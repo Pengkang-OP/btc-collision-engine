@@ -552,13 +552,11 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 
             except Exception as e:
                 # 使用ExceptionHandler记录详细错误
-                ExceptionHandler.handle_initialization_error(
+                ExceptionHandler.handle_engine_error(
+                    "GPU",
                     e,
-                    component="GPUCollisionEngine",
-                    context={
-                        'device_index': self.device_index,
-                        'batch_size': self.batch_size
-                    }
+                    stats=self.stats,
+                    context="初始化"
                 )
                 raise RuntimeError(f"GPU 初始化失败: {e}")
     
