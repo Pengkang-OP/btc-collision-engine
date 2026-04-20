@@ -189,12 +189,13 @@
         "compute_capability": "OpenCL 3.0",
         "recommended_batch_size": 262144,
         "max_batch_size": 524288,
-        "memory_efficiency": 0.5,
-        "optimizations": ["uint32_workaround", "timeout_protection", "async_transfer"],
+        "memory_efficiency": 0.45,
+        "optimizations": ["uint32_workaround", "timeout_protection", "async_transfer", "conservative_memory"],
         "known_issues": ["global_char_hang_bug"],
+        "timeout_seconds": 30,
         "min_driver_version": "31.0.101.0",
         "recommended_driver_version": "31.0.101.4500",
-        "notes": "Intel独立显卡,需要使用uint32避免hang bug,启用超时保护"
+        "notes": "Intel独立显卡,必须使用uint32避免hang bug,禁用异步,保守显存策略"
       }
     },
     "xe_ssg": {
@@ -206,11 +207,12 @@
         "recommended_batch_size": 524288,
         "max_batch_size": 1048576,
         "memory_efficiency": 0.55,
-        "optimizations": ["uint32_workaround", "timeout_protection", "async_transfer", "pro_driver_optimization"],
+        "optimizations": ["uint32_workaround", "timeout_protection", "async_transfer", "pro_driver_optimization", "conservative_memory"],
         "known_issues": ["global_char_hang_bug"],
+        "timeout_seconds": 30,
         "min_driver_version": "31.0.101.4500",
         "recommended_driver_version": "31.0.101.5000",
-        "notes": "Intel专业级显卡,驱动更稳定"
+        "notes": "Intel专业级显卡,驱动更稳定,必须使用uint32 workaround"
       }
     },
     "default": {
@@ -220,9 +222,10 @@
       "recommended_batch_size": 262144,
       "max_batch_size": 524288,
       "memory_efficiency": 0.45,
-      "optimizations": ["uint32_workaround", "timeout_protection"],
+      "optimizations": ["uint32_workaround", "timeout_protection", "conservative_memory"],
       "known_issues": ["global_char_hang_bug"],
-      "notes": "Intel默认配置,保守策略"
+      "timeout_seconds": 30,
+      "notes": "Intel默认配置,保守策略,必须启用uint32 workaround避免hang bug"
     }
   }
 }
