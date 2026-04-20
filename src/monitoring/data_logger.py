@@ -24,20 +24,25 @@ from collections import deque
 # 导入现有日志系统
 from src.utils import get_configured_logger
 from src.utils.logger import PerformanceMonitor
+from src.monitoring.storage_config import DataStorageConfig
 
 
 class DataLogger:
-    """数据日志记录器"""
+    """数据日志记录器
     
-    def __init__(self, storage_dir: str = "data_logs"):
+    注意：已统一使用data_logs作为唯一数据源，
+    monitoring_data目录已废弃。
+    """
+    
+    def __init__(self, storage_dir: str = None):
         """
         初始化数据日志记录器
         
         Args:
-            storage_dir: 数据存储目录
+            storage_dir: 数据存储目录（可选，默认使用data_logs）
         """
-        self.storage_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", storage_dir)
-        os.makedirs(self.storage_dir, exist_ok=True)
+        # 使用统一配置
+        self.storage_dir = DataStorageConfig.ensure_storage_dir(storage_dir)
         
         # 初始化日志记录器
         self.logger = get_configured_logger("DataLogger", thread_safe=True)
@@ -66,6 +71,34 @@ class DataLogger:
         self._speed_samples = []
         
         self.logger.info("数据日志系统初始化完成")
+    
+    def _atomic_write_json(self, filepath: str, data: Any):
+        """原子写入JSON文件
+        
+        使用临时文件+重命名的方式确保数据完整性，
+        避免写入中断导致文件损坏。
+        
+        Args:
+            filepath: 目标文件路径
+            data: 要写入的数据
+        """
+        temp_file = filepath + '.tmp'
+        try:
+            with open(temp_file, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+                f.flush()
+                os.fsync(f.fileno())  # 确保数据写入磁盘
+            
+            # 原子替换
+            os.replace(temp_file, filepath)
+        except Exception as e:
+            self.logger.error(f"原子写入失败: {e}")
+            # 清理临时文件
+            try:
+                if os.path.exists(temp_file):
+                    os.remove(temp_file)
+            except Exception:
+                pass
     
     def _initialize_files(self):
         """初始化数据文件"""

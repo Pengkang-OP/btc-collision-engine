@@ -254,6 +254,30 @@ class ConfigManager:
         if not isinstance(gpu_memory_ratio, (int, float)) or not (0 < gpu_memory_ratio <= 1.0):
             errors["gpu.memory_usage_ratio"] = "必须在(0, 1]范围内"
         
+        # 验证性能监控配置
+        perf_enabled = self.get("performance_monitoring.enabled")
+        if perf_enabled is not None and not isinstance(perf_enabled, bool):
+            errors["performance_monitoring.enabled"] = "必须是布尔值"
+        
+        perf_track_slow = self.get("performance_monitoring.track_slow_operations")
+        if perf_track_slow is not None and not isinstance(perf_track_slow, bool):
+            errors["performance_monitoring.track_slow_operations"] = "必须是布尔值"
+        
+        perf_threshold = self.get("performance_monitoring.slow_threshold_ms")
+        if perf_threshold is not None:
+            if not isinstance(perf_threshold, (int, float)) or perf_threshold < 0:
+                errors["performance_monitoring.slow_threshold_ms"] = "必须是非负数（毫秒）"
+        
+        perf_max_records = self.get("performance_monitoring.max_records")
+        if perf_max_records is not None:
+            if not isinstance(perf_max_records, int) or perf_max_records <= 0:
+                errors["performance_monitoring.max_records"] = "必须是正整数"
+        
+        perf_log_level = self.get("performance_monitoring.log_level")
+        valid_log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        if perf_log_level is not None and perf_log_level not in valid_log_levels:
+            errors["performance_monitoring.log_level"] = f"必须是以下值之一: {', '.join(valid_log_levels)}"
+        
         # 验证Crypto配置
         crypto_backend = self.get("crypto.backend")
         valid_backends = ["auto", "pure_python", "pure_python_const_time", "openssl", "coincurve", "ecdsa"]
