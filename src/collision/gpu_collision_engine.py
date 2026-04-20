@@ -38,6 +38,7 @@ from ..core.base58 import Base58
 from .collision_stats import CollisionStats
 from .checkpoint_manager import CheckpointManager
 from .deduplication_filter import DeduplicationFilter
+from .base_engine import BaseCollisionEngine
 from ..monitoring.data_logger import DataLogger
 from ..monitoring.enhanced_monitoring import EnhancedMonitoringSystem
 
@@ -359,8 +360,11 @@ class GPUKernel:
         self._batch_kernel = None
 
 
-class GPUCollisionEngine:
-    """GPU 加速的比特币私钥对撞引擎"""
+class GPUCollisionEngine(BaseCollisionEngine):
+    """GPU 加速的比特币私钥对撞引擎
+    
+    继承BaseCollisionEngine，实现GPU碰撞引擎。
+    """
     
     def __init__(self, targets: Set[str],
                  device_index: int = 1,
@@ -940,12 +944,16 @@ class GPUCollisionEngine:
                 range_end=self._range_end
             )
     
-    def stop(self):
-        """停止对撞"""
+    def stop(self, timeout: Optional[float] = None):
+        """停止对撞
+        
+        Args:
+            timeout: 等待停止的超时时间(秒)，None表示使用默认值
+        """
         self._stop_event.set()
         self._running = False
         if self._thread:
-            self._thread.join(timeout=5)
+            self._thread.join(timeout=timeout or 5)
         
         # 保存最终断点
         if self.checkpoint_mgr:
@@ -984,6 +992,22 @@ class GPUCollisionEngine:
     def is_running(self) -> bool:
         """是否正在运行"""
         return self._running and self._thread and self._thread.is_alive()
+    
+    def get_device_info(self) -> Dict[str, Any]:
+        """获取GPU设备信息
+        
+        Returns:
+            设备信息字典
+        """
+        if self._gpu_device:
+            return {
+                "type": "GPU",
+                "name": getattr(self._gpu_device, 'name', 'Unknown'),
+                "vendor": getattr(self._gpu_device, 'vendor', 'Unknown'),
+                "device_index": self.device_index,
+                "batch_size": self.batch_size
+            }
+        return {"type": "GPU", "status": "not_initialized"}
     
     def get_stats(self) -> CollisionStats:
         """获取统计信息"""
