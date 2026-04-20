@@ -139,12 +139,52 @@ class PerformanceTracker:
 
 
 # 全局性能追踪器实例
-_global_tracker = PerformanceTracker()
+_global_tracker = None
+_tracker_lock = threading.Lock()
+
+
+def _get_tracker_config():
+    """从配置获取追踪器配置"""
+    try:
+        from ..config.config_manager import ConfigManager
+        config_mgr = ConfigManager()
+        return {
+            'enabled': config_mgr.get('performance_monitoring.enabled', True),
+            'max_records': config_mgr.get('performance_monitoring.max_records', 10000),
+            'slow_threshold_ms': config_mgr.get('performance_monitoring.slow_threshold_ms', 1000),
+            'track_slow_operations': config_mgr.get('performance_monitoring.track_slow_operations', True),
+            'log_level': config_mgr.get('performance_monitoring.log_level', 'INFO')
+        }
+    except Exception:
+        # 配置加载失败，使用默认值
+        return {
+            'enabled': True,
+            'max_records': 10000,
+            'slow_threshold_ms': 1000,
+            'track_slow_operations': True,
+            'log_level': 'INFO'
+        }
 
 
 def get_performance_tracker() -> PerformanceTracker:
-    """获取全局性能追踪器"""
+    """获取全局性能追踪器（单例模式，支持配置）"""
+    global _global_tracker
+    
+    if _global_tracker is None:
+        with _tracker_lock:
+            if _global_tracker is None:
+                config = _get_tracker_config()
+                _global_tracker = PerformanceTracker(
+                    max_records=config['max_records']
+                )
+    
     return _global_tracker
+
+
+def is_performance_monitoring_enabled() -> bool:
+    """检查性能监控是否启用"""
+    config = _get_tracker_config()
+    return config['enabled']
 
 
 class EnhancedPerformanceMonitor:
@@ -197,32 +237,63 @@ class EnhancedPerformanceMonitor:
         return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.end_time = time.perf_counter()
-        elapsed_ms = (self.end_time - self.start_time) * 1000
+        """
+        退出上下文时的处理
         
-        success = exc_type is None
-        
-        # 记录日志
-        if self.log_result:
-            if success:
-                self.logger.log(
-                    self.level,
-                    f"[Performance] {self.operation}: {elapsed_ms:.2f}ms"
-                )
-            else:
-                self.logger.error(
-                    f"[Performance] {self.operation}: FAILED after {elapsed_ms:.2f}ms - {exc_val}"
-                )
-        
-        # 记录到追踪器
-        if self.track:
-            _global_tracker.record(
-                operation=self.operation,
-                elapsed_ms=elapsed_ms,
-                success=success,
-                error=str(exc_val) if exc_val else None,
-                metadata=self.metadata.copy()
-            )
+        注意: 此方法中的所有异常都被捕获，确保监控失败不会影响业务逻辑
+        """
+        try:
+            # 检查性能监控是否启用
+            if not is_performance_monitoring_enabled():
+                return
+            
+            self.end_time = time.perf_counter()
+            elapsed_ms = (self.end_time - self.start_time) * 1000
+            
+            success = exc_type is None
+            
+            # 记录日志（异常安全）
+            if self.log_result:
+                try:
+                    if success:
+                        self.logger.log(
+                            self.level,
+                            f"[Performance] {self.operation}: {elapsed_ms:.2f}ms"
+                        )
+                    else:
+                        self.logger.error(
+                            f"[Performance] {self.operation}: FAILED after {elapsed_ms:.2f}ms - {exc_val}"
+                        )
+                except Exception as log_error:
+                    # 日志失败不应影响业务，静默失败
+                    pass
+            
+            # 记录到追踪器（异常安全）
+            if self.track:
+                try:
+                    tracker = get_performance_tracker()
+                    tracker.record(
+                        operation=self.operation,
+                        elapsed_ms=elapsed_ms,
+                        success=success,
+                        error=str(exc_val) if exc_val else None,
+                        metadata=self.metadata.copy()
+                    )
+                    
+                    # 检查是否为慢操作并告警
+                    config = _get_tracker_config()
+                    if (config['track_slow_operations'] and 
+                        elapsed_ms > config['slow_threshold_ms']):
+                        self.logger.warning(
+                            f"[Performance] 慢操作检测: {self.operation} "
+                            f"耗时 {elapsed_ms:.2f}ms > {config['slow_threshold_ms']}ms"
+                        )
+                except Exception as track_error:
+                    # 追踪失败不应影响业务，静默失败
+                    pass
+        except Exception:
+            # 监控本身失败不应影响业务逻辑
+            pass
     
     def add_metadata(self, key: str, value):
         """添加元数据"""

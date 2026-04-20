@@ -50,7 +50,14 @@ class ConfigManager:
             "batch_size": 65536,
             "auto_detect": True,
             "memory_usage_ratio": 0.5,
-            "enable_vendor_optimizations": True,
+            "enable_vendor_optimizations": True
+        },
+        "performance_monitoring": {
+            "enabled": True,  # 是否启用性能监控
+            "track_slow_operations": True,  # 是否追踪慢操作
+            "slow_threshold_ms": 1000,  # 慢操作阈值（毫秒）
+            "max_records": 10000,  # 最大记录数
+            "log_level": "INFO"  # 性能日志级别（INFO/DEBUG/WARNING）
         },
         "crypto": {
             "backend": "auto",
