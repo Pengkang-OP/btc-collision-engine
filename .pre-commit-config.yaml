@@ -1,0 +1,52 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+
+repos:
+  # 导入路径检查
+  - repo: local
+    hooks:
+      - id: check-import-paths
+        name: Check import paths
+        entry: python scripts/check_import_paths.py
+        language: system
+        types: [python]
+        pass_filenames: false
+        description: "检查是否使用了已弃用的导入路径"
+
+  # Python代码格式化
+  - repo: https://github.com/psf/black
+    rev: 24.2.0
+    hooks:
+      - id: black
+        language_version: python3
+        args: [--line-length=100]
+
+  # Python代码 linting
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        args: [--max-line-length=100, --ignore=E203,W503]
+
+  # 测试运行（可选，默认不自动运行）
+  - repo: local
+    hooks:
+      - id: pytest
+        name: Run tests
+        entry: python -m pytest tests/test_import_paths.py tests/test_bech32_p2sh_conversion.py -v
+        language: system
+        types: [python]
+        pass_filenames: false
+        description: "运行关键测试确保代码质量"
+        stages: [manual]  # 手动触发，不阻塞提交
+
+  # 检查提交消息格式
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: detect-private-key

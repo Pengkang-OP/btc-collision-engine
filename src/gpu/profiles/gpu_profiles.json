@@ -1,0 +1,228 @@
+{
+  "_comment": "GPU型号配置数据库 - 包含2015年至今的主流GPU型号配置",
+  "_version": "1.0",
+  "_last_updated": "2026-04-20",
+  
+  "nvidia": {
+    "maxwell": {
+      "_year_range": "2015-2016",
+      "gtx_900_series": {
+        "models": ["GTX 950", "GTX 960", "GTX 970", "GTX 980", "GTX 980 Ti"],
+        "year": 2015,
+        "compute_capability": "5.2",
+        "recommended_batch_size": 524288,
+        "max_batch_size": 1048576,
+        "memory_efficiency": 0.6,
+        "optimizations": ["async_transfer", "persistent_buffers"],
+        "notes": "第一代支持异步传输的架构"
+      }
+    },
+    "pascal": {
+      "_year_range": "2016-2017",
+      "gtx_1000_series": {
+        "models": ["GTX 1050", "GTX 1050 Ti", "GTX 1060", "GTX 1070", "GTX 1070 Ti", "GTX 1080", "GTX 1080 Ti"],
+        "year": 2016,
+        "compute_capability": "6.1",
+        "recommended_batch_size": 1048576,
+        "max_batch_size": 2097152,
+        "memory_efficiency": 0.65,
+        "optimizations": ["async_transfer", "persistent_buffers", "shared_memory_optimization"],
+        "notes": "性能显著提升,支持更大的batch_size"
+      }
+    },
+    "volta": {
+      "_year_range": "2017-2018",
+      "titan_v": {
+        "models": ["TITAN V"],
+        "year": 2017,
+        "compute_capability": "7.0",
+        "recommended_batch_size": 2097152,
+        "max_batch_size": 4194304,
+        "memory_efficiency": 0.7,
+        "optimizations": ["async_transfer", "persistent_buffers", "tensor_core_ready"],
+        "notes": "引入Tensor Core,但OpenCL支持有限"
+      }
+    },
+    "turing": {
+      "_year_range": "2018-2019",
+      "rtx_2000_series": {
+        "models": ["RTX 2060", "RTX 2060 Super", "RTX 2070", "RTX 2070 Super", "RTX 2080", "RTX 2080 Super", "RTX 2080 Ti"],
+        "year": 2018,
+        "compute_capability": "7.5",
+        "recommended_batch_size": 2097152,
+        "max_batch_size": 4194304,
+        "memory_efficiency": 0.7,
+        "optimizations": ["async_transfer", "persistent_buffers", "shared_memory_optimization"],
+        "notes": "引入RT Core,OpenCL性能稳定"
+      }
+    },
+    "ampere": {
+      "_year_range": "2020-2022",
+      "rtx_3000_series": {
+        "models": ["RTX 3060", "RTX 3060 Ti", "RTX 3070", "RTX 3070 Ti", "RTX 3080", "RTX 3080 Ti", "RTX 3090", "RTX 3090 Ti"],
+        "year": 2020,
+        "compute_capability": "8.6",
+        "recommended_batch_size": 4194304,
+        "max_batch_size": 8388608,
+        "memory_efficiency": 0.75,
+        "optimizations": ["async_transfer", "persistent_buffers", "shared_memory_optimization", "large_page_support"],
+        "min_driver_version": "450.00",
+        "recommended_driver_version": "520.00",
+        "notes": "显著提升的内存带宽和计算能力"
+      }
+    },
+    "ada_lovelace": {
+      "_year_range": "2022-2026",
+      "rtx_4000_series": {
+        "models": ["RTX 4060", "RTX 4060 Ti", "RTX 4070", "RTX 4070 Ti", "RTX 4080", "RTX 4080 Super", "RTX 4090", "RTX 4090 D"],
+        "year": 2022,
+        "compute_capability": "8.9",
+        "recommended_batch_size": 4194304,
+        "max_batch_size": 8388608,
+        "memory_efficiency": 0.8,
+        "optimizations": ["async_transfer", "persistent_buffers", "shared_memory_optimization", "large_page_support", "shader_execution_reordering"],
+        "min_driver_version": "520.00",
+        "recommended_driver_version": "545.00",
+        "notes": "最新架构,性能最优"
+      }
+    },
+    "default": {
+      "models": [],
+      "year": 2015,
+      "compute_capability": "5.0",
+      "recommended_batch_size": 524288,
+      "max_batch_size": 1048576,
+      "memory_efficiency": 0.5,
+      "optimizations": ["async_transfer", "persistent_buffers"],
+      "notes": "NVIDIA默认配置"
+    }
+  },
+  
+  "amd": {
+    "polaris": {
+      "_year_range": "2016-2017",
+      "rx_400_500_series": {
+        "models": ["RX 460", "RX 470", "RX 480", "RX 550", "RX 560", "RX 570", "RX 580", "RX 590"],
+        "year": 2016,
+        "compute_capability": "OpenCL 2.0",
+        "recommended_batch_size": 524288,
+        "max_batch_size": 1048576,
+        "memory_efficiency": 0.55,
+        "optimizations": ["async_transfer", "memory_coalescing"],
+        "notes": "AMD主流架构,OpenCL支持良好"
+      }
+    },
+    "vega": {
+      "_year_range": "2017-2019",
+      "vega_series": {
+        "models": ["Vega 56", "Vega 64", "Radeon VII"],
+        "year": 2017,
+        "compute_capability": "OpenCL 2.0",
+        "recommended_batch_size": 1048576,
+        "max_batch_size": 2097152,
+        "memory_efficiency": 0.6,
+        "optimizations": ["async_transfer", "memory_coalescing", "hbm_optimization"],
+        "notes": "HBM2显存,带宽优势明显"
+      }
+    },
+    "rdna": {
+      "_year_range": "2019-2020",
+      "rx_5000_series": {
+        "models": ["RX 5500", "RX 5500 XT", "RX 5600 XT", "RX 5700", "RX 5700 XT"],
+        "year": 2019,
+        "compute_capability": "OpenCL 2.1",
+        "recommended_batch_size": 1048576,
+        "max_batch_size": 2097152,
+        "memory_efficiency": 0.65,
+        "optimizations": ["async_transfer", "memory_coalescing", "compute_unit_optimization"],
+        "notes": "新RDNA架构,计算单元优化"
+      }
+    },
+    "rdna2": {
+      "_year_range": "2020-2022",
+      "rx_6000_series": {
+        "models": ["RX 6600", "RX 6600 XT", "RX 6600 XTX", "RX 6700 XT", "RX 6800", "RX 6800 XT", "RX 6900 XT", "RX 6950 XT"],
+        "year": 2020,
+        "compute_capability": "OpenCL 2.1",
+        "recommended_batch_size": 2097152,
+        "max_batch_size": 4194304,
+        "memory_efficiency": 0.7,
+        "optimizations": ["async_transfer", "memory_coalescing", "compute_unit_optimization", "infinity_cache"],
+        "min_driver_version": "21.5.1",
+        "recommended_driver_version": "23.10.1",
+        "notes": "引入Infinity Cache,显著提升性能"
+      }
+    },
+    "rdna3": {
+      "_year_range": "2022-2026",
+      "rx_7000_series": {
+        "models": ["RX 7600", "RX 7600 XT", "RX 7700 XT", "RX 7800 XT", "RX 7900 GRE", "RX 7900 XT", "RX 7900 XTX"],
+        "year": 2022,
+        "compute_capability": "OpenCL 3.0",
+        "recommended_batch_size": 2097152,
+        "max_batch_size": 4194304,
+        "memory_efficiency": 0.75,
+        "optimizations": ["async_transfer", "memory_coalescing", "compute_unit_optimization", "chiplet_architecture"],
+        "min_driver_version": "22.10.1",
+        "recommended_driver_version": "24.1.1",
+        "notes": "Chiplet架构,最新一代AMD GPU"
+      }
+    },
+    "default": {
+      "models": [],
+      "year": 2016,
+      "compute_capability": "OpenCL 2.0",
+      "recommended_batch_size": 524288,
+      "max_batch_size": 1048576,
+      "memory_efficiency": 0.5,
+      "optimizations": ["async_transfer", "memory_coalescing"],
+      "notes": "AMD默认配置"
+    }
+  },
+  
+  "intel": {
+    "xe_hpg": {
+      "_year_range": "2022-2026",
+      "arc_700_800_series": {
+        "models": ["Intel Arc A750", "Intel Arc A770", "Intel Arc A580"],
+        "year": 2022,
+        "compute_capability": "OpenCL 3.0",
+        "recommended_batch_size": 262144,
+        "max_batch_size": 524288,
+        "memory_efficiency": 0.5,
+        "optimizations": ["uint32_workaround", "timeout_protection", "async_transfer"],
+        "known_issues": ["global_char_hang_bug"],
+        "min_driver_version": "31.0.101.0",
+        "recommended_driver_version": "31.0.101.4500",
+        "notes": "Intel独立显卡,需要使用uint32避免hang bug,启用超时保护"
+      }
+    },
+    "xe_ssg": {
+      "_year_range": "2023-2026",
+      "arc_pro_series": {
+        "models": ["Intel Arc Pro A30", "Intel Arc Pro A40", "Intel Arc Pro A50", "Intel Arc Pro A60"],
+        "year": 2023,
+        "compute_capability": "OpenCL 3.0",
+        "recommended_batch_size": 524288,
+        "max_batch_size": 1048576,
+        "memory_efficiency": 0.55,
+        "optimizations": ["uint32_workaround", "timeout_protection", "async_transfer", "pro_driver_optimization"],
+        "known_issues": ["global_char_hang_bug"],
+        "min_driver_version": "31.0.101.4500",
+        "recommended_driver_version": "31.0.101.5000",
+        "notes": "Intel专业级显卡,驱动更稳定"
+      }
+    },
+    "default": {
+      "models": [],
+      "year": 2022,
+      "compute_capability": "OpenCL 3.0",
+      "recommended_batch_size": 262144,
+      "max_batch_size": 524288,
+      "memory_efficiency": 0.45,
+      "optimizations": ["uint32_workaround", "timeout_protection"],
+      "known_issues": ["global_char_hang_bug"],
+      "notes": "Intel默认配置,保守策略"
+    }
+  }
+}
