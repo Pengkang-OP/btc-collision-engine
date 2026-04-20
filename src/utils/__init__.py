@@ -12,7 +12,8 @@ from .logging_config import init_logging, get_configured_logger, LoggingConfig
 from .performance_monitor import (
     PerformanceTracker, EnhancedPerformanceMonitor,
     PerformanceMetrics, get_performance_tracker,
-    log_performance_summary, create_performance_monitor
+    log_performance_summary, create_performance_monitor,
+    is_performance_monitoring_enabled
 )
 from .encoding_utils import EncodingUtils
 from .exception_handler import ExceptionHandler
@@ -31,6 +32,7 @@ __all__ = [
     'PerformanceTracker', 'EnhancedPerformanceMonitor',
     'PerformanceMetrics', 'get_performance_tracker',
     'log_performance_summary', 'create_performance_monitor',
+    'is_performance_monitoring_enabled',
     # 编码工具
     'EncodingUtils',
     # 异常处理
