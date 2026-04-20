@@ -294,36 +294,36 @@ class DataLogger:
             
             # 添加到错误缓冲区
             self._error_buffer.append(error_record)
+        
+        # 在锁外执行I/O操作（提升并发性能）
+        try:
+            # 读取现有错误日志
+            errors = []
+            if os.path.exists(self.error_log_file):
+                with open(self.error_log_file, 'r', encoding='utf-8') as f:
+                    errors = json.load(f)
             
-            # 保存到错误日志文件
-            try:
-                # 读取现有错误日志
-                errors = []
-                if os.path.exists(self.error_log_file):
-                    with open(self.error_log_file, 'r', encoding='utf-8') as f:
-                        errors = json.load(f)
-                
-                # 添加新错误
-                errors.append(error_record)
-                
-                # 限制错误日志数量
-                if len(errors) > 500:
-                    errors = errors[-500:]
-                
-                # 写回文件
-                with open(self.error_log_file, 'w', encoding='utf-8') as f:
-                    json.dump(errors, f, ensure_ascii=False, indent=2)
-            except Exception as e:
-                self.logger.error(f"保存错误日志失败: {e}")
+            # 添加新错误
+            errors.append(error_record)
             
-            # 记录到标准日志
-            if exception:
-                self.logger.error(f"错误记录 [{error_type}]: {message} - {exception}")
-            else:
-                self.logger.error(f"错误记录 [{error_type}]: {message}")
+            # 限制错误日志数量
+            if len(errors) > 500:
+                errors = errors[-500:]
+            
+            # 写回文件
+            with open(self.error_log_file, 'w', encoding='utf-8') as f:
+                json.dump(errors, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            self.logger.error(f"保存错误日志失败: {e}")
+        
+        # 记录到标准日志
+        if exception:
+            self.logger.error(f"错误记录 [{error_type}]: {message} - {exception}")
+        else:
+            self.logger.error(f"错误记录 [{error_type}]: {message}")
     
     def save_current_data(self):
-        """保存当前数据到文件（优化：I/O操作移出锁范围 + 深拷贝确保一致性）"""
+        """保存当前数据到文件（优化：I/O操作移出锁范围 + 深拷贝确保一致性 + 重试机制）"""
         # 在锁内深拷贝数据，确保嵌套字典的一致性
         with self._lock:
             save_data = {
@@ -334,38 +334,61 @@ class DataLogger:
         
         # 在锁外执行I/O操作
         temp_file = None  # 初始化临时文件变量，避免异常处理中NameError
-        try:
-            # 使用原子写入：先写临时文件，再重命名
-            # 使用tempfile生成唯一文件名，避免冲突
-            temp_fd, temp_file = tempfile.mkstemp(
-                dir=os.path.dirname(self.current_data_file),
-                suffix='.tmp',
-                prefix='.current_data_'
-            )
-            os.close(temp_fd)  # 关闭文件描述符，稍后用open写入
-            
-            with open(temp_file, 'w', encoding='utf-8') as f:
-                json.dump(save_data, f, ensure_ascii=False, indent=2)
-                f.flush()
-                os.fsync(f.fileno())  # 确保数据写入磁盘
-            
-            # 原子替换
-            if os.path.exists(self.current_data_file):
-                os.replace(temp_file, self.current_data_file)
-            else:
-                os.rename(temp_file, self.current_data_file)
-                
-        except Exception as e:
-            self.logger.error(f"保存当前数据失败: {e}")
-            # 清理临时文件
+        max_retries = 3
+        retry_delay = 0.5  # 秒
+        
+        for attempt in range(max_retries):
             try:
-                if temp_file and os.path.exists(temp_file):  # 安全检查
-                    os.remove(temp_file)
-            except Exception:
-                pass
+                # 使用原子写入：先写临时文件，再重命名
+                # 使用tempfile生成唯一文件名，避免冲突
+                temp_fd, temp_file = tempfile.mkstemp(
+                    dir=os.path.dirname(self.current_data_file),
+                    suffix='.tmp',
+                    prefix='.current_data_'
+                )
+                os.close(temp_fd)  # 关闭文件描述符，稍后用open写入
+                
+                with open(temp_file, 'w', encoding='utf-8') as f:
+                    json.dump(save_data, f, ensure_ascii=False, indent=2)
+                    f.flush()
+                    os.fsync(f.fileno())  # 确保数据写入磁盘
+                
+                # 原子替换（Windows可能需要特殊处理）
+                if os.path.exists(self.current_data_file):
+                    # Windows上先删除目标文件，再重命名（避免PermissionError）
+                    if os.name == 'nt':
+                        try:
+                            os.remove(self.current_data_file)
+                        except PermissionError:
+                            # 如果文件被占用，等待后重试
+                            if attempt < max_retries - 1:
+                                time.sleep(retry_delay)
+                                continue
+                            raise
+                    os.rename(temp_file, self.current_data_file)
+                else:
+                    os.rename(temp_file, self.current_data_file)
+                
+                # 成功，退出重试循环
+                return
+                    
+            except Exception as e:
+                self.logger.error(f"保存当前数据失败 (尝试 {attempt + 1}/{max_retries}): {e}")
+                # 清理临时文件
+                try:
+                    if temp_file and os.path.exists(temp_file):
+                        os.remove(temp_file)
+                except Exception:
+                    pass
+                
+                # 如果不是最后一次尝试，等待后重试
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
+                    continue
+                break
     
     def save_history_data(self):
-        """保存历史数据到文件（优化：I/O操作移出锁范围 + 数据恢复 + 唯一临时文件）"""
+        """保存历史数据到文件（优化：I/O操作移出锁范围 + 数据恢复 + 唯一临时文件 + 重试机制）"""
         # 在锁内获取数据
         with self._lock:
             new_data = list(self._history_buffer)
@@ -376,48 +399,72 @@ class DataLogger:
         
         # 在锁外执行I/O操作
         temp_file = None  # 初始化临时文件变量，避免异常处理中NameError
-        try:
-            # 读取现有历史数据（带恢复机制）
-            history = self._load_history_with_recovery()
-            
-            # 添加新数据
-            history.extend(new_data)
-            
-            # 限制历史数据数量
-            if len(history) > 1000:
-                history = history[-1000:]
-            
-            # 原子写入，使用唯一临时文件名
-            temp_fd, temp_file = tempfile.mkstemp(
-                dir=os.path.dirname(self.history_data_file),
-                suffix='.tmp',
-                prefix='.history_data_'
-            )
-            os.close(temp_fd)
-            
-            with open(temp_file, 'w', encoding='utf-8') as f:
-                json.dump(history, f, ensure_ascii=False, indent=2)
-                f.flush()
-                os.fsync(f.fileno())
-            
-            # 原子替换
-            if os.path.exists(self.history_data_file):
-                os.replace(temp_file, self.history_data_file)
-            else:
-                os.rename(temp_file, self.history_data_file)
-                
-        except Exception as e:
-            self.logger.error(f"保存历史数据失败: {e}")
-            # 将数据放回缓冲区，避免数据丢失
-            # 注意：这可能会改变数据顺序，但保证数据不丢失
-            with self._lock:
-                self._history_buffer.extend(new_data)
-            # 清理临时文件
+        max_retries = 3
+        retry_delay = 0.5  # 秒
+        
+        for attempt in range(max_retries):
             try:
-                if temp_file and os.path.exists(temp_file):  # 安全检查
-                    os.remove(temp_file)
-            except Exception:
-                pass
+                # 读取现有历史数据（带恢复机制）
+                history = self._load_history_with_recovery()
+                
+                # 添加新数据
+                history.extend(new_data)
+                
+                # 限制历史数据数量
+                if len(history) > 1000:
+                    history = history[-1000:]
+                
+                # 原子写入，使用唯一临时文件名
+                temp_fd, temp_file = tempfile.mkstemp(
+                    dir=os.path.dirname(self.history_data_file),
+                    suffix='.tmp',
+                    prefix='.history_data_'
+                )
+                os.close(temp_fd)
+                
+                with open(temp_file, 'w', encoding='utf-8') as f:
+                    json.dump(history, f, ensure_ascii=False, indent=2)
+                    f.flush()
+                    os.fsync(f.fileno())
+                
+                # 原子替换（Windows可能需要特殊处理）
+                if os.path.exists(self.history_data_file):
+                    # Windows上先删除目标文件，再重命名（避免PermissionError）
+                    if os.name == 'nt':
+                        try:
+                            os.remove(self.history_data_file)
+                        except PermissionError:
+                            # 如果文件被占用，等待后重试
+                            if attempt < max_retries - 1:
+                                time.sleep(retry_delay)
+                                continue
+                            raise
+                    os.rename(temp_file, self.history_data_file)
+                else:
+                    os.rename(temp_file, self.history_data_file)
+                
+                # 成功，退出重试循环
+                return
+                    
+            except Exception as e:
+                self.logger.error(f"保存历史数据失败 (尝试 {attempt + 1}/{max_retries}): {e}")
+                # 清理临时文件
+                try:
+                    if temp_file and os.path.exists(temp_file):
+                        os.remove(temp_file)
+                except Exception:
+                    pass
+                
+                # 如果不是最后一次尝试，等待后重试
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
+                    continue
+                
+                # 所有重试都失败，将数据放回缓冲区
+                with self._lock:
+                    for item in reversed(new_data):
+                        self._history_buffer.appendleft(item)
+                break
     
     def _load_history_with_recovery(self) -> list:
         """加载历史数据，带损坏恢复机制"""
@@ -557,75 +604,79 @@ class DataLogger:
         Returns:
             报告数据字典
         """
+        # 在锁内获取必要数据
         with self._lock:
-            try:
-                # 读取历史数据
-                history = []
-                if os.path.exists(self.history_data_file):
-                    with open(self.history_data_file, 'r', encoding='utf-8') as f:
-                        history = json.load(f)
-                
-                if not history:
-                    return {"message": "无历史数据可供生成报告"}
-                
-                # 根据报告类型过滤数据
-                now = datetime.now()
-                if report_type == "daily":
-                    cutoff = now.replace(hour=0, minute=0, second=0, microsecond=0)
-                elif report_type == "weekly":
-                    cutoff = now.replace(hour=0, minute=0, second=0, microsecond=0)
-                    cutoff = cutoff.replace(day=cutoff.day - cutoff.weekday())
-                elif report_type == "monthly":
-                    cutoff = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-                else:
-                    cutoff = now.replace(hour=0, minute=0, second=0, microsecond=0)
-                
-                cutoff_ts = cutoff.timestamp()
-                filtered_data = [d for d in history if d.get("timestamp", 0) >= cutoff_ts]
-                
-                if not filtered_data:
-                    return {"message": f"在指定时间范围内无数据 ({report_type})"}
-                
-                # 计算统计数据
-                speeds = [d.get("speed", 0) for d in filtered_data]
-                total_checked = max([d.get("total_checked", 0) for d in filtered_data], default=0)
-                matches_found = max([d.get("matches_found", 0) for d in filtered_data], default=0)
-                cpu_usages = [d.get("cpu_usage", 0) for d in filtered_data]
-                memory_usages = [d.get("memory_usage", 0) for d in filtered_data]
-                
-                report = {
-                    "report_type": report_type,
-                    "generated_at": now.isoformat(),
-                    "period_start": cutoff.isoformat(),
-                    "period_end": now.isoformat(),
-                    "data_points": len(filtered_data),
-                    "summary": {
-                        "total_checked": total_checked,
-                        "matches_found": matches_found,
-                        "avg_speed": statistics.mean(speeds) if speeds else 0,
-                        "max_speed": max(speeds) if speeds else 0,
-                        "min_speed": min(speeds) if speeds else 0,
-                        "avg_cpu_usage": statistics.mean(cpu_usages) if cpu_usages else 0,
-                        "avg_memory_usage": statistics.mean(memory_usages) if memory_usages else 0,
-                        "error_count": len(self._error_buffer)
-                    },
-                    "trends": self._analyze_trends(filtered_data),
-                    "recommendations": self._generate_recommendations(speeds, cpu_usages, memory_usages)
-                }
-                
-                # 保存报告
-                report_filename = f"report_{report_type}_{now.strftime('%Y%m%d_%H%M%S')}.json"
-                report_path = os.path.join(self.storage_dir, report_filename)
-                
-                with open(report_path, 'w', encoding='utf-8') as f:
-                    json.dump(report, f, ensure_ascii=False, indent=2)
-                
-                self.logger.info(f"{report_type}报告已生成: {report_path}")
-                return report
-                
-            except Exception as e:
-                self.logger.error(f"生成报告失败: {e}")
-                return {"error": str(e)}
+            error_count = len(self._error_buffer)
+        
+        # 在锁外执行I/O操作和报告生成
+        try:
+            # 读取历史数据
+            history = []
+            if os.path.exists(self.history_data_file):
+                with open(self.history_data_file, 'r', encoding='utf-8') as f:
+                    history = json.load(f)
+            
+            if not history:
+                return {"message": "无历史数据可供生成报告"}
+            
+            # 根据报告类型过滤数据
+            now = datetime.now()
+            if report_type == "daily":
+                cutoff = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            elif report_type == "weekly":
+                cutoff = now.replace(hour=0, minute=0, second=0, microsecond=0)
+                cutoff = cutoff.replace(day=cutoff.day - cutoff.weekday())
+            elif report_type == "monthly":
+                cutoff = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            else:
+                cutoff = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            
+            cutoff_ts = cutoff.timestamp()
+            filtered_data = [d for d in history if d.get("timestamp", 0) >= cutoff_ts]
+            
+            if not filtered_data:
+                return {"message": f"在指定时间范围内无数据 ({report_type})"}
+            
+            # 计算统计数据
+            speeds = [d.get("speed", 0) for d in filtered_data]
+            total_checked = max([d.get("total_checked", 0) for d in filtered_data], default=0)
+            matches_found = max([d.get("matches_found", 0) for d in filtered_data], default=0)
+            cpu_usages = [d.get("cpu_usage", 0) for d in filtered_data]
+            memory_usages = [d.get("memory_usage", 0) for d in filtered_data]
+            
+            report = {
+                "report_type": report_type,
+                "generated_at": now.isoformat(),
+                "period_start": cutoff.isoformat(),
+                "period_end": now.isoformat(),
+                "data_points": len(filtered_data),
+                "summary": {
+                    "total_checked": total_checked,
+                    "matches_found": matches_found,
+                    "avg_speed": statistics.mean(speeds) if speeds else 0,
+                    "max_speed": max(speeds) if speeds else 0,
+                    "min_speed": min(speeds) if speeds else 0,
+                    "avg_cpu_usage": statistics.mean(cpu_usages) if cpu_usages else 0,
+                    "avg_memory_usage": statistics.mean(memory_usages) if memory_usages else 0,
+                    "error_count": error_count  # 使用之前获取的值
+                },
+                "trends": self._analyze_trends(filtered_data),
+                "recommendations": self._generate_recommendations(speeds, cpu_usages, memory_usages)
+            }
+            
+            # 保存报告
+            report_filename = f"report_{report_type}_{now.strftime('%Y%m%d_%H%M%S')}.json"
+            report_path = os.path.join(self.storage_dir, report_filename)
+            
+            with open(report_path, 'w', encoding='utf-8') as f:
+                json.dump(report, f, ensure_ascii=False, indent=2)
+            
+            self.logger.info(f"{report_type}报告已生成: {report_path}")
+            return report
+            
+        except Exception as e:
+            self.logger.error(f"生成报告失败: {e}")
+            return {"error": str(e)}
     
     def _analyze_trends(self, data: List[Dict[str, Any]]) -> Dict[str, Any]:
         """分析数据趋势"""
@@ -707,33 +758,34 @@ class DataLogger:
         Args:
             max_age_days: 数据最大保存天数
         """
-        with self._lock:
-            try:
-                cutoff_time = time.time() - (max_age_days * 24 * 60 * 60)
+        # 计算截止时间
+        cutoff_time = time.time() - (max_age_days * 24 * 60 * 60)
+        
+        # 在锁外执行I/O操作
+        try:
+            # 清理历史数据
+            if os.path.exists(self.history_data_file):
+                with open(self.history_data_file, 'r', encoding='utf-8') as f:
+                    history = json.load(f)
                 
-                # 清理历史数据
-                if os.path.exists(self.history_data_file):
-                    with open(self.history_data_file, 'r', encoding='utf-8') as f:
-                        history = json.load(f)
-                    
-                    cleaned_history = [d for d in history if d.get("timestamp", 0) >= cutoff_time]
-                    
-                    if len(cleaned_history) != len(history):
-                        with open(self.history_data_file, 'w', encoding='utf-8') as f:
-                            json.dump(cleaned_history, f, ensure_ascii=False, indent=2)
-                        self.logger.info(f"清理了 {len(history) - len(cleaned_history)} 条过期历史数据")
+                cleaned_history = [d for d in history if d.get("timestamp", 0) >= cutoff_time]
                 
-                # 清理错误日志
-                if os.path.exists(self.error_log_file):
-                    with open(self.error_log_file, 'r', encoding='utf-8') as f:
-                        errors = json.load(f)
+                if len(cleaned_history) != len(history):
+                    with open(self.history_data_file, 'w', encoding='utf-8') as f:
+                        json.dump(cleaned_history, f, ensure_ascii=False, indent=2)
+                    self.logger.info(f"清理了 {len(history) - len(cleaned_history)} 条过期历史数据")
+            
+            # 清理错误日志
+            if os.path.exists(self.error_log_file):
+                with open(self.error_log_file, 'r', encoding='utf-8') as f:
+                    errors = json.load(f)
+                
+                cleaned_errors = [e for e in errors if e.get("timestamp", 0) >= cutoff_time]
+                
+                if len(cleaned_errors) != len(errors):
+                    with open(self.error_log_file, 'w', encoding='utf-8') as f:
+                        json.dump(cleaned_errors, f, ensure_ascii=False, indent=2)
+                    self.logger.info(f"清理了 {len(errors) - len(cleaned_errors)} 条过期错误日志")
                     
-                    cleaned_errors = [e for e in errors if e.get("timestamp", 0) >= cutoff_time]
-                    
-                    if len(cleaned_errors) != len(errors):
-                        with open(self.error_log_file, 'w', encoding='utf-8') as f:
-                            json.dump(cleaned_errors, f, ensure_ascii=False, indent=2)
-                        self.logger.info(f"清理了 {len(errors) - len(cleaned_errors)} 条过期错误日志")
-                        
-            except Exception as e:
-                self.logger.error(f"清理旧数据失败: {e}")
+        except Exception as e:
+            self.logger.error(f"清理旧数据失败: {e}")
