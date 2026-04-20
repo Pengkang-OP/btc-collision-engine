@@ -558,7 +558,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
                     stats=self.stats,
                     context="初始化"
                 )
-                raise RuntimeError(f"GPU 初始化失败: {e}")
+                raise RuntimeError(f"GPU 初始化失败: {e}") from e
     
     def _prepare_targets(self):
         """将目标地址转换为 Hash160"""
