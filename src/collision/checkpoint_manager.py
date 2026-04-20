@@ -103,12 +103,27 @@ class CheckpointManager:
             else:
                 os.rename(temp_filepath, self.filepath)
             
-            # 设置文件权限（仅Linux/macOS，Windows不支持chmod）
+            # 设置文件权限
+            # Linux/macOS: 使用chmod设置0o600
+            # Windows: 通过ACL设置仅所有者可读写
             if os.name != 'nt':  # nt = Windows
                 try:
                     os.chmod(self.filepath, 0o600)  # 仅所有者可读写
                 except OSError:
                     pass  # 权限设置失败不影响功能
+            else:
+                # Windows: 尝试使用icacls命令设置权限
+                try:
+                    import subprocess
+                    subprocess.run(
+                        ['icacls', self.filepath, '/inheritance:r', '/grant:r', f'{os.environ["USERNAME"]}:(R,W)'],
+                        check=True,
+                        capture_output=True,
+                        timeout=5
+                    )
+                    logger.debug("Windows文件权限已设置（icacls）")
+                except Exception:
+                    pass  # Windows权限设置失败不影响功能
             
             self._last_save_time = time.time()
             self._dirty = False
