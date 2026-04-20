@@ -1,0 +1,65 @@
+# Python缓存
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+.pytest_cache/
+.benchmarks/
+
+# 测试覆盖率
+.coverage
+.coverage.*
+htmlcov/
+*.cover
+
+# 虚拟环境
+.venv/
+venv/
+ENV/
+env/
+
+# IDE配置
+.qoder/
+.qodo/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 日志文件
+logs/*.log
+logs/*.log.*
+data_logs/report_daily_*.json
+monitoring_data/report_*.json
+monitoring_data/history_data.json
+test_results.log
+
+# 临时文件
+*.tmp
+*.bak
+*.cache
+*.pid
+
+# 操作系统
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 编译产物
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# 性能分析
+*.prof
+*.pstats
+
+# 环境配置
+.env
+.env.local

@@ -1,0 +1,124 @@
+{
+  "_comment": "BTC私钥碰撞工具配置文件",
+  "crypto": {
+    "_comment": "加密后端配置",
+    "backend": "auto",
+    "_comment_backend": "可选: auto, pure_python, pure_python_const_time, openssl, coincurve, ecdsa",
+    "use_gpu": true,
+    "_comment_use_gpu": "是否启用GPU加速",
+    "gpu_device_index": -1,
+    "_comment_gpu_device_index": "GPU设备索引, -1表示自动选择",
+    "gpu_batch_size": 65536,
+    "_comment_gpu_batch_size": "GPU批处理大小",
+    "constant_time": false,
+    "_comment_constant_time": "是否优先使用恒定时间算法(防御侧信道攻击)",
+    "verify_checksums": true,
+    "_comment_verify_checksums": "验证所有Base58Check校验和",
+    "strict_wif_validation": true,
+    "_comment_strict_wif_validation": "严格WIF格式验证"
+  },
+  "collision": {
+    "_comment": "碰撞引擎配置",
+    "max_workers": null,
+    "_comment_max_workers": "线程池最大工作线程数, null表示使用默认值(CPU核心数)",
+    "progress_interval": 1000,
+    "_comment_progress_interval": "进度回调间隔(次)",
+    "checkpoint_interval": 30,
+    "_comment_checkpoint_interval": "断点自动保存间隔(秒)",
+    "dedup_max_size": 1000000,
+    "_comment_dedup_max_size": "去重过滤器最大容量"
+  },
+  "logging": {
+    "_comment": "日志配置",
+    "level": "INFO",
+    "_comment_level": "日志级别: DEBUG, INFO, WARNING, ERROR, CRITICAL",
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    "_comment_format": "日志格式字符串",
+    "file": "logs/collision.log",
+    "_comment_file": "日志文件路径",
+    "max_bytes": 10485760,
+    "_comment_max_bytes": "单个日志文件最大字节数(10MB)",
+    "backup_count": 5,
+    "_comment_backup_count": "保留的备份文件数量",
+    "enable_console": true,
+    "_comment_enable_console": "是否输出到控制台",
+    "enable_file": true,
+    "_comment_enable_file": "是否输出到文件",
+    "rotation_type": "size",
+    "_comment_rotation_type": "日志轮转类型: size(按大小), time(按时间)",
+    "rotation_when": "midnight",
+    "_comment_rotation_when": "时间轮转触发时机(仅time类型有效)",
+    "rotation_interval": 1,
+    "_comment_rotation_interval": "时间轮转间隔(天)",
+    "compress_backups": false,
+    "_comment_compress_backups": "是否压缩备份日志"
+  },
+  "gui": {
+    "_comment": "GUI界面配置",
+    "theme": "dark",
+    "_comment_theme": "界面主题: dark, light",
+    "font": "Microsoft YaHei",
+    "_comment_font": "界面字体",
+    "font_size": 10,
+    "_comment_font_size": "字体大小(磅)",
+    "window_width": 800,
+    "_comment_window_width": "窗口宽度(像素)",
+    "window_height": 600,
+    "_comment_window_height": "窗口高度(像素)"
+  },
+  "monitoring": {
+    "_comment": "监控系统配置",
+    "enabled": true,
+    "_comment_enabled": "是否启用监控系统",
+    "collection_interval": 5,
+    "_comment_collection_interval": "数据采集间隔(秒)",
+    "storage_dir": "monitoring_data",
+    "_comment_storage_dir": "监控数据存储目录",
+    "history_max_size": 1000,
+    "_comment_history_max_size": "历史数据最大条数",
+    "error_max_size": 500,
+    "_comment_error_max_size": "错误日志最大条数",
+    "anomaly_thresholds": {
+      "_comment": "异常检测阈值",
+      "speed": {
+        "min": 100,
+        "max": 1000000
+      },
+      "cpu_usage": {
+        "max": 90
+      },
+      "memory_usage": {
+        "max": 1024
+      }
+    },
+    "auto_cleanup": {
+      "_comment": "自动清理配置",
+      "enabled": true,
+      "_comment_enabled": "是否启用自动清理",
+      "max_age_days": 30,
+      "_comment_max_age_days": "数据最大保存天数"
+    }
+  },
+  "gpu": {
+    "_comment": "GPU高级配置",
+    "use_new_module": true,
+    "_comment_use_new_module": "是否使用新的GPU模块(false=使用旧gpu_engine.py)",
+    "auto_detect": true,
+    "_comment_auto_detect": "自动检测GPU设备",
+    "memory_usage_ratio": 0.5,
+    "_comment_memory_usage_ratio": "显存使用比例(0.0-1.0)",
+    "enable_vendor_optimizations": true,
+    "_comment_enable_vendor_optimizations": "启用厂商特定优化",
+    "driver_check": {
+      "_comment": "驱动检查配置",
+      "enabled": true,
+      "_comment_enabled": "启用驱动版本检测和健康检查",
+      "require_minimum_version": true,
+      "_comment_require_minimum_version": "要求驱动版本满足最低要求(否则报错)",
+      "warn_on_unstable": true,
+      "_comment_warn_on_unstable": "对已知不稳定驱动版本发出警告",
+      "auto_fallback_conservative": true,
+      "_comment_auto_fallback_conservative": "驱动版本过旧时自动切换到保守模式"
+    }
+  }
+}
