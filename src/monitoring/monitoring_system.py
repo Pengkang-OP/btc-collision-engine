@@ -20,6 +20,7 @@ import psutil
 
 # 配置日志
 from src.utils import get_configured_logger
+from src.monitoring.storage_config import DataStorageConfig
 logger = get_configured_logger("MonitoringSystem")
 
 
@@ -142,11 +143,15 @@ class DataCollector:
 
 
 class DataStorage:
-    """数据存储管理"""
+    """数据存储管理
     
-    def __init__(self, storage_dir: str = "monitoring_data"):
-        self.storage_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", storage_dir)
-        os.makedirs(self.storage_dir, exist_ok=True)
+    注意：已统一使用data_logs作为唯一数据源，
+    monitoring_data目录已废弃。
+    """
+    
+    def __init__(self, storage_dir: str = None):
+        # 使用统一配置，默认使用data_logs
+        self.storage_dir = DataStorageConfig.ensure_storage_dir(storage_dir)
         self.current_data_file = os.path.join(self.storage_dir, "current_data.json")
         self.history_data_file = os.path.join(self.storage_dir, "history_data.json")
         self.error_log_file = os.path.join(self.storage_dir, "error_log.json")

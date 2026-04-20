@@ -155,8 +155,13 @@ def _get_tracker_config():
             'track_slow_operations': config_mgr.get('performance_monitoring.track_slow_operations', True),
             'log_level': config_mgr.get('performance_monitoring.log_level', 'INFO')
         }
-    except Exception:
-        # 配置加载失败，使用默认值
+    except Exception as e:
+        # 配置加载失败，使用默认值并记录警告日志
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(
+            f"性能监控配置加载失败，使用默认值: {type(e).__name__}: {e}"
+        )
         return {
             'enabled': True,
             'max_records': 10000,

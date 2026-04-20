@@ -1,57 +1,17 @@
 """OpenCL内核源码
 
-包含比特币secp256k1 GPU计算所需的OpenCL内核代码。
+包含比特币secp256k1 GPU计算所需的OpenCL内核代码
 
-## 内核功能
+## 核心功能
 
-### 大数运算
-- **uint256运算**: 加法、减法、乘法、比较、复制、字节转换
-- **模运算**: 模P归约(256位/512位)、模加法、模减法、模乘法、模平方、模幂、模逆
-
-### 椭圆曲线运算
-- **ec_point_double**: 点倍乘运算 (R = 2*P)
-- **ec_point_add**: 点加法运算 (R = P + Q)
-- **ec_scalar_multiply**: 标量乘法运算 (R = k * G)
-
-### 哈希算法
-- **SHA-256**: 完整64轮压缩函数实现
-- **RIPEMD-160**: 完整80轮压缩函数实现
-- **Hash160**: RIPEMD160(SHA256(data)) 组合哈希
-
-## 主要OpenCL内核
-
-### batch_check
-批量计算私钥到Hash160并比对目标地址。
-- 输入: 私钥数组、目标Hash160数组
-- 输出: 匹配标志数组
-- 用途: GPU加速的私钥碰撞检测
-
-### verify_arithmetic
-验证GPU算术正确性。
-- 计算: 2*G (基点倍乘)
-- 用途: GPU环境自检和算术验证
-
-### debug_hash
-调试哈希计算流程。
-- 功能: 输出中间哈希值
-- 用途: 开发和调试阶段的哈希验证
+- **大数运算**: uint256加法、减法、乘法、模运算
+- **椭圆曲线**: 点倍乘、点加法、标量乘法 (secp256k1)
+- **哈希算法**: SHA-256、RIPEMD-160、Hash160
+- **主要内核**: batch_check、verify_arithmetic、debug_hash
 
 ## 已知修复
 
-### Intel Arc A770兼容性修复
-1. **global char* hang bug**: 使用uint*替代uchar*避免GPU挂起
-2. **signed long bug**: 使用ulong算术避免有符号整数错误
-
-## 常量定义
-
-### secp256k1曲线参数
-- **GX, GY**: 基点G的坐标
-- **SECP256K1_P**: 素数P (2^256 - 2^32 - 977)
-- **SECP256K1_N**: 曲线阶N
-- **ZERO**: 零常量
-
-### SHA-256参数
-- **SHA256_K[64]**: 64个轮常量
+- Intel Arc A770兼容性: global char* hang bug、signed long bug
 
 ## 使用示例
 
@@ -59,20 +19,15 @@
 from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 import pyopencl as cl
 
-# 创建OpenCL上下文
-context = cl.create_some_context()
-queue = cl.CommandQueue(context)
-
-# 编译内核程序
 program = cl.Program(context, OPENCL_KERNEL_SOURCE).build()
-
-# 创建内核
 batch_check_kernel = program.batch_check
-verify_kernel = program.verify_arithmetic
-
-# 执行内核 (示例)
-# batch_check_kernel(queue, global_size, local_size, args...)
 ```
+
+## 详细文档
+
+完整的技术规格、API文档和使用指南请参阅:
+- [内核迁移完整性审查报告](../kernel-migration-completeness-review.md)
+- [GPU模块迁移报告](../gpu-module-migration-report.md)
 
 ## 技术规格
 
@@ -81,20 +36,6 @@ verify_kernel = program.verify_arithmetic
 - **内核函数**: 3个 (__kernel)
 - **辅助函数**: 26个
 - **常量定义**: 20个 (含宏定义)
-- **语言**: OpenCL C
-- **目标平台**: GPU (NVIDIA/AMD/Intel)
-
-## 依赖关系
-
-- **运行时**: pyopencl
-- **硬件**: OpenCL 1.2+兼容GPU
-- **驱动**: 最新GPU驱动 (参见DriverManager)
-
-## 参考资料
-
-- [secp256k1规范](https://en.bitcoin.it/wiki/Secp256k1)
-- [SHA-256规范](https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf)
-- [RIPEMD-160规范](https://homes.esat.kuleuven.be/~bosselae/ripemd160.html)
 """
 
 # OpenCL内核源码
