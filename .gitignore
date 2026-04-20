@@ -30,9 +30,8 @@ env/
 # 日志文件
 logs/*.log
 logs/*.log.*
-data_logs/report_daily_*.json
-monitoring_data/report_*.json
-monitoring_data/history_data.json
+data_logs/  # 运行时数据目录（完整忽略）
+monitoring_data/  # 监控数据目录（完整忽略）
 test_results.log
 
 # 临时文件
