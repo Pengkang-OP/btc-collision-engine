@@ -220,40 +220,35 @@ class TestGPUCollisionEngine:
                     'platform_obj': Mock()
                 }
                 mock_gpu_device.detect_devices.return_value = [mock_device_info]
+                mock_gpu_device.is_available.return_value = True
                 
                 # 模拟 GPU 设备初始化
                 mock_instance = Mock()
                 mock_instance.context = Mock()
                 mock_instance.queue = Mock()
-                mock_instance.get_device_info.return_value = {
+                mock_instance.device_info = {
                     'name': 'Test GPU',
                     'vendor': 'Test Vendor',
                     'platform': 'Test Platform'
                 }
+                mock_instance.get_device_info.return_value = mock_instance.device_info
                 mock_gpu_device.return_value = mock_instance
                 
                 # 模拟 GPUKernel 类
                 with patch('src.collision.gpu_collision_engine.GPUKernel') as mock_gpu_kernel:
                     mock_kernel_instance = Mock()
                     mock_kernel_instance.run_batch.return_value = []
+                    mock_kernel_instance.set_targets = Mock()
+                    mock_kernel_instance.cleanup = Mock()
                     mock_kernel_instance.max_batch_size = 65536
                     mock_gpu_kernel.return_value = mock_kernel_instance
                     
-                    # 直接模拟 GPUKernel 类
-                    with patch('src.collision.gpu_collision_engine.GPUKernel') as mock_gpu_kernel:
-                        mock_kernel_instance = Mock()
-                        mock_kernel_instance.run_batch.return_value = []
-                        mock_kernel_instance.set_targets = Mock()
-                        mock_kernel_instance.cleanup = Mock()
-                        mock_kernel_instance.max_batch_size = 65536
-                        mock_gpu_kernel.return_value = mock_kernel_instance
-                        
-                        # 初始化 GPU 引擎
-                        engine = GPUCollisionEngine(self.test_targets)
-                        
-                        # 测试获取设备信息
-                        device_info = engine.get_device_info()
-                        assert isinstance(device_info, dict)
-                        assert 'name' in device_info
-                        assert 'vendor' in device_info
-                        assert 'platform' in device_info
+                    # 初始化 GPU 引擎
+                    engine = GPUCollisionEngine(self.test_targets)
+                    
+                    # 测试获取设备信息
+                    device_info = engine.get_device_info()
+                    assert isinstance(device_info, dict)
+                    assert 'name' in device_info
+                    assert 'vendor' in device_info
+                    assert 'platform' in device_info
