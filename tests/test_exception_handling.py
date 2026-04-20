@@ -13,7 +13,7 @@ import os
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.collision.gpu_collision_engine import GPUDevice
+from src.collision.gpu_collision_engine import GPUDeviceHelper
 from src.collision.collision_stats import CollisionStats
 from src.collision.key_collision_engine import KeyCollisionEngine
 
@@ -39,7 +39,7 @@ class TestGPUExceptionHandling:
         
         for error in resource_errors:
             stats_before = stats.gpu_errors
-            GPUDevice.handle_gpu_batch_error("测试模式", error, stats)
+            GPUDeviceHelper.handle_gpu_batch_error("测试模式", error, stats)
             assert stats.gpu_errors == stats_before + 1, f"应该记录GPU错误: {error}"
             assert stats.resource_errors > 0, f"应该识别为资源错误: {error}"
     
@@ -54,7 +54,7 @@ class TestGPUExceptionHandling:
         
         for error in runtime_errors:
             stats_before = stats.gpu_errors
-            GPUDevice.handle_gpu_batch_error("测试模式", error, stats)
+            GPUDeviceHelper.handle_gpu_batch_error("测试模式", error, stats)
             assert stats.gpu_errors == stats_before + 1
             # 这些不是资源错误
             assert stats.resource_errors == 0
@@ -70,7 +70,7 @@ class TestGPUExceptionHandling:
         
         for error in data_errors:
             stats_before = stats.gpu_errors
-            GPUDevice.handle_gpu_batch_error("测试模式", error, stats)
+            GPUDeviceHelper.handle_gpu_batch_error("测试模式", error, stats)
             assert stats.gpu_errors == stats_before + 1
             assert stats.wif_encode_errors == stats_before + 1  # 应该计数WIF错误
     
@@ -79,15 +79,15 @@ class TestGPUExceptionHandling:
         stats = CollisionStats()
         
         unknown_error = KeyError("unexpected error")
-        GPUDevice.handle_gpu_batch_error("测试模式", unknown_error, stats)
+        GPUDeviceHelper.handle_gpu_batch_error("测试模式", unknown_error, stats)
         assert stats.gpu_errors == 1
     
     def test_handle_gpu_batch_error_without_stats(self):
         """测试不传入stats参数（不应该崩溃）"""
         # 不应该抛出异常
-        GPUDevice.handle_gpu_batch_error("测试模式", RuntimeError("test error"))
-        GPUDevice.handle_gpu_batch_error("测试模式", TypeError("test error"))
-        GPUDevice.handle_gpu_batch_error("测试模式", KeyError("test error"))
+        GPUDeviceHelper.handle_gpu_batch_error("测试模式", RuntimeError("test error"))
+        GPUDeviceHelper.handle_gpu_batch_error("测试模式", TypeError("test error"))
+        GPUDeviceHelper.handle_gpu_batch_error("测试模式", KeyError("test error"))
 
 
 class TestCollisionStatsErrorTracking:
