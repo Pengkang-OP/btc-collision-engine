@@ -155,6 +155,27 @@ class OptimizedP2PKHAddressGenerator:
         public_key = self.private_key_to_public_key(private_key, compressed)
         return self.public_key_to_address(public_key)
     
+    def generate_address(self, private_key: bytes, compressed: bool = True) -> Tuple[str, bytes, bytes]:
+        """
+        从私钥生成地址(返回三元组)
+        
+        这个方法是为了兼容旧的API,返回(address, compressed_public_key, private_key)
+        
+        Args:
+            private_key: 32字节私钥
+            compressed: 是否使用压缩格式
+        
+        Returns:
+            Tuple[str, bytes, bytes]: (地址, 压缩公钥, 私钥)
+        """
+        # 生成公钥
+        public_key = self.private_key_to_public_key(private_key, compressed)
+        
+        # 生成地址
+        address = self.public_key_to_address(public_key)
+        
+        return address, public_key, private_key
+    
     def batch_generate(self, private_keys: List[bytes], compressed: bool = True) -> List[str]:
         """
         批量生成地址(高性能)
