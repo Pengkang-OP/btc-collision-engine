@@ -1,60 +1,5 @@
 [
   {
-    "timestamp": 1776712959.1788027,
-    "datetime": "2026-04-21T03:22:39.178803",
-    "speed": 2262.6355041875145,
-    "total_checked": 1000,
-    "matches_found": 0,
-    "cpu_usage": 108.7,
-    "memory_usage": 237.23828125,
-    "thread_count": 5,
-    "avg_speed": 2262.6355041875145
-  },
-  {
-    "timestamp": 1776712959.698432,
-    "datetime": "2026-04-21T03:22:39.698432",
-    "speed": 2862.3652861338896,
-    "total_checked": 1000,
-    "matches_found": 0,
-    "cpu_usage": 77.8,
-    "memory_usage": 243.98046875,
-    "thread_count": 5,
-    "avg_speed": 2862.3652861338896
-  },
-  {
-    "timestamp": 1776712960.7327228,
-    "datetime": "2026-04-21T03:22:40.732723",
-    "speed": 2723.3123050512027,
-    "total_checked": 1000,
-    "matches_found": 0,
-    "cpu_usage": 93.2,
-    "memory_usage": 237.0546875,
-    "thread_count": 5,
-    "avg_speed": 2723.3123050512027
-  },
-  {
-    "timestamp": 1776712962.4651139,
-    "datetime": "2026-04-21T03:22:42.465114",
-    "speed": 2916.0341750564357,
-    "total_checked": 1000,
-    "matches_found": 0,
-    "cpu_usage": 93.4,
-    "memory_usage": 245.26953125,
-    "thread_count": 5,
-    "avg_speed": 2916.0341750564357
-  },
-  {
-    "timestamp": 1776712964.3658476,
-    "datetime": "2026-04-21T03:22:44.365848",
-    "speed": 2262.6355041875145,
-    "total_checked": 1000,
-    "matches_found": 0,
-    "cpu_usage": 93.6,
-    "memory_usage": 237.265625,
-    "thread_count": 5,
-    "avg_speed": 2262.6355041875145
-  },
-  {
     "timestamp": 1776712964.8932767,
     "datetime": "2026-04-21T03:22:44.893277",
     "speed": 2862.3652861338896,
@@ -10996,6 +10941,61 @@
     "matches_found": 0,
     "cpu_usage": 93.4,
     "memory_usage": 277.125,
+    "thread_count": 28,
+    "avg_speed": 0.0
+  },
+  {
+    "timestamp": 1776789170.6389382,
+    "datetime": "2026-04-22T00:32:50.638938",
+    "speed": 0.0,
+    "total_checked": 0,
+    "matches_found": 0,
+    "cpu_usage": 108.7,
+    "memory_usage": 277.13671875,
+    "thread_count": 28,
+    "avg_speed": 0.0
+  },
+  {
+    "timestamp": 1776789174.5164485,
+    "datetime": "2026-04-22T00:32:54.516448",
+    "speed": 0.0,
+    "total_checked": 0,
+    "matches_found": 0,
+    "cpu_usage": 93.7,
+    "memory_usage": 279.17578125,
+    "thread_count": 28,
+    "avg_speed": 0.0
+  },
+  {
+    "timestamp": 1776789175.704492,
+    "datetime": "2026-04-22T00:32:55.704492",
+    "speed": 0.0,
+    "total_checked": 0,
+    "matches_found": 0,
+    "cpu_usage": 155.3,
+    "memory_usage": 279.18359375,
+    "thread_count": 28,
+    "avg_speed": 0.0
+  },
+  {
+    "timestamp": 1776789179.6835363,
+    "datetime": "2026-04-22T00:32:59.683536",
+    "speed": 0.0,
+    "total_checked": 0,
+    "matches_found": 0,
+    "cpu_usage": 124.5,
+    "memory_usage": 279.21875,
+    "thread_count": 28,
+    "avg_speed": 0.0
+  },
+  {
+    "timestamp": 1776789180.8244147,
+    "datetime": "2026-04-22T00:33:00.824415",
+    "speed": 0.0,
+    "total_checked": 0,
+    "matches_found": 0,
+    "cpu_usage": 108.9,
+    "memory_usage": 279.3828125,
     "thread_count": 28,
     "avg_speed": 0.0
   }

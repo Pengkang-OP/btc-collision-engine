@@ -66,7 +66,7 @@ class SIMDHashOptimizer:
         self.RIPEMD160 = None
         
         try:
-            from Crypto.Hash import SHA256, RIPEMD160
+            from Crypto.Hash import SHA256, RIPEMD160  # nosec B413 - pycryptodome是pyCrypto的安全分支
             self.SHA256 = SHA256
             self.RIPEMD160 = RIPEMD160
             self.use_pycryptodome = True
