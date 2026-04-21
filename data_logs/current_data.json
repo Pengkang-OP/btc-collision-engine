@@ -1,0 +1,29 @@
+{
+  "saved_at": "2026-04-21T14:54:43.794475",
+  "uptime": 0.16601014137268066,
+  "engine": {
+    "timestamp": 1776754483.7716763,
+    "mode": "random",
+    "target_count": 1,
+    "is_running": true,
+    "current_position": 0
+  },
+  "system": {
+    "timestamp": 1776754483.7716866,
+    "os": "nt",
+    "python_version": "3.14.3",
+    "pid": 21988,
+    "uptime": 0.14321541786193848
+  },
+  "performance": {
+    "timestamp": 1776754483.7709522,
+    "datetime": "2026-04-21T14:54:43.770952",
+    "speed": 0.0,
+    "total_checked": 0,
+    "matches_found": 0,
+    "cpu_usage": 108.8,
+    "memory_usage": 81.4296875,
+    "thread_count": 10,
+    "avg_speed": 0.0
+  }
+}
