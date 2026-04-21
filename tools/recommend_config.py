@@ -47,27 +47,37 @@ def analyze_project(docs_dir: str) -> Dict:
     # 检查是否有目录
     has_toc_count = 0
     for f in md_files:
-        content = f.read_text(encoding='utf-8', errors='ignore')
-        if '## 目录' in content or '## TOC' in content or '## 目录' in content:
-            has_toc_count += 1
+        try:
+            content = f.read_text(encoding='utf-8', errors='ignore')
+            if '## 目录' in content or '## TOC' in content or '## 目录' in content:
+                has_toc_count += 1
+        except (OSError, PermissionError) as e:
+            print(f"⚠️  无法读取文件 {f.name}: {e}")
+            continue
     
     toc_ratio = has_toc_count / doc_count if doc_count > 0 else 0
     
     # 检查版本信息
     has_version_count = 0
     for f in md_files:
-        content = f.read_text(encoding='utf-8', errors='ignore')
-        if '版本' in content or 'version' in content.lower():
-            has_version_count += 1
+        try:
+            content = f.read_text(encoding='utf-8', errors='ignore')
+            if '版本' in content or 'version' in content.lower():
+                has_version_count += 1
+        except (OSError, PermissionError):
+            continue
     
     version_ratio = has_version_count / doc_count if doc_count > 0 else 0
     
     # 检查代码块
     has_code_count = 0
     for f in md_files:
-        content = f.read_text(encoding='utf-8', errors='ignore')
-        if '```' in content:
-            has_code_count += 1
+        try:
+            content = f.read_text(encoding='utf-8', errors='ignore')
+            if '```' in content:
+                has_code_count += 1
+        except (OSError, PermissionError):
+            continue
     
     code_ratio = has_code_count / doc_count if doc_count > 0 else 0
     
@@ -215,10 +225,14 @@ def main():
     
     # 保存配置
     if args.save and config:
-        config_file = Path(f"tools/scoring_recommended.json")
-        with open(config_file, 'w', encoding='utf-8') as f:
-            json.dump(config, f, indent=2, ensure_ascii=False)
-        print(f"\n✅ 配置已保存到: {config_file}")
+        try:
+            config_file = Path(f"tools/scoring_recommended.json")
+            with open(config_file, 'w', encoding='utf-8') as f:
+                json.dump(config, f, indent=2, ensure_ascii=False)
+            print(f"\n✅ 配置已保存到: {config_file}")
+        except (OSError, PermissionError) as e:
+            print(f"\n❌ 无法保存配置: {e}")
+            sys.exit(1)
 
 
 if __name__ == "__main__":

@@ -66,22 +66,33 @@ def benchmark_check(docs_dir: str, iterations: int = 10) -> Dict:
         print(f"  迭代 {i:2d}: {elapsed:.2f}秒, {doc_count}个文档, 平均分{avg_score:.1f}")
     
     # 计算统计
+    if not times:
+        print("❌ 没有有效的测试数据")
+        sys.exit(1)
+    
+    avg_time = statistics.mean(times)
+    if avg_time == 0:
+        print("⚠️  测试耗时为0，无法计算吞吐量")
+        throughput = 0
+    else:
+        throughput = doc_counts[0] / avg_time if doc_counts else 0
+    
     stats = {
         'iterations': iterations,
-        'doc_count': statistics.mean(doc_counts),
+        'doc_count': statistics.mean(doc_counts) if doc_counts else 0,
         'time': {
-            'avg': statistics.mean(times),
+            'avg': avg_time,
             'min': min(times),
             'max': max(times),
             'median': statistics.median(times),
             'stdev': statistics.stdev(times) if len(times) > 1 else 0,
         },
         'score': {
-            'avg': statistics.mean(scores),
-            'min': min(scores),
-            'max': max(scores),
+            'avg': statistics.mean(scores) if scores else 0,
+            'min': min(scores) if scores else 0,
+            'max': max(scores) if scores else 0,
         },
-        'throughput': doc_counts[0] / statistics.mean(times),  # 文档/秒
+        'throughput': throughput,
     }
     
     return stats
