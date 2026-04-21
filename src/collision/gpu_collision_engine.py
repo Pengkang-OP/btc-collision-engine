@@ -1180,43 +1180,38 @@ class GPUCollisionEngine(BaseCollisionEngine):
             return self._random_search_sync()
     
     def _random_search_sync(self):
-        """同步执行版本(原有逻辑)"""
+        """同步执行版本 - 重构优化（P0-1修复）
+        
+        将原有的300+行巨型函数拆分为多个职责单一的子函数：
+        1. _generate_private_keys_batch - 私钥批量生成
+        2. _process_gpu_matches - GPU匹配结果处理
+        3. _update_performance_metrics - 性能指标更新
+        4. _check_and_report_progress - 进度检查与报告
+        5. _wait_for_async_key_generation - 异步私钥生成等待
+        """
         import threading
         
-        logger.info("GPU _random_search 启动（高性能模式）")
-        target_hash160s = self._target_hash160s
-        num_targets = len(self._target_list)
+        logger.info("GPU _random_search 启动（高性能优化模式）")
+        
+        # 初始化状态
         batch_count = 0
         batch_num = 0
-        
-        logger.info(f"目标数量: {num_targets}, batch_size: {self.batch_size}")
+        target_hash160s = self._target_hash160s
+        num_targets = len(self._target_list)
         
         # 优化1: 增加初始批次到100万（提高GPU利用率）
-        INITIAL_BATCH_SIZE = 1_000_000  # 100万（原10万）
+        INITIAL_BATCH_SIZE = 1_000_000
         current_batch_size = min(INITIAL_BATCH_SIZE, self.batch_size)
         
-        logger.info(f"初始批次大小: {current_batch_size:,}")
+        logger.info(f"目标数量: {num_targets}, 初始批次大小: {current_batch_size:,}")
         
         # 预生成第一批私钥
-        logger.debug(f"生成初始批次 {current_batch_size:,} 个私钥...")
-        next_private_keys = b''.join(secrets.token_bytes(32) for _ in range(current_batch_size))
+        next_private_keys = self._generate_private_keys_batch(current_batch_size)
         
-        # 优化2: 异步私钥生成函数
-        def generate_next_batch_async(batch_size: int) -> threading.Thread:
-            """在后台线程生成下一批私钥"""
-            result = [None]  # 使用列表存储结果（闭包）
-            
-            def _generate():
-                result[0] = b''.join(secrets.token_bytes(32) for _ in range(batch_size))
-            
-            thread = threading.Thread(target=_generate, daemon=True)
-            thread.start()
-            return thread, result
+        # 启动第一个异步生成线程
+        gen_thread, gen_result = self._start_async_key_generation(self.batch_size)
         
-        # 启动第一个异步生成线程（生成完整batch_size）
-        gen_thread, gen_result = generate_next_batch_async(self.batch_size)
-        logger.debug(f"启动异步私钥生成线程（目标: {self.batch_size:,} 个）")
-        
+        # 主循环
         while not self._stop_event.is_set():
             # 使用预生成的私钥
             private_keys = next_private_keys
@@ -1224,124 +1219,40 @@ class GPUCollisionEngine(BaseCollisionEngine):
             
             try:
                 batch_num += 1
-                if batch_num <= 3 or batch_num % 100 == 0:
-                    logger.debug(f"GPU batch {batch_num}: 运行 run_batch (size={actual_batch_size})...")
                 
-                # v2.2.1: 记录GPU执行时间
-                batch_start_time = time.time()
+                # 执行GPU batch计算
+                matches, execution_time_ms = self._execute_gpu_batch(
+                    private_keys, actual_batch_size, batch_num
+                )
                 
-                # 目标已在初始化时设置，无需重复传递
-                matches = self._gpu_kernel.run_batch(private_keys, actual_batch_size)
+                # 等待异步私钥生成完成
+                next_private_keys = self._wait_for_async_key_generation(
+                    gen_thread, gen_result, batch_num
+                )
                 
-                # 计算实际执行时间
-                execution_time_ms = (time.time() - batch_start_time) * 1000
+                # 启动下一批异步生成
+                gen_thread, gen_result = self._start_async_key_generation(self.batch_size)
                 
-                # GPU计算完成后，等待异步生成完成并获取下一批
-                if gen_thread.is_alive():
-                    # 使用超时保护（生成838万私钥最多需要30秒）
-                    gen_thread.join(timeout=30.0)
-                    
-                    if gen_thread.is_alive():
-                        logger.error(f"GPU batch {batch_num}: 异步私钥生成超时（>30秒），强制继续")
-                        # 重新同步生成作为fallback
-                        next_private_keys = b''.join(secrets.token_bytes(32) for _ in range(self.batch_size))
-                    else:
-                        # 检查生成结果是否有效
-                        if gen_result[0] is None:
-                            logger.error(f"GPU batch {batch_num}: 异步私钥生成失败，结果为None")
-                            # 重新同步生成
-                            next_private_keys = b''.join(secrets.token_bytes(32) for _ in range(self.batch_size))
-                        else:
-                            next_private_keys = gen_result[0]
-                else:
-                    # 线程已结束，检查结果
-                    if gen_result[0] is None:
-                        logger.error(f"GPU batch {batch_num}: 异步私钥生成失败，结果为None")
-                        next_private_keys = b''.join(secrets.token_bytes(32) for _ in range(self.batch_size))
-                    else:
-                        next_private_keys = gen_result[0]
+                # 处理GPU匹配结果
+                self._process_gpu_matches(private_keys, matches)
                 
-                # 立即启动下一批的异步生成
-                gen_thread, gen_result = generate_next_batch_async(self.batch_size)
-                
-                if batch_num <= 3 or batch_num % 100 == 0:
-                    logger.debug(f"GPU batch {batch_num}: 发现 {len(matches)} 个匹配")
-                
-                # 处理匹配结果
-                for match in matches:
-                    key_idx = match["key_index"]
-                    private_key = private_keys[key_idx*32:(key_idx+1)*32]
-                    
-                    if not self.dedup_filter.check_and_add(private_key):
-                        continue
-                    
-                    target_idx = match["target_index"]
-                    address = self._target_list[target_idx]
-                    
-                    from ..core.wif import WIF
-                    wif = WIF.encode(private_key, compressed=True)
-                    
-                    self.stats.add_match(private_key, address)
-                    if self.on_match:
-                        self.on_match(private_key, address, wif)
-                
-                # 只有 run_batch 成功后才递增计数
+                # 更新统计数据
                 batch_count += actual_batch_size
                 self.stats.update(batch_count)
                 
-                # v2.2.1: 记录GPU性能指标
-                if self.gpu_performance_monitor:
-                    try:
-                        # v2.2.1: 使用精确的显存估算
-                        memory_mb = self._calculate_gpu_memory_usage(actual_batch_size)
-                        self.gpu_performance_monitor.record_kernel_metrics(
-                            batch_size=actual_batch_size,
-                            execution_time_ms=execution_time_ms,  # v2.2.1: 使用真实执行时间
-                            memory_allocated_mb=memory_mb
-                        )
-                    except Exception as e:
-                        logger.debug(f"记录GPU性能指标失败: {e}")
+                # 记录性能指标
+                self._update_performance_metrics(actual_batch_size, execution_time_ms)
                 
-                # 进度回调
-                current_time = time.time()
-                if current_time - self._last_progress_time >= self._progress_interval_sec:
-                    logger.debug(f"GPU 进度回调: batch_count={batch_count}")
-                    if self.on_progress:
-                        self.on_progress(self.stats)
-                    self._save_checkpoint(batch_count)
-                    self._last_progress_time = current_time
-                    
-                    # 自适应性能优化：每10秒调整一次
-                    if hasattr(self, '_gpu_kernel') and self._gpu_kernel:
-                        try:
-                            # 计算错误率
-                            error_rate = self.stats.gpu_error_count / max(batch_count, 1)
-                            
-                            # 分析并调整batch_size
-                            new_batch_size, adjustments = self._gpu_kernel.gpu_optimizer.analyze_and_adjust(
-                                current_batch_size=current_batch_size,
-                                error_rate=error_rate
-                            )
-                            
-                            # 如果调整了batch_size，更新
-                            if new_batch_size != current_batch_size and adjustments:
-                                logger.info(
-                                    f"自适应优化: batch_size {current_batch_size} -> {new_batch_size} "
-                                    f"({list(adjustments.keys())[0]})"
-                                )
-                                current_batch_size = new_batch_size
-                                self.batch_size = new_batch_size
-                                
-                        except Exception as adjust_error:
-                            logger.debug(f"自适应调整失败: {adjust_error}")
+                # 检查并报告进度
+                self._check_and_report_progress(batch_count, current_batch_size)
                     
             except Exception as e:
                 # 使用统一异常处理器处理GPU异常
                 ExceptionHandler.handle_gpu_error("随机碰撞", e, self.stats)
                 
-                # 异常恢复：重新启动异步生成，避免使用旧的/可能损坏的结果
+                # 异常恢复：重新启动异步生成
                 logger.warning(f"GPU batch {batch_num}: 异常恢复，重新启动异步私钥生成")
-                gen_thread, gen_result = generate_next_batch_async(self.batch_size)
+                gen_thread, gen_result = self._start_async_key_generation(self.batch_size)
                 
                 continue
         
@@ -1352,13 +1263,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             self.on_complete(self.stats)
     
     def _random_search_async(self):
-        """异步执行版本(双缓冲优化)
-        
-        使用AsyncGPUExecutor实现:
-        1. 双OpenCL队列(计算+传输)
-        2. 双缓冲机制(消除等待)
-        3. 异步私钥生成
-        """
+        """异步执行版本(双缓冲优化)"""
         import threading
         
         logger.info("GPU _random_search_async 启动（异步双缓冲模式）")
@@ -1461,6 +1366,196 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 time.sleep(0.1)
         
         logger.info(f"GPU _random_search_async 结束: 共处理 {batch_count} 个私钥")
+    
+    # ========== P0-1重构：辅助方法 ==========
+    
+    def _generate_private_keys_batch(self, count: int) -> bytes:
+        """生成一批随机私钥
+        
+        Args:
+            count: 私钥数量
+            
+        Returns:
+            拼接的私钥字节串（每个32字节）
+        """
+        return b''.join(secrets.token_bytes(32) for _ in range(count))
+    
+    def _start_async_key_generation(self, batch_size: int) -> tuple:
+        """启动异步私钥生成线程
+        
+        Args:
+            batch_size: 要生成的私钥数量
+            
+        Returns:
+            (thread, result_list) 元组
+        """
+        result = [None]
+        
+        def _generate():
+            result[0] = self._generate_private_keys_batch(batch_size)
+        
+        thread = threading.Thread(target=_generate, daemon=True)
+        thread.start()
+        return thread, result
+    
+    def _wait_for_async_key_generation(
+        self,
+        gen_thread: threading.Thread,
+        gen_result: list,
+        batch_num: int
+    ) -> bytes:
+        """等待异步私钥生成完成并返回结果
+        
+        Args:
+            gen_thread: 生成线程
+            gen_result: 结果列表
+            batch_num: 当前批次号
+            
+        Returns:
+            生成的私钥字节串
+        """
+        if gen_thread.is_alive():
+            # 使用超时保护
+            gen_thread.join(timeout=30.0)
+            
+            if gen_thread.is_alive():
+                logger.error(
+                    f"GPU batch {batch_num}: 异步私钥生成超时（>30秒），强制继续"
+                )
+                return self._generate_private_keys_batch(self.batch_size)
+        
+        # 检查生成结果
+        if gen_result[0] is None:
+            logger.error(
+                f"GPU batch {batch_num}: 异步私钥生成失败，结果为None"
+            )
+            return self._generate_private_keys_batch(self.batch_size)
+        
+        return gen_result[0]
+    
+    def _execute_gpu_batch(
+        self,
+        private_keys: bytes,
+        batch_size: int,
+        batch_num: int
+    ) -> tuple:
+        """执行GPU batch计算
+        
+        Args:
+            private_keys: 私钥字节串
+            batch_size: 批次大小
+            batch_num: 批次号
+            
+        Returns:
+            (matches, execution_time_ms) 元组
+        """
+        if batch_num <= 3 or batch_num % 100 == 0:
+            logger.debug(
+                f"GPU batch {batch_num}: 运行 run_batch (size={batch_size})..."
+            )
+        
+        batch_start_time = time.time()
+        matches = self._gpu_kernel.run_batch(private_keys, batch_size)
+        execution_time_ms = (time.time() - batch_start_time) * 1000
+        
+        if batch_num <= 3 or batch_num % 100 == 0:
+            logger.debug(f"GPU batch {batch_num}: 发现 {len(matches)} 个匹配")
+        
+        return matches, execution_time_ms
+    
+    def _process_gpu_matches(self, private_keys: bytes, matches: list):
+        """处理GPU匹配结果
+        
+        Args:
+            private_keys: 私钥字节串
+            matches: 匹配结果列表
+        """
+        for match in matches:
+            key_idx = match["key_index"]
+            private_key = private_keys[key_idx*32:(key_idx+1)*32]
+            
+            if not self.dedup_filter.check_and_add(private_key):
+                continue
+            
+            target_idx = match["target_index"]
+            address = self._target_list[target_idx]
+            
+            from ..core.wif import WIF
+            wif = WIF.encode(private_key, compressed=True)
+            
+            self.stats.add_match(private_key, address)
+            if self.on_match:
+                self.on_match(private_key, address, wif)
+    
+    def _update_performance_metrics(
+        self,
+        batch_size: int,
+        execution_time_ms: float
+    ):
+        """记录GPU性能指标
+        
+        Args:
+            batch_size: 批次大小
+            execution_time_ms: 执行时间（毫秒）
+        """
+        if not self.gpu_performance_monitor:
+            return
+        
+        try:
+            memory_mb = self._calculate_gpu_memory_usage(batch_size)
+            self.gpu_performance_monitor.record_kernel_metrics(
+                batch_size=batch_size,
+                execution_time_ms=execution_time_ms,
+                memory_allocated_mb=memory_mb
+            )
+        except Exception as e:
+            logger.debug(f"记录GPU性能指标失败: {e}")
+    
+    def _check_and_report_progress(
+        self,
+        batch_count: int,
+        current_batch_size: int
+    ):
+        """检查并报告进度
+        
+        Args:
+            batch_count: 已处理的总批次数量
+            current_batch_size: 当前批次大小
+        """
+        current_time = time.time()
+        if current_time - self._last_progress_time < self._progress_interval_sec:
+            return
+        
+        # 触发进度回调
+        logger.debug(f"GPU 进度回调: batch_count={batch_count}")
+        if self.on_progress:
+            self.on_progress(self.stats)
+        self._save_checkpoint(batch_count)
+        self._last_progress_time = current_time
+        
+        # 自适应性能优化
+        if not hasattr(self, '_gpu_kernel') or not self._gpu_kernel:
+            return
+        
+        try:
+            error_rate = self.stats.gpu_error_count / max(batch_count, 1)
+            
+            new_batch_size, adjustments = self._gpu_kernel.gpu_optimizer.analyze_and_adjust(
+                current_batch_size=current_batch_size,
+                error_rate=error_rate
+            )
+            
+            if new_batch_size != current_batch_size and adjustments:
+                reason = list(adjustments.keys())[0]
+                logger.info(
+                    f"自适应优化: batch_size {current_batch_size} -> {new_batch_size} "
+                    f"({reason})"
+                )
+                current_batch_size = new_batch_size
+                self.batch_size = new_batch_size
+                
+        except Exception as adjust_error:
+            logger.debug(f"自适应调整失败: {adjust_error}")
     
     def _range_scan(self, start: int, end: int):
         """范围扫描模式 - 流水线优化版本"""
