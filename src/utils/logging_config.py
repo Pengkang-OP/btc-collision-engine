@@ -199,6 +199,9 @@ def init_logging(config: Optional[Dict[str, Any]] = None):
         config: 自定义配置字典
     """
     logging_config.init(config)
+    
+    # 启用日志安全过滤器（P0-2修复）
+    _setup_security_filter()
 
 
 def get_configured_logger(name: str, thread_safe: bool = False) -> logging.Logger:

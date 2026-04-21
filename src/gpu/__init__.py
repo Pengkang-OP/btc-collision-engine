@@ -30,6 +30,7 @@ from .worker import SingleGPUWorker
 from .multi_gpu_engine import MultiGPUCollisionEngine
 from .auto_config import GPUAutoConfigurator, get_gpu_configurator, reset_gpu_configurator
 from .lock_monitor import LockMonitor, MonitoredLock, get_lock_monitor, create_monitored_lock
+from .data_monitor import DataMonitor, DataQualityIssue
 
 __version__ = "2.0.0"
 
@@ -59,5 +60,8 @@ __all__ = [
     'LockMonitor',
     'MonitoredLock',
     'get_lock_monitor',
-    'create_monitored_lock'
+    'create_monitored_lock',
+    # 数据监控
+    'DataMonitor',
+    'DataQualityIssue'
 ]
