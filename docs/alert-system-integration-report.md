@@ -20,9 +20,11 @@
 **方法**: `_on_performance_degradation()`
 
 **触发条件**:
+
 - 当前吞吐量 < 峰值吞吐量 × 75% (退化>25%)
 
 **集成代码**:
+
 ```python
 # 集成告警系统
 try:
@@ -47,6 +49,7 @@ except Exception as e:
 ```
 
 **告警规则**:
+
 - 退化率>20% → WARNING (性能退化警告)
 - 退化率>50% → CRITICAL (吞吐量严重下降)
 
@@ -58,9 +61,11 @@ except Exception as e:
 **方法**: `_check_error_rate()`
 
 **触发条件**:
+
 - 错误率 > 5%
 
 **集成代码**:
+
 ```python
 # 集成告警系统
 try:
@@ -85,6 +90,7 @@ except Exception as e:
 ```
 
 **告警规则**:
+
 - 错误率>5% → CRITICAL (错误率过高)
 
 ---
@@ -105,6 +111,7 @@ except Exception as e:
 ```
 
 **优势**:
+
 - ✅ 告警系统失败不影响GPU引擎运行
 - ✅ 即使告警模块缺失,监控器仍正常工作
 - ✅ 异常捕获避免级联故障
@@ -225,6 +232,7 @@ def _on_performance_degradation(self, metrics):
 ```
 
 **优势**:
+
 - ✅ 避免模块循环依赖
 - ✅ 延迟加载,提高启动速度
 - ✅ 支持告警模块可选

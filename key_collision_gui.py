@@ -30,6 +30,13 @@ from src.collision import (
 from src.config.gui_config import WINDOW_CONFIG, COMPONENT_CONFIG, FONT_CONFIG, COLOR_CONFIG, PADDING_CONFIG
 from src.utils.ui_helpers import format_timestamp, format_mode_name, format_number_with_commas
 
+# 导入告警面板(可选)
+try:
+    from src.gui.components.alert_panel import AlertPanel
+    ALERT_PANEL_AVAILABLE = True
+except ImportError:
+    ALERT_PANEL_AVAILABLE = False
+
 
 # =============================================================================
 # 配色方案 - 深色主题
@@ -1068,9 +1075,37 @@ class CollisionGUI:
         self.stats_display = StatsDisplay(main_container)
         self.stats_display.pack(fill=tk.X, pady=5)
         
-        # 日志/结果区
-        self.log_frame = ResultLogFrame(main_container)
-        self.log_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+        # 告警面板(如果可用)
+        if ALERT_PANEL_AVAILABLE:
+            # 使用PanedWindow实现可折叠面板
+            alert_paned = tk.PanedWindow(
+                main_container,
+                orient=tk.VERTICAL,
+                bg=Colors.BG,
+                sashrelief=tk.RAISED,
+                sashwidth=3
+            )
+            alert_paned.pack(fill=tk.BOTH, expand=True, pady=5)
+            
+            # 日志/结果区
+            log_container = tk.Frame(alert_paned, bg=Colors.BG)
+            self.log_frame = ResultLogFrame(log_container)
+            self.log_frame.pack(fill=tk.BOTH, expand=True)
+            alert_paned.add(log_container, minsize=200)
+            
+            # 告警面板
+            alert_container = tk.Frame(alert_paned, bg="#1E1E1E")
+            self.alert_panel = AlertPanel(alert_container)
+            self.alert_panel.pack(fill=tk.BOTH, expand=True)
+            alert_paned.add(alert_container, minsize=150)
+            
+            # 默认分配比例: 日志70%, 告警30%
+            alert_paned.sash_place(0, 0, int(WINDOW_CONFIG['default_height'] * 0.7))
+        else:
+            # 日志/结果区
+            self.log_frame = ResultLogFrame(main_container)
+            self.log_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+            self.alert_panel = None
         
         # 绑定控制按钮
         self.control_panel.btn_start.config(command=self._on_start)
