@@ -30,52 +30,59 @@ class IntelGPUVendor(GPUVendorBase):
         4. Arc驱动特定优化
         5. 根据驱动版本应用特定优化
         """
-        logger.info(f"应用Intel优化策略: {device.device_info.get('name', 'Unknown')}")
+        device_name = device.device_info.get('name', 'Unknown')
+        logger.info(f"应用Intel优化策略: {device_name}")
         
         optimizations = profile.get('optimizations', [])
         known_issues = profile.get('known_issues', [])
         
         # 1. uint32 workaround - 关键优化
         if 'uint32_workaround' in optimizations:
-            logger.info("启用uint32 workaround(避免Intel Arc global char* hang bug)")
+            logger.info("✅ 启用uint32 workaround(避免Intel Arc global char* hang bug)")
+            # 标记设备需要特殊处理
+            device.requires_uint32_workaround = True
             # 在GPUKernel中使用uint32*替代uchar*
             # 这是Intel Arc驱动的关键bug workaround
         
         # 2. 超时保护
         if 'timeout_protection' in optimizations:
-            logger.info("启用超时保护机制")
-            # 在GPUKernel.run_batch中添加30秒超时
+            timeout_seconds = profile.get('timeout_seconds', 30)
+            logger.info(f"✅ 启用超时保护机制: {timeout_seconds}秒")
+            # 在GPUKernel.run_batch中添加超时
             # 防止内核hang住导致GUI永久阻塞
+            device.timeout_seconds = timeout_seconds
         
-        # 3. 异步传输
+        # 3. 异步传输 - Intel建议禁用
         if 'async_transfer' in optimizations:
-            # 检查驱动是否支持
-            if device.driver_optimization_flags.get('enable_async_compute', True):
-                logger.debug("启用异步数据传输优化")
-            else:
-                logger.warning("Intel驱动版本较旧,禁用异步传输")
+            logger.warning("⚠️ Intel GPU: 禁用异步传输以确保稳定性")
+            device.enable_async = False
         
         # 4. 专业驱动优化
         if 'pro_driver_optimization' in optimizations:
             logger.debug("启用Intel Pro驱动优化")
             # Arc Pro系列使用专业驱动,更稳定
         
-        # 5. 驱动特定优化
+        # 5. 驱动版本检查
+        self._check_driver_version(device)
+        
+        # 6. 驱动特定优化
         if device.driver_optimization_flags.get('conservative_mode', False):
             logger.warning(
                 "Intel驱动保守模式: "
                 "使用更小的batch_size和更严格的超时"
             )
         
-        # 记录已知问题
+        # 7. 记录已知问题
         if 'global_char_hang_bug' in known_issues:
             logger.warning(
-                "Intel Arc存在global char* hang bug, "
+                "⚠️ Intel Arc存在global char* hang bug, "
                 "已启用uint32 workaround"
             )
         
+        # 8. 显存效率设置
         memory_efficiency = profile.get('memory_efficiency', 0.45)
-        logger.debug(f"Intel GPU内存效率: {memory_efficiency*100:.0f}% (保守策略)")
+        device.memory_efficiency = memory_efficiency
+        logger.info(f"✅ Intel GPU内存效率: {memory_efficiency*100:.0f}% (保守策略)")
     
     def calculate_batch_size(self, device, profile: Dict[str, Any]) -> int:
         """
@@ -111,6 +118,35 @@ class IntelGPUVendor(GPUVendorBase):
         )
         
         return optimal
+    
+    def _check_driver_version(self, device):
+        """检查驱动版本并给出建议"""
+        driver_version = device.driver_version
+        if not driver_version:
+            logger.warning("⚠️ 无法检测Intel驱动版本，使用保守模式")
+            return
+        
+        try:
+            # 解析版本号 (格式: 31.0.101.4500)
+            parts = driver_version.split('.')
+            if len(parts) >= 4:
+                major = int(parts[0])
+                minor = int(parts[1])
+                build = int(parts[2])
+                revision = int(parts[3])
+                
+                # 检查是否为推荐版本
+                if (major, minor, build, revision) < (31, 0, 101, 4500):
+                    logger.warning(
+                        f"⚠️ Intel驱动版本 {driver_version} 较旧，"
+                        f"建议更新到 31.0.101.4500+ 以获得更好的稳定性"
+                    )
+                else:
+                    logger.info(f"✅ Intel驱动版本 {driver_version} 符合要求")
+            else:
+                logger.debug(f"Intel驱动版本格式: {driver_version}")
+        except (ValueError, IndexError) as e:
+            logger.debug(f"无法解析Intel驱动版本: {driver_version}, 错误: {e}")
     
     def handle_errors(self, error: Exception, stats=None) -> bool:
         """
