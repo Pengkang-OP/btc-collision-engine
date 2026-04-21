@@ -6,7 +6,7 @@ WINDOW_CONFIG = {
     "default_height": 1000,  # 默认窗口高度
     "min_width": 500,        # 最小窗口宽度
     "min_height": 900,       # 最小窗口高度
-    "title": "BTC 私钥对撞工具 v1.0"  # 窗口标题
+    "title": "btc-collision-engine"  # 窗口标题
 }
 
 # 组件尺寸配置

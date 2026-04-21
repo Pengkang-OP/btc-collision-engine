@@ -1,0 +1,419 @@
+[
+  {
+    "timestamp": "2026-04-21T22:44:56.919138",
+    "alert_type": "performance_degradation",
+    "level": "warning",
+    "message": "GPU性能退化超过20%",
+    "metrics": {
+      "degradation_rate": 25.0
+    },
+    "resolved": true,
+    "resolved_at": "2026-04-21T22:44:57.185102"
+  },
+  {
+    "timestamp": "2026-04-21T22:44:56.931924",
+    "alert_type": "memory_overflow",
+    "level": "warning",
+    "message": "GPU内存使用超过80%",
+    "metrics": {
+      "memory_usage_percent": 85.0
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:44:56.944721",
+    "alert_type": "gpu_overheat",
+    "level": "critical",
+    "message": "GPU温度超过85°C",
+    "metrics": {
+      "gpu_temperature": 90.0
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:44:56.956863",
+    "alert_type": "error_rate_high",
+    "level": "critical",
+    "message": "错误率超过5%",
+    "metrics": {
+      "error_rate": 0.08
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:44:56.968642",
+    "alert_type": "throughput_drop",
+    "level": "critical",
+    "message": "吞吐量下降超过50%",
+    "metrics": {
+      "throughput": 400000,
+      "baseline_throughput": 1000000
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:44:56.980691",
+    "alert_type": "performance_degradation",
+    "level": "warning",
+    "message": "GPU性能退化超过20%",
+    "metrics": {
+      "degradation_rate": 25.0
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:44:56.994368",
+    "alert_type": "performance_degradation",
+    "level": "warning",
+    "message": "GPU性能退化超过20%",
+    "metrics": {
+      "degradation_rate": 25.0
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:44:57.007084",
+    "alert_type": "performance_degradation",
+    "level": "warning",
+    "message": "GPU性能退化超过20%",
+    "metrics": {
+      "degradation_rate": 25.0
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:44:57.007942",
+    "alert_type": "gpu_overheat",
+    "level": "critical",
+    "message": "GPU温度超过85°C",
+    "metrics": {
+      "gpu_temperature": 90.0
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:44:57.159977",
+    "alert_type": "performance_degradation",
+    "level": "warning",
+    "message": "GPU性能退化超过20%",
+    "metrics": {
+      "degradation_rate": 25.0
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:44:57.183144",
+    "alert_type": "performance_degradation",
+    "level": "warning",
+    "message": "GPU性能退化超过20%",
+    "metrics": {
+      "degradation_rate": 25.0
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:44:57.184051",
+    "alert_type": "gpu_overheat",
+    "level": "critical",
+    "message": "GPU温度超过85°C",
+    "metrics": {
+      "gpu_temperature": 90.0
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:44:57.223971",
+    "alert_type": "performance_degradation",
+    "level": "warning",
+    "message": "GPU性能退化超过20%",
+    "metrics": {
+      "degradation_rate": 25.0
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:44:57.246073",
+    "alert_type": "performance_degradation",
+    "level": "warning",
+    "message": "GPU性能退化超过20%",
+    "metrics": {
+      "degradation_rate": 25.0,
+      "gpu_temperature": 90.0,
+      "error_rate": 0.08
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:44:57.246911",
+    "alert_type": "gpu_overheat",
+    "level": "critical",
+    "message": "GPU温度超过85°C",
+    "metrics": {
+      "degradation_rate": 25.0,
+      "gpu_temperature": 90.0,
+      "error_rate": 0.08
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:44:57.247641",
+    "alert_type": "error_rate_high",
+    "level": "critical",
+    "message": "错误率超过5%",
+    "metrics": {
+      "degradation_rate": 25.0,
+      "gpu_temperature": 90.0,
+      "error_rate": 0.08
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:45:38.095714",
+    "alert_type": "performance_degradation",
+    "level": "warning",
+    "message": "GPU性能退化超过20%",
+    "metrics": {
+      "degradation_rate": 25.0
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:45:38.110203",
+    "alert_type": "memory_overflow",
+    "level": "warning",
+    "message": "GPU内存使用超过80%",
+    "metrics": {
+      "memory_usage_percent": 85.0
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:45:38.126975",
+    "alert_type": "gpu_overheat",
+    "level": "critical",
+    "message": "GPU温度超过85°C",
+    "metrics": {
+      "gpu_temperature": 90.0
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:45:38.141709",
+    "alert_type": "error_rate_high",
+    "level": "critical",
+    "message": "错误率超过5%",
+    "metrics": {
+      "error_rate": 0.08
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:45:38.154923",
+    "alert_type": "throughput_drop",
+    "level": "critical",
+    "message": "吞吐量下降超过50%",
+    "metrics": {
+      "throughput": 400000,
+      "baseline_throughput": 1000000
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:45:38.168600",
+    "alert_type": "performance_degradation",
+    "level": "warning",
+    "message": "GPU性能退化超过20%",
+    "metrics": {
+      "degradation_rate": 25.0
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:45:38.181579",
+    "alert_type": "performance_degradation",
+    "level": "warning",
+    "message": "GPU性能退化超过20%",
+    "metrics": {
+      "degradation_rate": 25.0
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:45:38.449013",
+    "alert_type": "performance_degradation",
+    "level": "warning",
+    "message": "GPU性能退化超过20%",
+    "metrics": {
+      "degradation_rate": 25.0,
+      "gpu_temperature": 90.0,
+      "error_rate": 0.08
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:45:38.450052",
+    "alert_type": "gpu_overheat",
+    "level": "critical",
+    "message": "GPU温度超过85°C",
+    "metrics": {
+      "degradation_rate": 25.0,
+      "gpu_temperature": 90.0,
+      "error_rate": 0.08
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:45:38.450931",
+    "alert_type": "error_rate_high",
+    "level": "critical",
+    "message": "错误率超过5%",
+    "metrics": {
+      "degradation_rate": 25.0,
+      "gpu_temperature": 90.0,
+      "error_rate": 0.08
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:45:53.740321",
+    "alert_type": "performance_degradation",
+    "level": "warning",
+    "message": "GPU性能退化超过20%",
+    "metrics": {
+      "degradation_rate": 25.0
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:45:53.755105",
+    "alert_type": "memory_overflow",
+    "level": "warning",
+    "message": "GPU内存使用超过80%",
+    "metrics": {
+      "memory_usage_percent": 85.0
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:45:53.770903",
+    "alert_type": "gpu_overheat",
+    "level": "critical",
+    "message": "GPU温度超过85°C",
+    "metrics": {
+      "gpu_temperature": 90.0
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:45:53.783848",
+    "alert_type": "error_rate_high",
+    "level": "critical",
+    "message": "错误率超过5%",
+    "metrics": {
+      "error_rate": 0.08
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:45:53.798562",
+    "alert_type": "throughput_drop",
+    "level": "critical",
+    "message": "吞吐量下降超过50%",
+    "metrics": {
+      "throughput": 400000,
+      "baseline_throughput": 1000000
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:45:53.811856",
+    "alert_type": "performance_degradation",
+    "level": "warning",
+    "message": "GPU性能退化超过20%",
+    "metrics": {
+      "degradation_rate": 25.0
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:45:53.825507",
+    "alert_type": "performance_degradation",
+    "level": "warning",
+    "message": "GPU性能退化超过20%",
+    "metrics": {
+      "degradation_rate": 25.0
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:45:54.088169",
+    "alert_type": "performance_degradation",
+    "level": "warning",
+    "message": "GPU性能退化超过20%",
+    "metrics": {
+      "degradation_rate": 25.0,
+      "gpu_temperature": 90.0,
+      "error_rate": 0.08
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:45:54.089425",
+    "alert_type": "gpu_overheat",
+    "level": "critical",
+    "message": "GPU温度超过85°C",
+    "metrics": {
+      "degradation_rate": 25.0,
+      "gpu_temperature": 90.0,
+      "error_rate": 0.08
+    },
+    "resolved": false,
+    "resolved_at": null
+  },
+  {
+    "timestamp": "2026-04-21T22:45:54.090602",
+    "alert_type": "error_rate_high",
+    "level": "critical",
+    "message": "错误率超过5%",
+    "metrics": {
+      "degradation_rate": 25.0,
+      "gpu_temperature": 90.0,
+      "error_rate": 0.08
+    },
+    "resolved": false,
+    "resolved_at": null
+  }
+]

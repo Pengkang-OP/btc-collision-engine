@@ -95,18 +95,21 @@
 ## ✅ 保留的核心文档（48个）
 
 ### 快速开始（4个）
+
 - ✅ README.md
 - ✅ getting-started.md
 - ✅ RELEASE_NOTES_v2.2.0.md
 - ✅ USAGE_GUIDE_v2.2.0.md
 
 ### 架构与设计（4个）
+
 - ✅ architecture.md
 - ✅ workflow_diagrams.md
 - ✅ api-reference.md
 - ✅ requirements.md
 
 ### 性能优化（8个）
+
 - ✅ optimization-implementation-report.md
 - ✅ optimization-implementation-summary.md
 - ✅ optimization-progress-report.md
@@ -117,6 +120,7 @@
 - ✅ comprehensive-audit-report.md
 
 ### GPU加速（7个）
+
 - ✅ gpu-integration-test-report-step7.md
 - ✅ gpu-monitoring-implementation-report.md
 - ✅ gpu-monitor-p0-fix-report.md
@@ -126,23 +130,27 @@
 - ✅ intel-arc-integration-guide.md
 
 ### 安全特性（4个）
+
 - ✅ security-guidelines.md
 - ✅ secure-key-management.md
 - ✅ quick-reference-private-key-security.md
 - ✅ intel-arc-gpu-compatibility-research.md
 
 ### 监控系统（3个）
+
 - ✅ monitoring-system-guide.md
 - ✅ monitoring-system-usage-guide.md
 - ✅ logging-guide.md
 
 ### 配置与部署（4个）
+
 - ✅ config-usage-examples.md
 - ✅ deployment-upgrade-guide.md
 - ✅ document-archive-strategy.md
 - ✅ logging-standards.md
 
 ### 功能特性（5个）
+
 - ✅ checkpoint-resume-feature.md
 - ✅ checkpoint-quick-guide.md
 - ✅ address-import-feature.md
@@ -150,21 +158,25 @@
 - ✅ gui-cli-integration-report.md
 
 ### 界面与故障排除（3个）
+
 - ✅ user-interface.md
 - ✅ troubleshooting.md
 - ✅ project-status.md
 
 ### 文档索引（3个）
+
 - ✅ DOCUMENT_INDEX.md
 - ✅ DOCUMENT_INDEX_v2.2.0.md
 - ✅ README.md (docs/)
 
 ### Intel Arc专项（3个）
+
 - ✅ intel-arc-a770-deep-optimization.md
 - ✅ intel-arc-a770-intermittent-issue-solution.md
 - ✅ intel-arc-fix-complete-report.md
 
 ### 其他（2个）
+
 - ✅ windows-console-utf8-fix.md
 - ✅ performance-optimization.md
 
@@ -184,6 +196,7 @@
 ### 目录结构优化
 
 **清理前**:
+
 ```
 docs/
 ├── 76个文档（核心+过程记录混合）
@@ -191,6 +204,7 @@ docs/
 ```
 
 **清理后**:
+
 ```
 docs/
 ├── 48个核心文档（面向用户和开发者）
@@ -207,6 +221,7 @@ docs/
 ## 🎯 清理原则
 
 ### 保留标准（核心文档）
+
 - ✅ 面向用户的使用指南
 - ✅ 面向开发者的API文档
 - ✅ 架构设计文档
@@ -217,6 +232,7 @@ docs/
 - ✅ 版本发布说明
 
 ### 归档标准（过程文档）
+
 - ✅ 开发过程记录
 - ✅ 中间状态报告
 - ✅ 修复过程文档
@@ -229,10 +245,12 @@ docs/
 ## 📝 后续建议
 
 ### 立即可做
+
 1. ✅ 更新DOCUMENT_INDEX.md（待执行）
 2. ✅ 创建本文档（已完成）
 
 ### 中长期
+
 1. 建立文档审查流程
 2. 定期清理过时文档（每季度）
 3. 建立文档生命周期管理规范
@@ -244,6 +262,7 @@ docs/
 本次文档清理成功将28个过程记录文档移动到archive目录，使docs根目录只保留48个核心文档。核心文档比例从63%提升到100%，显著提升了文档查找效率和维护便利性。
 
 **关键成果**:
+
 - ✅ 归档28个过程文档
 - ✅ 保留48个核心文档
 - ✅ 核心文档比例: 100%
