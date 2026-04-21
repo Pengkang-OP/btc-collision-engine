@@ -22,6 +22,14 @@ class GPUDeviceHelper:
         >>> GPUDeviceHelper.handle_gpu_batch_error("random", exception, stats)
     """
     
+    # P2优化：提取资源错误关键词为类常量，避免重复定义
+    RESOURCE_ERROR_KEYWORDS = [
+        "out of resources", "memory", "out of memory", 
+        "allocation failed", "insufficient", "resource exhausted",
+        "cl_out_of_resources", "cl_mem_object_allocation_failure"
+    ]
+    """GPU资源不足错误关键词列表"""
+    
     @staticmethod
     def handle_gpu_batch_error(mode: str, e: Exception, 
                               stats: Optional[Any] = None) -> bool:
@@ -40,13 +48,11 @@ class GPUDeviceHelper:
             # 这些是可恢复的错误，跳过当前批次继续执行
             # 常见原因：GPU内存不足、内核参数错误、目标地址格式错误
             error_msg = str(e).lower()
-            # 扩展资源不足关键词匹配，覆盖不同OpenCL实现的错误消息
-            resource_keywords = [
-                "out of resources", "memory", "out of memory", 
-                "allocation failed", "insufficient", "resource exhausted",
-                "cl_out_of_resources", "cl_mem_object_allocation_failure"
-            ]
-            is_resource_error = any(keyword in error_msg for keyword in resource_keywords)
+            # P2优化：使用类常量
+            is_resource_error = any(
+                keyword in error_msg 
+                for keyword in GPUDeviceHelper.RESOURCE_ERROR_KEYWORDS
+            )
             if is_resource_error:
                 logger.error(f"GPU {mode}失败（资源不足）: {type(e).__name__}: {e}")
                 if stats:
@@ -100,9 +106,8 @@ class GPUDeviceHelper:
             return False
         
         error_msg = str(exception).lower()
-        resource_keywords = [
-            "out of resources", "memory", "out of memory", 
-            "allocation failed", "insufficient", "resource exhausted",
-            "cl_out_of_resources", "cl_mem_object_allocation_failure"
-        ]
-        return any(keyword in error_msg for keyword in resource_keywords)
+        # P2优化：使用类常量
+        return any(
+            keyword in error_msg 
+            for keyword in GPUDeviceHelper.RESOURCE_ERROR_KEYWORDS
+        )

@@ -9,6 +9,11 @@
 - **哈希算法**: SHA-256、RIPEMD-160、Hash160
 - **主要内核**: batch_check、verify_arithmetic、debug_hash
 
+## P1-2修复
+
+- 实现GPUKernelProtocol接口
+- 支持依赖注入和测试Mock
+
 ## 已知修复
 
 - Intel Arc A770兼容性: global char* hang bug、signed long bug
@@ -37,6 +42,11 @@ batch_check_kernel = program.batch_check
 - **辅助函数**: 26个
 - **常量定义**: 20个 (含宏定义)
 """
+import logging
+from typing import Optional, Any, List, Dict
+
+# P1-2修复：实现接口
+from .kernel_protocol import GPUKernelProtocol
 
 # OpenCL内核源码
 OPENCL_KERNEL_SOURCE = """
