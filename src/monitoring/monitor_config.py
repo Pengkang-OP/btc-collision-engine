@@ -160,7 +160,7 @@ class MonitorConfig:
             >>> config = MonitorConfig()
             >>> config.update(data_logging_interval=2.0, alert_enabled=False)
         """
-        valid_fields = {f.name for f in cls.__dataclass_fields__.values()}
+        valid_fields = {f.name for f in self.__class__.__dataclass_fields__.values()}
         
         for key, value in kwargs.items():
             if key in valid_fields:
@@ -230,7 +230,7 @@ class MonitorConfig:
         items = []
         for field_name, field_value in asdict(self).items():
             # 只显示非默认值
-            default_value = getattr(MonitorConfig(), field_name)
+            default_value = getattr(self.__class__(), field_name)
             if field_value != default_value:
                 items.append(f"{field_name}={field_value}")
         
