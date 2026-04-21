@@ -24,17 +24,48 @@
 """
 import pytest
 from unittest.mock import Mock, patch
-from contextlib import ExitStack
+from contextlib import ExitStack, contextmanager
+
+
+# ============================================================================
+# GPU测试常量定义
+# ============================================================================
+
+class GPUConstants:
+    """GPU测试相关常量
+    
+    集中管理GPU测试中的硬编码值,提高可维护性
+    """
+    # 显存大小
+    DEFAULT_MEM_SIZE = 8 * 1024**3      # 8GB
+    HIGH_MEM_SIZE = 16 * 1024**3        # 16GB
+    ULTRA_MEM_SIZE = 32 * 1024**3       # 32GB
+    
+    # Batch Size
+    DEFAULT_BATCH_SIZE = 65536
+    MIN_BATCH_SIZE = 1024
+    MAX_BATCH_SIZE = 1048576            # 1M
+    
+    # 厂商字符串
+    VENDOR_NVIDIA = 'NVIDIA Corporation'
+    VENDOR_AMD = 'AMD'
+    VENDOR_INTEL = 'Intel Corporation'
+    
+    # 设备名称
+    DEVICE_NVIDIA = 'Test GPU'
+    DEVICE_AMD = 'Radeon RX 6800'
+    DEVICE_INTEL = 'Intel Arc A770'
 
 
 # ============================================================================
 # 公共Mock创建函数 (减少代码重复)
 # ============================================================================
 
-def _create_mock_gpu_objects(batch_size=65536, vendor='nvidia', 
-                              device_name='Test GPU', 
-                              vendor_str='NVIDIA Corporation',
-                              global_mem_size=8 * 1024**3):
+def _create_mock_gpu_objects(batch_size=GPUConstants.DEFAULT_BATCH_SIZE, 
+                              vendor='nvidia', 
+                              device_name=GPUConstants.DEVICE_NVIDIA, 
+                              vendor_str=GPUConstants.VENDOR_NVIDIA,
+                              global_mem_size=GPUConstants.DEFAULT_MEM_SIZE):
     """创建标准GPU Mock对象集(内部辅助函数)
     
     Args:
@@ -92,8 +123,6 @@ def _apply_gpu_patches(mock_device, mock_context, mock_kernel, vendor='nvidia'):
     Returns:
         contextmanager: 上下文管理器
     """
-    from contextlib import contextmanager
-    
     @contextmanager
     def _patch_context():
         with ExitStack() as stack:
@@ -116,62 +145,8 @@ def _apply_gpu_patches(mock_device, mock_context, mock_kernel, vendor='nvidia'):
     return _patch_context()
 
 
-# ============================================================================
-# Mock验证辅助函数
-# ============================================================================
-
-class MockAssertions:
-    """Mock断言辅助类
-    
-    提供常用的Mock验证方法,简化测试代码
-    
-    使用示例:
-        def test_engine(self, mock_gpu_chain):
-            mock_device, mock_context, mock_kernel = mock_gpu_chain
-            # ... 测试代码 ...
-            MockAssertions.assert_cleanup_called(mock_device, mock_context, mock_kernel)
-    """
-    
-    @staticmethod
-    def assert_cleanup_called(mock_device, mock_context, mock_kernel):
-        """验证GPU资源清理是否正确调用"""
-        mock_kernel.cleanup.assert_called_once()
-        mock_context.cleanup.assert_called_once()
-        mock_device.cleanup.assert_called_once()
-    
-    @staticmethod
-    def assert_kernel_executed(mock_kernel, min_calls=1):
-        """验证GPU内核执行批次调用
-        
-        Args:
-            mock_kernel: GPU内核Mock
-            min_calls: 最小调用次数
-        """
-        assert mock_kernel.run_batch.call_count >= min_calls, \
-            f"GPU内核执行次数{mock_kernel.run_batch.call_count} < {min_calls}"
-    
-    @staticmethod
-    def assert_targets_set(mock_kernel, expected_count):
-        """验证目标地址设置
-        
-        Args:
-            mock_kernel: GPU内核Mock
-            expected_count: 期望的目标地址数量
-        """
-        mock_kernel.set_targets.assert_called_once()
-        call_args = mock_kernel.set_targets.call_args
-        assert call_args[0][1] == expected_count, \
-            f"目标地址数量{call_args[0][1]} != {expected_count}"
-    
-    @staticmethod
-    def assert_engine_running(engine):
-        """验证引擎正在运行"""
-        assert engine.is_running() is True
-    
-    @staticmethod
-    def assert_engine_stopped(engine):
-        """验证引擎已停止"""
-        assert engine.is_running() is False
+# Mock验证辅助函数已从 tests.test_helpers 导入
+# 如需使用: from tests.test_helpers import MockAssertions
 
 
 # ============================================================================
@@ -212,22 +187,43 @@ def mock_gpu_chain():
 def mock_gpu_chain_custom_batch():
     """提供可自定义batch_size的GPU Mock链
     
-    与mock_gpu_chain类似,但允许指定batch_size
+    返回上下文管理器,需要使用with语句
     
     使用示例:
         def test_custom_batch(mock_gpu_chain_custom_batch):
-            mock_device, mock_context, mock_kernel = mock_gpu_chain_custom_batch(1000)
-            # 测试代码...
+            with mock_gpu_chain_custom_batch(1000) as mocks:
+                mock_device, mock_context, mock_kernel = mocks
+                # 测试代码...
     """
-    def _create_chain(batch_size=65536):
-        # 使用公共函数创建Mock对象
-        mock_device, mock_context, mock_kernel = _create_mock_gpu_objects(batch_size=batch_size)
-        
-        # 应用7层Mock链
-        with _apply_gpu_patches(mock_device, mock_context, mock_kernel) as mocks:
-            yield mocks
+    def _create_chain(batch_size=GPUConstants.DEFAULT_BATCH_SIZE):
+        mock_device, mock_context, mock_kernel = _create_mock_gpu_objects(
+            batch_size=batch_size
+        )
+        return _apply_gpu_patches(mock_device, mock_context, mock_kernel)
     
     return _create_chain
+
+
+@pytest.fixture
+def mock_gpu_chain_with_batch():
+    """提供可直接使用的自定义batch_size GPU Mock链
+    
+    与mock_gpu_chain_custom_batch不同,这个fixture直接yield mocks,
+    不需要with语句,但需要参数化测试使用pytest.mark.parametrize
+    
+    使用示例:
+        @pytest.mark.parametrize("batch_size", [100, 1000, 10000])
+        def test_multiple_batches(mock_gpu_chain_with_batch, batch_size):
+            mock_device, mock_context, mock_kernel = mock_gpu_chain_with_batch
+            # mock_gpu_chain_with_batch会在每个参数值下重新创建
+            # 需要在测试外部通过其他方式传入batch_size
+            pass
+    
+    注意: 这个fixture使用默认batch_size,如需自定义请使用mock_gpu_chain_custom_batch
+    """
+    mock_device, mock_context, mock_kernel = _create_mock_gpu_objects()
+    with _apply_gpu_patches(mock_device, mock_context, mock_kernel) as mocks:
+        yield mocks
 
 
 @pytest.fixture
@@ -243,9 +239,9 @@ def mock_gpu_device():
     mock_device.context = Mock()
     mock_device.queue = Mock()
     mock_device.device_info = {
-        'name': 'Test GPU',
-        'vendor': 'NVIDIA Corporation',
-        'global_mem_size': 8 * 1024**3
+        'name': GPUConstants.DEVICE_NVIDIA,
+        'vendor': GPUConstants.VENDOR_NVIDIA,
+        'global_mem_size': GPUConstants.DEFAULT_MEM_SIZE
     }
     mock_device.initialize = Mock()
     mock_device.get_device_info = Mock(return_value=mock_device.device_info)
@@ -254,18 +250,127 @@ def mock_gpu_device():
     yield mock_device
 
 
+@pytest.fixture(scope='module')
+def mock_gpu_device_module():
+    """模块级别的GPU设备Mock(多个测试共享)
+    
+    ⚠️ 注意: 此fixture在模块内共享,不适合修改Mock状态的测试!
+    
+    适用场景:
+        - 只读测试(不修改Mock返回值)
+        - 性能测试(避免重复创建Mock)
+        - 测试组(多个测试使用相同配置)
+    
+    不适用场景:
+        - 需要自定义Mock行为的测试
+        - 需要隔离的测试
+        - 会修改Mock状态的测试
+    
+    使用示例:
+        class TestGPUDeviceReadOnly:
+            def test_device_info_1(self, mock_gpu_device_module):
+                # 使用共享的Mock
+                info = mock_gpu_device_module.get_device_info()
+                assert info['name'] == 'Test GPU'
+            
+            def test_device_info_2(self, mock_gpu_device_module):
+                # 同一个Mock实例
+                info = mock_gpu_device_module.get_device_info()
+                assert info['vendor'] == 'NVIDIA Corporation'
+    
+    Yields:
+        Mock: GPU设备实例(模块内共享)
+    """
+    mock_device = Mock()
+    mock_device.context = Mock()
+    mock_device.queue = Mock()
+    mock_device.device_info = {
+        'name': GPUConstants.DEVICE_NVIDIA,
+        'vendor': GPUConstants.VENDOR_NVIDIA,
+        'global_mem_size': GPUConstants.DEFAULT_MEM_SIZE
+    }
+    mock_device.initialize = Mock()
+    mock_device.get_device_info = Mock(return_value=mock_device.device_info)
+    mock_device.cleanup = Mock()
+    
+    yield mock_device
+
+
+@pytest.fixture(scope='module')
+def mock_gpu_chain_module():
+    """模块级别的完整GPU Mock链
+    
+    ⚠️ 注意: 此fixture在模块内共享7层Mock链!
+    
+    适用场景:
+        - 模块内多个测试使用相同Mock配置
+        - 性能敏感测试(减少Mock创建开销)
+        - 集成测试组
+    
+    不适用场景:
+        - 需要自定义Mock行为的测试
+        - 需要严格隔离的测试
+        - 会修改Mock返回值的测试
+    
+    使用示例:
+        class TestGPUEngineIntegration:
+            def test_engine_init(self, mock_gpu_chain_module):
+                mock_device, mock_context, mock_kernel = mock_gpu_chain_module
+                engine = GPUCollisionEngine(targets)
+                # 测试...
+            
+            def test_engine_start(self, mock_gpu_chain_module):
+                # 同一个Mock实例
+                mock_device, mock_context, mock_kernel = mock_gpu_chain_module
+                # 测试...
+    
+    Yields:
+        tuple: (mock_device, mock_context, mock_kernel)
+    """
+    mock_device, mock_context, mock_kernel = _create_mock_gpu_objects()
+    with _apply_gpu_patches(mock_device, mock_context, mock_kernel) as mocks:
+        yield mocks
+
+
 @pytest.fixture
 def clear_gpu_detector_cache():
     """清除GPUDeviceDetector的所有缓存
     
-    用于需要重新检测GPU的测试
+    ⚠️ 警告: 此fixture修改类级别缓存,不建议在并发测试中使用!
+    
+    当使用pytest-xdist进行并行测试时,多个测试进程可能同时修改
+    类级别的缓存,导致测试不稳定。
+    
+    安全使用场景:
+        - 顺序执行的测试
+        - 单线程测试
+        - 不需要并发隔离的测试
+    
+    不安全使用场景:
+        - pytest -n auto (并行测试)
+        - 多线程测试
+        - 需要严格隔离的测试
     
     使用示例:
         def test_gpu_detection(clear_gpu_detector_cache):
             # 缓存已清除,可以重新检测
             pass
+    
+    替代方案:
+        如果需要并发安全,请在测试中直接Mock GPUDeviceDetector:
+        @patch('src.gpu.device.GPUDeviceDetector.is_gpu_available')
+        def test_safe(mock_is_available):
+            mock_is_available.return_value = True
     """
+    import warnings
     from src.gpu.device import GPUDeviceDetector
+    
+    # 发出并发安全警告
+    warnings.warn(
+        "clear_gpu_detector_cache修改类级别缓存,不建议在并发测试中使用",
+        RuntimeWarning,
+        stacklevel=2
+    )
     
     # 保存原始缓存值
     old_availability = GPUDeviceDetector._availability_cache
@@ -315,9 +420,9 @@ def mock_gpu_chain_amd():
     """
     mock_device, mock_context, mock_kernel = _create_mock_gpu_objects(
         vendor='amd',
-        device_name='Radeon RX 6800',
-        vendor_str='AMD',
-        global_mem_size=16 * 1024**3  # 16GB显存
+        device_name=GPUConstants.DEVICE_AMD,
+        vendor_str=GPUConstants.VENDOR_AMD,
+        global_mem_size=GPUConstants.HIGH_MEM_SIZE  # 16GB显存
     )
     
     with _apply_gpu_patches(mock_device, mock_context, mock_kernel, vendor='amd') as mocks:
@@ -335,9 +440,9 @@ def mock_gpu_chain_intel():
     """
     mock_device, mock_context, mock_kernel = _create_mock_gpu_objects(
         vendor='intel',
-        device_name='Intel Arc A770',
-        vendor_str='Intel Corporation',
-        global_mem_size=16 * 1024**3  # 16GB显存
+        device_name=GPUConstants.DEVICE_INTEL,
+        vendor_str=GPUConstants.VENDOR_INTEL,
+        global_mem_size=GPUConstants.HIGH_MEM_SIZE  # 16GB显存
     )
     
     # Intel特殊配置
