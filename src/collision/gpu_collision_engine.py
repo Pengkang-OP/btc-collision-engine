@@ -47,6 +47,16 @@ from .deduplication_filter import DeduplicationFilter
 from .base_engine import BaseCollisionEngine
 from ..monitoring.data_logger import DataLogger
 from ..monitoring.enhanced_monitoring import EnhancedMonitoringSystem
+from ..monitoring.gpu_performance_monitor import GPUPerformanceMonitor, get_gpu_performance_monitor
+
+# v2.2.1: 预导入GPU监控器,避免重复import
+_gpu_performance_monitor = None
+def _get_gpu_monitor():
+    """获取GPU性能监控器(懒加载)"""
+    global _gpu_performance_monitor
+    if _gpu_performance_monitor is None:
+        _gpu_performance_monitor = get_gpu_performance_monitor()
+    return _gpu_performance_monitor
 
 
 class GPUDeviceHelper:
@@ -400,6 +410,26 @@ class GPUKernel:
             )
             self.gpu_optimizer.record_performance(metrics)
             
+            # v2.2.1: 记录到GPU性能监控器
+            if hasattr(self, 'stats') and self.stats:
+                try:
+                    # 使用预导入的监控器,避免重复import
+                    gpu_monitor = _get_gpu_monitor()
+                    # v2.2.1: 使用精确的显存估算
+                    if hasattr(self, '_calculate_gpu_memory_usage'):
+                        memory_mb = self._calculate_gpu_memory_usage(num_keys)
+                    else:
+                        memory_mb = (num_keys * 36) / (1024 * 1024)
+                    gpu_monitor.record_kernel_metrics(
+                        batch_size=num_keys,
+                        execution_time_ms=execution_time_ms,
+                        memory_allocated_mb=memory_mb,
+                        error_count=0,
+                        match_count=len(matches)
+                    )
+                except Exception as monitor_error:
+                    logger.debug(f"GPU性能监控记录失败: {monitor_error}")
+            
             # P1: 记录到自适应超时管理器（每个批次都记录）
             if self.timeout_manager:
                 self.timeout_manager.record_execution_time(execution_time_ms)
@@ -692,7 +722,11 @@ class GPUCollisionEngine(BaseCollisionEngine):
                  checkpoint_interval: int = 30,
                  data_logging_enabled: bool = True,
                  data_logging_interval: int = 5,
-                 use_enhanced_monitoring: bool = True):
+                 use_enhanced_monitoring: bool = True,
+                 # 性能优化参数 (v2.2.0新增)
+                 use_gpu_memory_pool: bool = True,
+                 gpu_pool_max_buffers: int = 100,
+                 gpu_pool_max_memory_mb: int = 512):
         """
         初始化 GPU 碰撞引擎
         
@@ -710,6 +744,11 @@ class GPUCollisionEngine(BaseCollisionEngine):
             data_logging_enabled: 是否启用数据日志记录
             data_logging_interval: 数据日志记录间隔(秒)
             use_enhanced_monitoring: 是否使用增强监控系统（默认True）
+            
+            # 性能优化参数 (v2.2.0新增)
+            use_gpu_memory_pool: 是否使用GPU内存池（默认True）
+            gpu_pool_max_buffers: 内存池最大缓冲区数量（默认100）
+            gpu_pool_max_memory_mb: 内存池最大内存MB（默认512）
         """
         if not PYOPENCL_AVAILABLE:
             raise RuntimeError("pyopencl 不可用，无法使用 GPU 加速")
@@ -741,6 +780,18 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self._last_progress_time = 0
         self._progress_interval_sec = 0.5
         
+        # GPU内存池配置 (v2.2.0新增)
+        self.use_gpu_memory_pool = use_gpu_memory_pool
+        self.gpu_pool_max_buffers = gpu_pool_max_buffers
+        self.gpu_pool_max_memory_mb = gpu_pool_max_memory_mb
+        self._gpu_memory_pool = None  # 将在_init_gpu中初始化
+        
+        if use_gpu_memory_pool:
+            logger.info(f"GPU内存池已启用: max_buffers={gpu_pool_max_buffers}, "
+                       f"max_memory={gpu_pool_max_memory_mb}MB")
+        else:
+            logger.info("GPU内存池未启用,使用直接分配模式")
+        
         # GPU型号配置加载器
         self._profile_loader = GPUProfileLoader()
         
@@ -762,6 +813,9 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self.benchmark_suite: Optional['GPUBenchmarkSuite'] = None       # 基准测试套件
         self.auto_tuner: Optional['GPUAutoTuner'] = None                 # 自动调优器
         self.performance_reporter: Optional['PerformanceReportGenerator'] = None  # 性能报告生成器
+        
+        # v2.2.1 新增：GPU性能监控器
+        self.gpu_performance_monitor: Optional['GPUPerformanceMonitor'] = None
         
         if data_logging_enabled:
             try:
@@ -849,6 +903,15 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 
                 # 10. 创建GPUKernel（使用已编译的程序）
                 with EnhancedPerformanceMonitor(logger, "GPUKernel创建", level="DEBUG"):
+                    # 初始化GPU内存池 (v2.2.0新增)
+                    if self.use_gpu_memory_pool:
+                        from ..gpu.memory_pool import get_gpu_memory_pool
+                        self._gpu_memory_pool = get_gpu_memory_pool(
+                            self._gpu_device.context,
+                            max_buffers=self.gpu_pool_max_buffers
+                        )
+                        logger.info(f"GPU内存池初始化完成: {self._gpu_memory_pool.get_stats()}")
+                    
                     self._gpu_kernel = GPUKernel(
                         self._gpu_device, 
                         max_batch_size=self.batch_size,
@@ -867,6 +930,11 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 if vendor.lower().startswith('intel'):
                     logger.info("🔧 检测到 Intel GPU，应用特殊优化")
                     self._apply_intel_specific_optimizations()
+                
+                # 14. 初始化GPU性能监控器 (v2.2.1新增)
+                self.gpu_performance_monitor = get_gpu_performance_monitor(engine=self)
+                self.gpu_performance_monitor.start()
+                logger.info("✅ GPU性能监控器已启动")
                 
                 logger.info(
                     f"GPU 引擎初始化成功: {device_name} "
@@ -911,6 +979,42 @@ class GPUCollisionEngine(BaseCollisionEngine):
             raise ValueError("没有有效的目标地址")
         
         self._target_hash160s = b''.join(hash160_list)
+    
+    def _calculate_gpu_memory_usage(self, num_keys: int) -> float:
+        """
+        计算GPU显存使用(MB)
+        
+        v2.2.1改进: 考虑所有缓冲区,更精确的估算
+        
+        Args:
+            num_keys: 私钥数量
+            
+        Returns:
+            显存使用量(MB)
+        """
+        # 1. 私钥缓冲区 (num_keys * 32字节)
+        private_keys_mb = (num_keys * 32) / (1024 * 1024)
+        
+        # 2. 匹配结果缓冲区 (num_keys * 4字节)
+        match_flags_mb = (num_keys * 4) / (1024 * 1024)
+        
+        # 3. 目标地址缓冲区 (固定大小)
+        targets_mb = 0.0
+        if self._target_hash160s:
+            targets_mb = len(self._target_hash160s) / (1024 * 1024)
+        
+        # 4. 内核执行临时显存 (估算20% overhead)
+        overhead_mb = (private_keys_mb + match_flags_mb) * 0.2
+        
+        total_mb = private_keys_mb + match_flags_mb + targets_mb + overhead_mb
+        
+        logger.debug(f"GPU显存估算: private_keys={private_keys_mb:.2f}MB, "
+                    f"match_flags={match_flags_mb:.2f}MB, "
+                    f"targets={targets_mb:.2f}MB, "
+                    f"overhead={overhead_mb:.2f}MB, "
+                    f"total={total_mb:.2f}MB")
+        
+        return total_mb
     
     @staticmethod
     def is_gpu_available() -> bool:
@@ -1035,8 +1139,14 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 if batch_num <= 3 or batch_num % 100 == 0:
                     logger.debug(f"GPU batch {batch_num}: 运行 run_batch (size={actual_batch_size})...")
                 
+                # v2.2.1: 记录GPU执行时间
+                batch_start_time = time.time()
+                
                 # 目标已在初始化时设置，无需重复传递
                 matches = self._gpu_kernel.run_batch(private_keys, actual_batch_size)
+                
+                # 计算实际执行时间
+                execution_time_ms = (time.time() - batch_start_time) * 1000
                 
                 # GPU计算完成后，等待异步生成完成并获取下一批
                 if gen_thread.is_alive():
@@ -1090,6 +1200,19 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 # 只有 run_batch 成功后才递增计数
                 batch_count += actual_batch_size
                 self.stats.update(batch_count)
+                
+                # v2.2.1: 记录GPU性能指标
+                if self.gpu_performance_monitor:
+                    try:
+                        # v2.2.1: 使用精确的显存估算
+                        memory_mb = self._calculate_gpu_memory_usage(actual_batch_size)
+                        self.gpu_performance_monitor.record_kernel_metrics(
+                            batch_size=actual_batch_size,
+                            execution_time_ms=execution_time_ms,  # v2.2.1: 使用真实执行时间
+                            memory_allocated_mb=memory_mb
+                        )
+                    except Exception as e:
+                        logger.debug(f"记录GPU性能指标失败: {e}")
                 
                 # 进度回调
                 current_time = time.time()
@@ -1318,9 +1441,17 @@ class GPUCollisionEngine(BaseCollisionEngine):
         if self.enhanced_monitoring:
             try:
                 self.enhanced_monitoring.stop()
-                logger.info("GPU引擎：监控系统已停止")
+                logger.info("GPU引擎：增强监控系统已停止")
             except Exception as e:
                 logger.error(f"GPU引擎：停止监控系统失败: {e}")
+        
+        # v2.2.1: 停止GPU性能监控器
+        if self.gpu_performance_monitor:
+            try:
+                self.gpu_performance_monitor.stop()
+                logger.info("GPU引擎：GPU性能监控器已停止")
+            except Exception as e:
+                logger.error(f"GPU引擎：停止GPU性能监控器失败: {e}")
         
         # 清理去重过滤器（释放内存）
         if self.dedup_filter and self.dedup_filter.enabled:

@@ -26,7 +26,22 @@
     "checkpoint_interval": 30,
     "_comment_checkpoint_interval": "断点自动保存间隔(秒)",
     "dedup_max_size": 1000000,
-    "_comment_dedup_max_size": "去重过滤器最大容量"
+    "_comment_dedup_max_size": "去重过滤器最大容量",
+    "_comment_performance": "===== v2.2.0 新增: 性能优化配置 =====",
+    "use_performance_optimization": true,
+    "_comment_use_performance_optimization": "是否启用性能优化(默认true)",
+    "precomputed_window_size": 8,
+    "_comment_precomputed_window_size": "预计算表窗口大小4-8, 越大越快但占用更多内存(默认8, 50KB)",
+    "use_simd_hash": true,
+    "_comment_use_simd_hash": "是否使用SIMD哈希优化(需要pycryptodome)",
+    "use_memory_pool": true,
+    "_comment_use_memory_pool": "是否使用内存池(减少对象分配开销)",
+    "use_gpu_memory_pool": true,
+    "_comment_use_gpu_memory_pool": "是否使用GPU内存池(需要pyopencl)",
+    "gpu_pool_max_buffers": 100,
+    "_comment_gpu_pool_max_buffers": "GPU内存池最大缓冲区数量",
+    "gpu_pool_max_memory_mb": 512,
+    "_comment_gpu_pool_max_memory_mb": "GPU内存池最大内存(MB)"
   },
   "logging": {
     "_comment": "日志配置",

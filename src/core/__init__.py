@@ -24,6 +24,40 @@ from .simd_optimizer import (
     create_simd_optimizer,
     create_batch_processor
 )
+from .precomputed_table import (
+    PrecomputedPointTable,
+    PrecomputedTableManager,
+    get_precomputed_table,
+    precomputed_table_manager
+)
+from .bigint_optimizer import (
+    BigIntOptimizer,
+    get_bigint_optimizer,
+    bigint_optimizer
+)
+from .simd_hash import (
+    SIMDHashOptimizer,
+    get_simd_hash_optimizer,
+    simd_hash_optimizer
+)
+from .memory_pool import (
+    ObjectPool,
+    ECPointPool,
+    ByteArrayPool,
+    GlobalPoolManager,
+    pool_manager,
+    get_pool_manager
+)
+from .thread_pool import (
+    WorkStealingThreadPool,
+    TaskBatch,
+    GlobalThreadPoolManager,
+    thread_pool_manager,
+    get_thread_pool
+)
+from .optimized_address_generator import (
+    OptimizedP2PKHAddressGenerator
+)
 
 __all__ = [
     'Secp256k1',
@@ -50,5 +84,33 @@ __all__ = [
     'BatchCollisionProcessor',
     'NumpyOptimizedAddressGenerator',
     'create_simd_optimizer',
-    'create_batch_processor'
+    'create_batch_processor',
+    # 预计算表
+    'PrecomputedPointTable',
+    'PrecomputedTableManager',
+    'get_precomputed_table',
+    'precomputed_table_manager',
+    # 大整数优化
+    'BigIntOptimizer',
+    'get_bigint_optimizer',
+    'bigint_optimizer',
+    # SIMD哈希优化
+    'SIMDHashOptimizer',
+    'get_simd_hash_optimizer',
+    'simd_hash_optimizer',
+    # 内存池
+    'ObjectPool',
+    'ECPointPool',
+    'ByteArrayPool',
+    'GlobalPoolManager',
+    'pool_manager',
+    'get_pool_manager',
+    # 线程池
+    'WorkStealingThreadPool',
+    'TaskBatch',
+    'GlobalThreadPoolManager',
+    'thread_pool_manager',
+    'get_thread_pool',
+    # 优化版地址生成器
+    'OptimizedP2PKHAddressGenerator'
 ]

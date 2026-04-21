@@ -1180,7 +1180,12 @@ class CollisionGUI:
                 on_match=self._on_match,
                 on_complete=self._on_complete,
                 checkpoint_enabled=checkpoint_enabled,
-                dedup_enabled=dedup_enabled
+                dedup_enabled=dedup_enabled,
+                # v2.2.0 性能优化参数 (默认启用)
+                use_performance_optimization=True,
+                precomputed_window_size=8,
+                use_simd_hash=True,
+                use_memory_pool=True
             )
             actual_mode = "CPU"
         
@@ -1297,7 +1302,12 @@ class CollisionGUI:
                 on_match=self._on_match,
                 on_complete=self._on_complete,
                 checkpoint_enabled=True,  # 恢复断点时总是启用
-                dedup_enabled=dedup_enabled
+                dedup_enabled=dedup_enabled,
+                # v2.2.0 性能优化参数 (默认启用)
+                use_performance_optimization=True,
+                precomputed_window_size=8,
+                use_simd_hash=True,
+                use_memory_pool=True
             )
             actual_mode = "CPU"
         

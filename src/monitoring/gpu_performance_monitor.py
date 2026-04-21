@@ -1,0 +1,669 @@
+# -*- coding: utf-8 -*-
+"""
+GPU性能监控模块 - 实时监控GPU碰撞引擎
+
+监控GPU碰撞引擎的关键性能指标:
+- GPU利用率和计算效率
+- 显存使用情况和泄漏检测
+- 批次执行时间和吞吐量
+- 内核编译性能
+- 错误率和异常检测
+- 性能退化告警
+"""
+
+import time
+import threading
+import logging
+from typing import Dict, List, Optional, Any, Callable
+from collections import deque
+from dataclasses import dataclass, field
+from datetime import datetime
+
+logger = logging.getLogger("GPUPerformanceMonitor")
+
+
+@dataclass
+class GPUKernelMetrics:
+    """GPU内核执行指标"""
+    timestamp: float
+    batch_size: int
+    execution_time_ms: float
+    keys_per_second: float
+    memory_allocated_mb: float
+    error_count: int
+    match_count: int
+    
+    # 延迟统计(带默认值)
+    queue_wait_time_ms: float = 0.0
+    data_transfer_time_ms: float = 0.0
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """转换为字典"""
+        return {
+            'timestamp': self.timestamp,
+            'datetime': datetime.fromtimestamp(self.timestamp).isoformat(),
+            'batch_size': self.batch_size,
+            'execution_time_ms': self.execution_time_ms,
+            'keys_per_second': self.keys_per_second,
+            'memory_allocated_mb': self.memory_allocated_mb,
+            'error_count': self.error_count,
+            'match_count': self.match_count,
+            'queue_wait_time_ms': self.queue_wait_time_ms,
+            'data_transfer_time_ms': self.data_transfer_time_ms
+        }
+
+
+@dataclass
+class GPUMemoryMetrics:
+    """GPU显存指标"""
+    timestamp: float
+    total_memory_mb: float
+    used_memory_mb: float
+    free_memory_mb: float
+    usage_percent: float
+    peak_usage_mb: float
+    allocation_count: int
+    deallocation_count: int
+    pool_hits: int = 0
+    pool_misses: int = 0
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """转换为字典"""
+        return {
+            'timestamp': self.timestamp,
+            'datetime': datetime.fromtimestamp(self.timestamp).isoformat(),
+            'total_memory_mb': self.total_memory_mb,
+            'used_memory_mb': self.used_memory_mb,
+            'free_memory_mb': self.free_memory_mb,
+            'usage_percent': self.usage_percent,
+            'peak_usage_mb': self.peak_usage_mb,
+            'allocation_count': self.allocation_count,
+            'deallocation_count': self.deallocation_count,
+            'pool_hits': self.pool_hits,
+            'pool_misses': self.pool_misses,
+            'pool_hit_rate': self.pool_hits / max(self.pool_hits + self.pool_misses, 1) * 100
+        }
+
+
+@dataclass
+class GPUPerformanceReport:
+    """GPU性能报告"""
+    device_name: str
+    vendor: str
+    monitoring_duration_sec: float
+    total_batches: int
+    total_keys_processed: int
+    avg_throughput_keys_per_sec: float
+    peak_throughput_keys_per_sec: float
+    avg_execution_time_ms: float
+    min_execution_time_ms: float
+    max_execution_time_ms: float
+    memory_usage_avg_mb: float
+    memory_usage_peak_mb: float
+    error_rate_percent: float
+    pool_hit_rate_percent: float
+    performance_stability_percent: float
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """转换为字典"""
+        return {
+            'device_name': self.device_name,
+            'vendor': self.vendor,
+            'monitoring_duration_sec': self.monitoring_duration_sec,
+            'total_batches': self.total_batches,
+            'total_keys_processed': self.total_keys_processed,
+            'avg_throughput_keys_per_sec': self.avg_throughput_keys_per_sec,
+            'peak_throughput_keys_per_sec': self.peak_throughput_keys_per_sec,
+            'avg_execution_time_ms': self.avg_execution_time_ms,
+            'min_execution_time_ms': self.min_execution_time_ms,
+            'max_execution_time_ms': self.max_execution_time_ms,
+            'memory_usage_avg_mb': self.memory_usage_avg_mb,
+            'memory_usage_peak_mb': self.memory_usage_peak_mb,
+            'error_rate_percent': self.error_rate_percent,
+            'pool_hit_rate_percent': self.pool_hit_rate_percent,
+            'performance_stability_percent': self.performance_stability_percent
+        }
+
+
+class GPUPerformanceMonitor:
+    """GPU性能监控器
+    
+    实时监控GPU碰撞引擎的性能指标,包括:
+    - 内核执行性能
+    - 显存使用情况
+    - 错误和异常
+    - 性能退化检测
+    
+    使用示例:
+        monitor = GPUPerformanceMonitor(engine=gpu_engine)
+        monitor.start()
+        
+        # 在GPU引擎中记录指标
+        monitor.record_kernel_metrics(
+            batch_size=10000,
+            execution_time_ms=50.5,
+            memory_allocated_mb=128.0
+        )
+        
+        # 获取报告
+        report = monitor.get_performance_report()
+        
+        monitor.stop()
+    """
+    
+    def __init__(self,
+                 engine: Any = None,
+                 check_interval: float = 2.0,
+                 degradation_threshold: float = 0.75,
+                 history_size: int = 500):
+        """
+        初始化GPU性能监控器
+        
+        Args:
+            engine: GPU碰撞引擎实例(GPUCollisionEngine)
+            check_interval: 检查间隔(秒)
+            degradation_threshold: 性能退化阈值(相对于峰值的比值)
+            history_size: 历史记录大小
+        """
+        self.engine = engine
+        self.check_interval = check_interval
+        self.degradation_threshold = degradation_threshold
+        self.history_size = history_size
+        
+        # 内核执行历史
+        self._kernel_metrics: deque = deque(maxlen=history_size)
+        
+        # 显存使用历史
+        self._memory_metrics: deque = deque(maxlen=history_size)
+        
+        # 统计信息
+        self._peak_throughput = 0.0
+        self._total_batches = 0
+        self._total_keys = 0
+        self._total_errors = 0
+        self._start_time = None
+        
+        # 显存跟踪
+        self._peak_memory_mb = 0.0
+        self._total_allocations = 0
+        self._total_deallocations = 0
+        self._pool_hits = 0
+        self._pool_misses = 0
+        
+        # 线程控制
+        self._running = False
+        self._thread: Optional[threading.Thread] = None
+        self._lock = threading.Lock()
+        
+        # 告警回调
+        self._degradation_callbacks: List[Callable] = []
+        self._error_callbacks: List[Callable] = []
+        
+        # GPU设备信息
+        self._device_name = "Unknown"
+        self._vendor = "Unknown"
+        self._total_memory_mb = 0.0
+        
+        if engine:
+            self._init_device_info()
+        
+        logger.info(f"GPUPerformanceMonitor初始化: "
+                   f"device={self._device_name}, "
+                   f"check_interval={check_interval}s")
+    
+    def _init_device_info(self):
+        """初始化GPU设备信息"""
+        try:
+            if hasattr(self.engine, '_gpu_device') and self.engine._gpu_device:
+                device_info = self.engine._gpu_device.get_device_info()
+                self._device_name = device_info.get('name', 'Unknown')
+                self._vendor = device_info.get('vendor', 'Unknown')
+                self._total_memory_mb = device_info.get('global_mem_size', 0) / (1024 * 1024)
+                
+                logger.info(f"GPU设备信息: {self._device_name} ({self._vendor}), "
+                          f"显存={self._total_memory_mb:.0f}MB")
+        except Exception as e:
+            logger.warning(f"获取GPU设备信息失败: {e}")
+    
+    def start(self):
+        """启动监控"""
+        if self._running:
+            return
+        
+        self._running = True
+        self._start_time = time.time()
+        self._thread = threading.Thread(target=self._monitor_loop, daemon=True)
+        self._thread.start()
+        
+        logger.info(f"GPU性能监控已启动: {self._device_name}")
+    
+    def stop(self):
+        """停止监控"""
+        self._running = False
+        if self._thread:
+            self._thread.join(timeout=5)
+        
+        logger.info(f"GPU性能监控已停止: {self._total_batches}批次, "
+                   f"{self._total_keys:,}密钥")
+    
+    def record_kernel_metrics(self,
+                             batch_size: int,
+                             execution_time_ms: float,
+                             memory_allocated_mb: float = 0.0,
+                             error_count: int = 0,
+                             match_count: int = 0,
+                             queue_wait_time_ms: float = 0.0,
+                             data_transfer_time_ms: float = 0.0):
+        """
+        记录内核执行指标
+        
+        Args:
+            batch_size: 批次大小
+            execution_time_ms: 执行时间(毫秒)
+            memory_allocated_mb: 分配显存(MB)
+            error_count: 错误数
+            match_count: 匹配数
+            queue_wait_time_ms: 队列等待时间
+            data_transfer_time_ms: 数据传输时间
+        """
+        # 计算吞吐量
+        keys_per_second = (batch_size / execution_time_ms * 1000) if execution_time_ms > 0 else 0
+        
+        metrics = GPUKernelMetrics(
+            timestamp=time.time(),
+            batch_size=batch_size,
+            execution_time_ms=execution_time_ms,
+            keys_per_second=keys_per_second,
+            memory_allocated_mb=memory_allocated_mb,
+            error_count=error_count,
+            match_count=match_count,
+            queue_wait_time_ms=queue_wait_time_ms,
+            data_transfer_time_ms=data_transfer_time_ms
+        )
+        
+        with self._lock:
+            self._kernel_metrics.append(metrics)
+            self._total_batches += 1
+            self._total_keys += batch_size
+            self._total_errors += error_count
+            
+            # 更新峰值吞吐量
+            if keys_per_second > self._peak_throughput:
+                self._peak_throughput = keys_per_second
+            
+            # 更新显存峰值
+            if memory_allocated_mb > self._peak_memory_mb:
+                self._peak_memory_mb = memory_allocated_mb
+            
+            # 检测性能退化
+            if self._peak_throughput > 0 and keys_per_second < self._peak_throughput * self.degradation_threshold:
+                self._on_performance_degradation(metrics)
+        
+        logger.debug(f"GPU内核指标: batch={batch_size:,}, "
+                    f"time={execution_time_ms:.1f}ms, "
+                    f"throughput={keys_per_second:,.0f} keys/s")
+    
+    def record_memory_metrics(self,
+                             used_memory_mb: float,
+                             total_memory_mb: float = 0.0,
+                             allocation: bool = True,
+                             pool_hit: bool = False):
+        """
+        记录显存指标
+        
+        Args:
+            used_memory_mb: 已使用显存(MB)
+            total_memory_mb: 总显存(MB)
+            allocation: True=分配, False=释放
+            pool_hit: 是否命中内存池
+        """
+        if total_memory_mb == 0:
+            total_memory_mb = self._total_memory_mb
+        
+        free_memory_mb = total_memory_mb - used_memory_mb
+        usage_percent = (used_memory_mb / total_memory_mb * 100) if total_memory_mb > 0 else 0
+        
+        if allocation:
+            self._total_allocations += 1
+        else:
+            self._total_deallocations += 1
+        
+        if pool_hit:
+            self._pool_hits += 1
+        else:
+            self._pool_misses += 1
+        
+        if used_memory_mb > self._peak_memory_mb:
+            self._peak_memory_mb = used_memory_mb
+        
+        memory_metrics = GPUMemoryMetrics(
+            timestamp=time.time(),
+            total_memory_mb=total_memory_mb,
+            used_memory_mb=used_memory_mb,
+            free_memory_mb=free_memory_mb,
+            usage_percent=usage_percent,
+            peak_usage_mb=self._peak_memory_mb,
+            allocation_count=self._total_allocations,
+            deallocation_count=self._total_deallocations,
+            pool_hits=self._pool_hits,
+            pool_misses=self._pool_misses
+        )
+        
+        with self._lock:
+            self._memory_metrics.append(memory_metrics)
+        
+        logger.debug(f"GPU显存指标: used={used_memory_mb:.1f}MB, "
+                    f"usage={usage_percent:.1f}%")
+    
+    def get_current_throughput(self) -> float:
+        """获取当前吞吐量(keys/秒)"""
+        with self._lock:
+            if self._kernel_metrics:
+                return self._kernel_metrics[-1].keys_per_second
+        return 0.0
+    
+    def get_average_throughput(self, window_seconds: float = 60.0) -> float:
+        """
+        获取平均吞吐量
+        
+        Args:
+            window_seconds: 时间窗口(秒)
+        
+        Returns:
+            平均吞吐量(keys/秒)
+        """
+        with self._lock:
+            if not self._kernel_metrics:
+                return 0.0
+            
+            cutoff_time = time.time() - window_seconds
+            recent_metrics = [m for m in self._kernel_metrics if m.timestamp >= cutoff_time]
+            
+            if not recent_metrics:
+                return 0.0
+            
+            total_throughput = sum(m.keys_per_second for m in recent_metrics)
+            return total_throughput / len(recent_metrics)
+    
+    def get_memory_usage(self) -> Dict[str, float]:
+        """
+        获取显存使用情况
+        
+        Returns:
+            显存使用字典
+        """
+        with self._lock:
+            if self._memory_metrics:
+                latest = self._memory_metrics[-1]
+                return {
+                    'used_mb': latest.used_memory_mb,
+                    'total_mb': latest.total_memory_mb,
+                    'free_mb': latest.free_memory_mb,
+                    'usage_percent': latest.usage_percent,
+                    'peak_mb': latest.peak_usage_mb,
+                    'pool_hit_rate': latest.pool_hits / max(latest.pool_hits + latest.pool_misses, 1) * 100
+                }
+        
+        return {
+            'used_mb': 0.0,
+            'total_mb': self._total_memory_mb,
+            'free_mb': self._total_memory_mb,
+            'usage_percent': 0.0,
+            'peak_mb': self._peak_memory_mb,
+            'pool_hit_rate': 0.0
+        }
+    
+    def get_performance_report(self) -> GPUPerformanceReport:
+        """
+        获取GPU性能报告
+        
+        Returns:
+            性能报告
+        """
+        with self._lock:
+            if not self._kernel_metrics:
+                return GPUPerformanceReport(
+                    device_name=self._device_name,
+                    vendor=self._vendor,
+                    monitoring_duration_sec=0,
+                    total_batches=0,
+                    total_keys_processed=0,
+                    avg_throughput_keys_per_sec=0,
+                    peak_throughput_keys_per_sec=0,
+                    avg_execution_time_ms=0,
+                    min_execution_time_ms=0,
+                    max_execution_time_ms=0,
+                    memory_usage_avg_mb=0,
+                    memory_usage_peak_mb=0,
+                    error_rate_percent=0,
+                    pool_hit_rate_percent=0,
+                    performance_stability_percent=0
+                )
+            
+            # 计算统计
+            throughputs = [m.keys_per_second for m in self._kernel_metrics]
+            exec_times = [m.execution_time_ms for m in self._kernel_metrics]
+            memory_usages = [m.memory_allocated_mb for m in self._kernel_metrics if m.memory_allocated_mb > 0]
+            
+            avg_throughput = sum(throughputs) / len(throughputs)
+            peak_throughput = max(throughputs)
+            
+            avg_exec_time = sum(exec_times) / len(exec_times)
+            min_exec_time = min(exec_times)
+            max_exec_time = max(exec_times)
+            
+            avg_memory = sum(memory_usages) / len(memory_usages) if memory_usages else 0
+            peak_memory = max(memory_usages) if memory_usages else self._peak_memory_mb
+            
+            # 错误率
+            error_rate = (self._total_errors / max(self._total_batches, 1)) * 100
+            
+            # 内存池命中率
+            pool_hit_rate = (self._pool_hits / max(self._pool_hits + self._pool_misses, 1)) * 100
+            
+            # 性能稳定性
+            stability = (min(throughputs) / max(throughputs) * 100) if max(throughputs) > 0 else 0
+            
+            # 监控时长
+            duration = time.time() - self._start_time if self._start_time else 0
+            
+            return GPUPerformanceReport(
+                device_name=self._device_name,
+                vendor=self._vendor,
+                monitoring_duration_sec=duration,
+                total_batches=self._total_batches,
+                total_keys_processed=self._total_keys,
+                avg_throughput_keys_per_sec=avg_throughput,
+                peak_throughput_keys_per_sec=peak_throughput,
+                avg_execution_time_ms=avg_exec_time,
+                min_execution_time_ms=min_exec_time,
+                max_execution_time_ms=max_exec_time,
+                memory_usage_avg_mb=avg_memory,
+                memory_usage_peak_mb=peak_memory,
+                error_rate_percent=error_rate,
+                pool_hit_rate_percent=pool_hit_rate,
+                performance_stability_percent=stability
+            )
+    
+    def on_degradation(self, callback: Callable):
+        """
+        注册性能退化回调
+        
+        Args:
+            callback: 回调函数 fn(metrics, degradation_ratio)
+        """
+        self._degradation_callbacks.append(callback)
+    
+    def on_error(self, callback: Callable):
+        """
+        注册错误回调
+        
+        Args:
+            callback: 回调函数 fn(error_count, error_rate)
+        """
+        self._error_callbacks.append(callback)
+    
+    def export_metrics(self, format: str = 'json') -> str:
+        """
+        导出指标数据
+        
+        Args:
+            format: 导出格式 ('json' 或 'csv')
+        
+        Returns:
+            导出的数据字符串
+        """
+        import json
+        
+        with self._lock:
+            kernel_list = [m.to_dict() for m in self._kernel_metrics]
+            memory_list = [m.to_dict() for m in self._memory_metrics]
+            
+            if format == 'json':
+                return json.dumps({
+                    'kernel_metrics': kernel_list,
+                    'memory_metrics': memory_list,
+                    'device_info': {
+                        'name': self._device_name,
+                        'vendor': self._vendor,
+                        'total_memory_mb': self._total_memory_mb
+                    }
+                }, indent=2, ensure_ascii=False)
+            elif format == 'csv':
+                if not kernel_list:
+                    return ""
+                
+                headers = kernel_list[0].keys()
+                csv_lines = [','.join(headers)]
+                
+                for m in kernel_list:
+                    row = [str(m[h]) for h in headers]
+                    csv_lines.append(','.join(row))
+                
+                return '\n'.join(csv_lines)
+            else:
+                raise ValueError(f"不支持的格式: {format}")
+    
+    def _monitor_loop(self):
+        """监控循环"""
+        while self._running:
+            try:
+                # 定期收集GPU引擎指标
+                if self.engine:
+                    self._collect_engine_metrics()
+                
+                # 检查显存泄漏
+                self._check_memory_leak()
+                
+                # 检查错误率
+                self._check_error_rate()
+                
+                time.sleep(self.check_interval)
+            except Exception as e:
+                logger.error(f"GPU监控循环异常: {e}")
+                time.sleep(self.check_interval)
+    
+    def _collect_engine_metrics(self):
+        """从GPU引擎收集指标"""
+        try:
+            # 收集显存信息
+            if hasattr(self.engine, 'memory_monitor') and self.engine.memory_monitor:
+                mem_status = self.engine.memory_monitor.get_status()
+                self.record_memory_metrics(
+                    used_memory_mb=mem_status.get('current_mb', 0),
+                    total_memory_mb=mem_status.get('total_memory_gb', 0) * 1024,
+                    allocation=True
+                )
+            
+            # 收集GPU内存池信息
+            if hasattr(self.engine, '_gpu_memory_pool') and self.engine._gpu_memory_pool:
+                pool_stats = self.engine._gpu_memory_pool.get_stats()
+                logger.debug(f"GPU内存池状态: {pool_stats}")
+        except Exception as e:
+            logger.debug(f"收集GPU引擎指标失败: {e}")
+    
+    def _check_memory_leak(self):
+        """检测显存泄漏"""
+        with self._lock:
+            if len(self._memory_metrics) < 50:
+                return
+            
+            # 检查最近50个样本的趋势
+            recent = list(self._memory_metrics)[-50:]
+            memory_values = [m.used_memory_mb for m in recent]
+            
+            # 简单线性趋势检测
+            if len(memory_values) >= 2:
+                avg_first_half = sum(memory_values[:25]) / 25
+                avg_second_half = sum(memory_values[25:]) / 25
+                
+                # 如果后半段比前半段高20%以上,可能存在泄漏
+                if avg_first_half > 0 and (avg_second_half - avg_first_half) / avg_first_half > 0.2:
+                    logger.warning(f"⚠️ 检测到可能的显存泄漏: "
+                                 f"前半段={avg_first_half:.1f}MB, "
+                                 f"后半段={avg_second_half:.1f}MB")
+    
+    def _check_error_rate(self):
+        """检查错误率"""
+        with self._lock:
+            if self._total_batches < 10:
+                return
+            
+            error_rate = (self._total_errors / self._total_batches) * 100
+            
+            # 错误率超过5%触发告警
+            if error_rate > 5.0:
+                logger.warning(f"⚠️ GPU错误率过高: {error_rate:.2f}% "
+                             f"({self._total_errors}/{self._total_batches})")
+                
+                # 触发错误回调
+                for callback in self._error_callbacks:
+                    try:
+                        callback(self._total_errors, error_rate)
+                    except Exception as e:
+                        logger.error(f"错误回调执行失败: {e}")
+    
+    def _on_performance_degradation(self, metrics: GPUKernelMetrics):
+        """性能退化处理"""
+        degradation_ratio = metrics.keys_per_second / self._peak_throughput if self._peak_throughput > 0 else 0
+        
+        logger.warning(f"⚠️ GPU性能退化: "
+                      f"当前={metrics.keys_per_second:,.0f} keys/s, "
+                      f"峰值={self._peak_throughput:,.0f} keys/s, "
+                      f"退化率={degradation_ratio:.2%}")
+        
+        # 触发回调
+        for callback in self._degradation_callbacks:
+            try:
+                callback(metrics, degradation_ratio)
+            except Exception as e:
+                logger.error(f"GPU性能退化回调执行失败: {e}")
+
+
+# 全局GPU性能监控器实例
+_global_gpu_monitor: Optional[GPUPerformanceMonitor] = None
+_monitor_lock = threading.Lock()
+
+
+def get_gpu_performance_monitor(engine: Any = None) -> GPUPerformanceMonitor:
+    """获取全局GPU性能监控器"""
+    global _global_gpu_monitor
+    
+    with _monitor_lock:
+        if _global_gpu_monitor is None:
+            _global_gpu_monitor = GPUPerformanceMonitor(engine=engine)
+        elif engine and _global_gpu_monitor.engine is None:
+            _global_gpu_monitor.engine = engine
+            _global_gpu_monitor._init_device_info()
+        
+        return _global_gpu_monitor
+
+
+def reset_gpu_performance_monitor():
+    """重置全局GPU性能监控器"""
+    global _global_gpu_monitor
+    
+    with _monitor_lock:
+        if _global_gpu_monitor:
+            _global_gpu_monitor.stop()
+        _global_gpu_monitor = None

@@ -7,6 +7,7 @@ import concurrent.futures
 import psutil
 from typing import Set, Optional, Callable, Tuple, List, Dict, Any
 from ..core.address_generator import P2PKHAddressGenerator
+from ..core.optimized_address_generator import OptimizedP2PKHAddressGenerator
 from ..core.secp256k1 import Secp256k1
 from ..core.secure_key_manager import SecureKeyManager
 from .collision_stats import CollisionStats
@@ -53,7 +54,12 @@ class KeyCollisionEngine(BaseCollisionEngine):
                  data_logging_enabled: bool = True,
                  data_logging_interval: int = 5,
                  verbose_logging: bool = False,
-                 use_enhanced_monitoring: bool = True):  # 默认启用增强监控
+                 use_enhanced_monitoring: bool = True,  # 默认启用增强监控
+                 # 性能优化参数 (v2.2.0新增)
+                 use_performance_optimization: bool = True,
+                 precomputed_window_size: int = 8,
+                 use_simd_hash: bool = True,
+                 use_memory_pool: bool = True):
         """
         Args:
             targets: 目标地址集合 (set, O(1)查找)
@@ -74,6 +80,12 @@ class KeyCollisionEngine(BaseCollisionEngine):
             data_logging_interval: 数据日志记录间隔(秒)
             verbose_logging: 是否启用详细日志（生产环境建议False）
             use_enhanced_monitoring: 是否使用增强监控系统（默认True，包含异常检测和告警）
+            
+            # 性能优化参数 (v2.2.0新增)
+            use_performance_optimization: 是否启用性能优化（默认True）
+            precomputed_window_size: 预计算表窗口大小4-8（默认8）
+            use_simd_hash: 是否使用SIMD哈希优化（默认True）
+            use_memory_pool: 是否使用内存池（默认True）
         
         安全特性:
             - 使用SecureKeyManager管理私钥生命周期
@@ -85,7 +97,21 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self.on_progress = on_progress
         self.on_match = on_match
         self.on_complete = on_complete
-        self.generator = P2PKHAddressGenerator()
+        
+        # 性能优化: 选择优化版或标准版地址生成器 (v2.2.0)
+        if use_performance_optimization:
+            self.generator = OptimizedP2PKHAddressGenerator(
+                use_precomputed_table=True,
+                use_simd_hash=use_simd_hash,
+                use_memory_pool=use_memory_pool,
+                window_size=precomputed_window_size
+            )
+            logger.info(f"KeyCollisionEngine 使用优化版地址生成器: "
+                       f"window_size={precomputed_window_size}, "
+                       f"simd={use_simd_hash}, pool={use_memory_pool}")
+        else:
+            self.generator = P2PKHAddressGenerator()
+            logger.info("KeyCollisionEngine 使用标准版地址生成器")
         self.stats = CollisionStats()
         self._stop_event = threading.Event()
         self._running = False

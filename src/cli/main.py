@@ -146,6 +146,34 @@ def parse_args() -> argparse.Namespace:
         default=5.0,
         help="进度显示间隔（秒，默认: 5）"
     )
+    
+    # v2.2.0 性能优化选项
+    opt_group = parser.add_argument_group("v2.2.0 性能优化")
+    opt_group.add_argument(
+        "--no-optimize",
+        action="store_true",
+        default=False,
+        help="禁用性能优化（使用标准引擎）"
+    )
+    opt_group.add_argument(
+        "--window-size",
+        metavar="N",
+        type=int,
+        default=8,
+        help="预计算表窗口大小 4-8（默认: 8）"
+    )
+    opt_group.add_argument(
+        "--no-simd",
+        action="store_true",
+        default=False,
+        help="禁用SIMD哈希优化"
+    )
+    opt_group.add_argument(
+        "--no-memory-pool",
+        action="store_true",
+        default=False,
+        help="禁用内存池优化"
+    )
 
     return parser.parse_args()
 
@@ -293,6 +321,13 @@ def main() -> None:
     print(f"去重过滤     : {'启用' if args.dedup else '禁用'}")
     duration_str = f"{args.duration}秒" if args.duration > 0 else "无限制（Ctrl+C 停止）"
     print(f"运行时长     : {duration_str}")
+    # v2.2.0 性能优化信息
+    optimize_status = "禁用" if args.no_optimize else "启用"
+    print(f"性能优化     : {optimize_status} (v2.2.0)")
+    if not args.no_optimize:
+        print(f"  - 预计算表   : window_size={args.window_size}")
+        print(f"  - SIMD哈希   : {'禁用' if args.no_simd else '启用'}")
+        print(f"  - 内存池     : {'禁用' if args.no_memory_pool else '启用'}")
     print("-" * 70)
 
     # 构建引擎
@@ -305,6 +340,11 @@ def main() -> None:
         dedup_enabled=args.dedup,
         dedup_max_size=args.dedup_max_size,
         max_workers=args.workers,
+        # v2.2.0 性能优化参数
+        use_performance_optimization=not args.no_optimize,
+        precomputed_window_size=args.window_size,
+        use_simd_hash=not args.no_simd,
+        use_memory_pool=not args.no_memory_pool,
     )
 
     # 信号处理（Ctrl+C 优雅停止）
