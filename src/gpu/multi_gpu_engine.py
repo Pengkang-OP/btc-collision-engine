@@ -7,6 +7,7 @@
 
 import logging
 import time
+import threading
 from typing import Set, Dict, List, Optional, Callable
 
 from .selector import get_gpu_selector
@@ -50,11 +51,15 @@ class MultiGPUCollisionEngine:
         self.load_balancer = None
         self.workers = {}
         
-        # 状态管理
+        # 状态管理 (使用锁保护)
+        self._state_lock = threading.Lock()
         self._running = False
         self._initialized = False
         self._devices = []
         self._targets = set()
+        
+        # 工作器字典锁
+        self._workers_lock = threading.Lock()
         
         # 结果收集
         self._all_matches = []
@@ -120,7 +125,8 @@ class MultiGPUCollisionEngine:
                 strategy=strategy
             )
             
-            self._initialized = True
+            with self._state_lock:
+                self._initialized = True
             
             logger.info("多GPU引擎初始化成功")
             return True
@@ -151,9 +157,10 @@ class MultiGPUCollisionEngine:
             logger.error("引擎未初始化,请先调用initialize()")
             return False
         
-        if self._running:
-            logger.warning("引擎已在运行中")
-            return False
+        with self._state_lock:
+            if self._running:
+                logger.warning("引擎已在运行中")
+                return False
         
         try:
             self._targets = targets
@@ -181,14 +188,19 @@ class MultiGPUCollisionEngine:
                     result_callback=self._on_match_found
                 )
                 
-                self.workers[idx] = worker
+                with self._workers_lock:
+                    self.workers[idx] = worker
             
             # 启动所有工作器
-            for idx, worker in self.workers.items():
+            with self._workers_lock:
+                workers_snapshot = dict(self.workers)
+            
+            for idx, worker in workers_snapshot.items():
                 worker.start()
                 logger.info(f"GPU {idx} 工作器已启动")
             
-            self._running = True
+            with self._state_lock:
+                self._running = True
             
             logger.info(
                 f"多GPU碰撞已启动: {len(self.workers)}个GPU, "
@@ -203,13 +215,17 @@ class MultiGPUCollisionEngine:
     
     def stop(self):
         """停止所有GPU工作器"""
-        if not self._running:
-            return
+        with self._state_lock:
+            if not self._running:
+                return
         
         logger.info("停止多GPU碰撞...")
         
         # 停止所有工作器
-        for idx, worker in self.workers.items():
+        with self._workers_lock:
+            workers_snapshot = dict(self.workers)
+        
+        for idx, worker in workers_snapshot.items():
             try:
                 worker.stop_search()
                 logger.info(f"GPU {idx} 工作器停止信号已发送")
@@ -217,14 +233,18 @@ class MultiGPUCollisionEngine:
                 logger.error(f"停止GPU {idx} 工作器失败: {e}")
         
         # 等待所有工作器结束
-        for idx, worker in self.workers.items():
+        for idx, worker in workers_snapshot.items():
             try:
-                worker.join(timeout=10)
-                logger.info(f"GPU {idx} 工作器已停止")
+                worker.join(timeout=30)
+                if worker.is_alive():
+                    logger.warning(f"GPU {idx} 工作器未在30秒内停止")
+                else:
+                    logger.info(f"GPU {idx} 工作器已停止")
             except Exception as e:
                 logger.error(f"等待GPU {idx} 工作器失败: {e}")
         
-        self._running = False
+        with self._state_lock:
+            self._running = False
         
         # 更新统计
         self._update_combined_stats()
@@ -233,7 +253,10 @@ class MultiGPUCollisionEngine:
     
     def pause(self):
         """暂停所有GPU工作器"""
-        for idx, worker in self.workers.items():
+        with self._workers_lock:
+            workers_snapshot = dict(self.workers)
+        
+        for idx, worker in workers_snapshot.items():
             try:
                 worker.pause_search()
             except Exception as e:
@@ -243,7 +266,10 @@ class MultiGPUCollisionEngine:
     
     def resume(self):
         """恢复所有GPU工作器"""
-        for idx, worker in self.workers.items():
+        with self._workers_lock:
+            workers_snapshot = dict(self.workers)
+        
+        for idx, worker in workers_snapshot.items():
             try:
                 worker.resume_search()
             except Exception as e:
@@ -395,14 +421,19 @@ class MultiGPUCollisionEngine:
     
     def cleanup(self):
         """清理所有资源"""
-        self.stop()
+        with self._state_lock:
+            if self._running:
+                self.stop()
         
-        self.workers.clear()
+        with self._workers_lock:
+            self.workers.clear()
+        
         self._devices.clear()
         self._all_matches.clear()
         
-        self._initialized = False
-        self._running = False
+        with self._state_lock:
+            self._initialized = False
+            self._running = False
         
         logger.info("多GPU引擎资源已清理")
     

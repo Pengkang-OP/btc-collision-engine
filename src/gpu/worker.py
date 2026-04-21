@@ -97,8 +97,9 @@ class SingleGPUWorker(threading.Thread):
         """线程主循环"""
         try:
             self._initialize_gpu_engine()
-            self._stats['status'] = 'running'
-            self._stats['start_time'] = time.time()
+            with self._lock:
+                self._stats['status'] = 'running'
+                self._stats['start_time'] = time.time()
             
             logger.info(f"GPU {self.device_idx} 开始搜索...")
             
@@ -113,6 +114,8 @@ class SingleGPUWorker(threading.Thread):
                 self._stats['error_count'] += 1
         
         finally:
+            # 确保异常时也清理资源
+            self._cleanup_gpu_engine()
             self._cleanup()
             self._stats['status'] = 'stopped'
             logger.info(f"GPU {self.device_idx} 工作器已停止")
@@ -297,7 +300,7 @@ class SingleGPUWorker(threading.Thread):
         Returns:
             True表示线程存活
         """
-        return self.is_alive()
+        return threading.Thread.is_alive(self)
     
     def get_device_idx(self) -> int:
         """获取设备索引
