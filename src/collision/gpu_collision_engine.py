@@ -3,6 +3,7 @@
 基于 OpenCL 的 GPU 加速实现，利用 GPU 并行计算能力进行批量私钥碰撞检测。
 """
 
+# ========== 标准库导入 ==========
 import os
 import sys
 import json
@@ -15,11 +16,33 @@ from typing import Set, Optional, Callable, Tuple, List, Dict, Any
 
 logger = logging.getLogger(__name__)
 
-# 导入新GPU模块
+# ========== 常量定义 ==========
+# P2-2: 魔法数字提取为常量
+# GPU计算常量
+INITIAL_BATCH_SIZE = 1_000_000  # 初始批次大小（100万）
+ASYNC_KEY_GEN_TIMEOUT = 30.0  # 异步私钥生成超时（秒）
+BATCH_LOG_FREQUENCY = 100  # 日志记录频率（每N个batch）
+INITIAL_BATCHES_LOG = 3  # 初始批次日志数量
+
+# 线程等待超时
+THREAD_JOIN_TIMEOUT = 5.0  # 默认线程join超时（秒）
+MONITOR_THREAD_JOIN_TIMEOUT = 1.0  # 监控线程join超时（秒）
+
+# 异常恢复
+EXCEPTION_RECOVERY_DELAY = 0.1  # 异常恢复延迟（秒）
+
+# ========== 本地模块导入 ==========
+# GPU设备与上下文
 from ..gpu.device import GPUDevice, GPUDeviceDetector
 from ..gpu.context import GPUContext
+from ..gpu.device_helper import GPUDeviceHelper  # P1-2修复：从独立模块导入
+
+# GPU内核与协议
 from ..gpu.profiles.loader import GPUProfileLoader
 from ..gpu.kernel import OPENCL_KERNEL_SOURCE
+from ..gpu.kernel_protocol import GPUKernelProtocol, GPUKernelFactory  # P1-2修复
+
+# GPU性能优化
 from ..gpu.performance_optimizer import get_gpu_optimizer, PerformanceMetrics
 from ..gpu.intel_timeout_manager import AdaptiveTimeoutManager
 from ..gpu.intel_memory_monitor import IntelMemoryMonitor
@@ -62,58 +85,14 @@ def _get_gpu_monitor():
     return _gpu_performance_monitor
 
 
-class GPUDeviceHelper:
-    """GPU设备辅助类 - 提供静态方法供GPUKernel使用"""
-    
-    @staticmethod
-    def handle_gpu_batch_error(mode: str, e: Exception, stats=None):
-        """统一处理GPU计算批次异常
-        
-        Args:
-            mode: 计算模式（随机碰撞/范围扫描/暴力穷举）
-            e: 捕获的异常
-            stats: 统计对象（可选）
-            
-        Returns:
-            bool: 是否应该继续执行（总是返回True）
-        """
-        if isinstance(e, (RuntimeError, ValueError)):
-            # OpenCL运行时错误或数据验证错误
-            # 这些是可恢复的错误，跳过当前批次继续执行
-            # 常见原因：GPU内存不足、内核参数错误、目标地址格式错误
-            error_msg = str(e).lower()
-            # 扩展资源不足关键词匹配，覆盖不同OpenCL实现的错误消息
-            resource_keywords = [
-                "out of resources", "memory", "out of memory", 
-                "allocation failed", "insufficient", "resource exhausted",
-                "cl_out_of_resources", "cl_mem_object_allocation_failure"
-            ]
-            is_resource_error = any(keyword in error_msg for keyword in resource_keywords)
-            if is_resource_error:
-                logger.error(f"GPU {mode}失败（资源不足）: {type(e).__name__}: {e}")
-                if stats:
-                    stats.record_gpu_error(is_resource_error=True)
-            else:
-                logger.error(f"GPU {mode}失败（运行时错误）: {type(e).__name__}: {e}")
-                if stats:
-                    stats.record_gpu_error(is_resource_error=False)
-        elif isinstance(e, (TypeError, OverflowError)):
-            # WIF编码或数据处理错误
-            logger.error(f"GPU {mode}失败（数据错误）: {type(e).__name__}: {e}")
-            if stats:
-                stats.record_gpu_error(is_resource_error=False)
-                stats.record_wif_encode_error()
-        else:
-            # 未知错误：记录完整堆栈
-            logger.exception(f"GPU {mode}失败（未知错误）")
-            if stats:
-                stats.record_gpu_error(is_resource_error=False)
-        return True  # 总是继续执行
+# P1-2修复：GPUDeviceHelper已迁移到src.gpu.device_helper
+# from ..gpu.device_helper import GPUDeviceHelper
 
 
-class GPUKernel:
+class GPUKernel(GPUKernelProtocol):
     """OpenCL GPU 计算内核包装 - 优化版本
     
+    实现GPUKernelProtocol接口（P1-2修复）。
     使用持久化 Buffer 和异步执行来保持 GPU 持续高负载，
     避免频繁的内存分配和同步等待造成的 GPU 空闲。
     """
@@ -1200,7 +1179,6 @@ class GPUCollisionEngine(BaseCollisionEngine):
         num_targets = len(self._target_list)
         
         # 优化1: 增加初始批次到100万（提高GPU利用率）
-        INITIAL_BATCH_SIZE = 1_000_000
         current_batch_size = min(INITIAL_BATCH_SIZE, self.batch_size)
         
         logger.info(f"目标数量: {num_targets}, 初始批次大小: {current_batch_size:,}")
@@ -1363,7 +1341,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
                     
             except Exception as e:
                 ExceptionHandler.handle_gpu_error("异步随机碰撞", e, self.stats)
-                time.sleep(0.1)
+                time.sleep(EXCEPTION_RECOVERY_DELAY)
         
         logger.info(f"GPU _random_search_async 结束: 共处理 {batch_count} 个私钥")
     
@@ -1380,7 +1358,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         """
         return b''.join(secrets.token_bytes(32) for _ in range(count))
     
-    def _start_async_key_generation(self, batch_size: int) -> tuple:
+    def _start_async_key_generation(self, batch_size: int) -> Tuple[threading.Thread, List[Any]]:
         """启动异步私钥生成线程
         
         Args:
@@ -1389,7 +1367,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         Returns:
             (thread, result_list) 元组
         """
-        result = [None]
+        result: List[Any] = [None]
         
         def _generate():
             result[0] = self._generate_private_keys_batch(batch_size)
@@ -1401,7 +1379,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
     def _wait_for_async_key_generation(
         self,
         gen_thread: threading.Thread,
-        gen_result: list,
+        gen_result: List[Any],
         batch_num: int
     ) -> bytes:
         """等待异步私钥生成完成并返回结果
@@ -1416,11 +1394,11 @@ class GPUCollisionEngine(BaseCollisionEngine):
         """
         if gen_thread.is_alive():
             # 使用超时保护
-            gen_thread.join(timeout=30.0)
+            gen_thread.join(timeout=ASYNC_KEY_GEN_TIMEOUT)
             
             if gen_thread.is_alive():
                 logger.error(
-                    f"GPU batch {batch_num}: 异步私钥生成超时（>30秒），强制继续"
+                    f"GPU batch {batch_num}: 异步私钥生成超时（>{ASYNC_KEY_GEN_TIMEOUT}秒），强制继续"
                 )
                 return self._generate_private_keys_batch(self.batch_size)
         
@@ -1438,7 +1416,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         private_keys: bytes,
         batch_size: int,
         batch_num: int
-    ) -> tuple:
+    ) -> Tuple[List[Dict[str, int]], float]:
         """执行GPU batch计算
         
         Args:
@@ -1449,21 +1427,21 @@ class GPUCollisionEngine(BaseCollisionEngine):
         Returns:
             (matches, execution_time_ms) 元组
         """
-        if batch_num <= 3 or batch_num % 100 == 0:
+        if batch_num <= INITIAL_BATCHES_LOG or batch_num % BATCH_LOG_FREQUENCY == 0:
             logger.debug(
                 f"GPU batch {batch_num}: 运行 run_batch (size={batch_size})..."
             )
         
         batch_start_time = time.time()
-        matches = self._gpu_kernel.run_batch(private_keys, batch_size)
+        matches: List[Dict[str, int]] = self._gpu_kernel.run_batch(private_keys, batch_size)
         execution_time_ms = (time.time() - batch_start_time) * 1000
         
-        if batch_num <= 3 or batch_num % 100 == 0:
+        if batch_num <= INITIAL_BATCHES_LOG or batch_num % BATCH_LOG_FREQUENCY == 0:
             logger.debug(f"GPU batch {batch_num}: 发现 {len(matches)} 个匹配")
         
         return matches, execution_time_ms
     
-    def _process_gpu_matches(self, private_keys: bytes, matches: list):
+    def _process_gpu_matches(self, private_keys: bytes, matches: List[Dict[str, int]]) -> None:
         """处理GPU匹配结果
         
         Args:
@@ -1491,7 +1469,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self,
         batch_size: int,
         execution_time_ms: float
-    ):
+    ) -> None:
         """记录GPU性能指标
         
         Args:
@@ -1515,7 +1493,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self,
         batch_count: int,
         current_batch_size: int
-    ):
+    ) -> None:
         """检查并报告进度
         
         Args:
