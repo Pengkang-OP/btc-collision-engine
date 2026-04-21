@@ -87,6 +87,7 @@ class GPUProfileLoader:
             
             # 确保arch_data是字典（架构层级）
             if not isinstance(arch_data, dict):
+                logger.warning(f"跳过无效的架构配置 {vendor}/{arch_name}: 期望dict, 得到{type(arch_data).__name__}")
                 continue
             
             # 遍历该架构下的所有系列
@@ -96,6 +97,12 @@ class GPUProfileLoader:
                 
                 # 确保series_data是字典
                 if not isinstance(series_data, dict):
+                    logger.warning(f"跳过无效的系列配置 {vendor}/{arch_name}/{series_name}: 期望dict, 得到{type(series_data).__name__}")
+                    continue
+                
+                # 验证配置合法性
+                if not self._validate_profile(series_data, f"{vendor}/{arch_name}/{series_name}"):
+                    logger.warning(f"配置验证失败: {vendor}/{arch_name}/{series_name}")
                     continue
                 
                 # 检查型号是否在列表中
@@ -141,6 +148,47 @@ class GPUProfileLoader:
                 return True
         
         return False
+    
+    def _validate_profile(self, profile: Dict[str, Any], profile_path: str) -> bool:
+        """
+        验证GPU配置文件的合法性
+        
+        Args:
+            profile: 配置字典
+            profile_path: 配置路径(用于日志)
+            
+        Returns:
+            配置是否合法
+        """
+        # 检查必需字段
+        required_keys = ['models', 'recommended_batch_size', 'max_batch_size']
+        for key in required_keys:
+            if key not in profile:
+                logger.error(f"配置 {profile_path} 缺少必需字段: {key}")
+                return False
+        
+        # 验证batch_size关系
+        if profile['max_batch_size'] < profile['recommended_batch_size']:
+            logger.error(f"配置 {profile_path}: max_batch_size ({profile['max_batch_size']}) < recommended_batch_size ({profile['recommended_batch_size']})")
+            return False
+        
+        # 验证batch_size为正数
+        if profile['recommended_batch_size'] <= 0 or profile['max_batch_size'] <= 0:
+            logger.error(f"配置 {profile_path}: batch_size必须为正数")
+            return False
+        
+        # 验证memory_efficiency范围
+        if 'memory_efficiency' in profile:
+            eff = profile['memory_efficiency']
+            if not (0.0 < eff <= 1.0):
+                logger.warning(f"配置 {profile_path}: memory_efficiency ({eff}) 不在合理范围 (0.0, 1.0]")
+        
+        # 验证models为列表
+        if not isinstance(profile['models'], list):
+            logger.error(f"配置 {profile_path}: models必须为列表")
+            return False
+        
+        return True
     
     def _clean_model_name(self, name: str) -> str:
         """清理型号名称,移除常见前缀和后缀"""

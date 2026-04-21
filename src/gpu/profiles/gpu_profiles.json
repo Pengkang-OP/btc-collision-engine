@@ -19,15 +19,27 @@
     },
     "pascal": {
       "_year_range": "2016-2017",
-      "gtx_1000_series": {
-        "models": ["GTX 1050", "GTX 1050 Ti", "GTX 1060", "GTX 1070", "GTX 1070 Ti", "GTX 1080", "GTX 1080 Ti"],
+      "_comment_entry_level": "入门级:GTX 1050/1060,显存2-6GB,适合中等batch_size",
+      "gtx_1050_1060_series": {
+        "models": ["GTX 1050", "GTX 1050 Ti", "GTX 1060"],
+        "year": 2016,
+        "compute_capability": "6.1",
+        "recommended_batch_size": 524288,
+        "max_batch_size": 1048576,
+        "memory_efficiency": 0.60,
+        "optimizations": ["async_transfer", "persistent_buffers"],
+        "notes": "Pascal入门级,显存有限,保守配置"
+      },
+      "_comment_high_end": "高端级:GTX 1070/1080,显存8-11GB,支持更大batch_size",
+      "gtx_1070_1080_series": {
+        "models": ["GTX 1070", "GTX 1070 Ti", "GTX 1080", "GTX 1080 Ti"],
         "year": 2016,
         "compute_capability": "6.1",
         "recommended_batch_size": 1048576,
         "max_batch_size": 2097152,
         "memory_efficiency": 0.65,
         "optimizations": ["async_transfer", "persistent_buffers", "shared_memory_optimization"],
-        "notes": "性能显著提升,支持更大的batch_size"
+        "notes": "Pascal高端,显存充足,性能显著提升"
       }
     },
     "volta": {
@@ -45,15 +57,16 @@
     },
     "turing": {
       "_year_range": "2018-2019",
+      "_comment_gtx_1600": "GTX 1600系列基于Turing架构但无RT Core,性能介于Pascal和RTX之间,显存通常4-6GB",
       "gtx_1600_series": {
         "models": ["GTX 1650", "GTX 1650 Super", "GTX 1660", "GTX 1660 Super", "GTX 1660 Ti"],
         "year": 2019,
         "compute_capability": "7.5",
-        "recommended_batch_size": 1048576,
-        "max_batch_size": 2097152,
-        "memory_efficiency": 0.65,
+        "recommended_batch_size": 524288,
+        "max_batch_size": 1048576,
+        "memory_efficiency": 0.60,
         "optimizations": ["async_transfer", "persistent_buffers", "shared_memory_optimization"],
-        "notes": "Turing架构 mainstream系列,无RT Core但计算能力优秀"
+        "notes": "Turing架构 mainstream系列,无RT Core但计算能力优秀,保守配置确保稳定性"
       },
       "rtx_2000_series": {
         "models": ["RTX 2060", "RTX 2060 Super", "RTX 2070", "RTX 2070 Super", "RTX 2080", "RTX 2080 Super", "RTX 2080 Ti"],
