@@ -18,6 +18,12 @@ from ..gpu.device import GPUDevice, GPUDeviceDetector
 from ..gpu.context import GPUContext
 from ..gpu.profiles.loader import GPUProfileLoader
 from ..gpu.kernel import OPENCL_KERNEL_SOURCE
+from ..gpu.performance_optimizer import get_gpu_optimizer, PerformanceMetrics
+from ..gpu.intel_timeout_manager import AdaptiveTimeoutManager
+from ..gpu.intel_memory_monitor import IntelMemoryMonitor
+from ..gpu.benchmark_suite import GPUBenchmarkSuite
+from ..gpu.auto_tuner import GPUAutoTuner
+from ..gpu.performance_reporter import PerformanceReportGenerator, ReportConfig
 from ..utils.exception_handler import ExceptionHandler
 from ..utils.performance_monitor import EnhancedPerformanceMonitor
 
@@ -113,6 +119,7 @@ class GPUKernel:
             program: 已编译的OpenCL程序（可选，如果提供则跳过编译）
         """
         self.device = device
+        self.gpu_optimizer = get_gpu_optimizer()
         
         # 如果没有指定max_batch_size，根据GPU显存自动计算
         if max_batch_size is None:
@@ -144,14 +151,47 @@ class GPUKernel:
         self._allocate_buffers()
     
     def _compile(self):
-        """编译 OpenCL 内核"""
+        """编译 OpenCL 内核（带性能监控）"""
+        import time
+        
+        compile_start = time.time()
         try:
             # 使用新模块的内核源码
             self.program = cl.Program(self.device.context, OPENCL_KERNEL_SOURCE).build()
-            logger.info("OpenCL 内核编译成功")
+            compile_time_ms = (time.time() - compile_start) * 1000
+            
+            logger.info(f"OpenCL 内核编译成功: {compile_time_ms:.0f}ms")
+            
+            # 记录编译性能
+            try:
+                # 获取设备信息
+                device_name = self.device.device.name
+                vendor_str = self.device.device.vendor
+                global_mem = self.device.device.global_mem_size
+                
+                # 创建优化配置
+                profile = self.gpu_optimizer.create_optimized_profile(
+                    device_name=device_name,
+                    vendor_str=vendor_str,
+                    global_mem_size=global_mem,
+                    compile_time_ms=compile_time_ms
+                )
+                
+                # 如果配置文件指定了batch_size，更新
+                if profile.max_batch_size != self.max_batch_size:
+                    logger.info(
+                        f"根据性能优化调整batch_size: "
+                        f"{self.max_batch_size} -> {profile.max_batch_size}"
+                    )
+                    self.max_batch_size = profile.max_batch_size
+                    
+            except Exception as opt_error:
+                logger.warning(f"GPU性能优化失败: {opt_error}")
+                
         except Exception as e:
             # 编译失败或其他错误
-            logger.error(f"OpenCL 内核编译失败: {type(e).__name__}: {e}")
+            compile_time_ms = (time.time() - compile_start) * 1000
+            logger.error(f"OpenCL 内核编译失败: {type(e).__name__}: {e} ({compile_time_ms:.0f}ms)")
             raise RuntimeError(f"GPU 内核编译失败: {e}") from e
     
     def _verify(self):
@@ -255,6 +295,9 @@ class GPUKernel:
         修复：使用uint32替代uint8避免Intel Arc A770的global char* hang bug
         """
         import numpy as np
+        import time
+        
+        batch_start_time = time.time()
         
         # 参数校验
         if num_keys <= 0 or num_keys > self.max_batch_size:
@@ -345,7 +388,266 @@ class GPUKernel:
                     "target_index": int(match_view[i] - 1)
                 })
         
+        # 记录性能指标（用于自适应优化）
+        try:
+            execution_time_ms = (time.time() - batch_start_time) * 1000
+            keys_per_second = (num_keys / execution_time_ms * 1000) if execution_time_ms > 0 else 0
+            
+            metrics = PerformanceMetrics(
+                batch_execution_time_ms=execution_time_ms,
+                keys_per_second=keys_per_second,
+                error_count=0  # 本批次无错误
+            )
+            self.gpu_optimizer.record_performance(metrics)
+            
+            # P1: 记录到自适应超时管理器（每个批次都记录）
+            if self.timeout_manager:
+                self.timeout_manager.record_execution_time(execution_time_ms)
+                
+                # 降低日志频率：每 100 个批次检查一次警告
+                if (self.stats.total_batches > 0 and 
+                    self.stats.total_batches % self.MONITOR_INTERVAL == 0):
+                    if self.timeout_manager.should_warn(execution_time_ms):
+                        timeout = self.timeout_manager.get_timeout()
+                        logger.warning(
+                            f"⚠️ 执行时间接近超时阈值: "
+                            f"{execution_time_ms:.0f}ms / {timeout*1000:.0f}ms"
+                        )
+            
+            # P1: 显存监控（每个批次都跟踪，但降低检查频率）
+            if self.memory_monitor:
+                # 跟踪显存使用（估算）- 每个批次都记录
+                estimated_memory = num_keys * 36  # 每个私钥约 36 字节
+                self.memory_monitor.track_allocation(
+                    estimated_memory,
+                    batch_count=self.stats.total_batches
+                )
+                
+                # 降低显存检查频率：每 100 个批次检查一次
+                if (self.stats.total_batches > 0 and 
+                    self.stats.total_batches % self.MONITOR_INTERVAL == 0):
+                    # 检查显存警告
+                    warnings = self.memory_monitor.check_warnings()
+                    if warnings:
+                        for warning in warnings:
+                            logger.warning(warning)
+                    
+                    # 如果显存压力大，建议减小 batch_size
+                    reduction = self.memory_monitor.get_recommended_batch_reduction()
+                    if reduction > 0:
+                        new_batch_size = int(num_keys * (1 - reduction))
+                        logger.info(
+                            f"💡 显存压力，建议减小 batch_size: "
+                            f"{num_keys} -> {new_batch_size}"
+                        )
+        except Exception as perf_error:
+            logger.debug(f"性能指标记录失败: {perf_error}")
+        
         return matches
+    
+    def _apply_intel_specific_optimizations(self):
+        """应用 Intel GPU 特定优化和验证"""
+        logger.info("="*60)
+        logger.info("🔧 开始应用 Intel GPU 特殊优化")
+        logger.info("="*60)
+        
+        # 1. 验证 uint32 workaround
+        if not self._verify_uint32_workaround():
+            logger.error("❌ Intel uint32 workaround 验证失败")
+            raise RuntimeError("Intel GPU workaround 未正确应用，无法继续")
+        
+        # 2. 初始化 P1/P2 组件
+        self._init_intel_monitoring_and_tuning()
+        
+        # 3. 设置保守的超时
+        timeout = getattr(self._gpu_device, 'timeout_seconds', 30)
+        logger.info(f"✅ Intel 超时保护: {timeout}秒")
+        
+        # 4. 确认异步已禁用
+        if hasattr(self._gpu_device, 'enable_async'):
+            self._gpu_device.enable_async = False
+            logger.info("✅ Intel 异步执行: 已禁用")
+        
+        # 5. 显存限制
+        memory_efficiency = getattr(self._gpu_device, 'memory_efficiency', 0.45)
+        logger.info(f"✅ Intel 显存效率: {memory_efficiency*100:.0f}%")
+        
+        # 6. 驱动版本检查
+        if hasattr(self._gpu_device, 'driver_version') and self._gpu_device.driver_version:
+            logger.info(f"✅ Intel 驱动版本: {self._gpu_device.driver_version}")
+        else:
+            logger.warning("⚠️ 无法检测 Intel 驱动版本")
+        
+        logger.info("="*60)
+        logger.info("✅ Intel GPU 特殊优化应用完成")
+        logger.info("="*60)
+    
+    def _init_intel_monitoring_and_tuning(self):
+        """初始化 Intel GPU 监控和调优组件（P1/P2）
+        
+        采用防御性初始化策略：
+        - 每个组件独立初始化
+        - 失败不影响其他组件
+        - 失败的组件设为 None
+        - 记录详细的警告日志
+        
+        注意:
+            所有监控组件都是可选的，初始化失败不会阻止引擎运行。
+            引擎核心功能（碰撞检测）不受影响。
+        """
+        logger.info("\n📊 初始化 Intel GPU 监控和调优组件...")
+        
+        # 1. 自适应超时管理器（P1）
+        try:
+            self.timeout_manager = AdaptiveTimeoutManager(
+                base_timeout=getattr(self._gpu_device, 'timeout_seconds', 30.0),
+                history_size=50,
+                safety_factor=3.0,
+                min_timeout=10.0,
+                max_timeout=120.0
+            )
+            logger.info("✅ 自适应超时管理器已初始化")
+        except (RuntimeError, ValueError, TypeError, AttributeError) as e:
+            logger.warning(
+                f"⚠️ 自适应超时管理器初始化失败（非致命）: {type(e).__name__}: {e}\n"
+                f"   超时管理功能将被禁用，使用固定超时保护",
+                exc_info=True
+            )
+            self.timeout_manager = None
+        
+        # 2. 显存监控器（P1）
+        try:
+            total_memory = self._gpu_device.device_info.get('global_mem_size', 0)
+            
+            if total_memory <= 0:
+                logger.warning(
+                    "⚠️ 无法获取显存大小（global_mem_size=0），跳过显存监控器初始化\n"
+                    "   显存监控功能将被禁用"
+                )
+                self.memory_monitor = None
+            else:
+                self.memory_monitor = IntelMemoryMonitor(
+                    total_memory_bytes=total_memory,
+                    safe_usage_ratio=0.45  # Intel 保守策略
+                )
+                logger.info(
+                    f"✅ 显存监控器已初始化 "
+                    f"(总显存: {total_memory/1024**3:.1f}GB)"
+                )
+        except (RuntimeError, ValueError, TypeError, AttributeError) as e:
+            logger.warning(
+                f"⚠️ 显存监控器初始化失败（非致命）: {type(e).__name__}: {e}\n"
+                f"   显存监控功能将被禁用",
+                exc_info=True
+            )
+            self.memory_monitor = None
+        
+        # 3. 基准测试套件（P2）
+        try:
+            self.benchmark_suite = GPUBenchmarkSuite(self)
+            logger.info("✅ 基准测试套件已初始化")
+        except (RuntimeError, ValueError, TypeError, AttributeError) as e:
+            logger.warning(
+                f"⚠️ 基准测试套件初始化失败（非致命）: {type(e).__name__}: {e}\n"
+                f"   基准测试功能将被禁用",
+                exc_info=True
+            )
+            self.benchmark_suite = None
+        
+        # 4. 自动调优器（P2）
+        try:
+            self.auto_tuner = GPUAutoTuner(self)
+            logger.info("✅ 自动调优器已初始化")
+        except (RuntimeError, ValueError, TypeError, AttributeError) as e:
+            logger.warning(
+                f"⚠️ 自动调优器初始化失败（非致命）: {type(e).__name__}: {e}\n"
+                f"   自动调优功能将被禁用",
+                exc_info=True
+            )
+            self.auto_tuner = None
+        
+        # 5. 性能报告生成器（P2）
+        try:
+            self.performance_reporter = PerformanceReportGenerator(
+                gpu_engine=self,
+                benchmark_suite=self.benchmark_suite,
+                auto_tuner=self.auto_tuner
+            )
+            logger.info("✅ 性能报告生成器已初始化")
+        except (RuntimeError, ValueError, TypeError, AttributeError) as e:
+            logger.warning(
+                f"⚠️ 性能报告生成器初始化失败（非致命）: {type(e).__name__}: {e}\n"
+                f"   性能报告功能将被禁用",
+                exc_info=True
+            )
+            self.performance_reporter = None
+        
+        # 总结初始化结果
+        initialized_count = sum([
+            self.timeout_manager is not None,
+            self.memory_monitor is not None,
+            self.benchmark_suite is not None,
+            self.auto_tuner is not None,
+            self.performance_reporter is not None
+        ])
+        
+        if initialized_count == 5:
+            logger.info("✅ 所有 5 个监控和调优组件初始化成功\n")
+        elif initialized_count > 0:
+            logger.warning(
+                f"⚠️ {initialized_count}/5 个组件初始化成功，"
+                f"{5 - initialized_count} 个组件被禁用\n"
+                f"   引擎仍可正常运行，但部分监控功能不可用\n"
+            )
+        else:
+            logger.error(
+                "❌ 所有监控和调优组件初始化失败\n"
+                "   引擎将使用默认配置运行，无监控和调优功能\n"
+            )
+        
+        logger.info("✅ Intel GPU 监控和调优组件初始化完成\n")
+    
+    def _verify_uint32_workaround(self):
+        """验证 uint32 workaround 是否正确应用
+        
+        Returns:
+            bool: 验证成功返回 True
+        """
+        try:
+            # 检查内核源码
+            kernel_source = OPENCL_KERNEL_SOURCE
+            if '__global const uint *private_keys' not in kernel_source:
+                logger.error("❌ 内核未使用 uint32 workaround")
+                return False
+            
+            logger.info("✅ 内核源码使用 uint32 workaround")
+            
+            # 小规模测试（100个私钥）
+            test_num_keys = 100
+            test_keys = secrets.token_bytes(test_num_keys * 32)
+            test_targets = b'\x00' * 20  # 虚拟目标
+            
+            logger.info(f"🧪 运行 Intel workaround 测试 (num_keys={test_num_keys})...")
+            
+            # 运行测试批次
+            matches = self._gpu_kernel.run_batch(
+                num_keys=test_num_keys,
+                private_keys=test_keys,
+                target_hash160s=test_targets,
+                num_targets=1
+            )
+            
+            # 验证结果
+            if isinstance(matches, list):
+                logger.info("✅ Intel uint32 workaround 测试通过")
+                return True
+            else:
+                logger.error(f"❌ Intel workaround 测试返回异常结果: {type(matches)}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"❌ Intel workaround 测试失败: {type(e).__name__}: {e}")
+            return False
     
     def cleanup(self):
         """清理资源"""
@@ -365,6 +667,9 @@ class GPUCollisionEngine(BaseCollisionEngine):
     
     继承BaseCollisionEngine，实现GPU碰撞引擎。
     """
+    
+    # 监控配置
+    MONITOR_INTERVAL = 100  # 每 100 个批次检查一次警告和建议
     
     def __init__(self, targets: Set[str],
                  device_index: int = 1,
@@ -442,6 +747,13 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self.data_logger = None
         self.enhanced_monitoring = None
         
+        # P1/P2 新增：Intel GPU 监控和调优组件
+        self.timeout_manager: Optional['AdaptiveTimeoutManager'] = None  # 自适应超时管理
+        self.memory_monitor: Optional['IntelMemoryMonitor'] = None       # 显存监控
+        self.benchmark_suite: Optional['GPUBenchmarkSuite'] = None       # 基准测试套件
+        self.auto_tuner: Optional['GPUAutoTuner'] = None                 # 自动调优器
+        self.performance_reporter: Optional['PerformanceReportGenerator'] = None  # 性能报告生成器
+        
         if data_logging_enabled:
             try:
                 if use_enhanced_monitoring:
@@ -470,10 +782,11 @@ class GPUCollisionEngine(BaseCollisionEngine):
         2. 使用GPUProfileLoader加载型号配置
         3. 自动计算最优batch_size
         4. 应用厂商特定编译选项
+        5. Intel GPU特殊验证
         """
         with EnhancedPerformanceMonitor(logger, "GPU引擎初始化", level="INFO") as pm:
             try:
-                if not GPUDevice.is_available():
+                if not GPUDeviceDetector.is_gpu_available():
                     raise RuntimeError("pyopencl 不可用")
                 
                 # 1. 初始化GPU设备
@@ -488,7 +801,12 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 
                 logger.info(f"检测到GPU设备: {device_name} ({vendor})")
                 
-                # 3. 识别厂商并加载配置
+                # 3. Intel GPU特殊处理
+                if vendor.lower().startswith('intel'):
+                    logger.info("🔧 检测到 Intel GPU，应用特殊优化")
+                    self._apply_intel_specific_optimizations()
+                
+                # 4. 识别厂商并加载配置
                 with EnhancedPerformanceMonitor(logger, "GPU型号配置加载", level="DEBUG"):
                     from ..gpu.device import identify_vendor
                     vendor_type = identify_vendor(device_name, vendor)
@@ -587,20 +905,14 @@ class GPUCollisionEngine(BaseCollisionEngine):
     
     @staticmethod
     def is_gpu_available() -> bool:
-        """检查 GPU 是否可用"""
-        if not PYOPENCL_AVAILABLE:
-            return False
-        try:
-            devices = GPUDevice.detect_devices()
-            return len(devices) > 0
-        except (ImportError, RuntimeError, OSError) as e:
-            # 预期的设备检测异常
-            logger.debug(f"GPU检测失败: {type(e).__name__}: {e}")
-            return False
-        except Exception as e:
-            # 未知错误：记录日志
-            logger.warning(f"GPU检测未知错误: {type(e).__name__}: {e}")
-            return False
+        """检查 GPU 是否可用
+        
+        委托给GPUDeviceDetector进行实际检测，避免代码重复。
+        
+        Returns:
+            bool: GPU可用返回True，否则返回False
+        """
+        return GPUDeviceDetector.is_gpu_available()
     
     def get_device_info(self) -> Dict:
         """获取 GPU 设备信息"""
@@ -778,6 +1090,30 @@ class GPUCollisionEngine(BaseCollisionEngine):
                         self.on_progress(self.stats)
                     self._save_checkpoint(batch_count)
                     self._last_progress_time = current_time
+                    
+                    # 自适应性能优化：每10秒调整一次
+                    if hasattr(self, '_gpu_kernel') and self._gpu_kernel:
+                        try:
+                            # 计算错误率
+                            error_rate = self.stats.gpu_error_count / max(batch_count, 1)
+                            
+                            # 分析并调整batch_size
+                            new_batch_size, adjustments = self._gpu_kernel.gpu_optimizer.analyze_and_adjust(
+                                current_batch_size=current_batch_size,
+                                error_rate=error_rate
+                            )
+                            
+                            # 如果调整了batch_size，更新
+                            if new_batch_size != current_batch_size and adjustments:
+                                logger.info(
+                                    f"自适应优化: batch_size {current_batch_size} -> {new_batch_size} "
+                                    f"({list(adjustments.keys())[0]})"
+                                )
+                                current_batch_size = new_batch_size
+                                self.batch_size = new_batch_size
+                                
+                        except Exception as adjust_error:
+                            logger.debug(f"自适应调整失败: {adjust_error}")
                     
             except Exception as e:
                 # 使用统一异常处理器处理GPU异常
@@ -977,13 +1313,29 @@ class GPUCollisionEngine(BaseCollisionEngine):
             except Exception as e:
                 logger.error(f"GPU引擎：停止监控系统失败: {e}")
         
+        # 清理去重过滤器（释放内存）
+        if self.dedup_filter and self.dedup_filter.enabled:
+            stats = self.dedup_filter.get_stats()
+            logger.info(f"GPU引擎：清理去重过滤器: 检查={stats['checks_total']}, "
+                       f"重复={stats['duplicates_found']}, 跟踪={stats['tracked_total']}")
+            self.dedup_filter.reset()
+            logger.info("GPU引擎：去重过滤器已清理")
+        
         # 清理 GPU 资源
         if self._gpu_kernel:
             self._gpu_kernel.cleanup()
+            self._gpu_kernel = None
         if self._gpu_context:
             self._gpu_context.cleanup()
+            self._gpu_context = None
         if self._gpu_device:
             self._gpu_device.cleanup()
+            self._gpu_device = None
+        
+        # 重置引擎状态（支持重启）
+        self._stop_event.clear()
+        self._running = False
+        self._thread = None
         
         logger.info("GPU引擎：资源已清理")
     
@@ -1010,3 +1362,156 @@ class GPUCollisionEngine(BaseCollisionEngine):
     def get_stats(self) -> CollisionStats:
         """获取统计信息"""
         return self.stats
+    
+    # ==================== P2 便捷方法 ====================
+    
+    def run_benchmark(self, iterations: int = 5, save_report: bool = True) -> Dict[str, Any]:
+        """运行性能基准测试（P2）
+        
+        Args:
+            iterations: 迭代次数
+            save_report: 是否保存报告
+        
+        Returns:
+            基准测试结果
+        """
+        if not self.benchmark_suite:
+            logger.warning("基准测试套件未初始化")
+            return {}
+        
+        logger.info("\n" + "="*60)
+        logger.info("🚀 开始运行 GPU 性能基准测试")
+        logger.info("="*60)
+        
+        results = self.benchmark_suite.run_all_benchmarks(iterations)
+        
+        # 显示结果
+        summary = self.benchmark_suite.get_summary(results)
+        logger.info("\n" + summary)
+        
+        # 保存报告
+        if save_report:
+            report_path = self.generate_performance_report(
+                include_benchmarks=True,
+                include_tuning=False,
+                include_recommendations=True
+            )
+            logger.info(f"\n📄 基准测试报告已保存: {report_path}")
+        
+        return results
+    
+    def start_auto_tuning(
+        self, 
+        max_iterations: int = 30, 
+        save_report: bool = True,
+        auto_apply: bool = False
+    ) -> Dict[str, Any]:
+        """启动自动调优（P2）
+        
+        Args:
+            max_iterations: 最大迭代次数（建议 30-100）
+            save_report: 是否保存报告
+            auto_apply: 是否自动应用最优配置（默认 False，需要用户手动确认）
+        
+        Returns:
+            调优结果
+        """
+        # 参数验证
+        if max_iterations <= 0:
+            raise ValueError(f"max_iterations 必须大于 0，当前值: {max_iterations}")
+        if max_iterations > 1000:
+            logger.warning(
+                f"max_iterations={max_iterations} 过大，可能导致调优时间过长，"
+                f"建议设置为 30-100"
+            )
+        
+        if not self.auto_tuner:
+            logger.warning("自动调优器未初始化")
+            return {}
+        
+        # 保存原始 batch_size
+        original_batch_size = self.batch_size
+        logger.info(f"📌 当前 batch_size: {original_batch_size:,}")
+        
+        logger.info("\n" + "="*60)
+        logger.info("🎯 开始自动调优")
+        logger.info("="*60)
+        
+        # 调优回调：更新 batch_size（仅在 auto_apply=True 时）
+        def on_new_batch_size(new_size):
+            if auto_apply:
+                old_size = self.batch_size
+                self.batch_size = new_size
+                logger.info(f"🔄 自动更新 batch_size: {old_size:,} -> {new_size:,}")
+            else:
+                logger.info(f"💡 建议 batch_size: {new_size:,} (当前: {self.batch_size:,})")
+        
+        results = self.auto_tuner.start_tuning(
+            max_iterations=max_iterations,
+            callback=on_new_batch_size
+        )
+        
+        # 显示结果
+        optimal_size = results.get('optimal_batch_size')
+        logger.info(f"\n✅ 调优完成！")
+        logger.info(f"   最优 batch_size: {optimal_size:,}")
+        logger.info(f"   预期吞吐量: {results.get('expected_throughput', 0):,.0f} keys/s")
+        logger.info(f"   调优周期: {results.get('tuning_cycles', 0)}")
+        
+        if not auto_apply and optimal_size:
+            logger.info(f"   💡 要应用此配置，请使用: engine.batch_size = {optimal_size:,}")
+        
+        # 保存报告
+        if save_report:
+            report_path = self.generate_performance_report(
+                include_benchmarks=False,
+                include_tuning=True,
+                include_recommendations=True
+            )
+            logger.info(f"\n📄 调优报告已保存: {report_path}")
+        
+        return results
+    
+    def generate_performance_report(
+        self,
+        include_benchmarks: bool = True,
+        include_tuning: bool = True,
+        include_history: bool = True,
+        include_recommendations: bool = True,
+        include_comparison: bool = False,
+        output_dir: str = None
+    ) -> str:
+        """生成性能报告（P2）
+        
+        Args:
+            include_benchmarks: 包含基准测试结果
+            include_tuning: 包含调优结果
+            include_history: 包含历史趋势
+            include_recommendations: 包含优化建议
+            include_comparison: 包含历史对比
+            output_dir: 输出目录
+        
+        Returns:
+            报告文件路径
+        """
+        if not self.performance_reporter:
+            logger.warning("性能报告生成器未初始化")
+            return ""
+        
+        logger.info("\n" + "="*60)
+        logger.info("📊 生成 GPU 性能报告")
+        logger.info("="*60)
+        
+        report_path = self.performance_reporter.generate_report(
+            config=ReportConfig(
+                include_device_info=True,
+                include_benchmark_results=include_benchmarks,
+                include_tuning_results=include_tuning,
+                include_history=include_history,
+                include_recommendations=include_recommendations,
+                include_comparison=include_comparison
+            ),
+            output_dir=output_dir
+        )
+        
+        return report_path
