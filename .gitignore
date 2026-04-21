@@ -31,6 +31,7 @@ env/
 logs/*.log
 logs/*.log.*
 data_logs/  # 运行时数据目录（完整忽略）
+src/data_logs/  # 源码中的数据日志目录（完整忽略）
 monitoring_data/  # 监控数据目录（完整忽略，已废弃）
 test_results.log
 
