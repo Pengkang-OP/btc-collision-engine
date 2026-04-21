@@ -6,7 +6,7 @@
 """
 
 import logging
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional
 
 from .device import GPUDeviceDetector, identify_vendor
 

@@ -8,9 +8,8 @@
 import logging
 import time
 from typing import Set, Dict, List, Optional, Callable
-from pathlib import Path
 
-from .selector import GPUDeviceSelector, get_gpu_selector
+from .selector import get_gpu_selector
 from .load_balancer import GPULoadBalancer
 from .worker import SingleGPUWorker
 

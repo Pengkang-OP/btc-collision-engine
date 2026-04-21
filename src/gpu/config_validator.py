@@ -5,7 +5,7 @@
 """
 
 import logging
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -270,10 +270,10 @@ class GPUConfigValidator:
         for device in devices:
             if device.get('vendor') == 'intel':
                 warnings.append(
-                    f"Intel Arc GPU需要特殊配置:\n"
-                    f"- 启用uint32 workaround\n"
-                    f"- 禁用快速数学运算\n"
-                    f"- 使用较小批次大小"
+                    "Intel Arc GPU需要特殊配置:\n"
+                    "- 启用uint32 workaround\n"
+                    "- 禁用快速数学运算\n"
+                    "- 使用较小批次大小"
                 )
                 break
         
