@@ -1,5 +1,28 @@
 # 地址导入和自动保存功能
 
+> **版本**: v1.2.0 | **最后更新**: 2026-04-21  
+> **面向**: 用户
+
+
+
+## 目录
+
+- [功能概述](#功能概述)
+- [主要特性](#主要特性)
+- [使用方法](#使用方法)
+  - [基本导入](#基本导入)
+- [带进度回调的导入](#带进度回调的导入)
+  - [不同存储格式](#不同存储格式)
+- [不验证直接导入（快速模式）](#不验证直接导入快速模式)
+- [源文件格式](#源文件格式)
+  - [TXT格式](#txt格式)
+- [JSON格式](#json格式)
+  - [CSV格式](#csv格式)
+- [返回结果](#返回结果)
+- [元数据](#元数据)
+- [测试](#测试)
+- [示例](#示例)
+- [注意事项](#注意事项)
 ## 功能概述
 
 `AddressStorage` 类新增了 `import_addresses` 方法，支持从外部源导入比特币地址数据，并在导入过程中进行数据验证，验证通过后自动将有效地址保存到持久化存储中。
@@ -37,9 +60,9 @@ print(f"导入成功: {result['success']}")
 print(f"有效地址数: {result['imported_count']}")
 print(f"无效地址数: {result['invalid_count']}")
 print(f"存储路径: {result['storage_path']}")
-```
+```markdown
 
-### 带进度回调的导入
+## 带进度回调的导入
 
 ```python
 def progress_callback(imported, total, address):
@@ -52,7 +75,7 @@ result = storage.import_addresses(
     storage_type='json',
     progress_callback=progress_callback
 )
-```
+```markdown
 
 ### 不同存储格式
 
@@ -77,9 +100,9 @@ result = storage.import_addresses(
     storage_dir='./targets_data',
     storage_type='csv'
 )
-```
+```markdown
 
-### 不验证直接导入（快速模式）
+## 不验证直接导入（快速模式）
 
 ```python
 # 关闭验证，直接导入所有地址（包括可能无效的地址）
@@ -89,7 +112,7 @@ result = storage.import_addresses(
     validate=False,  # 关闭验证
     storage_type='json'
 )
-```
+```markdown
 
 ## 源文件格式
 
@@ -101,9 +124,9 @@ result = storage.import_addresses(
 1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2
 # 这是注释
 12c6DSiU4Rq3P4ZxziKxzrL5LmMBrzjrJX
-```
+```markdown
 
-### JSON格式
+## JSON格式
 支持多种结构：
 ```json
 {
@@ -112,7 +135,7 @@ result = storage.import_addresses(
     "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2"
   ]
 }
-```
+```python
 
 或：
 ```json
@@ -122,7 +145,7 @@ result = storage.import_addresses(
     "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2"
   ]
 }
-```
+```python
 
 或简单数组：
 ```json
@@ -130,7 +153,7 @@ result = storage.import_addresses(
   "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
   "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2"
 ]
-```
+```markdown
 
 ### CSV格式
 第一行为头部（可选），之后每行第一个字段为地址：
@@ -138,7 +161,7 @@ result = storage.import_addresses(
 address,name
 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa,test1
 1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2,test2
-```
+```markdown
 
 ## 返回结果
 
@@ -174,7 +197,7 @@ address,name
     "storage_type": "json"
   }
 }
-```
+```markdown
 
 ## 测试
 
@@ -182,7 +205,7 @@ address,name
 
 ```bash
 python -m pytest tests/test_address_import.py -v
-```
+```markdown
 
 ## 示例
 

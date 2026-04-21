@@ -21,6 +21,7 @@ from .config import GPUConfig
 from .context import GPUContext
 from .driver_manager import DriverManager, DriverVersionParser
 from .kernel import OPENCL_KERNEL_SOURCE
+from .facade import GPUFacade, create_gpu_facade
 
 __version__ = "2.0.0"
 
@@ -32,5 +33,8 @@ __all__ = [
     'identify_vendor',
     'DriverManager',
     'DriverVersionParser',
-    'OPENCL_KERNEL_SOURCE'
+    'OPENCL_KERNEL_SOURCE',
+    # GPU外观类（简化接口）
+    'GPUFacade',
+    'create_gpu_facade'
 ]

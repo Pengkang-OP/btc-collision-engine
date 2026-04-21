@@ -17,6 +17,11 @@ from .performance_monitor import (
 )
 from .encoding_utils import EncodingUtils
 from .exception_handler import ExceptionHandler
+from .file_utils import (
+    atomic_json_write, atomic_json_read,
+    safe_file_delete, get_file_size_safe,
+    ensure_directory
+)
 
 __all__ = [
     # 异常类
@@ -36,5 +41,9 @@ __all__ = [
     # 编码工具
     'EncodingUtils',
     # 异常处理
-    'ExceptionHandler'
+    'ExceptionHandler',
+    # 文件工具
+    'atomic_json_write', 'atomic_json_read',
+    'safe_file_delete', 'get_file_size_safe',
+    'ensure_directory'
 ]

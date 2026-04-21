@@ -1,7 +1,57 @@
 # GPU引擎使用指南
 
+> **版本**: v1.2.0 | **最后更新**: 2026-04-21  
+> **面向**: 开发者
+
+
 > 本文档详细介绍如何使用BTC碰撞引擎的GPU加速功能，包括安装、配置、性能调优和故障排除。
 
+
+## 目录
+
+- [📋 目录](#-目录)
+- [GPU加速概述](#gpu加速概述)
+  - [支持的GPU设备](#支持的gpu设备)
+  - [性能对比](#性能对比)
+- [环境准备](#环境准备)
+  - [1. 安装OpenCL驱动](#1-安装opencl驱动)
+    - [NVIDIA GPU](#nvidia-gpu)
+- [AMD GPU](#amd-gpu)
+- [Intel Arc GPU](#intel-arc-gpu)
+- [2. 安装Python依赖](#2-安装python依赖)
+- [3. 验证GPU可用性](#3-验证gpu可用性)
+- [快速开始](#快速开始)
+  - [方法1: GUI界面](#方法1-gui界面)
+  - [方法2: 命令行](#方法2-命令行)
+- [方法3: Python代码](#方法3-python代码)
+- [高级配置](#高级配置)
+  - [GPU设备选择](#gpu设备选择)
+- [Batch Size调优](#batch-size调优)
+- [内存优化](#内存优化)
+- [性能调优](#性能调优)
+  - [1. 异步流水线优化](#1-异步流水线优化)
+  - [2. 目标地址优化](#2-目标地址优化)
+- [3. 超时保护](#3-超时保护)
+- [4. 性能监控](#4-性能监控)
+- [故障排除](#故障排除)
+  - [问题1: GPU初始化失败](#问题1-gpu初始化失败)
+- [问题2: 显存不足](#问题2-显存不足)
+- [问题3: GPU执行超时](#问题3-gpu执行超时)
+  - [问题4: Intel Arc GPU Hang](#问题4-intel-arc-gpu-hang)
+- [问题5: 性能低于预期](#问题5-性能低于预期)
+- [最佳实践](#最佳实践)
+  - [1. 设备选择](#1-设备选择)
+- [2. Batch Size策略](#2-batch-size策略)
+- [3. 错误处理](#3-错误处理)
+  - [4. 资源清理](#4-资源清理)
+- [5. 长时间运行](#5-长时间运行)
+- [技术架构](#技术架构)
+  - [GPU计算流程](#gpu计算流程)
+  - [OpenCL内核优化](#opencl内核优化)
+- [附录](#附录)
+  - [A. GPU设备检测脚本](#a-gpu设备检测脚本)
+  - [B. 性能基准测试](#b-性能基准测试)
+- [参考资源](#参考资源)
 ## 📋 目录
 
 1. [GPU加速概述](#gpu加速概述)
@@ -45,21 +95,21 @@
 ```bash
 # 安装CUDA Toolkit (包含OpenCL)
 # 下载地址: https://developer.nvidia.com/cuda-toolkit
-```
+```markdown
 
-#### AMD GPU
+## AMD GPU
 ```bash
 # 安装AMD GPU驱动
 # 下载地址: https://www.amd.com/en/support
-```
+```markdown
 
-#### Intel Arc GPU
+## Intel Arc GPU
 ```bash
 # 安装Intel Graphics驱动
 # 下载地址: https://www.intel.com/content/www/us/en/download-center/home.html
-```
+```markdown
 
-### 2. 安装Python依赖
+## 2. 安装Python依赖
 
 ```bash
 # 安装PyOpenCL
@@ -70,9 +120,9 @@ pip install numpy
 
 # 可选：安装性能优化库
 pip install coincurve  # CPU后端优化
-```
+```markdown
 
-### 3. 验证GPU可用性
+## 3. 验证GPU可用性
 
 ```python
 from src.collision.gpu_collision_engine import GPUCollisionEngine
@@ -85,7 +135,7 @@ else:
 
 # 列出所有GPU设备
 GPUCollisionEngine.list_devices()
-```
+```python
 
 ---
 
@@ -96,7 +146,7 @@ GPUCollisionEngine.list_devices()
 1. 启动GUI程序
 ```bash
 python key_collision_gui.py
-```
+```python
 
 2. 在"高级选项"中勾选"使用GPU加速"
 
@@ -115,9 +165,9 @@ python key_collision_cli.py --targets addresses.txt --gpu --gpu-device 0
 
 # 设置batch size
 python key_collision_cli.py --targets addresses.txt --gpu --gpu-batch-size 100000
-```
+```markdown
 
-### 方法3: Python代码
+## 方法3: Python代码
 
 ```python
 from src.collision import create_collision_engine
@@ -132,7 +182,7 @@ engine = create_collision_engine(targets, mode='gpu')
 
 # 强制使用CPU
 engine = create_collision_engine(targets, mode='cpu')
-```
+```python
 
 ---
 
@@ -157,9 +207,9 @@ engine = GPUCollisionEngine(
     device_index=0,  # 使用第一个GPU
     batch_size=100000
 )
-```
+```markdown
 
-### Batch Size调优
+## Batch Size调优
 
 Batch size是影响GPU性能的关键参数：
 
@@ -176,15 +226,15 @@ Batch size是影响GPU性能的关键参数：
 engine = GPUCollisionEngine(targets=targets)
 # 或使用配置
 config.json: "gpu_batch_size": -1  # -1表示自动
-```
+```markdown
 
-### 内存优化
+## 内存优化
 
 ```python
 # GPU引擎使用持久化缓冲区，避免频繁分配
 # 目标地址缓冲区只在初始化时设置一次
 # 私钥缓冲区复用，减少内存传输
-```
+```python
 
 ---
 
@@ -206,9 +256,9 @@ GPU引擎使用异步私钥生成技术：
 
 # 建议：目标地址数量 < 10,000
 # 大量目标地址会降低GPU效率
-```
+```markdown
 
-### 3. 超时保护
+## 3. 超时保护
 
 GPU引擎内置30秒超时机制：
 - 防止GPU内核hang导致程序卡死
@@ -217,9 +267,9 @@ GPU引擎内置30秒超时机制：
 ```python
 # 超时自动触发错误恢复
 # 日志输出: "GPU执行超时(30秒)，可能存在内核hang问题"
-```
+```markdown
 
-### 4. 性能监控
+## 4. 性能监控
 
 ```python
 # 启用监控系统查看GPU性能
@@ -232,7 +282,7 @@ monitor.start()
 stats = engine.get_stats()
 print(f"GPU错误数: {stats.gpu_errors}")
 print(f"资源不足错误: {stats.resource_errors}")
-```
+```python
 
 ---
 
@@ -252,9 +302,9 @@ python -c "import pyopencl as cl; print(cl.get_platforms())"
 
 # 3. 更新GPU驱动
 # 访问GPU厂商官网下载最新驱动
-```
+```markdown
 
-### 问题2: 显存不足
+## 问题2: 显存不足
 
 **症状**: `cl_out_of_resources` 或 `memory allocation failed`
 
@@ -272,9 +322,9 @@ engine = GPUCollisionEngine(
     "gpu_batch_size": 50000
   }
 }
-```
+```yaml
 
-### 问题3: GPU执行超时
+## 问题3: GPU执行超时
 
 **症状**: `GPU执行超时(30秒)`
 
@@ -299,9 +349,9 @@ engine = GPUCollisionEngine(
 # 1. 更新Intel驱动到最新版本
 # 2. 减小batch size到10000
 # 3. 使用NVIDIA/AMD GPU替代
-```
+```markdown
 
-### 问题5: 性能低于预期
+## 问题5: 性能低于预期
 
 **检查清单**:
 - [ ] 是否使用了独立GPU（非集成显卡）
@@ -320,9 +370,9 @@ engine = GPUCollisionEngine(
 # 优先级: NVIDIA > AMD > Intel Arc
 # 系统会自动选择最佳设备，或手动指定：
 device_index = 0  # 通常NVIDIA是第一个设备
-```
+```markdown
 
-### 2. Batch Size策略
+## 2. Batch Size策略
 
 ```python
 # 首次使用：自动计算
@@ -331,9 +381,9 @@ engine = GPUCollisionEngine(targets=targets)
 # 性能测试后：手动调优
 # 根据GPU显存和性能测试调整
 optimal_batch_size = 200000  # 根据您的GPU调整
-```
+```markdown
 
-### 3. 错误处理
+## 3. 错误处理
 
 ```python
 try:
@@ -343,7 +393,7 @@ except RuntimeError as e:
     print(f"GPU不可用，回退到CPU: {e}")
     engine = create_collision_engine(targets, mode='cpu')
     engine.start(mode='random')
-```
+```markdown
 
 ### 4. 资源清理
 
@@ -356,9 +406,9 @@ if hasattr(engine, '_gpu_kernel'):
     engine._gpu_kernel.cleanup()
 if hasattr(engine, '_gpu_device'):
     engine._gpu_device.cleanup()
-```
+```markdown
 
-### 5. 长时间运行
+## 5. 长时间运行
 
 ```python
 # 启用断点续传
@@ -370,7 +420,7 @@ engine = GPUCollisionEngine(
 
 # 意外中断后可恢复
 # 重新启动时会自动检测断点文件
-```
+```python
 
 ---
 
@@ -400,7 +450,7 @@ engine = GPUCollisionEngine(
 4. 异步优化
    ├─ GPU计算批次N
    └─ CPU生成批次N+1（并行）
-```
+```markdown
 
 ### OpenCL内核优化
 
@@ -442,7 +492,7 @@ for platform in cl.get_platforms():
         print(f"最大工作项: {device.max_work_group_size}")
 
 print("\n" + "=" * 60)
-```
+```markdown
 
 ### B. 性能基准测试
 

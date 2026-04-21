@@ -2,6 +2,11 @@
 from .config_manager import ConfigManager
 from .crypto_config import CryptoConfig, CryptoBackendType, get_crypto_config, init_crypto_from_config
 from .config_coordinator import ConfigCoordinator
+from .performance_config import (
+    PerformanceOptimizationConfig,
+    PerformanceTuner,
+    create_optimized_config
+)
 
 __all__ = [
     'ConfigManager',
@@ -9,5 +14,9 @@ __all__ = [
     'CryptoBackendType',
     'get_crypto_config',
     'init_crypto_from_config',
-    'ConfigCoordinator'
+    'ConfigCoordinator',
+    # 性能优化配置
+    'PerformanceOptimizationConfig',
+    'PerformanceTuner',
+    'create_optimized_config'
 ]

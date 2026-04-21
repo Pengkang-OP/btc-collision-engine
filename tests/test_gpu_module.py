@@ -83,6 +83,8 @@ class TestGPUDeviceDetector(unittest.TestCase):
     def test_gpu_not_available(self):
         """测试GPU不可用的情况"""
         from src.gpu.device import GPUDeviceDetector
+        # 清除缓存以确保测试准确性
+        GPUDeviceDetector.clear_availability_cache()
         self.assertFalse(GPUDeviceDetector.is_gpu_available())
     
     @patch('src.gpu.device.cl')

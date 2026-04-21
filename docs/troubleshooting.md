@@ -1,5 +1,56 @@
 # BTC项目故障排除文档
 
+> **版本**: v1.2.0 | **最后更新**: 2026-04-21  
+> **面向**: 用户
+
+
+
+## 目录
+
+- [1. 概述](#1-概述)
+- [2. 安装问题](#2-安装问题)
+  - [2.1 Python版本不兼容](#21-python版本不兼容)
+- [2.2 缺少Tkinter（GUI无法启动）](#22-缺少tkintergui无法启动)
+- [2.3 权限错误](#23-权限错误)
+- [3. 运行时错误](#3-运行时错误)
+  - [3.1 私钥格式错误](#31-私钥格式错误)
+- [3.2 WIF解码失败](#32-wif解码失败)
+- [3.3 地址验证失败](#33-地址验证失败)
+- [3.4 椭圆曲线运算错误](#34-椭圆曲线运算错误)
+- [4. 性能问题](#4-性能问题)
+  - [4.1 运行速度慢](#41-运行速度慢)
+- [4.2 内存不足](#42-内存不足)
+- [4.3 磁盘空间不足](#43-磁盘空间不足)
+- [5. 线程安全问题](#5-线程安全问题)
+  - [5.1 死锁](#51-死锁)
+- [5.2 竞争条件](#52-竞争条件)
+- [6. GUI界面问题](#6-gui界面问题)
+  - [6.1 界面卡顿](#61-界面卡顿)
+- [6.2 界面显示异常](#62-界面显示异常)
+- [6.3 窗口无法显示](#63-窗口无法显示)
+- [7. 配置文件问题](#7-配置文件问题)
+  - [7.1 配置文件格式错误](#71-配置文件格式错误)
+- [7.2 配置项缺失](#72-配置项缺失)
+- [8. 碰撞检测问题](#8-碰撞检测问题)
+  - [8.1 碰撞引擎无法启动](#81-碰撞引擎无法启动)
+- [8.2 断点无法保存](#82-断点无法保存)
+- [8.3 匹配回调未触发](#83-匹配回调未触发)
+- [9. 日志问题](#9-日志问题)
+  - [9.1 日志文件无法创建](#91-日志文件无法创建)
+- [9.2 日志级别设置无效](#92-日志级别设置无效)
+- [10. 测试问题](#10-测试问题)
+  - [10.1 测试向量验证失败](#101-测试向量验证失败)
+- [10.2 模块导入错误](#102-模块导入错误)
+- [11. 调试技巧](#11-调试技巧)
+  - [11.1 启用详细日志](#111-启用详细日志)
+- [11.2 使用Python调试器](#112-使用python调试器)
+- [11.3 性能分析](#113-性能分析)
+- [11.4 内存分析](#114-内存分析)
+- [12. 常见问题速查表](#12-常见问题速查表)
+- [13. 获取帮助](#13-获取帮助)
+  - [13.1 收集诊断信息](#131-收集诊断信息)
+  - [13.2 提交Issue](#132-提交issue)
+- [14. 总结](#14-总结)
 ## 1. 概述
 
 本文档列出BTC项目常见问题及其解决方案，帮助用户快速诊断和解决问题。
@@ -9,7 +60,7 @@
 ### 2.1 Python版本不兼容
 
 **问题现象**:
-```
+```yaml
 SyntaxError: invalid syntax
 # 或
 ModuleNotFoundError: No module named 'secrets'
@@ -26,16 +77,16 @@ python --version
 # Windows: 从官网下载安装包
 # Ubuntu: sudo apt install python3.11
 # macOS: brew install python@3.11
-```
+```markdown
 
-### 2.2 缺少Tkinter（GUI无法启动）
+## 2.2 缺少Tkinter（GUI无法启动）
 
 **问题现象**:
 ```
 ModuleNotFoundError: No module named 'tkinter'
 # 或
 ImportError: No module named '_tkinter'
-```
+```python
 
 **解决方案**:
 
@@ -44,33 +95,33 @@ ImportError: No module named '_tkinter'
 # 重新安装Python，勾选"tcl/tk and IDLE"
 # 或修复安装
 python -m pip install --upgrade pip
-```
+```python
 
 **Ubuntu/Debian**:
 ```bash
 sudo apt update
 sudo apt install python3-tk
 sudo apt install python3.11-tk  # 如果使用Python 3.11
-```
+```python
 
 **CentOS/RHEL**:
 ```bash
 sudo yum install python3-tkinter
-```
+```python
 
 **macOS**:
 ```bash
 brew install python-tk@3.11
-```
+```markdown
 
-### 2.3 权限错误
+## 2.3 权限错误
 
 **问题现象**:
 ```
 PermissionError: [Errno 13] Permission denied: 'config.json'
 # 或
 OSError: [Errno 13] Permission denied: './logs'
-```
+```python
 
 **解决方案**:
 
@@ -84,7 +135,7 @@ icacls "F:\BTC" /grant $(whoami):F /T
 
 # 或移动项目到用户目录
 move F:\BTC C:\Users\$(whoami)\BTC
-```
+```python
 
 **Linux/macOS**:
 ```bash
@@ -95,7 +146,7 @@ chmod 755 /path/to/BTC
 # 创建必要的目录
 mkdir -p logs checkpoints
 chmod 755 logs checkpoints
-```
+```markdown
 
 ## 3. 运行时错误
 
@@ -106,7 +157,7 @@ chmod 755 logs checkpoints
 ValueError: 私钥长度必须为32字节，当前为31字节
 # 或
 ValueError: 无法解析私钥，请检查输入格式
-```
+```python
 
 **解决方案**:
 ```python
@@ -119,16 +170,16 @@ if len(private_key_hex) != 64:
 # Hex: 64位十六进制字符
 # WIF: 以5、K或L开头的Base58字符串
 # Decimal: 1 <= key < N 的整数
-```
+```markdown
 
-### 3.2 WIF解码失败
+## 3.2 WIF解码失败
 
 **问题现象**:
 ```
 ValueError: WIF版本字节无效
 # 或
 ValueError: WIF校验和不匹配
-```
+```python
 
 **解决方案**:
 ```python
@@ -147,14 +198,14 @@ except ValueError as e:
 # 1. 字符输入错误（如0和O混淆）
 # 2. 缺少字符
 # 3. 校验和错误（可能是复制不完整）
-```
+```markdown
 
-### 3.3 地址验证失败
+## 3.3 地址验证失败
 
 **问题现象**:
 ```
 ValueError: Base58Check校验和验证失败
-```
+```python
 
 **解决方案**:
 ```python
@@ -172,16 +223,16 @@ except ValueError as e:
 # 1. 地址是否完整复制
 # 2. 是否包含无效字符（0, O, I, l）
 # 3. 地址长度是否正常（25-35字符）
-```
+```markdown
 
-### 3.4 椭圆曲线运算错误
+## 3.4 椭圆曲线运算错误
 
 **问题现象**:
 ```
 ValueError: 模逆元不存在
 # 或
 ValueError: 生成的公钥为无穷远点，私钥无效
-```
+```python
 
 **解决方案**:
 ```python
@@ -197,7 +248,7 @@ elif private_key_int >= Secp256k1.N:
     print(f"N = {Secp256k1.N}")
 else:
     print("私钥范围有效")
-```
+```markdown
 
 ## 4. 性能问题
 
@@ -216,13 +267,13 @@ engine = KeyCollisionEngine(
     targets=targets,
     max_workers=8  # 设置为CPU核心数
 )
-```
+```python
 
 **2. 调试模式运行**
 ```bash
 # 检查是否启用了调试日志
 export BTC_LOG_LEVEL=INFO  # 改为INFO级别
-```
+```python
 
 **3. 系统资源不足**
 ```bash
@@ -232,16 +283,16 @@ Task Manager  # Windows
 
 # 检查内存使用
 free -h  # Linux
-```
+```markdown
 
-### 4.2 内存不足
+## 4.2 内存不足
 
 **问题现象**:
 ```
 MemoryError
 # 或
 系统明显变慢，交换空间使用增加
-```
+```python
 
 **解决方案**:
 
@@ -253,7 +304,7 @@ MemoryError
         "max_workers": 2  # 减少线程数
     }
 }
-```
+```python
 
 **2. 限制去重过滤器大小**:
 ```python
@@ -263,7 +314,7 @@ MemoryError
         "dedup_max_size": 100000  # 减小过滤器大小
     }
 }
-```
+```python
 
 **3. 禁用去重**:
 ```python
@@ -272,7 +323,7 @@ MemoryError
         "dedup_enabled": false
     }
 }
-```
+```python
 
 **4. 增加系统内存**或**使用交换空间**:
 ```bash
@@ -281,14 +332,14 @@ sudo fallocate -l 4G /swapfile
 sudo chmod 600 /swapfile
 sudo mkswap /swapfile
 sudo swapon /swapfile
-```
+```markdown
 
-### 4.3 磁盘空间不足
+## 4.3 磁盘空间不足
 
 **问题现象**:
 ```
 OSError: [Errno 28] No space left on device
-```
+```python
 
 **解决方案**:
 ```bash
@@ -303,7 +354,7 @@ rm logs/*.log.*  # 保留当前日志
 rm checkpoints/*.old
 
 # 压缩或删除旧导出文件
-```
+```markdown
 
 ## 5. 线程安全问题
 
@@ -323,7 +374,7 @@ def dump_threads():
 
 # 在程序卡住时调用
 dump_threads()
-```
+```python
 
 **解决方案**:
 ```python
@@ -337,9 +388,9 @@ try:
     pass
 finally:
     lock.release()
-```
+```markdown
 
-### 5.2 竞争条件
+## 5.2 竞争条件
 
 **问题现象**: 统计信息不准确，结果不一致
 
@@ -360,7 +411,7 @@ class ThreadSafeCounter:
     def get(self):
         with self._lock:
             return self._value
-```
+```markdown
 
 ## 6. GUI界面问题
 
@@ -375,7 +426,7 @@ class ThreadSafeCounter:
 # 在批量生成中，每10个更新一次UI
 if (i + 1) % 10 == 0:
     self.root.after(0, self._update_batch_ui, i + 1, count, result)
-```
+```python
 
 **2. 使用后台线程**:
 ```python
@@ -385,9 +436,9 @@ import threading
 thread = threading.Thread(target=self._batch_generate_worker, args=(count,))
 thread.daemon = True
 thread.start()
-```
+```markdown
 
-### 6.2 界面显示异常
+## 6.2 界面显示异常
 
 **问题现象**: 文字显示为方框或乱码
 
@@ -400,16 +451,16 @@ thread.start()
 
 # 或使用英文界面
 # 修改gui_config.py中的字体设置
-```
+```python
 
 **Linux**:
 ```bash
 # 安装中文字体
 sudo apt install fonts-wqy-zenhei
 sudo apt install fonts-wqy-microhei
-```
+```markdown
 
-### 6.3 窗口无法显示
+## 6.3 窗口无法显示
 
 **问题现象**: 运行GUI程序但窗口未出现
 
@@ -424,7 +475,7 @@ ssh -X user@host
 
 # Windows检查显卡驱动
 # 更新显卡驱动程序
-```
+```markdown
 
 ## 7. 配置文件问题
 
@@ -433,7 +484,7 @@ ssh -X user@host
 **问题现象**:
 ```
 json.decoder.JSONDecodeError: Expecting ',' delimiter
-```
+```python
 
 **解决方案**:
 ```python
@@ -447,14 +498,14 @@ try:
 except json.JSONDecodeError as e:
     print(f"JSON格式错误: {e}")
     print(f"错误位置: 行 {e.lineno}, 列 {e.colno}")
-```
+```markdown
 
-### 7.2 配置项缺失
+## 7.2 配置项缺失
 
 **问题现象**:
 ```
 KeyError: 'collision'
-```
+```python
 
 **解决方案**:
 ```python
@@ -463,7 +514,7 @@ config.get('collision', {}).get('max_workers', os.cpu_count())
 
 # 或重新生成配置文件
 # 复制config.example.json到config.json
-```
+```markdown
 
 ## 8. 碰撞检测问题
 
@@ -485,14 +536,14 @@ print(f"目标数量: {len(engine.targets)}")
 import threading
 thread = threading.Thread(target=engine.random_search)
 thread.start()
-```
+```markdown
 
-### 8.2 断点无法保存
+## 8.2 断点无法保存
 
 **问题现象**:
 ```
 OSError: [Errno 13] Permission denied: 'checkpoints/'
-```
+```python
 
 **解决方案**:
 ```bash
@@ -506,9 +557,9 @@ chmod 755 checkpoints
         "checkpoint_dir": "/tmp/btc_checkpoints"
     }
 }
-```
+```markdown
 
-### 8.3 匹配回调未触发
+## 8.3 匹配回调未触发
 
 **问题现象**: 找到匹配但未触发回调
 
@@ -526,7 +577,7 @@ engine = KeyCollisionEngine(
     targets=targets,
     on_match=on_match  # 确保回调已注册
 )
-```
+```markdown
 
 ## 9. 日志问题
 
@@ -535,7 +586,7 @@ engine = KeyCollisionEngine(
 **问题现象**:
 ```
 FileNotFoundError: [Errno 2] No such file or directory: 'logs/btc.log'
-```
+```python
 
 **解决方案**:
 ```python
@@ -546,9 +597,9 @@ os.makedirs('logs', exist_ok=True)
 
 # 或使用绝对路径
 log_path = os.path.join(os.path.dirname(__file__), 'logs', 'btc.log')
-```
+```markdown
 
-### 9.2 日志级别设置无效
+## 9.2 日志级别设置无效
 
 **问题现象**: 设置DEBUG级别但仍显示INFO日志
 
@@ -566,7 +617,7 @@ logging.basicConfig(
 # 或设置特定模块的日志级别
 logger = logging.getLogger('src.collision')
 logger.setLevel(logging.DEBUG)
-```
+```markdown
 
 ## 10. 测试问题
 
@@ -577,7 +628,7 @@ logger.setLevel(logging.DEBUG)
 测试失败！
 压缩公钥不匹配
 地址不匹配
-```
+```python
 
 **诊断步骤**:
 ```python
@@ -603,14 +654,14 @@ print(f"压缩公钥: {compressed_pk.hex()}")
 print(f"期望公钥: 0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798")
 
 # 检查每一步的输出
-```
+```markdown
 
-### 10.2 模块导入错误
+## 10.2 模块导入错误
 
 **问题现象**:
 ```
 ModuleNotFoundError: No module named 'src'
-```
+```python
 
 **解决方案**:
 ```python
@@ -622,7 +673,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # 或使用相对导入
 from ..core.secp256k1 import EllipticCurve
-```
+```markdown
 
 ## 11. 调试技巧
 
@@ -640,9 +691,9 @@ logging.basicConfig(
 # 启用特定模块的调试
 logging.getLogger('src.core').setLevel(logging.DEBUG)
 logging.getLogger('src.collision').setLevel(logging.DEBUG)
-```
+```markdown
 
-### 11.2 使用Python调试器
+## 11.2 使用Python调试器
 
 ```python
 # 在代码中设置断点
@@ -650,7 +701,7 @@ import pdb; pdb.set_trace()
 
 # 或使用ipdb（更友好）
 import ipdb; ipdb.set_trace()
-```
+```python
 
 **常用pdb命令**:
 | 命令 | 说明 |
@@ -662,7 +713,7 @@ import ipdb; ipdb.set_trace()
 | `l` | 显示代码 |
 | `q` | 退出 |
 
-### 11.3 性能分析
+## 11.3 性能分析
 
 ```python
 import cProfile
@@ -683,9 +734,9 @@ profiler.disable()
 stats = pstats.Stats(profiler)
 stats.sort_stats('cumulative')
 stats.print_stats(20)  # 显示前20个
-```
+```markdown
 
-### 11.4 内存分析
+## 11.4 内存分析
 
 ```python
 # 使用tracemalloc
@@ -702,7 +753,7 @@ top_stats = snapshot.statistics('lineno')
 
 for stat in top_stats[:10]:
     print(stat)
-```
+```markdown
 
 ## 12. 常见问题速查表
 

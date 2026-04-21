@@ -1,5 +1,9 @@
 # 日志记录标准规范
 
+> **版本**: v1.2.0 | **最后更新**: 2026-04-21  
+> **面向**: 开发者
+
+
 本文档定义BTC碰撞引擎项目的统一日志记录标准，包括日志格式、级别使用规范、性能监控和采样策略。
 
 ## 目录
@@ -18,12 +22,12 @@
 
 ### 1.1 标准格式
 
-```
+```python
 %(asctime)s - %(name)s - %(levelname)s - %(message)s
 ```
 
 **示例输出**:
-```
+```python
 2026-04-20 23:10:15,234 - src.collision.key_collision_engine - INFO - GPU引擎初始化成功: RTX 3080
 ```
 
@@ -50,7 +54,7 @@
 
 文件日志不使用颜色代码，保持纯文本格式：
 
-```
+```python
 2026-04-20 23:10:15,234 - src.collision.key_collision_engine - INFO - GPU引擎初始化成功: RTX 3080
 ```
 
@@ -73,7 +77,7 @@
 logger.debug(f"加载配置文件: {config_file}")
 logger.debug(f"batch_size={batch_size}, device_index={device_index}")
 logger.debug(f"工作线程 {worker_id}: 开始处理批次 {batch_number}")
-```
+```python
 
 **注意事项**:
 - ❌ 不要记录敏感信息（私钥、密码）
@@ -97,7 +101,7 @@ logger.info(f"GPU引擎初始化成功: {device_name} (厂商: {vendor}, batch_s
 logger.info(f"配置加载成功: {config_file}")
 logger.info(f"碰撞引擎已启动，模式: {mode}")
 logger.info(f"断点已保存: position={position}, checked={total_checked}")
-```
+```python
 
 **注意事项**:
 - ✅ 包含关键上下文信息
@@ -121,7 +125,7 @@ logger.warning(f"GPU型号配置未找到，使用默认配置: {device_name}")
 logger.warning(f"显存使用率过高: {usage:.1f}% > 80%")
 logger.warning(f"目标地址格式无效 [{address}]: {error}")
 logger.warning(f"批次处理失败（资源不足），跳过当前批次")
-```
+```python
 
 **注意事项**:
 - ✅ 说明问题的影响
@@ -145,7 +149,7 @@ logger.error(f"GPU初始化失败: {error}")
 logger.error(f"OpenCL内核编译失败: {type(e).__name__}: {e}")
 logger.error(f"文件不存在({operation}): {filepath}")
 logger.error(f"配置验证失败: {errors}")
-```
+```python
 
 **注意事项**:
 - ✅ 包含异常类型和消息
@@ -169,7 +173,7 @@ try:
 except Exception as e:
     logger.exception(f"未知错误发生: {operation_name}")
     # 自动包含完整堆栈跟踪
-```
+```python
 
 **注意事项**:
 - ✅ 仅在`except`块中使用
@@ -189,7 +193,7 @@ except Exception as e:
 ```python
 logger.critical(f"所有GPU设备不可用，无法继续执行")
 logger.critical(f"配置文件损坏，无法加载: {config_file}")
-```
+```python
 
 ---
 
@@ -205,12 +209,12 @@ from src.utils.logger import PerformanceMonitor
 
 with PerformanceMonitor(logger, "GPU内核编译", level="INFO"):
     program = cl.Program(context, kernel_source).build()
-```
+```python
 
 **输出示例**:
 ```
 2026-04-20 23:10:15,234 - src.collision.gpu_collision_engine - INFO - [Performance] GPU内核编译: 215.34ms
-```
+```markdown
 
 ### 3.2 性能监控场景
 
@@ -242,14 +246,14 @@ try:
     result = compute()
 finally:
     pm.__exit__(None, None, None)
-```
+```markdown
 
-### 3.4 性能日志格式
+## 3.4 性能日志格式
 
 ```
 [Performance] {operation_name}: {elapsed_ms:.2f}ms
 [Performance] {operation_name}: FAILED after {elapsed_ms:.2f}ms - {error}
-```
+```python
 
 ---
 
@@ -270,14 +274,14 @@ sampled_logger = get_sampled_logger("KeyCollisionEngine.sampled", sample_rate=10
 for i in range(1000000):
     sampled_logger.info(f"进度: {i:,} 已检查, {speed:,.0f} 次/秒")
     # 实际只记录1000条日志
-```
+```python
 
 **输出示例**:
 ```
 2026-04-20 23:10:15,234 - KeyCollisionEngine.sampled - INFO - [Sampled 1/1000] 进度: 1,000,000 已检查, 1,200,000 次/秒
-```
+```markdown
 
-### 4.2 采样率推荐
+## 4.2 采样率推荐
 
 | 场景 | 频率 | 推荐采样率 | 说明 |
 |------|------|-----------|------|
@@ -303,7 +307,7 @@ class SampledLogger:
             self._counter += 1
             if self._counter % self.sample_rate == 0:
                 self.logger.info(f"[Sampled 1/{self.sample_rate}] {msg}", *args, **kwargs)
-```
+```markdown
 
 ### 4.4 采样日志优势
 
@@ -338,9 +342,9 @@ logger = logging.getLogger("src.config.crypto_config")
 # 监控模块
 logger = logging.getLogger("src.monitoring.data_logger")
 logger = logging.getLogger("src.monitoring.enhanced_monitoring")
-```
+```markdown
 
-### 5.2 特殊日志记录器
+## 5.2 特殊日志记录器
 
 ```python
 # 采样日志
@@ -350,9 +354,9 @@ sampled_logger = get_sampled_logger("KeyCollisionEngine.sampled", sample_rate=10
 gpu_monitor_logger = logging.getLogger("GPUMonitor")
 
 # 性能监控（使用PerformanceMonitor，不单独命名）
-```
+```markdown
 
-### 5.3 命名原则
+## 5.3 命名原则
 
 - ✅ 使用模块路径作为名称
 - ✅ 使用点号分隔层级
@@ -374,9 +378,9 @@ init_logging()
 
 # 在模块中获取日志记录器
 logger = get_configured_logger(__name__)
-```
+```markdown
 
-### 6.2 使用惰性格式化
+## 6.2 使用惰性格式化
 
 ```python
 # ✅ 推荐: 惰性格式化
@@ -384,9 +388,9 @@ logger.info("GPU初始化成功: %s (batch_size: %d)", device_name, batch_size)
 
 # ❌ 不推荐: 提前格式化（即使日志级别不匹配也会执行）
 logger.info(f"GPU初始化成功: {device_name} (batch_size: {batch_size})")
-```
+```markdown
 
-### 6.3 包含关键上下文
+## 6.3 包含关键上下文
 
 ```python
 # ✅ 推荐: 包含上下文
@@ -394,9 +398,9 @@ logger.error(f"GPU批次处理失败 (device={device_index}, batch_size={batch_s
 
 # ❌ 不推荐: 缺少上下文
 logger.error(f"GPU处理失败: {error}")
-```
+```markdown
 
-### 6.4 避免敏感信息
+## 6.4 避免敏感信息
 
 ```python
 # ❌ 绝对禁止: 记录私钥
@@ -405,9 +409,9 @@ logger.debug(f"私钥: {private_key_hex}")
 # ✅ 推荐: 记录地址或哈希
 logger.debug(f"生成地址: {address}")
 logger.debug(f"地址哈希: {hash160.hex()}")
-```
+```markdown
 
-### 6.5 异常处理日志
+## 6.5 异常处理日志
 
 ```python
 try:
@@ -418,7 +422,7 @@ except RuntimeError as e:
 except Exception as e:
     # 未知错误，记录完整堆栈
     logger.exception(f"GPU未知错误: {operation}")
-```
+```markdown
 
 ### 6.6 进度日志优化
 
@@ -433,9 +437,9 @@ if time.time() - last_log_time > 1.0:  # 每秒记录一次
 
 # ❌ 不推荐: 每次都记录
 logger.info(f"进度: {count:,}")  # 太快！
-```
+```markdown
 
-### 6.7 资源管理日志
+## 6.7 资源管理日志
 
 ```python
 # 资源创建
@@ -446,7 +450,7 @@ logger.debug(f"GPU显存使用: {used_mb:.1f}MB / {total_mb:.1f}MB ({usage:.1f}%
 
 # 资源释放
 logger.info(f"GPU资源已清理: {device_name}")
-```
+```python
 
 ---
 
@@ -460,9 +464,9 @@ logger = logging.getLogger()  # 使用根日志记录器
 
 # ✅ 正确: 使用模块名称
 logger = logging.getLogger(__name__)
-```
+```markdown
 
-### 7.2 日志级别滥用
+## 7.2 日志级别滥用
 
 ```python
 # ❌ 错误: 使用INFO记录调试信息
@@ -476,9 +480,9 @@ logger.warning("引擎启动成功")
 
 # ✅ 正确: 使用INFO
 logger.info("引擎启动成功")
-```
+```markdown
 
-### 7.3 敏感信息泄露
+## 7.3 敏感信息泄露
 
 ```python
 # ❌ 绝对禁止
@@ -490,9 +494,9 @@ logger.error(f"密钥材料: {key_material.hex()}")
 logger.debug(f"地址: {address}")
 logger.info(f"地址数量: {len(targets)}")
 logger.error(f"地址格式无效: {invalid_address}")
-```
+```markdown
 
-### 7.4 性能问题
+## 7.4 性能问题
 
 ```python
 # ❌ 错误: 高频操作不使用采样
@@ -508,9 +512,9 @@ logger.debug(f"复杂计算结果: {expensive_function()}")
 
 # ✅ 正确: 惰性格式化
 logger.debug("复杂计算结果: %s", expensive_function())
-```
+```markdown
 
-### 7.5 异常处理不当
+## 7.5 异常处理不当
 
 ```python
 # ❌ 错误: 使用logger.info记录异常
@@ -537,7 +541,7 @@ try:
 except Exception as e:
     logger.error(f"操作失败: {e}")
     raise
-```
+```python
 
 ---
 
@@ -561,7 +565,7 @@ except Exception as e:
     "compress_backups": false
   }
 }
-```
+```markdown
 
 ### A.2 开发环境配置
 
@@ -573,7 +577,7 @@ except Exception as e:
     "enable_file": true
   }
 }
-```
+```markdown
 
 ### A.3 生产环境配置
 
@@ -587,7 +591,7 @@ except Exception as e:
     "backup_count": 10
   }
 }
-```
+```python
 
 ---
 

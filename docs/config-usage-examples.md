@@ -1,5 +1,9 @@
 # 配置系统使用示例
 
+> **版本**: v1.2.0 | **最后更新**: 2026-04-21  
+> **面向**: 开发者/运维
+
+
 本文档提供BTC碰撞引擎配置系统的完整使用示例，包括ConfigCoordinator、ConfigManager、CryptoConfig和GPUConfig的使用方法。
 
 ## 目录
@@ -39,9 +43,9 @@ if errors:
             print(f"  {manager}: {error}")
 else:
     print("✅ 所有配置验证通过")
-```
+```markdown
 
-### 1.2 使用默认配置（不加载文件）
+## 1.2 使用默认配置（不加载文件）
 
 ```python
 from src.config.config_manager import ConfigManager
@@ -52,7 +56,7 @@ cm = ConfigManager()
 # 访问默认配置
 print(f"默认GPU batch_size: {cm.get('gpu.batch_size')}")
 print(f"默认Crypto backend: {cm.get('crypto.backend')}")
-```
+```python
 
 ---
 
@@ -74,9 +78,9 @@ log_level = coordinator.get('logging.level')
 print(f"GPU batch_size: {gpu_batch_size}")
 print(f"Crypto backend: {crypto_backend}")
 print(f"Log level: {log_level}")
-```
+```markdown
 
-### 2.2 修改配置
+## 2.2 修改配置
 
 ```python
 from src.config import ConfigCoordinator
@@ -96,9 +100,9 @@ if coordinator.save_all():
     print("✅ 配置保存成功")
 else:
     print("❌ 配置保存失败")
-```
+```markdown
 
-### 2.3 获取特定配置管理器
+## 2.3 获取特定配置管理器
 
 ```python
 from src.config import ConfigCoordinator
@@ -119,9 +123,9 @@ print(f"Crypto配置: {crypto_dict}")
 gpu_config_obj = coordinator.gpu_config
 gpu_info = gpu_config_obj.get_gpu_config()
 print(f"GPU详细信息: {gpu_info}")
-```
+```markdown
 
-### 2.4 统一配置视图
+## 2.4 统一配置视图
 
 ```python
 from src.config import ConfigCoordinator
@@ -163,7 +167,7 @@ print(f"  日志级别: {unified['logging']['level']}")
 print(f"  日志文件: {unified['logging']['file']}")
 print(f"  控制台输出: {unified['logging']['enable_console']}")
 print(f"  文件输出: {unified['logging']['enable_file']}")
-```
+```python
 
 ---
 
@@ -188,9 +192,9 @@ print(f"完整GPU配置: {gpu_config}")
 # 获取带默认值的配置
 device_index = cm.get('gpu.device_index', -1)
 print(f"GPU设备索引: {device_index}")
-```
+```markdown
 
-### 3.2 修改和保存配置
+## 3.2 修改和保存配置
 
 ```python
 from src.config.config_manager import ConfigManager
@@ -207,9 +211,9 @@ if cm.save_config():
     print("✅ 配置保存成功")
 else:
     print("❌ 配置保存失败")
-```
+```markdown
 
-### 3.3 合并配置
+## 3.3 合并配置
 
 ```python
 from src.config.config_manager import ConfigManager
@@ -230,9 +234,9 @@ new_config = {
 cm.merge_config(new_config)
 cm.save_config()
 print("✅ 配置合并并保存成功")
-```
+```markdown
 
-### 3.4 验证配置
+## 3.4 验证配置
 
 ```python
 from src.config.config_manager import ConfigManager
@@ -248,7 +252,7 @@ if errors:
         print(f"  {key}: {error}")
 else:
     print("✅ 所有配置验证通过")
-```
+```python
 
 ---
 
@@ -277,9 +281,9 @@ if errors:
     print(f"配置验证失败: {errors}")
 else:
     print("✅ Crypto配置验证通过")
-```
+```markdown
 
-### 4.2 与ConfigManager集成（推荐）
+## 4.2 与ConfigManager集成（推荐）
 
 ```python
 from src.config.config_manager import ConfigManager
@@ -298,9 +302,9 @@ print(f"GPU配置（从ConfigManager获取）: {gpu_config}")
 # Crypto配置仍然独立管理
 crypto.set('backend', 'coincurve')
 print(f"Crypto后端: {crypto.get('backend')}")
-```
+```markdown
 
-### 4.3 应用到加密管理器
+## 4.3 应用到加密管理器
 
 ```python
 from src.config import ConfigCoordinator
@@ -312,7 +316,7 @@ if coordinator.apply_crypto_config():
     print("✅ Crypto配置已应用到加密管理器")
 else:
     print("❌ 应用Crypto配置失败")
-```
+```python
 
 ---
 
@@ -343,9 +347,9 @@ if errors:
     print(f"配置验证失败: {errors}")
 else:
     print("✅ GPU配置验证通过")
-```
+```markdown
 
-### 5.2 获取GPU设备信息
+## 5.2 获取GPU设备信息
 
 ```python
 from src.gpu.config import GPUConfig
@@ -367,9 +371,9 @@ if devices:
         print(f"  类型: {device['type']}")
 else:
     print("未检测到GPU设备")
-```
+```markdown
 
-### 5.3 检查GPU可用性
+## 5.3 检查GPU可用性
 
 ```python
 from src.gpu.config import GPUConfig
@@ -380,7 +384,7 @@ if gpu_config.is_gpu_available():
     print("✅ GPU可用")
 else:
     print("❌ GPU不可用")
-```
+```markdown
 
 ### 5.4 创建GPU引擎
 
@@ -396,7 +400,7 @@ try:
     print("✅ GPU引擎创建成功")
 except RuntimeError as e:
     print(f"❌ GPU引擎创建失败: {e}")
-```
+```python
 
 ---
 
@@ -423,9 +427,9 @@ if errors:
             print(f"  ❌ {error}")
 else:
     print("✅ 所有配置验证通过")
-```
+```markdown
 
-### 6.2 单独验证各个配置管理器
+## 6.2 单独验证各个配置管理器
 
 ```python
 from src.config import ConfigCoordinator
@@ -458,9 +462,9 @@ if gpu_errors:
         print(f"  {error}")
 else:
     print("✅ GPUConfig验证通过")
-```
+```markdown
 
-### 6.3 验证特定配置项
+## 6.3 验证特定配置项
 
 ```python
 from src.config.config_manager import ConfigManager
@@ -487,7 +491,7 @@ if crypto_backend not in valid_backends:
     print(f"❌ crypto.backend必须是以下值之一: {', '.join(valid_backends)}")
 else:
     print(f"✅ crypto.backend有效: {crypto_backend}")
-```
+```python
 
 ---
 
@@ -515,9 +519,9 @@ finally:
     # 恢复原始配置
     coordinator.set('gpu.batch_size', original_gpu_batch)
     print(f"已恢复batch_size: {coordinator.get('gpu.batch_size')}")
-```
+```markdown
 
-### 7.2 配置导入导出
+## 7.2 配置导入导出
 
 ```python
 import json
@@ -538,9 +542,9 @@ with open('exported_config.json', 'r', encoding='utf-8') as f:
 coordinator.config_manager.merge_config(imported_config)
 coordinator.config_manager.save_config()
 print("✅ 配置导入成功")
-```
+```markdown
 
-### 7.3 配置变更监听
+## 7.3 配置变更监听
 
 ```python
 from src.config import ConfigCoordinator
@@ -592,9 +596,9 @@ while True:
     if watcher.check_changes():
         print("检测到配置变更，执行相应操作...")
     time.sleep(5)
-```
+```markdown
 
-### 7.4 多环境配置
+## 7.4 多环境配置
 
 ```python
 from src.config import ConfigCoordinator
@@ -635,7 +639,7 @@ print(f"开发环境batch_size: {dev_coordinator.get('gpu.batch_size')}")
 # 使用生产环境配置
 prod_coordinator = multi_config.get_coordinator('prod')
 print(f"生产环境batch_size: {prod_coordinator.get('gpu.batch_size')}")
-```
+```python
 
 ---
 
@@ -649,7 +653,7 @@ print(f"生产环境batch_size: {prod_coordinator.get('gpu.batch_size')}")
 from src.config import ConfigCoordinator
 coordinator = ConfigCoordinator('config.json')
 config = coordinator.get_unified_config()
-```
+```python
 
 ✅ **启动时验证配置**
 ```python
@@ -657,7 +661,7 @@ coordinator = ConfigCoordinator('config.json')
 errors = coordinator.validate_all()
 if errors:
     raise ValueError(f"配置验证失败: {errors}")
-```
+```python
 
 ✅ **使用点号路径访问配置**
 ```python
@@ -667,15 +671,15 @@ batch_size = coordinator.get('gpu.batch_size')
 # 不推荐
 gpu_config = coordinator.config_manager.config['gpu']
 batch_size = gpu_config['batch_size']
-```
+```python
 
 ✅ **修改配置后及时保存**
 ```python
 coordinator.set('gpu.batch_size', 131072)
 coordinator.save_all()  # 立即保存
-```
+```markdown
 
-### 8.2 避免的做法
+## 8.2 避免的做法
 
 ❌ **直接修改内部配置字典**
 ```python
@@ -684,7 +688,7 @@ coordinator.config_manager.config['gpu']['batch_size'] = 131072
 
 # 正确做法
 coordinator.set('gpu.batch_size', 131072)
-```
+```python
 
 ❌ **忽略配置验证错误**
 ```python
@@ -698,7 +702,7 @@ errors = coordinator.validate_all()
 if errors:
     # 处理验证错误
     pass
-```
+```python
 
 ❌ **频繁保存配置**
 ```python
@@ -711,9 +715,9 @@ for i in range(100):
 for i in range(100):
     coordinator.set('gpu.batch_size', i)
 coordinator.save_all()  # 批量保存
-```
+```markdown
 
-### 8.3 性能优化
+## 8.3 性能优化
 
 ```python
 from src.config import ConfigCoordinator
@@ -754,7 +758,7 @@ def update_gpu_config(batch_size=None, device_index=None, memory_ratio=None):
         coordinator.set('gpu.memory_usage_ratio', memory_ratio)
     
     coordinator.save_all()
-```
+```python
 
 ---
 
@@ -824,7 +828,7 @@ def update_gpu_config(batch_size=None, device_index=None, memory_ratio=None):
 **解决方案**:
 ```python
 coordinator.set('gpu.batch_size', 65536)  # 设置为正整数
-```
+```markdown
 
 ### B.2 配置保存失败
 
@@ -839,9 +843,9 @@ icacls config.json /grant Users:F
 
 # Linux
 chmod 644 config.json
-```
+```markdown
 
-### B.3 配置加载失败
+## B.3 配置加载失败
 
 **错误**: `加载配置文件失败: JSON decode error`
 

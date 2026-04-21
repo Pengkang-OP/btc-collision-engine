@@ -17,6 +17,13 @@ from .crypto_backend import (
     CoincurveBackend,
     ECDSABackend
 )
+from .simd_optimizer import (
+    SIMDVectorizedOperations,
+    BatchCollisionProcessor,
+    NumpyOptimizedAddressGenerator,
+    create_simd_optimizer,
+    create_batch_processor
+)
 
 __all__ = [
     'Secp256k1',
@@ -37,5 +44,11 @@ __all__ = [
     'PurePythonBackend',
     'OpenSSLBackend',
     'CoincurveBackend',
-    'ECDSABackend'
+    'ECDSABackend',
+    # SIMD优化
+    'SIMDVectorizedOperations',
+    'BatchCollisionProcessor',
+    'NumpyOptimizedAddressGenerator',
+    'create_simd_optimizer',
+    'create_batch_processor'
 ]

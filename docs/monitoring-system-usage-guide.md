@@ -1,5 +1,55 @@
 # 监控系统使用指南和最佳实践
 
+> **版本**: v1.2.0 | **最后更新**: 2026-04-21  
+> **面向**: 运维/开发者
+
+
+
+## 目录
+
+- [📋 目录](#-目录)
+- [系统架构概述](#系统架构概述)
+  - [架构图](#架构图)
+- [核心组件](#核心组件)
+  - [1. DataStorage - 数据存储](#1-datastorage---数据存储)
+  - [2. DataCollector - 数据采集](#2-datacollector---数据采集)
+  - [3. AnomalyDetector - 异常检测](#3-anomalydetector---异常检测)
+  - [4. AlertSystem - 告警系统](#4-alertsystem---告警系统)
+  - [5. ReportGenerator - 报告生成](#5-reportgenerator---报告生成)
+- [使用示例](#使用示例)
+  - [示例1: 完整功能（推荐）](#示例1-完整功能推荐)
+- [示例2: 独立使用DataStorage](#示例2-独立使用datastorage)
+- [示例3: 独立使用AnomalyDetector](#示例3-独立使用anomalydetector)
+- [示例4: 独立使用AlertSystem](#示例4-独立使用alertsystem)
+- [示例5: 独立使用ReportGenerator](#示例5-独立使用reportgenerator)
+- [依赖注入模式](#依赖注入模式)
+  - [什么是依赖注入？](#什么是依赖注入)
+  - [监控系统的依赖关系](#监控系统的依赖关系)
+  - [使用Optional类型提示](#使用optional类型提示)
+  - [依赖注入的好处](#依赖注入的好处)
+    - [1. 灵活组合](#1-灵活组合)
+- [2. 易于测试](#2-易于测试)
+    - [3. 降级方案](#3-降级方案)
+- [最佳实践](#最佳实践)
+  - [1. 始终检查依赖](#1-始终检查依赖)
+- [2. 使用try-except保护](#2-使用try-except保护)
+- [3. 实现降级方案](#3-实现降级方案)
+- [4. 原子写入保证数据完整性](#4-原子写入保证数据完整性)
+- [5. 限制数据量防止内存溢出](#5-限制数据量防止内存溢出)
+- [6. 使用Optional类型提示](#6-使用optional类型提示)
+- [7. 添加详细文档](#7-添加详细文档)
+- [常见问题](#常见问题)
+  - [Q1: 什么时候应该使用完整功能，什么时候独立使用组件？](#q1-什么时候应该使用完整功能什么时候独立使用组件)
+  - [Q2: 为什么不强制要求依赖？](#q2-为什么不强制要求依赖)
+  - [Q3: 原子写入有什么作用？](#q3-原子写入有什么作用)
+  - [Q4: 如何自定义异常检测阈值？](#q4-如何自定义异常检测阈值)
+  - [Q5: 如何清理旧数据？](#q5-如何清理旧数据)
+  - [Q6: 监控系统会影响性能吗？](#q6-监控系统会影响性能吗)
+  - [Q7: 如何集成到现有的碰撞引擎？](#q7-如何集成到现有的碰撞引擎)
+- [附录](#附录)
+  - [A. 配置文件示例](#a-配置文件示例)
+  - [B. 错误码说明](#b-错误码说明)
+  - [C. 性能指标参考](#c-性能指标参考)
 **文档版本**: v1.0  
 **创建日期**: 2026-04-20  
 **适用范围**: monitoring_system.py模块  
@@ -23,7 +73,7 @@ BTC碰撞引擎监控系统采用**模块化设计**和**依赖注入模式**，
 
 ### 架构图
 
-```
+```python
 ┌─────────────────────────────────────────────────────────┐
 │                  MonitoringSystem                       │
 │                  (监控系统主类)                           │
@@ -136,9 +186,9 @@ print(f"当前速度: {status['current_data']['performance']['speed']}")
 # 生成报告
 report = monitoring.generate_report()
 print(f"平均速度: {report['summary']['average_speed']}")
-```
+```markdown
 
-### 示例2: 独立使用DataStorage
+## 示例2: 独立使用DataStorage
 
 单独使用数据存储功能：
 
@@ -168,9 +218,9 @@ storage.save_error({
     "type": "test_error",
     "message": "这是一个测试错误"
 })
-```
+```markdown
 
-### 示例3: 独立使用AnomalyDetector
+## 示例3: 独立使用AnomalyDetector
 
 单独使用异常检测功能：
 
@@ -208,9 +258,9 @@ for anomaly in anomalies:
 history_data = storage.get_history_data()
 trends = detector.analyze_trends(history_data)
 print(f"速度趋势: {trends['speed']['trend']}")
-```
+```markdown
 
-### 示例4: 独立使用AlertSystem
+## 示例4: 独立使用AlertSystem
 
 单独使用告警系统：
 
@@ -249,9 +299,9 @@ anomalies = [
     {"type": "engine", "metric": "speed", "message": "速度为0"}
 ]
 alert_system.process_anomalies(anomalies)
-```
+```markdown
 
-### 示例5: 独立使用ReportGenerator
+## 示例5: 独立使用ReportGenerator
 
 单独使用报告生成功能：
 
@@ -304,7 +354,7 @@ print(f"报告日期: {report['date']}")
 print(f"平均速度: {report['summary']['average_speed']}")
 print(f"趋势: {report['trends']['speed']['trend']}")
 print(f"建议: {report['recommendations']}")
-```
+```python
 
 ---
 
@@ -326,7 +376,7 @@ MonitoringSystem
   ├── AnomalyDetector (注入 DataStorage)
   ├── AlertSystem (注入 DataStorage)
   └── ReportGenerator (注入 DataStorage + AnomalyDetector)
-```
+```markdown
 
 ### 使用Optional类型提示
 
@@ -343,7 +393,7 @@ class AnomalyDetector:
         # 使用时检查
         if self.storage is not None:
             self.storage.save_error(...)
-```
+```markdown
 
 ### 依赖注入的好处
 
@@ -361,9 +411,9 @@ detector = AnomalyDetector()  # 不需要storage
 
 # 仅告警功能
 alert = AlertSystem()  # 不需要storage
-```
+```markdown
 
-#### 2. 易于测试
+## 2. 易于测试
 
 ```python
 from unittest.mock import Mock
@@ -378,7 +428,7 @@ def test_anomaly_detector():
     
     # 验证storage被正确调用
     mock_storage.save_error.assert_called_once()
-```
+```markdown
 
 #### 3. 降级方案
 
@@ -391,7 +441,7 @@ class ReportGenerator:
         else:
             # 降级方案
             trends = self._simple_trend_analysis(data)
-```
+```python
 
 ---
 
@@ -410,9 +460,9 @@ def generate_report(self):
 # ❌ 错误做法
 def generate_report(self):
     data = self.storage.get_history_data()  # 可能崩溃
-```
+```markdown
 
-### 2. 使用try-except保护
+## 2. 使用try-except保护
 
 ```python
 # ✅ 正确做法
@@ -424,9 +474,9 @@ except Exception as e:
 
 # ❌ 错误做法
 history = self.storage.get_history_data()  # 可能抛出异常
-```
+```markdown
 
-### 3. 实现降级方案
+## 3. 实现降级方案
 
 ```python
 # ✅ 正确做法
@@ -437,9 +487,9 @@ else:
 
 # ❌ 错误做法
 trends = self.detector.analyze_trends(data)  # detector可能为None
-```
+```markdown
 
-### 4. 原子写入保证数据完整性
+## 4. 原子写入保证数据完整性
 
 ```python
 # ✅ 正确做法
@@ -456,9 +506,9 @@ def save_data(self, data):
         if os.path.exists(temp_file):
             os.remove(temp_file)  # 清理临时文件
         raise
-```
+```markdown
 
-### 5. 限制数据量防止内存溢出
+## 5. 限制数据量防止内存溢出
 
 ```python
 # ✅ 正确做法
@@ -468,9 +518,9 @@ if len(history) > 1000:
 
 # ❌ 错误做法
 history.append(new_data)  # 无限增长
-```
+```markdown
 
-### 6. 使用Optional类型提示
+## 6. 使用Optional类型提示
 
 ```python
 # ✅ 正确做法
@@ -480,9 +530,9 @@ def __init__(self, storage: Optional['DataStorage'] = None):
 # ❌ 错误做法
 def __init__(self, storage: DataStorage = None):  # 类型提示不准确
     self.storage = storage
-```
+```markdown
 
-### 7. 添加详细文档
+## 7. 添加详细文档
 
 ```python
 class ReportGenerator:
@@ -498,7 +548,7 @@ class ReportGenerator:
         generator = ReportGenerator()
         generator.storage = custom_storage
     """
-```
+```yaml
 
 ---
 
@@ -535,7 +585,7 @@ class ReportGenerator:
 detector = AnomalyDetector()
 detector.thresholds["speed"]["min"] = 200  # 修改最低速度阈值
 detector.thresholds["cpu_usage"]["max"] = 80  # 修改CPU阈值
-```
+```markdown
 
 ### Q5: 如何清理旧数据？
 
@@ -545,7 +595,7 @@ from src.monitoring.data_logger import DataLogger
 
 logger = DataLogger()
 logger.cleanup_old_data(max_age_days=30)  # 清理30天前的数据
-```
+```markdown
 
 ### Q6: 监控系统会影响性能吗？
 
@@ -570,7 +620,7 @@ engine = KeyCollisionEngine(
 # - 创建MonitoringSystem
 # - 启动时自动启动监控
 # - 停止时自动停止监控
-```
+```python
 
 ---
 

@@ -56,23 +56,141 @@ def identify_vendor(device_name: str, vendor_str: str = '') -> str:
 class GPUDeviceDetector:
     """GPU设备检测器"""
     
+    # 可用性检测缓存
+    _availability_cache = None
+    _cache_timestamp = 0
+    _cache_ttl = 60  # 缓存有效期60秒
+    
+    # 设备信息缓存（避免重复检测）
+    _devices_cache = None
+    _devices_cache_timestamp = 0
+    
     @staticmethod
     def is_gpu_available() -> bool:
         """
         检查GPU是否可用
         
+        使用缓存机制避免频繁检测，缓存有效期60秒。
+        
         Returns:
             True如果GPU可用
         """
+        import time
+        
+        # 检查缓存是否有效
+        now = time.time()
+        if (GPUDeviceDetector._availability_cache is not None and
+            now - GPUDeviceDetector._cache_timestamp < GPUDeviceDetector._cache_ttl):
+            logger.debug(f"使用GPU可用性缓存: {GPUDeviceDetector._availability_cache}")
+            return GPUDeviceDetector._availability_cache
+        
         if not PYOPENCL_AVAILABLE:
+            logger.debug("pyopencl不可用，GPU检测跳过")
+            GPUDeviceDetector._availability_cache = False
+            GPUDeviceDetector._cache_timestamp = now
             return False
         
         try:
             devices = GPUDeviceDetector.detect_devices()
-            return len(devices) > 0
-        except Exception as e:
-            logger.debug(f"GPU检测失败: {e}")
+            available = len(devices) > 0
+            if available:
+                logger.debug(f"GPU可用，检测到 {len(devices)} 个设备")
+                # 缓存设备信息供get_gpu_health_status()使用
+                GPUDeviceDetector._devices_cache = devices
+                GPUDeviceDetector._devices_cache_timestamp = time.time()
+            else:
+                logger.debug("GPU不可用，未检测到设备")
+            
+            # 更新缓存
+            GPUDeviceDetector._availability_cache = available
+            GPUDeviceDetector._cache_timestamp = now
+            
+            return available
+        except (ImportError, RuntimeError, OSError) as e:
+            # 预期的设备检测异常
+            logger.debug(f"GPU检测失败: {type(e).__name__}: {e}")
+            GPUDeviceDetector._availability_cache = False
+            GPUDeviceDetector._cache_timestamp = now
             return False
+        except Exception as e:
+            # 未知错误：记录警告日志
+            logger.warning(f"GPU检测未知错误: {type(e).__name__}: {e}")
+            GPUDeviceDetector._availability_cache = False
+            GPUDeviceDetector._cache_timestamp = now
+            return False
+    
+    @staticmethod
+    def get_gpu_health_status() -> Dict:
+        """
+        获取GPU健康状态信息
+        
+        用于监控系统和运维诊断，提供详细的GPU状态信息。
+        复用is_gpu_available()的缓存，避免重复检测。
+        
+        Returns:
+            Dict: 包含GPU健康状态的字典，字段包括：
+                - available (bool): GPU是否可用
+                - device_count (int): 检测到的设备数量
+                - devices (List[str]): 设备名称列表
+                - status (str): 健康状态 ('healthy'/'unavailable'/'error')
+                - error (str, optional): 错误信息（仅在status='error'时存在）
+        """
+        import time
+        
+        try:
+            available = GPUDeviceDetector.is_gpu_available()
+            
+            if available:
+                # 复用缓存的设备信息，避免重复检测
+                now = time.time()
+                if (GPUDeviceDetector._devices_cache is not None and
+                    now - GPUDeviceDetector._devices_cache_timestamp < GPUDeviceDetector._cache_ttl):
+                    # 使用缓存的设备信息
+                    devices = GPUDeviceDetector._devices_cache
+                else:
+                    # 缓存失效，重新检测
+                    devices = GPUDeviceDetector.detect_devices()
+                    GPUDeviceDetector._devices_cache = devices
+                    GPUDeviceDetector._devices_cache_timestamp = now
+                
+                device_names = [dev['name'] for dev in devices]
+                
+                return {
+                    'available': True,
+                    'device_count': len(devices),
+                    'devices': device_names,
+                    'status': 'healthy'
+                }
+            else:
+                return {
+                    'available': False,
+                    'device_count': 0,
+                    'devices': [],
+                    'status': 'unavailable'
+                }
+        except Exception as e:
+            logger.error(f"GPU健康检查失败: {type(e).__name__}: {e}")
+            return {
+                'available': False,
+                'device_count': 0,
+                'devices': [],
+                'status': 'error',
+                'error': f"{type(e).__name__}: {e}"
+            }
+    
+    @staticmethod
+    def clear_availability_cache():
+        """
+        清除GPU可用性缓存和设备信息缓存
+        
+        在GPU状态可能发生变化时调用（如驱动更新、设备插拔），
+        强制下次is_gpu_available()重新检测。
+        """
+        GPUDeviceDetector._availability_cache = None
+        GPUDeviceDetector._cache_timestamp = 0
+        GPUDeviceDetector._devices_cache = None
+        GPUDeviceDetector._devices_cache_timestamp = 0
+        logger.debug("GPU可用性缓存和设备信息缓存已清除")
     
     @staticmethod
     def detect_devices() -> List[Dict]:

@@ -1,5 +1,42 @@
 # 快速开始与部署指南
 
+> **版本**: v1.2.0 | **最后更新**: 2026-04-21  
+> **面向**: 新用户
+
+
+
+## 目录
+
+- [📋 前置要求](#-前置要求)
+  - [系统要求](#系统要求)
+- [🚀 5分钟快速上手](#-5分钟快速上手)
+  - [1. 安装依赖](#1-安装依赖)
+- [2. 运行碰撞测试](#2-运行碰撞测试)
+    - [方法A: 使用命令行工具](#方法a-使用命令行工具)
+- [方法B: 使用测试脚本](#方法b-使用测试脚本)
+- [方法C: 使用Python代码](#方法c-使用python代码)
+- [🎯 三种碰撞模式](#-三种碰撞模式)
+  - [1. 随机模式（推荐）](#1-随机模式推荐)
+  - [2. 范围扫描模式](#2-范围扫描模式)
+  - [3. 暴力穷举模式](#3-暴力穷举模式)
+- [📊 性能基准](#-性能基准)
+- [🧪 运行测试](#-运行测试)
+  - [完整测试套件](#完整测试套件)
+- [测试状态](#测试状态)
+- [📁 项目结构](#-项目结构)
+- [💡 使用建议](#-使用建议)
+  - [1. 学习研究](#1-学习研究)
+  - [2. 性能测试](#2-性能测试)
+  - [3. 安全研究](#3-安全研究)
+- [⚠️ 重要说明](#-重要说明)
+  - [为什么找不到匹配？](#为什么找不到匹配)
+  - [测试的价值](#测试的价值)
+- [📚 下一步](#-下一步)
+  - [深入学习](#深入学习)
+  - [进阶使用](#进阶使用)
+- [🆘 获取帮助](#-获取帮助)
+  - [文档](#文档)
+  - [测试报告](#测试报告)
 ## 📋 前置要求
 
 - Python 3.14+ (推荐 3.11+)
@@ -28,9 +65,9 @@ cd f:/BTC
 
 # 安装依赖
 pip install -r requirements.txt
-```
+```markdown
 
-### 2. 运行碰撞测试
+## 2. 运行碰撞测试
 
 #### 方法A: 使用命令行工具
 
@@ -43,9 +80,9 @@ python key_collision_cli.py -f valid_addresses.txt -m random --duration 60
 
 # 指定线程数
 python key_collision_cli.py -f valid_addresses.txt -m random -w 4 --duration 60
-```
+```markdown
 
-#### 方法B: 使用测试脚本
+## 方法B: 使用测试脚本
 
 ```bash
 # 运行真实地址碰撞测试（10秒，2线程）
@@ -53,9 +90,9 @@ python run_real_collision_test.py
 
 # 自定义参数（60秒，4线程）
 python run_real_collision_test.py 60 4
-```
+```markdown
 
-#### 方法C: 使用Python代码
+## 方法C: 使用Python代码
 
 ```python
 from src.collision.key_collision_engine import KeyCollisionEngine
@@ -85,7 +122,7 @@ engine.stop()
 stats = engine.get_stats()
 print(f"检查了 {stats.total_checked} 个私钥")
 print(f"速度: {stats.speed:.0f} 次/秒")
-```
+```python
 
 ---
 
@@ -97,7 +134,7 @@ print(f"速度: {stats.speed:.0f} 次/秒")
 
 ```bash
 python key_collision_cli.py -f valid_addresses.txt -m random --duration 60
-```
+```python
 
 **适用场景**: 通用碰撞测试
 
@@ -107,7 +144,7 @@ python key_collision_cli.py -f valid_addresses.txt -m random --duration 60
 
 ```bash
 python key_collision_cli.py -f valid_addresses.txt -m range --start 1 --end 1000000
-```
+```python
 
 **适用场景**: 测试特定范围的私钥
 
@@ -117,7 +154,7 @@ python key_collision_cli.py -f valid_addresses.txt -m range --start 1 --end 1000
 
 ```bash
 python key_collision_cli.py -f valid_addresses.txt -m brute --start 1
-```
+```python
 
 **适用场景**: 连续私钥空间搜索
 
@@ -144,7 +181,7 @@ $ python run_real_collision_test.py 10 2
    总检查数:   32,603
    平均速度:   3.26K/s
    发现匹配:   0 个 (正常)
-```
+```python
 
 ---
 
@@ -164,15 +201,15 @@ python -m pytest tests/test_security.py -v
 
 # 生成覆盖率报告
 python -m pytest tests/ --cov=src --cov-report=html
-```
+```markdown
 
-### 测试状态
+## 测试状态
 
 ```
 ✅ 261个测试用例
 ✅ 97%+通过率
 ✅ 100%核心功能覆盖
-```
+```python
 
 ---
 

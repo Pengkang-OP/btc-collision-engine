@@ -445,6 +445,28 @@ class GPUKernel:
         
         return matches
     
+    def cleanup(self):
+        """清理资源"""
+        if self._keys_buf:
+            self._keys_buf = None
+        if self._match_buf:
+            self._match_buf = None
+        if self._targets_buf:
+            self._targets_buf = None
+        self._match_flags = None
+        self.program = None
+        self._batch_kernel = None
+
+
+class GPUCollisionEngine(BaseCollisionEngine):
+    """GPU 加速的比特币私钥对撞引擎
+    
+    继承BaseCollisionEngine，实现GPU碰撞引擎。
+    """
+    
+    # 监控配置
+    MONITOR_INTERVAL = 100  # 每 100 个批次检查一次警告和建议
+    
     def _apply_intel_specific_optimizations(self):
         """应用 Intel GPU 特定优化和验证"""
         logger.info("="*60)
@@ -517,23 +539,32 @@ class GPUKernel:
         
         # 2. 显存监控器（P1）
         try:
-            total_memory = self._gpu_device.device_info.get('global_mem_size', 0)
-            
-            if total_memory <= 0:
+            # 防御性检查：确保 device_info 是字典
+            device_info = self._gpu_device.device_info
+            if not isinstance(device_info, dict):
                 logger.warning(
-                    "⚠️ 无法获取显存大小（global_mem_size=0），跳过显存监控器初始化\n"
-                    "   显存监控功能将被禁用"
+                    f"⚠️ device_info 类型异常: {type(device_info).__name__}，跳过显存监控器初始化\n"
+                    f"   显存监控功能将被禁用"
                 )
                 self.memory_monitor = None
             else:
-                self.memory_monitor = IntelMemoryMonitor(
-                    total_memory_bytes=total_memory,
-                    safe_usage_ratio=0.45  # Intel 保守策略
-                )
-                logger.info(
-                    f"✅ 显存监控器已初始化 "
-                    f"(总显存: {total_memory/1024**3:.1f}GB)"
-                )
+                total_memory = device_info.get('global_mem_size', 0)
+                
+                if total_memory <= 0:
+                    logger.warning(
+                        "⚠️ 无法获取显存大小（global_mem_size=0），跳过显存监控器初始化\n"
+                        "   显存监控功能将被禁用"
+                    )
+                    self.memory_monitor = None
+                else:
+                    self.memory_monitor = IntelMemoryMonitor(
+                        total_memory_bytes=total_memory,
+                        safe_usage_ratio=0.45  # Intel 保守策略
+                    )
+                    logger.info(
+                        f"✅ 显存监控器已初始化 "
+                        f"(总显存: {total_memory/1024**3:.1f}GB)"
+                    )
         except (RuntimeError, ValueError, TypeError, AttributeError) as e:
             logger.warning(
                 f"⚠️ 显存监控器初始化失败（非致命）: {type(e).__name__}: {e}\n"
@@ -648,28 +679,6 @@ class GPUKernel:
         except Exception as e:
             logger.error(f"❌ Intel workaround 测试失败: {type(e).__name__}: {e}")
             return False
-    
-    def cleanup(self):
-        """清理资源"""
-        if self._keys_buf:
-            self._keys_buf = None
-        if self._match_buf:
-            self._match_buf = None
-        if self._targets_buf:
-            self._targets_buf = None
-        self._match_flags = None
-        self.program = None
-        self._batch_kernel = None
-
-
-class GPUCollisionEngine(BaseCollisionEngine):
-    """GPU 加速的比特币私钥对撞引擎
-    
-    继承BaseCollisionEngine，实现GPU碰撞引擎。
-    """
-    
-    # 监控配置
-    MONITOR_INTERVAL = 100  # 每 100 个批次检查一次警告和建议
     
     def __init__(self, targets: Set[str],
                  device_index: int = 1,
@@ -801,12 +810,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 
                 logger.info(f"检测到GPU设备: {device_name} ({vendor})")
                 
-                # 3. Intel GPU特殊处理
-                if vendor.lower().startswith('intel'):
-                    logger.info("🔧 检测到 Intel GPU，应用特殊优化")
-                    self._apply_intel_specific_optimizations()
-                
-                # 4. 识别厂商并加载配置
+                # 3. 识别厂商并加载配置
                 with EnhancedPerformanceMonitor(logger, "GPU型号配置加载", level="DEBUG"):
                     from ..gpu.device import identify_vendor
                     vendor_type = identify_vendor(device_name, vendor)
@@ -825,11 +829,11 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 # 4. 创建GPU上下文（包含厂商优化器）
                 self._gpu_context = GPUContext(self._gpu_device)
                 
-                # 5. 应用厂商优化
+                # 7. 应用厂商优化
                 with EnhancedPerformanceMonitor(logger, "GPU厂商优化应用", level="DEBUG"):
                     self._gpu_context.apply_optimizations()
                 
-                # 6. 计算最优batch_size（如果未指定）
+                # 8. 计算最优batch_size（如果未指定）
                 if self.batch_size is None:
                     self.batch_size = self._gpu_context.calculate_batch_size()
                     logger.info(
@@ -839,11 +843,11 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 else:
                     logger.debug(f"使用指定的 batch_size: {self.batch_size}")
                 
-                # 7. 使用GPUContext编译内核（应用厂商编译选项）
+                # 9. 使用GPUContext编译内核（应用厂商编译选项）
                 with EnhancedPerformanceMonitor(logger, "OpenCL内核编译", level="INFO"):
                     self._gpu_context.compile_kernel(OPENCL_KERNEL_SOURCE)
                 
-                # 8. 创建GPUKernel（使用已编译的程序）
+                # 10. 创建GPUKernel（使用已编译的程序）
                 with EnhancedPerformanceMonitor(logger, "GPUKernel创建", level="DEBUG"):
                     self._gpu_kernel = GPUKernel(
                         self._gpu_device, 
@@ -851,13 +855,18 @@ class GPUCollisionEngine(BaseCollisionEngine):
                         program=self._gpu_context.program
                     )
                 
-                # 9. 预转换目标地址为 Hash160
+                # 11. 预转换目标地址为 Hash160
                 with EnhancedPerformanceMonitor(logger, "目标地址转换", level="DEBUG"):
                     self._prepare_targets()
                 
-                # 10. 设置 GPU 目标地址缓冲区
+                # 12. 设置 GPU 目标地址缓冲区
                 if self._target_hash160s:
                     self._gpu_kernel.set_targets(self._target_hash160s, len(self._target_list))
+                
+                # 13. Intel GPU特殊验证（必须在 GPUKernel 创建之后）
+                if vendor.lower().startswith('intel'):
+                    logger.info("🔧 检测到 Intel GPU，应用特殊优化")
+                    self._apply_intel_specific_optimizations()
                 
                 logger.info(
                     f"GPU 引擎初始化成功: {device_name} "
