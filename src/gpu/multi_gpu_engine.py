@@ -160,16 +160,21 @@ class MultiGPUCollisionEngine:
             logger.error("引擎未初始化,请先调用initialize()")
             return False
         
-        with self._state_lock:
-            if self._running:
-                logger.warning("引擎已在运行中")
-                return False
-        
         try:
-            self._targets = targets
-            self._match_callback = match_callback
-            self._start_time = time.time()
-            self._all_matches = []
+            # 在锁内完成所有检查和状态修改,避免TOCTOU竞态条件
+            with self._state_lock:
+                if self._running:
+                    logger.warning("引擎已在运行中")
+                    return False
+                
+                # 设置状态变量
+                self._targets = targets
+                self._match_callback = match_callback
+                self._start_time = time.time()
+            
+            # _all_matches使用单独的锁
+            with self._matches_lock:
+                self._all_matches = []
             
             # 分配任务
             key_ranges = self.load_balancer.assign_all_key_ranges(total_keys)
@@ -351,7 +356,9 @@ class MultiGPUCollisionEngine:
         Returns:
             匹配结果列表
         """
-        return self._all_matches.copy()
+        # 使用锁保护_all_matches读取
+        with self._matches_lock:
+            return self._all_matches.copy()
     
     def is_running(self) -> bool:
         """检查引擎是否在运行
@@ -359,7 +366,9 @@ class MultiGPUCollisionEngine:
         Returns:
             True表示正在运行
         """
-        return self._running
+        # 使用锁保护_running读取
+        with self._state_lock:
+            return self._running
     
     def is_initialized(self) -> bool:
         """检查引擎是否已初始化
@@ -367,7 +376,9 @@ class MultiGPUCollisionEngine:
         Returns:
             True表示已初始化
         """
-        return self._initialized
+        # 使用锁保护_initialized读取
+        with self._state_lock:
+            return self._initialized
     
     def get_devices(self) -> List[Dict]:
         """获取当前使用的GPU设备列表
@@ -375,7 +386,9 @@ class MultiGPUCollisionEngine:
         Returns:
             设备信息列表
         """
-        return self._devices.copy()
+        # 使用锁保护_devices读取
+        with self._state_lock:
+            return self._devices.copy()
     
     def get_load_balancer(self) -> Optional[GPULoadBalancer]:
         """获取负载均衡器
