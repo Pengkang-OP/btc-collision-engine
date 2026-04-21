@@ -31,8 +31,15 @@ env/
 logs/*.log
 logs/*.log.*
 data_logs/  # 运行时数据目录（完整忽略）
-monitoring_data/  # 监控数据目录（完整忽略）
+monitoring_data/  # 监控数据目录（完整忽略，已废弃）
 test_results.log
+
+# 测试数据和结果
+test_data/  # 测试生成数据
+test_results/  # 测试结果
+test_*.txt  # 临时测试输出
+test_*.log  # 临时测试日志
+*.log  # 所有日志文件
 
 # 临时文件
 *.tmp
