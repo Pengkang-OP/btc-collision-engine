@@ -23,9 +23,9 @@ class SecurityLogFilter(logging.Filter):
     """
     
     # 私钥模式匹配
-    # 64位十六进制（32字节私钥）
+    # 64位十六进制（32字节私钥），支持0x前缀
     PRIVATE_KEY_HEX_PATTERN = re.compile(
-        r'\b[0-9a-fA-F]{64}\b'
+        r'\b(?:0x)?[0-9a-fA-F]{64}\b'
     )
     
     # WIF格式（以5/K/L开头的Base58字符串）
@@ -35,7 +35,7 @@ class SecurityLogFilter(logging.Filter):
     
     # 原始字节模式（32字节）
     RAW_KEY_PATTERN = re.compile(
-        r"b'\\x[0-9a-fA-F]{2}{32}'"
+        r"b'\\x[0-9a-fA-F]{2}(?:\\x[0-9a-fA-F]{2}){31}'"
     )
     
     def __init__(self, name='', mask_private_keys=True, mask_wif=True):

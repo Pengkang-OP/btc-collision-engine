@@ -10,6 +10,9 @@ from typing import Optional, Dict, Any
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 from .logger import ColoredFormatter, ThreadSafeLogger
 
+# 导入安全过滤器（P0-2修复）
+from .security_log_filter import SecurityLogFilter
+
 
 class LoggingConfig:
     """日志配置管理器"""
@@ -202,6 +205,49 @@ def init_logging(config: Optional[Dict[str, Any]] = None):
     
     # 启用日志安全过滤器（P0-2修复）
     _setup_security_filter()
+
+
+def _setup_security_filter():
+    """设置日志安全过滤器（P0-2修复）
+    
+    自动检测并屏蔽日志中的敏感信息：
+    - 比特币私钥（64位十六进制）
+    - WIF格式私钥
+    - 原始私钥字节
+    """
+    try:
+        # 创建安全过滤器
+        security_filter = SecurityLogFilter(
+            name='security_filter',
+            mask_private_keys=True,
+            mask_wif=True
+        )
+        
+        # 添加到根日志记录器
+        root_logger = logging.getLogger()
+        root_logger.addFilter(security_filter)
+        
+        # 添加到主要模块日志记录器
+        module_loggers = [
+            'GPUCollisionEngine',
+            'KeyCollisionEngine',
+            'GPUDeviceHelper',
+            'GPUKernel',
+            'DataLogger',
+            'MonitoringSystem',
+        ]
+        
+        for logger_name in module_loggers:
+            logger = logging.getLogger(logger_name)
+            logger.addFilter(security_filter)
+        
+        # 注意：这里不使用logging.info，因为日志系统可能还未完全初始化
+        print("[INFO] 日志安全过滤器已启用（防止私钥泄露）")
+        
+    except Exception as e:
+        # 安全过滤器初始化失败不应阻止日志系统工作
+        print(f"[WARNING] 日志安全过滤器初始化失败: {e}")
+        print("[WARNING] 日志系统将继续工作，但可能不会屏蔽敏感信息")
 
 
 def get_configured_logger(name: str, thread_safe: bool = False) -> logging.Logger:
