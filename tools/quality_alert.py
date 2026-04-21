@@ -163,6 +163,12 @@ def main():
     try:
         checker = DocumentQualityChecker(args.docs_dir)
         scores = checker.check_all()
+    except FileNotFoundError as e:
+        print(f"❌ 文档目录不存在: {e}")
+        sys.exit(1)
+    except PermissionError as e:
+        print(f"❌ 权限不足，无法访问文档: {e}")
+        sys.exit(1)
     except Exception as e:
         print(f"❌ 质量检查失败: {e}")
         sys.exit(1)

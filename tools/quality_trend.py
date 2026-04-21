@@ -33,7 +33,17 @@ class QualityTrendAnalyzer:
     
     def __init__(self, history_file: str = "quality_history.json"):
         self.history_file = Path(history_file)
+        self._cleanup_temp()  # 清理残留临时文件
         self.history: List[Dict] = self.load_history()
+    
+    def _cleanup_temp(self):
+        """清理残留的临时文件"""
+        temp_file = self.history_file.with_suffix('.tmp')
+        if temp_file.exists():
+            try:
+                temp_file.unlink()
+            except OSError:
+                pass
     
     def load_history(self) -> List[Dict]:
         """加载历史记录"""

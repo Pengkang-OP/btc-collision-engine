@@ -14,6 +14,7 @@ import io
 import time
 from pathlib import Path
 from multiprocessing import Pool, cpu_count
+from multiprocessing import BrokenProcessPool
 from typing import List, Dict
 
 # 修复Windows控制台编码问题
@@ -96,9 +97,17 @@ def parallel_check(docs_dir: str, workers: int = None, config_dict: Dict = None)
     try:
         with Pool(processes=workers) as pool:
             scores = pool.map(check_single_doc, tasks, chunksize=1)
-    except Exception as e:
-        print(f"\n❌ 并行检查失败: {e}")
+    except BrokenProcessPool as e:
+        print(f"\n❌ 进程池损坏: {e}")
         print(f"💡 建议: 尝试减少工作进程数 (--workers 4)")
+        sys.exit(1)
+    except KeyboardInterrupt:
+        print(f"\n⚠️  用户中断并行检查")
+        sys.exit(130)
+    except RuntimeError as e:
+        # 捕获其他运行时错误（如资源不足）
+        print(f"\n❌ 并行检查运行时错误: {e}")
+        print(f"💡 建议: 检查系统资源或减少工作进程数")
         sys.exit(1)
     
     elapsed = time.time() - start_time
