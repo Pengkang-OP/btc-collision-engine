@@ -616,6 +616,27 @@ class GPUPerformanceMonitor:
                 logger.warning(f"⚠️ GPU错误率过高: {error_rate:.2f}% "
                              f"({self._total_errors}/{self._total_batches})")
                 
+                # 集成告警系统
+                try:
+                    from .alert_system import get_alert_system
+                    alert_system = get_alert_system()
+                    
+                    # 获取当前吞吐量
+                    current_throughput = self._kernel_metrics[-1].keys_per_second if self._kernel_metrics else 0
+                    
+                    # 检查性能指标并触发告警
+                    alert_system.check_metrics({
+                        'throughput': current_throughput,
+                        'peak_throughput': self._peak_throughput,
+                        'degradation_rate': 0,
+                        'memory_usage_percent': (self._current_memory_mb / max(self._total_memory_mb, 1)) * 100 if hasattr(self, '_current_memory_mb') and hasattr(self, '_total_memory_mb') else 0,
+                        'gpu_temperature': 0,
+                        'error_rate': error_rate / 100,  # 转换为0-1范围
+                        'baseline_throughput': self._peak_throughput
+                    })
+                except Exception as e:
+                    logger.debug(f"告警系统检查失败(不影响主流程): {e}")
+                
                 # 触发错误回调
                 for callback in self._error_callbacks:
                     try:
@@ -626,11 +647,33 @@ class GPUPerformanceMonitor:
     def _on_performance_degradation(self, metrics: GPUKernelMetrics):
         """性能退化处理"""
         degradation_ratio = metrics.keys_per_second / self._peak_throughput if self._peak_throughput > 0 else 0
+        degradation_percent = (1 - degradation_ratio) * 100
         
         logger.warning(f"⚠️ GPU性能退化: "
                       f"当前={metrics.keys_per_second:,.0f} keys/s, "
                       f"峰值={self._peak_throughput:,.0f} keys/s, "
                       f"退化率={degradation_ratio:.2%}")
+        
+        # 集成告警系统
+        try:
+            from .alert_system import get_alert_system
+            alert_system = get_alert_system()
+            
+            # 获取当前错误率
+            error_rate = self._total_errors / max(self._total_batches, 1)
+            
+            # 检查性能指标并触发告警
+            alert_system.check_metrics({
+                'throughput': metrics.keys_per_second,
+                'peak_throughput': self._peak_throughput,
+                'degradation_rate': degradation_percent,
+                'memory_usage_percent': (self._current_memory_mb / max(self._total_memory_mb, 1)) * 100 if hasattr(self, '_current_memory_mb') and hasattr(self, '_total_memory_mb') else 0,
+                'gpu_temperature': 0,  # 暂不支持温度监控
+                'error_rate': error_rate,
+                'baseline_throughput': self._peak_throughput
+            })
+        except Exception as e:
+            logger.debug(f"告警系统检查失败(不影响主流程): {e}")
         
         # 触发回调
         for callback in self._degradation_callbacks:
