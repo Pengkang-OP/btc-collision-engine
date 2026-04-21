@@ -13,6 +13,7 @@ from typing import Set, Dict, List, Optional, Callable
 from .selector import get_gpu_selector
 from .load_balancer import GPULoadBalancer
 from .worker import SingleGPUWorker
+from .data_monitor import DataMonitor
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +72,11 @@ class MultiGPUCollisionEngine:
         # 统计信息
         self._start_time = None
         self._total_keys_checked = 0
+        
+        # 数据监控器
+        monitor_config = self.config.get('data_monitor', {})
+        self.data_monitor = DataMonitor(config=monitor_config)
+        self._monitor_enabled = self.config.get('enable_data_monitor', True)
         
         logger.info("MultiGPUCollisionEngine已创建")
     
@@ -193,7 +199,8 @@ class MultiGPUCollisionEngine:
                     key_range=key_range,
                     targets=targets,
                     config=device_config,
-                    result_callback=self._on_match_found
+                    result_callback=self._on_match_found,
+                    data_monitor=self.data_monitor if self._monitor_enabled else None
                 )
                 
                 with self._workers_lock:
@@ -206,6 +213,13 @@ class MultiGPUCollisionEngine:
             for idx, worker in workers_snapshot.items():
                 worker.start()
                 logger.info(f"GPU {idx} 工作器已启动")
+            
+            # 启动数据监控器
+            if self._monitor_enabled:
+                self.data_monitor.start(
+                    anomaly_callback=self._on_anomaly_detected
+                )
+                logger.info("数据监控器已启动")
             
             with self._state_lock:
                 self._running = True
@@ -259,6 +273,11 @@ class MultiGPUCollisionEngine:
             
             # 更新统计
             self._update_combined_stats()
+            
+            # 停止数据监控器
+            if self._monitor_enabled:
+                self.data_monitor.stop()
+                logger.info("数据监控器已停止")
             
             logger.info("多GPU碰撞已停止")
         finally:
@@ -412,6 +431,10 @@ class MultiGPUCollisionEngine:
         with self._matches_lock:
             self._all_matches.append(match)
         
+        # 报告给数据监控器
+        if self._monitor_enabled:
+            self.data_monitor.report_match(device_idx, match)
+        
         logger.info(
             f"GPU {device_idx} 发现匹配: {match.get('address', 'Unknown')}"
         )
@@ -422,6 +445,88 @@ class MultiGPUCollisionEngine:
                 self._match_callback(device_idx, match)
             except Exception as e:
                 logger.error(f"匹配回调异常: {e}")
+    
+    def _on_anomaly_detected(self, device_idx: int, issue: Dict):
+        """处理数据异常检测回调
+        
+        Args:
+            device_idx: GPU设备索引
+            issue: 数据质量问题
+        """
+        severity = issue.get('severity', 'low')
+        issue_type = issue.get('issue_type', 'unknown')
+        message = issue.get('message', '')
+        
+        # 根据严重程度采取不同措施
+        if severity == 'critical':
+            logger.critical(
+                f"GPU {device_idx} 严重数据异常: {message}"
+            )
+            # 可选择暂停该GPU工作器
+            if self.config.get('auto_pause_on_critical', False):
+                logger.warning(f"自动暂停GPU {device_idx}")
+                self._pause_device(device_idx)
+        
+        elif severity == 'high':
+            logger.error(
+                f"GPU {device_idx} 高级别数据异常: {message}"
+            )
+        
+        elif severity == 'medium':
+            logger.warning(
+                f"GPU {device_idx} 中级别数据异常: {message}"
+            )
+        
+        else:  # low
+            logger.debug(
+                f"GPU {device_idx} 低级别数据异常: {message}"
+            )
+    
+    def _pause_device(self, device_idx: int):
+        """暂停指定GPU工作器
+        
+        Args:
+            device_idx: GPU设备索引
+        """
+        with self._workers_lock:
+            if device_idx in self.workers:
+                try:
+                    self.workers[device_idx].pause_search()
+                    logger.info(f"GPU {device_idx} 已暂停")
+                except Exception as e:
+                    logger.error(f"暂停GPU {device_idx} 失败: {e}")
+    
+    def get_monitor_stats(self) -> Dict:
+        """获取数据监控统计
+        
+        Returns:
+            监控统计字典
+        """
+        if self._monitor_enabled:
+            return self.data_monitor.get_stats()
+        else:
+            return {'enabled': False}
+    
+    def get_monitor_issues(self, severity: str = None, 
+                          device_idx: int = None, limit: int = 100) -> List[Dict]:
+        """获取数据质量问题
+        
+        Args:
+            severity: 过滤严重程度
+            device_idx: 过滤设备索引
+            limit: 返回数量限制
+            
+        Returns:
+            问题列表
+        """
+        if self._monitor_enabled:
+            return self.data_monitor.get_issues(
+                severity=severity, 
+                device_idx=device_idx,
+                limit=limit
+            )
+        else:
+            return []
     
     def _get_device_config(self, device: Dict) -> Dict:
         """获取设备特定配置

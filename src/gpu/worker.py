@@ -42,7 +42,8 @@ class SingleGPUWorker(threading.Thread):
         key_range: Tuple[int, int],
         targets: Set[str],
         config: Dict,
-        result_callback: Optional[Callable] = None
+        result_callback: Optional[Callable] = None,
+        data_monitor = None  # 添加数据监控器引用
     ):
         """初始化GPU工作器
         
@@ -60,6 +61,7 @@ class SingleGPUWorker(threading.Thread):
         self.targets = targets
         self.config = config
         self.result_callback = result_callback
+        self.data_monitor = data_monitor  # 保存数据监控器引用
         
         # 线程控制
         self._stop_event = threading.Event()
@@ -201,7 +203,8 @@ class SingleGPUWorker(threading.Thread):
             engine_stats = self._gpu_engine.get_stats()
             
             with self._lock:
-                self._stats['keys_checked'] = engine_stats.get('total_checked', 0)
+                keys_checked = engine_stats.get('total_checked', 0)
+                self._stats['keys_checked'] = keys_checked
                 self._stats['matches_found'] = len(engine_stats.get('matches', []))
                 
                 # 计算运行时间
@@ -212,6 +215,14 @@ class SingleGPUWorker(threading.Thread):
                 if self._stats['elapsed_time'] > 0:
                     self._stats['throughput'] = (
                         self._stats['keys_checked'] / self._stats['elapsed_time']
+                    )
+                
+                # 报告给数据监控器
+                if self.data_monitor:
+                    self.data_monitor.report_keys_generated(
+                        device_idx=self.device_idx,
+                        count=keys_checked,
+                        key_range=self.key_range
                     )
                 
                 # 检查新匹配
@@ -228,6 +239,13 @@ class SingleGPUWorker(threading.Thread):
                             
         except Exception as e:
             logger.debug(f"更新统计信息失败: {e}")
+            # 报告错误给监控器
+            if self.data_monitor:
+                self.data_monitor.report_error(
+                    device_idx=self.device_idx,
+                    error_msg=str(e),
+                    error_type='stats_update_error'
+                )
     
     def _cleanup(self):
         """清理资源"""
