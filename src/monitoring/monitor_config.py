@@ -183,17 +183,31 @@ class MonitorConfig:
         if not 0.0 <= self.alert_threshold <= 1.0:
             raise ValueError(f"alert_threshold必须在0.0-1.0之间，当前: {self.alert_threshold}")
         
-        if self.data_logging_interval <= 0:
-            raise ValueError(f"data_logging_interval必须大于0，当前: {self.data_logging_interval}")
+        # 验证时间间隔(必须大于0)
+        time_intervals = [
+            ('data_logging_interval', self.data_logging_interval),
+            ('collection_interval', self.collection_interval),
+            ('gpu_monitoring_interval', self.gpu_monitoring_interval),
+            ('alert_cooldown', self.alert_cooldown),
+            ('report_interval', self.report_interval),
+            ('performance_log_interval', self.performance_log_interval),
+            ('cleanup_interval', self.cleanup_interval),
+        ]
         
-        if self.collection_interval <= 0:
-            raise ValueError(f"collection_interval必须大于0，当前: {self.collection_interval}")
+        for name, value in time_intervals:
+            if value <= 0:
+                raise ValueError(f"{name}必须大于0，当前: {value}")
         
-        if self.max_alerts_per_hour <= 0:
-            raise ValueError(f"max_alerts_per_hour必须大于0，当前: {self.max_alerts_per_hour}")
+        # 验证计数(必须大于0)
+        counters = [
+            ('data_log_save_frequency', self.data_log_save_frequency),
+            ('max_alerts_per_hour', self.max_alerts_per_hour),
+            ('max_log_entries', self.max_log_entries),
+        ]
         
-        if self.max_log_entries <= 0:
-            raise ValueError(f"max_log_entries必须大于0，当前: {self.max_log_entries}")
+        for name, value in counters:
+            if value <= 0:
+                raise ValueError(f"{name}必须大于0，当前: {value}")
         
         return True
     
@@ -201,7 +215,7 @@ class MonitorConfig:
         """合并配置
         
         other配置优先于当前配置。
-        other中的所有非默认值都会覆盖self的对应值。
+        other中的所有值都会覆盖self的对应值（包括默认值）。
         
         Args:
             other: 另一个配置对象（优先级更高）
