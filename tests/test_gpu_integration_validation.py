@@ -77,8 +77,8 @@ class GPUIntegrationValidator:
                 return False
             
             # 获取设备信息
-            from src.gpu.device import GPUDeviceHelper
-            devices = GPUDeviceHelper.detect_devices()
+            from src.gpu.device import GPUDeviceDetector
+            devices = GPUDeviceDetector.detect_devices()
             device_count = len(devices)
             self.print_result("GPU设备检测", device_count > 0, f"检测到 {device_count} 个GPU设备")
             
