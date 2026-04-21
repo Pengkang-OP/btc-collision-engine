@@ -23,6 +23,9 @@ setup_windows_utf8()
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+# 导入重试工具
+from retry_helper import read_with_retry
+
 
 def analyze_project(docs_dir: str) -> Dict:
     """分析项目特征
@@ -47,37 +50,34 @@ def analyze_project(docs_dir: str) -> Dict:
     # 检查是否有目录
     has_toc_count = 0
     for f in md_files:
-        try:
-            content = f.read_text(encoding='utf-8', errors='ignore')
-            if '## 目录' in content or '## TOC' in content or '## 目录' in content:
-                has_toc_count += 1
-        except (OSError, PermissionError) as e:
-            print(f"⚠️  无法读取文件 {f.name}: {e}")
+        content = read_with_retry(f)
+        if content is None:
+            print(f"⚠️  无法读取文件 {f.name} (重试3次后失败)")
             continue
+        if '## 目录' in content or '## TOC' in content or '## 目录' in content:
+            has_toc_count += 1
     
     toc_ratio = has_toc_count / doc_count if doc_count > 0 else 0
     
     # 检查版本信息
     has_version_count = 0
     for f in md_files:
-        try:
-            content = f.read_text(encoding='utf-8', errors='ignore')
-            if '版本' in content or 'version' in content.lower():
-                has_version_count += 1
-        except (OSError, PermissionError):
+        content = read_with_retry(f)
+        if content is None:
             continue
+        if '版本' in content or 'version' in content.lower():
+            has_version_count += 1
     
     version_ratio = has_version_count / doc_count if doc_count > 0 else 0
     
     # 检查代码块
     has_code_count = 0
     for f in md_files:
-        try:
-            content = f.read_text(encoding='utf-8', errors='ignore')
-            if '```' in content:
-                has_code_count += 1
-        except (OSError, PermissionError):
+        content = read_with_retry(f)
+        if content is None:
             continue
+        if '```' in content:
+            has_code_count += 1
     
     code_ratio = has_code_count / doc_count if doc_count > 0 else 0
     
