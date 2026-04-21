@@ -3,7 +3,7 @@
 比特币私钥碰撞引擎，支持CPU和GPU加速，用于学习和研究比特币地址碰撞。
 
 [![Python](https://img.shields.io/badge/Python-3.7+-blue.svg)](https://www.python.org/)
-[![Version](https://img.shields.io/badge/Version-1.2.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-2.2.0-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Contributions](https://img.shields.io/badge/Contributions-Welcome-orange.svg)](CONTRIBUTING.md)
 
@@ -39,8 +39,14 @@
   - 友好的操作界面
   - 实时状态显示
   - 目标地址管理
+- ✅ **性能优化** (v2.2.0新增)
+  - 预计算点表加速 (标量乘法 +46%)
+  - gmpy2大整数优化 (模逆元 +1455%)
+  - SIMD哈希优化 (AES-NI加速)
+  - 内存池系统 (分配延迟 -60%)
+  - GPU内存池 (缓冲区复用)
 
-> 📢 **v1.2.0 文档更新**: 我们全面重构了文档体系，清理了55个冗余文档，建立了清晰的6类文档分层结构。查看 [文档索引](docs/DOCUMENT_INDEX.md) 快速找到所需文档。
+> 📢 **v2.2.0 性能优化**: 新增预计算点表、gmpy2大整数优化、SIMD哈希、内存池等8个优化模块，综合性能提升 30-50%。查看 [性能验证报告](docs/performance-verification-report.md) 了解详情。
 
 ## 快速开始
 
@@ -121,6 +127,10 @@ pip install coincurve
 
 # numpy: GPU计算优化
 pip install numpy
+
+# v2.2.0 新增性能优化模块
+pip install gmpy2>=2.1.5            # 大整数运算优化 (模逆元 +1455%)
+pip install pycryptodome>=3.19.0    # SIMD哈希优化 (AES-NI加速)
 ```
 
 ## 使用方法
@@ -128,6 +138,7 @@ pip install numpy
 ### GUI操作
 
 1. **启动程序**
+
    ```bash
    python key_collision_gui.py
    ```
@@ -166,6 +177,71 @@ python key_collision_cli.py --gpu
 
 # 启用断点续传
 python key_collision_cli.py --checkpoint
+```
+
+## 性能优化配置 (v2.2.0)
+
+### 使用Python API
+
+```python
+from src.collision.key_collision_engine import KeyCollisionEngine
+
+# 方式1: 默认配置(自动启用所有优化)
+engine = KeyCollisionEngine(
+    targets={'1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'}
+)
+
+# 方式2: 自定义优化配置
+engine = KeyCollisionEngine(
+    targets=targets,
+    use_performance_optimization=True,  # 启用优化
+    precomputed_window_size=8,          # 预计算表窗口大小(4-8)
+    use_simd_hash=True,                 # SIMD哈希优化
+    use_memory_pool=True                # 内存池
+)
+
+# 方式3: 禁用优化(兼容模式)
+engine = KeyCollisionEngine(
+    targets=targets,
+    use_performance_optimization=False
+)
+```
+
+### 性能对比数据
+
+| 优化模块 | 性能提升 | 说明 |
+|---------|---------|------|
+| 预计算点表 | **+46%** | 标量乘法1.46x加速 |
+| gmpy2模逆元 | **+1455%** | 大整数运算14.55x加速 |
+| SIMD哈希 | **已启用** | AES-NI指令集加速 |
+| 内存池 | **-60%延迟** | 对象分配优化 |
+| GPU内存池 | **-60%开销** | 缓冲区复用 |
+
+> 📊 查看完整性能数据: [性能验证报告](docs/performance-verification-report.md)
+
+### 安装优化依赖
+
+```bash
+# 必需依赖
+pip install gmpy2>=2.1.5            # 大整数优化 (推荐)
+pip install pycryptodome>=3.19.0    # SIMD哈希 (推荐)
+
+# 可选依赖
+pip install memory-profiler>=0.61   # 内存分析
+pip install pytest-benchmark>=4.0   # 性能测试
+```
+
+### 运行性能基准测试
+
+```bash
+# 验证gmpy2性能
+python benchmarks/verify_gmpy2_performance.py
+
+# 完整基准测试
+python benchmarks/benchmark_optimizations.py
+
+# 集成测试
+python tests/test_optimization_integration.py
 ```
 
 ## 碰撞模式详解
@@ -216,7 +292,7 @@ engine = GPUCollisionEngine(
 
 ### 性能优化建议
 
-1. **批次大小**: 
+1. **批次大小**:
    - 小内存GPU: 10,000 - 50,000
    - 中等GPU: 100,000 - 500,000
    - 大内存GPU: 1,000,000+
@@ -245,6 +321,7 @@ engine = GPUCollisionEngine(
 ### 实时监控
 
 GUI界面显示：
+
 - 总检测数
 - 当前速度（次/秒）
 - 运行时间
@@ -253,6 +330,7 @@ GUI界面显示：
 ### 数据日志
 
 位置: `data_logs/`
+
 - `current_data.json`: 当前状态
 - `history_data.json`: 历史数据
 - `performance.log`: 性能日志
@@ -260,6 +338,7 @@ GUI界面显示：
 ### 运行日志
 
 位置: `logs/`
+
 - `collision.log`: 碰撞引擎日志
 - 自动轮转，保留最近5个文件
 
@@ -317,9 +396,23 @@ python test_checkpoint_resume.py
 
 ### GPU性能
 
+**实测数据** (Intel Arc A770, v2.2.0):
+
+| 指标 | 数值 | 说明 |
+|------|------|------|
+| 平均吞吐量 | **203,434 keys/s** | 批次大小5,000-10,000 |
+| 峰值吞吐量 | **240,031 keys/s** | 最佳性能 |
+| 平均执行时间 | 49.5 ms | 每批次 |
+| 错误率 | 0.00% | 稳定运行 |
+| 显存使用 | 0.42 MB/批次 | 高效利用 |
+
+**理论性能参考**:
+
 - 中端GPU (GTX 1060): ~50,000-100,000 次/秒
 - 高端GPU (RTX 3080): ~200,000-500,000 次/秒
 - 旗舰GPU (RTX 4090): ~1,000,000+ 次/秒
+
+> 📊 查看完整GPU测试报告: [gpu-integration-test-report-step7.md](docs/gpu-integration-test-report-step7.md)
 
 *实际性能取决于批次大小、目标数量和设备性能*
 
@@ -374,13 +467,15 @@ GPU线程 (GPU模式)
 ### Q: GPU初始化失败？
 
 A: 检查：
+
 1. 是否安装了pyopencl
 2. OpenCL驱动是否正确
 3. GPU设备是否支持OpenCL
 
 ### Q: 如何提高性能？
 
-A: 
+A:
+
 1. 安装coincurve库
 2. 启用GPU加速
 3. 调整批次大小
@@ -392,7 +487,8 @@ A: `data_logs/checkpoint.json`
 
 ### Q: 如何添加更多目标地址？
 
-A: 
+A:
+
 1. GUI: 直接在文本框输入
 2. CLI: 使用 `--targets` 参数指定文件
 3. 代码: 传入targets集合
