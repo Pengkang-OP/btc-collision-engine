@@ -34,6 +34,17 @@ class AlertType(Enum):
     SYSTEM_STABLE = "system_stable"                      # 系统稳定(恢复)
 
 
+# 默认冷却时间配置(秒)
+DEFAULT_COOLDOWNS = {
+    AlertType.PERFORMANCE_DEGRADATION: 300,  # 5分钟
+    AlertType.MEMORY_OVERFLOW: 600,          # 10分钟
+    AlertType.GPU_OVERHEAT: 120,             # 2分钟(需要快速响应)
+    AlertType.ERROR_RATE_HIGH: 300,          # 5分钟
+    AlertType.THROUGHPUT_DROP: 300,          # 5分钟
+    AlertType.SYSTEM_STABLE: 600,            # 10分钟
+}
+
+
 @dataclass
 class AlertRule:
     """告警规则"""
@@ -42,8 +53,18 @@ class AlertRule:
     level: AlertLevel                   # 告警级别
     condition: Callable[[Dict], bool]  # 条件函数
     message: str                        # 告警消息
-    cooldown: int = 300                 # 冷却时间(秒),避免频繁告警
+    cooldown: Optional[int] = None      # 冷却时间(秒),None表示使用默认值
     enabled: bool = True                # 是否启用
+    
+    def get_cooldown(self) -> int:
+        """获取冷却时间
+        
+        Returns:
+            冷却时间(秒)
+        """
+        if self.cooldown is not None:
+            return self.cooldown
+        return DEFAULT_COOLDOWNS.get(self.alert_type, 300)
 
 
 @dataclass
@@ -247,7 +268,8 @@ class AlertSystem:
             
             # 检查冷却时间
             last_time = self.last_alert_time.get(rule.name, 0)
-            if current_time - last_time < rule.cooldown:
+            cooldown = rule.get_cooldown()
+            if current_time - last_time < cooldown:
                 continue
             
             # 检查条件
@@ -261,6 +283,11 @@ class AlertSystem:
                         message=rule.message,
                         metrics=metrics.copy()
                     )
+                    
+                    # 检查是否是重复告警
+                    if self._is_duplicate_alert(alert):
+                        logger.debug(f"忽略重复告警: {rule.name}")
+                        continue
                     
                     # 记录告警
                     self.alert_history.append(alert)
@@ -276,6 +303,28 @@ class AlertSystem:
                 logger.error(f"检查告警规则 {rule.name} 时出错: {e}")
         
         return triggered_alerts
+    
+    def _is_duplicate_alert(self, alert: AlertRecord, lookback: int = 10) -> bool:
+        """检查是否是重复告警
+        
+        Args:
+            alert: 当前告警
+            lookback: 回溯检查的告警数量
+            
+        Returns:
+            是否是重复告警
+        """
+        # 获取最近的告警
+        recent_alerts = self.alert_history[-lookback:]
+        
+        for recent in recent_alerts:
+            # 如果类型和消息相同,且未解决,则认为是重复
+            if (recent.alert_type == alert.alert_type and 
+                recent.message == alert.message and 
+                not recent.resolved):
+                return True
+        
+        return False
     
     def _trigger_alert(self, alert: AlertRecord):
         """触发告警
@@ -351,11 +400,18 @@ class AlertSystem:
         
         return stats
     
-    def _save_alert_history(self):
-        """保存告警历史到文件"""
+    def _save_alert_history(self, max_records: int = 1000):
+        """保存告警历史到文件
+        
+        Args:
+            max_records: 最大保存记录数,避免文件过大
+        """
         try:
+            # 只保存最近的记录,避免文件过大
+            recent_history = self.alert_history[-max_records:]
+            
             data = []
-            for alert in self.alert_history:
+            for alert in recent_history:
                 data.append({
                     'timestamp': alert.timestamp,
                     'alert_type': alert.alert_type.value,

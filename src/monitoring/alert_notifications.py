@@ -33,6 +33,7 @@
 import logging
 import smtplib
 import json
+import os
 import requests
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -75,6 +76,14 @@ class BaseNotifier:
             alert: 告警记录
         """
         raise NotImplementedError
+    
+    def health_check(self) -> bool:
+        """检查通知器是否正常工作
+        
+        Returns:
+            是否正常
+        """
+        return True  # 默认实现,子类可覆盖
 
 
 class EmailNotifier(BaseNotifier):
@@ -84,7 +93,7 @@ class EmailNotifier(BaseNotifier):
                  smtp_server: str,
                  smtp_port: int = 587,
                  username: str = "",
-                 password: str = "",
+                 password: Optional[str] = None,
                  recipients: Optional[List[str]] = None,
                  use_tls: bool = True,
                  enabled: bool = True):
@@ -93,7 +102,7 @@ class EmailNotifier(BaseNotifier):
             smtp_server: SMTP服务器地址
             smtp_port: SMTP端口(587=TLS, 465=SSL, 25=普通)
             username: 用户名
-            password: 密码
+            password: 密码(优先使用环境变量SMTP_PASSWORD)
             recipients: 收件人列表
             use_tls: 是否使用TLS
             enabled: 是否启用
@@ -102,7 +111,8 @@ class EmailNotifier(BaseNotifier):
         self.smtp_server = smtp_server
         self.smtp_port = smtp_port
         self.username = username
-        self.password = password
+        # 优先使用环境变量,避免密码明文存储
+        self.password = password or os.getenv("SMTP_PASSWORD", "")
         self.recipients = recipients or []
         self.use_tls = use_tls
         
@@ -150,6 +160,21 @@ class EmailNotifier(BaseNotifier):
         except Exception as e:
             logger.error(f"发送邮件失败: {e}")
             raise
+    
+    def health_check(self) -> bool:
+        """检查SMTP服务器是否可连接
+        
+        Returns:
+            是否正常
+        """
+        try:
+            server = smtplib.SMTP(self.smtp_server, self.smtp_port, timeout=5)
+            server.quit()
+            logger.debug(f"邮件通知器健康检查通过: {self.smtp_server}:{self.smtp_port}")
+            return True
+        except Exception as e:
+            logger.error(f"邮件通知器健康检查失败: {e}")
+            return False
     
     def _create_subject(self, alert: AlertRecord) -> str:
         """创建邮件主题"""
@@ -249,16 +274,19 @@ class WeComWebhookNotifier(BaseNotifier):
     def __init__(self,
                  webhook_url: str,
                  mentioned_list: Optional[List[str]] = None,
+                 timeout: int = 10,
                  enabled: bool = True):
         """
         Args:
             webhook_url: 企业微信Webhook URL
             mentioned_list: @用户列表(["@all"]或["userid1", "userid2"])
+            timeout: 请求超时时间(秒)
             enabled: 是否启用
         """
         super().__init__(enabled)
         self.webhook_url = webhook_url
         self.mentioned_list = mentioned_list or []
+        self.timeout = timeout
         
         logger.info(f"企业微信Webhook通知器初始化")
     
@@ -298,7 +326,7 @@ class WeComWebhookNotifier(BaseNotifier):
         response = requests.post(
             self.webhook_url,
             json=data,
-            timeout=10
+            timeout=self.timeout
         )
         
         if response.status_code == 200:
@@ -311,6 +339,28 @@ class WeComWebhookNotifier(BaseNotifier):
         else:
             logger.error(f"企业微信HTTP错误: {response.status_code}")
             raise Exception(f"HTTP {response.status_code}")
+    
+    def health_check(self) -> bool:
+        """检查Webhook是否可达
+        
+        Returns:
+            是否正常
+        """
+        try:
+            # 发送一个简单的测试消息
+            data = {
+                "msgtype": "text",
+                "text": {"content": "健康检查"}
+            }
+            response = requests.post(
+                self.webhook_url,
+                json=data,
+                timeout=5
+            )
+            return response.status_code == 200
+        except Exception as e:
+            logger.error(f"企业微信Webhook健康检查失败: {e}")
+            return False
 
 
 class DingTalkWebhookNotifier(BaseNotifier):
@@ -320,18 +370,21 @@ class DingTalkWebhookNotifier(BaseNotifier):
                  webhook_url: str,
                  at_mobiles: Optional[List[str]] = None,
                  at_all: bool = False,
+                 timeout: int = 10,
                  enabled: bool = True):
         """
         Args:
             webhook_url: 钉钉Webhook URL
             at_mobiles: @手机号列表
             at_all: 是否@所有人
+            timeout: 请求超时时间(秒)
             enabled: 是否启用
         """
         super().__init__(enabled)
         self.webhook_url = webhook_url
         self.at_mobiles = at_mobiles or []
         self.at_all = at_all
+        self.timeout = timeout
         
         logger.info(f"钉钉Webhook通知器初始化")
     
@@ -374,7 +427,7 @@ class DingTalkWebhookNotifier(BaseNotifier):
         response = requests.post(
             self.webhook_url,
             json=data,
-            timeout=10,
+            timeout=self.timeout,
             headers={'Content-Type': 'application/json'}
         )
         
@@ -388,6 +441,29 @@ class DingTalkWebhookNotifier(BaseNotifier):
         else:
             logger.error(f"钉钉HTTP错误: {response.status_code}")
             raise Exception(f"HTTP {response.status_code}")
+    
+    def health_check(self) -> bool:
+        """检查Webhook是否可达
+        
+        Returns:
+            是否正常
+        """
+        try:
+            # 发送一个简单的测试消息
+            data = {
+                "msgtype": "text",
+                "text": {"content": "健康检查", "mentioned_list": []}
+            }
+            response = requests.post(
+                self.webhook_url,
+                json=data,
+                timeout=5,
+                headers={'Content-Type': 'application/json'}
+            )
+            return response.status_code == 200
+        except Exception as e:
+            logger.error(f"钉钉Webhook健康检查失败: {e}")
+            return False
 
 
 class SlackWebhookNotifier(BaseNotifier):
@@ -397,18 +473,21 @@ class SlackWebhookNotifier(BaseNotifier):
                  webhook_url: str,
                  channel: str = "#alerts",
                  username: str = "GPU Alert Bot",
+                 timeout: int = 10,
                  enabled: bool = True):
         """
         Args:
             webhook_url: Slack Webhook URL
             channel: 频道名称
             username: 用户名
+            timeout: 请求超时时间(秒)
             enabled: 是否启用
         """
         super().__init__(enabled)
         self.webhook_url = webhook_url
         self.channel = channel
         self.username = username
+        self.timeout = timeout
         
         logger.info(f"Slack Webhook通知器初始化")
     
@@ -461,7 +540,7 @@ class SlackWebhookNotifier(BaseNotifier):
         response = requests.post(
             self.webhook_url,
             json=data,
-            timeout=10
+            timeout=self.timeout
         )
         
         if response.status_code == 200:
@@ -469,3 +548,26 @@ class SlackWebhookNotifier(BaseNotifier):
         else:
             logger.error(f"Slack HTTP错误: {response.status_code}")
             raise Exception(f"HTTP {response.status_code}")
+    
+    def health_check(self) -> bool:
+        """检查Webhook是否可达
+        
+        Returns:
+            是否正常
+        """
+        try:
+            # 发送一个简单的测试消息
+            data = {
+                "channel": self.channel,
+                "username": self.username,
+                "text": "健康检查"
+            }
+            response = requests.post(
+                self.webhook_url,
+                json=data,
+                timeout=5
+            )
+            return response.status_code == 200
+        except Exception as e:
+            logger.error(f"Slack Webhook健康检查失败: {e}")
+            return False
