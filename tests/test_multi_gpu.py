@@ -201,7 +201,7 @@ class TestGPUConfigValidator(unittest.TestCase):
         is_valid, errors = self.validator.validate_config(config)
         
         self.assertFalse(is_valid)
-        self.assertTrue(any('mode' in err for err in errors))
+        self.assertTrue(any('模式' in err or 'mode' in err for err in errors))
     
     def test_suggest_config_multi(self):
         """测试多GPU配置建议"""

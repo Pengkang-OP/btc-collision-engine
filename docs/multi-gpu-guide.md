@@ -19,11 +19,13 @@ BTC碰撞引擎现在支持完整的多GPU并行计算功能,采用**任务分�
 ### 1. 检测GPU设备
 
 **命令行**:
+
 ```bash
 python tools/gpu_cli.py list
 ```
 
 **输出示例**:
+
 ```
 检测到 2 个GPU设备:
 ============================================================
@@ -114,6 +116,7 @@ python key_collision.py --gpu-mode multi --gpu-devices 0,1 --gpu-load-balancing 
 ### 方式3: GUI界面
 
 启动GUI后,在"GPU设备选择"面板中:
+
 1. 选择GPU模式(自动/单GPU/多GPU)
 2. 从列表中选择GPU设备(多选)
 3. 选择负载均衡策略
@@ -141,12 +144,14 @@ python key_collision.py --gpu-mode multi --gpu-devices 0,1 --gpu-load-balancing 
 ### 示例计算
 
 **NVIDIA GTX 1660 Ti**:
+
 - 显存: 6GB × 10 = 60
 - CU: 24 × 0.05 = 1.2
 - 厂商: 1.0
 - **总分: 61.2**
 
 **Intel Arc A770**:
+
 - 显存: 16GB × 10 = 160
 - CU: 512 × 0.05 = 25.6
 - 厂商: 0.9
@@ -161,6 +166,7 @@ python key_collision.py --gpu-mode multi --gpu-devices 0,1 --gpu-load-balancing 
 根据GPU评分分配任务权重。
 
 **示例**:
+
 - GPU 0(61.2分): 27% 任务
 - GPU 1(167.04分): 73% 任务
 
@@ -171,6 +177,7 @@ python key_collision.py --gpu-mode multi --gpu-devices 0,1 --gpu-load-balancing 
 所有GPU平均分配任务。
 
 **示例**:
+
 - GPU 0: 50% 任务
 - GPU 1: 50% 任务
 
@@ -193,6 +200,7 @@ python key_collision.py --gpu-mode multi --gpu-devices 0,1 --gpu-load-balancing 
 ```
 
 **特点**:
+
 - 大批次处理(128K-256K)
 - 大工作组(512)
 - 支持快速数学运算
@@ -210,6 +218,7 @@ python key_collision.py --gpu-mode multi --gpu-devices 0,1 --gpu-load-balancing 
 ```
 
 **特点**:
+
 - 中等批次大小
 - 中等工作组
 - 某些型号需要禁用编译器优化
@@ -228,6 +237,7 @@ python key_collision.py --gpu-mode multi --gpu-devices 0,1 --gpu-load-balancing 
 ```
 
 **特点**:
+
 - 较小批次(避免超时)
 - **必须**启用uint32 workaround
 - **必须**禁用快速数学运算(精度问题)
@@ -258,6 +268,7 @@ python key_collision.py --gpu-mode multi --gpu-devices 0,1 --gpu-load-balancing 
 | 2x Arc A770 | 400K | 4.0x |
 
 **注意**: 实际性能受以下因素影响:
+
 - PCIe带宽
 - CPU调度能力
 - 内存带宽
@@ -272,13 +283,16 @@ python key_collision.py --gpu-mode multi --gpu-devices 0,1 --gpu-load-balancing 
 **症状**: `未检测到GPU设备`
 
 **解决方案**:
+
 1. 检查GPU驱动是否安装
+
    ```bash
    nvidia-smi  # NVIDIA
    clinfo      # OpenCL
    ```
 
 2. 安装pyopencl
+
    ```bash
    pip install pyopencl
    ```
@@ -290,6 +304,7 @@ python key_collision.py --gpu-mode multi --gpu-devices 0,1 --gpu-load-balancing 
 **症状**: 多GPU加速比远低于预期
 
 **解决方案**:
+
 1. 检查负载均衡策略
    - 异构GPU使用`performance`
    - 同构GPU使用`equal`
@@ -307,7 +322,9 @@ python key_collision.py --gpu-mode multi --gpu-devices 0,1 --gpu-load-balancing 
 **症状**: Intel Arc运行时报错
 
 **解决方案**:
+
 1. 确保启用uint32 workaround
+
    ```json
    "per_device_config": {
      "1": {
@@ -317,11 +334,13 @@ python key_collision.py --gpu-mode multi --gpu-devices 0,1 --gpu-load-balancing 
    ```
 
 2. 禁用快速数学运算
+
    ```json
    "use_fast_math": false
    ```
 
 3. 减小批次大小
+
    ```json
    "batch_size": 32768
    ```
@@ -331,12 +350,15 @@ python key_collision.py --gpu-mode multi --gpu-devices 0,1 --gpu-load-balancing 
 **症状**: `Out of resources` 或 `CL_MEM_OBJECT_ALLOCATION_FAILURE`
 
 **解决方案**:
+
 1. 减小批次大小
+
    ```json
    "batch_size": 16384
    ```
 
 2. 降低显存使用率
+
    ```json
    "memory_usage_ratio": 0.5
    ```
@@ -352,6 +374,7 @@ python key_collision.py --gpu-mode multi --gpu-devices 0,1 --gpu-load-balancing 
 多GPU引擎每60秒自动评估实际性能,重新分配负载。
 
 **配置**:
+
 ```python
 from src.gpu.load_balancer import GPULoadBalancer
 
