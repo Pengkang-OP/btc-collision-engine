@@ -1,0 +1,120 @@
+name: Document Quality Check
+
+on:
+  push:
+    paths:
+      - 'docs/**/*.md'
+      - 'tools/check_document_quality.py'
+  pull_request:
+    paths:
+      - 'docs/**/*.md'
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  doc-quality:
+    name: Check Document Quality (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+      fail-fast: false  # 一个版本失败不取消其他版本
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'  # 启用pip缓存
+      
+      - name: Cache Python dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      
+      - name: Run Document Quality Check
+        id: quality
+        timeout-minutes: 10  # 防止卡死
+        run: |
+          echo "🔍 开始文档质量检查..."
+          python tools/check_document_quality.py > doc-quality-report.txt 2>&1
+          exit_code=$?
+          
+          # 允许质量检查脚本返回非零退出码（表示有需改进文档）
+          if [ $exit_code -ne 0 ] && [ $exit_code -ne 1 ]; then
+            echo "❌ 质量检查脚本崩溃，退出码: $exit_code"
+            cat doc-quality-report.txt
+            exit 1
+          fi
+          
+          cat doc-quality-report.txt
+          
+          # 提取平均评分 - 更精确的匹配
+          avg_score=$(grep "平均质量评分" doc-quality-report.txt | grep -oP '\d+\.\d+' || echo "0.0")
+          echo "average_score=$avg_score" >> $GITHUB_OUTPUT
+          
+          # 检查是否有需改进的文档 - 精确匹配文档列表
+          if grep -A 10 "需要改进的文档:" doc-quality-report.txt | grep -qE '^\s+- .+\.md: [0-9]'; then
+            echo "has_poor_docs=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_poor_docs=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Check Broken Links
+        id: links
+        timeout-minutes: 5  # 防止卡死
+        run: |
+          echo "🔗 开始检查断裂链接..."
+          python tools/check_broken_links.py > broken-links-report.txt 2>&1 || true
+          cat broken-links-report.txt
+          
+          # 提取断裂链接数
+          broken_count=$(grep "断裂链接" broken-links-report.txt | grep -oP '\d+' | head -1 || echo "0")
+          echo "broken_links=$broken_count" >> $GITHUB_OUTPUT
+      
+      - name: Upload Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: doc-quality-reports
+          path: |
+            doc-quality-report.txt
+            broken-links-report.txt
+          retention-days: 30
+      
+      - name: Quality Gate
+        if: steps.quality.outputs.has_poor_docs == 'true'
+        run: |
+          echo "⚠️  发现需改进的文档！"
+          echo "平均评分: ${{ steps.quality.outputs.average_score }}"
+          echo ""
+          echo "请查看 Artifacts 中的详细报告。"
+          echo ""
+          echo "改进建议:"
+          echo "1. 运行 python tools/check_document_quality.py 查看详情"
+          echo "2. 修复代码块语言类型"
+          echo "3. 添加版本信息"
+          echo "4. 为长文档添加目录"
+          exit 1
+      
+      - name: Summary
+        run: |
+          echo "## 📊 文档质量检查报告" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**平均评分**: ${{ steps.quality.outputs.average_score }}/10" >> $GITHUB_STEP_SUMMARY
+          echo "**断裂链接**: ${{ steps.links.outputs.broken_links }} 个" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ steps.quality.outputs.has_poor_docs }}" == "false" ]]; then
+            echo "✅ **所有文档质量良好！**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **有文档需要改进**" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "查看详细报告请前往 Artifacts 下载。" >> $GITHUB_STEP_SUMMARY

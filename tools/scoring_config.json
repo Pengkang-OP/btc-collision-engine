@@ -1,0 +1,11 @@
+{
+  "error_weight": 1.5,
+  "code_block_weight": 0.2,
+  "code_block_max": 2.0,
+  "link_weight": 0.8,
+  "link_max": 3.0,
+  "other_warning_weight": 0.3,
+  "info_weight": 0.1,
+  "toc_bonus": 0.3,
+  "version_bonus": 0.2
+}
