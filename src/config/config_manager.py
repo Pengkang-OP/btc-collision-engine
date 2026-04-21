@@ -75,7 +75,11 @@ class ConfigManager:
             config_file: 配置文件路径，None表示使用默认配置
         """
         self.config_file = config_file
-        self.config = self.DEFAULT_CONFIG.copy()
+        # P2修复：使用深拷贝避免浅拷贝导致的嵌套字典共享问题
+        # 浅拷贝.copy()只会拷贝顶层字典，嵌套字典仍然是同一个引用
+        # 这会导致一个实例修改配置影响其他实例
+        import copy
+        self.config = copy.deepcopy(self.DEFAULT_CONFIG)
         self._lock = threading.Lock()  # 线程锁保护配置读写
         
         if config_file and os.path.exists(config_file):

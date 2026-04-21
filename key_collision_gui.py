@@ -9,7 +9,7 @@
 本实现仅使用Python标准库，不依赖任何第三方加密库。
 
 作者: BTC Project
-版本: v1.1
+版本: v2.2.0
 """
 
 import tkinter as tk
@@ -27,8 +27,12 @@ from src.core import (
 from src.collision import (
     KeyCollisionEngine, TargetResolver, CollisionStats
 )
-from src.config.gui_config import WINDOW_CONFIG, COMPONENT_CONFIG, FONT_CONFIG, COLOR_CONFIG, PADDING_CONFIG
-from src.utils.ui_helpers import format_timestamp, format_mode_name, format_number_with_commas
+from src.config.gui_config import WINDOW_CONFIG, COMPONENT_CONFIG, FONT_CONFIG, COLOR_CONFIG, PADDING_CONFIG, LAYOUT_CONFIG, INTERACTION_CONFIG
+from src.utils.ui_helpers import (
+    format_timestamp, format_mode_name, format_number_with_commas,
+    format_speed, format_elapsed_time, format_eta, truncate_address,
+    validate_address_format, validate_hex_string, sanitize_display_text
+)
 
 # 导入告警面板(可选)
 try:
@@ -36,6 +40,14 @@ try:
     ALERT_PANEL_AVAILABLE = True
 except ImportError:
     ALERT_PANEL_AVAILABLE = False
+
+# 导入GPU组件(可选)
+try:
+    from src.gui.components.gpu_selector import GPUSelectorPanel
+    from src.gui.components.multi_gpu_monitor import MultiGPUMonitorPanel
+    GPU_COMPONENTS_AVAILABLE = True
+except ImportError:
+    GPU_COMPONENTS_AVAILABLE = False
 
 
 # =============================================================================
@@ -45,11 +57,19 @@ class Colors:
     """深色主题配色方案"""
     BG = COLOR_CONFIG["bg"]           # 背景
     SURFACE = COLOR_CONFIG["surface"]     # 表面
+    SURFACE1 = COLOR_CONFIG.get("surface1", "#45475a")    # 表面色1
+    SURFACE2 = COLOR_CONFIG.get("surface2", "#585b70")    # 表面色2
     FG = COLOR_CONFIG["fg"]          # 前景文字
+    SUBTEXT0 = COLOR_CONFIG.get("subtext0", "#a6adc8")    # 次级文字
+    SUBTEXT1 = COLOR_CONFIG.get("subtext1", "#bac2de")    # 次级文字1
     ACCENT = COLOR_CONFIG["accent"]      # 强调色（金色）
+    BLUE = COLOR_CONFIG.get("blue", "#89b4fa")        # 蓝色
+    LAVENDER = COLOR_CONFIG.get("lavender", "#b4befe")    # 薰衣草色
+    SAPPHIRE = COLOR_CONFIG.get("sapphire", "#74c7ec")    # 蓝宝石色
     SUCCESS = COLOR_CONFIG["success"]     # 成功色（绿色）
     ERROR = COLOR_CONFIG["error"]       # 错误色（红色）
     INFO = COLOR_CONFIG["info"]        # 信息色（青色）
+    WARNING = COLOR_CONFIG.get("warning", "#fab387")     # 警告色（桃色）
     BUTTON_BG = COLOR_CONFIG["button_bg"]   # 按钮背景
     BUTTON_HOVER = COLOR_CONFIG["button_hover"]  # 按钮悬停
     TEXT_BG = COLOR_CONFIG["text_bg"]     # 文本框背景
@@ -159,21 +179,40 @@ class TargetInputFrame(tk.Frame):
         
         # 过滤空行和注释
         inputs = []
+        invalid_inputs = []
         for line in lines:
             line = line.strip()
             if line and not line.startswith('#'):
-                inputs.append(line)
+                # 验证输入格式
+                if validate_address_format(line) or validate_hex_string(line):
+                    inputs.append(line)
+                else:
+                    invalid_inputs.append(line)
         
         if not inputs:
-            messagebox.showwarning("提示", "请输入至少一个目标地址")
+            messagebox.showerror("解析失败", "未能解析任何有效的目标地址\n\n请检查输入格式是否正确\n\n支持的格式：\n- P2PKH地址（以1开头）\n- P2SH地址（以3开头）\n- Bech32地址（以bc1开头）\n- WIF私钥（以5/K/L开头）\n- 公钥（66或130位十六进制）")
             return
+        
+        # 如果有无效输入，显示警告
+        if invalid_inputs:
+            warning_msg = f"发现 {len(invalid_inputs)} 个无效输入，已忽略\n\n"
+            warning_msg += "无效输入示例：\n"
+            for inv in invalid_inputs[:3]:  # 只显示前3个
+                warning_msg += f"  - {truncate_address(inv, 30)}\n"
+            if len(invalid_inputs) > 3:
+                warning_msg += f"  ... 及其他 {len(invalid_inputs)-3} 个\n"
+            warning_msg += "\n是否继续解析有效输入？"
+            
+            result = messagebox.askyesno("输入警告", warning_msg)
+            if not result:
+                return
         
         # 解析目标（resolve_multiple返回字典，需要提取值）
         result_dict = self.resolver.resolve_multiple(inputs)
         self.targets = set(result_dict.values())
         
         if not self.targets:
-            messagebox.showerror("解析失败", "未能解析任何有效的目标地址\n\n请检查输入格式是否正确\n\n支持的格式：\n- P2PKH地址（以1开头）\n- WIF私钥（以5/K/L开头）\n- 公钥（66或130位十六进制）")
+            messagebox.showerror("解析失败", "未能解析任何有效的目标地址\n\n请检查输入格式是否正确\n\n支持的格式：\n- P2PKH地址（以1开头）\n- P2SH地址（以3开头）\n- Bech32地址（以bc1开头）\n- WIF私钥（以5/K/L开头）\n- 公钥（66或130位十六进制）")
             return
         
         # 更新状态
@@ -182,11 +221,11 @@ class TargetInputFrame(tk.Frame):
         # 在日志区输出解析结果（如果有主GUI应用引用）
         if self.gui_app and hasattr(self.gui_app, 'log_frame'):
             count = len(self.targets)
-            self.gui_app.log_frame.log(f"✅ 成功解析 {count} 个目标地址")
+            self.gui_app.log_frame.log(f"✅ 成功解析 {count} 个目标地址", "success")
             for addr in list(self.targets)[:3]:  # 只显示前3个
-                self.gui_app.log_frame.log(f"   → {addr[:20]}...")
+                self.gui_app.log_frame.log(f"   → {truncate_address(addr, 25)}", "info")
             if count > 3:
-                self.gui_app.log_frame.log(f"   ... 及其他 {count-3} 个地址")
+                self.gui_app.log_frame.log(f"   ... 及其他 {count-3} 个地址", "info")
     
     def _on_clear(self):
         """清空按钮回调"""
@@ -388,7 +427,9 @@ class ControlPanel(tk.Frame):
         self.gpu_device_var = tk.StringVar(value="自动选择")
         self.gpu_device_combo = ttk.Combobox(
             self.gpu_device_frame, textvariable=self.gpu_device_var,
-            font=("Microsoft YaHei", 9), state="readonly", width=40
+            font=COMPONENT_CONFIG.get("gpu_combo", {}).get("font", ("Microsoft YaHei", 9)),
+            state="readonly",
+            width=COMPONENT_CONFIG.get("gpu_combo", {}).get("width", 45)
         )
         self.gpu_device_combo.pack(side=tk.LEFT, padx=(5, 0), fill=tk.X, expand=True)
         
@@ -808,13 +849,7 @@ class StatsDisplay(tk.Frame):
             self.lbl_progress.config(text=f"{pct:.2f}%")
             if hasattr(stats, 'eta_seconds') and stats.eta_seconds >= 0:
                 eta = stats.eta_seconds
-                if eta >= 3600:
-                    eta_str = f"{eta/3600:.1f}h"
-                elif eta >= 60:
-                    eta_str = f"{eta/60:.1f}m"
-                else:
-                    eta_str = f"{eta:.0f}s"
-                self.lbl_eta.config(text=eta_str)
+                self.lbl_eta.config(text=format_eta(eta))
             else:
                 self.lbl_eta.config(text="计算中...")
         else:
@@ -918,6 +953,7 @@ class ResultLogFrame(tk.Frame):
         self.log_text.tag_configure("error", foreground=Colors.ERROR)
         self.log_text.tag_configure("success", foreground=Colors.SUCCESS)
         self.log_text.tag_configure("info", foreground=Colors.INFO)
+        self.log_text.tag_configure("warning", foreground=Colors.WARNING)
         
         # 按钮区
         btn_frame = tk.Frame(self, bg=Colors.SURFACE)
@@ -930,11 +966,23 @@ class ResultLogFrame(tk.Frame):
             command=self._on_export
         )
         self.btn_export.pack(side=tk.LEFT)
+        
+        self.btn_clear_log = tk.Button(
+            btn_frame, text="清空日志", font=("Microsoft YaHei", 9),
+            bg=Colors.BUTTON_BG, fg=Colors.FG, activebackground=Colors.BUTTON_HOVER,
+            activeforeground=Colors.FG, relief=tk.FLAT, cursor="hand2",
+            command=self.clear
+        )
+        self.btn_clear_log.pack(side=tk.LEFT, padx=5)
     
     def log(self, message: str, tag: str = None):
         """添加日志消息"""
         self.log_text.config(state=tk.NORMAL)
         timestamp = time.strftime("%H:%M:%S")
+        
+        # 清理显示文本
+        message = sanitize_display_text(message)
+        
         if tag:
             self.log_text.insert(tk.END, f"[{timestamp}] {message}\n", tag)
         else:
@@ -983,6 +1031,10 @@ class ResultLogFrame(tk.Frame):
     def log_success(self, message: str):
         """记录成功消息"""
         self.log(message, "success")
+    
+    def log_warning(self, message: str):
+        """记录警告消息"""
+        self.log(message, "warning")
     
     def _on_export(self):
         """导出日志按钮回调"""
@@ -1040,6 +1092,10 @@ class CollisionGUI:
         self._cached_gpu_config = None
         self._config_loaded = False
         
+        # 状态栏
+        self.status_bar_text = tk.StringVar()
+        self.status_bar_text.set("就绪")
+        
         self._create_widgets()
         self._setup_bindings()
         
@@ -1057,7 +1113,7 @@ class CollisionGUI:
         title_frame.pack(fill=tk.X, pady=(0, 10))
         
         title = tk.Label(
-            title_frame, text="BTC 私钥对撞工具 v1.0",
+            title_frame, text="BTC 私钥对撞工具 v2.2.0",
             font=("Microsoft YaHei", 16, "bold"),
             bg=Colors.BG, fg=Colors.ACCENT
         )
@@ -1111,6 +1167,37 @@ class CollisionGUI:
         self.control_panel.btn_start.config(command=self._on_start)
         self.control_panel.btn_stop.config(command=self._on_stop)
         self.control_panel.btn_resume.config(command=self._on_resume)
+        
+        # 状态栏
+        self._create_status_bar()
+    
+    def _create_status_bar(self):
+        """创建底部状态栏"""
+        status_bar = tk.Frame(self.root, bg=Colors.SURFACE, relief=tk.RAISED, bd=1)
+        status_bar.pack(side=tk.BOTTOM, fill=tk.X)
+        
+        # 状态文本
+        status_label = tk.Label(
+            status_bar,
+            textvariable=self.status_bar_text,
+            font=FONT_CONFIG["status_bar"],
+            bg=Colors.SURFACE,
+            fg=Colors.FG,
+            anchor=tk.W,
+            padx=10
+        )
+        status_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        
+        # 版本信息
+        version_label = tk.Label(
+            status_bar,
+            text="v2.2.0",
+            font=FONT_CONFIG["status_bar"],
+            bg=Colors.SURFACE,
+            fg=Colors.SUBTEXT0 if hasattr(Colors, 'SUBTEXT0') else Colors.INFO,
+            padx=10
+        )
+        version_label.pack(side=tk.RIGHT)
     
     def _setup_bindings(self):
         """设置事件绑定"""
@@ -1362,6 +1449,7 @@ class CollisionGUI:
         self.control_panel.set_buttons_state(False)
         self.target_frame.set_enabled(True)
         self.stats_display.set_status("已停止", "warning")
+        self.status_bar_text.set("已停止")
         self.log_frame.log("界面状态已恢复")
     
     def _on_resume_from_control_panel(self, checkpoint_data: dict):
@@ -1456,6 +1544,15 @@ class CollisionGUI:
     def _update_progress_ui(self, stats: CollisionStats):
         """在主线程更新进度UI"""
         self.stats_display.update_stats(stats)
+        
+        # 更新状态栏
+        elapsed = stats.get_elapsed_seconds() if hasattr(stats, 'get_elapsed_seconds') else 0
+        speed = stats.get_speed() if hasattr(stats, 'get_speed') else 0
+        self.status_bar_text.set(
+            f"已检测: {format_number_with_commas(stats.total_checked)} | "
+            f"速度: {format_speed(speed)} | "
+            f"时间: {format_elapsed_time(elapsed)}"
+        )
     
     def _on_match(self, private_key: bytes, address: str, wif: str):
         """匹配回调（在后台线程中调用，需要调度到主线程）"""
@@ -1478,9 +1575,11 @@ class CollisionGUI:
         if stats.matches:
             self.stats_display.set_status(f"完成! 发现 {len(stats.matches)} 个匹配", "success")
             self.log_frame.log_success(f"对撞完成! 共发现 {len(stats.matches)} 个匹配")
+            self.status_bar_text.set(f"完成! 发现 {len(stats.matches)} 个匹配")
         else:
             self.stats_display.set_status("已停止", "warning")
             self.log_frame.log("对撞已停止，未发现匹配")
+            self.status_bar_text.set("已停止")
         
         # 更新最终统计
         self.stats_display.update_stats(stats)
