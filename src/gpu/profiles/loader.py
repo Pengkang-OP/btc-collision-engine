@@ -160,33 +160,73 @@ class GPUProfileLoader:
         Returns:
             配置是否合法
         """
+        errors = []
+        warnings = []
+        
         # 检查必需字段
         required_keys = ['models', 'recommended_batch_size', 'max_batch_size']
         for key in required_keys:
             if key not in profile:
-                logger.error(f"配置 {profile_path} 缺少必需字段: {key}")
-                return False
+                errors.append(f"缺少必需字段: {key}")
         
-        # 验证batch_size关系
-        if profile['max_batch_size'] < profile['recommended_batch_size']:
-            logger.error(f"配置 {profile_path}: max_batch_size ({profile['max_batch_size']}) < recommended_batch_size ({profile['recommended_batch_size']})")
+        # 如果有必需字段缺失，直接返回
+        if errors:
+            for error in errors:
+                logger.error(f"配置 {profile_path}: {error}")
             return False
-        
-        # 验证batch_size为正数
-        if profile['recommended_batch_size'] <= 0 or profile['max_batch_size'] <= 0:
-            logger.error(f"配置 {profile_path}: batch_size必须为正数")
-            return False
-        
-        # 验证memory_efficiency范围
-        if 'memory_efficiency' in profile:
-            eff = profile['memory_efficiency']
-            if not (0.0 < eff <= 1.0):
-                logger.warning(f"配置 {profile_path}: memory_efficiency ({eff}) 不在合理范围 (0.0, 1.0]")
         
         # 验证models为列表
         if not isinstance(profile['models'], list):
-            logger.error(f"配置 {profile_path}: models必须为列表")
+            errors.append("models必须为列表")
+        
+        # 验证batch_size为正数
+        if profile['recommended_batch_size'] <= 0 or profile['max_batch_size'] <= 0:
+            errors.append("batch_size必须为正数")
+        
+        # 验证batch_size关系
+        if profile['max_batch_size'] < profile['recommended_batch_size']:
+            errors.append(f"max_batch_size ({profile['max_batch_size']}) < recommended_batch_size ({profile['recommended_batch_size']})")
+        
+        # 验证optimizations字段（如果存在）
+        if 'optimizations' in profile:
+            if not isinstance(profile['optimizations'], list):
+                errors.append("optimizations必须为列表")
+            else:
+                # 验证优化项的有效性
+                valid_optimizations = {
+                    'async_transfer', 'persistent_buffers', 'shared_memory_optimization',
+                    'uint32_workaround', 'timeout_protection', 'conservative_memory',
+                    'memory_coalescing', 'hbm_optimization', 'compute_unit_optimization',
+                    'infinity_cache', 'chiplet_architecture', 'large_page_support',
+                    'shader_execution_reordering', 'pro_driver_optimization',
+                    'tensor_core_ready'  # NVIDIA Volta及以上架构
+                }
+                
+                invalid_opts = set(profile['optimizations']) - valid_optimizations
+                if invalid_opts:
+                    warnings.append(f"未知的优化项: {invalid_opts}")
+        
+        # 验证compute_capability（如果存在）
+        if 'compute_capability' in profile:
+            cc = profile['compute_capability']
+            if not isinstance(cc, (str, int, float)):
+                errors.append(f"compute_capability类型错误: 期望str/int/float, 得到{type(cc).__name__}")
+        
+        # 验证memory_efficiency范围（如果存在）
+        if 'memory_efficiency' in profile:
+            eff = profile['memory_efficiency']
+            if not (0.0 < eff <= 1.0):
+                warnings.append(f"memory_efficiency ({eff}) 不在合理范围 (0.0, 1.0]")
+        
+        # 输出验证结果
+        if errors:
+            for error in errors:
+                logger.error(f"配置 {profile_path}: {error}")
             return False
+        
+        if warnings:
+            for warning in warnings:
+                logger.warning(f"配置 {profile_path}: {warning}")
         
         return True
     
