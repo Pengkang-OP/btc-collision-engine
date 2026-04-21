@@ -20,6 +20,11 @@ from src.monitoring.alert_system import (
 class TestAlertSystem:
     """测试告警系统"""
     
+    def _create_alert_system(self, tmp_path):
+        """创建独立的告警系统实例,避免测试间干扰"""
+        log_file = tmp_path / f"test_alerts_{id(tmp_path)}.json"
+        return AlertSystem(alert_log_file=str(log_file))
+    
     def test_initialization(self, tmp_path):
         """测试初始化"""
         log_file = tmp_path / "test_alerts.json"
@@ -28,9 +33,10 @@ class TestAlertSystem:
         assert len(alert_system.alert_history) == 0
         assert len(alert_system.alert_callbacks) == 0
     
-    def test_setup_default_rules(self):
+    def test_setup_default_rules(self, tmp_path):
         """测试设置默认规则"""
-        alert_system = AlertSystem()
+        log_file = tmp_path / "test_alerts.json"
+        alert_system = AlertSystem(alert_log_file=str(log_file))
         alert_system.setup_default_rules()
         
         # 应该有5条默认规则
@@ -44,9 +50,10 @@ class TestAlertSystem:
         assert "错误率过高" in rule_names
         assert "吞吐量严重下降" in rule_names
     
-    def test_add_rule(self):
+    def test_add_rule(self, tmp_path):
         """测试添加规则"""
-        alert_system = AlertSystem()
+        log_file = tmp_path / "test_alerts.json"
+        alert_system = AlertSystem(alert_log_file=str(log_file))
         
         rule = AlertRule(
             name="测试规则",
@@ -60,9 +67,9 @@ class TestAlertSystem:
         assert len(alert_system.rules) == 1
         assert alert_system.rules[0].name == "测试规则"
     
-    def test_remove_rule(self):
-        """测试移除规则"""
-        alert_system = AlertSystem()
+    def test_remove_rule(self, tmp_path):
+        """测试删除规则"""
+        alert_system = self._create_alert_system(tmp_path)
         
         rule = AlertRule(
             name="测试规则",
@@ -84,9 +91,9 @@ class TestAlertSystem:
         result = alert_system.remove_rule("不存在的规则")
         assert result is False
     
-    def test_check_metrics_performance_degradation(self):
+    def test_check_metrics_performance_degradation(self, tmp_path):
         """测试性能退化告警"""
-        alert_system = AlertSystem()
+        alert_system = self._create_alert_system(tmp_path)
         alert_system.setup_default_rules()
         
         # 正常情况(退化率10%)
@@ -101,9 +108,9 @@ class TestAlertSystem:
         assert alerts[0].alert_type == AlertType.PERFORMANCE_DEGRADATION
         assert alerts[0].level == AlertLevel.WARNING
     
-    def test_check_metrics_memory_overflow(self):
+    def test_check_metrics_memory_overflow(self, tmp_path):
         """测试内存溢出告警"""
-        alert_system = AlertSystem()
+        alert_system = self._create_alert_system(tmp_path)
         alert_system.setup_default_rules()
         
         # 正常情况(70%)
@@ -118,9 +125,9 @@ class TestAlertSystem:
         assert alerts[0].alert_type == AlertType.MEMORY_OVERFLOW
         assert alerts[0].level == AlertLevel.WARNING
     
-    def test_check_metrics_gpu_overheat(self):
+    def test_check_metrics_gpu_overheat(self, tmp_path):
         """测试GPU过热告警"""
-        alert_system = AlertSystem()
+        alert_system = self._create_alert_system(tmp_path)
         alert_system.setup_default_rules()
         
         # 正常情况(75°C)
@@ -135,9 +142,9 @@ class TestAlertSystem:
         assert alerts[0].alert_type == AlertType.GPU_OVERHEAT
         assert alerts[0].level == AlertLevel.CRITICAL
     
-    def test_check_metrics_error_rate(self):
+    def test_check_metrics_error_rate(self, tmp_path):
         """测试错误率告警"""
-        alert_system = AlertSystem()
+        alert_system = self._create_alert_system(tmp_path)
         alert_system.setup_default_rules()
         
         # 正常情况(2%)
@@ -152,9 +159,9 @@ class TestAlertSystem:
         assert alerts[0].alert_type == AlertType.ERROR_RATE_HIGH
         assert alerts[0].level == AlertLevel.CRITICAL
     
-    def test_check_metrics_throughput_drop(self):
+    def test_check_metrics_throughput_drop(self, tmp_path):
         """测试吞吐量下降告警"""
-        alert_system = AlertSystem()
+        alert_system = self._create_alert_system(tmp_path)
         alert_system.setup_default_rules()
         
         # 正常情况(下降30%)
@@ -175,9 +182,9 @@ class TestAlertSystem:
         assert alerts[0].alert_type == AlertType.THROUGHPUT_DROP
         assert alerts[0].level == AlertLevel.CRITICAL
     
-    def test_cooldown_mechanism(self):
+    def test_cooldown_mechanism(self, tmp_path):
         """测试冷却机制"""
-        alert_system = AlertSystem()
+        alert_system = self._create_alert_system(tmp_path)
         alert_system.setup_default_rules()
         
         # 第一次触发
@@ -189,9 +196,9 @@ class TestAlertSystem:
         alerts2 = alert_system.check_metrics(metrics)
         assert len(alerts2) == 0
     
-    def test_alert_callback(self):
+    def test_alert_callback(self, tmp_path):
         """测试告警回调"""
-        alert_system = AlertSystem()
+        alert_system = self._create_alert_system(tmp_path)
         alert_system.setup_default_rules()
         
         callback_triggered = []
@@ -309,9 +316,9 @@ class TestAlertSystem:
         
         assert system1 is system2
     
-    def test_multiple_alerts_no_cooldown(self):
+    def test_multiple_alerts_no_cooldown(self, tmp_path):
         """测试多个不同规则同时触发"""
-        alert_system = AlertSystem()
+        alert_system = self._create_alert_system(tmp_path)
         alert_system.setup_default_rules()
         
         # 同时触发多个告警
