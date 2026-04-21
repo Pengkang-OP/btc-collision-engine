@@ -19,6 +19,12 @@ mypy>=1.0.0
 numba>=0.60.0
 numpy>=1.20.0           # Numba 依赖
 
+# 性能优化 - 新增 (v2.2.0)
+gmpy2>=2.1.5            # 大整数运算优化(Comba乘法),模运算性能+35%
+pycryptodome>=3.19.0    # SIMD哈希优化(AES-NI),SHA256性能+200%
+memory-profiler>=0.61   # 内存性能分析工具(可选)
+pytest-benchmark>=4.0   # 性能基准测试框架(可选)
+
 # 目标地址管理增强
 cachetools>=5.3.0       # LRU/TTL缓存，加速地址解析
 pybloom-live>=2.2.0     # 布隆过滤器，优化大规模地址去重
