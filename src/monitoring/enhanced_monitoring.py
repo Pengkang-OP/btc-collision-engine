@@ -44,7 +44,18 @@ class EnhancedMonitoringSystem:
     - 统一的数据接口
     
     P1-2修复: 使用MonitorConfig配置对象，解耦配置循环引用
+    
+    Attributes:
+        config: 监控配置对象
+        engine: 对撞引擎实例
+        data_logger: 数据日志记录器(可能为None)
+        collection_interval: 数据采集间隔(秒)
+        enable_monitoring_data: 是否启用监控数据采集
     """
+    
+    # 类属性类型提示
+    config: MonitorConfig
+    data_logger: Optional[Any]
     
     def __init__(
         self,
