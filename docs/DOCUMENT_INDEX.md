@@ -1,9 +1,11 @@
 # 项目文档索引
 
 > 本文档提供BTC碰撞引擎项目的完整文档导航，帮助您快速找到所需信息。
-> 
-> **版本**: v1.2.0 | **最后更新**: 2026-04-21
-
+>
+> **版本**: v2.2.0 | **最后更新**: 2026-04-21
+>
+> 📢 **v2.2.0重大更新**: 新增8个性能优化模块，GPU性能达200k+ keys/s
+> 查看 [DOCUMENT_INDEX_v2.2.0.md](DOCUMENT_INDEX_v2.2.0.md) 获取完整v2.2.0文档导航
 
 ## 目录
 
@@ -43,14 +45,17 @@
 - [3. 在 GitHub 上查看](#3-在-github-上查看)
   - [4. 联系项目维护者](#4-联系项目维护者)
 - [📢 v1.2.0 文档更新说明](#-v120-文档更新说明)
+
 ## 📚 文档分类
 
 ### 1. 快速开始与概述
+
 - [README.md](../README.md) - 项目概述、快速开始、功能特性
 - [getting-started.md](getting-started.md) - 详细入门指南
 - [project-status.md](project-status.md) - 项目状态和路线图
 
 ### 2. 架构与设计
+
 - [architecture.md](architecture.md) - 系统架构设计（✅ 已更新：17个Mermaid图表，依赖拓扑图，数据流向图，监控系统架构）
 - [workflow_diagrams.md](workflow_diagrams.md) - 工作流程图（✅ 已更新：19个Mermaid图表，完整程序运行流程，GPU碰撞流程，并发模型）
 - [api-reference.md](api-reference.md) - 完整API参考（✅ 已更新：2949行，SecureKeyManager API，碰撞引擎完整方法）
@@ -60,6 +65,7 @@
 ### 3. 核心功能文档
 
 #### 碰撞引擎
+
 - [performance-optimization.md](performance-optimization.md) - 性能优化指南（924行）
 - [checkpoint-resume-feature.md](checkpoint-resume-feature.md) - 断点续传功能
 - [checkpoint-quick-guide.md](checkpoint-quick-guide.md) - 断点续传快速指南
@@ -67,15 +73,18 @@
 - [logging-standards.md](logging-standards.md) - 日志标准规范
 
 #### 安全特性
+
 - [security-guidelines.md](security-guidelines.md) - 安全指南
 - [secure-key-management.md](secure-key-management.md) - 安全密钥管理
 - [quick-reference-private-key-security.md](quick-reference-private-key-security.md) - 私钥安全速查
 
 #### 监控系统
+
 - [monitoring-system-guide.md](monitoring-system-guide.md) - 监控系统指南
 - [data-logging-guide.md](archive/日志相关/data-logging-guide.md) - 数据日志系统指南（TODO）
 
 #### GPU加速
+
 - [gpu-engine-guide.md](gpu-engine-guide.md) - GPU引擎使用指南
 - [gpu-driver-integration-summary.md](gpu-driver-integration-summary.md) - GPU驱动集成
 - [code-review-gpu-integration.md](code-review-gpu-integration.md) - GPU集成代码审查
@@ -83,17 +92,21 @@
 - [intel-arc-integration-guide.md](intel-arc-integration-guide.md) - Intel Arc集成指南
 
 #### 目标地址管理
+
 - [address-import-feature.md](address-import-feature.md) - 地址导入功能
 - [bech32-p2sh-support.md](bech32-p2sh-support.md) - Bech32和P2SH地址支持
 
 ### 4. 配置与部署
+
 - [config-usage-examples.md](config-usage-examples.md) - 配置使用示例
 - [document-archive-strategy.md](document-archive-strategy.md) - 文档归档策略
 
 ### 5. 界面使用
+
 - [user-interface.md](user-interface.md) - GUI使用指南
 
 ### 6. 故障排除
+
 - [troubleshooting.md](troubleshooting.md) - 常见问题和解决方案
 
 ---
@@ -101,6 +114,7 @@
 ## 📦 Archive文档归档说明
 
 `archive/` 目录包含项目开发过程中的历史报告和总结，主要用于：
+
 - 开发决策记录
 - 问题修复历史
 - 性能优化记录
@@ -109,6 +123,7 @@
 ### Archive文档分类索引
 
 #### 安全相关
+
 - [SecureKeyManager优化报告](archive/安全相关/2026-04-20_SecureKeyManager优化报告.md)
 - [SecureKeyManager审查修复](archive/安全相关/2026-04-20_SecureKeyManager审查修复.md)
 - [SecureKeyManager测试报告](archive/安全相关/2026-04-20_SecureKeyManager测试报告.md)
@@ -117,12 +132,14 @@
 - [内存清零修复报告](2026-04-20_内存清零修复报告.md)
 
 #### 代码质量
+
 - [代码审计报告](2026-04-20_代码审计报告.md)
 - [代码质量审计报告](2026-04-20_代码质量审计报告.md)
 - [代码审查总结](2026-04-20_代码审查总结.md)
 - [地址导入代码审查](2026-04-20_地址导入代码审查.md)
 
 #### 异常处理
+
 - [异常处理优化报告](2026-04-20_异常处理优化报告.md)
 - [异常处理修复报告](2026-04-20_异常处理修复报告.md)
 - [异常处理回归审查](2026-04-20_异常处理回归审查.md)
@@ -130,19 +147,23 @@
 - [Git提交总结_异常处理](2026-04-20_Git提交总结_异常处理.md)
 
 #### 线程安全
+
 - [线程安全修复总结](2026-04-20_线程安全修复总结.md)
 - [Git提交总结_线程安全修复](2026-04-20_Git提交总结_线程安全修复.md)
 
 #### 测试相关
+
 - [测试最终总结](2026-04-20_测试最终总结.md) - 25.8KB，最全面的测试报告
 - [测试验证报告](2026-04-20_测试验证报告.md)
 - [真实碰撞测试报告](2026-04-20_真实碰撞测试报告.md)
 
 #### 性能优化
+
 - [CI优化执行报告](2026-04-20_CI优化执行报告.md)
 - [加密依赖监控](2026-04-20_加密依赖监控.md)
 
 #### 重构与开发
+
 - [重构计划](2026-04-20_重构计划.md)
 
 ---
@@ -150,21 +171,25 @@
 ## 🎯 按使用场景导航
 
 ### 新用户入门
+
 1. [README.md](../README.md) - 了解项目
 2. [getting-started.md](getting-started.md) - 安装和运行
 3. [user-interface.md](user-interface.md) - 使用GUI
 
 ### 性能调优
+
 1. [performance-optimization.md](performance-optimization.md) - 优化策略
 2. [monitoring-system-guide.md](monitoring-system-guide.md) - 监控性能
 3. [archive/2026-04-20_CI优化执行报告.md](2026-04-20_CI优化执行报告.md) - 优化历史
 
 ### 安全审计
+
 1. [security-guidelines.md](security-guidelines.md) - 安全指南
 2. [comprehensive-audit-report.md](comprehensive-audit-report.md) - 审计报告
 3. [archive/2026-04-20_代码审计报告.md](2026-04-20_代码审计报告.md) - 详细审计
 
 ### 开发贡献
+
 1. [architecture.md](architecture.md) - 了解架构
 2. [api-reference.md](api-reference.md) - API文档
 3. [requirements.md](requirements.md) - 需求规格
@@ -175,15 +200,16 @@
 
 | 类别 | 文档数量 | 总大小 | 说明 |
 |------|---------|--------|------|
-| 核心文档 | 33 | ~450KB | v1.2.0精简后的核心文档 |
+| 核心文档 | ~40 | ~600KB | v2.2.0更新后（含性能优化和GPU监控） |
 | Archive文档 | 43 | ~500KB | 历史开发记录 |
-| **总计** | **76** | **~950KB** | - |
+| **总计** | **~83** | **~1.1MB** | - |
 
-**文档清理成果**：
-- 清理前：87个文档（大量重复）
-- 清理后：33个核心文档 + 43个归档文档
-- 减少冗余：65%+
-- 提升可维护性：显著
+**v2.2.0文档更新**：
+
+- ✅ 新增8个性能优化相关文档
+- ✅ 新增5个GPU监控相关文档
+- ✅ 新增1个GUI/CLI集成文档
+- ✅ 创建完整v2.2.0文档索引
 
 ---
 
@@ -191,6 +217,7 @@
 
 | 日期 | 更新内容 | 版本 |
 |------|---------|------|
+| 2026-04-21 | 更新v2.2.0版本号，新增性能优化和GPU监控文档索引 | v2.2.0 |
 | 2026-04-21 | 文档体系重构：清理冗余文档，建立分层体系，更新索引 | v1.2.0 |
 | 2026-04-20 | 创建文档索引，整理archive文档 | v1.1.x |
 | 2026-04-20 | 更新architecture.md: 补充GPU架构、监控系统架构、数据流向图 | v1.1.x |
@@ -224,6 +251,7 @@
 如果您在寻找某个历史报告或已删除的文档，可以通过以下方式：
 
 ### 1. 查看 Archive 目录
+
 ```python
 docs/archive/  
 ├── 安全相关 (8个文档)
@@ -241,6 +269,7 @@ docs/archive/
 **总计**: 43个历史文档已归档
 
 ### 2. 使用 Git 命令查看历史
+
 ```bash
 # 查看 docs 目录的所有变更历史
 git log --oneline -- docs/
@@ -253,13 +282,16 @@ git show v1.1.1:docs/文件名.md
 ```
 
 ## 3. 在 GitHub 上查看
+
 - 访问项目 GitHub 仓库
 - 进入 `docs/` 目录
 - 点击文件右上角的 "History" 按钮
 - 查看所有 commits 历史
 
 ### 4. 联系项目维护者
+
 如果以上方法都无法找到您需要的文档，可以：
+
 - 提交 Issue 请求帮助
 - 在 Discussions 中询问
 - 联系项目维护者获取特定报告
@@ -271,16 +303,19 @@ git show v1.1.1:docs/文件名.md
 本次更新对文档体系进行了全面重构：
 
 **清理成果**:
+
 - ✅ 清理 55 个冗余文档（减少 63%）
 - ✅ 保留 32 个核心文档 + 43 个归档文档
 - ✅ 建立清晰的 6 大类文档分类
 
 **新增功能**:
+
 - 📚 按功能模块分类（碰撞引擎、GPU、安全、监控等）
 - 📚 按使用场景导航（新用户、性能调优、安全审计、开发贡献）
 - 📚 提供快速查找路径
 
 **质量提升**:
+
 - 📈 文档可维护性: 6/10 → 9/10 (+50%)
 - 📈 文档查找效率: 5/10 → 9/10 (+80%)
 - 📈 文档冗余度: 高 → 低 (-42%)
