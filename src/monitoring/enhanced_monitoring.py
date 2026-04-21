@@ -4,6 +4,8 @@
 增强版监控系统
 
 集成数据日志系统的监控系统，提供更全面的数据记录和监控功能。
+
+P1-2修复: 使用MonitorConfig配置对象，解耦配置循环引用
 """
 
 import os
@@ -29,6 +31,8 @@ from src.monitoring.monitoring_system import (
     MonitoringData
 )
 from src.monitoring.data_logger import DataLogger
+# P1-2修复：导入配置对象
+from src.monitoring.monitor_config import MonitorConfig, DEFAULT_CONFIG
 
 
 class EnhancedMonitoringSystem:
@@ -38,28 +42,80 @@ class EnhancedMonitoringSystem:
     - 实时监控和异常检测
     - 数据持久化和报告生成
     - 统一的数据接口
+    
+    P1-2修复: 使用MonitorConfig配置对象，解耦配置循环引用
     """
     
-    def __init__(self, engine=None, collection_interval: int = 5,
-                 enable_monitoring_data: bool = False):
+    def __init__(
+        self,
+        engine=None,
+        config: Optional[MonitorConfig] = None,
+        collection_interval: float = None,  # 已弃用，使用config
+        enable_monitoring_data: bool = None  # 已弃用，使用config
+    ):
         """
         初始化增强版监控系统
         
         Args:
             engine: 对撞引擎实例
-            collection_interval: 数据采集间隔（秒）
-            enable_monitoring_data: 是否同时保存到monitoring_data（默认False，统一使用data_logs）
+            config: 监控配置对象（推荐）
+            collection_interval: 数据采集间隔（秒）- 已弃用
+            enable_monitoring_data: 是否同时保存到monitoring_data - 已弃用
+            
+        Example:
+            >>> # 推荐方式：使用配置对象
+            >>> from src.monitoring.monitor_config import MonitorConfig
+            >>> config = MonitorConfig(
+            ...     data_logging_enabled=True,
+            ...     collection_interval=5.0
+            ... )
+            >>> monitoring = EnhancedMonitoringSystem(engine, config=config)
+            >>> 
+            >>> # 兼容方式：使用旧参数
+            >>> monitoring = EnhancedMonitoringSystem(
+            ...     engine,
+            ...     collection_interval=5,
+            ...     enable_monitoring_data=False
+            ... )
         """
         self.logger = get_configured_logger("EnhancedMonitoringSystem")
         self.engine = engine
-        self.collection_interval = collection_interval
-        self.enable_monitoring_data = enable_monitoring_data
+        
+        # P1-2修复：处理配置
+        if config is not None:
+            # 使用配置对象
+            self.config = config
+        else:
+            # 兼容旧API：从参数构建配置
+            self.config = MonitorConfig()
+            
+            if collection_interval is not None:
+                self.config.collection_interval = float(collection_interval)
+            
+            if enable_monitoring_data is not None:
+                self.config.enable_monitoring_data = enable_monitoring_data
+        
+        # 验证配置（添加异常处理）
+        try:
+            self.config.validate()
+        except ValueError as e:
+            self.logger.warning(f"配置验证失败: {e}, 使用默认配置")
+            self.config = MonitorConfig()  # 回退到默认配置
+        
+        # 使用配置初始化
+        self.collection_interval = self.config.collection_interval
+        self.enable_monitoring_data = self.config.enable_monitoring_data
         
         # 数据日志系统（主数据源）
-        self.data_logger = DataLogger(storage_dir="data_logs")
+        if self.config.data_logging_enabled:
+            # P1-2修复：DataLogger只接受storage_dir参数
+            # config配置通过MonitorConfig管理，不直接传递给DataLogger
+            self.data_logger = DataLogger(storage_dir="data_logs")
+        else:
+            self.data_logger = None
         
         # 可选：原始监控系统组件（用于实时监控和告警）
-        if enable_monitoring_data:
+        if self.config.enable_monitoring_data:
             self.storage = DataStorage()
             self.detector = AnomalyDetector(self.storage)
             self.alert_system = AlertSystem(self.storage)
@@ -75,11 +131,15 @@ class EnhancedMonitoringSystem:
         self._thread = None
         self._stop_event = threading.Event()
         
-        # 报告生成控制
+        # 报告生成控制（从配置读取）
         self._last_report_time = 0
-        self._report_interval = 3600  # 每小时生成一次报告
+        self._report_interval = self.config.report_interval
         
-        self.logger.info(f"增强版监控系统初始化完成 (monitoring_data={enable_monitoring_data})")
+        self.logger.info(
+            f"增强版监控系统初始化完成 "
+            f"(monitoring_data={self.config.enable_monitoring_data}, "
+            f"config={type(self.config).__name__})"
+        )
     
     def start(self):
         """启动监控系统"""
@@ -108,7 +168,7 @@ class EnhancedMonitoringSystem:
         while not self._stop_event.is_set():
             try:
                 # 收集数据（从引擎直接获取）
-                if self.engine and hasattr(self.engine, 'get_stats'):
+                if self.data_logger and self.engine and hasattr(self.engine, 'get_stats'):
                     stats = self.engine.get_stats()
                     if stats:
                         # 记录性能数据
@@ -122,7 +182,7 @@ class EnhancedMonitoringSystem:
                         )
                 
                 # 记录引擎数据
-                if self.engine:
+                if self.data_logger and self.engine:
                     self.data_logger.record_engine_data(
                         mode=getattr(self.engine, '_current_mode', ''),
                         target_count=len(getattr(self.engine, 'targets', [])),
@@ -131,7 +191,8 @@ class EnhancedMonitoringSystem:
                     )
                 
                 # 记录系统数据
-                self.data_logger.record_system_data()
+                if self.data_logger:
+                    self.data_logger.record_system_data()
                 
                 # 如果使用monitoring_data，同时保存
                 if self.enable_monitoring_data and self.storage:
@@ -153,8 +214,9 @@ class EnhancedMonitoringSystem:
                     self._last_report_time = current_time
                 
                 # 定期保存数据
-                self.data_logger.save_current_data()
-                self.data_logger.save_history_data()
+                if self.data_logger:
+                    self.data_logger.save_current_data()
+                    self.data_logger.save_history_data()
                 
             except Exception as e:
                 error_info = {
@@ -167,11 +229,12 @@ class EnhancedMonitoringSystem:
                     self.storage.save_error(error_info)
                 
                 # 同时记录到数据日志系统
-                self.data_logger.record_error(
-                    error_type="monitoring_error",
-                    message=f"监控系统错误: {str(e)}",
-                    exception=e
-                )
+                if self.data_logger:
+                    self.data_logger.record_error(
+                        error_type="monitoring_error",
+                        message=f"监控系统错误: {str(e)}",
+                        exception=e
+                    )
                 self.logger.error(f"监控系统错误: {e}")
             
             # 等待下一次采集
@@ -180,6 +243,9 @@ class EnhancedMonitoringSystem:
     def _save_to_data_logger(self, data: MonitoringData):
         """将数据保存到数据日志系统（已弃用，保留向后兼容）"""
         self.logger.warning("_save_to_data_logger已弃用，使用直接记录方式")
+        if not self.data_logger:
+            return
+        
         try:
             # 记录性能数据
             perf = data.performance
@@ -242,8 +308,9 @@ class EnhancedMonitoringSystem:
         """生成报告（控制频率）"""
         try:
             # 生成数据日志报告
-            report = self.data_logger.generate_report("daily")
-            self.logger.info("每日报告已生成")
+            if self.data_logger:
+                report = self.data_logger.generate_report("daily")
+                self.logger.info("每日报告已生成")
             
             # 如果启用monitoring_data，也生成原始报告
             if self.enable_monitoring_data and self.report_generator:
@@ -270,7 +337,7 @@ class EnhancedMonitoringSystem:
         alerts = self.alert_system.get_alert_history()
         
         # 获取数据日志统计
-        data_stats = self.data_logger.get_statistics()
+        data_stats = self.data_logger.get_statistics() if self.data_logger else {}
         
         return {
             "current_data": current_data,
@@ -285,7 +352,7 @@ class EnhancedMonitoringSystem:
         original_report = self.report_generator.generate_daily_report()
         
         # 生成数据日志报告
-        data_report = self.data_logger.generate_report("daily")
+        data_report = self.data_logger.generate_report("daily") if self.data_logger else {}
         
         return {
             "original_report": original_report,
