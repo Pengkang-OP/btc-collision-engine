@@ -298,16 +298,23 @@ class MultiGPUCollisionEngine:
             'status': 'running' if self._running else 'stopped',
             'device_count': len(self.workers),
             'total_keys_checked': 0,
-            'total_matches': len(self._all_matches),
+            'total_matches': 0,
             'combined_throughput': 0,
             'elapsed_time': 0,
             'per_device': {}
         }
         
+        # 使用锁保护workers和_all_matches访问
+        with self._workers_lock:
+            workers_snapshot = dict(self.workers)
+        
+        with self._matches_lock:
+            stats['total_matches'] = len(self._all_matches)
+        
         total_keys = 0
         total_throughput = 0
         
-        for idx, worker in self.workers.items():
+        for idx, worker in workers_snapshot.items():
             worker_stats = worker.get_stats()
             stats['per_device'][idx] = worker_stats
             
@@ -328,8 +335,12 @@ class MultiGPUCollisionEngine:
         Returns:
             设备索引 -> 统计信息映射
         """
+        # 使用锁保护workers访问
+        with self._workers_lock:
+            workers_snapshot = dict(self.workers)
+        
         stats = {}
-        for idx, worker in self.workers.items():
+        for idx, worker in workers_snapshot.items():
             stats[idx] = worker.get_stats()
         
         return stats
@@ -425,24 +436,24 @@ class MultiGPUCollisionEngine:
     
     def _update_combined_stats(self):
         """更新汇总统计"""
+        # 使用锁保护workers访问
+        with self._workers_lock:
+            workers_snapshot = dict(self.workers)
+        
         total_keys = 0
-        for worker in self.workers.values():
+        for worker in workers_snapshot.values():
             stats = worker.get_stats()
             total_keys += stats.get('keys_checked', 0)
         
-        self._total_keys_checked = total_keys
+        # 使用state_lock保护_total_keys_checked赋值
+        with self._state_lock:
+            self._total_keys_checked = total_keys
     
     def cleanup(self):
         """清理所有资源"""
-        # 先检查是否需要停止,在锁外调用stop()避免死锁
-        should_stop = False
-        with self._state_lock:
-            if self._running:
-                should_stop = True
-        
-        # 在锁外调用stop(),避免嵌套锁死锁
-        if should_stop:
-            self.stop()
+        # 直接调用stop(),stop()内部会检查_running状态
+        # 如果未运行则直接return,不会产生额外开销
+        self.stop()
         
         with self._workers_lock:
             self.workers.clear()
