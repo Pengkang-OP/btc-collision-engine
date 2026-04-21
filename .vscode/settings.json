@@ -1,0 +1,14 @@
+{
+  "markdownlint.config": {
+    "default": true,
+    "MD013": false,
+    "MD024": false,
+    "MD033": false
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "DavidAnson.vscode-markdownlint",
+    "editor.formatOnSave": true,
+    "editor.wordWrap": "on"
+  },
+  "files.encoding": "utf8"
+}

@@ -1,0 +1,109 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "检查文档质量",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "tools/check_document_quality.py"
+      ],
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "增量检查文档质量",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "tools/check_document_quality.py",
+        "--changed-only"
+      ],
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "并行检查文档质量",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "tools/check_document_quality_parallel.py"
+      ],
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "推荐评分配置",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "tools/recommend_config.py"
+      ],
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "分析质量趋势",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "tools/quality_trend.py",
+        "--check"
+      ],
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "质量告警检查",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "tools/quality_alert.py",
+        "--threshold",
+        "8.0"
+      ],
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "性能基准测试",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "tools/benchmark_quality_check.py",
+        "--iterations",
+        "10"
+      ],
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    }
+  ]
+}
