@@ -61,6 +61,9 @@ class MultiGPUCollisionEngine:
         # 工作器字典锁
         self._workers_lock = threading.Lock()
         
+        # 匹配结果锁
+        self._matches_lock = threading.Lock()
+        
         # 结果收集
         self._all_matches = []
         self._match_callback = None
@@ -215,41 +218,49 @@ class MultiGPUCollisionEngine:
     
     def stop(self):
         """停止所有GPU工作器"""
+        # 在锁内检查并设置停止标志
         with self._state_lock:
             if not self._running:
                 return
+            # 防止重复进入stop()
+            if getattr(self, '_stopping', False):
+                return
+            self._stopping = True
         
-        logger.info("停止多GPU碰撞...")
-        
-        # 停止所有工作器
-        with self._workers_lock:
-            workers_snapshot = dict(self.workers)
-        
-        for idx, worker in workers_snapshot.items():
-            try:
-                worker.stop_search()
-                logger.info(f"GPU {idx} 工作器停止信号已发送")
-            except Exception as e:
-                logger.error(f"停止GPU {idx} 工作器失败: {e}")
-        
-        # 等待所有工作器结束
-        for idx, worker in workers_snapshot.items():
-            try:
-                worker.join(timeout=30)
-                if worker.is_alive():
-                    logger.warning(f"GPU {idx} 工作器未在30秒内停止")
-                else:
-                    logger.info(f"GPU {idx} 工作器已停止")
-            except Exception as e:
-                logger.error(f"等待GPU {idx} 工作器失败: {e}")
-        
-        with self._state_lock:
-            self._running = False
-        
-        # 更新统计
-        self._update_combined_stats()
-        
-        logger.info("多GPU碰撞已停止")
+        try:
+            logger.info("停止多GPU碰撞...")
+            
+            # 停止所有工作器
+            with self._workers_lock:
+                workers_snapshot = dict(self.workers)
+            
+            for idx, worker in workers_snapshot.items():
+                try:
+                    worker.stop_search()
+                    logger.info(f"GPU {idx} 工作器停止信号已发送")
+                except Exception as e:
+                    logger.error(f"停止GPU {idx} 工作器失败: {e}")
+            
+            # 等待所有工作器结束
+            for idx, worker in workers_snapshot.items():
+                try:
+                    worker.join(timeout=30)
+                    if worker.is_alive():
+                        logger.warning(f"GPU {idx} 工作器未在30秒内停止")
+                    else:
+                        logger.info(f"GPU {idx} 工作器已停止")
+                except Exception as e:
+                    logger.error(f"等待GPU {idx} 工作器失败: {e}")
+            
+            # 更新统计
+            self._update_combined_stats()
+            
+            logger.info("多GPU碰撞已停止")
+        finally:
+            # 确保状态被正确更新
+            with self._state_lock:
+                self._running = False
+                self._stopping = False
     
     def pause(self):
         """暂停所有GPU工作器"""
@@ -373,7 +384,9 @@ class MultiGPUCollisionEngine:
         match['device_idx'] = device_idx
         match['timestamp'] = time.time()
         
-        self._all_matches.append(match)
+        # 使用锁保护_all_matches
+        with self._matches_lock:
+            self._all_matches.append(match)
         
         logger.info(
             f"GPU {device_idx} 发现匹配: {match.get('address', 'Unknown')}"
@@ -421,15 +434,23 @@ class MultiGPUCollisionEngine:
     
     def cleanup(self):
         """清理所有资源"""
+        # 先检查是否需要停止,在锁外调用stop()避免死锁
+        should_stop = False
         with self._state_lock:
             if self._running:
-                self.stop()
+                should_stop = True
+        
+        # 在锁外调用stop(),避免嵌套锁死锁
+        if should_stop:
+            self.stop()
         
         with self._workers_lock:
             self.workers.clear()
         
         self._devices.clear()
-        self._all_matches.clear()
+        
+        with self._matches_lock:
+            self._all_matches.clear()
         
         with self._state_lock:
             self._initialized = False

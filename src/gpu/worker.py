@@ -117,7 +117,8 @@ class SingleGPUWorker(threading.Thread):
             # 确保异常时也清理资源
             self._cleanup_gpu_engine()
             self._cleanup()
-            self._stats['status'] = 'stopped'
+            with self._lock:
+                self._stats['status'] = 'stopped'
             logger.info(f"GPU {self.device_idx} 工作器已停止")
     
     def _initialize_gpu_engine(self):
