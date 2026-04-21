@@ -23,6 +23,13 @@ from .driver_manager import DriverManager, DriverVersionParser
 from .kernel import OPENCL_KERNEL_SOURCE
 from .facade import GPUFacade, create_gpu_facade
 
+# 多GPU支持模块
+from .selector import GPUDeviceSelector, get_gpu_selector, reset_gpu_selector
+from .load_balancer import GPULoadBalancer
+from .worker import SingleGPUWorker
+from .multi_gpu_engine import MultiGPUCollisionEngine
+from .auto_config import GPUAutoConfigurator, get_gpu_configurator, reset_gpu_configurator
+
 __version__ = "2.0.0"
 
 __all__ = [
@@ -36,5 +43,15 @@ __all__ = [
     'OPENCL_KERNEL_SOURCE',
     # GPU外观类（简化接口）
     'GPUFacade',
-    'create_gpu_facade'
+    'create_gpu_facade',
+    # 多GPU支持
+    'GPUDeviceSelector',
+    'get_gpu_selector',
+    'reset_gpu_selector',
+    'GPULoadBalancer',
+    'SingleGPUWorker',
+    'MultiGPUCollisionEngine',
+    'GPUAutoConfigurator',
+    'get_gpu_configurator',
+    'reset_gpu_configurator'
 ]

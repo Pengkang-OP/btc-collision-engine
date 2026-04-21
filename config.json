@@ -119,6 +119,21 @@
       "_comment_warn_on_unstable": "对已知不稳定驱动版本发出警告",
       "auto_fallback_conservative": true,
       "_comment_auto_fallback_conservative": "驱动版本过旧时自动切换到保守模式"
+    },
+    "mode": "auto",
+    "_comment_mode": "GPU模式: auto=自动选择, single=单GPU, multi=多GPU",
+    "device_indices": [-1],
+    "_comment_device_indices": "GPU设备索引列表, -1=自动选择最佳, [0,1]=使用GPU 0和1",
+    "load_balancing": "performance",
+    "_comment_load_balancing": "负载均衡策略: performance=按性能, equal=平均分配",
+    "auto_tuning": true,
+    "_comment_auto_tuning": "自动根据设备型号调优参数",
+    "per_device_config": {
+      "_comment": "每个GPU的独立配置(可选,覆盖auto_tuning)",
+      "0": {
+        "batch_size": 65536,
+        "work_group_size": 256
+      }
     }
   },
   "performance_monitoring": {
