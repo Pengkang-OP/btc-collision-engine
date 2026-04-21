@@ -15,6 +15,10 @@ import json
 
 logger = logging.getLogger(__name__)
 
+# 告警系统常量
+MAX_ALERT_HISTORY = 1000  # 最大保存告警记录数
+ALERT_DEDUP_LOOKBACK = 10  # 告警去重回溯数量
+
 
 class AlertLevel(Enum):
     """告警级别"""
@@ -304,7 +308,7 @@ class AlertSystem:
         
         return triggered_alerts
     
-    def _is_duplicate_alert(self, alert: AlertRecord, lookback: int = 10) -> bool:
+    def _is_duplicate_alert(self, alert: AlertRecord, lookback: int = ALERT_DEDUP_LOOKBACK) -> bool:
         """检查是否是重复告警
         
         Args:
@@ -400,7 +404,7 @@ class AlertSystem:
         
         return stats
     
-    def _save_alert_history(self, max_records: int = 1000):
+    def _save_alert_history(self, max_records: int = MAX_ALERT_HISTORY):
         """保存告警历史到文件
         
         Args:

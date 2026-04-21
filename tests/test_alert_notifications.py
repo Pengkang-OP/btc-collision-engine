@@ -309,5 +309,103 @@ class TestNotifierIntegration:
         assert notifier.enabled is False
 
 
+class TestHealthCheck:
+    """测试健康检查功能"""
+    
+    @patch('smtplib.SMTP')
+    def test_email_health_check_success(self, mock_smtp):
+        """测试邮件健康检查成功"""
+        notifier = EmailNotifier(
+            smtp_server="smtp.example.com",
+            smtp_port=587
+        )
+        
+        mock_server = Mock()
+        mock_smtp.return_value = mock_server
+        
+        result = notifier.health_check()
+        
+        assert result is True
+        mock_smtp.assert_called_once_with("smtp.example.com", 587, timeout=5)
+        mock_server.quit.assert_called_once()
+    
+    @patch('smtplib.SMTP')
+    def test_email_health_check_failure(self, mock_smtp):
+        """测试邮件健康检查失败"""
+        notifier = EmailNotifier(
+            smtp_server="invalid.smtp.com",
+            smtp_port=587
+        )
+        
+        mock_smtp.side_effect = Exception("Connection refused")
+        
+        result = notifier.health_check()
+        
+        assert result is False
+    
+    @patch('requests.post')
+    def test_wecom_health_check_success(self, mock_post):
+        """测试企业微信健康检查成功"""
+        notifier = WeComWebhookNotifier(
+            webhook_url="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx"
+        )
+        
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_post.return_value = mock_response
+        
+        result = notifier.health_check()
+        
+        assert result is True
+        mock_post.assert_called_once()
+        call_args = mock_post.call_args
+        assert call_args.kwargs['timeout'] == 5
+    
+    @patch('requests.post')
+    def test_wecom_health_check_failure(self, mock_post):
+        """测试企业微信健康检查失败"""
+        notifier = WeComWebhookNotifier(
+            webhook_url="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx"
+        )
+        
+        mock_post.side_effect = Exception("Connection timeout")
+        
+        result = notifier.health_check()
+        
+        assert result is False
+    
+    @patch('requests.post')
+    def test_dingtalk_health_check_success(self, mock_post):
+        """测试钉钉健康检查成功"""
+        notifier = DingTalkWebhookNotifier(
+            webhook_url="https://oapi.dingtalk.com/robot/send?access_token=xxx"
+        )
+        
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_post.return_value = mock_response
+        
+        result = notifier.health_check()
+        
+        assert result is True
+        mock_post.assert_called_once()
+    
+    @patch('requests.post')
+    def test_slack_health_check_success(self, mock_post):
+        """测试Slack健康检查成功"""
+        notifier = SlackWebhookNotifier(
+            webhook_url="https://hooks.slack.com/services/xxx"
+        )
+        
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_post.return_value = mock_response
+        
+        result = notifier.health_check()
+        
+        assert result is True
+        mock_post.assert_called_once()
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

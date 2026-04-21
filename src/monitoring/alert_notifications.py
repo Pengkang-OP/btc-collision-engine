@@ -44,6 +44,10 @@ from .alert_system import AlertRecord, AlertLevel, AlertType
 
 logger = logging.getLogger(__name__)
 
+# 通知系统常量
+HEALTH_CHECK_TIMEOUT = 5  # 健康检查超时(秒)
+DEFAULT_WEBHOOK_TIMEOUT = 10  # 默认Webhook超时(秒)
+
 
 class BaseNotifier:
     """通知器基类"""
@@ -168,7 +172,7 @@ class EmailNotifier(BaseNotifier):
             是否正常
         """
         try:
-            server = smtplib.SMTP(self.smtp_server, self.smtp_port, timeout=5)
+            server = smtplib.SMTP(self.smtp_server, self.smtp_port, timeout=HEALTH_CHECK_TIMEOUT)
             server.quit()
             logger.debug(f"邮件通知器健康检查通过: {self.smtp_server}:{self.smtp_port}")
             return True
@@ -274,7 +278,7 @@ class WeComWebhookNotifier(BaseNotifier):
     def __init__(self,
                  webhook_url: str,
                  mentioned_list: Optional[List[str]] = None,
-                 timeout: int = 10,
+                 timeout: int = DEFAULT_WEBHOOK_TIMEOUT,
                  enabled: bool = True):
         """
         Args:
@@ -355,7 +359,7 @@ class WeComWebhookNotifier(BaseNotifier):
             response = requests.post(
                 self.webhook_url,
                 json=data,
-                timeout=5
+                timeout=HEALTH_CHECK_TIMEOUT
             )
             return response.status_code == 200
         except Exception as e:
@@ -370,7 +374,7 @@ class DingTalkWebhookNotifier(BaseNotifier):
                  webhook_url: str,
                  at_mobiles: Optional[List[str]] = None,
                  at_all: bool = False,
-                 timeout: int = 10,
+                 timeout: int = DEFAULT_WEBHOOK_TIMEOUT,
                  enabled: bool = True):
         """
         Args:
@@ -457,7 +461,7 @@ class DingTalkWebhookNotifier(BaseNotifier):
             response = requests.post(
                 self.webhook_url,
                 json=data,
-                timeout=5,
+                timeout=HEALTH_CHECK_TIMEOUT,
                 headers={'Content-Type': 'application/json'}
             )
             return response.status_code == 200
@@ -473,7 +477,7 @@ class SlackWebhookNotifier(BaseNotifier):
                  webhook_url: str,
                  channel: str = "#alerts",
                  username: str = "GPU Alert Bot",
-                 timeout: int = 10,
+                 timeout: int = DEFAULT_WEBHOOK_TIMEOUT,
                  enabled: bool = True):
         """
         Args:
@@ -565,7 +569,7 @@ class SlackWebhookNotifier(BaseNotifier):
             response = requests.post(
                 self.webhook_url,
                 json=data,
-                timeout=5
+                timeout=HEALTH_CHECK_TIMEOUT
             )
             return response.status_code == 200
         except Exception as e:
