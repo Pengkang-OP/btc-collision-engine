@@ -1,5 +1,9 @@
 # Python私钥安全管理完整指南
 
+> **版本**: v1.2.0 | **最后更新**: 2026-04-21  
+> **面向**: 用户/开发者
+
+
 **创建日期**: 2026-04-20  
 **适用范围**: BTC密钥碰撞项目  
 **安全等级**: 生产级  
@@ -34,11 +38,11 @@ gc.collect()  # 可能已复制private_key
 
 # 即使清零原始对象，副本仍在内存中
 secure_clear_bytearray(private_key)
-```
+```python
 
 **影响**: 🔴 高 - 清零可能不完整
 
-#### 2. 交换文件可能包含数据
+## 2. 交换文件可能包含数据
 
 ```python
 # 当内存不足时，操作系统可能将内存页交换到磁盘
@@ -47,28 +51,28 @@ secure_clear_bytearray(private_key)
 # macOS: swap文件
 
 # 即使清零内存，磁盘上可能仍有副本
-```
+```python
 
 **影响**: 🔴 高 - 私钥可能持久化到磁盘
 
-#### 3. CPU缓存残留
+## 3. CPU缓存残留
 
 ```python
 # CPU缓存（L1/L2/L3）可能包含私钥数据
 # 需要特殊指令（如CLFLUSH）才能清除
 # Python无法直接控制CPU缓存
-```
+```python
 
 **影响**: 🟡 中 - 高级攻击可能恢复数据
 
-#### 4. 对象复制
+## 4. 对象复制
 
 ```python
 # 以下操作都会创建副本
 private_key_copy = private_key[:]  # 切片
 temp = bytes(private_key)  # 转换
 func(private_key)  # 函数调用可能复制
-```
+```python
 
 **影响**: 🟡 中 - 多个副本难以追踪
 
@@ -98,7 +102,7 @@ def secure_clear_bytearray(buffer: bytearray):
         0,
         len(buffer)
     )
-```
+```python
 
 **优点**:
 - ✅ 无需外部依赖
@@ -124,7 +128,7 @@ with SecureKeyManager() as key_mgr:
     private_key = key_mgr.get_key()
     # 使用私钥...
 # 自动安全清零
-```
+```python
 
 **优点**:
 - ✅ 自动选择最佳后端
@@ -140,14 +144,14 @@ with SecureKeyManager() as key_mgr:
 
 ---
 
-#### 3. cryptography.io (强烈推荐)
+## 3. cryptography.io (强烈推荐)
 
 ```python
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms
 
 # 使用OpenSSL的安全清零
 # OPENSSL_cleanse不会被编译器优化掉
-```
+```python
 
 **优点**:
 - ✅ 使用OpenSSL的OPENSSL_cleanse
@@ -163,14 +167,14 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms
 
 ---
 
-#### 4. PyNaCl/libsodium (强烈推荐)
+## 4. PyNaCl/libsodium (强烈推荐)
 
 ```python
 import nacl.secret
 
 # 使用libsodium的sodium_memzero
 # 专门设计的安全清零函数
-```
+```python
 
 **优点**:
 - ✅ sodium_memzero是专用安全清零
@@ -185,7 +189,7 @@ import nacl.secret
 
 ---
 
-#### 5. 硬件安全模块HSM (最高安全)
+## 5. 硬件安全模块HSM (最高安全)
 
 ```
 私钥永远不离开HSM设备
@@ -197,7 +201,7 @@ import nacl.secret
 │             │
 │  签名操作   │ ← 只暴露签名结果
 └─────────────┘
-```
+```bash
 
 **优点**:
 - ✅ 完全防止内存复制
@@ -237,9 +241,9 @@ with SecureKeyManager() as key_mgr:
     print(f"地址: {address}")
 
 # 退出上下文，私钥已自动清零 ✅
-```
+```markdown
 
-#### 2. 手动管理
+## 2. 手动管理
 
 ```python
 key_mgr = SecureKeyManager()
@@ -253,7 +257,7 @@ try:
 finally:
     # 确保清零
     key_mgr.clear()
-```
+```markdown
 
 #### 3. 使用已知私钥
 
@@ -266,9 +270,9 @@ private_key_bytes = WIF.decode(wif)
 with SecureKeyManager() as key_mgr:
     key_mgr.generate_key(private_key_bytes)
     # 使用...
-```
+```markdown
 
-#### 4. 批量处理
+## 4. 批量处理
 
 ```python
 generator = P2PKHAddressGenerator()
@@ -282,7 +286,7 @@ for i in range(100):
         # 处理地址...
     
     # 每次循环结束自动清零
-```
+```python
 
 ---
 
@@ -296,9 +300,9 @@ key_mgr = SecureKeyManager(lock_memory=True)
 
 # 在Linux上会尝试mlock()
 # 防止内存页被交换到磁盘
-```
+```markdown
 
-#### 后端选择
+## 后端选择
 
 ```python
 # 查看当前后端
@@ -306,7 +310,7 @@ key_mgr = SecureKeyManager()
 print(key_mgr.backend)  # "cryptography" 或 "pynacl" 或 "ctypes"
 
 # 强制使用特定后端（需要修改代码）
-```
+```python
 
 ---
 
@@ -320,7 +324,7 @@ pip install cryptography
 
 # 验证
 python -c "import cryptography; print(cryptography.__version__)"
-```
+```python
 
 **特点**:
 - 基于OpenSSL
@@ -329,7 +333,7 @@ python -c "import cryptography; print(cryptography.__version__)"
 
 ---
 
-### 方案2: PyNaCl
+## 方案2: PyNaCl
 
 ```bash
 # 安装
@@ -337,7 +341,7 @@ pip install pynacl
 
 # 验证
 python -c "import nacl; print(nacl.__version__)"
-```
+```python
 
 **特点**:
 - 基于libsodium
@@ -346,13 +350,13 @@ python -c "import nacl; print(nacl.__version__)"
 
 ---
 
-### 方案3: 两者都安装
+## 方案3: 两者都安装
 
 ```bash
 pip install cryptography pynacl
 
 # SecureKeyManager会自动选择cryptography
-```
+```python
 
 ---
 
@@ -364,7 +368,7 @@ pip install cryptography pynacl
    ```python
    with SecureKeyManager() as key_mgr:
        # 自动清零
-   ```
+```python
 
 2. **最小化私钥存活时间**
    ```python
@@ -372,7 +376,7 @@ pip install cryptography pynacl
    with SecureKeyManager() as km:
        km.generate_key()
        use_key(km.get_key())
-   ```
+```python
 
 3. **异常也要清零**
    ```python
@@ -383,12 +387,12 @@ pip install cryptography pynacl
    except:
        # 仍然会清零
        pass
-   ```
+```python
 
 4. **安装密码学库**
    ```bash
    pip install cryptography
-   ```
+```python
 
 5. **使用bytearray**
    ```python
@@ -397,7 +401,7 @@ pip install cryptography pynacl
    
    # 差：不可变，无法清零
    key = secrets.token_bytes(32)
-   ```
+```python
 
 ---
 
@@ -410,7 +414,7 @@ pip install cryptography pynacl
    
    # ✅ 可以记录地址
    logger.info(f"地址: {address}")
-   ```
+```python
 
 2. **不要存储私钥到变量**
    ```python
@@ -419,7 +423,7 @@ pip install cryptography pynacl
    
    # ✅ 直接使用引用
    use_key(private_key)
-   ```
+```python
 
 3. **不要传递给不可信函数**
    ```python
@@ -428,7 +432,7 @@ pip install cryptography pynacl
    
    # ✅ 只传递地址
    use_address(address)
-   ```
+```python
 
 4. **不要忽略清零**
    ```python
@@ -442,7 +446,7 @@ pip install cryptography pynacl
    with SecureKeyManager() as key_mgr:
        key_mgr.generate_key()
        use_key(key_mgr.get_key())
-   ```
+```python
 
 ---
 
@@ -465,19 +469,19 @@ pip install cryptography pynacl
    ```bash
    grep -r "token_bytes(32)" src/
    grep -r "private_key" src/
-   ```
+```python
 
 2. **验证清零调用**
    ```bash
    grep -r "secure_clear" src/
    grep -r "\.clear()" src/
-   ```
+```python
 
 3. **检查日志语句**
    ```bash
    grep -r "logger.*private" src/
    grep -r "print.*key" src/
-   ```
+```markdown
 
 ### 安全测试
 
@@ -490,7 +494,7 @@ def test_key_cleared():
     
     # 退出上下文后，原始key_mgr._key应被清零
     assert all(b == 0 for b in key_mgr._key)
-```
+```python
 
 ---
 
@@ -516,7 +520,7 @@ def test_key_cleared():
 性能影响 = 12ms / 1000ms = 1.2%
 
 # 结论：影响可忽略
-```
+```python
 
 ---
 
@@ -553,7 +557,7 @@ with SecureKeyManager() as key_mgr:
 
 # 验证已清零
 assert all(b == 0 for b in key_mgr._key)
-```
+```python
 
 ---
 
@@ -573,17 +577,17 @@ assert all(b == 0 for b in key_mgr._key)
 1. ✅ 安装密码学库
    ```bash
    pip install cryptography
-   ```
+```python
 
 2. ✅ 使用SecureKeyManager
    ```python
    from src.core.secure_key_manager import SecureKeyManager
-   ```
+```python
 
 3. ✅ 审查现有代码
    ```bash
    grep -r "private_key" src/
-   ```
+```python
 
 4. ✅ 运行测试验证
    ```bash

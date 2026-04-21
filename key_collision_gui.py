@@ -17,6 +17,7 @@ from tkinter import ttk, scrolledtext, filedialog, messagebox
 import threading
 import time
 import os
+import logging
 from datetime import datetime
 
 from src.core import (
@@ -1026,6 +1027,7 @@ class CollisionGUI:
         # 初始化组件
         self.resolver = TargetResolver()
         self.engine = None
+        self._is_cleaning_up = False  # 资源清理标志（防止重复清理）
         
         self._create_widgets()
         self._setup_bindings()
@@ -1210,8 +1212,35 @@ class CollisionGUI:
     def _on_stop(self):
         """停止按钮回调"""
         if self.engine:
-            self.engine.stop()
-            self.log_frame.log("用户手动停止对撞")
+            # 保存引擎引用，避免竞态条件
+            engine_to_stop = self.engine
+            
+            # 禁用停止按钮防止重复点击
+            self.control_panel.btn_stop.config(state=tk.DISABLED)
+            self.log_frame.log("正在停止对撞引擎...")
+            
+            # 在后台线程中执行停止操作，避免阻塞 UI
+            def stop_engine_bg():
+                try:
+                    engine_to_stop.stop()  # 使用局部引用，避免竞态条件
+                    # 停止完成后，在主线程中更新 UI
+                    self.root.after(0, self._on_stop_complete)
+                except Exception as e:
+                    # 立即捕获错误消息，避免闭包变量问题
+                    error_msg = str(e)
+                    self.root.after(0, lambda msg=error_msg: self.log_frame.log(f"停止引擎时出错: {msg}"))
+                    self.root.after(0, self._on_stop_complete)
+            
+            stop_thread = threading.Thread(target=stop_engine_bg, daemon=True)
+            stop_thread.start()
+    
+    def _on_stop_complete(self):
+        """停止完成后的 UI 更新"""
+        self.log_frame.log("对撞引擎已停止")
+        self.control_panel.set_buttons_state(False)
+        self.target_frame.set_enabled(True)
+        self.stats_display.set_status("已停止", "warning")
+        self.log_frame.log("界面状态已恢复")
     
     def _on_resume_from_control_panel(self, checkpoint_data: dict):
         """从控制面板恢复断点"""
@@ -1334,12 +1363,62 @@ class CollisionGUI:
         self.root.after(100, self._schedule_stats_update)
     
     def _on_close(self):
-        """窗口关闭回调"""
+        """窗口关闭回调 - 增强资源清理版本"""
         if self.engine and self.engine.is_running():
             if messagebox.askyesno("确认", "对撞正在进行中，确定要退出吗?"):
-                self.engine.stop()
-                self.root.destroy()
+                # 异步停止引擎，完成后关闭窗口，避免 UI 阻塞
+                self.log_frame.log("正在停止引擎并关闭窗口...")
+                
+                # 保存引擎引用，避免竞态条件
+                engine_to_stop = self.engine
+                
+                def stop_and_close():
+                    try:
+                        # 1. 停止引擎（会清理所有内部资源）
+                        engine_to_stop.stop()
+                        
+                        # 2. 在主线程中完成清理
+                        self.root.after(0, self._cleanup_and_destroy)
+                    except Exception as e:
+                        error_msg = str(e)
+                        self.root.after(0, lambda msg=error_msg: self.log_frame.log(f"停止失败: {msg}"))
+                        self.root.after(0, self._cleanup_and_destroy)
+                
+                stop_thread = threading.Thread(target=stop_and_close, daemon=True)
+                stop_thread.start()
+                return  # 不立即销毁，等待后台线程完成
         else:
+            # 引擎未运行或不存在，直接清理
+            self._cleanup_and_destroy()
+    
+    def _cleanup_and_destroy(self):
+        """清理所有资源并销毁窗口"""
+        # 防止重复清理
+        if self._is_cleaning_up:
+            return
+        
+        self._is_cleaning_up = True
+        
+        try:
+            # 1. 显式清理引擎引用（允许垃圾回收）
+            if self.engine:
+                self.log_frame.log("清理引擎资源...")
+                self.engine = None
+            
+            # 2. 清理监控系统（如果存在）
+            if hasattr(self, 'stats_display'):
+                self.log_frame.log("清理显示组件...")
+            
+            # 3. 最后一条日志（必须在 shutdown 之前）
+            self.log_frame.log("资源清理完成，关闭窗口...")
+            
+            # 4. 刷新日志系统（必须在最后，之后不能再写日志）
+            logging.shutdown()
+            
+        except Exception as e:
+            print(f"清理过程出错: {e}")
+        finally:
+            # 5. 销毁窗口（无论如何都要执行）
             self.root.destroy()
 
 

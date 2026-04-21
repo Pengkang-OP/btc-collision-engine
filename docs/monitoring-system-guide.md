@@ -1,5 +1,55 @@
 # 监控系统使用指南
 
+> **版本**: v1.2.0 | **最后更新**: 2026-04-21  
+> **面向**: 运维/开发者
+
+
+
+## 目录
+
+- [1. 系统概述](#1-系统概述)
+- [2. 系统架构](#2-系统架构)
+  - [2.1 数据采集器 (DataCollector)](#21-数据采集器-datacollector)
+  - [2.2 数据存储 (DataStorage)](#22-数据存储-datastorage)
+  - [2.3 异常检测 (AnomalyDetector)](#23-异常检测-anomalydetector)
+  - [2.4 告警系统 (AlertSystem)](#24-告警系统-alertsystem)
+  - [2.5 报告生成器 (ReportGenerator)](#25-报告生成器-reportgenerator)
+- [3. 数据采集指标](#3-数据采集指标)
+  - [3.1 性能指标](#31-性能指标)
+  - [3.2 系统指标](#32-系统指标)
+  - [3.3 引擎指标](#33-引擎指标)
+- [4. 异常检测与告警](#4-异常检测与告警)
+  - [4.1 异常检测规则](#41-异常检测规则)
+  - [4.2 告警级别](#42-告警级别)
+  - [4.3 告警通知方式](#43-告警通知方式)
+- [5. 报告生成](#5-报告生成)
+  - [5.1 每日报告](#51-每日报告)
+  - [5.2 报告存储位置](#52-报告存储位置)
+- [6. 配置选项](#6-配置选项)
+  - [6.1 监控系统配置](#61-监控系统配置)
+  - [6.2 异常检测阈值配置](#62-异常检测阈值配置)
+- [7. 使用方法](#7-使用方法)
+  - [7.1 启用监控系统](#71-启用监控系统)
+- [7.2 查看监控状态](#72-查看监控状态)
+  - [7.3 生成报告](#73-生成报告)
+- [8. 数据存储结构](#8-数据存储结构)
+  - [8.1 监控数据目录](#81-监控数据目录)
+  - [8.2 数据格式](#82-数据格式)
+- [9. 最佳实践](#9-最佳实践)
+  - [9.1 性能优化](#91-性能优化)
+  - [9.2 故障排查](#92-故障排查)
+  - [9.3 系统维护](#93-系统维护)
+- [10. 故障排除](#10-故障排除)
+  - [10.1 常见问题](#101-常见问题)
+  - [10.2 日志查看](#102-日志查看)
+- [11. GPU监控（新增）](#11-gpu监控新增)
+  - [11.1 GPU监控模块](#111-gpu监控模块)
+  - [11.2 使用方法](#112-使用方法)
+- [11.3 依赖要求](#113-依赖要求)
+- [12. 数据自动清理（新增）](#12-数据自动清理新增)
+  - [12.1 清理工具](#121-清理工具)
+- [12.2 配置自动清理](#122-配置自动清理)
+- [13. 总结](#13-总结)
 ## 1. 系统概述
 
 监控系统是比特币私钥对撞引擎的实时监控和数据分析工具，旨在帮助用户评估引擎的运行状态、性能表现和潜在问题。该系统提供全面的数据采集、分析和告警功能，确保引擎持续稳定运行。
@@ -91,7 +141,7 @@
   - 优化建议
 
 ### 5.2 报告存储位置
-```
+```python
 monitoring_data/report_YYYY-MM-DD.json
 ```
 
@@ -123,7 +173,7 @@ self.thresholds = {
         "max": 1024  # 内存使用上限（MB）
     }
 }
-```
+```markdown
 
 ## 7. 使用方法
 
@@ -147,15 +197,15 @@ engine = KeyCollisionEngine(
     on_match=on_match,
     monitoring_enabled=False
 )
-```
+```markdown
 
-### 7.2 查看监控状态
+## 7.2 查看监控状态
 
 ```python
 if engine.monitoring_system:
     status = engine.monitoring_system.get_current_status()
     print(f"当前状态: {status}")
-```
+```markdown
 
 ### 7.3 生成报告
 
@@ -163,7 +213,7 @@ if engine.monitoring_system:
 if engine.monitoring_system:
     report = engine.monitoring_system.generate_report()
     print(f"报告: {report}")
-```
+```markdown
 
 ## 8. 数据存储结构
 
@@ -174,7 +224,7 @@ monitoring_data/
 ├── history_data.json     # 历史数据
 ├── error_log.json        # 错误日志
 └── report_YYYY-MM-DD.json # 每日报告
-```
+```markdown
 
 ### 8.2 数据格式
 
@@ -204,7 +254,7 @@ monitoring_data/
   },
   "errors": []
 }
-```
+```markdown
 
 ## 9. 最佳实践
 
@@ -241,7 +291,7 @@ monitoring_data/
 ```bash
 # 查看最近的监控日志
 grep "MonitoringSystem" logs/collision.log
-```
+```markdown
 
 ## 11. GPU监控（新增）
 
@@ -269,14 +319,14 @@ print(f"显存: {gpu_info['gpus'][0]['global_memory_mb']} MB")
 gpu_metrics = monitor.get_gpu_metrics()
 print(f"显存使用: {gpu_metrics['memory_used_mb']} MB")
 print(f"显存使用率: {gpu_metrics['memory_usage_percent']}%")
-```
+```markdown
 
-### 11.3 依赖要求
+## 11.3 依赖要求
 
 GPU监控需要安装PyOpenCL：
 ```bash
 pip install pyopencl
-```
+```python
 
 如果PyOpenCL不可用，GPU监控会自动禁用，不影响其他功能。
 
@@ -295,9 +345,9 @@ python tools/cleanup_monitoring_data.py --max-age 30 --dry-run
 
 # 实际清理（删除30天前的文件）
 python tools/cleanup_monitoring_data.py --max-age 30
-```
+```markdown
 
-### 12.2 配置自动清理
+## 12.2 配置自动清理
 
 在`config.json`中启用自动清理：
 

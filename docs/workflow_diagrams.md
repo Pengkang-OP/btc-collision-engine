@@ -1,5 +1,9 @@
 # BTC碰撞引擎 - 工作流程详细图
 
+> **版本**: v1.2.0 | **最后更新**: 2026-04-21  
+> **面向**: 开发者
+
+
 本文档包含系统各个关键流程的详细序列图和说明。
 
 ---
@@ -81,7 +85,7 @@ graph TD
     style UI fill:#e1f5ff
     style Engine fill:#fff3e0
     style Core fill:#e8f5e9
-```
+```python
 
 **说明**:
 - **用户界面层**：提供CLI、GUI、API三种交互方式
@@ -124,7 +128,7 @@ sequenceDiagram
         Engine->>CLI: on_progress(stats)
         CLI->>User: 显示进度<br/>速度/已检查/匹配数
     end
-```
+```python
 
 **启动步骤说明**:
 1. **参数解析**：使用argparse解析命令行参数
@@ -161,7 +165,7 @@ sequenceDiagram
     
     Main->>User: 显示窗口<br/>mainloop()
     User-->>Main: 界面就绪
-```
+```python
 
 **GUI启动特点**:
 - 使用Tkinter创建图形界面
@@ -218,7 +222,7 @@ sequenceDiagram
     end
     
     Pool-->>Engine: 收集所有worker结果
-```
+```python
 
 **随机碰撞特点**:
 - 使用SecureKeyManager确保私钥安全
@@ -262,7 +266,7 @@ sequenceDiagram
     end
     
     Engine->>Stats: update(total_count, total_range)
-```
+```python
 
 **范围扫描特点**:
 - 均匀分块，每个Worker处理连续范围
@@ -349,7 +353,7 @@ flowchart TD
     style OnMatch fill:#c8e6c9
     style ClearKey fill:#e8f5e9
     style CheckStop fill:#fff3e0
-```
+```yaml
 
 **流程说明**:
 
@@ -409,7 +413,7 @@ flowchart TD
     style F fill:#fff3e0
     style G fill:#e8f5e9
     style H fill:#c8e6c9
-```
+```yaml
 
 **详细步骤说明**:
 
@@ -462,7 +466,7 @@ flowchart TD
     style BitCheck fill:#ffebee
     style Return fill:#c8e6c9
     style End fill:#e1f5ff
-```
+```python
 
 **点加法与点倍乘公式**:
 
@@ -471,14 +475,14 @@ flowchart TD
 λ = (y2 - y1) / (x2 - x1) mod p
 x3 = λ² - x1 - x2 mod p
 y3 = λ(x1 - x3) - y1 mod p
-```
+```python
 
 **点倍乘（P = Q）**：
 ```
 λ = (3x1² + a) / (2y1) mod p
 x3 = λ² - 2x1 mod p
 y3 = λ(x1 - x3) - y1 mod p
-```
+```python
 
 **曲线参数**：
 - p = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
@@ -524,7 +528,7 @@ sequenceDiagram
     GUI->>Panel: 更新按钮状态
     GUI->>Panel: 禁用输入控件
     GUI-->>User: 界面更新
-```
+```markdown
 
 ### 5.2 进度更新流程
 
@@ -548,7 +552,7 @@ sequenceDiagram
     Stats-->>Display: 刷新显示数据
     
     Display-->>Engine: 界面更新完成
-```
+```python
 
 **进度更新特点**:
 - 使用`root.after(0)`确保线程安全
@@ -579,7 +583,7 @@ sequenceDiagram
     Note over LogFrame: 私钥/地址/WIF<br/>完整信息展示
     
     GUI->>GUI: 更新状态栏<br/>“发现匹配!”
-```
+```python
 
 **匹配处理特点**:
 - 传递私钥副本，原始私钥自动清零
@@ -616,7 +620,7 @@ sequenceDiagram
     Note over Buffer,FileSystem: os.replace()保证原子性
     
     CPMgr-->>Engine: 保存完成
-```
+```python
 
 **断点保存特点**:
 - 原子写入：先写入临时文件，再原子重命名
@@ -655,7 +659,7 @@ sequenceDiagram
     Engine->>Engine: start(resume=True)
     Engine-->>GUI: 从断点继续运行
     GUI-->>User: 显示恢复成功
-```
+```python
 
 **断点恢复特点**:
 - 版本检查：确保断点文件格式兼容
@@ -718,7 +722,7 @@ graph TD
     style MainThread fill:#e1f5ff
     style EngineThread fill:#fff3e0
     style WorkerPool fill:#e8f5e9
-```
+```python
 
 **线程结构说明**:
 - **主线程**：负责GUI事件循环和用户交互，不执行碰撞计算
@@ -760,7 +764,7 @@ graph LR
     style DedupLock fill:#f3e5f5
     style FileLock fill:#e8f5e9
     style InstanceLock fill:#fff3e0
-```
+```python
 
 **同步对象说明**:
 
@@ -810,7 +814,7 @@ sequenceDiagram
     
     Device->>Device: 创建Context/Queue<br/>cl.Context, cl.CommandQueue
     Device-->>Engine: 初始化完成
-```
+```python
 
 **GPU设备选择策略**:
 - 优先级：NVIDIA > AMD > Intel GPU
@@ -851,7 +855,7 @@ sequenceDiagram
     
     Engine->>Engine: 更新统计
     Engine->>GPUDevice: 生成下一批
-```
+```python
 
 **GPU批量处理特点**:
 - 批次大小：65536个工作项
@@ -890,7 +894,7 @@ sequenceDiagram
     end
     
     Engine->>Engine: 继续下一批
-```
+```python
 
 **错误恢复策略**:
 - 资源不足：记录错误，尝试减小批次大小
@@ -922,7 +926,7 @@ flowchart LR
     
     style CPU fill:#e8f5e9
     style GPU fill:#fff3e0
-```
+```python
 
 **性能对比**:
 
@@ -968,7 +972,7 @@ flowchart LR
        │                   │                   │                   │ 写入JSON
        │                   │                   │                   │ 文件
        │                   │                   │                   │
-```
+```markdown
 
 ### 9.2 数据日志记录流程
 
@@ -999,7 +1003,7 @@ flowchart LR
        │                   │                   │ performance.log   │
        │                   │                   │ (CSV格式)         │
        │                   │                   │                   │
-```
+```markdown
 
 ### 9.3 异常检测与告警流程
 
@@ -1035,7 +1039,7 @@ flowchart LR
        │                   │                   │                   │ [ALERT]
        │                   │                   │                   │ 告警消息
        │                   │                   │                   │
-```
+```markdown
 
 ### 9.4 报告生成流程
 
@@ -1069,7 +1073,7 @@ flowchart LR
        │                   │                   │                   │
        │                   │                   │                   │ report_YYYY-MM-DD.json
        │                   │                   │                   │
-```
+```markdown
 
 ### 9.5 GPU监控数据流程
 
@@ -1092,7 +1096,7 @@ flowchart LR
        │                   │                   │                   │
        │                   │                   │ 保存监控数据      │
        │                   │                   │                   │
-```
+```python
 
 ---
 
@@ -1121,7 +1125,7 @@ sequenceDiagram
     GK->>CPU: return_results()
     CPU->>CPU: check_matches()
     CPU-->>E: update_stats()
-```
+```markdown
 
 ### 10.2 监控数据流Mermaid图
 
@@ -1146,7 +1150,7 @@ flowchart TD
     N --> P[生成告警]
     H --> Q[ReportGenerator]
     Q --> R[每日报告]
-```
+```markdown
 
 ### 10.3 完整系统架构Mermaid图
 

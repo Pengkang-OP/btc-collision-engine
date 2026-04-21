@@ -2,6 +2,31 @@
 
 本目录存放项目开发和维护过程中使用的辅助工具脚本。
 
+## 🚨 Windows UTF-8 编码问题
+
+**问题**：在Windows系统中，中文和emoji字符可能显示为乱码，特别是使用管道时。
+
+**解决方案**：
+
+1. **直接运行**（推荐）：
+   ```powershell
+   python tools/check_document_quality.py
+   ```
+
+2. **使用管道**：
+   ```powershell
+   .\tools\run_utf8.ps1 -Script "python tools/check_document_quality.py" | Select-Object -First 20
+   ```
+
+3. **批处理环境**：
+   ```cmd
+   tools\run_utf8.bat python tools\check_document_quality.py
+   ```
+
+**详细文档**：
+- [UTF8编码完整指南](UTF8_ENCODING_GUIDE.md)
+- [UTF-8快速参考](UTF8_QUICK_REFERENCE.md)
+
 ## 工具分类
 
 ### 🔧 数据工具
@@ -33,17 +58,24 @@
 
 ## 现有工具
 
-> 💡 提示：之前在根目录的工具脚本已清理，如需保留可重新添加至此目录。
+### 📝 文档工具
+- **check_document_quality.py** - 文档质量检查
+- **add_version_info.py** - 批量添加版本信息
+- **add_table_of_contents.py** - 自动添加目录
+- **check_broken_links.py** - 断裂链接检查
+- **fix_heading_levels.py** - 标题层级修复
+- **fix_code_blocks.py** - 代码块语言类型修复
 
-### 可添加的工具示例
+### 🔍 系统工具
+- **audit_resource_cleanup.py** - 资源清理审计
+- **check_pr_status.py** - GitHub PR状态检查
+- **cleanup_monitoring_data.py** - 监控数据清理
 
-```python
-# extract_bitcoin_addresses.py - 从文本中提取比特币地址
-# generate_key_pair.py - 生成比特币密钥对
-# query_address_balance.py - 查询地址余额
-# verify_docs_links.py - 验证文档链接有效性
-# compare_addresses.py - 比较地址列表差异
-```
+### 🌐 UTF-8编码支持
+- **run_utf8.ps1** - PowerShell UTF-8包装器（支持管道）
+- **run_utf8.bat** - CMD UTF-8包装器（支持管道）
+
+> 💡 提示：所有文档工具已内置UTF-8编码支持，直接运行即可正常显示中文和emoji。
 
 ## 相关文档
 
@@ -53,4 +85,9 @@
 
 ## 维护记录
 
-- **2026-04-20**：创建 tools 目录，整理项目结构
+- **2026-04-21**：修复Windows UTF-8编码问题，添加包装器脚本和文档
+  - 修复8个Python脚本的UTF-8编码支持
+  - 创建run_utf8.ps1和run_utf8.bat包装器
+  - 编写UTF8_ENCODING_GUIDE.md和UTF8_QUICK_REFERENCE.md
+  - 完全解决PowerShell管道乱码问题
+- **2026-04-20**：创建tools目录，整理项目结构

@@ -4,8 +4,11 @@ from .targets.resolver import TargetResolver
 from .collision_stats import CollisionStats
 from .checkpoint_manager import CheckpointManager
 from .deduplication_filter import DeduplicationFilter
+from .bloom_deduplication_filter import BloomDeduplicationFilter
 from .base_engine import BaseCollisionEngine
 from .key_collision_engine import KeyCollisionEngine
+from .observers import CollisionObserver, BaseCollisionObserver, ObserverManager
+from .multiprocess_engine import MultiprocessCollisionEngine, HybridCollisionEngine
 
 # 条件导出 GPUCollisionEngine（pyopencl 可能不可用）
 try:
@@ -21,8 +24,14 @@ __all__ = [
     'CollisionStats',
     'CheckpointManager',
     'DeduplicationFilter',
+    'BloomDeduplicationFilter',
     'KeyCollisionEngine',
     'GPUCollisionEngine',
+    'CollisionObserver',
+    'BaseCollisionObserver',
+    'ObserverManager',
+    'MultiprocessCollisionEngine',
+    'HybridCollisionEngine',
     'create_collision_engine'
 ]
 

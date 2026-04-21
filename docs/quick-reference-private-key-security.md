@@ -1,5 +1,27 @@
 # 私钥安全管理 - 快速参考
 
+> **版本**: v1.2.0 | **最后更新**: 2026-04-21  
+> **面向**: 开发者/安全工程师
+
+
+
+## 目录
+
+- [🚀 快速开始](#-快速开始)
+  - [最简用法（推荐）](#最简用法推荐)
+- [📦 安装](#-安装)
+- [🔧 常用模式](#-常用模式)
+  - [1. 单次使用](#1-单次使用)
+- [2. 批量处理](#2-批量处理)
+  - [3. 异常安全](#3-异常安全)
+  - [4. 已知私钥](#4-已知私钥)
+- [✅ DO / ❌ DON'T](#-do---dont)
+  - [✅ 应该做](#-应该做)
+  - [❌ 不应该做](#-不应该做)
+- [🔍 验证](#-验证)
+- [📊 安全等级](#-安全等级)
+- [📚 更多信息](#-更多信息)
+- [⚠️ Python限制](#-python限制)
 ## 🚀 快速开始
 
 ### 最简用法（推荐）
@@ -12,7 +34,7 @@ with SecureKeyManager() as key_mgr:
     private_key = key_mgr.get_key()
     # 使用私钥...
 # 自动清零 ✅
-```
+```python
 
 ---
 
@@ -22,7 +44,7 @@ with SecureKeyManager() as key_mgr:
 # 已安装（requirements.txt中）
 pip install cryptography  # ✅ 已安装
 pip install pynacl        # ✅ 已安装
-```
+```python
 
 ---
 
@@ -35,9 +57,9 @@ with SecureKeyManager() as km:
     km.generate_key()
     use_key(km.get_key())
 # 自动清零
-```
+```markdown
 
-### 2. 批量处理
+## 2. 批量处理
 
 ```python
 for i in range(100):
@@ -45,7 +67,7 @@ for i in range(100):
         km.generate_key()
         process(km.get_key())
     # 每次循环清零
-```
+```markdown
 
 ### 3. 异常安全
 
@@ -56,7 +78,7 @@ try:
         risky_operation(km.get_key())
 except:
     pass  # 仍然清零 ✅
-```
+```markdown
 
 ### 4. 已知私钥
 
@@ -64,7 +86,7 @@ except:
 with SecureKeyManager() as km:
     km.generate_key(known_key_bytes)
     use(km.get_key())
-```
+```yaml
 
 ---
 

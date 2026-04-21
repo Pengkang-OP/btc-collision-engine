@@ -1,7 +1,54 @@
 # Bech32和P2SH地址支持指南
 
+> **版本**: v1.2.0 | **最后更新**: 2026-04-21  
+> **面向**: 开发者
+
+
 > 本文档介绍BTC碰撞引擎对Bech32（SegWit）和P2SH（Pay-to-Script-Hash）地址的支持情况和使用方法。
 
+
+## 目录
+
+- [📋 目录](#-目录)
+- [地址类型概述](#地址类型概述)
+  - [比特币地址类型对比](#比特币地址类型对比)
+  - [碰撞检测中的地址处理](#碰撞检测中的地址处理)
+- [Bech32地址支持](#bech32地址支持)
+  - [什么是Bech32？](#什么是bech32)
+  - [安装依赖](#安装依赖)
+  - [支持的Bech32类型](#支持的bech32类型)
+  - [转换原理](#转换原理)
+- [P2SH地址支持](#p2sh地址支持)
+  - [什么是P2SH？](#什么是p2sh)
+  - [转换原理](#转换原理)
+- [技术实现](#技术实现)
+  - [解析器代码](#解析器代码)
+    - [Bech32处理](#bech32处理)
+    - [P2SH处理](#p2sh处理)
+  - [缓存机制](#缓存机制)
+- [使用示例](#使用示例)
+  - [示例1: 混合地址导入](#示例1-混合地址导入)
+- [示例2: 从文件导入](#示例2-从文件导入)
+- [示例3: GUI中使用](#示例3-gui中使用)
+- [限制与注意事项](#限制与注意事项)
+  - [1. 碰撞检测限制](#1-碰撞检测限制)
+  - [2. Bech32依赖](#2-bech32依赖)
+  - [3. 不支持的地址类型](#3-不支持的地址类型)
+  - [4. 性能考虑](#4-性能考虑)
+- [5. 安全性](#5-安全性)
+- [最佳实践](#最佳实践)
+  - [1. 统一使用缓存](#1-统一使用缓存)
+- [2. 验证转换结果](#2-验证转换结果)
+- [3. 批量处理](#3-批量处理)
+- [4. 错误处理](#4-错误处理)
+- [未来计划](#未来计划)
+  - [未来计划](#未来计划)
+  - [Taproot地址支持（计划中）](#taproot地址支持计划中)
+    - [时间线](#时间线)
+    - [技术挑战](#技术挑战)
+    - [参考资源](#参考资源)
+  - [其他计划](#其他计划)
+- [参考资源](#参考资源)
 ## 📋 目录
 
 1. [地址类型概述](#地址类型概述)
@@ -27,7 +74,7 @@
 
 在私钥碰撞检测中，我们关心的是**Hash160匹配**，而非脚本类型：
 
-```
+```python
 私钥 → 公钥 → Hash160 → 地址格式（P2PKH/P2SH/Bech32）
                               ↓
                          碰撞检测（只比较Hash160）
@@ -55,7 +102,7 @@ Bech32地址解析需要额外的库：
 
 ```bash
 pip install bech32
-```
+```yaml
 
 ### 支持的Bech32类型
 
@@ -80,7 +127,7 @@ HRP + Data (5-bit)
 Witness Program (20或32字节)
     ↓ Base58Check(0x00, witness_hash)
 P2PKH地址（用于碰撞匹配）
-```
+```python
 
 **代码示例**：
 ```python
@@ -95,7 +142,7 @@ p2pkh_addr = resolver.resolve(bech32_addr)
 print(f"Bech32: {bech32_addr}")
 print(f"转换后: {p2pkh_addr}")
 # 输出: 1开头的P2PKH地址（用于碰撞匹配）
-```
+```python
 
 ---
 
@@ -117,7 +164,7 @@ P2SH地址 (3开头)
 版本(0x05) + Hash160 (20字节)
     ↓ Base58Check编码(0x00, Hash160)
 P2PKH地址（用于碰撞匹配）
-```
+```python
 
 **代码示例**：
 ```python
@@ -132,7 +179,7 @@ p2pkh_addr = resolver.resolve(p2sh_addr)
 print(f"P2SH: {p2sh_addr}")
 print(f"转换后: {p2pkh_addr}")
 # 输出: 1开头的P2PKH地址（相同的Hash160）
-```
+```python
 
 ---
 
@@ -160,7 +207,7 @@ elif fmt == 'bech32_address':
     except ImportError:
         logger.warning("需要bech32库: pip install bech32")
         return None
-```
+```markdown
 
 #### P2SH处理
 ```python
@@ -170,7 +217,7 @@ elif fmt == 'p2sh_address':
         # 将Hash160转换为P2PKH格式
         address = Base58.check_encode(0x00, payload)
         return address
-```
+```markdown
 
 ### 缓存机制
 
@@ -182,7 +229,7 @@ address = resolver.resolve('bc1q...')  # 解析并缓存
 
 # 再次解析（缓存命中）
 address = resolver.resolve('bc1q...')  # 直接从缓存返回，速度提升10x
-```
+```python
 
 ---
 
@@ -207,9 +254,9 @@ results = resolver.resolve_batch(addresses)
 
 for original, converted in results.items():
     print(f"{original[:15]}... -> {converted[:15]}...")
-```
+```markdown
 
-### 示例2: 从文件导入
+## 示例2: 从文件导入
 
 创建文件 `mixed_addresses.txt`：
 ```
@@ -221,7 +268,7 @@ for original, converted in results.items():
 
 # Bech32地址（SegWit）
 bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4
-```
+```python
 
 加载文件：
 ```python
@@ -231,9 +278,9 @@ resolver = TargetResolver()
 targets = resolver.load_from_file('mixed_addresses.txt')
 
 print(f"成功加载 {len(targets)} 个目标地址")
-```
+```markdown
 
-### 示例3: GUI中使用
+## 示例3: GUI中使用
 
 1. 启动GUI：`python key_collision_gui.py`
 2. 在目标地址输入区粘贴混合地址
@@ -254,7 +301,7 @@ print(f"成功加载 {len(targets)} 个目标地址")
 - 碰撞引擎：转换为1开头的P2PKH地址
 - 如果找到匹配：说明找到了对应的私钥
 - 但实际使用中：需要根据原始地址类型构造正确的交易
-```
+```yaml
 
 **这意味着**：
 - ✅ 可以找到对应私钥
@@ -281,9 +328,9 @@ print(f"成功加载 {len(targets)} 个目标地址")
 # 建议：大量Bech32地址时启用缓存
 
 resolver = TargetResolver(enable_cache=True, cache_max_size=10000)
-```
+```yaml
 
-### 5. 安全性
+## 5. 安全性
 
 - 地址转换**不改变**Hash160值
 - 转换仅用于碰撞匹配，不影响安全性
@@ -298,9 +345,9 @@ resolver = TargetResolver(enable_cache=True, cache_max_size=10000)
 ```python
 # 总是启用缓存，特别是混合地址类型时
 resolver = TargetResolver(enable_cache=True)
-```
+```markdown
 
-### 2. 验证转换结果
+## 2. 验证转换结果
 
 ```python
 # 检查转换是否成功
@@ -309,9 +356,9 @@ if address:
     print(f"转换成功: {address}")
 else:
     print("转换失败，检查地址格式或依赖库")
-```
+```markdown
 
-### 3. 批量处理
+## 3. 批量处理
 
 ```python
 # 使用批量解析提高性能
@@ -320,9 +367,9 @@ results = resolver.resolve_batch(addresses)
 
 # 过滤成功结果
 valid_targets = {addr for addr in results.values() if addr}
-```
+```markdown
 
-### 4. 错误处理
+## 4. 错误处理
 
 ```python
 try:

@@ -7,6 +7,58 @@
 
 ---
 
+
+## 目录
+
+- [📋 实施概览](#-实施概览)
+  - [核心特性](#核心特性)
+- [📁 新增文件](#-新增文件)
+  - [1. `src/gpu/driver_manager.py` (371行)](#1-srcgpudriver_managerpy-371行)
+    - [DriverVersionParser](#driverversionparser)
+    - [DriverManager](#drivermanager)
+  - [2. `tests/test_driver_manager.py` (294行)](#2-teststest_driver_managerpy-294行)
+- [🔧 修改文件](#-修改文件)
+  - [1. `src/gpu/device.py` (+69行)](#1-srcgpudevicepy-69行)
+  - [2. `src/gpu/profiles/gpu_profiles.json` (+12行)](#2-srcgpuprofilesgpu_profilesjson-12行)
+  - [3. `src/gpu/vendors/nvidia.py` (+14行, -5行)](#3-srcgpuvendorsnvidiapy-14行--5行)
+  - [4. `src/gpu/vendors/amd.py` (+8行)](#4-srcgpuvendorsamdpy-8行)
+  - [5. `src/gpu/vendors/intel.py` (+13行, -1行)](#5-srcgpuvendorsintelpy-13行--1行)
+  - [6. `config.json` (+12行, -1行)](#6-configjson-12行--1行)
+  - [7. `src/gpu/__init__.py` (+17行, -2行)](#7-srcgpu__init__py-17行--2行)
+- [🎯 核心功能详解](#-核心功能详解)
+  - [1. 驱动版本检测](#1-驱动版本检测)
+  - [2. 驱动健康检查](#2-驱动健康检查)
+  - [3. 驱动优化标志](#3-驱动优化标志)
+    - [NVIDIA](#nvidia)
+    - [AMD](#amd)
+    - [Intel](#intel)
+  - [4. 动态优化应用](#4-动态优化应用)
+- [📊 测试验证](#-测试验证)
+  - [测试统计](#测试统计)
+  - [测试场景](#测试场景)
+- [🔍 使用示例](#-使用示例)
+  - [1. 基本使用](#1-基本使用)
+- [2. 驱动健康检查](#2-驱动健康检查)
+- [3. 版本比较](#3-版本比较)
+- [🎨 架构优势](#-架构优势)
+  - [1. 非侵入式设计](#1-非侵入式设计)
+  - [2. 策略模式](#2-策略模式)
+  - [3. 防御性编程](#3-防御性编程)
+  - [4. 可扩展性](#4-可扩展性)
+- [📝 配置说明](#-配置说明)
+  - [config.json配置项](#configjson配置项)
+  - [推荐配置](#推荐配置)
+- [⚠️ 注意事项](#-注意事项)
+  - [1. 驱动检测权限](#1-驱动检测权限)
+  - [2. 驱动版本格式](#2-驱动版本格式)
+  - [3. 性能影响](#3-性能影响)
+  - [4. 向后兼容](#4-向后兼容)
+- [🚀 未来增强](#-未来增强)
+  - [1. 短期计划](#1-短期计划)
+  - [2. 中期计划](#2-中期计划)
+  - [3. 长期计划](#3-长期计划)
+- [📈 质量指标](#-质量指标)
+- [✅ 总结](#-总结)
 ## 📋 实施概览
 
 本次增强在现有GPU模块化架构基础上,成功集成了**GPU驱动程序因素的检测、验证和优化**功能。通过驱动版本检测、健康检查、兼容性验证和动态优化策略,显著提升了GPU运行的稳定性和性能。
@@ -56,7 +108,7 @@ UNSTABLE_DRIVERS = {
         ("31.0.100.0", "31.0.100.9999", "Arc早期驱动不稳定"),
     ]
 }
-```
+```markdown
 
 ### 2. `tests/test_driver_manager.py` (294行)
 
@@ -109,7 +161,7 @@ class GPUDevice:
             'health': self.driver_health,
             'optimization_flags': self.driver_optimization_flags
         }
-```
+```markdown
 
 ### 2. `src/gpu/profiles/gpu_profiles.json` (+12行)
 
@@ -155,7 +207,7 @@ class GPUDevice:
     }
   }
 }
-```
+```markdown
 
 ### 3. `src/gpu/vendors/nvidia.py` (+14行, -5行)
 
@@ -179,7 +231,7 @@ def apply_optimizations(self, device, profile):
     # 6. 驱动特定优化
     if device.driver_optimization_flags.get('conservative_mode', False):
         logger.warning("NVIDIA驱动保守模式:降低性能预期以确保稳定性")
-```
+```markdown
 
 ### 4. `src/gpu/vendors/amd.py` (+8行)
 
@@ -194,7 +246,7 @@ def apply_optimizations(self, device, profile):
     
     if device.driver_optimization_flags.get('conservative_mode', False):
         logger.warning("AMD驱动保守模式:降低性能预期以确保稳定性")
-```
+```markdown
 
 ### 5. `src/gpu/vendors/intel.py` (+13行, -1行)
 
@@ -214,7 +266,7 @@ def apply_optimizations(self, device, profile):
             "Intel驱动保守模式: "
             "使用更小的batch_size和更严格的超时"
         )
-```
+```markdown
 
 ### 6. `config.json` (+12行, -1行)
 
@@ -234,7 +286,7 @@ def apply_optimizations(self, device, profile):
     }
   }
 }
-```
+```markdown
 
 ### 7. `src/gpu/__init__.py` (+17行, -2行)
 
@@ -256,7 +308,7 @@ __all__ = [
     'DriverManager',
     'DriverVersionParser'
 ]
-```
+```python
 
 ---
 
@@ -272,7 +324,7 @@ __all__ = [
 ```
 INFO: 检测到NVIDIA驱动版本: 520.67.03
 INFO: GPU驱动版本: 520.67.03, 状态: 正常
-```
+```markdown
 
 ### 2. 驱动健康检查
 
@@ -294,7 +346,7 @@ INFO: GPU驱动版本: 520.67.03, 状态: 正常
 ```
 WARNING: GPU驱动健康检查警告: 驱动版本较旧: 510.00, 推荐版本: 520.00
 WARNING:   建议: 建议更新驱动到 520.00 以获得最佳性能
-```
+```markdown
 
 ### 3. 驱动优化标志
 
@@ -306,7 +358,7 @@ WARNING:   建议: 建议更新驱动到 520.00 以获得最佳性能
     'enable_shader_cache': True,     # 启用着色器缓存
     'conservative_mode': False       # 保守模式(旧驱动自动启用)
 }
-```
+```python
 
 **厂商特定规则**:
 
@@ -337,7 +389,7 @@ GPU初始化
 根据驱动标志调整
   ↓
 记录日志(警告/信息)
-```
+```python
 
 ---
 
@@ -353,7 +405,7 @@ tests/test_gpu_module.py: 21 passed
 tests/test_driver_manager.py: 24 passed
 
 45 passed in 0.54s
-```
+```python
 
 **测试覆盖率**: 100%  
 **执行时间**: 0.54秒
@@ -396,9 +448,9 @@ driver_info = device.get_driver_info()
 print(f"驱动版本: {driver_info['version']}")
 print(f"健康状态: {driver_info['health']['status']}")
 print(f"优化标志: {driver_info['optimization_flags']}")
-```
+```markdown
 
-### 2. 驱动健康检查
+## 2. 驱动健康检查
 
 ```python
 from src.gpu.driver_manager import DriverManager
@@ -417,9 +469,9 @@ print(f"状态: {health['status']}")
 print(f"消息: {health['message']}")
 for rec in health['recommendations']:
     print(f"  - {rec}")
-```
+```markdown
 
-### 3. 版本比较
+## 3. 版本比较
 
 ```python
 from src.gpu.driver_manager import DriverVersionParser
@@ -432,7 +484,7 @@ if result > 0:
 # 检查兼容性
 if DriverVersionParser.is_version_compatible("520.67", "450.00"):
     print("驱动版本满足最低要求")
-```
+```python
 
 ---
 

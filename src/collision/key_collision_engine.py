@@ -1231,6 +1231,25 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 except Exception as e:
                     logger.error(f"保存最终数据失败: {e}")
         
+        # 清理去重过滤器（释放内存）
+        if self.dedup_filter and self.dedup_filter.enabled:
+            stats = self.dedup_filter.get_stats()
+            logger.info(f"清理去重过滤器: 检查={stats['checks_total']}, 重复={stats['duplicates_found']}, "
+                       f"跟踪={stats['tracked_total']}")
+            self.dedup_filter.reset()
+            logger.info("去重过滤器已清理")
+        
+        # 显式关闭线程池（如果还在运行）
+        if self._executor:
+            logger.info("关闭线程池...")
+            self._executor.shutdown(wait=False)  # 不等待，立即关闭
+            self._executor = None
+        
+        # 重置引擎状态（支持重启）
+        self._stop_event.clear()
+        self._running = False
+        self._thread = None
+        
         logger.info("对撞引擎已停止")
     
     def is_running(self) -> bool:

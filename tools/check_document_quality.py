@@ -24,6 +24,7 @@ from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, Any
+import subprocess
 
 # 修复Windows控制台编码问题 - 使用共享模块
 import sys
@@ -165,16 +166,62 @@ class DocumentQualityChecker:
         self.issues: List[Issue] = []
         self.scores: List[DocumentScore] = []
         self.config = config or ScoringConfig()
+    
+    @staticmethod
+    def get_changed_docs(docs_dir: Path) -> List[Path]:
+        """获取Git变更的文档列表
         
-    def check_all(self) -> List[DocumentScore]:
-        """检查所有文档"""
+        Returns:
+            变更的.md文件列表
+        """
+        try:
+            # 获取git diff中的.md文件
+            result = subprocess.run(
+                ['git', 'diff', '--name-only', 'HEAD', '--', str(docs_dir)],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            
+            if result.returncode != 0:
+                print(f"⚠️  Git命令执行失败: {result.stderr}")
+                return []
+            
+            # 解析输出，只保留.md文件
+            changed_files = []
+            for line in result.stdout.strip().split('\n'):
+                if line.endswith('.md'):
+                    changed_files.append(Path(line))
+            
+            return changed_files
+            
+        except (subprocess.TimeoutExpired, FileNotFoundError, OSError) as e:
+            print(f"⚠️  无法获取Git变更: {e}")
+            return []
+        
+    def check_all(self, changed_only: bool = False) -> List[DocumentScore]:
+        """检查所有文档
+        
+        Args:
+            changed_only: 是否只检查变更的文档
+        """
         print("🔍 开始检查文档质量...\n")
         
         md_files = list(self.docs_dir.glob("*.md"))
         # 排除archive目录中的文件
         md_files = [f for f in md_files if 'archive' not in str(f)]
         
-        print(f"📁 找到 {len(md_files)} 个核心文档\n")
+        # 增量检查模式
+        if changed_only:
+            print("🔄 增量检查模式: 只检查Git变更的文档")
+            changed_files = self.get_changed_docs(self.docs_dir)
+            if not changed_files:
+                print("ℹ️  没有检测到变更的文档，检查所有文档")
+            else:
+                md_files = [f for f in md_files if f in changed_files]
+                print(f"📝 检测到 {len(md_files)} 个变更文档\n")
+        else:
+            print(f"📁 找到 {len(md_files)} 个核心文档\n")
         
         for md_file in sorted(md_files):
             score = self.check_document(md_file)
@@ -533,6 +580,11 @@ def main():
         default=None,
         help='保存当前配置到文件'
     )
+    parser.add_argument(
+        '--changed-only',
+        action='store_true',
+        help='只检查Git变更的文档(增量检查模式)'
+    )
     
     args = parser.parse_args()
     
@@ -562,7 +614,7 @@ def main():
         sys.exit(0)
     
     checker = DocumentQualityChecker(str(docs_dir), config)
-    scores = checker.check_all()
+    scores = checker.check_all(changed_only=args.changed_only)
     
     # 返回退出码（如果有严重问题则返回非0）
     has_errors = any(
