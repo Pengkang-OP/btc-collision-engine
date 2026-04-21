@@ -1,0 +1,27 @@
+{
+  "gpu": {
+    "enabled": true,
+    "device_index": 1,
+    "batch_size": 10000,
+    "use_memory_pool": true,
+    "enable_async": true,
+    "description": "使用 Intel(R) Arc(TM) A770 Graphics (15.6GB)"
+  },
+  "multi_gpu": {
+    "all_devices": [
+      {
+        "index": 0,
+        "name": "NVIDIA GeForce GTX 1660 Ti",
+        "vendor": "NVIDIA Corporation",
+        "memory_gb": 5.99969482421875
+      },
+      {
+        "index": 1,
+        "name": "Intel(R) Arc(TM) A770 Graphics",
+        "vendor": "Intel(R) Corporation",
+        "memory_gb": 15.55941390991211
+      }
+    ],
+    "recommended_index": 1
+  }
+}
