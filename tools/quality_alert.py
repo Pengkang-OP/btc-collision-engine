@@ -160,8 +160,12 @@ def main():
     
     # 执行质量检查
     print(f"🔍 执行质量检查...")
-    checker = DocumentQualityChecker(args.docs_dir)
-    scores = checker.check_all()
+    try:
+        checker = DocumentQualityChecker(args.docs_dir)
+        scores = checker.check_all()
+    except Exception as e:
+        print(f"❌ 质量检查失败: {e}")
+        sys.exit(1)
     
     if not scores:
         print("❌ 没有文档可检查")

@@ -93,14 +93,22 @@ def parallel_check(docs_dir: str, workers: int = None, config_dict: Dict = None)
     # 并行执行
     start_time = time.time()
     
-    with Pool(processes=workers) as pool:
-        scores = pool.map(check_single_doc, tasks)
+    try:
+        with Pool(processes=workers) as pool:
+            scores = pool.map(check_single_doc, tasks, chunksize=1)
+    except Exception as e:
+        print(f"\n❌ 并行检查失败: {e}")
+        print(f"💡 建议: 尝试减少工作进程数 (--workers 4)")
+        sys.exit(1)
     
     elapsed = time.time() - start_time
     
     # 打印结果
-    print(f"\n✅ 检查完成! 耗时: {elapsed:.2f}秒")
-    print(f"⚡ 平均速度: {len(md_files)/elapsed:.1f} 文档/秒")
+    if elapsed > 0:
+        print(f"\n✅ 检查完成! 耗时: {elapsed:.2f}秒")
+        print(f"⚡ 平均速度: {len(md_files)/elapsed:.1f} 文档/秒")
+    else:
+        print(f"\n✅ 检查完成! 耗时: <0.01秒")
     
     return scores
 

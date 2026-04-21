@@ -38,14 +38,34 @@ class QualityTrendAnalyzer:
     def load_history(self) -> List[Dict]:
         """加载历史记录"""
         if self.history_file.exists():
-            with open(self.history_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
+            try:
+                with open(self.history_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    if isinstance(data, list):
+                        return data
+                    else:
+                        print(f"⚠️  历史记录格式错误，重置为空列表")
+                        return []
+            except json.JSONDecodeError as e:
+                print(f"⚠️  历史记录JSON解析失败: {e}")
+                print(f"💡 重置为空列表")
+                return []
+            except (OSError, PermissionError) as e:
+                print(f"⚠️  无法读取历史记录: {e}")
+                return []
         return []
     
     def save_history(self):
         """保存历史记录"""
-        with open(self.history_file, 'w', encoding='utf-8') as f:
-            json.dump(self.history, f, indent=2, ensure_ascii=False)
+        try:
+            # 使用临时文件避免写入中断导致数据损坏
+            temp_file = self.history_file.with_suffix('.tmp')
+            with open(temp_file, 'w', encoding='utf-8') as f:
+                json.dump(self.history, f, indent=2, ensure_ascii=False)
+            # 原子替换
+            temp_file.replace(self.history_file)
+        except (OSError, PermissionError) as e:
+            print(f"⚠️  无法保存历史记录: {e}")
     
     def add_record(self, avg_score: float, doc_count: int, details: Dict):
         """添加新记录
@@ -157,12 +177,15 @@ class QualityTrendAnalyzer:
             print("❌ 没有历史数据")
             return
         
-        with open(output_file, 'w', encoding='utf-8') as f:
-            f.write("timestamp,avg_score,doc_count\n")
-            for record in self.history:
-                f.write(f"{record['timestamp']},{record['avg_score']},{record['doc_count']}\n")
-        
-        print(f"✅ 数据已导出到: {output_file}")
+        try:
+            with open(output_file, 'w', encoding='utf-8') as f:
+                f.write("timestamp,avg_score,doc_count\n")
+                for record in self.history:
+                    f.write(f"{record['timestamp']},{record['avg_score']},{record['doc_count']}\n")
+            
+            print(f"✅ 数据已导出到: {output_file}")
+        except (OSError, PermissionError) as e:
+            print(f"❌ 无法导出CSV: {e}")
 
 
 def main():
