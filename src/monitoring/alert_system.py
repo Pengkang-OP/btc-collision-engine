@@ -1,0 +1,423 @@
+"""性能监控告警系统
+
+实现GPU性能实时监控和异常自动告警功能。
+支持多种告警规则和通知方式。
+"""
+
+import logging
+import time
+from enum import Enum
+from typing import Dict, List, Optional, Callable, Any
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+import json
+
+logger = logging.getLogger(__name__)
+
+
+class AlertLevel(Enum):
+    """告警级别"""
+    INFO = "info"           # 信息
+    WARNING = "warning"     # 警告
+    CRITICAL = "critical"   # 严重
+    EMERGENCY = "emergency" # 紧急
+
+
+class AlertType(Enum):
+    """告警类型"""
+    PERFORMANCE_DEGRADATION = "performance_degradation"  # 性能退化
+    MEMORY_OVERFLOW = "memory_overflow"                  # 内存溢出
+    GPU_OVERHEAT = "gpu_overheat"                        # GPU过热
+    ERROR_RATE_HIGH = "error_rate_high"                  # 错误率高
+    THROUGHPUT_DROP = "throughput_drop"                  # 吞吐量下降
+    SYSTEM_STABLE = "system_stable"                      # 系统稳定(恢复)
+
+
+@dataclass
+class AlertRule:
+    """告警规则"""
+    name: str                           # 规则名称
+    alert_type: AlertType               # 告警类型
+    level: AlertLevel                   # 告警级别
+    condition: Callable[[Dict], bool]  # 条件函数
+    message: str                        # 告警消息
+    cooldown: int = 300                 # 冷却时间(秒),避免频繁告警
+    enabled: bool = True                # 是否启用
+
+
+@dataclass
+class AlertRecord:
+    """告警记录"""
+    timestamp: str                      # 时间戳
+    alert_type: AlertType               # 告警类型
+    level: AlertLevel                   # 告警级别
+    message: str                        # 告警消息
+    metrics: Dict[str, Any]             # 触发时的指标数据
+    resolved: bool = False              # 是否已解决
+    resolved_at: Optional[str] = None   # 解决时间
+
+
+class AlertSystem:
+    """性能监控告警系统
+    
+    功能:
+    - 实时监控GPU性能指标
+    - 自动检测异常情况
+    - 触发告警通知
+    - 记录告警历史
+    - 支持告警恢复检测
+    
+    使用示例:
+        alert_system = AlertSystem()
+        alert_system.setup_default_rules()
+        
+        # 检查性能指标
+        alert_system.check_metrics({
+            'throughput': 1000000,
+            'memory_usage': 0.75,
+            'gpu_temperature': 80,
+            'error_rate': 0.01
+        })
+    """
+    
+    def __init__(self, alert_log_file: Optional[str] = None):
+        """初始化告警系统
+        
+        Args:
+            alert_log_file: 告警日志文件路径
+        """
+        self.rules: List[AlertRule] = []
+        self.alert_history: List[AlertRecord] = []
+        self.last_alert_time: Dict[str, float] = {}  # 规则名称 -> 最后告警时间
+        self.alert_callbacks: List[Callable] = []     # 告警回调函数
+        
+        # 告警日志文件
+        if alert_log_file is None:
+            alert_log_file = "data_logs/alert_history.json"
+        self.alert_log_file = Path(alert_log_file)
+        self.alert_log_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        # 加载历史告警
+        self._load_alert_history()
+        
+        logger.info(f"告警系统初始化完成: {len(self.rules)} 条规则")
+    
+    def add_rule(self, rule: AlertRule):
+        """添加告警规则
+        
+        Args:
+            rule: 告警规则对象
+        """
+        self.rules.append(rule)
+        logger.info(f"添加告警规则: {rule.name} ({rule.level.value})")
+    
+    def remove_rule(self, rule_name: str) -> bool:
+        """移除告警规则
+        
+        Args:
+            rule_name: 规则名称
+            
+        Returns:
+            是否成功移除
+        """
+        initial_count = len(self.rules)
+        self.rules = [r for r in self.rules if r.name != rule_name]
+        removed = len(self.rules) < initial_count
+        
+        if removed:
+            logger.info(f"移除告警规则: {rule_name}")
+        
+        return removed
+    
+    def add_alert_callback(self, callback: Callable):
+        """添加告警回调函数
+        
+        Args:
+            callback: 回调函数,接收AlertRecord参数
+        """
+        self.alert_callbacks.append(callback)
+        logger.info(f"添加告警回调函数")
+    
+    def setup_default_rules(self):
+        """设置默认告警规则"""
+        
+        # 规则1: 性能退化>20%
+        def check_performance_degradation(metrics: Dict) -> bool:
+            if 'degradation_rate' not in metrics:
+                return False
+            return metrics['degradation_rate'] > 20.0
+        
+        self.add_rule(AlertRule(
+            name="性能退化警告",
+            alert_type=AlertType.PERFORMANCE_DEGRADATION,
+            level=AlertLevel.WARNING,
+            condition=check_performance_degradation,
+            message="GPU性能退化超过20%",
+            cooldown=300
+        ))
+        
+        # 规则2: 内存使用>80%
+        def check_memory_usage(metrics: Dict) -> bool:
+            if 'memory_usage_percent' not in metrics:
+                return False
+            return metrics['memory_usage_percent'] > 80.0
+        
+        self.add_rule(AlertRule(
+            name="内存使用过高",
+            alert_type=AlertType.MEMORY_OVERFLOW,
+            level=AlertLevel.WARNING,
+            condition=check_memory_usage,
+            message="GPU内存使用超过80%",
+            cooldown=600
+        ))
+        
+        # 规则3: GPU温度>85°C
+        def check_gpu_temperature(metrics: Dict) -> bool:
+            if 'gpu_temperature' not in metrics:
+                return False
+            return metrics['gpu_temperature'] > 85.0
+        
+        self.add_rule(AlertRule(
+            name="GPU温度过高",
+            alert_type=AlertType.GPU_OVERHEAT,
+            level=AlertLevel.CRITICAL,
+            condition=check_gpu_temperature,
+            message="GPU温度超过85°C",
+            cooldown=120
+        ))
+        
+        # 规则4: 错误率>5%
+        def check_error_rate(metrics: Dict) -> bool:
+            if 'error_rate' not in metrics:
+                return False
+            return metrics['error_rate'] > 0.05
+        
+        self.add_rule(AlertRule(
+            name="错误率过高",
+            alert_type=AlertType.ERROR_RATE_HIGH,
+            level=AlertLevel.CRITICAL,
+            condition=check_error_rate,
+            message="错误率超过5%",
+            cooldown=300
+        ))
+        
+        # 规则5: 吞吐量下降>50%
+        def check_throughput_drop(metrics: Dict) -> bool:
+            if 'throughput' not in metrics or 'baseline_throughput' not in metrics:
+                return False
+            if metrics['baseline_throughput'] == 0:
+                return False
+            drop_rate = (metrics['baseline_throughput'] - metrics['throughput']) / metrics['baseline_throughput']
+            return drop_rate > 0.5
+        
+        self.add_rule(AlertRule(
+            name="吞吐量严重下降",
+            alert_type=AlertType.THROUGHPUT_DROP,
+            level=AlertLevel.CRITICAL,
+            condition=check_throughput_drop,
+            message="吞吐量下降超过50%",
+            cooldown=300
+        ))
+        
+        logger.info(f"默认告警规则设置完成: {len(self.rules)} 条规则")
+    
+    def check_metrics(self, metrics: Dict[str, Any]) -> List[AlertRecord]:
+        """检查性能指标并触发告警
+        
+        Args:
+            metrics: 性能指标字典
+                - throughput: 当前吞吐量 (keys/s)
+                - peak_throughput: 峰值吞吐量 (keys/s)
+                - degradation_rate: 性能退化率 (%)
+                - memory_usage_percent: 内存使用百分比 (%)
+                - gpu_temperature: GPU温度 (°C)
+                - error_rate: 错误率 (0-1)
+                - baseline_throughput: 基准吞吐量 (keys/s)
+        
+        Returns:
+            触发的告警记录列表
+        """
+        triggered_alerts = []
+        current_time = time.time()
+        
+        for rule in self.rules:
+            if not rule.enabled:
+                continue
+            
+            # 检查冷却时间
+            last_time = self.last_alert_time.get(rule.name, 0)
+            if current_time - last_time < rule.cooldown:
+                continue
+            
+            # 检查条件
+            try:
+                if rule.condition(metrics):
+                    # 创建告警记录
+                    alert = AlertRecord(
+                        timestamp=datetime.now().isoformat(),
+                        alert_type=rule.alert_type,
+                        level=rule.level,
+                        message=rule.message,
+                        metrics=metrics.copy()
+                    )
+                    
+                    # 记录告警
+                    self.alert_history.append(alert)
+                    self.last_alert_time[rule.name] = current_time
+                    
+                    # 触发告警
+                    self._trigger_alert(alert)
+                    triggered_alerts.append(alert)
+                    
+                    logger.warning(f"⚠️ 告警触发 [{rule.level.value.upper()}]: {rule.message}")
+                    
+            except Exception as e:
+                logger.error(f"检查告警规则 {rule.name} 时出错: {e}")
+        
+        return triggered_alerts
+    
+    def _trigger_alert(self, alert: AlertRecord):
+        """触发告警
+        
+        Args:
+            alert: 告警记录
+        """
+        # 调用所有回调函数
+        for callback in self.alert_callbacks:
+            try:
+                callback(alert)
+            except Exception as e:
+                logger.error(f"告警回调函数执行失败: {e}")
+        
+        # 保存告警历史
+        self._save_alert_history()
+    
+    def resolve_alert(self, alert_index: int):
+        """标记告警已解决
+        
+        Args:
+            alert_index: 告警记录索引
+        """
+        if 0 <= alert_index < len(self.alert_history):
+            alert = self.alert_history[alert_index]
+            alert.resolved = True
+            alert.resolved_at = datetime.now().isoformat()
+            logger.info(f"告警已解决: {alert.message}")
+            self._save_alert_history()
+    
+    def get_active_alerts(self) -> List[AlertRecord]:
+        """获取未解决的告警
+        
+        Returns:
+            未解决的告警记录列表
+        """
+        return [a for a in self.alert_history if not a.resolved]
+    
+    def get_alert_statistics(self) -> Dict[str, Any]:
+        """获取告警统计信息
+        
+        Returns:
+            统计信息字典
+        """
+        stats = {
+            'total_alerts': len(self.alert_history),
+            'active_alerts': len(self.get_active_alerts()),
+            'resolved_alerts': sum(1 for a in self.alert_history if a.resolved),
+            'alerts_by_level': {},
+            'alerts_by_type': {},
+            'recent_alerts': []
+        }
+        
+        # 按级别统计
+        for alert in self.alert_history:
+            level = alert.level.value
+            stats['alerts_by_level'][level] = stats['alerts_by_level'].get(level, 0) + 1
+            
+            alert_type = alert.alert_type.value
+            stats['alerts_by_type'][alert_type] = stats['alerts_by_type'].get(alert_type, 0) + 1
+        
+        # 最近10条告警
+        stats['recent_alerts'] = [
+            {
+                'timestamp': a.timestamp,
+                'level': a.level.value,
+                'type': a.alert_type.value,
+                'message': a.message,
+                'resolved': a.resolved
+            }
+            for a in self.alert_history[-10:]
+        ]
+        
+        return stats
+    
+    def _save_alert_history(self):
+        """保存告警历史到文件"""
+        try:
+            data = []
+            for alert in self.alert_history:
+                data.append({
+                    'timestamp': alert.timestamp,
+                    'alert_type': alert.alert_type.value,
+                    'level': alert.level.value,
+                    'message': alert.message,
+                    'metrics': alert.metrics,
+                    'resolved': alert.resolved,
+                    'resolved_at': alert.resolved_at
+                })
+            
+            with open(self.alert_log_file, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+                
+        except Exception as e:
+            logger.error(f"保存告警历史失败: {e}")
+    
+    def _load_alert_history(self):
+        """从文件加载告警历史"""
+        if not self.alert_log_file.exists():
+            return
+        
+        try:
+            with open(self.alert_log_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            for item in data:
+                alert = AlertRecord(
+                    timestamp=item['timestamp'],
+                    alert_type=AlertType(item['alert_type']),
+                    level=AlertLevel(item['level']),
+                    message=item['message'],
+                    metrics=item.get('metrics', {}),
+                    resolved=item.get('resolved', False),
+                    resolved_at=item.get('resolved_at')
+                )
+                self.alert_history.append(alert)
+            
+            logger.info(f"加载告警历史: {len(self.alert_history)} 条记录")
+            
+        except Exception as e:
+            logger.error(f"加载告警历史失败: {e}")
+    
+    def clear_history(self):
+        """清空告警历史"""
+        self.alert_history.clear()
+        self.last_alert_time.clear()
+        self._save_alert_history()
+        logger.info("告警历史已清空")
+
+
+# 全局告警系统实例
+_alert_system: Optional[AlertSystem] = None
+
+
+def get_alert_system() -> AlertSystem:
+    """获取全局告警系统实例
+    
+    Returns:
+        AlertSystem实例
+    """
+    global _alert_system
+    if _alert_system is None:
+        _alert_system = AlertSystem()
+        _alert_system.setup_default_rules()
+    return _alert_system

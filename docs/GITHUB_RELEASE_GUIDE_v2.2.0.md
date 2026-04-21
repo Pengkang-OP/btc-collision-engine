@@ -32,6 +32,7 @@ git push origin v2.2.0
 ### 步骤1: 访问GitHub Release页面
 
 打开浏览器访问:
+
 ```
 https://github.com/pengkang2017/btc-collision-engine/releases/new
 ```
@@ -44,6 +45,7 @@ https://github.com/pengkang2017/btc-collision-engine/releases/new
 ### 步骤3: 填写Release信息
 
 **Release title** (发布标题):
+
 ```
 v2.2.0 - 性能优化与GPU监控增强
 ```
@@ -149,6 +151,7 @@ python key_collision.py
 
 **完整文档**: [文档索引](https://github.com/pengkang2017/btc-collision-engine/blob/main/docs/DOCUMENT_INDEX.md)  
 **变更日志**: [CHANGELOG.md](https://github.com/pengkang2017/btc-collision-engine/blob/main/CHANGELOG.md)
+
 ```
 
 ### 步骤4: 设置发布选项

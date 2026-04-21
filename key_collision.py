@@ -829,7 +829,7 @@ class CollisionCLI:
    ██║  ██╗███████╗╚██████╔╝    ╚██████╗╚██████╗███████╗██║██║███████║██║╚██████╔╝██║ ╚████║
    ╚═╝  ╚═╝╚══════╝ ╚═════╝      ╚═════╝ ╚═════╝╚══════╝╚═╝╚═╝╚══════╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝
 {p.RESET}
-{p.BRIGHT_GREEN}   比特币私钥对撞引擎 v1.0{p.RESET}
+{p.BRIGHT_GREEN}   btc-collision-engine{p.RESET}
 {p.DIM}   纯Python实现 | 标准库 only | 教育演示用途{p.RESET}
 {p.BRIGHT_YELLOW}{'='*70}{p.RESET}
         """)

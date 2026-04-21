@@ -59,11 +59,12 @@ class GPUDeviceDetector:
     # 可用性检测缓存
     _availability_cache = None
     _cache_timestamp = 0
-    _cache_ttl = 60  # 缓存有效期60秒
+    _cache_ttl = 30  # 缓存有效期30秒(从60秒缩短,提高响应性)
     
     # 设备信息缓存（避免重复检测）
     _devices_cache = None
     _devices_cache_timestamp = 0
+    _devices_cache_ttl = 30  # 设备缓存TTL(明确配置)
     
     @staticmethod
     def is_gpu_available() -> bool:
@@ -222,7 +223,8 @@ class GPUDeviceDetector:
                         
                         # 过滤掉CPU设备
                         if device_type == cl.device_type.CPU:
-                            logger.info(f"跳过CPU设备: {device.get_info(cl.device_info.NAME)}")
+                            cpu_name = device.get_info(cl.device_info.NAME)
+                            logger.debug(f"跳过CPU设备: {cpu_name}")
                             continue
                         
                         # 只保留GPU设备
@@ -238,7 +240,7 @@ class GPUDeviceDetector:
                             "uhd graphics" in device_name_lower or 
                             "iris" in device_name_lower
                         ):
-                            logger.info(f"跳过核显设备: {device_name}")
+                            logger.debug(f"跳过核显设备: {device_name}")
                             continue
                         
                         # 构建设备信息字典
@@ -281,34 +283,59 @@ class GPUDeviceDetector:
             raise RuntimeError("没有可用的GPU设备")
         
         def priority_score(dev):
-            """计算设备优先级分数"""
+            """
+            计算设备优先级分数
+            
+            综合考虑:
+            1. 显存大小 (主要因素,每GB 10分)
+            2. 计算单元 (次要因素,每100个CU 5分)
+            3. 厂商偏好 (辅助因素)
+            
+            这样可以确保:
+            - Intel Arc A770 (16GB) > NVIDIA GTX 1660 Ti (6GB)
+            - 大显存GPU优先被选择
+            """
             name_lower = dev['name'].lower()
             vendor_lower = dev.get('vendor', '').lower()
             
-            # NVIDIA最高优先级
-            if "nvidia" in name_lower or "nvidia" in vendor_lower or \
-               "geforce" in name_lower or "rtx" in name_lower or "gtx" in name_lower:
-                return 4
+            # 显存分数 (每GB 10分) - 这是最重要的因素
+            global_mem_gb = dev.get('global_mem_size', 0) / (1024**3)
+            memory_score = global_mem_gb * 10
             
-            # AMD次高
-            elif "amd" in name_lower or "amd" in vendor_lower or \
-                 "radeon" in name_lower:
-                return 3
+            # 计算单元分数 (每100个CU 5分)
+            compute_units = dev.get('max_compute_units', 0)
+            cu_score = (compute_units / 100.0) * 5
             
-            # Intel Arc第三
+            # 厂商基础分 (辅助因素,不超过20分)
+            if "nvidia" in name_lower or "nvidia" in vendor_lower:
+                vendor_score = 20
+            elif "amd" in name_lower or "amd" in vendor_lower:
+                vendor_score = 15
             elif "intel" in name_lower and "arc" in name_lower:
-                return 2
+                vendor_score = 10
+            elif "intel" in name_lower:
+                vendor_score = 5
+            else:
+                vendor_score = 0
             
-            # Intel其他第四
-            elif "intel" in name_lower or "intel" in vendor_lower:
-                return 1
+            # 总分 = 显存(主要) + 计算单元(次要) + 厂商(辅助)
+            total_score = memory_score + cu_score + vendor_score
             
-            # 其他GPU
-            return 0
+            return total_score
         
-        # 按优先级排序
+        # 按分数排序
         devices.sort(key=priority_score, reverse=True)
-        return devices[0]
+        best_device = devices[0]
+        
+        # 记录选择原因
+        logger.info(
+            f"自动选择最佳设备: {best_device['name']}\n"
+            f"  - 显存: {best_device.get('global_mem_size', 0)/(1024**3):.1f} GB\n"
+            f"  - 计算单元: {best_device.get('max_compute_units', 'N/A')}\n"
+            f"  - 优先级分数: {priority_score(best_device):.1f}"
+        )
+        
+        return best_device
 
 
 class GPUDevice:
@@ -321,7 +348,9 @@ class GPUDevice:
     def __init__(self):
         """初始化GPU设备对象"""
         self.context = None
-        self.queue = None
+        self.queue = None  # 向后兼容: 默认队列
+        self.compute_queue = None  # 计算队列(异步优化)
+        self.transfer_queue = None  # 传输队列(异步优化)
         self.device = None
         self.device_info = {}
         self.vendor = None
@@ -332,8 +361,11 @@ class GPUDevice:
         self.driver_version = None
         self.driver_health = None
         self.driver_optimization_flags = {}
+        
+        # 异步优化配置
+        self.enable_async_execution = False  # 是否启用异步执行
     
-    def initialize(self, device_index: int = -1):
+    def initialize(self, device_index: int = -1, enable_async: bool = False):
         """
         初始化GPU设备
         
@@ -341,7 +373,10 @@ class GPUDevice:
             device_index: 设备索引
                          -1 = 自动选择最佳设备
                          >=0 = 使用指定索引的设备
+            enable_async: 是否启用异步执行(双队列)
         """
+        # 设置异步标志
+        self.enable_async_execution = enable_async
         if not PYOPENCL_AVAILABLE:
             raise RuntimeError("pyopencl不可用")
         
@@ -354,21 +389,30 @@ class GPUDevice:
         if device_index == -1:
             # 自动选择最佳设备
             device_info = GPUDeviceDetector._select_best_device(devices)
-            logger.info("自动选择最佳GPU设备")
+            logger.info(f"自动选择最佳GPU设备: {device_info['name']}")
+            
         elif device_index >= 0:
-            # 使用指定设备,添加回退机制
+            # 使用指定设备,严格模式(不静默回退)
             if device_index >= len(devices):
-                logger.warning(
-                    f"设备索引 {device_index} 超出范围 (0-{len(devices)-1}), "
-                    f"自动选择最佳设备"
+                # 抛出异常,提供可用设备列表
+                available = [
+                    f"  [{i}] {d['name']} ({d.get('global_mem_size', 0)/(1024**3):.1f}GB)"
+                    for i, d in enumerate(devices)
+                ]
+                raise ValueError(
+                    f"设备索引 {device_index} 超出范围 (0-{len(devices)-1})\n"
+                    f"可用设备:\n" + "\n".join(available)
                 )
-                device_info = GPUDeviceDetector._select_best_device(devices)
             else:
                 device_info = devices[device_index]
+                logger.info(f"使用指定GPU设备 [{device_index}]: {device_info['name']}")
+                
         else:
             # 其他负数索引,视为无效
-            logger.warning(f"无效的设备索引 {device_index},使用自动选择")
-            device_info = GPUDeviceDetector._select_best_device(devices)
+            raise ValueError(
+                f"无效的设备索引 {device_index}\n"
+                f"有效值: -1(自动选择) 或 0-{len(devices)-1}(指定设备)"
+            )
         
         # 保存设备对象
         self.device = device_info['device']
@@ -395,11 +439,38 @@ class GPUDevice:
         
         # 创建OpenCL上下文和命令队列
         self.context = cl.Context([self.device])
-        self.queue = cl.CommandQueue(self.context, self.device)
+        
+        # 异步优化: 创建双队列(计算+传输)
+        if self.enable_async_execution:
+            logger.info("启用GPU异步执行: 创建双队列(计算+传输)")
+            # 计算队列 - 用于内核执行
+            self.compute_queue = cl.CommandQueue(
+                self.context, 
+                self.device,
+                properties=cl.command_queue_properties.PROFILING_ENABLE
+            )
+            # 传输队列 - 用于数据传输
+            self.transfer_queue = cl.CommandQueue(
+                self.context,
+                self.device,
+                properties=cl.command_queue_properties.PROFILING_ENABLE
+            )
+            # 向后兼容: 默认使用计算队列
+            self.queue = self.compute_queue
+            logger.info("  - 计算队列: 已创建(支持性能分析)")
+            logger.info("  - 传输队列: 已创建(支持异步传输)")
+        else:
+            # 传统模式: 单一队列
+            self.queue = cl.CommandQueue(self.context, self.device)
+            logger.info("使用传统单队列模式(同步执行)")
         
         logger.info(
             f"GPU设备初始化成功: {self.device_info['name']} "
-            f"({self.device_info['vendor']})"
+            f"({self.device_info['vendor']})\n"
+            f"  - 显存: {self.device_info['global_mem_size']/(1024**3):.1f} GB\n"
+            f"  - 计算单元: {self.device_info['max_compute_units']}\n"
+            f"  - 平台: {self.device_info['platform']}\n"
+            f"  - 异步执行: {'已启用' if self.enable_async_execution else '未启用'}"
         )
     
     def _validate_device_capabilities(self, device_info: Dict):
@@ -528,13 +599,24 @@ class GPUDevice:
     def cleanup(self):
         """释放GPU资源"""
         # 清理命令队列
-        if self.queue:
+        queues_to_cleanup = []
+        
+        if self.compute_queue:
+            queues_to_cleanup.append(("计算队列", self.compute_queue))
+        if self.transfer_queue:
+            queues_to_cleanup.append(("传输队列", self.transfer_queue))
+        if self.queue and self.queue not in [self.compute_queue, self.transfer_queue]:
+            queues_to_cleanup.append(("默认队列", self.queue))
+        
+        for name, q in queues_to_cleanup:
             try:
-                self.queue.finish()
+                q.finish()
             except Exception as e:
-                logger.debug(f"GPU队列清理失败: {e}")
-            finally:
-                self.queue = None
+                logger.debug(f"{name}清理失败: {e}")
+        
+        self.queue = None
+        self.compute_queue = None
+        self.transfer_queue = None
         
         # 清理上下文
         if self.context:

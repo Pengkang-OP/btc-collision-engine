@@ -1029,6 +1029,10 @@ class CollisionGUI:
         self.engine = None
         self._is_cleaning_up = False  # 资源清理标志（防止重复清理）
         
+        # GPU配置缓存
+        self._cached_gpu_config = None
+        self._config_loaded = False
+        
         self._create_widgets()
         self._setup_bindings()
         
@@ -1077,6 +1081,79 @@ class CollisionGUI:
         """设置事件绑定"""
         # 窗口关闭事件
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
+    
+    def _load_gpu_config_from_file(self) -> Optional[Dict]:
+        """从配置文件加载GPU配置
+        
+        按优先级尝试读取配置文件:
+        1. config.intel_arc.json (Intel Arc优化配置)
+        2. config.json (通用配置)
+        
+        Returns:
+            GPU配置字典,如果读取失败返回None
+        """
+        # 如果已加载,直接返回缓存
+        if self._config_loaded:
+            return self._cached_gpu_config
+        
+        import json
+        from pathlib import Path
+        from typing import Dict, Optional
+        
+        # 配置文件列表(按优先级)
+        config_files = [
+            Path(__file__).parent / 'config.intel_arc.json',
+            Path(__file__).parent / 'config.json',
+        ]
+        
+        for cfg_file in config_files:
+            if not cfg_file.exists():
+                continue
+            
+            try:
+                with open(cfg_file, 'r', encoding='utf-8') as f:
+                    full_config = json.load(f)
+                
+                # 提取GPU配置
+                config = {}
+                if 'gpu' in full_config:
+                    config['gpu'] = full_config['gpu']
+                
+                # engine.batch_size优先级最高
+                if 'engine' in full_config:
+                    engine_batch_size = full_config['engine'].get('batch_size')
+                    if isinstance(engine_batch_size, int) and engine_batch_size > 0:
+                        if 'gpu' not in config:
+                            config['gpu'] = {}
+                        config['gpu']['batch_size'] = engine_batch_size
+                    elif engine_batch_size is not None:
+                        self.log_frame.log(f"⚠️ 无效的batch_size: {engine_batch_size}, 将使用GPU配置或默认值")
+                
+                # 日志输出
+                if config:
+                    self.log_frame.log(f"✅ 从配置文件 {cfg_file.name} 读取GPU配置")
+                    gpu_cfg = config.get('gpu', {})
+                    if 'batch_size' in gpu_cfg:
+                        self.log_frame.log(f"   batch_size: {gpu_cfg['batch_size']:,}")
+                    if 'async_execution' in gpu_cfg:
+                        self.log_frame.log(f"   async_execution: {gpu_cfg['async_execution']}")
+                    if 'device_index' in gpu_cfg:
+                        self.log_frame.log(f"   device_index: {gpu_cfg['device_index']}")
+                
+                # 缓存配置
+                self._cached_gpu_config = config
+                self._config_loaded = True
+                
+                return config
+                
+            except json.JSONDecodeError as e:
+                self.log_frame.log(f"⚠️ 配置文件 {cfg_file.name} JSON格式错误: {e}")
+            except PermissionError:
+                self.log_frame.log(f"⚠️ 无法读取 {cfg_file.name}: 权限不足")
+            except Exception as e:
+                self.log_frame.log(f"⚠️ 读取配置文件 {cfg_file.name} 失败: {e}")
+        
+        return None
     
     def _on_mode_change(self, mode: str):
         """模式改变回调"""
@@ -1142,6 +1219,10 @@ class CollisionGUI:
         
         # 根据用户选择创建引擎
         from src.collision import create_collision_engine, GPUCollisionEngine
+        
+        # 从配置文件读取GPU配置
+        config = self._load_gpu_config_from_file()
+        
         try:
             if use_gpu:
                 # 用户选择使用 GPU
@@ -1149,6 +1230,7 @@ class CollisionGUI:
                     targets=targets,
                     mode='gpu',  # 强制使用 GPU
                     device_index=gpu_device_index,
+                    config=config,  # 传递配置(包含batch_size)
                     on_progress=self._on_progress,
                     on_match=self._on_match,
                     on_complete=self._on_complete,
@@ -1264,6 +1346,10 @@ class CollisionGUI:
         
         # 根据用户选择创建引擎
         from src.collision import create_collision_engine
+        
+        # 从配置文件读取GPU配置(复用相同方法)
+        config = self._load_gpu_config_from_file()
+        
         try:
             if use_gpu:
                 # 用户选择使用 GPU
@@ -1271,6 +1357,7 @@ class CollisionGUI:
                     targets=targets,
                     mode='gpu',  # 强制使用 GPU
                     device_index=gpu_device_index,
+                    config=config,  # 传递配置(包含batch_size)
                     on_progress=self._on_progress,
                     on_match=self._on_match,
                     on_complete=self._on_complete,

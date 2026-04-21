@@ -5,10 +5,12 @@
 
 import os
 import sys
+import json
 import time
 import threading
 import secrets
 import logging
+from pathlib import Path
 from typing import Set, Optional, Callable, Tuple, List, Dict, Any
 
 logger = logging.getLogger(__name__)
@@ -24,6 +26,7 @@ from ..gpu.intel_memory_monitor import IntelMemoryMonitor
 from ..gpu.benchmark_suite import GPUBenchmarkSuite
 from ..gpu.auto_tuner import GPUAutoTuner
 from ..gpu.performance_reporter import PerformanceReportGenerator, ReportConfig
+from ..gpu.async_executor import AsyncGPUExecutor  # 异步优化
 from ..utils.exception_handler import ExceptionHandler
 from ..utils.performance_monitor import EnhancedPerformanceMonitor
 
@@ -515,10 +518,14 @@ class GPUCollisionEngine(BaseCollisionEngine):
         timeout = getattr(self._gpu_device, 'timeout_seconds', 30)
         logger.info(f"✅ Intel 超时保护: {timeout}秒")
         
-        # 4. 确认异步已禁用
+        # 4. 异步执行(根据配置决定)
         if hasattr(self._gpu_device, 'enable_async'):
-            self._gpu_device.enable_async = False
-            logger.info("✅ Intel 异步执行: 已禁用")
+            # 不再强制禁用,尊重配置
+            if self._gpu_device.enable_async_execution:
+                logger.info("✅ Intel 异步执行: 已启用(双缓冲优化)")
+            else:
+                self._gpu_device.enable_async = False
+                logger.info("✅ Intel 异步执行: 已禁用(传统模式)")
         
         # 5. 显存限制
         memory_efficiency = getattr(self._gpu_device, 'memory_efficiency', 0.45)
@@ -855,7 +862,54 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 # 1. 初始化GPU设备
                 with EnhancedPerformanceMonitor(logger, "GPU设备初始化", level="DEBUG"):
                     self._gpu_device = GPUDevice()
-                    self._gpu_device.initialize(self.device_index)
+                    
+                    # 启用异步执行(按优先级读取配置)
+                    enable_async = False
+                    config_source = "默认"
+                    
+                    # 优先级1: 构造函数传入的配置
+                    if hasattr(self, 'config') and self.config:
+                        gpu_config = self.config.get('gpu', {})
+                        if 'async_execution' in gpu_config:
+                            enable_async = gpu_config['async_execution']
+                            config_source = "构造参数"
+                            logger.debug(f"从构造参数读取异步设置: {enable_async}")
+                    
+                    # 优先级2: 自动读取配置文件(仅当构造参数未明确设置时)
+                    if config_source == "默认":
+                        project_root = Path(__file__).parent.parent.parent
+                        config_files = [
+                            project_root / 'config.intel_arc.json',
+                            project_root / 'config.json',
+                        ]
+                        
+                        for cfg_file in config_files:
+                            if cfg_file.exists():
+                                try:
+                                    with open(cfg_file, 'r', encoding='utf-8') as f:
+                                        cfg = json.load(f)
+                                        if cfg.get('gpu', {}).get('async_execution', False):
+                                            enable_async = True
+                                            config_source = f"配置文件 {cfg_file.name}"
+                                            logger.info(f"✅ 从{config_source}读取异步设置")
+                                            break
+                                except json.JSONDecodeError as e:
+                                    logger.warning(f"配置文件 {cfg_file} JSON格式错误: {e}")
+                                except PermissionError:
+                                    logger.warning(f"无法读取 {cfg_file}: 权限不足")
+                                except Exception as e:
+                                    logger.debug(f"读取配置文件 {cfg_file} 失败(非关键): {e}")
+                    
+                    # 应用配置
+                    if enable_async:
+                        self._gpu_device.enable_async_execution = True
+                        logger.info(f"✅ GPU异步执行已启用({config_source}) - 双缓冲优化")
+                    else:
+                        logger.info(f"GPU异步执行未启用({config_source}) - 使用同步模式")
+                        logger.debug("提示: 在配置文件中设置 'gpu.async_execution': true 以启用异步优化")
+                    
+                    # 初始化设备(传入enable_async)
+                    self._gpu_device.initialize(self.device_index, enable_async=enable_async)
                 
                 # 2. 加载GPU型号配置
                 device_info = self._gpu_device.get_device_info()
@@ -863,6 +917,11 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 vendor = device_info.get('vendor', '')
                 
                 logger.info(f"检测到GPU设备: {device_name} ({vendor})")
+                logger.info(
+                    f"  - 显存: {device_info.get('global_mem_size', 0) / (1024**3):.1f} GB\n"
+                    f"  - 计算单元: {device_info.get('max_compute_units', 'N/A')}\n"
+                    f"  - 平台: {device_info.get('platform', 'Unknown')}"
+                )
                 
                 # 3. 识别厂商并加载配置
                 with EnhancedPerformanceMonitor(logger, "GPU型号配置加载", level="DEBUG"):
@@ -917,6 +976,23 @@ class GPUCollisionEngine(BaseCollisionEngine):
                         max_batch_size=self.batch_size,
                         program=self._gpu_context.program
                     )
+                
+                # 初始化异步执行器(如果启用了异步)
+                if self._gpu_device.enable_async_execution:
+                    logger.info("初始化GPU异步执行器...")
+                    self._async_executor = AsyncGPUExecutor(
+                        self._gpu_device,
+                        max_batch_size=self.batch_size
+                    )
+                    # 初始化双缓冲
+                    self._async_executor.initialize_buffers(
+                        self._gpu_device.context,
+                        num_keys=self.batch_size
+                    )
+                    logger.info("✅ GPU异步执行器已初始化(双缓冲)")
+                else:
+                    self._async_executor = None
+                    logger.info("GPU异步执行器未初始化(使用同步模式)")
                 
                 # 11. 预转换目标地址为 Hash160
                 with EnhancedPerformanceMonitor(logger, "目标地址转换", level="DEBUG"):
@@ -1092,7 +1168,19 @@ class GPUCollisionEngine(BaseCollisionEngine):
         1. 增加初始批次到100万，提高GPU利用率
         2. 异步私钥生成，在GPU计算时并行准备下一批
         3. 减少等待时间，实现持续高吞吐量
+        4. GPU异步执行(双缓冲),消除CPU-GPU等待
         """
+        # 检查是否启用异步执行
+        use_async = self._gpu_device.enable_async_execution and self._async_executor
+        if use_async:
+            logger.info("✅ 使用GPU异步执行模式(双缓冲)")
+            return self._random_search_async()
+        else:
+            logger.info("使用GPU同步执行模式")
+            return self._random_search_sync()
+    
+    def _random_search_sync(self):
+        """同步执行版本(原有逻辑)"""
         import threading
         
         logger.info("GPU _random_search 启动（高性能模式）")
@@ -1262,6 +1350,117 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self.stats.update(batch_count)
         if self.on_complete:
             self.on_complete(self.stats)
+    
+    def _random_search_async(self):
+        """异步执行版本(双缓冲优化)
+        
+        使用AsyncGPUExecutor实现:
+        1. 双OpenCL队列(计算+传输)
+        2. 双缓冲机制(消除等待)
+        3. 异步私钥生成
+        """
+        import threading
+        
+        logger.info("GPU _random_search_async 启动（异步双缓冲模式）")
+        target_hash160s = self._target_hash160s
+        num_targets = len(self._target_list)
+        batch_count = 0
+        batch_num = 0
+        
+        current_batch_size = min(1_000_000, self.batch_size)
+        logger.info(f"初始批次大小: {current_batch_size:,}")
+        
+        # 预生成第一批私钥
+        next_private_keys = b''.join(secrets.token_bytes(32) for _ in range(current_batch_size))
+        
+        # 异步私钥生成
+        def generate_next_batch_async(batch_size: int):
+            result = [None]
+            def _generate():
+                result[0] = b''.join(secrets.token_bytes(32) for _ in range(batch_size))
+            thread = threading.Thread(target=_generate, daemon=True)
+            thread.start()
+            return thread, result
+        
+        gen_thread, gen_result = generate_next_batch_async(self.batch_size)
+        
+        while not self._stop_event.is_set():
+            private_keys = next_private_keys
+            actual_batch_size = len(private_keys) // 32
+            
+            try:
+                batch_num += 1
+                batch_start_time = time.time()
+                
+                # 使用异步执行器
+                matches, execution_time_ms = self._async_executor.run_batch_async(
+                    private_keys=private_keys,
+                    num_keys=actual_batch_size,
+                    program=self._gpu_context.program,
+                    targets_buf=self._gpu_kernel._targets_buf,
+                    num_targets=num_targets
+                )
+                
+                # GPU计算完成后，等待异步生成完成
+                if gen_thread.is_alive():
+                    gen_thread.join(timeout=30.0)
+                    if gen_thread.is_alive():
+                        logger.error(f"异步私钥生成超时")
+                        next_private_keys = b''.join(secrets.token_bytes(32) for _ in range(self.batch_size))
+                    else:
+                        next_private_keys = gen_result[0] if gen_result[0] else b''.join(secrets.token_bytes(32) for _ in range(self.batch_size))
+                else:
+                    next_private_keys = gen_result[0] if gen_result[0] else b''.join(secrets.token_bytes(32) for _ in range(self.batch_size))
+                
+                # 启动下一批生成
+                gen_thread, gen_result = generate_next_batch_async(self.batch_size)
+                
+                # 处理匹配
+                for match in matches:
+                    key_idx = match["key_index"]
+                    private_key = private_keys[key_idx*32:(key_idx+1)*32]
+                    
+                    if not self.dedup_filter.check_and_add(private_key):
+                        continue
+                    
+                    target_idx = match["target_index"]
+                    address = self._target_list[target_idx]
+                    
+                    from ..core.wif import WIF
+                    wif = WIF.encode(private_key, compressed=True)
+                    
+                    self.stats.add_match(private_key, address)
+                    if self.on_match:
+                        self.on_match(private_key, address, wif)
+                
+                batch_count += actual_batch_size
+                self.stats.update(batch_count)
+                
+                # 记录性能
+                if self.gpu_performance_monitor:
+                    try:
+                        memory_mb = self._calculate_gpu_memory_usage(actual_batch_size)
+                        self.gpu_performance_monitor.record_kernel_metrics(
+                            batch_size=actual_batch_size,
+                            execution_time_ms=execution_time_ms,
+                            memory_allocated_mb=memory_mb
+                        )
+                    except Exception as e:
+                        logger.debug(f"记录GPU性能指标失败: {e}")
+                
+                # 进度回调
+                current_time = time.time()
+                if current_time - self._last_progress_time >= self._progress_interval_sec:
+                    if self.on_progress:
+                        self.on_progress(self.stats)
+                    self._save_checkpoint(batch_count)
+                    self._last_progress_time = current_time
+                    
+            except Exception as e:
+                ExceptionHandler.handle_gpu_error("异步随机碰撞", e, self.stats)
+                time.sleep(0.1)
+        
+        logger.info(f"GPU _random_search_async 结束: 共处理 {batch_count} 个私钥")
     
     def _range_scan(self, start: int, end: int):
         """范围扫描模式 - 流水线优化版本"""

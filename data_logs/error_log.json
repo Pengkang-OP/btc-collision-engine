@@ -1,1 +1,145 @@
-[]
+[
+  {
+    "timestamp": 1776767287.3759563,
+    "datetime": "2026-04-21T18:28:07.375956",
+    "type": "address_generation_failed",
+    "message": "生成地址失败",
+    "exception_type": "AttributeError",
+    "exception_message": "'OptimizedP2PKHAddressGenerator' object has no attribute 'generate_address'",
+    "context": {
+      "worker_id": 0
+    }
+  },
+  {
+    "timestamp": 1776767292.3769853,
+    "datetime": "2026-04-21T18:28:12.376985",
+    "type": "address_generation_failed",
+    "message": "生成地址失败",
+    "exception_type": "AttributeError",
+    "exception_message": "'OptimizedP2PKHAddressGenerator' object has no attribute 'generate_address'",
+    "context": {
+      "worker_id": 8
+    }
+  },
+  {
+    "timestamp": 1776767297.3781416,
+    "datetime": "2026-04-21T18:28:17.378142",
+    "type": "address_generation_failed",
+    "message": "生成地址失败",
+    "exception_type": "AttributeError",
+    "exception_message": "'OptimizedP2PKHAddressGenerator' object has no attribute 'generate_address'",
+    "context": {
+      "worker_id": 11
+    }
+  },
+  {
+    "timestamp": 1776767302.3796718,
+    "datetime": "2026-04-21T18:28:22.379672",
+    "type": "address_generation_failed",
+    "message": "生成地址失败",
+    "exception_type": "AttributeError",
+    "exception_message": "'OptimizedP2PKHAddressGenerator' object has no attribute 'generate_address'",
+    "context": {
+      "worker_id": 15
+    }
+  },
+  {
+    "timestamp": 1776767368.3394668,
+    "datetime": "2026-04-21T18:29:28.339467",
+    "type": "address_generation_failed",
+    "message": "生成地址失败",
+    "exception_type": "AttributeError",
+    "exception_message": "'OptimizedP2PKHAddressGenerator' object has no attribute 'generate_address'",
+    "context": {
+      "worker_id": 0
+    }
+  },
+  {
+    "timestamp": 1776767373.3398843,
+    "datetime": "2026-04-21T18:29:33.339884",
+    "type": "address_generation_failed",
+    "message": "生成地址失败",
+    "exception_type": "AttributeError",
+    "exception_message": "'OptimizedP2PKHAddressGenerator' object has no attribute 'generate_address'",
+    "context": {
+      "worker_id": 5
+    }
+  },
+  {
+    "timestamp": 1776767378.341969,
+    "datetime": "2026-04-21T18:29:38.341969",
+    "type": "address_generation_failed",
+    "message": "生成地址失败",
+    "exception_type": "AttributeError",
+    "exception_message": "'OptimizedP2PKHAddressGenerator' object has no attribute 'generate_address'",
+    "context": {
+      "worker_id": 9
+    }
+  },
+  {
+    "timestamp": 1776767383.342182,
+    "datetime": "2026-04-21T18:29:43.342182",
+    "type": "address_generation_failed",
+    "message": "生成地址失败",
+    "exception_type": "AttributeError",
+    "exception_message": "'OptimizedP2PKHAddressGenerator' object has no attribute 'generate_address'",
+    "context": {
+      "worker_id": 2
+    }
+  },
+  {
+    "timestamp": 1776767388.3425338,
+    "datetime": "2026-04-21T18:29:48.342534",
+    "type": "address_generation_failed",
+    "message": "生成地址失败",
+    "exception_type": "AttributeError",
+    "exception_message": "'OptimizedP2PKHAddressGenerator' object has no attribute 'generate_address'",
+    "context": {
+      "worker_id": 10
+    }
+  },
+  {
+    "timestamp": 1776767393.343042,
+    "datetime": "2026-04-21T18:29:53.343042",
+    "type": "address_generation_failed",
+    "message": "生成地址失败",
+    "exception_type": "AttributeError",
+    "exception_message": "'OptimizedP2PKHAddressGenerator' object has no attribute 'generate_address'",
+    "context": {
+      "worker_id": 12
+    }
+  },
+  {
+    "timestamp": 1776767398.344002,
+    "datetime": "2026-04-21T18:29:58.344002",
+    "type": "address_generation_failed",
+    "message": "生成地址失败",
+    "exception_type": "AttributeError",
+    "exception_message": "'OptimizedP2PKHAddressGenerator' object has no attribute 'generate_address'",
+    "context": {
+      "worker_id": 1
+    }
+  },
+  {
+    "timestamp": 1776767923.4917517,
+    "datetime": "2026-04-21T18:38:43.491752",
+    "type": "address_generation_failed",
+    "message": "生成地址失败",
+    "exception_type": "AttributeError",
+    "exception_message": "'OptimizedP2PKHAddressGenerator' object has no attribute 'generate_address'",
+    "context": {
+      "worker_id": 0
+    }
+  },
+  {
+    "timestamp": 1776767928.491897,
+    "datetime": "2026-04-21T18:38:48.491897",
+    "type": "address_generation_failed",
+    "message": "生成地址失败",
+    "exception_type": "AttributeError",
+    "exception_message": "'OptimizedP2PKHAddressGenerator' object has no attribute 'generate_address'",
+    "context": {
+      "worker_id": 2
+    }
+  }
+]
