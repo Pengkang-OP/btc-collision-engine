@@ -1230,5 +1230,16 @@
     "context": {
       "worker_id": 3
     }
+  },
+  {
+    "timestamp": 1776789177.5723479,
+    "datetime": "2026-04-22T00:32:57.572348",
+    "type": "address_generation_failed",
+    "message": "生成地址失败",
+    "exception_type": "AttributeError",
+    "exception_message": "'OptimizedP2PKHAddressGenerator' object has no attribute 'generate_address'",
+    "context": {
+      "worker_id": 5
+    }
   }
 ]
