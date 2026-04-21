@@ -1,29 +1,29 @@
 {
-  "saved_at": "2026-04-21T14:55:05.072751",
-  "uptime": 0.15678668022155762,
+  "saved_at": "2026-04-21T15:05:48.234045",
+  "uptime": 632.8366980552673,
   "engine": {
-    "timestamp": 1776754505.0594172,
-    "mode": "random",
+    "timestamp": 1776755148.2340262,
+    "mode": "range",
     "target_count": 1,
-    "is_running": true,
+    "is_running": false,
     "current_position": 0
   },
   "system": {
-    "timestamp": 1776754505.0594294,
+    "timestamp": 1776755148.234038,
     "os": "nt",
     "python_version": "3.14.3",
     "pid": 21988,
-    "uptime": 0.14345812797546387
+    "uptime": 632.8366854190826
   },
   "performance": {
-    "timestamp": 1776754505.0587146,
-    "datetime": "2026-04-21T14:55:05.058715",
-    "speed": 0.0,
-    "total_checked": 0,
+    "timestamp": 1776755148.2332678,
+    "datetime": "2026-04-21T15:05:48.233268",
+    "speed": 2671.5533313333167,
+    "total_checked": 1000,
     "matches_found": 0,
-    "cpu_usage": 93.4,
-    "memory_usage": 81.33203125,
-    "thread_count": 10,
-    "avg_speed": 0.0
+    "cpu_usage": 0.0,
+    "memory_usage": 83.8359375,
+    "thread_count": 2,
+    "avg_speed": 2671.5533313333167
   }
 }
