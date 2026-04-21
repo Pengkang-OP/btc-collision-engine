@@ -45,6 +45,16 @@
     },
     "turing": {
       "_year_range": "2018-2019",
+      "gtx_1600_series": {
+        "models": ["GTX 1650", "GTX 1650 Super", "GTX 1660", "GTX 1660 Super", "GTX 1660 Ti"],
+        "year": 2019,
+        "compute_capability": "7.5",
+        "recommended_batch_size": 1048576,
+        "max_batch_size": 2097152,
+        "memory_efficiency": 0.65,
+        "optimizations": ["async_transfer", "persistent_buffers", "shared_memory_optimization"],
+        "notes": "Turing架构 mainstream系列,无RT Core但计算能力优秀"
+      },
       "rtx_2000_series": {
         "models": ["RTX 2060", "RTX 2060 Super", "RTX 2070", "RTX 2070 Super", "RTX 2080", "RTX 2080 Super", "RTX 2080 Ti"],
         "year": 2018,

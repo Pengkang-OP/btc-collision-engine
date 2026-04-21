@@ -81,13 +81,21 @@ class GPUProfileLoader:
         
         # 遍历所有架构世代,查找匹配的型号
         for arch_name, arch_data in vendor_data.items():
-            # 跳过元数据字段
-            if arch_name.startswith('_'):
+            # 跳过元数据字段和default配置
+            if arch_name.startswith('_') or arch_name == 'default':
+                continue
+            
+            # 确保arch_data是字典（架构层级）
+            if not isinstance(arch_data, dict):
                 continue
             
             # 遍历该架构下的所有系列
             for series_name, series_data in arch_data.items():
                 if series_name.startswith('_'):
+                    continue
+                
+                # 确保series_data是字典
+                if not isinstance(series_data, dict):
                     continue
                 
                 # 检查型号是否在列表中

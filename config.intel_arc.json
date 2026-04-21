@@ -7,7 +7,7 @@
     },
     "gpu": {
         "use_gpu": true,
-        "device_index": 1,
+        "device_index": 0,
         "gpu_memory_pool": true,
         "max_buffers": 100,
         "max_memory_mb": 1024,
