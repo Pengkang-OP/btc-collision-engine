@@ -1,0 +1,35 @@
+{
+  "report_type": "daily",
+  "generated_at": "2026-04-22T17:30:01.611780",
+  "period_start": "2026-04-22T00:00:00",
+  "period_end": "2026-04-22T17:30:01.611780",
+  "data_points": 949,
+  "summary": {
+    "total_checked": 10000,
+    "matches_found": 1,
+    "avg_speed": 901.813829857962,
+    "max_speed": 21974.663383454706,
+    "min_speed": 0.0,
+    "avg_cpu_usage": 50.546469968387775,
+    "avg_memory_usage": 125.30844556770285,
+    "error_count": 1
+  },
+  "trends": {
+    "speed": {
+      "trend": "increasing",
+      "average": 901.813829857962,
+      "std_dev": 1274.0767633438893
+    },
+    "cpu_usage": {
+      "trend": "decreasing",
+      "average": 50.546469968387775,
+      "std_dev": 52.58064311367113
+    },
+    "memory_usage": {
+      "trend": "decreasing",
+      "average": 125.30844556770285,
+      "std_dev": 56.386601299109095
+    }
+  },
+  "recommendations": []
+}

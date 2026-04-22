@@ -58,6 +58,10 @@ from .thread_pool import (
 from .optimized_address_generator import (
     OptimizedP2PKHAddressGenerator
 )
+from .target_address_table import BitcoinTargetTable
+from .key_generator import SecureKeyGenerator
+from .address_converter import AddressConverter
+from .compliance_validator import BitcoinComplianceValidator
 
 __all__ = [
     'Secp256k1',
@@ -112,5 +116,10 @@ __all__ = [
     'thread_pool_manager',
     'get_thread_pool',
     # 优化版地址生成器
-    'OptimizedP2PKHAddressGenerator'
+    'OptimizedP2PKHAddressGenerator',
+    # 业务逻辑核心模块
+    'BitcoinTargetTable',
+    'SecureKeyGenerator',
+    'AddressConverter',
+    'BitcoinComplianceValidator'
 ]

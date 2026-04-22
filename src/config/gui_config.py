@@ -1,35 +1,67 @@
-"""GUI配置文件 - 存储界面尺寸和样式相关的配置"""
+"""GUI配置文件 - 存储界面尺寸和样式相关的配置
+
+跨平台兼容版本 v2.2.1
+- 支持Windows/Linux/macOS自动字体选择
+- 支持DPI缩放
+- 自适应窗口大小
+"""
+
+# 导入跨平台工具
+try:
+    from ..utils.platform_utils import PlatformUtils
+    _platform_utils_available = True
+except ImportError:
+    _platform_utils_available = False
+
+# 获取平台适配的字体
+if _platform_utils_available:
+    _ui_font = PlatformUtils.get_ui_font()
+    _mono_font = PlatformUtils.get_mono_font()
+else:
+    # 降级到默认字体
+    _ui_font = "Microsoft YaHei"
+    _mono_font = "Consolas"
 
 # 窗口配置
 WINDOW_CONFIG = {
-    "default_width": 800,    # 默认窗口宽度
-    "default_height": 1200,  # 默认窗口高度
+    "default_width": 800,    # 默认窗口宽度（会被自适应覆盖）
+    "default_height": 1200,  # 默认窗口高度（会被自适应覆盖）
     "min_width": 600,        # 最小窗口宽度
     "min_height": 900,       # 最小窗口高度
-    "title": "BTC 碰撞引擎 v2.2.0"  # 窗口标题
+    "title": "BTC 碰撞引擎 v2.2.0",  # 窗口标题
+    "use_adaptive_size": True,  # 是否使用自适应窗口大小
+    "width_ratio": 0.75,     # 窗口宽度占屏幕比例
+    "height_ratio": 0.80,    # 窗口高度占屏幕比例
 }
 
 # 布局配置
+# 状态: 部分配置已在代码中硬编码，计划v2.3.0实现动态布局
+# TODO: v2.3.0 实现动态布局配置，使这些配置项生效
 LAYOUT_CONFIG = {
-    "main_padding_x": 15,    # 主容器水平边距
-    "main_padding_y": 15,    # 主容器垂直边距
-    "section_spacing": 10,   # 区块间距
-    "alert_panel_ratio": 0.3,  # 告警面板默认占比（30%）
-    "use_paned_window": True,  # 是否使用可调整面板
+    "main_padding_x": 15,    # 主容器水平边距 [计划中]
+    "main_padding_y": 15,    # 主容器垂直边距 [计划中]
+    "section_spacing": 10,   # 区块间距 [计划中]
+    "alert_panel_ratio": 0.3,  # 告警面板默认占比（30%） [已部分实现]
+    "use_paned_window": True,  # 是否使用可调整面板 [已实现]
 }
 
 # 动画和交互配置
+# 状态: v2.2.0基础实现，完整功能计划v2.3.0
+# TODO: v2.3.0 实现交互动画和主题切换功能
 INTERACTION_CONFIG = {
-    "stats_update_interval": 100,  # 统计更新间隔（毫秒）
-    "alert_update_interval": 5000,  # 告警更新间隔（毫秒）
-    "button_hover_effect": True,    # 按钮悬停效果
-    "theme_switching": True,        # 支持主题切换
+    "stats_update_interval": 100,  # 统计更新间隔（毫秒） [已实现: 硬编码100ms]
+    "alert_update_interval": 5000,  # 告警更新间隔（毫秒） [已实现: 硬编码5000ms]
+    "button_hover_effect": True,    # 按钮悬停效果 [计划中]
+    "theme_switching": True,        # 支持主题切换 [计划中]
 }
 
 # 主题配置
+# 状态: v2.2.0仅实现深色主题，多主题计划v2.3.0
+# TODO: v2.3.0 实现多主题切换功能
 THEME_CONFIG = {
     "current_theme": "dark_catppuccin",  # 当前主题
     "available_themes": ["dark_catppuccin", "dark_material", "light_default"],  # 可用主题
+    "theme_switching_enabled": False,  # 是否启用主题切换 [计划中]
 }
 
 # 组件尺寸配置
@@ -65,17 +97,25 @@ COMPONENT_CONFIG = {
     }
 }
 
-# 字体配置
+# 字体配置 - 跨平台兼容
 FONT_CONFIG = {
-    "title": ("Microsoft YaHei", 16, "bold"),      # 标题字体
-    "subtitle": ("Microsoft YaHei", 9),            # 副标题字体
-    "section_title": ("Microsoft YaHei", 11, "bold"),  # 区块标题字体
-    "label": ("Microsoft YaHei", 10),             # 标签字体
-    "hint": ("Microsoft YaHei", 8),              # 提示字体
-    "button": ("Microsoft YaHei", 9),            # 按钮字体
-    "button_large": ("Microsoft YaHei", 11, "bold"),  # 大按钮字体
-    "monospace": ("Consolas", 10),               # 等宽字体（用于输入框和日志）
-    "status_bar": ("Microsoft YaHei", 9),        # 状态栏字体
+    "title": (_ui_font, 16, "bold"),      # 标题字体
+    "subtitle": (_ui_font, 9),            # 副标题字体
+    "section_title": (_ui_font, 11, "bold"),  # 区块标题字体
+    "label": (_ui_font, 10),             # 标签字体
+    "hint": (_ui_font, 8),              # 提示字体
+    "button": (_ui_font, 9),            # 按钮字体
+    "button_large": (_ui_font, 11, "bold"),  # 大按钮字体
+    "monospace": (_mono_font, 10),               # 等宽字体（用于输入框和日志）
+    "status_bar": (_ui_font, 9),        # 状态栏字体
+}
+
+# 平台信息
+PLATFORM_INFO = {
+    "current_platform": PlatformUtils.get_platform_name() if _platform_utils_available else "Unknown",
+    "ui_font": _ui_font,
+    "mono_font": _mono_font,
+    "dpi_scale": PlatformUtils.get_dpi_scale() if _platform_utils_available else 1.0,
 }
 
 # 颜色配置 - Catppuccin Mocha 主题
@@ -114,10 +154,68 @@ COLOR_CONFIG = {
 }
 
 # 间距配置
+# 状态: 已在v2.2.1统一使用
+# 说明: 所有UI组件应使用PADDING_CONFIG中的配置值
 PADDING_CONFIG = {
-    "window_padx": 15,    # 窗口内边距（水平）
-    "window_pady": 15,    # 窗口内边距（垂直）
-    "section_pady": 10,   # 区块间距
-    "element_padx": 8,    # 元素间距（水平）
-    "element_pady": 3     # 元素间距（垂直）
+    "window_padx": 10,    # 窗口内边距（水平） [已使用]
+    "window_pady": 10,    # 窗口内边距（垂直） [已使用]
+    "section_pady": 5,    # 区块间距 [已使用]
+    "element_padx": 5,    # 元素间距（水平） [已使用]
+    "element_pady": 2     # 元素间距（垂直） [已使用]
 }
+
+# 便捷访问
+WINDOW_PADX = PADDING_CONFIG["window_padx"]
+WINDOW_PADY = PADDING_CONFIG["window_pady"]
+SECTION_PADY = PADDING_CONFIG["section_pady"]
+ELEMENT_PADX = PADDING_CONFIG["element_padx"]
+ELEMENT_PADY = PADDING_CONFIG["element_pady"]
+
+
+# 配置验证函数
+def validate_color_config():
+    """
+    验证颜色配置格式是否正确
+    
+    Raises:
+        ValueError: 如果颜色格式不正确
+    """
+    import re
+    hex_pattern = re.compile(r'^#[0-9a-fA-F]{6}$')
+    
+    for key, value in COLOR_CONFIG.items():
+        if not isinstance(value, str):
+            raise ValueError(f"颜色配置 {key} 必须是字符串，当前类型: {type(value).__name__}")
+        if not hex_pattern.match(value):
+            raise ValueError(
+                f"颜色配置 {key} 格式错误: {value}\n"
+                f"预期格式: #RRGGBB (例如: #1e1e2e)"
+            )
+    
+    return True
+
+
+def validate_all_configs():
+    """
+    验证所有配置项的有效性
+    
+    Returns:
+        bool: 验证是否通过
+    """
+    # 验证窗口配置
+    if WINDOW_CONFIG["default_width"] < WINDOW_CONFIG["min_width"]:
+        raise ValueError("窗口默认宽度不能小于最小宽度")
+    if WINDOW_CONFIG["default_height"] < WINDOW_CONFIG["min_height"]:
+        raise ValueError("窗口默认高度不能小于最小高度")
+    
+    # 验证组件配置
+    for component_name, config in COMPONENT_CONFIG.items():
+        if "font" in config:
+            font = config["font"]
+            if not isinstance(font, tuple) or len(font) < 2:
+                raise ValueError(f"组件 {component_name} 的字体配置格式错误")
+    
+    # 验证颜色配置
+    validate_color_config()
+    
+    return True

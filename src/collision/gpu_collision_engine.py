@@ -67,6 +67,7 @@ except ImportError:
 from ..core.address_generator import P2PKHAddressGenerator
 from ..core.secp256k1 import Secp256k1
 from ..core.base58 import Base58
+from ..core.wif import WIF  # P1修复: 提前导入,避免循环内重复导入
 from .collision_stats import CollisionStats
 from .checkpoint_manager import CheckpointManager
 from .deduplication_filter import DeduplicationFilter
@@ -110,15 +111,15 @@ class GPUKernel(GPUKernelProtocol):
             max_batch_size: 最大批次大小（None=自动计算）
             program: 已编译的OpenCL程序（可选，如果提供则跳过编译）
         """
-        self.device = device
+        self._device = device
         self.gpu_optimizer = get_gpu_optimizer()
         
         # 如果没有指定max_batch_size，根据GPU显存自动计算
         if max_batch_size is None:
             max_batch_size = self._calculate_optimal_batch_size()
         
-        self.max_batch_size = max_batch_size
-        self.program = program  # 可能为None（需要自行编译）
+        self._max_batch_size = max_batch_size
+        self._program = program  # 可能为None（需要自行编译）
         self._batch_kernel = None
         
         # 持久化 Buffer - 避免频繁分配/释放
@@ -142,6 +143,33 @@ class GPUKernel(GPUKernelProtocol):
         self._verify()
         self._allocate_buffers()
     
+    @property
+    def device(self) -> Any:  # GPUDevice
+        """GPU设备对象
+        
+        Returns:
+            GPUDevice实例，包含OpenCL上下文、队列等设备信息
+        """
+        return self._device
+    
+    @property
+    def max_batch_size(self) -> int:
+        """最大批次大小
+        
+        Returns:
+            GPU内核能够处理的最大私钥数量
+        """
+        return self._max_batch_size
+    
+    @property
+    def program(self) -> Optional[Any]:  # Optional[cl.Program]
+        """已编译的OpenCL程序
+        
+        Returns:
+            pyopencl.Program实例，或None（如果尚未编译）
+        """
+        return self._program
+    
     def _compile(self):
         """编译 OpenCL 内核（带性能监控）"""
         import time
@@ -149,7 +177,7 @@ class GPUKernel(GPUKernelProtocol):
         compile_start = time.time()
         try:
             # 使用新模块的内核源码
-            self.program = cl.Program(self.device.context, OPENCL_KERNEL_SOURCE).build()
+            self._program = cl.Program(self.device.context, OPENCL_KERNEL_SOURCE).build()
             compile_time_ms = (time.time() - compile_start) * 1000
             
             logger.info(f"OpenCL 内核编译成功: {compile_time_ms:.0f}ms")
@@ -175,7 +203,7 @@ class GPUKernel(GPUKernelProtocol):
                         f"根据性能优化调整batch_size: "
                         f"{self.max_batch_size} -> {profile.max_batch_size}"
                     )
-                    self.max_batch_size = profile.max_batch_size
+                    self._max_batch_size = profile.max_batch_size
                     
             except Exception as opt_error:
                 logger.warning(f"GPU性能优化失败: {opt_error}")
@@ -301,6 +329,23 @@ class GPUKernel(GPUKernelProtocol):
                 f"但 num_keys={num_keys} 需要 {num_keys * 32} 字节"
             )
         
+        # P0修复: 显存溢出检查
+        # 计算所需显存: 私钥缓冲区 + 匹配结果 + 目标地址 + 20% overhead
+        target_buffer_size = len(self._target_hash160s) if self._target_hash160s else 0
+        required_memory = (num_keys * 32) + (num_keys * 4) + target_buffer_size
+        required_memory_with_overhead = int(required_memory * 1.2)
+        
+        # 获取GPU最大可用显存(80%为安全阈值)
+        device_info = self.device.get_device_info() if hasattr(self.device, 'get_device_info') else {}
+        max_memory = device_info.get('global_mem_size', 0)
+        safe_memory_limit = int(max_memory * 0.8) if max_memory > 0 else float('inf')
+        
+        if required_memory_with_overhead > safe_memory_limit:
+            raise MemoryError(
+                f"所需显存 {required_memory_with_overhead/1024**2:.0f}MB 超过安全限制 {safe_memory_limit/1024**2:.0f}MB\n"
+                f"建议: 减小 batch_size 从 {num_keys} 到 {int(num_keys * safe_memory_limit / required_memory_with_overhead)}"
+            )
+        
         # 设置目标（仅在第一次或目标变化时）
         if target_hash160s is not None:
             self.set_targets(target_hash160s, num_targets)
@@ -369,6 +414,13 @@ class GPUKernel(GPUKernelProtocol):
         
         # 检查是否超时
         if not execution_completed[0]:
+            # P1修复: 超时后尝试清理资源
+            try:
+                logger.warning("GPU执行超时，尝试强制完成队列以清理资源")
+                self.device.queue.finish()  # 强制完成队列
+            except Exception as cleanup_error:
+                logger.error(f"强制清理GPU队列失败: {cleanup_error}")
+            
             raise RuntimeError(f"GPU执行超时{timeout_seconds}秒，内核可能已hang")
         
         # 收集匹配结果
@@ -458,16 +510,36 @@ class GPUKernel(GPUKernelProtocol):
         return matches
     
     def cleanup(self):
-        """清理资源"""
-        if self._keys_buf:
-            self._keys_buf = None
-        if self._match_buf:
-            self._match_buf = None
-        if self._targets_buf:
-            self._targets_buf = None
+        """清理GPU资源
+        
+        P1修复: 显式释放OpenCL Buffer,防止显存泄漏
+        """
+        import pyopencl as cl
+        
+        # P1修复: 显式释放OpenCL Buffer
+        buffers_to_release = [
+            ("_keys_buf", self._keys_buf),
+            ("_match_buf", self._match_buf),
+            ("_targets_buf", self._targets_buf),
+        ]
+        
+        for buf_name, buf in buffers_to_release:
+            if buf is not None:
+                try:
+                    buf.release()  # 显式释放OpenCL资源
+                    logger.debug(f"已释放 {buf_name}")
+                except Exception as e:
+                    logger.warning(f"释放 {buf_name} 失败: {e}")
+        
+        # 清空引用
+        self._keys_buf = None
+        self._match_buf = None
+        self._targets_buf = None
         self._match_flags = None
-        self.program = None
+        self._program = None
         self._batch_kernel = None
+        
+        logger.debug("GPU Kernel资源已清理")
 
 
 class GPUCollisionEngine(BaseCollisionEngine):
@@ -1008,7 +1080,19 @@ class GPUCollisionEngine(BaseCollisionEngine):
                     stats=self.stats,
                     context="初始化"
                 )
-                raise RuntimeError(f"GPU 初始化失败: {e}") from e
+                # P0修复: 提供回退机制提示
+                logger.error(
+                    f"GPU初始化失败: {e}\n"
+                    f"建议操作:\n"
+                    f"  1. 检查GPU驱动是否正常\n"
+                    f"  2. 验证OpenCL环境配置\n"
+                    f"  3. 使用CPU引擎作为备选方案\n"
+                    f"  4. 查看日志获取详细错误信息"
+                )
+                raise RuntimeError(
+                    f"GPU初始化失败: {e}。"
+                    f"请检查GPU驱动和OpenCL环境,或使用CPU引擎作为备选方案。"
+                ) from e
     
     def _prepare_targets(self):
         """将目标地址转换为 Hash160"""
@@ -1256,16 +1340,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
         # 预生成第一批私钥
         next_private_keys = b''.join(secrets.token_bytes(32) for _ in range(current_batch_size))
         
-        # 异步私钥生成
-        def generate_next_batch_async(batch_size: int):
-            result = [None]
-            def _generate():
-                result[0] = b''.join(secrets.token_bytes(32) for _ in range(batch_size))
-            thread = threading.Thread(target=_generate, daemon=True)
-            thread.start()
-            return thread, result
-        
-        gen_thread, gen_result = generate_next_batch_async(self.batch_size)
+        # P2修复: 复用已有的_start_async_key_generation方法,避免重复定义
+        gen_thread, gen_result = self._start_async_key_generation(self.batch_size)
         
         while not self._stop_event.is_set():
             private_keys = next_private_keys
@@ -1309,7 +1385,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
                     target_idx = match["target_index"]
                     address = self._target_list[target_idx]
                     
-                    from ..core.wif import WIF
+                    # P1修复: 使用顶部导入的WIF
                     wif = WIF.encode(private_key, compressed=True)
                     
                     self.stats.add_match(private_key, address)
@@ -1458,7 +1534,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             target_idx = match["target_index"]
             address = self._target_list[target_idx]
             
-            from ..core.wif import WIF
+            # P1修复: 使用顶部导入的WIF,避免循环内重复导入
             wif = WIF.encode(private_key, compressed=True)
             
             self.stats.add_match(private_key, address)
@@ -1577,7 +1653,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
                     target_idx = match["target_index"]
                     address = self._target_list[target_idx]
                     
-                    from ..core.wif import WIF
+                    # P1修复: 使用顶部导入的WIF
                     wif = WIF.encode(private_key, compressed=True)
                     
                     self.stats.add_match(private_key, address)
@@ -1634,7 +1710,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
                     target_idx = match["target_index"]
                     address = self._target_list[target_idx]
                     
-                    from ..core.wif import WIF
+                    # P1修复: 使用顶部导入的WIF
                     wif = WIF.encode(private_key, compressed=True)
                     
                     self.stats.add_match(private_key, address)

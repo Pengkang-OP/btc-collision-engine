@@ -1,0 +1,3 @@
+# 性能日志 - 比特币密钥碰撞检测
+# 创建时间: 2026-04-22T04:08:55.130566
+# 格式: timestamp,speed,total_checked,matches,cpu_usage,memory_usage,threads
