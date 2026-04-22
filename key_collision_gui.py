@@ -27,12 +27,27 @@ from src.core import (
 from src.collision import (
     KeyCollisionEngine, TargetResolver, CollisionStats
 )
-from src.config.gui_config import WINDOW_CONFIG, COMPONENT_CONFIG, FONT_CONFIG, COLOR_CONFIG, PADDING_CONFIG, LAYOUT_CONFIG, INTERACTION_CONFIG
+from src.config.gui_config import WINDOW_CONFIG, COMPONENT_CONFIG, FONT_CONFIG, COLOR_CONFIG, PADDING_CONFIG, LAYOUT_CONFIG, INTERACTION_CONFIG, PLATFORM_INFO
 from src.utils.ui_helpers import (
     format_timestamp, format_mode_name, format_number_with_commas,
     format_speed, format_elapsed_time, format_eta, truncate_address,
     validate_address_format, validate_hex_string, sanitize_display_text
 )
+
+# 导入跨平台工具（自适应窗口大小）
+try:
+    from src.utils.platform_utils import PlatformUtils
+    _platform_utils_available = True
+except ImportError:
+    _platform_utils_available = False
+
+# 导入UI辅助工具（工具提示和引导）
+try:
+    from src.utils.ui_tutorial import setup_tutorials, UserGuide
+    _tutorial_available = True
+except ImportError:
+    _tutorial_available = False
+from src import __version__
 
 # 导入告警面板(可选)
 try:
@@ -42,6 +57,7 @@ except ImportError:
     ALERT_PANEL_AVAILABLE = False
 
 # 导入GPU组件(可选)
+# TODO: v2.3.0 集成 GPU 选择器和监控面板到主界面
 try:
     from src.gui.components.gpu_selector import GPUSelectorPanel
     from src.gui.components.multi_gpu_monitor import MultiGPUMonitorPanel
@@ -172,6 +188,30 @@ class TargetInputFrame(tk.Frame):
             except Exception as e:
                 messagebox.showerror("导入错误", f"无法读取文件:\n{str(e)}")
     
+    def _highlight_invalid_lines(self, line_numbers):
+        """高亮显示无效输入行
+        
+        参数:
+            line_numbers: 无效行号列表（从1开始）
+        """
+        # 清除之前的高亮
+        self.text_input.tag_remove('invalid', '1.0', tk.END)
+        
+        # 配置高亮样式
+        self.text_input.tag_configure(
+            'invalid',
+            background=COLOR_CONFIG.get('error', '#f38ba8'),
+            foreground='#1e1e2e'
+        )
+        
+        # 高亮无效行
+        for line_num in line_numbers:
+            self.text_input.tag_add(
+                'invalid',
+                f'{line_num}.0',
+                f'{line_num}.end'
+            )
+    
     def _on_parse(self):
         """解析目标按钮回调"""
         content = self.text_input.get('1.0', tk.END).strip()
@@ -180,7 +220,9 @@ class TargetInputFrame(tk.Frame):
         # 过滤空行和注释
         inputs = []
         invalid_inputs = []
-        for line in lines:
+        invalid_line_numbers = []
+        
+        for idx, line in enumerate(lines, 1):
             line = line.strip()
             if line and not line.startswith('#'):
                 # 验证输入格式
@@ -188,15 +230,31 @@ class TargetInputFrame(tk.Frame):
                     inputs.append(line)
                 else:
                     invalid_inputs.append(line)
+                    invalid_line_numbers.append(idx)
         
         if not inputs:
-            messagebox.showerror("解析失败", "未能解析任何有效的目标地址\n\n请检查输入格式是否正确\n\n支持的格式：\n- P2PKH地址（以1开头）\n- P2SH地址（以3开头）\n- Bech32地址（以bc1开头）\n- WIF私钥（以5/K/L开头）\n- 公钥（66或130位十六进制）")
+            # 无有效输入，高亮所有行并显示错误
+            self._highlight_invalid_lines(invalid_line_numbers)
+            
+            messagebox.showerror(
+                "解析失败", 
+                "未能解析任何有效的目标地址\n\n"
+                "常见原因：\n"
+                "• 地址包含空格或特殊字符\n"
+                "• 使用了不支持的地址格式\n\n"
+                "点击'帮助'查看支持的格式"
+            )
             return
         
         # 如果有无效输入，显示警告
         if invalid_inputs:
-            warning_msg = f"发现 {len(invalid_inputs)} 个无效输入，已忽略\n\n"
-            warning_msg += "无效输入示例：\n"
+            # 高亮无效行
+            self._highlight_invalid_lines(invalid_line_numbers)
+            
+            warning_msg = (
+                f"发现 {len(invalid_inputs)} 个无效输入，已忽略\n\n"
+                "无效输入示例：\n"
+            )
             for inv in invalid_inputs[:3]:  # 只显示前3个
                 warning_msg += f"  - {truncate_address(inv, 30)}\n"
             if len(invalid_inputs) > 3:
@@ -930,12 +988,25 @@ class ResultLogFrame(tk.Frame):
     
     def _create_widgets(self):
         """创建界面组件"""
+        # 标题和按钮容器
+        header_frame = tk.Frame(self, bg=Colors.SURFACE)
+        header_frame.pack(fill=tk.X, padx=10, pady=(10, 5))
+        
         # 标题
         title = tk.Label(
-            self, text="日志/结果", font=("Microsoft YaHei", 11, "bold"),
+            header_frame, text="日志/结果", font=("Microsoft YaHei", 11, "bold"),
             bg=Colors.SURFACE, fg=Colors.ACCENT
         )
-        title.pack(anchor=tk.W, padx=10, pady=(10, 5))
+        title.pack(side=tk.LEFT)
+        
+        # 导出按钮
+        self.btn_export = tk.Button(
+            header_frame, text="导出结果", font=("Microsoft YaHei", 9),
+            bg=Colors.BUTTON_BG, fg=Colors.FG, activebackground=Colors.BUTTON_HOVER,
+            activeforeground=Colors.FG, relief=tk.FLAT, cursor="hand2",
+            command=self._export_results
+        )
+        self.btn_export.pack(side=tk.RIGHT)
         
         # 日志文本框
         self.log_text = scrolledtext.ScrolledText(
@@ -1036,6 +1107,63 @@ class ResultLogFrame(tk.Frame):
         """记录警告消息"""
         self.log(message, "warning")
     
+    def _export_results(self):
+        """导出碰撞结果"""
+        filepath = filedialog.asksaveasfilename(
+            title="导出碰撞结果",
+            defaultextension=".json",
+            filetypes=[("JSON文件", "*.json"), ("文本文件", "*.txt"), ("所有文件", "*.*")]
+        )
+        if filepath:
+            try:
+                # 获取日志内容
+                self.log_text.config(state=tk.NORMAL)
+                content = self.log_text.get('1.0', tk.END)
+                self.log_text.config(state=tk.DISABLED)
+                
+                if filepath.endswith('.json'):
+                    # 导出为JSON格式（仅匹配结果）
+                    import re
+                    matches = []
+                    for line in content.split('\n'):
+                        if '✅ 匹配成功' in line or 'MATCH' in line:
+                            matches.append(line)
+                    
+                    export_data = {
+                        "export_time": datetime.now().isoformat(),
+                        "total_matches": len(matches),
+                        "matches": matches
+                    }
+                    
+                    with open(filepath, 'w', encoding='utf-8') as f:
+                        json.dump(export_data, f, ensure_ascii=False, indent=2)
+                else:
+                    # 导出为文本
+                    with open(filepath, 'w', encoding='utf-8') as f:
+                        f.write(content)
+                
+                # 设置文件权限
+                try:
+                    os.chmod(filepath, 0o600)
+                except OSError:
+                    pass
+                
+                self.log_success(f"结果已导出到: {filepath}")
+                messagebox.showinfo("导出成功", f"已导出碰撞结果到:\n{filepath}")
+                
+            except ValueError as e:
+                logging.error("导出参数错误: %s", str(e))
+                self.log_error(f"导出失败: {str(e)}")
+                messagebox.showerror("导出失败", f"参数错误:\n{str(e)}")
+            except IOError as e:
+                logging.error("导出文件IO错误: %s", str(e))
+                self.log_error(f"导出失败: {str(e)}")
+                messagebox.showerror("导出失败", f"文件写入错误:\n{str(e)}")
+            except Exception as e:
+                logging.error("导出失败: %s", str(e), exc_info=True)
+                self.log_error(f"导出失败: {str(e)}")
+                messagebox.showerror("导出失败", f"未知错误:\n{str(e)}")
+    
     def _on_export(self):
         """导出日志按钮回调"""
         filepath = filedialog.asksaveasfilename(
@@ -1077,11 +1205,43 @@ class CollisionGUI:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title(WINDOW_CONFIG["title"])
-        self.root.geometry(f"{WINDOW_CONFIG['default_width']}x{WINDOW_CONFIG['default_height']}")
+        
+        # 自适应窗口大小
+        if WINDOW_CONFIG.get("use_adaptive_size", True) and _platform_utils_available:
+            try:
+                width_ratio = WINDOW_CONFIG.get("width_ratio", 0.75)
+                height_ratio = WINDOW_CONFIG.get("height_ratio", 0.80)
+                width, height = PlatformUtils.get_optimal_window_size(
+                    root, width_ratio, height_ratio
+                )
+                self.root.geometry(f"{width}x{height}")
+                logging.info("使用自适应窗口大小: %dx%d", width, height)
+            except Exception as e:
+                logging.warning("自适应窗口失败，使用默认大小: %s", str(e))
+                self.root.geometry(f"{WINDOW_CONFIG['default_width']}x{WINDOW_CONFIG['default_height']}")
+        else:
+            self.root.geometry(f"{WINDOW_CONFIG['default_width']}x{WINDOW_CONFIG['default_height']}")
+        
         self.root.configure(bg=Colors.BG)
         
         # 设置窗口最小尺寸
         self.root.minsize(WINDOW_CONFIG["min_width"], WINDOW_CONFIG["min_height"])
+        
+        # 高分屏DPI缩放提示
+        if _platform_utils_available:
+            dpi_scale = PlatformUtils.get_dpi_scale(root)
+            if dpi_scale > 1.2:
+                logging.info("检测到高分屏 (DPI缩放: %.2f)", dpi_scale)
+        
+        # 打印平台信息
+        if PLATFORM_INFO:
+            logging.info(
+                "平台: %s | UI字体: %s | 等宽字体: %s | DPI: %.2f",
+                PLATFORM_INFO.get("current_platform", "Unknown"),
+                PLATFORM_INFO.get("ui_font", "Unknown"),
+                PLATFORM_INFO.get("mono_font", "Unknown"),
+                PLATFORM_INFO.get("dpi_scale", 1.0)
+            )
         
         # 初始化组件
         self.resolver = TargetResolver()
@@ -1092,12 +1252,40 @@ class CollisionGUI:
         self._cached_gpu_config = None
         self._config_loaded = False
         
+        # 状态栏更新频率限制（性能优化）
+        self._last_status_update = 0.0
+        self._status_update_interval = 1.0  # 最少1秒更新一次
+        
         # 状态栏
         self.status_bar_text = tk.StringVar()
         self.status_bar_text.set("就绪")
         
         self._create_widgets()
         self._setup_bindings()
+        
+        # 配置验证
+        self._validate_configs()
+    
+    def update_status(self, text: str, force: bool = False) -> None:
+        """更新状态栏（带频率限制，避免UI卡顿）
+        
+        Args:
+            text: 状态文本
+            force: 是否强制立即更新（忽略频率限制）
+        """
+        current_time = time.time()
+        if force or (current_time - self._last_status_update >= self._status_update_interval):
+            self.status_bar_text.set(text)
+            self._last_status_update = current_time
+        
+        # 设置工具提示和用户引导
+        if _tutorial_available:
+            setup_tutorials(self)
+            self.user_guide = UserGuide(root)
+            # 延迟显示欢迎引导（等UI完全加载）
+            root.after(1000, self._show_welcome_guide)
+        else:
+            self.user_guide = None
         
         # 启动定时器更新统计
         self._schedule_stats_update()
@@ -1127,6 +1315,19 @@ class CollisionGUI:
         self.control_panel = ControlPanel(main_container, on_mode_change=self._on_mode_change)
         self.control_panel.pack(fill=tk.X, pady=5)
         
+        # GPU选择器(如果可用)
+        self.gpu_selector = None
+        if GPU_COMPONENTS_AVAILABLE:
+            try:
+                self.gpu_selector = GPUSelectorPanel(main_container)
+                self.gpu_selector.pack(fill=tk.X, pady=5)
+                # 设置应用回调
+                self.gpu_selector.set_apply_callback(self._on_gpu_config_applied)
+                logging.info("GPU选择器已集成到主界面")
+            except Exception as e:
+                logging.warning("GPU选择器集成失败: %s", str(e))
+                self.gpu_selector = None
+        
         # 实时统计
         self.stats_display = StatsDisplay(main_container)
         self.stats_display.pack(fill=tk.X, pady=5)
@@ -1149,19 +1350,36 @@ class CollisionGUI:
             self.log_frame.pack(fill=tk.BOTH, expand=True)
             alert_paned.add(log_container, minsize=200)
             
-            # 告警面板
-            alert_container = tk.Frame(alert_paned, bg="#1E1E1E")
-            self.alert_panel = AlertPanel(alert_container)
-            self.alert_panel.pack(fill=tk.BOTH, expand=True)
-            alert_paned.add(alert_container, minsize=150)
+            # 告警和GPU监控容器
+            bottom_container = tk.Frame(alert_paned, bg=Colors.BG)
             
-            # 默认分配比例: 日志70%, 告警30%
+            # 告警面板
+            alert_container = tk.Frame(bottom_container, bg="#1E1E1E")
+            self.alert_panel = AlertPanel(alert_container)
+            self.alert_panel.pack(fill=tk.BOTH, expand=True, pady=5)
+            
+            # 多GPU监控面板(如果可用)
+            self.gpu_monitor = None
+            if GPU_COMPONENTS_AVAILABLE:
+                try:
+                    self.gpu_monitor = MultiGPUMonitorPanel(bottom_container)
+                    self.gpu_monitor.pack(fill=tk.X, pady=5)
+                    logging.info("多GPU监控面板已集成到主界面")
+                except Exception as e:
+                    logging.warning("多GPU监控面板集成失败: %s", str(e))
+                    self.gpu_monitor = None
+            
+            bottom_container.pack(fill=tk.BOTH, expand=True)
+            alert_paned.add(bottom_container, minsize=150)
+            
+            # 默认分配比例: 日志70%, 告警+GPU 30%
             alert_paned.sash_place(0, 0, int(WINDOW_CONFIG['default_height'] * 0.7))
         else:
             # 日志/结果区
             self.log_frame = ResultLogFrame(main_container)
             self.log_frame.pack(fill=tk.BOTH, expand=True, pady=5)
             self.alert_panel = None
+            self.gpu_monitor = None
         
         # 绑定控制按钮
         self.control_panel.btn_start.config(command=self._on_start)
@@ -1191,7 +1409,7 @@ class CollisionGUI:
         # 版本信息
         version_label = tk.Label(
             status_bar,
-            text="v2.2.0",
+            text=f"v{__version__}",
             font=FONT_CONFIG["status_bar"],
             bg=Colors.SURFACE,
             fg=Colors.SUBTEXT0 if hasattr(Colors, 'SUBTEXT0') else Colors.INFO,
@@ -1203,6 +1421,61 @@ class CollisionGUI:
         """设置事件绑定"""
         # 窗口关闭事件
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
+        
+        # 快捷键绑定
+        self._setup_shortcuts()
+    
+    def _setup_shortcuts(self):
+        """设置快捷键"""
+        try:
+            # Ctrl+Enter - 开始碰撞
+            self.root.bind('<Control-Return>', lambda e: self._on_start())
+            
+            # Ctrl+Shift+S - 停止碰撞
+            self.root.bind('<Control-Shift-S>', lambda e: self._on_stop())
+            self.root.bind('<Control-Shift-s>', lambda e: self._on_stop())  # 小写s
+            
+            # F5 - 恢复
+            self.root.bind('<F5>', lambda e: self._on_resume())
+            
+            # Ctrl+O - 导入文件
+            if hasattr(self, 'target_frame'):
+                self.root.bind('<Control-o>', lambda e: self.target_frame._on_import())
+                self.root.bind('<Control-O>', lambda e: self.target_frame._on_import())
+            
+            # Ctrl+H - 帮助
+            self.root.bind('<Control-h>', lambda e: self._show_help())
+            self.root.bind('<Control-H>', lambda e: self._show_help())
+            
+            logging.info("快捷键设置完成")
+        except ValueError as e:
+            logging.error("快捷键绑定参数错误: %s", str(e))
+        except Exception as e:
+            logging.error("设置快捷键失败: %s", str(e), exc_info=True)
+    
+    def _show_welcome_guide(self):
+        """显示欢迎引导"""
+        if self.user_guide and not self.user_guide._has_shown_welcome:
+            self.user_guide.show_welcome_guide()
+    
+    def _show_help(self):
+        """显示帮助"""
+        if self.user_guide:
+            self.user_guide.show_format_help()
+    
+    def _validate_configs(self):
+        """启动时验证配置"""
+        try:
+            from src.config.gui_config import validate_all_configs
+            validate_all_configs()
+            logging.info("✅ 配置文件验证通过")
+            self.update_status("就绪 | 配置验证通过", force=True)
+        except Exception as e:
+            error_msg = f"配置文件存在问题:\n{str(e)}\n\n将使用默认配置"
+            logging.warning("配置验证失败: %s", str(e))
+            # 延迟显示警告（等UI完全加载）
+            self.root.after(500, lambda: messagebox.showwarning("配置警告", error_msg))
+            self.update_status("就绪 | 配置验证失败", force=True)
     
     def _load_gpu_config_from_file(self) -> Optional[Dict]:
         """从配置文件加载GPU配置
@@ -1218,64 +1491,136 @@ class CollisionGUI:
         if self._config_loaded:
             return self._cached_gpu_config
         
-        import json
-        from pathlib import Path
-        from typing import Dict, Optional
-        
         # 配置文件列表(按优先级)
-        config_files = [
+        config_files = self._get_config_file_paths()
+        
+        for cfg_file in config_files:
+            config = self._try_load_single_config(cfg_file)
+            if config:
+                self._cached_gpu_config = config
+                self._config_loaded = True
+                return config
+        
+        return None
+    
+    def _get_config_file_paths(self) -> List:
+        """获取配置文件列表（按优先级）
+        
+        Returns:
+            配置文件路径列表
+        """
+        from pathlib import Path
+        return [
             Path(__file__).parent / 'config.intel_arc.json',
             Path(__file__).parent / 'config.json',
         ]
+    
+    def _try_load_single_config(self, cfg_file) -> Optional[Dict]:
+        """尝试加载单个配置文件
         
-        for cfg_file in config_files:
-            if not cfg_file.exists():
-                continue
+        Args:
+            cfg_file: 配置文件路径
             
-            try:
-                with open(cfg_file, 'r', encoding='utf-8') as f:
-                    full_config = json.load(f)
-                
-                # 提取GPU配置
-                config = {}
-                if 'gpu' in full_config:
-                    config['gpu'] = full_config['gpu']
-                
-                # engine.batch_size优先级最高
-                if 'engine' in full_config:
-                    engine_batch_size = full_config['engine'].get('batch_size')
-                    if isinstance(engine_batch_size, int) and engine_batch_size > 0:
-                        if 'gpu' not in config:
-                            config['gpu'] = {}
-                        config['gpu']['batch_size'] = engine_batch_size
-                    elif engine_batch_size is not None:
-                        self.log_frame.log(f"⚠️ 无效的batch_size: {engine_batch_size}, 将使用GPU配置或默认值")
-                
-                # 日志输出
-                if config:
-                    self.log_frame.log(f"✅ 从配置文件 {cfg_file.name} 读取GPU配置")
-                    gpu_cfg = config.get('gpu', {})
-                    if 'batch_size' in gpu_cfg:
-                        self.log_frame.log(f"   batch_size: {gpu_cfg['batch_size']:,}")
-                    if 'async_execution' in gpu_cfg:
-                        self.log_frame.log(f"   async_execution: {gpu_cfg['async_execution']}")
-                    if 'device_index' in gpu_cfg:
-                        self.log_frame.log(f"   device_index: {gpu_cfg['device_index']}")
-                
-                # 缓存配置
-                self._cached_gpu_config = config
-                self._config_loaded = True
-                
-                return config
-                
-            except json.JSONDecodeError as e:
-                self.log_frame.log(f"⚠️ 配置文件 {cfg_file.name} JSON格式错误: {e}")
-            except PermissionError:
-                self.log_frame.log(f"⚠️ 无法读取 {cfg_file.name}: 权限不足")
-            except Exception as e:
-                self.log_frame.log(f"⚠️ 读取配置文件 {cfg_file.name} 失败: {e}")
+        Returns:
+            配置字典，如果失败返回None
+        """
+        if not cfg_file.exists():
+            return None
+        
+        try:
+            return self._parse_config_file(cfg_file)
+        except json.JSONDecodeError as e:
+            self.log_frame.log(f"⚠️ 配置文件 {cfg_file.name} JSON格式错误: {e}")
+        except PermissionError:
+            self.log_frame.log(f"⚠️ 无法读取 {cfg_file.name}: 权限不足")
+        except Exception as e:
+            self.log_frame.log(f"⚠️ 读取配置文件 {cfg_file.name} 失败: {e}")
         
         return None
+    
+    def _parse_config_file(self, cfg_file) -> Optional[Dict]:
+        """解析配置文件并提取GPU配置
+        
+        Args:
+            cfg_file: 配置文件路径
+            
+        Returns:
+            GPU配置字典
+        """
+        import json
+        
+        with open(cfg_file, 'r', encoding='utf-8') as f:
+            full_config = json.load(f)
+        
+        config = self._extract_gpu_config(full_config)
+        
+        # 日志输出
+        if config:
+            self.log_frame.log(f"✅ 从配置文件 {cfg_file.name} 读取GPU配置")
+            gpu_cfg = config.get('gpu', {})
+            if 'batch_size' in gpu_cfg:
+                self.log_frame.log(f"   batch_size: {gpu_cfg['batch_size']:,}")
+            if 'async_execution' in gpu_cfg:
+                self.log_frame.log(f"   async_execution: {gpu_cfg['async_execution']}")
+            if 'device_index' in gpu_cfg:
+                self.log_frame.log(f"   device_index: {gpu_cfg['device_index']}")
+        
+        return config
+    
+    def _extract_gpu_config(self, full_config: Dict) -> Dict:
+        """从完整配置中提取GPU配置
+        
+        Args:
+            full_config: 完整配置字典
+            
+        Returns:
+            GPU配置字典
+        """
+        config = {}
+        
+        # 提取gpu配置
+        if 'gpu' in full_config:
+            config['gpu'] = full_config['gpu']
+        
+        # engine.batch_size优先级最高
+        engine_batch_size = full_config.get('engine', {}).get('batch_size')
+        if isinstance(engine_batch_size, int) and engine_batch_size > 0:
+            config.setdefault('gpu', {})['batch_size'] = engine_batch_size
+        elif engine_batch_size is not None:
+            self.log_frame.log(f"⚠️ 无效的batch_size: {engine_batch_size}, 将使用GPU配置或默认值")
+        
+        return config
+    
+    def _on_gpu_config_applied(self, config: Dict) -> None:
+        """GPU配置应用回调
+        
+        Args:
+            config: GPU配置字典，包含mode, device_indices, load_balancing等
+        """
+        try:
+            logging.info(f"GPU配置已应用: {config}")
+            self.log_success(f"GPU配置已更新: 模式={config.get('mode', 'auto')}")
+            
+            # 显示详细配置信息
+            mode = config.get('mode', 'auto')
+            device_indices = config.get('device_indices', [])
+            balancing = config.get('load_balancing', 'performance')
+            
+            self.log_frame.log(f"   模式: {mode}")
+            self.log_frame.log(f"   设备: {device_indices}")
+            self.log_frame.log(f"   负载均衡: {balancing}")
+            
+            # 如果引擎正在运行，提示用户重启
+            if self.engine and self.is_running:
+                self.log_warning("提示: GPU配置更改将在下次启动时生效")
+                self.log_warning("请先停止当前任务，然后重新启动")
+            
+            self.update_status(f"GPU配置已更新: {mode}", force=True)
+            
+        except Exception as e:
+            logging.error(f"应用GPU配置失败: {e}", exc_info=True)
+            self.log_error(f"应用GPU配置失败: {e}")
+            self.update_status("GPU配置应用失败", force=True)
     
     def _on_mode_change(self, mode: str):
         """模式改变回调"""
@@ -1449,7 +1794,7 @@ class CollisionGUI:
         self.control_panel.set_buttons_state(False)
         self.target_frame.set_enabled(True)
         self.stats_display.set_status("已停止", "warning")
-        self.status_bar_text.set("已停止")
+        self.update_status("已停止", force=True)
         self.log_frame.log("界面状态已恢复")
     
     def _on_resume_from_control_panel(self, checkpoint_data: dict):
@@ -1545,14 +1890,18 @@ class CollisionGUI:
         """在主线程更新进度UI"""
         self.stats_display.update_stats(stats)
         
-        # 更新状态栏
-        elapsed = stats.get_elapsed_seconds() if hasattr(stats, 'get_elapsed_seconds') else 0
-        speed = stats.get_speed() if hasattr(stats, 'get_speed') else 0
-        self.status_bar_text.set(
-            f"已检测: {format_number_with_commas(stats.total_checked)} | "
-            f"速度: {format_speed(speed)} | "
-            f"时间: {format_elapsed_time(elapsed)}"
-        )
+        # 优化：降低状态栏更新频率（每秒更新一次，避免频繁字符串格式化）
+        current_time = time.time()
+        if not hasattr(self, '_last_status_update') or \
+           current_time - self._last_status_update >= 1.0:
+            
+            elapsed = stats.get_elapsed_seconds() if hasattr(stats, 'get_elapsed_seconds') else 0
+            speed = stats.get_speed() if hasattr(stats, 'get_speed') else 0
+            self.update_status(
+                f"已检测: {format_number_with_commas(stats.total_checked)} | "
+                f"速度: {format_speed(speed)} | "
+                f"时间: {format_elapsed_time(elapsed)}"
+            )
     
     def _on_match(self, private_key: bytes, address: str, wif: str):
         """匹配回调（在后台线程中调用，需要调度到主线程）"""
@@ -1575,23 +1924,38 @@ class CollisionGUI:
         if stats.matches:
             self.stats_display.set_status(f"完成! 发现 {len(stats.matches)} 个匹配", "success")
             self.log_frame.log_success(f"对撞完成! 共发现 {len(stats.matches)} 个匹配")
-            self.status_bar_text.set(f"完成! 发现 {len(stats.matches)} 个匹配")
+            self.update_status(f"完成! 发现 {len(stats.matches)} 个匹配", force=True)
         else:
             self.stats_display.set_status("已停止", "warning")
             self.log_frame.log("对撞已停止，未发现匹配")
-            self.status_bar_text.set("已停止")
+            self.update_status("已停止", force=True)
         
         # 更新最终统计
         self.stats_display.update_stats(stats)
     
     def _schedule_stats_update(self):
-        """定时更新统计数据"""
-        if self.engine and self.engine.is_running():
-            stats = self.engine.get_stats()
-            self.stats_display.update_stats(stats)
-        
-        # 100ms后再次调用
-        self.root.after(100, self._schedule_stats_update)
+        """定时更新统计数据（优化版：避免与进度回调冲突）"""
+        try:
+            if self.engine and self.engine.is_running():
+                # 仅在引擎运行但进度回调未触发时才更新
+                # 这样可以避免重复更新和潜在的冲突
+                stats = self.engine.get_stats()
+                self.stats_display.update_stats(stats)
+                
+                # 更新状态栏（每秒一次）
+                elapsed = stats.get_elapsed_seconds() if hasattr(stats, 'get_elapsed_seconds') else 0
+                speed = stats.get_speed() if hasattr(stats, 'get_speed') else 0
+                self.update_status(
+                    f"已检测: {format_number_with_commas(stats.total_checked)} | "
+                    f"速度: {format_speed(speed)} | "
+                    f"时间: {format_elapsed_time(elapsed)}"
+                )
+        except Exception as e:
+            # 静默处理错误，避免影响 UI
+            pass
+        finally:
+            # 100ms后再次调用
+            self.root.after(100, self._schedule_stats_update)
     
     def _on_close(self):
         """窗口关闭回调 - 增强资源清理版本"""

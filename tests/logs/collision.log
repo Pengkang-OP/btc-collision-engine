@@ -1,0 +1,528 @@
+2026-04-22 04:07:56,563 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:07:56,564 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:07:56,568 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:07:56,568 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:07:56,571 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:07:56,574 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:07:56,574 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=True, config=MonitorConfig)
+2026-04-22 04:07:56,577 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:07:56,577 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:07:56,580 - src.monitoring.monitor_config - WARNING - 配置验证警告: alert_threshold必须在0.0-1.0之间，当前: 1.5
+2026-04-22 04:07:56,581 - EnhancedMonitoringSystem - WARNING - 配置验证失败: alert_threshold必须在0.0-1.0之间，当前: 1.5, 使用默认配置
+2026-04-22 04:07:56,584 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:07:56,584 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:07:56,587 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:07:56,587 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:07:56,588 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:07:56,589 - DataLogger - ERROR - 错误记录 [monitoring_error]: 监控系统错误: object of type 'Mock' has no len() - object of type 'Mock' has no len()
+2026-04-22 04:07:56,589 - EnhancedMonitoringSystem - ERROR - 监控系统错误: object of type 'Mock' has no len()
+2026-04-22 04:07:56,690 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:07:56,692 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:07:56,692 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:07:56,693 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:07:56,701 - DataLogger - ERROR - 错误记录 [monitoring_error]: 监控系统错误: object of type 'Mock' has no len() - object of type 'Mock' has no len()
+2026-04-22 04:07:56,701 - EnhancedMonitoringSystem - ERROR - 监控系统错误: object of type 'Mock' has no len()
+2026-04-22 04:07:56,802 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:07:57,004 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:07:57,005 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:07:57,006 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:07:57,014 - DataLogger - ERROR - 错误记录 [monitoring_error]: 监控系统错误: object of type 'Mock' has no len() - object of type 'Mock' has no len()
+2026-04-22 04:07:57,014 - EnhancedMonitoringSystem - ERROR - 监控系统错误: object of type 'Mock' has no len()
+2026-04-22 04:07:57,115 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:07:57,116 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:07:57,117 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:07:57,119 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:07:57,119 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:07:57,120 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:07:57,255 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:07:57,862 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:07:57,865 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:07:57,865 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:07:57,866 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:07:58,007 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_040758.json
+2026-04-22 04:07:58,008 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:07:58,362 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:07:58,365 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:07:58,366 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:07:58,367 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:07:58,505 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_040758.json
+2026-04-22 04:07:58,505 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:07:58,858 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:07:58,862 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:07:58,862 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:07:58,863 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:07:59,003 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_040759.json
+2026-04-22 04:07:59,003 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:07:59,361 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:07:59,365 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:07:59,365 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:07:59,366 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:07:59,366 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:07:59,367 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:07:59,376 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_040759.json
+2026-04-22 04:07:59,376 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:07:59,691 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:07:59,695 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:07:59,695 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:07:59,696 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:07:59,697 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_040759.json
+2026-04-22 04:07:59,697 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:08:00,010 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:08:00,013 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:00,013 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=True, config=MonitorConfig)
+2026-04-22 04:08:00,015 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:00,015 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=True, config=MonitorConfig)
+2026-04-22 04:08:00,016 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:08:00,299 - MonitoringSystem - WARNING - ALERT: 检测速率过低: 0.00/s - Details: {"type": "performance", "metric": "speed", "value": 0.0, "threshold": 100, "message": "\u68c0\u6d4b\u901f\u7387\u8fc7\u4f4e: 0.00/s"}
+2026-04-22 04:08:00,316 - MonitoringSystem - WARNING - ALERT: 引擎运行但检测速率为0 - Details: {"type": "engine", "metric": "speed", "value": 0, "threshold": 1, "message": "\u5f15\u64ce\u8fd0\u884c\u4f46\u68c0\u6d4b\u901f\u7387\u4e3a0"}
+2026-04-22 04:08:00,333 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_040800.json
+2026-04-22 04:08:00,334 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:08:00,355 - MonitoringSystem - INFO - 每日报告已生成: F:\Qoder\btc-collision-engine\src\data_logs\report_2026-04-22.json
+2026-04-22 04:08:00,356 - EnhancedMonitoringSystem - INFO - 监控系统报告已生成
+2026-04-22 04:08:00,749 - MonitoringSystem - WARNING - ALERT: 检测速率过低: 0.00/s - Details: {"type": "performance", "metric": "speed", "value": 0.0, "threshold": 100, "message": "\u68c0\u6d4b\u901f\u7387\u8fc7\u4f4e: 0.00/s"}
+2026-04-22 04:08:00,765 - MonitoringSystem - WARNING - ALERT: 引擎运行但检测速率为0 - Details: {"type": "engine", "metric": "speed", "value": 0, "threshold": 1, "message": "\u5f15\u64ce\u8fd0\u884c\u4f46\u68c0\u6d4b\u901f\u7387\u4e3a0"}
+2026-04-22 04:08:00,893 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:08:00,896 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:00,896 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:00,897 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:08:01,037 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_040801.json
+2026-04-22 04:08:01,037 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:08:01,641 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:08:01,643 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:01,643 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:01,655 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_040801.json
+2026-04-22 04:08:01,778 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:01,778 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:01,779 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:08:01,910 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_040801.json
+2026-04-22 04:08:01,910 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:08:02,269 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:08:02,271 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:02,271 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:02,273 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:02,273 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:02,274 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:08:02,282 - DataLogger - ERROR - 错误记录 [monitoring_error]: 监控系统错误: Test error - Test error
+2026-04-22 04:08:02,282 - EnhancedMonitoringSystem - ERROR - 监控系统错误: Test error
+2026-04-22 04:08:02,392 - DataLogger - ERROR - 错误记录 [monitoring_error]: 监控系统错误: Test error - Test error
+2026-04-22 04:08:02,392 - EnhancedMonitoringSystem - ERROR - 监控系统错误: Test error
+2026-04-22 04:08:02,501 - DataLogger - ERROR - 错误记录 [monitoring_error]: 监控系统错误: Test error - Test error
+2026-04-22 04:08:02,501 - EnhancedMonitoringSystem - ERROR - 监控系统错误: Test error
+2026-04-22 04:08:02,602 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:08:02,604 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:02,605 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:02,606 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:08:02,614 - DataLogger - ERROR - 错误记录 [monitoring_error]: 监控系统错误: object of type 'Mock' has no len() - object of type 'Mock' has no len()
+2026-04-22 04:08:02,614 - EnhancedMonitoringSystem - ERROR - 监控系统错误: object of type 'Mock' has no len()
+2026-04-22 04:08:02,724 - DataLogger - ERROR - 错误记录 [monitoring_error]: 监控系统错误: object of type 'Mock' has no len() - object of type 'Mock' has no len()
+2026-04-22 04:08:02,725 - EnhancedMonitoringSystem - ERROR - 监控系统错误: object of type 'Mock' has no len()
+2026-04-22 04:08:02,834 - DataLogger - ERROR - 错误记录 [monitoring_error]: 监控系统错误: object of type 'Mock' has no len() - object of type 'Mock' has no len()
+2026-04-22 04:08:02,835 - EnhancedMonitoringSystem - ERROR - 监控系统错误: object of type 'Mock' has no len()
+2026-04-22 04:08:02,935 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:08:02,939 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:02,939 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:02,939 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:08:03,079 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_040803.json
+2026-04-22 04:08:03,079 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:08:03,454 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:03,455 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:03,455 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:08:03,464 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_040803.json
+2026-04-22 04:08:03,464 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:08:03,569 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:08:03,670 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:08:03,775 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:08:03,876 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:08:03,980 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:08:39,494 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:39,495 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:39,498 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:39,498 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:39,500 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:39,503 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:39,503 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=True, config=MonitorConfig)
+2026-04-22 04:08:39,506 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:39,506 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:39,509 - src.monitoring.monitor_config - WARNING - 配置验证警告: alert_threshold必须在0.0-1.0之间，当前: 1.5
+2026-04-22 04:08:39,509 - EnhancedMonitoringSystem - WARNING - 配置验证失败: alert_threshold必须在0.0-1.0之间，当前: 1.5, 使用默认配置
+2026-04-22 04:08:39,512 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:39,513 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:39,515 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:39,515 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:39,516 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:08:39,517 - DataLogger - ERROR - 错误记录 [monitoring_error]: 监控系统错误: object of type 'Mock' has no len() - object of type 'Mock' has no len()
+2026-04-22 04:08:39,517 - EnhancedMonitoringSystem - ERROR - 监控系统错误: object of type 'Mock' has no len()
+2026-04-22 04:08:39,618 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:08:39,620 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:39,620 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:39,621 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:08:39,630 - DataLogger - ERROR - 错误记录 [monitoring_error]: 监控系统错误: object of type 'Mock' has no len() - object of type 'Mock' has no len()
+2026-04-22 04:08:39,630 - EnhancedMonitoringSystem - ERROR - 监控系统错误: object of type 'Mock' has no len()
+2026-04-22 04:08:39,731 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:08:39,934 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:39,934 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:39,935 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:08:39,946 - DataLogger - ERROR - 错误记录 [monitoring_error]: 监控系统错误: object of type 'Mock' has no len() - object of type 'Mock' has no len()
+2026-04-22 04:08:39,946 - EnhancedMonitoringSystem - ERROR - 监控系统错误: object of type 'Mock' has no len()
+2026-04-22 04:08:40,047 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:08:40,049 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:40,049 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:40,051 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:40,051 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:40,053 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:08:40,185 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_040840.json
+2026-04-22 04:08:40,186 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:08:40,790 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:08:40,793 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:40,793 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:40,794 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:08:40,931 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_040840.json
+2026-04-22 04:08:40,931 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:08:41,286 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:08:41,290 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:41,290 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:41,291 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:08:41,429 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_040841.json
+2026-04-22 04:08:41,429 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:08:41,782 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:08:41,786 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:41,786 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:41,787 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:08:41,929 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_040841.json
+2026-04-22 04:08:41,929 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:08:42,275 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:08:42,278 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:42,279 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:42,279 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:42,279 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:42,280 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:08:42,289 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_040842.json
+2026-04-22 04:08:42,289 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:08:42,603 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:08:42,606 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:42,606 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:42,607 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:08:42,609 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_040842.json
+2026-04-22 04:08:42,609 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:08:42,923 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:08:42,926 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:42,926 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=True, config=MonitorConfig)
+2026-04-22 04:08:42,928 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:42,929 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=True, config=MonitorConfig)
+2026-04-22 04:08:42,930 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:08:43,227 - MonitoringSystem - WARNING - ALERT: 检测速率过低: 0.00/s - Details: {"type": "performance", "metric": "speed", "value": 0.0, "threshold": 100, "message": "\u68c0\u6d4b\u901f\u7387\u8fc7\u4f4e: 0.00/s"}
+2026-04-22 04:08:43,246 - MonitoringSystem - WARNING - ALERT: 引擎运行但检测速率为0 - Details: {"type": "engine", "metric": "speed", "value": 0, "threshold": 1, "message": "\u5f15\u64ce\u8fd0\u884c\u4f46\u68c0\u6d4b\u901f\u7387\u4e3a0"}
+2026-04-22 04:08:43,267 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_040843.json
+2026-04-22 04:08:43,267 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:08:43,288 - MonitoringSystem - INFO - 每日报告已生成: F:\Qoder\btc-collision-engine\src\data_logs\report_2026-04-22.json
+2026-04-22 04:08:43,288 - EnhancedMonitoringSystem - INFO - 监控系统报告已生成
+2026-04-22 04:08:43,689 - MonitoringSystem - WARNING - ALERT: 检测速率过低: 0.00/s - Details: {"type": "performance", "metric": "speed", "value": 0.0, "threshold": 100, "message": "\u68c0\u6d4b\u901f\u7387\u8fc7\u4f4e: 0.00/s"}
+2026-04-22 04:08:43,706 - MonitoringSystem - WARNING - ALERT: 引擎运行但检测速率为0 - Details: {"type": "engine", "metric": "speed", "value": 0, "threshold": 1, "message": "\u5f15\u64ce\u8fd0\u884c\u4f46\u68c0\u6d4b\u901f\u7387\u4e3a0"}
+2026-04-22 04:08:43,834 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:08:43,836 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:43,836 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:43,837 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:08:43,980 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_040843.json
+2026-04-22 04:08:43,980 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:08:44,535 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_040844.json
+2026-04-22 04:08:44,535 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:08:44,657 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:08:44,666 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:44,666 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:44,684 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_040844.json
+2026-04-22 04:08:44,713 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:44,713 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:44,714 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:44,715 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=True, config=MonitorConfig)
+2026-04-22 04:08:44,715 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:08:45,016 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_040845.json
+2026-04-22 04:08:45,017 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:08:45,030 - MonitoringSystem - INFO - 每日报告已生成: F:\Qoder\btc-collision-engine\src\data_logs\report_2026-04-22.json
+2026-04-22 04:08:45,030 - EnhancedMonitoringSystem - INFO - 监控系统报告已生成
+2026-04-22 04:08:45,139 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:08:45,142 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:45,142 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:45,144 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:45,145 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:45,146 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:08:45,154 - DataLogger - ERROR - 错误记录 [monitoring_error]: 监控系统错误: Test error - Test error
+2026-04-22 04:08:45,154 - EnhancedMonitoringSystem - ERROR - 监控系统错误: Test error
+2026-04-22 04:08:45,264 - DataLogger - ERROR - 错误记录 [monitoring_error]: 监控系统错误: Test error - Test error
+2026-04-22 04:08:45,264 - EnhancedMonitoringSystem - ERROR - 监控系统错误: Test error
+2026-04-22 04:08:45,373 - DataLogger - ERROR - 错误记录 [monitoring_error]: 监控系统错误: Test error - Test error
+2026-04-22 04:08:45,373 - EnhancedMonitoringSystem - ERROR - 监控系统错误: Test error
+2026-04-22 04:08:45,474 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:08:45,477 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:45,477 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:45,478 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:08:45,487 - DataLogger - ERROR - 错误记录 [monitoring_error]: 监控系统错误: object of type 'Mock' has no len() - object of type 'Mock' has no len()
+2026-04-22 04:08:45,487 - EnhancedMonitoringSystem - ERROR - 监控系统错误: object of type 'Mock' has no len()
+2026-04-22 04:08:45,596 - DataLogger - ERROR - 错误记录 [monitoring_error]: 监控系统错误: object of type 'Mock' has no len() - object of type 'Mock' has no len()
+2026-04-22 04:08:45,596 - EnhancedMonitoringSystem - ERROR - 监控系统错误: object of type 'Mock' has no len()
+2026-04-22 04:08:45,705 - DataLogger - ERROR - 错误记录 [monitoring_error]: 监控系统错误: object of type 'Mock' has no len() - object of type 'Mock' has no len()
+2026-04-22 04:08:45,705 - EnhancedMonitoringSystem - ERROR - 监控系统错误: object of type 'Mock' has no len()
+2026-04-22 04:08:45,806 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:08:45,809 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:45,809 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=True, config=MonitorConfig)
+2026-04-22 04:08:45,809 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:08:46,103 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_040846.json
+2026-04-22 04:08:46,103 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:08:46,115 - MonitoringSystem - INFO - 每日报告已生成: F:\Qoder\btc-collision-engine\src\data_logs\report_2026-04-22.json
+2026-04-22 04:08:46,115 - EnhancedMonitoringSystem - INFO - 监控系统报告已生成
+2026-04-22 04:08:46,623 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:08:46,627 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:46,627 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:08:46,628 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:08:46,637 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_040846.json
+2026-04-22 04:08:46,637 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:08:46,741 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:08:46,842 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:08:46,947 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:08:47,048 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:08:47,152 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:08:55,130 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:55,259 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:55,265 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:55,272 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:55,278 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:55,293 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:55,307 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:55,321 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:55,328 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:55,334 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:55,341 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:55,347 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:55,348 - DataLogger - ERROR - 错误记录 [test_error]: Test error message - Test exception
+2026-04-22 04:08:55,363 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:55,364 - DataLogger - ERROR - 错误记录 [worker_error]: Worker failed - Invalid value
+2026-04-22 04:08:55,379 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:55,381 - DataLogger - ERROR - 错误记录 [error_0]: Error message 0
+2026-04-22 04:08:55,388 - DataLogger - ERROR - 错误记录 [error_1]: Error message 1
+2026-04-22 04:08:55,394 - DataLogger - ERROR - 错误记录 [error_2]: Error message 2
+2026-04-22 04:08:55,400 - DataLogger - ERROR - 错误记录 [error_3]: Error message 3
+2026-04-22 04:08:55,406 - DataLogger - ERROR - 错误记录 [error_4]: Error message 4
+2026-04-22 04:08:55,427 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:55,437 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:55,448 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:55,452 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:55,458 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:55,471 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:55,477 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:55,490 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:55,503 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:55,510 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:55,516 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:55,530 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:08:55,631 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:24,778 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:24,784 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:24,790 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:24,798 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:24,804 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:24,811 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:24,819 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:24,825 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:24,832 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:24,838 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:24,845 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:24,852 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:24,853 - DataLogger - ERROR - 错误记录 [test_error]: Test error message - Test exception
+2026-04-22 04:10:24,867 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:24,868 - DataLogger - ERROR - 错误记录 [worker_error]: Worker failed - Invalid value
+2026-04-22 04:10:24,882 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:24,884 - DataLogger - ERROR - 错误记录 [error_0]: Error message 0
+2026-04-22 04:10:24,890 - DataLogger - ERROR - 错误记录 [error_1]: Error message 1
+2026-04-22 04:10:24,896 - DataLogger - ERROR - 错误记录 [error_2]: Error message 2
+2026-04-22 04:10:24,903 - DataLogger - ERROR - 错误记录 [error_3]: Error message 3
+2026-04-22 04:10:24,910 - DataLogger - ERROR - 错误记录 [error_4]: Error message 4
+2026-04-22 04:10:24,924 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:24,934 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:24,945 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:24,950 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:24,956 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:24,969 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:24,976 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:24,983 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:24,992 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:24,999 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:25,005 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:25,013 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:25,115 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:46,801 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:46,807 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:46,814 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:46,820 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:46,827 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:46,833 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:46,843 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:46,850 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:46,856 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:46,861 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:46,867 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:46,873 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:46,875 - DataLogger - ERROR - 错误记录 [test_error]: Test error message - Test exception
+2026-04-22 04:10:46,887 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:46,888 - DataLogger - ERROR - 错误记录 [worker_error]: Worker failed - Invalid value
+2026-04-22 04:10:46,900 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:46,901 - DataLogger - ERROR - 错误记录 [error_0]: Error message 0
+2026-04-22 04:10:46,909 - DataLogger - ERROR - 错误记录 [error_1]: Error message 1
+2026-04-22 04:10:46,916 - DataLogger - ERROR - 错误记录 [error_2]: Error message 2
+2026-04-22 04:10:46,923 - DataLogger - ERROR - 错误记录 [error_3]: Error message 3
+2026-04-22 04:10:46,929 - DataLogger - ERROR - 错误记录 [error_4]: Error message 4
+2026-04-22 04:10:46,940 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:46,950 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:46,960 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:46,964 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:46,970 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:46,983 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:46,990 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:46,997 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:47,004 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:47,011 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:47,017 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:47,025 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:47,136 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:47,249 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:47,250 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:10:47,252 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:47,252 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:10:47,255 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:10:47,257 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:47,257 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=True, config=MonitorConfig)
+2026-04-22 04:10:47,260 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:47,260 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:10:47,262 - src.monitoring.monitor_config - WARNING - 配置验证警告: alert_threshold必须在0.0-1.0之间，当前: 1.5
+2026-04-22 04:10:47,262 - EnhancedMonitoringSystem - WARNING - 配置验证失败: alert_threshold必须在0.0-1.0之间，当前: 1.5, 使用默认配置
+2026-04-22 04:10:47,265 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:47,265 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:10:47,267 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:47,267 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:10:47,268 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:10:47,269 - DataLogger - ERROR - 错误记录 [monitoring_error]: 监控系统错误: object of type 'Mock' has no len() - object of type 'Mock' has no len()
+2026-04-22 04:10:47,269 - EnhancedMonitoringSystem - ERROR - 监控系统错误: object of type 'Mock' has no len()
+2026-04-22 04:10:47,370 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:10:47,372 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:47,372 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:10:47,373 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:10:47,382 - DataLogger - ERROR - 错误记录 [monitoring_error]: 监控系统错误: object of type 'Mock' has no len() - object of type 'Mock' has no len()
+2026-04-22 04:10:47,382 - EnhancedMonitoringSystem - ERROR - 监控系统错误: object of type 'Mock' has no len()
+2026-04-22 04:10:47,483 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:10:47,685 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:47,686 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:10:47,687 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:10:47,695 - DataLogger - ERROR - 错误记录 [monitoring_error]: 监控系统错误: object of type 'Mock' has no len() - object of type 'Mock' has no len()
+2026-04-22 04:10:47,696 - EnhancedMonitoringSystem - ERROR - 监控系统错误: object of type 'Mock' has no len()
+2026-04-22 04:10:47,796 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:10:47,798 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:47,798 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:10:47,800 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:47,800 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:10:47,801 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:10:47,934 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_041047.json
+2026-04-22 04:10:47,935 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:10:48,531 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:10:48,533 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:48,533 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:10:48,534 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:10:48,670 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_041048.json
+2026-04-22 04:10:48,670 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:10:49,023 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:10:49,026 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:49,026 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:10:49,028 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:10:49,160 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_041049.json
+2026-04-22 04:10:49,161 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:10:49,517 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:10:49,520 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:49,520 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:10:49,520 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:10:49,658 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_041049.json
+2026-04-22 04:10:49,658 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:10:50,009 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:10:50,012 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:50,012 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:10:50,013 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:50,013 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:10:50,013 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:10:50,022 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_041050.json
+2026-04-22 04:10:50,022 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:10:50,333 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:10:50,336 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:50,337 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:10:50,337 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:10:50,339 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_041050.json
+2026-04-22 04:10:50,339 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:10:50,653 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:10:50,655 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:50,656 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=True, config=MonitorConfig)
+2026-04-22 04:10:50,657 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:50,658 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=True, config=MonitorConfig)
+2026-04-22 04:10:50,658 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:10:50,942 - MonitoringSystem - WARNING - ALERT: 检测速率过低: 0.00/s - Details: {"type": "performance", "metric": "speed", "value": 0.0, "threshold": 100, "message": "\u68c0\u6d4b\u901f\u7387\u8fc7\u4f4e: 0.00/s"}
+2026-04-22 04:10:50,964 - MonitoringSystem - WARNING - ALERT: 引擎运行但检测速率为0 - Details: {"type": "engine", "metric": "speed", "value": 0, "threshold": 1, "message": "\u5f15\u64ce\u8fd0\u884c\u4f46\u68c0\u6d4b\u901f\u7387\u4e3a0"}
+2026-04-22 04:10:50,980 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_041050.json
+2026-04-22 04:10:50,980 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:10:51,000 - MonitoringSystem - INFO - 每日报告已生成: F:\Qoder\btc-collision-engine\src\data_logs\report_2026-04-22.json
+2026-04-22 04:10:51,000 - EnhancedMonitoringSystem - INFO - 监控系统报告已生成
+2026-04-22 04:10:51,387 - MonitoringSystem - WARNING - ALERT: 检测速率过低: 0.00/s - Details: {"type": "performance", "metric": "speed", "value": 0.0, "threshold": 100, "message": "\u68c0\u6d4b\u901f\u7387\u8fc7\u4f4e: 0.00/s"}
+2026-04-22 04:10:51,402 - MonitoringSystem - WARNING - ALERT: 引擎运行但检测速率为0 - Details: {"type": "engine", "metric": "speed", "value": 0, "threshold": 1, "message": "\u5f15\u64ce\u8fd0\u884c\u4f46\u68c0\u6d4b\u901f\u7387\u4e3a0"}
+2026-04-22 04:10:51,528 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:10:51,530 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:51,530 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:10:51,531 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:10:51,661 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_041051.json
+2026-04-22 04:10:51,662 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:10:52,259 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:10:52,261 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:52,261 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:10:52,271 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_041052.json
+2026-04-22 04:10:52,272 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:52,273 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:10:52,273 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:52,274 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=True, config=MonitorConfig)
+2026-04-22 04:10:52,274 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:10:52,559 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_041052.json
+2026-04-22 04:10:52,559 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:10:52,584 - MonitoringSystem - INFO - 每日报告已生成: F:\Qoder\btc-collision-engine\src\data_logs\report_2026-04-22.json
+2026-04-22 04:10:52,585 - EnhancedMonitoringSystem - INFO - 监控系统报告已生成
+2026-04-22 04:10:52,692 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:10:52,694 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:52,694 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:10:52,696 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:52,696 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:10:52,697 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:10:52,705 - DataLogger - ERROR - 错误记录 [monitoring_error]: 监控系统错误: Test error - Test error
+2026-04-22 04:10:52,705 - EnhancedMonitoringSystem - ERROR - 监控系统错误: Test error
+2026-04-22 04:10:52,814 - DataLogger - ERROR - 错误记录 [monitoring_error]: 监控系统错误: Test error - Test error
+2026-04-22 04:10:52,814 - EnhancedMonitoringSystem - ERROR - 监控系统错误: Test error
+2026-04-22 04:10:52,923 - DataLogger - ERROR - 错误记录 [monitoring_error]: 监控系统错误: Test error - Test error
+2026-04-22 04:10:52,923 - EnhancedMonitoringSystem - ERROR - 监控系统错误: Test error
+2026-04-22 04:10:53,024 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:10:53,026 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:53,026 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:10:53,027 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:10:53,037 - DataLogger - ERROR - 错误记录 [monitoring_error]: 监控系统错误: object of type 'Mock' has no len() - object of type 'Mock' has no len()
+2026-04-22 04:10:53,037 - EnhancedMonitoringSystem - ERROR - 监控系统错误: object of type 'Mock' has no len()
+2026-04-22 04:10:53,145 - DataLogger - ERROR - 错误记录 [monitoring_error]: 监控系统错误: object of type 'Mock' has no len() - object of type 'Mock' has no len()
+2026-04-22 04:10:53,146 - EnhancedMonitoringSystem - ERROR - 监控系统错误: object of type 'Mock' has no len()
+2026-04-22 04:10:53,255 - DataLogger - ERROR - 错误记录 [monitoring_error]: 监控系统错误: object of type 'Mock' has no len() - object of type 'Mock' has no len()
+2026-04-22 04:10:53,256 - EnhancedMonitoringSystem - ERROR - 监控系统错误: object of type 'Mock' has no len()
+2026-04-22 04:10:53,356 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:10:53,359 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:53,359 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=True, config=MonitorConfig)
+2026-04-22 04:10:53,360 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:10:53,634 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_041053.json
+2026-04-22 04:10:53,634 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:10:53,647 - MonitoringSystem - INFO - 每日报告已生成: F:\Qoder\btc-collision-engine\src\data_logs\report_2026-04-22.json
+2026-04-22 04:10:53,647 - EnhancedMonitoringSystem - INFO - 监控系统报告已生成
+2026-04-22 04:10:54,152 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:10:54,155 - DataLogger - INFO - 数据日志系统初始化完成
+2026-04-22 04:10:54,155 - EnhancedMonitoringSystem - INFO - 增强版监控系统初始化完成 (monitoring_data=False, config=MonitorConfig)
+2026-04-22 04:10:54,156 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:10:54,166 - DataLogger - INFO - daily报告已生成: F:\Qoder\btc-collision-engine\tests\data_logs\report_daily_20260422_041054.json
+2026-04-22 04:10:54,166 - EnhancedMonitoringSystem - INFO - 每日报告已生成
+2026-04-22 04:10:54,271 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:10:54,372 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:10:54,476 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止
+2026-04-22 04:10:54,577 - EnhancedMonitoringSystem - INFO - 增强版监控系统已启动
+2026-04-22 04:10:54,681 - EnhancedMonitoringSystem - INFO - 增强版监控系统已停止

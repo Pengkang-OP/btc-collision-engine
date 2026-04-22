@@ -1,0 +1,37 @@
+{
+  "report_type": "daily",
+  "generated_at": "2026-04-22T17:45:00.009729",
+  "period_start": "2026-04-22T00:00:00",
+  "period_end": "2026-04-22T17:45:00.009729",
+  "data_points": 1000,
+  "summary": {
+    "total_checked": 10000,
+    "matches_found": 1,
+    "avg_speed": 1475.7101200549935,
+    "max_speed": 21974.663383454706,
+    "min_speed": 0.0,
+    "avg_cpu_usage": 16.3551,
+    "avg_memory_usage": 110.38414453125,
+    "error_count": 0
+  },
+  "trends": {
+    "speed": {
+      "trend": "decreasing",
+      "average": 1475.7101200549935,
+      "std_dev": 1119.821038904027
+    },
+    "cpu_usage": {
+      "trend": "increasing",
+      "average": 16.3551,
+      "std_dev": 36.165874584675464
+    },
+    "memory_usage": {
+      "trend": "increasing",
+      "average": 110.38414453125,
+      "std_dev": 30.71278262058394
+    }
+  },
+  "recommendations": [
+    "CPU使用率较低，可以增加并发线程数提高性能"
+  ]
+}

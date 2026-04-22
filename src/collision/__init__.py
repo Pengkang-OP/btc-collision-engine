@@ -9,6 +9,8 @@ from .base_engine import BaseCollisionEngine
 from .key_collision_engine import KeyCollisionEngine
 from .observers import CollisionObserver, BaseCollisionObserver, ObserverManager
 from .multiprocess_engine import MultiprocessCollisionEngine, HybridCollisionEngine
+from .continuous_matcher import ContinuousMatcher
+from .match_storage import MatchDataStorage
 
 # 条件导出 GPUCollisionEngine（pyopencl 可能不可用）
 try:
@@ -32,7 +34,10 @@ __all__ = [
     'ObserverManager',
     'MultiprocessCollisionEngine',
     'HybridCollisionEngine',
-    'create_collision_engine'
+    'create_collision_engine',
+    # 业务逻辑模块
+    'ContinuousMatcher',
+    'MatchDataStorage'
 ]
 
 

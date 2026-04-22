@@ -9,6 +9,7 @@ UI工具函数模块
 from datetime import datetime
 from typing import Optional, Union
 import re
+import math
 
 
 def format_timestamp(timestamp: str, format_str: str = "%m-%d %H:%M") -> Optional[str]:
@@ -76,6 +77,10 @@ def format_speed(speed: float) -> str:
     Returns:
         格式化后的速度字符串
     """
+    # 处理负数、NaN和inf
+    if speed < 0 or math.isnan(speed) or math.isinf(speed):
+        return "0/s"
+    
     if speed < 1000:
         return f"{speed:.0f}/s"
     elif speed < 1000000:
@@ -140,6 +145,10 @@ def truncate_address(address: str, max_length: int = 20) -> str:
     Returns:
         截断后的地址字符串
     """
+    # 处理无效的max_length
+    if max_length <= 0:
+        return "..."
+    
     if len(address) <= max_length:
         return address
     return f"{address[:max_length]}..."

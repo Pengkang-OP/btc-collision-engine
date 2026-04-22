@@ -354,20 +354,37 @@ class DataLogger:
                     os.fsync(f.fileno())  # 确保数据写入磁盘
                 
                 # 原子替换（Windows可能需要特殊处理）
-                if os.path.exists(self.current_data_file):
-                    # Windows上先删除目标文件，再重命名（避免PermissionError）
-                    if os.name == 'nt':
+                # Windows上先删除目标文件，再重命名（避免PermissionError和WinError 183）
+                if os.name == 'nt':
+                    # Windows: 确保目标文件不存在
+                    if os.path.exists(self.current_data_file):
                         try:
-                            os.remove(self.current_data_file)
-                        except PermissionError:
-                            # 如果文件被占用，等待后重试
-                            if attempt < max_retries - 1:
-                                time.sleep(retry_delay)
-                                continue
+                            # 尝试删除，如果失败则重试
+                            for retry in range(3):
+                                try:
+                                    os.remove(self.current_data_file)
+                                    break
+                                except (PermissionError, OSError) as e:
+                                    if retry < 2:
+                                        time.sleep(0.1 * (retry + 1))  # 递增等待
+                                        continue
+                                    raise
+                        except Exception as e:
+                            self.logger.warning(f"删除旧数据文件失败: {e}")
+                            # 如果删除失败，尝试覆盖
+                            if os.path.exists(self.current_data_file):
+                                try:
+                                    os.replace(temp_file, self.current_data_file)
+                                    self.logger.info("使用os.replace()成功覆盖文件")
+                                    return
+                                except Exception as replace_error:
+                                    self.logger.error(f"os.replace()也失败: {replace_error}")
+                                    raise
                             raise
                     os.rename(temp_file, self.current_data_file)
                 else:
-                    os.rename(temp_file, self.current_data_file)
+                    # Unix/Linux: 直接使用os.replace（原子操作）
+                    os.replace(temp_file, self.current_data_file)
                 
                 # 成功，退出重试循环
                 return

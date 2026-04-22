@@ -234,6 +234,28 @@ class EllipticCurve:
         
         return ECPoint(x3, y3, self.curve)
     
+    def is_on_curve(self, point: ECPoint) -> bool:
+        """
+        验证点是否在椭圆曲线上
+        
+        检查点是否满足曲线方程: y² = x³ + ax + b (mod p)
+        对于secp256k1: y² = x³ + 7 (mod p)
+        
+        参数:
+            point: 要验证的椭圆曲线点
+            
+        返回:
+            如果点在曲线上返回True，否则返回False
+        """
+        if point.is_infinity:
+            return True  # 无穷远点被认为在曲线上
+        
+        # 验证 y² ≡ x³ + ax + b (mod p)
+        left_side = pow(point.y, 2, self.curve.P)
+        right_side = (pow(point.x, 3, self.curve.P) + self.curve.A * point.x + self.curve.B) % self.curve.P
+        
+        return left_side == right_side
+    
     def scalar_multiply(self, k: int, point: ECPoint) -> ECPoint:
         """
         椭圆曲线标量乘法（双倍-加法算法）

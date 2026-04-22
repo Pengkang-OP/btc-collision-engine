@@ -732,24 +732,66 @@ class ReportGenerator:
     def _calculate_trend(values: List[float]) -> str:
         """计算趋势（静态方法，避免重复定义）
         
+        P1修复: 使用线性回归代替简单的首尾比较，提高趋势判断准确性
+        
         Args:
             values: 数值列表
             
         Returns:
             趋势字符串："increasing", "decreasing", 或 "stable"
         """
-        if len(values) < 2:
+        if len(values) < 3:
             return "stable"
         
-        first_half_avg = statistics.mean(values[:len(values)//2])
-        second_half_avg = statistics.mean(values[len(values)//2:])
-        
-        if second_half_avg > first_half_avg * 1.05:  # 5% 增长阈值
-            return "increasing"
-        elif second_half_avg < first_half_avg * 0.95:  # 5% 下降阈值
-            return "decreasing"
-        else:
-            return "stable"
+        # P1修复: 使用线性回归计算趋势
+        try:
+            # 简单线性回归: y = mx + b
+            n = len(values)
+            x_sum = sum(range(n))
+            y_sum = sum(values)
+            xy_sum = sum(i * v for i, v in enumerate(values))
+            x2_sum = sum(i * i for i in range(n))
+            
+            # 计算斜率
+            denominator = n * x2_sum - x_sum * x_sum
+            if denominator == 0:
+                return "stable"
+            
+            slope = (n * xy_sum - x_sum * y_sum) / denominator
+            avg = y_sum / n
+            
+            # 避免除零
+            if avg == 0:
+                return "stable"
+            
+            # 归一化斜率（相对变化率）
+            normalized_slope = slope / abs(avg)
+            
+            # P1修复: 阈值调整为2%,提高趋势检测灵敏度
+            # 原5%阈值过于严格,导致明显趋势被误判为stable
+            threshold = 0.02
+            if normalized_slope > threshold:
+                return "increasing"
+            elif normalized_slope < -threshold:
+                return "decreasing"
+            else:
+                return "stable"
+                
+        except Exception as e:
+            # 如果计算失败，降级为简单比较
+            logger.debug(f"线性回归计算失败，使用简单比较: {e}")
+            if len(values) < 2:
+                return "stable"
+            
+            first_half_avg = statistics.mean(values[:len(values)//2])
+            second_half_avg = statistics.mean(values[len(values)//2:])
+            
+            if second_half_avg > first_half_avg * 1.05:
+                return "increasing"
+            elif second_half_avg < first_half_avg * 0.95:
+                return "decreasing"
+            else:
+                return "stable"
     
     def _simple_trend_analysis(self, data: List[Dict[str, Any]]) -> Dict[str, Any]:
         """简单的趋势分析（detector未初始化时的降级方案）
@@ -840,15 +882,26 @@ class MonitoringSystem:
         logger.info("监控系统已停止")
     
     def _monitoring_loop(self):
-        """监控循环"""
+        """监控循环
+        
+        P2修复: 优化I/O操作,降低历史数据保存频率
+        """
+        history_save_counter = 0  # 历史数据保存计数器
+        history_save_interval = 10  # 每10次采集保存一次历史数据
+        
         while not self._stop_event.is_set():
             try:
                 # 收集数据
                 data = self.collector.collect_all_data()
                 
-                # 保存数据
+                # 保存当前数据（每次都保存）
                 self.storage.save_current_data(data)
-                self.storage.save_history_data(data)
+                
+                # P2修复: 降低历史数据保存频率,减少I/O开销
+                history_save_counter += 1
+                if history_save_counter >= history_save_interval:
+                    self.storage.save_history_data(data)
+                    history_save_counter = 0
                 
                 # 检测异常
                 anomalies = self.detector.detect_anomalies(data)

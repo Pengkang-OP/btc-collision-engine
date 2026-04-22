@@ -1,0 +1,228 @@
+{
+  "date": "2026-04-22",
+  "summary": {
+    "total_checked": 31000,
+    "matches_found": 0,
+    "average_speed": 59.34065934065934,
+    "average_cpu_usage": 0.17142857142857143,
+    "average_memory_usage": 114.27893200549451,
+    "error_count": 178
+  },
+  "trends": {
+    "speed": {
+      "average": 59.34065934065934,
+      "std_dev": 248.54153329553145,
+      "trend": "increasing"
+    },
+    "cpu_usage": {
+      "average": 0.17142857142857143,
+      "std_dev": 1.6353243452861925,
+      "trend": "stable"
+    },
+    "memory_usage": {
+      "average": 114.27893200549451,
+      "std_dev": 21.331462078502966,
+      "trend": "decreasing"
+    }
+  },
+  "errors": [
+    {
+      "type": "alert",
+      "level": "critical",
+      "message": "引擎运行但检测速率为0",
+      "alert_data": {
+        "timestamp": 1776802123.2460918,
+        "level": "critical",
+        "message": "引擎运行但检测速率为0",
+        "details": {
+          "type": "engine",
+          "metric": "speed",
+          "value": 0,
+          "threshold": 1,
+          "message": "引擎运行但检测速率为0"
+        }
+      },
+      "timestamp": 1776802123.2559578
+    },
+    {
+      "type": "anomaly_detection",
+      "level": "warning",
+      "message": "检测到 2 个异常",
+      "anomaly_count": 2,
+      "anomalies": [
+        {
+          "type": "performance",
+          "metric": "speed",
+          "value": 0.0,
+          "threshold": 100,
+          "message": "检测速率过低: 0.00/s"
+        },
+        {
+          "type": "engine",
+          "metric": "speed",
+          "value": 0,
+          "threshold": 1,
+          "message": "引擎运行但检测速率为0"
+        }
+      ],
+      "timestamp": 1776802123.6823263
+    },
+    {
+      "type": "alert",
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "alert_data": {
+        "timestamp": 1776802123.6895504,
+        "level": "warning",
+        "message": "检测速率过低: 0.00/s",
+        "details": {
+          "type": "performance",
+          "metric": "speed",
+          "value": 0.0,
+          "threshold": 100,
+          "message": "检测速率过低: 0.00/s"
+        }
+      },
+      "timestamp": 1776802123.698399
+    },
+    {
+      "type": "alert",
+      "level": "critical",
+      "message": "引擎运行但检测速率为0",
+      "alert_data": {
+        "timestamp": 1776802123.7062223,
+        "level": "critical",
+        "message": "引擎运行但检测速率为0",
+        "details": {
+          "type": "engine",
+          "metric": "speed",
+          "value": 0,
+          "threshold": 1,
+          "message": "引擎运行但检测速率为0"
+        }
+      },
+      "timestamp": 1776802123.7176201
+    },
+    {
+      "type": "anomaly_detection",
+      "level": "warning",
+      "message": "检测到 2 个异常",
+      "anomaly_count": 2,
+      "anomalies": [
+        {
+          "type": "performance",
+          "metric": "speed",
+          "value": 0.0,
+          "threshold": 100,
+          "message": "检测速率过低: 0.00/s"
+        },
+        {
+          "type": "engine",
+          "metric": "speed",
+          "value": 0,
+          "threshold": 1,
+          "message": "引擎运行但检测速率为0"
+        }
+      ],
+      "timestamp": 1776802250.935154
+    },
+    {
+      "type": "alert",
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "alert_data": {
+        "timestamp": 1776802250.941885,
+        "level": "warning",
+        "message": "检测速率过低: 0.00/s",
+        "details": {
+          "type": "performance",
+          "metric": "speed",
+          "value": 0.0,
+          "threshold": 100,
+          "message": "检测速率过低: 0.00/s"
+        }
+      },
+      "timestamp": 1776802250.9505188
+    },
+    {
+      "type": "alert",
+      "level": "critical",
+      "message": "引擎运行但检测速率为0",
+      "alert_data": {
+        "timestamp": 1776802250.963882,
+        "level": "critical",
+        "message": "引擎运行但检测速率为0",
+        "details": {
+          "type": "engine",
+          "metric": "speed",
+          "value": 0,
+          "threshold": 1,
+          "message": "引擎运行但检测速率为0"
+        }
+      },
+      "timestamp": 1776802250.9728546
+    },
+    {
+      "type": "anomaly_detection",
+      "level": "warning",
+      "message": "检测到 2 个异常",
+      "anomaly_count": 2,
+      "anomalies": [
+        {
+          "type": "performance",
+          "metric": "speed",
+          "value": 0.0,
+          "threshold": 100,
+          "message": "检测速率过低: 0.00/s"
+        },
+        {
+          "type": "engine",
+          "metric": "speed",
+          "value": 0,
+          "threshold": 1,
+          "message": "引擎运行但检测速率为0"
+        }
+      ],
+      "timestamp": 1776802251.3813586
+    },
+    {
+      "type": "alert",
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "alert_data": {
+        "timestamp": 1776802251.3878639,
+        "level": "warning",
+        "message": "检测速率过低: 0.00/s",
+        "details": {
+          "type": "performance",
+          "metric": "speed",
+          "value": 0.0,
+          "threshold": 100,
+          "message": "检测速率过低: 0.00/s"
+        }
+      },
+      "timestamp": 1776802251.3965476
+    },
+    {
+      "type": "alert",
+      "level": "critical",
+      "message": "引擎运行但检测速率为0",
+      "alert_data": {
+        "timestamp": 1776802251.4029126,
+        "level": "critical",
+        "message": "引擎运行但检测速率为0",
+        "details": {
+          "type": "engine",
+          "metric": "speed",
+          "value": 0,
+          "threshold": 1,
+          "message": "引擎运行但检测速率为0"
+        }
+      },
+      "timestamp": 1776802251.409604
+    }
+  ],
+  "recommendations": [
+    "检测速率呈上升趋势，系统性能良好"
+  ]
+}
