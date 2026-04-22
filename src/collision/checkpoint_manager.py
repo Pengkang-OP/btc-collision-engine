@@ -98,32 +98,61 @@ class CheckpointManager:
                 json.dump(self._buffer, f, ensure_ascii=False, indent=2)
             
             # 原子重命名
-            if os.path.exists(self.filepath):
-                os.replace(temp_filepath, self.filepath)
+            # DA-1修复: 优化Windows原子操作
+            if os.name == 'nt':  # Windows
+                # Windows上os.replace()可能需要特殊处理
+                try:
+                    # 先尝试直接replace
+                    os.replace(temp_filepath, self.filepath)
+                except OSError as e:
+                    # 如果失败，尝试先删除再重命名
+                    logger.debug(f"os.replace()失败，尝试删除后重命名: {e}")
+                    if os.path.exists(self.filepath):
+                        os.remove(self.filepath)
+                    os.rename(temp_filepath, self.filepath)
             else:
-                os.rename(temp_filepath, self.filepath)
+                # Unix/Linux: 直接使用os.replace（原子操作）
+                os.replace(temp_filepath, self.filepath)
             
             # 设置文件权限
             # Linux/macOS: 使用chmod设置0o600
-            # Windows: 通过ACL设置仅所有者可读写
+            # Windows: 通过环境变量控制ACL设置
             if os.name != 'nt':  # nt = Windows
                 try:
                     os.chmod(self.filepath, 0o600)  # 仅所有者可读写
                 except OSError:
                     pass  # 权限设置失败不影响功能
             else:
-                # Windows: 尝试使用icacls命令设置权限
-                try:
-                    import subprocess
-                    subprocess.run(
-                        ['icacls', self.filepath, '/inheritance:r', '/grant:r', f'{os.environ["USERNAME"]}:(R,W)'],
-                        check=True,
-                        capture_output=True,
-                        timeout=5
-                    )
-                    logger.debug("Windows文件权限已设置（icacls）")
-                except Exception:
-                    pass  # Windows权限设置失败不影响功能
+                # Windows: ACL权限设置(可通过环境变量控制)
+                # 环境变量: BTC_ENGINE_SKIP_ACL
+                #   - 'true': 跳过ACL设置,使用Windows默认权限
+                #   - 'false'或未设置: 尝试使用icacls设置严格权限
+                # 安全说明:
+                #   - 断点文件不包含私钥,仅包含地址和进度信息
+                #   - 默认权限风险较低,但多用户环境建议启用ACL
+                #   - 测试环境中如遇到权限错误,可设置BTC_ENGINE_SKIP_ACL=true
+                skip_acl = os.environ.get('BTC_ENGINE_SKIP_ACL', 'false').lower() == 'true'
+                
+                if skip_acl:
+                    logger.debug("Windows环境: 根据配置(BTC_ENGINE_SKIP_ACL=true)跳过ACL设置")
+                else:
+                    try:
+                        import subprocess
+                        subprocess.run(
+                            ['icacls', self.filepath, '/inheritance:r', '/grant:r', 
+                             f'{os.environ["USERNAME"]}:(R,W)'],
+                            check=True,
+                            capture_output=True,
+                            timeout=5
+                        )
+                        logger.debug("Windows文件权限已设置(icacls)")
+                    except Exception as perm_error:
+                        # A类修复: 权限设置失败降级处理
+                        # 不阻断主流程,使用默认权限
+                        logger.warning(
+                            f"Windows ACL设置失败(不影响功能,使用默认权限): "
+                            f"{type(perm_error).__name__}: {perm_error}"
+                        )
             
             self._last_save_time = time.time()
             self._dirty = False

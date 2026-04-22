@@ -7,7 +7,10 @@
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
 import threading
+import logging
 from typing import Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class GPUSelectorPanel(ttk.Frame):
@@ -158,12 +161,16 @@ class GPUSelectorPanel(ttk.Frame):
                     
                     self.after(0, lambda: self._update_device_list(devices))
                 except Exception as e:
+                    # B类修复: 降级回退场景添加WARNING日志
+                    logger.warning(f"设备检测失败: {e}")
                     self.after(0, lambda: self._show_error(f"设备检测失败: {e}"))
             
             thread = threading.Thread(target=load_thread, daemon=True)
             thread.start()
             
         except Exception as e:
+            # B类修复: 降级回退场景添加WARNING日志
+            logger.warning(f"加载设备失败: {e}")
             self._show_error(f"加载设备失败: {e}")
     
     def _update_device_list(self, devices: List[Dict]):
@@ -268,6 +275,8 @@ class GPUSelectorPanel(ttk.Frame):
                 self.on_apply_callback(config)
                 messagebox.showinfo("成功", "GPU配置已应用!")
             except Exception as e:
+                # B类修复: 降级回退场景添加WARNING日志
+                logger.warning(f"应用GPU配置失败: {e}")
                 messagebox.showerror("错误", f"应用配置失败: {e}")
         else:
             messagebox.showinfo("提示", "未设置应用回调函数")

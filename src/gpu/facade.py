@@ -274,7 +274,9 @@ class GPUFacade:
         """析构函数"""
         try:
             self.cleanup()
-        except Exception:
+        except Exception as cleanup_error:
+            # A类修复: 析构函数中资源清理失败静默处理
+            # 因为此时对象正在销毁，无法做更多处理
             pass
 
 

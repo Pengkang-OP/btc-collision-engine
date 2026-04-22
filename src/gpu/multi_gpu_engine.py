@@ -14,6 +14,7 @@ from .selector import get_gpu_selector
 from .load_balancer import GPULoadBalancer
 from .worker import SingleGPUWorker
 from .data_monitor import DataMonitor
+from .gpu_recovery_manager import GPURecoveryManager
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +78,15 @@ class MultiGPUCollisionEngine:
         monitor_config = self.config.get('data_monitor', {})
         self.data_monitor = DataMonitor(config=monitor_config)
         self._monitor_enabled = self.config.get('enable_data_monitor', True)
+        
+        # GPU恢复管理器
+        recovery_config = self.config.get('gpu_recovery', {})
+        self.recovery_manager = GPURecoveryManager(
+            max_retry_count=recovery_config.get('max_retry_count', 3),
+            retry_delay_seconds=recovery_config.get('retry_delay_seconds', 5.0),
+            batch_size_reduction_factor=recovery_config.get('batch_size_reduction_factor', 0.5),
+            auto_redistribute=recovery_config.get('auto_redistribute', True)
+        )
         
         logger.info("MultiGPUCollisionEngine已创建")
     
@@ -552,6 +562,111 @@ class MultiGPUCollisionEngine:
         
         return config
     
+    def _handle_gpu_worker_failure(self, gpu_id: int, error: Exception):
+        """处理GPU工作器失败
+        
+        Args:
+            gpu_id: GPU设备ID
+            error: 捕获的异常
+        """
+        logger.error(f"GPU {gpu_id} 工作器失败: {type(error).__name__}: {error}")
+        
+        # 使用恢复管理器处理
+        self.recovery_manager.handle_gpu_failure(
+            gpu_id=gpu_id,
+            error=error,
+            redistribute_callback=self._redistribute_workload,
+            alert_callback=self._send_failure_alert
+        )
+    
+    def _redistribute_workload(self, failed_gpu_id: int):
+        """重新分配工作负载
+        
+        Args:
+            failed_gpu_id: 失败的GPU ID
+        """
+        logger.info(f"GPU {failed_gpu_id} 失败，正在重新分配工作负载...")
+        
+        # 获取健康GPU列表
+        failed_gpus = self.recovery_manager.get_failed_gpus()
+        healthy_gpus = [
+            idx for idx in self.workers.keys()
+            if idx not in failed_gpus
+        ]
+        
+        if not healthy_gpus:
+            logger.critical("所有GPU都已失败，无法继续运行")
+            self.stop()
+            return
+        
+        logger.info(f"健康GPU列表: {healthy_gpus}")
+        
+        # 获取失败GPU的工作范围
+        with self._workers_lock:
+            if failed_gpu_id not in self.workers:
+                logger.warning(f"GPU {failed_gpu_id} 不在工作器列表中")
+                return
+            
+            failed_worker = self.workers[failed_gpu_id]
+            failed_stats = failed_worker.get_stats()
+            failed_keys = failed_stats.get('keys_checked', 0)
+        
+        # 重新分配剩余工作
+        remaining_keys = max(0, failed_keys)
+        if remaining_keys > 0:
+            keys_per_gpu = remaining_keys // len(healthy_gpus)
+            logger.info(
+                f"将 {remaining_keys:,} 个密钥重新分配到 "
+                f"{len(healthy_gpus)} 个GPU"
+            )
+            
+            # 更新健康GPU的工作范围
+            for idx in healthy_gpus:
+                try:
+                    with self._workers_lock:
+                        if idx in self.workers:
+                            worker = self.workers[idx]
+                            # 增加工作范围
+                            worker.add_key_range(keys_per_gpu)
+                            logger.info(f"GPU {idx} 已增加 {keys_per_gpu:,} 个密钥")
+                except Exception as e:
+                    logger.error(f"更新GPU {idx} 工作范围失败: {e}")
+        
+        # 移除失败的工作器
+        with self._workers_lock:
+            if failed_gpu_id in self.workers:
+                try:
+                    failed_worker = self.workers[failed_gpu_id]
+                    failed_worker.stop_search()
+                    failed_worker.join(timeout=10)
+                    del self.workers[failed_gpu_id]
+                    logger.info(f"GPU {failed_gpu_id} 工作器已移除")
+                except Exception as e:
+                    logger.error(f"移除GPU {failed_gpu_id} 工作器失败: {e}")
+        
+        logger.info("工作负载重新分配完成")
+    
+    def _send_failure_alert(self, gpu_id: int, failure_type, error: Exception):
+        """发送失败告警
+        
+        Args:
+            gpu_id: GPU ID
+            failure_type: 失败类型
+            error: 异常对象
+        """
+        alert_message = (
+            f"GPU {gpu_id} 失败: {failure_type.value}\n"
+            f"错误: {type(error).__name__}: {error}\n"
+            f"恢复状态: {'成功' if not self.recovery_manager.is_gpu_failed(gpu_id) else '失败'}"
+        )
+        
+        logger.critical(alert_message)
+        
+        # 这里可以集成告警系统（邮件、Webhook等）
+        # 例如：
+        # if self.alert_system:
+        #     self.alert_system.send_alert(alert_message)
+    
     def _update_combined_stats(self):
         """更新汇总统计"""
         # 使用锁保护workers访问
@@ -600,5 +715,7 @@ class MultiGPUCollisionEngine:
         """析构函数"""
         try:
             self.cleanup()
-        except Exception:
+        except Exception as cleanup_error:
+            # A类修复: 析构函数中资源清理失败静默处理
+            # 因为此时对象正在销毁，无法做更多处理
             pass

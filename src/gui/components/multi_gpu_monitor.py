@@ -218,15 +218,17 @@ class MultiGPUMonitorPanel(ttk.Frame):
                 throughput_text = frame_data['throughput_label']['text']
                 throughput = float(throughput_text.replace(' keys/s', '').replace(',', ''))
                 total_throughput += throughput
-            except:
-                pass
+            except (ValueError, KeyError, AttributeError) as e:
+                # C类修复: 使用具体异常类型代替裸异常捕获
+                logging.debug(f"GPU {device_idx} 吞吐量解析失败: {e}")
             
             try:
                 keys_text = frame_data['keys_label']['text']
                 keys = int(keys_text.replace(',', ''))
                 total_keys += keys
-            except:
-                pass
+            except (ValueError, KeyError, AttributeError) as e:
+                # C类修复: 使用具体异常类型代替裸异常捕获
+                logging.debug(f"GPU {device_idx} keys解析失败: {e}")
             
             status_text = frame_data['status_label']['text']
             if '运行中' in status_text:
