@@ -5,6 +5,7 @@ import threading
 import secrets
 import concurrent.futures
 import psutil
+import signal
 from typing import Set, Optional, Callable, Tuple, List, Dict, Any
 from ..core.address_generator import P2PKHAddressGenerator
 from ..core.optimized_address_generator import OptimizedP2PKHAddressGenerator
@@ -146,9 +147,15 @@ class KeyCollisionEngine(BaseCollisionEngine):
         # 日志控制
         self.verbose_logging = verbose_logging  # 生产环境建议False
         # 性能优化：批量处理和进度控制
+        # P3-9修复: 支持自动调整batch_size
         self._batch_size = BATCH_SIZE  # 每批处理的私鑰数量
+        self._auto_tune_batch_size = True  # P3-9修复: 是否自动调整batch_size
+        self._cpu_count = os.cpu_count() or 4  # P3-9修复: CPU核心数
+        self._tune_batch_size()  # P3-9修复: 根据CPU核心数调整batch_size
         self._progress_interval_sec = PROGRESS_INTERVAL_SEC  # 进度回调最小间隔（秒）
+        self._progress_interval_count = 1000  # P2-5修复: 进度回调计数控制(每N个batch)
         self._last_progress_time = 0.0
+        self._batch_counter = 0  # P2-5修复: batch计数器
         
         # 数据日志系统
         # 设计说明：以下数据日志变量仅在主线程访问（通过_log_data_metrics方法），
@@ -196,6 +203,89 @@ class KeyCollisionEngine(BaseCollisionEngine):
         # 线程安全：仅在主线程的_log_data_metrics中访问
         self._last_error_log_time = 0.0
         self._error_log_interval = ERROR_LOG_INTERVAL_SEC  # 每5秒最多记录1个错误
+        
+        # 私钥回调安全配置
+        self._match_callback_timeout = 5  # 回调超时时间（秒）
+        self._match_callback_audit_enabled = True  # 启用审计日志
+    
+    def _safe_invoke_match_callback(self, private_key: bytes, address: str, wif: str) -> bool:
+        """安全调用匹配回调函数
+        
+        功能:
+        - 超时控制（防止回调函数卡死）
+        - 异常隔离（回调异常不影响引擎运行）
+        - 审计日志（记录回调执行情况）
+        
+        参数:
+            private_key: 私钥字节（32字节）
+            address: 比特币地址
+            wif: WIF格式私钥
+            
+        返回:
+            bool: 回调是否成功执行
+        """
+        if not self.on_match:
+            return True
+        
+        import hashlib
+        key_hash = hashlib.sha256(private_key).hexdigest()[:16]
+        
+        if self._match_callback_audit_enabled:
+            logger.info(f"调用匹配回调: address={address}, key_hash={key_hash}")
+        
+        try:
+            # Windows不支持SIGALRM，使用线程超时
+            if os.name == 'nt':
+                result = [None]
+                exception = [None]
+                
+                def target():
+                    try:
+                        result[0] = self.on_match(private_key, address, wif)
+                    except Exception as e:
+                        exception[0] = e
+                
+                callback_thread = threading.Thread(target=target, daemon=True)
+                callback_thread.start()
+                callback_thread.join(timeout=self._match_callback_timeout)
+                
+                if callback_thread.is_alive():
+                    logger.critical(
+                        f"匹配回调执行超时 ({self._match_callback_timeout}秒)，强制跳过: "
+                        f"address={address}, key_hash={key_hash}"
+                    )
+                    return False
+                
+                if exception[0]:
+                    logger.error(f"匹配回调异常: {exception[0]}")
+                    return False
+            else:
+                # Unix系统使用SIGALRM超时
+                def timeout_handler(signum, frame):
+                    raise TimeoutError(f"匹配回调执行超时 ({self._match_callback_timeout}秒)")
+                
+                old_handler = signal.signal(signal.SIGALRM, timeout_handler)
+                signal.alarm(self._match_callback_timeout)
+                
+                try:
+                    self.on_match(private_key, address, wif)
+                except TimeoutError as e:
+                    logger.critical(str(e))
+                    return False
+                except Exception as e:
+                    logger.error(f"匹配回调异常: {e}")
+                    return False
+                finally:
+                    signal.alarm(0)  # 取消超时
+                    signal.signal(signal.SIGALRM, old_handler)
+            
+            if self._match_callback_audit_enabled:
+                logger.debug(f"匹配回调执行成功: address={address}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"匹配回调调用失败: {e}")
+            return False
     
     def _generate_and_check_secure(self) -> Optional[Tuple[bytes, str]]:
         """使用安全密钥管理器生成私钥并检查匹配。
@@ -292,57 +382,77 @@ class KeyCollisionEngine(BaseCollisionEngine):
         try:
             # 获取CPU使用率（使用缓存避免频繁阻塞）
             if current_time - self._last_cpu_check >= CPU_CACHE_INTERVAL_SEC:  # 每秒更新一次
-                self._cached_cpu_usage = self._process.cpu_percent(interval=0.1)
+                self._cached_cpu_percent = self._process.cpu_percent(interval=0.1)
                 self._last_cpu_check = current_time
-            cpu_usage = self._cached_cpu_usage
             
-            # 获取内存和线程信息（非阻塞）
+            # 获取内存使用
             memory_info = self._process.memory_info()
-            memory_usage = memory_info.rss / (1024 * 1024)  # 转换为MB
-            thread_count = len(self._process.threads())
+            memory_mb = memory_info.rss / 1024 / 1024
             
-            # 记录性能数据
-            self.data_logger.record_performance_data(
-                speed=speed,
-                total_checked=count,
-                matches_found=len(getattr(self.stats, 'matches', [])),
-                cpu_usage=cpu_usage,
-                memory_usage=memory_usage,
-                thread_count=thread_count
-            )
+            # P3-9修复: 记录batch_size调优信息
+            if hasattr(self, '_auto_tune_batch_size') and self._auto_tune_batch_size:
+                logger.debug(
+                    f"Batch size调优: {self._batch_size} (CPU: {self._cpu_count}核)"
+                )
             
-            # 记录引擎数据
-            self.data_logger.record_engine_data(
-                mode=self._current_mode,
-                target_count=len(self.targets),
-                is_running=self._running,
-                current_position=self._current_position,
-                additional_info={
-                    "batch_size": self._batch_size,
-                    "max_workers": self.max_workers,
-                    "dedup_enabled": getattr(self.dedup_filter, 'enabled', False),
-                    "checkpoint_enabled": self.checkpoint_mgr is not None
-                }
-            )
+            # 记录数据 - 使用DataLogger的正确方法
+            if hasattr(self.data_logger, 'log_performance'):
+                # 增强监控系统的DataLogger
+                self.data_logger.log_performance(
+                    timestamp=current_time,
+                    keys_checked=count,
+                    speed=speed,
+                    cpu_percent=self._cached_cpu_percent,
+                    memory_mb=memory_mb
+                )
+            elif hasattr(self.data_logger, 'record_performance_data'):
+                # 传统DataLogger
+                self.data_logger.record_performance_data(
+                    speed=speed,
+                    total_checked=count,
+                    matches_found=len(getattr(self.stats, 'matches', [])),
+                    cpu_usage=self._cached_cpu_percent,
+                    memory_usage=memory_mb
+                )
             
-            # 更新最后记录时间
             self._last_data_log_time = current_time
             
-            # 降低保存频率：每N次记录保存一次（减少I/O）
-            self._data_log_save_counter += 1
-            if self._data_log_save_counter % DATA_LOG_SAVE_FREQUENCY == 0:
-                self.data_logger.save_current_data()
-                self.data_logger.save_history_data()
-            
-        except (IOError, OSError) as e:
-            # 文件系统错误：记录日志但不影响主流程
-            logger.error(f"记录数据日志失败（I/O错误）: {e}")
-        except (AttributeError, TypeError) as e:
-            # 数据 logger 状态错误
-            logger.error(f"记录数据日志失败（状态错误）: {type(e).__name__}")
         except Exception as e:
-            # 未知错误：记录完整堆栈
-            logger.exception(f"记录数据日志失败（未知错误）")
+            logger.error(f"记录数据指标失败: {e}")
+    
+    def _tune_batch_size(self):
+        """P3-9修复: 根据CPU核心数自动调整batch_size
+        
+        调优策略:
+        - 1-2核: 500
+        - 4核: 1000
+        - 8核: 2000
+        - 16核+: 4000
+        
+        目标: 平衡内存使用和并行效率
+        """
+        if not self._auto_tune_batch_size:
+            return
+        
+        cpu_count = self._cpu_count
+        
+        if cpu_count <= 2:
+            optimal_batch_size = 500
+        elif cpu_count <= 4:
+            optimal_batch_size = 1000
+        elif cpu_count <= 8:
+            optimal_batch_size = 2000
+        else:
+            optimal_batch_size = 4000
+        
+        old_batch_size = self._batch_size
+        self._batch_size = optimal_batch_size
+        
+        if old_batch_size != optimal_batch_size:
+            logger.info(
+                f"P3-9 Batch size自动调整: {old_batch_size} -> {optimal_batch_size} "
+                f"(CPU: {cpu_count}核)"
+            )
     
     def _random_search_worker(self, worker_id: int = 0) -> int:
         """
@@ -359,6 +469,10 @@ class KeyCollisionEngine(BaseCollisionEngine):
         local_count = 0
         local_matches = []
         batch_start_time = time.time()
+        
+        # BL-4修复: 添加短期去重缓存，减少DeduplicationFilter的压力
+        recent_keys: set = set()  # 最近生成的私钥指纹
+        max_recent_size = 10000  # 缓存大小
             
         logger.debug(f"工作线程 {worker_id} 启动，批量大小={self._batch_size}")
             
@@ -382,9 +496,21 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     if k < 1 or k >= Secp256k1.N:
                         continue  # with块会正确执行__exit__清零私钥
                                     
+                    # BL-4修复: 先检查短期缓存，再检查DeduplicationFilter
+                    import hashlib
+                    key_fp = hashlib.sha256(private_key).digest()[:8]
+                    if key_fp in recent_keys:
+                        continue  # 短期缓存命中，跳过
+                    
                     # 去重检查（DeduplicationFilter内部已有锁保护）
                     if not self.dedup_filter.check_and_add(bytes(private_key)):
                         continue  # with块会正确执行__exit__清零私钥
+                    
+                    # 添加到短期缓存
+                    recent_keys.add(key_fp)
+                    if len(recent_keys) > max_recent_size:
+                        # 缓存满时，清空一半（保留最近的）
+                        recent_keys = set(list(recent_keys)[max_recent_size//2:])
                                     
                     # 生成地址
                     try:
@@ -465,7 +591,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                                 self.stats.add_match(pk, addr)
                             if self.on_match:
                                 for pk, addr, wif_str in local_matches:
-                                    self.on_match(pk, addr, wif_str)
+                                    self._safe_invoke_match_callback(pk, addr, wif_str)
                             local_matches.clear()
                                         
                         # 如果没有on_match回调，找到匹配后停止
@@ -477,6 +603,12 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     # 退出with语句时private_key自动清零
             
             # 批次结束：key_mgr实例退出with块，最后一次私钥清零
+            
+            # P2-5修复: 定期更新全局计数器，确保主线程可以实时获取进度
+            # 这是为了解决工作线程持续运行时，主线程无法获取实时计数的问题
+            if batch_count > 0:
+                with self._state_lock:
+                    self._live_range_count += batch_count
             
             # 定期让出时间片，避免CPU占用过高
             if local_count % 100 == 0:
@@ -498,7 +630,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 self.stats.add_match(pk, addr)
             if self.on_match:
                 for pk, addr, wif_str in local_matches:
-                    self.on_match(pk, addr, wif_str)
+                    self._safe_invoke_match_callback(pk, addr, wif_str)
             logger.debug(f"工作线程 {worker_id} 提交了 {len(local_matches)} 个匹配结果")
         
         worker_time = time.time() - batch_start_time
@@ -586,12 +718,25 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         new_future = executor.submit(self._random_search_worker, worker_id)
                         futures[new_future] = worker_id
                 
-                # 基于时间的进度回调
+                # P2-5修复: 基于时间和计数的双重进度回调控制
                 current_time = time.time()
+                should_report = False
+                
+                # 时间间隔控制
                 if current_time - self._last_progress_time >= self._progress_interval_sec:
-                    # 线程安全：在锁内读取 total_count
+                    should_report = True
+                
+                # 计数控制(高速运行时更精确)
+                self._batch_counter += 1
+                if self._batch_counter >= self._progress_interval_count:
+                    should_report = True
+                    self._batch_counter = 0
+                
+                if should_report:
+                    # P2-5修复: 使用实时计数器，而不是等待线程完成
+                    # 这确保在工作线程持续运行时也能获取实时进度
                     with self._state_lock:
-                        safe_count = total_count
+                        safe_count = total_count + self._live_range_count
                     
                     self.stats.update(safe_count)
                     if self.on_progress:
@@ -610,7 +755,10 @@ class KeyCollisionEngine(BaseCollisionEngine):
         
         # 确保线程安全地获取最终计数
         with self._state_lock:
-            final_count = total_count
+            # P2-5修复: 包含实时计数器，确保最终统计准确
+            final_count = total_count + self._live_range_count
+            # 重置实时计数器（为下次运行做准备）
+            self._live_range_count = 0
         
         self._executor = None
         
@@ -718,7 +866,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         pk_copy = bytes(private_key)
                         self.stats.add_match(pk_copy, address)
                         if self.on_match:
-                            self.on_match(pk_copy, address, wif)
+                            self._safe_invoke_match_callback(pk_copy, address, wif)
                         # 如果没有on_match回调，找到匹配后停止
                         else:
                             self._stop_event.set()
@@ -778,6 +926,19 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 worker_end = start + (i + 1) * chunk_size - 1
                 if i == num_workers - 1:
                     worker_end = end  # 最后一个线程处理剩余部分
+                
+                # BL-5修复: 添加边界检查日志，确保无重叠或遭漏
+                if i > 0 and worker_start <= (start + (i-1) * chunk_size):
+                    logger.warning(
+                        f"RangeScan worker {i}: 边界重叠 detected! "
+                        f"start={worker_start}, prev_end={start + (i-1) * chunk_size}"
+                    )
+                
+                logger.debug(
+                    f"RangeScan worker {i}: 分配范围 [{worker_start}, {worker_end}] "
+                    f"(共{worker_end - worker_start + 1}个私钥)"
+                )
+                
                 future = executor.submit(self._range_scan_worker, worker_start, worker_end, i)
                 futures.append(future)
                 
@@ -860,7 +1021,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         if self.on_complete:
             self.on_complete(self.stats)
     
-    def _brute_force_worker(self, worker_id: int, batch_size: int = 5000) -> int:
+    def _brute_force_worker(self, worker_id: int, batch_size: int = 5000, max_keys: Optional[int] = None) -> int:
         """
         暴力穷举模式的工作线程函数
         
@@ -870,6 +1031,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         参数:
             worker_id: 工作线程标识符，用于日志区分
             batch_size: 每批获取的私钥数量，默认5000（减少锁竞争）
+            max_keys: 最大扫描私钥数量，None表示无限制
             
         返回:
             本线程处理的私钥总数
@@ -883,6 +1045,11 @@ class KeyCollisionEngine(BaseCollisionEngine):
         local_count = 0
         
         while not self._stop_event.is_set():
+            # 检查是否达到最大扫描数量
+            if max_keys is not None and local_count >= max_keys:
+                logger.info(f"BruteForce worker {worker_id}: 已达到最大扫描数量 {max_keys}")
+                break
+            
             # 原子地获取当前批次起始位置
             with self._state_lock:
                 batch_start = self._current_position
@@ -936,7 +1103,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                             pk_copy = bytes(private_key)
                             self.stats.add_match(pk_copy, address)
                             if self.on_match:
-                                self.on_match(pk_copy, address, wif)
+                                self._safe_invoke_match_callback(pk_copy, address, wif)
                             # 如果没有on_match回调，找到匹配后停止
                             else:
                                 self._stop_event.set()
@@ -950,8 +1117,17 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 # with块退出时私钥自动清零
         
         return local_count
-    def brute_force(self, start: int = 1) -> None:
-        """暴力穷举模式 - 使用线程池并行从指定起点开始顺序递增"""
+    def brute_force(self, start: int = 1, max_keys: Optional[int] = None) -> None:
+        """暴力穷举模式 - 使用线程池并行从指定起点开始顺序递增
+        
+        参数:
+            start: 起始私钥值，默认1
+            max_keys: 最大扫描私钥数量，None表示无限制（防止无限运行）
+        
+        注意:
+            - 建议设置max_keys参数以避免无限运行
+            - 例如：max_keys=1_000_000_000 限制扫描10亿个私钥
+        """
         self._current_mode = "brute_force"
         self._range_start = start
         self._range_end = None
@@ -961,6 +1137,11 @@ class KeyCollisionEngine(BaseCollisionEngine):
         total_count = 0
         self._running = True
         self._last_data_log_time = 0.0  # 重置数据日志时间
+        
+        # 警告：如果未设置max_keys
+        if max_keys is None:
+            logger.warning("⚠️ brute_force模式未设置max_keys限制，将无限运行直到手动停止或找到匹配")
+            logger.warning("建议：使用 max_keys 参数限制扫描数量，例如 max_keys=1_000_000_000")
         
         # 记录引擎启动数据
         if self.data_logging_enabled:
@@ -1169,6 +1350,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
                             mode = "random"
                 except Exception as e:
                     logger.error(f"从断点恢复失败: {e}")
+                    # RL-1修复: 启动失败时清理已初始化的资源
+                    self.checkpoint_mgr = None  # 清理可能损坏的checkpoint
                     # 继续使用原始参数启动
             
             self._stop_event.clear()
@@ -1181,7 +1364,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             elif mode == "range":
                 target_fn = lambda: self.range_scan(kwargs.get('start', 1), kwargs.get('end', 2**32))
             elif mode == "brute_force":
-                target_fn = lambda: self.brute_force(kwargs.get('start', 1))
+                target_fn = lambda: self.brute_force(kwargs.get('start', 1), kwargs.get('max_keys', None))
             
             logger.info(f"启动工作线程: {target_fn.__name__ if hasattr(target_fn, '__name__') else 'lambda'}")
             self._thread = threading.Thread(target=target_fn, daemon=True)
@@ -1189,7 +1372,16 @@ class KeyCollisionEngine(BaseCollisionEngine):
             logger.info("对撞引擎启动完成")
         except Exception as e:
             logger.error(f"启动对撞引擎失败: {e}")
+            # RL-1修复: 启动失败时清理资源
             self._running = False
+            self._stop_event.set()
+            # 清理可能已初始化的资源
+            if hasattr(self, '_executor') and self._executor:
+                try:
+                    self._executor.shutdown(wait=False)
+                except Exception as cleanup_error:
+                    # A类修复: 资源清理失败添加DEBUG日志
+                    logger.debug(f"清理线程池失败（启动失败时）: {cleanup_error}")
             raise
     
     def stop(self, timeout: Optional[float] = None) -> None:

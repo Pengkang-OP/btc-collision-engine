@@ -9,10 +9,13 @@
 
 import tkinter as tk
 from tkinter import ttk, messagebox
+import logging
 from typing import Optional, Dict, Any
 from datetime import datetime
 
 from src.monitoring.alert_system import AlertLevel, AlertType, get_alert_system
+
+logger = logging.getLogger(__name__)
 
 
 # 告警级别配色
@@ -202,14 +205,18 @@ class AlertPanel(tk.Frame):
             )
             
         except Exception as e:
-            pass  # 静默失败,不影响GUI
+            # B类修复: 降级回退场景添加DEBUG日志（GUI降级不影响功能）
+            logger.debug(f"更新告警列表失败（不影响GUI）: {e}")
+            # 静默失败,不影响GUI
     
     def _format_time(self, timestamp: str) -> str:
         """格式化时间戳"""
         try:
             dt = datetime.fromisoformat(timestamp)
             return dt.strftime("%H:%M:%S")
-        except:
+        except (ValueError, TypeError) as e:
+            # C类修复: 使用具体异常类型代替裸异常捕获
+            logger.debug(f"时间戳解析失败: {e}")
             return timestamp[:19]
     
     def _format_level(self, level: AlertLevel) -> str:

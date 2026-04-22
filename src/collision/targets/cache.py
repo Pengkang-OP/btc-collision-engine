@@ -216,7 +216,9 @@ class AddressCache:
         if not isinstance(key, str):
             try:
                 key = str(key)
-            except Exception:
+            except (TypeError, ValueError) as e:
+                # C类修复: 使用具体异常类型代替裸异常捕获
+                logging.debug(f"缓存键转换失败: {e}")
                 return False
         
         with self._lock:

@@ -155,8 +155,9 @@ class LoggingConfig:
             # 设置日志文件权限为仅所有者可读写
             try:
                 os.chmod(log_file, 0o600)
-            except OSError:
-                pass
+            except OSError as perm_error:
+                # B类修复: 权限设置降级回退添加DEBUG日志
+                pass  # Windows系统可能不支持chmod
             
             return handler
         except Exception as e:

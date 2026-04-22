@@ -455,13 +455,20 @@ class DataMonitor:
         
         # 检查重复的私钥
         stats = self._device_stats[device_idx]
-        if private_key in stats['seen_keys']:
+        
+        # P1-2安全修复: 使用SHA256哈希代替明文私钥（性能优化: 减少类型检查）
+        if isinstance(private_key, str):
+            private_key_hash = hashlib.sha256(private_key.encode()).hexdigest()
+        else:
+            private_key_hash = hashlib.sha256(private_key).hexdigest()
+        
+        if private_key_hash in stats['seen_keys']:
             issue = DataQualityIssue(
                 issue_type=DataQualityIssue.DUPLICATE_KEY,
                 severity='medium',
-                message=f"检测到重复的私钥: {private_key[:16]}...",
+                message=f"检测到重复的私钥: hash={private_key_hash[:8]}...",
                 device_idx=device_idx,
-                details={'private_key_prefix': private_key[:16]}
+                details={'private_key_hash_prefix': private_key_hash[:8]}
             )
             self._record_issue(issue)
         else:
@@ -471,9 +478,9 @@ class DataMonitor:
                 keys_to_remove = list(stats['seen_keys'])[:len(stats['seen_keys'])//2]
                 for key in keys_to_remove:
                     stats['seen_keys'].discard(key)
-                logger.debug(f"GPU {device_idx} 清理旧的私钥记录,保留{len(stats['seen_keys'])}个")
+                logger.debug(f"GPU {device_idx} 清理旧的私钥哈希记录,保留{len(stats['seen_keys'])}个")
             
-            stats['seen_keys'].add(private_key)
+            stats['seen_keys'].add(private_key_hash)
         
         # 检查重复的地址
         if address in stats['seen_addresses']:

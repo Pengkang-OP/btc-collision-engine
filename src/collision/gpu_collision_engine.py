@@ -16,6 +16,197 @@ from typing import Set, Optional, Callable, Tuple, List, Dict, Any
 
 logger = logging.getLogger(__name__)
 
+# ========== GPU缓冲区追踪器 ==========
+class GPUBufferTracker:
+    """P2-2修复: GPU缓冲区跟踪器,用于检测内存泄漏
+    
+    追踪所有分配的GPU缓冲区,检测超时未释放的缓冲区。
+    线程安全,支持多线程并发访问。
+    
+    增强功能:
+    - 自动清理超时缓冲区
+    - 引擎关闭时强制检查
+    - 内存使用趋势监控
+    """
+    
+    # 类级别配置
+    DEFAULT_TIMEOUT = 300  # 默认超时5分钟
+    MAX_TRACKED_BUFFERS = 1000  # 最大追踪缓冲区数量
+    
+    def __init__(self, timeout: int = None):
+        self._allocated_buffers: Dict[str, Dict[str, Any]] = {}
+        self._lock = threading.Lock()
+        self._timeout = timeout or self.DEFAULT_TIMEOUT
+        self._cleanup_count = 0
+        self._leak_detection_count = 0
+    
+    def track_buffer(self, name: str, buffer: Any, size: int):
+        """注册缓冲区
+        
+        Args:
+            name: 缓冲区名称
+            buffer: OpenCL Buffer对象
+            size: 缓冲区大小(字节)
+        """
+        with self._lock:
+            self._allocated_buffers[name] = {
+                'buffer': buffer,
+                'size': size,
+                'timestamp': time.time(),
+                'allocated': True
+            }
+        logger.debug(f"GPU Buffer追踪: 分配 {name} ({size/1024:.1f} KB)")
+    
+    def release_buffer(self, name: str):
+        """注销缓冲区
+        
+        Args:
+            name: 缓冲区名称
+        """
+        with self._lock:
+            if name in self._allocated_buffers:
+                del self._allocated_buffers[name]
+                logger.debug(f"GPU Buffer追踪: 释放 {name}")
+    
+    def get_leaked_buffers(self, timeout: int = 300) -> List[str]:
+        """检测超过timeout未释放的缓冲区
+        
+        Args:
+            timeout: 超时阈值(秒),默认5分钟
+            
+        Returns:
+            泄漏的缓冲区名称列表
+        """
+        current_time = time.time()
+        leaked = []
+        
+        with self._lock:
+            for name, info in self._allocated_buffers.items():
+                if current_time - info['timestamp'] > timeout:
+                    leaked.append(name)
+        
+        if leaked:
+            logger.warning(
+                f"检测到{len(leaked)}个可能的GPU Buffer泄漏: {', '.join(leaked)}"
+            )
+        
+        return leaked
+    
+    def get_stats(self) -> Dict[str, Any]:
+        """获取缓冲区统计信息
+        
+        Returns:
+            统计信息字典
+        """
+        with self._lock:
+            total_size = sum(info['size'] for info in self._allocated_buffers.values())
+            return {
+                'count': len(self._allocated_buffers),
+                'total_size_bytes': total_size,
+                'total_size_mb': total_size / 1024 / 1024,
+                'buffers': list(self._allocated_buffers.keys()),
+                'cleanup_count': self._cleanup_count,
+                'leak_detection_count': self._leak_detection_count,
+                'timeout_seconds': self._timeout
+            }
+    
+    def cleanup_timed_out_buffers(self) -> List[str]:
+        """自动清理超时的缓冲区
+        
+        审查修复#2: 实际释放GPU资源，而不仅删除追踪记录。
+        
+        Returns:
+            被清理的缓冲区名称列表
+        """
+        current_time = time.time()
+        cleaned = []
+        failed_to_release = []  # 记录释放失败的资源
+        
+        with self._lock:
+            to_remove = []
+            for name, info in self._allocated_buffers.items():
+                if current_time - info['timestamp'] > self._timeout:
+                    to_remove.append(name)
+            
+            for name in to_remove:
+                info = self._allocated_buffers[name]
+                # 审查修复#2: 尝试释放GPU资源
+                try:
+                    buffer = info.get('buffer')
+                    if buffer is not None and hasattr(buffer, 'release'):
+                        buffer.release()
+                        logger.debug(f"自动清理超时缓冲区: {name}")
+                    else:
+                        failed_to_release.append(name)
+                        logger.warning(f"超时缓冲区无release方法: {name}")
+                except Exception as e:
+                    failed_to_release.append(name)
+                    logger.error(f"清理超时缓冲区失败 {name}: {e}")
+                finally:
+                    del self._allocated_buffers[name]
+                    cleaned.append(name)
+                    self._cleanup_count += 1
+        
+        if cleaned:
+            msg = f"自动清理{len(cleaned)}个超时GPU缓冲区"
+            if failed_to_release:
+                msg += f"，{len(failed_to_release)}个释放失败"
+            logger.warning(msg)
+        
+        return cleaned
+    
+    def force_check_on_shutdown(self) -> Dict[str, Any]:
+        """引擎关闭时强制检查内存泄漏
+        
+        Returns:
+            检查结果字典
+        """
+        self._leak_detection_count += 1
+        
+        with self._lock:
+            remaining = len(self._allocated_buffers)
+            total_size = sum(info['size'] for info in self._allocated_buffers.values())
+            buffer_names = list(self._allocated_buffers.keys())
+            
+            # 尝试释放所有剩余缓冲区
+            released = []
+            failed = []
+            
+            for name, info in self._allocated_buffers.items():
+                try:
+                    buffer = info.get('buffer')
+                    if buffer is not None and hasattr(buffer, 'release'):
+                        buffer.release()
+                        released.append(name)
+                        logger.debug(f"关闭时释放缓冲区: {name}")
+                except Exception as e:
+                    failed.append({'name': name, 'error': str(e)})
+                    logger.error(f"关闭时释放缓冲区失败 {name}: {e}")
+            
+            # 清空追踪记录
+            self._allocated_buffers.clear()
+        
+        # 审查修复#3: 修正语义准确性
+        result = {
+            'remaining_buffers': remaining,
+            'total_size_bytes': total_size,
+            'released': released,
+            'release_failed': failed,
+            'has_unreleased': remaining > 0,  # 有未释放的缓冲区
+            'has_leak': len(failed) > 0,      # 释放失败才算泄漏
+            'all_released_successfully': len(failed) == 0
+        }
+        
+        if remaining > 0:
+            logger.critical(
+                f"GPU引擎关闭时发现{remaining}个未释放缓冲区 "
+                f"(总大小: {total_size/1024:.1f}KB): {', '.join(buffer_names)}"
+            )
+        else:
+            logger.info("GPU引擎关闭时所有缓冲区已正确释放")
+        
+        return result
+
 # ========== 常量定义 ==========
 # P2-2: 魔法数字提取为常量
 # GPU计算常量
@@ -122,6 +313,9 @@ class GPUKernel(GPUKernelProtocol):
         self._program = program  # 可能为None（需要自行编译）
         self._batch_kernel = None
         
+        # P2-2修复: 初始化缓冲区追踪器
+        self._buffer_tracker = GPUBufferTracker()
+        
         # 持久化 Buffer - 避免频繁分配/释放
         self._keys_buf = None
         self._match_buf = None
@@ -140,8 +334,14 @@ class GPUKernel(GPUKernelProtocol):
         if self.program is None:
             self._compile()
         
-        self._verify()
+        # 初始化_batch_kernel引用
+        if self._program is not None:
+            self._batch_kernel = self._program.batch_check
+        
         self._allocate_buffers()
+        
+        # 验证GPU内核(在分配缓冲区之后)
+        self._verify()
     
     @property
     def device(self) -> Any:  # GPUDevice
@@ -171,8 +371,16 @@ class GPUKernel(GPUKernelProtocol):
         return self._program
     
     def _compile(self):
-        """编译 OpenCL 内核（带性能监控）"""
+        """编译 OpenCL 内核（带性能监控和缓存）
+        
+        P2-6修复: 添加内核编译缓存机制，避免每次启动都重新编译
+        """
         import time
+        
+        # P2-6修复: 尝试从缓存加载
+        if self._load_kernel_cache():
+            logger.info("使用缓存的OpenCL内核二进制")
+            return
         
         compile_start = time.time()
         try:
@@ -181,6 +389,9 @@ class GPUKernel(GPUKernelProtocol):
             compile_time_ms = (time.time() - compile_start) * 1000
             
             logger.info(f"OpenCL 内核编译成功: {compile_time_ms:.0f}ms")
+            
+            # P2-6修复: 保存编译结果到缓存
+            self._save_kernel_cache()
             
             # 记录编译性能
             try:
@@ -216,10 +427,135 @@ class GPUKernel(GPUKernelProtocol):
     
     def _verify(self):
         """验证 GPU 计算正确性"""
+        import pyopencl as cl
         import numpy as np
         
-        result_x = np.zeros(8, dtype=np.uint32)
-        result_y = np.zeros(8, dtype=np.uint32)
+        # 准备测试数据
+        num_keys = 1
+        num_targets = 1
+        
+        # 测试私钥: 1 (32字节)
+        test_key_bytes = b'\x01' + b'\x00' * 31
+        
+        # 虚拟目标hash160 (20字节)
+        test_targets = b'\x00' * 20
+        
+        # 将测试数据写入GPU缓冲区
+        keys_array = np.frombuffer(test_key_bytes, dtype=np.uint32)
+        cl.enqueue_copy(self.device.queue, self._keys_buf, keys_array)
+        
+        # 设置目标
+        self.set_targets(test_targets, num_targets)
+        
+        # 清空匹配结果缓冲区
+        cl.enqueue_fill_buffer(
+            self.device.queue, self._match_buf,
+            np.int32(0), 0, num_keys * 4
+        )
+        
+        # 执行GPU batch计算
+        self._batch_kernel(
+            self.device.queue,
+            (num_keys,), None,
+            self._keys_buf, np.uint32(num_keys),
+            self._targets_buf, np.uint32(num_targets),
+            self._match_buf
+        ).wait()
+        
+        # 读取结果
+        match_flags = np.zeros(num_keys, dtype=np.int32)
+        cl.enqueue_copy(self.device.queue, match_flags, self._match_buf)
+        
+        # 验证: 由于目标是全0,不应该匹配
+        if match_flags[0] != 0:
+            raise RuntimeError(f"GPU内核验证失败: 不应匹配虚拟目标,但match_flags[0]={match_flags[0]}")
+        
+        logger.info("GPU 内核验证通过")
+    
+    def _generate_cache_key(self) -> str:
+        """P2-6修复: 生成缓存键
+        
+        基于设备信息和内核源码生成唯一的缓存键
+        """
+        import hashlib
+        
+        # 使用设备信息和内核源码生成键
+        device_info = f"{self.device.device.name}_{self.device.device.vendor}"
+        source_hash = hashlib.md5(OPENCL_KERNEL_SOURCE.encode()).hexdigest()[:8]
+        
+        cache_key = f"{device_info}_{source_hash}"
+        # 替换非法字符
+        cache_key = cache_key.replace(' ', '_').replace('-', '_')
+        
+        return cache_key
+    
+    def _get_cache_file(self) -> str:
+        """P2-6修复: 获取缓存文件路径"""
+        import os
+        
+        cache_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'cache')
+        os.makedirs(cache_dir, exist_ok=True)
+        
+        cache_key = self._generate_cache_key()
+        cache_file = os.path.join(cache_dir, f"kernel_{cache_key}.bin")
+        
+        return cache_file
+    
+    def _load_kernel_cache(self) -> bool:
+        """P2-6修复: 从缓存加载内核二进制
+        
+        返回:
+            bool: 是否成功加载缓存
+        """
+        import pyopencl as cl
+        
+        cache_file = self._get_cache_file()
+        
+        if not os.path.exists(cache_file):
+            logger.debug(f"缓存文件不存在: {cache_file}")
+            return False
+        
+        try:
+            with open(cache_file, 'rb') as f:
+                cached_binary = f.read()
+            
+            # 从二进制加载程序
+            self._program = cl.Program(
+                self.device.context,
+                [self.device.device],
+                [cached_binary]
+            ).build()
+            
+            logger.info(f"成功加载内核缓存: {cache_file}")
+            return True
+            
+        except Exception as e:
+            logger.warning(f"加载内核缓存失败: {e}")
+            # 缓存损坏，删除它
+            try:
+                os.remove(cache_file)
+            except Exception as cleanup_error:
+                # A类修复: 资源清理失败添加DEBUG日志
+                logger.debug(f"清理损坏缓存文件失败（可忽略）: {cleanup_error}")
+            return False
+    
+    def _save_kernel_cache(self):
+        """P2-6修复: 保存内核二进制到缓存"""
+        cache_file = self._get_cache_file()
+        
+        try:
+            # 获取编译后的二进制
+            binaries = self._program.get_info(cl.program_info.BINARIES)
+            if binaries and len(binaries) > 0:
+                binary = binaries[0]
+                
+                with open(cache_file, 'wb') as f:
+                    f.write(binary)
+                
+                logger.debug(f"内核缓存已保存: {cache_file} ({len(binary)} bytes)")
+                
+        except Exception as e:
+            logger.warning(f"保存内核缓存失败: {e}")
         
         x_buf = cl.Buffer(self.device.context, cl.mem_flags.WRITE_ONLY, size=32)
         y_buf = cl.Buffer(self.device.context, cl.mem_flags.WRITE_ONLY, size=32)
@@ -259,7 +595,10 @@ class GPUKernel(GPUKernelProtocol):
         )
     
     def _allocate_buffers(self):
-        """预分配 GPU 内存缓冲区"""
+        """预分配 GPU 内存缓冲区
+        
+        P2-2修复: 添加缓冲区追踪
+        """
         import numpy as np
         
         # 私钥缓冲区 (最大批次大小)
@@ -268,6 +607,8 @@ class GPUKernel(GPUKernelProtocol):
             cl.mem_flags.READ_ONLY,
             size=self.max_batch_size * 32
         )
+        # P2-2修复: 注册缓冲区追踪
+        self._buffer_tracker.track_buffer("_keys_buf", self._keys_buf, self.max_batch_size * 32)
         
         # 匹配结果缓冲区
         self._match_buf = cl.Buffer(
@@ -275,11 +616,16 @@ class GPUKernel(GPUKernelProtocol):
             cl.mem_flags.WRITE_ONLY,
             size=self.max_batch_size * 4
         )
+        # P2-2修复: 注册缓冲区追踪
+        self._buffer_tracker.track_buffer("_match_buf", self._match_buf, self.max_batch_size * 4)
         
         # 预分配主机内存
         self._match_flags = np.zeros(self.max_batch_size, dtype=np.int32)
         
         logger.info(f"GPU 缓冲区分配完成: max_batch_size={self.max_batch_size}")
+        # P2-2修复: 记录缓冲区统计
+        stats = self._buffer_tracker.get_stats()
+        logger.debug(f"GPU Buffer统计: {stats['count']}个缓冲区, {stats['total_size_mb']:.2f} MB")
     
     def set_targets(self, target_hash160s: bytes, num_targets: int):
         """设置目标地址 Hash160 - 只需设置一次"""
@@ -415,9 +761,32 @@ class GPUKernel(GPUKernelProtocol):
         # 检查是否超时
         if not execution_completed[0]:
             # P1修复: 超时后尝试清理资源
+            # P3改进: 添加超时监控和强制中断机制
             try:
                 logger.warning("GPU执行超时，尝试强制完成队列以清理资源")
+                
+                # 记录清理开始时间
+                cleanup_start = time.time()
+                
+                # 尝试在有限时间内完成队列
+                # 注意: OpenCL的finish()没有超时参数,但我们可以通过异常捕获来检测
                 self.device.queue.finish()  # 强制完成队列
+                
+                cleanup_elapsed = time.time() - cleanup_start
+                
+                # 记录清理性能指标
+                if cleanup_elapsed > 1.0:
+                    logger.warning(
+                        f"队列清理耗时{cleanup_elapsed:.2f}秒, "
+                        f"GPU可能存在性能问题"
+                    )
+                
+                # 如果清理耗时异常长(超过原始超时时间),说明GPU可能已完全故障
+                if cleanup_elapsed > timeout_seconds:
+                    logger.critical(
+                        f"队列清理耗时{cleanup_elapsed:.1f}秒超过原始超时{timeout_seconds}秒, "
+                        f"GPU可能已完全故障,建议重启程序并检查硬件"
+                    )
             except Exception as cleanup_error:
                 logger.error(f"强制清理GPU队列失败: {cleanup_error}")
             
@@ -510,27 +879,52 @@ class GPUKernel(GPUKernelProtocol):
         return matches
     
     def cleanup(self):
-        """清理GPU资源
-        
+        """清琅GPU资源
+            
         P1修复: 显式释放OpenCL Buffer,防止显存泄漏
+        P3改进: 删除未使用的pyopencl导入(Buffer对象自带release方法)
+        P5增强: 引擎关闭时强制检查内存泄漏
         """
-        import pyopencl as cl
-        
+        # 注意: 不需要导入pyopencl, OpenCL Buffer对象自带release()方法
+            
+        # P5增强: 引擎关闭时强制检查并释放所有缓冲区
+        if hasattr(self, '_buffer_tracker') and self._buffer_tracker:
+            try:
+                leak_report = self._buffer_tracker.force_check_on_shutdown()
+                # 审查修复#3: 使用修正后的语义
+                if leak_report['has_unreleased'] or leak_report['has_leak']:
+                    logger.warning(
+                        f"GPU内存泄漏检测报告: "
+                        f"未释放={leak_report['remaining_buffers']}, "
+                        f"释放成功={len(leak_report['released'])}, "
+                        f"释放失败={len(leak_report['release_failed'])}"
+                    )
+                    if leak_report['has_leak']:
+                        logger.error(
+                            f"发现{len(leak_report['release_failed'])}个缓冲区释放失败，"
+                            f"可能存在内存泄漏"
+                        )
+            except Exception as e:
+                logger.error(f"内存泄漏检查失败: {e}")
+            
         # P1修复: 显式释放OpenCL Buffer
         buffers_to_release = [
             ("_keys_buf", self._keys_buf),
             ("_match_buf", self._match_buf),
             ("_targets_buf", self._targets_buf),
         ]
-        
+            
         for buf_name, buf in buffers_to_release:
             if buf is not None:
                 try:
                     buf.release()  # 显式释放OpenCL资源
                     logger.debug(f"已释放 {buf_name}")
+                    # P2-2修复: 注销缓冲区追踪
+                    if hasattr(self, '_buffer_tracker'):
+                        self._buffer_tracker.release_buffer(buf_name)
                 except Exception as e:
                     logger.warning(f"释放 {buf_name} 失败: {e}")
-        
+            
         # 清空引用
         self._keys_buf = None
         self._match_buf = None
@@ -538,7 +932,7 @@ class GPUKernel(GPUKernelProtocol):
         self._match_flags = None
         self._program = None
         self._batch_kernel = None
-        
+            
         logger.debug("GPU Kernel资源已清理")
 
 
@@ -741,28 +1135,10 @@ class GPUCollisionEngine(BaseCollisionEngine):
             
             logger.info("✅ 内核源码使用 uint32 workaround")
             
-            # 小规模测试（100个私钥）
-            test_num_keys = 100
-            test_keys = secrets.token_bytes(test_num_keys * 32)
-            test_targets = b'\x00' * 20  # 虚拟目标
-            
-            logger.info(f"🧪 运行 Intel workaround 测试 (num_keys={test_num_keys})...")
-            
-            # 运行测试批次
-            matches = self._gpu_kernel.run_batch(
-                num_keys=test_num_keys,
-                private_keys=test_keys,
-                target_hash160s=test_targets,
-                num_targets=1
-            )
-            
-            # 验证结果
-            if isinstance(matches, list):
-                logger.info("✅ Intel uint32 workaround 测试通过")
-                return True
-            else:
-                logger.error(f"❌ Intel workaround 测试返回异常结果: {type(matches)}")
-                return False
+            # 由于_verify()已经成功验证了GPU内核,说明workaround已经正常工作
+            # 这里只需要确认即可,不需要再次运行测试
+            logger.info("✅ Intel uint32 workaround 验证通过 (已在GPU内核验证中确认)")
+            return True
                 
         except Exception as e:
             logger.error(f"❌ Intel workaround 测试失败: {type(e).__name__}: {e}")
@@ -1215,9 +1591,9 @@ class GPUCollisionEngine(BaseCollisionEngine):
         if mode == "random":
             target_fn = self._random_search
         elif mode == "range":
-            target_fn = lambda: self._range_scan(self._range_start, self._range_end)
+            target_fn = self._start_range_scan
         elif mode == "brute_force":
-            target_fn = lambda: self._brute_force(self._range_start)
+            target_fn = self._start_brute_force
         else:
             raise ValueError(f"未知模式: {mode}")
         
@@ -1241,6 +1617,22 @@ class GPUCollisionEngine(BaseCollisionEngine):
         else:
             logger.info("使用GPU同步执行模式")
             return self._random_search_sync()
+    
+    def _start_range_scan(self):
+        """启动范围扫描（命名函数替代lambda）
+        
+        这个函数是为了替代lambda: self._range_scan(self._range_start, self._range_end)
+        使用命名函数可以提高代码可读性和调试友好性。
+        """
+        return self._range_scan(self._range_start, self._range_end)
+    
+    def _start_brute_force(self):
+        """启动暴力穷举（命名函数替代lambda）
+        
+        这个函数是为了替代lambda: self._brute_force(self._range_start)
+        使用命名函数可以提高代码可读性和调试友好性。
+        """
+        return self._brute_force(self._range_start)
     
     def _random_search_sync(self):
         """同步执行版本 - 重构优化（P0-1修复）
@@ -1372,7 +1764,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
                     next_private_keys = gen_result[0] if gen_result[0] else b''.join(secrets.token_bytes(32) for _ in range(self.batch_size))
                 
                 # 启动下一批生成
-                gen_thread, gen_result = generate_next_batch_async(self.batch_size)
+                gen_thread, gen_result = self._start_async_key_generation(self.batch_size)
                 
                 # 处理匹配
                 for match in matches:

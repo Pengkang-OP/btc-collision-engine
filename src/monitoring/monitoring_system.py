@@ -187,8 +187,9 @@ class DataStorage:
             try:
                 if os.path.exists(temp_file):
                     os.remove(temp_file)
-            except Exception:
-                pass
+            except Exception as cleanup_error:
+                # A类修复: 资源清理失败添加DEBUG日志
+                logger.debug(f"清理临时文件失败（可忽略）: {cleanup_error}")
     
     def save_history_data(self, data: MonitoringData):
         """保存历史数据（优化：原子写入 + 数据恢复）"""
@@ -222,8 +223,125 @@ class DataStorage:
                 temp_file = self.history_data_file + '.tmp'
                 if os.path.exists(temp_file):
                     os.remove(temp_file)
-            except Exception:
-                pass
+            except Exception as cleanup_error:
+                # A类修复: 资源清理失败添加DEBUG日志
+                logger.debug(f"清理临时文件失败（可忽略）: {cleanup_error}")
+    
+    def compress_old_data(self, days_threshold: int = 7, sample_rate: float = 0.1):
+        """P2-3修复: 压缩超过threshold天的历史数据
+        
+        参数:
+            days_threshold: 超过多少天的数据需要压缩（默认7天）
+            sample_rate: 采样率，0.1表示保留10%的数据（默认0.1）
+        """
+        try:
+            import gzip
+            from datetime import datetime, timedelta
+            
+            # 计算截止日期
+            cutoff_date = datetime.now() - timedelta(days=days_threshold)
+            cutoff_timestamp = cutoff_date.timestamp()
+            
+            # 读取历史数据
+            history = self._load_history_with_recovery()
+            
+            if not history:
+                logger.info("无历史数据需要压缩")
+                return
+            
+            # 分离新旧数据
+            old_data = []
+            new_data = []
+            
+            for record in history:
+                timestamp = record.get('timestamp', 0)
+                if timestamp < cutoff_timestamp:
+                    old_data.append(record)
+                else:
+                    new_data.append(record)
+            
+            if not old_data:
+                logger.info(f"无超过{days_threshold}天的数据需要压缩")
+                return
+            
+            # 采样压缩旧数据
+            compressed_data = self._sample_data(old_data, sample_rate)
+            
+            # 保存压缩数据到单独文件
+            compressed_file = self.history_data_file.replace('.json', '_compressed.json')
+            temp_file = compressed_file + '.tmp'
+            
+            with open(temp_file, 'w', encoding='utf-8') as f:
+                json.dump(compressed_data, f, ensure_ascii=False, indent=2)
+                f.flush()
+                os.fsync(f.fileno())
+            
+            if os.path.exists(compressed_file):
+                os.replace(temp_file, compressed_file)
+            else:
+                os.rename(temp_file, compressed_file)
+            
+            # 保留新数据
+            temp_file = self.history_data_file + '.tmp'
+            with open(temp_file, 'w', encoding='utf-8') as f:
+                json.dump(new_data, f, ensure_ascii=False, indent=2)
+                f.flush()
+                os.fsync(f.fileno())
+            
+            if os.path.exists(self.history_data_file):
+                os.replace(temp_file, self.history_data_file)
+            else:
+                os.rename(temp_file, self.history_data_file)
+            
+            logger.info(
+                f"数据压缩完成: {len(old_data)}条旧数据 -> {len(compressed_data)}条 "
+                f"(采样率{sample_rate*100:.0f}%), 保留{len(new_data)}条新数据"
+            )
+            
+        except Exception as e:
+            logger.error(f"压缩历史数据失败: {e}")
+            # 清理临时文件
+            for temp_file in [compressed_file + '.tmp', self.history_data_file + '.tmp']:
+                try:
+                    if os.path.exists(temp_file):
+                        os.remove(temp_file)
+                except Exception as cleanup_error:
+                    # A类修复: 资源清理失败添加DEBUG日志
+                    logger.debug(f"清理临时文件失败（可忽略）: {cleanup_error}")
+    
+    def _sample_data(self, data: list, sample_rate: float) -> list:
+        """P2-3修复: 数据采样
+        
+        参数:
+            data: 原始数据列表
+            sample_rate: 采样率（0.0-1.0）
+        
+        返回:
+            采样后的数据列表
+        """
+        if not data or sample_rate >= 1.0:
+            return data
+        
+        import random
+        random.seed(42)  # 固定种子确保可重现
+        
+        # 计算采样数量
+        sample_count = max(1, int(len(data) * sample_rate))
+        
+        # 均匀采样：确保覆盖整个时间段
+        if sample_count >= len(data):
+            return data
+        
+        # 计算采样间隔
+        interval = len(data) / sample_count
+        sampled = []
+        
+        for i in range(sample_count):
+            index = int(i * interval)
+            if index < len(data):
+                sampled.append(data[index])
+        
+        return sampled
     
     def save_error(self, error: Dict[str, Any]):
         """保存错误记录（优化：原子写入）"""
@@ -261,8 +379,9 @@ class DataStorage:
                 temp_file = self.error_log_file + '.tmp'
                 if os.path.exists(temp_file):
                     os.remove(temp_file)
-            except Exception:
-                pass
+            except Exception as cleanup_error:
+                # A类修复: 资源清理失败添加DEBUG日志
+                logger.debug(f"清理临时文件失败（可忽略）: {cleanup_error}")
     
     def get_current_data(self) -> Optional[Dict[str, Any]]:
         """获取当前数据"""

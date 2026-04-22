@@ -91,14 +91,21 @@ class DataLogger:
             
             # 原子替换
             os.replace(temp_file, filepath)
+            
+            # 设置文件权限（仅所有者可读写）
+            try:
+                os.chmod(filepath, 0o600)
+            except (OSError, PermissionError) as e:
+                self.logger.debug(f"设置文件权限失败: {e}")
         except Exception as e:
             self.logger.error(f"原子写入失败: {e}")
             # 清理临时文件
             try:
                 if os.path.exists(temp_file):
                     os.remove(temp_file)
-            except Exception:
-                pass
+            except Exception as cleanup_error:
+                # A类修复: 资源清理失败添加DEBUG日志
+                self.logger.debug(f"清理临时文件失败（可忽略）: {cleanup_error}")
     
     def _initialize_files(self):
         """初始化数据文件"""
@@ -395,8 +402,9 @@ class DataLogger:
                 try:
                     if temp_file and os.path.exists(temp_file):
                         os.remove(temp_file)
-                except Exception:
-                    pass
+                except Exception as cleanup_error:
+                    # A类修复: 资源清理失败添加DEBUG日志
+                    self.logger.debug(f"清理临时文件失败（可忽略）: {cleanup_error}")
                 
                 # 如果不是最后一次尝试，等待后重试
                 if attempt < max_retries - 1:
@@ -469,8 +477,9 @@ class DataLogger:
                 try:
                     if temp_file and os.path.exists(temp_file):
                         os.remove(temp_file)
-                except Exception:
-                    pass
+                except Exception as cleanup_error:
+                    # A类修复: 资源清理失败添加DEBUG日志
+                    self.logger.debug(f"清理临时文件失败（可忽略）: {cleanup_error}")
                 
                 # 如果不是最后一次尝试，等待后重试
                 if attempt < max_retries - 1:

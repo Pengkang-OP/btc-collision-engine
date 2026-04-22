@@ -80,8 +80,9 @@ def atomic_json_write(filepath: str, data: Any, ensure_ascii: bool = False,
         if temp_file and os.path.exists(temp_file):
             try:
                 os.remove(temp_file)
-            except OSError:
-                pass
+            except OSError as cleanup_error:
+                # B类修复: 清理失败添加DEBUG日志
+                logger.debug(f"清理临时文件失败（可忽略）: {cleanup_error}")
 
 
 def atomic_json_read(filepath: str, default: Any = None, 
@@ -160,8 +161,9 @@ def _recover_from_backup(filepath: str, default: Any) -> Any:
             logger.error(f"从临时文件恢复失败: {e}")
             try:
                 os.remove(temp_file)  # 清理损坏的临时文件
-            except OSError:
-                pass
+            except OSError as cleanup_error:
+                # B类修复: 清理失败添加DEBUG日志
+                logger.debug(f"清理损坏临时文件失败（可忽略）: {cleanup_error}")
     
     # 尝试从备份文件恢复
     backup_file = filepath + '.bak'
@@ -251,8 +253,9 @@ def ensure_directory(dir_path: str, mode: int = 0o755) -> bool:
         if os.name != 'nt':
             try:
                 os.chmod(dir_path, mode)
-            except OSError:
-                pass
+            except OSError as perm_error:
+                # B类修复: 权限设置降级回退添加DEBUG日志
+                logger.debug(f"设置目录权限失败（可忽略）: {perm_error}")
         
         return True
     except Exception as e:
