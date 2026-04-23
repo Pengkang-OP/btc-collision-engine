@@ -135,12 +135,13 @@ class GPUAutoConfigurator:
             logger.debug(f"使用缓存配置: {device_key}")
             return self._config_cache[device_key].copy()
         
-        # 根据厂商生成配置
-        if vendor == 'nvidia':
+        # 根据厂商生成配置（兼容完整厂商名称如 'Intel(R) Corporation'）
+        vendor_lower = vendor.lower()
+        if 'nvidia' in vendor_lower:
             config = self.get_nvidia_config(device)
-        elif vendor == 'amd':
+        elif 'amd' in vendor_lower or 'advanced micro' in vendor_lower:
             config = self.get_amd_config(device)
-        elif vendor == 'intel':
+        elif 'intel' in vendor_lower:
             config = self.get_intel_config(device)
         else:
             config = self.get_unknown_config(device)
