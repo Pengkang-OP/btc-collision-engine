@@ -381,7 +381,209 @@ void mod_inverse(const uint256_t *a, uint256_t *result) {
 // 椭圆曲线运算 (secp256k1)
 // ============================================================================
 
-// 点倍乘: R = 2*P
+// ============================================================================
+// 雅可比坐标系（Jacobian Coordinates）点运算
+// v3.0.0优化: 消除中间模逆，大幅减少计算量
+// 雅可比坐标 (X:Y:Z) 对应仿射坐标 (X/Z², Y/Z³)
+// 点倍加: 11次mod_mul+5次mod_sqr（vs 仿射坐标: 4次mod_mul+505次模乘/mod_inverse）
+// 点加法: 16次mod_mul+4次mod_sqr（vs 仿射坐标: 5次mod_mul+505次模乘/mod_inverse）
+// ============================================================================
+
+// 雅可比坐标点倍加: (Rx:Ry:Rz) = 2*(Px:Py:Pz)
+// 使用标准雅可比公式（secp256k1 a=0 优化版）
+// 成本: 4次mod_sqr + 7次mod_mul（共11次模运算，无mod_inverse）
+// 賢识: 输入和输出可以是同一变量（内部全程使用临时变量）
+void jac_point_double(const uint256_t *px, const uint256_t *py, const uint256_t *pz,
+                      uint256_t *rx, uint256_t *ry, uint256_t *rz) {
+    // 无穷远点检测: Z == 0
+    if (uint256_is_zero(pz)) {
+        uint256_set_zero(rx);
+        uint256_set_zero(ry);
+        uint256_set_zero(rz);
+        return;
+    }
+    
+    // 在开始计算前，先拷贝输入到内部变量（防止输入输出别名）
+    uint256_t X, Y, Z;
+    uint256_copy(px, &X);
+    uint256_copy(py, &Y);
+    uint256_copy(pz, &Z);
+    
+    uint256_t t1, t2, t3, t4, t5;
+    uint256_t out_x, out_y, out_z;
+    
+    // secp256k1 a=0 的雅可比点倍加公式:
+    // S = 4*X*Y^2
+    // M = 3*X^2  (secp256k1 a=0, 无需 a*Z^4 项)
+    // X3 = M^2 - 2*S
+    // Y3 = M*(S - X3) - 8*Y^4
+    // Z3 = 2*Y*Z
+    
+    // t1 = Y^2
+    mod_sqr(&Y, &t1);
+    
+    // t2 = X*Y^2 (X * t1)
+    mod_mul(&X, &t1, &t2);
+    
+    // t3 = S = 4*X*Y^2 = 4*t2
+    mod_add(&t2, &t2, &t3);  // t3 = 2*t2
+    mod_add(&t3, &t3, &t3);  // t3 = 4*t2 = S
+    
+    // t4 = X^2
+    mod_sqr(&X, &t4);
+    
+    // t5 = M = 3*X^2 = 3*t4
+    mod_add(&t4, &t4, &t5);  // t5 = 2*t4
+    mod_add(&t5, &t4, &t5);  // t5 = 3*t4 = M
+    
+    // out_x = M^2 - 2*S
+    mod_sqr(&t5, &t4);        // t4 = M^2
+    mod_add(&t3, &t3, &t2);   // t2 = 2*S
+    mod_sub(&t4, &t2, &out_x);  // out_x = M^2 - 2*S = X3
+    
+    // out_z = 2*Y*Z
+    mod_mul(&Y, &Z, &t4);     // t4 = Y*Z
+    mod_add(&t4, &t4, &out_z); // out_z = 2*Y*Z = Z3
+    
+    // out_y = M*(S - X3) - 8*Y^4
+    mod_sub(&t3, &out_x, &t4);  // t4 = S - X3
+    mod_mul(&t5, &t4, &t3);     // t3 = M*(S - X3)
+    mod_sqr(&t1, &t4);          // t4 = Y^4
+    mod_add(&t4, &t4, &t2);     // t2 = 2*Y^4
+    mod_add(&t2, &t2, &t2);     // t2 = 4*Y^4
+    mod_add(&t2, &t2, &t2);     // t2 = 8*Y^4
+    mod_sub(&t3, &t2, &out_y);  // out_y = M*(S-X3) - 8*Y^4 = Y3
+    
+    // 统一赋值输出（即使输入输出为同一地址也安全）
+    uint256_copy(&out_x, rx);
+    uint256_copy(&out_y, ry);
+    uint256_copy(&out_z, rz);
+}
+
+// 雅可比坐标混合点加法: (Rx:Ry:Rz) = (P1x:P1y:P1z) + (P2x:P2y:1)
+// P2 是仿射坐标点（Z2=1），P1 是雅可比坐标点
+// 成本: 4次mod_sqr + 12次mod_mul（共16次模运算，无mod_inverse）
+// 賢识: 输入和输出可以是同一变量（内部全程使用临时变量）
+void jac_point_add_affine(const uint256_t *p1x, const uint256_t *p1y, const uint256_t *p1z,
+                          const uint256_t *p2x, const uint256_t *p2y,
+                          uint256_t *rx, uint256_t *ry, uint256_t *rz) {
+    // 检查 P1 是否是无穷远点: Z1 == 0
+    if (uint256_is_zero(p1z)) {
+        uint256_copy(p2x, rx);
+        uint256_copy(p2y, ry);
+        uint256_set_zero(rz);
+        rz->d[0] = 1;  // Z=1 表示仿射点
+        return;
+    }
+    
+    // 先拷贝输入到内部变量（防止输入输出别名）
+    uint256_t X1, Y1, Z1;
+    uint256_copy(p1x, &X1);
+    uint256_copy(p1y, &Y1);
+    uint256_copy(p1z, &Z1);
+    
+    uint256_t t1, t2, t3, t4, t5, t6;
+    uint256_t out_x, out_y, out_z;
+    
+    // 混合加法公式 (P2 的 Z2=1):
+    // U2 = X2*Z1^2
+    // S2 = Y2*Z1^3
+    // H = U2 - X1
+    // R = S2 - Y1
+    // X3 = R^2 - H^3 - 2*X1*H^2
+    // Y3 = R*(X1*H^2 - X3) - Y1*H^3
+    // Z3 = H*Z1
+    
+    // t1 = Z1^2
+    mod_sqr(&Z1, &t1);
+    
+    // t2 = U2 = X2 * Z1^2
+    mod_mul(p2x, &t1, &t2);
+    
+    // t3 = Z1^3 = Z1 * Z1^2
+    mod_mul(&Z1, &t1, &t3);
+    
+    // t4 = S2 = Y2 * Z1^3
+    mod_mul(p2y, &t3, &t4);
+    
+    // t5 = H = U2 - X1
+    mod_sub(&t2, &X1, &t5);
+    
+    // t6 = R = S2 - Y1
+    mod_sub(&t4, &Y1, &t6);
+    
+    // 处理 P1 == P2 的特殊情况 (H==0, R==0 -> 点倍加)
+    if (uint256_is_zero(&t5) && uint256_is_zero(&t6)) {
+        // P1 == P2, 需要点倍加
+        // 转换 P2 到雅可比坐标后倍加
+        uint256_t one;
+        uint256_set_zero(&one);
+        one.d[0] = 1;
+        jac_point_double(p2x, p2y, &one, rx, ry, rz);
+        return;
+    }
+    
+    // H == 0, R != 0 -> P1 == -P2, 结果是无穷远点
+    if (uint256_is_zero(&t5)) {
+        uint256_set_zero(rx);
+        uint256_set_zero(ry);
+        uint256_set_zero(rz);
+        return;
+    }
+    
+    // t1 = H^2
+    mod_sqr(&t5, &t1);
+    
+    // t3 = H^3 = H * H^2
+    mod_mul(&t5, &t1, &t3);
+    
+    // t2 = X1*H^2
+    mod_mul(&X1, &t1, &t2);
+    
+    // out_x = R^2 - H^3 - 2*X1*H^2
+    mod_sqr(&t6, &t4);          // t4 = R^2
+    mod_sub(&t4, &t3, &t4);     // t4 = R^2 - H^3
+    mod_add(&t2, &t2, &t1);     // t1 = 2*X1*H^2
+    mod_sub(&t4, &t1, &out_x);  // out_x = R^2 - H^3 - 2*X1*H^2 = X3
+    
+    // out_y = R*(X1*H^2 - X3) - Y1*H^3
+    mod_sub(&t2, &out_x, &t4);  // t4 = X1*H^2 - X3
+    mod_mul(&t6, &t4, &t1);     // t1 = R*(X1*H^2 - X3)
+    mod_mul(&Y1, &t3, &t4);     // t4 = Y1*H^3
+    mod_sub(&t1, &t4, &out_y);  // out_y = R*(X1*H^2 - X3) - Y1*H^3 = Y3
+    
+    // out_z = H * Z1
+    mod_mul(&t5, &Z1, &out_z);  // out_z = H*Z1 = Z3
+    
+    // 统一赋值输出
+    uint256_copy(&out_x, rx);
+    uint256_copy(&out_y, ry);
+    uint256_copy(&out_z, rz);
+}
+
+// 雅可比坐标转仿射坐标: (X:Y:Z) -> (X/Z^2, Y/Z^3)
+// 成本: 1次mod_inverse + 3次mod_mul
+void jac_to_affine(const uint256_t *jx, const uint256_t *jy, const uint256_t *jz,
+                   uint256_t *ax, uint256_t *ay) {
+    uint256_t z_inv, z_inv2, z_inv3;
+    
+    // z_inv = Z^(-1)
+    mod_inverse(jz, &z_inv);
+    
+    // z_inv2 = Z^(-2)
+    mod_sqr(&z_inv, &z_inv2);
+    
+    // z_inv3 = Z^(-3) = Z^(-1) * Z^(-2)
+    mod_mul(&z_inv, &z_inv2, &z_inv3);
+    
+    // ax = X * Z^(-2)
+    mod_mul(jx, &z_inv2, ax);
+    
+    // ay = Y * Z^(-3)
+    mod_mul(jy, &z_inv3, ay);
+}
+
+// 保留仿射坐标点倍加（用于预计算表生成）
 void ec_point_double(const uint256_t *px, const uint256_t *py, uint256_t *rx, uint256_t *ry) {
     if (uint256_is_zero(py)) {
         uint256_set_zero(rx);
@@ -421,7 +623,7 @@ void ec_point_double(const uint256_t *px, const uint256_t *py, uint256_t *rx, ui
     mod_sub(&temp1, py, ry);   // ry = lambda*(x - rx) - y
 }
 
-// 点加法: R = P + Q
+// 保留仿射坐标点加法（用于预计算表生成）
 void ec_point_add(const uint256_t *p1x, const uint256_t *p1y,
                   const uint256_t *p2x, const uint256_t *p2y,
                   uint256_t *rx, uint256_t *ry) {
@@ -477,87 +679,98 @@ void ec_point_add(const uint256_t *p1x, const uint256_t *p1y,
     mod_sub(&temp1, p1y, ry);  // ry = lambda*(x1 - rx) - y1
 }
 
-// 标量乘法: R = k * G (窗口优化算法)
-// v2.5.0优化: 窗口大小从w=4升级到w=5，减少循环次数(64→52)和点加次数
-// 预计算表从15个点扩展到31个点[1G-31G]
-// 理论点加减少约19%，预期性能提升10-20%
+// 标量乘法: R = k * G (雅可比坐标系 MSB-first 窗口优化算法)
+// v3.0.0重大优化:
+//   1. 使用雅可比坐标系消除中间模逆（理论大幅加速）
+//   2. 修复算法错误：从 LSB-first 改为正确的 MSB-first 实现
+// 算法步骤:
+//   1. 预计算表[1G..31G]（仿射坐标）
+//   2. 处理最高1位（bit255）
+//   3. 循环51次：每次先5次雅可比倍加，再查表加点（从高位到低位）
+//   4. 最终转换到仿射坐标（1次mod_inverse）
 void ec_scalar_multiply(const uint256_t *k, const uint256_t *gx, const uint256_t *gy,
                         uint256_t *rx, uint256_t *ry) {
-    // v2.5.0优化: 预计算表 [1G, 2G, 3G, ..., 31G]
-    // 窗口大小 w=5，预计算31个点覆盖所有可能的窗口值(1-31)
+    // 预计算仿射坐标表 [1G, 2G, 3G, ..., 31G]
     uint256_t precomp_x[31], precomp_y[31];
     uint256_t temp2x, temp2y;
     
-    // 预计算: precomp[0] = 1G = G
     uint256_copy(gx, &precomp_x[0]);
     uint256_copy(gy, &precomp_y[0]);
-    
-    // 预计算: precomp[1-30] = 2G-31G
     for (int i = 1; i < 31; i++) {
         ec_point_add(&precomp_x[i-1], &precomp_y[i-1], gx, gy, &temp2x, &temp2y);
         uint256_copy(&temp2x, &precomp_x[i]);
         uint256_copy(&temp2y, &precomp_y[i]);
     }
     
-    // 初始化结果为无穷远点
-    uint256_t result_x, result_y;
-    uint256_set_zero(&result_x);
-    uint256_set_zero(&result_y);
+    // 雅可比坐标结果初始为无穷远点
+    uint256_t jac_x, jac_y, jac_z;
+    uint256_set_zero(&jac_x);
+    uint256_set_zero(&jac_y);
+    uint256_set_zero(&jac_z);
     
-    // 窗口算法 (w=5)
-    // 每次处理5位，256位分为52组（最后一组4位，其余每组5位）
-    // 从最低有效位开始处理（LSB-first），每轮先做5次点倍加再查表加点
-    uint256_t exp;
-    uint256_copy(k, &exp);
+    // MSB-first 窗口算法 (w=5)
+    // 256位分解为: 最高1位(bit255) + 51组各5位(bits 254..0)
+    // 处理顺序: 先bit255，然后从高到低每次取5位
     
-    // 第1-51组：每组取5位 (0-31)
-    for (int i = 0; i < 51; i++) {
-        // 提取5位窗口值 (0-31)
-        int window = exp.d[0] & 0x1F;  // 最低5位
-        
-        // 5次点倍加 (处理5位)
-        for (int j = 0; j < 5; j++) {
-            ec_point_double(&result_x, &result_y, &temp2x, &temp2y);
-            uint256_copy(&temp2x, &result_x);
-            uint256_copy(&temp2y, &result_y);
-        }
-        
-        // 如果窗口值非零，查表加点
-        if (window > 0) {
-            // 直接映射 window: 1-31 → index: 0-30
-            int index = window - 1;
-            ec_point_add(&result_x, &result_y, &precomp_x[index], &precomp_y[index], &temp2x, &temp2y);
-            uint256_copy(&temp2x, &result_x);
-            uint256_copy(&temp2y, &result_y);
-        }
-        
-        // exp >>= 5
-        for (int j = 0; j < 7; j++) {
-            exp.d[j] = (exp.d[j] >> 5) | (exp.d[j + 1] << 27);
-        }
-        exp.d[7] >>= 5;
-    }
-    
-    // 第52组：处理剩余的最高1位 (256 - 51*5 = 1位)
-    // 51*5 = 255位已处理，剩余第256位（最高位）
+    // 步陨1: 处理最高1位 (bit255)
     {
-        int window = exp.d[0] & 0x1;  // 最低1位（即第256位）
+        // 获取私鑰第255位: k->d[7] 的第31位 (bit 255 = d[7]>>31)
+        int top_bit = (int)((k->d[7] >> 31) & 1);
+        if (top_bit) {
+            uint256_copy(&precomp_x[0], &jac_x);
+            uint256_copy(&precomp_y[0], &jac_y);
+            // jac_z = 1 (仿射点对应雅可比Z=1)
+            uint256_set_zero(&jac_z);
+            jac_z.d[0] = 1;
+        }
+        // top_bit==0: 结果仍为无穷远点 (jac_z=0)
+    }
+    
+    // 步陨2: 循环51组，每组5位，从高位到低位
+    // grp=50: bits 254..250
+    // grp=49: bits 249..245
+    // ...
+    // grp=0: bits 4..0
+    for (int grp = 50; grp >= 0; grp--) {
+        // 获取第 grp 组的5位窗口值
+        // bit范围: grp*5+4 到 grp*5
+        // grp*5 属于哪个 uint32: d[grp*5/32]
+        int bit_start = grp * 5;  // 最低位位置
+        int d_idx = bit_start / 32;
+        int d_shift = bit_start % 32;
         
-        // 1次点倍加
-        ec_point_double(&result_x, &result_y, &temp2x, &temp2y);
-        uint256_copy(&temp2x, &result_x);
-        uint256_copy(&temp2y, &result_y);
+        // 提取5位: 可能跨两个limb
+        int window;
+        if (d_shift <= 27) {
+            // 所有5位在同一个limb中
+            window = (int)((k->d[d_idx] >> d_shift) & 0x1F);
+        } else {
+            // 跨两个limb
+            uint lo = k->d[d_idx] >> d_shift;
+            uint hi = (d_idx + 1 < 8) ? (k->d[d_idx + 1] << (32 - d_shift)) : 0;
+            window = (int)((lo | hi) & 0x1F);
+        }
         
-        // 如果窗口值非零，加1G
+        // 5次雅可比点倍加 (无mod_inverse!)
+        for (int j = 0; j < 5; j++) {
+            jac_point_double(&jac_x, &jac_y, &jac_z, &temp2x, &temp2y, &jac_z);
+            uint256_copy(&temp2x, &jac_x);
+            uint256_copy(&temp2y, &jac_y);
+        }
+        
+        // 查表加点（雅可比+仿射混合，无mod_inverse!）
         if (window > 0) {
-            ec_point_add(&result_x, &result_y, &precomp_x[0], &precomp_y[0], &temp2x, &temp2y);
-            uint256_copy(&temp2x, &result_x);
-            uint256_copy(&temp2y, &result_y);
+            int index = window - 1;
+            jac_point_add_affine(&jac_x, &jac_y, &jac_z,
+                                 &precomp_x[index], &precomp_y[index],
+                                 &temp2x, &temp2y, &jac_z);
+            uint256_copy(&temp2x, &jac_x);
+            uint256_copy(&temp2y, &jac_y);
         }
     }
     
-    uint256_copy(&result_x, rx);
-    uint256_copy(&result_y, ry);
+    // 最终: 雅可比坐标 -> 仿射坐标 (1次mod_inverse)
+    jac_to_affine(&jac_x, &jac_y, &jac_z, rx, ry);
 }
 
 // ============================================================================
