@@ -187,6 +187,30 @@ class SingleGPUWorker(threading.Thread):
             if self._gpu_engine:
                 self._gpu_engine.stop()
                 
+        except MemoryError as me:
+            # M11: MemoryError 自动降批——将 batch_size 减半重试
+            current_batch = self.config.get('batch_size', 65536)
+            new_batch = max(current_batch // 2, 1024)
+            logger.warning(
+                f"GPU {self.device_idx} 内存不足（MemoryError），"
+                f"自动减小 batch_size: {current_batch:,} → {new_batch:,}"
+            )
+            self.config['batch_size'] = new_batch
+            with self._lock:
+                self._stats['error_count'] += 1
+                self._stats['last_error'] = f"MemoryError 自动降批至 {new_batch:,}"
+            # 重新初始化引擎并重试（仅重试一次防止无限循环）
+            try:
+                if self._gpu_engine:
+                    try:
+                        self._gpu_engine.stop()
+                    except Exception:
+                        pass
+                    self._gpu_engine = None
+                self._initialize_engine()
+                self._execute_search()
+            except Exception as retry_err:
+                logger.error(f"GPU {self.device_idx} 降批重试失败: {retry_err}")
         except Exception as e:
             logger.error(f"GPU {self.device_idx} 搜索异常: {e}")
             with self._lock:

@@ -48,6 +48,15 @@ test_*.log  # 临时测试日志
 *.cache
 *.pid
 
+# 代码审查 diff 文件
+review_diff_*.txt
+
+# data_logs 运行时报告（按日期生成的 JSON）
+data_logs/report_daily_*.json
+data_logs/current_data.json
+data_logs/history_data.json
+data_logs/performance.log
+
 # 操作系统
 .DS_Store
 Thumbs.db
