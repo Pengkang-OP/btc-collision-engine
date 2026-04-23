@@ -110,7 +110,6 @@ class ConfigCoordinator:
             'gpu': self.config_manager.get('gpu', {}),
             'crypto': self.crypto_config.to_dict(),
             'logging': self.config_manager.get('logging', {}),
-            'gui': self.config_manager.get('gui', {}),
         }
     
     def get(self, key: str, default: Any = None) -> Any:

@@ -96,7 +96,7 @@ class IntelGPUVendor(GPUVendorBase):
             _rate_logger.info(f"✅ 启用超时保护机制: {timeout_seconds}秒",
                              key="intel_timeout_protection")
             # 在GPUKernel.run_batch中添加超时
-            # 防止内核hang住导致GUI永久阻塞
+            # 防止内核hang住导致线程永久阻塞
             device.timeout_seconds = timeout_seconds
         
         # 3. 异步传输 - Intel建议禁用

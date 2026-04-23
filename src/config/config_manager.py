@@ -57,17 +57,6 @@ class ConfigManager:
                 },
                 "additionalProperties": False  # 审查修复#3: 禁止额外属性
             },
-            "gui": {
-                "type": "object",
-                "properties": {
-                    "theme": {"type": "string"},
-                    "font": {"type": "string"},
-                    "font_size": {"type": "integer", "minimum": 1},
-                    "window_width": {"type": "integer", "minimum": 100},
-                    "window_height": {"type": "integer", "minimum": 100}
-                },
-                "additionalProperties": False  # 审查修复#3: 禁止额外属性
-            },
             "gpu": {
                 "type": "object",
                 "properties": {
@@ -124,13 +113,6 @@ class ConfigManager:
             "rotation_when": "midnight",
             "rotation_interval": 1,
             "compress_backups": False
-        },
-        "gui": {
-            "theme": "dark",
-            "font": "Microsoft YaHei",
-            "font_size": 10,
-            "window_width": 800,
-            "window_height": 600
         },
         "gpu": {
             "use_gpu": True,
@@ -440,30 +422,7 @@ class ConfigManager:
         if log_compress_backups is not None and not self._is_strict_bool(log_compress_backups):
             errors["logging.compress_backups"] = "必须是布尔值"
         
-        # 验证GUI配置（审查修复#2: 补充缺失验证）
-        gui_config = config.get("gui", {})
-        
-        gui_theme = gui_config.get("theme")
-        if gui_theme is not None and not isinstance(gui_theme, str):
-            errors["gui.theme"] = "必须是字符串"
-        
-        gui_font = gui_config.get("font")
-        if gui_font is not None and not isinstance(gui_font, str):
-            errors["gui.font"] = "必须是字符串"
-        
-        gui_font_size = gui_config.get("font_size")
-        if gui_font_size is not None and (not isinstance(gui_font_size, int) or gui_font_size <= 0):
-            errors["gui.font_size"] = "必须是正整数"
-        
-        gui_window_width = gui_config.get("window_width")
-        if gui_window_width is not None and (not isinstance(gui_window_width, int) or gui_window_width < 100):
-            errors["gui.window_width"] = "必须>=100的整数"
-        
-        gui_window_height = gui_config.get("window_height")
-        if gui_window_height is not None and (not isinstance(gui_window_height, int) or gui_window_height < 100):
-            errors["gui.window_height"] = "必须>=100的整数"
-        
-        # 验证GPU配置
+        # 验证 GPU 配置
         gpu_config = config.get("gpu", {})
         
         gpu_batch_size = gpu_config.get("batch_size")

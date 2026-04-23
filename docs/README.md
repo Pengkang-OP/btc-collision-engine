@@ -42,10 +42,9 @@
 - [architecture.md](architecture.md) - 系统架构设计（含代码审核和算法）⭐
 - [workflow_diagrams.md](workflow_diagrams.md) - 工作流程图
 
-### 💻 API和界面 (2个)
+### 💻 API和界面 (1个)
 
 - [api-reference.md](api-reference.md) - 完整API文档 ⭐
-- [user-interface.md](user-interface.md) - GUI使用指南
 
 ### 🔒 安全和性能 (3个)
 
@@ -88,7 +87,7 @@
 
 ```python
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  CLI/GUI    │────▶│   Engine    │────▶│   Crypto    │
+│  CLI      │────▶│   Engine    │────▶│   Crypto    │
 │   界面层     │     │   碰撞引擎   │     │   核心算法   │
 └─────────────┘     └─────────────┘     └─────────────┘
                            │
@@ -115,7 +114,7 @@
 - ✅ 去重过滤：滑动窗口+指纹
 - ✅ 多后端加密：PurePython/OpenSSL/coincurve/ecdsa
 - ✅ 实时统计：速度、进度、ETA
-- ✅ 双界面：CLI命令行 + GUI图形界面
+- ✅ 单界面：CLI命令行
 - ✅ 配置管理：统一的配置系统
 - ✅ 监控系统：实时监控碰撞过程
 - ✅ 数据日志：自动记录性能指标和引擎状态
@@ -188,7 +187,6 @@ f:/BTC/
 ├── valid_addresses.txt            # 目标地址文件(38个)
 ├── run_real_collision_test.py     # 真实地址测试脚本
 ├── key_collision_cli.py           # CLI工具
-├── key_collision_gui.py           # GUI工具
 └── requirements.txt               # 依赖清单
 ```
 
