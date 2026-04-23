@@ -231,9 +231,23 @@ class GPUMemoryPool:
 
 
 class GPUBufferAllocator:
-    """GPU缓冲区分配器
+    """[实验性] GPU缓冲区分配器
     
-    高级分配器,支持不同类型缓冲区的智能管理。
+    高级分配器，支持不同类型缓冲区的智能管理。
+    
+    注意: 该功能目前未在生产环境中使用。
+    适用于需要精细化管理输入/输出/临时缓冲区的场景。
+    
+    当前状态:
+    - 代码已实现并通过测试
+    - 生产环境使用单一GPUMemoryPool即可满足需求
+    - 保留此代码供未来复杂场景使用
+    
+    使用示例:
+        >>> allocator = GPUBufferAllocator(context, max_pool_size=300)
+        >>> input_buf = allocator.allocate_input(1024)
+        >>> output_buf = allocator.allocate_output(2048)
+        >>> temp_buf = allocator.allocate_temp(512)
     """
     
     def __init__(self, context, max_pool_size: int = 200):
