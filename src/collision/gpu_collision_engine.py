@@ -14,6 +14,16 @@ import logging
 from pathlib import Path
 from typing import Set, Optional, Callable, Tuple, List, Dict, Any
 
+# v2.2.1: 导入异步日志支持
+try:
+    from ..utils.logger import AsyncFileHandler
+    ASYNC_LOG_AVAILABLE = True
+except ImportError:
+    ASYNC_LOG_AVAILABLE = False
+
+# v2.2.1迁移: 移除未使用的secp256k1导入，使用crypto_backend
+# from ..core.secp256k1 import Secp256k1  # 已删除，未使用
+
 logger = logging.getLogger(__name__)
 
 # ========== GPU缓冲区追踪器 ==========
@@ -235,6 +245,7 @@ from ..gpu.kernel_protocol import GPUKernelProtocol, GPUKernelFactory  # P1-2修
 
 # GPU性能优化
 from ..gpu.performance_optimizer import get_gpu_optimizer, PerformanceMetrics
+from ..gpu.auto_config import get_gpu_configurator, GPUAutoConfigurator
 from ..gpu.intel_timeout_manager import AdaptiveTimeoutManager
 from ..gpu.intel_memory_monitor import IntelMemoryMonitor
 from ..gpu.benchmark_suite import GPUBenchmarkSuite
@@ -320,6 +331,7 @@ class GPUKernel(GPUKernelProtocol):
         self._keys_buf = None
         self._match_buf = None
         self._targets_buf = None
+        self._target_hash160s = None  # P3修复: 添加目标地址缓存
         self._targets_cached = None
         self._num_targets_cached = 0
         
@@ -884,6 +896,7 @@ class GPUKernel(GPUKernelProtocol):
         P1修复: 显式释放OpenCL Buffer,防止显存泄漏
         P3改进: 删除未使用的pyopencl导入(Buffer对象自带release方法)
         P5增强: 引擎关闭时强制检查内存泄漏
+        v2.2.1: 关闭异步日志处理器
         """
         # 注意: 不需要导入pyopencl, OpenCL Buffer对象自带release()方法
             
@@ -929,9 +942,48 @@ class GPUKernel(GPUKernelProtocol):
         self._keys_buf = None
         self._match_buf = None
         self._targets_buf = None
+        
+        # v2.2.1: 关闭异步日志处理器
+        if hasattr(self, '_async_log_handler') and self._async_log_handler:
+            try:
+                self._async_log_handler.close()
+                logger.info("GPU异步日志已关闭")
+            except Exception as e:
+                logger.debug(f"关闭异步日志失败: {e}")
         self._match_flags = None
         self._program = None
         self._batch_kernel = None
+    
+    def _setup_async_logging(self, log_file: str, max_bytes: int, backup_count: int):
+        """设置异步日志处理器（v2.2.1新增）
+        
+        Args:
+            log_file: 日志文件路径
+            max_bytes: 单个文件最大字节数
+            backup_count: 备份文件数
+        """
+        try:
+            # 确保日志目录存在
+            log_dir = os.path.dirname(log_file)
+            if log_dir and not os.path.exists(log_dir):
+                os.makedirs(log_dir, mode=0o750, exist_ok=True)
+            
+            # 创建异步文件处理器
+            self._async_log_handler = AsyncFileHandler(
+                log_file,
+                max_bytes=max_bytes,
+                backup_count=backup_count
+            )
+            self._async_log_handler.setLevel(logging.DEBUG)
+            
+            # 添加到GPU引擎logger
+            logger.addHandler(self._async_log_handler)
+            
+            logger.info(f"GPU异步日志已启用: {log_file} (max={max_bytes/1024/1024:.0f}MB)")
+            
+        except Exception as e:
+            logger.warning(f"异步日志启用失败: {e}，使用同步日志")
+            self._async_log_handler = None
             
         logger.debug("GPU Kernel资源已清理")
 
@@ -1160,7 +1212,12 @@ class GPUCollisionEngine(BaseCollisionEngine):
                  # 性能优化参数 (v2.2.0新增)
                  use_gpu_memory_pool: bool = True,
                  gpu_pool_max_buffers: int = 100,
-                 gpu_pool_max_memory_mb: int = 512):
+                 gpu_pool_max_memory_mb: int = 512,
+                 # v2.2.1: 异步日志支持
+                 use_async_logging: bool = False,
+                 async_log_file: str = "logs/gpu_async.log",
+                 async_log_max_bytes: int = 10*1024*1024,
+                 async_log_backup_count: int = 5):
         """
         初始化 GPU 碰撞引擎
         
@@ -1183,6 +1240,12 @@ class GPUCollisionEngine(BaseCollisionEngine):
             use_gpu_memory_pool: 是否使用GPU内存池（默认True）
             gpu_pool_max_buffers: 内存池最大缓冲区数量（默认100）
             gpu_pool_max_memory_mb: 内存池最大内存MB（默认512）
+            
+            # v2.2.1: 异步日志支持
+            use_async_logging: 是否启用异步日志（默认False）
+            async_log_file: 异步日志文件路径
+            async_log_max_bytes: 单个日志文件最大字节数（默认10MB）
+            async_log_backup_count: 日志备份数量（默认5）
         """
         if not PYOPENCL_AVAILABLE:
             raise RuntimeError("pyopencl 不可用，无法使用 GPU 加速")
@@ -1191,7 +1254,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self.device_index = device_index
         
         # 如果未指定batch_size，稍后在_init_gpu中由GPUKernel自动计算
-        self.batch_size = batch_size
+        # 使用私有变量，通过属性访问（线程安全）
+        self._batch_size = batch_size
         self.on_progress = on_progress
         self.on_match = on_match
         self.on_complete = on_complete
@@ -1226,6 +1290,13 @@ class GPUCollisionEngine(BaseCollisionEngine):
         else:
             logger.info("GPU内存池未启用,使用直接分配模式")
         
+        # v2.2.1: 异步日志支持
+        self._async_log_handler = None
+        if use_async_logging and ASYNC_LOG_AVAILABLE:
+            self._setup_async_logging(async_log_file, async_log_max_bytes, async_log_backup_count)
+        elif use_async_logging and not ASYNC_LOG_AVAILABLE:
+            logger.warning("异步日志不可用（AsyncFileHandler导入失败），使用同步日志")
+        
         # GPU型号配置加载器
         self._profile_loader = GPUProfileLoader()
         
@@ -1246,7 +1317,21 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self.memory_monitor: Optional['IntelMemoryMonitor'] = None       # 显存监控
         self.benchmark_suite: Optional['GPUBenchmarkSuite'] = None       # 基准测试套件
         self.auto_tuner: Optional['GPUAutoTuner'] = None                 # 自动调优器
-        self.performance_reporter: Optional['PerformanceReportGenerator'] = None  # 性能报告生成器
+        self.performance_reporter: Optional['PerformanceReportGenerator'] = None  # 性能报告
+        
+        # GPU自动配置器（新增）
+        self.auto_configurator = get_gpu_configurator()
+        
+        # GPU性能优化器（新增）
+        self.performance_optimizer = get_gpu_optimizer()
+        
+        # 线程安全：batch_size保护锁（新增）
+        self._batch_size_lock = threading.Lock()
+        self._batch_size = batch_size
+        
+        # 调整历史统计（新增）
+        self._adjustment_history: List[Dict[str, Any]] = []
+        self._adjustment_history_lock = threading.Lock()
         
         # v2.2.1 新增：GPU性能监控器
         self.gpu_performance_monitor: Optional['GPUPerformanceMonitor'] = None
@@ -1270,6 +1355,229 @@ class GPUCollisionEngine(BaseCollisionEngine):
         
         # 初始化 GPU
         self._init_gpu()
+    
+    @property
+    def batch_size(self) -> int:
+        """线程安全的batch_size读取
+        
+        Returns:
+            当前批次大小
+        """
+        with self._batch_size_lock:
+            return self._batch_size
+    
+    @batch_size.setter
+    def batch_size(self, value: int):
+        """线程安全的batch_size写入
+        
+        Args:
+            value: 新的批次大小
+        """
+        with self._batch_size_lock:
+            self._batch_size = value
+    
+    def _merge_gpu_configs(self, auto_config: Dict, profile_config: Optional[Dict]) -> Dict:
+        """合并AutoConfig和ProfileLoader的配置
+        
+        优先级: ProfileLoader > AutoConfig
+        
+        Args:
+            auto_config: GPUAutoConfigurator生成的配置
+            profile_config: GPUProfileLoader加载的配置（可能为None）
+            
+        Returns:
+            合并后的配置
+        """
+        merged = auto_config.copy()
+        
+        if profile_config:
+            # ProfileLoader的配置覆盖AutoConfig
+            for key in ['batch_size', 'work_group_size', 'memory_usage_ratio',
+                        'enable_async', 'use_uint32_workaround']:
+                if key in profile_config:
+                    value = profile_config[key]
+                    # 验证值的有效性
+                    if self._validate_config_value(key, value):
+                        merged[key] = value
+                        logger.debug(f"配置覆盖: {key} = {value}")
+                    else:
+                        logger.warning(f"配置值无效: {key}={value}，使用默认值")
+        
+        # 验证合并后的配置
+        self._validate_merged_config(merged)
+        
+        logger.info(
+            f"GPU配置合并完成: "
+            f"batch_size={merged.get('batch_size', 'N/A'):,}, "
+            f"work_group={merged.get('work_group_size', 'N/A')}, "
+            f"mem_ratio={merged.get('memory_usage_ratio', 'N/A'):.0%}"
+        )
+        return merged
+    
+    def _validate_config_value(self, key: str, value: Any) -> bool:
+        """验证配置值的有效性
+        
+        Args:
+            key: 配置项名称
+            value: 配置值
+            
+        Returns:
+            是否有效
+        """
+        if key == 'batch_size':
+            return isinstance(value, int) and 1024 <= value <= 16777216
+        elif key == 'work_group_size':
+            return isinstance(value, int) and 64 <= value <= 1024
+        elif key == 'memory_usage_ratio':
+            return isinstance(value, (int, float)) and 0.1 <= value <= 0.9
+        elif key in ['enable_async', 'use_uint32_workaround']:
+            return isinstance(value, bool)
+        return True
+    
+    def _validate_merged_config(self, config: Dict):
+        """验证合并后的配置
+        
+        Args:
+            config: 合并后的配置字典
+        """
+        if 'batch_size' in config:
+            batch_size = config['batch_size']
+            if batch_size < 1024:
+                logger.warning(f"batch_size过小({batch_size})，可能导致性能差")
+            elif batch_size > 16777216:
+                logger.warning(f"batch_size过大({batch_size})，可能导致显存不足")
+        
+        if 'memory_usage_ratio' in config:
+            ratio = config['memory_usage_ratio']
+            if ratio > 0.85:
+                logger.warning(f"显存使用率过高({ratio:.0%})，可能导致不稳定")
+            elif ratio < 0.3:
+                logger.warning(f"显存使用率过低({ratio:.0%})，性能可能不佳")
+    
+    def _resize_gpu_buffers(self, new_batch_size: int):
+        """动态调整GPU缓冲区大小
+        
+        Args:
+            new_batch_size: 新的批次大小
+        """
+        try:
+            old_batch_size = self.batch_size
+            logger.info(f"正在调整GPU缓冲区大小: {old_batch_size:,} -> {new_batch_size:,}")
+            
+            # 1. 释放旧缓冲区
+            if self._gpu_kernel:
+                # 优先使用GPUKernel的release_buffers方法（推荐）
+                if hasattr(self._gpu_kernel, 'release_buffers'):
+                    self._gpu_kernel.release_buffers()
+                    logger.debug("使用release_buffers方法释放所有缓冲区")
+                else:
+                    logger.warning("GPUKernel没有release_buffers方法，尝试手动释放")
+                    # 手动释放已知缓冲区
+                    released_count = 0
+                    failed_count = 0
+                    
+                    # 标准缓冲区
+                    for attr in ['_keys_buf', '_match_buf', '_targets_buf']:
+                        buf = getattr(self._gpu_kernel, attr, None)
+                        if buf is not None:
+                            if hasattr(buf, 'release'):
+                                try:
+                                    buf.release()
+                                    setattr(self._gpu_kernel, attr, None)
+                                    released_count += 1
+                                    logger.debug(f"释放缓冲区: {attr}")
+                                except Exception as e:
+                                    failed_count += 1
+                                    logger.error(f"释放缓冲区失败 {attr}: {e}")
+                            else:
+                                logger.debug(f"缓冲区无release方法: {attr}")
+                    
+                    # 尝试释放其他可能的缓冲区（带_的缓冲区属性）
+                    for attr_name in dir(self._gpu_kernel):
+                        if attr_name.startswith('_') and 'buf' in attr_name.lower():
+                            if attr_name not in ['_keys_buf', '_match_buf', '_targets_buf']:
+                                buf = getattr(self._gpu_kernel, attr_name, None)
+                                if buf is not None and hasattr(buf, 'release'):
+                                    try:
+                                        buf.release()
+                                        setattr(self._gpu_kernel, attr_name, None)
+                                        released_count += 1
+                                        logger.debug(f"释放额外缓冲区: {attr_name}")
+                                    except Exception as e:
+                                        failed_count += 1
+                                        logger.debug(f"释放额外缓冲区失败 {attr_name}: {e}")
+                    
+                    logger.info(f"手动释放完成: 成功{released_count}个, 失败{failed_count}个")
+            
+            # 2. 更新kernel的max_batch_size
+            if self._gpu_kernel:
+                self._gpu_kernel._max_batch_size = new_batch_size
+            
+            # 3. 重新分配缓冲区
+            if self._gpu_kernel:
+                if hasattr(self._gpu_kernel, '_allocate_buffers'):
+                    self._gpu_kernel._allocate_buffers()
+                    logger.debug("缓冲区重新分配完成")
+            
+            logger.info(f"GPU缓冲区调整完成: {new_batch_size:,}")
+            
+            # 4. 记录调整历史
+            self._record_adjustment(old_batch_size, new_batch_size, "buffer_resize")
+            
+        except Exception as e:
+            logger.error(f"GPU缓冲区调整失败: {e}")
+            # 失败时保持原有batch_size
+            if self._gpu_kernel:
+                self.batch_size = self._gpu_kernel._max_batch_size
+    
+    def _record_adjustment(self, old_size: int, new_size: int, reason: str, details: str = ""):
+        """记录调整历史
+        
+        Args:
+            old_size: 调整前的大小
+            new_size: 调整后的大小
+            reason: 调整原因
+            details: 详细信息
+        """
+        import time
+        
+        record = {
+            'timestamp': time.time(),
+            'old_batch_size': old_size,
+            'new_batch_size': new_size,
+            'reason': reason,
+            'details': details,
+            'change_percent': ((new_size - old_size) / old_size * 100) if old_size > 0 else 0
+        }
+        
+        with self._adjustment_history_lock:
+            self._adjustment_history.append(record)
+            
+            # 保留最近100条记录
+            if len(self._adjustment_history) > 100:
+                self._adjustment_history = self._adjustment_history[-100:]
+        
+        logger.debug(
+            f"调整历史记录: {old_size:,} -> {new_size:,} "
+            f"({record['change_percent']:+.1f}%) - {reason}"
+        )
+    
+    def get_adjustment_history(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """获取调整历史
+        
+        Args:
+            limit: 返回的记录数量限制
+            
+        Returns:
+            调整历史记录列表（最新的在前）
+        """
+        with self._adjustment_history_lock:
+            history = self._adjustment_history.copy()
+        
+        # 按时间倒序
+        history.sort(key=lambda x: x['timestamp'], reverse=True)
+        
+        return history[:limit]
     
     def _init_gpu(self):
         """初始化 GPU 设备和内核（优化版本）
@@ -1338,7 +1646,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
                     # 初始化设备(传入enable_async)
                     self._gpu_device.initialize(self.device_index, enable_async=enable_async)
                 
-                # 2. 加载GPU型号配置
+                # 2. 使用GPUAutoConfigurator生成优化配置（新增）
                 device_info = self._gpu_device.get_device_info()
                 device_name = device_info.get('name', '')
                 vendor = device_info.get('vendor', '')
@@ -1350,7 +1658,18 @@ class GPUCollisionEngine(BaseCollisionEngine):
                     f"  - 平台: {device_info.get('platform', 'Unknown')}"
                 )
                 
+                # 2.5. 生成自动配置（新增）
+                auto_config = self.auto_configurator.configure_for_device(device_info)
+                logger.info(
+                    f"GPU自动配置生成: "
+                    f"batch_size={auto_config['batch_size']:,}, "
+                    f"vendor={auto_config.get('use_uint32_workaround', False)}"
+                )
+                
+                # 3. 加载GPU型号配置
+                
                 # 3. 识别厂商并加载配置
+                profile_config = None
                 with EnhancedPerformanceMonitor(logger, "GPU型号配置加载", level="DEBUG"):
                     from ..gpu.device import identify_vendor
                     vendor_type = identify_vendor(device_name, vendor)
@@ -1361,25 +1680,45 @@ class GPUCollisionEngine(BaseCollisionEngine):
                             logger.info(f"成功加载GPU型号配置: {vendor_type}/{device_name}")
                             # 将配置附加到GPUDevice
                             self._gpu_device.profile = profile
+                            # 提取配置字典（如果有）
+                            profile_config = profile.get('config', None)
                         else:
                             logger.warning(f"未找到GPU型号配置，使用默认配置: {device_name}")
                     else:
                         logger.warning(f"未知GPU厂商，跳过型号配置加载: {vendor}")
                 
-                # 4. 创建GPU上下文（包含厂商优化器）
+                # 3.5. 合并配置（新增）
+                merged_config = self._merge_gpu_configs(auto_config, profile_config)
+                
+                # 4. 创建GPU上下文（使用合并后的配置）
                 self._gpu_context = GPUContext(self._gpu_device)
                 
-                # 7. 应用厂商优化
+                # 5. 应用合并后的配置到GPU设备
+                if merged_config.get('enable_async') is not None:
+                    self._gpu_device.enable_async_execution = merged_config['enable_async']
+                    logger.info(f"✅ 异步执行: {merged_config['enable_async']} (合并配置)")
+                
+                if merged_config.get('use_uint32_workaround'):
+                    logger.info("✅ uint32 workaround: 已启用 (合并配置)")
+                
+                # 6. 应用厂商优化
                 with EnhancedPerformanceMonitor(logger, "GPU厂商优化应用", level="DEBUG"):
                     self._gpu_context.apply_optimizations()
                 
-                # 8. 计算最优batch_size（如果未指定）
+                # 7. 计算最优batch_size（使用合并后的配置）
                 if self.batch_size is None:
-                    self.batch_size = self._gpu_context.calculate_batch_size()
-                    logger.info(
-                        f"自动设置 batch_size: {self.batch_size} "
-                        f"(基于GPU型号配置和显存计算)"
-                    )
+                    # 优先使用合并配置中的batch_size
+                    if 'batch_size' in merged_config:
+                        self.batch_size = merged_config['batch_size']
+                        logger.info(
+                            f"使用合并配置的 batch_size: {self.batch_size:,}"
+                        )
+                    else:
+                        self.batch_size = self._gpu_context.calculate_batch_size()
+                        logger.info(
+                            f"自动计算 batch_size: {self.batch_size} "
+                            f"(基于GPU型号配置和显存计算)"
+                        )
                 else:
                     logger.debug(f"使用指定的 batch_size: {self.batch_size}")
                 
@@ -1787,17 +2126,54 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 batch_count += actual_batch_size
                 self.stats.update(batch_count)
                 
-                # 记录性能
-                if self.gpu_performance_monitor:
-                    try:
-                        memory_mb = self._calculate_gpu_memory_usage(actual_batch_size)
+                # 记录性能（同时记录到多个监控器）
+                try:
+                    memory_mb = self._calculate_gpu_memory_usage(actual_batch_size)
+                    
+                    # 1. 记录到GPU性能监控器（已有）
+                    if self.gpu_performance_monitor:
                         self.gpu_performance_monitor.record_kernel_metrics(
                             batch_size=actual_batch_size,
                             execution_time_ms=execution_time_ms,
                             memory_allocated_mb=memory_mb
                         )
-                    except Exception as e:
-                        logger.debug(f"记录GPU性能指标失败: {e}")
+                    
+                    # 2. 记录到性能优化器（新增）
+                    if self.performance_optimizer:
+                        metrics = PerformanceMetrics(
+                            batch_execution_time_ms=execution_time_ms,
+                            keys_per_second=self.stats.get_speed(),
+                            memory_usage_mb=memory_mb,
+                            error_count=0
+                        )
+                        self.performance_optimizer.record_performance(metrics)
+                        
+                    # 3. 定期触发参数调整（修复：使用batch_num计数器，每10批调整一次）
+                    if batch_num % 10 == 0 and self.performance_optimizer:
+                        new_batch_size, adjustment_info = self.performance_optimizer.analyze_and_adjust(
+                            current_batch_size=self.batch_size,
+                            error_rate=0.0
+                        )
+                        
+                        if new_batch_size != self.batch_size:
+                            old_batch_size = self.batch_size
+                            logger.info(
+                                f"🔧 动态调整batch_size: {old_batch_size:,} -> {new_batch_size:,} "
+                                f"原因: {adjustment_info}"
+                            )
+                            self.batch_size = new_batch_size
+                            # 重新分配GPU缓冲区
+                            self._resize_gpu_buffers(new_batch_size)
+                            
+                            # 记录调整历史
+                            self._record_adjustment(
+                                old_batch_size, new_batch_size, 
+                                "performance_optimization", 
+                                str(adjustment_info)
+                            )
+                            
+                except Exception as e:
+                    logger.debug(f"记录GPU性能指标失败: {e}")
                 
                 # 进度回调
                 current_time = time.time()
