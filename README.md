@@ -101,11 +101,36 @@ btc-collision-engine/
 
 ## 安装依赖
 
-### 基础依赖
+### 第一步：创建虚拟环境（强烈推荐）
+
+```bash
+# 创建虚拟环境
+python -m venv venv
+
+# 激活虚拟环境
+# Windows:
+venv\Scripts\activate
+# Linux / macOS:
+source venv/bin/activate
+```
+
+### 第二步：安装基础依赖
 
 ```bash
 pip install -r requirements.txt
 ```
+
+### 第三步：初始化配置文件
+
+```bash
+# Windows
+copy config.example.json config.json
+
+# Linux / macOS
+cp config.example.json config.json
+```
+
+> 然后按需编辑 `config.json`，设置目标地址、碰撞模式等参数。
 
 ### GPU加速（可选）
 
