@@ -123,15 +123,57 @@ cp config.example.json config.json
 
 ### GPU加速（可选）
 
+> **要求**：Python 3.7+、已安装 GPU 驱动、支持 OpenCL 1.2+
+
+#### NVIDIA GPU
+
 ```bash
-# 安装 PyOpenCL
+# Windows / Linux
+# 1. 安装 CUDA Toolkit ≥ 11.0（包含 OpenCL 运行时）
+#    下载: https://developer.nvidia.com/cuda-downloads
+
+# 2. 安装 PyOpenCL
 pip install pyopencl
 
-# 安装对应平台的OpenCL驱动
-# NVIDIA: 安装CUDA Toolkit
-# AMD: 安装AMD GPU驱动
-# Intel: 安装Intel Graphics驱动
+# 3. 验证
+python -c "import pyopencl; print([d.name for p in pyopencl.get_platforms() for d in p.get_devices()])"
 ```
+
+#### AMD GPU
+
+```bash
+# Windows
+# 1. 安装 AMD 软件（包含 OpenCL），驱动版本 >= 21.x
+#    下载: https://www.amd.com/en/support
+
+# Linux
+# sudo apt install mesa-opencl-icd  # Ubuntu/Debian
+# sudo dnf install opencl-filesystem mesa-libOpenCL  # Fedora
+
+# 2. 安装 PyOpenCL
+pip install pyopencl
+```
+
+#### Intel GPU（Arc / UHD 集成显卡）
+
+```bash
+# Windows
+# 1. 安装 Intel Arc 客户端驱动 >= 31.0.101.4146
+#    下载: https://www.intel.com/content/www/us/en/download-center/home.html
+
+# Linux
+# sudo apt install intel-opencl-icd  # Ubuntu
+
+# 2. 安装 PyOpenCL
+pip install pyopencl
+
+# 3. 验证 Intel GPU 可识别
+python -c "import pyopencl as cl; [print(d.name) for p in cl.get_platforms() for d in p.get_devices()]"
+```
+
+#### GPU 不可用时的降级
+
+当 PyOpenCL 未安装或无 GPU 设备时，引擎自动降级为 CPU 模式运行，不会报错退出。
 
 ### 性能优化（推荐）
 
