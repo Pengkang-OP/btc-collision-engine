@@ -657,10 +657,11 @@ def _run_main() -> None:
             from ..utils.data_cleanup import DataCleaner
         cleaner = DataCleaner()
         dry_run = getattr(args, 'dry_run', False)
-        result = cleaner.run_cleanup(dry_run=dry_run)
-        total = result.get('total_cleaned', 0) if not dry_run else result.get('total_preview', 0)
+        result = cleaner.clean_all(dry_run=dry_run)
+        total = result.get('files_removed', 0)
+        space_mb = result.get('space_freed_bytes', 0) / 1024 / 1024
         action = '预览' if dry_run else '已清理'
-        print(f"[{'预览' if dry_run else '完成'}] {action} {total} 个文件/目录")
+        print(f"[{ '预览' if dry_run else '完成'}] {action} {total} 个文件, 释放 {space_mb:.2f}MB")
         sys.exit(0)
 
     # --validate-addresses
