@@ -12,6 +12,7 @@ import os
 import json
 import csv
 import sqlite3
+import re
 from typing import Set, Optional, Dict, Any, Tuple, List
 from datetime import datetime
 
@@ -22,6 +23,41 @@ from ...utils.encoding_utils import EncodingUtils
 # 初始化日志系统
 init_logging()
 logger = get_configured_logger("AddressStorage")
+
+# 比特币地址验证正则表达式
+ADDRESS_PATTERNS = {
+    'P2PKH': re.compile(r'^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$'),  # 1或3开头
+    'P2SH': re.compile(r'^3[a-km-zA-HJ-NP-Z1-9]{25,34}$'),       # 3开头
+    'BECH32': re.compile(r'^(bc1|tb1|bc1p)[a-zA-HJ-NP-Z0-9]{25,62}$'),  # bc1开头
+}
+
+
+def validate_bitcoin_address(address: str) -> bool:
+    """验证比特币地址格式
+    
+    参数:
+        address: 比特币地址字符串
+        
+    返回:
+        bool: 地址格式是否有效
+    """
+    if not address or not isinstance(address, str):
+        return False
+    
+    # 检查长度
+    if len(address) < 26 or len(address) > 62:
+        return False
+    
+    # 检查是否包含危险字符（防SQL注入）
+    if any(c in address for c in [';', '--', "'", '"', '\\', '/', '*']):
+        return False
+    
+    # 匹配地址模式
+    for pattern_name, pattern in ADDRESS_PATTERNS.items():
+        if pattern.match(address):
+            return True
+    
+    return False
 
 
 class AddressStorage:
@@ -141,7 +177,25 @@ class AddressStorage:
             return set(), None
     
     def _save_sqlite(self, targets: Set[str], metadata: Optional[Dict] = None) -> bool:
-        """保存到SQLite数据库"""
+        """保存到SQLite数据库（带输入验证）"""
+        # 输入验证
+        validated_targets = set()
+        invalid_count = 0
+        
+        for addr in targets:
+            if validate_bitcoin_address(addr):
+                validated_targets.add(addr)
+            else:
+                invalid_count += 1
+                logger.warning(f"跳过无效地址: {addr[:10]}...")
+        
+        if invalid_count > 0:
+            logger.warning(f"已过滤 {invalid_count} 个无效地址")
+        
+        if not validated_targets:
+            logger.error("没有有效地址可保存")
+            return False
+        
         conn = sqlite3.connect(self.path)
         cursor = conn.cursor()
         
@@ -162,21 +216,34 @@ class AddressStorage:
                 )
             ''')
             
-            # 插入目标地址
+            # 插入目标地址（使用参数化查询 + 验证后的数据）
             inserted = 0
-            for addr in targets:
+            for addr in validated_targets:
                 try:
+                    # 参数化查询防止SQL注入
                     cursor.execute(
                         'INSERT OR IGNORE INTO targets (address) VALUES (?)',
                         (addr,)
                     )
                     inserted += cursor.rowcount
-                except Exception as e:
+                except sqlite3.IntegrityError as e:
+                    logger.debug(f"地址已存在，跳过: {addr[:10]}...")
+                except (sqlite3.Error, ValueError) as e:
                     logger.warning(f"插入地址失败 {addr[:10]}...: {e}")
             
-            # 保存元数据
+            # 保存元数据（验证键名）
             if metadata:
                 for key, value in metadata.items():
+                    # 验证元数据键名
+                    if not isinstance(key, str) or len(key) > 100:
+                        logger.warning(f"跳过无效元数据键: {key}")
+                        continue
+                    
+                    # 防止SQL注入：验证键名只包含安全字符
+                    if not re.match(r'^[a-zA-Z0-9_-]+$', key):
+                        logger.warning(f"元数据键包含不安全字符: {key}")
+                        continue
+                    
                     cursor.execute(
                         'INSERT OR REPLACE INTO metadata (key, value) VALUES (?, ?)',
                         (key, json.dumps(value))

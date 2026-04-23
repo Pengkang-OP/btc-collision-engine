@@ -45,7 +45,8 @@ class DataLogger:
         self.storage_dir = DataStorageConfig.ensure_storage_dir(storage_dir)
         
         # 初始化日志记录器
-        self.logger = get_configured_logger("DataLogger", thread_safe=True)
+        # v2.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
+        self.logger = get_configured_logger("DataLogger", thread_safe=False)
         
         # 数据文件路径
         self.current_data_file = os.path.join(self.storage_dir, "current_data.json")

@@ -8,7 +8,7 @@ import sys
 import logging
 from typing import Optional, Dict, Any
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
-from .logger import ColoredFormatter, ThreadSafeLogger
+from .logger import ColoredFormatter  # ThreadSafeLogger已弃用
 
 # 导入安全过滤器（P0-2修复）
 from .security_log_filter import SecurityLogFilter
@@ -176,7 +176,7 @@ class LoggingConfig:
         
         参数:
             name: 日志记录器名称
-            thread_safe: 是否返回线程安全包装器
+            thread_safe: 已弃用，Python的logging.Logger本身是线程安全的
             
         返回:
             配置好的日志记录器
@@ -186,8 +186,17 @@ class LoggingConfig:
         
         logger = logging.getLogger(name)
         
+        # v2.2.1修复: Python的logging.Logger本身是线程安全的（内部使用RLock）
+        # thread_safe参数已弃用，直接返回原生logger
         if thread_safe:
-            return ThreadSafeLogger(logger)
+            import warnings
+            warnings.warn(
+                f"get_logger(thread_safe=True)已弃用。Python的logging.Logger本身是线程安全的，"
+                f"请直接使用 get_logger('{name}', thread_safe=False) 或省略该参数。",
+                DeprecationWarning,
+                stacklevel=2
+            )
+        
         return logger
 
 

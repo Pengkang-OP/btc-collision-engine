@@ -196,17 +196,31 @@ class TestConfigManagerMerge(unittest.TestCase):
 
     def test_merge_preserves_structure(self):
         """合并保持配置结构"""
-        test_config = {"custom_key": "custom_value"}
+        # 使用Schema中已定义的字段来测试合并功能
+        test_config = {
+            "collision": {
+                "max_workers": 8,
+                "progress_interval": 2000
+            },
+            "logging": {
+                "level": "DEBUG"
+            }
+        }
         with open(self.config_file, 'w', encoding='utf-8') as f:
             json.dump(test_config, f)
 
         mgr = ConfigManager(config_file=self.config_file)
-        # 自定义键被添加
-        self.assertEqual(mgr.config.get("custom_key"), "custom_value")
-        # 默认结构保留
+        # 自定义值被合并
+        self.assertEqual(mgr.get("collision.max_workers"), 8)
+        self.assertEqual(mgr.get("collision.progress_interval"), 2000)
+        self.assertEqual(mgr.get("logging.level"), "DEBUG")
+        # 默认结构和其他值保留
         self.assertIn("collision", mgr.config)
         self.assertIn("logging", mgr.config)
         self.assertIn("gui", mgr.config)
+        # 未指定的字段保持默认值
+        self.assertEqual(mgr.get("gui.theme"), "dark")
+        self.assertEqual(mgr.get("collision.checkpoint_interval"), 30)
 
 
 class TestConfigManagerValidation(unittest.TestCase):

@@ -49,6 +49,11 @@ class GPUMemoryPool:
     
     管理GPU缓冲区的分配和释放,优先复用已有缓冲区。
     
+    优化v2.2.1:
+    - 添加预分配机制，减少首次分配延迟
+    - 实现批量预分配，提升初始化性能
+    - 智能大小对齐，提高复用率
+    
     使用示例:
         >>> import pyopencl as cl
         >>> context = cl.create_some_context()
@@ -81,6 +86,9 @@ class GPUMemoryPool:
         self._current_memory = 0
         self._allocation_count = 0
         
+        # 预分配优化v2.2.1
+        self._preallocated_sizes = set()  # 记录已预分配的大小
+        
         logger.info(f"GPU内存池初始化: max_buffers={max_buffers}, max_memory={max_memory_mb}MB")
     
     def allocate(self, size: int, flags=None):
@@ -99,21 +107,25 @@ class GPUMemoryPool:
         if flags is None:
             flags = cl.mem_flags.READ_WRITE
         
+        # 性能优化v2.2.1: 智能大小对齐，提高复用率
+        # 将大小对齐到256字节的倍数，增加缓冲池命中率
+        aligned_size = ((size + 255) // 256) * 256
+        
         with self._lock:
             # 尝试复用现有缓冲区
-            if size in self._pool and self._pool[size]:
-                buf = self._pool[size].pop()
+            if aligned_size in self._pool and self._pool[aligned_size]:
+                buf = self._pool[aligned_size].pop()
                 self._total_reused += 1
-                logger.debug(f"复用GPU缓冲区: {size}字节 (总复用: {self._total_reused})")
+                logger.debug(f"复用GPU缓冲区: {size}字节(对齐{aligned_size}) (总复用: {self._total_reused})")
                 return buf
             
             # 创建新缓冲区
-            buf = cl.Buffer(self._context, flags, size)
+            buf = cl.Buffer(self._context, flags, aligned_size)
             self._total_allocated += 1
-            self._current_memory += size
+            self._current_memory += aligned_size
             self._allocation_count += 1
             
-            logger.debug(f"分配新GPU缓冲区: {size}字节 (总分配: {self._total_allocated})")
+            logger.debug(f"分配新GPU缓冲区: {size}字节(对齐{aligned_size}) (总分配: {self._total_allocated})")
             return buf
     
     def release(self, buf, size: int = None):
@@ -124,6 +136,10 @@ class GPUMemoryPool:
             buf: OpenCL缓冲区对象
             size: 缓冲区大小(字节),如果为None则尝试从池中查找
         """
+        # 性能优化v2.2.1: 使用对齐后的大小
+        if size is not None:
+            size = ((size + 255) // 256) * 256
+        
         with self._lock:
             # 如果池已满,直接释放缓冲区
             total_buffers = sum(len(buffers) for buffers in self._pool.values())
@@ -141,6 +157,48 @@ class GPUMemoryPool:
                 if 'generic' not in self._pool:
                     self._pool['generic'] = []
                 self._pool['generic'].append(buf)
+    
+    def preallocate_buffers(self, sizes: List[int], count_per_size: int = 2):
+        """预分配常用大小的缓冲区（性能优化v2.2.1）
+        
+        在初始化阶段预分配常用缓冲区，避免运行时频繁分配。
+        
+        参数:
+            sizes: 需要预分配的缓冲区大小列表
+            count_per_size: 每个大小的预分配数量，默认2
+        """
+        import pyopencl as cl
+        
+        allocated = 0
+        with self._lock:
+            for size in sizes:
+                # 对齐大小
+                aligned_size = ((size + 255) // 256) * 256
+                
+                # 检查是否已预分配
+                if aligned_size in self._preallocated_sizes:
+                    continue
+                
+                # 创建缓冲区池
+                if aligned_size not in self._pool:
+                    self._pool[aligned_size] = []
+                
+                # 预分配
+                for _ in range(count_per_size):
+                    try:
+                        buf = cl.Buffer(self._context, cl.mem_flags.READ_WRITE, aligned_size)
+                        self._pool[aligned_size].append(buf)
+                        self._total_allocated += 1
+                        self._current_memory += aligned_size
+                        allocated += 1
+                    except Exception as e:
+                        logger.warning(f"预分配缓冲区失败 {aligned_size}: {e}")
+                        break
+                
+                self._preallocated_sizes.add(aligned_size)
+        
+        if allocated > 0:
+            logger.info(f"GPU内存池预分配完成: {allocated}个缓冲区")
     
     def get_stats(self) -> dict:
         """

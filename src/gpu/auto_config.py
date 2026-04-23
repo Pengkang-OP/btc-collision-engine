@@ -6,6 +6,7 @@
 """
 
 import logging
+import threading
 from typing import Dict
 
 logger = logging.getLogger(__name__)
@@ -241,12 +242,18 @@ class GPUAutoConfigurator:
             ratio = max_safe_memory / estimated_memory_gb
             new_batch_size = int(batch_size * ratio)
             
-            # 对齐到2的幂
-            new_batch_size = 1 << (new_batch_size.bit_length() - 1)
-            
-            logger.warning(
-                f"显存不足,批次大小从 {batch_size:,} 调整为 {new_batch_size:,}"
-            )
+            # 确保最小batch_size为1024
+            if new_batch_size < 1024:
+                new_batch_size = 1024
+                logger.warning(
+                    f"显存不足,批次大小从 {batch_size:,} 调整为最小值 {new_batch_size:,}"
+                )
+            else:
+                # 对齐到2的幂
+                new_batch_size = 1 << (new_batch_size.bit_length() - 1)
+                logger.warning(
+                    f"显存不足,批次大小从 {batch_size:,} 调整为 {new_batch_size:,}"
+                )
             
             config['batch_size'] = new_batch_size
         
@@ -318,22 +325,29 @@ class GPUAutoConfigurator:
         logger.debug("配置缓存已清除")
 
 
-# 全局单例
+# 线程安全的单例
 _configurator_instance = None
+_configurator_lock = threading.Lock()
 
 def get_gpu_configurator() -> GPUAutoConfigurator:
-    """获取GPU自动调优器单例
+    """获取GPU自动调优器单例（线程安全）
     
     Returns:
         GPUAutoConfigurator实例
     """
     global _configurator_instance
+    
+    # 双重检查锁定模式
     if _configurator_instance is None:
-        _configurator_instance = GPUAutoConfigurator()
+        with _configurator_lock:
+            if _configurator_instance is None:
+                _configurator_instance = GPUAutoConfigurator()
+    
     return _configurator_instance
 
 
 def reset_gpu_configurator():
     """重置GPU自动调优器单例(用于测试)"""
     global _configurator_instance
-    _configurator_instance = None
+    with _configurator_lock:
+        _configurator_instance = None

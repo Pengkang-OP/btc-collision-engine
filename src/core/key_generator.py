@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """安全私钥生成器 - 符合Bitcoin Core规范"""
+import os
 import secrets
 import time
 import threading
@@ -43,6 +44,8 @@ class SecureKeyGenerator:
                 - batch_size: 每批生成数量（默认1000）
                 - rate_limit: 每秒生成速率（默认0=无限制）
                 - key_format: 公钥格式（默认'both'）
+                - entropy_check_enabled: 是否启用熵池检查（默认True）
+                - min_entropy_bits: 最小熵值阈值（默认1000）
         """
         config = config or {}
         self.batch_size = config.get('batch_size', 1000)
@@ -51,14 +54,89 @@ class SecureKeyGenerator:
         self.key_manager = SecureKeyManager()
         self._lock = threading.Lock()
         
+        # P1-3修复: 熵池检查配置
+        self.entropy_check_enabled = config.get('entropy_check_enabled', True)
+        self.min_entropy_bits = config.get('min_entropy_bits', 1000)
+        
         # 统计信息
         self._total_generated = 0
         self._start_time = datetime.utcnow()
+        self.stats: Dict = {
+            'low_entropy_count': 0,
+            'entropy_checks': 0,
+            'warnings_issued': 0
+        }
         
         logger.info(
-            "SecureKeyGenerator初始化: batch_size=%d, rate_limit=%d",
-            self.batch_size, self.rate_limit
+            "SecureKeyGenerator初始化: batch_size=%d, rate_limit=%d, entropy_check=%s",
+            self.batch_size, self.rate_limit, self.entropy_check_enabled
         )
+    
+    def _check_entropy_health(self) -> bool:
+        """检查系统熵池健康状态
+        
+        P1-3修复: 添加熵池健康检查,防止低熵环境下生成弱密钥
+        
+        返回:
+            bool: 熵池是否健康
+        """
+        if not self.entropy_check_enabled:
+            return True
+        
+        try:
+            # Linux系统检查熵池
+            entropy_file = '/proc/sys/kernel/random/entropy_avail'
+            if os.path.exists(entropy_file):
+                with open(entropy_file, 'r') as f:
+                    entropy = int(f.read().strip())
+                
+                self.stats['entropy_checks'] = self.stats.get('entropy_checks', 0) + 1
+                    
+                if entropy < self.min_entropy_bits:
+                    logger.warning(
+                        f"系统熵池较低: {entropy} bits (< {self.min_entropy_bits}), "
+                        f"建议安装haveged或rng-tools"
+                    )
+                    self.stats['low_entropy_count'] = self.stats.get('low_entropy_count', 0) + 1
+                    
+                    # 仅在首次警告时发出详细提示
+                    if self.stats['low_entropy_count'] == 1:
+                        logger.warning(
+                            "熵池不足可能导致密钥生成质量下降。\n"
+                            "Linux解决方案:\n"
+                            "  sudo apt-get install haveged\n"
+                            "  sudo systemctl enable haveged\n"
+                            "  sudo systemctl start haveged\n"
+                            "或:\n"
+                            "  sudo apt-get install rng-tools\n"
+                            "  sudo systemctl enable rng-tools\n"
+                            "  sudo systemctl start rng-tools"
+                        )
+                        self.stats['warnings_issued'] = self.stats.get('warnings_issued', 0) + 1
+                    
+                    return False
+                elif entropy < self.min_entropy_bits * 2:
+                    logger.debug(f"系统熵池一般: {entropy} bits")
+                    return True
+                else:
+                    logger.debug(f"系统熵池充足: {entropy} bits")
+                    return True
+            
+            # Windows/macOS无法检查,假设健康
+            # 这些系统使用CryptGenRandom/SecureRandom,不依赖熵池
+            if self.stats.get('entropy_checks', 0) == 0:
+                # 仅在首次检查时记录说明
+                import platform
+                system = platform.system()
+                logger.debug(
+                    f"{system}系统使用系统级CSPRNG (CryptGenRandom/SecureRandom)，"
+                    f"不依赖/dev/random熵池，安全性由操作系统保证"
+                )
+                self.stats['entropy_checks'] = 1
+            return True
+        except Exception as e:
+            logger.debug(f"无法检查熵池状态: {e}")
+            return True  # 无法检查时假设健康
     
     def generate_batch(self, count: int) -> List[bytes]:
         """
@@ -72,6 +150,11 @@ class SecureKeyGenerator:
         """
         if count <= 0:
             raise ValueError("生成数量必须大于0")
+        
+        # P1-3修复: 检查熵池健康状态
+        if not self._check_entropy_health():
+            logger.warning("熵池健康度低,生成的密钥可能存在安全风险")
+            # 记录但不阻塞,避免影响性能
         
         private_keys = []
         start_time = time.time()
@@ -111,6 +194,13 @@ class SecureKeyGenerator:
             "批量生成完成: %d keys in %.2fs (%.0f keys/s)",
             len(private_keys), elapsed, rate
         )
+        
+        # BL-2修复: 检查是否生成了任何有效私钥
+        if len(private_keys) == 0 and count > 0:
+            raise RuntimeError(
+                f"无法生成任何有效私钥 (请求{count}个)。"
+                f"这可能是系统熵池严重不足或CSPRNG故障。"
+            )
         
         return private_keys
     
@@ -163,14 +253,21 @@ class SecureKeyGenerator:
             elapsed = (datetime.utcnow() - self._start_time).total_seconds()
             rate = self._total_generated / elapsed if elapsed > 0 else 0
             
-            return {
+            stats = {
                 'total_generated': self._total_generated,
                 'elapsed_seconds': elapsed,
                 'generation_rate': rate,
                 'batch_size': self.batch_size,
                 'rate_limit': self.rate_limit,
-                'key_format': self.key_format
+                'key_format': self.key_format,
+                # P1-3修复: 添加熵池统计
+                'entropy_check_enabled': self.entropy_check_enabled,
+                'min_entropy_bits': self.min_entropy_bits,
+                'low_entropy_warnings': self.stats.get('low_entropy_count', 0),
+                'entropy_checks': self.stats.get('entropy_checks', 0)
             }
+            
+            return stats
     
     def reset_statistics(self) -> None:
         """重置统计信息"""

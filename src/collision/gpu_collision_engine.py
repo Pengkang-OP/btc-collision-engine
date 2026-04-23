@@ -911,6 +911,15 @@ class GPUKernel(GPUKernelProtocol):
                 # 记录force_check_on_shutdown已经释放的缓冲区
                 released_buffers.update(leak_report.get('released', []))
                 
+                # v2.2.1修复: 将已释放的缓冲区引用设为None，避免双重释放
+                for buf_name in released_buffers:
+                    if buf_name == '_keys_buf':
+                        self._keys_buf = None
+                    elif buf_name == '_match_buf':
+                        self._match_buf = None
+                    elif buf_name == '_targets_buf':
+                        self._targets_buf = None
+                
                 # 审查修复#3: 使用修正后的语义
                 if leak_report['has_unreleased'] or leak_report['has_leak']:
                     logger.warning(
@@ -1036,8 +1045,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 self._gpu_device.enable_async = False
                 logger.info("✅ Intel 异步执行: 已禁用(传统模式)")
         
-        # 5. 显存限制
-        memory_efficiency = getattr(self._gpu_device, 'memory_efficiency', 0.45)
+        # 5. 显存限制（v2.2.1优化: 45% → 70%）
+        memory_efficiency = getattr(self._gpu_device, 'memory_efficiency', 0.70)
         logger.info(f"✅ Intel 显存效率: {memory_efficiency*100:.0f}%")
         
         # 6. 驱动版本检查

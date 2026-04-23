@@ -307,20 +307,33 @@ class GPUPerformanceOptimizer:
                     f"执行时间过长({avg_execution_time:.0f}ms)，减小batch: {current_batch_size} -> {new_batch_size}"
                 )
             
-            # 3. 性能良好且有余量 - 增大batch_size
+            # 3. 性能良好且有余量 - 增大batch_size（优化v2.2.1: 更激进的策略）
             elif (avg_execution_time < profile.slow_execution_threshold_ms * 0.5 and
                   error_rate < profile.error_rate_threshold * 0.5):
-                increase = profile.batch_size_step
+                # 根据性能余量计算增长因子
+                time_ratio = profile.slow_execution_threshold_ms * 0.5 / max(avg_execution_time, 1)
+                
+                if time_ratio > 3.0:
+                    # 性能非常优秀，大幅增加
+                    increase = profile.batch_size_step * 4
+                elif time_ratio > 2.0:
+                    # 性能良好，适度增加
+                    increase = profile.batch_size_step * 2
+                else:
+                    # 性能尚可，小幅增加
+                    increase = profile.batch_size_step
+                
                 new_batch_size = min(profile.max_batch_size_limit, current_batch_size + increase)
                 adjustments["performance_good"] = {
                     "avg_time_ms": avg_execution_time,
                     "avg_speed": avg_speed,
+                    "time_ratio": time_ratio,
                     "action": "increase_batch",
                     "old_batch": current_batch_size,
                     "new_batch": new_batch_size
                 }
                 logger.info(
-                    f"性能良好，增大batch: {current_batch_size} -> {new_batch_size}"
+                    f"性能良好(time_ratio={time_ratio:.1f}x)，增大batch: {current_batch_size} -> {new_batch_size}"
                 )
             
             # 4. 记录调整

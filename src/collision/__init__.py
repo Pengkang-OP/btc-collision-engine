@@ -11,6 +11,12 @@ from .observers import CollisionObserver, BaseCollisionObserver, ObserverManager
 from .multiprocess_engine import MultiprocessCollisionEngine, HybridCollisionEngine
 from .continuous_matcher import ContinuousMatcher
 from .match_storage import MatchDataStorage
+from .collision_helpers import (
+    encode_private_key_to_wif,
+    format_match_result,
+    safe_wif_encode
+)
+from . import constants
 
 # 条件导出 GPUCollisionEngine（pyopencl 可能不可用）
 try:
@@ -37,7 +43,11 @@ __all__ = [
     'create_collision_engine',
     # 业务逻辑模块
     'ContinuousMatcher',
-    'MatchDataStorage'
+    'MatchDataStorage',
+    # 辅助工具函数
+    'encode_private_key_to_wif',
+    'format_match_result',
+    'safe_wif_encode'
 ]
 
 

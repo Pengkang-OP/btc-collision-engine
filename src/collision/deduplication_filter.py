@@ -25,9 +25,19 @@ class DeduplicationFilter:
     - 仅对 random_search 模式有意义（range/brute_force 天然无重复）
     """
     
-    def __init__(self, max_size: int = 1_000_000, enabled: bool = True):
+    def __init__(self, max_size: int = 1_000_000, enabled: bool = True,
+                 false_positive_rate: float = 0.001):
+        """初始化去重过滤器
+        
+        参数:
+            max_size: 最大容量
+            enabled: 是否启用
+            false_positive_rate: 期望的误判率（BL-6修复：可配置）
+                默认0.001 (0.1%)，越低越准确但需要更多内存
+        """
         self.max_size = max_size
         self.enabled = enabled
+        self.false_positive_rate = false_positive_rate  # BL-6修复：添加配置
         self.duplicates_found: int = 0
         self.checks_total: int = 0
         
@@ -41,7 +51,10 @@ class DeduplicationFilter:
         self._current_size = 0
         self._half_size = max_size // 2
         
-        logger.debug(f"DeduplicationFilter 初始化: max_size={max_size}, enabled={enabled}")
+        logger.debug(
+            f"DeduplicationFilter 初始化: max_size={max_size}, enabled={enabled}, "
+            f"false_positive_rate={false_positive_rate*100:.2f}%"
+        )
     
     def _fingerprint(self, private_key: bytes) -> bytes:
         """计算私钥的8字节指纹"""
