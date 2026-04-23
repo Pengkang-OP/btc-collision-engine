@@ -1,4 +1,10 @@
-# BTC 私钥碰撞工具依赖
+# BTC 私鑰碋撞工具依赖（全量合并）
+#
+# 推荐按需安装：
+#   基础功能:   pip install -r requirements-base.txt
+#   GPU 加速:   pip install -r requirements-gpu.txt
+#   开发/测试:   pip install -r requirements-dev.txt
+#   全量安装:   pip install -r requirements.txt  (本文件)
 # 核心依赖
 coincurve>=18.0.0       # libsecp256k1 绑定（推荐，性能最佳）
 psutil>=5.9.0           # 系统资源监控
