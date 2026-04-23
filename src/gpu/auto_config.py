@@ -92,9 +92,9 @@ class GPUAutoConfigurator:
     
     # Intel Arc GPU配置模板
     INTEL_ARC_CONFIG = {
-        'batch_size': 32768,       # 32K - 较小批次(避免超时)
+        'batch_size': 262144,      # v2.2.1优化: 262K - 经测试最优批次大小
         'work_group_size': 256,    # 中等工作组
-        'memory_usage_ratio': 0.5, # 保守显存使用率
+        'memory_usage_ratio': 0.7, # v2.2.1优化: 提高显存使用率(原0.5)
         'enable_async': True,      # 异步执行(必须)
         'use_fast_math': False,    # 禁用快速数学(加密运算需要精度)
         'use_uint32_workaround': True,  # uint32溢出workaround(必须)
@@ -226,18 +226,18 @@ class GPUAutoConfigurator:
         
         # v2.2.1修复: 使用统一的显存获取方法
         memory_gb = _get_memory_gb(device)
-        if memory_gb >= 16:
-            # Arc A770 16GB
-            config['batch_size'] = 65536   # 64K
-            config['memory_usage_ratio'] = 0.6
+        if memory_gb >= 15:  # v2.2.1修改: 15.56GB的A770也能匹配
+            # Arc A770 16GB - v2.2.1优化: 提升到262K
+            config['batch_size'] = 262144   # 262K
+            config['memory_usage_ratio'] = 0.7
         elif memory_gb >= 8:
-            # Arc A750/A580
-            config['batch_size'] = 32768   # 32K
-            config['memory_usage_ratio'] = 0.5
+            # Arc A750/A580 - v2.2.1优化: 提升到131K
+            config['batch_size'] = 131072   # 131K
+            config['memory_usage_ratio'] = 0.6
         else:
             # Arc A380等低端卡
-            config['batch_size'] = 16384   # 16K
-            config['memory_usage_ratio'] = 0.4
+            config['batch_size'] = 65536   # 65K
+            config['memory_usage_ratio'] = 0.5
         
         return config
     
