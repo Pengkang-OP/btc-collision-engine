@@ -44,16 +44,24 @@ class TestCLI:
         # 模拟参数对象
         class Args:
             def __init__(self, **kwargs):
-                for key, value in kwargs.items():
-                    setattr(self, key, value)
+                # 添加所有必需的属性（包括新增的工具命令属性）
+                self.targets = kwargs.get('targets', None)
+                self.file = kwargs.get('file', None)
+                self.mode = kwargs.get('mode', 'random')
+                self.start = kwargs.get('start', None)
+                self.end = kwargs.get('end', None)
+                self.workers = kwargs.get('workers', 4)
+                self.duration = kwargs.get('duration', 60)
+                # 新增工具命令属性
+                self.health_check = kwargs.get('health_check', False)
+                self.platform_check = kwargs.get('platform_check', False)
+                self.cleanup = kwargs.get('cleanup', False)
+                self.validate_addresses = kwargs.get('validate_addresses', None)
         
         # 测试有效参数
         args = Args(
             mode='random',
-            start=None,
-            end=None,
-            workers=4,
-            duration=60
+            targets=['1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa']
         )
         assert validate_args(args) is True
         
