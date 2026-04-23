@@ -603,7 +603,7 @@ from src.collision.targets.resolver import TargetResolver
 
 A: 
 1. 确保安装了所有依赖
-2. 检查Python版本（需要3.7+）
+2. 检查Python版本（需要3.9+）
 3. 查看详细错误信息
 4. 查看项目Issues是否有类似问题
 

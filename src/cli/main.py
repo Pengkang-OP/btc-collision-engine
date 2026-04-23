@@ -121,7 +121,7 @@ def parse_args() -> argparse.Namespace:
 
     # 目标地址
     target_group = parser.add_argument_group("目标地址")
-    target_ex = target_group.add_mutually_exclusive_group(required=True)
+    target_ex = target_group.add_mutually_exclusive_group(required=False)
     target_ex.add_argument(
         "-t", "--targets",
         metavar="ADDRESS",
@@ -281,11 +281,57 @@ def parse_args() -> argparse.Namespace:
         help="多 GPU 模式下手动指定 GPU 索引列表，例如: --gpu-indices 0 1（默认: 自动选择）"
     )
 
+    # ── 实用工具选项 ────────────────────────────────────────────────────────
+    util_group = parser.add_argument_group(
+        "实用工具",
+        "独立功能命令，指定后直接执行并退出，不启动碰撞引擎"
+    )
+    util_group.add_argument(
+        "--validate-addresses",
+        metavar="FILE",
+        default=None,
+        help="验证地址文件中的所有比特币地址格式，输出验证报告后退出"
+    )
+    util_group.add_argument(
+        "--health-check",
+        action="store_true",
+        default=False,
+        help="运行系统健康检查（依赖、配置、磁盘等），输出报告后退出"
+    )
+    util_group.add_argument(
+        "--cleanup",
+        action="store_true",
+        default=False,
+        help="清理过期临时文件、历史数据和日志（dry-run 预览请用 --cleanup --dry-run）"
+    )
+    util_group.add_argument(
+        "--dry-run",
+        action="store_true",
+        default=False,
+        help="与 --cleanup 配合，仅预览将被清理的文件，不实际删除"
+    )
+    util_group.add_argument(
+        "--platform-check",
+        action="store_true",
+        default=False,
+        help="运行跨平台兼容性检查（路径长度、编码、磁盘空间等），输出报告后退出"
+    )
+
     return parser.parse_args()
 
 
 def validate_args(args: argparse.Namespace) -> bool:
     """验证参数合法性，返回 True 表示合法"""
+    # 如果没有 -t/-f，且不是实用工具命令，则报错
+    is_util_cmd = (
+        getattr(args, 'health_check', False)
+        or getattr(args, 'platform_check', False)
+        or getattr(args, 'cleanup', False)
+        or getattr(args, 'validate_addresses', None) is not None
+    )
+    if not is_util_cmd and not args.targets and not args.file:
+        print("错误: 需要 -t/--targets 或 -f/--file 指定目标地址", file=sys.stderr)
+        return False
     if args.mode in ("range", "brute_force"):
         if args.start is None:
             print(f"错误: {args.mode} 模式需要 --start 参数", file=sys.stderr)
@@ -504,10 +550,126 @@ def main() -> None:
         sys.exit(2)
 
 
+def _cmd_validate_addresses(file_path: str) -> None:
+    """--validate-addresses 命令实现：批量验证文件中所有比特币地址"""
+    from pathlib import Path
+
+    target_path = Path(file_path)
+    if not target_path.exists():
+        print(f"错误: 文件不存在 - {file_path}", file=sys.stderr)
+        sys.exit(1)
+
+    # 尝试导入地址验证器
+    try:
+        from src.collision.targets.validator import AddressBatchValidator
+    except ImportError:
+        from ..collision.targets.validator import AddressBatchValidator
+
+    print(f"[BTC地址验证] 文件: {file_path}")
+    print("-" * 60)
+
+    # 读取文件
+    lines = []
+    try:
+        with open(target_path, 'r', encoding='utf-8', errors='replace') as f:
+            lines = f.readlines()
+    except Exception as exc:
+        print(f"错误: 读取文件失败 - {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    addresses = []
+    for raw in lines:
+        stripped = raw.strip()
+        if stripped and not stripped.startswith('#'):
+            addresses.append(stripped)
+
+    if not addresses:
+        print("警告: 文件中未找到任何地址（空行/注释行已跳过）")
+        sys.exit(0)
+
+    # 执行批量验证
+    validator = AddressBatchValidator()
+    results_dict = validator.validate_batch(addresses)
+
+    valid_list   = [r for r in results_dict.values() if r.valid]
+    invalid_list = [r for r in results_dict.values() if r.validated and not r.valid]
+    skipped_list = [r for r in results_dict.values() if not r.validated]
+
+    print(f"总地址数  : {len(addresses)}")
+    print(f"[OK] 有效    : {len(valid_list)}")
+    print(f"[!]  无效    : {len(invalid_list)}")
+    print(f"[--] 跳过    : {len(skipped_list)}")
+    print("-" * 60)
+
+    if valid_list:
+        print(f"\n有效地址示例（最多显示 5 个）:")
+        for r in valid_list[:5]:
+            fmt = getattr(r, 'format_type', 'unknown') or 'unknown'
+            print(f"  [OK] {r.address}  [{fmt}]")
+
+    if invalid_list:
+        print(f"\n无效地址（最多显示 10 个）:")
+        for r in invalid_list[:10]:
+            err = getattr(r, 'error', '') or ''
+            print(f"  [!]  {r.address}  原因: {err}")
+
+    print("-" * 60)
+    valid_rate = len(valid_list) / len(addresses) * 100 if addresses else 0
+    print(f"有效率: {valid_rate:.1f}%")
+    if valid_rate < 100:
+        print("警告: 存在无效地址，请检查地址文件格式")
+
+
 def _run_main() -> None:
     """CLI 主逻辑（由 main() 包装异常处理）"""
     args = parse_args()
 
+    # ── 实用工具命令：请在参数验证之前处理，需要 -t/-f 的命令已抚异常 ───────
+
+    # --health-check
+    if getattr(args, 'health_check', False):
+        try:
+            from src.utils.health_check import HealthChecker
+        except ImportError:
+            from ..utils.health_check import HealthChecker
+        checker = HealthChecker()
+        results = checker.run_all_checks()
+        checker.generate_report()
+        all_ok = all(passed for passed, _ in results.values())
+        sys.exit(0 if all_ok else 1)
+
+    # --platform-check
+    if getattr(args, 'platform_check', False):
+        try:
+            from src.utils.platform_check import PlatformChecker
+        except ImportError:
+            from ..utils.platform_check import PlatformChecker
+        checker = PlatformChecker()
+        all_passed, _ = checker.run_all_checks()
+        checker.print_report()
+        sys.exit(0 if all_passed else 1)
+
+    # --cleanup
+    if getattr(args, 'cleanup', False):
+        try:
+            from src.utils.data_cleanup import DataCleaner
+        except ImportError:
+            from ..utils.data_cleanup import DataCleaner
+        cleaner = DataCleaner()
+        dry_run = getattr(args, 'dry_run', False)
+        result = cleaner.run_cleanup(dry_run=dry_run)
+        total = result.get('total_cleaned', 0) if not dry_run else result.get('total_preview', 0)
+        action = '预览' if dry_run else '已清理'
+        print(f"[{'预览' if dry_run else '完成'}] {action} {total} 个文件/目录")
+        sys.exit(0)
+
+    # --validate-addresses
+    validate_file = getattr(args, 'validate_addresses', None)
+    if validate_file is not None:
+        _cmd_validate_addresses(validate_file)
+        sys.exit(0)
+
+    # 对于其他命令，-t/-f 是必填项，此处已由 argparse required=True 保障
     if not validate_args(args):
         sys.exit(1)
 
@@ -581,6 +743,32 @@ def _run_main() -> None:
 
     # 构建引擎
     engine, engine_type = build_engine(args, targets)
+
+    # ── 将告警系统集成到引擎主流程 ──────────────────────────────────
+    alert_system = None
+    try:
+        from src.monitoring.alert_system import AlertSystem
+    except ImportError:
+        try:
+            from ..monitoring.alert_system import AlertSystem
+        except ImportError:
+            AlertSystem = None
+
+    if AlertSystem is not None:
+        try:
+            alert_system = AlertSystem()
+            alert_system.setup_default_rules()
+
+            def _on_alert(alert_record):
+                level = getattr(alert_record.level, 'value', str(alert_record.level)).upper()
+                msg = getattr(alert_record, 'message', str(alert_record))
+                print(f"\n⚠️  [告警/{level}] {msg}")
+
+            alert_system.add_alert_callback(_on_alert)
+            logger.info("告警系统已集成：%d 条规则", len(alert_system.rules))
+        except Exception as exc:
+            logger.warning("告警系统初始化失败，将以没有告警的方式运行: %s", exc)
+            alert_system = None
 
     # 信号处理（Ctrl+C 优雅停止）
     stop_event = threading.Event()
@@ -656,6 +844,20 @@ def _run_main() -> None:
             else:
                 stats = engine.get_stats()
                 print(format_progress(stats, args.mode, total_range))
+
+                # 告警系统检查（每次刷新进度后执行）
+                if alert_system is not None:
+                    try:
+                        elapsed_sec = stats.elapsed if stats.elapsed > 0 else 1
+                        throughput = stats.total_checked / elapsed_sec if elapsed_sec > 0 else 0
+                        metrics = {
+                            'throughput': throughput,
+                            'baseline_throughput': getattr(stats, 'peak_speed', throughput * 1.2),
+                            'error_rate': 0.0,
+                        }
+                        alert_system.check_metrics(metrics)
+                    except Exception:
+                        pass  # 告警异常不影响主流程
 
             # 检查运行时长限制
             if args.duration > 0 and (time.time() - start_time) >= args.duration:
