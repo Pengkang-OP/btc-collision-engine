@@ -68,17 +68,12 @@
     "compress_backups": false,
     "_comment_compress_backups": "是否压缩备份日志"
   },
-  "gui": {
-    "_comment": "GUI界面配置",
-    "theme": "dark",
-    "_comment_theme": "界面主题: dark, light",
-    "font": "Microsoft YaHei",
-    "_comment_font": "界面字体",
-    "font_size": 10,
-    "_comment_font_size": "字体大小(磅)",
-    "window_width": 800,
-    "_comment_window_width": "窗口宽度(像素)",
-    "window_height": 600,
-    "_comment_window_height": "窗口高度(像素)"
+  "performance_monitoring": {
+    "_comment": "性能监控配置（v3.0.0+）",
+    "enabled": true,
+    "track_slow_operations": true,
+    "slow_threshold_ms": 100,
+    "max_records": 1000,
+    "log_level": "DEBUG"
   }
 }

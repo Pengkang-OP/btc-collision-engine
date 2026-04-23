@@ -113,21 +113,58 @@ class CollisionStats:
             
             return snap
     
+    def reset(self) -> None:
+        """线程安全地重置所有统计数据
+        
+        使用场景:引擎重新启动、测试初始化、监控系统周期性清除。
+        注意: 会清空 matches 列表，请确保已保存重要匹配结果。
+        """
+        with self._lock:
+            self.total_checked = 0
+            self.speed = 0.0
+            self.elapsed = 0.0
+            self.start_time = time.time()  # 重置开始时间为当前时间
+            self.matches = []
+            self._match_count = 0
+            self.total_range = 0
+            self.eta_seconds = -1.0
+            self.gpu_errors = 0
+            self.worker_errors = 0
+            self.wif_encode_errors = 0
+            self.resource_errors = 0
+            if hasattr(self, '_progress_percent'):
+                self._progress_percent = 0.0
+
+    def get_total_checked(self) -> int:
+        """线程安全地获取已检查数量"""
+        with self._lock:
+            return self.total_checked
+
+    def get_elapsed(self) -> float:
+        """线程安全地获取已运行时间（秒）"""
+        with self._lock:
+            return self.elapsed
+
     def format_elapsed(self) -> str:
         """格式化已运行时间为 HH:MM:SS"""
-        hours = int(self.elapsed // 3600)
-        minutes = int((self.elapsed % 3600) // 60)
-        seconds = int(self.elapsed % 60)
+        with self._lock:
+            elapsed = self.elapsed
+        hours = int(elapsed // 3600)
+        minutes = int((elapsed % 3600) // 60)
+        seconds = int(elapsed % 60)
         return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
-    
+
     def format_speed(self) -> str:
         """格式化速度（带单位）"""
-        if self.speed >= 1_000_000:
-            return f"{self.speed / 1_000_000:.2f}M/s"
-        elif self.speed >= 1_000:
-            return f"{self.speed / 1_000:.2f}K/s"
+        with self._lock:
+            speed = self.speed
+        if speed >= 1_000_000:
+            return f"{speed / 1_000_000:.2f}M/s"
+        elif speed >= 1_000:
+            return f"{speed / 1_000:.2f}K/s"
         else:
-            return f"{self.speed:.2f}/s"
+            return f"{speed:.2f}/s"
+
     
     def get_speed(self) -> float:
         """

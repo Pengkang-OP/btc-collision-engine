@@ -4,13 +4,58 @@
 - uint32 workaround避免global char* hang bug
 - 超时保护机制
 - 保守的batch_size策略
+- 日志频率限制（防止重复日志泵洪）
 """
 
 from typing import Dict, Any
 import logging
+import time
 from .base import GPUVendorBase
 
 logger = logging.getLogger(__name__)
+
+
+class _RateLimitedLogger:
+    """日志频率限制器 - 防止相同日志在短时间内重复输出导致泵洪"""
+
+    def __init__(self, base_logger, min_interval: float = 60.0):
+        """
+        Args:
+            base_logger: 基础 logger
+            min_interval: 相同消息的最小输出间隔（秒），默认 60s
+        """
+        self._logger = base_logger
+        self._min_interval = min_interval
+        self._last_logged: Dict[str, float] = {}
+
+    def _should_log(self, key: str) -> bool:
+        now = time.time()
+        last = self._last_logged.get(key, 0.0)
+        if now - last >= self._min_interval:
+            self._last_logged[key] = now
+            return True
+        return False
+
+    def warning(self, msg: str, key: str = None) -> None:
+        k = key or msg[:80]
+        if self._should_log(k):
+            self._logger.warning(msg)
+
+    def info(self, msg: str, key: str = None) -> None:
+        k = key or msg[:80]
+        if self._should_log(k):
+            self._logger.info(msg)
+
+    def error(self, msg: str, key: str = None) -> None:
+        """error 级别不限流，始终输出"""
+        self._logger.error(msg)
+
+    def debug(self, msg: str) -> None:
+        self._logger.debug(msg)
+
+
+# 初始化限流 logger（1分钟内相同消息不重复输出）
+_rate_logger = _RateLimitedLogger(logger, min_interval=60.0)
 
 
 class IntelGPUVendor(GPUVendorBase):
@@ -38,7 +83,8 @@ class IntelGPUVendor(GPUVendorBase):
         
         # 1. uint32 workaround - 关键优化
         if 'uint32_workaround' in optimizations:
-            logger.info("✅ 启用uint32 workaround(避免Intel Arc global char* hang bug)")
+            _rate_logger.info("✅ 启用uint32 workaround(避免Intel Arc global char* hang bug)",
+                             key="intel_uint32_workaround")
             # 标记设备需要特殊处理
             device.requires_uint32_workaround = True
             # 在GPUKernel中使用uint32*替代uchar*
@@ -47,14 +93,16 @@ class IntelGPUVendor(GPUVendorBase):
         # 2. 超时保护
         if 'timeout_protection' in optimizations:
             timeout_seconds = profile.get('timeout_seconds', 30)
-            logger.info(f"✅ 启用超时保护机制: {timeout_seconds}秒")
+            _rate_logger.info(f"✅ 启用超时保护机制: {timeout_seconds}秒",
+                             key="intel_timeout_protection")
             # 在GPUKernel.run_batch中添加超时
             # 防止内核hang住导致GUI永久阻塞
             device.timeout_seconds = timeout_seconds
         
         # 3. 异步传输 - Intel建议禁用
         if 'async_transfer' in optimizations:
-            logger.warning("⚠️ Intel GPU: 禁用异步传输以确保稳定性")
+            _rate_logger.warning("⚠️ Intel GPU: 禁用异步传输以确保稳定性",
+                                key="intel_async_disabled")
             device.enable_async = False
         
         # 4. 专业驱动优化
@@ -67,22 +115,27 @@ class IntelGPUVendor(GPUVendorBase):
         
         # 6. 驱动特定优化
         if device.driver_optimization_flags.get('conservative_mode', False):
-            logger.warning(
+            _rate_logger.warning(
                 "Intel驱动保守模式: "
-                "使用更小的batch_size和更严格的超时"
+                "使用更小的batch_size和更严格的超时",
+                key="intel_conservative_mode"
             )
         
         # 7. 记录已知问题
         if 'global_char_hang_bug' in known_issues:
-            logger.warning(
+            _rate_logger.warning(
                 "⚠️ Intel Arc存在global char* hang bug, "
-                "已启用uint32 workaround"
+                "已启用uint32 workaround",
+                key="intel_known_hang_bug"
             )
         
         # 8. 显存效率设置 (v2.2.1优化: 45% -> 70%)
         memory_efficiency = profile.get('memory_efficiency', 0.70)
         device.memory_efficiency = memory_efficiency
-        logger.info(f"✅ Intel GPU内存效率: {memory_efficiency*100:.0f}% (v2.2.1优化)")
+        _rate_logger.info(
+            f"✅ Intel GPU内存效率: {memory_efficiency*100:.0f}% (v2.2.1优化)",
+            key="intel_memory_efficiency"
+        )
     
     def calculate_batch_size(self, device, profile: Dict[str, Any]) -> int:
         """
@@ -123,7 +176,8 @@ class IntelGPUVendor(GPUVendorBase):
         """检查驱动版本并给出建议"""
         driver_version = device.driver_version
         if not driver_version:
-            logger.warning("⚠️ 无法检测Intel驱动版本，使用保守模式")
+            _rate_logger.warning("⚠️ 无法检测Intel驱动版本，使用保守模式",
+                               key="intel_no_driver_version")
             return
         
         try:
@@ -137,12 +191,14 @@ class IntelGPUVendor(GPUVendorBase):
                 
                 # 检查是否为推荐版本
                 if (major, minor, build, revision) < (31, 0, 101, 4500):
-                    logger.warning(
+                    _rate_logger.warning(
                         f"⚠️ Intel驱动版本 {driver_version} 较旧，"
-                        f"建议更新到 31.0.101.4500+ 以获得更好的稳定性"
+                        f"建议更新到 31.0.101.4500+ 以获得更好的稳定性",
+                        key=f"intel_driver_old_{driver_version}"
                     )
                 else:
-                    logger.info(f"✅ Intel驱动版本 {driver_version} 符合要求")
+                    _rate_logger.info(f"✅ Intel驱动版本 {driver_version} 符合要求",
+                                    key=f"intel_driver_ok_{driver_version}")
             else:
                 logger.debug(f"Intel驱动版本格式: {driver_version}")
         except (ValueError, IndexError) as e:
