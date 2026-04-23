@@ -93,7 +93,7 @@ class GPUAutoConfigurator:
     # Intel Arc GPU配置模板
     INTEL_ARC_CONFIG = {
         'batch_size': 262144,      # v2.2.1优化: 262K - 经测试最优批次大小
-        'work_group_size': 256,    # 中等工作组
+        'work_group_size': 512,    # v2.3.0优化: 512 - 匹配A770的512个EU(原256)
         'memory_usage_ratio': 0.7, # v2.2.1优化: 提高显存使用率(原0.5)
         'enable_async': True,      # 异步执行(必须)
         'use_fast_math': False,    # 禁用快速数学(加密运算需要精度)
@@ -230,6 +230,7 @@ class GPUAutoConfigurator:
             # Arc A770 16GB - v2.2.1优化: 提升到262K
             config['batch_size'] = 262144   # 262K
             config['memory_usage_ratio'] = 0.7
+            config['work_group_size'] = 512  # v2.3.0优化: 匹配512个EU
         elif memory_gb >= 8:
             # Arc A750/A580 - v2.2.1优化: 提升到131K
             config['batch_size'] = 131072   # 131K

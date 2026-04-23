@@ -425,7 +425,8 @@ class GPUDevice:
             'vendor': self.vendor,
             'platform': device_info.get('platform', 'Unknown'),
             'global_mem_size': device_info['device'].global_mem_size,
-            'max_compute_units': device_info['device'].max_compute_units
+            'max_compute_units': device_info['device'].max_compute_units,
+            'work_group_size': 256  # v2.3.0优化: 默认值，会被auto_config覆盖
         }
         
         # 验证设备能力
