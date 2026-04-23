@@ -478,20 +478,22 @@ void ec_point_add(const uint256_t *p1x, const uint256_t *p1y,
 }
 
 // 标量乘法: R = k * G (窗口优化算法)
-// v2.4.0修复: 使用完整预计算表[1G-15G]修复偶数窗口映射错误
+// v2.5.0优化: 窗口大小从w=4升级到w=5，减少循环次数(64→52)和点加次数
+// 预计算表从15个点扩展到31个点[1G-31G]
+// 理论点加减少约19%，预期性能提升10-20%
 void ec_scalar_multiply(const uint256_t *k, const uint256_t *gx, const uint256_t *gy,
                         uint256_t *rx, uint256_t *ry) {
-    // v2.4.0修复: 预计算表 [1G, 2G, 3G, ..., 15G]
-    // 窗口大小 w=4，预计算15个点覆盖所有可能的窗口值(1-15)
-    uint256_t precomp_x[15], precomp_y[15];
+    // v2.5.0优化: 预计算表 [1G, 2G, 3G, ..., 31G]
+    // 窗口大小 w=5，预计算31个点覆盖所有可能的窗口值(1-31)
+    uint256_t precomp_x[31], precomp_y[31];
     uint256_t temp2x, temp2y;
     
     // 预计算: precomp[0] = 1G = G
     uint256_copy(gx, &precomp_x[0]);
     uint256_copy(gy, &precomp_y[0]);
     
-    // 预计算: precomp[1-14] = 2G-15G
-    for (int i = 1; i < 15; i++) {
+    // 预计算: precomp[1-30] = 2G-31G
+    for (int i = 1; i < 31; i++) {
         ec_point_add(&precomp_x[i-1], &precomp_y[i-1], gx, gy, &temp2x, &temp2y);
         uint256_copy(&temp2x, &precomp_x[i]);
         uint256_copy(&temp2y, &precomp_y[i]);
@@ -502,17 +504,19 @@ void ec_scalar_multiply(const uint256_t *k, const uint256_t *gx, const uint256_t
     uint256_set_zero(&result_x);
     uint256_set_zero(&result_y);
     
-    // 窗口算法 (w=4)
-    // 每次处理4位，从256位减少到64次循环
+    // 窗口算法 (w=5)
+    // 每次处理5位，256位分为52组（最后一组4位，其余每组5位）
+    // 从最低有效位开始处理（LSB-first），每轮先做5次点倍加再查表加点
     uint256_t exp;
     uint256_copy(k, &exp);
     
-    for (int i = 0; i < 64; i++) {
-        // 提取4位窗口值 (0-15)
-        int window = exp.d[0] & 0xF;  // 最低4位
+    // 第1-51组：每组取5位 (0-31)
+    for (int i = 0; i < 51; i++) {
+        // 提取5位窗口值 (0-31)
+        int window = exp.d[0] & 0x1F;  // 最低5位
         
-        // 4次点倍加 (处理4位)
-        for (int j = 0; j < 4; j++) {
+        // 5次点倍加 (处理5位)
+        for (int j = 0; j < 5; j++) {
             ec_point_double(&result_x, &result_y, &temp2x, &temp2y);
             uint256_copy(&temp2x, &result_x);
             uint256_copy(&temp2y, &result_y);
@@ -520,21 +524,36 @@ void ec_scalar_multiply(const uint256_t *k, const uint256_t *gx, const uint256_t
         
         // 如果窗口值非零，查表加点
         if (window > 0) {
-            // v2.4.0修复: 直接映射 window: 1-15 → index: 0-14
+            // 直接映射 window: 1-31 → index: 0-30
             int index = window - 1;
-            
-            if (index >= 0 && index < 15) {
-                ec_point_add(&result_x, &result_y, &precomp_x[index], &precomp_y[index], &temp2x, &temp2y);
-                uint256_copy(&temp2x, &result_x);
-                uint256_copy(&temp2y, &result_y);
-            }
+            ec_point_add(&result_x, &result_y, &precomp_x[index], &precomp_y[index], &temp2x, &temp2y);
+            uint256_copy(&temp2x, &result_x);
+            uint256_copy(&temp2y, &result_y);
         }
         
-        // exp >>= 4
+        // exp >>= 5
         for (int j = 0; j < 7; j++) {
-            exp.d[j] = (exp.d[j] >> 4) | (exp.d[j + 1] << 28);
+            exp.d[j] = (exp.d[j] >> 5) | (exp.d[j + 1] << 27);
         }
-        exp.d[7] >>= 4;
+        exp.d[7] >>= 5;
+    }
+    
+    // 第52组：处理剩余的最高1位 (256 - 51*5 = 1位)
+    // 51*5 = 255位已处理，剩余第256位（最高位）
+    {
+        int window = exp.d[0] & 0x1;  // 最低1位（即第256位）
+        
+        // 1次点倍加
+        ec_point_double(&result_x, &result_y, &temp2x, &temp2y);
+        uint256_copy(&temp2x, &result_x);
+        uint256_copy(&temp2y, &result_y);
+        
+        // 如果窗口值非零，加1G
+        if (window > 0) {
+            ec_point_add(&result_x, &result_y, &precomp_x[0], &precomp_y[0], &temp2x, &temp2y);
+            uint256_copy(&temp2x, &result_x);
+            uint256_copy(&temp2y, &result_y);
+        }
     }
     
     uint256_copy(&result_x, rx);
