@@ -25,6 +25,7 @@ import signal
 import sys
 import time
 import threading
+from pathlib import Path
 from typing import Optional, Set
 
 # 将项目根目录加入路径
@@ -316,6 +317,24 @@ def parse_args() -> argparse.Namespace:
         default=False,
         help="运行跨平台兼容性检查（路径长度、编码、磁盘空间等），输出报告后退出"
     )
+    util_group.add_argument(
+        "--quick-start",
+        action="store_true",
+        default=False,
+        help="启动交互式快速引导模式，适合新手用户"
+    )
+    util_group.add_argument(
+        "--examples",
+        action="store_true",
+        default=False,
+        help="显示常用使用示例后退出"
+    )
+    util_group.add_argument(
+        "--config-check",
+        action="store_true",
+        default=False,
+        help="检查配置文件状态，验证配置有效性"
+    )
 
     return parser.parse_args()
 
@@ -328,37 +347,52 @@ def validate_args(args: argparse.Namespace) -> bool:
         or getattr(args, 'platform_check', False)
         or getattr(args, 'cleanup', False)
         or getattr(args, 'validate_addresses', None) is not None
+        or getattr(args, 'examples', False)
+        or getattr(args, 'config_check', False)
+        or getattr(args, 'quick_start', False)
     )
     if not is_util_cmd and not args.targets and not args.file:
-        print("错误: 需要 -t/--targets 或 -f/--file 指定目标地址", file=sys.stderr)
+        print("\n[Error] 需要指定目标地址", file=sys.stderr)
+        print("\n[Tip] 提示:")
+        print("   - 单个地址: python key_collision_cli.py -t <地址> -m random")
+        print("   - 文件加载: python key_collision_cli.py -f <文件> -m random")
+        print("   - 快速引导: python key_collision_cli.py --quick-start")
+        print("   - 查看示例: python key_collision_cli.py --examples")
+        print("   - 完整帮助: python key_collision_cli.py --help\n")
         return False
     if args.mode in ("range", "brute_force"):
         if args.start is None:
-            print(f"错误: {args.mode} 模式需要 --start 参数", file=sys.stderr)
+            print(f"\n[Error] {args.mode} 模式需要 --start 参数", file=sys.stderr)
+            print(f"[Tip] 示例: python key_collision_cli.py -t <地址> -m {args.mode} --start 1\n")
             return False
         try:
             int(args.start, 16)
         except ValueError:
-            print(f"错误: --start 必须是有效的十六进制数 (当前: {args.start})", file=sys.stderr)
+            print(f"\n[Error] --start 必须是有效的十六进制数 (当前: {args.start})", file=sys.stderr)
+            print(f"[Tip] 示例: --start 1 或 --start 1A2B3C\n")
             return False
 
     if args.mode == "range":
         if args.end is None:
-            print("错误: range 模式需要 --end 参数", file=sys.stderr)
+            print("\n[Error] range 模式需要 --end 参数", file=sys.stderr)
+            print("[Tip] 示例: python key_collision_cli.py -t <地址> -m range --start 1 --end FFFFFFFF\n")
             return False
         try:
             int(args.end, 16)
         except ValueError:
-            print(f"错误: --end 必须是有效的十六进制数 (当前: {args.end})", file=sys.stderr)
+            print(f"\n[Error] --end 必须是有效的十六进制数 (当前: {args.end})", file=sys.stderr)
+            print(f"[Tip] 示例: --end FFFFFFFF 或 --end 1000000\n")
             return False
 
         start_val = int(args.start, 16)
         end_val = int(args.end, 16)
         if start_val >= end_val:
-            print(f"错误: --start ({args.start}) 必须小于 --end ({args.end})", file=sys.stderr)
+            print(f"\n[Error] --start ({args.start}) 必须小于 --end ({args.end})", file=sys.stderr)
+            print("[Tip] 提示: 请检查起始和结束私钥的顺序\n")
             return False
         if start_val < 1:
-            print("错误: --start 必须 >= 1", file=sys.stderr)
+            print("\n[Error] --start 必须 >= 1", file=sys.stderr)
+            print("[Tip] 提示: 私钥范围必须从 1 开始\n")
             return False
         
         # M-NEW2修复: 范围过大警告（2^64约需数百年才能穷举）
@@ -396,7 +430,7 @@ def load_targets(args: argparse.Namespace) -> Set[str]:
 
 
 def format_progress(stats: CollisionStats, mode: str, total_range: Optional[int] = None) -> str:
-    """格式化进度信息"""
+    """格式化进度信息（带可视化进度条）"""
     elapsed = stats.format_elapsed()
     checked = stats.total_checked
     speed_str = stats.format_speed()
@@ -407,11 +441,16 @@ def format_progress(stats: CollisionStats, mode: str, total_range: Optional[int]
         time.time() - stats.start_time if stats.start_time > 0 else 0
     )
     if checked == 0 and elapsed_sec < 15:
-        return f"[{elapsed}] 初始化中... | 速度: -- | 匹配: {matches} | ETA: --"
+        return f"[{elapsed}] [Initializing] 初始化中... | 速度: -- | 匹配: {matches} | ETA: --"
+    
+    # 计算进度百分比和 ETA
+    pct = 0.0
     eta_str = "--"
-    if total_range and total_range > 0 and checked > 0:
-        elapsed_sec = time.time() - stats.start_time if stats.start_time else 0
-        if elapsed_sec > 0:
+    
+    if total_range and total_range > 0:
+        pct = min(100.0, checked / total_range * 100)
+        
+        if checked > 0 and elapsed_sec > 0:
             speed = checked / elapsed_sec
             remaining = total_range - checked
             if speed > 0 and remaining > 0:
@@ -423,17 +462,44 @@ def format_progress(stats: CollisionStats, mode: str, total_range: Optional[int]
                 else:
                     eta_str = f"{eta_sec / 3600:.1f}h"
             elif remaining <= 0:
-                eta_str = "完成"
-
-    # 进度百分比
-    pct_str = ""
+                eta_str = "[Done] 完成"
+    
+    # 生成可视化进度条
+    bar_length = 20
     if total_range and total_range > 0:
-        pct = min(100.0, checked / total_range * 100)
-        pct_str = f" | 进度: {pct:.1f}%"
+        filled = int(bar_length * pct / 100)
+        bar = '█' * filled + '░' * (bar_length - filled)
+        pct_str = f" {bar} {pct:5.1f}%"
+    else:
+        pct_str = ""
+    
+    # 格式化已检查数量
+    if checked >= 1_000_000_000:
+        checked_str = f"{checked/1_000_000_000:.2f}B"
+    elif checked >= 1_000_000:
+        checked_str = f"{checked/1_000_000:.2f}M"
+    elif checked >= 1_000:
+        checked_str = f"{checked/1_000:.1f}K"
+    else:
+        checked_str = str(checked)
+    
+    # 总范围显示
+    if total_range and total_range > 0:
+        if total_range >= 1_000_000_000:
+            total_str = f"{total_range/1_000_000_000:.2f}B"
+        elif total_range >= 1_000_000:
+            total_str = f"{total_range/1_000_000:.2f}M"
+        else:
+            total_str = f"{total_range:,}"
+        range_info = f" | {checked_str}/{total_str}"
+    else:
+        range_info = f" | {checked_str}"
 
     return (
-        f"[{elapsed}] 已检查: {checked:,} | 速度: {speed_str}"
-        f"{pct_str} | 匹配: {matches} | ETA: {eta_str}"
+        f"[{elapsed}]{pct_str}{range_info}"
+        f" | 速度: {speed_str}"
+        f" | ETA: {eta_str}"
+        f" | 匹配: {matches}"
     )
 
 
@@ -620,11 +686,328 @@ def _cmd_validate_addresses(file_path: str) -> None:
         print("警告: 存在无效地址，请检查地址文件格式")
 
 
+def _cmd_examples() -> None:
+    """--examples 命令实现：显示常用使用示例"""
+    # 确保UTF-8输出
+    if sys.platform == 'win32':
+        import io
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    
+    print("=" * 70)
+    print("[Examples] BTC碰撞引擎 - 常用示例")
+    print("=" * 70)
+    
+    examples = [
+        {
+            "title": "1. 基础随机碰撞",
+            "desc": "最简单的使用方式，持续运行直到 Ctrl+C",
+            "cmd": "python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random"
+        },
+        {
+            "title": "2. 断点续传（推荐）",
+            "desc": "启用断点续传和去重，运行1小时后自动停止",
+            "cmd": "python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random --checkpoint --dedup --duration 3600"
+        },
+        {
+            "title": "3. 从文件加载目标",
+            "desc": "从文件读取多个目标地址",
+            "cmd": "python key_collision_cli.py -f targets.txt -m random --checkpoint"
+        },
+        {
+            "title": "4. GPU加速模式",
+            "desc": "启用单GPU加速（速度提升数千倍）",
+            "cmd": "python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random --use-gpu"
+        },
+        {
+            "title": "5. 多GPU模式",
+            "desc": "使用所有可用GPU设备",
+            "cmd": "python key_collision_cli.py -f targets.txt -m random --multi-gpu"
+        },
+        {
+            "title": "6. 范围扫描",
+            "desc": "在指定私钥范围内搜索",
+            "cmd": "python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m range --start 1 --end FFFFFFFF"
+        },
+        {
+            "title": "7. 系统健康检查",
+            "desc": "检查系统依赖和配置状态",
+            "cmd": "python key_collision_cli.py --health-check"
+        },
+        {
+            "title": "8. 验证地址文件",
+            "desc": "批量验证文件中的地址格式",
+            "cmd": "python key_collision_cli.py --validate-addresses targets.txt"
+        },
+    ]
+    
+    for ex in examples:
+        print(f"\n{ex['title']}")
+        print(f"   {ex['desc']}")
+        print(f"   $ {ex['cmd']}")
+    
+    print("\n" + "=" * 70)
+    print("💡 提示:")
+    print("   - 新手建议使用 --quick-start 进行交互式引导")
+    print("   - 查看完整帮助: python key_collision_cli.py --help")
+    print("   - 检查配置状态: python key_collision_cli.py --config-check")
+    print("=" * 70)
+
+
+def _cmd_config_check() -> None:
+    """--config-check 命令实现：检查配置文件状态"""
+    from pathlib import Path
+    
+    # 确保UTF-8输出
+    if sys.platform == 'win32':
+        import io
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    
+    config_path = Path("config.json")
+    example_path = Path("config.example.json")
+    
+    print("=" * 70)
+    print("[Config Check] 配置文件检查")
+    print("=" * 70)
+    
+    # 检查配置文件存在性
+    if config_path.exists():
+        print("\n✅ config.json 存在")
+        
+        # 验证JSON格式
+        try:
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+            print("✅ JSON格式正确")
+            
+            # 基本结构验证
+            required_sections = ['crypto', 'collision', 'logging']
+            missing_sections = [s for s in required_sections if s not in config]
+            
+            if missing_sections:
+                print(f"⚠️  缺少配置段: {', '.join(missing_sections)}")
+            else:
+                print("✅ 主要配置段完整")
+            
+            # 显示关键配置信息
+            print("\n📊 关键配置信息:")
+            collision_cfg = config.get('collision', {})
+            print(f"   - 工作线程数: {collision_cfg.get('max_workers', '自动 (CPU核心数)')}")
+            print(f"   - 性能优化: {'启用' if collision_cfg.get('use_performance_optimization', True) else '禁用'}")
+            print(f"   - 断点续传间隔: {collision_cfg.get('checkpoint_interval', 30)}秒")
+            
+            gpu_cfg = config.get('gpu', {})
+            print(f"   - GPU模式: {gpu_cfg.get('mode', 'auto')}")
+            
+        except json.JSONDecodeError as e:
+            print(f"❌ JSON格式错误: {e}")
+            print("💡 修复建议: 从 config.example.json 重新复制")
+        except Exception as e:
+            print(f"❌ 读取失败: {e}")
+    else:
+        print("\n❌ config.json 不存在")
+        if example_path.exists():
+            print("✅ config.example.json 存在")
+            print("💡 修复建议: 复制示例配置文件")
+            print("   Windows: copy config.example.json config.json")
+            print("   Linux/Mac: cp config.example.json config.json")
+        else:
+            print("❌ config.example.json 也不存在")
+            print("💡 修复建议: 从项目仓库重新获取配置文件")
+    
+    # 检查必要目录
+    print("\n📁 必要目录检查:")
+    required_dirs = ['logs', 'data_logs', 'monitoring_data']
+    for dir_name in required_dirs:
+        dir_path = Path(dir_name)
+        if dir_path.exists():
+            print(f"   ✅ {dir_name}/")
+        else:
+            print(f"   ❌ {dir_name}/ (不存在)")
+            print(f"      修复: mkdir {dir_name}")
+    
+    print("\n" + "=" * 70)
+
+
+def _cmd_quick_start() -> None:
+    """--quick-start 命令实现：交互式快速引导"""
+    # 确保UTF-8输出
+    if sys.platform == 'win32':
+        import io
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    
+    print("=" * 70)
+    print("[Quick Start] BTC碰撞引擎 - 快速引导模式")
+    print("=" * 70)
+    print()
+    
+    try:
+        # 步骤1: 选择目标地址来源
+        print("【步骤 1/4】选择目标地址来源")
+        print("   1. 单个比特币地址")
+        print("   2. 从文件加载多个地址")
+        target_type = input("   请选择 [1/2] [默认:1]: ").strip() or '1'
+        
+        targets = []
+        target_file = None
+        
+        if target_type == '1':
+            address = input("   输入比特币地址: ").strip()
+            if not address:
+                print("   ❌ 地址不能为空")
+                return
+            targets = [address]
+        elif target_type == '2':
+            target_file = input("   输入文件路径 [默认: targets.txt]: ").strip() or 'targets.txt'
+            if not Path(target_file).exists():
+                print(f"   ⚠️  文件不存在: {target_file}")
+                create = input("   是否创建示例文件? [y/N]: ").strip().lower()
+                if create == 'y':
+                    with open(target_file, 'w', encoding='utf-8') as f:
+                        f.write("# 目标地址文件\n")
+                        f.write("# 每行一个地址，支持 # 注释\n")
+                        f.write("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n")
+                    print(f"   ✅ 已创建示例文件: {target_file}")
+                    print("   💡 请编辑文件添加您的目标地址后重新运行")
+                    return
+                else:
+                    return
+        else:
+            print("   ❌ 无效选择")
+            return
+        
+        # 步骤2: 选择碰撞模式
+        print("\n【步骤 2/4】选择碰撞模式")
+        print("   1. random    - 随机碰撞（推荐新手）")
+        print("   2. range     - 范围扫描（需要指定起始/结束私钥）")
+        print("   3. brute_force - 暴力穷举（研究用途）")
+        mode_choice = input("   请选择 [1/2/3] [默认:1]: ").strip() or '1'
+        
+        mode_map = {'1': 'random', '2': 'range', '3': 'brute_force'}
+        mode = mode_map.get(mode_choice, 'random')
+        
+        start_key = None
+        end_key = None
+        
+        if mode in ['range', 'brute_force']:
+            start_key = input("   起始私钥 (十六进制) [默认:1]: ").strip() or '1'
+            if mode == 'range':
+                end_key = input("   结束私钥 (十六进制) [默认:FFFFFFFF]: ").strip() or 'FFFFFFFF'
+        
+        # 步骤3: 功能选项
+        print("\n【步骤 3/4】功能选项")
+        checkpoint = input("   启用断点续传? [Y/n] [默认:Y]: ").strip().lower() != 'n'
+        dedup = input("   启用去重过滤? [Y/n] [默认:Y]: ").strip().lower() != 'n'
+        
+        duration_str = input("   运行时长 (秒，0=无限) [默认:0]: ").strip() or '0'
+        try:
+            duration = int(duration_str)
+        except ValueError:
+            print("   ⚠️  无效数值，使用默认值 0")
+            duration = 0
+        
+        # 步骤4: GPU加速
+        print("\n【步骤 4/4】GPU加速")
+        print("   1. CPU 模式（默认）")
+        print("   2. 单GPU 加速")
+        print("   3. 多GPU 加速")
+        gpu_choice = input("   请选择 [1/2/3] [默认:1]: ").strip() or '1'
+        
+        # 构建命令
+        print("\n" + "=" * 70)
+        print("✅ 生成的命令:")
+        print("=" * 70)
+        
+        cmd_parts = ["python", "key_collision_cli.py"]
+        
+        if targets:
+            cmd_parts.extend(["-t"] + targets)
+        elif target_file:
+            cmd_parts.extend(["-f", target_file])
+        
+        cmd_parts.extend(["-m", mode])
+        
+        if start_key:
+            cmd_parts.extend(["--start", start_key])
+        if end_key:
+            cmd_parts.extend(["--end", end_key])
+        
+        if checkpoint:
+            cmd_parts.append("--checkpoint")
+        if dedup:
+            cmd_parts.append("--dedup")
+        if duration > 0:
+            cmd_parts.extend(["--duration", str(duration)])
+        
+        if gpu_choice == '2':
+            cmd_parts.append("--use-gpu")
+        elif gpu_choice == '3':
+            cmd_parts.append("--multi-gpu")
+        
+        cmd_str = " ".join(cmd_parts)
+        print(f"\n{cmd_str}\n")
+        
+        # 询问是否执行
+        execute = input("是否立即执行? [Y/n] [默认:Y]: ").strip().lower()
+        if execute != 'n':
+            print("\n" + "=" * 70)
+            print("🚀 启动碰撞引擎...")
+            print("=" * 70 + "\n")
+            
+            # 解析并执行命令
+            import shlex
+            # 模拟命令行参数
+            sys.argv = cmd_parts
+            from src.cli.main import _run_main
+            _run_main()
+        else:
+            print("\n💡 提示: 您可以复制上面的命令直接运行")
+            print("   查看完整帮助: python key_collision_cli.py --help")
+    
+    except KeyboardInterrupt:
+        print("\n\n⚠️  用户中断，退出引导模式")
+    except Exception as e:
+        print(f"\n❌ 错误: {e}")
+        print("💡 您可以直接使用命令行参数运行")
+
+
 def _run_main() -> None:
     """CLI 主逻辑（由 main() 包装异常处理）"""
     args = parse_args()
 
     # ── 实用工具命令：请在参数验证之前处理，需要 -t/-f 的命令已抚异常 ───────
+
+    # --examples
+    if getattr(args, 'examples', False):
+        _cmd_examples()
+        sys.exit(0)
+
+    # --config-check
+    if getattr(args, 'config_check', False):
+        _cmd_config_check()
+        sys.exit(0)
+
+    # --quick-start
+    if getattr(args, 'quick_start', False):
+        _cmd_quick_start()
+        sys.exit(0)
+
+    # ── 自动检测首次运行 ───────────────────────────────────────
+    config_path = Path("config.json")
+    wizard_marker = Path("data_logs/.wizard_completed")
+    
+    if not config_path.exists() and not wizard_marker.exists():
+        print("\n[First Run] 检测到首次运行，启动配置向导...")
+        print("[Tip] 提示: 如果您想直接使用命令行，可以按 Ctrl+C 退出\n")
+        try:
+            from src.utils.first_run_wizard import FirstRunWizard
+        except ImportError:
+            from ..utils.first_run_wizard import FirstRunWizard
+        
+        wizard = FirstRunWizard()
+        wizard.run()
+        print("\n[OK] 配置完成！现在可以开始使用碰撞引擎")
+        print("[Tip] 提示: 运行 'python key_collision_cli.py --quick-start' 开始\n")
+        sys.exit(0)
 
     # --health-check
     if getattr(args, 'health_check', False):
