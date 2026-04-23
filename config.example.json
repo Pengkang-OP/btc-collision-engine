@@ -75,5 +75,57 @@
     "slow_threshold_ms": 100,
     "max_records": 1000,
     "log_level": "DEBUG"
+  },
+  "monitoring": {
+    "_comment": "监控系统配置",
+    "enabled": true,
+    "_comment_enabled": "是否启用监控系统",
+    "collection_interval": 5,
+    "_comment_collection_interval": "数据采集间隔(秒)",
+    "storage_dir": "monitoring_data",
+    "_comment_storage_dir": "监控数据存储目录",
+    "history_max_size": 1000,
+    "_comment_history_max_size": "历史数据最大条数",
+    "error_max_size": 500,
+    "_comment_error_max_size": "错误日志最大条数",
+    "anomaly_thresholds": {
+      "_comment": "异常检测阈值",
+      "speed": {
+        "min": 100,
+        "max": 1000000
+      },
+      "cpu_usage": {
+        "max": 90
+      },
+      "memory_usage": {
+        "max": 1024
+      }
+    },
+    "auto_cleanup": {
+      "_comment": "自动清理配置",
+      "enabled": true,
+      "_comment_enabled": "是否启用自动清理",
+      "max_age_days": 30,
+      "_comment_max_age_days": "数据最大保存天数"
+    }
+  },
+  "gpu": {
+    "_comment": "GPU高级配置",
+    "use_new_module": true,
+    "_comment_use_new_module": "是否使用新的GPU模块(false=使用旧gpu_engine.py)",
+    "auto_detect": true,
+    "_comment_auto_detect": "自动检测GPU设备",
+    "memory_usage_ratio": 0.5,
+    "_comment_memory_usage_ratio": "显存使用比例(0.0-1.0)",
+    "enable_vendor_optimizations": true,
+    "_comment_enable_vendor_optimizations": "启用厂商特定优化",
+    "mode": "auto",
+    "_comment_mode": "GPU模式: auto=自动选择, single=单GPU, multi=多GPU",
+    "device_indices": [-1],
+    "_comment_device_indices": "GPU设备索引列表, -1=自动选择最佳, [0,1]=使用GPU 0和1",
+    "load_balancing": "performance",
+    "_comment_load_balancing": "负载均衡策略: performance=按性能, equal=平均分配",
+    "auto_tuning": true,
+    "_comment_auto_tuning": "自动根据设备型号调优参数"
   }
 }
