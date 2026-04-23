@@ -1830,15 +1830,24 @@ class GPUCollisionEngine(BaseCollisionEngine):
                         logger.info(f"GPU内存池初始化完成: {self._gpu_memory_pool.get_stats()}")
                         
                         # v3.2.0新增: 预分配常用大小的缓冲区（性能优化）
-                        preallocate_sizes = [
-                            self.batch_size * 32,  # 私钥缓冲区大小
-                            self.batch_size * 4,   # 匹配缓冲区大小
-                        ]
+                        # v3.3.0优化: 使用正确的内存标志进行预分配
+                        import pyopencl as cl
+                        
+                        # 预分配私钥缓冲区 (READ_ONLY)
                         self._gpu_memory_pool.preallocate_buffers(
-                            sizes=preallocate_sizes,
-                            count_per_size=2  # 每个大小预分配2个
+                            sizes=[self.batch_size * 32],
+                            count_per_size=2,
+                            flags=cl.mem_flags.READ_ONLY
                         )
-                        logger.info("✅ GPU内存池预分配完成")
+                        
+                        # 预分配匹配缓冲区 (WRITE_ONLY)
+                        self._gpu_memory_pool.preallocate_buffers(
+                            sizes=[self.batch_size * 4],
+                            count_per_size=2,
+                            flags=cl.mem_flags.WRITE_ONLY
+                        )
+                        
+                        logger.info("✅ GPU内存池预分配完成（使用正确的内存标志）")
                     
                     self._gpu_kernel = GPUKernel(
                         self._gpu_device, 

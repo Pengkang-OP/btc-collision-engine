@@ -7,2214 +7,6 @@
     "anomalies": [
       {
         "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885318.9596717
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885318.980589,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885318.9946892
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885320.2428968
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885320.2676172,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885320.2823966
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885321.5426173
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885321.5647979,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885321.5809245
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885322.841438
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885322.8660839,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885322.8822978
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885324.1315634
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885324.1535304,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885324.16874
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885325.4264524
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885325.448938,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885325.4656339
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885326.755253
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885326.7791216,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885326.7931643
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885328.060115
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885328.0850503,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885328.100093
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885329.3753607
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885329.4065201,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885329.4322903
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885330.7035673
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885330.7276587,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885330.743538
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885332.0245435
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885332.04531,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885332.0601234
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885333.318657
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885333.3393488,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885333.352532
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885334.6107912
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885334.6323705,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885334.646776
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885335.9103954
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885335.9320552,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885335.9448395
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885337.2196562
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885337.246037,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885337.2617774
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885338.5417876
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885338.568629,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885338.5835495
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885339.8816314
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885339.907805,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885339.9232614
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885341.2196634
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885341.2433338,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885341.2566159
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885342.520219
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885342.5404952,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885342.5551333
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885343.8286254
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885343.8534834,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885343.8741639
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885345.1423283
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885345.1625838,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885345.1776435
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885346.4356759
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885346.4583452,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885346.474473
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885347.7465384
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885347.7698455,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885347.7840796
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885349.0383365
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885349.060219,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885349.0744593
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885350.3626127
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885350.38471,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885350.4037445
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885351.6697092
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885351.6913733,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885351.705291
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885352.9602706
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885352.980762,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885352.9936287
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885354.2496357
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885354.269718,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885354.2872713
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885355.5498595
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885355.572109,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885355.5872586
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885356.9078894
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885356.9311519,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885356.945497
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885358.2165642
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885358.2536948,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885358.278296
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885359.567153
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885359.5871506,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885359.602516
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885360.8751976
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885360.8981087,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885360.9115431
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885362.1599827
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885362.175846,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885362.1880648
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885363.4870172
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885363.5054808,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885363.5179973
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    ],
-    "timestamp": 1776885364.767049
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776885364.7877567,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776885364.8042758
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 2 个异常",
-    "anomaly_count": 2,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      },
-      {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    ],
-    "timestamp": 1776965858.0397835
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776965858.0536563,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776965858.0639095
-  },
-  {
-    "type": "alert",
-    "level": "critical",
-    "message": "引擎运行但检测速率为0",
-    "alert_data": {
-      "timestamp": 1776965858.077534,
-      "level": "critical",
-      "message": "引擎运行但检测速率为0",
-      "details": {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    },
-    "timestamp": 1776965858.0877633
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 2 个异常",
-    "anomaly_count": 2,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      },
-      {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    ],
-    "timestamp": 1776966157.0528927
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776966157.0668542,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776966157.0785856
-  },
-  {
-    "type": "alert",
-    "level": "critical",
-    "message": "引擎运行但检测速率为0",
-    "alert_data": {
-      "timestamp": 1776966157.093675,
-      "level": "critical",
-      "message": "引擎运行但检测速率为0",
-      "details": {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    },
-    "timestamp": 1776966157.1062348
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 3 个异常",
-    "anomaly_count": 3,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      },
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 93.4,
-        "threshold": 90,
-        "message": "CPU使用率过高: 93.40%"
-      },
-      {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    ],
-    "timestamp": 1776975157.4996948
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1776975157.5649364,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1776975157.6221006
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 93.40%",
-    "alert_data": {
-      "timestamp": 1776975157.6738555,
-      "level": "warning",
-      "message": "CPU使用率过高: 93.40%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 93.4,
-        "threshold": 90,
-        "message": "CPU使用率过高: 93.40%"
-      }
-    },
-    "timestamp": 1776975157.728238
-  },
-  {
-    "type": "alert",
-    "level": "critical",
-    "message": "引擎运行但检测速率为0",
-    "alert_data": {
-      "timestamp": 1776975157.786985,
-      "level": "critical",
-      "message": "引擎运行但检测速率为0",
-      "details": {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    },
-    "timestamp": 1776975157.8546975
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 108.9,
-        "threshold": 90,
-        "message": "CPU使用率过高: 108.90%"
-      }
-    ],
-    "timestamp": 1776975163.090564
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 108.90%",
-    "alert_data": {
-      "timestamp": 1776975163.1041741,
-      "level": "warning",
-      "message": "CPU使用率过高: 108.90%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 108.9,
-        "threshold": 90,
-        "message": "CPU使用率过高: 108.90%"
-      }
-    },
-    "timestamp": 1776975163.1152916
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 93.7,
-        "threshold": 90,
-        "message": "CPU使用率过高: 93.70%"
-      }
-    ],
-    "timestamp": 1776975168.2903712
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 93.70%",
-    "alert_data": {
-      "timestamp": 1776975168.3049934,
-      "level": "warning",
-      "message": "CPU使用率过高: 93.70%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 93.7,
-        "threshold": 90,
-        "message": "CPU使用率过高: 93.70%"
-      }
-    },
-    "timestamp": 1776975168.3157687
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 109.1,
-        "threshold": 90,
-        "message": "CPU使用率过高: 109.10%"
-      }
-    ],
-    "timestamp": 1776975173.4902182
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 109.10%",
-    "alert_data": {
-      "timestamp": 1776975173.504741,
-      "level": "warning",
-      "message": "CPU使用率过高: 109.10%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 109.1,
-        "threshold": 90,
-        "message": "CPU使用率过高: 109.10%"
-      }
-    },
-    "timestamp": 1776975173.5148804
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 111.7,
-        "threshold": 90,
-        "message": "CPU使用率过高: 111.70%"
-      }
-    ],
-    "timestamp": 1776975178.7910879
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 111.70%",
-    "alert_data": {
-      "timestamp": 1776975178.85892,
-      "level": "warning",
-      "message": "CPU使用率过高: 111.70%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 111.7,
-        "threshold": 90,
-        "message": "CPU使用率过高: 111.70%"
-      }
-    },
-    "timestamp": 1776975178.9511027
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 108.9,
-        "threshold": 90,
-        "message": "CPU使用率过高: 108.90%"
-      }
-    ],
-    "timestamp": 1776975184.1568425
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 108.90%",
-    "alert_data": {
-      "timestamp": 1776975184.1707919,
-      "level": "warning",
-      "message": "CPU使用率过高: 108.90%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 108.9,
-        "threshold": 90,
-        "message": "CPU使用率过高: 108.90%"
-      }
-    },
-    "timestamp": 1776975184.1826303
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 93.6,
-        "threshold": 90,
-        "message": "CPU使用率过高: 93.60%"
-      }
-    ],
-    "timestamp": 1776975189.351398
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 93.60%",
-    "alert_data": {
-      "timestamp": 1776975189.3645525,
-      "level": "warning",
-      "message": "CPU使用率过高: 93.60%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 93.6,
-        "threshold": 90,
-        "message": "CPU使用率过高: 93.60%"
-      }
-    },
-    "timestamp": 1776975189.375794
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 108.8,
-        "threshold": 90,
-        "message": "CPU使用率过高: 108.80%"
-      }
-    ],
-    "timestamp": 1776975194.5462377
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 108.80%",
-    "alert_data": {
-      "timestamp": 1776975194.5603378,
-      "level": "warning",
-      "message": "CPU使用率过高: 108.80%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 108.8,
-        "threshold": 90,
-        "message": "CPU使用率过高: 108.80%"
-      }
-    },
-    "timestamp": 1776975194.5711746
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 105.4,
-        "threshold": 90,
-        "message": "CPU使用率过高: 105.40%"
-      }
-    ],
-    "timestamp": 1776975199.810651
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 105.40%",
-    "alert_data": {
-      "timestamp": 1776975199.8923562,
-      "level": "warning",
-      "message": "CPU使用率过高: 105.40%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 105.4,
-        "threshold": 90,
-        "message": "CPU使用率过高: 105.40%"
-      }
-    },
-    "timestamp": 1776975199.9761055
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 93.3,
-        "threshold": 90,
-        "message": "CPU使用率过高: 93.30%"
-      }
-    ],
-    "timestamp": 1776975205.25303
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 93.30%",
-    "alert_data": {
-      "timestamp": 1776975205.2669876,
-      "level": "warning",
-      "message": "CPU使用率过高: 93.30%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 93.3,
-        "threshold": 90,
-        "message": "CPU使用率过高: 93.30%"
-      }
-    },
-    "timestamp": 1776975205.2762332
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 93.4,
-        "threshold": 90,
-        "message": "CPU使用率过高: 93.40%"
-      }
-    ],
-    "timestamp": 1776975210.4488266
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 93.40%",
-    "alert_data": {
-      "timestamp": 1776975210.4631298,
-      "level": "warning",
-      "message": "CPU使用率过高: 93.40%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 93.4,
-        "threshold": 90,
-        "message": "CPU使用率过高: 93.40%"
-      }
-    },
-    "timestamp": 1776975210.4723444
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 109.2,
-        "threshold": 90,
-        "message": "CPU使用率过高: 109.20%"
-      }
-    ],
-    "timestamp": 1776975215.6417575
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 109.20%",
-    "alert_data": {
-      "timestamp": 1776975215.6554897,
-      "level": "warning",
-      "message": "CPU使用率过高: 109.20%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 109.2,
-        "threshold": 90,
-        "message": "CPU使用率过高: 109.20%"
-      }
-    },
-    "timestamp": 1776975215.6643176
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 133.0,
-        "threshold": 90,
-        "message": "CPU使用率过高: 133.00%"
-      }
-    ],
-    "timestamp": 1776975220.9328492
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 133.00%",
-    "alert_data": {
-      "timestamp": 1776975220.9949663,
-      "level": "warning",
-      "message": "CPU使用率过高: 133.00%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 133.0,
-        "threshold": 90,
-        "message": "CPU使用率过高: 133.00%"
-      }
-    },
-    "timestamp": 1776975221.0735111
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 93.5,
-        "threshold": 90,
-        "message": "CPU使用率过高: 93.50%"
-      }
-    ],
-    "timestamp": 1776975226.2776818
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 93.50%",
-    "alert_data": {
-      "timestamp": 1776975226.2911186,
-      "level": "warning",
-      "message": "CPU使用率过高: 93.50%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 93.5,
-        "threshold": 90,
-        "message": "CPU使用率过高: 93.50%"
-      }
-    },
-    "timestamp": 1776975226.3018157
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 93.3,
-        "threshold": 90,
-        "message": "CPU使用率过高: 93.30%"
-      }
-    ],
-    "timestamp": 1776975231.481647
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 93.30%",
-    "alert_data": {
-      "timestamp": 1776975231.495285,
-      "level": "warning",
-      "message": "CPU使用率过高: 93.30%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 93.3,
-        "threshold": 90,
-        "message": "CPU使用率过高: 93.30%"
-      }
-    },
-    "timestamp": 1776975231.5052693
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 93.5,
-        "threshold": 90,
-        "message": "CPU使用率过高: 93.50%"
-      }
-    ],
-    "timestamp": 1776975236.6831815
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 93.50%",
-    "alert_data": {
-      "timestamp": 1776975236.6972106,
-      "level": "warning",
-      "message": "CPU使用率过高: 93.50%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 93.5,
-        "threshold": 90,
-        "message": "CPU使用率过高: 93.50%"
-      }
-    },
-    "timestamp": 1776975236.7070293
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 118.0,
-        "threshold": 90,
-        "message": "CPU使用率过高: 118.00%"
-      }
-    ],
-    "timestamp": 1776975241.967322
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 118.00%",
-    "alert_data": {
-      "timestamp": 1776975242.0300095,
-      "level": "warning",
-      "message": "CPU使用率过高: 118.00%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 118.0,
-        "threshold": 90,
-        "message": "CPU使用率过高: 118.00%"
-      }
-    },
-    "timestamp": 1776975242.0921123
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 93.3,
-        "threshold": 90,
-        "message": "CPU使用率过高: 93.30%"
-      }
-    ],
-    "timestamp": 1776975247.3365972
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 93.30%",
-    "alert_data": {
-      "timestamp": 1776975247.360276,
-      "level": "warning",
-      "message": "CPU使用率过高: 93.30%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 93.3,
-        "threshold": 90,
-        "message": "CPU使用率过高: 93.30%"
-      }
-    },
-    "timestamp": 1776975247.3710005
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 93.6,
-        "threshold": 90,
-        "message": "CPU使用率过高: 93.60%"
-      }
-    ],
-    "timestamp": 1776975252.542617
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 93.60%",
-    "alert_data": {
-      "timestamp": 1776975252.5573316,
-      "level": "warning",
-      "message": "CPU使用率过高: 93.60%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 93.6,
-        "threshold": 90,
-        "message": "CPU使用率过高: 93.60%"
-      }
-    },
-    "timestamp": 1776975252.567686
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 103.6,
-        "threshold": 90,
-        "message": "CPU使用率过高: 103.60%"
-      }
-    ],
-    "timestamp": 1776975263.0116181
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 103.60%",
-    "alert_data": {
-      "timestamp": 1776975263.0827699,
-      "level": "warning",
-      "message": "CPU使用率过高: 103.60%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 103.6,
-        "threshold": 90,
-        "message": "CPU使用率过高: 103.60%"
-      }
-    },
-    "timestamp": 1776975263.139384
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 109.0,
-        "threshold": 90,
-        "message": "CPU使用率过高: 109.00%"
-      }
-    ],
-    "timestamp": 1776975268.3577313
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 109.00%",
-    "alert_data": {
-      "timestamp": 1776975268.3721335,
-      "level": "warning",
-      "message": "CPU使用率过高: 109.00%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 109.0,
-        "threshold": 90,
-        "message": "CPU使用率过高: 109.00%"
-      }
-    },
-    "timestamp": 1776975268.382415
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 93.5,
-        "threshold": 90,
-        "message": "CPU使用率过高: 93.50%"
-      }
-    ],
-    "timestamp": 1776975273.5745199
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 93.50%",
-    "alert_data": {
-      "timestamp": 1776975273.5942726,
-      "level": "warning",
-      "message": "CPU使用率过高: 93.50%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 93.5,
-        "threshold": 90,
-        "message": "CPU使用率过高: 93.50%"
-      }
-    },
-    "timestamp": 1776975273.6045265
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 202.3,
-        "threshold": 90,
-        "message": "CPU使用率过高: 202.30%"
-      }
-    ],
-    "timestamp": 1776975278.7826014
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 202.30%",
-    "alert_data": {
-      "timestamp": 1776975278.7962582,
-      "level": "warning",
-      "message": "CPU使用率过高: 202.30%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 202.3,
-        "threshold": 90,
-        "message": "CPU使用率过高: 202.30%"
-      }
-    },
-    "timestamp": 1776975278.8068585
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 93.2,
-        "threshold": 90,
-        "message": "CPU使用率过高: 93.20%"
-      }
-    ],
-    "timestamp": 1776975283.9907198
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 93.20%",
-    "alert_data": {
-      "timestamp": 1776975284.0147064,
-      "level": "warning",
-      "message": "CPU使用率过高: 93.20%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 93.2,
-        "threshold": 90,
-        "message": "CPU使用率过高: 93.20%"
-      }
-    },
-    "timestamp": 1776975284.0284328
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 1 个异常",
-    "anomaly_count": 1,
-    "anomalies": [
-      {
-        "type": "performance",
         "metric": "cpu_usage",
         "value": 93.3,
         "threshold": 90,
@@ -8530,5 +6322,2197 @@
       }
     },
     "timestamp": 1776976366.5420475
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 108.7,
+        "threshold": 90,
+        "message": "CPU使用率过高: 108.70%"
+      }
+    ],
+    "timestamp": 1776976371.7861707
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 108.70%",
+    "alert_data": {
+      "timestamp": 1776976371.800878,
+      "level": "warning",
+      "message": "CPU使用率过高: 108.70%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 108.7,
+        "threshold": 90,
+        "message": "CPU使用率过高: 108.70%"
+      }
+    },
+    "timestamp": 1776976371.8133268
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 109.0,
+        "threshold": 90,
+        "message": "CPU使用率过高: 109.00%"
+      }
+    ],
+    "timestamp": 1776976377.038812
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 109.00%",
+    "alert_data": {
+      "timestamp": 1776976377.0561085,
+      "level": "warning",
+      "message": "CPU使用率过高: 109.00%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 109.0,
+        "threshold": 90,
+        "message": "CPU使用率过高: 109.00%"
+      }
+    },
+    "timestamp": 1776976377.0703645
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 3 个异常",
+    "anomaly_count": 3,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      },
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 104.0,
+        "threshold": 90,
+        "message": "CPU使用率过高: 104.00%"
+      },
+      {
+        "type": "engine",
+        "metric": "speed",
+        "value": 0,
+        "threshold": 1,
+        "message": "引擎运行但检测速率为0"
+      }
+    ],
+    "timestamp": 1776976419.6580968
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1776976419.7227764,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1776976419.7874372
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 104.00%",
+    "alert_data": {
+      "timestamp": 1776976419.8624046,
+      "level": "warning",
+      "message": "CPU使用率过高: 104.00%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 104.0,
+        "threshold": 90,
+        "message": "CPU使用率过高: 104.00%"
+      }
+    },
+    "timestamp": 1776976419.9583354
+  },
+  {
+    "type": "alert",
+    "level": "critical",
+    "message": "引擎运行但检测速率为0",
+    "alert_data": {
+      "timestamp": 1776976420.027067,
+      "level": "critical",
+      "message": "引擎运行但检测速率为0",
+      "details": {
+        "type": "engine",
+        "metric": "speed",
+        "value": 0,
+        "threshold": 1,
+        "message": "引擎运行但检测速率为0"
+      }
+    },
+    "timestamp": 1776976420.102141
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.2,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.20%"
+      }
+    ],
+    "timestamp": 1776976425.3424
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.20%",
+    "alert_data": {
+      "timestamp": 1776976425.3564892,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.20%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.2,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.20%"
+      }
+    },
+    "timestamp": 1776976425.3674586
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.6,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.60%"
+      }
+    ],
+    "timestamp": 1776976430.5448618
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.60%",
+    "alert_data": {
+      "timestamp": 1776976430.559141,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.60%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.6,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.60%"
+      }
+    },
+    "timestamp": 1776976430.569386
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.2,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.20%"
+      }
+    ],
+    "timestamp": 1776976435.7805698
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.20%",
+    "alert_data": {
+      "timestamp": 1776976435.7966533,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.20%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.2,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.20%"
+      }
+    },
+    "timestamp": 1776976435.8062518
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    ],
+    "timestamp": 1776976446.2033472
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.40%",
+    "alert_data": {
+      "timestamp": 1776976446.2179627,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.40%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    },
+    "timestamp": 1776976446.2285576
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.7,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.70%"
+      }
+    ],
+    "timestamp": 1776976451.404019
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.70%",
+    "alert_data": {
+      "timestamp": 1776976451.418685,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.70%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.7,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.70%"
+      }
+    },
+    "timestamp": 1776976451.4288301
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 162.5,
+        "threshold": 90,
+        "message": "CPU使用率过高: 162.50%"
+      }
+    ],
+    "timestamp": 1776976456.6863942
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 162.50%",
+    "alert_data": {
+      "timestamp": 1776976456.7465024,
+      "level": "warning",
+      "message": "CPU使用率过高: 162.50%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 162.5,
+        "threshold": 90,
+        "message": "CPU使用率过高: 162.50%"
+      }
+    },
+    "timestamp": 1776976456.8102274
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 109.1,
+        "threshold": 90,
+        "message": "CPU使用率过高: 109.10%"
+      }
+    ],
+    "timestamp": 1776976462.0162914
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 109.10%",
+    "alert_data": {
+      "timestamp": 1776976462.031351,
+      "level": "warning",
+      "message": "CPU使用率过高: 109.10%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 109.1,
+        "threshold": 90,
+        "message": "CPU使用率过高: 109.10%"
+      }
+    },
+    "timestamp": 1776976462.04113
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.3,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.30%"
+      }
+    ],
+    "timestamp": 1776976467.2658288
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.30%",
+    "alert_data": {
+      "timestamp": 1776976467.2804286,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.30%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.3,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.30%"
+      }
+    },
+    "timestamp": 1776976467.2908702
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.6,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.60%"
+      }
+    ],
+    "timestamp": 1776976472.4634905
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.60%",
+    "alert_data": {
+      "timestamp": 1776976472.4781218,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.60%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.6,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.60%"
+      }
+    },
+    "timestamp": 1776976472.4885888
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 103.5,
+        "threshold": 90,
+        "message": "CPU使用率过高: 103.50%"
+      }
+    ],
+    "timestamp": 1776976477.7726493
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 103.50%",
+    "alert_data": {
+      "timestamp": 1776976477.834661,
+      "level": "warning",
+      "message": "CPU使用率过高: 103.50%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 103.5,
+        "threshold": 90,
+        "message": "CPU使用率过高: 103.50%"
+      }
+    },
+    "timestamp": 1776976477.9109223
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.3,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.30%"
+      }
+    ],
+    "timestamp": 1776976483.1453693
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.30%",
+    "alert_data": {
+      "timestamp": 1776976483.1593966,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.30%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.3,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.30%"
+      }
+    },
+    "timestamp": 1776976483.1695557
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.5,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.50%"
+      }
+    ],
+    "timestamp": 1776976488.347828
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.50%",
+    "alert_data": {
+      "timestamp": 1776976488.3616045,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.50%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.5,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.50%"
+      }
+    },
+    "timestamp": 1776976488.3710272
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 140.2,
+        "threshold": 90,
+        "message": "CPU使用率过高: 140.20%"
+      }
+    ],
+    "timestamp": 1776976493.5637202
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 140.20%",
+    "alert_data": {
+      "timestamp": 1776976493.577917,
+      "level": "warning",
+      "message": "CPU使用率过高: 140.20%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 140.2,
+        "threshold": 90,
+        "message": "CPU使用率过高: 140.20%"
+      }
+    },
+    "timestamp": 1776976493.5878546
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.7,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.70%"
+      }
+    ],
+    "timestamp": 1776976498.8431337
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.70%",
+    "alert_data": {
+      "timestamp": 1776976498.894144,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.70%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.7,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.70%"
+      }
+    },
+    "timestamp": 1776976498.9625585
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.3,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.30%"
+      }
+    ],
+    "timestamp": 1776976504.2027543
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.30%",
+    "alert_data": {
+      "timestamp": 1776976504.2173886,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.30%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.3,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.30%"
+      }
+    },
+    "timestamp": 1776976504.2283154
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    ],
+    "timestamp": 1776976509.406847
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.40%",
+    "alert_data": {
+      "timestamp": 1776976509.4264832,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.40%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    },
+    "timestamp": 1776976509.437544
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 177.5,
+        "threshold": 90,
+        "message": "CPU使用率过高: 177.50%"
+      }
+    ],
+    "timestamp": 1776976514.7381258
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 177.50%",
+    "alert_data": {
+      "timestamp": 1776976514.7876287,
+      "level": "warning",
+      "message": "CPU使用率过高: 177.50%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 177.5,
+        "threshold": 90,
+        "message": "CPU使用率过高: 177.50%"
+      }
+    },
+    "timestamp": 1776976514.799312
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 109.1,
+        "threshold": 90,
+        "message": "CPU使用率过高: 109.10%"
+      }
+    ],
+    "timestamp": 1776976520.0185664
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 109.10%",
+    "alert_data": {
+      "timestamp": 1776976520.0787964,
+      "level": "warning",
+      "message": "CPU使用率过高: 109.10%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 109.1,
+        "threshold": 90,
+        "message": "CPU使用率过高: 109.10%"
+      }
+    },
+    "timestamp": 1776976520.137404
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 109.2,
+        "threshold": 90,
+        "message": "CPU使用率过高: 109.20%"
+      }
+    ],
+    "timestamp": 1776976525.3687956
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 109.20%",
+    "alert_data": {
+      "timestamp": 1776976525.387285,
+      "level": "warning",
+      "message": "CPU使用率过高: 109.20%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 109.2,
+        "threshold": 90,
+        "message": "CPU使用率过高: 109.20%"
+      }
+    },
+    "timestamp": 1776976525.399303
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    ],
+    "timestamp": 1776976530.5783172
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.40%",
+    "alert_data": {
+      "timestamp": 1776976530.6070158,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.40%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    },
+    "timestamp": 1776976530.6185358
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 192.0,
+        "threshold": 90,
+        "message": "CPU使用率过高: 192.00%"
+      }
+    ],
+    "timestamp": 1776976535.879793
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 192.00%",
+    "alert_data": {
+      "timestamp": 1776976535.947802,
+      "level": "warning",
+      "message": "CPU使用率过高: 192.00%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 192.0,
+        "threshold": 90,
+        "message": "CPU使用率过高: 192.00%"
+      }
+    },
+    "timestamp": 1776976535.99225
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    ],
+    "timestamp": 1776976541.1635754
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.40%",
+    "alert_data": {
+      "timestamp": 1776976541.1783812,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.40%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    },
+    "timestamp": 1776976541.1901183
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    ],
+    "timestamp": 1776976546.3626359
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.40%",
+    "alert_data": {
+      "timestamp": 1776976546.377739,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.40%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    },
+    "timestamp": 1776976546.3876047
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    ],
+    "timestamp": 1776976551.569038
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.40%",
+    "alert_data": {
+      "timestamp": 1776976551.5837066,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.40%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    },
+    "timestamp": 1776976551.594677
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 103.5,
+        "threshold": 90,
+        "message": "CPU使用率过高: 103.50%"
+      }
+    ],
+    "timestamp": 1776976556.8347056
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 103.50%",
+    "alert_data": {
+      "timestamp": 1776976556.9048653,
+      "level": "warning",
+      "message": "CPU使用率过高: 103.50%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 103.5,
+        "threshold": 90,
+        "message": "CPU使用率过高: 103.50%"
+      }
+    },
+    "timestamp": 1776976556.9810462
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    ],
+    "timestamp": 1776976567.3551092
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.40%",
+    "alert_data": {
+      "timestamp": 1776976567.3745904,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.40%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    },
+    "timestamp": 1776976567.3855805
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 197.1,
+        "threshold": 90,
+        "message": "CPU使用率过高: 197.10%"
+      }
+    ],
+    "timestamp": 1776976572.6225991
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 197.10%",
+    "alert_data": {
+      "timestamp": 1776976572.636966,
+      "level": "warning",
+      "message": "CPU使用率过高: 197.10%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 197.1,
+        "threshold": 90,
+        "message": "CPU使用率过高: 197.10%"
+      }
+    },
+    "timestamp": 1776976572.6475453
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    ],
+    "timestamp": 1776976577.9243386
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.40%",
+    "alert_data": {
+      "timestamp": 1776976577.9834507,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.40%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    },
+    "timestamp": 1776976578.0286922
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.3,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.30%"
+      }
+    ],
+    "timestamp": 1776976588.407242
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.30%",
+    "alert_data": {
+      "timestamp": 1776976588.4213278,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.30%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.3,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.30%"
+      }
+    },
+    "timestamp": 1776976588.4318054
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 207.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 207.40%"
+      }
+    ],
+    "timestamp": 1776976593.6990814
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 207.40%",
+    "alert_data": {
+      "timestamp": 1776976593.7655919,
+      "level": "warning",
+      "message": "CPU使用率过高: 207.40%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 207.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 207.40%"
+      }
+    },
+    "timestamp": 1776976593.835856
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    ],
+    "timestamp": 1776976599.0773716
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.40%",
+    "alert_data": {
+      "timestamp": 1776976599.1429276,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.40%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    },
+    "timestamp": 1776976599.2001495
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 109.1,
+        "threshold": 90,
+        "message": "CPU使用率过高: 109.10%"
+      }
+    ],
+    "timestamp": 1776976604.426278
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 109.10%",
+    "alert_data": {
+      "timestamp": 1776976604.4410155,
+      "level": "warning",
+      "message": "CPU使用率过高: 109.10%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 109.1,
+        "threshold": 90,
+        "message": "CPU使用率过高: 109.10%"
+      }
+    },
+    "timestamp": 1776976604.4513497
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 109.0,
+        "threshold": 90,
+        "message": "CPU使用率过高: 109.00%"
+      }
+    ],
+    "timestamp": 1776976609.6257334
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 109.00%",
+    "alert_data": {
+      "timestamp": 1776976609.6434007,
+      "level": "warning",
+      "message": "CPU使用率过高: 109.00%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 109.0,
+        "threshold": 90,
+        "message": "CPU使用率过高: 109.00%"
+      }
+    },
+    "timestamp": 1776976609.6551163
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 186.9,
+        "threshold": 90,
+        "message": "CPU使用率过高: 186.90%"
+      }
+    ],
+    "timestamp": 1776976614.872354
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 186.90%",
+    "alert_data": {
+      "timestamp": 1776976614.8863173,
+      "level": "warning",
+      "message": "CPU使用率过高: 186.90%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 186.9,
+        "threshold": 90,
+        "message": "CPU使用率过高: 186.90%"
+      }
+    },
+    "timestamp": 1776976614.897252
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.3,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.30%"
+      }
+    ],
+    "timestamp": 1776976620.0693624
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.30%",
+    "alert_data": {
+      "timestamp": 1776976620.0923414,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.30%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.3,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.30%"
+      }
+    },
+    "timestamp": 1776976620.1351063
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.6,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.60%"
+      }
+    ],
+    "timestamp": 1776976625.4067085
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.60%",
+    "alert_data": {
+      "timestamp": 1776976625.4282856,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.60%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.6,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.60%"
+      }
+    },
+    "timestamp": 1776976625.4465597
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.2,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.20%"
+      }
+    ],
+    "timestamp": 1776976630.6299233
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.20%",
+    "alert_data": {
+      "timestamp": 1776976630.6441212,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.20%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.2,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.20%"
+      }
+    },
+    "timestamp": 1776976630.6553602
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 178.3,
+        "threshold": 90,
+        "message": "CPU使用率过高: 178.30%"
+      }
+    ],
+    "timestamp": 1776976635.9194214
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 178.30%",
+    "alert_data": {
+      "timestamp": 1776976635.972668,
+      "level": "warning",
+      "message": "CPU使用率过高: 178.30%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 178.3,
+        "threshold": 90,
+        "message": "CPU使用率过高: 178.30%"
+      }
+    },
+    "timestamp": 1776976635.9838362
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 108.8,
+        "threshold": 90,
+        "message": "CPU使用率过高: 108.80%"
+      }
+    ],
+    "timestamp": 1776976641.1584897
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 108.80%",
+    "alert_data": {
+      "timestamp": 1776976641.172117,
+      "level": "warning",
+      "message": "CPU使用率过高: 108.80%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 108.8,
+        "threshold": 90,
+        "message": "CPU使用率过高: 108.80%"
+      }
+    },
+    "timestamp": 1776976641.1830015
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 103.1,
+        "threshold": 90,
+        "message": "CPU使用率过高: 103.10%"
+      }
+    ],
+    "timestamp": 1776976646.422498
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 103.10%",
+    "alert_data": {
+      "timestamp": 1776976646.4854481,
+      "level": "warning",
+      "message": "CPU使用率过高: 103.10%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 103.1,
+        "threshold": 90,
+        "message": "CPU使用率过高: 103.10%"
+      }
+    },
+    "timestamp": 1776976646.568215
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    ],
+    "timestamp": 1776976651.7942202
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.40%",
+    "alert_data": {
+      "timestamp": 1776976651.8088672,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.40%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    },
+    "timestamp": 1776976651.819774
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.2,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.20%"
+      }
+    ],
+    "timestamp": 1776976656.9916718
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.20%",
+    "alert_data": {
+      "timestamp": 1776976657.006883,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.20%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.2,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.20%"
+      }
+    },
+    "timestamp": 1776976657.0182638
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 108.9,
+        "threshold": 90,
+        "message": "CPU使用率过高: 108.90%"
+      }
+    ],
+    "timestamp": 1776976662.1863754
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 108.90%",
+    "alert_data": {
+      "timestamp": 1776976662.2010148,
+      "level": "warning",
+      "message": "CPU使用率过高: 108.90%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 108.9,
+        "threshold": 90,
+        "message": "CPU使用率过高: 108.90%"
+      }
+    },
+    "timestamp": 1776976662.2117527
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.6,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.60%"
+      }
+    ],
+    "timestamp": 1776976667.3863432
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.60%",
+    "alert_data": {
+      "timestamp": 1776976667.400158,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.60%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.6,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.60%"
+      }
+    },
+    "timestamp": 1776976667.4142997
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 177.5,
+        "threshold": 90,
+        "message": "CPU使用率过高: 177.50%"
+      }
+    ],
+    "timestamp": 1776976672.7306595
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 177.50%",
+    "alert_data": {
+      "timestamp": 1776976672.8114145,
+      "level": "warning",
+      "message": "CPU使用率过高: 177.50%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 177.5,
+        "threshold": 90,
+        "message": "CPU使用率过高: 177.50%"
+      }
+    },
+    "timestamp": 1776976672.8592575
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 103.9,
+        "threshold": 90,
+        "message": "CPU使用率过高: 103.90%"
+      }
+    ],
+    "timestamp": 1776976678.2551563
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 103.90%",
+    "alert_data": {
+      "timestamp": 1776976678.3156316,
+      "level": "warning",
+      "message": "CPU使用率过高: 103.90%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 103.9,
+        "threshold": 90,
+        "message": "CPU使用率过高: 103.90%"
+      }
+    },
+    "timestamp": 1776976678.3793728
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 108.9,
+        "threshold": 90,
+        "message": "CPU使用率过高: 108.90%"
+      }
+    ],
+    "timestamp": 1776976683.6106553
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 108.90%",
+    "alert_data": {
+      "timestamp": 1776976683.6244805,
+      "level": "warning",
+      "message": "CPU使用率过高: 108.90%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 108.9,
+        "threshold": 90,
+        "message": "CPU使用率过高: 108.90%"
+      }
+    },
+    "timestamp": 1776976683.6348279
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    ],
+    "timestamp": 1776976688.8089902
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.40%",
+    "alert_data": {
+      "timestamp": 1776976688.8223295,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.40%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    },
+    "timestamp": 1776976688.8323333
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    ],
+    "timestamp": 1776976694.0109713
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.40%",
+    "alert_data": {
+      "timestamp": 1776976694.0303113,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.40%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    },
+    "timestamp": 1776976694.0414157
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 109.1,
+        "threshold": 90,
+        "message": "CPU使用率过高: 109.10%"
+      }
+    ],
+    "timestamp": 1776976699.290307
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 109.10%",
+    "alert_data": {
+      "timestamp": 1776976699.3510766,
+      "level": "warning",
+      "message": "CPU使用率过高: 109.10%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 109.1,
+        "threshold": 90,
+        "message": "CPU使用率过高: 109.10%"
+      }
+    },
+    "timestamp": 1776976699.4309995
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 108.9,
+        "threshold": 90,
+        "message": "CPU使用率过高: 108.90%"
+      }
+    ],
+    "timestamp": 1776976704.656107
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 108.90%",
+    "alert_data": {
+      "timestamp": 1776976704.6699417,
+      "level": "warning",
+      "message": "CPU使用率过高: 108.90%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 108.9,
+        "threshold": 90,
+        "message": "CPU使用率过高: 108.90%"
+      }
+    },
+    "timestamp": 1776976704.6804132
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.6,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.60%"
+      }
+    ],
+    "timestamp": 1776976709.852752
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.60%",
+    "alert_data": {
+      "timestamp": 1776976709.8667269,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.60%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.6,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.60%"
+      }
+    },
+    "timestamp": 1776976709.8778656
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 206.6,
+        "threshold": 90,
+        "message": "CPU使用率过高: 206.60%"
+      }
+    ],
+    "timestamp": 1776976715.1332638
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 206.60%",
+    "alert_data": {
+      "timestamp": 1776976715.189024,
+      "level": "warning",
+      "message": "CPU使用率过高: 206.60%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 206.6,
+        "threshold": 90,
+        "message": "CPU使用率过高: 206.60%"
+      }
+    },
+    "timestamp": 1776976715.2009394
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 108.8,
+        "threshold": 90,
+        "message": "CPU使用率过高: 108.80%"
+      }
+    ],
+    "timestamp": 1776976720.4705431
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 108.80%",
+    "alert_data": {
+      "timestamp": 1776976720.539007,
+      "level": "warning",
+      "message": "CPU使用率过高: 108.80%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 108.8,
+        "threshold": 90,
+        "message": "CPU使用率过高: 108.80%"
+      }
+    },
+    "timestamp": 1776976720.6147463
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    ],
+    "timestamp": 1776976725.8599744
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.40%",
+    "alert_data": {
+      "timestamp": 1776976725.883013,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.40%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    },
+    "timestamp": 1776976725.8965616
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    ],
+    "timestamp": 1776976731.1230345
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.40%",
+    "alert_data": {
+      "timestamp": 1776976731.136906,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.40%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.4,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.40%"
+      }
+    },
+    "timestamp": 1776976731.1478775
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 176.9,
+        "threshold": 90,
+        "message": "CPU使用率过高: 176.90%"
+      }
+    ],
+    "timestamp": 1776976736.4275608
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 176.90%",
+    "alert_data": {
+      "timestamp": 1776976736.4824138,
+      "level": "warning",
+      "message": "CPU使用率过高: 176.90%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 176.9,
+        "threshold": 90,
+        "message": "CPU使用率过高: 176.90%"
+      }
+    },
+    "timestamp": 1776976736.4955282
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.5,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.50%"
+      }
+    ],
+    "timestamp": 1776976746.8503103
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 93.50%",
+    "alert_data": {
+      "timestamp": 1776976746.8643003,
+      "level": "warning",
+      "message": "CPU使用率过高: 93.50%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 93.5,
+        "threshold": 90,
+        "message": "CPU使用率过高: 93.50%"
+      }
+    },
+    "timestamp": 1776976746.8746054
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 109.3,
+        "threshold": 90,
+        "message": "CPU使用率过高: 109.30%"
+      }
+    ],
+    "timestamp": 1776976752.0417042
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 109.30%",
+    "alert_data": {
+      "timestamp": 1776976752.0555282,
+      "level": "warning",
+      "message": "CPU使用率过高: 109.30%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 109.3,
+        "threshold": 90,
+        "message": "CPU使用率过高: 109.30%"
+      }
+    },
+    "timestamp": 1776976752.066063
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 109.0,
+        "threshold": 90,
+        "message": "CPU使用率过高: 109.00%"
+      }
+    ],
+    "timestamp": 1776976757.2409852
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "CPU使用率过高: 109.00%",
+    "alert_data": {
+      "timestamp": 1776976757.2568913,
+      "level": "warning",
+      "message": "CPU使用率过高: 109.00%",
+      "details": {
+        "type": "performance",
+        "metric": "cpu_usage",
+        "value": 109.0,
+        "threshold": 90,
+        "message": "CPU使用率过高: 109.00%"
+      }
+    },
+    "timestamp": 1776976757.2685463
   }
 ]
