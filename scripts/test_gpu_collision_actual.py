@@ -91,7 +91,7 @@ def main():
         engine = GPUCollisionEngine(
             targets=targets,
             device_index=-1,  # 自动选择最佳GPU
-            batch_size=65536,
+            batch_size=262144,  # v2.2.1优化: 使用262K批次
             on_progress=on_progress,
             on_match=on_match,
             checkpoint_enabled=False,
