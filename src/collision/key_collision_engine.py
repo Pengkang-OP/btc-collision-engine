@@ -9,7 +9,8 @@ import signal
 from typing import Set, Optional, Callable, Tuple, List, Dict, Any
 from ..core.address_generator import P2PKHAddressGenerator
 from ..core.optimized_address_generator import OptimizedP2PKHAddressGenerator
-from ..core.secp256k1 import Secp256k1
+# v2.2.1迁移: 使用crypto_backend替代secp256k1.py（性能提升1000倍）
+from ..core.crypto_backend import crypto_manager, BackendType
 from ..core.secure_key_manager import SecureKeyManager
 from .collision_stats import CollisionStats
 from .checkpoint_manager import CheckpointManager
@@ -25,7 +26,8 @@ from ..monitoring.enhanced_monitoring import EnhancedMonitoringSystem
 init_logging()
 
 # 获取模块日志记录器
-logger = get_configured_logger("KeyCollisionEngine", thread_safe=True)
+# v2.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
+logger = get_configured_logger("KeyCollisionEngine", thread_safe=False)
 sampled_logger = get_sampled_logger("KeyCollisionEngine.sampled", sample_rate=1000)
 
 # 模块级常量配置
@@ -60,7 +62,9 @@ class KeyCollisionEngine(BaseCollisionEngine):
                  use_performance_optimization: bool = True,
                  precomputed_window_size: int = 8,
                  use_simd_hash: bool = True,
-                 use_memory_pool: bool = True):
+                 use_memory_pool: bool = True,
+                 # v2.2.1: crypto_backend支持
+                 crypto_backend_type: str = None):  # 'coincurve', 'openssl', 'ecdsa', 'pure_python'
         """
         Args:
             targets: 目标地址集合 (set, O(1)查找)
@@ -87,6 +91,9 @@ class KeyCollisionEngine(BaseCollisionEngine):
             precomputed_window_size: 预计算表窗口大小4-8（默认8）
             use_simd_hash: 是否使用SIMD哈希优化（默认True）
             use_memory_pool: 是否使用内存池（默认True）
+            
+            # v2.2.1: crypto_backend支持
+            crypto_backend_type: 加密后端类型（默认自动选择最佳后端）
         
         安全特性:
             - 使用SecureKeyManager管理私钥生命周期
@@ -135,6 +142,9 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self._current_mode = ""
         self._range_start = None
         self._range_end = None
+        
+        # v2.2.1: 初始化crypto_backend
+        self._init_crypto_backend(crypto_backend_type)
         # 线程安全的计数器
         # 注意：已简化为单锁设计，避免多锁导致的死锁风险
         # _count_lock 保护所有共享状态（计数器、位置、模式等）
@@ -306,8 +316,9 @@ class KeyCollisionEngine(BaseCollisionEngine):
             # 转换为整数验证范围
             k = int.from_bytes(private_key, 'big')
             
-            # 验证范围
-            if k < 1 or k >= Secp256k1.N:
+            # 验证范围（使用crypto_backend的曲线参数）
+            # Secp256k1.N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+            if k < 1 or k >= 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141:
                 return None
             
             # 生成地址
@@ -454,6 +465,43 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 f"(CPU: {cpu_count}核)"
             )
     
+    def _init_crypto_backend(self, backend_type: str = None):
+        """初始化加密后端（v2.2.1新增）
+        
+        Args:
+            backend_type: 后端类型 ('coincurve', 'openssl', 'ecdsa', 'pure_python')
+                         None表示自动选择最佳后端
+        """
+        try:
+            if backend_type:
+                # 用户指定后端
+                backend_map = {
+                    'coincurve': BackendType.COINCURVE,
+                    'openssl': BackendType.OPENSSL,
+                    'ecdsa': BackendType.ECDSA,
+                    'pure_python': BackendType.PURE_PYTHON
+                }
+                
+                backend_enum = backend_map.get(backend_type.lower())
+                if backend_enum:
+                    success = crypto_manager.set_backend(backend_enum)
+                    if success:
+                        logger.info(f"加密后端已设置为: {backend_type}")
+                    else:
+                        logger.warning(f"加密后端设置失败: {backend_type}，使用默认后端")
+                else:
+                    logger.warning(f"未知的加密后端类型: {backend_type}，使用默认后端")
+            
+            # 获取当前后端信息
+            backend = crypto_manager.current_backend
+            logger.info(
+                f"加密后端初始化完成: {backend.name}, "
+                f"恒定时间={backend.is_constant_time()}"
+            )
+            
+        except Exception as e:
+            logger.error(f"加密后端初始化失败: {e}，使用默认后端")
+    
     def _random_search_worker(self, worker_id: int = 0) -> int:
         """
         随机碰撞模式的工作线程函数（安全增强版）
@@ -493,7 +541,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
                                     
                     # 转换为整数验证范围
                     k = int.from_bytes(private_key, 'big')
-                    if k < 1 or k >= Secp256k1.N:
+                    # v2.2.1迁移: 使用曲线阶数常量（原Secp256k1.N）
+                    if k < 1 or k >= 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141:
                         continue  # with块会正确执行__exit__清零私钥
                                     
                     # BL-4修复: 先检查短期缓存，再检查DeduplicationFilter
@@ -827,8 +876,9 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 if self._stop_event.is_set():
                     break
                         
-                # 验证范围
-                if k < 1 or k >= Secp256k1.N:
+                # 验证范围（使用crypto_backend的曲线参数）
+                # Secp256k1.N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+                if k < 1 or k >= 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141:
                     continue
                         
                 # 复用key_mgr生成新私钥（旧私钥自动清零）
@@ -1063,8 +1113,9 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     if self._stop_event.is_set():
                         break
                     
-                    # 验证范围
-                    if k < 1 or k >= Secp256k1.N:
+                    # 验证范围（使用crypto_backend的曲线参数）
+                    # Secp256k1.N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+                    if k < 1 or k >= 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141:
                         continue
                     
                     # 复用key_mgr生成新私钥（旧私钥自动清零）
@@ -1489,7 +1540,21 @@ class KeyCollisionEngine(BaseCollisionEngine):
             
         注意:
             返回的是原始 stats 对象的引用，外部修改会影响内部状态
+            P2修复: 包含_live_range_count确保实时统计数据准确
+            线程安全: 使用stats.update()确保正确的锁保护
         """
+        # P2修复: 将live_range_count合并到stats中
+        if self.stats and hasattr(self, '_live_range_count') and self._live_range_count > 0:
+            with self._state_lock:
+                live_count = self._live_range_count
+                if live_count > 0:
+                    # 使用stats.update()确保线程安全和数据一致性
+                    # update()会使用stats._lock保护，并统一计算speed和elapsed
+                    new_total = self.stats.total_checked + live_count
+                    self.stats.update(new_total)
+                    # 重置计数器避免重复计算
+                    self._live_range_count = 0
+        
         return self.stats
 
 

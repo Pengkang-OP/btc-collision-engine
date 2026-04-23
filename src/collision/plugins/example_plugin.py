@@ -6,7 +6,9 @@ from typing import Set, Optional, Callable
 from src.collision.plugins.base_plugin import CollisionPlugin
 from src.collision.collision_stats import CollisionStats
 from src.core.address_generator import P2PKHAddressGenerator
-from src.core.secp256k1 import Secp256k1
+# v2.2.1迁移: 使用crypto_backend替代secp256k1.py
+# Secp256k1.N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+SECP256K1_N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
 
 
 class ExamplePlugin(CollisionPlugin):
@@ -71,7 +73,8 @@ class ExamplePlugin(CollisionPlugin):
             # 生成随机私钥
             private_key = secrets.token_bytes(32)
             k = int.from_bytes(private_key, 'big')
-            if k < 1 or k >= Secp256k1.N:
+            # v2.2.1迁移: 使用曲线阶数常量（原Secp256k1.N）
+            if k < 1 or k >= SECP256K1_N:
                 continue
             
             # 生成地址
