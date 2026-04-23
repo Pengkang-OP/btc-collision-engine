@@ -52,6 +52,7 @@ pre-commit run --all-files
 ```
 
 **pre-commit钩子会自动检查**:
+
 - ✅ 导入路径规范
 - ✅ 代码格式化（Black）
 - ✅ 代码质量（Flake8）
@@ -142,7 +143,8 @@ from src.collision.targets import TargetResolver, AddressMatcher, AddressCache
 from src.collision.target_resolver import TargetResolver
 ```
 
-**原因**: 
+**原因**:
+
 - 旧路径已迁移到 `targets.resolver` 子包
 - 使用旧路径会产生 `DeprecationWarning`
 - 新路径模块组织更清晰，与其他targets模块一致
@@ -184,6 +186,7 @@ python scripts/check_import_paths.py
 项目文档分为两大类：
 
 #### 核心文档 (docs/根目录)
+
 面向用户和开发者的主要文档，保持最新：
 
 - **快速开始**: README.md, getting-started.md, project-status.md
@@ -194,6 +197,7 @@ python scripts/check_import_paths.py
 - **故障排除**: troubleshooting.md
 
 #### 归档文档 (docs/archive/)
+
 开发过程中的历史报告和决策记录：
 
 - 按主题分类（安全、性能、测试、GPU等）
@@ -601,7 +605,8 @@ from src.collision.targets.resolver import TargetResolver
 
 ### Q: 测试失败怎么办？
 
-A: 
+A:
+
 1. 确保安装了所有依赖
 2. 检查Python版本（需要3.9+）
 3. 查看详细错误信息
