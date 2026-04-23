@@ -32,7 +32,7 @@ from .auto_config import GPUAutoConfigurator, get_gpu_configurator, reset_gpu_co
 from .lock_monitor import LockMonitor, MonitoredLock, get_lock_monitor, create_monitored_lock
 from .data_monitor import DataMonitor, DataQualityIssue
 
-__version__ = "3.1.0"  # 与主项目版本同步
+__version__ = "3.1.1"  # 与主项目版本同步 (v3.1.1: 自动化安装、健康检查、数据清理)
 
 __all__ = [
     'GPUDeviceDetector',

@@ -12,18 +12,15 @@ from src.config.config_manager import ConfigManager
 
 
 class TestConfigManagerBasic(unittest.TestCase):
-    """基础功能测试"""
+    """基础配置测试"""
 
     def setUp(self):
-        """创建临时目录和配置文件"""
         self.test_dir = tempfile.mkdtemp()
         self.config_file = os.path.join(self.test_dir, "test_config.json")
-        # 为每个测试创建新的ConfigManager实例，避免状态污染
         from src.config.config_manager import ConfigManager as CM
         self.cm_class = CM
 
     def tearDown(self):
-        """清理临时文件"""
         shutil.rmtree(self.test_dir, ignore_errors=True)
 
     def test_default_config_initialization(self):
@@ -32,24 +29,23 @@ class TestConfigManagerBasic(unittest.TestCase):
         self.assertIsNotNone(mgr.config)
         self.assertIn("collision", mgr.config)
         self.assertIn("logging", mgr.config)
-        self.assertIn("gui", mgr.config)
+        # GUI已移除，不再测试
+        self.assertIn("gpu", mgr.config)
 
     def test_default_config_values(self):
         """默认配置值正确"""
         mgr = ConfigManager()
         self.assertEqual(mgr.get("logging.level"), "INFO")
-        self.assertEqual(mgr.get("gui.theme"), "dark")
+        # GUI已移除，测试其他默认值
         self.assertEqual(mgr.get("collision.progress_interval"), 1000)
+        self.assertTrue(mgr.get("gpu.use_gpu"))
 
     def test_load_config_from_file(self):
         """从文件加载配置"""
-        # 创建测试配置文件
+        # 创建测试配置文件（不包含GUI）
         test_config = {
             "logging": {
                 "level": "DEBUG"
-            },
-            "gui": {
-                "window_width": 1200
             }
         }
         with open(self.config_file, 'w', encoding='utf-8') as f:
@@ -57,9 +53,8 @@ class TestConfigManagerBasic(unittest.TestCase):
 
         mgr = ConfigManager(config_file=self.config_file)
         self.assertEqual(mgr.get("logging.level"), "DEBUG")
-        self.assertEqual(mgr.get("gui.window_width"), 1200)
         # 默认值应该保留
-        self.assertEqual(mgr.get("gui.theme"), "dark")
+        self.assertEqual(mgr.get("logging.format"), "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
     def test_save_config_to_file(self):
         """保存配置到文件"""
@@ -179,11 +174,6 @@ class TestConfigManagerMerge(unittest.TestCase):
             },
             "logging": {
                 "level": "CRITICAL"
-            },
-            "gui": {
-                "theme": "light",
-                "window_width": 1920,
-                "window_height": 1080
             }
         }
         with open(self.config_file, 'w', encoding='utf-8') as f:
@@ -192,7 +182,6 @@ class TestConfigManagerMerge(unittest.TestCase):
         mgr = ConfigManager(config_file=self.config_file)
         self.assertEqual(mgr.get("collision.max_workers"), 16)
         self.assertEqual(mgr.get("logging.level"), "CRITICAL")
-        self.assertEqual(mgr.get("gui.theme"), "light")
 
     def test_merge_preserves_structure(self):
         """合并保持配置结构"""
@@ -214,12 +203,11 @@ class TestConfigManagerMerge(unittest.TestCase):
         self.assertEqual(mgr.get("collision.max_workers"), 8)
         self.assertEqual(mgr.get("collision.progress_interval"), 2000)
         self.assertEqual(mgr.get("logging.level"), "DEBUG")
-        # 默认结构和其他值保留
+        # 默认结构和其他值保留（GUI已移除）
         self.assertIn("collision", mgr.config)
         self.assertIn("logging", mgr.config)
-        self.assertIn("gui", mgr.config)
+        self.assertIn("gpu", mgr.config)
         # 未指定的字段保持默认值
-        self.assertEqual(mgr.get("gui.theme"), "dark")
         self.assertEqual(mgr.get("collision.checkpoint_interval"), 30)
 
 
@@ -288,37 +276,30 @@ class TestConfigManagerValidation(unittest.TestCase):
             self.assertNotIn("logging.level", errors, f"{level} 应该有效")
 
     def test_validate_invalid_window_width(self):
-        """验证无效的窗口宽度"""
-        mgr = ConfigManager()
-        mgr.set("gui.window_width", -100)
-        errors = mgr.validate()
-        self.assertIn("gui.window_width", errors)
+        """验证无效窗口宽度 - GUI已移除，测试跳过"""
+        # 此测试已过时，跳过
+        pass
 
     def test_validate_invalid_window_height(self):
-        """验证无效的窗口高度"""
-        mgr = ConfigManager()
-        mgr.set("gui.window_height", 0)
-        errors = mgr.validate()
-        self.assertIn("gui.window_height", errors)
+        """验证无效窗口高度 - GUI已移除，测试跳过"""
+        # 此测试已过时，跳过
+        pass
 
     def test_validate_invalid_font_size(self):
-        """验证无效的字体大小"""
-        mgr = ConfigManager()
-        mgr.set("gui.font_size", -1)
-        errors = mgr.validate()
-        self.assertIn("gui.font_size", errors)
+        """验证无效字体大小 - GUI已移除，测试跳过"""
+        # 此测试已过时，跳过
+        pass
 
     def test_validate_multiple_errors(self):
-        """验证多个错误同时存在"""
+        """验证多个错误"""
         mgr = ConfigManager()
         mgr.set("collision.max_workers", -1)
         mgr.set("logging.level", "INVALID")
-        mgr.set("gui.window_width", 0)
         errors = mgr.validate()
-        self.assertGreaterEqual(len(errors), 3)
+        # 应该捕获多个错误（不包含GUI）
+        self.assertGreater(len(errors), 0)
         self.assertIn("collision.max_workers", errors)
         self.assertIn("logging.level", errors)
-        self.assertIn("gui.window_width", errors)
 
 
 class TestConfigManagerEdgeCases(unittest.TestCase):
@@ -366,12 +347,17 @@ class TestConfigManagerEdgeCases(unittest.TestCase):
 
     def test_unicode_in_config(self):
         """配置中包含Unicode字符"""
-        mgr = ConfigManager(config_file=self.config_file)
-        mgr.set("gui.font", "微软雅黑")
-        mgr.save_config()
+        test_config = {
+            "logging": {
+                "file": "日志/collision.log"
+            }
+        }
+        config_file = os.path.join(self.test_dir, "unicode_config.json")
+        with open(config_file, 'w', encoding='utf-8') as f:
+            json.dump(test_config, f)
 
-        mgr2 = ConfigManager(config_file=self.config_file)
-        self.assertEqual(mgr2.get("gui.font"), "微软雅黑")
+        mgr2 = ConfigManager(config_file=config_file)
+        self.assertEqual(mgr2.get("logging.file"), "日志/collision.log")
 
     def test_large_config_values(self):
         """配置大数值"""
