@@ -185,10 +185,16 @@ class GPUPerformanceMonitor:
         
         # 显存跟踪
         self._peak_memory_mb = 0.0
+        self._current_memory_mb = 0.0  # P0修复: 始终维护当前显存，供告警系统使用
         self._total_allocations = 0
         self._total_deallocations = 0
         self._pool_hits = 0
         self._pool_misses = 0
+        
+        # P1修复: 峰值基准窗口 - 使用滑动窗口P90代替历史最高值，避免偶发峰值污染基准
+        self._baseline_window_size = 50     # 计算基准的滑动窗口大小
+        self._warmup_batches = 10           # 预热批次数：前N批不触发退化检测
+        self._degradation_pending: Optional['GPUKernelMetrics'] = None  # 锁外触发告警
         
         # 线程控制
         self._running = False
@@ -281,23 +287,33 @@ class GPUPerformanceMonitor:
             data_transfer_time_ms=data_transfer_time_ms
         )
         
+        # P1修复: 锁内只做数据收集，退化检测结果暂存，锁外再触发告警（避免锁内IO）
+        degradation_triggered = False
         with self._lock:
             self._kernel_metrics.append(metrics)
             self._total_batches += 1
             self._total_keys += batch_size
             self._total_errors += error_count
             
-            # 更新峰值吞吐量
+            # 更新峰值吞吐量（仍保留用于report接口兼容）
             if keys_per_second > self._peak_throughput:
                 self._peak_throughput = keys_per_second
             
-            # 更新显存峰值
+            # 更新显存峰值和当前值
             if memory_allocated_mb > self._peak_memory_mb:
                 self._peak_memory_mb = memory_allocated_mb
+            if memory_allocated_mb > 0:
+                self._current_memory_mb = memory_allocated_mb  # P0修复: 实时更新当前显存
             
-            # 检测性能退化
-            if self._peak_throughput > 0 and keys_per_second < self._peak_throughput * self.degradation_threshold:
-                self._on_performance_degradation(metrics)
+            # P1修复: 预热完成后，用滑动窗口P90基准检测退化，避免偶发峰值污染
+            if self._total_batches > self._warmup_batches:
+                baseline = self._get_baseline_throughput_locked()
+                if baseline > 0 and keys_per_second < baseline * self.degradation_threshold:
+                    degradation_triggered = True
+        
+        # P1修复: 锁外触发告警，避免持锁时进行文件IO
+        if degradation_triggered:
+            self._on_performance_degradation(metrics)
         
         logger.debug(f"GPU内核指标: batch={batch_size:,}, "
                     f"time={execution_time_ms:.1f}ms, "
@@ -336,6 +352,9 @@ class GPUPerformanceMonitor:
         if used_memory_mb > self._peak_memory_mb:
             self._peak_memory_mb = used_memory_mb
         
+        # P0修复: record_memory_metrics路径同步更新_current_memory_mb
+        self._current_memory_mb = used_memory_mb
+        
         memory_metrics = GPUMemoryMetrics(
             timestamp=time.time(),
             total_memory_mb=total_memory_mb,
@@ -354,6 +373,27 @@ class GPUPerformanceMonitor:
         
         logger.debug(f"GPU显存指标: used={used_memory_mb:.1f}MB, "
                     f"usage={usage_percent:.1f}%")
+    
+    def _get_baseline_throughput_locked(self) -> float:
+        """P1修复: 计算滑动窗口P50基准吞吐量（需在持锁时调用）
+        
+        取最近 _baseline_window_size 条记录的中位数（P50）为基准。
+        P50对偶发峰值最鹍棒：即使50%的批次都是偶发高峰，中位数也不受影响。
+        
+        Returns:
+            P50基准吞吐量 (keys/s)，数据不足时返回 0.0
+        """
+        if len(self._kernel_metrics) < 5:
+            return 0.0
+        
+        window = list(self._kernel_metrics)[-self._baseline_window_size:]
+        throughputs = sorted(m.keys_per_second for m in window if m.keys_per_second > 0)
+        if not throughputs:
+            return 0.0
+        
+        # P50（中位数）: 最高鲁棒性，偶发高峰和偶发低谷均不影响基准
+        median_idx = len(throughputs) // 2
+        return throughputs[median_idx]
     
     def get_current_throughput(self) -> float:
         """获取当前吞吐量(keys/秒)"""

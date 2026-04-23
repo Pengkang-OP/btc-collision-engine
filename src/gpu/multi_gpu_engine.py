@@ -159,15 +159,19 @@ class MultiGPUCollisionEngine:
         targets: Set[str],
         mode: str = 'random',
         total_keys: int = 10000000,
-        match_callback: Optional[Callable] = None
+        match_callback: Optional[Callable] = None,
+        range_start: Optional[int] = None,   # range/brute_force 的起始私钥
+        range_end: Optional[int] = None,     # range 的结束私钥
     ) -> bool:
         """启动多GPU碰撞搜索
         
         Args:
             targets: 目标地址集合
-            mode: 碰撞模式(目前仅支持'random')
-            total_keys: 总私钥搜索数量
+            mode: 碰撞模式 ('random' | 'range' | 'brute_force')
+            total_keys: 总私钥搜索数量（random 模式下用于负载分配）
             match_callback: 找到匹配时的回调函数(device_idx, match)
+            range_start: range/brute_force 模式的起始私钥（十进制整数）
+            range_end: range 模式的结束私钥（十进制整数）
             
         Returns:
             启动是否成功
@@ -203,14 +207,17 @@ class MultiGPUCollisionEngine:
                 # 获取设备特定配置
                 device_config = self._get_device_config(device)
                 
-                # 创建工作器
+                # 创建工作器（传入 mode 及范围参数）
                 worker = SingleGPUWorker(
                     device_idx=idx,
                     key_range=key_range,
                     targets=targets,
                     config=device_config,
                     result_callback=self._on_match_found,
-                    data_monitor=self.data_monitor if self._monitor_enabled else None
+                    data_monitor=self.data_monitor if self._monitor_enabled else None,
+                    mode=mode,
+                    range_start=range_start,
+                    range_end=range_end,
                 )
                 
                 with self._workers_lock:

@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hash160比对流程 - 动态拓扑图</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0d1b2a 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #e0e0e0;
+            overflow-x: hidden;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.8em;
+            background: linear-gradient(135deg, #00d4ff, #7b2ff7, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+            animation: titleGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes titleGlow {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.3); }
+        }
+
+        .header p {
+            font-size: 1.3em;
+            color: #a0b0c0;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            display: inline-block;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            color: #00d4ff;
+        }
+
+        .main-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            position: relative;
+        }
+
+        .flow-panel {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(0, 212, 255, 0.2);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .flow-panel::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 212, 255, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .flow-panel:hover::before {
+            opacity: 1;
+        }
+
+        .flow-panel:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(0, 212, 255, 0.3);
+            border-color: #00d4ff;
+        }
+
+        .panel-title {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .panel-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            background: linear-gradient(135deg, #00d4ff, #7b2ff7);
+            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
+        }
+
+        .step-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .step-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 12px;
+            padding: 18px;
+            position: relative;
+            transition: all 0.3s ease;
+            opacity: 0;
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .step-card:nth-child(1) { animation-delay: 0.1s; }
+        .step-card:nth-child(2) { animation-delay: 0.2s; }
+        .step-card:nth-child(3) { animation-delay: 0.3s; }
+        .step-card:nth-child(4) { animation-delay: 0.4s; }
+        .step-card:nth-child(5) { animation-delay: 0.5s; }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .step-card:hover {
+            transform: translateX(8px);
+            border-color: #00d4ff;
+            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.25);
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .step-number {
+            width: 35px;
+            height: 35px;
+            background: linear-gradient(135deg, #00d4ff, #7b2ff7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1em;
+            color: white;
+            box-shadow: 0 3px 10px rgba(0, 212, 255, 0.4);
+        }
+
+        .step-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+
+        .step-content {
+            margin-left: 47px;
+            color: #c0c8d0;
+            line-height: 1.6;
+        }
+
+        .code-block {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #7fff7f;
+            overflow-x: auto;
+        }
+
+        .comparison-section {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, rgba(123, 47, 247, 0.1), rgba(0, 212, 255, 0.1));
+            border: 2px solid rgba(123, 47, 247, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            margin-top: 20px;
+        }
+
+        .comparison-title {
+            font-size: 2em;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #00d4ff, #7b2ff7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .comparison-table {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .comparison-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(0, 212, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .comparison-card:hover {
+            transform: scale(1.05);
+            border-color: #00d4ff;
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .comparison-card h3 {
+            font-size: 1.3em;
+            color: #00d4ff;
+            margin-bottom: 15px;
+        }
+
+        .comparison-item {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 10px 0;
+            text-align: left;
+        }
+
+        .comparison-item .label {
+            font-size: 0.9em;
+            color: #8090a0;
+            margin-bottom: 5px;
+        }
+
+        .comparison-item .value {
+            font-size: 1.1em;
+            color: #7fff7f;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+        }
+
+        .match-animation {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px;
+            background: rgba(0, 212, 255, 0.05);
+            border-radius: 20px;
+            margin-top: 20px;
+        }
+
+        .match-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .flow-box {
+            background: linear-gradient(135deg, #00d4ff, #7b2ff7);
+            border-radius: 15px;
+            padding: 20px 30px;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2em;
+            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.4);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .flow-arrow {
+            font-size: 2em;
+            color: #00d4ff;
+            animation: arrowMove 1.5s ease-in-out infinite;
+        }
+
+        @keyframes arrowMove {
+            0%, 100% { transform: translateX(0); opacity: 1; }
+            50% { transform: translateX(10px); opacity: 0.7; }
+        }
+
+        .success-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #00ff88, #00d4ff);
+            color: #0a0e27;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1.3em;
+            margin-top: 20px;
+            animation: successGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes successGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 136, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(0, 255, 136, 0.8); }
+        }
+
+        .tech-specs {
+            grid-column: 1 / -1;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+        }
+
+        .specs-title {
+            font-size: 1.5em;
+            color: #00d4ff;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .specs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .spec-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            border-left: 4px solid #00d4ff;
+        }
+
+        .spec-label {
+            font-size: 0.9em;
+            color: #8090a0;
+            margin-bottom: 5px;
+        }
+
+        .spec-value {
+            font-size: 1.2em;
+            color: #7fff7f;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+        }
+
+        @media (max-width: 1200px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+            .comparison-table {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔐 Hash160 哈希值比对流程</h1>
+        <p>目标地址与生成地址的哈希一致性验证</p>
+        <div class="subtitle">核心机制：公钥 → SHA256 → RIPEMD160 → 20字节Hash160 → O(1)字典查找</div>
+    </div>
+
+    <div class="main-container">
+        <!-- 左侧：目标地址加载流程 -->
+        <div class="flow-panel">
+            <div class="panel-title">
+                <div class="panel-icon">📥</div>
+                <span>目标地址加载流程</span>
+            </div>
+            <div class="step-list">
+                <div class="step-card">
+                    <div class="step-header">
+                        <div class="step-number">1</div>
+                        <div class="step-title">输入WIF私钥</div>
+                    </div>
+                    <div class="step-content">
+                        <p>从配置文件或用户输入读取WIF格式私钥</p>
+                        <div class="code-block">
+# 示例WIF私钥
+wif = '5KJvsngHeMpm884wtkJNzQGaCErckhHJBGFsvd3VyK5qMZXj3hS'
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-header">
+                        <div class="step-number">2</div>
+                        <div class="step-title">WIF解码 → 私钥</div>
+                    </div>
+                    <div class="step-content">
+                        <p>解码WIF格式，提取32字节私钥和压缩标志</p>
+                        <div class="code-block">
+from src.core.wif import WIF
+private_key, compressed = WIF.decode(wif)
+# private_key: 32字节
+# compressed: True/False
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-header">
+                        <div class="step-number">3</div>
+                        <div class="step-title">私钥 → 公钥（椭圆曲线）</div>
+                    </div>
+                    <div class="step-content">
+                        <p>使用secp256k1椭圆曲线进行标量乘法：Q = k × G</p>
+                        <div class="code-block">
+from src.core.address_generator import P2PKHAddressGenerator
+generator = P2PKHAddressGenerator()
+public_key = generator.private_key_to_public_key(
+    private_key, compressed
+)
+# 压缩公钥: 33字节 (02/03 + x坐标)
+# 非压缩公钥: 65字节 (04 + x坐标 + y坐标)
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-header">
+                        <div class="step-number">4</div>
+                        <div class="step-title">公钥 → Hash160</div>
+                    </div>
+                    <div class="step-content">
+                        <p><strong>核心哈希算法</strong>：SHA256 + RIPEMD160</p>
+                        <div class="code-block">
+from src.core.hash_utils import HashUtils
+hash160 = HashUtils.hash160(public_key)
+# hash160: 20字节
+# 等效于: RIPEMD160(SHA256(public_key))
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-header">
+                        <div class="step-number">5</div>
+                        <div class="step-title">存储到目标哈希表</div>
+                    </div>
+                    <div class="step-content">
+                        <p>将Hash160存入_set和_target_map</p>
+                        <div class="code-block">
+# src/core/target_address_table.py:74
+self._hash160_set.add(hash160)  # O(1)查找
+self._target_map[hash160] = {
+    'wif': wif,
+    'address': address,
+    'hash160': hash160.hex(),
+    'type': address_type
+}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：生成地址碰撞流程 -->
+        <div class="flow-panel">
+            <div class="panel-title">
+                <div class="panel-icon">⚡</div>
+                <span>生成地址碰撞流程</span>
+            </div>
+            <div class="step-list">
+                <div class="step-card">
+                    <div class="step-header">
+                        <div class="step-number">1</div>
+                        <div class="step-title">生成随机私钥</div>
+                    </div>
+                    <div class="step-content">
+                        <p>使用加密安全随机数生成器</p>
+                        <div class="code-block">
+import secrets
+private_key = secrets.token_bytes(32)
+# 确保: 1 <= key < secp256k1.N
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-header">
+                        <div class="step-number">2</div>
+                        <div class="step-title">私钥 → 公钥（相同算法）</div>
+                    </div>
+                    <div class="step-content">
+                        <p>使用与目标地址相同的椭圆曲线算法</p>
+                        <div class="code-block">
+public_key = generator.private_key_to_public_key(
+    private_key, compressed=True
+)
+# 使用相同的secp256k1曲线
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-header">
+                        <div class="step-number">3</div>
+                        <div class="step-title">公钥 → Hash160（完全一致）</div>
+                    </div>
+                    <div class="step-content">
+                        <p><strong>使用完全相同的HashUtils.hash160()函数</strong></p>
+                        <div class="code-block">
+# CPU版本
+hash160 = HashUtils.hash160(public_key)
+
+# GPU版本（OpenCL内核）
+uchar hash160_result[20];
+hash160(pubkey, 33, hash160_result);
+// 输出: 20字节，与CPU完全一致
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-header">
+                        <div class="step-number">4</div>
+                        <div class="step-title">O(1)哈希表查找</div>
+                    </div>
+                    <div class="step-content">
+                        <p>在目标哈希表中快速查找匹配</p>
+                        <div class="code-block">
+# src/core/target_address_table.py:99
+if hash160 in self._hash160_set:
+    return True, self._target_map.get(hash160)
+# 时间复杂度: O(1)
+# 数据类型: bytes (20字节)
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-header">
+                        <div class="step-number">5</div>
+                        <div class="step-title">碰撞成功处理</div>
+                    </div>
+                    <div class="step-content">
+                        <p>记录匹配结果并触发回调</p>
+                        <div class="code-block">
+match_record = {
+    'found_at': datetime.utcnow().isoformat(),
+    'hash160': hash160.hex(),
+    'target': target_info,
+    'generated': addr_info
+}
+# 保存到文件/数据库
+# 触发通知/回调
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 对比分析 -->
+        <div class="comparison-section">
+            <div class="comparison-title">🔍 Hash160一致性对比分析</div>
+            <div class="comparison-table">
+                <div class="comparison-card">
+                    <h3>📥 目标地址</h3>
+                    <div class="comparison-item">
+                        <div class="label">输入源</div>
+                        <div class="value">WIF私钥 / 公钥 / 地址</div>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="label">哈希生成</div>
+                        <div class="value">HashUtils.hash160(pubkey)</div>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="label">哈希算法</div>
+                        <div class="value">SHA256 → RIPEMD160</div>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="label">输出格式</div>
+                        <div class="value">20字节 bytes</div>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="label">存储位置</div>
+                        <div class="value">_hash160_set (Python set)</div>
+                    </div>
+                </div>
+
+                <div class="comparison-card" style="border-color: #7b2ff7;">
+                    <h3>⚡ 生成地址</h3>
+                    <div class="comparison-item">
+                        <div class="label">输入源</div>
+                        <div class="value">随机私钥 / 范围扫描</div>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="label">哈希生成</div>
+                        <div class="value">HashUtils.hash160(pubkey)</div>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="label">哈希算法</div>
+                        <div class="value">SHA256 → RIPEMD160</div>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="label">输出格式</div>
+                        <div class="value">20字节 bytes</div>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="label">存储位置</div>
+                        <div class="value">临时变量（用于查询）</div>
+                    </div>
+                </div>
+
+                <div class="comparison-card" style="border-color: #00ff88;">
+                    <h3>✅ 一致性验证</h3>
+                    <div class="comparison-item">
+                        <div class="label">哈希源</div>
+                        <div class="value" style="color: #00ff88;">✓ 都是公钥</div>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="label">哈希算法</div>
+                        <div class="value" style="color: #00ff88;">✓ 完全相同</div>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="label">数据长度</div>
+                        <div class="value" style="color: #00ff88;">✓ 都是20字节</div>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="label">数据类型</div>
+                        <div class="value" style="color: #00ff88;">✓ 都是bytes</div>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="label">比对方式</div>
+                        <div class="value" style="color: #00ff88;">✓ O(1)字典查找</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 碰撞匹配动画 -->
+        <div class="match-animation">
+            <h2 style="font-size: 2em; margin-bottom: 20px; color: #00d4ff;">
+                🎯 碰撞检测流程
+            </h2>
+            <div class="match-flow">
+                <div class="flow-box">
+                    目标Hash160<br>
+                    <small>20字节</small>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box" style="background: linear-gradient(135deg, #7b2ff7, #ff6b6b);">
+                    _hash160_set<br>
+                    <small>Python set</small>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box" style="background: linear-gradient(135deg, #ff6b6b, #00ff88);">
+                    O(1)查找<br>
+                    <small>bytes比较</small>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box" style="background: linear-gradient(135deg, #00ff88, #00d4ff);">
+                    匹配成功! ✓<br>
+                    <small>记录结果</small>
+                </div>
+            </div>
+
+            <div class="match-flow" style="margin-top: 40px;">
+                <div class="flow-box">
+                    生成Hash160<br>
+                    <small>20字节</small>
+                </div>
+                <div class="flow-arrow" style="animation-delay: 0.3s;">→</div>
+                <div style="font-size: 1.5em; color: #00d4ff; font-weight: bold;">
+                    hash160 in _hash160_set
+                </div>
+                <div class="flow-arrow" style="animation-delay: 0.6s;">→</div>
+                <div class="success-badge">
+                    ✓ 碰撞成功
+                </div>
+            </div>
+        </div>
+
+        <!-- 技术规格 -->
+        <div class="tech-specs">
+            <div class="specs-title">📊 核心技术规格</div>
+            <div class="specs-grid">
+                <div class="spec-item">
+                    <div class="spec-label">哈希算法</div>
+                    <div class="spec-value">RIPEMD160(SHA256(pubkey))</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">输入数据</div>
+                    <div class="spec-value">公钥（33或65字节）</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">输出长度</div>
+                    <div class="spec-value">20字节（160位）</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">查找复杂度</div>
+                    <div class="spec-value">O(1) 常数时间</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">数据类型</div>
+                    <div class="spec-value">Python bytes</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">比较方式</div>
+                    <div class="spec-value">逐字节精确匹配</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">GPU实现</div>
+                    <div class="spec-value">OpenCL内核（一致）</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">线程安全</div>
+                    <div class="spec-value">RLock保护</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">存储结构</div>
+                    <div class="spec-value">set + dict双结构</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">内存占用</div>
+                    <div class="spec-value">~40字节/目标</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">代码位置</div>
+                    <div class="spec-value">hash_utils.py:40-50</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">验证状态</div>
+                    <div class="spec-value" style="color: #00ff88;">✓ 完全一致</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 动态粒子背景
+        const canvas = document.createElement('canvas');
+        canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;pointer-events:none;';
+        document.body.appendChild(canvas);
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // 粒子系统
+        const particles = [];
+        const particleCount = 50;
+
+        for (let i = 0; i < particleCount; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 0.5,
+                vy: (Math.random() - 0.5) * 0.5,
+                size: Math.random() * 2 + 1,
+                alpha: Math.random() * 0.5 + 0.2
+            });
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+
+                if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(0, 212, 255, ${p.alpha})`;
+                ctx.fill();
+            });
+
+            // 连线
+            particles.forEach((p1, i) => {
+                particles.slice(i + 1).forEach(p2 => {
+                    const dx = p1.x - p2.x;
+                    const dy = p1.y - p2.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < 150) {
+                        ctx.beginPath();
+                        ctx.moveTo(p1.x, p1.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.strokeStyle = `rgba(0, 212, 255, ${0.1 * (1 - distance / 150)})`;
+                        ctx.stroke();
+                    }
+                });
+            });
+
+            requestAnimationFrame(animateParticles);
+        }
+
+        animateParticles();
+
+        // 滚动渐显效果
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.step-card, .comparison-card, .spec-item').forEach(el => {
+            observer.observe(el);
+        });
+
+        console.log('Hash160比对流程拓扑图已加载');
+    </script>
+</body>
+</html>

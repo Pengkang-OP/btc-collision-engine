@@ -28,7 +28,7 @@ PRODUCTION_INCLUDE = [
     # 核心应用
     "key_collision.py",
     "key_collision_cli.py",
-    "key_collision_gui.py",
+    # M-NEW3修复: key_collision_gui.py 已移除，项目转为纯 CLI 架构
     "start.bat",
     
     # 配置文件
@@ -294,11 +294,6 @@ copy config.example.json config.json
 python key_collision_cli.py
 ```
 
-**GUI模式**:
-```bash
-python key_collision_gui.py
-```
-
 **直接运行**:
 ```bash
 start.bat
@@ -310,7 +305,7 @@ start.bat
 btc-collision-engine/
 ├── key_collision.py          # 主程序
 ├── key_collision_cli.py      # CLI入口
-├── key_collision_gui.py      # GUI界面
+# M-NEW3修复: key_collision_gui.py 已移除，项目转为纯 CLI 架构
 ├── start.bat                 # Windows启动脚本
 ├── config.json               # 配置文件
 ├── requirements.txt          # Python依赖
@@ -430,7 +425,7 @@ def main():
     print(f"\n🎯 下一步:")
     print(f"   1. 在输出目录中安装依赖: pip install -r requirements.txt")
     print(f"   2. 编辑配置文件: config.json")
-    print(f"   3. 运行程序: python key_collision_gui.py")
+    print(f"   3. 运行程序: python key_collision_cli.py")  # M-NEW3修复: 更新为CLI入口
     print("=" * 80)
 
 

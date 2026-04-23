@@ -22,7 +22,16 @@ class CheckpointManager:
     DEFAULT_FILE = "collision_checkpoint.json"
     
     def __init__(self, filepath: str = None, auto_save_interval: int = 30):
-        self.filepath = filepath or os.path.join(os.path.dirname(os.path.abspath(__file__)), self.DEFAULT_FILE)
+        # 修复: 默认断点路径使用data_logs目录（有写入权限）
+        if filepath is None:
+            # 获取项目根目录（src的父目录）
+            project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            data_logs_dir = os.path.join(project_root, "data_logs")
+            # 确保data_logs目录存在
+            os.makedirs(data_logs_dir, exist_ok=True)
+            self.filepath = os.path.join(data_logs_dir, self.DEFAULT_FILE)
+        else:
+            self.filepath = filepath
         self.auto_save_interval = auto_save_interval
         self._last_save_time = 0.0
         self._lock = threading.Lock()  # 线程锁保护文件操作

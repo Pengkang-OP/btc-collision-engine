@@ -297,7 +297,8 @@ class DriverManager:
                         
                         logger.info(f"检测到AMD驱动版本(Linux): {version}")
                         return version
-                except Exception:
+                except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+                    # 忽略常见的指令找不到/超时，继续尝试下一个方式
                     continue
             
             logger.warning("Linux AMD驱动检测失败")
@@ -387,7 +388,8 @@ class DriverManager:
                         
                         logger.info(f"检测到Intel驱动版本(Linux): {version}")
                         return version
-                except Exception:
+                except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+                    # 忽略常见的指令找不到/超时，继续尝试下一个方式
                     continue
             
             logger.warning("Linux Intel驱动检测失败")
