@@ -207,9 +207,15 @@ class GPUBufferTracker:
             'all_released_successfully': len(failed) == 0
         }
         
-        if remaining > 0:
+        # v2.2.1修复: 只在释放失败时输出CRITICAL警告
+        if len(failed) > 0:
             logger.critical(
-                f"GPU引擎关闭时发现{remaining}个未释放缓冲区 "
+                f"GPU引擎关闭时{len(failed)}个缓冲区释放失败 "
+                f"(可能内存泄漏): {', '.join([f['name'] for f in failed])}"
+            )
+        elif remaining > 0:
+            logger.info(
+                f"GPU引擎关闭时释放了{remaining}个缓冲区 "
                 f"(总大小: {total_size/1024:.1f}KB): {', '.join(buffer_names)}"
             )
         else:
