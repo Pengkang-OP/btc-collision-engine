@@ -96,9 +96,9 @@ class GPUAutoConfigurator:
         'work_group_size': 256,    # 中等工作组
         'memory_usage_ratio': 0.5, # 保守显存使用率
         'enable_async': True,      # 异步执行(必须)
-        'use_fast_math': True,     # v2.2.1优化: 启用快速数学运算(提升性能)
+        'use_fast_math': False,    # 禁用快速数学(加密运算需要精度)
         'use_uint32_workaround': True,  # uint32溢出workaround(必须)
-        'compiler_flags': '-cl-fast-relaxed-math -cl-unsafe-math-optimizations'  # v2.2.1优化: 启用编译器优化
+        'compiler_flags': ''       # 不使用优化标志(加密运算不适用)
     }
     
     # 未知GPU保守配置
