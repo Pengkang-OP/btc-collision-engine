@@ -1,0 +1,45 @@
+# Prometheus配置 - BTC碰撞引擎监控
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# 告警规则
+rule_files:
+  - "rules/*.yml"
+
+# 抓取配置
+scrape_configs:
+  # Prometheus自身监控
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # BTC碰撞引擎节点导出器
+  - job_name: 'btc-collision-engine'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['btc-engine-exporter:9100']
+        labels:
+          instance: 'btc-collision-cpu'
+          mode: 'cpu'
+
+  # GPU模式
+  - job_name: 'btc-collision-gpu'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['btc-engine-gpu-exporter:9100']
+        labels:
+          instance: 'btc-collision-gpu'
+          mode: 'gpu'
+
+  # 节点导出器（系统指标）
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+# Alertmanager配置
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - 'alertmanager:9093'
