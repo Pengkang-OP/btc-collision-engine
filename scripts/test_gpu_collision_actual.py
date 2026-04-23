@@ -21,7 +21,7 @@ from src.collision.collision_stats import CollisionStats
 def main():
     """主函数"""
     print("=" * 80)
-    print("  🚀 GPU碰撞引擎实际性能测试")
+    print("  GPU碰撞引擎实际性能测试")  # 移除emoji避免Windows GBK编码问题
     print("=" * 80)
     print(f"  测试时间: {time.strftime('%Y-%m-%d %H:%M:%S')}")
     print()
@@ -112,7 +112,10 @@ def main():
         print(f"  📱 GPU设备信息:")
         print(f"     名称: {device_info.get('name', 'Unknown')}")
         print(f"     厂商: {device_info.get('vendor', 'Unknown')}")
-        print(f"     显存: {device_info.get('global_mem_gb', 0):.2f} GB")
+        # 修复: 使用global_mem_size（字节）而非global_mem_gb
+        global_mem_bytes = device_info.get('global_mem_size', 0)
+        global_mem_gb = global_mem_bytes / (1024**3) if global_mem_bytes > 0 else 0
+        print(f"     显存: {global_mem_gb:.2f} GB")
         print(f"     批次大小: {engine.batch_size:,}")
         print()
         
