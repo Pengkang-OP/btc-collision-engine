@@ -1,18 +1,18 @@
 {
-  "timestamp": 1776976366.128661,
+  "timestamp": 1776976757.0811882,
   "performance": {
-    "speed": 535135.4168118128,
-    "total_checked": 646922816,
+    "speed": 503893.8700836135,
+    "total_checked": 169820736,
     "matches_found": 0,
-    "cpu_usage": 103.6,
-    "memory_usage": 367.828125,
+    "cpu_usage": 109.0,
+    "memory_usage": 264.04296875,
     "thread_count": 9
   },
   "system": {
     "os": "nt",
     "python_version": "3.14.3",
-    "pid": 1992,
-    "uptime": 1209.0238971710205
+    "pid": 23016,
+    "uptime": 337.7995717525482
   },
   "engine": {
     "mode": "random",

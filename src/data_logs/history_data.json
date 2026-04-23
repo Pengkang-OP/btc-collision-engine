@@ -1,149 +1,5 @@
 [
   {
-    "timestamp": 1776884122.3461673,
-    "performance": {
-      "speed": 0.0,
-      "total_checked": 0,
-      "matches_found": 0,
-      "cpu_usage": 0.0,
-      "memory_usage": 228.62109375,
-      "thread_count": 5
-    },
-    "system": {
-      "os": "nt",
-      "python_version": "3.14.3",
-      "pid": 25544,
-      "uptime": 0.1411571502685547
-    },
-    "engine": {
-      "mode": "",
-      "target_count": 0,
-      "is_running": false,
-      "current_position": 0
-    },
-    "errors": []
-  },
-  {
-    "timestamp": 1776884123.5949564,
-    "performance": {
-      "speed": 0.0,
-      "total_checked": 0,
-      "matches_found": 0,
-      "cpu_usage": 0.0,
-      "memory_usage": 228.62109375,
-      "thread_count": 5
-    },
-    "system": {
-      "os": "nt",
-      "python_version": "3.14.3",
-      "pid": 25544,
-      "uptime": 0.14800667762756348
-    },
-    "engine": {
-      "mode": "",
-      "target_count": 0,
-      "is_running": false,
-      "current_position": 0
-    },
-    "errors": []
-  },
-  {
-    "timestamp": 1776884124.8526316,
-    "performance": {
-      "speed": 0.0,
-      "total_checked": 0,
-      "matches_found": 0,
-      "cpu_usage": 0.0,
-      "memory_usage": 228.62109375,
-      "thread_count": 5
-    },
-    "system": {
-      "os": "nt",
-      "python_version": "3.14.3",
-      "pid": 25544,
-      "uptime": 0.14567112922668457
-    },
-    "engine": {
-      "mode": "",
-      "target_count": 0,
-      "is_running": false,
-      "current_position": 0
-    },
-    "errors": []
-  },
-  {
-    "timestamp": 1776884126.1234915,
-    "performance": {
-      "speed": 0.0,
-      "total_checked": 0,
-      "matches_found": 0,
-      "cpu_usage": 0.0,
-      "memory_usage": 228.62109375,
-      "thread_count": 5
-    },
-    "system": {
-      "os": "nt",
-      "python_version": "3.14.3",
-      "pid": 25544,
-      "uptime": 0.1440720558166504
-    },
-    "engine": {
-      "mode": "",
-      "target_count": 0,
-      "is_running": false,
-      "current_position": 0
-    },
-    "errors": []
-  },
-  {
-    "timestamp": 1776884127.386165,
-    "performance": {
-      "speed": 0.0,
-      "total_checked": 0,
-      "matches_found": 0,
-      "cpu_usage": 0.0,
-      "memory_usage": 228.62109375,
-      "thread_count": 5
-    },
-    "system": {
-      "os": "nt",
-      "python_version": "3.14.3",
-      "pid": 25544,
-      "uptime": 0.1563243865966797
-    },
-    "engine": {
-      "mode": "",
-      "target_count": 0,
-      "is_running": false,
-      "current_position": 0
-    },
-    "errors": []
-  },
-  {
-    "timestamp": 1776884128.6946516,
-    "performance": {
-      "speed": 0.0,
-      "total_checked": 0,
-      "matches_found": 0,
-      "cpu_usage": 0.0,
-      "memory_usage": 228.62109375,
-      "thread_count": 5
-    },
-    "system": {
-      "os": "nt",
-      "python_version": "3.14.3",
-      "pid": 25544,
-      "uptime": 0.14357876777648926
-    },
-    "engine": {
-      "mode": "",
-      "target_count": 0,
-      "is_running": false,
-      "current_position": 0
-    },
-    "errors": []
-  },
-  {
     "timestamp": 1776884129.9621992,
     "performance": {
       "speed": 0.0,
@@ -23990,6 +23846,150 @@
       "python_version": "3.14.3",
       "pid": 1992,
       "uptime": 1203.7511529922485
+    },
+    "engine": {
+      "mode": "random",
+      "target_count": 190,
+      "is_running": true,
+      "current_position": 0
+    },
+    "errors": []
+  },
+  {
+    "timestamp": 1776976467.0556202,
+    "performance": {
+      "speed": 538404.5742153107,
+      "total_checked": 25117248,
+      "matches_found": 0,
+      "cpu_usage": 93.3,
+      "memory_usage": 243.50390625,
+      "thread_count": 13
+    },
+    "system": {
+      "os": "nt",
+      "python_version": "3.14.3",
+      "pid": 23016,
+      "uptime": 47.773887634277344
+    },
+    "engine": {
+      "mode": "random",
+      "target_count": 190,
+      "is_running": true,
+      "current_position": 0
+    },
+    "errors": []
+  },
+  {
+    "timestamp": 1776976519.8149545,
+    "performance": {
+      "speed": 540719.5645038486,
+      "total_checked": 53428800,
+      "matches_found": 0,
+      "cpu_usage": 109.1,
+      "memory_usage": 248.921875,
+      "thread_count": 10
+    },
+    "system": {
+      "os": "nt",
+      "python_version": "3.14.3",
+      "pid": 23016,
+      "uptime": 100.5382068157196
+    },
+    "engine": {
+      "mode": "random",
+      "target_count": 190,
+      "is_running": true,
+      "current_position": 0
+    },
+    "errors": []
+  },
+  {
+    "timestamp": 1776976572.4066806,
+    "performance": {
+      "speed": 541982.0469213399,
+      "total_checked": 82788928,
+      "matches_found": 0,
+      "cpu_usage": 197.1,
+      "memory_usage": 248.9296875,
+      "thread_count": 9
+    },
+    "system": {
+      "os": "nt",
+      "python_version": "3.14.3",
+      "pid": 23016,
+      "uptime": 153.1403694152832
+    },
+    "engine": {
+      "mode": "random",
+      "target_count": 190,
+      "is_running": true,
+      "current_position": 0
+    },
+    "errors": []
+  },
+  {
+    "timestamp": 1776976625.1943557,
+    "performance": {
+      "speed": 542902.5819052733,
+      "total_checked": 111100480,
+      "matches_found": 0,
+      "cpu_usage": 93.6,
+      "memory_usage": 248.91015625,
+      "thread_count": 8
+    },
+    "system": {
+      "os": "nt",
+      "python_version": "3.14.3",
+      "pid": 23016,
+      "uptime": 205.92205047607422
+    },
+    "engine": {
+      "mode": "random",
+      "target_count": 190,
+      "is_running": true,
+      "current_position": 0
+    },
+    "errors": []
+  },
+  {
+    "timestamp": 1776976677.8750212,
+    "performance": {
+      "speed": 506225.8878824437,
+      "total_checked": 129974848,
+      "matches_found": 0,
+      "cpu_usage": 103.9,
+      "memory_usage": 256.921875,
+      "thread_count": 8
+    },
+    "system": {
+      "os": "nt",
+      "python_version": "3.14.3",
+      "pid": 23016,
+      "uptime": 258.596640586853
+    },
+    "engine": {
+      "mode": "random",
+      "target_count": 190,
+      "is_running": true,
+      "current_position": 0
+    },
+    "errors": []
+  },
+  {
+    "timestamp": 1776976730.9173295,
+    "performance": {
+      "speed": 512485.97664583795,
+      "total_checked": 159334976,
+      "matches_found": 0,
+      "cpu_usage": 93.4,
+      "memory_usage": 261.55859375,
+      "thread_count": 9
+    },
+    "system": {
+      "os": "nt",
+      "python_version": "3.14.3",
+      "pid": 23016,
+      "uptime": 311.63547015190125
     },
     "engine": {
       "mode": "random",

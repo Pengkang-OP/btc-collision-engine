@@ -158,16 +158,24 @@ class GPUMemoryPool:
                     self._pool['generic'] = []
                 self._pool['generic'].append(buf)
     
-    def preallocate_buffers(self, sizes: List[int], count_per_size: int = 2):
-        """预分配常用大小的缓冲区（性能优化v2.2.1）
+    def preallocate_buffers(self, sizes: List[int], count_per_size: int = 2, flags=None):
+        """预分配常用大小的缓冲区（性能优化v2.2.1，v3.3.0增强）
         
         在初始化阶段预分配常用缓冲区，避免运行时频繁分配。
         
         参数:
             sizes: 需要预分配的缓冲区大小列表
             count_per_size: 每个大小的预分配数量，默认2
+            flags: OpenCL内存标志，默认READ_WRITE（通用）
+        
+        v3.3.0增强:
+        - 支持自定义内存标志
+        - 为不同用途分配不同标志的缓冲区
         """
         import pyopencl as cl
+        
+        if flags is None:
+            flags = cl.mem_flags.READ_WRITE
         
         allocated = 0
         with self._lock:
@@ -186,7 +194,7 @@ class GPUMemoryPool:
                 # 预分配
                 for _ in range(count_per_size):
                     try:
-                        buf = cl.Buffer(self._context, cl.mem_flags.READ_WRITE, aligned_size)
+                        buf = cl.Buffer(self._context, flags, aligned_size)
                         self._pool[aligned_size].append(buf)
                         self._total_allocated += 1
                         self._current_memory += aligned_size
