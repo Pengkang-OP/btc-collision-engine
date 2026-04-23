@@ -956,8 +956,12 @@ class GPUKernel(GPUKernelProtocol):
         P5增强: 引擎关闭时强制检查内存泄漏
         v2.2.1: 关闭异步日志处理器
         v2.2.1修复: 避免双重释放缓冲区
+        v3.2.1修复: 缓冲区归还到内存池（支持复用）
         """
         # 注意: 不需要导入pyopencl, OpenCL Buffer对象自带release()方法
+        
+        # v3.2.1修复: 获取内存池引用（如果已启用）
+        memory_pool = getattr(self, '_gpu_memory_pool', None)
         
         # v2.2.1修复: 跟踪已释放的缓冲区，避免双重释放
         released_buffers = set()
@@ -993,15 +997,19 @@ class GPUKernel(GPUKernelProtocol):
                         )
             except Exception as e:
                 logger.error(f"内存泄漏检查失败: {e}")
-            
+        
+        # v3.2.1修复: 计算缓冲区大小（用于归还到内存池）
+        keys_buf_size = self.max_batch_size * 32 if hasattr(self, 'max_batch_size') else 0
+        match_buf_size = self.max_batch_size * 4 if hasattr(self, 'max_batch_size') else 0
+        
         # P1修复: 显式释放OpenCL Buffer（跳过已释放的）
         buffers_to_release = [
-            ("_keys_buf", self._keys_buf),
-            ("_match_buf", self._match_buf),
-            ("_targets_buf", self._targets_buf),
+            ("_keys_buf", self._keys_buf, keys_buf_size),
+            ("_match_buf", self._match_buf, match_buf_size),
+            ("_targets_buf", self._targets_buf, 0),  # targets_buf大小动态，不归还到池
         ]
             
-        for buf_name, buf in buffers_to_release:
+        for buf_name, buf, buf_size in buffers_to_release:
             # v2.2.1修复: 跳过已被force_check_on_shutdown释放的缓冲区
             if buf_name in released_buffers:
                 logger.debug(f"缓冲区 {buf_name} 已释放，跳过")
@@ -1009,8 +1017,15 @@ class GPUKernel(GPUKernelProtocol):
                 
             if buf is not None:
                 try:
-                    buf.release()  # 显式释放OpenCL资源
-                    logger.debug(f"已释放 {buf_name}")
+                    # v3.2.1修复: 优先归还到内存池（支持复用）
+                    if memory_pool and buf_size > 0 and buf_name != '_targets_buf':
+                        memory_pool.release(buf, buf_size)
+                        logger.debug(f"缓冲区 {buf_name} 已归还到内存池 ({buf_size/1024/1024:.2f} MB)")
+                    else:
+                        # 直接释放（回退模式或targets_buf）
+                        buf.release()
+                        logger.debug(f"已释放 {buf_name}")
+                    
                     # P2-2修复: 注销缓冲区追踪
                     if hasattr(self, '_buffer_tracker'):
                         self._buffer_tracker.release_buffer(buf_name)
