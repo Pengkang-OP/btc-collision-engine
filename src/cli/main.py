@@ -245,7 +245,12 @@ def format_progress(stats: CollisionStats, mode: str, total_range: Optional[int]
     speed_str = stats.format_speed()
     matches = len(stats.matches)
 
-    # ETA 估算（仅 range 模式有意义）
+    # 引擎初始化期间，显示友好提示
+    elapsed_sec = stats.elapsed if stats.elapsed > 0 else (
+        time.time() - stats.start_time if stats.start_time > 0 else 0
+    )
+    if checked == 0 and elapsed_sec < 15:
+        return f"[{elapsed}] 初始化中... | 速度: -- | 匹配: {matches} | ETA: --"
     eta_str = "--"
     if total_range and total_range > 0 and checked > 0:
         elapsed_sec = time.time() - stats.start_time if stats.start_time else 0

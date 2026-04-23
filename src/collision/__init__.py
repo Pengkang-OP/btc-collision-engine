@@ -22,9 +22,15 @@ from . import constants
 try:
     from .gpu_collision_engine import GPUCollisionEngine
     _GPU_AVAILABLE = True
-except ImportError:
+except ImportError as _gpu_import_err:
     GPUCollisionEngine = None
     _GPU_AVAILABLE = False
+    import logging as _logging
+    _logging.getLogger(__name__).info(
+        "[GPU提示] pyopencl 未安装，GPU加速功能不可用，将使用 CPU 模式运行。\n"
+        "  如需启用 GPU 加速，请安装 OpenCL 运行时，然后：\n"
+        "    pip install pyopencl"
+    )
 
 __all__ = [
     'BaseCollisionEngine',
@@ -116,14 +122,36 @@ def create_collision_engine(targets: Set[str], mode: str = 'auto',
         if _GPU_AVAILABLE and GPUCollisionEngine.is_gpu_available():
             return GPUCollisionEngine(targets=targets, **merged_kwargs)
         else:
+            if not _GPU_AVAILABLE:
+                import logging as _log
+                _log.getLogger(__name__).info(
+                    "[GPU提示] pyopencl 未安装，已自动切换到 CPU 模式。\n"
+                    "  如需 GPU 加速： pip install pyopencl"
+                )
+            elif not GPUCollisionEngine.is_gpu_available():
+                import logging as _log
+                _log.getLogger(__name__).info(
+                    "[GPU提示] 未检测到可用的 OpenCL 设备，已自动切换到 CPU 模式。\n"
+                    "  请确认已安装对应厂商的 GPU 驱动及 OpenCL 运行时。"
+                )
             return KeyCollisionEngine(targets=targets, **merged_kwargs)
 
     # gpu模式: 强制使用GPU
     if mode == 'gpu':
         if not _GPU_AVAILABLE:
-            raise RuntimeError("GPU不可用: GPUCollisionEngine模块导入失败")
+            raise RuntimeError(
+                "GPU不可用: pyopencl 未安装。\n"
+                "  请安装 OpenCL 运行时并执行: pip install pyopencl\n"
+                "  安装指南请参阅 docs/FAQ.md#GPU"
+            )
         if not GPUCollisionEngine.is_gpu_available():
-            raise RuntimeError("GPU不可用: 未检测到OpenCL设备")
+            raise RuntimeError(
+                "GPU不可用: 未检测到可用的 OpenCL 设备。\n"
+                "  请确认：\n"
+                "    1. GPU 驱动已正确安装（Intel: https://www.intel.com/opencl, NVIDIA: CUDA驱动包）\n"
+                "    2. OpenCL 运行时已安装\n"
+                "    3. 运行 `python scripts/diagnose.py` 获取详细说明"
+            )
         return GPUCollisionEngine(targets=targets, **merged_kwargs)
 
     # cpu模式: 强制使用CPU

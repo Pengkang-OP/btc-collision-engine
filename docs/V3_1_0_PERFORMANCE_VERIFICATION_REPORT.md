@@ -95,6 +95,7 @@ if vendor == 'intel':           # ← 精确匹配失败！
 ```
 
 实际 `device.get('vendor')` 返回的是 `'Intel(R) Corporation'`，导致 Intel Arc A770 被错误识别为未知厂商，使用了保守配置：
+
 - `enable_async = False`（异步双缓冲从未触发）
 - `batch_size = 32768`（仅为最优值的 1/8）
 - `work_group_size = 256`（仅为最优值的 1/2）
@@ -130,6 +131,7 @@ CPU处理结果:          [处理匹配]        [处理匹配]        [处理匹
 ```
 
 **双缓冲实现**：
+
 - `AsyncGPUExecutor` 使用 Buffer A 和 Buffer B 交替执行
 - 预取队列（v2.2.1）消除 CPU-GPU 等待
 - 异步事件（OpenCL Event）管理批次切换
@@ -300,6 +302,7 @@ eng.stop()
 ```
 
 **预期输出**：
+
 ```
 enable_async_execution: True
 async_executor: YES

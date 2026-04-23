@@ -14,6 +14,9 @@ from .logger import ColoredFormatter  # ThreadSafeLogger已弃用
 # 导入安全过滤器（P0-2修复）
 from .security_log_filter import SecurityLogFilter
 
+# 幂等守卫：防止多次 import 重复执行安全过滤器初始化
+_security_filter_initialized: bool = False
+
 
 class LoggingConfig:
     """日志配置管理器"""
@@ -286,7 +289,12 @@ def _setup_security_filter():
     - 比特币私钥（64位十六进制）
     - WIF格式私钥
     - 原始私钥字节
+    
+    注：幂等设计，多次调用只执行一次。
     """
+    global _security_filter_initialized
+    if _security_filter_initialized:
+        return
     try:
         # 创建安全过滤器
         security_filter = SecurityLogFilter(
@@ -315,6 +323,7 @@ def _setup_security_filter():
         
         # 注意：这里不使用logging.info，因为日志系统可能还未完全初始化
         print("[INFO] 日志安全过滤器已启用（防止私钥泄露）")
+        _security_filter_initialized = True
         
     except Exception as e:
         # 安全过滤器初始化失败不应阻止日志系统工作

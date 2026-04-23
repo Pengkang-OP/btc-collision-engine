@@ -7,6 +7,42 @@
 
 ---
 
+## [3.0.0] - 2026-04-23
+
+### 里程碑说明
+
+本版本完成 **PROJECT_COMPREHENSIVE_ANALYSIS.md 全部 28 个问题**（C1-C5、H1-H9、M1-M14）的修复，标志着项目进入 CLI 稳定期。
+
+### 修复
+
+#### CLI 稳定性修复
+
+- 🐛 **日志安全过滤器重复打印**（`src/utils/logging_config.py`）
+  - 添加模块级幂等守卫 `_security_filter_initialized`，确保多次 import 时日志只打印一次
+
+- 🐛 **进度栏速度持续显示 `0.00/s`**（`src/collision/key_collision_engine.py`、`src/cli/main.py`）
+  - `_random_search_worker` 改为每 32 次更新一次 `_live_range_count`，提高实时计数频率
+  - `get_stats()` 改用 `max(live_count, total_checked)` 实时刷新速度，移除重置逻辑
+  - `format_progress()` 在初始化期（`total_checked==0` 且 `elapsed<15s`）显示 `初始化中...` 友好提示
+
+#### H8：PyOpenCL 不可用友好提示（`src/collision/__init__.py`）
+
+- `ImportError` 时输出安装步骤（`pip install pyopencl`）
+- `auto` 模式失败时区分「pyopencl 未安装」和「无可用设备」两种情形，各给出针对性提示
+- `gpu` 强制模式 `RuntimeError` 增加驱动链接和 `diagnose.py` 引导
+
+#### M13：内存监控自动降级（`src/collision/key_collision_engine.py`）
+
+- 新增内存阈值属性：高警 2048MB、临界 3072MB，冷却时间 30 秒
+- 新增 `_check_memory_and_downgrade()` 方法：
+  - 高警：`batch_size` 降至 75%（下限 512）
+  - 临界：`batch_size` 减半（下限 256），同时更新下次启动的 `max_workers` 配置
+  - 30 秒冷却防止频繁抖动
+- 双路调用保障：`_log_data_metrics` 内 + `random_search` 进度主循环内，确保 `data_logging_enabled=False` 时仍生效
+- 日志文案明确区分「本次运行 batch_size 降级」与「下次启动 max_workers 配置变更」
+
+---
+
 ## [2.3.0] - 2026-04-22
 
 ### 文档优化
