@@ -1,0 +1,24 @@
+{
+  "test_time": "2026-04-24T04:16:25.603731",
+  "device_info": {
+    "name": "Intel(R) Arc(TM) A770 Graphics",
+    "vendor": "Intel(R) Corporation",
+    "global_mem_gb": 0,
+    "compute_units": 0,
+    "memory_efficiency": 0.7,
+    "batch_size": 1048576,
+    "initialization_time": 0.5818588733673096
+  },
+  "benchmark": {
+    "duration": 30,
+    "total_keys": 8340032,
+    "avg_speed": 242290.3503789098,
+    "max_speed": 246520.3032596872,
+    "min_speed": 225895.37407453026,
+    "stability_percent": 3.3487709145873534,
+    "speed_samples": 6
+  },
+  "stress_test": {},
+  "memory_usage": {},
+  "stability": {}
+}

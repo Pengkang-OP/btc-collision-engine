@@ -17,17 +17,16 @@
     "strict_wif_validation": true,
     "_comment_strict_wif_validation": "严格WIF格式验证"
   },
-  "collision": {
+  "engine": {
     "_comment": "碰撞引擎配置",
-    "max_workers": 2,
-    "_comment_max_workers": "线程池最大工作线程数, null表示使用默认值(CPU核心数)",
-    "progress_interval": 1000,
-    "_comment_progress_interval": "进度回调间隔(次)",
-    "checkpoint_interval": 10,
-    "_comment_checkpoint_interval": "断点自动保存间隔(秒)",
-    "dedup_max_size": 1000000,
-    "_comment_dedup_max_size": "去重过滤器最大容量",
-    "use_performance_optimization": false
+    "mode": "random",
+    "_comment_mode": "碰撞模式: random=随机, sequential=顺序",
+    "batch_size": 1048576,
+    "_comment_batch_size": "批次大小, 1M为Intel Arc A770最优配置",
+    "max_threads": 8,
+    "_comment_max_threads": "最大线程数",
+    "checkpoint_interval": 300,
+    "_comment_checkpoint_interval": "断点保存间隔(秒)"
   },
   "logging": {
     "_comment": "日志配置",
@@ -106,10 +105,22 @@
     "_comment_use_new_module": "是否使用新的GPU模块(false=使用旧gpu_engine.py)",
     "auto_detect": true,
     "_comment_auto_detect": "自动检测GPU设备",
-    "memory_usage_ratio": 0.5,
-    "_comment_memory_usage_ratio": "显存使用比例(0.0-1.0)",
+    "memory_usage_ratio": 0.70,
+    "_comment_memory_usage_ratio": "显存使用比例(0.0-1.0), Intel Arc建议0.70",
     "enable_vendor_optimizations": true,
     "_comment_enable_vendor_optimizations": "启用厂商特定优化",
+    "gpu_memory_pool": true,
+    "_comment_gpu_memory_pool": "启用GPU内存池以减少频繁分配/释放",
+    "max_buffers": 200,
+    "_comment_max_buffers": "GPU内存池最大缓冲区数量",
+    "max_memory_mb": 8192,
+    "_comment_max_memory_mb": "GPU内存池最大内存(MB), 8GB",
+    "async_execution": true,
+    "_comment_async_execution": "启用GPU异步执行(双缓冲优化), 性能提升~61%",
+    "timeout_protection": true,
+    "_comment_timeout_protection": "启用GPU超时保护机制, 防止永久卡死",
+    "base_timeout_seconds": 30,
+    "_comment_base_timeout_seconds": "GPU内核执行基础超时(秒)",
     "driver_check": {
       "_comment": "驱动检查配置",
       "enabled": true,
@@ -134,10 +145,21 @@
     "per_device_config": {
       "_comment": "每个GPU的独立配置(可选,覆盖auto_tuning)",
       "0": {
-        "batch_size": 65536,
-        "work_group_size": 256
+        "batch_size": 1048576,
+        "work_group_size": 512
       }
     }
+  },
+  "optimization": {
+    "_comment": "GPU优化参数",
+    "uint32_workaround": true,
+    "_comment_uint32_workaround": "Intel Arc必须启用(避免global char* hang bug)",
+    "disable_async_transfer": false,
+    "_comment_disable_async_transfer": "禁用异步传输(Intel Arc建议false以启用)",
+    "conservative_memory_policy": false,
+    "_comment_conservative_memory_policy": "保守内存策略(默认false, 依赖内存池管理)",
+    "adaptive_timeout": true,
+    "_comment_adaptive_timeout": "自适应超时(根据历史执行时间动态调整)"
   },
   "performance_monitoring": {
     "_comment": "性能监控配置",
