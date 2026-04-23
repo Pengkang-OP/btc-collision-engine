@@ -1,0 +1,96 @@
+[Unit]
+Description=BTC Collision Engine - Bitcoin Address Collision Detection
+Documentation=file:///opt/btc-collision-engine/README.md
+After=network.target
+Wants=network.target
+
+# GPU支持（如果使用GPU加速）
+# After=network.target nvidia-persistenced.service
+# Wants=nvidia-persistenced.service
+
+[Service]
+Type=simple
+User=btc-engine
+Group=btc-engine
+
+# 工作目录
+WorkingDirectory=/opt/btc-collision-engine
+
+# 环境配置
+Environment="PYTHONUNBUFFERED=1"
+Environment="PYTHONDONTWRITEBYTECODE=1"
+Environment="VIRTUAL_ENV=/opt/btc-collision-engine/venv"
+Environment="PATH=/opt/btc-collision-engine/venv/bin:/usr/bin:/bin"
+
+# GPU环境变量（如使用NVIDIA GPU）
+# Environment="NVIDIA_VISIBLE_DEVICES=all"
+# Environment="NVIDIA_DRIVER_CAPABILITIES=compute,utility"
+
+# 启动命令（根据实际配置调整）
+# 模式1: 随机碰撞（推荐用于未知目标）
+ExecStart=/opt/btc-collision-engine/venv/bin/python key_collision_cli.py \
+    --config /opt/btc-collision-engine/config.production.json \
+    --mode random \
+    --checkpoint \
+    --dedup
+
+# 模式2: 从文件加载目标
+# ExecStart=/opt/btc-collision-engine/venv/bin/python key_collision_cli.py \
+#     --config /opt/btc-collision-engine/config.production.json \
+#     --file /opt/btc-collision-engine/targets.txt \
+#     --mode range \
+#     --start 1 \
+#     --end FFFFFFFF \
+#     --checkpoint \
+#     --dedup
+
+# 模式3: 暴力穷举
+# ExecStart=/opt/btc-collision-engine/venv/bin/python key_collision_cli.py \
+#     --config /opt/btc-collision-engine/config.production.json \
+#     --target 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa \
+#     --mode brute_force \
+#     --start 1 \
+#     --workers 8 \
+#     --checkpoint
+
+# 重启策略
+Restart=on-failure
+RestartSec=10
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+# 日志配置
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=btc-collision-engine
+
+# 安全加固
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/btc-collision-engine/logs \
+               /opt/btc-collision-engine/data_logs \
+               /opt/btc-collision-engine/monitoring_data
+PrivateTmp=true
+
+# 资源限制
+# CPU限制（根据实际硬件调整）
+# CPUQuota=800%
+
+# 内存限制（根据实际硬件调整）
+# MemoryMax=16G
+# MemoryHigh=14G
+
+# 文件描述符限制
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# 进程优先级（较低优先级，避免影响系统其他服务）
+Nice=10
+
+# 看门狗（健康检查）
+WatchdogSec=300
+WatchdogSignal=SIGUSR1
+
+[Install]
+WantedBy=multi-user.target

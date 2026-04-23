@@ -1,0 +1,77 @@
+{
+  "_comment": "生产环境配置 - Docker部署",
+  "crypto": {
+    "backend": "auto",
+    "use_gpu": true,
+    "gpu_device_index": -1,
+    "gpu_batch_size": 65536,
+    "constant_time": false,
+    "verify_checksums": true,
+    "strict_wif_validation": true
+  },
+  "collision": {
+    "max_workers": null,
+    "progress_interval": 1000,
+    "checkpoint_interval": 60,
+    "dedup_max_size": 5000000
+  },
+  "logging": {
+    "level": "INFO",
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    "file": "logs/collision.log",
+    "max_bytes": 52428800,
+    "backup_count": 10,
+    "enable_console": true,
+    "enable_file": true,
+    "rotation_type": "size",
+    "rotation_when": "midnight",
+    "rotation_interval": 1,
+    "compress_backups": true
+  },
+  "gpu": {
+    "use_new_module": true,
+    "auto_detect": true,
+    "memory_usage_ratio": 0.7,
+    "enable_vendor_optimizations": true,
+    "driver_check": {
+      "enabled": true,
+      "require_minimum_version": true,
+      "warn_on_unstable": true,
+      "auto_fallback_conservative": true
+    },
+    "mode": "auto",
+    "device_indices": [-1],
+    "load_balancing": "performance",
+    "auto_tuning": true
+  },
+  "monitoring": {
+    "enabled": true,
+    "collection_interval": 10,
+    "storage_dir": "monitoring_data",
+    "history_max_size": 5000,
+    "error_max_size": 1000,
+    "anomaly_thresholds": {
+      "speed": {
+        "min": 100,
+        "max": 1000000
+      },
+      "cpu_usage": {
+        "max": 85
+      },
+      "memory_usage": {
+        "max": 14336
+      }
+    },
+    "auto_cleanup": {
+      "enabled": true,
+      "max_age_days": 30
+    }
+  },
+  "performance_monitoring": {
+    "enabled": true,
+    "max_records": 50000,
+    "slow_threshold_ms": 5000,
+    "track_slow_operations": true,
+    "log_level": "INFO"
+  }
+}

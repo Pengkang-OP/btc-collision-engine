@@ -1,0 +1,47 @@
+# Docker相关
+Dockerfile
+Dockerfile.amd
+docker-compose.yml
+deploy/
+
+# 系统服务
+deploy/systemd/btc-collision-engine.service
+
+# 生产配置（如果存在敏感信息）
+# config.production.json
+
+# 日志文件
+*.log
+logs/
+data_logs/
+monitoring_data/
+
+# 虚拟环境
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 测试
+.pytest_cache/
+.coverage
+htmlcov/
+test_results/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 临时文件
+*.tmp
+*.bak
