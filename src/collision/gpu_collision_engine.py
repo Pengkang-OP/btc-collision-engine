@@ -891,19 +891,26 @@ class GPUKernel(GPUKernelProtocol):
         return matches
     
     def cleanup(self):
-        """清琅GPU资源
+        """清理GPU资源
             
         P1修复: 显式释放OpenCL Buffer,防止显存泄漏
         P3改进: 删除未使用的pyopencl导入(Buffer对象自带release方法)
         P5增强: 引擎关闭时强制检查内存泄漏
         v2.2.1: 关闭异步日志处理器
+        v2.2.1修复: 避免双重释放缓冲区
         """
         # 注意: 不需要导入pyopencl, OpenCL Buffer对象自带release()方法
+        
+        # v2.2.1修复: 跟踪已释放的缓冲区，避免双重释放
+        released_buffers = set()
             
         # P5增强: 引擎关闭时强制检查并释放所有缓冲区
         if hasattr(self, '_buffer_tracker') and self._buffer_tracker:
             try:
                 leak_report = self._buffer_tracker.force_check_on_shutdown()
+                # 记录force_check_on_shutdown已经释放的缓冲区
+                released_buffers.update(leak_report.get('released', []))
+                
                 # 审查修复#3: 使用修正后的语义
                 if leak_report['has_unreleased'] or leak_report['has_leak']:
                     logger.warning(
@@ -920,7 +927,7 @@ class GPUKernel(GPUKernelProtocol):
             except Exception as e:
                 logger.error(f"内存泄漏检查失败: {e}")
             
-        # P1修复: 显式释放OpenCL Buffer
+        # P1修复: 显式释放OpenCL Buffer（跳过已释放的）
         buffers_to_release = [
             ("_keys_buf", self._keys_buf),
             ("_match_buf", self._match_buf),
@@ -928,6 +935,11 @@ class GPUKernel(GPUKernelProtocol):
         ]
             
         for buf_name, buf in buffers_to_release:
+            # v2.2.1修复: 跳过已被force_check_on_shutdown释放的缓冲区
+            if buf_name in released_buffers:
+                logger.debug(f"缓冲区 {buf_name} 已释放，跳过")
+                continue
+                
             if buf is not None:
                 try:
                     buf.release()  # 显式释放OpenCL资源
