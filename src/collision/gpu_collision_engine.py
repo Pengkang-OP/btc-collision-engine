@@ -754,7 +754,7 @@ class GPUKernel(GPUKernelProtocol):
         )
         
         # 方案B：添加超时保护机制（防止Intel Arc A770等GPU永久卡死）
-        # 使用事件等待带超时，避免GUI永久阻塞
+        # 使用事件等待带超时，避免阻塞
         timeout_seconds = 30  # Intel Arc建议的超时时间
         
         # 创建超时事件
