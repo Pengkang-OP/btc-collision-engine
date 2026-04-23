@@ -276,8 +276,13 @@ class GPUAutoConfigurator:
         
         # v2.2.1修复: 修正显存估算公式
         # 实际测试: 262K批次使用约9MB显存，而非536MB
-        # 每个密钥约需: 9MB / 262144 = 36字节
-        estimated_memory_gb = (batch_size * 36) / (1024 ** 3)
+        # 
+        # 显存组成 (每密钥):
+        #   - 私钥缓冲区 (_keys_buf):    32 字节
+        #   - 匹配缓冲区 (_match_buf):    4 字节
+        #   - 安全边际:                   15% (6 字节)
+        #   总计:                        42 字节
+        estimated_memory_gb = (batch_size * 42) / (1024 ** 3)
         
         # 如果估算显存超过可用显存的安全比例,减小批次
         max_safe_memory = memory_gb * config['memory_usage_ratio']
