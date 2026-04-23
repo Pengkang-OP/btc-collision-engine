@@ -6,6 +6,7 @@
 import os
 import sys
 import logging
+import shutil
 from typing import Optional, Dict, Any
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 from .logger import ColoredFormatter  # ThreadSafeLogger已弃用
@@ -57,6 +58,7 @@ class LoggingConfig:
         
         self._config = {**self.DEFAULT_CONFIG, **(config or {})}
         self._ensure_log_directory()
+        self.check_disk_space()  # M12: 初始化时主动检查磁盘空间
         self._initialized = True
         
         # 配置根日志记录器
@@ -97,6 +99,39 @@ class LoggingConfig:
             if log_dir and not os.path.exists(log_dir):
                 os.makedirs(log_dir, mode=0o750, exist_ok=True)
     
+    def check_disk_space(self, min_free_mb: int = 200) -> bool:
+        """主动检查日志目录所在磁盘的可用空间
+    
+        Args:
+            min_free_mb: 最小可用空间（MB），低于此值发出 WARNING
+    
+        Returns:
+            True 表示磁盘空间充足，False 表示空间不足
+        """
+        log_file = self._config.get("file", "logs/collision.log") if self._config else "logs/collision.log"
+        log_dir = os.path.dirname(os.path.abspath(log_file)) or "."
+        # 若目录不存在，退化到当前工作目录
+        check_path = log_dir if os.path.exists(log_dir) else "."
+        try:
+            usage = shutil.disk_usage(check_path)
+            free_mb = usage.free / (1024 * 1024)
+            total_mb = usage.total / (1024 * 1024)
+            used_pct = (usage.used / usage.total) * 100
+            if free_mb < min_free_mb:
+                # 使用 print 而非 logging，避免递归初始化
+                print(
+                    f"[磁盘警告] 日志目录 '{check_path}' 可用空间不足 "
+                    f"{free_mb:.0f} MB（阈值 {min_free_mb} MB，"
+                    f"总计 {total_mb:.0f} MB，已用 {used_pct:.1f}%）",
+                    file=sys.stderr
+                )
+                return False
+            return True
+        except Exception as e:
+            # 磁盘检查失败不应阻止程序启动
+            print(f"[磁盘检查] 无法获取磁盘空间信息: {e}", file=sys.stderr)
+            return True
+
     def _setup_root_logger(self):
         """配置根日志记录器"""
         level = self._config.get("level", "INFO")
