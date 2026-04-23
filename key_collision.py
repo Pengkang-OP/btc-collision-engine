@@ -33,10 +33,22 @@ except ImportError:
     COINCURVE_AVAILABLE = False
     logging.info("coincurve库未安装，将使用纯Python实现")
 
-from p2pkh_simulator import (
-    Secp256k1, ECPoint, EllipticCurve, HashUtils, Base58, WIF,
-    P2PKHAddressGenerator, ColorPrinter
-)
+# 尝试导入 p2pkh_simulator（旧版第一方模拟器，可选）
+try:
+    from p2pkh_simulator import (
+        Secp256k1, ECPoint, EllipticCurve, HashUtils, Base58, WIF,
+        P2PKHAddressGenerator, ColorPrinter
+    )
+    P2PKH_SIMULATOR_AVAILABLE = True
+except ImportError:
+    P2PKH_SIMULATOR_AVAILABLE = False
+    # 定义占位符，避免后续代码指向这些类型时出错
+    Secp256k1 = ECPoint = EllipticCurve = HashUtils = Base58 = WIF = None
+    P2PKHAddressGenerator = ColorPrinter = None
+    logging.warning(
+        "p2pkh_simulator 模块未找到，key_collision.py 的旧版 GUI 功能不可用。"
+        "请使用 key_collision_cli.py 运行命令行模式。"
+    )
 
 # 导入监控系统
 try:
