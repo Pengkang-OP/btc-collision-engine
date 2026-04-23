@@ -240,17 +240,19 @@ class TestGPUPerformanceMonitor:
         
         monitor.on_degradation(on_degradation)
         
-        # 先记录高性能
-        monitor.record_kernel_metrics(
-            batch_size=10000,
-            execution_time_ms=50.0,  # 200k keys/s
-            memory_allocated_mb=128.0
-        )
+        # P1修复后需要越过预热期（warmup_batches=10），且基准使用P50滑动窗口
+        # 先注入足够的高性能批次建立温定基准
+        for _ in range(12):
+            monitor.record_kernel_metrics(
+                batch_size=10000,
+                execution_time_ms=50.0,  # 200k keys/s
+                memory_allocated_mb=128.0
+            )
         
-        # 再记录低性能(低于80%阈值)
+        # 再记录严重退化性能（低于基准的 25%，远超退化阈值75%）
         monitor.record_kernel_metrics(
-            batch_size=10000,
-            execution_time_ms=100.0,  # 100k keys/s (50%)
+            batch_size=1000,
+            execution_time_ms=200.0,  # 5k keys/s (2.5%，远低于阈值)
             memory_allocated_mb=128.0
         )
         

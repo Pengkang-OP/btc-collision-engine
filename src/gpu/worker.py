@@ -43,16 +43,23 @@ class SingleGPUWorker(threading.Thread):
         targets: Set[str],
         config: Dict,
         result_callback: Optional[Callable] = None,
-        data_monitor = None  # 添加数据监控器引用
+        data_monitor = None,  # 添加数据监控器引用
+        mode: str = 'random',       # 碰撞模式: random / range / brute_force
+        range_start: Optional[int] = None,  # range/brute_force 起始私钥
+        range_end: Optional[int] = None,    # range 结束私钥
     ):
         """初始化GPU工作器
         
         Args:
             device_idx: GPU设备索引
-            key_range: 私钥搜索范围(start, end)
+            key_range: 私钥搜索范围(start, end)，用于负载均衡分配
             targets: 目标地址集合
             config: GPU配置参数
             result_callback: 找到匹配时的回调函数
+            data_monitor: 数据监控器引用
+            mode: 碰撞模式 ('random' | 'range' | 'brute_force')
+            range_start: range/brute_force 模式的起始私钥（十进制整数）
+            range_end: range 模式的结束私钥（十进制整数）
         """
         super().__init__(daemon=True)
         
@@ -62,6 +69,9 @@ class SingleGPUWorker(threading.Thread):
         self.config = config
         self.result_callback = result_callback
         self.data_monitor = data_monitor  # 保存数据监控器引用
+        self.mode = mode
+        self.range_start = range_start
+        self.range_end = range_end
         
         # 线程控制
         self._stop_event = threading.Event()
@@ -117,7 +127,6 @@ class SingleGPUWorker(threading.Thread):
         
         finally:
             # 确保异常时也清理资源
-            self._cleanup_gpu_engine()
             self._cleanup()
             with self._lock:
                 self._stats['status'] = 'stopped'
@@ -129,24 +138,20 @@ class SingleGPUWorker(threading.Thread):
             # 导入GPU碰撞引擎
             from ..collision.gpu_collision_engine import GPUCollisionEngine
             
-            # 创建引擎实例
-            self._gpu_engine = GPUCollisionEngine()
-            
             # 配置引擎
-            batch_size = self.config.get('batch_size', 65536)
+            batch_size = self.config.get('batch_size', None)  # None=自动计算
             
-            # 初始化GPU
-            self._gpu_engine.initialize(
+            # 创建引擎实例（targets 是必填参数，其余通过 __init__ 完成初始化）
+            self._gpu_engine = GPUCollisionEngine(
+                targets=self.targets,
                 device_index=self.device_idx,
-                batch_size=batch_size
+                batch_size=batch_size,
+                use_gpu_memory_pool=True,
             )
-            
-            # 设置目标地址
-            self._gpu_engine.set_target_addresses(list(self.targets))
             
             logger.info(
                 f"GPU {self.device_idx} 引擎初始化完成: "
-                f"批次={batch_size:,}"
+                f"批次={batch_size or '自动'}"
             )
             
         except Exception as e:
@@ -154,7 +159,7 @@ class SingleGPUWorker(threading.Thread):
             raise
     
     def _execute_search(self):
-        """执行私钥搜索"""
+        """执行私钥搜索（支持 random / range / brute_force 三种模式）"""
         if not self._gpu_engine:
             return
         
@@ -162,8 +167,21 @@ class SingleGPUWorker(threading.Thread):
         total_keys = end_key - start_key
         
         try:
-            # 启动GPU引擎(它会在内部循环)
-            self._gpu_engine.start(mode='random')
+            # 根据模式组装 start() 关键字参数
+            engine_kwargs: Dict = {}
+            if self.mode in ('range', 'brute_force'):
+                if self.range_start is not None:
+                    engine_kwargs['start'] = self.range_start
+            if self.mode == 'range':
+                if self.range_end is not None:
+                    engine_kwargs['end'] = self.range_end
+            
+            # 启动GPU引擎（在内部线程循环）
+            self._gpu_engine.start(mode=self.mode, **engine_kwargs)
+            logger.info(
+                f"GPU {self.device_idx} 引擎已启动: "
+                f"mode={self.mode}, kwargs={engine_kwargs or '无'}"
+            )
             
             # 监控循环
             while not self._stop_event.is_set():
@@ -175,8 +193,8 @@ class SingleGPUWorker(threading.Thread):
                 # 更新统计
                 self._update_stats()
                 
-                # 检查是否完成
-                if self._stats['keys_checked'] >= total_keys:
+                # random 模式不按范围判断结束；range/brute_force 按已检查量
+                if self.mode != 'random' and self._stats['keys_checked'] >= total_keys:
                     logger.info(f"GPU {self.device_idx} 完成搜索范围")
                     break
                 
@@ -187,8 +205,8 @@ class SingleGPUWorker(threading.Thread):
             if self._gpu_engine:
                 self._gpu_engine.stop()
                 
-        except MemoryError as me:
-            # M11: MemoryError 自动降批——将 batch_size 减半重试
+        except MemoryError:
+            # MemoryError 自动降批——将 batch_size 减半重试（仅一次）
             current_batch = self.config.get('batch_size', 65536)
             new_batch = max(current_batch // 2, 1024)
             logger.warning(
@@ -199,15 +217,21 @@ class SingleGPUWorker(threading.Thread):
             with self._lock:
                 self._stats['error_count'] += 1
                 self._stats['last_error'] = f"MemoryError 自动降批至 {new_batch:,}"
-            # 重新初始化引擎并重试（仅重试一次防止无限循环）
+            # 重新初始化引擎并重试
             try:
                 if self._gpu_engine:
                     try:
                         self._gpu_engine.stop()
-                    except Exception:
-                        pass
+                    except RuntimeError as stop_err:
+                        logger.warning(
+                            f"GPU {self.device_idx} 引擎停止时报RuntimeError（将强制释放资源）: {stop_err}"
+                        )
+                    except OSError as stop_err:
+                        logger.warning(
+                            f"GPU {self.device_idx} 引擎停止时发生OSError: {stop_err}"
+                        )
                     self._gpu_engine = None
-                self._initialize_engine()
+                self._initialize_gpu_engine()   # 已修正：使用正确的方法名
                 self._execute_search()
             except Exception as retry_err:
                 logger.error(f"GPU {self.device_idx} 降批重试失败: {retry_err}")
@@ -227,9 +251,9 @@ class SingleGPUWorker(threading.Thread):
             engine_stats = self._gpu_engine.get_stats()
             
             with self._lock:
-                keys_checked = engine_stats.get('total_checked', 0)
+                keys_checked = engine_stats.total_checked
                 self._stats['keys_checked'] = keys_checked
-                self._stats['matches_found'] = len(engine_stats.get('matches', []))
+                self._stats['matches_found'] = len(engine_stats.matches)
                 
                 # 计算运行时间
                 if self._stats['start_time']:
@@ -249,15 +273,18 @@ class SingleGPUWorker(threading.Thread):
                         key_range=self.key_range
                     )
                 
-                # 检查新匹配
-                matches = engine_stats.get('matches', [])
-                for match in matches:
-                    self._result_queue.put(match)
+                # 检查新匹配（matches 是 Match 对象列表）
+                for match in engine_stats.matches:
+                    match_dict = {
+                        'address': match.get('address', '') if isinstance(match, dict) else getattr(match, 'address', ''),
+                        'private_key': match.get('private_key_hex', '') if isinstance(match, dict) else getattr(match, 'private_key_hex', ''),
+                    }
+                    self._result_queue.put(match_dict)
                     
                     # 调用回调
                     if self.result_callback:
                         try:
-                            self.result_callback(self.device_idx, match)
+                            self.result_callback(self.device_idx, match_dict)
                         except Exception as e:
                             logger.error(f"结果回调异常: {e}")
                             
@@ -275,8 +302,7 @@ class SingleGPUWorker(threading.Thread):
         """清理资源"""
         try:
             if self._gpu_engine:
-                self._gpu_engine.stop()
-                self._gpu_engine.cleanup()
+                self._gpu_engine.stop()  # stop() 内部已完整清理 GPU 资源
                 self._gpu_engine = None
         except Exception as e:
             logger.error(f"GPU {self.device_idx} 清理失败: {e}")

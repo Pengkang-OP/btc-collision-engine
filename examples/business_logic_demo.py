@@ -16,15 +16,13 @@ import os
 # 确保在项目根目录运行
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# 添加src到路径
-sys.path.insert(0, 'src')
-
-from target_address_table import BitcoinTargetTable
-from key_generator import SecureKeyGenerator
-from address_converter import AddressConverter
-from compliance_validator import BitcoinComplianceValidator
-from continuous_matcher import ContinuousMatcher
-from match_storage import MatchDataStorage
+# H-NEW2修复: 使用正确的包路径导入模块（扁平导入已失效）
+from src.core.target_address_table import BitcoinTargetTable
+from src.core.key_generator import SecureKeyGenerator
+from src.core.address_converter import AddressConverter
+from src.core.compliance_validator import BitcoinComplianceValidator
+from src.collision.continuous_matcher import ContinuousMatcher
+from src.collision.match_storage import MatchDataStorage
 
 
 def example_1_target_table():

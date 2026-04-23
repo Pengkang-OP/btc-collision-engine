@@ -113,11 +113,11 @@ class GPUPerformanceOptimizer:
                 vendor=GPUVendor.INTEL,
                 device_name="Intel GPU",
                 max_batch_size=262144,  # 256K
-                work_group_size=128,
-                memory_usage_ratio=0.5,
+                work_group_size=512,    # P3修复: 同步v2.3.0优化，匹配Arc A770的512个EU（原128）
+                memory_usage_ratio=0.7, # P3修复: 同步v2.2.1优化的显存率（原0.5）
                 preferred_mode="range_scan",
-                use_uint32_workaround=True,  # Intel Arc需要workaround
-                enable_async_execution=False,  # Intel异步支持较差
+                use_uint32_workaround=True,   # Intel Arc需要workaround
+                enable_async_execution=True,  # P3修复: 启用异步（Intel Arc必须）（原False）
                 enable_buffer_pooling=True,
             ),
         }

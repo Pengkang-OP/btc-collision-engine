@@ -61,3 +61,28 @@ class HashUtils:
             32字节双SHA-256哈希值
         """
         return HashUtils.sha256(HashUtils.sha256(data))
+    
+    @staticmethod
+    def hash160_to_address(hash160: bytes, version: int = 0x00) -> str:
+        """
+        将Hash160转换为P2PKH地址
+        
+        参数:
+            hash160: 20字节Hash160值
+            version: 版本字节，默认0x00 (P2PKH主网)
+            
+        返回:
+            Base58Check编码的P2PKH地址
+            
+        示例:
+            >>> hash160 = bytes.fromhex('751e76e8199196d454941c45d1b3a323f1433bd6')
+            >>> address = HashUtils.hash160_to_address(hash160)
+            >>> print(address)
+            1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH
+        """
+        if len(hash160) != 20:
+            raise ValueError(f"Hash160必须为20字节，当前为{len(hash160)}字节")
+        
+        # 延迟导入避免循环依赖
+        from .base58 import Base58
+        return Base58.check_encode(version, hash160)

@@ -329,7 +329,15 @@ class GPUKernel(GPUKernelProtocol):
         # 如果没有指定max_batch_size，根据GPU显存自动计算
         if max_batch_size is None:
             max_batch_size = self._calculate_optimal_batch_size()
-        
+                
+        # L-NEW1修复: 与配置层保持一致的上限检查（16M）
+        MAX_BATCH_SIZE_LIMIT = 16777216  # 16M，与 config_manager.py Schema 一致
+        if max_batch_size > MAX_BATCH_SIZE_LIMIT:
+            raise ValueError(
+                f"batch_size {max_batch_size} 超出最大限制 {MAX_BATCH_SIZE_LIMIT} "
+                f"(配置层与引擎层统一上限)"
+            )
+                
         self._max_batch_size = max_batch_size
         self._program = program  # 可能为None（需要自行编译）
         self._batch_kernel = None

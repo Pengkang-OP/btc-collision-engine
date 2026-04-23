@@ -85,7 +85,7 @@ class TestGPUPerformanceOptimizer(unittest.TestCase):
         
         self.assertEqual(profile.vendor, GPUVendor.INTEL)
         self.assertTrue(profile.use_uint32_workaround)  # Intel需要workaround
-        self.assertFalse(profile.enable_async_execution)  # Intel异步支持差
+        self.assertTrue(profile.enable_async_execution)  # P3修复: Intel Arc必须开启异步执行
         self.assertEqual(profile.preferred_mode, "range_scan")
     
     def test_create_optimized_profile_amd(self):
