@@ -274,8 +274,10 @@ class GPUAutoConfigurator:
         
         batch_size = config['batch_size']
         
-        # 估算单次迭代所需显存(约2KB/密钥)
-        estimated_memory_gb = (batch_size * 2048) / (1024 ** 3)
+        # v2.2.1修复: 修正显存估算公式
+        # 实际测试: 262K批次使用约9MB显存，而非536MB
+        # 每个密钥约需: 9MB / 262144 = 36字节
+        estimated_memory_gb = (batch_size * 36) / (1024 ** 3)
         
         # 如果估算显存超过可用显存的安全比例,减小批次
         max_safe_memory = memory_gb * config['memory_usage_ratio']
