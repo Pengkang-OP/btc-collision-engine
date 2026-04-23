@@ -277,5 +277,167 @@
     "exception_type": "RuntimeError",
     "exception_message": "Record failed",
     "context": {}
+  },
+  {
+    "timestamp": 1776965854.266662,
+    "datetime": "2026-04-24T01:37:34.266662",
+    "type": "monitoring_error",
+    "message": "监控系统错误: object of type 'Mock' has no len()",
+    "exception_type": "TypeError",
+    "exception_message": "object of type 'Mock' has no len()",
+    "context": {}
+  },
+  {
+    "timestamp": 1776965854.3785713,
+    "datetime": "2026-04-24T01:37:34.378571",
+    "type": "monitoring_error",
+    "message": "监控系统错误: object of type 'Mock' has no len()",
+    "exception_type": "TypeError",
+    "exception_message": "object of type 'Mock' has no len()",
+    "context": {}
+  },
+  {
+    "timestamp": 1776965854.6909957,
+    "datetime": "2026-04-24T01:37:34.690996",
+    "type": "monitoring_error",
+    "message": "监控系统错误: object of type 'Mock' has no len()",
+    "exception_type": "TypeError",
+    "exception_message": "object of type 'Mock' has no len()",
+    "context": {}
+  },
+  {
+    "timestamp": 1776965859.5765207,
+    "datetime": "2026-04-24T01:37:39.576521",
+    "type": "monitoring_error",
+    "message": "监控系统错误: Test error",
+    "exception_type": "RuntimeError",
+    "exception_message": "Test error",
+    "context": {}
+  },
+  {
+    "timestamp": 1776965859.6862977,
+    "datetime": "2026-04-24T01:37:39.686298",
+    "type": "monitoring_error",
+    "message": "监控系统错误: Test error",
+    "exception_type": "RuntimeError",
+    "exception_message": "Test error",
+    "context": {}
+  },
+  {
+    "timestamp": 1776965859.7962337,
+    "datetime": "2026-04-24T01:37:39.796234",
+    "type": "monitoring_error",
+    "message": "监控系统错误: Test error",
+    "exception_type": "RuntimeError",
+    "exception_message": "Test error",
+    "context": {}
+  },
+  {
+    "timestamp": 1776965859.9087489,
+    "datetime": "2026-04-24T01:37:39.908749",
+    "type": "monitoring_error",
+    "message": "监控系统错误: object of type 'Mock' has no len()",
+    "exception_type": "TypeError",
+    "exception_message": "object of type 'Mock' has no len()",
+    "context": {}
+  },
+  {
+    "timestamp": 1776965860.0207055,
+    "datetime": "2026-04-24T01:37:40.020705",
+    "type": "monitoring_error",
+    "message": "监控系统错误: object of type 'Mock' has no len()",
+    "exception_type": "TypeError",
+    "exception_message": "object of type 'Mock' has no len()",
+    "context": {}
+  },
+  {
+    "timestamp": 1776965860.130642,
+    "datetime": "2026-04-24T01:37:40.130642",
+    "type": "monitoring_error",
+    "message": "监控系统错误: object of type 'Mock' has no len()",
+    "exception_type": "TypeError",
+    "exception_message": "object of type 'Mock' has no len()",
+    "context": {}
+  },
+  {
+    "timestamp": 1776966153.3738627,
+    "datetime": "2026-04-24T01:42:33.373863",
+    "type": "monitoring_error",
+    "message": "监控系统错误: object of type 'Mock' has no len()",
+    "exception_type": "TypeError",
+    "exception_message": "object of type 'Mock' has no len()",
+    "context": {}
+  },
+  {
+    "timestamp": 1776966153.4787667,
+    "datetime": "2026-04-24T01:42:33.478767",
+    "type": "monitoring_error",
+    "message": "监控系统错误: object of type 'Mock' has no len()",
+    "exception_type": "TypeError",
+    "exception_message": "object of type 'Mock' has no len()",
+    "context": {}
+  },
+  {
+    "timestamp": 1776966153.792103,
+    "datetime": "2026-04-24T01:42:33.792103",
+    "type": "monitoring_error",
+    "message": "监控系统错误: object of type 'Mock' has no len()",
+    "exception_type": "TypeError",
+    "exception_message": "object of type 'Mock' has no len()",
+    "context": {}
+  },
+  {
+    "timestamp": 1776966158.6568198,
+    "datetime": "2026-04-24T01:42:38.656820",
+    "type": "monitoring_error",
+    "message": "监控系统错误: Test error",
+    "exception_type": "RuntimeError",
+    "exception_message": "Test error",
+    "context": {}
+  },
+  {
+    "timestamp": 1776966158.7666452,
+    "datetime": "2026-04-24T01:42:38.766645",
+    "type": "monitoring_error",
+    "message": "监控系统错误: Test error",
+    "exception_type": "RuntimeError",
+    "exception_message": "Test error",
+    "context": {}
+  },
+  {
+    "timestamp": 1776966158.8795846,
+    "datetime": "2026-04-24T01:42:38.879585",
+    "type": "monitoring_error",
+    "message": "监控系统错误: Test error",
+    "exception_type": "RuntimeError",
+    "exception_message": "Test error",
+    "context": {}
+  },
+  {
+    "timestamp": 1776966158.9911013,
+    "datetime": "2026-04-24T01:42:38.991101",
+    "type": "monitoring_error",
+    "message": "监控系统错误: object of type 'Mock' has no len()",
+    "exception_type": "TypeError",
+    "exception_message": "object of type 'Mock' has no len()",
+    "context": {}
+  },
+  {
+    "timestamp": 1776966159.101107,
+    "datetime": "2026-04-24T01:42:39.101107",
+    "type": "monitoring_error",
+    "message": "监控系统错误: object of type 'Mock' has no len()",
+    "exception_type": "TypeError",
+    "exception_message": "object of type 'Mock' has no len()",
+    "context": {}
+  },
+  {
+    "timestamp": 1776966159.2118,
+    "datetime": "2026-04-24T01:42:39.211800",
+    "type": "monitoring_error",
+    "message": "监控系统错误: object of type 'Mock' has no len()",
+    "exception_type": "TypeError",
+    "exception_message": "object of type 'Mock' has no len()",
+    "context": {}
   }
 ]
