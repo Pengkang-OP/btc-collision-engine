@@ -11,6 +11,9 @@ from typing import Dict
 
 logger = logging.getLogger(__name__)
 
+# 字节到GB的转换常量
+_BYTES_TO_GB = 1024 ** 3  # 1,073,741,824
+
 
 def _get_memory_gb(device: Dict) -> float:
     """获取GPU显存大小(GB)
@@ -21,13 +24,32 @@ def _get_memory_gb(device: Dict) -> float:
         device: 设备信息字典
         
     Returns:
-        显存大小(GB)
+        显存大小(GB)，如果无法获取则返回0
     """
+    if not isinstance(device, dict):
+        logger.error(f"device参数类型错误: 期望dict, 实际{type(device)}")
+        return 0
+    
     memory_gb = device.get('global_mem_gb', 0)
+    
+    # 验证memory_gb是否为有效数值
+    if not isinstance(memory_gb, (int, float)) or memory_gb < 0:
+        memory_gb = 0
+    
     if memory_gb == 0:
         # 如果没有global_mem_gb，从global_mem_size(字节)转换
         memory_bytes = device.get('global_mem_size', 0)
-        memory_gb = memory_bytes / (1024 ** 3) if memory_bytes > 0 else 0
+        
+        # 验证memory_bytes是否为有效数值
+        if not isinstance(memory_bytes, (int, float)) or memory_bytes < 0:
+            memory_bytes = 0
+            
+        if memory_bytes > 0:
+            memory_gb = memory_bytes / _BYTES_TO_GB
+            logger.debug(f"从global_mem_size转换显存: {memory_bytes} 字节 = {memory_gb:.2f} GB")
+        else:
+            logger.warning("无法获取GPU显存信息(global_mem_gb和global_mem_size均为0)")
+    
     return memory_gb
 
 
@@ -249,10 +271,6 @@ class GPUAutoConfigurator:
         """
         # v2.2.1修复: 使用统一的显存获取方法
         memory_gb = _get_memory_gb(device)
-        if memory_gb == 0:
-            # 如果没有global_mem_gb，从global_mem_size(字节)转换
-            memory_bytes = device.get('global_mem_size', 0)
-            memory_gb = memory_bytes / (1024 ** 3) if memory_bytes > 0 else 0
         
         batch_size = config['batch_size']
         
