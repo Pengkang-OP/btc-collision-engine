@@ -167,6 +167,12 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self._last_progress_time = 0.0
         self._batch_counter = 0  # P2-5修复: batch计数器
         
+        # M13: 内存监控自动降级
+        self._memory_high_threshold_mb = 2048  # 内存警报阈値 2GB
+        self._memory_critical_threshold_mb = 3072  # 内存临界阈値 3GB
+        self._last_memory_downgrade_time = 0.0  # 上次降级时间
+        self._memory_downgrade_cooldown = 30.0  # 降级冷却时间（秒）
+        
         # 数据日志系统
         # 设计说明：以下数据日志变量仅在主线程访问（通过_log_data_metrics方法），
         # 工作线程不直接访问这些变量，因此无需额外的锁保护。
@@ -400,6 +406,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
             memory_info = self._process.memory_info()
             memory_mb = memory_info.rss / 1024 / 1024
             
+            # M13: 内存监控自动降级
+            self._check_memory_and_downgrade(memory_mb, current_time)
             # P3-9修复: 记录batch_size调优信息
             if hasattr(self, '_auto_tune_batch_size') and self._auto_tune_batch_size:
                 logger.debug(
@@ -431,6 +439,57 @@ class KeyCollisionEngine(BaseCollisionEngine):
         except Exception as e:
             logger.error(f"记录数据指标失败: {e}")
     
+    def _check_memory_and_downgrade(self, memory_mb: float, current_time: float) -> None:
+        """M13: 内存监控自动降级
+        
+        当进程内存使用超过阈値时，自动降低 batch_size 和 max_workers
+        以降低内存压力，防止程序 OOM 崩溃。
+        
+        参数:
+            memory_mb: 当前进程占用内存（MB）
+            current_time: 当前时间戳
+        """
+        # 冷却期内不重复降级
+        if current_time - self._last_memory_downgrade_time < self._memory_downgrade_cooldown:
+            return
+        
+        if memory_mb >= self._memory_critical_threshold_mb:
+            # 临界状态：将 batch_size 减半（对当前运行立即生效）
+            old_batch = self._batch_size
+            new_batch = max(old_batch // 2, 256)
+            self._batch_size = new_batch
+            
+            # 同时更新 max_workers 配置（影响下次启动，当前线程池不受影响）
+            if self.max_workers and self.max_workers > 1:
+                old_workers = self.max_workers
+                self.max_workers = max(self.max_workers // 2, 1)
+                logger.warning(
+                    f"[M13 内存降级] 内存使用 {memory_mb:.0f}MB 达临界阈値 "
+                    f"{self._memory_critical_threshold_mb}MB，"
+                    f"本次运行已将 batch_size: {old_batch} -> {new_batch}，"
+                    f"将下次启动的 max_workers 配置: {old_workers} -> {self.max_workers}"
+                )
+            else:
+                logger.warning(
+                    f"[M13 内存降级] 内存使用 {memory_mb:.0f}MB 达临界阈値 "
+                    f"{self._memory_critical_threshold_mb}MB，"
+                    f"本次运行已将 batch_size: {old_batch} -> {new_batch}"
+                )
+            self._last_memory_downgrade_time = current_time
+        
+        elif memory_mb >= self._memory_high_threshold_mb:
+            # 警报状态：仅降低 batch_size
+            old_batch = self._batch_size
+            new_batch = max(old_batch * 3 // 4, 512)  # 降到 75%
+            if new_batch < old_batch:
+                self._batch_size = new_batch
+                logger.warning(
+                    f"[M13 内存降级] 内存使用 {memory_mb:.0f}MB 达高警阈値 "
+                    f"{self._memory_high_threshold_mb}MB，"
+                    f"batch_size: {old_batch} -> {new_batch}"
+                )
+                self._last_memory_downgrade_time = current_time
+
     def _tune_batch_size(self):
         """P3-9修复: 根据CPU核心数自动调整batch_size
         
@@ -609,8 +668,12 @@ class KeyCollisionEngine(BaseCollisionEngine):
                                     
                     local_count += 1
                     batch_count += 1
-                                    
-                    # 检查匹配
+                    
+                    # 实时更新共享计数器（每 32 次更新一次，均衡锁争用与实时性）
+                    if local_count % 32 == 0:
+                        with self._state_lock:
+                            self._live_range_count += 32
+                    
                     if address in self.targets:
                         try:
                             from ..core.wif import WIF
@@ -658,7 +721,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
             if batch_count > 0:
                 with self._state_lock:
                     self._live_range_count += batch_count
-            
             # 定期让出时间片，避免CPU占用过高
             if local_count % 100 == 0:
                 time.sleep(0)
@@ -796,6 +858,13 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     elapsed = current_time - self.stats.start_time
                     speed = safe_count / elapsed if elapsed > 0 else 0
                     self._log_data_metrics(safe_count, speed)
+                    
+                    # M13: 内存监控自动降级（独立于数据日志，即使禁用日志也生效）
+                    try:
+                        mem_mb = self._process.memory_info().rss / 1024 / 1024
+                        self._check_memory_and_downgrade(mem_mb, current_time)
+                    except Exception:
+                        pass
                     
                     self._last_progress_time = current_time
                     
@@ -1543,17 +1612,23 @@ class KeyCollisionEngine(BaseCollisionEngine):
             P2修复: 包含_live_range_count确保实时统计数据准确
             线程安全: 使用stats.update()确保正确的锁保护
         """
-        # P2修复: 将live_range_count合并到stats中
-        if self.stats and hasattr(self, '_live_range_count') and self._live_range_count > 0:
+        if self.stats:
             with self._state_lock:
                 live_count = self._live_range_count
-                if live_count > 0:
-                    # 使用stats.update()确保线程安全和数据一致性
-                    # update()会使用stats._lock保护，并统一计算speed和elapsed
-                    new_total = self.stats.total_checked + live_count
-                    self.stats.update(new_total)
-                    # 重置计数器避免重复计算
-                    self._live_range_count = 0
+            
+            if live_count > 0:
+                # 有实时计数：合并到 stats。
+                # 注意：不重置 _live_range_count，它由主循环自行管理。
+                # 将 live_count 直接作为近似总计数更新到 stats。
+                # （主循环会定期调用 stats.update(safe_count)，其中 safe_count = total_count + _live_range_count）
+                self.stats.update(max(live_count, self.stats.total_checked))
+            elif self.stats.start_time > 0 and self.stats.total_checked > 0:
+                # 即使 live_range_count 为 0，也尝试刷新 elapsed 和 speed
+                elapsed = time.time() - self.stats.start_time
+                if elapsed > 0:
+                    with self.stats._lock:
+                        self.stats.elapsed = elapsed
+                        self.stats.speed = self.stats.total_checked / elapsed
         
         return self.stats
 
