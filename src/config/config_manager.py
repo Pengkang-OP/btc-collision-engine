@@ -33,7 +33,7 @@ class ConfigManager:
             "collision": {
                 "type": "object",
                 "properties": {
-                    "max_workers": {"type": ["integer", "null"], "minimum": 1},
+                    "max_workers": {"type": ["integer", "null"], "minimum": 1, "maximum": 1024},
                     "progress_interval": {"type": "integer", "minimum": 1},
                     "checkpoint_interval": {"type": "integer", "minimum": 1},
                     "dedup_max_size": {"type": "integer", "minimum": 1}
@@ -73,7 +73,7 @@ class ConfigManager:
                 "properties": {
                     "use_gpu": {"type": "boolean"},
                     "device_index": {"type": "integer"},
-                    "batch_size": {"type": "integer", "minimum": 1},
+                    "batch_size": {"type": "integer", "minimum": 1, "maximum": 16777216},
                     "auto_detect": {"type": "boolean"},
                     "memory_usage_ratio": {"type": "number", "minimum": 0, "maximum": 1},
                     "enable_vendor_optimizations": {"type": "boolean"}
@@ -376,6 +376,8 @@ class ConfigManager:
         max_workers = config.get("collision", {}).get("max_workers")
         if max_workers is not None and (not isinstance(max_workers, int) or max_workers <= 0):
             errors["collision.max_workers"] = "必须是正整数"
+        elif max_workers is not None and max_workers > 1024:
+            errors["collision.max_workers"] = "上限为 1024（避免线程过度创建导致系统和内存耗尽）"
         
         progress_interval = config.get("collision", {}).get("progress_interval")
         if progress_interval is not None and (not isinstance(progress_interval, int) or progress_interval <= 0):
@@ -467,6 +469,8 @@ class ConfigManager:
         gpu_batch_size = gpu_config.get("batch_size")
         if gpu_batch_size is not None and (not isinstance(gpu_batch_size, int) or gpu_batch_size <= 0):
             errors["gpu.batch_size"] = "必须是正整数"
+        elif gpu_batch_size is not None and gpu_batch_size > 16777216:
+            errors["gpu.batch_size"] = "上限为 16777216 (16M)，避免显存耗尽"
         
         gpu_device_index = gpu_config.get("device_index")
         if gpu_device_index is not None and not isinstance(gpu_device_index, int):
