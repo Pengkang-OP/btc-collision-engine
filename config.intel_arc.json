@@ -1,7 +1,7 @@
 {
   "engine": {
     "mode": "random",
-    "batch_size": 1000000,
+    "batch_size": 262144,
     "max_threads": 8,
     "checkpoint_interval": 300
   },
@@ -31,7 +31,7 @@
     "adaptive_timeout": true
   },
   "_comment_device_index": "GPU设备索引: 0=NVIDIA GTX 1660 Ti, 1=Intel Arc A770",
-  "_comment_batch_size": "批次大小: 65536(保守) 131072(平衡) 1000000(高性能)",
+  "_comment_batch_size": "批次大小: 65536(保守) 131072(平衡) 262144(最优) 1000000(测试)",
   "_comment_async": "异步执行已启用(双缓冲优化),如不稳定可设为false",
   "_comment_workaround": "Intel Arc必须启用uint32 workaround避免hang bug"
 }

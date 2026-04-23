@@ -39,7 +39,7 @@ def test_config(config_name, batch_size, test_duration=30):
     def on_progress(stats):
         stats_history.append({
             'total_checked': stats.total_checked,
-            'keys_per_second': stats.keys_per_second,
+            'keys_per_second': stats.speed,  # 修复: 使用speed而非keys_per_second
             'matches': stats.matches
         })
     
