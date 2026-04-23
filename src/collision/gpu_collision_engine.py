@@ -1061,14 +1061,12 @@ class GPUCollisionEngine(BaseCollisionEngine):
         timeout = getattr(self._gpu_device, 'timeout_seconds', 30)
         logger.info(f"✅ Intel 超时保护: {timeout}秒")
         
-        # 4. 异步执行(根据配置决定)
-        if hasattr(self._gpu_device, 'enable_async'):
-            # 不再强制禁用,尊重配置
-            if self._gpu_device.enable_async_execution:
-                logger.info("✅ Intel 异步执行: 已启用(双缓冲优化)")
-            else:
-                self._gpu_device.enable_async = False
-                logger.info("✅ Intel 异步执行: 已禁用(传统模式)")
+        # 4. 异步执行(根据配置决定) - v2.3.1修复: 不再写旧属性enable_async，只读enable_async_execution
+        async_enabled = self._gpu_device.enable_async_execution
+        if async_enabled:
+            logger.info("✅ Intel 异步执行: 已启用(双缓冲优化)")
+        else:
+            logger.info("Intel 异步执行: 未启用(传统模式)")
         
         # 5. 显存限制（v2.2.1优化: 45% → 70%）
         memory_efficiency = getattr(self._gpu_device, 'memory_efficiency', 0.70)

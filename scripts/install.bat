@@ -2,6 +2,9 @@
 chcp 65001 > nul
 setlocal enabledelayedexpansion
 
+:: 切换到项目根目录（脚本所在目录的上一级）
+cd /d "%~dp0.."
+
 echo ========================================
 echo BTC 碰撞引擎 - 安装脚本
 echo ========================================
@@ -69,9 +72,29 @@ echo [成功] 虚拟环境已激活
 echo.
 echo [4/7] 安装基础依赖...
 echo [信息] 这可能需要几分钟时间，请耐心等待...
-pip install -r requirements-base.txt
+
+:: 升级 pip 以支持更多预编译 wheel
+python -m pip install --upgrade pip --quiet
+
+:: 优先尝试安装 coincurve 预编译 wheel（避免 Windows 编译问题）
+echo Installing coincurve...
+pip install coincurve --only-binary :all: --quiet 2>nul
 if errorlevel 1 (
-    echo [警告] 基础依赖安装失败，尝试继续...
+    echo [警告] coincurve 预编译包不可用，尝试源码编译...
+    pip install coincurve --quiet 2>nul
+    if errorlevel 1 (
+        echo [警告] coincurve 安装失败，将使用纯 Python ecdsa 库作为备用后端
+    ) else (
+        echo [成功] coincurve 安装完成
+    )
+) else (
+    echo [成功] coincurve 安装完成
+)
+
+:: 安装其余基础依赖（排除 coincurve，已单独处理）
+pip install -r requirements-base.txt --quiet
+if errorlevel 1 (
+    echo [警告] 部分基础依赖安装失败，尝试继续...
 ) else (
     echo [成功] 基础依赖安装完成
 )
@@ -105,9 +128,14 @@ if not exist "config.json" (
 :: 7. 验证关键依赖
 echo.
 echo [7/7] 验证关键依赖...
-python -c "import coincurve; print('[成功] coincurve')" 2>nul || echo [警告] coincurve未安装
-python -c "import gmpy2; print('[成功] gmpy2')" 2>nul || echo [警告] gmpy2未安装
-python -c "import psutil; print('[成功] psutil')" 2>nul || echo [警告] psutil未安装
+python -c "import coincurve" 2>nul
+if errorlevel 1 (echo [警告] coincurve未安装，将使用 ecdsa 备用后端) else (echo [成功] coincurve 已安装)
+python -c "import gmpy2" 2>nul
+if errorlevel 1 (echo [警告] gmpy2未安装，可选) else (echo [成功] gmpy2 已安装)
+python -c "import psutil" 2>nul
+if errorlevel 1 (echo [警告] psutil未安装) else (echo [成功] psutil 已安装)
+python -c "import ecdsa" 2>nul
+if errorlevel 1 (echo [警告] ecdsa未安装) else (echo [成功] ecdsa 已安装)
 
 :: 创建必要目录
 if not exist "logs" mkdir logs
