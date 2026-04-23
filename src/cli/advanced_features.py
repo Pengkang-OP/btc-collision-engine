@@ -221,7 +221,7 @@ def recommend_parameters(args) -> dict:
         end_val = int(args.end, 16) if args.end else 0
         total_range = end_val - start_val if end_val > start_val else 0
         
-        if total_range > 2**32:
+        if total_range >= 2**32:  # 大于等于2^32时推荐断点续传
             recommendations.append('--checkpoint')
             recommendations.append('--checkpoint-interval')
             recommendations.append('60')
