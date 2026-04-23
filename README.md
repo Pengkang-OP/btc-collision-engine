@@ -90,7 +90,31 @@ btc-collision-engine/
 
 ## 安装依赖
 
-### 第一步：创建虚拟环境（强烈推荐）
+### 方法一：自动化安装脚本（推荐，5分钟完成）
+
+**Windows**:
+
+```bash
+scripts\install.bat
+```
+
+**Linux / macOS**:
+
+```bash
+bash scripts/install.sh
+```
+
+安装脚本会自动完成：
+
+- ✅ Python版本检查（需要3.9+）
+- ✅ 虚拟环境创建和激活
+- ✅ 依赖安装（基础+可选GPU）
+- ✅ 配置文件初始化
+- ✅ 依赖验证和目录创建
+
+### 方法二：手动安装（高级用户）
+
+#### 第一步：创建虚拟环境（强烈推荐）
 
 ```bash
 # 创建虚拟环境
@@ -103,13 +127,15 @@ venv\Scripts\activate
 source venv/bin/activate
 ```
 
-### 第二步：安装基础依赖
+#### 第二步：安装基础依赖
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-base.txt
 ```
 
-### 第三步：初始化配置文件
+> 💡 **提示**: `requirements.txt` 包含所有依赖（包括开发工具），普通用户使用 `requirements-base.txt` 即可。
+
+#### 第三步：初始化配置文件
 
 ```bash
 # Windows
@@ -123,7 +149,7 @@ cp config.example.json config.json
 
 ### GPU加速（可选）
 
-> **要求**：Python 3.7+、已安装 GPU 驱动、支持 OpenCL 1.2+
+> **要求**：Python 3.9+、已安装 GPU 驱动、支持 OpenCL 1.2+
 
 #### NVIDIA GPU
 
@@ -187,6 +213,38 @@ pip install numpy
 # v2.2.0 新增性能优化模块
 pip install gmpy2>=2.1.5            # 大整数运算优化 (模逆元 +1455%)
 pip install pycryptodome>=3.19.0    # SIMD哈希优化 (AES-NI加速)
+```
+
+## 系统维护（推荐）
+
+### 健康检查
+
+运行健康检查诊断系统状态：
+
+```bash
+# 基础检查
+python -m src.utils.health_check
+
+# 包含GPU检查
+python -m src.utils.health_check --gpu
+
+# 生成报告文件
+python -m src.utils.health_check --report health_report.txt
+```
+
+### 数据清理
+
+定期清理过期数据，防止磁盘空间耗尽：
+
+```bash
+# 试运行（查看将删除什么）
+python -m src.utils.data_cleanup --dry-run
+
+# 实际清理
+python -m src.utils.data_cleanup
+
+# 自定义保留天数
+python -m src.utils.data_cleanup --temp-days 14 --data-days 60
 ```
 
 ## 使用方法

@@ -2,10 +2,10 @@
 
 > 本文档提供BTC碰撞引擎项目的完整文档导航，帮助您快速找到所需信息。
 >
-> **版本**: v2.3.0 | **最后更新**: 2026-04-22
+> **版本**: v3.1.1 | **最后更新**: 2026-04-23
 >
-> 📢 **v2.3.0重大更新**: 全面文档梳理整合,建立清晰的归档体系
-> 📢 **文档清理**: 2026-04-22完成大规模文档清理,根目录25→3个文件,docs目录100→30个文件
+> 📢 **v3.1.1重大更新**: 自动化安装脚本、健康检查、数据清理、使用场景指南
+> 📢 **v3.1.0文档清理**: 根目录25→3个文件,docs目录100→30个文件
 > 查看 [DOCUMENT_CLEANUP_REPORT_v2.3.0.md](DOCUMENT_CLEANUP_REPORT_v2.3.0.md) 获取清理详情
 > 📢 **测试文件清理**: 2026-04-22完成测试文件整理,归档40+个测试相关文件
 > 查看 [TEST_CLEANUP_REPORT_20260422.md](TEST_CLEANUP_REPORT_20260422.md) 获取清理详情
@@ -54,7 +54,8 @@
 ### 1. 快速开始与概述
 
 - [README.md](../README.md) - 项目概述、快速开始、功能特性
-- [getting-started.md](getting-started.md) - 详细入门指南
+- [getting-started.md](getting-started.md) - 详细入门指南（✅ v3.1.1更新）
+- [use-cases.md](use-cases.md) - 使用场景指南（✅ v3.1.1新增）
 - [project-status.md](project-status.md) - 项目状态和路线图
 
 ### 2. 架构与设计
@@ -103,6 +104,13 @@
 
 - [config-usage-examples.md](config-usage-examples.md) - 配置使用示例
 - [document-archive-strategy.md](document-archive-strategy.md) - 文档归档策略
+
+### 4.5 系统维护（v3.1.1新增）
+
+- 🏥 **健康检查**: `python -m src.utils.health_check` - 诊断系统状态
+- 🧹 **数据清理**: `python -m src.utils.data_cleanup` - 清理过期数据
+- 📖 **安装脚本**: `scripts/install.bat` (Windows) / `scripts/install.sh` (Linux/macOS)
+- 📝 **改进报告**: [AI_AUTO_SORT_PROJECT_IMPROVEMENT_REPORT.md](../AI_AUTO_SORT_PROJECT_IMPROVEMENT_REPORT.md)
 
 ### 5. 界面使用
 
