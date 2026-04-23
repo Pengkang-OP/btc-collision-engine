@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-UI 模块更新验证脚本
+UI 模块更新验证脚本（已废弃）
 
-验证 UI 模块更新后的功能是否正常。
+警告：GUI 模块已删除，本测试文件不再可用。
 """
 
 import sys
 import os
 
+import pytest
+
+pytestmark = pytest.mark.skip(reason="GUI 模块已删除，所有 GUI 测试已废弃")
+
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 
 
 def test_gui_config():
