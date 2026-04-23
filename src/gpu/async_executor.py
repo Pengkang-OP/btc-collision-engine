@@ -134,27 +134,32 @@ class AsyncGPUExecutor:
                        program, targets_buf, num_targets) -> Tuple[List[Dict], float]:
         """
         异步执行批次
-        
+            
+        v2.3.1修复: 数据流向错误，重写双缓冲逻辑:
+        - 当前批数据写入 current_buf（传输队列）
+        - 内核在传输完成后执行（事件依赖）
+        - 预取数据写入 next_buf（下一批的提前传输）
+            
         Args:
-            private_keys: 私钥数据
-            num_keys: 密钥数量
+            private_keys: 私鑰数据
+            num_keys: 密鑰数量
             program: OpenCL程序
             targets_buf: 目标地址缓冲区
             num_targets: 目标数量
-            
+                
         Returns:
             (matches, execution_time_ms)
         """
         import pyopencl as cl
         import numpy as np
-        
+            
         start_time = time.time()
-        
+            
         # 检查是否支持异步
         if not self.device.enable_async_execution or not self.device.compute_queue:
             # 回退到同步模式
             return self._run_batch_sync(private_keys, num_keys, program, targets_buf, num_targets)
-        
+            
         try:
             # 选择当前缓冲
             if self.current_buffer == 'A':
@@ -163,34 +168,26 @@ class AsyncGPUExecutor:
             else:
                 current_buf = self.buffer_b
                 next_buf = self.buffer_a
-            
-            # 1. 检查预取数据是否就绪（性能优化v2.2.1）
-            if self._next_batch_ready.is_set() and self._next_batch_data:
-                # 使用预取的数据
-                next_keys = self._next_batch_data
-                next_num = self._next_batch_size
-                self._next_batch_ready.clear()
-                self._next_batch_data = None
-                self.prefetch_hits += 1
-                logger.debug(f"预取命中: 使用预取数据")
-            else:
-                # 预取未命中，使用当前数据
-                next_keys = private_keys
-                next_num = num_keys
-                self.prefetch_misses += 1
-                logger.debug(f"预取未命中: 使用当前数据")
-            
-            # 2. 在传输队列上异步准备下一批数据
-            keys_array = np.frombuffer(next_keys[:next_num * 32], dtype=np.uint32)
-            
+                
+            # v2.3.1修复: 正确的双缓冲数据流向
+            # 
+            # 正确逻辑:
+            #   1. 把本次数据写入 current_buf（传输队列，非阻塞）
+            #   2. 内核执行等待传输完成（wait_for=事件依赖）
+            #   3. 如果有预取数据，并行把下一批写入 next_buf
+            # 错误逻辑(已修复):
+            #   取 next_keys 写入 next_buf，内核却计算 current_buf 旧数据!
+                
+            # 1. 把本次数据写入 current_buf（传输队列，非阻塞）
+            keys_array = np.frombuffer(private_keys[:num_keys * 32], dtype=np.uint32)
             transfer_event = cl.enqueue_copy(
                 self.device.transfer_queue,
-                next_buf['keys'],
+                current_buf['keys'],   # v2.3.1修复: 小 current_buf，不是 next_buf
                 keys_array,
-                is_blocking=False  # 不阻塞!
+                is_blocking=False      # 非阻塞!
             )
-            
-            # 3. 清空当前缓冲的匹配结果
+                
+            # 2. 清空当前缓冲的匹配结果（计算队列）
             cl.enqueue_fill_buffer(
                 self.device.compute_queue,
                 current_buf['matches'],
@@ -198,21 +195,56 @@ class AsyncGPUExecutor:
                 0,
                 num_keys * 4
             )
-            
-            # 4. 执行内核(异步)
+                
+            # 3. 如果有预取数据，并行把它写入 next_buf（真正的双缓冲预取）
+            if self._next_batch_ready.is_set() and self._next_batch_data is not None:
+                prefetch_keys = self._next_batch_data
+                prefetch_num = self._next_batch_size
+                self._next_batch_ready.clear()
+                self._next_batch_data = None
+                self.prefetch_hits += 1
+                logger.debug(f"预取命中: 把下一批{prefetch_num}个密鑰写入 next_buf")
+                # 并行把下一批数据写入 next_buf（不阻塞）
+                next_keys_array = np.frombuffer(prefetch_keys[:prefetch_num * 32], dtype=np.uint32)
+                cl.enqueue_copy(
+                    self.device.transfer_queue,
+                    next_buf['keys'],
+                    next_keys_array,
+                    is_blocking=False
+                )
+            else:
+                self.prefetch_misses += 1
+                logger.debug("预取未命中: 下一批将在切换后写入")
+                
+            # 4. 执行内核(等待传输事件完成) - v2.3.1修复: 添加 wait_for 事件依赖
             batch_kernel = program.batch_check
-            
-            kernel_event = batch_kernel(
-                self.device.compute_queue,
-                (num_keys,),
-                None,
-                current_buf['keys'],
-                np.uint32(num_keys),
-                targets_buf,
-                np.uint32(num_targets),
-                current_buf['matches']
-            )
-            
+                
+            try:
+                kernel_event = batch_kernel(
+                    self.device.compute_queue,
+                    (num_keys,),
+                    None,
+                    current_buf['keys'],
+                    np.uint32(num_keys),
+                    targets_buf,
+                    np.uint32(num_targets),
+                    current_buf['matches'],
+                    wait_for=[transfer_event]  # v2.3.1修复: 等待传输完成再执行
+                )
+            except TypeError:
+                # 如果该版本 pyopencl 不支持 wait_for，先同步等待传输完成
+                transfer_event.wait()
+                kernel_event = batch_kernel(
+                    self.device.compute_queue,
+                    (num_keys,),
+                    None,
+                    current_buf['keys'],
+                    np.uint32(num_keys),
+                    targets_buf,
+                    np.uint32(num_targets),
+                    current_buf['matches']
+                )
+                
             # 5. 异步读取结果
             read_event = cl.enqueue_copy(
                 self.device.compute_queue,
@@ -220,7 +252,7 @@ class AsyncGPUExecutor:
                 current_buf['matches'],
                 is_blocking=False
             )
-            
+                
             # 6. 等待完成(带超时)
             timeout_seconds = 30
             try:
@@ -234,7 +266,7 @@ class AsyncGPUExecutor:
                     read_event.wait()
             except Exception as e:
                 raise RuntimeError(f"异步执行失败: {e}")
-            
+                
             # 7. 收集匹配结果
             matches = []
             for i in range(num_keys):
@@ -243,15 +275,15 @@ class AsyncGPUExecutor:
                         "key_index": i,
                         "target_index": int(current_buf['match_flags'][i] - 1)
                     })
-            
+                
             # 8. 切换缓冲
             self.current_buffer = 'B' if self.current_buffer == 'A' else 'A'
             self.async_executions += 1
-            
+                
             execution_time_ms = (time.time() - start_time) * 1000
-            
+                
             return matches, execution_time_ms
-            
+                
         except Exception as e:
             logger.warning(f"异步执行失败,回退到同步模式: {e}")
             self.sync_fallbacks += 1

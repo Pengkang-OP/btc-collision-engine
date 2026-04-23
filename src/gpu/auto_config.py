@@ -228,9 +228,9 @@ class GPUAutoConfigurator:
         # v2.2.1修复: 使用统一的显存获取方法
         memory_gb = _get_memory_gb(device)
         if memory_gb >= 15:  # v2.2.1修改: 15.56GB的A770也能匹配
-            # Arc A770 16GB - v2.2.1优化: 提升到262K
-            config['batch_size'] = 262144   # 262K
-            config['memory_usage_ratio'] = 0.7
+            # Arc A770 16GB - v3.1.0优化: 提升到 1M（原262K），充分利用16GB显存
+            config['batch_size'] = 1048576  # 1M，42MB显存占用（A770有充足余量）
+            config['memory_usage_ratio'] = 0.70
             config['work_group_size'] = 512  # v2.3.0优化: 匹配512个EU
         elif memory_gb >= 8:
             # Arc A750/A580 - v2.2.1优化: 提升到131K

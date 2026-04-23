@@ -1,0 +1,22 @@
+{
+  "timestamp": "2026-04-24T03:34:47.934582",
+  "test_type": "2M_batch_size_test",
+  "device": {
+    "name": "Intel(R) Arc(TM) A770 Graphics",
+    "type": "GPU",
+    "vendor": "Intel(R) Corporation",
+    "platform": "Intel(R) OpenCL Graphics",
+    "global_mem_size": 16706793472,
+    "max_compute_units": 512,
+    "work_group_size": 256
+  },
+  "batch_size": 2097152,
+  "duration_seconds": 62.09596490859985,
+  "total_checked": 32457280,
+  "avg_speed": 522695.4770374282,
+  "peak_speed": 538862.8040187088,
+  "min_speed": 456143.5714953769,
+  "batch_count": 16,
+  "estimated_memory_mb": 84.0,
+  "improvement_vs_1m_percent": -0.04446557892708369
+}
