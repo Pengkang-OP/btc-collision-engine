@@ -322,6 +322,10 @@ class GPUKernel(GPUKernelProtocol):
         self._device = device
         self.gpu_optimizer = get_gpu_optimizer()
         
+        # v2.3.0优化: 从配置中获取work_group_size
+        device_info = device.get_device_info() if hasattr(device, 'get_device_info') else {}
+        self._work_group_size = device_info.get('work_group_size', 256)
+        
         # 如果没有指定max_batch_size，根据GPU显存自动计算
         if max_batch_size is None:
             max_batch_size = self._calculate_optimal_batch_size()
@@ -729,8 +733,15 @@ class GPUKernel(GPUKernelProtocol):
         if self._batch_kernel is None:
             self._batch_kernel = self.program.batch_check
         
+        # v2.3.0优化: 显式设置local_work_size提升性能
+        # 从配置中获取work_group_size，避免OpenCL自动选择次优值
+        local_work_size = getattr(self, '_work_group_size', 256)
+        
+        # 确保global_work_size是local_work_size的整数倍
+        global_work_size = ((num_keys + local_work_size - 1) // local_work_size) * local_work_size
+        
         self._batch_kernel(
-            self.device.queue, (num_keys,), None,
+            self.device.queue, (global_work_size,), (local_work_size,),
             self._keys_buf, np.uint32(num_keys),
             self._targets_buf, np.uint32(self._num_targets_cached),
             self._match_buf
@@ -1807,7 +1818,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 
                 logger.info(
                     f"GPU 引擎初始化成功: {device_name} "
-                    f"(厂商: {vendor}, batch_size: {self.batch_size})"
+                    f"(厂商: {vendor}, batch_size: {self.batch_size}, "
+                    f"work_group_size: {self.kernel._work_group_size if hasattr(self, 'kernel') and self.kernel else 'N/A'})"
                 )
                 
                 pm.add_metadata('device_name', device_name)

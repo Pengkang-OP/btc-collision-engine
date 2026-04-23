@@ -477,44 +477,64 @@ void ec_point_add(const uint256_t *p1x, const uint256_t *p1y,
     mod_sub(&temp1, p1y, ry);  // ry = lambda*(x1 - rx) - y1
 }
 
-// 标量乘法: R = k * G (双倍-加法算法)
+// 标量乘法: R = k * G (窗口优化算法)
+// v2.4.0修复: 使用完整预计算表[1G-15G]修复偶数窗口映射错误
 void ec_scalar_multiply(const uint256_t *k, const uint256_t *gx, const uint256_t *gy,
                         uint256_t *rx, uint256_t *ry) {
-    uint256_t result_x, result_y;
-    uint256_t addend_x, addend_y;
-    uint256_t exp;
-    uint256_t temp_x, temp_y;
+    // v2.4.0修复: 预计算表 [1G, 2G, 3G, ..., 15G]
+    // 窗口大小 w=4，预计算15个点覆盖所有可能的窗口值(1-15)
+    uint256_t precomp_x[15], precomp_y[15];
+    uint256_t temp2x, temp2y;
+    
+    // 预计算: precomp[0] = 1G = G
+    uint256_copy(gx, &precomp_x[0]);
+    uint256_copy(gy, &precomp_y[0]);
+    
+    // 预计算: precomp[1-14] = 2G-15G
+    for (int i = 1; i < 15; i++) {
+        ec_point_add(&precomp_x[i-1], &precomp_y[i-1], gx, gy, &temp2x, &temp2y);
+        uint256_copy(&temp2x, &precomp_x[i]);
+        uint256_copy(&temp2y, &precomp_y[i]);
+    }
     
     // 初始化结果为无穷远点
+    uint256_t result_x, result_y;
     uint256_set_zero(&result_x);
     uint256_set_zero(&result_y);
     
-    // 初始化 addend 为基点 G
-    uint256_copy(gx, &addend_x);
-    uint256_copy(gy, &addend_y);
-    
-    // 复制指数
+    // 窗口算法 (w=4)
+    // 每次处理4位，从256位减少到64次循环
+    uint256_t exp;
     uint256_copy(k, &exp);
     
-    // 双倍-加法算法
-    while (!uint256_is_zero(&exp)) {
-        if (exp.d[0] & 1) {
-            // result += addend
-            // 使用临时变量避免输入输出参数重叠问题
-            ec_point_add(&result_x, &result_y, &addend_x, &addend_y, &temp_x, &temp_y);
-            uint256_copy(&temp_x, &result_x);
-            uint256_copy(&temp_y, &result_y);
-        }
-        // addend *= 2
-        ec_point_double(&addend_x, &addend_y, &temp_x, &temp_y);
-        uint256_copy(&temp_x, &addend_x);
-        uint256_copy(&temp_y, &addend_y);
+    for (int i = 0; i < 64; i++) {
+        // 提取4位窗口值 (0-15)
+        int window = exp.d[0] & 0xF;  // 最低4位
         
-        // exp >>= 1
-        for (int i = 0; i < 7; i++) {
-            exp.d[i] = (exp.d[i] >> 1) | (exp.d[i + 1] << 31);
+        // 4次点倍加 (处理4位)
+        for (int j = 0; j < 4; j++) {
+            ec_point_double(&result_x, &result_y, &temp2x, &temp2y);
+            uint256_copy(&temp2x, &result_x);
+            uint256_copy(&temp2y, &result_y);
         }
-        exp.d[7] >>= 1;
+        
+        // 如果窗口值非零，查表加点
+        if (window > 0) {
+            // v2.4.0修复: 直接映射 window: 1-15 → index: 0-14
+            int index = window - 1;
+            
+            if (index >= 0 && index < 15) {
+                ec_point_add(&result_x, &result_y, &precomp_x[index], &precomp_y[index], &temp2x, &temp2y);
+                uint256_copy(&temp2x, &result_x);
+                uint256_copy(&temp2y, &result_y);
+            }
+        }
+        
+        // exp >>= 4
+        for (int j = 0; j < 7; j++) {
+            exp.d[j] = (exp.d[j] >> 4) | (exp.d[j + 1] << 28);
+        }
+        exp.d[7] >>= 4;
     }
     
     uint256_copy(&result_x, rx);
