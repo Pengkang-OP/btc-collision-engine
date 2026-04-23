@@ -19,6 +19,7 @@
 """
 
 import argparse
+import json
 import os
 import signal
 import sys
@@ -34,8 +35,62 @@ if _project_root not in sys.path:
 from src.collision import KeyCollisionEngine, TargetResolver, CollisionStats
 from src.utils import init_logging, get_configured_logger
 
+# GPU 引擎延迟导入（pyopencl 可选依赖）
+try:
+    from src.collision.gpu_collision_engine import GPUCollisionEngine
+    from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
+    GPU_AVAILABLE = True
+except ImportError:
+    GPU_AVAILABLE = False
+
 init_logging()
 logger = get_configured_logger("CLI")
+
+
+def load_config_with_validation() -> Optional[dict]:
+    """
+    加载并验证配置文件
+    
+    返回:
+        配置字典，如果加载失败则返回None
+    """
+    config_path = os.path.join(_project_root, 'config.json')
+    
+    # 检查配置文件是否存在
+    if not os.path.exists(config_path):
+        logger.warning(f"配置文件不存在: {config_path}")
+        logger.info("请运行: copy config.example.json config.json (Windows) 或 cp config.example.json config.json (Linux/macOS)")
+        return None
+    
+    # 尝试加载JSON
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        logger.info(f"配置文件加载成功: {config_path}")
+        
+        # 基本验证
+        if not isinstance(config, dict):
+            logger.error("配置文件格式错误: 根节点必须是JSON对象")
+            return None
+        
+        return config
+        
+    except json.JSONDecodeError as e:
+        logger.error(f"配置文件JSON格式错误: {e}")
+        logger.error(f"位置: 行{e.lineno}, 列{e.colno}")
+        logger.error("请检查config.json语法，或从config.example.json重新复制")
+        return None
+    except UnicodeDecodeError as e:
+        logger.error(f"配置文件编码错误: {e}")
+        logger.error("请确保配置文件使用UTF-8编码")
+        return None
+    except PermissionError as e:
+        logger.error(f"配置文件权限错误: {e}")
+        logger.error("请检查文件读取权限")
+        return None
+    except Exception as e:
+        logger.error(f"加载配置文件时发生未知错误: {e}")
+        return None
 
 
 def parse_args() -> argparse.Namespace:
@@ -55,8 +110,12 @@ def parse_args() -> argparse.Namespace:
   启用断点续传，运行120秒后自动停止:
     python key_collision_cli.py -t 1A1z... -m random --checkpoint --duration 120
 
-  多线程暴力穷举，自定义进度显示间隔:
-    python key_collision_cli.py -t 1A1z... -m brute_force --start 1 --workers 8 --progress-interval 10
+  多GPU单GPU GPU加速随机碰撞:
+    python key_collision_cli.py -f targets.txt --use-gpu -m random
+    python key_collision_cli.py -f targets.txt --multi-gpu -m random
+
+  GPU加速范围扫描:
+    python key_collision_cli.py -f targets.txt --use-gpu -m range --start 1 --end FFFFFFFF
         """
     )
 
@@ -175,6 +234,53 @@ def parse_args() -> argparse.Namespace:
         help="禁用内存池优化"
     )
 
+    # GPU 加速选项
+    gpu_group = parser.add_argument_group(
+        "GPU 加速",
+        "启用 GPU 加速可将速度提升数千倍（需安装 pyopencl）"
+    )
+    gpu_group.add_argument(
+        "--use-gpu",
+        action="store_true",
+        default=False,
+        help="启用单 GPU 加速模式"
+    )
+    gpu_group.add_argument(
+        "--gpu-device",
+        metavar="INDEX",
+        type=int,
+        default=-1,
+        help="GPU 设备索引，-1 表示自动选择最佳设备（默认: -1）"
+    )
+    gpu_group.add_argument(
+        "--gpu-batch-size",
+        metavar="N",
+        type=int,
+        default=None,
+        help="GPU 每批处理私钥数量，None 表示根据显存自动计算（默认: 自动）"
+    )
+    gpu_group.add_argument(
+        "--multi-gpu",
+        action="store_true",
+        default=False,
+        help="启用多 GPU 模式（自动使用所有可用 GPU，优先级高于 --use-gpu）"
+    )
+    gpu_group.add_argument(
+        "--gpu-count",
+        metavar="N",
+        type=int,
+        default=-1,
+        help="多 GPU 模式下使用的 GPU 数量，-1 表示使用全部（默认: -1）"
+    )
+    gpu_group.add_argument(
+        "--gpu-indices",
+        metavar="IDX",
+        type=int,
+        nargs="+",
+        default=None,
+        help="多 GPU 模式下手动指定 GPU 索引列表，例如: --gpu-indices 0 1（默认: 自动选择）"
+    )
+
     return parser.parse_args()
 
 
@@ -208,6 +314,11 @@ def validate_args(args: argparse.Namespace) -> bool:
         if start_val < 1:
             print("错误: --start 必须 >= 1", file=sys.stderr)
             return False
+        
+        # M-NEW2修复: 范围过大警告（2^64约需数百年才能穷举）
+        total_range = end_val - start_val + 1
+        if total_range > 2**64:
+            print(f"警告: 搜索范围超过 2^64 ({total_range:,} 个私钥)，任务可能需要极长时间", file=sys.stderr)
 
     if args.workers is not None and args.workers < 1:
         print(f"错误: --workers 必须 >= 1 (当前: {args.workers})", file=sys.stderr)
@@ -280,6 +391,68 @@ def format_progress(stats: CollisionStats, mode: str, total_range: Optional[int]
     )
 
 
+def build_engine(args, targets: Set[str]):
+    """引擎工厂：根据 CLI 参数分路 CPU / 单GPU / 多GPU 三种引擎
+
+    Returns:
+        (engine, engine_type) 元组
+        engine_type: 'cpu' | 'gpu' | 'multi_gpu'
+    """
+    # ── 多GPU 模式 ──────────────────────────────────────────────
+    if getattr(args, 'multi_gpu', False):
+        if not GPU_AVAILABLE:
+            print("错误: 多GPU模式需要安装 pyopencl，当前不可用", file=sys.stderr)
+            sys.exit(1)
+        engine = MultiGPUCollisionEngine()
+        device_indices = getattr(args, 'gpu_indices', None)
+        gpu_count = getattr(args, 'gpu_count', -1)
+        ok = engine.initialize(
+            device_indices=device_indices,
+            device_count=gpu_count,
+            strategy='performance',
+        )
+        if not ok:
+            print("错误: 多GPU引擎初始化失败，请检查 GPU 驱动和 pyopencl 安装", file=sys.stderr)
+            sys.exit(1)
+        return engine, 'multi_gpu'
+
+    # ── 单GPU 模式 ──────────────────────────────────────────────
+    if getattr(args, 'use_gpu', False):
+        if not GPU_AVAILABLE:
+            print("错误: GPU模式需要安装 pyopencl，当前不可用", file=sys.stderr)
+            sys.exit(1)
+        engine = GPUCollisionEngine(
+            targets=targets,
+            device_index=getattr(args, 'gpu_device', -1),
+            batch_size=getattr(args, 'gpu_batch_size', None),
+            on_progress=lambda s: None,
+            on_match=on_match_callback,
+            checkpoint_enabled=args.checkpoint,
+            checkpoint_interval=args.checkpoint_interval,
+            dedup_enabled=args.dedup,
+            dedup_max_size=args.dedup_max_size,
+            use_gpu_memory_pool=True,
+        )
+        return engine, 'gpu'
+
+    # ── CPU 模式（默认）────────────────────────────────────────
+    engine = KeyCollisionEngine(
+        targets=targets,
+        on_progress=lambda s: None,
+        on_match=on_match_callback,
+        checkpoint_enabled=args.checkpoint,
+        checkpoint_interval=args.checkpoint_interval,
+        dedup_enabled=args.dedup,
+        dedup_max_size=args.dedup_max_size,
+        max_workers=args.workers,
+        use_performance_optimization=not args.no_optimize,
+        precomputed_window_size=args.window_size,
+        use_simd_hash=not args.no_simd,
+        use_memory_pool=not args.no_memory_pool,
+    )
+    return engine, 'cpu'
+
+
 def on_match_callback(private_key: bytes, address: str, wif: str) -> None:
     """匹配回调（高亮显示）"""
     pk_hex = private_key.hex()
@@ -293,10 +466,56 @@ def on_match_callback(private_key: bytes, address: str, wif: str) -> None:
 
 def main() -> None:
     """CLI 主入口"""
+    try:
+        _run_main()
+    except KeyboardInterrupt:
+        print("\n用户中断，退出程序。")
+        sys.exit(0)
+    except SystemExit:
+        # 参数验证失败等主动调用 sys.exit() 的情况，直接透传
+        raise
+    except ValueError as e:
+        print(f"\n错误: 参数值无效 - {e}", file=sys.stderr)
+        logger.exception("参数值无效")
+        sys.exit(1)
+    except FileNotFoundError as e:
+        print(f"\n错误: 文件不存在 - {e}", file=sys.stderr)
+        logger.exception("文件不存在")
+        sys.exit(1)
+    except PermissionError as e:
+        print(f"\n错误: 权限不足 - {e}", file=sys.stderr)
+        logger.exception("权限不足")
+        sys.exit(1)
+    except MemoryError:
+        print("\n错误: 内存不足，请减少目标地址数量或降低批次大小", file=sys.stderr)
+        logger.exception("内存不足")
+        sys.exit(1)
+    except ImportError as e:
+        print(f"\n错误: 缺少依赖模块 - {e}", file=sys.stderr)
+        logger.exception("缺少依赖模块")
+        sys.exit(1)
+    except OSError as e:
+        print(f"\n错误: 系统调用失败 - {e}", file=sys.stderr)
+        logger.exception("系统调用失败")
+        sys.exit(1)
+    except Exception as e:
+        print(f"\n错误: 未预期的异常 - {type(e).__name__}: {e}", file=sys.stderr)
+        logger.exception("CLI 主程序未预期异常")
+        sys.exit(2)
+
+
+def _run_main() -> None:
+    """CLI 主逻辑（由 main() 包装异常处理）"""
     args = parse_args()
 
     if not validate_args(args):
         sys.exit(1)
+
+    # 加载并验证配置文件
+    config = load_config_with_validation()
+    if config is None:
+        logger.warning("使用默认配置运行")
+        config = {}
 
     # 加载目标
     targets = load_targets(args)
@@ -320,37 +539,48 @@ def main() -> None:
     if end_val is not None:
         print(f"结束私钥     : 0x{end_val:x}")
         print(f"搜索范围     : {total_range:,} 个私钥")
-    workers = args.workers or os.cpu_count() or 4
-    print(f"工作线程数   : {workers}")
+    # ── 确定引擎模式并打印配置 ──────────────────────────────────
+    use_multi_gpu = getattr(args, 'multi_gpu', False)
+    use_single_gpu = getattr(args, 'use_gpu', False) and not use_multi_gpu
+    use_cpu = not use_multi_gpu and not use_single_gpu
+
+    if use_multi_gpu:
+        gpu_indices = getattr(args, 'gpu_indices', None)
+        gpu_count   = getattr(args, 'gpu_count', -1)
+        print(f"加速模式     : 多GPU")
+        if gpu_indices:
+            print(f"GPU 设备     : 指定索引 {gpu_indices}")
+        elif gpu_count > 0:
+            print(f"GPU 数量     : {gpu_count} 个（按性能自动选择）")
+        else:
+            print(f"GPU 数量     : 全部可用（按性能自动选择）")
+    elif use_single_gpu:
+        gpu_device     = getattr(args, 'gpu_device', -1)
+        gpu_batch_size = getattr(args, 'gpu_batch_size', None)
+        print(f"加速模式     : 单GPU")
+        print(f"GPU 设备索引 : {gpu_device if gpu_device >= 0 else '自动选择'}")
+        print(f"GPU 批次大小 : {gpu_batch_size if gpu_batch_size else '自动计算'}")
+    else:
+        workers = args.workers or os.cpu_count() or 4
+        print(f"加速模式     : CPU")
+        print(f"工作线程数   : {workers}")
+
     print(f"断点续传     : {'启用' if args.checkpoint else '禁用'}")
     print(f"去重过滤     : {'启用' if args.dedup else '禁用'}")
     duration_str = f"{args.duration}秒" if args.duration > 0 else "无限制（Ctrl+C 停止）"
     print(f"运行时长     : {duration_str}")
-    # v2.2.0 性能优化信息
-    optimize_status = "禁用" if args.no_optimize else "启用"
-    print(f"性能优化     : {optimize_status} (v2.2.0)")
-    if not args.no_optimize:
-        print(f"  - 预计算表   : window_size={args.window_size}")
-        print(f"  - SIMD哈希   : {'禁用' if args.no_simd else '启用'}")
-        print(f"  - 内存池     : {'禁用' if args.no_memory_pool else '启用'}")
+
+    if use_cpu:
+        optimize_status = "禁用" if args.no_optimize else "启用"
+        print(f"性能优化     : {optimize_status} (v2.2.0)")
+        if not args.no_optimize:
+            print(f"  - 预计算表   : window_size={args.window_size}")
+            print(f"  - SIMD哈希   : {'禁用' if args.no_simd else '启用'}")
+            print(f"  - 内存池     : {'禁用' if args.no_memory_pool else '启用'}")
     print("-" * 70)
 
     # 构建引擎
-    engine = KeyCollisionEngine(
-        targets=targets,
-        on_progress=lambda s: None,  # 启动进度回调，确保 stats 实时更新
-        on_match=on_match_callback,
-        checkpoint_enabled=args.checkpoint,
-        checkpoint_interval=args.checkpoint_interval,
-        dedup_enabled=args.dedup,
-        dedup_max_size=args.dedup_max_size,
-        max_workers=args.workers,
-        # v2.2.0 性能优化参数
-        use_performance_optimization=not args.no_optimize,
-        precomputed_window_size=args.window_size,
-        use_simd_hash=not args.no_simd,
-        use_memory_pool=not args.no_memory_pool,
-    )
+    engine, engine_type = build_engine(args, targets)
 
     # 信号处理（Ctrl+C 优雅停止）
     stop_event = threading.Event()
@@ -366,13 +596,30 @@ def main() -> None:
 
     # 启动引擎
     print("开始对撞，按 Ctrl+C 停止...\n")
-    engine_kwargs = {}
-    if args.mode in ("range", "brute_force"):
-        engine_kwargs["start"] = start_val
-    if args.mode == "range":
-        engine_kwargs["end"] = end_val
 
-    engine.start(mode=args.mode, **engine_kwargs)
+    if engine_type == 'multi_gpu':
+        # 多GPU 引擎：使用自身的 start(targets, mode, range_start, range_end) 签名
+        ok = engine.start(
+            targets=targets,
+            mode=args.mode,
+            range_start=start_val,
+            range_end=end_val,
+            match_callback=lambda dev_idx, m: print(
+                f"\n[GPU {dev_idx}] 发现匹配: 地址={m.get('address', 'N/A')}"
+            ),
+        )
+        if not ok:
+            print("错误: 多GPU引擎启动失败", file=sys.stderr)
+            sys.exit(1)
+    else:
+        # 单GPU / CPU 引擎：使用 start(mode, start, end) 签名
+        engine_kwargs = {}
+        if args.mode in ("range", "brute_force"):
+            engine_kwargs["start"] = start_val
+        if args.mode == "range":
+            engine_kwargs["end"] = end_val
+        engine.start(mode=args.mode, **engine_kwargs)
+
     start_time = time.time()
 
     # 主循环：打印进度
@@ -381,8 +628,34 @@ def main() -> None:
             time.sleep(args.progress_interval)
             if stop_event.is_set():
                 break
-            stats = engine.get_stats()
-            print(format_progress(stats, args.mode, total_range))
+
+            if engine_type == 'multi_gpu':
+                # 多GPU 引擎使用 get_combined_stats() 返回字典
+                combined = engine.get_combined_stats()
+                elapsed_sec = combined.get('elapsed_time', 0)
+                total_checked = combined.get('total_keys_checked', 0)
+                throughput = combined.get('combined_throughput', 0)
+                matches = combined.get('total_matches', 0)
+                device_count = combined.get('device_count', 0)
+                h, rem = divmod(int(elapsed_sec), 3600)
+                m_t, s = divmod(rem, 60)
+                elapsed_fmt = f"{h:02d}:{m_t:02d}:{s:02d}"
+                speed_fmt = (
+                    f"{throughput/1_000_000:.2f}M/s"
+                    if throughput >= 1_000_000
+                    else f"{throughput/1_000:.1f}K/s"
+                    if throughput >= 1_000
+                    else f"{throughput:.0f}/s"
+                )
+                print(
+                    f"[{elapsed_fmt}] GPU x{device_count} | "
+                    f"已检查: {total_checked:,} | "
+                    f"速度: {speed_fmt} | "
+                    f"匹配: {matches}"
+                )
+            else:
+                stats = engine.get_stats()
+                print(format_progress(stats, args.mode, total_range))
 
             # 检查运行时长限制
             if args.duration > 0 and (time.time() - start_time) >= args.duration:
@@ -400,18 +673,61 @@ def main() -> None:
     time.sleep(0.5)
 
     # 打印最终统计
-    stats = engine.get_stats()
     print("\n" + "=" * 70)
     print("对撞结束 - 最终统计")
     print("-" * 70)
-    print(f"  总检查数 : {stats.total_checked:,}")
-    print(f"  运行时间 : {stats.format_elapsed()}")
-    print(f"  平均速度 : {stats.format_speed()}")
-    print(f"  发现匹配 : {len(stats.matches)} 个")
-    if stats.matches:
-        print("\n  匹配详情:")
-        for m in stats.matches:
-            print(f"    地址: {m.get('address', 'N/A')}")
+
+    if engine_type == 'multi_gpu':
+        combined = engine.get_combined_stats()
+        elapsed_sec = combined.get('elapsed_time', 0)
+        total_checked = combined.get('total_keys_checked', 0)
+        throughput = combined.get('combined_throughput', 0)
+        matches_count = combined.get('total_matches', 0)
+        device_count = combined.get('device_count', 0)
+        h, rem = divmod(int(elapsed_sec), 3600)
+        m_t, s = divmod(rem, 60)
+        elapsed_fmt = f"{h:02d}:{m_t:02d}:{s:02d}"
+        speed_fmt = (
+            f"{throughput/1_000_000:.2f}M/s"
+            if throughput >= 1_000_000
+            else f"{throughput/1_000:.1f}K/s"
+            if throughput >= 1_000
+            else f"{throughput:.0f}/s"
+        )
+        print(f"  加速模式  : 多GPU ({device_count} 个设备)")
+        print(f"  总检查数  : {total_checked:,}")
+        print(f"  运行时间  : {elapsed_fmt}")
+        print(f"  平均速度  : {speed_fmt}")
+        print(f"  发现匹配  : {matches_count} 个")
+        # 每GPU分项
+        per_device = combined.get('per_device', {})
+        if per_device:
+            print("\n  各GPU明细:")
+            for dev_idx, dev_stats in sorted(per_device.items()):
+                dev_keys = dev_stats.get('keys_checked', 0)
+                dev_tp   = dev_stats.get('throughput', 0)
+                dev_speed_fmt = (
+                    f"{dev_tp/1_000_000:.2f}M/s"
+                    if dev_tp >= 1_000_000
+                    else f"{dev_tp/1_000:.1f}K/s"
+                    if dev_tp >= 1_000
+                    else f"{dev_tp:.0f}/s"
+                )
+                print(f"    GPU {dev_idx}: 检查 {dev_keys:,} | 速度 {dev_speed_fmt}")
+        # 清理多GPU引擎
+        engine.cleanup()
+    else:
+        stats = engine.get_stats()
+        mode_label = "单GPU" if engine_type == 'gpu' else "CPU"
+        print(f"  加速模式  : {mode_label}")
+        print(f"  总检查数  : {stats.total_checked:,}")
+        print(f"  运行时间  : {stats.format_elapsed()}")
+        print(f"  平均速度  : {stats.format_speed()}")
+        print(f"  发现匹配  : {len(stats.matches)} 个")
+        if stats.matches:
+            print("\n  匹配详情:")
+            for m in stats.matches:
+                print(f"    地址: {m.get('address', 'N/A')}")
     print("=" * 70)
 
 

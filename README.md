@@ -2,7 +2,7 @@
 
 比特币私钥碰撞引擎，支持CPU和GPU加速，用于学习和研究比特币地址碰撞。
 
-[![Python](https://img.shields.io/badge/Python-3.7+-blue.svg)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
 [![Version](https://img.shields.io/badge/Version-2.2.0-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Contributions](https://img.shields.io/badge/Contributions-Welcome-orange.svg)](CONTRIBUTING.md)
