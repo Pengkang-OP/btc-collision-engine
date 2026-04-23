@@ -35,10 +35,6 @@
   - 性能指标统计
   - 进度可视化
   - 数据日志记录
-- ✅ 图形界面
-  - 友好的操作界面
-  - 实时状态显示
-  - 目标地址管理
 - ✅ **性能优化** (v2.2.0新增)
   - 预计算点表加速 (标量乘法 +46%)
   - gmpy2大整数优化 (模逆元 +1455%)
@@ -50,31 +46,24 @@
 
 ## 快速开始
 
-### 图形界面模式
-
-```bash
-python key_collision_gui.py
-```
-
 ### 命令行模式
 
 ```bash
-python key_collision_cli.py
+python key_collision_cli.py --help
 ```
 
-### 旧版主引擎（纯Python）
+### 示例：随机碰撞
 
 ```bash
-python key_collision.py
+python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random
 ```
 
 ## 项目结构
 
 ```
 btc-collision-engine/
-├── key_collision_gui.py      # GUI主程序
-├── key_collision_cli.py      # 命令行程序
-├── key_collision.py          # 旧版主引擎
+├── key_collision_cli.py      # 命令行主入口（推荐使用）
+├── key_collision.py          # 旧版主引擎（兼容保留）
 ├── gpu_engine.py             # GPU引擎实现
 ├── src/                      # 核心模块
 │   ├── collision/            # 碰撞引擎
@@ -160,48 +149,26 @@ pip install pycryptodome>=3.19.0    # SIMD哈希优化 (AES-NI加速)
 
 ## 使用方法
 
-### GUI操作
-
-1. **启动程序**
-
-   ```bash
-   python key_collision_gui.py
-   ```
-
-2. **添加目标地址**
-   - 在文本框中输入比特币地址（每行一个）
-   - 或从文件加载地址列表
-   - 点击"解析"按钮验证地址
-
-3. **选择碰撞模式**
-   - **随机碰撞**: 无限随机生成私钥
-   - **范围扫描**: 设置起止范围（十六进制）
-   - **暴力穷举**: 设置起始点
-
-4. **高级选项**
-   - ☑️ 启用断点续传
-   - ☑️ 启用去重过滤
-   - ☑️ 使用GPU加速
-
-5. **启动碰撞**
-   - 点击"开始"按钮
-   - 实时查看统计信息
-   - 随时可以暂停/停止
-
 ### 命令行使用
 
 ```bash
-# 从文件加载目标地址
-python key_collision_cli.py --targets addresses.txt
+# 查看所有参数
+python key_collision_cli.py --help
 
-# 使用随机模式
-python key_collision_cli.py --mode random
+# 随机碰撞（无限运行，Ctrl+C 停止）
+python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random
 
-# 使用GPU加速
-python key_collision_cli.py --gpu
+# 从文件加载目标地址，范围扫描
+python key_collision_cli.py -f targets.txt -m range --start 1 --end FFFFFFFF
 
-# 启用断点续传
-python key_collision_cli.py --checkpoint
+# 暴力穷举模式，多线程
+python key_collision_cli.py -t 1A1z... -m brute_force --start 1 --workers 8
+
+# 启用断点续传，运行120秒后自动停止
+python key_collision_cli.py -t 1A1z... -m random --checkpoint --duration 120
+
+# 启用去重过滤
+python key_collision_cli.py -t 1A1z... -m random --dedup
 ```
 
 ## 性能优化配置 (v2.2.0)
@@ -305,7 +272,7 @@ GPUCollisionEngine.list_devices()
 
 ### 选择特定GPU
 
-在GUI的"高级选项"中选择GPU设备索引，或在代码中指定：
+在代码中指定GPU设备索引：
 
 ```python
 engine = GPUCollisionEngine(
@@ -345,7 +312,7 @@ engine = GPUCollisionEngine(
 
 ### 实时监控
 
-GUI界面显示：
+CLI 运行时实时输出：
 
 - 总检测数
 - 当前速度（次/秒）
@@ -474,7 +441,7 @@ python test_checkpoint_resume.py
 ### 线程模型
 
 ```
-主线程 (GUI/CLI)
+主线程 (CLI)
     ↓
 工作线程池 (CPU模式)
     ├── Worker 1
@@ -514,9 +481,8 @@ A: `data_logs/checkpoint.json`
 
 A:
 
-1. GUI: 直接在文本框输入
-2. CLI: 使用 `--targets` 参数指定文件
-3. 代码: 传入targets集合
+1. CLI: 使用 `-t` 参数直接传入，或 `-f` 指定文件（每行一个）
+2. 代码: 传入targets集合
 
 ## 贡献
 
