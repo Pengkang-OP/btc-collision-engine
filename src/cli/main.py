@@ -35,6 +35,13 @@ if _project_root not in sys.path:
 
 from src.collision import KeyCollisionEngine, TargetResolver, CollisionStats
 from src.utils import init_logging, get_configured_logger
+from src.cli.advanced_features import (
+    apply_template,
+    recommend_parameters,
+    export_progress_data,
+    export_matches,
+    GPUErrorHandler,
+)
 
 # GPU 引擎延迟导入（pyopencl 可选依赖）
 try:
@@ -334,6 +341,30 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         default=False,
         help="检查配置文件状态，验证配置有效性"
+    )
+    util_group.add_argument(
+        "--template",
+        metavar="NAME",
+        default=None,
+        help="使用配置模板创建config.json (可选: gpu-performance, long-running, gpu-multi, quick-test)"
+    )
+    util_group.add_argument(
+        "--export-progress",
+        metavar="FILE",
+        default=None,
+        help="运行结束后导出进度数据到JSON文件"
+    )
+    util_group.add_argument(
+        "--export-matches",
+        metavar="FILE",
+        default=None,
+        help="导出匹配结果到JSON文件"
+    )
+    util_group.add_argument(
+        "--recommend",
+        action="store_true",
+        default=False,
+        help="根据目标和系统信息推荐最优参数组合"
     )
 
     return parser.parse_args()
@@ -984,6 +1015,31 @@ def _run_main() -> None:
     # --config-check
     if getattr(args, 'config_check', False):
         _cmd_config_check()
+        sys.exit(0)
+
+    # --template
+    template_name = getattr(args, 'template', None)
+    if template_name is not None:
+        from src.cli.advanced_features import apply_template
+        success = apply_template(template_name)
+        sys.exit(0 if success else 1)
+
+    # --recommend
+    if getattr(args, 'recommend', False):
+        from src.cli.advanced_features import recommend_parameters
+        rec = recommend_parameters(args)
+        print("=" * 70)
+        print(f"[Recommend] 参数智能推荐")
+        print("=" * 70)
+        print(f"\n[Info] 推荐参数:")
+        if rec['recommendations']:
+            print(f"   {' '.join(rec['recommendations'])}")
+        else:
+            print(f"   （使用默认参数即可）")
+        print(f"\n[Info] 推荐原因:")
+        for i, reason in enumerate(rec['reasons'], 1):
+            print(f"   {i}. {reason}")
+        print("\n" + "=" * 70)
         sys.exit(0)
 
     # --quick-start
