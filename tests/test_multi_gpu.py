@@ -155,7 +155,7 @@ class TestGPUAutoConfigurator(unittest.TestCase):
         self.assertIn(config['batch_size'], [32768, 65536, 131072])
     
     def test_intel_config(self):
-        """测试Intel配置"""
+        """测试Intel配置（v2.2.1: Arc A770 16GB优化为262144）"""
         device = {
             'vendor': 'intel',
             'global_mem_gb': 16.0
@@ -165,7 +165,43 @@ class TestGPUAutoConfigurator(unittest.TestCase):
         
         self.assertEqual(config['use_uint32_workaround'], True)
         self.assertEqual(config['use_fast_math'], False)
-        self.assertIn(config['batch_size'], [16384, 32768, 65536])
+        # v2.2.1优化: Arc A770(16GB)使用262144批次; 低显存设备使用更小批次
+        self.assertIn(config['batch_size'], [65536, 131072, 262144])
+
+    def test_configure_for_device_intel_full_vendor_name(self):
+        """测试完整厂商名称路由 - Intel(R) Corporation 应走 INTEL_ARC_CONFIG"""
+        device = {
+            'vendor': 'Intel(R) Corporation',
+            'name': 'Intel(R) Arc(TM) A770 Graphics',
+            'global_mem_size': 15 * 1024 ** 3
+        }
+        config = self.configurator.configure_for_device(device)
+        self.assertTrue(config['enable_async'],          "Intel Arc 应启用异步执行")
+        self.assertTrue(config['use_uint32_workaround'], "Intel Arc 应启用uint32 workaround")
+        self.assertFalse(config['use_fast_math'],         "Intel Arc 应禁用快速数学")
+        self.assertEqual(config['batch_size'], 262144,    "Intel Arc A770 应使用262144批次")
+
+    def test_configure_for_device_amd_full_vendor_name(self):
+        """测试完整厂商名称路由 - Advanced Micro Devices, Inc. 应走 AMD_CONFIG"""
+        device = {
+            'vendor': 'Advanced Micro Devices, Inc.',
+            'name': 'AMD Radeon RX 6800 XT',
+            'global_mem_size': 16 * 1024 ** 3
+        }
+        config = self.configurator.configure_for_device(device)
+        self.assertTrue(config['enable_async'],           "AMD GPU 应启用异步执行")
+        self.assertFalse(config['use_uint32_workaround'], "AMD GPU 不需要uint32 workaround")
+
+    def test_configure_for_device_unknown_vendor(self):
+        """测试未知厂商应回退到保守配置"""
+        device = {
+            'vendor': 'SomeUnknownVendor',
+            'name': 'Unknown GPU',
+            'global_mem_size': 4 * 1024 ** 3
+        }
+        config = self.configurator.configure_for_device(device)
+        self.assertFalse(config['enable_async'],          "未知厂商应禁用异步执行")
+        self.assertFalse(config['use_uint32_workaround'], "未知厂商应禁用uint32 workaround")
 
 
 class TestGPUConfigValidator(unittest.TestCase):
