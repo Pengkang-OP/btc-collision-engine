@@ -12,6 +12,25 @@ from typing import Dict
 logger = logging.getLogger(__name__)
 
 
+def _get_memory_gb(device: Dict) -> float:
+    """获取GPU显存大小(GB)
+    
+    v2.2.1修复: 兼容global_mem_size(字节)和global_mem_gb两种格式
+    
+    Args:
+        device: 设备信息字典
+        
+    Returns:
+        显存大小(GB)
+    """
+    memory_gb = device.get('global_mem_gb', 0)
+    if memory_gb == 0:
+        # 如果没有global_mem_gb，从global_mem_size(字节)转换
+        memory_bytes = device.get('global_mem_size', 0)
+        memory_gb = memory_bytes / (1024 ** 3) if memory_bytes > 0 else 0
+    return memory_gb
+
+
 class GPUAutoConfigurator:
     """GPU参数自动调优器
     
@@ -128,8 +147,8 @@ class GPUAutoConfigurator:
         """
         config = self.NVIDIA_CONFIG.copy()
         
-        # 根据显存调整批次大小
-        memory_gb = device.get('global_mem_gb', 0)
+        # v2.2.1修复: 使用统一的显存获取方法
+        memory_gb = _get_memory_gb(device)
         if memory_gb >= 24:
             # RTX 3090/4090等高端卡
             config['batch_size'] = 262144  # 256K
@@ -159,8 +178,8 @@ class GPUAutoConfigurator:
         """
         config = self.AMD_CONFIG.copy()
         
-        # 根据显存调整
-        memory_gb = device.get('global_mem_gb', 0)
+        # v2.2.1修复: 使用统一的显存获取方法
+        memory_gb = _get_memory_gb(device)
         if memory_gb >= 16:
             # RX 6800 XT/7900 XTX等
             config['batch_size'] = 131072  # 128K
@@ -183,8 +202,8 @@ class GPUAutoConfigurator:
         """
         config = self.INTEL_ARC_CONFIG.copy()
         
-        # 根据显存调整
-        memory_gb = device.get('global_mem_gb', 0)
+        # v2.2.1修复: 使用统一的显存获取方法
+        memory_gb = _get_memory_gb(device)
         if memory_gb >= 16:
             # Arc A770 16GB
             config['batch_size'] = 65536   # 64K
@@ -207,8 +226,8 @@ class GPUAutoConfigurator:
         """
         config = self.UNKNOWN_CONFIG.copy()
         
-        # 根据显存微调
-        memory_gb = device.get('global_mem_gb', 0)
+        # v2.2.1修复: 使用统一的显存获取方法
+        memory_gb = _get_memory_gb(device)
         if memory_gb >= 8:
             config['batch_size'] = 65536
         elif memory_gb >= 4:
@@ -228,7 +247,13 @@ class GPUAutoConfigurator:
         Returns:
             调整后的配置
         """
-        memory_gb = device.get('global_mem_gb', 0)
+        # v2.2.1修复: 使用统一的显存获取方法
+        memory_gb = _get_memory_gb(device)
+        if memory_gb == 0:
+            # 如果没有global_mem_gb，从global_mem_size(字节)转换
+            memory_bytes = device.get('global_mem_size', 0)
+            memory_gb = memory_bytes / (1024 ** 3) if memory_bytes > 0 else 0
+        
         batch_size = config['batch_size']
         
         # 估算单次迭代所需显存(约2KB/密钥)
