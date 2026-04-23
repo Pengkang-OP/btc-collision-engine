@@ -19,18 +19,19 @@
   },
   "collision": {
     "_comment": "碰撞引擎配置",
-    "max_workers": null,
+    "max_workers": 2,
     "_comment_max_workers": "线程池最大工作线程数, null表示使用默认值(CPU核心数)",
     "progress_interval": 1000,
     "_comment_progress_interval": "进度回调间隔(次)",
-    "checkpoint_interval": 30,
+    "checkpoint_interval": 10,
     "_comment_checkpoint_interval": "断点自动保存间隔(秒)",
     "dedup_max_size": 1000000,
-    "_comment_dedup_max_size": "去重过滤器最大容量"
+    "_comment_dedup_max_size": "去重过滤器最大容量",
+    "use_performance_optimization": false
   },
   "logging": {
     "_comment": "日志配置",
-    "level": "INFO",
+    "level": "DEBUG",
     "_comment_level": "日志级别: DEBUG, INFO, WARNING, ERROR, CRITICAL",
     "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     "_comment_format": "日志格式字符串",
@@ -68,7 +69,7 @@
   },
   "monitoring": {
     "_comment": "监控系统配置",
-    "enabled": true,
+    "enabled": false,
     "_comment_enabled": "是否启用监控系统",
     "collection_interval": 5,
     "_comment_collection_interval": "数据采集间隔(秒)",
@@ -122,7 +123,9 @@
     },
     "mode": "auto",
     "_comment_mode": "GPU模式: auto=自动选择, single=单GPU, multi=多GPU",
-    "device_indices": [-1],
+    "device_indices": [
+      -1
+    ],
     "_comment_device_indices": "GPU设备索引列表, -1=自动选择最佳, [0,1]=使用GPU 0和1",
     "load_balancing": "performance",
     "_comment_load_balancing": "负载均衡策略: performance=按性能, equal=平均分配",

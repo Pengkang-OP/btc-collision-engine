@@ -1,0 +1,111 @@
+{
+  "execution_time": "2026-04-24T03:46:28.337888",
+  "duration_seconds": 134.711489,
+  "total_tasks": 6,
+  "executed_tasks": 3,
+  "completed_tasks": 3,
+  "failed_tasks": 0,
+  "tasks": [
+    {
+      "id": "P0-1",
+      "name": "推送代码到远程仓库",
+      "description": "推送12个未提交commits和所有变更文件",
+      "impact": 9,
+      "urgency": 8,
+      "effort_hours": 0.5,
+      "category": "docs",
+      "priority_score": 14400.0,
+      "status": "completed"
+    },
+    {
+      "id": "P1-2",
+      "name": "启用GPU内存池预分配功能",
+      "description": "在初始化后调用preallocate_buffers()，提升首次分配性能",
+      "impact": 7,
+      "urgency": 6,
+      "effort_hours": 0.5,
+      "category": "performance",
+      "priority_score": 8400.0,
+      "status": "completed"
+    },
+    {
+      "id": "P2-1",
+      "name": "整理2M批次测试报告",
+      "description": "整理1M vs 2M批次对比测试数据和结论",
+      "impact": 6,
+      "urgency": 5,
+      "effort_hours": 1.0,
+      "category": "docs",
+      "priority_score": 3000.0,
+      "status": "completed"
+    },
+    {
+      "id": "P1-1",
+      "name": "修复GPU内存池未真正生效问题",
+      "description": "修改缓冲区分配逻辑，使用pool.allocate()替代cl.Buffer()",
+      "impact": 8,
+      "urgency": 7,
+      "effort_hours": 2.0,
+      "category": "performance",
+      "priority_score": 2800.0,
+      "status": "pending"
+    },
+    {
+      "id": "P3-1",
+      "name": "标记实验性功能",
+      "description": "将GPUBufferAllocator标记为[实验性]",
+      "impact": 4,
+      "urgency": 3,
+      "effort_hours": 0.5,
+      "category": "test",
+      "priority_score": 2400.0,
+      "status": "pending"
+    },
+    {
+      "id": "P2-2",
+      "name": "完善GPU内存管理系统文档",
+      "description": "整合分析报告和使用情况报告到主文档",
+      "impact": 6,
+      "urgency": 4,
+      "effort_hours": 1.5,
+      "category": "docs",
+      "priority_score": 1600.0,
+      "status": "pending"
+    }
+  ],
+  "executed": [
+    {
+      "id": "P0-1",
+      "name": "推送代码到远程仓库",
+      "description": "推送12个未提交commits和所有变更文件",
+      "impact": 9,
+      "urgency": 8,
+      "effort_hours": 0.5,
+      "category": "docs",
+      "priority_score": 14400.0,
+      "status": "completed"
+    },
+    {
+      "id": "P1-2",
+      "name": "启用GPU内存池预分配功能",
+      "description": "在初始化后调用preallocate_buffers()，提升首次分配性能",
+      "impact": 7,
+      "urgency": 6,
+      "effort_hours": 0.5,
+      "category": "performance",
+      "priority_score": 8400.0,
+      "status": "completed"
+    },
+    {
+      "id": "P2-1",
+      "name": "整理2M批次测试报告",
+      "description": "整理1M vs 2M批次对比测试数据和结论",
+      "impact": 6,
+      "urgency": 5,
+      "effort_hours": 1.0,
+      "category": "docs",
+      "priority_score": 3000.0,
+      "status": "completed"
+    }
+  ]
+}

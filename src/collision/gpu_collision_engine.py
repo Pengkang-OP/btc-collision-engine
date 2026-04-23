@@ -628,26 +628,49 @@ class GPUKernel(GPUKernelProtocol):
         """预分配 GPU 内存缓冲区
         
         P2-2修复: 添加缓冲区追踪
+        v3.2.0修复: 使用GPU内存池分配缓冲区（如果已启用）
         """
         import numpy as np
+        import pyopencl as cl
+        
+        # 获取内存池引用（如果已启用）
+        memory_pool = getattr(self, '_gpu_memory_pool', None)
         
         # 私钥缓冲区 (最大批次大小)
-        self._keys_buf = cl.Buffer(
-            self.device.context,
-            cl.mem_flags.READ_ONLY,
-            size=self.max_batch_size * 32
-        )
+        keys_buf_size = self.max_batch_size * 32
+        if memory_pool:
+            # 使用内存池分配（支持复用）
+            self._keys_buf = memory_pool.allocate(keys_buf_size, cl.mem_flags.READ_ONLY)
+            logger.debug(f"使用内存池分配私钥缓冲区: {keys_buf_size}字节")
+        else:
+            # 直接分配（回退模式）
+            self._keys_buf = cl.Buffer(
+                self.device.context,
+                cl.mem_flags.READ_ONLY,
+                size=keys_buf_size
+            )
+            logger.debug(f"直接分配私钥缓冲区: {keys_buf_size}字节")
+        
         # P2-2修复: 注册缓冲区追踪
-        self._buffer_tracker.track_buffer("_keys_buf", self._keys_buf, self.max_batch_size * 32)
+        self._buffer_tracker.track_buffer("_keys_buf", self._keys_buf, keys_buf_size)
         
         # 匹配结果缓冲区
-        self._match_buf = cl.Buffer(
-            self.device.context,
-            cl.mem_flags.WRITE_ONLY,
-            size=self.max_batch_size * 4
-        )
+        match_buf_size = self.max_batch_size * 4
+        if memory_pool:
+            # 使用内存池分配（支持复用）
+            self._match_buf = memory_pool.allocate(match_buf_size, cl.mem_flags.WRITE_ONLY)
+            logger.debug(f"使用内存池分配匹配缓冲区: {match_buf_size}字节")
+        else:
+            # 直接分配（回退模式）
+            self._match_buf = cl.Buffer(
+                self.device.context,
+                cl.mem_flags.WRITE_ONLY,
+                size=match_buf_size
+            )
+            logger.debug(f"直接分配匹配缓冲区: {match_buf_size}字节")
+        
         # P2-2修复: 注册缓冲区追踪
-        self._buffer_tracker.track_buffer("_match_buf", self._match_buf, self.max_batch_size * 4)
+        self._buffer_tracker.track_buffer("_match_buf", self._match_buf, match_buf_size)
         
         # 预分配主机内存
         self._match_flags = np.zeros(self.max_batch_size, dtype=np.int32)
@@ -656,6 +679,16 @@ class GPUKernel(GPUKernelProtocol):
         # P2-2修复: 记录缓冲区统计
         stats = self._buffer_tracker.get_stats()
         logger.debug(f"GPU Buffer统计: {stats['count']}个缓冲区, {stats['total_size_mb']:.2f} MB")
+        
+        # v3.2.0新增: 记录内存池使用状态
+        if memory_pool:
+            pool_stats = memory_pool.get_stats()
+            logger.info(
+                f"GPU内存池状态: 复用率={pool_stats['reuse_rate']*100:.1f}%, "
+                f"已分配={pool_stats['total_allocated']}, "
+                f"已复用={pool_stats['total_reused']}, "
+                f"当前内存={pool_stats['current_memory_mb']:.1f}MB"
+            )
     
     def set_targets(self, target_hash160s: bytes, num_targets: int):
         """设置目标地址 Hash160 - 只需设置一次"""
@@ -1780,6 +1813,17 @@ class GPUCollisionEngine(BaseCollisionEngine):
                             max_buffers=self.gpu_pool_max_buffers
                         )
                         logger.info(f"GPU内存池初始化完成: {self._gpu_memory_pool.get_stats()}")
+                        
+                        # v3.2.0新增: 预分配常用大小的缓冲区（性能优化）
+                        preallocate_sizes = [
+                            self.batch_size * 32,  # 私钥缓冲区大小
+                            self.batch_size * 4,   # 匹配缓冲区大小
+                        ]
+                        self._gpu_memory_pool.preallocate_buffers(
+                            sizes=preallocate_sizes,
+                            count_per_size=2  # 每个大小预分配2个
+                        )
+                        logger.info("✅ GPU内存池预分配完成")
                     
                     self._gpu_kernel = GPUKernel(
                         self._gpu_device, 
