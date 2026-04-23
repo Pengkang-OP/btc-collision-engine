@@ -183,18 +183,45 @@ class LoggingConfig:
                     backupCount=self._config.get("backup_count", 5),
                     encoding='utf-8'
                 )
-            
+
             handler.setLevel(getattr(logging, level))
             handler.setFormatter(logging.Formatter(format_str))
-            
+
+            # M10: 包装文件处理器，捕获磁盘满 OSError
+            class _DiskSafeHandler(logging.Handler):
+                """OSError（磁盘满）安全包装层"""
+                def __init__(self, inner: logging.Handler):
+                    super().__init__(inner.level)
+                    self._inner = inner
+                    self._disk_full_warned = False
+
+                def setFormatter(self, fmt):
+                    self._inner.setFormatter(fmt)
+
+                def emit(self, record: logging.LogRecord):
+                    try:
+                        self._inner.emit(record)
+                        self._disk_full_warned = False  # 恢复后重置警告状态
+                    except OSError as os_err:
+                        if not self._disk_full_warned:
+                            self._disk_full_warned = True
+                            print(
+                                f"[日志警告] 日志文件写入失败（磁盘可能已满）: {os_err}"
+                                f" 请清理磁盘或调整 logging.file 路径",
+                                file=sys.stderr
+                            )
+
+                def close(self):
+                    self._inner.close()
+                    super().close()
+
             # 设置日志文件权限为仅所有者可读写
             try:
                 os.chmod(log_file, 0o600)
-            except OSError as perm_error:
-                # B类修复: 权限设置降级回退添加DEBUG日志
-                pass  # Windows系统可能不支持chmod
-            
-            return handler
+            except OSError:
+                pass  # Windows 系统可能不支持 chmod
+
+            return _DiskSafeHandler(handler)
         except Exception as e:
             print(f"创建日志文件处理器失败: {e}", file=sys.stderr)
             return None

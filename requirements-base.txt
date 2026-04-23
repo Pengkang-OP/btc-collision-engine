@@ -1,0 +1,24 @@
+# BTC 碰撞引擎 - 基础必选依赖
+# 安装: pip install -r requirements-base.txt
+
+# 加密核心
+coincurve>=18.0.0           # libsecp256k1 绑定（强烈推荐，性能最佳）
+cryptography>=41.0.0,<47.0.0  # 密钥安全清零、常量时间比较
+PyNaCl>=1.5.0,<2.0.0        # libsodium 绑定，防侧信道攻击
+
+# 系统工具
+psutil>=5.9.0               # 系统资源监控
+
+# 地址解析
+cachetools>=5.3.0            # LRU/TTL 缓存，加速地址解析
+pybloom-live>=2.2.0          # Bloom 过滤器，大规模地址去重
+bech32>=1.2.0                # Bech32 地址解析（P2WPKH 支持）
+bitarray>=2.6.0              # Bloom 过滤器底层位数组
+chardet>=5.0.0,<6.0.0       # 文件编码自动检测
+
+# 网络通信
+requests>=2.28.0,<3.0.0     # HTTP 请求，告警通知 Webhook
+
+# 可选工具
+ecdsa>=0.18.0                # 纯 Python ECDSA 备用后端
+setproctitle>=1.3.0          # 进程名设置，便于系统监控

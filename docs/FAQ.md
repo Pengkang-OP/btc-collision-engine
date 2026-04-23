@@ -106,9 +106,11 @@ cp config.example.json config.json
 
 1. 确认 `pyopencl` 已安装
 2. 验证 GPU 驱动支持 OpenCL：
+
    ```bash
    python -c "import pyopencl; print(pyopencl.get_platforms())"
    ```
+
 3. 检查 `config.json` 中 `gpu.use_gpu` 是否为 `true`
 4. 尝试指定 `gpu.device_index` 为具体设备编号
 
@@ -178,9 +180,11 @@ python key_collision_cli.py -t <地址> -m random --duration 10
 **A:** 常见原因及解决：
 
 1. **未指定目标地址**：使用 `-t` 或 `-f` 参数
+
    ```bash
    python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random
    ```
+
 2. **目标文件为空**：检查 `targets.txt` 是否包含有效地址
 3. **依赖库未安装**：重新运行 `pip install -r requirements.txt`
 
