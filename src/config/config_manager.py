@@ -13,9 +13,97 @@ init_logging()
 # 获取模块日志记录器
 logger = get_configured_logger("ConfigManager")
 
+# DF-3修复: 添加JSON Schema验证
+try:
+    from jsonschema import Draft7Validator
+    import jsonschema
+    HAS_JSONSCHEMA = True
+except ImportError:
+    HAS_JSONSCHEMA = False
+    logger.debug("jsonschema库未安装，配置文件将跳过Schema验证")
+
 
 class ConfigManager:
     """配置管理器 - 统一管理应用配置"""
+    
+    # 审查修复#5: 将Schema提取为类常量，避免每次验证都重新创建
+    CONFIG_SCHEMA = {
+        "type": "object",
+        "properties": {
+            "collision": {
+                "type": "object",
+                "properties": {
+                    "max_workers": {"type": ["integer", "null"], "minimum": 1},
+                    "progress_interval": {"type": "integer", "minimum": 1},
+                    "checkpoint_interval": {"type": "integer", "minimum": 1},
+                    "dedup_max_size": {"type": "integer", "minimum": 1}
+                },
+                "additionalProperties": False  # 审查修复#3: 禁止额外属性
+            },
+            "logging": {
+                "type": "object",
+                "properties": {
+                    "level": {"enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]},
+                    "format": {"type": "string"},
+                    "file": {"type": "string"},
+                    "max_bytes": {"type": "integer", "minimum": 1},
+                    "backup_count": {"type": "integer", "minimum": 0},
+                    "enable_console": {"type": "boolean"},
+                    "enable_file": {"type": "boolean"},
+                    "rotation_type": {"enum": ["size", "time"]},
+                    "rotation_when": {"type": "string"},
+                    "rotation_interval": {"type": "integer", "minimum": 1},
+                    "compress_backups": {"type": "boolean"}
+                },
+                "additionalProperties": False  # 审查修复#3: 禁止额外属性
+            },
+            "gui": {
+                "type": "object",
+                "properties": {
+                    "theme": {"type": "string"},
+                    "font": {"type": "string"},
+                    "font_size": {"type": "integer", "minimum": 1},
+                    "window_width": {"type": "integer", "minimum": 100},
+                    "window_height": {"type": "integer", "minimum": 100}
+                },
+                "additionalProperties": False  # 审查修复#3: 禁止额外属性
+            },
+            "gpu": {
+                "type": "object",
+                "properties": {
+                    "use_gpu": {"type": "boolean"},
+                    "device_index": {"type": "integer"},
+                    "batch_size": {"type": "integer", "minimum": 1},
+                    "auto_detect": {"type": "boolean"},
+                    "memory_usage_ratio": {"type": "number", "minimum": 0, "maximum": 1},
+                    "enable_vendor_optimizations": {"type": "boolean"}
+                },
+                "additionalProperties": False  # 审查修复#3: 禁止额外属性
+            },
+            "performance_monitoring": {
+                "type": "object",
+                "properties": {
+                    "enabled": {"type": "boolean"},
+                    "track_slow_operations": {"type": "boolean"},
+                    "slow_threshold_ms": {"type": "number", "minimum": 0},
+                    "max_records": {"type": "integer", "minimum": 1},
+                    "log_level": {"enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]}
+                },
+                "additionalProperties": False  # 审查修复#3: 禁止额外属性
+            },
+            "crypto": {
+                "type": "object",
+                "properties": {
+                    "backend": {"enum": ["auto", "pure_python", "pure_python_const_time", "openssl", "coincurve", "ecdsa"]},
+                    "constant_time": {"type": "boolean"},
+                    "verify_checksums": {"type": "boolean"},
+                    "strict_wif_validation": {"type": "boolean"}
+                },
+                "additionalProperties": False  # 审查修复#3: 禁止额外属性
+            }
+        },
+        "additionalProperties": False  # 审查修复#3: 顶层也禁止额外属性
+    }
     
     DEFAULT_CONFIG = {
         "collision": {
@@ -95,6 +183,14 @@ class ConfigManager:
         try:
             with open(self.config_file, 'r', encoding='utf-8') as f:
                 user_config = json.load(f)
+            
+            # DF-3修复: 配置文件格式校验（使用统一的validate方法）
+            validation_errors = self.validate(user_config)
+            if validation_errors:
+                error_msgs = [f"{k}: {v}" for k, v in validation_errors.items()]
+                logger.error(f"配置文件格式错误:\n" + "\n".join(error_msgs))
+                return False
+            
             # 线程安全：在锁内合并配置
             with self._lock:
                 self._merge_config(self.config, user_config)
@@ -137,15 +233,14 @@ class ConfigManager:
             配置值
         """
         keys = key.split('.')
-        # 线程安全：在锁内读取配置
+        # DF-1修复：整个遍历过程在锁内完成，确保真正的线程安全
         with self._lock:
             value = self.config
-        
-        for k in keys:
-            if isinstance(value, dict) and k in value:
-                value = value[k]
-            else:
-                return default
+            for k in keys:
+                if isinstance(value, dict) and k in value:
+                    value = value[k]
+                else:
+                    return default
         
         return value
     
@@ -200,92 +295,251 @@ class ConfigManager:
         import copy
         return copy.deepcopy(config)
     
-    def validate(self) -> Dict[str, str]:
+    def validate(self, config: Dict[str, Any] = None) -> Dict[str, str]:
         """
-        验证配置
+        DF-3修复: 统一配置验证逻辑
         
+        优先使用JSON Schema验证（如果可用），否则使用手动验证。
+        
+        参数:
+            config: 要验证的配置字典，None表示验证当前配置
+            
         返回:
-            验证失败的配置项和错误信息
+            验证失败的配置项和错误信息字典
+        """
+        if config is None:
+            config = self.config
+        
+        # DF-3修复: 统一验证逻辑
+        if HAS_JSONSCHEMA:
+            # 使用JSON Schema验证
+            return self._validate_with_schema(config)
+        else:
+            # 降级为手动验证
+            return self._validate_manual(config)
+    
+    def _validate_with_schema(self, config: Dict[str, Any]) -> Dict[str, str]:
+        """DF-3修复: 使用JSON Schema验证配置
+        
+        参数:
+            config: 用户配置字典
+            
+        返回:
+            错误信息字典，空字典表示验证通过
+        """
+        if not HAS_JSONSCHEMA:
+            return {}  # 没有jsonschema库，返回空
+        
+        # 审查修复#5: 使用类常量Schema，避免重复创建
+        # 审查修复#1: 使用Draft7Validator收集所有错误，而非只捕获第一个
+        errors = {}
+        validator = Draft7Validator(self.CONFIG_SCHEMA)
+        for error in sorted(validator.iter_errors(config), key=lambda e: e.path):
+            path = '.'.join(str(p) for p in error.absolute_path) if error.absolute_path else "root"
+            # 避免覆盖同一字段的多个错误
+            if path not in errors:
+                errors[path] = error.message
+            else:
+                errors[path] += f"; {error.message}"
+        
+        return errors
+    
+    @staticmethod
+    def _is_strict_bool(value: Any) -> bool:
+        """审查修复#4: 严格布尔值检查，防止int被误认为bool
+        
+        在Python中，bool是int的子类，isinstance(True, int)返回True。
+        此方法确保只接受真正的布尔值，不接受整数（但JSON解析的True/False是bool类型）。
+        
+        参数:
+            value: 要检查的值
+            
+        返回:
+            如果是严格的布尔值返回True，否则返回False
+        """
+        # JSON解析的True/False是bool类型，isinstance返回True
+        # 但用户直接传入的1/0是int类型，应该拒绝
+        return type(value) is bool
+    
+    def _validate_manual(self, config: Dict[str, Any]) -> Dict[str, str]:
+        """DF-3修复: 手动验证配置（降级方案）
+        
+        参数:
+            config: 用户配置字典
+            
+        返回:
+            错误信息字典
         """
         errors = {}
         
         # 验证碰撞引擎配置
-        max_workers = self.get("collision.max_workers")
+        max_workers = config.get("collision", {}).get("max_workers")
         if max_workers is not None and (not isinstance(max_workers, int) or max_workers <= 0):
             errors["collision.max_workers"] = "必须是正整数"
         
-        progress_interval = self.get("collision.progress_interval")
-        if not isinstance(progress_interval, int) or progress_interval <= 0:
+        progress_interval = config.get("collision", {}).get("progress_interval")
+        if progress_interval is not None and (not isinstance(progress_interval, int) or progress_interval <= 0):
             errors["collision.progress_interval"] = "必须是正整数"
         
-        checkpoint_interval = self.get("collision.checkpoint_interval")
-        if not isinstance(checkpoint_interval, int) or checkpoint_interval <= 0:
+        checkpoint_interval = config.get("collision", {}).get("checkpoint_interval")
+        if checkpoint_interval is not None and (not isinstance(checkpoint_interval, int) or checkpoint_interval <= 0):
             errors["collision.checkpoint_interval"] = "必须是正整数"
         
-        dedup_max_size = self.get("collision.dedup_max_size")
-        if not isinstance(dedup_max_size, int) or dedup_max_size <= 0:
+        dedup_max_size = config.get("collision", {}).get("dedup_max_size")
+        if dedup_max_size is not None and (not isinstance(dedup_max_size, int) or dedup_max_size <= 0):
             errors["collision.dedup_max_size"] = "必须是正整数"
         
-        # 验证日志配置
-        log_level = self.get("logging.level")
+        # 审查修复#2: 补充日志配置验证（之前缺失）
+        logging_config = config.get("logging", {})
+        
+        log_level = logging_config.get("level")
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-        if log_level not in valid_levels:
+        if log_level is not None and log_level not in valid_levels:
             errors["logging.level"] = f"必须是以下值之一: {', '.join(valid_levels)}"
         
-        # 验证GUI配置
-        window_width = self.get("gui.window_width")
-        if not isinstance(window_width, int) or window_width <= 0:
-            errors["gui.window_width"] = "必须是正整数"
+        log_format = logging_config.get("format")
+        if log_format is not None and not isinstance(log_format, str):
+            errors["logging.format"] = "必须是字符串"
         
-        window_height = self.get("gui.window_height")
-        if not isinstance(window_height, int) or window_height <= 0:
-            errors["gui.window_height"] = "必须是正整数"
+        log_file = logging_config.get("file")
+        if log_file is not None and not isinstance(log_file, str):
+            errors["logging.file"] = "必须是字符串路径"
         
-        font_size = self.get("gui.font_size")
-        if not isinstance(font_size, int) or font_size <= 0:
+        log_max_bytes = logging_config.get("max_bytes")
+        if log_max_bytes is not None and (not isinstance(log_max_bytes, int) or log_max_bytes <= 0):
+            errors["logging.max_bytes"] = "必须是正整数"
+        
+        log_backup_count = logging_config.get("backup_count")
+        if log_backup_count is not None and (not isinstance(log_backup_count, int) or log_backup_count < 0):
+            errors["logging.backup_count"] = "必须是非负整数"
+        
+        log_enable_console = logging_config.get("enable_console")
+        if log_enable_console is not None and not self._is_strict_bool(log_enable_console):
+            errors["logging.enable_console"] = "必须是布尔值"
+        
+        log_enable_file = logging_config.get("enable_file")
+        if log_enable_file is not None and not self._is_strict_bool(log_enable_file):
+            errors["logging.enable_file"] = "必须是布尔值"
+        
+        log_rotation_type = logging_config.get("rotation_type")
+        valid_rotation_types = ["size", "time"]
+        if log_rotation_type is not None and log_rotation_type not in valid_rotation_types:
+            errors["logging.rotation_type"] = f"必须是以下值之一: {', '.join(valid_rotation_types)}"
+        
+        log_rotation_when = logging_config.get("rotation_when")
+        if log_rotation_when is not None and not isinstance(log_rotation_when, str):
+            errors["logging.rotation_when"] = "必须是字符串"
+        
+        log_rotation_interval = logging_config.get("rotation_interval")
+        if log_rotation_interval is not None and (not isinstance(log_rotation_interval, int) or log_rotation_interval <= 0):
+            errors["logging.rotation_interval"] = "必须是正整数"
+        
+        log_compress_backups = logging_config.get("compress_backups")
+        if log_compress_backups is not None and not self._is_strict_bool(log_compress_backups):
+            errors["logging.compress_backups"] = "必须是布尔值"
+        
+        # 验证GUI配置（审查修复#2: 补充缺失验证）
+        gui_config = config.get("gui", {})
+        
+        gui_theme = gui_config.get("theme")
+        if gui_theme is not None and not isinstance(gui_theme, str):
+            errors["gui.theme"] = "必须是字符串"
+        
+        gui_font = gui_config.get("font")
+        if gui_font is not None and not isinstance(gui_font, str):
+            errors["gui.font"] = "必须是字符串"
+        
+        gui_font_size = gui_config.get("font_size")
+        if gui_font_size is not None and (not isinstance(gui_font_size, int) or gui_font_size <= 0):
             errors["gui.font_size"] = "必须是正整数"
         
+        gui_window_width = gui_config.get("window_width")
+        if gui_window_width is not None and (not isinstance(gui_window_width, int) or gui_window_width < 100):
+            errors["gui.window_width"] = "必须>=100的整数"
+        
+        gui_window_height = gui_config.get("window_height")
+        if gui_window_height is not None and (not isinstance(gui_window_height, int) or gui_window_height < 100):
+            errors["gui.window_height"] = "必须>=100的整数"
+        
         # 验证GPU配置
-        gpu_batch_size = self.get("gpu.batch_size")
-        if not isinstance(gpu_batch_size, int) or gpu_batch_size <= 0:
+        gpu_config = config.get("gpu", {})
+        
+        gpu_batch_size = gpu_config.get("batch_size")
+        if gpu_batch_size is not None and (not isinstance(gpu_batch_size, int) or gpu_batch_size <= 0):
             errors["gpu.batch_size"] = "必须是正整数"
         
-        gpu_device_index = self.get("gpu.device_index")
-        if not isinstance(gpu_device_index, int):
+        gpu_device_index = gpu_config.get("device_index")
+        if gpu_device_index is not None and not isinstance(gpu_device_index, int):
             errors["gpu.device_index"] = "必须是整数"
         
-        gpu_memory_ratio = self.get("gpu.memory_usage_ratio")
-        if not isinstance(gpu_memory_ratio, (int, float)) or not (0 < gpu_memory_ratio <= 1.0):
+        gpu_memory_ratio = gpu_config.get("memory_usage_ratio")
+        if gpu_memory_ratio is not None and (not isinstance(gpu_memory_ratio, (int, float)) or not (0 < gpu_memory_ratio <= 1.0)):
             errors["gpu.memory_usage_ratio"] = "必须在(0, 1]范围内"
         
+        gpu_use_gpu = gpu_config.get("use_gpu")
+        if gpu_use_gpu is not None and not self._is_strict_bool(gpu_use_gpu):
+            errors["gpu.use_gpu"] = "必须是布尔值"
+        
+        gpu_auto_detect = gpu_config.get("auto_detect")
+        if gpu_auto_detect is not None and not self._is_strict_bool(gpu_auto_detect):
+            errors["gpu.auto_detect"] = "必须是布尔值"
+        
+        gpu_vendor_opts = gpu_config.get("enable_vendor_optimizations")
+        if gpu_vendor_opts is not None and not self._is_strict_bool(gpu_vendor_opts):
+            errors["gpu.enable_vendor_optimizations"] = "必须是布尔值"
+        
         # 验证性能监控配置
-        perf_enabled = self.get("performance_monitoring.enabled")
-        if perf_enabled is not None and not isinstance(perf_enabled, bool):
+        perf_config = config.get("performance_monitoring", {})
+        
+        perf_enabled = perf_config.get("enabled")
+        if perf_enabled is not None and not self._is_strict_bool(perf_enabled):  # 审查修复#4: 严格布尔值检查
             errors["performance_monitoring.enabled"] = "必须是布尔值"
         
-        perf_track_slow = self.get("performance_monitoring.track_slow_operations")
-        if perf_track_slow is not None and not isinstance(perf_track_slow, bool):
+        perf_track_slow = perf_config.get("track_slow_operations")
+        if perf_track_slow is not None and not self._is_strict_bool(perf_track_slow):
             errors["performance_monitoring.track_slow_operations"] = "必须是布尔值"
         
-        perf_threshold = self.get("performance_monitoring.slow_threshold_ms")
+        perf_threshold = perf_config.get("slow_threshold_ms")
         if perf_threshold is not None:
             if not isinstance(perf_threshold, (int, float)) or perf_threshold < 0:
                 errors["performance_monitoring.slow_threshold_ms"] = "必须是非负数（毫秒）"
         
-        perf_max_records = self.get("performance_monitoring.max_records")
+        perf_max_records = perf_config.get("max_records")
         if perf_max_records is not None:
             if not isinstance(perf_max_records, int) or perf_max_records <= 0:
                 errors["performance_monitoring.max_records"] = "必须是正整数"
         
-        perf_log_level = self.get("performance_monitoring.log_level")
+        perf_log_level = perf_config.get("log_level")
         valid_log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         if perf_log_level is not None and perf_log_level not in valid_log_levels:
             errors["performance_monitoring.log_level"] = f"必须是以下值之一: {', '.join(valid_log_levels)}"
         
         # 验证Crypto配置
-        crypto_backend = self.get("crypto.backend")
+        crypto_config = config.get("crypto", {})
+        
+        crypto_backend = crypto_config.get("backend")
         valid_backends = ["auto", "pure_python", "pure_python_const_time", "openssl", "coincurve", "ecdsa"]
-        if crypto_backend not in valid_backends:
+        if crypto_backend is not None and crypto_backend not in valid_backends:
             errors["crypto.backend"] = f"必须是以下值之一: {', '.join(valid_backends)}"
+        
+        # 审查修复#2: 补充Crypto配置验证（之前缺失）
+        crypto_constant_time = crypto_config.get("constant_time")
+        if crypto_constant_time is not None and not self._is_strict_bool(crypto_constant_time):
+            errors["crypto.constant_time"] = "必须是布尔值"
+        
+        crypto_verify_checksums = crypto_config.get("verify_checksums")
+        if crypto_verify_checksums is not None and not self._is_strict_bool(crypto_verify_checksums):
+            errors["crypto.verify_checksums"] = "必须是布尔值"
+        
+        crypto_strict_wif = crypto_config.get("strict_wif_validation")
+        if crypto_strict_wif is not None and not self._is_strict_bool(crypto_strict_wif):
+            errors["crypto.strict_wif_validation"] = "必须是布尔值"
+        
+        # 审查修复#6: 添加配置依赖关系验证
+        # 日志轮转依赖验证
+        if log_rotation_type == "size" and "max_bytes" not in logging_config:
+            errors["logging.max_bytes"] = "size轮转模式需要配置max_bytes"
+        elif log_rotation_type == "time" and "rotation_when" not in logging_config:
+            errors["logging.rotation_when"] = "time轮转模式需要配置rotation_when"
         
         return errors

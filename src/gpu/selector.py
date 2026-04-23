@@ -6,6 +6,7 @@
 """
 
 import logging
+import threading
 from typing import List, Dict, Optional
 
 from .device import GPUDeviceDetector, identify_vendor
@@ -389,22 +390,29 @@ class GPUDeviceSelector:
         logger.debug("GPU设备选择器缓存已清除")
 
 
-# 全局单例
+# 线程安全的单例
 _selector_instance = None
+_selector_lock = threading.Lock()
 
 def get_gpu_selector() -> GPUDeviceSelector:
-    """获取GPU设备选择器单例
+    """获取GPU设备选择器单例（线程安全）
     
     Returns:
         GPUDeviceSelector实例
     """
     global _selector_instance
+    
+    # 双重检查锁定模式
     if _selector_instance is None:
-        _selector_instance = GPUDeviceSelector()
+        with _selector_lock:
+            if _selector_instance is None:
+                _selector_instance = GPUDeviceSelector()
+    
     return _selector_instance
 
 
 def reset_gpu_selector():
     """重置GPU设备选择器单例(用于测试)"""
     global _selector_instance
-    _selector_instance = None
+    with _selector_lock:
+        _selector_instance = None

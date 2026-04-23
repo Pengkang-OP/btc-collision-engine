@@ -113,8 +113,8 @@ class MatchDataStorage:
             if temp_file.exists():
                 try:
                     temp_file.unlink()
-                except:
-                    pass
+                except (OSError, PermissionError) as e:
+                    logger.error(f"清理临时文件失败: {e}")
             
             raise
     

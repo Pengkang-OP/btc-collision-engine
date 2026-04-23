@@ -1,0 +1,945 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+GPU设备选择和切换功能全面测试
+验证多GPU环境下不同厂商GPU的检测、评分、选择和切换功能
+"""
+
+import sys
+import os
+import time
+import json
+import unittest
+from pathlib import Path
+from unittest.mock import Mock, patch, MagicMock
+from typing import Dict, List
+
+# 修复Windows编码
+if sys.platform == 'win32':
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
+# 添加项目根目录
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from src.gpu.selector import GPUDeviceSelector, get_gpu_selector, reset_gpu_selector
+from src.gpu.device import GPUDeviceDetector, identify_vendor, GPUDevice
+
+
+# Mock pyopencl常量
+def create_mock_cl():
+    """创建Mock的pyopencl模块"""
+    mock_cl = Mock()
+    
+    # 设备类型常量
+    class device_type:
+        CPU = 0x2
+        GPU = 0x4
+    
+    class device_info:
+        TYPE = 0x1000
+        NAME = 0x1001
+        VENDOR = 0x1002
+        GLOBAL_MEM_SIZE = 0x1003
+        MAX_COMPUTE_UNITS = 0x1004
+    
+    class platform_info:
+        NAME = 0x1000
+    
+    class command_queue_properties:
+        PROFILING_ENABLE = 0x1
+    
+    mock_cl.device_type = device_type
+    mock_cl.device_info = device_info
+    mock_cl.platform_info = platform_info
+    mock_cl.command_queue_properties = command_queue_properties
+    
+    return mock_cl
+
+
+class TestGPUDeviceDetection(unittest.TestCase):
+    """测试1: GPU设备检测功能"""
+    
+    def setUp(self):
+        """测试前准备"""
+        # 清除缓存确保每次测试独立
+        GPUDeviceDetector.clear_availability_cache()
+        reset_gpu_selector()
+    
+    def test_01_detect_single_gpu(self):
+        """测试1.1: 检测单个GPU设备"""
+        print("\n📋 测试1.1: 检测单个GPU设备")
+        
+        # Mock单个GPU设备
+        mock_device = Mock()
+        mock_device.type = 0x4  # GPU类型
+        mock_device.name = "NVIDIA GeForce RTX 3080"
+        mock_device.vendor = "NVIDIA Corporation"
+        mock_device.global_mem_size = 8589934592
+        mock_device.max_compute_units = 68
+        
+        mock_platform = Mock()
+        mock_platform.get_devices = Mock(return_value=[mock_device])
+        
+        with patch('src.gpu.device.cl.get_platforms', return_value=[mock_platform]):
+            devices = GPUDeviceDetector.detect_devices()
+            
+            self.assertEqual(len(devices), 1)
+            self.assertEqual(devices[0]['name'], "NVIDIA GeForce RTX 3080")
+            self.assertEqual(devices[0]['vendor'], "NVIDIA Corporation")
+            self.assertEqual(devices[0]['type'], 'GPU')
+            print(f"  ✅ 成功检测到: {devices[0]['name']}")
+    
+    def test_02_detect_multi_gpu(self):
+        """测试1.2: 检测多个GPU设备(不同厂商)"""
+        print("\n📋 测试1.2: 检测多个GPU设备")
+        
+        # Mock 3个不同厂商的GPU
+        def create_mock_device(name, vendor, mem_size, compute_units):
+            device = Mock()
+            device.type = 0x4  # GPU类型
+            device.name = name
+            device.vendor = vendor
+            device.global_mem_size = mem_size
+            device.max_compute_units = compute_units
+            return device
+        
+        nvidia_gpu = create_mock_device(
+            "NVIDIA GeForce RTX 3080", 
+            "NVIDIA Corporation", 
+            10737418240,  # 10GB
+            68
+        )
+        
+        amd_gpu = create_mock_device(
+            "AMD Radeon RX 6800 XT",
+            "Advanced Micro Devices, Inc.",
+            17179869184,  # 16GB
+            72
+        )
+        
+        intel_gpu = create_mock_device(
+            "Intel(R) Arc(TM) A770 Graphics",
+            "Intel Corporation",
+            17179869184,  # 16GB
+            512
+        )
+        
+        # 模拟两个平台
+        platform1 = Mock()
+        platform1.get_devices = Mock(return_value=[nvidia_gpu])
+        
+        platform2 = Mock()
+        platform2.get_devices = Mock(return_value=[amd_gpu, intel_gpu])
+        
+        with patch('src.gpu.device.cl.get_platforms', return_value=[platform1, platform2]):
+            devices = GPUDeviceDetector.detect_devices()
+            
+            self.assertEqual(len(devices), 3)
+            
+            # 验证每个设备信息
+            vendors = [d['vendor'] for d in devices]
+            self.assertTrue(any('NVIDIA' in v for v in vendors))
+            self.assertTrue(any('AMD' in v or 'Advanced' in v for v in vendors))
+            self.assertTrue(any('Intel' in v for v in vendors))
+            
+            print(f"  ✅ 检测到 {len(devices)} 个GPU设备:")
+            for i, dev in enumerate(devices):
+                print(f"     [{i}] {dev['name']} ({dev['vendor']})")
+    
+    def test_03_filter_cpu_devices(self):
+        """测试1.3: 过滤CPU设备"""
+        print("\n📋 测试1.3: 过滤CPU设备")
+        
+        cpu_device = Mock()
+        cpu_device.type = 0x2  # CPU类型
+        cpu_device.name = "Intel(R) Core(TM) i7-10700K"
+        cpu_device.vendor = "Intel(R) Corporation"
+        cpu_device.global_mem_size = 34359738368
+        cpu_device.max_compute_units = 16
+        
+        gpu_device = Mock()
+        gpu_device.type = 0x4  # GPU类型
+        gpu_device.name = "NVIDIA GeForce GTX 1660"
+        gpu_device.vendor = "NVIDIA Corporation"
+        gpu_device.global_mem_size = 6442450944
+        gpu_device.max_compute_units = 22
+        
+        platform = Mock()
+        platform.get_devices = Mock(return_value=[cpu_device, gpu_device])
+        
+        with patch('src.gpu.device.cl.get_platforms', return_value=[platform]):
+            devices = GPUDeviceDetector.detect_devices()
+            
+            # 应该只检测到GPU,CPU被过滤
+            self.assertEqual(len(devices), 1)
+            self.assertIn("GTX 1660", devices[0]['name'])
+            print(f"  ✅ CPU设备已过滤,仅保留GPU: {devices[0]['name']}")
+    
+    def test_04_filter_integrated_gpu(self):
+        """测试1.4: 过滤Intel核显"""
+        print("\n📋 测试1.4: 过滤Intel核显")
+        
+        integrated_gpu = Mock()
+        integrated_gpu.type = 0x4  # GPU类型
+        integrated_gpu.name = "Intel(R) UHD Graphics 630"
+        integrated_gpu.vendor = "Intel Corporation"
+        integrated_gpu.global_mem_size = 8589934592
+        integrated_gpu.max_compute_units = 24
+        
+        discrete_gpu = Mock()
+        discrete_gpu.type = 0x4  # GPU类型
+        discrete_gpu.name = "Intel(R) Arc(TM) A770 Graphics"
+        discrete_gpu.vendor = "Intel Corporation"
+        discrete_gpu.global_mem_size = 17179869184
+        discrete_gpu.max_compute_units = 512
+        
+        platform = Mock()
+        platform.get_devices = Mock(return_value=[integrated_gpu, discrete_gpu])
+        
+        with patch('src.gpu.device.cl.get_platforms', return_value=[platform]):
+            devices = GPUDeviceDetector.detect_devices()
+            
+            # 应该只检测到独显,核显被过滤
+            self.assertEqual(len(devices), 1)
+            self.assertIn("Arc", devices[0]['name'])
+            print(f"  ✅ 核显已过滤,仅保留独显: {devices[0]['name']}")
+    
+    def test_05_availability_cache(self):
+        """测试1.5: GPU可用性检测缓存机制"""
+        print("\n📋 测试1.5: GPU可用性缓存机制")
+        
+        mock_device = Mock()
+        mock_device.type = 0x4
+        mock_device.name = "Test GPU"
+        mock_device.vendor = "Test Vendor"
+        mock_device.global_mem_size = 8589934592
+        mock_device.max_compute_units = 68
+        
+        platform = Mock()
+        platform.get_devices = Mock(return_value=[mock_device])
+        
+        call_count = 0
+        
+        def mock_get_platforms():
+            nonlocal call_count
+            call_count += 1
+            return [platform]
+        
+        with patch('src.gpu.device.cl.get_platforms', side_effect=mock_get_platforms):
+            # 第一次调用 - 应该执行实际检测
+            result1 = GPUDeviceDetector.is_gpu_available()
+            self.assertTrue(result1)
+            first_call_count = call_count
+            
+            # 第二次调用 - 应该使用缓存
+            result2 = GPUDeviceDetector.is_gpu_available()
+            self.assertTrue(result2)
+            second_call_count = call_count
+            
+            # 验证缓存生效(调用次数未增加)
+            self.assertEqual(first_call_count, second_call_count)
+            print(f"  ✅ 缓存机制正常: 检测{first_call_count}次,缓存命中{second_call_count - first_call_count}次")
+            
+            # 清除缓存后再次调用 - 应该重新检测
+            GPUDeviceDetector.clear_availability_cache()
+            result3 = GPUDeviceDetector.is_gpu_available()
+            self.assertTrue(result3)
+            self.assertEqual(call_count, first_call_count + 1)
+            print(f"  ✅ 缓存清除后重新检测成功")
+
+
+class TestGPUVendorIdentification(unittest.TestCase):
+    """测试2: GPU厂商识别功能"""
+    
+    def test_01_identify_nvidia(self):
+        """测试2.1: 识别NVIDIA GPU"""
+        print("\n📋 测试2.1: 识别NVIDIA GPU")
+        
+        test_cases = [
+            ("NVIDIA GeForce RTX 3080", "NVIDIA Corporation"),
+            ("GeForce GTX 1660 Ti", "NVIDIA"),
+            ("RTX 4090", "NVIDIA Corporation"),
+            ("Tesla V100", "NVIDIA"),
+        ]
+        
+        for name, vendor in test_cases:
+            result = identify_vendor(name, vendor)
+            self.assertEqual(result, 'nvidia', f"Failed for {name}")
+            print(f"  ✅ {name} -> {result}")
+    
+    def test_02_identify_amd(self):
+        """测试2.2: 识别AMD GPU"""
+        print("\n📋 测试2.2: 识别AMD GPU")
+        
+        test_cases = [
+            ("AMD Radeon RX 6800 XT", "Advanced Micro Devices, Inc."),
+            ("Radeon RX 5700 XT", "AMD"),
+            ("AMD Radeon Pro W6800", "AMD"),
+        ]
+        
+        for name, vendor in test_cases:
+            result = identify_vendor(name, vendor)
+            self.assertEqual(result, 'amd', f"Failed for {name}")
+            print(f"  ✅ {name} -> {result}")
+    
+    def test_03_identify_intel(self):
+        """测试2.3: 识别Intel GPU"""
+        print("\n📋 测试2.3: 识别Intel GPU")
+        
+        test_cases = [
+            ("Intel(R) Arc(TM) A770 Graphics", "Intel Corporation"),
+            ("Intel Arc A750", "Intel"),
+            ("Intel(R) UHD Graphics 630", "Intel Corporation"),
+        ]
+        
+        for name, vendor in test_cases:
+            result = identify_vendor(name, vendor)
+            self.assertEqual(result, 'intel', f"Failed for {name}")
+            print(f"  ✅ {name} -> {result}")
+    
+    def test_04_identify_unknown(self):
+        """测试2.4: 识别未知厂商"""
+        print("\n📋 测试2.4: 识别未知厂商GPU")
+        
+        result = identify_vendor("Unknown GPU", "Unknown Vendor")
+        self.assertEqual(result, 'unknown')
+        print(f"  ✅ 未知厂商正确识别: {result}")
+
+
+class TestGPUDeviceScoring(unittest.TestCase):
+    """测试3: GPU评分和选择算法"""
+    
+    def setUp(self):
+        """测试前准备"""
+        reset_gpu_selector()
+        self.selector = GPUDeviceSelector()
+    
+    def test_01_score_nvidia_gpu(self):
+        """测试3.1: NVIDIA GPU评分"""
+        print("\n📋 测试3.1: NVIDIA GPU评分")
+        
+        device = {
+            'name': 'NVIDIA GeForce RTX 3080',
+            'vendor': 'nvidia',
+            'global_mem_gb': 10.0,
+            'max_compute_units': 68,
+            'global_index': 0,
+        }
+        
+        score = self.selector.score_device(device)
+        
+        # 预期分数: (10*10 + 68*0.05) * 1.0 = 103.4
+        expected_score = (10.0 * 10.0 + 68 * 0.05) * 1.0
+        
+        self.assertAlmostEqual(score, expected_score, places=1)
+        print(f"  ✅ {device['name']} 评分: {score:.1f} (预期: {expected_score:.1f})")
+    
+    def test_02_score_amd_gpu(self):
+        """测试3.2: AMD GPU评分"""
+        print("\n📋 测试3.2: AMD GPU评分")
+        
+        device = {
+            'name': 'AMD Radeon RX 6800 XT',
+            'vendor': 'amd',
+            'global_mem_gb': 16.0,
+            'max_compute_units': 72,
+            'global_index': 1,
+        }
+        
+        score = self.selector.score_device(device)
+        
+        # 预期分数: (16*10 + 72*0.05) * 0.95 = 155.42
+        expected_score = (16.0 * 10.0 + 72 * 0.05) * 0.95
+        
+        self.assertAlmostEqual(score, expected_score, places=1)
+        print(f"  ✅ {device['name']} 评分: {score:.1f} (预期: {expected_score:.1f})")
+    
+    def test_03_score_intel_gpu(self):
+        """测试3.3: Intel GPU评分"""
+        print("\n📋 测试3.3: Intel GPU评分")
+        
+        device = {
+            'name': 'Intel Arc A770',
+            'vendor': 'intel',
+            'global_mem_gb': 16.0,
+            'max_compute_units': 512,
+            'global_index': 2,
+        }
+        
+        score = self.selector.score_device(device)
+        
+        # 预期分数: (16*10 + 512*0.05) * 0.9 = 167.04
+        expected_score = (16.0 * 10.0 + 512 * 0.05) * 0.9
+        
+        self.assertAlmostEqual(score, expected_score, places=1)
+        print(f"  ✅ {device['name']} 评分: {score:.1f} (预期: {expected_score:.1f})")
+    
+    def test_04_select_best_device(self):
+        """测试3.4: 自动选择最佳GPU"""
+        print("\n📋 测试3.4: 自动选择最佳GPU")
+        
+        devices = [
+            {
+                'name': 'NVIDIA GeForce RTX 3080',
+                'vendor': 'nvidia',
+                'global_mem_gb': 10.0,
+                'max_compute_units': 68,
+                'global_index': 0,
+            },
+            {
+                'name': 'AMD Radeon RX 6800 XT',
+                'vendor': 'amd',
+                'global_mem_gb': 16.0,
+                'max_compute_units': 72,
+                'global_index': 1,
+            },
+            {
+                'name': 'Intel Arc A770',
+                'vendor': 'intel',
+                'global_mem_gb': 16.0,
+                'max_compute_units': 512,
+                'global_index': 2,
+            },
+        ]
+        
+        # 计算所有设备分数
+        for device in devices:
+            device['score'] = self.selector.score_device(device)
+        
+        # 选择最佳设备
+        best = self.selector.select_best_device(devices)
+        
+        self.assertIsNotNone(best)
+        # Intel Arc A770应该分数最高(167.04 > 155.42 > 103.4)
+        self.assertIn('Arc A770', best['name'])
+        
+        print(f"  ✅ 最佳GPU选择: {best['name']} (评分: {best['score']:.1f})")
+        print(f"     所有设备评分:")
+        for dev in sorted(devices, key=lambda d: d['score'], reverse=True):
+            print(f"       - {dev['name']}: {dev['score']:.1f}")
+    
+    def test_05_select_by_index(self):
+        """测试3.5: 根据索引选择GPU"""
+        print("\n📋 测试3.5: 根据索引选择GPU")
+        
+        devices = [
+            {
+                'global_index': 0,
+                'name': 'NVIDIA RTX 3080',
+                'vendor': 'nvidia',
+                'global_mem_gb': 10.0,
+                'max_compute_units': 68,
+            },
+            {
+                'global_index': 1,
+                'name': 'AMD RX 6800 XT',
+                'vendor': 'amd',
+                'global_mem_gb': 16.0,
+                'max_compute_units': 72,
+            },
+        ]
+        
+        # Mock detect_all_devices
+        with patch.object(self.selector, 'detect_all_devices', return_value=devices):
+            # 选择索引0
+            device0 = self.selector.get_device_info(0)
+            self.assertIsNotNone(device0)
+            self.assertIn('NVIDIA', device0['name'])
+            
+            # 选择索引1
+            device1 = self.selector.get_device_info(1)
+            self.assertIsNotNone(device1)
+            self.assertIn('AMD', device1['name'])
+            
+            # 选择不存在的索引
+            device_invalid = self.selector.get_device_info(99)
+            self.assertIsNone(device_invalid)
+            
+            print(f"  ✅ 索引选择功能正常")
+    
+    def test_06_recommend_batch_size(self):
+        """测试3.6: 推荐批次大小"""
+        print("\n📋 测试3.6: 推荐批次大小")
+        
+        test_cases = [
+            # (显存GB, 厂商, 预期批次大小)
+            (16.0, 'nvidia', 131072),  # >=16GB -> 128K
+            (16.0, 'intel', 65536),    # Intel减半 -> 64K
+            (8.0, 'amd', 52428),       # 8GB * 0.8 = 52428.8
+            (4.0, 'nvidia', 32768),    # >=4GB -> 32K
+            (2.0, 'nvidia', 16384),    # <4GB -> 16K
+        ]
+        
+        for mem_gb, vendor, expected in test_cases:
+            device = {
+                'global_mem_gb': mem_gb,
+                'vendor': vendor,
+            }
+            
+            recommended = self.selector.recommend_batch_size(device)
+            
+            # Intel和AMD有调整,允许小误差
+            if vendor == 'amd':
+                self.assertAlmostEqual(recommended, expected, delta=100)
+            else:
+                self.assertEqual(recommended, expected)
+            
+            print(f"  ✅ {vendor.upper()} {mem_gb}GB -> {recommended:,}")
+
+
+class TestGPUSwitching(unittest.TestCase):
+    """测试4: GPU切换功能"""
+    
+    def setUp(self):
+        """测试前准备"""
+        reset_gpu_selector()
+    
+    def test_01_switch_between_devices(self):
+        """测试4.1: 在不同GPU间切换"""
+        print("\n📋 测试4.1: GPU切换功能")
+        
+        # Mock两个GPU设备
+        def create_mock_device(name, vendor, mem_size, compute_units):
+            device = Mock()
+            device.type = 0x4
+            device.name = name
+            device.vendor = vendor
+            device.global_mem_size = mem_size
+            device.max_compute_units = compute_units
+            return device
+        
+        gpu0 = create_mock_device("NVIDIA RTX 3080", "NVIDIA", 10737418240, 68)
+        gpu1 = create_mock_device("AMD RX 6800 XT", "AMD", 17179869184, 72)
+        
+        mock_context = Mock()
+        mock_queue = Mock()
+        
+        platform = Mock()
+        platform.get_devices = Mock(return_value=[gpu0, gpu1])
+        
+        with patch('src.gpu.device.cl.get_platforms', return_value=[platform]):
+            with patch('src.gpu.device.cl.Context', return_value=mock_context):
+                with patch('src.gpu.device.cl.CommandQueue', return_value=mock_queue):
+                    # 初始化GPUDevice
+                    gpu_device = GPUDevice()
+                    
+                    # 第一次: 使用GPU 0
+                    gpu_device.initialize(device_index=0)
+                    self.assertIn("RTX 3080", gpu_device.device_info['name'])
+                    print(f"  ✅ 切换到GPU 0: {gpu_device.device_info['name']}")
+                    
+                    # 清理
+                    gpu_device.cleanup()
+                    
+                    # 第二次: 使用GPU 1
+                    gpu_device.initialize(device_index=1)
+                    self.assertIn("RX 6800 XT", gpu_device.device_info['name'])
+                    print(f"  ✅ 切换到GPU 1: {gpu_device.device_info['name']}")
+                    
+                    # 清理
+                    gpu_device.cleanup()
+    
+    def test_02_auto_select_fallback(self):
+        """测试4.2: 自动选择最佳GPU"""
+        print("\n📋 测试4.2: 自动选择GPU(-1索引)")
+            
+        def create_mock_device(name, vendor, mem_size, compute_units):
+            device = Mock()
+            device.type = 0x4
+            device.name = name
+            device.vendor = vendor
+            device.global_mem_size = mem_size
+            device.max_compute_units = compute_units
+            return device
+            
+        # 创廻3个GPU,AMD显存最大应该被选中
+        gpu0 = create_mock_device("NVIDIA GTX 1660", "NVIDIA", 6442450944, 22)
+        gpu1 = create_mock_device("AMD RX 6800 XT", "AMD", 17179869184, 72)
+        gpu2 = create_mock_device("Intel Arc A750", "Intel", 8589934592, 512)
+            
+        mock_context = Mock()
+        mock_queue = Mock()
+            
+        platform = Mock()
+        platform.get_devices = Mock(return_value=[gpu0, gpu1, gpu2])
+            
+        with patch('src.gpu.device.cl.get_platforms', return_value=[platform]):
+            with patch('src.gpu.device.cl.Context', return_value=mock_context):
+                with patch('src.gpu.device.cl.CommandQueue', return_value=mock_queue):
+                    gpu_device = GPUDevice()
+                        
+                    # 使用-1自动选择
+                    gpu_device.initialize(device_index=-1)
+                        
+                    # 应该选择AMD RX 6800 XT(显存最大)
+                    self.assertIn("RX 6800 XT", gpu_device.device_info['name'])
+                    print(f"  ✅ 自动选择最佳GPU: {gpu_device.device_info['name']}")
+                        
+                    gpu_device.cleanup()
+    
+    def test_03_invalid_device_index(self):
+        """测试4.3: 无效设备索引处理"""
+        print("\n📋 测试4.3: 无效设备索引处理")
+        
+        mock_device = Mock()
+        mock_device.type = 0x4
+        mock_device.name = "Test GPU"
+        mock_device.vendor = "Test"
+        mock_device.global_mem_size = 8589934592
+        mock_device.max_compute_units = 68
+        
+        platform = Mock()
+        platform.get_devices = Mock(return_value=[mock_device])
+        
+        with patch('src.gpu.device.cl.get_platforms', return_value=[platform]):
+            gpu_device = GPUDevice()
+            
+            # 尝试使用不存在的索引
+            with self.assertRaises(ValueError) as context:
+                gpu_device.initialize(device_index=5)
+            
+            # 验证错误信息包含可用设备列表
+            error_msg = str(context.exception)
+            self.assertIn("超出范围", error_msg)
+            print(f"  ✅ 正确处理无效索引: {error_msg[:50]}...")
+
+
+class TestGPUConfigurationAdaptation(unittest.TestCase):
+    """测试5: 配置适配功能"""
+    
+    def setUp(self):
+        """测试前准备"""
+        reset_gpu_selector()
+        self.selector = GPUDeviceSelector()
+    
+    def test_01_batch_size_adaptation(self):
+        """测试5.1: 批次大小根据GPU适配"""
+        print("\n📋 测试5.1: 批次大小适配")
+        
+        test_configs = [
+            # (设备名称, 显存GB, 厂商, 预期批次大小范围)
+            ("NVIDIA RTX 4090", 24.0, 'nvidia', (100000, 150000)),
+            ("AMD RX 7900 XTX", 24.0, 'amd', (80000, 120000)),
+            ("Intel Arc A770", 16.0, 'intel', (50000, 80000)),
+            ("NVIDIA GTX 1660", 6.0, 'nvidia', (30000, 50000)),
+        ]
+        
+        for name, mem_gb, vendor, (min_batch, max_batch) in test_configs:
+            device = {
+                'name': name,
+                'vendor': vendor,
+                'global_mem_gb': mem_gb,
+                'max_compute_units': 100,
+            }
+            
+            batch_size = self.selector.recommend_batch_size(device)
+            
+            self.assertGreaterEqual(batch_size, min_batch)
+            self.assertLessEqual(batch_size, max_batch)
+            
+            print(f"  ✅ {name}: {batch_size:,} (范围: {min_batch:,}-{max_batch:,})")
+    
+    def test_02_work_group_size_adaptation(self):
+        """测试5.2: 工作组大小适配"""
+        print("\n📋 测试5.2: 工作组大小适配")
+        
+        test_cases = [
+            ("NVIDIA RTX 3080", 'nvidia', 1024, 512),
+            ("AMD RX 6800 XT", 'amd', 1024, 256),
+            ("Intel Arc A770", 'intel', 1024, 256),
+        ]
+        
+        for name, vendor, max_work_group, expected in test_cases:
+            device = {
+                'name': name,
+                'vendor': vendor,
+                'max_work_group_size': max_work_group,
+            }
+            
+            work_group = self.selector.recommend_work_group_size(device)
+            
+            self.assertEqual(work_group, expected)
+            print(f"  ✅ {name}: 工作组大小 {work_group}")
+    
+    def test_03_memory_pool_configuration(self):
+        """测试5.3: 内存池配置适配"""
+        print("\n📋 测试5.3: 内存池配置")
+        
+        # 不同显存的GPU应有不同的内存池配置
+        devices = [
+            {'global_mem_gb': 24.0, 'vendor': 'nvidia'},
+            {'global_mem_gb': 16.0, 'vendor': 'amd'},
+            {'global_mem_gb': 8.0, 'vendor': 'intel'},
+        ]
+        
+        for device in devices:
+            batch_size = self.selector.recommend_batch_size(device)
+            
+            # 内存池大小应该与批次大小相关
+            # 估算: 每个key 32字节 + 匹配标志4字节 = 36字节
+            estimated_memory_mb = (batch_size * 36) / (1024 * 1024)
+            
+            print(f"  ✅ {device['vendor'].upper()} {device['global_mem_gb']}GB:")
+            print(f"       批次大小: {batch_size:,}")
+            print(f"       估算内存: {estimated_memory_mb:.2f} MB")
+
+
+class TestGPURunningStability(unittest.TestCase):
+    """测试6: GPU运行稳定性"""
+    
+    def test_01_multiple_init_cleanup(self):
+        """测试6.1: 多次初始化/清理稳定性"""
+        print("\n📋 测试6.1: 多次初始化/清理循环")
+        
+        mock_device = Mock()
+        mock_device.type = 0x4
+        mock_device.name = "Test GPU"
+        mock_device.vendor = "Test"
+        mock_device.global_mem_size = 8589934592
+        mock_device.max_compute_units = 68
+        
+        mock_context = Mock()
+        mock_queue = Mock()
+        mock_queue.finish = Mock()
+        
+        platform = Mock()
+        platform.get_devices = Mock(return_value=[mock_device])
+        
+        with patch('src.gpu.device.cl.get_platforms', return_value=[platform]):
+            with patch('src.gpu.device.cl.Context', return_value=mock_context):
+                with patch('src.gpu.device.cl.CommandQueue', return_value=mock_queue):
+                    gpu_device = GPUDevice()
+                    
+                    # 循环5次初始化/清理
+                    for i in range(5):
+                        gpu_device.initialize(device_index=0)
+                        self.assertIsNotNone(gpu_device.context)
+                        self.assertIsNotNone(gpu_device.queue)
+                        
+                        gpu_device.cleanup()
+                        self.assertIsNone(gpu_device.context)
+                        self.assertIsNone(gpu_device.queue)
+                        
+                        print(f"  ✅ 循环 {i+1}/5: 初始化/清理成功")
+    
+    def test_02_resource_cleanup_completeness(self):
+        """测试6.2: 资源清理完整性"""
+        print("\n📋 测试6.2: 资源清理完整性")
+        
+        mock_device = Mock()
+        mock_device.type = 0x4
+        mock_device.name = "Test GPU"
+        mock_device.vendor = "Test"
+        mock_device.global_mem_size = 8589934592
+        mock_device.max_compute_units = 68
+        
+        mock_context = Mock()
+        mock_queue = Mock()
+        mock_compute_queue = Mock()
+        mock_transfer_queue = Mock()
+        
+        for q in [mock_queue, mock_compute_queue, mock_transfer_queue]:
+            q.finish = Mock()
+        
+        platform = Mock()
+        platform.get_devices = Mock(return_value=[mock_device])
+        
+        with patch('src.gpu.device.cl.get_platforms', return_value=[platform]):
+            with patch('src.gpu.device.cl.Context', return_value=mock_context):
+                with patch('src.gpu.device.cl.CommandQueue', side_effect=[mock_compute_queue, mock_transfer_queue]):
+                    gpu_device = GPUDevice()
+                    
+                    # 启用异步模式
+                    gpu_device.initialize(device_index=0, enable_async=True)
+                    
+                    # 验证所有队列已创建
+                    self.assertIsNotNone(gpu_device.compute_queue)
+                    self.assertIsNotNone(gpu_device.transfer_queue)
+                    
+                    # 清理
+                    gpu_device.cleanup()
+                    
+                    # 验证所有资源已清理
+                    self.assertIsNone(gpu_device.context)
+                    self.assertIsNone(gpu_device.queue)
+                    self.assertIsNone(gpu_device.compute_queue)
+                    self.assertIsNone(gpu_device.transfer_queue)
+                    self.assertIsNone(gpu_device.device)
+                    
+                    print(f"  ✅ 所有资源已完全清理")
+
+
+class TestMultiGPUIntegration(unittest.TestCase):
+    """测试7: 多GPU集成测试"""
+    
+    def setUp(self):
+        """测试前准备"""
+        reset_gpu_selector()
+    
+    def test_01_selector_singleton(self):
+        """测试7.1: 选择器单例模式"""
+        print("\n📋 测试7.1: 选择器单例模式")
+        
+        selector1 = get_gpu_selector()
+        selector2 = get_gpu_selector()
+        
+        # 应该是同一个实例
+        self.assertIs(selector1, selector2)
+        print(f"  ✅ 单例模式正常: selector1 is selector2 = {selector1 is selector2}")
+    
+    def test_02_detect_and_score_all_devices(self):
+        """测试7.2: 检测并评分所有设备"""
+        print("\n📋 测试7.2: 检测并评分所有设备")
+        
+        def create_mock_device(name, vendor, mem_size, compute_units):
+            device = Mock()
+            device.type = 0x4
+            device.name = name
+            device.vendor = vendor
+            device.global_mem_size = mem_size
+            device.max_compute_units = compute_units
+            return device
+        
+        gpus = [
+            create_mock_device("NVIDIA RTX 3080", "NVIDIA", 10737418240, 68),
+            create_mock_device("AMD RX 6800 XT", "AMD", 17179869184, 72),
+            create_mock_device("Intel Arc A770", "Intel", 17179869184, 512),
+        ]
+        
+        platform = Mock()
+        platform.get_devices = Mock(return_value=gpus)
+        
+        with patch('src.gpu.device.cl.get_platforms', return_value=[platform]):
+            selector = get_gpu_selector()
+            devices = selector.detect_all_devices()
+            
+            self.assertEqual(len(devices), 3)
+            
+            # 验证所有设备都有评分
+            for device in devices:
+                self.assertIn('score', device)
+                self.assertGreater(device['score'], 0)
+            
+            print(f"  ✅ 检测到 {len(devices)} 个设备,均已评分:")
+            for dev in sorted(devices, key=lambda d: d['score'], reverse=True):
+                print(f"       [{dev['global_index']}] {dev['name']}: {dev['score']:.1f}分")
+    
+    def test_03_format_device_info(self):
+        """测试7.3: 格式化设备信息"""
+        print("\n📋 测试7.3: 格式化设备信息")
+        
+        device = {
+            'global_index': 0,
+            'name': 'NVIDIA GeForce RTX 3080',
+            'vendor': 'nvidia',
+            'global_mem_gb': 10.0,
+            'max_compute_units': 68,
+            'score': 103.4,
+            'max_work_group_size': 1024,
+            'global_mem_cache_kb': 5120,
+            'local_mem_kb': 64,
+            'recommended_batch_size': 131072,
+            'recommended_work_group': 512,
+        }
+        
+        selector = GPUDeviceSelector()
+        
+        # 简洁格式
+        brief = selector.format_device_info(device, detailed=False)
+        self.assertIn('RTX 3080', brief)
+        self.assertIn('10.00 GB', brief)
+        
+        # 详细格式
+        detailed = selector.format_device_info(device, detailed=True)
+        self.assertIn('131,072', detailed)
+        self.assertIn('512', detailed)
+        
+        print(f"  ✅ 简洁格式:\n{brief}")
+        print(f"\n  ✅ 详细格式:\n{detailed}")
+    
+    def test_04_select_devices_by_indices(self):
+        """测试7.4: 根据索引列表选择设备"""
+        print("\n📋 测试7.4: 批量选择设备")
+        
+        devices = [
+            {'global_index': 0, 'name': 'GPU 0', 'vendor': 'nvidia', 'global_mem_gb': 10.0, 'max_compute_units': 68},
+            {'global_index': 1, 'name': 'GPU 1', 'vendor': 'amd', 'global_mem_gb': 16.0, 'max_compute_units': 72},
+            {'global_index': 2, 'name': 'GPU 2', 'vendor': 'intel', 'global_mem_gb': 16.0, 'max_compute_units': 512},
+        ]
+        
+        selector = GPUDeviceSelector()
+        
+        with patch.object(selector, 'detect_all_devices', return_value=devices):
+            # 选择索引0和2
+            selected = selector.select_devices_by_indices([0, 2])
+            
+            self.assertEqual(len(selected), 2)
+            self.assertEqual(selected[0]['global_index'], 0)
+            self.assertEqual(selected[1]['global_index'], 2)
+            
+            print(f"  ✅ 成功选择 {len(selected)} 个设备:")
+            for dev in selected:
+                print(f"       - {dev['name']}")
+
+
+def run_tests():
+    """运行所有测试"""
+    print("="*80)
+    print("  GPU设备选择和切换功能全面测试")
+    print("="*80)
+    print(f"开始时间: {time.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Python版本: {sys.version}")
+    print()
+    
+    # 创建测试套件
+    loader = unittest.TestLoader()
+    suite = unittest.TestSuite()
+    
+    # 添加所有测试类
+    test_classes = [
+        TestGPUDeviceDetection,
+        TestGPUVendorIdentification,
+        TestGPUDeviceScoring,
+        TestGPUSwitching,
+        TestGPUConfigurationAdaptation,
+        TestGPURunningStability,
+        TestMultiGPUIntegration,
+    ]
+    
+    for test_class in test_classes:
+        tests = loader.loadTestsFromTestCase(test_class)
+        suite.addTests(tests)
+    
+    # 运行测试
+    runner = unittest.TextTestRunner(verbosity=2)
+    result = runner.run(suite)
+    
+    # 输出总结
+    print("\n" + "="*80)
+    print("  测试总结")
+    print("="*80)
+    print(f"  总测试数: {result.testsRun}")
+    print(f"  ✅ 通过: {result.testsRun - len(result.failures) - len(result.errors)}")
+    print(f"  ❌ 失败: {len(result.failures)}")
+    print(f"  💥 错误: {len(result.errors)}")
+    
+    pass_rate = ((result.testsRun - len(result.failures) - len(result.errors)) / result.testsRun * 100) if result.testsRun > 0 else 0
+    print(f"  通过率: {pass_rate:.1f}%")
+    
+    if result.failures:
+        print("\n失败测试:")
+        for test, traceback in result.failures:
+            print(f"  - {test}: {traceback.split('.')[-1].strip()}")
+    
+    if result.errors:
+        print("\n错误测试:")
+        for test, traceback in result.errors:
+            print(f"  - {test}: {traceback.split('.')[-1].strip()}")
+    
+    return len(result.failures) == 0 and len(result.errors) == 0
+
+
+if __name__ == "__main__":
+    success = run_tests()
+    sys.exit(0 if success else 1)

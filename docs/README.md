@@ -1,9 +1,7 @@
 # 比特币私钥碰撞工具 - 文档中心
 
-> **版本**: v1.2.0 | **最后更新**: 2026-04-21  
+> **版本**: v2.3.0 | **最后更新**: 2026-04-22  
 > **面向**: 所有用户
-
-
 
 ## 目录
 
@@ -21,6 +19,7 @@
 - [代码质量](#代码质量)
 - [测试状态](#测试状态)
 - [文件结构](#文件结构)
+
 ## 快速入口
 
 - 🚀 [快速开始指南](getting-started.md) - 5分钟上手
@@ -33,36 +32,44 @@
 ## 文档导航
 
 ### 📖 入门指南 (3个)
+
 - [getting-started.md](getting-started.md) - 快速开始与部署指南 ⭐
 - [project-status.md](project-status.md) - 项目状态总览 ⭐
 - [requirements.md](requirements.md) - 需求规格和功能规划
 
 ### 🏗️ 架构设计 (2个)
+
 - [architecture.md](architecture.md) - 系统架构设计（含代码审核和算法）⭐
 - [workflow_diagrams.md](workflow_diagrams.md) - 工作流程图
 
 ### 💻 API和界面 (2个)
+
 - [api-reference.md](api-reference.md) - 完整API文档 ⭐
 - [user-interface.md](user-interface.md) - GUI使用指南
 
 ### 🔒 安全和性能 (3个)
+
 - [security-guidelines.md](security-guidelines.md) - 安全最佳实践（含审计发现） ⭐
 - [secure-key-management.md](secure-key-management.md) - 私钥安全管理指南
 - [performance-optimization.md](performance-optimization.md) - 性能调优指南
 
 ### 🔧 运维和监控 (3个)
+
 - [troubleshooting.md](troubleshooting.md) - 故障排除指南
 - [logging-guide.md](logging-guide.md) - 日志配置指南（含数据日志集成、监控指南）
 - [monitoring-system-guide.md](monitoring-system-guide.md) - 监控系统指南
 
 ### 📦 功能特性 (4个)
+
 - [checkpoint-resume-feature.md](checkpoint-resume-feature.md) - 断点续传功能
 - [checkpoint-quick-guide.md](checkpoint-quick-guide.md) - 断点续传快速指南
 - [address-import-feature.md](address-import-feature.md) - 地址导入功能
 - [quick-reference-private-key-security.md](quick-reference-private-key-security.md) - 私钥安全快速参考
 
 ### 📦 归档文档
+
 历史过程文档已归档到 [archive](archive/README.md) 目录，包括：
+
 - 异常处理系列（4个文档）
 - SecureKeyManager系列（4个文档）
 - 代码审查系列（4个文档）
@@ -73,9 +80,9 @@
 
 ---
 
-**文档总数**: 18个核心文档 + 24个归档文档  
-**核心文档**: 8个（⭐标记）  
-**最后更新**: 2026-04-20
+**文档总数**: 30个核心文档 + 200+个归档文档  
+**根目录文档**: 3个（README.md, CHANGELOG.md, CONTRIBUTING.md）  
+**最后更新**: 2026-04-22
 
 ## 系统概览
 

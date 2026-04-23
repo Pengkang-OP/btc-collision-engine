@@ -397,8 +397,8 @@ class PerformanceReportGenerator:
                     recommendations.append(
                         "显存较小 (<4GB)，建议使用较小的 batch_size 避免显存不足"
                     )
-            except:
-                pass
+            except (KeyError, TypeError, ValueError) as e:
+                logger.debug(f"获取GPU显存信息失败: {e}")
         
         # 通用建议
         recommendations.append("定期运行基准测试以监控性能变化")

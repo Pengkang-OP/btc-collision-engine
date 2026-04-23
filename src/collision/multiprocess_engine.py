@@ -17,6 +17,7 @@
 import os
 import multiprocessing as mp
 from multiprocessing import Process, Queue, Manager
+from multiprocessing.queues import Empty, Full
 from typing import List, Dict, Any, Optional, Callable
 import time
 import logging
@@ -181,14 +182,14 @@ def _worker_process(
                         try:
                             if isinstance(pk, bytearray):
                                 pk[:] = b'\x00' * len(pk)
-                        except:
-                            pass  # 忽略清零失败
+                        except (TypeError, ValueError, MemoryError) as e:
+                            logger.debug(f"私钥清零失败: {e}")
                         
                         # 删除引用，加速GC
                         try:
                             del pk_bytes
-                        except:
-                            pass
+                        except NameError:
+                            pass  # 变量已不存在
                 
                 # 发送匹配结果
                 if batch_matches:
@@ -244,8 +245,8 @@ def _worker_process(
                     if isinstance(pk, bytearray):
                         pk[:] = b'\x00' * len(pk)
                 del private_keys
-        except:
-            pass
+        except (NameError, TypeError, ValueError) as e:
+            logger.debug(f"清理私钥内存失败: {e}")
         
         logger.info(f"工作进程 {worker_id} 退出: 检测={total_checked:,}, 匹配={matches_found}")
 
@@ -454,9 +455,11 @@ class MultiprocessCollisionEngine:
                         continue
                 
                 results.extend(batch)
-        except:
-            # 队列为空或超时
+        except Empty:
+            # 队列为空
             pass
+        except Exception as e:
+            logger.warning(f"收集结果时异常: {e}")
         
         # 更新总匹配数（线程安全）
         with self._stats_lock:
@@ -477,8 +480,11 @@ class MultiprocessCollisionEngine:
                 while True:
                     stats = self.stats_queue.get_nowait()
                     self.worker_stats[stats['worker_id']] = stats
-            except:
+            except Empty:
+                # 队列为空，收集完毕
                 pass
+            except (KeyError, TypeError) as e:
+                logger.warning(f"统计数据处理异常: {e}")
             
             # 聚合统计
             total_checked = sum(s['total_checked'] for s in self.worker_stats.values())
@@ -514,15 +520,39 @@ class MultiprocessCollisionEngine:
         for _ in self.workers:
             try:
                 self.task_queue.put(None, timeout=1.0)
-            except:
-                pass
+            except Full:
+                logger.warning("任务队列已满，跳过毒丸信号")
+            except Exception as e:
+                logger.error(f"发送停止信号失败: {e}")
         
         # 等待工作进程退出
+        zombie_processes = []  # 记录僵尸进程
         for i, p in enumerate(self.workers):
             p.join(timeout=timeout / len(self.workers))
             if p.is_alive():
-                logger.warning(f"工作进程 {i} 未按时退出，强制终止")
+                logger.warning(f"工作进程 {i} (PID={p.pid}) 未按时退出，强制终止")
                 p.terminate()
+                p.join(timeout=2.0)  # 等待terminate生效
+                
+                # 检查是否成为僵尸进程
+                if p.is_alive() or p.exitcode is None:
+                    zombie_processes.append({'id': i, 'pid': p.pid})
+                    logger.error(f"工作进程 {i} (PID={p.pid}) 可能已成为僵尸进程")
+        
+        # #12修复: 僵尸进程清理报告
+        if zombie_processes:
+            logger.critical(
+                f"发现{len(zombie_processes)}个僵尸进程: "
+                f"{', '.join([f'Worker-{z['id']}(PID={z['pid']})' for z in zombie_processes])}"
+            )
+            # 尝试发送SIGKILL（Unix）
+            if os.name != 'nt':
+                for z in zombie_processes:
+                    try:
+                        os.kill(z['pid'], signal.SIGKILL)
+                        logger.info(f"已发送SIGKILL到进程 {z['pid']}")
+                    except Exception as e:
+                        logger.error(f"发送SIGKILL失败 {z['pid']}: {e}")
         
         self._running = False
         
@@ -553,7 +583,10 @@ class MultiprocessCollisionEngine:
                     while not queue.empty():
                         try:
                             queue.get_nowait()
-                        except:
+                        except Empty:
+                            break  # 队列已空
+                        except Exception as e:
+                            logger.debug(f"清理队列项失败: {e}")
                             break
         except Exception as e:
             logger.debug(f"清理队列时出错: {e}")

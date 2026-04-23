@@ -188,12 +188,13 @@ class GPUConfigValidator:
         }
         
         if mode == 'auto':
-            # 自动选择最佳GPU
-            best_device = max(devices, key=lambda d: d.get('score', 0))
+            # 自动选择最佳GPU（传递-1让底层自动选择）
             config['device_indices'] = [-1]
             
         elif mode == 'single':
-            # 单GPU模式
+            # 单GPU模式：使用评分最高的设备
+            # 注意：实际使用时应该由GUI传入用户选择的设备索引
+            # 这里为了向后兼容，仍然返回最佳设备
             best_device = max(devices, key=lambda d: d.get('score', 0))
             config['device_indices'] = [best_device['global_index']]
             

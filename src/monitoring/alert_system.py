@@ -117,6 +117,12 @@ class AlertSystem:
         self.last_alert_time: Dict[str, float] = {}  # 规则名称 -> 最后告警时间
         self.alert_callbacks: List[Callable] = []     # 告警回调函数
         
+        # #11修复: 增强的速率限制
+        self._global_rate_limit_max = 10  # 每分钟最多10条告警
+        self._global_rate_limit_window = 60  # 时间窗口60秒
+        self._recent_alerts = []  # 最近的告警时间戳列表
+        self._rate_limit_exceeded_count = 0  # 速率限制触发次数
+        
         # 告警日志文件
         if alert_log_file is None:
             alert_log_file = "data_logs/alert_history.json"
@@ -266,6 +272,15 @@ class AlertSystem:
         triggered_alerts = []
         current_time = time.time()
         
+        # #11修复: 检查全局速率限制
+        if not self._check_global_rate_limit(current_time):
+            logger.warning(
+                f"告警速率限制触发: 已发送{self._global_rate_limit_max}条告警，"
+                f"将在{self._global_rate_limit_window}秒窗口后重置"
+            )
+            self._rate_limit_exceeded_count += 1
+            return triggered_alerts
+        
         for rule in self.rules:
             if not rule.enabled:
                 continue
@@ -297,6 +312,9 @@ class AlertSystem:
                     self.alert_history.append(alert)
                     self.last_alert_time[rule.name] = current_time
                     
+                    # #11修复: 记录到全局速率限制
+                    self._recent_alerts.append(current_time)
+                    
                     # 触发告警
                     self._trigger_alert(alert)
                     triggered_alerts.append(alert)
@@ -307,6 +325,40 @@ class AlertSystem:
                 logger.error(f"检查告警规则 {rule.name} 时出错: {e}")
         
         return triggered_alerts
+    
+    def _check_global_rate_limit(self, current_time: float) -> bool:
+        """检查全局速率限制（#11修复）
+        
+        防止告警泛滥，限制单位时间内的告警数量。
+        
+        Args:
+            current_time: 当前时间戳
+        
+        Returns:
+            True表示允许发送告警，False表示超过限制
+        """
+        # 清理过期的告警记录
+        window_start = current_time - self._global_rate_limit_window
+        self._recent_alerts = [
+            t for t in self._recent_alerts if t > window_start
+        ]
+        
+        # 检查是否超过限制
+        return len(self._recent_alerts) < self._global_rate_limit_max
+    
+    def get_rate_limit_stats(self) -> dict:
+        """获取速率限制统计"""
+        current_time = time.time()
+        window_start = current_time - self._global_rate_limit_window
+        recent_count = len([t for t in self._recent_alerts if t > window_start])
+        
+        return {
+            'recent_alerts': recent_count,
+            'max_alerts_per_window': self._global_rate_limit_max,
+            'window_seconds': self._global_rate_limit_window,
+            'rate_limit_exceeded_count': self._rate_limit_exceeded_count,
+            'can_send_more': recent_count < self._global_rate_limit_max
+        }
     
     def _is_duplicate_alert(self, alert: AlertRecord, lookback: int = ALERT_DEDUP_LOOKBACK) -> bool:
         """检查是否是重复告警

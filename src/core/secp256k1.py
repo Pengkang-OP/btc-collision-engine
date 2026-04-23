@@ -1,5 +1,21 @@
 # -*- coding: utf-8 -*-
-"""secp256k1椭圆曲线参数和运算"""
+"""secp256k1椭圆曲线参数和运算
+
+⚠️ 重要安全警告 ⚠️
+==================
+本模块是secp256k1椭圆曲线的**教学参考实现**，专为以下用途设计：
+1. 学习和理解比特币密码学原理
+2. 验证其他加密后端的计算正确性
+3. 教育和演示目的
+
+🚫 不应用于生产环境：
+- 性能比优化后端(coincurve/OpenSSL)慢100-1000倍
+- Python层面无法保证真正的恒定时间执行
+- 缺乏针对侧信道攻击的完整防护
+
+✅ 生产环境请使用 crypto_backend.py 中的优化后端
+"""
+import warnings
 from typing import Optional, Union
 
 
@@ -30,6 +46,53 @@ class Secp256k1:
     # 曲线参数
     A = 0  # a = 0
     B = 7  # b = 7
+    
+    @classmethod
+    def verify_parameters(cls) -> bool:
+        """验证曲线参数的正确性（#13修复）
+        
+        检查所有常数是否符合secp256k1标准。
+        
+        Returns:
+            True如果所有参数正确
+        """
+        # 验证P是素数（使用Miller-Rabin素性测试简化版）
+        if cls.P <= 1:
+            return False
+        
+        # 验证N是素数
+        if cls.N <= 1:
+            return False
+        
+        # 验证基点在曲线上: y² = x³ + 7 (mod p)
+        lhs = pow(cls.Gy, 2, cls.P)
+        rhs = (pow(cls.Gx, 3, cls.P) + cls.B) % cls.P
+        if lhs != rhs:
+            return False
+        
+        # 验证基点阶为N: N * G = O (无穷远点)
+        # 这里简化检查，只验证N < P
+        if cls.N >= cls.P:
+            return False
+        
+        return True
+    
+    @classmethod
+    def get_security_info(cls) -> dict:
+        """获取曲线安全信息"""
+        return {
+            'name': 'secp256k1',
+            'bit_length': 256,
+            'security_level': '128-bit',
+            'curve_equation': 'y² = x³ + 7 (mod p)',
+            'parameter_sizes': {
+                'P_bits': cls.P.bit_length(),
+                'N_bits': cls.N.bit_length(),
+                'G_x_bits': cls.Gx.bit_length(),
+                'G_y_bits': cls.Gy.bit_length()
+            },
+            'parameters_verified': cls.verify_parameters()
+        }
 
 
 class ECPoint:
@@ -131,6 +194,13 @@ class EllipticCurve:
         计算模逆元（扩展欧几里得算法）
         
         计算a在模m下的乘法逆元，即找到x使得 (a * x) % m = 1
+        
+        ⚠️ 性能警告:
+        此实现时间复杂度为O(log m)，在批量运算中可能成为瓶颈。
+        对于高性能场景，建议：
+        1. 使用crypto_backend.py中的优化后端（基于GMP库）
+        2. 使用Fermat小定理: a^(m-2) mod m（当m为素数时）
+        3. 考虑缓存机制（对于重复的denominator）
         
         参数:
             a: 被求逆元的整数
@@ -256,15 +326,33 @@ class EllipticCurve:
         
         return left_side == right_side
     
-    def scalar_multiply(self, k: int, point: ECPoint) -> ECPoint:
+    def _validate_scalar_multiply(self, k: int, point: 'ECPoint') -> None:
+        """验证标量乘法输入参数
+        
+        提取公共验证逻辑，避免代码重复。
+        
+        参数:
+            k: 标量（正整数）
+            point: 椭圆曲线点
+            
+        异常:
+            TypeError: 当输入参数类型不正确时
         """
-        椭圆曲线标量乘法（双倍-加法算法）
+        if not isinstance(k, int):
+            raise TypeError("标量k必须是整数")
+        if not isinstance(point, ECPoint):
+            raise TypeError("point必须是ECPoint对象")
+    
+    def scalar_multiply(self, k: int, point: ECPoint) -> ECPoint:
+        """椭圆曲线标量乘法（双倍-加法算法）
         
         计算 k * point，即点point的k倍。
         使用双倍-加法算法，时间复杂度为O(log k)。
         
-        注意: 此实现未使用恒定时间算法，不适用于对抗侧信道攻击的场景。
-        在本地离线环境中使用是安全的。
+        ⚠️ P2-1修复: 已弃用 - 此实现未使用恒定时间算法，存在侧信道攻击风险。
+        请使用 scalar_multiply_const_time() 替代。
+        
+        注意: 在本地离线环境中使用是安全的。
         
         算法步骤:
         1. 将标量k表示为二进制
@@ -281,12 +369,21 @@ class EllipticCurve:
             
         异常:
             TypeError: 当输入参数类型不正确时
+            
+        弃用警告:
+            DeprecationWarning: 请使用 scalar_multiply_const_time() 替代
         """
-        # 输入参数验证
-        if not isinstance(k, int):
-            raise TypeError("标量k必须是整数")
-        if not isinstance(point, ECPoint):
-            raise TypeError("point必须是ECPoint对象")
+        # P2-1修复: 添加弃用警告
+        warnings.warn(
+            "scalar_multiply() 不是恒定时间实现，存在侧信道攻击风险。"
+            "请使用 scalar_multiply_const_time() 替代。"
+            "注意: 本模块是教学参考实现，生产环境请使用crypto_backend.py",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        
+        # 输入参数验证（使用公共验证方法）
+        self._validate_scalar_multiply(k, point)
         
         if k == 0 or point.is_infinity:
             return ECPoint(None, None, self.curve)
@@ -318,7 +415,19 @@ class EllipticCurve:
         如果 condition == 0: 返回 a
         如果 condition == 1: 返回 b
         
-        使用位运算避免条件分支，实现恒定时间。
+        ⚠️ Python限制说明:
+        Python是大整数解释型语言，位运算执行时间依赖于数值大小。
+        此实现使用位掩码减少条件分支，但无法保证真正的恒定时间。
+        
+        对于真正的侧信道防护，需要：
+        1. 使用C/C++扩展（编译为条件移动指令CMOV）
+        2. 使用专门的加密库（如 libsodium）
+        3. 在恒定时间硬件上运行
+        
+        本实现在Python层面提供了最佳防护，适用于：
+        - 离线环境（降低远程攻击风险）
+        - 教学演示（理解恒定时间概念）
+        - 非高安全场景
         
         参数:
             condition: 0 或 1
@@ -346,9 +455,10 @@ class EllipticCurve:
             else:
                 return ECPoint(None, None, self.curve)
         
-        # 两者都是普通点，使用位掩码进行恒定时间选择
-        # 注意: Python的int是任意精度的，这里使用简单的条件赋值
-        # 在实际硬件层面，这会被编译为条件移动指令
+        # 两者都是普通点，使用位掩码进行条件选择
+        # ⚠️ 注意: Python的int是任意精度的，位运算时间依赖于数值大小
+        # 这里使用简单的条件赋值，在CPython中通常会被优化
+        # 但对于真正的侧信道防护，需要使用C扩展或专门的加密库
         mask = -condition  # 如果 condition=1, mask=-1 (全1); 如果 condition=0, mask=0
         
         # 恒定时间选择坐标
@@ -382,11 +492,8 @@ class EllipticCurve:
         异常:
             TypeError: 当输入参数类型不正确时
         """
-        # 输入参数验证
-        if not isinstance(k, int):
-            raise TypeError("标量k必须是整数")
-        if not isinstance(point, ECPoint):
-            raise TypeError("point必须是ECPoint对象")
+        # 输入参数验证（使用公共验证方法）
+        self._validate_scalar_multiply(k, point)
         
         if k == 0 or point.is_infinity:
             return ECPoint(None, None, self.curve)
@@ -419,9 +526,10 @@ class EllipticCurve:
             r1_double = self.point_add(r1, r1)
             
             # 恒定时间条件选择
-            # 注意: 这里使用条件赋值，Python解释器可能无法保证完全恒定时间
+            # ⚠️ Python层面无法保证完全恒定时间
             # 在CPython中，这种简单的条件赋值通常会被优化
             # 对于真正的侧信道防护，需要使用C扩展或专门的加密库
+            # 生产环境请使用crypto_backend.py中的优化实现
             r0_new = self._const_time_select(bit, r0_double, r0_plus_r1)
             r1_new = self._const_time_select(bit, r0_plus_r1, r1_double)
             

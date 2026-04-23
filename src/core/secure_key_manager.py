@@ -7,6 +7,7 @@
 """
 
 import os
+import sys
 import secrets
 import warnings
 from typing import Optional, Callable
@@ -83,15 +84,18 @@ class SecureKeyManager:
         初始化安全密钥管理器
         
         参数:
-            lock_memory: 是否锁定内存防止交换（仅Linux/macOS）
+            lock_memory: 是否锁定内存防止交换
         
         注意:
-            - Windows不支持mlock()，会自动跳过
+            - Linux/macOS: 使用mlock()锁定内存
+            - Windows: 使用VirtualLock()锁定内存
             - 锁定内存需要足够的权限
         """
         self._key: Optional[bytearray] = None
         self._locked = False
         self._cleared = False
+        self._memory_locked = False
+        self._lock_memory_enabled = lock_memory
         
         # 选择后端
         if HAS_CRYPTOGRAPHY:
@@ -106,28 +110,226 @@ class SecureKeyManager:
                 UserWarning,
                 stacklevel=2
             )
-        
-        # 尝试锁定内存（仅Linux/macOS）
-        if lock_memory and os.name != 'nt':
-            self._try_lock_memory()
     
     def _try_lock_memory(self):
         """
-        尝试锁定内存，防止交换到磁盘
+        尝试锁定内存，防止敏感数据被交换到磁盘
         
-        Linux: 使用 mlock()
-        macOS: 使用 mlock()
-        Windows: 不支持，跳过
+        Linux/macOS: 使用 mlock() 系统调用
+        Windows: 使用 VirtualLock() API
+        
+        返回:
+            bool: 内存锁定是否成功
+        
+        注意:
+            - Linux: 需要root权限或CAP_IPC_LOCK能力，或调整memlock限制
+            - macOS: 需要root权限
+            - Windows: 锁定内存会减少工作集可用空间
+            - 失败不会抛出异常，但会记录警告
+        """
+        if not self._lock_memory_enabled:
+            return False
+        
+        try:
+            if os.name == 'nt':
+                # Windows平台
+                return self._lock_memory_windows()
+            elif os.name == 'posix':
+                # Linux/macOS平台
+                return self._lock_memory_posix()
+            else:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"不支持的操作系统: {os.name}，无法锁定内存")
+                return False
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"内存锁定失败: {e}，将继续运行但不保护内存")
+            return False
+    
+    def _lock_memory_posix(self) -> bool:
+        """
+        POSIX系统 (Linux/macOS) 的内存锁定实现
+        
+        使用 mlock() 系统调用锁定内存页，防止被交换到磁盘
         """
         try:
-            if os.name == 'posix':
+            # 加载C库
+            if sys.platform == 'darwin':
+                # macOS
+                libc = ctypes.CDLL("/usr/lib/libSystem.B.dylib")
+            else:
+                # Linux
                 libc = ctypes.CDLL("libc.so.6")
-                # mlock需要root权限或CAP_IPC_LOCK能力
-                # 这里我们只是尝试，失败不影响功能
-                pass  # 实际应用中需要正确实现
-        except (OSError, AttributeError):
-            # 无法锁定内存，继续使用但不锁定
-            pass
+            
+            # 配置mlock函数签名
+            # int mlock(const void *addr, size_t len);
+            libc.mlock.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
+            libc.mlock.restype = ctypes.c_int
+            
+            # 配置munlock函数签名
+            # int munlock(const void *addr, size_t len);
+            libc.munlock.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
+            libc.munlock.restype = ctypes.c_int
+            
+            # 保存libc引用供后续使用
+            self._libc = libc
+            
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info("POSIX内存锁定支持已初始化 (mlock/munlock)")
+            return True
+            
+        except (OSError, AttributeError) as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"无法初始化POSIX内存锁定: {e}")
+            return False
+    
+    def _lock_memory_windows(self) -> bool:
+        """
+        Windows平台的内存锁定实现
+        
+        使用 VirtualLock() API锁定内存页，防止被交换到页面文件
+        """
+        try:
+            # 加载kernel32.dll
+            kernel32 = ctypes.WinDLL("kernel32.dll")
+            
+            # 配置VirtualLock函数签名
+            # BOOL VirtualLock(LPVOID lpAddress, SIZE_T dwSize);
+            kernel32.VirtualLock.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
+            kernel32.VirtualLock.restype = ctypes.c_bool
+            
+            # 配置VirtualUnlock函数签名
+            # BOOL VirtualUnlock(LPVOID lpAddress, SIZE_T dwSize);
+            kernel32.VirtualUnlock.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
+            kernel32.VirtualUnlock.restype = ctypes.c_bool
+            
+            # 保存kernel32引用供后续使用
+            self._kernel32 = kernel32
+            
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info("Windows内存锁定支持已初始化 (VirtualLock/VirtualUnlock)")
+            return True
+            
+        except (OSError, AttributeError) as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"无法初始化Windows内存锁定: {e}")
+            return False
+    
+    def _lock_key_memory(self) -> bool:
+        """
+        锁定当前密钥的内存页
+        
+        必须在生成密钥后调用
+        
+        返回:
+            bool: 锁定是否成功
+        """
+        if self._key is None or self._cleared:
+            return False
+        
+        if not self._lock_memory_enabled:
+            return False
+        
+        try:
+            if os.name == 'nt' and hasattr(self, '_kernel32'):
+                # Windows: VirtualLock
+                addr = ctypes.addressof(ctypes.c_char.from_buffer(self._key))
+                size = len(self._key)
+                result = self._kernel32.VirtualLock(addr, size)
+                
+                if result:
+                    self._memory_locked = True
+                    return True
+                else:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    error_code = ctypes.get_last_error()
+                    logger.warning(f"Windows VirtualLock失败，错误码: {error_code}")
+                    return False
+                    
+            elif os.name == 'posix' and hasattr(self, '_libc'):
+                # Linux/macOS: mlock
+                addr = ctypes.addressof(ctypes.c_char.from_buffer(self._key))
+                size = len(self._key)
+                result = self._libc.mlock(addr, size)
+                
+                if result == 0:  # mlock返回0表示成功
+                    self._memory_locked = True
+                    return True
+                else:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    import errno
+                    logger.warning(f"POSIX mlock失败，错误码: {errno.errorcode.get(ctypes.get_errno(), 'Unknown')}")
+                    return False
+            else:
+                return False
+                
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"锁定密钥内存失败: {e}")
+            return False
+    
+    def _unlock_key_memory(self) -> bool:
+        """
+        解锁当前密钥的内存页
+        
+        在清零密钥后调用
+        
+        返回:
+            bool: 解锁是否成功
+        """
+        if not self._memory_locked:
+            return False
+        
+        if self._key is None:
+            return False
+        
+        try:
+            if os.name == 'nt' and hasattr(self, '_kernel32'):
+                # Windows: VirtualUnlock
+                addr = ctypes.addressof(ctypes.c_char.from_buffer(self._key))
+                size = len(self._key)
+                result = self._kernel32.VirtualUnlock(addr, size)
+                
+                if result:
+                    self._memory_locked = False
+                    return True
+                else:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"Windows VirtualUnlock失败")
+                    return False
+                    
+            elif os.name == 'posix' and hasattr(self, '_libc'):
+                # Linux/macOS: munlock
+                addr = ctypes.addressof(ctypes.c_char.from_buffer(self._key))
+                size = len(self._key)
+                result = self._libc.munlock(addr, size)
+                
+                if result == 0:  # munlock返回0表示成功
+                    self._memory_locked = False
+                    return True
+                else:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"POSIX munlock失败")
+                    return False
+            else:
+                return False
+                
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"解锁密钥内存失败: {e}")
+            return False
     
     def generate_key(self, key_bytes: Optional[bytes] = None) -> None:
         """
@@ -139,6 +341,7 @@ class SecureKeyManager:
         注意:
             - 密钥以bytearray存储，可安全清零
             - 生成前会检查是否已有密钥，如有则先清零
+            - 生成后会自动尝试锁定内存（如果启用）
         """
         # 如果已有密钥，先安全清零
         if self._key is not None and not self._cleared:
@@ -153,6 +356,11 @@ class SecureKeyManager:
             self._key = bytearray(key_bytes)
         
         self._cleared = False
+        self._memory_locked = False
+        
+        # 尝试锁定内存
+        if self._lock_memory_enabled:
+            self._lock_key_memory()
     
     def get_key(self) -> bytearray:
         """
@@ -182,11 +390,19 @@ class SecureKeyManager:
         - cryptography: 使用 OpenSSL 的安全清零
         - PyNaCl: 使用 libsodium 的安全清零
         - ctypes: 直接memset清零
+        
+        注意:
+            - 清零前会先解锁内存
+            - 清零后内存被标记为可交换
         """
         if self._key is None or self._cleared:
             return
         
         try:
+            # 先解锁内存（清零前解锁）
+            if self._memory_locked:
+                self._unlock_key_memory()
+            
             if self._backend == "cryptography":
                 self._clear_with_cryptography()
             elif self._backend == "pynacl":
@@ -273,6 +489,11 @@ class SecureKeyManager:
     def backend(self) -> str:
         """当前使用的安全后端"""
         return self._backend
+    
+    @property
+    def is_memory_locked(self) -> bool:
+        """内存是否已锁定"""
+        return self._memory_locked
     
     @staticmethod
     def get_clear_stats() -> dict:

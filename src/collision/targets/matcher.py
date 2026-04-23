@@ -16,7 +16,8 @@ from ...utils import init_logging, get_configured_logger
 
 # 初始化日志系统
 init_logging()
-logger = get_configured_logger("AddressMatcher", thread_safe=True)
+# v2.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
+logger = get_configured_logger("AddressMatcher", thread_safe=False)
 
 
 class AddressMatcher:
