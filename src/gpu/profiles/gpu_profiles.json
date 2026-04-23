@@ -212,13 +212,13 @@
         "compute_capability": "OpenCL 3.0",
         "recommended_batch_size": 262144,
         "max_batch_size": 524288,
-        "memory_efficiency": 0.45,
+        "memory_efficiency": 0.70,
         "optimizations": ["uint32_workaround", "timeout_protection", "async_transfer", "conservative_memory"],
         "known_issues": ["global_char_hang_bug"],
         "timeout_seconds": 30,
         "min_driver_version": "31.0.101.0",
         "recommended_driver_version": "31.0.101.4500",
-        "notes": "Intel独立显卡,必须使用uint32避免hang bug,禁用异步,保守显存策略"
+        "notes": "Intel独立显卡,必须使用uint32避免hang bug,禁用异步,v2.2.1优化显存效率70%"
       }
     },
     "xe_ssg": {
@@ -244,11 +244,11 @@
       "compute_capability": "OpenCL 3.0",
       "recommended_batch_size": 262144,
       "max_batch_size": 524288,
-      "memory_efficiency": 0.45,
+      "memory_efficiency": 0.70,
       "optimizations": ["uint32_workaround", "timeout_protection", "conservative_memory"],
       "known_issues": ["global_char_hang_bug"],
       "timeout_seconds": 30,
-      "notes": "Intel默认配置,保守策略,必须启用uint32 workaround避免hang bug"
+      "notes": "Intel默认配置,v2.2.1优化显存效率70%,必须启用uint32 workaround避免hang bug"
     }
   }
 }

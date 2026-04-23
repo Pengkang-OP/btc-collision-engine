@@ -79,10 +79,10 @@ class IntelGPUVendor(GPUVendorBase):
                 "已启用uint32 workaround"
             )
         
-        # 8. 显存效率设置
-        memory_efficiency = profile.get('memory_efficiency', 0.45)
+        # 8. 显存效率设置 (v2.2.1优化: 45% -> 70%)
+        memory_efficiency = profile.get('memory_efficiency', 0.70)
         device.memory_efficiency = memory_efficiency
-        logger.info(f"✅ Intel GPU内存效率: {memory_efficiency*100:.0f}% (保守策略)")
+        logger.info(f"✅ Intel GPU内存效率: {memory_efficiency*100:.0f}% (v2.2.1优化)")
     
     def calculate_batch_size(self, device, profile: Dict[str, Any]) -> int:
         """
@@ -95,7 +95,7 @@ class IntelGPUVendor(GPUVendorBase):
         """
         recommended = profile.get('recommended_batch_size', 262144)
         maximum = profile.get('max_batch_size', 524288)
-        memory_efficiency = profile.get('memory_efficiency', 0.45)
+        memory_efficiency = profile.get('memory_efficiency', 0.70)  # v2.2.1优化: 45% -> 70%
         
         # 根据显存计算理论最大值(使用更保守的memory_efficiency)
         global_mem = device.device_info.get('global_mem_size', 0)

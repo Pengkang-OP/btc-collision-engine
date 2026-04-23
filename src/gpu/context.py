@@ -152,8 +152,10 @@ class GPUContext:
             options.append("-cl-std=CL2.0")
         
         elif vendor == "Intel":
-            # Intel选项(保守)
+            # Intel选项(v2.2.1优化: 添加快速数学选项)
             options.append("-cl-std=CL2.0")
+            # v2.2.1: 启用快速数学优化(测试稳定后保留)
+            options.append("-cl-fast-relaxed-math")
         
         return " ".join(options)
     
