@@ -5,6 +5,8 @@
     "batch_size": 10000,
     "use_memory_pool": true,
     "enable_async": true,
+    "max_error_retries": 100,
+    "_comment_max_error_retries": "GPU连续错误最大重试次数(超过后强制停止引擎)",
     "description": "使用 Intel(R) Arc(TM) A770 Graphics (15.6GB)"
   },
   "multi_gpu": {
