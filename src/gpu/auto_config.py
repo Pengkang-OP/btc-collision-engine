@@ -91,10 +91,11 @@ class GPUAutoConfigurator:
     }
     
     # Intel Arc GPU配置模板
+    # CFG-2修复: 统一为保守策略，避免显存使用过高导致不稳定
     INTEL_ARC_CONFIG = {
         'batch_size': 262144,      # v2.2.1优化: 262K - 经测试最优批次大小
         'work_group_size': 512,    # v2.3.0优化: 512 - 匹配A770的512个EU(原256)
-        'memory_usage_ratio': 0.7, # v2.2.1优化: 提高显存使用率(原0.5)
+        'memory_usage_ratio': 0.45, # CFG-2修复: 保守策略(原0.7)，提高稳定性
         'enable_async': True,      # 异步执行(必须)
         'use_fast_math': False,    # 禁用快速数学(加密运算需要精度)
         'use_uint32_workaround': True,  # uint32溢出workaround(必须)
