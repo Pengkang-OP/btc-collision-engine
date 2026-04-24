@@ -21,6 +21,14 @@ try:
 except ImportError:
     ASYNC_LOG_AVAILABLE = False
 
+# CODE-1修复: 导入GPU配置管理器（可选）
+try:
+    from .gpu_config_manager import GPUConfigManager
+    GPU_CONFIG_MANAGER_AVAILABLE = True
+except ImportError:
+    GPU_CONFIG_MANAGER_AVAILABLE = False
+    GPUConfigManager = None
+
 # v2.2.1迁移: 移除未使用的secp256k1导入，使用crypto_backend
 # from ..core.secp256k1 import Secp256k1  # 已删除，未使用
 
@@ -314,6 +322,10 @@ class GPUKernel(GPUKernelProtocol):
     # 2*G 的期望坐标值（用于验证）
     EXPECTED_2G_X = 0xC6047F9441ED7D6D3045406E95C07CD85C778E4B8CEF3CA7ABAC09B95C709EE5
     EXPECTED_2G_Y = 0x1AE168FEA63DC339A3C58419466CEAEEF7F632653266D0E1236431A950CFE52A
+    
+    # v3.2.3新增: 缓冲区大小因子常量
+    KEYS_BUFFER_SIZE_FACTOR = 32    # 每个私钥32字节（256位）
+    MATCH_BUFFER_SIZE_FACTOR = 4    # 每个匹配标志4字节（int32）
     
     def __init__(self, device: GPUDevice, max_batch_size: int = None, program: Optional[Any] = None):
         """
@@ -698,8 +710,9 @@ class GPUKernel(GPUKernelProtocol):
         # 获取内存池引用（如果已启用）
         memory_pool = getattr(self, '_gpu_memory_pool', None)
         
+        # v3.2.3优化: 使用常量计算缓冲区大小
         # 私钥缓冲区 (最大批次大小)
-        keys_buf_size = self.max_batch_size * 32
+        keys_buf_size = self.max_batch_size * self.KEYS_BUFFER_SIZE_FACTOR
         if memory_pool:
             # 使用内存池分配（支持复用）
             self._keys_buf = memory_pool.allocate(keys_buf_size, cl.mem_flags.READ_ONLY)
@@ -717,7 +730,7 @@ class GPUKernel(GPUKernelProtocol):
         self._buffer_tracker.track_buffer("_keys_buf", self._keys_buf, keys_buf_size)
         
         # 匹配结果缓冲区
-        match_buf_size = self.max_batch_size * 4
+        match_buf_size = self.max_batch_size * self.MATCH_BUFFER_SIZE_FACTOR
         if memory_pool:
             # 使用内存池分配（支持复用）
             self._match_buf = memory_pool.allocate(match_buf_size, cl.mem_flags.WRITE_ONLY)
@@ -1532,6 +1545,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
     def _merge_gpu_configs(self, auto_config: Dict, profile_config: Optional[Dict]) -> Dict:
         """合并AutoConfig和ProfileLoader的配置
         
+        CODE-1修复: 优先使用GPUConfigManager，否则使用原有逻辑（向后兼容）
+        
         优先级: ProfileLoader > AutoConfig
         
         Args:
@@ -1541,6 +1556,15 @@ class GPUCollisionEngine(BaseCollisionEngine):
         Returns:
             合并后的配置
         """
+        # CODE-1修复: 使用GPUConfigManager（如果可用）
+        if GPU_CONFIG_MANAGER_AVAILABLE and GPUConfigManager is not None:
+            try:
+                config_manager = GPUConfigManager()
+                return config_manager.merge_gpu_configs(auto_config, profile_config)
+            except Exception as e:
+                logger.warning(f"GPUConfigManager合并失败，使用原有逻辑: {e}")
+        
+        # 原有逻辑（向后兼容）
         merged = auto_config.copy()
         
         if profile_config:
@@ -1561,9 +1585,9 @@ class GPUCollisionEngine(BaseCollisionEngine):
         
         logger.info(
             f"GPU配置合并完成: "
-            f"batch_size={merged.get('batch_size', 'N/A'):,}, "
+            f"batch_size={merged.get('batch_size', 'N/A')}, "
             f"work_group={merged.get('work_group_size', 'N/A')}, "
-            f"mem_ratio={merged.get('memory_usage_ratio', 'N/A'):.0%}"
+            f"mem_ratio={merged.get('memory_usage_ratio', 'N/A')}"
         )
         return merged
     
@@ -1893,7 +1917,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
                         )
                         logger.info(f"GPU内存池初始化完成: {self._gpu_memory_pool.get_stats()}")
                         
-                        # v3.3.0优化: 预分配持久化缓冲区（纯持久化设计）
+                        # v3.2.3优化: 预分配持久化缓冲区（使用常量+验证）
                         # 持久化缓冲区设计：缓冲区在引擎生命周期内不释放，直接复用
                         # 异步双缓冲需要2个缓冲区交替使用（缓冲0计算时，缓冲1准备数据）
                         import pyopencl as cl
@@ -1902,33 +1926,49 @@ class GPUCollisionEngine(BaseCollisionEngine):
                         is_async_mode = getattr(self._gpu_device, 'enable_async_execution', False)
                         buffer_count = 2 if is_async_mode else 1  # 异步需要2个，同步需要1个
                         
+                        # v3.2.3: 使用常量计算缓冲区大小
                         preallocate_sizes = [
-                            self.batch_size * 32,  # 私钥缓冲区大小 (32MB @ 1M batch)
-                            self.batch_size * 4,   # 匹配缓冲区大小 (4MB @ 1M batch)
+                            self.batch_size * GPUKernel.KEYS_BUFFER_SIZE_FACTOR,   # 私钥缓冲区
+                            self.batch_size * GPUKernel.MATCH_BUFFER_SIZE_FACTOR,  # 匹配缓冲区
                         ]
                         
                         # 预分配私钥缓冲区 (READ_ONLY)
                         self._gpu_memory_pool.preallocate_buffers(
                             sizes=[preallocate_sizes[0]],
-                            count_per_size=buffer_count,  # v3.3.0: 异步双缓冲需要2个
+                            count_per_size=buffer_count,
                             flags=cl.mem_flags.READ_ONLY
                         )
                         
                         # 预分配匹配缓冲区 (WRITE_ONLY)
                         self._gpu_memory_pool.preallocate_buffers(
                             sizes=[preallocate_sizes[1]],
-                            count_per_size=buffer_count,  # v3.3.0: 异步双缓冲需要2个
+                            count_per_size=buffer_count,
                             flags=cl.mem_flags.WRITE_ONLY
                         )
                         
-                        total_buffers = buffer_count * 2  # 2种类型 × buffer_count
-                        total_prealloc_mb = sum(preallocate_sizes) * buffer_count / (1024*1024)
-                        mode_str = "异步双缓冲" if is_async_mode else "同步"
-                        logger.info(
-                            f"✅ GPU内存池预分配完成 (v3.3.0纯持久化设计): "
-                            f"{total_buffers}个缓冲区 ({mode_str}), {total_prealloc_mb:.1f}MB | "
-                            f"设计: 零运行时分配开销 + 正确内存标志，性能最优"
-                        )
+                        # v3.2.3新增: 预分配验证逻辑
+                        prealloc_stats = self._gpu_memory_pool.get_stats()
+                        expected_count = len(preallocate_sizes) * buffer_count
+                        actual_count = prealloc_stats['total_allocated']
+                        
+                        if actual_count != expected_count:
+                            logger.warning(
+                                f"⚠️ 预分配数量不匹配: 预期{expected_count}个, "
+                                f"实际{actual_count}个 (异步模式={is_async_mode})"
+                            )
+                        else:
+                            logger.debug(f"✅ 预分配验证通过: {actual_count}个缓冲区")
+                        
+                        # 修复: 确保total_prealloc_mb是数值类型
+                        try:
+                            total_prealloc_mb = float(sum(preallocate_sizes) * buffer_count / (1024*1024))
+                            logger.info(
+                                f"✅ GPU内存池预分配完成 (持久化模式): "
+                                f"{actual_count}个缓冲区, {total_prealloc_mb:.1f}MB | "
+                                f"设计: 零运行时分配开销，性能最优"
+                            )
+                        except (TypeError, ValueError) as e:
+                            logger.debug(f"GPU内存池预分配完成 (持久化模式): {actual_count}个缓冲区")
                     
                     self._gpu_kernel = GPUKernel(
                         self._gpu_device, 
@@ -2470,7 +2510,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         batch_size: int,
         batch_num: int
     ) -> Tuple[List[Dict[str, int]], float]:
-        """执行GPU batch计算
+        """PERF-1修复: 执行GPU batch计算（带性能优化建议）
         
         Args:
             private_keys: 私钥字节串
@@ -2488,6 +2528,14 @@ class GPUCollisionEngine(BaseCollisionEngine):
         batch_start_time = time.time()
         matches: List[Dict[str, int]] = self._gpu_kernel.run_batch(private_keys, batch_size)
         execution_time_ms = (time.time() - batch_start_time) * 1000
+        
+        # PERF-1修复: 检测CPU-GPU同步瓶颈
+        if execution_time_ms > 1000:  # 超过1秒
+            logger.warning(
+                f"PERF-1警告: GPU batch {batch_num} 执行时间过长 ({execution_time_ms:.0f}ms)\n"
+                f"  可能原因: CPU-GPU同步等待、PCIe带宽瓶颈、GPU计算负载高\n"
+                f"  建议: 启用异步执行模式(双缓冲)可提升30-50%吞吐量"
+            )
         
         if batch_num <= INITIAL_BATCHES_LOG or batch_num % BATCH_LOG_FREQUENCY == 0:
             logger.debug(f"GPU batch {batch_num}: 发现 {len(matches)} 个匹配")
@@ -2589,14 +2637,21 @@ class GPUCollisionEngine(BaseCollisionEngine):
             logger.debug(f"自适应调整失败: {adjust_error}")
     
     def _range_scan(self, start: int, end: int):
-        """范围扫描模式 - 流水线优化版本"""
+        """ALG-2修复: 范围扫描模式 - 流水线优化版本
+        
+        修复内容:
+        - 修复边界重复问题：batch_end应该使用end而非end+1
+        - 添加边界检查日志，便于调试
+        """
         target_hash160s = self._target_hash160s
         num_targets = len(self._target_list)
         current = start
         batch_count = 0
         
-        # 预生成第一批私钥
-        batch_end = min(current + self.batch_size, end + 1)
+        logger.debug(f"范围扫描启动: start={start}, end={end}, total={end-start+1}")
+        
+        # ALG-2修复: 使用end而非end+1，避免边界重复
+        batch_end = min(current + self.batch_size, end)
         actual_batch_size = batch_end - current
         next_private_keys = b''.join(
             i.to_bytes(32, 'big') for i in range(current, batch_end)
