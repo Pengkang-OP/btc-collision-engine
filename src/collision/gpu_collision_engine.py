@@ -271,7 +271,7 @@ from ..gpu.benchmark_suite import GPUBenchmarkSuite
 from ..gpu.auto_tuner import GPUAutoTuner
 from ..gpu.performance_reporter import PerformanceReportGenerator, ReportConfig
 from ..gpu.async_executor import AsyncGPUExecutor  # 异步优化
-from ..utils.exception_handler import ExceptionHandler
+from ..utils.exception_handler import ExceptionHandler  # 统一异常处理器
 from ..utils.performance_monitor import EnhancedPerformanceMonitor
 
 NEW_GPU_MODULE_AVAILABLE = True
@@ -323,7 +323,7 @@ class GPUKernel(GPUKernelProtocol):
     EXPECTED_2G_X = 0xC6047F9441ED7D6D3045406E95C07CD85C778E4B8CEF3CA7ABAC09B95C709EE5
     EXPECTED_2G_Y = 0x1AE168FEA63DC339A3C58419466CEAEEF7F632653266D0E1236431A950CFE52A
     
-    # v3.2.3新增: 缓冲区大小因子常量
+    # v3.3.0新增: 缓冲区大小因子常量
     KEYS_BUFFER_SIZE_FACTOR = 32    # 每个私钥32字节（256位）
     MATCH_BUFFER_SIZE_FACTOR = 4    # 每个匹配标志4字节（int32）
     
@@ -710,7 +710,7 @@ class GPUKernel(GPUKernelProtocol):
         # 获取内存池引用（如果已启用）
         memory_pool = getattr(self, '_gpu_memory_pool', None)
         
-        # v3.2.3优化: 使用常量计算缓冲区大小
+        # v3.3.0优化: 使用常量计算缓冲区大小
         # 私钥缓冲区 (最大批次大小)
         keys_buf_size = self.max_batch_size * self.KEYS_BUFFER_SIZE_FACTOR
         if memory_pool:
@@ -1493,6 +1493,10 @@ class GPUCollisionEngine(BaseCollisionEngine):
         
         # 线程安全：batch_size保护锁（新增）
         self._batch_size_lock = threading.Lock()
+        
+        # P0-4修复: GPU异常最大重试次数（防止无限循环）
+        self._max_gpu_error_retries = 100  # 最大连续错误次数
+        self._consecutive_gpu_errors = 0  # 当前连续错误计数
         self._batch_size = batch_size
         
         # 调整历史统计（新增）
@@ -1924,58 +1928,60 @@ class GPUCollisionEngine(BaseCollisionEngine):
                         )
                         logger.info(f"GPU内存池初始化完成: {self._gpu_memory_pool.get_stats()}")
                         
-                        # v3.2.3优化: 预分配持久化缓冲区（使用常量+验证）
+                        # v3.3.0优化: 预分配持久化缓冲区（使用常量+验证）
                         # 持久化缓冲区设计：缓冲区在引擎生命周期内不释放，直接复用
                         # 异步双缓冲需要2个缓冲区交替使用（缓冲0计算时，缓冲1准备数据）
                         import pyopencl as cl
-                        
+                                                
                         # 检测是否为异步模式
                         is_async_mode = getattr(self._gpu_device, 'enable_async_execution', False)
                         buffer_count = 2 if is_async_mode else 1  # 异步需要2个，同步需要1个
-                        
-                        # v3.2.3: 使用常量计算缓冲区大小
+                                                
+                        # v3.3.0: 使用常量计算缓冲区大小
                         preallocate_sizes = [
                             self.batch_size * GPUKernel.KEYS_BUFFER_SIZE_FACTOR,   # 私钥缓冲区
-                            self.batch_size * GPUKernel.MATCH_BUFFER_SIZE_FACTOR,  # 匹配缓冲区
+                            self.batch_size * GPUKernel.MATCH_BUFFER_SIZE_FACTOR,  # 匹配缓冲区,
                         ]
-                        
+                                                
+                        # v3.3.0修复: 记录预分配前的状态（验证新增数而非累计数）
+                        before_stats = self._gpu_memory_pool.get_stats()
+                        before_count = before_stats['total_allocated']
+                                                
                         # 预分配私钥缓冲区 (READ_ONLY)
                         self._gpu_memory_pool.preallocate_buffers(
                             sizes=[preallocate_sizes[0]],
                             count_per_size=buffer_count,
                             flags=cl.mem_flags.READ_ONLY
                         )
-                        
+                                                
                         # 预分配匹配缓冲区 (WRITE_ONLY)
                         self._gpu_memory_pool.preallocate_buffers(
                             sizes=[preallocate_sizes[1]],
                             count_per_size=buffer_count,
                             flags=cl.mem_flags.WRITE_ONLY
                         )
-                        
-                        # v3.2.3新增: 预分配验证逻辑
-                        prealloc_stats = self._gpu_memory_pool.get_stats()
+                                                
+                        # v3.3.0修复: 验证新增的缓冲区数量（不是累计数）
+                        after_stats = self._gpu_memory_pool.get_stats()
+                        after_count = after_stats['total_allocated']
+                        newly_allocated = after_count - before_count
                         expected_count = len(preallocate_sizes) * buffer_count
-                        actual_count = prealloc_stats['total_allocated']
-                        
-                        if actual_count != expected_count:
+                                                
+                        if newly_allocated != expected_count:
                             logger.warning(
                                 f"⚠️ 预分配数量不匹配: 预期{expected_count}个, "
-                                f"实际{actual_count}个 (异步模式={is_async_mode})"
+                                f"实际新增{newly_allocated}个 (累计{after_count}个, 异步模式={is_async_mode})"
                             )
                         else:
-                            logger.debug(f"✅ 预分配验证通过: {actual_count}个缓冲区")
+                            logger.debug(f"✅ 预分配验证通过: 新增{newly_allocated}个缓冲区")
                         
-                        # 修复: 确保total_prealloc_mb是数值类型
-                        try:
-                            total_prealloc_mb = float(sum(preallocate_sizes) * buffer_count / (1024*1024))
-                            logger.info(
-                                f"✅ GPU内存池预分配完成 (持久化模式): "
-                                f"{actual_count}个缓冲区, {total_prealloc_mb:.1f}MB | "
-                                f"设计: 零运行时分配开销，性能最优"
-                            )
-                        except (TypeError, ValueError) as e:
-                            logger.debug(f"GPU内存池预分配完成 (持久化模式): {actual_count}个缓冲区")
+                        # v3.3.0优化: 简化日志输出（移除过度保护）
+                        total_prealloc_mb = sum(preallocate_sizes) * buffer_count / (1024*1024)
+                        logger.info(
+                            f"✅ GPU内存池预分配完成 (v3.3.0持久化模式): "
+                            f"{newly_allocated}个缓冲区, {total_prealloc_mb:.1f}MB | "
+                            f"设计: 零运行时分配开销 + 正确内存标志，性能最优"
+                        )
                     
                     self._gpu_kernel = GPUKernel(
                         self._gpu_device, 
@@ -2146,6 +2152,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
                             self._target_hash160s,
                             len(self._target_list)
                         )
+                        logger.info("✅ 断点恢复: GPU目标缓冲区已同步更新")
                 checkpoint_mode = checkpoint.get("mode", mode)
                 if checkpoint_mode == "range":
                     kwargs['start'] = checkpoint.get("current_position", kwargs.get('start', 1))
@@ -2420,7 +2427,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 current_time = time.time()
                 if current_time - self._last_progress_time >= self._progress_interval_sec:
                     if self.on_progress:
-                        self.on_progress(self.stats)
+                        self.on_progress(self.stats.snapshot())  # P1-2修复: 使用线程安全快照
                     self._save_checkpoint(batch_count)
                     self._last_progress_time = current_time
                     
@@ -2621,10 +2628,13 @@ class GPUCollisionEngine(BaseCollisionEngine):
         # 触发进度回调
         logger.debug(f"GPU 进度回调: batch_count={batch_count}")
         if self.on_progress:
-            self.on_progress(self.stats)
+            self.on_progress(self.stats.snapshot())  # P1-2修复: 使用线程安全快照
         self._save_checkpoint(batch_count)
         self._last_progress_time = current_time
         
+        # 成功执行,重置连续错误计数
+        self._consecutive_gpu_errors = 0
+                        
         # 自适应性能优化
         if not hasattr(self, '_gpu_kernel') or not self._gpu_kernel:
             return
@@ -2720,6 +2730,17 @@ class GPUCollisionEngine(BaseCollisionEngine):
             except Exception as e:
                 # 使用统一异常处理器处理GPU异常
                 ExceptionHandler.handle_gpu_error("范围扫描", e, self.stats)
+                
+                # P0-4修复: 检查是否超过最大重试次数
+                self._consecutive_gpu_errors += 1
+                if self._consecutive_gpu_errors >= self._max_gpu_error_retries:
+                    logger.critical(
+                        f"GPU连续错误次数达到上限({self._max_gpu_error_retries}), "
+                        f"强制停止引擎以防止无限循环"
+                    )
+                    self._running = False
+                    break
+                
                 continue
         
         self._running = False
@@ -2772,13 +2793,24 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 current_time = time.time()
                 if current_time - self._last_progress_time >= self._progress_interval_sec:
                     if self.on_progress:
-                        self.on_progress(self.stats)
+                        self.on_progress(self.stats.snapshot())  # P1-2修复: 使用线程安全快照
                     self._save_checkpoint(batch_count)
                     self._last_progress_time = current_time
                     
             except Exception as e:
                 # 使用统一异常处理器处理GPU异常
                 ExceptionHandler.handle_gpu_error("暴力穷举", e, self.stats)
+                
+                # P0-4修复: 检查是否超过最大重试次数
+                self._consecutive_gpu_errors += 1
+                if self._consecutive_gpu_errors >= self._max_gpu_error_retries:
+                    logger.critical(
+                        f"GPU连续错误次数达到上限({self._max_gpu_error_retries}), "
+                        f"强制停止引擎以防止无限循环"
+                    )
+                    self._running = False
+                    break
+                
                 continue
         
         self._running = False
