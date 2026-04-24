@@ -20,7 +20,9 @@
     "max_memory_mb": 8192,
     "async_execution": true,
     "timeout_protection": true,
-    "base_timeout_seconds": 30
+    "base_timeout_seconds": 30,
+    "max_error_retries": 100,
+    "_comment_max_error_retries": "GPU连续错误最大重试次数(超过后强制停止引擎)"
   },
   "monitoring": {
     "enable_performance_monitor": true,
