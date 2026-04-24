@@ -1583,11 +1583,18 @@ class GPUCollisionEngine(BaseCollisionEngine):
         # 验证合并后的配置
         self._validate_merged_config(merged)
         
+        # v3.3.0修复: 安全的日志格式化（保留千位分隔符和百分比）
+        batch_size_val = merged.get('batch_size', 'N/A')
+        batch_size_str = f"{batch_size_val:,}" if isinstance(batch_size_val, (int, float)) else batch_size_val
+        
+        mem_ratio_val = merged.get('memory_usage_ratio', 'N/A')
+        mem_ratio_str = f"{mem_ratio_val:.0%}" if isinstance(mem_ratio_val, (int, float)) else mem_ratio_val
+        
         logger.info(
             f"GPU配置合并完成: "
-            f"batch_size={merged.get('batch_size', 'N/A')}, "
+            f"batch_size={batch_size_str}, "
             f"work_group={merged.get('work_group_size', 'N/A')}, "
-            f"mem_ratio={merged.get('memory_usage_ratio', 'N/A')}"
+            f"mem_ratio={mem_ratio_str}"
         )
         return merged
     
@@ -2529,10 +2536,16 @@ class GPUCollisionEngine(BaseCollisionEngine):
         matches: List[Dict[str, int]] = self._gpu_kernel.run_batch(private_keys, batch_size)
         execution_time_ms = (time.time() - batch_start_time) * 1000
         
-        # PERF-1修复: 检测CPU-GPU同步瓶颈
-        if execution_time_ms > 1000:  # 超过1秒
+        # PERF-1修复: 检测CPU-GPU同步瓶颈（动态阈值）
+        # 基于批次大小和预期速度计算合理阈值
+        expected_speed = 500000  # 500K keys/s基准
+        expected_time_ms = (batch_size / expected_speed) * 1000
+        threshold_ms = expected_time_ms * 1.5  # 1.5倍容差
+        
+        if execution_time_ms > threshold_ms:
             logger.warning(
-                f"PERF-1警告: GPU batch {batch_num} 执行时间过长 ({execution_time_ms:.0f}ms)\n"
+                f"PERF-1警告: GPU batch {batch_num} 执行时间过长 "
+                f"({execution_time_ms:.0f}ms > {threshold_ms:.0f}ms)\n"
                 f"  可能原因: CPU-GPU同步等待、PCIe带宽瓶颈、GPU计算负载高\n"
                 f"  建议: 启用异步执行模式(双缓冲)可提升30-50%吞吐量"
             )
