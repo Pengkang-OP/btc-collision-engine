@@ -419,6 +419,39 @@ class GPUDevice:
         self.device = device_info['device']
         self.vendor = device_info.get('vendor', 'Unknown')
         
+        # COMP-2修复: 检测OpenCL版本并提供兼容性建议
+        opencl_version = device_info.get('version', 'Unknown')
+        logger.info(f"OpenCL版本: {opencl_version}")
+        
+        # 解析OpenCL版本号 (例如 "OpenCL 3.0" -> 3.0)
+        try:
+            version_str = opencl_version.replace('OpenCL', '').strip()
+            version_num = float(version_str.split()[0])  # 取第一个数字部分
+            
+            if version_num < 1.2:
+                logger.warning(
+                    f"COMP-2警告: OpenCL版本过低 ({version_num})，部分功能可能不可用\n"
+                    f"  最低要求: OpenCL 1.2\n"
+                    f"  建议: 更新GPU驱动或使用更高版本的设备"
+                )
+                # 标记为不兼容模式，某些高级功能需要禁用
+                self._legacy_mode = True
+            else:
+                logger.info(f"✅ OpenCL版本兼容 ({version_num} >= 1.2)")
+                self._legacy_mode = False
+                
+                # 为OpenCL 3.0+提供额外优化建议
+                if version_num >= 3.0:
+                    logger.info(
+                        f"检测到OpenCL 3.0+，可以使用最新特性:\n"
+                        f"  - Sub-groups (SIMD)\n"
+                        f"  - 3D image support\n"
+                        f"  - Extended atomic operations"
+                    )
+        except (ValueError, IndexError):
+            logger.warning(f"无法解析OpenCL版本: {opencl_version}")
+            self._legacy_mode = True
+        
         # 构建设备信息字典
         self.device_info = {
             'name': device_info.get('name', 'Unknown'),
