@@ -1834,6 +1834,13 @@ class GPUCollisionEngine(BaseCollisionEngine):
                         logger.info(f"GPU异步执行未启用 (来源: {config_source}) - 使用同步模式")
                         logger.info("提示: 在配置文件中设置 'gpu.async_execution': true 以启用异步优化")
                     
+                    # P0-4修复: 从配置文件读取最大错误重试次数
+                    if hasattr(self, 'config') and self.config:
+                        gpu_config = self.config.get('gpu', {})
+                        if 'max_error_retries' in gpu_config:
+                            self._max_gpu_error_retries = gpu_config['max_error_retries']
+                            logger.info(f"✅ 从配置文件读取max_error_retries: {self._max_gpu_error_retries}")
+                    
                     # 初始化设备(传入enable_async)
                     self._gpu_device.initialize(self.device_index, enable_async=enable_async)
                 
@@ -1964,7 +1971,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
                         # v3.3.0修复: 验证新增的缓冲区数量（不是累计数）
                         after_stats = self._gpu_memory_pool.get_stats()
                         after_count = after_stats['total_allocated']
-                        newly_allocated = after_count - before_count
+                        newly_allocated = int(after_count - before_count)  # 修复: 确保是数值类型
                         expected_count = len(preallocate_sizes) * buffer_count
                                                 
                         if newly_allocated != expected_count:
@@ -1976,7 +1983,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
                             logger.debug(f"✅ 预分配验证通过: 新增{newly_allocated}个缓冲区")
                         
                         # v3.3.0优化: 简化日志输出（移除过度保护）
-                        total_prealloc_mb = sum(preallocate_sizes) * buffer_count / (1024*1024)
+                        total_prealloc_mb = float(sum(preallocate_sizes) * buffer_count / (1024*1024))  # 修复: 确保是数值类型
                         logger.info(
                             f"✅ GPU内存池预分配完成 (v3.3.0持久化模式): "
                             f"{newly_allocated}个缓冲区, {total_prealloc_mb:.1f}MB | "
@@ -2139,6 +2146,10 @@ class GPUCollisionEngine(BaseCollisionEngine):
         if self._running:
             return
         
+        # P0-4修复: 重置错误计数器（引擎重启时清空历史状态）
+        with self._batch_size_lock:
+            self._consecutive_gpu_errors = 0
+        
         # 断点恢复逻辑
         if resume and self.checkpoint_mgr:
             checkpoint = self.checkpoint_mgr.load()
@@ -2152,7 +2163,11 @@ class GPUCollisionEngine(BaseCollisionEngine):
                             self._target_hash160s,
                             len(self._target_list)
                         )
-                        logger.info("✅ 断点恢复: GPU目标缓冲区已同步更新")
+                        logger.info(
+                            f"✅ 断点恢复: GPU目标缓冲区已同步更新 "
+                            f"(目标数={len(self._target_list)}, "
+                            f"Hash160大小={len(self._target_hash160s)}字节)"
+                        )
                 checkpoint_mode = checkpoint.get("mode", mode)
                 if checkpoint_mode == "range":
                     kwargs['start'] = checkpoint.get("current_position", kwargs.get('start', 1))
@@ -2301,7 +2316,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self._running = False
         self.stats.update(batch_count)
         if self.on_complete:
-            self.on_complete(self.stats)
+            self.on_complete(self.stats.snapshot())  # P1-2修复: 使用线程安全快照
     
     def _random_search_async(self):
         """异步执行版本(双缓冲优化)"""
@@ -2433,6 +2448,18 @@ class GPUCollisionEngine(BaseCollisionEngine):
                     
             except Exception as e:
                 ExceptionHandler.handle_gpu_error("异步随机碰撞", e, self.stats)
+                
+                # P0-4修复: 检查是否超过最大重试次数（添加锁保护）
+                with self._batch_size_lock:
+                    self._consecutive_gpu_errors += 1
+                    if self._consecutive_gpu_errors >= self._max_gpu_error_retries:
+                        logger.critical(
+                            f"GPU连续错误次数达到上限({self._max_gpu_error_retries}), "
+                            f"强制停止引擎以防止无限循环"
+                        )
+                        self._running = False
+                        break
+                
                 time.sleep(EXCEPTION_RECOVERY_DELAY)
         
         logger.info(f"GPU _random_search_async 结束: 共处理 {batch_count} 个私钥")
@@ -2632,8 +2659,9 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self._save_checkpoint(batch_count)
         self._last_progress_time = current_time
         
-        # 成功执行,重置连续错误计数
-        self._consecutive_gpu_errors = 0
+        # 成功执行,重置连续错误计数（添加锁保护）
+        with self._batch_size_lock:
+            self._consecutive_gpu_errors = 0
                         
         # 自适应性能优化
         if not hasattr(self, '_gpu_kernel') or not self._gpu_kernel:
@@ -2731,22 +2759,23 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 # 使用统一异常处理器处理GPU异常
                 ExceptionHandler.handle_gpu_error("范围扫描", e, self.stats)
                 
-                # P0-4修复: 检查是否超过最大重试次数
-                self._consecutive_gpu_errors += 1
-                if self._consecutive_gpu_errors >= self._max_gpu_error_retries:
-                    logger.critical(
-                        f"GPU连续错误次数达到上限({self._max_gpu_error_retries}), "
-                        f"强制停止引擎以防止无限循环"
-                    )
-                    self._running = False
-                    break
+                # P0-4修复: 检查是否超过最大重试次数（添加锁保护）
+                with self._batch_size_lock:
+                    self._consecutive_gpu_errors += 1
+                    if self._consecutive_gpu_errors >= self._max_gpu_error_retries:
+                        logger.critical(
+                            f"GPU连续错误次数达到上限({self._max_gpu_error_retries}), "
+                            f"强制停止引擎以防止无限循环"
+                        )
+                        self._running = False
+                        break
                 
                 continue
         
         self._running = False
         self.stats.update(batch_count)
         if self.on_complete:
-            self.on_complete(self.stats)
+            self.on_complete(self.stats.snapshot())  # P1-2修复: 使用线程安全快照
     
     def _brute_force(self, start: int):
         """暴力穷举模式"""
@@ -2801,22 +2830,23 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 # 使用统一异常处理器处理GPU异常
                 ExceptionHandler.handle_gpu_error("暴力穷举", e, self.stats)
                 
-                # P0-4修复: 检查是否超过最大重试次数
-                self._consecutive_gpu_errors += 1
-                if self._consecutive_gpu_errors >= self._max_gpu_error_retries:
-                    logger.critical(
-                        f"GPU连续错误次数达到上限({self._max_gpu_error_retries}), "
-                        f"强制停止引擎以防止无限循环"
-                    )
-                    self._running = False
-                    break
+                # P0-4修复: 检查是否超过最大重试次数（添加锁保护）
+                with self._batch_size_lock:
+                    self._consecutive_gpu_errors += 1
+                    if self._consecutive_gpu_errors >= self._max_gpu_error_retries:
+                        logger.critical(
+                            f"GPU连续错误次数达到上限({self._max_gpu_error_retries}), "
+                            f"强制停止引擎以防止无限循环"
+                        )
+                        self._running = False
+                        break
                 
                 continue
         
         self._running = False
         self.stats.update(batch_count)
         if self.on_complete:
-            self.on_complete(self.stats)
+            self.on_complete(self.stats.snapshot())  # P1-2修复: 使用线程安全快照
     
     def _save_checkpoint(self, count: int):
         """保存断点"""

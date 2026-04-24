@@ -151,7 +151,7 @@ class GPUConfigManager:
             return isinstance(value, int) and 64 <= value <= 2048
         elif key == 'memory_usage_ratio':
             return isinstance(value, (int, float)) and 0 < value <= 1.0
-        elif key in ['enable_async', 'use_uint32_workaround']:
+        elif key in ['enable_async', 'use_uint32_workaround', 'use_fast_math']:
             return isinstance(value, bool)
         return True
     
