@@ -363,7 +363,8 @@ class GPUDevice:
         self.driver_optimization_flags = {}
         
         # 异步优化配置
-        self.enable_async_execution = False  # 是否启用异步执行
+        # PERF-2修复: 默认启用异步执行，提高GPU利用率
+        self.enable_async_execution = True  # 是否启用异步执行（默认True）
     
     def initialize(self, device_index: int = -1, enable_async: bool = False):
         """

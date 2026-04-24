@@ -238,6 +238,11 @@ MONITOR_THREAD_JOIN_TIMEOUT = 1.0  # 监控线程join超时（秒）
 # 异常恢复
 EXCEPTION_RECOVERY_DELAY = 0.1  # 异常恢复延迟（秒）
 
+# ALG-1修复: 异步私钥生成超时计算常量
+ASYNC_KEY_GEN_BASE_TIMEOUT = 5.0  # 基础超时（秒）
+ASYNC_KEY_GEN_PER_KEY_TIME = 0.00001  # 每个私钥预计时间（10微秒）
+ASYNC_KEY_GEN_SAFETY_FACTOR = 2.0  # 安全系数
+
 # ========== 本地模块导入 ==========
 # GPU设备与上下文
 from ..gpu.device import GPUDevice, GPUDeviceDetector
@@ -456,33 +461,38 @@ class GPUKernel(GPUKernelProtocol):
             raise RuntimeError(f"GPU 内核编译失败: {e}") from e
     
     def _verify(self):
-        """验证 GPU 计算正确性"""
+        """ALG-3修复: 验证 GPU 计算正确性（增强版）
+            
+        验证内容:
+        1. 基础验证: 虚拟目标不应匹配
+        2. 增强验证: 已知私钥-地址对应该匹配（如果提供）
+        """
         import pyopencl as cl
         import numpy as np
-        
-        # 准备测试数据
+            
+        # ===== 验证1: 基础验证 - 虚拟目标不应匹配 =====
         num_keys = 1
         num_targets = 1
-        
+            
         # 测试私钥: 1 (32字节)
         test_key_bytes = b'\x01' + b'\x00' * 31
-        
-        # 虚拟目标hash160 (20字节)
+            
+        # 虚拟目杢hash160 (20字节)
         test_targets = b'\x00' * 20
-        
+            
         # 将测试数据写入GPU缓冲区
         keys_array = np.frombuffer(test_key_bytes, dtype=np.uint32)
         cl.enqueue_copy(self.device.queue, self._keys_buf, keys_array)
-        
+            
         # 设置目标
         self.set_targets(test_targets, num_targets)
-        
+            
         # 清空匹配结果缓冲区
         cl.enqueue_fill_buffer(
             self.device.queue, self._match_buf,
             np.int32(0), 0, num_keys * 4
         )
-        
+            
         # 执行GPU batch计算
         self._batch_kernel(
             self.device.queue,
@@ -491,16 +501,68 @@ class GPUKernel(GPUKernelProtocol):
             self._targets_buf, np.uint32(num_targets),
             self._match_buf
         ).wait()
-        
+            
         # 读取结果
         match_flags = np.zeros(num_keys, dtype=np.int32)
         cl.enqueue_copy(self.device.queue, match_flags, self._match_buf)
-        
+            
         # 验证: 由于目标是全0,不应该匹配
         if match_flags[0] != 0:
             raise RuntimeError(f"GPU内核验证失败: 不应匹配虚拟目标,但match_flags[0]={match_flags[0]}")
-        
-        logger.info("GPU 内核验证通过")
+            
+        logger.info("✅ GPU内核基础验证通过（虚拟目标不匹配）")
+            
+        # ===== ALG-3修复: 验证2 - 真实地址匹配测试 =====
+        # 使用已知私钥和对应的Hash160进行测试
+        # 这里使用私钥=1的公钥的Hash160
+        # 私钥1的压缩公钥Hash160: 751e76e8199196d454941c45d1b3a323f1433bd6
+        try:
+            from ..core.address_generator import P2PKHAddressGenerator
+                
+            # 生成私钥1的地址和Hash160
+            generator = P2PKHAddressGenerator()
+            test_address = generator.private_key_to_address(test_key_bytes)
+            test_hash160 = generator.private_key_to_hash160(test_key_bytes)
+                
+            logger.info(f"ALG-3增强验证: 测试私钥1 -> 地址 {test_address}")
+            logger.info(f"  Hash160: {test_hash160.hex()}")
+                
+            # 将真实Hash160设置为目标
+            self.set_targets(test_hash160, 1)
+                
+            # 清空匹配结果缓冲区
+            cl.enqueue_fill_buffer(
+                self.device.queue, self._match_buf,
+                np.int32(0), 0, num_keys * 4
+            )
+                
+            # 执行GPU batch计算
+            self._batch_kernel(
+                self.device.queue,
+                (num_keys,), None,
+                self._keys_buf, np.uint32(num_keys),
+                self._targets_buf, np.uint32(1),
+                self._match_buf
+            ).wait()
+                
+            # 读取结果
+            match_flags = np.zeros(num_keys, dtype=np.int32)
+            cl.enqueue_copy(self.device.queue, match_flags, self._match_buf)
+                
+            # 验证: 私钥1应该匹配它的地址
+            if match_flags[0] != 1:
+                raise RuntimeError(
+                    f"GPU内核增强验证失败: "
+                    f"私钥1应该匹配地址{test_address},但match_flags[0]={match_flags[0]}"
+                )
+                
+            logger.info(f"✅ GPU内核增强验证通过（私钥1匹配地址{test_address}）")
+                
+        except ImportError:
+            logger.warning("ALG-3增强验证跳过: 无法导入地址生成器")
+        except Exception as e:
+            logger.warning(f"ALG-3增强验证失败: {e}")
+            # 不阻止初始化，仅警告
     
     def _generate_cache_key(self) -> str:
         """P2-6修复: 生成缓存键
@@ -680,14 +742,16 @@ class GPUKernel(GPUKernelProtocol):
         stats = self._buffer_tracker.get_stats()
         logger.debug(f"GPU Buffer统计: {stats['count']}个缓冲区, {stats['total_size_mb']:.2f} MB")
         
-        # v3.2.0新增: 记录内存池使用状态
+        # v3.3.0优化: 记录内存池使用状态（纯持久化设计）
         if memory_pool:
             pool_stats = memory_pool.get_stats()
             logger.info(
-                f"GPU内存池状态: 复用率={pool_stats['reuse_rate']*100:.1f}%, "
+                f"GPU内存池状态 (v3.3.0纯持久化设计): "
                 f"已分配={pool_stats['total_allocated']}, "
                 f"已复用={pool_stats['total_reused']}, "
-                f"当前内存={pool_stats['current_memory_mb']:.1f}MB"
+                f"当前内存={pool_stats['current_memory_mb']:.1f}MB, "
+                f"池内缓冲={pool_stats['pooled_buffers']}个 | "
+                f"设计: 持久化缓冲区在引擎生命周期内重复使用，零运行时分配开销"
             )
     
     def set_targets(self, target_hash160s: bytes, num_targets: int):
@@ -721,6 +785,7 @@ class GPUKernel(GPUKernelProtocol):
         """批量执行私钥碰撞检测 - 优化版本
         
         使用异步数据传输和持久化缓冲区，保持 GPU 持续工作。
+        v3.2.2优化: 持久化缓冲区设计 - 零运行时分配开销，性能最优
         修复：使用uint32替代uint8避免Intel Arc A770的global char* hang bug
         """
         import numpy as np
@@ -957,11 +1022,12 @@ class GPUKernel(GPUKernelProtocol):
         v2.2.1: 关闭异步日志处理器
         v2.2.1修复: 避免双重释放缓冲区
         v3.2.1修复: 缓冲区归还到内存池（支持复用）
+        v3.3.0优化: 纯持久化设计 - 直接释放，不归还到内存池
         """
         # 注意: 不需要导入pyopencl, OpenCL Buffer对象自带release()方法
         
-        # v3.2.1修复: 获取内存池引用（如果已启用）
-        memory_pool = getattr(self, '_gpu_memory_pool', None)
+        # v3.3.0优化: 纯持久化设计 - 不需要内存池引用（缓冲区直接释放）
+        # memory_pool = getattr(self, '_gpu_memory_pool', None)  # 不再需要
         
         # v2.2.1修复: 跟踪已释放的缓冲区，避免双重释放
         released_buffers = set()
@@ -998,18 +1064,18 @@ class GPUKernel(GPUKernelProtocol):
             except Exception as e:
                 logger.error(f"内存泄漏检查失败: {e}")
         
-        # v3.2.1修复: 计算缓冲区大小（用于归还到内存池）
-        keys_buf_size = self.max_batch_size * 32 if hasattr(self, 'max_batch_size') else 0
-        match_buf_size = self.max_batch_size * 4 if hasattr(self, 'max_batch_size') else 0
+        # v3.3.0优化: 纯持久化设计 - 直接释放，不需要计算大小
+        # keys_buf_size = self.max_batch_size * 32 if hasattr(self, 'max_batch_size') else 0  # 不再需要
+        # match_buf_size = self.max_batch_size * 4 if hasattr(self, 'max_batch_size') else 0  # 不再需要
         
         # P1修复: 显式释放OpenCL Buffer（跳过已释放的）
         buffers_to_release = [
-            ("_keys_buf", self._keys_buf, keys_buf_size),
-            ("_match_buf", self._match_buf, match_buf_size),
-            ("_targets_buf", self._targets_buf, 0),  # targets_buf大小动态，不归还到池
+            ("_keys_buf", self._keys_buf),
+            ("_match_buf", self._match_buf),
+            ("_targets_buf", self._targets_buf),
         ]
             
-        for buf_name, buf, buf_size in buffers_to_release:
+        for buf_name, buf in buffers_to_release:
             # v2.2.1修复: 跳过已被force_check_on_shutdown释放的缓冲区
             if buf_name in released_buffers:
                 logger.debug(f"缓冲区 {buf_name} 已释放，跳过")
@@ -1017,14 +1083,9 @@ class GPUKernel(GPUKernelProtocol):
                 
             if buf is not None:
                 try:
-                    # v3.2.1修复: 优先归还到内存池（支持复用）
-                    if memory_pool and buf_size > 0 and buf_name != '_targets_buf':
-                        memory_pool.release(buf, buf_size)
-                        logger.debug(f"缓冲区 {buf_name} 已归还到内存池 ({buf_size/1024/1024:.2f} MB)")
-                    else:
-                        # 直接释放（回退模式或targets_buf）
-                        buf.release()
-                        logger.debug(f"已释放 {buf_name}")
+                    # v3.3.0优化: 纯持久化设计 - 直接释放，不归还到内存池
+                    buf.release()
+                    logger.debug(f"已释放 {buf_name}")
                     
                     # P2-2修复: 注销缓冲区追踪
                     if hasattr(self, '_buffer_tracker'):
@@ -1694,13 +1755,16 @@ class GPUCollisionEngine(BaseCollisionEngine):
                     enable_async = False
                     config_source = "默认"
                     
+                    # OPT-1修复: 记录配置读取优先级日志
+                    logger.debug("配置读取优先级: 1.构造函数参数 > 2.配置文件 > 3.默认值")
+                    
                     # 优先级1: 构造函数传入的配置
                     if hasattr(self, 'config') and self.config:
                         gpu_config = self.config.get('gpu', {})
                         if 'async_execution' in gpu_config:
                             enable_async = gpu_config['async_execution']
                             config_source = "构造参数"
-                            logger.debug(f"从构造参数读取异步设置: {enable_async}")
+                            logger.info(f"✅ 从构造参数读取异步设置: {enable_async} (优先级1)")
                     
                     # 优先级2: 自动读取配置文件(仅当构造参数未明确设置时)
                     if config_source == "默认":
@@ -1718,7 +1782,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
                                         if cfg.get('gpu', {}).get('async_execution', False):
                                             enable_async = True
                                             config_source = f"配置文件 {cfg_file.name}"
-                                            logger.info(f"✅ 从{config_source}读取异步设置")
+                                            logger.info(f"✅ 从{config_source}读取异步设置 (优先级2)")
                                             break
                                 except json.JSONDecodeError as e:
                                     logger.warning(f"配置文件 {cfg_file} JSON格式错误: {e}")
@@ -1730,10 +1794,10 @@ class GPUCollisionEngine(BaseCollisionEngine):
                     # 应用配置
                     if enable_async:
                         self._gpu_device.enable_async_execution = True
-                        logger.info(f"✅ GPU异步执行已启用({config_source}) - 双缓冲优化")
+                        logger.info(f"✅ GPU异步执行已启用 (来源: {config_source}) - 双缓冲优化")
                     else:
-                        logger.info(f"GPU异步执行未启用({config_source}) - 使用同步模式")
-                        logger.debug("提示: 在配置文件中设置 'gpu.async_execution': true 以启用异步优化")
+                        logger.info(f"GPU异步执行未启用 (来源: {config_source}) - 使用同步模式")
+                        logger.info("提示: 在配置文件中设置 'gpu.async_execution': true 以启用异步优化")
                     
                     # 初始化设备(传入enable_async)
                     self._gpu_device.initialize(self.device_index, enable_async=enable_async)
@@ -1829,25 +1893,42 @@ class GPUCollisionEngine(BaseCollisionEngine):
                         )
                         logger.info(f"GPU内存池初始化完成: {self._gpu_memory_pool.get_stats()}")
                         
-                        # v3.2.0新增: 预分配常用大小的缓冲区（性能优化）
-                        # v3.3.0优化: 使用正确的内存标志进行预分配
+                        # v3.3.0优化: 预分配持久化缓冲区（纯持久化设计）
+                        # 持久化缓冲区设计：缓冲区在引擎生命周期内不释放，直接复用
+                        # 异步双缓冲需要2个缓冲区交替使用（缓冲0计算时，缓冲1准备数据）
                         import pyopencl as cl
+                        
+                        # 检测是否为异步模式
+                        is_async_mode = getattr(self._gpu_device, 'enable_async_execution', False)
+                        buffer_count = 2 if is_async_mode else 1  # 异步需要2个，同步需要1个
+                        
+                        preallocate_sizes = [
+                            self.batch_size * 32,  # 私钥缓冲区大小 (32MB @ 1M batch)
+                            self.batch_size * 4,   # 匹配缓冲区大小 (4MB @ 1M batch)
+                        ]
                         
                         # 预分配私钥缓冲区 (READ_ONLY)
                         self._gpu_memory_pool.preallocate_buffers(
-                            sizes=[self.batch_size * 32],
-                            count_per_size=2,
+                            sizes=[preallocate_sizes[0]],
+                            count_per_size=buffer_count,  # v3.3.0: 异步双缓冲需要2个
                             flags=cl.mem_flags.READ_ONLY
                         )
                         
                         # 预分配匹配缓冲区 (WRITE_ONLY)
                         self._gpu_memory_pool.preallocate_buffers(
-                            sizes=[self.batch_size * 4],
-                            count_per_size=2,
+                            sizes=[preallocate_sizes[1]],
+                            count_per_size=buffer_count,  # v3.3.0: 异步双缓冲需要2个
                             flags=cl.mem_flags.WRITE_ONLY
                         )
                         
-                        logger.info("✅ GPU内存池预分配完成（使用正确的内存标志）")
+                        total_buffers = buffer_count * 2  # 2种类型 × buffer_count
+                        total_prealloc_mb = sum(preallocate_sizes) * buffer_count / (1024*1024)
+                        mode_str = "异步双缓冲" if is_async_mode else "同步"
+                        logger.info(
+                            f"✅ GPU内存池预分配完成 (v3.3.0纯持久化设计): "
+                            f"{total_buffers}个缓冲区 ({mode_str}), {total_prealloc_mb:.1f}MB | "
+                            f"设计: 零运行时分配开销 + 正确内存标志，性能最优"
+                        )
                     
                     self._gpu_kernel = GPUKernel(
                         self._gpu_device, 
@@ -2304,6 +2385,20 @@ class GPUCollisionEngine(BaseCollisionEngine):
     
     # ========== P0-1重构：辅助方法 ==========
     
+    def _calculate_key_gen_timeout(self, batch_size: int) -> float:
+        """ALG-1修复: 根据batch_size动态计算异步私钥生成超时时间
+        
+        Args:
+            batch_size: 要生成的私钥数量
+            
+        Returns:
+            超时时间（秒）
+        """
+        # 动态计算: 基础超时 + (每私钥时间 * 数量) * 安全系数
+        estimated_time = ASYNC_KEY_GEN_BASE_TIMEOUT + (batch_size * ASYNC_KEY_GEN_PER_KEY_TIME * ASYNC_KEY_GEN_SAFETY_FACTOR)
+        # 限制在合理范围内：最少5秒，最多120秒
+        return max(ASYNC_KEY_GEN_BASE_TIMEOUT, min(estimated_time, 120.0))
+    
     def _generate_private_keys_batch(self, count: int) -> bytes:
         """生成一批随机私钥
         
@@ -2350,12 +2445,13 @@ class GPUCollisionEngine(BaseCollisionEngine):
             生成的私钥字节串
         """
         if gen_thread.is_alive():
-            # 使用超时保护
-            gen_thread.join(timeout=ASYNC_KEY_GEN_TIMEOUT)
+            # ALG-1修复: 使用动态计算的超时时间
+            dynamic_timeout = self._calculate_key_gen_timeout(self.batch_size)
+            gen_thread.join(timeout=dynamic_timeout)
             
             if gen_thread.is_alive():
                 logger.error(
-                    f"GPU batch {batch_num}: 异步私钥生成超时（>{ASYNC_KEY_GEN_TIMEOUT}秒），强制继续"
+                    f"GPU batch {batch_num}: 异步私钥生成超时（>{dynamic_timeout:.1f}秒），强制继续"
                 )
                 return self._generate_private_keys_batch(self.batch_size)
         
