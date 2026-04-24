@@ -22,6 +22,18 @@ from ..utils.exception_handler import ExceptionHandler
 from ..monitoring.data_logger import DataLogger
 from ..monitoring.enhanced_monitoring import EnhancedMonitoringSystem
 
+# v3.2.0: 事件系统支持
+from .event_bus import EventBus, get_event_bus
+from .events import (
+    EngineProgressEvent,
+    EngineMatchEvent,
+    EngineErrorEvent,
+    EngineCompleteEvent,
+    EngineStartEvent,
+    EngineStopEvent
+)
+from .types import ProgressCallback, MatchCallback, CompleteCallback
+
 # 初始化日志系统（如果尚未初始化）
 init_logging()
 
@@ -46,14 +58,17 @@ class KeyCollisionEngine(BaseCollisionEngine):
     """
 
     def __init__(self, targets: Set[str],
-                 on_progress: Optional[Callable[[Any], None]] = None,
-                 on_match: Optional[Callable[[bytes, str, str], None]] = None,
-                 on_complete: Optional[Callable[[Any], None]] = None,
+                 # v3.2.0: 统一类型提示
+                 on_progress: Optional[ProgressCallback] = None,
+                 on_match: Optional[MatchCallback] = None,
+                 on_complete: Optional[CompleteCallback] = None,
                  checkpoint_enabled: bool = False,
                  dedup_enabled: bool = False,
                  dedup_max_size: int = 1_000_000,
                  checkpoint_interval: int = 30,
                  max_workers: Optional[int] = None,
+                 # v3.2.0: 事件总线支持
+                 event_bus: Optional[EventBus] = None,
                  data_logging_enabled: bool = True,
                  data_logging_interval: int = 5,
                  verbose_logging: bool = False,
@@ -81,6 +96,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             dedup_max_size: 去重过滤器最大容量
             checkpoint_interval: 断点自动保存间隔(秒)
             max_workers: 线程池最大工作线程数，None表示使用默认值
+            event_bus: 事件总线实例（v3.2.0新增，None则自动创建）
             data_logging_enabled: 是否启用数据日志记录
             data_logging_interval: 数据日志记录间隔(秒)
             verbose_logging: 是否启用详细日志（生产环境建议False）
@@ -102,6 +118,11 @@ class KeyCollisionEngine(BaseCollisionEngine):
             - 密码学库(cryptography/PyNaCl)确保安全清零
         """
         self.targets = targets
+        
+        # v3.2.0: 事件总线初始化
+        self.event_bus = event_bus or EventBus()
+        
+        # 向后兼容: 保留回调
         self.on_progress = on_progress
         self.on_match = on_match
         self.on_complete = on_complete
@@ -184,9 +205,11 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self.enhanced_monitoring = None
         self._process = psutil.Process(os.getpid())
         
-        # 初始化数据日志器（带错误处理）
+        # v3.2.0: 初始化数据日志系统（使用事件适配器）
         if data_logging_enabled:
             try:
+                from src.monitoring.event_adapters import DataLoggerAdapter, setup_data_logging
+                
                 if use_enhanced_monitoring:
                     # 使用增强监控系统（推荐）
                     self.enhanced_monitoring = EnhancedMonitoringSystem(
@@ -195,11 +218,22 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         enable_monitoring_data=False  # 统一使用data_logs
                     )
                     self.data_logger = self.enhanced_monitoring.data_logger
-                    logger.info("增强监控系统已启用（统一数据源）")
+                    
+                    # 订阅事件到增强监控
+                    from src.monitoring.event_adapters import EnhancedMonitoringAdapter
+                    monitoring_adapter = EnhancedMonitoringAdapter(self.enhanced_monitoring)
+                    monitoring_adapter.subscribe_to(self.event_bus)
+                    
+                    logger.info("增强监控系统已启用（事件驱动模式）")
                 else:
                     # 使用传统DataLogger（向后兼容）
-                    self.data_logger = DataLogger()
-                    logger.info("数据日志系统已启用（传统模式）")
+                    # 通过事件适配器解耦
+                    self.data_logger_adapter = setup_data_logging(
+                        event_bus=self.event_bus,
+                        data_logger=DataLogger()
+                    )
+                    self.data_logger = self.data_logger_adapter.data_logger
+                    logger.info("数据日志系统已启用（事件驱动模式）")
             except Exception as e:
                 logger.warning(f"数据日志系统初始化失败，已禁用: {e}")
                 self.data_logging_enabled = False

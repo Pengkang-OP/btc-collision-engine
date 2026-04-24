@@ -18,6 +18,31 @@ from .collision_helpers import (
 )
 from . import constants
 
+# 事件系统 (v3.2.0新增)
+from .events import (
+    EventType,
+    CollisionEvent,
+    EngineProgressEvent,
+    EngineMatchEvent,
+    EngineErrorEvent,
+    EngineCompleteEvent,
+    EngineStartEvent,
+    EngineStopEvent,
+    GPUKernelExecEvent,
+    GPUErrorEvent,
+    MonitoringAlertEvent,
+    MonitoringAnomalyEvent
+)
+from .event_bus import EventBus, get_event_bus, reset_event_bus
+from .types import (
+    ProgressCallback,
+    MatchCallback,
+    CompleteCallback,
+    ErrorCallback,
+    EventHandler,
+    ErrorHandler
+)
+
 # 条件导出 GPUCollisionEngine（pyopencl 可能不可用）
 try:
     from .gpu_collision_engine import GPUCollisionEngine
@@ -53,7 +78,30 @@ __all__ = [
     # 辅助工具函数
     'encode_private_key_to_wif',
     'format_match_result',
-    'safe_wif_encode'
+    'safe_wif_encode',
+    # 事件系统 (v3.2.0新增)
+    'EventType',
+    'CollisionEvent',
+    'EngineProgressEvent',
+    'EngineMatchEvent',
+    'EngineErrorEvent',
+    'EngineCompleteEvent',
+    'EngineStartEvent',
+    'EngineStopEvent',
+    'GPUKernelExecEvent',
+    'GPUErrorEvent',
+    'MonitoringAlertEvent',
+    'MonitoringAnomalyEvent',
+    'EventBus',
+    'get_event_bus',
+    'reset_event_bus',
+    # 类型定义 (v3.2.0新增)
+    'ProgressCallback',
+    'MatchCallback',
+    'CompleteCallback',
+    'ErrorCallback',
+    'EventHandler',
+    'ErrorHandler'
 ]
 
 
