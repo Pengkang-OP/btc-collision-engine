@@ -8,7 +8,7 @@ CODE-1修复: 从gpu_collision_engine.py提取配置管理逻辑，降低主类�
 import logging
 import json
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -32,10 +32,12 @@ class GPUConfigManager:
     
     def read_async_config(
         self,
-        constructor_config: Optional[Dict] = None,
-        config_files: Optional[list] = None
-    ) -> tuple:
+        constructor_config: Optional[Dict[str, Any]] = None,
+        config_files: Optional[List[Path]] = None
+    ) -> Tuple[bool, str]:
         """读取异步执行配置（按优先级）
+        
+        CODE-3修复: 添加完整类型注解
         
         Args:
             constructor_config: 构造函数传入的配置
@@ -96,6 +98,8 @@ class GPUConfigManager:
     ) -> Dict[str, Any]:
         """合并AutoConfig和ProfileLoader的配置
         
+        CODE-3修复: 添加完整类型注解
+        
         Args:
             auto_config: GPUAutoConfigurator生成的配置
             profile_config: GPUProfileLoader加载的配置（可选）
@@ -132,6 +136,8 @@ class GPUConfigManager:
     def _validate_config_value(self, key: str, value: Any) -> bool:
         """验证配置值的有效性
         
+        CODE-3修复: 添加完整类型注解
+        
         Args:
             key: 配置键名
             value: 配置值
@@ -149,28 +155,34 @@ class GPUConfigManager:
             return isinstance(value, bool)
         return True
     
-    def _validate_merged_config(self, config: Dict[str, Any]):
+    def _validate_merged_config(self, config: Dict[str, Any]) -> None:
         """验证合并后的配置
+        
+        CODE-3修复: 添加完整类型注解（返回None）
         
         Args:
             config: 合并后的配置字典
         """
         if 'batch_size' in config:
             batch_size = config['batch_size']
-            if batch_size < 1024:
-                logger.warning(f"batch_size过小({batch_size})，可能导致性能差")
-            elif batch_size > 16777216:
-                logger.warning(f"batch_size过大({batch_size})，可能导致显存不足")
+            if batch_size is not None:
+                if batch_size < 1024:
+                    logger.warning(f"batch_size过小({batch_size})，可能导致性能差")
+                elif batch_size > 16777216:
+                    logger.warning(f"batch_size过大({batch_size})，可能导致显存不足")
         
         if 'memory_usage_ratio' in config:
             ratio = config['memory_usage_ratio']
-            if ratio > 0.85:
-                logger.warning(f"显存使用率过高({ratio:.0%})，可能导致不稳定")
-            elif ratio < 0.3:
-                logger.warning(f"显存使用率过低({ratio:.0%})，性能可能不佳")
+            if ratio is not None:
+                if ratio > 0.85:
+                    logger.warning(f"显存使用率过高({ratio:.0%})，可能导致不稳定")
+                elif ratio < 0.3:
+                    logger.warning(f"显存使用率过低({ratio:.0%})，性能可能不佳")
     
     def get_config_summary(self, config: Dict[str, Any]) -> str:
         """获取配置摘要信息
+        
+        CODE-3修复: 添加完整类型注解
         
         Args:
             config: 配置字典

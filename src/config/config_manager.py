@@ -65,7 +65,13 @@ class ConfigManager:
                     "batch_size": {"type": "integer", "minimum": 1, "maximum": 16777216},
                     "auto_detect": {"type": "boolean"},
                     "memory_usage_ratio": {"type": "number", "minimum": 0, "maximum": 1},
-                    "enable_vendor_optimizations": {"type": "boolean"}
+                    "enable_vendor_optimizations": {"type": "boolean"},
+                    # CFG-1修复: 添加缺失的GPU配置项
+                    "async_execution": {"type": "boolean"},  # v3.3.0: 异步执行默认启用
+                    "work_group_size": {"type": "integer", "minimum": 64, "maximum": 2048},
+                    "use_fast_math": {"type": "boolean"},
+                    "use_uint32_workaround": {"type": "boolean"},
+                    "compiler_flags": {"type": "string"}
                 },
                 "additionalProperties": False  # 审查修复#3: 禁止额外属性
             },
