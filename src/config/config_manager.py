@@ -27,6 +27,8 @@ class ConfigManager:
     """配置管理器 - 统一管理应用配置"""
     
     # 审查修复#5: 将Schema提取为类常量，避免每次验证都重新创建
+    # 优化: 将Draft7Validator实例缓存为类变量，避免重复创建开销
+    _cached_validator = None  # 类级缓存的Schema验证器实例
     CONFIG_SCHEMA = {
         "type": "object",
         "properties": {
@@ -36,7 +38,15 @@ class ConfigManager:
                     "max_workers": {"type": ["integer", "null"], "minimum": 1, "maximum": 1024},
                     "progress_interval": {"type": "integer", "minimum": 1},
                     "checkpoint_interval": {"type": "integer", "minimum": 1},
-                    "dedup_max_size": {"type": "integer", "minimum": 1}
+                    "dedup_max_size": {"type": "integer", "minimum": 1},
+                    # D-2修复: 补充 config.example.json 中存在的性能优化字段
+                    "use_performance_optimization": {"type": "boolean"},
+                    "precomputed_window_size": {"type": "integer", "minimum": 1, "maximum": 16},
+                    "use_simd_hash": {"type": "boolean"},
+                    "use_memory_pool": {"type": "boolean"},
+                    "use_gpu_memory_pool": {"type": "boolean"},
+                    "gpu_pool_max_buffers": {"type": "integer", "minimum": 1},
+                    "gpu_pool_max_memory_mb": {"type": "integer", "minimum": 1}
                 },
                 "additionalProperties": False  # 审查修复#3: 禁止额外属性
             },
@@ -67,11 +77,33 @@ class ConfigManager:
                     "memory_usage_ratio": {"type": "number", "minimum": 0, "maximum": 1},
                     "enable_vendor_optimizations": {"type": "boolean"},
                     # CFG-1修复: 添加缺失的GPU配置项
-                    "async_execution": {"type": "boolean"},  # v3.3.0: 异步执行默认启用
+                    "async_execution": {"type": "boolean"},
                     "work_group_size": {"type": "integer", "minimum": 64, "maximum": 2048},
                     "use_fast_math": {"type": "boolean"},
                     "use_uint32_workaround": {"type": "boolean"},
-                    "compiler_flags": {"type": "string"}
+                    "compiler_flags": {"type": "string"},
+                    # D-2修复: 补充 config.example.json gpu区块字段
+                    "use_new_module": {"type": "boolean"},
+                    "mode": {"enum": ["auto", "single", "multi"]},
+                    "device_indices": {"type": "array", "items": {"type": "integer"}},
+                    "load_balancing": {"enum": ["performance", "equal"]},
+                    "auto_tuning": {"type": "boolean"},
+                    # 队列深度优化 v2.3.2: GPU 命令队列预提交批次数
+                    "queue_depth": {"type": "integer", "minimum": 1, "maximum": 16},
+                    # 内存池相关配置
+                    "gpu_memory_pool": {"type": "boolean"},
+                    "max_buffers": {"type": "integer", "minimum": 1},
+                    "max_memory_mb": {"type": "integer", "minimum": 64},
+                    # 超时保护配置
+                    "timeout_protection": {"type": "boolean"},
+                    "base_timeout_seconds": {"type": "number", "minimum": 1},
+                    "max_error_retries": {"type": "integer", "minimum": 1},
+                    # 种子预生成缓存
+                    "seed_prefetch_size": {"type": "integer", "minimum": 1, "maximum": 64},
+                    # 驱动检查配置
+                    "driver_check": {"type": "object"},
+                    # 每设备独立配置
+                    "per_device_config": {"type": "object"}
                 },
                 "additionalProperties": False  # 审查修复#3: 禁止额外属性
             },
@@ -92,9 +124,99 @@ class ConfigManager:
                     "backend": {"enum": ["auto", "pure_python", "pure_python_const_time", "openssl", "coincurve", "ecdsa"]},
                     "constant_time": {"type": "boolean"},
                     "verify_checksums": {"type": "boolean"},
-                    "strict_wif_validation": {"type": "boolean"}
+                    "strict_wif_validation": {"type": "boolean"},
+                    # D-2修复: 补充 config.example.json crypto区块字段
+                    "use_gpu": {"type": "boolean"},
+                    "gpu_device_index": {"type": "integer"},
+                    "gpu_batch_size": {"type": "integer", "minimum": 1, "maximum": 16777216}
                 },
                 "additionalProperties": False  # 审查修复#3: 禁止额外属性
+            },
+            # D-2修复: 补充 config.example.json 中的 monitoring 顶层区块
+            "monitoring": {
+                "type": "object",
+                "properties": {
+                    "enabled": {"type": "boolean"},
+                    "collection_interval": {"type": "integer", "minimum": 1},
+                    "storage_dir": {"type": "string"},
+                    "history_max_size": {"type": "integer", "minimum": 1},
+                    "error_max_size": {"type": "integer", "minimum": 1},
+                    "anomaly_thresholds": {
+                        "type": "object",
+                        "properties": {
+                            "speed": {
+                                "type": "object",
+                                "properties": {
+                                    "min": {"type": "number"},
+                                    "max": {"type": "number"}
+                                },
+                                "additionalProperties": False
+                            },
+                            "cpu_usage": {
+                                "type": "object",
+                                "properties": {"max": {"type": "number"}},
+                                "additionalProperties": False
+                            },
+                            "memory_usage": {
+                                "type": "object",
+                                "properties": {"max": {"type": "number"}},
+                                "additionalProperties": False
+                            }
+                        },
+                        "additionalProperties": False
+                    },
+                    "auto_cleanup": {
+                        "type": "object",
+                        "properties": {
+                            "enabled": {"type": "boolean"},
+                            "max_age_days": {"type": "integer", "minimum": 1}
+                        },
+                        "additionalProperties": False
+                    }
+                },
+                "additionalProperties": False
+            },
+            # i18n 国际化配置节
+            "i18n": {
+                "type": "object",
+                "properties": {
+                    "language": {"type": "string"},
+                    "fallback_language": {"type": "string"}
+                },
+                "additionalProperties": False
+            },
+            # CFG-2修复: 补充 config.json 中的 engine 区块
+            "engine": {
+                "type": "object",
+                "properties": {
+                    "mode": {"enum": ["random", "sequential", "range", "brute_force"]},
+                    "batch_size": {"type": "integer", "minimum": 1, "maximum": 16777216},
+                    "max_threads": {"type": "integer", "minimum": 1, "maximum": 1024}
+                },
+                "additionalProperties": False
+            },
+            # CFG-2修复: 补充 config.json 中的 gui 区块
+            "gui": {
+                "type": "object",
+                "properties": {
+                    "theme": {"enum": ["dark", "light"]},
+                    "font": {"type": "string"},
+                    "font_size": {"type": "integer", "minimum": 8, "maximum": 72},
+                    "window_width": {"type": "integer", "minimum": 400},
+                    "window_height": {"type": "integer", "minimum": 300}
+                },
+                "additionalProperties": False
+            },
+            # CFG-2修复: 补充 config.json 中的 optimization 区块
+            "optimization": {
+                "type": "object",
+                "properties": {
+                    "uint32_workaround": {"type": "boolean"},
+                    "disable_async_transfer": {"type": "boolean"},
+                    "conservative_memory_policy": {"type": "boolean"},
+                    "adaptive_timeout": {"type": "boolean"}
+                },
+                "additionalProperties": False
             }
         },
         "additionalProperties": False  # 审查修复#3: 顶层也禁止额外属性
@@ -126,7 +248,8 @@ class ConfigManager:
             "batch_size": 65536,
             "auto_detect": True,
             "memory_usage_ratio": 0.5,
-            "enable_vendor_optimizations": True
+            "enable_vendor_optimizations": True,
+            "queue_depth": 4  # GPU 命令队列预提交批次数，默认 4
         },
         "performance_monitoring": {
             "enabled": True,  # 是否启用性能监控
@@ -140,6 +263,10 @@ class ConfigManager:
             "constant_time": False,
             "verify_checksums": True,
             "strict_wif_validation": True,
+        },
+        "i18n": {
+            "language": "auto",
+            "fallback_language": "en_US",
         }
     }
     
@@ -161,6 +288,25 @@ class ConfigManager:
         if config_file and os.path.exists(config_file):
             self.load_config()
     
+    @staticmethod
+    def _strip_comments(config: Any) -> Any:
+        """D-2修复: 递归移除所有以 '_comment' 开头的注释键，使 config.example.json
+        可直接作为合法配置使用（与 additionalProperties:False 的 JSON Schema 兼容）。
+
+        参数:
+            config: 配置字典或任意值
+
+        返回:
+            过滤后的配置字典（不修改原对象）
+        """
+        if isinstance(config, dict):
+            return {
+                k: ConfigManager._strip_comments(v)
+                for k, v in config.items()
+                if not k.startswith('_comment')
+            }
+        return config
+
     def load_config(self) -> bool:
         """
         从文件加载配置（线程安全）
@@ -170,8 +316,11 @@ class ConfigManager:
         """
         try:
             with open(self.config_file, 'r', encoding='utf-8') as f:
-                user_config = json.load(f)
+                raw_config = json.load(f)
             
+            # D-2修复: 过滤 _comment 注释键，兼容 config.example.json 直接使用
+            user_config = self._strip_comments(raw_config)
+
             # DF-3修复: 配置文件格式校验（使用统一的validate方法）
             validation_errors = self.validate(user_config)
             if validation_errors:
@@ -318,10 +467,13 @@ class ConfigManager:
         if not HAS_JSONSCHEMA:
             return {}  # 没有jsonschema库，返回空
         
+        # 优化: 使用缓存的验证器实例，避免每次验证都重新创建
         # 审查修复#5: 使用类常量Schema，避免重复创建
         # 审查修复#1: 使用Draft7Validator收集所有错误，而非只捕获第一个
         errors = {}
-        validator = Draft7Validator(self.CONFIG_SCHEMA)
+        validator = self._get_validator()
+        if validator is None:
+            return {}
         for error in sorted(validator.iter_errors(config), key=lambda e: e.path):
             path = '.'.join(str(p) for p in error.absolute_path) if error.absolute_path else "root"
             # 避免覆盖同一字段的多个错误
@@ -331,6 +483,15 @@ class ConfigManager:
                 errors[path] += f"; {error.message}"
         
         return errors
+    
+    @classmethod
+    def _get_validator(cls):
+        """获取缓存的Schema验证器实例（懒加载）"""
+        if cls._cached_validator is None:
+            if HAS_JSONSCHEMA:
+                cls._cached_validator = Draft7Validator(cls.CONFIG_SCHEMA)
+                logger.debug("Draft7Validator实例已初始化并缓存")
+        return cls._cached_validator
     
     @staticmethod
     def _is_strict_bool(value: Any) -> bool:

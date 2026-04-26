@@ -184,6 +184,11 @@ class GPUMockFactory:
     def create_cl_buffer(size: int = 1024) -> Mock:
         """创建标准 Mock OpenCL Buffer（cl.Buffer 替代品）。
 
+        重要: pyopencl.Buffer 的构造函数签名为:
+            Buffer(context, flags, size=0, hostbuf=None)
+        
+        因此 Mock 必须能够接受这些参数并返回有效的 Mock 对象。
+
         Args:
             size: 缓冲区大小（字节，仅用于元数据）
 
@@ -195,6 +200,12 @@ class GPUMockFactory:
         else:
             buf = Mock()
         buf.size = size
+        
+        # 关键修复: Buffer 构造函数需要正确处理参数
+        # 当代码调用 cl.Buffer(context, flags, hostbuf=...) 时
+        # Mock 必须能够接受这些位置参数和关键字参数
+        buf_constructor = Mock(return_value=buf)
+        
         return buf
 
     @staticmethod
@@ -354,20 +365,32 @@ class GPUMockFactory:
 
         class command_queue_properties:
             PROFILING_ENABLE = 0x1
+        
+        class mem_flags:
+            READ_ONLY = 0x0001
+            READ_WRITE = 0x0002
+            WRITE_ONLY = 0x0004
+            COPY_HOST_PTR = 0x0010
 
         mock_cl.device_type                = device_type
         mock_cl.device_info                = device_info
         mock_cl.platform_info              = platform_info
         mock_cl.command_queue_properties   = command_queue_properties
+        mock_cl.mem_flags                  = mem_flags
 
         # 常用异常类型
         mock_cl.Error                      = Exception
         mock_cl.MemoryError                = MemoryError
         mock_cl.RuntimeError               = RuntimeError
 
+        # 关键修复: pyopencl.Buffer 的 Mock 必须正确处理构造函数签名
+        # Buffer(context, flags, size=0, hostbuf=None)
+        mock_buffer_instance = Mock()
+        mock_buffer_instance.size = 1024
+        mock_cl.Buffer = Mock(return_value=mock_buffer_instance)
+        
         # 常用函数桩（可被测试用例覆盖）
         mock_cl.get_platforms              = Mock(return_value=[])
-        mock_cl.Buffer                     = Mock(return_value=Mock())
         mock_cl.Program                    = Mock(return_value=GPUMockFactory.create_cl_program())
         mock_cl.CommandQueue               = Mock(return_value=GPUMockFactory.create_cl_queue())
         mock_cl.Context                    = Mock(return_value=GPUMockFactory.create_cl_context())
