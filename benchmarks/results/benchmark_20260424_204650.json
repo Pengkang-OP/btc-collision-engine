@@ -1,0 +1,40 @@
+{
+  "timestamp": "2026-04-24T20:46:50",
+  "python_version": "3.14.3",
+  "platform": "Windows-11",
+  "benchmarks": {
+    "secp256k1_key_gen": {
+      "ops_per_sec": 86091.87,
+      "mean_us": 11.615,
+      "std_us": 63.233,
+      "iterations": 200,
+      "success": true
+    },
+    "address_generation": {
+      "ops_per_sec": 3293.89,
+      "mean_us": 303.592,
+      "std_us": 328.061,
+      "iterations": 500,
+      "success": true
+    },
+    "collision_check": {
+      "ops_per_sec": 8823282.88,
+      "mean_us": 0.113,
+      "std_us": 261.911,
+      "iterations": 200,
+      "success": true
+    },
+    "dedup_filter": {
+      "ops_per_sec": 376529.84,
+      "mean_us": 2.656,
+      "std_us": 309.879,
+      "iterations": 100,
+      "success": true
+    }
+  },
+  "comparison": {
+    "baseline_file": null,
+    "regressions": [],
+    "improvements": []
+  }
+}

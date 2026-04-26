@@ -1,0 +1,38 @@
+{
+  "report_type": "daily",
+  "generated_at": "2026-04-24T17:32:17.960438",
+  "period_start": "2026-04-24T00:00:00",
+  "period_end": "2026-04-24T17:32:17.960438",
+  "data_points": 1000,
+  "summary": {
+    "total_checked": 17820500544,
+    "matches_found": 1,
+    "avg_speed": 369189.15687274875,
+    "max_speed": 537530.2710765457,
+    "min_speed": 0.0,
+    "avg_cpu_usage": 8.7232,
+    "avg_memory_usage": 28.215078125,
+    "error_count": 0
+  },
+  "trends": {
+    "speed": {
+      "trend": "decreasing",
+      "average": 369189.15687274875,
+      "std_dev": 249137.41776982293
+    },
+    "cpu_usage": {
+      "trend": "increasing",
+      "average": 8.7232,
+      "std_dev": 27.491042526233507
+    },
+    "memory_usage": {
+      "trend": "increasing",
+      "average": 28.215078125,
+      "std_dev": 42.087730181408965
+    }
+  },
+  "recommendations": [
+    "检测速率很高，系统性能良好",
+    "CPU使用率较低，可以增加并发线程数提高性能"
+  ]
+}

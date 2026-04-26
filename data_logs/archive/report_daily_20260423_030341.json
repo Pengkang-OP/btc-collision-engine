@@ -1,0 +1,38 @@
+{
+  "report_type": "daily",
+  "generated_at": "2026-04-23T03:03:41.638462",
+  "period_start": "2026-04-23T00:00:00",
+  "period_end": "2026-04-23T03:03:41.638462",
+  "data_points": 340,
+  "summary": {
+    "total_checked": 128000,
+    "matches_found": 0,
+    "avg_speed": 48.83127583573112,
+    "max_speed": 60.02213106918921,
+    "min_speed": 37.04445362280648,
+    "avg_cpu_usage": 102.13088235294117,
+    "avg_memory_usage": 146.58519071691177,
+    "error_count": 0
+  },
+  "trends": {
+    "speed": {
+      "trend": "decreasing",
+      "average": 48.83127583573112,
+      "std_dev": 6.268304399286409
+    },
+    "cpu_usage": {
+      "trend": "stable",
+      "average": 102.13088235294117,
+      "std_dev": 14.450236622706045
+    },
+    "memory_usage": {
+      "trend": "stable",
+      "average": 146.58519071691177,
+      "std_dev": 9.898798491325417
+    }
+  },
+  "recommendations": [
+    "检测速率较低，建议检查系统配置或考虑使用GPU加速",
+    "CPU使用率较高，建议优化算法或减少并发线程数"
+  ]
+}

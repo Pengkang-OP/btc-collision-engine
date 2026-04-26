@@ -1,0 +1,37 @@
+{
+  "report_type": "daily",
+  "generated_at": "2026-04-24T19:24:48.903413",
+  "period_start": "2026-04-24T00:00:00",
+  "period_end": "2026-04-24T19:24:48.903413",
+  "data_points": 24,
+  "summary": {
+    "total_checked": 10000,
+    "matches_found": 0,
+    "avg_speed": 726.0574023266009,
+    "max_speed": 1500.0,
+    "min_speed": 0.0,
+    "avg_cpu_usage": 92.44166666666666,
+    "avg_memory_usage": 147.54329427083334,
+    "error_count": 0
+  },
+  "trends": {
+    "speed": {
+      "trend": "stable",
+      "average": 726.0574023266009,
+      "std_dev": 650.3677645790932
+    },
+    "cpu_usage": {
+      "trend": "increasing",
+      "average": 92.44166666666666,
+      "std_dev": 29.07981395590668
+    },
+    "memory_usage": {
+      "trend": "increasing",
+      "average": 147.54329427083334,
+      "std_dev": 26.807455039097363
+    }
+  },
+  "recommendations": [
+    "CPU使用率较高，建议优化算法或减少并发线程数"
+  ]
+}

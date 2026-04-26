@@ -1,0 +1,27 @@
+问题ID,优先级,类别,文件,位置,问题描述,风险等级,修复建议,预估工作量,状态
+P0-1,P0,代码复杂度,src/collision/gpu_collision_engine.py,1164-1500,GPU引擎_random_search方法超过300行，圈复杂度过高,严重,拆分为5-8个子函数，每个<100行,2-3天,待修复
+P0-2,P0,安全漏洞,src/collision/gpu_collision_engine.py,多处,GPU错误日志可能包含私钥信息，存在泄露风险,严重,实现日志过滤器，屏蔽私钥模式，仅记录哈希,1天,待修复
+P1-1,P1,代码复杂度,src/collision/key_collision_engine.py,510-850,CPU引擎random_search方法约340行，包含大量内联逻辑,高,拆分为5-8个子函数，提取初始化、循环、错误处理等逻辑,1-2天,待修复
+P1-2,P1,架构设计,多处,模块间存在循环依赖风险（gpu_collision_engine→gpu_performance_monitor→performance_optimizer）,高,引入依赖注入模式，使用接口抽象解耦，采用事件驱动通信,2-3天,待修复
+P1-3,P1,代码质量,全局,约40%的函数缺少类型提示，回调函数签名不明确,高,补充完整类型提示，统一为Google风格docstring,3-4天,待修复
+P1-4,P1,UI响应性,key_collision_gui.py,1488-1495,GUI定时器每100ms触发，引擎响应慢时可能导致UI卡顿,高,动态调整更新频率，增加异常处理避免定时器停止,0.5天,待修复
+P1-5,P1,配置验证,src/gpu/profiles/loader.py,_validate_profile方法,部分字段未验证类型，数值范围检查不完整，缺少配置依赖关系验证,高,完善类型检查，添加范围验证，实现配置依赖验证,1天,部分完成
+P1-6,P1,资源管理,src/core/memory_pool.py; src/gpu/memory_pool.py,内存池未实现自动清理，长时间运行可能积累废弃缓冲区,高,实现定期清理机制，增加内存使用监控，设置cleanup_interval,1天,待修复
+P1-7,P1,异常处理,多处,部分异常捕获后只记录简单消息，缺少堆栈跟踪和上下文信息,高,使用logger.exception或添加exc_info=True，增加batch_id/mode等上下文,1-2天,待修复
+P1-8,P1,测试覆盖,tests/,GPU引擎核心路径测试覆盖约65%，异常场景和并发测试不足,高,补充核心流程测试、多线程竞态条件测试、异常恢复机制测试,3-4天,待修复
+P2-1,P2,文档规范,全局,文档字符串格式不统一，部分使用reST风格部分使用Google风格,中,统一为Google风格docstring，包含Args/Returns/Raises部分,2天,待修复
+P2-2,P2,代码规范,全局,魔法数字未提取为常量（如0.45、1000、65536等硬编码值）,中,提取为模块级常量，使用有意义的命名,1天,待修复
+P2-3,P2,PEP 8合规,全局,导入顺序不规范，未按照标准库→第三方→本地模块排序,中,使用isort工具统一排序，配置.pre-commit-hooks,0.5天,待修复
+P2-4,P2,错误恢复,src/collision/gpu_collision_engine.py,部分GPU初始化失败后缺少完善的回退机制,中,增加多级回退策略，记录回退日志，通知用户,1天,待修复
+P2-5,P2,日志管理,全局,日志级别使用不当，部分INFO级别应为DEBUG，部分WARNING应为INFO,中,重新评估所有日志级别，合理分配INFO/WARNING/ERROR/DEBUG,1天,待修复
+P2-6,P2,用户体验,src/cli/main.py,CLI参数帮助信息不完整，部分参数缺少详细说明,中,补充所有参数的description和examples，增加usage示例,0.5天,待修复
+P2-7,P2,GUI功能,key_collision_gui.py,GUI缺少键盘快捷键支持，操作效率低,中,添加常用快捷键（Ctrl+S保存、Ctrl+R恢复、Ctrl+Q退出等）,1天,待修复
+P2-8,P2,性能测试,benchmarks/,缺少标准性能基准测试，优化效果难以量化验证,中,建立标准测试集，实现自动化基准测试，记录性能趋势,2天,待修复
+P2-9,P2,配置管理,config.json,配置文件缺少schema验证，配置错误难以发现,中,使用JSON Schema或Pydantic验证配置，提供友好的错误提示,2天,待修复
+P2-10,P2,测试覆盖,tests/,部分核心模块缺少单元测试（如checkpoint_manager、deduplication_filter）,中,补充核心模块测试，达到80%覆盖率目标,3天,待修复
+P3-1,P3,代码注释,全局,部分复杂算法（如Montgomery Ladder、椭圆曲线运算）缺少详细注释,低,增加算法说明、数学公式引用、复杂度分析,1天,待修复
+P3-2,P3,命名规范,全局,部分变量使用缩写命名不够直观（如cfg、mgr、opt等）,低,使用完整命名，提高代码可读性,0.5天,待修复
+P3-3,P3,文档示例,docs/,API文档缺少使用示例，开发者难以快速上手,低,为每个公共API添加使用示例，创建快速入门指南,2天,待修复
+P3-4,P3,国际化,key_collision_gui.py,GUI仅支持中文，建议支持多语言切换,低,使用gettext实现国际化，提供中英文语言包,3天,待修复
+P3-5,P3,监控界面,monitoring/,缺少Web监控仪表板，无法远程查看运行状态,低,基于Flask/FastAPI实现Web监控界面，实时显示性能指标,5天,待修复
+P3-6,P3,CI/CD,.github/workflows/,缺少自动化部署脚本和发布流程,低,完善GitHub Actions工作流，实现自动测试、构建、发布,2天,待修复
