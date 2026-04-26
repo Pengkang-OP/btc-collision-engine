@@ -35,6 +35,22 @@ from src.cli.validation import validate_file_path
 
 logger = logging.getLogger(__name__)
 
+# 快速模式默认配置常量
+QUICK_RUN_DEFAULTS = {
+    'target_file': 'targets.txt',
+    'mode': 'random',
+    'checkpoint': True,
+    'dedup': True,
+    'duration': 0,  # 0表示不限制
+    'countdown_seconds': 3,  # 倒计时秒数
+}
+
+# 预览配置常量
+PREVIEW_CONFIG = {
+    'max_preview_addresses': 3,  # 最多预览地址数
+    'max_address_display_length': 20,  # 地址显示最大长度
+}
+
 
 def _cmd_validate_addresses(file_path: str) -> None:
     """--validate-addresses 命令实现：批量验证文件中所有比特币地址"""
@@ -119,44 +135,54 @@ def _cmd_examples() -> None:
 
     examples = [
         {
-            "title": "1. 基础随机碰撞",
+            "title": "1. 快速模式 (推荐新手)",
+            "desc": "使用默认配置直接启动（需要targets.txt文件）",
+            "cmd": "start.bat --quick-run"
+        },
+        {
+            "title": "2. 基础随机碰撞",
             "desc": "最简单的使用方式，持续运行直到 Ctrl+C",
-            "cmd": "python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random"
+            "cmd": "start.bat -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random"
         },
         {
-            "title": "2. 断点续传（推荐）",
+            "title": "3. 断点续传（推荐）",
             "desc": "启用断点续传和去重，运行1小时后自动停止",
-            "cmd": "python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random --checkpoint --dedup --duration 3600"
+            "cmd": "start.bat -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random --checkpoint --dedup --duration 3600"
         },
         {
-            "title": "3. 从文件加载目标",
+            "title": "4. 从文件加载目标",
             "desc": "从文件读取多个目标地址",
-            "cmd": "python key_collision_cli.py -f targets.txt -m random --checkpoint"
+            "cmd": "start.bat -f targets.txt -m random --checkpoint"
         },
         {
-            "title": "4. GPU加速模式",
+            "title": "5. GPU加速模式",
             "desc": "启用单GPU加速（速度提升数千倍）",
-            "cmd": "python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random --use-gpu"
+            "cmd": "start.bat -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random --use-gpu"
         },
         {
-            "title": "5. 多GPU模式",
+            "title": "6. 多GPU模式",
             "desc": "使用所有可用GPU设备",
-            "cmd": "python key_collision_cli.py -f targets.txt -m random --multi-gpu"
+            "cmd": "start.bat -f targets.txt -m random --multi-gpu"
         },
         {
-            "title": "6. 范围扫描",
+            "title": "7. 范围扫描",
             "desc": "在指定私钥范围内搜索",
-            "cmd": "python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m range --start 1 --end FFFFFFFF"
+            "cmd": "start.bat -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m range --start 1 --end FFFFFFFF"
         },
         {
-            "title": "7. 系统健康检查",
+            "title": "8. 交互式向导",
+            "desc": "逐步引导配置，适合新手",
+            "cmd": "start.bat --quick-start"
+        },
+        {
+            "title": "9. 系统健康检查",
             "desc": "检查系统依赖和配置状态",
-            "cmd": "python key_collision_cli.py --health-check"
+            "cmd": "start.bat --health-check"
         },
         {
-            "title": "8. 验证地址文件",
+            "title": "10. 验证地址文件",
             "desc": "批量验证文件中的地址格式",
-            "cmd": "python key_collision_cli.py --validate-addresses targets.txt"
+            "cmd": "start.bat --validate-addresses targets.txt"
         },
     ]
 
@@ -166,10 +192,21 @@ def _cmd_examples() -> None:
         print(f"   $ {ex['cmd']}")
 
     print("\n" + SEPARATOR_EQUAL)
-    print("💡 " + _t("cli.commands.examples_tips_title") + ":")
+    print("[TIP] " + _t("cli.commands.examples_tips_title") + ":")
     print("   - " + _t("cli.commands.tip_quick_start"))
     print("   - " + _t("cli.commands.tip_help"))
     print("   - " + _t("cli.commands.tip_config_check"))
+    
+    print("\n" + SEPARATOR_DASHED)
+    print("[快捷命令别名]")
+    print("   qs      = --quick-start  (交互式向导)")
+    print("   qr      = --quick-run    (快速模式)")
+    print("   hc      = --health-check (健康检查)")
+    print("   cc      = --config-check (配置验证)")
+    print("   ex      = --examples     (显示示例)")
+    print("   rec     = --recommend    (参数推荐)")
+    print(SEPARATOR_DASHED)
+    print("提示: Windows用户可直接使用 start.bat 替代 python key_collision_cli.py")
     print(SEPARATOR_EQUAL)
 
 
@@ -187,70 +224,130 @@ def _cmd_config_check() -> None:
 
     # 检查配置文件存在性
     if config_path.exists():
-        print("\n✅ config.json " + _t("cli.commands.file_exists"))
+        print("\n[OK] config.json " + _t("cli.commands.file_exists"))
 
         # 验证JSON格式
         try:
             with open(config_path, 'r', encoding='utf-8') as f:
                 config = json.load(f)
-            print("✅ " + _t("cli.commands.json_valid"))
+            print("[OK] " + _t("cli.commands.json_valid"))
 
             # 基本结构验证
             missing_sections = [s for s in REQUIRED_CONFIG_SECTIONS if s not in config]
 
             if missing_sections:
-                print(f"⚠️  " + _t("cli.commands.missing_sections") + f": {', '.join(missing_sections)}")
+                print("[WARN] " + _t("cli.commands.missing_sections") + ": " + ', '.join(missing_sections))
             else:
-                print("✅ " + _t("cli.commands.sections_complete"))
+                print("[OK] " + _t("cli.commands.sections_complete"))
 
             # 显示关键配置信息
-            print("\n📊 关键配置信息:")
+            print("\n[INFO] Key config:")
             collision_cfg = config.get('collision', {})
-            print(f"   - 工作线程数: {collision_cfg.get('max_workers', '自动 (CPU核心数)')}")
-            print(f"   - 性能优化: {'启用' if collision_cfg.get('use_performance_optimization', True) else '禁用'}")
-            print(f"   - 断点续传间隔: {collision_cfg.get('checkpoint_interval', 30)}秒")
+            engine_cfg = config.get('engine', {})
+            workers = collision_cfg.get('max_workers', engine_cfg.get('max_threads', 'auto'))
+            print("   - workers        : " + str(workers))
+            print("   - perf_optimize  : " + ("enabled" if collision_cfg.get('use_performance_optimization', True) else "disabled"))
+            chk = collision_cfg.get('checkpoint_interval', engine_cfg.get('checkpoint_interval', 30))
+            print("   - checkpoint_int : " + str(chk) + "s")
 
             gpu_cfg = config.get('gpu', {})
-            print(f"   - GPU模式: {gpu_cfg.get('mode', 'auto')}")
+            print("   - GPU mode       : " + gpu_cfg.get('mode', 'auto'))
 
         except json.JSONDecodeError as e:
-            print(f"❌ " + _t("config.invalid", error=str(e)))
-            print("💡 " + _t("cli.commands.fix_copy_example"))
+            print("[ERROR] " + _t("config.invalid", error=str(e)))
+            print("[TIP]   " + _t("cli.commands.fix_copy_example"))
         except Exception as e:
             logger.error(_t("errors.io_error", detail=str(e)))
-            print(f"❌ " + _t("errors.io_error", detail=str(e)))
+            print("[ERROR] " + _t("errors.io_error", detail=str(e)))
     else:
-        print("\n❌ config.json " + _t("cli.commands.file_not_exist"))
+        print("\n[MISS] config.json " + _t("cli.commands.file_not_exist"))
         if example_path.exists():
-            print("✅ config.example.json " + _t("cli.commands.file_exists"))
-            print("💡 " + _t("cli.commands.fix_copy_suggestion"))
+            print("[OK]   config.example.json " + _t("cli.commands.file_exists"))
+            print("[TIP]  " + _t("cli.commands.fix_copy_suggestion"))
             print("   Windows: copy config.example.json config.json")
             print("   Linux/Mac: cp config.example.json config.json")
         else:
-            print("❌ config.example.json " + _t("cli.commands.also_not_exist"))
-            print("💡 " + _t("cli.commands.fix_reacquire"))
+            print("[MISS] config.example.json " + _t("cli.commands.also_not_exist"))
+            print("[TIP]  " + _t("cli.commands.fix_reacquire"))
 
     # 检查必要目录
-    print("\n📁 " + _t("cli.commands.dir_check_title") + ":")
+    print("\n[INFO] " + _t("cli.commands.dir_check_title") + ":")
     required_dirs = ['logs', 'data_logs', 'monitoring_data']
     for dir_name in required_dirs:
         dir_path = Path(dir_name)
         if dir_path.exists():
-            print(f"   ✅ {dir_name}/")
+            print("   [OK]  " + dir_name + "/")
         else:
-            print(f"   ❌ {dir_name}/ (" + _t("cli.commands.dir_not_exist") + ")")
-            print(f"      " + _t("cli.commands.dir_fix") + f": mkdir {dir_name}")
+            print("   [MISS] " + dir_name + "/ (" + _t("cli.commands.dir_not_exist") + ")")
+            print("          " + _t("cli.commands.dir_fix") + ": mkdir " + dir_name)
 
     print("\n" + SEPARATOR_EQUAL)
 
 
-def _quick_start_select_target() -> Tuple[List[str], Optional[str]]:
-    """步骤1: 选择目标地址来源。返回 (targets_list, target_file)"""
+DEFAULT_TARGETS_FILE = "targets.txt"
+
+
+def _save_address_to_targets_file(address: str, output) -> None:
+    """将单个地址去重合并写入 targets.txt。
+    - 读取现有地址，若地址已存在则跳过；否则追加到文件末尾。
+    - 若文件不存在则自动创建。
+    """
+    targets_path = Path(DEFAULT_TARGETS_FILE)
+    existing: set = set()
+
+    # 读取已有地址
+    if targets_path.exists():
+        try:
+            with open(targets_path, 'r', encoding='utf-8-sig', errors='ignore') as f:
+                for line in f:
+                    stripped = line.strip()
+                    if stripped and not stripped.startswith('#'):
+                        existing.add(stripped)
+        except OSError:
+            pass
+
+    if address in existing:
+        output.print("   [INFO] 地址已存在于 targets.txt，无需重复添加")
+        return
+
+    # 将新地址追加到文件
+    try:
+        if not targets_path.exists():
+            with open(targets_path, 'w', encoding='utf-8') as f:
+                f.write("# BTC 目标地址列表\n")
+                f.write("# 每行一个地址，支持 # 注释行\n")
+                f.write("# 支持 P2PKH (1开头)、P2SH (3开头)、Bech32 (bc1开头) 格式\n#\n")
+        with open(targets_path, 'a', encoding='utf-8') as f:
+            f.write(address + '\n')
+        output.print("   [green][OK] 地址已保存到 targets.txt（共 " + str(len(existing) + 1) + " 条）[/green]")
+    except OSError as e:
+        output.warning("无法写入 targets.txt: " + str(e))
+
+
+def _quick_start_select_target(compact: bool = False) -> Tuple[List[str], Optional[str]]:
+    """步骤1: 选择目标地址来源。返回 (targets_list, target_file)
+    
+    Args:
+        compact: 紧凑模式，跳过详细帮助信息
+    """
     output = CLIOutput.get_instance()
-    output.print("[bold cyan]【步骤 1/4】[/bold cyan] " + _t("cli.commands.step1_title"))
+    output.print("\n[bold cyan]【步骤 1/4】[/bold cyan] " + _t("cli.commands.step1_title"))
     output.print("   1. " + _t("cli.commands.step1_single"))
     output.print("   2. " + _t("cli.commands.step1_file"))
-    target_type = input("   " + _t("cli.commands.step1_prompt") + " ").strip() or '1'
+    
+    # 紧凑模式下跳过详细帮助信息
+    if not compact:
+        output.print("\n   [?] " + _t("cli.commands.help_address_formats"))
+        output.print("      - P2PKH: " + _t("cli.commands.help_p2pkh"))
+        output.print("      - P2SH: " + _t("cli.commands.help_p2sh"))
+        output.print("      - Bech32: " + _t("cli.commands.help_bech32") + "\n")
+    else:
+        output.print("")  # 简单换行
+    while True:
+        target_type = input("   " + _t("cli.commands.step1_prompt") + " ").strip()
+        if target_type in ('1', '2'):
+            break
+        output.error("请输入 1 或 2")
 
     targets: List[str] = []
     target_file: Optional[str] = None
@@ -261,22 +358,39 @@ def _quick_start_select_target() -> Tuple[List[str], Optional[str]]:
             output.error(_t("cli.commands.address_empty"))
             return [], None
         targets = [address]
+        # 将新地址去重合并写入 targets.txt
+        _save_address_to_targets_file(address, output)
     elif target_type == '2':
-        target_file = input("   " + _t("cli.commands.input_file_path") + " [targets.txt]: ").strip() or 'targets.txt'
+        target_file = input("   " + _t("cli.commands.input_file_path") + ": ").strip()
+        if not target_file:
+            target_file = 'targets.txt'
+            output.print("   [INFO] 使用默认文件: targets.txt")
         if not Path(target_file).exists():
             output.warning(_t("errors.file_not_found", path=target_file))
             output.print("   1. " + _t("cli.commands.create_example_file"))
             output.print("   2. 手动输入地址")
             output.print("   3. 返回重新选择")
-            choice = input("   请选择 [1/2/3]: ").strip() or '1'
+            while True:
+                choice = input("   请选择 [1/2/3]: ").strip()
+                if choice in ('1', '2', '3'):
+                    break
+                output.error("请输入 1、2 或 3")
             if choice == '1':
-                with open(target_file, 'w', encoding='utf-8') as f:
-                    f.write("# 目标地址文件\n")
-                    f.write("# 每行一个地址，支持 # 注释\n")
-                    f.write("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n")
-                output.success(_t("cli.commands.example_file_created", path=target_file))
-                output.print("   💡 " + _t("cli.commands.example_file_tip"))
-                return [], None
+                try:
+                    with open(target_file, 'w', encoding='utf-8') as f:
+                        f.write("# 目标地址文件\n")
+                        f.write("# 每行一个地址，支持 # 注释\n")
+                        f.write("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n")
+                    output.success(_t("cli.commands.example_file_created", path=target_file))
+                    output.print("   [TIP] " + _t("cli.commands.example_file_tip"))
+                    # 继续使用创建的文件
+                    valid_count = 1
+                    output.success(_t("cli.commands.addresses_loaded", count=str(valid_count), path=Path(target_file).name))
+                    return [], target_file
+                except Exception as e:
+                    output.error(f"创建文件失败: {str(e)}")
+                    output.print("   [TIP] 请检查文件路径是否正确，以及是否有写入权限")
+                    return [], None
             elif choice == '2':
                 address = input("   请输入目标地址: ").strip()
                 if not address:
@@ -307,8 +421,10 @@ def _quick_start_select_target() -> Tuple[List[str], Optional[str]]:
                         break
                     except (UnicodeDecodeError, LookupError):
                         continue
-            except OSError:
-                pass
+            except Exception as e:
+                output.error(f"读取文件失败: {str(e)}")
+                output.print("   [TIP] 请检查文件路径是否正确，以及是否有读取权限")
+                return [], None
             if valid_count == 0:
                 output.warning(_t("cli.commands.no_valid_addresses", path=file_basename))
                 output.print("   " + _t("cli.commands.file_format_hint"))
@@ -323,14 +439,34 @@ def _quick_start_select_target() -> Tuple[List[str], Optional[str]]:
     return targets, target_file
 
 
-def _quick_start_select_mode() -> Tuple[str, Optional[str], Optional[str]]:
-    """步骤2: 选择碰撞模式。返回 (mode, start_key, end_key)"""
+def _quick_start_select_mode(compact: bool = False) -> Tuple[str, Optional[str], Optional[str]]:
+    """步骤2: 选择碰撞模式。返回 (mode, start_key, end_key)
+    
+    Args:
+        compact: 紧凑模式，跳过详细帮助信息
+    """
     output = CLIOutput.get_instance()
     output.print("\n[bold cyan]【步骤 2/4】[/bold cyan] " + _t("cli.commands.step2_title"))
     output.print("   1. random    - " + _t("cli.commands.mode_random_desc"))
     output.print("   2. range     - " + _t("cli.commands.mode_range_desc"))
     output.print("   3. brute_force - " + _t("cli.commands.mode_brute_desc"))
-    mode_choice = input("   " + _t("cli.commands.step2_prompt") + " ").strip() or '1'
+    
+    # 紧凑模式下跳过详细帮助信息
+    if not compact:
+        output.print("\n   [?] " + _t("cli.commands.help_mode_description"))
+        output.print("      - random: " + _t("cli.commands.help_mode_random_detail"))
+        output.print("      - range: " + _t("cli.commands.help_mode_range_detail"))
+        output.print("      - brute_force: " + _t("cli.commands.help_mode_brute_detail") + "\n")
+    else:
+        output.print("")
+    while True:
+        mode_choice = input("   " + _t("cli.commands.step2_prompt") + " (推荐: 1): ").strip()
+        if mode_choice == '':
+            mode_choice = '1'
+            break
+        if mode_choice in ('1', '2', '3'):
+            break
+        output.error("请输入 1、2 或 3")
 
     mode_map = {'1': 'random', '2': 'range', '3': 'brute_force'}
     mode = mode_map.get(mode_choice, 'random')
@@ -339,26 +475,102 @@ def _quick_start_select_mode() -> Tuple[str, Optional[str], Optional[str]]:
     end_key: Optional[str] = None
 
     if mode in ['range', 'brute_force']:
-        start_key = input("   " + _t("cli.commands.input_start_key") + " [1]: ").strip() or '1'
+        while True:
+            start_key = input("   " + _t("cli.commands.input_start_key") + " (hex): ").strip() or '1'
+            if all(c in '0123456789abcdefABCDEF' for c in start_key):
+                break
+            output.error("请输入有效的十六进制字符串")
         if mode == 'range':
-            end_key = input("   " + _t("cli.commands.input_end_key") + " [FFFFFFFF]: ").strip() or 'FFFFFFFF'
+            while True:
+                end_key = input("   " + _t("cli.commands.input_end_key") + " (hex): ").strip() or 'FFFFFFFF'
+                if all(c in '0123456789abcdefABCDEF' for c in end_key):
+                    break
+                output.error("请输入有效的十六进制字符串")
 
     return mode, start_key, end_key
 
 
-def _quick_start_select_options() -> Tuple[bool, bool, int]:
-    """步骤3: 选择功能选项。返回 (checkpoint, dedup, duration)"""
+def _quick_start_select_options(compact: bool = False) -> Tuple[bool, bool, int]:
+    """步骤3: 选择功能选项。返回 (checkpoint, dedup, duration)
+    
+    Args:
+        compact: 紧凑模式，跳过详细帮助信息
+    """
     output = CLIOutput.get_instance()
     output.print("\n[bold cyan]【步骤 3/4】[/bold cyan] " + _t("cli.commands.step3_title"))
-    checkpoint = input("   " + _t("cli.commands.enable_checkpoint") + " [Y/n]: ").strip().lower() != 'n'
-    dedup = input("   " + _t("cli.commands.enable_dedup") + " [Y/n]: ").strip().lower() != 'n'
+    
+    # 紧凑模式下跳过详细帮助信息
+    if not compact:
+        output.print("\n   [?] " + _t("cli.commands.help_feature_description"))
+        output.print("      - checkpoint: " + _t("cli.commands.help_checkpoint"))
+        output.print("      - dedup: " + _t("cli.commands.help_dedup"))
+        output.print("      - duration: " + _t("cli.commands.help_duration") + "\n")
+    else:
+        output.print("")
+    
+    # 启用断点续传（默认Y）
+    while True:
+        cp = input("   " + _t("cli.commands.enable_checkpoint") + " (推荐: Y): ").strip().lower()
+        if cp == '':
+            checkpoint = True
+            break
+        if cp in ('y', 'n'):
+            checkpoint = (cp == 'y')
+            break
+        output.error("请输入 y 或 n")
+    
+    # 启用去重过滤（默认Y）
+    while True:
+        dd = input("   " + _t("cli.commands.enable_dedup") + " (推荐: Y): ").strip().lower()
+        if dd == '':
+            dedup = True
+            break
+        if dd in ('y', 'n'):
+            dedup = (dd == 'y')
+            break
+        output.error("请输入 y 或 n")
 
-    duration_str = input("   " + _t("cli.commands.input_duration") + " [0]: ").strip() or '0'
-    try:
-        duration = int(duration_str)
-    except ValueError:
-        output.warning(_t("errors.value_error", detail=duration_str) + _t("cli.commands.use_default_0"))
-        duration = 0
+    # 运行时长选项（天、小时、无限）
+    output.print("   运行时长选项:")
+    output.print("   1. 无限（默认）")
+    output.print("   2. 指定小时")
+    output.print("   3. 指定天")
+    while True:
+        time_choice = input("   请选择 [1/2/3] (推荐: 1): ").strip()
+        if time_choice == '':
+            duration = 0
+            break
+        if time_choice == '1':
+            duration = 0
+            break
+        elif time_choice == '2':
+            while True:
+                hours_str = input("   请输入小时数: ").strip()
+                try:
+                    hours = int(hours_str)
+                    if hours <= 0:
+                        output.error("小时数必须大于0")
+                        continue
+                    duration = hours * 3600
+                    break
+                except ValueError:
+                    output.error("请输入整数")
+            break
+        elif time_choice == '3':
+            while True:
+                days_str = input("   请输入天数: ").strip()
+                try:
+                    days = int(days_str)
+                    if days <= 0:
+                        output.error("天数必须大于0")
+                        continue
+                    duration = days * 24 * 3600
+                    break
+                except ValueError:
+                    output.error("请输入整数")
+            break
+        else:
+            output.error("请输入 1、2 或 3")
 
     return checkpoint, dedup, duration
 
@@ -407,7 +619,7 @@ def _quick_start_select_gpu() -> List[str]:
 
     # 预先检测 GPU，决定默认选项
     output.print("\n[bold cyan]【步骤 4/4】[/bold cyan] " + _t("cli.commands.step4_title"))
-    output.print("   🔍 正在检测可用 GPU 设备（最多等待 5 秒）...")
+    output.print("   [INFO] 正在检测可用 GPU 设备（最多等待 5 秒）...")
     detected_devices = _detect_gpu_devices_with_timeout(timeout=5.0)
 
     if detected_devices:
@@ -424,9 +636,13 @@ def _quick_start_select_gpu() -> List[str]:
     output.print("   1. " + _t("cli.commands.mode_cpu"))
     output.print("   2. " + _t("cli.commands.mode_single_gpu"))
     output.print("   3. " + _t("cli.commands.mode_multi_gpu"))
-    gpu_choice = input(
-        "   " + _t("cli.commands.step4_prompt") + f" [默认:{default_choice}]: "
-    ).strip() or default_choice
+    while True:
+        gpu_choice = input(
+            "   " + _t("cli.commands.step4_prompt") + f" (推荐: {default_choice}): "
+        ).strip()
+        if gpu_choice in ('1', '2', '3'):
+            break
+        output.error("请输入 1、2 或 3")
 
     gpu_args: List[str] = []
 
@@ -436,8 +652,11 @@ def _quick_start_select_gpu() -> List[str]:
 
         if not devices:
             output.warning("未检测到可用 GPU 设备（可能缺少 OpenCL 驱动）")
+            output.print("   [INFO] GPU 模式需要安装 pyopencl 和相应的驱动")
+            output.print("   [INFO] 请参考文档安装 GPU 驱动和依赖")
             fallback = input("   是否仍然尝试 GPU 模式？[y/N]: ").strip().lower()
             if fallback == 'y':
+                output.warning("警告：在无 GPU 设备的情况下尝试 GPU 模式可能会导致运行时错误")
                 gpu_args.append("--use-gpu")
             else:
                 output.success("已回退到 CPU 模式")
@@ -451,7 +670,7 @@ def _quick_start_select_gpu() -> List[str]:
                 label = _format_device_label(dev, i)
                 output.print(f"     {i + 1}. {label}")
             while True:
-                raw = input(f"   请选择 GPU 设备 [1-{len(devices)}] [默认:1]: ").strip() or '1'
+                raw = input(f"   请选择 GPU 设备 [1-{len(devices)}]: ").strip()
                 try:
                     idx = int(raw) - 1
                     if 0 <= idx < len(devices):
@@ -469,8 +688,11 @@ def _quick_start_select_gpu() -> List[str]:
 
         if not devices:
             output.warning("未检测到可用 GPU 设备（可能缺少 OpenCL 驱动）")
+            output.print("   [INFO] GPU 模式需要安装 pyopencl 和相应的驱动")
+            output.print("   [INFO] 请参考文档安装 GPU 驱动和依赖")
             fallback = input("   是否仍然尝试多GPU模式？[y/N]: ").strip().lower()
             if fallback == 'y':
+                output.warning("警告：在无 GPU 设备的情况下尝试多GPU模式可能会导致运行时错误")
                 gpu_args.append("--multi-gpu")
             else:
                 output.success("已回退到 CPU 模式")
@@ -485,7 +707,7 @@ def _quick_start_select_gpu() -> List[str]:
                 output.print(f"     {i + 1}. {label}")
             default_indices = " ".join(str(i + 1) for i in range(len(devices)))
             raw = input(
-                f"   请选择要使用的 GPU 设备编号（空格分隔，如 1 2）[默认: 全部={default_indices}]: "
+                f"   请选择要使用的 GPU 设备编号（空格分隔，如 1 2，直接回车=全部）: "
             ).strip() or default_indices
             selected_indices: List[int] = []
             valid = True
@@ -517,6 +739,118 @@ def _quick_start_select_gpu() -> List[str]:
     return gpu_args
 
 
+def _cmd_quick_run(executor: Optional[Callable[[], None]] = None) -> None:
+    """--quick-run 命令实现：快速模式，跳过向导直接使用默认配置运行"""
+    # 确保UTF-8输出
+    PlatformUtils.ensure_utf8_output()
+
+    output = CLIOutput.get_instance()
+    output.header("BTC碰撞引擎 - 快速模式")
+    
+    try:
+        # 使用默认配置快速启动
+        output.print("\n[bold cyan]使用默认配置快速启动...[/bold cyan]\n")
+        
+        # 默认目标：检查targets.txt是否存在
+        target_file = QUICK_RUN_DEFAULTS['target_file']
+        targets = []
+        target_file_exists = Path(target_file).exists()
+        
+        if target_file_exists:
+            # 统计文件中的地址数量并预览
+            address_count = 0
+            preview_addresses = []
+            max_preview = PREVIEW_CONFIG['max_preview_addresses']
+            max_display_len = PREVIEW_CONFIG['max_address_display_length']
+            try:
+                with open(target_file, 'r', encoding='utf-8') as f:
+                    for line_num, line in enumerate(f, 1):
+                        stripped = line.strip()
+                        if stripped and not stripped.startswith('#'):
+                            address_count += 1
+                            if len(preview_addresses) < max_preview:
+                                preview_addresses.append(stripped)
+            except Exception as e:
+                output.error(f"读取文件失败: {str(e)}")
+                return
+            
+            if address_count == 0:
+                output.warning(f"{target_file} 中没有有效的目标地址")
+                output.print("\n[TIP] 请先在文件中添加目标地址，或使用以下命令:")
+                output.print(f"  start.bat -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random\n")
+                return
+            
+            output.success(f"发现目标文件: {target_file} ({address_count} 个地址)")
+            
+            # 显示地址预览
+            if preview_addresses:
+                output.print("\n[bold yellow]地址预览:[/bold yellow]")
+                for i, addr in enumerate(preview_addresses, 1):
+                    # 截断长地址显示
+                    display_addr = addr[:max_display_len] + "..." if len(addr) > max_display_len else addr
+                    output.print(f"  {i}. {display_addr}")
+                if address_count > max_preview:
+                    output.print(f"  ... 及其他 {address_count - max_preview} 个地址")
+                output.print("")
+            
+            cmd_parts = ["python", "key_collision_cli.py", "-f", target_file]
+        else:
+            output.warning(f"未找到 {target_file}，请使用 -t 或 -f 指定目标")
+            output.print("\n[TIP] 快速模式示例:")
+            output.print("  start.bat -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random")
+            output.print("  start.bat -f targets.txt --use-gpu\n")
+            return
+        
+        # 默认配置：使用常量配置
+        cmd_parts.extend(["-m", QUICK_RUN_DEFAULTS['mode']])
+        if QUICK_RUN_DEFAULTS['checkpoint']:
+            cmd_parts.append("--checkpoint")
+        if QUICK_RUN_DEFAULTS['dedup']:
+            cmd_parts.append("--dedup")
+        
+        # 构建配置摘要
+        config_summary = {
+            "目标文件": target_file,
+            "碰撞模式": "随机模式" if QUICK_RUN_DEFAULTS['mode'] == 'random' else QUICK_RUN_DEFAULTS['mode'],
+            "断点续传": "启用" if QUICK_RUN_DEFAULTS['checkpoint'] else "禁用",
+            "去重过滤": "启用" if QUICK_RUN_DEFAULTS['dedup'] else "禁用",
+            "运行时长": "不限制" if QUICK_RUN_DEFAULTS['duration'] == 0 else f"{QUICK_RUN_DEFAULTS['duration']}分钟",
+            "加速模式": "CPU 模式",
+        }
+        
+        output.print("\n[bold yellow]默认配置:[/bold yellow]")
+        for key, value in config_summary.items():
+            output.print(f"  {key}: {value}")
+        
+        # 询问是否执行（使用可配置的倒计时）
+        countdown = QUICK_RUN_DEFAULTS['countdown_seconds']
+        output.print(f"\n[bold green]{countdown}秒后自动开始... (按Ctrl+C取消)[/bold green]")
+        try:
+            import time
+            for i in range(countdown, 0, -1):
+                output.print(f"  {i}...")
+                time.sleep(1)
+        except KeyboardInterrupt:
+            output.warning("已取消")
+            return
+        
+        # 执行命令
+        output.header(_t("cli.messages.starting"))
+        if executor is not None:
+            argv = list(cmd_parts)
+            if argv and argv[0].lower() in ("python", "python3", "python.exe", "python3.exe"):
+                argv = argv[1:]
+            sys.argv = argv
+            executor()
+        else:
+            output.print("\n请手动运行: " + " ".join(cmd_parts))
+            
+    except KeyboardInterrupt:
+        output.warning(_t("errors.keyboard_interrupt"))
+    except Exception as e:
+        output.error(_t("errors.unexpected", error=str(e)))
+
+
 def _quick_start_build_and_run(
     cmd_parts: List[str],
     executor: Optional[Callable[[], None]],
@@ -537,7 +871,11 @@ def _quick_start_build_and_run(
     output.print(f"\n[bold yellow]{cmd_str}[/bold yellow]\n")
 
     # 询问是否执行
-    execute = input(_t("cli.commands.execute_now") + " [Y/n]: ").strip().lower()
+    while True:
+        execute = input(_t("cli.commands.execute_now") + " ").strip().lower()
+        if execute in ('y', 'n'):
+            break
+        output.error("请输入 y 或 n")
     if execute != 'n':
         output.header(_t("cli.messages.starting"))
 
@@ -551,29 +889,39 @@ def _quick_start_build_and_run(
         else:
             output.print("\n" + _t("cli.commands.copy_and_run"))
     else:
-        output.print("\n💡 " + _t("cli.commands.tip_copy_cmd"))
+        output.print("\n[TIP] " + _t("cli.commands.tip_copy_cmd"))
         output.print("   " + _t("cli.commands.tip_help_cmd"))
 
 
-def _cmd_quick_start(executor: Optional[Callable[[], None]] = None) -> None:
-    """--quick-start 命令实现：交互式快速引导"""
+def _cmd_quick_start(executor: Optional[Callable[[], None]] = None, compact: bool = False) -> None:
+    """--quick-start 命令实现：交互式快速引导
+    
+    Args:
+        executor: 执行器函数（可选）
+        compact: 紧凑模式，跳过详细帮助信息
+    """
     # 确保UTF-8输出
     PlatformUtils.ensure_utf8_output()
 
     output = CLIOutput.get_instance()
     output.header("BTC碰撞引擎 - 快速启动向导")
+    
+    if compact:
+        output.print("[INFO] 紧凑模式：已跳过详细帮助信息\n")
 
     try:
         # 步骤1: 选择目标地址来源
-        targets, target_file = _quick_start_select_target()
+        targets, target_file = _quick_start_select_target(compact=compact)
         if not targets and not target_file:
+            output.error("错误：未选择目标地址")
+            output.print("[TIP] 请重新启动向导并选择有效的目标地址")
             return
 
         # 步骤2: 选择碰撞模式
-        mode, start_key, end_key = _quick_start_select_mode()
+        mode, start_key, end_key = _quick_start_select_mode(compact=compact)
 
         # 步骤3: 功能选项
-        checkpoint, dedup, duration = _quick_start_select_options()
+        checkpoint, dedup, duration = _quick_start_select_options(compact=compact)
 
         # 步骤4: GPU加速
         gpu_args = _quick_start_select_gpu()
@@ -582,8 +930,11 @@ def _cmd_quick_start(executor: Optional[Callable[[], None]] = None) -> None:
         cmd_parts = ["python", "key_collision_cli.py"]
         if target_file:
             cmd_parts.extend(["-f", target_file])
-        else:
+        elif targets:
             cmd_parts.extend(["-t"] + targets)
+        else:
+            output.error("错误：无法构建命令，缺少目标地址")
+            return
 
         # -m 始终显式输出（即使是默认值 random）
         cmd_parts.extend(["-m", mode])
@@ -628,7 +979,7 @@ def _cmd_quick_start(executor: Optional[Callable[[], None]] = None) -> None:
         output.warning(_t("errors.keyboard_interrupt"))
     except Exception as e:
         output.error(_t("errors.unexpected", error=str(e)))
-        output.print("💡 " + _t("cli.commands.direct_cli_tip"))
+        output.print("[TIP] " + _t("cli.commands.direct_cli_tip"))
 
 
 # ── 命令分发函数 ─────────────────────────────────────────────────────────────
@@ -675,10 +1026,16 @@ def _handle_info_commands(args: argparse.Namespace) -> bool:
 
 
 def _handle_wizard_and_quickstart(args: argparse.Namespace, run_main_fn=None) -> bool:
-    """处理向导和快速启动：--quick-start, 首次运行检测"""
-    # --quick-start
+    """处理向导和快速启动：--quick-start, --quick-run, 首次运行检测"""
+    # --quick-run (快速模式)
+    if getattr(args, 'quick_run', False):
+        _cmd_quick_run(executor=run_main_fn)
+        sys.exit(0)
+    
+    # --quick-start (支持 --compact 参数)
     if getattr(args, 'quick_start', False):
-        _cmd_quick_start(executor=run_main_fn)
+        compact = getattr(args, 'compact', False)
+        _cmd_quick_start(executor=run_main_fn, compact=compact)
         sys.exit(0)
 
     # ── 自动检测首次运行 ───────────────────────────────────────
