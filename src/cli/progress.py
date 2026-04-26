@@ -73,8 +73,23 @@ def _format_progress_bar(pct: float) -> str:
     return f" {bar} {pct:5.1f}%"
 
 
-def format_progress(stats: CollisionStats, mode: str, total_range: Optional[int] = None) -> str:
-    """格式化进度信息（带可视化进度条）"""
+# 有效的引擎类型白名单
+VALID_ENGINE_TYPES = {'cpu', 'gpu', 'multi-gpu'}
+
+
+def format_progress(stats: CollisionStats, mode: str, total_range: Optional[int] = None, engine_type: str = 'cpu') -> str:
+    """格式化进度信息（带可视化进度条）
+    
+    Args:
+        stats: 碰撞统计数据
+        mode: 碰撞模式
+        total_range: 总范围
+        engine_type: 引擎类型 ('cpu', 'gpu', 'multi-gpu')
+    """
+    # 验证引擎类型，无效时降级为默认值
+    if engine_type not in VALID_ENGINE_TYPES:
+        engine_type = 'cpu'
+    
     elapsed = stats.format_elapsed()
     checked = stats.total_checked
     speed_str = stats.format_speed()
@@ -85,7 +100,8 @@ def format_progress(stats: CollisionStats, mode: str, total_range: Optional[int]
         time.time() - stats.start_time if stats.start_time > 0 else 0
     )
     if checked == 0 and elapsed_sec < INIT_CHECK_THRESHOLD:
-        return f"[{elapsed}] [Initializing] 初始化中... | 速度: -- | 匹配: {matches} | ETA: --"
+        engine_tag = f"[{engine_type.upper()}]"
+        return f"[{elapsed}] {engine_tag} [Initializing] 初始化中... | 速度: -- | 匹配: {matches} | ETA: --"
 
     # 计算进度百分比
     pct = min(100.0, checked / total_range * 100) if total_range and total_range > 0 else 0.0
@@ -106,8 +122,11 @@ def format_progress(stats: CollisionStats, mode: str, total_range: Optional[int]
     else:
         range_info = f" | {checked_str}"
 
+    # 引擎类型标签
+    engine_tag = f"[{engine_type.upper()}]"
+
     return (
-        f"[{elapsed}]{pct_str}{range_info}"
+        f"[{elapsed}] {engine_tag}{pct_str}{range_info}"
         f" | 速度: {speed_str}"
         f" | ETA: {eta_str}"
         f" | 匹配: {matches}"
