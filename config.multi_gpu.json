@@ -2,7 +2,7 @@
   "gpu": {
     "enabled": true,
     "device_index": 1,
-    "batch_size": 10000,
+    "batch_size": 1048576,
     "use_memory_pool": true,
     "enable_async": true,
     "max_error_retries": 100,

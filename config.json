@@ -22,9 +22,26 @@
     "batch_size": 1048576,
     "_comment_batch_size": "批次大小, 1M为Intel Arc A770最优配置(CPU和GPU统一使用)",
     "max_threads": 8,
-    "_comment_max_threads": "最大线程数",
-    "checkpoint_interval": 300,
-    "_comment_checkpoint_interval": "断点保存间隔(秒)"
+    "_comment_max_threads": "最大线程数"
+  },
+  "collision": {
+    "_comment": "碰撞引擎运行时参数（CLI使用）",
+    "max_workers": null,
+    "_comment_max_workers": "工作线程数，null=自动使用CPU核心数",
+    "progress_interval": 1000,
+    "_comment_progress_interval": "进度回调触发间隔（检测次数）",
+    "checkpoint_interval": 30,
+    "_comment_checkpoint_interval": "断点自动保存间隔（秒）",
+    "dedup_max_size": 1000000,
+    "_comment_dedup_max_size": "去重过滤器最大容量（仅random模式有效）",
+    "use_performance_optimization": true,
+    "_comment_use_performance_optimization": "是否启用v2.2.0性能优化套件",
+    "precomputed_window_size": 8,
+    "_comment_precomputed_window_size": "EC预计算表窗口大小，范围4-8",
+    "use_simd_hash": true,
+    "_comment_use_simd_hash": "启用SIMD哈希优化（需安装pycryptodome）",
+    "use_memory_pool": true,
+    "_comment_use_memory_pool": "启用ECPoint内存池，减少GC压力"
   },
   "logging": {
     "_comment": "日志配置",
@@ -66,11 +83,11 @@
   },
   "monitoring": {
     "_comment": "监控系统配置",
-    "enabled": false,
+    "enabled": true,
     "_comment_enabled": "是否启用监控系统",
     "collection_interval": 5,
     "_comment_collection_interval": "数据采集间隔(秒)",
-    "storage_dir": "monitoring_data",
+    "storage_dir": "data_logs",
     "_comment_storage_dir": "监控数据存储目录",
     "history_max_size": 1000,
     "_comment_history_max_size": "历史数据最大条数",
@@ -115,6 +132,8 @@
     "_comment_max_memory_mb": "GPU内存池最大内存(MB,与代码默认值一致)",
     "async_execution": true,
     "_comment_async_execution": "启用GPU异步执行(双缓冲优化), 性能提升~61%",
+    "queue_depth": 4,
+    "_comment_queue_depth": "GPU命令队列深度: GPU队列中同时保持的预提交批次数(v2.3.2队列深度优化), 默认4, 范围1-16",
     "timeout_protection": true,
     "_comment_timeout_protection": "启用GPU超时保护机制, 防止永久卡死",
     "base_timeout_seconds": 30,
@@ -173,5 +192,12 @@
     "_comment_track_slow_operations": "是否追踪慢操作",
     "log_level": "INFO",
     "_comment_log_level": "日志级别"
+  },
+  "i18n": {
+    "_comment": "i18n 国际化配置",
+    "language": "auto",
+    "_comment_language": "界面语言：auto=自动检测系统语言, zh_CN, en_US",
+    "fallback_language": "en_US",
+    "_comment_fallback_language": "回退语言，当指定语言找不到翻译时使用"
   }
 }

@@ -8,6 +8,8 @@
 #
 # P1-4修复: 统一依赖管理，避免重复定义
 # 本文件仅包含对其他依赖文件的引用
+# B-2修复: 显式声明核心运行时依赖，确保直接 pip install -r requirements.txt 时包含
+jsonschema>=4.0.0           # 配置文件 JSON Schema 验证（必需）
 
 # 基础依赖（必需）
 -r requirements-base.txt
