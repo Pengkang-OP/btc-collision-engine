@@ -191,7 +191,7 @@ class GPUBenchmarkSuite:
         Returns:
             测试结果
         """
-        import secrets
+        import os
         
         results = []
         batch_sizes = [10000, 50000, 100000]
@@ -200,9 +200,8 @@ class GPUBenchmarkSuite:
             exec_times = []
             
             for i in range(iterations):
-                # 准备测试数据
-                test_keys = secrets.token_bytes(batch_size * 32)
-                test_targets = b'\x00' * 20
+                # 准备测试数据（PRNG模式：仅需 32 字节随机种子）
+                seed = os.urandom(32)
                 
                 start_time = time.time()
                 
@@ -210,10 +209,8 @@ class GPUBenchmarkSuite:
                     # 执行批次
                     if hasattr(self.gpu_engine, '_gpu_kernel'):
                         matches = self.gpu_engine._gpu_kernel.run_batch(
+                            seed=seed,
                             num_keys=batch_size,
-                            private_keys=test_keys,
-                            target_hash160s=test_targets,
-                            num_targets=1
                         )
                     
                     duration_ms = (time.time() - start_time) * 1000
@@ -311,7 +308,7 @@ class GPUBenchmarkSuite:
         Returns:
             测试结果
         """
-        import secrets
+        import os
         
         results = []
         batch_sizes = [10000, 25000, 50000, 100000, 250000, 500000]
@@ -322,18 +319,15 @@ class GPUBenchmarkSuite:
             exec_times = []
             
             for i in range(iterations):
-                test_keys = secrets.token_bytes(batch_size * 32)
-                test_targets = b'\x00' * 20
+                seed = os.urandom(32)
                 
                 start_time = time.time()
                 
                 try:
                     if hasattr(self.gpu_engine, '_gpu_kernel'):
                         self.gpu_engine._gpu_kernel.run_batch(
+                            seed=seed,
                             num_keys=batch_size,
-                            private_keys=test_keys,
-                            target_hash160s=test_targets,
-                            num_targets=1
                         )
                     
                     duration_ms = (time.time() - start_time) * 1000

@@ -97,34 +97,39 @@ class DeduplicationFilter:
             
             return True
     
+    def _get_stats_unlocked(self) -> Dict[str, Any]:
+        """返回去重统计（不加锁版本，调用方须已持有 self._lock）"""
+        tracked_total = len(self._current) + len(self._pending)
+        stats = {
+            "tracked_current": len(self._current),
+            "tracked_pending": len(self._pending),
+            "tracked_total": tracked_total,
+            "duplicates_found": self.duplicates_found,
+            "checks_total": self.checks_total,
+            "duplicate_rate": self.duplicates_found / self.checks_total if self.checks_total > 0 else 0,
+            "max_size": self.max_size,
+            "memory_usage_estimate": tracked_total * 8  # 每个指纹8字节
+        }
+
+        # 记录统计信息（每1000次检查记录一次）
+        if self.checks_total % 1000 == 0 and self.checks_total > 0:
+            memory_mb = stats["memory_usage_estimate"] / (1024 * 1024)
+            logger.debug(f"去重统计: 检查={self.checks_total}, 重复={self.duplicates_found}, "
+                        f"重复率={stats['duplicate_rate']:.4%}, 跟踪数={tracked_total}, "
+                        f"内存估计={memory_mb:.2f}MB")
+
+        return stats
+
     def get_stats(self) -> Dict[str, Any]:
         """返回去重统计"""
         with self._lock:
-            tracked_total = len(self._current) + len(self._pending)
-            stats = {
-                "tracked_current": len(self._current),
-                "tracked_pending": len(self._pending),
-                "tracked_total": tracked_total,
-                "duplicates_found": self.duplicates_found,
-                "checks_total": self.checks_total,
-                "duplicate_rate": self.duplicates_found / self.checks_total if self.checks_total > 0 else 0,
-                "max_size": self.max_size,
-                "memory_usage_estimate": tracked_total * 8  # 每个指纹8字节
-            }
-            
-            # 记录统计信息（每1000次检查记录一次）
-            if self.checks_total % 1000 == 0 and self.checks_total > 0:
-                memory_mb = stats["memory_usage_estimate"] / (1024 * 1024)
-                logger.debug(f"去重统计: 检查={self.checks_total}, 重复={self.duplicates_found}, "
-                            f"重复率={stats['duplicate_rate']:.4%}, 跟踪数={tracked_total}, "
-                            f"内存估计={memory_mb:.2f}MB")
-            
-            return stats
-    
+            return self._get_stats_unlocked()
+
     def reset(self) -> None:
         """重置过滤器"""
         with self._lock:
-            old_stats = self.get_stats()
+            # 使用不加锁版本，避免 reset() 持锁时再次获取同一把锁导致死锁
+            old_stats = self._get_stats_unlocked()
             self._current.clear()
             self._pending.clear()
             self._queue.clear()

@@ -125,7 +125,7 @@ class HealthChecker:
                 os.remove(test_file)
             except PermissionError:
                 no_permission.append(dir_name)
-            except Exception:
+            except OSError:
                 pass
         
         issues = []
@@ -161,6 +161,36 @@ class HealthChecker:
         except Exception as e:
             return False, f"GPU检查失败: {e}"
     
+    def check_monitoring_system(self) -> Tuple[bool, str]:
+        """检查监控系统状态"""
+        try:
+            from src.monitoring.monitoring_system import DataStorage
+            
+            # 检查监控系统依赖
+            import psutil
+            
+            # 检查数据存储目录
+            storage = DataStorage()
+            storage_dir = storage.storage_dir
+            
+            if not os.path.exists(storage_dir):
+                return False, f"监控数据目录不存在: {storage_dir}"
+            
+            # 检查目录写权限
+            test_file = os.path.join(storage_dir, '.test_monitoring')
+            try:
+                with open(test_file, 'w') as f:
+                    f.write('test')
+                os.remove(test_file)
+            except PermissionError:
+                return False, f"监控数据目录无写权限: {storage_dir}"
+            
+            return True, f"监控系统正常: 数据目录 {storage_dir}"
+        except ImportError as e:
+            return False, f"监控系统依赖缺失: {e}"
+        except Exception as e:
+            return False, f"监控系统检查失败: {e}"
+    
     def run_all_checks(self, include_gpu: bool = False) -> Dict[str, Tuple[bool, str]]:
         """运行所有健康检查
         
@@ -181,6 +211,7 @@ class HealthChecker:
             ("配置文件", self.check_config_file),
             ("磁盘空间", self.check_disk_space),
             ("目录权限", self.check_directories),
+            ("监控系统", self.check_monitoring_system),
         ]
         
         if include_gpu:

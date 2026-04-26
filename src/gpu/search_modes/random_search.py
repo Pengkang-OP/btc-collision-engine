@@ -11,8 +11,10 @@ CPU过载保护: 主循环内添加节流机制，防止 CPU 飞升。
 
 import logging
 import os
+import queue
+import threading
 import time
-from typing import TYPE_CHECKING, Any, List, Tuple
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 
 from ...utils.exception_handler import ExceptionHandler
 from .base_search import BaseSearchMode
@@ -33,6 +35,9 @@ MIN_BATCH_INTERVAL_SEC = 0.001    # 批次间最小间隔 1ms，防止空转
 EXP_BACKOFF_BASE = 0.1            # 指数退避基础延迟(s)
 EXP_BACKOFF_MAX = 30.0            # 指数退避最大延迟(s)
 
+# 种子预生成参数
+SEED_PREFETCH_SIZE = 5            # 种子缓存队列最大深度
+
 # 已弃用常量（历史兼容保留，PRNG模式下不再需要）
 ASYNC_KEY_GEN_BASE_TIMEOUT = 5.0
 ASYNC_KEY_GEN_PER_KEY_TIME = 0.00001
@@ -44,12 +49,66 @@ class RandomSearchMode(BaseSearchMode):
 
     对应原 GPUCollisionEngine 中的 _random_search_sync / _random_search_async 方法。
     通过 self.engine 访问所有引擎状态，不复制状态。
+
+    v4.1 新增：后台种子预生成线程，维护 maxsize=5 的种子缓存队列，
+    消除主循环中 os.urandom() 的阻塞等待，进一步平滑 GPU 利用率。
     """
+
+    def __init__(self, engine, seed_prefetch_size: int = SEED_PREFETCH_SIZE) -> None:  # type: ignore[override]
+        super().__init__(engine)
+        # BUG-6: 支持从外部传入 seed_prefetch_size，不再硬编码 SEED_PREFETCH_SIZE
+        self._seed_prefetch_size = seed_prefetch_size
+        # 种子预生成队列与线程
+        self._seed_queue: queue.Queue = queue.Queue(maxsize=seed_prefetch_size)
+        self._seed_stop_event: threading.Event = threading.Event()
+        self._seed_thread: Optional[threading.Thread] = None
+        self._start_seed_prefetch_thread()
+
+    def _start_seed_prefetch_thread(self) -> None:
+        """启动后台种子预生成 daemon 线程"""
+        self._seed_stop_event.clear()
+        self._seed_thread = threading.Thread(
+            target=self._seed_prefetch_worker,
+            name="SeedPrefetch",
+            daemon=True
+        )
+        self._seed_thread.start()
+        logger.info(f"种子预生成线程已启动 (缓存深度={self._seed_prefetch_size})")
+
+    def _seed_prefetch_worker(self) -> None:
+        """后台线程：持续调用 os.urandom(32) 填充种子队列"""
+        while not self._seed_stop_event.is_set():
+            try:
+                seed = os.urandom(32)
+                # 阻塞等待直到队列有空位（最多等待 0.1s，超时后检查 stop_event）
+                try:
+                    self._seed_queue.put(seed, timeout=0.1)
+                except queue.Full:
+                    # 队列满则跳过，避免阻塞 stop_event 检查
+                    pass
+            except OSError as e:
+                logger.warning(f"种子预生成失败: {e}")
+                time.sleep(0.01)
+            except Exception as e:
+                logger.warning(f"种子预生成线程意外错误: {e}")
+                time.sleep(0.01)
+        logger.debug("种子预生成线程已退出")
+
+    def stop(self) -> None:
+        """停止种子预生成线程（cleanup 入口）"""
+        self._seed_stop_event.set()
+        if self._seed_thread is not None and self._seed_thread.is_alive():
+            self._seed_thread.join(timeout=2.0)
+            if self._seed_thread.is_alive():
+                logger.warning("种子预生成线程未在 2s 内退出")
+        self._seed_thread = None
+        logger.info("种子预生成线程已停止")
 
     def execute(self) -> None:
         """执行随机搜索（入口，根据引擎配置选择同步或异步模式）"""
         engine = self.engine
-        use_async = engine._gpu_device.enable_async_execution and engine._async_executor
+        # 确保异步执行器存在且启用
+        use_async = engine._gpu_device.enable_async_execution and engine._async_executor is not None
         if use_async:
             logger.info("✅ 使用GPU异步执行模式(双缓冲)")
             self._execute_async()
@@ -75,9 +134,14 @@ class RandomSearchMode(BaseSearchMode):
         batch_count = 0
         batch_num = 0
         consecutive_errors = 0
-        num_targets = len(engine._target_list)
+        # 使用engine.targets作为目标地址列表
+        target_list = list(engine.targets)
+        num_targets = len(target_list)
         current_batch_size = engine.batch_size
 
+        # 确保current_batch_size不为None
+        if current_batch_size is None:
+            current_batch_size = 1000000  # 默认批次大小
         logger.info(f"目标数量: {num_targets}, 初始批次大小: {current_batch_size:,}")
 
         while not engine._stop_event.is_set():
@@ -125,7 +189,7 @@ class RandomSearchMode(BaseSearchMode):
                             f"{CPU_OVERLOAD_THRESHOLD}%, 节流 {CPU_THROTTLE_SLEEP}s"
                         )
                         time.sleep(CPU_THROTTLE_SLEEP)
-                except Exception:
+                except OSError:
                     pass  # psutil 不可用时忽略
 
             except Exception as e:
@@ -160,12 +224,20 @@ class RandomSearchMode(BaseSearchMode):
 
         engine = self.engine
         logger.info("GPU _random_search_async 启动 (PRNG + 异步双缓冲)")
-        num_targets = len(engine._target_list)
+        # 使用engine.targets作为目标地址列表
+        target_list = list(engine.targets)
+        num_targets = len(target_list)
         batch_count = 0
         batch_num = 0
         consecutive_errors = 0
-
         current_batch_size = engine.batch_size
+
+        # BUG-4: 若 while 循环未执行（stop_event 提前 set），seed 需有初始值防止 NameError
+        seed: Optional[bytes] = None
+
+        # 确保current_batch_size不为None
+        if current_batch_size is None:
+            current_batch_size = 1000000  # 默认批次大小
         logger.info(f"初始批次大小: {current_batch_size:,}")
 
         while not engine._stop_event.is_set():
@@ -276,7 +348,7 @@ class RandomSearchMode(BaseSearchMode):
                             f"{CPU_OVERLOAD_THRESHOLD}%, 节流 {CPU_THROTTLE_SLEEP}s"
                         )
                         time.sleep(CPU_THROTTLE_SLEEP)
-                except Exception:
+                except OSError:
                     pass
 
             except Exception as e:
@@ -308,25 +380,34 @@ class RandomSearchMode(BaseSearchMode):
         # 收集最后一批异步结果
         if engine._async_executor is not None:
             try:
-                final_matches = engine._async_executor.flush_pending()
-                if final_matches:
+                # BUG-3: flush_pending 返回 List[Tuple[bytes, List[Dict]]]，
+                # 每批次携带自己的 seed，必须按批次正确重建私钥，不得用最后一个 seed 处理所有结果
+                pending_batches = engine._async_executor.flush_pending()
+                if pending_batches:
                     from ...core.wif import WIF
-                    seed_int = int.from_bytes(seed, 'big')
-                    for match in final_matches:
-                        key_idx = match["key_index"]
-                        key_int = (seed_int + key_idx) % (2 ** 256)
-                        private_key = key_int.to_bytes(32, 'big')
-
-                        if not engine.dedup_filter.check_and_add(private_key):
+                    for batch_seed, batch_matches in pending_batches:
+                        if not batch_matches:
                             continue
+                        # BUG-4: 跳过 seed 为 None 的批次（理论上不应出现，防御性处理）
+                        if batch_seed is None:
+                            logger.warning("flush_pending 返回了 seed=None 的批次，跳过")
+                            continue
+                        batch_seed_int = int.from_bytes(batch_seed, 'big')
+                        for match in batch_matches:
+                            key_idx = match["key_index"]
+                            key_int = (batch_seed_int + key_idx) % (2 ** 256)
+                            private_key = key_int.to_bytes(32, 'big')
 
-                        target_idx = match["target_index"]
-                        address = engine._target_list[target_idx]
-                        wif = WIF.encode(private_key, compressed=True)
+                            if not engine.dedup_filter.check_and_add(private_key):
+                                continue
 
-                        engine.stats.add_match(private_key, address)
-                        if engine.on_match:
-                            engine.on_match(private_key, address, wif)
+                            target_idx = match["target_index"]
+                            address = engine._target_list[target_idx]
+                            wif = WIF.encode(private_key, compressed=True)
+
+                            engine.stats.add_match(private_key, address)
+                            if engine.on_match:
+                                engine.on_match(private_key, address, wif)
             except Exception as e:
                 logger.warning(f"收集最后一批异步结果失败: {e}")
 
@@ -337,10 +418,19 @@ class RandomSearchMode(BaseSearchMode):
     def _generate_seed(self) -> bytes:
         """生成 32 字节随机种子（PRNG模式入口）
 
+        优先从预生成缓存队列获取（get_nowait），队列为空时
+        fallback 到即时调用 os.urandom(32)。
+
         Returns:
             32字节种子
         """
-        return os.urandom(32)
+        try:
+            seed = self._seed_queue.get_nowait()
+            logger.debug("使用预生成种子（缓存命中）")
+            return seed
+        except queue.Empty:
+            logger.debug("种子队列空，即时生成")
+            return os.urandom(32)
 
     # DEPRECATED(v4.0): PRNG改造后不再需要批量生成私钥缓冲区。
     # GPU内核通过 seed+gid 自行推导私钥，无需主机侧传输大缓冲区。

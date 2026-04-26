@@ -366,7 +366,7 @@ class GPUDevice:
         # PERF-2修复: 默认启用异步执行，提高GPU利用率
         self.enable_async_execution = True  # 是否启用异步执行（默认True）
     
-    def initialize(self, device_index: int = -1, enable_async: bool = False):
+    def initialize(self, device_index: int = -1, enable_async: bool = True):
         """
         初始化GPU设备
         
@@ -374,7 +374,7 @@ class GPUDevice:
             device_index: 设备索引
                          -1 = 自动选择最佳设备
                          >=0 = 使用指定索引的设备
-            enable_async: 是否启用异步执行(双队列)
+            enable_async: 是否启用异步执行(双队列), 默认True开启双缓冲优化
         """
         # 设置异步标志
         self.enable_async_execution = enable_async
@@ -463,6 +463,20 @@ class GPUDevice:
             'work_group_size': 256  # v2.3.0优化: 默认值，会被auto_config覆盖
         }
         
+        # 查询设备最大工作组大小
+        try:
+            max_wgs = device_info['device'].max_work_group_size
+        except (AttributeError, Exception):
+            max_wgs = 256  # 安全默认值
+        self.device_info['max_work_group_size'] = max_wgs
+        
+        # 查询设备本地内存大小
+        try:
+            local_mem = device_info['device'].local_mem_size
+        except (AttributeError, Exception):
+            local_mem = 16384  # 16KB默认值
+        self.device_info['local_mem_size'] = local_mem
+        
         # 验证设备能力
         self._validate_device_capabilities(device_info)
         
@@ -504,6 +518,8 @@ class GPUDevice:
             f"({self.device_info['vendor']})\n"
             f"  - 显存: {self.device_info['global_mem_size']/(1024**3):.1f} GB\n"
             f"  - 计算单元: {self.device_info['max_compute_units']}\n"
+            f"  - 最大工作组大小: {self.device_info.get('max_work_group_size', 'N/A')}\n"
+            f"  - 本地内存: {self.device_info.get('local_mem_size', 0)/1024:.0f} KB\n"
             f"  - 平台: {self.device_info['platform']}\n"
             f"  - 异步执行: {'已启用' if self.enable_async_execution else '未启用'}"
         )

@@ -897,8 +897,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     try:
                         mem_mb = self._process.memory_info().rss / 1024 / 1024
                         self._check_memory_and_downgrade(mem_mb, current_time)
-                    except Exception:
-                        pass
+                    except (AttributeError, OSError, RuntimeError) as e:
+                        logger.debug(f"内存监控失败（不影响主逻辑）: {type(e).__name__}: {e}")
                     
                     self._last_progress_time = current_time
                     
@@ -1633,7 +1633,21 @@ class KeyCollisionEngine(BaseCollisionEngine):
             False 表示引擎已停止或未启动
         """
         return self._running and self._thread and self._thread.is_alive()
-    
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.stop()
+        return False
+
+    def __del__(self):
+        try:
+            if self._running:
+                self.stop()
+        except Exception:
+            pass
+
     def get_stats(self) -> CollisionStats:
         """
         获取当前碰撞统计信息

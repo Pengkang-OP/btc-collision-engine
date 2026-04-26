@@ -101,6 +101,47 @@ class PlatformUtils:
         logger.debug("等宽字体: %s (平台: %s)", font, cls._platform)
         return font
     
+    @staticmethod
+    def ensure_utf8_output():
+        """确保 Windows 终端输出使用 UTF-8 编码。
+        
+        在 Windows 系统上将 stdout 和 stderr 包装为 UTF-8 编码的 TextIOWrapper。
+        在其他系统上无操作。可安全多次调用。
+        """
+        if platform.system() != 'Windows':
+            return
+        import io
+        import sys
+        if hasattr(sys.stdout, 'buffer') and (not isinstance(sys.stdout, io.TextIOWrapper) or sys.stdout.encoding.lower() != 'utf-8'):
+            sys.stdout = io.TextIOWrapper(
+                sys.stdout.buffer, encoding='utf-8', errors='replace'
+            )
+        if hasattr(sys.stderr, 'buffer') and (not isinstance(sys.stderr, io.TextIOWrapper) or sys.stderr.encoding.lower() != 'utf-8'):
+            sys.stderr = io.TextIOWrapper(
+                sys.stderr.buffer, encoding='utf-8', errors='replace'
+            )
+
+    @staticmethod
+    def get_temp_dir() -> str:
+        """获取跨平台临时目录路径。"""
+        import tempfile
+        return tempfile.gettempdir()
+
+    @staticmethod
+    def get_config_dir(app_name: str = "btc-collision-engine") -> str:
+        """获取跨平台应用配置目录。
+        
+        Windows: %APPDATA%/app_name
+        Linux/macOS: ~/.config/app_name
+        """
+        if platform.system() == 'Windows':
+            base = os.environ.get('APPDATA', os.path.expanduser('~'))
+        else:
+            base = os.path.join(os.path.expanduser('~'), '.config')
+        config_dir = os.path.join(base, app_name)
+        os.makedirs(config_dir, exist_ok=True)
+        return config_dir
+
     @classmethod
     def get_dpi_scale(cls, root: Optional[tk.Tk] = None) -> float:
         """获取DPI缩放比例
@@ -116,6 +157,14 @@ class PlatformUtils:
             >>> if scale > 1.5:  # 高分屏
             ...     # 调整字体大小
         """
+        # 支持环境变量覆盖
+        env_scale = os.environ.get('BTC_DPI_SCALE')
+        if env_scale:
+            try:
+                return float(env_scale)
+            except ValueError:
+                pass
+
         if cls._dpi_scale is not None:
             return cls._dpi_scale
         
@@ -134,7 +183,8 @@ class PlatformUtils:
             
         except Exception as e:
             logger.warning("无法检测DPI，使用默认值1.0: %s", str(e))
-            return 1.0
+            cls._dpi_scale = 1.0
+            return cls._dpi_scale
     
     @classmethod
     def get_screen_size(cls, root: Optional[tk.Tk] = None) -> Tuple[int, int]:

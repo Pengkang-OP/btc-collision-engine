@@ -8,13 +8,14 @@
 import logging
 import time
 import threading
-from typing import Set, Dict, List, Optional, Callable
+from typing import Set, Dict, List, Optional, Callable, Any
 
 from .selector import get_gpu_selector
 from .load_balancer import GPULoadBalancer
 from .worker import SingleGPUWorker
 from .data_monitor import DataMonitor
 from .gpu_recovery_manager import GPURecoveryManager
+from .memory_pool import GPUMemoryPool
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +89,19 @@ class MultiGPUCollisionEngine:
             auto_redistribute=recovery_config.get('auto_redistribute', True)
         )
         
+        # 同厂商内核编译缓存: vendor_key -> 编译配置元数据
+        # 注意: OpenCL Program 不能跨 context 共享。
+        # 此处缓存厂商编译配置（编译选项等元数据），内核内核由
+        # GPUContext 独立编译并缓存自身 context 级别的 program。
+        self._compiled_programs: Dict[str, Any] = {}  # vendor_key -> {source, options}
+        
+        # Per-GPU 内存池分配配置: device_index -> max_memory_mb
+        # 由 create_proportional_pools 按显存比例计算
+        self._device_memory_pool_config: Dict[int, int] = {}
+
+        # 可配置的工作器等待超时（秒）
+        self._worker_join_timeout = self.config.get('worker_join_timeout', 30)
+        
         logger.info("MultiGPUCollisionEngine已创建")
     
     def initialize(
@@ -137,6 +151,25 @@ class MultiGPUCollisionEngine:
                 f"初始化 {len(self._devices)} 个GPU设备: "
                 f"{[d['name'] for d in self._devices]}"
             )
+            
+            # 按显存比例计算 Per-GPU 内存池分配配置
+            total_pool_mb = self.config.get('total_pool_mb', 512)
+            proportional_pools = GPUMemoryPool.create_proportional_pools(
+                devices=self._devices,
+                contexts=None,  # context 由 GPUCollisionEngine 自行管理
+                total_pool_mb=total_pool_mb
+            )
+            # 保存各设备的内存池大小配置，以全局索引为键
+            self._device_memory_pool_config = {}
+            for local_i, device in enumerate(self._devices):
+                global_idx = device['global_index']
+                pool = proportional_pools.get(local_i)
+                if pool is not None:
+                    mb = pool.get_stats()['max_memory_mb']
+                    self._device_memory_pool_config[global_idx] = int(mb)
+                    logger.info(
+                        f"GPU {global_idx} 内存池分配: {int(mb)}MB"
+                    )
             
             # 创建负载均衡器
             self.load_balancer = GPULoadBalancer(
@@ -280,9 +313,9 @@ class MultiGPUCollisionEngine:
             # 等待所有工作器结束
             for idx, worker in workers_snapshot.items():
                 try:
-                    worker.join(timeout=30)
+                    worker.join(timeout=self._worker_join_timeout)
                     if worker.is_alive():
-                        logger.warning(f"GPU {idx} 工作器未在30秒内停止")
+                        logger.warning(f"GPU {idx} 工作器未在{self._worker_join_timeout}秒内停止")
                     else:
                         logger.info(f"GPU {idx} 工作器已停止")
                 except Exception as e:
@@ -560,6 +593,14 @@ class MultiGPUCollisionEngine:
             'work_group_size': device.get('recommended_work_group', 256)
         }
         
+        # 应用 Per-GPU 内存池分配配置（按显存比例）
+        global_idx = device['global_index']
+        if global_idx in self._device_memory_pool_config:
+            config['max_memory_mb'] = self._device_memory_pool_config[global_idx]
+            logger.debug(
+                f"GPU {global_idx} 内存池配置: {config['max_memory_mb']}MB"
+            )
+        
         # 合并用户配置
         per_device_config = self.config.get('per_device_config', {})
         device_idx_str = str(device['global_index'])
@@ -568,6 +609,56 @@ class MultiGPUCollisionEngine:
             config.update(per_device_config[device_idx_str])
         
         return config
+    
+    def _get_vendor_key(self, device: Dict) -> str:
+        """生成厂商+平台的唯一键，用于同厂商内核编译配置共享
+        
+        Args:
+            device: 设备信息字典
+            
+        Returns:
+            格式为 '{vendor}_{platform}' 的唯一键
+        """
+        vendor = str(device.get('vendor', 'unknown')).lower().strip()
+        platform = str(device.get('platform_name', 'unknown')).lower().strip()
+        # 移除特殊字符，保留字母数字和下划线
+        vendor = ''.join(c if c.isalnum() else '_' for c in vendor)
+        platform = ''.join(c if c.isalnum() else '_' for c in platform)
+        return f"{vendor}_{platform}"
+    
+    def _get_or_cache_compile_config(self, device: Dict, kernel_source: str, build_options: str) -> Dict:
+        """获取或缓存内核编译配置（同厂商GPU共享编译配置）
+        
+        OpenCL Program 不能跨 context 共享，但同厂商 GPU 可共享相同的
+        编译选项和源码，避免重复预处理。每个 GPUContext 负责自身 context
+        内的 program 编译和缓存（见 GPUContext._kernel_cache）。
+        此处缓存的是编译元数据，供日志和监控使用。
+        
+        Args:
+            device: 设备信息字典
+            kernel_source: 内核源码
+            build_options: 编译选项字符串
+            
+        Returns:
+            编译配置字典
+        """
+        vendor_key = self._get_vendor_key(device)
+        
+        if vendor_key in self._compiled_programs:
+            logger.info(f"同厂商 '{vendor_key}' 编译配置已存在，无需重新预处理")
+            return self._compiled_programs[vendor_key]
+        
+        # 首次为该厂商记录编译配置
+        compile_config = {
+            'vendor_key': vendor_key,
+            'build_options': build_options,
+            'source_len': len(kernel_source),
+        }
+        self._compiled_programs[vendor_key] = compile_config
+        logger.info(
+            f"注册厂商 '{vendor_key}' 编译配置: options='{build_options}'"
+        )
+        return compile_config
     
     def _handle_gpu_worker_failure(self, gpu_id: int, error: Exception):
         """处理GPU工作器失败

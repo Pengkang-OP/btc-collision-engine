@@ -104,7 +104,7 @@ class DriverManager:
             ("450.00", "451.99", "内存泄漏问题"),
             ("470.00", "470.99", "OpenCL稳定性问题"),
             ("510.00", "510.99", "GPU内存管理问题"),
-            ("515.00", "515.99", "CUDA驱动兼容性问颚"),
+            ("515.00", "515.99", "CUDA驱动兼容性问题"),
         ],
         'amd': [
             ("21.10.0", "21.11.9", "已知崩溃问题"),
@@ -137,6 +137,19 @@ class DriverManager:
                     'name': 'nvidia-smi',
                     'cmd': ['nvidia-smi', '--query-gpu=driver_version', '--format=csv,noheader'],
                     'parser': 'nvidia_smi'
+                })
+            elif system == 'Darwin':
+                # macOS: 检查 CUDA toolkit
+                detection_methods.append({
+                    'name': 'nvidia-smi-macos',
+                    'cmd': ['nvidia-smi', '--query-gpu=driver_version', '--format=csv,noheader'],
+                    'parser': 'nvidia_smi'
+                })
+                # 同时检查 CUDA toolkit 路径
+                detection_methods.append({
+                    'name': 'nvcc-version',
+                    'cmd': ['/usr/local/cuda/bin/nvcc', '--version'],
+                    'parser': 'nvcc'
                 })
             else:
                 # Linux: 尝试多种方式
@@ -231,6 +244,23 @@ class DriverManager:
             
             if system == 'Windows':
                 return DriverManager._detect_amd_windows()
+            elif system == 'Darwin':
+                # macOS: 使用 system_profiler 检测 AMD GPU
+                try:
+                    result = subprocess.run(
+                        ['system_profiler', 'SPDisplaysDataType'],
+                        capture_output=True, text=True, timeout=10
+                    )
+                    if result.returncode == 0 and 'AMD' in result.stdout:
+                        # 从输出中提取版本信息
+                        for line in result.stdout.split('\n'):
+                            if 'Version' in line or 'Kernel Extension' in line:
+                                version = line.split(':')[-1].strip()
+                                if version:
+                                    return version
+                except (OSError, subprocess.SubprocessError, ValueError):
+                    pass
+                return None
             else:
                 return DriverManager._detect_amd_linux()
                 
@@ -321,6 +351,23 @@ class DriverManager:
             
             if system == 'Windows':
                 return DriverManager._detect_intel_windows()
+            elif system == 'Darwin':
+                # macOS: 使用 system_profiler 检测 Intel GPU
+                try:
+                    result = subprocess.run(
+                        ['system_profiler', 'SPDisplaysDataType'],
+                        capture_output=True, text=True, timeout=10
+                    )
+                    if result.returncode == 0 and 'Intel' in result.stdout:
+                        # 从输出中提取版本信息
+                        for line in result.stdout.split('\n'):
+                            if 'Version' in line or 'Kernel Extension' in line:
+                                version = line.split(':')[-1].strip()
+                                if version:
+                                    return version
+                except (OSError, subprocess.SubprocessError, ValueError):
+                    pass
+                return None
             else:
                 return DriverManager._detect_intel_linux()
                 

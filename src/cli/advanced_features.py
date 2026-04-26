@@ -201,7 +201,7 @@ def recommend_parameters(args) -> dict:
             with open(args.file, 'r', encoding='utf-8') as f:
                 lines = [l.strip() for l in f if l.strip() and not l.startswith('#')]
                 target_count = len(lines)
-        except:
+        except (OSError, ValueError, UnicodeDecodeError):
             pass
     
     if target_count > 10:

@@ -475,7 +475,7 @@ class SecureKeyManager:
             # 使用 Exception 而非裸except，避免捕获 KeyboardInterrupt/SystemExit
             try:
                 self.clear()
-            except Exception:
+            except (OSError, ValueError):
                 # 析构函数中静默失败是可接受的
                 # 因为此时对象正在销毁，无法做更多处理
                 pass

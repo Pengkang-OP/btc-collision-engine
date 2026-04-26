@@ -10,6 +10,7 @@
 from typing import Dict, Any
 import logging
 from .base import GPUVendorBase
+from ..constants import PER_KEY_MEMORY_BYTES, MIN_BATCH_SIZE, align_batch_size
 
 logger = logging.getLogger(__name__)
 
@@ -90,17 +91,14 @@ class AMDGPUVendor(GPUVendorBase):
         
         # 根据显存计算理论最大值
         global_mem = device.device_info.get('global_mem_size', 0)
-        per_key_memory = 36
+        per_key_memory = PER_KEY_MEMORY_BYTES
         mem_based_max = int((global_mem * memory_efficiency) / per_key_memory)
         
         # 取三者最小值
         optimal = min(recommended, maximum, mem_based_max)
         
-        # 向下对齐到1024的倍数
-        optimal = (optimal // 1024) * 1024
-        
-        # 确保最小值为1024
-        optimal = max(optimal, 1024)
+        # 向下对齐到1024的倍数，并确保不低于最小值
+        optimal = align_batch_size(optimal)
         
         logger.info(
             f"AMD batch_size计算: recommended={recommended}, "

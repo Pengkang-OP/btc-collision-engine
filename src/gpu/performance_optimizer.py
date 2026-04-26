@@ -15,7 +15,19 @@ from typing import Dict, Any, Optional, List, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
 
+from .constants import MIN_BATCH_SIZE, MAX_BATCH_SIZE, clamp_batch_size
+
 logger = logging.getLogger(__name__)
+
+
+# ===== 厂商特定调整策略 =====
+# 根据GPU厂商选择不同的增长/减少因子，Intel采用更保守的策略
+VENDOR_ADJUST_STRATEGY: Dict[str, Dict[str, float]] = {
+    'nvidia': {'growth_factor': 1.5, 'reduction_factor': 0.5},
+    'amd':    {'growth_factor': 1.3, 'reduction_factor': 0.5},
+    'intel':  {'growth_factor': 1.1, 'reduction_factor': 0.7},  # Intel更保守
+}
+DEFAULT_ADJUST_STRATEGY: Dict[str, float] = {'growth_factor': 1.2, 'reduction_factor': 0.5}
 
 
 class GPUVendor(Enum):
@@ -240,13 +252,15 @@ class GPUPerformanceOptimizer:
     def analyze_and_adjust(
         self,
         current_batch_size: int,
-        error_rate: float = 0.0
+        error_rate: float = 0.0,
+        engine: Any = None,
     ) -> Tuple[int, Dict[str, Any]]:
         """分析性能数据并调整参数
         
         Args:
             current_batch_size: 当前批次大小
             error_rate: 错误率（0.0-1.0）
+            engine: GPU引擎实例（可选），用于获取厂商信息和monitor
             
         Returns:
             (new_batch_size, adjustment_info)
@@ -264,6 +278,34 @@ class GPUPerformanceOptimizer:
                     "reason": f"调整冷却期，剩余{remaining:.1f}秒"
                 }
         
+        # ---- 频率限流：60秒内调整不超过5次 ----
+        if engine is not None:
+            monitor = getattr(engine, '_engine_monitor', None)
+            if monitor is not None:
+                recent_count = monitor.get_recent_adjustments(seconds=60)
+                if recent_count >= 5:
+                    logger.warning(
+                        f"batch_size调整过于频繁 ({recent_count}次/60秒)，暂停自动调整"
+                    )
+                    return current_batch_size, {
+                        "action": "rate_limited",
+                        "reason": f"调整频率超限({recent_count}次/60秒)"
+                    }
+        
+        # ---- 获取厂商策略 ----
+        vendor_key = 'unknown'
+        if engine is not None:
+            vendor_key = getattr(engine, '_vendor', 'unknown')
+            if not isinstance(vendor_key, str):
+                vendor_key = 'unknown'
+            vendor_key = vendor_key.lower()
+            if vendor_key == 'unknown' and hasattr(engine, 'gpu_device'):
+                vendor_key = str(getattr(engine.gpu_device, 'vendor', 'unknown')).lower()
+        # 也可从当前profile推断
+        if vendor_key == 'unknown' and self._current_profile:
+            vendor_key = self._current_profile.vendor.value.lower()
+        strategy = VENDOR_ADJUST_STRATEGY.get(vendor_key, DEFAULT_ADJUST_STRATEGY)
+        
         with self._lock:
             if len(self._metrics_history) < 3:
                 return current_batch_size, {"action": "insufficient_data", "reason": "数据不足"}
@@ -279,7 +321,8 @@ class GPUPerformanceOptimizer:
             
             # 1. 错误率过高 - 减小batch_size
             if error_rate > profile.error_rate_threshold:
-                reduction = max(profile.batch_size_step, current_batch_size // 4)
+                reduction_factor = strategy['reduction_factor']
+                reduction = max(profile.batch_size_step, int(current_batch_size * reduction_factor))
                 new_batch_size = max(profile.min_batch_size, current_batch_size - reduction)
                 adjustments["error_rate_too_high"] = {
                     "current": error_rate,
@@ -294,7 +337,8 @@ class GPUPerformanceOptimizer:
             
             # 2. 执行时间过长 - 减小batch_size
             elif avg_execution_time > profile.slow_execution_threshold_ms:
-                reduction = max(profile.batch_size_step, current_batch_size // 4)
+                reduction_factor = strategy['reduction_factor']
+                reduction = max(profile.batch_size_step, int(current_batch_size * reduction_factor))
                 new_batch_size = max(profile.min_batch_size, current_batch_size - reduction)
                 adjustments["execution_too_slow"] = {
                     "avg_time_ms": avg_execution_time,
@@ -310,31 +354,49 @@ class GPUPerformanceOptimizer:
             # 3. 性能良好且有余量 - 增大batch_size（优化v2.2.1: 更激进的策略）
             elif (avg_execution_time < profile.slow_execution_threshold_ms * 0.5 and
                   error_rate < profile.error_rate_threshold * 0.5):
-                # 根据性能余量计算增长因子
+                # 根据性能余量和厂商策略计算增长量
                 time_ratio = profile.slow_execution_threshold_ms * 0.5 / max(avg_execution_time, 1)
+                growth_factor = strategy['growth_factor']
                 
                 if time_ratio > 3.0:
-                    # 性能非常优秀，大幅增加
-                    increase = profile.batch_size_step * 4
+                    # 性能非常优秀，大幅增加（受厂商策略影响）
+                    increase = int(profile.batch_size_step * 4 * growth_factor)
                 elif time_ratio > 2.0:
                     # 性能良好，适度增加
-                    increase = profile.batch_size_step * 2
+                    increase = int(profile.batch_size_step * 2 * growth_factor)
                 else:
                     # 性能尚可，小幅增加
-                    increase = profile.batch_size_step
+                    increase = int(profile.batch_size_step * growth_factor)
                 
                 new_batch_size = min(profile.max_batch_size_limit, current_batch_size + increase)
                 adjustments["performance_good"] = {
                     "avg_time_ms": avg_execution_time,
                     "avg_speed": avg_speed,
                     "time_ratio": time_ratio,
+                    "growth_factor": growth_factor,
                     "action": "increase_batch",
                     "old_batch": current_batch_size,
                     "new_batch": new_batch_size
                 }
                 logger.info(
-                    f"性能良好(time_ratio={time_ratio:.1f}x)，增大batch: {current_batch_size} -> {new_batch_size}"
+                    f"性能良好(time_ratio={time_ratio:.1f}x, growth={growth_factor})，"
+                    f"增大batch: {current_batch_size} -> {new_batch_size}"
                 )
+            
+            # ---- 幅度上限：单次调整不超过当前值的50% ----
+            if new_batch_size != current_batch_size:
+                max_change = current_batch_size * 0.5
+                if abs(new_batch_size - current_batch_size) > max_change:
+                    if new_batch_size > current_batch_size:
+                        new_batch_size = int(current_batch_size + max_change)
+                    else:
+                        new_batch_size = int(current_batch_size - max_change)
+                    logger.info(
+                        f"调整幅度受限，限制为当前值的50%: {new_batch_size}"
+                    )
+                
+                # 应用常量范围限制
+                new_batch_size = clamp_batch_size(new_batch_size)
             
             # 4. 记录调整
             if new_batch_size != current_batch_size:

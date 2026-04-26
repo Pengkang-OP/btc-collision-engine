@@ -1,0 +1,194 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+CLI 统一输出管理器 - 基于 Rich 库
+
+提供格式统一、支持颜色控制和静默模式的 CLI 输出功能。
+管道输出（非 tty）时自动禁用 ANSI 转义码。
+"""
+
+import io
+import os
+import platform
+import sys
+from typing import Optional
+
+from rich.console import Console
+from rich.table import Table
+from rich.panel import Panel
+from rich.text import Text
+from rich.rule import Rule
+
+
+def _get_utf8_console(stderr: bool = False, no_color: bool = False) -> Console:
+    """创建强制 UTF-8 编码的 Rich Console，解决 Windows GBK 终端乱码问题。"""
+    if platform.system() == 'Windows':
+        try:
+            # 强制将 stdout/stderr 包装为 UTF-8，Rich Console 绑定此对象
+            if stderr:
+                if not (isinstance(sys.stderr, io.TextIOWrapper)
+                        and sys.stderr.encoding.lower() == 'utf-8'):
+                    sys.stderr = io.TextIOWrapper(
+                        sys.stderr.buffer, encoding='utf-8', errors='replace'
+                    )
+                file_obj = sys.stderr
+            else:
+                if not (isinstance(sys.stdout, io.TextIOWrapper)
+                        and sys.stdout.encoding.lower() == 'utf-8'):
+                    sys.stdout = io.TextIOWrapper(
+                        sys.stdout.buffer, encoding='utf-8', errors='replace'
+                    )
+                file_obj = sys.stdout
+            return Console(
+                file=file_obj,
+                highlight=False,
+                no_color=no_color,
+                force_terminal=True,
+            )
+        except (AttributeError, io.UnsupportedOperation):
+            pass
+    # 非 Windows 或包装失败：使用默认 Console
+    return Console(
+        highlight=False,
+        no_color=no_color,
+        stderr=stderr,
+    )
+
+
+class CLIOutput:
+    """统一的 CLI 输出管理器，支持颜色控制和静默模式。
+
+    遵循 https://no-color.org/ 规范：环境变量 NO_COLOR 存在时强制禁色。
+    Rich 库会自动检测非 tty（管道/重定向）并禁用 ANSI 转义码。
+    """
+
+    _instance: Optional["CLIOutput"] = None  # 单例
+
+    def __init__(self, no_color: bool = False, quiet: bool = False) -> None:
+        # NO_COLOR 环境变量优先（https://no-color.org/）
+        force_no_color = no_color or os.environ.get("NO_COLOR") is not None
+
+        self.quiet = quiet
+        self.console = _get_utf8_console(stderr=False, no_color=force_no_color)
+        self.err_console = _get_utf8_console(stderr=True, no_color=force_no_color)
+
+    # ── 单例管理 ──────────────────────────────────────────────────────
+
+    @classmethod
+    def get_instance(cls) -> "CLIOutput":
+        """获取单例实例；若未初始化则以默认参数创建。"""
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
+
+    @classmethod
+    def init(cls, no_color: bool = False, quiet: bool = False) -> "CLIOutput":
+        """初始化单例（应在程序入口处调用一次）。"""
+        cls._instance = cls(no_color=no_color, quiet=quiet)
+        return cls._instance
+
+    # ── 消息级别输出 ──────────────────────────────────────────────────
+
+    def info(self, msg: str) -> None:
+        """蓝色 [INFO] 信息，quiet 模式下不显示。"""
+        if not self.quiet:
+            self.console.print(f"[blue][INFO][/blue] {msg}")
+
+    def success(self, msg: str) -> None:
+        """绿色 [OK] 成功消息，始终显示。"""
+        self.console.print(f"[green][OK][/green] {msg}")
+
+    def warning(self, msg: str) -> None:
+        """黄色 [WARN] 警告，输出到 stderr。"""
+        self.err_console.print(f"[yellow][WARN][/yellow] {msg}")
+
+    def error(self, msg: str) -> None:
+        """红色 [ERROR] 错误，输出到 stderr。"""
+        self.err_console.print(f"[red][ERROR][/red] {msg}")
+
+    def print(self, msg: str = "", **kwargs) -> None:
+        """普通输出，quiet 模式下不显示。"""
+        if not self.quiet:
+            self.console.print(msg, **kwargs)
+
+    def print_always(self, msg: str = "", **kwargs) -> None:
+        """始终输出（不受 quiet 影响）。"""
+        self.console.print(msg, **kwargs)
+
+    # ── 结构化输出 ────────────────────────────────────────────────────
+
+    def rule(self, title: str = "", style: str = "dim") -> None:
+        """水平分隔线，quiet 模式下不显示。"""
+        if not self.quiet:
+            self.console.rule(title, style=style)
+
+    def header(self, title: str) -> None:
+        """大标题分隔线，quiet 模式下不显示。"""
+        if not self.quiet:
+            self.console.print()
+            self.console.rule(f"[bold]{title}[/bold]", style="bright_blue")
+            self.console.print()
+
+    def startup_panel(self, config: dict) -> None:
+        """使用 Rich Panel + Table 展示启动配置，quiet 模式下不显示。
+
+        Args:
+            config: 有序字典，key 为配置项名称，value 为配置值。
+        """
+        if self.quiet:
+            return
+        table = Table(show_header=False, box=None, padding=(0, 2))
+        table.add_column("项目", style="cyan", min_width=14)
+        table.add_column("值", style="white")
+        for key, value in config.items():
+            table.add_row(str(key), str(value))
+        self.console.print(
+            Panel(table, title="[bold]启动配置[/bold]", border_style="blue")
+        )
+
+    def final_summary(self, title: str, stats: dict) -> None:
+        """使用 Rich Panel + Table 展示最终统计，始终显示。
+
+        Args:
+            title: 面板标题。
+            stats: 有序字典，key 为指标名，value 为指标值。
+        """
+        table = Table(show_header=False, box=None, padding=(0, 2))
+        table.add_column("指标", style="cyan", min_width=12)
+        table.add_column("值", style="bold white")
+        for key, value in stats.items():
+            table.add_row(str(key), str(value))
+        self.console.print(
+            Panel(table, title=f"[bold]{title}[/bold]", border_style="green")
+        )
+
+    def stats_panel(self, title: str, rows: list) -> None:
+        """通用统计面板（支持自定义行样式）。
+
+        Args:
+            title: 面板标题。
+            rows:  列表，每个元素为 (label, value) 或 (label, value, style) 元组。
+        """
+        table = Table(show_header=False, box=None, padding=(0, 2))
+        table.add_column("指标", style="cyan", min_width=14)
+        table.add_column("值", style="bold white")
+        for row in rows:
+            if len(row) == 3:
+                label, value, style = row
+                table.add_row(str(label), f"[{style}]{value}[/{style}]")
+            else:
+                label, value = row[0], row[1]
+                table.add_row(str(label), str(value))
+        self.console.print(
+            Panel(table, title=f"[bold]{title}[/bold]", border_style="cyan")
+        )
+
+    def status_line(self, text: str) -> None:
+        """单行状态更新（\\r 覆盖式）— 用于运行时进度显示。
+
+        quiet 模式下不显示。保持与 engine_runner 原有实现兼容。
+        """
+        if self.quiet:
+            return
+        sys.stdout.write(f"\r{text}\033[K")
+        sys.stdout.flush()

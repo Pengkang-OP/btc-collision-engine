@@ -26,7 +26,7 @@ from src.monitoring.monitoring_system import (
     DataCollector, 
     DataStorage, 
     AnomalyDetector, 
-    AlertSystem, 
+    MonitoringAlertAdapter, 
     ReportGenerator,
     MonitoringData
 )
@@ -129,14 +129,17 @@ class EnhancedMonitoringSystem:
         if self.config.enable_monitoring_data:
             self.storage = DataStorage()
             self.detector = AnomalyDetector(self.storage)
-            self.alert_system = AlertSystem(self.storage)
+            self.alert_system = MonitoringAlertAdapter(self.storage)
             self.report_generator = ReportGenerator(self.storage, self.detector)
+            # 创建长生命周期的 DataCollector，避免每轮循环重复创建导致线程泄漏
+            self._collector = DataCollector(self.engine)
         else:
             # 仅使用DataLogger的统计和报告功能
             self.storage = None
             self.detector = None
             self.alert_system = None
             self.report_generator = None
+            self._collector = None
         
         self._running = False
         self._thread = None
@@ -172,6 +175,12 @@ class EnhancedMonitoringSystem:
         if self._thread:
             self._thread.join(timeout=10)
         self._running = False
+        # 清理 DataCollector，停止其后台 CPU 采样线程
+        if hasattr(self, '_collector') and self._collector:
+            try:
+                self._collector.stop()
+            except (TypeError, ValueError, KeyError) as e:
+                self.logger.debug(f"DataCollector停止异常（可忽略）: {e}")
         self.logger.info("增强版监控系统已停止")
     
     def _monitoring_loop(self):
@@ -206,10 +215,8 @@ class EnhancedMonitoringSystem:
                     self.data_logger.record_system_data()
                 
                 # 如果使用monitoring_data，同时保存
-                if self.enable_monitoring_data and self.storage:
-                    from src.monitoring.monitoring_system import DataCollector
-                    collector = DataCollector(self.engine)
-                    data = collector.collect_all_data()
+                if self.enable_monitoring_data and self.storage and self._collector:
+                    data = self._collector.collect_all_data()
                     self.storage.save_current_data(data)
                     self.storage.save_history_data(data)
                     
@@ -229,6 +236,21 @@ class EnhancedMonitoringSystem:
                     self.data_logger.save_current_data()
                     self.data_logger.save_history_data()
                 
+            except OSError as e:
+                # 文件系统相关错误（日志写入、数据保存等）
+                self.logger.warning(f"监控系统文件系统错误: {e}")
+                error_info = {
+                    "type": "monitoring",
+                    "message": f"监控系统文件系统错误: {str(e)}"
+                }
+                if self.enable_monitoring_data and self.storage:
+                    try:
+                        self.storage.save_error(error_info)
+                    except OSError:
+                        pass
+            except (TypeError, ValueError) as e:
+                # 数据格式问题，通常是引擎返回数据结构变化
+                self.logger.debug(f"监控系统数据格式异常（可忽略）: {e}")
             except Exception as e:
                 error_info = {
                     "type": "monitoring",
@@ -248,8 +270,8 @@ class EnhancedMonitoringSystem:
                     )
                 self.logger.error(f"监控系统错误: {e}")
             
-            # 等待下一次采集
-            time.sleep(self.collection_interval)
+            # 等待下一次采集（可被 stop() 立即中断）
+            self._stop_event.wait(self.collection_interval)
     
     def _save_to_data_logger(self, data: MonitoringData):
         """将数据保存到数据日志系统（已弃用，保留向后兼容）"""
@@ -295,7 +317,7 @@ class EnhancedMonitoringSystem:
         try:
             process = psutil.Process(os.getpid())
             return process.cpu_percent(interval=0.1)
-        except Exception:
+        except (TypeError, ValueError, KeyError):
             return 0.0
     
     def _get_memory_usage(self) -> float:
@@ -304,7 +326,7 @@ class EnhancedMonitoringSystem:
             process = psutil.Process(os.getpid())
             memory_info = process.memory_info()
             return memory_info.rss / (1024 * 1024)
-        except Exception:
+        except (TypeError, ValueError, KeyError):
             return 0.0
     
     def _get_thread_count(self) -> int:
@@ -312,7 +334,7 @@ class EnhancedMonitoringSystem:
         try:
             process = psutil.Process(os.getpid())
             return len(process.threads())
-        except Exception:
+        except (TypeError, ValueError, KeyError):
             return 0
     
     def _generate_reports(self):
@@ -320,12 +342,12 @@ class EnhancedMonitoringSystem:
         try:
             # 生成数据日志报告
             if self.data_logger:
-                report = self.data_logger.generate_report("daily")
+                self.data_logger.generate_report("daily")
                 self.logger.info("每日报告已生成")
             
             # 如果启用monitoring_data，也生成原始报告
             if self.enable_monitoring_data and self.report_generator:
-                original_report = self.report_generator.generate_daily_report()
+                self.report_generator.generate_daily_report()
                 self.logger.info("监控系统报告已生成")
         except Exception as e:
             self.logger.error(f"生成报告失败: {e}")

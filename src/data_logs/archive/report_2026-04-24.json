@@ -1,0 +1,220 @@
+{
+  "date": "2026-04-24",
+  "summary": {
+    "total_checked": 5580177519528,
+    "matches_found": 0,
+    "average_speed": 526657.6524820705,
+    "average_cpu_usage": 110.88348484848485,
+    "average_memory_usage": 393.54906486742425,
+    "error_count": 500
+  },
+  "trends": {
+    "speed": {
+      "average": 521196.70489941543,
+      "std_dev": 91991.49319773931,
+      "trend": "decreasing"
+    },
+    "cpu_usage": {
+      "average": 109.59,
+      "std_dev": 28.37791323540122,
+      "trend": "increasing"
+    },
+    "memory_usage": {
+      "average": 399.200234375,
+      "std_dev": 51.293389861438285,
+      "trend": "decreasing"
+    }
+  },
+  "errors": [
+    {
+      "type": "anomaly_detection",
+      "level": "warning",
+      "message": "检测到 1 个异常",
+      "anomaly_count": 1,
+      "anomalies": [
+        {
+          "type": "performance",
+          "metric": "cpu_usage",
+          "value": 93.6,
+          "threshold": 90,
+          "message": "CPU使用率过高: 93.60%"
+        }
+      ],
+      "timestamp": 1777009581.4980047
+    },
+    {
+      "type": "alert",
+      "level": "warning",
+      "message": "CPU使用率过高: 93.60%",
+      "alert_data": {
+        "timestamp": 1777009581.520943,
+        "level": "warning",
+        "message": "CPU使用率过高: 93.60%",
+        "details": {
+          "type": "performance",
+          "metric": "cpu_usage",
+          "value": 93.6,
+          "threshold": 90,
+          "message": "CPU使用率过高: 93.60%"
+        }
+      },
+      "timestamp": 1777009581.5367465
+    },
+    {
+      "type": "anomaly_detection",
+      "level": "warning",
+      "message": "检测到 3 个异常",
+      "anomaly_count": 3,
+      "anomalies": [
+        {
+          "type": "performance",
+          "metric": "speed",
+          "value": 0.0,
+          "threshold": 100,
+          "message": "检测速率过低: 0.00/s"
+        },
+        {
+          "type": "performance",
+          "metric": "cpu_usage",
+          "value": 100.7,
+          "threshold": 90,
+          "message": "CPU使用率过高: 100.70%"
+        },
+        {
+          "type": "engine",
+          "metric": "speed",
+          "value": 0,
+          "threshold": 1,
+          "message": "引擎运行但检测速率为0"
+        }
+      ],
+      "timestamp": 1777045935.4737031
+    },
+    {
+      "type": "alert",
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "alert_data": {
+        "timestamp": 1777045936.510322,
+        "level": "warning",
+        "message": "检测速率过低: 0.00/s",
+        "details": {
+          "type": "performance",
+          "metric": "speed",
+          "value": 0.0,
+          "threshold": 100,
+          "message": "检测速率过低: 0.00/s"
+        }
+      },
+      "timestamp": 1777045937.4692082
+    },
+    {
+      "type": "alert",
+      "level": "warning",
+      "message": "CPU使用率过高: 100.70%",
+      "alert_data": {
+        "timestamp": 1777045937.7527184,
+        "level": "warning",
+        "message": "CPU使用率过高: 100.70%",
+        "details": {
+          "type": "performance",
+          "metric": "cpu_usage",
+          "value": 100.7,
+          "threshold": 90,
+          "message": "CPU使用率过高: 100.70%"
+        }
+      },
+      "timestamp": 1777045938.7306488
+    },
+    {
+      "type": "alert",
+      "level": "critical",
+      "message": "引擎运行但检测速率为0",
+      "alert_data": {
+        "timestamp": 1777045939.6416316,
+        "level": "critical",
+        "message": "引擎运行但检测速率为0",
+        "details": {
+          "type": "engine",
+          "metric": "speed",
+          "value": 0,
+          "threshold": 1,
+          "message": "引擎运行但检测速率为0"
+        }
+      },
+      "timestamp": 1777045940.7367773
+    },
+    {
+      "type": "anomaly_detection",
+      "level": "warning",
+      "message": "检测到 1 个异常",
+      "anomaly_count": 1,
+      "anomalies": [
+        {
+          "type": "performance",
+          "metric": "cpu_usage",
+          "value": 93.1,
+          "threshold": 90,
+          "message": "CPU使用率过高: 93.10%"
+        }
+      ],
+      "timestamp": 1777045962.2778115
+    },
+    {
+      "type": "alert",
+      "level": "warning",
+      "message": "CPU使用率过高: 93.10%",
+      "alert_data": {
+        "timestamp": 1777045963.1383772,
+        "level": "warning",
+        "message": "CPU使用率过高: 93.10%",
+        "details": {
+          "type": "performance",
+          "metric": "cpu_usage",
+          "value": 93.1,
+          "threshold": 90,
+          "message": "CPU使用率过高: 93.10%"
+        }
+      },
+      "timestamp": 1777045963.779467
+    },
+    {
+      "type": "anomaly_detection",
+      "level": "warning",
+      "message": "检测到 1 个异常",
+      "anomaly_count": 1,
+      "anomalies": [
+        {
+          "type": "performance",
+          "metric": "cpu_usage",
+          "value": 98.9,
+          "threshold": 90,
+          "message": "CPU使用率过高: 98.90%"
+        }
+      ],
+      "timestamp": 1777045990.6561973
+    },
+    {
+      "type": "alert",
+      "level": "warning",
+      "message": "CPU使用率过高: 98.90%",
+      "alert_data": {
+        "timestamp": 1777045991.3567097,
+        "level": "warning",
+        "message": "CPU使用率过高: 98.90%",
+        "details": {
+          "type": "performance",
+          "metric": "cpu_usage",
+          "value": 98.9,
+          "threshold": 90,
+          "message": "CPU使用率过高: 98.90%"
+        }
+      },
+      "timestamp": 1777045992.5920703
+    }
+  ],
+  "recommendations": [
+    "检测速率呈下降趋势，建议检查系统资源使用情况",
+    "CPU使用率较高，建议优化代码或考虑使用GPU加速"
+  ]
+}

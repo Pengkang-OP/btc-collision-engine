@@ -58,7 +58,7 @@ class CollisionEvent:
         source: 事件来源 (模块名称)
         metadata: 附加元数据
     """
-    event_type: EventType
+    event_type: Optional[EventType] = field(default=None)
     timestamp: datetime = field(default_factory=datetime.now)
     source: str = "collision_engine"
     metadata: Dict[str, Any] = field(default_factory=dict)

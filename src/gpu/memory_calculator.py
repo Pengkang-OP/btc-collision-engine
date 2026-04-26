@@ -19,17 +19,22 @@ class GPUMemoryCalculator:
 
     提供静态工具方法，用于估算 GPU 内核执行时的显存需求。
 
-    内存布局（基于 OpenCL 内核实现）：
-    - 私钥缓冲区:     num_keys * 32 字节 (PRIVATE_KEY_SIZE)
-    - 匹配标志缓冲区: num_keys *  4 字节 (uint32)
-    - 目标地址缓冲区: num_targets * 20 字节 (HASH160_SIZE)
-    - 执行临时开销:   上述缓冲区总和的 20%
+    内存布局（基于 PRNG 改造后的 OpenCL 内核实现）：
+    - seed_buf（固定）:    32 字节（替代旧 num_keys * 32 私钥缓冲区）
+    - 预计算表（固定）:    1984 字节（31×2×8 uint32 = 496×4 字节，G1..G31 affine）
+    - 匹配标志缓冲区:      num_keys * 4 字节 (uint32)
+    - 目标地址缓冲区:      num_targets * 20 字节 (HASH160_SIZE)
+    - 执行临时开销:        上述缓冲区总和的 20%
+
+    注意：PRNG 改造后私钥在 GPU 端由 seed+gid 生成，不再传输大型私钥缓冲区。
     """
 
     # ------------------------------------------------------------------
     # 常量定义
     # ------------------------------------------------------------------
-    PRIVATE_KEY_SIZE: int = 32   # 私钥字节数
+    SEED_BUF_SIZE: int = 32      # PRNG 种子缓冲区（固定，不随 batch_size 变化）
+    PRECOMP_TABLE_SIZE: int = 1984  # 预计算点表（31×2×8 uint32 = 496×4 字节，固定）
+    PRIVATE_KEY_SIZE: int = 32   # 已弃用：PRNG 模式下私钥不再传输，保留仅供向后兼容
     HASH160_SIZE: int = 20       # Hash160（RIPEMD160(SHA256(pubkey))）字节数
     MATCH_FLAG_SIZE: int = 4     # 匹配标志（uint32）字节数
     KERNEL_OVERHEAD_RATIO: float = 0.20  # 内核执行临时显存开销比例（20%）
@@ -44,6 +49,8 @@ class GPUMemoryCalculator:
     def calculate_batch_memory(batch_size: int, num_targets: int) -> int:
         """计算给定 batch_size 和目标数的显存需求（字节）
 
+        PRNG 模式：私钥在 GPU 端由 seed+gid 生成，host 仅传输 32 字节 seed_buf。
+
         Args:
             batch_size:   每批处理的私钥数量
             num_targets:  目标地址数量
@@ -51,21 +58,24 @@ class GPUMemoryCalculator:
         Returns:
             估算的显存需求（字节）
         """
-        # 1. 私钥缓冲区
-        private_keys_bytes = batch_size * GPUMemoryCalculator.PRIVATE_KEY_SIZE
+        # 1. seed_buf（固定 32 字节，替代旧 batch_size * 32 私钥缓冲区）
+        seed_buf_bytes = GPUMemoryCalculator.SEED_BUF_SIZE
 
-        # 2. 匹配标志缓冲区
+        # 2. 预计算点表（固定 1984 字节）
+        precomp_bytes = GPUMemoryCalculator.PRECOMP_TABLE_SIZE
+
+        # 3. 匹配标志缓冲区
         match_flags_bytes = batch_size * GPUMemoryCalculator.MATCH_FLAG_SIZE
 
-        # 3. 目标地址缓冲区
+        # 4. 目标地址缓冲区
         targets_bytes = num_targets * GPUMemoryCalculator.HASH160_SIZE
 
-        # 4. 内核执行临时开销（20%）
+        # 5. 内核执行临时开销（20%，仅对可变大小缓冲区计算）
         overhead_bytes = int(
-            (private_keys_bytes + match_flags_bytes) * GPUMemoryCalculator.KERNEL_OVERHEAD_RATIO
+            match_flags_bytes * GPUMemoryCalculator.KERNEL_OVERHEAD_RATIO
         )
 
-        total_bytes = private_keys_bytes + match_flags_bytes + targets_bytes + overhead_bytes
+        total_bytes = seed_buf_bytes + precomp_bytes + match_flags_bytes + targets_bytes + overhead_bytes
         return total_bytes
 
     @staticmethod
@@ -112,11 +122,18 @@ class GPUMemoryCalculator:
             )
             return 10_000  # 返回最小安全值
 
-        # 每个 key 消耗的字节数（含 20% overhead）
-        per_key_bytes = (
-            GPUMemoryCalculator.PRIVATE_KEY_SIZE +
-            GPUMemoryCalculator.MATCH_FLAG_SIZE
-        ) * (1 + GPUMemoryCalculator.KERNEL_OVERHEAD_RATIO)
+        # PRNG 模式：固定开销（seed_buf + precomp_table）先从可用显存中扣除
+        fixed_bytes = GPUMemoryCalculator.SEED_BUF_SIZE + GPUMemoryCalculator.PRECOMP_TABLE_SIZE
+        remaining -= fixed_bytes
+
+        if remaining <= 0:
+            logger.warning(
+                f"可用显存扣除固定缓冲区后不足，使用最小 batch_size"
+            )
+            return 10_000
+
+        # 每个 key 消耗的字节数（含 20% overhead，PRNG 模式下仅 match_flags）
+        per_key_bytes = GPUMemoryCalculator.MATCH_FLAG_SIZE * (1 + GPUMemoryCalculator.KERNEL_OVERHEAD_RATIO)
 
         max_batch = int(remaining / per_key_bytes)
 
@@ -150,16 +167,19 @@ class GPUMemoryCalculator:
         """
         bpMB = GPUMemoryCalculator.BYTES_PER_MB
 
-        private_keys_bytes = batch_size * GPUMemoryCalculator.PRIVATE_KEY_SIZE
+        # PRNG 模式：固定缓冲区（seed_buf + precomp_table）
+        seed_buf_bytes = GPUMemoryCalculator.SEED_BUF_SIZE
+        precomp_bytes = GPUMemoryCalculator.PRECOMP_TABLE_SIZE
         match_flags_bytes = batch_size * GPUMemoryCalculator.MATCH_FLAG_SIZE
         targets_bytes = num_targets * GPUMemoryCalculator.HASH160_SIZE
         overhead_bytes = int(
-            (private_keys_bytes + match_flags_bytes) * GPUMemoryCalculator.KERNEL_OVERHEAD_RATIO
+            match_flags_bytes * GPUMemoryCalculator.KERNEL_OVERHEAD_RATIO
         )
-        total_bytes = private_keys_bytes + match_flags_bytes + targets_bytes + overhead_bytes
+        total_bytes = seed_buf_bytes + precomp_bytes + match_flags_bytes + targets_bytes + overhead_bytes
 
         breakdown = {
-            'private_keys_mb': private_keys_bytes / bpMB,
+            'seed_buf_mb': seed_buf_bytes / bpMB,
+            'precomp_table_mb': precomp_bytes / bpMB,
             'match_flags_mb': match_flags_bytes / bpMB,
             'targets_mb': targets_bytes / bpMB,
             'overhead_mb': overhead_bytes / bpMB,
@@ -167,7 +187,8 @@ class GPUMemoryCalculator:
         }
 
         logger.debug(
-            f"GPU显存估算: private_keys={breakdown['private_keys_mb']:.2f}MB, "
+            f"GPU显存估算(PRNG模式): seed_buf={breakdown['seed_buf_mb']:.4f}MB, "
+            f"precomp={breakdown['precomp_table_mb']:.4f}MB, "
             f"match_flags={breakdown['match_flags_mb']:.2f}MB, "
             f"targets={breakdown['targets_mb']:.2f}MB, "
             f"overhead={breakdown['overhead_mb']:.2f}MB, "
@@ -195,15 +216,18 @@ class GPUMemoryCalculator:
         """
         bpMB = GPUMemoryCalculator.BYTES_PER_MB
 
-        private_keys_mb = (num_keys * GPUMemoryCalculator.PRIVATE_KEY_SIZE) / bpMB
+        # PRNG 模式：seed_buf（固定32字节）+ precomp_table（固定1984字节）+ match_flags（可变）
+        seed_buf_mb = GPUMemoryCalculator.SEED_BUF_SIZE / bpMB
+        precomp_mb = GPUMemoryCalculator.PRECOMP_TABLE_SIZE / bpMB
         match_flags_mb = (num_keys * GPUMemoryCalculator.MATCH_FLAG_SIZE) / bpMB
         targets_mb = len(hash160_bytes) / bpMB if hash160_bytes else 0.0
-        overhead_mb = (private_keys_mb + match_flags_mb) * GPUMemoryCalculator.KERNEL_OVERHEAD_RATIO
+        overhead_mb = match_flags_mb * GPUMemoryCalculator.KERNEL_OVERHEAD_RATIO
 
-        total_mb = private_keys_mb + match_flags_mb + targets_mb + overhead_mb
+        total_mb = seed_buf_mb + precomp_mb + match_flags_mb + targets_mb + overhead_mb
 
         logger.debug(
-            f"GPU显存估算: private_keys={private_keys_mb:.2f}MB, "
+            f"GPU显存估算(PRNG模式): seed_buf={seed_buf_mb:.4f}MB, "
+            f"precomp={precomp_mb:.4f}MB, "
             f"match_flags={match_flags_mb:.2f}MB, "
             f"targets={targets_mb:.2f}MB, "
             f"overhead={overhead_mb:.2f}MB, "

@@ -15,6 +15,23 @@ logger = logging.getLogger(__name__)
 _BYTES_TO_GB = 1024 ** 3  # 1,073,741,824
 
 
+def _align_work_group_size(recommended: int, max_wgs: int, alignment: int) -> int:
+    """将work_group_size对齐到厂商最优值，且不超过设备限制"""
+    if max_wgs <= 0:
+        return 1
+
+    wgs = min(recommended, max_wgs)
+
+    if max_wgs < alignment:
+        return max_wgs
+
+    wgs = (wgs // alignment) * alignment
+    if wgs == 0:
+        wgs = alignment
+
+    return min(wgs, max_wgs)
+
+
 def _get_memory_gb(device: Dict) -> float:
     """获取GPU显存大小(GB)
     
@@ -190,6 +207,17 @@ class GPUAutoConfigurator:
             config['batch_size'] = 32768   # 32K
             config['memory_usage_ratio'] = 0.6
         
+        # 自适应 work_group_size: NVIDIA Warp大小对齕32
+        max_wgs = device.get('max_work_group_size', 1024)
+        recommended_wgs = 256
+        adjusted_wgs = _align_work_group_size(recommended_wgs, max_wgs, 32)
+        if adjusted_wgs != recommended_wgs:
+            logger.info(
+                f"[NVIDIA] work_group_size从{recommended_wgs}调整为{adjusted_wgs} "
+                f"(设备限制: {max_wgs}, 对齐: 32)"
+            )
+        config['work_group_size'] = adjusted_wgs
+        
         return config
     
     def get_amd_config(self, device: Dict) -> Dict:
@@ -213,6 +241,17 @@ class GPUAutoConfigurator:
         else:
             config['batch_size'] = 32768   # 32K
         
+        # 自适应 work_group_size: AMD Wavefront大小对齕64 (GCN架构, RDNA为32)
+        max_wgs = device.get('max_work_group_size', 1024)
+        recommended_wgs = 256
+        adjusted_wgs = _align_work_group_size(recommended_wgs, max_wgs, 64)
+        if adjusted_wgs != recommended_wgs:
+            logger.info(
+                f"[AMD] work_group_size从{recommended_wgs}调整为{adjusted_wgs} "
+                f"(设备限制: {max_wgs}, 对齐: 64)"
+            )
+        config['work_group_size'] = adjusted_wgs
+        
         return config
     
     def get_intel_config(self, device: Dict) -> Dict:
@@ -232,15 +271,27 @@ class GPUAutoConfigurator:
             # Arc A770 16GB - v3.1.0优化: 提升到 1M（原262K），充分利用16GB显存
             config['batch_size'] = 1048576  # 1M，42MB显存占用（A770有充足余量）
             config['memory_usage_ratio'] = 0.70
-            config['work_group_size'] = 512  # v2.3.0优化: 匹配512个EU
+            recommended_wgs = 512  # v2.3.0优化: 匹配512个EU
         elif memory_gb >= 8:
             # Arc A750/A580 - v2.2.1优化: 提升到131K
             config['batch_size'] = 131072   # 131K
             config['memory_usage_ratio'] = 0.6
+            recommended_wgs = 512
         else:
             # Arc A380等低端卡
             config['batch_size'] = 65536   # 65K
             config['memory_usage_ratio'] = 0.5
+            recommended_wgs = 512
+        
+        # 自适应 work_group_size: Intel Arc EU对齕32
+        max_wgs = device.get('max_work_group_size', 1024)
+        adjusted_wgs = _align_work_group_size(recommended_wgs, max_wgs, 32)
+        if adjusted_wgs != recommended_wgs:
+            logger.info(
+                f"[Intel Arc] work_group_size从{recommended_wgs}调整为{adjusted_wgs} "
+                f"(设备限制: {max_wgs}, 对齐: 32)"
+            )
+        config['work_group_size'] = adjusted_wgs
         
         return config
     
@@ -259,6 +310,17 @@ class GPUAutoConfigurator:
             config['batch_size'] = 32768
         else:
             config['batch_size'] = 16384
+        
+        # 自适应 work_group_size: 保守配置对齕32
+        max_wgs = device.get('max_work_group_size', 1024)
+        recommended_wgs = 256
+        adjusted_wgs = _align_work_group_size(recommended_wgs, max_wgs, 32)
+        if adjusted_wgs != recommended_wgs:
+            logger.info(
+                f"[Unknown GPU] work_group_size从{recommended_wgs}调整为{adjusted_wgs} "
+                f"(设备限制: {max_wgs}, 对齐: 32)"
+            )
+        config['work_group_size'] = adjusted_wgs
         
         return config
     

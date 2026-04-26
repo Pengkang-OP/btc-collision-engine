@@ -31,8 +31,29 @@ from .multi_gpu_engine import MultiGPUCollisionEngine
 from .auto_config import GPUAutoConfigurator, get_gpu_configurator, reset_gpu_configurator
 from .lock_monitor import LockMonitor, MonitoredLock, get_lock_monitor, create_monitored_lock
 from .data_monitor import DataMonitor, DataQualityIssue
+# 提取的独立模块
+from .intel_optimizer import IntelGPUOptimizer
+from .nvidia_optimizer import NvidiaGPUOptimizer
+from .amd_optimizer import AmdGPUOptimizer
+from .memory_calculator import GPUMemoryCalculator
+from .optimization_pipeline import PerformanceOptimizationPipeline
+from .engine_monitor import GPUEngineMonitor
+# GPU全局常量模块
+from .constants import (
+    PER_KEY_MEMORY_BYTES,
+    BYTES_PER_MB,
+    BATCH_SIZE_ALIGNMENT,
+    MIN_BATCH_SIZE,
+    MAX_BATCH_SIZE,
+    DEFAULT_BATCH_SIZE,
+    MEMORY_EFFICIENCY_MIN,
+    MEMORY_EFFICIENCY_MAX,
+    DEFAULT_MEMORY_EFFICIENCY,
+    align_batch_size,
+    clamp_batch_size,
+)
 
-__version__ = "3.1.1"  # 与主项目版本同步 (v3.1.1: 自动化安装、健康检查、数据清理)
+__version__ = "3.2.0"  # 与主项目版本同步 (v3.2.0: 版本统一、配置结构对齐、GPU异步执行默认开启)
 
 __all__ = [
     'GPUDeviceDetector',
@@ -63,5 +84,25 @@ __all__ = [
     'create_monitored_lock',
     # 数据监控
     'DataMonitor',
-    'DataQualityIssue'
+    'DataQualityIssue',
+    # 提取的独立模块
+    'IntelGPUOptimizer',
+    'NvidiaGPUOptimizer',
+    'AmdGPUOptimizer',
+    'GPUMemoryCalculator',
+    'PerformanceOptimizationPipeline',
+    # Task#3: 引擎监控模块
+    'GPUEngineMonitor',
+    # Task#7: GPU全局常量模块
+    'PER_KEY_MEMORY_BYTES',
+    'BYTES_PER_MB',
+    'BATCH_SIZE_ALIGNMENT',
+    'MIN_BATCH_SIZE',
+    'MAX_BATCH_SIZE',
+    'DEFAULT_BATCH_SIZE',
+    'MEMORY_EFFICIENCY_MIN',
+    'MEMORY_EFFICIENCY_MAX',
+    'DEFAULT_MEMORY_EFFICIENCY',
+    'align_batch_size',
+    'clamp_batch_size',
 ]

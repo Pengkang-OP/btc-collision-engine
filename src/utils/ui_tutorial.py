@@ -5,6 +5,7 @@ from tkinter import messagebox
 from typing import Optional
 
 from ..config.gui_config import FONT_CONFIG, COLOR_CONFIG
+from .platform_utils import PlatformUtils
 
 
 class Tooltip:
@@ -59,7 +60,7 @@ class Tooltip:
                 background="#ffffe0",
                 relief="solid",
                 borderwidth=1,
-                font=FONT_CONFIG.get("hint", ("Microsoft YaHei", 8)),
+                font=FONT_CONFIG.get("hint", PlatformUtils.get_font_config()["hint"]),
                 wraplength=300
             )
             label.pack(ipadx=5, ipady=3)

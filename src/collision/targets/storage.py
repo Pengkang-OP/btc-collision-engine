@@ -472,17 +472,8 @@ class AddressStorage:
             # 初始化存储
             storage = AddressStorage(storage_type=storage_type, path=storage_path)
             
-            # 安全检查: 防止路径遍历攻击
+            # 获取源文件真实路径
             real_source_path = os.path.realpath(source_path)
-            allowed_dirs = [
-                os.path.abspath(os.getcwd()),
-                os.path.abspath(os.environ.get('TEMP', '/tmp')),
-                os.path.abspath(os.environ.get('TMP', '/tmp')),
-            ]
-            if not any(real_source_path.startswith(allowed_dir) for allowed_dir in allowed_dirs):
-                result['error'] = "安全警告: 源文件路径超出允许范围"
-                logger.error(f"安全警告: 路径遍历攻击检测 - 路径={real_source_path}")
-                return result
             
             # 读取源文件
             logger.info(f"开始导入地址: 源文件={real_source_path}, 存储类型={storage_type}")

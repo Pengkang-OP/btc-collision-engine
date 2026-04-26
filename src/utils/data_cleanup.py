@@ -10,7 +10,7 @@ import shutil
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -213,6 +213,125 @@ class DataCleaner:
         logger.info(f"监控数据清理完成: 删除{files_removed}个文件, 释放{space_freed / 1024 / 1024:.2f}MB")
         return files_removed, space_freed
     
+    def clean_old_reports(self, max_age_days: int = 7, archive_dir: str = "archive") -> Dict[str, Any]:
+        """清理过期的报告文件，将超过指定天数的报告归档
+        
+        Args:
+            max_age_days: 报告保留天数，默认7天
+            archive_dir: 归档子目录名称，默认为 "archive"
+        
+        Returns:
+            清理统计信息
+        """
+        logger.info(f"开始归档过期报告文件（>{max_age_days}天）...")
+        
+        data_dir = os.path.join(self.project_root, 'data_logs')
+        if not os.path.exists(data_dir):
+            return {'moved': 0, 'space_freed_bytes': 0, 'errors': 0}
+        
+        archive_path = os.path.join(data_dir, archive_dir)
+        os.makedirs(archive_path, exist_ok=True)
+        
+        moved_count = 0
+        space_freed = 0
+        errors = 0
+        cutoff_time = time.time() - (max_age_days * 24 * 3600)
+        
+        patterns = ['report_daily_*.json', 'report_*.json']
+        matched_files = set()
+        for pattern in patterns:
+            for file_path in Path(data_dir).glob(pattern):
+                matched_files.add(file_path)
+        
+        for file_path in matched_files:
+            try:
+                file_mtime = file_path.stat().st_mtime
+                if file_mtime < cutoff_time:
+                    file_size = file_path.stat().st_size
+                    dest = os.path.join(archive_path, file_path.name)
+                    shutil.move(str(file_path), dest)
+                    logger.debug(f"归档报告文件: {file_path.name}")
+                    moved_count += 1
+                    space_freed += file_size
+                    self.stats['files_removed'] += 1
+                    self.stats['space_freed_bytes'] += file_size
+            except OSError as e:
+                logger.error(f"归档报告文件失败 {file_path}: {e}")
+                self.stats['errors'] += 1
+                errors += 1
+        
+        logger.info(f"报告归档完成: 移动{moved_count}个文件, 释放{space_freed / 1024 / 1024:.2f}MB")
+        return {'moved': moved_count, 'space_freed_bytes': space_freed, 'errors': errors}
+
+    def rotate_performance_log(self, max_size_mb: float = 10.0, dry_run: bool = False) -> bool:
+        """轮转 performance.log 日志文件
+
+        当 data_logs/performance.log 超过指定大小时，将其归档到
+        data_logs/archive/ 目录，并创建新的空文件。
+
+        参数:
+            max_size_mb: 触发轮转的文件大小阈值（MB），默认 10MB
+            dry_run: 是否为试运行（不实际操作文件）
+
+        返回:
+            True 表示执行了轮转操作，False 表示无需轮转
+        """
+        # 构建 performance.log 的完整路径
+        perf_log_path = Path(self.project_root) / 'data_logs' / 'performance.log'
+
+        # 文件不存在则直接返回
+        if not perf_log_path.exists():
+            logger.debug("performance.log 不存在，跳过轮转")
+            return False
+
+        # 获取文件大小（字节转 MB）
+        file_size_bytes = perf_log_path.stat().st_size
+        file_size_mb = file_size_bytes / (1024 * 1024)
+
+        # 文件未超过阈值则不需要轮转
+        if file_size_mb <= max_size_mb:
+            logger.debug(f"performance.log 大小为 {file_size_mb:.2f}MB，未超过阈值 {max_size_mb}MB，无需轮转")
+            return False
+
+        logger.info(f"performance.log 大小为 {file_size_mb:.2f}MB，超过 {max_size_mb}MB 阈值，开始轮转...")
+
+        # 确保归档目录存在
+        archive_dir = Path(self.project_root) / 'data_logs' / 'archive'
+        archive_dir.mkdir(parents=True, exist_ok=True)
+
+        # 归档文件命名格式：performance_log_YYYYMMDD.log
+        date_str = datetime.now().strftime('%Y%m%d')
+        archive_name = f'performance_log_{date_str}.log'
+        archive_path = archive_dir / archive_name
+
+        # 如果同日期归档文件已存在，追加时间戳以避免覆盖
+        if archive_path.exists():
+            timestamp_str = datetime.now().strftime('%Y%m%d_%H%M%S')
+            archive_name = f'performance_log_{timestamp_str}.log'
+            archive_path = archive_dir / archive_name
+
+        try:
+            if not dry_run:
+                # 将当前文件移动到归档目录
+                shutil.move(str(perf_log_path), str(archive_path))
+                logger.info(f"performance.log 已归档至: {archive_path}")
+
+                # 创建新的空 performance.log
+                perf_log_path.touch()
+                logger.info("已创建新的空 performance.log")
+
+                # 更新统计信息
+                self.stats['space_freed_bytes'] += file_size_bytes
+                self.stats['files_removed'] += 1
+            else:
+                logger.info(f"[试运行] 将归档 performance.log ({file_size_mb:.2f}MB) -> {archive_path}")
+
+            return True
+        except OSError as e:
+            logger.error(f"轮转 performance.log 失败: {e}")
+            self.stats['errors'] += 1
+            return False
+
     def clean_all(self, dry_run: bool = False) -> dict:
         """执行所有清理任务
         
@@ -237,7 +356,20 @@ class DataCleaner:
             ("过期数据", lambda: self.clean_old_data(dry_run=dry_run)),
             ("日志轮转", lambda: (self.rotate_log_files(dry_run=dry_run), 0)),
             ("监控数据", lambda: self.clean_monitoring_data(dry_run=dry_run)),
+            ("报告归档", lambda: (lambda r: (r['moved'], r['space_freed_bytes']))(self.clean_old_reports()) if not dry_run else (0, 0)),
         ]
+
+        # 单独处理 performance.log 轮转（返回值为 bool，不适合统一的 (files, space) 格式）
+        try:
+            rotated = self.rotate_performance_log(dry_run=dry_run)
+            if rotated:
+                print("[成功] performance.log轮转: 已归档超大日志文件")
+            else:
+                print("[跳过] performance.log轮转: 文件未超过10MB阈值")
+        except Exception as e:
+            print(f"[错误] performance.log轮转: {e}")
+            logger.error(f"performance.log 轮转任务失败: {e}")
+            self.stats['errors'] += 1
         
         for task_name, task_func in tasks:
             try:

@@ -1,0 +1,73 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+配置加载与验证模块
+
+提供配置文件的加载、解析和基本验证功能。
+"""
+
+import json
+import os
+import sys
+
+# 将项目根目录加入路径
+_project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
+
+from src.utils import get_configured_logger
+from src.i18n import _t
+from typing import Optional
+
+logger = get_configured_logger("CLI")
+
+
+def load_config_with_validation(config_file: str = None) -> Optional[dict]:
+    """
+    加载并验证配置文件
+    
+    参数:
+        config_file: 可选的配置文件路径，若为 None 则使用项目根目录的 config.json
+    返回:
+        配置字典，如果加载失败则返回None
+    """
+    if config_file:
+        config_path = os.path.abspath(config_file)
+    else:
+        config_path = os.path.join(_project_root, 'config.json')
+    
+    # 检查配置文件是否存在
+    if not os.path.exists(config_path):
+        logger.warning(f"配置文件不存在: {config_path}")
+        logger.info("请运行: copy config.example.json config.json (Windows) 或 cp config.example.json config.json (Linux/macOS)")
+        return None
+    
+    # 尝试加载JSON
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        logger.info(_t("config.loaded", path=config_path))
+        
+        # 基本验证
+        if not isinstance(config, dict):
+            logger.error(_t("config.invalid", error="根节点必须是JSON对象"))
+            return None
+        
+        return config
+        
+    except json.JSONDecodeError as e:
+        logger.error(_t("config.invalid", error=str(e)))
+        logger.error(f"位置: 行{e.lineno}, 列{e.colno}")
+        logger.error("请检查config.json语法，或从config.example.json重新复制")
+        return None
+    except UnicodeDecodeError as e:
+        logger.error(_t("errors.io_error", detail=str(e)))
+        logger.error("请确保配置文件使用UTF-8编码")
+        return None
+    except PermissionError as e:
+        logger.error(_t("errors.permission_denied", path=config_path))
+        logger.error("请检查文件读取权限")
+        return None
+    except Exception as e:
+        logger.error(_t("errors.unexpected", error=str(e)))
+        return None

@@ -29,6 +29,7 @@ from pathlib import Path
 from typing import List, Tuple, Dict, Any, Optional
 
 from ..utils import init_logging, get_configured_logger
+from ..i18n import _t
 
 init_logging()
 logger = get_configured_logger("PlatformChecker")
@@ -94,17 +95,18 @@ class PlatformChecker:
         machine = platform.machine()
         version = platform.version()
 
-        detail = (
-            f"系统={system}, 版本={release}, "
-            f"架构={machine}, 详情={version[:60]}"
+        detail = _t(
+            "platform.check.detail_os",
+            system=system, release=release,
+            machine=machine, version=version[:60]
         )
 
         if system in ("Windows", "Linux", "Darwin"):
-            msg = f"{system} {release} ({machine}) — 已支持"
-            return self._add("操作系统", True, msg, detail)
+            msg = _t("platform.check.os_supported", os_name=f"{system} {release} ({machine})")
+            return self._add(_t("platform.check.name_os"), True, msg, detail)
         else:
-            msg = f"{system} — 未经测试，可能出现兼容问题"
-            return self._add("操作系统", False, msg, detail)
+            msg = _t("platform.check.os_unsupported", os_name=system)
+            return self._add(_t("platform.check.name_os"), False, msg, detail)
 
     def check_python_version(self) -> CheckResult:
         """检查 Python 版本 >= 3.9"""
@@ -112,12 +114,16 @@ class PlatformChecker:
         ver_str = f"Python {major}.{minor}.{micro}"
 
         if (major, minor) >= (3, 9):
-            return self._add("Python 版本", True, f"{ver_str} >= 3.9 OK", sys.executable)
+            return self._add(
+                _t("platform.check.name_python"), True,
+                _t("platform.check.python_ok", version=ver_str),
+                sys.executable
+            )
         else:
             return self._add(
-                "Python 版本",
+                _t("platform.check.name_python"),
                 False,
-                f"{ver_str} < 3.9，请升级 Python",
+                _t("platform.check.python_low", version=ver_str, required="3.9"),
                 "参考: https://www.python.org/downloads/"
             )
 
@@ -129,24 +135,25 @@ class PlatformChecker:
 
         if system != "Windows":
             return self._add(
-                "路径长度",
+                _t("platform.check.name_path"),
                 True,
-                f"非 Windows 系统，无路径长度限制 (当前路径长 {path_len})",
+                _t("platform.check.path_length_non_windows", path_len=path_len),
                 root_str
             )
 
         if path_len > self.WINDOWS_MAX_PATH - 60:
             # 留 60 字符余量给子路径
-            msg = (
-                f"项目路径较长 ({path_len} 字符)，可能触发 Windows MAX_PATH={self.WINDOWS_MAX_PATH} 限制。"
-                " 建议开启「长路径支持」或将项目移至更短路径。"
+            msg = _t(
+                "platform.check.path_length_long",
+                path_len=path_len,
+                max_path=self.WINDOWS_MAX_PATH
             )
-            return self._add("路径长度", False, msg, root_str)
+            return self._add(_t("platform.check.name_path"), False, msg, root_str)
 
         return self._add(
-            "路径长度",
+            _t("platform.check.name_path"),
             True,
-            f"路径长度 {path_len} 字符，在 Windows 限制 {self.WINDOWS_MAX_PATH} 内",
+            _t("platform.check.path_length_ok", path_len=path_len, max_path=self.WINDOWS_MAX_PATH),
             root_str
         )
 
@@ -156,22 +163,27 @@ class PlatformChecker:
         preferred = locale.getpreferredencoding(False)
         stdout_enc = getattr(sys.stdout, "encoding", "unknown") or "unknown"
 
-        detail = (
-            f"文件系统编码={fs_encoding}, "
-            f"系统首选编码={preferred}, "
-            f"stdout编码={stdout_enc}"
+        detail = _t(
+            "platform.check.detail_encoding",
+            fs_encoding=fs_encoding,
+            preferred=preferred,
+            stdout_enc=stdout_enc
         )
 
         # Windows 旧版控制台可能使用 GBK/CP936
         if stdout_enc.upper() in ("UTF-8", "UTF8", "UTF_8"):
-            return self._add("终端编码", True, f"stdout 编码为 UTF-8 OK", detail)
+            return self._add(
+                _t("platform.check.name_encoding"), True,
+                _t("platform.check.encoding_ok", encoding=stdout_enc),
+                detail
+            )
 
         # 常见非 UTF-8 编码提示
         hint = ""
         if platform.system() == "Windows":
-            hint = " 可在 PowerShell 执行 `chcp 65001` 切换为 UTF-8"
-        msg = f"stdout 编码为 {stdout_enc}，中文显示可能异常。{hint}"
-        return self._add("终端编码", False, msg, detail)
+            hint = _t("platform.check.encoding_win_hint")
+        msg = _t("platform.check.encoding_warn", encoding=stdout_enc) + hint
+        return self._add(_t("platform.check.name_encoding"), False, msg, detail)
 
     def check_directory_permissions(self) -> CheckResult:
         """检查关键目录的读写权限"""
@@ -192,15 +204,15 @@ class PlatformChecker:
 
         if failures:
             return self._add(
-                "目录权限",
+                _t("platform.check.name_permission"),
                 False,
-                f"{len(failures)} 个目录权限不足",
+                _t("platform.check.permission_denied", path=f"{len(failures)} dirs"),
                 "\n".join(failures)
             )
         return self._add(
-            "目录权限",
+            _t("platform.check.name_permission"),
             True,
-            f"已检查 {len(required_dirs)} 个关键目录，权限正常"
+            _t("platform.check.permission_ok")
         )
 
     def check_disk_space(self, min_mb: int = 200) -> CheckResult:
@@ -210,27 +222,38 @@ class PlatformChecker:
             free_mb = usage.free / (1024 * 1024)
             total_mb = usage.total / (1024 * 1024)
 
-            detail = (
-                f"总容量={total_mb:.0f}MB, "
-                f"已用={( usage.used / 1024 / 1024):.0f}MB, "
-                f"可用={free_mb:.0f}MB"
+            detail = _t(
+                "platform.check.detail_disk",
+                total_mb=total_mb,
+                used_mb=usage.used / 1024 / 1024,
+                free_mb=free_mb
             )
 
             if free_mb < min_mb:
                 return self._add(
-                    "磁盘空间",
+                    _t("platform.check.name_disk"),
                     False,
-                    f"可用空间不足！{free_mb:.0f}MB < {min_mb}MB",
+                    _t("platform.check.disk_low_mb", free_mb=free_mb, min_mb=min_mb),
                     detail
                 )
-            return self._add("磁盘空间", True, f"可用 {free_mb:.0f}MB OK", detail)
+            return self._add(
+                _t("platform.check.name_disk"), True,
+                _t("platform.check.disk_ok_mb", free_mb=free_mb),
+                detail
+            )
         except Exception as exc:
-            return self._add("磁盘空间", False, f"检查失败: {exc}")
+            return self._add(
+                _t("platform.check.name_disk"), False,
+                _t("platform.check.disk_check_failed", error=exc)
+            )
 
     def check_long_path_support(self) -> CheckResult:
         """仅 Windows：检测是否开启了长路径支持"""
         if platform.system() != "Windows":
-            return self._add("长路径支持", True, "非 Windows 系统，跳过此检查")
+            return self._add(
+                _t("platform.check.name_long_path"), True,
+                _t("platform.check.long_path_skipped")
+            )
 
         try:
             import winreg
@@ -241,16 +264,21 @@ class PlatformChecker:
             value, _ = winreg.QueryValueEx(key, "LongPathsEnabled")
             winreg.CloseKey(key)
             if value == 1:
-                return self._add("长路径支持", True, "Windows 长路径支持已启用 OK")
+                return self._add(
+                    _t("platform.check.name_long_path"), True,
+                    _t("platform.check.long_path_enabled")
+                )
             else:
                 return self._add(
-                    "长路径支持",
+                    _t("platform.check.name_long_path"),
                     False,
-                    "Windows 长路径支持未启用，深层嵌套路径可能失败。"
-                    " 建议在「组策略 > 计算机配置 > 管理模板 > 系统 > 文件系统」中开启",
+                    _t("platform.check.long_path_disabled"),
                 )
-        except Exception:
-            return self._add("长路径支持", False, "无法读取注册表，请手动确认长路径设置")
+        except OSError:
+            return self._add(
+                _t("platform.check.name_long_path"), False,
+                _t("platform.check.long_path_check_failed")
+            )
 
     def check_symlink_support(self) -> CheckResult:
         """检测符号链接支持（Windows 需管理员权限或开发者模式）"""
@@ -261,21 +289,27 @@ class PlatformChecker:
             test_link.symlink_to(test_target)
             test_link.unlink()
             test_target.unlink()
-            return self._add("符号链接", True, "符号链接支持正常 OK")
+            return self._add(
+                _t("platform.check.name_symlink"), True,
+                _t("platform.check.symlink_ok")
+            )
         except (OSError, NotImplementedError):
             # 清理残留
             for p in (test_link, test_target):
                 try:
                     p.unlink()
-                except Exception:
+                except OSError:
                     pass
             if platform.system() == "Windows":
-                msg = "符号链接不可用（Windows 需开发者模式或管理员权限），项目功能不受影响"
+                msg = _t("platform.check.symlink_unavailable_win")
             else:
-                msg = "符号链接不可用，请检查文件系统和权限"
-            return self._add("符号链接", False, msg)
+                msg = _t("platform.check.symlink_unavailable")
+            return self._add(_t("platform.check.name_symlink"), False, msg)
         except Exception as exc:
-            return self._add("符号链接", False, f"检查失败: {exc}")
+            return self._add(
+                _t("platform.check.name_symlink"), False,
+                _t("platform.check.symlink_check_failed", error=exc)
+            )
 
     # -------------------------------------------------------------------------
     # 汇总入口
@@ -323,12 +357,14 @@ class PlatformChecker:
 
         info = self.get_platform_info()
         print("=" * 60)
-        print("  跨平台兼容性检查报告")
+        print("  " + _t("platform.check.report_title"))
         print("=" * 60)
-        print(f"  操作系统  : {info['os']} {info['os_release']} ({info['machine']})")
-        print(f"  Python    : {info['python_version']} ({info['python_executable']})")
-        print(f"  项目根目录 : {info['project_root']}")
-        print(f"  终端编码  : {info['encoding_stdout']}")
+        print(f"  " + _t("platform.check.report_os",
+                          os=info['os'], release=info['os_release'], machine=info['machine']))
+        print(f"  " + _t("platform.check.report_python",
+                          version=info['python_version'], executable=info['python_executable']))
+        print(f"  " + _t("platform.check.report_root", root=info['project_root']))
+        print(f"  " + _t("platform.check.report_encoding", encoding=info['encoding_stdout']))
         print("-" * 60)
 
         passed_count = sum(1 for r in self.results if r.passed)
@@ -343,12 +379,12 @@ class PlatformChecker:
 
         print("-" * 60)
         if passed_count == total_count:
-            print(f"  [成功] 所有 {total_count} 项检查通过！平台兼容性良好。")
+            print("  " + _t("platform.check.report_all_passed", total=total_count))
         else:
             fail_count = total_count - passed_count
             print(
-                f"  [注意] {passed_count}/{total_count} 项通过，"
-                f"{fail_count} 项需关注（见上方 [!] 条目）"
+                "  " + _t("platform.check.report_some_failed",
+                           passed=passed_count, total=total_count, failed=fail_count)
             )
         print("=" * 60)
 

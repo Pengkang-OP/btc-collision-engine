@@ -14,6 +14,7 @@ import chardet
 
 # 直接从具体模块导入，避免循环导入
 from .logging_config import init_logging, get_configured_logger
+from .platform_utils import PlatformUtils
 
 # 初始化日志系统
 init_logging()
@@ -327,9 +328,9 @@ class EncodingUtils:
         返回:
             平台默认编码
         """
-        if sys.platform == 'win32':
+        if PlatformUtils.is_windows():
             return 'gbk'
-        elif sys.platform == 'darwin':
+        elif PlatformUtils.is_macos():
             return 'utf-8'
         else:
             # Linux和其他Unix系统

@@ -16,6 +16,7 @@
 
 import sys
 import os
+import re
 import json
 import shutil
 from pathlib import Path
@@ -79,6 +80,9 @@ class FirstRunWizard:
 
     def should_run(self) -> bool:
         """判断是否应该运行向导"""
+        # 非交互式环境（pytest、CI 管道等）不弹出向导
+        if not sys.stdin.isatty():
+            return False
         # 如果已完成向导，不再运行
         if self.marker_path.exists():
             return False
@@ -197,10 +201,69 @@ class FirstRunWizard:
                 print(f"  已选择: {found_file}")
                 return str(found_file)
 
-        print("\n  请输入目标比特币地址（P2PKH 格式，以 1 开头）：")
-        print("  示例: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa  (创世区块地址)")
-        addr = self._prompt("  地址", "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
-        return addr
+        print("\n  请输入目标比特币地址或地址文件路径:")
+        print("    - 直接输入地址（如: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa）")
+        print("    - 输入文件路径（如: C:\\addresses.txt 或 /home/user/addresses.txt）")
+        user_input = self._prompt("  地址/文件路径", "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
+
+        # 自动检测：文件路径还是直接地址
+        # Windows 绝对路径：盘符格式 C:\ 或 C:/
+        _win_abs = bool(re.match(r'^[A-Za-z]:[/\\]', user_input))
+        # Unix 绝对路径：以 / 开头
+        _unix_abs = user_input.startswith('/')
+        # 包含路径分隔符（反斜杠或正斜杠）
+        _has_sep = ('\\' in user_input or '/' in user_input)
+        # 以常见文件扩展名结尾
+        _has_ext = bool(re.search(r'\.[a-zA-Z0-9]{1,5}$', user_input))
+        is_file_path = (
+            os.path.isfile(user_input)
+            or _win_abs
+            or _unix_abs
+            or _has_sep
+            or _has_ext
+        )
+        if is_file_path:
+            if os.path.isfile(user_input):
+                print(f"  已识别为地址文件: {user_input}")
+            else:
+                # 尝试自动修正常见问题
+                resolved = self._try_resolve_path(user_input)
+                if resolved and resolved != user_input:
+                    print(f"  [提示] 文件路径已自动修正: {user_input}")
+                    print(f"         → {resolved}")
+                    user_input = resolved
+                else:
+                    print(f"  [警告] 文件路径未找到: {user_input}")
+                    retry = self._yes_no("  是否仍然将其作为文件路径使用？", default=True)
+                    if not retry:
+                        print(f"  将作为单个地址使用: {user_input}")
+                    else:
+                        print(f"  将使用文件路径（运行时需确保文件存在）: {user_input}")
+        else:
+            print(f"  目标地址: {user_input}")
+
+        return user_input
+
+    @staticmethod
+    def _try_resolve_path(path: str) -> Optional[str]:
+        """尝试自动修正常见路径问题，返回修正后的路径或 None
+
+        处理场景：
+        1. Windows 双重扩展名：xxx.txt.txt → xxx.txt
+        2. 缺少扩展名：xxx → xxx.txt
+        """
+        p = Path(path)
+        # 场景1：去掉一层重复扩展名（如 .txt.txt → .txt）
+        if p.suffix and p.stem.endswith(p.suffix):
+            candidate = str(p.with_name(p.stem))  # 去掉最外层后缀
+            if os.path.isfile(candidate):
+                return candidate
+        # 场景2：文件名本身不含扩展名，尝试追加 .txt
+        if not p.suffix:
+            candidate = path + ".txt"
+            if os.path.isfile(candidate):
+                return candidate
+        return None
 
     def _step_gpu(self, config: Dict) -> None:
         """步骤3：GPU 设置"""
@@ -226,19 +289,26 @@ class FirstRunWizard:
         else:
             print("  已选择 CPU 模式")
 
-    def _step_workers(self, config: Dict) -> None:
+    def _step_workers(self, config: Dict, use_gpu: bool = False) -> None:
         """步骤4：CPU 工作线程数"""
         print("\n[步骤 4/4] 性能设置")
         cpu_count = os.cpu_count() or 4
         print(f"  检测到 {cpu_count} 个 CPU 核心")
-        raw = self._prompt(f"  CPU 工作线程数（默认: {cpu_count}，建议不超过 CPU 核数）",
-                           str(cpu_count))
-        try:
-            workers = int(raw)
-            if workers < 1:
-                workers = cpu_count
-        except ValueError:
+        if use_gpu:
+            # GPU 模式下跳过线程数询问，使用默认值
             workers = cpu_count
+            print(f"  GPU 模式已启用，CPU 辅助线程默认使用 {workers} 个")
+        else:
+            raw = self._prompt(
+                f"  CPU 工作线程数（默认: {cpu_count}，建议不超过 CPU 核数）",
+                str(cpu_count)
+            )
+            try:
+                workers = int(raw)
+                if workers < 1:
+                    workers = cpu_count
+            except ValueError:
+                workers = cpu_count
         config["collision"]["workers"] = workers
         print(f"  已设置工作线程数: {workers}")
 
@@ -281,7 +351,7 @@ class FirstRunWizard:
         try:
             self.marker_path.parent.mkdir(parents=True, exist_ok=True)
             self.marker_path.write_text("wizard_completed\n")
-        except Exception:
+        except OSError:
             pass
 
     # -------------------------------------------------------------------------
@@ -297,7 +367,8 @@ class FirstRunWizard:
         self._step_mode(config)
         target = self._step_target(config)
         self._step_gpu(config)
-        self._step_workers(config)
+        use_gpu = config["gpu"].get("enabled", False)
+        self._step_workers(config, use_gpu=use_gpu)
 
         # 写入配置
         print("\n[完成] 正在生成配置文件...")
