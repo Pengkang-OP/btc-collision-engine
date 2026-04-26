@@ -9,6 +9,7 @@ import threading
 from typing import Optional, Any, List, Dict
 
 import numpy as np
+import pyopencl as cl
 
 from .kernel_protocol import GPUKernelProtocol
 from .device import GPUDevice
@@ -724,7 +725,6 @@ class GPUKernel(GPUKernelProtocol):
         try:
             # v3.3.1修复: 使用轮询等待替代无限期阻塞
             # PyOpenCL的Event.wait()不支持timeout参数,改用command_execution_status查询
-            import pyopencl as cl
             
             while True:
                 # 非阻塞查询GPU执行状态
