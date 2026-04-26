@@ -21,7 +21,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.core.key_generator import SecureKeyGenerator
 from src.core.address_converter import AddressConverter
-from src.core.target_address_table import BitcoinTargetTable
+from src.core.hash_utils import hash160 as compute_hash160
+from src.core.base58 import Base58
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 目标地址（示例：比特币创世区块地址，余额 > 50 BTC）
@@ -47,12 +48,18 @@ def main():
     # 初始化组件
     key_gen = SecureKeyGenerator()
     converter = AddressConverter()
-    target_table = BitcoinTargetTable()
 
-    # 加载目标地址
+    # 将目标地址转为 Hash160 集合以实现 O(1) 匹配
+    target_hash160_set = set()
     for addr in TARGET_ADDRESSES:
-        target_table.add_address(addr)
-    print(f"  已加载 {len(TARGET_ADDRESSES)} 个目标地址")
+        try:
+            # Base58Check 解码: 版本字节(1) + Hash160(20) + 校验和(4)
+            _, payload = Base58.check_decode(addr)
+            h160 = payload  # payload 即 Hash160
+            target_hash160_set.add(bytes(h160))
+        except Exception:
+            pass
+    print(f"  已加载 {len(target_hash160_set)} 个目标 Hash160")
 
     # 开始碰撞
     start_time = time.time()
@@ -62,16 +69,18 @@ def main():
     print("\n  开始碰撞...")
     try:
         while time.time() - start_time < RUN_DURATION:
-            # 生成随机私钥
-            private_key = key_gen.generate_secure_key()
+            # 生成随机私钥（generate_single 返回 bytes）
+            private_key = key_gen.generate_single()
 
-            # 计算比特币地址
-            address = converter.private_key_to_address(private_key)
+            # 计算地址信息（含 Hash160）
+            result = converter.private_key_to_address(private_key, compressed=True)
+            address = result['address']
+            hash160 = bytes.fromhex(result['hash160'])
 
             checked += 1
 
             # 检查是否匹配
-            if target_table.contains(address):
+            if hash160 in target_hash160_set:
                 elapsed = time.time() - start_time
                 matches.append({
                     "private_key": private_key.hex(),

@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# DEPRECATED(v4.0): Montgomery Trick 批量模逆优化方案已放弃。
+# GPU PRNG 改造后，内核内部采用费马小定理进行模逆，Montgomery Trick 已无必要。
+# 本脚本仅作历史参考保留，不建议运行。
 """
 批量模逆算法性能分析
 

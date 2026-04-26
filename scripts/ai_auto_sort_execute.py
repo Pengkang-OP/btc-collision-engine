@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# DEPRECATED(v3.3.0): 本脚本中包含旧版 _keys_buf 缓冲区分配逻辑，
+# 该部分已在 v4.0 PRNG 改造中完整移除。
+# 本脚本不应再运行，仅作历史参考保留。
 """
 AI自动排序执行脚本
 

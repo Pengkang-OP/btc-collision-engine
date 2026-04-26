@@ -41,40 +41,58 @@ echo "[2/7] 检查虚拟环境..."
 if [ -d "venv" ]; then
     echo -e "${YELLOW}[信息]${NC} 检测到现有虚拟环境"
     read -p "是否使用现有虚拟环境? (y/N): " USE_EXISTING
-    if [ "$USE_EXISTING" != "y" ] && [ "$USE_EXISTING" != "Y" ]; then
-        echo -e "${YELLOW}[信息]${NC} 删除现有虚拟环境..."
-        rm -rf venv
-    else
+    if [ "$USE_EXISTING" = "y" ] || [ "$USE_EXISTING" = "Y" ]; then
         source venv/bin/activate
         echo -e "${GREEN}[成功]${NC} 虚拟环境已激活"
-        goto INSTALL_DEPS
+    else
+        echo -e "${YELLOW}[信息]${NC} 删除现有虚拟环境..."
+        rm -rf venv
     fi
 fi
 
-# 创建虚拟环境
-echo -e "${YELLOW}[信息]${NC} 创建虚拟环境..."
-python3 -m venv venv
-if [ $? -ne 0 ]; then
-    echo -e "${RED}[错误] 创建虚拟环境失败${NC}"
-    exit 1
-fi
-echo -e "${GREEN}[成功]${NC} 虚拟环境创建成功"
+if [ ! -d "venv" ]; then
+    # 创建虚拟环境
+    echo -e "${YELLOW}[信息]${NC} 创建虚拟环境..."
+    python3 -m venv venv
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}[错误] 创建虚拟环境失败${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}[成功]${NC} 虚拟环境创建成功"
 
-# 3. 激活虚拟环境
-echo ""
-echo "[3/7] 激活虚拟环境..."
-source venv/bin/activate
-if [ $? -ne 0 ]; then
-    echo -e "${RED}[错误] 激活虚拟环境失败${NC}"
-    exit 1
+    # 3. 激活虚拟环境
+    echo ""
+    echo "[3/7] 激活虚拟环境..."
+    source venv/bin/activate
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}[错误] 激活虚拟环境失败${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}[成功]${NC} 虚拟环境已激活"
 fi
-echo -e "${GREEN}[成功]${NC} 虚拟环境已激活"
 
-INSTALL_DEPS:
 # 4. 安装基础依赖
 echo ""
 echo "[4/7] 安装基础依赖..."
 echo -e "${YELLOW}[信息]${NC} 这可能需要几分钟时间，请耐心等待..."
+
+# 升级 pip 以支持更多预编译 wheel
+python3 -m pip install --upgrade pip --quiet
+
+# 优先尝试安装 coincurve（先预编译，失败则源码编译）
+echo -e "${YELLOW}[信息]${NC} 安装 coincurve..."
+set +e
+pip install "coincurve>=18.0.0" 2>/dev/null
+if [ $? -ne 0 ]; then
+    echo -e "${YELLOW}[警告]${NC} 预编译安装失败，尝试源码编译..."
+    pip install --no-binary :all: coincurve
+    if [ $? -ne 0 ]; then
+        echo -e "${YELLOW}[警告]${NC} coincurve 安装失败，将使用 ecdsa 作为备选"
+    fi
+fi
+set -e
+
+# 安装其余基础依赖
 pip install -r requirements-base.txt
 if [ $? -ne 0 ]; then
     echo -e "${YELLOW}[警告]${NC} 基础依赖安装失败，尝试继续..."
@@ -111,9 +129,11 @@ fi
 # 7. 验证关键依赖
 echo ""
 echo "[7/7] 验证关键依赖..."
-python3 -c "import coincurve; print('[成功] coincurve')" 2>/dev/null || echo -e "${YELLOW}[警告]${NC} coincurve未安装"
-python3 -c "import gmpy2; print('[成功] gmpy2')" 2>/dev/null || echo -e "${YELLOW}[警告]${NC} gmpy2未安装"
-python3 -c "import psutil; print('[成功] psutil')" 2>/dev/null || echo -e "${YELLOW}[警告]${NC} psutil未安装"
+echo -e "${YELLOW}[验证]${NC} 检查关键依赖..."
+python3 -c "import coincurve; print(f'  coincurve {coincurve.__version__} ✓')" 2>/dev/null || echo -e "  ${RED}coincurve 未安装${NC}"
+python3 -c "import gmpy2; print(f'  gmpy2 {gmpy2.version} ✓')" 2>/dev/null || echo -e "  ${YELLOW}gmpy2 未安装（可选加速）${NC}"
+python3 -c "import psutil; print(f'  psutil {psutil.__version__} ✓')" 2>/dev/null || echo -e "  ${RED}psutil 未安装${NC}"
+python3 -c "import ecdsa; print(f'  ecdsa {ecdsa.__version__} ✓')" 2>/dev/null || echo -e "  ${YELLOW}ecdsa 备选库 ✓${NC}"
 
 # 创建必要目录
 mkdir -p logs data_logs monitoring_data
