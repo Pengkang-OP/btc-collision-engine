@@ -7,6 +7,98 @@
 
 ---
 
+## [3.3.0] - 2026-04-26
+
+### 异步双缓冲优化 (v3.3.0核心特性)
+
+- **GPU异步双缓冲架构**: 计算队列+传输队列独立工作,重叠执行
+- **预取机制**: 提前准备下一批种子,隐藏PCIe传输延迟
+- **队列深度优化**: queue_depth=4,平衡延迟与显存占用
+- **PRNG模式优化**: 种子预生成替代大量密钥传输,节省~32MB/批次
+
+### 性能提升
+
+- **Intel Arc A770: 2.99M → 4.89M keys/s (+63.9% 提升)** 🚀
+- 同步模式(单缓冲): 2,985,007 keys/s (基准)
+- 异步模式(双缓冲): 4,894,354 keys/s (优化后)
+- 峰值速度: 5,082,867 keys/s
+- 60秒总计: 281,018,368 keys (vs 同步模式166,723,584 keys)
+- GPU利用率显著提升,稳定性保持±1.6%
+
+### 技术改进
+
+- **双队列架构**: 计算队列(GPU内核计算) + 传输队列(异步数据传输)
+- **异步执行器**: `src/gpu/async_executor.py` 队列深度可调(1-16)
+- **内存优化**: PRNG模式仅需32字节种子缓冲(替代32MB keys_buf)
+- **初始化优化**: 异步模式初始化时间0.27s (vs 同步模式0.75s)
+- **配置优化**: config.json默认启用async_execution=true
+
+### 测试验证
+
+- 90秒性能对比测试(分析前60秒稳定数据)
+- 同步模式8个数据点,异步模式9个数据点
+- 完整测试报告: `test_results/async_double_buffer_comparison_20260426.json`
+- 详细分析文档: `test_results/async_double_buffer_comparison_20260426.md`
+
+### 改动文件
+
+- `src/gpu/async_executor.py` - 异步执行器,双缓冲队列管理
+- `src/gpu/device.py` - 双队列创建(计算队列+传输队列)
+- `src/gpu/search_modes/random_search.py` - 异步执行模式实现
+- `src/collision/gpu_collision_engine.py` - 异步执行器集成
+- `config.json` - async_execution默认启用,queue_depth=4
+- `scripts/test_sync_mode_90s.py` - 同步模式测试脚本(新增)
+- `scripts/test_async_mode_90s.py` - 异步模式测试脚本(新增)
+
+### 已知问题
+
+- ⚠️ GPU内核停止阻塞: `kernel_impl.py:715` 的`read_event.wait()`无限期阻塞,测试需使用`os._exit(0)`强制退出
+- 🔧 计划修复: 使用非阻塞等待或添加超时参数
+
+---
+
+## [3.2.0] - 2026-04-26
+
+### 性能优化
+
+- **GPU PRNG 私鑰生成**：CPU种子 + GPU线程ID偏移，消除 CPU→GPU 私鑰传输瓶颈
+- **secp256k1 预计算表常数化**：[1G..31G] 仿射坐标 host 预计算 + `__constant` 内存
+- **模逆加法链优化**：secp256k1 P-2 定制加法链（255 sqr + 15 mul），mul 减少 89%
+- **异步双缓冲默认开启**：消除子批次同步等待开销
+- **CPU 过载保护**：批次间节流 + CPU 使用率检测 + 指数退避重试
+
+### 性能提升
+
+- **Intel Arc A770: 44K → 3.07M keys/s（70x 提升）**
+- GPU 显存节省 ~32MB/批次（PRNG 模式仅需 32 字节种子缓冲）
+- 最优 batch_size: 1,000,000（1,048,576）
+
+### 改动文件
+
+- `src/gpu/kernel.py` - GPU PRNG 内核 + 预计算表 + 模逆加法链
+- `src/gpu/async_executor.py` - seed buffer 替代 keys buffer
+- `src/gpu/precompute.py` - 新增 host 端预计算表生成
+- `src/collision/gpu_collision_engine.py` - PRNG 匹配重建
+- `src/gpu/search_modes/random_search.py` - 种子生成 + CPU 保护
+- `src/gpu/device.py` - 双缓冲默认开启
+- `src/gpu/intel_optimizer.py` - PRNG 验证逻辑兼容
+
+---
+
+## [3.1.2] - 2026-04-25
+
+### 清理与维护
+
+- 删除根目录 61 个临时报告、文本、数据和 HTML 文件
+- 删除根目录 28 个临时 Python 测试/验证/诊断脚本
+- 归档 data_logs/ 中 1010+ 个过期 report_daily_*.json 至 archive/
+- 清理 data_logs/ 中 3 个 .tmp 临时文件和空目录
+- 整理 docs/ 中 12 个过时文档至 docs/archive/
+- 修复 src/collision/types.py 中重复的 typing 导入
+- 为 src/monitoring/monitoring_system.py 中 AlertSystem 重复问题添加文档说明
+
+---
+
 ## [3.1.1] - 2026-04-23
 
 ### 里程碑说明
