@@ -37,7 +37,11 @@ test_results.log
 
 # 测试数据和结果
 test_data/  # 测试生成数据
-test_results/  # 测试结果
+test_results/*.xml  # 测试报告XML（临时）
+test_results/*.json  # 测试性能数据（临时）
+test_results/performance_report_*.json  # 性能报告（临时）
+test_results/alert_system_test_results.xml  # 告警测试结果（临时）
+test_results/gpu_*.json  # GPU性能数据（临时）
 test_*.txt  # 临时测试输出
 test_*.log  # 临时测试日志
 tests/data_logs/report_daily_*.json  # 测试运行时生成的日志文件（大量小文件）
