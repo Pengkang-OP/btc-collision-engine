@@ -1,0 +1,37 @@
+{
+  "report_type": "daily",
+  "generated_at": "2026-04-24T21:29:34.569084",
+  "period_start": "2026-04-24T00:00:00",
+  "period_end": "2026-04-24T21:29:34.569084",
+  "data_points": 1000,
+  "summary": {
+    "total_checked": 17820500544,
+    "matches_found": 1,
+    "avg_speed": 160330.1291905116,
+    "max_speed": 537530.2710765457,
+    "min_speed": 0.0,
+    "avg_cpu_usage": 29.1495,
+    "avg_memory_usage": 85.95987109375,
+    "error_count": 0
+  },
+  "trends": {
+    "speed": {
+      "trend": "decreasing",
+      "average": 160330.1291905116,
+      "std_dev": 245755.49656826112
+    },
+    "cpu_usage": {
+      "trend": "increasing",
+      "average": 29.1495,
+      "std_dev": 43.37906826239256
+    },
+    "memory_usage": {
+      "trend": "increasing",
+      "average": 85.95987109375,
+      "std_dev": 78.1819391687306
+    }
+  },
+  "recommendations": [
+    "检测速率很高，系统性能良好"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "report_type": "daily",
+  "generated_at": "2026-04-25T10:40:13.699413",
+  "period_start": "2026-04-25T00:00:00",
+  "period_end": "2026-04-25T10:40:13.699413",
+  "data_points": 309,
+  "summary": {
+    "total_checked": 10000,
+    "matches_found": 1,
+    "avg_speed": 461.2455435605438,
+    "max_speed": 22605.92864072437,
+    "min_speed": 0.0,
+    "avg_cpu_usage": 63.00550161812298,
+    "avg_memory_usage": 557.501795105178,
+    "error_count": 0
+  },
+  "trends": {
+    "speed": {
+      "trend": "increasing",
+      "average": 461.2455435605438,
+      "std_dev": 2138.3062841800997
+    },
+    "cpu_usage": {
+      "trend": "decreasing",
+      "average": 63.00550161812298,
+      "std_dev": 52.86962525712407
+    },
+    "memory_usage": {
+      "trend": "decreasing",
+      "average": 557.501795105178,
+      "std_dev": 528.0983513383345
+    }
+  },
+  "recommendations": [
+    "内存使用适中，注意监控内存增长趋势"
+  ]
+}
