@@ -3,7 +3,7 @@
 比特币私钥碰撞引擎，支持CPU和GPU加速，用于学习和研究比特币地址碰撞。
 
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
-[![Version](https://img.shields.io/badge/Version-2.2.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-3.3.0-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Contributions](https://img.shields.io/badge/Contributions-Welcome-orange.svg)](CONTRIBUTING.md)
 
@@ -35,14 +35,14 @@
   - 性能指标统计
   - 进度可视化
   - 数据日志记录
-- ✅ **性能优化** (v2.2.0新增)
-  - 预计算点表加速 (标量乘法 +46%)
-  - gmpy2大整数优化 (模逆元 +1455%)
-  - SIMD哈希优化 (AES-NI加速)
-  - 内存池系统 (分配延迟 -60%)
-  - GPU内存池 (缓冲区复用)
+- ✅ **性能优化** (v3.3.0最新)
+  - GPU PRNG 私钥生成（消除 CPU→GPU 传输瓶颈）
+  - secp256k1 预计算表常数化（`__constant` 内存）
+  - 模逆加法链优化（mul 减少 89%）
+  - **异步双缓冲架构** (计算队列+传输队列,性能+63.9%)
+  - Intel Arc A770: **4.89M keys/s**（异步模式,峰值5.08M）
 
-> 📢 **v2.2.0 性能优化**: 新增预计算点表、gmpy2大整数优化、SIMD哈希、内存池等8个优化模块，综合性能提升 30-50%。查看 [性能验证报告](docs/performance-verification-report.md) 了解详情。
+> 📢 **v3.3.0 性能里程碑**: 异步双缓冲优化成功! Intel Arc A770 实测达到 **4.89M keys/s**（对比同步模式2.99M 提升 **63.9%**）。异步模式(双缓冲) vs 同步模式(单缓冲)完整对比查看 [CHANGELOG](CHANGELOG.md) 和 [性能报告](test_results/async_double_buffer_comparison_20260426.md)。
 
 ## 快速开始
 
@@ -271,7 +271,17 @@ python key_collision_cli.py -t 1A1z... -m random --checkpoint --duration 120
 python key_collision_cli.py -t 1A1z... -m random --dedup
 ```
 
-## 性能优化配置 (v2.2.0)
+## 性能优化配置 (v3.2.0)
+
+### GPU 性能基准
+
+| 模式 | 速度 | 说明 |
+|------|------|------|
+| 初始基准 (CPU) | **44K keys/s** | 无GPU优化 |
+| GPU 异步双缓冲 | **~520K keys/s** | v3.0 |
+| GPU PRNG + 双缓冲 | **3.07M keys/s** | v3.2.0，**70x 提升** |
+
+最优配置：`batch_size=1,048,576`，`async_execution=true`（参考 `config.intel_arc.json`）
 
 ### 使用Python API
 
@@ -301,13 +311,16 @@ engine = KeyCollisionEngine(
 
 ### 性能对比数据
 
+### CPU 优化模块性能对比
+
 | 优化模块 | 性能提升 | 说明 |
 |---------|---------|------|
-| 预计算点表 | **+46%** | 标量乘法1.46x加速 |
-| gmpy2模逆元 | **+1455%** | 大整数运算14.55x加速 |
-| SIMD哈希 | **已启用** | AES-NI指令集加速 |
+| 预计算点表 | **+46%** | 标量乘法 1.46x 加速 |
+| gmpy2模逆元 | **+1455%** | 大整数运算 14.55x 加速 |
+| SIMD哈希 | **已启用** | AES-NI 指令集加速 |
 | 内存池 | **-60%延迟** | 对象分配优化 |
 | GPU内存池 | **-60%开销** | 缓冲区复用 |
+| **GPU PRNG** | **70x 总提升** | **Intel Arc A770: 3.07M keys/s** |
 
 > 📊 查看完整性能数据: [性能验证报告](docs/performance-verification-report.md)
 
