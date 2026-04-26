@@ -40,6 +40,7 @@ test_data/  # 测试生成数据
 test_results/  # 测试结果
 test_*.txt  # 临时测试输出
 test_*.log  # 临时测试日志
+tests/data_logs/report_daily_*.json  # 测试运行时生成的日志文件（大量小文件）
 *.log  # 所有日志文件
 
 # 临时文件
@@ -79,3 +80,34 @@ build/
 # 环境配置
 .env
 .env.local
+
+# ========================================
+# 根目录临时报告防污染规则
+# ========================================
+
+# AI/工具自动生成的报告文件
+*_REPORT*.md
+*_ANALYSIS*.md
+*_REVIEW*.md
+*_SUMMARY*.md
+*_PLAN*.md
+*_INDEX*.md
+AI_AUTO_SORT_*.md
+AI_AUTO_SORT_*.json
+
+# 保留标准项目文件
+!README.md
+!CHANGELOG.md
+!CONTRIBUTING.md
+!STARTUP_GUIDE.md
+
+# 根目录临时数据文件
+dxdiag.txt
+tmp_*.txt
+gpu_*.txt
+*.html
+!docs/**/*.html
+
+# 根目录临时JSON
+intel_arc_*.json
+test_env_use.json
