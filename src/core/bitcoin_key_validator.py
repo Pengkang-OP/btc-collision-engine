@@ -20,6 +20,90 @@ from enum import Enum
 from src.core.secp256k1 import Secp256k1, ECPoint, EllipticCurve
 from src.core.base58 import Base58
 from src.core.wif import WIF
+from src.core.hash_utils import HashUtils
+
+
+class WIFEncoder:
+    """WIF (Wallet Import Format) 编码器 - 符合Bitcoin Core规范
+    
+    扩展了基础WIF类，增加测试网支持。
+    - 主网压缩WIF: 'K'/'L'开头（52字符）
+    - 主网非压缩WIF: '5'开头（51字符）
+    - 测试网压缩WIF: 'c'开头
+    - 测试网非压缩WIF: '9'开头
+    """
+    
+    MAINNET_VERSION = 0x80
+    TESTNET_VERSION = 0xEF
+    
+    @staticmethod
+    def encode(private_key: bytes, compressed: bool = True, testnet: bool = False) -> str:
+        """将32字节私钥编码为WIF格式
+        
+        Args:
+            private_key: 32字节私钥
+            compressed: 是否生成压缩WIF (K/L开头) 还是非压缩WIF (5开头)
+            testnet: 是否使用测试网版本字节（0xEF）
+            
+        Returns:
+            WIF编码字符串
+            
+        Raises:
+            ValueError: 当私钥长度不为32字节时
+        """
+        if not isinstance(private_key, bytes):
+            raise ValueError("私钥必须是字节串")
+        if len(private_key) != 32:
+            raise ValueError("私钥长度必须为32字节")
+        
+        # 版本字节: 主网0x80, 测试网0xEF
+        version = WIFEncoder.TESTNET_VERSION if testnet else WIFEncoder.MAINNET_VERSION
+        data = bytes([version]) + private_key
+        if compressed:
+            data += bytes([0x01])  # 压缩标志
+        # 校验和: 双SHA256前4字节
+        checksum = HashUtils.double_sha256(data)[:4]
+        return Base58.encode(data + checksum)
+    
+    @staticmethod
+    def decode(wif: str) -> Tuple[bytes, bool, bool]:
+        """从WIF解码为私钥
+        
+        Args:
+            wif: WIF编码字符串
+            
+        Returns:
+            (private_key, is_compressed, is_testnet) 元组
+            
+        Raises:
+            ValueError: 当WIF格式无效或校验和验证失败时
+        """
+        if not isinstance(wif, str):
+            raise ValueError("WIF必须是字符串")
+        
+        raw = Base58.decode(wif)
+        if len(raw) < 5:
+            raise ValueError(f"WIF数据过短: {len(raw)}字节")
+        
+        # 校验和验证
+        payload, checksum = raw[:-4], raw[-4:]
+        expected = HashUtils.double_sha256(payload)[:4]
+        if checksum != expected:
+            raise ValueError("WIF校验和验证失败")
+        
+        version = payload[0]
+        if version not in (WIFEncoder.MAINNET_VERSION, WIFEncoder.TESTNET_VERSION):
+            raise ValueError(f"WIF版本字节无效: 0x{version:02x}")
+        
+        is_testnet = (version == WIFEncoder.TESTNET_VERSION)
+        key_data = payload[1:]
+        
+        if len(key_data) == 33 and key_data[-1] == 0x01:
+            return key_data[:-1], True, is_testnet  # 压缩
+        elif len(key_data) == 32:
+            return key_data, False, is_testnet  # 非压缩
+        else:
+            raise ValueError(f"无效的WIF载荷长度: {len(key_data)}")
 
 
 class KeyValidationConstants:

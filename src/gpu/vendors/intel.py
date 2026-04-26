@@ -11,6 +11,7 @@ from typing import Dict, Any
 import logging
 import time
 from .base import GPUVendorBase
+from ..constants import PER_KEY_MEMORY_BYTES, MIN_BATCH_SIZE, align_batch_size
 
 logger = logging.getLogger(__name__)
 
@@ -99,11 +100,26 @@ class IntelGPUVendor(GPUVendorBase):
             # 防止内核hang住导致线程永久阻塞
             device.timeout_seconds = timeout_seconds
         
-        # 3. 异步传输 - Intel建议禁用
+        # 3. 异步传输 - 仅对低端/不稳定型号禁用，Arc A770 等高端卡保持异步启用
         if 'async_transfer' in optimizations:
-            _rate_logger.warning("⚠️ Intel GPU: 禁用异步传输以确保稳定性",
-                                key="intel_async_disabled")
-            device.enable_async = False
+            # 清除 (R)/(TM) 等商标标记后再匹配
+            import re
+            device_name_clean = re.sub(r'\((?:r|tm|R|TM)\)', '', device_name.lower()).strip()
+            device_name_clean = re.sub(r'\s+', ' ', device_name_clean)  # 合并多余空格
+            # Arc A770/A750/A580 及 Pro 系列支持异步执行，不禁用
+            is_high_end = any(x in device_name_clean for x in [
+                'arc a770', 'arc a750', 'arc a580',
+                'arc pro', 'arc a3'
+            ])
+            if not is_high_end:
+                _rate_logger.warning("⚠️ Intel GPU: 禁用异步传输以确保稳定性",
+                                    key="intel_async_disabled")
+                device.enable_async_execution = False
+            else:
+                _rate_logger.info(
+                    f"✅ Intel Arc 高端型号 ({device_name}): 保持异步执行启用",
+                    key="intel_async_kept"
+                )
         
         # 4. 专业驱动优化
         if 'pro_driver_optimization' in optimizations:
@@ -152,17 +168,14 @@ class IntelGPUVendor(GPUVendorBase):
         
         # 根据显存计算理论最大值(使用更保守的memory_efficiency)
         global_mem = device.device_info.get('global_mem_size', 0)
-        per_key_memory = 36
+        per_key_memory = PER_KEY_MEMORY_BYTES
         mem_based_max = int((global_mem * memory_efficiency) / per_key_memory)
         
         # 取三者最小值
         optimal = min(recommended, maximum, mem_based_max)
         
-        # 向下对齐到1024的倍数
-        optimal = (optimal // 1024) * 1024
-        
-        # 确保最小值为1024
-        optimal = max(optimal, 1024)
+        # 向下对齐到1024的倍数，并确保不低于最小值
+        optimal = align_batch_size(optimal)
         
         logger.info(
             f"Intel batch_size计算: recommended={recommended}, "

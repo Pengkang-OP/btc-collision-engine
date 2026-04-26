@@ -69,11 +69,44 @@ class DataCollector:
         self.engine = engine
         self.process = psutil.Process(os.getpid())
         self.start_time = time.time()
+        
+        # 优化: 后台线程持续采样CPU使用率，避免阻塞主线程
+        self._cpu_usage_value: float = 0.0
+        self._cpu_sample_lock = threading.Lock()
+        self._cpu_sample_running = True
+        self._cpu_sample_thread = threading.Thread(
+            target=self._background_cpu_sampling,
+            daemon=True,
+            name="cpu-sampler"
+        )
+        self._cpu_sample_thread.start()
+        logger.debug("后台CPU采样线程已启动")
+    
+    def _background_cpu_sampling(self):
+        """后台持续采样CPU使用率，避免阻塞主线程"""
+        process = psutil.Process(os.getpid())
+        while self._cpu_sample_running:
+            try:
+                cpu_val = process.cpu_percent(interval=0.5)
+                with self._cpu_sample_lock:
+                    self._cpu_usage_value = cpu_val
+            except OSError:
+                pass
+            time.sleep(0.5)
+    
+    def _get_cpu_usage(self) -> float:
+        """非阻塞获取CPU使用率"""
+        with self._cpu_sample_lock:
+            return self._cpu_usage_value
+    
+    def stop(self):
+        """停止后台CPU采样线程"""
+        self._cpu_sample_running = False
     
     def collect_performance_data(self) -> Dict[str, Any]:
         """收集性能数据"""
         try:
-            cpu_usage = self.process.cpu_percent(interval=0.1)
+            cpu_usage = self._get_cpu_usage()  # 优化: 非阻塞获取，替代阻塞0.1s的cpu_percent(interval=0.1)
             memory_info = self.process.memory_info()
             memory_usage = memory_info.rss / (1024 * 1024)  # 转换为MB
             thread_count = len(self.process.threads())
@@ -634,39 +667,44 @@ class AnomalyDetector:
         }
 
 
-class AlertSystem:
-    """告警系统
+class MonitoringAlertAdapter:
+    """监控系统告警适配器
+    
+    将监控系统的异常检测结果适配到全局 AlertSystem，
+    统一项目中的告警处理逻辑。
     
     使用示例:
         # 完整功能（推荐）
         storage = DataStorage()
-        alert_system = AlertSystem(storage)
+        adapter = MonitoringAlertAdapter(storage)
         
         # 独立使用（仅打印，不保存）
-        alert_system = AlertSystem()
+        adapter = MonitoringAlertAdapter()
     """
     
     def __init__(self, storage: Optional['DataStorage'] = None):
         """
-        初始化告警系统
+        初始化告警适配器
         
         Args:
             storage: 数据存储实例（可选），用于保存告警记录
         """
-        # 使用依赖注入，storage变为可选
         self.storage = storage
-        self.alert_history = []
+        self.alert_history: list = []
+        # 使用全局告警系统（延迟导入避免循环引用）
+        from src.monitoring.alert_system import get_alert_system
+        self._alert_system = get_alert_system()
     
-    def generate_alert(self, anomaly: Dict[str, Any]):
-        """生成告警
+    def generate_alert(self, anomaly: Dict[str, Any]) -> None:
+        """从异常记录生成告警
         
         Args:
             anomaly: 异常信息字典
         """
         alert = {
             "timestamp": time.time(),
-            "level": "warning" if anomaly["type"] == "performance" else "critical",
-            "message": anomaly["message"],
+            "level": "warning" if anomaly.get("type") == "performance" else "critical",
+            "message": anomaly.get("message", ""),
             "details": anomaly
         }
         
@@ -683,6 +721,11 @@ class AlertSystem:
         # 记录到日志
         logger.warning(f"ALERT: {alert['message']} - Details: {json.dumps(anomaly)}")
         
+        # 同时通过全局告警系统检查指标
+        metrics = self._anomaly_to_metrics(anomaly)
+        if metrics:
+            self._alert_system.check_metrics(metrics)
+        
         # 如果storage可用，保存告警记录
         if self.storage is not None:
             try:
@@ -695,14 +738,29 @@ class AlertSystem:
             except Exception as e:
                 logger.error(f"保存告警记录失败: {e}")
     
-    def process_anomalies(self, anomalies: List[Dict[str, Any]]):
-        """处理异常并生成告警"""
+    def process_anomalies(self, anomalies: List[Dict[str, Any]]) -> None:
+        """处理异常列表并生成告警"""
         for anomaly in anomalies:
             self.generate_alert(anomaly)
     
     def get_alert_history(self) -> List[Dict[str, Any]]:
         """获取告警历史"""
-        return self.alert_history
+        return list(self.alert_history)
+    
+    @staticmethod
+    def _anomaly_to_metrics(anomaly: Dict[str, Any]) -> Dict[str, Any]:
+        """将异常记录转换为性能指标格式"""
+        metrics = {}
+        mapping = {
+            'speed': 'throughput',
+            'cpu_usage': 'cpu_usage_percent',
+            'memory_usage': 'memory_usage',
+            'error_rate': 'error_rate',
+        }
+        for key, mapped_key in mapping.items():
+            if key in anomaly:
+                metrics[mapped_key] = anomaly[key]
+        return metrics
 
 
 class ReportGenerator:
@@ -971,12 +1029,24 @@ class MonitoringSystem:
         self.storage = DataStorage()
         self.collector = DataCollector(engine)
         self.detector = AnomalyDetector(self.storage)
-        self.alert_system = AlertSystem(self.storage)
+        self.alert_system = MonitoringAlertAdapter(self.storage)
         self.report_generator = ReportGenerator(self.storage, self.detector)
         
         self._running = False
         self._thread = None
         self._stop_event = threading.Event()
+        
+        # 线程等待超时（秒）
+        self._thread_join_timeout = 10
+        
+        # 优化: 批量缓冲写入机制，降低I/O开销
+        self._data_buffer: list = []
+        self._buffer_flush_size = 100  # 累积100条后批量写入
+        self._buffer_lock = threading.Lock()
+        
+        # 时间触发的缓冲刷写（每60秒强制刷写一次）
+        self._last_flush_time = time.monotonic()
+        self._flush_interval = 60
     
     def start(self):
         """启动监控系统"""
@@ -996,14 +1066,66 @@ class MonitoringSystem:
         
         self._stop_event.set()
         if self._thread:
-            self._thread.join(timeout=10)
+            self._thread.join(timeout=self._thread_join_timeout)
         self._running = False
+        
+        # 停止后台CPU采样线程
+        self.collector.stop()
+        
+        # 写入剩余缓冲数据
+        self._flush_buffer()
         logger.info("监控系统已停止")
+    
+    def _buffer_data_point(self, data: 'MonitoringData'):
+        """缓冲数据点，达到阈值时批量写入"""
+        with self._buffer_lock:
+            self._data_buffer.append(data.to_dict())
+            if len(self._data_buffer) >= self._buffer_flush_size:
+                self._flush_buffer_unlocked()
+    
+    def _flush_buffer(self):
+        """批量写入缓冲数据（线程安全版本，供外部调用）"""
+        with self._buffer_lock:
+            self._flush_buffer_unlocked()
+    
+    def _flush_buffer_unlocked(self):
+        """批量写入缓冲数据（内部方法，调用方必须已持有 _buffer_lock）"""
+        if not self._data_buffer:
+            return
+        buffer_copy = self._data_buffer.copy()
+        self._data_buffer.clear()
+        # 一次性批量写入: 读取现有历史数据，添加所有缓冲项，再写入
+        try:
+            history = self.storage._load_history_with_recovery()
+            history.extend(buffer_copy)
+            if len(history) > 1000:
+                history = history[-1000:]
+            temp_file = self.storage.history_data_file + '.tmp'
+            with open(temp_file, 'w', encoding='utf-8') as f:
+                import json as _json
+                _json.dump(history, f, ensure_ascii=False, indent=2)
+                f.flush()
+                os.fsync(f.fileno())
+            if os.path.exists(self.storage.history_data_file):
+                os.replace(temp_file, self.storage.history_data_file)
+            else:
+                os.rename(temp_file, self.storage.history_data_file)
+            logger.debug(f"缓冲区已刷新: 批量写入{len(buffer_copy)}条历史数据")
+        except Exception as e:
+            logger.error(f"批量写入缓冲数据失败: {e}")
+            # 清理临时文件
+            try:
+                temp_file = self.storage.history_data_file + '.tmp'
+                if os.path.exists(temp_file):
+                    os.remove(temp_file)
+            except OSError:
+                pass
     
     def _monitoring_loop(self):
         """监控循环
         
         P2修复: 优化I/O操作,降低历史数据保存频率
+        优化: 利用批量缓冲将历史数据批量写入，进一步减少I/O
         """
         history_save_counter = 0  # 历史数据保存计数器
         history_save_interval = 10  # 每10次采集保存一次历史数据
@@ -1017,9 +1139,10 @@ class MonitoringSystem:
                 self.storage.save_current_data(data)
                 
                 # P2修复: 降低历史数据保存频率,减少I/O开销
+                # 优化: 利用缓冲机制将数据点缓冲，达到阈值时批量写入
                 history_save_counter += 1
                 if history_save_counter >= history_save_interval:
-                    self.storage.save_history_data(data)
+                    self._buffer_data_point(data)  # 加入缓冲区
                     history_save_counter = 0
                 
                 # 检测异常
@@ -1039,6 +1162,12 @@ class MonitoringSystem:
                 }
                 self.storage.save_error(error_info)
                 logger.error(f"监控系统错误: {e}")
+            
+            # 时间触发的缓冲刷写
+            now = time.monotonic()
+            if now - self._last_flush_time >= self._flush_interval:
+                self._flush_buffer()
+                self._last_flush_time = now
             
             # 等待下一次采集
             time.sleep(self.collection_interval)

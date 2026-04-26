@@ -10,6 +10,8 @@ import tempfile
 import logging
 from typing import Any, Optional
 
+from src.utils.platform_utils import PlatformUtils
+
 logger = logging.getLogger(__name__)
 
 
@@ -250,7 +252,7 @@ def ensure_directory(dir_path: str, mode: int = 0o755) -> bool:
             logger.debug(f"创建目录: {dir_path}")
         
         # 设置权限（仅Linux/macOS）
-        if os.name != 'nt':
+        if not PlatformUtils.is_windows():
             try:
                 os.chmod(dir_path, mode)
             except OSError as perm_error:

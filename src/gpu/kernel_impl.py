@@ -706,13 +706,24 @@ class GPUKernel(GPUKernelProtocol):
             try:
                 if not timeout_event.wait(timeout_seconds):
                     # 超时未收到完成信号
-                    logger.error(f"GPU执行超时({timeout_seconds}秒),可能存在内核hang问题")
-                    # 尝试强制完成队列
-                    try:
-                        self.device.queue.finish()
-                    except Exception as e:
-                        logger.error(f"强制完成队列失败: {e}")
+                    logger.error(
+                        f"GPU执行超时({timeout_seconds}秒),可能存在内核hang问题"
+                    )
+                    
+                    # v3.3.1改进: 不尝试queue.finish(),因为它也可能阻塞
+                    # 直接标记超时,让主线程的轮询循环检测并处理
+                    logger.warning(
+                        "标记GPU执行超时,等待主线程轮询检测并处理"
+                    )
                     execution_completed[0] = False
+                    
+                    # 可选: 如果未来PyOpenCL支持上下文中断,可以启用
+                    # if hasattr(self.device.context, 'abort'):
+                    #     try:
+                    #         self.device.context.abort()
+                    #         logger.info("已尝试中断GPU上下文")
+                    #     except Exception as e:
+                    #         logger.error(f"中断GPU上下文失败: {e}")
                 # else: 正常完成,不做任何操作
             except Exception as e:
                 logger.error(f"超时监控线程异常: {e}")
@@ -726,16 +737,49 @@ class GPUKernel(GPUKernelProtocol):
             # v3.3.1修复: 使用轮询等待替代无限期阻塞
             # PyOpenCL的Event.wait()不支持timeout参数,改用command_execution_status查询
             
+            # 添加最大迭代次数保护(防止无限循环)
+            max_iterations = int(timeout_seconds / poll_interval) + 10  # 300 + 10次容错
+            iteration_count = 0
+            
             while True:
-                # 非阻塞查询GPU执行状态
-                status = read_event.command_execution_status
-                if status == cl.command_execution_status.COMPLETE:
-                    execution_completed[0] = True
+                iteration_count += 1
+                
+                # 防止无限循环(安全网)
+                if iteration_count > max_iterations:
+                    logger.warning(
+                        f"轮询次数超过最大值({max_iterations}),强制退出 "
+                        f"(可能GPU状态查询异常)"
+                    )
+                    execution_completed[0] = False
+                    break
+                
+                try:
+                    # 非阻塞查询GPU执行状态
+                    status = read_event.command_execution_status
+                    if status == cl.command_execution_status.COMPLETE:
+                        execution_completed[0] = True
+                        break
+                except cl.Error as e:
+                    # GPU驱动错误或设备断开
+                    logger.error(
+                        f"GPU状态查询失败(第{iteration_count}次轮询): {e}"
+                    )
+                    execution_completed[0] = False
+                    break
+                except Exception as e:
+                    # 其他未知错误(不应该发生,但作为安全网)
+                    logger.error(
+                        f"GPU状态查询异常(第{iteration_count}次轮询): {type(e).__name__}: {e}"
+                    )
+                    execution_completed[0] = False
                     break
                         
-                # 检查是否需要停止(支持优雅退出)
+                # GPU未完成时才检查停止信号(避免竞态条件)
                 if stop_event is not None and stop_event.is_set():
-                    logger.info("检测到停止信号,中断GPU等待")
+                    logger.info(
+                        f"检测到停止信号,中断GPU等待 "
+                        f"(已轮询{iteration_count}次, 耗时{iteration_count * poll_interval:.1f}秒)"
+                    )
                     execution_completed[0] = False
                     break
                 
@@ -750,46 +794,32 @@ class GPUKernel(GPUKernelProtocol):
                 if monitor_thread.is_alive():
                     logger.warning("超时监控线程未能及时退出")
         
-        # 检查是否超时
+        # 检查是否超时或停止信号中断
         if not execution_completed[0]:
-            # P1修复: 超时后尝试清理资源
-            # P3改进: 添加超时监控和强制中断机制
-            try:
-                logger.warning("GPU执行超时，尝试强制完成队列以清理资源")
-                
-                # 记录清理开始时间
-                cleanup_start = time.time()
-                
-                # 尝试在有限时间内完成队列
-                # 注意: OpenCL的finish()没有超时参数,但我们可以通过异常捕获来检测
-                self.device.queue.finish()  # 强制完成队列
-                
-                cleanup_elapsed = time.time() - cleanup_start
-                
-                # 记录清理性能指标
-                if cleanup_elapsed > 1.0:
-                    logger.warning(
-                        f"队列清理耗时{cleanup_elapsed:.2f}秒, "
-                        f"GPU可能存在性能问题"
-                    )
-                
-                # 如果清理耗时异常长(超过原始超时时间),说明GPU可能已完全故障
-                if cleanup_elapsed > timeout_seconds:
-                    logger.critical(
-                        f"队列清理耗时{cleanup_elapsed:.1f}秒超过原始超时{timeout_seconds}秒, "
-                        f"GPU可能已完全故障,建议重启程序并检查硬件"
-                    )
-            except Exception as cleanup_error:
-                logger.error(f"强制清理GPU队列失败: {cleanup_error}")
-                # 队列清理失败后尝试释放缓冲区资源，防止显存泄漏
-                for buf_attr in ('_seed_buf', '_match_buf', '_targets_buf'):
-                    buf = getattr(self, buf_attr, None)
-                    if buf is not None:
-                        try:
-                            buf.release()
-                            logger.debug(f"GPU超时清理：已释放 {buf_attr}")
-                        except Exception as buf_err:
-                            logger.debug(f"GPU超时清理：释放 {buf_attr} 失败: {buf_err}")
+            # v3.3.1改进: GPU超时/停止后不尝试queue.finish(),避免二次阻塞
+            # 直接记录日志并释放缓冲区资源,防止显存泄漏
+            logger.warning(
+                "GPU执行未完成(超时或停止信号),跳过队列清理以避免阻塞"
+            )
+            
+            # 释放缓冲区资源,防止显存泄漏
+            for buf_attr in ('_seed_buf', '_match_buf', '_targets_buf'):
+                buf = getattr(self, buf_attr, None)
+                if buf is not None:
+                    try:
+                        buf.release()
+                        logger.debug(f"GPU超时清理：已释放 {buf_attr}")
+                    except cl.Error as e:
+                        # OpenCL错误(缓冲区已释放或设备断开)
+                        logger.warning(
+                            f"GPU超时清理：释放 {buf_attr} 失败(OpenCL错误): {e}"
+                        )
+                    except Exception as buf_err:
+                        # 其他未知异常
+                        logger.warning(
+                            f"GPU超时清理：释放 {buf_attr} 失败: "
+                            f"{type(buf_err).__name__}: {buf_err}"
+                        )
             
             raise RuntimeError(f"GPU执行超时{timeout_seconds}秒，内核可能已hang")
         

@@ -18,9 +18,50 @@ import sys
 import threading
 import time
 import queue
+import platform
 from typing import Optional, Dict, Any
 from logging.handlers import RotatingFileHandler
 from functools import wraps
+
+
+def _make_rotating_handler(filename: str, max_bytes: int, backup_count: int) -> RotatingFileHandler:
+    """工厂函数：Windows 返回 SafeRotatingFileHandler，其他平台返回原生 RotatingFileHandler"""
+    if platform.system() == 'Windows':
+        # 延迟导入避免循环依赖（logging_config 也导入 logger）
+        try:
+            from .logging_config import SafeRotatingFileHandler
+            return SafeRotatingFileHandler(
+                filename, maxBytes=max_bytes, backupCount=backup_count, encoding='utf-8'
+            )
+        except ImportError:
+            pass
+    return RotatingFileHandler(
+        filename, maxBytes=max_bytes, backupCount=backup_count, encoding='utf-8'
+    )
+
+
+class SafeStreamHandler(logging.StreamHandler):
+    """Windows GBK 编码安全控制台处理器
+
+    在 Windows CMD/PowerShell（默认 GBK 编码）环境下，中文日志消息会乱码。
+    本处理器在 emit 时尝试将无法编码的字符替换为 '?'，同时在真实终端下尝试强制 UTF-8 输出。
+    """
+
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            msg = self.format(record)
+            stream = self.stream
+            # 如果是 Windows 且流编码不是 UTF-8，尝试将消息安全转换
+            enc = getattr(stream, 'encoding', '') or ''
+            if enc.lower() not in ('utf-8', 'utf8'):
+                # 将无法用目标编码输出的字符替换为 '?'
+                msg = msg.encode(enc, errors='replace').decode(enc, errors='replace')
+            stream.write(msg + self.terminator)
+            self.flush()
+        except RecursionError:
+            raise
+        except Exception:
+            self.handleError(record)
 
 
 class ColoredFormatter(logging.Formatter):
@@ -141,21 +182,55 @@ class SampledLogger:
     - 循环内部的状态报告
     - 高频性能指标记录
     - 批量处理进度跟踪
+    
+    支持两种限频模式（可同时使用）：
+    - 计数采样（sample_rate）：每N条消息记录1条
+    - 时间限频（max_per_second）：每秒最多记录N条
+    两个条件同时满足才会实际写入日志。
     """
     
     # 计数器上限，防止长时间运行后整数过大
     _COUNTER_MAX = 10**9
     
-    def __init__(self, logger: logging.Logger, sample_rate: int = 100):
+    def __init__(self, logger: logging.Logger, sample_rate: int = 100,
+                 max_per_second: float = 0.0):
         """
         参数:
             logger: 底层日志记录器
-            sample_rate: 采样率（每N条记录1条）
+            sample_rate: 采样率（每N条记录1条，计数采样）
+            max_per_second: 每秒最多记录N条（时间限频），0表示不限制
         """
         self.logger = logger
         self.sample_rate = sample_rate
+        self.max_per_second = max_per_second
         self._counter = 0
         self._lock = threading.Lock()
+        # 时间限频相关：记录当前秒窗口的起始时间和已记录条数
+        self._last_log_time = 0.0
+        self._time_window_count = 0
+    
+    def _should_log_by_time(self) -> bool:
+        """检查是否满足时间限频条件（调用前须持有 _lock）
+        
+        返回 True 表示允许记录，同时更新时间窗口计数器。
+        若 max_per_second <= 0 则始终返回 True（不限频）。
+        """
+        if self.max_per_second <= 0:
+            return True
+        
+        current_time = time.monotonic()
+        # 判断是否处于同一秒窗口
+        if current_time - self._last_log_time >= 1.0:
+            # 新的时间窗口，重置计数
+            self._last_log_time = current_time
+            self._time_window_count = 1
+            return True
+        else:
+            # 在同一秒窗口内
+            if self._time_window_count < self.max_per_second:
+                self._time_window_count += 1
+                return True
+            return False
     
     def debug(self, msg: str, *args, **kwargs):
         with self._lock:
@@ -163,7 +238,7 @@ class SampledLogger:
             # 防止计数器无限增长
             if self._counter >= self._COUNTER_MAX:
                 self._counter = 0
-            if self._counter % self.sample_rate == 0:
+            if self._counter % self.sample_rate == 0 and self._should_log_by_time():
                 self.logger.debug(f"[Sampled 1/{self.sample_rate}] {msg}", *args, **kwargs)
     
     def info(self, msg: str, *args, **kwargs):
@@ -172,8 +247,26 @@ class SampledLogger:
             # 防止计数器无限增长
             if self._counter >= self._COUNTER_MAX:
                 self._counter = 0
-            if self._counter % self.sample_rate == 0:
+            if self._counter % self.sample_rate == 0 and self._should_log_by_time():
                 self.logger.info(f"[Sampled 1/{self.sample_rate}] {msg}", *args, **kwargs)
+    
+    def warning(self, msg: str, *args, **kwargs):
+        with self._lock:
+            self._counter += 1
+            # 防止计数器无限增长
+            if self._counter >= self._COUNTER_MAX:
+                self._counter = 0
+            if self._counter % self.sample_rate == 0 and self._should_log_by_time():
+                self.logger.warning(f"[Sampled 1/{self.sample_rate}] {msg}", *args, **kwargs)
+    
+    def error(self, msg: str, *args, **kwargs):
+        with self._lock:
+            self._counter += 1
+            # 防止计数器无限增长
+            if self._counter >= self._COUNTER_MAX:
+                self._counter = 0
+            if self._counter % self.sample_rate == 0 and self._should_log_by_time():
+                self.logger.error(f"[Sampled 1/{self.sample_rate}] {msg}", *args, **kwargs)
 
 
 def setup_logger(name: str, level: str = "INFO", 
@@ -210,8 +303,8 @@ def setup_logger(name: str, level: str = "INFO",
     else:
         console_formatter = logging.Formatter(format)
     
-    # 创建控制台处理器
-    console_handler = logging.StreamHandler(sys.stdout)
+    # 创建控制台处理器（使用 SafeStreamHandler 以兼容 Windows GBK 编码）
+    console_handler = SafeStreamHandler(sys.stdout)
     console_handler.setLevel(getattr(logging, level))
     console_handler.setFormatter(console_formatter)
     logger.addHandler(console_handler)
@@ -223,13 +316,8 @@ def setup_logger(name: str, level: str = "INFO",
         if log_dir and not os.path.exists(log_dir):
             os.makedirs(log_dir, mode=0o750, exist_ok=True)
         
-        # 使用 RotatingFileHandler 自动轮转
-        file_handler = RotatingFileHandler(
-            log_file, 
-            maxBytes=max_bytes,
-            backupCount=backup_count,
-            encoding='utf-8'
-        )
+        # 使用 SafeRotatingFileHandler 自动轮转（Windows 安全）
+        file_handler = _make_rotating_handler(log_file, max_bytes, backup_count)
         file_handler.setLevel(getattr(logging, level))
         file_handler.setFormatter(logging.Formatter(format))
         logger.addHandler(file_handler)
@@ -258,7 +346,8 @@ def get_logger(name: str, thread_safe: bool = False) -> logging.Logger:
     return logger
 
 
-def get_sampled_logger(name: str, sample_rate: int = 100) -> SampledLogger:
+def get_sampled_logger(name: str, sample_rate: int = 100,
+                       max_per_second: float = 0.0) -> SampledLogger:
     """
     获取采样日志记录器（用于高频操作）
     
@@ -267,7 +356,8 @@ def get_sampled_logger(name: str, sample_rate: int = 100) -> SampledLogger:
     
     参数:
         name: 日志记录器名称
-        sample_rate: 采样率
+        sample_rate: 采样率（每N条记录1条，计数采样）
+        max_per_second: 每秒最多记录N条（时间限频），0表示不限制
         
     返回:
         采样日志记录器
@@ -275,7 +365,7 @@ def get_sampled_logger(name: str, sample_rate: int = 100) -> SampledLogger:
     # 直接使用 logging.getLogger，依赖全局 init_logging 配置的 handlers
     # 避免通过 get_logger/setup_logger 再次配置 handlers 导致重复输出
     base_logger = logging.getLogger(name)
-    return SampledLogger(base_logger, sample_rate)
+    return SampledLogger(base_logger, sample_rate, max_per_second)
 
 
 def log_performance(logger: logging.Logger, operation: str, level: str = "DEBUG"):
@@ -326,7 +416,7 @@ class AsyncLogger:
         self._queue: queue.Queue = queue.Queue(maxsize=max_queue_size)
         self._writer_thread = threading.Thread(
             target=self._write_loop,
-            daemon=True,  # 守护线程，主程序退出时自动终止
+            daemon=False,  # 非守护线程，确保程序退出时日志完整写入
             name="AsyncLogger-Writer"
         )
         self._stop_event = threading.Event()
@@ -337,21 +427,33 @@ class AsyncLogger:
         """后台写入循环"""
         while not self._stop_event.is_set():
             try:
-                # 等待日志记录（超时检查退出信号）
-                try:
-                    record = self._queue.get(timeout=0.5)
-                except queue.Empty:
-                    continue
-                
+                record = self._queue.get(timeout=0.5)
+            except queue.Empty:
+                continue
+            
+            try:
                 # 实际写入（调用底层handler）
                 if hasattr(self, '_handler') and self._handler:
                     self._handler.emit(record)
-                
-                self._queue.task_done()
-                
             except Exception as e:
                 # 写入失败不应崩溃后台线程
                 sys.stderr.write(f"异步日志写入失败: {e}\n")
+            finally:
+                self._queue.task_done()
+        
+        # 修复竞态条件: 停止事件设置后，处理队列中所有剩余记录
+        while True:
+            try:
+                record = self._queue.get_nowait()
+            except queue.Empty:
+                break
+            try:
+                if hasattr(self, '_handler') and self._handler:
+                    self._handler.emit(record)
+            except Exception as e:
+                sys.stderr.write(f"异步日志drain写入失败: {e}\n")
+            finally:
+                self._queue.task_done()
     
     def emit(self, record: logging.LogRecord):
         """异步发出日志记录"""
@@ -373,11 +475,14 @@ class AsyncLogger:
         # 等待队列清空（最多5秒）
         try:
             self._queue.join()
-        except Exception:
+        except (OSError, ValueError):
             pass
         
         # 等待线程退出
-        self._writer_thread.join(timeout=2)
+        self._writer_thread.join(timeout=5)
+        if self._writer_thread.is_alive():
+            import sys
+            sys.stderr.write("警告: 异步日志写线程未能在规定时间内退出\n")
         
         # 关闭底层handler
         if hasattr(self, '_handler') and self._handler:
@@ -413,12 +518,7 @@ class AsyncFileHandler(logging.Handler):
         
         # 创建底层文件处理器
         if max_bytes > 0:
-            self._handler = RotatingFileHandler(
-                filename,
-                maxBytes=max_bytes,
-                backupCount=backup_count,
-                encoding='utf-8'
-            )
+            self._handler = _make_rotating_handler(filename, max_bytes, backup_count)
         else:
             self._handler = logging.FileHandler(filename, encoding='utf-8')
         

@@ -32,12 +32,15 @@ class GPUKernelProtocol(Protocol):
     """
     
     @abstractmethod
-    def run_batch(self, private_keys: bytes, num_keys: int) -> List[Dict[str, int]]:
-        """执行一批私钥计算
+    def run_batch(self, seed: bytes, num_keys: int) -> List[Dict[str, int]]:
+        """执行一批密钥碰撞计算（PRNG模式）
+        
+        v4.0 PRNG改造：CPU仅传递32字节随机种子，GPU内核自行生成
+        每个工作单元的私钥（key = seed XOR gid），大幅减少PCIe传输量。
         
         Args:
-            private_keys: 私钥字节串（每个私钥32字节）
-            num_keys: 私钥数量
+            seed: 32字节随机种子（替代原 private_keys 大缓冲区）
+            num_keys: 本批次生成的私钥数量
             
         Returns:
             匹配结果列表，每个元素包含:
@@ -46,7 +49,7 @@ class GPUKernelProtocol(Protocol):
                 
         Raises:
             RuntimeError: GPU执行失败
-            ValueError: 参数无效
+            ValueError: 参数无效（seed长度不足32字节，或num_keys <= 0）
         """
         ...
     

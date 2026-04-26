@@ -296,7 +296,7 @@ class EnhancedPerformanceMonitor:
                 except Exception as track_error:
                     # 追踪失败不应影响业务，静默失败
                     pass
-        except Exception:
+        except (OSError, ValueError):
             # 监控本身失败不应影响业务逻辑
             pass
     

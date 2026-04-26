@@ -7,7 +7,7 @@ from .exceptions import (
 from .logger import (
     setup_logger, get_logger, PerformanceMonitor, SampledLogger,
     ThreadSafeLogger, ColoredFormatter, log_performance,
-    AsyncLogger, AsyncFileHandler  # v2.2.1新增
+    AsyncLogger, AsyncFileHandler, SafeStreamHandler  # SafeStreamHandler: Windows GBK编码兼容
 )
 from .logging_config import init_logging, get_configured_logger, LoggingConfig
 from .performance_monitor import (
@@ -32,7 +32,7 @@ __all__ = [
     # 日志工具
     'setup_logger', 'get_logger', 'PerformanceMonitor', 'SampledLogger',
     'ThreadSafeLogger', 'ColoredFormatter', 'log_performance',
-    'AsyncLogger', 'AsyncFileHandler',  # v2.2.1新增
+    'AsyncLogger', 'AsyncFileHandler', 'SafeStreamHandler',  # v2.2.1新增; SafeStreamHandler: Windows GBK兼容
     # 日志配置
     'init_logging', 'get_configured_logger', 'LoggingConfig',
     # 性能监控

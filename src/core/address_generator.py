@@ -121,9 +121,9 @@ class P2PKHAddressGenerator:
                     "提示: 安装 coincurve 库可提升3-5倍性能 "
                     "(pip install coincurve>=18.0.0)"
                 )
-        except Exception:
+        except ImportError as e:
             # 静默失败，不影响功能
-            pass
+            logger.debug(f"coincurve库不可用（将使用纯 Python 实现）: {e}")
     
     def generate_private_key(self, max_retries: int = 100) -> bytes:
         """
@@ -197,8 +197,9 @@ class P2PKHAddressGenerator:
         try:
             from .crypto_backend import crypto_manager
             return crypto_manager.generate_public_key(private_key, compressed)
-        except Exception:
-            # 回退到纯Python实现
+        except (ImportError, AttributeError) as e:
+            # 回退到纯 Python 实现
+            logger.debug(f"加密后端不可用，使用纯 Python 实现: {type(e).__name__}")
             return self.ec.generate_public_key(private_key, compressed)
     
     def public_key_to_address(self, public_key: bytes) -> str:

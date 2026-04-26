@@ -3,7 +3,8 @@
 支持多种比特币地址和密钥格式的自动识别与转换:
 - P2PKH地址(以'1'开头的标准比特币地址)
 - P2SH地址(以'3'开头的脚本哈希地址)
-- Bech32地址(以'bc1'开头的原生SegWit地址)
+- Bech32地址(以'bc1q'开头的原生SegWit地址, BIP-173)
+- Bech32m地址(以'bc1p'开头的Taproot地址, BIP-350)
 - WIF私钥(以'5'/'K'/'L'开头的Wallet Import Format)
 - 压缩公钥(66字符hex, 02/03前缀)
 - 非压缩公钥(130字符hex, 04前缀)
@@ -16,6 +17,7 @@
 - 批量解析减少函数调用开销
 - 增强的格式检测支持更多地址类型
 - 跨平台文件编码兼容
+- 内置Bech32/Bech32m编解码，无需外部bech32库
 """
 import os
 import logging
@@ -32,6 +34,154 @@ from ...utils.encoding_utils import EncodingUtils
 init_logging()
 # v2.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
 logger = get_configured_logger("TargetResolver", thread_safe=False)
+
+
+# ---------------------------------------------------------------------------
+# 内置 Bech32 / Bech32m 编解码  (BIP-173 / BIP-350)
+# 不依赖外部 bech32 库，完整实现多项RFC验证
+# ---------------------------------------------------------------------------
+
+_BECH32_CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
+_BECH32_CHARSET_MAP = {c: i for i, c in enumerate(_BECH32_CHARSET)}
+
+_BECH32_CONST = 1          # bech32  校验常量 (BIP-173)
+_BECH32M_CONST = 0x2bc830a3  # bech32m 校验常量 (BIP-350)
+
+
+def _bech32_polymod(values: list) -> int:
+    """Bech32/Bech32m 多项式校验模运算"""
+    generator = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3]
+    chk = 1
+    for value in values:
+        top = chk >> 25
+        chk = (chk & 0x1ffffff) << 5 ^ value
+        for i in range(5):
+            chk ^= generator[i] if ((top >> i) & 1) else 0
+    return chk
+
+
+def _bech32_hrp_expand(hrp: str) -> list:
+    """扩展 HRP 为校验运算所需格式"""
+    return [ord(c) >> 5 for c in hrp] + [0] + [ord(c) & 31 for c in hrp]
+
+
+def _bech32_verify_checksum(hrp: str, data: list) -> Optional[int]:
+    """验证 Bech32/Bech32m 校验和，返回编码常量 (1=bech32, 0x2bc830a3=bech32m) 或 None"""
+    const = _bech32_polymod(_bech32_hrp_expand(hrp) + data)
+    if const == _BECH32_CONST:
+        return _BECH32_CONST
+    if const == _BECH32M_CONST:
+        return _BECH32M_CONST
+    return None
+
+
+def _convertbits(data, from_bits: int, to_bits: int, pad: bool = True) -> Optional[list]:
+    """5-bit <-> 8-bit 位转换（BIP-173 convertbits）"""
+    acc = 0
+    bits = 0
+    result = []
+    maxv = (1 << to_bits) - 1
+    max_acc = (1 << (from_bits + to_bits - 1)) - 1
+    for value in data:
+        if value < 0 or (value >> from_bits):
+            return None
+        acc = ((acc << from_bits) | value) & max_acc
+        bits += from_bits
+        while bits >= to_bits:
+            bits -= to_bits
+            result.append((acc >> bits) & maxv)
+    if pad:
+        if bits:
+            result.append((acc << (to_bits - bits)) & maxv)
+    elif bits >= from_bits or ((acc << (to_bits - bits)) & maxv):
+        return None
+    return result
+
+
+def bech32_decode(bech: str) -> Tuple[Optional[str], Optional[list], Optional[int]]:
+    """解码 Bech32/Bech32m 字符串
+    
+    Args:
+        bech: 要解码的字符串
+        
+    Returns:
+        (hrp, data_5bit, encoding_const) 三元组，失败时返回 (None, None, None)
+        encoding_const: 1=bech32, 0x2bc830a3=bech32m
+    """
+    # BIP-173: 禁止大小写混合
+    if bech.lower() != bech and bech.upper() != bech:
+        return None, None, None
+    bech = bech.lower()
+    
+    # 最大长度限制
+    if len(bech) > 90:
+        return None, None, None
+    
+    # 找分隔符 '1'
+    pos = bech.rfind('1')
+    if pos < 1 or pos + 7 > len(bech):
+        return None, None, None
+    
+    hrp = bech[:pos]
+    data_part = bech[pos + 1:]
+    
+    # 验证字符集
+    if not all(c in _BECH32_CHARSET_MAP for c in data_part):
+        return None, None, None
+    
+    decoded = [_BECH32_CHARSET_MAP[c] for c in data_part]
+    enc = _bech32_verify_checksum(hrp, decoded)
+    if enc is None:
+        return None, None, None
+    
+    return hrp, decoded[:-6], enc
+
+
+def decode_segwit_address(hrp: str, addr: str) -> Tuple[Optional[int], Optional[bytes]]:
+    """解码 SegWit 地址，提取 witness version 和 witness program
+    
+    支持:
+    - P2WPKH: witness version=0, 20字节 witness program (bc1q)
+    - P2WSH:  witness version=0, 32字节 witness program (bc1q)
+    - P2TR:   witness version=1, 32字节 witness program (bc1p, Taproot)
+    
+    Args:
+        hrp: 人类可读部分 ('bc'=主网, 'tb'=测试网)
+        addr: 完整 bech32/bech32m 地址字符串
+        
+    Returns:
+        (witness_version, witness_program_bytes), 失败返回 (None, None)
+    """
+    hrp_got, data, enc = bech32_decode(addr)
+    if hrp_got is None or hrp_got != hrp.lower():
+        return None, None
+    if not data or len(data) < 1:
+        return None, None
+    
+    witness_version = data[0]
+    if witness_version > 16:
+        return None, None
+    
+    # witness_version=0 必须使用 bech32，version>=1 必须使用 bech32m
+    if witness_version == 0 and enc != _BECH32_CONST:
+        return None, None
+    if witness_version != 0 and enc != _BECH32M_CONST:
+        return None, None
+    
+    witness_program = _convertbits(data[1:], 5, 8, False)
+    if witness_program is None:
+        return None, None
+    
+    prog_len = len(witness_program)
+    # P2WPKH=20, P2WSH=32, P2TR=32
+    if witness_version == 0 and prog_len not in (20, 32):
+        return None, None
+    if witness_version == 1 and prog_len != 32:
+        return None, None
+    if prog_len < 2 or prog_len > 40:
+        return None, None
+    
+    return witness_version, bytes(witness_program)
 
 
 class TargetResolver:
@@ -208,54 +358,37 @@ class TargetResolver:
                     return None
             
             elif fmt == 'bech32_address':
-                # Bech32地址转换（需要bech32库）
+                # Bech32地址转换 (BIP-173, 内置编解码，无需外部库)
                 try:
-                    import bech32
+                    # 提取 HRP（bc=主网, tb=测试网）并解码 witness program
+                    hrp = 'bc' if input_str.lower().startswith('bc1') else 'tb'
+                    witness_version, witness_program = decode_segwit_address(hrp, input_str)
                     
-                    # Bech32要求全大写或全小写，不允许混合大小写
-                    if input_str != input_str.lower() and input_str != input_str.upper():
-                        logger.warning(f"Bech32地址大小写混合（无效格式）: {input_str}")
-                        return None
-                    
-                    # 解析Bech32地址
-                    hrp, data = bech32.bech32_decode(input_str)
-                    if hrp is None or data is None:
+                    if witness_version is None or witness_program is None:
                         logger.warning(f"Bech32地址解码失败: {input_str}")
                         return None
                     
-                    # data[0]是版本号，data[1:]才是真正的witness program
-                    if len(data) < 2:
-                        logger.warning(f"Bech32地址数据过短: {input_str}")
+                    # 仅支持 witness version 0 (P2WPKH/P2WSH)
+                    if witness_version != 0:
+                        logger.warning(f"bech32_address格式仅支持witness version 0, 当前={witness_version}: {input_str}")
                         return None
                     
-                    version = data[0]
-                    witness_data = data[1:]
-                    
-                    # 转换witness program（20字节=P2WPKH, 32字节=P2WSH）
-                    witness_bytes = bech32.convertbits(witness_data, 5, 8, False)
-                    if not witness_bytes:
-                        logger.warning(f"Bech32 witness转换失败: {input_str}")
-                        return None
-                    
-                    # 区分P2WPKH和P2WSH
-                    addr_type = None
-                    if len(witness_bytes) == 20:
+                    prog_len = len(witness_program)
+                    if prog_len == 20:
                         addr_type = "P2WPKH"
-                        logger.debug(f"检测到{addr_type}地址 ({len(witness_bytes)}字节witness): {input_str[:20]}...")
-                    elif len(witness_bytes) == 32:
+                    elif prog_len == 32:
                         addr_type = "P2WSH"
-                        logger.debug(f"检测到{addr_type}地址 ({len(witness_bytes)}字节witness): {input_str[:20]}...")
                     else:
                         logger.warning(
-                            f"Bech32 witness长度无效: {len(witness_bytes)}字节 "
+                            f"Bech32 witness长度无效: {prog_len}字节 "
                             f"(期望20=P2WPKH或32=P2WSH), 地址={input_str}"
                         )
                         return None
                     
-                    witness_hash = bytes(witness_bytes)
+                    logger.debug(f"检测到{addr_type}地址 ({prog_len}字节witness): {input_str[:30]}...")
                     
-                    # 将witness hash转换为P2PKH地址（用于碰撞匹配）
-                    address = Base58.check_encode(0x00, witness_hash)
+                    # 将 witness hash 转换为 P2PKH 地址（用于碰撞匹配）
+                    address = Base58.check_encode(0x00, witness_program)
                     
                     if self.cache:
                         self.cache.put(input_str, address)
@@ -263,25 +396,40 @@ class TargetResolver:
                     logger.debug(f"Bech32地址转换: {input_str} -> {address}")
                     return address
                     
-                except ImportError:
-                    logger.warning(
-                        f"Bech32地址需要bech32库支持: pip install bech32, 输入: {input_str}"
-                    )
-                    return None
                 except Exception as e:
                     logger.error(f"Bech32地址转换异常: {input_str} - {type(e).__name__}: {e}")
                     return None
             
             elif fmt == 'taproot_address':
-                # Taproot地址（bc1p开头，BIP-0341）
-                # Taproot使用x-only公钥和Schnorr签名，转换逻辑复杂
-                # 当前版本暂不支持，仅记录日志
-                logger.warning(
-                    f"Taproot地址暂不支持转换: {input_str}\n"
-                    f"Taproot (P2TR) 使用x-only公钥和Schnorr签名 (BIP-0341/0342)\n"
-                    f"需要额外实现Taproot地址解析逻辑"
-                )
-                return None
+                # Taproot地址 (bc1p开头, BIP-350, Bech32m, witness version 1)
+                try:
+                    hrp = 'bc' if input_str.lower().startswith('bc1') else 'tb'
+                    witness_version, witness_program = decode_segwit_address(hrp, input_str)
+                    
+                    if witness_version is None or witness_program is None:
+                        logger.warning(f"Taproot地址解码失败: {input_str}")
+                        return None
+                    
+                    if witness_version != 1:
+                        logger.warning(f"taproot_address格式期望witness version 1, 当前={witness_version}: {input_str}")
+                        return None
+                    
+                    if len(witness_program) != 32:
+                        logger.warning(f"Taproot witness program应为32字节, 实际={len(witness_program)}字节")
+                        return None
+                    
+                    # 将32字节 x-only 公钥作为 witness hash 转换为匹配地址
+                    address = Base58.check_encode(0x00, witness_program)
+                    
+                    if self.cache:
+                        self.cache.put(input_str, address)
+                    
+                    logger.debug(f"Taproot(P2TR)地址转换: {input_str} -> {address}")
+                    return address
+                    
+                except Exception as e:
+                    logger.error(f"Taproot地址转换异常: {input_str} - {type(e).__name__}: {e}")
+                    return None
             
             elif fmt == 'wif':
                 # WIF解码 -> 推导公钥 -> 推导地址
@@ -392,16 +540,8 @@ class TargetResolver:
         """
         addresses: Set[str] = set()
         
-        # 安全检查: 防止路径遍历攻击
+        # 获取真实路径
         real_path = os.path.realpath(filepath)
-        allowed_dirs = [
-            os.path.abspath(os.getcwd()),
-            os.path.abspath(os.environ.get('TEMP', '/tmp')),
-            os.path.abspath(os.environ.get('TMP', '/tmp')),
-        ]
-        if not any(real_path.startswith(allowed_dir) for allowed_dir in allowed_dirs):
-            logger.error(f"安全警告:路径遍历攻击检测 - 路径超出允许范围: {real_path}")
-            return addresses
         
         # 检查文件是否存在
         if not os.path.exists(real_path):

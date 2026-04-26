@@ -9,19 +9,23 @@ from .monitoring_system import (
     DataCollector,
     DataStorage,
     AnomalyDetector,
-    AlertSystem,
+    MonitoringAlertAdapter,
     ReportGenerator,
     MonitoringData
 )
 from .data_logger import DataLogger
 from .enhanced_monitoring import EnhancedMonitoringSystem
 
+# 向后兼容别名：MonitoringAlertAdapter 取代原本地 AlertSystem
+AlertSystem = MonitoringAlertAdapter
+
 __all__ = [
     "MonitoringSystem",
     "DataCollector",
     "DataStorage",
     "AnomalyDetector",
-    "AlertSystem",
+    "MonitoringAlertAdapter",
+    "AlertSystem",  # 向后兼容别名
     "ReportGenerator",
     "MonitoringData",
     "DataLogger",

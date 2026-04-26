@@ -5,11 +5,40 @@
 """
 import os
 import sys
+import time
 import logging
 import shutil
+import platform
 from typing import Optional, Dict, Any
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
-from .logger import ColoredFormatter  # ThreadSafeLogger已弃用
+from .logger import ColoredFormatter, SafeStreamHandler  # ThreadSafeLogger已弃用
+
+
+class SafeRotatingFileHandler(RotatingFileHandler):
+    """Windows 安全的日志轮转处理器，处理多线程文件锁冲突（WinError 32）
+
+    仅在 Windows 平台启用重试逻辑；Linux/macOS 行为与原生 RotatingFileHandler 完全相同。
+    """
+
+    def __init__(self, *args, **kwargs):
+        self._retry_count = kwargs.pop('retry_count', 3)
+        self._retry_delay = kwargs.pop('retry_delay', 0.1)
+        self._is_windows = platform.system() == 'Windows'
+        super().__init__(*args, **kwargs)
+
+    def doRollover(self):
+        """带重试机制的日志轮转（Windows 专用）"""
+        if not self._is_windows:
+            super().doRollover()
+            return
+        for attempt in range(self._retry_count):
+            try:
+                super().doRollover()
+                return
+            except PermissionError:
+                if attempt < self._retry_count - 1:
+                    time.sleep(self._retry_delay * (attempt + 1))
+                # 最后一次重试仍失败：静默跳过轮转，继续写入当前文件，不影响主程序
 
 # 导入安全过滤器（P0-2修复）
 from .security_log_filter import SecurityLogFilter
@@ -91,7 +120,7 @@ class LoggingConfig:
                 logging_config["format"] = format_str
             
             return logging_config
-        except Exception:
+        except (OSError, ImportError):
             return None
     
     def _ensure_log_directory(self):
@@ -147,9 +176,9 @@ class LoggingConfig:
         # 清除现有处理器
         root_logger.handlers.clear()
         
-        # 控制台处理器
+        # 控制台处理器（使用 SafeStreamHandler 以兼容 Windows GBK 编码）
         if self._config.get("enable_console", True):
-            console_handler = logging.StreamHandler(sys.stdout)
+            console_handler = SafeStreamHandler(sys.stdout)
             console_handler.setLevel(getattr(logging, level))
             console_formatter = ColoredFormatter(format_str)
             console_handler.setFormatter(console_formatter)
@@ -180,10 +209,10 @@ class LoggingConfig:
                 )
             else:
                 # 基于大小的轮转（默认）
-                handler = RotatingFileHandler(
+                handler = SafeRotatingFileHandler(
                     log_file,
-                    maxBytes=self._config.get("max_bytes", 10*1024*1024),
-                    backupCount=self._config.get("backup_count", 5),
+                    maxBytes=self._config.get('max_bytes', 10*1024*1024),
+                    backupCount=self._config.get('backup_count', 5),
                     encoding='utf-8'
                 )
 

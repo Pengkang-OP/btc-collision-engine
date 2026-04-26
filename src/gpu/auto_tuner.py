@@ -193,15 +193,14 @@ class GPUAutoTuner:
         Returns:
             性能数据
         """
-        import secrets
+        import os
         
         exec_times = []
         iterations = self.config.exploration_iterations
         
         for i in range(iterations):
-            # 准备测试数据
-            test_keys = secrets.token_bytes(batch_size * 32)
-            test_targets = b'\x00' * 20
+            # 准备测试数据（PRNG模式：仅需 32 字节随机种子）
+            seed = os.urandom(32)
             
             start_time = time.time()
             
@@ -209,10 +208,8 @@ class GPUAutoTuner:
                 # 执行批次
                 if hasattr(self.gpu_engine, '_gpu_kernel'):
                     matches = self.gpu_engine._gpu_kernel.run_batch(
+                        seed=seed,
                         num_keys=batch_size,
-                        private_keys=test_keys,
-                        target_hash160s=test_targets,
-                        num_targets=1
                     )
                 
                 duration_ms = (time.time() - start_time) * 1000
@@ -320,22 +317,19 @@ class GPUAutoTuner:
         Returns:
             当前吞吐量（keys/sec）
         """
-        import secrets
+        import os
         
         batch_size = self.best_config.get('batch_size', 100000) if self.best_config else 100000
         
         try:
-            test_keys = secrets.token_bytes(batch_size * 32)
-            test_targets = b'\x00' * 20
+            seed = os.urandom(32)
             
             start_time = time.time()
             
             if hasattr(self.gpu_engine, '_gpu_kernel'):
                 self.gpu_engine._gpu_kernel.run_batch(
+                    seed=seed,
                     num_keys=batch_size,
-                    private_keys=test_keys,
-                    target_hash160s=test_targets,
-                    num_targets=1
                 )
             
             duration_ms = (time.time() - start_time) * 1000

@@ -42,16 +42,19 @@ class BaseSearchMode:
         stop_condition_fn: Optional[Callable[[], bool]] = None,
     ) -> int:
         """通用批处理执行循环
-
+    
         消除 _brute_force / _range_scan 中约 100 行重复的批处理执行逻辑。
-
+    
         Args:
-            key_generator_fn:    无参可调用对象，每次调用返回 (private_keys_bytes, actual_batch_size)。
+            key_generator_fn:    无参可调用对象，每次调用返回 (data_bytes, actual_batch_size)。
+                                 支持两种模式：
+                                 - PRNG模式（random_search）：返回 32 字节种子（seed）和批次大小。
+                                 - 序列模式（brute_force/range_scan）：返回完整私钥字节串和数量。
                                  返回 None 或空字节串时终止循环。
-            mode_name:           搜索模式名称，用于异常日志（如"暴力穷举"、"范围扫描"）。
+            mode_name:           搜索模式名称，用于异常日志（如“暴力穷举”、“范围扫描”）。
             stop_condition_fn:   可选的额外停止条件检查，返回 True 表示停止。
                                  若为 None，则仅依赖 _stop_event。
-
+    
         Returns:
             本次循环共处理的私钥总数 (batch_count)
         """
@@ -67,18 +70,18 @@ class BaseSearchMode:
             gen_result = key_generator_fn()
             if gen_result is None:
                 break
-            private_keys, actual_batch_size = gen_result
-            if not private_keys or actual_batch_size <= 0:
+            batch_data, actual_batch_size = gen_result
+            if not batch_data or actual_batch_size <= 0:
                 break
 
             try:
-                # 执行 GPU batch 计算
-                matches = engine._gpu_kernel.run_batch(private_keys, actual_batch_size)
+                # 执行 GPU batch 计算（支持两种模式：seed 或完整私钥字节串）
+                matches = engine._gpu_kernel.run_batch(batch_data, actual_batch_size)
 
                 # 处理匹配结果
                 for match in matches:
                     key_idx = match["key_index"]
-                    private_key = private_keys[key_idx * 32:(key_idx + 1) * 32]
+                    private_key = batch_data[key_idx * 32:(key_idx + 1) * 32]
                     target_idx = match["target_index"]
                     address = engine._target_list[target_idx]
                     from ...core.wif import WIF

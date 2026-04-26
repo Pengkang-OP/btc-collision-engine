@@ -7,6 +7,7 @@
 支持数据存储、轮转机制和报告生成。
 """
 
+import shutil
 import os
 import sys
 import time
@@ -25,6 +26,7 @@ from collections import deque
 from src.utils import get_configured_logger
 from src.utils.logger import PerformanceMonitor
 from src.monitoring.storage_config import DataStorageConfig
+from src.utils.platform_utils import PlatformUtils
 
 
 class DataLogger:
@@ -363,7 +365,7 @@ class DataLogger:
                 
                 # 原子替换（Windows可能需要特殊处理）
                 # Windows上先删除目标文件，再重命名（避免PermissionError和WinError 183）
-                if os.name == 'nt':
+                if PlatformUtils.is_windows():
                     # Windows: 确保目标文件不存在
                     if os.path.exists(self.current_data_file):
                         try:
@@ -456,7 +458,7 @@ class DataLogger:
                 # 原子替换（Windows可能需要特殊处理）
                 if os.path.exists(self.history_data_file):
                     # Windows上先删除目标文件，再重命名（避免PermissionError）
-                    if os.name == 'nt':
+                    if PlatformUtils.is_windows():
                         try:
                             os.remove(self.history_data_file)
                         except PermissionError:
@@ -699,6 +701,7 @@ class DataLogger:
                 json.dump(report, f, ensure_ascii=False, indent=2)
             
             self.logger.info(f"{report_type}报告已生成: {report_path}")
+            self._auto_cleanup_if_needed()
             return report
             
         except Exception as e:
@@ -778,6 +781,91 @@ class DataLogger:
         
         return recommendations
     
+    def _load_auto_cleanup_config(self):
+        """从 ConfigManager 读取 monitoring.auto_cleanup 配置
+        
+        返回:
+            (enabled: bool, max_age_days: int) 元组，读取失败时返回默认值 (True, 7)
+        """
+        # 默认值（向后兼容）
+        default_enabled = True
+        default_max_age_days = 7
+        try:
+            from src.config.config_manager import ConfigManager
+            # 尝试定位配置文件路径（相对于当前工作目录或脚本目录）
+            import pathlib
+            candidates = [
+                pathlib.Path("config.json"),
+                pathlib.Path(__file__).parent.parent.parent / "config.json",
+            ]
+            config_file = None
+            for candidate in candidates:
+                if candidate.exists():
+                    config_file = str(candidate)
+                    break
+            
+            cfg = ConfigManager(config_file)
+            enabled = cfg.get("monitoring.auto_cleanup.enabled", default_enabled)
+            max_age_days = cfg.get("monitoring.auto_cleanup.max_age_days", default_max_age_days)
+            
+            # 类型安全检查，防止配置值类型异常
+            if not isinstance(enabled, bool):
+                enabled = default_enabled
+            if not isinstance(max_age_days, int) or max_age_days <= 0:
+                max_age_days = default_max_age_days
+            
+            return enabled, max_age_days
+        except Exception:
+            # 配置读取失败时静默回退到默认值
+            return default_enabled, default_max_age_days
+
+    def _auto_cleanup_if_needed(self):
+        """自动清理过期报告文件（每24小时最多执行一次）
+        
+        从 config.json 的 monitoring.auto_cleanup 读取：
+          - enabled: 是否启用自动清理（默认 True）
+          - max_age_days: 归档保留天数（默认 7 天）
+        配置读取失败时静默回退到默认值，保持向后兼容。
+        """
+        current_time = time.time()
+        if not hasattr(self, '_last_cleanup_time'):
+            self._last_cleanup_time = 0
+        
+        # 每24小时最多执行一次清理
+        if current_time - self._last_cleanup_time < 86400:
+            return
+        
+        # 读取配置（失败时使用默认值）
+        cleanup_enabled, max_age_days = self._load_auto_cleanup_config()
+        
+        # 如果配置禁用了自动清理，直接跳过
+        if not cleanup_enabled:
+            self.logger.debug("自动清理已通过配置禁用，跳过本次清理")
+            self._last_cleanup_time = current_time
+            return
+        
+        try:
+            archive_dir = os.path.join(self.storage_dir, "archive")
+            os.makedirs(archive_dir, exist_ok=True)
+            
+            cutoff_time = current_time - (max_age_days * 86400)
+            moved_count = 0
+            
+            for filename in os.listdir(self.storage_dir):
+                if filename.startswith("report_") and filename.endswith(".json"):
+                    filepath = os.path.join(self.storage_dir, filename)
+                    if os.path.isfile(filepath) and os.path.getmtime(filepath) < cutoff_time:
+                        dest = os.path.join(archive_dir, filename)
+                        shutil.move(filepath, dest)
+                        moved_count += 1
+            
+            if moved_count > 0:
+                self.logger.info(f"自动归档了 {moved_count} 个过期报告文件（保留期: {max_age_days} 天）")
+            
+            self._last_cleanup_time = current_time
+        except Exception as e:
+            self.logger.warning(f"自动清理报告文件时出错: {e}")
+
     def cleanup_old_data(self, max_age_days: int = 30):
         """
         清理旧数据
@@ -816,3 +904,81 @@ class DataLogger:
                     
         except Exception as e:
             self.logger.error(f"清理旧数据失败: {e}")
+    
+    def _flush_history_buffer(self):
+        """将历史缓冲区数据写入磁盘（调用前需持有 _lock）"""
+        if not self._history_buffer:
+            return
+        
+        new_data = list(self._history_buffer)
+        self._history_buffer.clear()
+        
+        # 在锁外执行 I/O，避免死锁
+        # 注意：此方法由 flush() 在锁内调用，所以这里用临时变量传递数据
+        self._pending_history_data = new_data
+    
+    def _flush_error_buffer(self):
+        """将错误缓冲区数据写入磁盘（调用前需持有 _lock）"""
+        if not self._error_buffer:
+            return
+        self._pending_error_data = list(self._error_buffer)
+        self._error_buffer.clear()
+    
+    def flush(self):
+        """刷写所有缓冲数据到磁盘"""
+        pending_history = None
+        pending_errors = None
+        
+        with self._lock:
+            if self._history_buffer:
+                pending_history = list(self._history_buffer)
+                self._history_buffer.clear()
+            if self._error_buffer:
+                pending_errors = list(self._error_buffer)
+                self._error_buffer.clear()
+        
+        # 在锁外执行 I/O 操作
+        if pending_history:
+            try:
+                history = self._load_history_with_recovery()
+                history.extend(pending_history)
+                if len(history) > 1000:
+                    history = history[-1000:]
+                self._atomic_write_json(self.history_data_file, history)
+                self.logger.debug(f"flush: 写入 {len(pending_history)} 条历史数据")
+            except Exception as e:
+                self.logger.error(f"flush 写入历史数据失败: {e}")
+                # 写入失败则将数据放回缓冲区
+                with self._lock:
+                    for item in reversed(pending_history):
+                        self._history_buffer.appendleft(item)
+        
+        if pending_errors:
+            try:
+                errors = []
+                if os.path.exists(self.error_log_file):
+                    try:
+                        with open(self.error_log_file, 'r', encoding='utf-8') as f:
+                            errors = json.load(f)
+                    except (json.JSONDecodeError, OSError) as e:
+                        self.logger.warning(f"读取错误日志文件失败，将覆盖: {e}")
+                        errors = []
+                errors.extend(pending_errors)
+                if len(errors) > 500:
+                    errors = errors[-500:]
+                self._atomic_write_json(self.error_log_file, errors)
+                self.logger.debug(f"flush: 写入 {len(pending_errors)} 条错误数据")
+            except Exception as e:
+                self.logger.error(f"flush 写入错误数据失败: {e}")
+                # 写入失败则将数据放回缓冲区
+                with self._lock:
+                    for item in reversed(pending_errors):
+                        self._error_buffer.appendleft(item)
+    
+    def stop(self):
+        """停止数据记录器，确保所有数据已写入"""
+        try:
+            self.flush()
+            self.logger.info("数据记录器已停止，所有缓冲数据已写入")
+        except Exception as e:
+            self.logger.error(f"数据记录器停止时刷写失败: {e}")

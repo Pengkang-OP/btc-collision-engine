@@ -8,6 +8,7 @@ from typing import Dict, List, Optional, Set
 
 # 导入日志配置
 from ..utils import init_logging, get_configured_logger
+from ..utils.platform_utils import PlatformUtils
 
 # 初始化日志系统（如果尚未初始化）
 init_logging()
@@ -108,7 +109,7 @@ class CheckpointManager:
             
             # 原子重命名
             # DA-1修复: 优化Windows原子操作
-            if os.name == 'nt':  # Windows
+            if PlatformUtils.is_windows():  # Windows
                 # Windows上os.replace()可能需要特殊处理
                 try:
                     # 先尝试直接replace
@@ -126,7 +127,7 @@ class CheckpointManager:
             # 设置文件权限
             # Linux/macOS: 使用chmod设置0o600
             # Windows: 通过环境变量控制ACL设置
-            if os.name != 'nt':  # nt = Windows
+            if not PlatformUtils.is_windows():  # nt = Windows
                 try:
                     os.chmod(self.filepath, 0o600)  # 仅所有者可读写
                 except OSError:
@@ -195,7 +196,7 @@ class CheckpointManager:
                     try:
                         os.rename(temp_filepath, self.filepath)
                         # 设置文件权限
-                        if os.name != 'nt':
+                        if not PlatformUtils.is_windows():
                             try:
                                 os.chmod(self.filepath, 0o600)
                             except OSError:
