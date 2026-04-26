@@ -47,11 +47,17 @@ test_*.log  # 临时测试日志
 tests/data_logs/report_daily_*.json  # 测试运行时生成的日志文件（大量小文件）
 *.log  # 所有日志文件
 
+# 基准测试结果（临时数据）
+benchmarks/results/benchmark_*.json  # 基准测试数据
+benchmarks/btc_addresses_sorted.txt  # 排序后的地址数据
+
 # 临时文件
 *.tmp
 *.bak
 *.cache
 *.pid
+*.exe  # 可执行安装程序
+dxdiag.txt  # DirectX诊断报告
 
 # 代码审查 diff 文件
 review_diff_*.txt
@@ -115,3 +121,9 @@ gpu_*.txt
 # 根目录临时JSON
 intel_arc_*.json
 test_env_use.json
+
+# 临时测试和验证脚本（非核心功能）
+comprehensive_test.py
+quick_verify_*.py
+test_*.py  # 临时测试脚本（非tests目录）
+verify_*.py  # 临时验证脚本
