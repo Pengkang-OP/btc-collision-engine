@@ -236,7 +236,7 @@ def main():
             
             print(f"     进程内存:     {memory_mb:,.1f} MB")
             print(f"     CPU使用率:    {cpu_percent:.1f}%")
-        except:
+        except Exception:
             print(f"     资源监控:     不可用")
         
         print(f"  {'='*76}")

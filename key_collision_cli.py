@@ -15,18 +15,19 @@ import sys
 # 确保项目根目录在路径中
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from src.i18n import _t
 from src.cli.main import main
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\n[用户中断] 程序已安全退出。")
+        print("\n" + _t("cli.entry.keyboard_interrupt"))
         sys.exit(0)
     except Exception as e:
         logging.basicConfig(level=logging.CRITICAL)
         logger = logging.getLogger(__name__)
-        logger.critical("未预期的致命错误: %s", e, exc_info=True)
-        print(f"\n[错误] {e}\n请查看日志以获取详细信息。", file=sys.stderr)
+        logger.critical(_t("cli.entry.fatal_error", error=e), exc_info=True)
+        print(f"\n" + _t("cli.entry.error_prefix", error=e) + "\n" + _t("cli.entry.check_log"), file=sys.stderr)
         sys.exit(1)
 

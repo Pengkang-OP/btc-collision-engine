@@ -139,15 +139,14 @@ from src.collision.targets import TargetResolver, AddressMatcher, AddressCache
 ### ❌ 避免使用的导入方式
 
 ```python
-# 已弃用！将在 v2.0 (2026-Q3) 中移除
-from src.collision.target_resolver import TargetResolver
+# ❌ 此路径已在 v3.x 中删除，不再可用
+# from src.collision.target_resolver import TargetResolver
 ```
 
-**原因**:
+**说明**:
 
-- 旧路径已迁移到 `targets.resolver` 子包
-- 使用旧路径会产生 `DeprecationWarning`
-- 新路径模块组织更清晰，与其他targets模块一致
+- `src.collision.target_resolver` 兼容层已于 v3.x 正式删除
+- 请直接使用上方推荐的三种新路径之一
 
 ### 导入顺序
 
@@ -507,37 +506,20 @@ mypy src/collision/
 4. **设定移除时间**: 明确标注将在哪个版本移除
 5. **保持兼容**: 在移除前保持向后兼容
 
-### 弃用示例
+### 已删除的兼容层
+
+`src.collision.target_resolver` 兼容模块已在 v3.x 中正式删除。如遇到 `ModuleNotFoundError`，请将导入更新为：
 
 ```python
-"""旧模块 - 向后兼容
-
-⚠️  弃用警告: 此模块已迁移到新位置。
-
-📅 移除计划:
-    - 此模块将在 v2.0 版本中移除（计划时间: 2026-Q3）
-    - 建议所有用户尽快迁移到新路径
-
-✅ 新用法（推荐）:
-    from src.collision.targets.resolver import TargetResolver
-
-❌ 旧用法（已弃用）:
-    from src.collision.target_resolver import TargetResolver
-"""
-import warnings
-
-warnings.warn(
-    "此模块已迁移，请使用新路径",
-    DeprecationWarning,
-    stacklevel=2
-)
+# 推荐：从 collision 包直接导入
+from src.collision import TargetResolver
+# 或：完整路径导入
+from src.collision.targets.resolver import TargetResolver
 ```
 
 ### 当前弃用项
 
-| 弃用项 | 替代方案 | 移除版本 | 移除时间 |
-|--------|----------|----------|----------|
-| `src.collision.target_resolver` | `src.collision.targets.resolver` | v2.0 | 2026-Q3 |
+（当前版本无待删除的弃用项）
 
 ---
 
@@ -587,17 +569,10 @@ A: 为了更好地组织模块结构，TargetResolver已迁移到 `targets` 子�
 
 ### Q: 旧导入路径还能用吗？
 
-A: 可以，但会产生 `DeprecationWarning`。旧路径将在 v2.0 (2026-Q3) 中移除，建议尽快迁移。
-
-### Q: 如何迁移？
-
-A: 只需更改导入语句：
+A: 不可以。`src.collision.target_resolver` 兼容层已在 v3.x 中删除。请使用新路径：
 
 ```python
-# 旧代码
-from src.collision.target_resolver import TargetResolver
-
-# 新代码
+# 推荐方式
 from src.collision import TargetResolver
 # 或
 from src.collision.targets.resolver import TargetResolver
