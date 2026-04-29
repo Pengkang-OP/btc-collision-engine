@@ -43,16 +43,135 @@ For complete technical specs, API docs and usage guide, see:
 - **Constant definitions**: 20 (including macros)
 """
 import logging
-from typing import Optional, Any, List, Dict
+from typing import Optional, Any, List, Dict, Tuple
 
 # P1-2 fix: implement interface
 from .kernel_protocol import GPUKernelProtocol
+
+# ============================================================================
+# Kernel version management
+# ============================================================================
+# Format: MAJOR.MINOR.PATCH
+# - MAJOR: incompatible API/algorithm changes (e.g., coordinate system switch)
+# - MINOR: new features backward-compatible (e.g., new kernel function)
+# - PATCH: bug fixes, optimizations (e.g., macro refactoring)
+KERNEL_VERSION = "4.1.0"
+KERNEL_VERSION_TUPLE = (4, 1, 0)
+
+# Maps versions to changelog entries for auditing
+KERNEL_VERSION_HISTORY: List[Dict[str, str]] = [
+    {"version": "4.1.0", "date": "2026-04",
+     "changes": "HASH160_TARGET_SCAN macro; batch eviction optimizations; adaptive worker stats"},
+    {"version": "4.0.0", "date": "2026-03",
+     "changes": "PRNG seed mode; precomputed table from host; MSB-first windowed scalar"},
+    {"version": "3.0.0", "date": "2025-12",
+     "changes": "Jacobian coordinates; Intel Arc A770 compatibility fixes"},
+    {"version": "2.0.0", "date": "2025-09",
+     "changes": "batch_check_local_mem kernel; uint256_mod_p iterative reduction"},
+    {"version": "1.0.0", "date": "2025-06",
+     "changes": "Initial OpenCL kernel: secp256k1, SHA-256, RIPEMD-160, batch_check"},
+]
+
+
+def get_kernel_version() -> str:
+    """获取当前内核版本号"""
+    return KERNEL_VERSION
+
+
+def get_kernel_version_tuple() -> Tuple[int, int, int]:
+    """获取当前内核版本号元组 (major, minor, patch)"""
+    return KERNEL_VERSION_TUPLE
+
+
+def validate_kernel_version(min_version: str) -> bool:
+    """校验内核版本是否满足最低要求
+
+    用于编译时检查：确保当前内核版本 >= 调用方要求的最低版本。
+
+    Args:
+        min_version: 最低版本要求，格式 "major.minor.patch"
+
+    Returns:
+        True 如果当前版本 >= 最低版本
+
+    Raises:
+        ValueError: 版本格式无效
+
+    使用示例:
+        >>> if not validate_kernel_version("4.0.0"):
+        ...     raise RuntimeError("Kernel too old for precomputed table feature")
+    """
+    try:
+        parts = min_version.split(".")
+        if len(parts) != 3:
+            raise ValueError(f"Invalid version format: {min_version}")
+        min_tuple = (int(parts[0]), int(parts[1]), int(parts[2]))
+    except (ValueError, TypeError) as e:
+        raise ValueError(f"Invalid version format: {min_version}") from e
+
+    return KERNEL_VERSION_TUPLE >= min_tuple
+
+
+def get_version_changelog(version: Optional[str] = None) -> List[Dict[str, str]]:
+    """获取内核版本变更日志
+
+    Args:
+        version: 指定版本号，为 None 时返回所有历史
+
+    Returns:
+        变更日志列表
+    """
+    if version is None:
+        return KERNEL_VERSION_HISTORY.copy()
+    return [e for e in KERNEL_VERSION_HISTORY if e["version"] == version]
+
+
+def get_latest_compatible_version(current_version: str,
+                                  available_versions: List[str]) -> Optional[str]:
+    """查找最新兼容版本（用于回滚场景）
+
+    给定当前版本和可用版本列表，返回可回退到的最高版本。
+
+    Args:
+        current_version: 当前版本号
+        available_versions: 可用的历史版本列表
+
+    Returns:
+        最高兼容版本号，无可用版本时返回 None
+    """
+    try:
+        cur = tuple(int(x) for x in current_version.split("."))
+    except (ValueError, AttributeError):
+        return None
+
+    compatible = []
+    for v in available_versions:
+        try:
+            parts = tuple(int(x) for x in v.split("."))
+            if parts < cur:
+                compatible.append((parts, v))
+        except (ValueError, AttributeError):
+            continue
+
+    if not compatible:
+        return None
+
+    # 返回最高兼容版本
+    compatible.sort(key=lambda x: x[0], reverse=True)
+    return compatible[0][1]
 
 # OpenCL kernel source code
 OPENCL_KERNEL_SOURCE = """
 // ============================================================================
 // Bitcoin secp256k1 GPU computation kernel
+// Kernel Version: 4.1.0 (MAJOR.MINOR.PATCH)
+// Compile-time validation: #if KERNEL_VERSION_MAJOR < 4 ...
 // ============================================================================
+
+// Kernel version defines for compile-time feature gating
+#define KERNEL_VERSION_MAJOR 4
+#define KERNEL_VERSION_MINOR 1
+#define KERNEL_VERSION_PATCH 0
 
 // uint256 type: 8 x uint32, little-endian (d[0]=LSB, d[7]=MSB)
 typedef struct {
@@ -147,7 +266,7 @@ void uint256_set_zero(uint256_t *a) {
 // GPU-side key generation: key = seed + global_id (256-bit addition)
 // seed is passed as __constant uint[8] from host (big-endian uint32 array)
 // Avoids large private_keys global buffer; host only sends 32-byte seed
-void generate_private_key(__constant const uint *seed, uint gid, uint256_t *k) {
+void generate_private_key(__constant const uint *seed, ulong gid, uint256_t *k) {
     // Read seed (big-endian uint32 array -> little-endian uint256_t)
     uint256_t s;
     for (int i = 0; i < 8; i++) {
@@ -1256,23 +1375,54 @@ void hash160(const uchar *data, uint len, uchar *result) {
 // Main kernel: batch check private keys
 // ============================================================================
 
+// Macro: Hash160 target scan with progressive early-exit (uint32 vectorized, 5 uint compares)
+// Eliminates code duplication between batch_check and batch_check_local_mem.
+// Parameters:
+//   src_base  - pointer to array of 20-byte Hash160 entries (local or global memory)
+//   h0..h4    - pre-assembled hash160_result as 5 uint32 (little-endian)
+//   n_targets - number of target entries
+//   match     - int variable (will be set to target_index+1 on match, 0 otherwise)
+#define HASH160_TARGET_SCAN(src_base, h0, h1, h2, h3, h4, n_targets, match) \
+do { \
+    for (uint _t = 0; _t < (n_targets) && (match) == 0; _t++) { \
+        const uchar *_src = (src_base) + _t * 20u; \
+        uint _t0 = (uint)_src[0]  | ((uint)_src[1]  << 8) | ((uint)_src[2]  << 16) | ((uint)_src[3]  << 24); \
+        if (_t0 != (h0)) continue; \
+        uint _t1 = (uint)_src[4]  | ((uint)_src[5]  << 8) | ((uint)_src[6]  << 16) | ((uint)_src[7]  << 24); \
+        if (_t1 != (h1)) continue; \
+        uint _t2 = (uint)_src[8]  | ((uint)_src[9]  << 8) | ((uint)_src[10] << 16) | ((uint)_src[11] << 24); \
+        if (_t2 != (h2)) continue; \
+        uint _t3 = (uint)_src[12] | ((uint)_src[13] << 8) | ((uint)_src[14] << 16) | ((uint)_src[15] << 24); \
+        if (_t3 != (h3)) continue; \
+        uint _t4 = (uint)_src[16] | ((uint)_src[17] << 8) | ((uint)_src[18] << 16) | ((uint)_src[19] << 24); \
+        if (_t4 != (h4)) continue; \
+        match = (int)(_t + 1); \
+    } \
+} while(0)
+
 __kernel void batch_check(
     __constant const uint *seed,            // 32-byte seed (8 uint32, big-endian); key = seed + gid
     const uint num_keys,
     __global const uchar *target_hash160s,  // Input: num_targets * 20 bytes
     const uint num_targets,
     __global int *match_flags,              // Output: num_keys flags (0=no match, target_index+1=match)
+    const uint check_uncompressed,          // v4.0: 0=compressed only, 1=also check uncompressed format
     __constant const uint *precomp_table    // Precomputed table: 31x2x8 = 496 uint32 (G1..G31 affine)
 ) {
-    uint gid = get_global_id(0);
+    // P1-2 fix: ulong gid prevents 32-bit overflow when batch_size >= 2^32
+    ulong gid = get_global_id(0);
     if (gid >= num_keys) return;
     
     // Generate private key on GPU: k = seed + gid (256-bit addition)
     uint256_t k;
     generate_private_key(seed, gid, &k);
     
-    // Check if private key is zero
-    if (uint256_is_zero(&k)) {
+    // P1-3 fix: Validate private key range (1 <= k < N)
+    // Previously only checked k==0, missing k >= N check.
+    // k >= N would produce a point on the curve but with incorrect discrete log.
+    uint256_t n_val;
+    for (int i = 0; i < 8; i++) n_val.d[i] = SECP256K1_N[i];
+    if (uint256_is_zero(&k) || uint256_cmp(&k, &n_val) >= 0) {
         match_flags[gid] = 0;
         return;
     }
@@ -1306,19 +1456,28 @@ __kernel void batch_check(
     uint h4 = (uint)hash160_result[16] | ((uint)hash160_result[17] << 8) | ((uint)hash160_result[18] << 16) | ((uint)hash160_result[19] << 24);
 
     int match = 0;
-    for (uint t = 0; t < num_targets && match == 0; t++) {
-        __global const uchar *src = target_hash160s + t * 20u;
-        uint t0 = (uint)src[0]  | ((uint)src[1]  << 8) | ((uint)src[2]  << 16) | ((uint)src[3]  << 24);
-        if (t0 != h0) continue;
-        uint t1 = (uint)src[4]  | ((uint)src[5]  << 8) | ((uint)src[6]  << 16) | ((uint)src[7]  << 24);
-        if (t1 != h1) continue;
-        uint t2 = (uint)src[8]  | ((uint)src[9]  << 8) | ((uint)src[10] << 16) | ((uint)src[11] << 24);
-        if (t2 != h2) continue;
-        uint t3 = (uint)src[12] | ((uint)src[13] << 8) | ((uint)src[14] << 16) | ((uint)src[15] << 24);
-        if (t3 != h3) continue;
-        uint t4 = (uint)src[16] | ((uint)src[17] << 8) | ((uint)src[18] << 16) | ((uint)src[19] << 24);
-        if (t4 != h4) continue;
-        match = (int)(t + 1);  // Store target_index + 1
+    HASH160_TARGET_SCAN(target_hash160s, h0, h1, h2, h3, h4, num_targets, match);
+
+    // v4.0: If no match and uncompressed checking enabled, try uncompressed format
+    if (match == 0 && check_uncompressed) {
+        // Serialize uncompressed public key (0x04 + x + y)
+        uchar pubkey_uncomp[65];
+        pubkey_uncomp[0] = 0x04;
+        uint256_to_bytes(&qx, &pubkey_uncomp[1]);
+        uint256_to_bytes(&qy, &pubkey_uncomp[33]);
+        
+        // Hash160(uncompressed pubkey) -> 20 bytes
+        hash160(pubkey_uncomp, 65, hash160_result);
+        
+        // Re-pack hash160_result as 5 uint32 (little-endian)
+        h0 = (uint)hash160_result[0]  | ((uint)hash160_result[1]  << 8) | ((uint)hash160_result[2]  << 16) | ((uint)hash160_result[3]  << 24);
+        h1 = (uint)hash160_result[4]  | ((uint)hash160_result[5]  << 8) | ((uint)hash160_result[6]  << 16) | ((uint)hash160_result[7]  << 24);
+        h2 = (uint)hash160_result[8]  | ((uint)hash160_result[9]  << 8) | ((uint)hash160_result[10] << 16) | ((uint)hash160_result[11] << 24);
+        h3 = (uint)hash160_result[12] | ((uint)hash160_result[13] << 8) | ((uint)hash160_result[14] << 16) | ((uint)hash160_result[15] << 24);
+        h4 = (uint)hash160_result[16] | ((uint)hash160_result[17] << 8) | ((uint)hash160_result[18] << 16) | ((uint)hash160_result[19] << 24);
+        
+        // Compare uncompressed Hash160 against all targets
+        HASH160_TARGET_SCAN(target_hash160s, h0, h1, h2, h3, h4, num_targets, match);
     }
 
     match_flags[gid] = match;
@@ -1334,10 +1493,12 @@ __kernel void batch_check_local_mem(
     __global const uchar *target_hash160s,  // Input: num_targets * 20 bytes
     const uint num_targets,
     __global int *match_flags,              // Output: num_keys flags
+    const uint check_uncompressed,          // v4.0: 0=compressed only, 1=also check uncompressed format
     __local uchar *cached_targets,          // local memory cache: num_targets * 20 bytes
     __constant const uint *precomp_table    // Precomputed table: 31x2x8 = 496 uint32 (G1..G31 affine)
 ) {
-    uint gid = get_global_id(0);
+    // P1-2 fix: ulong gid prevents 32-bit overflow when batch_size >= 2^32
+    ulong gid = get_global_id(0);
     uint lid = get_local_id(0);
     uint lsize = get_local_size(0);
     uint total_bytes = num_targets * 20u;
@@ -1355,8 +1516,10 @@ __kernel void batch_check_local_mem(
     uint256_t k;
     generate_private_key(seed, gid, &k);
 
-    // Check if private key is zero
-    if (uint256_is_zero(&k)) {
+    // P1-3 fix: Validate private key range (1 <= k < N)
+    uint256_t n_val;
+    for (int i = 0; i < 8; i++) n_val.d[i] = SECP256K1_N[i];
+    if (uint256_is_zero(&k) || uint256_cmp(&k, &n_val) >= 0) {
         match_flags[gid] = 0;
         return;
     }
@@ -1389,19 +1552,28 @@ __kernel void batch_check_local_mem(
     uint h4 = (uint)hash160_result[16] | ((uint)hash160_result[17] << 8) | ((uint)hash160_result[18] << 16) | ((uint)hash160_result[19] << 24);
 
     int match = 0;
-    for (uint t = 0; t < num_targets && match == 0; t++) {
-        __local const uchar *src = cached_targets + t * 20u;
-        uint t0 = (uint)src[0]  | ((uint)src[1]  << 8) | ((uint)src[2]  << 16) | ((uint)src[3]  << 24);
-        if (t0 != h0) continue;
-        uint t1 = (uint)src[4]  | ((uint)src[5]  << 8) | ((uint)src[6]  << 16) | ((uint)src[7]  << 24);
-        if (t1 != h1) continue;
-        uint t2 = (uint)src[8]  | ((uint)src[9]  << 8) | ((uint)src[10] << 16) | ((uint)src[11] << 24);
-        if (t2 != h2) continue;
-        uint t3 = (uint)src[12] | ((uint)src[13] << 8) | ((uint)src[14] << 16) | ((uint)src[15] << 24);
-        if (t3 != h3) continue;
-        uint t4 = (uint)src[16] | ((uint)src[17] << 8) | ((uint)src[18] << 16) | ((uint)src[19] << 24);
-        if (t4 != h4) continue;
-        match = (int)(t + 1);  // Store target_index + 1
+    HASH160_TARGET_SCAN(cached_targets, h0, h1, h2, h3, h4, num_targets, match);
+
+    // v4.0: If no match and uncompressed checking enabled, try uncompressed format
+    if (match == 0 && check_uncompressed) {
+        // Serialize uncompressed public key (0x04 + x + y)
+        uchar pubkey_uncomp[65];
+        pubkey_uncomp[0] = 0x04;
+        uint256_to_bytes(&qx, &pubkey_uncomp[1]);
+        uint256_to_bytes(&qy, &pubkey_uncomp[33]);
+        
+        // Hash160(uncompressed pubkey) -> 20 bytes
+        hash160(pubkey_uncomp, 65, hash160_result);
+        
+        // Re-pack hash160_result as 5 uint32 (little-endian)
+        h0 = (uint)hash160_result[0]  | ((uint)hash160_result[1]  << 8) | ((uint)hash160_result[2]  << 16) | ((uint)hash160_result[3]  << 24);
+        h1 = (uint)hash160_result[4]  | ((uint)hash160_result[5]  << 8) | ((uint)hash160_result[6]  << 16) | ((uint)hash160_result[7]  << 24);
+        h2 = (uint)hash160_result[8]  | ((uint)hash160_result[9]  << 8) | ((uint)hash160_result[10] << 16) | ((uint)hash160_result[11] << 24);
+        h3 = (uint)hash160_result[12] | ((uint)hash160_result[13] << 8) | ((uint)hash160_result[14] << 16) | ((uint)hash160_result[15] << 24);
+        h4 = (uint)hash160_result[16] | ((uint)hash160_result[17] << 8) | ((uint)hash160_result[18] << 16) | ((uint)hash160_result[19] << 24);
+        
+        // Compare uncompressed Hash160 against local cached targets
+        HASH160_TARGET_SCAN(cached_targets, h0, h1, h2, h3, h4, num_targets, match);
     }
 
     match_flags[gid] = match;

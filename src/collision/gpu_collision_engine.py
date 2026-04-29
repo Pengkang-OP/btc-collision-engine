@@ -56,6 +56,11 @@ ASYNC_KEY_GEN_TIMEOUT = 30.0  # 异步私钥生成超时（秒）
 BATCH_LOG_FREQUENCY = 100  # 日志记录频率（每N个batch）
 INITIAL_BATCHES_LOG = 3  # 初始批次日志数量
 
+# P1-2修复: GPU内核 gid 为 ulong (64-bit), 但 num_keys 仍为 uint (32-bit)
+# batch_size 必须 < 2^32 以防止 gid 溢出和安全参数截断
+UINT32_MAX = 0xFFFFFFFF  # 4294967295
+GPU_MAX_BATCH_SIZE = UINT32_MAX  # GPU内核 batch_size 上限 (匹配 num_keys 的 uint 类型)
+
 # 线程等待超时
 THREAD_JOIN_TIMEOUT = 5.0  # 默认线程join超时（秒）
 MONITOR_THREAD_JOIN_TIMEOUT = 1.0  # 监控线程join超时（秒）
@@ -248,7 +253,9 @@ class GPUCollisionEngine(BaseCollisionEngine):
                  use_async_logging: bool = False,
                  async_log_file: str = "logs/gpu_async.log",
                  async_log_max_bytes: int = 10*1024*1024,
-                 async_log_backup_count: int = 5):
+                 async_log_backup_count: int = 5,
+                 # v4.0: 地址格式支持
+                 check_uncompressed: Optional[bool] = None):  # 是否同时检查非压缩格式, None=自动检测
         """
         初始化 GPU 碰撞引擎
         
@@ -277,6 +284,12 @@ class GPUCollisionEngine(BaseCollisionEngine):
             async_log_file: 异步日志文件路径
             async_log_max_bytes: 单个日志文件最大字节数（默认10MB）
             async_log_backup_count: 日志备份数量（默认5）
+            
+            # v4.0: 地址格式支持
+            check_uncompressed: 是否同时检查非压缩格式地址
+                              - True: 强制启用双格式检查
+                              - False: 强制禁用, 仅检查压缩格式
+                              - None: 自动检测（默认, 根据目标地址数量决定）
         """
         if not PYOPENCL_AVAILABLE:
             raise RuntimeError("pyopencl 不可用，无法使用 GPU 加速")
@@ -295,6 +308,13 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self._dynamic_speed_benchmark = 500000  # 默认500K keys/s基准
         self._last_memory_check_time = time.time()  # 上次内存检查时间
         self._memory_check_interval = 60  # 内存检查间隔（秒）
+        
+        # v4.0: 地址格式支持配置（智能检测）
+        if check_uncompressed is None:
+            self._check_uncompressed = self._auto_detect_compression_needed_gpu()
+            logger.info(f"GPU自动检测地址格式: {'启用双格式检查' if self._check_uncompressed else '仅检查压缩格式'}")
+        else:
+            self._check_uncompressed = 1 if check_uncompressed else 0
         
         # 控制参数
         self._batch_size = batch_size
@@ -342,7 +362,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
         )
         
         # 初始化GPU设备
-        self._device_manager.initialize(targets, batch_size)
+        self._device_manager.initialize(targets, batch_size,
+                                         check_uncompressed=self._check_uncompressed)
         
         # 获取设备实例（保持向后兼容）
         self._gpu_device = self._device_manager.device
@@ -387,7 +408,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self._adaptive_batch_enabled = True
         self._adaptive_error_count = 0
         self._adaptive_batch_size = self._batch_size
-        self._max_batch_size = self._batch_size * 2 if self._batch_size else 2097152
+        self._max_batch_size = min(self._batch_size * 2, GPU_MAX_BATCH_SIZE - 1) if self._batch_size else 2097152
         self._min_batch_size = self._batch_size // 4 if self._batch_size else 262144
         self._last_batch_adjust_time = time.time()
         self._batch_adjust_interval = 10.0  # 批次调整间隔（秒）
@@ -409,9 +430,19 @@ class GPUCollisionEngine(BaseCollisionEngine):
     def batch_size(self, value: int):
         """线程安全的batch_size写入
         
+        P1-2: batch_size >= UINT32_MAX 会导致 GPU 内核 gid 溢出
+        
         Args:
             value: 新的批次大小
+            
+        Raises:
+            ValueError: 如果 batch_size >= UINT32_MAX (2^32)
         """
+        if value >= GPU_MAX_BATCH_SIZE:
+            raise ValueError(
+                f"P1-2: batch_size ({value:,}) >= UINT32_MAX ({GPU_MAX_BATCH_SIZE:,}) "
+                f"会导致 GPU 内核 gid 溢出"
+            )
         with self._batch_size_lock:
             self._batch_size = value
     
@@ -482,7 +513,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             是否有效
         """
         if key == 'batch_size':
-            return isinstance(value, int) and 1024 <= value <= 16777216
+            return isinstance(value, int) and 1024 <= value < GPU_MAX_BATCH_SIZE
         elif key == 'work_group_size':
             return isinstance(value, int) and 64 <= value <= 1024
         elif key == 'memory_usage_ratio':
@@ -614,8 +645,26 @@ class GPUCollisionEngine(BaseCollisionEngine):
         """
         return self._engine_monitor.get_adjustment_history(limit=limit)
     
-
+    def _auto_detect_compression_needed_gpu(self) -> int:
+        """GPU路径智能检测是否需要检查非压缩格式地址
+        
+        与CPU路径策略一致：
+        - 目标地址数量较少时（< 1000），启用双格式检查（返回1）
+        - 目标地址数量较多时（>= 1000），仅检查压缩格式（返回0）
+        
+        返回:
+            int: 0=仅压缩格式, 1=双格式检查
+        """
+        target_count = len(self.targets)
+        
+        if target_count < 1000:
+            logger.debug(f"GPU: 目标地址数={target_count} < 1000，启用双格式检查")
+            return 1
+        else:
+            logger.debug(f"GPU: 目标地址数={target_count} >= 1000，仅检查压缩格式（性能优先）")
+            return 0
     
+
     def _prepare_targets(self):
         """将目标地址转换为 Hash160"""
         self._target_list = []
@@ -772,10 +821,6 @@ class GPUCollisionEngine(BaseCollisionEngine):
     def _calculate_key_gen_timeout(self, batch_size: int) -> float:
         """ALG-1修复: 委托给 RandomSearchMode._calculate_key_gen_timeout()"""
         return self._random_search_mode._calculate_key_gen_timeout(batch_size)
-    
-    def _generate_private_keys_batch(self, count: int) -> bytes:
-        """生成一批随机私钥 - 委托给 RandomSearchMode._generate_private_keys_batch()"""
-        return self._random_search_mode._generate_private_keys_batch(count)
     
     def _start_async_key_generation(self, batch_size: int) -> Tuple[threading.Thread, List[Any]]:
         """启动异步私钥生成线程 - 委托给 RandomSearchMode._start_async_key_generation()"""

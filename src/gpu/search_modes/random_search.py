@@ -352,16 +352,22 @@ class RandomSearchMode(BaseSearchMode):
                     
                     batch_count += batch_size
                     
-                    # 处理匹配结果
+                    # 更新统计数据（与同步模式保持一致）
+                    engine.stats.update(batch_count)
+                    
+                    # 处理匹配结果（与同步模式保持一致，使用 engine._process_gpu_matches_prng）
                     if matches:
-                        self._process_matches(matches, seed, batch_size)
+                        engine._process_gpu_matches_prng(seed, matches)
                     
                     # 检查停止信号
                     if engine._stop_event.is_set():
                         break
                     
                     # 性能监控
-                    speed = batch_size / (execution_time_ms / 1000)
+                    # v4.0 修复: 异步模式下 execution_time_ms 可能为 0
+                    # (GPU快到submit+return耗时小于1ms时钟精度)
+                    effective_time_ms = max(execution_time_ms, 0.001)
+                    speed = batch_size / (effective_time_ms / 1000)
                     if batch_num <= 5 or batch_num % 10 == 0:
                         logger.info(f"GPU batch {batch_num}: {batch_size:,} keys, {execution_time_ms:.2f}ms, {speed:.0f} keys/s")
                     
@@ -486,20 +492,3 @@ class RandomSearchMode(BaseSearchMode):
                         engine.on_match(result)
                     except Exception as e:
                         logger.error(f"匹配回调异常: {e}")
-
-    # DEPRECATED(v4.0): PRNG改造后不再需要批量生成私钥缓冲区。
-    # GPU内核通过 seed+gid 自行推导私钥，无需主机侧传输大缓冲区。
-    # 此方法无任何调用者，仅保留以避免破坏可能存在的外部脚本引用。
-    def _generate_private_keys_batch(self, count: int) -> bytes:  # noqa: deprecated
-        """[已弃用，v4.0 PRNG改造后无调用者]
-
-        PRNG模式下 GPU 自行推导私钥，本方法不再被引擎使用。
-        如需生成随机字节，请使用 _generate_seed() 代替。
-        """
-        import warnings
-        warnings.warn(
-            "_generate_private_keys_batch 已弃用（v4.0 PRNG改造），请使用 _generate_seed()",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return os.urandom(count * 32)
