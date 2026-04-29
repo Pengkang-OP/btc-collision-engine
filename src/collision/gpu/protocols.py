@@ -7,14 +7,94 @@
 创建日期: 2026-04-29
 """
 
-from typing import Protocol, Set, Optional, Callable, Dict, Any, List, Tuple
-from dataclasses import dataclass
+from typing import Protocol, Set, Optional, Callable, Dict, Any, List, Tuple, TypedDict
+from dataclasses import dataclass, field
+
+
+# ========== GPU类型定义 ==========
+
+class GPUDeviceInfo(TypedDict, total=False):
+    """GPU设备信息"""
+    device_id: int
+    vendor: str
+    name: str
+    memory_total: int  # 字节
+    memory_free: int  # 字节
+    compute_units: int
+    clock_frequency: int  # MHz
+    platform: str  # 'OpenCL', 'CUDA', etc.
+
+
+class GPUDevice:
+    """GPU设备实例（轻量级封装）"""
+    
+    def __init__(
+        self,
+        device_id: int = -1,
+        vendor: str = "unknown",
+        name: str = "",
+        memory_total: int = 0,
+        device_obj: Any = None
+    ):
+        self.device_id = device_id
+        self.vendor = vendor
+        self.name = name
+        self.memory_total = memory_total
+        self.device_obj = device_obj  # 底层GPU对象（cl.Device等）
+    
+    def to_dict(self) -> GPUDeviceInfo:
+        return {
+            'device_id': self.device_id,
+            'vendor': self.vendor,
+            'name': self.name,
+            'memory_total': self.memory_total,
+        }
+
+
+class GPUContext:
+    """GPU上下文封装"""
+    
+    def __init__(self, context_obj: Any = None, device: Optional[GPUDevice] = None):
+        self.context_obj = context_obj  # 底层上下文对象（cl.Context等）
+        self.device = device
+
+
+class GPUKernel:
+    """GPU内核封装"""
+    
+    def __init__(
+        self,
+        kernel_obj: Any = None,
+        name: str = "",
+        context: Optional[GPUContext] = None
+    ):
+        self.kernel_obj = kernel_obj  # 底层内核对象（cl.Kernel等）
+        self.name = name
+        self.context = context
+
+
+class MatchResult(TypedDict, total=False):
+    """匹配结果"""
+    address: str
+    private_key: str
+    public_key: str
+    hash160: str
+    index: int
+    seed: str
 
 
 class IGPUDeviceManager(Protocol):
     """GPU设备管理器接口"""
     
-    def select_device(self, device_index: int = -1) -> Any:
+    def list_devices(self) -> List[GPUDevice]:
+        """列出所有可用GPU设备
+        
+        Returns:
+            GPU设备列表
+        """
+        ...
+    
+    def select_device(self, device_index: int = -1) -> GPUDevice:
         """选择GPU设备
         
         Args:
@@ -25,7 +105,7 @@ class IGPUDeviceManager(Protocol):
         """
         ...
     
-    def create_context(self, device: Any) -> Any:
+    def create_context(self, device: GPUDevice) -> GPUContext:
         """创建GPU上下文
         
         Args:
@@ -44,7 +124,7 @@ class IGPUDeviceManager(Protocol):
 class IKernelExecutor(Protocol):
     """GPU内核执行器接口"""
     
-    def compile_kernel(self, device: Any, context: Any) -> Any:
+    def compile_kernel(self, device: GPUDevice, context: GPUContext) -> GPUKernel:
         """编译GPU内核
         
         Args:
@@ -58,11 +138,11 @@ class IKernelExecutor(Protocol):
     
     def execute_batch(
         self,
-        kernel: Any,
+        kernel: GPUKernel,
         seed: bytes,
         batch_size: int,
         stop_event: Any = None
-    ) -> Tuple[List[Dict[str, int]], float]:
+    ) -> Tuple[List[MatchResult], float]:
         """执行单个批次
         
         Args:
@@ -80,7 +160,7 @@ class IKernelExecutor(Protocol):
 class IAsyncExecutionPipeline(Protocol):
     """异步执行管道接口"""
     
-    def initialize(self, kernel: Any, batch_size: int) -> None:
+    def initialize(self, kernel: GPUKernel, batch_size: int) -> None:
         """初始化异步管道
         
         Args:
@@ -89,11 +169,19 @@ class IAsyncExecutionPipeline(Protocol):
         """
         ...
     
+    def is_ready(self) -> bool:
+        """检查管道是否就绪
+        
+        Returns:
+            是否就绪
+        """
+        ...
+    
     def run_batch(
         self,
         seed: bytes,
         batch_size: int
-    ) -> Tuple[List[Dict[str, int]], float]:
+    ) -> Tuple[List[MatchResult], float]:
         """运行单个批次
         
         Args:
@@ -157,9 +245,21 @@ class ICollisionCore(Protocol):
         """停止碰撞"""
         ...
     
+    def pause(self) -> None:
+        """暂停碰撞"""
+        ...
+    
+    def resume(self) -> None:
+        """恢复碰撞"""
+        ...
+    
+    def reset(self) -> None:
+        """重置统计"""
+        ...
+    
     def on_batch_complete(
         self,
-        matches: List[Dict[str, int]],
+        matches: List[MatchResult],
         batch_size: int
     ) -> None:
         """批次完成回调
@@ -185,12 +285,13 @@ class GPUExecutionContext:
     
     包含GPU执行所需的所有资源和配置。
     """
-    device: Any = None
-    context: Any = None
-    kernel: Any = None
+    device: Optional[GPUDevice] = None
+    context: Optional[GPUContext] = None
+    kernel: Optional[GPUKernel] = None
     batch_size: int = 1_000_000
     vendor: str = "unknown"
     config: Optional[Dict[str, Any]] = None
+    initialized_at: float = 0.0  # 初始化时间戳
 
 
 @dataclass
@@ -199,11 +300,23 @@ class CollisionResult:
     
     单次批次执行的完整结果。
     """
-    matches: List[Dict[str, int]]
-    execution_time_ms: float
-    batch_size: int
+    matches: List[MatchResult] = field(default_factory=list)
+    execution_time_ms: float = 0.0
+    batch_size: int = 0
     total_checked: int = 0
     gpu_errors: int = 0
+    keys_per_second: float = 0.0  # 性能指标
+    device_id: int = -1  # 多GPU追踪
+    timestamp: float = 0.0  # 时间戳
+    seed: Optional[bytes] = None  # 可追溯性
+    
+    def __post_init__(self):
+        """计算派生字段"""
+        if self.execution_time_ms > 0 and self.batch_size > 0:
+            self.keys_per_second = self.batch_size / (self.execution_time_ms / 1000.0)
+        if self.timestamp == 0.0:
+            import time
+            self.timestamp = time.time()
 
 
 class VendorOptimizationStrategy(Protocol):

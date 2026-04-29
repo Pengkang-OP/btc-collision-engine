@@ -17,12 +17,12 @@ from typing import Optional, Dict, Any, List
 import logging
 import time
 
-from .protocols import IMonitoringPipeline
+from .protocols import IMonitoringPipeline, MatchResult
 
 logger = logging.getLogger(__name__)
 
 
-class PerformanceMonitoringPipeline:
+class PerformanceMonitoringPipeline(IMonitoringPipeline):
     """性能监控管道
     
     职责:
@@ -30,6 +30,8 @@ class PerformanceMonitoringPipeline:
     - 统一数据记录到DataLogger
     - 异常检测和告警
     - 性能报告生成
+    
+    实现接口: IMonitoringPipeline
     
     使用示例:
         >>> monitoring = PerformanceMonitoringPipeline(engine, config)

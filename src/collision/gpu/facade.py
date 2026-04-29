@@ -21,6 +21,9 @@ from .protocols import (
     IKernelExecutor,
     IAsyncExecutionPipeline,
     GPUExecutionContext,
+    GPUDevice,
+    GPUContext,
+    GPUKernel,
     CollisionResult,
 )
 
@@ -198,13 +201,13 @@ class GPUEngineFacade:
     # ========== 私有方法 ==========
     
     def _create_device_manager(self) -> IGPUDeviceManager:
-        """创建GPU设备管理器
-        
+        """创庺GPU设备管理器
+            
         Returns:
             GPU设备管理器实例
         """
         # TODO: Phase 2实现 - 从现有GPUDeviceManager适配
-        from ..gpu.device_manager import GPUDeviceManager
+        from ...gpu.device_manager import GPUDeviceManager
         return GPUDeviceManager(config=self.config)
     
     def _create_kernel_executor(self) -> IKernelExecutor:
@@ -227,7 +230,7 @@ class GPUEngineFacade:
         from .async_pipeline_adapter import AsyncPipelineAdapter
         return AsyncPipelineAdapter(config=self.config)
     
-    def _detect_vendor(self, device: Any) -> str:
+    def _detect_vendor(self, device: GPUDevice) -> str:
         """检测GPU厂商
         
         Args:
@@ -236,9 +239,16 @@ class GPUEngineFacade:
         Returns:
             厂商标识符: 'intel', 'nvidia', 'amd', 'unknown'
         """
+        # 如果设备对象已有vendor信息，直接使用
+        if device and device.vendor != "unknown":
+            return device.vendor
+        
         # TODO: Phase 2实现 - 从现有vendor检测逻辑提取
         try:
-            from ..gpu.device import identify_vendor
-            return identify_vendor(device)
+            if device.device_obj:
+                from ...gpu.device import identify_vendor
+                return identify_vendor(device.device_obj)
         except Exception:
-            return "unknown"
+            pass
+        
+        return "unknown"
