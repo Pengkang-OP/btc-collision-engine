@@ -2,8 +2,8 @@
   {
     "type": "anomaly_detection",
     "level": "warning",
-    "message": "检测到 3 个异常",
-    "anomaly_count": 3,
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
     "anomalies": [
       {
         "type": "performance",
@@ -11,30 +11,16 @@
         "value": 0.0,
         "threshold": 100,
         "message": "检测速率过低: 0.00/s"
-      },
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 99.0,
-        "threshold": 90,
-        "message": "CPU使用率过高: 99.00%"
-      },
-      {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
       }
     ],
-    "timestamp": 1777147286.0104868
+    "timestamp": 1777315372.5193408
   },
   {
     "type": "alert",
     "level": "warning",
     "message": "检测速率过低: 0.00/s",
     "alert_data": {
-      "timestamp": 1777147286.6367702,
+      "timestamp": 1777315372.5226095,
       "level": "warning",
       "message": "检测速率过低: 0.00/s",
       "details": {
@@ -45,690 +31,7 @@
         "message": "检测速率过低: 0.00/s"
       }
     },
-    "timestamp": 1777147288.9433925
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 99.00%",
-    "alert_data": {
-      "timestamp": 1777147289.3167539,
-      "level": "warning",
-      "message": "CPU使用率过高: 99.00%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 99.0,
-        "threshold": 90,
-        "message": "CPU使用率过高: 99.00%"
-      }
-    },
-    "timestamp": 1777147291.9353757
-  },
-  {
-    "type": "alert",
-    "level": "critical",
-    "message": "引擎运行但检测速率为0",
-    "alert_data": {
-      "timestamp": 1777147292.5293138,
-      "level": "critical",
-      "message": "引擎运行但检测速率为0",
-      "details": {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    },
-    "timestamp": 1777147293.9462006
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 3 个异常",
-    "anomaly_count": 3,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      },
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 98.7,
-        "threshold": 90,
-        "message": "CPU使用率过高: 98.70%"
-      },
-      {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    ],
-    "timestamp": 1777184921.2280645
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1777184921.7266564,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1777184923.8727384
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 98.70%",
-    "alert_data": {
-      "timestamp": 1777184924.6000528,
-      "level": "warning",
-      "message": "CPU使用率过高: 98.70%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 98.7,
-        "threshold": 90,
-        "message": "CPU使用率过高: 98.70%"
-      }
-    },
-    "timestamp": 1777184927.549656
-  },
-  {
-    "type": "alert",
-    "level": "critical",
-    "message": "引擎运行但检测速率为0",
-    "alert_data": {
-      "timestamp": 1777184928.5070488,
-      "level": "critical",
-      "message": "引擎运行但检测速率为0",
-      "details": {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    },
-    "timestamp": 1777184930.8586032
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 3 个异常",
-    "anomaly_count": 3,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      },
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 109.8,
-        "threshold": 90,
-        "message": "CPU使用率过高: 109.80%"
-      },
-      {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    ],
-    "timestamp": 1777185500.833684
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1777185501.2288764,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1777185504.2672875
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 109.80%",
-    "alert_data": {
-      "timestamp": 1777185504.7235096,
-      "level": "warning",
-      "message": "CPU使用率过高: 109.80%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 109.8,
-        "threshold": 90,
-        "message": "CPU使用率过高: 109.80%"
-      }
-    },
-    "timestamp": 1777185506.6984246
-  },
-  {
-    "type": "alert",
-    "level": "critical",
-    "message": "引擎运行但检测速率为0",
-    "alert_data": {
-      "timestamp": 1777185506.9200592,
-      "level": "critical",
-      "message": "引擎运行但检测速率为0",
-      "details": {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    },
-    "timestamp": 1777185509.1925302
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 3 个异常",
-    "anomaly_count": 3,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      },
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 111.2,
-        "threshold": 90,
-        "message": "CPU使用率过高: 111.20%"
-      },
-      {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    ],
-    "timestamp": 1777186091.8738453
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1777186092.2293587,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1777186094.4887848
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 111.20%",
-    "alert_data": {
-      "timestamp": 1777186095.279608,
-      "level": "warning",
-      "message": "CPU使用率过高: 111.20%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 111.2,
-        "threshold": 90,
-        "message": "CPU使用率过高: 111.20%"
-      }
-    },
-    "timestamp": 1777186097.2675195
-  },
-  {
-    "type": "alert",
-    "level": "critical",
-    "message": "引擎运行但检测速率为0",
-    "alert_data": {
-      "timestamp": 1777186097.9901469,
-      "level": "critical",
-      "message": "引擎运行但检测速率为0",
-      "details": {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    },
-    "timestamp": 1777186100.3331156
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 2 个异常",
-    "anomaly_count": 2,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      },
-      {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    ],
-    "timestamp": 1777186221.006421
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1777186221.010075,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1777186221.0192192
-  },
-  {
-    "type": "alert",
-    "level": "critical",
-    "message": "引擎运行但检测速率为0",
-    "alert_data": {
-      "timestamp": 1777186221.0235243,
-      "level": "critical",
-      "message": "引擎运行但检测速率为0",
-      "details": {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    },
-    "timestamp": 1777186221.0322688
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 3 个异常",
-    "anomaly_count": 3,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      },
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 113.2,
-        "threshold": 90,
-        "message": "CPU使用率过高: 113.20%"
-      },
-      {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    ],
-    "timestamp": 1777186628.877912
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1777186629.4582932,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1777186631.7386343
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 113.20%",
-    "alert_data": {
-      "timestamp": 1777186632.1732864,
-      "level": "warning",
-      "message": "CPU使用率过高: 113.20%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 113.2,
-        "threshold": 90,
-        "message": "CPU使用率过高: 113.20%"
-      }
-    },
-    "timestamp": 1777186635.6774468
-  },
-  {
-    "type": "alert",
-    "level": "critical",
-    "message": "引擎运行但检测速率为0",
-    "alert_data": {
-      "timestamp": 1777186636.0772922,
-      "level": "critical",
-      "message": "引擎运行但检测速率为0",
-      "details": {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    },
-    "timestamp": 1777186638.1355116
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 3 个异常",
-    "anomaly_count": 3,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      },
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 103.4,
-        "threshold": 90,
-        "message": "CPU使用率过高: 103.40%"
-      },
-      {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    ],
-    "timestamp": 1777186997.6352642
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1777186998.046498,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1777187000.6320927
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 103.40%",
-    "alert_data": {
-      "timestamp": 1777187000.8874178,
-      "level": "warning",
-      "message": "CPU使用率过高: 103.40%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 103.4,
-        "threshold": 90,
-        "message": "CPU使用率过高: 103.40%"
-      }
-    },
-    "timestamp": 1777187003.5782526
-  },
-  {
-    "type": "alert",
-    "level": "critical",
-    "message": "引擎运行但检测速率为0",
-    "alert_data": {
-      "timestamp": 1777187003.9607058,
-      "level": "critical",
-      "message": "引擎运行但检测速率为0",
-      "details": {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    },
-    "timestamp": 1777187005.3201113
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 3 个异常",
-    "anomaly_count": 3,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      },
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 97.2,
-        "threshold": 90,
-        "message": "CPU使用率过高: 97.20%"
-      },
-      {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    ],
-    "timestamp": 1777187304.8212578
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1777187305.2709806,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1777187307.478101
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 97.20%",
-    "alert_data": {
-      "timestamp": 1777187308.107186,
-      "level": "warning",
-      "message": "CPU使用率过高: 97.20%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 97.2,
-        "threshold": 90,
-        "message": "CPU使用率过高: 97.20%"
-      }
-    },
-    "timestamp": 1777187310.699555
-  },
-  {
-    "type": "alert",
-    "level": "critical",
-    "message": "引擎运行但检测速率为0",
-    "alert_data": {
-      "timestamp": 1777187311.440832,
-      "level": "critical",
-      "message": "引擎运行但检测速率为0",
-      "details": {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    },
-    "timestamp": 1777187313.556822
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 3 个异常",
-    "anomaly_count": 3,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      },
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 111.6,
-        "threshold": 90,
-        "message": "CPU使用率过高: 111.60%"
-      },
-      {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    ],
-    "timestamp": 1777187887.2740402
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1777187887.748697,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1777187889.6065557
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 111.60%",
-    "alert_data": {
-      "timestamp": 1777187890.0738578,
-      "level": "warning",
-      "message": "CPU使用率过高: 111.60%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 111.6,
-        "threshold": 90,
-        "message": "CPU使用率过高: 111.60%"
-      }
-    },
-    "timestamp": 1777187892.015054
-  },
-  {
-    "type": "alert",
-    "level": "critical",
-    "message": "引擎运行但检测速率为0",
-    "alert_data": {
-      "timestamp": 1777187892.469203,
-      "level": "critical",
-      "message": "引擎运行但检测速率为0",
-      "details": {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    },
-    "timestamp": 1777187894.5475986
+    "timestamp": 1777315372.531967
   },
   {
     "type": "anomaly_detection",
@@ -738,31 +41,31 @@
     "anomalies": [
       {
         "type": "performance",
-        "metric": "cpu_usage",
-        "value": 105.9,
-        "threshold": 90,
-        "message": "CPU使用率过高: 105.90%"
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
       }
     ],
-    "timestamp": 1777187913.680775
+    "timestamp": 1777315373.6293125
   },
   {
     "type": "alert",
     "level": "warning",
-    "message": "CPU使用率过高: 105.90%",
+    "message": "检测速率过低: 0.00/s",
     "alert_data": {
-      "timestamp": 1777187914.287896,
+      "timestamp": 1777315373.631677,
       "level": "warning",
-      "message": "CPU使用率过高: 105.90%",
+      "message": "检测速率过低: 0.00/s",
       "details": {
         "type": "performance",
-        "metric": "cpu_usage",
-        "value": 105.9,
-        "threshold": 90,
-        "message": "CPU使用率过高: 105.90%"
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
       }
     },
-    "timestamp": 1777187917.1128733
+    "timestamp": 1777315373.6399162
   },
   {
     "type": "anomaly_detection",
@@ -772,61 +75,20 @@
     "anomalies": [
       {
         "type": "performance",
-        "metric": "cpu_usage",
-        "value": 100.3,
-        "threshold": 90,
-        "message": "CPU使用率过高: 100.30%"
-      }
-    ],
-    "timestamp": 1777187948.9374883
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 100.30%",
-    "alert_data": {
-      "timestamp": 1777187949.1238322,
-      "level": "warning",
-      "message": "CPU使用率过高: 100.30%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 100.3,
-        "threshold": 90,
-        "message": "CPU使用率过高: 100.30%"
-      }
-    },
-    "timestamp": 1777187950.8659573
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 2 个异常",
-    "anomaly_count": 2,
-    "anomalies": [
-      {
-        "type": "performance",
         "metric": "speed",
         "value": 0.0,
         "threshold": 100,
         "message": "检测速率过低: 0.00/s"
-      },
-      {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
       }
     ],
-    "timestamp": 1777188335.4125829
+    "timestamp": 1777315374.7128644
   },
   {
     "type": "alert",
     "level": "warning",
     "message": "检测速率过低: 0.00/s",
     "alert_data": {
-      "timestamp": 1777188335.417418,
+      "timestamp": 1777315374.715705,
       "level": "warning",
       "message": "检测速率过低: 0.00/s",
       "details": {
@@ -837,168 +99,7 @@
         "message": "检测速率过低: 0.00/s"
       }
     },
-    "timestamp": 1777188335.4276445
-  },
-  {
-    "type": "alert",
-    "level": "critical",
-    "message": "引擎运行但检测速率为0",
-    "alert_data": {
-      "timestamp": 1777188335.4321642,
-      "level": "critical",
-      "message": "引擎运行但检测速率为0",
-      "details": {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    },
-    "timestamp": 1777188335.4409056
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 2 个异常",
-    "anomaly_count": 2,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      },
-      {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    ],
-    "timestamp": 1777188335.8336792
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1777188335.838204,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1777188335.8477147
-  },
-  {
-    "type": "alert",
-    "level": "critical",
-    "message": "引擎运行但检测速率为0",
-    "alert_data": {
-      "timestamp": 1777188335.8524299,
-      "level": "critical",
-      "message": "引擎运行但检测速率为0",
-      "details": {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    },
-    "timestamp": 1777188335.8613389
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 3 个异常",
-    "anomaly_count": 3,
-    "anomalies": [
-      {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      },
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 116.3,
-        "threshold": 90,
-        "message": "CPU使用率过高: 116.30%"
-      },
-      {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    ],
-    "timestamp": 1777188931.4669464
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "检测速率过低: 0.00/s",
-    "alert_data": {
-      "timestamp": 1777188931.7537918,
-      "level": "warning",
-      "message": "检测速率过低: 0.00/s",
-      "details": {
-        "type": "performance",
-        "metric": "speed",
-        "value": 0.0,
-        "threshold": 100,
-        "message": "检测速率过低: 0.00/s"
-      }
-    },
-    "timestamp": 1777188932.9632459
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 116.30%",
-    "alert_data": {
-      "timestamp": 1777188933.5229912,
-      "level": "warning",
-      "message": "CPU使用率过高: 116.30%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 116.3,
-        "threshold": 90,
-        "message": "CPU使用率过高: 116.30%"
-      }
-    },
-    "timestamp": 1777188934.9953
-  },
-  {
-    "type": "alert",
-    "level": "critical",
-    "message": "引擎运行但检测速率为0",
-    "alert_data": {
-      "timestamp": 1777188935.4093707,
-      "level": "critical",
-      "message": "引擎运行但检测速率为0",
-      "details": {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    },
-    "timestamp": 1777188936.3873315
+    "timestamp": 1777315374.7242322
   },
   {
     "type": "anomaly_detection",
@@ -1008,61 +109,20 @@
     "anomalies": [
       {
         "type": "performance",
-        "metric": "cpu_usage",
-        "value": 99.0,
-        "threshold": 90,
-        "message": "CPU使用率过高: 99.00%"
-      }
-    ],
-    "timestamp": 1777188965.330021
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 99.00%",
-    "alert_data": {
-      "timestamp": 1777188965.4707491,
-      "level": "warning",
-      "message": "CPU使用率过高: 99.00%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 99.0,
-        "threshold": 90,
-        "message": "CPU使用率过高: 99.00%"
-      }
-    },
-    "timestamp": 1777188966.3164039
-  },
-  {
-    "type": "anomaly_detection",
-    "level": "warning",
-    "message": "检测到 2 个异常",
-    "anomaly_count": 2,
-    "anomalies": [
-      {
-        "type": "performance",
         "metric": "speed",
         "value": 0.0,
         "threshold": 100,
         "message": "检测速率过低: 0.00/s"
-      },
-      {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
       }
     ],
-    "timestamp": 1777192069.454643
+    "timestamp": 1777315375.8067281
   },
   {
     "type": "alert",
     "level": "warning",
     "message": "检测速率过低: 0.00/s",
     "alert_data": {
-      "timestamp": 1777192069.4601312,
+      "timestamp": 1777315375.8096313,
       "level": "warning",
       "message": "检测速率过低: 0.00/s",
       "details": {
@@ -1073,31 +133,13 @@
         "message": "检测速率过低: 0.00/s"
       }
     },
-    "timestamp": 1777192069.4705153
-  },
-  {
-    "type": "alert",
-    "level": "critical",
-    "message": "引擎运行但检测速率为0",
-    "alert_data": {
-      "timestamp": 1777192069.475799,
-      "level": "critical",
-      "message": "引擎运行但检测速率为0",
-      "details": {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    },
-    "timestamp": 1777192069.4862103
+    "timestamp": 1777315375.8176425
   },
   {
     "type": "anomaly_detection",
     "level": "warning",
-    "message": "检测到 3 个异常",
-    "anomaly_count": 3,
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
     "anomalies": [
       {
         "type": "performance",
@@ -1105,30 +147,16 @@
         "value": 0.0,
         "threshold": 100,
         "message": "检测速率过低: 0.00/s"
-      },
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 100.6,
-        "threshold": 90,
-        "message": "CPU使用率过高: 100.60%"
-      },
-      {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
       }
     ],
-    "timestamp": 1777199325.8372068
+    "timestamp": 1777315376.8992724
   },
   {
     "type": "alert",
     "level": "warning",
     "message": "检测速率过低: 0.00/s",
     "alert_data": {
-      "timestamp": 1777199326.602334,
+      "timestamp": 1777315376.9020393,
       "level": "warning",
       "message": "检测速率过低: 0.00/s",
       "details": {
@@ -1139,49 +167,13 @@
         "message": "检测速率过低: 0.00/s"
       }
     },
-    "timestamp": 1777199336.293695
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 100.60%",
-    "alert_data": {
-      "timestamp": 1777199336.727831,
-      "level": "warning",
-      "message": "CPU使用率过高: 100.60%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 100.6,
-        "threshold": 90,
-        "message": "CPU使用率过高: 100.60%"
-      }
-    },
-    "timestamp": 1777199340.3361452
-  },
-  {
-    "type": "alert",
-    "level": "critical",
-    "message": "引擎运行但检测速率为0",
-    "alert_data": {
-      "timestamp": 1777199340.5488048,
-      "level": "critical",
-      "message": "引擎运行但检测速率为0",
-      "details": {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    },
-    "timestamp": 1777199346.2478917
+    "timestamp": 1777315376.9103937
   },
   {
     "type": "anomaly_detection",
     "level": "warning",
-    "message": "检测到 3 个异常",
-    "anomaly_count": 3,
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
     "anomalies": [
       {
         "type": "performance",
@@ -1189,30 +181,16 @@
         "value": 0.0,
         "threshold": 100,
         "message": "检测速率过低: 0.00/s"
-      },
-      {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 99.4,
-        "threshold": 90,
-        "message": "CPU使用率过高: 99.40%"
-      },
-      {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
       }
     ],
-    "timestamp": 1777201292.3569312
+    "timestamp": 1777315377.9836128
   },
   {
     "type": "alert",
     "level": "warning",
     "message": "检测速率过低: 0.00/s",
     "alert_data": {
-      "timestamp": 1777201292.7395432,
+      "timestamp": 1777315377.986135,
       "level": "warning",
       "message": "检测速率过低: 0.00/s",
       "details": {
@@ -1223,49 +201,13 @@
         "message": "检测速率过低: 0.00/s"
       }
     },
-    "timestamp": 1777201298.1944847
-  },
-  {
-    "type": "alert",
-    "level": "warning",
-    "message": "CPU使用率过高: 99.40%",
-    "alert_data": {
-      "timestamp": 1777201298.4524877,
-      "level": "warning",
-      "message": "CPU使用率过高: 99.40%",
-      "details": {
-        "type": "performance",
-        "metric": "cpu_usage",
-        "value": 99.4,
-        "threshold": 90,
-        "message": "CPU使用率过高: 99.40%"
-      }
-    },
-    "timestamp": 1777201305.050569
-  },
-  {
-    "type": "alert",
-    "level": "critical",
-    "message": "引擎运行但检测速率为0",
-    "alert_data": {
-      "timestamp": 1777201305.8729212,
-      "level": "critical",
-      "message": "引擎运行但检测速率为0",
-      "details": {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    },
-    "timestamp": 1777201314.9673467
+    "timestamp": 1777315377.995065
   },
   {
     "type": "anomaly_detection",
     "level": "warning",
-    "message": "检测到 2 个异常",
-    "anomaly_count": 2,
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
     "anomalies": [
       {
         "type": "performance",
@@ -1273,23 +215,16 @@
         "value": 0.0,
         "threshold": 100,
         "message": "检测速率过低: 0.00/s"
-      },
-      {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
       }
     ],
-    "timestamp": 1777213499.5494313
+    "timestamp": 1777315379.0735657
   },
   {
     "type": "alert",
     "level": "warning",
     "message": "检测速率过低: 0.00/s",
     "alert_data": {
-      "timestamp": 1777213499.5543845,
+      "timestamp": 1777315379.0763922,
       "level": "warning",
       "message": "检测速率过低: 0.00/s",
       "details": {
@@ -1300,31 +235,13 @@
         "message": "检测速率过低: 0.00/s"
       }
     },
-    "timestamp": 1777213499.5641403
-  },
-  {
-    "type": "alert",
-    "level": "critical",
-    "message": "引擎运行但检测速率为0",
-    "alert_data": {
-      "timestamp": 1777213499.568957,
-      "level": "critical",
-      "message": "引擎运行但检测速率为0",
-      "details": {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    },
-    "timestamp": 1777213499.577713
+    "timestamp": 1777315379.0833106
   },
   {
     "type": "anomaly_detection",
     "level": "warning",
-    "message": "检测到 2 个异常",
-    "anomaly_count": 2,
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
     "anomalies": [
       {
         "type": "performance",
@@ -1332,23 +249,16 @@
         "value": 0.0,
         "threshold": 100,
         "message": "检测速率过低: 0.00/s"
-      },
-      {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
       }
     ],
-    "timestamp": 1777213500.0298574
+    "timestamp": 1777315380.1421654
   },
   {
     "type": "alert",
     "level": "warning",
     "message": "检测速率过低: 0.00/s",
     "alert_data": {
-      "timestamp": 1777213500.0365283,
+      "timestamp": 1777315380.144827,
       "level": "warning",
       "message": "检测速率过低: 0.00/s",
       "details": {
@@ -1359,31 +269,13 @@
         "message": "检测速率过低: 0.00/s"
       }
     },
-    "timestamp": 1777213500.044753
-  },
-  {
-    "type": "alert",
-    "level": "critical",
-    "message": "引擎运行但检测速率为0",
-    "alert_data": {
-      "timestamp": 1777213500.0510092,
-      "level": "critical",
-      "message": "引擎运行但检测速率为0",
-      "details": {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    },
-    "timestamp": 1777213500.0599325
+    "timestamp": 1777315380.1532605
   },
   {
     "type": "anomaly_detection",
     "level": "warning",
-    "message": "检测到 2 个异常",
-    "anomaly_count": 2,
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
     "anomalies": [
       {
         "type": "performance",
@@ -1391,23 +283,16 @@
         "value": 0.0,
         "threshold": 100,
         "message": "检测速率过低: 0.00/s"
-      },
-      {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
       }
     ],
-    "timestamp": 1777220129.716184
+    "timestamp": 1777315381.2190037
   },
   {
     "type": "alert",
     "level": "warning",
     "message": "检测速率过低: 0.00/s",
     "alert_data": {
-      "timestamp": 1777220129.7210393,
+      "timestamp": 1777315381.2220023,
       "level": "warning",
       "message": "检测速率过低: 0.00/s",
       "details": {
@@ -1418,31 +303,13 @@
         "message": "检测速率过低: 0.00/s"
       }
     },
-    "timestamp": 1777220129.7301273
-  },
-  {
-    "type": "alert",
-    "level": "critical",
-    "message": "引擎运行但检测速率为0",
-    "alert_data": {
-      "timestamp": 1777220129.7347617,
-      "level": "critical",
-      "message": "引擎运行但检测速率为0",
-      "details": {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
-      }
-    },
-    "timestamp": 1777220129.7429154
+    "timestamp": 1777315381.2319474
   },
   {
     "type": "anomaly_detection",
     "level": "warning",
-    "message": "检测到 2 个异常",
-    "anomaly_count": 2,
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
     "anomalies": [
       {
         "type": "performance",
@@ -1450,23 +317,16 @@
         "value": 0.0,
         "threshold": 100,
         "message": "检测速率过低: 0.00/s"
-      },
-      {
-        "type": "engine",
-        "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
       }
     ],
-    "timestamp": 1777220130.1478333
+    "timestamp": 1777315382.3030424
   },
   {
     "type": "alert",
     "level": "warning",
     "message": "检测速率过低: 0.00/s",
     "alert_data": {
-      "timestamp": 1777220130.1538997,
+      "timestamp": 1777315382.3061755,
       "level": "warning",
       "message": "检测速率过低: 0.00/s",
       "details": {
@@ -1477,24 +337,2420 @@
         "message": "检测速率过低: 0.00/s"
       }
     },
-    "timestamp": 1777220130.163418
+    "timestamp": 1777315382.3186777
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315383.3901894
   },
   {
     "type": "alert",
-    "level": "critical",
-    "message": "引擎运行但检测速率为0",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
     "alert_data": {
-      "timestamp": 1777220130.1684651,
-      "level": "critical",
-      "message": "引擎运行但检测速率为0",
+      "timestamp": 1777315383.3932157,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
       "details": {
-        "type": "engine",
+        "type": "performance",
         "metric": "speed",
-        "value": 0,
-        "threshold": 1,
-        "message": "引擎运行但检测速率为0"
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
       }
     },
-    "timestamp": 1777220130.1759667
+    "timestamp": 1777315383.4016907
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315384.482834
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315384.485822,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315384.4927692
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315385.5527143
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315385.5555682,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315385.5631866
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315386.6331465
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315386.636521,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315386.6494021
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315387.7190986
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315387.721911,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315387.7308764
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315388.7995076
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315388.8025367,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315388.8107126
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315389.8842056
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315389.8872716,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315389.8992956
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315390.9642587
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315390.9672155,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315390.9763427
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315392.0546763
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315392.058973,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315392.069488
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315393.1393986
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315393.1427479,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315393.1517994
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315394.2199216
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315394.2238786,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315394.2332044
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315395.3058078
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315395.3098497,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315395.3180537
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315396.3962827
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315396.400881,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315396.4097824
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315397.4861047
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315397.4902518,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315397.5015826
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315398.5728323
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315398.5767188,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315398.5857804
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315399.655418
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315399.6589334,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315399.6671658
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315400.7393835
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315400.742929,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315400.7510927
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315401.8171618
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315401.821006,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315401.832615
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315402.9025507
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315402.9069114,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315402.9164286
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315403.9921856
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315403.9959033,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315404.006486
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315405.079268
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315405.0832453,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315405.0924325
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315406.1611304
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315406.1662903,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315406.1771874
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315407.265326
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315407.2695,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315407.277554
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315408.3501558
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315408.3544557,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315408.3635623
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315409.437228
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315409.4415545,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315409.4503708
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315410.5165703
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315410.5205343,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315410.5299227
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315411.6104438
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315411.6148045,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315411.6248367
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315412.699568
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315412.7038121,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315412.712734
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315413.7874835
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315413.791659,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315413.8001544
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315414.8767343
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315414.881119,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315414.8901687
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315415.9610543
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315415.9652624,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315415.9736905
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315417.0418613
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315417.0467484,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315417.0564022
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315418.127308
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315418.131781,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315418.1411805
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315419.2142162
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315419.218668,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315419.227393
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315420.302014
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315420.3067505,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315420.3155026
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315421.3945239
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315421.3998313,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315421.4081635
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315422.4973986
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315422.5021236,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315422.5118597
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315423.5935063
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315423.5979812,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315423.6078088
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315424.710871
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315424.7160037,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315424.724878
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315425.8084671
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315425.8142974,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315425.8252122
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315426.9097197
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315426.9146214,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315426.9228868
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315428.0135584
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315428.0183384,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315428.0278661
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315429.1112342
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315429.1169107,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315429.1258886
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315430.2268517
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315430.2321627,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315430.2411711
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315431.335506
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315431.340263,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315431.3487227
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315432.4337633
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315432.4385395,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315432.4470735
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315433.5340497
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315433.539766,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315433.5490081
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315434.629242
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315434.6350272,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315434.6435428
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315435.7239003
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315435.72904,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315435.7378962
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315436.823815
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315436.8290327,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315436.8377488
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315437.933308
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315437.939784,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315437.9516385
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315439.0439005
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315439.0496411,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315439.0598528
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315440.1553438
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315440.1606388,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315440.1686137
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315441.2672129
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315441.2733362,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315441.2821374
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315442.3827763
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315442.3883753,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315442.3965218
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315443.496246
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315443.5031016,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315443.513587
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315444.6151786
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315444.620812,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315444.629141
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315445.7246497
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315445.7300777,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315445.7405996
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315446.8348334
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315446.840464,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315446.8485556
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315447.9388082
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315447.9449522,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315447.9539216
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315449.0654695
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315449.0736861,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315449.082835
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315450.1976504
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315450.203513,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315450.212671
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315451.3237865
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315451.3298244,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315451.338435
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315452.4438684
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315452.4498148,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315452.458831
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315453.5590343
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315453.567374,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315453.5763853
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315454.6827743
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315454.688887,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315454.69825
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315455.7764924
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315455.782904,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315455.7928178
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315456.884704
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315456.89042,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315456.899888
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315457.9872205
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315457.993231,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315458.0053594
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315459.0910046
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315459.0976787,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315459.1071956
+  },
+  {
+    "type": "anomaly_detection",
+    "level": "warning",
+    "message": "检测到 1 个异常",
+    "anomaly_count": 1,
+    "anomalies": [
+      {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    ],
+    "timestamp": 1777315460.1944234
+  },
+  {
+    "type": "alert",
+    "level": "warning",
+    "message": "检测速率过低: 0.00/s",
+    "alert_data": {
+      "timestamp": 1777315460.2013037,
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "details": {
+        "type": "performance",
+        "metric": "speed",
+        "value": 0.0,
+        "threshold": 100,
+        "message": "检测速率过低: 0.00/s"
+      }
+    },
+    "timestamp": 1777315460.2120297
   }
 ]

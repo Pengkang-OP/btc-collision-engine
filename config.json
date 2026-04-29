@@ -26,7 +26,7 @@
   },
   "collision": {
     "_comment": "碰撞引擎运行时参数（CLI使用）",
-    "max_workers": null,
+    "max_workers": 1,
     "_comment_max_workers": "工作线程数，null=自动使用CPU核心数",
     "progress_interval": 1000,
     "_comment_progress_interval": "进度回调触发间隔（检测次数）",
@@ -55,7 +55,7 @@
     "_comment_max_bytes": "单个日志文件最大字节数(10MB)",
     "backup_count": 5,
     "_comment_backup_count": "保留的备份文件数量",
-    "enable_console": true,
+    "enable_console": false,
     "_comment_enable_console": "是否输出到控制台",
     "enable_file": true,
     "_comment_enable_file": "是否输出到文件",
@@ -120,7 +120,7 @@
     "_comment_use_new_module": "是否使用新的GPU模块(false=使用旧gpu_engine.py)",
     "auto_detect": true,
     "_comment_auto_detect": "自动检测GPU设备",
-    "memory_usage_ratio": 0.70,
+    "memory_usage_ratio": 0.8,
     "_comment_memory_usage_ratio": "显存使用比例(0.0-1.0), Intel Arc建议0.70",
     "enable_vendor_optimizations": true,
     "_comment_enable_vendor_optimizations": "启用厂商特定优化",
@@ -151,7 +151,7 @@
       "auto_fallback_conservative": true,
       "_comment_auto_fallback_conservative": "驱动版本过旧时自动切换到保守模式"
     },
-    "mode": "auto",
+    "mode": "multi",
     "_comment_mode": "GPU模式: auto=自动选择, single=单GPU, multi=多GPU",
     "device_indices": [
       -1
@@ -195,7 +195,7 @@
   },
   "i18n": {
     "_comment": "i18n 国际化配置",
-    "language": "auto",
+    "language": "zh_CN",
     "_comment_language": "界面语言：auto=自动检测系统语言, zh_CN, en_US",
     "fallback_language": "en_US",
     "_comment_fallback_language": "回退语言，当指定语言找不到翻译时使用"

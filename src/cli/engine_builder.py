@@ -104,6 +104,7 @@ def build_engine(args: argparse.Namespace, targets: Set[str], on_progress=None, 
                 dedup_enabled=args.dedup,
                 dedup_max_size=args.dedup_max_size,
                 use_gpu_memory_pool=True,
+                use_async_logging=True,
             )
             return engine, 'gpu'
         except RuntimeError as e:

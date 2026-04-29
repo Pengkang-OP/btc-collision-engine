@@ -55,7 +55,7 @@ class AddressConverter:
             raise ValueError("私钥必须为32字节")
         
         # Step 1: 椭圆曲线标量乘法 (私钥 → 公钥)
-        public_key = self.ec.scalar_multiply(private_key, compressed)
+        public_key = self.ec.generate_public_key(private_key, compressed)
         
         # Step 2: SHA-256哈希
         sha256_hash = hashlib.sha256(public_key).digest()

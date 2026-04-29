@@ -22,7 +22,25 @@ class CheckpointManager:
     
     DEFAULT_FILE = "collision_checkpoint.json"
     
+    # 类级别的pywin32可用性检查
+    _has_win32_security = None
+    
+    @classmethod
+    def _check_win32_security(cls):
+        """检查pywin32是否可用（类级别的一次性检查）"""
+        if cls._has_win32_security is None:
+            try:
+                import win32security
+                import ntsecuritycon
+                cls._has_win32_security = True
+            except ImportError:
+                cls._has_win32_security = False
+        return cls._has_win32_security
+    
     def __init__(self, filepath: str = None, auto_save_interval: int = 30):
+        # 确保pywin32可用性检查已执行
+        self._has_win32_security = self._check_win32_security()
+        
         # 修复: 默认断点路径使用data_logs目录（有写入权限）
         if filepath is None:
             # 获取项目根目录（src的父目录）
@@ -38,7 +56,7 @@ class CheckpointManager:
         self._lock = threading.Lock()  # 线程锁保护文件操作
         self._dirty = False  # 脏标志，标记是否有未保存的更改
         self._buffer = None  # 缓冲区，用于批量保存
-        logger.debug(f"CheckpointManager 初始化: 文件={self.filepath}, 自动保存间隔={auto_save_interval}秒")
+        logger.debug(f"CheckpointManager 初始化: 文件={self.filepath}, 自动保存间隔={auto_save_interval}秒, pywin32可用={self._has_win32_security}")
     
     def save(self, mode: str, targets: Set[str], current_position: int, 
              total_checked: int, matches: List[Dict], 
@@ -101,80 +119,147 @@ class CheckpointManager:
         if not self._dirty or self._buffer is None:
             return
         
-        temp_filepath = self.filepath + '.tmp'
         try:
-            # 使用临时文件 + 原子重命名，防止写入中断导致文件损坏
+            logger.debug(f"开始保存断点: {self.filepath}")
+            
+            # 确保目录存在
+            dir_path = os.path.dirname(self.filepath)
+            if not os.path.exists(dir_path):
+                logger.debug(f"创建目录: {dir_path}")
+                os.makedirs(dir_path, exist_ok=True)
+            
+            # 使用临时文件+原子重命名机制，确保文件完整性
+            temp_filepath = f"{self.filepath}.tmp"
+            logger.debug(f"写入临时文件: {temp_filepath}")
+            
+            # 写入临时文件
             with open(temp_filepath, 'w', encoding='utf-8') as f:
                 json.dump(self._buffer, f, ensure_ascii=False, indent=2)
+            logger.debug("临时文件写入成功")
             
-            # 原子重命名
-            # DA-1修复: 优化Windows原子操作
-            if PlatformUtils.is_windows():  # Windows
-                # Windows上os.replace()可能需要特殊处理
-                try:
-                    # 先尝试直接replace
-                    os.replace(temp_filepath, self.filepath)
-                except OSError as e:
-                    # 如果失败，尝试先删除再重命名
-                    logger.debug(f"os.replace()失败，尝试删除后重命名: {e}")
-                    if os.path.exists(self.filepath):
-                        os.remove(self.filepath)
-                    os.rename(temp_filepath, self.filepath)
-            else:
-                # Unix/Linux: 直接使用os.replace（原子操作）
-                os.replace(temp_filepath, self.filepath)
+            # 原子重命名（跨平台兼容）
+            logger.debug(f"原子重命名: {temp_filepath} -> {self.filepath}")
+            os.replace(temp_filepath, self.filepath)
+            logger.debug("原子重命名成功")
             
-            # 设置文件权限
-            # Linux/macOS: 使用chmod设置0o600
-            # Windows: 通过环境变量控制ACL设置
-            if not PlatformUtils.is_windows():  # nt = Windows
-                try:
-                    os.chmod(self.filepath, 0o600)  # 仅所有者可读写
-                except OSError:
-                    pass  # 权限设置失败不影响功能
-            else:
-                # Windows: ACL权限设置(可通过环境变量控制)
-                # 环境变量: BTC_ENGINE_SKIP_ACL
-                #   - 'true': 跳过ACL设置,使用Windows默认权限
-                #   - 'false'或未设置: 尝试使用icacls设置严格权限
-                # 安全说明:
-                #   - 断点文件不包含私钥,仅包含地址和进度信息
-                #   - 默认权限风险较低,但多用户环境建议启用ACL
-                #   - 测试环境中如遇到权限错误,可设置BTC_ENGINE_SKIP_ACL=true
-                skip_acl = os.environ.get('BTC_ENGINE_SKIP_ACL', 'false').lower() == 'true'
-                
-                if skip_acl:
-                    logger.debug("Windows环境: 根据配置(BTC_ENGINE_SKIP_ACL=true)跳过ACL设置")
+            # 设置文件权限（跨平台兼容）
+            try:
+                if not PlatformUtils.is_windows():
+                    # Linux/macOS: 设置为仅所有者可读写
+                    os.chmod(self.filepath, 0o600)
+                    logger.debug(f"已设置文件权限: 0o600 (仅所有者可读写)")
                 else:
-                    try:
-                        import subprocess
-                        subprocess.run(
-                            ['icacls', self.filepath, '/inheritance:r', '/grant:r', 
-                             f'{os.environ["USERNAME"]}:(R,W)'],
-                            check=True,
-                            capture_output=True,
-                            timeout=5
-                        )
-                        logger.debug("Windows文件权限已设置(icacls)")
-                    except Exception as perm_error:
-                        # A类修复: 权限设置失败降级处理
-                        # 不阻断主流程,使用默认权限
-                        logger.warning(
-                            f"Windows ACL设置失败(不影响功能,使用默认权限): "
-                            f"{type(perm_error).__name__}: {perm_error}"
-                        )
+                    # Windows: 尝试设置ACL（仅所有者可访问）
+                    if self._has_win32_security:
+                        try:
+                            import win32security
+                            import ntsecuritycon as con
+                            import getpass
+                            
+                            # 获取文件句柄
+                            handle = win32security.GetFileSecurity(
+                                self.filepath,
+                                win32security.DACL_SECURITY_INFORMATION
+                            )
+                            
+                            # 创建新的DACL
+                            dacl = win32security.ACL()
+                            
+                            # 获取当前用户SID
+                            username = getpass.getuser()
+                            sid, _, _ = win32security.LookupAccountName(None, username)
+                            
+                            # 添加访问控制项（仅当前用户可完全控制）
+                            dacl.AddAccessAllowedAce(
+                                win32security.ACL_REVISION,
+                                con.FILE_ALL_ACCESS,
+                                sid
+                            )
+                            
+                            # 设置新的DACL
+                            handle.SetSecurityDescriptorDacl(1, dacl, 0)
+                            win32security.SetFileSecurity(
+                                self.filepath,
+                                win32security.DACL_SECURITY_INFORMATION,
+                                handle
+                            )
+                            logger.debug("已设置Windows文件权限（仅当前用户可访问）")
+                        except Exception as e:
+                            # pywin32权限设置失败，尝试icacls
+                            logger.debug(f"pywin32权限设置失败: {e}，尝试使用icacls")
+                            try:
+                                import getpass
+                                username = getpass.getuser()
+                                import subprocess
+                                
+                                # 使用icacls命令设置权限：移除所有继承的权限，只允许当前用户访问
+                                cmd = [
+                                    'icacls',
+                                    self.filepath,
+                                    '/inheritance:r',  # 移除继承
+                                    f'/grant:r', f'{username}:F',  # 授予当前用户完全控制权限
+                                    '/Q'  # 静默执行
+                                ]
+                                
+                                result = subprocess.run(cmd, capture_output=True, text=True)
+                                if result.returncode == 0:
+                                    logger.debug("已使用icacls设置Windows文件权限（仅当前用户可访问）")
+                                else:
+                                    logger.warning(f"icacls权限设置失败: {result.stderr}")
+                            except Exception as e:
+                                # icacls命令也失败，跳过Windows权限设置
+                                logger.debug("icacls命令执行失败，跳过Windows权限设置")
+                    else:
+                        # pywin32未安装，尝试使用icacls命令
+                        try:
+                            import getpass
+                            username = getpass.getuser()
+                            import subprocess
+                            
+                            # 使用icacls命令设置权限：移除所有继承的权限，只允许当前用户访问
+                            cmd = [
+                                'icacls',
+                                self.filepath,
+                                '/inheritance:r',  # 移除继承
+                                f'/grant:r', f'{username}:F',  # 授予当前用户完全控制权限
+                                '/Q'  # 静默执行
+                            ]
+                            
+                            result = subprocess.run(cmd, capture_output=True, text=True)
+                            if result.returncode == 0:
+                                logger.debug("已使用icacls设置Windows文件权限（仅当前用户可访问）")
+                            else:
+                                logger.warning(f"icacls权限设置失败: {result.stderr}")
+                        except Exception as e:
+                            # icacls命令也失败，跳过Windows权限设置
+                            logger.debug("pywin32未安装且icacls命令执行失败，跳过Windows权限设置")
+            except Exception as e:
+                # 权限设置失败不影响主流程，只记录警告
+                logger.warning(f"文件权限设置失败: {e}")
+            
+            # 清理可能的旧临时文件
+            self._cleanup_temp_file(temp_filepath)
             
             self._last_save_time = time.time()
             self._dirty = False
             logger.debug(f"断点已保存: {self.filepath}, 位置={self._buffer.get('current_position')}, 已检查={self._buffer.get('total_checked')}")
         except PermissionError as e:
             logger.error(f"保存断点失败（权限不足）: {e}")
+            logger.error(f"文件路径: {self.filepath}")
+            import traceback
+            logger.error(f"堆栈跟踪: {traceback.format_exc()}")
+            # 清理临时文件
+            temp_filepath = f"{self.filepath}.tmp"
             self._cleanup_temp_file(temp_filepath)
         except OSError as e:
             logger.error(f"保存断点失败（I/O错误）: {e}", exc_info=True)
+            # 清理临时文件
+            temp_filepath = f"{self.filepath}.tmp"
             self._cleanup_temp_file(temp_filepath)
         except Exception as e:
             logger.error(f"保存断点失败（未知错误）: {e}", exc_info=True)
+            # 清理临时文件
+            temp_filepath = f"{self.filepath}.tmp"
             self._cleanup_temp_file(temp_filepath)
     
     def _cleanup_temp_file(self, temp_filepath: str) -> None:

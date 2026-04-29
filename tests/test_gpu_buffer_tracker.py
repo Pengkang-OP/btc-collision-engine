@@ -16,7 +16,7 @@ import pytest
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from src.collision.gpu_collision_engine import GPUBufferTracker
+from src.gpu.buffer_tracker import GPUBufferTracker
 
 
 @pytest.mark.unit

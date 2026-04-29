@@ -82,6 +82,9 @@ class LoggingConfig:
             config: 自定义配置字典，None则使用默认配置
         """
         if self._initialized:
+            # 修复: 添加调试日志，避免静默失败
+            import logging
+            logging.getLogger(__name__).debug("日志系统已初始化，跳过重复调用")
             return
         
         if config is None:
@@ -130,6 +133,10 @@ class LoggingConfig:
             log_dir = os.path.dirname(log_file)
             if log_dir and not os.path.exists(log_dir):
                 os.makedirs(log_dir, mode=0o750, exist_ok=True)
+        else:
+            # 使用平台特定的日志目录
+            from .log_platform_adapter import ensure_log_directory
+            ensure_log_directory()
     
     def check_disk_space(self, min_free_mb: int = 200) -> bool:
         """主动检查日志目录所在磁盘的可用空间
@@ -176,8 +183,11 @@ class LoggingConfig:
         # 清除现有处理器
         root_logger.handlers.clear()
         
+        # 检查环境变量是否禁用控制台日志
+        disable_console = os.environ.get('DISABLE_CONSOLE_LOG', '').lower() in ('1', 'true', 'yes')
+        
         # 控制台处理器（使用 SafeStreamHandler 以兼容 Windows GBK 编码）
-        if self._config.get("enable_console", True):
+        if self._config.get("enable_console", True) and not disable_console:
             console_handler = SafeStreamHandler(sys.stdout)
             console_handler.setLevel(getattr(logging, level))
             console_formatter = ColoredFormatter(format_str)
@@ -205,7 +215,7 @@ class LoggingConfig:
                     when=self._config.get("rotation_when", "midnight"),
                     interval=self._config.get("rotation_interval", 1),
                     backupCount=self._config.get("backup_count", 5),
-                    encoding='utf-8'
+                    encoding='utf-8-sig'  # 修复: 使用UTF-8-BOM解决Windows中文乱码
                 )
             else:
                 # 基于大小的轮转（默认）
@@ -213,7 +223,7 @@ class LoggingConfig:
                     log_file,
                     maxBytes=self._config.get('max_bytes', 10*1024*1024),
                     backupCount=self._config.get('backup_count', 5),
-                    encoding='utf-8'
+                    encoding='utf-8-sig'  # 修复: 使用UTF-8-BOM解决Windows中文乱码
                 )
 
             handler.setLevel(getattr(logging, level))

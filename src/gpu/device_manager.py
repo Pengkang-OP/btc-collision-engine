@@ -234,6 +234,15 @@ class GPUDeviceManager:
     def _calculate_optimal_batch_size(self) -> int:
         """计算最优batch_size"""
         device_info = self._gpu_device.get_device_info()
+        device_name = device_info.get('name', '')
+        vendor = device_info.get('vendor_identifier', 'unknown')
+        
+        # 尝试从GPU配置文件中获取推荐的batch_size
+        profile = self._profile_loader.get_profile(vendor, device_name)
+        if profile and 'recommended_batch_size' in profile:
+            recommended_batch_size = profile['recommended_batch_size']
+            self.logger.info(f"从GPU配置文件获取推荐 batch_size: {recommended_batch_size}")
+            return recommended_batch_size
         
         # 基于显存大小计算
         global_mem_size = device_info.get('global_mem_size', 1024**3)  # 默认1GB
@@ -293,6 +302,16 @@ class GPUDeviceManager:
             gpu_config = self.config.get('gpu', {})
             queue_depth = gpu_config.get('queue_depth', 4)
             
+            # 尝试从GPU配置文件中获取推荐的队列深度
+            device_info = self._gpu_device.get_device_info()
+            device_name = device_info.get('name', '')
+            vendor = device_info.get('vendor_identifier', 'unknown')
+            
+            profile = self._profile_loader.get_profile(vendor, device_name)
+            if profile and 'queue_depth' in profile:
+                queue_depth = profile['queue_depth']
+                self.logger.info(f"从GPU配置文件获取推荐队列深度: {queue_depth}")
+            
             self._async_executor = AsyncGPUExecutor(
                 self._gpu_device,
                 max_batch_size=batch_size,
@@ -305,7 +324,7 @@ class GPUDeviceManager:
                 num_keys=batch_size
             )
             
-            self.logger.info("✅ GPU异步执行器已初始化(双缓冲)")
+            self.logger.info(f"✅ GPU异步执行器已初始化(双缓冲, 队列深度: {queue_depth})")
         else:
             self._async_executor = None
             self.logger.info("GPU异步执行器未初始化(使用同步模式)")
@@ -358,30 +377,49 @@ class GPUDeviceManager:
     
     def cleanup(self):
         """清理GPU资源"""
+        import time
+        
         try:
             # 清理异步执行器
             if self._async_executor:
+                start_time = time.time()
                 self._async_executor.cleanup()
+                elapsed = time.time() - start_time
+                self.logger.info(f"设备管理器：异步执行器已清理 (耗时: {elapsed:.2f}秒)")
             
             # 清理内核
             if self._gpu_kernel:
+                start_time = time.time()
                 self._gpu_kernel.cleanup()
+                elapsed = time.time() - start_time
+                self.logger.info(f"设备管理器：内核已清理 (耗时: {elapsed:.2f}秒)")
             
             # 清理内存池
             if self._gpu_memory_pool:
-                self._gpu_memory_pool.cleanup()
+                start_time = time.time()
+                self._gpu_memory_pool.clear()
+                elapsed = time.time() - start_time
+                self.logger.info(f"设备管理器：内存池已清理 (耗时: {elapsed:.2f}秒)")
             
             # 清理上下文
             if self._gpu_context:
+                start_time = time.time()
                 self._gpu_context.cleanup()
+                elapsed = time.time() - start_time
+                self.logger.info(f"设备管理器：上下文已清理 (耗时: {elapsed:.2f}秒)")
             
             # 清理设备
             if self._gpu_device:
+                start_time = time.time()
                 self._gpu_device.cleanup()
+                elapsed = time.time() - start_time
+                self.logger.info(f"设备管理器：设备已清理 (耗时: {elapsed:.2f}秒)")
             
-            self.logger.info("GPU资源清理完成")
+            self.logger.info("设备管理器：GPU资源清理完成")
         except Exception as e:
-            self.logger.warning(f"GPU资源清理失败: {e}")
+            self.logger.warning(f"设备管理器：GPU资源清理失败: {e}")
+            import traceback
+            traceback.print_exc()
     
     @property
     def device(self) -> GPUDevice:

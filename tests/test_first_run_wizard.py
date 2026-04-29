@@ -75,7 +75,9 @@ class TestFirstRunWizardBasic(TestCase):
         if self.wizard.marker_path.exists():
             self.wizard.marker_path.unlink()
         
-        self.assertTrue(self.wizard.should_run())
+        with patch('sys.stdin') as mock_stdin:
+            mock_stdin.isatty.return_value = True
+            self.assertTrue(self.wizard.should_run())
 
     def test_should_run_with_marker(self):
         """有标记文件时不应运行向导"""
@@ -106,7 +108,9 @@ class TestFirstRunWizardBasic(TestCase):
         self.wizard.config_path.parent.mkdir(parents=True, exist_ok=True)
         self.wizard.config_path.touch()
         
-        self.assertTrue(self.wizard.should_run())
+        with patch('sys.stdin') as mock_stdin:
+            mock_stdin.isatty.return_value = True
+            self.assertTrue(self.wizard.should_run())
 
     def test_should_run_with_small_config(self):
         """小配置文件（<50字节）时应运行向导"""
@@ -114,7 +118,9 @@ class TestFirstRunWizardBasic(TestCase):
         with open(self.wizard.config_path, 'w', encoding='utf-8') as f:
             f.write('{}')  # 只有2字节
         
-        self.assertTrue(self.wizard.should_run())
+        with patch('sys.stdin') as mock_stdin:
+            mock_stdin.isatty.return_value = True
+            self.assertTrue(self.wizard.should_run())
 
 
 class TestFirstRunWizardConfig(TestCase):
@@ -273,7 +279,9 @@ class TestFirstRunWizardEdgeCases(TestCase):
         wizard = FirstRunWizard(project_root=nonexistent_dir)
         
         # should_run应该返回True（没有config.json）
-        self.assertTrue(wizard.should_run())
+        with patch('sys.stdin') as mock_stdin:
+            mock_stdin.isatty.return_value = True
+            self.assertTrue(wizard.should_run())
 
     def test_config_path_permission_error(self):
         """配置文件权限错误"""
@@ -285,7 +293,9 @@ class TestFirstRunWizardEdgeCases(TestCase):
         
         # 在Windows上难以模拟权限错误，这里测试正常情况
         # should_run应该能正常处理
-        self.assertTrue(wizard.should_run())
+        with patch('sys.stdin') as mock_stdin:
+            mock_stdin.isatty.return_value = True
+            self.assertTrue(wizard.should_run())
 
     def test_default_config_immutability(self):
         """默认配置不可变性"""

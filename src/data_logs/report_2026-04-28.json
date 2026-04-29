@@ -1,0 +1,51 @@
+{
+  "date": "2026-04-28",
+  "summary": {
+    "total_checked": 0,
+    "matches_found": 0,
+    "average_speed": 0.0,
+    "average_cpu_usage": 0.0,
+    "average_memory_usage": 132.05859375,
+    "error_count": 2
+  },
+  "trends": {
+    "message": "历史数据不足，无法分析趋势"
+  },
+  "errors": [
+    {
+      "type": "anomaly_detection",
+      "level": "warning",
+      "message": "检测到 1 个异常",
+      "anomaly_count": 1,
+      "anomalies": [
+        {
+          "type": "performance",
+          "metric": "speed",
+          "value": 0.0,
+          "threshold": 100,
+          "message": "检测速率过低: 0.00/s"
+        }
+      ],
+      "timestamp": 1777315372.5193408
+    },
+    {
+      "type": "alert",
+      "level": "warning",
+      "message": "检测速率过低: 0.00/s",
+      "alert_data": {
+        "timestamp": 1777315372.5226095,
+        "level": "warning",
+        "message": "检测速率过低: 0.00/s",
+        "details": {
+          "type": "performance",
+          "metric": "speed",
+          "value": 0.0,
+          "threshold": 100,
+          "message": "检测速率过低: 0.00/s"
+        }
+      },
+      "timestamp": 1777315372.531967
+    }
+  ],
+  "recommendations": []
+}

@@ -64,11 +64,12 @@ class CLIOutput:
 
     _instance: Optional["CLIOutput"] = None  # 单例
 
-    def __init__(self, no_color: bool = False, quiet: bool = False) -> None:
+    def __init__(self, no_color: bool = False, quiet: bool = False, compact: bool = False) -> None:
         # NO_COLOR 环境变量优先（https://no-color.org/）
         force_no_color = no_color or os.environ.get("NO_COLOR") is not None
 
         self.quiet = quiet
+        self.compact = compact
         self.console = _get_utf8_console(stderr=False, no_color=force_no_color)
         self.err_console = _get_utf8_console(stderr=True, no_color=force_no_color)
 
@@ -82,9 +83,9 @@ class CLIOutput:
         return cls._instance
 
     @classmethod
-    def init(cls, no_color: bool = False, quiet: bool = False) -> "CLIOutput":
+    def init(cls, no_color: bool = False, quiet: bool = False, compact: bool = False) -> "CLIOutput":
         """初始化单例（应在程序入口处调用一次）。"""
-        cls._instance = cls(no_color=no_color, quiet=quiet)
+        cls._instance = cls(no_color=no_color, quiet=quiet, compact=compact)
         return cls._instance
 
     # ── 消息级别输出 ──────────────────────────────────────────────────
@@ -98,13 +99,31 @@ class CLIOutput:
         """绿色 [OK] 成功消息，始终显示。"""
         self.console.print(f"[green][OK][/green] {msg}")
 
-    def warning(self, msg: str) -> None:
-        """黄色 [WARN] 警告，输出到 stderr。"""
-        self.err_console.print(f"[yellow][WARN][/yellow] {msg}")
+    def hint(self, msg: str) -> None:
+        """蓝色 [HINT] 提示信息，始终显示。"""
+        self.console.print(f"[blue][HINT][/blue] {msg}")
 
-    def error(self, msg: str) -> None:
-        """红色 [ERROR] 错误，输出到 stderr。"""
+    def warning(self, msg: str, details: Optional[str] = None) -> None:
+        """黄色 [WARN] 警告，输出到 stderr。
+        
+        Args:
+            msg: 警告消息
+            details: 可选的警告详细信息
+        """
+        self.err_console.print(f"[yellow][WARN][/yellow] {msg}")
+        if details:
+            self.err_console.print(f"[yellow]└─ 详细:[/yellow] {details}")
+
+    def error(self, msg: str, details: Optional[str] = None) -> None:
+        """红色 [ERROR] 错误，输出到 stderr。
+        
+        Args:
+            msg: 错误消息
+            details: 可选的错误详细信息
+        """
         self.err_console.print(f"[red][ERROR][/red] {msg}")
+        if details:
+            self.err_console.print(f"[red]└─ 详细:[/red] {details}")
 
     def print(self, msg: str = "", **kwargs) -> None:
         """普通输出，quiet 模式下不显示。"""
@@ -125,9 +144,11 @@ class CLIOutput:
     def header(self, title: str) -> None:
         """大标题分隔线，quiet 模式下不显示。"""
         if not self.quiet:
-            self.console.print()
+            if not self.compact:
+                self.console.print()
             self.console.rule(f"[bold]{title}[/bold]", style="bright_blue")
-            self.console.print()
+            if not self.compact:
+                self.console.print()
 
     def startup_panel(self, config: dict) -> None:
         """使用 Rich Panel + Table 展示启动配置，quiet 模式下不显示。
@@ -184,7 +205,7 @@ class CLIOutput:
         )
 
     def status_line(self, text: str) -> None:
-        """单行状态更新（\\r 覆盖式）— 用于运行时进度显示。
+        """单行状态更新（\r 覆盖式）— 用于运行时进度显示。
 
         quiet 模式下不显示。保持与 engine_runner 原有实现兼容。
         """
@@ -192,3 +213,30 @@ class CLIOutput:
             return
         sys.stdout.write(f"\r{text}\033[K")
         sys.stdout.flush()
+
+    def performance_status(self, stats: dict) -> None:
+        """性能状态显示，使用单行实时更新。
+
+        Args:
+            stats: 性能统计数据，包含以下键:
+                - speed: 每秒尝试次数
+                - keys_total: 总尝试次数
+                - gpu_usage: GPU使用率 (可选)
+                - memory_used: 内存使用量 (可选)
+        """
+        if self.quiet:
+            return
+        
+        parts = []
+        if 'speed' in stats:
+            parts.append(f"速度: {stats['speed']:,}/s")
+        if 'keys_total' in stats:
+            parts.append(f"总尝试: {stats['keys_total']:,}")
+        if 'gpu_usage' in stats:
+            parts.append(f"GPU: {stats['gpu_usage']}%")
+        if 'memory_used' in stats:
+            parts.append(f"内存: {stats['memory_used']}MB")
+        
+        if parts:
+            status_text = " | ".join(parts)
+            self.status_line(f"[cyan]性能状态:[/cyan] {status_text}")

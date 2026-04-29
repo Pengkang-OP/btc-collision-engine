@@ -151,6 +151,11 @@ class SearchModeCoordinator:
             self.logger.info(f"停止搜索模式: {self._current_mode}")
             # 保存当前状态
             self._save_current_state()
+            # 停止当前模式的执行
+            if self._current_mode in self._modes:
+                search_mode = self._modes[self._current_mode]
+                if hasattr(search_mode, 'stop'):
+                    search_mode.stop()
             # 清除当前模式
             self._current_mode = None
     

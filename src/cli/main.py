@@ -39,6 +39,7 @@ from src.cli.config_loader import load_config_with_validation
 from src.cli.output import CLIOutput
 from src.cli.stats_reporter import _print_final_summary
 
+# 初始化日志
 init_logging()
 logger = get_configured_logger("CLI")
 

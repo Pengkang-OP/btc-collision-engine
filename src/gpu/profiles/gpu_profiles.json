@@ -59,14 +59,27 @@
       "_year_range": "2018-2019",
       "_comment_gtx_1600": "GTX 1600系列基于Turing架构但无RT Core,性能介于Pascal和RTX之间,显存通常4-6GB",
       "gtx_1600_series": {
-        "models": ["GTX 1650", "GTX 1650 Super", "GTX 1660", "GTX 1660 Super", "GTX 1660 Ti"],
+        "models": ["GTX 1650", "GTX 1650 Super"],
+        "year": 2019,
+        "compute_capability": "7.5",
+        "recommended_batch_size": 262144,
+        "max_batch_size": 524288,
+        "memory_efficiency": 0.55,
+        "optimizations": ["async_transfer", "persistent_buffers"],
+        "notes": "Turing架构入门级系列,显存有限,保守配置确保稳定性"
+      },
+      "gtx_1660_series": {
+        "models": ["GTX 1660", "GTX 1660 Super", "GTX 1660 Ti"],
         "year": 2019,
         "compute_capability": "7.5",
         "recommended_batch_size": 524288,
         "max_batch_size": 1048576,
         "memory_efficiency": 0.60,
         "optimizations": ["async_transfer", "persistent_buffers", "shared_memory_optimization"],
-        "notes": "Turing架构 mainstream系列,无RT Core但计算能力优秀,保守配置确保稳定性"
+        "queue_depth": 8,
+        "min_driver_version": "442.00",
+        "recommended_driver_version": "520.00",
+        "notes": "Turing架构主流系列,无RT Core但计算能力优秀,适合中等批量大小"
       },
       "rtx_2000_series": {
         "models": ["RTX 2060", "RTX 2060 Super", "RTX 2070", "RTX 2070 Super", "RTX 2080", "RTX 2080 Super", "RTX 2080 Ti"],
@@ -171,6 +184,7 @@
         "max_batch_size": 4194304,
         "memory_efficiency": 0.7,
         "optimizations": ["async_transfer", "memory_coalescing", "compute_unit_optimization", "infinity_cache"],
+        "queue_depth": 6,
         "min_driver_version": "21.5.1",
         "recommended_driver_version": "23.10.1",
         "notes": "引入Infinity Cache,显著提升性能"
@@ -186,6 +200,7 @@
         "max_batch_size": 4194304,
         "memory_efficiency": 0.75,
         "optimizations": ["async_transfer", "memory_coalescing", "compute_unit_optimization", "chiplet_architecture"],
+        "queue_depth": 7,
         "min_driver_version": "22.10.1",
         "recommended_driver_version": "24.1.1",
         "notes": "Chiplet架构,最新一代AMD GPU"
@@ -214,6 +229,7 @@
         "max_batch_size": 524288,
         "memory_efficiency": 0.70,
         "optimizations": ["uint32_workaround", "timeout_protection", "async_transfer", "conservative_memory"],
+        "queue_depth": 3,
         "known_issues": ["global_char_hang_bug"],
         "timeout_seconds": 30,
         "min_driver_version": "31.0.101.0",

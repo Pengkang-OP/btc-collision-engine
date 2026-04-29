@@ -30,4 +30,3 @@ if __name__ == "__main__":
         logger.critical(_t("cli.entry.fatal_error", error=e), exc_info=True)
         print(f"\n" + _t("cli.entry.error_prefix", error=e) + "\n" + _t("cli.entry.check_log"), file=sys.stderr)
         sys.exit(1)
-

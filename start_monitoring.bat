@@ -1,44 +1,83 @@
 @echo off
-REM 监控系统启动批处理文件
+chcp 936 >nul 2>&1
+cd /d "%~dp0"
 
+where python >nul 2>&1
+if errorlevel 1 (
+    echo [ERROR] Python not found
+    pause
+    exit /b 1
+)
+
+if not exist "start_monitoring.py" (
+    echo [ERROR] start_monitoring.py not found
+    pause
+    exit /b 1
+)
+
+if exist "venv\Scripts\activate.bat" (
+    call venv\Scripts\activate.bat >nul 2>&1
+)
+
+:menu
+cls
 echo ===============================================
-echo BTC 碰撞引擎 - 监控系统启动脚本
+echo   BTC Collision Engine - Monitoring
 echo ===============================================
 echo.
-
-echo 1. 启动基本监控（CPU模式）
-echo 2. 启动GPU监控（如果支持）
-echo 3. 启动带报告的监控
-echo 4. 退出
+echo   1. Start CPU monitoring
+echo   2. Start GPU monitoring
+echo   3. Start with report
+echo   4. Open logs folder
+echo   0. Exit
 echo.
+echo =============================================
 
-set /p choice=请选择操作 (1-4): 
+set "CHOICE="
+set /p CHOICE=Select (0-4):
 
-if "%choice%"=="1" goto basic
-if "%choice%"=="2" goto gpu
-if "%choice%"=="3" goto report
-if "%choice%"=="4" goto exit
+if "%CHOICE%"=="" goto menu
+if "%CHOICE%"=="1" goto basic
+if "%CHOICE%"=="2" goto gpu
+if "%CHOICE%"=="3" goto report
+if "%CHOICE%"=="4" goto viewlog
+if "%CHOICE%"=="0" goto exit
+
+echo [ERROR] Invalid option: %CHOICE%
+timeout /t 1 >nul
+goto menu
 
 :basic
-echo 启动基本监控系统（CPU模式）...
+echo.
+echo [INFO] Starting CPU monitoring...
 python start_monitoring.py --mode cpu
-goto end
+goto done
 
 :gpu
-echo 启动GPU监控系统...
+echo.
+echo [INFO] Starting GPU monitoring...
 python start_monitoring.py --mode gpu
-goto end
+goto done
 
 :report
-echo 启动带报告的监控系统...
+echo.
+echo [INFO] Starting with report...
 python start_monitoring.py --mode cpu --report
-goto end
+goto done
+
+:viewlog
+echo.
+explorer logs
+goto menu
+
+:done
+echo.
+echo Press any key to return to menu...
+pause >nul
+goto menu
 
 :exit
-echo 退出...
-goto end
-
-:end
+cls
 echo.
-echo 操作完成，按任意键退出...
-pause >nul
+echo [INFO] Exiting...
+echo.

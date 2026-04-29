@@ -1,0 +1,137 @@
+name: Release
+
+# 仅在推送 v* 格式的 Git tag 时触发（如 v3.1.2）
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  # ─────────────────────────────────────────────
+  # Job 1: 运行完整测试套件，确保发布质量
+  # ─────────────────────────────────────────────
+  test:
+    name: 发布前测试验证
+    runs-on: ubuntu-latest
+
+    steps:
+      # 检出代码
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      # 设置 Python 3.12 运行环境
+      - name: 设置 Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # 安装项目依赖
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-benchmark pytest-cov
+
+      # 运行完整测试套件
+      - name: 运行测试套件
+        run: |
+          python -m pytest tests/ -v --tb=short --cov=src --cov-report=term-missing
+
+  # ─────────────────────────────────────────────
+  # Job 2: 创建 GitHub Release，附带 CHANGELOG 内容
+  # ─────────────────────────────────────────────
+  release:
+    name: 创建 GitHub Release
+    needs: test
+    runs-on: ubuntu-latest
+
+    # 需要写权限以创建 Release
+    permissions:
+      contents: write
+
+    steps:
+      # 检出代码（含完整历史以便读取 CHANGELOG）
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 从 tag 名称提取纯版本号（v3.1.2 → 3.1.2）
+      - name: 提取版本号
+        id: version
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG_NAME#v}"
+          echo "tag=${TAG_NAME}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "提取版本号: tag=${TAG_NAME}, version=${VERSION}"
+
+      # 从 CHANGELOG.md 中提取该版本对应的更新记录
+      # 提取规则：匹配 "## [版本号]" 或 "## 版本号" 标题，
+      # 截取到下一个 "## " 标题（不含）之间的内容
+      - name: 从 CHANGELOG 提取发布说明
+        id: changelog
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          TAG="${{ steps.version.outputs.tag }}"
+
+          # 尝试多种常见的 CHANGELOG 版本标题格式
+          NOTES=$(python3 - <<'PYEOF'
+          import re, sys
+
+          version = "$VERSION"
+          tag = "$TAG"
+
+          try:
+              with open("CHANGELOG.md", "r", encoding="utf-8") as f:
+                  content = f.read()
+          except FileNotFoundError:
+              print("CHANGELOG.md 文件未找到，使用默认发布说明。")
+              sys.exit(0)
+
+          # 匹配版本标题的多种格式：
+          #   ## [3.1.2] - 2026-04-25
+          #   ## [v3.1.2]
+          #   ## 3.1.2
+          #   ## v3.1.2
+          patterns = [
+              rf"##\s+\[{re.escape(version)}\][^\n]*\n(.*?)(?=\n##\s|\Z)",
+              rf"##\s+\[{re.escape(tag)}\][^\n]*\n(.*?)(?=\n##\s|\Z)",
+              rf"##\s+{re.escape(version)}[^\n]*\n(.*?)(?=\n##\s|\Z)",
+              rf"##\s+{re.escape(tag)}[^\n]*\n(.*?)(?=\n##\s|\Z)",
+          ]
+
+          for pat in patterns:
+              m = re.search(pat, content, re.DOTALL)
+              if m:
+                  notes = m.group(1).strip()
+                  if notes:
+                      print(notes)
+                      sys.exit(0)
+
+          print(f"版本 {version} 的更新记录未在 CHANGELOG.md 中找到。")
+          PYEOF
+          )
+
+          # 将多行内容写入 GitHub Actions 输出（使用 heredoc 方式）
+          {
+            echo "notes<<RELEASE_NOTES_EOF"
+            echo "$NOTES"
+            echo "RELEASE_NOTES_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "── 提取到的发布说明 ──"
+          echo "$NOTES"
+
+      # 使用 softprops/action-gh-release@v2 创建正式 GitHub Release
+      - name: 创建 GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          # Release 标题：版本 tag 名称
+          name: "Release ${{ steps.version.outputs.tag }}"
+          # Release body：从 CHANGELOG 提取的更新记录
+          body: ${{ steps.changelog.outputs.notes }}
+          # 标记为正式发布（非预发布）
+          prerelease: false
+          # 自动生成的 tag 已存在，不重新创建
+          tag_name: ${{ steps.version.outputs.tag }}

@@ -52,7 +52,8 @@ class AddressMatcher:
             bloom_error_rate: 布隆过滤器误判率(仅bloom_filter策略)
         """
         self.strategy = strategy
-        self.targets = targets or set()
+        # 标准化目标地址为小写，确保大小写不敏感匹配
+        self.targets = set(addr.lower() for addr in (targets or set()))
         
         # 线程安全
         self._lock = threading.RLock()
@@ -130,14 +131,17 @@ class AddressMatcher:
                 logger.error(f"地址类型转换失败: {address}, 错误={e}")
                 return False
         
+        # 标准化地址为小写，确保大小写不敏感匹配
+        normalized_address = address.lower()
+        
         with self._lock:
             try:
                 if self.strategy == 'hash_set':
-                    return address in self._hash_set
+                    return normalized_address in self._hash_set
                 elif self.strategy == 'bloom_filter':
-                    return address in self._bloom
+                    return normalized_address in self._bloom
                 elif self.strategy == 'trie':
-                    return self._search_trie(address)
+                    return self._search_trie(normalized_address)
                 else:
                     return False
             except Exception as e:
@@ -168,16 +172,19 @@ class AddressMatcher:
                 logger.error(f"地址类型转换失败: {address}, 错误={e}")
                 return
         
+        # 标准化地址为小写
+        normalized_address = address.lower()
+        
         with self._lock:
             try:
-                self.targets.add(address)
+                self.targets.add(normalized_address)
                 
                 if self.strategy == 'hash_set':
-                    self._hash_set.add(address)
+                    self._hash_set.add(normalized_address)
                 elif self.strategy == 'bloom_filter':
-                    self._bloom.add(address)
+                    self._bloom.add(normalized_address)
                 elif self.strategy == 'trie':
-                    self._insert_trie(address)
+                    self._insert_trie(normalized_address)
             except Exception as e:
                 logger.error(f"添加目标地址失败: {address}, 错误={e}")
     
@@ -192,10 +199,12 @@ class AddressMatcher:
         valid_addresses = set()
         for addr in addresses:
             if isinstance(addr, str):
-                valid_addresses.add(addr)
+                # 标准化地址为小写
+                valid_addresses.add(addr.lower())
             else:
                 try:
-                    valid_addresses.add(str(addr))
+                    # 标准化地址为小写
+                    valid_addresses.add(str(addr).lower())
                 except Exception as e:
                     logger.warning(f"地址类型转换失败,跳过: {addr}, 错误={e}")
         
@@ -226,14 +235,17 @@ class AddressMatcher:
         返回:
             True表示成功移除,False表示地址不存在
         """
+        # 标准化地址为小写
+        normalized_address = address.lower()
+        
         with self._lock:
-            if address not in self.targets:
+            if normalized_address not in self.targets:
                 return False
             
-            self.targets.discard(address)
+            self.targets.discard(normalized_address)
             
             if self.strategy == 'hash_set':
-                self._hash_set.discard(address)
+                self._hash_set.discard(normalized_address)
             elif self.strategy == 'bloom_filter':
                 logger.warning("布隆过滤器不支持删除操作")
                 return False

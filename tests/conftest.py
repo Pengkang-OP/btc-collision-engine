@@ -5,6 +5,7 @@
 - GPU引擎测试的统一Mock链Fixture
 - Mock验证辅助函数
 - 测试环境配置
+- pyopencl.Buffer全局修复
 
 常见问题:
     Q1: 什么时候使用mock_gpu_chain,什么时候使用mock_gpu_device?
@@ -21,10 +22,16 @@
     
     Q3: 测试失败提示"GPU初始化失败"?
     A3: 确保使用了mock_gpu_chain fixture,而不是手动Mock
+    
+    Q4: pyopencl.Buffer Mock报错怎么办?
+    A4: 已全局修复,使用mock_gpu_chain或mock_pyopencl_buffer fixture即可
 """
 import pytest
 from unittest.mock import Mock, patch
 from contextlib import ExitStack, contextmanager
+
+# 导入GPU Mock修复补丁
+from tests.gpu_mock_patch import mock_pyopencl_buffer, mock_pyopencl_full, mock_gpu_collision_engine_full
 
 
 # ============================================================================
@@ -125,6 +132,19 @@ def _apply_gpu_patches(mock_device, mock_context, mock_kernel, vendor='nvidia'):
     """
     @contextmanager
     def _patch_context():
+        # F-1修复: 创建 Mock cl.Buffer，避免 pyopencl.Buffer 要求真实 Context
+        mock_cl_buffer = Mock()
+        mock_cl_module = Mock()
+        mock_cl_module.Buffer = Mock(return_value=mock_cl_buffer)
+        mock_cl_module.mem_flags = Mock()
+        mock_cl_module.mem_flags.READ_WRITE = 1
+        mock_cl_module.mem_flags.COPY_HOST_PTR = 2
+        mock_cl_module.mem_flags.READ_ONLY = 4
+        mock_cl_module.mem_flags.WRITE_ONLY = 8
+        # 为 pyopencl.array 子模块创建 Mock，避免函数级 'import pyopencl.array as cl_array' 失败
+        mock_cl_array = Mock()
+        mock_cl_array.Array = Mock()
+
         with ExitStack() as stack:
             # 应用7层Mock
             stack.enter_context(patch('src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE', True))
@@ -136,6 +156,12 @@ def _apply_gpu_patches(mock_device, mock_context, mock_kernel, vendor='nvidia'):
                 patch('src.collision.gpu_collision_engine.GPUProfileLoader')
             )
             stack.enter_context(patch('src.gpu.device.identify_vendor', return_value=vendor))
+            # async_executor采用函数级导入，通过patch sys.modules使内部 import pyopencl as cl 使用Mock
+            # 同时注入 pyopencl.array 子模块，避免 'import pyopencl.array as cl_array' 失败
+            stack.enter_context(patch.dict('sys.modules', {
+                'pyopencl': mock_cl_module,
+                'pyopencl.array': mock_cl_array,
+            }))
             
             # 配置ProfileLoader返回None(使用默认配置)
             mock_profile_loader.return_value.get_profile.return_value = None

@@ -1,0 +1,339 @@
+"""日志收集规则配置系统
+
+提供详细的日志收集规则配置，支持：
+- 基于模块的日志级别控制
+- 基于关键字的日志过滤
+- 基于上下文的日志增强
+- 动态规则加载和更新
+"""
+import os
+import json
+import logging
+from typing import Dict, List, Optional, Any, Pattern, Union
+import re
+from dataclasses import dataclass, field
+
+
+@dataclass
+class LogCollectionRule:
+    """日志收集规则"""
+    name: str  # 规则名称
+    module_pattern: str  # 模块匹配模式，支持通配符
+    level: str = "INFO"  # 日志级别
+    include_patterns: List[str] = field(default_factory=list)  # 包含的关键字模式
+    exclude_patterns: List[str] = field(default_factory=list)  # 排除的关键字模式
+    enabled: bool = True  # 是否启用
+    context_fields: List[str] = field(default_factory=list)  # 需要包含的上下文字段
+    sample_rate: int = 1  # 采样率，1表示全部记录，N表示每N条记录1条
+    max_logs_per_second: float = 0.0  # 每秒最大日志数，0表示无限制
+    
+    def __post_init__(self):
+        """初始化规则"""
+        # 编译正则表达式模式
+        self._module_regex: Optional[Pattern] = None
+        self._include_regexes: List[Pattern] = []
+        self._exclude_regexes: List[Pattern] = []
+        
+        # 编译模块模式
+        if self.module_pattern:
+            # 将通配符转换为正则表达式
+            regex_pattern = self.module_pattern.replace('*', '.*')
+            self._module_regex = re.compile(regex_pattern)
+        
+        # 编译包含模式
+        for pattern in self.include_patterns:
+            try:
+                self._include_regexes.append(re.compile(pattern))
+            except re.error:
+                pass
+        
+        # 编译排除模式
+        for pattern in self.exclude_patterns:
+            try:
+                self._exclude_regexes.append(re.compile(pattern))
+            except re.error:
+                pass
+    
+    def matches_module(self, module_name: str) -> bool:
+        """检查模块是否匹配规则"""
+        if not self._module_regex:
+            return True
+        return self._module_regex.match(module_name) is not None
+    
+    def should_include(self, message: str) -> bool:
+        """检查消息是否应该包含"""
+        # 如果有包含模式，至少需要匹配一个
+        if self._include_regexes:
+            for regex in self._include_regexes:
+                if regex.search(message):
+                    break
+            else:
+                return False
+        
+        # 如果有排除模式，不能匹配任何一个
+        for regex in self._exclude_regexes:
+            if regex.search(message):
+                return False
+        
+        return True
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """转换为字典"""
+        return {
+            "name": self.name,
+            "module_pattern": self.module_pattern,
+            "level": self.level,
+            "include_patterns": self.include_patterns,
+            "exclude_patterns": self.exclude_patterns,
+            "enabled": self.enabled,
+            "context_fields": self.context_fields,
+            "sample_rate": self.sample_rate,
+            "max_logs_per_second": self.max_logs_per_second
+        }
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'LogCollectionRule':
+        """从字典创建规则"""
+        return cls(
+            name=data.get("name", ""),
+            module_pattern=data.get("module_pattern", ""),
+            level=data.get("level", "INFO"),
+            include_patterns=data.get("include_patterns", []),
+            exclude_patterns=data.get("exclude_patterns", []),
+            enabled=data.get("enabled", True),
+            context_fields=data.get("context_fields", []),
+            sample_rate=data.get("sample_rate", 1),
+            max_logs_per_second=data.get("max_logs_per_second", 0.0)
+        )
+
+
+class LogCollectionRuleManager:
+    """日志收集规则管理器"""
+    
+    def __init__(self, config_file: Optional[str] = None):
+        """
+        初始化规则管理器
+        
+        Args:
+            config_file: 规则配置文件路径
+        """
+        self.rules: List[LogCollectionRule] = []
+        self.config_file = config_file
+        self._load_rules()
+    
+    def _load_rules(self):
+        """加载规则配置"""
+        if not self.config_file:
+            # 使用默认规则
+            self._load_default_rules()
+            return
+        
+        try:
+            if os.path.exists(self.config_file):
+                with open(self.config_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    if isinstance(data, list):
+                        self.rules = [LogCollectionRule.from_dict(rule_data) for rule_data in data]
+                    elif isinstance(data, dict) and "rules" in data:
+                        self.rules = [LogCollectionRule.from_dict(rule_data) for rule_data in data["rules"]]
+            else:
+                # 文件不存在，使用默认规则
+                self._load_default_rules()
+                # 保存默认规则到文件
+                self.save_rules()
+        except Exception as e:
+            # 加载失败，使用默认规则
+            print(f"加载日志收集规则失败: {e}")
+            self._load_default_rules()
+    
+    def _load_default_rules(self):
+        """加载默认规则"""
+        self.rules = [
+            LogCollectionRule(
+                name="核心模块详细日志",
+                module_pattern="core.*",
+                level="DEBUG",
+                include_patterns=[],
+                exclude_patterns=[],
+                enabled=True,
+                context_fields=["timestamp", "module", "level"]
+            ),
+            LogCollectionRule(
+                name="GPU模块性能日志",
+                module_pattern="gpu.*",
+                level="INFO",
+                include_patterns=["performance", "speed", "benchmark"],
+                exclude_patterns=[],
+                enabled=True,
+                context_fields=["timestamp", "module", "level", "gpu_id", "speed"]
+            ),
+            LogCollectionRule(
+                name="错误和异常",
+                module_pattern=".*",
+                level="ERROR",
+                include_patterns=[],
+                exclude_patterns=[],
+                enabled=True,
+                context_fields=["timestamp", "module", "level", "exception"]
+            ),
+            LogCollectionRule(
+                name="高频操作采样",
+                module_pattern=".*",
+                level="DEBUG",
+                include_patterns=["loop", "iteration", "batch"],
+                exclude_patterns=[],
+                enabled=True,
+                sample_rate=100,
+                max_logs_per_second=10
+            )
+        ]
+    
+    def save_rules(self):
+        """保存规则到配置文件"""
+        if not self.config_file:
+            return
+        
+        try:
+            # 确保目录存在
+            config_dir = os.path.dirname(self.config_file)
+            if config_dir and not os.path.exists(config_dir):
+                os.makedirs(config_dir, mode=0o750, exist_ok=True)
+            
+            # 保存规则
+            rules_data = [rule.to_dict() for rule in self.rules]
+            with open(self.config_file, 'w', encoding='utf-8') as f:
+                json.dump({"rules": rules_data}, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"保存日志收集规则失败: {e}")
+    
+    def add_rule(self, rule: LogCollectionRule):
+        """添加规则"""
+        self.rules.append(rule)
+        self.save_rules()
+    
+    def remove_rule(self, rule_name: str):
+        """删除规则"""
+        self.rules = [rule for rule in self.rules if rule.name != rule_name]
+        self.save_rules()
+    
+    def update_rule(self, rule_name: str, **kwargs):
+        """更新规则"""
+        for rule in self.rules:
+            if rule.name == rule_name:
+                for key, value in kwargs.items():
+                    if hasattr(rule, key):
+                        setattr(rule, key, value)
+                # 重新初始化规则
+                rule.__post_init__()
+                self.save_rules()
+                break
+    
+    def get_matching_rules(self, module_name: str, level: str, message: str) -> List[LogCollectionRule]:
+        """获取匹配的规则"""
+        matching_rules = []
+        for rule in self.rules:
+            if not rule.enabled:
+                continue
+            
+            # 检查模块匹配
+            if not rule.matches_module(module_name):
+                continue
+            
+            # 检查日志级别
+            rule_level = getattr(logging, rule.level, logging.INFO)
+            message_level = getattr(logging, level, logging.INFO)
+            if message_level < rule_level:
+                continue
+            
+            # 检查消息过滤
+            if not rule.should_include(message):
+                continue
+            
+            matching_rules.append(rule)
+        
+        return matching_rules
+    
+    def get_effective_rule(self, module_name: str, level: str, message: str) -> Optional[LogCollectionRule]:
+        """获取最有效的规则（优先级最高）"""
+        matching_rules = self.get_matching_rules(module_name, level, message)
+        if not matching_rules:
+            return None
+        
+        # 按模块匹配的精确程度排序（更具体的模块模式优先）
+        def get_pattern_specificity(pattern: str) -> int:
+            # 计算模式的具体程度：通配符越少越具体
+            return pattern.count('*')
+        
+        matching_rules.sort(key=lambda r: get_pattern_specificity(r.module_pattern))
+        return matching_rules[0]
+    
+    def get_rules(self) -> List[LogCollectionRule]:
+        """获取所有规则"""
+        return self.rules
+    
+    def set_rules(self, rules: List[LogCollectionRule]):
+        """设置规则"""
+        self.rules = rules
+        self.save_rules()
+
+
+# 全局规则管理器实例
+_rule_manager: Optional[LogCollectionRuleManager] = None
+
+
+def get_rule_manager(config_file: Optional[str] = None) -> LogCollectionRuleManager:
+    """
+    获取规则管理器实例
+    
+    Args:
+        config_file: 规则配置文件路径
+    
+    Returns:
+        规则管理器实例
+    """
+    global _rule_manager
+    if _rule_manager is None:
+        _rule_manager = LogCollectionRuleManager(config_file)
+    return _rule_manager
+
+
+def init_log_collection_rules(config_file: Optional[str] = None):
+    """
+    初始化日志收集规则
+    
+    Args:
+        config_file: 规则配置文件路径
+    """
+    get_rule_manager(config_file)
+
+
+def get_matching_rules(module_name: str, level: str, message: str) -> List[LogCollectionRule]:
+    """
+    获取匹配的日志收集规则
+    
+    Args:
+        module_name: 模块名称
+        level: 日志级别
+        message: 日志消息
+    
+    Returns:
+        匹配的规则列表
+    """
+    rule_manager = get_rule_manager()
+    return rule_manager.get_matching_rules(module_name, level, message)
+
+
+def get_effective_rule(module_name: str, level: str, message: str) -> Optional[LogCollectionRule]:
+    """
+    获取最有效的日志收集规则
+    
+    Args:
+        module_name: 模块名称
+        level: 日志级别
+        message: 日志消息
+    
+    Returns:
+        最有效的规则
+    """
+    rule_manager = get_rule_manager()
+    return rule_manager.get_effective_rule(module_name, level, message)
