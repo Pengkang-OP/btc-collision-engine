@@ -172,6 +172,7 @@ class AsyncGPUExecutor:
         # 异步流水线状态 — 延迟结果等待
         self._pending_buffer = None     # 待处理的缓冲区引用
         self._pending_num_keys = 0      # 待处理的批次大小
+        self.check_uncompressed = 0     # v4.0: 由 GPUDeviceManager.initialize() 覆写
         
         # 预取队列优化v2.2.1
         self._prefetch_enabled = True
@@ -508,6 +509,7 @@ class AsyncGPUExecutor:
                     targets_buf,
                     np.uint32(num_targets),
                     current_buf['matches'],
+                    np.uint32(getattr(self, 'check_uncompressed', 0)),
                     self.precomp_buffer,
                     wait_for=[transfer_event]  # 等待种子传输完成再执行
                 )
@@ -524,6 +526,7 @@ class AsyncGPUExecutor:
                         targets_buf,
                         np.uint32(num_targets),
                         current_buf['matches'],
+                        np.uint32(getattr(self, 'check_uncompressed', 0)),
                         self.precomp_buffer
                     )
                 except Exception as e:
@@ -685,6 +688,7 @@ class AsyncGPUExecutor:
             self.seed_buffer, np.uint32(num_keys),
             targets_buf, np.uint32(num_targets),
             temp_buf['matches'],
+            np.uint32(getattr(self, 'check_uncompressed', 0)),
             self.precomp_buffer
         )
         

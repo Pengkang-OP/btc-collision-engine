@@ -128,6 +128,7 @@ class GPUKernel(GPUKernelProtocol):
         self._target_hash160s = None  # P3修复: 添加目标地址缓存
         self._targets_cached = None
         self._num_targets_cached = 0
+        self._check_uncompressed = 0  # v4.0: 0=仅压缩, 1=也检查非压缩
         self._precomp_buf = None  # 预计算表常量缓冲区（生命周期与 kernel 一致）
         
         # 预分配主机内存
@@ -281,6 +282,7 @@ class GPUKernel(GPUKernelProtocol):
             self._seed_buf, np.uint32(num_keys),
             self._targets_buf, np.uint32(num_targets),
             self._match_buf,
+            np.uint32(self._check_uncompressed),
             self._precomp_buf
         ).wait()
                 
@@ -325,6 +327,7 @@ class GPUKernel(GPUKernelProtocol):
                 self._seed_buf, np.uint32(num_keys),
                 self._targets_buf, np.uint32(1),
                 self._match_buf,
+                np.uint32(self._check_uncompressed),
                 self._precomp_buf
             ).wait()
                     
@@ -535,14 +538,24 @@ class GPUKernel(GPUKernelProtocol):
                 f"设计: 持久化缓冲区在引擎生命周期内重复使用，零运行时分配开销"
             )
     
-    def set_targets(self, target_hash160s: bytes, num_targets: int):
-        """设置目标地址 Hash160 - 只需设置一次"""
+    def set_targets(self, target_hash160s: bytes, num_targets: int,
+                    check_uncompressed: int = 0):
+        """设置目标地址 Hash160 - 只需设置一次
+        
+        Args:
+            target_hash160s: 目标Hash160字节串
+            num_targets: 目标数量
+            check_uncompressed: 是否同时检查非压缩格式 (0=仅压缩, 1=双格式)
+        """
         import numpy as np
         
         # 检查是否需要更新
         if (self._targets_cached == target_hash160s and 
-            self._num_targets_cached == num_targets):
+            self._num_targets_cached == num_targets and
+            self._check_uncompressed == check_uncompressed):
             return
+        
+        self._check_uncompressed = check_uncompressed
         
         # 释放旧的缓冲区
         if self._targets_buf is not None:
@@ -673,6 +686,7 @@ class GPUKernel(GPUKernelProtocol):
                 self._seed_buf, np.uint32(num_keys),
                 self._targets_buf, np.uint32(self._num_targets_cached),
                 self._match_buf,
+                np.uint32(self._check_uncompressed),
                 cl.LocalMemory(target_bytes),  # 分配 local memory
                 self._precomp_buf
             )
@@ -682,6 +696,7 @@ class GPUKernel(GPUKernelProtocol):
                 self._seed_buf, np.uint32(num_keys),
                 self._targets_buf, np.uint32(self._num_targets_cached),
                 self._match_buf,
+                np.uint32(self._check_uncompressed),
                 self._precomp_buf
             )
         

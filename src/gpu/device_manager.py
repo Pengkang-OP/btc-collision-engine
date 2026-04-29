@@ -52,12 +52,14 @@ class GPUDeviceManager:
         self._nvidia_optimizer = None
         self._amd_optimizer = None
     
-    def initialize(self, targets: Set[str], batch_size: int = None) -> 'GPUDeviceManager':
+    def initialize(self, targets: Set[str], batch_size: int = None,
+                  check_uncompressed: int = 0) -> 'GPUDeviceManager':
         """初始化GPU设备
         
         Args:
             targets: 目标地址集合
             batch_size: 批次大小（None表示自动计算）
+            check_uncompressed: 是否同时检查非压缩格式 (0=仅压缩, 1=双格式)
             
         Returns:
             self，支持链式调用
@@ -91,7 +93,12 @@ class GPUDeviceManager:
                 
                 # 8. 设置目标地址
                 if target_hash160s:
-                    self._gpu_kernel.set_targets(target_hash160s, len(target_list))
+                    self._gpu_kernel.set_targets(target_hash160s, len(target_list),
+                                                  check_uncompressed=check_uncompressed)
+                
+                # 8.1 传递 check_uncompressed 给异步执行器
+                if self._async_executor:
+                    self._async_executor.check_uncompressed = check_uncompressed
                 
                 # 9. 应用厂商优化
                 self._apply_vendor_optimizations()
