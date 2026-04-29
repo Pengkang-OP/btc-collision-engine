@@ -8,6 +8,7 @@ GPU碰撞引擎实际性能测试
 import sys
 import time
 import os
+import threading
 from pathlib import Path
 
 # 添加项目根目录
@@ -126,9 +127,21 @@ def main():
         print()
         print("  " + "─" * 78)
         
-        # 启动引擎
+        # 启动引擎（在后台线程中运行，因为 engine.start() 是阻塞调用）
         start_time = time.time()
-        engine.start(mode="random")  # GPU引擎使用"random"模式
+        
+        def _run_engine():
+            """后台线程：运行 GPU 碰撞引擎"""
+            try:
+                engine.start(mode="random")  # GPU引擎使用"random"模式
+            except Exception as e:
+                print(f"\n\n  ❌ 引擎运行异常: {e}")
+        
+        engine_thread = threading.Thread(target=_run_engine, daemon=True, name="GPU-Test-Engine")
+        engine_thread.start()
+        
+        # 等待引擎实际启动（给调度器时间启动后台任务）
+        time.sleep(0.5)
         
         # 运行指定时长
         try:
@@ -143,6 +156,9 @@ def main():
             print(f"\n\n  ⚠️  收到中断信号，正在停止...")
         finally:
             engine.stop()
+            engine_thread.join(timeout=5)
+            if engine_thread.is_alive():
+                print(f"\n  ⚠️  引擎线程未能在5秒内停止，强制终止")
         
         elapsed = time.time() - start_time
         
