@@ -12,6 +12,7 @@
 
 import os
 import sys
+import unittest
 import tempfile
 import shutil
 from pathlib import Path
@@ -333,6 +334,239 @@ class TestPlatformCheckerEdgeCases(TestCase):
         self.assertTrue(checker.results[0].passed)
         self.assertFalse(checker.results[1].passed)
         self.assertTrue(checker.results[2].passed)
+
+
+# ============================================================================
+# 编码检测增强测试
+# ============================================================================
+
+class TestEncodingDetection(unittest.TestCase):
+    """编码检测增强测试。"""
+
+    def setUp(self):
+        self.test_dir = tempfile.mkdtemp()
+        self.checker = PlatformChecker(project_root=self.test_dir)
+
+    def tearDown(self):
+        if os.path.exists(self.test_dir):
+            shutil.rmtree(self.test_dir)
+
+    def test_check_encoding_utf8_passes(self):
+        """UTF-8 编码应该通过检查。"""
+        mock_stdout = MagicMock()
+        mock_stdout.encoding = 'utf-8'
+        with patch('sys.stdout', mock_stdout):
+            result = self.checker.check_encoding()
+        self.assertIsNotNone(result)
+        self.assertIsInstance(result, CheckResult)
+
+    def test_check_encoding_gbk(self):
+        """GBK 编码（非 UTF-8）应给出警告。"""
+        mock_stdout = MagicMock()
+        mock_stdout.encoding = 'gbk'
+        with patch('sys.stdout', mock_stdout):
+            result = self.checker.check_encoding()
+        self.assertIsNotNone(result)
+        self.assertIsInstance(result, CheckResult)
+        # GBK 非 UTF-8，检查应失败并包含编码信息
+        self.assertFalse(result.passed)
+        self.assertIn('gbk', result.message.lower())
+
+    def test_check_encoding_gb2312(self):
+        """GB2312 编码（非 UTF-8）应给出警告。"""
+        mock_stdout = MagicMock()
+        mock_stdout.encoding = 'gb2312'
+        with patch('sys.stdout', mock_stdout):
+            result = self.checker.check_encoding()
+        self.assertIsNotNone(result)
+        self.assertIsInstance(result, CheckResult)
+        self.assertFalse(result.passed)
+
+    def test_check_encoding_cp936(self):
+        """CP936（GBK 变体）应给出警告。"""
+        mock_stdout = MagicMock()
+        mock_stdout.encoding = 'cp936'
+        with patch('sys.stdout', mock_stdout):
+            result = self.checker.check_encoding()
+        self.assertIsNotNone(result)
+        self.assertFalse(result.passed)
+
+    def test_check_encoding_utf8_variants(self):
+        """UTF-8 的各种写法变体都应通过。"""
+        for enc in ('UTF-8', 'utf-8', 'utf8', 'UTF8', 'UTF_8'):
+            mock_stdout = MagicMock()
+            mock_stdout.encoding = enc
+            with patch('sys.stdout', mock_stdout):
+                result = self.checker.check_encoding()
+            self.assertTrue(
+                result.passed,
+                f"编码 '{enc}' 应该通过检查，但失败了: {result.message}"
+            )
+
+    def test_check_encoding_result_name(self):
+        """检查结果名称为 '终端编码'。"""
+        result = self.checker.check_encoding()
+        self.assertEqual(result.name, "终端编码")
+
+
+# ============================================================================
+# get_platform_info 测试
+# ============================================================================
+
+class TestGetPlatformInfo(unittest.TestCase):
+    """平台信息获取测试。"""
+
+    def setUp(self):
+        self.test_dir = tempfile.mkdtemp()
+        self.checker = PlatformChecker(project_root=self.test_dir)
+
+    def tearDown(self):
+        if os.path.exists(self.test_dir):
+            shutil.rmtree(self.test_dir)
+
+    def test_get_platform_info_returns_dict(self):
+        """get_platform_info 返回字典。"""
+        info = self.checker.get_platform_info()
+        self.assertIsInstance(info, dict)
+
+    def test_get_platform_info_required_keys(self):
+        """get_platform_info 包含所有必要字段。"""
+        info = self.checker.get_platform_info()
+        required_keys = [
+            'os', 'os_release', 'os_version', 'machine',
+            'python_version', 'python_executable',
+            'encoding_fs', 'encoding_stdout',
+            'project_root', 'cwd'
+        ]
+        for key in required_keys:
+            self.assertIn(key, info, f"缺少键: {key}")
+
+    def test_get_platform_info_os_value(self):
+        """get_platform_info 的 os 字段与实际系统一致。"""
+        import platform
+        info = self.checker.get_platform_info()
+        self.assertEqual(info['os'], platform.system())
+
+    def test_get_platform_info_python_version_format(self):
+        """python_version 格式为 X.Y.Z。"""
+        info = self.checker.get_platform_info()
+        parts = info['python_version'].split('.')
+        self.assertEqual(len(parts), 3)
+        for part in parts:
+            self.assertTrue(part.isdigit(), f"版本号部分 '{part}' 不是数字")
+
+    def test_get_platform_info_project_root_matches(self):
+        """project_root 字段与 checker 的项目根目录一致。"""
+        info = self.checker.get_platform_info()
+        self.assertEqual(info['project_root'], str(self.checker.project_root))
+
+    def test_get_platform_info_cwd_is_directory(self):
+        """cwd 字段为存在的目录。"""
+        info = self.checker.get_platform_info()
+        self.assertTrue(os.path.isdir(info['cwd']))
+
+    def test_get_platform_info_values_are_strings(self):
+        """所有字段值都是字符串。"""
+        info = self.checker.get_platform_info()
+        for key, value in info.items():
+            self.assertIsInstance(value, str, f"字段 '{key}' 的值不是字符串: {type(value)}")
+
+
+# ============================================================================
+# macOS 平台 Mock 测试
+# ============================================================================
+
+class TestMacOSPlatform(unittest.TestCase):
+    """macOS 平台特定测试。"""
+
+    def setUp(self):
+        self.test_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        if os.path.exists(self.test_dir):
+            shutil.rmtree(self.test_dir)
+
+    @patch('platform.system', return_value='Darwin')
+    @patch('platform.release', return_value='23.0.0')
+    @patch('platform.machine', return_value='arm64')
+    def test_check_os_macos(self, mock_machine, mock_release, mock_system):
+        """macOS (Darwin) 平台检查应通过。"""
+        checker = PlatformChecker(project_root=self.test_dir)
+        result = checker.check_os()
+        self.assertTrue(result.passed)
+        self.assertIn('Darwin', result.message)
+
+    @patch('platform.system', return_value='Darwin')
+    def test_check_path_length_macos_skips_windows_check(self, mock_system):
+        """macOS 上路径长度检查跳过 Windows 限制。"""
+        checker = PlatformChecker(project_root=self.test_dir)
+        result = checker.check_path_length()
+        self.assertTrue(result.passed)
+
+    @patch('platform.system', return_value='Darwin')
+    def test_check_long_path_support_macos_skips(self, mock_system):
+        """macOS 上长路径支持检查跳过。"""
+        checker = PlatformChecker(project_root=self.test_dir)
+        result = checker.check_long_path_support()
+        self.assertTrue(result.passed)
+        self.assertIn('非 Windows', result.message)
+
+
+# ============================================================================
+# Linux 平台 Mock 测试
+# ============================================================================
+
+class TestLinuxPlatform(unittest.TestCase):
+    """Linux 平台特定测试。"""
+
+    def setUp(self):
+        self.test_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        if os.path.exists(self.test_dir):
+            shutil.rmtree(self.test_dir)
+
+    @patch('platform.system', return_value='Linux')
+    @patch('platform.release', return_value='6.1.0')
+    @patch('platform.machine', return_value='x86_64')
+    def test_check_os_linux(self, mock_machine, mock_release, mock_system):
+        """Linux 平台检查应通过。"""
+        checker = PlatformChecker(project_root=self.test_dir)
+        result = checker.check_os()
+        self.assertTrue(result.passed)
+        self.assertIn('Linux', result.message)
+
+    @patch('platform.system', return_value='Linux')
+    def test_check_long_path_support_linux_skips(self, mock_system):
+        """Linux 上长路径支持检查跳过。"""
+        checker = PlatformChecker(project_root=self.test_dir)
+        result = checker.check_long_path_support()
+        self.assertTrue(result.passed)
+
+
+# ============================================================================
+# 不支持的平台测试
+# ============================================================================
+
+class TestUnsupportedPlatform(unittest.TestCase):
+    """未经测试的平台测试。"""
+
+    def setUp(self):
+        self.test_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        if os.path.exists(self.test_dir):
+            shutil.rmtree(self.test_dir)
+
+    @patch('platform.system', return_value='FreeBSD')
+    @patch('platform.release', return_value='13.0')
+    @patch('platform.machine', return_value='amd64')
+    def test_check_os_unsupported(self, mock_machine, mock_release, mock_system):
+        """未支持的平台检查应失败并说明未经测试。"""
+        checker = PlatformChecker(project_root=self.test_dir)
+        result = checker.check_os()
+        self.assertFalse(result.passed)
+        self.assertIn('未经测试', result.message)
 
 
 if __name__ == '__main__':

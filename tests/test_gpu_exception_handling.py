@@ -77,9 +77,25 @@ class TestGPURuntimeErrors:
             with patch('src.collision.gpu_collision_engine.GPUDevice', return_value=mock_device), \
                  patch('src.collision.gpu_collision_engine.GPUContext', return_value=mock_context), \
                  patch('src.collision.gpu_collision_engine.GPUKernel', return_value=mock_kernel), \
+                 patch('src.collision.gpu_collision_engine.AsyncGPUExecutor') as mock_async_executor, \
                  patch('src.collision.gpu_collision_engine.GPUProfileLoader') as mock_profile_loader:
                 
                 mock_profile_loader.return_value.get_profile.return_value = None
+
+                # 异步执行器第5次调用时抛出异常（匹配原 mock_kernel.run_batch 的逻辑）
+                async_call_count = [0]
+                def run_batch_async_with_error(*args, **kwargs):
+                    async_call_count[0] += 1
+                    if async_call_count[0] == 5:
+                        raise RuntimeError("GPU execution failed")
+                    return ([], 50.0)
+
+                mock_async_instance = Mock()
+                mock_async_instance.initialize_buffers = Mock()
+                mock_async_instance.run_batch_async = Mock(side_effect=run_batch_async_with_error)
+                mock_async_instance.flush_pending = Mock(return_value=[])
+                mock_async_instance.cleanup = Mock()
+                mock_async_executor.return_value = mock_async_instance
                 
                 targets = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}
                 engine = GPUCollisionEngine(targets, batch_size=100)
@@ -126,7 +142,7 @@ class TestGPURuntimeErrors:
                 targets = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}
                 
                 # 验证初始化失败
-                with pytest.raises(RuntimeError, match="GPU 初始化失败"):
+                with pytest.raises(RuntimeError, match="GPU初始化失败"):
                     GPUCollisionEngine(targets)
 
 
@@ -296,10 +312,17 @@ class TestEdgeCases:
              patch('src.collision.gpu_collision_engine.GPUDevice', return_value=mock_device), \
              patch('src.collision.gpu_collision_engine.GPUContext', return_value=mock_context), \
              patch('src.collision.gpu_collision_engine.GPUKernel', return_value=mock_kernel), \
+             patch('src.collision.gpu_collision_engine.AsyncGPUExecutor') as mock_async_executor, \
              patch('src.collision.gpu_collision_engine.GPUProfileLoader') as mock_profile_loader, \
              patch('src.gpu.device.identify_vendor', return_value='nvidia'):
             
             mock_profile_loader.return_value.get_profile.return_value = None
+
+            mock_async_instance = Mock()
+            mock_async_instance.initialize_buffers = Mock()
+            mock_async_instance.run_batch_async = Mock(return_value=([], 50.0))
+            mock_async_instance.cleanup = Mock()
+            mock_async_executor.return_value = mock_async_instance
             
             # 空目标地址
             targets = set()
@@ -339,9 +362,16 @@ class TestEdgeCases:
             with patch('src.collision.gpu_collision_engine.GPUDevice', return_value=mock_device), \
                  patch('src.collision.gpu_collision_engine.GPUContext', return_value=mock_context), \
                  patch('src.collision.gpu_collision_engine.GPUKernel', return_value=mock_kernel), \
+                 patch('src.collision.gpu_collision_engine.AsyncGPUExecutor') as mock_async_executor, \
                  patch('src.collision.gpu_collision_engine.GPUProfileLoader') as mock_profile_loader:
                 
                 mock_profile_loader.return_value.get_profile.return_value = None
+
+                mock_async_instance = Mock()
+                mock_async_instance.initialize_buffers = Mock()
+                mock_async_instance.run_batch_async = Mock(return_value=([], 50.0))
+                mock_async_instance.cleanup = Mock()
+                mock_async_executor.return_value = mock_async_instance
                 
                 # 单个目标地址
                 targets = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}

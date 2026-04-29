@@ -1032,6 +1032,18 @@ class MonitoringSystem:
         self.alert_system = MonitoringAlertAdapter(self.storage)
         self.report_generator = ReportGenerator(self.storage, self.detector)
         
+        # 集成日志监控系统
+        try:
+            from .log_monitoring_integrator import get_log_monitoring_integrator
+            self.log_integrator = get_log_monitoring_integrator()
+            self.log_integrator.integrate_with_monitoring_system(self)
+        except Exception as e:
+            logger.error(f"集成日志监控系统失败: {e}")
+            self.log_integrator = None
+        
+        # 注册的组件
+        self.components = {}
+        
         self._running = False
         self._thread = None
         self._stop_event = threading.Event()
@@ -1047,6 +1059,17 @@ class MonitoringSystem:
         # 时间触发的缓冲刷写（每60秒强制刷写一次）
         self._last_flush_time = time.monotonic()
         self._flush_interval = 60
+    
+    def register_component(self, name: str, component: Any):
+        """
+        注册组件
+        
+        Args:
+            name: 组件名称
+            component: 组件实例
+        """
+        self.components[name] = component
+        logger.info(f"组件 '{name}' 已注册到监控系统")
     
     def start(self):
         """启动监控系统"""

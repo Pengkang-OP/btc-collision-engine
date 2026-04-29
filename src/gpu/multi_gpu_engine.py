@@ -3,6 +3,13 @@
 
 协调多个GPU工作器进行并行私钥碰撞搜索。
 采用任务分割策略,每个GPU独立搜索不同的私钥范围。
+
+增强功能：
+- 实时工作负载监控
+- 性能指标收集和分析
+- 负载均衡器集成
+- 工作状态跟踪
+- 自动重平衡触发
 """
 
 import logging
@@ -101,6 +108,16 @@ class MultiGPUCollisionEngine:
 
         # 可配置的工作器等待超时（秒）
         self._worker_join_timeout = self.config.get('worker_join_timeout', 30)
+        
+        # 工作负载监控
+        self._workload_monitor = None
+        self._monitor_thread = None
+        self._monitor_interval = self.config.get('workload_monitor_interval', 5)  # 监控间隔(秒)
+        self._auto_rebalance = self.config.get('auto_rebalance', True)  # 自动重平衡
+        
+        # 性能历史数据
+        self._performance_history = []
+        self._max_history_size = 100  # 最大历史记录数
         
         logger.info("MultiGPUCollisionEngine已创建")
     
@@ -271,6 +288,9 @@ class MultiGPUCollisionEngine:
                 )
                 logger.info("数据监控器已启动")
             
+            # 启动工作负载监控
+            self._start_workload_monitor()
+            
             with self._state_lock:
                 self._running = True
             
@@ -298,6 +318,9 @@ class MultiGPUCollisionEngine:
         
         try:
             logger.info("停止多GPU碰撞...")
+            
+            # 停止工作负载监控
+            self._stop_workload_monitor()
             
             # 停止所有工作器
             with self._workers_lock:
@@ -808,6 +831,151 @@ class MultiGPUCollisionEngine:
         """上下文管理器出口"""
         self.cleanup()
         return False
+    
+    def _start_workload_monitor(self):
+        """启动工作负载监控线程"""
+        if self._monitor_thread and self._monitor_thread.is_alive():
+            logger.warning("工作负载监控线程已在运行")
+            return
+        
+        # 启动监控线程
+        self._monitor_thread = threading.Thread(
+            target=self._workload_monitor_loop,
+            daemon=True
+        )
+        self._monitor_thread.start()
+        logger.info("工作负载监控线程已启动")
+    
+    def _stop_workload_monitor(self):
+        """停止工作负载监控线程"""
+        if self._monitor_thread and self._monitor_thread.is_alive():
+            # 等待线程结束
+            try:
+                self._monitor_thread.join(timeout=5)
+                if self._monitor_thread.is_alive():
+                    logger.warning("工作负载监控线程未在5秒内停止")
+                else:
+                    logger.info("工作负载监控线程已停止")
+            except Exception as e:
+                logger.error(f"停止工作负载监控线程失败: {e}")
+            finally:
+                self._monitor_thread = None
+    
+    def _workload_monitor_loop(self):
+        """工作负载监控循环"""
+        while True:
+            try:
+                # 检查引擎是否运行
+                with self._state_lock:
+                    if not self._running:
+                        break
+                
+                # 收集性能数据
+                self._collect_performance_data()
+                
+                # 检查是否需要自动重平衡
+                if self._auto_rebalance:
+                    self._check_auto_rebalance()
+                
+                # 等待下一次监控
+                time.sleep(self._monitor_interval)
+                
+            except Exception as e:
+                logger.error(f"工作负载监控异常: {e}")
+                # 短暂休眠后继续
+                time.sleep(1)
+    
+    def _collect_performance_data(self):
+        """收集性能数据"""
+        try:
+            # 获取当前统计
+            stats = self.get_combined_stats()
+            
+            # 记录性能历史
+            performance_data = {
+                'timestamp': time.time(),
+                'total_keys_checked': stats['total_keys_checked'],
+                'combined_throughput': stats['combined_throughput'],
+                'device_count': stats['device_count'],
+                'elapsed_time': stats['elapsed_time'],
+                'per_device': stats['per_device']
+            }
+            
+            self._performance_history.append(performance_data)
+            
+            # 保持历史数据大小
+            if len(self._performance_history) > self._max_history_size:
+                self._performance_history = self._performance_history[-self._max_history_size:]
+            
+            # 记录负载均衡器状态
+            if self.load_balancer:
+                load_stats = self.load_balancer.get_all_loads()
+                # 记录性能数据到负载均衡器
+                for device_idx, worker_stats in stats['per_device'].items():
+                    throughput = worker_stats.get('throughput', 0)
+                    error_rate = worker_stats.get('error_rate', 0)
+                    self.load_balancer.record_performance(device_idx, throughput, error_rate)
+                    
+                    # 记录内存使用
+                    if 'memory_usage' in worker_stats:
+                        memory_usage = worker_stats['memory_usage']
+                        # 估算内存使用
+                        total_memory = 0
+                        for device in self._devices:
+                            if device['global_index'] == device_idx:
+                                total_memory = device.get('global_mem_size', 0)
+                                break
+                        if total_memory > 0:
+                            used_memory = total_memory * memory_usage
+                            self.load_balancer.record_memory_usage(
+                                device_idx, used_memory, total_memory
+                            )
+            
+        except Exception as e:
+            logger.error(f"收集性能数据失败: {e}")
+    
+    def _check_auto_rebalance(self):
+        """检查是否需要自动重平衡"""
+        try:
+            if not self.load_balancer:
+                return
+            
+            # 检查是否需要重平衡
+            if self.load_balancer.should_rebalance():
+                logger.info("触发自动负载重平衡")
+                new_weights = self.load_balancer.redistribute_load()
+                
+                # 这里可以添加工作负载重新分配的逻辑
+                # 例如，根据新的权重调整工作器的任务范围
+                
+        except Exception as e:
+            logger.error(f"自动重平衡检查失败: {e}")
+    
+    def get_performance_history(self) -> List[Dict]:
+        """获取性能历史数据
+        
+        Returns:
+            性能历史数据列表
+        """
+        return self._performance_history.copy()
+    
+    def get_workload_stats(self) -> Dict:
+        """获取工作负载统计信息
+        
+        Returns:
+            工作负载统计字典
+        """
+        stats = {
+            'monitor_enabled': self._auto_rebalance,
+            'monitor_interval': self._monitor_interval,
+            'performance_history_count': len(self._performance_history),
+            'load_balancer_stats': {}
+        }
+        
+        if self.load_balancer:
+            stats['load_balancer_stats'] = self.load_balancer.get_stats()
+        
+        return stats
     
     def __del__(self):
         """析构函数"""

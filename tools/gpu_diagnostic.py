@@ -46,9 +46,9 @@ def check_gpu_hardware():
     print_section("GPU硬件检测")
     
     try:
-        from src.gpu.device import GPUDeviceHelper
+        from src.gpu.device import GPUDeviceDetector
         
-        devices = GPUDeviceHelper.detect_devices()
+        devices = GPUDeviceDetector.detect_devices()
         
         if not devices:
             print("  [FAIL] 未检测到GPU设备")

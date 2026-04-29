@@ -123,7 +123,7 @@ class TestEnhancedMonitoringSystemLifecycle:
     
     def setup_method(self):
         """每个测试前准备"""
-        self.mock_engine = Mock()
+        self.mock_engine = MagicMock()
         self.mock_engine.is_running.return_value = False
         self.mock_engine.get_stats.return_value = None
         
@@ -183,7 +183,7 @@ class TestEnhancedMonitoringSystemLifecycle:
     def test_monitoring_loop_runs(self):
         """测试监控循环运行"""
         # 配置mock引擎返回统计数据
-        mock_stats = Mock()
+        mock_stats = MagicMock()
         mock_stats.speed = 1000.0
         mock_stats.total_checked = 5000
         mock_stats.matches = []
@@ -211,8 +211,8 @@ class TestEnhancedMonitoringSystemDataCollection:
         self.test_dir = tempfile.mkdtemp()
         
         # 创建mock引擎
-        self.mock_engine = Mock()
-        mock_stats = Mock()
+        self.mock_engine = MagicMock()
+        mock_stats = MagicMock()
         mock_stats.speed = 1500.0
         mock_stats.total_checked = 10000
         mock_stats.matches = []
@@ -310,8 +310,8 @@ class TestEnhancedMonitoringSystemAlerts:
             alert_threshold=0.8
         )
         
-        self.mock_engine = Mock()
-        mock_stats = Mock()
+        self.mock_engine = MagicMock()
+        mock_stats = MagicMock()
         mock_stats.speed = 0.0  # 低速触发告警
         mock_stats.total_checked = 0
         mock_stats.matches = []
@@ -359,8 +359,8 @@ class TestEnhancedMonitoringSystemReports:
             report_interval=0.5  # 快速报告用于测试
         )
         
-        self.mock_engine = Mock()
-        mock_stats = Mock()
+        self.mock_engine = MagicMock()
+        mock_stats = MagicMock()
         mock_stats.speed = 1000.0
         mock_stats.total_checked = 5000
         mock_stats.matches = []
@@ -420,8 +420,8 @@ class TestEnhancedMonitoringSystemStatus:
             collection_interval=0.1
         )
         
-        self.mock_engine = Mock()
-        mock_stats = Mock()
+        self.mock_engine = MagicMock()
+        mock_stats = MagicMock()
         mock_stats.speed = 1200.0
         mock_stats.total_checked = 8000
         mock_stats.matches = []
@@ -496,7 +496,7 @@ class TestEnhancedMonitoringSystemErrorHandling:
     def test_monitoring_loop_error_recovery(self):
         """测试监控循环错误恢复"""
         # 创建会抛出异常的引擎
-        faulty_engine = Mock()
+        faulty_engine = MagicMock()
         faulty_engine.get_stats.side_effect = RuntimeError("Test error")
         faulty_engine.is_running.return_value = True
         
@@ -514,7 +514,7 @@ class TestEnhancedMonitoringSystemErrorHandling:
     def test_engine_attribute_error(self):
         """测试引擎缺少属性的处理"""
         # 创建不完整的引擎
-        incomplete_engine = Mock()
+        incomplete_engine = MagicMock()
         # 不提供get_stats方法
         
         self.monitor.engine = incomplete_engine
@@ -543,8 +543,8 @@ class TestEnhancedMonitoringSystemIntegration:
     def test_full_lifecycle(self):
         """测试完整生命周期"""
         # 创建mock引擎
-        mock_engine = Mock()
-        mock_stats = Mock()
+        mock_engine = MagicMock()
+        mock_stats = MagicMock()
         mock_stats.speed = 1000.0
         mock_stats.total_checked = 5000
         mock_stats.matches = []

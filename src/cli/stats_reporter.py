@@ -98,8 +98,9 @@ def _print_final_summary(engine: Any, engine_type: str, args: argparse.Namespace
         stats_dict[_t("cli.main.avg_speed")] = stats.format_speed()
         stats_dict[_t("cli.main.matches_found")] = f"{len(stats.matches)} 个"
         if stats.matches:
-            for m in stats.matches:
-                stats_dict[_t("address.match_found", address=m.get('address', 'N/A'))] = ""
+            # 导入分页功能
+            from src.cli.pagination import display_paginated_results
+            display_paginated_results(stats.matches, "匹配结果")
 
     output.final_summary(_t("cli.main.final_summary"), stats_dict)
 

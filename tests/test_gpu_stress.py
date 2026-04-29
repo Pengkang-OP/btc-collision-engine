@@ -11,6 +11,7 @@ GPU压力测试
 所有 GPU 操作全部使用 mock，不依赖实际 GPU 硬件。
 """
 
+import os
 import pytest
 import time
 import secrets
@@ -65,7 +66,7 @@ class TestLargeBatch:
 
         # mock GPU 批量处理：返回 batch_size 个 Hash160（20字节）
         mock_kernel.run_batch = Mock(
-            side_effect=lambda keys: [b'\xab' * 20 for _ in keys]
+            side_effect=lambda seed, num_keys: [b'\xab' * 20 for _ in range(num_keys)]
         )
 
         total_processed = 0
@@ -73,9 +74,10 @@ class TestLargeBatch:
 
         # 分批提交
         for offset in range(0, TOTAL_KEYS, BATCH_SIZE):
-            batch = _generate_key_batch(min(BATCH_SIZE, TOTAL_KEYS - offset))
-            batch_results = mock_kernel.run_batch(batch)
-            total_processed += len(batch)
+            cur_batch_size = min(BATCH_SIZE, TOTAL_KEYS - offset)
+            seed = os.urandom(32)
+            batch_results = mock_kernel.run_batch(seed, cur_batch_size)
+            total_processed += cur_batch_size
             results.extend(batch_results)
 
         assert total_processed == TOTAL_KEYS, (
@@ -91,12 +93,12 @@ class TestLargeBatch:
         MAX_BATCH_SIZE = 65536
         mock_kernel = GPUMockFactory.create_gpu_kernel(batch_size=MAX_BATCH_SIZE)
         mock_kernel.run_batch = Mock(
-            side_effect=lambda keys: [b'\x00' * 20 for _ in keys]
+            side_effect=lambda seed, num_keys: [b'\x00' * 20 for _ in range(num_keys)]
         )
 
         # 批次等于最大值
-        batch = _generate_key_batch(MAX_BATCH_SIZE)
-        results = mock_kernel.run_batch(batch)
+        seed = os.urandom(32)
+        results = mock_kernel.run_batch(seed, MAX_BATCH_SIZE)
         assert len(results) == MAX_BATCH_SIZE
 
     def test_batch_size_boundary_exceed_max(self):
@@ -108,19 +110,19 @@ class TestLargeBatch:
 
         call_sizes = []
 
-        def mock_run_batch(keys):
-            call_sizes.append(len(keys))
-            return [b'\x00' * 20 for _ in keys]
+        def mock_run_batch(seed, num_keys):
+            call_sizes.append(num_keys)
+            return [b'\x00' * 20 for _ in range(num_keys)]
 
         mock_kernel.run_batch = Mock(side_effect=mock_run_batch)
 
         # 模拟引擎按 max_batch_size 分批
-        all_keys = _generate_key_batch(TOTAL_KEYS)
         total_processed = 0
         for i in range(0, TOTAL_KEYS, MAX_BATCH_SIZE):
-            sub_batch = all_keys[i:i + MAX_BATCH_SIZE]
-            mock_kernel.run_batch(sub_batch)
-            total_processed += len(sub_batch)
+            cur_batch_size = min(MAX_BATCH_SIZE, TOTAL_KEYS - i)
+            seed = os.urandom(32)
+            mock_kernel.run_batch(seed, cur_batch_size)
+            total_processed += cur_batch_size
 
         assert total_processed == TOTAL_KEYS
         # 验证批次大小均不超过 MAX_BATCH_SIZE
@@ -150,9 +152,10 @@ class TestLargeBatch:
         mock_kernel = GPUMockFactory.create_gpu_kernel(batch_size=1000)
         mock_kernel.run_batch = Mock(return_value=[])
 
-        result = mock_kernel.run_batch([])
+        seed = os.urandom(32)
+        result = mock_kernel.run_batch(seed, 0)
         assert result == [], "空批次应返回空列表"
-        mock_kernel.run_batch.assert_called_once_with([])
+        mock_kernel.run_batch.assert_called_once_with(seed, 0)
 
 
 # ---------------------------------------------------------------------------
@@ -171,7 +174,7 @@ class TestLongRunning:
 
         mock_kernel = GPUMockFactory.create_gpu_kernel(batch_size=BATCH_SIZE)
         mock_kernel.run_batch = Mock(
-            side_effect=lambda keys: [b'\xff' * 20 for _ in keys]
+            side_effect=lambda seed, num_keys: [b'\xff' * 20 for _ in range(num_keys)]
         )
 
         # 追踪每轮分配/释放的缓冲区
@@ -192,8 +195,8 @@ class TestLongRunning:
         # 模拟 100 轮：每轮分配→处理→释放
         for round_idx in range(ROUNDS):
             buf = alloc_buffer(BATCH_SIZE * 32)
-            keys = _generate_key_batch(BATCH_SIZE)
-            mock_kernel.run_batch(keys)
+            seed = os.urandom(32)
+            mock_kernel.run_batch(seed, BATCH_SIZE)
             free_buffer(buf)
 
         # 验证：所有分配的缓冲区均已释放（无泄漏）
@@ -211,7 +214,7 @@ class TestLongRunning:
 
         # 模拟长时间运行后清理
         for _ in range(50):
-            mock_kernel.run_batch([1])
+            mock_kernel.run_batch(os.urandom(32), 1)
 
         mock_kernel.cleanup()
         mock_kernel.cleanup.assert_called_once()
@@ -224,13 +227,13 @@ class TestLongRunning:
 
         mock_kernel = GPUMockFactory.create_gpu_kernel(batch_size=BATCH_SIZE)
         mock_kernel.run_batch = Mock(
-            side_effect=lambda keys: [b'\xee' * 20 for _ in keys]
+            side_effect=lambda seed, num_keys: [b'\xee' * 20 for _ in range(num_keys)]
         )
 
         for _ in range(ROUNDS):
-            keys = _generate_key_batch(BATCH_SIZE)
+            seed = os.urandom(32)
             t0 = time.perf_counter()
-            mock_kernel.run_batch(keys)
+            mock_kernel.run_batch(seed, BATCH_SIZE)
             elapsed_ms = (time.perf_counter() - t0) * 1000
             assert elapsed_ms < MAX_ROUND_TIME_MS, (
                 f"单轮处理耗时 {elapsed_ms:.1f}ms 超过 {MAX_ROUND_TIME_MS}ms"
@@ -374,22 +377,22 @@ class TestErrorRecoveryStress:
         success_count = 0
         failure_count = 0
 
-        def intermittent_run_batch(keys):
+        def intermittent_run_batch(seed, num_keys):
             nonlocal call_count, success_count, failure_count
             call_count += 1
             if call_count % 4 == 0:
                 failure_count += 1
                 raise RuntimeError("intermittent gpu error")
             success_count += 1
-            return [b'\xcc' * 20 for _ in keys]
+            return [b'\xcc' * 20 for _ in range(num_keys)]
 
         mock_kernel.run_batch = Mock(side_effect=intermittent_run_batch)
 
         results = []
         for _ in range(ROUNDS):
             try:
-                batch = _generate_key_batch(10)
-                result = mock_kernel.run_batch(batch)
+                seed = os.urandom(32)
+                result = mock_kernel.run_batch(seed, 10)
                 results.extend(result)
             except RuntimeError as e:
                 recovery_manager.handle_gpu_failure(

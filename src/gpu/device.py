@@ -36,19 +36,91 @@ def identify_vendor(device_name: str, vendor_str: str = '') -> str:
     
     # NVIDIA
     if 'nvidia' in vendor_lower or 'nvidia' in name_lower or \
-       'geforce' in name_lower or 'rtx' in name_lower or 'gtx' in name_lower:
+       'geforce' in name_lower or 'rtx' in name_lower or 'gtx' in name_lower or \
+       'titan' in name_lower or 'tesla' in name_lower or 'quadro' in name_lower:
         return 'nvidia'
     
     # AMD
     elif 'amd' in vendor_lower or 'amd' in name_lower or \
-         'radeon' in name_lower or 'radeon' in vendor_lower:
+         'radeon' in name_lower or 'radeon' in vendor_lower or \
+         'vega' in name_lower or 'navi' in name_lower or 'instinct' in name_lower:
         return 'amd'
     
     # Intel
-    elif 'intel' in vendor_lower or 'intel' in name_lower:
+    elif 'intel' in vendor_lower or 'intel' in name_lower or \
+         'iris' in name_lower or 'arc' in name_lower:
         return 'intel'
     
     # 未知
+    else:
+        return 'unknown'
+
+
+def identify_gpu_model(device_name: str, vendor: str) -> str:
+    """
+    识别GPU型号
+    
+    Args:
+        device_name: 设备名称
+        vendor: 厂商名称
+        
+    Returns:
+        GPU型号标识
+    """
+    name_lower = device_name.lower()
+    vendor_lower = vendor.lower()
+    
+    if vendor_lower == 'nvidia':
+        # NVIDIA 型号识别
+        if 'rtx 40' in name_lower:
+            return 'rtx40'
+        elif 'rtx 30' in name_lower:
+            return 'rtx30'
+        elif 'rtx 20' in name_lower:
+            return 'rtx20'
+        elif 'gtx 16' in name_lower:
+            return 'gtx16'
+        elif 'gtx 10' in name_lower:
+            return 'gtx10'
+        elif 'titan' in name_lower:
+            return 'titan'
+        elif 'tesla' in name_lower:
+            return 'tesla'
+        elif 'quadro' in name_lower:
+            return 'quadro'
+        else:
+            return 'nvidia_other'
+    
+    elif vendor_lower == 'amd':
+        # AMD 型号识别
+        if 'rx 7' in name_lower:
+            return 'rx7000'
+        elif 'rx 6' in name_lower:
+            return 'rx6000'
+        elif 'rx 5700' in name_lower or 'rx 5600' in name_lower or 'rx 5500' in name_lower:
+            return 'rx5000'
+        elif 'rx 580' in name_lower or 'rx 570' in name_lower or 'rx 560' in name_lower:
+            return 'rx500'
+        elif 'vega' in name_lower:
+            return 'vega'
+        elif 'instinct' in name_lower:
+            return 'instinct'
+        else:
+            return 'amd_other'
+    
+    elif vendor_lower == 'intel':
+        # Intel 型号识别
+        if 'arc' in name_lower:
+            return 'arc'
+        elif 'iris' in name_lower:
+            return 'iris'
+        elif 'hd graphics' in name_lower:
+            return 'hd_graphics'
+        elif 'uhd graphics' in name_lower:
+            return 'uhd_graphics'
+        else:
+            return 'intel_other'
+    
     else:
         return 'unknown'
 
@@ -252,6 +324,7 @@ class GPUDeviceDetector:
                             'platform_obj': platform,
                             'global_mem_size': device.global_mem_size,
                             'max_compute_units': device.max_compute_units,
+                            'max_work_group_size': device.max_work_group_size,
                             'type': 'GPU'
                         }
                         
@@ -452,11 +525,17 @@ class GPUDevice:
             logger.warning(f"无法解析OpenCL版本: {opencl_version}")
             self._legacy_mode = True
         
+        # 识别GPU型号
+        vendor_identifier = identify_vendor(device_info.get('name', ''), self.vendor)
+        gpu_model = identify_gpu_model(device_info.get('name', ''), vendor_identifier)
+        
         # 构建设备信息字典
         self.device_info = {
             'name': device_info.get('name', 'Unknown'),
             'type': device_info.get('type', 'GPU'),
             'vendor': self.vendor,
+            'vendor_identifier': vendor_identifier,
+            'model': gpu_model,
             'platform': device_info.get('platform', 'Unknown'),
             'global_mem_size': device_info['device'].global_mem_size,
             'max_compute_units': device_info['device'].max_compute_units,
@@ -649,6 +728,8 @@ class GPUDevice:
     
     def cleanup(self):
         """释放GPU资源"""
+        import time
+        
         # 清理命令队列
         queues_to_cleanup = []
         
@@ -661,9 +742,12 @@ class GPUDevice:
         
         for name, q in queues_to_cleanup:
             try:
+                start_time = time.time()
                 q.finish()
+                elapsed = time.time() - start_time
+                logger.debug(f"{name}已完成所有命令 (耗时: {elapsed:.2f}秒)")
             except Exception as e:
-                logger.debug(f"{name}清理失败: {e}")
+                logger.warning(f"{name}清理失败: {e}")
         
         self.queue = None
         self.compute_queue = None
@@ -674,9 +758,12 @@ class GPUDevice:
             try:
                 # 确保所有命令完成
                 if hasattr(self.context, 'finish'):
+                    start_time = time.time()
                     self.context.finish()
+                    elapsed = time.time() - start_time
+                    logger.debug(f"GPU上下文已完成所有命令 (耗时: {elapsed:.2f}秒)")
             except Exception as e:
-                logger.debug(f"GPU上下文完成失败: {e}")
+                logger.warning(f"GPU上下文完成失败: {e}")
             finally:
                 self.context = None
         

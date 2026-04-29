@@ -1,0 +1,37 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+BTC碰撞引擎 - 引导界面模块
+
+该模块专注于用户交互与流程引导，提供独立的交互式向导功能。
+
+主要功能：
+- 目标地址选择
+- 碰撞模式选择
+- 功能选项配置
+- GPU设备选择
+- 配置构建与执行
+
+支持独立运行：
+    python -m src.wizard
+
+或者导入使用：
+    from src.wizard import WizardEngine
+    wizard = WizardEngine()
+    result = wizard.run()
+"""
+
+__version__ = "1.0.0"
+__author__ = "BTC Collision Engine Team"
+
+from .wizard_engine import WizardEngine
+from .interfaces import WizardResult, WizardConfig, WizardMode
+from .events import WizardEvent
+
+__all__ = [
+    'WizardEngine',
+    'WizardResult',
+    'WizardConfig',
+    'WizardMode',
+    'WizardEvent',
+]

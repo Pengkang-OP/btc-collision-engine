@@ -41,15 +41,18 @@ class TestAlertSystemIntegration:
         import src.monitoring.alert_system as alert_module
         alert_module._alert_system = alert_system
         
-        # 先记录一个高性能数据作为峰值 (100ms = 2M keys/s for batch_size=1000000)
-        self.monitor.record_kernel_metrics(
-            batch_size=1000000,
-            execution_time_ms=500.0,  # 500ms
-            memory_allocated_mb=256.0,
-            error_count=0
-        )
+        # Task 2 引入了预热机制: _warmup_batches=10
+        # 预热期内不触发退化告警，需要先记录超过10批高性能数据度过预热期
+        warmup_count = self.monitor._warmup_batches + 1  # 超过预热批次数
+        for _ in range(warmup_count):
+            self.monitor.record_kernel_metrics(
+                batch_size=1000000,
+                execution_time_ms=500.0,  # 500ms, 高性能基准
+                memory_allocated_mb=256.0,
+                error_count=0
+            )
         
-        # 记录低性能数据(2500ms, 吞吐量降低5倍,应该触发告警)
+        # 预热完成后记录低性能数据(2500ms, 吞吐量降低5倍,应该触发告警)
         self.monitor.record_kernel_metrics(
             batch_size=1000000,
             execution_time_ms=2500.0,  # 2500ms (退化80%)

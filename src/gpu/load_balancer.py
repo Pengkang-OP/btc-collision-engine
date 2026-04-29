@@ -3,11 +3,19 @@
 
 为多GPU环境提供智能的任务分配和负载均衡。
 支持按性能分配和平均分配两种策略。
+
+增强功能：
+- 基于历史性能数据的动态负载重平衡
+- 负载不均衡检测和自动调整
+- 内存使用考虑
+- 性能预测和自适应调整
+- 细粒度负载调整
 """
 
 import logging
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple, Optional, Any
 import time
+import statistics
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +51,9 @@ class GPULoadBalancer:
         self,
         devices: List[Dict],
         strategy: str = 'performance',
-        rebalance_interval: int = 60
+        rebalance_interval: int = 30,  # 减少重平衡间隔，提高响应速度
+        min_rebalance_threshold: float = 0.05,  # 减少重平衡阈值，提高负载均衡的准确性
+        memory_usage_threshold: float = 0.75  # 减少内存使用阈值，避免内存不足
     ):
         """初始化负载均衡器
         
@@ -51,6 +61,8 @@ class GPULoadBalancer:
             devices: GPU设备列表
             strategy: 负载策略 ('performance' 或 'equal')
             rebalance_interval: 动态重平衡间隔(秒)
+            min_rebalance_threshold: 最小重平衡阈值(0.0-1.0)
+            memory_usage_threshold: 内存使用阈值(0.0-1.0)
         """
         if not devices:
             raise ValueError("设备列表不能为空")
@@ -58,18 +70,24 @@ class GPULoadBalancer:
         self.devices = devices
         self.strategy = strategy
         self.rebalance_interval = rebalance_interval
+        self.min_rebalance_threshold = min_rebalance_threshold
+        self.memory_usage_threshold = memory_usage_threshold
         
         self._weights = {}
         self._key_ranges = {}
         self._last_rebalance_time = time.time()
         self._performance_stats = {}
+        self._memory_stats = {}
+        self._historical_performance = {}
+        self._load_history = {}
         
         # 计算初始权重
         self._calculate_initial_weights()
         
         logger.info(
             f"GPU负载均衡器已初始化: "
-            f"设备数={len(devices)}, 策略={strategy}"
+            f"设备数={len(devices)}, 策略={strategy}, "
+            f"重平衡间隔={rebalance_interval}s"
         )
     
     def _calculate_initial_weights(self):
@@ -251,9 +269,48 @@ class GPULoadBalancer:
             throughput: 吞吐量(keys/s)
             error_rate: 错误率(0.0-1.0)
         """
+        timestamp = time.time()
+        
+        # 记录当前性能
         self._performance_stats[device_idx] = {
             'throughput': throughput,
             'error_rate': error_rate,
+            'timestamp': timestamp
+        }
+        
+        # 记录历史性能
+        if device_idx not in self._historical_performance:
+            self._historical_performance[device_idx] = []
+        
+        self._historical_performance[device_idx].append({
+            'throughput': throughput,
+            'error_rate': error_rate,
+            'timestamp': timestamp
+        })
+        
+        # 保持历史数据大小
+        if len(self._historical_performance[device_idx]) > 50:
+            self._historical_performance[device_idx] = self._historical_performance[device_idx][-50:]
+    
+    def record_memory_usage(
+        self,
+        device_idx: int,
+        used_memory_mb: float,
+        total_memory_mb: float
+    ):
+        """记录GPU内存使用情况
+        
+        Args:
+            device_idx: 设备索引
+            used_memory_mb: 已使用内存(MB)
+            total_memory_mb: 总内存(MB)
+        """
+        usage_ratio = used_memory_mb / total_memory_mb if total_memory_mb > 0 else 0
+        
+        self._memory_stats[device_idx] = {
+            'used_memory_mb': used_memory_mb,
+            'total_memory_mb': total_memory_mb,
+            'usage_ratio': usage_ratio,
             'timestamp': time.time()
         }
     
@@ -266,7 +323,64 @@ class GPULoadBalancer:
         now = time.time()
         elapsed = now - self._last_rebalance_time
         
-        return elapsed >= self.rebalance_interval
+        # 时间间隔检查
+        if elapsed >= self.rebalance_interval:
+            return True
+        
+        # 负载不均衡检查
+        if self._detect_load_imbalance():
+            return True
+        
+        # 内存使用检查
+        if self._detect_memory_pressure():
+            return True
+        
+        return False
+    
+    def _detect_load_imbalance(self) -> bool:
+        """检测负载不均衡情况
+        
+        Returns:
+            True表示负载不均衡
+        """
+        if not self._performance_stats:
+            return False
+        
+        throughputs = []
+        for stats in self._performance_stats.values():
+            throughputs.append(stats['throughput'])
+        
+        if len(throughputs) < 2:
+            return False
+        
+        # 计算标准差
+        std_dev = statistics.stdev(throughputs)
+        mean = statistics.mean(throughputs)
+        
+        # 计算变异系数
+        if mean > 0:
+            cv = std_dev / mean
+            if cv > self.min_rebalance_threshold:
+                logger.debug(f"检测到负载不均衡: 变异系数={cv:.3f}")
+                return True
+        
+        return False
+    
+    def _detect_memory_pressure(self) -> bool:
+        """检测内存压力
+        
+        Returns:
+            True表示存在内存压力
+        """
+        if not self._memory_stats:
+            return False
+        
+        for stats in self._memory_stats.values():
+            if stats['usage_ratio'] > self.memory_usage_threshold:
+                logger.debug(f"检测到内存压力: 使用率={stats['usage_ratio']:.3f}")
+                return True
+        
+        return False
     
     def redistribute_load(self) -> Dict[int, float]:
         """根据实际性能重新分配负载
@@ -288,21 +402,89 @@ class GPULoadBalancer:
         new_weights = {}
         total_throughput = 0
         
+        # GPU厂商性能系数
+        vendor_performance_factors = {
+            'nvidia': 1.0,
+            'amd': 0.95,
+            'intel': 0.9
+        }
+        
         for idx, stats in self._performance_stats.items():
-            throughput = stats['throughput']
+            # 考虑历史性能
+            historical_perf = self._calculate_historical_performance(idx)
+            current_throughput = stats['throughput']
             error_rate = stats['error_rate']
             
-            # 有效吞吐量(考虑错误率)
-            effective_throughput = throughput * (1 - error_rate)
+            # 计算动态学习率
+            history_length = len(self._historical_performance.get(idx, []))
+            if history_length < 3:
+                # 历史数据不足，更多依赖当前性能
+                learning_rate = 0.9
+            else:
+                # 历史数据充足，平衡当前和历史性能
+                learning_rate = 0.7
+            
+            # 结合历史和当前性能
+            if historical_perf > 0:
+                effective_throughput = learning_rate * current_throughput + (1 - learning_rate) * historical_perf
+            else:
+                effective_throughput = current_throughput
+            
+            # 考虑错误率
+            effective_throughput = effective_throughput * (1 - error_rate)
+            
+            # 考虑内存使用情况
+            memory_factor = self._get_memory_factor(idx)
+            effective_throughput = effective_throughput * memory_factor
+            
+            # 考虑GPU厂商特性
+            vendor = 'unknown'
+            for device in self.devices:
+                if device['global_index'] == idx:
+                    vendor = device.get('vendor', 'unknown').lower()
+                    break
+            
+            vendor_factor = vendor_performance_factors.get(vendor, 0.8)
+            effective_throughput = effective_throughput * vendor_factor
+            
+            # 考虑预测性能
+            predicted_perf = self.get_performance_prediction(idx)
+            if predicted_perf and predicted_perf > 0:
+                # 结合预测性能，提前调整负载
+                effective_throughput = 0.8 * effective_throughput + 0.2 * predicted_perf
+            
             new_weights[idx] = effective_throughput
             total_throughput += effective_throughput
         
         # 归一化
         if total_throughput > 0:
-            self._weights = {
+            # 计算新权重
+            raw_weights = {
                 idx: tp / total_throughput
                 for idx, tp in new_weights.items()
             }
+            
+            # 负载平滑：避免权重剧烈变化
+            smoothed_weights = {}
+            for idx, new_weight in raw_weights.items():
+                old_weight = self._weights.get(idx, 1.0 / len(self.devices))
+                # 平滑因子，0.3表示30%的新权重，70%的旧权重
+                smoothed_weight = 0.3 * new_weight + 0.7 * old_weight
+                smoothed_weights[idx] = smoothed_weight
+            
+            # 重新归一化
+            smoothed_total = sum(smoothed_weights.values())
+            if smoothed_total > 0:
+                self._weights = {
+                    idx: w / smoothed_total
+                    for idx, w in smoothed_weights.items()
+                }
+            else:
+                # 降级为平均分配
+                self._weights = {
+                    idx: 1.0 / len(self.devices)
+                    for idx in self._weights.keys()
+                }
         else:
             # 降级为平均分配
             self._weights = {
@@ -310,10 +492,75 @@ class GPULoadBalancer:
                 for idx in self._weights.keys()
             }
         
+        # 记录负载历史
+        self._record_load_history()
+        
         self._last_rebalance_time = time.time()
         
         logger.info(f"负载重平衡完成: {self._weights}")
         return self._weights
+    
+    def _calculate_historical_performance(self, device_idx: int) -> float:
+        """计算设备的历史性能
+        
+        Args:
+            device_idx: 设备索引
+            
+        Returns:
+            平均历史吞吐量
+        """
+        if device_idx not in self._historical_performance:
+            return 0
+        
+        history = self._historical_performance[device_idx]
+        if not history:
+            return 0
+        
+        # 计算最近10次的平均值
+        recent_history = history[-10:]
+        throughputs = [h['throughput'] for h in recent_history]
+        
+        return statistics.mean(throughputs)
+    
+    def _get_memory_factor(self, device_idx: int) -> float:
+        """获取内存影响因子
+        
+        Args:
+            device_idx: 设备索引
+            
+        Returns:
+            内存因子(0.0-1.0)
+        """
+        if device_idx not in self._memory_stats:
+            return 1.0
+        
+        stats = self._memory_stats[device_idx]
+        usage_ratio = stats['usage_ratio']
+        
+        # 内存使用越高，因子越低
+        if usage_ratio < 0.5:
+            return 1.0
+        elif usage_ratio < 0.8:
+            return 1.0 - (usage_ratio - 0.5) * 0.5
+        else:
+            return 0.8 - (usage_ratio - 0.8) * 0.5
+    
+    def _record_load_history(self):
+        """记录负载历史"""
+        timestamp = time.time()
+        
+        for idx, weight in self._weights.items():
+            if idx not in self._load_history:
+                self._load_history[idx] = []
+            
+            self._load_history[idx].append({
+                'weight': weight,
+                'timestamp': timestamp
+            })
+            
+            # 保持历史数据大小
+            if len(self._load_history[idx]) > 100:
+                self._load_history[idx] = self._load_history[idx][-100:]
     
     def get_device_load(self, device_idx: int) -> Optional[Dict]:
         """获取指定GPU的负载信息
@@ -330,6 +577,7 @@ class GPULoadBalancer:
         weight = self._weights[device_idx]
         key_range = self._key_ranges.get(device_idx, (0, 0))
         perf_stats = self._performance_stats.get(device_idx, {})
+        memory_stats = self._memory_stats.get(device_idx, {})
         
         return {
             'device_idx': device_idx,
@@ -337,6 +585,7 @@ class GPULoadBalancer:
             'key_range': key_range,
             'throughput': perf_stats.get('throughput', 0),
             'error_rate': perf_stats.get('error_rate', 0),
+            'memory_usage': memory_stats.get('usage_ratio', 0),
             'last_update': perf_stats.get('timestamp', 0)
         }
     
@@ -377,13 +626,70 @@ class GPULoadBalancer:
         
         logger.info(f"负载策略已更改为: {strategy}")
     
+    def get_performance_prediction(self, device_idx: int) -> Optional[float]:
+        """预测设备性能
+        
+        Args:
+            device_idx: 设备索引
+            
+        Returns:
+            预测的吞吐量
+        """
+        if device_idx not in self._historical_performance:
+            return None
+        
+        history = self._historical_performance[device_idx]
+        if len(history) < 5:
+            return None
+        
+        # 简单线性预测
+        recent_history = history[-5:]
+        throughputs = [h['throughput'] for h in recent_history]
+        
+        if len(throughputs) < 2:
+            return throughputs[0] if throughputs else None
+        
+        # 计算趋势
+        trend = (throughputs[-1] - throughputs[0]) / (len(throughputs) - 1)
+        
+        # 预测下一个值
+        predicted = throughputs[-1] + trend
+        
+        return max(predicted, 0)
+    
     def reset(self):
         """重置负载均衡器"""
         self._weights = {}
         self._key_ranges = {}
         self._performance_stats = {}
+        self._memory_stats = {}
+        self._historical_performance = {}
+        self._load_history = {}
         self._last_rebalance_time = time.time()
         
         self._calculate_initial_weights()
         
         logger.info("负载均衡器已重置")
+    
+    def get_stats(self) -> Dict[str, Any]:
+        """获取负载均衡器统计信息
+        
+        Returns:
+            统计信息字典
+        """
+        stats = {
+            'device_count': len(self.devices),
+            'strategy': self.strategy,
+            'rebalance_interval': self.rebalance_interval,
+            'current_weights': self._weights,
+            'performance_stats': self._performance_stats,
+            'memory_stats': self._memory_stats,
+            'last_rebalance': self._last_rebalance_time
+        }
+        
+        # 计算整体性能
+        if self._performance_stats:
+            total_throughput = sum(s['throughput'] for s in self._performance_stats.values())
+            stats['total_throughput'] = total_throughput
+        
+        return stats

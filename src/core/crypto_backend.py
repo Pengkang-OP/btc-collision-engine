@@ -28,8 +28,8 @@ from enum import Enum, auto
 # 导入日志配置
 from ..utils import init_logging, get_configured_logger
 
-# 初始化日志系统（如果尚未初始化）
-init_logging()
+# 注意：不在模块级别调用init_logging()，由CLI入口统一初始化
+# init_logging()  # ← 已移除，避免重复初始化
 
 # 获取模块日志记录器
 logger = get_configured_logger("CryptoBackend")

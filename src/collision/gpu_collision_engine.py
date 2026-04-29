@@ -39,10 +39,14 @@ from ..gpu.search_modes import RandomSearchMode, BruteForceSearchMode, RangeScan
 # Task#3: 导入引擎监控模块（已迁移至独立模块）
 from ..gpu.engine_monitor import GPUEngineMonitor
 
+# 导入日志配置（修复：统一使用get_configured_logger）
+from ..utils import get_configured_logger
+
 # v2.2.1迁移: 移除未使用的secp256k1导入，使用crypto_backend
 # from ..core.secp256k1 import Secp256k1  # 已删除，未使用
 
-logger = logging.getLogger(__name__)
+# 修复: 使用统一的logger获取方式
+logger = get_configured_logger(__name__)
 
 # ========== 常量定义 ==========
 # P2-2: 魔法数字提取为常量
@@ -760,6 +764,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
     
     def _random_search_async(self):
         """异步执行版本(双缓冲优化) - 委托给 RandomSearchMode._execute_async()"""
+        # 尝试使用异步模式，如果失败会自动回退到同步模式
         return self._random_search_mode._execute_async()
     
     # ========== P0-1重构：辅助方法 ==========
@@ -809,11 +814,44 @@ class GPUCollisionEngine(BaseCollisionEngine):
             )
 
         batch_start_time = time.time()
-        # v3.3.1修复: 传递_stop_event到GPU kernel,支持优雅停止
-        matches: List[Dict[str, int]] = self._gpu_kernel.run_batch(
-            seed, batch_size, stop_event=self._stop_event
-        )
-        execution_time_ms = (time.time() - batch_start_time) * 1000
+        
+        # 检查是否有异步执行器可用
+        if hasattr(self, '_async_executor') and self._async_executor is not None:
+            try:
+                # 使用异步执行
+                matches: List[Dict[str, int]] = []
+                if hasattr(self, '_gpu_kernel') and self._gpu_kernel is not None:
+                    if hasattr(self._gpu_kernel, 'program') and hasattr(self._gpu_kernel, '_targets_buf'):
+                        matches, execution_time_ms = self._async_executor.run_batch_async(
+                            seed, batch_size, self._gpu_kernel.program,
+                            self._gpu_kernel._targets_buf, len(self.targets)
+                        )
+                        logger.debug(f"GPU batch {batch_num}: 使用异步执行")
+                    else:
+                        # 回退到同步执行
+                        matches = self._gpu_kernel.run_batch(
+                            seed, batch_size, stop_event=self._stop_event
+                        )
+                        execution_time_ms = (time.time() - batch_start_time) * 1000
+                else:
+                    # 回退到同步执行
+                    matches = self._gpu_kernel.run_batch(
+                        seed, batch_size, stop_event=self._stop_event
+                    )
+                    execution_time_ms = (time.time() - batch_start_time) * 1000
+            except Exception as e:
+                logger.warning(f"异步执行失败，回退到同步模式: {e}")
+                # 回退到同步执行
+                matches = self._gpu_kernel.run_batch(
+                    seed, batch_size, stop_event=self._stop_event
+                )
+                execution_time_ms = (time.time() - batch_start_time) * 1000
+        else:
+            # 同步执行
+            matches = self._gpu_kernel.run_batch(
+                seed, batch_size, stop_event=self._stop_event
+            )
+            execution_time_ms = (time.time() - batch_start_time) * 1000
         
         # PERF-1修复: 检测CPU-GPU同步瓶颈（动态阈值）
         # 基于批次大小和预期速度计算合理阈值
@@ -1140,19 +1178,23 @@ class GPUCollisionEngine(BaseCollisionEngine):
         
         # 保存最终断点
         if self.checkpoint_mgr:
-            matches_list = [
-                {"private_key": m["private_key_hex"], "address": m["address"]}
-                for m in self.stats.matches
-            ]
-            self.checkpoint_mgr.save(
-                mode=self._current_mode,
-                targets=self.targets,
-                current_position=self._current_position,
-                total_checked=self.stats.total_checked,
-                matches=matches_list,
-                range_start=self._range_start,
-                range_end=self._range_end
-            )
+            try:
+                matches_list = [
+                    {"private_key": m["private_key_hex"], "address": m["address"]}
+                    for m in self.stats.matches
+                ]
+                self.checkpoint_mgr.save(
+                    mode=self._current_mode,
+                    targets=self.targets,
+                    current_position=self._current_position,
+                    total_checked=self.stats.total_checked,
+                    matches=matches_list,
+                    range_start=self._range_start,
+                    range_end=self._range_end
+                )
+            except Exception as e:
+                logger.error(f"保存最终断点失败: {e}")
+                # 继续执行后续清理步骤，不因为断点保存失败而中断
         
         # 停止监控系统
         if self.enhanced_monitoring:
@@ -1186,41 +1228,53 @@ class GPUCollisionEngine(BaseCollisionEngine):
             except Exception as e:
                 logger.error(f"GPU引擎：刷写数据日志失败: {e}")
         
+        import time
+        
         # 停止缓冲区定期泄漏检查
         if hasattr(self, '_buffer_tracker') and self._buffer_tracker:
             try:
                 self._buffer_tracker.stop_periodic_check()
+                logger.debug("GPU引擎：缓冲区定期泄漏检查已停止")
             except Exception as e:
-                logger.warning(f"停止缓冲区定期检查失败: {e}")
+                logger.warning(f"GPU引擎：停止缓冲区定期检查失败: {e}")
         
         # 停止种子预生成线程（BUG-1: 防止线程泄漏）
         if hasattr(self, '_random_search_mode') and self._random_search_mode:
             try:
+                start_time = time.time()
                 self._random_search_mode.stop()
-                logger.info("GPU引擎：种子预生成线程已停止")
+                elapsed = time.time() - start_time
+                logger.info(f"GPU引擎：种子预生成线程已停止 (耗时: {elapsed:.2f}秒)")
             except Exception as e:
                 logger.warning(f"GPU引擎：停止种子预生成线程失败: {e}")
 
-        # 清理异步执行器缓冲区（BUG-2: 防止 buffer_pool 中的 OpenCL Buffer 泄漏）
-        if self._async_executor:
+        # 清理异步执行器资源（BUG-2: 防止 buffer_pool 中的 OpenCL Buffer 泄漏）
+        if hasattr(self, '_async_executor') and self._async_executor:
             try:
+                start_time = time.time()
                 self._async_executor.cleanup()
-                logger.info("GPU引擎：异步执行器缓冲区已释放")
+                elapsed = time.time() - start_time
+                logger.info(f"GPU引擎：异步执行器资源已清理 (耗时: {elapsed:.2f}秒)")
             except Exception as e:
-                logger.warning(f"GPU引擎：释放异步执行器缓冲区失败: {e}")
+                logger.error(f"GPU引擎：清理异步执行器失败: {e}")
             self._async_executor = None
 
-        # 清理 GPU 资源
-        try:
-            self._device_manager.cleanup()
-            logger.info("GPU引擎：资源已清理")
-        except Exception as e:
-            logger.warning(f"清理资源失败: {e}")
+        # 清理设备管理器资源
+        if hasattr(self, '_device_manager') and self._device_manager:
+            try:
+                start_time = time.time()
+                self._device_manager.cleanup()
+                elapsed = time.time() - start_time
+                logger.info(f"GPU引擎：设备管理器资源已清理 (耗时: {elapsed:.2f}秒)")
+            except Exception as e:
+                logger.error(f"GPU引擎：清理设备管理器失败: {e}")
         
         # 重置引擎状态（支持重启）
         self._stop_event.clear()
         self._running = False
         self._thread = None
+        
+        logger.info("GPU引擎：资源清理完成")
     
     def is_running(self) -> bool:
         """是否正在运行"""
@@ -1228,12 +1282,14 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
     def __enter__(self):
         return self
-
+    
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """退出上下文管理器，释放资源"""
         self.stop()
-        return False
-
+        return False  # 不抑制异常
+    
     def __del__(self):
+        """析构函数，确保资源释放"""
         try:
             if self._running:
                 self.stop()
@@ -1375,3 +1431,40 @@ class GPUCollisionEngine(BaseCollisionEngine):
             include_comparison=include_comparison,
             output_dir=output_dir,
         )
+    
+    def _setup_async_logging(self, log_file: str, max_bytes: int, backup_count: int):
+        """设置异步日志处理器
+        
+        Args:
+            log_file: 日志文件路径
+            max_bytes: 单个文件最大字节数
+            backup_count: 备份文件数
+        """
+        import os
+        import logging
+        
+        try:
+            # 确保日志目录存在
+            log_dir = os.path.dirname(log_file)
+            if log_dir and not os.path.exists(log_dir):
+                os.makedirs(log_dir, mode=0o750, exist_ok=True)
+            
+            # 创建异步文件处理器
+            from ..utils.logger import AsyncFileHandler
+            self._async_log_handler = AsyncFileHandler(
+                log_file,
+                max_bytes=max_bytes,
+                backup_count=backup_count
+            )
+            self._async_log_handler.setLevel(logging.DEBUG)
+            
+            # 修复: 使用模块级logger，不重复获取
+            # logger = logging.getLogger(__name__)  # ← 已删除
+            logger.addHandler(self._async_log_handler)
+            
+            logger.info(f"GPU异步日志已启用: {log_file} (max={max_bytes/1024/1024:.0f}MB)")
+            
+        except Exception as e:
+            # 修复: 使用模块级logger，不重复获取
+            # logger = logging.getLogger(__name__)  # ← 已删除
+            logger.warning(f"异步日志启用失败: {e}，使用同步日志")

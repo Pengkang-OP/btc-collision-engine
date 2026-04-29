@@ -57,6 +57,65 @@ def create_mock_cl():
     return mock_cl
 
 
+# cl模块的设备信息常量（实际 pyopencl 常量值，通过 int(cl.device_info.XXX) 确认）
+_CL_DEVICE_TYPE = 4096    # int(cl.device_info.TYPE)
+_CL_DEVICE_NAME = 4139    # int(cl.device_info.NAME)
+_CL_DEVICE_VENDOR = 4140  # int(cl.device_info.VENDOR)
+_CL_PLATFORM_NAME = 2306  # int(cl.platform_info.NAME)
+_CL_DEVICE_TYPE_CPU = 2   # int(cl.device_type.CPU)
+_CL_DEVICE_TYPE_GPU = 4   # int(cl.device_type.GPU)
+
+
+def make_mock_gpu_device(name: str, vendor: str, mem_size: int, compute_units: int,
+                         device_type_val: int = _CL_DEVICE_TYPE_GPU) -> Mock:
+    """
+    创建正确配置的 Mock GPU 设备。
+
+    src/gpu/device.py 的 detect_devices() 通过 device.get_info(cl.device_info.XXX)
+    读取设备属性，因此必须为 Mock 配置 get_info() 方法。
+    同时直接属性 global_mem_size / max_compute_units 也需要设置。
+    """
+    device = MagicMock()
+    device.global_mem_size = mem_size
+    device.max_compute_units = compute_units
+    device.max_work_group_size = 256  # 避免格式化字符串时返回 MagicMock
+    device.local_mem_size = 32768     # 32KB 默认局部内存
+
+    # get_info 映射表：使用实际 cl.device_info 的整数常量值
+    _info_map = {
+        _CL_DEVICE_TYPE:   device_type_val,
+        _CL_DEVICE_NAME:   name,
+        _CL_DEVICE_VENDOR: vendor,
+    }
+
+    def _get_info(key):
+        # 兼容枚举值或整数值
+        k = int(key) if hasattr(key, '__int__') else key
+        return _info_map.get(k, None)
+
+    device.get_info.side_effect = _get_info
+    # 保留 .name .vendor .type 属性以兼容部分直接访问
+    device.name = name
+    device.vendor = vendor
+    device.type = device_type_val
+    return device
+
+
+def make_mock_platform(name: str = "Mock Platform") -> Mock:
+    """创建正确配置的 Mock Platform，支持 get_info() 调用。"""
+    platform = MagicMock()
+    platform.name = name
+
+    def _get_info(key):
+        k = int(key) if hasattr(key, '__int__') else key
+        if k == _CL_PLATFORM_NAME:
+            return name
+        return None
+
+    platform.get_info.side_effect = _get_info
+    return platform
+
+
 class TestGPUDeviceDetection(unittest.TestCase):
     """测试1: GPU设备检测功能"""
     
@@ -71,14 +130,14 @@ class TestGPUDeviceDetection(unittest.TestCase):
         print("\n📋 测试1.1: 检测单个GPU设备")
         
         # Mock单个GPU设备
-        mock_device = Mock()
-        mock_device.type = 0x4  # GPU类型
-        mock_device.name = "NVIDIA GeForce RTX 3080"
-        mock_device.vendor = "NVIDIA Corporation"
-        mock_device.global_mem_size = 8589934592
-        mock_device.max_compute_units = 68
+        mock_device = make_mock_gpu_device(
+            name="NVIDIA GeForce RTX 3080",
+            vendor="NVIDIA Corporation",
+            mem_size=8589934592,
+            compute_units=68,
+        )
         
-        mock_platform = Mock()
+        mock_platform = make_mock_platform("Mock Platform")
         mock_platform.get_devices = Mock(return_value=[mock_device])
         
         with patch('src.gpu.device.cl.get_platforms', return_value=[mock_platform]):
@@ -94,31 +153,21 @@ class TestGPUDeviceDetection(unittest.TestCase):
         """测试1.2: 检测多个GPU设备(不同厂商)"""
         print("\n📋 测试1.2: 检测多个GPU设备")
         
-        # Mock 3个不同厂商的GPU
-        def create_mock_device(name, vendor, mem_size, compute_units):
-            device = Mock()
-            device.type = 0x4  # GPU类型
-            device.name = name
-            device.vendor = vendor
-            device.global_mem_size = mem_size
-            device.max_compute_units = compute_units
-            return device
-        
-        nvidia_gpu = create_mock_device(
+        nvidia_gpu = make_mock_gpu_device(
             "NVIDIA GeForce RTX 3080", 
             "NVIDIA Corporation", 
             10737418240,  # 10GB
             68
         )
         
-        amd_gpu = create_mock_device(
+        amd_gpu = make_mock_gpu_device(
             "AMD Radeon RX 6800 XT",
             "Advanced Micro Devices, Inc.",
             17179869184,  # 16GB
             72
         )
         
-        intel_gpu = create_mock_device(
+        intel_gpu = make_mock_gpu_device(
             "Intel(R) Arc(TM) A770 Graphics",
             "Intel Corporation",
             17179869184,  # 16GB
@@ -126,10 +175,10 @@ class TestGPUDeviceDetection(unittest.TestCase):
         )
         
         # 模拟两个平台
-        platform1 = Mock()
+        platform1 = make_mock_platform("Platform 1")
         platform1.get_devices = Mock(return_value=[nvidia_gpu])
         
-        platform2 = Mock()
+        platform2 = make_mock_platform("Platform 2")
         platform2.get_devices = Mock(return_value=[amd_gpu, intel_gpu])
         
         with patch('src.gpu.device.cl.get_platforms', return_value=[platform1, platform2]):
@@ -151,21 +200,22 @@ class TestGPUDeviceDetection(unittest.TestCase):
         """测试1.3: 过滤CPU设备"""
         print("\n📋 测试1.3: 过滤CPU设备")
         
-        cpu_device = Mock()
-        cpu_device.type = 0x2  # CPU类型
-        cpu_device.name = "Intel(R) Core(TM) i7-10700K"
-        cpu_device.vendor = "Intel(R) Corporation"
-        cpu_device.global_mem_size = 34359738368
-        cpu_device.max_compute_units = 16
+        cpu_device = make_mock_gpu_device(
+            name="Intel(R) Core(TM) i7-10700K",
+            vendor="Intel(R) Corporation",
+            mem_size=34359738368,
+            compute_units=16,
+            device_type_val=_CL_DEVICE_TYPE_CPU,  # CPU类型
+        )
         
-        gpu_device = Mock()
-        gpu_device.type = 0x4  # GPU类型
-        gpu_device.name = "NVIDIA GeForce GTX 1660"
-        gpu_device.vendor = "NVIDIA Corporation"
-        gpu_device.global_mem_size = 6442450944
-        gpu_device.max_compute_units = 22
+        gpu_device = make_mock_gpu_device(
+            name="NVIDIA GeForce GTX 1660",
+            vendor="NVIDIA Corporation",
+            mem_size=6442450944,
+            compute_units=22,
+        )
         
-        platform = Mock()
+        platform = make_mock_platform("Mock Platform")
         platform.get_devices = Mock(return_value=[cpu_device, gpu_device])
         
         with patch('src.gpu.device.cl.get_platforms', return_value=[platform]):
@@ -180,21 +230,21 @@ class TestGPUDeviceDetection(unittest.TestCase):
         """测试1.4: 过滤Intel核显"""
         print("\n📋 测试1.4: 过滤Intel核显")
         
-        integrated_gpu = Mock()
-        integrated_gpu.type = 0x4  # GPU类型
-        integrated_gpu.name = "Intel(R) UHD Graphics 630"
-        integrated_gpu.vendor = "Intel Corporation"
-        integrated_gpu.global_mem_size = 8589934592
-        integrated_gpu.max_compute_units = 24
+        integrated_gpu = make_mock_gpu_device(
+            name="Intel(R) UHD Graphics 630",
+            vendor="Intel Corporation",
+            mem_size=8589934592,
+            compute_units=24,
+        )
         
-        discrete_gpu = Mock()
-        discrete_gpu.type = 0x4  # GPU类型
-        discrete_gpu.name = "Intel(R) Arc(TM) A770 Graphics"
-        discrete_gpu.vendor = "Intel Corporation"
-        discrete_gpu.global_mem_size = 17179869184
-        discrete_gpu.max_compute_units = 512
+        discrete_gpu = make_mock_gpu_device(
+            name="Intel(R) Arc(TM) A770 Graphics",
+            vendor="Intel Corporation",
+            mem_size=17179869184,
+            compute_units=512,
+        )
         
-        platform = Mock()
+        platform = make_mock_platform("Mock Platform")
         platform.get_devices = Mock(return_value=[integrated_gpu, discrete_gpu])
         
         with patch('src.gpu.device.cl.get_platforms', return_value=[platform]):
@@ -209,14 +259,14 @@ class TestGPUDeviceDetection(unittest.TestCase):
         """测试1.5: GPU可用性检测缓存机制"""
         print("\n📋 测试1.5: GPU可用性缓存机制")
         
-        mock_device = Mock()
-        mock_device.type = 0x4
-        mock_device.name = "Test GPU"
-        mock_device.vendor = "Test Vendor"
-        mock_device.global_mem_size = 8589934592
-        mock_device.max_compute_units = 68
+        mock_device = make_mock_gpu_device(
+            name="Test GPU",
+            vendor="Test Vendor",
+            mem_size=8589934592,
+            compute_units=68,
+        )
         
-        platform = Mock()
+        platform = make_mock_platform("Mock Platform")
         platform.get_devices = Mock(return_value=[mock_device])
         
         call_count = 0
@@ -499,23 +549,13 @@ class TestGPUSwitching(unittest.TestCase):
         """测试4.1: 在不同GPU间切换"""
         print("\n📋 测试4.1: GPU切换功能")
         
-        # Mock两个GPU设备
-        def create_mock_device(name, vendor, mem_size, compute_units):
-            device = Mock()
-            device.type = 0x4
-            device.name = name
-            device.vendor = vendor
-            device.global_mem_size = mem_size
-            device.max_compute_units = compute_units
-            return device
-        
-        gpu0 = create_mock_device("NVIDIA RTX 3080", "NVIDIA", 10737418240, 68)
-        gpu1 = create_mock_device("AMD RX 6800 XT", "AMD", 17179869184, 72)
+        gpu0 = make_mock_gpu_device("NVIDIA RTX 3080", "NVIDIA", 10737418240, 68)
+        gpu1 = make_mock_gpu_device("AMD RX 6800 XT", "AMD", 17179869184, 72)
         
         mock_context = Mock()
         mock_queue = Mock()
         
-        platform = Mock()
+        platform = make_mock_platform("Mock Platform")
         platform.get_devices = Mock(return_value=[gpu0, gpu1])
         
         with patch('src.gpu.device.cl.get_platforms', return_value=[platform]):
@@ -543,25 +583,16 @@ class TestGPUSwitching(unittest.TestCase):
     def test_02_auto_select_fallback(self):
         """测试4.2: 自动选择最佳GPU"""
         print("\n📋 测试4.2: 自动选择GPU(-1索引)")
-            
-        def create_mock_device(name, vendor, mem_size, compute_units):
-            device = Mock()
-            device.type = 0x4
-            device.name = name
-            device.vendor = vendor
-            device.global_mem_size = mem_size
-            device.max_compute_units = compute_units
-            return device
-            
-        # 创廻3个GPU,AMD显存最大应该被选中
-        gpu0 = create_mock_device("NVIDIA GTX 1660", "NVIDIA", 6442450944, 22)
-        gpu1 = create_mock_device("AMD RX 6800 XT", "AMD", 17179869184, 72)
-        gpu2 = create_mock_device("Intel Arc A750", "Intel", 8589934592, 512)
-            
+                
+        # 创建3个GPU，AMD显存最大应该被选中
+        gpu0 = make_mock_gpu_device("NVIDIA GTX 1660", "NVIDIA", 6442450944, 22)
+        gpu1 = make_mock_gpu_device("AMD RX 6800 XT", "AMD", 17179869184, 72)
+        gpu2 = make_mock_gpu_device("Intel Arc A750", "Intel", 8589934592, 512)
+                
         mock_context = Mock()
         mock_queue = Mock()
-            
-        platform = Mock()
+                
+        platform = make_mock_platform("Mock Platform")
         platform.get_devices = Mock(return_value=[gpu0, gpu1, gpu2])
             
         with patch('src.gpu.device.cl.get_platforms', return_value=[platform]):
@@ -582,14 +613,14 @@ class TestGPUSwitching(unittest.TestCase):
         """测试4.3: 无效设备索引处理"""
         print("\n📋 测试4.3: 无效设备索引处理")
         
-        mock_device = Mock()
-        mock_device.type = 0x4
-        mock_device.name = "Test GPU"
-        mock_device.vendor = "Test"
-        mock_device.global_mem_size = 8589934592
-        mock_device.max_compute_units = 68
+        mock_device = make_mock_gpu_device(
+            name="Test GPU",
+            vendor="Test",
+            mem_size=8589934592,
+            compute_units=68,
+        )
         
-        platform = Mock()
+        platform = make_mock_platform("Mock Platform")
         platform.get_devices = Mock(return_value=[mock_device])
         
         with patch('src.gpu.device.cl.get_platforms', return_value=[platform]):
@@ -692,18 +723,18 @@ class TestGPURunningStability(unittest.TestCase):
         """测试6.1: 多次初始化/清理稳定性"""
         print("\n📋 测试6.1: 多次初始化/清理循环")
         
-        mock_device = Mock()
-        mock_device.type = 0x4
-        mock_device.name = "Test GPU"
-        mock_device.vendor = "Test"
-        mock_device.global_mem_size = 8589934592
-        mock_device.max_compute_units = 68
+        mock_device = make_mock_gpu_device(
+            name="Test GPU",
+            vendor="Test",
+            mem_size=8589934592,
+            compute_units=68,
+        )
         
         mock_context = Mock()
         mock_queue = Mock()
         mock_queue.finish = Mock()
         
-        platform = Mock()
+        platform = make_mock_platform("Mock Platform")
         platform.get_devices = Mock(return_value=[mock_device])
         
         with patch('src.gpu.device.cl.get_platforms', return_value=[platform]):
@@ -727,12 +758,12 @@ class TestGPURunningStability(unittest.TestCase):
         """测试6.2: 资源清理完整性"""
         print("\n📋 测试6.2: 资源清理完整性")
         
-        mock_device = Mock()
-        mock_device.type = 0x4
-        mock_device.name = "Test GPU"
-        mock_device.vendor = "Test"
-        mock_device.global_mem_size = 8589934592
-        mock_device.max_compute_units = 68
+        mock_device = make_mock_gpu_device(
+            name="Test GPU",
+            vendor="Test",
+            mem_size=8589934592,
+            compute_units=68,
+        )
         
         mock_context = Mock()
         mock_queue = Mock()
@@ -742,7 +773,7 @@ class TestGPURunningStability(unittest.TestCase):
         for q in [mock_queue, mock_compute_queue, mock_transfer_queue]:
             q.finish = Mock()
         
-        platform = Mock()
+        platform = make_mock_platform("Mock Platform")
         platform.get_devices = Mock(return_value=[mock_device])
         
         with patch('src.gpu.device.cl.get_platforms', return_value=[platform]):
@@ -792,22 +823,13 @@ class TestMultiGPUIntegration(unittest.TestCase):
         """测试7.2: 检测并评分所有设备"""
         print("\n📋 测试7.2: 检测并评分所有设备")
         
-        def create_mock_device(name, vendor, mem_size, compute_units):
-            device = Mock()
-            device.type = 0x4
-            device.name = name
-            device.vendor = vendor
-            device.global_mem_size = mem_size
-            device.max_compute_units = compute_units
-            return device
-        
         gpus = [
-            create_mock_device("NVIDIA RTX 3080", "NVIDIA", 10737418240, 68),
-            create_mock_device("AMD RX 6800 XT", "AMD", 17179869184, 72),
-            create_mock_device("Intel Arc A770", "Intel", 17179869184, 512),
+            make_mock_gpu_device("NVIDIA RTX 3080", "NVIDIA", 10737418240, 68),
+            make_mock_gpu_device("AMD RX 6800 XT", "AMD", 17179869184, 72),
+            make_mock_gpu_device("Intel Arc A770", "Intel", 17179869184, 512),
         ]
         
-        platform = Mock()
+        platform = make_mock_platform("Mock Platform")
         platform.get_devices = Mock(return_value=gpus)
         
         with patch('src.gpu.device.cl.get_platforms', return_value=[platform]):

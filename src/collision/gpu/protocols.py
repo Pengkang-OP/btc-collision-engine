@@ -1,0 +1,229 @@
+"""GPU碰撞引擎接口协议定义
+
+定义所有组件的接口协议，遵循依赖倒置原则(DIP)。
+所有实现类都应该实现这些接口。
+
+版本: v1.0
+创建日期: 2026-04-29
+"""
+
+from typing import Protocol, Set, Optional, Callable, Dict, Any, List, Tuple
+from dataclasses import dataclass
+
+
+class IGPUDeviceManager(Protocol):
+    """GPU设备管理器接口"""
+    
+    def select_device(self, device_index: int = -1) -> Any:
+        """选择GPU设备
+        
+        Args:
+            device_index: 设备索引，-1表示自动选择
+            
+        Returns:
+            GPU设备实例
+        """
+        ...
+    
+    def create_context(self, device: Any) -> Any:
+        """创建GPU上下文
+        
+        Args:
+            device: GPU设备实例
+            
+        Returns:
+            GPU上下文实例
+        """
+        ...
+    
+    def release_all(self) -> None:
+        """释放所有GPU资源"""
+        ...
+
+
+class IKernelExecutor(Protocol):
+    """GPU内核执行器接口"""
+    
+    def compile_kernel(self, device: Any, context: Any) -> Any:
+        """编译GPU内核
+        
+        Args:
+            device: GPU设备
+            context: GPU上下文
+            
+        Returns:
+            GPU内核实例
+        """
+        ...
+    
+    def execute_batch(
+        self,
+        kernel: Any,
+        seed: bytes,
+        batch_size: int,
+        stop_event: Any = None
+    ) -> Tuple[List[Dict[str, int]], float]:
+        """执行单个批次
+        
+        Args:
+            kernel: GPU内核
+            seed: 32字节随机种子
+            batch_size: 批次大小
+            stop_event: 停止事件
+            
+        Returns:
+            (匹配结果列表, 执行时间ms)
+        """
+        ...
+
+
+class IAsyncExecutionPipeline(Protocol):
+    """异步执行管道接口"""
+    
+    def initialize(self, kernel: Any, batch_size: int) -> None:
+        """初始化异步管道
+        
+        Args:
+            kernel: GPU内核
+            batch_size: 批次大小
+        """
+        ...
+    
+    def run_batch(
+        self,
+        seed: bytes,
+        batch_size: int
+    ) -> Tuple[List[Dict[str, int]], float]:
+        """运行单个批次
+        
+        Args:
+            seed: 随机种子
+            batch_size: 批次大小
+            
+        Returns:
+            (匹配结果列表, 执行时间ms)
+        """
+        ...
+    
+    def cleanup(self) -> None:
+        """清理异步管道资源"""
+        ...
+
+
+class IMonitoringPipeline(Protocol):
+    """监控管道接口"""
+    
+    def start(self) -> None:
+        """启动所有监控器"""
+        ...
+    
+    def stop(self) -> None:
+        """停止所有监控器"""
+        ...
+    
+    def record_metrics(
+        self,
+        batch_size: int,
+        execution_time_ms: float,
+        **metrics: Any
+    ) -> None:
+        """记录性能指标
+        
+        Args:
+            batch_size: 批次大小
+            execution_time_ms: 执行时间(毫秒)
+            **metrics: 其他指标
+        """
+        ...
+    
+    def flush(self) -> None:
+        """刷写所有缓冲数据"""
+        ...
+
+
+class ICollisionCore(Protocol):
+    """碰撞核心接口"""
+    
+    def start(self, mode: str = 'random', **kwargs) -> None:
+        """启动碰撞
+        
+        Args:
+            mode: 碰撞模式 (random/range/brute_force)
+            **kwargs: 其他参数
+        """
+        ...
+    
+    def stop(self) -> None:
+        """停止碰撞"""
+        ...
+    
+    def on_batch_complete(
+        self,
+        matches: List[Dict[str, int]],
+        batch_size: int
+    ) -> None:
+        """批次完成回调
+        
+        Args:
+            matches: 匹配结果列表
+            batch_size: 批次大小
+        """
+        ...
+    
+    def get_stats(self) -> Dict[str, Any]:
+        """获取碰撞统计
+        
+        Returns:
+            统计信息字典
+        """
+        ...
+
+
+@dataclass
+class GPUExecutionContext:
+    """GPU执行上下文
+    
+    包含GPU执行所需的所有资源和配置。
+    """
+    device: Any = None
+    context: Any = None
+    kernel: Any = None
+    batch_size: int = 1_000_000
+    vendor: str = "unknown"
+    config: Optional[Dict[str, Any]] = None
+
+
+@dataclass
+class CollisionResult:
+    """碰撞结果
+    
+    单次批次执行的完整结果。
+    """
+    matches: List[Dict[str, int]]
+    execution_time_ms: float
+    batch_size: int
+    total_checked: int = 0
+    gpu_errors: int = 0
+
+
+class VendorOptimizationStrategy(Protocol):
+    """厂商优化策略接口"""
+    
+    def apply_optimizations(self, context: GPUExecutionContext) -> Dict[str, Any]:
+        """应用厂商特定优化
+        
+        Args:
+            context: GPU执行上下文
+            
+        Returns:
+            优化后的组件字典
+        """
+        ...
+    
+    def get_monitoring_components(self) -> Dict[str, Any]:
+        """获取厂商特定监控组件
+        
+        Returns:
+            监控组件字典
+        """
+        ...

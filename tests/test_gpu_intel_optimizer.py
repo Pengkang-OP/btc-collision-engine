@@ -30,9 +30,10 @@ from src.gpu.intel_optimizer import IntelGPUOptimizer
 # ---------------------------------------------------------------------------
 
 # 包含正确 uint32 workaround 特征字符串的内核源码片段
+# 注意: v4.0 PRNG改造后，内核使用 __constant const uint *seed 替代 __global const uint *private_keys
 _VALID_KERNEL_SOURCE = """
 __kernel void btc_collision(
-    __global const uint *private_keys,
+    __constant const uint *seed,
     __global uint *match_flags,
     __global const uchar *target_hashes,
     const uint num_keys,
@@ -159,7 +160,7 @@ class TestVerifyUint32Workaround(unittest.TestCase):
 
     def test_contains_partial_match_returns_false(self):
         """仅包含部分特征字符串时应返回 False"""
-        partial_source = "__global const uint private_keys"  # 缺少 *
+        partial_source = "__constant const uint seed"  # 缺少 *
         result = self.optimizer._verify_uint32_workaround(partial_source)
         self.assertFalse(result)
 

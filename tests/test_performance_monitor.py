@@ -184,8 +184,9 @@ class TestEnhancedPerformanceMonitor:
         """测试基本使用"""
         logger = logging.getLogger('test_basic')
         
-        with EnhancedPerformanceMonitor(logger, "test_op", track=False):
-            time.sleep(0.01)  # 10ms
+        with caplog.at_level(logging.INFO, logger='test_basic'):
+            with EnhancedPerformanceMonitor(logger, "test_op", track=False):
+                time.sleep(0.01)  # 10ms
         
         # 检查日志输出
         assert "[Performance] test_op:" in caplog.text

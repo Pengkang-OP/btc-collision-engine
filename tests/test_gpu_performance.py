@@ -63,7 +63,7 @@ class TestPerformanceOptimizer:
         
         assert intel_profile.vendor == GPUVendor.INTEL
         assert intel_profile.use_uint32_workaround is True
-        assert intel_profile.enable_async_execution is False
+        assert intel_profile.enable_async_execution is True
     
     def test_gpu_optimizer_adaptive_adjustment(self):
         """测试自适应调整"""

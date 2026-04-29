@@ -33,56 +33,64 @@ class TestCalculateBatchMemory(unittest.TestCase):
         self.assertGreater(result, 0)
 
     def test_zero_batch_size_returns_targets_bytes_only(self):
-        """batch_size=0 时结果应仅包含目标地址缓冲区字节数"""
+        """batch_size=0 时结果应包含固定开销(seed_buf+precomp) + 目标地址缓冲区字节数"""
         num_targets = 100
         result = GPUMemoryCalculator.calculate_batch_memory(0, num_targets)
-        expected = num_targets * GPUMemoryCalculator.HASH160_SIZE
+        expected = (
+            GPUMemoryCalculator.SEED_BUF_SIZE +
+            GPUMemoryCalculator.PRECOMP_TABLE_SIZE +
+            num_targets * GPUMemoryCalculator.HASH160_SIZE
+        )
         self.assertEqual(result, expected)
 
     def test_zero_targets_no_target_overhead(self):
-        """num_targets=0 时结果不含目标地址缓冲区"""
+        """num_targets=0 时结果不含目标地址缓冲区（PRNG模式：固定seed_buf+precomp+match_flags)"""
         batch_size = 100_000
         result = GPUMemoryCalculator.calculate_batch_memory(batch_size, 0)
-        # 仅有私钥缓冲区 + 匹配标志缓冲区 + 20% overhead，无目标地址
-        key_bytes = batch_size * GPUMemoryCalculator.PRIVATE_KEY_SIZE
+        # PRNG模式: seed_buf(32) + precomp(1984) + match_flags(batch*4) + overhead(match_flags*0.2)
+        seed_bytes = GPUMemoryCalculator.SEED_BUF_SIZE
+        precomp_bytes = GPUMemoryCalculator.PRECOMP_TABLE_SIZE
         flag_bytes = batch_size * GPUMemoryCalculator.MATCH_FLAG_SIZE
-        overhead = int((key_bytes + flag_bytes) * GPUMemoryCalculator.KERNEL_OVERHEAD_RATIO)
-        expected = key_bytes + flag_bytes + overhead
+        overhead = int(flag_bytes * GPUMemoryCalculator.KERNEL_OVERHEAD_RATIO)
+        expected = seed_bytes + precomp_bytes + flag_bytes + overhead
         self.assertEqual(result, expected)
 
-    def test_both_zero_returns_zero(self):
-        """两个参数均为零时应返回 0"""
+    def test_both_zero_returns_fixed_overhead_only(self):
+        """两个参数均为零时应返回固定开销（seed_buf 32B + precomp 1984B = 2016B）"""
         result = GPUMemoryCalculator.calculate_batch_memory(0, 0)
-        self.assertEqual(result, 0)
+        expected = GPUMemoryCalculator.SEED_BUF_SIZE + GPUMemoryCalculator.PRECOMP_TABLE_SIZE
+        self.assertEqual(result, expected)
 
     def test_large_batch_size(self):
         """极大 batch_size（1000 万）应能正常计算不溢出"""
         result = GPUMemoryCalculator.calculate_batch_memory(10_000_000, 100)
         self.assertGreater(result, 0)
-        # 大致估算: 10M * (32+4) * 1.2 ≈ 432,000,000 字节
-        expected_approx = 10_000_000 * 36 * 1.2
-        self.assertAlmostEqual(result, expected_approx, delta=1_000_000)
+        # PRNG模式: seed(32) + precomp(1984) + match_flags(10M*4*1.2) + targets(100*20)
+        # 主要开销: 10M * 4 * 1.2 = 48,000,000 字节
+        expected_approx = 10_000_000 * 4 * 1.2
+        self.assertAlmostEqual(result, expected_approx, delta=100_000)
 
     def test_typical_gpu_run_size(self):
         """验证典型 GPU 运行规模(100万 keys, 320 targets)的计算值合理"""
         result = GPUMemoryCalculator.calculate_batch_memory(1_000_000, 320)
-        # 100万 * 32 = 32,000,000 字节 keys; 100万 * 4 = 4,000,000 字节 flags
-        # 320*20=6400 字节 targets; overhead = 36,000,000 * 0.2 = 7,200,000 字节
-        # 总计约 43,206,400 字节 ÷ 1024² ≈ 41.2 MiB
+        # PRNG模式: seed(32B) + precomp(1984B) + match_flags(1M*4=4MB) + overhead(4MB*0.2=0.8MB) + targets(320*20=6400B)
+        # 总计约 4MB + 0.8MB ≈ 4.8MB
         result_mb = result / GPUMemoryCalculator.BYTES_PER_MB
-        self.assertAlmostEqual(result_mb, 41.2, delta=1.0)
+        self.assertGreater(result_mb, 4.5)
+        self.assertLess(result_mb, 6.0)
 
     def test_memory_formula_components(self):
-        """验证各内存分量公式正确"""
+        """验证各内存分量公式正确（PRNG模式）"""
         batch_size = 1000
         num_targets = 50
         result = GPUMemoryCalculator.calculate_batch_memory(batch_size, num_targets)
 
-        pk_bytes = batch_size * 32      # PRIVATE_KEY_SIZE
+        seed_bytes = GPUMemoryCalculator.SEED_BUF_SIZE   # 32
+        precomp_bytes = GPUMemoryCalculator.PRECOMP_TABLE_SIZE  # 1984
         mf_bytes = batch_size * 4       # MATCH_FLAG_SIZE
         tg_bytes = num_targets * 20     # HASH160_SIZE
-        oh_bytes = int((pk_bytes + mf_bytes) * 0.20)  # KERNEL_OVERHEAD_RATIO
-        expected = pk_bytes + mf_bytes + tg_bytes + oh_bytes
+        oh_bytes = int(mf_bytes * 0.20)  # KERNEL_OVERHEAD_RATIO
+        expected = seed_bytes + precomp_bytes + mf_bytes + tg_bytes + oh_bytes
 
         self.assertEqual(result, expected)
 
@@ -97,10 +105,11 @@ class TestCalculateBatchMemoryMb(unittest.TestCase):
         result = GPUMemoryCalculator.calculate_batch_memory_mb(100_000, 100)
         self.assertIsInstance(result, float)
 
-    def test_zero_inputs_returns_zero(self):
-        """两个参数均为零时应返回 0.0"""
+    def test_zero_inputs_returns_fixed_overhead(self):
+        """两个参数均为零时应返回固定开销（seed_buf + precomp_table）"""
         result = GPUMemoryCalculator.calculate_batch_memory_mb(0, 0)
-        self.assertEqual(result, 0.0)
+        expected = (GPUMemoryCalculator.SEED_BUF_SIZE + GPUMemoryCalculator.PRECOMP_TABLE_SIZE) / GPUMemoryCalculator.BYTES_PER_MB
+        self.assertAlmostEqual(result, expected, places=10)
 
     def test_consistent_with_byte_method(self):
         """MB 结果应与字节结果一致（相差 BYTES_PER_MB 倍）"""
@@ -111,11 +120,11 @@ class TestCalculateBatchMemoryMb(unittest.TestCase):
         self.assertAlmostEqual(mb_result, byte_result / (1024 * 1024), places=10)
 
     def test_one_mb_boundary(self):
-        """验证接近 1MB 的结果精度"""
-        # 约 1MB 的计算场景
+        """验证接近 1MB 的结果精度（targets 缓冲区 1MB)"""
+        # targets_bytes = (1024*1024//20) * 20 ≈ 1MB，加上固定开销(2016B)
         result = GPUMemoryCalculator.calculate_batch_memory_mb(0, 1024 * 1024 // 20)
-        # targets_bytes = (1024*1024//20) * 20 = 1MB
-        self.assertAlmostEqual(result, 1.0, delta=0.01)
+        # 固定开销 2016B 约 0.0019MB，targets ≈ 1.0MB，合计略大于 1MB
+        self.assertAlmostEqual(result, 1.002, delta=0.01)
 
 
 @pytest.mark.unit
@@ -187,10 +196,11 @@ class TestGetMemoryBreakdown(unittest.TestCase):
     """测试 get_memory_breakdown() 方法"""
 
     def test_returns_dict_with_required_keys(self):
-        """应返回包含所有必需键的字典"""
+        """应返回包含所有必需键的字典（PRNG模式新键名）"""
         result = GPUMemoryCalculator.get_memory_breakdown(100_000, 100)
         required_keys = {
-            'private_keys_mb',
+            'seed_buf_mb',
+            'precomp_table_mb',
             'match_flags_mb',
             'targets_mb',
             'overhead_mb',
@@ -208,7 +218,8 @@ class TestGetMemoryBreakdown(unittest.TestCase):
         """total_mb 应等于各分量之和"""
         result = GPUMemoryCalculator.get_memory_breakdown(500_000, 500)
         expected_total = (
-            result['private_keys_mb'] +
+            result['seed_buf_mb'] +
+            result['precomp_table_mb'] +
             result['match_flags_mb'] +
             result['targets_mb'] +
             result['overhead_mb']
@@ -216,10 +227,14 @@ class TestGetMemoryBreakdown(unittest.TestCase):
         self.assertAlmostEqual(result['total_mb'], expected_total, places=10)
 
     def test_zero_inputs_all_zero(self):
-        """两个参数均为零时所有值应为 0.0"""
+        """两个参数均为零时，可变分量为零，固定分量非零"""
         result = GPUMemoryCalculator.get_memory_breakdown(0, 0)
-        for key, val in result.items():
-            self.assertEqual(val, 0.0, f"{key} should be 0.0")
+        bpMB = GPUMemoryCalculator.BYTES_PER_MB
+        self.assertAlmostEqual(result['seed_buf_mb'], GPUMemoryCalculator.SEED_BUF_SIZE / bpMB, places=10)
+        self.assertAlmostEqual(result['precomp_table_mb'], GPUMemoryCalculator.PRECOMP_TABLE_SIZE / bpMB, places=10)
+        self.assertEqual(result['match_flags_mb'], 0.0)
+        self.assertEqual(result['targets_mb'], 0.0)
+        self.assertEqual(result['overhead_mb'], 0.0)
 
     def test_consistent_with_mb_method(self):
         """total_mb 应与 calculate_batch_memory_mb() 结果一致"""
@@ -229,10 +244,10 @@ class TestGetMemoryBreakdown(unittest.TestCase):
         mb_method = GPUMemoryCalculator.calculate_batch_memory_mb(batch_size, num_targets)
         self.assertAlmostEqual(breakdown['total_mb'], mb_method, places=10)
 
-    def test_overhead_is_20_percent_of_keys_and_flags(self):
-        """overhead_mb 应为 (private_keys + match_flags) * 20%"""
+    def test_overhead_is_20_percent_of_match_flags(self):
+        """overhead_mb 应为 match_flags * 20%（PRNG模式不含private_keys）"""
         result = GPUMemoryCalculator.get_memory_breakdown(200_000, 200)
-        expected_overhead = (result['private_keys_mb'] + result['match_flags_mb']) * 0.20
+        expected_overhead = result['match_flags_mb'] * 0.20
         self.assertAlmostEqual(result['overhead_mb'], expected_overhead, places=6)
 
 
@@ -255,14 +270,15 @@ class TestCalculateFromHash160Bytes(unittest.TestCase):
         self.assertAlmostEqual(result_none, result_zero, places=10)
 
     def test_empty_bytes_equals_no_targets(self):
-        """空字节串的结果应等于无目标地址场景"""
+        """空字节串的结果应等于无目标地址场景（PRNG模式）"""
         result_empty = GPUMemoryCalculator.calculate_from_hash160_bytes(50_000, b'')
-        # 手动计算预期值
+        # 手动计算预期值（PRNG模式）
         bpMB = GPUMemoryCalculator.BYTES_PER_MB
-        pk_mb = (50_000 * 32) / bpMB
+        seed_mb = GPUMemoryCalculator.SEED_BUF_SIZE / bpMB
+        precomp_mb = GPUMemoryCalculator.PRECOMP_TABLE_SIZE / bpMB
         mf_mb = (50_000 * 4) / bpMB
-        oh_mb = (pk_mb + mf_mb) * 0.20
-        expected = pk_mb + mf_mb + oh_mb
+        oh_mb = mf_mb * 0.20
+        expected = seed_mb + precomp_mb + mf_mb + oh_mb
         self.assertAlmostEqual(result_empty, expected, places=10)
 
     def test_larger_bytes_gives_larger_result(self):
@@ -274,10 +290,15 @@ class TestCalculateFromHash160Bytes(unittest.TestCase):
         self.assertGreater(result_large, result_small)
 
     def test_zero_keys_with_bytes(self):
-        """num_keys=0 时仅有目标地址内存占用"""
+        """num_keys=0 时有固定开销(seed_buf+precomp) + 目标地址内存占用"""
         hash160_bytes = b'\xff' * 200
         result = GPUMemoryCalculator.calculate_from_hash160_bytes(0, hash160_bytes)
-        expected = len(hash160_bytes) / GPUMemoryCalculator.BYTES_PER_MB
+        bpMB = GPUMemoryCalculator.BYTES_PER_MB
+        expected = (
+            GPUMemoryCalculator.SEED_BUF_SIZE / bpMB +
+            GPUMemoryCalculator.PRECOMP_TABLE_SIZE / bpMB +
+            len(hash160_bytes) / bpMB
+        )
         self.assertAlmostEqual(result, expected, places=10)
 
 

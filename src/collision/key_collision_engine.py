@@ -117,7 +117,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
             - 匹配的私钥以副本形式传递给回调函数
             - 密码学库(cryptography/PyNaCl)确保安全清零
         """
-        self.targets = targets
+        # 标准化目标地址为小写，确保大小写不敏感匹配
+        self.targets = set(addr.lower() for addr in targets)
         
         # v3.2.0: 事件总线初始化
         self.event_bus = event_bus or EventBus()
@@ -364,8 +365,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
             # 生成地址
             address, _, _ = self.generator.generate_address(private_key)
             
-            # 检查匹配
-            if address in self.targets:
+            # 检查匹配（标准化为小写）
+            if address.lower() in self.targets:
                 # 找到匹配时，返回私钥的副本
                 # 注意：调用者需要负责安全处理这个副本
                 return (bytes(private_key), address)
@@ -708,7 +709,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         with self._state_lock:
                             self._live_range_count += 32
                     
-                    if address in self.targets:
+                    if address.lower() in self.targets:
                         try:
                             from ..core.wif import WIF
                             # 将private_key转换为bytes（可能是memoryview）
@@ -1008,8 +1009,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     with self._state_lock:
                         self._live_range_count += 500
                         
-                # 检查匹配
-                if address in self.targets:
+                # 检查匹配（标准化为小写）
+                if address.lower() in self.targets:
                     try:
                         from ..core.wif import WIF
                         # 将private_key转换为bytes（可能是memoryview）
@@ -1246,8 +1247,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
                                     
                     local_count += 1
                                     
-                    # 检查匹配
-                    if address in self.targets:
+                    # 检查匹配（标准化为小写）
+                    if address.lower() in self.targets:
                         try:
                             from ..core.wif import WIF
                             # 将private_key转换为bytes（可能是memoryview）

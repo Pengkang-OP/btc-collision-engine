@@ -18,7 +18,7 @@ import time
 import os
 
 # 添加项目根目录到路径
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.collision.gpu_collision_engine import GPUCollisionEngine
 
@@ -145,7 +145,7 @@ def test_buffer_return_to_pool():
     engine.stop()
     
     if stats:
-        speed = stats.get('gpu_speed', 0)
+        speed = getattr(stats, 'speed', 0) or getattr(stats, 'average_speed', 0)
         print(f"  GPU速度: {speed:,.0f} keys/s")
         if speed > 400000:
             print("  ✅ 性能正常 (>400K keys/s)")
