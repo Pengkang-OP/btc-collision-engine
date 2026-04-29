@@ -17,12 +17,12 @@ from typing import Set, Optional, Dict, Any, List, Callable
 import logging
 import time
 
-from .protocols import ICollisionCore, CollisionResult
+from .protocols import ICollisionCore, CollisionResult, MatchResult
 
 logger = logging.getLogger(__name__)
 
 
-class CollisionCore:
+class CollisionCore(ICollisionCore):
     """碰撞核心逻辑
     
     职责:
@@ -30,6 +30,8 @@ class CollisionCore:
     - 断点续传保存/恢复
     - 去重过滤（Bloom过滤器）
     - 搜索模式协调执行
+    
+    实现接口: ICollisionCore
     
     使用示例:
         >>> core = CollisionCore(targets, config)
@@ -44,7 +46,11 @@ class CollisionCore:
         targets: Set[str],
         config: Optional[Dict[str, Any]] = None,
         on_progress: Optional[Callable] = None,
-        on_match: Optional[Callable] = None
+        on_match: Optional[Callable] = None,
+        # 依赖注入（可选）
+        stats_factory: Optional[Callable] = None,
+        checkpoint_factory: Optional[Callable] = None,
+        dedup_factory: Optional[Callable] = None,
     ):
         """初始化碰撞核心
         
@@ -53,11 +59,19 @@ class CollisionCore:
             config: 配置字典
             on_progress: 进度回调函数
             on_match: 匹配回调函数
+            stats_factory: 统计对象工厂函数 (可选)
+            checkpoint_factory: 断点管理器工厂函数 (可选)
+            dedup_factory: 去重过滤器工厂函数 (可选)
         """
         self.targets = targets
         self.config = config or {}
         self.on_progress = on_progress
         self.on_match = on_match
+        
+        # 依赖注入工厂
+        self._stats_factory = stats_factory
+        self._checkpoint_factory = checkpoint_factory
+        self._dedup_factory = dedup_factory
         
         # 核心组件（延迟初始化）
         self.stats = None
@@ -67,6 +81,7 @@ class CollisionCore:
         
         # 状态
         self._running = False
+        self._paused = False
         self._start_time = 0.0
         self._last_checkpoint_time = 0.0
         
@@ -123,6 +138,7 @@ class CollisionCore:
             return
         
         self._running = False
+        self._paused = False
         
         # 1. 停止搜索协调器
         if self.search_coordinator:
@@ -138,9 +154,37 @@ class CollisionCore:
         
         logger.info("碰撞核心已停止")
     
+    def pause(self) -> None:
+        """暂停碰撞"""
+        if not self._running or self._paused:
+            return
+        
+        self._paused = True
+        logger.info("碰撞核心已暂停")
+        
+        if self.search_coordinator and hasattr(self.search_coordinator, 'pause'):
+            self.search_coordinator.pause()
+    
+    def resume(self) -> None:
+        """恢复碰撞"""
+        if not self._running or not self._paused:
+            return
+        
+        self._paused = False
+        logger.info("碰撞核心已恢复")
+        
+        if self.search_coordinator and hasattr(self.search_coordinator, 'resume'):
+            self.search_coordinator.resume()
+    
+    def reset(self) -> None:
+        """重置统计"""
+        if self.stats and hasattr(self.stats, 'reset'):
+            self.stats.reset()
+            logger.info("碰撞统计已重置")
+    
     def on_batch_complete(
         self,
-        matches: List[Dict[str, int]],
+        matches: List[MatchResult],
         batch_size: int
     ) -> None:
         """批次完成回调
@@ -149,7 +193,7 @@ class CollisionCore:
             matches: 匹配结果列表
             batch_size: 批次大小
         """
-        if not self._running or not self.stats:
+        if not self._running or self._paused or not self.stats:
             return
         
         # 1. 更新统计
@@ -203,7 +247,16 @@ class CollisionCore:
     
     def _init_stats(self):
         """初始化碰撞统计"""
-        # TODO: Phase 4实现 - 从现有CollisionStats适配
+        # 优先使用依赖注入的工厂
+        if self._stats_factory:
+            try:
+                self.stats = self._stats_factory()
+                logger.debug("使用注入的统计工厂初始化")
+                return
+            except Exception as e:
+                logger.warning(f"注入的统计工厂初始化失败: {e}，使用默认")
+        
+        # 默认实现
         try:
             from ..collision.collision_stats import CollisionStats
             self.stats = CollisionStats()
@@ -213,7 +266,16 @@ class CollisionCore:
     
     def _init_checkpoint(self):
         """初始化断点管理器"""
-        # TODO: Phase 4实现 - 从现有CheckpointManager适配
+        # 优先使用依赖注入的工厂
+        if self._checkpoint_factory:
+            try:
+                self.checkpoint = self._checkpoint_factory()
+                logger.debug("使用注入的断点工厂初始化")
+                return
+            except Exception as e:
+                logger.warning(f"注入的断点工厂初始化失败: {e}，使用默认")
+        
+        # 默认实现
         try:
             from ..collision.checkpoint_manager import CheckpointManager
             self.checkpoint = CheckpointManager(
@@ -225,7 +287,16 @@ class CollisionCore:
     
     def _init_dedup_filter(self):
         """初始化去重过滤器"""
-        # TODO: Phase 4实现 - 从现有DeduplicationFilter适配
+        # 优先使用依赖注入的工厂
+        if self._dedup_factory:
+            try:
+                self.dedup_filter = self._dedup_factory()
+                logger.debug("使用注入的去重工厂初始化")
+                return
+            except Exception as e:
+                logger.warning(f"注入的去重工厂初始化失败: {e}，使用默认")
+        
+        # 默认实现
         try:
             dedup_max_size = self.config.get('dedup_max_size', 1_000_000)
             from ..collision.deduplication_filter import DeduplicationFilter
