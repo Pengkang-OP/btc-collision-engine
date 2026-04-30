@@ -22,10 +22,10 @@ class TestWorkStealingThreadPool:
         assert len(pool._queues) == 4
     
     def test_default_thread_count(self):
-        """测试默认线程数"""
+        """测试默认线程数 (P3-8: 不再-1, 直接使用CPU核心数)"""
         import os
         pool = WorkStealingThreadPool()
-        expected = max(1, os.cpu_count() - 1)
+        expected = os.cpu_count() or 4
         assert pool.num_threads == expected
     
     def test_submit_and_execute(self):

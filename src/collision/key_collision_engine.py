@@ -21,6 +21,8 @@ from ..utils.logger import get_sampled_logger, PerformanceMonitor
 from ..utils.exception_handler import ExceptionHandler
 from ..monitoring.data_logger import DataLogger
 from ..monitoring.enhanced_monitoring import EnhancedMonitoringSystem
+# P3-8: 线程池配置校验
+from ..core.thread_pool import _validate_worker_count
 
 # v3.2.0: 事件系统支持
 from .event_bus import EventBus, get_event_bus
@@ -171,8 +173,15 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self.checkpoint_mgr = CheckpointManager(auto_save_interval=checkpoint_interval) if checkpoint_enabled else None
         # 去重过滤器
         self.dedup_filter = DeduplicationFilter(max_size=dedup_max_size, enabled=dedup_enabled)
-        # 线程池
-        self.max_workers = max_workers
+        # 线程池配置
+        # P3-8: 校验并记录最终使用的 max_workers
+        self._cpu_count = os.cpu_count() or 4
+        self.max_workers = _validate_worker_count(max_workers) if max_workers is not None else None
+        if self.max_workers is not None:
+            logger.info(
+                f"KeyCollisionEngine 使用自定义线程数: max_workers={self.max_workers}, "
+                f"CPU核心数={self._cpu_count}"
+            )
         self._executor: Optional[concurrent.futures.ThreadPoolExecutor] = None
         # 当前位置（用于断点保存）
         self._current_position = 0
@@ -197,7 +206,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
         # P3-9修复: 支持自动调整batch_size
         self._batch_size = BATCH_SIZE  # 每批处理的私鑰数量
         self._auto_tune_batch_size = True  # P3-9修复: 是否自动调整batch_size
-        self._cpu_count = os.cpu_count() or 4  # P3-9修复: CPU核心数
         self._tune_batch_size()  # P3-9修复: 根据CPU核心数调整batch_size
         self._progress_interval_sec = PROGRESS_INTERVAL_SEC  # 进度回调最小间隔（秒）
         self._progress_interval_count = 1000  # P2-5修复: 进度回调计数控制(每N个batch)
@@ -509,10 +517,10 @@ class KeyCollisionEngine(BaseCollisionEngine):
             new_batch = max(old_batch // 2, 256)
             self._batch_size = new_batch
             
-            # 同时更新 max_workers 配置（影响下次启动，当前线程池不受影响）
+            # P3-8: 同时更新 max_workers 配置（边界校验，影响下次启动）
             if self.max_workers and self.max_workers > 1:
                 old_workers = self.max_workers
-                self.max_workers = max(self.max_workers // 2, 1)
+                self.max_workers = _validate_worker_count(max(self.max_workers // 2, 1))
                 logger.warning(
                     f"[M13 内存降级] 内存使用 {memory_mb:.0f}MB 达临界阈値 "
                     f"{self._memory_critical_threshold_mb}MB，"
@@ -876,8 +884,15 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 self.data_logger.record_system_data()
         
         # 确定工作线程数
-        num_workers = self.max_workers or (os.cpu_count() or 4)
-        logger.info(f"工作线程数: {num_workers}")
+        # P3-8: 使用配置值或CPU核心数（上限1024，下限1）
+        num_workers = _validate_worker_count(self.max_workers) if self.max_workers is not None else self._cpu_count
+        # P3-8: 内存降级时进一步减少线程
+        available_memory_mb = psutil.virtual_memory().available / (1024 * 1024)
+        if available_memory_mb < 512:
+            # 可用内存 < 512MB：限制线程数不超过2
+            num_workers = min(num_workers, 2)
+            logger.warning(f"可用内存不足 ({available_memory_mb:.0f}MB)，限制线程数为 {num_workers}")
+        logger.info(f"工作线程数: {num_workers} (CPU核心: {self._cpu_count}, 可用内存: {available_memory_mb:.0f}MB)")
         
         # 创建线程池
         with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
