@@ -330,7 +330,7 @@ class GPUDeviceSelector:
         vendor = identify_vendor(device_name, vendor_str)
         
         # 识别GPU型号 (用于世代加分)
-        gpu_model = self._scorer._identify_model(device_name, vendor)
+        gpu_model = self._scorer.identify_model(device_name, vendor)
         
         # 显存(字节转GB)
         global_mem_bytes = raw_device.get('global_mem_bytes', 0)

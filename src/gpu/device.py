@@ -371,6 +371,7 @@ class GPUDeviceDetector:
             score_info = {
                 'name': device_name,
                 'vendor': vendor,
+                'model': scorer.identify_model(device_name, vendor),
                 'global_mem_gb': dev.get('global_mem_size', 0) / (1024**3),
                 'max_compute_units': dev.get('max_compute_units', 0),
             }
