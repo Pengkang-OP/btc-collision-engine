@@ -5,6 +5,7 @@
 
 import os
 import json
+from src.utils.fast_json import fast_load, fast_dump
 import logging
 from ..utils import init_logging, get_configured_logger
 from typing import Dict, Any, Optional
@@ -54,7 +55,7 @@ class GPUConfig:
             return
         try:
             with open(self.config_file, 'r', encoding='utf-8') as f:
-                user_config = json.load(f)
+                user_config = fast_load(f)
             
             # 只加载gpu相关配置
             if 'gpu' in user_config:
@@ -170,7 +171,7 @@ class GPUConfig:
         
         return device
     
-    def create_gpu_engine(self, targets) -> Any:
+    def create_gpu_engine(self, targets: Any) -> Any:
         """
         创建GPU碰撞引擎
         
@@ -213,14 +214,14 @@ class GPUConfig:
             existing_config = {}
             if os.path.exists(self.config_file):
                 with open(self.config_file, 'r', encoding='utf-8') as f:
-                    existing_config = json.load(f)
+                    existing_config = fast_load(f)
             
             # 更新GPU配置
             existing_config['gpu'] = self.config
             
             # 保存
             with open(self.config_file, 'w', encoding='utf-8') as f:
-                json.dump(existing_config, f, indent=2, ensure_ascii=False)
+                fast_dump(existing_config, f, indent=2, ensure_ascii=False)
             
             logger.info("GPU配置已保存")
             return True

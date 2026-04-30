@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 import json
-
+from src.utils.fast_json import fast_dump, fast_load
 logger = logging.getLogger(__name__)
 
 # 告警系统常量
@@ -120,7 +120,7 @@ class AlertSystem:
         # #11修复: 增强的速率限制
         self._global_rate_limit_max = 10  # 每分钟最多10条告警
         self._global_rate_limit_window = 60  # 时间窗口60秒
-        self._recent_alerts = []  # 最近的告警时间戳列表
+        self._recent_alerts: List[float] = []  # 最近的告警时间戳列表
         self._rate_limit_exceeded_count = 0  # 速率限制触发次数
         
         # 告警日志文件
@@ -177,7 +177,7 @@ class AlertSystem:
         def check_performance_degradation(metrics: Dict) -> bool:
             if 'degradation_rate' not in metrics:
                 return False
-            return metrics['degradation_rate'] > 20.0
+            return metrics['degradation_rate'] > 20.0  # type: ignore[no-any-return]
         
         self.add_rule(AlertRule(
             name="性能退化警告",
@@ -192,7 +192,7 @@ class AlertSystem:
         def check_memory_usage(metrics: Dict) -> bool:
             if 'memory_usage_percent' not in metrics:
                 return False
-            return metrics['memory_usage_percent'] > 80.0
+            return metrics['memory_usage_percent'] > 80.0  # type: ignore[no-any-return]
         
         self.add_rule(AlertRule(
             name="内存使用过高",
@@ -207,7 +207,7 @@ class AlertSystem:
         def check_gpu_temperature(metrics: Dict) -> bool:
             if 'gpu_temperature' not in metrics:
                 return False
-            return metrics['gpu_temperature'] > 85.0
+            return metrics['gpu_temperature'] > 85.0  # type: ignore[no-any-return]
         
         self.add_rule(AlertRule(
             name="GPU温度过高",
@@ -222,7 +222,7 @@ class AlertSystem:
         def check_error_rate(metrics: Dict) -> bool:
             if 'error_rate' not in metrics:
                 return False
-            return metrics['error_rate'] > 0.05
+            return metrics['error_rate'] > 0.05  # type: ignore[no-any-return]
         
         self.add_rule(AlertRule(
             name="错误率过高",
@@ -240,7 +240,7 @@ class AlertSystem:
             if metrics['baseline_throughput'] == 0:
                 return False
             drop_rate = (metrics['baseline_throughput'] - metrics['throughput']) / metrics['baseline_throughput']
-            return drop_rate > 0.5
+            return drop_rate > 0.5  # type: ignore[no-any-return]
         
         self.add_rule(AlertRule(
             name="吞吐量严重下降",
@@ -269,7 +269,7 @@ class AlertSystem:
         Returns:
             触发的告警记录列表
         """
-        triggered_alerts = []
+        triggered_alerts: List[AlertRecord] = []
         current_time = time.time()
         
         # #11修复: 检查全局速率限制
@@ -425,7 +425,7 @@ class AlertSystem:
         Returns:
             统计信息字典
         """
-        stats = {
+        stats: Dict[str, Any] = {
             'total_alerts': len(self.alert_history),
             'active_alerts': len(self.get_active_alerts()),
             'resolved_alerts': sum(1 for a in self.alert_history if a.resolved),
@@ -479,7 +479,7 @@ class AlertSystem:
                 })
             
             with open(self.alert_log_file, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
+                fast_dump(data, f, indent=2, ensure_ascii=False)
                 
         except Exception as e:
             logger.error(f"保存告警历史失败: {e}")
@@ -491,7 +491,7 @@ class AlertSystem:
         
         try:
             with open(self.alert_log_file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
+                data = fast_load(f)
             
             for item in data:
                 alert = AlertRecord(

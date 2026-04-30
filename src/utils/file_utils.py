@@ -6,6 +6,7 @@
 
 import os
 import json
+from src.utils.fast_json import fast_dump, fast_load
 import tempfile
 import logging
 from typing import Any, Optional
@@ -54,7 +55,7 @@ def atomic_json_write(filepath: str, data: Any, ensure_ascii: bool = False,
         
         # 写入数据
         with os.fdopen(temp_fd, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=ensure_ascii, indent=indent)
+            fast_dump(data, f, ensure_ascii=ensure_ascii, indent=indent)
             if fsync:
                 f.flush()
                 os.fsync(f.fileno())  # 确保数据写入磁盘
@@ -111,7 +112,7 @@ def atomic_json_read(filepath: str, default: Any = None,
             return default
         
         with open(filepath, 'r', encoding='utf-8') as f:
-            data = json.load(f)
+            data = fast_load(f)
         
         # 验证数据
         if validate_func and not validate_func(data):
@@ -153,7 +154,7 @@ def _recover_from_backup(filepath: str, default: Any) -> Any:
         try:
             logger.info(f"尝试从临时文件恢复: {temp_file}")
             with open(temp_file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
+                data = fast_load(f)
             
             # 恢复成功，替换原文件
             os.replace(temp_file, filepath)
@@ -173,7 +174,7 @@ def _recover_from_backup(filepath: str, default: Any) -> Any:
         try:
             logger.info(f"尝试从备份文件恢复: {backup_file}")
             with open(backup_file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
+                data = fast_load(f)
             logger.info(f"从备份文件恢复成功: {filepath}")
             return data
         except Exception as e:
