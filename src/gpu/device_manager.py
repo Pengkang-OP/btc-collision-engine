@@ -290,7 +290,7 @@ class GPUDeviceManager:
 
             # 创建GPUKernel
             self._gpu_kernel = GPUKernel(
-                self._gpu_device,
+                self._gpu_device,  # type: ignore[arg-type]
                 max_batch_size=batch_size,
                 program=self._gpu_context.program,  # type: ignore[union-attr]
             )
@@ -446,7 +446,7 @@ class GPUDeviceManager:
     @property
     def device(self) -> GPUDevice:
         """获取GPU设备实例"""
-        return self._gpu_device
+        return self._gpu_device  # type: ignore[return-value]
 
     @property
     def context(self) -> GPUContext:

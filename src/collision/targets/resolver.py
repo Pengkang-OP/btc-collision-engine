@@ -560,7 +560,7 @@ class TargetResolver:
         if to_resolve:
             logger.debug(f"需要解析的地址数: {len(to_resolve)}")
             for inp in to_resolve:
-                results[inp] = self.resolve(inp)
+                results[inp] = self.resolve(inp)  # type: ignore[assignment]
 
         success_count = sum(1 for v in results.values() if v is not None)
         cache_hits = len(results) - len(to_resolve)
@@ -569,7 +569,7 @@ class TargetResolver:
             f"失败={len(inputs)-success_count}, 缓存命中={cache_hits}"
         )
 
-        return results
+        return results  # type: ignore[return-value]
 
     def load_from_file(self, filepath: str) -> Set[str]:
         """

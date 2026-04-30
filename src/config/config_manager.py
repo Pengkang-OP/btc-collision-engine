@@ -462,7 +462,7 @@ class ConfigManager:
 
             self._watcher = ConfigWatcher(
                 config_path=self.config_file,
-                on_reload=self.reload_config,
+                on_reload=self.reload_config,  # type: ignore[arg-type]
                 debounce_seconds=debounce_seconds,
                 poll_interval=poll_interval,
             )
@@ -523,7 +523,7 @@ class ConfigManager:
             value = self.config
             for k in keys:
                 if isinstance(value, dict) and k in value:
-                    value = value[k]
+                    value = value[k]  # type: ignore[assignment]
                 else:
                     return default
 
@@ -548,7 +548,7 @@ class ConfigManager:
             for i, k in enumerate(keys[:-1]):
                 if k not in config or not isinstance(config[k], dict):
                     config[k] = {}
-                config = config[k]
+                config = config[k]  # type: ignore[assignment]
 
             config[keys[-1]] = value
         return True
