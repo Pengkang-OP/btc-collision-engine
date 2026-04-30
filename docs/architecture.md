@@ -1,6 +1,6 @@
 # BTC碰撞引擎架构文档
 
-> **版本**: v3.4.0 | **最后更新**: 2026-04-30  
+> **版本**: v3.5.0 | **最后更新**: 2026-05-01
 > **面向**: 开发者/架构师
 
 ## 目录
@@ -223,7 +223,7 @@ graph TD
     B --> D["ECPoint<br/>曲线点类"]
     C --> E["Base58<br/>Base58编码"]
     E --> F["WIF<br/>私钥格式"]
-    
+
     style A fill:#e1f5ff
     style B fill:#fff3e0
     style C fill:#fff3e0
@@ -251,7 +251,7 @@ graph TD
     A --> F["P2PKHAddressGenerator<br/>地址生成器"]
     A --> G["SecureKeyManager<br/>安全密钥管理器"]
     A --> H["DataLogger<br/>数据日志"]
-    
+
     style A fill:#e1f5ff
     style B fill:#e8f5e9
     style C fill:#fff3e0
@@ -382,12 +382,12 @@ graph TD
     A --> C["OpenSSLBackend<br/>cryptography库"]
     A --> D["CoincurveBackend<br/>libsecp256k1"]
     A --> E["ECDSABackend<br/>ecdsa库"]
-    
+
     F["CryptoBackendManager<br/>后端管理器"] --> B
     F --> C
     F --> D
     F --> E
-    
+
     style A fill:#e1f5ff
     style F fill:#fff3e0
     style B fill:#e8f5e9
@@ -561,22 +561,22 @@ flowchart LR
     B -->|random| C[random_search]
     B -->|range| D[range_scan]
     B -->|brute_force| E[brute_force]
-    
+
     C --> F[ThreadPoolExecutor]
     D --> F
     E --> F
-    
+
     F --> G[Worker线程]
     G --> H[SecureKeyManager<br/>生成私钥]
     H --> I[P2PKHAddressGenerator<br/>生成地址]
     I --> J{匹配目标?}
-    
+
     J -->|是| K[on_match回调]
     J -->|否| L[私钥清零]
-    
+
     K --> M[更新统计]
     L --> M
-    
+
     M --> N{停止信号?}
     N -->|否| G
     N -->|是| O[保存断点]
@@ -617,22 +617,22 @@ graph TD
     A --> D["AnomalyDetector<br/>异常检测器"]
     A --> E["AlertSystem<br/>告警系统"]
     A --> F["ReportGenerator<br/>报告生成器"]
-    
+
     B --> G["collect_performance<br/>性能数据"]
     B --> H["collect_system<br/>系统数据"]
     B --> I["collect_engine<br/>引擎数据"]
-    
+
     C --> J["current_data.json"]
     C --> K["history_data.json<br/>最多1000条"]
     C --> L["error_log.json<br/>最多500条"]
-    
+
     D --> M["detect_anomalies<br/>异常检测"]
     D --> N["analyze_trends<br/>趋势分析"]
-    
+
     E --> O["generate_alert<br/>生成告警"]
-    
+
     F --> P["generate_daily_report<br/>每日报告"]
-    
+
     style A fill:#e1f5ff
     style B fill:#e8f5e9
     style C fill:#fff3e0
@@ -746,13 +746,13 @@ graph TB
         CLI["key_collision_cli.py<br/>命令行界面"]
         GUI["key_collision_gui.py<br/>图形界面 Tkinter"]
     end
-    
+
     subgraph Engine["⚙️ 碰撞引擎层"]
         CPUEngine["KeyCollisionEngine<br/>CPU碰撞引擎"]
         GPUEngine["GPUCollisionEngine<br/>GPU碰撞引擎"]
         ThreadPool["ThreadPoolExecutor<br/>线程池"]
     end
-    
+
     subgraph Crypto["🔐 加密算法层"]
         CryptoMgr["CryptoBackendManager<br/>后端管理器"]
         PurePython["PurePythonBackend<br/>纯Python"]
@@ -761,7 +761,7 @@ graph TB
         ECDSA["ECDSABackend<br/>ecdsa库"]
         SecureKey["SecureKeyManager<br/>私钥清零"]
     end
-    
+
     subgraph Core["🧮 核心密码学层"]
         Secp256k1["secp256k1.py<br/>椭圆曲线"]
         HashUtils["hash_utils.py<br/>SHA-256/RIPEMD-160"]
@@ -769,14 +769,14 @@ graph TB
         WIF["wif.py<br/>WIF格式"]
         AddrGen["address_generator.py<br/>地址生成器"]
     end
-    
+
     subgraph Monitor["📊 监控与日志层"]
         MonSys["MonitoringSystem<br/>主监控系统"]
         DataLogger["DataLogger<br/>数据日志"]
         GPUMonitor["GPUMonitor<br/>GPU监控"]
         Anomaly["AnomalyDetector<br/>异常检测"]
     end
-    
+
     subgraph Data["💾 数据存储层"]
         Checkpoint["CheckpointManager<br/>断点管理器"]
         Dedup["DeduplicationFilter<br/>去重过滤器"]
@@ -784,55 +784,55 @@ graph TB
         JSONFiles["JSON文件<br/>data_logs/monitoring_data"]
         LogFiles["日志文件<br/>logs/"]
     end
-    
+
     subgraph GPU["🎮 GPU加速（可选）"]
         PyOpenCL["PyOpenCL>=2023.1.2<br/>OpenCL绑定"]
         OpenCLRuntime["OpenCL Runtime<br/>GPU驱动"]
     end
-    
+
     CLI --> CPUEngine
     GUI --> CPUEngine
     CLI -.可选.-> GPUEngine
     GUI -.可选.-> GPUEngine
-    
+
     CPUEngine --> ThreadPool
     GPUEngine --> PyOpenCL
     PyOpenCL --> OpenCLRuntime
-    
+
     CPUEngine --> CryptoMgr
     GPUEngine --> CryptoMgr
-    
+
     CryptoMgr --> Coincurve
     CryptoMgr --> OpenSSL
     CryptoMgr --> ECDSA
     CryptoMgr --> PurePython
-    
+
     CPUEngine --> SecureKey
     GPUEngine --> SecureKey
-    
+
     CryptoMgr --> Secp256k1
     CryptoMgr --> AddrGen
     AddrGen --> HashUtils
     AddrGen --> Base58
     Base58 --> WIF
-    
+
     CPUEngine --> MonSys
     GPUEngine --> MonSys
     MonSys --> DataLogger
     MonSys --> GPUMonitor
     MonSys --> Anomaly
-    
+
     DataLogger --> JSONFiles
     GPUMonitor --> JSONFiles
-    
+
     CPUEngine --> Checkpoint
     CPUEngine --> Dedup
     CPUEngine --> Stats
     Checkpoint --> JSONFiles
-    
+
     MonSys --> LogFiles
     CPUEngine --> LogFiles
-    
+
     style UI fill:#e1f5ff
     style Engine fill:#fff3e0
     style Crypto fill:#e8f5e9
@@ -882,7 +882,7 @@ flowchart TD
     E --> F["RIPEMD-160<br/>Hash160 20字节"]
     F --> G["添加版本字节0x00<br/>+ 校验和4字节"]
     G --> H["Base58Check编码<br/>以'1'开头的地址"]
-    
+
     style A fill:#e1f5ff
     style B fill:#fff3e0
     style C fill:#e8f5e9
@@ -911,20 +911,20 @@ flowchart TD
 graph LR
     A["目标地址集<br/>Set结构 O(1)查找"] <--> B["碰撞引擎<br/>KeyCollisionEngine"]
     B <--> C["私钥生成器<br/>SecureKeyManager"]
-    
+
     B --> D["CheckpointManager<br/>断点管理器"]
     B --> E["CollisionStats<br/>统计模块"]
     B --> F["DeduplicationFilter<br/>去重过滤器"]
     B --> G["DataLogger<br/>数据日志"]
-    
+
     E --> H["速度统计<br/>speed"]
     E --> I["匹配计数<br/>matches"]
     E --> J["错误统计<br/>errors"]
-    
+
     G --> K["current_data.json"]
     G --> L["history_data.json"]
     G --> M["performance.log"]
-    
+
     style A fill:#e1f5ff
     style B fill:#fff3e0
     style C fill:#e8f5e9
@@ -944,26 +944,26 @@ sequenceDiagram
     participant Stats as CollisionStats
     participant Logger as DataLogger
     participant JSON as JSON文件
-    
+
     Engine->>Stats: 更新统计数据<br/>每批次
     Note over Engine,Stats: total_checked, speed, matches
-    
+
     loop 每5秒
         Engine->>Logger: record_performance_data()
         Note over Engine,Logger: speed, cpu, memory, threads
-        
+
         Engine->>Logger: record_engine_data()
         Note over Engine,Logger: mode, targets, position
-        
+
         Logger->>Logger: 缓存数据
-        
+
         alt 每3次记录
             Logger->>JSON: save_current_data()
             Logger->>JSON: save_history_data()
             Note over Logger,JSON: 降低I/O频率
         end
     end
-    
+
     Engine->>Logger: record_error()
     Note over Engine,Logger: 错误限频：每5秒最多1次
 ```python
@@ -1561,7 +1561,7 @@ graph TD
         CE["Collision Engine"]
         GE["GPU Engine"]
     end
-    
+
     subgraph Monitor["监控系统"]
         MS["MonitoringSystem<br/>主监控器"]
         DC["DataCollector<br/>数据采集器"]
@@ -1570,41 +1570,41 @@ graph TD
         AS["AlertSystem<br/>告警系统"]
         RG["ReportGenerator<br/>报告生成"]
     end
-    
+
     subgraph Logger["数据日志"]
         DL["DataLogger"]
         GM["GPUMonitor"]
     end
-    
+
     subgraph Storage["存储层"]
         Current["current_data.json"]
         History["history_data.json"]
         ErrorLog["error_log.json"]
         PerfLog["performance.log"]
     end
-    
+
     CE --> MS
     GE --> MS
     GE --> GM
-    
+
     MS --> DC
     DC --> DS
     DC --> AD
-    
+
     AD --> AS
     MS --> RG
-    
+
     MS --> DL
     DL --> Current
     DL --> History
     DL --> PerfLog
-    
+
     DS --> Current
     DS --> History
     DS --> ErrorLog
-    
+
     GM --> Current
-    
+
     style Engine fill:#e1f5ff
     style Monitor fill:#fff3e0
     style Logger fill:#e8f5e9
@@ -1620,57 +1620,57 @@ graph LR
     subgraph Main["主监控器"]
         MS["MonitoringSystem"]
     end
-    
+
     subgraph Collector["数据采集"]
         DC["DataCollector"]
         DC1["collect_performance"]
         DC2["collect_system"]
         DC3["collect_engine"]
     end
-    
+
     subgraph Storage["数据存储"]
         DS["DataStorage"]
         DS1["current_data.json"]
         DS2["history_data.json"]
         DS3["error_log.json"]
     end
-    
+
     subgraph Detection["异常检测"]
         AD["AnomalyDetector"]
         AD1["detect_anomalies"]
         AD2["analyze_trends"]
     end
-    
+
     subgraph Alert["告警系统"]
         ALS["AlertSystem"]
         ALS1["generate_alert"]
     end
-    
+
     subgraph Report["报告生成"]
         RG["ReportGenerator"]
         RG1["generate_daily_report"]
     end
-    
+
     MS --> DC
     DC --> DC1
     DC --> DC2
     DC --> DC3
-    
+
     MS --> DS
     DS --> DS1
     DS --> DS2
     DS --> DS3
-    
+
     MS --> AD
     AD --> AD1
     AD --> AD2
-    
+
     AD1 --> ALS
     ALS --> ALS1
-    
+
     MS --> RG
     RG --> RG1
-    
+
     style Main fill:#e1f5ff
     style Collector fill:#e8f5e9
     style Storage fill:#fff3e0
@@ -1864,68 +1864,68 @@ graph TB
         CLI["CLI界面<br/>key_collision_cli.py"]
         GUI["GUI界面<br/>key_collision_gui.py"]
     end
-    
+
     subgraph Engine["⚙️ 碰撞引擎层 Collision Engine"]
         Engine_Main["碰撞引擎<br/>Engine"]
         CPU["CPU引擎<br/>KeyCollisionEngine"]
         GPU["GPU引擎<br/>GPUCollisionEngine"]
     end
-    
+
     subgraph Crypto["🔐 加密算法层 Crypto"]
         Crypto_Backend["加密后端<br/>CryptoBackend"]
         ThreadPool["线程池<br/>ThreadPoolExecutor"]
         OpenCL["OpenCL内核<br/>OpenCL Kernel"]
         GPUDev["GPU设备<br/>GPUDevice"]
     end
-    
+
     subgraph Monitor["📊 监控层 Monitoring"]
         Mon["监控系统<br/>MonitoringSystem"]
         DataCol["数据采集<br/>DataCollector"]
         GPUMon["GPU监控<br/>GPUMonitor"]
     end
-    
+
     subgraph Storage["💾 数据存储层 Storage"]
         DataStor["数据存储<br/>DataStorage"]
         DataLog["数据日志<br/>DataLogger"]
         JSON_Files["JSON文件<br/>data_logs/"]
     end
-    
+
     subgraph Analysis["📈 分析层 Analysis"]
         Report["报告生成<br/>ReportGenerator"]
         Trends["趋势分析<br/>AnomalyDetector"]
     end
-    
+
     subgraph Stats["📊 统计层 Statistics"]
         Stats_Main["碰撞统计<br/>CollisionStats"]
     end
-    
+
     CLI --> Engine_Main
     GUI --> Engine_Main
     Engine_Main --> CPU
     Engine_Main --> GPU
-    
+
     CPU --> Crypto_Backend
     CPU --> ThreadPool
     GPU --> OpenCL
     GPU --> GPUDev
-    
+
     CPU --> Mon
     GPU --> Mon
     Mon --> DataCol
     Mon --> GPUMon
-    
+
     DataCol --> DataStor
     DataCol --> DataLog
     GPUMon --> DataStor
-    
+
     DataStor --> JSON_Files
     DataLog --> Report
     DataLog --> Trends
-    
+
     CPU --> Stats_Main
     GPU --> Stats_Main
     Stats_Main --> Mon
-    
+
     style UI fill:#e1f5ff
     style Engine fill:#fff3e0
     style Crypto fill:#e8f5e9
@@ -1947,19 +1947,19 @@ flowchart LR
     SHA --> RIP["RIPEMD-160"]
     RIP --> H160["Hash160"]
     H160 --> Match["地址匹配<br/>Address Match"]
-    
+
     Match -->|成功| Callback["回调on_match"]
     Match -->|继续| Stats["统计更新<br/>Stats Update"]
-    
+
     Stats --> Monitor["监控采集<br/>Monitor"]
     Monitor --> Storage["数据存储<br/>Storage"]
     Storage --> JSON["JSON文件"]
-    
+
     Monitor --> Alert["异常检测<br/>Anomaly"]
     Alert -->|异常| Warning["告警<br/>Alert"]
-    
+
     Storage --> Report["报告生成<br/>Report"]
-    
+
     style PK fill:#e1f5ff
     style EC fill:#e8f5e9
     style PK2 fill:#f3e5f5
@@ -1985,8 +1985,8 @@ graph LR
 
 ### 23.1 整合概述
 
-**整合日期**: 2026-04-20  
-**整合版本**: v2.0  
+**整合日期**: 2026-04-20
+**整合版本**: v2.0
 **整合目标**: 统一配置管理、标准化引擎接口、规范化异常处理
 
 **整合成果**:
@@ -2106,7 +2106,7 @@ from src.collision import create_collision_engine
 engine = create_collision_engine(targets, mode='auto')
 
 # 强制GPU
-engine = create_collision_engine(targets, mode='gpu', 
+engine = create_collision_engine(targets, mode='gpu',
                                   device_index=-1, batch_size=65536)
 
 # 强制CPU
@@ -2390,8 +2390,8 @@ def stop(self):
 
 ---
 
-**文档版本**: v2.0  
-**最后更新**: 2026-04-20  
+**文档版本**: v2.0
+**最后更新**: 2026-04-20
 **维护者**: BTC碰撞引擎开发团队
     subgraph Core["核心模块 Core"]
         Secp["secp256k1"]
@@ -2401,7 +2401,7 @@ def stop(self):
         AddrGen["address_generator"]
         Crypto["crypto_backend"]
     end
-    
+
     subgraph Collision["碰撞模块 Collision"]
         KeyEngine["key_collision_engine"]
         GPUEngine["gpu_collision_engine"]
@@ -2409,19 +2409,19 @@ def stop(self):
         Checkpoint["checkpoint_manager"]
         Dedup["deduplication_filter"]
     end
-    
+
     subgraph Monitor["监控模块 Monitor"]
         MonSystem["monitoring_system"]
         DataLog["data_logger"]
         GPUMon["gpu_monitor"]
         Enhanced["enhanced_monitoring"]
     end
-    
+
     KeyEngine --> Core
     GPUEngine --> Core
     KeyEngine --> Monitor
     GPUEngine --> Monitor
-    
+
     style Core fill:#e1f5ff
     style Collision fill:#fff3e0
     style Monitor fill:#e8f5e9

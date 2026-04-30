@@ -54,7 +54,8 @@
 ### 1. 快速开始与概述
 
 - [README.md](../README.md) - 项目概述、快速开始、功能特性
-- [RELEASE_NOTES_v3.4.0.md](RELEASE_NOTES_v3.4.0.md) - v3.4.0 发布说明 (🆕)
+- [RELEASE_NOTES_v3.5.0.md](RELEASE_NOTES_v3.5.0.md) - v3.5.0 发布说明 (🆕)
+- [RELEASE_NOTES_v3.4.0.md](RELEASE_NOTES_v3.4.0.md) - v3.4.0 发布说明
 - [getting-started.md](getting-started.md) - 详细入门指南（✅ v3.1.1更新）
 - [use-cases.md](use-cases.md) - 使用场景指南（✅ v3.1.1新增）
 - [project-status.md](project-status.md) - 项目状态和路线图

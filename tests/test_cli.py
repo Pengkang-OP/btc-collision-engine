@@ -899,7 +899,7 @@ class TestV3Improvements:
 
         # mock export_progress_data，追踪调用（需 patch stats_reporter 模块中的引用）
         called = []
-        def fake_export_progress(stats, engine_type, output_file, *args, **kwargs):
+        def fake_export_progress(stats, mode, engine_type, output_file, *args, **kwargs):
             called.append((engine_type, output_file))
             return True
 

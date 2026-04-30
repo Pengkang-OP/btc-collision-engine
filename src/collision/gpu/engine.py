@@ -339,8 +339,29 @@ class GPUCollisionEngine(BaseCollisionEngine):
             self._consecutive_gpu_errors = 0
         self._stop_event.clear()
         self._running = True
+
+        # 确保 Core 延迟组件已初始化（stats/checkpoint/dedup）
+        if self.stats is None:
+            self._core._init_stats()
+            self.stats = self._core.stats
+        if self.checkpoint_mgr is None and self._core.config.get("checkpoint_enabled", False):
+            self._core._init_checkpoint()
+            self.checkpoint_mgr = self._core.checkpoint
+        if self.dedup_filter is None and self._core.config.get("dedup_enabled", False):
+            self._core._init_dedup_filter()
+            self.dedup_filter = self._core.dedup_filter
+
         self.stats.start_time = time.time()  # type: ignore[attr-defined]
-        self._search_coordinator.start(mode, resume=resume, **kwargs)
+
+        # 在后台线程中启动搜索（start() 非阻塞，stop() 负责终止）
+        self._thread = threading.Thread(
+            target=self._search_coordinator.start,
+            args=(mode,),
+            kwargs={"resume": resume, **kwargs},
+            daemon=True,
+            name="GPUCollisionEngine-search",
+        )
+        self._thread.start()
 
     def stop(self, timeout: Optional[float] = None) -> None:
         """停止对撞"""
