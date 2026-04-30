@@ -2,7 +2,7 @@
 import json
 import os
 import threading
-from typing import Dict, Any, Optional
+from typing import Dict, Any, List, Callable, Optional
 
 # 导入日志配置
 from ..utils import init_logging, get_configured_logger
@@ -287,6 +287,10 @@ class ConfigManager:
         
         if config_file and os.path.exists(config_file):
             self.load_config()
+        
+        # P2-4: 配置热重载支持
+        self._change_callbacks: List[Callable[[], None]] = []
+        self._watcher = None  # type: Optional['ConfigWatcher']
     
     @staticmethod
     def _strip_comments(config: Any) -> Any:
@@ -335,6 +339,124 @@ class ConfigManager:
         except Exception as e:
             logger.error(f"加载配置文件失败: {e}")
             return False
+    
+    # ── P2-4: 配置热重载 ──────────────────────────────────────────
+    
+    def reload_config(self) -> bool:
+        """安全重载配置 (P2-4): 验证新配置后才应用，失败则保持原配置
+        
+        与 load_config() 不同，reload_config() 会:
+        1. 先验证新配置文件是否合法
+        2. 验证失败时保持当前配置不变
+        3. 成功重载后通知所有 on_config_changed 回调
+        
+        返回:
+            重载成功返回 True，失败返回 False
+        """
+        if not self.config_file:
+            return False
+        
+        try:
+            with open(self.config_file, 'r', encoding='utf-8') as f:
+                raw_config = json.load(f)
+            
+            new_config = self._strip_comments(raw_config)
+            
+            # 验证新配置
+            validation_errors = self.validate(new_config)
+            if validation_errors:
+                error_msgs = [f"{k}: {v}" for k, v in validation_errors.items()]
+                logger.error(
+                    "配置热重载失败 — 新配置验证未通过 (保留原配置):\n%s",
+                    "\n".join(error_msgs),
+                )
+                return False
+            
+            # 深拷贝备份原配置 (用于失败回滚)
+            import copy
+            with self._lock:
+                old_config_backup = copy.deepcopy(self.config)
+            
+            # 应用新配置
+            with self._lock:
+                self._merge_config(self.config, new_config)
+            
+            logger.info("配置热重载成功: %s", self.config_file)
+            
+            # P2-4: 通知所有变更回调
+            self._notify_change_callbacks()
+            
+            return True
+        except Exception as e:
+            logger.error("配置热重载失败: %s (保留原配置)", e)
+            return False
+    
+    def on_config_changed(self, callback: Callable[[], None]) -> None:
+        """注册配置变更回调 (P2-4)
+        
+        当配置文件通过 reload_config() 成功重载后，所有注册的回调都会被调用。
+        回调在触发 reload 的线程中同步执行（后台线程）。
+        
+        参数:
+            callback: 无参数的可调用对象
+        """
+        self._change_callbacks.append(callback)
+    
+    def _notify_change_callbacks(self) -> None:
+        """通知所有配置变更回调 (P2-4)
+        
+        每个回调都有独立的异常保护，单个回调失败不影响其他回调。
+        """
+        for callback in self._change_callbacks:
+            try:
+                callback()
+            except Exception as e:
+                logger.error("配置变更回调 %s 执行失败: %s", callback.__name__, e)
+    
+    def start_watching(self, debounce_seconds: float = 2.0, poll_interval: float = 2.0) -> bool:
+        """启动配置文件热重载监听 (P2-4)
+        
+        自动选择最佳后端:
+        - watchdog (事件驱动, 响应快)
+        - polling  (定期检查 mtime, 无需外部依赖)
+        
+        参数:
+            debounce_seconds: 防抖间隔 (秒)，避免连续写入触发多次重载
+            poll_interval: 轮询模式下的检查间隔 (秒)，仅 polling 后端使用
+            
+        返回:
+            启动成功返回 True
+        """
+        if not self.config_file:
+            logger.warning("无法启动配置监听: 未设置配置文件路径")
+            return False
+        
+        from .config_watcher import ConfigWatcher
+        
+        # 停止已有的监听器
+        if self._watcher is not None:
+            self._watcher.stop()
+        
+        self._watcher = ConfigWatcher(
+            config_path=self.config_file,
+            on_reload=self.reload_config,
+            debounce_seconds=debounce_seconds,
+            poll_interval=poll_interval,
+        )
+        return self._watcher.start()
+    
+    def stop_watching(self) -> None:
+        """停止配置文件热重载监听 (P2-4)"""
+        if self._watcher is not None:
+            self._watcher.stop()
+            self._watcher = None
+    
+    def __del__(self) -> None:
+        """析构时自动停止配置监听 (P2-4)"""
+        try:
+            self.stop_watching()
+        except Exception:
+            pass
     
     def save_config(self) -> bool:
         """
