@@ -484,7 +484,7 @@ class SecureKeyManager:
     ) -> None:
         """上下文管理器出口 - 自动清零"""
         self.clear()
-        return False
+        return False  # type: ignore[return-value]
 
     def __del__(self) -> None:
         """析构函数 - 确保清零"""

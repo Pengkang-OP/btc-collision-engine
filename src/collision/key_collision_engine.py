@@ -167,7 +167,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 f"simd={use_simd_hash}, pool={use_memory_pool}"
             )
         else:
-            self.generator = P2PKHAddressGenerator()
+            self.generator = P2PKHAddressGenerator()  # type: ignore[assignment]
             logger.info("KeyCollisionEngine 使用标准版地址生成器")
         # P3-7: 存储内存池开关状态
         self.use_memory_pool = use_memory_pool

@@ -190,7 +190,7 @@ class GPUConfigValidator:
 
             for device in devices:
                 device_config = configurator.configure_for_device(device)
-                config["per_device_config"][str(device["global_index"])] = {
+                config["per_device_config"][str(device["global_index"])] = {  # type: ignore[index]
                     "batch_size": device_config["batch_size"],
                     "work_group_size": device_config["work_group_size"],
                 }

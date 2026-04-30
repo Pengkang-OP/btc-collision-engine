@@ -87,7 +87,7 @@ class PrecomputedPointTable:
             self.G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
         else:
             self.ec = ec
-            self.G = ec.curve.G if hasattr(ec.curve, "G") else None
+            self.G = ec.curve.G if hasattr(ec.curve, "G") else None  # type: ignore[assignment]
             if self.G is None:
                 from .secp256k1 import Secp256k1, ECPoint
 

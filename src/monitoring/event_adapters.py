@@ -244,7 +244,7 @@ class EnhancedMonitoringAdapter:
         """处理错误事件"""
         if self.monitoring_system:
             try:
-                self.monitoring_system.handle_error(
+                self.monitoring_system.handle_error(  # type: ignore[attr-defined]
                     error=event.exception or Exception(event.error_message), context=event.context
                 )
             except Exception as e:

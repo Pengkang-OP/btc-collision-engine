@@ -120,7 +120,7 @@ class ExamplePlugin(CollisionPlugin):
 
     def is_running(self) -> bool:
         """是否正在运行"""
-        return self._running and self._thread and self._thread.is_alive()
+        return self._running and self._thread and self._thread.is_alive()  # type: ignore[return-value]
 
     def get_stats(self) -> CollisionStats:
         """获取统计数据"""
