@@ -66,6 +66,6 @@ class RangeScanSearchMode(BaseSearchMode):
         )
 
         engine._running = False
-        engine.stats.update(batch_count)
+        engine.stats.update(batch_count)  # type: ignore[union-attr]
         if engine.on_complete:
-            engine.on_complete(engine.stats.snapshot())  # P1-2修复: 使用线程安全快照
+            engine.on_complete(engine.stats.snapshot())  # type: ignore[union-attr]  # P1-2修复: 使用线程安全快照

@@ -198,8 +198,9 @@ class DriverManager:
                     )
 
                     if result.returncode == 0 and result.stdout.strip():
+                        parser_type: str = str(method["parser"])
                         version = DriverManager._parse_nvidia_output(
-                            result.stdout.strip(), method["parser"]
+                            result.stdout.strip(), parser_type
                         )
                         if version:
                             logger.info(f"检测到NVIDIA驱动版本({method['name']}): {version}")
@@ -580,7 +581,7 @@ class DriverManager:
                 'recommendations': ['建议列表']
             }
         """
-        result = {"status": "good", "message": "驱动版本正常", "recommendations": []}
+        result: Dict[str, Any] = {"status": "good", "message": "驱动版本正常", "recommendations": []}
 
         if not driver_version:
             result["status"] = "warning"

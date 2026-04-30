@@ -10,7 +10,7 @@
 import time
 import logging
 import threading
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 from dataclasses import dataclass, field
 from datetime import datetime
 
@@ -268,7 +268,7 @@ class EnhancedPerformanceMonitor:
                 return
 
             self.end_time = time.perf_counter()
-            elapsed_ms = (self.end_time - self.start_time) * 1000  # type: ignore[operator]
+            elapsed_ms = (cast(float, self.end_time) - cast(float, self.start_time)) * 1000
 
             success = exc_type is None
 
@@ -321,8 +321,8 @@ class EnhancedPerformanceMonitor:
     def elapsed_ms(self) -> float:
         """获取已耗时的毫秒数"""
         if self.end_time is None:
-            return (time.perf_counter() - self.start_time) * 1000  # type: ignore[operator]
-        return (self.end_time - self.start_time) * 1000  # type: ignore[operator]
+            return (time.perf_counter() - cast(float, self.start_time)) * 1000
+        return (cast(float, self.end_time) - cast(float, self.start_time)) * 1000
 
 
 def log_performance_summary(
@@ -337,6 +337,10 @@ def log_performance_summary(
     """
     if tracker is None:
         tracker = _global_tracker
+
+    if tracker is None:
+        logger.info("性能追踪器未初始化，无法生成摘要")
+        return
 
     stats = tracker.get_statistics()
 

@@ -12,7 +12,7 @@ import sys
 import platform
 import logging
 import ctypes
-from typing import Optional, Dict, Any, Callable, List
+from typing import Optional, Dict, Any, Callable, List, cast
 
 
 class PlatformAdapter:
@@ -137,12 +137,12 @@ class PlatformAdapter:
         """
         if self.platform_name == "Windows":
             try:
-                return ctypes.windll.shell32.IsUserAnAdmin() != 0  # type: ignore[no-any-return]
+                return cast(bool, ctypes.windll.shell32.IsUserAnAdmin() != 0)  # Windows ctypes API
             except Exception:
                 return False
         else:
             try:
-                return os.geteuid() == 0  # type: ignore[attr-defined,no-any-return]
+                return getattr(os, 'geteuid', lambda: -1)() == 0  # Unix-only，mypy无类型信息
             except Exception:
                 return False
 
@@ -159,7 +159,7 @@ class PlatformAdapter:
                 import ctypes
 
                 kernel32 = ctypes.windll.kernel32
-                return kernel32.GetPriorityClass(kernel32.GetCurrentProcess())  # type: ignore[no-any-return]
+                return cast(int, kernel32.GetPriorityClass(kernel32.GetCurrentProcess()))  # Windows ctypes API
             except Exception:
                 return 0
         else:
@@ -167,7 +167,7 @@ class PlatformAdapter:
             try:
                 import psutil
 
-                return psutil.Process(os.getpid()).nice()  # type: ignore[no-any-return]
+                return cast(int, psutil.Process(os.getpid()).nice())  # 可选依赖psutil
             except Exception:
                 return 0
 
@@ -187,7 +187,7 @@ class PlatformAdapter:
                 import ctypes
 
                 kernel32 = ctypes.windll.kernel32
-                return kernel32.SetPriorityClass(kernel32.GetCurrentProcess(), priority) != 0  # type: ignore[no-any-return]
+                return cast(bool, kernel32.SetPriorityClass(kernel32.GetCurrentProcess(), priority) != 0)  # Windows ctypes API
             except Exception:
                 return False
         else:
@@ -237,9 +237,9 @@ class PlatformAdapter:
         """
         from .logging_config import SafeRotatingFileHandler
 
-        return SafeRotatingFileHandler(  # type: ignore[no-any-return]
+        return cast(logging.Handler, SafeRotatingFileHandler(
             filename, maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8"
-        )
+        ))
 
     def _get_unix_file_handler(self, filename: str, level: int) -> logging.Handler:
         """
@@ -254,9 +254,9 @@ class PlatformAdapter:
         """
         from logging.handlers import RotatingFileHandler
 
-        return RotatingFileHandler(  # type: ignore[no-any-return]
+        return cast(logging.Handler, RotatingFileHandler(
             filename, maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8"
-        )
+        ))
 
     def _get_windows_console_handler(self, level: int) -> logging.Handler:
         """
@@ -270,7 +270,7 @@ class PlatformAdapter:
         """
         from .logger import SafeStreamHandler
 
-        return SafeStreamHandler(sys.stdout)  # type: ignore[no-any-return]
+        return cast(logging.Handler, SafeStreamHandler(sys.stdout))
 
     def _get_unix_console_handler(self, level: int) -> logging.Handler:
         """
@@ -284,7 +284,7 @@ class PlatformAdapter:
         """
         from .logger import SafeStreamHandler
 
-        return SafeStreamHandler(sys.stdout)  # type: ignore[no-any-return]
+        return cast(logging.Handler, SafeStreamHandler(sys.stdout))
 
     def get_platform_optimizations(self) -> Dict[str, Any]:
         """
@@ -295,7 +295,7 @@ class PlatformAdapter:
         """
         optimizations: Dict[str, Any] = {
             "platform": self.platform_name,
-            "optimizations": [],  # type: ignore[var-annotated]
+            "optimizations": cast(list, []),
         }
 
         if self.platform_name == "Windows":

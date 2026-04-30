@@ -93,6 +93,7 @@ class GPUDeviceManager:
 
                 # 5. 编译和创建内核
                 self._init_kernel(batch_size)
+                assert self._gpu_kernel is not None  # _init_kernel 保证初始化
 
                 # 6. 初始化内存池
                 self._init_memory_pool()

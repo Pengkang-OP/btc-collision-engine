@@ -42,12 +42,20 @@ logger = get_configured_logger("FastJSON")
 
 # P3-10: 检测 orjson 可用性
 _ORJSON_AVAILABLE = False
-_orjson_module = None
+_orjson_module: Any = None
+
+_ORJSON_OPT_INDENT_2: int = 1  # orjson.OPT_INDENT_2
+_ORJSON_OPT_SORT_KEYS: int = 1 << 1  # orjson.OPT_SORT_KEYS
+_ORJSON_OPT_NON_STR_KEYS: int = 1 << 2  # orjson.OPT_NON_STR_KEYS
 
 try:
-    import orjson as _orjson_module
+    import orjson as _orjson_imported
 
+    _orjson_module = _orjson_imported
     _ORJSON_AVAILABLE = True
+    _ORJSON_OPT_INDENT_2 = getattr(_orjson_imported, 'OPT_INDENT_2', 1)
+    _ORJSON_OPT_SORT_KEYS = getattr(_orjson_imported, 'OPT_SORT_KEYS', 1 << 1)
+    _ORJSON_OPT_NON_STR_KEYS = getattr(_orjson_imported, 'OPT_NON_STR_KEYS', 1 << 2)
     logger.debug("fast_json: 使用 orjson 加速 JSON 序列化")
 except ImportError:
     logger.info("fast_json: orjson 不可用，使用标准 json 模块（性能较低）")
@@ -77,16 +85,16 @@ def fast_dumps(
         JSON 字符串
     """
     if _ORJSON_AVAILABLE:
+        assert _orjson_module is not None  # orjson已导入，缩窄Optional类型
         try:
             # orjson 选项
             option = 0
             if indent is not None and indent >= 2:
-                option |= _orjson_module.OPT_INDENT_2
+                option |= _ORJSON_OPT_INDENT_2
             if sort_keys:
-                option |= _orjson_module.OPT_SORT_KEYS
-            # orjson 默认不转义非 ASCII，与 ensure_ascii=False 对应
+                option |= _ORJSON_OPT_SORT_KEYS
             if not ensure_ascii:
-                option |= _orjson_module.OPT_NON_STR_KEYS
+                option |= _ORJSON_OPT_NON_STR_KEYS
 
             if default is not None:
                 result = _orjson_module.dumps(obj, default=default, option=option)
@@ -158,6 +166,7 @@ def fast_loads(s: Union[str, bytes]) -> Any:
         反序列化的 Python 对象
     """
     if _ORJSON_AVAILABLE:
+        assert _orjson_module is not None  # orjson已导入，缩窄Optional类型
         try:
             return _orjson_module.loads(s)
         except Exception as e:

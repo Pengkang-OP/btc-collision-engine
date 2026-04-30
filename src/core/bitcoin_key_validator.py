@@ -408,6 +408,9 @@ class BitcoinKeyValidator:
             result.add_detail("public_key_point_x", f"{public_key_point.x:064x}")
             result.add_detail("public_key_point_y", f"{public_key_point.y:064x}")
 
+            # 5. 序列化公钥 — 经过 is_infinity 检查后, x/y 必然非 None
+            assert public_key_point.x is not None and public_key_point.y is not None
+
             # 5. 序列化公钥
             if compressed:
                 # 压缩格式：33字节，02或03开头

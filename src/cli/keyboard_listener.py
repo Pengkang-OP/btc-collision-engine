@@ -59,7 +59,7 @@ class KeyboardListener:
                 import tty  # noqa: PLC0415
 
                 fd = sys.stdin.fileno()
-                termios.tcgetattr(fd)  # 若非 TTY 会抛出 termios.error
+                getattr(termios, "tcgetattr")(fd)  # 若非 TTY 会抛出 termios.error
                 cls._platform_available = True
             except Exception as exc:
                 cls._platform_available = False
@@ -141,7 +141,7 @@ class KeyboardListener:
 
         fd = sys.stdin.fileno()
         try:
-            old_settings = termios.tcgetattr(fd)
+            old_settings = getattr(termios, "tcgetattr")(fd)
         except Exception:
             self._available = False
             return

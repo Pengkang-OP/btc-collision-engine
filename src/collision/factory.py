@@ -29,12 +29,12 @@ class EngineFactory:
     @staticmethod
     def create_cpu_engine(
         targets: Set[str],
-        container: Optional["DependencyContainer"] = None,  # type: ignore[name-defined]
+        container: Optional["DependencyContainer"] = None,  # type: ignore[name-defined]  # 字符串前向引用
         stats: Any = None,
         event_bus: Any = None,
         data_logger: Any = None,
         **kwargs,
-    ) -> "KeyCollisionEngine":  # type: ignore[name-defined]
+    ) -> "KeyCollisionEngine":  # type: ignore[name-defined]  # 字符串前向引用
         """创建 CPU 碰撞引擎
 
         Args:
@@ -56,19 +56,19 @@ class EngineFactory:
             event_bus = event_bus or container.event_bus
             data_logger = data_logger or container.data_logger
 
-        return KeyCollisionEngine(  # type: ignore[call-arg]
+        return KeyCollisionEngine(  # type: ignore[call-arg]  # 工厂透传**kwargs
             targets=targets, stats=stats, event_bus=event_bus, data_logger=data_logger, **kwargs
         )
 
     @staticmethod
     def create_gpu_engine(
         targets: Set[str],
-        container: Optional["DependencyContainer"] = None,  # type: ignore[name-defined]
+        container: Optional["DependencyContainer"] = None,  # type: ignore[name-defined]  # 字符串前向引用
         stats: Any = None,
         event_bus: Any = None,
         data_logger: Any = None,
         **kwargs,
-    ) -> "GPUCollisionEngine":  # type: ignore[name-defined]
+    ) -> "GPUCollisionEngine":  # type: ignore[name-defined]  # 字符串前向引用
         """创建 GPU 碰撞引擎
 
         Args:
@@ -89,6 +89,6 @@ class EngineFactory:
             event_bus = event_bus or container.event_bus
             data_logger = data_logger or container.data_logger
 
-        return GPUCollisionEngine(  # type: ignore[call-arg]
+        return GPUCollisionEngine(  # type: ignore[call-arg]  # 工厂透传**kwargs
             targets=targets, stats=stats, event_bus=event_bus, data_logger=data_logger, **kwargs
         )

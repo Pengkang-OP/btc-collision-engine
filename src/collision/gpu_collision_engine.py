@@ -87,21 +87,6 @@ logger = get_configured_logger(__name__)
 
 NEW_GPU_MODULE_AVAILABLE = True
 
-# 可选: GPUConfigManager (保持与原代码一致的 try/except)
-try:
-    from .gpu_config_manager import GPUConfigManager as _GPUConfigManager  # noqa: F811
-    GPU_CONFIG_MANAGER_AVAILABLE = True
-except ImportError:
-    GPU_CONFIG_MANAGER_AVAILABLE = False
-    GPUConfigManager = None  # type: ignore[assignment,misc]
-
-# 可选: 异步日志
-try:
-    from ..utils.logger import AsyncFileHandler  # noqa: F811
-    ASYNC_LOG_AVAILABLE = True
-except ImportError:
-    ASYNC_LOG_AVAILABLE = False
-
 __all__ = [
     "GPUCollisionEngine",
     "GPU_MAX_BATCH_SIZE",

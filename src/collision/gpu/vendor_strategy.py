@@ -14,7 +14,7 @@
 更新日期: 2026-04-30
 """
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, cast
 import logging
 
 from .protocols import VendorOptimizationStrategy, GPUExecutionContext
@@ -277,7 +277,7 @@ class VendorOptimizationFactory:
         try:
             strategy = strategy_cls()
             logger.debug(f"创建{vendor}优化策略成功")
-            return strategy  # type: ignore[no-any-return]
+            return cast(VendorOptimizationStrategy, strategy)
         except Exception as e:
             logger.error(f"创建{vendor}优化策略失败: {e}")
             return DefaultOptimizationStrategy()

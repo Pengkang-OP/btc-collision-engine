@@ -17,7 +17,7 @@ import sys
 import time
 import json
 import argparse
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, cast
 from datetime import datetime
 
 # 添加项目根目录到路径
@@ -52,7 +52,7 @@ class BenchmarkResult:
         """停止测试"""
         self.end_time = time.time()
 
-        elapsed = self.end_time - self.start_time  # type: ignore[operator]
+        elapsed = cast(float, self.end_time) - cast(float, self.start_time)
         self.avg_speed = self.total_processed / elapsed if elapsed > 0 else 0
 
     def to_dict(self) -> Dict[str, Any]:
@@ -60,7 +60,7 @@ class BenchmarkResult:
         return {
             "name": self.name,
             "config": self.config,
-            "elapsed_seconds": self.end_time - self.start_time if self.end_time else 0,  # type: ignore[operator]
+            "elapsed_seconds": cast(float, self.end_time) - cast(float, self.start_time) if self.end_time else 0,
             "total_processed": self.total_processed,
             "matches_found": self.matches_found,
             "avg_speed_keys_per_sec": self.avg_speed,
@@ -112,7 +112,7 @@ class PerformanceBenchmark:
 
             print(
                 f"  SHA256: {result.avg_speed:,.0f} keys/s, "
-                f"耗时: {result.end_time - result.start_time:.3f}s"  # type: ignore[operator]
+                f"耗时: {cast(float, result.end_time) - cast(float, result.start_time):.3f}s"
             )
             self.results.append(result)
 
@@ -128,7 +128,7 @@ class PerformanceBenchmark:
 
             print(
                 f"  Hash160: {result.avg_speed:,.0f} keys/s, "
-                f"耗时: {result.end_time - result.start_time:.3f}s"  # type: ignore[operator]
+                f"耗时: {cast(float, result.end_time) - cast(float, result.start_time):.3f}s"
             )
             self.results.append(result)
 
@@ -176,7 +176,7 @@ class PerformanceBenchmark:
                     return hashlib.sha256(pk).hexdigest()[:34]
 
             # 启动引擎
-            engine.start(  # type: ignore[call-arg]
+            engine.start(  # type: ignore[call-arg]  # 动态参数透传
                 generator_func=generate_keys, address_generator=MockAddressGenerator()
             )
 
@@ -239,7 +239,7 @@ class PerformanceBenchmark:
 
             print(
                 f"  添加速度: {result.avg_speed:,.0f} items/s, "
-                f"耗时: {result.end_time - result.start_time:.3f}s"  # type: ignore[operator]
+                f"耗时: {cast(float, result.end_time) - cast(float, result.start_time):.3f}s"
             )
             print(f"  内存使用: {bloom.bloom.bit_size // 8 / 1024 / 1024:.2f} MB")
             self.results.append(result)

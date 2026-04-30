@@ -181,7 +181,7 @@ class RandomSearchMode(BaseSearchMode):
 
                 # 更新统计数据
                 batch_count += current_batch_size
-                engine.stats.update(batch_count)
+                engine.stats.update(batch_count)  # type: ignore[union-attr]
 
                 # 记录性能指标
                 engine._update_performance_metrics(current_batch_size, execution_time_ms)
@@ -223,9 +223,9 @@ class RandomSearchMode(BaseSearchMode):
 
         logger.info(f"GPU _random_search 结束: 共处理 {batch_count} 个私钥")
         engine._running = False
-        engine.stats.update(batch_count)
+        engine.stats.update(batch_count)  # type: ignore[union-attr]
         if engine.on_complete:
-            engine.on_complete(engine.stats.snapshot())
+            engine.on_complete(engine.stats.snapshot())  # type: ignore[union-attr]
 
     # ------------------------------------------------------------------
     # 异步双缓冲执行模式
@@ -362,7 +362,7 @@ class RandomSearchMode(BaseSearchMode):
                     batch_count += batch_size  # type: ignore[operator]
 
                     # 更新统计数据（与同步模式保持一致）
-                    engine.stats.update(batch_count)
+                    engine.stats.update(batch_count)  # type: ignore[union-attr]
 
                     # 处理匹配结果（与同步模式保持一致，使用 engine._process_gpu_matches_prng）
                     if matches:
@@ -446,9 +446,9 @@ class RandomSearchMode(BaseSearchMode):
 
         logger.info(f"GPU异步执行结束: 共处理 {batch_count} 个私钥")
         engine._running = False
-        engine.stats.update(batch_count)
+        engine.stats.update(batch_count)  # type: ignore[union-attr]
         if engine.on_complete:
-            engine.on_complete(engine.stats.snapshot())
+            engine.on_complete(engine.stats.snapshot())  # type: ignore[union-attr]
 
     # ------------------------------------------------------------------
     # 辅助方法

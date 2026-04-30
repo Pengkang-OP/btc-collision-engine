@@ -5,7 +5,11 @@
 
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
+import logging
+
 from .collision_stats import CollisionStats
+
+logger = logging.getLogger(__name__)
 
 
 class CollisionObserver(ABC):
@@ -91,15 +95,20 @@ class MonitoringObserver(BaseCollisionObserver):
         self.monitoring_system = monitoring_system
 
     def on_progress(self, stats: CollisionStats) -> None:
-        """转发进度事件到监控系统"""
-        # 监控系统会自动采集数据，这里仅触发采集
-        pass
+        """转发进度事件到监控系统
+
+        监控系统会自动采集数据（轮询 stats），此方法仅确认事件已触发。
+        """
+        logger.debug(f"进度事件: 已检查 {stats.total_checked:,} 个密钥")
 
     def on_match(self, private_key: bytes, address: str, wif: str) -> None:
-        """记录匹配事件"""
+        """记录匹配事件到监控数据日志"""
         if hasattr(self.monitoring_system, "data_logger"):
-            # 可以在这里记录匹配事件到日志
-            pass
+            self.monitoring_system.data_logger.record_error(
+                error_type="MatchFound",
+                error_message=f"地址匹配: {address}",
+                context={"address": address, "has_wif": bool(wif)},
+            )
 
     def on_error(self, error: Exception, context: Optional[Dict[str, Any]] = None) -> None:
         """记录错误事件"""

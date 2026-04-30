@@ -89,13 +89,13 @@ class BaseSearchMode:
                     from ...core.wif import WIF
 
                     wif = WIF.encode(private_key, compressed=True)
-                    engine.stats.add_match(private_key, address)
+                    engine.stats.add_match(private_key, address)  # type: ignore[attr-defined]
                     if engine.on_match:
                         engine.on_match(private_key, address, wif)
 
                 # 更新统计
                 batch_count += actual_batch_size
-                engine.stats.update(batch_count)
+                engine.stats.update(batch_count)  # type: ignore[attr-defined]
 
                 # 成功后重置连续错误计数
                 with engine._batch_size_lock:
@@ -105,7 +105,7 @@ class BaseSearchMode:
                 current_time = time.time()
                 if current_time - engine._last_progress_time >= engine._progress_interval_sec:
                     if engine.on_progress:
-                        engine.on_progress(engine.stats.snapshot())
+                        engine.on_progress(engine.stats.snapshot())  # type: ignore[union-attr]
                     engine._save_checkpoint(batch_count)
                     engine._last_progress_time = current_time  # type: ignore[assignment]
 

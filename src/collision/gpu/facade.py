@@ -81,6 +81,25 @@ class GPUEngineFacade:
             self.device = device
             self.context = self._device_manager.create_context(device)
 
+        # 编译内核
+        if self.context is not None and device is not None:
+            try:
+                kernel = self._kernel_adapter.compile_kernel(
+                    device, self.context
+                )
+                self.kernel = kernel
+            except Exception as e:
+                logger.error(f"内核编译失败: {e}")
+
+        # 初始化异步管道
+        try:
+            self._async_pipeline.initialize(
+                kernel=self.kernel,
+                batch_size=batch_size or 1_000_000,
+            )
+        except Exception as e:
+            logger.error(f"异步管道初始化失败: {e}")
+
         self._initialized = True
         logger.info(f"GPUEngineFacade 初始化完成: device={device}")
 

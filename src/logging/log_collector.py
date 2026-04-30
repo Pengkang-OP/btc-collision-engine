@@ -29,7 +29,7 @@ class LogCollector:
         self._handlers: Dict[str, Callable] = {}
         self._running = False
         self._collector_thread: Optional[threading.Thread] = None
-        self._log_handler = None
+        self._log_handler: Optional[_CollectorLogHandler] = None
         self._setup_logging_handler()
 
     def _setup_logging_handler(self):
@@ -133,7 +133,8 @@ class LogCollector:
             logger_name: 日志器名称，None表示根日志器
         """
         logger = logging.getLogger(logger_name)
-        logger.addHandler(self._log_handler)
+        if self._log_handler is not None:
+            logger.addHandler(self._log_handler)
         logger.setLevel(logging.DEBUG)
 
     def detach_from_logger(self, logger_name: Optional[str] = None):
@@ -143,7 +144,7 @@ class LogCollector:
             logger_name: 日志器名称，None表示根日志器
         """
         logger = logging.getLogger(logger_name)
-        if self._log_handler in logger.handlers:
+        if self._log_handler is not None and self._log_handler in logger.handlers:
             logger.removeHandler(self._log_handler)
 
 
