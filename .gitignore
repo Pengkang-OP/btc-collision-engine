@@ -69,6 +69,8 @@ data_logs/report_daily_*.json
 data_logs/current_data.json
 data_logs/history_data.json
 data_logs/performance.log
+test_matches/
+mypy_*.txt
 
 # 操作系统
 .DS_Store

@@ -334,7 +334,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
                 def target() -> None:
                     try:
-                        result[0] = self.on_match(private_key, address, wif)  # type: ignore[misc]
+                        result[0] = self.on_match(private_key, address, wif)  # type: ignore[misc]  # 线程间数据传递，类型推断受限
                     except Exception as e:
                         exception[0] = e
 
@@ -357,8 +357,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 def timeout_handler(signum: int, frame: Any) -> None:
                     raise TimeoutError(f"匹配回调执行超时 ({self._match_callback_timeout}秒)")
 
-                old_handler = signal.signal(signal.SIGALRM, timeout_handler)  # type: ignore[attr-defined]
-                signal.alarm(self._match_callback_timeout)  # type: ignore[attr-defined]
+                old_handler = signal.signal(signal.SIGALRM, timeout_handler)  # type: ignore[attr-defined]  # signal.SIGALRM 仅 Unix 可用
+                signal.alarm(self._match_callback_timeout)  # type: ignore[attr-defined]  # signal.alarm 仅 Unix 可用
 
                 try:
                     self.on_match(private_key, address, wif)
@@ -369,8 +369,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     logger.error(f"匹配回调异常: {e}")
                     return False
                 finally:
-                    signal.alarm(0)  # type: ignore[attr-defined]  # 取消超时
-                    signal.signal(signal.SIGALRM, old_handler)  # type: ignore[attr-defined]
+                    signal.alarm(0)  # type: ignore[attr-defined]  # 取消超时定时器
+                    signal.signal(signal.SIGALRM, old_handler)  # type: ignore[attr-defined]  # 恢复原始信号处理器
 
             if self._match_callback_audit_enabled:
                 logger.debug(f"匹配回调执行成功: address={address}")
@@ -740,7 +740,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                             uncompressed_addr = None
                     except ValueError as e:
                         logger.warning(f"Random worker {worker_id}: 私钥无效，跳过: {e}")
-                        if self.data_logging_enabled:
+                        if self.data_logging_enabled and self.data_logger:
                             current_time = time.time()
                             should_log = False
 
@@ -754,8 +754,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
                                     should_log = True
 
                             # 在锁外执行I/O操作
-                            if should_log:
-                                self.data_logger.record_error(  # type: ignore[union-attr]
+                            if should_log and self.data_logger:
+                                self.data_logger.record_error(
                                     error_type="invalid_key",
                                     message=f"随机私钥无效",
                                     exception=e,
@@ -764,7 +764,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         continue  # with块会正确执行__exit__清零私钥
                     except Exception as e:
                         logger.error(f"Random worker {worker_id}: 生成地址失败: {e}", exc_info=True)
-                        if self.data_logging_enabled:
+                        if self.data_logging_enabled and self.data_logger:
                             current_time = time.time()
                             should_log = False
 
@@ -778,8 +778,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
                                     should_log = True
 
                             # 在锁外执行I/O操作
-                            if should_log:
-                                self.data_logger.record_error(  # type: ignore[union-attr]
+                            if should_log and self.data_logger:
+                                self.data_logger.record_error(
                                     error_type="address_generation_failed",
                                     message=f"生成地址失败",
                                     exception=e,
@@ -939,8 +939,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 logger.debug(f"P3-7 内存池调优跳过: {type(e).__name__}: {e}")
 
         # 记录引擎启动数据
-        if self.data_logging_enabled:
-            self.data_logger.record_engine_data(  # type: ignore[union-attr]
+        if self.data_logging_enabled and self.data_logger:
+            self.data_logger.record_engine_data(
                 mode=self._current_mode,
                 target_count=len(self.targets),
                 is_running=True,
@@ -948,7 +948,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             )
             # 系统数据只在第一次记录（避免重复）
             if self._last_data_log_time == 0.0:
-                self.data_logger.record_system_data()  # type: ignore[union-attr]
+                self.data_logger.record_system_data()
 
         # 确定工作线程数
         # P3-8: 使用配置值或CPU核心数（上限1024，下限1）
@@ -1089,8 +1089,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
         logger.info("=" * 60)
 
         # 记录引擎停止数据
-        if self.data_logging_enabled:
-            self.data_logger.record_engine_data(  # type: ignore[union-attr]
+        if self.data_logging_enabled and self.data_logger:
+            self.data_logger.record_engine_data(
                 mode=self._current_mode,
                 target_count=len(self.targets),
                 is_running=False,
@@ -1098,7 +1098,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             )
             # 生成报告
             try:
-                report = self.data_logger.generate_report("daily")  # type: ignore[union-attr]
+                report = self.data_logger.generate_report("daily")
                 logger.info(f"数据日志报告已生成")
             except Exception as e:
                 logger.error(f"生成数据日志报告失败: {e}")
@@ -1251,8 +1251,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self._last_data_log_time = 0.0  # 重置数据日志时间
 
         # 记录引擎启动数据
-        if self.data_logging_enabled:
-            self.data_logger.record_engine_data(  # type: ignore[union-attr]
+        if self.data_logging_enabled and self.data_logger:
+            self.data_logger.record_engine_data(
                 mode=self._current_mode,
                 target_count=len(self.targets),
                 is_running=True,
@@ -1261,7 +1261,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             )
             # 系统数据只在第一次记录（避免重复）
             if self._last_data_log_time == 0.0:
-                self.data_logger.record_system_data()  # type: ignore[union-attr]
+                self.data_logger.record_system_data()
 
         # 计算线程数和每个线程的任务范围
         num_workers = self.max_workers or 4
@@ -1375,8 +1375,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self._running = False
 
         # 记录引擎停止数据
-        if self.data_logging_enabled:
-            self.data_logger.record_engine_data(  # type: ignore[union-attr]
+        if self.data_logging_enabled and self.data_logger:
+            self.data_logger.record_engine_data(
                 mode=self._current_mode,
                 target_count=len(self.targets),
                 is_running=False,
@@ -1384,7 +1384,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             )
             # 生成报告
             try:
-                report = self.data_logger.generate_report("daily")  # type: ignore[union-attr]
+                report = self.data_logger.generate_report("daily")
                 logger.info(f"数据日志报告已生成")
             except Exception as e:
                 logger.error(f"生成数据日志报告失败: {e}")
@@ -1535,8 +1535,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
             logger.warning("建议：使用 max_keys 参数限制扫描数量，例如 max_keys=1_000_000_000")
 
         # 记录引擎启动数据
-        if self.data_logging_enabled:
-            self.data_logger.record_engine_data(  # type: ignore[union-attr]
+        if self.data_logging_enabled and self.data_logger:
+            self.data_logger.record_engine_data(
                 mode=self._current_mode,
                 target_count=len(self.targets),
                 is_running=True,
@@ -1544,7 +1544,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             )
             # 系统数据只在第一次记录（避免重复）
             if self._last_data_log_time == 0.0:
-                self.data_logger.record_system_data()  # type: ignore[union-attr]
+                self.data_logger.record_system_data()
 
         # 创建线程池
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
@@ -1604,8 +1604,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self._running = False
 
         # 记录引擎停止数据
-        if self.data_logging_enabled:
-            self.data_logger.record_engine_data(  # type: ignore[union-attr]
+        if self.data_logging_enabled and self.data_logger:
+            self.data_logger.record_engine_data(
                 mode=self._current_mode,
                 target_count=len(self.targets),
                 is_running=False,
@@ -1613,7 +1613,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             )
             # 生成报告
             try:
-                report = self.data_logger.generate_report("daily")  # type: ignore[union-attr]
+                report = self.data_logger.generate_report("daily")
                 logger.info(f"数据日志报告已生成")
             except Exception as e:
                 logger.error(f"生成数据日志报告失败: {e}")
@@ -1656,7 +1656,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         if not self.targets and data.get("targets"):
             self.targets = set(data["targets"])
 
-        return data  # type: ignore[no-any-return]
+        return data  # type: ignore[no-any-return]  # json.loads 返回 Any，函数签名要求 Dict
 
     def start_from_checkpoint(self, data: Dict) -> None:
         """根据断点数据启动对撞"""
@@ -1888,12 +1888,12 @@ class KeyCollisionEngine(BaseCollisionEngine):
             True 表示引擎正在运行（已启动且工作线程存活），
             False 表示引擎已停止或未启动
         """
-        return self._running and self._thread and self._thread.is_alive()  # type: ignore[return-value]
+        return self._running and self._thread and self._thread.is_alive()  # type: ignore[return-value]  # _thread 可能为 None，and 短路已处理
 
     def __enter__(self) -> "KeyCollisionEngine":
         return self
 
-    def __exit__(self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]) -> bool:  # type: ignore[exit-return]
+    def __exit__(self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]) -> bool:  # type: ignore[exit-return]  # mypy 期望 Optional[bool]
         self.stop()
         return False
 

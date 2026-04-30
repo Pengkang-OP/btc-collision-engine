@@ -55,12 +55,14 @@ facade.cleanup()
 
 - ✅ **Phase 1**: 基础设施准备（协议定义、模块骨架）
 - ✅ **Phase 2**: 外观层实现（设备适配器、内核适配器、异步管道适配器、facade增强）
-- ⏳ **Phase 3**: 监控管道实现
-- ⏳ **Phase 4**: 碰撞核心实现
-- ⏳ **Phase 5**: 引擎协调器重构
-- ⏳ **Phase 6**: 迁移验证
+- ✅ **Phase 3**: 监控管道实现（PerformanceMonitoringPipeline）
+- ✅ **Phase 4**: 碰撞核心实现（CollisionCore: 统计/断点/去重/搜索协调）
+- ✅ **Phase 5**: 引擎协调器重构（VendorOptimizationFactory: NVIDIA/AMD/Intel 策略）
+- ✅ **Phase 6**: 迁移验证（shim 向后兼容层、test_gpu_engine_refactor_phase6.py）
 
-## Phase 2 实施详情
+## 实施详情
+
+Phase 2 外观层是重构的核心切入点，后续阶段详见各模块源码及 ENGINEREFACTORING_PLAN.md。
 
 ### 新增文件
 
@@ -85,7 +87,7 @@ facade.cleanup()
 
 ## 版本
 
-- **版本**: v2.0
+- **版本**: v6.0.0 (Phase 6)
 - **创建日期**: 2026-04-29
 - **更新日期**: 2026-04-30
-- **状态**: Phase 2 已完成
+- **状态**: 全部阶段已完成
