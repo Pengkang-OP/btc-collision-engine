@@ -22,7 +22,7 @@ class ConfigCoordinator:
     4. 统一配置验证
     """
     
-    def __init__(self, config_file: str = 'config.json'):
+    def __init__(self, config_file: str = 'config.json') -> None:
         """
         初始化配置协调器
         
@@ -47,7 +47,7 @@ class ConfigCoordinator:
         
         logger.info("配置协调器初始化完成")
     
-    def _sync_configs(self):
+    def _sync_configs(self) -> None:
         """同步各配置管理器的配置"""
         try:
             # 从ConfigManager同步到GPUConfig
@@ -60,7 +60,7 @@ class ConfigCoordinator:
         except Exception as e:
             logger.warning(f"配置同步失败: {e}")
     
-    def _sync_gpu_config(self):
+    def _sync_gpu_config(self) -> None:
         """同步GPU配置到GPUConfig"""
         try:
             gpu_config = {
@@ -80,7 +80,7 @@ class ConfigCoordinator:
         except Exception as e:
             logger.warning(f"GPU配置同步失败: {e}")
     
-    def _sync_crypto_config(self):
+    def _sync_crypto_config(self) -> None:
         """同步Crypto配置到CryptoConfig"""
         try:
             crypto_backend = self.config_manager.get('crypto.backend', 'auto')

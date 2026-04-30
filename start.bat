@@ -3,88 +3,149 @@ chcp 65001 >nul 2>&1
 setlocal enabledelayedexpansion
 
 cd /d "%~dp0"
-if errorlevel 1 (
-    echo [ERROR] Cannot change directory
-    pause
-    exit /b 1
-)
 
-if not exist "key_collision_cli.py" (
-    echo [ERROR] key_collision_cli.py not found
-    pause
-    exit /b 1
-)
+set "VENV_EXISTS=0"
+if exist "venv\Scripts\activate.bat" set "VENV_EXISTS=1"
 
-set "PYTHON_SCRIPT=key_collision_cli.py"
-
-where python >nul 2>&1
-if errorlevel 1 (
-    echo [WARN] Python not found
-)
-
-if exist "venv\Scripts\activate.bat" (
-    call venv\Scripts\activate.bat >nul 2>&1
-)
-
-if not exist "logs" mkdir "logs" 2>nul
-if not exist "data_logs" mkdir "data_logs" 2>nul
-if not exist "monitoring_data" mkdir "monitoring_data" 2>nul
-
-if not exist "config.json" (
-    if exist "config.example.json" (
-        copy "config.example.json" "config.json" >nul 2>&1
-        echo [OK] Created config.json from template
-    )
-)
-
+:menu
+cls
 echo.
-echo ========================================
-echo   BTC Collision Engine - Startup Menu
-echo ========================================
+echo ================================================================
+echo           BTC Collision Engine - Startup Menu
+echo ================================================================
 echo.
-echo Select startup mode:
+echo System Status:
+if !VENV_EXISTS! equ 1 (
+    echo   Virtual Environment: [OK] Found
+) else (
+    echo   Virtual Environment: [WARN] Not Found
+)
+if exist "targets.txt" (
+    echo   Targets File: [OK] Found
+) else (
+    echo   Targets File: [WARN] Not Found
+)
+echo.
+echo Please select an option:
 echo.
 echo   1. Interactive Wizard (Recommended)
 echo   2. Quick Run (using targets.txt)
-echo   3. Dual Window Mode (Interactive + Log Monitor)
-echo   4. Monitoring System
+echo   3. Start Monitor
+echo   4. Maintenance and Cleanup
 echo   5. Show Help
 echo   0. Exit
 echo.
+echo ================================================================
+echo.
+
 set "CHOICE="
-set /p CHOICE=Enter option (0-5, default 1):
+set /p "CHOICE=Enter option (0-5): "
 
-if "%CHOICE%"=="" set "CHOICE=1"
+if "!CHOICE!"=="" goto :menu
 
-if "%CHOICE%"=="1" (
-    echo [INFO] Starting Interactive Wizard...
-    python "%PYTHON_SCRIPT%" --quick-start
-) else if "%CHOICE%"=="2" (
-    if not exist "targets.txt" (
-        echo [ERROR] targets.txt not found
-        echo Please create targets.txt first
-        pause
-        exit /b 1
-    )
-    echo [INFO] Starting Quick Run...
-    python "%PYTHON_SCRIPT%" --quick-run
-) else if "%CHOICE%"=="3" (
-    echo [INFO] Starting Dual Window Mode...
-    echo [INFO] Log monitor will open in a separate window
-    python dual_launcher.py
-) else if "%CHOICE%"=="4" (
-    echo [INFO] Starting Monitoring System...
-    start_monitoring.bat
-) else if "%CHOICE%"=="5" (
-    python "%PYTHON_SCRIPT%" --help
-) else if "%CHOICE%"=="0" (
-    echo [INFO] Exiting...
-    pause
-    exit /b 0
-) else (
-    echo [ERROR] Invalid option: %CHOICE%
-    echo Defaulting to Interactive Wizard...
-    python "%PYTHON_SCRIPT%" --quick-start
+if "!CHOICE!"=="1" (
+    if !VENV_EXISTS! equ 1 call venv\Scripts\activate.bat >nul 2>&1
+    python key_collision_cli.py --quick-start
+    goto :end_action
 )
 
+if "!CHOICE!"=="2" (
+    if not exist "targets.txt" (
+        echo [ERROR] targets.txt not found
+        pause
+        goto :menu
+    )
+    if !VENV_EXISTS! equ 1 call venv\Scripts\activate.bat >nul 2>&1
+    python key_collision_cli.py --quick-run
+    goto :end_action
+)
+
+if "!CHOICE!"=="3" (
+    start "" powershell -Command "& 'monitor.ps1'"
+    goto :menu
+)
+
+if "!CHOICE!"=="4" (
+    call :cleanup_menu
+    goto :menu
+)
+
+if "!CHOICE!"=="5" (
+    if !VENV_EXISTS! equ 1 call venv\Scripts\activate.bat >nul 2>&1
+    python key_collision_cli.py --help
+    pause
+    goto :menu
+)
+
+if "!CHOICE!"=="0" (
+    echo [INFO] Goodbye!
+    exit /b 0
+)
+
+echo [ERROR] Invalid option: !CHOICE!
 pause
+goto :menu
+
+:cleanup_menu
+cls
+echo.
+echo ================================================================
+echo           Maintenance and Cleanup Menu
+echo ================================================================
+echo.
+echo   1. Clear log files
+echo   2. Clear checkpoint files
+echo   3. Clear all temporary files
+echo   0. Back
+echo.
+echo ================================================================
+echo.
+
+set "CLEAN_CHOICE="
+set /p "CLEAN_CHOICE=Enter option (0-3): "
+
+if "!CLEAN_CHOICE!"=="1" (
+    echo [INFO] Clearing log files...
+    for /r %%f in (*.log) do del "%%f" >nul 2>&1
+    echo [OK] Done
+    pause
+    goto :cleanup_menu
+)
+
+if "!CLEAN_CHOICE!"=="2" (
+    echo [INFO] Clearing checkpoint files...
+    for /r %%f in (*.ckpt) do del "%%f" >nul 2>&1
+    echo [OK] Done
+    pause
+    goto :cleanup_menu
+)
+
+if "!CLEAN_CHOICE!"=="3" (
+    set "CONFIRM="
+    set /p "CONFIRM=Are you sure? (Y/N): "
+    if /i not "!CONFIRM!"=="Y" (
+        echo [INFO] Cancelled
+        pause
+        goto :cleanup_menu
+    )
+    for /r %%f in (*.log) do del "%%f" >nul 2>&1
+    for /r %%f in (*.ckpt) do del "%%f" >nul 2>&1
+    for /d /r %%d in (__pycache__) do rmdir /s /q "%%d" >nul 2>&1
+    echo [OK] All temporary files cleared
+    pause
+    goto :cleanup_menu
+)
+
+if "!CLEAN_CHOICE!"=="0" (
+    goto :eof
+)
+
+echo [ERROR] Invalid option
+pause
+goto :cleanup_menu
+
+:end_action
+echo.
+echo Press any key to return to menu...
+pause >nul
+goto :menu

@@ -230,8 +230,15 @@ class OpenSSLBackend(CryptoBackend):
         return result.x, result.y
     
     def is_constant_time(self) -> bool:
-        # OpenSSL通常使用恒定时间算法
-        return True
+        # P1-6 fix: generate_public_key() IS constant-time (uses OpenSSL ec.derive_private_key),
+        # but scalar_multiply() falls back to PurePython EllipticCurve.scalar_multiply()
+        # which is NOT constant-time (non-Montgomery Ladder, variable-time mod_inverse).
+        # Since is_constant_time() should reflect the ENTIRE backend, return False.
+        #
+        # For this project's main use case (collision detection via generate_public_key),
+        # the actual execution path IS constant-time. This flag is conservatively False
+        # because scalar_multiply() is not constant-time.
+        return False
 
 
 class CoincurveBackend(CryptoBackend):

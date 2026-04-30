@@ -17,6 +17,8 @@ import time
 from typing import Tuple, Optional, Dict, Any, List
 from enum import Enum
 
+import bech32
+
 from src.core.secp256k1 import Secp256k1, ECPoint, EllipticCurve
 from src.core.base58 import Base58
 from src.core.wif import WIF
@@ -619,9 +621,57 @@ class BitcoinKeyValidator:
             except (ValueError, TypeError) as e:
                 result.add_error(f"Base58Check校验和验证失败: {str(e)}")
         
-        # 3. Bech32地址验证（需要bech32模块）
+        # 3. Bech32地址验证
         elif addr_type == AddressType.BECH32:
-            result.add_warning("Bech32地址验证需要bech32模块")
+            # 验证最小长度
+            if len(address) < 10:
+                result.add_error(f"Bech32地址长度过短: {len(address)}字符")
+                return result
+            
+            # 验证字符集（只允许bech32字符）
+            charset = set("qpzry9x8gf2tvdw0s3jn54khce6mua7l")
+            for c in address[3:]:  # 跳过 "bc1" 前缀
+                if c not in charset:
+                    result.add_error(f"Bech32地址包含无效字符: '{c}'")
+                    return result
+            
+            # 使用bech32库进行完整验证
+            try:
+                decoded = bech32.bech32_decode(address)
+                if decoded is None or decoded[0] is None:
+                    result.add_error("Bech32地址解码失败（校验和无效或格式错误）")
+                    return result
+                
+                hrp, data = decoded
+                
+                # 验证HRP
+                if hrp != 'bc' and hrp != 'tb':
+                    result.add_error(f"Bech32地址HRP错误: 期望'bc'或'tb'，实际'{hrp}'")
+                
+                # 验证数据长度
+                # P2WPKH: witness version 0 (5 bits) + 20-byte witness program (160 bits) = 33 bytes in 5-bit groups
+                # P2WSH: witness version 0 (5 bits) + 32-byte witness program (256 bits) = 53 bytes in 5-bit groups
+                data_length = len(data)
+                if data_length not in [33, 53]:
+                    result.add_error(f"Bech32地址数据长度错误: {data_length}，应为33 (P2WPKH) 或 53 (P2WSH)")
+                
+                # 验证witness版本
+                witness_version = data[0]
+                if witness_version != 0:
+                    result.add_error(f"不支持的witness版本: {witness_version}")
+                
+                # 确定地址类型
+                if data_length == 33:
+                    result.add_detail("bech32_address_subtype", "P2WPKH")
+                elif data_length == 53:
+                    result.add_detail("bech32_address_subtype", "P2WSH")
+                
+                result.add_detail("bech32_hrp", hrp)
+                result.add_detail("bech32_data_length", data_length)
+                result.add_detail("bech32_valid", True)
+                
+            except Exception as e:
+                result.add_error(f"Bech32地址验证失败: {str(e)}")
         
         return result
     

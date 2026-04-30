@@ -1,13 +1,14 @@
 @echo off
-REM UTF-8编码设置批处理文件
-REM 解决Windows CMD管道破坏Python UTF-8输出的问题
-REM
-REM 使用方法:
-REM   tools\run_utf8.bat python tools\check_document_quality.py
-REM   tools\run_utf8.bat python tools\add_version_info.py --dry-run
+setlocal enabledelayedexpansion
 
-REM 设置控制台代码页为UTF-8
-chcp 65001 >nul 2>&1
+call "%~dp0..\common.bat"
+call :init_encoding
 
-REM 执行命令
+if "%~1"=="" (
+    echo [ERROR] No command specified
+    echo Usage: %~nx0 python script.py [args]
+    pause
+    exit /b 1
+)
+
 %*

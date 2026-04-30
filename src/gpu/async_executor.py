@@ -9,7 +9,7 @@
 import time
 import threading
 import logging
-from typing import List, Dict, Optional, Tuple
+from typing import Any, List, Dict, Optional, Tuple
 
 # P3-5: 统一日志获取 + 修复缺失导入
 from ..utils import init_logging, get_configured_logger
@@ -108,7 +108,7 @@ class _PendingBatch:
 
     __slots__ = ("read_event", "buf", "num_keys", "seed")
 
-    def __init__(self, read_event, buf, num_keys: int, seed: bytes):
+    def __init__(self, read_event: Any, buf: Any, num_keys: int, seed: bytes) -> None:
         self.read_event = read_event  # cl.Event: 结果回读完成事件
         self.buf = buf                 # 对应的缓冲区字典 {matches, match_flags}
         self.num_keys = num_keys
@@ -131,7 +131,7 @@ class AsyncGPUExecutor:
     - 使用非阻塞 enqueue，按 FIFO 顺序处理最老批次结果
     """
     
-    def __init__(self, gpu_device, max_batch_size: int, queue_depth: int = DEFAULT_QUEUE_DEPTH):
+    def __init__(self, gpu_device: Any, max_batch_size: int, queue_depth: int = DEFAULT_QUEUE_DEPTH) -> None:
         """
         初始化异步执行器
         
@@ -245,7 +245,7 @@ class AsyncGPUExecutor:
         """
         return GPU_SPECIFIC_CONFIG.get(gpu_model, GPU_SPECIFIC_CONFIG.get('default', {}))
     
-    def initialize_buffers(self, context, num_keys: int):
+    def initialize_buffers(self, context: Any, num_keys: int) -> None:
         """
         初始化缓冲区池（PRNG模式：seed缓冲区替代keys缓冲区）
 
@@ -311,7 +311,7 @@ class AsyncGPUExecutor:
             f"总显存消耗约 {self.queue_depth * num_keys * 4 / 1024 / 1024:.1f} MB"
         )
 
-    def prefetch_next_batch(self, seed: bytes, num_keys: int):
+    def prefetch_next_batch(self, seed: bytes, num_keys: int) -> None:
         """预存下一批种子（PRNG模式：仅缓存32字节种子，v2.2.1）
         
         Args:
@@ -333,7 +333,7 @@ class AsyncGPUExecutor:
             self._next_batch_ready.clear()
     
     def run_batch_async(self, seed: bytes, num_keys: int,
-                       program, targets_buf, num_targets) -> Tuple[List[Dict], float]:
+                       program: Any, targets_buf: Any, num_targets: int) -> Tuple[List[Dict], float]:
         """
         异步执行批次（PRNG模式：seed替代private_keys）
     

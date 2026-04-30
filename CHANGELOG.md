@@ -7,6 +7,87 @@
 
 ---
 
+## [3.4.0] - 2026-04-30
+
+### Wizard 模块架构重构 (v3.4.0 核心特性)
+
+- **模块化向导架构**: 将单一向导函数拆分为独立的策略组件
+  - `target_selector.py` — 目标地址选择器 (单地址/文件加载/自动去重)
+  - `mode_selector.py` — 碰撞模式选择器 (random/range/brute_force)
+  - `option_selector.py` — 功能选项选择器 (checkpoint/dedup/duration)
+  - `gpu_selector.py` — GPU 加速选择器 (CPU/单GPU/多GPU + 设备检测)
+- **统一配置构建器** (`config_builder.py`): 将向导输入转换为命令行参数
+- **事件驱动架构**: `events.py` 事件系统 + `message_queue.py` 消息队列, 解耦组件通信
+- **清晰接口定义** (`interfaces.py`): Protocol-based 设计, 提升可测试性
+- **向导引擎** (`wizard_engine.py`): 编排完整 4 步向导流程, 支持紧凑模式
+
+### GPU 引擎架构重构 (Phase 1 + Phase 2)
+
+- **协议层架构** (`protocols.py`): 定义核心接口 (ICollisionCore, IGPUEngineFacade, IPerformanceMonitor 等)
+- **外观层** (`facade.py`): GPUEngineFacade 统一 GPU 引擎入口, 降低耦合
+- **碰撞核心** (`core.py`): CollisionCore 管理统计/断点/去重/搜索模式协调
+- **监控管道** (`monitoring.py`): PerformanceMonitoringPipeline 独立监控组件
+- **厂商策略** (`vendor_strategy.py`): VendorOptimizationFactory 多厂商适配 (NVIDIA/AMD/Intel)
+- **清晰的模块边界**:每个组件职责单一, 依赖关系明确, 易于测试
+
+### GPU 功能增强
+
+- **v4.0 双格式地址匹配**: 同时支持 P2PKH (1xxx) 和 Bech32/P2SH 格式地址匹配
+- **P1-3 私钥范围验证**: 增强私钥生成范围校验, 防止越界访问
+- **ZeroDivisionError 修复**: 修复动态基准计算中的除零问题
+- **GPU 设备检测超时保护**: 添加 5 秒超时, 防止 GPU 检测阻塞向导
+
+### 日志子系统 (新增 `src/logging/`)
+
+- **log_collector.py**: 结构化日志收集器, 支持多源汇聚
+- **log_processor.py**: 日志处理器, 支持过滤/转换/路由
+- **log_storage.py**: 日志存储层, 支持文件/内存双模式
+- **log_query.py**: 日志查询接口, 支持时间范围/级别/模块过滤
+- **events.py**: 日志事件定义, 标准化事件格式
+
+### CLI 增强与修复
+
+- **CLIOutput 单例重置机制** (`reset_instance`): 支持测试中 capsys/monkeypatch 替换 stdout
+- **sys.stdout 安全重配置**: 使用 `reconfigure()` 替代 `TextIOWrapper` 包装, 防止 I/O 缓冲区关闭
+- **向导第 4 步**: GPU 加速选择 (CPU 模式 / 单GPU 加速 / 多GPU 加速), 含设备自动检测
+- **向导输入对齐**: 时长选择改用 1/2/3 选项 (无限/小时/天)
+
+### 测试体系增强
+
+- **55/55 测试全部通过** (CLI + GPU engine refactored + exception handling)
+- **预存测试问题全部修复** (11 项):
+  - `src/collision/gpu/` 添加 4 个工厂函数 (get_gpu_engine_facade 等)
+  - `test_single_target` 修复 `_target_list` → `targets`
+  - CLI 测试交叉污染修复 (I/O closed + 单例重置)
+  - `Callable` 类型导入缺失修复
+- **新增测试文件**: `test_gpu_engine_refactored.py` (导入/组件实例化/向后兼容/协议定义/循环依赖检测)
+- **CLI 测试覆盖增强**: 38 个 CLI 测试全部通过
+
+### 改动文件
+
+- `src/wizard/` — 新增模块 (10 文件)
+- `src/collision/gpu/` — GPU 引擎重构 (5 文件新增, core/facade/monitoring/protocols/vendor_strategy)
+- `src/logging/` — 新增日志子系统 (5 文件)
+- `src/collision/gpu_collision_engine.py` — Callable 导入修复
+- `src/cli/output.py` — CLIOutput 安全改进 (reconfigure + reset_instance)
+- `src/cli/commands.py` — 向导 GPU 选择步骤 + 时长选项改进
+- `src/utils/` — 日志相关工具 (log_collection_rules, log_dependency_manager, log_performance_optimizer, log_platform_adapter)
+- `tests/test_cli.py` — 测试增强 (单例重置 + mock 输入对齐)
+- `tests/test_gpu_engine_refactored.py` — 新增 GPU 引擎重构测试
+- `tests/test_gpu_exception_handling.py` — 属性引用修复
+
+### 破坏性变更
+
+- 无 ✅
+
+### 迁移指南
+
+- 无需迁移, 可直接升级 🔄
+- 向导新增 GPU 加速选择步骤, 首次使用需选择 CPU/GPU 模式 📝
+- 推荐观察 `src/logging/` 日志子系统运行状态 🔧
+
+---
+
 ## [3.3.1] - 2026-04-27
 
 ### GPU停止阻塞修复 (v3.3.1核心特性)

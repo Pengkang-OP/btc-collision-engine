@@ -1,57 +1,42 @@
 @echo off
-chcp 936 >nul 2>&1
-cd /d "%~dp0"
+setlocal enabledelayedexpansion
+
+call "%~dp0common.bat"
+call :init_encoding
+call :set_script_dir
 
 set "CONFIG_FILE=config.intel_arc.json"
 set "PYTHON_SCRIPT=key_collision_cli.py"
 
-where python >nul 2>&1
-if errorlevel 1 (
-    echo [ERROR] Python not found
-    pause
-    exit /b 1
-)
+call :check_python
+call :check_python_version
 
-if not exist "!CONFIG_FILE!" (
-    echo [ERROR] Config file not found: !CONFIG_FILE!
-    pause
-    exit /b 1
-)
+call :check_file_exists "!CONFIG_FILE!"
 
-if not defined VIRTUAL_ENV (
-    if exist "venv\Scripts\activate.bat" (
-        call venv\Scripts\activate.bat >nul 2>&1
-    )
-)
+call :activate_venv
+call :create_required_dirs
 
-for %%D in (logs data_logs monitoring_data) do (
-    if not exist "%%D" mkdir "%%D" 2>nul
-)
+call :print_header "BTC 碰撞引擎 - GPU 异步优化模式"
 
-echo.
-echo ================================================================
-echo   BTC Collision Engine - GPU Async Optimized
-echo ================================================================
-echo.
-echo   Config: !CONFIG_FILE!
-echo   GPU: Intel Arc A770 (Dual Buffer Async)
-echo   Batch: 1,000,000 keys/batch
+echo   配置文件: !CONFIG_FILE!
+echo   GPU: Intel Arc A770 (双缓冲异步)
+echo   批处理: 1,000,000 密钥/批次
 echo.
 
-echo [INFO] Starting GPU async engine...
-echo [INFO] Press Ctrl+C to stop safely
+echo [INFO] 正在启动 GPU 异步引擎...
+echo [INFO] 按 Ctrl+C 安全停止
 echo.
 
-python !PYTHON_SCRIPT! --config "!CONFIG_FILE!" %*
+python "!PYTHON_SCRIPT!" --config "!CONFIG_FILE!" %*
 set "EXIT_CODE=!errorlevel!"
 
 echo.
 if !EXIT_CODE! equ 0 (
-    echo [OK] Engine completed
+    echo [OK] 引擎运行完成
 ) else if !EXIT_CODE! equ 130 (
-    echo [INFO] Interrupted by user
+    echo [INFO] 用户中断操作
 ) else (
-    echo [ERROR] Exit code: !EXIT_CODE!
+    echo [ERROR] 退出码: !EXIT_CODE!
 )
 
 echo.

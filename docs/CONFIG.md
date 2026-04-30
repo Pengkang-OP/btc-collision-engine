@@ -73,6 +73,53 @@
 
 ---
 
+## `monitoring` — 监控系统配置
+
+| 配置项 | 类型 | 默认值 | 有效值 / 范围 | 说明 |
+|--------|------|--------|--------------|------|
+| `enabled` | bool | `true` | `true` / `false` | 是否启用监控系统 |
+| `collection_interval` | int | `5` | `>= 1` | 数据采集间隔（秒） |
+| `storage_dir` | string | `"monitoring_data"` | 任意路径 | 监控数据存储目录 |
+| `history_max_size` | int | `1000` | `>= 1` | 历史数据最大条数 |
+| `error_max_size` | int | `500` | `>= 1` | 错误日志最大条数 |
+| `auto_cleanup.enabled` | bool | `true` | `true` / `false` | 是否启用自动清理 |
+| `auto_cleanup.max_age_days` | int | `30` | `>= 1` | 数据最大保存天数 |
+
+---
+
+## `gpu` — GPU 高级配置
+
+| 配置项 | 类型 | 默认值 | 有效值 / 范围 | 说明 |
+|--------|------|--------|--------------|------|
+| `use_new_module` | bool | `true` | `true` / `false` | 是否使用新的 GPU 模块 |
+| `auto_detect` | bool | `true` | `true` / `false` | 自动检测 GPU 设备 |
+| `memory_usage_ratio` | float | `0.70` | `(0, 1]` | 显存使用比例（Intel Arc 建议 0.70） |
+| `enable_vendor_optimizations` | bool | `true` | `true` / `false` | 启用厂商特定优化 |
+| `gpu_memory_pool` | bool | `true` | `true` / `false` | 启用 GPU 内存池 |
+| `max_buffers` | int | `100` | `>= 1` | GPU 内存池最大缓冲区数量 |
+| `max_memory_mb` | int | `512` | `>= 1` | GPU 内存池最大内存（MB） |
+| `async_execution` | bool | `true` | `true` / `false` | 启用 GPU 异步执行（双缓冲优化） |
+| `queue_depth` | int | `4` | `1` ~ `16` | GPU 命令队列深度 |
+| `timeout_protection` | bool | `true` | `true` / `false` | 启用 GPU 超时保护机制 |
+| `base_timeout_seconds` | int | `60` | `>= 1` | GPU 内核执行基础超时（秒） |
+| `mode` | string | `"auto"` | `auto` / `single` / `multi` | GPU 模式 |
+| `device_indices` | array | `[-1]` | 整数数组 | GPU 设备索引列表，`-1` 表示自动选择 |
+| `load_balancing` | string | `"performance"` | `performance` / `equal` | 负载均衡策略 |
+| `auto_tuning` | bool | `true` | `true` / `false` | 自动根据设备型号调优参数 |
+
+---
+
+## `optimization` — GPU 优化参数
+
+| 配置项 | 类型 | 默认值 | 有效值 / 范围 | 说明 |
+|--------|------|--------|--------------|------|
+| `uint32_workaround` | bool | `true` | `true` / `false` | Intel Arc 必须启用（避免 global char* hang bug） |
+| `disable_async_transfer` | bool | `false` | `true` / `false` | 禁用异步传输（Intel Arc 建议 `false`） |
+| `conservative_memory_policy` | bool | `false` | `true` / `false` | 保守内存策略 |
+| `adaptive_timeout` | bool | `true` | `true` / `false` | 自适应超时（根据历史执行时间动态调整） |
+
+---
+
 ## `performance_monitoring` — 性能监控配置
 
 | 配置项 | 类型 | 默认值 | 有效值 / 范围 | 说明 |
@@ -82,6 +129,26 @@
 | `slow_threshold_ms` | float | `100` | `>= 0` | 慢操作阈值（毫秒） |
 | `max_records` | int | `1000` | `>= 1` | 性能记录最大保存条数 |
 | `log_level` | string | `"DEBUG"` | `DEBUG` / `INFO` / `WARNING` / `ERROR` / `CRITICAL` | 性能日志输出级别 |
+
+---
+
+## `i18n` — 国际化配置
+
+| 配置项 | 类型 | 默认值 | 有效值 / 范围 | 说明 |
+|--------|------|--------|--------------|------|
+| `language` | string | `"auto"` | `auto` / `zh_CN` / `en_US` | 界面语言。`auto` 自动检测系统语言 |
+| `fallback_language` | string | `"en_US"` | `zh_CN` / `en_US` | 回退语言（当指定语言翻译不存在时使用） |
+
+---
+
+## `security` — 安全配置
+
+| 配置项 | 类型 | 默认值 | 有效值 / 范围 | 说明 |
+|--------|------|--------|--------------|------|
+| `enable_deduplication` | bool | `true` | `true` / `false` | 是否启用去重功能 |
+| `enable_checkpoint` | bool | `true` | `true` / `false` | 是否启用断点保存功能 |
+| `checkpoint_encryption` | bool | `true` | `true` / `false` | 是否加密断点文件（保护目标地址列表） |
+| `enable_audit_log` | bool | `true` | `true` / `false` | 是否启用审计日志 |
 
 ---
 
@@ -123,5 +190,41 @@
 {
   "logging": { "level": "DEBUG", "enable_console": true },
   "collision": { "max_workers": 1 }
+}
+```
+
+### 生产环境模式
+
+```json
+{
+  "logging": { 
+    "level": "INFO", 
+    "enable_console": true,
+    "enable_file": true,
+    "compress_backups": true
+  },
+  "collision": { 
+    "max_workers": null,
+    "checkpoint_interval": 60
+  },
+  "security": {
+    "enable_deduplication": true,
+    "enable_checkpoint": true,
+    "checkpoint_encryption": true,
+    "enable_audit_log": true
+  }
+}
+```
+
+### 多 GPU 并行模式
+
+```json
+{
+  "gpu": {
+    "mode": "multi",
+    "device_indices": [-1],
+    "load_balancing": "performance",
+    "auto_tuning": true
+  }
 }
 ```

@@ -912,7 +912,7 @@ class MultiGPUCollisionEngine:
 
         logger.info("多GPU引擎资源已清理")
     
-    def __enter__(self):
+    def __enter__(self) -> "MultiGPUEngine":
         """上下文管理器入口"""
         return self
     

@@ -1,16 +1,24 @@
 # BTC碰撞引擎拓扑图文档
 
-> **版本**: v1.0.0 | **最后更新**: 2026-04-26  
-> **面向**: 开发者/架构师
+> **版本**: v3.3.2 | **最后更新**: 2026-04-29  
+> **面向**: 开发者/架构师  
+> **更新说明**: 根据实际代码验证结果，修正目标地址数据流描述（存储P2PKH地址字符串而非Hash160）
 
 ## 目录
 
-- [1. 系统架构拓扑图](#1-系统架构拓扑图)
-- [2. 核心模块关系图](#2-核心模块关系图)
-- [3. 数据流向图](#3-数据流向图)
-- [4. 依赖关系图](#4-依赖关系图)
-- [5. 模块职责表](#5-模块职责表)
-- [6. 技术栈依赖](#6-技术栈依赖)
+- [BTC碰撞引擎拓扑图文档](#btc碰撞引擎拓扑图文档)
+  - [目录](#目录)
+  - [1. 系统架构拓扑图](#1-系统架构拓扑图)
+  - [2. 核心模块关系图](#2-核心模块关系图)
+  - [3. 数据流向图](#3-数据流向图)
+  - [3.5 目标地址导入与匹配详细数据流（已验证）](#35-目标地址导入与匹配详细数据流已验证)
+    - [数据转换流程](#数据转换流程)
+    - [实际测试数据（私钥=1）](#实际测试数据私钥1)
+    - [核心代码位置](#核心代码位置)
+    - [验证结论](#验证结论)
+  - [5. 模块职责表](#5-模块职责表)
+  - [6. 技术栈依赖](#6-技术栈依赖)
+  - [总结](#总结)
 
 ## 1. 系统架构拓扑图
 
@@ -224,29 +232,45 @@ flowchart TD
     style H fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px;
 ```
 
-**图3.2**: 碰撞检测数据流
+**图3.2**: 碰撞检测数据流（已验证 v2026-04-29）
 
 ```mermaid
 flowchart TD
-    A["目标地址集<br/>Set结构 O(1)查找"] --> B["碰撞引擎<br/>KeyCollisionEngine"]
-    B --> C["私钥生成<br/>SecureKeyManager"]
-    C --> D["地址生成<br/>P2PKHAddressGenerator"]
-    D --> E["哈希计算<br/>HashUtils"]
-    E --> F["匹配检查<br/>与目标地址比较"]
-    F -->|匹配| G["触发回调<br/>on_match"]
-    F -->|不匹配| H["私钥清零<br/>安全销毁"]
-    G --> I["更新统计<br/>CollisionStats"]
-    H --> I
-    B --> J["断点保存<br/>CheckpointManager"]
-    B --> K["去重过滤<br/>DeduplicationFilter"]
-    B --> L["性能监控<br/>DataLogger"]
+    subgraph TargetImport["目标地址导入阶段"]
+        A1["多种格式输入<br/>WIF/地址/公钥/Hash160"] --> A2["TargetResolver<br/>格式检测 detect_format()"]
+        A2 --> A3["统一转换 resolve()<br/>→ P2PKH地址字符串"]
+        A3 --> A4["引擎初始化<br/>self.targets = Set[str]"]
+        A4 --> A5["小写化存储<br/>addr.lower()<br/>Set[str] O(1)查找"]
+    end
     
-    style A fill:#e1f5ff,stroke:#2196f3,stroke-width:2px;
-    style B fill:#fff3e0,stroke:#ff9800,stroke-width:2px;
-    style C,D,E fill:#e8f5e9,stroke:#4caf50,stroke-width:2px;
-    style F fill:#f3e5f5,stroke:#9c27b0,stroke-width:2px;
-    style G,H fill:#ffebee,stroke:#f44336,stroke-width:2px;
-    style I,J,K,L fill:#e3f2fd,stroke:#1976d2,stroke-width:2px;
+    subgraph CollisionEngine["碰撞引擎运行阶段"]
+        B1["私钥生成<br/>SecureKeyManager"] --> B2["地址生成<br/>P2PKHAddressGenerator"]
+        B2 --> B3["椭圆曲线乘法<br/>Q = k * G → 公钥"]
+        B3 --> B4["Hash160计算<br/>SHA256 + RIPEMD160<br/>20字节中间结果"]
+        B4 --> B5["Base58Check编码<br/>→ P2PKH地址字符串"]
+    end
+    
+    subgraph MatchProcess["碰撞匹配阶段"]
+        B5 --> C1["生成地址小写化<br/>addr.lower()"]
+        A5 --> C2{"字符串集合查找<br/>addr.lower() in targets?<br/>O(1)时间复杂度"}
+        C1 --> C2
+        C2 -->|匹配 True| D1["触发回调<br/>on_match(pk, addr, wif)"]
+        C2 -->|不匹配 False| D2["计数器+1<br/>继续下一个私钥"]
+        D1 --> D3["更新统计<br/>CollisionStats"]
+        D2 --> D3
+    end
+    
+    subgraph SystemOps["系统操作"]
+        B1 --> E1["断点保存<br/>CheckpointManager"]
+        B1 --> E2["去重过滤<br/>DeduplicationFilter"]
+        D3 --> E3["性能监控<br/>DataLogger"]
+    end
+    
+    style TargetImport fill:#e3f2fd,stroke:#2196f3,stroke-width:2px
+    style CollisionEngine fill:#fff3e0,stroke:#ff9800,stroke-width:2px
+    style MatchProcess fill:#f3e5f5,stroke:#9c27b0,stroke-width:2px
+    style SystemOps fill:#e8f5e9,stroke:#4caf50,stroke-width:2px
+    style D1 fill:#c8e6c9,stroke:#4caf50,stroke-width:2px
 ```
 
 **图3.3**: GPU加速数据流
@@ -268,7 +292,116 @@ flowchart TD
     style G,H fill:#e8f5e9,stroke:#4caf50,stroke-width:2px;
 ```
 
-## 4. 依赖关系图
+## 3.5 目标地址导入与匹配详细数据流（已验证）
+
+**关键发现**：通过实际代码测试验证（2026-04-29），目标地址存储和匹配使用的是**P2PKH地址字符串**，而非Hash160。
+
+### 数据转换流程
+
+```mermaid
+flowchart LR
+    subgraph Input["输入层"]
+        I1["WIF私钥<br/>5/K/L开头"]
+        I2["P2PKH地址<br/>1开头"]
+        I3["P2SH地址<br/>3开头"]
+        I4["Bech32地址<br/>bc1开头"]
+        I5["压缩公钥<br/>02/03 hex"]
+        I6["Hash160<br/>40 hex"]
+    end
+    
+    subgraph Resolve["解析层"]
+        R1["TargetResolver<br/>detect_format()"]
+        R2["统一转换为<br/>P2PKH地址字符串"]
+    end
+    
+    subgraph Store["存储层"]
+        S1["self.targets<br/>Set[str]"]
+        S2["小写化处理<br/>addr.lower()"]
+    end
+    
+    subgraph Generate["生成层"]
+        G1["私钥32字节"]
+        G2["公钥33字节"]
+        G3["Hash160 20字节<br/>(中间结果)"]
+        G4["P2PKH地址字符串<br/>33-34字符"]
+    end
+    
+    subgraph Match["匹配层"]
+        M1["生成地址.lower()"]
+        M2{"in targets?<br/>字符串比较"}
+        M3["✅ 匹配成功"]
+        M4["❌ 继续下一个"]
+    end
+    
+    I1 --> R1
+    I2 --> R1
+    I3 --> R1
+    I4 --> R1
+    I5 --> R1
+    I6 --> R1
+    
+    R1 --> R2
+    R2 --> S1
+    S1 --> S2
+    
+    G1 --> G2
+    G2 --> G3
+    G3 --> G4
+    
+    G4 --> M1
+    S2 --> M2
+    M1 --> M2
+    
+    M2 --> M3
+    M2 --> M4
+    
+    style Input fill:#e3f2fd,stroke:#2196f3,stroke-width:2px
+    style Resolve fill:#fff3e0,stroke:#ff9800,stroke-width:2px
+    style Store fill:#fff9c4,stroke:#fbc02d,stroke-width:2px
+    style Generate fill:#f3e5f5,stroke:#9c27b0,stroke-width:2px
+    style Match fill:#ffebee,stroke:#f44336,stroke-width:2px
+    style M3 fill:#c8e6c9,stroke:#4caf50,stroke-width:2px
+```
+
+### 实际测试数据（私钥=1）
+
+| 步骤 | 数据 | 类型 | 大小 | 说明 |
+|------|------|------|------|------|
+| WIF私钥 | `KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qYjgd9M7rFU73sVHnoWn` | str | 52字符 | 压缩格式 |
+| 解码私钥 | `0000000000000000000000000000000000000000000000000000000000000001` | bytes | 32字节 | hex=1 |
+| 压缩公钥 | `0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798` | bytes | 33字节 | 02前缀 |
+| Hash160 | `751e76e8199196d454941c45d1b3a323f1433bd6` | bytes | 20字节 | 中间结果 |
+| P2PKH地址 | `1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH` | str | 34字符 | 最终输出 |
+| 存储格式 | `1bggz9tcn4rm9kbzdn7kprqz87sz26samh` | str | 34字符 | 小写存储 |
+
+### 核心代码位置
+
+- **TargetResolver解析**：`src/collision/targets/resolver.py`
+  - `detect_format()` - 自动检测输入格式
+  - `resolve()` - 统一转换为P2PKH地址
+
+- **引擎初始化**：`src/collision/key_collision_engine.py:129`
+
+  ```python
+  self.targets = set(addr.lower() for addr in targets)
+  ```
+
+- **碰撞匹配**：`src/collision/key_collision_engine.py:1077`
+
+  ```python
+  if compressed_addr.lower() in self.targets:
+      # 匹配成功
+  ```
+
+### 验证结论
+
+✅ 所有输入格式统一转换为P2PKH地址字符串  
+✅ 地址字符串转换为小写后存储到Set[str]  
+✅ 碰撞匹配时使用小写地址字符串进行比较  
+✅ **Hash160仅作为中间计算结果，不用于最终匹配**  
+✅ 使用Python Set实现O(1)时间复杂度的地址查找  
+
+---
 
 **图4.1**: 模块依赖关系图
 

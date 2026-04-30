@@ -1,52 +1,62 @@
 @echo off
-REM 监控报告生成批处理文件
+setlocal enabledelayedexpansion
 
-echo ===============================================
-echo BTC 碰撞引擎 - 监控报告生成脚本
-echo ===============================================
+call "%~dp0common.bat"
+call :init_encoding
+call :set_script_dir
+
+call :print_header "BTC Collision Engine - Report Generator"
+
+call :check_python
+call :check_python_version
+call :check_file_exists "generate_report.py"
+call :activate_venv
+
+echo   1. Generate daily report
+echo   2. Generate weekly report
+echo   3. Generate monthly report
+echo   4. Generate HTML format report
+echo   5. Exit
 echo.
 
-echo 1. 生成每日报告
-echo 2. 生成每周报告
-echo 3. 生成每月报告
-echo 4. 生成HTML格式报告
-echo 5. 退出
-echo.
+set "CHOICE="
+set /p "CHOICE=Select operation (1-5): "
 
-set /p choice=请选择操作 (1-5): 
+if "!CHOICE!"=="1" goto :daily
+if "!CHOICE!"=="2" goto :weekly
+if "!CHOICE!"=="3" goto :monthly
+if "!CHOICE!"=="4" goto :html
+if "!CHOICE!"=="5" goto :exit
 
-if "%choice%"=="1" goto daily
-if "%choice%"=="2" goto weekly
-if "%choice%"=="3" goto monthly
-if "%choice%"=="4" goto html
-if "%choice%"=="5" goto exit
+echo [ERROR] Invalid option: !CHOICE!
+goto :end
 
 :daily
-echo 生成每日报告...
+echo [INFO] Generating daily report...
 python generate_report.py --type daily
-goto end
+goto :end
 
 :weekly
-echo 生成每周报告...
+echo [INFO] Generating weekly report...
 python generate_report.py --type weekly
-goto end
+goto :end
 
 :monthly
-echo 生成每月报告...
+echo [INFO] Generating monthly report...
 python generate_report.py --type monthly
-goto end
+goto :end
 
 :html
-echo 生成HTML格式报告...
+echo [INFO] Generating HTML report...
 python generate_report.py --type daily --html --output report.html
-echo HTML报告已保存到 report.html
-goto end
+echo [OK] HTML report saved to report.html
+goto :end
 
 :exit
-echo 退出...
-goto end
+echo [INFO] Exiting...
+goto :end
 
 :end
 echo.
-echo 操作完成，按任意键退出...
+echo Operation completed, press any key to exit...
 pause >nul

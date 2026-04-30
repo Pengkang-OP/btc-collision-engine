@@ -74,12 +74,15 @@ ReadWritePaths=/opt/btc-collision-engine/logs \
 PrivateTmp=true
 
 # 资源限制
-# CPU限制（根据实际硬件调整）
-# CPUQuota=800%
+# CPU限制（根据实际硬件调整，800% = 8核）
+CPUQuota=800%
 
 # 内存限制（根据实际硬件调整）
-# MemoryMax=16G
-# MemoryHigh=14G
+MemoryMax=16G
+MemoryHigh=14G
+
+# 内存交换限制
+MemorySwapMax=2G
 
 # 文件描述符限制
 LimitNOFILE=65536
@@ -87,6 +90,15 @@ LimitNPROC=4096
 
 # 进程优先级（较低优先级，避免影响系统其他服务）
 Nice=10
+
+# IO限制（防止磁盘IO过载）
+IOWeight=50
+
+# 阻塞IO限制
+BlockIOWeight=50
+
+# 任务数限制
+TasksMax=4096
 
 # 看门狗（健康检查）
 WatchdogSec=300
