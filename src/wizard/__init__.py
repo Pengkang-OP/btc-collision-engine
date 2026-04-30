@@ -27,6 +27,7 @@ __author__ = "BTC Collision Engine Team"
 from .wizard_engine import WizardEngine
 from .interfaces import WizardResult, WizardConfig, WizardMode
 from .events import WizardEvent
+from .selector_protocol import SelectorProtocol
 
 __all__ = [
     'WizardEngine',
@@ -34,4 +35,5 @@ __all__ = [
     'WizardConfig',
     'WizardMode',
     'WizardEvent',
+    'SelectorProtocol',
 ]

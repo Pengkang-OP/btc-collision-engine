@@ -74,7 +74,7 @@ class ConfigManager:
                     "device_index": {"type": "integer"},
                     "batch_size": {"type": "integer", "minimum": 1, "maximum": 16777216},
                     "auto_detect": {"type": "boolean"},
-                    "memory_usage_ratio": {"type": "number", "minimum": 0, "maximum": 1},
+                    "memory_usage_ratio": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
                     "enable_vendor_optimizations": {"type": "boolean"},
                     # CFG-1修复: 添加缺失的GPU配置项
                     "async_execution": {"type": "boolean"},
@@ -270,7 +270,7 @@ class ConfigManager:
         }
     }
     
-    def __init__(self, config_file: str = None):
+    def __init__(self, config_file: Optional[str] = None) -> None:
         """
         初始化配置管理器
         
@@ -405,7 +405,7 @@ class ConfigManager:
             config[keys[-1]] = value
         return True
     
-    def _merge_config(self, base: Dict, update: Dict):
+    def _merge_config(self, base: Dict, update: Dict) -> None:
         """
         递归合并配置（必须在锁内调用）
         
@@ -485,7 +485,7 @@ class ConfigManager:
         return errors
     
     @classmethod
-    def _get_validator(cls):
+    def _get_validator(cls) -> Optional['Draft7Validator']:
         """获取缓存的Schema验证器实例（懒加载）"""
         if cls._cached_validator is None:
             if HAS_JSONSCHEMA:

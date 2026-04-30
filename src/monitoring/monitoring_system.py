@@ -27,7 +27,7 @@ logger = get_configured_logger("MonitoringSystem")
 class MonitoringData:
     """监控数据结构"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.timestamp: float = time.time()
         self.performance: Dict[str, Any] = {
             "speed": 0.0,  # 每秒检测速率
@@ -65,7 +65,7 @@ class MonitoringData:
 class DataCollector:
     """数据采集器"""
     
-    def __init__(self, engine=None):
+    def __init__(self, engine: Optional[Any] = None) -> None:
         self.engine = engine
         self.process = psutil.Process(os.getpid())
         self.start_time = time.time()
@@ -99,7 +99,7 @@ class DataCollector:
         with self._cpu_sample_lock:
             return self._cpu_usage_value
     
-    def stop(self):
+    def stop(self) -> None:
         """停止后台CPU采样线程"""
         self._cpu_sample_running = False
     
@@ -182,7 +182,7 @@ class DataStorage:
     monitoring_data目录已废弃。
     """
     
-    def __init__(self, storage_dir: str = None):
+    def __init__(self, storage_dir: str = None) -> None:
         # 使用统一配置，默认使用data_logs
         self.storage_dir = DataStorageConfig.ensure_storage_dir(storage_dir)
         self.current_data_file = os.path.join(self.storage_dir, "current_data.json")
@@ -199,7 +199,7 @@ class DataStorage:
             with open(self.error_log_file, 'w', encoding='utf-8') as f:
                 json.dump([], f)
     
-    def save_current_data(self, data: MonitoringData):
+    def save_current_data(self, data: MonitoringData) -> None:
         """保存当前数据（优化：原子写入）"""
         try:
             # 使用原子写入：先写临时文件，再重命名
@@ -224,7 +224,7 @@ class DataStorage:
                 # A类修复: 资源清理失败添加DEBUG日志
                 logger.debug(f"清理临时文件失败（可忽略）: {cleanup_error}")
     
-    def save_history_data(self, data: MonitoringData):
+    def save_history_data(self, data: MonitoringData) -> None:
         """保存历史数据（优化：原子写入 + 数据恢复）"""
         try:
             # 读取现有历史数据（带恢复机制）
@@ -260,7 +260,7 @@ class DataStorage:
                 # A类修复: 资源清理失败添加DEBUG日志
                 logger.debug(f"清理临时文件失败（可忽略）: {cleanup_error}")
     
-    def compress_old_data(self, days_threshold: int = 7, sample_rate: float = 0.1):
+    def compress_old_data(self, days_threshold: int = 7, sample_rate: float = 0.1) -> None:
         """P2-3修复: 压缩超过threshold天的历史数据
         
         参数:
@@ -376,7 +376,7 @@ class DataStorage:
         
         return sampled
     
-    def save_error(self, error: Dict[str, Any]):
+    def save_error(self, error: Dict[str, Any]) -> None:
         """保存错误记录（优化：原子写入）"""
         try:
             # 读取现有错误日志
@@ -505,7 +505,7 @@ class AnomalyDetector:
         detector = AnomalyDetector()
     """
     
-    def __init__(self, storage: Optional['DataStorage'] = None):
+    def __init__(self, storage: Optional['DataStorage'] = None) -> None:
         """
         初始化异常检测器
         
@@ -682,7 +682,7 @@ class MonitoringAlertAdapter:
         adapter = MonitoringAlertAdapter()
     """
     
-    def __init__(self, storage: Optional['DataStorage'] = None):
+    def __init__(self, storage: Optional['DataStorage'] = None) -> None:
         """
         初始化告警适配器
         
@@ -779,7 +779,7 @@ class ReportGenerator:
         generator.detector = custom_detector
     """
     
-    def __init__(self, storage: Optional['DataStorage'] = None, detector: Optional['AnomalyDetector'] = None):
+    def __init__(self, storage: Optional['DataStorage'] = None, detector: Optional['AnomalyDetector'] = None) -> None:
         """
         初始化报告生成器
         
@@ -1016,7 +1016,7 @@ class ReportGenerator:
 class MonitoringSystem:
     """监控系统主类"""
     
-    def __init__(self, engine=None, collection_interval: int = 5):
+    def __init__(self, engine: Optional[Any] = None, collection_interval: int = 5) -> None:
         """
         初始化监控系统
         
@@ -1060,7 +1060,7 @@ class MonitoringSystem:
         self._last_flush_time = time.monotonic()
         self._flush_interval = 60
     
-    def register_component(self, name: str, component: Any):
+    def register_component(self, name: str, component: Any) -> None:
         """
         注册组件
         
@@ -1071,7 +1071,7 @@ class MonitoringSystem:
         self.components[name] = component
         logger.info(f"组件 '{name}' 已注册到监控系统")
     
-    def start(self):
+    def start(self) -> None:
         """启动监控系统"""
         if self._running:
             return
@@ -1082,7 +1082,7 @@ class MonitoringSystem:
         self._thread.start()
         logger.info("监控系统已启动")
     
-    def stop(self):
+    def stop(self) -> None:
         """停止监控系统"""
         if not self._running:
             return

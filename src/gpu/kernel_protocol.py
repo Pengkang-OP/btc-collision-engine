@@ -165,7 +165,7 @@ class GPUKernelFactory:
         if cls._kernel_class is None:
             raise ValueError("未注册GPU内核类，请先调用 GPUKernelFactory.register()")
         
-        return cls._kernel_class(device, max_batch_size=max_batch_size, program=program)
+        return cls._kernel_class(device, max_batch_size=max_batch_size, program=program)  # type: ignore[call-arg]
     
     @classmethod
     def reset(cls) -> None:

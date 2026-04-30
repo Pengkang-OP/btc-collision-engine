@@ -98,7 +98,7 @@ class MonitorConfig:
     """清理间隔（秒，默认24小时）"""
     
     # P3优化：dataclass初始化后自动验证
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """dataclass初始化后自动调用验证
         
         确保配置对象创建时就是有效的。

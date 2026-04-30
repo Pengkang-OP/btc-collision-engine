@@ -106,7 +106,7 @@ class AlertSystem:
         })
     """
     
-    def __init__(self, alert_log_file: Optional[str] = None):
+    def __init__(self, alert_log_file: Optional[str] = None) -> None:
         """初始化告警系统
         
         Args:
@@ -134,7 +134,7 @@ class AlertSystem:
         
         logger.info(f"告警系统初始化完成: {len(self.rules)} 条规则")
     
-    def add_rule(self, rule: AlertRule):
+    def add_rule(self, rule: AlertRule) -> None:
         """添加告警规则
         
         Args:
@@ -161,7 +161,7 @@ class AlertSystem:
         
         return removed
     
-    def add_alert_callback(self, callback: Callable):
+    def add_alert_callback(self, callback: Callable) -> None:
         """添加告警回调函数
         
         Args:
@@ -170,7 +170,7 @@ class AlertSystem:
         self.alert_callbacks.append(callback)
         logger.info(f"添加告警回调函数")
     
-    def setup_default_rules(self):
+    def setup_default_rules(self) -> None:
         """设置默认告警规则"""
         
         # 规则1: 性能退化>20%
@@ -398,7 +398,7 @@ class AlertSystem:
         # 保存告警历史
         self._save_alert_history()
     
-    def resolve_alert(self, alert_index: int):
+    def resolve_alert(self, alert_index: int) -> None:
         """标记告警已解决
         
         Args:
@@ -510,7 +510,7 @@ class AlertSystem:
         except Exception as e:
             logger.error(f"加载告警历史失败: {e}")
     
-    def clear_history(self):
+    def clear_history(self) -> None:
         """清空告警历史"""
         self.alert_history.clear()
         self.last_alert_time.clear()

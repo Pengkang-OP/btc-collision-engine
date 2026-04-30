@@ -275,16 +275,20 @@ class TestValidateConfigValue:
         assert self.manager._validate_config_value('batch_size', 1024) is True
     
     def test_batch_size_valid_max(self):
-        """测试batch_size最大有效值"""
-        assert self.manager._validate_config_value('batch_size', 16777216) is True
+        """测试batch_size最大有效值 (P1-2: < UINT32_MAX)"""
+        UINT32_MAX = 0xFFFFFFFF
+        assert self.manager._validate_config_value('batch_size', UINT32_MAX - 1) is True
     
     def test_batch_size_too_small(self):
         """测试batch_size过小"""
         assert self.manager._validate_config_value('batch_size', 512) is False
     
     def test_batch_size_too_large(self):
-        """测试batch_size过大"""
-        assert self.manager._validate_config_value('batch_size', 33554432) is False
+        """测试batch_size过大 (P1-2: >= UINT32_MAX 应拒绝)"""
+        UINT32_MAX = 0xFFFFFFFF
+        # UINT32_MAX should be rejected (gid overflow prevention)
+        assert self.manager._validate_config_value('batch_size', UINT32_MAX) is False
+        assert self.manager._validate_config_value('batch_size', UINT32_MAX + 1) is False
     
     def test_batch_size_wrong_type(self):
         """测试batch_size类型错误"""
@@ -351,7 +355,7 @@ class TestValidateMergedConfig:
         assert "batch_size过小" in caplog.text
     
     def test_batch_size_too_large_warning(self, caplog):
-        """测试batch_size过大输出警告"""
+        """测试batch_size过大输出警告 (P1-2: >= 33M 触发显存警告)"""
         config = {'batch_size': 33554432}
         
         with caplog.at_level(logging.WARNING):

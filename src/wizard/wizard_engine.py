@@ -9,6 +9,10 @@
 import sys
 import os
 import time
+import traceback
+import logging
+
+logger = logging.getLogger(__name__)
 
 # 添加项目根目录到路径
 _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -41,16 +45,18 @@ class WizardEngine:
             print(f"向导取消或出错: {result.error_message}")
     """
 
-    def __init__(self, config: Optional[WizardConfig] = None):
+    def __init__(self, config: Optional[WizardConfig] = None, message_queue: Optional[WizardMessageQueue] = None):
         """初始化向导引擎
 
         Args:
             config: 向导配置，默认使用标准配置
+            message_queue: 消息队列实例，默认使用全局单例。
+                          支持注入自定义/模拟队列用于测试。
         """
         self.config = config or WizardConfig()
         self.result = WizardResult()
         self.event_dispatcher = EventDispatcher()
-        self.message_queue = get_message_queue()
+        self.message_queue = message_queue or get_message_queue()
         self._running = False
         self._step_handlers = {
             'target': self._select_target,
@@ -89,7 +95,8 @@ class WizardEngine:
         except KeyboardInterrupt:
             self._cancelled()
         except Exception as e:
-            self._error(str(e))
+            logger.error(f"Wizard engine error: {e}", exc_info=True)
+            self._error(f"{type(e).__name__}: {e}")
         finally:
             self._running = False
 
@@ -152,7 +159,11 @@ class WizardEngine:
     def _build_config(self):
         """构建配置"""
         builder = ConfigBuilder()
-        command = builder.build(self.result)
+        try:
+            command = builder.build(self.result)
+        except ValueError as e:
+            self._error(f"Config validation failed: {e}")
+            return
         self.result.command = command
         self.message_queue.send(WizardEventType.CONFIG_BUILT, {
             'command': command
@@ -230,7 +241,8 @@ class WizardEngine:
         import subprocess
         try:
             subprocess.run(self.result.command)
-        except Exception as e:
+        except (subprocess.SubprocessError, FileNotFoundError, OSError) as e:
+            logger.error(f"Command execution failed: {e}")
             print(f"[ERROR] 执行失败: {e}")
 
     def stop(self):

@@ -27,7 +27,7 @@ class LogCollectionRule:
     sample_rate: int = 1  # 采样率，1表示全部记录，N表示每N条记录1条
     max_logs_per_second: float = 0.0  # 每秒最大日志数，0表示无限制
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """初始化规则"""
         # 编译正则表达式模式
         self._module_regex: Optional[Pattern] = None
@@ -110,7 +110,7 @@ class LogCollectionRule:
 class LogCollectionRuleManager:
     """日志收集规则管理器"""
     
-    def __init__(self, config_file: Optional[str] = None):
+    def __init__(self, config_file: Optional[str] = None) -> None:
         """
         初始化规则管理器
         
@@ -121,7 +121,7 @@ class LogCollectionRuleManager:
         self.config_file = config_file
         self._load_rules()
     
-    def _load_rules(self):
+    def _load_rules(self) -> None:
         """加载规则配置"""
         if not self.config_file:
             # 使用默认规则
@@ -146,7 +146,7 @@ class LogCollectionRuleManager:
             print(f"加载日志收集规则失败: {e}")
             self._load_default_rules()
     
-    def _load_default_rules(self):
+    def _load_default_rules(self) -> None:
         """加载默认规则"""
         self.rules = [
             LogCollectionRule(
@@ -188,7 +188,7 @@ class LogCollectionRuleManager:
             )
         ]
     
-    def save_rules(self):
+    def save_rules(self) -> None:
         """保存规则到配置文件"""
         if not self.config_file:
             return
@@ -206,17 +206,17 @@ class LogCollectionRuleManager:
         except Exception as e:
             print(f"保存日志收集规则失败: {e}")
     
-    def add_rule(self, rule: LogCollectionRule):
+    def add_rule(self, rule: LogCollectionRule) -> None:
         """添加规则"""
         self.rules.append(rule)
         self.save_rules()
     
-    def remove_rule(self, rule_name: str):
+    def remove_rule(self, rule_name: str) -> None:
         """删除规则"""
         self.rules = [rule for rule in self.rules if rule.name != rule_name]
         self.save_rules()
     
-    def update_rule(self, rule_name: str, **kwargs):
+    def update_rule(self, rule_name: str, **kwargs) -> None:
         """更新规则"""
         for rule in self.rules:
             if rule.name == rule_name:
@@ -271,7 +271,7 @@ class LogCollectionRuleManager:
         """获取所有规则"""
         return self.rules
     
-    def set_rules(self, rules: List[LogCollectionRule]):
+    def set_rules(self, rules: List[LogCollectionRule]) -> None:
         """设置规则"""
         self.rules = rules
         self.save_rules()

@@ -11,13 +11,17 @@
 
 import logging
 from ..utils import init_logging, get_configured_logger
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, Any, Dict, TYPE_CHECKING
 
 logger = get_configured_logger("IntelOptimizer")
 
 # 延迟导入避免循环依赖
 if TYPE_CHECKING:
-    pass
+    from .intel_timeout_manager import AdaptiveTimeoutManager  # noqa: F401
+    from .intel_memory_monitor import IntelMemoryMonitor  # noqa: F401
+    from .benchmark_suite import GPUBenchmarkSuite  # noqa: F401
+    from .auto_tuner import GPUAutoTuner  # noqa: F401
+    from .performance_reporter import PerformanceReportGenerator  # noqa: F401
 
 
 class IntelGPUOptimizer:
@@ -31,23 +35,23 @@ class IntelGPUOptimizer:
         logger: 可选的日志记录器，默认使用模块级 logger
     """
 
-    def __init__(self, device, config: dict, engine_logger=None) -> None:
+    def __init__(self, device: Any, config: Dict[str, Any], engine_logger: Any = None) -> None:
         self._device = device
         self._config = config
         self._logger = engine_logger or logger
 
         # 维持对监控组件的引用（注入到 engine 的属性中）
-        self._timeout_manager = None
-        self._memory_monitor = None
-        self._benchmark_suite = None
-        self._auto_tuner = None
-        self._performance_reporter = None
+        self._timeout_manager: Any = None
+        self._memory_monitor: Any = None
+        self._benchmark_suite: Any = None
+        self._auto_tuner: Any = None
+        self._performance_reporter: Any = None
 
     # ------------------------------------------------------------------
     # 公共接口
     # ------------------------------------------------------------------
 
-    def apply_optimizations(self, engine_context: dict) -> dict:
+    def apply_optimizations(self, engine_context: Dict[str, Any]) -> Dict[str, Any]:
         """应用 Intel GPU 特定优化
 
         验证 uint32 workaround 是否正确应用，并初始化所有监控/调优组件。
@@ -65,7 +69,7 @@ class IntelGPUOptimizer:
         self._logger.info("🔧 开始应用 Intel GPU 特殊优化")
         self._logger.info("=" * 60)
 
-        result = {}
+        result: Dict[str, Any] = {}
 
         # 1. 验证 uint32 workaround
         kernel_source = engine_context.get('kernel_source', '')
@@ -110,7 +114,7 @@ class IntelGPUOptimizer:
 
         return result
 
-    def init_monitoring_and_tuning(self, engine_context: dict) -> dict:
+    def init_monitoring_and_tuning(self, engine_context: Dict[str, Any]) -> Dict[str, Any]:
         """初始化 Intel GPU 监控和调优组件（P1/P2）
 
         采用防御性初始化策略：
@@ -296,7 +300,7 @@ class IntelGPUOptimizer:
             'performance_reporter': self._performance_reporter,
         }
 
-    def get_optimization_flags(self) -> dict:
+    def get_optimization_flags(self) -> Dict[str, Any]:
         """获取当前 Intel 优化标志状态
 
         Returns:
@@ -319,29 +323,29 @@ class IntelGPUOptimizer:
     # ------------------------------------------------------------------
 
     @property
-    def timeout_manager(self) -> 'AdaptiveTimeoutManager':
+    def timeout_manager(self) -> Optional['AdaptiveTimeoutManager']:
         """自适应超时管理器"""
-        return self._timeout_manager
+        return self._timeout_manager  # type: ignore[no-any-return]
 
     @property
-    def memory_monitor(self) -> 'IntelMemoryMonitor':
+    def memory_monitor(self) -> Optional['IntelMemoryMonitor']:
         """显存监控器"""
-        return self._memory_monitor
+        return self._memory_monitor  # type: ignore[no-any-return]
 
     @property
-    def benchmark_suite(self) -> 'GPUBenchmarkSuite':
+    def benchmark_suite(self) -> Optional['GPUBenchmarkSuite']:
         """基准测试套件"""
-        return self._benchmark_suite
+        return self._benchmark_suite  # type: ignore[no-any-return]
 
     @property
-    def auto_tuner(self) -> 'GPUAutoTuner':
+    def auto_tuner(self) -> Optional['GPUAutoTuner']:
         """自动调优器"""
-        return self._auto_tuner
+        return self._auto_tuner  # type: ignore[no-any-return]
 
     @property
-    def performance_reporter(self) -> 'GPUPerformanceReporter':
+    def performance_reporter(self) -> Optional['PerformanceReportGenerator']:
         """性能报告生成器"""
-        return self._performance_reporter
+        return self._performance_reporter  # type: ignore[no-any-return]
 
     # ------------------------------------------------------------------
     # 内部工具方法

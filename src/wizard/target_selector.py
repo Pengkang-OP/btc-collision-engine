@@ -10,6 +10,8 @@ import sys
 import os
 from typing import Tuple, List, Optional
 
+from .selector_protocol import SelectorProtocol
+
 # 添加项目根目录到路径
 _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if _project_root not in sys.path:
@@ -21,7 +23,7 @@ except ImportError:
     from src.collision.targets.resolver import TargetResolver
 
 
-class TargetSelector:
+class TargetSelector(SelectorProtocol):
     """目标地址选择器"""
 
     def __init__(self):

@@ -24,7 +24,7 @@ from src.utils.log_platform_adapter import get_platform_info
 class LogMonitoringIntegrator:
     """日志监控集成器"""
     
-    def __init__(self, storage_dir: str = None):
+    def __init__(self, storage_dir: str = None) -> None:
         """
         初始化日志监控集成器
         
@@ -48,7 +48,7 @@ class LogMonitoringIntegrator:
         # 集成状态
         self._initialized = False
     
-    def initialize(self):
+    def initialize(self) -> None:
         """初始化集成器"""
         if not self._initialized:
             # 检查依赖
@@ -63,7 +63,7 @@ class LogMonitoringIntegrator:
             self._initialized = True
             self.logger.info("日志监控集成器初始化完成")
     
-    def log(self, module: str, level: str, message: str, **kwargs):
+    def log(self, module: str, level: str, message: str, **kwargs) -> None:
         """
         统一日志接口
         
@@ -190,7 +190,7 @@ class LogMonitoringIntegrator:
         with self._lock:
             return self._log_buffer[-count:]
     
-    def flush(self):
+    def flush(self) -> None:
         """
         刷新所有缓冲数据
         """
@@ -203,7 +203,7 @@ class LogMonitoringIntegrator:
         
         self.logger.info("日志监控集成器数据已刷新")
     
-    def stop(self):
+    def stop(self) -> None:
         """
         停止集成器
         """
@@ -215,7 +215,7 @@ class LogMonitoringIntegrator:
         
         self.logger.info("日志监控集成器已停止")
     
-    def integrate_with_monitoring_system(self, monitoring_system: MonitoringSystem):
+    def integrate_with_monitoring_system(self, monitoring_system: MonitoringSystem) -> None:
         """
         与监控系统集成
         
@@ -227,7 +227,7 @@ class LogMonitoringIntegrator:
             monitoring_system.register_component('log_monitoring', self)
         
         # 定期同步日志数据到监控系统
-        def sync_log_data():
+        def sync_log_data() -> None:
             while True:
                 try:
                     # 获取最近的日志
@@ -281,7 +281,7 @@ def get_log_monitoring_integrator(storage_dir: str = None) -> LogMonitoringInteg
     return _integrator
 
 
-def init_log_monitoring_integration(storage_dir: str = None):
+def init_log_monitoring_integration(storage_dir: str = None) -> None:
     """
     初始化日志监控集成
     
@@ -292,7 +292,7 @@ def init_log_monitoring_integration(storage_dir: str = None):
     integrator.initialize()
 
 
-def log(module: str, level: str, message: str, **kwargs):
+def log(module: str, level: str, message: str, **kwargs) -> None:
     """
     统一日志接口
     
@@ -317,7 +317,7 @@ def get_integration_stats() -> Dict[str, Any]:
     return integrator.get_log_stats()
 
 
-def flush_logs():
+def flush_logs() -> None:
     """
     刷新日志数据
     """
@@ -325,7 +325,7 @@ def flush_logs():
     integrator.flush()
 
 
-def stop_log_monitoring():
+def stop_log_monitoring() -> None:
     """
     停止日志监控
     """

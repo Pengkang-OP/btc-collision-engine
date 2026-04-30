@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 """GPU引擎P0-1重构辅助方法单元测试
 
-测试GPU引擎重构后新增的7个辅助方法：
-1. _generate_private_keys_batch
-2. _start_async_key_generation
-3. _wait_for_async_key_generation
-4. _execute_gpu_batch
-5. _process_gpu_matches
-6. _update_performance_metrics
-7. _check_and_report_progress
+测试GPU引擎重构后新增的辅助方法：
+1. _start_async_key_generation
+2. _wait_for_async_key_generation
+3. _execute_gpu_batch
+4. _process_gpu_matches
+5. _update_performance_metrics
+6. _check_and_report_progress
 """
 import pytest
 import os
@@ -68,132 +67,6 @@ def create_mock_gpu_engine(test_targets):
             with patch('src.collision.gpu_collision_engine.GPUProfileLoader') as mock_profile:
                 mock_profile.return_value.get_profile.return_value = None
                 return GPUCollisionEngine(test_targets)
-
-
-class TestGeneratePrivateKeysBatch:
-    """测试 _generate_private_keys_batch 方法"""
-    
-    def setup_method(self):
-        """设置测试环境"""
-        self.test_targets = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}
-    
-    def test_generate_correct_size(self):
-        """测试生成正确大小的私钥批次"""
-        engine = create_mock_gpu_engine(self.test_targets)
-        
-        # 测试生成100个私钥
-        keys = engine._generate_private_keys_batch(100)
-        assert len(keys) == 3200  # 100 * 32 bytes
-        
-        # 测试生成1个私钥
-        keys = engine._generate_private_keys_batch(1)
-        assert len(keys) == 32
-        
-        # 测试生成0个私钥
-        keys = engine._generate_private_keys_batch(0)
-        assert len(keys) == 0
-    
-    def test_generate_random_keys(self):
-        """测试生成的私鑰是随机的"""
-        with patch('src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE', True):
-            with patch('src.collision.gpu_collision_engine.GPUDevice') as mock_device, \
-                 patch('src.collision.gpu_collision_engine.GPUContext') as mock_context, \
-                 patch('src.collision.gpu_collision_engine.GPUKernel') as mock_kernel, \
-                 patch('src.collision.gpu_collision_engine.AsyncGPUExecutor') as mock_async_executor:
-                    
-                # 设置mock (简化版)
-                mock_device_instance = Mock()
-                mock_device_instance.context = Mock()
-                mock_device_instance.queue = Mock()
-                mock_device_instance.device_info = {'name': 'Test', 'vendor': 'Test', 'global_mem_size': 1024**3}
-                mock_device_instance.initialize = Mock()
-                mock_device_instance.get_device_info = Mock(return_value=mock_device_instance.device_info)
-                mock_device_instance.cleanup = Mock()
-                mock_device.return_value = mock_device_instance
-                    
-                mock_context_instance = Mock()
-                mock_context_instance.program = Mock()
-                mock_context_instance.apply_optimizations = Mock()
-                mock_context_instance.calculate_batch_size = Mock(return_value=65536)
-                mock_context_instance.compile_kernel = Mock()
-                mock_context_instance.cleanup = Mock()
-                mock_context.return_value = mock_context_instance
-                    
-                mock_kernel_instance = Mock()
-                mock_kernel_instance.run_batch = Mock(return_value=[])
-                mock_kernel_instance.set_targets = Mock()
-                mock_kernel_instance.cleanup = Mock()
-                mock_kernel_instance.max_batch_size = 65536
-                mock_kernel.return_value = mock_kernel_instance
-    
-                mock_async_instance = Mock()
-                mock_async_instance.initialize_buffers = Mock()
-                mock_async_instance.run_batch_async = Mock(return_value=([], 50.0))
-                mock_async_instance.cleanup = Mock()
-                mock_async_executor.return_value = mock_async_instance
-                    
-                with patch('src.collision.gpu_collision_engine.GPUProfileLoader') as mock_profile:
-                    mock_profile.return_value.get_profile.return_value = None
-                        
-                    engine = GPUCollisionEngine(self.test_targets)
-                        
-                    # 生成两批私鑰，应该不同
-                    keys1 = engine._generate_private_keys_batch(10)
-                    keys2 = engine._generate_private_keys_batch(10)
-                    assert keys1 != keys2
-    
-    def test_generate_unique_keys(self):
-        """测试同一批次内的私鑰唯一性"""
-        with patch('src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE', True):
-            with patch('src.collision.gpu_collision_engine.GPUDevice') as mock_device, \
-                 patch('src.collision.gpu_collision_engine.GPUContext') as mock_context, \
-                 patch('src.collision.gpu_collision_engine.GPUKernel') as mock_kernel, \
-                 patch('src.collision.gpu_collision_engine.AsyncGPUExecutor') as mock_async_executor:
-                    
-                # 设置mock
-                mock_device_instance = Mock()
-                mock_device_instance.context = Mock()
-                mock_device_instance.queue = Mock()
-                mock_device_instance.device_info = {'name': 'Test', 'vendor': 'Test', 'global_mem_size': 1024**3}
-                mock_device_instance.initialize = Mock()
-                mock_device_instance.get_device_info = Mock(return_value=mock_device_instance.device_info)
-                mock_device_instance.cleanup = Mock()
-                mock_device.return_value = mock_device_instance
-                    
-                mock_context_instance = Mock()
-                mock_context_instance.program = Mock()
-                mock_context_instance.apply_optimizations = Mock()
-                mock_context_instance.calculate_batch_size = Mock(return_value=65536)
-                mock_context_instance.compile_kernel = Mock()
-                mock_context_instance.cleanup = Mock()
-                mock_context.return_value = mock_context_instance
-                    
-                mock_kernel_instance = Mock()
-                mock_kernel_instance.run_batch = Mock(return_value=[])
-                mock_kernel_instance.set_targets = Mock()
-                mock_kernel_instance.cleanup = Mock()
-                mock_kernel_instance.max_batch_size = 65536
-                mock_kernel.return_value = mock_kernel_instance
-    
-                mock_async_instance = Mock()
-                mock_async_instance.initialize_buffers = Mock()
-                mock_async_instance.run_batch_async = Mock(return_value=([], 50.0))
-                mock_async_instance.cleanup = Mock()
-                mock_async_executor.return_value = mock_async_instance
-                    
-                with patch('src.collision.gpu_collision_engine.GPUProfileLoader') as mock_profile:
-                    mock_profile.return_value.get_profile.return_value = None
-                        
-                    engine = GPUCollisionEngine(self.test_targets)
-                        
-                    # 生成 1000 个私鑰
-                    keys = engine._generate_private_keys_batch(1000)
-                    
-                    # 提取所有私钥
-                    key_list = [keys[i:i+32] for i in range(0, len(keys), 32)]
-                    
-                    # 验证唯一性（基于概率，几乎不可能重复）
-                    assert len(key_list) == len(set(key_list))
 
 
 class TestAsyncKeyGeneration:

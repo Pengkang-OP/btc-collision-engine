@@ -33,16 +33,19 @@ class TestBatchSizeBoundaries:
     
     # 最大值边界
     def test_batch_size_maximum_valid(self):
-        """测试batch_size最大有效值16777216"""
-        assert self.manager._validate_config_value('batch_size', 16777216) is True
+        """测试batch_size最大有效值 (P1-2: < UINT32_MAX)"""
+        UINT32_MAX = 0xFFFFFFFF
+        assert self.manager._validate_config_value('batch_size', UINT32_MAX - 1) is True
     
     def test_batch_size_above_maximum(self):
-        """测试batch_size超过最大值16777217"""
-        assert self.manager._validate_config_value('batch_size', 16777217) is False
+        """测试batch_size超过最大值 (P1-2: >= UINT32_MAX 应拒绝)"""
+        UINT32_MAX = 0xFFFFFFFF
+        assert self.manager._validate_config_value('batch_size', UINT32_MAX) is False
     
     def test_batch_size_very_large(self):
-        """测试batch_size非常大"""
-        assert self.manager._validate_config_value('batch_size', 100000000) is False
+        """测试batch_size非常大 (P1-2: >= UINT32_MAX 应拒绝)"""
+        UINT32_MAX = 0xFFFFFFFF
+        assert self.manager._validate_config_value('batch_size', UINT32_MAX + 1000) is False
     
     # 类型边界
     def test_batch_size_float(self):

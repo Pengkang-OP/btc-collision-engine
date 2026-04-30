@@ -62,7 +62,7 @@ class MultiGPUCollisionEngine:
         engine.stop()
     """
     
-    def __init__(self, config: Optional[Union[Dict, MultiGPUConfig]] = None):
+    def __init__(self, config: Optional[Union[Dict, MultiGPUConfig]] = None) -> None:
         """初始化多GPU引擎
         
         Args:
@@ -342,7 +342,7 @@ class MultiGPUCollisionEngine:
             logger.error(f"启动多GPU碰撞失败: {e}")
             return False
     
-    def stop(self):
+    def stop(self) -> None:
         """停止所有GPU工作器
 
         线程安全：使用 _stopping 标志 + _state_lock 防止重入。
@@ -405,7 +405,7 @@ class MultiGPUCollisionEngine:
 
         logger.info("多GPU碰撞已停止")
     
-    def pause(self):
+    def pause(self) -> None:
         """暂停所有GPU工作器"""
         with self._workers_lock:
             workers_snapshot = dict(self.workers)
@@ -418,7 +418,7 @@ class MultiGPUCollisionEngine:
         
         logger.info("所有GPU工作器已暂停")
     
-    def resume(self):
+    def resume(self) -> None:
         """恢复所有GPU工作器"""
         with self._workers_lock:
             workers_snapshot = dict(self.workers)
@@ -881,7 +881,7 @@ class MultiGPUCollisionEngine:
         with self._state_lock:
             self._total_keys_checked = total_keys
     
-    def cleanup(self):
+    def cleanup(self) -> None:
         """清理所有资源
 
         安全设计：仅在引擎非运行状态或已停止时执行清理。
@@ -916,7 +916,7 @@ class MultiGPUCollisionEngine:
         """上下文管理器入口"""
         return self
     
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]) -> None:
         """上下文管理器出口"""
         self.cleanup()
         return False
@@ -1089,7 +1089,7 @@ class MultiGPUCollisionEngine:
         
         return stats
     
-    def __del__(self):
+    def __del__(self) -> None:
         """析构函数"""
         try:
             self.cleanup()

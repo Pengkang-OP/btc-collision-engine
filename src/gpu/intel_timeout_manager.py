@@ -15,7 +15,7 @@ import time
 import logging
 from ..utils import init_logging, get_configured_logger
 import statistics
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from collections import deque
 
 logger = get_configured_logger("IntelTimeoutManager")
@@ -59,7 +59,7 @@ class AdaptiveTimeoutManager:
         self.max_timeout = max_timeout
         
         # 执行时间历史记录（毫秒）
-        self._execution_times: deque = deque(maxlen=history_size)
+        self._execution_times: deque[float] = deque(maxlen=history_size)
         
         # 统计信息
         self._total_records = 0
@@ -126,7 +126,7 @@ class AdaptiveTimeoutManager:
         dynamic_timeout_sec = dynamic_timeout_ms / 1000.0
         
         # 限制在合理范围内
-        final_timeout = max(self.min_timeout, min(dynamic_timeout_sec, self.max_timeout))
+        final_timeout = float(max(self.min_timeout, min(dynamic_timeout_sec, self.max_timeout)))
         
         # 检查是否需要调整
         if abs(final_timeout - self._last_timeout) > 1.0:  # 变化超过 1 秒
@@ -140,7 +140,7 @@ class AdaptiveTimeoutManager:
         
         return final_timeout
     
-    def get_statistics(self) -> dict:
+    def get_statistics(self) -> Dict[str, Any]:
         """获取统计信息
         
         Returns:

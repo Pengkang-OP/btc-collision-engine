@@ -32,7 +32,7 @@
 
 import threading
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # 导入日志配置
 from ..utils import init_logging, get_configured_logger
@@ -70,7 +70,7 @@ class GPUMemoryPool:
         >>> pool.release(buf)  # 归还到池中
     """
     
-    def __init__(self, context, max_buffers: int = 100, max_memory_mb: int = 512, enable_dynamic_adjustment: bool = True):
+    def __init__(self, context: Any, max_buffers: int = 100, max_memory_mb: int = 512, enable_dynamic_adjustment: bool = True) -> None:
         """
         初始化GPU内存池
         
@@ -125,7 +125,7 @@ class GPUMemoryPool:
         
         logger.info(f"GPU内存池初始化: max_buffers={max_buffers}, max_memory={max_memory_mb}MB, dynamic_adjustment={enable_dynamic_adjustment}")
     
-    def allocate(self, size: int, flags=None, buffer_type: str = 'generic'):
+    def allocate(self, size: int, flags: Optional[Any] = None, buffer_type: str = 'generic') -> Any:
         """
         分配GPU内存(优先复用)
         
@@ -196,7 +196,7 @@ class GPUMemoryPool:
             
             return buf
     
-    def release(self, buf, size: int = None, buffer_type: str = 'generic'):
+    def release(self, buf: Any, size: int = None, buffer_type: str = 'generic') -> None:
         """
         归还GPU缓冲区到池中
         
@@ -274,9 +274,9 @@ class GPUMemoryPool:
             # 记录内存使用
             self._record_memory_usage()
     
-    def preallocate_buffers(self, sizes: List[int], count_per_size: int = 2, flags=None, buffer_type: str = 'generic'):
+    def preallocate_buffers(self, sizes: List[int], count_per_size: int = 2, flags: Optional[Any] = None, buffer_type: str = 'generic') -> None:
         """预分配常用大小的缓冲区（性能优化v2.2.1，v3.3.0增强）
-        
+    
         在初始化阶段预分配常用缓冲区，避免运行时频繁分配。
         
         参数:
@@ -467,7 +467,7 @@ class GPUMemoryPool:
         if len(self._memory_usage_history) > 100:
             self._memory_usage_history = self._memory_usage_history[-100:]
     
-    def adapt_capacity(self, context=None) -> None:
+    def adapt_capacity(self, context: Optional[Any] = None) -> None:
         """根据GPU显存压力动态调整池容量
         
         通过尝试分配100MB测试缓冲区来检测当前显存是否充足：
@@ -567,7 +567,7 @@ class GPUMemoryPool:
                 'allocation_count': self._allocation_count
             }
     
-    def clear(self):
+    def clear(self) -> None:
         """清空内存池,释放所有缓冲区（尽力而为）"""
         with self._lock:
             # 清理通用池
@@ -682,7 +682,7 @@ class GPUBufferAllocator:
         >>> temp_buf = allocator.allocate_temp(512)
     """
     
-    def __init__(self, context, max_pool_size: int = 200):
+    def __init__(self, context: Any, max_pool_size: int = 200) -> None:
         """
         初始化GPU缓冲区分配器
         
@@ -700,27 +700,27 @@ class GPUBufferAllocator:
         
         logger.info("GPU缓冲区分配器初始化完成")
     
-    def allocate_input(self, size: int):
+    def allocate_input(self, size: int) -> Any:
         """分配输入缓冲区(主机到设备)"""
         return self._input_pool.allocate(size, buffer_type='input')
     
-    def allocate_output(self, size: int):
+    def allocate_output(self, size: int) -> Any:
         """分配输出缓冲区(设备到主机)"""
         return self._output_pool.allocate(size, buffer_type='output')
     
-    def allocate_temp(self, size: int):
+    def allocate_temp(self, size: int) -> Any:
         """分配临时缓冲区(内核内部使用)"""
         return self._temp_pool.allocate(size, buffer_type='temp')
     
-    def release_input(self, buf, size: int = None):
+    def release_input(self, buf: Any, size: int = None) -> None:
         """归还输入缓冲区"""
         self._input_pool.release(buf, size, buffer_type='input')
     
-    def release_output(self, buf, size: int = None):
+    def release_output(self, buf: Any, size: int = None) -> None:
         """归还输出缓冲区"""
         self._output_pool.release(buf, size, buffer_type='output')
     
-    def release_temp(self, buf, size: int = None):
+    def release_temp(self, buf: Any, size: int = None) -> None:
         """归还临时缓冲区"""
         self._temp_pool.release(buf, size, buffer_type='temp')
     
@@ -744,7 +744,7 @@ class GlobalGPUMemoryManager:
     _lock = threading.Lock()
     _pools = {}
     
-    def __new__(cls):
+    def __new__(cls) -> "GlobalGPUMemoryManager":
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None:
@@ -752,7 +752,7 @@ class GlobalGPUMemoryManager:
                     cls._instance._pools = {}
         return cls._instance
     
-    def get_pool(self, context, max_buffers: int = 100) -> GPUMemoryPool:
+    def get_pool(self, context: Any, max_buffers: int = 100) -> GPUMemoryPool:
         """
         获取或创建GPU内存池
         
@@ -769,7 +769,7 @@ class GlobalGPUMemoryManager:
             logger.info(f"为上下文 {context_id} 创建GPU内存池")
         return self._pools[context_id]
     
-    def clear_all(self):
+    def clear_all(self) -> None:
         """清空所有内存池"""
         with self._lock:
             for pool in self._pools.values():
@@ -782,6 +782,6 @@ class GlobalGPUMemoryManager:
 gpu_memory_manager = GlobalGPUMemoryManager()
 
 
-def get_gpu_memory_pool(context, max_buffers: int = 100) -> GPUMemoryPool:
+def get_gpu_memory_pool(context: Any, max_buffers: int = 100) -> GPUMemoryPool:
     """获取GPU内存池的便捷函数"""
     return gpu_memory_manager.get_pool(context, max_buffers)

@@ -36,7 +36,7 @@ class DataLogger:
     monitoring_data目录已废弃。
     """
     
-    def __init__(self, storage_dir: str = None):
+    def __init__(self, storage_dir: str = None) -> None:
         """
         初始化数据日志记录器
         
@@ -138,7 +138,7 @@ class DataLogger:
             self.logger.error(f"初始化数据文件失败: {e}")
     
     def record_performance_data(self, speed: float, total_checked: int, matches_found: int,
-                               cpu_usage: float = 0.0, memory_usage: float = 0.0, thread_count: int = 0):
+                               cpu_usage: float = 0.0, memory_usage: float = 0.0, thread_count: int = 0) -> None:
         """
         记录性能数据（添加数据验证）
         
@@ -219,7 +219,7 @@ class DataLogger:
         self.logger.debug(f"性能数据: 速度={speed:.2f}/s, 总计={total_checked}, 匹配={matches_found}")
     
     def record_system_data(self, os_name: str = "", python_version: str = "", 
-                          pid: int = 0, uptime: float = 0.0):
+                          pid: int = 0, uptime: float = 0.0) -> None:
         """
         记录系统数据
         
@@ -252,7 +252,7 @@ class DataLogger:
     
     def record_engine_data(self, mode: str = "", target_count: int = 0,
                           is_running: bool = False, current_position: int = 0,
-                          additional_info: Dict[str, Any] = None):
+                          additional_info: Dict[str, Any] = None) -> None:
         """
         记录引擎状态数据
         
@@ -279,7 +279,7 @@ class DataLogger:
             self.logger.debug(f"引擎数据: 模式={mode}, 目标数={target_count}, 运行中={is_running}")
     
     def record_error(self, error_type: str, message: str, exception: Exception = None,
-                    context: Dict[str, Any] = None):
+                    context: Dict[str, Any] = None) -> None:
         """
         记录错误信息
         
@@ -332,7 +332,7 @@ class DataLogger:
         else:
             self.logger.error(f"错误记录 [{error_type}]: {message}")
     
-    def save_current_data(self):
+    def save_current_data(self) -> None:
         """保存当前数据到文件（优化：I/O操作移出锁范围 + 深拷贝确保一致性 + 重试机制）"""
         # 在锁内深拷贝数据，确保嵌套字典的一致性
         with self._lock:
@@ -415,7 +415,7 @@ class DataLogger:
                     continue
                 break
     
-    def save_history_data(self):
+    def save_history_data(self) -> None:
         """保存历史数据到文件（优化：I/O操作移出锁范围 + 数据恢复 + 唯一临时文件 + 重试机制）"""
         # 在锁内获取数据
         with self._lock:
@@ -718,7 +718,7 @@ class DataLogger:
         cpu_usages = [d.get("cpu_usage", 0) for d in data]
         memory_usages = [d.get("memory_usage", 0) for d in data]
         
-        def calculate_trend(values):
+        def calculate_trend(values: List[float]) -> str:
             if len(values) < 2:
                 return "stable"
             first_half_avg = statistics.mean(values[:len(values)//2])
@@ -866,7 +866,7 @@ class DataLogger:
         except Exception as e:
             self.logger.warning(f"自动清理报告文件时出错: {e}")
 
-    def cleanup_old_data(self, max_age_days: int = 30):
+    def cleanup_old_data(self, max_age_days: int = 30) -> None:
         """
         清理旧数据
         
@@ -924,7 +924,7 @@ class DataLogger:
         self._pending_error_data = list(self._error_buffer)
         self._error_buffer.clear()
     
-    def flush(self):
+    def flush(self) -> None:
         """刷写所有缓冲数据到磁盘"""
         pending_history = None
         pending_errors = None
@@ -975,7 +975,7 @@ class DataLogger:
                     for item in reversed(pending_errors):
                         self._error_buffer.appendleft(item)
     
-    def stop(self):
+    def stop(self) -> None:
         """停止数据记录器，确保所有数据已写入"""
         try:
             self.flush()

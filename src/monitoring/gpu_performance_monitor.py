@@ -155,7 +155,7 @@ class GPUPerformanceMonitor:
                  engine: Any = None,
                  check_interval: float = 2.0,
                  degradation_threshold: float = 0.75,
-                 history_size: int = 500):
+                 history_size: int = 500) -> None:
         """
         初始化GPU性能监控器
         
@@ -231,7 +231,7 @@ class GPUPerformanceMonitor:
         except Exception as e:
             logger.warning(f"获取GPU设备信息失败: {e}")
     
-    def start(self):
+    def start(self) -> None:
         """启动监控"""
         if self._running:
             return
@@ -243,7 +243,7 @@ class GPUPerformanceMonitor:
         
         logger.info(f"GPU性能监控已启动: {self._device_name}")
     
-    def stop(self):
+    def stop(self) -> None:
         """停止监控"""
         self._running = False
         if self._thread:
@@ -259,7 +259,7 @@ class GPUPerformanceMonitor:
                              error_count: int = 0,
                              match_count: int = 0,
                              queue_wait_time_ms: float = 0.0,
-                             data_transfer_time_ms: float = 0.0):
+                             data_transfer_time_ms: float = 0.0) -> None:
         """
         记录内核执行指标
         
@@ -323,7 +323,7 @@ class GPUPerformanceMonitor:
                              used_memory_mb: float,
                              total_memory_mb: float = 0.0,
                              allocation: bool = True,
-                             pool_hit: bool = False):
+                             pool_hit: bool = False) -> None:
         """
         记录显存指标
         
@@ -525,7 +525,7 @@ class GPUPerformanceMonitor:
                 performance_stability_percent=stability
             )
     
-    def on_degradation(self, callback: Callable):
+    def on_degradation(self, callback: Callable) -> None:
         """
         注册性能退化回调
         
@@ -534,7 +534,7 @@ class GPUPerformanceMonitor:
         """
         self._degradation_callbacks.append(callback)
     
-    def on_error(self, callback: Callable):
+    def on_error(self, callback: Callable) -> None:
         """
         注册错误回调
         
@@ -742,7 +742,7 @@ def get_gpu_performance_monitor(engine: Any = None) -> GPUPerformanceMonitor:
         return _global_gpu_monitor
 
 
-def reset_gpu_performance_monitor():
+def reset_gpu_performance_monitor() -> None:
     """重置全局GPU性能监控器"""
     global _global_gpu_monitor
     

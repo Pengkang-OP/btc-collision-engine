@@ -12,7 +12,7 @@
 import time
 import threading
 import logging
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Callable
 from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -88,7 +88,7 @@ class OptimizationPerformanceMonitor:
     def __init__(self, 
                  check_interval: float = 5.0,
                  degradation_threshold: float = 0.8,
-                 history_size: int = 1000):
+                 history_size: int = 1000) -> None:
         """
         初始化性能监控器
         
@@ -122,7 +122,7 @@ class OptimizationPerformanceMonitor:
                    f"check_interval={check_interval}s, "
                    f"degradation_threshold={degradation_threshold}")
     
-    def start(self):
+    def start(self) -> None:
         """启动监控"""
         if self._running:
             return
@@ -134,7 +134,7 @@ class OptimizationPerformanceMonitor:
         
         logger.info("性能监控已启动")
     
-    def stop(self):
+    def stop(self) -> None:
         """停止监控"""
         self._running = False
         if self._thread:
@@ -152,7 +152,7 @@ class OptimizationPerformanceMonitor:
                       gpu_memory_pool: bool = False,
                       memory_usage_mb: float = 0.0,
                       generation_times: Optional[List[float]] = None,
-                      error_count: int = 0):
+                      error_count: int = 0) -> None:
         """
         记录性能指标
         
@@ -311,7 +311,7 @@ class OptimizationPerformanceMonitor:
             
             return report
     
-    def on_degradation(self, callback):
+    def on_degradation(self, callback: Callable) -> None:
         """
         注册性能退化回调
         
@@ -400,7 +400,7 @@ def get_performance_monitor() -> OptimizationPerformanceMonitor:
         return _global_monitor
 
 
-def reset_performance_monitor():
+def reset_performance_monitor() -> None:
     """重置全局性能监控器"""
     global _global_monitor
     

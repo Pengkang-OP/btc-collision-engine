@@ -18,7 +18,7 @@ logger = logging.getLogger("GPUMonitor")
 class GPUMonitor:
     """GPU监控器"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         """初始化GPU监控器"""
         self.gpu_available = False
         self.gpu_info = {}
@@ -128,7 +128,7 @@ class GPUMonitor:
                 "error": str(e)
             }
     
-    def track_memory_usage(self, allocated_bytes: int):
+    def track_memory_usage(self, allocated_bytes: int) -> None:
         """
         跟踪GPU显存使用
         

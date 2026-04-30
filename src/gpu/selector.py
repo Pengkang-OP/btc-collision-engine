@@ -8,7 +8,7 @@
 import logging
 from ..utils import init_logging, get_configured_logger
 import threading
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 
 from .device import GPUDeviceDetector, identify_vendor
 
@@ -47,8 +47,8 @@ class GPUDeviceSelector:
     
     def __init__(self) -> None:
         """初始化GPU设备选择器"""
-        self._devices_cache = None
-        self._scores_cache = {}
+        self._devices_cache: Optional[List[Dict[str, Any]]] = None
+        self._scores_cache: Dict[int, float] = {}
         
     def detect_all_devices(self, force_refresh: bool = False) -> List[Dict]:
         """检测所有GPU设备
@@ -122,7 +122,7 @@ class GPUDeviceSelector:
         vendor_factor = self.VENDOR_FACTORS.get(vendor, 0.8)
         
         # 总分
-        total_score = (memory_score + cu_score) * vendor_factor
+        total_score = float((memory_score + cu_score) * vendor_factor)
         
         logger.debug(
             f"设备评分: {device.get('name', 'Unknown')} - "
@@ -132,7 +132,7 @@ class GPUDeviceSelector:
         
         return total_score
     
-    def select_best_device(self, devices: List[Dict] = None) -> Optional[Dict]:
+    def select_best_device(self, devices: Optional[List[Dict[str, Any]]] = None) -> Optional[Dict[str, Any]]:
         """自动选择评分最高的GPU设备
         
         Args:
@@ -220,7 +220,7 @@ class GPUDeviceSelector:
         
         return '\n'.join(lines)
     
-    def format_all_devices(self, devices: List[Dict] = None) -> str:
+    def format_all_devices(self, devices: Optional[List[Dict[str, Any]]] = None) -> str:
         """格式化所有设备信息
         
         Args:
@@ -336,12 +336,12 @@ class GPUDeviceSelector:
         
         # NVIDIA适合大工作组
         if vendor == 'nvidia':
-            return min(512, max_work_group)
+            return int(min(512, max_work_group))
         # AMD/Intel适合中等工作组
         elif vendor in ('amd', 'intel'):
-            return min(256, max_work_group)
+            return int(min(256, max_work_group))
         else:
-            return min(256, max_work_group)
+            return int(min(256, max_work_group))
     
     def _enrich_device_info(self, raw_device: Dict, global_idx: int) -> Dict:
         """增强设备信息,添加评分所需的字段

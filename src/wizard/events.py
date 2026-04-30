@@ -10,6 +10,9 @@ from enum import Enum
 from typing import Dict, Any, Optional
 from dataclasses import dataclass, field
 import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class WizardEventType(Enum):
@@ -68,8 +71,11 @@ class EventDispatcher:
             for callback in self._listeners[event.event_type]:
                 try:
                     callback(event)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.error(
+                        f"Event callback failed for {event.event_type.value}: {e}",
+                        exc_info=True
+                    )
 
     def clear(self):
         """清空所有监听器"""
