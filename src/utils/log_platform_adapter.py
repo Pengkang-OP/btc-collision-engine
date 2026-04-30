@@ -17,7 +17,7 @@ from typing import Optional, Dict, Any, Callable
 class PlatformAdapter:
     """平台适配器"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         """初始化平台适配器"""
         self.platform_name = platform.system()
         self.platform_version = platform.version()

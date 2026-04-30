@@ -17,6 +17,9 @@ from typing import Set, Optional, Dict, Any, List, Callable
 import logging
 import time
 
+# P3-3: 统一回调类型别名
+from ..types import ProgressCallback, MatchCallback
+
 from .protocols import ICollisionCore, CollisionResult, MatchResult
 
 logger = logging.getLogger(__name__)
@@ -45,8 +48,8 @@ class CollisionCore(ICollisionCore):
         self,
         targets: Set[str],
         config: Optional[Dict[str, Any]] = None,
-        on_progress: Optional[Callable] = None,
-        on_match: Optional[Callable] = None,
+        on_progress: Optional[ProgressCallback] = None,
+        on_match: Optional[MatchCallback] = None,
         # 依赖注入（可选）
         stats_factory: Optional[Callable] = None,
         checkpoint_factory: Optional[Callable] = None,

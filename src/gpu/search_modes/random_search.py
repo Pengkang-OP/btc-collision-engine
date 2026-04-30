@@ -461,7 +461,7 @@ class RandomSearchMode(BaseSearchMode):
             logger.debug("种子队列空，即时生成")
             return os.urandom(32)
     
-    def _process_matches(self, matches, seed, batch_size):
+    def _process_matches(self, matches, seed, batch_size) -> None:
         """处理匹配结果"""
         engine = self.engine
         for match in matches:

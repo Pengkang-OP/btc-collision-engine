@@ -20,6 +20,7 @@ class SecurityLogFilter(logging.Filter):
     - 比特币私钥（64位十六进制）
     - WIF格式私钥
     - 原始私钥字节
+    - 比特币地址（P2PKH/P2SH/Bech32/Bech32m）
     """
     
     # 私钥模式匹配
@@ -38,16 +39,36 @@ class SecurityLogFilter(logging.Filter):
         r"b'\\x[0-9a-fA-F]{2}(?:\\x[0-9a-fA-F]{2}){31}'"
     )
     
-    def __init__(self, name='', mask_private_keys=True, mask_wif=True):
+    # P0-1: 比特币地址模式匹配
+    # P2PKH: 以 1 开头，25-34 字符 Base58
+    P2PKH_ADDRESS_PATTERN = re.compile(
+        r'\b1[1-9A-HJ-NP-Za-km-z]{24,33}\b'
+    )
+    # P2SH: 以 3 开头，25-34 字符 Base58
+    P2SH_ADDRESS_PATTERN = re.compile(
+        r'\b3[1-9A-HJ-NP-Za-km-z]{24,33}\b'
+    )
+    # Bech32: 以 bc1 开头，42 或 62 字符（P2WPKH/P2WSH）
+    BECH32_ADDRESS_PATTERN = re.compile(
+        r'\bbc1[ac-hj-np-z02-9]{38,58}\b'
+    )
+    # Bech32m (Taproot): 以 bc1p 开头，62 字符
+    BECH32M_ADDRESS_PATTERN = re.compile(
+        r'\bbc1p[ac-hj-np-z02-9]{58}\b'
+    )
+    
+    def __init__(self, name='', mask_private_keys=True, mask_wif=True, mask_addresses=True) -> None:
         """
         Args:
             name: 过滤器名称
             mask_private_keys: 是否屏蔽私钥十六进制
             mask_wif: 是否屏蔽WIF格式
+            mask_addresses: 是否屏蔽比特币地址
         """
         super().__init__(name)
         self.mask_private_keys = mask_private_keys
         self.mask_wif = mask_wif
+        self.mask_addresses = mask_addresses
     
     def filter(self, record: logging.LogRecord) -> bool:
         """过滤日志记录，屏蔽敏感信息
@@ -109,6 +130,13 @@ class SecurityLogFilter(logging.Filter):
             message
         )
         
+        # P0-1: 屏蔽比特币地址
+        if self.mask_addresses:
+            message = self.P2PKH_ADDRESS_PATTERN.sub('[P2PKH_ADDRESS]', message)
+            message = self.P2SH_ADDRESS_PATTERN.sub('[P2SH_ADDRESS]', message)
+            message = self.BECH32_ADDRESS_PATTERN.sub('[BECH32_ADDRESS]', message)
+            message = self.BECH32M_ADDRESS_PATTERN.sub('[BECH32M_ADDRESS]', message)
+        
         return message
     
     def _sanitize_value(self, value: str) -> str:
@@ -142,7 +170,7 @@ class SecurityLogFilter(logging.Filter):
         return f'[PRIVATE_KEY:{key_hash}...]'
 
 
-def setup_security_logging():
+def setup_security_logging() -> None:
     """为所有日志记录器添加安全过滤器
     
     应在应用程序启动时调用，确保所有日志都经过安全过滤。
@@ -151,7 +179,8 @@ def setup_security_logging():
     security_filter = SecurityLogFilter(
         name='security_filter',
         mask_private_keys=True,
-        mask_wif=True
+        mask_wif=True,
+        mask_addresses=True
     )
     
     # 添加到根日志记录器
@@ -194,7 +223,7 @@ def sanitize_private_key_for_log(private_key: bytes) -> str:
 
 
 # 便捷函数
-def log_safe_error(logger: logging.Logger, message: str, **kwargs):
+def log_safe_error(logger: logging.Logger, message: str, **kwargs) -> None:
     """记录安全的错误日志（自动过滤敏感信息）
     
     Args:
@@ -206,7 +235,7 @@ def log_safe_error(logger: logging.Logger, message: str, **kwargs):
     logger.error(message, **kwargs)
 
 
-def log_safe_debug(logger: logging.Logger, message: str, **kwargs):
+def log_safe_debug(logger: logging.Logger, message: str, **kwargs) -> None:
     """记录安全的调试日志（自动过滤敏感信息）
     
     Args:

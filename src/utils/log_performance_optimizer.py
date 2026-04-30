@@ -33,7 +33,7 @@ class LogPerformanceConfig:
 class AsyncLogBuffer:
     """异步日志缓冲区"""
     
-    def __init__(self, config: LogPerformanceConfig):
+    def __init__(self, config: LogPerformanceConfig) -> None:
         """
         初始化异步日志缓冲区
         
@@ -52,16 +52,16 @@ class AsyncLogBuffer:
         self._handlers: List[logging.Handler] = []
         self._dropped_count = 0
     
-    def add_handler(self, handler: logging.Handler):
+    def add_handler(self, handler: logging.Handler) -> None:
         """添加日志处理器"""
         self._handlers.append(handler)
     
-    def remove_handler(self, handler: logging.Handler):
+    def remove_handler(self, handler: logging.Handler) -> None:
         """移除日志处理器"""
         if handler in self._handlers:
             self._handlers.remove(handler)
     
-    def emit(self, record: logging.LogRecord):
+    def emit(self, record: logging.LogRecord) -> None:
         """异步发出日志记录"""
         try:
             self.queue.put_nowait(record)
@@ -71,7 +71,7 @@ class AsyncLogBuffer:
             if self._dropped_count % 1000 == 0:
                 print(f"警告: 日志缓冲区已满，已丢弃 {self._dropped_count} 条记录")
     
-    def _flush_loop(self):
+    def _flush_loop(self) -> None:
         """后台刷新循环"""
         while not self._stop_event.is_set():
             try:
@@ -91,7 +91,7 @@ class AsyncLogBuffer:
             except Exception as e:
                 print(f"日志刷新循环错误: {e}")
     
-    def _batch_write(self, records: List[logging.LogRecord]):
+    def _batch_write(self, records: List[logging.LogRecord]) -> None:
         """批量写入日志记录"""
         for handler in self._handlers:
             try:
@@ -100,7 +100,7 @@ class AsyncLogBuffer:
             except Exception as e:
                 print(f"批量写入错误: {e}")
     
-    def flush(self):
+    def flush(self) -> None:
         """手动刷新缓冲区"""
         records = []
         while not self.queue.empty():
@@ -114,7 +114,7 @@ class AsyncLogBuffer:
         if records:
             self._batch_write(records)
     
-    def close(self):
+    def close(self) -> None:
         """关闭缓冲区"""
         self._stop_event.set()
         self._flush_thread.join(timeout=5)
@@ -132,7 +132,7 @@ class AsyncLogBuffer:
 class LogPerformanceOptimizer:
     """日志性能优化器"""
     
-    def __init__(self, config: Optional[LogPerformanceConfig] = None):
+    def __init__(self, config: Optional[LogPerformanceConfig] = None) -> None:
         """
         初始化性能优化器
         
@@ -143,7 +143,7 @@ class LogPerformanceOptimizer:
         self.async_buffer: Optional[AsyncLogBuffer] = None
         self._initialized = False
     
-    def initialize(self):
+    def initialize(self) -> None:
         """初始化优化器"""
         if not self._initialized:
             if self.config.async_enabled:
@@ -165,16 +165,16 @@ class LogPerformanceOptimizer:
         if self.config.async_enabled and self.async_buffer:
             # 包装为异步处理器
             class OptimizedHandler(logging.Handler):
-                def __init__(self, original_handler, async_buffer):
+                def __init__(self, original_handler, async_buffer) -> None:
                     super().__init__()
                     self.original_handler = original_handler
                     self.async_buffer = async_buffer
                     self.async_buffer.add_handler(original_handler)
                 
-                def emit(self, record: logging.LogRecord):
+                def emit(self, record: logging.LogRecord) -> None:
                     self.async_buffer.emit(record)
                 
-                def close(self):
+                def close(self) -> None:
                     self.async_buffer.remove_handler(self.original_handler)
                     self.original_handler.close()
                     super().close()
@@ -255,7 +255,7 @@ class LogPerformanceOptimizer:
         memory_usage = self.get_memory_usage()
         return memory_usage > self.config.memory_threshold
     
-    def close(self):
+    def close(self) -> None:
         """关闭优化器"""
         if self.async_buffer:
             self.async_buffer.close()
@@ -284,7 +284,7 @@ class LogPerformanceOptimizer:
 class LogThrottler:
     """日志节流器"""
     
-    def __init__(self, max_logs_per_second: float = 100.0):
+    def __init__(self, max_logs_per_second: float = 100.0) -> None:
         """
         初始化日志节流器
         
