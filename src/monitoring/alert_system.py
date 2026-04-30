@@ -426,8 +426,8 @@ class AlertSystem:
             except Exception as e:
                 logger.error(f"告警回调函数执行失败: {e}")
         
-        # 2. P2-7: 通过通知渠道发送
-        for channel in self.notification_channels:
+        # 2. P2-7: 通过通知渠道发送 (C3修复: 遍历快照避免并发修改)
+        for channel in list(self.notification_channels):
             try:
                 channel.send(alert)
             except Exception as e:

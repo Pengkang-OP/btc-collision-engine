@@ -343,12 +343,13 @@ class ConfigManager:
     # ── P2-4: 配置热重载 ──────────────────────────────────────────
     
     def reload_config(self) -> bool:
-        """安全重载配置 (P2-4): 验证新配置后才应用，失败则保持原配置
+        """安全重载配置 (P2-4): 验证新配置后才应用，失败则回滚到原配置
         
         与 load_config() 不同，reload_config() 会:
         1. 先验证新配置文件是否合法
         2. 验证失败时保持当前配置不变
         3. 成功重载后通知所有 on_config_changed 回调
+        4. 应用过程中异常则回滚到原配置
         
         返回:
             重载成功返回 True，失败返回 False
@@ -356,6 +357,7 @@ class ConfigManager:
         if not self.config_file:
             return False
         
+        old_config_backup = None
         try:
             with open(self.config_file, 'r', encoding='utf-8') as f:
                 raw_config = json.load(f)
@@ -372,13 +374,10 @@ class ConfigManager:
                 )
                 return False
             
-            # 深拷贝备份原配置 (用于失败回滚)
+            # W5修复: 备份+合并合并为单次锁获取，消除 TOCTOU 窗口
             import copy
             with self._lock:
                 old_config_backup = copy.deepcopy(self.config)
-            
-            # 应用新配置
-            with self._lock:
                 self._merge_config(self.config, new_config)
             
             logger.info("配置热重载成功: %s", self.config_file)
@@ -388,7 +387,11 @@ class ConfigManager:
             
             return True
         except Exception as e:
-            logger.error("配置热重载失败: %s (保留原配置)", e)
+            # W4修复: 利用备份回滚配置，确保"保留原配置"的承诺真实可信
+            if old_config_backup is not None:
+                with self._lock:
+                    self.config = old_config_backup
+            logger.error("配置热重载失败: %s (已回滚到原配置)", e)
             return False
     
     def on_config_changed(self, callback: Callable[[], None]) -> None:
@@ -411,7 +414,9 @@ class ConfigManager:
             try:
                 callback()
             except Exception as e:
-                logger.error("配置变更回调 %s 执行失败: %s", callback.__name__, e)
+                # C1修复: 使用 getattr 安全获取名称，避免 callable class 无 __name__ 导致 AttributeError
+                cb_name = getattr(callback, '__name__', str(callback))
+                logger.error("配置变更回调 %s 执行失败: %s", cb_name, e)
     
     def start_watching(self, debounce_seconds: float = 2.0, poll_interval: float = 2.0) -> bool:
         """启动配置文件热重载监听 (P2-4)
@@ -433,23 +438,26 @@ class ConfigManager:
         
         from .config_watcher import ConfigWatcher
         
-        # 停止已有的监听器
-        if self._watcher is not None:
-            self._watcher.stop()
-        
-        self._watcher = ConfigWatcher(
-            config_path=self.config_file,
-            on_reload=self.reload_config,
-            debounce_seconds=debounce_seconds,
-            poll_interval=poll_interval,
-        )
-        return self._watcher.start()
+        # C2修复: 加锁保护 _watcher 的读写，防止并发 start/stop 竞态
+        with self._lock:
+            if self._watcher is not None:
+                self._watcher.stop()
+            
+            self._watcher = ConfigWatcher(
+                config_path=self.config_file,
+                on_reload=self.reload_config,
+                debounce_seconds=debounce_seconds,
+                poll_interval=poll_interval,
+            )
+            return self._watcher.start()
     
     def stop_watching(self) -> None:
         """停止配置文件热重载监听 (P2-4)"""
-        if self._watcher is not None:
-            self._watcher.stop()
-            self._watcher = None
+        # C2修复: 加锁保护 _watcher 的读写
+        with self._lock:
+            if self._watcher is not None:
+                self._watcher.stop()
+                self._watcher = None
     
     def __del__(self) -> None:
         """析构时自动停止配置监听 (P2-4)"""

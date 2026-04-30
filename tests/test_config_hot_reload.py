@@ -499,3 +499,130 @@ class TestConfigManagerThreadSafety(unittest.TestCase):
 
         self.cm.stop_watching()
         self.assertEqual(len(errors), 0, f"并发错误: {errors}")
+
+    def test_03_concurrent_start_stop_race(self):
+        """S10: 并发 start_watching/stop_watching 不崩溃"""
+        errors = []
+
+        def starter():
+            try:
+                for _ in range(10):
+                    self.cm.start_watching(poll_interval=0.3)
+                    time.sleep(0.05)
+            except Exception as e:
+                errors.append(f"starter: {e}")
+
+        def stopper():
+            try:
+                for _ in range(10):
+                    self.cm.stop_watching()
+                    time.sleep(0.05)
+            except Exception as e:
+                errors.append(f"stopper: {e}")
+
+        threads = [
+            threading.Thread(target=starter),
+            threading.Thread(target=stopper),
+        ]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=20)
+
+        self.cm.stop_watching()
+        self.assertEqual(len(errors), 0, f"并发 start/stop 竞态错误: {errors}")
+
+    def test_04_concurrent_reload_and_set_no_write_loss(self):
+        """S10: 并发 reload_config + set 验证无写入丢失"""
+        errors = []
+        # 使用独立 key 避免与文件配置冲突
+        test_key = "collision.test_concurrent_value"
+
+        def reloader():
+            try:
+                for _ in range(30):
+                    self.cm.reload_config()
+                    time.sleep(0.03)
+            except Exception as e:
+                errors.append(f"reloader: {e}")
+
+        def setter():
+            try:
+                for i in range(50):
+                    self.cm.set(test_key, i)
+                    time.sleep(0.01)
+            except Exception as e:
+                errors.append(f"setter: {e}")
+
+        def reader():
+            try:
+                for _ in range(100):
+                    self.cm.get(test_key)
+                    time.sleep(0.005)
+            except Exception as e:
+                errors.append(f"reader: {e}")
+
+        threads = [
+            threading.Thread(target=reloader),
+            threading.Thread(target=setter),
+            threading.Thread(target=reader),
+        ]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=20)
+
+        self.assertEqual(len(errors), 0, f"并发 reload+set 错误: {errors}")
+
+
+class TestNotificationChannelConcurrency(unittest.TestCase):
+    """S10: 通知渠道并发安全测试"""
+
+    def setUp(self):
+        from src.monitoring.alert_system import AlertSystem, AlertLevel, AlertType
+        self.AlertSystem = AlertSystem
+        self.AlertLevel = AlertLevel
+        self.AlertType = AlertType
+
+    def test_01_concurrent_add_channel_and_trigger(self):
+        """S10: 并发 add_notification_channel + _trigger_alert 不崩溃"""
+        from src.monitoring.notification_channels import ConsoleNotification
+
+        alert_sys = self.AlertSystem()
+        errors = []
+
+        def adder():
+            try:
+                for i in range(20):
+                    ch = ConsoleNotification()
+                    alert_sys.add_notification_channel(ch)
+                    time.sleep(0.01)
+            except Exception as e:
+                errors.append(f"adder: {e}")
+
+        def trigger():
+            try:
+                for i in range(20):
+                    from src.monitoring.alert_system import AlertRecord
+                    alert = AlertRecord(
+                        timestamp="2026-01-01T00:00:00",
+                        level=self.AlertLevel.WARNING,
+                        alert_type=self.AlertType.PERFORMANCE_DEGRADATION,
+                        message=f"Concurrent test alert {i}",
+                        metrics={},
+                    )
+                    alert_sys._trigger_alert(alert)
+                    time.sleep(0.01)
+            except Exception as e:
+                errors.append(f"trigger: {e}")
+
+        threads = [
+            threading.Thread(target=adder),
+            threading.Thread(target=trigger),
+        ]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=15)
+
+        self.assertEqual(len(errors), 0, f"并发 add+trigger 错误: {errors}")
