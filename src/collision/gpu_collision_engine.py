@@ -13,7 +13,10 @@ import threading
 import secrets
 import logging
 from pathlib import Path
-from typing import Set, Optional, Callable, Tuple, List, Dict, Any
+from typing import Set, Optional, Tuple, List, Dict, Any, Callable
+
+# P3-3: 统一回调类型别名
+from .types import ProgressCallback, MatchCallback, CompleteCallback
 
 # v2.2.1: 导入异步日志支持
 try:
@@ -116,7 +119,7 @@ except ImportError:
     PYOPENCL_AVAILABLE = False
 
 
-def _seed_bytes_to_u32_be_array(seed: bytes):
+def _seed_bytes_to_u32_be_array(seed: bytes) -> "np.ndarray":
     """把 32 字节 seed 按 big-endian 拆成 8×uint32，再转成本机端序。
 
     GPU 内核 generate_private_key 假设 seed 按 big-endian uint32 排列，
@@ -143,7 +146,7 @@ from ..monitoring.gpu_performance_monitor import GPUPerformanceMonitor, get_gpu_
 
 # v2.2.1: 预导入GPU监控器,避免重复import
 _gpu_performance_monitor = None
-def _get_gpu_monitor():
+def _get_gpu_monitor() -> "GPUPerformanceMonitor":
     """获取GPU性能监控器(懒加载)"""
     global _gpu_performance_monitor
     if _gpu_performance_monitor is None:
@@ -165,7 +168,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
     # 监控配置
     MONITOR_INTERVAL = 100  # 每 100 个批次检查一次警告和建议
     
-    def _apply_intel_specific_optimizations(self):
+    def _apply_intel_specific_optimizations(self) -> None:
         """应用 Intel GPU 特定优化和验证
         
         委托给 IntelGPUOptimizer 处理，保持向后兼容。
@@ -191,7 +194,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self._perf_pipeline.auto_tuner = self.auto_tuner
         self._perf_pipeline.performance_reporter = self.performance_reporter
     
-    def _init_intel_monitoring_and_tuning(self):
+    def _init_intel_monitoring_and_tuning(self) -> None:
         """初始化 Intel GPU 监控和调优组件（P1/P2）
         
         委托给 IntelGPUOptimizer 处理，保持向后兼容。
@@ -216,7 +219,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self._perf_pipeline.auto_tuner = self.auto_tuner
         self._perf_pipeline.performance_reporter = self.performance_reporter
     
-    def _verify_uint32_workaround(self):
+    def _verify_uint32_workaround(self) -> bool:
         """验证 uint32 workaround 是否正确应用
         
         委托给 IntelGPUOptimizer 处理，保持向后兼容。
@@ -235,9 +238,9 @@ class GPUCollisionEngine(BaseCollisionEngine):
     def __init__(self, targets: Set[str],
                  device_index: int = 1,
                  batch_size: int = None,
-                 on_progress: Optional[Callable] = None,
-                 on_match: Optional[Callable] = None,
-                 on_complete: Optional[Callable] = None,
+                 on_progress: Optional[ProgressCallback] = None,
+                 on_match: Optional[MatchCallback] = None,
+                 on_complete: Optional[CompleteCallback] = None,
                  checkpoint_enabled: bool = False,
                  dedup_enabled: bool = False,
                  dedup_max_size: int = 1_000_000,
@@ -427,7 +430,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             return self._batch_size
     
     @batch_size.setter
-    def batch_size(self, value: int):
+    def batch_size(self, value: int) -> None:
         """线程安全的batch_size写入
         
         P1-2: batch_size >= UINT32_MAX 会导致 GPU 内核 gid 溢出
@@ -522,7 +525,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             return isinstance(value, bool)
         return True
     
-    def _validate_merged_config(self, config: Dict):
+    def _validate_merged_config(self, config: Dict) -> None:
         """验证合并后的配置
         
         Args:
@@ -542,7 +545,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             elif ratio < 0.3:
                 logger.warning(f"显存使用率过低({ratio:.0%})，性能可能不佳")
     
-    def _resize_gpu_buffers(self, new_batch_size: int):
+    def _resize_gpu_buffers(self, new_batch_size: int) -> None:
         """动态调整GPU缓冲区大小
         
         Args:
@@ -618,7 +621,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             if self._gpu_kernel:
                 self.batch_size = self._gpu_kernel._max_batch_size
     
-    def _record_adjustment(self, old_size: int, new_size: int, reason: str, details: str = ""):
+    def _record_adjustment(self, old_size: int, new_size: int, reason: str, details: str = "") -> None:
         """记录调整历史 - 委托给 GPUEngineMonitor.record_adjustment()
         
         Args:
@@ -665,7 +668,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             return 0
     
 
-    def _prepare_targets(self):
+    def _prepare_targets(self) -> None:
         """将目标地址转换为 Hash160"""
         self._target_list = []
         hash160_list = []
@@ -708,7 +711,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             hash160_bytes=self._target_hash160s,
         )
     
-    def _calculate_dynamic_benchmark(self):
+    def _calculate_dynamic_benchmark(self) -> None:
         """
         计算动态性能基准值
         
@@ -738,7 +741,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             # 保持默认值
             pass
     
-    def _check_memory_leaks(self):
+    def _check_memory_leaks(self) -> None:
         """
         定期检查内存泄漏
         
@@ -771,7 +774,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         """
         return GPUDeviceDetector.is_gpu_available()
     
-    def start(self, mode: str = "random", resume: bool = False, **kwargs):
+    def start(self, mode: str = "random", resume: bool = False, **kwargs) -> None:
         """启动对撞"""
         if self._running:
             return
@@ -787,11 +790,11 @@ class GPUCollisionEngine(BaseCollisionEngine):
         # 委托给搜索模式协调器
         self._search_coordinator.start(mode, resume=resume, **kwargs)
     
-    def _random_search(self):
+    def _random_search(self) -> None:
         """随机碰撞模式 - 委托给 RandomSearchMode"""
         return self._random_search_mode.execute()
     
-    def _start_range_scan(self):
+    def _start_range_scan(self) -> None:
         """启动范围扫描（命名函数替代lambda）
         
         这个函数是为了替代lambda: self._range_scan(self._range_start, self._range_end)

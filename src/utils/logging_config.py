@@ -20,13 +20,13 @@ class SafeRotatingFileHandler(RotatingFileHandler):
     仅在 Windows 平台启用重试逻辑；Linux/macOS 行为与原生 RotatingFileHandler 完全相同。
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         self._retry_count = kwargs.pop('retry_count', 3)
         self._retry_delay = kwargs.pop('retry_delay', 0.1)
         self._is_windows = platform.system() == 'Windows'
         super().__init__(*args, **kwargs)
 
-    def doRollover(self):
+    def doRollover(self) -> None:
         """带重试机制的日志轮转（Windows 专用）"""
         if not self._is_windows:
             super().doRollover()
@@ -69,12 +69,12 @@ class LoggingConfig:
     _config = None
     _initialized = False
     
-    def __new__(cls):
+    def __new__(cls) -> "LoggingConfig":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
     
-    def init(self, config: Optional[Dict[str, Any]] = None):
+    def init(self, config: Optional[Dict[str, Any]] = None) -> None:
         """
         初始化日志配置
         
@@ -126,7 +126,7 @@ class LoggingConfig:
         except (OSError, ImportError):
             return None
     
-    def _ensure_log_directory(self):
+    def _ensure_log_directory(self) -> None:
         """确保日志目录存在"""
         log_file = self._config.get("file")
         if log_file:
@@ -171,7 +171,7 @@ class LoggingConfig:
             print(f"[磁盘检查] 无法获取磁盘空间信息: {e}", file=sys.stderr)
             return True
 
-    def _setup_root_logger(self):
+    def _setup_root_logger(self) -> None:
         """配置根日志记录器"""
         level = self._config.get("level", "INFO")
         format_str = self._config.get("format", self.DEFAULT_CONFIG["format"])
@@ -232,15 +232,15 @@ class LoggingConfig:
             # M10: 包装文件处理器，捕获磁盘满 OSError
             class _DiskSafeHandler(logging.Handler):
                 """OSError（磁盘满）安全包装层"""
-                def __init__(self, inner: logging.Handler):
+                def __init__(self, inner: logging.Handler) -> None:
                     super().__init__(inner.level)
                     self._inner = inner
                     self._disk_full_warned = False
 
-                def setFormatter(self, fmt):
+                def setFormatter(self, fmt) -> None:
                     self._inner.setFormatter(fmt)
 
-                def emit(self, record: logging.LogRecord):
+                def emit(self, record: logging.LogRecord) -> None:
                     try:
                         self._inner.emit(record)
                         self._disk_full_warned = False  # 恢复后重置警告状态
@@ -253,7 +253,7 @@ class LoggingConfig:
                                 file=sys.stderr
                             )
 
-                def close(self):
+                def close(self) -> None:
                     self._inner.close()
                     super().close()
 
@@ -308,7 +308,7 @@ class LoggingConfig:
 logging_config = LoggingConfig()
 
 
-def init_logging(config: Optional[Dict[str, Any]] = None):
+def init_logging(config: Optional[Dict[str, Any]] = None) -> None:
     """
     初始化日志系统
     
@@ -321,7 +321,7 @@ def init_logging(config: Optional[Dict[str, Any]] = None):
     _setup_security_filter()
 
 
-def _setup_security_filter():
+def _setup_security_filter() -> None:
     """设置日志安全过滤器（P0-2修复）
     
     自动检测并屏蔽日志中的敏感信息：
@@ -339,7 +339,8 @@ def _setup_security_filter():
         security_filter = SecurityLogFilter(
             name='security_filter',
             mask_private_keys=True,
-            mask_wif=True
+            mask_wif=True,
+            mask_addresses=True
         )
         
         # 添加到根日志记录器

@@ -2,7 +2,10 @@
 import time
 import threading
 import secrets
-from typing import Set, Optional, Callable
+from typing import Set, Optional
+
+# P3-3: 统一回调类型别名
+from ..types import ProgressCallback, MatchCallback, CompleteCallback
 from src.collision.plugins.base_plugin import CollisionPlugin
 from src.collision.collision_stats import CollisionStats
 from src.core.address_generator import P2PKHAddressGenerator
@@ -40,9 +43,9 @@ class ExamplePlugin(CollisionPlugin):
         self._thread: Optional[threading.Thread] = None
         self.progress_interval = kwargs.get('progress_interval', 1000)
     
-    def start(self, on_progress: Optional[Callable] = None,
-              on_match: Optional[Callable] = None,
-              on_complete: Optional[Callable] = None):
+    def start(self, on_progress: Optional[ProgressCallback] = None,
+              on_match: Optional[MatchCallback] = None,
+              on_complete: Optional[CompleteCallback] = None):
         """
         开始碰撞
         

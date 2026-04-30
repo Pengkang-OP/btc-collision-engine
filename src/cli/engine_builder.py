@@ -12,7 +12,10 @@ import argparse
 import hashlib
 import logging
 import sys
-from typing import Any, Set, Tuple
+from typing import Any, Optional, Set, Tuple
+
+# P3-3: 统一回调类型别名
+from src.collision.types import ProgressCallback, MatchCallback
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +32,7 @@ except ImportError:
     GPU_AVAILABLE = False
 
 
-def on_match_callback(sensitive_mode: str = "full"):
+def on_match_callback(sensitive_mode: str = "full") -> MatchCallback:
     """匹配回调工厂函数（高亮显示，支持脱敏模式）"""
     def _callback(private_key: bytes, address: str, wif: str) -> None:
         pk_hex = private_key.hex()
@@ -55,7 +58,7 @@ def on_match_callback(sensitive_mode: str = "full"):
     return _callback
 
 
-def build_engine(args: argparse.Namespace, targets: Set[str], on_progress=None, on_match=None, sensitive_mode: str = "full") -> Tuple[Any, str]:
+def build_engine(args: argparse.Namespace, targets: Set[str], on_progress: Optional[ProgressCallback] = None, on_match: Optional[MatchCallback] = None, sensitive_mode: str = "full") -> Tuple[Any, str]:
     """引擎工厂：根据 CLI 参数分路 CPU / 单GPU / 多GPU 三种引擎
 
     Returns:
