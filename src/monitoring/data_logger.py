@@ -12,6 +12,7 @@ import os
 import sys
 import time
 import json
+from src.utils.fast_json import fast_dump, fast_load, fast_loads
 import logging
 import statistics
 import threading
@@ -88,7 +89,7 @@ class DataLogger:
         temp_file = filepath + '.tmp'
         try:
             with open(temp_file, 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
+                fast_dump(data, f, ensure_ascii=False, indent=2)
                 f.flush()
                 os.fsync(f.fileno())  # 确保数据写入磁盘
             
@@ -116,17 +117,17 @@ class DataLogger:
             # 初始化当前数据文件
             if not os.path.exists(self.current_data_file):
                 with open(self.current_data_file, 'w', encoding='utf-8') as f:
-                    json.dump({}, f)
+                    fast_dump({}, f)
             
             # 初始化历史数据文件
             if not os.path.exists(self.history_data_file):
                 with open(self.history_data_file, 'w', encoding='utf-8') as f:
-                    json.dump([], f)
+                    fast_dump([], f)
             
             # 初始化错误日志文件
             if not os.path.exists(self.error_log_file):
                 with open(self.error_log_file, 'w', encoding='utf-8') as f:
-                    json.dump([], f)
+                    fast_dump([], f)
                     
             # 初始化性能日志文件
             if not os.path.exists(self.performance_log_file):
@@ -311,7 +312,7 @@ class DataLogger:
             errors = []
             if os.path.exists(self.error_log_file):
                 with open(self.error_log_file, 'r', encoding='utf-8') as f:
-                    errors = json.load(f)
+                    errors = fast_load(f)
             
             # 添加新错误
             errors.append(error_record)
@@ -322,7 +323,7 @@ class DataLogger:
             
             # 写回文件
             with open(self.error_log_file, 'w', encoding='utf-8') as f:
-                json.dump(errors, f, ensure_ascii=False, indent=2)
+                fast_dump(errors, f, ensure_ascii=False, indent=2)
         except Exception as e:
             self.logger.error(f"保存错误日志失败: {e}")
         
@@ -359,7 +360,7 @@ class DataLogger:
                 os.close(temp_fd)  # 关闭文件描述符，稍后用open写入
                 
                 with open(temp_file, 'w', encoding='utf-8') as f:
-                    json.dump(save_data, f, ensure_ascii=False, indent=2)
+                    fast_dump(save_data, f, ensure_ascii=False, indent=2)
                     f.flush()
                     os.fsync(f.fileno())  # 确保数据写入磁盘
                 
@@ -451,7 +452,7 @@ class DataLogger:
                 os.close(temp_fd)
                 
                 with open(temp_file, 'w', encoding='utf-8') as f:
-                    json.dump(history, f, ensure_ascii=False, indent=2)
+                    fast_dump(history, f, ensure_ascii=False, indent=2)
                     f.flush()
                     os.fsync(f.fileno())
                 
@@ -502,7 +503,7 @@ class DataLogger:
         
         try:
             with open(self.history_data_file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
+                data = fast_load(f)
                 if isinstance(data, list):
                     return data
                 else:
@@ -574,7 +575,7 @@ class DataLogger:
                                 # 找到完整对象
                                 try:
                                     obj_str = content[start:j+1]
-                                    obj = json.loads(obj_str)
+                                    obj = fast_loads(obj_str)
                                     if isinstance(obj, dict) and 'timestamp' in obj:
                                         recovered.append(obj)
                                 except json.JSONDecodeError:
@@ -643,7 +644,7 @@ class DataLogger:
             history = []
             if os.path.exists(self.history_data_file):
                 with open(self.history_data_file, 'r', encoding='utf-8') as f:
-                    history = json.load(f)
+                    history = fast_load(f)
             
             if not history:
                 return {"message": "无历史数据可供生成报告"}
@@ -698,7 +699,7 @@ class DataLogger:
             report_path = os.path.join(self.storage_dir, report_filename)
             
             with open(report_path, 'w', encoding='utf-8') as f:
-                json.dump(report, f, ensure_ascii=False, indent=2)
+                fast_dump(report, f, ensure_ascii=False, indent=2)
             
             self.logger.info(f"{report_type}报告已生成: {report_path}")
             self._auto_cleanup_if_needed()
@@ -881,25 +882,25 @@ class DataLogger:
             # 清理历史数据
             if os.path.exists(self.history_data_file):
                 with open(self.history_data_file, 'r', encoding='utf-8') as f:
-                    history = json.load(f)
+                    history = fast_load(f)
                 
                 cleaned_history = [d for d in history if d.get("timestamp", 0) >= cutoff_time]
                 
                 if len(cleaned_history) != len(history):
                     with open(self.history_data_file, 'w', encoding='utf-8') as f:
-                        json.dump(cleaned_history, f, ensure_ascii=False, indent=2)
+                        fast_dump(cleaned_history, f, ensure_ascii=False, indent=2)
                     self.logger.info(f"清理了 {len(history) - len(cleaned_history)} 条过期历史数据")
             
             # 清理错误日志
             if os.path.exists(self.error_log_file):
                 with open(self.error_log_file, 'r', encoding='utf-8') as f:
-                    errors = json.load(f)
+                    errors = fast_load(f)
                 
                 cleaned_errors = [e for e in errors if e.get("timestamp", 0) >= cutoff_time]
                 
                 if len(cleaned_errors) != len(errors):
                     with open(self.error_log_file, 'w', encoding='utf-8') as f:
-                        json.dump(cleaned_errors, f, ensure_ascii=False, indent=2)
+                        fast_dump(cleaned_errors, f, ensure_ascii=False, indent=2)
                     self.logger.info(f"清理了 {len(errors) - len(cleaned_errors)} 条过期错误日志")
                     
         except Exception as e:
@@ -959,7 +960,7 @@ class DataLogger:
                 if os.path.exists(self.error_log_file):
                     try:
                         with open(self.error_log_file, 'r', encoding='utf-8') as f:
-                            errors = json.load(f)
+                            errors = fast_load(f)
                     except (json.JSONDecodeError, OSError) as e:
                         self.logger.warning(f"读取错误日志文件失败，将覆盖: {e}")
                         errors = []

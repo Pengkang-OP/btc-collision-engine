@@ -19,7 +19,7 @@ import time
 import logging
 from ..utils import init_logging, get_configured_logger
 import statistics
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -76,7 +76,7 @@ class GPUBenchmarkSuite:
         >>> print(report)
     """
     
-    def __init__(self, gpu_engine) -> None:
+    def __init__(self, gpu_engine: Any) -> None:
         """初始化基准测试套件
         
         Args:
@@ -487,7 +487,7 @@ class GPUBenchmarkSuite:
             filepath: 文件路径
             results: 测试结果（可选）
         """
-        import json
+        from src.utils.fast_json import fast_dump
         
         if results is None:
             results = self.results
@@ -515,7 +515,7 @@ class GPUBenchmarkSuite:
             })
         
         with open(filepath, 'w', encoding='utf-8') as f:
-            json.dump(serializable, f, indent=2, ensure_ascii=False)
+            fast_dump(serializable, f, indent=2, ensure_ascii=False)
         
         logger.info(f"测试结果已保存到: {filepath}")
     

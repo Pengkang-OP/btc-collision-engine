@@ -18,6 +18,9 @@ from datetime import datetime
 from typing import Dict, List, Optional, Callable, Any
 import psutil
 
+# P3-10: 高性能JSON序列化
+from src.utils.fast_json import fast_dumps, fast_loads, fast_dump, fast_load
+
 # 配置日志
 from src.utils import get_configured_logger
 from src.monitoring.storage_config import DataStorageConfig
@@ -192,12 +195,12 @@ class DataStorage:
         # 初始化历史数据文件
         if not os.path.exists(self.history_data_file):
             with open(self.history_data_file, 'w', encoding='utf-8') as f:
-                json.dump([], f)
+                fast_dump([], f)
         
         # 初始化错误日志文件
         if not os.path.exists(self.error_log_file):
             with open(self.error_log_file, 'w', encoding='utf-8') as f:
-                json.dump([], f)
+                fast_dump([], f)
     
     def save_current_data(self, data: MonitoringData) -> None:
         """保存当前数据（优化：原子写入）"""
@@ -205,7 +208,7 @@ class DataStorage:
             # 使用原子写入：先写临时文件，再重命名
             temp_file = self.current_data_file + '.tmp'
             with open(temp_file, 'w', encoding='utf-8') as f:
-                json.dump(data.to_dict(), f, ensure_ascii=False, indent=2)
+                fast_dump(data.to_dict(), f, ensure_ascii=False, indent=2)
                 f.flush()
                 os.fsync(f.fileno())  # 确保数据写入磁盘
             
@@ -240,7 +243,7 @@ class DataStorage:
             # 原子写入
             temp_file = self.history_data_file + '.tmp'
             with open(temp_file, 'w', encoding='utf-8') as f:
-                json.dump(history, f, ensure_ascii=False, indent=2)
+                fast_dump(history, f, ensure_ascii=False, indent=2)
                 f.flush()
                 os.fsync(f.fileno())
             
@@ -305,7 +308,7 @@ class DataStorage:
             temp_file = compressed_file + '.tmp'
             
             with open(temp_file, 'w', encoding='utf-8') as f:
-                json.dump(compressed_data, f, ensure_ascii=False, indent=2)
+                fast_dump(compressed_data, f, ensure_ascii=False, indent=2)
                 f.flush()
                 os.fsync(f.fileno())
             
@@ -317,7 +320,7 @@ class DataStorage:
             # 保留新数据
             temp_file = self.history_data_file + '.tmp'
             with open(temp_file, 'w', encoding='utf-8') as f:
-                json.dump(new_data, f, ensure_ascii=False, indent=2)
+                fast_dump(new_data, f, ensure_ascii=False, indent=2)
                 f.flush()
                 os.fsync(f.fileno())
             
@@ -383,7 +386,7 @@ class DataStorage:
             errors = []
             if os.path.exists(self.error_log_file):
                 with open(self.error_log_file, 'r', encoding='utf-8') as f:
-                    errors = json.load(f)
+                    errors = fast_load(f)
             
             # 添加新错误
             error["timestamp"] = time.time()
@@ -396,7 +399,7 @@ class DataStorage:
             # 原子写入
             temp_file = self.error_log_file + '.tmp'
             with open(temp_file, 'w', encoding='utf-8') as f:
-                json.dump(errors, f, ensure_ascii=False, indent=2)
+                fast_dump(errors, f, ensure_ascii=False, indent=2)
                 f.flush()
                 os.fsync(f.fileno())
             
@@ -421,7 +424,7 @@ class DataStorage:
         try:
             if os.path.exists(self.current_data_file):
                 with open(self.current_data_file, 'r', encoding='utf-8') as f:
-                    return json.load(f)
+                    return fast_load(f)
         except Exception as e:
             logger.error(f"读取当前数据失败: {e}")
         return None
@@ -433,7 +436,7 @@ class DataStorage:
         
         try:
             with open(self.history_data_file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
+                data = fast_load(f)
                 if isinstance(data, list):
                     return data
                 else:
@@ -462,7 +465,7 @@ class DataStorage:
             recovered = []
             for match in matches:
                 try:
-                    obj = json.loads(match)
+                    obj = fast_loads(match)
                     recovered.append(obj)
                 except json.JSONDecodeError:
                     continue
@@ -478,7 +481,7 @@ class DataStorage:
         """获取历史数据"""
         try:
             with open(self.history_data_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
+                return fast_load(f)
         except Exception as e:
             logger.error(f"读取历史数据失败: {e}")
             return []
@@ -487,7 +490,7 @@ class DataStorage:
         """获取错误日志"""
         try:
             with open(self.error_log_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
+                return fast_load(f)
         except Exception as e:
             logger.error(f"读取错误日志失败: {e}")
             return []
@@ -719,7 +722,7 @@ class MonitoringAlertAdapter:
         print(f"{level_color}[ALERT] {datetime.fromtimestamp(alert['timestamp']).strftime('%Y-%m-%d %H:%M:%S')} - {alert['message']}{reset_color}")
         
         # 记录到日志
-        logger.warning(f"ALERT: {alert['message']} - Details: {json.dumps(anomaly)}")
+        logger.warning(f"ALERT: {alert['message']} - Details: {fast_dumps(anomaly)}")
         
         # 同时通过全局告警系统检查指标
         metrics = self._anomaly_to_metrics(anomaly)
@@ -872,7 +875,7 @@ class ReportGenerator:
         try:
             report_file = os.path.join(self.storage.storage_dir, f"report_{today.isoformat()}.json")
             with open(report_file, 'w', encoding='utf-8') as f:
-                json.dump(report, f, ensure_ascii=False, indent=2)
+                fast_dump(report, f, ensure_ascii=False, indent=2)
             logger.info(f"每日报告已生成: {report_file}")
         except Exception as e:
             logger.error(f"保存报告失败: {e}")

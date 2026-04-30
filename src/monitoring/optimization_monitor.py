@@ -330,13 +330,13 @@ class OptimizationPerformanceMonitor:
         Returns:
             导出的数据字符串
         """
-        import json
+        from src.utils.fast_json import fast_dumps
         
         with self._lock:
             metrics_list = [m.to_dict() for m in self._metrics_history]
             
             if format == 'json':
-                return json.dumps(metrics_list, indent=2, ensure_ascii=False)
+                return fast_dumps(metrics_list, indent=2, ensure_ascii=False)
             elif format == 'csv':
                 if not metrics_list:
                     return ""
