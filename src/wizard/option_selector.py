@@ -10,8 +10,10 @@ import sys
 import os
 from typing import Tuple
 
+from .selector_protocol import SelectorProtocol
 
-class OptionSelector:
+
+class OptionSelector(SelectorProtocol):
     """功能选项选择器"""
 
     def select(self, compact: bool = False) -> Tuple[bool, bool, int]:

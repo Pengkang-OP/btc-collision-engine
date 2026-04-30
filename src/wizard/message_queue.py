@@ -9,8 +9,11 @@
 import queue
 import threading
 import time
+import logging
 from typing import Optional, Dict, Any
 from .events import WizardEvent, WizardEventType
+
+logger = logging.getLogger(__name__)
 
 
 class WizardMessageQueue:
@@ -42,6 +45,10 @@ class WizardMessageQueue:
             self._notify_subscribers(event)
             return True
         except queue.Full:
+            logger.warning(
+                f"Message queue full (size={self._queue.maxsize}), "
+                f"dropping event: {event_type.value}"
+            )
             return False
 
     def send_wizard_start(self, config: Dict[str, Any]) -> bool:
@@ -137,8 +144,11 @@ class WizardMessageQueue:
         for callback in self._subscribers:
             try:
                 callback(event)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error(
+                    f"Subscriber callback failed for {event.event_type.value}: {e}",
+                    exc_info=True
+                )
 
     def enable(self):
         """启用队列"""
@@ -173,17 +183,48 @@ class WizardMessageQueue:
 _global_message_queue: Optional[WizardMessageQueue] = None
 
 
-def get_message_queue() -> WizardMessageQueue:
-    """获取全局消息队列实例"""
+def get_message_queue(maxsize: int = 1000) -> WizardMessageQueue:
+    """获取全局消息队列实例
+
+    Args:
+        maxsize: 队列最大容量（仅在首次创建时生效）
+
+    Returns:
+        全局消息队列实例
+
+    使用示例:
+        # 使用默认队列
+        queue = get_message_queue()
+
+        # 注入自定义队列用于测试
+        test_queue = WizardMessageQueue(maxsize=100)
+        reset_message_queue(test_queue)
+    """
     global _global_message_queue
     if _global_message_queue is None:
-        _global_message_queue = WizardMessageQueue()
+        _global_message_queue = WizardMessageQueue(maxsize=maxsize)
     return _global_message_queue
 
 
-def reset_message_queue():
-    """重置全局消息队列"""
+def set_message_queue(queue: WizardMessageQueue):
+    """设置全局消息队列实例（用于测试注入）
+
+    Args:
+        queue: 新的消息队列实例
+    """
     global _global_message_queue
     if _global_message_queue is not None:
         _global_message_queue.clear()
-    _global_message_queue = None
+    _global_message_queue = queue
+
+
+def reset_message_queue(new_queue: Optional[WizardMessageQueue] = None):
+    """重置全局消息队列
+
+    Args:
+        new_queue: 可选的新队列实例，为 None 时完全清空
+    """
+    global _global_message_queue
+    if _global_message_queue is not None:
+        _global_message_queue.clear()
+    _global_message_queue = new_queue

@@ -9,6 +9,9 @@
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
 from enum import Enum
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class WizardMode(Enum):
@@ -67,38 +70,12 @@ class WizardResult:
         }
 
     def build_command(self) -> List[str]:
-        """构建命令行"""
-        cmd = ["python", "key_collision_cli.py"]
+        """构建命令行
 
-        if self.target_file:
-            cmd.extend(["-f", self.target_file])
-        elif self.targets:
-            for target in self.targets:
-                cmd.extend(["-t", target])
-
-        cmd.extend(["-m", self.mode])
-
-        if self.mode in ("range", "brute_force"):
-            if self.start_key:
-                cmd.extend(["--start", self.start_key])
-            if self.end_key:
-                cmd.extend(["--end", self.end_key])
-
-        if self.checkpoint:
-            cmd.append("--checkpoint")
-        if self.dedup:
-            cmd.append("--dedup")
-
-        if self.duration > 0:
-            cmd.extend(["--duration", str(self.duration)])
-
-        if self.use_multi_gpu and self.gpu_indices:
-            cmd.append("--multi-gpu")
-            cmd.extend(["--gpu-indices"] + [str(i) for i in self.gpu_indices])
-        elif self.gpu_indices:
-            cmd.extend(["--gpu-indices", " ".join(map(str, self.gpu_indices))])
-
-        return cmd
+        委托 ConfigBuilder 统一构建逻辑，避免与 config_builder.py 重复实现。
+        """
+        from .config_builder import ConfigBuilder
+        return ConfigBuilder().build(self)
 
     def save_to_file(self, filepath: str) -> bool:
         """保存结果到文件"""
@@ -107,7 +84,8 @@ class WizardResult:
             with open(filepath, 'w', encoding='utf-8') as f:
                 json.dump(self.to_dict(), f, indent=2, ensure_ascii=False)
             return True
-        except Exception:
+        except (IOError, OSError, TypeError, json.JSONEncodeError) as e:
+            logger.error(f"Failed to save wizard result to {filepath}: {e}")
             return False
 
     @classmethod
@@ -118,5 +96,6 @@ class WizardResult:
             with open(filepath, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             return cls(**data)
-        except Exception:
+        except (IOError, OSError, json.JSONDecodeError, TypeError, KeyError) as e:
+            logger.error(f"Failed to load wizard result from {filepath}: {e}")
             return None

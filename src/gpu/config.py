@@ -163,7 +163,7 @@ class GPUConfig:
             已初始化的GPUDevice实例
         """
         if device_index is None:
-            device_index = self.config.get("gpu_device_index", -1)
+            device_index = int(self.config.get("gpu_device_index", -1))
         
         device = GPUDevice()
         device.initialize(device_index)

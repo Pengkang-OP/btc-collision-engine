@@ -669,18 +669,26 @@ def _quick_start_select_gpu() -> List[str]:
             for i, dev in enumerate(devices):
                 label = _format_device_label(dev, i)
                 output.print(f"     {i + 1}. {label}")
-            while True:
-                raw = input(f"   请选择 GPU 设备 [1-{len(devices)}]: ").strip()
-                try:
-                    idx = int(raw) - 1
-                    if 0 <= idx < len(devices):
-                        label = _format_device_label(devices[idx], idx)
-                        output.success(f"已选择: {label}")
-                        gpu_args.extend(["--use-gpu", "--gpu-device", str(idx)])
-                        break
-                except ValueError:
-                    pass
-                output.error(f"无效输入，请输入 1 到 {len(devices)} 之间的数字")
+            default_idx = 1  # 默认选择第一个设备
+            raw = input(f"   请选择 GPU 设备 [1-{len(devices)}，直接回车=选择第一个]: ").strip() or str(default_idx)
+            try:
+                idx = int(raw) - 1
+                if 0 <= idx < len(devices):
+                    label = _format_device_label(devices[idx], idx)
+                    output.success(f"已选择: {label}")
+                    gpu_args.extend(["--use-gpu", "--gpu-device", str(idx)])
+                else:
+                    output.error(f"无效设备编号: {raw}（有效范围 1-{len(devices)}）")
+                    output.warning("将使用第一个 GPU 设备")
+                    label = _format_device_label(devices[0], 0)
+                    output.success(f"已选择: {label}")
+                    gpu_args.extend(["--use-gpu", "--gpu-device", "0"])
+            except ValueError:
+                output.error(f"无效输入: {raw}")
+                output.warning("将使用第一个 GPU 设备")
+                label = _format_device_label(devices[0], 0)
+                output.success(f"已选择: {label}")
+                gpu_args.extend(["--use-gpu", "--gpu-device", "0"])
 
     elif gpu_choice == '3':
         # 多GPU模式：使用已检测到的设备
@@ -870,9 +878,9 @@ def _quick_start_build_and_run(
     output.rule("[bold green]" + _t("cli.commands.generated_cmd") + "[/bold green]", style="green")
     output.print(f"\n[bold yellow]{cmd_str}[/bold yellow]\n")
 
-    # 询问是否执行
+    # 询问是否执行（默认 y）
     while True:
-        execute = input(_t("cli.commands.execute_now") + " ").strip().lower()
+        execute = input(_t("cli.commands.execute_now") + " [y/n] (推荐: Y，直接回车=Y): ").strip().lower() or 'y'
         if execute in ('y', 'n'):
             break
         output.error("请输入 y 或 n")

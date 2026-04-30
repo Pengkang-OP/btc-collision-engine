@@ -59,11 +59,11 @@ class EnhancedMonitoringSystem:
     
     def __init__(
         self,
-        engine=None,
+        engine: Optional[Any] = None,
         config: Optional[MonitorConfig] = None,
         collection_interval: float = None,  # 已弃用，使用config
         enable_monitoring_data: bool = None  # 已弃用，使用config
-    ):
+    ) -> None:
         """
         初始化增强版监控系统
         
@@ -155,7 +155,7 @@ class EnhancedMonitoringSystem:
             f"config={type(self.config).__name__})"
         )
     
-    def start(self):
+    def start(self) -> None:
         """启动监控系统"""
         if self._running:
             return
@@ -166,7 +166,7 @@ class EnhancedMonitoringSystem:
         self._thread.start()
         self.logger.info("增强版监控系统已启动")
     
-    def stop(self):
+    def stop(self) -> None:
         """停止监控系统"""
         if not self._running:
             return

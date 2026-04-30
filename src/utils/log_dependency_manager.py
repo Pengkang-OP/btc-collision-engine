@@ -35,18 +35,18 @@ class LogComponent:
 class LogDependencyManager:
     """日志依赖管理器"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         """初始化依赖管理器"""
         self.components: Dict[str, LogComponent] = {}
         self.dependencies: Dict[str, Dependency] = {}
         self.initialization_order: List[str] = []
         self.initialized_components: Set[str] = set()
     
-    def register_component(self, component: LogComponent):
+    def register_component(self, component: LogComponent) -> None:
         """注册日志组件"""
         self.components[component.name] = component
     
-    def register_dependency(self, dependency: Dependency):
+    def register_dependency(self, dependency: Dependency) -> None:
         """注册依赖项"""
         self.dependencies[dependency.name] = dependency
     
@@ -65,7 +65,7 @@ class LogDependencyManager:
         temp: Set[str] = set()
         order: List[str] = []
         
-        def visit(component_name: str):
+        def visit(component_name: str) -> None:
             if component_name in temp:
                 raise ValueError(f"循环依赖检测: {component_name}")
             if component_name not in visited:

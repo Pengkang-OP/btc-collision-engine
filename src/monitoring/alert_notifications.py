@@ -52,14 +52,14 @@ DEFAULT_WEBHOOK_TIMEOUT = 10  # 默认Webhook超时(秒)
 class BaseNotifier:
     """通知器基类"""
     
-    def __init__(self, enabled: bool = True):
+    def __init__(self, enabled: bool = True) -> None:
         """
         Args:
             enabled: 是否启用
         """
         self.enabled = enabled
     
-    def send(self, alert: AlertRecord):
+    def send(self, alert: AlertRecord) -> None:
         """发送告警通知
         
         Args:
@@ -100,7 +100,7 @@ class EmailNotifier(BaseNotifier):
                  password: Optional[str] = None,
                  recipients: Optional[List[str]] = None,
                  use_tls: bool = True,
-                 enabled: bool = True):
+                 enabled: bool = True) -> None:
         """
         Args:
             smtp_server: SMTP服务器地址
@@ -279,7 +279,7 @@ class WeComWebhookNotifier(BaseNotifier):
                  webhook_url: str,
                  mentioned_list: Optional[List[str]] = None,
                  timeout: int = DEFAULT_WEBHOOK_TIMEOUT,
-                 enabled: bool = True):
+                 enabled: bool = True) -> None:
         """
         Args:
             webhook_url: 企业微信Webhook URL
@@ -375,7 +375,7 @@ class DingTalkWebhookNotifier(BaseNotifier):
                  at_mobiles: Optional[List[str]] = None,
                  at_all: bool = False,
                  timeout: int = DEFAULT_WEBHOOK_TIMEOUT,
-                 enabled: bool = True):
+                 enabled: bool = True) -> None:
         """
         Args:
             webhook_url: 钉钉Webhook URL
@@ -478,7 +478,7 @@ class SlackWebhookNotifier(BaseNotifier):
                  channel: str = "#alerts",
                  username: str = "GPU Alert Bot",
                  timeout: int = DEFAULT_WEBHOOK_TIMEOUT,
-                 enabled: bool = True):
+                 enabled: bool = True) -> None:
         """
         Args:
             webhook_url: Slack Webhook URL

@@ -52,7 +52,7 @@ class DataLoggerAdapter:
         >>> adapter = setup_data_logging(bus)
     """
     
-    def __init__(self, data_logger: Optional[DataLogger] = None):
+    def __init__(self, data_logger: Optional[DataLogger] = None) -> None:
         """
         初始化适配器
         
@@ -207,7 +207,7 @@ class EnhancedMonitoringAdapter:
         自行采集数据。此适配器主要用于错误传递。
     """
     
-    def __init__(self, monitoring_system):
+    def __init__(self, monitoring_system: "EnhancedMonitoringSystem") -> None:
         """
         初始化适配器
         
@@ -282,7 +282,7 @@ def setup_data_logging(
 
 def setup_enhanced_monitoring(
     event_bus: EventBus,
-    monitoring_system
+    monitoring_system: "EnhancedMonitoringSystem"
 ) -> EnhancedMonitoringAdapter:
     """
     便捷函数: 设置增强监控事件监听

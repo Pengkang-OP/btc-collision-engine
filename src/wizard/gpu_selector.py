@@ -11,13 +11,15 @@ import os
 import time
 from typing import Tuple, List
 
+from .selector_protocol import SelectorProtocol
+
 # 添加项目根目录到路径
 _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
 
-class GPUSelector:
+class GPUSelector(SelectorProtocol):
     """GPU设备选择器"""
 
     def select(self, compact: bool = False) -> Tuple[List[int], bool]:

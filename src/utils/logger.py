@@ -77,7 +77,7 @@ class ColoredFormatter(logging.Formatter):
     }
     RESET = '\033[0m'
     
-    def format(self, record):
+    def format(self, record) -> str:
         # 保存原始级别名称
         orig_levelname = record.levelname
         
@@ -108,7 +108,7 @@ class ThreadSafeLogger:
         logger = logging.getLogger('name')
     """
     
-    def __init__(self, logger: logging.Logger):
+    def __init__(self, logger: logging.Logger) -> None:
         import warnings
         warnings.warn(
             "ThreadSafeLogger已弃用。Python的logging.Logger本身是线程安全的，"
@@ -119,27 +119,27 @@ class ThreadSafeLogger:
         self._logger = logger
         self._lock = threading.Lock()
     
-    def debug(self, msg: str, *args, **kwargs):
+    def debug(self, msg: str, *args, **kwargs) -> None:
         with self._lock:
             self._logger.debug(msg, *args, **kwargs)
     
-    def info(self, msg: str, *args, **kwargs):
+    def info(self, msg: str, *args, **kwargs) -> None:
         with self._lock:
             self._logger.info(msg, *args, **kwargs)
     
-    def warning(self, msg: str, *args, **kwargs):
+    def warning(self, msg: str, *args, **kwargs) -> None:
         with self._lock:
             self._logger.warning(msg, *args, **kwargs)
     
-    def error(self, msg: str, *args, **kwargs):
+    def error(self, msg: str, *args, **kwargs) -> None:
         with self._lock:
             self._logger.error(msg, *args, **kwargs)
     
-    def critical(self, msg: str, *args, **kwargs):
+    def critical(self, msg: str, *args, **kwargs) -> None:
         with self._lock:
             self._logger.critical(msg, *args, **kwargs)
     
-    def exception(self, msg: str, *args, **kwargs):
+    def exception(self, msg: str, *args, **kwargs) -> None:
         with self._lock:
             self._logger.exception(msg, *args, **kwargs)
 
@@ -147,7 +147,7 @@ class ThreadSafeLogger:
 class PerformanceMonitor:
     """性能监控上下文管理器"""
     
-    def __init__(self, logger: logging.Logger, operation: str, level: str = "DEBUG"):
+    def __init__(self, logger: logging.Logger, operation: str, level: str = "DEBUG") -> None:
         self.logger = logger
         self.operation = operation
         self.level = getattr(logging, level.upper())

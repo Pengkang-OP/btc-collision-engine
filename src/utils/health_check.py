@@ -2,6 +2,19 @@
 """系统健康检查模块
 
 提供系统环境和依赖的健康状态检查，帮助快速诊断问题。
+
+扩展检查项:
+- Python版本兼容性
+- 关键依赖是否安装且版本正确
+- 配置文件有效性（包括生产配置）
+- 磁盘空间是否充足
+- 目录权限
+- GPU设备可用性（如启用）
+- 网络连通性测试
+- 端口占用检查
+- 进程状态验证
+- 依赖版本兼容性深度检查
+- 配置文件权限检查
 """
 
 import importlib
@@ -9,8 +22,9 @@ import json
 import logging
 import os
 import shutil
+import socket
 import sys
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +39,14 @@ class HealthChecker:
     - 磁盘空间是否充足
     - 目录权限
     - GPU设备可用性（如启用）
+    - 网络连通性
+    - 端口占用
+    - 进程状态
+    - 依赖版本兼容性
+    - 配置文件权限
     """
     
-    def __init__(self, project_root: str = None):
+    def __init__(self, project_root: Optional[str] = None) -> None:
         """初始化健康检查器
         
         参数:
@@ -35,6 +54,7 @@ class HealthChecker:
         """
         self.project_root = project_root or os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         self.results: Dict[str, Tuple[bool, str]] = {}
+        self.required_configs = ['config.json', 'config.production.json']
     
     def check_python_version(self) -> Tuple[bool, str]:
         """检查Python版本兼容性"""
@@ -191,11 +211,166 @@ class HealthChecker:
         except Exception as e:
             return False, f"监控系统检查失败: {e}"
     
-    def run_all_checks(self, include_gpu: bool = False) -> Dict[str, Tuple[bool, str]]:
+    def check_config_files(self) -> Tuple[bool, str]:
+        """检查所有必需的配置文件"""
+        missing = []
+        invalid = []
+        
+        for config_name in self.required_configs:
+            config_path = os.path.join(self.project_root, config_name)
+            
+            if not os.path.exists(config_path):
+                missing.append(config_name)
+                continue
+            
+            try:
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    config = json.load(f)
+                
+                if not isinstance(config, dict):
+                    invalid.append(f"{config_name} (格式错误)")
+            except json.JSONDecodeError as e:
+                invalid.append(f"{config_name} (JSON错误: {e})")
+        
+        issues = []
+        if missing:
+            issues.append(f"缺失配置文件: {', '.join(missing)}")
+        if invalid:
+            issues.append(f"无效配置文件: {', '.join(invalid)}")
+        
+        if issues:
+            return False, '; '.join(issues)
+        return True, f"所有配置文件正常: {', '.join(self.required_configs)}"
+    
+    def check_config_permissions(self) -> Tuple[bool, str]:
+        """检查配置文件权限"""
+        insecure_files = []
+        
+        for config_name in self.required_configs:
+            config_path = os.path.join(self.project_root, config_name)
+            
+            if os.path.exists(config_path):
+                # 获取文件权限（八进制）
+                try:
+                    stat_info = os.stat(config_path)
+                    permissions = stat_info.st_mode & 0o777
+                    
+                    # 检查是否过松（组或其他用户有读写权限）
+                    if permissions & 0o077:  # 组或其他有任何权限
+                        insecure_files.append(f"{config_name} ({oct(permissions)[2:]})")
+                except Exception:
+                    pass
+        
+        if insecure_files:
+            return False, f"配置文件权限不安全: {', '.join(insecure_files)} (建议设置为 600)"
+        return True, "配置文件权限安全"
+    
+    def check_network_connectivity(self) -> Tuple[bool, str]:
+        """检查网络连通性"""
+        test_hosts = [
+            ('www.google.com', 443),
+            ('api.github.com', 443),
+        ]
+        
+        failed = []
+        succeeded = []
+        
+        for host, port in test_hosts:
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(5)
+                result = sock.connect_ex((host, port))
+                sock.close()
+                
+                if result == 0:
+                    succeeded.append(host)
+                else:
+                    failed.append(host)
+            except Exception:
+                failed.append(host)
+        
+        if failed:
+            return False, f"网络连接失败: {', '.join(failed)}"
+        return True, f"网络连接正常: {', '.join(succeeded)}"
+    
+    def check_port_availability(self, ports: Optional[List[int]] = None) -> Tuple[bool, str]:
+        """检查端口占用情况"""
+        ports = ports or [9090, 3000, 9100]
+        used_ports = []
+        
+        for port in ports:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(1)
+                if s.connect_ex(('localhost', port)) == 0:
+                    used_ports.append(str(port))
+        
+        if used_ports:
+            return False, f"端口已被占用: {', '.join(used_ports)}"
+        return True, f"所有端口可用: {', '.join(map(str, ports))}"
+    
+    def check_process_status(self) -> Tuple[bool, str]:
+        """检查进程状态"""
+        try:
+            import psutil
+            
+            # 检查是否有其他实例在运行
+            current_pid = os.getpid()
+            process_name = 'btc-collision'
+            
+            for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+                try:
+                    if proc.pid != current_pid:
+                        cmdline = ' '.join(proc.cmdline())
+                        if 'key_collision' in cmdline.lower() or process_name in cmdline.lower():
+                            return False, f"检测到其他实例正在运行 (PID: {proc.pid})"
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
+            
+            return True, "无其他实例运行"
+        except ImportError:
+            return True, "psutil未安装，跳过进程检查"
+        except Exception as e:
+            return False, f"进程检查失败: {e}"
+    
+    def check_dependency_versions(self) -> Tuple[bool, str]:
+        """检查依赖版本兼容性"""
+        version_requirements = {
+            'coincurve': (18, 0, 0),
+            'gmpy2': (2, 1, 0),
+            'psutil': (5, 9, 0),
+            'pycryptodome': (3, 19, 0),
+        }
+        
+        issues = []
+        
+        for dep, min_version in version_requirements.items():
+            try:
+                module = importlib.import_module(dep)
+                version_str = getattr(module, '__version__', 'unknown')
+                
+                # 解析版本号
+                try:
+                    version_parts = version_str.split('.')
+                    version = tuple(map(int, version_parts[:3]))
+                    
+                    if version < min_version:
+                        issues.append(f"{dep}版本过低: {version_str} (需要 {'.'.join(map(str, min_version))}+)")
+                except ValueError:
+                    pass  # 无法解析版本，跳过
+                    
+            except ImportError:
+                pass  # 依赖未安装，由其他检查处理
+        
+        if issues:
+            return False, '; '.join(issues)
+        return True, "所有依赖版本符合要求"
+    
+    def run_all_checks(self, include_gpu: bool = False, include_network: bool = False) -> Dict[str, Tuple[bool, str]]:
         """运行所有健康检查
         
         参数:
             include_gpu: 是否包含GPU检查
+            include_network: 是否包含网络检查
             
         返回:
             检查结果字典 {检查项: (是否通过, 详细信息)}
@@ -208,14 +383,21 @@ class HealthChecker:
         checks = [
             ("Python版本", self.check_python_version),
             ("依赖安装", self.check_dependencies),
-            ("配置文件", self.check_config_file),
+            ("依赖版本", self.check_dependency_versions),
+            ("配置文件", self.check_config_files),
+            ("配置权限", self.check_config_permissions),
             ("磁盘空间", self.check_disk_space),
             ("目录权限", self.check_directories),
+            ("进程状态", self.check_process_status),
             ("监控系统", self.check_monitoring_system),
         ]
         
         if include_gpu:
             checks.append(("GPU设备", self.check_gpu_availability))
+        
+        if include_network:
+            checks.append(("网络连接", self.check_network_connectivity))
+            checks.append(("端口占用", self.check_port_availability))
         
         all_passed = True
         for check_name, check_func in checks:
@@ -267,6 +449,11 @@ def main():
         help="包含GPU设备检查"
     )
     parser.add_argument(
+        "--network",
+        action="store_true",
+        help="包含网络连通性检查"
+    )
+    parser.add_argument(
         "--report",
         metavar="FILE",
         help="生成报告文件"
@@ -275,7 +462,7 @@ def main():
     args = parser.parse_args()
     
     checker = HealthChecker()
-    results = checker.run_all_checks(include_gpu=args.gpu)
+    results = checker.run_all_checks(include_gpu=args.gpu, include_network=args.network)
     
     if args.report:
         report = checker.generate_report()

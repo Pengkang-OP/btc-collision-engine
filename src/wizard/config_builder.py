@@ -8,7 +8,10 @@
 
 import sys
 import os
+import logging
 from typing import List
+
+logger = logging.getLogger(__name__)
 
 # 添加项目根目录到路径
 _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -21,6 +24,8 @@ from .interfaces import WizardResult
 class ConfigBuilder:
     """配置构建器"""
 
+    VALID_MODES = frozenset({'random', 'range', 'brute_force'})
+
     def build(self, result: WizardResult) -> List[str]:
         """构建命令行
 
@@ -29,7 +34,25 @@ class ConfigBuilder:
 
         Returns:
             命令列表
+
+        Raises:
+            ValueError: 输入参数不合法时抛出
         """
+        # 输入校验
+        if not result.targets and not result.target_file:
+            raise ValueError("No targets specified: both targets and target_file are empty")
+
+        if result.mode not in self.VALID_MODES:
+            raise ValueError(
+                f"Invalid mode '{result.mode}'. Valid modes: {', '.join(sorted(self.VALID_MODES))}"
+            )
+
+        if result.mode in ('range', 'brute_force') and not result.start_key:
+            raise ValueError(f"Mode '{result.mode}' requires a start_key")
+
+        if result.mode == 'range' and not result.end_key:
+            raise ValueError("Mode 'range' requires an end_key")
+
         cmd = ["python", "key_collision_cli.py"]
 
         if result.target_file:
@@ -57,7 +80,9 @@ class ConfigBuilder:
         if result.gpu_indices:
             if result.use_multi_gpu:
                 cmd.append("--multi-gpu")
-            cmd.extend(["--gpu-indices"] + [str(i) for i in result.gpu_indices])
+            # Always use separate args for each index (better CLI compatibility)
+            for idx in result.gpu_indices:
+                cmd.extend(["--gpu-indices", str(idx)])
 
         return cmd
 
@@ -98,5 +123,6 @@ class ConfigBuilder:
                 f.write(" ".join(self.build(result)))
                 f.write("\n")
             return True
-        except Exception:
+        except (IOError, OSError) as e:
+            logger.error(f"Failed to save command to {filepath}: {e}")
             return False

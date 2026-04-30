@@ -149,6 +149,11 @@ class SensitiveDataFilter:
     SENSITIVE_PATTERNS = [
         (r'[0-9a-fA-F]{64}', '***REDACTED***'),  # 私钥
         (r'PrivateKey["\']?\s*[:=]\s*["\']?[0-9a-fA-F]{64}', '***REDACTED***'),
+        # P0-1: 比特币地址模式
+        (r'\b1[1-9A-HJ-NP-Za-km-z]{24,33}\b', '[P2PKH_ADDRESS]'),  # P2PKH
+        (r'\b3[1-9A-HJ-NP-Za-km-z]{24,33}\b', '[P2SH_ADDRESS]'),   # P2SH
+        (r'\bbc1[ac-hj-np-z02-9]{38,58}\b', '[BECH32_ADDRESS]'),    # Bech32
+        (r'\bbc1p[ac-hj-np-z02-9]{58}\b', '[BECH32M_ADDRESS]'),     # Bech32m
     ]
 
     def __init__(self, enabled: bool = True):

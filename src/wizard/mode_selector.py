@@ -10,13 +10,15 @@ import sys
 import os
 from typing import Tuple, Optional
 
+from .selector_protocol import SelectorProtocol
+
 # 添加项目根目录到路径
 _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
 
-class ModeSelector:
+class ModeSelector(SelectorProtocol):
     """碰撞模式选择器"""
 
     MODES = {
