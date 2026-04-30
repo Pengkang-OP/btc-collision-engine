@@ -48,7 +48,7 @@ try:
     from .gpu_collision_engine import GPUCollisionEngine
     _GPU_AVAILABLE = True
 except ImportError as _gpu_import_err:
-    GPUCollisionEngine = None
+    GPUCollisionEngine = None  # type: ignore[misc,assignment]
     _GPU_AVAILABLE = False
     import logging as _logging
     _logging.getLogger(__name__).info(
@@ -106,7 +106,7 @@ __all__ = [
 
 
 def create_collision_engine(targets: Set[str], mode: str = 'auto', 
-                           config: Dict[str, Any] = None,
+                           config: Optional[Dict[str, Any]] = None,
                            **kwargs) -> BaseCollisionEngine:
     """
     创建碰撞引擎实例

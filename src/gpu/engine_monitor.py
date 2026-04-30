@@ -51,7 +51,7 @@ class GPUEngineMonitor:
         status = monitor.get_engine_status()
     """
 
-    def __init__(self, engine: Optional["GPUCollisionEngine"] = None):
+    def __init__(self, engine: Optional["GPUCollisionEngine"] = None) -> None:
         """初始化引擎监控器
 
         Args:
@@ -260,7 +260,7 @@ class GPUEngineMonitor:
     # 性能监控和自适应调整
     # ------------------------------------------------------------------
 
-    def record_batch_performance(self, batch_time: float, num_keys: int, success: bool):
+    def record_batch_performance(self, batch_time: float, num_keys: int, success: bool) -> None:
         """记录批次性能数据
         
         Args:
@@ -417,7 +417,7 @@ class GPUEngineMonitor:
             "min_throughput": round(min_throughput, 2)
         }
     
-    def clear_performance_data(self):
+    def clear_performance_data(self) -> None:
         """清空性能数据"""
         with self._performance_lock:
             self._performance_window.clear()

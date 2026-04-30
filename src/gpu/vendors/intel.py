@@ -22,7 +22,7 @@ logger = get_configured_logger("IntelVendor")
 class _RateLimitedLogger:
     """日志频率限制器 - 防止相同日志在短时间内重复输出导致泵洪"""
 
-    def __init__(self, base_logger, min_interval: float = 60.0):
+    def __init__(self, base_logger: Any, min_interval: float = 60.0) -> None:
         """
         Args:
             base_logger: 基础 logger
@@ -68,7 +68,7 @@ class IntelGPUVendor(GPUVendorBase):
     def get_vendor_name(self) -> str:
         return "Intel"
     
-    def apply_optimizations(self, device, profile: Dict[str, Any]):
+    def apply_optimizations(self, device: Any, profile: Dict[str, Any]) -> None:
         """
         应用Intel特定优化
         
@@ -156,7 +156,7 @@ class IntelGPUVendor(GPUVendorBase):
             key="intel_memory_efficiency"
         )
     
-    def calculate_batch_size(self, device, profile: Dict[str, Any]) -> int:
+    def calculate_batch_size(self, device: Any, profile: Dict[str, Any]) -> int:
         """
         计算Intel GPU的最优batch_size
         
@@ -220,7 +220,7 @@ class IntelGPUVendor(GPUVendorBase):
         except (ValueError, IndexError) as e:
             logger.debug(f"无法解析Intel驱动版本: {driver_version}, 错误: {e}")
     
-    def handle_errors(self, error: Exception, stats=None) -> bool:
+    def handle_errors(self, error: Exception, stats: Optional[Any] = None) -> bool:
         """
         处理Intel GPU特定错误
         

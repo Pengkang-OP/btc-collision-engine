@@ -17,7 +17,7 @@ logger = get_configured_logger("GPUProfileLoader")
 class GPUProfileLoader:
     """GPU型号配置加载器"""
     
-    def __init__(self, profile_file: str = None):
+    def __init__(self, profile_file: str = None) -> None:
         """
         初始化加载器
         
@@ -322,7 +322,7 @@ class GPUProfileLoader:
         vendor_data = self.profiles[vendor]
         return [k for k in vendor_data.keys() if not k.startswith('_') and k != 'default']
     
-    def reload(self):
+    def reload(self) -> None:
         """重新加载配置文件"""
         logger.info("重新加载GPU型号数据库...")
         self._load_profiles()

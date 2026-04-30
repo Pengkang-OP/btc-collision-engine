@@ -59,6 +59,8 @@ class CryptoConfig:
             加载成功返回True
         """
         try:
+            if self.config_file is None:
+                return False
             with open(self.config_file, 'r', encoding='utf-8') as f:
                 user_config = json.load(f)
             self.config.update(user_config)

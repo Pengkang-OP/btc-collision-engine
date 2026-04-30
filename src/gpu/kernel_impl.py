@@ -43,7 +43,7 @@ except ImportError:
     pass
 
 
-def get_gpu_optimizer():
+def get_gpu_optimizer() -> Optional[Any]:
     """获取GPU优化器"""
     try:
         from .performance_optimizer import get_gpu_optimizer as _get_gpu_optimizer
@@ -82,7 +82,7 @@ class GPUKernel(GPUKernelProtocol):
     KEYS_BUFFER_SIZE_FACTOR = 32    # Deprecated: PRNG模式下私钥缓冲区已不再需要
     MATCH_BUFFER_SIZE_FACTOR = 4    # 每个匹配标志4字节（int32）
     
-    def __init__(self, device: GPUDevice, max_batch_size: int = None, program: Optional[Any] = None):
+    def __init__(self, device: GPUDevice, max_batch_size: int = None, program: Optional[Any] = None) -> None:
         """
         初始化GPUKernel
         
@@ -542,7 +542,7 @@ class GPUKernel(GPUKernelProtocol):
             )
     
     def set_targets(self, target_hash160s: bytes, num_targets: int,
-                    check_uncompressed: int = 0):
+                    check_uncompressed: int = 0) -> None:
         """设置目标地址 Hash160 - 只需设置一次
         
         Args:
@@ -579,7 +579,7 @@ class GPUKernel(GPUKernelProtocol):
     
     def run_batch(self, seed: bytes, num_keys: int,
                   target_hash160s: bytes = None, num_targets: int = 0,
-                  stop_event = None) -> List[Dict]:
+                  stop_event: Optional[Any] = None) -> List[Dict]:
         """PRNG模式批量执行私钥碰撞检测
         
         v4.0 PRNG改造: CPU仅传入 32 字节种子，GPU内核自行计算 key = seed + gid。
@@ -719,7 +719,7 @@ class GPUKernel(GPUKernelProtocol):
         timeout_event = threading.Event()
         execution_completed = [False]  # 使用列表存储结果(闭包)
                 
-        def timeout_monitor():
+        def timeout_monitor() -> None:
             """后台线程监控GPU执行超时"""
             try:
                 if not timeout_event.wait(timeout_seconds):
@@ -930,7 +930,7 @@ class GPUKernel(GPUKernelProtocol):
         
         return matches
     
-    def cleanup(self):
+    def cleanup(self) -> None:
         """清理GPU资源
             
         P1修复: 显式释放OpenCL Buffer,防止显存泄漏

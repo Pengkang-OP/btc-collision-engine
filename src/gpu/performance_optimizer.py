@@ -89,7 +89,7 @@ class GPUPerformanceOptimizer:
     根据性能监控数据动态调整GPU碰撞引擎参数。
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         self._lock = threading.Lock()
         self._metrics_history: List[PerformanceMetrics] = []
         self._current_profile: Optional[GPUProfile] = None
@@ -226,7 +226,7 @@ class GPUPerformanceOptimizer:
         
         return profile
     
-    def record_performance(self, metrics: PerformanceMetrics):
+    def record_performance(self, metrics: PerformanceMetrics) -> None:
         """记录性能指标
         
         Args:
@@ -492,7 +492,7 @@ class GPUPerformanceOptimizer:
         
         return recommendations
     
-    def reset(self):
+    def reset(self) -> None:
         """重置优化器状态"""
         with self._lock:
             self._metrics_history.clear()

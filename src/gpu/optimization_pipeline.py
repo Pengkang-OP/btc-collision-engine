@@ -36,7 +36,7 @@ class PerformanceOptimizationPipeline:
         benchmark_suite: Optional["GPUBenchmarkSuite"] = None,
         reporter: Optional["PerformanceReportGenerator"] = None,
         logger_instance: Optional[logging.Logger] = None,
-    ):
+    ) -> None:
         """初始化性能优化管道
 
         Args:
@@ -126,7 +126,7 @@ class PerformanceOptimizationPipeline:
     def start_auto_tuning(
         self,
         max_iterations: int = 30,
-        on_new_batch_size=None,
+        on_new_batch_size: Optional[Callable] = None,
     ) -> Dict[str, Any]:
         """启动自动调优
 

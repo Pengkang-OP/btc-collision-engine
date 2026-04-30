@@ -24,7 +24,7 @@ class NVIDIAGPUVendor(GPUVendorBase):
     def get_vendor_name(self) -> str:
         return "NVIDIA"
     
-    def apply_optimizations(self, device, profile: Dict[str, Any]):
+    def apply_optimizations(self, device: Any, profile: Dict[str, Any]) -> None:
         """
         应用NVIDIA特定优化
         
@@ -77,7 +77,7 @@ class NVIDIAGPUVendor(GPUVendorBase):
         memory_efficiency = profile.get('memory_efficiency', 0.5)
         logger.debug(f"NVIDIA GPU内存效率: {memory_efficiency*100:.0f}%")
     
-    def calculate_batch_size(self, device, profile: Dict[str, Any]) -> int:
+    def calculate_batch_size(self, device: Any, profile: Dict[str, Any]) -> int:
         """
         计算NVIDIA GPU的最优batch_size
         
@@ -108,7 +108,7 @@ class NVIDIAGPUVendor(GPUVendorBase):
         
         return optimal
     
-    def handle_errors(self, error: Exception, stats=None) -> bool:
+    def handle_errors(self, error: Exception, stats: Optional[Any] = None) -> bool:
         """
         处理NVIDIA GPU特定错误
         

@@ -131,7 +131,7 @@ class GPUAutoConfigurator:
         'compiler_flags': ''
     }
     
-    def __init__(self):
+    def __init__(self) -> None:
         """初始化自动调优器"""
         self._config_cache = {}
         
@@ -435,7 +435,7 @@ class GPUAutoConfigurator:
         
         return '\n'.join(lines)
     
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """清除配置缓存"""
         self._config_cache.clear()
         logger.debug("配置缓存已清除")
@@ -462,7 +462,7 @@ def get_gpu_configurator() -> GPUAutoConfigurator:
     return _configurator_instance
 
 
-def reset_gpu_configurator():
+def reset_gpu_configurator() -> None:
     """重置GPU自动调优器单例(用于测试)"""
     global _configurator_instance
     with _configurator_lock:

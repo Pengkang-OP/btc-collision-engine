@@ -18,7 +18,7 @@ import time
 import logging
 from ..utils import init_logging, get_configured_logger
 import hashlib
-from typing import Dict, List, Set, Optional, Tuple
+from typing import Any, Dict, List, Set, Optional, Tuple
 from collections import defaultdict, deque
 from datetime import datetime
 
@@ -39,7 +39,7 @@ class DataQualityIssue:
     STALE_DATA = "stale_data"
     
     def __init__(self, issue_type: str, severity: str, message: str, 
-                 device_idx: int, details: Dict = None):
+                 device_idx: int, details: Dict = None) -> None:
         """初始化质量问题
         
         Args:
@@ -89,7 +89,7 @@ class DataMonitor:
         monitor.stop()
     """
     
-    def __init__(self, config: Optional[Dict] = None):
+    def __init__(self, config: Optional[Dict] = None) -> None:
         """初始化数据监控器
         
         Args:
@@ -148,7 +148,7 @@ class DataMonitor:
         
         logger.info("数据监控器已创建")
     
-    def start(self, anomaly_callback=None) -> None:
+    def start(self, anomaly_callback: Optional[Any] = None) -> None:
         """启动监控
         
         Args:
@@ -188,7 +188,7 @@ class DataMonitor:
         logger.info("数据监控器已停止")
     
     def report_keys_generated(self, device_idx: int, count: int, 
-                              key_range: Tuple[int, int] = None):
+                              key_range: Tuple[int, int] = None) -> None:
         """报告生成的私钥数据
         
         Args:
@@ -282,7 +282,7 @@ class DataMonitor:
             logger.error(f"报告错误失败 [GPU {device_idx}]: {e}")
     
     def report_validation_result(self, device_idx: int, passed: bool, 
-                                 validation_type: str = None):
+                                 validation_type: str = None) -> None:
         """报告验证结果
         
         Args:

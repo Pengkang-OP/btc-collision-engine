@@ -27,7 +27,7 @@ class GPUVendorBase(ABC):
         pass
     
     @abstractmethod
-    def apply_optimizations(self, device, profile: Dict[str, Any]):
+    def apply_optimizations(self, device: Any, profile: Dict[str, Any]) -> None:
         """
         应用厂商特定的优化策略
         
@@ -38,7 +38,7 @@ class GPUVendorBase(ABC):
         pass
     
     @abstractmethod
-    def calculate_batch_size(self, device, profile: Dict[str, Any]) -> int:
+    def calculate_batch_size(self, device: Any, profile: Dict[str, Any]) -> int:
         """
         计算最优batch_size
         
@@ -51,7 +51,7 @@ class GPUVendorBase(ABC):
         """
         pass
     
-    def handle_errors(self, error: Exception, stats=None) -> bool:
+    def handle_errors(self, error: Exception, stats: Optional[Any] = None) -> bool:
         """
         处理厂商特定的错误
         

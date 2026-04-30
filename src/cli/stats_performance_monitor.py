@@ -55,7 +55,7 @@ class StatsPerformanceMonitor:
         }
         
         # 性能采样队列
-        self._samples = deque(maxlen=100)
+        self._samples: deque[PerformanceSample] = deque(maxlen=100)
         self._samples_lock = threading.Lock()
         
         # 统计计数器

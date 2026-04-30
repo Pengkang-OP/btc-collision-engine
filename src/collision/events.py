@@ -66,7 +66,7 @@ class CollisionEvent:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
-            "event_type": self.event_type.value,
+            "event_type": self.event_type.value if self.event_type else None,
             "timestamp": self.timestamp.isoformat(),
             "source": self.source,
             "metadata": self.metadata
