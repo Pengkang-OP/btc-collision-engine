@@ -154,10 +154,10 @@ class EmailNotifier(BaseNotifier):
             if self.smtp_port == 465:
                 # SSL连接
                 server = smtplib.SMTP_SSL(self.smtp_server, self.smtp_port)
-                server.login(self.username, self.password)
+                server.login(self.username, self.password)  # type: ignore[arg-type]
             else:
                 # TLS或普通连接
-                server = smtplib.SMTP(self.smtp_server, self.smtp_port)
+                server = smtplib.SMTP(self.smtp_server, self.smtp_port)  # type: ignore[assignment]
                 if self.use_tls:
                     server.starttls()
                 if self.username and self.password:

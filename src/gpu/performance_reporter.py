@@ -278,7 +278,7 @@ class PerformanceReportGenerator:
         Returns:
             JSON 字符串
         """
-        report_data = {
+        report_data: Dict[str, Any] = {
             "metadata": {
                 "generated_at": datetime.now().isoformat(),
                 "generator": "BTC Collision Engine Performance Reporter",

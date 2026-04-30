@@ -407,8 +407,8 @@ class GPUPerformanceOptimizer:
             # 4. 记录调整
             if new_batch_size != current_batch_size:
                 self._adjustment_count += 1
-                self._last_adjustment_time = now  # 记录调整时间
-                adjustments["adjustment_count"] = self._adjustment_count
+                self._last_adjustment_time = now  # type: ignore[assignment]  # 记录调整时间
+                adjustments["adjustment_count"] = self._adjustment_count  # type: ignore[assignment]
 
             return new_batch_size, adjustments
 

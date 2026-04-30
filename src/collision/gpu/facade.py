@@ -94,7 +94,7 @@ class GPUEngineFacade:
         # 初始化异步管道
         try:
             self._async_pipeline.initialize(
-                kernel=self.kernel,
+                kernel=self.kernel,  # type: ignore[arg-type]
                 batch_size=batch_size or 1_000_000,
             )
         except Exception as e:
@@ -110,7 +110,7 @@ class GPUEngineFacade:
             设备信息字典
         """
         if self.device is not None:
-            return self.device.to_dict()
+            return self.device.to_dict()  # type: ignore[return-value]
         return {"status": "not_initialized"}
 
     def is_initialized(self) -> bool:
