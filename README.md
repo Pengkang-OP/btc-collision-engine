@@ -3,7 +3,7 @@
 比特币私钥碰撞引擎，支持CPU和GPU加速，用于学习和研究比特币地址碰撞。
 
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
-[![Version](https://img.shields.io/badge/Version-3.4.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-3.5.1-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Contributions](https://img.shields.io/badge/Contributions-Welcome-orange.svg)](CONTRIBUTING.md)
 
@@ -11,7 +11,7 @@
 
 ## 功能特性
 
-- ✅ **交互式向导** (v3.4.0 全新模块化架构)
+- ✅ **交互式向导** (v3.4.0 全新模块化架构, v3.5.0 增强)
   - 4 步引导流程 (目标地址 → 碰撞模式 → 功能选项 → GPU加速)
   - 模块化策略组件 (目标/模式/选项/GPU 选择器)
   - 自动设备检测与推荐
@@ -40,15 +40,23 @@
   - 性能指标统计
   - 进度可视化
   - 数据日志记录
-- ✅ **性能优化** (v3.4.0 最新)
+- ✅ **性能优化** (v3.5.0 最新)
   - GPU PRNG 私钥生成（消除 CPU→GPU 传输瓶颈）
   - secp256k1 预计算表常数化（`__constant` 内存）
   - 模逆加法链优化（mul 减少 89%）
   - **异步双缓冲架构** (计算队列+传输队列,性能+63.9%)
   - **GPU 引擎架构重构** (协议层+外观层+核心层+监控管道+厂商策略)
   - Intel Arc A770: **4.89M keys/s**（异步模式,峰值5.08M）
+- ✅ **代码质量** (v3.5.0)
+  - 全模块类型提示补全 (104 文件, P3-3)
+  - 配置热重载 (运行时检测并生效)
+  - 多渠道告警系统 (Console/LogFile/Composite)
+  - 地址生成器架构去重 (BaseAddressGenerator)
+  - GPU 设备评分统一 (GPUDeviceScorer)
+  - 序列化性能优化 (orjson 优先)
+  - 内存池自适应调优 (shrink/hit_ratio/auto_tune)
 
-> 📢 **v3.4.0 架构里程碑**: Wizard 模块架构重构完成! 向导拆分为 4 个独立策略组件 + 事件驱动架构。GPU 引擎完成 Phase 1+2 协议层重构 (facade/core/monitoring/vendor_strategy)。新增 `src/logging/` 日志子系统。详见 [CHANGELOG](CHANGELOG.md)。
+> 📢 **v3.5.0 类型系统工程化**: 全模块类型提示补全 (104 文件)、配置热重载、多渠道告警系统、地址生成器架构去重、GPU 评分统一、内存池自适应调优、序列化优化。详见 [CHANGELOG](CHANGELOG.md) 和 [v3.5.0 发布说明](docs/RELEASE_NOTES_v3.5.0.md)。
 
 ## 快速开始
 
@@ -660,7 +668,7 @@ python test_checkpoint_resume.py
     ├── Worker 1
     ├── Worker 2
     └── ...
-    
+
 或
 
 GPU线程 (GPU模式)
