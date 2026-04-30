@@ -89,7 +89,7 @@ class WizardResult:
             with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(self.to_dict(), f, indent=2, ensure_ascii=False)
             return True
-        except (IOError, OSError, TypeError, json.JSONEncodeError) as e:
+        except (IOError, OSError, TypeError, ValueError) as e:
             logger.error(f"Failed to save wizard result to {filepath}: {e}")
             return False
 

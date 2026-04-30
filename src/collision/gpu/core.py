@@ -14,7 +14,7 @@
 更新日期: 2026-04-30
 """
 
-from typing import Set, Optional, Dict, Any, List, Callable, TYPE_CHECKING
+from typing import Set, Optional, Dict, Any, List, Callable, TYPE_CHECKING, cast
 import logging
 import time
 
@@ -144,7 +144,8 @@ class CollisionCore(ICollisionCore):
 
         # 委托给搜索协调器执行
         if self.search_coordinator:
-            self.search_coordinator.start(mode, resume=resume, **kwargs)  # type: ignore[union-attr]
+            assert self.search_coordinator is not None  # 上方 if 已保证
+            self.search_coordinator.start(mode, resume=resume, **kwargs)
 
     def stop(self) -> None:
         """停止碰撞"""

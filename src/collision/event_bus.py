@@ -24,7 +24,7 @@
 """
 
 import threading
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, cast
 from collections import defaultdict
 import logging
 
@@ -78,20 +78,22 @@ class EventBus:
         self._published_count = 0
         self._error_count = 0
 
-        # 异步队列
+        # 异步队列（同步模式下为 None）
+        self._event_queue: Optional[Any] = None
+        self._worker_thread: Optional[threading.Thread] = None
+        self._running: bool = False
+
         if async_mode:
             import queue
 
-            self._event_queue: queue.Queue[CollisionEvent] = queue.Queue(maxsize=max_queue_size)
+            self._event_queue = queue.Queue(maxsize=max_queue_size)
             self._running = True
-            self._worker_thread: threading.Thread = threading.Thread(
+            self._worker_thread = threading.Thread(
                 target=self._process_events, daemon=True
             )
             self._worker_thread.start()
             logger.info("事件总线已启动 (异步模式)")
         else:
-            self._event_queue = None  # type: ignore[assignment]
-            self._worker_thread = None  # type: ignore[assignment]
             logger.debug("事件总线已初始化 (同步模式)")
 
     def subscribe(self, event_type: EventType, handler: Callable) -> None:
@@ -169,6 +171,7 @@ class EventBus:
 
         if self._async_mode:
             # 异步模式: 加入队列
+            assert self._event_queue is not None
             try:
                 self._event_queue.put_nowait(event)
             except Exception as e:
@@ -185,7 +188,7 @@ class EventBus:
             event: 事件对象
         """
         with self._lock:
-            handlers = self._subscribers.get(event.event_type, []).copy()  # type: ignore[arg-type]
+            handlers = cast(List[Callable], self._subscribers.get(event.event_type, [])).copy()
 
         if not handlers:
             logger.debug(f"事件无订阅者: {event.event_type.value if event.event_type else 'N/A'}")
@@ -212,6 +215,7 @@ class EventBus:
         logger.info("事件处理线程已启动")
 
         while self._running:
+            assert self._event_queue is not None
             try:
                 event = self._event_queue.get(timeout=0.1)
                 self._dispatch_event(event)
@@ -243,6 +247,7 @@ class EventBus:
             self._running = False
 
             # 清空队列
+            assert self._event_queue is not None
             try:
                 while not self._event_queue.empty():
                     self._event_queue.get_nowait()
@@ -310,7 +315,6 @@ class EventBus:
     ) -> None:
         """上下文管理器出口"""
         self.shutdown()
-        return False
 
 
 # 全局事件总线实例 (单例模式)

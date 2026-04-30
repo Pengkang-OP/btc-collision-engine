@@ -90,7 +90,9 @@ class SIMDHashOptimizer:
         """
         if self.use_pycryptodome:
             # 使用pycryptodome (SIMD加速)
-            return [self.SHA256.new(data).digest() for data in data_list]
+            sha256_module = self.SHA256
+            assert sha256_module is not None
+            return [sha256_module.new(data).digest() for data in data_list]
         else:
             # 回退到hashlib
             return [hashlib.sha256(data).digest() for data in data_list]
@@ -106,7 +108,9 @@ class SIMDHashOptimizer:
             RIPEMD160哈希结果列表
         """
         if self.use_pycryptodome:
-            return [self.RIPEMD160.new(data).digest() for data in data_list]
+            ripemd160_module = self.RIPEMD160
+            assert ripemd160_module is not None
+            return [ripemd160_module.new(data).digest() for data in data_list]
         else:
             return [hashlib.new("ripemd160", data).digest() for data in data_list]
 

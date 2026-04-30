@@ -332,6 +332,9 @@ class ConfigManager:
             加载成功返回True，失败返回False
         """
         try:
+            if not self.config_file:
+                logger.warning("配置文件路径未设置，跳过加载")
+                return False
             with open(self.config_file, "r", encoding="utf-8") as f:
                 raw_config = json.load(f)
 

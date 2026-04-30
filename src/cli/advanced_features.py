@@ -15,7 +15,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, cast
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 配置模板系统
@@ -152,7 +152,8 @@ def apply_template(template_name: str, config_path: str = "config.json") -> bool
             config = {}
 
     # 应用模板更新
-    deep_merge(config, template["updates"])
+    updates: Dict[str, Any] = cast(Dict[str, Any], template["updates"])
+    deep_merge(config, updates)
 
     # 保存配置
     try:
@@ -162,7 +163,7 @@ def apply_template(template_name: str, config_path: str = "config.json") -> bool
         print(f"[Info] 配置名称: {template['name']}")
         print(f"[Info] 配置文件: {config_path}")
         print(f"\n[Info] 应用的配置项:")
-        for section, values in template["updates"].items():
+        for section, values in updates.items():
             print(f"   [{section}]")
             for key, value in values.items():
                 print(f"     {key} = {value}")

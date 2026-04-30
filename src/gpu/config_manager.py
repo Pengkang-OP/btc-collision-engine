@@ -220,8 +220,9 @@ class GPUConfigManager:
             self.logger.info(f"✅ 应用配置: async_execution={config['async_execution']}")
 
         if "use_uint32_workaround" in config:
-            # 这里可以添加对use_uint32_workaround的处理
-            pass
+            # uint32_workaround 在 kernel 层由 intel_optimizer 自动应用，
+            # 此处仅记录配置状态（设备层无直接属性设置）
+            self.logger.info(f"✅ 应用配置: use_uint32_workaround={config['use_uint32_workaround']}")
 
         return config
 

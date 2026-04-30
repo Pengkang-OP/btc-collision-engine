@@ -23,10 +23,9 @@ import time
 import signal
 import threading
 import logging
-from typing import Set, Optional, Tuple, List, Dict, Any, Callable
+from typing import Set, Optional, Tuple, List, Dict, Any, Callable, cast
 
 # Phase 1-5 组件
-from .facade import GPUEngineFacade
 from .monitoring import PerformanceMonitoringPipeline
 from .core import CollisionCore
 from .vendor_strategy import VendorOptimizationFactory
@@ -72,7 +71,7 @@ try:
     GPU_CONFIG_MANAGER_AVAILABLE = True
 except ImportError:
     GPU_CONFIG_MANAGER_AVAILABLE = False
-    GPUConfigManager = None  # type: ignore[assignment,misc]
+    GPUConfigManager = None  # type: ignore[assignment,misc]  # 条件导入回退
 
 # 基础依赖
 from ...gpu.device import GPUDeviceDetector
@@ -115,7 +114,7 @@ def _seed_bytes_to_u32_be_array(seed: bytes) -> "np.ndarray":
     if len(seed) != 32:
         raise ValueError(f"seed must be 32 bytes, got {len(seed)}")
     be_u32 = np.frombuffer(seed, dtype=">u4")
-    return be_u32.astype(np.uint32)  # type: ignore[no-any-return]
+    return cast("np.ndarray", be_u32.astype(np.uint32))
 
 
 class GPUCollisionEngine(BaseCollisionEngine):
@@ -171,7 +170,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self._stop_event = threading.Event()
         self._running = False
         self._thread: Optional[threading.Thread] = None
-        self._dynamic_speed_benchmark = 500000
+        self._dynamic_speed_benchmark: float = 500000.0
         self._last_memory_check_time = time.time()
         self._memory_check_interval = 60
 
@@ -242,7 +241,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self._gpu_device = self._device_manager.device
         self._gpu_context = self._device_manager.context
         self._gpu_kernel = self._device_manager.kernel
-        self._async_executor = self._device_manager.async_executor
+        self._async_executor: Optional[Any] = self._device_manager.async_executor
         self._gpu_memory_pool = self._device_manager.memory_pool
 
         # === Phase 5: VendorOptimizationFactory ===
@@ -252,7 +251,17 @@ class GPUCollisionEngine(BaseCollisionEngine):
         # === 搜索模式协调器 ===
         self._search_coordinator = SearchModeCoordinator(self, logger)
 
-        # === Phase 3: PerformanceMonitoringPipeline ===
+        # 将协调器内部模式同步到 engine 属性（向后兼容搜索模式委托方法）
+        self._random_search_mode = self._search_coordinator.get_mode_instance("random")
+        self._range_scan_mode = self._search_coordinator.get_mode_instance("range_scan")
+        self._brute_force_mode = self._search_coordinator.get_mode_instance("brute_force")
+
+        # === Phase 3: PerformanceMonitoringPipeline (懒加载) ===
+        self._perf_pipeline: Optional[PerformanceMonitoringPipeline] = None
+        self._perf_pipeline_config = {
+            "batch_size": batch_size,
+            "device_index": device_index,
+        }
         if data_logging_enabled:
             try:
                 if use_enhanced_monitoring:
@@ -302,7 +311,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
     def batch_size(self) -> int:
         """线程安全的 batch_size 读取"""
         with self._batch_size_lock:
-            return self._batch_size  # type: ignore[return-value]
+            return cast(int, self._batch_size)
 
     @batch_size.setter
     def batch_size(self, value: int) -> None:
@@ -397,7 +406,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 self._async_executor.cleanup()
             except Exception as e:
                 logger.error(f"清理异步执行器失败: {e}")
-            self._async_executor = None  # type: ignore[assignment]
+            self._async_executor = None  # type: ignore[assignment]  # cleanup重置
 
         # 清理设备管理器
         if self._device_manager:
@@ -406,14 +415,13 @@ class GPUCollisionEngine(BaseCollisionEngine):
             except Exception as e:
                 logger.error(f"清理设备管理器失败: {e}")
 
-        self._stop_event.clear()
         self._running = False
         self._thread = None
         logger.info("GPU引擎：资源清理完成")
 
     def is_running(self) -> bool:
         """是否正在运行"""
-        return self._running and self._thread and self._thread.is_alive()  # type: ignore[return-value]
+        return cast(bool, self._running and self._thread and self._thread.is_alive())
 
     def get_device_info(self) -> Dict[str, Any]:
         """获取 GPU 设备信息"""
@@ -433,7 +441,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
     def get_adjustment_history(self, limit: int = 10) -> List[Dict[str, Any]]:
         """获取调整历史"""
-        return self._engine_monitor.get_adjustment_history(limit=limit)  # type: ignore[no-any-return]
+        return cast(List[Dict[str, Any]], self._engine_monitor.get_adjustment_history(limit=limit))
 
     # ========== 上下文管理器 ==========
 
@@ -448,7 +456,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             if self._running:
                 self.stop()
         except Exception:
-            pass
+            pass  # 析构函数中资源清理失败静默处理，避免GC崩溃
 
     # ========== 厂商检测 ==========
 
@@ -493,10 +501,10 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
     def _calculate_gpu_memory_usage(self, num_keys: int) -> float:
         """计算 GPU 显存使用(MB)"""
-        return GPUMemoryCalculator.calculate_from_hash160_bytes(  # type: ignore[no-any-return]
+        return cast(float, GPUMemoryCalculator.calculate_from_hash160_bytes(
             num_keys=num_keys,
             hash160_bytes=self._target_hash160s,
-        )
+        ))
 
     # ========== 性能基准 ==========
 
@@ -509,7 +517,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             self._gpu_kernel.run_batch(seed, test_batch_size)
             execution_time = time.time() - start_time
             actual_speed = test_batch_size / execution_time
-            self._dynamic_speed_benchmark = actual_speed * 0.8  # type: ignore[assignment]
+            self._dynamic_speed_benchmark = actual_speed * 0.8
             logger.info(f"动态性能基准计算完成: {self._dynamic_speed_benchmark:.0f} keys/s")
         except Exception as e:
             logger.warning(f"动态性能基准计算失败，使用默认值: {e}")
@@ -538,19 +546,20 @@ class GPUCollisionEngine(BaseCollisionEngine):
         batch_start_time = time.time()
 
         if self._async_executor is not None:
-            try:
-                matches: List[Dict[str, int]] = []
-                if self._gpu_kernel is not None:
-                    if hasattr(self._gpu_kernel, "program") and hasattr(
-                        self._gpu_kernel, "_targets_buf"
-                    ):
+            matches: List[Dict[str, int]] = []
+            if self._gpu_kernel is not None:
+                if hasattr(self._gpu_kernel, "program") and hasattr(
+                    self._gpu_kernel, "_targets_buf"
+                ):
+                    try:
                         matches, execution_time_ms = self._async_executor.run_batch_async(
                             seed, batch_size,
                             self._gpu_kernel.program,
                             self._gpu_kernel._targets_buf,
                             len(self.targets),
                         )
-                    else:
+                    except Exception as e:
+                        logger.warning(f"异步执行失败，回退到同步模式: {e}")
                         matches = self._gpu_kernel.run_batch(
                             seed, batch_size, stop_event=self._stop_event
                         )
@@ -560,13 +569,13 @@ class GPUCollisionEngine(BaseCollisionEngine):
                         seed, batch_size, stop_event=self._stop_event
                     )
                     execution_time_ms = (time.time() - batch_start_time) * 1000
-            except Exception as e:
-                logger.warning(f"异步执行失败，回退到同步模式: {e}")
-                matches = self._gpu_kernel.run_batch(seed, batch_size, stop_event=self._stop_event)
-                execution_time_ms = (time.time() - batch_start_time) * 1000
-        else:
+            else:
+                raise RuntimeError("GPU内核不可用，无法执行批次")
+        elif self._gpu_kernel is not None:
             matches = self._gpu_kernel.run_batch(seed, batch_size, stop_event=self._stop_event)
             execution_time_ms = (time.time() - batch_start_time) * 1000
+        else:
+            raise RuntimeError("GPU内核不可用，无法执行批次")
 
         # PERF-1: 检测 CPU-GPU 同步瓶颈
         expected_speed = getattr(self, "_dynamic_speed_benchmark", 500000)
@@ -598,9 +607,9 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
                 def target() -> None:
                     try:
-                        result[0] = self.on_match(private_key, address, wif)  # type: ignore[misc]
+                        result[0] = self.on_match(private_key, address, wif)  # type: ignore[misc]  # 线程间数据传递
                     except Exception as e:
-                        exception[0] = e  # type: ignore[call-overload]
+                        exception[0] = e  # type: ignore[call-overload]  # 线程间异常传递
 
                 callback_thread = threading.Thread(target=target, daemon=True)
                 callback_thread.start()
@@ -615,8 +624,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 def timeout_handler(signum: int, frame: Any) -> None:
                     raise TimeoutError(f"匹配回调执行超时 ({self._match_callback_timeout}秒)")
 
-                old_handler = signal.signal(signal.SIGALRM, timeout_handler)  # type: ignore[attr-defined]
-                signal.alarm(int(self._match_callback_timeout))  # type: ignore[attr-defined]
+                old_handler = signal.signal(signal.SIGALRM, timeout_handler)  # type: ignore[attr-defined]  # Unix-only API
+                signal.alarm(int(self._match_callback_timeout))  # type: ignore[attr-defined]  # Unix-only API
                 try:
                     self.on_match(private_key, address, wif)
                 except TimeoutError as e:
@@ -626,8 +635,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
                     logger.error(f"匹配回调异常: {e}")
                     return False
                 finally:
-                    signal.alarm(0)  # type: ignore[attr-defined]
-                    signal.signal(signal.SIGALRM, old_handler)  # type: ignore[attr-defined]
+                    signal.alarm(0)  # type: ignore[attr-defined]  # Unix-only API
+                    signal.signal(signal.SIGALRM, old_handler)  # type: ignore[attr-defined]  # Unix-only API
             return True
         except Exception as e:
             logger.error(f"匹配回调调用失败: {e}")
@@ -722,7 +731,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
                     perf_stats = self.gpu_performance_monitor.get_stats()
                     gpu_utilization = perf_stats.get("avg_gpu_utilization")
                 except Exception:
-                    pass
+                    pass  # 无法获取GPU性能统计，跳过利用率自适应调整
             if gpu_utilization is not None and gpu_utilization < 0.5:
                 new_size = min(self._max_batch_size, int(old_batch_size * 1.5))
                 if new_size != old_batch_size:
@@ -752,18 +761,19 @@ class GPUCollisionEngine(BaseCollisionEngine):
             return
 
         try:
-            error_rate = self.stats.gpu_error_count / max(batch_count, 1)  # type: ignore[attr-defined]
-            new_batch_size, adjustments = self._gpu_kernel.gpu_optimizer.analyze_and_adjust(  # type: ignore[union-attr]
-                current_batch_size=current_batch_size,
-                error_rate=error_rate,
-                engine=self,
-            )
-            if new_batch_size != current_batch_size and adjustments:
-                reason = list(adjustments.keys())[0]
-                logger.info(
-                    f"自适应优化: batch_size {current_batch_size} -> {new_batch_size} ({reason})"
+            error_rate = getattr(self.stats, 'gpu_error_count', 0) / max(batch_count, 1)
+            if self._gpu_kernel and self._gpu_kernel.gpu_optimizer:
+                new_batch_size, adjustments = self._gpu_kernel.gpu_optimizer.analyze_and_adjust(
+                    current_batch_size=current_batch_size,
+                    error_rate=error_rate,
+                    engine=self,
                 )
-                self.batch_size = new_batch_size
+                if new_batch_size != current_batch_size and adjustments:
+                    reason = list(adjustments.keys())[0]
+                    logger.info(
+                        f"自适应优化: batch_size {current_batch_size} -> {new_batch_size} ({reason})"
+                    )
+                    self.batch_size = new_batch_size
         except Exception as adjust_error:
             logger.debug(f"自适应调整失败: {adjust_error}")
 
@@ -882,7 +892,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
                                 buf.release()
                                 setattr(self._gpu_kernel, attr, None)
                             except Exception:
-                                pass
+                                pass  # 缓冲区释放失败不影响主流程
                 self._gpu_kernel._max_batch_size = new_batch_size
                 if hasattr(self._gpu_kernel, "_allocate_buffers"):
                     self._gpu_kernel._allocate_buffers()
@@ -943,9 +953,18 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
     # ========== P2 便捷方法 (向后兼容) ==========
 
+    def _get_perf_pipeline(self) -> PerformanceMonitoringPipeline:
+        """懒加载 PerformanceMonitoringPipeline"""
+        if self._perf_pipeline is None:
+            self._perf_pipeline = PerformanceMonitoringPipeline(
+                engine=self,
+                config=self._perf_pipeline_config,
+            )
+        return self._perf_pipeline
+
     def run_benchmark(self, iterations: int = 5, save_report: bool = True) -> Dict[str, Any]:
         """运行性能基准测试 (P2)"""
-        results = self._perf_pipeline.run_benchmark(iterations)  # type: ignore[attr-defined]
+        results = self._get_perf_pipeline().run_benchmark(iterations)
         if save_report and results:
             report_path = self.generate_performance_report(
                 include_benchmarks=True, include_tuning=False, include_recommendations=True
@@ -970,7 +989,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             else:
                 logger.info(f"建议 batch_size: {new_size:,} (当前: {self.batch_size:,})")
 
-        results = self._perf_pipeline.start_auto_tuning(  # type: ignore[attr-defined]
+        results = self._get_perf_pipeline().start_auto_tuning(
             max_iterations=max_iterations, on_new_batch_size=on_new_batch_size
         )
         optimal_size = results.get("optimal_batch_size")
@@ -993,7 +1012,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         output_dir: Optional[str] = None,
     ) -> str:
         """生成性能报告 (P2)"""
-        return self._perf_pipeline.generate_report(  # type: ignore[no-any-return,attr-defined]
+        return self._get_perf_pipeline().generate_report(
             include_benchmarks=include_benchmarks,
             include_tuning=include_tuning,
             include_history=include_history,

@@ -14,7 +14,7 @@
 更新日期: 2026-04-30
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, cast
 import logging
 import time
 
@@ -325,9 +325,9 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
             if self.engine and hasattr(self.engine, "_gpu_device"):
                 from ...gpu.device import identify_vendor
 
-                return identify_vendor(self.engine._gpu_device)  # type: ignore[no-any-return]
+                return cast(str, identify_vendor(self.engine._gpu_device))
         except Exception:
-            pass
+            pass  # GPU设备检测失败，回退到 device_info 方案
 
         # 备选：从 engine 的 device_info 获取
         try:
@@ -336,6 +336,6 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
                 if isinstance(info, dict) and "vendor" in info:
                     return info["vendor"]
         except Exception:
-            pass
+            pass  # device_info 方案也失败，返回 unknown
 
         return "unknown"

@@ -1902,7 +1902,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             if self._running:
                 self.stop()
         except Exception:
-            pass
+            pass  # 析构函数中资源清理失败静默处理，避免GC崩溃
 
     def get_stats(self) -> CollisionStats:
         """

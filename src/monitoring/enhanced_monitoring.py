@@ -357,16 +357,19 @@ class EnhancedMonitoringSystem:
 
     def get_current_status(self) -> Dict[str, Any]:
         """获取当前状态"""
+        if self.storage is None:
+            return {"message": "监控数据未启用 (enable_monitoring_data=False)"}
+
         current_data = self.storage.get_current_data()
         if not current_data:
             return {"message": "暂无数据"}
 
         # 分析趋势
         history_data = self.storage.get_history_data()
-        trends = self.detector.analyze_trends(history_data)
+        trends = self.detector.analyze_trends(history_data) if self.detector is not None else []
 
         # 获取告警历史
-        alerts = self.alert_system.get_alert_history()
+        alerts = self.alert_system.get_alert_history() if self.alert_system is not None else []
 
         # 获取数据日志统计
         data_stats = self.data_logger.get_statistics() if self.data_logger else {}
@@ -381,7 +384,7 @@ class EnhancedMonitoringSystem:
     def generate_report(self) -> Dict[str, Any]:
         """生成报告"""
         # 生成原始报告
-        original_report = self.report_generator.generate_daily_report()
+        original_report = self.report_generator.generate_daily_report() if self.report_generator is not None else {}
 
         # 生成数据日志报告
         data_report = self.data_logger.generate_report("daily") if self.data_logger else {}

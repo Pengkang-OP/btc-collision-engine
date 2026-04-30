@@ -165,8 +165,7 @@ class PerformanceReportGenerator:
         ]
 
         # 获取基准测试结果
-        if hasattr(self.benchmark_suite, "results") and self.benchmark_suite.results:
-            # 使用已有的测试结果
+        if self.benchmark_suite is not None and hasattr(self.benchmark_suite, "results") and self.benchmark_suite.results:
             lines.append(self.benchmark_suite.generate_report())
         else:
             lines.append("*暂无基准测试数据*\n")
@@ -224,7 +223,7 @@ class PerformanceReportGenerator:
         recommendations = self._generate_recommendations()
 
         if recommendations:
-            for i, rec in enumerate(recommendations, 1):
+            for i, rec in enumerate(recommendations, 1):  # type: ignore[arg-type]
                 lines.append(f"{i}. {rec}")
         else:
             lines.append("当前配置已优化，暂无额外建议。\n")
@@ -305,7 +304,7 @@ class PerformanceReportGenerator:
                         "duration_ms": r.duration_ms,
                         "parameters": r.parameters,
                     }
-                    for r in self.benchmark_suite.results
+                    for r in self.benchmark_suite.results  # type: ignore[union-attr]
                 ]
 
         # 添加调优结果

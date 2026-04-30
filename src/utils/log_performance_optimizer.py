@@ -14,7 +14,7 @@ import threading
 import queue
 import logging
 import platform
-from typing import Optional, Dict, Any, List, Callable
+from typing import Optional, Dict, Any, List, Callable, cast
 from dataclasses import dataclass, field
 
 
@@ -239,7 +239,7 @@ class LogPerformanceOptimizer:
 
             process = psutil.Process(os.getpid())
             memory_info = process.memory_info()
-            return memory_info.rss / (1024 * 1024)  # type: ignore[no-any-return]
+            return cast(float, memory_info.rss / (1024 * 1024))  # 可选依赖psutil，mypy无类型信息
         except ImportError:
             return 0.0
 

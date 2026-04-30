@@ -20,7 +20,7 @@ import threading
 import time
 import queue
 import platform
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, Union, cast
 from logging.handlers import RotatingFileHandler
 from functools import wraps
 
@@ -165,7 +165,7 @@ class PerformanceMonitor:
         self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]
     ) -> None:
         self.end_time = time.perf_counter()
-        elapsed_ms = (self.end_time - self.start_time) * 1000  # type: ignore[operator]
+        elapsed_ms = (cast(float, self.end_time) - cast(float, self.start_time)) * 1000
 
         if exc_type is None:
             self.logger.log(self.level, f"[Performance] {self.operation}: {elapsed_ms:.2f}ms")
@@ -178,8 +178,8 @@ class PerformanceMonitor:
     def elapsed_ms(self) -> float:
         """获取已耗时的毫秒数"""
         if self.end_time is None:
-            return (time.perf_counter() - self.start_time) * 1000  # type: ignore[operator]
-        return (self.end_time - self.start_time) * 1000  # type: ignore[operator]
+            return (time.perf_counter() - cast(float, self.start_time)) * 1000
+        return (cast(float, self.end_time) - cast(float, self.start_time)) * 1000
 
 
 class SampledLogger:
@@ -310,7 +310,7 @@ def setup_logger(
 
     # 创建格式化器
     if use_color:
-        console_formatter = ColoredFormatter(format)
+        console_formatter: logging.Formatter = ColoredFormatter(format)
     else:
         console_formatter = logging.Formatter(format)
 
@@ -328,7 +328,7 @@ def setup_logger(
             os.makedirs(log_dir, mode=0o750, exist_ok=True)
 
         # 使用 SafeRotatingFileHandler 自动轮转（Windows 安全）
-        file_handler = _make_rotating_handler(log_file, max_bytes, backup_count)
+        file_handler: logging.FileHandler = _make_rotating_handler(log_file, max_bytes, backup_count)
         file_handler.setLevel(getattr(logging, level))
         file_handler.setFormatter(logging.Formatter(format))
         logger.addHandler(file_handler)
@@ -336,7 +336,7 @@ def setup_logger(
     return logger
 
 
-def get_logger(name: str, thread_safe: bool = False) -> logging.Logger:
+def get_logger(name: str, thread_safe: bool = False) -> Union[logging.Logger, "ThreadSafeLogger"]:
     """
     获取已配置的日志记录器，如果不存在则创建默认记录器
 
@@ -429,6 +429,7 @@ class AsyncLogger:
             max_queue_size: 队列最大长度，超出时丢弃最旧日志
         """
         self._queue: queue.Queue = queue.Queue(maxsize=max_queue_size)
+        self._handler: Optional[logging.Handler] = None
         self._writer_thread = threading.Thread(
             target=self._write_loop,
             daemon=False,  # 非守护线程，确保程序退出时日志完整写入
@@ -448,7 +449,7 @@ class AsyncLogger:
 
             try:
                 # 实际写入（调用底层handler）
-                if hasattr(self, "_handler") and self._handler:
+                if self._handler:
                     self._handler.emit(record)
             except Exception as e:
                 # 写入失败不应崩溃后台线程
@@ -463,7 +464,7 @@ class AsyncLogger:
             except queue.Empty:
                 break
             try:
-                if hasattr(self, "_handler") and self._handler:
+                if self._handler:
                     self._handler.emit(record)
             except Exception as e:
                 sys.stderr.write(f"异步日志drain写入失败: {e}\n")
