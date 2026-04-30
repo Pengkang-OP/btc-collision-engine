@@ -437,7 +437,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
     def get_stats(self) -> CollisionStats:
         """获取统计信息"""
-        return self.stats
+        return self.stats  # type: ignore[return-value]
 
     def get_adjustment_history(self, limit: int = 10) -> List[Dict[str, Any]]:
         """获取调整历史"""
@@ -800,7 +800,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
     def _random_search(self) -> None:
         """随机碰撞模式"""
-        return self._random_search_mode.execute()  # type: ignore[no-any-return,attr-defined]
+        return self._random_search_mode.execute()  # type: ignore[no-any-return,attr-defined,union-attr]
 
     def _start_range_scan(self) -> None:
         """启动范围扫描"""
@@ -820,27 +820,27 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
     def _calculate_key_gen_timeout(self, batch_size: int) -> float:
         """异步私钥生成超时计算"""
-        return self._random_search_mode._calculate_key_gen_timeout(batch_size)  # type: ignore[no-any-return,attr-defined]
+        return self._random_search_mode._calculate_key_gen_timeout(batch_size)  # type: ignore[no-any-return,attr-defined,union-attr]
 
     def _start_async_key_generation(self, batch_size: int) -> Tuple[threading.Thread, List[Any]]:
         """启动异步私钥生成线程"""
-        return self._random_search_mode._start_async_key_generation(batch_size)  # type: ignore[no-any-return,attr-defined]
+        return self._random_search_mode._start_async_key_generation(batch_size)  # type: ignore[no-any-return,attr-defined,union-attr]
 
     def _wait_for_async_key_generation(
         self, gen_thread: threading.Thread, gen_result: List[Any], batch_num: int
     ) -> bytes:
         """等待异步私钥生成完成"""
-        return self._random_search_mode._wait_for_async_key_generation(  # type: ignore[no-any-return,attr-defined]
+        return self._random_search_mode._wait_for_async_key_generation(  # type: ignore[no-any-return,attr-defined,union-attr]
             gen_thread, gen_result, batch_num
         )
 
     def _range_scan(self, start: int, end: int):
         """范围扫描模式"""
-        return self._range_scan_mode.execute(start, end)  # type: ignore[attr-defined]
+        return self._range_scan_mode.execute(start, end)  # type: ignore[attr-defined,union-attr]
 
     def _brute_force(self, start: int):
         """暴力穷举模式"""
-        return self._brute_force_mode.execute(start)  # type: ignore[attr-defined]
+        return self._brute_force_mode.execute(start)  # type: ignore[attr-defined,union-attr]
 
     def _execute_batch_loop(
         self,
@@ -849,7 +849,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         stop_condition_fn: Optional[Callable[[], bool]] = None,
     ) -> int:
         """通用批处理执行循环"""
-        return self._brute_force_mode._execute_batch_loop(  # type: ignore[no-any-return,attr-defined]
+        return self._brute_force_mode._execute_batch_loop(  # type: ignore[no-any-return,attr-defined,union-attr]
             key_generator_fn=key_generator_fn,
             mode_name=mode_name,
             stop_condition_fn=stop_condition_fn,

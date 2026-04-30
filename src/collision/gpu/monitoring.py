@@ -280,7 +280,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
 
                 if self.engine and hasattr(self.engine, "_gpu_device"):
                     monitors.append(IntelMemoryMonitor(self.engine._gpu_device))
-                    monitors.append(AdaptiveTimeoutManager())
+                    monitors.append(AdaptiveTimeoutManager())  # type: ignore[arg-type]
             except Exception as e:
                 logger.warning(f"创建Intel监控器失败: {e}")
 

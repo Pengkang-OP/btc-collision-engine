@@ -688,8 +688,8 @@ class GPUKernel(GPUKernelProtocol):
             return []
 
         try:
-            cl.enqueue_fill_buffer(  # type: ignore[arg-type]
-                self.device.queue, self._match_buf, np.int32(0), 0, num_keys * 4
+            cl.enqueue_fill_buffer(
+                self.device.queue, self._match_buf, np.int32(0), 0, num_keys * 4  # type: ignore[arg-type]
             )
         except Exception as e:
             logger.error(f"清空 match_buf 失败: {e}")

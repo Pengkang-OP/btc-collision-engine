@@ -533,7 +533,7 @@ class AsyncFileHandler(logging.Handler):
 
         # 创建底层文件处理器
         if max_bytes > 0:
-            self._handler = _make_rotating_handler(filename, max_bytes, backup_count)
+            self._handler: logging.Handler = _make_rotating_handler(filename, max_bytes, backup_count)
         else:
             self._handler = logging.FileHandler(filename, encoding="utf-8")
 
