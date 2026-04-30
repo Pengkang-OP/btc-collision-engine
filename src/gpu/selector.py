@@ -11,6 +11,7 @@ import threading
 from typing import List, Dict, Optional, Any
 
 from .device import GPUDeviceDetector, identify_vendor
+from .scorer import GPUDeviceScorer, get_gpu_scorer
 
 logger = get_configured_logger("GPUSelector")
 
@@ -33,20 +34,13 @@ class GPUDeviceSelector:
         device = selector.get_device_info(0)
     """
     
-    # 厂商偏好系数
-    VENDOR_FACTORS = {
-        'nvidia': 1.0,    # NVIDIA最优
-        'amd': 0.95,      # AMD接近
-        'intel': 0.9,     # Intel Arc需要workarounds
-        'unknown': 0.8    # 未知厂商保守估计
-    }
-    
-    # 评分权重
-    WEIGHT_MEMORY = 10.0      # 每GB显存10分
-    WEIGHT_COMPUTE_UNITS = 0.05  # 每个计算单元0.05分
-    
-    def __init__(self) -> None:
-        """初始化GPU设备选择器"""
+    def __init__(self, scorer: Optional[GPUDeviceScorer] = None) -> None:
+        """初始化GPU设备选择器
+        
+        Args:
+            scorer: GPU设备评分器，为None时使用全局单例
+        """
+        self._scorer = scorer or get_gpu_scorer()
         self._devices_cache: Optional[List[Dict[str, Any]]] = None
         self._scores_cache: Dict[int, float] = {}
         
@@ -98,10 +92,7 @@ class GPUDeviceSelector:
     def score_device(self, device: Dict) -> float:
         """计算GPU设备评分
         
-        评分算法:
-        - 显存大小: 10分/GB (最重要)
-        - 计算单元: 0.05分/CU
-        - 厂商偏好: NVIDIA=1.0, AMD=0.95, Intel=0.9
+        委托给统一的 GPUDeviceScorer 进行评分。
         
         Args:
             device: 设备信息字典
@@ -109,28 +100,7 @@ class GPUDeviceSelector:
         Returns:
             评分(越高越好)
         """
-        # 显存分数
-        memory_gb = device.get('global_mem_gb', 0)
-        memory_score = memory_gb * self.WEIGHT_MEMORY
-        
-        # 计算单元分数
-        compute_units = device.get('max_compute_units', 0)
-        cu_score = compute_units * self.WEIGHT_COMPUTE_UNITS
-        
-        # 厂商系数
-        vendor = device.get('vendor', 'unknown')
-        vendor_factor = self.VENDOR_FACTORS.get(vendor, 0.8)
-        
-        # 总分
-        total_score = float((memory_score + cu_score) * vendor_factor)
-        
-        logger.debug(
-            f"设备评分: {device.get('name', 'Unknown')} - "
-            f"显存={memory_score:.1f}, CU={cu_score:.1f}, "
-            f"厂商={vendor_factor}, 总分={total_score:.1f}"
-        )
-        
-        return total_score
+        return self._scorer.score(device)
     
     def select_best_device(self, devices: Optional[List[Dict[str, Any]]] = None) -> Optional[Dict[str, Any]]:
         """自动选择评分最高的GPU设备
@@ -359,6 +329,9 @@ class GPUDeviceSelector:
         # 识别厂商
         vendor = identify_vendor(device_name, vendor_str)
         
+        # 识别GPU型号 (用于世代加分)
+        gpu_model = self._scorer._identify_model(device_name, vendor)
+        
         # 显存(字节转GB)
         global_mem_bytes = raw_device.get('global_mem_bytes', 0)
         global_mem_gb = global_mem_bytes / (1024 ** 3)
@@ -369,6 +342,7 @@ class GPUDeviceSelector:
             'platform_index': raw_device.get('platform_index', 0),
             'name': device_name,
             'vendor': vendor,
+            'model': gpu_model,
             'global_mem_gb': global_mem_gb,
             'global_mem_bytes': global_mem_bytes,
             'max_compute_units': raw_device.get('max_compute_units', 0),
@@ -412,7 +386,7 @@ def get_gpu_selector() -> GPUDeviceSelector:
     return _selector_instance
 
 
-def reset_gpu_selector():
+def reset_gpu_selector() -> None:
     """重置GPU设备选择器单例(用于测试)"""
     global _selector_instance
     with _selector_lock:

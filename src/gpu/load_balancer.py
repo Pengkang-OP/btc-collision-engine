@@ -20,6 +20,9 @@ import statistics
 # P3-5: 统一日志获取
 from ..utils import init_logging, get_configured_logger
 
+# P3-11: 统一GPU评分
+from .scorer import GPUDeviceScorer, get_gpu_scorer
+
 logger = get_configured_logger("GPULoadBalancer")
 
 
@@ -42,13 +45,7 @@ class GPULoadBalancer:
         start, end = balancer.assign_key_range(1000000, device_idx=0)
     """
     
-    # 厂商性能系数(基于实际测试经验值)
-    VENDOR_PERFORMANCE_FACTORS = {
-        'nvidia': 1.0,    # NVIDIA基准性能
-        'amd': 0.95,      # AMD略低
-        'intel': 0.9,     # Intel Arc需要workarounds
-        'unknown': 0.8    # 未知厂商保守估计
-    }
+    # 厂商性能系数已迁移到 GPUDeviceScorer (P3-11)
     
     def __init__(
         self,
@@ -56,7 +53,8 @@ class GPULoadBalancer:
         strategy: str = 'performance',
         rebalance_interval: int = 30,  # 减少重平衡间隔，提高响应速度
         min_rebalance_threshold: float = 0.05,  # 减少重平衡阈值，提高负载均衡的准确性
-        memory_usage_threshold: float = 0.75  # 减少内存使用阈值，避免内存不足
+        memory_usage_threshold: float = 0.75,  # 减少内存使用阈值，避免内存不足
+        scorer: Optional[GPUDeviceScorer] = None
     ) -> None:
         """初始化负载均衡器
         
@@ -66,6 +64,7 @@ class GPULoadBalancer:
             rebalance_interval: 动态重平衡间隔(秒)
             min_rebalance_threshold: 最小重平衡阈值(0.0-1.0)
             memory_usage_threshold: 内存使用阈值(0.0-1.0)
+            scorer: GPU设备评分器，为None时使用全局单例
         """
         if not devices:
             raise ValueError("设备列表不能为空")
@@ -75,6 +74,7 @@ class GPULoadBalancer:
         self.rebalance_interval = rebalance_interval
         self.min_rebalance_threshold = min_rebalance_threshold
         self.memory_usage_threshold = memory_usage_threshold
+        self._scorer = scorer or get_gpu_scorer()
         
         self._weights = {}
         self._key_ranges = {}
@@ -111,42 +111,12 @@ class GPULoadBalancer:
     def _calculate_performance_weights(self) -> Dict[int, float]:
         """基于设备性能计算权重
         
-        算法:
-        weight = (memory_gb * 0.6 + compute_units * 0.01) * vendor_factor
+        委托给统一的 GPUDeviceScorer 计算归一化权重。
         
         Returns:
-            设备索引 -> 权重映射
+            设备索引 -> 权重映射 (总和为1.0)
         """
-        raw_weights = {}
-        
-        for device in self.devices:
-            idx = device['global_index']
-            memory_gb = device.get('global_mem_gb', 0)
-            compute_units = device.get('max_compute_units', 0)
-            vendor = device.get('vendor', 'unknown')
-            
-            # 厂商系数
-            vendor_factor = self.VENDOR_PERFORMANCE_FACTORS.get(vendor, 0.8)
-            
-            # 计算原始权重
-            weight = (memory_gb * 0.6 + compute_units * 0.01) * vendor_factor
-            raw_weights[idx] = weight
-        
-        # 归一化(使总和为1)
-        total_weight = sum(raw_weights.values())
-        if total_weight > 0:
-            normalized_weights = {
-                idx: w / total_weight
-                for idx, w in raw_weights.items()
-            }
-        else:
-            # 降级为平均分配
-            normalized_weights = {
-                idx: 1.0 / len(self.devices)
-                for idx in raw_weights.keys()
-            }
-        
-        return normalized_weights
+        return self._scorer.calculate_performance_weights(self.devices)
     
     def calculate_weights(self) -> Dict[int, float]:
         """获取当前负载权重

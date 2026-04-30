@@ -5,7 +5,7 @@
 """
 
 import logging
-from typing import Any, List, Dict, Optional
+from typing import Any, List, Dict, Optional, Tuple
 
 # P3-5: 统一日志获取
 from ..utils import init_logging, get_configured_logger
@@ -19,6 +19,7 @@ except ImportError:
 
 from .profiles.loader import GPUProfileLoader
 from .driver_manager import DriverManager, DriverVersionParser
+from .scorer import get_gpu_scorer, GPUDeviceScorer
 
 logger = get_configured_logger("GPUDevice")
 
@@ -133,12 +134,12 @@ class GPUDeviceDetector:
     
     # 可用性检测缓存
     _availability_cache = None
-    _cache_timestamp = 0
+    _cache_timestamp = 0.0
     _cache_ttl = 30  # 缓存有效期30秒(从60秒缩短,提高响应性)
     
     # 设备信息缓存（避免重复检测）
     _devices_cache = None
-    _devices_cache_timestamp = 0
+    _devices_cache_timestamp = 0.0
     _devices_cache_ttl = 30  # 设备缓存TTL(明确配置)
     
     @staticmethod
@@ -173,7 +174,7 @@ class GPUDeviceDetector:
                 logger.debug(f"GPU可用，检测到 {len(devices)} 个设备")
                 # 缓存设备信息供get_gpu_health_status()使用
                 GPUDeviceDetector._devices_cache = devices
-                GPUDeviceDetector._devices_cache_timestamp = time.time()
+                GPUDeviceDetector._devices_cache_timestamp = time.time()  # type: ignore[assignment]
             else:
                 logger.debug("GPU不可用，未检测到设备")
             
@@ -263,9 +264,9 @@ class GPUDeviceDetector:
         强制下次is_gpu_available()重新检测。
         """
         GPUDeviceDetector._availability_cache = None
-        GPUDeviceDetector._cache_timestamp = 0
+        GPUDeviceDetector._cache_timestamp = 0.0
         GPUDeviceDetector._devices_cache = None
-        GPUDeviceDetector._devices_cache_timestamp = 0
+        GPUDeviceDetector._devices_cache_timestamp = 0.0
         logger.debug("GPU可用性缓存和设备信息缓存已清除")
     
     @staticmethod
@@ -307,7 +308,7 @@ class GPUDeviceDetector:
                             continue
                         
                         device_name = device.get_info(cl.device_info.NAME)
-                        device_name_lower = device_name.lower()
+                        device_name_lower = device_name.lower()  # type: ignore[attr-defined]
                         
                         # 过滤掉核显/亮机显卡
                         if "intel" in device_name_lower and (
@@ -344,9 +345,9 @@ class GPUDeviceDetector:
     
     @staticmethod
     def _select_best_device(devices: List[Dict]) -> Dict:
-        """
-        选择最佳GPU设备
+        """选择最佳GPU设备
         
+        使用统一的 GPUDeviceScorer 进行评分和选择。
         优先级: NVIDIA > AMD > Intel Arc > Intel其他 > 其他GPU
         
         Args:
@@ -358,49 +359,26 @@ class GPUDeviceDetector:
         if not devices:
             raise RuntimeError("没有可用的GPU设备")
         
-        def priority_score(dev: Dict) -> float:
-            """
-            计算设备优先级分数
+        scorer = get_gpu_scorer()
+        
+        # 为每个设备计算评分
+        for dev in devices:
+            # 构建评分器所需的设备信息
+            device_name = dev.get('name', '')
+            vendor_str = dev.get('vendor', '')
+            vendor = identify_vendor(device_name, vendor_str)
             
-            综合考虑:
-            1. 显存大小 (主要因素,每GB 10分)
-            2. 计算单元 (次要因素,每100个CU 5分)
-            3. 厂商偏好 (辅助因素)
+            score_info = {
+                'name': device_name,
+                'vendor': vendor,
+                'global_mem_gb': dev.get('global_mem_size', 0) / (1024**3),
+                'max_compute_units': dev.get('max_compute_units', 0),
+            }
             
-            这样可以确保:
-            - Intel Arc A770 (16GB) > NVIDIA GTX 1660 Ti (6GB)
-            - 大显存GPU优先被选择
-            """
-            name_lower = dev['name'].lower()
-            vendor_lower = dev.get('vendor', '').lower()
-            
-            # 显存分数 (每GB 10分) - 这是最重要的因素
-            global_mem_gb = dev.get('global_mem_size', 0) / (1024**3)
-            memory_score = global_mem_gb * 10
-            
-            # 计算单元分数 (每100个CU 5分)
-            compute_units = dev.get('max_compute_units', 0)
-            cu_score = (compute_units / 100.0) * 5
-            
-            # 厂商基础分 (辅助因素,不超过20分)
-            if "nvidia" in name_lower or "nvidia" in vendor_lower:
-                vendor_score = 20
-            elif "amd" in name_lower or "amd" in vendor_lower:
-                vendor_score = 15
-            elif "intel" in name_lower and "arc" in name_lower:
-                vendor_score = 10
-            elif "intel" in name_lower:
-                vendor_score = 5
-            else:
-                vendor_score = 0
-            
-            # 总分 = 显存(主要) + 计算单元(次要) + 厂商(辅助)
-            total_score = memory_score + cu_score + vendor_score
-            
-            return total_score
+            dev['_score'] = scorer.score(score_info)
         
         # 按分数排序
-        devices.sort(key=priority_score, reverse=True)
+        devices.sort(key=lambda d: d.get('_score', 0), reverse=True)
         best_device = devices[0]
         
         # 记录选择原因
@@ -408,7 +386,7 @@ class GPUDeviceDetector:
             f"自动选择最佳设备: {best_device['name']}\n"
             f"  - 显存: {best_device.get('global_mem_size', 0)/(1024**3):.1f} GB\n"
             f"  - 计算单元: {best_device.get('max_compute_units', 'N/A')}\n"
-            f"  - 优先级分数: {priority_score(best_device):.1f}"
+            f"  - 统一评分: {best_device.get('_score', 0):.1f}"
         )
         
         return best_device
@@ -428,7 +406,7 @@ class GPUDevice:
         self.compute_queue = None  # 计算队列(异步优化)
         self.transfer_queue = None  # 传输队列(异步优化)
         self.device = None
-        self.device_info = {}
+        self.device_info: Dict[str, Any] = {}
         self.vendor = None
         self.profile = None
         self.profile_loader = GPUProfileLoader()
@@ -436,7 +414,7 @@ class GPUDevice:
         # 驱动相关
         self.driver_version = None
         self.driver_health = None
-        self.driver_optimization_flags = {}
+        self.driver_optimization_flags: Dict[str, Any] = {}
         
         # 异步优化配置
         # PERF-2修复: 默认启用异步执行，提高GPU利用率
@@ -529,7 +507,7 @@ class GPUDevice:
             self._legacy_mode = True
         
         # 识别GPU型号
-        vendor_identifier = identify_vendor(device_info.get('name', ''), self.vendor)
+        vendor_identifier = identify_vendor(device_info.get('name', ''), self.vendor)  # type: ignore[arg-type]
         gpu_model = identify_gpu_model(device_info.get('name', ''), vendor_identifier)
         
         # 构建设备信息字典
@@ -569,20 +547,20 @@ class GPUDevice:
         self._detect_and_validate_driver()
         
         # 创建OpenCL上下文和命令队列
-        self.context = cl.Context([self.device])
+        self.context = cl.Context([self.device])  # type: ignore[assignment,list-item]
         
         # 异步优化: 创建双队列(计算+传输)
         if self.enable_async_execution:
             logger.info("启用GPU异步执行: 创建双队列(计算+传输)")
             # 计算队列 - 用于内核执行
-            self.compute_queue = cl.CommandQueue(
-                self.context, 
+            self.compute_queue = cl.CommandQueue(  # type: ignore[assignment]
+                self.context,  # type: ignore[arg-type] 
                 self.device,
                 properties=cl.command_queue_properties.PROFILING_ENABLE
             )
             # 传输队列 - 用于数据传输
-            self.transfer_queue = cl.CommandQueue(
-                self.context,
+            self.transfer_queue = cl.CommandQueue(  # type: ignore[assignment]
+                self.context,  # type: ignore[arg-type]
                 self.device,
                 properties=cl.command_queue_properties.PROFILING_ENABLE
             )
@@ -592,7 +570,7 @@ class GPUDevice:
             logger.info("  - 传输队列: 已创建(支持异步传输)")
         else:
             # 传统模式: 单一队列
-            self.queue = cl.CommandQueue(self.context, self.device)
+            self.queue = cl.CommandQueue(self.context, self.device)  # type: ignore[assignment,arg-type]
             logger.info("使用传统单队列模式(同步执行)")
         
         logger.info(
@@ -647,10 +625,10 @@ class GPUDevice:
             device_name: 设备名称
         """
         # 使用共享函数识别厂商
-        vendor = identify_vendor(device_name, self.vendor)
+        vendor = identify_vendor(device_name, self.vendor)  # type: ignore[arg-type]
         
         # 加载配置
-        self.profile = self.profile_loader.get_profile(vendor, device_name)
+        self.profile = self.profile_loader.get_profile(vendor, device_name)  # type: ignore[assignment]
         
         if self.profile:
             logger.info(
@@ -665,7 +643,7 @@ class GPUDevice:
         检测驱动版本并验证健康状态
         """
         # 1. 检测驱动版本
-        self.driver_version = DriverManager.detect_driver_version(self.vendor)
+        self.driver_version = DriverManager.detect_driver_version(self.vendor)  # type: ignore[assignment,arg-type]
         
         if not self.driver_version:
             logger.warning("无法检测GPU驱动版本")
@@ -734,7 +712,7 @@ class GPUDevice:
         import time
         
         # 清理命令队列
-        queues_to_cleanup = []
+        queues_to_cleanup: List[Tuple[str, Any]] = []
         
         if self.compute_queue:
             queues_to_cleanup.append(("计算队列", self.compute_queue))
