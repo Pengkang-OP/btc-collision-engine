@@ -40,7 +40,7 @@ class SearchModeCoordinator:
         self.engine = engine
         self.logger = logger or _logger
         
-        self._current_mode = None
+        self._current_mode: Optional[str] = None
         self._modes: Dict[str, Any] = {}
         
         # 初始化搜索模式
@@ -143,7 +143,7 @@ class SearchModeCoordinator:
         """保存当前模式的状态"""
         if self.engine.checkpoint_mgr:
             try:
-                self.engine._save_checkpoint(self.engine.stats.total_keys)
+                self.engine._save_checkpoint(self.engine.stats.total_keys)  # type: ignore[attr-defined]
                 self.logger.info("当前状态已保存到检查点")
             except Exception as e:
                 self.logger.error(f"保存检查点失败: {e}")
@@ -193,7 +193,7 @@ class SearchModeCoordinator:
         try:
             # 检查搜索模式是否有status方法
             if hasattr(search_mode, 'get_status'):
-                return search_mode.get_status()
+                return search_mode.get_status()  # type: ignore[no-any-return]
             else:
                 return {
                     "mode": mode,

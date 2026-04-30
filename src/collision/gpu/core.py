@@ -54,7 +54,7 @@ class CollisionCore(ICollisionCore):
         stats_factory: Optional[Callable] = None,
         checkpoint_factory: Optional[Callable] = None,
         dedup_factory: Optional[Callable] = None,
-    ):
+    ) -> None:
         """初始化碰撞核心
         
         Args:
@@ -133,7 +133,7 @@ class CollisionCore(ICollisionCore):
         logger.info(f"碰撞核心已启动: mode={mode}")
         
         # 委托给搜索协调器执行
-        self.search_coordinator.start(mode, engine=self, **kwargs)
+        self.search_coordinator.start(mode, engine=self, **kwargs)  # type: ignore[union-attr,attr-defined]
     
     def stop(self) -> None:
         """停止碰撞"""

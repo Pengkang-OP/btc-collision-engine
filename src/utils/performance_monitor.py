@@ -10,7 +10,7 @@
 import time
 import logging
 import threading
-from typing import Optional, Dict, List
+from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
 
@@ -34,7 +34,7 @@ class PerformanceTracker:
     记录和追踪性能指标，支持统计分析
     """
     
-    def __init__(self, max_records: int = 10000):
+    def __init__(self, max_records: int = 10000) -> None:
         """
         Args:
             max_records: 最大记录数（超过后自动清理旧记录）
@@ -45,7 +45,7 @@ class PerformanceTracker:
     
     def record(self, operation: str, elapsed_ms: float, 
                success: bool = True, error: Optional[str] = None,
-               metadata: Optional[Dict] = None):
+               metadata: Optional[Dict[str, Any]] = None) -> None:
         """
         记录性能指标
         
@@ -132,7 +132,7 @@ class PerformanceTracker:
             slow_ops.sort(key=lambda x: x.elapsed_ms, reverse=True)
             return slow_ops[:limit]
     
-    def clear(self):
+    def clear(self) -> None:
         """清空所有记录"""
         with self._lock:
             self._records.clear()
@@ -217,7 +217,7 @@ class EnhancedPerformanceMonitor:
     
     def __init__(self, logger: logging.Logger, operation: str, 
                  level: str = "INFO", log_result: bool = True,
-                 track: bool = True):
+                 track: bool = True) -> None:
         """
         Args:
             logger: 日志记录器
@@ -237,11 +237,11 @@ class EnhancedPerformanceMonitor:
         self.end_time = None
         self.metadata = {}
     
-    def __enter__(self):
+    def __enter__(self) -> 'EnhancedPerformanceMonitor':
         self.start_time = time.perf_counter()
         return self
     
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]) -> None:
         """
         退出上下文时的处理
         
@@ -300,7 +300,7 @@ class EnhancedPerformanceMonitor:
             # 监控本身失败不应影响业务逻辑
             pass
     
-    def add_metadata(self, key: str, value):
+    def add_metadata(self, key: str, value: Any) -> None:
         """添加元数据"""
         self.metadata[key] = value
     
@@ -312,7 +312,7 @@ class EnhancedPerformanceMonitor:
         return (self.end_time - self.start_time) * 1000
 
 
-def log_performance_summary(logger: logging.Logger, tracker: Optional[PerformanceTracker] = None):
+def log_performance_summary(logger: logging.Logger, tracker: Optional[PerformanceTracker] = None) -> None:
     """
     记录性能统计摘要
     
@@ -351,7 +351,7 @@ def log_performance_summary(logger: logging.Logger, tracker: Optional[Performanc
 
 
 # 兼容性包装器
-def create_performance_monitor(logger: logging.Logger, operation: str, level: str = "INFO"):
+def create_performance_monitor(logger: logging.Logger, operation: str, level: str = "INFO") -> 'EnhancedPerformanceMonitor':
     """
     创建性能监控器（兼容旧API）
     

@@ -35,7 +35,7 @@ class CollisionError(Exception):
         error_code: Optional[int] = None,
         context: Optional[Dict[str, Any]] = None,
         original_error: Optional[Exception] = None
-    ):
+    ) -> None:
         """
         初始化异常
         
@@ -89,7 +89,7 @@ class ConfigError(CollisionError):
         error_code: Optional[int] = None,
         context: Optional[Dict[str, Any]] = None,
         original_error: Optional[Exception] = None
-    ):
+    ) -> None:
         super().__init__(
             message,
             error_code or self.CONFIG_ERROR,
@@ -107,7 +107,7 @@ class ValidationError(CollisionError):
         error_code: Optional[int] = None,
         context: Optional[Dict[str, Any]] = None,
         original_error: Optional[Exception] = None
-    ):
+    ) -> None:
         super().__init__(
             message,
             error_code or self.VALIDATION_ERROR,
@@ -125,7 +125,7 @@ class KeyGenerationError(CollisionError):
         error_code: Optional[int] = None,
         context: Optional[Dict[str, Any]] = None,
         original_error: Optional[Exception] = None
-    ):
+    ) -> None:
         super().__init__(
             message,
             error_code or self.KEY_GENERATION_ERROR,
@@ -143,7 +143,7 @@ class AddressGenerationError(CollisionError):
         error_code: Optional[int] = None,
         context: Optional[Dict[str, Any]] = None,
         original_error: Optional[Exception] = None
-    ):
+    ) -> None:
         super().__init__(
             message,
             error_code or self.ADDRESS_GENERATION_ERROR,
@@ -161,7 +161,7 @@ class CheckpointError(CollisionError):
         error_code: Optional[int] = None,
         context: Optional[Dict[str, Any]] = None,
         original_error: Optional[Exception] = None
-    ):
+    ) -> None:
         super().__init__(
             message,
             error_code or self.CHECKPOINT_ERROR,
@@ -179,7 +179,7 @@ class DeduplicationError(CollisionError):
         error_code: Optional[int] = None,
         context: Optional[Dict[str, Any]] = None,
         original_error: Optional[Exception] = None
-    ):
+    ) -> None:
         super().__init__(
             message,
             error_code or self.DEDUPLICATION_ERROR,
@@ -197,7 +197,7 @@ class TargetResolutionError(CollisionError):
         error_code: Optional[int] = None,
         context: Optional[Dict[str, Any]] = None,
         original_error: Optional[Exception] = None
-    ):
+    ) -> None:
         super().__init__(
             message,
             error_code or self.TARGET_RESOLUTION_ERROR,
@@ -215,7 +215,7 @@ class CryptoBackendError(CollisionError):
         error_code: Optional[int] = None,
         context: Optional[Dict[str, Any]] = None,
         original_error: Optional[Exception] = None
-    ):
+    ) -> None:
         super().__init__(
             message,
             error_code or self.CRYPTO_BACKEND_ERROR,

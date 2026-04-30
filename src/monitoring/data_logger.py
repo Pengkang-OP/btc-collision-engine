@@ -37,7 +37,7 @@ class DataLogger:
     monitoring_data目录已废弃。
     """
     
-    def __init__(self, storage_dir: str = None) -> None:
+    def __init__(self, storage_dir: Optional[str] = None) -> None:
         """
         初始化数据日志记录器
         
@@ -61,9 +61,9 @@ class DataLogger:
         self._initialize_files()
         
         # 数据缓存
-        self._current_data = {}
-        self._history_buffer = deque(maxlen=1000)  # 限制历史数据数量
-        self._error_buffer = deque(maxlen=500)     # 限制错误日志数量
+        self._current_data: Dict[str, Any] = {}
+        self._history_buffer: deque = deque(maxlen=1000)  # 限制历史数据数量
+        self._error_buffer: deque = deque(maxlen=500)     # 限制错误日志数量
         
         # 线程锁
         self._lock = threading.Lock()
@@ -72,7 +72,7 @@ class DataLogger:
         self._start_time = time.time()
         self._total_checks = 0
         self._matches_found = 0
-        self._speed_samples = []
+        self._speed_samples: List[float] = []
         
         self.logger.info("数据日志系统初始化完成")
     
@@ -253,7 +253,7 @@ class DataLogger:
     
     def record_engine_data(self, mode: str = "", target_count: int = 0,
                           is_running: bool = False, current_position: int = 0,
-                          additional_info: Dict[str, Any] = None) -> None:
+                          additional_info: Optional[Dict[str, Any]] = None) -> None:
         """
         记录引擎状态数据
         
@@ -279,8 +279,8 @@ class DataLogger:
             self._current_data["engine"] = engine_data
             self.logger.debug(f"引擎数据: 模式={mode}, 目标数={target_count}, 运行中={is_running}")
     
-    def record_error(self, error_type: str, message: str, exception: Exception = None,
-                    context: Dict[str, Any] = None) -> None:
+    def record_error(self, error_type: str, message: str, exception: Optional[Exception] = None,
+                    context: Optional[Dict[str, Any]] = None) -> None:
         """
         记录错误信息
         
@@ -830,7 +830,7 @@ class DataLogger:
         """
         current_time = time.time()
         if not hasattr(self, '_last_cleanup_time'):
-            self._last_cleanup_time = 0
+            self._last_cleanup_time: float = 0.0
         
         # 每24小时最多执行一次清理
         if current_time - self._last_cleanup_time < 86400:

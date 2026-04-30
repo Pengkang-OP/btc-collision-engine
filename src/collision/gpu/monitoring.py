@@ -44,7 +44,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
         self,
         engine: Any = None,
         config: Optional[Dict[str, Any]] = None
-    ):
+    ) -> None:
         """初始化监控管道
         
         Args:
@@ -59,7 +59,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
         self._perf_monitor = None
         self._engine_monitor = None
         self._data_logger = None
-        self._vendor_monitors = []
+        self._vendor_monitors: List[Any] = []
         
         logger.debug("PerformanceMonitoringPipeline 初始化完成")
     
@@ -181,7 +181,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
         Returns:
             监控统计字典
         """
-        stats = {}
+        stats: Dict[str, Any] = {}
         
         if self._perf_monitor and hasattr(self._perf_monitor, 'get_stats'):
             stats['performance'] = self._perf_monitor.get_stats()
@@ -292,7 +292,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
         try:
             if self.engine and hasattr(self.engine, '_gpu_device'):
                 from ..gpu.device import identify_vendor
-                return identify_vendor(self.engine._gpu_device)
+                return identify_vendor(self.engine._gpu_device)  # type: ignore[no-any-return]
         except Exception:
             pass
         return "unknown"

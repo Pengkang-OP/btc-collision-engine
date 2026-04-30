@@ -32,7 +32,7 @@ class BruteForceSearchMode(BaseSearchMode):
             start: 起始私钥整数值
         """
         engine = self.engine
-        engine._range_start = start
+        engine._range_start = start  # type: ignore[assignment]
         engine._current_position = start
 
         current = start

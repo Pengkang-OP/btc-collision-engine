@@ -4,7 +4,7 @@ import json
 import time
 import threading
 from datetime import datetime
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Any
 
 # 导入日志配置
 from ..utils import init_logging, get_configured_logger
@@ -37,7 +37,7 @@ class CheckpointManager:
                 cls._has_win32_security = False
         return cls._has_win32_security
     
-    def __init__(self, filepath: str = None, auto_save_interval: int = 30):
+    def __init__(self, filepath: Optional[str] = None, auto_save_interval: int = 30) -> None:
         # 确保pywin32可用性检查已执行
         self._has_win32_security = self._check_win32_security()
         
@@ -55,7 +55,7 @@ class CheckpointManager:
         self._last_save_time = 0.0
         self._lock = threading.Lock()  # 线程锁保护文件操作
         self._dirty = False  # 脏标志，标记是否有未保存的更改
-        self._buffer = None  # 缓冲区，用于批量保存
+        self._buffer: Optional[Dict[str, Any]] = None  # 缓冲区，用于批量保存
         logger.debug(f"CheckpointManager 初始化: 文件={self.filepath}, 自动保存间隔={auto_save_interval}秒, pywin32可用={self._has_win32_security}")
     
     def save(self, mode: str, targets: Set[str], current_position: int, 
@@ -307,8 +307,7 @@ class CheckpointManager:
                 
                 logger.info(f"断点已加载: {self.filepath}, 模式={data.get('mode')}, "
                            f"已检查={data.get('total_checked', 0)}, 匹配数={len(data.get('matches', []))}")
-                return data
-                
+                return data  # type: ignore[no-any-return]
             except FileNotFoundError:
                 logger.debug(f"断点文件不存在: {self.filepath}")
                 return None

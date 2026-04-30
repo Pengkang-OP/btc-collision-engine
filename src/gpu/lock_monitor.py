@@ -176,7 +176,7 @@ class MonitoredLock:
         self._name = name
         self._acquire_time: Optional[float] = None
     
-    def acquire(self, blocking=True, timeout=-1) -> bool:
+    def acquire(self, blocking: bool = True, timeout: float = -1) -> bool:
         """获取锁"""
         start_time = time.time()
         result = self._lock.acquire(blocking, timeout)

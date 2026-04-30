@@ -15,7 +15,7 @@ class CollisionStats:
     - 私钥通过 on_match 回调直接传递给调用者，不在内存中持久化
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.total_checked: int = 0       # 已检测总数
         self.speed: float = 0.0           # 每秒检测速率
         self.elapsed: float = 0.0         # 已运行时间(秒)

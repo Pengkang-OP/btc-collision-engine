@@ -41,7 +41,7 @@ class AsyncLogBuffer:
             config: 性能配置
         """
         self.config = config
-        self.queue = queue.Queue(maxsize=config.buffer_size)
+        self.queue: queue.Queue[logging.LogRecord] = queue.Queue(maxsize=config.buffer_size)
         self._stop_event = threading.Event()
         self._flush_thread = threading.Thread(
             target=self._flush_loop,
@@ -76,7 +76,7 @@ class AsyncLogBuffer:
         while not self._stop_event.is_set():
             try:
                 # 批量获取日志记录
-                records = []
+                records: List[logging.LogRecord] = []
                 while len(records) < self.config.batch_size:
                     try:
                         record = self.queue.get(timeout=self.config.flush_interval)
@@ -165,7 +165,7 @@ class LogPerformanceOptimizer:
         if self.config.async_enabled and self.async_buffer:
             # 包装为异步处理器
             class OptimizedHandler(logging.Handler):
-                def __init__(self, original_handler, async_buffer) -> None:
+                def __init__(self, original_handler: Any, async_buffer: Any) -> None:
                     super().__init__()
                     self.original_handler = original_handler
                     self.async_buffer = async_buffer
@@ -214,7 +214,7 @@ class LogPerformanceOptimizer:
             平台优化策略
         """
         platform_name = platform.system()
-        optimizations = {
+        optimizations: Dict[str, Any] = {
             'platform': platform_name,
             'recommendations': []
         }
@@ -241,7 +241,7 @@ class LogPerformanceOptimizer:
             import psutil
             process = psutil.Process(os.getpid())
             memory_info = process.memory_info()
-            return memory_info.rss / (1024 * 1024)  # 转换为MB
+            return memory_info.rss / (1024 * 1024)  # type: ignore[no-any-return]
         except ImportError:
             return 0.0
     
@@ -320,7 +320,7 @@ class LogThrottler:
                 return False
 
 
-def log_performance_decorator(logger: logging.Logger, operation: str, level: str = "DEBUG"):
+def log_performance_decorator(logger: logging.Logger, operation: str, level: str = "DEBUG") -> Callable:
     """
     性能监控装饰器
     
@@ -332,7 +332,7 @@ def log_performance_decorator(logger: logging.Logger, operation: str, level: str
     Returns:
         装饰器
     """
-    def decorator(func):
+    def decorator(func: Callable) -> Callable:
         def wrapper(*args, **kwargs) -> Any:
             start_time = time.time()
             try:

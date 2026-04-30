@@ -11,7 +11,7 @@ import sys
 import platform
 import logging
 import ctypes
-from typing import Optional, Dict, Any, Callable
+from typing import Optional, Dict, Any, Callable, List
 
 
 class PlatformAdapter:
@@ -133,12 +133,12 @@ class PlatformAdapter:
         """
         if self.platform_name == 'Windows':
             try:
-                return ctypes.windll.shell32.IsUserAnAdmin() != 0
+                return ctypes.windll.shell32.IsUserAnAdmin() != 0  # type: ignore[no-any-return]
             except Exception:
                 return False
         else:
             try:
-                return os.geteuid() == 0
+                return os.geteuid() == 0  # type: ignore[attr-defined,no-any-return]
             except Exception:
                 return False
     
@@ -154,14 +154,14 @@ class PlatformAdapter:
             try:
                 import ctypes
                 kernel32 = ctypes.windll.kernel32
-                return kernel32.GetPriorityClass(kernel32.GetCurrentProcess())
+                return kernel32.GetPriorityClass(kernel32.GetCurrentProcess())  # type: ignore[no-any-return]
             except Exception:
                 return 0
         else:
             # Unix-like 系统进程优先级
             try:
                 import psutil
-                return psutil.Process(os.getpid()).nice()
+                return psutil.Process(os.getpid()).nice()  # type: ignore[no-any-return]
             except Exception:
                 return 0
     
@@ -180,7 +180,7 @@ class PlatformAdapter:
             try:
                 import ctypes
                 kernel32 = ctypes.windll.kernel32
-                return kernel32.SetPriorityClass(kernel32.GetCurrentProcess(), priority) != 0
+                return kernel32.SetPriorityClass(kernel32.GetCurrentProcess(), priority) != 0  # type: ignore[no-any-return]
             except Exception:
                 return False
         else:
@@ -192,14 +192,14 @@ class PlatformAdapter:
             except Exception:
                 return False
     
-    def get_platform_specific_handlers(self) -> Dict[str, Callable]:
+    def get_platform_specific_handlers(self) -> Dict[str, Callable[..., Any]]:
         """
         获取平台特定的处理器
         
         Returns:
             平台特定的处理器字典
         """
-        handlers = {}
+        handlers: Dict[str, Callable[..., Any]] = {}
         
         if self.platform_name == 'Windows':
             # Windows 特定处理器
@@ -228,7 +228,7 @@ class PlatformAdapter:
             文件处理器
         """
         from .logging_config import SafeRotatingFileHandler
-        return SafeRotatingFileHandler(
+        return SafeRotatingFileHandler(  # type: ignore[no-any-return]
             filename, 
             maxBytes=10*1024*1024, 
             backupCount=5, 
@@ -247,7 +247,7 @@ class PlatformAdapter:
             文件处理器
         """
         from logging.handlers import RotatingFileHandler
-        return RotatingFileHandler(
+        return RotatingFileHandler(  # type: ignore[no-any-return]
             filename, 
             maxBytes=10*1024*1024, 
             backupCount=5, 
@@ -265,7 +265,7 @@ class PlatformAdapter:
             控制台处理器
         """
         from .logger import SafeStreamHandler
-        return SafeStreamHandler(sys.stdout)
+        return SafeStreamHandler(sys.stdout)  # type: ignore[no-any-return]
     
     def _get_unix_console_handler(self, level: int) -> logging.Handler:
         """
@@ -278,7 +278,7 @@ class PlatformAdapter:
             控制台处理器
         """
         from .logger import SafeStreamHandler
-        return SafeStreamHandler(sys.stdout)
+        return SafeStreamHandler(sys.stdout)  # type: ignore[no-any-return]
     
     def get_platform_optimizations(self) -> Dict[str, Any]:
         """
@@ -287,9 +287,9 @@ class PlatformAdapter:
         Returns:
             优化策略
         """
-        optimizations = {
+        optimizations: Dict[str, Any] = {
             'platform': self.platform_name,
-            'optimizations': []
+            'optimizations': []  # type: ignore[var-annotated]
         }
         
         if self.platform_name == 'Windows':
@@ -375,7 +375,7 @@ def ensure_log_directory() -> bool:
     return adapter.ensure_directory(log_dir)
 
 
-def get_platform_specific_handlers() -> Dict[str, Callable]:
+def get_platform_specific_handlers() -> Dict[str, Callable[..., Any]]:
     """
     获取平台特定的处理器
     

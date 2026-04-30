@@ -16,7 +16,7 @@
 ✅ 生产环境请使用 crypto_backend.py 中的优化后端
 """
 import warnings
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 
 class Secp256k1:
@@ -112,7 +112,7 @@ class ECPoint:
         >>> infinity = ECPoint(None, None)
     """
     
-    def __init__(self, x: Optional[int], y: Optional[int], curve=Secp256k1):
+    def __init__(self, x: Optional[int], y: Optional[int], curve: Any = Secp256k1) -> None:
         """
         初始化椭圆曲线点
         
@@ -126,7 +126,7 @@ class ECPoint:
         self.curve = curve
         self.is_infinity = (x is None or y is None)
     
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Any) -> bool:
         """
         判断两个点是否相等
         
@@ -180,7 +180,7 @@ class EllipticCurve:
         >>> public_key = ec.generate_public_key(private_key_int)
     """
     
-    def __init__(self, curve=Secp256k1):
+    def __init__(self, curve: Any = Secp256k1) -> None:
         """
         初始化椭圆曲线运算器
         
@@ -284,13 +284,13 @@ class EllipticCurve:
         if x1 == x2:
             # 点倍乘: P = Q
             # lambda = (3*x1^2 + a) / (2*y1) mod p
-            numerator = (3 * x1 * x1 + self.curve.A) % p
-            denominator = (2 * y1) % p
+            numerator = (3 * x1 * x1 + self.curve.A) % p  # type: ignore[operator]
+            denominator = (2 * y1) % p  # type: ignore[operator]
         else:
             # 点加法: P ≠ Q
             # lambda = (y2 - y1) / (x2 - x1) mod p
-            numerator = (y2 - y1) % p
-            denominator = (x2 - x1) % p
+            numerator = (y2 - y1) % p  # type: ignore[operator]
+            denominator = (x2 - x1) % p  # type: ignore[operator]
         
         # 计算 lambda = numerator / denominator mod p
         lambda_val = (numerator * self.mod_inverse(denominator, p)) % p
@@ -321,10 +321,10 @@ class EllipticCurve:
             return True  # 无穷远点被认为在曲线上
         
         # 验证 y² ≡ x³ + ax + b (mod p)
-        left_side = pow(point.y, 2, self.curve.P)
-        right_side = (pow(point.x, 3, self.curve.P) + self.curve.A * point.x + self.curve.B) % self.curve.P
+        left_side = pow(point.y, 2, self.curve.P)  # type: ignore[arg-type]
+        right_side = (pow(point.x, 3, self.curve.P) + self.curve.A * point.x + self.curve.B) % self.curve.P  # type: ignore[arg-type]
         
-        return left_side == right_side
+        return left_side == right_side  # type: ignore[no-any-return]
     
     def _validate_scalar_multiply(self, k: int, point: 'ECPoint') -> None:
         """验证标量乘法输入参数
@@ -446,8 +446,8 @@ class EllipticCurve:
         b_y = 0 if b.is_infinity else b.y
         
         # 位掩码选择坐标（无分支）
-        x = (a_x & ~mask) | (b_x & mask)
-        y = (a_y & ~mask) | (b_y & mask)
+        x = (a_x & ~mask) | (b_x & mask)  # type: ignore[operator]
+        y = (a_y & ~mask) | (b_y & mask)  # type: ignore[operator]
         
         # 位掩码选择无穷远标志
         a_inf = 1 if a.is_infinity else 0
@@ -571,12 +571,12 @@ class EllipticCurve:
             raise ValueError("生成的公钥为无穷远点，私钥无效")
         
         # 转换为字节串
-        x_bytes = public_point.x.to_bytes(32, 'big')
+        x_bytes = public_point.x.to_bytes(32, 'big')  # type: ignore[union-attr]
         
         if compressed:
             # 压缩格式: 0x02 (y为偶数) 或 0x03 (y为奇数) + x坐标
             # 使用位运算进行恒定时间选择
-            is_even = 1 - (public_point.y & 1)  # y为偶数时 is_even=1
+            is_even = 1 - (public_point.y & 1)  # type: ignore[operator]  # y为偶数时 is_even=1
             # 0x02 = 2, 0x03 = 3
             # 如果 is_even=1: prefix = 2, 否则 prefix = 3
             prefix_byte = 2 + (1 - is_even)
@@ -584,5 +584,5 @@ class EllipticCurve:
             return prefix + x_bytes
         else:
             # 非压缩格式: 0x04 + x坐标 + y坐标
-            y_bytes = public_point.y.to_bytes(32, 'big')
+            y_bytes = public_point.y.to_bytes(32, 'big')  # type: ignore[union-attr]
             return b'\x04' + x_bytes + y_bytes

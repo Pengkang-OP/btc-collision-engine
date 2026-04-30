@@ -78,7 +78,7 @@ class GPURecoveryManager:
         retry_delay_seconds: float = 5.0,
         batch_size_reduction_factor: float = 0.5,
         auto_redistribute: bool = True,
-        max_failed_gpus_before_fallback: int = None  # 新增：降级阈值
+        max_failed_gpus_before_fallback: Optional[int] = None  # 新增：降级阈值
     ) -> None:
         """初始化恢复管理器
         
@@ -476,7 +476,7 @@ class GPURecoveryManager:
             f"(总计: {self._total_failures})"
         )
     
-    def _verify_gpu_health(self, gpu_id: int, timeout: float = None) -> bool:
+    def _verify_gpu_health(self, gpu_id: int, timeout: Optional[float] = None) -> bool:
         """H1/H3/H4修复: 验证GPU是否健康（带超时控制和取消机制）
         
         通过回调函数执行GPU健康检查，验证GPU是否真正恢复。
@@ -529,7 +529,7 @@ class GPURecoveryManager:
                         logger.debug(f"GPU {gpu_id} 健康检查通过")
                     else:
                         logger.warning(f"GPU {gpu_id} 健康检查失败")
-                    return healthy
+                    return healthy  # type: ignore[return-value]
                 
                 # 其他类型，转换为bool
                 return bool(result)

@@ -438,7 +438,7 @@ class HealthChecker:
         return "\n".join(lines)
 
 
-def main():
+def main() -> None:
     """健康检查CLI入口"""
     import argparse
     

@@ -22,7 +22,7 @@ class GPUKernelAdapter(IKernelExecutor):
     适配现有GPUKernel到IKernelExecutor接口。
     """
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         """初始化适配器
         
         Args:
@@ -54,7 +54,7 @@ class GPUKernelAdapter(IKernelExecutor):
             logger.debug(f"开始编译GPU内核: device={device.name}, vendor={device.vendor}")
             
             # 使用底层GPUKernelImpl创建内核
-            kernel_impl = GPUKernelImpl(
+            kernel_impl = GPUKernelImpl(  # type: ignore[call-arg]
                 device=device.device_obj,
                 context=context.context_obj,
                 kernel_source=OPENCL_KERNEL_SOURCE,

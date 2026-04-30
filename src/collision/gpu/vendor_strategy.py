@@ -79,7 +79,7 @@ class NvidiaOptimizationStrategy:
     
     def apply_optimizations(self, context: GPUExecutionContext) -> Dict[str, Any]:
         """应用NVIDIA特定优化"""
-        components = {}
+        components: Dict[str, Any] = {}
         
         try:
             # TODO: Phase 5实现 - NVIDIA特定优化
@@ -109,7 +109,7 @@ class AMDOptimizationStrategy:
     
     def apply_optimizations(self, context: GPUExecutionContext) -> Dict[str, Any]:
         """应用AMD特定优化"""
-        components = {}
+        components: Dict[str, Any] = {}
         
         try:
             # TODO: Phase 5实现 - AMD特定优化
@@ -184,7 +184,7 @@ class VendorOptimizationFactory:
         try:
             strategy = strategy_cls()
             logger.debug(f"创建{vendor}优化策略成功")
-            return strategy
+            return strategy  # type: ignore[no-any-return]
         except Exception as e:
             logger.error(f"创建{vendor}优化策略失败: {e}")
             return DefaultOptimizationStrategy()

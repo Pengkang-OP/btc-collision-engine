@@ -282,8 +282,8 @@ class GPUEngineMonitor:
         # 更新引擎统计信息
         if self._engine and success:
             try:
-                self._engine.stats.last_batch_time = batch_time
-                self._engine.stats.total_keys += num_keys
+                self._engine.stats.last_batch_time = batch_time  # type: ignore[attr-defined]
+                self._engine.stats.total_keys += num_keys  # type: ignore[attr-defined]
             except Exception as e:
                 logger.warning(f"更新引擎统计信息失败: {e}")
     
@@ -356,13 +356,13 @@ class GPUEngineMonitor:
         if not self.should_adjust_batch_size():
             return False
         
-        old_size = self._engine.batch_size
+        old_size = self._engine.batch_size  # type: ignore[union-attr]
         new_size, reason, details = self.calculate_optimal_batch_size()
         
         if new_size != old_size:
             # 执行调整
             try:
-                self._engine.batch_size = new_size
+                self._engine.batch_size = new_size  # type: ignore[union-attr]
                 self._last_adjust_time = time.time()
                 
                 # 记录调整历史

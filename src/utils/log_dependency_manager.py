@@ -221,7 +221,7 @@ def get_dependency_manager() -> LogDependencyManager:
     return _dependency_manager
 
 
-def init_log_dependencies():
+def init_log_dependencies() -> None:
     """
     初始化日志依赖
     """

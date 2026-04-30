@@ -42,13 +42,13 @@ logger = get_configured_logger("PlatformChecker")
 class CheckResult:
     """单项检查结果"""
 
-    def __init__(self, name: str, passed: bool, message: str, detail: str = ""):
+    def __init__(self, name: str, passed: bool, message: str, detail: str = "") -> None:
         self.name = name
         self.passed = passed
         self.message = message
         self.detail = detail
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         status = "✅" if self.passed else "⚠️"
         return f"{status} {self.name}: {self.message}"
 
@@ -63,7 +63,7 @@ class PlatformChecker:
     # Windows MAX_PATH 限制
     WINDOWS_MAX_PATH = 260
 
-    def __init__(self, project_root: Optional[str] = None):
+    def __init__(self, project_root: Optional[str] = None) -> None:
         """初始化检查器
 
         Args:
@@ -78,7 +78,7 @@ class PlatformChecker:
     # 内部工具
     # -------------------------------------------------------------------------
 
-    def _add(self, name: str, passed: bool, message: str, detail: str = ""):
+    def _add(self, name: str, passed: bool, message: str, detail: str = "") -> CheckResult:
         r = CheckResult(name, passed, message, detail)
         self.results.append(r)
         logger.debug(repr(r))
@@ -347,7 +347,7 @@ class PlatformChecker:
             "cwd": str(Path.cwd()),
         }
 
-    def print_report(self):
+    def print_report(self) -> None:
         """打印可读的检查报告"""
         # Windows 旧控制台可能不支持 emoji，安全输出
         import sys
@@ -393,7 +393,7 @@ class PlatformChecker:
 # CLI 入口
 # ─────────────────────────────────────────────────────────────────────────────
 
-def main():
+def main() -> None:
     """命令行入口 - python -m src.utils.platform_check"""
     import argparse
 

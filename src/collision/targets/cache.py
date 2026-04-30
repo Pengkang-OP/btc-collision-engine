@@ -41,7 +41,7 @@ class AddressCache:
     def __init__(self, 
                  lru_size: int = 10000,
                  ttl_seconds: int = 3600,
-                 enable_stats: bool = True):
+                 enable_stats: bool = True) -> None:
         """
         初始化地址缓存
         

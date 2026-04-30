@@ -9,7 +9,7 @@
 """
 import os
 import sys
-from typing import Optional, List, Tuple
+from typing import Any, List, Optional, Tuple
 import chardet
 
 # 直接从具体模块导入，避免循环导入
@@ -297,7 +297,7 @@ class EncodingUtils:
     
     @staticmethod
     def safe_open(filepath: str, mode: str = 'r', encoding: Optional[str] = None,
-                try_multiple: bool = True):
+                try_multiple: bool = True) -> Any:
         """
         安全地打开文件（上下文管理器）
         

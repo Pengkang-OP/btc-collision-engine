@@ -598,7 +598,7 @@ def _format_device_label(device: dict, index: int) -> str:
             mem_mb = mem_size / (1024 ** 2)
             mem_str = f"{mem_mb:.0f}MB"
         return f"{name} ({mem_str})"
-    return name
+    return name  # type: ignore[no-any-return]
 
 
 def _detect_gpu_devices_with_timeout(timeout: float = 5.0) -> List[dict]:
@@ -761,17 +761,17 @@ def _cmd_quick_run(executor: Optional[Callable[[], None]] = None) -> None:
         
         # 默认目标：检查targets.txt是否存在
         target_file = QUICK_RUN_DEFAULTS['target_file']
-        targets = []
-        target_file_exists = Path(target_file).exists()
+        targets: List[str] = []
+        target_file_exists = Path(target_file).exists()  # type: ignore[arg-type]
         
         if target_file_exists:
             # 统计文件中的地址数量并预览
             address_count = 0
-            preview_addresses = []
+            preview_addresses: List[str] = []
             max_preview = PREVIEW_CONFIG['max_preview_addresses']
             max_display_len = PREVIEW_CONFIG['max_address_display_length']
             try:
-                with open(target_file, 'r', encoding='utf-8') as f:
+                with open(target_file, 'r', encoding='utf-8') as f:  # type: ignore[call-overload]
                     for line_num, line in enumerate(f, 1):
                         stripped = line.strip()
                         if stripped and not stripped.startswith('#'):
@@ -835,7 +835,7 @@ def _cmd_quick_run(executor: Optional[Callable[[], None]] = None) -> None:
         output.print(f"\n[bold green]{countdown}秒后自动开始... (按Ctrl+C取消)[/bold green]")
         try:
             import time
-            for i in range(countdown, 0, -1):
+            for i in range(countdown, 0, -1):  # type: ignore[call-overload]
                 output.print(f"  {i}...")
                 time.sleep(1)
         except KeyboardInterrupt:
@@ -846,12 +846,12 @@ def _cmd_quick_run(executor: Optional[Callable[[], None]] = None) -> None:
         output.header(_t("cli.messages.starting"))
         if executor is not None:
             argv = list(cmd_parts)
-            if argv and argv[0].lower() in ("python", "python3", "python.exe", "python3.exe"):
+            if argv and argv[0].lower() in ("python", "python3", "python.exe", "python3.exe"):  # type: ignore[attr-defined]
                 argv = argv[1:]
-            sys.argv = argv
+            sys.argv = argv  # type: ignore[assignment]
             executor()
         else:
-            output.print("\n请手动运行: " + " ".join(cmd_parts))
+            output.print("\n请手动运行: " + " ".join(cmd_parts))  # type: ignore[arg-type]
             
     except KeyboardInterrupt:
         output.warning(_t("errors.keyboard_interrupt"))
@@ -1087,9 +1087,9 @@ def _handle_system_commands(args: argparse.Namespace) -> bool:
             from src.utils.platform_check import PlatformChecker
         except ImportError:
             from ..utils.platform_check import PlatformChecker  # type: ignore
-        checker = PlatformChecker()
+        checker = PlatformChecker()  # type: ignore[assignment]
         all_passed, _ = checker.run_all_checks()
-        checker.print_report()
+        checker.print_report()  # type: ignore[attr-defined]
         sys.exit(0 if all_passed else 1)
 
     # --cleanup

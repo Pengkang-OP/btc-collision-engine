@@ -21,7 +21,7 @@ class CollisionPlugin(ABC):
         pass
     
     @abstractmethod
-    def initialize(self, targets: Set[str], **kwargs):
+    def initialize(self, targets: Set[str], **kwargs) -> None:
         """
         初始化插件
         
@@ -34,7 +34,7 @@ class CollisionPlugin(ABC):
     @abstractmethod
     def start(self, on_progress: Optional[Callable[['CollisionStats'], None]] = None,
               on_match: Optional[Callable[[bytes, str, str], None]] = None,
-              on_complete: Optional[Callable[['CollisionStats'], None]] = None):
+              on_complete: Optional[Callable[['CollisionStats'], None]] = None) -> None:
         """
         开始碰撞
         
@@ -50,7 +50,7 @@ class CollisionPlugin(ABC):
         pass
     
     @abstractmethod
-    def stop(self):
+    def stop(self) -> None:
         """停止碰撞"""
         pass
     

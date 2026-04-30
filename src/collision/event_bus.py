@@ -23,7 +23,7 @@
     >>> bus.unsubscribe(EventType.ENGINE_PROGRESS, handle_progress)
 """
 import threading
-from typing import Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 from collections import defaultdict
 import logging
 
@@ -59,7 +59,7 @@ class EventBus:
         >>> print(f"发布事件数: {bus.published_count}")
     """
     
-    def __init__(self, async_mode: bool = False, max_queue_size: int = 1000):
+    def __init__(self, async_mode: bool = False, max_queue_size: int = 1000) -> None:
         """
         初始化事件总线
         
@@ -80,14 +80,14 @@ class EventBus:
         # 异步队列
         if async_mode:
             import queue
-            self._event_queue = queue.Queue(maxsize=max_queue_size)
+            self._event_queue: queue.Queue[CollisionEvent] = queue.Queue(maxsize=max_queue_size)
             self._running = True
-            self._worker_thread = threading.Thread(target=self._process_events, daemon=True)
+            self._worker_thread: threading.Thread = threading.Thread(target=self._process_events, daemon=True)
             self._worker_thread.start()
             logger.info("事件总线已启动 (异步模式)")
         else:
-            self._event_queue = None
-            self._worker_thread = None
+            self._event_queue = None  # type: ignore[assignment]
+            self._worker_thread = None  # type: ignore[assignment]
             logger.debug("事件总线已初始化 (同步模式)")
     
     def subscribe(self, event_type: EventType, handler: Callable) -> None:
@@ -135,7 +135,7 @@ class EventBus:
             >>> 
             >>> bus.subscribe_to_all(handle_all)
         """
-        def wrapper(event: CollisionEvent):
+        def wrapper(event: CollisionEvent) -> None:
             handler(event.event_type, event)
         
         # 订阅所有事件类型
@@ -180,10 +180,10 @@ class EventBus:
             event: 事件对象
         """
         with self._lock:
-            handlers = self._subscribers.get(event.event_type, []).copy()
+            handlers = self._subscribers.get(event.event_type, []).copy()  # type: ignore[arg-type]
         
         if not handlers:
-            logger.debug(f"事件无订阅者: {event.event_type.value}")
+            logger.debug(f"事件无订阅者: {event.event_type.value if event.event_type else 'N/A'}")
             return
         
         # 在锁外执行处理器，避免死锁
@@ -296,11 +296,11 @@ class EventBus:
             "queue_size": self._event_queue.qsize() if self._event_queue else 0
         }
     
-    def __enter__(self):
+    def __enter__(self) -> 'EventBus':
         """上下文管理器入口"""
         return self
     
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]) -> None:
         """上下文管理器出口"""
         self.shutdown()
         return False

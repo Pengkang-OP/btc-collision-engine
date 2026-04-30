@@ -5,7 +5,7 @@
 
 import threading
 import time
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 
 class DeltaStats:
@@ -21,7 +21,7 @@ class DeltaStats:
     - 刷新操作使用独立锁
     """
     
-    def __init__(self, flush_interval: float = 0.1):
+    def __init__(self, flush_interval: float = 0.1) -> None:
         """
         Args:
             flush_interval: 自动刷新间隔（秒），默认0.1秒
@@ -43,7 +43,7 @@ class DeltaStats:
         }
         
         # 增量更新队列
-        self._delta_queue = []
+        self._delta_queue: List[Dict[str, Any]] = []
         self._delta_lock = threading.Lock()
         
         # 刷新线程
@@ -71,7 +71,7 @@ class DeltaStats:
         if not updates:
             return
         
-        merged_delta = {}
+        merged_delta: Dict[str, int] = {}
         for update in updates:
             for key, value in update.items():
                 merged_delta[key] = merged_delta.get(key, 0) + value
@@ -125,7 +125,7 @@ class ThreadLocalDeltaStats:
     为每个线程维护独立的增量缓冲区，减少锁竞争。
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         self._local = threading.local()
         self._global_stats = DeltaStats()
     
@@ -138,7 +138,7 @@ class ThreadLocalDeltaStats:
                 'gpu_errors': 0,
                 'worker_errors': 0
             }
-        return self._local.buffer
+        return self._local.buffer  # type: ignore[no-any-return]
     
     def add_check(self, count: int = 1) -> None:
         """记录检查数量（无锁操作）"""

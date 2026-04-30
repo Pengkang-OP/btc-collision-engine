@@ -106,7 +106,7 @@ class BaseSearchMode:
                     if engine.on_progress:
                         engine.on_progress(engine.stats.snapshot())
                     engine._save_checkpoint(batch_count)
-                    engine._last_progress_time = current_time
+                    engine._last_progress_time = current_time  # type: ignore[assignment]
 
             except Exception as e:
                 # 保持现有的 ExceptionHandler 调用

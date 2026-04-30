@@ -21,7 +21,7 @@
 import os
 import sys
 import time
-from typing import Optional, Set
+from typing import Any, Optional, Set
 
 # 将项目根目录加入路径
 _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -82,7 +82,7 @@ def _apply_output_flags(args) -> None:
         logger.debug("详细级别 -v：启用调试输出")
 
 
-def load_targets(args) -> Set[str]:
+def load_targets(args: Any) -> Set[str]:
     """加载目标地址集合"""
     # 延迟导入 TargetResolver（属于重量级依赖链）
     from src.collision import TargetResolver
@@ -100,7 +100,7 @@ def load_targets(args) -> Set[str]:
         if not quiet:
             print(_t("address.loaded", count=len(targets)))
     else:
-        targets = resolver.resolve_multiple(args.targets)
+        targets = resolver.resolve_multiple(args.targets)  # type: ignore[assignment]
         if not targets:
             print(_t("address.load_failed", error="未能解析任何有效的目标地址"), file=sys.stderr)
             sys.exit(1)
@@ -216,8 +216,8 @@ def main() -> None:
     # 确保 stdout/stderr 在非 UTF-8 环境下不会因无法编码字符而崩溃
     try:
         if hasattr(sys.stdout, 'reconfigure'):
-            sys.stdout.reconfigure(errors='replace')
-            sys.stderr.reconfigure(errors='replace')
+            sys.stdout.reconfigure(errors='replace')  # type: ignore[union-attr]
+            sys.stderr.reconfigure(errors='replace')  # type: ignore[union-attr]
     except Exception:
         pass
     try:

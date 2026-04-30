@@ -22,7 +22,7 @@ import threading
 import time
 import logging
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, Union, Dict, Any
 from enum import Enum, auto
 
 # 导入日志配置
@@ -105,7 +105,7 @@ class CryptoBackend(ABC):
 class PurePythonBackend(CryptoBackend):
     """纯Python后端 - 使用现有的secp256k1.py实现"""
     
-    def __init__(self, use_const_time: bool = False):
+    def __init__(self, use_const_time: bool = False) -> None:
         from .secp256k1 import EllipticCurve, Secp256k1, ECPoint
         self.ec = EllipticCurve()
         self.G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
@@ -121,9 +121,9 @@ class PurePythonBackend(CryptoBackend):
     
     def generate_public_key(self, private_key: bytes, compressed: bool = True) -> bytes:
         if self._use_const_time:
-            return self.ec.generate_public_key_const_time(private_key, compressed)
+            return self.ec.generate_public_key_const_time(private_key, compressed)  # type: ignore[no-any-return]
         else:
-            return self.ec.generate_public_key(private_key, compressed)
+            return self.ec.generate_public_key(private_key, compressed)  # type: ignore[no-any-return]
     
     def scalar_multiply(self, k: int, point_x: int, point_y: int) -> Tuple[int, int]:
         from .secp256k1 import ECPoint
@@ -143,7 +143,7 @@ class PurePythonBackend(CryptoBackend):
 class OpenSSLBackend(CryptoBackend):
     """OpenSSL后端 - 使用cryptography库"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self._available = self._check_availability()
         if self._available:
             from cryptography.hazmat.primitives.asymmetric import ec
@@ -194,16 +194,14 @@ class OpenSSLBackend(CryptoBackend):
         if compressed:
             # 压缩格式: 0x02 (y为偶数) 或 0x03 (y为奇数) + x坐标
             prefix = b'\x02' if (y % 2 == 0) else b'\x03'
-            return prefix + x_bytes
+            return prefix + x_bytes  # type: ignore[no-any-return]
         else:
             # 非压缩格式: 0x04 + x坐标 + y坐标
             y_bytes = y.to_bytes(32, 'big')
-            return b'\x04' + x_bytes + y_bytes
+            return b'\x04' + x_bytes + y_bytes  # type: ignore[no-any-return]
     
     def scalar_multiply(self, k: int, point_x: int, point_y: int) -> Tuple[int, int]:
         """
-        OpenSSL标量乘法
-        
         注意: cryptography库不直接暴露点乘运算，
         我们通过创建临时私钥来实现。
         """
@@ -244,7 +242,7 @@ class OpenSSLBackend(CryptoBackend):
 class CoincurveBackend(CryptoBackend):
     """coincurve后端 - 使用libsecp256k1"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self._available = self._check_availability()
     
     def _check_availability(self) -> bool:
@@ -270,7 +268,7 @@ class CoincurveBackend(CryptoBackend):
         
         # 使用coincurve生成公钥
         private_key_obj = coincurve.PrivateKey(private_key)
-        return private_key_obj.public_key.format(compressed=compressed)
+        return private_key_obj.public_key.format(compressed=compressed)  # type: ignore[no-any-return]
     
     def scalar_multiply(self, k: int, point_x: int, point_y: int) -> Tuple[int, int]:
         """
@@ -316,7 +314,7 @@ class CoincurveBackend(CryptoBackend):
 class ECDSABackend(CryptoBackend):
     """ecdsa库后端"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self._available = self._check_availability()
         if self._available:
             from ecdsa import SigningKey, SECP256k1, VerifyingKey
@@ -348,9 +346,9 @@ class ECDSABackend(CryptoBackend):
         verifying_key = signing_key.get_verifying_key()
         
         if compressed:
-            return verifying_key.to_string("compressed")
+            return verifying_key.to_string("compressed")  # type: ignore[no-any-return]
         else:
-            return b'\x04' + verifying_key.to_string()
+            return b'\x04' + verifying_key.to_string()  # type: ignore[no-any-return]
     
     def scalar_multiply(self, k: int, point_x: int, point_y: int) -> Tuple[int, int]:
         """
@@ -383,11 +381,11 @@ class CryptoBackendManager:
     
     _instance = None
     _lock = threading.RLock()  # 类级锁，保护单例创建
-    _backends = {}
+    _backends: Dict[Any, Any] = {}
     _current_backend = None
     _default_backend_type = BackendType.PURE_PYTHON
     
-    def __new__(cls):
+    def __new__(cls) -> 'CryptoBackendManager':
         if cls._instance is None:
             with cls._lock:
                 # 双重检查锁定模式
@@ -413,7 +411,7 @@ class CryptoBackendManager:
         self._select_best_backend()
         
         available = [bt.name for bt, backend in self._backends.items() if backend.is_available]
-        logger.info(f"加密后端初始化完成: 可用={available}, 当前={self._current_backend.name}")
+        logger.info(f"加密后端初始化完成: 可用={available}, 当前={self._current_backend.name}")  # type: ignore[attr-defined]
     
     def _select_best_backend(self):
         """选择最佳可用后端（内部方法，调用者需持有锁）"""
@@ -452,7 +450,7 @@ class CryptoBackendManager:
             backend = self._current_backend
         if backend is None:
             raise RuntimeError("No crypto backend available")
-        return backend
+        return backend  # type: ignore[no-any-return]
     
     def set_backend(self, backend_type: BackendType, **kwargs) -> bool:
         """

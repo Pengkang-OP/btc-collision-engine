@@ -34,7 +34,7 @@ class BitcoinTargetTable:
         >>> is_match, info = table.check_match(hash160)
     """
     
-    def __init__(self, max_size: int = 10_000_000):
+    def __init__(self, max_size: int = 10_000_000) -> None:
         """
         初始化目标地址表
         

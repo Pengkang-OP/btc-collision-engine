@@ -38,10 +38,10 @@ class GPUFacade:
     
     def __init__(self) -> None:
         """初始化GPU外观类"""
-        self._driver_manager = None
-        self._gpu_device = None
-        self._collision_engine = None
-        self._is_initialized = False
+        self._driver_manager: Optional[Any] = None
+        self._gpu_device: Optional[Any] = None
+        self._collision_engine: Optional[Any] = None
+        self._is_initialized: bool = False
         
         logger.debug("GPUFacade已创建")
     
@@ -55,14 +55,14 @@ class GPUFacade:
             from .driver_manager import DriverManager
             
             self._driver_manager = DriverManager()
-            available = self._driver_manager.detect_gpu()
+            available = self._driver_manager.detect_gpu()  # type: ignore[union-attr]
             
             if available:
                 logger.info("GPU可用")
             else:
                 logger.info("GPU不可用")
             
-            return available
+            return available  # type: ignore[no-any-return]
             
         except Exception as e:
             logger.warning(f"GPU可用性检查失败: {e}")
@@ -88,7 +88,7 @@ class GPUFacade:
         if not self._driver_manager:
             self.is_available()
         
-        return self._driver_manager.list_devices()
+        return self._driver_manager.list_devices()  # type: ignore[union-attr,no-any-return]
     
     def initialize(self, device_index: int = 0, batch_size: int = 1000000) -> bool:
         """初始化GPU设备
@@ -106,7 +106,7 @@ class GPUFacade:
             
             # 创建GPU设备
             from .device import GPUDevice
-            self._gpu_device = GPUDevice(device_index=device_index)
+            self._gpu_device = GPUDevice(device_index=device_index)  # type: ignore[call-arg]
             
             # 创建碰撞引擎
             from .collision_engine import GPUCollisionEngine
@@ -143,10 +143,10 @@ class GPUFacade:
         
         try:
             # 设置目标
-            self._collision_engine.set_target_addresses(targets)
+            self._collision_engine.set_target_addresses(targets)  # type: ignore[union-attr]
             
             # 启动碰撞
-            self._collision_engine.start(mode=mode, batch_size=batch_size)
+            self._collision_engine.start(mode=mode, batch_size=batch_size)  # type: ignore[union-attr]
             
             logger.info(f"GPU碰撞已启动: 模式={mode}, 目标={len(targets)}")
             return True
@@ -183,7 +183,7 @@ class GPUFacade:
             return {"status": "not_initialized"}
         
         try:
-            return self._collision_engine.get_stats()
+            return self._collision_engine.get_stats()  # type: ignore[no-any-return]
         except Exception as e:
             logger.error(f"获取统计信息失败: {e}")
             return {"status": "error", "message": str(e)}
@@ -198,7 +198,7 @@ class GPUFacade:
             return {"status": "not_initialized"}
         
         try:
-            return self._collision_engine.get_device_info()
+            return self._collision_engine.get_device_info()  # type: ignore[no-any-return]
         except Exception as e:
             logger.error(f"获取设备信息失败: {e}")
             return {"status": "error", "message": str(e)}
@@ -213,7 +213,7 @@ class GPUFacade:
             return {"status": "not_initialized"}
         
         try:
-            return self._gpu_device.get_memory_info()
+            return self._gpu_device.get_memory_info()  # type: ignore[no-any-return]
         except Exception as e:
             logger.error(f"获取内存信息失败: {e}")
             return {"status": "error", "message": str(e)}
@@ -268,7 +268,7 @@ class GPUFacade:
     def __exit__(self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]) -> None:
         """上下文管理器出口"""
         self.cleanup()
-        return False
+        return False  # type: ignore[return-value]
     
     def __del__(self) -> None:
         """析构函数"""

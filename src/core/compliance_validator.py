@@ -21,7 +21,7 @@ class BitcoinComplianceValidator:
         >>> is_valid, issues = validator.validate(data)
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """初始化验证器"""
         logger.info("BitcoinComplianceValidator初始化完成")
     

@@ -35,7 +35,7 @@ class SecureKeyGenerator:
         >>> keys = generator.generate_batch(1000)
     """
     
-    def __init__(self, config: Optional[Dict] = None):
+    def __init__(self, config: Optional[Dict] = None) -> None:
         """
         初始化私钥生成器
         

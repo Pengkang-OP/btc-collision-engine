@@ -74,7 +74,7 @@ class TargetSelector(SelectorProtocol):
             print("    [ERROR] 地址不能为空")
             return self._select_single()
 
-        targets = self.resolver.resolve_multiple([address])
+        targets = self.resolver.resolve_multiple([address])  # type: ignore[assignment]
 
         if not targets:
             print(f"    [ERROR] 无效的地址格式: {address}")
@@ -122,7 +122,7 @@ class TargetSelector(SelectorProtocol):
             print("[ERROR] 地址不能为空")
             return self._select_compact()
 
-        targets = self.resolver.resolve_multiple([address])
+        targets = self.resolver.resolve_multiple([address])  # type: ignore[assignment]
 
         if not targets:
             print(f"[ERROR] 无效的地址格式: {address}")

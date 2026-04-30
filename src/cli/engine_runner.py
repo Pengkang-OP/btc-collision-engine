@@ -75,7 +75,7 @@ def _setup_and_start_engine(
         try:
             from ..monitoring.alert_system import AlertSystem
         except ImportError:
-            AlertSystem = None
+            AlertSystem = None  # type: ignore[misc,assignment]
 
     if AlertSystem is not None:
         try:
@@ -299,7 +299,8 @@ def _compute_range(
         start_val = int(args.start, 16)
     if args.mode == "range" and args.end:
         end_val = int(args.end, 16)
-        total_range = end_val - start_val + 1
+        if start_val is not None:
+            total_range = end_val - start_val + 1
     return start_val, end_val, total_range
 
 

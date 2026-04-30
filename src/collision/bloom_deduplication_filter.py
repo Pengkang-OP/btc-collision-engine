@@ -28,7 +28,7 @@ class BloomFilter:
     - 不会漏判（False Negative）：说不在就一定不在
     """
     
-    def __init__(self, max_elements: int, false_positive_rate: float = 0.01):
+    def __init__(self, max_elements: int, false_positive_rate: float = 0.01) -> None:
         """
         初始化Bloom Filter
         
@@ -116,7 +116,7 @@ class BloomFilter:
         
         return hashes
     
-    def add(self, item: bytes):
+    def add(self, item: bytes) -> None:
         """添加元素到Bloom Filter
         
         Args:
@@ -192,7 +192,7 @@ class BloomFilter:
             "memory_usage_bytes": self.bit_size // 8
         }
     
-    def clear(self):
+    def clear(self) -> None:
         """清空Bloom Filter"""
         self.bit_array.setall(0)
         self.elements_added = 0
@@ -210,7 +210,7 @@ class BloomDeduplicationFilter:
     
     def __init__(self, max_size: int = 10_000_000, 
                  false_positive_rate: float = 0.001,
-                 enabled: bool = True):
+                 enabled: bool = True) -> None:
         """
         初始化Bloom Filter去重过滤器
         
@@ -292,7 +292,7 @@ class BloomDeduplicationFilter:
             "bloom_filter": bloom_stats
         }
     
-    def reset(self):
+    def reset(self) -> None:
         """重置过滤器"""
         with self._lock:
             self.bloom.clear()

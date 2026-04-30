@@ -26,7 +26,7 @@ class AddressConverter:
         >>> result = converter.private_key_to_all(private_key)
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """初始化地址转换器"""
         self.ec = EllipticCurve()
         logger.info("AddressConverter初始化完成")

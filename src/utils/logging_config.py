@@ -128,6 +128,7 @@ class LoggingConfig:
     
     def _ensure_log_directory(self) -> None:
         """确保日志目录存在"""
+        assert self._config is not None
         log_file = self._config.get("file")
         if log_file:
             log_dir = os.path.dirname(log_file)
@@ -173,6 +174,7 @@ class LoggingConfig:
 
     def _setup_root_logger(self) -> None:
         """配置根日志记录器"""
+        assert self._config is not None
         level = self._config.get("level", "INFO")
         format_str = self._config.get("format", self.DEFAULT_CONFIG["format"])
         
@@ -204,10 +206,12 @@ class LoggingConfig:
     
     def _create_file_handler(self, log_file: str, format_str: str) -> Optional[logging.Handler]:
         """创建文件处理器"""
+        assert self._config is not None
         rotation_type = self._config.get("rotation_type", "size")
         level = self._config.get("level", "INFO")
         
         try:
+            handler: logging.Handler
             if rotation_type == "time":
                 # 基于时间的轮转
                 handler = TimedRotatingFileHandler(
@@ -272,6 +276,7 @@ class LoggingConfig:
         """获取当前配置"""
         if not self._initialized:
             self.init()
+        assert self._config is not None
         return self._config.copy()
     
     def get_logger(self, name: str, thread_safe: bool = False) -> logging.Logger:

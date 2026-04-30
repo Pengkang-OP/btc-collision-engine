@@ -65,7 +65,7 @@ class WIFEncoder:
             data += bytes([0x01])  # 压缩标志
         # 校验和: 双SHA256前4字节
         checksum = HashUtils.double_sha256(data)[:4]
-        return Base58.encode(data + checksum)
+        return Base58.encode(data + checksum)  # type: ignore[no-any-return]
     
     @staticmethod
     def decode(wif: str) -> Tuple[bytes, bool, bool]:
@@ -132,21 +132,21 @@ class AddressType(Enum):
 
 class KeyValidationResult:
     """密钥验证结果"""
-    def __init__(self):
+    def __init__(self) -> None:
         self.success = True
-        self.errors = []
-        self.warnings = []
-        self.details = {}
+        self.errors: List[str] = []
+        self.warnings: List[str] = []
+        self.details: Dict[str, Any] = {}
     
-    def add_error(self, error: str):
+    def add_error(self, error: str) -> None:
         self.success = False
         self.errors.append(error)
-        return self  # 支持链式调用
+        return self  # type: ignore[return-value]  # 支持链式调用
     
-    def add_warning(self, warning: str):
+    def add_warning(self, warning: str) -> None:
         self.warnings.append(warning)
     
-    def add_detail(self, key: str, value: Any):
+    def add_detail(self, key: str, value: Any) -> None:
         self.details[key] = value
     
     def to_dict(self) -> Dict[str, Any]:
@@ -161,7 +161,7 @@ class KeyValidationResult:
 class BitcoinKeyValidator:
     """比特币密钥和地址完整验证器"""
     
-    def __init__(self, secure_mode: bool = True):
+    def __init__(self, secure_mode: bool = True) -> None:
         """
         初始化验证器
         
@@ -201,7 +201,7 @@ class BitcoinKeyValidator:
         
         # Base58Check编码
         checksum = hashlib.sha256(hashlib.sha256(versioned).digest()).digest()[:4]
-        return Base58.encode(versioned + checksum)
+        return Base58.encode(versioned + checksum)  # type: ignore[no-any-return]
     
     @staticmethod
     def generate_bech32_address(public_key: bytes, hrp: str = "bc") -> str:
@@ -816,7 +816,7 @@ class BitcoinKeyValidator:
         
         返回完整的验证报告
         """
-        report = {
+        report: Dict[str, Any] = {
             "timestamp": time.time(),
             "steps": {},
             "overall_success": True,

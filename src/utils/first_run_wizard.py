@@ -66,7 +66,7 @@ class FirstRunWizard:
         }
     }
 
-    def __init__(self, project_root: Optional[str] = None):
+    def __init__(self, project_root: Optional[str] = None) -> None:
         if project_root is None:
             project_root = str(Path(__file__).resolve().parent.parent.parent)
         self.project_root = Path(project_root)
@@ -409,7 +409,7 @@ class FirstRunWizard:
 # CLI 入口
 # ─────────────────────────────────────────────────────────────────────────────
 
-def main():
+def main() -> None:
     """命令行入口：强制运行向导（忽略已完成标记）"""
     wizard = FirstRunWizard()
     wizard.run()
