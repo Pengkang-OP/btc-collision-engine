@@ -7,6 +7,7 @@ from .performance_config import (
     PerformanceTuner,
     create_optimized_config
 )
+from .config_watcher import ConfigWatcher  # P2-4
 
 __all__ = [
     'ConfigManager',
@@ -18,5 +19,7 @@ __all__ = [
     # 性能优化配置
     'PerformanceOptimizationConfig',
     'PerformanceTuner',
-    'create_optimized_config'
+    'create_optimized_config',
+    # P2-4: 配置热重载
+    'ConfigWatcher',
 ]
