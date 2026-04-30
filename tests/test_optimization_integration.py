@@ -6,9 +6,12 @@
 import sys
 import io
 
-# 修复Windows编码
+# 修复Windows编码（Python 3.7+: reconfigure 安全无副作用）
 if sys.platform == 'win32':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    else:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 import time
 import secrets

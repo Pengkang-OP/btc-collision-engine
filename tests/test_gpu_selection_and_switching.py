@@ -14,10 +14,13 @@ from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 from typing import Dict, List
 
-# 修复Windows编码
+# 修复Windows编码（Python 3.7+: reconfigure 安全无副作用）
 if sys.platform == 'win32':
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    else:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 # 添加项目根目录
 sys.path.insert(0, str(Path(__file__).parent.parent))

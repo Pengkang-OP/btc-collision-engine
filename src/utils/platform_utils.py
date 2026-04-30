@@ -112,14 +112,21 @@ class PlatformUtils:
             return
         import io
         import sys
-        if hasattr(sys.stdout, 'buffer') and (not isinstance(sys.stdout, io.TextIOWrapper) or sys.stdout.encoding.lower() != 'utf-8'):
-            sys.stdout = io.TextIOWrapper(
-                sys.stdout.buffer, encoding='utf-8', errors='replace'
-            )
-        if hasattr(sys.stderr, 'buffer') and (not isinstance(sys.stderr, io.TextIOWrapper) or sys.stderr.encoding.lower() != 'utf-8'):
-            sys.stderr = io.TextIOWrapper(
-                sys.stderr.buffer, encoding='utf-8', errors='replace'
-            )
+        if hasattr(sys.stdout, 'buffer'):
+            if hasattr(sys.stdout, 'reconfigure'):
+                # Python 3.7+: reconfigure 是安全的（不创建新 wrapper）
+                sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+            elif not isinstance(sys.stdout, io.TextIOWrapper) or sys.stdout.encoding.lower() != 'utf-8':
+                sys.stdout = io.TextIOWrapper(
+                    sys.stdout.buffer, encoding='utf-8', errors='replace'
+                )
+        if hasattr(sys.stderr, 'buffer'):
+            if hasattr(sys.stderr, 'reconfigure'):
+                sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+            elif not isinstance(sys.stderr, io.TextIOWrapper) or sys.stderr.encoding.lower() != 'utf-8':
+                sys.stderr = io.TextIOWrapper(
+                    sys.stderr.buffer, encoding='utf-8', errors='replace'
+                )
 
     @staticmethod
     def get_temp_dir() -> str:

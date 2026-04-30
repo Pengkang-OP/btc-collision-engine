@@ -25,9 +25,35 @@ from .monitoring import PerformanceMonitoringPipeline
 from .core import CollisionCore
 from .vendor_strategy import VendorOptimizationFactory
 
+
+# 工厂函数（向后兼容：支持延迟导入/依赖注入场景）
+def get_gpu_engine_facade():
+    """返回 GPUEngineFacade 类（非实例）"""
+    return GPUEngineFacade
+
+
+def get_monitoring_pipeline():
+    """返回 PerformanceMonitoringPipeline 类（非实例）"""
+    return PerformanceMonitoringPipeline
+
+
+def get_collision_core():
+    """返回 CollisionCore 类（非实例）"""
+    return CollisionCore
+
+
+def get_vendor_factory():
+    """返回 VendorOptimizationFactory 类（非实例）"""
+    return VendorOptimizationFactory
+
+
 __all__ = [
     "GPUEngineFacade",
     "PerformanceMonitoringPipeline",
     "CollisionCore",
     "VendorOptimizationFactory",
+    "get_gpu_engine_facade",
+    "get_monitoring_pipeline",
+    "get_collision_core",
+    "get_vendor_factory",
 ]

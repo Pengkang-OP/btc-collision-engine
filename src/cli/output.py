@@ -11,6 +11,7 @@ import io
 import os
 import platform
 import sys
+import threading
 from typing import Optional
 
 from rich.console import Console
@@ -21,33 +22,26 @@ from rich.rule import Rule
 
 
 def _get_utf8_console(stderr: bool = False, no_color: bool = False) -> Console:
-    """创建强制 UTF-8 编码的 Rich Console，解决 Windows GBK 终端乱码问题。"""
+    """创建强制 UTF-8 编码的 Rich Console，解决 Windows GBK 终端乱码问题。
+
+    优先使用 Python 3.7+ 的 reconfigure() 接口（不会关闭底层 buffer），
+    失败则静默降级为默认 Console，避免 TextIOWrapper 关闭底层句柄。
+    """
     if platform.system() == 'Windows':
         try:
-            # 强制将 stdout/stderr 包装为 UTF-8，Rich Console 绑定此对象
-            if stderr:
-                if not (isinstance(sys.stderr, io.TextIOWrapper)
-                        and sys.stderr.encoding.lower() == 'utf-8'):
-                    sys.stderr = io.TextIOWrapper(
-                        sys.stderr.buffer, encoding='utf-8', errors='replace'
-                    )
-                file_obj = sys.stderr
-            else:
-                if not (isinstance(sys.stdout, io.TextIOWrapper)
-                        and sys.stdout.encoding.lower() == 'utf-8'):
-                    sys.stdout = io.TextIOWrapper(
-                        sys.stdout.buffer, encoding='utf-8', errors='replace'
-                    )
-                file_obj = sys.stdout
-            return Console(
-                file=file_obj,
-                highlight=False,
-                no_color=no_color,
-                force_terminal=True,
-            )
-        except (AttributeError, io.UnsupportedOperation):
+            target_stream = sys.stderr if stderr else sys.stdout
+            # Python 3.7+: reconfigure 不会创建新 wrapper，不会关闭底层 fd
+            if hasattr(target_stream, 'reconfigure'):
+                target_stream.reconfigure(encoding='utf-8', errors='replace')
+                return Console(
+                    file=target_stream,
+                    highlight=False,
+                    no_color=no_color,
+                    force_terminal=True,
+                )
+        except (AttributeError, io.UnsupportedOperation, OSError):
             pass
-    # 非 Windows 或包装失败：使用默认 Console
+    # 非 Windows 或 reconfigure 失败：使用默认 Console
     return Console(
         highlight=False,
         no_color=no_color,
@@ -63,6 +57,7 @@ class CLIOutput:
     """
 
     _instance: Optional["CLIOutput"] = None  # 单例
+    _lock: threading.Lock = threading.Lock()   # 线程安全锁
 
     def __init__(self, no_color: bool = False, quiet: bool = False, compact: bool = False) -> None:
         # NO_COLOR 环境变量优先（https://no-color.org/）
@@ -77,16 +72,34 @@ class CLIOutput:
 
     @classmethod
     def get_instance(cls) -> "CLIOutput":
-        """获取单例实例；若未初始化则以默认参数创建。"""
+        """获取单例实例；若未初始化则以默认参数创建。
+        
+        线程安全：使用 double-checked locking 防止并发创建多个实例。
+        """
         if cls._instance is None:
-            cls._instance = cls()
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = cls()
         return cls._instance
 
     @classmethod
     def init(cls, no_color: bool = False, quiet: bool = False, compact: bool = False) -> "CLIOutput":
-        """初始化单例（应在程序入口处调用一次）。"""
-        cls._instance = cls(no_color=no_color, quiet=quiet, compact=compact)
+        """初始化单例（应在程序入口处调用一次）。
+        
+        线程安全：持锁替换实例，调用方应确保在单线程初始化阶段调用。
+        """
+        with cls._lock:
+            cls._instance = cls(no_color=no_color, quiet=quiet, compact=compact)
         return cls._instance
+
+    @classmethod
+    def reset_instance(cls) -> None:
+        """重置单例（测试用：允许 capsys/monkeypatch 替换 stdout 后重新创建）。
+        
+        线程安全：持锁清空实例。
+        """
+        with cls._lock:
+            cls._instance = None
 
     # ── 消息级别输出 ──────────────────────────────────────────────────
 

@@ -477,3 +477,94 @@ def mock_gpu_chain_intel():
     
     with _apply_gpu_patches(mock_device, mock_context, mock_kernel, vendor='intel') as mocks:
         yield mocks
+
+
+# ============================================================================
+# pytest配置钩子
+# ============================================================================
+
+def pytest_configure(config):
+    """配置pytest环境,注册自定义marker"""
+    # GPU测试相关marker
+    config.addinivalue_line("markers", "gpu_hardware: 需要真实GPU硬件的测试")
+    config.addinivalue_line("markers", "gpu_unit: GPU单元测试（可Mock）")
+    config.addinivalue_line("markers", "gpu_integration: GPU集成测试")
+    
+    # 性能测试相关marker
+    config.addinivalue_line("markers", "performance: 性能基准测试")
+    config.addinivalue_line("markers", "benchmark: 基准测试")
+    
+    # 安全测试相关marker
+    config.addinivalue_line("markers", "security: 安全合规测试")
+    
+    # 标记为预期失败的测试
+    config.addinivalue_line("markers", "expected_failure: 已知问题,预期失败")
+    
+    # P2-7: 注册 timeout marker (由 pytest-timeout 插件提供)
+    config.addinivalue_line("markers", "timeout: 测试超时时间(秒)")
+
+
+def pytest_collection_modifyitems(config, items):
+    """修改测试项集合
+    
+    根据marker对测试进行分类和排序
+    
+    P2-7: 为GPU标记测试添加超时配置 (90秒)
+    """
+    import os
+    
+    # 检查是否需要跳过 GPU 硬件测试
+    # CI 环境可通过 BTC_SKIP_GPU_HW=1 强制跳过，否则自动检测 GPU 可用性
+    skip_gpu_hw = os.environ.get('BTC_SKIP_GPU_HW', '') == '1'
+    gpu_availability_checked = False
+    
+    # 为GPU测试添加超时标记
+    gpu_timeout_marker = pytest.mark.timeout(90)
+    for item in items:
+        # 为需要GPU硬件的测试条件跳过（仅在无 GPU 或 CI 强制跳过时）
+        if "gpu_hardware" in item.keywords:
+            if skip_gpu_hw:
+                item.add_marker(
+                    pytest.mark.skip(reason="[GPU-HW] BTC_SKIP_GPU_HW=1 强制跳过")
+                )
+            elif not gpu_availability_checked:
+                gpu_availability_checked = True
+                try:
+                    from src.gpu.device import GPUDeviceDetector
+                    if not GPUDeviceDetector.is_gpu_available():
+                        skip_gpu_hw = True
+                except (ImportError, Exception):
+                    skip_gpu_hw = True
+                if skip_gpu_hw:
+                    item.add_marker(
+                        pytest.mark.skip(reason="[GPU-HW] 未检测到可用 GPU 设备")
+                    )
+            elif skip_gpu_hw:
+                item.add_marker(
+                    pytest.mark.skip(reason="[GPU-HW] 未检测到可用 GPU 设备")
+                )
+        # P2-7: GPU测试超时保护
+        if any(m in item.keywords for m in ('gpu', 'gpu_hardware', 'gpu_unit', 'gpu_integration')):
+            item.add_marker(gpu_timeout_marker)
+
+
+@pytest.fixture(autouse=True)
+def reset_cli_output_singleton():
+    """每个测试前重置 CLIOutput 单例，避免跨测试 sys.stdout 污染。
+    
+    问题背景：test_cli_advanced_features.py 等测试会替换 sys.stdout 为 StringIO，
+    若 CLIOutput 单例在替换前已创建，其内部 Console 持有旧的 sys.stdout 引用，
+    恢复时可能导致 I/O 操作已关闭文件的错误。
+    """
+    try:
+        from src.cli.output import CLIOutput
+        CLIOutput.reset_instance()
+    except ImportError:
+        pass
+    yield
+    # teardown: 再次重置，确保下一个测试干净启动
+    try:
+        from src.cli.output import CLIOutput
+        CLIOutput.reset_instance()
+    except ImportError:
+        pass
