@@ -103,7 +103,7 @@ class MultiGPUCollisionEngine:
         self._total_keys_checked = 0
 
         # 数据监控器
-        self.data_monitor = DataMonitor(config=self.config.data_monitor)
+        self.data_monitor = DataMonitor(config=self.config.data_monitor)  # type: ignore[arg-type]
         self._monitor_enabled = self.config.enable_data_monitor
 
         # GPU恢复管理器
