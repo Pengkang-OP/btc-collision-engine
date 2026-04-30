@@ -382,8 +382,8 @@ class TestGPUDeviceScoring(unittest.TestCase):
         
         score = self.selector.score_device(device)
         
-        # 预期分数: (10*10 + 68*0.05) * 1.0 = 103.4
-        expected_score = (10.0 * 10.0 + 68 * 0.05) * 1.0
+        # P3-11 统一评分: (10*10 + 68*0.05 + gen_bonus_rtx30=10.0) * 1.0 = 113.4
+        expected_score = (10.0 * 10.0 + 68 * 0.05 + 10.0) * 1.0
         
         self.assertAlmostEqual(score, expected_score, places=1)
         print(f"  ✅ {device['name']} 评分: {score:.1f} (预期: {expected_score:.1f})")
@@ -402,8 +402,8 @@ class TestGPUDeviceScoring(unittest.TestCase):
         
         score = self.selector.score_device(device)
         
-        # 预期分数: (16*10 + 72*0.05) * 0.95 = 155.42
-        expected_score = (16.0 * 10.0 + 72 * 0.05) * 0.95
+        # P3-11 统一评分: (16*10 + 72*0.05 + gen_bonus_rx6000=8.0) * 0.95 = 163.02
+        expected_score = (16.0 * 10.0 + 72 * 0.05 + 8.0) * 0.95
         
         self.assertAlmostEqual(score, expected_score, places=1)
         print(f"  ✅ {device['name']} 评分: {score:.1f} (预期: {expected_score:.1f})")
@@ -422,8 +422,8 @@ class TestGPUDeviceScoring(unittest.TestCase):
         
         score = self.selector.score_device(device)
         
-        # 预期分数: (16*10 + 512*0.05) * 0.9 = 167.04
-        expected_score = (16.0 * 10.0 + 512 * 0.05) * 0.9
+        # P3-11 统一评分: (16*10 + 512*0.05 + gen_bonus_arc=5.0) * 0.9 = 171.54
+        expected_score = (16.0 * 10.0 + 512 * 0.05 + 5.0) * 0.9
         
         self.assertAlmostEqual(score, expected_score, places=1)
         print(f"  ✅ {device['name']} 评分: {score:.1f} (预期: {expected_score:.1f})")
@@ -464,7 +464,7 @@ class TestGPUDeviceScoring(unittest.TestCase):
         best = self.selector.select_best_device(devices)
         
         self.assertIsNotNone(best)
-        # Intel Arc A770应该分数最高(167.04 > 155.42 > 103.4)
+        # P3-11: Intel Arc A770仍然分数最高 (171.54 > 163.02 > 113.4)
         self.assertIn('Arc A770', best['name'])
         
         print(f"  ✅ 最佳GPU选择: {best['name']} (评分: {best['score']:.1f})")

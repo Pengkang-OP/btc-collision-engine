@@ -28,6 +28,7 @@ from .metrics import GPUMetricsCollector, get_metrics_collector
 # 多GPU支持模块
 from .selector import GPUDeviceSelector, get_gpu_selector, reset_gpu_selector
 from .load_balancer import GPULoadBalancer
+from .scorer import GPUDeviceScorer, get_gpu_scorer, reset_gpu_scorer
 from .worker import SingleGPUWorker
 from .multi_gpu_engine import MultiGPUCollisionEngine
 from .auto_config import GPUAutoConfigurator, get_gpu_configurator, reset_gpu_configurator
@@ -82,6 +83,10 @@ __all__ = [
     'get_gpu_selector',
     'reset_gpu_selector',
     'GPULoadBalancer',
+    # P3-11: 统一GPU评分
+    'GPUDeviceScorer',
+    'get_gpu_scorer',
+    'reset_gpu_scorer',
     'SingleGPUWorker',
     'MultiGPUCollisionEngine',
     'GPUAutoConfigurator',
