@@ -116,6 +116,7 @@ class AlertSystem:
         self.alert_history: List[AlertRecord] = []
         self.last_alert_time: Dict[str, float] = {}  # 规则名称 -> 最后告警时间
         self.alert_callbacks: List[Callable] = []     # 告警回调函数
+        self.notification_channels: List[Any] = []     # P2-7: 通知渠道列表
         
         # #11修复: 增强的速率限制
         self._global_rate_limit_max = 10  # 每分钟最多10条告警
@@ -169,6 +170,36 @@ class AlertSystem:
         """
         self.alert_callbacks.append(callback)
         logger.info(f"添加告警回调函数")
+    
+    # ── P2-7: 多渠道通知支持 ──
+    def add_notification_channel(self, channel) -> None:
+        """添加告警通知渠道
+        
+        渠道对象只需实现 send(alert: AlertRecord) 方法即可（鸭子类型）。
+        
+        Args:
+            channel: 通知渠道对象 (如 ConsoleNotification, LogFileNotification)
+        """
+        self.notification_channels.append(channel)
+        channel_name = getattr(channel, 'name', str(channel))
+        logger.info(f"添加告警通知渠道: {channel_name}")
+    
+    def remove_notification_channel(self, channel) -> bool:
+        """移除告警通知渠道
+        
+        Args:
+            channel: 要移除的通知渠道
+            
+        Returns:
+            是否成功移除
+        """
+        try:
+            self.notification_channels.remove(channel)
+            channel_name = getattr(channel, 'name', str(channel))
+            logger.info(f"移除告警通知渠道: {channel_name}")
+            return True
+        except ValueError:
+            return False
     
     def setup_default_rules(self) -> None:
         """设置默认告警规则"""
@@ -383,19 +414,27 @@ class AlertSystem:
         return False
     
     def _trigger_alert(self, alert: AlertRecord):
-        """触发告警
+        """触发告警 (P2-7: 多渠道通知)
         
         Args:
             alert: 告警记录
         """
-        # 调用所有回调函数
+        # 1. 调用所有旧版回调函数 (向后兼容)
         for callback in self.alert_callbacks:
             try:
                 callback(alert)
             except Exception as e:
                 logger.error(f"告警回调函数执行失败: {e}")
         
-        # 保存告警历史
+        # 2. P2-7: 通过通知渠道发送
+        for channel in self.notification_channels:
+            try:
+                channel.send(alert)
+            except Exception as e:
+                channel_name = getattr(channel, 'name', str(channel))
+                logger.error(f"通知渠道 {channel_name} 发送失败: {e}")
+        
+        # 3. 保存告警历史
         self._save_alert_history()
     
     def resolve_alert(self, alert_index: int) -> None:
