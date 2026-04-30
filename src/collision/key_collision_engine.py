@@ -83,7 +83,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                  # v2.2.1: crypto_backend支持
                  crypto_backend_type: str = None,  # 'coincurve', 'openssl', 'ecdsa', 'pure_python'
                  # 地址格式支持 (v3.2.1新增)
-                 check_uncompressed: Optional[bool] = None):  # 是否同时检查非压缩格式地址, None表示自动检测
+                 check_uncompressed: Optional[bool] = None) -> None:  # 是否同时检查非压缩格式地址, None表示自动检测
         """
         Args:
             targets: 目标地址集合 (set, O(1)查找)
@@ -159,6 +159,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
         else:
             self.generator = P2PKHAddressGenerator()
             logger.info("KeyCollisionEngine 使用标准版地址生成器")
+        # P3-7: 存储内存池开关状态
+        self.use_memory_pool = use_memory_pool
         self.stats = CollisionStats()
         self._stop_event = threading.Event()
         self._running = False
@@ -313,7 +315,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 result = [None]
                 exception = [None]
                 
-                def target():
+                def target() -> None:
                     try:
                         result[0] = self.on_match(private_key, address, wif)
                     except Exception as e:
@@ -335,7 +337,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     return False
             else:
                 # Unix系统使用SIGALRM超时
-                def timeout_handler(signum, frame):
+                def timeout_handler(signum: int, frame: Any) -> None:
                     raise TimeoutError(f"匹配回调执行超时 ({self._match_callback_timeout}秒)")
                 
                 old_handler = signal.signal(signal.SIGALRM, timeout_handler)
@@ -870,6 +872,19 @@ class KeyCollisionEngine(BaseCollisionEngine):
         total_count = 0
         self._running = True
         self._last_data_log_time = 0.0  # 重置数据日志时间
+        
+        # P3-7: 启动时自适应调优内存池
+        if self.use_memory_pool:
+            try:
+                from ..core.memory_pool import pool_manager
+                was_tuned = pool_manager.auto_tune_all()
+                if not was_tuned:
+                    stats = pool_manager.get_all_stats()
+                    logger.debug(
+                        f"P3-7 内存池状态: total_est={stats['total_estimated_memory_mb']:.1f}MB"
+                    )
+            except (ImportError, RuntimeError) as e:
+                logger.debug(f"P3-7 内存池调优跳过: {type(e).__name__}: {e}")
         
         # 记录引擎启动数据
         if self.data_logging_enabled:
@@ -1760,7 +1775,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
     def __enter__(self) -> "KeyCollisionEngine":
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
+    def __exit__(self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]) -> bool:
         self.stop()
         return False
 
