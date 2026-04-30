@@ -124,7 +124,7 @@ class PurePythonBackend(CryptoBackend):
 
     def generate_public_key(self, private_key: bytes, compressed: bool = True) -> bytes:
         if self._use_const_time:
-            return self.ec.generate_public_key_const_time(private_key, compressed)  # type: ignore[no-any-return]
+            return self.ec.generate_public_key_const_time(private_key, compressed)  # type: ignore[no-any-return,attr-defined]
         else:
             return self.ec.generate_public_key(private_key, compressed)  # type: ignore[no-any-return]
 
@@ -138,7 +138,7 @@ class PurePythonBackend(CryptoBackend):
         else:
             result = self.ec.scalar_multiply(k, point)
 
-        return result.x, result.y
+        return result.x, result.y  # type: ignore[return-value]
 
     def is_constant_time(self) -> bool:
         return self._use_const_time
@@ -224,7 +224,7 @@ class OpenSSLBackend(CryptoBackend):
         ec_impl = EllipticCurve()
         result = ec_impl.scalar_multiply(k, ECPoint(point_x, point_y))
 
-        return result.x, result.y
+        return result.x, result.y  # type: ignore[return-value]
 
     def is_constant_time(self) -> bool:
         # P1-6 fix: generate_public_key() IS constant-time (uses OpenSSL ec.derive_private_key),
@@ -292,9 +292,9 @@ class CoincurveBackend(CryptoBackend):
             result = pubkey.multiply(k.to_bytes(32, "big"))
 
             # 解析结果
-            if result[0] == 0x04:
-                rx = int.from_bytes(result[1:33], "big")
-                ry = int.from_bytes(result[33:65], "big")
+            if result[0] == 0x04:  # type: ignore[index]
+                rx = int.from_bytes(result[1:33], "big")  # type: ignore[index]
+                ry = int.from_bytes(result[33:65], "big")  # type: ignore[index]
                 return rx, ry
         except AttributeError:
             # 如果multiply不可用，使用纯Python回退
@@ -304,8 +304,8 @@ class CoincurveBackend(CryptoBackend):
         from .secp256k1 import EllipticCurve, ECPoint
 
         ec_impl = EllipticCurve()
-        result = ec_impl.scalar_multiply(k, ECPoint(point_x, point_y))
-        return result.x, result.y
+        result = ec_impl.scalar_multiply(k, ECPoint(point_x, point_y))  # type: ignore[assignment]
+        return result.x, result.y  # type: ignore[return-value,attr-defined]
 
     def is_constant_time(self) -> bool:
         # libsecp256k1使用恒定时间算法
@@ -363,7 +363,7 @@ class ECDSABackend(CryptoBackend):
 
         ec_impl = EllipticCurve()
         result = ec_impl.scalar_multiply(k, ECPoint(point_x, point_y))
-        return result.x, result.y
+        return result.x, result.y  # type: ignore[return-value]
 
     def is_constant_time(self) -> bool:
         # ecdsa库可能不使用恒定时间算法
