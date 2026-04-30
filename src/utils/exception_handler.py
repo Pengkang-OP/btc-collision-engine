@@ -1,12 +1,21 @@
 """统一异常处理器
 
 提供统一的异常处理机制,适用于CPU引擎、GPU引擎和配置系统。
+
+P3-6增强：
+- 新增 handle_gpu_async_error(): GPU异步执行错误处理
+- 新增 handle_cl_resource_error(): OpenCL资源错误分类
+- 新增 handle_gpu_cleanup_error(): GPU清理操作错误处理
+- 细化 handle_gpu_error(): 增加 MemoryError/ImportError 分类
 """
 
 import logging
 from typing import Optional
 
-logger = logging.getLogger(__name__)
+# P3-5: 统一日志获取
+from .logging_config import get_configured_logger
+
+logger = get_configured_logger("ExceptionHandler")
 
 
 class ExceptionHandler:
@@ -47,6 +56,16 @@ class ExceptionHandler:
             logger.critical(f"{engine_type}引擎内存不足: {error_msg}")
             if stats and hasattr(stats, 'record_error'):
                 stats.record_error("memory_error", error_msg)
+        elif isinstance(error, ImportError):
+            # 模块导入错误（P3-6: 新增分类）
+            logger.error(f"{engine_type}引擎{context}模块导入失败: {error_msg}")
+            if stats and hasattr(stats, 'record_worker_error'):
+                stats.record_worker_error()
+        elif isinstance(error, OSError):
+            # 系统I/O错误（P3-6: 新增分类）
+            logger.error(f"{engine_type}引擎{context}系统I/O错误: {error_type}: {error_msg}")
+            if stats and hasattr(stats, 'record_worker_error'):
+                stats.record_worker_error()
         else:
             # 未知错误
             logger.exception(f"{engine_type}引擎{context}未知错误")
@@ -57,6 +76,8 @@ class ExceptionHandler:
     def handle_gpu_error(mode: str, error: Exception, stats=None):
         """
         统一处理GPU错误(复用GPUDevice.handle_gpu_batch_error逻辑)
+        
+        P3-6增强: 新增 MemoryError 分类，避免被归类为"未知错误"
         
         参数:
             mode: 计算模式("随机碰撞"/"范围扫描"/"暴力穷举")
@@ -84,6 +105,11 @@ class ExceptionHandler:
                 logger.error(f"GPU {mode}失败(运行时错误): {type(error).__name__}: {error}")
                 if stats and hasattr(stats, 'record_gpu_error'):
                     stats.record_gpu_error(is_resource_error=False)
+        elif isinstance(error, MemoryError):
+            # P3-6: 内存不足(独立分类，便于监控告警)
+            logger.critical(f"GPU {mode}内存不足(MemoryError): {error}")
+            if stats and hasattr(stats, 'record_gpu_error'):
+                stats.record_gpu_error(is_resource_error=True)
         elif isinstance(error, (TypeError, OverflowError)):
             # 数据编码错误
             logger.error(f"GPU {mode}失败(数据错误): {type(error).__name__}: {error}")
@@ -99,6 +125,91 @@ class ExceptionHandler:
                 stats.record_gpu_error(is_resource_error=False)
         
         return True  # 总是继续执行
+    
+    @staticmethod
+    def handle_gpu_async_error(error: Exception, context: str = "") -> bool:
+        """
+        P3-6新增: 统一处理GPU异步执行错误
+        
+        用于 async_executor.py 中的异步执行回退逻辑，
+        区分 OpenCL 运行时错误与其他可恢复错误。
+        
+        参数:
+            error: 捕获的异常
+            context: 错误上下文("种子写入"/"内核执行"/"结果回读"/"缓冲清理")
+            
+        返回:
+            bool: True=应回退到同步模式, False=应向上传播
+        """
+        error_type = type(error).__name__
+        
+        if isinstance(error, (RuntimeError, MemoryError)):
+            # OpenCL 运行时/内存错误 → 可回退
+            logger.warning(f"GPU异步{context}OpenCL错误({error_type}): {error}")
+            return True
+        elif isinstance(error, (ValueError, TypeError, IndexError)):
+            # 数据/参数错误 → 可回退
+            logger.warning(f"GPU异步{context}数据异常({error_type}): {error}")
+            return True
+        elif isinstance(error, AttributeError):
+            # 对象状态异常 → 可回退
+            logger.warning(f"GPU异步{context}对象状态异常({error_type}): {error}")
+            return True
+        else:
+            # 未知错误 → 记录并回退（保守策略）
+            logger.exception(f"GPU异步{context}未知异常({error_type}): {error}")
+            return True
+    
+    @staticmethod
+    def handle_cl_resource_error(error: Exception, resource_type: str = "") -> bool:
+        """
+        P3-6新增: 分类处理OpenCL资源错误
+        
+        根据错误消息关键字判断是否为资源耗尽型错误，
+        为自动降批/重试策略提供决策依据。
+        
+        参数:
+            error: 捕获的异常
+            resource_type: 资源类型("buffer"/"kernel"/"queue"/"event")
+            
+        返回:
+            bool: True=资源耗尽(应降批/释放), False=其他错误
+        """
+        error_msg = str(error).lower()
+        resource_keywords = [
+            "out of resources", "memory", "out of memory",
+            "allocation failed", "insufficient", "resource exhausted",
+            "cl_out_of_resources", "cl_mem_object_allocation_failure",
+            "cl_out_of_host_memory", "invalid buffer size"
+        ]
+        
+        is_resource_error = any(keyword in error_msg for keyword in resource_keywords)
+        
+        if is_resource_error:
+            logger.warning(f"OpenCL {resource_type}资源耗尽: {type(error).__name__}: {error}")
+        else:
+            logger.error(f"OpenCL {resource_type}操作失败: {type(error).__name__}: {error}")
+        
+        return is_resource_error
+    
+    @staticmethod
+    def handle_gpu_cleanup_error(error: Exception, resource_name: str = "") -> None:
+        """
+        P3-6新增: 统一处理GPU资源清理错误
+        
+        GPU资源清理（buffer释放、队列完成）时的错误处理。
+        清理失败通常为非致命错误，使用 WARNING 级别。
+        
+        参数:
+            error: 捕获的异常
+            resource_name: 资源名称("seed_buffer"/"precomp_buffer"/"compute_queue")
+        """
+        if isinstance(error, RuntimeError):
+            logger.warning(f"GPU清理{resource_name}OpenCL错误: {error}")
+        elif isinstance(error, OSError):
+            logger.warning(f"GPU清理{resource_name}系统I/O错误: {error}")
+        else:
+            logger.warning(f"GPU清理{resource_name}失败: {type(error).__name__}: {error}")
     
     @staticmethod
     def handle_config_error(error: Exception, config_type: str = ""):
