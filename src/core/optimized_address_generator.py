@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
-"""优化版P2PKH地址生成器 - 集成性能优化模块"""
-import secrets
-from typing import Tuple, Optional, List
-from .secp256k1 import EllipticCurve, Secp256k1, ECPoint
+"""优化版P2PKH地址生成器 - 集成性能优化模块
+
+继承自 BaseAddressGenerator，添加预计算表/SIMD/内存池优化。
+"""
+from typing import List
+from .secp256k1 import Secp256k1, ECPoint
 from .hash_utils import HashUtils
 from .base58 import Base58
 from .precomputed_table import get_precomputed_table
 from .simd_hash import get_simd_hash_optimizer
 from .memory_pool import get_pool_manager
+from .address_generator import BaseAddressGenerator
 
 # 导入日志配置
 from ..utils import init_logging, get_configured_logger
@@ -19,7 +22,7 @@ init_logging()
 logger = get_configured_logger("OptimizedAddressGenerator")
 
 
-class OptimizedP2PKHAddressGenerator:
+class OptimizedP2PKHAddressGenerator(BaseAddressGenerator):
     """优化版P2PKH地址生成器
     
     集成以下优化:
@@ -36,10 +39,10 @@ class OptimizedP2PKHAddressGenerator:
         addresses = generator.batch_generate(private_keys_list)
     """
     
-    def __init__(self, use_precomputed_table: bool = True, 
+    def __init__(self, use_precomputed_table: bool = True,
                  use_simd_hash: bool = True,
                  use_memory_pool: bool = True,
-                 window_size: int = 8):
+                 window_size: int = 8) -> None:
         """
         初始化优化版地址生成器
         
@@ -49,7 +52,7 @@ class OptimizedP2PKHAddressGenerator:
             use_memory_pool: 使用内存池
             window_size: 预计算表窗口大小(4-8)
         """
-        self.ec = EllipticCurve(Secp256k1)
+        super().__init__()
         self.G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
         
         # 优化模块
@@ -114,7 +117,7 @@ class OptimizedP2PKHAddressGenerator:
     
     def public_key_to_address(self, public_key: bytes) -> str:
         """
-        公钥生成地址(可选SIMD优化)
+        公钥生成地址(SIMD优化路径)
         
         Args:
             public_key: 公钥字节
@@ -124,26 +127,19 @@ class OptimizedP2PKHAddressGenerator:
         """
         # SHA256(RIPEMD160(SHA256(public_key)))
         if self.use_simd_hash and self.simd_optimizer:
-            # 使用SIMD批量哈希(单元素批量)
             sha256_result = self.simd_optimizer.batch_sha256([public_key])[0]
             ripemd160_result = self.simd_optimizer.batch_ripemd160([sha256_result])[0]
+            # 添加版本字节 + 校验和 + Base58编码
+            extended = b'\x00' + ripemd160_result
+            checksum = HashUtils.sha256(HashUtils.sha256(extended))[:4]
+            return Base58.encode(extended + checksum)
         else:
-            # 标准方法
-            sha256_result = HashUtils.sha256(public_key)
-            ripemd160_result = HashUtils.ripemd160(sha256_result)
-        
-        # 添加版本字节(0x00 for mainnet)
-        extended = b'\x00' + ripemd160_result
-        
-        # 计算校验和
-        checksum = HashUtils.sha256(HashUtils.sha256(extended))[:4]
-        
-        # Base58编码
-        return Base58.encode(extended + checksum)
+            # 回退到基类标准实现
+            return super().public_key_to_address(public_key)
     
     def generate_from_private_key(self, private_key: bytes, compressed: bool = True) -> str:
         """
-        从私钥生成地址(完整流程)
+        从私钥生成地址(完整流程，仅返回地址字符串)
         
         Args:
             private_key: 32字节私钥
@@ -152,29 +148,7 @@ class OptimizedP2PKHAddressGenerator:
         Returns:
             P2PKH地址
         """
-        public_key = self.private_key_to_public_key(private_key, compressed)
-        return self.public_key_to_address(public_key)
-    
-    def generate_address(self, private_key: bytes, compressed: bool = True) -> Tuple[str, bytes, bytes]:
-        """
-        从私钥生成地址(返回三元组)
-        
-        这个方法是为了兼容旧的API,返回(address, compressed_public_key, private_key)
-        
-        Args:
-            private_key: 32字节私钥
-            compressed: 是否使用压缩格式
-        
-        Returns:
-            Tuple[str, bytes, bytes]: (地址, 压缩公钥, 私钥)
-        """
-        # 生成公钥
-        public_key = self.private_key_to_public_key(private_key, compressed)
-        
-        # 生成地址
-        address = self.public_key_to_address(public_key)
-        
-        return address, public_key, private_key
+        return super().generate_address(private_key, compressed)[0]
     
     def batch_generate(self, private_keys: List[bytes], compressed: bool = True) -> List[str]:
         """

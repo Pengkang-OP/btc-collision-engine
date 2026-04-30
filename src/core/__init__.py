@@ -3,7 +3,7 @@ from .secp256k1 import Secp256k1, ECPoint, EllipticCurve
 from .hash_utils import HashUtils
 from .base58 import Base58
 from .wif import WIF
-from .address_generator import P2PKHAddressGenerator
+from .address_generator import BaseAddressGenerator, P2PKHAddressGenerator
 from .crypto_backend import (
     CryptoBackend,
     BackendType,
@@ -70,6 +70,7 @@ __all__ = [
     'HashUtils',
     'Base58',
     'WIF',
+    'BaseAddressGenerator',
     'P2PKHAddressGenerator',
     # 加密后端
     'CryptoBackend',
