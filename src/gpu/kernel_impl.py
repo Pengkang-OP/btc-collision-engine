@@ -8,6 +8,9 @@ import time
 import threading
 from typing import Optional, Any, List, Dict
 
+# P3-5: 统一日志获取
+from ..utils import init_logging, get_configured_logger
+
 import numpy as np
 import pyopencl as cl
 
@@ -29,7 +32,7 @@ from ..core.address_generator import P2PKHAddressGenerator
 from ..core.hash_utils import HashUtils
 from ..monitoring.gpu_performance_monitor import get_gpu_performance_monitor
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger("GPUKernel")
 
 
 # 尝试导入 pyopencl

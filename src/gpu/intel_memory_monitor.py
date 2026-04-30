@@ -11,11 +11,12 @@
 
 import time
 import logging
+from ..utils import init_logging, get_configured_logger
 from typing import Dict, Optional, List
 from dataclasses import dataclass, field
 from enum import Enum
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger("IntelMemoryMonitor")
 
 
 class MemoryStatus(Enum):
@@ -138,7 +139,7 @@ class IntelMemoryMonitor:
         
         return True
     
-    def track_deallocation(self, size_bytes: int, batch_count: int = 0):
+    def track_deallocation(self, size_bytes: int, batch_count: int = 0) -> None:
         """跟踪显存释放
         
         Args:
@@ -275,7 +276,7 @@ class IntelMemoryMonitor:
         # 如果分配是释放的 3 倍以上，可能存在泄漏
         return ratio > 3.0
     
-    def _record_snapshot(self, batch_count: int = 0):
+    def _record_snapshot(self, batch_count: int = 0) -> None:
         """记录显存快照
         
         Args:
@@ -319,7 +320,7 @@ class IntelMemoryMonitor:
         """
         return self._history[-last_n:]
     
-    def reset(self):
+    def reset(self) -> None:
         """重置监控器状态"""
         self.current_usage = 0
         self.peak_usage = 0

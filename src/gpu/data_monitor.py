@@ -16,12 +16,13 @@
 import threading
 import time
 import logging
+from ..utils import init_logging, get_configured_logger
 import hashlib
 from typing import Dict, List, Set, Optional, Tuple
 from collections import defaultdict, deque
 from datetime import datetime
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger("GPUDataMonitor")
 
 
 class DataQualityIssue:
@@ -88,7 +89,7 @@ class DataMonitor:
         monitor.stop()
     """
     
-    def __init__(self, config: Dict = None):
+    def __init__(self, config: Optional[Dict] = None):
         """初始化数据监控器
         
         Args:
@@ -147,7 +148,7 @@ class DataMonitor:
         
         logger.info("数据监控器已创建")
     
-    def start(self, anomaly_callback=None):
+    def start(self, anomaly_callback=None) -> None:
         """启动监控
         
         Args:
@@ -171,7 +172,7 @@ class DataMonitor:
         
         logger.info("数据监控器已启动")
     
-    def stop(self):
+    def stop(self) -> None:
         """停止监控"""
         if not self._running:
             return
@@ -220,7 +221,7 @@ class DataMonitor:
         except Exception as e:
             logger.error(f"报告私钥生成失败 [GPU {device_idx}]: {e}")
     
-    def report_match(self, device_idx: int, match_data: Dict):
+    def report_match(self, device_idx: int, match_data: Dict) -> None:
         """报告匹配结果
         
         Args:
@@ -250,7 +251,7 @@ class DataMonitor:
         except Exception as e:
             logger.error(f"报告匹配结果失败 [GPU {device_idx}]: {e}")
     
-    def report_error(self, device_idx: int, error_msg: str, error_type: str = None):
+    def report_error(self, device_idx: int, error_msg: str, error_type: Optional[str] = None) -> None:
         """报告错误
         
         Args:
@@ -356,7 +357,7 @@ class DataMonitor:
         
         return issues[-limit:]
     
-    def _monitor_loop(self):
+    def _monitor_loop(self) -> None:
         """监控循环(在独立线程中运行)"""
         logger.info("数据监控循环已启动")
         
@@ -372,7 +373,7 @@ class DataMonitor:
         
         logger.info("数据监控循环已停止")
     
-    def _perform_checks(self):
+    def _perform_checks(self) -> None:
         """执行所有检查"""
         current_time = time.time()
         
@@ -390,7 +391,7 @@ class DataMonitor:
             # 检查错误率
             self._check_error_rate(device_idx)
     
-    def _validate_key_range(self, device_idx: int, key_range: Tuple[int, int]):
+    def _validate_key_range(self, device_idx: int, key_range: Tuple[int, int]) -> None:
         """验证私钥范围
         
         Args:
@@ -420,7 +421,7 @@ class DataMonitor:
             )
             self._record_issue(issue)
     
-    def _validate_match(self, device_idx: int, match_data: Dict):
+    def _validate_match(self, device_idx: int, match_data: Dict) -> None:
         """验证匹配数据
         
         Args:
@@ -503,7 +504,7 @@ class DataMonitor:
             
             stats['seen_addresses'].add(address)
     
-    def _check_stale_data(self, device_idx: int, current_time: float):
+    def _check_stale_data(self, device_idx: int, current_time: float) -> None:
         """检查数据是否过期
         
         Args:
@@ -526,7 +527,7 @@ class DataMonitor:
             )
             self._record_issue(issue)
     
-    def _check_throughput_drop(self, device_idx: int):
+    def _check_throughput_drop(self, device_idx: int) -> None:
         """检查吞吐量下降
         
         Args:
@@ -558,7 +559,7 @@ class DataMonitor:
                 )
                 self._record_issue(issue)
     
-    def _check_error_rate(self, device_idx: int):
+    def _check_error_rate(self, device_idx: int) -> None:
         """检查错误率
         
         Args:
@@ -585,7 +586,7 @@ class DataMonitor:
                 )
                 self._record_issue(issue)
     
-    def _detect_error_spike(self, device_idx: int):
+    def _detect_error_spike(self, device_idx: int) -> None:
         """检测错误率激增
         
         Args:
@@ -637,7 +638,7 @@ class DataMonitor:
         
         return 0.0
     
-    def _record_issue(self, issue: DataQualityIssue):
+    def _record_issue(self, issue: DataQualityIssue) -> None:
         """记录问题
         
         Args:

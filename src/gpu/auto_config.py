@@ -6,10 +6,11 @@
 """
 
 import logging
+from ..utils import init_logging, get_configured_logger
 import threading
 from typing import Dict
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger("GPUAutoConfig")
 
 # 字节到GB的转换常量
 _BYTES_TO_GB = 1024 ** 3  # 1,073,741,824

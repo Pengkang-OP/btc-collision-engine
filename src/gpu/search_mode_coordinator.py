@@ -4,6 +4,9 @@
 """
 
 import logging
+
+# P3-5: 统一日志获取
+from ..utils import init_logging, get_configured_logger
 from typing import Dict, Optional, List, Any, TYPE_CHECKING
 
 from ..gpu.search_modes import RandomSearchMode, BruteForceSearchMode, RangeScanSearchMode
@@ -14,7 +17,7 @@ if TYPE_CHECKING:
     # 避免循环导入：仅在类型检查时引用引擎
     from ..collision.gpu_collision_engine import GPUCollisionEngine
 
-logger = logging.getLogger(__name__)
+_logger = get_configured_logger("SearchModeCoordinator")
 
 
 class SearchModeCoordinator:
@@ -35,7 +38,7 @@ class SearchModeCoordinator:
             logger: 日志记录器
         """
         self.engine = engine
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or _logger
         
         self._current_mode = None
         self._modes: Dict[str, Any] = {}

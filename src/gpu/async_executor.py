@@ -11,9 +11,12 @@ import threading
 import logging
 from typing import List, Dict, Optional, Tuple
 
+# P3-5: 统一日志获取 + 修复缺失导入
+from ..utils import init_logging, get_configured_logger
+
 import numpy as np
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger("AsyncGPUExecutor")
 
 
 def _seed_bytes_to_u32_be_array(seed: bytes) -> np.ndarray:

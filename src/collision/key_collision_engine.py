@@ -297,7 +297,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         key_hash = hashlib.sha256(private_key).hexdigest()[:16]
         
         if self._match_callback_audit_enabled:
-            logger.info(f"调用匹配回调: address={address}, key_hash={key_hash}")
+            logger.debug(f"调用匹配回调: address={address}, key_hash={key_hash}")
         
         try:
             # Windows不支持SIGALRM，使用线程超时

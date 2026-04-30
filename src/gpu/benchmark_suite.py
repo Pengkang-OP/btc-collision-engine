@@ -17,13 +17,14 @@ import os
 import sys
 import time
 import logging
+from ..utils import init_logging, get_configured_logger
 import statistics
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger("GPUBenchmarkSuite")
 
 
 class BenchmarkType(Enum):
@@ -75,7 +76,7 @@ class GPUBenchmarkSuite:
         >>> print(report)
     """
     
-    def __init__(self, gpu_engine):
+    def __init__(self, gpu_engine) -> None:
         """初始化基准测试套件
         
         Args:
@@ -479,7 +480,7 @@ class GPUBenchmarkSuite:
         
         return "\n".join(report_lines)
     
-    def save_results(self, filepath: str, results: Optional[List[BenchmarkResult]] = None):
+    def save_results(self, filepath: str, results: Optional[List[BenchmarkResult]] = None) -> None:
         """保存测试结果到 JSON 文件
         
         Args:

@@ -20,11 +20,14 @@ import logging
 from collections import deque
 from typing import Dict, Any, List, Optional, TYPE_CHECKING
 
+# P3-5: 统一日志获取 + 修复缺失导入
+from ..utils import init_logging, get_configured_logger
+
 if TYPE_CHECKING:
     # 避免循环导入：仅在类型检查时引用引擎
     from ..collision.gpu_collision_engine import GPUCollisionEngine
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger("GPUEngineMonitor")
 
 
 class GPUEngineMonitor:

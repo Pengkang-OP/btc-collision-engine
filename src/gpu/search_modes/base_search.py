@@ -9,12 +9,14 @@ import struct
 import time
 from typing import TYPE_CHECKING, Callable, Optional, Tuple
 
+# P3-5: 统一日志获取 + 修复缺失导入
+from ...utils import init_logging, get_configured_logger
 from ...utils.exception_handler import ExceptionHandler
 
 if TYPE_CHECKING:
     from ...collision.gpu_collision_engine import GPUCollisionEngine
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger("BaseSearchMode")
 
 
 class BaseSearchMode:

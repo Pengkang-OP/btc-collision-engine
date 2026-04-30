@@ -6,9 +6,10 @@
 迁移日期: 2026-04-22
 """
 import logging
+from ..utils import init_logging, get_configured_logger
 from typing import Optional, Any
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger("GPUDeviceHelper")
 
 
 class GPUDeviceHelper:

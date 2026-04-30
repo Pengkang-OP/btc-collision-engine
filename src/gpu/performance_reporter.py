@@ -19,11 +19,12 @@ import sys
 import time
 import json
 import logging
+from ..utils import init_logging, get_configured_logger
 from typing import Dict, List, Optional
 from datetime import datetime
 from dataclasses import dataclass
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger("GPUPerformanceReporter")
 
 
 @dataclass
@@ -54,7 +55,7 @@ class PerformanceReportGenerator:
         >>> generator.save_report(report, "gpu_performance_report.md")
     """
     
-    def __init__(self, gpu_engine, benchmark_suite=None, auto_tuner=None):
+    def __init__(self, gpu_engine, benchmark_suite=None, auto_tuner=None) -> None:
         """初始化报告生成器
         
         Args:
@@ -318,7 +319,7 @@ class PerformanceReportGenerator:
         
         return json.dumps(report_data, indent=2, ensure_ascii=False)
     
-    def save_report(self, report: str, filepath: str):
+    def save_report(self, report: str, filepath: str) -> None:
         """保存报告到文件
         
         Args:

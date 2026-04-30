@@ -6,13 +6,17 @@
 import hashlib
 import logging
 from typing import Dict, Any
+
+# P3-5: 统一日志获取
+from ..utils import init_logging, get_configured_logger
+
 from .device import GPUDevice, identify_vendor
 from .vendors.base import GPUVendorBase
 from .vendors.nvidia import NVIDIAGPUVendor
 from .vendors.amd import AMDGPUVendor
 from .vendors.intel import IntelGPUVendor
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger("GPUContext")
 
 
 # 厂商编译选项配置

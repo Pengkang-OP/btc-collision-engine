@@ -5,6 +5,9 @@
 """
 
 import logging
+
+# P3-5: 统一日志获取
+from ...utils import init_logging, get_configured_logger
 from typing import TYPE_CHECKING, Tuple
 
 from .base_search import BaseSearchMode
@@ -12,7 +15,7 @@ from .base_search import BaseSearchMode
 if TYPE_CHECKING:
     from ...collision.gpu_collision_engine import GPUCollisionEngine
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger("BruteForceSearch")
 
 
 class BruteForceSearchMode(BaseSearchMode):

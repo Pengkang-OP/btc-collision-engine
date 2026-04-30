@@ -10,9 +10,10 @@
 """
 
 import logging
+from ..utils import init_logging, get_configured_logger
 from typing import Optional, TYPE_CHECKING
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger("IntelOptimizer")
 
 # 延迟导入避免循环依赖
 if TYPE_CHECKING:
@@ -30,7 +31,7 @@ class IntelGPUOptimizer:
         logger: 可选的日志记录器，默认使用模块级 logger
     """
 
-    def __init__(self, device, config: dict, engine_logger=None):
+    def __init__(self, device, config: dict, engine_logger=None) -> None:
         self._device = device
         self._config = config
         self._logger = engine_logger or logger
@@ -318,27 +319,27 @@ class IntelGPUOptimizer:
     # ------------------------------------------------------------------
 
     @property
-    def timeout_manager(self):
+    def timeout_manager(self) -> 'AdaptiveTimeoutManager':
         """自适应超时管理器"""
         return self._timeout_manager
 
     @property
-    def memory_monitor(self):
+    def memory_monitor(self) -> 'IntelMemoryMonitor':
         """显存监控器"""
         return self._memory_monitor
 
     @property
-    def benchmark_suite(self):
+    def benchmark_suite(self) -> 'GPUBenchmarkSuite':
         """基准测试套件"""
         return self._benchmark_suite
 
     @property
-    def auto_tuner(self):
+    def auto_tuner(self) -> 'GPUAutoTuner':
         """自动调优器"""
         return self._auto_tuner
 
     @property
-    def performance_reporter(self):
+    def performance_reporter(self) -> 'GPUPerformanceReporter':
         """性能报告生成器"""
         return self._performance_reporter
 
