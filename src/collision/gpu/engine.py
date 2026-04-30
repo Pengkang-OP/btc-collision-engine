@@ -114,7 +114,7 @@ def _seed_bytes_to_u32_be_array(seed: bytes) -> "np.ndarray":
     if len(seed) != 32:
         raise ValueError(f"seed must be 32 bytes, got {len(seed)}")
     be_u32 = np.frombuffer(seed, dtype=">u4")
-    return cast("np.ndarray", be_u32.astype(np.uint32))
+    return be_u32.astype(np.uint32)
 
 
 class GPUCollisionEngine(BaseCollisionEngine):
@@ -339,7 +339,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             self._consecutive_gpu_errors = 0
         self._stop_event.clear()
         self._running = True
-        self.stats.start_time = time.time()
+        self.stats.start_time = time.time()  # type: ignore[attr-defined]
         self._search_coordinator.start(mode, resume=resume, **kwargs)
 
     def stop(self, timeout: Optional[float] = None) -> None:
@@ -441,7 +441,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
     def get_adjustment_history(self, limit: int = 10) -> List[Dict[str, Any]]:
         """获取调整历史"""
-        return cast(List[Dict[str, Any]], self._engine_monitor.get_adjustment_history(limit=limit))
+        return self._engine_monitor.get_adjustment_history(limit=limit)
 
     # ========== 上下文管理器 ==========
 
@@ -501,10 +501,10 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
     def _calculate_gpu_memory_usage(self, num_keys: int) -> float:
         """计算 GPU 显存使用(MB)"""
-        return cast(float, GPUMemoryCalculator.calculate_from_hash160_bytes(
+        return GPUMemoryCalculator.calculate_from_hash160_bytes(
             num_keys=num_keys,
             hash160_bytes=self._target_hash160s,
-        ))
+        )
 
     # ========== 性能基准 ==========
 
@@ -649,12 +649,12 @@ class GPUCollisionEngine(BaseCollisionEngine):
         for match in matches:
             key_idx = match["key_index"]
             private_key = private_keys[key_idx * 32 : (key_idx + 1) * 32]
-            if not self.dedup_filter.check_and_add(private_key):
+            if not self.dedup_filter.check_and_add(private_key):  # type: ignore[attr-defined]
                 continue
             target_idx = match["target_index"]
             address = self._target_list[target_idx]
             wif = WIF.encode(private_key, compressed=True)
-            self.stats.add_match(private_key, address)
+            self.stats.add_match(private_key, address)  # type: ignore[attr-defined]
             if not self._safe_invoke_match_callback(private_key, address, wif):
                 logger.warning(f"GPU匹配回调处理失败，跳过地址: {address}")
 
@@ -665,12 +665,12 @@ class GPUCollisionEngine(BaseCollisionEngine):
             key_idx = match["key_index"]
             key_int = (seed_int + key_idx) % (2**256)
             private_key = key_int.to_bytes(32, "big")
-            if not self.dedup_filter.check_and_add(private_key):
+            if not self.dedup_filter.check_and_add(private_key):  # type: ignore[attr-defined]
                 continue
             target_idx = match["target_index"]
             address = self._target_list[target_idx]
             wif = WIF.encode(private_key, compressed=True)
-            self.stats.add_match(private_key, address)
+            self.stats.add_match(private_key, address)  # type: ignore[attr-defined]
             if not self._safe_invoke_match_callback(private_key, address, wif):
                 logger.warning(f"GPU匹配回调处理失败，跳过地址: {address}")
 
@@ -750,7 +750,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             return
         logger.debug(f"GPU 进度回调: batch_count={batch_count}")
         if self.on_progress:
-            self.on_progress(self.stats.snapshot())
+            self.on_progress(self.stats.snapshot())  # type: ignore[attr-defined]
         self._save_checkpoint(batch_count)
         self._last_progress_time = current_time
 
@@ -964,7 +964,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
     def run_benchmark(self, iterations: int = 5, save_report: bool = True) -> Dict[str, Any]:
         """运行性能基准测试 (P2)"""
-        results = self._get_perf_pipeline().run_benchmark(iterations)
+        results = self._get_perf_pipeline().run_benchmark(iterations)  # type: ignore[attr-defined]
         if save_report and results:
             report_path = self.generate_performance_report(
                 include_benchmarks=True, include_tuning=False, include_recommendations=True
@@ -989,7 +989,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             else:
                 logger.info(f"建议 batch_size: {new_size:,} (当前: {self.batch_size:,})")
 
-        results = self._get_perf_pipeline().start_auto_tuning(
+        results = self._get_perf_pipeline().start_auto_tuning(  # type: ignore[attr-defined]
             max_iterations=max_iterations, on_new_batch_size=on_new_batch_size
         )
         optimal_size = results.get("optimal_batch_size")
@@ -1012,7 +1012,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         output_dir: Optional[str] = None,
     ) -> str:
         """生成性能报告 (P2)"""
-        return self._get_perf_pipeline().generate_report(
+        return self._get_perf_pipeline().generate_report(  # type: ignore[attr-defined]
             include_benchmarks=include_benchmarks,
             include_tuning=include_tuning,
             include_history=include_history,

@@ -105,7 +105,7 @@ class BaseSearchMode:
                 current_time = time.time()
                 if current_time - engine._last_progress_time >= engine._progress_interval_sec:
                     if engine.on_progress:
-                        engine.on_progress(engine.stats.snapshot())  # type: ignore[union-attr]
+                        engine.on_progress(engine.stats.snapshot())  # type: ignore[attr-defined]
                     engine._save_checkpoint(batch_count)
                     engine._last_progress_time = current_time  # type: ignore[assignment]
 

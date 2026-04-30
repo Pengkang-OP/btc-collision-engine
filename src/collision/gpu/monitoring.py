@@ -325,7 +325,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
             if self.engine and hasattr(self.engine, "_gpu_device"):
                 from ...gpu.device import identify_vendor
 
-                return cast(str, identify_vendor(self.engine._gpu_device))
+                return identify_vendor(self.engine._gpu_device)
         except Exception:
             pass  # GPU设备检测失败，回退到 device_info 方案
 

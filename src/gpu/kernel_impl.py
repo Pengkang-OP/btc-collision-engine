@@ -476,9 +476,9 @@ class GPUKernel(GPUKernelProtocol):
             target_buffer_size = len(self._target_hash160s)
 
         # 调用共享函数
-        return cast(int, calculate_optimal_batch_size(
+        return calculate_optimal_batch_size(
             device=self.device, target_buffer_size=target_buffer_size
-        ))
+        )
 
     def _allocate_buffers(self):
         """预分配 GPU 内存缓冲区（PRNG模式）

@@ -295,7 +295,7 @@ class PlatformAdapter:
         """
         optimizations: Dict[str, Any] = {
             "platform": self.platform_name,
-            "optimizations": cast(list, []),
+            "optimizations": [],
         }
 
         if self.platform_name == "Windows":

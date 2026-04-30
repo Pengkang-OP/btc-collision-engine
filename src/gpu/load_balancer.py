@@ -113,7 +113,7 @@ class GPULoadBalancer:
         Returns:
             设备索引 -> 权重映射 (总和为1.0)
         """
-        return cast(Dict[int, float], self._scorer.calculate_performance_weights(self.devices))
+        return self._scorer.calculate_performance_weights(self.devices)
 
     def calculate_weights(self) -> Dict[int, float]:
         """获取当前负载权重
