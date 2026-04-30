@@ -12,8 +12,11 @@
 import threading
 import time
 import logging
-from typing import Set, Dict, Optional, Tuple, Callable, Union, Any
+from typing import Set, Dict, Optional, Tuple, Callable, Union, Any, TYPE_CHECKING
 from queue import Queue, Empty
+
+if TYPE_CHECKING:
+    from ..collision.gpu_collision_engine import GPUCollisionEngine
 
 # P3-5: 统一日志获取
 from ..utils import init_logging, get_configured_logger
@@ -106,10 +109,10 @@ class SingleGPUWorker(threading.Thread):
         self._lock = threading.Lock()
         
         # 结果队列
-        self._result_queue = Queue()
+        self._result_queue: Queue[Dict[str, Any]] = Queue()
         
         # 统计信息
-        self._stats = {
+        self._stats: Dict[str, Any] = {
             'device_idx': device_idx,
             'status': 'initialized',  # initialized, running, paused, stopped, error
             'keys_checked': 0,
@@ -122,13 +125,13 @@ class SingleGPUWorker(threading.Thread):
         }
         
         # 增量统计器（线程本地，减少锁竞争）- 根据配置启用
-        self._delta_stats = None
+        self._delta_stats: Optional[Any] = None
         if _delta_stats_available:
             self._delta_stats = ThreadLocalDeltaStats()
             logger.debug(f"GPU {device_idx}: 增量统计器已启用")
         
         # GPU引擎实例
-        self._gpu_engine = None
+        self._gpu_engine: Optional['GPUCollisionEngine'] = None
         
         logger.info(
             f"GPU工作器已创建: 设备={device_idx}, "
@@ -148,11 +151,35 @@ class SingleGPUWorker(threading.Thread):
             # 执行搜索
             self._execute_search()
             
-        except Exception as e:
-            logger.error(f"GPU {self.device_idx} 工作器异常: {e}")
+        except MemoryError as e:
+            logger.error(f"GPU {self.device_idx} 内存不足: {e}")
             with self._lock:
                 self._stats['status'] = 'error'
-                self._stats['last_error'] = str(e)
+                self._stats['last_error'] = f"MemoryError: {e}"
+                self._stats['error_count'] += 1
+        except ImportError as e:
+            logger.error(f"GPU {self.device_idx} 模块导入失败: {e}")
+            with self._lock:
+                self._stats['status'] = 'error'
+                self._stats['last_error'] = f"ImportError: {e}"
+                self._stats['error_count'] += 1
+        except RuntimeError as e:
+            logger.error(f"GPU {self.device_idx} 运行时错误: {e}")
+            with self._lock:
+                self._stats['status'] = 'error'
+                self._stats['last_error'] = f"RuntimeError: {e}"
+                self._stats['error_count'] += 1
+        except OSError as e:
+            logger.error(f"GPU {self.device_idx} 系统I/O错误: {e}")
+            with self._lock:
+                self._stats['status'] = 'error'
+                self._stats['last_error'] = f"OSError: {e}"
+                self._stats['error_count'] += 1
+        except Exception as e:
+            logger.exception(f"GPU {self.device_idx} 工作器未知异常: {type(e).__name__}: {e}")
+            with self._lock:
+                self._stats['status'] = 'error'
+                self._stats['last_error'] = f"{type(e).__name__}: {e}"
                 self._stats['error_count'] += 1
         
         finally:
@@ -169,13 +196,13 @@ class SingleGPUWorker(threading.Thread):
             from ..collision.gpu_collision_engine import GPUCollisionEngine
             
             # 配置引擎
-            batch_size = self.config.batch_size  # None=自动计算
+            batch_size: Optional[int] = self.config.batch_size  # None=自动计算
             
             # 创建引擎实例（targets 是必填参数，其余通过 __init__ 完成初始化）
             self._gpu_engine = GPUCollisionEngine(
                 targets=self.targets,
                 device_index=self.device_idx,
-                batch_size=batch_size,
+                batch_size=batch_size,  # type: ignore[arg-type]
                 use_gpu_memory_pool=True,
             )
             
@@ -184,8 +211,17 @@ class SingleGPUWorker(threading.Thread):
                 f"批次={batch_size or '自动'}"
             )
             
+        except ImportError as e:
+            logger.error(f"GPU {self.device_idx} GPU引擎模块导入失败: {e}")
+            raise
+        except (ValueError, TypeError) as e:
+            logger.error(f"GPU {self.device_idx} 引擎配置参数无效: {type(e).__name__}: {e}")
+            raise
+        except RuntimeError as e:
+            logger.error(f"GPU {self.device_idx} 引擎运行时初始化失败: {e}")
+            raise
         except Exception as e:
-            logger.error(f"GPU {self.device_idx} 引擎初始化失败: {e}")
+            logger.exception(f"GPU {self.device_idx} 引擎初始化未知异常: {type(e).__name__}: {e}")
             raise
     
     def _execute_search(self):
@@ -290,11 +326,21 @@ class SingleGPUWorker(threading.Thread):
                 self._execute_search()
             except Exception as retry_err:
                 logger.error(f"GPU {self.device_idx} 降批重试失败: {retry_err}")
-        except Exception as e:
-            logger.error(f"GPU {self.device_idx} 搜索异常: {e}")
+        except RuntimeError as e:
+            logger.error(f"GPU {self.device_idx} 搜索运行时错误: {e}")
             with self._lock:
                 self._stats['error_count'] += 1
-                self._stats['last_error'] = str(e)
+                self._stats['last_error'] = f"RuntimeError: {e}"
+        except ValueError as e:
+            logger.error(f"GPU {self.device_idx} 搜索数据错误: {e}")
+            with self._lock:
+                self._stats['error_count'] += 1
+                self._stats['last_error'] = f"ValueError: {e}"
+        except Exception as e:
+            logger.exception(f"GPU {self.device_idx} 搜索未知异常: {type(e).__name__}: {e}")
+            with self._lock:
+                self._stats['error_count'] += 1
+                self._stats['last_error'] = f"{type(e).__name__}: {e}"
     
     def _update_stats(self):
         """更新统计信息"""
@@ -351,8 +397,24 @@ class SingleGPUWorker(threading.Thread):
                         except Exception as e:
                             logger.error(f"结果回调异常: {e}")
                             
+        except AttributeError as e:
+            logger.debug(f"统计信息属性访问失败: {e}")
+            if self.data_monitor:
+                self.data_monitor.report_error(
+                    device_idx=self.device_idx,
+                    error_msg=str(e),
+                    error_type='stats_update_attr_error'
+                )
+        except (ValueError, TypeError) as e:
+            logger.debug(f"统计信息数据类型错误: {type(e).__name__}: {e}")
+            if self.data_monitor:
+                self.data_monitor.report_error(
+                    device_idx=self.device_idx,
+                    error_msg=str(e),
+                    error_type='stats_update_data_error'
+                )
         except Exception as e:
-            logger.debug(f"更新统计信息失败: {e}")
+            logger.debug(f"更新统计信息失败: {type(e).__name__}: {e}")
             # 报告错误给监控器
             if self.data_monitor:
                 self.data_monitor.report_error(
@@ -371,8 +433,12 @@ class SingleGPUWorker(threading.Thread):
             if self._gpu_engine:
                 self._gpu_engine.stop()  # stop() 内部已完整清理 GPU 资源
                 self._gpu_engine = None
+        except RuntimeError as e:
+            logger.error(f"GPU {self.device_idx} 引擎停止时运行时错误: {e}")
+        except OSError as e:
+            logger.error(f"GPU {self.device_idx} 引擎停止时系统I/O错误: {e}")
         except Exception as e:
-            logger.error(f"GPU {self.device_idx} 清理失败: {e}")
+            logger.error(f"GPU {self.device_idx} 清理失败: {type(e).__name__}: {e}")
     
     def stop_search(self) -> None:
         """停止搜索"""
@@ -428,7 +494,7 @@ class SingleGPUWorker(threading.Thread):
             True表示正在运行
         """
         with self._lock:
-            return self._stats['status'] == 'running'
+            return self._stats['status'] == 'running'  # type: ignore[no-any-return]
     
     def is_alive(self) -> bool:
         """检查线程是否存活

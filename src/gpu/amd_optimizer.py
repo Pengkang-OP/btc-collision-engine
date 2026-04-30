@@ -592,6 +592,13 @@ class AmdGPUOptimizer:
             if self._driver_info.get('recommendation'):
                 self._logger.warning(f"⚠️ {self._driver_info['recommendation']}")
 
+        except (OSError, FileNotFoundError) as e:
+            self._logger.warning(
+                f"⚠️ AMD 驱动检测系统错误（非致命）: {type(e).__name__}: {e}\n"
+                f"   驱动版本信息将不可用"
+            )
+            self._driver_info = {}
+            result['driver'] = {}
         except Exception as e:
             self._logger.warning(
                 f"⚠️ AMD 驱动检测失败（非致命）: {type(e).__name__}: {e}\n"
@@ -618,6 +625,17 @@ class AmdGPUOptimizer:
                 f"Chiplet: {'是' if self._arch_info.get('chiplet') else '否'}）"
             )
 
+        except (ValueError, KeyError) as e:
+            self._logger.warning(
+                f"⚠️ AMD 架构识别数据异常（非致命）: {type(e).__name__}: {e}\n"
+                f"   架构特性将使用保守默认值（GCN，Wavefront=64）"
+            )
+            self._arch_info = {
+                'arch': 'Unknown', 'wavefront_size': 64,
+                'infinity_cache': False, 'chiplet': False,
+                'is_cdna': False, 'lds_kb': 64, 'memory_type': 'Unknown',
+            }
+            result['arch'] = self._arch_info
         except Exception as e:
             self._logger.warning(
                 f"⚠️ AMD 架构识别失败（非致命）: {type(e).__name__}: {e}\n"
@@ -647,6 +665,13 @@ class AmdGPUOptimizer:
                     f"Wavefront({self._wavefront_result['wavefront_size']}) 的整数倍"
                 )
 
+        except (ValueError, TypeError) as e:
+            self._logger.warning(
+                f"⚠️ AMD Wavefront 验证参数异常（非致命）: {type(e).__name__}: {e}\n"
+                f"   Wavefront 对齐将跳过"
+            )
+            self._wavefront_result = {}
+            result['wavefront'] = {}
         except Exception as e:
             self._logger.warning(
                 f"⚠️ AMD Wavefront 验证失败（非致命）: {type(e).__name__}: {e}\n"
@@ -679,6 +704,17 @@ class AmdGPUOptimizer:
             if ic_hint:
                 self._logger.info("✅ AMD Infinity Cache 可用，局部性访问模式将受益")
 
+        except (ValueError, KeyError, TypeError) as e:
+            self._logger.warning(
+                f"⚠️ AMD 显存优化配置数据异常（非致命）: {type(e).__name__}: {e}\n"
+                f"   显存配置将使用保守默认值"
+            )
+            self._memory_config = {
+                'memory_ratio': 0.60, 'global_mem_gb': 0.0,
+                'memory_type': 'Unknown', 'infinity_cache_hint': False,
+                'infinity_cache_bonus': 0.0,
+            }
+            result['memory'] = self._memory_config
         except Exception as e:
             self._logger.warning(
                 f"⚠️ AMD 显存优化配置失败（非致命）: {type(e).__name__}: {e}\n"
