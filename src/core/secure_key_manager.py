@@ -10,7 +10,7 @@ import os
 import sys
 import secrets
 import warnings
-from typing import Optional, Callable
+from typing import Any, Callable, Optional
 from contextlib import contextmanager
 
 # 尝试导入密码学库
@@ -79,7 +79,7 @@ class SecureKeyManager:
     _successful_clears: int = 0  # 成功清零次数
     _failed_clears: int = 0  # 失败清零次数
     
-    def __init__(self, lock_memory: bool = True):
+    def __init__(self, lock_memory: bool = True) -> None:
         """
         初始化安全密钥管理器
         
@@ -459,16 +459,16 @@ class SecureKeyManager:
                 for i in range(len(self._key)):
                     self._key[i] = 0
     
-    def __enter__(self):
+    def __enter__(self) -> 'SecureKeyManager':
         """上下文管理器入口"""
         return self
     
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]) -> None:
         """上下文管理器出口 - 自动清零"""
         self.clear()
         return False
     
-    def __del__(self):
+    def __del__(self) -> None:
         """析构函数 - 确保清零"""
         if self._key is not None and not self._cleared:
             # 尝试清零，但忽略异常（对象正在销毁）
@@ -525,7 +525,7 @@ class SecureKeyManager:
         }
     
     @staticmethod
-    def reset_clear_stats():
+    def reset_clear_stats() -> None:
         """重置清零统计"""
         SecureKeyManager._total_clears = 0
         SecureKeyManager._successful_clears = 0
@@ -533,7 +533,7 @@ class SecureKeyManager:
 
 
 @contextmanager
-def secure_key_context(key_bytes: Optional[bytes] = None):
+def secure_key_context(key_bytes: Optional[bytes] = None) -> Any:
     """
     安全密钥上下文管理器（便捷函数）
     

@@ -19,7 +19,7 @@ import threading
 import time
 import queue
 import platform
-from typing import Optional, Dict, Any
+from typing import Any, Callable, Dict, Optional
 from logging.handlers import RotatingFileHandler
 from functools import wraps
 
@@ -77,7 +77,7 @@ class ColoredFormatter(logging.Formatter):
     }
     RESET = '\033[0m'
     
-    def format(self, record) -> str:
+    def format(self, record: logging.LogRecord) -> str:
         # 保存原始级别名称
         orig_levelname = record.levelname
         
@@ -154,11 +154,11 @@ class PerformanceMonitor:
         self.start_time = None
         self.end_time = None
     
-    def __enter__(self):
+    def __enter__(self) -> 'PerformanceMonitor':
         self.start_time = time.perf_counter()
         return self
     
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]) -> None:
         self.end_time = time.perf_counter()
         elapsed_ms = (self.end_time - self.start_time) * 1000
         
@@ -193,7 +193,7 @@ class SampledLogger:
     _COUNTER_MAX = 10**9
     
     def __init__(self, logger: logging.Logger, sample_rate: int = 100,
-                 max_per_second: float = 0.0):
+                 max_per_second: float = 0.0) -> None:
         """
         参数:
             logger: 底层日志记录器
@@ -232,7 +232,7 @@ class SampledLogger:
                 return True
             return False
     
-    def debug(self, msg: str, *args, **kwargs):
+    def debug(self, msg: str, *args: Any, **kwargs: Any) -> None:
         with self._lock:
             self._counter += 1
             # 防止计数器无限增长
@@ -241,7 +241,7 @@ class SampledLogger:
             if self._counter % self.sample_rate == 0 and self._should_log_by_time():
                 self.logger.debug(f"[Sampled 1/{self.sample_rate}] {msg}", *args, **kwargs)
     
-    def info(self, msg: str, *args, **kwargs):
+    def info(self, msg: str, *args: Any, **kwargs: Any) -> None:
         with self._lock:
             self._counter += 1
             # 防止计数器无限增长
@@ -250,7 +250,7 @@ class SampledLogger:
             if self._counter % self.sample_rate == 0 and self._should_log_by_time():
                 self.logger.info(f"[Sampled 1/{self.sample_rate}] {msg}", *args, **kwargs)
     
-    def warning(self, msg: str, *args, **kwargs):
+    def warning(self, msg: str, *args: Any, **kwargs: Any) -> None:
         with self._lock:
             self._counter += 1
             # 防止计数器无限增长
@@ -259,7 +259,7 @@ class SampledLogger:
             if self._counter % self.sample_rate == 0 and self._should_log_by_time():
                 self.logger.warning(f"[Sampled 1/{self.sample_rate}] {msg}", *args, **kwargs)
     
-    def error(self, msg: str, *args, **kwargs):
+    def error(self, msg: str, *args: Any, **kwargs: Any) -> None:
         with self._lock:
             self._counter += 1
             # 防止计数器无限增长
@@ -368,7 +368,7 @@ def get_sampled_logger(name: str, sample_rate: int = 100,
     return SampledLogger(base_logger, sample_rate, max_per_second)
 
 
-def log_performance(logger: logging.Logger, operation: str, level: str = "DEBUG"):
+def log_performance(logger: logging.Logger, operation: str, level: str = "DEBUG") -> Callable:
     """
     性能监控装饰器工厂
     
@@ -377,9 +377,9 @@ def log_performance(logger: logging.Logger, operation: str, level: str = "DEBUG"
         def my_function():
             pass
     """
-    def decorator(func):
+    def decorator(func: Callable) -> Callable:
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             with PerformanceMonitor(logger, operation, level):
                 return func(*args, **kwargs)
         return wrapper
@@ -408,7 +408,7 @@ class AsyncLogger:
         >>> async_handler.close()
     """
     
-    def __init__(self, max_queue_size: int = 10000):
+    def __init__(self, max_queue_size: int = 10000) -> None:
         """
         参数:
             max_queue_size: 队列最大长度，超出时丢弃最旧日志
@@ -455,7 +455,7 @@ class AsyncLogger:
             finally:
                 self._queue.task_done()
     
-    def emit(self, record: logging.LogRecord):
+    def emit(self, record: logging.LogRecord) -> None:
         """异步发出日志记录"""
         try:
             self._queue.put_nowait(record)
@@ -468,7 +468,7 @@ class AsyncLogger:
                     f"⚠️ 异步日志队列已满，已丢弃 {self._dropped_count} 条记录\n"
                 )
     
-    def close(self):
+    def close(self) -> None:
         """关闭异步日志器，等待队列清空"""
         self._stop_event.set()
         
@@ -507,7 +507,7 @@ class AsyncFileHandler(logging.Handler):
         >>> logger.addHandler(handler)
     """
     
-    def __init__(self, filename: str, max_bytes: int = 0, backup_count: int = 0):
+    def __init__(self, filename: str, max_bytes: int = 0, backup_count: int = 0) -> None:
         """
         参数:
             filename: 日志文件路径
@@ -526,11 +526,11 @@ class AsyncFileHandler(logging.Handler):
         self._async_logger = AsyncLogger()
         self._async_logger._handler = self._handler
     
-    def emit(self, record: logging.LogRecord):
+    def emit(self, record: logging.LogRecord) -> None:
         """异步发出日志记录"""
         self._async_logger.emit(record)
     
-    def close(self):
+    def close(self) -> None:
         """关闭处理器"""
         self._async_logger.close()
         super().close()

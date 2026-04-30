@@ -7,7 +7,7 @@
 - 大页内存支持
 """
 
-from typing import Dict, Any
+from typing import Any, Dict, Optional
 import logging
 
 # P3-5: 统一日志获取

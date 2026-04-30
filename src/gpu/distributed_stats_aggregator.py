@@ -32,7 +32,7 @@ class DistributedStatsAggregator:
     - 内置负载均衡感知
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         # 停止标志（必须在启动线程前初始化）
         self._stop_event = threading.Event()
         

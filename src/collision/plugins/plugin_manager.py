@@ -10,12 +10,12 @@ from .base_plugin import CollisionPlugin
 class PluginManager:
     """插件管理器 - 加载和管理碰撞策略插件"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         """初始化插件管理器"""
         self.plugins: Dict[str, CollisionPlugin] = {}
         self.plugin_dirs: List[str] = []
     
-    def add_plugin_directory(self, directory: str):
+    def add_plugin_directory(self, directory: str) -> None:
         """
         添加插件目录
         
@@ -110,7 +110,7 @@ class PluginManager:
         """
         return list(self.plugins.keys())
     
-    def unload_plugins(self):
+    def unload_plugins(self) -> None:
         """
         卸载所有插件
         """

@@ -65,6 +65,7 @@ def build_engine(args: argparse.Namespace, targets: Set[str], on_progress: Optio
         (engine, engine_type) 元组
         engine_type: 'cpu' | 'gpu' | 'multi_gpu'
     """
+    engine: Any = None
     # ── 多GPU 模式 ──────────────────────────────────────────────
     if getattr(args, 'multi_gpu', False):
         if not GPU_AVAILABLE:
@@ -99,7 +100,7 @@ def build_engine(args: argparse.Namespace, targets: Set[str], on_progress: Optio
             engine = GPUCollisionEngine(
                 targets=targets,
                 device_index=getattr(args, 'gpu_device', -1),
-                batch_size=getattr(args, 'gpu_batch_size', None),
+                batch_size=getattr(args, 'gpu_batch_size', None),  # type: ignore[arg-type]
                 on_progress=on_progress if on_progress else lambda s: None,
                 on_match=match_cb,
                 checkpoint_enabled=args.checkpoint,

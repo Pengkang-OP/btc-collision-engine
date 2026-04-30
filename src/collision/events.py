@@ -87,7 +87,7 @@ class EngineStartEvent(CollisionEvent):
     target_count: int = 0
     batch_size: int = 0
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.event_type = EventType.ENGINE_START
         self.metadata.update({
             "mode": self.mode,
@@ -122,7 +122,7 @@ class EngineProgressEvent(CollisionEvent):
     thread_count: int = 0
     elapsed_time: float = 0.0
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.event_type = EventType.ENGINE_PROGRESS
         self.metadata.update({
             "total_checked": self.total_checked,
@@ -153,7 +153,7 @@ class EngineMatchEvent(CollisionEvent):
     wif: str = ""
     target_address: str = ""
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.event_type = EventType.ENGINE_MATCH
         # 不将private_key放入metadata (安全考虑)
         self.metadata.update({
@@ -180,7 +180,7 @@ class EngineErrorEvent(CollisionEvent):
     context: Dict[str, Any] = field(default_factory=dict)
     recoverable: bool = False
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.event_type = EventType.ENGINE_ERROR
         self.metadata.update({
             "error_type": self.error_type,
@@ -207,7 +207,7 @@ class EngineCompleteEvent(CollisionEvent):
     avg_speed: float = 0.0
     stop_reason: str = "normal"
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.event_type = EventType.ENGINE_COMPLETE
         self.metadata.update({
             "total_checked": self.total_checked,
@@ -230,7 +230,7 @@ class EngineStopEvent(CollisionEvent):
     reason: str = "user_request"
     total_checked: int = 0
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.event_type = EventType.ENGINE_STOP
         self.metadata.update({
             "reason": self.reason,
@@ -256,7 +256,7 @@ class GPUKernelExecEvent(CollisionEvent):
     exec_time: float = 0.0
     device_index: int = 0
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.event_type = EventType.GPU_KERNEL_EXEC
         self.metadata.update({
             "kernel_name": self.kernel_name,
@@ -282,7 +282,7 @@ class GPUErrorEvent(CollisionEvent):
     device_index: int = 0
     recoverable: bool = False
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.event_type = EventType.GPU_ERROR
         self.metadata.update({
             "error_type": self.error_type,
@@ -309,7 +309,7 @@ class MonitoringAlertEvent(CollisionEvent):
     severity: str = "info"
     metrics: Dict[str, Any] = field(default_factory=dict)
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.event_type = EventType.MONITORING_ALERT
         self.metadata.update({
             "alert_type": self.alert_type,
@@ -335,7 +335,7 @@ class MonitoringAnomalyEvent(CollisionEvent):
     expected_range: tuple = (0.0, 0.0)
     deviation: float = 0.0
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.event_type = EventType.MONITORING_ANOMALY
         self.metadata.update({
             "anomaly_type": self.anomaly_type,

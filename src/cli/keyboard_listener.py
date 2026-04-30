@@ -14,7 +14,7 @@ import os
 import sys
 import threading
 import time
-from typing import Optional
+from typing import Callable, Optional
 
 
 class KeyboardListener:
@@ -72,7 +72,7 @@ class KeyboardListener:
         cls.is_available()  # 确保已检测
         return cls._platform_unavailable_reason
 
-    def __init__(self, on_key_callback):
+    def __init__(self, on_key_callback: Callable) -> None:
         """
         参数:
             on_key_callback: 接收单个大写字符的可调用对象，例如 'P'/'R'/'Q'/'S'
@@ -83,7 +83,7 @@ class KeyboardListener:
         # 实例可用性与类级别检测保持一致
         self._available: bool = KeyboardListener.is_available()
 
-    def start(self):
+    def start(self) -> None:
         """启动监听线程（daemon，不阻塞主线程退出）。"""
         self._stop.clear()
         self._thread = threading.Thread(
@@ -91,7 +91,7 @@ class KeyboardListener:
         )
         self._thread.start()
 
-    def stop(self):
+    def stop(self) -> None:
         """停止监听线程，最多等待 1 秒。"""
         self._stop.set()
         if self._thread and self._thread.is_alive():

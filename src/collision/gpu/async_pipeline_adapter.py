@@ -22,15 +22,15 @@ class AsyncPipelineAdapter(IAsyncExecutionPipeline):
     适配现有AsyncGPUExecutor到IAsyncExecutionPipeline接口。
     """
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         """初始化适配器
         
         Args:
             config: 配置字典
         """
         self.config = config or {}
-        self._pipeline = None
-        self._kernel = None  # 保存kernel引用
+        self._pipeline: Any = None
+        self._kernel: Any = None  # 保存kernel引用
         self._batch_size = 0
     
     def initialize(self, kernel: GPUKernel, batch_size: int) -> None:

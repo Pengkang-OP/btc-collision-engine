@@ -19,7 +19,7 @@ class PaginationManager:
     - 自定义数据分页显示
     """
     
-    def __init__(self, items: List[Any], page_size: int = 10):
+    def __init__(self, items: List[Any], page_size: int = 10) -> None:
         """初始化分页管理器
         
         Args:
@@ -131,7 +131,7 @@ class PaginationManager:
             output.print(" ".join(nav_options))
 
 
-def display_paginated_results(results: List[dict], title: str = "匹配结果"):
+def display_paginated_results(results: List[dict], title: str = "匹配结果") -> None:
     """分页显示匹配结果
     
     Args:
@@ -145,7 +145,7 @@ def display_paginated_results(results: List[dict], title: str = "匹配结果"):
         output.info("没有匹配结果")
         return
     
-    def format_match(item):
+    def format_match(item: dict) -> str:
         address = item.get('address', 'N/A')
         timestamp = item.get('timestamp', 0)
         match_index = item.get('match_index', 0)
@@ -175,7 +175,7 @@ def display_paginated_results(results: List[dict], title: str = "匹配结果"):
             paginator.go_to_page(page)
 
 
-def display_paginated_performance(data: List[dict], title: str = "性能数据"):
+def display_paginated_performance(data: List[dict], title: str = "性能数据") -> None:
     """分页显示性能数据
     
     Args:
@@ -189,7 +189,7 @@ def display_paginated_performance(data: List[dict], title: str = "性能数据")
         output.info("没有性能数据")
         return
     
-    def format_performance(item):
+    def format_performance(item: dict) -> str:
         timestamp = item.get('timestamp', 0)
         speed = item.get('speed', 0)
         total_checked = item.get('total_checked', 0)
@@ -220,7 +220,7 @@ def display_paginated_performance(data: List[dict], title: str = "性能数据")
             paginator.go_to_page(page)
 
 
-def display_paginated_errors(errors: List[dict], title: str = "错误日志"):
+def display_paginated_errors(errors: List[dict], title: str = "错误日志") -> None:
     """分页显示错误日志
     
     Args:
@@ -234,7 +234,7 @@ def display_paginated_errors(errors: List[dict], title: str = "错误日志"):
         output.info("没有错误日志")
         return
     
-    def format_error(item):
+    def format_error(item: dict) -> str:
         timestamp = item.get('timestamp', 0)
         error_type = item.get('error_type', 'Unknown')
         message = item.get('message', 'No message')

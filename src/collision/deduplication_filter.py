@@ -26,7 +26,7 @@ class DeduplicationFilter:
     """
     
     def __init__(self, max_size: int = 1_000_000, enabled: bool = True,
-                 false_positive_rate: float = 0.001):
+                 false_positive_rate: float = 0.001) -> None:
         """初始化去重过滤器
         
         参数:

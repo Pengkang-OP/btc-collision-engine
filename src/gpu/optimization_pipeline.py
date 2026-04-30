@@ -8,7 +8,7 @@ import logging
 
 # P3-5: 统一日志获取
 from ..utils import init_logging, get_configured_logger
-from typing import Optional, Dict, Any, TYPE_CHECKING
+from typing import Any, Callable, Dict, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..gpu.auto_tuner import GPUAutoTuner

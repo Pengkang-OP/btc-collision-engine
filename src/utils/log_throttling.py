@@ -6,7 +6,7 @@
 
 import time
 import logging
-from typing import Dict, Optional
+from typing import Any, Callable, Dict, Optional
 from functools import wraps
 
 
@@ -21,7 +21,7 @@ class RateLimitedLogger:
         >>> logger.error_limited("数据库连接失败", cooldown=60)  # 60秒内只记录一次
     """
     
-    def __init__(self, name: str, default_cooldown: int = 60):
+    def __init__(self, name: str, default_cooldown: int = 60) -> None:
         """初始化
         
         参数:
@@ -33,7 +33,7 @@ class RateLimitedLogger:
         self._last_log_time: Dict[str, float] = {}
     
     def error_limited(self, message: str, cooldown: Optional[int] = None, 
-                     *args, **kwargs):
+                     *args: Any, **kwargs: Any) -> None:
         """频率限制的error日志
         
         参数:
@@ -52,7 +52,7 @@ class RateLimitedLogger:
             self._last_log_time[message] = current_time
     
     def warning_limited(self, message: str, cooldown: Optional[int] = None,
-                       *args, **kwargs):
+                       *args: Any, **kwargs: Any) -> None:
         """频率限制的warning日志
         
         参数:
@@ -70,12 +70,12 @@ class RateLimitedLogger:
             self.logger.warning(message, *args, **kwargs)
             self._last_log_time[message] = current_time
     
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """清除缓存的日志时间戳"""
         self._last_log_time.clear()
 
 
-def rate_limited_log(cooldown: int = 60, level: str = 'error'):
+def rate_limited_log(cooldown: int = 60, level: str = 'error') -> Callable:
     """日志频率限制装饰器
     
     用于装饰可能频繁调用的函数，限制其日志输出频率。
@@ -90,11 +90,11 @@ def rate_limited_log(cooldown: int = 60, level: str = 'error'):
         >>>     logger.error(f"处理错误: {error}")
         >>>     # 60秒内只记录一次
     """
-    def decorator(func):
+    def decorator(func: Callable) -> Callable:
         last_log_time: Dict[str, float] = {}
         
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             current_time = time.time()
             # 使用函数名作为缓存键
             cache_key = func.__name__

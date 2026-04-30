@@ -99,7 +99,7 @@ class WorkStealingThreadPool:
         >>> pool.stop()
     """
     
-    def __init__(self, num_threads: int = None, enable_work_stealing: bool = True):
+    def __init__(self, num_threads: Optional[int] = None, enable_work_stealing: bool = True) -> None:
         """
         初始化线程池
         
@@ -135,7 +135,7 @@ class WorkStealingThreadPool:
         
         logger.info(f"线程池初始化: threads={self.num_threads}, work_stealing={enable_work_stealing}")
     
-    def start(self):
+    def start(self) -> None:
         """启动线程池"""
         self._stop_event.clear()
         self._start_time = time.time()  # P3-8: 记录启动时间
@@ -152,7 +152,7 @@ class WorkStealingThreadPool:
         
         logger.info(f"线程池已启动: {self.num_threads}个线程")
     
-    def stop(self, wait: bool = True, timeout: float = 30.0):
+    def stop(self, wait: bool = True, timeout: float = 30.0) -> None:
         """
         停止线程池
         
@@ -191,7 +191,7 @@ class WorkStealingThreadPool:
         返回:
             Future对象,用于获取任务结果
         """
-        future = Future()
+        future: 'Future' = Future()
         
         # 包装任务
         task = (fn, args, kwargs, future)
@@ -243,7 +243,7 @@ class WorkStealingThreadPool:
         # 1. 尝试从本地队列获取
         with self._queue_locks[thread_id]:
             if self._queues[thread_id]:
-                return self._queues[thread_id].popleft()
+                return self._queues[thread_id].popleft()  # type: ignore[no-any-return]
         
         # 2. 工作窃取: 从其他队列获取
         if self.enable_work_stealing:
@@ -273,7 +273,7 @@ class WorkStealingThreadPool:
                     # 从队列尾部窃取(减少竞争)
                     task = self._queues[victim_id].pop()
                     self._tasks_stolen += 1
-                    return task
+                    return task  # type: ignore[no-any-return]
         
         return None
     
@@ -356,7 +356,7 @@ class TaskBatch:
     用于批量提交和执行任务,减少调度开销。
     """
     
-    def __init__(self, pool: WorkStealingThreadPool):
+    def __init__(self, pool: WorkStealingThreadPool) -> None:
         """
         初始化批量任务执行器
         
@@ -366,7 +366,7 @@ class TaskBatch:
         self._pool = pool
         self._futures: List[Future] = []
     
-    def submit(self, fn: Callable, *args, **kwargs):
+    def submit(self, fn: Callable, *args, **kwargs) -> None:
         """提交任务到批次"""
         future = self._pool.submit(fn, *args, **kwargs)
         self._futures.append(future)
@@ -401,28 +401,28 @@ class GlobalThreadPoolManager:
     _instance = None
     _lock = threading.Lock()
     
-    def __new__(cls):
+    def __new__(cls) -> 'GlobalThreadPoolManager':
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None:
                     cls._instance = super().__new__(cls)
-                    cls._instance._pool: Optional[WorkStealingThreadPool] = None
-                    cls._instance._initialized = False
-                    cls._instance._shutdown_complete = False
+                    cls._instance._pool: Optional[WorkStealingThreadPool] = None  # type: ignore[misc,has-type]
+                    cls._instance._initialized = False  # type: ignore[has-type]
+                    cls._instance._shutdown_complete = False  # type: ignore[has-type]
         return cls._instance
     
-    def initialize(self, num_threads: int = None):
+    def initialize(self, num_threads: Optional[int] = None) -> None:
         """
         P3-8增强: 初始化全局线程池（支持配置传入）
         
         参数:
             num_threads: 线程数，None则自动检测。会被边界校验修正。
         """
-        if self._initialized:
+        if self._initialized:  # type: ignore[has-type]
             return
         
         with self._lock:
-            if not self._initialized:
+            if not self._initialized:  # type: ignore[has-type]
                 self._pool = WorkStealingThreadPool(num_threads)
                 self._pool.start()
                 self._initialized = True
@@ -435,7 +435,7 @@ class GlobalThreadPoolManager:
             self.initialize()
         return self._pool
     
-    def shutdown(self):
+    def shutdown(self) -> None:
         """
         P3-8增强: 关闭全局线程池（带统计输出）
         """
@@ -502,4 +502,8 @@ thread_pool_manager = GlobalThreadPoolManager()
 
 def get_thread_pool() -> WorkStealingThreadPool:
     """获取全局线程池实例"""
-    return thread_pool_manager.get_pool()
+    pool = thread_pool_manager.get_pool()
+    if pool is None:
+        thread_pool_manager.initialize()
+        pool = thread_pool_manager.get_pool()
+    return pool  # type: ignore[return-value]

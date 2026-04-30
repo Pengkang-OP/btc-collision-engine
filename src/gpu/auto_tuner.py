@@ -15,7 +15,7 @@
 import time
 import logging
 from ..utils import init_logging, get_configured_logger
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
 import statistics
@@ -74,7 +74,7 @@ class GPUAutoTuner:
         >>> print(f"最优 batch_size: {optimal['batch_size']}")
     """
     
-    def __init__(self, gpu_engine, config: Optional[TuningConfig] = None) -> None:
+    def __init__(self, gpu_engine: Any, config: Optional[TuningConfig] = None) -> None:
         """初始化自动调优器
         
         Args:

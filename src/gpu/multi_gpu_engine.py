@@ -78,15 +78,15 @@ class MultiGPUCollisionEngine:
         
         # 核心组件
         self.selector = get_gpu_selector()
-        self.load_balancer = None
-        self.workers = {}
+        self.load_balancer: Optional[GPULoadBalancer] = None
+        self.workers: Dict[int, Any] = {}
         
         # 状态管理 (使用锁保护)
         self._state_lock = threading.Lock()
         self._running = False
         self._initialized = False
-        self._devices = []
-        self._targets = set()
+        self._devices: List[Dict[str, Any]] = []
+        self._targets: Set[str] = set()
         
         # 工作器字典锁
         self._workers_lock = threading.Lock()
@@ -95,11 +95,11 @@ class MultiGPUCollisionEngine:
         self._matches_lock = threading.Lock()
         
         # 结果收集
-        self._all_matches = []
-        self._match_callback = None
+        self._all_matches: List[Dict[str, Any]] = []
+        self._match_callback: Optional[Callable[..., Any]] = None
         
         # 统计信息
-        self._start_time = None
+        self._start_time: Optional[float] = None
         self._total_keys_checked = 0
         
         # 数据监控器
@@ -130,12 +130,12 @@ class MultiGPUCollisionEngine:
         
         # 工作负载监控
         self._workload_monitor = None
-        self._monitor_thread = None
+        self._monitor_thread: Optional[threading.Thread] = None
         self._monitor_interval = self.config.workload_monitor_interval
         self._auto_rebalance = self.config.auto_rebalance
         
         # 性能历史数据
-        self._performance_history = []
+        self._performance_history: List[Dict[str, Any]] = []
         self._max_history_size = 100  # 最大历史记录数
         
         # 分布式统计聚合器（减少锁竞争，支持大规模GPU集群）- 根据配置启用
@@ -275,6 +275,7 @@ class MultiGPUCollisionEngine:
                 self._all_matches = []
             
             # 分配任务
+            assert self.load_balancer is not None
             key_ranges = self.load_balancer.assign_all_key_ranges(total_keys)
             
             # 创建工作器
@@ -650,12 +651,12 @@ class MultiGPUCollisionEngine:
             监控统计字典
         """
         if self._monitor_enabled:
-            return self.data_monitor.get_stats()
+            return self.data_monitor.get_stats()  # type: ignore[no-any-return]
         else:
             return {'enabled': False}
     
-    def get_monitor_issues(self, severity: str = None, 
-                          device_idx: int = None, limit: int = 100) -> List[Dict]:
+    def get_monitor_issues(self, severity: Optional[str] = None, 
+                          device_idx: Optional[int] = None, limit: int = 100) -> List[Dict]:
         """获取数据质量问题
         
         Args:
@@ -667,7 +668,7 @@ class MultiGPUCollisionEngine:
             问题列表
         """
         if self._monitor_enabled:
-            return self.data_monitor.get_issues(
+            return self.data_monitor.get_issues(  # type: ignore[no-any-return]
                 severity=severity, 
                 device_idx=device_idx,
                 limit=limit
@@ -747,7 +748,7 @@ class MultiGPUCollisionEngine:
         
         if vendor_key in self._compiled_programs:
             logger.info(f"同厂商 '{vendor_key}' 编译配置已存在，无需重新预处理")
-            return self._compiled_programs[vendor_key]
+            return self._compiled_programs[vendor_key]  # type: ignore[no-any-return]
         
         # 首次为该厂商记录编译配置
         compile_config = {
@@ -912,14 +913,13 @@ class MultiGPUCollisionEngine:
 
         logger.info("多GPU引擎资源已清理")
     
-    def __enter__(self) -> "MultiGPUEngine":
+    def __enter__(self) -> "MultiGPUCollisionEngine":
         """上下文管理器入口"""
         return self
     
     def __exit__(self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]) -> None:
         """上下文管理器出口"""
         self.cleanup()
-        return False
     
     def _start_workload_monitor(self):
         """启动工作负载监控线程"""
@@ -1053,7 +1053,7 @@ class MultiGPUCollisionEngine:
         Returns:
             GPUMetricsCollector 的导出数据
         """
-        return self._metrics.export_json()
+        return self._metrics.export_json()  # type: ignore[no-any-return]
 
     def export_prometheus_metrics(self) -> str:
         """导出 Prometheus 格式指标
@@ -1061,7 +1061,7 @@ class MultiGPUCollisionEngine:
         Returns:
             Prometheus text exposition format 字符串
         """
-        return self._metrics.export_prometheus()
+        return self._metrics.export_prometheus()  # type: ignore[no-any-return]
 
     def get_performance_history(self) -> List[Dict]:
         """获取性能历史数据

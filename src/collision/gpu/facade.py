@@ -49,7 +49,7 @@ class GPUEngineFacade:
         >>> facade.cleanup()
     """
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         """初始化GPU引擎外观
         
         Args:
@@ -163,7 +163,7 @@ class GPUEngineFacade:
             with self._lock:
                 async_pipeline = self._async_pipeline
             
-            matches, exec_time_ms = async_pipeline.run_batch(
+            matches, exec_time_ms = async_pipeline.run_batch(  # type: ignore[union-attr]
                 seed=seed,
                 batch_size=batch_size
             )
@@ -211,11 +211,11 @@ class GPUEngineFacade:
             except Exception as e:
                 logger.error(f"GPU引擎资源清理失败: {e}")
     
-    def __enter__(self):
+    def __enter__(self) -> 'GPUEngineFacade':
         """上下文管理器入口"""
         return self
     
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]) -> None:
         """上下文管理器出口"""
         self.cleanup()
         return False  # 不抑制异常
@@ -238,7 +238,7 @@ class GPUEngineFacade:
         """
         # TODO: Phase 2实现 - 从现有GPUDeviceManager适配
         from ...gpu.device_manager import GPUDeviceManager
-        return GPUDeviceManager(config=self.config)
+        return GPUDeviceManager(config=self.config)  # type: ignore[return-value]
     
     def _create_kernel_executor(self) -> IKernelExecutor:
         """创建GPU内核执行器
@@ -258,7 +258,7 @@ class GPUEngineFacade:
         """
         # TODO: Phase 2实现 - 从现有AsyncGPUExecutor适配
         from .async_pipeline_adapter import AsyncPipelineAdapter
-        return AsyncPipelineAdapter(config=self.config)
+        return AsyncPipelineAdapter(config=self.config)  # type: ignore[abstract]
     
     def _detect_vendor(self, device: GPUDevice) -> str:
         """检测GPU厂商

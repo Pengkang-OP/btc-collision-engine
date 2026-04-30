@@ -21,7 +21,7 @@ SHA256/RIPEMD160/secp256k1 等加密/哈希运算的精度。
 import logging
 from ..utils import init_logging, get_configured_logger
 import re
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, Dict, Optional, TYPE_CHECKING
 
 logger = get_configured_logger("NvidiaOptimizer")
 
@@ -103,7 +103,7 @@ class NvidiaDriverDetector:
                 'recommendation': str | None,
             }
         """
-        result = {
+        result: Dict[str, Any] = {
             'version_str': None,
             'major': None,
             'opencl_12_ok': False,
@@ -304,7 +304,7 @@ class NvidiaMemoryOptimizer:
     _HBM_KEYWORDS = ['A100', 'V100', 'H100', 'H200', 'GH200', 'GV100',
                      'Tesla K', 'Tesla P', 'Quadro GV']
 
-    def __init__(self, device_info: dict, arch_features: dict, engine_logger=None) -> None:
+    def __init__(self, device_info: dict, arch_features: dict, engine_logger: Optional[Any] = None) -> None:
         self._device_info = device_info
         self._arch_features = arch_features
         self._logger = engine_logger or logger
@@ -403,7 +403,7 @@ class NvidiaGPUOptimizer:
         self._logger.info("🔧 开始应用 NVIDIA GPU 特殊优化")
         self._logger.info("=" * 60)
 
-        result = {}
+        result: Dict[str, Any] = {}
 
         # 1. 驱动版本检测
         try:

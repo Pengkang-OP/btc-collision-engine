@@ -102,7 +102,7 @@ class PlatformUtils:
         return font
     
     @staticmethod
-    def ensure_utf8_output():
+    def ensure_utf8_output() -> None:
         """确保 Windows 终端输出使用 UTF-8 编码。
         
         在 Windows 系统上将 stdout 和 stderr 包装为 UTF-8 编码的 TextIOWrapper。

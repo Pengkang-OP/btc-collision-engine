@@ -41,7 +41,7 @@ class AddressMatcher:
                  strategy: str = 'hash_set',
                  targets: Optional[Set[str]] = None,
                  bloom_capacity: int = 100000,
-                 bloom_error_rate: float = 0.001):
+                 bloom_error_rate: float = 0.001) -> None:
         """
         初始化地址匹配引擎
         
@@ -157,7 +157,7 @@ class AddressMatcher:
             node = node[char]
         return '$' in node
     
-    def add_target(self, address: str):
+    def add_target(self, address: str) -> None:
         """
         添加单个目标地址
         
@@ -188,7 +188,7 @@ class AddressMatcher:
             except Exception as e:
                 logger.error(f"添加目标地址失败: {address}, 错误={e}")
     
-    def add_targets(self, addresses: Set[str]):
+    def add_targets(self, addresses: Set[str]) -> None:
         """
         批量添加目标地址
         
@@ -277,7 +277,7 @@ class AddressMatcher:
             
             return stats
     
-    def clear(self):
+    def clear(self) -> None:
         """清空所有目标地址"""
         with self._lock:
             self.targets.clear()

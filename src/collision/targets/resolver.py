@@ -202,7 +202,7 @@ class TargetResolver:
     
     def __init__(self, enable_cache: bool = True, cache_max_size: int = 10000,
                  max_file_size_bytes: int = MAX_FILE_SIZE_BYTES,
-                 max_lines: int = MAX_LINES, batch_size: int = BATCH_SIZE):
+                 max_lines: int = MAX_LINES, batch_size: int = BATCH_SIZE) -> None:
         """
         初始化目标地址解析器
         

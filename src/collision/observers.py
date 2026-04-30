@@ -44,7 +44,7 @@ class CollisionObserver(ABC):
         """
         pass
     
-    def on_error(self, error: Exception, context: Dict[str, Any] = None) -> None:
+    def on_error(self, error: Exception, context: Optional[Dict[str, Any]] = None) -> None:
         """错误事件（可选实现）
         
         Args:
@@ -72,7 +72,7 @@ class BaseCollisionObserver(CollisionObserver):
         """默认不处理完成事件"""
         pass
     
-    def on_error(self, error: Exception, context: Dict[str, Any] = None) -> None:
+    def on_error(self, error: Exception, context: Optional[Dict[str, Any]] = None) -> None:
         """默认不处理错误事件"""
         pass
 
@@ -83,7 +83,7 @@ class MonitoringObserver(BaseCollisionObserver):
     将碰撞引擎事件转发到监控系统。
     """
     
-    def __init__(self, monitoring_system):
+    def __init__(self, monitoring_system: Any) -> None:
         """
         Args:
             monitoring_system: EnhancedMonitoringSystem实例
@@ -101,7 +101,7 @@ class MonitoringObserver(BaseCollisionObserver):
             # 可以在这里记录匹配事件到日志
             pass
     
-    def on_error(self, error: Exception, context: Dict[str, Any] = None) -> None:
+    def on_error(self, error: Exception, context: Optional[Dict[str, Any]] = None) -> None:
         """记录错误事件"""
         if hasattr(self.monitoring_system, 'data_logger'):
             self.monitoring_system.data_logger.record_error(
@@ -117,7 +117,7 @@ class LoggingObserver(BaseCollisionObserver):
     专门用于记录碰撞引擎的关键事件。
     """
     
-    def __init__(self, logger):
+    def __init__(self, logger: Any) -> None:
         """
         Args:
             logger: logging.Logger实例
@@ -156,7 +156,7 @@ class ObserverManager:
     管理多个观察者，提供批量通知功能。
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         self._observers = []
         self._lock = None  # 延迟初始化，避免循环导入
     
@@ -234,7 +234,7 @@ class ObserverManager:
                     f"观察者on_complete回调失败: {e}"
                 )
     
-    def notify_error(self, error: Exception, context: Dict[str, Any] = None) -> None:
+    def notify_error(self, error: Exception, context: Optional[Dict[str, Any]] = None) -> None:
         """通知所有观察者错误事件
         
         Args:

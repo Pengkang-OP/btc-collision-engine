@@ -76,13 +76,13 @@ class GPULoadBalancer:
         self.memory_usage_threshold = memory_usage_threshold
         self._scorer = scorer or get_gpu_scorer()
         
-        self._weights = {}
-        self._key_ranges = {}
-        self._last_rebalance_time = time.time()
-        self._performance_stats = {}
-        self._memory_stats = {}
-        self._historical_performance = {}
-        self._load_history = {}
+        self._weights: Dict[int, float] = {}
+        self._key_ranges: Dict[int, Tuple[int, int]] = {}
+        self._last_rebalance_time: float = time.time()
+        self._performance_stats: Dict[int, Dict[str, Any]] = {}
+        self._memory_stats: Dict[int, Dict[str, Any]] = {}
+        self._historical_performance: Dict[int, List[Dict[str, Any]]] = {}
+        self._load_history: Dict[int, List[Dict[str, Any]]] = {}
         
         # 计算初始权重
         self._calculate_initial_weights()
@@ -116,7 +116,7 @@ class GPULoadBalancer:
         Returns:
             设备索引 -> 权重映射 (总和为1.0)
         """
-        return self._scorer.calculate_performance_weights(self.devices)
+        return self._scorer.calculate_performance_weights(self.devices)  # type: ignore[no-any-return]
     
     def calculate_weights(self) -> Dict[int, float]:
         """获取当前负载权重
@@ -493,7 +493,7 @@ class GPULoadBalancer:
         recent_history = history[-10:]
         throughputs = [h['throughput'] for h in recent_history]
         
-        return statistics.mean(throughputs)
+        return statistics.mean(throughputs)  # type: ignore[no-any-return]
     
     def _get_memory_factor(self, device_idx: int) -> float:
         """获取内存影响因子
@@ -514,9 +514,9 @@ class GPULoadBalancer:
         if usage_ratio < 0.5:
             return 1.0
         elif usage_ratio < 0.8:
-            return 1.0 - (usage_ratio - 0.5) * 0.5
+            return 1.0 - (usage_ratio - 0.5) * 0.5  # type: ignore[no-any-return]
         else:
-            return 0.8 - (usage_ratio - 0.8) * 0.5
+            return 0.8 - (usage_ratio - 0.8) * 0.5  # type: ignore[no-any-return]
     
     def _record_load_history(self) -> None:
         """记录负载历史"""
@@ -628,7 +628,7 @@ class GPULoadBalancer:
         # 预测下一个值
         predicted = throughputs[-1] + trend
         
-        return max(predicted, 0)
+        return max(predicted, 0)  # type: ignore[no-any-return]
     
     def reset(self) -> None:
         """重置负载均衡器"""

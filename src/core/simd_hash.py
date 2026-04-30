@@ -59,7 +59,7 @@ class SIMDHashOptimizer:
     
     __slots__ = ['use_pycryptodome', 'SHA256', 'RIPEMD160']
     
-    def __init__(self):
+    def __init__(self) -> None:
         """初始化SIMD哈希优化器,检测pycryptodome可用性"""
         self.use_pycryptodome = False
         self.SHA256 = None

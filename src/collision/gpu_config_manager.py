@@ -25,7 +25,7 @@ class GPUConfigManager:
     设计模式: 策略模式 + 责任链模式
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """初始化配置管理器"""
         self._config_cache: Dict[str, Any] = {}
         logger.debug("GPUConfigManager已初始化")

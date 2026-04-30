@@ -26,7 +26,9 @@ from .intel_optimizer import IntelGPUOptimizer
 from .buffer_tracker import GPUBufferTracker
 from .precompute import get_precomp_table
 from ..utils.exception_handler import ExceptionHandler
-from ..utils.performance_monitor import EnhancedPerformanceMonitor, PerformanceMetrics
+from ..utils.performance_monitor import EnhancedPerformanceMonitor
+from ..utils.performance_monitor import PerformanceMetrics as UtilsPerformanceMetrics
+from .performance_optimizer import PerformanceMetrics
 from ..utils.gpu_memory_utils import calculate_optimal_batch_size
 from ..core.address_generator import P2PKHAddressGenerator
 from ..core.hash_utils import HashUtils
@@ -36,9 +38,9 @@ logger = get_configured_logger("GPUKernel")
 
 
 # 尝试导入 pyopencl
-cl = None
+cl = None  # type: ignore[assignment]
 try:
-    import pyopencl as cl
+    import pyopencl as cl  # type: ignore[no-redef]
 except ImportError:
     pass
 
@@ -82,7 +84,7 @@ class GPUKernel(GPUKernelProtocol):
     KEYS_BUFFER_SIZE_FACTOR = 32    # Deprecated: PRNG模式下私钥缓冲区已不再需要
     MATCH_BUFFER_SIZE_FACTOR = 4    # 每个匹配标志4字节（int32）
     
-    def __init__(self, device: GPUDevice, max_batch_size: int = None, program: Optional[Any] = None) -> None:
+    def __init__(self, device: GPUDevice, max_batch_size: Optional[int] = None, program: Optional[Any] = None) -> None:
         """
         初始化GPUKernel
         
@@ -112,11 +114,11 @@ class GPUKernel(GPUKernelProtocol):
                 
         self._max_batch_size = max_batch_size
         self._program = program  # 可能为None（需要自行编译）
-        self._batch_kernel = None
-        self._batch_kernel_local = None  # local memory版本内核引用
+        self._batch_kernel: Optional[Any] = None
+        self._batch_kernel_local: Optional[Any] = None  # local memory版本内核引用
         # 查询设备local memory大小（OpenCL标准属性），回退默认值16KB
         try:
-            self._local_mem_size = device.device.local_mem_size
+            self._local_mem_size = device.device.local_mem_size  # type: ignore[attr-defined]
         except Exception:
             self._local_mem_size = 16384  # 默认16KB
         
@@ -124,18 +126,18 @@ class GPUKernel(GPUKernelProtocol):
         self._buffer_tracker = GPUBufferTracker()
         
         # 持久化 Buffer - 避免频繁分配/释放
-        self._seed_buf = None     # PRNG模式：仅存傤32字节种子
+        self._seed_buf: Optional[Any] = None     # PRNG模式：仅存傤32字节种子
         # self._keys_buf 已于 v4.0 PRNG 改造时移除，不再使用
-        self._match_buf = None
-        self._targets_buf = None
-        self._target_hash160s = None  # P3修复: 添加目标地址缓存
-        self._targets_cached = None
+        self._match_buf: Optional[Any] = None
+        self._targets_buf: Optional[Any] = None
+        self._target_hash160s: Optional[bytes] = None  # P3修复: 添加目标地址缓存
+        self._targets_cached: Optional[bytes] = None
         self._num_targets_cached = 0
         self._check_uncompressed = 0  # v4.0: 0=仅压缩, 1=也检查非压缩
-        self._precomp_buf = None  # 预计算表常量缓冲区（生命周期与 kernel 一致）
+        self._precomp_buf: Optional[Any] = None  # 预计算表常量缓冲区（生命周期与 kernel 一致）
         
         # 预分配主机内存
-        self._match_flags = None
+        self._match_flags: Optional[Any] = None
 
         # 校验 GPUDevice 已正确初始化
         if not getattr(self.device, "context", None) or not getattr(self.device, "queue", None):
@@ -218,7 +220,7 @@ class GPUKernel(GPUKernelProtocol):
                 global_mem = self.device.device.global_mem_size
                 
                 # 创建优化配置
-                profile = self.gpu_optimizer.create_optimized_profile(
+                profile = self.gpu_optimizer.create_optimized_profile(  # type: ignore[union-attr]
                     device_name=device_name,
                     vendor_str=vendor_str,
                     global_mem_size=global_mem,
@@ -267,19 +269,20 @@ class GPUKernel(GPUKernelProtocol):
                 
         # 将种子写入GPU seed缓冲区
         seed_array = _seed_bytes_to_u32_be_array(test_seed_bytes)
-        cl.enqueue_copy(self.device.queue, self._seed_buf, seed_array)
+        cl.enqueue_copy(  # type: ignore[call-overload]
+            self.device.queue, self._seed_buf, seed_array)
                 
         # 设置目标
         self.set_targets(test_targets, num_targets)
                 
         # 清空匹配结果缓冲区
-        cl.enqueue_fill_buffer(
-            self.device.queue, self._match_buf,
-            np.int32(0), 0, num_keys * 4
+        cl.enqueue_fill_buffer(  # type: ignore[arg-type]
+            self.device.queue, self._match_buf,  # type: ignore[arg-type]
+            np.int32(0), 0, num_keys * 4  # type: ignore[arg-type]
         )
                 
         # 执行GPU batch计算
-        self._batch_kernel(
+        self._batch_kernel(  # type: ignore[misc]
             self.device.queue,
             (num_keys,), None,
             self._seed_buf, np.uint32(num_keys),
@@ -290,8 +293,9 @@ class GPUKernel(GPUKernelProtocol):
         ).wait()
                 
         # 读取结果
-        match_flags = np.zeros(num_keys, dtype=np.int32)
-        cl.enqueue_copy(self.device.queue, match_flags, self._match_buf)
+        match_flags: np.ndarray[Any, Any] = np.zeros(num_keys, dtype=np.int32)
+        cl.enqueue_copy(  # type: ignore[call-overload]
+            self.device.queue, match_flags, self._match_buf)
                 
         # 验证: 由于目标是全0,不应该匹配
         if match_flags[0] != 0:
@@ -318,13 +322,13 @@ class GPUKernel(GPUKernelProtocol):
             self.set_targets(test_hash160, 1)
                     
             # 清空匹配结果缓冲区
-            cl.enqueue_fill_buffer(
-                self.device.queue, self._match_buf,
-                np.int32(0), 0, num_keys * 4
+            cl.enqueue_fill_buffer(  # type: ignore[arg-type]
+                self.device.queue, self._match_buf,  # type: ignore[arg-type]
+                np.int32(0), 0, num_keys * 4  # type: ignore[arg-type]
             )
                     
             # 执行GPU batch计算
-            self._batch_kernel(
+            self._batch_kernel(  # type: ignore[misc]
                 self.device.queue,
                 (num_keys,), None,
                 self._seed_buf, np.uint32(num_keys),
@@ -336,7 +340,8 @@ class GPUKernel(GPUKernelProtocol):
                     
             # 读取结果
             match_flags = np.zeros(num_keys, dtype=np.int32)
-            cl.enqueue_copy(self.device.queue, match_flags, self._match_buf)
+            cl.enqueue_copy(  # type: ignore[call-overload]
+                self.device.queue, match_flags, self._match_buf)
                     
             # 验证: 私钥1应该匹配它的地址
             if match_flags[0] != 1:
@@ -426,7 +431,7 @@ class GPUKernel(GPUKernelProtocol):
         
         try:
             # 获取编译后的二进制
-            binaries = self._program.get_info(cl.program_info.BINARIES)
+            binaries = self._program.get_info(cl.program_info.BINARIES)  # type: ignore[union-attr]
             if binaries and len(binaries) > 0:
                 binary = binaries[0]
                 
@@ -452,7 +457,7 @@ class GPUKernel(GPUKernelProtocol):
             target_buffer_size = len(self._target_hash160s)
         
         # 调用共享函数
-        return calculate_optimal_batch_size(
+        return calculate_optimal_batch_size(  # type: ignore[no-any-return]
             device=self.device,
             target_buffer_size=target_buffer_size
         )
@@ -474,13 +479,13 @@ class GPUKernel(GPUKernelProtocol):
         # 节省显存: max_batch_size * 32 字节（例: 1M keys 节省约32MB）
         if memory_pool:
             # 内存池不支持如此小的分配，直接创建
-            self._seed_buf = cl.Buffer(
+            self._seed_buf = cl.Buffer(  # type: ignore[assignment]
                 self.device.context,
                 cl.mem_flags.READ_ONLY,
                 size=32  # 固定32字节
             )
         else:
-            self._seed_buf = cl.Buffer(
+            self._seed_buf = cl.Buffer(  # type: ignore[assignment]
                 self.device.context,
                 cl.mem_flags.READ_ONLY,
                 size=32  # 固定32字节
@@ -499,7 +504,7 @@ class GPUKernel(GPUKernelProtocol):
             logger.debug(f"使用内存池分配匹配缓冲区: {match_buf_size}字节")
         else:
             # 直接分配（回退模式）
-            self._match_buf = cl.Buffer(
+            self._match_buf = cl.Buffer(  # type: ignore[assignment]
                 self.device.context,
                 cl.mem_flags.WRITE_ONLY,
                 size=match_buf_size
@@ -510,13 +515,13 @@ class GPUKernel(GPUKernelProtocol):
         self._buffer_tracker.track_buffer("_match_buf", self._match_buf, match_buf_size)
         
         # 预分配主机内存
-        self._match_flags = np.zeros(self.max_batch_size, dtype=np.int32)
+        self._match_flags = np.zeros(self.max_batch_size, dtype=np.int32)  # type: ignore[assignment]
 
         # 预计算表常量缓冲区
         if self._precomp_buf is None:
             from .precompute import get_precomp_table
             precomp_data = get_precomp_table()
-            self._precomp_buf = cl.Buffer(
+            self._precomp_buf = cl.Buffer(  # type: ignore[assignment]
                 self.device.context,
                 cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR,
                 hostbuf=precomp_data
@@ -566,19 +571,19 @@ class GPUKernel(GPUKernelProtocol):
         
         # 创建新的目标缓冲区
         targets_array = np.frombuffer(target_hash160s, dtype=np.uint8)
-        self._targets_buf = cl.Buffer(
+        self._targets_buf = cl.Buffer(  # type: ignore[assignment]
             self.device.context,
             cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR,
             hostbuf=targets_array
         )
         
-        self._targets_cached = target_hash160s
+        self._targets_cached = target_hash160s  # type: ignore[assignment]
         self._num_targets_cached = num_targets
         
         logger.info(f"GPU 目标地址设置完成: {num_targets} 个目标")
     
     def run_batch(self, seed: bytes, num_keys: int,
-                  target_hash160s: bytes = None, num_targets: int = 0,
+                  target_hash160s: Optional[bytes] = None, num_targets: int = 0,
                   stop_event: Optional[Any] = None) -> List[Dict]:
         """PRNG模式批量执行私钥碰撞检测
         
@@ -635,7 +640,8 @@ class GPUKernel(GPUKernelProtocol):
         
         seed_array = _seed_bytes_to_u32_be_array(seed)
         try:
-            cl.enqueue_copy(self.device.queue, self._seed_buf, seed_array)
+            cl.enqueue_copy(  # type: ignore[call-overload]
+                self.device.queue, self._seed_buf, seed_array)
         except Exception as e:
             logger.error(f"写入 seed_buf 失败: {e}")
             return []
@@ -646,7 +652,7 @@ class GPUKernel(GPUKernelProtocol):
             return []
         
         try:
-            cl.enqueue_fill_buffer(
+            cl.enqueue_fill_buffer(  # type: ignore[arg-type]
                 self.device.queue, self._match_buf,
                 np.int32(0), 0, num_keys * 4
             )
@@ -656,7 +662,7 @@ class GPUKernel(GPUKernelProtocol):
         
         # 执行内核（异步）
         if self._batch_kernel is None:
-            self._batch_kernel = self.program.batch_check
+            self._batch_kernel = self.program.batch_check  # type: ignore[union-attr]
         
         # v2.3.0优化: 显式设置local_work_size提升性能
         # 从配置中获取work_group_size，避免OpenCL自动选择次优值
@@ -684,7 +690,7 @@ class GPUKernel(GPUKernelProtocol):
             logger.debug(
                 f"使用local memory版内核: 目标数据{target_bytes}B 设备local_mem={local_mem_size}B"
             )
-            self._batch_kernel_local(
+            self._batch_kernel_local(  # type: ignore[misc]
                 self.device.queue, (global_work_size,), (local_work_size,),
                 self._seed_buf, np.uint32(num_keys),
                 self._targets_buf, np.uint32(self._num_targets_cached),
@@ -694,7 +700,7 @@ class GPUKernel(GPUKernelProtocol):
                 self._precomp_buf
             )
         else:
-            self._batch_kernel(
+            self._batch_kernel(  # type: ignore[misc]
                 self.device.queue, (global_work_size,), (local_work_size,),
                 self._seed_buf, np.uint32(num_keys),
                 self._targets_buf, np.uint32(self._num_targets_cached),
@@ -704,7 +710,7 @@ class GPUKernel(GPUKernelProtocol):
             )
         
         # 异步读取结果
-        match_view = self._match_flags[:num_keys]
+        match_view = self._match_flags[:num_keys]  # type: ignore[index]
         read_event = cl.enqueue_copy(
             self.device.queue, match_view, self._match_buf
         )
@@ -860,7 +866,7 @@ class GPUKernel(GPUKernelProtocol):
                 keys_per_second=keys_per_second,
                 error_count=0  # 本批次无错误
             )
-            self.gpu_optimizer.record_performance(metrics)
+            self.gpu_optimizer.record_performance(metrics)  # type: ignore[union-attr]
             
             # v2.2.1: 记录到GPU性能监控器
             if hasattr(self, 'stats') and self.stats:
@@ -904,7 +910,7 @@ class GPUKernel(GPUKernelProtocol):
                 estimated_memory = num_keys * 36  # 每个私钥约 36 字节
                 self.memory_monitor.track_allocation(
                     estimated_memory,
-                    batch_count=self.stats.total_batches
+                    batch_count=self.stats.total_batches  # type: ignore[attr-defined]
                 )
                 
                 # 降低显存检查频率：每 100 个批次检查一次

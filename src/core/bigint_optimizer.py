@@ -27,7 +27,7 @@
 """
 
 import logging
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Any
 
 # 导入日志配置
 from ..utils import init_logging, get_configured_logger
@@ -56,11 +56,11 @@ class BigIntOptimizer:
     
     __slots__ = ['gmpy2', 'use_gmpy2', 'mpz']
     
-    def __init__(self):
+    def __init__(self) -> None:
         """初始化大整数优化器,检测gmpy2可用性"""
-        self.gmpy2 = None
-        self.use_gmpy2 = False
-        self.mpz = None
+        self.gmpy2: Optional[Any] = None
+        self.use_gmpy2: bool = False
+        self.mpz: Optional[Any] = None
         
         try:
             import gmpy2
@@ -88,7 +88,7 @@ class BigIntOptimizer:
         if self.use_gmpy2:
             # 使用gmpy2.invert() - 基于扩展欧几里得的优化实现
             try:
-                return int(self.gmpy2.invert(self.mpz(a), self.mpz(m)))
+                return int(self.gmpy2.invert(self.mpz(a), self.mpz(m)))  # type: ignore[union-attr,misc]
             except ZeroDivisionError:
                 raise ValueError(f"模逆元不存在: {a} 在模 {m} 下")
         else:
@@ -132,7 +132,7 @@ class BigIntOptimizer:
         """
         if self.use_gmpy2:
             # gmpy2内部使用Comba乘法,比Python int快30-40%
-            return int((self.mpz(a) * self.mpz(b)) % self.mpz(m))
+            return int((self.mpz(a) * self.mpz(b)) % self.mpz(m))  # type: ignore[misc]
         else:
             return (a * b) % m
     
@@ -149,7 +149,7 @@ class BigIntOptimizer:
             (a + b) % m
         """
         if self.use_gmpy2:
-            return int((self.mpz(a) + self.mpz(b)) % self.mpz(m))
+            return int((self.mpz(a) + self.mpz(b)) % self.mpz(m))  # type: ignore[misc]
         else:
             return (a + b) % m
     
@@ -166,7 +166,7 @@ class BigIntOptimizer:
             (a - b) % m
         """
         if self.use_gmpy2:
-            return int((self.mpz(a) - self.mpz(b)) % self.mpz(m))
+            return int((self.mpz(a) - self.mpz(b)) % self.mpz(m))  # type: ignore[misc]
         else:
             return (a - b) % m
     
@@ -183,7 +183,7 @@ class BigIntOptimizer:
             (base ^ exp) % m
         """
         if self.use_gmpy2:
-            return int(pow(self.mpz(base), self.mpz(exp), self.mpz(m)))
+            return int(pow(self.mpz(base), self.mpz(exp), self.mpz(m)))  # type: ignore[misc]
         else:
             return pow(base, exp, m)
     

@@ -19,7 +19,7 @@
 """
 
 import logging
-from typing import List, Optional
+from typing import Any, List, Optional
 
 # 导入日志配置
 from ..utils import init_logging, get_configured_logger
@@ -60,7 +60,7 @@ class PrecomputedPointTable:
     
     __slots__ = ['window_size', 'table', 'num_points', 'ec', 'G']
     
-    def __init__(self, window_size: int = 8, ec=None):
+    def __init__(self, window_size: int = 8, ec: Any = None) -> None:
         """
         初始化预计算点表
         
@@ -130,7 +130,7 @@ class PrecomputedPointTable:
         
         return table
     
-    def scalar_multiply_with_table(self, k: int, ec=None) -> 'ECPoint':
+    def scalar_multiply_with_table(self, k: int, ec: Any = None) -> 'ECPoint':
         """
         使用预计算表加速标量乘法
         
@@ -227,13 +227,13 @@ class PrecomputedTableManager:
     _instance = None
     _tables = {}
     
-    def __new__(cls):
+    def __new__(cls) -> 'PrecomputedTableManager':
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._tables = {}
         return cls._instance
     
-    def get_table(self, window_size: int = 8, ec=None) -> PrecomputedPointTable:
+    def get_table(self, window_size: int = 8, ec: Any = None) -> PrecomputedPointTable:
         """
         获取或创建预计算表
         
@@ -248,7 +248,7 @@ class PrecomputedTableManager:
             self._tables[window_size] = PrecomputedPointTable(window_size, ec)
         return self._tables[window_size]
     
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """清空所有预计算表缓存"""
         self._tables.clear()
         logger.info("预计算表缓存已清空")
@@ -258,7 +258,7 @@ class PrecomputedTableManager:
 precomputed_table_manager = PrecomputedTableManager()
 
 
-def get_precomputed_table(window_size: int = 8, ec=None) -> PrecomputedPointTable:
+def get_precomputed_table(window_size: int = 8, ec: Any = None) -> PrecomputedPointTable:
     """
     获取预计算表(便捷函数)
     

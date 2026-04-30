@@ -61,8 +61,8 @@ class EnhancedMonitoringSystem:
         self,
         engine: Optional[Any] = None,
         config: Optional[MonitorConfig] = None,
-        collection_interval: float = None,  # 已弃用，使用config
-        enable_monitoring_data: bool = None  # 已弃用，使用config
+        collection_interval: Optional[float] = None,  # 已弃用，使用config
+        enable_monitoring_data: Optional[bool] = None  # 已弃用，使用config
     ) -> None:
         """
         初始化增强版监控系统
@@ -142,11 +142,11 @@ class EnhancedMonitoringSystem:
             self._collector = None
         
         self._running = False
-        self._thread = None
+        self._thread: Optional[threading.Thread] = None
         self._stop_event = threading.Event()
         
         # 报告生成控制（从配置读取）
-        self._last_report_time = 0
+        self._last_report_time: float = 0.0
         self._report_interval = self.config.report_interval
         
         self.logger.info(
@@ -316,7 +316,7 @@ class EnhancedMonitoringSystem:
         """获取CPU使用率"""
         try:
             process = psutil.Process(os.getpid())
-            return process.cpu_percent(interval=0.1)
+            return process.cpu_percent(interval=0.1)  # type: ignore[no-any-return]
         except (TypeError, ValueError, KeyError):
             return 0.0
     
@@ -325,7 +325,7 @@ class EnhancedMonitoringSystem:
         try:
             process = psutil.Process(os.getpid())
             memory_info = process.memory_info()
-            return memory_info.rss / (1024 * 1024)
+            return memory_info.rss / (1024 * 1024)  # type: ignore[no-any-return]
         except (TypeError, ValueError, KeyError):
             return 0.0
     
@@ -394,4 +394,4 @@ class EnhancedMonitoringSystem:
     
     def get_data_logger(self) -> DataLogger:
         """获取数据日志记录器"""
-        return self.data_logger
+        return self.data_logger  # type: ignore[return-value]

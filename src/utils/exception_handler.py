@@ -14,6 +14,7 @@ from typing import Optional
 
 # P3-5: 统一日志获取
 from .logging_config import get_configured_logger
+from typing import Any
 
 logger = get_configured_logger("ExceptionHandler")
 
@@ -28,7 +29,7 @@ class ExceptionHandler:
     """
     
     @staticmethod
-    def handle_engine_error(engine_type: str, error: Exception, stats=None, context: str = ""):
+    def handle_engine_error(engine_type: str, error: Exception, stats: Any = None, context: str = "") -> None:
         """
         统一处理引擎错误
         
@@ -73,7 +74,7 @@ class ExceptionHandler:
                 stats.record_worker_error()
     
     @staticmethod
-    def handle_gpu_error(mode: str, error: Exception, stats=None):
+    def handle_gpu_error(mode: str, error: Exception, stats: Any = None) -> bool:
         """
         统一处理GPU错误(复用GPUDevice.handle_gpu_batch_error逻辑)
         
@@ -212,7 +213,7 @@ class ExceptionHandler:
             logger.warning(f"GPU清理{resource_name}失败: {type(error).__name__}: {error}")
     
     @staticmethod
-    def handle_config_error(error: Exception, config_type: str = ""):
+    def handle_config_error(error: Exception, config_type: str = "") -> None:
         """
         统一处理配置错误
         
@@ -230,7 +231,7 @@ class ExceptionHandler:
             logger.exception(f"{config_type}配置加载未知错误")
     
     @staticmethod
-    def handle_file_error(error: Exception, operation: str, filepath: str = ""):
+    def handle_file_error(error: Exception, operation: str, filepath: str = "") -> None:
         """
         统一处理文件操作错误
         

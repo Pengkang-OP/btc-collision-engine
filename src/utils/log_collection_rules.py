@@ -297,7 +297,7 @@ def get_rule_manager(config_file: Optional[str] = None) -> LogCollectionRuleMana
     return _rule_manager
 
 
-def init_log_collection_rules(config_file: Optional[str] = None):
+def init_log_collection_rules(config_file: Optional[str] = None) -> None:
     """
     初始化日志收集规则
     

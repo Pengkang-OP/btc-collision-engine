@@ -179,7 +179,7 @@ def apply_template(template_name: str, config_path: str = "config.json") -> bool
 # 参数智能推荐
 # ─────────────────────────────────────────────────────────────────────────────
 
-def recommend_parameters(args) -> dict:
+def recommend_parameters(args: Any) -> dict:
     """
     根据目标和系统信息推荐最优参数
     
@@ -254,7 +254,7 @@ def recommend_parameters(args) -> dict:
 # 进度数据导出
 # ─────────────────────────────────────────────────────────────────────────────
 
-def export_progress_data(stats, mode: str, engine_type: str, 
+def export_progress_data(stats: Any, mode: str, engine_type: str, 
                          output_file: str, total_range: Optional[int] = None) -> bool:
     """
     导出进度数据到JSON文件

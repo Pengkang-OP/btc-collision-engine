@@ -9,7 +9,7 @@ import json
 from src.utils.fast_json import fast_dump, fast_load
 import tempfile
 import logging
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 from src.utils.platform_utils import PlatformUtils
 
@@ -89,7 +89,7 @@ def atomic_json_write(filepath: str, data: Any, ensure_ascii: bool = False,
 
 
 def atomic_json_read(filepath: str, default: Any = None, 
-                    validate_func=None) -> Any:
+                    validate_func: Optional[Callable] = None) -> Any:
     """安全读取JSON文件（带恢复机制）
     
     尝试读取JSON文件，如果文件损坏则尝试从备份恢复。

@@ -39,7 +39,7 @@ class DataQualityIssue:
     STALE_DATA = "stale_data"
     
     def __init__(self, issue_type: str, severity: str, message: str, 
-                 device_idx: int, details: Dict = None) -> None:
+                 device_idx: int, details: Optional[Dict[str, Any]] = None) -> None:
         """初始化质量问题
         
         Args:
@@ -57,7 +57,7 @@ class DataQualityIssue:
         self.timestamp = time.time()
         self.datetime = datetime.now().isoformat()
     
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
             'issue_type': self.issue_type,
@@ -89,7 +89,7 @@ class DataMonitor:
         monitor.stop()
     """
     
-    def __init__(self, config: Optional[Dict] = None) -> None:
+    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         """初始化数据监控器
         
         Args:
@@ -108,14 +108,14 @@ class DataMonitor:
         
         # 线程控制
         self._running = False
-        self._monitor_thread = None
+        self._monitor_thread: Optional[threading.Thread] = None
         self._stop_event = threading.Event()
         
         # 线程安全锁
         self._lock = threading.RLock()  # 使用可重入锁保护所有共享状态
         
         # 设备数据跟踪
-        self._device_stats = defaultdict(lambda: {
+        self._device_stats: Dict[int, Dict[str, Any]] = defaultdict(lambda: {
             'total_keys': 0,
             'total_matches': 0,
             'total_errors': 0,
@@ -127,13 +127,13 @@ class DataMonitor:
         })
         
         # 问题记录
-        self._issues = deque(maxlen=10000)  # 保留最近10000个问题
-        self._issues_by_type = defaultdict(int)
-        self._issues_by_device = defaultdict(int)
-        self._issues_last_minute = deque(maxlen=1000)
+        self._issues: deque[Dict[str, Any]] = deque(maxlen=10000)  # 保留最近10000个问题
+        self._issues_by_type: Dict[str, int] = defaultdict(int)
+        self._issues_by_device: Dict[int, int] = defaultdict(int)
+        self._issues_last_minute: deque[float] = deque(maxlen=1000)
         
         # 统计信息
-        self._stats = {
+        self._stats: Dict[str, Any] = {
             'total_keys_monitored': 0,
             'total_matches_verified': 0,
             'total_issues_detected': 0,
@@ -144,7 +144,7 @@ class DataMonitor:
         }
         
         # 回调函数
-        self._anomaly_callback = None
+        self._anomaly_callback: Optional[Any] = None
         
         logger.info("数据监控器已创建")
     
@@ -188,7 +188,7 @@ class DataMonitor:
         logger.info("数据监控器已停止")
     
     def report_keys_generated(self, device_idx: int, count: int, 
-                              key_range: Tuple[int, int] = None) -> None:
+                              key_range: Optional[Tuple[int, int]] = None) -> None:
         """报告生成的私钥数据
         
         Args:
@@ -282,7 +282,7 @@ class DataMonitor:
             logger.error(f"报告错误失败 [GPU {device_idx}]: {e}")
     
     def report_validation_result(self, device_idx: int, passed: bool, 
-                                 validation_type: str = None) -> None:
+                                 validation_type: Optional[str] = None) -> None:
         """报告验证结果
         
         Args:
@@ -305,7 +305,7 @@ class DataMonitor:
         except Exception as e:
             logger.error(f"报告验证结果失败 [GPU {device_idx}]: {e}")
     
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> Dict[str, Any]:
         """获取监控统计
         
         Returns:
@@ -334,8 +334,8 @@ class DataMonitor:
             
             return stats
     
-    def get_issues(self, severity: str = None, device_idx: int = None,
-                   limit: int = 100) -> List[Dict]:
+    def get_issues(self, severity: Optional[str] = None, device_idx: Optional[int] = None,
+                   limit: int = 100) -> List[Dict[str, Any]]:
         """获取检测到的问题
         
         Args:
@@ -634,7 +634,7 @@ class DataMonitor:
         total_time = history[-1]['timestamp'] - history[0]['timestamp']
         
         if total_time > 0:
-            return total_keys / total_time
+            return total_keys / total_time  # type: ignore[no-any-return]
         
         return 0.0
     

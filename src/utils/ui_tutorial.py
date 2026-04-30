@@ -2,7 +2,7 @@
 """UI辅助工具 - 工具提示和用户引导"""
 import tkinter as tk
 from tkinter import messagebox
-from typing import Optional
+from typing import Any, Optional
 
 from ..config.gui_config import FONT_CONFIG, COLOR_CONFIG
 from .platform_utils import PlatformUtils
@@ -17,7 +17,7 @@ class Tooltip:
         >>> tooltip = Tooltip(button, "点击开始碰撞")
     """
     
-    def __init__(self, widget, text: str, delay: int = 500):
+    def __init__(self, widget: Any, text: str, delay: int = 500) -> None:
         """
         初始化工具提示
         
@@ -42,7 +42,7 @@ class Tooltip:
     
     def _show_tooltip(self, event=None):
         """显示提示"""
-        def show():
+        def show() -> None:
             # 获取鼠标位置
             x = self.widget.winfo_rootx() + 20
             y = self.widget.winfo_rooty() + self.widget.winfo_height() + 5
@@ -81,7 +81,7 @@ class Tooltip:
             self.tooltip_window = None
 
 
-def add_tooltip(widget, text: str, delay: int = 500) -> Tooltip:
+def add_tooltip(widget: Any, text: str, delay: int = 500) -> Tooltip:
     """为组件添加工具提示（便捷函数）
     
     参数:
@@ -101,7 +101,7 @@ class UserGuide:
     提供首次使用引导、帮助信息等功能
     """
     
-    def __init__(self, root: tk.Tk):
+    def __init__(self, root: tk.Tk) -> None:
         """
         初始化用户引导
         
@@ -111,7 +111,7 @@ class UserGuide:
         self.root = root
         self._has_shown_welcome = False
     
-    def show_welcome_guide(self):
+    def show_welcome_guide(self) -> Any:
         """显示新用户欢迎引导"""
         if self._has_shown_welcome:
             return
@@ -146,7 +146,7 @@ class UserGuide:
         self._has_shown_welcome = True
         return result
     
-    def show_format_help(self):
+    def show_format_help(self) -> None:
         """显示输入格式帮助"""
         message = (
             "支持的输入格式：\n\n"
@@ -169,7 +169,7 @@ class UserGuide:
         
         messagebox.showinfo("输入格式帮助", message)
     
-    def show_mode_help(self, mode: str):
+    def show_mode_help(self, mode: str) -> None:
         """显示模式帮助
         
         参数:
@@ -202,7 +202,7 @@ class UserGuide:
         messagebox.showinfo(f"{mode}模式说明", help_text.get(mode, "未知模式"))
 
 
-def setup_tutorials(gui_app):
+def setup_tutorials(gui_app: Any) -> None:
     """为GUI应用设置工具提示和引导
     
     参数:

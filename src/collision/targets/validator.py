@@ -77,7 +77,7 @@ class AddressBatchValidator:
         ...     print(f"{addr}: {'valid' if result.valid else 'invalid'}")
     """
     
-    def __init__(self, max_workers: int = 4):
+    def __init__(self, max_workers: int = 4) -> None:
         """
         初始化批量地址验证器
         

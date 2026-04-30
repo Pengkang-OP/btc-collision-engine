@@ -87,10 +87,10 @@ class ValidationMonitor:
     
     def __init__(
         self, 
-        validator=None,
+        validator: Any = None,
         thresholds: Optional[ValidationThresholds] = None,
         alert_callback: Optional[Callable] = None
-    ):
+    ) -> None:
         """
         初始化验证质量监控器
         
@@ -332,7 +332,7 @@ class ValidationMonitor:
             'recent_alerts': self.alert_history[-10:],  # 最近10次告警
         }
     
-    def reset_statistics(self):
+    def reset_statistics(self) -> None:
         """重置统计信息"""
         self.total_checks = 0
         self.total_alerts = 0
@@ -342,7 +342,7 @@ class ValidationMonitor:
 
 # 便捷函数
 def create_monitor(
-    validator=None,
+    validator: Any = None,
     coverage_warning: float = 90.0,
     unvalidated_warning: float = 0.1,
     alert_callback: Optional[Callable] = None

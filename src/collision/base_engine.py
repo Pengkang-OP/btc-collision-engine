@@ -15,7 +15,7 @@ class BaseCollisionEngine(ABC):
     """
     
     @abstractmethod
-    def __init__(self, targets: Set[str], **kwargs):
+    def __init__(self, targets: Set[str], **kwargs) -> None:
         """
         初始化碰撞引擎
         
@@ -26,7 +26,7 @@ class BaseCollisionEngine(ABC):
         pass
     
     @abstractmethod
-    def start(self, mode: str = "random", resume: bool = False, **kwargs):
+    def start(self, mode: str = "random", resume: bool = False, **kwargs) -> None:
         """
         启动碰撞引擎
         
@@ -40,7 +40,7 @@ class BaseCollisionEngine(ABC):
         pass
     
     @abstractmethod
-    def stop(self, timeout: Optional[float] = None):
+    def stop(self, timeout: Optional[float] = None) -> None:
         """
         停止碰撞引擎
         

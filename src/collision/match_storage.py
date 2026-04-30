@@ -3,7 +3,7 @@
 import json
 import os
 import threading
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from datetime import datetime
 from pathlib import Path
 
@@ -32,7 +32,7 @@ class MatchDataStorage:
         >>> filepath = storage.save_match(match_data)
     """
     
-    def __init__(self, storage_path: str = './matches'):
+    def __init__(self, storage_path: str = './matches') -> None:
         """
         初始化数据存储
         
@@ -131,7 +131,7 @@ class MatchDataStorage:
         generated = match_data.get('generated', {})
         
         # 转换字节串为十六进制字符串
-        def to_hex(data):
+        def to_hex(data: Any) -> str:
             if isinstance(data, bytes):
                 return data.hex()
             return data

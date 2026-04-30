@@ -6,7 +6,7 @@
 import threading
 import time
 import psutil
-from typing import Dict, Any, Optional
+from typing import Any, Callable, Dict, Optional
 from dataclasses import dataclass
 from collections import deque
 
@@ -78,7 +78,7 @@ class StatsPerformanceMonitor:
         # 进程信息
         self._process = psutil.Process()
     
-    def set_alert_callback(self, callback) -> None:
+    def set_alert_callback(self, callback: Optional[Callable]) -> None:
         """设置告警回调函数"""
         self._alert_callback = callback
     
@@ -223,10 +223,10 @@ class StatsPerformanceMonitor:
 class StatsUpdateProfiler:
     """统计更新性能分析器"""
     
-    def __init__(self, monitor: StatsPerformanceMonitor):
+    def __init__(self, monitor: StatsPerformanceMonitor) -> None:
         self._monitor = monitor
     
-    def profile_update(self, update_func, *args, **kwargs):
+    def profile_update(self, update_func: Callable, *args: Any, **kwargs: Any) -> Any:
         """分析更新操作的性能"""
         start_time = time.perf_counter()
         lock_wait_start = time.perf_counter()
@@ -256,9 +256,9 @@ def get_global_monitor() -> StatsPerformanceMonitor:
     return _global_monitor
 
 
-def profile_stats_update(func):
+def profile_stats_update(func: Callable) -> Callable:
     """装饰器：分析统计更新函数"""
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         monitor = get_global_monitor()
         profiler = StatsUpdateProfiler(monitor)
         return profiler.profile_update(func, *args, **kwargs)

@@ -42,7 +42,7 @@ class AdaptiveTimeoutManager:
         safety_factor: float = 3.0,
         min_timeout: float = 10.0,
         max_timeout: float = 120.0
-    ):
+    ) -> None:
         """初始化自适应超时管理器
         
         Args:

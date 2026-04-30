@@ -14,7 +14,7 @@
 import time
 import threading
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 # P3-5: 统一日志获取
 from ..utils import init_logging, get_configured_logger
@@ -45,9 +45,9 @@ class SmartBatchSizeOptimizer:
         gpu_config = self._get_gpu_config(gpu_model)
         
         # 使用GPU特定配置或默认值
-        self._initial_batch_size = gpu_config.get('initial_batch_size', initial_batch_size)
-        self._min_batch_size = gpu_config.get('min_batch_size', min_batch_size)
-        self._max_batch_size = gpu_config.get('max_batch_size', max_batch_size)
+        self._initial_batch_size: int = gpu_config.get('initial_batch_size', initial_batch_size)
+        self._min_batch_size: int = gpu_config.get('min_batch_size', min_batch_size)
+        self._max_batch_size: int = gpu_config.get('max_batch_size', max_batch_size)
         
         # 性能历史数据
         self._performance_history: List[Dict] = []
@@ -66,7 +66,7 @@ class SmartBatchSizeOptimizer:
         self._lock = threading.Lock()
         
         # 当前批次大小
-        self._current_batch_size = self._initial_batch_size
+        self._current_batch_size: int = self._initial_batch_size
         
         logger.info(f"智能批次大小优化器初始化: GPU型号={gpu_model}, 初始批次={self._initial_batch_size}, 范围={self._min_batch_size}-{self._max_batch_size}")
     
@@ -263,7 +263,7 @@ class SmartBatchSizeOptimizer:
             推荐的批次大小
         """
         # 计算不同批次大小的平均吞吐量
-        batch_performance = {}
+        batch_performance: Dict[int, List[float]] = {}
         for record in self._performance_history:
             batch_size = record['batch_size']
             if batch_size not in batch_performance:

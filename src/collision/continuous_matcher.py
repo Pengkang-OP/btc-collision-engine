@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """持续比对系统 - 大规模地址库快速比对"""
 import threading
-from typing import List, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from datetime import datetime
 
 from ..utils import init_logging, get_configured_logger
@@ -30,7 +30,7 @@ class ContinuousMatcher:
         >>> stats = matcher.get_statistics()
     """
     
-    def __init__(self, target_table):
+    def __init__(self, target_table: Any) -> None:
         """
         初始化比对系统
         

@@ -57,7 +57,7 @@ class SecurityLogFilter(logging.Filter):
         r'\bbc1p[ac-hj-np-z02-9]{58}\b'
     )
     
-    def __init__(self, name='', mask_private_keys=True, mask_wif=True, mask_addresses=True) -> None:
+    def __init__(self, name: str = '', mask_private_keys: bool = True, mask_wif: bool = True, mask_addresses: bool = True) -> None:
         """
         Args:
             name: 过滤器名称

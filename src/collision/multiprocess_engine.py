@@ -17,7 +17,7 @@
 import os
 import multiprocessing as mp
 from multiprocessing import Process, Queue, Manager
-from multiprocessing.queues import Empty, Full
+from multiprocessing.queues import Empty, Full  # type: ignore[attr-defined]
 from typing import List, Dict, Any, Optional, Callable
 import time
 import logging
@@ -43,10 +43,10 @@ def _worker_process(
     task_queue: Queue,
     result_queue: Queue,
     stats_queue: Queue,
-    stop_event: mp.Event,
+    stop_event: mp.Event,  # type: ignore[valid-type]
     generator_func_name: str,
     batch_size: int = 10000,
-    encryption_key: bytes = None,
+    encryption_key: Optional[bytes] = None,
     enable_encryption: bool = False
 ):
     """工作进程
@@ -99,11 +99,11 @@ def _worker_process(
     # 在子进程中本地初始化生成器（避免pickle问题）
     # 使用bytearray以支持私钥清零
     if generator_func_name == 'random':
-        def generator_func(n):
+        def generator_func(n: int) -> List[bytearray]:
             return [bytearray(os.urandom(32)) for _ in range(n)]
     elif generator_func_name == 'sequential':
         start_key = 1
-        def sequential_gen(n):
+        def sequential_gen(n: int) -> List[bytearray]:
             nonlocal start_key
             keys = [bytearray(start_key.to_bytes(32, 'big')) for _ in range(n)]
             start_key += n
@@ -125,7 +125,7 @@ def _worker_process(
     matches_found = 0
     
     try:
-        while not stop_event.is_set():
+        while not stop_event.is_set():  # type: ignore[attr-defined]
             try:
                 # 从任务队列获取任务（超时避免永久阻塞）
                 task = task_queue.get(timeout=1.0)
@@ -270,10 +270,10 @@ class MultiprocessCollisionEngine:
     
     def __init__(
         self,
-        num_workers: int = None,
+        num_workers: Optional[int] = None,
         batch_size: int = 10000,
-        target_addresses: List[str] = None
-    ):
+        target_addresses: Optional[List[str]] = None
+    ) -> None:
         """
         初始化多进程碰撞引擎
         
@@ -291,32 +291,32 @@ class MultiprocessCollisionEngine:
         self.target_addresses = target_addresses or []
         
         # 进程间通信
-        self.task_queue = None
-        self.result_queue = None
-        self.stats_queue = None
-        self.stop_event = None
+        self.task_queue: Optional[Queue] = None
+        self.result_queue: Optional[Queue] = None
+        self.stats_queue: Optional[Queue] = None
+        self.stop_event: Optional[Any] = None
         
         # 工作进程
-        self.workers = []
+        self.workers: List[Process] = []
         
         # 统计信息
-        self.total_checked = 0
-        self.total_matches = []
-        self.worker_stats = {}
+        self.total_checked: int = 0
+        self.total_matches: List[Dict[str, Any]] = []
+        self.worker_stats: Dict[int, Dict[str, Any]] = {}
         
         # 线程锁（保护统计信息）
         self._stats_lock = threading.Lock()
         
         # 状态
         self._running = False
-        self._generator_func = None
-        self._address_generator = None
+        self._generator_func: Optional[Any] = None
+        self._address_generator: Optional[Any] = None
         
         # Queue监控
         self._queue_overflow_warnings = 0
         
         # 加密配置（可选）
-        self._encryption_key = None  # 使用bytearray存储，支持清零
+        self._encryption_key: Optional[bytearray] = None  # 使用bytearray存储，支持清零
         self._enable_encryption = False
         
         logger.info(f"多进程引擎初始化: workers={num_workers}, batch_size={batch_size:,}")
@@ -396,7 +396,7 @@ class MultiprocessCollisionEngine:
         
         return True
     
-    def submit_task(self, batch_size: int = None):
+    def submit_task(self, batch_size: Optional[int] = None) -> None:
         """提交任务到工作队列
         
         Args:
@@ -412,7 +412,7 @@ class MultiprocessCollisionEngine:
         }
         
         try:
-            self.task_queue.put(task, timeout=1.0)
+            self.task_queue.put(task, timeout=1.0)  # type: ignore[union-attr]
         except Exception as e:
             logger.error(f"提交任务失败: {e}")
     
@@ -435,7 +435,7 @@ class MultiprocessCollisionEngine:
         
         try:
             while True:
-                batch = self.result_queue.get(timeout=timeout)
+                batch = self.result_queue.get(timeout=timeout)  # type: ignore[union-attr]
                 
                 # 如果启用加密，则解密
                 if self._enable_encryption and isinstance(batch, bytes):
@@ -478,7 +478,7 @@ class MultiprocessCollisionEngine:
             # 收集所有工作进程的统计
             try:
                 while True:
-                    stats = self.stats_queue.get_nowait()
+                    stats = self.stats_queue.get_nowait()  # type: ignore[union-attr]
                     self.worker_stats[stats['worker_id']] = stats
             except Empty:
                 # 队列为空，收集完毕
@@ -502,7 +502,7 @@ class MultiprocessCollisionEngine:
                 'matches': list(self.total_matches)  # 返回副本
             }
     
-    def stop(self, timeout: float = 10.0):
+    def stop(self, timeout: float = 10.0) -> None:
         """停止多进程引擎
         
         Args:
@@ -514,12 +514,12 @@ class MultiprocessCollisionEngine:
         logger.info("停止多进程引擎...")
         
         # 设置停止事件
-        self.stop_event.set()
+        self.stop_event.set()  # type: ignore[union-attr]
         
         # 发送毒丸信号
         for _ in self.workers:
             try:
-                self.task_queue.put(None, timeout=1.0)
+                self.task_queue.put(None, timeout=1.0)  # type: ignore[union-attr]
             except Full:
                 logger.warning("任务队列已满，跳过毒丸信号")
             except Exception as e:
@@ -549,7 +549,7 @@ class MultiprocessCollisionEngine:
             if os.name != 'nt':
                 for z in zombie_processes:
                     try:
-                        os.kill(z['pid'], signal.SIGKILL)
+                        os.kill(z['pid'], signal.SIGKILL)  # type: ignore[attr-defined,arg-type]
                         logger.info(f"已发送SIGKILL到进程 {z['pid']}")
                     except Exception as e:
                         logger.error(f"发送SIGKILL失败 {z['pid']}: {e}")
@@ -591,7 +591,7 @@ class MultiprocessCollisionEngine:
         except Exception as e:
             logger.debug(f"清理队列时出错: {e}")
     
-    def cleanup(self):
+    def cleanup(self) -> None:
         """清理资源"""
         if self._running:
             self.stop()
@@ -609,14 +609,14 @@ class MultiprocessCollisionEngine:
         
         logger.info("多进程引擎资源已清理")
     
-    def __enter__(self):
+    def __enter__(self) -> 'MultiprocessCollisionEngine':
         """上下文管理器入口"""
         return self
     
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]) -> None:
         """上下文管理器出口"""
         self.cleanup()
-        return False
+        return False  # type: ignore[return-value]
 
 
 class HybridCollisionEngine:
@@ -634,9 +634,9 @@ class HybridCollisionEngine:
     def __init__(
         self,
         use_multiprocess: bool = True,
-        num_workers: int = None,
+        num_workers: Optional[int] = None,
         batch_size: int = 10000
-    ):
+    ) -> None:
         """
         初始化混合引擎
         
@@ -650,8 +650,8 @@ class HybridCollisionEngine:
         self.batch_size = batch_size
         
         # 引擎实例
-        self.mp_engine = None
-        self.thread_engine = None
+        self.mp_engine: Optional[MultiprocessCollisionEngine] = None
+        self.thread_engine: Optional[Any] = None
         
         logger.info(f"混合引擎初始化: multiprocess={use_multiprocess}, workers={self.num_workers}")
     
@@ -677,9 +677,9 @@ class HybridCollisionEngine:
                 targets=kwargs.get('targets', []),
                 thread_count=self.num_workers
             )
-            return self.thread_engine.start(**kwargs)
+            return self.thread_engine.start(**kwargs)  # type: ignore[no-any-return]
     
-    def stop(self, **kwargs):
+    def stop(self, **kwargs) -> None:
         """停止引擎"""
         if self.mp_engine:
             self.mp_engine.stop(**kwargs)
@@ -691,10 +691,10 @@ class HybridCollisionEngine:
         if self.mp_engine:
             return self.mp_engine.get_stats()
         if self.thread_engine:
-            return self.thread_engine.get_stats()
+            return self.thread_engine.get_stats()  # type: ignore[no-any-return]
         return {}
     
-    def cleanup(self):
+    def cleanup(self) -> None:
         """清理资源"""
         if self.mp_engine:
             self.mp_engine.cleanup()
@@ -703,9 +703,9 @@ class HybridCollisionEngine:
 
 
 def create_multiprocess_engine(
-    num_workers: int = None,
+    num_workers: Optional[int] = None,
     batch_size: int = 10000,
-    targets: List[str] = None
+    targets: Optional[List[str]] = None
 ) -> MultiprocessCollisionEngine:
     """创建多进程引擎的工厂函数
     
@@ -726,7 +726,7 @@ def create_multiprocess_engine(
 
 def create_hybrid_engine(
     use_multiprocess: bool = True,
-    num_workers: int = None,
+    num_workers: Optional[int] = None,
     batch_size: int = 10000
 ) -> HybridCollisionEngine:
     """创建混合引擎的工厂函数

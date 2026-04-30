@@ -60,7 +60,7 @@ class IntelMemoryMonitor:
         warning_threshold: float = 0.70,
         critical_threshold: float = 0.85,
         emergency_threshold: float = 0.95
-    ):
+    ) -> None:
         """初始化显存监控器
         
         Args:

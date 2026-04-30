@@ -25,7 +25,7 @@ class DataCleaner:
     - 监控数据自动归档
     """
     
-    def __init__(self, project_root: str = None):
+    def __init__(self, project_root: str = None) -> None:
         """初始化数据清理器
         
         参数:
@@ -405,7 +405,7 @@ class DataCleaner:
             return {}
 
 
-def main():
+def main() -> None:
     """数据清理CLI入口"""
     import argparse
     

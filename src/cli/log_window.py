@@ -13,7 +13,7 @@ import time
 import tkinter as tk
 from tkinter import scrolledtext, ttk
 import logging
-from typing import Optional
+from typing import Optional, Any
 
 
 class LogWindow:
@@ -27,7 +27,7 @@ class LogWindow:
     - 支持保存日志到文件
     """
     
-    def __init__(self, title: str = "引擎日志", width: int = 800, height: int = 600):
+    def __init__(self, title: str = "引擎日志", width: int = 800, height: int = 600) -> None:
         """初始化日志窗口
         
         Args:
@@ -38,15 +38,15 @@ class LogWindow:
         self.title = title
         self.width = width
         self.height = height
-        self.log_queue = queue.Queue()
-        self.root = None
-        self.text_area = None
-        self.filter_var = None
-        self.auto_scroll_var = None
-        self.running = False
-        self.update_thread = None
+        self.log_queue: 'queue.Queue[Any]' = queue.Queue()
+        self.root: Optional[Any] = None
+        self.text_area: Optional[Any] = None
+        self.filter_var: Optional[Any] = None
+        self.auto_scroll_var: Optional[Any] = None
+        self.running: bool = False
+        self.update_thread: Optional[threading.Thread] = None
     
-    def start(self):
+    def start(self) -> None:
         """启动日志窗口
         
         在新线程中创建并运行Tkinter窗口
@@ -57,7 +57,7 @@ class LogWindow:
         # 等待窗口初始化完成
         time.sleep(0.5)
     
-    def stop(self):
+    def stop(self) -> None:
         """停止日志窗口
         
         安全关闭窗口和线程
@@ -68,7 +68,7 @@ class LogWindow:
         if self.update_thread:
             self.update_thread.join(timeout=2.0)
     
-    def log(self, message: str, level: str = "INFO"):
+    def log(self, message: str, level: str = "INFO") -> None:
         """添加日志消息
         
         Args:
@@ -236,7 +236,7 @@ class LogWindow:
 class LogWindowHandler(logging.Handler):
     """将日志重定向到LogWindow的Handler"""
     
-    def __init__(self, log_window: LogWindow):
+    def __init__(self, log_window: LogWindow) -> None:
         """初始化日志处理器
         
         Args:
@@ -245,7 +245,7 @@ class LogWindowHandler(logging.Handler):
         super().__init__()
         self.log_window = log_window
     
-    def emit(self, record: logging.LogRecord):
+    def emit(self, record: logging.LogRecord) -> None:
         """处理日志记录
         
         Args:

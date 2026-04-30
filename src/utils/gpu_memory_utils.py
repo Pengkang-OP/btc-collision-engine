@@ -15,7 +15,7 @@
 """
 
 import logging
-from typing import Protocol, Dict, Any
+from typing import Protocol, Dict, Any, Optional
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ class BatchSizeConfig:
     memory_alignment: int = 1024
     per_key_memory: int = 36
     
-    def validate(self):
+    def validate(self) -> None:
         """验证配置有效性
         
         Raises:
@@ -71,7 +71,7 @@ class BatchSizeConfig:
                 f"per_key_memory必须为正数: {self.per_key_memory}"
             )
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """初始化后自动验证配置
         
         在dataclass初始化完成后自动调用validate()，确保配置始终有效。

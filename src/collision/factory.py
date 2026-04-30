@@ -1,7 +1,7 @@
 """引擎工厂 — 简化引擎创建并支持依赖注入"""
 
 import logging
-from typing import Optional, Set
+from typing import Any, Optional, Set
 
 logger = logging.getLogger(__name__)
 
@@ -29,12 +29,12 @@ class EngineFactory:
     @staticmethod
     def create_cpu_engine(
         targets: Set[str],
-        container: Optional['DependencyContainer'] = None,
-        stats=None,
-        event_bus=None,
-        data_logger=None,
+        container: Optional['DependencyContainer'] = None,  # type: ignore[name-defined]
+        stats: Any = None,
+        event_bus: Any = None,
+        data_logger: Any = None,
         **kwargs
-    ):
+    ) -> 'KeyCollisionEngine':
         """创建 CPU 碰撞引擎
         
         Args:
@@ -56,7 +56,7 @@ class EngineFactory:
             event_bus = event_bus or container.event_bus
             data_logger = data_logger or container.data_logger
         
-        return KeyCollisionEngine(
+        return KeyCollisionEngine(  # type: ignore[call-arg]
             targets=targets,
             stats=stats,
             event_bus=event_bus,
@@ -67,12 +67,12 @@ class EngineFactory:
     @staticmethod
     def create_gpu_engine(
         targets: Set[str],
-        container: Optional['DependencyContainer'] = None,
-        stats=None,
-        event_bus=None,
-        data_logger=None,
+        container: Optional['DependencyContainer'] = None,  # type: ignore[name-defined]
+        stats: Any = None,
+        event_bus: Any = None,
+        data_logger: Any = None,
         **kwargs
-    ):
+    ) -> 'GPUCCollisionEngine':
         """创建 GPU 碰撞引擎
         
         Args:
@@ -93,7 +93,7 @@ class EngineFactory:
             event_bus = event_bus or container.event_bus
             data_logger = data_logger or container.data_logger
         
-        return GPUCollisionEngine(
+        return GPUCollisionEngine(  # type: ignore[call-arg]
             targets=targets,
             stats=stats,
             event_bus=event_bus,

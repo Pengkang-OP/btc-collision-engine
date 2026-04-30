@@ -336,7 +336,7 @@ def get_metrics_collector() -> GPUMetricsCollector:
     return _global_metrics_collector
 
 
-def reset_metrics_collector():
+def reset_metrics_collector() -> None:
     """重置全局指标收集器"""
     global _global_metrics_collector
     if _global_metrics_collector is not None:

@@ -13,7 +13,7 @@ import json
 import csv
 import sqlite3
 import re
-from typing import Set, Optional, Dict, Any, Tuple, List
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 from datetime import datetime
 
 # 导入日志配置
@@ -71,7 +71,7 @@ class AddressStorage:
         >>> targets, metadata = storage.load_targets()
     """
     
-    def __init__(self, storage_type: str = 'json', path: str = 'targets_data'):
+    def __init__(self, storage_type: str = 'json', path: str = 'targets_data') -> None:
         """
         初始化地址存储管理器
         
@@ -405,7 +405,7 @@ class AddressStorage:
     
     def import_addresses(self, source_path: str, storage_dir: str = None, 
                         validate: bool = True, storage_type: str = 'json',
-                        progress_callback=None) -> Dict[str, Any]:
+                        progress_callback: Optional[Callable] = None) -> Dict[str, Any]:
         """
         从外部源导入地址并自动保存到持久化存储
         

@@ -35,7 +35,7 @@ class GPUDevice:
         name: str = "",
         memory_total: int = 0,
         device_obj: Any = None
-    ):
+    ) -> None:
         self.device_id = device_id
         self.vendor = vendor
         self.name = name
@@ -54,7 +54,7 @@ class GPUDevice:
 class GPUContext:
     """GPU上下文封装"""
     
-    def __init__(self, context_obj: Any = None, device: Optional[GPUDevice] = None):
+    def __init__(self, context_obj: Any = None, device: Optional[GPUDevice] = None) -> None:
         self.context_obj = context_obj  # 底层上下文对象（cl.Context等）
         self.device = device
 
@@ -67,7 +67,7 @@ class GPUKernel:
         kernel_obj: Any = None,
         name: str = "",
         context: Optional[GPUContext] = None
-    ):
+    ) -> None:
         self.kernel_obj = kernel_obj  # 底层内核对象（cl.Kernel等）
         self.name = name
         self.context = context
@@ -310,7 +310,7 @@ class CollisionResult:
     timestamp: float = 0.0  # 时间戳
     seed: Optional[bytes] = None  # 可追溯性
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """计算派生字段"""
         if self.execution_time_ms > 0 and self.batch_size > 0:
             self.keys_per_second = self.batch_size / (self.execution_time_ms / 1000.0)

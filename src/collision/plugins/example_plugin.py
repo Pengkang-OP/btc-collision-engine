@@ -27,7 +27,7 @@ class ExamplePlugin(CollisionPlugin):
         """插件描述"""
         return "示例碰撞插件，实现随机碰撞策略"
     
-    def initialize(self, targets: Set[str], **kwargs):
+    def initialize(self, targets: Set[str], **kwargs) -> None:
         """
         初始化插件
         
@@ -45,7 +45,7 @@ class ExamplePlugin(CollisionPlugin):
     
     def start(self, on_progress: Optional[ProgressCallback] = None,
               on_match: Optional[MatchCallback] = None,
-              on_complete: Optional[CompleteCallback] = None):
+              on_complete: Optional[CompleteCallback] = None) -> None:
         """
         开始碰撞
         
@@ -105,7 +105,7 @@ class ExamplePlugin(CollisionPlugin):
             self.on_complete(self.stats)
         self._running = False
     
-    def stop(self):
+    def stop(self) -> None:
         """停止碰撞"""
         self._stop_event.set()
         self._running = False
