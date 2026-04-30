@@ -52,7 +52,7 @@ class BenchmarkResult:
         """停止测试"""
         self.end_time = time.time()
 
-        elapsed = (self.end_time - self.start_time) if self.end_time and self.start_time else 0.0  # type: ignore[operator]
+        elapsed = (self.end_time - self.start_time) if self.end_time is not None and self.start_time is not None else 0.0  # type: ignore[operator]
         self.avg_speed = self.total_processed / elapsed if elapsed > 0 else 0
 
     def to_dict(self) -> Dict[str, Any]:
@@ -60,7 +60,7 @@ class BenchmarkResult:
         return {
             "name": self.name,
             "config": self.config,
-            "elapsed_seconds": (self.end_time - self.start_time) if self.end_time and self.start_time else 0,  # type: ignore[operator]
+            "elapsed_seconds": (self.end_time - self.start_time) if self.end_time is not None and self.start_time is not None else 0,  # type: ignore[operator]
             "total_processed": self.total_processed,
             "matches_found": self.matches_found,
             "avg_speed_keys_per_sec": self.avg_speed,
