@@ -6,12 +6,13 @@
 """
 
 import logging
+from ..utils import init_logging, get_configured_logger
 import threading
 from typing import List, Dict, Optional
 
 from .device import GPUDeviceDetector, identify_vendor
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger("GPUSelector")
 
 
 class GPUDeviceSelector:
@@ -44,7 +45,7 @@ class GPUDeviceSelector:
     WEIGHT_MEMORY = 10.0      # 每GB显存10分
     WEIGHT_COMPUTE_UNITS = 0.05  # 每个计算单元0.05分
     
-    def __init__(self):
+    def __init__(self) -> None:
         """初始化GPU设备选择器"""
         self._devices_cache = None
         self._scores_cache = {}
@@ -383,7 +384,7 @@ class GPUDeviceSelector:
         
         return enriched
     
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """清除设备缓存"""
         self._devices_cache = None
         self._scores_cache = {}

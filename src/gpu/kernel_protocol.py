@@ -5,7 +5,7 @@
 
 创建日期: 2026-04-22
 """
-from typing import Protocol, List, Dict, Any, Type, runtime_checkable
+from typing import Protocol, List, Dict, Any, Optional, Type, Union, runtime_checkable
 from abc import abstractmethod
 
 
@@ -132,7 +132,7 @@ class GPUKernelFactory:
     """
     
     # P3优化：添加类型提示
-    _kernel_class: Type[GPUKernelProtocol] = None  # type: ignore
+    _kernel_class: Optional[Type[GPUKernelProtocol]] = None
     
     @classmethod
     def register(cls, kernel_class: Type[GPUKernelProtocol]) -> None:
@@ -148,7 +148,7 @@ class GPUKernelFactory:
         cls._kernel_class = kernel_class
     
     @classmethod
-    def create(cls, device, max_batch_size: int = None, program=None) -> GPUKernelProtocol:
+    def create(cls, device: Any, max_batch_size: Optional[int] = None, program: Any = None) -> GPUKernelProtocol:
         """创建GPU内核实例
         
         Args:
@@ -168,6 +168,6 @@ class GPUKernelFactory:
         return cls._kernel_class(device, max_batch_size=max_batch_size, program=program)
     
     @classmethod
-    def reset(cls):
+    def reset(cls) -> None:
         """重置工厂（用于测试）"""
-        cls._kernel_class = None
+        cls._kernel_class = None  # type: ignore[assignment]

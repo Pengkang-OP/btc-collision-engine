@@ -10,6 +10,9 @@
 import os
 import time
 import logging
+
+# P3-5: 统一日志获取
+from ..utils import init_logging, get_configured_logger
 import threading
 from typing import Dict, Any, Optional, List, Tuple
 from dataclasses import dataclass, field
@@ -17,7 +20,7 @@ from enum import Enum
 
 from .constants import MIN_BATCH_SIZE, MAX_BATCH_SIZE, clamp_batch_size
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger("GPUPerformanceOptimizer")
 
 
 # ===== 厂商特定调整策略 =====

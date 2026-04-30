@@ -14,12 +14,13 @@
 
 import time
 import logging
+from ..utils import init_logging, get_configured_logger
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
 import statistics
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger("GPUAutoTuner")
 
 
 class TuningPhase(Enum):
@@ -73,7 +74,7 @@ class GPUAutoTuner:
         >>> print(f"最优 batch_size: {optimal['batch_size']}")
     """
     
-    def __init__(self, gpu_engine, config: Optional[TuningConfig] = None):
+    def __init__(self, gpu_engine, config: Optional[TuningConfig] = None) -> None:
         """初始化自动调优器
         
         Args:
@@ -407,7 +408,7 @@ class GPUAutoTuner:
         
         return "\n".join(report_lines)
     
-    def reset(self):
+    def reset(self) -> None:
         """重置调优器状态"""
         self.phase = TuningPhase.EXPLORATION
         self.is_tuning = False

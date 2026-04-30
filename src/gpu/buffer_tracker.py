@@ -8,7 +8,10 @@ import threading
 import logging
 from typing import Any, Dict, List, Optional
 
-logger = logging.getLogger(__name__)
+# P3-5: 统一日志获取
+from ..utils import init_logging, get_configured_logger
+
+logger = get_configured_logger("GPUBufferTracker")
 
 
 # ========== GPU缓冲区追踪器 ==========
@@ -32,7 +35,7 @@ class GPUBufferTracker:
     MAX_TRACKED_BUFFERS = 1000  # 最大追踪缓冲区数量
     MEMORY_USAGE_THRESHOLD = 1024 * 1024 * 1024  # 1GB内存使用阈值
     
-    def __init__(self, timeout: int = None, memory_threshold: int = None):
+    def __init__(self, timeout: Optional[int] = None, memory_threshold: Optional[int] = None) -> None:
         self._allocated_buffers: Dict[str, Dict[str, Any]] = {}
         self._lock = threading.Lock()
         self._timeout = timeout or self.DEFAULT_TIMEOUT

@@ -17,7 +17,10 @@ from typing import List, Dict, Tuple, Optional, Any
 import time
 import statistics
 
-logger = logging.getLogger(__name__)
+# P3-5: 统一日志获取
+from ..utils import init_logging, get_configured_logger
+
+logger = get_configured_logger("GPULoadBalancer")
 
 
 class GPULoadBalancer:
@@ -90,7 +93,7 @@ class GPULoadBalancer:
             f"重平衡间隔={rebalance_interval}s"
         )
     
-    def _calculate_initial_weights(self):
+    def _calculate_initial_weights(self) -> None:
         """计算初始负载权重"""
         if self.strategy == 'equal':
             # 平均分配
@@ -545,7 +548,7 @@ class GPULoadBalancer:
         else:
             return 0.8 - (usage_ratio - 0.8) * 0.5
     
-    def _record_load_history(self):
+    def _record_load_history(self) -> None:
         """记录负载历史"""
         timestamp = time.time()
         
@@ -657,7 +660,7 @@ class GPULoadBalancer:
         
         return max(predicted, 0)
     
-    def reset(self):
+    def reset(self) -> None:
         """重置负载均衡器"""
         self._weights = {}
         self._key_ranges = {}

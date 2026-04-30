@@ -187,14 +187,29 @@ def setup_security_logging() -> None:
     root_logger = logging.getLogger()
     root_logger.addFilter(security_filter)
     
-    # 添加到主要模块日志记录器
+    # 添加到主要模块日志记录器（处理私钥/敏感数据的模块）
     module_loggers = [
-        'GPUCollisionEngine',
+        # 碰撞引擎（核心私钥处理）
         'KeyCollisionEngine',
-        'GPUDeviceHelper',
+        'MultiGPUEngine',
+        'AsyncGPUExecutor',
+        # GPU工作线程（处理私钥批量生成/匹配）
+        'GPUWorker',
         'GPUKernel',
+        'GPUDevice',
+        # GPU搜索模式（批量私钥搜索）
+        'RandomSearchMode',
+        'BruteForceSearch',
+        'RangeScanSearch',
+        'BaseSearchMode',
+        # 上下文管理
+        'GPUContext',
+        'GPUMemoryPool',
+        'GPUBufferTracker',
+        # 监控/日志
         'DataLogger',
         'MonitoringSystem',
+        'GPUEngineMonitor',
     ]
     
     for logger_name in module_loggers:

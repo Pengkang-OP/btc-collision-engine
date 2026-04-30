@@ -16,7 +16,10 @@ import threading
 import logging
 from typing import Dict, List, Optional
 
-logger = logging.getLogger(__name__)
+# P3-5: 统一日志获取
+from ..utils import init_logging, get_configured_logger
+
+logger = get_configured_logger("BatchSizeOptimizer")
 
 
 class SmartBatchSizeOptimizer:
@@ -25,7 +28,7 @@ class SmartBatchSizeOptimizer:
     根据GPU性能、内存使用和系统负载动态调整批次大小。
     """
     
-    def __init__(self, initial_batch_size: int, min_batch_size: int = 1024, max_batch_size: int = 1048576, gpu_model: str = 'default'):
+    def __init__(self, initial_batch_size: int, min_batch_size: int = 1024, max_batch_size: int = 1048576, gpu_model: str = 'default') -> None:
         """
         初始化智能批次大小优化器
         

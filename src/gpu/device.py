@@ -7,6 +7,9 @@
 import logging
 from typing import List, Dict, Optional
 
+# P3-5: 统一日志获取
+from ..utils import init_logging, get_configured_logger
+
 # 尝试导入pyopencl
 try:
     import pyopencl as cl
@@ -17,7 +20,7 @@ except ImportError:
 from .profiles.loader import GPUProfileLoader
 from .driver_manager import DriverManager, DriverVersionParser
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger("GPUDevice")
 
 
 def identify_vendor(device_name: str, vendor_str: str = '') -> str:

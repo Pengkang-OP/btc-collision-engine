@@ -16,13 +16,15 @@ import threading
 import time
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 
+# P3-5: 统一日志获取 + 修复缺失导入
+from ...utils import init_logging, get_configured_logger
 from ...utils.exception_handler import ExceptionHandler
 from .base_search import BaseSearchMode
 
 if TYPE_CHECKING:
     from ...collision.gpu_collision_engine import GPUCollisionEngine
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger("RandomSearchMode")
 
 # 与 gpu_collision_engine 保持一致的常量
 INITIAL_BATCH_SIZE = 1_000_000
@@ -369,7 +371,7 @@ class RandomSearchMode(BaseSearchMode):
                     effective_time_ms = max(execution_time_ms, 0.001)
                     speed = batch_size / (effective_time_ms / 1000)
                     if batch_num <= 5 or batch_num % 10 == 0:
-                        logger.info(f"GPU batch {batch_num}: {batch_size:,} keys, {execution_time_ms:.2f}ms, {speed:.0f} keys/s")
+                        logger.debug(f"GPU batch {batch_num}: {batch_size:,} keys, {execution_time_ms:.2f}ms, {speed:.0f} keys/s")
                     
                     # 记录性能数据
                     batch_optimizer.record_performance(batch_size, execution_time_ms, speed)

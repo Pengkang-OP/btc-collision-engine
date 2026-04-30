@@ -3,15 +3,35 @@
 
 封装单个GPU的碰撞引擎,在线程中独立运行私钥搜索任务。
 提供线程安全的状态管理和结果收集。
+
+集成优化：
+- 使用 ThreadLocalDeltaStats 减少锁竞争（可配置）
+- 使用性能监控装饰器（可配置）
 """
 
 import threading
 import time
 import logging
-from typing import Set, Dict, Optional, Tuple, Callable
+from typing import Set, Dict, Optional, Tuple, Callable, Union
 from queue import Queue, Empty
 
-logger = logging.getLogger(__name__)
+# P3-5: 统一日志获取
+from ..utils import init_logging, get_configured_logger
+
+from ..config.optimization_config import is_feature_enabled
+
+# 根据配置条件导入优化模块
+_delta_stats_available = is_feature_enabled('delta_stats')
+_monitor_available = is_feature_enabled('performance_monitor')
+
+if _delta_stats_available:
+    from ..collision.delta_stats import ThreadLocalDeltaStats
+if _monitor_available:
+    from ..cli.stats_performance_monitor import profile_stats_update
+
+from .gpu_config import WorkerConfig
+
+logger = get_configured_logger("GPUWorker")
 
 
 class SingleGPUWorker(threading.Thread):
@@ -41,7 +61,7 @@ class SingleGPUWorker(threading.Thread):
         device_idx: int,
         key_range: Tuple[int, int],
         targets: Set[str],
-        config: Dict,
+        config: Union[Dict, WorkerConfig],
         result_callback: Optional[Callable] = None,
         data_monitor = None,  # 添加数据监控器引用
         mode: str = 'random',       # 碰撞模式: random / range / brute_force
@@ -54,7 +74,7 @@ class SingleGPUWorker(threading.Thread):
             device_idx: GPU设备索引
             key_range: 私钥搜索范围(start, end)，用于负载均衡分配
             targets: 目标地址集合
-            config: GPU配置参数
+            config: GPU配置参数 (Dict 或 WorkerConfig)
             result_callback: 找到匹配时的回调函数
             data_monitor: 数据监控器引用
             mode: 碰撞模式 ('random' | 'range' | 'brute_force')
@@ -66,7 +86,11 @@ class SingleGPUWorker(threading.Thread):
         self.device_idx = device_idx
         self.key_range = key_range
         self.targets = targets
-        self.config = config
+        # 统一转换为 WorkerConfig（兼容 Dict 旧接口）
+        if isinstance(config, WorkerConfig):
+            self.config = config
+        else:
+            self.config = WorkerConfig.from_dict(config)
         self.result_callback = result_callback
         self.data_monitor = data_monitor  # 保存数据监控器引用
         self.mode = mode
@@ -96,6 +120,12 @@ class SingleGPUWorker(threading.Thread):
             'error_count': 0,
             'last_error': None
         }
+        
+        # 增量统计器（线程本地，减少锁竞争）- 根据配置启用
+        self._delta_stats = None
+        if _delta_stats_available:
+            self._delta_stats = ThreadLocalDeltaStats()
+            logger.debug(f"GPU {device_idx}: 增量统计器已启用")
         
         # GPU引擎实例
         self._gpu_engine = None
@@ -139,7 +169,7 @@ class SingleGPUWorker(threading.Thread):
             from ..collision.gpu_collision_engine import GPUCollisionEngine
             
             # 配置引擎
-            batch_size = self.config.get('batch_size', None)  # None=自动计算
+            batch_size = self.config.batch_size  # None=自动计算
             
             # 创建引擎实例（targets 是必填参数，其余通过 __init__ 完成初始化）
             self._gpu_engine = GPUCollisionEngine(
@@ -176,30 +206,55 @@ class SingleGPUWorker(threading.Thread):
                 if self.range_end is not None:
                     engine_kwargs['end'] = self.range_end
             
-            # 启动GPU引擎（在内部线程循环）
+            # 启动监控线程（并行更新统计）
+            def monitor_loop():
+                # 自适应更新间隔: 高吞吐时更频繁(0.2s), 低吞吐时降低开销(1.0s)
+                _base_interval = 0.5
+                _min_interval = 0.2
+                _max_interval = 1.0
+                _adaptive_interval = _base_interval
+                _last_throughput = 0
+
+                while not self._stop_event.is_set():
+                    # 检查暂停状态
+                    if not self._pause_event.is_set():
+                        time.sleep(0.1)
+                        continue
+
+                    # 更新统计
+                    self._update_stats()
+
+                    # 根据吞吐量自适应调整更新间隔
+                    current_throughput = self._stats.get('throughput', 0)
+                    if current_throughput > 1_000_000:
+                        _adaptive_interval = _min_interval  # 高频更新
+                    elif current_throughput < 10_000:
+                        _adaptive_interval = _max_interval  # 降低开销
+                    else:
+                        _adaptive_interval = _base_interval
+                    _last_throughput = current_throughput
+
+                    # random 模式不按范围判断结束；range/brute_force 按已检查量
+                    if self.mode != 'random' and self._stats['keys_checked'] >= total_keys:
+                        logger.info(f"GPU {self.device_idx} 完成搜索范围")
+                        self._stop_event.set()
+                        break
+
+                    # 自适应休眠让出CPU
+                    time.sleep(_adaptive_interval)
+            
+            monitor_thread = threading.Thread(target=monitor_loop, daemon=True)
+            monitor_thread.start()
+            
+            # 启动GPU引擎（阻塞调用，直到完成或停止）
             self._gpu_engine.start(mode=self.mode, **engine_kwargs)
             logger.info(
                 f"GPU {self.device_idx} 引擎已启动: "
                 f"mode={self.mode}, kwargs={engine_kwargs or '无'}"
             )
             
-            # 监控循环
-            while not self._stop_event.is_set():
-                # 检查暂停状态
-                if not self._pause_event.is_set():
-                    time.sleep(0.1)
-                    continue
-                
-                # 更新统计
-                self._update_stats()
-                
-                # random 模式不按范围判断结束；range/brute_force 按已检查量
-                if self.mode != 'random' and self._stats['keys_checked'] >= total_keys:
-                    logger.info(f"GPU {self.device_idx} 完成搜索范围")
-                    break
-                
-                # 短暂休眠让出CPU
-                time.sleep(0.5)
+            # 等待监控线程结束
+            monitor_thread.join(timeout=5.0)
             
             # 停止引擎
             if self._gpu_engine:
@@ -207,13 +262,13 @@ class SingleGPUWorker(threading.Thread):
                 
         except MemoryError:
             # MemoryError 自动降批——将 batch_size 减半重试（仅一次）
-            current_batch = self.config.get('batch_size', 65536)
+            current_batch = self.config.batch_size or 65536
             new_batch = max(current_batch // 2, 1024)
             logger.warning(
                 f"GPU {self.device_idx} 内存不足（MemoryError），"
                 f"自动减小 batch_size: {current_batch:,} → {new_batch:,}"
             )
-            self.config['batch_size'] = new_batch
+            self.config.batch_size = new_batch
             with self._lock:
                 self._stats['error_count'] += 1
                 self._stats['last_error'] = f"MemoryError 自动降批至 {new_batch:,}"
@@ -250,9 +305,13 @@ class SingleGPUWorker(threading.Thread):
             # 获取引擎统计
             engine_stats = self._gpu_engine.get_stats()
             
-            with self._lock:
+            # 使用增量统计器（无锁操作）- 根据配置启用
+            if self._delta_stats:
                 keys_checked = engine_stats.total_checked
-                self._stats['keys_checked'] = keys_checked
+                self._delta_stats.add_check(keys_checked - self._stats.get('keys_checked', 0))
+            
+            with self._lock:
+                self._stats['keys_checked'] = engine_stats.total_checked
                 self._stats['matches_found'] = len(engine_stats.matches)
                 
                 # 计算运行时间
@@ -269,7 +328,7 @@ class SingleGPUWorker(threading.Thread):
                 if self.data_monitor:
                     self.data_monitor.report_keys_generated(
                         device_idx=self.device_idx,
-                        count=keys_checked,
+                        count=self._stats['keys_checked'],
                         key_range=self.key_range
                     )
                 
@@ -280,6 +339,10 @@ class SingleGPUWorker(threading.Thread):
                         'private_key': match.get('private_key_hex', '') if isinstance(match, dict) else getattr(match, 'private_key_hex', ''),
                     }
                     self._result_queue.put(match_dict)
+                    
+                    # 记录匹配到增量统计器
+                    if self._delta_stats:
+                        self._delta_stats.add_match()
                     
                     # 调用回调
                     if self.result_callback:
@@ -297,6 +360,10 @@ class SingleGPUWorker(threading.Thread):
                     error_msg=str(e),
                     error_type='stats_update_error'
                 )
+
+    # 根据配置条件应用性能监控装饰器
+    if _monitor_available:
+        _update_stats = profile_stats_update(_update_stats)
     
     def _cleanup(self):
         """清理资源"""

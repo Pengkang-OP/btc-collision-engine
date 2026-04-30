@@ -5,6 +5,9 @@
 """
 
 import logging
+
+# P3-5: 统一日志获取
+from ..utils import init_logging, get_configured_logger
 from typing import Optional, Dict, Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -12,7 +15,7 @@ if TYPE_CHECKING:
     from ..gpu.benchmark_suite import GPUBenchmarkSuite
     from ..gpu.performance_reporter import PerformanceReportGenerator, ReportConfig
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger("GPUOptimizationPipeline")
 
 
 class PerformanceOptimizationPipeline:

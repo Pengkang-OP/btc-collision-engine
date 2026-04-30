@@ -4,6 +4,9 @@
 """
 
 import logging
+
+# P3-5: 统一日志获取
+from ..utils import init_logging, get_configured_logger
 import time
 from pathlib import Path
 from typing import Dict, Optional, Set, Any
@@ -21,7 +24,7 @@ from .nvidia_optimizer import NvidiaGPUOptimizer
 from .intel_optimizer import IntelGPUOptimizer
 from .kernel import OPENCL_KERNEL_SOURCE
 
-logger = logging.getLogger(__name__)
+_logger = get_configured_logger("GPUDeviceManager")
 
 
 class GPUDeviceManager:
@@ -39,7 +42,7 @@ class GPUDeviceManager:
         """
         self.device_index = device_index
         self.config = config or {}
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or _logger
         
         self._gpu_device = None
         self._gpu_context = None

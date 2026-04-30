@@ -6,9 +6,12 @@
 import json
 import os
 import logging
+
+# P3-5: 统一日志获取
+from ...utils import init_logging, get_configured_logger
 from typing import Dict, Optional, List, Any
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger("GPUProfileLoader")
 
 
 class GPUProfileLoader:

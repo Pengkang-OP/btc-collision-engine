@@ -4,13 +4,16 @@
 """
 
 import logging
+
+# P3-5: 统一日志获取
+from ..utils import init_logging, get_configured_logger
 from typing import Dict, Optional, Any
 
 from .profiles.loader import GPUProfileLoader
 from .auto_config import get_gpu_configurator
 from .device import identify_vendor
 
-logger = logging.getLogger(__name__)
+_logger = get_configured_logger("GPUConfigManager")
 
 
 class GPUConfigManager:
@@ -32,7 +35,7 @@ class GPUConfigManager:
             logger: 日志记录器
         """
         self.user_config = user_config or {}
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or _logger
         
         self._auto_configurator = get_gpu_configurator()
         self._profile_loader = GPUProfileLoader()

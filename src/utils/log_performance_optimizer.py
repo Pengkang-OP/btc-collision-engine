@@ -333,7 +333,7 @@ def log_performance_decorator(logger: logging.Logger, operation: str, level: str
         装饰器
     """
     def decorator(func):
-        def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs) -> Any:
             start_time = time.time()
             try:
                 result = func(*args, **kwargs)

@@ -13,11 +13,12 @@
 
 import time
 import logging
+from ..utils import init_logging, get_configured_logger
 import statistics
 from typing import List, Optional
 from collections import deque
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger("IntelTimeoutManager")
 
 
 class AdaptiveTimeoutManager:
@@ -71,7 +72,7 @@ class AdaptiveTimeoutManager:
             f"safety={safety_factor}x, range=[{min_timeout}s, {max_timeout}s]"
         )
     
-    def record_execution_time(self, time_ms: float):
+    def record_execution_time(self, time_ms: float) -> None:
         """记录执行时间
         
         Args:
@@ -178,7 +179,7 @@ class AdaptiveTimeoutManager:
         
         return stats
     
-    def reset(self):
+    def reset(self) -> None:
         """重置管理器状态"""
         self._execution_times.clear()
         self._total_records = 0

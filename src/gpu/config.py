@@ -6,12 +6,13 @@
 import os
 import json
 import logging
+from ..utils import init_logging, get_configured_logger
 from typing import Dict, Any, Optional
 
 from .device import GPUDevice, GPUDeviceDetector
 from .profiles.loader import GPUProfileLoader
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger("GPUConfig")
 
 
 class GPUConfig:
@@ -33,7 +34,7 @@ class GPUConfig:
         "enable_vendor_optimizations": True,
     }
     
-    def __init__(self, config_file: str = None):
+    def __init__(self, config_file: Optional[str] = None) -> None:
         """
         初始化GPU配置
         
@@ -47,8 +48,10 @@ class GPUConfig:
         if config_file and os.path.exists(config_file):
             self._load_config()
     
-    def _load_config(self):
+    def _load_config(self) -> None:
         """从文件加载配置"""
+        if self.config_file is None:
+            return
         try:
             with open(self.config_file, 'r', encoding='utf-8') as f:
                 user_config = json.load(f)
@@ -85,10 +88,10 @@ class GPUConfig:
         }
     
     def set_gpu_config(self, 
-                      use_gpu: bool = None,
-                      device_index: int = None,
-                      batch_size: int = None,
-                      **kwargs) -> bool:
+                      use_gpu: Optional[bool] = None,
+                      device_index: Optional[int] = None,
+                      batch_size: Optional[int] = None,
+                      **kwargs: Any) -> bool:
         """
         设置GPU配置
         
@@ -149,7 +152,7 @@ class GPUConfig:
         """
         return GPUDeviceDetector.is_gpu_available()
     
-    def create_gpu_device(self, device_index: int = None) -> GPUDevice:
+    def create_gpu_device(self, device_index: Optional[int] = None) -> GPUDevice:
         """
         创建并初始化GPU设备
         
@@ -167,7 +170,7 @@ class GPUConfig:
         
         return device
     
-    def create_gpu_engine(self, targets):
+    def create_gpu_engine(self, targets) -> Any:
         """
         创建GPU碰撞引擎
         

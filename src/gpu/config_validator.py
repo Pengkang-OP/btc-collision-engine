@@ -5,9 +5,10 @@
 """
 
 import logging
+from ..utils import init_logging, get_configured_logger
 from typing import Dict, List, Tuple
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger("GPUConfigValidator")
 
 
 class GPUConfigValidator:
@@ -38,7 +39,7 @@ class GPUConfigValidator:
         'memory_usage_ratio': (0.1, 0.95),   # 10% - 95%
     }
     
-    def __init__(self):
+    def __init__(self) -> None:
         """初始化配置验证器"""
         pass
     

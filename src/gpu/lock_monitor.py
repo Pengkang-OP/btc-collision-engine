@@ -7,7 +7,7 @@
 
 import threading
 import time
-from typing import Dict, List
+from typing import Dict, List, Any, Optional
 from collections import defaultdict
 
 
@@ -21,7 +21,7 @@ class LockMonitor:
     - 生成性能报告
     """
     
-    def __init__(self, slow_threshold_ms: float = 10.0):
+    def __init__(self, slow_threshold_ms: float = 10.0) -> None:
         """初始化监控器
         
         Args:
@@ -31,7 +31,7 @@ class LockMonitor:
         self._lock = threading.Lock()
         
         # 统计数据
-        self._lock_stats = defaultdict(lambda: {
+        self._lock_stats: Dict[str, Dict[str, Any]] = defaultdict(lambda: {
             'acquisitions': 0,  # 获取次数
             'total_wait_ms': 0.0,  # 总等待时间
             'max_wait_ms': 0.0,  # 最大等待时间
@@ -43,15 +43,15 @@ class LockMonitor:
         # 是否启用监控
         self._enabled = True
     
-    def enable(self):
+    def enable(self) -> None:
         """启用监控"""
         self._enabled = True
     
-    def disable(self):
+    def disable(self) -> None:
         """禁用监控"""
         self._enabled = False
     
-    def record_lock_acquire(self, lock_name: str, wait_time_ms: float):
+    def record_lock_acquire(self, lock_name: str, wait_time_ms: float) -> None:
         """记录锁获取
         
         Args:
@@ -70,7 +70,7 @@ class LockMonitor:
             if wait_time_ms > self.slow_threshold_ms:
                 stats['slow_acquisitions'] += 1
     
-    def record_lock_release(self, lock_name: str, hold_time_ms: float):
+    def record_lock_release(self, lock_name: str, hold_time_ms: float) -> None:
         """记录锁释放
         
         Args:
@@ -152,7 +152,7 @@ class LockMonitor:
         
         return "\n".join(report)
     
-    def reset(self):
+    def reset(self) -> None:
         """重置统计数据"""
         with self._lock:
             self._lock_stats.clear()
@@ -164,7 +164,7 @@ class MonitoredLock:
     包装threading.Lock,自动记录性能指标。
     """
     
-    def __init__(self, monitor: LockMonitor, name: str):
+    def __init__(self, monitor: LockMonitor, name: str) -> None:
         """初始化
         
         Args:
@@ -174,9 +174,9 @@ class MonitoredLock:
         self._lock = threading.Lock()
         self._monitor = monitor
         self._name = name
-        self._acquire_time = None
+        self._acquire_time: Optional[float] = None
     
-    def acquire(self, blocking=True, timeout=-1):
+    def acquire(self, blocking=True, timeout=-1) -> bool:
         """获取锁"""
         start_time = time.time()
         result = self._lock.acquire(blocking, timeout)
@@ -189,7 +189,7 @@ class MonitoredLock:
         
         return result
     
-    def release(self):
+    def release(self) -> None:
         """释放锁"""
         if self._acquire_time:
             hold_time_ms = (time.time() - self._acquire_time) * 1000
@@ -198,13 +198,12 @@ class MonitoredLock:
         
         self._lock.release()
     
-    def __enter__(self):
+    def __enter__(self) -> 'MonitoredLock':
         self.acquire()
         return self
     
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         self.release()
-        return False
 
 
 # 全局锁监控器实例

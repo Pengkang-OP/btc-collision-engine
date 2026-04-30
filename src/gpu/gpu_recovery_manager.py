@@ -7,6 +7,9 @@ GPU异常恢复管理器
 """
 
 import logging
+
+# P3-5: 统一日志获取
+from ..utils import init_logging, get_configured_logger
 import time
 import threading
 import concurrent.futures  # M3修复: 移到文件顶部
@@ -15,7 +18,7 @@ from enum import Enum
 from dataclasses import dataclass, field
 from datetime import datetime
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger("GPURecoveryManager")
 
 
 class GPUFailureType(Enum):
@@ -91,6 +94,9 @@ class GPURecoveryManager:
         self.batch_size_reduction_factor = batch_size_reduction_factor
         self.auto_redistribute = auto_redistribute
         self.max_failed_gpus_before_fallback = max_failed_gpus_before_fallback or 2  # 默认2个
+
+        # 失败历史数量上限（防止内存无限增长）
+        self._max_failure_history_per_gpu = 100
         
         # 失败GPU集合
         self._failed_gpus: Set[int] = set()
@@ -441,7 +447,7 @@ class GPURecoveryManager:
             return False
     
     def _record_failure(self, gpu_id: int, record: GPUFailureRecord):
-        """记录失败历史
+        """记录失败历史（带容量上限防止内存无限增长）
         
         Args:
             gpu_id: GPU ID
@@ -450,7 +456,16 @@ class GPURecoveryManager:
         with self._history_lock:
             if gpu_id not in self._failure_history:
                 self._failure_history[gpu_id] = []
-            self._failure_history[gpu_id].append(record)
+            history = self._failure_history[gpu_id]
+            history.append(record)
+            # 超过上限时移除最旧的记录
+            if len(history) > self._max_failure_history_per_gpu:
+                trimmed = history[:-self._max_failure_history_per_gpu]
+                del history[:len(history) - self._max_failure_history_per_gpu]
+                logger.debug(
+                    f"GPU {gpu_id} 失败历史超过上限, "
+                    f"已清理 {len(trimmed)} 条最旧记录"
+                )
         
         # H2修复: 添加线程保护
         with self._stats_lock:

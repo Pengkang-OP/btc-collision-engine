@@ -9,11 +9,14 @@
 
 from typing import Dict, Any
 import logging
+
+# P3-5: 统一日志获取
+from ...utils import init_logging, get_configured_logger
 import time
 from .base import GPUVendorBase
 from ..constants import PER_KEY_MEMORY_BYTES, MIN_BATCH_SIZE, align_batch_size
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger("IntelVendor")
 
 
 class _RateLimitedLogger:

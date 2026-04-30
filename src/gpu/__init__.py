@@ -20,8 +20,10 @@ from .device import GPUDeviceDetector, GPUDevice, identify_vendor
 from .config import GPUConfig
 from .context import GPUContext
 from .driver_manager import DriverManager, DriverVersionParser
-from .kernel import OPENCL_KERNEL_SOURCE
+from .kernel import OPENCL_KERNEL_SOURCE, get_kernel_version, validate_kernel_version, get_version_changelog
 from .facade import GPUFacade, create_gpu_facade
+from .gpu_config import MultiGPUConfig, GPURecoveryConfig, DataMonitorConfig, WorkerConfig
+from .metrics import GPUMetricsCollector, get_metrics_collector
 
 # 多GPU支持模块
 from .selector import GPUDeviceSelector, get_gpu_selector, reset_gpu_selector
@@ -53,7 +55,7 @@ from .constants import (
     clamp_batch_size,
 )
 
-__version__ = "3.2.0"  # 与主项目版本同步 (v3.2.0: 版本统一、配置结构对齐、GPU异步执行默认开启)
+__version__ = "3.3.1"  # 与主项目版本同步 (v3.3.1: GPU停止阻塞修复，轮询等待替代Event.wait())
 
 __all__ = [
     'GPUDeviceDetector',
@@ -67,6 +69,14 @@ __all__ = [
     # GPU外观类（简化接口）
     'GPUFacade',
     'create_gpu_facade',
+    # GPU配置数据结构
+    'MultiGPUConfig',
+    'GPURecoveryConfig',
+    'DataMonitorConfig',
+    'WorkerConfig',
+    # GPU可观测性
+    'GPUMetricsCollector',
+    'get_metrics_collector',
     # 多GPU支持
     'GPUDeviceSelector',
     'get_gpu_selector',

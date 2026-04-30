@@ -9,9 +9,10 @@
 """
 
 import logging
+from ..utils import init_logging, get_configured_logger
 from typing import Dict
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger("GPUMemoryCalculator")
 
 
 class GPUMemoryCalculator:

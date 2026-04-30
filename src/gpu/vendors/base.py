@@ -7,7 +7,10 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any
 import logging
 
-logger = logging.getLogger(__name__)
+# P3-5: 统一日志获取
+from ...utils import init_logging, get_configured_logger
+
+logger = get_configured_logger("BaseVendor")
 
 
 class GPUVendorBase(ABC):

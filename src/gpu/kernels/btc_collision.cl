@@ -96,7 +96,7 @@ void uint256_set_zero(uint256_t *a) {
 // GPU-side key generation: key = seed + global_id (256-bit addition)
 // seed is passed as __constant uint[8] from host (big-endian uint32 array)
 // Avoids large private_keys global buffer; host only sends 32-byte seed
-void generate_private_key(__constant const uint *seed, uint gid, uint256_t *k) {
+void generate_private_key(__constant const uint *seed, ulong gid, uint256_t *k) {
     // Read seed (big-endian uint32 array -> little-endian uint256_t)
     uint256_t s;
     for (int i = 0; i < 8; i++) {
@@ -1211,15 +1211,19 @@ __kernel void batch_check(
     __global int *match_flags,              // Output: num_keys flags (0=no match, target_index+1=match)
     __constant const uint *precomp_table    // Precomputed table: 31x2x8 = 496 uint32 (G1..G31 affine)
 ) {
-    uint gid = get_global_id(0);
+    // P1-2 fix: ulong gid prevents 32-bit overflow when batch_size >= 2^32
+    ulong gid = get_global_id(0);
     if (gid >= num_keys) return;
     
     // Generate private key on GPU: k = seed + gid (256-bit addition)
     uint256_t k;
     generate_private_key(seed, gid, &k);
     
-    // Check if private key is zero
-    if (uint256_is_zero(&k)) {
+    // P1-3 fix: Validate private key range (1 <= k < N)
+    // Previously only checked k==0, missing k >= N check.
+    uint256_t n_val;
+    for (int i = 0; i < 8; i++) n_val.d[i] = SECP256K1_N[i];
+    if (uint256_is_zero(&k) || uint256_cmp(&k, &n_val) >= 0) {
         match_flags[gid] = 0;
         return;
     }
@@ -1284,7 +1288,8 @@ __kernel void batch_check_local_mem(
     __local uchar *cached_targets,          // local memory cache: num_targets * 20 bytes
     __constant const uint *precomp_table    // Precomputed table: 31x2x8 = 496 uint32 (G1..G31 affine)
 ) {
-    uint gid = get_global_id(0);
+    // P1-2 fix: ulong gid prevents 32-bit overflow when batch_size >= 2^32
+    ulong gid = get_global_id(0);
     uint lid = get_local_id(0);
     uint lsize = get_local_size(0);
     uint total_bytes = num_targets * 20u;
@@ -1302,8 +1307,10 @@ __kernel void batch_check_local_mem(
     uint256_t k;
     generate_private_key(seed, gid, &k);
 
-    // Check if private key is zero
-    if (uint256_is_zero(&k)) {
+    // P1-3 fix: Validate private key range (1 <= k < N)
+    uint256_t n_val;
+    for (int i = 0; i < 8; i++) n_val.d[i] = SECP256K1_N[i];
+    if (uint256_is_zero(&k) || uint256_cmp(&k, &n_val) >= 0) {
         match_flags[gid] = 0;
         return;
     }
