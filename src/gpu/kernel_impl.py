@@ -858,12 +858,15 @@ class GPUKernel(GPUKernelProtocol):
             # 直接记录日志并释放缓冲区资源,防止显存泄漏
             logger.warning("GPU执行未完成(超时或停止信号),跳过队列清理以避免阻塞")
 
-            # 释放缓冲区资源,防止显存泄漏
-            for buf_attr in ("_seed_buf", "_match_buf", "_targets_buf"):
+            # 释放缓冲区资源,防止显存泄漏（统一通过buffer_tracker释放,避免double-unref）
+            for buf_attr in ("_seed_buf", "_match_buf", "_targets_buf", "_precomp_buf"):
                 buf = getattr(self, buf_attr, None)
                 if buf is not None:
                     try:
-                        buf.release()
+                        if hasattr(self, "_buffer_tracker") and self._buffer_tracker:
+                            self._buffer_tracker.release_buffer(buf_attr)
+                        else:
+                            buf.release()
                         logger.debug(f"GPU超时清理：已释放 {buf_attr}")
                     except cl.Error as e:
                         # OpenCL错误(缓冲区已释放或设备断开)
@@ -874,6 +877,7 @@ class GPUKernel(GPUKernelProtocol):
                             f"GPU超时清理：释放 {buf_attr} 失败: "
                             f"{type(buf_err).__name__}: {buf_err}"
                         )
+                    setattr(self, buf_attr, None)
 
             raise RuntimeError(f"GPU执行超时{timeout_seconds}秒，内核可能已hang")
 
@@ -1044,6 +1048,8 @@ class GPUKernel(GPUKernelProtocol):
                     logger.debug(f"已释放 {buf_name}")
 
                     # P2-2修复: 注销缓冲区追踪
+                    # 注意: force_check_on_shutdown已clear整个_allocated_buffers dict,
+                    # 所以此处release_buffer是空操作(防御性保留,避免未来重构遗漏)
                     if hasattr(self, "_buffer_tracker"):
                         self._buffer_tracker.release_buffer(buf_name)
                 except Exception as e:
