@@ -268,7 +268,7 @@ class EnhancedPerformanceMonitor:
                 return
 
             self.end_time = time.perf_counter()
-            elapsed_ms = (cast(float, self.end_time) - cast(float, self.start_time)) * 1000
+            elapsed_ms = (self.end_time - self.start_time) * 1000  # type: ignore[operator]
 
             success = exc_type is None
 

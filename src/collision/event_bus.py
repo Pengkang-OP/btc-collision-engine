@@ -188,7 +188,7 @@ class EventBus:
             event: 事件对象
         """
         with self._lock:
-            handlers = cast(List[Callable], self._subscribers.get(event.event_type, [])).copy()
+            handlers = self._subscribers.get(event.event_type, []).copy()  # type: ignore[arg-type]
 
         if not handlers:
             logger.debug(f"事件无订阅者: {event.event_type.value if event.event_type else 'N/A'}")

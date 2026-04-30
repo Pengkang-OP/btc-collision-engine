@@ -53,6 +53,6 @@ class BruteForceSearchMode(BaseSearchMode):
         )
 
         engine._running = False
-        engine.stats.update(batch_count)  # type: ignore[union-attr]
+        engine.stats.update(batch_count)  # type: ignore[attr-defined]
         if engine.on_complete:
-            engine.on_complete(engine.stats.snapshot())  # type: ignore[union-attr]  # P1-2修复: 使用线程安全快照
+            engine.on_complete(engine.stats.snapshot())  # type: ignore[attr-defined]  # P1-2修复: 使用线程安全快照

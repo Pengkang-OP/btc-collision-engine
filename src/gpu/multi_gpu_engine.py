@@ -1018,7 +1018,7 @@ class MultiGPUCollisionEngine:
         Returns:
             GPUMetricsCollector 的导出数据
         """
-        return cast(Dict, self._metrics.export_json())
+        return self._metrics.export_json()
 
     def export_prometheus_metrics(self) -> str:
         """导出 Prometheus 格式指标
@@ -1026,7 +1026,7 @@ class MultiGPUCollisionEngine:
         Returns:
             Prometheus text exposition format 字符串
         """
-        return cast(str, self._metrics.export_prometheus())
+        return self._metrics.export_prometheus()
 
     def get_performance_history(self) -> List[Dict]:
         """获取性能历史数据

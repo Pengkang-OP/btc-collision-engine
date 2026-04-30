@@ -165,7 +165,7 @@ class PerformanceMonitor:
         self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]
     ) -> None:
         self.end_time = time.perf_counter()
-        elapsed_ms = (cast(float, self.end_time) - cast(float, self.start_time)) * 1000
+        elapsed_ms = (self.end_time - self.start_time) * 1000  # type: ignore[operator]
 
         if exc_type is None:
             self.logger.log(self.level, f"[Performance] {self.operation}: {elapsed_ms:.2f}ms")
@@ -178,8 +178,8 @@ class PerformanceMonitor:
     def elapsed_ms(self) -> float:
         """获取已耗时的毫秒数"""
         if self.end_time is None:
-            return (time.perf_counter() - cast(float, self.start_time)) * 1000
-        return (cast(float, self.end_time) - cast(float, self.start_time)) * 1000
+            return (time.perf_counter() - self.start_time) * 1000  # type: ignore[operator]
+        return (self.end_time - self.start_time) * 1000  # type: ignore[operator]
 
 
 class SampledLogger:
