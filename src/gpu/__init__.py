@@ -20,8 +20,12 @@ from .device import GPUDeviceDetector, GPUDevice, identify_vendor
 from .config import GPUConfig
 from .context import GPUContext
 from .driver_manager import DriverManager, DriverVersionParser
-from .kernel import OPENCL_KERNEL_SOURCE, get_kernel_version, validate_kernel_version, get_version_changelog
-from .facade import GPUFacade, create_gpu_facade
+from .kernel import (
+    OPENCL_KERNEL_SOURCE,
+    get_kernel_version,
+    validate_kernel_version,
+    get_version_changelog,
+)
 from .gpu_config import MultiGPUConfig, GPURecoveryConfig, DataMonitorConfig, WorkerConfig
 from .metrics import GPUMetricsCollector, get_metrics_collector
 
@@ -34,6 +38,7 @@ from .multi_gpu_engine import MultiGPUCollisionEngine
 from .auto_config import GPUAutoConfigurator, get_gpu_configurator, reset_gpu_configurator
 from .lock_monitor import LockMonitor, MonitoredLock, get_lock_monitor, create_monitored_lock
 from .data_monitor import DataMonitor, DataQualityIssue
+
 # 提取的独立模块
 from .intel_optimizer import IntelGPUOptimizer
 from .nvidia_optimizer import NvidiaGPUOptimizer
@@ -41,6 +46,7 @@ from .amd_optimizer import AmdGPUOptimizer
 from .memory_calculator import GPUMemoryCalculator
 from .optimization_pipeline import PerformanceOptimizationPipeline
 from .engine_monitor import GPUEngineMonitor
+
 # GPU全局常量模块
 from .constants import (
     PER_KEY_MEMORY_BYTES,
@@ -56,68 +62,67 @@ from .constants import (
     clamp_batch_size,
 )
 
-__version__ = "3.5.0"  # 与主项目版本同步 (v3.5.0: P3-3全模块类型提示补全 + P2-4配置热重载 + P2-7告警系统)
+__version__ = (
+    "3.5.0"  # 与主项目版本同步 (v3.5.0: P3-3全模块类型提示补全 + P2-4配置热重载 + P2-7告警系统)
+)
 
 __all__ = [
-    'GPUDeviceDetector',
-    'GPUDevice',
-    'GPUConfig',
-    'GPUContext',
-    'identify_vendor',
-    'DriverManager',
-    'DriverVersionParser',
-    'OPENCL_KERNEL_SOURCE',
-    # GPU外观类（简化接口）
-    'GPUFacade',
-    'create_gpu_facade',
+    "GPUDeviceDetector",
+    "GPUDevice",
+    "GPUConfig",
+    "GPUContext",
+    "identify_vendor",
+    "DriverManager",
+    "DriverVersionParser",
+    "OPENCL_KERNEL_SOURCE",
     # GPU配置数据结构
-    'MultiGPUConfig',
-    'GPURecoveryConfig',
-    'DataMonitorConfig',
-    'WorkerConfig',
+    "MultiGPUConfig",
+    "GPURecoveryConfig",
+    "DataMonitorConfig",
+    "WorkerConfig",
     # GPU可观测性
-    'GPUMetricsCollector',
-    'get_metrics_collector',
+    "GPUMetricsCollector",
+    "get_metrics_collector",
     # 多GPU支持
-    'GPUDeviceSelector',
-    'get_gpu_selector',
-    'reset_gpu_selector',
-    'GPULoadBalancer',
+    "GPUDeviceSelector",
+    "get_gpu_selector",
+    "reset_gpu_selector",
+    "GPULoadBalancer",
     # P3-11: 统一GPU评分
-    'GPUDeviceScorer',
-    'get_gpu_scorer',
-    'reset_gpu_scorer',
-    'SingleGPUWorker',
-    'MultiGPUCollisionEngine',
-    'GPUAutoConfigurator',
-    'get_gpu_configurator',
-    'reset_gpu_configurator',
+    "GPUDeviceScorer",
+    "get_gpu_scorer",
+    "reset_gpu_scorer",
+    "SingleGPUWorker",
+    "MultiGPUCollisionEngine",
+    "GPUAutoConfigurator",
+    "get_gpu_configurator",
+    "reset_gpu_configurator",
     # 锁监控
-    'LockMonitor',
-    'MonitoredLock',
-    'get_lock_monitor',
-    'create_monitored_lock',
+    "LockMonitor",
+    "MonitoredLock",
+    "get_lock_monitor",
+    "create_monitored_lock",
     # 数据监控
-    'DataMonitor',
-    'DataQualityIssue',
+    "DataMonitor",
+    "DataQualityIssue",
     # 提取的独立模块
-    'IntelGPUOptimizer',
-    'NvidiaGPUOptimizer',
-    'AmdGPUOptimizer',
-    'GPUMemoryCalculator',
-    'PerformanceOptimizationPipeline',
+    "IntelGPUOptimizer",
+    "NvidiaGPUOptimizer",
+    "AmdGPUOptimizer",
+    "GPUMemoryCalculator",
+    "PerformanceOptimizationPipeline",
     # Task#3: 引擎监控模块
-    'GPUEngineMonitor',
+    "GPUEngineMonitor",
     # Task#7: GPU全局常量模块
-    'PER_KEY_MEMORY_BYTES',
-    'BYTES_PER_MB',
-    'BATCH_SIZE_ALIGNMENT',
-    'MIN_BATCH_SIZE',
-    'MAX_BATCH_SIZE',
-    'DEFAULT_BATCH_SIZE',
-    'MEMORY_EFFICIENCY_MIN',
-    'MEMORY_EFFICIENCY_MAX',
-    'DEFAULT_MEMORY_EFFICIENCY',
-    'align_batch_size',
-    'clamp_batch_size',
+    "PER_KEY_MEMORY_BYTES",
+    "BYTES_PER_MB",
+    "BATCH_SIZE_ALIGNMENT",
+    "MIN_BATCH_SIZE",
+    "MAX_BATCH_SIZE",
+    "DEFAULT_BATCH_SIZE",
+    "MEMORY_EFFICIENCY_MIN",
+    "MEMORY_EFFICIENCY_MAX",
+    "DEFAULT_MEMORY_EFFICIENCY",
+    "align_batch_size",
+    "clamp_batch_size",
 ]

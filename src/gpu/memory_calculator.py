@@ -33,11 +33,11 @@ class GPUMemoryCalculator:
     # ------------------------------------------------------------------
     # 常量定义
     # ------------------------------------------------------------------
-    SEED_BUF_SIZE: int = 32      # PRNG 种子缓冲区（固定，不随 batch_size 变化）
+    SEED_BUF_SIZE: int = 32  # PRNG 种子缓冲区（固定，不随 batch_size 变化）
     PRECOMP_TABLE_SIZE: int = 1984  # 预计算点表（31×2×8 uint32 = 496×4 字节，固定）
-    PRIVATE_KEY_SIZE: int = 32   # 已弃用：PRNG 模式下私钥不再传输，保留仅供向后兼容
-    HASH160_SIZE: int = 20       # Hash160（RIPEMD160(SHA256(pubkey))）字节数
-    MATCH_FLAG_SIZE: int = 4     # 匹配标志（uint32）字节数
+    PRIVATE_KEY_SIZE: int = 32  # 已弃用：PRNG 模式下私钥不再传输，保留仅供向后兼容
+    HASH160_SIZE: int = 20  # Hash160（RIPEMD160(SHA256(pubkey))）字节数
+    MATCH_FLAG_SIZE: int = 4  # 匹配标志（uint32）字节数
     KERNEL_OVERHEAD_RATIO: float = 0.20  # 内核执行临时显存开销比例（20%）
 
     BYTES_PER_MB: int = 1024 * 1024
@@ -72,11 +72,11 @@ class GPUMemoryCalculator:
         targets_bytes = num_targets * GPUMemoryCalculator.HASH160_SIZE
 
         # 5. 内核执行临时开销（20%，仅对可变大小缓冲区计算）
-        overhead_bytes = int(
-            match_flags_bytes * GPUMemoryCalculator.KERNEL_OVERHEAD_RATIO
-        )
+        overhead_bytes = int(match_flags_bytes * GPUMemoryCalculator.KERNEL_OVERHEAD_RATIO)
 
-        total_bytes = seed_buf_bytes + precomp_bytes + match_flags_bytes + targets_bytes + overhead_bytes
+        total_bytes = (
+            seed_buf_bytes + precomp_bytes + match_flags_bytes + targets_bytes + overhead_bytes
+        )
         return total_bytes
 
     @staticmethod
@@ -95,9 +95,7 @@ class GPUMemoryCalculator:
 
     @staticmethod
     def estimate_max_batch_size(
-        available_memory: int,
-        num_targets: int,
-        memory_ratio: float = 0.7
+        available_memory: int, num_targets: int, memory_ratio: float = 0.7
     ) -> int:
         """估算可用显存下的最大 batch_size
 
@@ -128,13 +126,13 @@ class GPUMemoryCalculator:
         remaining -= fixed_bytes
 
         if remaining <= 0:
-            logger.warning(
-                f"可用显存扣除固定缓冲区后不足，使用最小 batch_size"
-            )
+            logger.warning(f"可用显存扣除固定缓冲区后不足，使用最小 batch_size")
             return 10_000
 
         # 每个 key 消耗的字节数（含 20% overhead，PRNG 模式下仅 match_flags）
-        per_key_bytes = GPUMemoryCalculator.MATCH_FLAG_SIZE * (1 + GPUMemoryCalculator.KERNEL_OVERHEAD_RATIO)
+        per_key_bytes = GPUMemoryCalculator.MATCH_FLAG_SIZE * (
+            1 + GPUMemoryCalculator.KERNEL_OVERHEAD_RATIO
+        )
 
         max_batch = int(remaining / per_key_bytes)
 
@@ -173,18 +171,18 @@ class GPUMemoryCalculator:
         precomp_bytes = GPUMemoryCalculator.PRECOMP_TABLE_SIZE
         match_flags_bytes = batch_size * GPUMemoryCalculator.MATCH_FLAG_SIZE
         targets_bytes = num_targets * GPUMemoryCalculator.HASH160_SIZE
-        overhead_bytes = int(
-            match_flags_bytes * GPUMemoryCalculator.KERNEL_OVERHEAD_RATIO
+        overhead_bytes = int(match_flags_bytes * GPUMemoryCalculator.KERNEL_OVERHEAD_RATIO)
+        total_bytes = (
+            seed_buf_bytes + precomp_bytes + match_flags_bytes + targets_bytes + overhead_bytes
         )
-        total_bytes = seed_buf_bytes + precomp_bytes + match_flags_bytes + targets_bytes + overhead_bytes
 
         breakdown = {
-            'seed_buf_mb': seed_buf_bytes / bpMB,
-            'precomp_table_mb': precomp_bytes / bpMB,
-            'match_flags_mb': match_flags_bytes / bpMB,
-            'targets_mb': targets_bytes / bpMB,
-            'overhead_mb': overhead_bytes / bpMB,
-            'total_mb': total_bytes / bpMB,
+            "seed_buf_mb": seed_buf_bytes / bpMB,
+            "precomp_table_mb": precomp_bytes / bpMB,
+            "match_flags_mb": match_flags_bytes / bpMB,
+            "targets_mb": targets_bytes / bpMB,
+            "overhead_mb": overhead_bytes / bpMB,
+            "total_mb": total_bytes / bpMB,
         }
 
         logger.debug(
@@ -199,10 +197,7 @@ class GPUMemoryCalculator:
         return breakdown
 
     @staticmethod
-    def calculate_from_hash160_bytes(
-        num_keys: int,
-        hash160_bytes: bytes
-    ) -> float:
+    def calculate_from_hash160_bytes(num_keys: int, hash160_bytes: bytes) -> float:
         """根据 hash160 字节串计算显存需求（MB）
 
         与 GPUCollisionEngine._calculate_gpu_memory_usage 保持一致的计算逻辑：

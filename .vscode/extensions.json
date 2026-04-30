@@ -1,7 +1,22 @@
 {
   "recommendations": [
+    // Python 开发
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-python.black-formatter",
+    "ms-python.flake8",
+
+    // 类型检查与安全
+    "matangover.mypy",
+    "littlefoxteam.vscode-python-test-adapter",
+
+    // Markdown
     "DavidAnson.vscode-markdownlint",
     "bierner.markdown-preview-github-styles",
-    "shd101wyy.markdown-preview-enhanced"
+    "shd101wyy.markdown-preview-enhanced",
+
+    // 其他
+    "eamodio.gitlens",
+    "redhat.vscode-yaml"
   ]
 }

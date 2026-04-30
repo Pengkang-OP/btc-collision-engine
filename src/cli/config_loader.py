@@ -22,10 +22,10 @@ from typing import Optional
 logger = get_configured_logger("CLI")
 
 
-def load_config_with_validation(config_file: str = None) -> Optional[dict]:
+def load_config_with_validation(config_file: Optional[str] = None) -> Optional[dict]:
     """
     加载并验证配置文件
-    
+
     参数:
         config_file: 可选的配置文件路径，若为 None 则使用项目根目录的 config.json
     返回:
@@ -34,27 +34,29 @@ def load_config_with_validation(config_file: str = None) -> Optional[dict]:
     if config_file:
         config_path = os.path.abspath(config_file)
     else:
-        config_path = os.path.join(_project_root, 'config.json')
-    
+        config_path = os.path.join(_project_root, "config.json")
+
     # 检查配置文件是否存在
     if not os.path.exists(config_path):
         logger.warning(f"配置文件不存在: {config_path}")
-        logger.info("请运行: copy config.example.json config.json (Windows) 或 cp config.example.json config.json (Linux/macOS)")
+        logger.info(
+            "请运行: copy config.example.json config.json (Windows) 或 cp config.example.json config.json (Linux/macOS)"
+        )
         return None
-    
+
     # 尝试加载JSON
     try:
-        with open(config_path, 'r', encoding='utf-8') as f:
+        with open(config_path, "r", encoding="utf-8") as f:
             config = json.load(f)
         logger.info(_t("config.loaded", path=config_path))
-        
+
         # 基本验证
         if not isinstance(config, dict):
             logger.error(_t("config.invalid", error="根节点必须是JSON对象"))
             return None
-        
+
         return config
-        
+
     except json.JSONDecodeError as e:
         logger.error(_t("config.invalid", error=str(e)))
         logger.error(f"位置: 行{e.lineno}, 列{e.colno}")

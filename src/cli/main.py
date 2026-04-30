@@ -48,13 +48,13 @@ def _apply_output_flags(args) -> None:
     """根据 --verbose / --quiet / --no-color 调整日志级别和输出行为"""
     import logging
 
-    verbose = getattr(args, 'verbose', 0)
-    quiet = getattr(args, 'quiet', False)
-    no_color = getattr(args, 'no_color', False)
+    verbose = getattr(args, "verbose", 0)
+    quiet = getattr(args, "quiet", False)
+    no_color = getattr(args, "no_color", False)
 
     # --no-color: 设置环境变量供 Rich 等库感知
     if no_color:
-        os.environ['NO_COLOR'] = '1'
+        os.environ["NO_COLOR"] = "1"
 
     # --quiet 与 --verbose 互斥：quiet 优先
     if quiet:
@@ -88,14 +88,17 @@ def load_targets(args: Any) -> Set[str]:
     from src.collision import TargetResolver
 
     resolver = TargetResolver()
-    quiet = getattr(args, 'quiet', False)
+    quiet = getattr(args, "quiet", False)
     if args.file:
         if not validate_file_path(args.file):
             print(f"[Error] 文件路径验证失败", file=sys.stderr)
             sys.exit(1)
         targets = resolver.load_from_file(args.file)
         if not targets:
-            print(_t("address.load_failed", error=f"从文件 '{args.file}' 未加载到任何有效地址"), file=sys.stderr)
+            print(
+                _t("address.load_failed", error=f"从文件 '{args.file}' 未加载到任何有效地址"),
+                file=sys.stderr,
+            )
             sys.exit(1)
         if not quiet:
             print(_t("address.loaded", count=len(targets)))
@@ -114,13 +117,13 @@ def _run_main() -> None:
     args = parse_args()
 
     # 语言设置（优先级：命令行 > 环境变量 > 系统语言）
-    if getattr(args, 'language', None):
+    if getattr(args, "language", None):
         set_language(args.language)
 
     # 初始化统一输出管理器（单例，后续模块通过 CLIOutput.get_instance() 获取）
     CLIOutput.init(
-        no_color=getattr(args, 'no_color', False),
-        quiet=getattr(args, 'quiet', False),
+        no_color=getattr(args, "no_color", False),
+        quiet=getattr(args, "quiet", False),
     )
 
     # 应用输出标志（--verbose/--quiet/--no-color）
@@ -153,13 +156,14 @@ def _run_main() -> None:
     start_val, end_val, total_range = _compute_range(args)
 
     # 阶段5: 显示配置信息（--quiet 时跳过）
-    quiet = getattr(args, 'quiet', False)
-    verbose = getattr(args, 'verbose', 0)
+    quiet = getattr(args, "quiet", False)
+    verbose = getattr(args, "verbose", 0)
     if not quiet:
         _print_config_info(args, targets, start_val, end_val, total_range)
         # -vv 额外打印配置详情
         if verbose >= 2 and config:
             import json
+
             print("\n[详细] 当前 config.json 配置:")
             print(json.dumps(config, ensure_ascii=False, indent=2))
 
@@ -215,9 +219,9 @@ def main() -> None:
     """CLI 主入口"""
     # 确保 stdout/stderr 在非 UTF-8 环境下不会因无法编码字符而崩溃
     try:
-        if hasattr(sys.stdout, 'reconfigure'):
-            sys.stdout.reconfigure(errors='replace')  # type: ignore[union-attr]
-            sys.stderr.reconfigure(errors='replace')  # type: ignore[union-attr]
+        if hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(errors="replace")  # type: ignore[union-attr]
+            sys.stderr.reconfigure(errors="replace")  # type: ignore[union-attr]
     except Exception:
         pass
     try:

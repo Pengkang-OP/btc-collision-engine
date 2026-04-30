@@ -4,8 +4,8 @@
 
 # 进度条配置
 PROGRESS_BAR_LENGTH: int = 20
-PROGRESS_BAR_FILLED: str = '█'
-PROGRESS_BAR_EMPTY: str = '░'
+PROGRESS_BAR_FILLED: str = "█"
+PROGRESS_BAR_EMPTY: str = "░"
 
 # 数值单位阈值
 UNIT_BILLION: int = 1_000_000_000
@@ -20,8 +20,8 @@ TAG_OK: str = "[OK]"
 TAG_WARN: str = "[Warn]"
 
 # 配置段名称
-REQUIRED_CONFIG_SECTIONS: list = ['crypto', 'collision', 'logging']
-REQUIRED_DIRECTORIES: list = ['logs', 'data_logs']
+REQUIRED_CONFIG_SECTIONS: list = ["crypto", "collision", "logging"]
+REQUIRED_DIRECTORIES: list = ["logs", "data_logs"]
 
 # 默认值
 DEFAULT_CHECKPOINT_INTERVAL: int = 30

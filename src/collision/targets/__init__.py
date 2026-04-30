@@ -21,10 +21,10 @@ from .matcher import AddressMatcher
 from .storage import AddressStorage
 
 __all__ = [
-    'TargetResolver',
-    'AddressCache',
-    'AddressBatchValidator',
-    'ValidationResult',
-    'AddressMatcher',
-    'AddressStorage',
+    "TargetResolver",
+    "AddressCache",
+    "AddressBatchValidator",
+    "ValidationResult",
+    "AddressMatcher",
+    "AddressStorage",
 ]

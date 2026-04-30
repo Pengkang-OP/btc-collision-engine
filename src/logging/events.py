@@ -14,6 +14,7 @@ import time
 
 class LogEventType(Enum):
     """日志事件类型"""
+
     ENGINE_START = "engine_start"
     ENGINE_STOP = "engine_stop"
     ENGINE_ERROR = "engine_error"
@@ -31,6 +32,7 @@ class LogEventType(Enum):
 @dataclass
 class LogEvent:
     """日志事件数据结构"""
+
     event_type: LogEventType
     data: Dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=time.time)
@@ -39,14 +41,15 @@ class LogEvent:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
-            'event_type': self.event_type.value,
-            'data': self.data,
-            'timestamp': self.timestamp,
-            'source': self.source,
+            "event_type": self.event_type.value,
+            "data": self.data,
+            "timestamp": self.timestamp,
+            "source": self.source,
         }
 
     @property
     def formatted_time(self) -> str:
         """获取格式化的时间字符串"""
         from datetime import datetime
-        return datetime.fromtimestamp(self.timestamp).strftime('%Y-%m-%d %H:%M:%S')
+
+        return datetime.fromtimestamp(self.timestamp).strftime("%Y-%m-%d %H:%M:%S")

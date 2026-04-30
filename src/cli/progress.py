@@ -74,12 +74,14 @@ def _format_progress_bar(pct: float) -> str:
 
 
 # 有效的引擎类型白名单
-VALID_ENGINE_TYPES = {'cpu', 'gpu', 'multi-gpu'}
+VALID_ENGINE_TYPES = {"cpu", "gpu", "multi-gpu"}
 
 
-def format_progress(stats: CollisionStats, mode: str, total_range: Optional[int] = None, engine_type: str = 'cpu') -> str:
+def format_progress(
+    stats: CollisionStats, mode: str, total_range: Optional[int] = None, engine_type: str = "cpu"
+) -> str:
     """格式化进度信息（带可视化进度条）
-    
+
     Args:
         stats: 碰撞统计数据
         mode: 碰撞模式
@@ -88,16 +90,18 @@ def format_progress(stats: CollisionStats, mode: str, total_range: Optional[int]
     """
     # 验证引擎类型，无效时降级为默认值
     if engine_type not in VALID_ENGINE_TYPES:
-        engine_type = 'cpu'
-    
+        engine_type = "cpu"
+
     elapsed = stats.format_elapsed()
     checked = stats.total_checked
     speed_str = stats.format_speed()
     matches = len(stats.matches)
 
     # 引擎初始化期间，显示友好提示
-    elapsed_sec = stats.elapsed if stats.elapsed > 0 else (
-        time.time() - stats.start_time if stats.start_time > 0 else 0
+    elapsed_sec = (
+        stats.elapsed
+        if stats.elapsed > 0
+        else (time.time() - stats.start_time if stats.start_time > 0 else 0)
     )
     if checked == 0 and elapsed_sec < INIT_CHECK_THRESHOLD:
         engine_tag = f"[{engine_type.upper()}]"

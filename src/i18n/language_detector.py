@@ -30,11 +30,11 @@ _LANG_MAP = {
     "en": "en_US",
     "english": "en_US",
     # Windows 语言代码（十六进制）
-    "2052": "zh_CN",   # 中文（中国）
-    "1028": "zh_CN",   # 中文（台湾）
-    "3076": "zh_CN",   # 中文（香港）
-    "1033": "en_US",   # 英语（美国）
-    "2057": "en_US",   # 英语（英国）
+    "2052": "zh_CN",  # 中文（中国）
+    "1028": "zh_CN",  # 中文（台湾）
+    "3076": "zh_CN",  # 中文（香港）
+    "1033": "en_US",  # 英语（美国）
+    "2057": "en_US",  # 英语（英国）
 }
 
 # 默认回退语言
@@ -94,6 +94,7 @@ def detect_system_language() -> str:
 # Windows 语言检测
 # ------------------------------------------------------------------
 
+
 def _detect_windows_language() -> Optional[str]:
     """
     通过 Windows API 检测用户界面语言。
@@ -103,6 +104,7 @@ def _detect_windows_language() -> Optional[str]:
     """
     try:
         import ctypes
+
         lang_id = ctypes.windll.kernel32.GetUserDefaultUILanguage()
         # Windows LANGID 十六进制字符串映射
         lang_str = str(lang_id)
@@ -132,6 +134,7 @@ def _detect_windows_language() -> Optional[str]:
 # ------------------------------------------------------------------
 # Unix/Linux/macOS 语言检测
 # ------------------------------------------------------------------
+
 
 def _detect_unix_language() -> Optional[str]:
     """
@@ -169,6 +172,7 @@ def _detect_env_language() -> Optional[str]:
 # ------------------------------------------------------------------
 # 辅助函数
 # ------------------------------------------------------------------
+
 
 def _normalize_language_code(code: str) -> Optional[str]:
     """

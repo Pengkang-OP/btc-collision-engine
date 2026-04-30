@@ -5,9 +5,4 @@ from .nvidia import NVIDIAGPUVendor
 from .amd import AMDGPUVendor
 from .intel import IntelGPUVendor
 
-__all__ = [
-    'GPUVendorBase',
-    'NVIDIAGPUVendor',
-    'AMDGPUVendor',
-    'IntelGPUVendor'
-]
+__all__ = ["GPUVendorBase", "NVIDIAGPUVendor", "AMDGPUVendor", "IntelGPUVendor"]

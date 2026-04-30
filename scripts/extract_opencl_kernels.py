@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""从kernel.py提取OpenCL内核源码到独立的.cl文件"""
+"""调试工具: 从kernel.py提取OpenCL内核源码到 scripts/kernels/ 目录
+
+内核源码的唯一真实来源是 src/gpu/kernel.py 中的 OPENCL_KERNEL_SOURCE。
+此脚本仅用于调试目的，将内嵌源码导出为 .cl 文件方便查看。
+"""
 
 import os
 import sys
@@ -13,21 +17,21 @@ from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
 def create_kernel_files():
     """创建OpenCL内核文件"""
-    
+
     kernel_dir = os.path.join(os.path.dirname(__file__), 'kernels')
     os.makedirs(kernel_dir, exist_ok=True)
-    
+
     # 1. 创建主碰撞检测内核文件
     main_kernel_path = os.path.join(kernel_dir, 'btc_collision.cl')
     with open(main_kernel_path, 'w', encoding='utf-8') as f:
         f.write("""// ============================================================================
 // 比特币 secp256k1 GPU 碰撞检测内核
 // ============================================================================
-// 
+//
 // 文件: btc_collision.cl
 // 描述: BTC碰撞引擎的核心OpenCL内核，实现批量私钥到地址的碰撞检测
 // 版本: v2.2.0
-// 
+//
 // 核心功能:
 // - 批量私钥处理（支持uint32优化，避免Intel Arc hang bug）
 // - secp256k1椭圆曲线标量乘法
@@ -53,11 +57,11 @@ def create_kernel_files():
 
 """)
         f.write(OPENCL_KERNEL_SOURCE)
-    
+
     print(f"✓ 已创建: {main_kernel_path}")
     print(f"  大小: {os.path.getsize(main_kernel_path)} 字节")
     print(f"  行数: {sum(1 for _ in open(main_kernel_path, 'r', encoding='utf-8'))} 行")
-    
+
     # 2. 创建README说明文件
     readme_path = os.path.join(kernel_dir, 'README.md')
     with open(readme_path, 'w', encoding='utf-8') as f:
@@ -126,9 +130,9 @@ python -c "from src.gpu.kernel import OPENCL_KERNEL_SOURCE; print(f'内核源码
 - [工作流图](../../docs/workflow_diagrams.md)
 - [GPU操作流程图](../../docs/gpu-operation-flowchart.md)
 """)
-    
+
     print(f"✓ 已创建: {readme_path}")
-    
+
     # 3. 验证内核源码
     print("\n验证内核源码...")
     print(f"  总字符数: {len(OPENCL_KERNEL_SOURCE)}")
@@ -136,14 +140,14 @@ python -c "from src.gpu.kernel import OPENCL_KERNEL_SOURCE; print(f'内核源码
     print(f"  包含批处理内核: {'batch_check' in OPENCL_KERNEL_SOURCE}")
     print(f"  包含验证内核: {'verify_arithmetic' in OPENCL_KERNEL_SOURCE}")
     print(f"  包含调试内核: {'debug_hash' in OPENCL_KERNEL_SOURCE}")
-    
+
     # 4. 统计信息
     print("\n内核统计信息:")
     lines = OPENCL_KERNEL_SOURCE.split('\n')
     print(f"  总行数: {len(lines)}")
     print(f"  注释行数: {sum(1 for line in lines if line.strip().startswith('//'))}")
     print(f"  空行数: {sum(1 for line in lines if not line.strip())}")
-    
+
     print("\n✅ OpenCL内核文件创建完成！")
 
 if __name__ == '__main__':

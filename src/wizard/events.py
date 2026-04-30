@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 class WizardEventType(Enum):
     """引导事件类型"""
+
     WIZARD_START = "wizard_start"
     TARGET_SELECTED = "target_selected"
     MODE_SELECTED = "mode_selected"
@@ -33,6 +34,7 @@ class WizardEventType(Enum):
 @dataclass
 class WizardEvent:
     """引导事件数据结构"""
+
     event_type: WizardEventType
     data: Dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=time.time)
@@ -41,10 +43,10 @@ class WizardEvent:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
-            'event_type': self.event_type.value,
-            'data': self.data,
-            'timestamp': self.timestamp,
-            'source': self.source,
+            "event_type": self.event_type.value,
+            "data": self.data,
+            "timestamp": self.timestamp,
+            "source": self.source,
         }
 
 
@@ -73,8 +75,7 @@ class EventDispatcher:
                     callback(event)
                 except Exception as e:
                     logger.error(
-                        f"Event callback failed for {event.event_type.value}: {e}",
-                        exc_info=True
+                        f"Event callback failed for {event.event_type.value}: {e}", exc_info=True
                     )
 
     def clear(self):

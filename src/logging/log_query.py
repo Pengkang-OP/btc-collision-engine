@@ -23,13 +23,15 @@ class LogQuery:
         self.storage_dir = storage_dir
         self.log_file = os.path.join(storage_dir, "wizard.log")
 
-    def query(self,
-              event_type: Optional[str] = None,
-              source: Optional[str] = None,
-              start_time: Optional[float] = None,
-              end_time: Optional[float] = None,
-              keyword: Optional[str] = None,
-              limit: int = 100) -> List[Dict[str, Any]]:
+    def query(
+        self,
+        event_type: Optional[str] = None,
+        source: Optional[str] = None,
+        start_time: Optional[float] = None,
+        end_time: Optional[float] = None,
+        keyword: Optional[str] = None,
+        limit: int = 100,
+    ) -> List[Dict[str, Any]]:
         """查询日志
 
         Args:
@@ -43,31 +45,31 @@ class LogQuery:
         Returns:
             符合条件的日志列表
         """
-        results = []
+        results: list[dict[str, Any]] = []
 
         if not os.path.exists(self.log_file):
             return results
 
-        with open(self.log_file, 'r', encoding='utf-8') as f:
+        with open(self.log_file, "r", encoding="utf-8") as f:
             for line in f:
                 try:
                     event_data = json.loads(line.strip())
 
                     # 应用过滤条件
-                    if event_type and event_data.get('type') != event_type:
+                    if event_type and event_data.get("type") != event_type:
                         continue
 
-                    if source and event_data.get('source') != source:
+                    if source and event_data.get("source") != source:
                         continue
 
-                    timestamp = event_data.get('timestamp', 0)
+                    timestamp = event_data.get("timestamp", 0)
                     if start_time and timestamp < start_time:
                         continue
                     if end_time and timestamp > end_time:
                         continue
 
                     if keyword:
-                        message = event_data.get('message', '').lower()
+                        message = event_data.get("message", "").lower()
                         if keyword.lower() not in message:
                             continue
 
@@ -114,10 +116,7 @@ class LogQuery:
         Returns:
             日志列表
         """
-        return self.query(
-            start_time=start.timestamp(),
-            end_time=end.timestamp()
-        )
+        return self.query(start_time=start.timestamp(), end_time=end.timestamp())
 
     def get_last_hour(self) -> List[Dict[str, Any]]:
         """获取最近一小时的日志"""
@@ -131,7 +130,9 @@ class LogQuery:
         start = end - timedelta(days=1)
         return self.get_by_timerange(start, end)
 
-    def search(self, keyword: str, case_sensitive: bool = False, limit: int = 100) -> List[Dict[str, Any]]:
+    def search(
+        self, keyword: str, case_sensitive: bool = False, limit: int = 100
+    ) -> List[Dict[str, Any]]:
         """搜索日志
 
         Args:
@@ -150,16 +151,16 @@ class LogQuery:
         Returns:
             类型计数字典
         """
-        counts = defaultdict(int)
+        counts: defaultdict[str, int] = defaultdict(int)
 
         if not os.path.exists(self.log_file):
             return dict(counts)
 
-        with open(self.log_file, 'r', encoding='utf-8') as f:
+        with open(self.log_file, "r", encoding="utf-8") as f:
             for line in f:
                 try:
                     event_data = json.loads(line.strip())
-                    event_type = event_data.get('type', 'unknown')
+                    event_type = event_data.get("type", "unknown")
                     counts[event_type] += 1
                 except json.JSONDecodeError:
                     continue
@@ -179,11 +180,11 @@ class LogQuery:
         last_time = None
 
         if os.path.exists(self.log_file):
-            with open(self.log_file, 'r', encoding='utf-8') as f:
+            with open(self.log_file, "r", encoding="utf-8") as f:
                 for line in f:
                     try:
                         event_data = json.loads(line.strip())
-                        timestamp = event_data.get('timestamp')
+                        timestamp = event_data.get("timestamp")
                         if timestamp:
                             if first_time is None:
                                 first_time = timestamp
@@ -192,12 +193,12 @@ class LogQuery:
                         continue
 
         return {
-            'total_count': total,
-            'type_counts': counts,
-            'first_log_time': first_time,
-            'last_log_time': last_time,
-            'log_file': self.log_file,
-            'log_file_exists': os.path.exists(self.log_file)
+            "total_count": total,
+            "type_counts": counts,
+            "first_log_time": first_time,
+            "last_log_time": last_time,
+            "log_file": self.log_file,
+            "log_file_exists": os.path.exists(self.log_file),
         }
 
     def tail(self, count: int = 10) -> List[Dict[str, Any]]:
@@ -211,7 +212,9 @@ class LogQuery:
         """
         return self.get_recent(count)
 
-    def filter(self, predicate: Callable[[Dict[str, Any]], bool], limit: int = 100) -> List[Dict[str, Any]]:
+    def filter(
+        self, predicate: Callable[[Dict[str, Any]], bool], limit: int = 100
+    ) -> List[Dict[str, Any]]:
         """使用自定义函数过滤
 
         Args:

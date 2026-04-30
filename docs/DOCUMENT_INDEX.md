@@ -5,7 +5,7 @@
 > **版本**: v3.5.0 | **最后更新**: 2026-04-30
 >
 > 📢 **v3.5.0重大更新**: 全模块类型提示系统化工程 (104文件)、配置热重载、多渠道告警系统、70新测试
-> 📢 **v3.4.0更新**: Wizard模块化重构、GPU引擎协议层重构、结构化日志子系统、CLI增强
+> 📢 **v3.4.0更新**: Wizard模块化重构、GPU引擎协议层重构、结构化日志子系统、CLI增强 → [发布说明](RELEASE_NOTES_v3.4.0.md)
 > 📢 **v3.3.1更新**: GPU停止阻塞修复、生产可观测性提升、异步双缓冲架构
 > 📢 **v3.1.0文档清理**: 根目录25→3个文件,docs目录100→30个文件
 > 查看 [DOCUMENT_CLEANUP_REPORT_v2.3.0.md](DOCUMENT_CLEANUP_REPORT_v2.3.0.md) 获取清理详情
@@ -54,6 +54,7 @@
 ### 1. 快速开始与概述
 
 - [README.md](../README.md) - 项目概述、快速开始、功能特性
+- [RELEASE_NOTES_v3.4.0.md](RELEASE_NOTES_v3.4.0.md) - v3.4.0 发布说明 (🆕)
 - [getting-started.md](getting-started.md) - 详细入门指南（✅ v3.1.1更新）
 - [use-cases.md](use-cases.md) - 使用场景指南（✅ v3.1.1新增）
 - [project-status.md](project-status.md) - 项目状态和路线图
@@ -353,7 +354,7 @@ data_logs/archive/          (300个过期每日报告)
 ### 1. 查看 Archive 目录
 
 ```python
-docs/archive/  
+docs/archive/
 ├── 安全相关 (8个文档)
 ├── 代码质量 (6个文档)
 ├── 异常处理 (4个文档)

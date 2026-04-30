@@ -41,7 +41,17 @@ class GPUMetricsCollector:
 
     # 直方图桶边界（秒）：用于内核延迟分布
     KERNEL_LATENCY_BUCKETS = (
-        0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0, float("inf")
+        0.001,
+        0.002,
+        0.005,
+        0.01,
+        0.02,
+        0.05,
+        0.1,
+        0.2,
+        0.5,
+        1.0,
+        float("inf"),
     )
 
     def __init__(self) -> None:
@@ -230,7 +240,7 @@ class GPUMetricsCollector:
 
             lines.append("# HELP gpu_throughput_keys_per_sec Current throughput per device.")
             lines.append("# TYPE gpu_throughput_keys_per_sec gauge")
-            for dev, val in sorted(self._throughput.items()):  # type: ignore[assignment]
+            for dev, val in sorted(self._throughput.items()):  # type: ignore[assignment]  # sorted()对DictItems的泛型推断受限
                 lines.append(f'gpu_throughput_keys_per_sec{{device="{dev}"}} {val:.1f}')
 
             lines.append("# HELP gpu_memory_usage_bytes GPU memory usage per device.")
@@ -269,7 +279,9 @@ class GPUMetricsCollector:
             # Collector uptime
             lines.append("# HELP gpu_metrics_collector_uptime_seconds Collector uptime.")
             lines.append("# TYPE gpu_metrics_collector_uptime_seconds gauge")
-            lines.append(f"gpu_metrics_collector_uptime_seconds {time.time() - self._created_at:.1f}")
+            lines.append(
+                f"gpu_metrics_collector_uptime_seconds {time.time() - self._created_at:.1f}"
+            )
 
             lines.append("")  # 末尾换行
             return "\n".join(lines)
@@ -298,10 +310,7 @@ class GPUMetricsCollector:
                         "pool_hit_ratio": self.get_pool_hit_ratio(dev),
                     }
                     for dev in sorted(
-                        set(
-                            list(self._keys_checked_total.keys())
-                            + list(self._throughput.keys())
-                        )
+                        set(list(self._keys_checked_total.keys()) + list(self._throughput.keys()))
                     )
                 },
             }

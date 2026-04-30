@@ -53,42 +53,40 @@ class WizardMessageQueue:
 
     def send_wizard_start(self, config: Dict[str, Any]) -> bool:
         """发送向导开始事件"""
-        return self.send(WizardEventType.WIZARD_START, {'config': config})
+        return self.send(WizardEventType.WIZARD_START, {"config": config})
 
     def send_target_selected(self, targets: list, target_file: Optional[str] = None) -> bool:
         """发送目标选择事件"""
-        return self.send(WizardEventType.TARGET_SELECTED, {
-            'targets': targets,
-            'target_file': target_file
-        })
+        return self.send(
+            WizardEventType.TARGET_SELECTED, {"targets": targets, "target_file": target_file}
+        )
 
-    def send_mode_selected(self, mode: str, start_key: Optional[str] = None,
-                          end_key: Optional[str] = None) -> bool:
+    def send_mode_selected(
+        self, mode: str, start_key: Optional[str] = None, end_key: Optional[str] = None
+    ) -> bool:
         """发送模式选择事件"""
-        return self.send(WizardEventType.MODE_SELECTED, {
-            'mode': mode,
-            'start_key': start_key,
-            'end_key': end_key
-        })
+        return self.send(
+            WizardEventType.MODE_SELECTED,
+            {"mode": mode, "start_key": start_key, "end_key": end_key},
+        )
 
     def send_options_selected(self, checkpoint: bool, dedup: bool, duration: int) -> bool:
         """发送选项选择事件"""
-        return self.send(WizardEventType.OPTIONS_SELECTED, {
-            'checkpoint': checkpoint,
-            'dedup': dedup,
-            'duration': duration
-        })
+        return self.send(
+            WizardEventType.OPTIONS_SELECTED,
+            {"checkpoint": checkpoint, "dedup": dedup, "duration": duration},
+        )
 
     def send_gpu_selected(self, gpu_indices: list, use_multi_gpu: bool) -> bool:
         """发送GPU选择事件"""
-        return self.send(WizardEventType.GPU_SELECTED, {
-            'gpu_indices': gpu_indices,
-            'use_multi_gpu': use_multi_gpu
-        })
+        return self.send(
+            WizardEventType.GPU_SELECTED,
+            {"gpu_indices": gpu_indices, "use_multi_gpu": use_multi_gpu},
+        )
 
     def send_wizard_complete(self, result: Dict[str, Any]) -> bool:
         """发送向导完成事件"""
-        return self.send(WizardEventType.WIZARD_COMPLETE, {'result': result})
+        return self.send(WizardEventType.WIZARD_COMPLETE, {"result": result})
 
     def send_wizard_cancelled(self) -> bool:
         """发送向导取消事件"""
@@ -96,7 +94,7 @@ class WizardMessageQueue:
 
     def send_wizard_error(self, error_message: str) -> bool:
         """发送向导错误事件"""
-        return self.send(WizardEventType.WIZARD_ERROR, {'error': error_message}, priority=1)
+        return self.send(WizardEventType.WIZARD_ERROR, {"error": error_message}, priority=1)
 
     def receive(self, timeout: Optional[float] = None) -> Optional[WizardEvent]:
         """从队列接收事件
@@ -146,8 +144,7 @@ class WizardMessageQueue:
                 callback(event)
             except Exception as e:
                 logger.error(
-                    f"Subscriber callback failed for {event.event_type.value}: {e}",
-                    exc_info=True
+                    f"Subscriber callback failed for {event.event_type.value}: {e}", exc_info=True
                 )
 
     def enable(self):

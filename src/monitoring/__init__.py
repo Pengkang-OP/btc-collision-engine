@@ -11,7 +11,7 @@ from .monitoring_system import (
     AnomalyDetector,
     MonitoringAlertAdapter,
     ReportGenerator,
-    MonitoringData
+    MonitoringData,
 )
 from .data_logger import DataLogger
 from .enhanced_monitoring import EnhancedMonitoringSystem

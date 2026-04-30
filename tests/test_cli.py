@@ -17,10 +17,12 @@ class TestCLI:
     """CLI 测试类"""
 
     def setup_method(self):
-        """每个测试前重置 CLIOutput 单例，确保 capsys/monkeypatch 生效"""
+        """每个测试前重置 CLIOutput 和 LogWindow 单例，确保测试隔离"""
         from src.cli.output import CLIOutput
         CLIOutput.reset_instance()
-    
+        from src.cli.log_window import reset_log_window_instance
+        reset_log_window_instance()
+
     def test_parse_args(self):
         """测试命令行参数解析"""
         # 测试随机模式
@@ -30,20 +32,20 @@ class TestCLI:
             assert args.mode == 'random'
             assert args.checkpoint is False
             assert args.dedup is False
-        
+
         # 测试范围模式
         with patch('sys.argv', ['cli.py', '-t', '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa', '-m', 'range', '--start', '1', '--end', 'FFFF']):
             args = parse_args()
             assert args.mode == 'range'
             assert args.start == '1'
             assert args.end == 'FFFF'
-        
+
         # 测试暴力穷举模式
         with patch('sys.argv', ['cli.py', '-t', '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa', '-m', 'brute_force', '--start', '1']):
             args = parse_args()
             assert args.mode == 'brute_force'
             assert args.start == '1'
-    
+
     def test_validate_args(self):
         """测试参数验证"""
         # 模拟参数对象
@@ -62,14 +64,14 @@ class TestCLI:
                 self.platform_check = kwargs.get('platform_check', False)
                 self.cleanup = kwargs.get('cleanup', False)
                 self.validate_addresses = kwargs.get('validate_addresses', None)
-        
+
         # 测试有效参数
         args = Args(
             mode='random',
             targets=['1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa']
         )
         assert validate_args(args) is True
-        
+
         # 测试范围模式缺少 start
         args = Args(
             mode='range',
@@ -79,7 +81,7 @@ class TestCLI:
             duration=60
         )
         assert validate_args(args) is False
-        
+
         # 测试范围模式缺少 end
         args = Args(
             mode='range',
@@ -89,7 +91,7 @@ class TestCLI:
             duration=60
         )
         assert validate_args(args) is False
-        
+
         # 测试无效的 start 值
         args = Args(
             mode='range',
@@ -99,7 +101,7 @@ class TestCLI:
             duration=60
         )
         assert validate_args(args) is False
-        
+
         # 测试 start >= end
         args = Args(
             mode='range',
@@ -109,7 +111,7 @@ class TestCLI:
             duration=60
         )
         assert validate_args(args) is False
-        
+
         # 测试无效的 workers
         args = Args(
             mode='random',
@@ -119,7 +121,7 @@ class TestCLI:
             duration=60
         )
         assert validate_args(args) is False
-        
+
         # 测试无效的 duration
         args = Args(
             mode='random',
@@ -129,24 +131,24 @@ class TestCLI:
             duration=-10
         )
         assert validate_args(args) is False
-    
+
     def test_format_progress(self):
         """测试进度格式化"""
         stats = CollisionStats()
         stats.total_checked = 1000
         stats.start_time = 1000  # 模拟开始时间
-        
+
         # 测试随机模式进度（新格式：[elapsed] | 1.0K | 速度: ... | ETA: -- | 匹配: 0）
         progress_str = format_progress(stats, 'random')
         assert '1.0K' in progress_str  # 已检查数量以缩写显示
         assert '速度:' in progress_str
         assert '匹配: 0' in progress_str
-        
+
         # 测试范围模式进度（带进度条和百分比）
         progress_str = format_progress(stats, 'range', total_range=10000)
         assert '1.0K' in progress_str  # 已检查数量
         assert '10.0%' in progress_str  # 进度百分比
-    
+
     def test_load_targets(self, tmp_path):
         """测试目标地址加载"""
         # 模拟 TargetResolver（延迟导入，需 patch collision 模块）
@@ -155,24 +157,24 @@ class TestCLI:
             mock_instance.load_from_file.return_value = {'1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa', '1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH'}
             mock_instance.resolve_multiple.return_value = {'1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'}
             mock_resolver.return_value = mock_instance
-            
+
             # 模拟参数对象
             class Args:
                 def __init__(self, **kwargs):
                     for key, value in kwargs.items():
                         setattr(self, key, value)
-            
+
             # 测试从文件加载（同时 mock validate_file_path 跳过文件存在性检查）
             with patch('src.cli.main.validate_file_path', return_value=True):
                 args = Args(file="test.txt", targets=None)
                 targets = load_targets(args)
                 assert len(targets) >= 2
-            
+
             # 测试从命令行参数加载
             args = Args(file=None, targets=['1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'])
             targets = load_targets(args)
             assert len(targets) >= 1
-    
+
     def test_main_random_mode(self, capsys, monkeypatch):
         """测试主程序随机模式"""
         # 模拟命令行参数
@@ -182,11 +184,11 @@ class TestCLI:
             '-m', 'random',
             '--duration', '1'
         ])
-        
+
         # 创建 mock 引擎实例
         mock_instance = Mock()
         mock_instance.is_running.side_effect = [True, False]
-        
+
         mock_stats = Mock()
         mock_stats.total_checked = 1000
         mock_stats.elapsed = 1.0
@@ -194,11 +196,11 @@ class TestCLI:
         mock_stats.format_elapsed = lambda: '0:00:01'
         mock_stats.format_speed = lambda: '1,000 次/秒'
         mock_stats.matches = []
-        
+
         mock_instance.get_stats.return_value = mock_stats
         mock_instance.start = Mock()
         mock_instance.stop = Mock()
-        
+
         # 直接 patch build_engine，跳过实际引擎创建
         with patch('src.cli.engine_runner.build_engine', return_value=(mock_instance, 'cpu')):
             # 模拟 time.sleep
@@ -210,14 +212,14 @@ class TestCLI:
                     return 1000 if _time_call_count[0] == 1 else 2000
                 with patch('time.time', side_effect=_mock_time):
                     main()
-        
+
         # 检查输出
         captured = capsys.readouterr()
         assert '开始对撞' in captured.out
         assert '对撞结束' in captured.out
         # Rich Panel 输出格式：「总检查数」后面是空格填充而非「  : 」
         assert '总检查数' in captured.out and '1,000' in captured.out
-    
+
     def test_main_range_mode(self, capsys, monkeypatch):
         """测试主程序范围模式"""
         # 模拟命令行参数
@@ -229,11 +231,11 @@ class TestCLI:
             '--end', '1000',
             '--duration', '1'
         ])
-        
+
         # 创建 mock 引擎实例
         mock_instance = Mock()
         mock_instance.is_running.side_effect = [True, False]
-        
+
         mock_stats = Mock()
         mock_stats.total_checked = 500
         mock_stats.elapsed = 1.0
@@ -241,11 +243,11 @@ class TestCLI:
         mock_stats.format_elapsed = lambda: '0:00:01'
         mock_stats.format_speed = lambda: '500 次/秒'
         mock_stats.matches = []
-        
+
         mock_instance.get_stats.return_value = mock_stats
         mock_instance.start = Mock()
         mock_instance.stop = Mock()
-        
+
         # 直接 patch build_engine，跳过实际引擎创建
         with patch('src.cli.engine_runner.build_engine', return_value=(mock_instance, 'cpu')):
             with patch('time.sleep', return_value=None):
@@ -255,14 +257,14 @@ class TestCLI:
                     return 1000 if _time_call_count[0] == 1 else 2000
                 with patch('time.time', side_effect=_mock_time):
                     main()
-        
+
         # 检查输出
         captured = capsys.readouterr()
         assert '开始对撞' in captured.out
         assert '对撞结束' in captured.out
         # Rich Panel 输出格式：「总检查数」后面是空格填充而非「  : 」
         assert '总检查数' in captured.out and '500' in captured.out
-    
+
     def test_main_brute_force_mode(self, capsys, monkeypatch):
         """测试主程序暴力穷举模式"""
         # 模拟命令行参数
@@ -273,11 +275,11 @@ class TestCLI:
             '--start', '1',
             '--duration', '1'
         ])
-        
+
         # 创建 mock 引擎实例
         mock_instance = Mock()
         mock_instance.is_running.side_effect = [True, False]
-        
+
         mock_stats = Mock()
         mock_stats.total_checked = 2000
         mock_stats.elapsed = 1.0
@@ -285,11 +287,11 @@ class TestCLI:
         mock_stats.format_elapsed = lambda: '0:00:01'
         mock_stats.format_speed = lambda: '2,000 次/秒'
         mock_stats.matches = []
-        
+
         mock_instance.get_stats.return_value = mock_stats
         mock_instance.start = Mock()
         mock_instance.stop = Mock()
-        
+
         # 直接 patch build_engine，跳过实际引擎创建
         with patch('src.cli.engine_runner.build_engine', return_value=(mock_instance, 'cpu')):
             with patch('time.sleep', return_value=None):
@@ -299,7 +301,7 @@ class TestCLI:
                     return 1000 if _time_call_count[0] == 1 else 2000
                 with patch('time.time', side_effect=_mock_time):
                     main()
-        
+
         # 检查输出
         captured = capsys.readouterr()
         assert '开始对撞' in captured.out
@@ -428,6 +430,13 @@ class TestCLI:
 class TestLoadConfigWithValidation:
     """配置加载测试"""
 
+    def setup_method(self):
+        """每个测试前重置 CLIOutput 和 LogWindow 单例，确保测试隔离"""
+        from src.cli.output import CLIOutput
+        CLIOutput.reset_instance()
+        from src.cli.log_window import reset_log_window_instance
+        reset_log_window_instance()
+
     @staticmethod
     def _get_config_loader_module():
         """Safety helper: 获取 src.cli.config_loader 模块对象（_project_root 在此模块）"""
@@ -478,6 +487,13 @@ class TestLoadConfigWithValidation:
 
 class TestBuildEngine:
     """引擎构建测试"""
+
+    def setup_method(self):
+        """每个测试前重置 CLIOutput 和 LogWindow 单例，确保测试隔离"""
+        from src.cli.output import CLIOutput
+        CLIOutput.reset_instance()
+        from src.cli.log_window import reset_log_window_instance
+        reset_log_window_instance()
 
     def test_build_cpu_engine(self, monkeypatch):
         """默认构建CPU引擎"""
@@ -532,6 +548,13 @@ class TestBuildEngine:
 
 class TestUtilityCommands:
     """工具命令测试"""
+
+    def setup_method(self):
+        """每个测试前重置 CLIOutput 和 LogWindow 单例，确保测试隔离"""
+        from src.cli.output import CLIOutput
+        CLIOutput.reset_instance()
+        from src.cli.log_window import reset_log_window_instance
+        reset_log_window_instance()
 
     def test_examples_output(self, monkeypatch):
         """--examples 输出包含示例命令"""
@@ -603,6 +626,13 @@ class TestUtilityCommands:
 
 class TestAdvancedFeatures:
     """高级功能测试"""
+
+    def setup_method(self):
+        """每个测试前重置 CLIOutput 和 LogWindow 单例，确保测试隔离"""
+        from src.cli.output import CLIOutput
+        CLIOutput.reset_instance()
+        from src.cli.log_window import reset_log_window_instance
+        reset_log_window_instance()
 
     def test_apply_template_valid(self, tmp_path):
         """应用合法模板成功"""
@@ -686,9 +716,11 @@ class TestSecurity:
     """安全性测试"""
 
     def setup_method(self):
-        """每个测试前重置 CLIOutput 单例"""
+        """每个测试前重置 CLIOutput 和 LogWindow 单例，确保测试隔离"""
         from src.cli.output import CLIOutput
         CLIOutput.reset_instance()
+        from src.cli.log_window import reset_log_window_instance
+        reset_log_window_instance()
 
     def test_file_path_traversal_blocked(self):
         """路径遍历攻击被阻止"""
@@ -717,6 +749,13 @@ class TestSecurity:
 class TestModuleExports:
     """模块导出完整性测试"""
 
+    def setup_method(self):
+        """每个测试前重置 CLIOutput 和 LogWindow 单例，确保测试隔离"""
+        from src.cli.output import CLIOutput
+        CLIOutput.reset_instance()
+        from src.cli.log_window import reset_log_window_instance
+        reset_log_window_instance()
+
     def test_all_public_api_importable(self):
         """__all__ 中所有符号可导入"""
         from src.cli import __all__
@@ -738,9 +777,11 @@ class TestV3Improvements:
     """V3版本新增功能测试"""
 
     def setup_method(self):
-        """每个测试前重置 CLIOutput 单例"""
+        """每个测试前重置 CLIOutput 和 LogWindow 单例，确保测试隔离"""
         from src.cli.output import CLIOutput
         CLIOutput.reset_instance()
+        from src.cli.log_window import reset_log_window_instance
+        reset_log_window_instance()
 
     # ── 通用 Args 构建辅助 ───────────────────────────────────────────────────
     @staticmethod

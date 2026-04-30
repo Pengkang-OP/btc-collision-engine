@@ -6,7 +6,7 @@ import re
 import os
 
 # Map of Chinese text -> English translation
-# Applied to both kernel.py OPENCL_KERNEL_SOURCE and btc_collision.cl
+# Applied to kernel.py OPENCL_KERNEL_SOURCE (the single source of truth for OpenCL kernels)
 REPLACEMENTS = [
     # File header / section comments
     ("比特币 secp256k1 GPU 计算内核", "Bitcoin secp256k1 GPU computation kernel"),
@@ -356,7 +356,6 @@ def main():
     base = r'f:\Qoder\btc-collision-engine'
     files = [
         os.path.join(base, 'src', 'gpu', 'kernel.py'),
-        os.path.join(base, 'src', 'gpu', 'kernels', 'btc_collision.cl'),
     ]
 
     total_remaining = 0

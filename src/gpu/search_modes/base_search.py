@@ -44,9 +44,9 @@ class BaseSearchMode:
         stop_condition_fn: Optional[Callable[[], bool]] = None,
     ) -> int:
         """通用批处理执行循环
-    
+
         消除 _brute_force / _range_scan 中约 100 行重复的批处理执行逻辑。
-    
+
         Args:
             key_generator_fn:    无参可调用对象，每次调用返回 (data_bytes, actual_batch_size)。
                                  支持两种模式：
@@ -56,7 +56,7 @@ class BaseSearchMode:
             mode_name:           搜索模式名称，用于异常日志（如“暴力穷举”、“范围扫描”）。
             stop_condition_fn:   可选的额外停止条件检查，返回 True 表示停止。
                                  若为 None，则仅依赖 _stop_event。
-    
+
         Returns:
             本次循环共处理的私钥总数 (batch_count)
         """
@@ -83,10 +83,11 @@ class BaseSearchMode:
                 # 处理匹配结果
                 for match in matches:
                     key_idx = match["key_index"]
-                    private_key = batch_data[key_idx * 32:(key_idx + 1) * 32]
+                    private_key = batch_data[key_idx * 32 : (key_idx + 1) * 32]
                     target_idx = match["target_index"]
                     address = engine._target_list[target_idx]
                     from ...core.wif import WIF
+
                     wif = WIF.encode(private_key, compressed=True)
                     engine.stats.add_match(private_key, address)
                     if engine.on_match:
@@ -115,26 +116,27 @@ class BaseSearchMode:
                 # 异常分类和恢复
                 error_str = str(e).lower()
 
-                if 'out of memory' in error_str or 'mem_object_allocation_failure' in error_str:
+                if "out of memory" in error_str or "mem_object_allocation_failure" in error_str:
                     # OOM: 缩减 batch_size
                     logger.warning(f"GPU内存不足，尝试缩减batch_size")
                     with engine._batch_size_lock:
-                        new_size = max(engine._batch_size // 2, 1024)
+                        new_size = max(engine._batch_size // 2, 1024)  # type: ignore[operator]
                         engine._batch_size = new_size
                         logger.info(f"batch_size已缩减至 {new_size}")
                     continue
 
-                elif 'timeout' in error_str or 'command_execution' in error_str:
+                elif "timeout" in error_str or "command_execution" in error_str:
                     # 超时: 记录但继续（连续错误计数会最终处理）
                     logger.warning(f"GPU执行超时: {e}")
 
-                elif 'device' in error_str and ('lost' in error_str or 'not found' in error_str):
+                elif "device" in error_str and ("lost" in error_str or "not found" in error_str):
                     # 设备丢失: 尝试 recovery_manager 恢复
-                    recovery_mgr = getattr(engine, '_recovery_manager', None) or \
-                                   getattr(engine, 'gpu_recovery_manager', None)
+                    recovery_mgr = getattr(engine, "_recovery_manager", None) or getattr(
+                        engine, "gpu_recovery_manager", None
+                    )
                     if recovery_mgr is not None:
                         try:
-                            gpu_id = getattr(engine, 'device_index', 0)
+                            gpu_id = getattr(engine, "device_index", 0)
                             recovered = recovery_mgr.handle_gpu_failure(gpu_id, e)
                             if recovered:
                                 logger.info("GPU设备恢复成功")
@@ -184,7 +186,7 @@ class BaseSearchMode:
             high = key_int >> 128
             low = key_int & ((1 << 128) - 1)
             struct.pack_into(
-                '>QQQQ',
+                ">QQQQ",
                 keys_data,
                 offset,
                 high >> 64,

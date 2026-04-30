@@ -1,7 +1,10 @@
 """GPU碰撞引擎重构模块
 
 本模块包含从GPUCollisionEngine解耦出来的核心组件:
-- GPUEngineFacade: GPU外观层，封装设备/上下文/内核管理
+- GPUEngineFacade: GPU引擎外观层，封装设备/内核/管道管理
+- DeviceManagerAdapter: GPU设备管理器适配器
+- GPUKernelAdapter: GPU内核执行器适配器
+- AsyncPipelineAdapter: 异步执行管道适配器
 - PerformanceMonitoringPipeline: 性能监控管道
 - CollisionCore: 碰撞核心逻辑
 - VendorOptimizationFactory: 厂商优化策略工厂
@@ -12,11 +15,12 @@
 - 提高可测试性 (Mock层从7+降到1-2)
 - 保持向后兼容 (API不变)
 
-版本: v1.0
+版本: v6.0.0 (Phase 6)
 创建日期: 2026-04-29
+更新日期: 2026-04-30
 """
 
-__version__ = "1.0.0"
+__version__ = "6.0.0"
 __author__ = "BTC Project"
 
 # 直接导入（非延迟），避免循环依赖
@@ -24,6 +28,14 @@ from .facade import GPUEngineFacade
 from .monitoring import PerformanceMonitoringPipeline
 from .core import CollisionCore
 from .vendor_strategy import VendorOptimizationFactory
+
+# Phase 2 新增适配器
+from .device_manager_adapter import DeviceManagerAdapter
+from .kernel_adapter import GPUKernelAdapter
+from .async_pipeline_adapter import AsyncPipelineAdapter
+
+# Phase 3 新增适配器
+from .data_logger_adapter import DataLoggerAdapter
 
 
 # 工厂函数（向后兼容：支持延迟导入/依赖注入场景）
@@ -47,13 +59,41 @@ def get_vendor_factory():
     return VendorOptimizationFactory
 
 
+def get_device_manager_adapter():
+    """返回 DeviceManagerAdapter 类（非实例）"""
+    return DeviceManagerAdapter
+
+
+def get_kernel_adapter():
+    """返回 GPUKernelAdapter 类（非实例）"""
+    return GPUKernelAdapter
+
+
+def get_async_pipeline_adapter():
+    """返回 AsyncPipelineAdapter 类（非实例）"""
+    return AsyncPipelineAdapter
+
+
+def get_data_logger_adapter():
+    """返回 DataLoggerAdapter 类（非实例）"""
+    return DataLoggerAdapter
+
+
 __all__ = [
     "GPUEngineFacade",
     "PerformanceMonitoringPipeline",
     "CollisionCore",
     "VendorOptimizationFactory",
+    "DeviceManagerAdapter",
+    "GPUKernelAdapter",
+    "AsyncPipelineAdapter",
+    "DataLoggerAdapter",
     "get_gpu_engine_facade",
     "get_monitoring_pipeline",
     "get_collision_core",
     "get_vendor_factory",
+    "get_device_manager_adapter",
+    "get_kernel_adapter",
+    "get_async_pipeline_adapter",
+    "get_data_logger_adapter",
 ]

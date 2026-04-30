@@ -33,6 +33,7 @@ _suppressed_handlers: list = []  # 保存被抑制的 (handler, original_level) 
 def _suppress_console_logging() -> None:
     """将所有终端 StreamHandler 日志级别提升到 CRITICAL，避免运行时刷屏。"""
     import logging as _logging
+
     root = _logging.getLogger()
     for h in root.handlers:
         if isinstance(h, _logging.StreamHandler) and not isinstance(h, _logging.FileHandler):
@@ -61,10 +62,11 @@ def _setup_and_start_engine(
         (engine, engine_type, alert_system, stop_event) 四元组
     """
     import logging as _logging
+
     logger = _logging.getLogger("CLI")
 
     # 构建引擎
-    sensitive_mode = getattr(args, 'sensitive_mode', 'full')
+    sensitive_mode = getattr(args, "sensitive_mode", "full")
     engine, engine_type = build_engine(args, targets, sensitive_mode=sensitive_mode)
 
     # ── 将告警系统集成到引擎主流程 ──────────────────────────────────
@@ -83,8 +85,8 @@ def _setup_and_start_engine(
             alert_system.setup_default_rules()
 
             def _on_alert(alert_record: Any) -> None:
-                level = getattr(alert_record.level, 'value', str(alert_record.level)).upper()
-                msg = getattr(alert_record, 'message', str(alert_record))
+                level = getattr(alert_record.level, "value", str(alert_record.level)).upper()
+                msg = getattr(alert_record, "message", str(alert_record))
                 print(f"\n[WARN] [" + _t("common.warning") + f"/{level}] {msg}")
 
             alert_system.add_alert_callback(_on_alert)
@@ -108,7 +110,7 @@ def _setup_and_start_engine(
     # 启动引擎
     print(_t("cli.main.collision_start") + "\n")
 
-    if engine_type == 'multi_gpu':
+    if engine_type == "multi_gpu":
         ok = engine.start(
             targets=targets,
             mode=args.mode,
@@ -153,27 +155,27 @@ def _run_collision_loop(
 
     def on_key(key: str) -> None:
         nonlocal paused, pause_start, total_pause_time
-        if key == 'P' and not paused:
+        if key == "P" and not paused:
             paused = True
             pause_start = time.time()
             output.print("[yellow]⏸ 已暂停 — 按 [R] 恢复 | [Q] 退出 | [S] 统计[/yellow]")
-            if hasattr(engine, 'pause'):
+            if hasattr(engine, "pause"):
                 engine.pause()
-        elif key == 'R' and paused:
+        elif key == "R" and paused:
             if pause_start is not None:
                 total_pause_time += time.time() - pause_start
             paused = False
             pause_start = None
             output.print("[green]▶ 已恢复运行[/green]")
-            if hasattr(engine, 'resume'):
+            if hasattr(engine, "resume"):
                 engine.resume()
-        elif key == 'Q':
+        elif key == "Q":
             output.print("[red]■ 正在停止..[/red]")
             stop_event.set()
             engine.stop()
-        elif key == 'S':
+        elif key == "S":
             try:
-                if engine_type == 'multi_gpu':
+                if engine_type == "multi_gpu":
                     combined = engine.get_combined_stats()
                     print("\n" + "=" * 52)
                     print("  详细统计信息")
@@ -216,22 +218,24 @@ def _run_collision_loop(
             if stop_event.is_set():
                 break
 
-            if engine_type == 'multi_gpu':
+            if engine_type == "multi_gpu":
                 combined = engine.get_combined_stats()
-                elapsed_sec = combined.get('elapsed_time', 0)
-                total_checked = combined.get('total_keys_checked', 0)
-                throughput = combined.get('combined_throughput', 0)
-                matches = combined.get('total_matches', 0)
-                device_count = combined.get('device_count', 0)
+                elapsed_sec = combined.get("elapsed_time", 0)
+                total_checked = combined.get("total_keys_checked", 0)
+                throughput = combined.get("combined_throughput", 0)
+                matches = combined.get("total_matches", 0)
+                device_count = combined.get("device_count", 0)
                 h, rem = divmod(int(elapsed_sec), 3600)
                 m_t, s = divmod(rem, 60)
                 elapsed_fmt = f"{h:02d}:{m_t:02d}:{s:02d}"
                 speed_fmt = (
                     f"{throughput/1_000_000:.2f}M/s"
                     if throughput >= 1_000_000
-                    else f"{throughput/1_000:.1f}K/s"
-                    if throughput >= 1_000
-                    else f"{throughput:.0f}/s"
+                    else (
+                        f"{throughput/1_000:.1f}K/s"
+                        if throughput >= 1_000
+                        else f"{throughput:.0f}/s"
+                    )
                 )
                 _status_line = (
                     f"[{elapsed_fmt}] GPU x{device_count} | "
@@ -261,9 +265,9 @@ def _run_collision_loop(
                         elapsed_sec = stats.elapsed if stats.elapsed > 0 else 1
                         throughput = stats.total_checked / elapsed_sec if elapsed_sec > 0 else 0
                         metrics = {
-                            'throughput': throughput,
-                            'baseline_throughput': getattr(stats, 'peak_speed', throughput * 1.2),
-                            'error_rate': 0.0,
+                            "throughput": throughput,
+                            "baseline_throughput": getattr(stats, "peak_speed", throughput * 1.2),
+                            "error_rate": 0.0,
                         }
                         alert_system.check_metrics(metrics)
                     except Exception:
@@ -315,8 +319,8 @@ def _print_config_info(
     output = CLIOutput.get_instance()
 
     # 确定引擎模式
-    use_multi_gpu = getattr(args, 'multi_gpu', False)
-    use_single_gpu = getattr(args, 'use_gpu', False) and not use_multi_gpu
+    use_multi_gpu = getattr(args, "multi_gpu", False)
+    use_single_gpu = getattr(args, "use_gpu", False) and not use_multi_gpu
     use_cpu = not use_multi_gpu and not use_single_gpu
 
     # 构建配置字典
@@ -330,8 +334,8 @@ def _print_config_info(
         config_items["搜索范围"] = f"{total_range:,} 个私鑅"
 
     if use_multi_gpu:
-        gpu_indices = getattr(args, 'gpu_indices', None)
-        gpu_count = getattr(args, 'gpu_count', -1)
+        gpu_indices = getattr(args, "gpu_indices", None)
+        gpu_count = getattr(args, "gpu_count", -1)
         config_items["加速模式"] = _t("gpu.multi_gpu.enabled")
         if gpu_indices:
             config_items["GPU 设备"] = f"指定索引 {gpu_indices}"
@@ -340,18 +344,18 @@ def _print_config_info(
         else:
             config_items["GPU 设备"] = _t("gpu.multi_gpu.device_count", count=_t("common.all"))
     elif use_single_gpu:
-        gpu_device = getattr(args, 'gpu_device', -1)
-        gpu_batch_size = getattr(args, 'gpu_batch_size', None)
+        gpu_device = getattr(args, "gpu_device", -1)
+        gpu_batch_size = getattr(args, "gpu_batch_size", None)
         config_items["加速模式"] = _t("collision.mode.gpu")
-        config_items["GPU 设备索引"] = str(gpu_device) if gpu_device >= 0 else _t('common.auto')
-        config_items["GPU 批次大小"] = str(gpu_batch_size) if gpu_batch_size else _t('common.auto')
+        config_items["GPU 设备索引"] = str(gpu_device) if gpu_device >= 0 else _t("common.auto")
+        config_items["GPU 批次大小"] = str(gpu_batch_size) if gpu_batch_size else _t("common.auto")
     else:
         workers = args.workers or os.cpu_count() or 4
         config_items["加速模式"] = _t("collision.mode.cpu")
         config_items["工作线程数"] = str(workers)
 
-    config_items["断点续传"] = _t('common.enabled') if args.checkpoint else _t('common.disabled')
-    config_items["去重过滤"] = _t('common.enabled') if args.dedup else _t('common.disabled')
+    config_items["断点续传"] = _t("common.enabled") if args.checkpoint else _t("common.disabled")
+    config_items["去重过滤"] = _t("common.enabled") if args.dedup else _t("common.disabled")
     duration_str = f"{args.duration}秒" if args.duration > 0 else "无限制（Ctrl+C 停止）"
     config_items["运行时长"] = duration_str
 
@@ -360,7 +364,11 @@ def _print_config_info(
         config_items["性能优化"] = f"{optimize_status} (v2.2.0)"
         if not args.no_optimize:
             config_items["预计算表"] = f"window_size={args.window_size}"
-            config_items["SIMD哈希"] = _t('common.disabled') if args.no_simd else _t('common.enabled')
-            config_items["内存池"] = _t('common.disabled') if args.no_memory_pool else _t('common.enabled')
+            config_items["SIMD哈希"] = (
+                _t("common.disabled") if args.no_simd else _t("common.enabled")
+            )
+            config_items["内存池"] = (
+                _t("common.disabled") if args.no_memory_pool else _t("common.enabled")
+            )
 
     output.startup_panel(config_items)

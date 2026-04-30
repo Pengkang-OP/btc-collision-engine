@@ -27,6 +27,7 @@ from src.i18n import _t
 try:
     from src.collision.gpu_collision_engine import GPUCollisionEngine
     from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
+
     GPU_AVAILABLE = True
 except ImportError:
     GPU_AVAILABLE = False
@@ -34,6 +35,7 @@ except ImportError:
 
 def on_match_callback(sensitive_mode: str = "full") -> MatchCallback:
     """匹配回调工厂函数（高亮显示，支持脱敏模式）"""
+
     def _callback(private_key: bytes, address: str, wif: str) -> None:
         pk_hex = private_key.hex()
 
@@ -58,7 +60,13 @@ def on_match_callback(sensitive_mode: str = "full") -> MatchCallback:
     return _callback
 
 
-def build_engine(args: argparse.Namespace, targets: Set[str], on_progress: Optional[ProgressCallback] = None, on_match: Optional[MatchCallback] = None, sensitive_mode: str = "full") -> Tuple[Any, str]:
+def build_engine(
+    args: argparse.Namespace,
+    targets: Set[str],
+    on_progress: Optional[ProgressCallback] = None,
+    on_match: Optional[MatchCallback] = None,
+    sensitive_mode: str = "full",
+) -> Tuple[Any, str]:
     """引擎工厂：根据 CLI 参数分路 CPU / 单GPU / 多GPU 三种引擎
 
     Returns:
@@ -67,23 +75,23 @@ def build_engine(args: argparse.Namespace, targets: Set[str], on_progress: Optio
     """
     engine: Any = None
     # ── 多GPU 模式 ──────────────────────────────────────────────
-    if getattr(args, 'multi_gpu', False):
+    if getattr(args, "multi_gpu", False):
         if not GPU_AVAILABLE:
             print(_t("cli.engine.multi_gpu_requires_opencl"), file=sys.stderr)
             sys.exit(1)
         try:
             engine = MultiGPUCollisionEngine()
-            device_indices = getattr(args, 'gpu_indices', None)
-            gpu_count = getattr(args, 'gpu_count', -1)
+            device_indices = getattr(args, "gpu_indices", None)
+            gpu_count = getattr(args, "gpu_count", -1)
             ok = engine.initialize(
                 device_indices=device_indices,
                 device_count=gpu_count,
-                strategy='performance',
+                strategy="performance",
             )
             if not ok:
                 print(_t("cli.engine.multi_gpu_init_failed"), file=sys.stderr)
                 sys.exit(1)
-            return engine, 'multi_gpu'
+            return engine, "multi_gpu"
         except Exception as e:
             logger.error(f"Multi-GPU initialization failed: {e}")
             print(f"\n[ERROR] Multi-GPU initialization failed: {e}", file=sys.stderr)
@@ -91,7 +99,7 @@ def build_engine(args: argparse.Namespace, targets: Set[str], on_progress: Optio
             sys.exit(1)
 
     # ── 单GPU 模式 ──────────────────────────────────────────────
-    if getattr(args, 'use_gpu', False):
+    if getattr(args, "use_gpu", False):
         if not GPU_AVAILABLE:
             print(_t("cli.engine.gpu_requires_opencl"), file=sys.stderr)
             sys.exit(1)
@@ -99,8 +107,8 @@ def build_engine(args: argparse.Namespace, targets: Set[str], on_progress: Optio
         try:
             engine = GPUCollisionEngine(
                 targets=targets,
-                device_index=getattr(args, 'gpu_device', -1),
-                batch_size=getattr(args, 'gpu_batch_size', None),  # type: ignore[arg-type]
+                device_index=getattr(args, "gpu_device", -1),
+                batch_size=getattr(args, "gpu_batch_size", None),  # type: ignore[arg-type]
                 on_progress=on_progress if on_progress else lambda s: None,
                 on_match=match_cb,
                 checkpoint_enabled=args.checkpoint,
@@ -110,7 +118,7 @@ def build_engine(args: argparse.Namespace, targets: Set[str], on_progress: Optio
                 use_gpu_memory_pool=True,
                 use_async_logging=True,
             )
-            return engine, 'gpu'
+            return engine, "gpu"
         except RuntimeError as e:
             error_msg = str(e)
             print(f"\n[ERROR] GPU initialization failed", file=sys.stderr)
@@ -118,7 +126,10 @@ def build_engine(args: argparse.Namespace, targets: Set[str], on_progress: Optio
             print(f"\nSuggestions:", file=sys.stderr)
             print(f"  1. Check GPU driver installation", file=sys.stderr)
             print(f"  2. Verify PyOpenCL environment", file=sys.stderr)
-            print(f"  3. Try CPU mode: python key_collision_cli.py -t <address> -m random", file=sys.stderr)
+            print(
+                f"  3. Try CPU mode: python key_collision_cli.py -t <address> -m random",
+                file=sys.stderr,
+            )
             sys.exit(1)
         except Exception as e:
             logger.error(f"GPU initialization error: {e}")
@@ -142,4 +153,4 @@ def build_engine(args: argparse.Namespace, targets: Set[str], on_progress: Optio
         use_simd_hash=not args.no_simd,
         use_memory_pool=not args.no_memory_pool,
     )
-    return engine, 'cpu'
+    return engine, "cpu"

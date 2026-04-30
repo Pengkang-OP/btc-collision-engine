@@ -14,10 +14,10 @@
 --------------------------------------------------------------------------------
     # 方式1: 直接导入（推荐）
     from src.collision.targets.resolver import TargetResolver
-    
+
     # 方式2: 通过 collision 包导入
     from src.collision import TargetResolver
-    
+
     # 方式3: 通过 targets 子包导入
     from src.collision.targets import TargetResolver
 
@@ -42,6 +42,7 @@
     - docs/address-import-feature.md
     - docs/architecture_separation_design.md
 """
+
 import warnings
 
 warnings.warn(
@@ -63,9 +64,9 @@ warnings.warn(
     ================================================================
     """,
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 from .targets.resolver import TargetResolver
 
-__all__ = ['TargetResolver']
+__all__ = ["TargetResolver"]

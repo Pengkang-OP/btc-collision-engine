@@ -57,29 +57,29 @@ class LogProcessor:
             格式化后的事件字典
         """
         return {
-            'timestamp': event.timestamp,
-            'formatted_time': event.formatted_time,
-            'type': event.event_type.value,
-            'source': event.source,
-            'data': event.data,
-            'message': self._build_message(event)
+            "timestamp": event.timestamp,
+            "formatted_time": event.formatted_time,
+            "type": event.event_type.value,
+            "source": event.source,
+            "data": event.data,
+            "message": self._build_message(event),
         }
 
     def _build_message(self, event: LogEvent) -> str:
         """构建日志消息"""
         msg_parts = [f"[{event.event_type.value}]"]
 
-        if event.source != 'logging':
+        if event.source != "logging":
             msg_parts.append(f"({event.source})")
 
         data = event.data
         if isinstance(data, dict):
-            if 'message' in data:
-                msg_parts.append(data['message'])
-            elif 'error' in data:
+            if "message" in data:
+                msg_parts.append(data["message"])
+            elif "error" in data:
                 msg_parts.append(f"Error: {data['error']}")
-            elif 'status' in data:
-                msg_parts.append(data['status'])
+            elif "status" in data:
+                msg_parts.append(data["status"])
             else:
                 msg_parts.append(str(data))
         else:
@@ -147,13 +147,13 @@ class SensitiveDataFilter:
     """
 
     SENSITIVE_PATTERNS = [
-        (r'[0-9a-fA-F]{64}', '***REDACTED***'),  # 私钥
-        (r'PrivateKey["\']?\s*[:=]\s*["\']?[0-9a-fA-F]{64}', '***REDACTED***'),
+        (r"[0-9a-fA-F]{64}", "***REDACTED***"),  # 私钥
+        (r'PrivateKey["\']?\s*[:=]\s*["\']?[0-9a-fA-F]{64}', "***REDACTED***"),
         # P0-1: 比特币地址模式
-        (r'\b1[1-9A-HJ-NP-Za-km-z]{24,33}\b', '[P2PKH_ADDRESS]'),  # P2PKH
-        (r'\b3[1-9A-HJ-NP-Za-km-z]{24,33}\b', '[P2SH_ADDRESS]'),   # P2SH
-        (r'\bbc1[ac-hj-np-z02-9]{38,58}\b', '[BECH32_ADDRESS]'),    # Bech32
-        (r'\bbc1p[ac-hj-np-z02-9]{58}\b', '[BECH32M_ADDRESS]'),     # Bech32m
+        (r"\b1[1-9A-HJ-NP-Za-km-z]{24,33}\b", "[P2PKH_ADDRESS]"),  # P2PKH
+        (r"\b3[1-9A-HJ-NP-Za-km-z]{24,33}\b", "[P2SH_ADDRESS]"),  # P2SH
+        (r"\bbc1[ac-hj-np-z02-9]{38,58}\b", "[BECH32_ADDRESS]"),  # Bech32
+        (r"\bbc1p[ac-hj-np-z02-9]{58}\b", "[BECH32M_ADDRESS]"),  # Bech32m
     ]
 
     def __init__(self, enabled: bool = True):

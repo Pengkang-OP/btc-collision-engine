@@ -31,11 +31,11 @@ from .log_query import LogQuery
 from .events import LogEvent
 
 __all__ = [
-    'LogManager',
-    'LogLevel',
-    'LogCollector',
-    'LogProcessor',
-    'LogStorage',
-    'LogQuery',
-    'LogEvent',
+    "LogManager",
+    "LogLevel",
+    "LogCollector",
+    "LogProcessor",
+    "LogStorage",
+    "LogQuery",
+    "LogEvent",
 ]

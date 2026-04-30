@@ -45,7 +45,11 @@ class WizardEngine:
             print(f"向导取消或出错: {result.error_message}")
     """
 
-    def __init__(self, config: Optional[WizardConfig] = None, message_queue: Optional[WizardMessageQueue] = None):
+    def __init__(
+        self,
+        config: Optional[WizardConfig] = None,
+        message_queue: Optional[WizardMessageQueue] = None,
+    ):
         """初始化向导引擎
 
         Args:
@@ -59,11 +63,11 @@ class WizardEngine:
         self.message_queue = message_queue or get_message_queue()
         self._running = False
         self._step_handlers = {
-            'target': self._select_target,
-            'mode': self._select_mode,
-            'options': self._select_options,
-            'gpu': self._select_gpu,
-            'build': self._build_config,
+            "target": self._select_target,
+            "mode": self._select_mode,
+            "options": self._select_options,
+            "gpu": self._select_gpu,
+            "build": self._build_config,
         }
 
     def run(self) -> WizardResult:
@@ -73,14 +77,14 @@ class WizardEngine:
             WizardResult: 向导结果
         """
         self._running = True
-        self.message_queue.send_wizard_start({'mode': self.config.mode.value})
+        self.message_queue.send_wizard_start({"mode": self.config.mode.value})
 
         try:
             if self.config.show_intro:
                 self._show_intro()
 
             # 执行各步骤
-            for step_name in ['target', 'mode', 'options', 'gpu', 'build']:
+            for step_name in ["target", "mode", "options", "gpu", "build"]:
                 if not self._running:
                     break
                 handler = self._step_handlers.get(step_name)
@@ -117,9 +121,7 @@ class WizardEngine:
     def _select_target(self):
         """选择目标地址"""
         selector = TargetSelector()
-        targets, target_file = selector.select(
-            compact=(self.config.mode == WizardMode.COMPACT)
-        )
+        targets, target_file = selector.select(compact=(self.config.mode == WizardMode.COMPACT))
         self.result.targets = targets
         self.result.target_file = target_file
         self.message_queue.send_target_selected(targets, target_file)
@@ -127,9 +129,7 @@ class WizardEngine:
     def _select_mode(self):
         """选择碰撞模式"""
         selector = ModeSelector()
-        mode, start_key, end_key = selector.select(
-            compact=(self.config.mode == WizardMode.COMPACT)
-        )
+        mode, start_key, end_key = selector.select(compact=(self.config.mode == WizardMode.COMPACT))
         self.result.mode = mode
         self.result.start_key = start_key
         self.result.end_key = end_key
@@ -165,9 +165,7 @@ class WizardEngine:
             self._error(f"Config validation failed: {e}")
             return
         self.result.command = command
-        self.message_queue.send(WizardEventType.CONFIG_BUILT, {
-            'command': command
-        })
+        self.message_queue.send(WizardEventType.CONFIG_BUILT, {"command": command})
 
     def _complete(self):
         """向导完成"""
@@ -179,7 +177,7 @@ class WizardEngine:
 
         if not self.config.auto_continue:
             response = input(f"\n是否立即执行? [y/n] (推荐: Y): ").strip().lower()
-            if response and response[0] != 'y':
+            if response and response[0] != "y":
                 self.result.success = False
                 self.result.error_message = "用户取消执行"
                 return
@@ -239,6 +237,7 @@ class WizardEngine:
         print()
 
         import subprocess
+
         try:
             subprocess.run(self.result.command)
         except (subprocess.SubprocessError, FileNotFoundError, OSError) as e:
@@ -271,10 +270,10 @@ def main():
     """独立运行向导"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='BTC碰撞引擎 - 交互式向导')
-    parser.add_argument('--compact', action='store_true', help='紧凑模式（跳过帮助信息）')
-    parser.add_argument('--auto', action='store_true', help='自动模式（使用默认值）')
-    parser.add_argument('--output', type=str, help='保存配置到文件')
+    parser = argparse.ArgumentParser(description="BTC碰撞引擎 - 交互式向导")
+    parser.add_argument("--compact", action="store_true", help="紧凑模式（跳过帮助信息）")
+    parser.add_argument("--auto", action="store_true", help="自动模式（使用默认值）")
+    parser.add_argument("--output", type=str, help="保存配置到文件")
 
     args = parser.parse_args()
 
@@ -298,5 +297,5 @@ def main():
     return 0 if result.success else 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

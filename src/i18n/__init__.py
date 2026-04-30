@@ -29,6 +29,7 @@ _translator = Translator(language=detect_system_language())
 # 便捷函数
 # ------------------------------------------------------------------
 
+
 def _t(key: str, **kwargs) -> str:
     """
     翻译快捷函数。

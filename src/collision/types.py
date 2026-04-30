@@ -5,16 +5,16 @@
 使用示例:
     >>> from src.collision.types import ProgressCallback, MatchCallback
     >>> from src.collision.collision_stats import CollisionStats
-    >>> 
+    >>>
     >>> def my_progress_handler(stats: CollisionStats) -> None:
     ...     print(f"速度: {stats.speed}")
-    >>> 
+    >>>
     >>> # 类型提示会自动检查参数
     >>> callback: ProgressCallback = my_progress_handler
 """
+
 from typing import Callable, Optional, Any, Dict, Set
 from .collision_stats import CollisionStats
-
 
 # ============================================================================
 # 回调函数类型别名
