@@ -5,7 +5,7 @@
 """
 
 import logging
-from typing import List, Dict, Optional
+from typing import Any, List, Dict, Optional
 
 # P3-5: 统一日志获取
 from ..utils import init_logging, get_configured_logger
@@ -255,7 +255,7 @@ class GPUDeviceDetector:
             }
     
     @staticmethod
-    def clear_availability_cache():
+    def clear_availability_cache() -> None:
         """
         清除GPU可用性缓存和设备信息缓存
         
@@ -358,7 +358,7 @@ class GPUDeviceDetector:
         if not devices:
             raise RuntimeError("没有可用的GPU设备")
         
-        def priority_score(dev):
+        def priority_score(dev: Dict) -> float:
             """
             计算设备优先级分数
             
@@ -421,7 +421,7 @@ class GPUDevice:
     保持与现有gpu_engine.py和gpu_collision_engine.py的API完全兼容
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """初始化GPU设备对象"""
         self.context = None
         self.queue = None  # 向后兼容: 默认队列
@@ -442,7 +442,7 @@ class GPUDevice:
         # PERF-2修复: 默认启用异步执行，提高GPU利用率
         self.enable_async_execution = True  # 是否启用异步执行（默认True）
     
-    def initialize(self, device_index: int = -1, enable_async: bool = True):
+    def initialize(self, device_index: int = -1, enable_async: bool = True) -> None:
         """
         初始化GPU设备
         
@@ -729,7 +729,7 @@ class GPUDevice:
         """
         return self.device_info.copy()
     
-    def cleanup(self):
+    def cleanup(self) -> None:
         """释放GPU资源"""
         import time
         

@@ -21,7 +21,7 @@ SHA256/RIPEMD160/secp256k1 等加密/哈希运算的精度。
 import logging
 from ..utils import init_logging, get_configured_logger
 import re
-from typing import Optional, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING
 
 logger = get_configured_logger("NvidiaOptimizer")
 
@@ -40,7 +40,7 @@ class _RateLimitedLogger:
     避免在高频循环中产生大量重复日志，每条消息在冷却期内只记录一次。
     """
 
-    def __init__(self, base_logger, cooldown_seconds: float = 60.0) -> None:
+    def __init__(self, base_logger: Any, cooldown_seconds: float = 60.0) -> None:
         self._logger = base_logger
         self._cooldown = cooldown_seconds
         self._last_logged: dict = {}
@@ -87,7 +87,7 @@ class NvidiaDriverDetector:
         'Blackwell': 545,
     }
 
-    def __init__(self, device_info: dict, engine_logger=None) -> None:
+    def __init__(self, device_info: dict, engine_logger: Optional[Any] = None) -> None:
         self._device_info = device_info
         self._logger = engine_logger or logger
 
@@ -258,7 +258,7 @@ class NvidiaArchDetector:
          }),
     ]
 
-    def __init__(self, device_info: dict, engine_logger=None) -> None:
+    def __init__(self, device_info: dict, engine_logger: Optional[Any] = None) -> None:
         self._device_info = device_info
         self._logger = engine_logger or logger
 
@@ -376,7 +376,7 @@ class NvidiaGPUOptimizer:
         engine_logger: 可选的日志记录器，默认使用模块级 logger
     """
 
-    def __init__(self, device_info: dict, config: Optional[dict] = None, engine_logger=None) -> None:
+    def __init__(self, device_info: dict, config: Optional[dict] = None, engine_logger: Optional[Any] = None) -> None:
         self._device_info = device_info if isinstance(device_info, dict) else {}
         self._config = config or {}
         self._logger = engine_logger or logger

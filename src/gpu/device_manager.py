@@ -33,7 +33,7 @@ class GPUDeviceManager:
     负责GPU设备的初始化、配置和管理。
     """
     
-    def __init__(self, device_index: int = -1, config: Dict = None, logger=None):
+    def __init__(self, device_index: int = -1, config: Dict = None, logger: Optional[Any] = None) -> None:
         """
         Args:
             device_index: GPU设备索引（-1表示自动选择）
@@ -385,7 +385,7 @@ class GPUDeviceManager:
                 self.logger.warning(f"⚠️ AMD 优化器初始化失败（非致命）: {e}")
                 self._amd_optimizer = None
     
-    def cleanup(self):
+    def cleanup(self) -> None:
         """清理GPU资源"""
         import time
         
@@ -452,6 +452,6 @@ class GPUDeviceManager:
         return self._async_executor
     
     @property
-    def memory_pool(self):
+    def memory_pool(self) -> Any:
         """获取内存池实例"""
         return self._gpu_memory_pool

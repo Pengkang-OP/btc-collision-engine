@@ -151,14 +151,14 @@ class ConfigCoordinator:
         else:
             return self.config_manager.set(key, value)
     
-    def validate_all(self) -> Dict[str, list]:
+    def validate_all(self) -> Dict[str, Any]:
         """
         验证所有配置
         
         返回:
             验证错误字典,key为配置管理器名称,value为错误列表
         """
-        errors = {}
+        errors: Dict[str, Any] = {}
         
         # 验证ConfigManager
         config_errors = self.config_manager.validate()

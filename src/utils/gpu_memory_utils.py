@@ -96,7 +96,7 @@ DEFAULT_BATCH_SIZE = 65536
 def calculate_optimal_batch_size(
     device: GPUDeviceProtocol,
     target_buffer_size: int = 0,
-    config: BatchSizeConfig = None,
+    config: Optional[BatchSizeConfig] = None,
     verbose: bool = True
 ) -> int:
     """根据GPU显存大小计算最优batch_size

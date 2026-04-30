@@ -45,7 +45,7 @@ class GPUBufferTracker:
         self._memory_usage_history: List[Dict] = []  # 内存使用历史
         self._last_check_time = time.time()
         
-    def track_buffer(self, name: str, buffer: Any, size: int, buffer_type: str = 'generic', context: str = ''):
+    def track_buffer(self, name: str, buffer: Any, size: int, buffer_type: str = 'generic', context: str = '') -> None:
         """注册缓冲区
         
         Args:
@@ -79,7 +79,7 @@ class GPUBufferTracker:
         
         logger.debug(f"GPU Buffer追踪: 分配 {name} ({size/1024:.1f} KB, 类型: {buffer_type})")
     
-    def release_buffer(self, name: str):
+    def release_buffer(self, name: str) -> None:
         """注销缓冲区
         
         Args:
@@ -252,7 +252,7 @@ class GPUBufferTracker:
         
         return cleaned
     
-    def start_periodic_check(self, interval: int = 300):
+    def start_periodic_check(self, interval: int = 300) -> None:
         """启动定期泄漏检查（默认每5分钟）"""
         self._check_interval = interval
         self._periodic_check_stop = threading.Event()
@@ -264,7 +264,7 @@ class GPUBufferTracker:
         self._periodic_check_thread.start()
         logger.info(f"GPU缓冲区追踪器：定期检查已启动，间隔 {interval} 秒")
 
-    def stop_periodic_check(self):
+    def stop_periodic_check(self) -> None:
         """停止定期泄漏检查"""
         if hasattr(self, '_periodic_check_stop') and self._periodic_check_stop:
             self._periodic_check_stop.set()

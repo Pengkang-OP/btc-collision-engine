@@ -57,7 +57,7 @@ class GPULoadBalancer:
         rebalance_interval: int = 30,  # 减少重平衡间隔，提高响应速度
         min_rebalance_threshold: float = 0.05,  # 减少重平衡阈值，提高负载均衡的准确性
         memory_usage_threshold: float = 0.75  # 减少内存使用阈值，避免内存不足
-    ):
+    ) -> None:
         """初始化负载均衡器
         
         Args:
@@ -264,7 +264,7 @@ class GPULoadBalancer:
         device_idx: int,
         throughput: float,
         error_rate: float = 0.0
-    ):
+    ) -> None:
         """记录GPU实际性能
         
         Args:
@@ -300,7 +300,7 @@ class GPULoadBalancer:
         device_idx: int,
         used_memory_mb: float,
         total_memory_mb: float
-    ):
+    ) -> None:
         """记录GPU内存使用情况
         
         Args:
@@ -615,7 +615,7 @@ class GPULoadBalancer:
         """
         return self.strategy
     
-    def set_strategy(self, strategy: str):
+    def set_strategy(self, strategy: str) -> None:
         """设置负载策略
         
         Args:

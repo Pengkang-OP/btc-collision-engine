@@ -31,7 +31,7 @@ class SearchModeCoordinator:
     MODE_BRUTE_FORCE = "brute_force"
     MODE_RANGE_SCAN = "range_scan"
     
-    def __init__(self, engine: "GPUCollisionEngine", logger=None):
+    def __init__(self, engine: "GPUCollisionEngine", logger: Optional[Any] = None) -> None:
         """
         Args:
             engine: GPUCollisionEngine实例
@@ -64,7 +64,7 @@ class SearchModeCoordinator:
         """获取可用的搜索模式列表"""
         return list(self._modes.keys())
     
-    def start(self, mode: str, resume: bool = False, **kwargs):
+    def start(self, mode: str, resume: bool = False, **kwargs) -> None:
         """启动指定的搜索模式
         
         Args:
@@ -118,7 +118,7 @@ class SearchModeCoordinator:
         else:
             self.logger.warning("检查点管理器未启用，无法恢复")
     
-    def switch_mode(self, new_mode: str, **kwargs):
+    def switch_mode(self, new_mode: str, **kwargs) -> None:
         """切换到新的搜索模式
         
         Args:
@@ -148,7 +148,7 @@ class SearchModeCoordinator:
             except Exception as e:
                 self.logger.error(f"保存检查点失败: {e}")
     
-    def stop(self):
+    def stop(self) -> None:
         """停止当前搜索模式"""
         if self._current_mode:
             self.logger.info(f"停止搜索模式: {self._current_mode}")

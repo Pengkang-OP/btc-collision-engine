@@ -91,7 +91,7 @@ def rate_limited_log(cooldown: int = 60, level: str = 'error'):
         >>>     # 60秒内只记录一次
     """
     def decorator(func):
-        last_log_time = {}
+        last_log_time: Dict[str, float] = {}
         
         @wraps(func)
         def wrapper(*args, **kwargs):

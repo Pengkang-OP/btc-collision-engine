@@ -28,7 +28,7 @@ class GPUConfigManager:
     PRIORITY_AUTO = 3          # 自动生成配置
     PRIORITY_DEFAULT = 4       # 默认值
     
-    def __init__(self, user_config: Dict = None, logger=None):
+    def __init__(self, user_config: Dict = None, logger: Optional[Any] = None) -> None:
         """
         Args:
             user_config: 用户提供的配置
@@ -188,7 +188,7 @@ class GPUConfigManager:
         """
         return self.user_config.get('gpu', {})
     
-    def update_config(self, updates: Dict):
+    def update_config(self, updates: Dict) -> None:
         """更新配置
         
         Args:

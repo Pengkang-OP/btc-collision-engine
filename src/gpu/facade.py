@@ -36,7 +36,7 @@ class GPUFacade:
         ...     facade.stop()
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """初始化GPU外观类"""
         self._driver_manager = None
         self._gpu_device = None
@@ -261,16 +261,16 @@ class GPUFacade:
             "matches_found": len(stats.get('matches', []))
         }
     
-    def __enter__(self):
+    def __enter__(self) -> "GPUFacade":
         """上下文管理器入口"""
         return self
     
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]) -> None:
         """上下文管理器出口"""
         self.cleanup()
         return False
     
-    def __del__(self):
+    def __del__(self) -> None:
         """析构函数"""
         try:
             self.cleanup()

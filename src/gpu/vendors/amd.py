@@ -24,7 +24,7 @@ class AMDGPUVendor(GPUVendorBase):
     def get_vendor_name(self) -> str:
         return "AMD"
     
-    def apply_optimizations(self, device, profile: Dict[str, Any]):
+    def apply_optimizations(self, device: Any, profile: Dict[str, Any]) -> None:
         """
         应用AMD特定优化
         
@@ -79,7 +79,7 @@ class AMDGPUVendor(GPUVendorBase):
         memory_efficiency = profile.get('memory_efficiency', 0.5)
         logger.debug(f"AMD GPU内存效率: {memory_efficiency*100:.0f}%")
     
-    def calculate_batch_size(self, device, profile: Dict[str, Any]) -> int:
+    def calculate_batch_size(self, device: Any, profile: Dict[str, Any]) -> int:
         """
         计算AMD GPU的最优batch_size
         
@@ -110,7 +110,7 @@ class AMDGPUVendor(GPUVendorBase):
         
         return optimal
     
-    def handle_errors(self, error: Exception, stats=None) -> bool:
+    def handle_errors(self, error: Exception, stats: Optional[Any] = None) -> bool:
         """
         处理AMD GPU特定错误
         """

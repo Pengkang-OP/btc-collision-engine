@@ -79,7 +79,7 @@ class GPURecoveryManager:
         batch_size_reduction_factor: float = 0.5,
         auto_redistribute: bool = True,
         max_failed_gpus_before_fallback: int = None  # 新增：降级阈值
-    ):
+    ) -> None:
         """初始化恢复管理器
         
         Args:
@@ -247,7 +247,7 @@ class GPURecoveryManager:
         # 未知错误
         return GPUFailureType.UNKNOWN
     
-    def set_fallback_callback(self, callback: Callable):
+    def set_fallback_callback(self, callback: Callable) -> None:
         """设置降级到CPU模式的回调函数
         
         Args:
@@ -256,7 +256,7 @@ class GPURecoveryManager:
         with self._fallback_lock:
             self._fallback_callback = callback
     
-    def set_recovery_callback(self, callback: Callable):
+    def set_recovery_callback(self, callback: Callable) -> None:
         """设置从CPU模式恢复到GPU模式的回调函数
         
         Args:
@@ -315,7 +315,7 @@ class GPURecoveryManager:
             except Exception as e:
                 logger.error(f"降级回调执行失败: {e}")
     
-    def recover_from_fallback(self):
+    def recover_from_fallback(self) -> None:
         """从CPU模式恢复到GPU模式
         
         当GPU恢复正常后调用。
@@ -549,7 +549,7 @@ class GPURecoveryManager:
         self,
         gpu_id: int,
         callback: Callable[[str, Any], None]
-    ):
+    ) -> None:
         """注册恢复回调
         
         Args:
@@ -607,7 +607,7 @@ class GPURecoveryManager:
             )
         }
     
-    def reset_failure_history(self, gpu_id: Optional[int] = None):
+    def reset_failure_history(self, gpu_id: Optional[int] = None) -> None:
         """重置失败历史
         
         Args:

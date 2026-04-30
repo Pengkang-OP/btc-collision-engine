@@ -53,7 +53,7 @@ class GPUContext:
     4. 资源清理
     """
     
-    def __init__(self, device: GPUDevice):
+    def __init__(self, device: GPUDevice) -> None:
         """
         初始化GPU上下文
         
@@ -98,7 +98,7 @@ class GPUContext:
             logger.warning(f"未知GPU厂商: {vendor},使用默认优化器")
             return GPUVendorBase()
     
-    def apply_optimizations(self):
+    def apply_optimizations(self) -> None:
         """
         应用厂商特定优化
         
@@ -135,7 +135,7 @@ class GPUContext:
             logger.error(f"计算batch_size失败: {e},使用默认值")
             return 65536
     
-    def compile_kernel(self, kernel_source: str):
+    def compile_kernel(self, kernel_source: str) -> Any:
         """
         编译OpenCL内核（自动使用内核缓存）
         
@@ -236,7 +236,7 @@ class GPUContext:
         """获取厂商优化器"""
         return self.vendor_handler
     
-    def cleanup(self):
+    def cleanup(self) -> None:
         """释放资源（尽力而为）"""
         # 先清理内核缓存，再清理 program
         try:
