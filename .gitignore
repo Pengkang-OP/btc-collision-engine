@@ -127,3 +127,34 @@ comprehensive_test.py
 quick_verify_*.py
 test_*.py  # 临时测试脚本（非tests目录）
 verify_*.py  # 临时验证脚本
+
+# 根目录临时工具脚本
+analysis.py
+calc_cost.py
+check_i18n.py
+check_package_stats.py
+diagnose_shell_environment.ps1
+generate_report.py
+generate_report.bat
+log_monitor.py
+log_monitor.bat
+monitor.ps1
+monitor_cli_status.py
+optimize_gpu_performance.py
+production_acceptance_test.py
+run_engine_no_log.py
+run_engine_with_log.py
+run_with_log.py
+start_collision_full.py
+start_comprehensive_monitoring.py
+start_monitoring.py
+start_monitoring.bat
+test_address_case_impact.py
+test_checkpoint.py
+verify_package.py
+view_monitor_data.py
+
+# 根目录中文报告
+业务*.md
+拓扑*.md
+目标*.md

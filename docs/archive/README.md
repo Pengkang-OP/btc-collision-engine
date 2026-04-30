@@ -1,6 +1,6 @@
 # 归档文档索引
 
-> **版本**: v2.3.0 | **最后更新**: 2026-04-22
+> **版本**: v3.3.1 | **最后更新**: 2026-04-28
 >
 > 本目录包含项目所有历史文档的完整归档,按类别分类存储。
 
@@ -10,32 +10,31 @@
 
 | 归档目录 | 文件数量 | 说明 |
 |---------|---------|------|
-| audit-reports/ | 7个 | 审计报告 |
-| fix-reports/ | 29个 | 修复报告 |
-| test-reports/ | 2个 | 测试报告 |
+| audit-reports/ | 8个 | 审计报告 |
+| fix-reports/ | 30个 | 修复报告 |
 | code-review-reports/ | 3个 | 代码审查报告 |
-| implementation-reports/ | 14个 | 实施报告 |
-| execution-summaries/ | 0个 | 执行总结 |
-| gpu-related/ | 11个 | GPU相关历史报告 |
-| ui-related/ | 6个 | UI相关历史报告 |
+| implementation-reports/ | 13个 | 实施报告 |
+| gpu-related/ | 6个 | GPU相关历史报告 |
+| ui-related/ | 1个 | UI相关历史报告 |
 | security-related/ | 2个 | 安全相关历史报告 |
-| performance-related/ | 7个 | 性能相关历史报告 |
-| temp-reports-20260422/ | 51个 | 临时报告(2026-04-22) |
-| test-reports-20260422/ | 17个 | 测试报告(2026-04-22) |
-| development-reports/ | 24个 | 开发报告 |
-| document-quality-reports/ | 5个 | 文档质量报告 |
+| performance-related/ | 6个 | 性能相关历史报告 |
+| temp-reports-20260422/ | 3个 | 临时报告(2026-04-22) |
+| test-reports-20260422/ | 9个 | 测试报告(2026-04-22) |
+| development-reports/ | 16个 | 开发报告 |
 | gpu-integration-tests/ | 3个 | GPU集成测试 |
 | gpu-optimization-tools/ | 5个 | GPU优化工具 |
 | alert-system-dev/ | 7个 | 告警系统开发 |
 | alert-system-optimization/ | 4个 | 告警系统优化 |
 | v2.2.0-fix-reports/ | 8个 | v2.2.0修复报告 |
-| **总计** | **205个** | - |
+| root_reports/ | 16个 | 根目录报告迁移 |
+| improvement_reports/ | 5个 | 改进报告 |
+| **总计** | **144个** | - |
 
 ---
 
 ## 📁 归档目录说明
 
-### 新建归档目录 (v2.3.0)
+### 归档目录分类
 
 #### audit-reports/ - 审计报告
 
@@ -45,10 +44,6 @@
 
 包含所有问题修复、bug修复报告。
 
-#### test-reports/ - 测试报告
-
-包含测试实施、测试验证报告。
-
 #### code-review-reports/ - 代码审查报告
 
 包含代码审查、PR审查报告。
@@ -56,10 +51,6 @@
 #### implementation-reports/ - 实施报告
 
 包含功能实施、集成实施报告。
-
-#### execution-summaries/ - 执行总结
-
-包含任务执行总结报告。
 
 #### gpu-related/ - GPU相关历史报告
 
@@ -77,8 +68,6 @@
 
 包含性能优化、调优相关报告。
 
-### 已有归档目录
-
 #### temp-reports-20260422/ - 临时报告
 
 2026-04-22清理的临时过程报告。
@@ -89,11 +78,7 @@
 
 #### development-reports/ - 开发报告
 
-历史开发过程报告。
-
-#### document-quality-reports/ - 文档质量报告
-
-文档质量检查和改进报告。
+历史开发过程报告，包含诊断脚本和演示代码。
 
 #### gpu-integration-tests/ - GPU集成测试
 
@@ -114,6 +99,14 @@ GPU性能优化工具和报告。
 #### v2.2.0-fix-reports/ - v2.2.0修复报告
 
 v2.2.0版本修复报告。
+
+#### root_reports/ - 根目录报告迁移
+
+从项目根目录迁移的报告文件。
+
+#### improvement_reports/ - 改进报告
+
+AI自动排序和项目改进相关报告。
 
 ---
 
@@ -142,5 +135,5 @@ v2.2.0版本修复报告。
 
 ---
 
-**最后更新**: 2026-04-22  
-**版本**: v2.3.0
+**最后更新**: 2026-04-28  
+**版本**: v3.3.1

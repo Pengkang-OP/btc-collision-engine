@@ -196,13 +196,22 @@ class TargetResolver:
         >>> addresses = resolver.resolve_multiple(['1A1z...', '5KJvs...'])
     """
     
-    def __init__(self, enable_cache: bool = True, cache_max_size: int = 10000):
+    MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024  # 最大文件大小: 100MB
+    MAX_LINES = 1_000_000                    # 最大行数: 100万行
+    BATCH_SIZE = 100                          # 批量解析大小
+    
+    def __init__(self, enable_cache: bool = True, cache_max_size: int = 10000,
+                 max_file_size_bytes: int = MAX_FILE_SIZE_BYTES,
+                 max_lines: int = MAX_LINES, batch_size: int = BATCH_SIZE):
         """
         初始化目标地址解析器
         
         参数:
             enable_cache: 是否启用缓存,默认True
             cache_max_size: 缓存最大容量,默认10000条目
+            max_file_size_bytes: 最大文件大小(字节),默认100MB
+            max_lines: 最大行数限制,默认100万行
+            batch_size: 批量解析大小,默认100
         """
         self.generator = P2PKHAddressGenerator()
         
@@ -212,8 +221,15 @@ class TargetResolver:
             enable_stats=True
         ) if enable_cache else None
         
+        # 文件加载配置
+        self._max_file_size_bytes = max_file_size_bytes
+        self._max_lines = max_lines
+        self._batch_size = batch_size
+        
         logger.info(f"TargetResolver 初始化: 缓存={'启用' if enable_cache else '禁用'}, "
-                   f"缓存容量={cache_max_size if enable_cache else 'N/A'}")
+                   f"缓存容量={cache_max_size if enable_cache else 'N/A'}, "
+                   f"最大文件大小={max_file_size_bytes//(1024*1024)}MB, "
+                   f"最大行数={max_lines}")
     
     @staticmethod
     def detect_format(input_str: str) -> str:
@@ -504,17 +520,16 @@ class TargetResolver:
         
         results = {}
         to_resolve = []
-        cache_hits = 0
         
-        # 第一遍:检查缓存
+        # 第一遍:检查缓存（统一使用cache.get()方法，确保统计一致性）
         for inp in inputs:
-            if self.cache and inp in self.cache:
-                results[inp] = self.cache.get(inp)
-                cache_hits += 1
+            cached_result = self.cache.get(inp) if self.cache else None
+            if cached_result is not None:
+                results[inp] = cached_result
             else:
                 to_resolve.append(inp)
         
-        logger.debug(f"批量解析缓存命中: {cache_hits}/{len(inputs)} ({(cache_hits/len(inputs)*100) if len(inputs) > 0 else 0:.1f}%)")
+        logger.debug(f"批量解析缓存命中: {len(results)}/{len(inputs)} ({(len(results)/len(inputs)*100) if len(inputs) > 0 else 0:.1f}%)")
         
         # 第二遍:解析未缓存的
         if to_resolve:
@@ -523,6 +538,7 @@ class TargetResolver:
                 results[inp] = self.resolve(inp)
         
         success_count = sum(1 for v in results.values() if v is not None)
+        cache_hits = len(results) - len(to_resolve)
         logger.info(f"批量解析完成: 总数={len(inputs)}, 成功={success_count}, "
                    f"失败={len(inputs)-success_count}, 缓存命中={cache_hits}")
         
@@ -548,10 +564,11 @@ class TargetResolver:
             logger.error(f"文件不存在: {real_path}")
             return addresses
         
-        # 检查文件大小
+        # 检查文件大小（使用配置参数）
         file_size = os.path.getsize(real_path)
-        if file_size > 100 * 1024 * 1024:  # 100MB
-            logger.error(f"文件过大(>100MB): {real_path}, 大小={file_size/1024/1024:.1f}MB")
+        if file_size > self._max_file_size_bytes:
+            max_size_mb = self._max_file_size_bytes // (1024 * 1024)
+            logger.error(f"文件过大(>{max_size_mb}MB): {real_path}, 大小={file_size/1024/1024:.1f}MB")
             return addresses
         
         logger.info(f"开始从文件加载目标地址: {real_path}, 大小={file_size/1024:.1f}KB")
@@ -559,9 +576,6 @@ class TargetResolver:
         # 安全读取文件
         try:
             line_count: int = 0
-            max_lines: int = 1_000_000  # 最多100万行
-            batch_inputs = []
-            batch_size = 100
             valid_count = 0
             invalid_count = 0
             comment_count = 0
@@ -574,11 +588,14 @@ class TargetResolver:
                 logger.error(f"文件读取失败: {real_path}, 错误={e}")
                 return addresses
             
+            batch_inputs = []
+            
             for line in lines:
                 line_count += 1
                 
-                if line_count > max_lines:
-                    logger.warning(f"超过最大行数限制({max_lines}),停止读取")
+                # 使用配置的最大行数限制
+                if line_count > self._max_lines:
+                    logger.warning(f"超过最大行数限制({self._max_lines}),停止读取")
                     break
                 
                 line = line.strip()
@@ -593,8 +610,8 @@ class TargetResolver:
                 
                 batch_inputs.append(line)
                 
-                # 批量解析
-                if len(batch_inputs) >= batch_size:
+                # 批量解析（使用配置的批量大小）
+                if len(batch_inputs) >= self._batch_size:
                     batch_results = self.resolve_batch(batch_inputs)
                     for inp, addr in batch_results.items():
                         if addr:

@@ -48,7 +48,7 @@ class PerformanceOptimizationConfig:
     enable_performance_monitoring: bool = True
     monitoring_interval: float = 5.0  # 秒
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """初始化后验证"""
         # 自动检测CPU核心数
         if self.num_workers is None:
@@ -94,7 +94,7 @@ class PerformanceOptimizationConfig:
             if k in cls.__dataclass_fields__
         })
     
-    def optimize_for_cpu(self, num_cores: int = None):
+    def optimize_for_cpu(self, num_cores: Optional[int] = None) -> 'PerformanceOptimizationConfig':
         """针对CPU优化"""
         cores = num_cores or mp.cpu_count()
         
@@ -106,7 +106,7 @@ class PerformanceOptimizationConfig:
         
         return self
     
-    def optimize_for_gpu(self, device_index: int = 0):
+    def optimize_for_gpu(self, device_index: int = 0) -> 'PerformanceOptimizationConfig':
         """针对GPU优化"""
         self.use_gpu = True
         self.gpu_device_index = device_index
@@ -115,7 +115,7 @@ class PerformanceOptimizationConfig:
         
         return self
     
-    def optimize_for_memory(self, max_memory_mb: int = 2048):
+    def optimize_for_memory(self, max_memory_mb: int = 2048) -> 'PerformanceOptimizationConfig':
         """针对内存优化（降低内存使用）"""
         self.max_memory_mb = max_memory_mb
         self.simd_batch_size = 50000
@@ -125,7 +125,7 @@ class PerformanceOptimizationConfig:
         
         return self
     
-    def optimize_for_speed(self, num_cores: int = None):
+    def optimize_for_speed(self, num_cores: Optional[int] = None) -> 'PerformanceOptimizationConfig':
         """针对速度优化（高内存使用）"""
         cores = num_cores or mp.cpu_count()
         

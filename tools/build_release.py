@@ -14,8 +14,8 @@ import sys
 from pathlib import Path
 
 # ─────────────────────────── Config ────────────────────────────
-VERSION = "3.2.0"
-RELEASE_DATE = "2026-04-26"
+VERSION = "3.3.1"
+RELEASE_DATE = "2026-04-27"
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_OUTPUT = Path(r"F:\Qoder\btc-collision-tools")
 
@@ -541,6 +541,14 @@ pip install -r requirements\requirements-base.txt 2>nul
 if not errorlevel 1 goto :deps_ok
 
 echo [WARN] Some packages may have failed, installing key packages individually...
+pip install numpy>=1.24.0 2>nul
+if errorlevel 1 (
+    echo [WARN] numpy installation failed, but continuing...
+)
+pip install rich>=13.0 2>nul
+if errorlevel 1 (
+    echo [WARN] rich installation failed, but continuing...
+)
 pip install chardet>=5.0.0 2>nul
 pip install cryptography>=43.0.0 2>nul
 pip install psutil>=5.9.0 2>nul
@@ -553,6 +561,9 @@ pip install "PyNaCl>=1.5.0" 2>nul
 pip install pybloom-live>=2.2.0 2>nul
 pip install gmpy2>=2.1.5 2>nul
 pip install pycryptodome>=3.19.0 2>nul
+pip install ecdsa>=0.18.0 2>nul
+pip install bitarray>=2.6.0 2>nul
+pip install xxhash>=3.0.0 2>nul
 
 :deps_ok
 echo [OK] Base dependencies installed
@@ -687,17 +698,17 @@ exec python3 key_collision_cli.py $ARGS
 
 START_BAT = r"""@echo off
 REM ============================================================
-REM BTC 碰撞引擎 v__VERSION__ - 启动脚本
-REM 功能: 环境检查、虚拟环境激活、配置初始化、引擎启动
+REM BTC Collision Engine v__VERSION__ - Startup Script
+REM Features: Environment check, venv activation, config init, engine start
 REM ============================================================
 
 chcp 65001 >nul 2>&1
 setlocal enabledelayedexpansion
 
-REM ── 切换到脚本所在目录 ──────────────────────────────────────
+REM -- Switch to script directory --
 cd /d "%~dp0"
 
-REM ── 检查 --help 参数 ───────────────────────────────────────
+REM -- Check --help parameter --
 for %%A in (%*) do (
     if /i "%%~A"=="--help" (
         call :show_help
@@ -709,59 +720,59 @@ for %%A in (%*) do (
     )
 )
 
-REM ── 初始化变量 ─────────────────────────────────────────────
+REM -- Initialize variables --
 set "PYTHON_SCRIPT=key_collision_cli.py"
 set "CONFIG_EXAMPLE=config.example.json"
 
 echo.
 echo ========================================
-echo   BTC 碰撞引擎 - 启动器
+echo   BTC Collision Engine - Launcher
 echo ========================================
 echo.
 
-REM ── 环境检查 ───────────────────────────────────────────────
+REM -- Environment check --
 call :check_python
 if errorlevel 1 (
     pause
     exit /b 1
 )
 
-REM ── 激活虚拟环境 ───────────────────────────────────────────
+REM -- Activate virtual environment --
 call :activate_venv
 
-REM ── 创建必要目录 ───────────────────────────────────────────
+REM -- Create required directories --
 for %%D in (logs data_logs monitoring_data) do (
     if not exist "%%D" mkdir "%%D" 2>nul
 )
 
-REM ── 初始化配置文件 ─────────────────────────────────────────
+REM -- Initialize config file --
 if not exist "config.json" (
     if exist "!CONFIG_EXAMPLE!" (
         copy "!CONFIG_EXAMPLE!" "config.json" >nul 2>&1
-        echo [OK] 已从模板创建 config.json
+        echo [OK] Created config.json from template
     ) else (
-        echo [WARN] 未找到配置模板，请手动创建 config.json
+        echo [WARN] Config template not found, please create config.json manually
     )
 )
 
-REM ── 启动引擎 ───────────────────────────────────────────────
+REM -- Start engine --
 echo.
-echo [INFO] 启动碰撞引擎...
+echo [INFO] Starting collision engine...
 echo.
 
 cmd /c python !PYTHON_SCRIPT! %*
 set "EXIT_CODE=!errorlevel!"
 
-REM ── 退出处理 ───────────────────────────────────────────────
+REM -- Exit handling --
 echo.
 if !EXIT_CODE! equ 0 (
-    echo [OK] 执行完成
+    echo [OK] Execution completed
 ) else if !EXIT_CODE! equ 130 (
-    echo [INFO] 用户中止 ^(Ctrl+C^)
+    echo [INFO] User interrupted ^(Ctrl+C^)
 ) else if !EXIT_CODE! equ 2 (
-    echo [ERROR] 参数错误，请运行 start.bat --help 查看用法
+    echo [ERROR] Parameter error, please run start.bat --help for usage
 ) else (
-    echo [ERROR] 引擎退出，错误码: !EXIT_CODE!
+    echo [ERROR] Engine exited with code: !EXIT_CODE!
 )
 
 echo.
@@ -769,29 +780,29 @@ pause
 exit /b !EXIT_CODE!
 
 REM ============================================================
-REM 子程序: 检查Python环境
+REM Subroutine: Check Python environment
 REM ============================================================
 :check_python
 where python >nul 2>&1
 if errorlevel 1 (
-    echo [ERROR] 未找到 Python
+    echo [ERROR] Python not found
     echo.
-    echo   请从 https://www.python.org/downloads/ 下载安装 Python 3.9+
-    echo   安装时请勾选 "Add Python to PATH"
+    echo   Please download and install Python 3.9+ from https://www.python.org/downloads/
+    echo   Make sure to check "Add Python to PATH" during installation
     exit /b 1
 )
 
 for /f "tokens=2" %%i in ('python --version 2^>^&1') do set "PY_VER=%%i"
 python -c "import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)" 2>nul
 if errorlevel 1 (
-    echo [ERROR] Python 版本过低: !PY_VER! ^(需要 3.9+^)
+    echo [ERROR] Python version too low: !PY_VER! ^(requires 3.9+^)
     exit /b 1
 )
 echo [OK] Python !PY_VER!
 exit /b 0
 
 REM ============================================================
-REM 子程序: 激活虚拟环境
+REM Subroutine: Activate virtual environment
 REM ============================================================
 :activate_venv
 if defined VIRTUAL_ENV (
@@ -800,48 +811,48 @@ if defined VIRTUAL_ENV (
 if exist "venv\Scripts\activate.bat" (
     call venv\Scripts\activate.bat 2>nul
     if not errorlevel 1 (
-        echo [OK] 虚拟环境已激活
+        echo [OK] Virtual environment activated
     ) else (
-        echo [WARN] 虚拟环境激活失败，使用系统 Python
+        echo [WARN] Virtual environment activation failed, using system Python
     )
 ) else (
-    echo [WARN] 虚拟环境不存在，建议运行 install.bat 安装
+    echo [WARN] Virtual environment not found, recommended to run install.bat
 )
 exit /b 0
 
 REM ============================================================
-REM 子程序: 显示帮助
+REM Subroutine: Show help
 REM ============================================================
 :show_help
 echo.
-echo BTC 碰撞引擎 v__VERSION__ - 启动脚本
+echo BTC Collision Engine v__VERSION__ - Startup Script
 echo ========================================
 echo.
-echo 用法:
-echo   start.bat [参数]
+echo Usage:
+echo   start.bat [options]
 echo.
-echo 所有参数直接传递给 key_collision_cli.py，常用参数:
+echo All options are passed directly to key_collision_cli.py, common options:
 echo.
-echo   目标:
-echo     -t ^<地址^>          指定单个目标地址
-echo     -f ^<文件^>          从文件读取目标地址列表
+echo   Targets:
+echo     -t ^<address^>       Specify single target address
+echo     -f ^<file^>          Read target address list from file
 echo.
-echo   模式:
-echo     -m ^<模式^>          碰撞模式: random / range / dictionary
-echo     --start ^<hex^>      范围起点 (仅 range 模式)
-echo     --end ^<hex^>        范围终点 (仅 range 模式)
+echo   Mode:
+echo     -m ^<mode^>          Collision mode: random / range / dictionary
+echo     --start ^<hex^>      Range start (range mode only)
+echo     --end ^<hex^>        Range end (range mode only)
 echo.
 echo   GPU:
-echo     --use-gpu           启用 GPU 加速
-echo     --multi-gpu         启用多 GPU
-echo     --config ^<文件^>    指定配置文件
+echo     --use-gpu           Enable GPU acceleration
+echo     --multi-gpu         Enable multi-GPU
+echo     --config ^<file^>    Specify config file
 echo.
-echo   控制:
-echo     --duration ^<秒^>    运行时长
-echo     --quick-start       启动快速向导
-echo     --help              显示完整帮助
+echo   Control:
+echo     --duration ^<sec^>   Run duration
+echo     --quick-start       Start quick wizard
+echo     --help              Show full help
 echo.
-echo 示例:
+echo Examples:
 echo   start.bat --quick-start
 echo   start.bat -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random
 echo   start.bat --config config.intel_arc.json --use-gpu
@@ -1024,6 +1035,30 @@ def copy_entry_files(root: Path, out: Path) -> None:
             log_skip(f"Entry not found: {name}")
 
 
+def copy_batch_scripts(root: Path, out: Path) -> None:
+    """复制所有 .bat 脚本到输出目录"""
+    bat_files = [
+        "diagnostic.bat",
+        "generate_report.bat",
+        "log_monitor.bat",
+        "start_async_optimized.bat",
+        "start_dual.bat",
+        "start_engine.bat",
+        "start_monitoring.bat",
+    ]
+    copied = 0
+    for name in bat_files:
+        src = root / name
+        if src.exists():
+            shutil.copy2(src, out / name)
+            log_ok(f"Script: {name}")
+            copied += 1
+        else:
+            log_skip(f"Script not found: {name}")
+    if copied > 0:
+        print(f"  [INFO] {copied} batch script(s) copied")
+
+
 def copy_requirements(root: Path, out: Path) -> None:
     req_dir = out / "requirements"
     req_dir.mkdir(exist_ok=True)
@@ -1162,10 +1197,18 @@ def generate_start_sh(out: Path) -> None:
 
 
 def generate_start_bat(out: Path) -> None:
-    content = START_BAT.replace("__VERSION__", VERSION)
-    target = out / "start.bat"
-    target.write_text(content, encoding="utf-8", newline="\r\n")
-    log_ok("start.bat generated (CRLF)")
+    """复制源目录的 start.bat（带交互式菜单）"""
+    src = PROJECT_ROOT / "start.bat"
+    if src.exists():
+        # 直接复制源文件，保留所有功能
+        shutil.copy2(src, out / "start.bat")
+        log_ok("start.bat copied from source (with menu)")
+    else:
+        # 如果源文件不存在，使用简化版模板
+        content = START_BAT.replace("__VERSION__", VERSION)
+        target = out / "start.bat"
+        target.write_text(content, encoding="utf-8", newline="\r\n")
+        log_ok("start.bat generated from template (CRLF)")
 
 
 def generate_release_notes(out: Path) -> None:
@@ -1246,6 +1289,7 @@ def main() -> int:
         ("Cleaning output", lambda: clean_output(out)),
         ("Copying source", lambda: copy_source(PROJECT_ROOT, out)),
         ("Copying entry files", lambda: copy_entry_files(PROJECT_ROOT, out)),
+        ("Copying batch scripts", lambda: copy_batch_scripts(PROJECT_ROOT, out)),
         ("Copying requirements", lambda: copy_requirements(PROJECT_ROOT, out)),
         ("Copying config templates", lambda: copy_configs(PROJECT_ROOT, out)),
         ("Copying Docker files", lambda: copy_docker(PROJECT_ROOT, out)),

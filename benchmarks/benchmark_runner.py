@@ -147,7 +147,7 @@ def bench_collision_check() -> BenchmarkResult:
     """碰撞检测吞吐量基准测试（使用 set lookup）"""
     # 构造含 10000 个目标地址的集合
     target_set = {f"1Address{i:040d}" for i in range(10_000)}
-    probe_addrs = [f"1Address{i:040d}" for i in range(0, 2000, 2)]  # 50% 命中
+    probe_addrs = [f"1Address{i:040d}" for i in range(0, 2000, 2)]  # 全部命中（偶数地址均在 0..9999 范围内）
 
     def _check():
         for addr in probe_addrs:
@@ -309,17 +309,19 @@ def _compare_results(
 class BenchmarkRunner:
     """统一基准测试运行器"""
 
-    def __init__(self, output_dir: Optional[str] = None, compare: bool = False):
+    def __init__(self, output_dir: Optional[str] = None, compare: bool = False, baseline: Optional[str] = None):
         """
         参数:
             output_dir: 结果保存目录，默认为 benchmarks/results
             compare:    是否与上次结果对比
+            baseline:   指定基线文件路径（用于 CI 流水线）
         """
         if output_dir:
             self.results_dir = Path(output_dir)
         else:
             self.results_dir = _ROOT / "benchmarks" / "results"
         self.compare = compare
+        self.baseline = Path(baseline) if baseline else None
 
         # 确保输出目录存在
         self.results_dir.mkdir(parents=True, exist_ok=True)
@@ -401,11 +403,17 @@ class BenchmarkRunner:
             "regressions": [],
             "improvements": [],
         }
-        if self.compare:
-            latest = _find_latest_result(self.results_dir)
-            # 排除刚才保存的当前文件
-            if latest and latest.name != filename:
-                comparison = _compare_results(results, latest)
+        if self.compare or self.baseline:
+            baseline_path = None
+            if self.baseline and self.baseline.exists():
+                baseline_path = self.baseline
+            elif self.compare:
+                latest = _find_latest_result(self.results_dir)
+                # 排除刚才保存的当前文件
+                if latest and latest.name != filename:
+                    baseline_path = latest
+            if baseline_path:
+                comparison = _compare_results(results, baseline_path)
 
         payload = {
             "timestamp": datetime.now().isoformat(timespec="seconds"),
@@ -463,8 +471,8 @@ class BenchmarkRunner:
         results = self.run_all()
         out_path = self.save(results)
 
-        # 如开启对比，读取刚保存的文件并打印报告
-        if self.compare:
+        # 如开启对比或指定基线，读取刚保存的文件并打印报告
+        if self.compare or self.baseline:
             try:
                 with out_path.open("r", encoding="utf-8") as f:
                     data = json.load(f)
@@ -498,6 +506,12 @@ def _build_parser() -> argparse.ArgumentParser:
         "--compare",
         action="store_true",
         help="与上次结果对比，检测性能回归（下降 >10%% 报警）",
+    )
+    parser.add_argument(
+        "--baseline",
+        metavar="FILE",
+        default=None,
+        help="指定基线文件路径（用于 CI 流水线，与已提交基线对比）",
     )
     parser.add_argument(
         "--output",
@@ -541,7 +555,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             return 2
         suite = {n: BUILTIN_BENCHMARKS[n] for n in args.only}
 
-    runner = BenchmarkRunner(output_dir=args.output, compare=args.compare)
+    runner = BenchmarkRunner(output_dir=args.output, compare=args.compare, baseline=args.baseline)
     return runner.run() if suite is BUILTIN_BENCHMARKS else _run_subset(runner, suite)
 
 
@@ -549,13 +563,21 @@ def _run_subset(runner: BenchmarkRunner, suite: Dict[str, Callable]) -> int:
     """运行子集并保存"""
     results = runner.run_all(suite)
     out_path = runner.save(results)
-    if runner.compare:
+    if runner.compare or runner.baseline:
         try:
             with out_path.open("r", encoding="utf-8") as f:
                 data = json.load(f)
             runner.print_comparison(data.get("comparison", {}))
         except Exception:
             pass
+    # 若存在回归，返回非零退出码（与 run() 行为一致）
+    try:
+        with out_path.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+        if data.get("comparison", {}).get("regressions"):
+            return 1
+    except Exception:
+        pass
     return 0
 
 

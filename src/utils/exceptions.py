@@ -32,9 +32,9 @@ class CollisionError(Exception):
     def __init__(
         self, 
         message: str, 
-        error_code: int = None,
-        context: Dict[str, Any] = None,
-        original_error: Exception = None
+        error_code: Optional[int] = None,
+        context: Optional[Dict[str, Any]] = None,
+        original_error: Optional[Exception] = None
     ):
         """
         初始化异常
@@ -86,9 +86,9 @@ class ConfigError(CollisionError):
     def __init__(
         self, 
         message: str, 
-        error_code: int = None,
-        context: Dict[str, Any] = None,
-        original_error: Exception = None
+        error_code: Optional[int] = None,
+        context: Optional[Dict[str, Any]] = None,
+        original_error: Optional[Exception] = None
     ):
         super().__init__(
             message,
@@ -104,9 +104,9 @@ class ValidationError(CollisionError):
     def __init__(
         self, 
         message: str, 
-        error_code: int = None,
-        context: Dict[str, Any] = None,
-        original_error: Exception = None
+        error_code: Optional[int] = None,
+        context: Optional[Dict[str, Any]] = None,
+        original_error: Optional[Exception] = None
     ):
         super().__init__(
             message,
@@ -122,9 +122,9 @@ class KeyGenerationError(CollisionError):
     def __init__(
         self, 
         message: str, 
-        error_code: int = None,
-        context: Dict[str, Any] = None,
-        original_error: Exception = None
+        error_code: Optional[int] = None,
+        context: Optional[Dict[str, Any]] = None,
+        original_error: Optional[Exception] = None
     ):
         super().__init__(
             message,
@@ -140,9 +140,9 @@ class AddressGenerationError(CollisionError):
     def __init__(
         self, 
         message: str, 
-        error_code: int = None,
-        context: Dict[str, Any] = None,
-        original_error: Exception = None
+        error_code: Optional[int] = None,
+        context: Optional[Dict[str, Any]] = None,
+        original_error: Optional[Exception] = None
     ):
         super().__init__(
             message,
@@ -158,9 +158,9 @@ class CheckpointError(CollisionError):
     def __init__(
         self, 
         message: str, 
-        error_code: int = None,
-        context: Dict[str, Any] = None,
-        original_error: Exception = None
+        error_code: Optional[int] = None,
+        context: Optional[Dict[str, Any]] = None,
+        original_error: Optional[Exception] = None
     ):
         super().__init__(
             message,
@@ -176,9 +176,9 @@ class DeduplicationError(CollisionError):
     def __init__(
         self, 
         message: str, 
-        error_code: int = None,
-        context: Dict[str, Any] = None,
-        original_error: Exception = None
+        error_code: Optional[int] = None,
+        context: Optional[Dict[str, Any]] = None,
+        original_error: Optional[Exception] = None
     ):
         super().__init__(
             message,
@@ -194,9 +194,9 @@ class TargetResolutionError(CollisionError):
     def __init__(
         self, 
         message: str, 
-        error_code: int = None,
-        context: Dict[str, Any] = None,
-        original_error: Exception = None
+        error_code: Optional[int] = None,
+        context: Optional[Dict[str, Any]] = None,
+        original_error: Optional[Exception] = None
     ):
         super().__init__(
             message,
@@ -212,9 +212,9 @@ class CryptoBackendError(CollisionError):
     def __init__(
         self, 
         message: str, 
-        error_code: int = None,
-        context: Dict[str, Any] = None,
-        original_error: Exception = None
+        error_code: Optional[int] = None,
+        context: Optional[Dict[str, Any]] = None,
+        original_error: Optional[Exception] = None
     ):
         super().__init__(
             message,

@@ -1,6 +1,6 @@
 # GPU引擎使用指南
 
-> **版本**: v1.2.0 | **最后更新**: 2026-04-21  
+> **版本**: v3.3.1 | **最后更新**: 2026-04-28  
 > **面向**: 开发者
 
 
@@ -61,6 +61,7 @@
 5. [性能调优](#性能调优)
 6. [故障排除](#故障排除)
 7. [最佳实践](#最佳实践)
+8. [技术架构（重构后）](#技术架构重构后)
 
 ---
 
@@ -141,6 +142,8 @@ GPUCollisionEngine.list_devices()
 
 ## 快速开始
 
+> **重构说明**: v4.0重构后，GPU引擎采用组件化架构，代码更加模块化，同时保持完全向后兼容。
+
 ### 方法1: GUI界面
 
 1. 启动GUI程序
@@ -182,6 +185,34 @@ engine = create_collision_engine(targets, mode='gpu')
 
 # 强制使用CPU
 engine = create_collision_engine(targets, mode='cpu')
+```python
+
+## 方法4: 使用新组件（高级）
+
+```python
+# 重构后新增的组件化API
+from src.gpu.device_manager import GPUDeviceManager
+from src.gpu.config_manager import GPUConfigManager
+from src.gpu.search_mode_coordinator import SearchModeCoordinator
+from src.collision.gpu_collision_engine import GPUCollisionEngine
+
+targets = {'1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'}
+
+# 方式1: 使用设备管理器（推荐用于高级配置）
+device_manager = GPUDeviceManager(
+    device_index=0,
+    config={'gpu': {'use_memory_pool': True}}
+)
+device_manager.initialize(targets, batch_size=1000000)
+
+# 方式2: 使用配置管理器
+config_manager = GPUConfigManager(user_config={'gpu': {'batch_size': 2097152}})
+config = config_manager.prepare_config(device_manager.device)
+
+# 方式3: 使用搜索模式协调器
+engine = GPUCollisionEngine(targets)
+coordinator = SearchModeCoordinator(engine)
+coordinator.start(mode='random')
 ```python
 
 ---
@@ -458,6 +489,69 @@ engine = GPUCollisionEngine(
 - **uint32优化**: 替代uint8，性能提升4倍
 - **异步执行**: 减少CPU-GPU同步等待
 - **超时保护**: 30秒超时防止hang
+
+---
+
+## 技术架构（重构后）
+
+### 组件化架构
+
+v4.0重构后，GPU引擎采用分层组件化架构：
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│                      应用层 (Application)                      │
+│        GPUCollisionEngine - 对外接口、组件协调                  │
+├────────────────────────────────────────────────────────────────┤
+│                      协调层 (Coordinator)                      │
+│   SearchModeCoordinator - 搜索模式管理、切换执行                │
+├────────────────────────────────────────────────────────────────┤
+│                       管理层 (Manager)                        │
+│   GPUDeviceManager  - 设备初始化、上下文管理                   │
+│   GPUConfigManager  - 配置加载、合并、验证                     │
+│   GPUEngineMonitor  - 性能监控、自适应调整                     │
+├────────────────────────────────────────────────────────────────┤
+│                       执行层 (Executor)                        │
+│   RandomSearchMode    - 随机搜索算法                          │
+│   BruteForceSearchMode - 暴力破解算法                         │
+│   RangeScanSearchMode  - 范围扫描算法                         │
+├────────────────────────────────────────────────────────────────┤
+│                    基础设施层 (Infrastructure)                 │
+│   GPUKernel       - OpenCL内核实现                            │
+│   GPUContext      - OpenCL上下文管理                          │
+│   GPUMemoryPool   - GPU内存池                                │
+│   AsyncGPUExecutor - 异步执行器                               │
+└────────────────────────────────────────────────────────────────┘
+```
+
+### 新增组件说明
+
+| 组件 | 文件路径 | 职责 |
+|------|----------|------|
+| GPUDeviceManager | src/gpu/device_manager.py | 设备初始化、上下文创建、内核编译 |
+| GPUConfigManager | src/gpu/config_manager.py | 配置加载、合并、验证 |
+| SearchModeCoordinator | src/gpu/search_mode_coordinator.py | 搜索模式管理、切换执行 |
+| GPUEngineMonitor | src/gpu/engine_monitor.py | 性能监控、自适应调整 |
+
+### 重构收益
+
+| 维度 | 重构前 | 重构后 | 改进 |
+|------|--------|--------|------|
+| 代码行数 | ~2500行 | ~800行 | 68%减少 |
+| 职责数量 | 10+ | 2 | 职责分离 |
+| 可测试性 | 困难 | 各组件独立可测 | 显著提升 |
+| 可扩展性 | 受限 | 模块化设计 | 灵活扩展 |
+| 向后兼容 | - | ✅ 完全兼容 | API不变 |
+
+### 配置优先级
+
+重构后的配置系统支持多源配置合并，优先级从高到低：
+
+1. **构造函数参数** - 直接传递给引擎的参数
+2. **用户配置文件** - config.json中的设置
+3. **GPU型号配置** - profiles目录中的厂商配置
+4. **自动生成配置** - 根据设备能力自动计算
+5. **默认配置值** - 系统内置默认值
 
 ---
 

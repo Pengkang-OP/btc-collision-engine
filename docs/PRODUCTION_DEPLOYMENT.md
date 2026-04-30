@@ -30,8 +30,17 @@
 | 文件 | 说明 | 用途 |
 |------|------|------|
 | `deploy/prometheus/prometheus.yml` | Prometheus配置 | 指标收集和告警 |
+| `deploy/prometheus/rules/btc-collision-alerts.yml` | 告警规则 | 异常检测和告警通知 |
 | `deploy/grafana/datasources/datasource.yml` | Grafana数据源 | 可视化监控 |
+| `deploy/grafana/dashboards/btc-collision-dashboard.json` | Grafana仪表盘 | 实时监控面板 |
 | `deploy/docker-deploy.sh` | Docker部署脚本 | 一键启动Docker环境 |
+
+### 4. 备份与维护
+
+| 文件 | 说明 | 用途 |
+|------|------|------|
+| `scripts/backup_manager.py` | 备份管理器 | 创建、恢复、管理备份 |
+| `scripts/schedule_backup.py` | 定时备份调度器 | 设置自动备份任务 |
 
 ---
 
@@ -119,6 +128,53 @@ docker-compose --profile gpu --profile nvidia --profile monitoring up -d
 
 ---
 
+## ✅ 验收测试
+
+### 生产验收测试状态
+
+**测试版本**: v3.3.1
+**测试时间**: 2026-04-28
+**测试结果**: ✅ PASSED (18/18, 100%)
+
+### 测试覆盖
+
+| 测试类别 | 测试数 | 通过 | 状态 |
+|----------|--------|------|------|
+| 关键功能测试 | 10 | 10 | ✅ |
+| 扩展功能测试 | 8 | 8 | ✅ |
+| **总计** | **18** | **18** | ✅ |
+
+### 关键验证项
+
+| 验证项 | 状态 | 说明 |
+|--------|------|------|
+| 核心加密功能 | ✅ | Bitcoin密钥生成和验证 |
+| 配置管理系统 | ✅ | 配置读写和持久化 |
+| 日志和安全 | ✅ | 安全日志过滤 |
+| 检查点功能 | ✅ | 状态保存和恢复 |
+| 碰撞引擎 | ✅ | 核心碰撞计算 |
+| 安全功能 | ✅ | 密钥安全处理 |
+| 真实碰撞运行 | ✅ | 315 keys / 3.17s |
+| 性能压力测试 | ✅ | 1,387 keys / 10.5s |
+
+### 运行验收测试
+
+```bash
+# 运行完整验收测试
+python production_acceptance_test.py
+
+# 查看验收报告
+cat data_logs/acceptance_test/acceptance_test_summary.md
+```
+
+### 验收报告位置
+
+- **JSON报告**: `data_logs/acceptance_test/acceptance_test_report.json`
+- **Markdown摘要**: `data_logs/acceptance_test/acceptance_test_summary.md`
+- **测试日志**: `data_logs/acceptance_test/acceptance_test.log`
+
+---
+
 ## 🔧 配置说明
 
 ### 生产配置优化（config.production.json）
@@ -160,13 +216,25 @@ systemd-cgtop
 
 # 查看日志
 journalctl -u btc-collision-engine -f
+
+# 查看资源限制状态
+systemctl show btc-collision-engine | grep Memory
 ```
 
 ### 2. 应用级监控
 
 ```bash
-# 健康检查
+# 健康检查（基础）
+python -m src.utils.health_check
+
+# 健康检查（含GPU）
 python -m src.utils.health_check --gpu
+
+# 健康检查（含网络）
+python -m src.utils.health_check --network
+
+# 生成健康检查报告
+python -m src.utils.health_check --gpu --report health_report.txt
 
 # 查看当前性能
 cat data_logs/current_data.json | jq '.performance'
@@ -184,11 +252,29 @@ docker-compose --profile monitoring up -d
 # 访问Grafana
 # URL: http://localhost:3000
 # 用户名: admin
-# 密码: btc-monitor-2024
+# 密码: changeme (可通过环境变量 GF_ADMIN_PASSWORD 设置)
 
 # 访问Prometheus
 # URL: http://localhost:9090
+
+# 查看告警规则
+cat deploy/prometheus/rules/btc-collision-alerts.yml
 ```
+
+### 4. 告警规则
+
+系统已配置以下告警规则：
+
+| 告警名称 | 触发条件 | 严重级别 |
+|----------|----------|----------|
+| BTCEngineDown | 服务离线超过1分钟 | critical |
+| BTCHighCPUUsage | CPU使用率>90%持续5分钟 | warning |
+| BTCHighMemoryUsage | 内存使用率>90%持续5分钟 | warning |
+| BTCLowDiskSpace | 磁盘空间<10% | critical |
+| BTCThroughputDrop | 检测速率<1000 keys/s持续2分钟 | warning |
+| BTCErrorRateHigh | 错误率>5%持续1分钟 | critical |
+| BTCGPUMemoryHigh | GPU显存>80%持续3分钟 | warning |
+| BTCGPUTemperatureHigh | GPU温度>85°C持续1分钟 | critical |
 
 ---
 
@@ -319,6 +405,9 @@ df -h /opt/btc-collision-engine
 
 # 4. 查看错误日志
 journalctl -u btc-collision-engine -p err --since today
+
+# 5. 运行健康检查
+python -m src.utils.health_check --gpu
 ```
 
 ### 定期维护
@@ -330,9 +419,27 @@ sudo journalctl --vacuum-time=7d
 # 每月：清理数据
 python -m src.utils.data_cleanup --temp-days 14 --data-days 30
 
-# 每季度：备份数据
-tar czf /backup/btc-engine-$(date +%Y%m%d).tar.gz \
-    /opt/btc-collision-engine/data_logs/
+# 定期：备份数据
+python scripts/backup_manager.py create --desc "定期备份"
+
+# 查看备份列表
+python scripts/backup_manager.py list
+
+# 恢复备份
+python scripts/backup_manager.py restore btc-collision-backup_20240101_120000.tar.gz
+```
+
+### 自动备份配置
+
+```bash
+# 安装定时备份任务
+python scripts/schedule_backup.py install
+
+# 查看当前定时任务
+python scripts/schedule_backup.py show
+
+# 移除定时备份任务
+python scripts/schedule_backup.py remove
 ```
 
 ### 故障处理
@@ -349,7 +456,24 @@ sudo systemctl reload btc-collision-engine
 
 # 4. 查看完整日志
 journalctl -u btc-collision-engine --since "1 hour ago"
+
+# 5. 检查资源限制
+systemctl show btc-collision-engine | grep -E '(Memory|CPU)'
 ```
+
+### 资源限制配置
+
+systemd服务已配置以下资源限制：
+
+| 限制项 | 值 | 说明 |
+|--------|-----|------|
+| CPUQuota | 800% | CPU使用上限（8核） |
+| MemoryMax | 16G | 最大内存 |
+| MemoryHigh | 14G | 内存高压阈值 |
+| MemorySwapMax | 2G | 最大交换内存 |
+| LimitNOFILE | 65536 | 最大文件描述符 |
+| LimitNPROC | 4096 | 最大进程数 |
+| Nice | 10 | 进程优先级 |
 
 ---
 

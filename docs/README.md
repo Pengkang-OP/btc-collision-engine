@@ -1,6 +1,6 @@
 # 比特币私钥碰撞工具 - 文档中心
 
-> **版本**: v2.3.0 | **最后更新**: 2026-04-22  
+> **版本**: v3.3.1 | **最后更新**: 2026-04-28  
 > **面向**: 所有用户
 
 ## 目录
@@ -52,11 +52,12 @@
 - [secure-key-management.md](secure-key-management.md) - 私钥安全管理指南
 - [performance-optimization.md](performance-optimization.md) - 性能调优指南
 
-### 🔧 运维和监控 (3个)
+### 🔧 运维和监控 (4个)
 
 - [troubleshooting.md](troubleshooting.md) - 故障排除指南
 - [logging-guide.md](logging-guide.md) - 日志配置指南（含数据日志集成、监控指南）
 - [monitoring-system-guide.md](monitoring-system-guide.md) - 监控系统指南
+- [MAINTENANCE_MANUAL.md](MAINTENANCE_MANUAL.md) - 维护手册（运维指南）⭐
 
 ### 📦 功能特性 (4个)
 
@@ -79,9 +80,9 @@
 
 ---
 
-**文档总数**: 30个核心文档 + 200+个归档文档  
+**文档总数**: 31个核心文档 + 144+个归档文档  
 **根目录文档**: 3个（README.md, CHANGELOG.md, CONTRIBUTING.md）  
-**最后更新**: 2026-04-22
+**最后更新**: 2026-04-28
 
 ## 系统概览
 
@@ -192,5 +193,5 @@ f:/BTC/
 
 ---
 
-*文档生成时间: 2026-04-20*  
-*最近审计: 2026-04-20 (全面技术审计通过 9.2/10)*
+*文档生成时间: 2026-04-28*  
+*最近更新: v3.3.1 (2026-04-27) 异步双缓冲性能优化*

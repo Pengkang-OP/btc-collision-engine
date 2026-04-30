@@ -145,3 +145,147 @@ jobs:
         echo "📚 检查文档结构..."
         ls -la docs/
         echo "✅ 文档检查完成"
+
+  # ──────────────────────────────────────────
+  # P0 新增: 安全扫描 (Bandit)
+  # ──────────────────────────────────────────
+  security-scan:
+    name: 安全扫描 (Bandit)
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: 设置 Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install bandit>=1.7.0
+        # Bandit 是静态分析工具，无需安装项目运行时依赖
+
+    - name: 运行 Bandit 安全扫描
+      id: bandit-scan
+      continue-on-error: true  # TODO: 源码告警清零后移除此行，启用硬阻断
+      run: |
+        echo "🔒 运行 Bandit 安全扫描..."
+        bandit -r src/ -ll -f json -o bandit-report.json
+        BANDIT_EXIT=$?
+        echo "$BANDIT_EXIT" > bandit-exit-code.txt
+        echo "--- 扫描摘要 ---"
+        if [ -s bandit-report.json ]; then
+          ISSUE_COUNT=$(jq '.results | length' bandit-report.json)
+          if [ "$ISSUE_COUNT" -gt 0 ]; then
+            echo "⚠️  发现 ${ISSUE_COUNT} 个安全问题:"
+            jq -r '.results[]? | "  [\(.test_id)] \(.filename):\(.line_number) - \(.issue_text[:120])"' bandit-report.json
+          else
+            echo "✅ 未发现安全问题"
+          fi
+        fi
+        if [ $BANDIT_EXIT -gt 1 ]; then
+          echo "❌ Bandit 执行异常 (exit=$BANDIT_EXIT)"
+          exit $BANDIT_EXIT
+        fi
+        echo "✅ Bandit 安全扫描完成 (exit=$BANDIT_EXIT)"
+
+    - name: 验证 Bandit 未异常崩溃
+      if: always()
+      run: |
+        if [ -f bandit-exit-code.txt ]; then
+          EXIT_CODE=$(cat bandit-exit-code.txt)
+          if [ "$EXIT_CODE" -gt 1 ]; then
+            echo "❌ Bandit 异常退出 (exit=$EXIT_CODE)，非安全问题导致"
+            exit 1
+          fi
+        fi
+        echo "✅ Bandit 未异常崩溃"
+
+    - name: 上传 Bandit 报告
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: bandit-report
+        path: bandit-report.json
+
+  # ──────────────────────────────────────────
+  # P0 新增: 类型检查 (mypy)
+  # ──────────────────────────────────────────
+  type-check:
+    name: 类型检查 (mypy)
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: 设置 Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-base.txt
+        pip install mypy>=1.0.0
+        # mypy 类型检查仅需运行时依赖 + mypy 本身
+
+    - name: 运行 mypy 类型检查
+      run: |
+        echo "🔍 运行 mypy 类型检查..."
+        mypy src/ --config-file pyproject.toml
+        echo "✅ mypy 类型检查通过"
+
+  # ──────────────────────────────────────────
+  # P0 新增: 性能回归检测 (Benchmark)
+  # ──────────────────────────────────────────
+  benchmark:
+    name: 性能回归检测
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: 设置 Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: 运行性能基准测试
+      run: |
+        echo "⚡ 运行性能基准测试..."
+        # 清理旧结果文件，避免 artifact 累积
+        rm -f benchmarks/results/benchmark_[0-9]*.json
+        BASELINE="benchmarks/results/benchmark-baseline.json"
+        if [ -f "$BASELINE" ]; then
+          echo "📊 与基线对比: $BASELINE"
+          python -m benchmarks.benchmark_runner --baseline "$BASELINE" --output benchmarks/results
+          EXIT_CODE=$?
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "⚠️ 检测到性能回归！请检查上方输出。"
+            echo "如果回归是预期内的（如新增功能导致），请更新基线文件。"
+            exit $EXIT_CODE
+          fi
+        else
+          echo "⚠️ 未找到基线文件，跳过回归对比（仅运行基准测试）"
+          python -m benchmarks.benchmark_runner --output benchmarks/results
+        fi
+        echo "✅ 基准测试完成"
+
+    - name: 上传基准测试结果
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmark-results
+        path: benchmarks/results/benchmark_*.json

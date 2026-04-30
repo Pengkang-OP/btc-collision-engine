@@ -1,29 +1,63 @@
 # GPU配置管理器使用指南
 
-> **版本**: v3.3.0 | **更新日期**: 2026-04-26  
+> **版本**: v4.0.0 (重构后) | **更新日期**: 2026-04-28  
 > **面向**: 开发者/运维人员
 
 ## 概述
 
-GPU配置管理器（GPUConfigManager）是v3.2.0引入的核心组件，用于统一管理GPU设备的配置读取、合并、验证和应用。它解决了多配置源冲突、参数验证缺失等问题，提供了企业级的配置治理能力。
+GPU配置管理器（GPUConfigManager）是重构后独立的核心组件，位于 `src/gpu/config_manager.py`，用于统一管理GPU设备的配置读取、合并、验证和应用。它解决了多配置源冲突、参数验证缺失等问题，提供了企业级的配置治理能力。
+
+## 架构定位
+
+```
+配置管理组件架构
+┌─────────────────────────────────────────────────────────────┐
+│                    GPUConfigManager                         │
+│  ┌──────────────────┐  ┌──────────────────┐                │
+│  │  GPUProfileLoader│  │ GPUAutoConfigurator│               │
+│  │  (厂商配置)       │  │  (自动配置)        │                │
+│  └────────┬─────────┘  └────────┬─────────┘                │
+│           │                     │                          │
+│           └─────────┬───────────┘                          │
+│                     ▼                                       │
+│           ┌──────────────────┐                             │
+│           │   配置合并引擎    │                             │
+│           │   (优先级处理)    │                             │
+│           └────────┬─────────┘                             │
+│                    ▼                                       │
+│           ┌──────────────────┐                             │
+│           │   配置验证器      │                             │
+│           └────────┬─────────┘                             │
+│                    ▼                                       │
+│           ┌──────────────────┐                             │
+│           │   应用配置        │                             │
+│           └──────────────────┘                             │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ## 核心功能
 
 ### 1. 配置读取
 
-- 从config.json读取基础配置
-- 从GPU Profile加载厂商特定配置
+- 从config.json读取用户配置
+- 从GPU Profile加载厂商特定配置（NVIDIA/AMD/Intel）
+- 自动生成基于设备能力的配置
 - 支持运行时动态覆盖
 
 ### 2. 配置合并
 
-- 优先级策略：Profile配置 > AutoConfig > 默认配置
+- **优先级策略**（从高到低）：
+  1. 构造函数参数（最高优先级）
+  2. 用户配置文件（config.json）
+  3. GPU型号配置文件（profiles）
+  4. 自动生成配置
+  5. 默认配置值（最低优先级）
 - 智能冲突解决
 - 向后兼容保证
 
 ### 3. 配置验证
 
-- 参数范围检查
+- 参数范围检查（如batch_size: 1024-16777216）
 - 类型验证
 - 依赖关系验证
 
@@ -38,26 +72,23 @@ GPU配置管理器（GPUConfigManager）是v3.2.0引入的核心组件，用于�
 ### 基础使用
 
 ```python
-from src.gpu.gpu_config_manager import GPUConfigManager
+from src.gpu.config_manager import GPUConfigManager
 
 # 创建配置管理器
-config_manager = GPUConfigManager()
+config_manager = GPUConfigManager(user_config={'gpu': {'batch_size': 2097152}})
 
-# 加载配置
-config = config_manager.load_config('config.json')
+# 准备配置（自动合并多源配置）
+device = get_gpu_device()  # 获取GPU设备实例
+config = config_manager.prepare_config(device)
 
-# 验证配置
-is_valid = config_manager.validate_config(config)
-
-if is_valid:
-    # 应用配置
-    config_manager.apply_config(config)
+# 配置已自动验证并合并完成
+print(config)
 ```
 
 ### 配置合并示例
 
 ```python
-from src.gpu.gpu_config_manager import GPUConfigManager
+from src.gpu.config_manager import GPUConfigManager
 
 config_manager = GPUConfigManager()
 
@@ -88,6 +119,33 @@ print(merged_config)
 #     'memory_usage_ratio': 0.70,
 #     'use_uint32_workaround': True
 # }
+```
+
+### 完整配置流程
+
+```python
+from src.gpu.config_manager import GPUConfigManager
+from src.gpu.device import GPUDevice, GPUDeviceDetector
+
+# 检测并获取GPU设备
+devices = GPUDeviceDetector.detect_devices()
+device = devices[0]
+
+# 创建配置管理器
+user_config = {
+    'gpu': {
+        'use_memory_pool': True,
+        'pool_max_buffers': 100,
+        'pool_max_memory_mb': 512
+    }
+}
+config_manager = GPUConfigManager(user_config=user_config)
+
+# 准备完整配置
+config = config_manager.prepare_config(device, user_batch_size=2097152)
+
+# 使用配置初始化设备
+device.initialize(config)
 ```
 
 ## 配置项详解

@@ -1,6 +1,6 @@
 # Python 代码规范
 
-> **版本**: v3.1.2 | **更新日期**: 2026-04-25 | **适用范围**: btc-collision-engine 全体 Python 源码
+> **版本**: v3.3.1 | **更新日期**: 2026-04-28 | **适用范围**: btc-collision-engine 全体 Python 源码
 
 ---
 

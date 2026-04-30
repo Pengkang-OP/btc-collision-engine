@@ -1,9 +1,7 @@
 # BTC碰撞引擎架构文档
 
-> **版本**: v1.2.0 | **最后更新**: 2026-04-21  
+> **版本**: v3.4.0 | **最后更新**: 2026-04-30  
 > **面向**: 开发者/架构师
-
-
 
 ## 目录
 
@@ -106,18 +104,18 @@
     - [23.2.1 配置架构](#2321-配置架构)
     - [23.2.2 配置验证流程](#2322-配置验证流程)
 - [23.3 引擎架构整合](#233-引擎架构整合)
-    - [23.3.1 引擎类图](#2331-引擎类图)
-    - [23.3.2 工厂函数](#2332-工厂函数)
+  - [23.3.1 引擎类图](#2331-引擎类图)
+  - [23.3.2 工厂函数](#2332-工厂函数)
 - [23.4 异常处理整合](#234-异常处理整合)
-    - [23.4.1 ExceptionHandler架构](#2341-exceptionhandler架构)
-    - [23.4.2 集成示例](#2342-集成示例)
+  - [23.4.1 ExceptionHandler架构](#2341-exceptionhandler架构)
+  - [23.4.2 集成示例](#2342-集成示例)
 - [23.5 整合质量评估](#235-整合质量评估)
-    - [23.5.1 代码质量评分](#2351-代码质量评分)
-    - [23.5.2 技术债务](#2352-技术债务)
-    - [23.5.3 性能影响](#2353-性能影响)
+  - [23.5.1 代码质量评分](#2351-代码质量评分)
+  - [23.5.2 技术债务](#2352-技术债务)
+  - [23.5.3 性能影响](#2353-性能影响)
   - [23.6 向后兼容性](#236-向后兼容性)
 - [23.7 工厂函数增强](#237-工厂函数增强)
-    - [create_collision_engine() 优化](#create_collision_engine-优化)
+  - [create_collision_engine() 优化](#create_collision_engine-优化)
   - [23.8 GPU引擎优化 (阶段3)](#238-gpu引擎优化-阶段3)
     - [23.8.1 设备初始化优化](#2381-设备初始化优化)
     - [23.8.2 GPUKernel优化](#2382-gpukernel优化)
@@ -127,11 +125,13 @@
 - [23. 性能优化策略 - 扩展](#23-性能优化策略---扩展)
   - [23.1 GPU优化策略](#231-gpu优化策略)
   - [23.2 监控优化策略](#232-监控优化策略)
+
 ## 1. 项目概述
 
 BTC碰撞引擎是一个高性能的比特币P2PKH（Pay-to-Public-Key-Hash）地址生成和私钥碰撞检测系统。项目采用模块化设计，支持CPU多线程和GPU加速，包含核心密码学组件、碰撞检测引擎、图形用户界面、监控系统等多个子系统。
 
 ### 1.1 项目特点
+
 - **多后端支持**：支持Pure Python、OpenSSL（cryptography）、Coincurve（libsecp256k1）、ECDSA四种加密后端
 - **GPU加速**：支持OpenCL GPU加速，性能提升100-1000倍（65536个工作项并行）
 - **安全设计**：SecureKeyManager确保私钥使用后自动清零，防止内存残留攻击
@@ -323,7 +323,9 @@ private_key (int) → scalar_multiply(k, G) → public_point (ECPoint)
 
 **编码流程**:
 ```
+
 数据 → 添加版本字节 → 计算双SHA-256校验和 → Base58编码
+
 ```markdown
 
 ### 4.4 WIF私钥格式模块 (wif.py)
@@ -347,12 +349,14 @@ private_key (int) → scalar_multiply(k, G) → public_point (ECPoint)
 
 **生成流程**:
 ```
+
 1. 生成私钥 (32字节随机数，secrets.token_bytes)
 2. 生成公钥 (优先使用crypto_manager，回退到椭圆曲线标量乘法)
 3. SHA-256哈希
 4. RIPEMD-160哈希 (Hash160)
 5. 添加版本字节(0x00)和校验和
 6. Base58Check编码 → 比特币地址
+
 ```python
 
 **后端选择逻辑**:
@@ -454,51 +458,87 @@ key_mgr.clear_key()  # 手动清零
 - 数据日志记录集成
 - **目标地址管理**（新增）：LRU缓存、批量验证、布隆过滤器匹配
 
-### 5.2 GPU碰撞引擎 (gpu_collision_engine.py) - 新增
+### 5.2 GPU碰撞引擎 (gpu_collision_engine.py) - 重构
 
 **文件位置**: `src/collision/gpu_collision_engine.py`
 
-**架构设计**:
+**架构设计**（重构后 - 组件化架构）:
 ```
-GPUCollisionEngine (GPU碰撞引擎)
-├── GPUDevice (设备管理)
-│   ├── detect_devices(): 检测GPU设备
-│   ├── initialize(): 初始化设备
-│   └── _select_best_device(): 选择最佳设备
-├── GPUKernel (OpenCL内核)
-│   ├── uint256运算: 大数加减乘除模逆
-│   ├── secp256k1点乘: 标量乘法
-│   ├── SHA-256 + RIPEMD-160: 哈希计算
-│   └── 批量Hash160计算
-└── GPUMonitor (GPU监控)
-    ├── get_gpu_info(): GPU信息
-    ├── get_gpu_metrics(): 性能指标
-    └── track_memory_usage(): 显存跟踪
+
+GPUCollisionEngine (GPU碰撞引擎) - 对外接口与协调层
+├── GPUDeviceManager (设备管理器)
+│   ├── 设备初始化与选择
+│   ├── 上下文创建
+│   ├── 内核编译
+│   └── 内存池管理
+├── GPUConfigManager (配置管理器)
+│   ├── 配置加载与合并
+│   ├── 配置验证
+│   └── 厂商配置适配
+├── SearchModeCoordinator (搜索模式协调器)
+│   ├── RandomSearchMode (随机搜索)
+│   ├── BruteForceSearchMode (暴力破解)
+│   └── RangeScanSearchMode (范围扫描)
+├── GPUEngineMonitor (引擎监控器)
+│   ├── 性能指标收集
+│   ├── Batch Size自适应调整
+│   └── 错误检测与恢复
+└── GPUKernel (OpenCL内核)
+    ├── uint256运算: 大数加减乘除模逆
+    ├── secp256k1点乘: 标量乘法
+    ├── SHA-256 + RIPEMD-160: 哈希计算
+    └── 批量Hash160计算
+
 ```python
+
+**分层架构说明**:
+| 层级 | 组件 | 职责 | 文件位置 |
+|------|------|------|----------|
+| 应用层 | GPUCollisionEngine | 对外接口、组件协调 | src/collision/gpu_collision_engine.py |
+| 协调层 | SearchModeCoordinator | 搜索模式管理、切换执行 | src/gpu/search_mode_coordinator.py |
+| 管理层 | GPUDeviceManager | 设备初始化、上下文管理 | src/gpu/device_manager.py |
+| 管理层 | GPUConfigManager | 配置加载、合并、验证 | src/gpu/config_manager.py |
+| 管理层 | GPUEngineMonitor | 性能监控、自适应调整 | src/gpu/engine_monitor.py |
+| 执行层 | RandomSearchMode等 | 具体搜索算法实现 | src/gpu/search_modes/*.py |
+| 基础设施层 | GPUKernel/GPUContext | OpenCL内核与上下文 | src/gpu/kernel.py, src/gpu/context.py |
 
 **核心功能**:
 - GPU并行计算: 65536个工作项同时处理
 - 批量私钥到Hash160转换
 - 自动设备选择和回退机制
-- 显存优化管理
+- 显存优化管理（内存池）
 - 错误恢复机制
+- 自适应Batch Size调整
+- 完整的搜索模式支持（随机/暴力/范围扫描）
 
 **性能对比**:
 | 指标 | CPU引擎 | GPU引擎 | 提升倍数 |
 |------|---------|---------|----------|
-| 批次大小 | 1,000 | 65,536 | 65x |
+| 批次大小 | 1,000 | 65,536+ | 65x+ |
 | 吞吐量 | ~1,000-10,000/s | ~100,000-1,000,000/s | 100-1000x |
 | 适用场景 | 无GPU环境 | 有独立GPU | N/A |
 
+**重构收益**:
+| 维度 | 重构前 | 重构后 | 改进 |
+|------|--------|--------|------|
+| 代码行数 | ~2500行 | ~800行 | 68%减少 |
+| 职责数量 | 10+ | 2 | 职责分离 |
+| 可测试性 | 困难 | 各组件独立可测 | 显著提升 |
+| 可扩展性 | 受限 | 模块化设计 | 灵活扩展 |
+
 **工作流程**:
 ```
-1. 初始化GPU设备和内核
-2. 生成随机私钥批次(CPU端)
-3. 传输私钥到GPU显存
-4. GPU并行计算: 私钥 → 公钥 → Hash160
-5. 传输Hash160结果回CPU
-6. CPU端检查目标匹配
-7. 发现匹配时触发回调
+
+1. 设备管理器初始化GPU设备和内核
+2. 配置管理器加载并验证配置
+3. 生成随机私钥批次(CPU端)
+4. 传输私钥到GPU显存
+5. GPU并行计算: 私钥 → 公钥 → Hash160
+6. 传输Hash160结果回CPU
+7. CPU端检查目标匹配
+8. 发现匹配时触发回调
+9. 监控器收集性能数据并自适应调整
+
 ```markdown
 
 ### 5.3 碰撞引擎工作模式对比
@@ -546,6 +586,7 @@ flowchart LR
 ### 5.4 工作流程
 
 ```
+
 ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
 │  生成随机私钥 │ → │  生成地址   │ → │  匹配检查   │
 └─────────────┘    └─────────────┘    └──────┬──────┘
@@ -556,6 +597,7 @@ flowchart LR
                        │   匹配成功   │                │   继续生成   │
                        │ 触发回调    │                │             │
                        └─────────────┘                └─────────────┘
+
 ```markdown
 
 ## 6. 监控和数据日志系统
@@ -677,6 +719,7 @@ graph TD
 
 **界面结构**:
 ```
+
 P2PKHGUI
 ├── 单地址生成标签页
 │   ├── 私钥输入区域
@@ -688,6 +731,7 @@ P2PKHGUI
 └── 地址验证标签页
     ├── 地址输入
     └── 验证结果展示
+
 ```python
 
 ---
@@ -939,10 +983,12 @@ if data_logging_enabled:
 ### 9.1 配置模块结构
 
 ```
+
 src/config/
 ├── config_manager.py    # 配置管理器
 ├── crypto_config.py     # 加密配置
 └── gui_config.py        # GUI配置
+
 ```markdown
 
 ### 9.2 配置项说明
@@ -998,6 +1044,7 @@ DEFAULT_CONFIG = {
 **配置架构** (v2.0 - 统一协调):
 
 ```
+
 ┌─────────────────────────────────────────────────────────┐
 │              ConfigCoordinator (协调器)                  │
 │  - 统一配置访问接口                                       │
@@ -1024,6 +1071,7 @@ DEFAULT_CONFIG = {
 │  - 保留独立DEFAULT_CONFIG  │
 │    (向后兼容)               │
 └────────────────────────────┘
+
 ```python
 
 **设计原则**:
@@ -1034,6 +1082,7 @@ DEFAULT_CONFIG = {
 ```
 
 **配置访问**:
+
 ```python
 # 点号路径访问
 max_workers = config.get("collision.max_workers")
@@ -1147,9 +1196,11 @@ os.replace(temp_filepath, self.filepath)
 ### 12.2 安全模块
 
 ```
+
 src/utils/
 ├── exceptions.py    # 安全异常类
 └── logger.py        # 安全日志记录
+
 ```yaml
 
 ## 13. 性能架构
@@ -1293,11 +1344,13 @@ src/utils/
 P2PKH（Pay-to-Public-Key-Hash）是比特币最常用的地址类型。从私钥到比特币地址的生成包含6个步骤：
 
 ```
+
 ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
 │  步飤1   │ → │  步飤2   │ → │  步飤3   │ → │  步飤4   │ → │  步飤5   │ → │  步飤6   │
 │ 私钥生成 │    │椭圆曲线  │    │ SHA-256 │    │RIPEMD-160│    │版本+校验 │    │Base58   │
 │          │    │乘法      │    │         │    │(Hash160) │    │和       │    │Check编码 │
 └──────────┘    └──────────┘    └──────────┘    └──────────┘    └──────────┘    └──────────┘
+
 ```markdown
 
 #### 步骤1：私钥生成
@@ -1425,6 +1478,7 @@ BTC项目采用清晰的模块化架构，各组件职责明确、依赖关系�
 ### 19.1 GPU碰撞引擎架构
 
 ```
+
 ┌─────────────────────────────────────────────────────────────┐
 │                    GPUCollisionEngine                        │
 │                   (GPU碰撞引擎主类)                          │
@@ -1436,12 +1490,14 @@ BTC项目采用清晰的模块化架构，各组件职责明确、依赖关系�
 │GPUDevice│ │GPUKernel│ │GPUMonitor│ │Collision│
 │设备管理 │ │OpenCL内核│ │GPU监控  │ │  Stats  │
 └────────┘ └────────┘ └────────┘ └────────┘
+
 ```markdown
 
 ### 19.2 GPU vs CPU架构对比
 
 **CPU引擎架构**:
 ```
+
 KeyCollisionEngine
 ├── P2PKHAddressGenerator (地址生成)
 │   └── EllipticCurve (椭圆曲线)
@@ -1450,10 +1506,12 @@ KeyCollisionEngine
 ├── CollisionStats (统计)
 ├── CheckpointManager (断点)
 └── DataLogger (数据日志)
+
 ```python
 
 **GPU引擎架构**:
 ```
+
 GPUCollisionEngine
 ├── GPUDevice (GPU设备)
 │   └── OpenCL Context/Queue
@@ -1465,6 +1523,7 @@ GPUCollisionEngine
 │   └── 目标匹配检查
 ├── CollisionStats (统计)
 └── CheckpointManager (断点)
+
 ```python
 
 **关键差异**:
@@ -1622,6 +1681,7 @@ graph LR
 
 **EnhancedMonitoringSystem（增强版）**:
 ```
+
 EnhancedMonitoringSystem
 ├── MonitoringSystem (所有功能)
 │   ├── DataCollector
@@ -1634,6 +1694,7 @@ EnhancedMonitoringSystem
     ├── record_engine_data()
     ├── analyze_trends()
     └── generate_report()
+
 ```markdown
 
 ### 20.3 数据采集流程
@@ -1661,6 +1722,7 @@ flowchart LR
 ### 21.1 完整数据流向图
 
 ```
+
 ┌─────────────────────────────────────────────────────────────┐
 │                      完整数据流向                             │
 └─────────────────────────────────────────────────────────────┘
@@ -1703,11 +1765,13 @@ RIPEMD-160 哈希 (Hash160)
                                     ▼
                             报告生成 ─────> ReportGenerator
                                             DataLogger
+
 ```markdown
 
 ### 21.2 性能数据流向
 
 ```
+
 碰撞引擎 ──> CollisionStats ──> DataCollector ──> DataStorage
    │              │                   │                │
    │              ▼                   ▼                ▼
@@ -1722,11 +1786,13 @@ DataLogger <──────┴───────────────�
    │
    ▼
 报告生成
+
 ```markdown
 
 ### 21.3 GPU数据流向
 
 ```
+
 CPU端                  GPU端                  CPU端
   │                      │                      │
   │ 私钥批次              │                      │
@@ -1744,12 +1810,14 @@ CPU端                  GPU端                  CPU端
   │                      │                      │ 统计更新
   │                      │                      │ 监控采集
   ▼                      ▼                      ▼
+
 ```markdown
 
 ### 21.4 监控数据集成
 
 **CPU引擎监控**:
 ```
+
 KeyCollisionEngine
    │
    ├─> CollisionStats (统计)
@@ -1761,10 +1829,12 @@ KeyCollisionEngine
    └─> DataLogger (日志)
           │
           └─> JSON Files (文件)
+
 ```python
 
 **GPU引擎监控**:
 ```
+
 GPUCollisionEngine
    │
    ├─> CollisionStats (统计)
@@ -1779,6 +1849,7 @@ GPUCollisionEngine
    │      └─> 显存使用
    │
    └─> DataStorage (存储)
+
 ```markdown
 
 ## 22. Mermaid系统架构图 - 优化
@@ -1988,11 +2059,12 @@ print(f"Crypto backend: {unified_config['crypto']['backend']}")
 #### 23.3.1 引擎类图
 
 ```
+
 ┌────────────────────────────────────────────────────┐
 │           BaseCollisionEngine (ABC)                │
 │                                                    │
-│  @abstractmethod __init__(targets, **kwargs)       │
-│  @abstractmethod start(mode, resume, **kwargs)     │
+│  @abstractmethod **init**(targets, **kwargs)       │
+│  @abstractmethod start(mode, resume,**kwargs)     │
 │  @abstractmethod stop(timeout)                     │
 │  @abstractmethod is_running() -> bool              │
 │  @abstractmethod get_stats() -> CollisionStats     │
@@ -2022,6 +2094,7 @@ print(f"Crypto backend: {unified_config['crypto']['backend']}")
 │  ✅ 批量私钥碰撞检测                                │
 │  ✅ 厂商优化支持                                    │
 └────────────────────────────────────────────────────┘
+
 ```markdown
 
 #### 23.3.2 工厂函数
@@ -2171,7 +2244,9 @@ unified_config = coordinator.get_unified_config()
 
 2. **配置优先级系统**
    ```
+
    kwargs (最高) > config > 默认值 (最低)
+
 ```yaml
 
 3. **配置自动合并**
@@ -2203,6 +2278,7 @@ unified_config = coordinator.get_unified_config()
 
 1. **分步骤初始化**
    ```
+
    1. 初始化GPU设备
    2. 加载GPU型号配置
    3. 识别厂商并加载配置
@@ -2213,6 +2289,7 @@ unified_config = coordinator.get_unified_config()
    8. 创建GPUKernel
    9. 准备目标地址
    10. 设置GPU缓冲区
+
 ```python
 
 2. **GPUContext集成**

@@ -1,6 +1,6 @@
 # Git 提交规范
 
-> **版本**: v3.1.2 | **更新日期**: 2026-04-25 | **适用范围**: btc-collision-engine 代码仓库
+> **版本**: v3.3.1 | **更新日期**: 2026-04-28 | **适用范围**: btc-collision-engine 代码仓库
 
 ---
 
@@ -333,6 +333,6 @@ git push origin v3.1.2
 *参考文件*：
 
 - `CHANGELOG.md` — 版本历史与变更记录
-- `pyproject.toml` — 当前版本号 `version = "3.1.2"`
+- `pyproject.toml` — 当前版本号 `version = "3.3.1"`
 - `.github/workflows/ci.yml` — CI 工作流配置
 - `.pre-commit-config.yaml` — 提交前自动检查

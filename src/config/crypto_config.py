@@ -36,7 +36,7 @@ class CryptoConfig:
         "strict_wif_validation": True,  # 严格WIF格式验证
     }
     
-    def __init__(self, config_file: str = None, config_manager=None):
+    def __init__(self, config_file: Optional[str] = None, config_manager=None) -> None:
         """
         初始化加密配置
         
@@ -203,7 +203,7 @@ class CryptoConfig:
         gpu_config = GPUConfig()
         return gpu_config.get_gpu_device_info()
 
-    def create_gpu_engine(self, targets):
+    def create_gpu_engine(self, targets) -> Any:
         """根据当前GPU配置创建GPU碰撞引擎
 
         参数:
@@ -250,8 +250,8 @@ class CryptoConfig:
             "batch_size": self.config.get("gpu_batch_size", 65536),
         }
     
-    def set_gpu_config(self, use_gpu: bool = None, device_index: int = None, 
-                       batch_size: int = None) -> bool:
+    def set_gpu_config(self, use_gpu: Optional[bool] = None, device_index: Optional[int] = None, 
+                       batch_size: Optional[int] = None) -> bool:
         """
         设置GPU配置
         
@@ -315,13 +315,13 @@ class CryptoConfig:
         """
         return self.config.copy()
     
-    def reset_to_defaults(self):
+    def reset_to_defaults(self) -> None:
         """重置为默认配置"""
         self.config = self.DEFAULT_CONFIG.copy()
 
 
 # 全局配置实例
-def get_crypto_config(config_file: str = None) -> CryptoConfig:
+def get_crypto_config(config_file: Optional[str] = None) -> CryptoConfig:
     """
     获取加密配置实例
     
@@ -340,7 +340,7 @@ def get_crypto_config(config_file: str = None) -> CryptoConfig:
 
 
 # 便捷函数
-def init_crypto_from_config(config_file: str = None) -> CryptoConfig:
+def init_crypto_from_config(config_file: Optional[str] = None) -> CryptoConfig:
     """
     从配置文件初始化加密系统
     

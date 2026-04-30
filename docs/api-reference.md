@@ -1,6 +1,6 @@
 # BTC项目API接口文档
 
-> **版本**: v1.2.0 | **最后更新**: 2026-04-21  
+> **版本**: v3.3.1 | **最后更新**: 2026-04-28  
 > **面向**: 开发者
 
 
@@ -985,8 +985,16 @@ KeyCollisionEngine(
     dedup_max_size: int = 1_000_000,
     checkpoint_interval: int = 30,
     max_workers: Optional[int] = None,
+    event_bus: Optional[EventBus] = None,
     data_logging_enabled: bool = True,
-    data_logging_interval: int = 5
+    data_logging_interval: int = 5,
+    verbose_logging: bool = False,
+    use_enhanced_monitoring: bool = True,
+    use_performance_optimization: bool = True,
+    precomputed_window_size: int = 8,
+    use_simd_hash: bool = True,
+    use_memory_pool: bool = True,
+    crypto_backend_type: str = None
 )
 ```python
 
@@ -1002,8 +1010,16 @@ KeyCollisionEngine(
 | `dedup_max_size` | int | 1,000,000 | 去重过滤器最大容量 |
 | `checkpoint_interval` | int | 30 | 断点自动保存间隔(秒) |
 | `max_workers` | Optional[int] | None | 线程池最大工作线程数，None表示使用默认值 |
+| `event_bus` | EventBus | None | 事件总线实例（v3.2.0新增，None则自动创建） |
 | `data_logging_enabled` | bool | True | 是否启用数据日志记录 |
 | `data_logging_interval` | int | 5 | 数据日志记录间隔(秒) |
+| `verbose_logging` | bool | False | 是否启用详细日志（生产环境建议False） |
+| `use_enhanced_monitoring` | bool | True | 是否使用增强监控系统（包含异常检测和告警） |
+| `use_performance_optimization` | bool | True | 是否启用性能优化（v2.2.0新增） |
+| `precomputed_window_size` | int | 8 | 预计算表窗口大小(4-8) |
+| `use_simd_hash` | bool | True | 是否使用SIMD哈希优化 |
+| `use_memory_pool` | bool | True | 是否使用内存池 |
+| `crypto_backend_type` | str | None | 加密后端类型: 'coincurve', 'openssl', 'ecdsa', 'pure_python' |
 
 **内部配置**:
 ```python
@@ -1014,7 +1030,7 @@ self._progress_interval_sec = 0.5  # 进度回调最小间隔（秒）
 **运行模式**:
 - `random_search()`: 随机搜索模式
 - `range_scan(start, end)`: 范围扫描模式
-- `sequential_brute_force()`: 顺序爆破模式
+- `brute_force(start, max_keys)`: 暴力穷举模式
 
 **示例**:
 ```python
@@ -3057,7 +3073,7 @@ engine.range_scan(start=1, end=1000000)
 ## brute_force() 方法
 
 ```python
-brute_force(start: int = 1) -> None
+brute_force(start: int = 1, max_keys: Optional[int] = None) -> None
 ```python
 
 暴力穷举模式 - 从指定位置开始顺序穷举。
@@ -3065,7 +3081,8 @@ brute_force(start: int = 1) -> None
 **参数**:
 | 参数 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| `start` | int | 1 | 起始私钥 |
+| `start` | int | 1 | 起始私钥（整数） |
+| `max_keys` | Optional[int] | None | 最大检查数量，None表示无限穷举 |
 
 **特点**:
 - 无限穷举，直到手动停止

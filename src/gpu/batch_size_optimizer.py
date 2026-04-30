@@ -139,7 +139,7 @@ class SmartBatchSizeOptimizer:
         }
         return gpu_configs.get(gpu_model, gpu_configs.get('default', {}))
     
-    def record_performance(self, batch_size: int, execution_time_ms: float, throughput: float):
+    def record_performance(self, batch_size: int, execution_time_ms: float, throughput: float) -> None:
         """
         记录性能数据
         
@@ -160,7 +160,7 @@ class SmartBatchSizeOptimizer:
             if len(self._performance_history) > self._history_window:
                 self._performance_history = self._performance_history[-self._history_window:]
     
-    def record_memory_usage(self, used_memory_mb: float, total_memory_mb: float):
+    def record_memory_usage(self, used_memory_mb: float, total_memory_mb: float) -> None:
         """
         记录内存使用情况
         
@@ -180,7 +180,7 @@ class SmartBatchSizeOptimizer:
             if len(self._memory_history) > self._history_window:
                 self._memory_history = self._memory_history[-self._history_window:]
     
-    def record_system_load(self, cpu_load: float, gpu_load: float):
+    def record_system_load(self, cpu_load: float, gpu_load: float) -> None:
         """
         记录系统负载
         
@@ -424,7 +424,7 @@ class SmartBatchSizeOptimizer:
             
             return stats
     
-    def reset(self):
+    def reset(self) -> None:
         """
         重置优化器状态
         """
@@ -461,7 +461,7 @@ def get_batch_size_optimizer(initial_batch_size: int = 1048576, gpu_model: str =
     return global_batch_optimizer
 
 
-def reset_batch_size_optimizer():
+def reset_batch_size_optimizer() -> None:
     """
     重置全局智能批次大小优化器
     """

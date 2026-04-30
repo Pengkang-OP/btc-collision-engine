@@ -194,12 +194,11 @@ def _run_collision_loop(
     # 快捷键提示（固定在底部）
     _hotkey_bar = "\033[36m快捷键: [P]暂停  [R]恢复  [Q]退出  [S]统计\033[0m"
     _hotkey_visible = False
+    _status_line = ""
 
     try:
         # 显示控制提示栏
         if listener._available:
-            print("")  # 预留状态行位置
-            print(_hotkey_bar, flush=True)  # 快捷键固定在底部
             _hotkey_visible = True
         else:
             reason = KeyboardListener.unavailable_reason()
@@ -234,25 +233,27 @@ def _run_collision_loop(
                     if throughput >= 1_000
                     else f"{throughput:.0f}/s"
                 )
-                status_line = (
+                _status_line = (
                     f"[{elapsed_fmt}] GPU x{device_count} | "
                     + _t("cli.main.progress_checked", count=total_checked)
                     + f" | {speed_fmt} | "
                     + _t("cli.main.progress_matches", count=matches)
                 )
-                if _hotkey_visible:
-                    print(f"\033[1A\r{status_line}\033[K\n\r{_hotkey_bar}\033[K", end="", flush=True)
-                else:
-                    print(f"\r{status_line}\033[K", end="", flush=True)
             else:
                 stats = engine.get_stats()
-                status_line = format_progress(stats, args.mode, total_range)
+                _status_line = format_progress(stats, args.mode, total_range)
                 # 确保状态行不含换行，适合 \r 覆盖模式
-                status_line = status_line.replace("\n", " ")
-                if _hotkey_visible:
-                    print(f"\033[1A\r{status_line}\033[K\n\r{_hotkey_bar}\033[K", end="", flush=True)
-                else:
-                    print(f"\r{status_line}\033[K", end="", flush=True)
+                _status_line = _status_line.replace("\n", " ")
+
+            # 显示状态行和快捷键栏（固定在底部）
+            if _hotkey_visible:
+                # 清除当前行，打印状态行，然后换行打印快捷键栏
+                print(f"\r{_status_line}\033[K", end="", flush=True)
+                print(f"\n{_hotkey_bar}\033[K", end="", flush=True)
+                # 上移一行回到状态行位置，准备下次更新
+                print("\033[1A", end="", flush=True)
+            else:
+                print(f"\r{_status_line}\033[K", end="", flush=True)
 
                 # 告警系统检查（每次刷新进度后执行）
                 if alert_system is not None:

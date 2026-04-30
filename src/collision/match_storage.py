@@ -3,7 +3,7 @@
 import json
 import os
 import threading
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 from datetime import datetime
 from pathlib import Path
 

@@ -1,83 +1,73 @@
 @echo off
-chcp 936 >nul 2>&1
-cd /d "%~dp0"
+setlocal enabledelayedexpansion
 
-where python >nul 2>&1
-if errorlevel 1 (
-    echo [ERROR] Python not found
-    pause
-    exit /b 1
-)
+call "%~dp0common.bat"
+call :init_encoding
+call :set_script_dir
 
-if not exist "start_monitoring.py" (
-    echo [ERROR] start_monitoring.py not found
-    pause
-    exit /b 1
-)
-
-if exist "venv\Scripts\activate.bat" (
-    call venv\Scripts\activate.bat >nul 2>&1
-)
+call :check_python
+call :check_python_version
+call :check_file_exists "start_monitoring.py"
+call :activate_venv
 
 :menu
 cls
-echo ===============================================
-echo   BTC Collision Engine - Monitoring
-echo ===============================================
-echo.
-echo   1. Start CPU monitoring
-echo   2. Start GPU monitoring
-echo   3. Start with report
-echo   4. Open logs folder
-echo   0. Exit
+call :print_header "BTC 碰撞引擎 - 监控系统"
+
+echo   1. 启动 CPU 监控
+echo   2. 启动 GPU 监控
+echo   3. 带报告模式启动
+echo   4. 打开日志文件夹
+echo   0. 退出
 echo.
 echo =============================================
 
 set "CHOICE="
-set /p CHOICE=Select (0-4):
+set /p "CHOICE=请选择 (0-4): "
 
-if "%CHOICE%"=="" goto menu
-if "%CHOICE%"=="1" goto basic
-if "%CHOICE%"=="2" goto gpu
-if "%CHOICE%"=="3" goto report
-if "%CHOICE%"=="4" goto viewlog
-if "%CHOICE%"=="0" goto exit
+if "!CHOICE!"=="" goto :menu
+if "!CHOICE!"=="1" goto :basic
+if "!CHOICE!"=="2" goto :gpu
+if "!CHOICE!"=="3" goto :report
+if "!CHOICE!"=="4" goto :viewlog
+if "!CHOICE!"=="0" goto :exit
 
-echo [ERROR] Invalid option: %CHOICE%
+echo [ERROR] 无效选项: !CHOICE!
 timeout /t 1 >nul
-goto menu
+goto :menu
 
 :basic
 echo.
-echo [INFO] Starting CPU monitoring...
+echo [INFO] 正在启动 CPU 监控...
 python start_monitoring.py --mode cpu
-goto done
+goto :done
 
 :gpu
 echo.
-echo [INFO] Starting GPU monitoring...
+echo [INFO] 正在启动 GPU 监控...
 python start_monitoring.py --mode gpu
-goto done
+goto :done
 
 :report
 echo.
-echo [INFO] Starting with report...
+echo [INFO] 正在启动带报告模式...
 python start_monitoring.py --mode cpu --report
-goto done
+goto :done
 
 :viewlog
 echo.
+echo [INFO] 正在打开日志文件夹...
 explorer logs
-goto menu
+goto :menu
 
 :done
 echo.
-echo Press any key to return to menu...
+echo 按任意键返回菜单...
 pause >nul
-goto menu
+goto :menu
 
 :exit
 cls
 echo.
-echo [INFO] Exiting...
+echo [INFO] 正在退出...
 echo.

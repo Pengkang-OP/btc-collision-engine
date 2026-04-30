@@ -12,7 +12,7 @@
 import threading
 import time
 import logging
-from typing import Set, Dict, Optional, Tuple, Callable, Union
+from typing import Set, Dict, Optional, Tuple, Callable, Union, Any
 from queue import Queue, Empty
 
 # P3-5: 统一日志获取
@@ -63,7 +63,7 @@ class SingleGPUWorker(threading.Thread):
         targets: Set[str],
         config: Union[Dict, WorkerConfig],
         result_callback: Optional[Callable] = None,
-        data_monitor = None,  # 添加数据监控器引用
+        data_monitor: Optional[Any] = None,  # 添加数据监控器引用
         mode: str = 'random',       # 碰撞模式: random / range / brute_force
         range_start: Optional[int] = None,  # range/brute_force 起始私钥
         range_end: Optional[int] = None,    # range 结束私钥
@@ -135,7 +135,7 @@ class SingleGPUWorker(threading.Thread):
             f"范围={key_range[0]:,}-{key_range[1]:,}"
         )
     
-    def run(self):
+    def run(self) -> None:
         """线程主循环"""
         try:
             self._initialize_gpu_engine()
@@ -207,7 +207,7 @@ class SingleGPUWorker(threading.Thread):
                     engine_kwargs['end'] = self.range_end
             
             # 启动监控线程（并行更新统计）
-            def monitor_loop():
+            def monitor_loop() -> None:
                 # 自适应更新间隔: 高吞吐时更频繁(0.2s), 低吞吐时降低开销(1.0s)
                 _base_interval = 0.5
                 _min_interval = 0.2
@@ -374,19 +374,19 @@ class SingleGPUWorker(threading.Thread):
         except Exception as e:
             logger.error(f"GPU {self.device_idx} 清理失败: {e}")
     
-    def stop_search(self):
+    def stop_search(self) -> None:
         """停止搜索"""
         logger.info(f"GPU {self.device_idx} 收到停止信号")
         self._stop_event.set()
     
-    def pause_search(self):
+    def pause_search(self) -> None:
         """暂停搜索"""
         logger.info(f"GPU {self.device_idx} 暂停")
         self._pause_event.clear()
         with self._lock:
             self._stats['status'] = 'paused'
     
-    def resume_search(self):
+    def resume_search(self) -> None:
         """恢复搜索"""
         logger.info(f"GPU {self.device_idx} 恢复")
         self._pause_event.set()
@@ -454,7 +454,7 @@ class SingleGPUWorker(threading.Thread):
         """
         return self.key_range
     
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"<SingleGPUWorker device={self.device_idx} "
             f"status={self._stats['status']} "

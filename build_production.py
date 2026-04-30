@@ -10,7 +10,7 @@ BTC碰撞引擎 - 生产环境打包脚本
 - 生成版本信息文件
 
 使用方法:
-    python build_production.py --output F:\Qoder\btc-collision-tools
+    python build_production.py --output F:\\Qoder\\btc-collision-tools
 """
 
 import os

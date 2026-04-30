@@ -21,7 +21,7 @@ SHA256/RIPEMD160/secp256k1 等加密/哈希运算的精度。
 import logging
 from ..utils import init_logging, get_configured_logger
 import re
-from typing import Optional, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING
 
 logger = get_configured_logger("AMDOptimizer")
 
@@ -40,7 +40,7 @@ class _RateLimitedLogger:
     避免在高频循环中产生大量重复日志，每条消息在冷却期内只记录一次。
     """
 
-    def __init__(self, base_logger, cooldown_seconds: float = 60.0) -> None:
+    def __init__(self, base_logger: Any, cooldown_seconds: float = 60.0) -> None:
         self._logger = base_logger
         self._cooldown = cooldown_seconds
         self._last_logged: dict = {}
@@ -77,7 +77,7 @@ class AmdDriverDetector:
     MIN_ADRENALIN_MINOR = 10
     RECOMMENDED_ADRENALIN_YEAR = 25  # Adrenalin 25.x (最新推荐)
 
-    def __init__(self, device_info: dict, engine_logger=None) -> None:
+    def __init__(self, device_info: dict, engine_logger: Optional[Any] = None) -> None:
         self._device_info = device_info
         self._logger = engine_logger or logger
 
@@ -314,7 +314,7 @@ class AmdArchDetector:
          }),
     ]
 
-    def __init__(self, device_info: dict, engine_logger=None) -> None:
+    def __init__(self, device_info: dict, engine_logger: Optional[Any] = None) -> None:
         self._device_info = device_info
         self._logger = engine_logger or logger
 
@@ -369,7 +369,7 @@ class AmdWavefrontValidator:
     不对齐时记录 warning 并建议调整，不抛出异常。
     """
 
-    def __init__(self, arch_info: dict, engine_logger=None) -> None:
+    def __init__(self, arch_info: dict, engine_logger: Optional[Any] = None) -> None:
         self._arch_info = arch_info
         self._logger = engine_logger or logger
         self._wavefront_size = arch_info.get('wavefront_size', 64)
@@ -444,7 +444,7 @@ class AmdMemoryOptimizer:
     # GDDR5 架构列表
     _GDDR5_ARCHS = {'GCN1.0', 'GCN3.0'}
 
-    def __init__(self, device_info: dict, arch_info: dict, engine_logger=None) -> None:
+    def __init__(self, device_info: dict, arch_info: dict, engine_logger: Optional[Any] = None) -> None:
         self._device_info = device_info
         self._arch_info = arch_info
         self._logger = engine_logger or logger
@@ -538,7 +538,7 @@ class AmdGPUOptimizer:
         engine_logger: 可选的日志记录器，默认使用模块级 logger
     """
 
-    def __init__(self, device_info: dict, config: Optional[dict] = None, engine_logger=None) -> None:
+    def __init__(self, device_info: dict, config: Optional[dict] = None, engine_logger: Optional[Any] = None) -> None:
         self._device_info = device_info if isinstance(device_info, dict) else {}
         self._config = config or {}
         self._logger = engine_logger or logger
