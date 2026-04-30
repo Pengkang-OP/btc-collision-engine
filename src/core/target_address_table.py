@@ -119,7 +119,7 @@ class BitcoinTargetTable:
                 private_key, compressed = WIF.decode(wif)
 
                 # 生成公钥和地址
-                address_info = generator.generate_address_from_private_key(private_key, compressed)
+                address_info = generator.generate_address_from_private_key(private_key, compressed)  # type: ignore[attr-defined]
 
                 # 提取hash160
                 hash160 = bytes.fromhex(address_info["hash160"])
@@ -153,19 +153,19 @@ class BitcoinTargetTable:
         返回:
             成功加载的目标地址数量
         """
-        filepath = Path(filepath)
+        filepath = Path(filepath)  # type: ignore[assignment]
 
-        if not filepath.exists():
+        if not filepath.exists():  # type: ignore[attr-defined]
             raise FileNotFoundError(f"文件不存在: {filepath}")
 
-        suffix = filepath.suffix.lower()
+        suffix = filepath.suffix.lower()  # type: ignore[attr-defined]
 
         if suffix == ".json":
-            return self._load_from_json(filepath)
+            return self._load_from_json(filepath)  # type: ignore[arg-type]
         elif suffix == ".csv":
-            return self._load_from_csv(filepath)
+            return self._load_from_csv(filepath)  # type: ignore[arg-type]
         elif suffix == ".txt":
-            return self._load_from_txt(filepath)
+            return self._load_from_txt(filepath)  # type: ignore[arg-type]
         else:
             raise ValueError(f"不支持的文件格式: {suffix}")
 

@@ -34,7 +34,7 @@ import logging
 import smtplib
 import json
 import os
-import requests
+import requests  # type: ignore[import-untyped]
 from abc import ABC, abstractmethod
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
