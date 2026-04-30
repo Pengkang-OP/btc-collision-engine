@@ -39,6 +39,7 @@ logger = get_configured_logger("PlatformChecker")
 # 结果数据类
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class CheckResult:
     """单项检查结果"""
 
@@ -56,6 +57,7 @@ class CheckResult:
 # ─────────────────────────────────────────────────────────────────────────────
 # 核心检查器
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class PlatformChecker:
     """跨平台兼容性检查器"""
@@ -97,8 +99,10 @@ class PlatformChecker:
 
         detail = _t(
             "platform.check.detail_os",
-            system=system, release=release,
-            machine=machine, version=version[:60]
+            system=system,
+            release=release,
+            machine=machine,
+            version=version[:60],
         )
 
         if system in ("Windows", "Linux", "Darwin"):
@@ -115,16 +119,17 @@ class PlatformChecker:
 
         if (major, minor) >= (3, 9):
             return self._add(
-                _t("platform.check.name_python"), True,
+                _t("platform.check.name_python"),
+                True,
                 _t("platform.check.python_ok", version=ver_str),
-                sys.executable
+                sys.executable,
             )
         else:
             return self._add(
                 _t("platform.check.name_python"),
                 False,
                 _t("platform.check.python_low", version=ver_str, required="3.9"),
-                "参考: https://www.python.org/downloads/"
+                "参考: https://www.python.org/downloads/",
             )
 
     def check_path_length(self) -> CheckResult:
@@ -138,15 +143,13 @@ class PlatformChecker:
                 _t("platform.check.name_path"),
                 True,
                 _t("platform.check.path_length_non_windows", path_len=path_len),
-                root_str
+                root_str,
             )
 
         if path_len > self.WINDOWS_MAX_PATH - 60:
             # 留 60 字符余量给子路径
             msg = _t(
-                "platform.check.path_length_long",
-                path_len=path_len,
-                max_path=self.WINDOWS_MAX_PATH
+                "platform.check.path_length_long", path_len=path_len, max_path=self.WINDOWS_MAX_PATH
             )
             return self._add(_t("platform.check.name_path"), False, msg, root_str)
 
@@ -154,7 +157,7 @@ class PlatformChecker:
             _t("platform.check.name_path"),
             True,
             _t("platform.check.path_length_ok", path_len=path_len, max_path=self.WINDOWS_MAX_PATH),
-            root_str
+            root_str,
         )
 
     def check_encoding(self) -> CheckResult:
@@ -167,15 +170,16 @@ class PlatformChecker:
             "platform.check.detail_encoding",
             fs_encoding=fs_encoding,
             preferred=preferred,
-            stdout_enc=stdout_enc
+            stdout_enc=stdout_enc,
         )
 
         # Windows 旧版控制台可能使用 GBK/CP936
         if stdout_enc.upper() in ("UTF-8", "UTF8", "UTF_8"):
             return self._add(
-                _t("platform.check.name_encoding"), True,
+                _t("platform.check.name_encoding"),
+                True,
                 _t("platform.check.encoding_ok", encoding=stdout_enc),
-                detail
+                detail,
             )
 
         # 常见非 UTF-8 编码提示
@@ -207,12 +211,10 @@ class PlatformChecker:
                 _t("platform.check.name_permission"),
                 False,
                 _t("platform.check.permission_denied", path=f"{len(failures)} dirs"),
-                "\n".join(failures)
+                "\n".join(failures),
             )
         return self._add(
-            _t("platform.check.name_permission"),
-            True,
-            _t("platform.check.permission_ok")
+            _t("platform.check.name_permission"), True, _t("platform.check.permission_ok")
         )
 
     def check_disk_space(self, min_mb: int = 200) -> CheckResult:
@@ -226,7 +228,7 @@ class PlatformChecker:
                 "platform.check.detail_disk",
                 total_mb=total_mb,
                 used_mb=usage.used / 1024 / 1024,
-                free_mb=free_mb
+                free_mb=free_mb,
             )
 
             if free_mb < min_mb:
@@ -234,39 +236,41 @@ class PlatformChecker:
                     _t("platform.check.name_disk"),
                     False,
                     _t("platform.check.disk_low_mb", free_mb=free_mb, min_mb=min_mb),
-                    detail
+                    detail,
                 )
             return self._add(
-                _t("platform.check.name_disk"), True,
+                _t("platform.check.name_disk"),
+                True,
                 _t("platform.check.disk_ok_mb", free_mb=free_mb),
-                detail
+                detail,
             )
         except Exception as exc:
             return self._add(
-                _t("platform.check.name_disk"), False,
-                _t("platform.check.disk_check_failed", error=exc)
+                _t("platform.check.name_disk"),
+                False,
+                _t("platform.check.disk_check_failed", error=exc),
             )
 
     def check_long_path_support(self) -> CheckResult:
         """仅 Windows：检测是否开启了长路径支持"""
         if platform.system() != "Windows":
             return self._add(
-                _t("platform.check.name_long_path"), True,
-                _t("platform.check.long_path_skipped")
+                _t("platform.check.name_long_path"), True, _t("platform.check.long_path_skipped")
             )
 
         try:
             import winreg
+
             key = winreg.OpenKey(
-                winreg.HKEY_LOCAL_MACHINE,
-                r"SYSTEM\CurrentControlSet\Control\FileSystem"
+                winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\FileSystem"
             )
             value, _ = winreg.QueryValueEx(key, "LongPathsEnabled")
             winreg.CloseKey(key)
             if value == 1:
                 return self._add(
-                    _t("platform.check.name_long_path"), True,
-                    _t("platform.check.long_path_enabled")
+                    _t("platform.check.name_long_path"),
+                    True,
+                    _t("platform.check.long_path_enabled"),
                 )
             else:
                 return self._add(
@@ -276,8 +280,9 @@ class PlatformChecker:
                 )
         except OSError:
             return self._add(
-                _t("platform.check.name_long_path"), False,
-                _t("platform.check.long_path_check_failed")
+                _t("platform.check.name_long_path"),
+                False,
+                _t("platform.check.long_path_check_failed"),
             )
 
     def check_symlink_support(self) -> CheckResult:
@@ -290,8 +295,7 @@ class PlatformChecker:
             test_link.unlink()
             test_target.unlink()
             return self._add(
-                _t("platform.check.name_symlink"), True,
-                _t("platform.check.symlink_ok")
+                _t("platform.check.name_symlink"), True, _t("platform.check.symlink_ok")
             )
         except (OSError, NotImplementedError):
             # 清理残留
@@ -307,8 +311,9 @@ class PlatformChecker:
             return self._add(_t("platform.check.name_symlink"), False, msg)
         except Exception as exc:
             return self._add(
-                _t("platform.check.name_symlink"), False,
-                _t("platform.check.symlink_check_failed", error=exc)
+                _t("platform.check.name_symlink"),
+                False,
+                _t("platform.check.symlink_check_failed", error=exc),
             )
 
     # -------------------------------------------------------------------------
@@ -351,20 +356,34 @@ class PlatformChecker:
         """打印可读的检查报告"""
         # Windows 旧控制台可能不支持 emoji，安全输出
         import sys
-        safe_mode = getattr(sys.stdout, 'encoding', 'utf-8').lower() not in ('utf-8', 'utf8')
-        ok_mark  = '[OK] ' if safe_mode else '\u2705'
-        bad_mark = '[!]  ' if safe_mode else '\u26a0\ufe0f '
+
+        safe_mode = getattr(sys.stdout, "encoding", "utf-8").lower() not in ("utf-8", "utf8")
+        ok_mark = "[OK] " if safe_mode else "\u2705"
+        bad_mark = "[!]  " if safe_mode else "\u26a0\ufe0f "
 
         info = self.get_platform_info()
         print("=" * 60)
         print("  " + _t("platform.check.report_title"))
         print("=" * 60)
-        print(f"  " + _t("platform.check.report_os",
-                          os=info['os'], release=info['os_release'], machine=info['machine']))
-        print(f"  " + _t("platform.check.report_python",
-                          version=info['python_version'], executable=info['python_executable']))
-        print(f"  " + _t("platform.check.report_root", root=info['project_root']))
-        print(f"  " + _t("platform.check.report_encoding", encoding=info['encoding_stdout']))
+        print(
+            f"  "
+            + _t(
+                "platform.check.report_os",
+                os=info["os"],
+                release=info["os_release"],
+                machine=info["machine"],
+            )
+        )
+        print(
+            f"  "
+            + _t(
+                "platform.check.report_python",
+                version=info["python_version"],
+                executable=info["python_executable"],
+            )
+        )
+        print(f"  " + _t("platform.check.report_root", root=info["project_root"]))
+        print(f"  " + _t("platform.check.report_encoding", encoding=info["encoding_stdout"]))
         print("-" * 60)
 
         passed_count = sum(1 for r in self.results if r.passed)
@@ -383,8 +402,13 @@ class PlatformChecker:
         else:
             fail_count = total_count - passed_count
             print(
-                "  " + _t("platform.check.report_some_failed",
-                           passed=passed_count, total=total_count, failed=fail_count)
+                "  "
+                + _t(
+                    "platform.check.report_some_failed",
+                    passed=passed_count,
+                    total=total_count,
+                    failed=fail_count,
+                )
             )
         print("=" * 60)
 
@@ -393,23 +417,15 @@ class PlatformChecker:
 # CLI 入口
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def main() -> None:
     """命令行入口 - python -m src.utils.platform_check"""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="BTC碰撞引擎 - 跨平台兼容性检查工具"
-    )
+    parser = argparse.ArgumentParser(description="BTC碰撞引擎 - 跨平台兼容性检查工具")
+    parser.add_argument("--json", action="store_true", help="以 JSON 格式输出检查结果")
     parser.add_argument(
-        "--json",
-        action="store_true",
-        help="以 JSON 格式输出检查结果"
-    )
-    parser.add_argument(
-        "--root",
-        metavar="PATH",
-        default=None,
-        help="项目根目录路径（默认：自动检测）"
+        "--root", metavar="PATH", default=None, help="项目根目录路径（默认：自动检测）"
     )
     args = parser.parse_args()
 
@@ -418,6 +434,7 @@ def main() -> None:
 
     if args.json:
         import json
+
         result = {
             "all_passed": all_passed,
             "platform": checker.get_platform_info(),

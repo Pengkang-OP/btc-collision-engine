@@ -46,6 +46,7 @@ _orjson_module = None
 
 try:
     import orjson as _orjson_module
+
     _ORJSON_AVAILABLE = True
     logger.debug("fast_json: 使用 orjson 加速 JSON 序列化")
 except ImportError:
@@ -59,7 +60,7 @@ def fast_dumps(
     indent: Optional[int] = None,
     ensure_ascii: bool = False,
     sort_keys: bool = False,
-    **kwargs
+    **kwargs,
 ) -> str:
     """高性能 JSON 序列化为字符串
 
@@ -88,21 +89,17 @@ def fast_dumps(
                 option |= _orjson_module.OPT_NON_STR_KEYS
 
             if default is not None:
-                result = _orjson_module.dumps(
-                    obj, default=default, option=option
-                )
+                result = _orjson_module.dumps(obj, default=default, option=option)
             else:
                 result = _orjson_module.dumps(obj, option=option)
 
             # orjson 返回 bytes，转换为 str
             if isinstance(result, bytes):
-                return result.decode('utf-8')
+                return result.decode("utf-8")
             return result
 
         except (TypeError, ValueError, OverflowError) as e:
-            logger.debug(
-                f"orjson 序列化失败 ({type(e).__name__}: {e})，回退到标准 json"
-            )
+            logger.debug(f"orjson 序列化失败 ({type(e).__name__}: {e})，回退到标准 json")
             # 降级到标准 json
 
     # 标准 json 降级路径
@@ -112,7 +109,7 @@ def fast_dumps(
         indent=indent,
         ensure_ascii=ensure_ascii,
         sort_keys=sort_keys,
-        **kwargs
+        **kwargs,
     )
 
 
@@ -124,7 +121,7 @@ def fast_dump(
     indent: Optional[int] = None,
     ensure_ascii: bool = False,
     sort_keys: bool = False,
-    **kwargs
+    **kwargs,
 ) -> None:
     """高性能 JSON 序列化到文件
 
@@ -144,7 +141,7 @@ def fast_dump(
         indent=indent,
         ensure_ascii=ensure_ascii,
         sort_keys=sort_keys,
-        **kwargs
+        **kwargs,
     )
     fp.write(json_str)
 
@@ -164,13 +161,11 @@ def fast_loads(s: Union[str, bytes]) -> Any:
         try:
             return _orjson_module.loads(s)
         except Exception as e:
-            logger.debug(
-                f"orjson 反序列化失败 ({type(e).__name__}: {e})，回退到标准 json"
-            )
+            logger.debug(f"orjson 反序列化失败 ({type(e).__name__}: {e})，回退到标准 json")
 
     # 标准 json 降级路径
     if isinstance(s, bytes):
-        s = s.decode('utf-8')
+        s = s.decode("utf-8")
     return _json.loads(s)
 
 

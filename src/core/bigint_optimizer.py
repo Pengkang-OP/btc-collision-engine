@@ -41,47 +41,48 @@ logger = get_configured_logger("BigIntOptimizer")
 
 class BigIntOptimizer:
     """大整数运算优化器
-    
+
     提供优化的大整数模运算,优先使用gmpy2,不可用时回退到纯Python。
-    
+
     性能对比 (10000次模逆元运算):
     - 纯Python (扩展欧几里得): ~2.5秒
     - gmpy2.invert(): ~1.6秒
     - 性能提升: ~35%
-    
+
     示例:
         >>> optimizer = BigIntOptimizer()
         >>> result = optimizer.mod_inverse(a, m)
     """
-    
-    __slots__ = ['gmpy2', 'use_gmpy2', 'mpz']
-    
+
+    __slots__ = ["gmpy2", "use_gmpy2", "mpz"]
+
     def __init__(self) -> None:
         """初始化大整数优化器,检测gmpy2可用性"""
         self.gmpy2: Optional[Any] = None
         self.use_gmpy2: bool = False
         self.mpz: Optional[Any] = None
-        
+
         try:
             import gmpy2
+
             self.gmpy2 = gmpy2
             self.mpz = gmpy2.mpz
             self.use_gmpy2 = True
             logger.info("gmpy2大整数优化已启用 (Comba乘法)")
         except ImportError:
             logger.info("gmpy2未安装,使用纯Python大整数运算 (pip install gmpy2)")
-    
+
     def mod_inverse(self, a: int, m: int) -> int:
         """
         计算模逆元: 找到x使得 (a * x) % m = 1
-        
+
         参数:
             a: 被求逆元的整数
             m: 模数
-        
+
         返回:
             a在模m下的逆元
-        
+
         异常:
             ValueError: 当逆元不存在时
         """
@@ -94,39 +95,39 @@ class BigIntOptimizer:
         else:
             # 回退到纯Python扩展欧几里得算法
             return self._mod_inverse_python(a, m)
-    
+
     def _mod_inverse_python(self, a: int, m: int) -> int:
         """纯Python扩展欧几里得算法"""
         if a < 0:
             a = a % m
-        
+
         t, new_t = 0, 1
         r, new_r = m, a
-        
+
         while new_r != 0:
             quotient = r // new_r
             t, new_t = new_t, t - quotient * new_t
             r, new_r = new_r, r - quotient * new_r
-        
+
         if r > 1:
             raise ValueError(f"模逆元不存在: {a} 在模 {m} 下")
-        
+
         if t < 0:
             t = t + m
-        
+
         return t
-    
+
     def mod_mul(self, a: int, b: int, m: int) -> int:
         """
         计算模乘法: (a * b) % m
-        
+
         使用gmpy2.mpz进行Comba乘法优化
-        
+
         参数:
             a: 乘数
             b: 乘数
             m: 模数
-        
+
         返回:
             (a * b) % m
         """
@@ -135,16 +136,16 @@ class BigIntOptimizer:
             return int((self.mpz(a) * self.mpz(b)) % self.mpz(m))  # type: ignore[misc]
         else:
             return (a * b) % m
-    
+
     def mod_add(self, a: int, b: int, m: int) -> int:
         """
         计算模加法: (a + b) % m
-        
+
         参数:
             a: 加数
             b: 加数
             m: 模数
-        
+
         返回:
             (a + b) % m
         """
@@ -152,16 +153,16 @@ class BigIntOptimizer:
             return int((self.mpz(a) + self.mpz(b)) % self.mpz(m))  # type: ignore[misc]
         else:
             return (a + b) % m
-    
+
     def mod_sub(self, a: int, b: int, m: int) -> int:
         """
         计算模减法: (a - b) % m
-        
+
         参数:
             a: 被减数
             b: 减数
             m: 模数
-        
+
         返回:
             (a - b) % m
         """
@@ -169,16 +170,16 @@ class BigIntOptimizer:
             return int((self.mpz(a) - self.mpz(b)) % self.mpz(m))  # type: ignore[misc]
         else:
             return (a - b) % m
-    
+
     def mod_pow(self, base: int, exp: int, m: int) -> int:
         """
         计算模幂: (base ^ exp) % m
-        
+
         参数:
             base: 底数
             exp: 指数
             m: 模数
-        
+
         返回:
             (base ^ exp) % m
         """
@@ -186,11 +187,11 @@ class BigIntOptimizer:
             return int(pow(self.mpz(base), self.mpz(exp), self.mpz(m)))  # type: ignore[misc]
         else:
             return pow(base, exp, m)
-    
+
     def is_optimized(self) -> bool:
         """检查是否使用gmpy2优化"""
         return self.use_gmpy2
-    
+
     def get_backend_name(self) -> str:
         """获取当前后端名称"""
         return "gmpy2 (Comba乘法)" if self.use_gmpy2 else "Pure Python"

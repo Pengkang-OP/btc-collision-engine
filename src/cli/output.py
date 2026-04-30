@@ -27,12 +27,12 @@ def _get_utf8_console(stderr: bool = False, no_color: bool = False) -> Console:
     优先使用 Python 3.7+ 的 reconfigure() 接口（不会关闭底层 buffer），
     失败则静默降级为默认 Console，避免 TextIOWrapper 关闭底层句柄。
     """
-    if platform.system() == 'Windows':
+    if platform.system() == "Windows":
         try:
             target_stream = sys.stderr if stderr else sys.stdout
             # Python 3.7+: reconfigure 不会创建新 wrapper，不会关闭底层 fd
-            if hasattr(target_stream, 'reconfigure'):
-                target_stream.reconfigure(encoding='utf-8', errors='replace')
+            if hasattr(target_stream, "reconfigure"):
+                target_stream.reconfigure(encoding="utf-8", errors="replace")
                 return Console(
                     file=target_stream,
                     highlight=False,
@@ -57,7 +57,7 @@ class CLIOutput:
     """
 
     _instance: Optional["CLIOutput"] = None  # 单例
-    _lock: threading.Lock = threading.Lock()   # 线程安全锁
+    _lock: threading.Lock = threading.Lock()  # 线程安全锁
 
     def __init__(self, no_color: bool = False, quiet: bool = False, compact: bool = False) -> None:
         # NO_COLOR 环境变量优先（https://no-color.org/）
@@ -73,7 +73,7 @@ class CLIOutput:
     @classmethod
     def get_instance(cls) -> "CLIOutput":
         """获取单例实例；若未初始化则以默认参数创建。
-        
+
         线程安全：使用 double-checked locking 防止并发创建多个实例。
         """
         if cls._instance is None:
@@ -83,9 +83,11 @@ class CLIOutput:
         return cls._instance
 
     @classmethod
-    def init(cls, no_color: bool = False, quiet: bool = False, compact: bool = False) -> "CLIOutput":
+    def init(
+        cls, no_color: bool = False, quiet: bool = False, compact: bool = False
+    ) -> "CLIOutput":
         """初始化单例（应在程序入口处调用一次）。
-        
+
         线程安全：持锁替换实例，调用方应确保在单线程初始化阶段调用。
         """
         with cls._lock:
@@ -95,7 +97,7 @@ class CLIOutput:
     @classmethod
     def reset_instance(cls) -> None:
         """重置单例（测试用：允许 capsys/monkeypatch 替换 stdout 后重新创建）。
-        
+
         线程安全：持锁清空实例。
         """
         with cls._lock:
@@ -118,7 +120,7 @@ class CLIOutput:
 
     def warning(self, msg: str, details: Optional[str] = None) -> None:
         """黄色 [WARN] 警告，输出到 stderr。
-        
+
         Args:
             msg: 警告消息
             details: 可选的警告详细信息
@@ -129,7 +131,7 @@ class CLIOutput:
 
     def error(self, msg: str, details: Optional[str] = None) -> None:
         """红色 [ERROR] 错误，输出到 stderr。
-        
+
         Args:
             msg: 错误消息
             details: 可选的错误详细信息
@@ -176,9 +178,7 @@ class CLIOutput:
         table.add_column("值", style="white")
         for key, value in config.items():
             table.add_row(str(key), str(value))
-        self.console.print(
-            Panel(table, title="[bold]启动配置[/bold]", border_style="blue")
-        )
+        self.console.print(Panel(table, title="[bold]启动配置[/bold]", border_style="blue"))
 
     def final_summary(self, title: str, stats: dict) -> None:
         """使用 Rich Panel + Table 展示最终统计，始终显示。
@@ -192,9 +192,7 @@ class CLIOutput:
         table.add_column("值", style="bold white")
         for key, value in stats.items():
             table.add_row(str(key), str(value))
-        self.console.print(
-            Panel(table, title=f"[bold]{title}[/bold]", border_style="green")
-        )
+        self.console.print(Panel(table, title=f"[bold]{title}[/bold]", border_style="green"))
 
     def stats_panel(self, title: str, rows: list) -> None:
         """通用统计面板（支持自定义行样式）。
@@ -213,9 +211,7 @@ class CLIOutput:
             else:
                 label, value = row[0], row[1]
                 table.add_row(str(label), str(value))
-        self.console.print(
-            Panel(table, title=f"[bold]{title}[/bold]", border_style="cyan")
-        )
+        self.console.print(Panel(table, title=f"[bold]{title}[/bold]", border_style="cyan"))
 
     def status_line(self, text: str) -> None:
         """单行状态更新（\r 覆盖式）— 用于运行时进度显示。
@@ -239,17 +235,17 @@ class CLIOutput:
         """
         if self.quiet:
             return
-        
+
         parts = []
-        if 'speed' in stats:
+        if "speed" in stats:
             parts.append(f"速度: {stats['speed']:,}/s")
-        if 'keys_total' in stats:
+        if "keys_total" in stats:
             parts.append(f"总尝试: {stats['keys_total']:,}")
-        if 'gpu_usage' in stats:
+        if "gpu_usage" in stats:
             parts.append(f"GPU: {stats['gpu_usage']}%")
-        if 'memory_used' in stats:
+        if "memory_used" in stats:
             parts.append(f"内存: {stats['memory_used']}MB")
-        
+
         if parts:
             status_text = " | ".join(parts)
             self.status_line(f"[cyan]性能状态:[/cyan] {status_text}")

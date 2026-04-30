@@ -42,6 +42,7 @@ For complete technical specs, API docs and usage guide, see:
 - **Helper functions**: 26
 - **Constant definitions**: 20 (including macros)
 """
+
 import logging
 from typing import Optional, Any, List, Dict, Tuple
 
@@ -60,16 +61,31 @@ KERNEL_VERSION_TUPLE = (4, 1, 0)
 
 # Maps versions to changelog entries for auditing
 KERNEL_VERSION_HISTORY: List[Dict[str, str]] = [
-    {"version": "4.1.0", "date": "2026-04",
-     "changes": "HASH160_TARGET_SCAN macro; batch eviction optimizations; adaptive worker stats"},
-    {"version": "4.0.0", "date": "2026-03",
-     "changes": "PRNG seed mode; precomputed table from host; MSB-first windowed scalar"},
-    {"version": "3.0.0", "date": "2025-12",
-     "changes": "Jacobian coordinates; Intel Arc A770 compatibility fixes"},
-    {"version": "2.0.0", "date": "2025-09",
-     "changes": "batch_check_local_mem kernel; uint256_mod_p iterative reduction"},
-    {"version": "1.0.0", "date": "2025-06",
-     "changes": "Initial OpenCL kernel: secp256k1, SHA-256, RIPEMD-160, batch_check"},
+    {
+        "version": "4.1.0",
+        "date": "2026-04",
+        "changes": "HASH160_TARGET_SCAN macro; batch eviction optimizations; adaptive worker stats",
+    },
+    {
+        "version": "4.0.0",
+        "date": "2026-03",
+        "changes": "PRNG seed mode; precomputed table from host; MSB-first windowed scalar",
+    },
+    {
+        "version": "3.0.0",
+        "date": "2025-12",
+        "changes": "Jacobian coordinates; Intel Arc A770 compatibility fixes",
+    },
+    {
+        "version": "2.0.0",
+        "date": "2025-09",
+        "changes": "batch_check_local_mem kernel; uint256_mod_p iterative reduction",
+    },
+    {
+        "version": "1.0.0",
+        "date": "2025-06",
+        "changes": "Initial OpenCL kernel: secp256k1, SHA-256, RIPEMD-160, batch_check",
+    },
 ]
 
 
@@ -126,8 +142,9 @@ def get_version_changelog(version: Optional[str] = None) -> List[Dict[str, str]]
     return [e for e in KERNEL_VERSION_HISTORY if e["version"] == version]
 
 
-def get_latest_compatible_version(current_version: str,
-                                  available_versions: List[str]) -> Optional[str]:
+def get_latest_compatible_version(
+    current_version: str, available_versions: List[str]
+) -> Optional[str]:
     """查找最新兼容版本（用于回滚场景）
 
     给定当前版本和可用版本列表，返回可回退到的最高版本。
@@ -159,6 +176,7 @@ def get_latest_compatible_version(current_version: str,
     # 返回最高兼容版本
     compatible.sort(key=lambda x: x[0], reverse=True)
     return compatible[0][1]
+
 
 # OpenCL kernel source code
 OPENCL_KERNEL_SOURCE = """

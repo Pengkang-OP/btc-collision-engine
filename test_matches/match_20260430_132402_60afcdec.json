@@ -1,0 +1,35 @@
+{
+  "match_info": {
+    "found_at": "2026-04-30T13:24:02.630472",
+    "hash160": "60afcdec519698a263417ddfe7cea936737a0ee7",
+    "collision_type": "exact_match"
+  },
+  "private_key": {
+    "hex": "0100000000000000000000000000000000000000000000000000000000000000",
+    "wif_compressed": "",
+    "wif_uncompressed": ""
+  },
+  "public_key": {
+    "compressed": "",
+    "uncompressed": ""
+  },
+  "address": {
+    "p2pkh_compressed": "",
+    "p2pkh_uncompressed": "",
+    "hash160_compressed": "",
+    "hash160_uncompressed": ""
+  },
+  "target_info": {
+    "wif": "KwFevqMbSXhGxNWuVc6vuERwdXq7aDQtiLNkjPVokF87RsGMBYqZ",
+    "address": "19pEUX5s6aNoE1oyjtzUkKTLENZyAYSJC8",
+    "hash160": "60afcdec519698a263417ddfe7cea936737a0ee7",
+    "type": "p2pkh",
+    "added_at": "2026-04-30T13:24:02.620932"
+  },
+  "verification": {
+    "private_key_valid": true,
+    "address_match": true,
+    "wif_decodable": true,
+    "verified_at": "2026-04-30T13:24:02.632469"
+  }
+}

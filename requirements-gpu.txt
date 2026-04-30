@@ -14,7 +14,3 @@ pyopencl>=2021.1            # OpenCL GPU 计算支持（必需）
 
 # GPU 数值计算加速
 numpy>=1.24.0               # GPU 内核数据传输与数组操作
-
-# 性能优化（配合 GPU 使用效果更佳）
-gmpy2>=2.1.5,<3.0.0         # GMP 大整数运算，模运算性能 +35%
-pycryptodome>=3.19.0,<4.0.0  # SIMD 哈希优化（AES-NI），SHA256 性能 +200%

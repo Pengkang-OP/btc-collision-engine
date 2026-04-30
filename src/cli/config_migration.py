@@ -18,7 +18,14 @@ from src.i18n import _t
 CONFIG_VERSION = "3.1.0"
 
 # 必需的配置段（用于版本检测）
-V3_1_REQUIRED_SECTIONS = {"crypto", "collision", "logging", "gpu", "monitoring", "performance_monitoring"}
+V3_1_REQUIRED_SECTIONS = {
+    "crypto",
+    "collision",
+    "logging",
+    "gpu",
+    "monitoring",
+    "performance_monitoring",
+}
 V3_0_REQUIRED_SECTIONS = {"crypto", "collision", "logging", "gpu", "monitoring"}
 V2_SECTIONS = {"crypto", "collision", "logging"}
 
@@ -38,18 +45,15 @@ MIGRATION_RULES: Dict[str, Dict[str, Any]] = {
                 "mode": "auto",
                 "device_indices": [-1],
                 "load_balancing": "performance",
-                "auto_tuning": True
+                "auto_tuning": True,
             },
             "monitoring": {
                 "enabled": False,
                 "collection_interval": 5,
                 "storage_dir": "monitoring_data",
                 "history_max_size": 1000,
-                "auto_cleanup": {
-                    "enabled": True,
-                    "max_age_days": 30
-                }
-            }
+                "auto_cleanup": {"enabled": True, "max_age_days": 30},
+            },
         },
         "add_fields": {
             "collision": {
@@ -59,10 +63,10 @@ MIGRATION_RULES: Dict[str, Dict[str, Any]] = {
                 "use_memory_pool": True,
                 "use_gpu_memory_pool": True,
                 "gpu_pool_max_buffers": 100,
-                "gpu_pool_max_memory_mb": 512
+                "gpu_pool_max_memory_mb": 512,
             }
         },
-        "rename_fields": {}
+        "rename_fields": {},
     },
     "3.0_to_3.1": {
         "add_sections": {
@@ -70,16 +74,12 @@ MIGRATION_RULES: Dict[str, Dict[str, Any]] = {
                 "enabled": True,
                 "track_slow_operations": True,
                 "slow_threshold_ms": 5000,
-                "max_records": 10000
+                "max_records": 10000,
             }
         },
-        "add_fields": {
-            "gpu": {
-                "per_device_config": {}
-            }
-        },
-        "rename_fields": {}
-    }
+        "add_fields": {"gpu": {"per_device_config": {}}},
+        "rename_fields": {},
+    },
 }
 
 

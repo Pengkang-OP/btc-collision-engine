@@ -47,6 +47,7 @@ class KeyboardListener:
         if os.name == "nt":
             try:
                 import msvcrt  # noqa: PLC0415
+
                 cls._platform_available = True
             except ImportError:
                 cls._platform_available = False
@@ -79,16 +80,14 @@ class KeyboardListener:
         """
         self._callback = on_key_callback
         self._stop = threading.Event()
-        self._thread = None
+        self._thread: Optional[threading.Thread] = None
         # 实例可用性与类级别检测保持一致
         self._available: bool = KeyboardListener.is_available()
 
     def start(self) -> None:
         """启动监听线程（daemon，不阻塞主线程退出）。"""
         self._stop.clear()
-        self._thread = threading.Thread(
-            target=self._listen, daemon=True, name="KeyboardListener"
-        )
+        self._thread = threading.Thread(target=self._listen, daemon=True, name="KeyboardListener")
         self._thread.start()
 
     def stop(self) -> None:

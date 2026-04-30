@@ -14,7 +14,13 @@ import os
 import sys
 
 from src.i18n import _t
-from src.cli.constants import TAG_ERROR, TAG_TIP, TAG_WARN, DEFAULT_DEDUP_MAX_SIZE, DEFAULT_CHECKPOINT_INTERVAL
+from src.cli.constants import (
+    TAG_ERROR,
+    TAG_TIP,
+    TAG_WARN,
+    DEFAULT_DEDUP_MAX_SIZE,
+    DEFAULT_CHECKPOINT_INTERVAL,
+)
 
 # 运行时长上限阈值（7天，超过给出警告）
 _DURATION_WARN_THRESHOLD = 604800
@@ -31,13 +37,13 @@ def validate_args(args: argparse.Namespace) -> bool:
 
     # 如果没有 -t/-f，且不是实用工具命令，则报错
     is_util_cmd = (
-        getattr(args, 'health_check', False)
-        or getattr(args, 'platform_check', False)
-        or getattr(args, 'cleanup', False)
-        or getattr(args, 'validate_addresses', None) is not None
-        or getattr(args, 'examples', False)
-        or getattr(args, 'config_check', False)
-        or getattr(args, 'quick_start', False)
+        getattr(args, "health_check", False)
+        or getattr(args, "platform_check", False)
+        or getattr(args, "cleanup", False)
+        or getattr(args, "validate_addresses", None) is not None
+        or getattr(args, "examples", False)
+        or getattr(args, "config_check", False)
+        or getattr(args, "quick_start", False)
     )
     if not is_util_cmd and not args.targets and not args.file:
         output.error(_t("cli.validation.need_target"))
@@ -92,30 +98,33 @@ def validate_args(args: argparse.Namespace) -> bool:
             output.warning(f"  预计耗时约 {hours:,.0f} 小时，建议缩小扫描范围")
 
     # --duration 超过 7 天给出警告（不阻止运行）
-    duration = getattr(args, 'duration', 0)
+    duration = getattr(args, "duration", 0)
     if duration > _DURATION_WARN_THRESHOLD:
         days = duration / 86400
         output.warning(f"--duration {duration} 超过 7 天（{days:.1f} 天），程序将持续运行")
 
     # --checkpoint-interval 范围检查
-    checkpoint_interval = getattr(args, 'checkpoint_interval', DEFAULT_CHECKPOINT_INTERVAL)
-    if checkpoint_interval < _CHECKPOINT_INTERVAL_MIN or checkpoint_interval > _CHECKPOINT_INTERVAL_MAX:
+    checkpoint_interval = getattr(args, "checkpoint_interval", DEFAULT_CHECKPOINT_INTERVAL)
+    if (
+        checkpoint_interval < _CHECKPOINT_INTERVAL_MIN
+        or checkpoint_interval > _CHECKPOINT_INTERVAL_MAX
+    ):
         output.error(f"--checkpoint-interval {checkpoint_interval} 超出合法范围")
         output.print(f"  提示: 有效范围为 {_CHECKPOINT_INTERVAL_MIN}-{_CHECKPOINT_INTERVAL_MAX} 秒")
         return False
 
     # GPU模式下CPU专用参数警告
     # 注意: --use-gpu 与 --multi-gpu 互斥性已由 argparse 的 mutually_exclusive_group 自动处理
-    is_gpu_mode = getattr(args, 'use_gpu', False) or getattr(args, 'multi_gpu', False)
+    is_gpu_mode = getattr(args, "use_gpu", False) or getattr(args, "multi_gpu", False)
     if is_gpu_mode:
         cpu_only_warnings = []
-        if getattr(args, 'no_optimize', False):
+        if getattr(args, "no_optimize", False):
             cpu_only_warnings.append("--no-optimize")
-        if getattr(args, 'window_size', 8) != 8:
+        if getattr(args, "window_size", 8) != 8:
             cpu_only_warnings.append(f"--window-size {args.window_size}")
-        if getattr(args, 'no_simd', False):
+        if getattr(args, "no_simd", False):
             cpu_only_warnings.append("--no-simd")
-        if getattr(args, 'no_memory_pool', False):
+        if getattr(args, "no_memory_pool", False):
             cpu_only_warnings.append("--no-memory-pool")
 
         if cpu_only_warnings:
@@ -126,17 +135,21 @@ def validate_args(args: argparse.Namespace) -> bool:
             )
 
     # checkpoint-interval 依赖性检查（自动启用 --checkpoint）
-    if checkpoint_interval != DEFAULT_CHECKPOINT_INTERVAL and not getattr(args, 'checkpoint', False):
+    if checkpoint_interval != DEFAULT_CHECKPOINT_INTERVAL and not getattr(
+        args, "checkpoint", False
+    ):
         output.print(f"  提示: 已自动启用 --checkpoint（因为指定了 --checkpoint-interval）")
         args.checkpoint = True
 
     # dedup-max-size 依赖性检查（自动启用 --dedup）
-    if getattr(args, 'dedup_max_size', DEFAULT_DEDUP_MAX_SIZE) != DEFAULT_DEDUP_MAX_SIZE and not getattr(args, 'dedup', False):
+    if getattr(
+        args, "dedup_max_size", DEFAULT_DEDUP_MAX_SIZE
+    ) != DEFAULT_DEDUP_MAX_SIZE and not getattr(args, "dedup", False):
         output.print(f"  提示: 已自动启用 --dedup（因为指定了 --dedup-max-size）")
         args.dedup = True
 
     # window-size 范围验证
-    window_size = getattr(args, 'window_size', 8)
+    window_size = getattr(args, "window_size", 8)
     if window_size < 4 or window_size > 8:
         output.error(_t("cli.validation.window_size_range", value=window_size))
         output.print(f"  提示: --window-size 有效范围为 4-8")
@@ -158,6 +171,7 @@ def validate_args(args: argparse.Namespace) -> bool:
 def _get_output():
     """获取 CLIOutput 单例（延迟导入避免循环依赖）"""
     from src.cli.output import CLIOutput
+
     return CLIOutput.get_instance()
 
 
@@ -174,6 +188,7 @@ def validate_file_path(file_path: str) -> bool:
         True 如果路径有效，False 如果路径无效
     """
     from pathlib import Path
+
     output = _get_output()
     resolved = Path(file_path).resolve()
 

@@ -6,10 +6,10 @@
 """
 
 import numpy as np
-from typing import Tuple
+from typing import Optional, Tuple
 
 # secp256k1 曲线参数
-_P  = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
+_P = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
 _GX = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798
 _GY = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8
 
@@ -18,9 +18,7 @@ _EXPECTED_2G_X = 0xC6047F9441ED7D6D3045406E95C07CD85C778E4B8CEF3CA7ABAC09B95C709
 _EXPECTED_2G_Y = 0x1AE168FEA63DC339A3C58419466CEAEEF7F632653266D0E1236431A950CFE52A
 
 
-def _point_add(
-    p1: Tuple[int, int], p2: Tuple[int, int]
-) -> Tuple[int, int]:
+def _point_add(p1: Tuple[int, int], p2: Tuple[int, int]) -> Tuple[int, int]:
     """仿射坐标下的椭圆曲线点加法 (secp256k1)
 
     Args:
@@ -98,8 +96,8 @@ def generate_secp256k1_precomp_table() -> np.ndarray:
         x, y = current
         offset = i * 16  # 每个点占 16 个 uint32
 
-        table[offset:offset + 8]      = _int_to_uint32_le(x)  # x 坐标
-        table[offset + 8:offset + 16] = _int_to_uint32_le(y)  # y 坐标
+        table[offset : offset + 8] = _int_to_uint32_le(x)  # x 坐标
+        table[offset + 8 : offset + 16] = _int_to_uint32_le(y)  # y 坐标
 
         # 下一个点
         current = _point_add(current, G)
@@ -110,13 +108,9 @@ def generate_secp256k1_precomp_table() -> np.ndarray:
     g1y_reconstructed = sum(int(table[8 + j]) << (32 * j) for j in range(8))
 
     if g1x_reconstructed != _GX:
-        raise RuntimeError(
-            f"1G.x 验证失败: got {hex(g1x_reconstructed)}, expected {hex(_GX)}"
-        )
+        raise RuntimeError(f"1G.x 验证失败: got {hex(g1x_reconstructed)}, expected {hex(_GX)}")
     if g1y_reconstructed != _GY:
-        raise RuntimeError(
-            f"1G.y 验证失败: got {hex(g1y_reconstructed)}, expected {hex(_GY)}"
-        )
+        raise RuntimeError(f"1G.y 验证失败: got {hex(g1y_reconstructed)}, expected {hex(_GY)}")
 
     # 验证 2G
     g2_offset = 16  # 第 2 个点的偏移
@@ -136,7 +130,7 @@ def generate_secp256k1_precomp_table() -> np.ndarray:
 
 
 # 模块级缓存（避免重复计算）
-_cached_table: np.ndarray = None
+_cached_table: Optional[np.ndarray] = None
 
 
 def get_precomp_table() -> np.ndarray:

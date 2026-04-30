@@ -22,8 +22,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # 复制依赖文件
-COPY requirements-base.txt requirements.txt
+COPY requirements-base.txt requirements-base.txt
 COPY requirements-gpu.txt requirements-gpu.txt
+COPY requirements-dev.txt requirements-dev.txt
+COPY requirements.txt requirements.txt
 
 # 创建虚拟环境并安装依赖
 RUN python -m venv /opt/venv
@@ -36,13 +38,13 @@ FROM python:3.11-slim AS production
 
 # 标签信息
 LABEL maintainer="BTC Project" \
-      org.label-schema.schema-version="1.0" \
-      org.label-schema.name="BTC Collision Engine" \
-      org.label-schema.description="Bitcoin Address Collision Detection Engine" \
-      org.label-schema.version="${VERSION}" \
-      org.label-schema.build-date="${BUILD_DATE}" \
-      org.label-schema.vcs-ref="${VCS_REF}" \
-      org.label-schema.vcs-url="https://github.com/your-repo/btc-collision-engine"
+    org.label-schema.schema-version="1.0" \
+    org.label-schema.name="BTC Collision Engine" \
+    org.label-schema.description="Bitcoin Address Collision Detection Engine" \
+    org.label-schema.version="${VERSION}" \
+    org.label-schema.build-date="${BUILD_DATE}" \
+    org.label-schema.vcs-ref="${VCS_REF}" \
+    org.label-schema.vcs-url="https://github.com/your-repo/btc-collision-engine"
 
 # 运行时参数
 ARG RUN_MODE="cpu"  # cpu 或 gpu

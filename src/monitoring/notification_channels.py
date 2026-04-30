@@ -30,13 +30,13 @@ logger = logging.getLogger(__name__)
 # ANSI 颜色代码 (ConsoleNotification 使用)
 # ──────────────────────────────────────────────
 _COLORS = {
-    AlertLevel.INFO:       '\033[94m',  # 蓝色
-    AlertLevel.WARNING:    '\033[93m',  # 黄色
-    AlertLevel.CRITICAL:   '\033[91m',  # 红色
-    AlertLevel.EMERGENCY:  '\033[95m',  # 紫色
+    AlertLevel.INFO: "\033[94m",  # 蓝色
+    AlertLevel.WARNING: "\033[93m",  # 黄色
+    AlertLevel.CRITICAL: "\033[91m",  # 红色
+    AlertLevel.EMERGENCY: "\033[95m",  # 紫色
 }
-_RESET = '\033[0m'
-_BOLD = '\033[1m'
+_RESET = "\033[0m"
+_BOLD = "\033[1m"
 
 
 class NotificationChannel(ABC):
@@ -88,13 +88,13 @@ class ConsoleNotification(NotificationChannel):
         return "Console"
 
     def send(self, alert: AlertRecord) -> None:
-        color = _COLORS.get(alert.level, '\033[0m')
-        prefix = _BOLD if alert.level in (AlertLevel.CRITICAL, AlertLevel.EMERGENCY) else ''
+        color = _COLORS.get(alert.level, "\033[0m")
+        prefix = _BOLD if alert.level in (AlertLevel.CRITICAL, AlertLevel.EMERGENCY) else ""
 
         try:
-            timestamp = datetime.fromisoformat(alert.timestamp).strftime('%H:%M:%S')
+            timestamp = datetime.fromisoformat(alert.timestamp).strftime("%H:%M:%S")
         except (ValueError, AttributeError):
-            timestamp = alert.timestamp or '--:--:--'
+            timestamp = alert.timestamp or "--:--:--"
 
         line = (
             f"{prefix}{color}[{alert.level.value.upper():>8}] "
@@ -133,7 +133,7 @@ class LogFileNotification(NotificationChannel):
         try:
             timestamp = self._format_timestamp(alert.timestamp)
         except Exception:
-            timestamp = alert.timestamp or '????-??-?? ??:??:??'
+            timestamp = alert.timestamp or "????-??-?? ??:??:??"
 
         line = (
             f"[{alert.level.value.upper():>8}] "
@@ -143,7 +143,7 @@ class LogFileNotification(NotificationChannel):
         )
 
         try:
-            with open(self.file_path, 'a', encoding='utf-8') as f:
+            with open(self.file_path, "a", encoding="utf-8") as f:
                 f.write(line)
         except OSError as e:
             logger.error(f"写入告警通知文件失败 ({self.file_path}): {e}")
@@ -151,7 +151,7 @@ class LogFileNotification(NotificationChannel):
     @staticmethod
     def _format_timestamp(ts_str: str) -> str:
         """将 ISO 时间戳转换为可读格式"""
-        return datetime.fromisoformat(ts_str).strftime('%Y-%m-%d %H:%M:%S')
+        return datetime.fromisoformat(ts_str).strftime("%Y-%m-%d %H:%M:%S")
 
 
 class CompositeNotification(NotificationChannel):

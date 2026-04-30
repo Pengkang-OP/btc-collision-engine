@@ -12,6 +12,10 @@ import os
 # 添加项目根目录到Python路径
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+import pytest
+
+pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
+
 from src.collision.gpu_collision_engine import GPUCollisionEngine
 from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
 from src.utils import init_logging, get_configured_logger
@@ -23,7 +27,7 @@ logger = get_configured_logger("ProductionTest")
 def test_single_gpu_production():
     """测试单GPU生产模式"""
     logger.info("开始测试单GPU生产模式")
-    
+
     # 创建一个更大的测试目标地址集合
     test_targets = {
         '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',  # 中本聪的地址
@@ -37,35 +41,35 @@ def test_single_gpu_production():
         '15h2WwK6kNN7Rg2a6q8p8vZ3Z5y7X8k9L',  # 测试地址1
         '16s7G8vHq3y7e8k9n0m1b2c3d4e5f6g7h8'   # 测试地址2
     }
-    
+
     # 初始化GPU碰撞引擎
     engine = None
     try:
         engine = GPUCollisionEngine(device_index=0, batch_size=1048576, targets=test_targets)
         logger.info("单GPU引擎初始化成功")
-        
+
         # 运行碰撞检测任务
         logger.info("运行碰撞检测任务...")
-        
+
         # 启动碰撞检测
         start_time = time.time()
-        
+
         # 运行较长时间的碰撞检测任务
         logger.info("开始运行生产模式碰撞检测任务，持续60秒...")
-        
+
         # 等待60秒
         time.sleep(60)
-        
+
         # 停止碰撞检测
         engine.stop()
-        
+
         elapsed = time.time() - start_time
         logger.info(f"碰撞检测任务完成，耗时: {elapsed:.2f}秒")
-        
+
         # 获取统计信息
         stats = engine.get_stats()
         logger.info(f"碰撞检测统计: {stats}")
-        
+
         logger.info("✅ 单GPU生产模式测试成功")
         return True
     except Exception as e:
@@ -84,7 +88,7 @@ def test_single_gpu_production():
 def test_multi_gpu_production():
     """测试多GPU生产模式"""
     logger.info("开始测试多GPU生产模式")
-    
+
     # 创建一个更大的测试目标地址集合
     test_targets = {
         '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',  # 中本聪的地址
@@ -98,48 +102,48 @@ def test_multi_gpu_production():
         '15h2WwK6kNN7Rg2a6q8p8vZ3Z5y7X8k9L',  # 测试地址1
         '16s7G8vHq3y7e8k9n0m1b2c3d4e5f6g7h8'   # 测试地址2
     }
-    
+
     # 初始化多GPU碰撞引擎
     engine = None
     try:
         engine = MultiGPUCollisionEngine()
         logger.info("多GPU引擎创建成功")
-        
+
         # 初始化设备
         init_result = engine.initialize(device_count=2)
         if not init_result:
             logger.error("❌ 多GPU设备初始化失败")
             return False
-        
+
         logger.info("多GPU引擎初始化成功")
-        
+
         # 运行碰撞检测任务
         logger.info("运行碰撞检测任务...")
-        
+
         # 启动碰撞检测
         start_time = time.time()
-        
+
         # 运行较长时间的碰撞检测任务
         logger.info("开始运行生产模式碰撞检测任务，持续60秒...")
-        
+
         start_result = engine.start(targets=test_targets, mode='random', total_keys=100000000)  # 1亿次碰撞检测
         if not start_result:
             logger.error("❌ 多GPU碰撞检测启动失败")
             return False
-        
+
         # 等待60秒
         time.sleep(60)
-        
+
         # 停止碰撞检测
         engine.stop()
-        
+
         elapsed = time.time() - start_time
         logger.info(f"碰撞检测任务完成，耗时: {elapsed:.2f}秒")
-        
+
         # 获取统计信息
         stats = engine.get_combined_stats()
         logger.info(f"碰撞检测统计: {stats}")
-        
+
         logger.info("✅ 多GPU生产模式测试成功")
         return True
     except Exception as e:
@@ -160,10 +164,10 @@ def main():
     try:
         # 测试单GPU生产模式
         single_gpu_result = test_single_gpu_production()
-        
+
         # 测试多GPU生产模式
         multi_gpu_result = test_multi_gpu_production()
-        
+
         if single_gpu_result and multi_gpu_result:
             logger.info("✅ 生产模式测试全部成功")
         else:

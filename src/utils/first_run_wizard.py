@@ -32,13 +32,14 @@ logger = get_configured_logger("FirstRunWizard")
 # 向导类
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class FirstRunWizard:
     """首次运行交互式向导"""
 
     # 已有 config.json 且不为空则认为不是首次运行
     CONFIG_FILE = "config.json"
     CONFIG_EXAMPLE = "config.example.json"
-    WIZARD_MARKER = "data_logs/.wizard_completed"   # 标记文件，防止重复弹出
+    WIZARD_MARKER = "data_logs/.wizard_completed"  # 标记文件，防止重复弹出
 
     # 默认配置模板
     DEFAULT_CONFIG: Dict[str, Any] = {
@@ -47,23 +48,16 @@ class FirstRunWizard:
             "batch_size": 10000,
             "workers": None,
             "checkpoint_enabled": False,
-            "dedup_enabled": False
+            "dedup_enabled": False,
         },
-        "gpu": {
-            "enabled": False,
-            "device_index": -1,
-            "batch_size": None
-        },
+        "gpu": {"enabled": False, "device_index": -1, "batch_size": None},
         "logging": {
             "level": "INFO",
             "file": "logs/collision.log",
             "max_bytes": 10485760,
-            "backup_count": 5
+            "backup_count": 5,
         },
-        "monitoring": {
-            "enabled": True,
-            "report_interval": 30
-        }
+        "monitoring": {"enabled": True, "report_interval": 30},
     }
 
     def __init__(self, project_root: Optional[str] = None) -> None:
@@ -172,7 +166,7 @@ class FirstRunWizard:
         mode_options = [
             "random   - 随机碰撞（推荐入门）",
             "range    - 范围扫描（指定起始/结束私钥）",
-            "brute_force - 暴力穷举（从私钥 1 开始）"
+            "brute_force - 暴力穷举（从私钥 1 开始）",
         ]
         choice = self._choose("请选择默认碰撞模式", mode_options, default_idx=0)
         mode = choice.split(" ")[0].strip()
@@ -208,20 +202,14 @@ class FirstRunWizard:
 
         # 自动检测：文件路径还是直接地址
         # Windows 绝对路径：盘符格式 C:\ 或 C:/
-        _win_abs = bool(re.match(r'^[A-Za-z]:[/\\]', user_input))
+        _win_abs = bool(re.match(r"^[A-Za-z]:[/\\]", user_input))
         # Unix 绝对路径：以 / 开头
-        _unix_abs = user_input.startswith('/')
+        _unix_abs = user_input.startswith("/")
         # 包含路径分隔符（反斜杠或正斜杠）
-        _has_sep = ('\\' in user_input or '/' in user_input)
+        _has_sep = "\\" in user_input or "/" in user_input
         # 以常见文件扩展名结尾
-        _has_ext = bool(re.search(r'\.[a-zA-Z0-9]{1,5}$', user_input))
-        is_file_path = (
-            os.path.isfile(user_input)
-            or _win_abs
-            or _unix_abs
-            or _has_sep
-            or _has_ext
-        )
+        _has_ext = bool(re.search(r"\.[a-zA-Z0-9]{1,5}$", user_input))
+        is_file_path = os.path.isfile(user_input) or _win_abs or _unix_abs or _has_sep or _has_ext
         if is_file_path:
             if os.path.isfile(user_input):
                 print(f"  已识别为地址文件: {user_input}")
@@ -272,6 +260,7 @@ class FirstRunWizard:
         # 检查 PyOpenCL 是否可用
         try:
             import pyopencl
+
             has_opencl = True
         except ImportError:
             has_opencl = False
@@ -300,8 +289,7 @@ class FirstRunWizard:
             print(f"  GPU 模式已启用，CPU 辅助线程默认使用 {workers} 个")
         else:
             raw = self._prompt(
-                f"  CPU 工作线程数（默认: {cpu_count}，建议不超过 CPU 核数）",
-                str(cpu_count)
+                f"  CPU 工作线程数（默认: {cpu_count}，建议不超过 CPU 核数）", str(cpu_count)
             )
             try:
                 workers = int(raw)
@@ -323,14 +311,14 @@ class FirstRunWizard:
             if self.example_path.exists():
                 shutil.copy2(self.example_path, self.config_path)
                 # 合并向导配置
-                with open(self.config_path, 'r', encoding='utf-8') as f:
+                with open(self.config_path, "r", encoding="utf-8") as f:
                     base = json.load(f)
                 # 深度合并
                 self._deep_merge(base, config)
-                with open(self.config_path, 'w', encoding='utf-8') as f:
+                with open(self.config_path, "w", encoding="utf-8") as f:
                     json.dump(base, f, indent=2, ensure_ascii=False)
             else:
-                with open(self.config_path, 'w', encoding='utf-8') as f:
+                with open(self.config_path, "w", encoding="utf-8") as f:
                     json.dump(config, f, indent=2, ensure_ascii=False)
             return True
         except Exception as exc:
@@ -361,6 +349,7 @@ class FirstRunWizard:
     def run(self) -> Dict:
         """运行完整向导，返回最终配置"""
         import copy
+
         config = copy.deepcopy(self.DEFAULT_CONFIG)
 
         self._welcome()
@@ -408,6 +397,7 @@ class FirstRunWizard:
 # ─────────────────────────────────────────────────────────────────────────────
 # CLI 入口
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def main() -> None:
     """命令行入口：强制运行向导（忽略已完成标记）"""

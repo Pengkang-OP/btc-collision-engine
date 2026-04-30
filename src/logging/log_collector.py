@@ -36,9 +36,7 @@ class LogCollector:
         """设置logging处理器"""
         self._log_handler = _CollectorLogHandler(self)
         self._log_handler.setLevel(logging.DEBUG)
-        formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        )
+        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         self._log_handler.setFormatter(formatter)
 
     def start(self):
@@ -47,10 +45,7 @@ class LogCollector:
             return
 
         self._running = True
-        self._collector_thread = threading.Thread(
-            target=self._collect_loop,
-            daemon=True
-        )
+        self._collector_thread = threading.Thread(target=self._collect_loop, daemon=True)
         self._collector_thread.start()
 
     def stop(self):
@@ -73,15 +68,15 @@ class LogCollector:
 
     def _process_item(self, item: Dict[str, Any]):
         """处理收集到的项目"""
-        event_type = item.get('event_type', LogEventType.STATUS_UPDATE)
-        data = item.get('data', {})
-        timestamp = item.get('timestamp', time.time())
+        event_type = item.get("event_type", LogEventType.STATUS_UPDATE)
+        data = item.get("data", {})
+        timestamp = item.get("timestamp", time.time())
 
         event = LogEvent(
             event_type=event_type,
             data=data,
             timestamp=timestamp,
-            source=item.get('source', 'collector')
+            source=item.get("source", "collector"),
         )
 
         # 调用注册的处理器
@@ -92,8 +87,9 @@ class LogCollector:
             except Exception:
                 pass
 
-    def collect_from_queue(self, event_type: LogEventType, data: Dict[str, Any],
-                          source: str = "external"):
+    def collect_from_queue(
+        self, event_type: LogEventType, data: Dict[str, Any], source: str = "external"
+    ):
         """从消息队列收集
 
         Args:
@@ -102,12 +98,9 @@ class LogCollector:
             source: 事件来源
         """
         try:
-            self._queue.put_nowait({
-                'event_type': event_type,
-                'data': data,
-                'timestamp': time.time(),
-                'source': source
-            })
+            self._queue.put_nowait(
+                {"event_type": event_type, "data": data, "timestamp": time.time(), "source": source}
+            )
         except queue.Full:
             pass
 
@@ -116,12 +109,8 @@ class LogCollector:
         level_name = logging.getLevelName(level)
         self.collect_from_queue(
             LogEventType.STATUS_UPDATE,
-            {
-                'logger': logger_name,
-                'level': level_name,
-                'message': message
-            },
-            source='logging'
+            {"logger": logger_name, "level": level_name, "message": message},
+            source="logging",
         )
 
     def register_handler(self, event_type: str, handler: Callable):
@@ -137,7 +126,7 @@ class LogCollector:
         """取消注册事件处理器"""
         self._handlers.pop(event_type, None)
 
-    def attach_to_logger(self, logger_name: str = None):
+    def attach_to_logger(self, logger_name: Optional[str] = None):
         """附加到Python logger
 
         Args:
@@ -147,7 +136,7 @@ class LogCollector:
         logger.addHandler(self._log_handler)
         logger.setLevel(logging.DEBUG)
 
-    def detach_from_logger(self, logger_name: str = None):
+    def detach_from_logger(self, logger_name: Optional[str] = None):
         """从Python logger分离
 
         Args:
@@ -168,10 +157,6 @@ class _CollectorLogHandler(logging.Handler):
     def emit(self, record: logging.LogRecord):
         """发送日志记录"""
         try:
-            self.collector.collect_log(
-                record.name,
-                record.levelno,
-                self.format(record)
-            )
+            self.collector.collect_log(record.name, record.levelno, self.format(record))
         except Exception:
             self.handleError(record)

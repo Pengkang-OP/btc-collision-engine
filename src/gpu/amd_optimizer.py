@@ -34,6 +34,7 @@ if TYPE_CHECKING:
 # 内部辅助组件
 # ---------------------------------------------------------------------------
 
+
 class _RateLimitedLogger:
     """频率限制日志记录器
 
@@ -47,6 +48,7 @@ class _RateLimitedLogger:
 
     def warning(self, key: str, message: str) -> None:
         import time
+
         now = time.monotonic()
         if now - self._last_logged.get(key, 0.0) >= self._cooldown:
             self._logger.warning(message)
@@ -54,6 +56,7 @@ class _RateLimitedLogger:
 
     def info(self, key: str, message: str) -> None:
         import time
+
         now = time.monotonic()
         if now - self._last_logged.get(key, 0.0) >= self._cooldown:
             self._logger.info(message)
@@ -70,10 +73,10 @@ class AmdDriverDetector:
     """
 
     # 推荐最低版本（基于AMD官方发布说明）
-    MIN_ROCM_MAJOR = 4          # ROCm 4.5+ (最低支持OpenCL 2.0)
-    MIN_ROCM_MINOR = 5          # ROCm 4.5
+    MIN_ROCM_MAJOR = 4  # ROCm 4.5+ (最低支持OpenCL 2.0)
+    MIN_ROCM_MINOR = 5  # ROCm 4.5
     RECOMMENDED_ROCM_MAJOR = 7  # ROCm 7.x (最新推荐)
-    MIN_ADRENALIN_YEAR = 22     # Adrenalin 22.10+
+    MIN_ADRENALIN_YEAR = 22  # Adrenalin 22.10+
     MIN_ADRENALIN_MINOR = 10
     RECOMMENDED_ADRENALIN_YEAR = 25  # Adrenalin 25.x (最新推荐)
 
@@ -93,79 +96,76 @@ class AmdDriverDetector:
             }
         """
         result = {
-            'version_str': None,
-            'driver_type': 'Unknown',
-            'is_sufficient': False,
-            'recommendation': None,
+            "version_str": None,
+            "driver_type": "Unknown",
+            "is_sufficient": False,
+            "recommendation": None,
         }
 
-        version_str = (
-            self._device_info.get('driver_version')
-            or self._device_info.get('version', '')
+        version_str = self._device_info.get("driver_version") or self._device_info.get(
+            "version", ""
         )
         if not version_str:
-            result['recommendation'] = (
+            result["recommendation"] = (
                 "无法检测 AMD 驱动版本，建议使用 Adrenalin 22.10+ 或 ROCm 4.0+ 以获得最佳 OpenCL 支持"
             )
             return result
 
         version_str = str(version_str)
-        result['version_str'] = version_str
+        result["version_str"] = version_str
 
         # 判断驱动类型并解析版本
-        if 'rocm' in version_str.lower():
-            result['driver_type'] = 'ROCm'
+        if "rocm" in version_str.lower():
+            result["driver_type"] = "ROCm"
             major, minor = self._parse_rocm_version(version_str)
             if major is not None:
                 # ROCm 4.5+ 满足最低要求
-                result['is_sufficient'] = (
-                    major > self.MIN_ROCM_MAJOR
-                    or (major == self.MIN_ROCM_MAJOR and (minor or 0) >= self.MIN_ROCM_MINOR)
+                result["is_sufficient"] = major > self.MIN_ROCM_MAJOR or (
+                    major == self.MIN_ROCM_MAJOR and (minor or 0) >= self.MIN_ROCM_MINOR
                 )
-                if not result['is_sufficient']:
-                    result['recommendation'] = (
+                if not result["is_sufficient"]:
+                    result["recommendation"] = (
                         f"ROCm 版本 {major}.{minor or 0} 较旧，"
                         f"建议升级至 ROCm {self.MIN_ROCM_MAJOR}.{self.MIN_ROCM_MINOR}+ "
                         f"以获得完整 OpenCL 2.0 支持"
                     )
                 elif major < self.RECOMMENDED_ROCM_MAJOR:
-                    result['recommendation'] = (
+                    result["recommendation"] = (
                         f"ROCm 版本 {major}.{minor or 0} 可正常工作，"
                         f"建议升级至推荐版本 ROCm {self.RECOMMENDED_ROCM_MAJOR}.x"
                     )
         else:
             # Adrenalin 格式通常为 "22.10.1" 或 "23.5.2"
-            result['driver_type'] = 'Adrenalin'
+            result["driver_type"] = "Adrenalin"
             year, minor = self._parse_adrenalin_version(version_str)
             if year is not None:
-                result['is_sufficient'] = (
-                    year > self.MIN_ADRENALIN_YEAR
-                    or (year == self.MIN_ADRENALIN_YEAR and minor >= self.MIN_ADRENALIN_MINOR)
+                result["is_sufficient"] = year > self.MIN_ADRENALIN_YEAR or (
+                    year == self.MIN_ADRENALIN_YEAR and minor >= self.MIN_ADRENALIN_MINOR
                 )
-                if not result['is_sufficient']:
-                    result['recommendation'] = (
+                if not result["is_sufficient"]:
+                    result["recommendation"] = (
                         f"AMD Adrenalin 驱动版本 {year}.{minor} 较旧，"
                         f"建议升级至 {self.MIN_ADRENALIN_YEAR}.{self.MIN_ADRENALIN_MINOR}+ "
                         f"以获得更好的 OpenCL 稳定性"
                     )
                 elif year < self.RECOMMENDED_ADRENALIN_YEAR:
-                    result['recommendation'] = (
+                    result["recommendation"] = (
                         f"AMD Adrenalin 驱动版本 {year}.{minor} 可正常工作，"
                         f"建议升级至推荐版本 Adrenalin {self.RECOMMENDED_ADRENALIN_YEAR}.x"
                     )
             else:
-                result['is_sufficient'] = True  # 无法解析时不报警
+                result["is_sufficient"] = True  # 无法解析时不报警
 
         return result
 
     @staticmethod
     def _parse_rocm_version(version_str: str) -> tuple:
         """从 ROCm 版本字符串中解析主次版本号，返回(major, minor)"""
-        match = re.search(r'(\d+)\.(\d+)', version_str)
+        match = re.search(r"(\d+)\.(\d+)", version_str)
         if match:
             return int(match.group(1)), int(match.group(2))
         # 仅有主版本号
-        match = re.search(r'(\d+)', version_str)
+        match = re.search(r"(\d+)", version_str)
         if match:
             return int(match.group(1)), None
         return None, None
@@ -173,7 +173,7 @@ class AmdDriverDetector:
     @staticmethod
     def _parse_rocm_major(version_str: str) -> Optional[int]:
         """从 ROCm 版本字符串中解析主版本号（常规调用）"""
-        match = re.search(r'(\d+)\.\d+', version_str)
+        match = re.search(r"(\d+)\.\d+", version_str)
         if match:
             return int(match.group(1))
         return None
@@ -181,7 +181,7 @@ class AmdDriverDetector:
     @staticmethod
     def _parse_adrenalin_version(version_str: str) -> tuple:
         """从 Adrenalin 版本字符串中解析 (年份, 次版本)"""
-        match = re.search(r'(\d{2})\.(\d{1,2})', version_str)
+        match = re.search(r"(\d{2})\.(\d{1,2})", version_str)
         if match:
             return int(match.group(1)), int(match.group(2))
         return None, None
@@ -201,117 +201,279 @@ class AmdArchDetector:
     _ARCH_PATTERNS = [
         # CDNA 4.0 (2024) - MI350/MI355
         # 来源：amd.com CDNA4 建筑师介绍
-        (['MI355', 'MI350', 'MI35'],
-         'CDNA4', 64, {
-             'infinity_cache': False, 'chiplet': True, 'is_cdna': True,
-             'lds_kb': 160, 'memory_type': 'HBM3e',
-             'min_driver': 'ROCm 7.x', 'recommended_driver': 'ROCm 7.x',
-         }),
+        (
+            ["MI355", "MI350", "MI35"],
+            "CDNA4",
+            64,
+            {
+                "infinity_cache": False,
+                "chiplet": True,
+                "is_cdna": True,
+                "lds_kb": 160,
+                "memory_type": "HBM3e",
+                "min_driver": "ROCm 7.x",
+                "recommended_driver": "ROCm 7.x",
+            },
+        ),
         # CDNA 3.0 (2023) - MI300/MI325
         # 来源：amd.com CDNA3 建筑师介绍
-        (['MI325', 'MI300', 'MI3'],
-         'CDNA3', 64, {
-             'infinity_cache': False, 'chiplet': True, 'is_cdna': True,
-             'lds_kb': 64, 'memory_type': 'HBM3',
-             'min_driver': 'ROCm 6.0', 'recommended_driver': 'ROCm 7.x',
-         }),
+        (
+            ["MI325", "MI300", "MI3"],
+            "CDNA3",
+            64,
+            {
+                "infinity_cache": False,
+                "chiplet": True,
+                "is_cdna": True,
+                "lds_kb": 64,
+                "memory_type": "HBM3",
+                "min_driver": "ROCm 6.0",
+                "recommended_driver": "ROCm 7.x",
+            },
+        ),
         # CDNA 2.0 (2021) - MI210/MI250
         # 来源：amd.com CDNA2 建筑师介绍
-        (['MI250', 'MI210', 'MI2'],
-         'CDNA2', 64, {
-             'infinity_cache': False, 'chiplet': False, 'is_cdna': True,
-             'lds_kb': 64, 'memory_type': 'HBM2e',
-             'min_driver': 'ROCm 5.x', 'recommended_driver': 'ROCm 7.x',
-         }),
+        (
+            ["MI250", "MI210", "MI2"],
+            "CDNA2",
+            64,
+            {
+                "infinity_cache": False,
+                "chiplet": False,
+                "is_cdna": True,
+                "lds_kb": 64,
+                "memory_type": "HBM2e",
+                "min_driver": "ROCm 5.x",
+                "recommended_driver": "ROCm 7.x",
+            },
+        ),
         # CDNA 1.0 (2019) - MI100
         # 来源：amd.com CDNA1 建筑师介绍
-        (['MI100'],
-         'CDNA1', 64, {
-             'infinity_cache': False, 'chiplet': False, 'is_cdna': True,
-             'lds_kb': 64, 'memory_type': 'HBM2',
-             'min_driver': 'ROCm 4.5', 'recommended_driver': 'ROCm 6.4',
-         }),
+        (
+            ["MI100"],
+            "CDNA1",
+            64,
+            {
+                "infinity_cache": False,
+                "chiplet": False,
+                "is_cdna": True,
+                "lds_kb": 64,
+                "memory_type": "HBM2",
+                "min_driver": "ROCm 4.5",
+                "recommended_driver": "ROCm 6.4",
+            },
+        ),
         # RDNA 4.0 (2025) - RX 9xxx (Navi 4x)
         # 来源：amd.com RDNA4 建筑师介绍
         # 具体型号先，'Navi 4'最后
-        (['RX 9070', 'RX 9060', 'RX 9080', 'RX 9090',
-          'RX 92', 'RX 93', 'RX 95', 'RX 97', 'RX 99',
-          'Navi 4', 'RDNA4'],
-         'RDNA4', 32, {
-             'infinity_cache': True, 'chiplet': False, 'is_cdna': False,
-             'lds_kb': 128, 'memory_type': 'GDDR6',
-             'alternative_wavefront': 64,
-             'min_driver': 'Adrenalin 25.x', 'recommended_driver': 'Adrenalin 25.x',
-         }),
+        (
+            [
+                "RX 9070",
+                "RX 9060",
+                "RX 9080",
+                "RX 9090",
+                "RX 92",
+                "RX 93",
+                "RX 95",
+                "RX 97",
+                "RX 99",
+                "Navi 4",
+                "RDNA4",
+            ],
+            "RDNA4",
+            32,
+            {
+                "infinity_cache": True,
+                "chiplet": False,
+                "is_cdna": False,
+                "lds_kb": 128,
+                "memory_type": "GDDR6",
+                "alternative_wavefront": 64,
+                "min_driver": "Adrenalin 25.x",
+                "recommended_driver": "Adrenalin 25.x",
+            },
+        ),
         # RDNA 3.0 (2022) - RX 7xxx (Navi 3x)
         # 来源：amd.com RDNA3 建筑师介绍
-        (['RX 7900', 'RX 7800', 'RX 7700', 'RX 7600', 'RX 7500',
-          'RX7900', 'RX7800', 'RX7700', 'RX7600',
-          'W7900', 'W7800',
-          'Navi 3', 'RDNA3'],
-         'RDNA3', 32, {
-             'infinity_cache': True, 'chiplet': True, 'is_cdna': False,
-             'lds_kb': 128, 'memory_type': 'GDDR6',
-             'alternative_wavefront': 64,
-             'min_driver': 'Adrenalin 23.x', 'recommended_driver': 'Adrenalin 25.x',
-         }),
+        (
+            [
+                "RX 7900",
+                "RX 7800",
+                "RX 7700",
+                "RX 7600",
+                "RX 7500",
+                "RX7900",
+                "RX7800",
+                "RX7700",
+                "RX7600",
+                "W7900",
+                "W7800",
+                "Navi 3",
+                "RDNA3",
+            ],
+            "RDNA3",
+            32,
+            {
+                "infinity_cache": True,
+                "chiplet": True,
+                "is_cdna": False,
+                "lds_kb": 128,
+                "memory_type": "GDDR6",
+                "alternative_wavefront": 64,
+                "min_driver": "Adrenalin 23.x",
+                "recommended_driver": "Adrenalin 25.x",
+            },
+        ),
         # RDNA 2.0 (2020) - RX 6xxx (Navi 2x)
         # 来源：amd.com RDNA2 建筑师介绍；全线配备 128MB Infinity Cache
-        (['RX 6900', 'RX 6800', 'RX 6700', 'RX 6600', 'RX 6500', 'RX 6400',
-          'RX6900', 'RX6800', 'RX6700', 'RX6600',
-          'W6900', 'W6800',
-          'Navi 2', 'RDNA2'],
-         'RDNA2', 32, {
-             'infinity_cache': True, 'chiplet': False, 'is_cdna': False,
-             'lds_kb': 128, 'memory_type': 'GDDR6',
-             'alternative_wavefront': 64,
-             'min_driver': 'Adrenalin 22.x', 'recommended_driver': 'Adrenalin 24.x',
-         }),
+        (
+            [
+                "RX 6900",
+                "RX 6800",
+                "RX 6700",
+                "RX 6600",
+                "RX 6500",
+                "RX 6400",
+                "RX6900",
+                "RX6800",
+                "RX6700",
+                "RX6600",
+                "W6900",
+                "W6800",
+                "Navi 2",
+                "RDNA2",
+            ],
+            "RDNA2",
+            32,
+            {
+                "infinity_cache": True,
+                "chiplet": False,
+                "is_cdna": False,
+                "lds_kb": 128,
+                "memory_type": "GDDR6",
+                "alternative_wavefront": 64,
+                "min_driver": "Adrenalin 22.x",
+                "recommended_driver": "Adrenalin 24.x",
+            },
+        ),
         # RDNA 1.0 (2019) - RX 5xxx (Navi 10/14)
         # 注意：具体型号先于'Navi 1'和'RDNA'，避免和 GCN3.0 的'RX 5'模式冲突
         # 来源：amd.com RDNA 建筑师介绍
-        (['RX 5700', 'RX 5600', 'RX 5500', 'RX 5300',
-          'RX5700', 'RX5600', 'RX5500',
-          'Navi 1', 'Navi10', 'Navi14', 'RDNA'],
-         'RDNA', 32, {
-             'infinity_cache': False, 'chiplet': False, 'is_cdna': False,
-             'lds_kb': 128, 'memory_type': 'GDDR6',
-             'alternative_wavefront': 64,
-             'min_driver': 'Adrenalin 22.x', 'recommended_driver': 'Adrenalin 24.x',
-         }),
+        (
+            [
+                "RX 5700",
+                "RX 5600",
+                "RX 5500",
+                "RX 5300",
+                "RX5700",
+                "RX5600",
+                "RX5500",
+                "Navi 1",
+                "Navi10",
+                "Navi14",
+                "RDNA",
+            ],
+            "RDNA",
+            32,
+            {
+                "infinity_cache": False,
+                "chiplet": False,
+                "is_cdna": False,
+                "lds_kb": 128,
+                "memory_type": "GDDR6",
+                "alternative_wavefront": 64,
+                "min_driver": "Adrenalin 22.x",
+                "recommended_driver": "Adrenalin 24.x",
+            },
+        ),
         # GCN 5.0 / Vega (2017) - Vega56/64 / MI25/MI50/MI60 / Radeon VII
         # 来源：amd.com GCN5 建筑师介绍；Vega 全系列使用 HBM2
-        (['Vega', 'Radeon VII', 'MI50', 'MI60', 'MI25', 'Frontier',
-          'GCN5', 'Vega20', 'Vega10'],
-         'GCN5.0', 64, {
-             'infinity_cache': False, 'chiplet': False, 'is_cdna': False,
-             'lds_kb': 64, 'memory_type': 'HBM2',
-             'min_driver': 'Adrenalin 20.x', 'recommended_driver': 'Adrenalin 24.x',
-         }),
+        (
+            ["Vega", "Radeon VII", "MI50", "MI60", "MI25", "Frontier", "GCN5", "Vega20", "Vega10"],
+            "GCN5.0",
+            64,
+            {
+                "infinity_cache": False,
+                "chiplet": False,
+                "is_cdna": False,
+                "lds_kb": 64,
+                "memory_type": "HBM2",
+                "min_driver": "Adrenalin 20.x",
+                "recommended_driver": "Adrenalin 24.x",
+            },
+        ),
         # GCN 3.0/4.0 (2015-2016) - Fiji/Polaris - RX 480/580 / Fury
         # 注意：'RX 5'在RDNA1已处理，这里只匹配具体型号
         # 来源：amd.com GCN3 建筑师介绍
-        (['RX 480', 'RX 470', 'RX 460',
-          'RX 580', 'RX 570', 'RX 560', 'RX 550',
-          'RX480', 'RX470', 'RX580', 'RX570',
-          'Fury', 'Nano', 'Polaris', 'Fiji', 'GCN3', 'GCN4'],
-         'GCN3.0', 64, {
-             'infinity_cache': False, 'chiplet': False, 'is_cdna': False,
-             'lds_kb': 64, 'memory_type': 'GDDR5',
-             'min_driver': 'Adrenalin 18.x', 'recommended_driver': 'Adrenalin 22.x',
-         }),
+        (
+            [
+                "RX 480",
+                "RX 470",
+                "RX 460",
+                "RX 580",
+                "RX 570",
+                "RX 560",
+                "RX 550",
+                "RX480",
+                "RX470",
+                "RX580",
+                "RX570",
+                "Fury",
+                "Nano",
+                "Polaris",
+                "Fiji",
+                "GCN3",
+                "GCN4",
+            ],
+            "GCN3.0",
+            64,
+            {
+                "infinity_cache": False,
+                "chiplet": False,
+                "is_cdna": False,
+                "lds_kb": 64,
+                "memory_type": "GDDR5",
+                "min_driver": "Adrenalin 18.x",
+                "recommended_driver": "Adrenalin 22.x",
+            },
+        ),
         # GCN 1.0/2.0 (2012-2014) - HD 7xxx / R9 2xx/3xx
         # 来源：amd.com GCN1 建筑师介绍
-        (['R9 390', 'R9 380', 'R9 370', 'R9 290', 'R9 280', 'R9 270',
-          'R7 260', 'R7 370',
-          'HD 7970', 'HD 7950', 'HD 7870', 'HD 7850',
-          'HD 77', 'HD 78', 'HD 79',
-          'GCN1', 'GCN2', 'Tahiti', 'Hawaii', 'Bonaire'],
-         'GCN1.0', 64, {
-             'infinity_cache': False, 'chiplet': False, 'is_cdna': False,
-             'lds_kb': 64, 'memory_type': 'GDDR5',
-             'min_driver': 'Adrenalin 18.x', 'recommended_driver': 'Adrenalin 22.x',
-         }),
+        (
+            [
+                "R9 390",
+                "R9 380",
+                "R9 370",
+                "R9 290",
+                "R9 280",
+                "R9 270",
+                "R7 260",
+                "R7 370",
+                "HD 7970",
+                "HD 7950",
+                "HD 7870",
+                "HD 7850",
+                "HD 77",
+                "HD 78",
+                "HD 79",
+                "GCN1",
+                "GCN2",
+                "Tahiti",
+                "Hawaii",
+                "Bonaire",
+            ],
+            "GCN1.0",
+            64,
+            {
+                "infinity_cache": False,
+                "chiplet": False,
+                "is_cdna": False,
+                "lds_kb": 64,
+                "memory_type": "GDDR5",
+                "min_driver": "Adrenalin 18.x",
+                "recommended_driver": "Adrenalin 22.x",
+            },
+        ),
     ]
 
     def __init__(self, device_info: dict, engine_logger: Optional[Any] = None) -> None:
@@ -320,7 +482,7 @@ class AmdArchDetector:
 
     def detect(self) -> dict:
         """检测 GPU 架构代
-    
+
         Returns:
             {
                 'arch': str,                    # 架构名称
@@ -335,26 +497,26 @@ class AmdArchDetector:
                 'recommended_driver': str,      # 推荐驱动版本
             }
         """
-        device_name = self._device_info.get('name', '')
-    
+        device_name = self._device_info.get("name", "")
+
         for patterns, arch_name, wavefront_size, features in self._ARCH_PATTERNS:
             for pattern in patterns:
                 if pattern.upper() in device_name.upper():
                     return {
-                        'arch': arch_name,
-                        'wavefront_size': wavefront_size,
+                        "arch": arch_name,
+                        "wavefront_size": wavefront_size,
                         **features,
                     }
-    
+
         self._logger.warning(f"⚠️ 无法识别 AMD GPU 架构：{device_name}，使用默认 GCN 配置")
         return {
-            'arch': 'Unknown',
-            'wavefront_size': 64,  # 保守默认値
-            'infinity_cache': False,
-            'chiplet': False,
-            'is_cdna': False,
-            'lds_kb': 64,
-            'memory_type': 'Unknown',
+            "arch": "Unknown",
+            "wavefront_size": 64,  # 保守默认値
+            "infinity_cache": False,
+            "chiplet": False,
+            "is_cdna": False,
+            "lds_kb": 64,
+            "memory_type": "Unknown",
         }
 
 
@@ -372,7 +534,7 @@ class AmdWavefrontValidator:
     def __init__(self, arch_info: dict, engine_logger: Optional[Any] = None) -> None:
         self._arch_info = arch_info
         self._logger = engine_logger or logger
-        self._wavefront_size = arch_info.get('wavefront_size', 64)
+        self._wavefront_size = arch_info.get("wavefront_size", 64)
 
     def validate(self, work_group_size: int) -> dict:
         """验证 work_group_size 对齐情况
@@ -390,27 +552,28 @@ class AmdWavefrontValidator:
             }
         """
         result = {
-            'valid': True,
-            'wavefront_size': self._wavefront_size,
-            'work_group_size': work_group_size,
-            'suggested_size': None,
-            'warning': None,
+            "valid": True,
+            "wavefront_size": self._wavefront_size,
+            "work_group_size": work_group_size,
+            "suggested_size": None,
+            "warning": None,
         }
 
         if work_group_size <= 0:
-            result['valid'] = False
-            result['warning'] = f"work_group_size={work_group_size} 无效，应为正整数"
+            result["valid"] = False
+            result["warning"] = f"work_group_size={work_group_size} 无效，应为正整数"
             return result
 
         if work_group_size % self._wavefront_size != 0:
-            result['valid'] = False
+            result["valid"] = False
             # 计算建议值：向上取整到 wavefront_size 的倍数
             suggested = (
                 (work_group_size + self._wavefront_size - 1)
-                // self._wavefront_size * self._wavefront_size
+                // self._wavefront_size
+                * self._wavefront_size
             )
-            result['suggested_size'] = suggested
-            result['warning'] = (
+            result["suggested_size"] = suggested
+            result["warning"] = (
                 f"work_group_size={work_group_size} 不是 AMD Wavefront 大小 "
                 f"{self._wavefront_size} 的倍数（架构: {self._arch_info.get('arch', 'Unknown')}），"
                 f"建议调整为 {suggested} 以获得最佳性能"
@@ -433,18 +596,31 @@ class AmdMemoryOptimizer:
     # HBM 架构列表（优先从 arch_info 的 memory_type 字段读取）
     # 错误回退用：设备名称关键词匹配
     _HBM_DEVICE_KEYWORDS = [
-        'Vega', 'Radeon VII', 'MI50', 'MI60', 'MI25', 'MI100',
-        'MI210', 'MI250', 'MI300', 'MI325', 'MI350', 'MI355',
-        'Frontier', 'Instinct',
+        "Vega",
+        "Radeon VII",
+        "MI50",
+        "MI60",
+        "MI25",
+        "MI100",
+        "MI210",
+        "MI250",
+        "MI300",
+        "MI325",
+        "MI350",
+        "MI355",
+        "Frontier",
+        "Instinct",
     ]
     # HBM 架构列表
-    _HBM_ARCHS = {'GCN5.0', 'CDNA1', 'CDNA2', 'CDNA3', 'CDNA4'}
+    _HBM_ARCHS = {"GCN5.0", "CDNA1", "CDNA2", "CDNA3", "CDNA4"}
     # GDDR6 架构列表
-    _GDDR6_ARCHS = {'RDNA', 'RDNA2', 'RDNA3', 'RDNA4'}
+    _GDDR6_ARCHS = {"RDNA", "RDNA2", "RDNA3", "RDNA4"}
     # GDDR5 架构列表
-    _GDDR5_ARCHS = {'GCN1.0', 'GCN3.0'}
+    _GDDR5_ARCHS = {"GCN1.0", "GCN3.0"}
 
-    def __init__(self, device_info: dict, arch_info: dict, engine_logger: Optional[Any] = None) -> None:
+    def __init__(
+        self, device_info: dict, arch_info: dict, engine_logger: Optional[Any] = None
+    ) -> None:
         self._device_info = device_info
         self._arch_info = arch_info
         self._logger = engine_logger or logger
@@ -461,67 +637,68 @@ class AmdMemoryOptimizer:
                 'infinity_cache_bonus': float,  # Infinity Cache 提升的 ratio 附加值
             }
         """
-        global_mem = self._device_info.get('global_mem_size', 0)
-        global_mem_gb = global_mem / (1024 ** 3) if global_mem > 0 else 0.0
+        global_mem = self._device_info.get("global_mem_size", 0)
+        global_mem_gb = global_mem / (1024**3) if global_mem > 0 else 0.0
 
         # 优先从 arch_info 中获取显存类型字段（已经由架构识别确定）
-        memory_type = self._arch_info.get('memory_type', '')
-        if not memory_type or memory_type == 'Unknown':
+        memory_type = self._arch_info.get("memory_type", "")
+        if not memory_type or memory_type == "Unknown":
             # 回退：通过设备名称和架构名推断
-            device_name = self._device_info.get('name', '')
+            device_name = self._device_info.get("name", "")
             memory_type = self._detect_memory_type(device_name)
 
         # 根据显存类型设置基准 memory_ratio
-        arch = self._arch_info.get('arch', '')
-        if memory_type in ('HBM2', 'HBM2e', 'HBM3', 'HBM3e', 'HBM') or arch in self._HBM_ARCHS:
-            base_ratio = 0.70   # HBM带宽高，但爆发传输比系数大，保守一些
-            memory_type = memory_type if memory_type != 'Unknown' else 'HBM'
-        elif memory_type == 'GDDR6' or arch in self._GDDR6_ARCHS:
-            base_ratio = 0.60   # RDNA 系列 GDDR6
-            memory_type = 'GDDR6'
-        elif memory_type == 'GDDR5' or arch in self._GDDR5_ARCHS:
-            base_ratio = 0.55   # 老 GCN GDDR5
-            memory_type = 'GDDR5'
+        arch = self._arch_info.get("arch", "")
+        if memory_type in ("HBM2", "HBM2e", "HBM3", "HBM3e", "HBM") or arch in self._HBM_ARCHS:
+            base_ratio = 0.70  # HBM带宽高，但爆发传输比系数大，保守一些
+            memory_type = memory_type if memory_type != "Unknown" else "HBM"
+        elif memory_type == "GDDR6" or arch in self._GDDR6_ARCHS:
+            base_ratio = 0.60  # RDNA 系列 GDDR6
+            memory_type = "GDDR6"
+        elif memory_type == "GDDR5" or arch in self._GDDR5_ARCHS:
+            base_ratio = 0.55  # 老 GCN GDDR5
+            memory_type = "GDDR5"
         else:
-            base_ratio = 0.60   # 保守默认
+            base_ratio = 0.60  # 保守默认
 
         # RDNA2+支持 Infinity Cache，提升局部性访问的内存利用率
-        infinity_cache_hint = self._arch_info.get('infinity_cache', False)
+        infinity_cache_hint = self._arch_info.get("infinity_cache", False)
         infinity_cache_bonus = 0.05 if infinity_cache_hint else 0.0
         memory_ratio = min(base_ratio + infinity_cache_bonus, 0.85)  # 上限 0.85
 
         return {
-            'memory_ratio': memory_ratio,
-            'global_mem_gb': global_mem_gb,
-            'memory_type': memory_type,
-            'infinity_cache_hint': infinity_cache_hint,
-            'infinity_cache_bonus': infinity_cache_bonus,
+            "memory_ratio": memory_ratio,
+            "global_mem_gb": global_mem_gb,
+            "memory_type": memory_type,
+            "infinity_cache_hint": infinity_cache_hint,
+            "infinity_cache_bonus": infinity_cache_bonus,
         }
 
     def _detect_memory_type(self, device_name: str) -> str:
         """根据设备名称和架构推断显存类型（回退逻辑）"""
         device_upper = device_name.upper()
-        arch = self._arch_info.get('arch', '')
+        arch = self._arch_info.get("arch", "")
 
         # 优先检查架构名
         if arch in self._HBM_ARCHS:
-            return 'HBM'
+            return "HBM"
         if arch in self._GDDR6_ARCHS:
-            return 'GDDR6'
+            return "GDDR6"
         if arch in self._GDDR5_ARCHS:
-            return 'GDDR5'
+            return "GDDR5"
 
         # 设备名称关键词匹配
         for keyword in self._HBM_DEVICE_KEYWORDS:
             if keyword.upper() in device_upper:
-                return 'HBM'
+                return "HBM"
 
-        return 'Unknown'
+        return "Unknown"
 
 
 # ---------------------------------------------------------------------------
 # 主优化器类
 # ---------------------------------------------------------------------------
+
 
 class AmdGPUOptimizer:
     """AMD GPU 专有优化器
@@ -538,7 +715,9 @@ class AmdGPUOptimizer:
         engine_logger: 可选的日志记录器，默认使用模块级 logger
     """
 
-    def __init__(self, device_info: dict, config: Optional[dict] = None, engine_logger: Optional[Any] = None) -> None:
+    def __init__(
+        self, device_info: dict, config: Optional[dict] = None, engine_logger: Optional[Any] = None
+    ) -> None:
         self._device_info = device_info if isinstance(device_info, dict) else {}
         self._config = config or {}
         self._logger = engine_logger or logger
@@ -575,13 +754,13 @@ class AmdGPUOptimizer:
                 engine_logger=self._logger,
             )
             self._driver_info = detector.detect()
-            result['driver'] = self._driver_info
+            result["driver"] = self._driver_info
 
-            driver_type = self._driver_info.get('driver_type', 'Unknown')
-            version_str = self._driver_info.get('version_str')
+            driver_type = self._driver_info.get("driver_type", "Unknown")
+            version_str = self._driver_info.get("version_str")
 
             if version_str:
-                sufficient = self._driver_info.get('is_sufficient', False)
+                sufficient = self._driver_info.get("is_sufficient", False)
                 self._logger.info(
                     f"✅ AMD 驱动版本: {version_str}（类型: {driver_type}，"
                     f"版本{'充足' if sufficient else '较旧'}）"
@@ -589,7 +768,7 @@ class AmdGPUOptimizer:
             else:
                 self._logger.warning(f"⚠️ 无法检测 AMD 驱动版本（类型: {driver_type}）")
 
-            if self._driver_info.get('recommendation'):
+            if self._driver_info.get("recommendation"):
                 self._logger.warning(f"⚠️ {self._driver_info['recommendation']}")
 
         except (OSError, FileNotFoundError) as e:
@@ -598,14 +777,14 @@ class AmdGPUOptimizer:
                 f"   驱动版本信息将不可用"
             )
             self._driver_info = {}
-            result['driver'] = {}
+            result["driver"] = {}
         except Exception as e:
             self._logger.warning(
                 f"⚠️ AMD 驱动检测失败（非致命）: {type(e).__name__}: {e}\n"
                 f"   驱动版本信息将不可用"
             )
             self._driver_info = {}
-            result['driver'] = {}
+            result["driver"] = {}
 
         # 2. 架构代识别
         try:
@@ -614,10 +793,10 @@ class AmdGPUOptimizer:
                 engine_logger=self._logger,
             )
             self._arch_info = arch_detector.detect()
-            result['arch'] = self._arch_info
+            result["arch"] = self._arch_info
 
-            wavefront_size = self._arch_info.get('wavefront_size', 64)
-            infinity_cache = self._arch_info.get('infinity_cache', False)
+            wavefront_size = self._arch_info.get("wavefront_size", 64)
+            infinity_cache = self._arch_info.get("infinity_cache", False)
             self._logger.info(
                 f"✅ AMD GPU 架构: {self._arch_info['arch']}"
                 f"（Wavefront={wavefront_size}，"
@@ -631,34 +810,42 @@ class AmdGPUOptimizer:
                 f"   架构特性将使用保守默认值（GCN，Wavefront=64）"
             )
             self._arch_info = {
-                'arch': 'Unknown', 'wavefront_size': 64,
-                'infinity_cache': False, 'chiplet': False,
-                'is_cdna': False, 'lds_kb': 64, 'memory_type': 'Unknown',
+                "arch": "Unknown",
+                "wavefront_size": 64,
+                "infinity_cache": False,
+                "chiplet": False,
+                "is_cdna": False,
+                "lds_kb": 64,
+                "memory_type": "Unknown",
             }
-            result['arch'] = self._arch_info
+            result["arch"] = self._arch_info
         except Exception as e:
             self._logger.warning(
                 f"⚠️ AMD 架构识别失败（非致命）: {type(e).__name__}: {e}\n"
                 f"   架构特性将使用保守默认值（GCN，Wavefront=64）"
             )
             self._arch_info = {
-                'arch': 'Unknown', 'wavefront_size': 64,
-                'infinity_cache': False, 'chiplet': False,
-                'is_cdna': False, 'lds_kb': 64, 'memory_type': 'Unknown',
+                "arch": "Unknown",
+                "wavefront_size": 64,
+                "infinity_cache": False,
+                "chiplet": False,
+                "is_cdna": False,
+                "lds_kb": 64,
+                "memory_type": "Unknown",
             }
-            result['arch'] = self._arch_info
+            result["arch"] = self._arch_info
 
         # 3. Wavefront 对齐验证
         try:
-            work_group_size = self._config.get('work_group_size', 256)
+            work_group_size = self._config.get("work_group_size", 256)
             validator = AmdWavefrontValidator(
                 arch_info=self._arch_info,
                 engine_logger=self._logger,
             )
             self._wavefront_result = validator.validate(work_group_size)
-            result['wavefront'] = self._wavefront_result
+            result["wavefront"] = self._wavefront_result
 
-            if self._wavefront_result['valid']:
+            if self._wavefront_result["valid"]:
                 self._logger.info(
                     f"✅ AMD Wavefront 对齐验证通过: "
                     f"work_group_size={work_group_size} 是 "
@@ -671,14 +858,14 @@ class AmdGPUOptimizer:
                 f"   Wavefront 对齐将跳过"
             )
             self._wavefront_result = {}
-            result['wavefront'] = {}
+            result["wavefront"] = {}
         except Exception as e:
             self._logger.warning(
                 f"⚠️ AMD Wavefront 验证失败（非致命）: {type(e).__name__}: {e}\n"
                 f"   Wavefront 对齐将跳过"
             )
             self._wavefront_result = {}
-            result['wavefront'] = {}
+            result["wavefront"] = {}
 
         # 4. 显存优化配置
         try:
@@ -688,14 +875,14 @@ class AmdGPUOptimizer:
                 engine_logger=self._logger,
             )
             self._memory_config = mem_optimizer.compute()
-            result['memory'] = self._memory_config
+            result["memory"] = self._memory_config
 
-            mem_type = self._memory_config.get('memory_type', 'Unknown')
-            mem_gb = self._memory_config.get('global_mem_gb', 0.0)
-            mem_ratio = self._memory_config.get('memory_ratio', 0.60)
-            ic_hint = self._memory_config.get('infinity_cache_hint', False)
-            ic_bonus = self._memory_config.get('infinity_cache_bonus', 0.0)
-            
+            mem_type = self._memory_config.get("memory_type", "Unknown")
+            mem_gb = self._memory_config.get("global_mem_gb", 0.0)
+            mem_ratio = self._memory_config.get("memory_ratio", 0.60)
+            ic_hint = self._memory_config.get("infinity_cache_hint", False)
+            ic_bonus = self._memory_config.get("infinity_cache_bonus", 0.0)
+
             self._logger.info(
                 f"\u2705 AMD 显存配置: {mem_gb:.1f}GB（类型: {mem_type}），"
                 f"memory_ratio={mem_ratio:.2f}"
@@ -710,36 +897,40 @@ class AmdGPUOptimizer:
                 f"   显存配置将使用保守默认值"
             )
             self._memory_config = {
-                'memory_ratio': 0.60, 'global_mem_gb': 0.0,
-                'memory_type': 'Unknown', 'infinity_cache_hint': False,
-                'infinity_cache_bonus': 0.0,
+                "memory_ratio": 0.60,
+                "global_mem_gb": 0.0,
+                "memory_type": "Unknown",
+                "infinity_cache_hint": False,
+                "infinity_cache_bonus": 0.0,
             }
-            result['memory'] = self._memory_config
+            result["memory"] = self._memory_config
         except Exception as e:
             self._logger.warning(
                 f"⚠️ AMD 显存优化配置失败（非致命）: {type(e).__name__}: {e}\n"
                 f"   显存配置将使用保守默认值"
             )
             self._memory_config = {
-                'memory_ratio': 0.60, 'global_mem_gb': 0.0,
-                'memory_type': 'Unknown', 'infinity_cache_hint': False,
-                'infinity_cache_bonus': 0.0,
+                "memory_ratio": 0.60,
+                "global_mem_gb": 0.0,
+                "memory_type": "Unknown",
+                "infinity_cache_hint": False,
+                "infinity_cache_bonus": 0.0,
             }
-            result['memory'] = self._memory_config
+            result["memory"] = self._memory_config
 
         # 5. 快速数学优化禁用确认（加密/哈希必须精确）
-        result['fast_math_disabled'] = True
+        result["fast_math_disabled"] = True
         self._logger.info("✅ 快速数学优化: 已禁用（保证 SHA256/RIPEMD160/secp256k1 精度）")
 
         # 6. 汇总优化建议
-        result['recommended_memory_ratio'] = (
-            self._memory_config.get('memory_ratio', 0.60) if self._memory_config else 0.60
+        result["recommended_memory_ratio"] = (
+            self._memory_config.get("memory_ratio", 0.60) if self._memory_config else 0.60
         )
-        result['recommended_wavefront_size'] = (
-            self._arch_info.get('wavefront_size', 64) if self._arch_info else 64
+        result["recommended_wavefront_size"] = (
+            self._arch_info.get("wavefront_size", 64) if self._arch_info else 64
         )
-        result['arch_name'] = (
-            self._arch_info.get('arch', 'Unknown') if self._arch_info else 'Unknown'
+        result["arch_name"] = (
+            self._arch_info.get("arch", "Unknown") if self._arch_info else "Unknown"
         )
 
         self._logger.info("=" * 60)
@@ -755,43 +946,43 @@ class AmdGPUOptimizer:
             包含当前优化状态的字典
         """
         driver_version = None
-        driver_type = 'Unknown'
+        driver_type = "Unknown"
         if self._driver_info:
-            driver_version = self._driver_info.get('version_str')
-            driver_type = self._driver_info.get('driver_type', 'Unknown')
+            driver_version = self._driver_info.get("version_str")
+            driver_type = self._driver_info.get("driver_type", "Unknown")
 
-        arch_name = 'Unknown'
+        arch_name = "Unknown"
         wavefront_size = 64
         if self._arch_info:
-            arch_name = self._arch_info.get('arch', 'Unknown')
-            wavefront_size = self._arch_info.get('wavefront_size', 64)
+            arch_name = self._arch_info.get("arch", "Unknown")
+            wavefront_size = self._arch_info.get("wavefront_size", 64)
 
         memory_ratio = 0.60
         global_mem_gb = 0.0
-        memory_type = 'Unknown'
+        memory_type = "Unknown"
         infinity_cache = False
         if self._memory_config:
-            memory_ratio = self._memory_config.get('memory_ratio', 0.60)
-            global_mem_gb = self._memory_config.get('global_mem_gb', 0.0)
-            memory_type = self._memory_config.get('memory_type', 'Unknown')
-            infinity_cache = self._memory_config.get('infinity_cache_hint', False)
+            memory_ratio = self._memory_config.get("memory_ratio", 0.60)
+            global_mem_gb = self._memory_config.get("global_mem_gb", 0.0)
+            memory_type = self._memory_config.get("memory_type", "Unknown")
+            infinity_cache = self._memory_config.get("infinity_cache_hint", False)
 
         wavefront_valid = True
         if self._wavefront_result:
-            wavefront_valid = self._wavefront_result.get('valid', True)
+            wavefront_valid = self._wavefront_result.get("valid", True)
 
         return {
-            'vendor': 'AMD',
-            'driver_version': driver_version,
-            'driver_type': driver_type,
-            'arch': arch_name,
-            'wavefront_size': wavefront_size,
-            'wavefront_aligned': wavefront_valid,
-            'global_mem_gb': global_mem_gb,
-            'memory_type': memory_type,
-            'memory_ratio': memory_ratio,
-            'infinity_cache': infinity_cache,
-            'fast_math_disabled': True,
-            'driver_info': self._driver_info or {},
-            'arch_info': self._arch_info or {},
+            "vendor": "AMD",
+            "driver_version": driver_version,
+            "driver_type": driver_type,
+            "arch": arch_name,
+            "wavefront_size": wavefront_size,
+            "wavefront_aligned": wavefront_valid,
+            "global_mem_gb": global_mem_gb,
+            "memory_type": memory_type,
+            "memory_ratio": memory_ratio,
+            "infinity_cache": infinity_cache,
+            "fast_math_disabled": True,
+            "driver_info": self._driver_info or {},
+            "arch_info": self._arch_info or {},
         }

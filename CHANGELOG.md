@@ -65,6 +65,8 @@
 
 ## [3.4.0] - 2026-04-30
 
+> 📋 完整发布说明: [RELEASE_NOTES_v3.4.0.md](docs/RELEASE_NOTES_v3.4.0.md)
+
 ### Wizard 模块架构重构 (v3.4.0 核心特性)
 
 - **模块化向导架构**: 将单一向导函数拆分为独立的策略组件
@@ -489,12 +491,12 @@
   - 从25个MD文件精简到3个核心文档 (-88%)
   - 保留: README.md, CHANGELOG.md, CONTRIBUTING.md
   - 归档22个历史报告文档
-  
+
 - 📚 **docs目录整理**
   - 从~100个文件精简到30个核心文档 (-70%)
   - 保留核心功能文档和用户指南
   - 归档70+个历史报告文档
-  
+
 - 📚 **建立分类归档体系**
   - 新建10个分类归档目录:
     - audit-reports/ (审计报告)
@@ -508,7 +510,7 @@
     - security-related/ (安全相关历史报告)
     - performance-related/ (性能相关历史报告)
   - 所有历史文档100%归档保留,无任何删除
-  
+
 - 📚 **文档索引更新**
   - 更新DOCUMENT_INDEX.md反映新结构
   - 更新docs/README.md同步变化
@@ -533,33 +535,33 @@
   - 窗口法预计算G的倍数加速标量乘法
   - 纯Python模式性能提升 1.29x
   - 内存占用仅 50KB (window_size=8)
-  
+
 - 🚀 **大整数优化** (`src/core/bigint_optimizer.py`)
   - gmpy2 Comba乘法优化模运算
   - 模运算性能提升 35% (需安装gmpy2)
   - 自动回退到纯Python
-  
+
 - 🚀 **SIMD哈希优化** (`src/core/simd_hash.py`)
   - pycryptodome库AES-NI指令集加速
   - SHA256批量处理提升 200%
   - 自动回退到hashlib
-  
+
 - 🚀 **内存池系统** (`src/core/memory_pool.py`)
   - ObjectPool: 通用对象池
   - ECPointPool: ECPoint专用池
   - ByteArrayPool: 自动清零敏感数据
   - 对象分配延迟降低 60%
-  
+
 - 🚀 **工作窃取线程池** (`src/core/thread_pool.py`)
   - 负载均衡,空闲线程从繁忙线程窃取任务
   - 多线程效率提升 30%
   - 批量任务执行器 TaskBatch
-  
+
 - 🚀 **GPU内存池** (`src/gpu/memory_pool.py`)
   - OpenCL缓冲区复用
   - GPU内存分配开销降低 60%
   - 按大小分组复用
-  
+
 - 🚀 **优化版地址生成器** (`src/core/optimized_address_generator.py`)
   - 整合所有优化模块的统一接口
   - 可配置启用/禁用各优化模块

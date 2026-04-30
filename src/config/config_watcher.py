@@ -84,7 +84,7 @@ class ConfigWatcher:
         self._stop_event = threading.Event()
         self._stop_event.set()
         self._lock = threading.Lock()
-        self._observer: Optional['Observer'] = None
+        self._observer: Optional["Observer"] = None
         self._poll_thread: Optional[threading.Thread] = None
         self._last_mtime: float = 0.0
         self._last_reload_time: float = 0.0
@@ -159,7 +159,8 @@ class ConfigWatcher:
             self._observer.start()
             logger.info(
                 "ConfigWatcher 已启动 (watchdog, 路径: %s, 防抖: %.1fs)",
-                self._config_path, self._debounce_seconds,
+                self._config_path,
+                self._debounce_seconds,
             )
             return True
         except Exception as e:
@@ -179,7 +180,9 @@ class ConfigWatcher:
         self._poll_thread.start()
         logger.info(
             "ConfigWatcher 已启动 (polling, 路径: %s, 间隔: %.1fs, 防抖: %.1fs)",
-            self._config_path, self._poll_interval, self._debounce_seconds,
+            self._config_path,
+            self._poll_interval,
+            self._debounce_seconds,
         )
         return True
 
@@ -222,4 +225,5 @@ class ConfigWatcher:
         try:
             self.stop()
         except Exception:
+            # 析构期间忽略所有异常，避免GC崩溃
             pass

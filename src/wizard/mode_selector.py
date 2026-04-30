@@ -22,9 +22,9 @@ class ModeSelector(SelectorProtocol):
     """碰撞模式选择器"""
 
     MODES = {
-        '1': {'name': 'random', 'desc': '随机碰撞（推荐新手）'},
-        '2': {'name': 'range', 'desc': '范围扫描（需要指定起始/结束私钥）'},
-        '3': {'name': 'brute_force', 'desc': '暴力穷举（研究用途）'},
+        "1": {"name": "random", "desc": "随机碰撞（推荐新手）"},
+        "2": {"name": "range", "desc": "范围扫描（需要指定起始/结束私钥）"},
+        "3": {"name": "brute_force", "desc": "暴力穷举（研究用途）"},
     }
 
     def select(self, compact: bool = False) -> Tuple[str, Optional[str], Optional[str]]:
@@ -61,16 +61,16 @@ class ModeSelector(SelectorProtocol):
                 choice = "1"
 
             if choice in self.MODES:
-                mode_name = self.MODES[choice]['name']
+                mode_name = self.MODES[choice]["name"]
                 break
             else:
                 print("    [ERROR] 无效选项，请重新选择")
 
-        if mode_name == 'random':
+        if mode_name == "random":
             return mode_name, None, None
-        elif mode_name == 'range':
+        elif mode_name == "range":
             return self._select_range()
-        elif mode_name == 'brute_force':
+        elif mode_name == "brute_force":
             return self._select_brute_force()
 
         return mode_name, None, None
@@ -96,7 +96,7 @@ class ModeSelector(SelectorProtocol):
             print("    [ERROR] 无效的十六进制格式")
             return self._select_range()
 
-        return 'range', start_key, end_key
+        return "range", start_key, end_key
 
     def _select_brute_force(self) -> Tuple[str, str, None]:
         """选择暴力穷举模式参数"""
@@ -113,8 +113,8 @@ class ModeSelector(SelectorProtocol):
             print("    [ERROR] 无效的十六进制格式")
             return self._select_brute_force()
 
-        return 'brute_force', start_key, None
+        return "brute_force", start_key, None
 
     def _select_compact(self) -> Tuple[str, Optional[str], Optional[str]]:
         """紧凑模式选择"""
-        return 'random', None, None
+        return "random", None, None

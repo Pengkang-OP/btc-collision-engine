@@ -5,6 +5,7 @@
 
 迁移日期: 2026-04-22
 """
+
 import logging
 from ..utils import init_logging, get_configured_logger
 from typing import Optional, Any
@@ -14,33 +15,37 @@ logger = get_configured_logger("GPUDeviceHelper")
 
 class GPUDeviceHelper:
     """GPU设备辅助类
-    
+
     提供静态方法供GPUKernel和其他模块使用。
     独立于GPU引擎，避免循环依赖。
-    
+
     使用示例:
         >>> from src.gpu.device_helper import GPUDeviceHelper
         >>> GPUDeviceHelper.handle_gpu_batch_error("random", exception, stats)
     """
-    
+
     # P2优化：提取资源错误关键词为类常量，避免重复定义
     RESOURCE_ERROR_KEYWORDS = [
-        "out of resources", "memory", "out of memory", 
-        "allocation failed", "insufficient", "resource exhausted",
-        "cl_out_of_resources", "cl_mem_object_allocation_failure"
+        "out of resources",
+        "memory",
+        "out of memory",
+        "allocation failed",
+        "insufficient",
+        "resource exhausted",
+        "cl_out_of_resources",
+        "cl_mem_object_allocation_failure",
     ]
     """GPU资源不足错误关键词列表"""
-    
+
     @staticmethod
-    def handle_gpu_batch_error(mode: str, e: Exception, 
-                              stats: Optional[Any] = None) -> bool:
+    def handle_gpu_batch_error(mode: str, e: Exception, stats: Optional[Any] = None) -> bool:
         """统一处理GPU计算批次异常
-        
+
         Args:
             mode: 计算模式（随机碰撞/范围扫描/暴力穷举）
             e: 捕获的异常
             stats: 统计对象（可选）
-            
+
         Returns:
             bool: 是否应该继续执行（总是返回True）
         """
@@ -51,8 +56,7 @@ class GPUDeviceHelper:
             error_msg = str(e).lower()
             # P2优化：使用类常量
             is_resource_error = any(
-                keyword in error_msg 
-                for keyword in GPUDeviceHelper.RESOURCE_ERROR_KEYWORDS
+                keyword in error_msg for keyword in GPUDeviceHelper.RESOURCE_ERROR_KEYWORDS
             )
             if is_resource_error:
                 logger.error(f"GPU {mode}失败（资源不足）: {type(e).__name__}: {e}")
@@ -74,41 +78,38 @@ class GPUDeviceHelper:
             if stats:
                 stats.record_gpu_error(is_resource_error=False)
         return True  # 总是继续执行
-    
+
     @staticmethod
     def get_device_capabilities(device: Any) -> dict:
         """获取设备能力信息
-        
+
         Args:
             device: GPUDevice实例
-            
+
         Returns:
             设备能力字典
         """
         return {
-            'max_work_group_size': getattr(device, 'max_work_group_size', 256),
-            'max_compute_units': getattr(device, 'max_compute_units', 1),
-            'global_mem_size': getattr(device, 'global_mem_size', 0),
-            'local_mem_size': getattr(device, 'local_mem_size', 0),
-            'enable_async_execution': getattr(device, 'enable_async_execution', False),
+            "max_work_group_size": getattr(device, "max_work_group_size", 256),
+            "max_compute_units": getattr(device, "max_compute_units", 1),
+            "global_mem_size": getattr(device, "global_mem_size", 0),
+            "local_mem_size": getattr(device, "local_mem_size", 0),
+            "enable_async_execution": getattr(device, "enable_async_execution", False),
         }
-    
+
     @staticmethod
     def is_resource_error(exception: Exception) -> bool:
         """判断是否为资源不足错误
-        
+
         Args:
             exception: 异常对象
-            
+
         Returns:
             bool: 是否为资源错误
         """
         if not isinstance(exception, (RuntimeError, ValueError)):
             return False
-        
+
         error_msg = str(exception).lower()
         # P2优化：使用类常量
-        return any(
-            keyword in error_msg 
-            for keyword in GPUDeviceHelper.RESOURCE_ERROR_KEYWORDS
-        )
+        return any(keyword in error_msg for keyword in GPUDeviceHelper.RESOURCE_ERROR_KEYWORDS)

@@ -30,10 +30,10 @@ from .events import WizardEvent
 from .selector_protocol import SelectorProtocol
 
 __all__ = [
-    'WizardEngine',
-    'WizardResult',
-    'WizardConfig',
-    'WizardMode',
-    'WizardEvent',
-    'SelectorProtocol',
+    "WizardEngine",
+    "WizardResult",
+    "WizardConfig",
+    "WizardMode",
+    "WizardEvent",
+    "SelectorProtocol",
 ]

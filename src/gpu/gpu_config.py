@@ -22,21 +22,22 @@ class GPURecoveryConfig:
 
     控制 GPU 故障后的自动恢复行为。
     """
+
     max_retry_count: int = 3
     retry_delay_seconds: float = 5.0
     batch_size_reduction_factor: float = 0.5
     auto_redistribute: bool = True
 
     @classmethod
-    def from_dict(cls, d: Optional[Dict[str, Any]] = None) -> 'GPURecoveryConfig':
+    def from_dict(cls, d: Optional[Dict[str, Any]] = None) -> "GPURecoveryConfig":
         """从 dict 构造（兼容旧接口）"""
         if not d:
             return cls()
         return cls(
-            max_retry_count=d.get('max_retry_count', 3),
-            retry_delay_seconds=d.get('retry_delay_seconds', 5.0),
-            batch_size_reduction_factor=d.get('batch_size_reduction_factor', 0.5),
-            auto_redistribute=d.get('auto_redistribute', True),
+            max_retry_count=d.get("max_retry_count", 3),
+            retry_delay_seconds=d.get("retry_delay_seconds", 5.0),
+            batch_size_reduction_factor=d.get("batch_size_reduction_factor", 0.5),
+            auto_redistribute=d.get("auto_redistribute", True),
         )
 
 
@@ -46,6 +47,7 @@ class DataMonitorConfig:
 
     兼容 DataMonitor 的所有配置项，支持 dict-like .get() 访问。
     """
+
     check_interval: float = 1.0
     throughput_threshold: float = 0.5
     error_rate_threshold: float = 0.1
@@ -61,20 +63,20 @@ class DataMonitorConfig:
         return getattr(self, key, default)
 
     @classmethod
-    def from_dict(cls, d: Optional[Dict[str, Any]] = None) -> 'DataMonitorConfig':
+    def from_dict(cls, d: Optional[Dict[str, Any]] = None) -> "DataMonitorConfig":
         """从 dict 构造"""
         if not d:
             return cls()
         return cls(
-            check_interval=d.get('check_interval', 1.0),
-            throughput_threshold=d.get('throughput_threshold', 0.5),
-            error_rate_threshold=d.get('error_rate_threshold', 0.1),
-            stale_data_timeout=d.get('stale_data_timeout', 10.0),
-            max_issues_per_minute=d.get('max_issues_per_minute', 100),
-            max_seen_keys=d.get('max_seen_keys', 100000),
-            max_seen_addresses=d.get('max_seen_addresses', 10000),
-            max_retry_count=d.get('max_retry_count', 3),
-            anomaly_threshold=d.get('anomaly_threshold', 0.1),
+            check_interval=d.get("check_interval", 1.0),
+            throughput_threshold=d.get("throughput_threshold", 0.5),
+            error_rate_threshold=d.get("error_rate_threshold", 0.1),
+            stale_data_timeout=d.get("stale_data_timeout", 10.0),
+            max_issues_per_minute=d.get("max_issues_per_minute", 100),
+            max_seen_keys=d.get("max_seen_keys", 100000),
+            max_seen_addresses=d.get("max_seen_addresses", 10000),
+            max_retry_count=d.get("max_retry_count", 3),
+            anomaly_threshold=d.get("anomaly_threshold", 0.1),
         )
 
 
@@ -96,6 +98,7 @@ class MultiGPUConfig:
         auto_pause_on_critical: 严重异常时是否自动暂停 GPU
         per_device_config: 每个设备的独立配置覆盖
     """
+
     total_pool_mb: int = 512
     enable_data_monitor: bool = True
     data_monitor: DataMonitorConfig = field(default_factory=DataMonitorConfig)
@@ -107,7 +110,7 @@ class MultiGPUConfig:
     per_device_config: Dict[str, Dict[str, Any]] = field(default_factory=dict)
 
     @classmethod
-    def from_dict(cls, d: Optional[Dict[str, Any]] = None) -> 'MultiGPUConfig':
+    def from_dict(cls, d: Optional[Dict[str, Any]] = None) -> "MultiGPUConfig":
         """从 dict 构造（兼容旧接口，渐进式迁移用）
 
         Args:
@@ -119,15 +122,15 @@ class MultiGPUConfig:
         if not d:
             return cls()
         return cls(
-            total_pool_mb=d.get('total_pool_mb', 512),
-            enable_data_monitor=d.get('enable_data_monitor', True),
-            data_monitor=DataMonitorConfig.from_dict(d.get('data_monitor')),
-            gpu_recovery=GPURecoveryConfig.from_dict(d.get('gpu_recovery')),
-            worker_join_timeout=d.get('worker_join_timeout', 30),
-            workload_monitor_interval=d.get('workload_monitor_interval', 5),
-            auto_rebalance=d.get('auto_rebalance', True),
-            auto_pause_on_critical=d.get('auto_pause_on_critical', False),
-            per_device_config=d.get('per_device_config', {}),
+            total_pool_mb=d.get("total_pool_mb", 512),
+            enable_data_monitor=d.get("enable_data_monitor", True),
+            data_monitor=DataMonitorConfig.from_dict(d.get("data_monitor")),
+            gpu_recovery=GPURecoveryConfig.from_dict(d.get("gpu_recovery")),
+            worker_join_timeout=d.get("worker_join_timeout", 30),
+            workload_monitor_interval=d.get("workload_monitor_interval", 5),
+            auto_rebalance=d.get("auto_rebalance", True),
+            auto_pause_on_critical=d.get("auto_pause_on_critical", False),
+            per_device_config=d.get("per_device_config", {}),
         )
 
 
@@ -140,27 +143,28 @@ class WorkerConfig:
         work_group_size: OpenCL 工作组大小
         max_memory_mb: 最大内存使用 (MB)
     """
+
     batch_size: Optional[int] = None
     work_group_size: int = 256
     max_memory_mb: Optional[int] = None
 
     @classmethod
-    def from_dict(cls, d: Optional[Dict[str, Any]] = None) -> 'WorkerConfig':
+    def from_dict(cls, d: Optional[Dict[str, Any]] = None) -> "WorkerConfig":
         """从 dict 构造（兼容旧接口）"""
         if not d:
             return cls()
         return cls(
-            batch_size=d.get('batch_size'),
-            work_group_size=d.get('work_group_size', 256),
-            max_memory_mb=d.get('max_memory_mb'),
+            batch_size=d.get("batch_size"),
+            work_group_size=d.get("work_group_size", 256),
+            max_memory_mb=d.get("max_memory_mb"),
         )
 
     def to_dict(self) -> Dict[str, Any]:
         """转换回 dict（兼容需要 dict 的旧接口）"""
         result: Dict[str, Any] = {
-            'batch_size': self.batch_size,
-            'work_group_size': self.work_group_size,
+            "batch_size": self.batch_size,
+            "work_group_size": self.work_group_size,
         }
         if self.max_memory_mb is not None:
-            result['max_memory_mb'] = self.max_memory_mb
+            result["max_memory_mb"] = self.max_memory_mb
         return result

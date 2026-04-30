@@ -18,8 +18,6 @@ bandit>=1.7.0               # 安全扫描
 
 # 性能分析
 memory-profiler>=0.61       # 内存占用分析
-numba>=0.60.0               # JIT 编译加速（可选，开发阶段验证用）
-numpy>=1.24.0               # Numba 依赖
 
 # 文档工具
 sphinx>=7.0.0

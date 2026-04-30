@@ -24,7 +24,7 @@ from .interfaces import WizardResult
 class ConfigBuilder:
     """配置构建器"""
 
-    VALID_MODES = frozenset({'random', 'range', 'brute_force'})
+    VALID_MODES = frozenset({"random", "range", "brute_force"})
 
     def build(self, result: WizardResult) -> List[str]:
         """构建命令行
@@ -47,10 +47,10 @@ class ConfigBuilder:
                 f"Invalid mode '{result.mode}'. Valid modes: {', '.join(sorted(self.VALID_MODES))}"
             )
 
-        if result.mode in ('range', 'brute_force') and not result.start_key:
+        if result.mode in ("range", "brute_force") and not result.start_key:
             raise ValueError(f"Mode '{result.mode}' requires a start_key")
 
-        if result.mode == 'range' and not result.end_key:
+        if result.mode == "range" and not result.end_key:
             raise ValueError("Mode 'range' requires an end_key")
 
         cmd = ["python", "key_collision_cli.py"]
@@ -114,7 +114,7 @@ class ConfigBuilder:
             是否保存成功
         """
         try:
-            with open(filepath, 'w', encoding='utf-8') as f:
+            with open(filepath, "w", encoding="utf-8") as f:
                 f.write("#!/bin/bash\n")
                 f.write("# BTC Collision Engine - 启动命令\n")
                 f.write("# 生成时间: \n")

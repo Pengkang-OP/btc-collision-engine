@@ -53,9 +53,9 @@ class OptionSelector(SelectorProtocol):
             if response == "":
                 return True
 
-            if response in ('y', 'yes'):
+            if response in ("y", "yes"):
                 return True
-            elif response in ('n', 'no'):
+            elif response in ("n", "no"):
                 return False
             else:
                 print("    [ERROR] 无效选项，请输入 y 或 n")
@@ -68,9 +68,9 @@ class OptionSelector(SelectorProtocol):
             if response == "":
                 return True
 
-            if response in ('y', 'yes'):
+            if response in ("y", "yes"):
                 return True
-            elif response in ('n', 'no'):
+            elif response in ("n", "no"):
                 return False
             else:
                 print("    [ERROR] 无效选项，请输入 y 或 n")

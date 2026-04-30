@@ -1,284 +1,132 @@
-"""GPU引擎外观层
+"""GPU引擎外观层 - 统一GPU引擎入口
 
-封装GPU设备、上下文、内核的初始化和执行逻辑，
-提供统一的简化接口给上层引擎使用。
+提供 GPUEngineFacade 类，封装设备管理、内核执行和异步管道。
+降低外部调用方与底层 GPU 模块的耦合。
 
-职责:
-- GPU资源生命周期管理
-- 内核编译与加载
-- 异步执行调度
-- 缓冲区管理
+组件:
+- DeviceManagerAdapter: GPU设备管理
+- GPUKernelAdapter: GPU内核执行
+- AsyncPipelineAdapter: 异步执行管道
 
-版本: v2.0 (Phase 2)
-创建日期: 2026-04-29
-更新日期: 2026-04-29
+版本: v1.0.0 (Phase 2)
+创建日期: 2026-04-30
 """
 
-from typing import Optional, Dict, Any, List, Tuple
 import logging
-import threading
-import time
+from typing import Optional, Dict, Any, List
 
-from .protocols import (
-    IGPUDeviceManager,
-    IKernelExecutor,
-    IAsyncExecutionPipeline,
-    GPUExecutionContext,
-    GPUDevice,
-    GPUContext,
-    GPUKernel,
-    CollisionResult,
-)
+from .device_manager_adapter import DeviceManagerAdapter
+from .kernel_adapter import GPUKernelAdapter
+from .async_pipeline_adapter import AsyncPipelineAdapter
+from .protocols import GPUDevice, GPUContext, GPUKernel
 
 logger = logging.getLogger(__name__)
 
 
 class GPUEngineFacade:
-    """GPU引擎外观类
-    
-    职责:
-    - 封装GPU设备/上下文/内核的复杂性
-    - 提供统一的执行接口
-    - 管理异步执行管道
-    - 资源生命周期管理
-    
-    使用示例:
-        >>> facade = GPUEngineFacade(config=config)
-        >>> facade.initialize(device_index=-1, batch_size=1000000)
-        >>> matches, time_ms = facade.execute_batch(seed, batch_size)
-        >>> facade.cleanup()
+    """GPU引擎外观层
+
+    统一封装 GPU 设备管理、内核执行和异步管道，
+    为上层引擎提供简洁的接口。
+
+    Usage:
+        facade = GPUEngineFacade(config=config)
+        facade.initialize(device_index=0, batch_size=1_000_000)
+        # ... 使用 facade.kernel, facade.device 等
+        facade.cleanup()
     """
-    
+
     def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
-        """初始化GPU引擎外观
-        
+        """初始化 GPU 引擎外观
+
         Args:
-            config: 配置字典
+            config: GPU 配置字典
         """
         self.config = config or {}
-        self._context: Optional[GPUExecutionContext] = None
         self._initialized = False
-        
-        # 延迟初始化组件
-        self._device_manager: Optional[IGPUDeviceManager] = None
-        self._kernel_executor: Optional[IKernelExecutor] = None
-        self._async_pipeline: Optional[IAsyncExecutionPipeline] = None
-        
-        # 线程安全
-        self._lock = threading.RLock()
-        
-        logger.debug("GPUEngineFacade 初始化完成")
-    
+
+        # Phase 2 适配器
+        self._device_manager = DeviceManagerAdapter(config=self.config)
+        self._kernel_adapter = GPUKernelAdapter(config=self.config)
+        self._async_pipeline = AsyncPipelineAdapter(config=self.config)
+
+        # 暴露属性（向后兼容）
+        self.device: Optional[GPUDevice] = None
+        self.context: Optional[GPUContext] = None
+        self.kernel: Optional[GPUKernel] = None
+        self.async_executor = self._async_pipeline
+
     def initialize(
         self,
-        device_index: int = -1,
-        batch_size: Optional[int] = None
+        device_index: int = 0,
+        batch_size: Optional[int] = None,
+        targets: Any = None,
+        check_uncompressed: int = 0,
     ) -> None:
-        """初始化GPU资源
-        
+        """初始化 GPU 设备、上下文和内核
+
         Args:
-            device_index: GPU设备索引，-1表示自动选择
-            batch_size: 批次大小，None表示自动计算
-            
-        Raises:
-            RuntimeError: GPU初始化失败
+            device_index: GPU 设备索引
+            batch_size: 批次大小
+            targets: 目标地址（可选）
+            check_uncompressed: 是否检查未压缩地址
         """
-        with self._lock:
-            if self._initialized:
-                logger.warning("GPU引擎已初始化，跳过重复初始化")
-                return
-            
-            try:
-                # 1. 创建执行上下文
-                batch_size = batch_size or self.config.get('batch_size', 1_000_000)
-                self._context = GPUExecutionContext(
-                    batch_size=batch_size,
-                    vendor="unknown",  # 将在设备选择后更新
-                    config=self.config,
-                    initialized_at=time.time()
-                )
-                
-                # 2. 选择GPU设备
-                self._device_manager = self._create_device_manager()
-                device = self._device_manager.select_device(device_index)
-                self._context.device = device
-                self._context.vendor = self._detect_vendor(device)
-                
-                # 3. 创建GPU上下文
-                context = self._device_manager.create_context(device)
-                self._context.context = context
-                
-                # 4. 编译内核
-                self._kernel_executor = self._create_kernel_executor()
-                kernel = self._kernel_executor.compile_kernel(device, context)
-                self._context.kernel = kernel
-                
-                # 5. 初始化异步管道
-                self._async_pipeline = self._create_async_pipeline()
-                self._async_pipeline.initialize(kernel, batch_size)
-                
-                self._initialized = True
-                logger.info(
-                    f"GPU引擎初始化完成: "
-                    f"device_index={device_index}, "
-                    f"batch_size={batch_size:,}, "
-                    f"vendor={self._context.vendor}"
-                )
-                
-            except Exception as e:
-                logger.error(f"GPU引擎初始化失败: {e}")
-                self.cleanup()
-                raise RuntimeError(f"GPU引擎初始化失败: {e}") from e
-    
-    def execute_batch(
-        self,
-        seed: bytes,
-        batch_size: Optional[int] = None
-    ) -> CollisionResult:
-        """执行单个批次
-        
-        Args:
-            seed: 32字节随机种子
-            batch_size: 批次大小，None使用初始化时的值
-            
+        if self._initialized:
+            logger.warning("GPUEngineFacade 已初始化，跳过重复初始化")
+            return
+
+        # 选择并创建设备
+        device = self._device_manager.select_device(device_index)
+        if device is not None:
+            self.device = device
+            self.context = self._device_manager.create_context(device)
+
+        self._initialized = True
+        logger.info(f"GPUEngineFacade 初始化完成: device={device}")
+
+    def get_device_info(self) -> Dict[str, Any]:
+        """获取 GPU 设备信息
+
         Returns:
-            CollisionResult: 碰撞结果
-            
-        Raises:
-            RuntimeError: 引擎未初始化
+            设备信息字典
         """
-        with self._lock:
-            if not self._initialized:
-                raise RuntimeError("GPU引擎未初始化，请先调用initialize()")
-            
-            if not self._context:
-                raise RuntimeError("GPU执行上下文未创建")
-            
-            batch_size = batch_size or self._context.batch_size
-        
-        start_time = time.time()
-        
-        try:
-            # 委托给异步管道执行
-            with self._lock:
-                async_pipeline = self._async_pipeline
-            
-            matches, exec_time_ms = async_pipeline.run_batch(  # type: ignore[union-attr]
-                seed=seed,
-                batch_size=batch_size
-            )
-            
-            total_elapsed_ms = (time.time() - start_time) * 1000
-            
-            result = CollisionResult(
-                matches=matches,
-                execution_time_ms=exec_time_ms,
-                batch_size=batch_size,
-                device_id=self._context.device.device_id if self._context.device else -1,
-                seed=seed
-            )
-            
-            return result
-            
-        except Exception as e:
-            logger.error(f"GPU批次执行失败: {e}")
-            raise
-    
-    def cleanup(self) -> None:
-        """清理所有GPU资源"""
-        with self._lock:
-            if not self._initialized:
-                return
-            
-            try:
-                # 1. 清理异步管道
-                if self._async_pipeline:
-                    self._async_pipeline.cleanup()
-                    self._async_pipeline = None
-                
-                # 2. 释放设备资源
-                if self._device_manager:
-                    self._device_manager.release_all()
-                    self._device_manager = None
-                
-                # 3. 重置上下文
-                self._context = None
-                self._kernel_executor = None
-                self._initialized = False
-                
-                logger.info("GPU引擎资源清理完成")
-                
-            except Exception as e:
-                logger.error(f"GPU引擎资源清理失败: {e}")
-    
-    def __enter__(self) -> 'GPUEngineFacade':
-        """上下文管理器入口"""
-        return self
-    
-    def __exit__(self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]) -> None:
-        """上下文管理器出口"""
-        self.cleanup()
-        return False  # 不抑制异常
-    
+        if self.device is not None:
+            return self.device.to_dict()
+        return {"status": "not_initialized"}
+
     def is_initialized(self) -> bool:
-        """检查引擎是否已初始化"""
+        """检查是否已初始化"""
         return self._initialized
-    
-    def get_context(self) -> Optional[GPUExecutionContext]:
-        """获取GPU执行上下文"""
-        return self._context
-    
-    # ========== 私有方法 ==========
-    
-    def _create_device_manager(self) -> IGPUDeviceManager:
-        """创庺GPU设备管理器
-            
+
+    def list_devices(self) -> List[GPUDevice]:
+        """列出所有可用 GPU 设备
+
         Returns:
-            GPU设备管理器实例
+            GPU 设备列表
         """
-        # TODO: Phase 2实现 - 从现有GPUDeviceManager适配
-        from ...gpu.device_manager import GPUDeviceManager
-        return GPUDeviceManager(config=self.config)  # type: ignore[return-value]
-    
-    def _create_kernel_executor(self) -> IKernelExecutor:
-        """创建GPU内核执行器
-        
-        Returns:
-            GPU内核执行器实例
-        """
-        # TODO: Phase 2实现 - 从现有GPUKernel适配
-        from .kernel_adapter import GPUKernelAdapter
-        return GPUKernelAdapter(config=self.config)
-    
-    def _create_async_pipeline(self) -> IAsyncExecutionPipeline:
-        """创建异步执行管道
-        
-        Returns:
-            异步执行管道实例
-        """
-        # TODO: Phase 2实现 - 从现有AsyncGPUExecutor适配
-        from .async_pipeline_adapter import AsyncPipelineAdapter
-        return AsyncPipelineAdapter(config=self.config)  # type: ignore[abstract]
-    
-    def _detect_vendor(self, device: GPUDevice) -> str:
-        """检测GPU厂商
-        
-        Args:
-            device: GPU设备实例
-            
-        Returns:
-            厂商标识符: 'intel', 'nvidia', 'amd', 'unknown'
-        """
-        # 如果设备对象已有vendor信息，直接使用
-        if device and device.vendor != "unknown":
-            return device.vendor
-        
-        # TODO: Phase 2实现 - 从现有vendor检测逻辑提取
+        return self._device_manager.list_devices()
+
+    def cleanup(self) -> None:
+        """清理 GPU 资源"""
         try:
-            if device.device_obj:
-                from ...gpu.device import identify_vendor
-                return identify_vendor(device.device_obj)
-        except Exception:
-            pass
-        
-        return "unknown"
+            if self._async_pipeline is not None:
+                self._async_pipeline.cleanup()
+        except Exception as e:
+            logger.error(f"清理异步管道失败: {e}")
+
+        try:
+            if self._device_manager is not None:
+                self._device_manager.release_all()
+        except Exception as e:
+            logger.error(f"清理设备管理器失败: {e}")
+
+        self.device = None
+        self.context = None
+        self.kernel = None
+        self._initialized = False
+        logger.info("GPUEngineFacade 资源清理完成")
+
+    def __repr__(self) -> str:
+        status = "initialized" if self._initialized else "not_initialized"
+        device_name = self.device.name if self.device else "None"
+        return f"GPUEngineFacade(status={status}, device={device_name})"

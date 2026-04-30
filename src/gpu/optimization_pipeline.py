@@ -95,9 +95,7 @@ class PerformanceOptimizationPipeline:
     # 基准测试
     # ------------------------------------------------------------------
 
-    def run_benchmark(
-        self, iterations: int = 5
-    ) -> Dict[str, Any]:
+    def run_benchmark(self, iterations: int = 5) -> Dict[str, Any]:
         """运行 GPU 性能基准测试
 
         Args:

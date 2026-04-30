@@ -71,9 +71,9 @@ class GPUSelector(SelectorProtocol):
         """检测可用GPU设备"""
         try:
             from src.gpu.device import get_available_devices
+
             devices = get_available_devices()
-            return [{'index': i, 'name': d.get('name', 'Unknown')}
-                    for i, d in enumerate(devices)]
+            return [{"index": i, "name": d.get("name", "Unknown")} for i, d in enumerate(devices)]
         except Exception as e:
             print(f"    [WARN] GPU检测失败: {e}")
             return []

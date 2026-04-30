@@ -91,11 +91,7 @@ class Translator:
         返回所有支持的语言代码列表（即 locales/ 目录中的 JSON 文件名）。
         """
         try:
-            return [
-                p.stem
-                for p in self._locales_dir.glob("*.json")
-                if p.stem != "__init__"
-            ]
+            return [p.stem for p in self._locales_dir.glob("*.json") if p.stem != "__init__"]
         except OSError:
             return [_FALLBACK_LANGUAGE]
 

@@ -25,7 +25,7 @@
 
 ### 扩展功能测试 (8项)
 11. 国际化系统 - 中英文翻译
-12. GPU模块基础 - GPUFacade可用性
+12. GPU模块基础 - 设备检测可用性
 13. 监控系统 - MonitoringSystem告警
 14. 性能基准测试 - 密钥生成性能
 15. 边界条件测试 - 无效地址验证
@@ -94,22 +94,22 @@ SUMMARY_FILE = LOG_DIR / "acceptance_test_summary.md"
 
 class SystemMetrics:
     """系统性能指标监控"""
-    
+
     def __init__(self):
         self.start_time = None
         self.metrics_history = []
-    
+
     def start_monitoring(self):
         """开始监控"""
         self.start_time = datetime.now()
-    
+
     def capture_metrics(self) -> Dict[str, Any]:
         """捕获当前系统指标"""
         try:
             cpu_percent = psutil.cpu_percent(interval=1)
             memory = psutil.virtual_memory()
             disk = psutil.disk_usage('.')
-            
+
             metrics = {
                 'timestamp': datetime.now().isoformat(),
                 'cpu_percent': cpu_percent,
@@ -120,21 +120,21 @@ class SystemMetrics:
                 'disk_used_gb': disk.used / 1024 / 1024 / 1024,
                 'disk_total_gb': disk.total / 1024 / 1024 / 1024
             }
-            
+
             self.metrics_history.append(metrics)
             return metrics
         except Exception as e:
             logger.error(f"捕获指标失败: {e}")
             return {}
-    
+
     def get_summary(self) -> Dict[str, Any]:
         """获取指标摘要"""
         if not self.metrics_history:
             return {}
-        
+
         cpu_values = [m.get('cpu_percent', 0) for m in self.metrics_history]
         memory_values = [m.get('memory_percent', 0) for m in self.metrics_history]
-        
+
         return {
             'duration_seconds': (datetime.now() - self.start_time).total_seconds() if self.start_time else 0,
             'samples_count': len(self.metrics_history),
@@ -149,7 +149,7 @@ class SystemMetrics:
 
 class TestSuite:
     """测试套件"""
-    
+
     def __init__(self):
         self.metrics = SystemMetrics()
         self.test_results = {
@@ -163,7 +163,7 @@ class TestSuite:
             'metrics': {},
             'overall_status': 'IN_PROGRESS'
         }
-    
+
     def run_test(self, name: str, test_func, critical: bool = False) -> Tuple[bool, float, str]:
         """运行单个测试"""
         start_time = time.time()
@@ -176,30 +176,30 @@ class TestSuite:
             'started_at': datetime.now().isoformat(),
             'completed_at': None
         }
-        
+
         logger.info(f"=" * 80)
         logger.info(f"开始测试: {name}")
         logger.info(f"=" * 80)
-        
+
         try:
             # 测试前捕获指标
             self.metrics.capture_metrics()
-            
+
             # 运行测试
             test_func()
-            
+
             # 测试后捕获指标
             self.metrics.capture_metrics()
-            
+
             duration = time.time() - start_time
             result['status'] = 'PASSED'
             result['duration_seconds'] = duration
             result['completed_at'] = datetime.now().isoformat()
             self.test_results['passed'] += 1
-            
+
             logger.info(f"✓ 测试通过: {name} ({duration:.2f}s)")
             return True, duration, None
-            
+
         except Exception as e:
             duration = time.time() - start_time
             result['status'] = 'FAILED'
@@ -207,29 +207,29 @@ class TestSuite:
             result['error_message'] = str(e)
             result['completed_at'] = datetime.now().isoformat()
             self.test_results['failed'] += 1
-            
+
             logger.error(f"✗ 测试失败: {name}")
             logger.error(f"错误: {e}")
             import traceback
             logger.error(traceback.format_exc())
-            
+
             return False, duration, str(e)
-        
+
         finally:
             self.test_results['total_tests'] += 1
             self.test_results['tests'].append(result)
-    
+
     def test_environment_validation(self):
         """测试环境验证"""
         logger.info("验证生产环境配置...")
-        
+
         # 检查Python版本
         required_version = (3, 8)
         current_version = sys.version_info
         if current_version < required_version:
             raise RuntimeError(f"Python版本过低: {current_version}, 需要 {required_version}")
         logger.info(f"Python版本: {sys.version}")
-        
+
         # 检查关键依赖
         critical_dependencies = ['numpy', 'psutil', 'pyopencl']
         for dep in critical_dependencies:
@@ -238,7 +238,7 @@ class TestSuite:
                 logger.info(f"✓ 依赖已安装: {dep}")
             except ImportError:
                 raise RuntimeError(f"关键依赖未安装: {dep}")
-        
+
         # 检查目录结构
         required_dirs = ['src', 'tests', 'logs', 'data_logs', 'monitoring_data']
         for d in required_dirs:
@@ -248,7 +248,7 @@ class TestSuite:
                 dir_path.mkdir(parents=True, exist_ok=True)
             else:
                 logger.info(f"✓ 目录存在: {d}")
-        
+
         # 检查配置文件
         config_file = SCRIPT_DIR / 'config.json'
         if not config_file.exists():
@@ -260,9 +260,9 @@ class TestSuite:
                 logger.info("✓ config.json已从config.example.json创建")
             else:
                 raise RuntimeError("配置文件缺失")
-        
+
         logger.info("环境验证完成")
-    
+
     def test_core_crypto_module(self):
         """测试核心加密模块"""
         logger.info("测试核心加密模块...")
@@ -292,39 +292,34 @@ class TestSuite:
 
         logger.info("✓ 密钥生成测试通过")
         logger.info("✓ 核心加密模块测试完成")
-    
+
     def test_gpu_module_basic(self):
         """测试GPU模块基础功能"""
         logger.info("测试GPU模块基础功能...")
-        
+
         try:
-            from src.gpu.facade import GPUFacade
-            
-            # 初始化GPU
-            facade = GPUFacade()
-            if not facade.is_available():
+            from src.gpu.device import GPUDeviceDetector
+
+            # 检查GPU可用性
+            if not GPUDeviceDetector.is_gpu_available():
                 logger.warning("GPU不可用，跳过GPU相关测试")
                 return
-            
+
             # 获取GPU信息
-            devices = facade.get_available_devices()
+            devices = GPUDeviceDetector.list_devices()
             logger.info(f"可用GPU: {len(devices)} 个")
-            
+
             for device in devices:
-                logger.info(f"  - {device['name']} ({device['vendor']})")
-            
-            # 测试基本参数
-            config = facade.get_recommended_config()
-            logger.info(f"推荐配置: batch_size={config.get('batch_size')}")
-            
+                logger.info(f"  - {device.name} ({device.vendor})")
+
             logger.info("✓ GPU模块基础测试通过")
-            
+
         except ImportError as e:
             logger.warning(f"GPU模块导入失败，跳过测试: {e}")
         except Exception as e:
             logger.error(f"GPU模块测试失败: {e}")
             raise
-    
+
     def test_configuration_management(self):
         """测试配置管理模块"""
         logger.info("测试配置管理模块...")
@@ -354,47 +349,47 @@ class TestSuite:
             raise RuntimeError(f"配置保存失败，期望: {test_value}, 实际: {saved_value}")
 
         logger.info("✓ 配置管理模块测试通过")
-    
+
     def test_logging_system(self):
         """测试日志系统"""
         logger.info("测试日志系统...")
-        
+
         from src.utils.logging_config import LoggingConfig, init_logging
-        
+
         # 初始化日志
         init_logging()
         logging_config = LoggingConfig()
-        
+
         # 检查日志处理器
         root_logger = logging.getLogger()
         handlers = root_logger.handlers
         logger.info(f"✓ 日志处理器数量: {len(handlers)}")
-        
+
         # 测试安全过滤器
         from src.utils.security_log_filter import SecurityLogFilter
         filter_instance = SecurityLogFilter()
-        
+
         # 测试敏感信息过滤
         test_log_records = [
             "正常日志信息",
             "包含私钥: L5oLkpV3aqBjhki6LmvChTCV6odsp4SXM6FfU2Gppt5kFLaHLuZ9",
             "WIF私钥: 5KYZdUEo39z3FPrtuX2QbbwGnNP5zTd7yyr2SC1j299sBCnWjss"
         ]
-        
+
         for msg in test_log_records:
             record = logging.LogRecord(
                 'test', logging.INFO, '', 0, msg, (), None
             )
             filtered = filter_instance.filter(record)
             logger.info(f"✓ 日志过滤测试: {record.getMessage()[:80]}...")
-        
+
         # 检查日志文件
         log_file = SCRIPT_DIR / "logs" / "collision.log"
         if log_file.exists():
             logger.info(f"✓ 日志文件存在: {log_file} ({log_file.stat().st_size:,} bytes)")
-        
+
         logger.info("✓ 日志系统测试通过")
-    
+
     def test_collision_engine_basic(self):
         """测试碰撞引擎基础功能"""
         logger.info("测试碰撞引擎基础功能...")
@@ -409,7 +404,7 @@ class TestSuite:
         logger.info(f"初始统计: total_checked={stats.total_checked}, matches={len(stats.matches)}")
 
         logger.info("✓ 碰撞引擎基础测试通过")
-    
+
     def test_checkpoint_system(self):
         """测试检查点系统"""
         logger.info("测试检查点系统...")
@@ -441,7 +436,7 @@ class TestSuite:
             logger.info("✓ 检查点管理器初始化成功")
 
         logger.info("✓ 检查点系统测试通过")
-    
+
     def test_i18n_system(self):
         """测试国际化系统"""
         logger.info("测试国际化系统...")
@@ -466,7 +461,7 @@ class TestSuite:
                 logger.warning(f"翻译测试跳过 {lang}: {e}")
 
         logger.info("✓ 国际化系统测试通过")
-    
+
     def test_monitoring_system(self):
         """测试监控系统"""
         logger.info("测试监控系统...")
@@ -491,11 +486,11 @@ class TestSuite:
         except Exception as e:
             logger.error(f"监控系统测试失败: {e}")
             raise
-    
+
     def test_cli_basic_commands(self):
         """测试CLI基础命令"""
         logger.info("测试CLI基础命令...")
-        
+
         # 测试帮助命令
         result = subprocess.run(
             [sys.executable, str(SCRIPT_DIR / 'key_collision_cli.py'), '--help'],
@@ -503,14 +498,14 @@ class TestSuite:
             text=True,
             timeout=30
         )
-        
+
         if result.returncode != 0:
             logger.error(f"CLI帮助命令输出: {result.stdout}")
             logger.error(f"CLI帮助命令错误: {result.stderr}")
             raise RuntimeError(f"CLI帮助命令失败，返回码: {result.returncode}")
-        
+
         logger.info("✓ CLI帮助命令测试通过")
-        
+
         # 测试版本命令
         result = subprocess.run(
             [sys.executable, str(SCRIPT_DIR / 'key_collision_cli.py'), '--version'],
@@ -518,12 +513,12 @@ class TestSuite:
             text=True,
             timeout=30
         )
-        
+
         if result.returncode == 0:
             logger.info("✓ CLI版本命令测试通过")
         else:
             logger.warning("CLI版本命令可能不存在，继续测试")
-    
+
     def test_edge_cases(self):
         """测试边界条件"""
         logger.info("测试边界条件...")
@@ -548,7 +543,7 @@ class TestSuite:
                 logger.info(f"✓ 正确拒绝无效地址: {addr[:30]}{'...' if len(addr) > 30 else ''}")
 
         logger.info("✓ 边界条件测试通过")
-    
+
     def test_error_handling(self):
         """测试错误处理"""
         logger.info("测试错误处理...")
@@ -569,7 +564,7 @@ class TestSuite:
                 logger.info(f"✓ 异常处理正常: {type(exc).__name__}")
 
         logger.info("✓ 错误处理测试通过")
-    
+
     def test_security_features(self):
         """测试安全功能"""
         logger.info("测试安全功能...")
@@ -601,7 +596,7 @@ class TestSuite:
         logger.info("✓ 安全过滤器初始化成功")
 
         logger.info("✓ 安全功能测试通过")
-    
+
     def test_performance_baseline(self):
         """测试性能基准"""
         logger.info("测试性能基准...")
@@ -637,12 +632,12 @@ class TestSuite:
 
         start_time = time.time()
         engine.start(mode='random')
-        
+
         time.sleep(3)
-        
+
         engine.stop()
         elapsed = time.time() - start_time
-        
+
         stats = engine.get_stats()
         throughput = stats.total_checked / elapsed if elapsed > 0 else 0
 
@@ -661,16 +656,13 @@ class TestSuite:
         logger.info("测试GPU实际运行...")
 
         try:
-            from src.gpu.facade import GPUFacade
-            from src.gpu.device import GPUDeviceManager
+            from src.gpu.device import GPUDeviceDetector
 
-            facade = GPUFacade()
-            if not facade.is_available():
+            if not GPUDeviceDetector.is_gpu_available():
                 logger.warning("GPU不可用，跳过GPU实际运行测试")
                 return
 
-            device_manager = GPUDeviceManager()
-            devices = device_manager.get_available_devices()
+            devices = GPUDeviceDetector.list_devices()
 
             if not devices:
                 logger.warning("未检测到GPU设备，跳过GPU实际运行测试")
@@ -678,7 +670,7 @@ class TestSuite:
 
             logger.info(f"✓ 检测到 {len(devices)} 个GPU设备:")
             for i, device in enumerate(devices):
-                logger.info(f"  - GPU {i}: {device.get('name', 'Unknown')} ({device.get('vendor', 'Unknown')})")
+                logger.info(f"  - GPU {i}: {device.name} ({device.vendor})")
 
             from src.gpu.kernel_impl import GPUKernel
 
@@ -768,7 +760,7 @@ class TestSuite:
 
         engine.stop()
         elapsed = time.time() - start_time
-        
+
         stats = engine.get_stats()
         total_checked = stats.total_checked
         avg_throughput = total_checked / elapsed if elapsed > 0 else 0
@@ -790,38 +782,38 @@ class TestSuite:
     def generate_report(self):
         """生成详细测试报告"""
         logger.info("生成测试报告...")
-        
+
         self.test_results['completed_at'] = datetime.now().isoformat()
         self.test_results['metrics'] = self.metrics.get_summary()
-        
+
         # 计算总体状态
-        critical_failures = [t for t in self.test_results['tests'] 
+        critical_failures = [t for t in self.test_results['tests']
                             if t['status'] == 'FAILED' and t['critical']]
-        
+
         if critical_failures:
             self.test_results['overall_status'] = 'FAILED'
         elif self.test_results['failed'] == 0:
             self.test_results['overall_status'] = 'PASSED'
         else:
             self.test_results['overall_status'] = 'PASSED_WITH_WARNINGS'
-        
+
         # 保存JSON报告
         with open(REPORT_FILE, 'w', encoding='utf-8') as f:
             json.dump(self.test_results, f, ensure_ascii=False, indent=2)
-        
+
         logger.info(f"✓ JSON报告已保存: {REPORT_FILE}")
-        
+
         # 生成Markdown摘要
         self.generate_markdown_summary()
-    
+
     def generate_markdown_summary(self):
         """生成Markdown格式的报告摘要"""
-        
+
         with open(SUMMARY_FILE, 'w', encoding='utf-8') as f:
             f.write("# 生产环境全面验收测试报告\n\n")
             f.write(f"**测试时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
             f.write(f"**测试状态**: {self.test_results['overall_status']}\n\n")
-            
+
             # 测试统计
             f.write("## 测试统计\n\n")
             f.write("| 指标 | 数值 |\n")
@@ -831,7 +823,7 @@ class TestSuite:
             f.write(f"| 失败 | {self.test_results['failed']} |\n")
             f.write(f"| 跳过 | {self.test_results['skipped']} |\n")
             f.write(f"| 成功率 | {(self.test_results['passed'] / self.test_results['total_tests'] * 100):.1f}% |\n\n")
-            
+
             # 性能指标
             f.write("## 系统性能指标\n\n")
             if 'metrics' in self.test_results and self.test_results['metrics']:
@@ -844,26 +836,26 @@ class TestSuite:
                 f.write(f"| CPU最高使用率 | {metrics.get('cpu_max', 0):.1f}% |\n")
                 f.write(f"| 内存平均使用率 | {metrics.get('memory_avg', 0):.1f}% |\n")
                 f.write(f"| 内存最高使用率 | {metrics.get('memory_max', 0):.1f}% |\n\n")
-            
+
             # 详细测试结果
             f.write("## 详细测试结果\n\n")
-            
+
             for test in self.test_results['tests']:
                 status_icon = "✓" if test['status'] == 'PASSED' else "✗"
                 critical_mark = "[CRITICAL]" if test['critical'] else ""
-                
+
                 f.write(f"### {status_icon} {test['name']} {critical_mark}\n\n")
                 f.write(f"- **状态**: {test['status']}\n")
                 f.write(f"- **耗时**: {test['duration_seconds']:.2f}s\n")
-                
+
                 if test['error_message']:
                     f.write(f"- **错误**: {test['error_message']}\n")
-                
+
                 f.write("\n")
-            
+
             # 结论和建议
             f.write("## 结论和建议\n\n")
-            
+
             if self.test_results['overall_status'] == 'PASSED':
                 f.write("✅ **系统已准备好生产部署**\n\n")
                 f.write("所有关键功能测试通过，性能指标符合要求，系统稳定安全。\n\n")
@@ -873,7 +865,7 @@ class TestSuite:
             else:
                 f.write("❌ **关键测试失败，系统未达到生产部署标准**\n\n")
                 f.write("核心功能测试失败，需要修复所有关键问题后再进行部署。\n\n")
-            
+
             # 建议
             f.write("### 后续建议\n\n")
             f.write("1. **监控部署**: 部署后启用完整监控系统\n")
@@ -881,17 +873,17 @@ class TestSuite:
             f.write("3. **定期备份**: 设置定期检查点和数据备份\n")
             f.write("4. **安全审计**: 定期进行安全审计和渗透测试\n")
             f.write("5. **性能优化**: 根据实际运行情况继续优化GPU和CPU性能\n\n")
-        
+
         logger.info(f"✓ Markdown摘要已保存: {SUMMARY_FILE}")
-    
+
     def run_full_suite(self):
         """运行完整测试套件"""
         logger.info("=" * 80)
         logger.info("生产环境全面验收测试")
         logger.info("=" * 80)
-        
+
         self.metrics.start_monitoring()
-        
+
         # 测试顺序 - 基础到复杂
         self.run_test("环境验证", self.test_environment_validation, critical=True)
         self.run_test("核心加密模块", self.test_core_crypto_module, critical=True)
@@ -911,10 +903,10 @@ class TestSuite:
         self.run_test("GPU实际运行", self.test_gpu_actual_run)
         self.run_test("多GPU负载均衡", self.test_multi_gpu_load_balance)
         self.run_test("性能压力测试", self.test_stress_performance, critical=True)
-        
+
         # 生成报告
         self.generate_report()
-        
+
         # 输出总结
         logger.info("=" * 80)
         logger.info("测试完成总结")
@@ -929,7 +921,7 @@ class TestSuite:
         logger.info(f"详细报告: {REPORT_FILE}")
         logger.info(f"测试摘要: {SUMMARY_FILE}")
         logger.info(f"详细日志: {LOG_FILE}")
-        
+
         # 返回最终状态
         return self.test_results['overall_status'] == 'PASSED' or \
                self.test_results['overall_status'] == 'PASSED_WITH_WARNINGS'
@@ -941,10 +933,10 @@ def main():
     print("生产环境全面验收测试")
     print("=" * 80)
     print()
-    
+
     suite = TestSuite()
     success = suite.run_full_suite()
-    
+
     # 显示报告文件位置
     print()
     print("=" * 80)
@@ -954,7 +946,7 @@ def main():
     print(f"JSON报告: {REPORT_FILE}")
     print(f"Markdown摘要: {SUMMARY_FILE}")
     print()
-    
+
     if success:
         print("✅ 验收测试通过！")
         return 0

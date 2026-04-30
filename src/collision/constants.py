@@ -7,7 +7,7 @@
 # ========== 私钥相关常量 ==========
 PRIVATE_KEY_SIZE = 32  # 私钥长度（字节）
 PRIVATE_KEY_MIN = 1  # 私钥最小值
-COMPRESSED_FLAG = b'\x01'  # 压缩公钥标志
+COMPRESSED_FLAG = b"\x01"  # 压缩公钥标志
 
 # ========== 批次大小常量 ==========
 BATCH_SIZE_DEFAULT = 1000  # 默认批次大小

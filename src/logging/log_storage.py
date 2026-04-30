@@ -23,9 +23,12 @@ class LogStorage:
     - 轮转机制
     """
 
-    def __init__(self, storage_dir: str = "logs",
-                 max_file_size: int = 10 * 1024 * 1024,
-                 backup_count: int = 5):
+    def __init__(
+        self,
+        storage_dir: str = "logs",
+        max_file_size: int = 10 * 1024 * 1024,
+        backup_count: int = 5,
+    ):
         """初始化存储器
 
         Args:
@@ -37,7 +40,7 @@ class LogStorage:
         self.max_file_size = max_file_size
         self.backup_count = backup_count
         self._lock = threading.Lock()
-        self._memory_buffer = deque(maxlen=10000)
+        self._memory_buffer: deque[dict[str, Any]] = deque(maxlen=10000)
         self._ensure_storage_dir()
 
     def _ensure_storage_dir(self):
@@ -77,9 +80,9 @@ class LogStorage:
 
         # 写入文件
         with self._lock:
-            with open(log_file, 'a', encoding='utf-8') as f:
+            with open(log_file, "a", encoding="utf-8") as f:
                 json.dump(event_data, f, ensure_ascii=False)
-                f.write('\n')
+                f.write("\n")
 
     def _rotate_file(self, filepath: str):
         """轮转文件"""
@@ -138,7 +141,7 @@ class LogStorage:
         """
         results = []
         for event_data in reversed(self._memory_buffer):
-            if event_data.get('type') == event_type:
+            if event_data.get("type") == event_type:
                 results.append(event_data)
                 if len(results) >= limit:
                     break
@@ -156,7 +159,7 @@ class LogStorage:
         """
         results = []
         for event_data in self._memory_buffer:
-            timestamp = event_data.get('timestamp', 0)
+            timestamp = event_data.get("timestamp", 0)
             if start_time <= timestamp <= end_time:
                 results.append(event_data)
         return results
@@ -175,7 +178,7 @@ class LogStorage:
         keyword_to_find = keyword if case_sensitive else keyword.lower()
 
         for event_data in self._memory_buffer:
-            message = str(event_data.get('message', ''))
+            message = str(event_data.get("message", ""))
             search_in = message if case_sensitive else message.lower()
 
             if keyword_to_find in search_in:
@@ -194,9 +197,9 @@ class LogStorage:
         Returns:
             统计信息字典
         """
-        type_counts = {}
+        type_counts: dict[str, int] = {}
         for event_data in self._memory_buffer:
-            event_type = event_data.get('type', 'unknown')
+            event_type = event_data.get("type", "unknown")
             type_counts[event_type] = type_counts.get(event_type, 0) + 1
 
         log_file = os.path.join(self.storage_dir, "wizard.log")
@@ -205,10 +208,10 @@ class LogStorage:
             file_size = os.path.getsize(log_file)
 
         return {
-            'total_count': len(self._memory_buffer),
-            'type_counts': type_counts,
-            'file_size': file_size,
-            'storage_dir': self.storage_dir
+            "total_count": len(self._memory_buffer),
+            "type_counts": type_counts,
+            "file_size": file_size,
+            "storage_dir": self.storage_dir,
         }
 
     def export_to_json(self, filepath: str, recent_only: bool = False) -> bool:
@@ -224,7 +227,7 @@ class LogStorage:
         try:
             data = self.get_recent() if recent_only else list(self._memory_buffer)
 
-            with open(filepath, 'w', encoding='utf-8') as f:
+            with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
 
             return True

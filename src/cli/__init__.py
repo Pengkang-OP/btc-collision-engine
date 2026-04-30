@@ -24,16 +24,24 @@ from src.cli.config_migration import migrate_config_file
 
 __all__ = [
     # 核心
-    'main', 'parse_args', 'load_targets',
+    "main",
+    "parse_args",
+    "load_targets",
     # 验证
-    'validate_args', 'validate_file_path',
+    "validate_args",
+    "validate_file_path",
     # 进度
-    'format_progress',
+    "format_progress",
     # 引擎
-    'build_engine', 'on_match_callback', 'GPU_AVAILABLE',
+    "build_engine",
+    "on_match_callback",
+    "GPU_AVAILABLE",
     # 高级功能
-    'apply_template', 'recommend_parameters',
-    'export_progress_data', 'export_matches', 'GPUErrorHandler',
+    "apply_template",
+    "recommend_parameters",
+    "export_progress_data",
+    "export_matches",
+    "GPUErrorHandler",
     # 配置迁移
-    'migrate_config_file',
+    "migrate_config_file",
 ]
