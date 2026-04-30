@@ -351,7 +351,7 @@ class AddressBatchValidator:
 
         return valid_addresses
 
-    def get_summary(self) -> Dict[str, int]:
+    def get_summary(self) -> Dict[str, Union[float, int]]:
         """
         获取验证统计摘要
 

@@ -9,7 +9,7 @@ from ..utils import init_logging, get_configured_logger
 import re
 import subprocess
 import platform
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 logger = get_configured_logger("GPUDriverManager")
 
