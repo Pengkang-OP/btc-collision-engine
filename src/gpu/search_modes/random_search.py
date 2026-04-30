@@ -493,7 +493,7 @@ class RandomSearchMode(BaseSearchMode):
 
                 # 记录统计信息
                 if hasattr(engine, "stats") and hasattr(engine.stats, "add_match"):
-                    engine.stats.add_match()  # type: ignore[attr-defined, call-arg]
+                    engine.stats.add_match(private_key, address)  # type: ignore[attr-defined]
 
                 # 触发回调
                 if hasattr(engine, "on_match") and engine.on_match:
