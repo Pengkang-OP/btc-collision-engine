@@ -264,14 +264,21 @@ class P2PKHAddressGenerator(BaseAddressGenerator):
         """从公钥生成比特币地址（委托给基类实现）"""
         return super().public_key_to_address(public_key)
     
-    def generate_address(self, private_key: Optional[bytes] = None) -> Tuple[str, bytes, bytes]:
+    def generate_address(
+        self,
+        private_key: Optional[bytes] = None,
+        compressed: bool = True,
+    ) -> Tuple[str, bytes, bytes]:
         """
         生成完整的比特币地址
         
-        从私钥生成地址，返回地址和两种格式的公钥。
+        从私钥生成地址。P2PKHAddressGenerator 始终返回两种格式的公钥
+        (compressed_public_key, uncompressed_public_key)，因此 compressed
+        参数被接受但仅用于与基类接口兼容，不影响实际行为。
         
         参数:
             private_key: 可选的32字节私钥，None则随机生成
+            compressed: 基类兼容参数，不影响 P2PKHAddressGenerator 行为
             
         返回:
             (address, compressed_public_key, uncompressed_public_key)元组

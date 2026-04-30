@@ -172,15 +172,26 @@ class GPUDeviceScorer:
     def score_relative(self, device: Dict[str, Any]) -> float:
         """计算相对性能权重 (用于负载均衡)
         
-        与 score() 使用相同的各因子权重比例，
-        但返回的是原始评分 (不乘 vendor_factor)，便于负载均衡器归一化。
+        使用更平衡的 memory:compute ≈ 60:1 权重比，与旧版 _calculate_performance_weights
+        行为保持一致，使任务分配在显存和计算单元之间更均衡。
+        
+        与 score() 的区别:
+        - score(): 权重比 200:1，偏向显存，用于设备评级排名
+        - score_relative(): 权重比 60:1，更平衡，用于负载均衡归一化权重
+        
+        仍会乘以 vendor_factor，由调用方 calculate_performance_weights() 归一化。
         
         Args:
             device: 设备信息字典
         
         Returns:
-            相对性能权重值
+            相对性能权重值 (含厂商系数)
         """
+        # 负载均衡专用权重：memory:compute ≈ 6.0 : 0.1 = 60:1
+        # 与旧版 load_balancer._calculate_performance_weights 保持一致
+        BALANCE_MEMORY = 6.0
+        BALANCE_COMPUTE = 0.1
+        
         memory_gb = device.get('global_mem_gb', 0.0)
         compute_units = device.get('max_compute_units', 0)
         vendor = device.get('vendor', 'unknown')
@@ -189,9 +200,9 @@ class GPUDeviceScorer:
         cache_kb = device.get('global_mem_cache_kb', 0.0)
         local_mem_kb = device.get('local_mem_kb', 0.0)
         
-        # 与 score() 相同的因子计算，但保留 raw_score
-        memory_score = memory_gb * self.WEIGHT_MEMORY
-        cu_score = float(compute_units) * self.WEIGHT_COMPUTE_UNITS
+        memory_score = memory_gb * BALANCE_MEMORY
+        cu_score = float(compute_units) * BALANCE_COMPUTE
+        # cache/local_mem/generation_bonus 保持与 score() 一致
         cache_bonus = float(cache_kb) * self.WEIGHT_CACHE
         local_mem_bonus = float(local_mem_kb) * self.WEIGHT_LOCAL_MEM
         generation_bonus = self._get_generation_bonus(vendor, name, model)
