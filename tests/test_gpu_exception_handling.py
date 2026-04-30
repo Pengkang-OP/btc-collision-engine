@@ -77,7 +77,8 @@ class TestGPURuntimeErrors:
             with patch('src.collision.gpu_collision_engine.GPUDevice', return_value=mock_device), \
                  patch('src.collision.gpu_collision_engine.GPUContext', return_value=mock_context), \
                  patch('src.collision.gpu_collision_engine.GPUKernel', return_value=mock_kernel), \
-                 patch('src.collision.gpu_collision_engine.AsyncGPUExecutor') as mock_async_executor, \
+                 patch('src.gpu.device_manager.AsyncGPUExecutor') as mock_async_executor, \
+                 patch('src.collision.gpu_collision_engine.AsyncGPUExecutor') as mock_async_executor_shim, \
                  patch('src.collision.gpu_collision_engine.GPUProfileLoader') as mock_profile_loader:
                 
                 mock_profile_loader.return_value.get_profile.return_value = None
@@ -96,6 +97,8 @@ class TestGPURuntimeErrors:
                 mock_async_instance.flush_pending = Mock(return_value=[])
                 mock_async_instance.cleanup = Mock()
                 mock_async_executor.return_value = mock_async_instance
+                # 同时修补 shim 层的引用（供通过 gpu_collision_engine 的导入者）
+                mock_async_executor_shim.return_value = mock_async_instance
                 
                 targets = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}
                 engine = GPUCollisionEngine(targets, batch_size=100)

@@ -7,6 +7,7 @@
 
 import platform
 import os
+import sys
 import tkinter as tk
 from typing import Tuple, Optional
 
@@ -98,31 +99,20 @@ class PlatformUtils:
     def ensure_utf8_output() -> None:
         """确保 Windows 终端输出使用 UTF-8 编码。
 
-        在 Windows 系统上将 stdout 和 stderr 包装为 UTF-8 编码的 TextIOWrapper。
+        使用 sys.stdout/stderr.reconfigure() 安全配置 UTF-8 编码。
+        Python 3.7+ 原生支持，项目最低要求 Python 3.9+。
         在其他系统上无操作。可安全多次调用。
+
+        Task #31: 移除了 io.TextIOWrapper 回退，避免 Python 3.14 中
+        TextIOWrapper.close() 关闭底层 fd 导致的 capture 崩溃。
         """
         if platform.system() != "Windows":
             return
-        import io
-        import sys
 
-        if hasattr(sys.stdout, "buffer"):
-            if hasattr(sys.stdout, "reconfigure"):
-                # Python 3.7+: reconfigure 是安全的（不创建新 wrapper）
-                sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-            elif (
-                not isinstance(sys.stdout, io.TextIOWrapper)
-                or sys.stdout.encoding.lower() != "utf-8"
-            ):
-                sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-        if hasattr(sys.stderr, "buffer"):
-            if hasattr(sys.stderr, "reconfigure"):
-                sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-            elif (
-                not isinstance(sys.stderr, io.TextIOWrapper)
-                or sys.stderr.encoding.lower() != "utf-8"
-            ):
-                sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+        if hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        if hasattr(sys.stderr, "reconfigure"):
+            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
     @staticmethod
     def get_temp_dir() -> str:

@@ -78,7 +78,7 @@ def mock_engine_patches(mock_targets):
 class TestEngineIntegration:
     """测试引擎构造函数参数完整性"""
 
-    def test_constructor_all_17_params(self, mock_targets, mock_engine_patches):
+    def test_constructor_all_17_params(self, mock_targets, mock_engine_patches, tmp_path):
         """测试构造函数接受全部 17 个参数"""
         patches, _, _ = mock_engine_patches
 
@@ -108,7 +108,7 @@ class TestEngineIntegration:
                 gpu_pool_max_buffers=50,
                 gpu_pool_max_memory_mb=256,
                 use_async_logging=False,
-                async_log_file="test.log",
+                async_log_file=str(tmp_path / "test.log"),
                 async_log_max_bytes=5 * 1024 * 1024,
                 async_log_backup_count=3,
                 check_uncompressed=False,

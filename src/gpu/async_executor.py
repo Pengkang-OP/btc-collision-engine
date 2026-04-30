@@ -149,8 +149,9 @@ class AsyncGPUExecutor:
         gpu_config = self._get_gpu_config(gpu_model)
 
         # 使用GPU特定配置或默认值
+        # queue_depth: 构造参数显式传入优先，GPU型号配置仅作推荐
         self.max_batch_size = gpu_config.get("max_batch_size", max_batch_size)
-        self.queue_depth = gpu_config.get("queue_depth", queue_depth)
+        self.queue_depth = max(1, queue_depth)
         self.initial_batch_size = gpu_config.get("initial_batch_size", 65536)
 
         # 预计算表缓冲区（常量，生命周期与 executor 一致）

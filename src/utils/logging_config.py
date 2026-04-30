@@ -10,9 +10,15 @@ import time
 import logging
 import shutil
 import platform
+import threading
 from typing import Optional, Dict, Any
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 from .logger import ColoredFormatter, SafeStreamHandler  # ThreadSafeLogger已弃用
+
+# 模块级可重入锁，序列化所有 SafeRotatingFileHandler 实例的 rollover 操作，
+# 防止并发测试场景下多个处理器同时竞争同一日志文件的 rename/delete。
+# 使用 RLock 对齐 Python logging.Handler 内置锁类型，提供防御性可重入安全。
+_rollover_lock = threading.RLock()
 
 
 class SafeRotatingFileHandler(RotatingFileHandler):
@@ -28,18 +34,28 @@ class SafeRotatingFileHandler(RotatingFileHandler):
         super().__init__(*args, **kwargs)
 
     def doRollover(self) -> None:
-        """带重试机制的日志轮转（Windows 专用）"""
+        """带重试机制的日志轮转（Windows 专用），加全局锁防止并发冲突
+
+        sleep 在锁外执行，避免持有锁期间阻塞其他 handler 的 rollover。
+        """
         if not self._is_windows:
             super().doRollover()
             return
         for attempt in range(self._retry_count):
-            try:
-                super().doRollover()
-                return
-            except PermissionError:
-                if attempt < self._retry_count - 1:
-                    time.sleep(self._retry_delay * (attempt + 1))
-                # 最后一次重试仍失败：静默跳过轮转，继续写入当前文件，不影响主程序
+            with _rollover_lock:
+                try:
+                    super().doRollover()
+                    return
+                except PermissionError:
+                    pass  # 锁内只做尝试，不等待
+            if attempt < self._retry_count - 1:
+                time.sleep(self._retry_delay * (attempt + 1))
+        # 所有重试均失败：输出警告并继续写入当前文件，不中断主程序
+        print(
+            f"[日志警告] 日志轮转失败（已重试{self._retry_count}次），"
+            f"文件可能被其他进程占用: {self.baseFilename}",
+            file=sys.stderr,
+        )
 
 
 # 导入安全过滤器（P0-2修复）

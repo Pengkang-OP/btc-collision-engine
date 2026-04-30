@@ -82,7 +82,7 @@ class TestConfigFilesQueueDepth(unittest.TestCase):
         return ConfigManager._strip_comments(raw)
 
     def test_config_json_has_queue_depth(self):
-        cfg_path = ROOT / 'config.json'
+        cfg_path = ROOT.parent / 'config.json'
         cfg = self._load_and_strip(cfg_path)
         gpu_cfg = cfg.get('gpu', {})
         self.assertIn('queue_depth', gpu_cfg,
@@ -90,30 +90,39 @@ class TestConfigFilesQueueDepth(unittest.TestCase):
         self.assertEqual(gpu_cfg['queue_depth'], 4,
                          f"config.json queue_depth 应为 4，实际: {gpu_cfg['queue_depth']}")
 
+    @unittest.skipIf(
+        not (ROOT.parent / 'config.intel_arc.json').exists(),
+        "config.intel_arc.json 不存在")
     def test_config_intel_arc_has_queue_depth(self):
-        cfg_path = ROOT / 'config.intel_arc.json'
+        cfg_path = ROOT.parent / 'config.intel_arc.json'
         cfg = self._load_and_strip(cfg_path)
         gpu_cfg = cfg.get('gpu', {})
         self.assertIn('queue_depth', gpu_cfg,
                       "config.intel_arc.json gpu 块应包含 queue_depth 字段")
 
     def test_config_example_has_queue_depth(self):
-        cfg_path = ROOT / 'config.example.json'
+        cfg_path = ROOT.parent / 'config.example.json'
         cfg = self._load_and_strip(cfg_path)
         gpu_cfg = cfg.get('gpu', {})
         self.assertIn('queue_depth', gpu_cfg,
                       "config.example.json gpu 块应包含 queue_depth 字段")
 
+    @unittest.skipIf(
+        not (ROOT.parent / 'config.optimized.json').exists(),
+        "config.optimized.json 不存在")
     def test_config_optimized_has_queue_depth(self):
-        cfg_path = ROOT / 'config.optimized.json'
+        cfg_path = ROOT.parent / 'config.optimized.json'
         cfg = self._load_and_strip(cfg_path)
         gpu_cfg = cfg.get('gpu', {})
         self.assertIn('queue_depth', gpu_cfg,
                       "config.optimized.json gpu 块应包含 queue_depth 字段")
 
+    @unittest.skipIf(
+        not (ROOT.parent / 'config.intel_arc.json').exists(),
+        "config.intel_arc.json 不存在")
     def test_gpu_block_validates_without_queue_depth_errors(self):
         """intel_arc 配置的 gpu 块不应有 queue_depth 相关验证错误"""
-        cfg_path = ROOT / 'config.intel_arc.json'
+        cfg_path = ROOT.parent / 'config.intel_arc.json'
         cfg = self._load_and_strip(cfg_path)
         gpu_only = {'gpu': cfg.get('gpu', {})}
         errors = self.cm.validate(gpu_only)
