@@ -120,9 +120,9 @@ def _worker_process(
         raise ValueError(f"未知的生成器函数: {generator_func_name}")
 
     # 在子进程中初始化地址生成器
-    from ..core.address_generator import P2PKHAddressGenerator
+    from ..core.optimized_address_generator import OptimizedP2PKHAddressGenerator
 
-    address_generator = P2PKHAddressGenerator()
+    address_generator = OptimizedP2PKHAddressGenerator()
 
     # 转换为集合加速查找
     target_set = set(target_addresses)
@@ -154,7 +154,7 @@ def _worker_process(
                         pk_bytes = bytes(pk)
 
                         # 使用子进程本地初始化的address_generator
-                        address = address_generator.generate_from_private_key(pk_bytes)  # type: ignore[attr-defined]
+                        address = address_generator.generate_from_private_key(pk_bytes)
                         total_checked += 1
 
                         if address in target_set:

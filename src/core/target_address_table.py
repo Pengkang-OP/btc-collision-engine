@@ -10,7 +10,8 @@ from pathlib import Path
 
 from ..utils import init_logging, get_configured_logger
 from .wif import WIF
-from .address_generator import P2PKHAddressGenerator
+from .optimized_address_generator import OptimizedP2PKHAddressGenerator
+from .hash_utils import HashUtils
 
 # 初始化日志系统
 init_logging()
@@ -111,7 +112,7 @@ class BitcoinTargetTable:
             成功加载的目标地址数量
         """
         loaded_count = 0
-        generator = P2PKHAddressGenerator()
+        generator = OptimizedP2PKHAddressGenerator()
 
         for i, wif in enumerate(wif_list):
             try:
@@ -119,15 +120,16 @@ class BitcoinTargetTable:
                 private_key, compressed = WIF.decode(wif)
 
                 # 生成公钥和地址
-                address_info = generator.generate_address_from_private_key(private_key, compressed)  # type: ignore[attr-defined]
+                address = generator.generate_from_private_key(private_key, compressed)
+                public_key = generator.private_key_to_public_key(private_key, compressed)
 
                 # 提取hash160
-                hash160 = bytes.fromhex(address_info["hash160"])
+                hash160 = HashUtils.hash160(public_key)
 
                 # 添加到目标表
                 self.add_target(
                     wif=wif,
-                    address=address_info["address"],
+                    address=address,
                     hash160=hash160,
                     address_type="compressed" if compressed else "uncompressed",
                 )
