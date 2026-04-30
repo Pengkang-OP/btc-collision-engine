@@ -321,8 +321,8 @@ class EnhancedPerformanceMonitor:
     def elapsed_ms(self) -> float:
         """获取已耗时的毫秒数"""
         if self.end_time is None:
-            return (time.perf_counter() - cast(float, self.start_time)) * 1000
-        return (cast(float, self.end_time) - cast(float, self.start_time)) * 1000
+            return (time.perf_counter() - self.start_time) * 1000  # type: ignore[operator]
+        return (self.end_time - self.start_time) * 1000  # type: ignore[operator]
 
 
 def log_performance_summary(
