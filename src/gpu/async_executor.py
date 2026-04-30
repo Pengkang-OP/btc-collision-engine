@@ -459,7 +459,7 @@ class AsyncGPUExecutor:
             try:
                 transfer_event = cl.enqueue_copy(
                     self.device.transfer_queue,
-                    self.seed_buffer,
+                    self.seed_buffer,  # type: ignore[arg-type]
                     seed_array,
                     is_blocking=False,  # 非阻塞!
                 )
@@ -516,7 +516,7 @@ class AsyncGPUExecutor:
                         )
 
                 cl.enqueue_fill_buffer(
-                    self.device.compute_queue, current_buf["matches"], np.int32(0), 0, num_keys * 4
+                    self.device.compute_queue, current_buf["matches"], np.int32(0), 0, num_keys * 4  # type: ignore[arg-type]
                 )
             except (RuntimeError, MemoryError) as e:
                 logger.warning(f"清空缓冲区OpenCL错误: {type(e).__name__}: {e}，回退到同步模式")
@@ -708,14 +708,14 @@ class AsyncGPUExecutor:
 
         # 写入种子到 seed_buffer
         seed_array = _seed_bytes_to_u32_be_array(seed[:32])
-        cl.enqueue_copy(self.device.queue, self.seed_buffer, seed_array)
+        cl.enqueue_copy(self.device.queue, self.seed_buffer, seed_array)  # type: ignore[arg-type]
 
         # 使用buffer_a作为临时缓冲（仅匹配结果）
         temp_buf = self.buffer_a if self.buffer_a["matches"] else self.buffer_b
 
         try:
             cl.enqueue_fill_buffer(
-                self.device.queue, temp_buf["matches"], np.int32(0), 0, num_keys * 4
+                self.device.queue, temp_buf["matches"], np.int32(0), 0, num_keys * 4  # type: ignore[arg-type]
             )
         except (RuntimeError, MemoryError) as e:
             logger.error(f"同步模式下清空缓冲区OpenCL错误: {type(e).__name__}: {e}")
@@ -727,7 +727,7 @@ class AsyncGPUExecutor:
                     self.device.context, cl.mem_flags.READ_WRITE, size=num_keys * 4
                 )
                 cl.enqueue_fill_buffer(
-                    self.device.queue, temp_buf["matches"], np.int32(0), 0, num_keys * 4
+                    self.device.queue, temp_buf["matches"], np.int32(0), 0, num_keys * 4  # type: ignore[arg-type]
                 )
             except (RuntimeError, MemoryError) as create_err:
                 logger.error(f"创建临时缓冲区OpenCL错误: {create_err}")
@@ -745,7 +745,7 @@ class AsyncGPUExecutor:
                     self.device.context, cl.mem_flags.READ_WRITE, size=num_keys * 4
                 )
                 cl.enqueue_fill_buffer(
-                    self.device.queue, temp_buf["matches"], np.int32(0), 0, num_keys * 4
+                    self.device.queue, temp_buf["matches"], np.int32(0), 0, num_keys * 4  # type: ignore[arg-type]
                 )
             except (RuntimeError, MemoryError) as create_err:
                 logger.error(f"创建临时缓冲区OpenCL错误: {create_err}")

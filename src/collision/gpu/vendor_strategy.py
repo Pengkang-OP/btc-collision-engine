@@ -34,19 +34,19 @@ class IntelOptimizationStrategy:
 
     def apply_optimizations(self, context: GPUExecutionContext) -> Dict[str, Any]:
         """应用Intel特定优化"""
-        components = {}
+        components: Dict[str, Any] = {}
 
         try:
             # 1. 超时管理器
             from ...gpu.intel_timeout_manager import AdaptiveTimeoutManager
 
-            components["timeout_manager"] = AdaptiveTimeoutManager(config=context.config)
+            components["timeout_manager"] = AdaptiveTimeoutManager(config=context.config)  # type: ignore[call-arg]
 
             # 2. 内存监控器
             from ...gpu.intel_memory_monitor import IntelMemoryMonitor
 
             if context.device:
-                components["memory_monitor"] = IntelMemoryMonitor(context.device)
+                components["memory_monitor"] = IntelMemoryMonitor(context.device)  # type: ignore[arg-type]
 
             # 3. Intel优化器
             from ...gpu.intel_optimizer import IntelGPUOptimizer

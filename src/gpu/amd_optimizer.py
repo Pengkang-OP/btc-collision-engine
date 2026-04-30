@@ -21,7 +21,7 @@ SHA256/RIPEMD160/secp256k1 等加密/哈希运算的精度。
 import logging
 from ..utils import init_logging, get_configured_logger
 import re
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, Dict, Optional, TYPE_CHECKING
 
 logger = get_configured_logger("AMDOptimizer")
 
@@ -745,7 +745,7 @@ class AmdGPUOptimizer:
         self._logger.info("🔧 开始应用 AMD GPU 特殊优化")
         self._logger.info("=" * 60)
 
-        result = {}
+        result: Dict[str, Any] = {}
 
         # 1. 驱动版本检测
         try:
