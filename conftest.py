@@ -17,10 +17,14 @@ import sys
 
 
 def pytest_configure(config):
-    """在 pytest 配置阶段应用 Python 3.14 兼容性补丁。"""
-    if sys.version_info >= (3, 14):
-        _apply_python314_capture_patch()
-        _apply_python314_logging_patch()
+    """在 pytest 配置阶段应用 capture/logging 兼容性补丁。
+
+    问题根因: platform_utils/测试代码 中用 io.TextIOWrapper 包装 sys.stdout
+    未使用 closefd=False，导致底层 fd 被意外关闭。pytest capture 的 tmpfile
+    因此变成 closed 状态。此补丁对 Python 3.12+ 均适用。
+    """
+    _apply_python314_capture_patch()
+    _apply_python314_logging_patch()
 
 
 def _apply_python314_capture_patch():

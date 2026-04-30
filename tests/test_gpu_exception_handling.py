@@ -378,4 +378,4 @@ class TestEdgeCases:
                 
                 # 验证初始化成功
                 engine = GPUCollisionEngine(targets)
-                assert len(engine._target_list) == 1
+                assert len(engine.targets) == 1

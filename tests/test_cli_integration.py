@@ -238,7 +238,7 @@ class TestCLIEndToEnd:
             "1",                                  # random 模式
             "n",                                  # 不启用 checkpoint
             "n",                                  # 不启用 dedup
-            "0",                                  # duration=0
+            "1",                                  # duration=无限（1=无限，旧版用0）
             "1",                                  # CPU
             "n",                                  # 不执行
         ])

@@ -15,6 +15,11 @@ from src.collision.collision_stats import CollisionStats
 
 class TestCLI:
     """CLI 测试类"""
+
+    def setup_method(self):
+        """每个测试前重置 CLIOutput 单例，确保 capsys/monkeypatch 生效"""
+        from src.cli.output import CLIOutput
+        CLIOutput.reset_instance()
     
     def test_parse_args(self):
         """测试命令行参数解析"""
@@ -385,8 +390,8 @@ class TestCLI:
         # 同时 mock 掉 src.cli.commands 模块内的 sys.platform
         monkeypatch.setattr('src.cli.commands.sys.platform', 'linux')
 
-        # 模拟用户输入：选择单个地址、输入地址、选random模式、启用checkpoint(Y)、启用dedup(Y)、duration=0、CPU模式、不执行(n)
-        inputs = iter(['1', '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa', '1', 'Y', 'Y', '0', '1', 'n'])
+        # 模拟用户输入：选择单个地址、输入地址、选random模式、启用checkpoint(Y)、启用dedup(Y)、时长选无限(1)、GPU选CPU模式(1)、不执行(n)
+        inputs = iter(['1', '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa', '1', 'Y', 'Y', '1', '1', 'n'])
         monkeypatch.setattr('builtins.input', lambda _='': next(inputs))
 
         # mock 掉 PlatformUtils.ensure_utf8_output，避免 StringIO 没有 buffer 属性报错
@@ -680,6 +685,11 @@ class TestAdvancedFeatures:
 class TestSecurity:
     """安全性测试"""
 
+    def setup_method(self):
+        """每个测试前重置 CLIOutput 单例"""
+        from src.cli.output import CLIOutput
+        CLIOutput.reset_instance()
+
     def test_file_path_traversal_blocked(self):
         """路径遍历攻击被阻止"""
         from src.cli.validation import validate_file_path
@@ -726,6 +736,11 @@ class TestModuleExports:
 
 class TestV3Improvements:
     """V3版本新增功能测试"""
+
+    def setup_method(self):
+        """每个测试前重置 CLIOutput 单例"""
+        from src.cli.output import CLIOutput
+        CLIOutput.reset_instance()
 
     # ── 通用 Args 构建辅助 ───────────────────────────────────────────────────
     @staticmethod

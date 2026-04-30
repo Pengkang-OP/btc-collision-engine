@@ -203,6 +203,8 @@ class TestPerformanceBenchmarks:
         end_time = time.time()
         
         elapsed = end_time - start_time
+        if elapsed <= 0:
+            elapsed = 0.001  # 防止除以零（测试执行过快）
         speed = iterations / elapsed
         
         print(f"\n[Performance] 统计信息更新性能:")
