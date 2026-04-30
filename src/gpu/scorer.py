@@ -390,6 +390,18 @@ class GPUDeviceScorer:
         
         return 0.0
     
+    def identify_model(self, device_name: str, vendor: str) -> Optional[str]:
+        """识别GPU型号 (公开接口)
+        
+        Args:
+            device_name: 设备名称
+            vendor: 厂商标识 (nvidia/amd/intel)
+        
+        Returns:
+            型号标识字符串或 None
+        """
+        return self._identify_model(device_name, vendor)
+    
     def _identify_model(self, device_name: str, vendor: str) -> Optional[str]:
         """从设备名称自动识别GPU型号
         
@@ -439,7 +451,10 @@ class GPUDeviceScorer:
                 model = 'rx6000'
             elif 'rx 5700' in name_lower or 'rx 5600' in name_lower or 'rx 5500' in name_lower:
                 model = 'rx5000'
-            elif 'rx 580' in name_lower or 'rx 570' in name_lower or 'rx 560' in name_lower:
+            elif any(x in name_lower for x in [
+                'rx 590', 'rx 580', 'rx 570', 'rx 560', 'rx 550', 'rx 480',
+                'rx 470', 'rx 460', 'rx 540', 'rx 530'
+            ]):
                 model = 'rx500'
             elif 'vega' in name_lower:
                 model = 'vega'
