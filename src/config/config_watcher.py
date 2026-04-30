@@ -79,7 +79,10 @@ class ConfigWatcher:
         self._poll_interval = poll_interval
 
         # 状态管理
-        self._running = False
+        # W8修复: 使用 threading.Event 替代 bool，消除 _poll_loop 与 stop() 之间的数据竞争
+        # Event.set() = 停止请求, Event.clear() = 运行中, 初始为停止状态
+        self._stop_event = threading.Event()
+        self._stop_event.set()
         self._lock = threading.Lock()
         self._observer: Optional['Observer'] = None
         self._poll_thread: Optional[threading.Thread] = None
@@ -101,10 +104,10 @@ class ConfigWatcher:
             True 如果启动成功，False 如果已在运行中
         """
         with self._lock:
-            if self._running:
+            if not self._stop_event.is_set():
                 logger.warning("ConfigWatcher 已在运行中")
                 return False
-            self._running = True
+            self._stop_event.clear()
 
         if HAS_WATCHDOG:
             return self._start_watchdog()
@@ -114,9 +117,9 @@ class ConfigWatcher:
     def stop(self) -> None:
         """停止文件监听"""
         with self._lock:
-            if not self._running:
+            if self._stop_event.is_set():
                 return
-            self._running = False
+            self._stop_event.set()
 
         # 停止 watchdog observer
         if self._observer is not None:
@@ -142,7 +145,7 @@ class ConfigWatcher:
     @property
     def is_running(self) -> bool:
         """是否正在运行"""
-        return self._running
+        return not self._stop_event.is_set()
 
     # ── watchdog 后端 ─────────────────────────────────────────────
 
@@ -182,7 +185,7 @@ class ConfigWatcher:
 
     def _poll_loop(self) -> None:
         """轮询主循环"""
-        while self._running:
+        while not self._stop_event.is_set():
             try:
                 current_mtime = os.path.getmtime(self._config_path)
                 if current_mtime > self._last_mtime:
@@ -194,7 +197,7 @@ class ConfigWatcher:
 
             # 分段 sleep，以便快速响应 stop()
             for _ in range(int(self._poll_interval / 0.2)):
-                if not self._running:
+                if self._stop_event.is_set():
                     break
                 time.sleep(0.2)
 
@@ -206,10 +209,11 @@ class ConfigWatcher:
         if now - self._last_reload_time < self._debounce_seconds:
             logger.debug("配置变更被防抖忽略 (距上次 %.2fs)", now - self._last_reload_time)
             return
-        self._last_reload_time = now
         logger.info("检测到配置文件变更，触发重载: %s", self._config_path)
         try:
             self._on_reload()
+            # S11修复: 回调成功后才更新防抖计时器，避免长耗时回调完成后立即触发下一次重载
+            self._last_reload_time = time.time()
         except Exception as e:
             logger.error("配置重载回调执行失败: %s", e)
 

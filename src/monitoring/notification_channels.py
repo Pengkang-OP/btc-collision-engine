@@ -120,7 +120,10 @@ class LogFileNotification(NotificationChannel):
             file_path: 告警通知日志文件路径
         """
         self.file_path = Path(file_path)
-        self.file_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            self.file_path.parent.mkdir(parents=True, exist_ok=True)
+        except OSError as e:
+            logger.warning("无法创建告警通知日志目录 %s: %s", self.file_path.parent, e)
 
     @property
     def name(self) -> str:
@@ -174,7 +177,8 @@ class CompositeNotification(NotificationChannel):
         return f"Composite({', '.join(c.name for c in self.channels)})"
 
     def send(self, alert: AlertRecord) -> None:
-        for channel in self.channels:
+        # W6修复: 遍历快照避免并发 add 导致的行为未定义
+        for channel in list(self.channels):
             try:
                 channel.send(alert)
             except Exception as e:
