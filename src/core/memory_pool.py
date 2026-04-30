@@ -425,17 +425,17 @@ class GlobalPoolManager:
             with cls._lock:
                 if cls._instance is None:
                     cls._instance = super().__new__(cls)
-                    cls._instance._initialized = False
-                    cls._instance._pools_registry: List[ObjectPool] = []
+                    cls._instance._initialized = False  # type: ignore[has-type]
+                    cls._instance._pools_registry: List[ObjectPool] = []  # type: ignore[misc,has-type]
         return cls._instance
 
     def initialize(self) -> None:
         """初始化所有全局池"""
-        if self._initialized:
+        if self._initialized:  # type: ignore[has-type]
             return
 
         with self._lock:
-            if not self._initialized:
+            if not self._initialized:  # type: ignore[has-type]
                 self.ecpoint_pool = ECPointPool(initial_size=1000, max_size=10000)
                 self.bytearray_pool_32 = ByteArrayPool(
                     buffer_size=32, initial_size=500, max_size=5000

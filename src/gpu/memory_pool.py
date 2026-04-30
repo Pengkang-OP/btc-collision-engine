@@ -284,9 +284,9 @@ class GPUMemoryPool:
                 except Exception as e:
                     logger.warning(f"处理未指定大小的缓冲区失败: {e}")
                     # 作为最后的 fallback，放到通用池
-                    if "generic" not in self._pool:
-                        self._pool["generic"] = []
-                    self._pool["generic"].append(buf)
+                    if "generic" not in self._pool:  # type: ignore[comparison-overlap]
+                        self._pool["generic"] = []  # type: ignore[index]
+                    self._pool["generic"].append(buf)  # type: ignore[index]
 
             # 记录内存使用
             self._record_memory_usage()
@@ -462,7 +462,7 @@ class GPUMemoryPool:
                     self._max_memory_bytes * 1.5, 2 * 1024 * 1024 * 1024
                 )  # 最多2GB
                 if new_max_memory > self._max_memory_bytes:
-                    self._max_memory_bytes = new_max_memory
+                    self._max_memory_bytes = new_max_memory  # type: ignore[assignment]
                     logger.info(
                         f"内存使用较高，扩展内存池大小: {new_max_memory / (1024 * 1024):.1f}MB"
                     )

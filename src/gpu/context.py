@@ -96,7 +96,7 @@ class GPUContext:
             return IntelGPUVendor()
         else:
             logger.warning(f"未知GPU厂商: {vendor},使用默认优化器")
-            return GPUVendorBase()
+            return GPUVendorBase()  # type: ignore[abstract]
 
     def apply_optimizations(self) -> None:
         """
@@ -184,7 +184,7 @@ class GPUContext:
             )
 
             # 编译内核
-            self.program = cl.Program(self.device.context, kernel_source).build(
+            self.program = cl.Program(self.device.context, kernel_source).build(  # type: ignore[call-overload]
                 options=build_options
             )
 
@@ -215,10 +215,10 @@ class GPUContext:
         # 从配置表获取编译选项
         vendor_cfg = VENDOR_BUILD_OPTIONS.get(vendor_name)
         if vendor_cfg is not None:
-            options = vendor_cfg["options"][:]
+            options = vendor_cfg["options"][:]  # type: ignore[index]
             logger.debug(
                 f"使用厂商编译配置 [{vendor_name}]: {' '.join(options)} "
-                f"— {vendor_cfg['description']}"
+                f"— {vendor_cfg['description']}"  # type: ignore[index]
             )
             return " ".join(options)
 

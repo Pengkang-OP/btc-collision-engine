@@ -106,7 +106,7 @@ class BatchOptimizer:
             哈希结果列表
         """
         # 预分配结果数组
-        results = [None] * len(data_list)
+        results = [b""] * len(data_list)
 
         # 批量处理（优化内存局部性）
         for i, data in enumerate(data_list):
@@ -123,7 +123,7 @@ class BatchOptimizer:
         Returns:
             哈希结果列表
         """
-        results = [None] * len(data_list)
+        results = [b""] * len(data_list)
 
         for i, data in enumerate(data_list):
             results[i] = hashlib.sha256(data).digest()
@@ -186,7 +186,7 @@ class BatchOptimizer:
         Returns:
             比特币地址列表
         """
-        from ..core.base58 import base58_encode
+        from ..core.base58 import Base58
 
         addresses = []
         for hash160 in hash160_list:
@@ -197,7 +197,7 @@ class BatchOptimizer:
             checksum = hashlib.sha256(hashlib.sha256(extended).digest()).digest()[:4]
 
             # Base58编码
-            address = base58_encode(extended + checksum)
+            address = Base58.encode(extended + checksum)
             addresses.append(address)
 
         return addresses

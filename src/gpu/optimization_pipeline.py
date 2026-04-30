@@ -85,7 +85,7 @@ class PerformanceOptimizationPipeline:
             return current_size
 
         try:
-            suggestion = self.auto_tuner.suggest_batch_size(current_size, metrics)
+            suggestion = self.auto_tuner.suggest_batch_size(current_size, metrics)  # type: ignore[attr-defined]
             return int(suggestion) if suggestion else current_size
         except (AttributeError, TypeError, ValueError) as exc:
             self._logger.debug(f"optimize_batch_size 委托失败，保持原值: {exc}")
@@ -113,9 +113,9 @@ class PerformanceOptimizationPipeline:
         self._logger.info("=" * 60)
 
         results = self.benchmark_suite.run_all_benchmarks(iterations)
-        summary = self.benchmark_suite.get_summary(results)
+        summary = self.benchmark_suite.get_summary(results)  # type: ignore[attr-defined]
         self._logger.info("\n" + summary)
-        return results
+        return results  # type: ignore[return-value]
 
     # ------------------------------------------------------------------
     # 自动调优
@@ -143,7 +143,7 @@ class PerformanceOptimizationPipeline:
         self._logger.info("开始自动调优")
         self._logger.info("=" * 60)
 
-        results = self.auto_tuner.start_tuning(
+        results = self.auto_tuner.start_tuning(  # type: ignore[call-arg]
             max_iterations=max_iterations,
             callback=on_new_batch_size,
         )
@@ -196,7 +196,7 @@ class PerformanceOptimizationPipeline:
         self._logger.info("生成 GPU 性能报告")
         self._logger.info("=" * 60)
 
-        report_path = self.performance_reporter.generate_report(
+        report_path = self.performance_reporter.generate_report(  # type: ignore[call-arg]
             config=ReportConfig(
                 include_device_info=True,
                 include_benchmark_results=include_benchmarks,

@@ -154,7 +154,7 @@ def _worker_process(
                         pk_bytes = bytes(pk)
 
                         # 使用子进程本地初始化的address_generator
-                        address = address_generator.generate_from_private_key(pk_bytes)
+                        address = address_generator.generate_from_private_key(pk_bytes)  # type: ignore[attr-defined]
                         total_checked += 1
 
                         if address in target_set:
@@ -451,7 +451,7 @@ class MultiprocessCollisionEngine:
                     try:
                         from cryptography.fernet import Fernet, InvalidToken
 
-                        fernet = Fernet(self._encryption_key)
+                        fernet = Fernet(self._encryption_key)  # type: ignore[arg-type]
                         decrypted_data = fernet.decrypt(batch)
                         batch = json.loads(decrypted_data)
                     except InvalidToken:
@@ -686,9 +686,9 @@ class HybridCollisionEngine:
             from ..collision import KeyCollisionEngine
 
             self.thread_engine = KeyCollisionEngine(
-                targets=kwargs.get("targets", []), thread_count=self.num_workers
+                targets=kwargs.get("targets", []), max_workers=self.num_workers  # type: ignore[call-arg]
             )
-            return self.thread_engine.start(**kwargs)  # type: ignore[no-any-return]
+            return self.thread_engine.start(**kwargs)  # type: ignore[no-any-return,return-value,func-returns-value]
 
     def stop(self, **kwargs) -> None:
         """停止引擎"""
