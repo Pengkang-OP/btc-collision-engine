@@ -56,7 +56,7 @@ from .constants import (
     clamp_batch_size,
 )
 
-__version__ = "3.3.1"  # 与主项目版本同步 (v3.3.1: GPU停止阻塞修复，轮询等待替代Event.wait())
+__version__ = "3.5.0"  # 与主项目版本同步 (v3.5.0: P3-3全模块类型提示补全 + P2-4配置热重载 + P2-7告警系统)
 
 __all__ = [
     'GPUDeviceDetector',

@@ -7,6 +7,62 @@
 
 ---
 
+## [3.5.0] - 2026-04-30
+
+### 类型系统工程化 (v3.5.0 核心特性)
+
+- **P3-3 全模块类型提示渐进式补全**: src/ 下 7 模块 104 文件
+  - `cli/` (9文件): commands, engine_builder, log_window, pagination, stats_performance_monitor 等
+  - `collision/` (32文件): key_collision_engine, gpu_collision_engine, event_bus, factory, observers, dependency_container 等
+  - `core/` (13文件): secp256k1, crypto_backend, thread_pool, key_generator, precomputed_table, bigint_optimizer 等
+  - `gpu/` (24文件): kernel_impl, device_manager, multi_gpu_engine, load_balancer, data_monitor, search_modes 等
+  - `monitoring/` (3文件): data_logger, enhanced_monitoring, storage_config
+  - `utils/` (21文件): logger, performance_monitor, log_platform_adapter, logging_config, exceptions 等
+  - `wizard/` (1文件): target_selector
+- **P3-3 规范**: self/cls 免标注, 嵌套非下划线函数需类型提示
+- **回归验证**: 1471 测试选中, ~765 执行 (52%), 7 失败全部预存, 零破坏性变更
+
+### 新增功能
+
+- **P2-4 配置热重载** (`config_watcher.py` + `ConfigManager` 集成): 运行时检测配置文件变更并自动生效
+- **P2-7 告警系统多渠道通知**: `NotificationChannel` 抽象基类 + `Console`/`LogFile`/`Composite` 通道, 引擎集成
+
+### 测试增强
+
+- **P3-12 测试覆盖提升**: 70 个新测试
+
+### 代码质量
+
+- **P3-1 地址生成器架构去重**: 提取 `BaseAddressGenerator` 共享基类, 消除 P2PKH/P2SH 重复代码
+- **P3-4~P3-6**: 29 文件初步类型注解 + GPU 异常分类细化 + ExceptionHandler 增强
+- **P3-7 内存池优化**: ObjectPool 增强 (shrink/hit_ratio/auto_tune) + GlobalPoolManager 自适应调优
+- **P3-8 线程池配置优化**: 可观测性 + 健康监控 + 边界校验 + 配置集成
+- **P3-10 序列化性能优化**: orjson 优先 + json 降级统一 fast_json 模块
+- **P3-11 GPU设备评分统一**: GPUDeviceScorer + 消除三套不一致评分公式
+
+### 改动文件
+
+- `src/` — 104 文件类型提示补全 (+743/-730 行)
+- `src/config/config_watcher.py` — 新增配置监听器
+- `src/utils/notification_channel.py` — 新增告警通道
+- `src/collision/alert_system.py` — 新增告警系统
+- `src/core/address_generator.py` — BaseAddressGenerator 共享基类
+- `src/gpu/memory_pool.py` — ObjectPool 增强
+- `src/core/thread_pool.py` — 线程池可观测性增强
+- `src/gpu/scorer.py` — GPU 评分统一
+- `tests/` — 70 个新测试
+
+### 破坏性变更
+
+- 无 ✅
+
+### 迁移指南
+
+- 无需迁移, 可直接升级 🔄
+- 类型提示补全为纯静态标注, 运行时行为不变 📝
+
+---
+
 ## [3.4.0] - 2026-04-30
 
 ### Wizard 模块架构重构 (v3.4.0 核心特性)
@@ -802,4 +858,4 @@
 
 ---
 
-**最后更新**: 2026-04-21
+**最后更新**: 2026-04-30
