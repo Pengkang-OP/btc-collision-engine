@@ -59,7 +59,7 @@ class GPUConfigManager:
         profile_config = self._load_profile_config(device_info)
 
         # 3. 合并配置
-        merged_config = self._merge_configs(auto_config, profile_config, self.user_config)
+        merged_config = self._merge_configs(auto_config, profile_config or {}, self.user_config)
 
         # 4. 处理用户指定的batch_size
         if user_batch_size is not None:

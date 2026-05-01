@@ -461,7 +461,7 @@ class ConfigManager:
 
             self._watcher = ConfigWatcher(
                 config_path=self.config_file,
-                on_reload=lambda: self.reload_config(),
+                on_reload=lambda: (self.reload_config(), None)[1],
                 debounce_seconds=debounce_seconds,
                 poll_interval=poll_interval,
             )

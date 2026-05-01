@@ -71,7 +71,7 @@ try:
     GPU_CONFIG_MANAGER_AVAILABLE = True
 except ImportError:
     GPU_CONFIG_MANAGER_AVAILABLE = False
-    GPUConfigManager: Any = None  # 条件导入回退
+    GPUConfigManager: Any = None  # type: ignore[no-redef]  # 条件导入回退
 
 # 基础依赖
 from ...gpu.device import GPUDeviceDetector  # noqa: E402

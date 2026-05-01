@@ -1135,9 +1135,9 @@ def _handle_system_commands(args: argparse.Namespace) -> bool:
             from src.utils.platform_check import PlatformChecker
         except ImportError:
             from ..utils.platform_check import PlatformChecker
-        checker = PlatformChecker()
-        all_passed, _ = checker.run_all_checks()
-        checker.print_report()
+        platform_checker = PlatformChecker()
+        all_passed, _ = platform_checker.run_all_checks()
+        platform_checker.print_report()
         sys.exit(0 if all_passed else 1)
 
     # --cleanup
