@@ -96,12 +96,13 @@ class TestCmdValidateAddresses:
     """地址验证命令测试"""
 
     def test_file_not_found_exits(self, temp_dir):
-        """文件不存在时应退出"""
+        """文件不存在时应退出（sys.exit 被 mock 后函数会继续执行到多次 exit）"""
         from src.cli.commands import _cmd_validate_addresses
         with patch.object(sys, 'exit') as mock_exit, \
              patch('src.cli.commands.validate_file_path', return_value=True):
             _cmd_validate_addresses(os.path.join(temp_dir, "nonexistent.txt"))
-            mock_exit.assert_called_once_with(1)
+            # sys.exit(1) 应至少被调用一次
+            mock_exit.assert_any_call(1)
 
     def test_empty_file(self, temp_dir):
         """空文件应正常退出"""
@@ -132,11 +133,15 @@ class TestCmdValidateAddresses:
                 assert call_args[0][0] == 0
 
     def test_path_validation_fails(self):
-        """路径验证失败应提前返回"""
+        """路径验证失败应提前返回，不调用 sys.exit 也不读文件"""
         from src.cli.commands import _cmd_validate_addresses
-        with patch('src.cli.commands.validate_file_path', return_value=False):
-            # 不应进入文件读取逻辑
+        with patch('src.cli.commands.validate_file_path', return_value=False), \
+             patch.object(sys, 'exit') as mock_exit, \
+             patch('builtins.open') as mock_open:
             _cmd_validate_addresses("/invalid/../path")
+            # 验证提前返回：不应调用 sys.exit，也不应打开文件
+            mock_exit.assert_not_called()
+            mock_open.assert_not_called()
 
 
 # ============================================================================
@@ -201,17 +206,21 @@ class TestSaveAddressToTargetsFile:
     """地址保存测试"""
 
     def test_creates_new_file(self, temp_dir):
-        from src.cli.commands import _save_address_to_targets_file, DEFAULT_TARGETS_FILE
+        from src.cli.commands import _save_address_to_targets_file
         import src.cli.commands as commands_module
 
         targets_path = os.path.join(temp_dir, "targets_test.txt")
         mock_output = MagicMock()
 
+        # 确保目标文件不存在
+        if os.path.exists(targets_path):
+            os.remove(targets_path)
+
         with patch.object(commands_module, 'DEFAULT_TARGETS_FILE', targets_path):
             _save_address_to_targets_file("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", mock_output)
 
         assert os.path.exists(targets_path)
-        with open(targets_path, "r") as f:
+        with open(targets_path, "r", encoding="utf-8") as f:
             content = f.read()
         assert "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa" in content
 
@@ -244,16 +253,19 @@ class TestHandleInfoCommands:
     """信息命令分发测试"""
 
     def test_examples_command(self):
+        """examples 命令：sys.exit 被 mock 后函数不会真正退出，返回值可能为 False"""
         from src.cli.commands import _handle_info_commands
         args = Mock()
         args.examples = True
         args.config_check = False
         args.template = None
         args.recommend = False
-        with patch.object(sys, 'exit') as mock_exit:
+        with patch('src.cli.commands._cmd_examples') as mock_cmd, \
+             patch.object(sys, 'exit') as mock_exit:
             result = _handle_info_commands(args)
-        assert result is True
+        # sys.exit 被调用即说明匹配到了命令
         mock_exit.assert_called_once_with(0)
+        mock_cmd.assert_called_once()
 
     def test_no_info_command(self):
         from src.cli.commands import _handle_info_commands
@@ -271,6 +283,7 @@ class TestHandleSystemCommands:
     """系统命令分发测试"""
 
     def test_validate_addresses_command(self):
+        """validate-addresses 命令：sys.exit 被 mock 后函数继续执行，验证命令被调用即可"""
         from src.cli.commands import _handle_system_commands
         args = Mock()
         args.health_check = False
@@ -281,11 +294,11 @@ class TestHandleSystemCommands:
         with patch('src.cli.commands._cmd_validate_addresses') as mock_cmd, \
              patch.object(sys, 'exit') as mock_exit:
             result = _handle_system_commands(args)
-        assert result is True
         mock_cmd.assert_called_once_with("test.txt")
         mock_exit.assert_called_once_with(0)
 
     def test_migrate_config_command(self):
+        """migrate-config 命令：sys.exit 被 mock 后函数继续执行，验证 migrate_config_file 被调用即可"""
         from src.cli.commands import _handle_system_commands
         args = Mock()
         args.health_check = False
@@ -293,10 +306,10 @@ class TestHandleSystemCommands:
         args.cleanup = False
         args.validate_addresses = None
         args.migrate_config = True
-        with patch('src.cli.config_migration.migrate_config_file', return_value=True), \
+        with patch('src.cli.config_migration.migrate_config_file', return_value=True) as mock_migrate, \
              patch.object(sys, 'exit') as mock_exit:
             result = _handle_system_commands(args)
-        assert result is True
+        mock_migrate.assert_called_once()
         mock_exit.assert_called_once_with(0)
 
     def test_no_system_command(self):
@@ -320,6 +333,7 @@ class TestDispatchUtilityCommands:
     """工具命令调度测试"""
 
     def test_dispatches_to_info(self):
+        """调度到信息命令：sys.exit 被 mock 后函数继续执行，验证 _cmd_examples 被调用即可"""
         from src.cli.commands import _dispatch_utility_commands
         args = Mock()
         args.examples = True
@@ -333,9 +347,11 @@ class TestDispatchUtilityCommands:
         args.cleanup = False
         args.validate_addresses = None
         args.migrate_config = False
-        with patch.object(sys, 'exit') as mock_exit:
+        with patch('src.cli.commands._cmd_examples') as mock_cmd, \
+             patch.object(sys, 'exit') as mock_exit:
             result = _dispatch_utility_commands(args)
-        assert result is True
+        mock_cmd.assert_called_once()
+        mock_exit.assert_called_once_with(0)
 
     def test_no_match_returns_false(self):
         from src.cli.commands import _dispatch_utility_commands
