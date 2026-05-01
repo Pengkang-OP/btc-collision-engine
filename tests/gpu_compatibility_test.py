@@ -86,6 +86,7 @@ def test_gpu_device_detection():
         return False
 
 
+@pytest.mark.skip(reason="需手动调用: test_gpu_initialization(device_index=N)，非常规 pytest 测试")
 def test_gpu_initialization(device_index: int):
     """测试GPU设备初始化
 
@@ -131,6 +132,7 @@ def test_gpu_initialization(device_index: int):
         return False, error_msg
 
 
+@pytest.mark.skip(reason="需手动调用: test_gpu_batch_sizes(device_index=N)，非常规 pytest 测试")
 def test_gpu_batch_sizes(device_index: int):
     """测试不同批次大小的兼容性
 

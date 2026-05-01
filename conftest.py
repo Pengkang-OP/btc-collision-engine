@@ -134,3 +134,29 @@ def _apply_python314_logging_patch():
 
     except Exception:
         pass
+
+
+# ============================================================================
+# 共享测试工具
+# ============================================================================
+
+import time as _poll_time
+
+
+def poll_until(condition, timeout=2.0, interval=0.01):
+    """轮询直到条件成立或超时。比 time.sleep() 更稳定，适应慢 CI 环境。
+
+    Args:
+        condition: 返回 bool 的可调用对象
+        timeout: 最大等待时间（秒）
+        interval: 轮询间隔（秒）
+
+    Returns:
+        条件成立返回 True，超时返回最后一次 condition() 的结果
+    """
+    deadline = _poll_time.time() + timeout
+    result = condition()
+    while not result and _poll_time.time() < deadline:
+        _poll_time.sleep(interval)
+        result = condition()
+    return result

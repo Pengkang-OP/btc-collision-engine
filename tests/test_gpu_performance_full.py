@@ -98,8 +98,9 @@ class GPUPerformanceTester:
                 'matches': len(stats.matches)
             })
 
-        def on_match(match_info):
-            print(f"  🎯 发现匹配: {match_info.get('address', 'N/A')}")
+        def on_match(private_key: bytes, address: str, wif: str):
+            """匹配回调 - 签名匹配 MatchCallback = Callable[[bytes, str, str], None]"""
+            print(f"  🎯 发现匹配: {address}")
 
         start_init = time.time()
 
@@ -119,19 +120,24 @@ class GPUPerformanceTester:
         device_info = engine._gpu_device.get_device_info()
         memory_efficiency = getattr(engine._gpu_device, 'memory_efficiency', 0.70)
 
+        # 从 global_mem_size (字节) 计算 GB 值
+        global_mem_bytes = device_info.get('global_mem_size', 0)
+        global_mem_gb = global_mem_bytes / (1024**3) if global_mem_bytes else 0
+        compute_units = device_info.get('max_compute_units', 0)
+
         self.results['device_info'] = {
             'name': device_info.get('name', 'Unknown'),
             'vendor': device_info.get('vendor', 'Unknown'),
-            'global_mem_gb': device_info.get('global_mem_gb', 0),
-            'compute_units': device_info.get('compute_units', 0),
+            'global_mem_gb': global_mem_gb,
+            'compute_units': compute_units,
             'memory_efficiency': memory_efficiency,
             'batch_size': engine.batch_size,
             'initialization_time': init_time
         }
 
         print(f"✓ GPU设备: {device_info.get('name', 'Unknown')}")
-        print(f"✓ 显存: {device_info.get('global_mem_gb', 0):.2f} GB")
-        print(f"✓ 计算单元: {device_info.get('compute_units', 0)}")
+        print(f"✓ 显存: {global_mem_gb:.2f} GB")
+        print(f"✓ 计算单元: {compute_units}")
         print(f"✓ 显存效率: {memory_efficiency*100:.0f}%")
         print(f"✓ 批次大小: {engine.batch_size:,}")
         print(f"✓ 初始化时间: {init_time:.2f}秒")

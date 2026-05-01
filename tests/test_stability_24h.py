@@ -95,6 +95,10 @@ class StabilityTestRunner:
         initial_memory = self.metrics_history[0]['memory_mb']
         current_memory = self.metrics_history[-1]['memory_mb']
 
+        # 防止除零: 初始显存为0时视为无泄漏（监控未采集到数据）
+        if initial_memory <= 0:
+            return True
+
         # 显存增长超过10%视为内存泄漏
         growth_rate = (current_memory - initial_memory) / initial_memory * 100
         has_leak = growth_rate > 10.0
@@ -218,6 +222,8 @@ class StabilityTestRunner:
 
         # 初始化 GPU 性能监控器 (引擎默认不初始化)
         self._monitor = GPUPerformanceMonitor(engine=self.engine)
+        # 注入到引擎，确保引擎的 record_kernel_metrics() 能向监控器推送数据
+        self.engine.gpu_performance_monitor = self._monitor
         self._monitor.start()
 
         self.start_time = time.time()

@@ -76,18 +76,22 @@ class TestNoCircularDependency:
 
     def test_import_order_independence(self):
         """测试导入顺序无关性"""
-        # 清除已导入的模块
-        modules_to_clear = [k for k in sys.modules.keys() if 'src.collision.gpu' in k]
+        # 保存原始模块引用，防止清除后污染其他测试
+        saved_modules = {k: v for k, v in sys.modules.items() if 'src.collision.gpu' in k}
+        modules_to_clear = list(saved_modules.keys())
         for mod in modules_to_clear:
             del sys.modules[mod]
 
-        # 尝试不同导入顺序
         try:
+            # 尝试不同导入顺序
             from src.collision.gpu.protocols import IGPUDeviceManager
             from src.collision.gpu.core import CollisionCore
             assert True
         except ImportError as e:
             pytest.fail(f"导入失败（可能存在循环依赖）: {e}")
+        finally:
+            # 恢复原始模块引用，防止交叉测试污染
+            sys.modules.update(saved_modules)
 
     def test_all_modules_importable(self):
         """测试所有模块可导入"""
