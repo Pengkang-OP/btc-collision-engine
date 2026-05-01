@@ -661,8 +661,10 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 def timeout_handler(signum: int, frame: Any) -> None:
                     raise TimeoutError(f"匹配回调执行超时 ({self._match_callback_timeout}秒)")
 
-                old_handler = signal.signal(signal.SIGALRM, timeout_handler)  # type: ignore[attr-defined]  # Unix-only API
-                signal.alarm(int(self._match_callback_timeout))  # type: ignore[attr-defined]  # Unix-only API
+                _sigalrm = signal.SIGALRM  # type: ignore[attr-defined]  # Unix-only API
+                old_handler = signal.signal(_sigalrm, timeout_handler)
+                _alarm = signal.alarm  # type: ignore[attr-defined]  # Unix-only API
+                _alarm(int(self._match_callback_timeout))
                 try:
                     on_match(private_key, address, wif)
                 except TimeoutError as e:
@@ -672,8 +674,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
                     logger.error(f"匹配回调异常: {e}", exc_info=True)
                     return False
                 finally:
-                    signal.alarm(0)  # type: ignore[attr-defined]  # Unix-only API
-                    signal.signal(signal.SIGALRM, old_handler)  # type: ignore[attr-defined]  # Unix-only API
+                    _alarm(0)
+                    signal.signal(_sigalrm, old_handler)
             return True
         except Exception as e:
             logger.error(f"匹配回调调用失败: {e}", exc_info=True)
