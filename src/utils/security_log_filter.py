@@ -43,6 +43,10 @@ class SecurityLogFilter(logging.Filter):
     # Bech32m (Taproot): 以 bc1p 开头，62 字符
     BECH32M_ADDRESS_PATTERN = re.compile(r"\bbc1p[ac-hj-np-z02-9]{58}\b")
 
+    # BIP32 扩展密钥 (xprv/xpub/等)
+    BIP32_EXTENDED_KEY_PATTERN = re.compile(r"\b[xXtT]prv[1-9A-HJ-NP-Za-km-z]{107,108}\b")
+    BIP32_EXTENDED_PUBKEY_PATTERN = re.compile(r"\b[xXtT]pub[1-9A-HJ-NP-Za-km-z]{107,108}\b")
+
     def __init__(
         self,
         name: str = "",
@@ -118,6 +122,10 @@ class SecurityLogFilter(logging.Filter):
             message = self.P2SH_ADDRESS_PATTERN.sub("[P2SH_ADDRESS]", message)
             message = self.BECH32_ADDRESS_PATTERN.sub("[BECH32_ADDRESS]", message)
             message = self.BECH32M_ADDRESS_PATTERN.sub("[BECH32M_ADDRESS]", message)
+
+        # 屏蔽 BIP32 扩展密钥 (与 log_processor.SensitiveDataFilter 保持一致)
+        message = self.BIP32_EXTENDED_KEY_PATTERN.sub("[BIP32_EXTENDED_KEY]", message)
+        message = self.BIP32_EXTENDED_PUBKEY_PATTERN.sub("[BIP32_EXTENDED_PUBKEY]", message)
 
         return message
 

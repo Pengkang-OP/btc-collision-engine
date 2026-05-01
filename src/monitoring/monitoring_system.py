@@ -201,7 +201,7 @@ class DataStorage:
                 fast_dump([], f)
 
     def save_current_data(self, data: MonitoringData) -> None:
-        """保存当前数据（优化：原子写入）"""
+        """保存当前数据（优化：原子写入 + 安全权限）"""
         try:
             # 使用原子写入：先写临时文件，再重命名
             temp_file = self.current_data_file + ".tmp"
@@ -209,6 +209,10 @@ class DataStorage:
                 fast_dump(data.to_dict(), f, ensure_ascii=False, indent=2)
                 f.flush()
                 os.fsync(f.fileno())  # 确保数据写入磁盘
+
+            # 设置安全权限: 仅所有者可读写 (Unix only; Windows 通过 ACL 控制)
+            if os.name != 'nt':
+                os.chmod(temp_file, 0o600)
 
             # 原子替换
             if os.path.exists(self.current_data_file):
@@ -244,6 +248,10 @@ class DataStorage:
                 fast_dump(history, f, ensure_ascii=False, indent=2)
                 f.flush()
                 os.fsync(f.fileno())
+
+            # 设置安全权限: 仅所有者可读写 (Unix only; Windows 通过 ACL 控制)
+            if os.name != 'nt':
+                os.chmod(temp_file, 0o600)
 
             # 原子替换
             if os.path.exists(self.history_data_file):
@@ -401,6 +409,10 @@ class DataStorage:
                 fast_dump(errors, f, ensure_ascii=False, indent=2)
                 f.flush()
                 os.fsync(f.fileno())
+
+            # 设置安全权限: 仅所有者可读写 (Unix only; Windows 通过 ACL 控制)
+            if os.name != 'nt':
+                os.chmod(temp_file, 0o600)
 
             # 原子替换
             if os.path.exists(self.error_log_file):

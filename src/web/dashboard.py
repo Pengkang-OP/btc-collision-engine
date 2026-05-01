@@ -1,0 +1,474 @@
+"""Web 监控仪表板 - Flask 应用
+
+BTC 碰撞引擎的 Web 监控仪表板，提供:
+- RESTful API 接口查询运行状态
+- HTML 仪表板页面实时展示引擎指标
+- 历史性能数据查询
+- 错误日志浏览
+
+启动:
+    python -m src.web.dashboard --host 0.0.0.0 --port 8080
+
+API 端点:
+    GET  /api/status       - 当前运行状态
+    GET  /api/history      - 历史数据 (支持 ?limit=N)
+    GET  /api/errors       - 错误日志 (支持 ?limit=N)
+    GET  /api/report       - 日报告摘要
+    GET  /                 - 仪表板 HTML 页面
+"""
+
+import os
+import json
+import sys
+import argparse
+import logging
+import time
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+try:
+    from flask import Flask, jsonify, render_template_string, request
+    FLASK_AVAILABLE = True
+except ImportError:
+    FLASK_AVAILABLE = False
+    Flask = None  # type: ignore[assignment]
+    jsonify = None  # type: ignore[assignment]
+    render_template_string = None  # type: ignore[assignment]
+    request = None  # type: ignore[assignment]
+
+logger = logging.getLogger(__name__)
+
+# ──────────────────────────────────────────────────────────────────
+# HTML 模板 (内嵌，无需外部文件)
+# ──────────────────────────────────────────────────────────────────
+
+DASHBOARD_TEMPLATE = """<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="30">
+    <title>BTC 碰撞引擎 - 监控仪表板</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: #0d1117; color: #c9d1d9;
+            min-height: 100vh; padding: 20px;
+        }
+        h1 { color: #58a6ff; font-size: 1.8em; margin-bottom: 10px; }
+        .subtitle { color: #8b949e; font-size: 0.9em; margin-bottom: 24px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .card {
+            background: #161b22; border: 1px solid #30363d;
+            border-radius: 8px; padding: 20px;
+        }
+        .card h3 { color: #58a6ff; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .card .value { font-size: 2.2em; font-weight: 700; color: #f0f6fc; }
+        .card .label { color: #8b949e; font-size: 0.8em; margin-top: 4px; }
+        .status-ok { color: #3fb950; }
+        .status-warn { color: #d29922; }
+        .status-error { color: #f85149; }
+        .section { margin-bottom: 24px; }
+        .section h2 { color: #58a6ff; font-size: 1.2em; margin-bottom: 12px; border-bottom: 1px solid #30363d; padding-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid #21262d; }
+        th { color: #8b949e; font-weight: 600; background: #161b22; }
+        tr:hover { background: #1c2129; }
+        .badge {
+            display: inline-block; padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75em; font-weight: 600;
+        }
+        .badge-info { background: #1f6feb33; color: #58a6ff; }
+        .badge-warn { background: #d2992233; color: #d29922; }
+        .empty { color: #8b949e; font-style: italic; padding: 12px; }
+        .footer { text-align: center; color: #484f58; font-size: 0.8em; margin-top: 32px; }
+    </style>
+</head>
+<body>
+    <h1>🔑 BTC 碰撞引擎 - 监控仪表板</h1>
+    <p class="subtitle">实时运行状态 | 自动刷新: 30秒 | 生成时间: {{ generated_at }}</p>
+
+    <!-- 核心指标 -->
+    <div class="section"><h2>📊 核心指标</h2>
+    <div class="grid">
+        <div class="card">
+            <h3>检测速率</h3>
+            <div class="value">{{ "%.0f"|format(stats.get('speed', 0)) }}<span style="font-size:0.5em">/s</span></div>
+            <div class="label">平均: {{ "%.0f"|format(stats.get('avg_speed', 0)) }}/s | 最大: {{ "%.0f"|format(stats.get('max_speed', 0)) }}/s</div>
+        </div>
+        <div class="card">
+            <h3>已检测总数</h3>
+            <div class="value">{{ "{:,}".format(stats.get('total_checked', 0)) }}</div>
+            <div class="label">匹配: {{ stats.get('matches_found', 0) }}</div>
+        </div>
+        <div class="card">
+            <h3>运行时间</h3>
+            <div class="value">{{ uptime_display }}</div>
+            <div class="label">引擎状态:
+                <span class="{% if stats.get('is_running', false) %}status-ok{% else %}status-warn{% endif %}">
+                    {{ "运行中" if stats.get('is_running', false) else "已停止" }}
+                </span>
+            </div>
+        </div>
+        <div class="card">
+            <h3>系统资源</h3>
+            <div class="value" style="font-size:1.2em">
+                CPU: {{ "%.1f"|format(stats.get('cpu_usage', 0)) }}%<br>
+                内存: {{ "%.0f"|format(stats.get('memory_usage', 0)) }} MB
+            </div>
+        </div>
+    </div></div>
+
+    <!-- 引擎信息 -->
+    <div class="section"><h2>⚙️ 引擎信息</h2>
+    <div class="grid">
+        <div class="card">
+            <h3>运行模式</h3>
+            <div class="value" style="font-size:1.2em"><span class="badge badge-info">{{ engine.mode or "N/A" }}</span></div>
+        </div>
+        <div class="card">
+            <h3>目标地址</h3>
+            <div class="value" style="font-size:1.2em">{{ engine.target_count or 0 }}</div>
+        </div>
+        <div class="card">
+            <h3>当前位置</h3>
+            <div class="value" style="font-size:1.2em">{{ "{:,}".format(engine.current_position or 0) }}</div>
+        </div>
+        <div class="card">
+            <h3>操作系统</h3>
+            <div class="value" style="font-size:1.2em">{{ system.os or "N/A" }}</div>
+            <div class="label">Python {{ system.python_version or "N/A" }} | PID: {{ system.pid or "N/A" }}</div>
+        </div>
+    </div></div>
+
+    <!-- 错误日志 -->
+    <div class="section"><h2>⚠️ 最近错误 ({{ errors|length }})</h2>
+    {% if errors %}
+    <table>
+        <thead><tr><th>时间</th><th>类型</th><th>消息</th><th>异常</th></tr></thead>
+        <tbody>
+        {% for e in errors %}
+        <tr>
+            <td>{{ e.datetime or "N/A" }}</td>
+            <td><span class="badge badge-warn">{{ e.type or "N/A" }}</span></td>
+            <td>{{ e.message[:100] if e.message else "N/A" }}</td>
+            <td>{{ e.exception_type or "-" }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="empty">✅ 暂无错误记录</p>
+    {% endif %}</div>
+
+    <!-- 历史数据 -->
+    <div class="section"><h2>📈 最近历史数据 ({{ history|length }} 条)</h2>
+    {% if history %}
+    <table>
+        <thead><tr><th>时间</th><th>速度/s</th><th>总数</th><th>匹配</th><th>CPU%</th><th>内存MB</th></tr></thead>
+        <tbody>
+        {% for h in history %}
+        <tr>
+            <td>{{ h.datetime or "N/A" }}</td>
+            <td>{{ "%.0f"|format(h.speed or 0) }}</td>
+            <td>{{ "{:,}".format(h.total_checked or 0) }}</td>
+            <td>{{ h.matches_found or 0 }}</td>
+            <td>{{ "%.1f"|format(h.cpu_usage or 0) }}</td>
+            <td>{{ "%.0f"|format(h.memory_usage or 0) }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="empty">暂无历史数据</p>
+    {% endif %}</div>
+
+    <div class="footer">
+        BTC 碰撞引擎 v{{ version }} | Web 监控仪表板 v1.0
+    </div>
+</body>
+</html>"""
+
+# ──────────────────────────────────────────────────────────────────
+# 数据读取工具
+# ──────────────────────────────────────────────────────────────────
+
+def _find_data_logs_dir() -> Path:
+    """查找 data_logs 目录"""
+    candidates = [
+        Path("data_logs"),
+        Path(__file__).parent.parent.parent / "data_logs",
+    ]
+    for c in candidates:
+        if c.exists():
+            return c
+    return Path("data_logs")
+
+
+def _safe_read_json(path: Path) -> Any:
+    """安全读取 JSON 文件"""
+    if not path.exists():
+        return None
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError) as e:
+        logger.warning(f"读取 JSON 失败 {path}: {e}")
+        return None
+
+
+def get_current_stats(data_dir: Path) -> Dict[str, Any]:
+    """获取当前统计信息"""
+    data = _safe_read_json(data_dir / "current_data.json") or {}
+    perf = data.get("performance", {})
+    engine_info = data.get("engine", {})
+    system_info = data.get("system", {})
+
+    return {
+        "speed": perf.get("speed", 0) if isinstance(perf, dict) else 0,
+        "avg_speed": perf.get("avg_speed", 0) if isinstance(perf, dict) else 0,
+        "max_speed": 0,
+        "total_checked": perf.get("total_checked", 0) if isinstance(perf, dict) else 0,
+        "matches_found": perf.get("matches_found", 0) if isinstance(perf, dict) else 0,
+        "cpu_usage": perf.get("cpu_usage", 0) if isinstance(perf, dict) else 0,
+        "memory_usage": perf.get("memory_usage", 0) if isinstance(perf, dict) else 0,
+        "thread_count": perf.get("thread_count", 0) if isinstance(perf, dict) else 0,
+        "uptime": data.get("uptime", 0),
+        "is_running": engine_info.get("is_running", False) if isinstance(engine_info, dict) else False,
+        "mode": engine_info.get("mode", "") if isinstance(engine_info, dict) else "",
+        "target_count": engine_info.get("target_count", 0) if isinstance(engine_info, dict) else 0,
+        "current_position": engine_info.get("current_position", 0) if isinstance(engine_info, dict) else 0,
+        "os": system_info.get("os", "N/A") if isinstance(system_info, dict) else "N/A",
+        "python_version": system_info.get("python_version", "N/A") if isinstance(system_info, dict) else "N/A",
+        "pid": system_info.get("pid", "N/A") if isinstance(system_info, dict) else "N/A",
+        "generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+    }
+
+
+def get_history(data_dir: Path, limit: int = 20) -> List[Dict[str, Any]]:
+    """获取历史数据"""
+    data = _safe_read_json(data_dir / "history_data.json") or []
+    if isinstance(data, list):
+        return data[-limit:]
+    return []
+
+
+def get_errors(data_dir: Path, limit: int = 20) -> List[Dict[str, Any]]:
+    """获取错误日志"""
+    data = _safe_read_json(data_dir / "error_log.json") or []
+    if isinstance(data, list):
+        return data[-limit:]
+    return []
+
+
+def format_uptime(seconds: float) -> str:
+    """格式化运行时间"""
+    if seconds < 60:
+        return f"{int(seconds)}秒"
+    elif seconds < 3600:
+        return f"{int(seconds // 60)}分{int(seconds % 60)}秒"
+    else:
+        h = int(seconds // 3600)
+        m = int((seconds % 3600) // 60)
+        return f"{h}小时{m}分"
+
+
+# ──────────────────────────────────────────────────────────────────
+# Flask 应用工厂
+# ──────────────────────────────────────────────────────────────────
+
+def create_app(data_dir: Optional[Path] = None) -> "Flask":
+    """创建 Flask 应用
+
+    Args:
+        data_dir: data_logs 目录路径，为 None 时自动查找
+
+    Returns:
+        Flask 应用实例
+    """
+    if not FLASK_AVAILABLE:
+        raise ImportError(
+            "Flask 未安装。请运行: pip install flask"
+        )
+
+    app = Flask(__name__)
+    data_logs_dir = data_dir or _find_data_logs_dir()
+
+    # 从 web 包元数据获取版本号（避免硬编码和触发 OpenCL 初始化）
+    try:
+        from . import __version__ as web_version
+        version = web_version
+    except ImportError:
+        version = "1.0.0"
+
+    @app.route("/")
+    def index():
+        """仪表板主页"""
+        stats = get_current_stats(data_logs_dir)
+        history = get_history(data_logs_dir, limit=20)
+        errors = get_errors(data_logs_dir, limit=15)
+
+        uptime_display = format_uptime(stats.get("uptime", 0))
+
+        return render_template_string(
+            DASHBOARD_TEMPLATE,
+            stats=stats,
+            history=history,
+            errors=errors,
+            uptime_display=uptime_display,
+            engine={
+                "mode": stats.get("mode", ""),
+                "target_count": stats.get("target_count", 0),
+                "current_position": stats.get("current_position", 0),
+            },
+            system={
+                "os": stats.get("os", "N/A"),
+                "python_version": stats.get("python_version", "N/A"),
+                "pid": stats.get("pid", "N/A"),
+            },
+            version=version,
+            generated_at=time.strftime("%Y-%m-%d %H:%M:%S"),
+        )
+
+    @app.route("/api/status")
+    def api_status():
+        """API: 当前运行状态"""
+        return jsonify(get_current_stats(data_logs_dir))
+
+    @app.route("/api/history")
+    def api_history():
+        """API: 历史数据
+
+        Query params:
+            limit: 返回条数 (默认 50, 最大 200)
+        """
+        limit = request.args.get("limit", 50, type=int)
+        limit = min(limit, 200)
+        return jsonify(get_history(data_logs_dir, limit=limit))
+
+    @app.route("/api/errors")
+    def api_errors():
+        """API: 错误日志
+
+        Query params:
+            limit: 返回条数 (默认 50, 最大 200)
+        """
+        limit = request.args.get("limit", 50, type=int)
+        limit = min(limit, 200)
+        return jsonify(get_errors(data_logs_dir, limit=limit))
+
+    @app.route("/api/report")
+    def api_report():
+        """API: 日报告摘要"""
+        stats = get_current_stats(data_logs_dir)
+        history = get_history(data_logs_dir, limit=100)
+
+        speeds = [h.get("speed", 0) for h in history if h.get("speed")]
+        avg_speed = sum(speeds) / len(speeds) if speeds else 0
+        max_speed = max(speeds) if speeds else 0
+
+        return jsonify({
+            "generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "summary": {
+                "total_checked": stats.get("total_checked", 0),
+                "matches_found": stats.get("matches_found", 0),
+                "avg_speed": round(avg_speed, 2),
+                "max_speed": round(max_speed, 2),
+                "uptime_seconds": stats.get("uptime", 0),
+                "cpu_usage": stats.get("cpu_usage", 0),
+                "memory_usage": stats.get("memory_usage", 0),
+            },
+            "engine": {
+                "mode": stats.get("mode", ""),
+                "is_running": stats.get("is_running", False),
+            },
+        })
+
+    @app.route("/health")
+    def health():
+        """健康检查端点"""
+        return jsonify({"status": "ok", "timestamp": time.time()})
+
+    return app
+
+
+def run_dashboard(
+    host: str = "0.0.0.0",
+    port: int = 8080,
+    data_dir: Optional[str] = None,
+    debug: bool = False,
+    use_reloader: bool = False,
+) -> None:
+    """启动 Web 监控仪表板
+
+    Args:
+        host: 监听地址 (默认 0.0.0.0)
+        port: 监听端口 (默认 8080)
+        data_dir: data_logs 目录路径
+        debug: 是否开启调试模式
+        use_reloader: 是否启用 Flask 自动重载 (开发模式，默认关闭)
+    """
+    if not FLASK_AVAILABLE:
+        print("❌ Flask 未安装。请运行: pip install flask")
+        sys.exit(1)
+
+    data_path = Path(data_dir) if data_dir else None
+    app = create_app(data_dir=data_path)
+
+    print(f"""
+╔══════════════════════════════════════════════════════╗
+║     BTC 碰撞引擎 - Web 监控仪表板 v1.0               ║
+╠══════════════════════════════════════════════════════╣
+║  本地访问: http://127.0.0.1:{port:<5}                  ║
+║  API 端点:                                           ║
+║    GET /api/status  - 当前运行状态                   ║
+║    GET /api/history - 历史数据 (?limit=N)            ║
+║    GET /api/errors  - 错误日志 (?limit=N)            ║
+║    GET /api/report  - 日报告摘要                     ║
+║    GET /health      - 健康检查                       ║
+╚══════════════════════════════════════════════════════╝
+""")
+
+    # 安全: debug模式下强制绑定localhost，防止远程代码执行
+    if debug and host not in ("127.0.0.1", "localhost"):
+        logger.warning(f"Debug 模式仅允许本地绑定，已自动将 host 从 {host} 改为 127.0.0.1")
+        host = "127.0.0.1"
+
+    app.run(host=host, port=port, debug=debug, use_reloader=use_reloader)
+
+
+# ──────────────────────────────────────────────────────────────────
+# CLI 入口
+# ──────────────────────────────────────────────────────────────────
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="BTC 碰撞引擎 - Web 监控仪表板",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+示例:
+  python -m src.web.dashboard                    # 默认 0.0.0.0:8080
+  python -m src.web.dashboard --port 3000        # 自定义端口
+  python -m src.web.dashboard --host 127.0.0.1   # 仅本地访问
+  python -m src.web.dashboard --debug            # 调试模式
+        """,
+    )
+    parser.add_argument("--host", default="0.0.0.0", help="监听地址 (默认: 0.0.0.0)")
+    parser.add_argument("--port", type=int, default=8080, help="监听端口 (默认: 8080)")
+    parser.add_argument("--data-dir", default=None, help="data_logs 目录路径")
+    parser.add_argument("--debug", action="store_true", help="开启 Flask 调试模式")
+    parser.add_argument("--reload", action="store_true", help="启用 Flask 自动重载 (开发模式)")
+    args = parser.parse_args()
+
+    run_dashboard(
+        host=args.host,
+        port=args.port,
+        data_dir=args.data_dir,
+        debug=args.debug,
+        use_reloader=args.reload,
+    )
+
+
+if __name__ == "__main__":
+    main()

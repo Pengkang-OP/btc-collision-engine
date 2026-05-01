@@ -19,10 +19,10 @@ from enum import Enum
 
 import bech32
 
-from src.core.secp256k1 import Secp256k1, ECPoint, EllipticCurve
-from src.core.base58 import Base58
-from src.core.wif import WIF
-from src.core.hash_utils import HashUtils
+from .secp256k1 import Secp256k1, ECPoint, EllipticCurve
+from .base58 import Base58
+from .wif import WIF
+from .hash_utils import HashUtils
 
 
 class WIFEncoder:
@@ -735,7 +735,12 @@ class BitcoinKeyValidator:
         try:
             # 2. 编码为WIF
             wif = WIF.encode(private_key, compressed)
-            result.add_detail("wif", wif)
+            # 安全模式：步骤详情中脱敏WIF，防止通过to_dict()泄露
+            if self.secure_mode:
+                wif_safe = wif[:8] + "..." + wif[-4:] if len(wif) > 12 else "***"
+                result.add_detail("wif", wif_safe)
+            else:
+                result.add_detail("wif", wif)
             result.add_detail("wif_length", len(wif))
             result.add_detail("compressed", compressed)
 
@@ -777,13 +782,23 @@ class BitcoinKeyValidator:
         返回私钥和压缩标志
         """
         result = KeyValidationResult()
-        result.add_detail("wif", wif)
+        # 安全模式：步骤详情中脱敏WIF和私钥
+        if self.secure_mode:
+            wif_safe = wif[:8] + "..." + wif[-4:] if len(wif) > 12 else "***"
+            result.add_detail("wif", wif_safe)
+        else:
+            result.add_detail("wif", wif)
 
         try:
             # 1. 解码WIF
             private_key, compressed = WIF.decode(wif)
 
-            result.add_detail("private_key_hex", private_key.hex())
+            # 安全模式：不输出私钥明文
+            if self.secure_mode:
+                pk_hash = hashlib.sha256(private_key).hexdigest()[:16]
+                result.add_detail("private_key_hash", pk_hash)
+            else:
+                result.add_detail("private_key_hex", private_key.hex())
             result.add_detail("compressed", compressed)
 
             # 2. 验证私钥
@@ -944,16 +959,26 @@ class BitcoinKeyValidator:
         ]:
             report["warnings"].extend(step_result.warnings)
 
-        # 添加摘要
+        # 添加摘要 - 安全模式下不暴露私钥明文
+        if self.secure_mode:
+            pk_hash = hashlib.sha256(private_key).hexdigest()[:16]
+            wif_comp_safe = wif_compressed[:8] + "..." + wif_compressed[-4:] if len(wif_compressed) > 12 else "***"
+            wif_uncomp_safe = wif_uncompressed[:8] + "..." + wif_uncompressed[-4:] if len(wif_uncompressed) > 12 else "***"
+        else:
+            pk_hash = private_key.hex()
+            wif_comp_safe = wif_compressed
+            wif_uncomp_safe = wif_uncompressed
+
         report["summary"] = {
-            "private_key_hex": private_key.hex(),
+            "private_key_hash": pk_hash,
             "public_key_compressed": public_key_compressed.hex(),
             "public_key_uncompressed": public_key_uncompressed.hex(),
             "address": address,
-            "wif_compressed": wif_compressed,
-            "wif_uncompressed": wif_uncompressed,
+            "wif_compressed": wif_comp_safe,
+            "wif_uncompressed": wif_uncomp_safe,
             "address_match": match_result.details.get("match", False),
             "target_count": len(target_addresses),
+            "secure_mode": self.secure_mode,
         }
 
         return report

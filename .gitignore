@@ -39,11 +39,7 @@ test_results.log
 
 # 测试数据和结果
 test_data/
-test_results/*.xml
-test_results/*.json
-test_results/performance_report_*.json
-test_results/alert_system_test_results.xml
-test_results/gpu_*.json
+test_results/
 test_*.txt
 test_*.log
 tests/data_logs/report_daily_*.json
@@ -63,6 +59,9 @@ dxdiag.txt
 
 # 代码审查 diff 文件
 review_diff_*.txt
+
+# 根目录临时报告
+report.txt
 
 # data_logs 运行时报告（按日期生成的 JSON）
 data_logs/report_daily_*.json
