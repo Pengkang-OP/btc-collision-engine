@@ -12,6 +12,7 @@
 import time
 import logging
 from ..utils import init_logging, get_configured_logger
+from ..collision.constants import INTEL_SAFE_MEMORY_RATIO
 from typing import Dict, Optional, List
 from dataclasses import dataclass, field
 from enum import Enum
@@ -58,7 +59,7 @@ class IntelMemoryMonitor:
     def __init__(
         self,
         total_memory_bytes: int,
-        safe_usage_ratio: float = 0.45,
+        safe_usage_ratio: float = INTEL_SAFE_MEMORY_RATIO,
         warning_threshold: float = 0.70,
         critical_threshold: float = 0.85,
         emergency_threshold: float = 0.95,

@@ -34,6 +34,7 @@ import logging
 import smtplib
 import json
 import os
+import re
 import requests  # type: ignore[import-untyped]
 from abc import ABC, abstractmethod
 from email.mime.text import MIMEText
@@ -301,7 +302,9 @@ class WeComWebhookNotifier(BaseNotifier):
         self.mentioned_list = mentioned_list or []
         self.timeout = timeout
 
-        logger.info(f"企业微信Webhook通知器初始化")
+        # 安全: 不记录完整URL（仅记录脱敏后的地址）
+        _safe_url = re.sub(r'(key=|token=|secret=)[^&]+', r'\1***REDACTED***', self.webhook_url)
+        logger.info(f"企业微信Webhook通知器初始化: {_safe_url}")
 
     def _send_notification(self, alert: AlertRecord):
         """发送企业微信通知"""

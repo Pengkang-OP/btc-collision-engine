@@ -179,14 +179,12 @@ class TestPoolStats:
         collector.record_pool_access(0, False)
         assert collector.get_pool_hit_ratio(0) == 0.0
 
-    def test_pool_ratio_direct_query(self, collector):
-        """直接查询命中率验证"""
+    def test_pool_ratio_in_prometheus(self, collector):
+        """Prometheus 导出包含命中率（RLock 修复后不再死锁）"""
         collector.record_pool_access(0, True)
         collector.record_pool_access(0, False)
-        # 注意：export_prometheus() 和 export_json() 内部调用 get_pool_hit_ratio
-        # 时会递归获取 self._lock 导致死锁，这是 metrics.py 的已知 bug。
-        # 此处直接调用 get_pool_hit_ratio 验证逻辑
-        assert collector.get_pool_hit_ratio(0) == 0.5
+        prom = collector.export_prometheus()
+        assert 'gpu_memory_pool_hit_ratio{device="0"} 0.5000' in prom
 
 
 class TestExport:
@@ -207,23 +205,27 @@ class TestExport:
         prom = collector.export_prometheus()
         assert prom.endswith("\n")
 
-    def test_export_json_structure_empty(self, collector):
-        """空收集器 JSON 导出结构完整
-
-        注意：export_json() 在 per_device 循环中调用 get_kernel_latency_stats()
-        会递归获取 self._lock 导致死锁（metrics.py 已知 bug）。
-        因此只在无数据时测试导出结构。
-        """
+    def test_export_json_structure_with_data(self, collector):
+        """有数据时 JSON 导出结构完整（RLock 修复后不再死锁）"""
+        collector.record_keys_checked(0, 100)
+        collector.record_match_found(0)
+        collector.record_throughput(0, 5000.0)
+        collector.record_kernel_latency(0, 0.015)
+        collector.record_pool_access(0, True)
         data = collector.export_json()
         assert "uptime_sec" in data
         assert "total_keys_checked" in data
-        assert "total_matches" in data
-        assert "total_errors" in data
-        assert "combined_throughput" in data
+        assert data["total_keys_checked"] == 100
+        assert data["total_matches"] == 1
         assert "per_device" in data
-        assert data["total_keys_checked"] == 0
-        assert data["total_matches"] == 0
-        assert data["combined_throughput"] == 0.0
+        assert 0 in data["per_device"]
+        dev = data["per_device"][0]
+        assert dev["keys_checked"] == 100
+        assert dev["matches"] == 1
+        assert dev["throughput"] == 5000.0
+        assert "kernel_latency" in dev
+        assert dev["kernel_latency"]["count"] == 1
+        assert dev["pool_hit_ratio"] == 1.0
 
     def test_export_json_per_device_empty(self, collector):
         """空收集器 per_device 为空"""
@@ -296,11 +298,7 @@ class TestThreadSafety:
         assert len(errors) == 0
 
     def test_concurrent_export_during_recording(self, collector):
-        """录制期间并发 Prometheus 导出不崩溃
-
-        注意：只测 export_prometheus()（不触发递归锁死锁）。
-        export_json() 内部调用 get_kernel_latency_stats 会导致死锁。
-        """
+        """录制期间并发导出（Prometheus+JSON）不崩溃（RLock 修复后安全）"""
         errors = []
         stop = threading.Event()
 
@@ -314,7 +312,7 @@ class TestThreadSafety:
         def exporter():
             while not stop.is_set():
                 collector.export_prometheus()
-                # export_json() 会触发递归锁死锁，不在此测试
+                collector.export_json()
 
         threads = [
             threading.Thread(target=recorder),

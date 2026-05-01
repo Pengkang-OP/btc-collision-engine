@@ -72,13 +72,15 @@ class ContinuousMatcher:
                 logger.warning("地址信息缺少hash160字段")
                 continue
 
-            self.total_checked += 1
+            with self._lock:
+                self.total_checked += 1
 
             # O(1)哈希表查找
             is_match, target_info = self.target_table.check_match(hash160)
 
             if is_match:
-                self.match_count += 1
+                with self._lock:
+                    self.match_count += 1
 
                 match_record = {
                     "found_at": datetime.utcnow().isoformat(),

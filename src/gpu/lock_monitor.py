@@ -28,7 +28,7 @@ class LockMonitor:
             slow_threshold_ms: 慢锁阈值(毫秒),超过此时间视为慢锁
         """
         self.slow_threshold_ms = slow_threshold_ms
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
 
         # 统计数据
         self._lock_stats: Dict[str, Dict[str, Any]] = defaultdict(

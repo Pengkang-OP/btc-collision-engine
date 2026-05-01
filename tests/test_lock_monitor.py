@@ -162,26 +162,32 @@ class TestLockMonitorEnableDisable:
 class TestLockMonitorReport:
     """报告生成测试"""
 
-    def test_report_empty_no_data(self, monitor):
-        """空报告
-
-        注意：generate_report() 内部调用 get_all_stats() -> get_stats()
-        会递归获取 self._lock 导致死锁（lock_monitor.py 已知 bug）。
-        仅在无数据时测试。
-        """
-        report = monitor.generate_report()
-        assert "无数据" in report
-
-    def test_get_all_stats_with_data(self, monitor):
-        """通过 get_all_stats 直接验证数据（绕过 generate_report 死锁）"""
+    def test_report_with_data(self, monitor):
+        """有数据时生成完整报告（RLock 修复后不再死锁）"""
         monitor.record_lock_acquire("main_lock", 5.0)
         monitor.record_lock_release("main_lock", 10.0)
-        # get_all_stats() 在有数据时也会调用 get_stats() 导致死锁，
-        # 所以单独查询每个锁
-        stats = monitor.get_stats("main_lock")
-        assert stats["acquisitions"] == 1
-        assert stats["avg_wait_ms"] == 5.0
-        assert stats["avg_hold_ms"] == 10.0
+        monitor.record_lock_acquire("aux_lock", 2.0)
+        monitor.record_lock_release("aux_lock", 3.0)
+        report = monitor.generate_report()
+        assert "锁性能监控报告" in report
+        assert "main_lock" in report
+        assert "aux_lock" in report
+
+    def test_get_all_stats_with_data(self, monitor):
+        """get_all_stats 汇总所有锁数据（RLock 修复后不再死锁）"""
+        monitor.record_lock_acquire("main_lock", 5.0)
+        monitor.record_lock_release("main_lock", 10.0)
+        monitor.record_lock_acquire("aux_lock", 2.0)
+        monitor.record_lock_release("aux_lock", 3.0)
+        all_stats = monitor.get_all_stats()
+        assert "main_lock" in all_stats
+        assert "aux_lock" in all_stats
+        assert all_stats["main_lock"]["acquisitions"] == 1
+        assert all_stats["main_lock"]["avg_wait_ms"] == 5.0
+        assert all_stats["main_lock"]["avg_hold_ms"] == 10.0
+        assert all_stats["aux_lock"]["acquisitions"] == 1
+        assert all_stats["aux_lock"]["avg_wait_ms"] == 2.0
+        assert all_stats["aux_lock"]["avg_hold_ms"] == 3.0
 
 
 class TestLockMonitorReset:

@@ -97,9 +97,12 @@ RUN mkdir -p data_logs monitoring_data logs
 RUN chmod 750 ${DATA_DIR} ${LOG_DIR} ${MONITOR_DIR} \
     && chmod 750 data_logs monitoring_data logs
 
-# 创建非root用户
+# 创建非root用户并切换
 RUN groupadd -r btc-engine && useradd -r -g btc-engine -d ${APP_HOME} -s /sbin/nologin btc-engine \
     && chown -R btc-engine:btc-engine ${APP_HOME}
+
+# 切换到非 root 用户运行（安全加固）
+USER btc-engine
 
 # 健康检查
 HEALTHCHECK --interval=60s --timeout=30s --start-period=120s --retries=3 \

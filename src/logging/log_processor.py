@@ -21,6 +21,7 @@ class LogProcessor:
 
     def __init__(self):
         self._filters = []
+        self._redactors = []  # 脱敏器：修改事件数据，不丢弃事件
         self._formatters = {}
 
     def process(self, event: LogEvent) -> Optional[Dict[str, Any]]:
@@ -32,7 +33,11 @@ class LogProcessor:
         Returns:
             处理后的事件字典，如果被过滤则返回None
         """
-        # 应用过滤器
+        # 1. 先应用脱敏器（修改 data 内容，不丢弃事件）
+        for redact_func in self._redactors:
+            event.data = redact_func(event.data)
+
+        # 2. 再应用丢弃过滤器
         for filter_func in self._filters:
             if not filter_func(event):
                 return None
@@ -86,6 +91,16 @@ class LogProcessor:
             msg_parts.append(str(data))
 
         return " ".join(msg_parts)
+
+    def add_redactor(self, redact_func):
+        """添加脱敏器
+
+        脱敏器修改事件内容（如替换敏感信息），不丢弃事件。
+
+        Args:
+            redact_func: 脱敏函数，接收 event.data，返回修改后的 data
+        """
+        self._redactors.append(redact_func)
 
     def add_filter(self, filter_func):
         """添加过滤器
@@ -147,13 +162,19 @@ class SensitiveDataFilter:
     """
 
     SENSITIVE_PATTERNS = [
-        (r"[0-9a-fA-F]{64}", "***REDACTED***"),  # 私钥
+        (r"[0-9a-fA-F]{64}", "***REDACTED***"),  # 私钥 (hex)
         (r'PrivateKey["\']?\s*[:=]\s*["\']?[0-9a-fA-F]{64}', "***REDACTED***"),
         # P0-1: 比特币地址模式
         (r"\b1[1-9A-HJ-NP-Za-km-z]{24,33}\b", "[P2PKH_ADDRESS]"),  # P2PKH
         (r"\b3[1-9A-HJ-NP-Za-km-z]{24,33}\b", "[P2SH_ADDRESS]"),  # P2SH
         (r"\bbc1[ac-hj-np-z02-9]{38,58}\b", "[BECH32_ADDRESS]"),  # Bech32
         (r"\bbc1p[ac-hj-np-z02-9]{58}\b", "[BECH32M_ADDRESS]"),  # Bech32m
+        # P1-1: WIF 格式私钥
+        (r"\b5[HJK][1-9A-HJ-NP-Za-km-z]{48,49}\b", "[WIF_UNCOMPRESSED_KEY]"),
+        (r"\b[KL][1-9A-HJ-NP-Za-km-z]{50,51}\b", "[WIF_COMPRESSED_KEY]"),
+        # BIP32 扩展密钥
+        (r"\b[xXtT]prv[1-9A-HJ-NP-Za-km-z]{107,108}\b", "[BIP32_EXTENDED_KEY]"),
+        (r"\b[xXtT]pub[1-9A-HJ-NP-Za-km-z]{107,108}\b", "[BIP32_EXTENDED_PUBKEY]"),
     ]
 
     def __init__(self, enabled: bool = True):
@@ -171,6 +192,20 @@ class SensitiveDataFilter:
                 return False
 
         return True
+
+    @classmethod
+    def redact_data(cls, data: Any) -> Any:
+        """脱敏数据（支持 str/dict/list）
+
+        对事件数据进行脱敏处理，修改内容而非丢弃事件。
+        """
+        if isinstance(data, str):
+            return cls.redact(data)
+        elif isinstance(data, dict):
+            return {k: cls.redact_data(v) for k, v in data.items()}
+        elif isinstance(data, list):
+            return [cls.redact_data(item) for item in data]
+        return data
 
     @classmethod
     def redact(cls, text: str) -> str:

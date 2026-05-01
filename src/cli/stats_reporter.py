@@ -112,7 +112,9 @@ def _print_final_summary(engine: Any, engine_type: str, args: argparse.Namespace
     if export_progress_file:
         try:
             stats = engine.get_stats() if hasattr(engine, "get_stats") else {}
-            export_progress_data(stats, engine_type, engine_type, export_progress_file)
+            # 修正: 参数顺序 mode, engine_type (之前 engine_type 被错误传给 mode)
+            mode = getattr(args, "mode", "unknown")
+            export_progress_data(stats, mode, engine_type, export_progress_file)
             print(_t("export.completed", path=export_progress_file))
         except Exception as e:
             print(_t("export.failed", error=str(e)))

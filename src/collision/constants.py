@@ -48,6 +48,7 @@ LOG_BACKUP_COUNT = 5  # 日志备份数量
 
 # ========== GPU相关常量 ==========
 GPU_MEMORY_RATIO_DEFAULT = 0.5  # GPU内存使用比例默认值
+INTEL_SAFE_MEMORY_RATIO = 0.45  # Intel GPU 安全显存使用率（保守策略，避免TDR超时）
 GPU_DEVICE_AUTO_SELECT = -1  # GPU设备自动选择标志
 GPU_COMPILE_TIMEOUT = 60  # GPU编译超时（秒）
 
