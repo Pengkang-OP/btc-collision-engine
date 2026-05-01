@@ -7,7 +7,7 @@ import secrets
 import concurrent.futures
 import psutil
 import signal
-from typing import Set, Optional, Callable, Tuple, List, Dict, Any
+from typing import Set, Optional, Callable, Tuple, List, Dict, Any, cast
 from ..core.address_generator import P2PKHAddressGenerator
 from ..core.optimized_address_generator import OptimizedP2PKHAddressGenerator
 
@@ -325,6 +325,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
         if not self.on_match:
             return True
 
+        on_match = self.on_match
+
         import hashlib
 
         key_hash = hashlib.sha256(private_key).hexdigest()[:16]
@@ -340,7 +342,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
                 def target() -> None:
                     try:
-                        result[0] = self.on_match(private_key, address, wif)  # type: ignore[misc]  # 线程间数据传递，类型推断受限
+                        result[0] = on_match(private_key, address, wif)
                     except Exception as e:
                         exception[0] = e
 
@@ -367,7 +369,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 signal.alarm(self._match_callback_timeout)  # type: ignore[attr-defined]  # signal.alarm 仅 Unix 可用
 
                 try:
-                    self.on_match(private_key, address, wif)
+                    on_match(private_key, address, wif)
                 except TimeoutError as e:
                     logger.critical(str(e))
                     return False
@@ -1676,7 +1678,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         if not self.targets and data.get("targets"):
             self.targets = set(data["targets"])
 
-        return data  # type: ignore[no-any-return]  # json.loads 返回 Any，函数签名要求 Dict
+        return data
 
     def start_from_checkpoint(self, data: Dict) -> None:
         """根据断点数据启动对撞"""
@@ -1908,14 +1910,14 @@ class KeyCollisionEngine(BaseCollisionEngine):
             True 表示引擎正在运行（已启动且工作线程存活），
             False 表示引擎已停止或未启动
         """
-        return self._running and self._thread and self._thread.is_alive()  # type: ignore[return-value]  # _thread 可能为 None，and 短路已处理
+        return cast(bool, self._running and self._thread and self._thread.is_alive())
 
     def __enter__(self) -> "KeyCollisionEngine":
         return self
 
-    def __exit__(self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]) -> bool:  # type: ignore[exit-return]  # mypy 期望 Optional[bool]
+    def __exit__(self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]) -> None:
         self.stop()
-        return False
+        return
 
     def __del__(self) -> None:
         try:
