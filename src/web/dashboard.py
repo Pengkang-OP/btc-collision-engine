@@ -26,18 +26,13 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-Flask: Any
-jsonify: Any
-render_template_string: Any
-request: Any
-
 try:
     from flask import Flask, jsonify, render_template_string, request
 
     FLASK_AVAILABLE = True
 except ImportError:
     FLASK_AVAILABLE = False
-    Flask = jsonify = render_template_string = request = None
+    Flask = jsonify = render_template_string = request = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 

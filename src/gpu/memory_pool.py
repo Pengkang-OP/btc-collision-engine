@@ -32,7 +32,7 @@
 
 import threading
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 # 导入日志配置
 from ..utils import init_logging, get_configured_logger
@@ -92,7 +92,7 @@ class GPUMemoryPool:
         self._enable_dynamic_adjustment = enable_dynamic_adjustment
 
         # 缓冲区池: 按大小分组
-        self._pool: Dict[int, List] = {}
+        self._pool: Dict[Union[int, str], List[Any]] = {}
         # 按类型分组的缓冲区池
         self._type_pools: Dict[str, Dict[int, List]] = {
             "input": {},  # 输入缓冲区
@@ -284,9 +284,9 @@ class GPUMemoryPool:
                 except Exception as e:
                     logger.warning(f"处理未指定大小的缓冲区失败: {e}")
                     # 作为最后的 fallback，放到通用池
-                    if "generic" not in self._pool:  # type: ignore[comparison-overlap]
-                        self._pool["generic"] = []  # type: ignore[index]
-                    self._pool["generic"].append(buf)  # type: ignore[index]
+                    if "generic" not in self._pool:
+                        self._pool["generic"] = []
+                    self._pool["generic"].append(buf)
 
             # 记录内存使用
             self._record_memory_usage()
@@ -472,7 +472,7 @@ class GPUMemoryPool:
                     self._max_memory_bytes * 1.5, 2 * 1024 * 1024 * 1024
                 )  # 最多2GB
                 if new_max_memory > self._max_memory_bytes:
-                    self._max_memory_bytes = new_max_memory  # type: ignore[assignment]
+                    self._max_memory_bytes = int(new_max_memory)
                     logger.info(
                         f"内存使用较高，扩展内存池大小: {new_max_memory / (1024 * 1024):.1f}MB"
                     )
