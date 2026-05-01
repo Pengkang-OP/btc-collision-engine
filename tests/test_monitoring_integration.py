@@ -44,9 +44,7 @@ class TestEngineMonitoringIntegration:
     def test_engine_creates_enhanced_monitoring(self):
         """测试引擎创建增强监控系统"""
         engine = KeyCollisionEngine(
-            targets=self.targets,
-            data_logging_enabled=True,
-            use_enhanced_monitoring=True
+            targets=self.targets, data_logging_enabled=True, use_enhanced_monitoring=True
         )
 
         assert engine.enhanced_monitoring is not None
@@ -55,9 +53,7 @@ class TestEngineMonitoringIntegration:
     def test_engine_without_monitoring(self):
         """测试引擎不启用监控"""
         engine = KeyCollisionEngine(
-            targets=self.targets,
-            data_logging_enabled=False,
-            use_enhanced_monitoring=False
+            targets=self.targets, data_logging_enabled=False, use_enhanced_monitoring=False
         )
 
         assert engine.enhanced_monitoring is None
@@ -66,9 +62,7 @@ class TestEngineMonitoringIntegration:
     def test_engine_monitoring_starts_with_engine(self):
         """测试监控系统随引擎启动"""
         engine = KeyCollisionEngine(
-            targets=self.targets,
-            data_logging_enabled=True,
-            use_enhanced_monitoring=True
+            targets=self.targets, data_logging_enabled=True, use_enhanced_monitoring=True
         )
 
         # 启动引擎
@@ -86,9 +80,7 @@ class TestEngineMonitoringIntegration:
     def test_engine_monitoring_stops_with_engine(self):
         """测试监控系统随引擎停止"""
         engine = KeyCollisionEngine(
-            targets=self.targets,
-            data_logging_enabled=True,
-            use_enhanced_monitoring=True
+            targets=self.targets, data_logging_enabled=True, use_enhanced_monitoring=True
         )
 
         engine.start(mode="random")
@@ -119,15 +111,12 @@ class TestDataFlowIntegration:
             targets=self.targets,
             data_logging_enabled=True,
             data_logging_interval=1,
-            use_enhanced_monitoring=True
+            use_enhanced_monitoring=True,
         )
 
         engine.start(mode="random")
         # 轮询等待数据记录，最多 3s
-        poll_until(
-            lambda: engine.data_logger.get_statistics() is not None,
-            timeout=3.0
-        )
+        poll_until(lambda: engine.data_logger.get_statistics() is not None, timeout=3.0)
         engine.stop()
 
         # 验证数据已记录
@@ -140,14 +129,11 @@ class TestDataFlowIntegration:
             targets=self.targets,
             data_logging_enabled=True,
             data_logging_interval=1,
-            use_enhanced_monitoring=True
+            use_enhanced_monitoring=True,
         )
 
         engine.start(mode="random")
-        poll_until(
-            lambda: engine.data_logger.get_current_data() is not None,
-            timeout=3.0
-        )
+        poll_until(lambda: engine.data_logger.get_current_data() is not None, timeout=3.0)
         engine.stop()
 
         # 验证引擎数据
@@ -167,22 +153,18 @@ class TestMonitoringLifecycle:
         # 这个测试验证当EnhancedMonitoringSystem初始化失败时的降级处理
         # 由于Mock路径问题，我们简化测试，只验证引擎能正常创建
         engine = KeyCollisionEngine(
-            targets=self.targets,
-            data_logging_enabled=True,
-            use_enhanced_monitoring=True
+            targets=self.targets, data_logging_enabled=True, use_enhanced_monitoring=True
         )
 
         # 验证引擎创建成功，监控系统已初始化
         assert engine is not None
         # 无论监控系统是否成功，引擎都应该能正常工作
-        assert hasattr(engine, 'data_logger') or hasattr(engine, 'enhanced_monitoring')
+        assert hasattr(engine, "data_logger") or hasattr(engine, "enhanced_monitoring")
 
     def test_engine_restart_with_monitoring(self):
         """测试引擎重启时监控系统正常工作"""
         engine = KeyCollisionEngine(
-            targets=self.targets,
-            data_logging_enabled=True,
-            use_enhanced_monitoring=True
+            targets=self.targets, data_logging_enabled=True, use_enhanced_monitoring=True
         )
 
         # 第一次启动
@@ -212,7 +194,7 @@ class TestMonitoringWithDifferentModes:
             targets=self.targets,
             data_logging_enabled=True,
             data_logging_interval=1,
-            use_enhanced_monitoring=True
+            use_enhanced_monitoring=True,
         )
 
         engine.start(mode="random")
@@ -226,7 +208,9 @@ class TestMonitoringWithDifferentModes:
 
         # 验证引擎确实运行了（总检查数>0）
         # 注意：需要在stop()后检查，因为stop()会触发最终统计更新
-        assert engine.stats.total_checked > 0, f"引擎应该处理了至少一个私钥，但total_checked={engine.stats.total_checked}"
+        assert (
+            engine.stats.total_checked > 0
+        ), f"引擎应该处理了至少一个私钥，但total_checked={engine.stats.total_checked}"
 
     def test_monitoring_in_brute_force_mode(self):
         """测试暴力穷举模式下的监控"""
@@ -234,7 +218,7 @@ class TestMonitoringWithDifferentModes:
             targets=self.targets,
             data_logging_enabled=True,
             data_logging_interval=1,
-            use_enhanced_monitoring=True
+            use_enhanced_monitoring=True,
         )
 
         engine.start(mode="brute_force", start=1)
@@ -242,9 +226,9 @@ class TestMonitoringWithDifferentModes:
         poll_until(
             lambda: (
                 engine.stats.total_checked > 0
-                and engine.data_logger.get_statistics().get('total_checks', 0) > 0
+                and engine.data_logger.get_statistics().get("total_checks", 0) > 0
             ),
-            timeout=5.0
+            timeout=5.0,
         )
         engine.stop()
 
@@ -256,7 +240,7 @@ class TestMonitoringWithDifferentModes:
         assert engine.stats.total_checked > 0, "引擎应该处理了至少一个私钥"
 
         # 验证数据记录器也记录了数据
-        total_checks = stats.get('total_checks', 0)
+        total_checks = stats.get("total_checks", 0)
         assert total_checks > 0, f"数据记录器应该记录了数据，但total_checks={total_checks}"
 
 
@@ -270,16 +254,12 @@ class TestMonitoringErrorScenarios:
     def test_monitoring_continues_on_data_error(self):
         """测试数据记录错误时监控继续运行"""
         engine = KeyCollisionEngine(
-            targets=self.targets,
-            data_logging_enabled=True,
-            use_enhanced_monitoring=True
+            targets=self.targets, data_logging_enabled=True, use_enhanced_monitoring=True
         )
 
         # 模拟数据记录器错误
         original_record = engine.data_logger.record_performance_data
-        engine.data_logger.record_performance_data = Mock(
-            side_effect=RuntimeError("Record failed")
-        )
+        engine.data_logger.record_performance_data = Mock(side_effect=RuntimeError("Record failed"))
 
         engine.start(mode="random")
         poll_until(lambda: engine.is_running(), timeout=2.0)
@@ -292,9 +272,7 @@ class TestMonitoringErrorScenarios:
     def test_engine_continues_on_monitoring_error(self):
         """测试监控错误时引擎继续运行"""
         engine = KeyCollisionEngine(
-            targets=self.targets,
-            data_logging_enabled=True,
-            use_enhanced_monitoring=True
+            targets=self.targets, data_logging_enabled=True, use_enhanced_monitoring=True
         )
 
         # 模拟监控系统错误
@@ -324,7 +302,7 @@ class TestMonitoringConfiguration:
             targets=self.targets,
             data_logging_enabled=True,
             data_logging_interval=2,
-            use_enhanced_monitoring=True
+            use_enhanced_monitoring=True,
         )
 
         # 验证配置已应用
@@ -333,9 +311,7 @@ class TestMonitoringConfiguration:
     def test_enhanced_monitoring_enabled(self):
         """测试增强监控启用"""
         engine = KeyCollisionEngine(
-            targets=self.targets,
-            data_logging_enabled=True,
-            use_enhanced_monitoring=True
+            targets=self.targets, data_logging_enabled=True, use_enhanced_monitoring=True
         )
 
         assert engine.enhanced_monitoring is not None
@@ -344,9 +320,7 @@ class TestMonitoringConfiguration:
     def test_traditional_mode_enabled(self):
         """测试传统模式启用"""
         engine = KeyCollisionEngine(
-            targets=self.targets,
-            data_logging_enabled=True,
-            use_enhanced_monitoring=False
+            targets=self.targets, data_logging_enabled=True, use_enhanced_monitoring=False
         )
 
         # 应该使用传统DataLogger
@@ -373,7 +347,7 @@ class TestMonitoringDataIntegrity:
             targets=self.targets,
             data_logging_enabled=True,
             data_logging_interval=1,
-            use_enhanced_monitoring=True
+            use_enhanced_monitoring=True,
         )
 
         engine.start(mode="random")
@@ -388,7 +362,9 @@ class TestMonitoringDataIntegrity:
 
         # 验证引擎确实运行了
         # 注意：需要在stop()后检查，因为stop()会触发最终统计更新
-        assert engine.stats.total_checked > 0, f"引擎应该处理了数据，但total_checked={engine.stats.total_checked}"
+        assert (
+            engine.stats.total_checked > 0
+        ), f"引擎应该处理了数据，但total_checked={engine.stats.total_checked}"
 
     def test_no_data_loss_on_stop(self):
         """测试停止时无数据丢失"""
@@ -396,7 +372,7 @@ class TestMonitoringDataIntegrity:
             targets=self.targets,
             data_logging_enabled=True,
             data_logging_interval=1,
-            use_enhanced_monitoring=True
+            use_enhanced_monitoring=True,
         )
 
         engine.start(mode="random")
@@ -412,10 +388,11 @@ class TestMonitoringDataIntegrity:
 
         # 数据应该保持一致 - 严格断言
         # 停止前后总检查数应该相同（没有数据丢失）
-        total_checks_before = stats_before.get('total_checks', 0)
-        total_checks_after = stats_after.get('total_checks', 0)
-        assert total_checks_before == total_checks_after, \
-            f"停止前后数据不一致: before={total_checks_before}, after={total_checks_after}"
+        total_checks_before = stats_before.get("total_checks", 0)
+        total_checks_after = stats_after.get("total_checks", 0)
+        assert (
+            total_checks_before == total_checks_after
+        ), f"停止前后数据不一致: before={total_checks_before}, after={total_checks_after}"
 
         # 验证引擎的总检查数一致
         # P2-5修复后，可以严格验证

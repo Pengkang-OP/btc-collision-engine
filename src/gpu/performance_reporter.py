@@ -165,7 +165,11 @@ class PerformanceReportGenerator:
         ]
 
         # 获取基准测试结果
-        if self.benchmark_suite is not None and hasattr(self.benchmark_suite, "results") and self.benchmark_suite.results:
+        if (
+            self.benchmark_suite is not None
+            and hasattr(self.benchmark_suite, "results")
+            and self.benchmark_suite.results
+        ):
             lines.append(self.benchmark_suite.generate_report())
         else:
             lines.append("*暂无基准测试数据*\n")

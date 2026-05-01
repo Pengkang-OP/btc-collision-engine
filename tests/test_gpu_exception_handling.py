@@ -8,6 +8,7 @@
 - 文件系统异常
 - 统一异常处理器
 """
+
 import pytest
 import os
 import sys
@@ -42,9 +43,9 @@ class TestGPURuntimeErrors:
         mock_device.context = Mock()
         mock_device.queue = Mock()
         mock_device.device_info = {
-            'name': 'Test GPU',
-            'vendor': 'NVIDIA Corporation',
-            'global_mem_size': 8 * 1024**3
+            "name": "Test GPU",
+            "vendor": "NVIDIA Corporation",
+            "global_mem_size": 8 * 1024**3,
         }
         mock_device.initialize = Mock()
         mock_device.get_device_info = Mock(return_value=mock_device.device_info)
@@ -60,6 +61,7 @@ class TestGPURuntimeErrors:
         mock_kernel = Mock()
         # 第5次调用时抛出异常
         call_count = [0]
+
         def run_batch_with_error(*args, **kwargs):
             call_count[0] += 1
             if call_count[0] == 5:
@@ -73,18 +75,23 @@ class TestGPURuntimeErrors:
         mock_kernel.gpu_optimizer = Mock()
         mock_kernel.gpu_optimizer.analyze_and_adjust = Mock(return_value=(100, {}))
 
-        with patch('src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE', True):
-            with patch('src.collision.gpu_collision_engine.GPUDevice', return_value=mock_device), \
-                 patch('src.collision.gpu_collision_engine.GPUContext', return_value=mock_context), \
-                 patch('src.collision.gpu_collision_engine.GPUKernel', return_value=mock_kernel), \
-                 patch('src.gpu.device_manager.AsyncGPUExecutor') as mock_async_executor, \
-                 patch('src.collision.gpu_collision_engine.AsyncGPUExecutor') as mock_async_executor_shim, \
-                 patch('src.collision.gpu_collision_engine.GPUProfileLoader') as mock_profile_loader:
+        with patch("src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE", True):
+            with (
+                patch("src.collision.gpu_collision_engine.GPUDevice", return_value=mock_device),
+                patch("src.collision.gpu_collision_engine.GPUContext", return_value=mock_context),
+                patch("src.collision.gpu_collision_engine.GPUKernel", return_value=mock_kernel),
+                patch("src.gpu.device_manager.AsyncGPUExecutor") as mock_async_executor,
+                patch(
+                    "src.collision.gpu_collision_engine.AsyncGPUExecutor"
+                ) as mock_async_executor_shim,
+                patch("src.collision.gpu_collision_engine.GPUProfileLoader") as mock_profile_loader,
+            ):
 
                 mock_profile_loader.return_value.get_profile.return_value = None
 
                 # 异步执行器第5次调用时抛出异常（匹配原 mock_kernel.run_batch 的逻辑）
                 async_call_count = [0]
+
                 def run_batch_async_with_error(*args, **kwargs):
                     async_call_count[0] += 1
                     if async_call_count[0] == 5:
@@ -124,18 +131,20 @@ class TestGPURuntimeErrors:
         mock_device.context = Mock()
         mock_device.queue = Mock()
         mock_device.device_info = {
-            'name': 'Test GPU',
-            'vendor': 'NVIDIA Corporation',
-            'global_mem_size': 8 * 1024**3
+            "name": "Test GPU",
+            "vendor": "NVIDIA Corporation",
+            "global_mem_size": 8 * 1024**3,
         }
         mock_device.initialize = Mock()
         mock_device.get_device_info = Mock(return_value=mock_device.device_info)
         mock_device.cleanup = Mock()
 
-        with patch('src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE', True):
-            with patch('src.collision.gpu_collision_engine.GPUDevice', return_value=mock_device), \
-                 patch('pyopencl.Program') as mock_program, \
-                 patch('src.collision.gpu_collision_engine.GPUProfileLoader') as mock_profile_loader:
+        with patch("src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE", True):
+            with (
+                patch("src.collision.gpu_collision_engine.GPUDevice", return_value=mock_device),
+                patch("pyopencl.Program") as mock_program,
+                patch("src.collision.gpu_collision_engine.GPUProfileLoader") as mock_profile_loader,
+            ):
 
                 mock_profile_loader.return_value.get_profile.return_value = None
 
@@ -198,7 +207,7 @@ class TestFileSystemErrors:
                 current_position=1000,
                 total_checked=1000,
                 matches=[],
-                force=True
+                force=True,
             )
 
             # 验证文件存在
@@ -211,7 +220,7 @@ class TestFileSystemErrors:
             checkpoint_mgr = CheckpointManager(filepath=filepath)
 
             # 创建损坏的JSON文件
-            with open(filepath, 'w', encoding='utf-8') as f:
+            with open(filepath, "w", encoding="utf-8") as f:
                 f.write("{ invalid json content")
 
             # 验证加载返回None
@@ -289,9 +298,9 @@ class TestEdgeCases:
         mock_device.context = Mock()
         mock_device.queue = Mock()
         mock_device.device_info = {
-            'name': 'Test GPU',
-            'vendor': 'NVIDIA Corporation',
-            'global_mem_size': 8 * 1024**3
+            "name": "Test GPU",
+            "vendor": "NVIDIA Corporation",
+            "global_mem_size": 8 * 1024**3,
         }
         mock_device.initialize = Mock()
         mock_device.get_device_info = Mock(return_value=mock_device.device_info)
@@ -310,14 +319,19 @@ class TestEdgeCases:
         mock_kernel.cleanup = Mock()
         mock_kernel.max_batch_size = 65536
 
-        with patch('src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE', True), \
-             patch('src.collision.gpu_collision_engine.GPUDeviceDetector.is_gpu_available', return_value=True), \
-             patch('src.collision.gpu_collision_engine.GPUDevice', return_value=mock_device), \
-             patch('src.collision.gpu_collision_engine.GPUContext', return_value=mock_context), \
-             patch('src.collision.gpu_collision_engine.GPUKernel', return_value=mock_kernel), \
-             patch('src.collision.gpu_collision_engine.AsyncGPUExecutor') as mock_async_executor, \
-             patch('src.collision.gpu_collision_engine.GPUProfileLoader') as mock_profile_loader, \
-             patch('src.gpu.device.identify_vendor', return_value='nvidia'):
+        with (
+            patch("src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE", True),
+            patch(
+                "src.collision.gpu_collision_engine.GPUDeviceDetector.is_gpu_available",
+                return_value=True,
+            ),
+            patch("src.collision.gpu_collision_engine.GPUDevice", return_value=mock_device),
+            patch("src.collision.gpu_collision_engine.GPUContext", return_value=mock_context),
+            patch("src.collision.gpu_collision_engine.GPUKernel", return_value=mock_kernel),
+            patch("src.collision.gpu_collision_engine.AsyncGPUExecutor") as mock_async_executor,
+            patch("src.collision.gpu_collision_engine.GPUProfileLoader") as mock_profile_loader,
+            patch("src.gpu.device.identify_vendor", return_value="nvidia"),
+        ):
 
             mock_profile_loader.return_value.get_profile.return_value = None
 
@@ -340,9 +354,9 @@ class TestEdgeCases:
         mock_device.context = Mock()
         mock_device.queue = Mock()
         mock_device.device_info = {
-            'name': 'Test GPU',
-            'vendor': 'NVIDIA Corporation',
-            'global_mem_size': 8 * 1024**3
+            "name": "Test GPU",
+            "vendor": "NVIDIA Corporation",
+            "global_mem_size": 8 * 1024**3,
         }
         mock_device.initialize = Mock()
         mock_device.get_device_info = Mock(return_value=mock_device.device_info)
@@ -361,12 +375,14 @@ class TestEdgeCases:
         mock_kernel.cleanup = Mock()
         mock_kernel.max_batch_size = 65536
 
-        with patch('src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE', True):
-            with patch('src.collision.gpu_collision_engine.GPUDevice', return_value=mock_device), \
-                 patch('src.collision.gpu_collision_engine.GPUContext', return_value=mock_context), \
-                 patch('src.collision.gpu_collision_engine.GPUKernel', return_value=mock_kernel), \
-                 patch('src.collision.gpu_collision_engine.AsyncGPUExecutor') as mock_async_executor, \
-                 patch('src.collision.gpu_collision_engine.GPUProfileLoader') as mock_profile_loader:
+        with patch("src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE", True):
+            with (
+                patch("src.collision.gpu_collision_engine.GPUDevice", return_value=mock_device),
+                patch("src.collision.gpu_collision_engine.GPUContext", return_value=mock_context),
+                patch("src.collision.gpu_collision_engine.GPUKernel", return_value=mock_kernel),
+                patch("src.collision.gpu_collision_engine.AsyncGPUExecutor") as mock_async_executor,
+                patch("src.collision.gpu_collision_engine.GPUProfileLoader") as mock_profile_loader,
+            ):
 
                 mock_profile_loader.return_value.get_profile.return_value = None
 

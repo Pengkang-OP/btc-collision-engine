@@ -13,10 +13,10 @@ import argparse
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 
-
 # ============================================================================
 # _suppress_console_logging / _restore_console_logging 测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestConsoleLogSuppression:
@@ -65,6 +65,7 @@ class TestConsoleLogSuppression:
 
             assert handler.level == logging.INFO
             from src.cli.engine_runner import _suppressed_handlers
+
             assert len(_suppressed_handlers) == 0
         finally:
             root.handlers.clear()
@@ -125,12 +126,14 @@ class TestConsoleLogSuppression:
 # _compute_range 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestComputeRange:
     """范围计算测试"""
 
     def test_range_mode_with_both_keys(self):
         from src.cli.engine_runner import _compute_range
+
         args = Mock()
         args.mode = "range"
         args.start = "1"
@@ -142,6 +145,7 @@ class TestComputeRange:
 
     def test_brute_force_mode_no_end(self):
         from src.cli.engine_runner import _compute_range
+
         args = Mock()
         args.mode = "brute_force"
         args.start = "A"
@@ -153,6 +157,7 @@ class TestComputeRange:
 
     def test_random_mode_no_range(self):
         from src.cli.engine_runner import _compute_range
+
         args = Mock()
         args.mode = "random"
         args.start = None
@@ -164,6 +169,7 @@ class TestComputeRange:
 
     def test_range_mode_no_start(self):
         from src.cli.engine_runner import _compute_range
+
         args = Mock()
         args.mode = "range"
         args.start = None
@@ -175,6 +181,7 @@ class TestComputeRange:
 
     def test_large_hex_values(self):
         from src.cli.engine_runner import _compute_range
+
         args = Mock()
         args.mode = "range"
         args.start = "FFFFFFFF"
@@ -189,12 +196,14 @@ class TestComputeRange:
 # _print_config_info 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestPrintConfigInfo:
     """配置信息打印测试"""
 
     def test_cpu_mode_output(self):
         from src.cli.engine_runner import _print_config_info
+
         args = Mock()
         args.mode = "random"
         args.multi_gpu = False
@@ -208,7 +217,7 @@ class TestPrintConfigInfo:
         args.no_simd = False
         args.no_memory_pool = False
 
-        with patch('src.cli.engine_runner.CLIOutput') as mock_output_cls:
+        with patch("src.cli.engine_runner.CLIOutput") as mock_output_cls:
             mock_output = MagicMock()
             mock_output_cls.get_instance.return_value = mock_output
             _print_config_info(args, {"addr1", "addr2"}, None, None, None)
@@ -217,6 +226,7 @@ class TestPrintConfigInfo:
 
     def test_gpu_mode_output(self):
         from src.cli.engine_runner import _print_config_info
+
         args = Mock()
         args.mode = "random"
         args.multi_gpu = False
@@ -227,7 +237,7 @@ class TestPrintConfigInfo:
         args.gpu_device = 0
         args.gpu_batch_size = 1000000
 
-        with patch('src.cli.engine_runner.CLIOutput') as mock_output_cls:
+        with patch("src.cli.engine_runner.CLIOutput") as mock_output_cls:
             mock_output = MagicMock()
             mock_output_cls.get_instance.return_value = mock_output
             _print_config_info(args, {"addr1"}, None, None, None)
@@ -238,6 +248,7 @@ class TestPrintConfigInfo:
 
     def test_multi_gpu_mode_output(self):
         from src.cli.engine_runner import _print_config_info
+
         args = Mock()
         args.mode = "range"
         args.multi_gpu = True
@@ -248,7 +259,7 @@ class TestPrintConfigInfo:
         args.gpu_indices = "0 1"
         args.gpu_count = 2
 
-        with patch('src.cli.engine_runner.CLIOutput') as mock_output_cls:
+        with patch("src.cli.engine_runner.CLIOutput") as mock_output_cls:
             mock_output = MagicMock()
             mock_output_cls.get_instance.return_value = mock_output
             _print_config_info(args, {"addr1"}, 1, 255, 255)
@@ -256,6 +267,7 @@ class TestPrintConfigInfo:
 
     def test_range_mode_config(self):
         from src.cli.engine_runner import _print_config_info
+
         args = Mock()
         args.mode = "range"
         args.multi_gpu = False
@@ -269,7 +281,7 @@ class TestPrintConfigInfo:
         args.no_simd = False
         args.no_memory_pool = False
 
-        with patch('src.cli.engine_runner.CLIOutput') as mock_output_cls:
+        with patch("src.cli.engine_runner.CLIOutput") as mock_output_cls:
             mock_output = MagicMock()
             mock_output_cls.get_instance.return_value = mock_output
             _print_config_info(args, {"addr1"}, 0, 100, 101)

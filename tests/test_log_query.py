@@ -18,37 +18,87 @@ from unittest.mock import patch
 
 from src.logging.log_query import LogQuery
 
-
 # ============================================================================
 # Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def temp_log_file():
     """创建包含测试日志数据的临时文件"""
     events = [
-        {"timestamp": 1000.0, "type": "engine_start", "source": "engine",
-         "message": "引擎启动", "data": {}},
-        {"timestamp": 1100.0, "type": "status_update", "source": "monitor",
-         "message": "进度更新", "data": {"progress": 50}},
-        {"timestamp": 1200.0, "type": "engine_error", "source": "gpu",
-         "message": "GPU内存不足", "data": {}},
-        {"timestamp": 1300.0, "type": "match_found", "source": "engine",
-         "message": "发现匹配", "data": {"address": "1A1z..."}},
-        {"timestamp": 1400.0, "type": "engine_stop", "source": "engine",
-         "message": "引擎停止", "data": {}},
-        {"timestamp": 1500.0, "type": "status_update", "source": "monitor",
-         "message": "状态报告", "data": {"progress": 100}},
-        {"timestamp": 1600.0, "type": "gpu_detected", "source": "gpu",
-         "message": "检测到NVIDIA RTX 4090", "data": {}},
-        {"timestamp": 1700.0, "type": "engine_error", "source": "gpu",
-         "message": "内核编译失败", "data": {}},
-        {"timestamp": 1800.0, "type": "status_update", "source": "monitor",
-         "message": "最终状态", "data": {"final": True}},
-        {"timestamp": 1900.0, "type": "config_loaded", "source": "config",
-         "message": "配置加载完成", "data": {}},
+        {
+            "timestamp": 1000.0,
+            "type": "engine_start",
+            "source": "engine",
+            "message": "引擎启动",
+            "data": {},
+        },
+        {
+            "timestamp": 1100.0,
+            "type": "status_update",
+            "source": "monitor",
+            "message": "进度更新",
+            "data": {"progress": 50},
+        },
+        {
+            "timestamp": 1200.0,
+            "type": "engine_error",
+            "source": "gpu",
+            "message": "GPU内存不足",
+            "data": {},
+        },
+        {
+            "timestamp": 1300.0,
+            "type": "match_found",
+            "source": "engine",
+            "message": "发现匹配",
+            "data": {"address": "1A1z..."},
+        },
+        {
+            "timestamp": 1400.0,
+            "type": "engine_stop",
+            "source": "engine",
+            "message": "引擎停止",
+            "data": {},
+        },
+        {
+            "timestamp": 1500.0,
+            "type": "status_update",
+            "source": "monitor",
+            "message": "状态报告",
+            "data": {"progress": 100},
+        },
+        {
+            "timestamp": 1600.0,
+            "type": "gpu_detected",
+            "source": "gpu",
+            "message": "检测到NVIDIA RTX 4090",
+            "data": {},
+        },
+        {
+            "timestamp": 1700.0,
+            "type": "engine_error",
+            "source": "gpu",
+            "message": "内核编译失败",
+            "data": {},
+        },
+        {
+            "timestamp": 1800.0,
+            "type": "status_update",
+            "source": "monitor",
+            "message": "最终状态",
+            "data": {"final": True},
+        },
+        {
+            "timestamp": 1900.0,
+            "type": "config_loaded",
+            "source": "config",
+            "message": "配置加载完成",
+            "data": {},
+        },
     ]
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.log', delete=False, encoding='utf-8') as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".log", delete=False, encoding="utf-8") as f:
         for event in events:
             f.write(json.dumps(event) + "\n")
         temp_path = f.name
@@ -78,6 +128,7 @@ def log_query(temp_log_file):
 # ============================================================================
 # 基础查询测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestLogQueryBasic:

@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 """P3-10: fast_json 模块单元测试"""
+
 import json
 import pytest
 import tempfile
 import os
-from src.utils.fast_json import (
-    fast_dumps, fast_loads, fast_dump, fast_load, is_orjson_available
-)
+from src.utils.fast_json import fast_dumps, fast_loads, fast_dump, fast_load, is_orjson_available
 
 
 class TestFastDumps:
@@ -66,13 +65,13 @@ class TestFastDumpLoad:
     def test_round_trip(self):
         data = {"test": "value", "list": [1, 2, 3], "nested": {"a": 1}}
         with tempfile.NamedTemporaryFile(
-            mode='w', suffix='.json', delete=False, encoding='utf-8'
+            mode="w", suffix=".json", delete=False, encoding="utf-8"
         ) as f:
             temp_path = f.name
             fast_dump(data, f, indent=2)
 
         try:
-            with open(temp_path, 'r', encoding='utf-8') as f:
+            with open(temp_path, "r", encoding="utf-8") as f:
                 loaded = fast_load(f)
             assert loaded == data
         finally:

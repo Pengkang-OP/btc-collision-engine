@@ -6,6 +6,7 @@ pytestmark = pytest.mark.gpu_hardware  # P2-3: 需要真实GPU，CI中自动skip
 from src.collision.gpu_collision_engine import GPUCollisionEngine
 from src.collision.targets.resolver import TargetResolver
 
+
 @pytest.mark.gpu
 def test_dynamic_benchmark_calculation():
     """
@@ -13,19 +14,15 @@ def test_dynamic_benchmark_calculation():
     """
     # 创建目标解析器和目标地址
     resolver = TargetResolver()
-    resolved = resolver.resolve('1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa')  # 中本聪的地址
+    resolved = resolver.resolve("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")  # 中本聪的地址
     targets = {resolved} if resolved else set()  # 引擎期望 Set[str]
 
     # 创建GPU碰撞引擎
-    engine = GPUCollisionEngine(
-        targets=targets,
-        device_index=0,
-        batch_size=100000
-    )
+    engine = GPUCollisionEngine(targets=targets, device_index=0, batch_size=100000)
 
     try:
         # 检查动态基准值是否存在且为正数
-        assert hasattr(engine, '_dynamic_speed_benchmark'), "动态基准值属性不存在"
+        assert hasattr(engine, "_dynamic_speed_benchmark"), "动态基准值属性不存在"
         assert engine._dynamic_speed_benchmark > 0, "动态基准值应该大于0"
 
         # 打印动态基准值
@@ -40,6 +37,7 @@ def test_dynamic_benchmark_calculation():
         # 清理资源
         engine.stop()
 
+
 @pytest.mark.gpu
 def test_performance_warning_threshold():
     """
@@ -47,19 +45,15 @@ def test_performance_warning_threshold():
     """
     # 创建目标解析器和目标地址
     resolver = TargetResolver()
-    resolved = resolver.resolve('1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa')  # 中本聪的地址
+    resolved = resolver.resolve("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")  # 中本聪的地址
     targets = {resolved} if resolved else set()  # 引擎期望 Set[str]
 
     # 创建GPU碰撞引擎
-    engine = GPUCollisionEngine(
-        targets=targets,
-        device_index=0,
-        batch_size=100000
-    )
+    engine = GPUCollisionEngine(targets=targets, device_index=0, batch_size=100000)
 
     try:
         # 模拟执行一个批次，检查性能警告阈值计算
-        seed = b'\x00' * 32
+        seed = b"\x00" * 32
         batch_size = 100000
         batch_num = 1
 
@@ -77,6 +71,7 @@ def test_performance_warning_threshold():
     finally:
         # 清理资源
         engine.stop()
+
 
 if __name__ == "__main__":
     # 运行测试

@@ -891,8 +891,12 @@ class GlobalGPUMemoryManager:
             logger.debug("GPU内存池自动清理已在运行，跳过重复启动")
             return
 
-        interval = interval_seconds if interval_seconds is not None else self.DEFAULT_AUTO_CLEANUP_INTERVAL
-        lru_timeout = lru_idle_timeout if lru_idle_timeout is not None else self.DEFAULT_LRU_IDLE_TIMEOUT
+        interval = (
+            interval_seconds if interval_seconds is not None else self.DEFAULT_AUTO_CLEANUP_INTERVAL
+        )
+        lru_timeout = (
+            lru_idle_timeout if lru_idle_timeout is not None else self.DEFAULT_LRU_IDLE_TIMEOUT
+        )
         self._cleanup_stop_event.clear()
         self._cleanup_thread = threading.Thread(
             target=self._auto_cleanup_loop,

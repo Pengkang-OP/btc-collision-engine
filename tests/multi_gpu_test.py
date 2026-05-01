@@ -4,13 +4,14 @@
 
 此脚本用于测试多GPU的功能，包括初始化、碰撞检测和资源释放等。
 """
+
 import time
 import logging
 import sys
 import os
 
 # 添加项目根目录到Python路径
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import pytest
 
@@ -22,6 +23,7 @@ from src.utils import init_logging, get_configured_logger
 # 配置日志
 init_logging()
 logger = get_configured_logger("MultiGPUTest")
+
 
 def test_multi_gpu_initialization():
     """测试多GPU初始化"""
@@ -53,6 +55,7 @@ def test_multi_gpu_initialization():
     except Exception as e:
         logger.error(f"❌ 多GPU初始化失败: {e}")
         import traceback
+
         traceback.print_exc()
         return False
     finally:
@@ -63,12 +66,13 @@ def test_multi_gpu_initialization():
             except Exception as e:
                 logger.warning(f"停止引擎时出现错误: {e}")
 
+
 def test_multi_gpu_collision_detection():
     """测试多GPU碰撞检测"""
     logger.info("开始测试多GPU碰撞检测")
 
     # 创建一个测试目标地址集合
-    test_targets = {'1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'}
+    test_targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
 
     # 初始化多GPU碰撞引擎
     engine = None
@@ -89,7 +93,7 @@ def test_multi_gpu_collision_detection():
 
         # 启动碰撞检测
         start_time = time.time()
-        start_result = engine.start(targets=test_targets, mode='random', total_keys=100000)
+        start_result = engine.start(targets=test_targets, mode="random", total_keys=100000)
         if not start_result:
             logger.error("❌ 多GPU碰撞检测启动失败")
             return False
@@ -111,6 +115,7 @@ def test_multi_gpu_collision_detection():
     except Exception as e:
         logger.error(f"❌ 多GPU碰撞检测失败: {e}")
         import traceback
+
         traceback.print_exc()
         return False
     finally:
@@ -121,12 +126,13 @@ def test_multi_gpu_collision_detection():
             except Exception as e:
                 logger.warning(f"停止引擎时出现错误: {e}")
 
+
 def test_multi_gpu_resource_release():
     """测试多GPU资源释放"""
     logger.info("开始测试多GPU资源释放")
 
     # 创建一个测试目标地址集合
-    test_targets = {'1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'}
+    test_targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
 
     # 初始化多GPU碰撞引擎
     engine = None
@@ -143,7 +149,7 @@ def test_multi_gpu_resource_release():
         logger.info("多GPU引擎初始化成功")
 
         # 启动碰撞检测
-        start_result = engine.start(targets=test_targets, mode='random', total_keys=100000)
+        start_result = engine.start(targets=test_targets, mode="random", total_keys=100000)
         if not start_result:
             logger.error("❌ 多GPU碰撞检测启动失败")
             return False
@@ -169,8 +175,10 @@ def test_multi_gpu_resource_release():
     except Exception as e:
         logger.error(f"❌ 多GPU资源释放失败: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def main():
     """主函数"""
@@ -191,7 +199,9 @@ def main():
     except Exception as e:
         logger.error(f"❌ 测试过程中出现错误: {e}")
         import traceback
+
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     main()

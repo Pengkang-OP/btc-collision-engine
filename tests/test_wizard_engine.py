@@ -18,10 +18,10 @@ from src.wizard.wizard_engine import WizardEngine
 from src.wizard.message_queue import WizardMessageQueue
 from src.wizard.events import WizardEventType
 
-
 # ============================================================================
 # 辅助函数
 # ============================================================================
+
 
 def _mock_all_selectors():
     """模拟所有选择器成功返回，确保 run() 正常走完全流程
@@ -59,6 +59,7 @@ def _stop_all_patches(patchers: dict):
 # ============================================================================
 # 1. WizardEngine 初始化测试
 # ============================================================================
+
 
 class TestWizardEngineInit:
     """WizardEngine 初始化测试"""
@@ -98,6 +99,7 @@ class TestWizardEngineInit:
 # ============================================================================
 # 2. run() 生命周期测试
 # ============================================================================
+
 
 class TestWizardEngineRun:
     """WizardEngine.run() 测试"""
@@ -170,6 +172,7 @@ class TestWizardEngineRun:
 # 3. stop() 和状态测试
 # ============================================================================
 
+
 class TestWizardEngineStop:
     """WizardEngine.stop() 测试"""
 
@@ -206,6 +209,7 @@ class TestWizardEngineStop:
 # 4. _show_intro 和 _show_summary 测试
 # ============================================================================
 
+
 class TestWizardEngineDisplay:
     """显示方法测试"""
 
@@ -217,8 +221,10 @@ class TestWizardEngineDisplay:
     def test_show_summary_with_targets(self):
         """_show_summary 应处理多目标"""
         engine = WizardEngine()
-        engine.result.targets = ["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
-                                  "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"]
+        engine.result.targets = [
+            "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+            "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH",
+        ]
         engine.result.mode = "random"
         engine.result.gpu_indices = [0]
         engine.result.use_multi_gpu = False
@@ -245,6 +251,7 @@ class TestWizardEngineDisplay:
 # 5. _execute 测试
 # ============================================================================
 
+
 class TestWizardEngineExecute:
     """_execute 方法测试"""
 
@@ -265,6 +272,7 @@ class TestWizardEngineExecute:
 # ============================================================================
 # 6. 步骤处理器注册/取消 测试
 # ============================================================================
+
 
 class TestWizardEngineStepHandlers:
     """步骤处理器管理测试"""
@@ -303,6 +311,7 @@ class TestWizardEngineStepHandlers:
 # ============================================================================
 # 7. 消息队列集成测试
 # ============================================================================
+
 
 class TestWizardEngineMessageQueue:
     """消息队列集成测试"""

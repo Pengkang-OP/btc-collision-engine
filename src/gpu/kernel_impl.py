@@ -39,7 +39,9 @@ logger = get_configured_logger("GPUKernel")
 
 # DEF-2修复: 内核编译重试配置
 GPU_KERNEL_COMPILE_MAX_RETRIES = 3
-GPU_KERNEL_COMPILE_RETRY_DELAY_BASE = 2.0  # 基础延迟(秒), 指数退避: 2s(第1次失败后), 4s(第2次失败后)
+GPU_KERNEL_COMPILE_RETRY_DELAY_BASE = (
+    2.0  # 基础延迟(秒), 指数退避: 2s(第1次失败后), 4s(第2次失败后)
+)
 
 # DEF-2修复: 渐进编译策略 — 每次重试尝试不同的编译选项
 COMPILE_STRATEGIES = [
@@ -114,7 +116,7 @@ def compile_kernel_with_retry(
             last_error = e
 
             if attempt < max_retries - 1:
-                delay = retry_delay_base * (2 ** attempt)
+                delay = retry_delay_base * (2**attempt)
                 log.warning(
                     f"OpenCL 内核编译失败 (第{attempt + 1}/{max_retries}次/{strategy_desc}): "
                     f"{type(e).__name__}: {e} ({compile_time_ms:.0f}ms), "
@@ -127,9 +129,7 @@ def compile_kernel_with_retry(
                     f"{type(e).__name__}: {e} (累计{compile_time_total:.0f}ms)"
                 )
 
-    raise RuntimeError(
-        f"GPU 内核编译失败 (已重试{max_retries}次): {last_error}"
-    ) from last_error
+    raise RuntimeError(f"GPU 内核编译失败 (已重试{max_retries}次): {last_error}") from last_error
 
 
 def get_gpu_optimizer() -> Optional[Any]:
@@ -377,9 +377,7 @@ class GPUKernel(GPUKernelProtocol):
 
         # 将种子写入GPU seed缓冲区
         seed_array = _seed_bytes_to_u32_be_array(test_seed_bytes)
-        cl.enqueue_copy(
-            self.device.queue, self._seed_buf, seed_array
-        )
+        cl.enqueue_copy(self.device.queue, self._seed_buf, seed_array)
 
         # 设置目标
         self.set_targets(test_targets, num_targets, check_uncompressed=0)
@@ -409,9 +407,7 @@ class GPUKernel(GPUKernelProtocol):
 
         # 读取结果
         match_flags: np.ndarray[Any, Any] = np.zeros(num_keys, dtype=np.int32)
-        cl.enqueue_copy(
-            self.device.queue, match_flags, self._match_buf
-        )
+        cl.enqueue_copy(self.device.queue, match_flags, self._match_buf)
 
         # 验证: 由于目标是全0,不应该匹配
         if match_flags[0] != 0:
@@ -464,9 +460,7 @@ class GPUKernel(GPUKernelProtocol):
 
             # 读取结果
             match_flags = np.zeros(num_keys, dtype=np.int32)
-            cl.enqueue_copy(
-                self.device.queue, match_flags, self._match_buf
-            )
+            cl.enqueue_copy(self.device.queue, match_flags, self._match_buf)
 
             # 验证: 私钥1应该匹配它的地址
             if match_flags[0] != 1:
@@ -794,9 +788,7 @@ class GPUKernel(GPUKernelProtocol):
 
         seed_array = _seed_bytes_to_u32_be_array(seed)
         try:
-            cl.enqueue_copy(
-                self.device.queue, self._seed_buf, seed_array
-            )
+            cl.enqueue_copy(self.device.queue, self._seed_buf, seed_array)
         except Exception as e:
             logger.error(f"写入 seed_buf 失败: {e}")
             return []
@@ -807,9 +799,7 @@ class GPUKernel(GPUKernelProtocol):
             return []
 
         try:
-            cl.enqueue_fill_buffer(
-                self.device.queue, self._match_buf, np.int32(0), 0, num_keys * 4
-            )
+            cl.enqueue_fill_buffer(self.device.queue, self._match_buf, np.int32(0), 0, num_keys * 4)
         except Exception as e:
             logger.error(f"清空 match_buf 失败: {e}")
             return []

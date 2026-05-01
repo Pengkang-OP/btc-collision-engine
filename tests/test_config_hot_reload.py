@@ -18,20 +18,20 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.config.config_manager import ConfigManager
 from src.config.config_watcher import ConfigWatcher, HAS_WATCHDOG
 
-
 # ═══════════════════════════════════════════════════════════════════
 # ConfigWatcher 测试
 # ═══════════════════════════════════════════════════════════════════
+
 
 class TestConfigWatcherBackend(unittest.TestCase):
     """ConfigWatcher 后端选择测试"""
 
     def test_01_backend_type(self):
         """后端类型为 watchdog 或 polling"""
-        fd, path = tempfile.mkstemp(suffix='.json')
+        fd, path = tempfile.mkstemp(suffix=".json")
         os.close(fd)
         try:
-            with open(path, 'w') as f:
+            with open(path, "w") as f:
                 json.dump({"test": True}, f)
             w = ConfigWatcher(path, lambda: None)
             self.assertIn(w.backend, ("watchdog", "polling"))
@@ -48,9 +48,9 @@ class TestConfigWatcherLifecycle(unittest.TestCase):
     """ConfigWatcher 生命周期测试"""
 
     def setUp(self):
-        fd, self.config_path = tempfile.mkstemp(suffix='.json')
+        fd, self.config_path = tempfile.mkstemp(suffix=".json")
         os.close(fd)
-        with open(self.config_path, 'w') as f:
+        with open(self.config_path, "w") as f:
             json.dump({"test": True}, f)
 
     def tearDown(self):
@@ -93,9 +93,9 @@ class TestConfigWatcherPolling(unittest.TestCase):
     """ConfigWatcher 轮询模式测试"""
 
     def setUp(self):
-        fd, self.config_path = tempfile.mkstemp(suffix='.json')
+        fd, self.config_path = tempfile.mkstemp(suffix=".json")
         os.close(fd)
-        with open(self.config_path, 'w') as f:
+        with open(self.config_path, "w") as f:
             json.dump({"version": 1}, f)
 
     def tearDown(self):
@@ -115,7 +115,7 @@ class TestConfigWatcherPolling(unittest.TestCase):
         try:
             # 修改文件
             time.sleep(0.1)
-            with open(self.config_path, 'w') as f:
+            with open(self.config_path, "w") as f:
                 json.dump({"version": 2}, f)
 
             # 等待轮询检测
@@ -154,10 +154,10 @@ class TestConfigWatcherPolling(unittest.TestCase):
         try:
             time.sleep(0.1)
             # 连续写入两次
-            with open(self.config_path, 'w') as f:
+            with open(self.config_path, "w") as f:
                 json.dump({"v": 1}, f)
             time.sleep(0.2)
-            with open(self.config_path, 'w') as f:
+            with open(self.config_path, "w") as f:
                 json.dump({"v": 2}, f)
 
             time.sleep(1.0)
@@ -173,10 +173,10 @@ class TestConfigWatcherErrors(unittest.TestCase):
 
     def test_01_callback_exception_does_not_crash(self):
         """回调异常不导致 watcher 崩溃"""
-        fd, path = tempfile.mkstemp(suffix='.json')
+        fd, path = tempfile.mkstemp(suffix=".json")
         os.close(fd)
         try:
-            with open(path, 'w') as f:
+            with open(path, "w") as f:
                 json.dump({}, f)
 
             def bad_callback():
@@ -186,7 +186,7 @@ class TestConfigWatcherErrors(unittest.TestCase):
             w.start()
             try:
                 time.sleep(0.1)
-                with open(path, 'w') as f:
+                with open(path, "w") as f:
                     json.dump({"new": True}, f)
                 time.sleep(1.0)
                 # watcher 不应崩溃
@@ -213,13 +213,14 @@ class TestConfigWatcherErrors(unittest.TestCase):
 # ConfigManager 热重载测试
 # ═══════════════════════════════════════════════════════════════════
 
+
 class TestConfigManagerReload(unittest.TestCase):
     """ConfigManager.reload_config() 测试"""
 
     def setUp(self):
-        fd, self.config_path = tempfile.mkstemp(suffix='.json')
+        fd, self.config_path = tempfile.mkstemp(suffix=".json")
         os.close(fd)
-        with open(self.config_path, 'w') as f:
+        with open(self.config_path, "w") as f:
             json.dump({"logging": {"level": "DEBUG"}}, f)
         self.cm = ConfigManager(config_file=self.config_path)
 
@@ -233,7 +234,7 @@ class TestConfigManagerReload(unittest.TestCase):
         self.assertEqual(self.cm.get("logging.level"), "DEBUG")
 
         # 修改文件
-        with open(self.config_path, 'w') as f:
+        with open(self.config_path, "w") as f:
             json.dump({"logging": {"level": "WARNING"}}, f)
 
         result = self.cm.reload_config()
@@ -245,7 +246,7 @@ class TestConfigManagerReload(unittest.TestCase):
         original_level = self.cm.get("logging.level")
 
         # 写入无效配置
-        with open(self.config_path, 'w') as f:
+        with open(self.config_path, "w") as f:
             json.dump({"logging": {"level": "INVALID_LEVEL"}}, f)
 
         result = self.cm.reload_config()
@@ -262,7 +263,7 @@ class TestConfigManagerReload(unittest.TestCase):
         """损坏的 JSON 不覆盖原配置"""
         original_level = self.cm.get("logging.level")
 
-        with open(self.config_path, 'w') as f:
+        with open(self.config_path, "w") as f:
             f.write("{ this is not valid json }")
 
         result = self.cm.reload_config()
@@ -274,9 +275,9 @@ class TestConfigManagerCallbacks(unittest.TestCase):
     """ConfigManager.on_config_changed() 回调测试"""
 
     def setUp(self):
-        fd, self.config_path = tempfile.mkstemp(suffix='.json')
+        fd, self.config_path = tempfile.mkstemp(suffix=".json")
         os.close(fd)
-        with open(self.config_path, 'w') as f:
+        with open(self.config_path, "w") as f:
             json.dump({"logging": {"level": "INFO"}}, f)
         self.cm = ConfigManager(config_file=self.config_path)
 
@@ -290,7 +291,7 @@ class TestConfigManagerCallbacks(unittest.TestCase):
         called = []
         self.cm.on_config_changed(lambda: called.append(True))
 
-        with open(self.config_path, 'w') as f:
+        with open(self.config_path, "w") as f:
             json.dump({"logging": {"level": "WARNING"}}, f)
 
         self.cm.reload_config()
@@ -301,7 +302,7 @@ class TestConfigManagerCallbacks(unittest.TestCase):
         called = []
         self.cm.on_config_changed(lambda: called.append(True))
 
-        with open(self.config_path, 'w') as f:
+        with open(self.config_path, "w") as f:
             json.dump({"logging": {"level": "INVALID"}}, f)
 
         self.cm.reload_config()
@@ -313,7 +314,7 @@ class TestConfigManagerCallbacks(unittest.TestCase):
         self.cm.on_config_changed(lambda: results.append("A"))
         self.cm.on_config_changed(lambda: results.append("B"))
 
-        with open(self.config_path, 'w') as f:
+        with open(self.config_path, "w") as f:
             json.dump({"logging": {"level": "ERROR"}}, f)
 
         self.cm.reload_config()
@@ -332,7 +333,7 @@ class TestConfigManagerCallbacks(unittest.TestCase):
         self.cm.on_config_changed(bad)
         self.cm.on_config_changed(good)
 
-        with open(self.config_path, 'w') as f:
+        with open(self.config_path, "w") as f:
             json.dump({"logging": {"level": "CRITICAL"}}, f)
 
         result = self.cm.reload_config()
@@ -344,9 +345,9 @@ class TestConfigManagerWatching(unittest.TestCase):
     """ConfigManager start_watching / stop_watching 测试"""
 
     def setUp(self):
-        fd, self.config_path = tempfile.mkstemp(suffix='.json')
+        fd, self.config_path = tempfile.mkstemp(suffix=".json")
         os.close(fd)
-        with open(self.config_path, 'w') as f:
+        with open(self.config_path, "w") as f:
             json.dump({"logging": {"level": "INFO"}}, f)
         self.cm = ConfigManager(config_file=self.config_path)
 
@@ -390,7 +391,7 @@ class TestConfigManagerWatching(unittest.TestCase):
 
         try:
             time.sleep(0.1)
-            with open(self.config_path, 'w') as f:
+            with open(self.config_path, "w") as f:
                 json.dump({"logging": {"level": "ERROR"}}, f)
 
             # 等待轮询检测 + 重载
@@ -408,7 +409,7 @@ class TestConfigManagerWatching(unittest.TestCase):
 
         try:
             time.sleep(0.1)
-            with open(self.config_path, 'w') as f:
+            with open(self.config_path, "w") as f:
                 json.dump({"logging": {"level": "GARBAGE"}}, f)
 
             time.sleep(1.5)
@@ -423,9 +424,9 @@ class TestConfigManagerThreadSafety(unittest.TestCase):
     """热重载线程安全测试"""
 
     def setUp(self):
-        fd, self.config_path = tempfile.mkstemp(suffix='.json')
+        fd, self.config_path = tempfile.mkstemp(suffix=".json")
         os.close(fd)
-        with open(self.config_path, 'w') as f:
+        with open(self.config_path, "w") as f:
             json.dump({"logging": {"level": "INFO"}}, f)
         self.cm = ConfigManager(config_file=self.config_path)
 
@@ -580,6 +581,7 @@ class TestNotificationChannelConcurrency(unittest.TestCase):
 
     def setUp(self):
         from src.monitoring.alert_system import AlertSystem, AlertLevel, AlertType
+
         self.AlertSystem = AlertSystem
         self.AlertLevel = AlertLevel
         self.AlertType = AlertType
@@ -604,6 +606,7 @@ class TestNotificationChannelConcurrency(unittest.TestCase):
             try:
                 for i in range(20):
                     from src.monitoring.alert_system import AlertRecord
+
                     alert = AlertRecord(
                         timestamp="2026-01-01T00:00:00",
                         level=self.AlertLevel.WARNING,

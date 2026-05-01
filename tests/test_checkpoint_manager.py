@@ -1,4 +1,5 @@
 """CheckpointManager 单元测试 - 保存/加载/删除、敏感信息清理、原子写入"""
+
 import json
 import os
 import sys
@@ -17,6 +18,7 @@ class TestCheckpointManagerBasic(unittest.TestCase):
     def setUp(self):
         # 使用临时文件，但不预先创建
         import uuid
+
         self.tmp_path = os.path.join(
             tempfile.gettempdir(), f"test_ckpt_{uuid.uuid4().hex[:8]}.json"
         )
@@ -44,14 +46,12 @@ class TestCheckpointManagerBasic(unittest.TestCase):
     def test_exists_after_save(self):
         """保存后 exists() 返回 True"""
         self.assertFalse(self.mgr.exists())
-        self.mgr.save(mode="random", targets=set(), current_position=0,
-                      total_checked=0, matches=[])
+        self.mgr.save(mode="random", targets=set(), current_position=0, total_checked=0, matches=[])
         self.assertTrue(self.mgr.exists())
 
     def test_delete(self):
         """删除后 exists() 返回 False"""
-        self.mgr.save(mode="random", targets=set(), current_position=0,
-                      total_checked=0, matches=[])
+        self.mgr.save(mode="random", targets=set(), current_position=0, total_checked=0, matches=[])
         self.assertTrue(self.mgr.exists())
         self.mgr.delete()
         self.assertFalse(self.mgr.exists())
@@ -67,6 +67,7 @@ class TestCheckpointSensitiveInfoCleaning(unittest.TestCase):
 
     def setUp(self):
         import uuid
+
         self.tmp_path = os.path.join(
             tempfile.gettempdir(), f"test_ckpt_sens_{uuid.uuid4().hex[:8]}.json"
         )
@@ -83,7 +84,7 @@ class TestCheckpointSensitiveInfoCleaning(unittest.TestCase):
                 "address": "1TestAddress",
                 "private_key_hex": "deadbeef" * 8,
                 "private_key_wif": "KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qYjgd9M7rFU65NZy3yH",
-                "timestamp": time.time()
+                "timestamp": time.time(),
             }
         ]
         self.mgr.save(
@@ -91,11 +92,11 @@ class TestCheckpointSensitiveInfoCleaning(unittest.TestCase):
             targets=set(),
             current_position=0,
             total_checked=100,
-            matches=matches_with_key
+            matches=matches_with_key,
         )
 
         # 直接读取 JSON 文件内容
-        with open(self.tmp_path, encoding='utf-8') as f:
+        with open(self.tmp_path, encoding="utf-8") as f:
             raw = f.read()
 
         self.assertNotIn("deadbeef", raw)
@@ -106,16 +107,16 @@ class TestCheckpointSensitiveInfoCleaning(unittest.TestCase):
     def test_address_preserved_in_match(self):
         """断点保存保留地址信息"""
         matches = [{"address": "1TestPreserved", "timestamp": time.time()}]
-        self.mgr.save(mode="random", targets=set(), current_position=0,
-                      total_checked=0, matches=matches)
+        self.mgr.save(
+            mode="random", targets=set(), current_position=0, total_checked=0, matches=matches
+        )
         data = self.mgr.load()
         self.assertEqual(data["matches"][0]["address"], "1TestPreserved")
 
     def test_security_note_in_file(self):
         """断点文件包含安全说明"""
-        self.mgr.save(mode="random", targets=set(), current_position=0,
-                      total_checked=0, matches=[])
-        with open(self.tmp_path, encoding='utf-8') as f:
+        self.mgr.save(mode="random", targets=set(), current_position=0, total_checked=0, matches=[])
+        with open(self.tmp_path, encoding="utf-8") as f:
             raw = f.read()
         self.assertIn("security_note", raw)
 
@@ -129,10 +130,16 @@ class TestCheckpointAtomicWrite(unittest.TestCase):
         tmp.close()
         try:
             mgr = CheckpointManager(filepath=tmp.name)
-            mgr.save(mode="range", targets={"1A"}, current_position=999,
-                     total_checked=5000, matches=[],
-                     range_start=1, range_end=10000)
-            with open(tmp.name, encoding='utf-8') as f:
+            mgr.save(
+                mode="range",
+                targets={"1A"},
+                current_position=999,
+                total_checked=5000,
+                matches=[],
+                range_start=1,
+                range_end=10000,
+            )
+            with open(tmp.name, encoding="utf-8") as f:
                 data = json.load(f)
             self.assertIn("mode", data)
         finally:
@@ -145,8 +152,13 @@ class TestCheckpointAtomicWrite(unittest.TestCase):
         tmp.close()
         try:
             mgr = CheckpointManager(filepath=tmp.name)
-            mgr.save(mode="random", targets={"addr1", "addr2"},
-                     current_position=0, total_checked=0, matches=[])
+            mgr.save(
+                mode="random",
+                targets={"addr1", "addr2"},
+                current_position=0,
+                total_checked=0,
+                matches=[],
+            )
             data = mgr.load()
             self.assertIsInstance(data["targets"], list)
             self.assertIn("addr1", data["targets"])
@@ -176,8 +188,7 @@ class TestCheckpointAutoSave(unittest.TestCase):
         tmp.close()
         try:
             mgr = CheckpointManager(filepath=tmp.name, auto_save_interval=9999)
-            mgr.save(mode="random", targets=set(), current_position=0,
-                     total_checked=0, matches=[])
+            mgr.save(mode="random", targets=set(), current_position=0, total_checked=0, matches=[])
             # 紧接着保存，间隔未到
             self.assertFalse(mgr.should_auto_save())
         finally:

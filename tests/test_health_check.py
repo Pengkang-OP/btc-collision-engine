@@ -25,10 +25,10 @@ from unittest.mock import Mock, patch, MagicMock
 
 from src.utils.health_check import HealthChecker, main
 
-
 # ============================================================================
 # Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def checker():
@@ -59,6 +59,7 @@ def checker_with_config():
 # Python 版本检查
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestPythonVersionCheck:
     """Python 版本检查测试"""
@@ -76,6 +77,7 @@ class TestPythonVersionCheck:
 # ============================================================================
 # 依赖检查
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestDependencyCheck:
@@ -102,6 +104,7 @@ class TestDependencyCheck:
 # ============================================================================
 # 配置文件检查
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestConfigFileCheck:
@@ -149,6 +152,7 @@ class TestConfigFileCheck:
 # 磁盘空间检查
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestDiskSpaceCheck:
     """磁盘空间检查测试"""
@@ -171,6 +175,7 @@ class TestDiskSpaceCheck:
 # 目录权限检查
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestDirectoryCheck:
     """目录检查测试"""
@@ -190,6 +195,7 @@ class TestDirectoryCheck:
 # GPU 检查
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestGPUCheck:
     """GPU 设备检查测试"""
@@ -202,12 +208,14 @@ class TestGPUCheck:
 
     def test_check_gpu_pyopencl_not_installed(self, checker):
         """模拟 pyopencl 未安装"""
-        with patch('builtins.__import__') as mock_import:
+        with patch("builtins.__import__") as mock_import:
             original_import = __import__
+
             def selective_import(name, *args, **kwargs):
-                if name == 'pyopencl':
+                if name == "pyopencl":
                     raise ImportError("No module named 'pyopencl'")
                 return original_import(name, *args, **kwargs)
+
             mock_import.side_effect = selective_import
             passed, message = checker.check_gpu_availability()
             assert passed is False
@@ -217,6 +225,7 @@ class TestGPUCheck:
 # ============================================================================
 # 监控系统检查
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestMonitoringCheck:
@@ -233,11 +242,12 @@ class TestMonitoringCheck:
 # 网络检查
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestNetworkCheck:
     """网络检查测试"""
 
-    @patch('socket.socket')
+    @patch("socket.socket")
     def test_check_network_connectivity(self, mock_socket_class, checker):
         mock_sock = Mock()
         mock_sock.connect_ex.return_value = 0  # 连接成功
@@ -246,7 +256,7 @@ class TestNetworkCheck:
         passed, message = checker.check_network_connectivity()
         assert passed is True
 
-    @patch('socket.socket')
+    @patch("socket.socket")
     def test_check_network_connectivity_failure(self, mock_socket_class, checker):
         mock_sock = Mock()
         mock_sock.connect_ex.return_value = 1  # 连接失败
@@ -260,11 +270,12 @@ class TestNetworkCheck:
 # 端口检查
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestPortCheck:
     """端口检查测试"""
 
-    @patch('socket.socket')
+    @patch("socket.socket")
     def test_check_port_availability_all_free(self, mock_socket_class, checker):
         mock_sock = Mock()
         mock_sock.__enter__ = Mock(return_value=mock_sock)
@@ -280,6 +291,7 @@ class TestPortCheck:
 # 进程状态检查
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestProcessCheck:
     """进程状态检查测试"""
@@ -294,6 +306,7 @@ class TestProcessCheck:
 # ============================================================================
 # 综合测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestHealthCheckerIntegration:
@@ -334,27 +347,26 @@ class TestHealthCheckerIntegration:
 # CLI 入口测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestHealthCheckCLI:
     """CLI 入口测试"""
 
-    @patch('sys.argv', ['health_check.py'])
+    @patch("sys.argv", ["health_check.py"])
     def test_main_basic(self, checker):
         """基本运行不应崩溃"""
-        with patch('src.utils.health_check.HealthChecker') as mock_cls:
+        with patch("src.utils.health_check.HealthChecker") as mock_cls:
             mock_instance = Mock()
-            mock_instance.run_all_checks.return_value = {
-                "test": (True, "all good")
-            }
+            mock_instance.run_all_checks.return_value = {"test": (True, "all good")}
             mock_cls.return_value = mock_instance
             try:
                 main()
             except SystemExit:
                 pass
 
-    @patch('sys.argv', ['health_check.py', '--gpu', '--network'])
+    @patch("sys.argv", ["health_check.py", "--gpu", "--network"])
     def test_main_with_options(self):
-        with patch('src.utils.health_check.HealthChecker') as mock_cls:
+        with patch("src.utils.health_check.HealthChecker") as mock_cls:
             mock_instance = Mock()
             mock_instance.run_all_checks.return_value = {"test": (True, "ok")}
             mock_cls.return_value = mock_instance
@@ -363,9 +375,9 @@ class TestHealthCheckCLI:
             except SystemExit:
                 pass
 
-    @patch('sys.argv', ['health_check.py', '--report', 'report.txt'])
+    @patch("sys.argv", ["health_check.py", "--report", "report.txt"])
     def test_main_with_report(self, checker):
-        with patch('src.utils.health_check.HealthChecker') as mock_cls:
+        with patch("src.utils.health_check.HealthChecker") as mock_cls:
             mock_instance = Mock()
             mock_instance.run_all_checks.return_value = {"test": (True, "ok")}
             mock_instance.generate_report.return_value = "report content"

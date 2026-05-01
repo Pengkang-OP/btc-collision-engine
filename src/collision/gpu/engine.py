@@ -561,7 +561,9 @@ class GPUCollisionEngine(BaseCollisionEngine):
             if hasattr(self._gpu_kernel, "_buffer_tracker") and self._gpu_kernel._buffer_tracker:
                 try:
                     stats = self._gpu_kernel._buffer_tracker.get_stats()
-                    logger.debug(f"内存检查: {stats['count']}个缓冲区, {stats['total_size_mb']:.2f} MB")
+                    logger.debug(
+                        f"内存检查: {stats['count']}个缓冲区, {stats['total_size_mb']:.2f} MB"
+                    )
                 except Exception as e:
                     logger.error(f"内存泄漏检查失败: {e}", exc_info=True)
 
@@ -584,7 +586,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 ):
                     try:
                         matches, execution_time_ms = self._async_executor.run_batch_async(
-                            seed, batch_size,
+                            seed,
+                            batch_size,
                             self._gpu_kernel.program,
                             self._gpu_kernel._targets_buf,
                             len(self.targets),
@@ -653,6 +656,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
                     logger.error(f"匹配回调异常: {exception[0]}")
                     return False
             else:
+
                 def timeout_handler(signum: int, frame: Any) -> None:
                     raise TimeoutError(f"匹配回调执行超时 ({self._match_callback_timeout}秒)")
 
@@ -724,7 +728,9 @@ class GPUCollisionEngine(BaseCollisionEngine):
         except Exception as e:
             logger.debug(f"记录GPU性能指标失败: {e}")
 
-    def _record_adjustment(self, old_size: int, new_size: int, reason: str, details: str = "") -> None:
+    def _record_adjustment(
+        self, old_size: int, new_size: int, reason: str, details: str = ""
+    ) -> None:
         """记录调整历史"""
         self._engine_monitor.record_adjustment(
             old_size=old_size, new_size=new_size, reason=reason, details=details
@@ -796,7 +802,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             return
 
         try:
-            error_rate = getattr(self.stats, 'gpu_error_count', 0) / max(batch_count, 1)
+            error_rate = getattr(self.stats, "gpu_error_count", 0) / max(batch_count, 1)
             if self._gpu_kernel and self._gpu_kernel.gpu_optimizer:
                 new_batch_size, adjustments = self._gpu_kernel.gpu_optimizer.analyze_and_adjust(
                     current_batch_size=current_batch_size,
@@ -867,16 +873,22 @@ class GPUCollisionEngine(BaseCollisionEngine):
     def _start_async_key_generation(self, batch_size: int) -> Tuple[threading.Thread, List[Any]]:
         """启动异步私钥生成线程"""
         assert self._random_search_mode is not None
-        return cast(Tuple[threading.Thread, List[Any]], self._random_search_mode._start_async_key_generation(batch_size))
+        return cast(
+            Tuple[threading.Thread, List[Any]],
+            self._random_search_mode._start_async_key_generation(batch_size),
+        )
 
     def _wait_for_async_key_generation(
         self, gen_thread: threading.Thread, gen_result: List[Any], batch_num: int
     ) -> bytes:
         """等待异步私钥生成完成"""
         assert self._random_search_mode is not None
-        return cast(bytes, self._random_search_mode._wait_for_async_key_generation(
-            gen_thread, gen_result, batch_num
-        ))
+        return cast(
+            bytes,
+            self._random_search_mode._wait_for_async_key_generation(
+                gen_thread, gen_result, batch_num
+            ),
+        )
 
     def _range_scan(self, start: int, end: int):
         """范围扫描模式"""
@@ -896,11 +908,14 @@ class GPUCollisionEngine(BaseCollisionEngine):
     ) -> int:
         """通用批处理执行循环"""
         assert self._brute_force_mode is not None
-        return cast(int, self._brute_force_mode._execute_batch_loop(
-            key_generator_fn=key_generator_fn,
-            mode_name=mode_name,
-            stop_condition_fn=stop_condition_fn,
-        ))
+        return cast(
+            int,
+            self._brute_force_mode._execute_batch_loop(
+                key_generator_fn=key_generator_fn,
+                mode_name=mode_name,
+                stop_condition_fn=stop_condition_fn,
+            ),
+        )
 
     # ========== 异步日志 ==========
 
@@ -912,9 +927,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 os.makedirs(log_dir, mode=0o750, exist_ok=True)
             from ...utils.logger import AsyncFileHandler
 
-            handler = AsyncFileHandler(
-                log_file, max_bytes=max_bytes, backup_count=backup_count
-            )
+            handler = AsyncFileHandler(log_file, max_bytes=max_bytes, backup_count=backup_count)
             self._async_log_handler = handler
             handler.setLevel(logging.DEBUG)
             logger.addHandler(handler)
@@ -963,8 +976,13 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 logger.warning(f"GPUConfigManager合并失败，使用原有逻辑: {e}")
         merged = auto_config.copy()
         if profile_config:
-            for key in ["batch_size", "work_group_size", "memory_usage_ratio",
-                         "enable_async", "use_uint32_workaround"]:
+            for key in [
+                "batch_size",
+                "work_group_size",
+                "memory_usage_ratio",
+                "enable_async",
+                "use_uint32_workaround",
+            ]:
                 if key in profile_config:
                     value = profile_config[key]
                     if self._validate_config_value(key, value):

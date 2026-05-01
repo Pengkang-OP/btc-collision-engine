@@ -4,6 +4,7 @@
 使用新的GPU Mock基础设施，完全Mock pyopencl模块，
 避免真实GPU调用导致的测试失败。
 """
+
 import pytest
 import os
 import sys
@@ -30,24 +31,26 @@ def mock_gpu_setup():
     """
     # 创建Mock的OpenCL设备对象
     mock_cl_device = Mock()
-    mock_cl_device.get_info = Mock(side_effect=lambda key: {
-        0x1000: 0x4,  # TYPE -> GPU
-        0x1001: 'Test GPU',  # NAME
-        0x1002: 'NVIDIA Corporation',  # VENDOR
-    }.get(key, Mock()))
+    mock_cl_device.get_info = Mock(
+        side_effect=lambda key: {
+            0x1000: 0x4,  # TYPE -> GPU
+            0x1001: "Test GPU",  # NAME
+            0x1002: "NVIDIA Corporation",  # VENDOR
+        }.get(key, Mock())
+    )
     mock_cl_device.global_mem_size = 8 * 1024**3
     mock_cl_device.max_compute_units = 68
 
     # 设备信息字典（必须包含'device'键）
     mock_device_info = {
-        'name': 'Test GPU',
-        'vendor': 'NVIDIA Corporation',
-        'platform': 'Mock Platform',
-        'device': mock_cl_device,  # 关键：必须包含真实的device对象
-        'platform_obj': Mock(),
-        'global_mem_size': 8 * 1024**3,
-        'max_compute_units': 68,
-        'type': 'GPU'
+        "name": "Test GPU",
+        "vendor": "NVIDIA Corporation",
+        "platform": "Mock Platform",
+        "device": mock_cl_device,  # 关键：必须包含真实的device对象
+        "platform_obj": Mock(),
+        "global_mem_size": 8 * 1024**3,
+        "max_compute_units": 68,
+        "type": "GPU",
     }
 
     mock_device = Mock()
@@ -79,27 +82,35 @@ def mock_gpu_setup():
     mock_buffer.size = 1024
 
     # 完全Mock所有GPU相关模块
-    with patch('src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE', True), \
-         patch('src.collision.gpu_collision_engine.GPUDeviceDetector.is_gpu_available', return_value=True), \
-         patch('src.collision.gpu_collision_engine.GPUDeviceDetector.detect_devices', return_value=[mock_device_info]), \
-         patch('src.collision.gpu_collision_engine.GPUDevice', return_value=mock_device), \
-         patch('src.collision.gpu_collision_engine.GPUContext', return_value=mock_context), \
-         patch('src.collision.gpu_collision_engine.GPUKernel', return_value=mock_kernel), \
-         patch('src.collision.gpu_collision_engine.GPUProfileLoader') as mock_profile_loader, \
-         patch('pyopencl.Buffer', return_value=mock_buffer), \
-         patch('pyopencl.mem_flags.READ_ONLY', 0x0001), \
-         patch('pyopencl.mem_flags.READ_WRITE', 0x0002), \
-         patch('pyopencl.mem_flags.COPY_HOST_PTR', 0x0010), \
-         patch('src.gpu.async_executor.AsyncGPUExecutor.initialize_buffers'), \
-         patch('src.gpu.async_executor.AsyncGPUExecutor.run_batch_async', return_value=([], 1.0)):
+    with (
+        patch("src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE", True),
+        patch(
+            "src.collision.gpu_collision_engine.GPUDeviceDetector.is_gpu_available",
+            return_value=True,
+        ),
+        patch(
+            "src.collision.gpu_collision_engine.GPUDeviceDetector.detect_devices",
+            return_value=[mock_device_info],
+        ),
+        patch("src.collision.gpu_collision_engine.GPUDevice", return_value=mock_device),
+        patch("src.collision.gpu_collision_engine.GPUContext", return_value=mock_context),
+        patch("src.collision.gpu_collision_engine.GPUKernel", return_value=mock_kernel),
+        patch("src.collision.gpu_collision_engine.GPUProfileLoader") as mock_profile_loader,
+        patch("pyopencl.Buffer", return_value=mock_buffer),
+        patch("pyopencl.mem_flags.READ_ONLY", 0x0001),
+        patch("pyopencl.mem_flags.READ_WRITE", 0x0002),
+        patch("pyopencl.mem_flags.COPY_HOST_PTR", 0x0010),
+        patch("src.gpu.async_executor.AsyncGPUExecutor.initialize_buffers"),
+        patch("src.gpu.async_executor.AsyncGPUExecutor.run_batch_async", return_value=([], 1.0)),
+    ):
 
         mock_profile_loader.return_value.get_profile.return_value = None
 
         yield {
-            'device': mock_device,
-            'context': mock_context,
-            'kernel': mock_kernel,
-            'buffer': mock_buffer,
+            "device": mock_device,
+            "context": mock_context,
+            "kernel": mock_kernel,
+            "buffer": mock_buffer,
         }
 
 
@@ -134,23 +145,35 @@ class TestGPUCollisionEngine:
     def test_gpu_engine_initialization_without_gpu(self):
         """测试在没有 GPU 的情况下初始化 GPU 引擎"""
         # 模拟 pyopencl 不可用
-        with patch('src.collision.gpu.engine.PYOPENCL_AVAILABLE', False):
+        with patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", False):
             with pytest.raises(RuntimeError, match="pyopencl 不可用，无法使用 GPU 加速"):
                 GPUCollisionEngine(self.test_targets)
 
     def test_gpu_engine_mock_initialization(self):
         """使用 Mock 测试 GPU 引擎初始化 - 无设备情况"""
         # 模拟 pyopencl 可用
-        with patch('src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE', True):
+        with patch("src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE", True):
             # Mock GPUDeviceDetector返回空设备列表
-            with patch('src.collision.gpu_collision_engine.GPUDeviceDetector.detect_devices', return_value=[]), \
-                 patch('src.collision.gpu_collision_engine.GPUDeviceDetector.is_gpu_available', return_value=False):
+            with (
+                patch(
+                    "src.collision.gpu_collision_engine.GPUDeviceDetector.detect_devices",
+                    return_value=[],
+                ),
+                patch(
+                    "src.collision.gpu_collision_engine.GPUDeviceDetector.is_gpu_available",
+                    return_value=False,
+                ),
+            ):
 
                 # 测试没有 GPU 设备的情况应该抛出异常
-                with pytest.raises(RuntimeError, match="pyopencl 不可用|未检测到 GPU 设备|GPU.*不可用"):
+                with pytest.raises(
+                    RuntimeError, match="pyopencl 不可用|未检测到 GPU 设备|GPU.*不可用"
+                ):
                     GPUCollisionEngine(self.test_targets)
 
-    @pytest.mark.skip(reason="[GPU-HW-001] 需要真实GPU硬件: pyopencl C扩展类型检查无法完美Mock。详见: test_results/PYOPENCL_MOCK_SOLUTION.md")
+    @pytest.mark.skip(
+        reason="[GPU-HW-001] 需要真实GPU硬件: pyopencl C扩展类型检查无法完美Mock。详见: test_results/PYOPENCL_MOCK_SOLUTION.md"
+    )
     def test_gpu_engine_initialization_with_mock_device(self, mock_gpu_setup):
         """使用 Mock 设备测试 GPU 引擎初始化
 
@@ -168,7 +191,9 @@ class TestGPUCollisionEngine:
         assert isinstance(engine.batch_size, int)
         assert engine.batch_size > 0
 
-    @pytest.mark.skip(reason="[GPU-HW-002] 需要真实GPU硬件: pyopencl C扩展类型检查无法完美Mock。详见: test_results/PYOPENCL_MOCK_SOLUTION.md")
+    @pytest.mark.skip(
+        reason="[GPU-HW-002] 需要真实GPU硬件: pyopencl C扩展类型检查无法完美Mock。详见: test_results/PYOPENCL_MOCK_SOLUTION.md"
+    )
     def test_gpu_engine_lifecycle_start_stop(self, mock_gpu_setup):
         """测试 GPU 引擎的生命周期（启动和停止）
 
@@ -186,9 +211,9 @@ class TestGPUCollisionEngine:
         assert engine.is_running() is False
 
         # 验证资源清理
-        mock_gpu_setup['kernel'].cleanup.assert_called_once()
-        mock_gpu_setup['context'].cleanup.assert_called_once()
-        mock_gpu_setup['device'].cleanup.assert_called_once()
+        mock_gpu_setup["kernel"].cleanup.assert_called_once()
+        mock_gpu_setup["context"].cleanup.assert_called_once()
+        mock_gpu_setup["device"].cleanup.assert_called_once()
 
     def test_gpu_engine_invalid_mode_raises_error(self):
         """测试使用无效模式启动 GPU 引擎应抛出 ValueError
@@ -204,8 +229,10 @@ class TestGPUCollisionEngine:
         """
         # 策略：直接Mock GPUDeviceManager，完全绕过GPU初始化流程
         # Phase 6: engine.py 从 src.gpu.device_manager 导入，需要 patch 正确路径
-        with patch('src.collision.gpu.engine.GPUDeviceManager') as MockDeviceManager, \
-             patch('src.collision.gpu.engine.PYOPENCL_AVAILABLE', True):
+        with (
+            patch("src.collision.gpu.engine.GPUDeviceManager") as MockDeviceManager,
+            patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
+        ):
             # 配置Mock使其跳过GPU初始化，但允许引擎创建成功
             mock_device_manager = Mock()
             mock_device_manager.initialize = Mock()  # 不执行任何操作
@@ -214,13 +241,15 @@ class TestGPUCollisionEngine:
             mock_device_manager.kernel = Mock()  # Mock内核对象
             mock_device_manager.async_executor = Mock()  # Mock异步执行器
             mock_device_manager.memory_pool = Mock()  # Mock内存池
-            mock_device_manager.get_device_info = Mock(return_value={
-                'name': 'Mock GPU',
-                'vendor': 'NVIDIA Corporation',
-                'type': 'GPU',
-                'device_index': 0,
-                'batch_size': 65536
-            })
+            mock_device_manager.get_device_info = Mock(
+                return_value={
+                    "name": "Mock GPU",
+                    "vendor": "NVIDIA Corporation",
+                    "type": "GPU",
+                    "device_index": 0,
+                    "batch_size": 65536,
+                }
+            )
             MockDeviceManager.return_value = mock_device_manager
 
             # 创建引擎（不会真实初始化GPU）
@@ -246,12 +275,14 @@ class TestGPUCollisionEngine:
                 engine.start(mode="invalid_mode")
                 # 等待后台线程抛出异常
                 import time
+
                 time.sleep(0.5)
 
                 # 验证后台线程捕获到 ValueError
                 assert len(captured_exceptions) > 0, "应捕获到后台线程异常"
                 assert any(
-                    isinstance(exc, ValueError) and ("未知" in str(exc) or "无效" in str(exc) or "invalid" in str(exc).lower())
+                    isinstance(exc, ValueError)
+                    and ("未知" in str(exc) or "无效" in str(exc) or "invalid" in str(exc).lower())
                     for exc in captured_exceptions
                 ), f"应捕获到包含'未知/无效/invalid'的ValueError，实际: {captured_exceptions}"
             finally:
@@ -259,7 +290,9 @@ class TestGPUCollisionEngine:
                 if engine.is_running():
                     engine.stop()
 
-    @pytest.mark.skip(reason="[GPU-HW-003] 需要真实GPU硬件: pyopencl C扩展类型检查无法完美Mock。详见: test_results/PYOPENCL_MOCK_SOLUTION.md")
+    @pytest.mark.skip(
+        reason="[GPU-HW-003] 需要真实GPU硬件: pyopencl C扩展类型检查无法完美Mock。详见: test_results/PYOPENCL_MOCK_SOLUTION.md"
+    )
     def test_gpu_engine_get_device_info(self, mock_gpu_setup):
         """测试获取 GPU 设备信息
 
@@ -271,9 +304,9 @@ class TestGPUCollisionEngine:
         # 测试获取设备信息
         device_info = engine.get_device_info()
         assert isinstance(device_info, dict)
-        assert 'type' in device_info
-        assert device_info['type'] == 'GPU'
-        assert 'name' in device_info
-        assert 'vendor' in device_info
-        assert 'device_index' in device_info
-        assert 'batch_size' in device_info
+        assert "type" in device_info
+        assert device_info["type"] == "GPU"
+        assert "name" in device_info
+        assert "vendor" in device_info
+        assert "device_index" in device_info
+        assert "batch_size" in device_info

@@ -36,19 +36,16 @@ os.makedirs(_TEST_OUTPUT_DIR, exist_ok=True)
 
 def test_sync_mode(test_duration: int = 90, analysis_duration: int = 60):
     """测试同步模式"""
-    print("="*80)
+    print("=" * 80)
     print("  同步模式性能测试")
-    print("="*80)
+    print("=" * 80)
     print(f"  测试时长: {test_duration}秒 (含 {test_duration - analysis_duration}s 缓冲)")
     print(f"  数据分析: 前{analysis_duration}秒")
     print(f"  批次大小: 1,048,576")
     print(f"  目标地址: 2个")
     print()
 
-    targets = [
-        "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
-        "12cbQLTFMXRnSzktFkuoG3eHoMeFtpTu3S"
-    ]
+    targets = ["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", "12cbQLTFMXRnSzktFkuoG3eHoMeFtpTu3S"]
 
     stats_history = []
     total_keys = 0
@@ -66,18 +63,22 @@ def test_sync_mode(test_duration: int = 90, analysis_duration: int = 60):
 
         # 只记录前analysis_duration秒的数据
         if elapsed <= analysis_duration:
-            stats_history.append({
-                'timestamp': time.time(),
-                'elapsed': elapsed,
-                'total_checked': stats.total_checked,
-                'speed': stats.speed,
-                'matches': len(stats.matches)
-            })
+            stats_history.append(
+                {
+                    "timestamp": time.time(),
+                    "elapsed": elapsed,
+                    "total_checked": stats.total_checked,
+                    "speed": stats.speed,
+                    "matches": len(stats.matches),
+                }
+            )
 
         # 打印进度(每5秒)
         if len(stats_history) % 10 == 0 and elapsed <= analysis_duration:
-            print(f"  [{elapsed:5.1f}s] 速度: {stats.speed:,.0f} keys/s | "
-                  f"总计: {stats.total_checked:,} | 匹配: {len(stats.matches)}")
+            print(
+                f"  [{elapsed:5.1f}s] 速度: {stats.speed:,.0f} keys/s | "
+                f"总计: {stats.total_checked:,} | 匹配: {len(stats.matches)}"
+            )
 
     try:
         # 初始化引擎
@@ -90,19 +91,19 @@ def test_sync_mode(test_duration: int = 90, analysis_duration: int = 60):
             batch_size=1048576,
             on_progress=on_progress,
             checkpoint_enabled=False,
-            dedup_enabled=False
+            dedup_enabled=False,
         )
 
         # 确认异步执行器状态
-        if hasattr(engine, '_async_executor') and engine._async_executor:
-            queue_depth = getattr(engine._async_executor, 'queue_depth', 'N/A')
+        if hasattr(engine, "_async_executor") and engine._async_executor:
+            queue_depth = getattr(engine._async_executor, "queue_depth", "N/A")
             print(f"  [配置] ✓ 异步执行器已启用 (队列深度: {queue_depth})")
         else:
             print("  [配置] 异步执行器未启用，使用同步执行路径")
 
         init_time = time.time() - init_start
         device_info = engine._gpu_device.get_device_info() if engine._gpu_device else {}
-        device_name = device_info.get('name', 'Unknown')
+        device_name = device_info.get("name", "Unknown")
         print(f"  [完成] 初始化耗时: {init_time:.2f}秒")
         print(f"  [设备] {device_name}")
         print()
@@ -128,7 +129,7 @@ def test_sync_mode(test_duration: int = 90, analysis_duration: int = 60):
                 total_keys = stats.total_checked
 
             # 检查引擎线程是否异常退出
-            if hasattr(engine, '_thread') and engine._thread and not engine._thread.is_alive():
+            if hasattr(engine, "_thread") and engine._thread and not engine._thread.is_alive():
                 print("  [完成] 引擎线程已退出")
                 break
 
@@ -141,50 +142,48 @@ def test_sync_mode(test_duration: int = 90, analysis_duration: int = 60):
 
         # 计算统计数据
         if stats_history:
-            speed_samples = [s['speed'] for s in stats_history if s['speed'] > 0]
+            speed_samples = [s["speed"] for s in stats_history if s["speed"] > 0]
             avg_speed = sum(speed_samples) / len(speed_samples) if speed_samples else 0
 
             keys_at_60s = 0
-            for s in sorted(stats_history, key=lambda x: x['elapsed'], reverse=True):
-                if s['elapsed'] <= analysis_duration:
-                    keys_at_60s = s['total_checked']
+            for s in sorted(stats_history, key=lambda x: x["elapsed"], reverse=True):
+                if s["elapsed"] <= analysis_duration:
+                    keys_at_60s = s["total_checked"]
                     break
 
             if keys_at_60s == 0 and stats_history:
-                keys_at_60s = stats_history[-1]['total_checked']
+                keys_at_60s = stats_history[-1]["total_checked"]
         else:
             avg_speed = 0
             keys_at_60s = total_keys
             speed_samples = []
 
         result = {
-            'mode': 'sync',
-            'device': device_name,
-            'test_duration': test_duration,
-            'analysis_duration': analysis_duration,
-            'duration': elapsed,
-            'total_keys': keys_at_60s,
-            'avg_speed': avg_speed,
-            'init_time': init_time,
-            'samples': len(stats_history),
-            'speed_samples': speed_samples,
-            'timestamp': datetime.now().isoformat()
+            "mode": "sync",
+            "device": device_name,
+            "test_duration": test_duration,
+            "analysis_duration": analysis_duration,
+            "duration": elapsed,
+            "total_keys": keys_at_60s,
+            "avg_speed": avg_speed,
+            "init_time": init_time,
+            "samples": len(stats_history),
+            "speed_samples": speed_samples,
+            "timestamp": datetime.now().isoformat(),
         }
 
         if speed_samples:
-            result['max_speed'] = max(speed_samples)
-            result['min_speed'] = min(speed_samples)
+            result["max_speed"] = max(speed_samples)
+            result["min_speed"] = min(speed_samples)
             n = len(speed_samples)
             if n > 1:
-                result['speed_std'] = (
-                    sum((s - avg_speed) ** 2 for s in speed_samples) / n
-                ) ** 0.5
+                result["speed_std"] = (sum((s - avg_speed) ** 2 for s in speed_samples) / n) ** 0.5
 
         # 保存结果
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filepath = _TEST_OUTPUT_DIR / f"sync_mode_{timestamp}.json"
 
-        with open(str(filepath), 'w', encoding='utf-8') as f:
+        with open(str(filepath), "w", encoding="utf-8") as f:
             json.dump(result, f, indent=2, ensure_ascii=False)
 
         print(f"\n  📊 结果已保存: {filepath}")
@@ -192,7 +191,7 @@ def test_sync_mode(test_duration: int = 90, analysis_duration: int = 60):
         print(f"  60秒总计: {keys_at_60s:,} keys")
 
         # 触发资源完全释放
-        if hasattr(engine, '_gpu_device') and engine._gpu_device:
+        if hasattr(engine, "_gpu_device") and engine._gpu_device:
             try:
                 engine._gpu_device.cleanup()
             except Exception:
@@ -201,6 +200,7 @@ def test_sync_mode(test_duration: int = 90, analysis_duration: int = 60):
     except Exception as e:
         print(f"\n  [错误] 测试失败: {e}")
         import traceback
+
         traceback.print_exc()
         # 确保异常路径下也清理资源
         if engine:

@@ -4,14 +4,14 @@
 import datetime
 
 test_cases = [
-    ('2024-01-01T12:00:00', 'valid'),
-    ('invalid', 'ValueError'),
-    (123, 'TypeError'),
-    (None, 'TypeError'),
+    ("2024-01-01T12:00:00", "valid"),
+    ("invalid", "ValueError"),
+    (123, "TypeError"),
+    (None, "TypeError"),
 ]
 
 print("测试datetime.fromisoformat()的异常类型:")
-print("="*60)
+print("=" * 60)
 
 for test, expected in test_cases:
     try:
@@ -22,6 +22,6 @@ for test, expected in test_cases:
         status = "✅" if actual == expected else "⚠️"
         print(f"{status} {repr(test):30} -> {actual}: {e}")
 
-print("\n" + "="*60)
+print("\n" + "=" * 60)
 print("结论: fromisoformat()只抛出ValueError和TypeError")
 print("OSError不会在此场景发生，移除是正确的")

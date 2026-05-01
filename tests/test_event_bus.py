@@ -18,15 +18,20 @@ from unittest.mock import Mock, call
 
 from src.collision.event_bus import EventBus, get_event_bus, reset_event_bus
 from src.collision.events import (
-    CollisionEvent, EventType,
-    EngineStartEvent, EngineProgressEvent, EngineMatchEvent,
-    EngineErrorEvent, EngineCompleteEvent, EngineStopEvent,
+    CollisionEvent,
+    EventType,
+    EngineStartEvent,
+    EngineProgressEvent,
+    EngineMatchEvent,
+    EngineErrorEvent,
+    EngineCompleteEvent,
+    EngineStopEvent,
 )
-
 
 # ============================================================================
 # Fixtures
 # ============================================================================
+
 
 @pytest.fixture(autouse=True)
 def reset_global_bus():
@@ -54,6 +59,7 @@ def async_bus():
 # 事件创建测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestEventCreation:
     """事件对象创建测试"""
@@ -76,7 +82,7 @@ class TestEventCreation:
             private_key=b"\x01" * 32,
             address="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
             wif="KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qYjgd9M7rFU72sVhvfoj",
-            target_address="1TargetAddress"
+            target_address="1TargetAddress",
         )
         assert event.event_type == EventType.ENGINE_MATCH
         assert event.address == "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
@@ -85,19 +91,14 @@ class TestEventCreation:
 
     def test_engine_error_event(self):
         event = EngineErrorEvent(
-            error_type="GPU_OOM",
-            error_message="Out of memory",
-            recoverable=True
+            error_type="GPU_OOM", error_message="Out of memory", recoverable=True
         )
         assert event.event_type == EventType.ENGINE_ERROR
         assert event.error_type == "GPU_OOM"
 
     def test_engine_complete_event(self):
         event = EngineCompleteEvent(
-            total_checked=1000000,
-            matches_found=5,
-            elapsed_time=3600.0,
-            stop_reason="normal"
+            total_checked=1000000, matches_found=5, elapsed_time=3600.0, stop_reason="normal"
         )
         assert event.event_type == EventType.ENGINE_COMPLETE
 
@@ -115,6 +116,7 @@ class TestEventCreation:
 # ============================================================================
 # 同步模式测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestEventBusSync:
@@ -221,7 +223,9 @@ class TestEventBusSyncErrorHandling:
         assert isinstance(args[1], RuntimeError)
 
     def test_error_handler_exception_not_propagate(self, sync_bus):
-        error_handler = Mock(__name__="err_handler", side_effect=RuntimeError("error in error handler"))
+        error_handler = Mock(
+            __name__="err_handler", side_effect=RuntimeError("error in error handler")
+        )
         handler = Mock(__name__="bad_handler", side_effect=RuntimeError("original error"))
         sync_bus.subscribe(EventType.ENGINE_START, handler)
         sync_bus.set_error_handler(error_handler)
@@ -270,6 +274,7 @@ class TestEventBusSyncLifecycle:
 # 异步模式测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestEventBusAsync:
     """异步模式事件总线测试"""
@@ -317,6 +322,7 @@ class TestEventBusAsync:
 # 全局单例测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestEventBusGlobal:
     """全局单例测试"""
@@ -344,6 +350,7 @@ class TestEventBusGlobal:
 # ============================================================================
 # 线程安全测试
 # ============================================================================
+
 
 @pytest.mark.unit
 @pytest.mark.thread_safety

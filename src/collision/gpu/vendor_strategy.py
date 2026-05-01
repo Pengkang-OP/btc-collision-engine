@@ -106,10 +106,7 @@ class NvidiaOptimizationStrategy:
             # 记录关键优化信息
             arch = optimization_result.get("arch_name", "Unknown")
             mem_ratio = optimization_result.get("recommended_memory_ratio", 0.60)
-            logger.info(
-                f"NVIDIA GPU优化策略已应用: arch={arch}, "
-                f"memory_ratio={mem_ratio:.2f}"
-            )
+            logger.info(f"NVIDIA GPU优化策略已应用: arch={arch}, " f"memory_ratio={mem_ratio:.2f}")
 
         except Exception as e:
             logger.error(f"应用NVIDIA优化失败: {e}")

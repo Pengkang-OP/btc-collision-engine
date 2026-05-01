@@ -20,7 +20,6 @@ from src.core.base58 import Base58
 from src.core.wif import WIF
 from tests.gpu_mock_factory import GPUMockFactory, PRESET_NVIDIA, PRESET_AMD, PRESET_INTEL_ARC
 
-
 # ---------------------------------------------------------------------------
 # secp256k1曲线阶 N（常量）
 # ---------------------------------------------------------------------------
@@ -31,10 +30,11 @@ SECP256K1_N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
 # 辅助函数
 # ---------------------------------------------------------------------------
 
+
 def _compute_hash160(public_key_bytes: bytes) -> bytes:
     """计算公钥的Hash160（SHA256 → RIPEMD160）"""
     sha256_digest = hashlib.sha256(public_key_bytes).digest()
-    ripemd160 = hashlib.new('ripemd160')
+    ripemd160 = hashlib.new("ripemd160")
     ripemd160.update(sha256_digest)
     return ripemd160.digest()
 
@@ -44,8 +44,8 @@ def _privkey_to_compressed_pubkey(private_key_int: int) -> bytes:
     curve = EllipticCurve()
     G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
     pub_point = curve.scalar_multiply(private_key_int, G)
-    prefix = b'\x02' if pub_point.y % 2 == 0 else b'\x03'
-    return prefix + pub_point.x.to_bytes(32, 'big')
+    prefix = b"\x02" if pub_point.y % 2 == 0 else b"\x03"
+    return prefix + pub_point.x.to_bytes(32, "big")
 
 
 def _privkey_to_uncompressed_pubkey(private_key_int: int) -> bytes:
@@ -53,16 +53,13 @@ def _privkey_to_uncompressed_pubkey(private_key_int: int) -> bytes:
     curve = EllipticCurve()
     G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
     pub_point = curve.scalar_multiply(private_key_int, G)
-    return (
-        b'\x04'
-        + pub_point.x.to_bytes(32, 'big')
-        + pub_point.y.to_bytes(32, 'big')
-    )
+    return b"\x04" + pub_point.x.to_bytes(32, "big") + pub_point.y.to_bytes(32, "big")
 
 
 # ---------------------------------------------------------------------------
 # Test 1: 边界值私钥测试
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 @pytest.mark.gpu
@@ -76,7 +73,7 @@ class TestBoundaryPrivateKeys:
     def test_key_one_is_valid(self):
         """私钥 k=1 是最小有效值"""
         k = 1
-        privkey = k.to_bytes(32, 'big')
+        privkey = k.to_bytes(32, "big")
         assert len(privkey) == 32
         # k=1 时公钥 = G（生成元）
         pub = self.curve.scalar_multiply(k, self.G)
@@ -93,7 +90,7 @@ class TestBoundaryPrivateKeys:
     def test_key_n_minus_1_is_valid(self):
         """私钥 k=N-1 是最大有效值"""
         k = SECP256K1_N - 1
-        privkey = k.to_bytes(32, 'big')
+        privkey = k.to_bytes(32, "big")
         assert len(privkey) == 32
         pub = self.curve.scalar_multiply(k, self.G)
         assert not pub.is_infinity
@@ -139,6 +136,7 @@ class TestBoundaryPrivateKeys:
 # Test 2: 已知比特币测试向量
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 @pytest.mark.gpu
 class TestKnownBitcoinVectors:
@@ -169,9 +167,7 @@ class TestKnownBitcoinVectors:
         pubkey = _privkey_to_compressed_pubkey(self.PRIVKEY_01)
         hash160 = _compute_hash160(pubkey)
         assert hash160 == self.EXPECTED_HASH160, (
-            f"Hash160 不正确\n"
-            f"期望: {self.EXPECTED_HASH160.hex()}\n"
-            f"实际: {hash160.hex()}"
+            f"Hash160 不正确\n" f"期望: {self.EXPECTED_HASH160.hex()}\n" f"实际: {hash160.hex()}"
         )
 
     def test_privkey_1_p2pkh_address(self):
@@ -180,9 +176,7 @@ class TestKnownBitcoinVectors:
         hash160 = _compute_hash160(pubkey)
         address = Base58.check_encode(0x00, hash160)
         assert address == self.EXPECTED_P2PKH_ADDRESS, (
-            f"P2PKH 地址不正确\n"
-            f"期望: {self.EXPECTED_P2PKH_ADDRESS}\n"
-            f"实际: {address}"
+            f"P2PKH 地址不正确\n" f"期望: {self.EXPECTED_P2PKH_ADDRESS}\n" f"实际: {address}"
         )
 
     def test_full_chain_privkey_to_address(self):
@@ -196,7 +190,7 @@ class TestKnownBitcoinVectors:
         assert len(sha256_result) == 32, "SHA256 输出应为 32 字节"
 
         # 3. RIPEMD160(SHA256(pubkey)) = Hash160
-        ripemd160 = hashlib.new('ripemd160')
+        ripemd160 = hashlib.new("ripemd160")
         ripemd160.update(sha256_result)
         hash160 = ripemd160.digest()
         assert len(hash160) == 20, "Hash160 输出应为 20 字节"
@@ -204,12 +198,12 @@ class TestKnownBitcoinVectors:
 
         # 4. P2PKH 地址（Base58Check）
         address = Base58.check_encode(0x00, hash160)
-        assert address.startswith('1'), f"P2PKH 地址应以 '1' 开头，实际: {address[0]}"
+        assert address.startswith("1"), f"P2PKH 地址应以 '1' 开头，实际: {address[0]}"
         assert address == self.EXPECTED_P2PKH_ADDRESS
 
     def test_hash160_input_is_pubkey_not_privkey(self):
         """严格验证：Hash160 的输入是公钥，不是私钥"""
-        privkey_bytes = self.PRIVKEY_01.to_bytes(32, 'big')
+        privkey_bytes = self.PRIVKEY_01.to_bytes(32, "big")
         pubkey = _privkey_to_compressed_pubkey(self.PRIVKEY_01)
 
         # Hash160(公钥) 应与期望值一致
@@ -218,14 +212,13 @@ class TestKnownBitcoinVectors:
 
         # Hash160(私钥) 应与期望值不一致（业务逻辑正确性检验）
         hash160_from_privkey = _compute_hash160(privkey_bytes)
-        assert hash160_from_privkey != self.EXPECTED_HASH160, (
-            "Hash160 的输入是公钥，不是私钥！"
-        )
+        assert hash160_from_privkey != self.EXPECTED_HASH160, "Hash160 的输入是公钥，不是私钥！"
 
 
 # ---------------------------------------------------------------------------
 # Test 3: GPU 与 CPU 计算结果一致性（mock GPU 引擎）
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 @pytest.mark.gpu
@@ -256,9 +249,9 @@ class TestGPUCPUConsistency:
         """k=1 时 GPU 与 CPU Hash160 完全一致"""
         cpu_result = self._cpu_compute_hash160(1)
         gpu_result = self._simulate_gpu_hash160(1)
-        assert cpu_result == gpu_result, (
-            f"k=1 Hash160 不一致\nCPU: {cpu_result.hex()}\nGPU: {gpu_result.hex()}"
-        )
+        assert (
+            cpu_result == gpu_result
+        ), f"k=1 Hash160 不一致\nCPU: {cpu_result.hex()}\nGPU: {gpu_result.hex()}"
 
     def test_hash160_cpu_gpu_equal_for_known_keys(self):
         """多个已知私钥 GPU 与 CPU Hash160 完全一致"""
@@ -267,21 +260,20 @@ class TestGPUCPUConsistency:
             cpu_result = self._cpu_compute_hash160(k)
             gpu_result = self._simulate_gpu_hash160(k)
             assert cpu_result == gpu_result, (
-                f"k={k:#x} Hash160 不一致\n"
-                f"CPU: {cpu_result.hex()}\nGPU: {gpu_result.hex()}"
+                f"k={k:#x} Hash160 不一致\n" f"CPU: {cpu_result.hex()}\nGPU: {gpu_result.hex()}"
             )
 
     def test_mock_gpu_engine_patch(self):
         """通过 patch_gpu_collision_engine 验证 mock 引擎可正常调用"""
         with GPUMockFactory.patch_gpu_collision_engine(batch_size=100) as mocks:
-            kernel = mocks['kernel']
+            kernel = mocks["kernel"]
             # 模拟 GPU 批量处理
-            kernel.run_batch.return_value = [b'\xaa' * 20, b'\xbb' * 20]
+            kernel.run_batch.return_value = [b"\xaa" * 20, b"\xbb" * 20]
             seed = os.urandom(32)
             result = kernel.run_batch(seed, 2)
             assert len(result) == 2
-            assert result[0] == b'\xaa' * 20
-            assert result[1] == b'\xbb' * 20
+            assert result[0] == b"\xaa" * 20
+            assert result[1] == b"\xbb" * 20
 
     def test_hash160_length_always_20_bytes(self):
         """任意有效私钥的 Hash160 长度固定为 20 字节"""
@@ -294,6 +286,7 @@ class TestGPUCPUConsistency:
 # ---------------------------------------------------------------------------
 # Test 4: 批量一致性测试
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 @pytest.mark.gpu
@@ -315,10 +308,7 @@ class TestBatchConsistency:
         keys = self._generate_valid_keys(self.BATCH_SIZE)
 
         # CPU 逐个计算 Hash160
-        cpu_results = [
-            _compute_hash160(_privkey_to_compressed_pubkey(k))
-            for k in keys
-        ]
+        cpu_results = [_compute_hash160(_privkey_to_compressed_pubkey(k)) for k in keys]
 
         # mock GPU 批量处理（返回等价结果）
         mock_kernel = GPUMockFactory.create_gpu_kernel(batch_size=self.BATCH_SIZE)
@@ -327,13 +317,12 @@ class TestBatchConsistency:
         seed = os.urandom(32)
         gpu_results = mock_kernel.run_batch(seed, self.BATCH_SIZE)
 
-        assert len(gpu_results) == self.BATCH_SIZE, (
-            f"批量结果数量应为 {self.BATCH_SIZE}，实际 {len(gpu_results)}"
-        )
+        assert (
+            len(gpu_results) == self.BATCH_SIZE
+        ), f"批量结果数量应为 {self.BATCH_SIZE}，实际 {len(gpu_results)}"
         for i, (cpu_h, gpu_h) in enumerate(zip(cpu_results, gpu_results)):
             assert cpu_h == gpu_h, (
-                f"第 {i} 个私钥 Hash160 不一致\n"
-                f"CPU: {cpu_h.hex()}\nGPU: {gpu_h.hex()}"
+                f"第 {i} 个私钥 Hash160 不一致\n" f"CPU: {cpu_h.hex()}\nGPU: {gpu_h.hex()}"
             )
 
     def test_all_keys_in_valid_range(self):
@@ -356,6 +345,7 @@ class TestBatchConsistency:
 # Test 5: 压缩/非压缩公钥格式验证
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 @pytest.mark.gpu
 class TestCompressedUncompressedPubkey:
@@ -371,42 +361,35 @@ class TestCompressedUncompressedPubkey:
         """压缩公钥长度应为 33 字节"""
         for k in self.test_keys:
             pubkey = _privkey_to_compressed_pubkey(k)
-            assert len(pubkey) == 33, (
-                f"k={k:#x} 压缩公钥长度应为 33，实际 {len(pubkey)}"
-            )
+            assert len(pubkey) == 33, f"k={k:#x} 压缩公钥长度应为 33，实际 {len(pubkey)}"
 
     def test_compressed_pubkey_prefix_02_or_03(self):
         """压缩公钥前缀应为 0x02（y 偶）或 0x03（y 奇）"""
         for k in self.test_keys:
             pubkey = _privkey_to_compressed_pubkey(k)
-            assert pubkey[0] in (0x02, 0x03), (
-                f"k={k:#x} 压缩公钥前缀 0x{pubkey[0]:02x} 不是 0x02/0x03"
-            )
+            assert pubkey[0] in (
+                0x02,
+                0x03,
+            ), f"k={k:#x} 压缩公钥前缀 0x{pubkey[0]:02x} 不是 0x02/0x03"
 
     def test_compressed_pubkey_x_coordinate_32_bytes(self):
         """压缩公钥 X 坐标部分为 32 字节"""
         for k in self.test_keys:
             pubkey = _privkey_to_compressed_pubkey(k)
             x_bytes = pubkey[1:]
-            assert len(x_bytes) == 32, (
-                f"k={k:#x} X 坐标长度应为 32 字节，实际 {len(x_bytes)}"
-            )
+            assert len(x_bytes) == 32, f"k={k:#x} X 坐标长度应为 32 字节，实际 {len(x_bytes)}"
 
     def test_uncompressed_pubkey_length(self):
         """非压缩公钥长度应为 65 字节"""
         for k in self.test_keys:
             pubkey = _privkey_to_uncompressed_pubkey(k)
-            assert len(pubkey) == 65, (
-                f"k={k:#x} 非压缩公钥长度应为 65，实际 {len(pubkey)}"
-            )
+            assert len(pubkey) == 65, f"k={k:#x} 非压缩公钥长度应为 65，实际 {len(pubkey)}"
 
     def test_uncompressed_pubkey_prefix_04(self):
         """非压缩公钥前缀应为 0x04"""
         for k in self.test_keys:
             pubkey = _privkey_to_uncompressed_pubkey(k)
-            assert pubkey[0] == 0x04, (
-                f"k={k:#x} 非压缩公钥前缀 0x{pubkey[0]:02x} 不是 0x04"
-            )
+            assert pubkey[0] == 0x04, f"k={k:#x} 非压缩公钥前缀 0x{pubkey[0]:02x} 不是 0x04"
 
     def test_uncompressed_pubkey_xy_coordinates(self):
         """非压缩公钥包含 32 字节 X + 32 字节 Y"""
@@ -422,27 +405,26 @@ class TestCompressedUncompressedPubkey:
         for k in self.test_keys:
             comp = _privkey_to_compressed_pubkey(k)
             uncomp = _privkey_to_uncompressed_pubkey(k)
-            x_from_comp = comp[1:]       # 32 字节
+            x_from_comp = comp[1:]  # 32 字节
             x_from_uncomp = uncomp[1:33]  # 32 字节
-            assert x_from_comp == x_from_uncomp, (
-                f"k={k:#x} 压缩/非压缩公钥 X 坐标不一致"
-            )
+            assert x_from_comp == x_from_uncomp, f"k={k:#x} 压缩/非压缩公钥 X 坐标不一致"
 
     def test_prefix_corresponds_to_y_parity(self):
         """压缩公钥前缀与 Y 坐标奇偶性对应：偶→02，奇→03"""
         for k in self.test_keys:
             comp = _privkey_to_compressed_pubkey(k)
             uncomp = _privkey_to_uncompressed_pubkey(k)
-            y = int.from_bytes(uncomp[33:], 'big')
+            y = int.from_bytes(uncomp[33:], "big")
             expected_prefix = 0x02 if y % 2 == 0 else 0x03
-            assert comp[0] == expected_prefix, (
-                f"k={k:#x} 前缀 0x{comp[0]:02x} 与 Y 奇偶性不符（Y={y:#x}）"
-            )
+            assert (
+                comp[0] == expected_prefix
+            ), f"k={k:#x} 前缀 0x{comp[0]:02x} 与 Y 奇偶性不符（Y={y:#x}）"
 
 
 # ---------------------------------------------------------------------------
 # Test 6: WIF 编码正确性
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 @pytest.mark.gpu
@@ -452,42 +434,34 @@ class TestWIFEncoding:
     def setup_method(self):
         # 使用固定测试私钥
         self.test_privkeys = [
-            (1).to_bytes(32, 'big'),
-            (2).to_bytes(32, 'big'),
-            (0xDEADBEEF).to_bytes(32, 'big'),
+            (1).to_bytes(32, "big"),
+            (2).to_bytes(32, "big"),
+            (0xDEADBEEF).to_bytes(32, "big"),
         ]
 
     def test_compressed_wif_starts_with_K_or_L(self):
         """压缩 WIF 应以 'K' 或 'L' 开头"""
         for privkey in self.test_privkeys:
             wif = WIF.encode(privkey, compressed=True)
-            assert wif[0] in ('K', 'L'), (
-                f"压缩 WIF 应以 K/L 开头，实际: {wif[0]}  (WIF={wif})"
-            )
+            assert wif[0] in ("K", "L"), f"压缩 WIF 应以 K/L 开头，实际: {wif[0]}  (WIF={wif})"
 
     def test_compressed_wif_length_52(self):
         """压缩 WIF 应为 52 字符"""
         for privkey in self.test_privkeys:
             wif = WIF.encode(privkey, compressed=True)
-            assert len(wif) == 52, (
-                f"压缩 WIF 长度应为 52，实际 {len(wif)}  (WIF={wif})"
-            )
+            assert len(wif) == 52, f"压缩 WIF 长度应为 52，实际 {len(wif)}  (WIF={wif})"
 
     def test_uncompressed_wif_starts_with_5(self):
         """非压缩 WIF 应以 '5' 开头"""
         for privkey in self.test_privkeys:
             wif = WIF.encode(privkey, compressed=False)
-            assert wif[0] == '5', (
-                f"非压缩 WIF 应以 '5' 开头，实际: {wif[0]}  (WIF={wif})"
-            )
+            assert wif[0] == "5", f"非压缩 WIF 应以 '5' 开头，实际: {wif[0]}  (WIF={wif})"
 
     def test_uncompressed_wif_length_51(self):
         """非压缩 WIF 应为 51 字符"""
         for privkey in self.test_privkeys:
             wif = WIF.encode(privkey, compressed=False)
-            assert len(wif) == 51, (
-                f"非压缩 WIF 长度应为 51，实际 {len(wif)}  (WIF={wif})"
-            )
+            assert len(wif) == 51, f"非压缩 WIF 长度应为 51，实际 {len(wif)}  (WIF={wif})"
 
     def test_wif_base58check_roundtrip_compressed(self):
         """压缩 WIF 可以 Base58Check 解码并还原原始私钥"""
@@ -510,10 +484,10 @@ class TestWIFEncoding:
 
     def test_wif_privkey_1_known_value(self):
         """私钥 0x01 的压缩 WIF 为项目实际计算值（Base58Check 实现相关）"""
-        privkey = (1).to_bytes(32, 'big')
+        privkey = (1).to_bytes(32, "big")
         wif = WIF.encode(privkey, compressed=True)
         # 验证基本格式（K/L 开头，52 字符），不硬编码具体字符串（不同 Base58 实现可能不同）
-        assert wif[0] in ('K', 'L'), f"压缩 WIF 应以 K/L 开头，实际: {wif[0]}"
+        assert wif[0] in ("K", "L"), f"压缩 WIF 应以 K/L 开头，实际: {wif[0]}"
         assert len(wif) == 52, f"压缩 WIF 应为 52 字符，实际 {len(wif)}"
         # 验证可逆性：解码后还原原始私钥
         decoded_privkey, compressed = WIF.decode(wif)
@@ -522,7 +496,7 @@ class TestWIFEncoding:
 
     def test_wif_only_valid_base58_chars(self):
         """WIF 字符串只包含合法 Base58 字符（不含 0, O, I, l）"""
-        invalid_chars = set('0OIl')
+        invalid_chars = set("0OIl")
         for privkey in self.test_privkeys:
             for compressed in (True, False):
                 wif = WIF.encode(privkey, compressed=compressed)

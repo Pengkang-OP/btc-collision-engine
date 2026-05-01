@@ -19,7 +19,7 @@ from tools.check_document_quality import (
     ScoringConfig,
     Issue,
     Severity,
-    IssueType
+    IssueType,
 )
 
 
@@ -35,9 +35,7 @@ def test_perfect_score():
 def test_error_deduction():
     """测试ERROR扣分"""
     checker = DocumentQualityChecker()
-    checker.issues = [
-        Issue(Severity.ERROR, 'test.md', 1, '编码错误')
-    ]
+    checker.issues = [Issue(Severity.ERROR, "test.md", 1, "编码错误")]
     score = checker.calculate_score()
     # 10.0 - 1.5 (error) + 0.3 (toc) + 0.2 (version) = 9.0
     expected = 9.0
@@ -50,8 +48,7 @@ def test_code_block_cap():
     checker = DocumentQualityChecker()
     # 创建100个代码块问题，应该最多扣2分
     checker.issues = [
-        Issue(Severity.WARNING, 'test.md', i, '代码块建议指定语言类型')
-        for i in range(1, 101)
+        Issue(Severity.WARNING, "test.md", i, "代码块建议指定语言类型") for i in range(1, 101)
     ]
     score = checker.calculate_score()
     # 10.0 - 2.0 (code_block_max) = 8.0
@@ -63,10 +60,7 @@ def test_link_cap():
     """测试链接扣分上限"""
     checker = DocumentQualityChecker()
     # 创建100个链接问题，应该最多扣3分
-    checker.issues = [
-        Issue(Severity.WARNING, 'test.md', i, '链接可能断裂')
-        for i in range(1, 101)
-    ]
+    checker.issues = [Issue(Severity.WARNING, "test.md", i, "链接可能断裂") for i in range(1, 101)]
     score = checker.calculate_score()
     # 10.0 - 3.0 (link_max) = 7.0
     assert score >= 7.0, f"预期>=7.0，实际{score}（扣分过多）"
@@ -87,9 +81,7 @@ def test_bonus_partial():
     """测试部分奖励"""
     checker = DocumentQualityChecker()
     # 有一个小问题，但已添加目录和版本
-    checker.issues = [
-        Issue(Severity.INFO, 'test.md', 1, '文件建议添加结尾换行')
-    ]
+    checker.issues = [Issue(Severity.INFO, "test.md", 1, "文件建议添加结尾换行")]
     score = checker.calculate_score()
     # 10.0 - 0.1 (info) + 0.3 (toc) + 0.2 (version) = 10.4 -> 10.0 (封顶)
     expected = 10.0
@@ -102,8 +94,8 @@ def test_no_bonus_with_issues():
     checker = DocumentQualityChecker()
     # 有目录和版本相关的问题
     checker.issues = [
-        Issue(Severity.WARNING, 'test.md', 1, '长文档建议添加目录'),
-        Issue(Severity.WARNING, 'test.md', 2, '文档缺少版本信息')
+        Issue(Severity.WARNING, "test.md", 1, "长文档建议添加目录"),
+        Issue(Severity.WARNING, "test.md", 2, "文档缺少版本信息"),
     ]
     score = checker.calculate_score()
     # 10.0 - 0.3 - 0.3 = 9.4 (无奖励)
@@ -117,9 +109,9 @@ def test_boundary_negative_warnings():
     checker = DocumentQualityChecker()
     # 故意构造可能导致负数的情况
     checker.issues = [
-        Issue(Severity.WARNING, 'test.md', 1, '代码块建议'),
-        Issue(Severity.WARNING, 'test.md', 2, '代码块建议'),
-        Issue(Severity.WARNING, 'test.md', 3, '链接问题'),
+        Issue(Severity.WARNING, "test.md", 1, "代码块建议"),
+        Issue(Severity.WARNING, "test.md", 2, "代码块建议"),
+        Issue(Severity.WARNING, "test.md", 3, "链接问题"),
     ]
     # warning_count=3, code_block=2, link=1
     # other_warnings = max(0, 3-2-1) = 0
@@ -132,10 +124,7 @@ def test_score_bounds():
     """测试分数边界（0-10）"""
     checker = DocumentQualityChecker()
     # 创建大量ERROR，应该扣分但最低0分
-    checker.issues = [
-        Issue(Severity.ERROR, 'test.md', i, '严重错误')
-        for i in range(1, 20)
-    ]
+    checker.issues = [Issue(Severity.ERROR, "test.md", i, "严重错误") for i in range(1, 20)]
     score = checker.calculate_score()
     assert 0.0 <= score <= 10.0, f"分数{score}超出范围[0, 10]"
     print("✅ 测试通过: 分数边界")
@@ -145,25 +134,25 @@ def test_config_load_save():
     """测试配置加载和保存"""
     import json
     import tempfile
-    
+
     # 创建默认配置
     config = ScoringConfig()
-    
+
     # 保存到临时文件
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         temp_path = f.name
-    
+
     try:
         config.save_to_file(temp_path)
-        
+
         # 加载配置
         loaded_config = ScoringConfig.from_file(temp_path)
-        
+
         # 验证配置一致
         assert config.error_weight == loaded_config.error_weight
         assert config.code_block_max == loaded_config.code_block_max
         assert config.toc_bonus == loaded_config.toc_bonus
-        
+
         print("✅ 测试通过: 配置加载保存")
     finally:
         Path(temp_path).unlink()
@@ -171,15 +160,11 @@ def test_config_load_save():
 
 def test_custom_config():
     """测试自定义配置"""
-    custom_config = ScoringConfig(
-        error_weight=2.0,
-        code_block_weight=0.5,
-        toc_bonus=0.5
-    )
-    
+    custom_config = ScoringConfig(error_weight=2.0, code_block_weight=0.5, toc_bonus=0.5)
+
     checker = DocumentQualityChecker(config=custom_config)
-    checker.issues = [Issue(Severity.ERROR, 'test.md', 1, '错误')]
-    
+    checker.issues = [Issue(Severity.ERROR, "test.md", 1, "错误")]
+
     score = checker.calculate_score()
     # 10.0 - 2.0 (error) + 0.5 (toc) + 0.2 (version) = 8.7
     expected = 8.7
@@ -199,7 +184,7 @@ def test_issue_type_constants():
 def test_config_validation_negative_weight():
     """测试配置验证 - 负权重"""
     import pytest
-    
+
     try:
         config = ScoringConfig(error_weight=-1.0)
         config.validate()
@@ -222,11 +207,7 @@ def test_config_validation_excessive_bonus():
 
 def test_config_validation_valid():
     """测试配置验证 - 有效配置"""
-    config = ScoringConfig(
-        error_weight=2.0,
-        toc_bonus=0.3,
-        version_bonus=0.2
-    )
+    config = ScoringConfig(error_weight=2.0, toc_bonus=0.3, version_bonus=0.2)
     config.validate()  # 不应抛出异常
     print("✅ 测试通过: 有效配置验证")
 
@@ -237,7 +218,7 @@ def run_all_tests():
     print("🧪 开始运行单元测试")
     print("=" * 60)
     print()
-    
+
     tests = [
         test_perfect_score,
         test_error_deduction,
@@ -255,10 +236,10 @@ def run_all_tests():
         test_config_validation_excessive_bonus,
         test_config_validation_valid,
     ]
-    
+
     passed = 0
     failed = 0
-    
+
     for test in tests:
         try:
             test()
@@ -271,12 +252,12 @@ def run_all_tests():
             print(f"❌ 测试异常: {test.__name__}")
             print(f"   错误: {e}")
             failed += 1
-    
+
     print()
     print("=" * 60)
     print(f"📊 测试结果: {passed}通过, {failed}失败")
     print("=" * 60)
-    
+
     return failed == 0
 
 

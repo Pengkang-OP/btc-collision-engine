@@ -18,8 +18,8 @@ from unittest.mock import MagicMock, patch, PropertyMock
 
 from src.collision.gpu.protocols import GPUExecutionContext, GPUDevice
 
-
 # ========== Fixtures ==========
+
 
 @pytest.fixture
 def mock_context():
@@ -95,12 +95,14 @@ def mock_context_intel():
 
 # ========== Test: IntelOptimizationStrategy ==========
 
+
 class TestIntelOptimizationStrategy:
     """测试 Intel 优化策略"""
 
     def test_strategy_creation(self):
         """策略创建"""
         from src.collision.gpu.vendor_strategy import IntelOptimizationStrategy
+
         strategy = IntelOptimizationStrategy()
         assert strategy is not None
 
@@ -125,12 +127,14 @@ class TestIntelOptimizationStrategy:
 
 # ========== Test: NvidiaOptimizationStrategy ==========
 
+
 class TestNvidiaOptimizationStrategy:
     """测试 NVIDIA 优化策略"""
 
     def test_strategy_creation(self):
         """策略创建"""
         from src.collision.gpu.vendor_strategy import NvidiaOptimizationStrategy
+
         strategy = NvidiaOptimizationStrategy()
         assert strategy is not None
 
@@ -214,12 +218,14 @@ class TestNvidiaOptimizationStrategy:
 
 # ========== Test: AMDOptimizationStrategy ==========
 
+
 class TestAMDOptimizationStrategy:
     """测试 AMD 优化策略"""
 
     def test_strategy_creation(self):
         """策略创建"""
         from src.collision.gpu.vendor_strategy import AMDOptimizationStrategy
+
         strategy = AMDOptimizationStrategy()
         assert strategy is not None
 
@@ -303,12 +309,14 @@ class TestAMDOptimizationStrategy:
 
 # ========== Test: DefaultOptimizationStrategy ==========
 
+
 class TestDefaultOptimizationStrategy:
     """测试默认优化策略"""
 
     def test_strategy_creation(self):
         """策略创建"""
         from src.collision.gpu.vendor_strategy import DefaultOptimizationStrategy
+
         strategy = DefaultOptimizationStrategy()
         assert strategy is not None
 
@@ -331,6 +339,7 @@ class TestDefaultOptimizationStrategy:
 
 # ========== Test: VendorOptimizationFactory ==========
 
+
 class TestVendorOptimizationFactory:
     """测试厂商优化策略工厂"""
 
@@ -340,6 +349,7 @@ class TestVendorOptimizationFactory:
             VendorOptimizationFactory,
             IntelOptimizationStrategy,
         )
+
         strategy = VendorOptimizationFactory.create("intel")
         assert isinstance(strategy, IntelOptimizationStrategy)
 
@@ -349,6 +359,7 @@ class TestVendorOptimizationFactory:
             VendorOptimizationFactory,
             NvidiaOptimizationStrategy,
         )
+
         strategy = VendorOptimizationFactory.create("nvidia")
         assert isinstance(strategy, NvidiaOptimizationStrategy)
 
@@ -358,6 +369,7 @@ class TestVendorOptimizationFactory:
             VendorOptimizationFactory,
             AMDOptimizationStrategy,
         )
+
         strategy = VendorOptimizationFactory.create("amd")
         assert isinstance(strategy, AMDOptimizationStrategy)
 
@@ -367,6 +379,7 @@ class TestVendorOptimizationFactory:
             VendorOptimizationFactory,
             NvidiaOptimizationStrategy,
         )
+
         strategy = VendorOptimizationFactory.create("NVIDIA")
         assert isinstance(strategy, NvidiaOptimizationStrategy)
 
@@ -376,6 +389,7 @@ class TestVendorOptimizationFactory:
             VendorOptimizationFactory,
             DefaultOptimizationStrategy,
         )
+
         strategy = VendorOptimizationFactory.create("unknown_vendor")
         assert isinstance(strategy, DefaultOptimizationStrategy)
 
@@ -385,6 +399,7 @@ class TestVendorOptimizationFactory:
             VendorOptimizationFactory,
             DefaultOptimizationStrategy,
         )
+
         strategy = VendorOptimizationFactory.create("")
         assert isinstance(strategy, DefaultOptimizationStrategy)
 
@@ -404,6 +419,7 @@ class TestVendorOptimizationFactory:
         class MockStrategy:
             def apply_optimizations(self, context):
                 return {}
+
             def get_monitoring_components(self):
                 return {}
 
@@ -436,6 +452,7 @@ class TestVendorOptimizationFactory:
 
 # ========== Test: 模块导入与版本 ==========
 
+
 class TestModuleImports:
     """测试模块导入和版本"""
 
@@ -448,6 +465,7 @@ class TestModuleImports:
             DefaultOptimizationStrategy,
             VendorOptimizationFactory,
         )
+
         assert IntelOptimizationStrategy is not None
         assert NvidiaOptimizationStrategy is not None
         assert AMDOptimizationStrategy is not None
@@ -457,21 +475,25 @@ class TestModuleImports:
     def test_import_from_gpu_package(self):
         """从 gpu 包导入"""
         from src.collision.gpu import VendorOptimizationFactory
+
         assert VendorOptimizationFactory is not None
 
     def test_module_version(self):
         """测试模块版本号 v6.0.0"""
         from src.collision import gpu
+
         assert gpu.__version__ == "6.0.0"
 
     def test_vendor_factory_in_all(self):
         """验证 VendorOptimizationFactory 在 __all__ 中"""
         from src.collision.gpu import __all__ as gpu_all
+
         assert "VendorOptimizationFactory" in gpu_all
 
     def test_no_phase5_todos_in_vendor_strategy(self):
         """验证 vendor_strategy.py 中无 Phase 5 TODO"""
         import os
+
         file_path = os.path.join(
             os.path.dirname(__file__),
             "..",
@@ -483,15 +505,14 @@ class TestModuleImports:
         file_path = os.path.abspath(file_path)
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
-        assert "# TODO: Phase 5" not in content, (
-            "vendor_strategy.py 中还有未处理的 Phase 5 TODO"
-        )
-        assert "# TODO: Phase 5实现" not in content, (
-            "vendor_strategy.py 中还有未处理的 Phase 5实现 TODO"
-        )
+        assert "# TODO: Phase 5" not in content, "vendor_strategy.py 中还有未处理的 Phase 5 TODO"
+        assert (
+            "# TODO: Phase 5实现" not in content
+        ), "vendor_strategy.py 中还有未处理的 Phase 5实现 TODO"
 
 
 # ========== Test: 集成测试 ==========
+
 
 class TestVendorStrategyIntegration:
     """厂商优化策略集成测试"""

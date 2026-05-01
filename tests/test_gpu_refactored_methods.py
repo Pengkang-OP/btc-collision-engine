@@ -9,6 +9,7 @@
 5. _update_performance_metrics
 6. _check_and_report_progress
 """
+
 import pytest
 import os
 import time
@@ -21,7 +22,7 @@ from src.collision.gpu.engine import (
     ASYNC_KEY_GEN_TIMEOUT,
     BATCH_LOG_FREQUENCY,
     INITIAL_BATCHES_LOG,
-    EXCEPTION_RECOVERY_DELAY
+    EXCEPTION_RECOVERY_DELAY,
 )
 
 
@@ -97,9 +98,12 @@ class TestAsyncKeyGeneration:
         def _start_async_key_generation(batch_size):
             """PRNG延续层：启动异步私鑰生成"""
             result_list = [None]
+
             def _gen():
                 import os
+
                 result_list[0] = os.urandom(batch_size * 32)
+
             t = threading.Thread(target=_gen, daemon=True)
             t.start()
             return t, result_list
@@ -107,6 +111,7 @@ class TestAsyncKeyGeneration:
         def _wait_for_async_key_generation(gen_thread, gen_result, batch_num):
             """PRNG延续层：等待异步私鑰生成完成"""
             import os
+
             gen_thread.join(timeout=2.0)
             if gen_result[0] is None:
                 return os.urandom(engine.batch_size * 32)
@@ -220,10 +225,9 @@ class TestExecuteGPUBatch:
         engine = self._create_mock_engine()
 
         # 设置mock返回匹配结果
-        engine._gpu_kernel.run_batch = Mock(return_value=[
-            {"key_index": 0, "target_index": 0},
-            {"key_index": 50, "target_index": 0}
-        ])
+        engine._gpu_kernel.run_batch = Mock(
+            return_value=[{"key_index": 0, "target_index": 0}, {"key_index": 50, "target_index": 0}]
+        )
 
         seed = os.urandom(32)
 
@@ -240,7 +244,7 @@ class TestExecuteGPUBatch:
         seed = os.urandom(32)
 
         # 测试初始批次（应该记录日志）
-        with patch('src.collision.gpu.engine.logger') as mock_logger:
+        with patch("src.collision.gpu.engine.logger") as mock_logger:
             engine._execute_gpu_batch(seed, 100, 1)
             # batch_num=1 <= INITIAL_BATCHES_LOG=3，应该记录日志
             assert mock_logger.debug.call_count >= 1
@@ -282,15 +286,15 @@ class TestProcessGPUMatches:
         engine.on_match = match_callback
 
         # 准备私钥和匹配结果
-        private_keys = b'\x01' * 32 + b'\x02' * 32  # 2个私钥
-        matches = [
-            {"key_index": 0, "target_index": 0}
-        ]
+        private_keys = b"\x01" * 32 + b"\x02" * 32  # 2个私钥
+        matches = [{"key_index": 0, "target_index": 0}]
 
         # 处理匹配
         engine._process_gpu_matches(private_keys, matches)
         # Windows下回调在子线程执行，等待一下确保完成
-        import time; time.sleep(0.1)
+        import time
+
+        time.sleep(0.1)
 
         # 验证回调被调用
         assert match_callback.called
@@ -307,13 +311,15 @@ class TestProcessGPUMatches:
         engine.dedup_filter.enabled = True
         engine.dedup_filter.check_and_add = Mock(side_effect=[True, False])
 
-        private_keys = b'\x01' * 32
+        private_keys = b"\x01" * 32
         matches = [{"key_index": 0, "target_index": 0}]
 
         # 第一次处理
         engine._process_gpu_matches(private_keys, matches)
         # Windows下回调在子线程执行，等待一下确保完成
-        import time; time.sleep(0.1)
+        import time
+
+        time.sleep(0.1)
         call_count_1 = match_callback.call_count
 
         # 第二次处理（应该被去重）
@@ -352,8 +358,8 @@ class TestPerformanceMetrics:
         # 验证调用
         assert mock_monitor.record_kernel_metrics.called
         call_args = mock_monitor.record_kernel_metrics.call_args
-        assert call_args[1]['batch_size'] == 1000
-        assert call_args[1]['execution_time_ms'] == 50.5
+        assert call_args[1]["batch_size"] == 1000
+        assert call_args[1]["execution_time_ms"] == 50.5
 
     def test_update_performance_metrics_no_monitor(self):
         """测试没有性能监控器时不报错"""

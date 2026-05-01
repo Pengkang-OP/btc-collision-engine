@@ -22,7 +22,6 @@ from src.gpu.gpu_recovery_manager import GPURecoveryManager, GPUFailureType
 from src.gpu.load_balancer import GPULoadBalancer
 from tests.gpu_mock_factory import GPUMockFactory
 
-
 # ---------------------------------------------------------------------------
 # secp256k1 常量
 # ---------------------------------------------------------------------------
@@ -33,6 +32,7 @@ SECP256K1_N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
 # 辅助函数
 # ---------------------------------------------------------------------------
 
+
 def _generate_key_batch(size: int) -> list:
     """生成 size 个有效随机私钥整数"""
     return [secrets.randbelow(SECP256K1_N - 1) + 1 for _ in range(size)]
@@ -40,17 +40,18 @@ def _generate_key_batch(size: int) -> list:
 
 def _make_device(global_index, vendor="nvidia", mem_gb=8.0, compute_units=68):
     return {
-        'global_index': global_index,
-        'name': f"Mock GPU {global_index}",
-        'vendor': vendor,
-        'global_mem_gb': mem_gb,
-        'max_compute_units': compute_units,
+        "global_index": global_index,
+        "name": f"Mock GPU {global_index}",
+        "vendor": vendor,
+        "global_mem_gb": mem_gb,
+        "max_compute_units": compute_units,
     }
 
 
 # ---------------------------------------------------------------------------
 # TestLargeBatch：大批量测试
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 @pytest.mark.gpu
@@ -59,14 +60,14 @@ class TestLargeBatch:
 
     def test_million_keys_processing_mock(self):
         """模拟百万级私钥处理（分批 mock，每批 1000 个）"""
-        TOTAL_KEYS = 100_000   # 模拟百万场景（mock 测试，缩减总量）
+        TOTAL_KEYS = 100_000  # 模拟百万场景（mock 测试，缩减总量）
         BATCH_SIZE = 1_000
 
         mock_kernel = GPUMockFactory.create_gpu_kernel(batch_size=BATCH_SIZE)
 
         # mock GPU 批量处理：返回 batch_size 个 Hash160（20字节）
         mock_kernel.run_batch = Mock(
-            side_effect=lambda seed, num_keys: [b'\xab' * 20 for _ in range(num_keys)]
+            side_effect=lambda seed, num_keys: [b"\xab" * 20 for _ in range(num_keys)]
         )
 
         total_processed = 0
@@ -80,9 +81,7 @@ class TestLargeBatch:
             total_processed += cur_batch_size
             results.extend(batch_results)
 
-        assert total_processed == TOTAL_KEYS, (
-            f"处理总量 {total_processed} 应等于 {TOTAL_KEYS}"
-        )
+        assert total_processed == TOTAL_KEYS, f"处理总量 {total_processed} 应等于 {TOTAL_KEYS}"
         assert len(results) == TOTAL_KEYS
         # 验证每个结果为 20 字节 Hash160
         for h in results[:10]:  # 抽查前 10 个
@@ -93,7 +92,7 @@ class TestLargeBatch:
         MAX_BATCH_SIZE = 65536
         mock_kernel = GPUMockFactory.create_gpu_kernel(batch_size=MAX_BATCH_SIZE)
         mock_kernel.run_batch = Mock(
-            side_effect=lambda seed, num_keys: [b'\x00' * 20 for _ in range(num_keys)]
+            side_effect=lambda seed, num_keys: [b"\x00" * 20 for _ in range(num_keys)]
         )
 
         # 批次等于最大值
@@ -112,7 +111,7 @@ class TestLargeBatch:
 
         def mock_run_batch(seed, num_keys):
             call_sizes.append(num_keys)
-            return [b'\x00' * 20 for _ in range(num_keys)]
+            return [b"\x00" * 20 for _ in range(num_keys)]
 
         mock_kernel.run_batch = Mock(side_effect=mock_run_batch)
 
@@ -132,7 +131,7 @@ class TestLargeBatch:
     def test_large_batch_load_distribution(self):
         """百万级任务在多 GPU 下正确分配（负载均衡验证）"""
         devices = [_make_device(i, "nvidia", 8.0, 68) for i in range(4)]
-        balancer = GPULoadBalancer(devices, strategy='equal')
+        balancer = GPULoadBalancer(devices, strategy="equal")
 
         total_keys = 1_000_000
         ranges = balancer.assign_all_key_ranges(total_keys)
@@ -143,9 +142,7 @@ class TestLargeBatch:
         # 每 GPU 应分配约 25% ± 5%
         for idx, (start, end) in ranges.items():
             assigned = end - start
-            assert abs(assigned - 250_000) < 25_000, (
-                f"GPU {idx} 分配 {assigned:,}，偏差过大"
-            )
+            assert abs(assigned - 250_000) < 25_000, f"GPU {idx} 分配 {assigned:,}，偏差过大"
 
     def test_empty_batch_handled_gracefully(self):
         """空批次不应导致崩溃"""
@@ -162,6 +159,7 @@ class TestLargeBatch:
 # TestLongRunning：长时间运行模拟
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 @pytest.mark.gpu
 class TestLongRunning:
@@ -174,7 +172,7 @@ class TestLongRunning:
 
         mock_kernel = GPUMockFactory.create_gpu_kernel(batch_size=BATCH_SIZE)
         mock_kernel.run_batch = Mock(
-            side_effect=lambda seed, num_keys: [b'\xff' * 20 for _ in range(num_keys)]
+            side_effect=lambda seed, num_keys: [b"\xff" * 20 for _ in range(num_keys)]
         )
 
         # 追踪每轮分配/释放的缓冲区
@@ -200,17 +198,15 @@ class TestLongRunning:
             free_buffer(buf)
 
         # 验证：所有分配的缓冲区均已释放（无泄漏）
-        assert len(allocated_buffers) == 0, (
-            f"{ROUNDS} 轮后仍有 {len(allocated_buffers)} 个未释放缓冲区"
-        )
-        assert len(freed_buffers) == ROUNDS, (
-            f"已释放缓冲区数 {len(freed_buffers)} 应等于 {ROUNDS}"
-        )
+        assert (
+            len(allocated_buffers) == 0
+        ), f"{ROUNDS} 轮后仍有 {len(allocated_buffers)} 个未释放缓冲区"
+        assert len(freed_buffers) == ROUNDS, f"已释放缓冲区数 {len(freed_buffers)} 应等于 {ROUNDS}"
 
     def test_buffer_tracker_cleanup_after_long_run(self):
         """长时间运行后，mock 缓冲区追踪器的 cleanup 被正确调用"""
         mock_kernel = GPUMockFactory.create_gpu_kernel(batch_size=200)
-        mock_kernel.run_batch = Mock(return_value=[b'\x00' * 20])
+        mock_kernel.run_batch = Mock(return_value=[b"\x00" * 20])
 
         # 模拟长时间运行后清理
         for _ in range(50):
@@ -227,7 +223,7 @@ class TestLongRunning:
 
         mock_kernel = GPUMockFactory.create_gpu_kernel(batch_size=BATCH_SIZE)
         mock_kernel.run_batch = Mock(
-            side_effect=lambda seed, num_keys: [b'\xee' * 20 for _ in range(num_keys)]
+            side_effect=lambda seed, num_keys: [b"\xee" * 20 for _ in range(num_keys)]
         )
 
         for _ in range(ROUNDS):
@@ -235,9 +231,9 @@ class TestLongRunning:
             t0 = time.perf_counter()
             mock_kernel.run_batch(seed, BATCH_SIZE)
             elapsed_ms = (time.perf_counter() - t0) * 1000
-            assert elapsed_ms < MAX_ROUND_TIME_MS, (
-                f"单轮处理耗时 {elapsed_ms:.1f}ms 超过 {MAX_ROUND_TIME_MS}ms"
-            )
+            assert (
+                elapsed_ms < MAX_ROUND_TIME_MS
+            ), f"单轮处理耗时 {elapsed_ms:.1f}ms 超过 {MAX_ROUND_TIME_MS}ms"
 
     def test_recovery_manager_stats_stable_over_time(self):
         """长时间运行中，恢复管理器统计不会意外重置"""
@@ -254,11 +250,9 @@ class TestLongRunning:
             )
 
         stats = recovery_manager.get_recovery_stats()
-        assert stats['total_failures'] == 10, (
-            f"总失败次数 {stats['total_failures']} 应为 10"
-        )
-        assert stats['success_rate'] >= 0, "成功率不应为负"
-        assert stats['success_rate'] <= 100, "成功率不应超过 100"
+        assert stats["total_failures"] == 10, f"总失败次数 {stats['total_failures']} 应为 10"
+        assert stats["success_rate"] >= 0, "成功率不应为负"
+        assert stats["success_rate"] <= 100, "成功率不应超过 100"
 
     def test_kernel_set_targets_called_each_round(self):
         """每轮批处理前 set_targets 应被正确调用"""
@@ -275,6 +269,7 @@ class TestLongRunning:
 # ---------------------------------------------------------------------------
 # TestErrorRecoveryStress：错误恢复压力测试
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 @pytest.mark.gpu
@@ -311,8 +306,8 @@ class TestErrorRecoveryStress:
             )
 
         stats = recovery_manager.get_recovery_stats()
-        assert stats['total_failures'] == 20
-        assert stats['success_rate'] >= 0
+        assert stats["total_failures"] == 20
+        assert stats["success_rate"] >= 0
 
     def test_random_error_injection_multiple_gpus(self):
         """随机向 4 个 GPU 各注入错误，统计独立追踪"""
@@ -326,17 +321,14 @@ class TestErrorRecoveryStress:
             )
 
         stats = recovery_manager.get_recovery_stats()
-        assert stats['total_failures'] == 4
+        assert stats["total_failures"] == 4
 
     def test_consecutive_5_failures_marks_gpu_failed(self):
         """连续 5 次 GPU 失败后，GPU 被标记为永久失败（禁用）"""
         recovery_manager = self._make_recovery_manager()
 
         # 注册总返回失败的恢复回调
-        recovery_manager.register_recovery_callback(
-            gpu_id=0,
-            callback=lambda action, *args: False
-        )
+        recovery_manager.register_recovery_callback(gpu_id=0, callback=lambda action, *args: False)
 
         for _ in range(6):  # 超过 max_retry_count+2
             recovery_manager.handle_gpu_failure(
@@ -344,19 +336,14 @@ class TestErrorRecoveryStress:
                 error=RuntimeError("persistent failure"),
             )
 
-        assert recovery_manager.is_gpu_failed(0), (
-            "连续多次失败后 GPU 0 应被标记为失败"
-        )
+        assert recovery_manager.is_gpu_failed(0), "连续多次失败后 GPU 0 应被标记为失败"
 
     def test_consecutive_failures_alert_called(self):
         """连续失败时 alert_callback 被调用"""
         recovery_manager = self._make_recovery_manager()
         alert_mock = Mock()
 
-        recovery_manager.register_recovery_callback(
-            gpu_id=0,
-            callback=lambda action, *args: False
-        )
+        recovery_manager.register_recovery_callback(gpu_id=0, callback=lambda action, *args: False)
 
         for _ in range(4):
             recovery_manager.handle_gpu_failure(
@@ -384,7 +371,7 @@ class TestErrorRecoveryStress:
                 failure_count += 1
                 raise RuntimeError("intermittent gpu error")
             success_count += 1
-            return [b'\xcc' * 20 for _ in range(num_keys)]
+            return [b"\xcc" * 20 for _ in range(num_keys)]
 
         mock_kernel.run_batch = Mock(side_effect=intermittent_run_batch)
 
@@ -403,13 +390,13 @@ class TestErrorRecoveryStress:
         # 验证成功次数约为 3/4
         assert success_count == ROUNDS - failure_count
         expected_failures = ROUNDS // 4
-        assert abs(failure_count - expected_failures) <= 1, (
-            f"间歇性失败次数 {failure_count} 与期望 {expected_failures} 偏差过大"
-        )
+        assert (
+            abs(failure_count - expected_failures) <= 1
+        ), f"间歇性失败次数 {failure_count} 与期望 {expected_failures} 偏差过大"
 
         # 统计追踪正确
         stats = recovery_manager.get_recovery_stats()
-        assert stats['total_failures'] == failure_count
+        assert stats["total_failures"] == failure_count
 
     def test_intermittent_failures_engine_state_consistent(self):
         """间歇性失败期间，恢复管理器状态始终一致"""
@@ -424,9 +411,9 @@ class TestErrorRecoveryStress:
 
         stats = recovery_manager.get_recovery_stats()
         # 5 次失败（i=2,5,8,11,14）
-        assert stats['total_failures'] == 5
-        assert 'success_rate' in stats
-        assert 'failed_gpus' in stats
+        assert stats["total_failures"] == 5
+        assert "success_rate" in stats
+        assert "failed_gpus" in stats
 
     def test_error_injection_oom_triggers_batch_reduction_config(self):
         """OOM 错误应通过 batch_size_reduction_factor 记录降批配置"""
@@ -460,8 +447,7 @@ class TestErrorRecoveryStress:
         for error, expected_type in error_type_pairs:
             classified = recovery_manager._classify_failure(error)
             assert classified == expected_type, (
-                f"错误 '{error}' 应被分类为 {expected_type.value}，"
-                f"实际: {classified.value}"
+                f"错误 '{error}' 应被分类为 {expected_type.value}，" f"实际: {classified.value}"
             )
 
     def test_fallback_triggered_when_enough_gpus_fail(self):
@@ -483,19 +469,14 @@ class TestErrorRecoveryStress:
         # 注册让恢复总失败的回调
         for gpu_id in [0, 1]:
             recovery_manager.register_recovery_callback(
-                gpu_id=gpu_id,
-                callback=lambda action, *args: False
+                gpu_id=gpu_id, callback=lambda action, *args: False
             )
 
         # 让 GPU 0 和 GPU 1 都超过最大重试次数
         for _ in range(5):
-            recovery_manager.handle_gpu_failure(
-                gpu_id=0, error=RuntimeError("error")
-            )
+            recovery_manager.handle_gpu_failure(gpu_id=0, error=RuntimeError("error"))
         for _ in range(5):
-            recovery_manager.handle_gpu_failure(
-                gpu_id=1, error=RuntimeError("error")
-            )
+            recovery_manager.handle_gpu_failure(gpu_id=1, error=RuntimeError("error"))
 
         # 两个 GPU 失败（≥ 阈值 2），应触发 CPU 降级
         assert len(fallback_called) >= 1, "应触发 CPU 降级回调"
@@ -513,10 +494,10 @@ class TestErrorRecoveryStress:
             )
 
         stats = recovery_manager.get_recovery_stats()
-        assert stats['total_failures'] == 4
-        assert 0.0 <= stats['success_rate'] <= 100.0, (
-            f"成功率 {stats['success_rate']} 不在 [0, 100] 范围内"
-        )
+        assert stats["total_failures"] == 4
+        assert (
+            0.0 <= stats["success_rate"] <= 100.0
+        ), f"成功率 {stats['success_rate']} 不在 [0, 100] 范围内"
 
     def test_multiple_gpu_ids_independent_failure_tracking(self):
         """不同 GPU ID 的失败独立追踪，不互相干扰"""
@@ -531,6 +512,4 @@ class TestErrorRecoveryStress:
             recovery_manager.handle_gpu_failure(gpu_id=2, error=RuntimeError("err"))
 
         stats = recovery_manager.get_recovery_stats()
-        assert stats['total_failures'] == 6, (
-            f"总失败次数 {stats['total_failures']} 应为 6"
-        )
+        assert stats["total_failures"] == 6, f"总失败次数 {stats['total_failures']} 应为 6"

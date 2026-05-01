@@ -20,10 +20,10 @@ from unittest.mock import patch
 
 from src.logging.log_storage import LogStorage
 
-
 # ============================================================================
 # Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def storage():
@@ -37,16 +37,41 @@ def storage():
 def populated_storage(storage):
     """预填充数据的 LogStorage"""
     events = [
-        {"timestamp": 1000, "type": "engine_start", "source": "engine",
-         "message": "引擎启动", "data": {}},
-        {"timestamp": 1100, "type": "status_update", "source": "monitor",
-         "message": "进度 50%", "data": {"progress": 50}},
-        {"timestamp": 1200, "type": "engine_error", "source": "gpu",
-         "message": "错误: 内存不足", "data": {}},
-        {"timestamp": 1300, "type": "match_found", "source": "engine",
-         "message": "匹配发现", "data": {"address": "1xxx"}},
-        {"timestamp": 1400, "type": "engine_stop", "source": "engine",
-         "message": "引擎停止", "data": {}},
+        {
+            "timestamp": 1000,
+            "type": "engine_start",
+            "source": "engine",
+            "message": "引擎启动",
+            "data": {},
+        },
+        {
+            "timestamp": 1100,
+            "type": "status_update",
+            "source": "monitor",
+            "message": "进度 50%",
+            "data": {"progress": 50},
+        },
+        {
+            "timestamp": 1200,
+            "type": "engine_error",
+            "source": "gpu",
+            "message": "错误: 内存不足",
+            "data": {},
+        },
+        {
+            "timestamp": 1300,
+            "type": "match_found",
+            "source": "engine",
+            "message": "匹配发现",
+            "data": {"address": "1xxx"},
+        },
+        {
+            "timestamp": 1400,
+            "type": "engine_stop",
+            "source": "engine",
+            "message": "引擎停止",
+            "data": {},
+        },
     ]
     for event in events:
         storage.save(event)
@@ -56,6 +81,7 @@ def populated_storage(storage):
 # ============================================================================
 # 初始化测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestLogStorageInit:
@@ -77,6 +103,7 @@ class TestLogStorageInit:
 # 保存测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestLogStorageSave:
     """保存功能测试"""
@@ -94,10 +121,7 @@ class TestLogStorageSave:
         assert os.path.exists(log_file)
 
     def test_save_batch(self, storage):
-        events = [
-            {"timestamp": i, "type": "batch", "message": f"msg_{i}"}
-            for i in range(10)
-        ]
+        events = [{"timestamp": i, "type": "batch", "message": f"msg_{i}"} for i in range(10)]
         count = storage.save_batch(events)
         assert count == 10
         assert len(storage._memory_buffer) == 10
@@ -117,7 +141,7 @@ class TestLogStorageSave:
 
     def test_save_exception_returns_false(self, storage):
         """保存过程中异常应返回 False 且不崩溃"""
-        with patch.object(storage, '_save_to_file', side_effect=OSError("disk full")):
+        with patch.object(storage, "_save_to_file", side_effect=OSError("disk full")):
             result = storage.save({"timestamp": 1, "type": "test", "message": "x"})
             assert result is False
 
@@ -125,6 +149,7 @@ class TestLogStorageSave:
 # ============================================================================
 # 查询测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestLogStorageQuery:
@@ -196,7 +221,7 @@ class TestLogStorageStats:
         assert stats["type_counts"]["status_update"] == 1
 
     def test_export_to_json(self, populated_storage):
-        with tempfile.NamedTemporaryFile(suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
             export_path = f.name
 
         try:
@@ -210,7 +235,7 @@ class TestLogStorageStats:
                 os.unlink(export_path)
 
     def test_export_recent_only(self, populated_storage):
-        with tempfile.NamedTemporaryFile(suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
             export_path = f.name
 
         try:
@@ -232,6 +257,7 @@ class TestLogStorageStats:
 # ============================================================================
 # 文件轮转测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestLogStorageFileRotation:
@@ -267,6 +293,7 @@ class TestLogStorageFileRotation:
 # ============================================================================
 # 边界情况测试
 # ============================================================================
+
 
 @pytest.mark.unit
 @pytest.mark.edge_cases

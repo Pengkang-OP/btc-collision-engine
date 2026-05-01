@@ -42,19 +42,19 @@ class GPUPerformanceTester:
         self.test_duration_benchmark = test_duration_benchmark
         self.test_duration_stress = test_duration_stress
         self.results = {
-            'test_time': datetime.now().isoformat(),
-            'device_info': {},
-            'benchmark': {},
-            'stress_test': {},
-            'memory_usage': {},
-            'stability': {}
+            "test_time": datetime.now().isoformat(),
+            "device_info": {},
+            "benchmark": {},
+            "stress_test": {},
+            "memory_usage": {},
+            "stability": {},
         }
 
     def load_test_addresses(self, count=10):
         """加载测试地址"""
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("  步骤1: 加载测试地址")
-        print("="*80)
+        print("=" * 80)
 
         # 从文件加载 (修正双重 .txt 扩展名)
         address_file = _PROJECT_ROOT / "benchmarks" / "btc_addresses_sorted.txt"
@@ -84,19 +84,21 @@ class GPUPerformanceTester:
 
     def initialize_gpu_engine(self, targets, batch_size=None):
         """初始化GPU引擎"""
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("  步骤2: 初始化GPU引擎")
-        print("="*80)
+        print("=" * 80)
 
         stats_history = []
 
         def on_progress(stats):
-            stats_history.append({
-                'timestamp': time.time(),
-                'total_checked': stats.total_checked,
-                'speed': stats.speed,
-                'matches': len(stats.matches)
-            })
+            stats_history.append(
+                {
+                    "timestamp": time.time(),
+                    "total_checked": stats.total_checked,
+                    "speed": stats.speed,
+                    "matches": len(stats.matches),
+                }
+            )
 
         def on_match(private_key: bytes, address: str, wif: str):
             """匹配回调 - 签名匹配 MatchCallback = Callable[[bytes, str, str], None]"""
@@ -111,28 +113,28 @@ class GPUPerformanceTester:
             on_progress=on_progress,
             on_match=on_match,
             use_enhanced_monitoring=True,
-            use_gpu_memory_pool=True
+            use_gpu_memory_pool=True,
         )
 
         init_time = time.time() - start_init
 
         # 获取设备信息
         device_info = engine._gpu_device.get_device_info()
-        memory_efficiency = getattr(engine._gpu_device, 'memory_efficiency', 0.70)
+        memory_efficiency = getattr(engine._gpu_device, "memory_efficiency", 0.70)
 
         # 从 global_mem_size (字节) 计算 GB 值
-        global_mem_bytes = device_info.get('global_mem_size', 0)
+        global_mem_bytes = device_info.get("global_mem_size", 0)
         global_mem_gb = global_mem_bytes / (1024**3) if global_mem_bytes else 0
-        compute_units = device_info.get('max_compute_units', 0)
+        compute_units = device_info.get("max_compute_units", 0)
 
-        self.results['device_info'] = {
-            'name': device_info.get('name', 'Unknown'),
-            'vendor': device_info.get('vendor', 'Unknown'),
-            'global_mem_gb': global_mem_gb,
-            'compute_units': compute_units,
-            'memory_efficiency': memory_efficiency,
-            'batch_size': engine.batch_size,
-            'initialization_time': init_time
+        self.results["device_info"] = {
+            "name": device_info.get("name", "Unknown"),
+            "vendor": device_info.get("vendor", "Unknown"),
+            "global_mem_gb": global_mem_gb,
+            "compute_units": compute_units,
+            "memory_efficiency": memory_efficiency,
+            "batch_size": engine.batch_size,
+            "initialization_time": init_time,
         }
 
         print(f"✓ GPU设备: {device_info.get('name', 'Unknown')}")
@@ -146,9 +148,9 @@ class GPUPerformanceTester:
 
     def run_benchmark_test(self, engine, stats_history):
         """运行基准性能测试"""
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print(f"  步骤3: 基准性能测试 ({self.test_duration_benchmark}秒)")
-        print("="*80)
+        print("=" * 80)
 
         engine.start(mode="random")
 
@@ -160,11 +162,13 @@ class GPUPerformanceTester:
             if stats_history:
                 latest = stats_history[-1]
                 elapsed = time.time() - start_time
-                speed = latest['speed']
+                speed = latest["speed"]
                 speeds.append(speed)
 
-                print(f"  [{elapsed:5.1f}s] {latest['total_checked']:>12,} keys | "
-                      f"{speed:>10,.2f} keys/s")
+                print(
+                    f"  [{elapsed:5.1f}s] {latest['total_checked']:>12,} keys | "
+                    f"{speed:>10,.2f} keys/s"
+                )
 
         engine.stop()
 
@@ -173,7 +177,7 @@ class GPUPerformanceTester:
             avg_speed = statistics.mean(speeds)
             max_speed = max(speeds)
             min_speed = min(speeds)
-            total_keys = stats_history[-1]['total_checked']
+            total_keys = stats_history[-1]["total_checked"]
 
             # 计算稳定性（标准差/平均值）
             if avg_speed > 0:
@@ -181,14 +185,14 @@ class GPUPerformanceTester:
             else:
                 stability = 0
 
-            self.results['benchmark'] = {
-                'duration': self.test_duration_benchmark,
-                'total_keys': total_keys,
-                'avg_speed': avg_speed,
-                'max_speed': max_speed,
-                'min_speed': min_speed,
-                'stability_percent': stability,
-                'speed_samples': len(speeds)
+            self.results["benchmark"] = {
+                "duration": self.test_duration_benchmark,
+                "total_keys": total_keys,
+                "avg_speed": avg_speed,
+                "max_speed": max_speed,
+                "min_speed": min_speed,
+                "stability_percent": stability,
+                "speed_samples": len(speeds),
             }
 
             print(f"\n  基准测试结果:")
@@ -200,9 +204,9 @@ class GPUPerformanceTester:
 
     def run_stress_test(self, engine, stats_history):
         """运行压力测试"""
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print(f"  步骤4: 压力测试 ({self.test_duration_stress}秒)")
-        print("="*80)
+        print("=" * 80)
 
         # 清空历史记录
         stats_history.clear()
@@ -218,18 +222,21 @@ class GPUPerformanceTester:
             if stats_history:
                 latest = stats_history[-1]
                 elapsed = time.time() - start_time
-                speed = latest['speed']
+                speed = latest["speed"]
                 speeds.append(speed)
 
                 # 获取内存使用
                 import psutil
+
                 process = psutil.Process(os.getpid())
                 memory_mb = process.memory_info().rss / (1024 * 1024)
                 memory_samples.append(memory_mb)
 
-                print(f"  [{elapsed:5.1f}s] {latest['total_checked']:>12,} keys | "
-                      f"{speed:>10,.2f} keys/s | "
-                      f"内存: {memory_mb:>8,.1f} MB")
+                print(
+                    f"  [{elapsed:5.1f}s] {latest['total_checked']:>12,} keys | "
+                    f"{speed:>10,.2f} keys/s | "
+                    f"内存: {memory_mb:>8,.1f} MB"
+                )
 
         engine.stop()
 
@@ -238,7 +245,7 @@ class GPUPerformanceTester:
             avg_speed = statistics.mean(speeds)
             max_speed = max(speeds)
             min_speed = min(speeds)
-            total_keys = stats_history[-1]['total_checked']
+            total_keys = stats_history[-1]["total_checked"]
 
             # 内存统计
             if memory_samples:
@@ -248,14 +255,14 @@ class GPUPerformanceTester:
                 avg_memory = 0
                 max_memory = 0
 
-            self.results['stress_test'] = {
-                'duration': self.test_duration_stress,
-                'total_keys': total_keys,
-                'avg_speed': avg_speed,
-                'max_speed': max_speed,
-                'min_speed': min_speed,
-                'avg_memory_mb': avg_memory,
-                'max_memory_mb': max_memory
+            self.results["stress_test"] = {
+                "duration": self.test_duration_stress,
+                "total_keys": total_keys,
+                "avg_speed": avg_speed,
+                "max_speed": max_speed,
+                "min_speed": min_speed,
+                "avg_memory_mb": avg_memory,
+                "max_memory_mb": max_memory,
             }
 
             print(f"\n  压力测试结果:")
@@ -267,9 +274,9 @@ class GPUPerformanceTester:
 
     def run_stability_test(self, engine, stats_history):
         """运行稳定性测试（短周期多次）"""
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("  步骤5: 稳定性测试 (5次×10秒)")
-        print("="*80)
+        print("=" * 80)
 
         test_count = 5
         test_duration = 10
@@ -285,7 +292,7 @@ class GPUPerformanceTester:
             while time.time() - start_time < test_duration:
                 time.sleep(2)
                 if stats_history:
-                    speeds.append(stats_history[-1]['speed'])
+                    speeds.append(stats_history[-1]["speed"])
 
             engine.stop()
 
@@ -310,13 +317,13 @@ class GPUPerformanceTester:
                 std_dev = 0
                 cv = 0
 
-            self.results['stability'] = {
-                'test_count': test_count,
-                'test_duration': test_duration,
-                'overall_avg_speed': overall_avg,
-                'std_dev': std_dev,
-                'coefficient_of_variation': cv,
-                'individual_results': all_speeds
+            self.results["stability"] = {
+                "test_count": test_count,
+                "test_duration": test_duration,
+                "overall_avg_speed": overall_avg,
+                "std_dev": std_dev,
+                "coefficient_of_variation": cv,
+                "individual_results": all_speeds,
             }
 
             print(f"\n  稳定性结果:")
@@ -326,9 +333,9 @@ class GPUPerformanceTester:
 
     def generate_report(self):
         """生成测试报告"""
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("  GPU性能测试报告")
-        print("="*80)
+        print("=" * 80)
 
         # 设备信息
         print(f"\n📊 GPU设备信息:")
@@ -339,7 +346,7 @@ class GPUPerformanceTester:
         print(f"  批次大小: {self.results['device_info'].get('batch_size', 0):,}")
 
         # 基准测试
-        if 'avg_speed' in self.results.get('benchmark', {}):
+        if "avg_speed" in self.results.get("benchmark", {}):
             print(f"\n🏁 基准测试 ({self.results['benchmark']['duration']}秒):")
             print(f"  总检查数: {self.results['benchmark']['total_keys']:>12,} keys")
             print(f"  平均速度: {self.results['benchmark']['avg_speed']:>12,.2f} keys/s")
@@ -347,7 +354,7 @@ class GPUPerformanceTester:
             print(f"  稳定性: {self.results['benchmark']['stability_percent']:>12.2f}%")
 
         # 压力测试
-        if 'avg_speed' in self.results.get('stress_test', {}):
+        if "avg_speed" in self.results.get("stress_test", {}):
             print(f"\n💪 压力测试 ({self.results['stress_test']['duration']}秒):")
             print(f"  总检查数: {self.results['stress_test']['total_keys']:>12,} keys")
             print(f"  平均速度: {self.results['stress_test']['avg_speed']:>12,.2f} keys/s")
@@ -356,7 +363,7 @@ class GPUPerformanceTester:
             print(f"  峰值内存: {self.results['stress_test']['max_memory_mb']:>12,.1f} MB")
 
         # 稳定性测试
-        if 'overall_avg_speed' in self.results.get('stability', {}):
+        if "overall_avg_speed" in self.results.get("stability", {}):
             print(f"\n📈 稳定性测试:")
             print(f"  平均速度: {self.results['stability']['overall_avg_speed']:>12,.2f} keys/s")
             print(f"  变异系数: {self.results['stability']['coefficient_of_variation']:>12.2f}%")
@@ -364,9 +371,9 @@ class GPUPerformanceTester:
         # 综合评估
         print(f"\n⭐ 综合评估:")
 
-        benchmark_speed = self.results.get('benchmark', {}).get('avg_speed', 0)
-        stress_speed = self.results.get('stress_test', {}).get('avg_speed', 0)
-        stability_cv = self.results.get('stability', {}).get('coefficient_of_variation', 100)
+        benchmark_speed = self.results.get("benchmark", {}).get("avg_speed", 0)
+        stress_speed = self.results.get("stress_test", {}).get("avg_speed", 0)
+        stability_cv = self.results.get("stability", {}).get("coefficient_of_variation", 100)
 
         # 性能评级
         if benchmark_speed > 100000:
@@ -398,19 +405,21 @@ class GPUPerformanceTester:
         # 保存报告
         report_dir = _PROJECT_ROOT / "test_results"
         os.makedirs(report_dir, exist_ok=True)
-        report_file = report_dir / f"gpu_performance_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        report_file = (
+            report_dir / f"gpu_performance_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        )
 
-        with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, "w", encoding="utf-8") as f:
             json.dump(self.results, f, indent=2, ensure_ascii=False)
 
         print(f"\n📄 详细报告已保存: {report_file}")
-        print("="*80)
+        print("=" * 80)
 
     def run_all_tests(self):
         """运行所有测试"""
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("  GPU碰撞引擎综合性能测试")
-        print("="*80)
+        print("=" * 80)
         print(f"  测试时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
         # 步骤1: 加载地址
@@ -439,12 +448,13 @@ class GPUPerformanceTester:
         except Exception as e:
             print(f"\n\n❌ 测试过程出错: {e}")
             import traceback
+
             traceback.print_exc()
         finally:
             # 清理资源
             if engine:
                 engine.stop()
-                if hasattr(engine, '_gpu_device'):
+                if hasattr(engine, "_gpu_device"):
                     engine._gpu_device.cleanup()
 
             print("\n✓ 测试完成，资源已清理")
@@ -453,8 +463,7 @@ class GPUPerformanceTester:
 def main():
     """主函数"""
     tester = GPUPerformanceTester(
-        test_duration_benchmark=30,  # 基准测试30秒
-        test_duration_stress=60      # 压力测试60秒
+        test_duration_benchmark=30, test_duration_stress=60  # 基准测试30秒  # 压力测试60秒
     )
 
     tester.run_all_tests()

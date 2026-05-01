@@ -30,6 +30,7 @@ class TestModuleImports:
             GPUExecutionContext,
             CollisionResult,
         )
+
         assert IGPUDeviceManager is not None
         assert IKernelExecutor is not None
         assert IAsyncExecutionPipeline is not None
@@ -41,11 +42,13 @@ class TestModuleImports:
     def test_import_monitoring(self):
         """测试监控管道导入"""
         from src.collision.gpu.monitoring import PerformanceMonitoringPipeline
+
         assert PerformanceMonitoringPipeline is not None
 
     def test_import_core(self):
         """测试碰撞核心导入"""
         from src.collision.gpu.core import CollisionCore
+
         assert CollisionCore is not None
 
     def test_import_vendor_strategy(self):
@@ -57,6 +60,7 @@ class TestModuleImports:
             AMDOptimizationStrategy,
             DefaultOptimizationStrategy,
         )
+
         assert VendorOptimizationFactory is not None
 
     def test_import_module_init(self):
@@ -67,6 +71,7 @@ class TestModuleImports:
             get_collision_core,
             get_vendor_factory,
         )
+
         assert get_gpu_engine_facade is not None
         assert callable(get_gpu_engine_facade)
 
@@ -77,7 +82,7 @@ class TestNoCircularDependency:
     def test_import_order_independence(self):
         """测试导入顺序无关性"""
         # 保存原始模块引用，防止清除后污染其他测试
-        saved_modules = {k: v for k, v in sys.modules.items() if 'src.collision.gpu' in k}
+        saved_modules = {k: v for k, v in sys.modules.items() if "src.collision.gpu" in k}
         modules_to_clear = list(saved_modules.keys())
         for mod in modules_to_clear:
             del sys.modules[mod]
@@ -86,6 +91,7 @@ class TestNoCircularDependency:
             # 尝试不同导入顺序
             from src.collision.gpu.protocols import IGPUDeviceManager
             from src.collision.gpu.core import CollisionCore
+
             assert True
         except ImportError as e:
             pytest.fail(f"导入失败（可能存在循环依赖）: {e}")
@@ -96,14 +102,14 @@ class TestNoCircularDependency:
     def test_all_modules_importable(self):
         """测试所有模块可导入"""
         module_list = [
-            'src.collision.gpu',
-            'src.collision.gpu.protocols',
-            'src.collision.gpu.facade',
-            'src.collision.gpu.monitoring',
-            'src.collision.gpu.core',
-            'src.collision.gpu.vendor_strategy',
-            'src.collision.gpu.kernel_adapter',
-            'src.collision.gpu.async_pipeline_adapter',
+            "src.collision.gpu",
+            "src.collision.gpu.protocols",
+            "src.collision.gpu.facade",
+            "src.collision.gpu.monitoring",
+            "src.collision.gpu.core",
+            "src.collision.gpu.vendor_strategy",
+            "src.collision.gpu.kernel_adapter",
+            "src.collision.gpu.async_pipeline_adapter",
         ]
 
         for module_name in module_list:
@@ -120,12 +126,9 @@ class TestProtocolDefinitions:
         """测试GPU执行上下文"""
         from src.collision.gpu.protocols import GPUExecutionContext
 
-        context = GPUExecutionContext(
-            batch_size=1000000,
-            vendor='intel'
-        )
+        context = GPUExecutionContext(batch_size=1000000, vendor="intel")
         assert context.batch_size == 1000000
-        assert context.vendor == 'intel'
+        assert context.vendor == "intel"
         assert context.device is None
         assert context.context is None
 
@@ -133,11 +136,7 @@ class TestProtocolDefinitions:
         """测试碰撞结果"""
         from src.collision.gpu.protocols import CollisionResult
 
-        result = CollisionResult(
-            matches=[],
-            execution_time_ms=50.0,
-            batch_size=1000
-        )
+        result = CollisionResult(matches=[], execution_time_ms=50.0, batch_size=1000)
         assert result.execution_time_ms == 50.0
         assert result.batch_size == 1000
         assert len(result.matches) == 0
@@ -158,7 +157,7 @@ class TestComponentInstantiation:
         """测试碰撞核心实例化"""
         from src.collision.gpu.core import CollisionCore
 
-        targets = {'1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'}
+        targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
         core = CollisionCore(targets=targets, config={})
         assert core is not None
         assert not core.is_running()
@@ -168,15 +167,15 @@ class TestComponentInstantiation:
         from src.collision.gpu.vendor_strategy import VendorOptimizationFactory
 
         # 测试Intel策略
-        intel_strategy = VendorOptimizationFactory.create('intel')
+        intel_strategy = VendorOptimizationFactory.create("intel")
         assert intel_strategy is not None
 
         # 测试NVIDIA策略
-        nvidia_strategy = VendorOptimizationFactory.create('nvidia')
+        nvidia_strategy = VendorOptimizationFactory.create("nvidia")
         assert nvidia_strategy is not None
 
         # 测试未知厂商（应返回默认策略）
-        unknown_strategy = VendorOptimizationFactory.create('unknown')
+        unknown_strategy = VendorOptimizationFactory.create("unknown")
         assert unknown_strategy is not None
 
     def test_supported_vendors(self):
@@ -184,9 +183,9 @@ class TestComponentInstantiation:
         from src.collision.gpu.vendor_strategy import VendorOptimizationFactory
 
         vendors = VendorOptimizationFactory.get_supported_vendors()
-        assert 'intel' in vendors
-        assert 'nvidia' in vendors
-        assert 'amd' in vendors
+        assert "intel" in vendors
+        assert "nvidia" in vendors
+        assert "amd" in vendors
 
 
 class TestBackwardCompatibility:
@@ -213,5 +212,5 @@ class TestBackwardCompatibility:
         assert factory_cls is not None
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

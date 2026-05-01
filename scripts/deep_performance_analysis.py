@@ -3,24 +3,25 @@
 
 import sys
 import time
-sys.path.insert(0, 'f:/Qoder/btc-collision-engine')
 
-print("="*80)
+sys.path.insert(0, "f:/Qoder/btc-collision-engine")
+
+print("=" * 80)
 print("GPU性能深度诊断工具")
-print("="*80)
+print("=" * 80)
 
 # 1. 检查GPU硬件规格
 print("\n📊 步骤1: 检查GPU硬件规格")
-print("-"*80)
+print("-" * 80)
 
 try:
     import pyopencl as cl
-    
+
     platforms = cl.get_platforms()
     for platform in platforms:
         devices = platform.get_devices(device_type=cl.device_type.GPU)
         for device in devices:
-            if 'Arc' in device.name:
+            if "Arc" in device.name:
                 print(f"GPU设备: {device.name}")
                 print(f"  厂商: {device.vendor}")
                 print(f"  最大计算单元: {device.max_compute_units}")
@@ -28,20 +29,22 @@ try:
                 print(f"  最大内存分配: {device.max_mem_alloc_size / 1024**2:.0f} MB")
                 print(f"  全局内存: {device.global_mem_size / 1024**3:.2f} GB")
                 print(f"  时钟频率: {device.max_clock_frequency} MHz")
-                
+
                 # 计算理论性能
                 # 每个EU每个时钟周期可以执行一定数量的操作
                 # Intel Arc: 每个EU可以处理7个线程
                 peak_ops = device.max_compute_units * 7 * device.max_clock_frequency * 1e6
                 print(f"\n  理论峰值操作数: {peak_ops/1e9:.1f} GOPS")
-                print(f"  (基于: {device.max_compute_units} EUs × 7线程 × {device.max_clock_frequency} MHz)")
-                
+                print(
+                    f"  (基于: {device.max_compute_units} EUs × 7线程 × {device.max_clock_frequency} MHz)"
+                )
+
 except Exception as e:
     print(f"❌ GPU检测失败: {e}")
 
 # 2. 分析当前性能
 print("\n📊 步骤2: 分析当前性能水平")
-print("-"*80)
+print("-" * 80)
 
 current_speed = 46487  # keys/s
 
@@ -68,7 +71,7 @@ print(f"总运算量: {total_ops/1e9:.2f} GOPS (十亿次操作/秒)")
 
 # 3. 对比理论性能
 print("\n📊 步骤3: 性能对比分析")
-print("-"*80)
+print("-" * 80)
 
 # Intel Arc A770理论峰值
 # 512 EUs, 2.4 GHz, 每个EU 7线程
@@ -100,37 +103,37 @@ else:
 
 # 4. 分析可能的瓶颈
 print("\n📊 步骤4: 瓶颈分析")
-print("-"*80)
+print("-" * 80)
 
 bottlenecks = [
     {
-        'name': '椭圆曲线算法复杂度',
-        'severity': '极高',
-        'description': '每个私钥需要256次循环，每次包含复杂模运算',
-        'impact': '主要瓶颈',
-        'optimization_potential': '50-200%'
+        "name": "椭圆曲线算法复杂度",
+        "severity": "极高",
+        "description": "每个私钥需要256次循环，每次包含复杂模运算",
+        "impact": "主要瓶颈",
+        "optimization_potential": "50-200%",
     },
     {
-        'name': '模逆运算',
-        'severity': '高',
-        'description': '使用费马小定理需要256次模乘，可以使用扩展欧几里得优化',
-        'impact': '重要瓶颈',
-        'optimization_potential': '20-40%'
+        "name": "模逆运算",
+        "severity": "高",
+        "description": "使用费马小定理需要256次模乘，可以使用扩展欧几里得优化",
+        "impact": "重要瓶颈",
+        "optimization_potential": "20-40%",
     },
     {
-        'name': '内存访问模式',
-        'severity': '中',
-        'description': '频繁的global memory读写',
-        'impact': '次要瓶颈',
-        'optimization_potential': '10-30%'
+        "name": "内存访问模式",
+        "severity": "中",
+        "description": "频繁的global memory读写",
+        "impact": "次要瓶颈",
+        "optimization_potential": "10-30%",
     },
     {
-        'name': '工作组调度',
-        'severity': '低',
-        'description': '已经配置为512，不是瓶颈',
-        'impact': '微小影响',
-        'optimization_potential': '<5%'
-    }
+        "name": "工作组调度",
+        "severity": "低",
+        "description": "已经配置为512，不是瓶颈",
+        "impact": "微小影响",
+        "optimization_potential": "<5%",
+    },
 ]
 
 for i, b in enumerate(bottlenecks, 1):
@@ -143,7 +146,7 @@ for i, b in enumerate(bottlenecks, 1):
 
 # 5. 椭圆曲线窗口优化分析
 print("\n📊 步骤5: 椭圆曲线窗口优化可行性分析")
-print("-"*80)
+print("-" * 80)
 
 print("当前算法 (Binary Method):")
 print("  for bit in 256位:")
@@ -169,7 +172,7 @@ print()
 
 # 6. 批量模逆优化分析
 print("\n📊 步骤6: 批量模逆优化可行性分析")
-print("-"*80)
+print("-" * 80)
 
 print("当前: 每个私钥独立计算模逆")
 print("  - 每个模逆: 256次模乘 (费马小定理)")
@@ -189,7 +192,7 @@ print()
 
 # 7. 综合评估
 print("\n📊 步骤7: 综合评估")
-print("-"*80)
+print("-" * 80)
 
 print("当前性能: 46,487 keys/s")
 print()
@@ -219,6 +222,6 @@ else:
     print("⚠️  46k keys/s 接近最优")
     print("   优化空间有限")
 
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("分析完成")
-print("="*80)
+print("=" * 80)

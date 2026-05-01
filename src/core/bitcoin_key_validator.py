@@ -962,8 +962,16 @@ class BitcoinKeyValidator:
         # 添加摘要 - 安全模式下不暴露私钥明文
         if self.secure_mode:
             pk_hash = hashlib.sha256(private_key).hexdigest()[:16]
-            wif_comp_safe = wif_compressed[:8] + "..." + wif_compressed[-4:] if len(wif_compressed) > 12 else "***"
-            wif_uncomp_safe = wif_uncompressed[:8] + "..." + wif_uncompressed[-4:] if len(wif_uncompressed) > 12 else "***"
+            wif_comp_safe = (
+                wif_compressed[:8] + "..." + wif_compressed[-4:]
+                if len(wif_compressed) > 12
+                else "***"
+            )
+            wif_uncomp_safe = (
+                wif_uncompressed[:8] + "..." + wif_uncompressed[-4:]
+                if len(wif_uncompressed) > 12
+                else "***"
+            )
         else:
             pk_hash = private_key.hex()
             wif_comp_safe = wif_compressed

@@ -39,11 +39,8 @@ _LOG_FILE = _TEST_OUTPUT_DIR / "intel_arc_collision_test.log"
 # 配置日志
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler(str(_LOG_FILE), encoding='utf-8')
-    ]
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    handlers=[logging.StreamHandler(), logging.FileHandler(str(_LOG_FILE), encoding="utf-8")],
 )
 
 logger = logging.getLogger("IntelArcCollisionTest")
@@ -66,7 +63,7 @@ def load_valid_addresses(filepath: str = "") -> Set[str]:
         logger.warning("未找到有效地址文件，将使用默认测试地址")
         return addresses
     try:
-        with open(filepath, 'r', encoding='utf-8') as f:
+        with open(filepath, "r", encoding="utf-8") as f:
             for line in f:
                 addr = line.strip()
                 if addr and len(addr) >= 26:
@@ -83,13 +80,10 @@ class IntelArcTestMonitor:
 
     def __init__(self, total_memory_bytes: int):
         self.memory_monitor = IntelMemoryMonitor(
-            total_memory_bytes=total_memory_bytes,
-            safe_usage_ratio=0.45
+            total_memory_bytes=total_memory_bytes, safe_usage_ratio=0.45
         )
         self.timeout_manager = AdaptiveTimeoutManager(
-            base_timeout=30.0,
-            min_timeout=10.0,
-            max_timeout=120.0
+            base_timeout=30.0, min_timeout=10.0, max_timeout=120.0
         )
 
         # 性能统计
@@ -119,36 +113,30 @@ class IntelArcTestMonitor:
 
         # 记录显存 (基于 batch_size 估算: 每 key 约 42 字节)
         estimated_bytes = batch_size * 42
-        self.memory_monitor.track_allocation(
-            estimated_bytes,
-            batch_count=self.batch_count
-        )
-        self.memory_monitor.track_deallocation(
-            estimated_bytes,
-            batch_count=self.batch_count
-        )
+        self.memory_monitor.track_allocation(estimated_bytes, batch_count=self.batch_count)
+        self.memory_monitor.track_deallocation(estimated_bytes, batch_count=self.batch_count)
 
     def get_statistics(self) -> Dict:
         """获取统计信息"""
         elapsed = time.time() - self.start_time if self.start_time else 0
         avg_throughput = (
             sum(self.throughput_history) / len(self.throughput_history)
-            if self.throughput_history else 0
+            if self.throughput_history
+            else 0
         )
         peak_throughput = max(self.throughput_history) if self.throughput_history else 0
 
         return {
-            'elapsed_seconds': elapsed,
-            'batch_count': self.batch_count,
-            'total_keys': self.total_keys,
-            'avg_throughput': avg_throughput,
-            'peak_throughput': peak_throughput,
-            'avg_execution_time_ms': (
-                sum(self.execution_times) / len(self.execution_times)
-                if self.execution_times else 0
+            "elapsed_seconds": elapsed,
+            "batch_count": self.batch_count,
+            "total_keys": self.total_keys,
+            "avg_throughput": avg_throughput,
+            "peak_throughput": peak_throughput,
+            "avg_execution_time_ms": (
+                sum(self.execution_times) / len(self.execution_times) if self.execution_times else 0
             ),
-            'current_timeout': self.timeout_manager.get_timeout(),
-            'memory_status': self.memory_monitor.get_status()
+            "current_timeout": self.timeout_manager.get_timeout(),
+            "memory_status": self.memory_monitor.get_status(),
         }
 
     def generate_report(self) -> str:
@@ -175,13 +163,13 @@ class IntelArcTestMonitor:
         report.append(f"  超时调整次数: {timeout_stats.get('timeout_adjustments', 0)}")
         report.append("")
 
-        mem_status = stats['memory_status']
+        mem_status = stats["memory_status"]
         report.append("💾 显存使用:")
         report.append(f"  总显存: {mem_status['total_memory_gb']:.1f} GB")
         report.append(f"  安全限制: {mem_status['safe_limit_mb']:.0f} MB (45%)")
         report.append(f"  峰值使用: {mem_status['peak_mb']:.1f} MB")
-        status_val = mem_status.get('status')
-        if hasattr(status_val, 'value'):
+        status_val = mem_status.get("status")
+        if hasattr(status_val, "value"):
             report.append(f"  状态: {status_val.value.upper()}")
         else:
             report.append(f"  状态: {status_val}")
@@ -198,9 +186,7 @@ class IntelArcTestMonitor:
 
 
 def run_gpu_collision_test(
-    targets: Set[str],
-    duration: int = 60,
-    batch_size: int = 1048576
+    targets: Set[str], duration: int = 60, batch_size: int = 1048576
 ) -> Dict:
     """运行GPU碰撞测试"""
 
@@ -213,43 +199,37 @@ def run_gpu_collision_test(
     print()
 
     # 统计数据
-    stats_data = {
-        'total_checked': 0,
-        'speed': 0.0,
-        'elapsed': 0.0,
-        'matches': [],
-        'batches': []
-    }
+    stats_data = {"total_checked": 0, "speed": 0.0, "elapsed": 0.0, "matches": [], "batches": []}
 
     # 创建监控器
     monitor = IntelArcTestMonitor(total_memory_bytes=16 * 1024**3)
 
     def on_progress(stats: CollisionStats):
         """进度回调"""
-        stats_data['total_checked'] = stats.total_checked
-        stats_data['speed'] = stats.speed
-        stats_data['elapsed'] = stats.elapsed
-        stats_data['matches'] = stats.matches
+        stats_data["total_checked"] = stats.total_checked
+        stats_data["speed"] = stats.speed
+        stats_data["elapsed"] = stats.elapsed
+        stats_data["matches"] = stats.matches
 
         elapsed = stats.elapsed
         mins = int(elapsed // 60)
         secs = int(elapsed % 60)
 
-        print(f"  [{mins:02d}:{secs:02d}] "
-              f"已检查: {stats.total_checked:>12,} | "
-              f"速度: {stats.speed:>12,.0f} keys/s | "
-              f"匹配: {len(stats.matches)}")
+        print(
+            f"  [{mins:02d}:{secs:02d}] "
+            f"已检查: {stats.total_checked:>12,} | "
+            f"速度: {stats.speed:>12,.0f} keys/s | "
+            f"匹配: {len(stats.matches)}"
+        )
 
     def on_match(private_key: bytes, address: str, wif: str):
         """匹配回调 - 签名需匹配 MatchCallback = Callable[[bytes, str, str], None]"""
         print(f"\n🎯 发现匹配: {address}")
         print(f"   私钥: {private_key.hex()}")
         print(f"   WIF: {wif}\n")
-        stats_data['matches'].append({
-            'address': address,
-            'private_key': private_key.hex(),
-            'wif': wif
-        })
+        stats_data["matches"].append(
+            {"address": address, "private_key": private_key.hex(), "wif": wif}
+        )
 
     try:
         # 初始化GPU引擎
@@ -263,7 +243,7 @@ def run_gpu_collision_test(
             checkpoint_enabled=False,
             dedup_enabled=False,
             data_logging_enabled=False,
-            use_enhanced_monitoring=True
+            use_enhanced_monitoring=True,
         )
 
         # 获取设备信息
@@ -298,13 +278,12 @@ def run_gpu_collision_test(
                 if now - last_log_time >= 5.0:
                     last_log_time = now
                     current_stats = engine.get_stats()
-                    if hasattr(current_stats, 'speed') and current_stats.speed > 0:
+                    if hasattr(current_stats, "speed") and current_stats.speed > 0:
                         # 估算执行时间：batch_size / speed * 1000
                         est_batch_time = batch_size / current_stats.speed * 1000
                         batch_times.append(est_batch_time)
                         monitor.record_batch(
-                            batch_size=batch_size,
-                            execution_time_ms=est_batch_time
+                            batch_size=batch_size, execution_time_ms=est_batch_time
                         )
 
         except KeyboardInterrupt:
@@ -333,26 +312,28 @@ def run_gpu_collision_test(
         # 保存测试数据
         # 转换MemoryStatus枚举为字符串
         monitoring_data = monitor.get_statistics()
-        if 'memory_status' in monitoring_data:
-            mem_status = monitoring_data['memory_status']
-            if hasattr(mem_status.get('status'), 'value'):
-                mem_status['status'] = mem_status['status'].value
+        if "memory_status" in monitoring_data:
+            mem_status = monitoring_data["memory_status"]
+            if hasattr(mem_status.get("status"), "value"):
+                mem_status["status"] = mem_status["status"].value
 
         test_result = {
-            'timestamp': datetime.now().isoformat(),
-            'device': device_info,
-            'duration_seconds': elapsed,
-            'total_checked': stats_data['total_checked'],
-            'avg_speed': stats_data['total_checked'] / elapsed,
-            'peak_speed': stats_data['speed'],
-            'matches_found': len(stats_data['matches']),
-            'matches': stats_data['matches'],
-            'monitoring': monitoring_data
+            "timestamp": datetime.now().isoformat(),
+            "device": device_info,
+            "duration_seconds": elapsed,
+            "total_checked": stats_data["total_checked"],
+            "avg_speed": stats_data["total_checked"] / elapsed,
+            "peak_speed": stats_data["speed"],
+            "matches_found": len(stats_data["matches"]),
+            "matches": stats_data["matches"],
+            "monitoring": monitoring_data,
         }
 
         # 保存结果到 test_results 目录
-        result_file = _TEST_OUTPUT_DIR / f"intel_arc_test_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        with open(str(result_file), 'w', encoding='utf-8') as f:
+        result_file = (
+            _TEST_OUTPUT_DIR / f"intel_arc_test_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        )
+        with open(str(result_file), "w", encoding="utf-8") as f:
             json.dump(test_result, f, indent=2, ensure_ascii=False)
 
         print(f"\n💾 测试结果已保存到: {result_file}")
@@ -363,6 +344,7 @@ def run_gpu_collision_test(
         logger.error(f"GPU测试失败: {e}", exc_info=True)
         print(f"\n❌ GPU测试失败: {e}")
         import traceback
+
         traceback.print_exc()
         return None
 
@@ -377,22 +359,21 @@ def run_cpu_baseline_test(targets: Set[str], duration: int = 10) -> Dict:
 
     from src.collision.key_collision_engine import KeyCollisionEngine
 
-    stats_data = {
-        'total_checked': 0,
-        'speed': 0.0
-    }
+    stats_data = {"total_checked": 0, "speed": 0.0}
 
     def on_progress(stats: CollisionStats):
-        stats_data['total_checked'] = stats.total_checked
-        stats_data['speed'] = stats.speed
+        stats_data["total_checked"] = stats.total_checked
+        stats_data["speed"] = stats.speed
 
         elapsed = stats.elapsed
         mins = int(elapsed // 60)
         secs = int(elapsed % 60)
 
-        print(f"  [{mins:02d}:{secs:02d}] "
-              f"已检查: {stats.total_checked:>10,} | "
-              f"速度: {stats.speed:>10,.2f} keys/s")
+        print(
+            f"  [{mins:02d}:{secs:02d}] "
+            f"已检查: {stats.total_checked:>10,} | "
+            f"速度: {stats.speed:>10,.2f} keys/s"
+        )
 
     try:
         print("📋 初始化CPU碰撞引擎...")
@@ -401,7 +382,7 @@ def run_cpu_baseline_test(targets: Set[str], duration: int = 10) -> Dict:
             mode="random",
             batch_size=10000,
             on_progress=on_progress,
-            checkpoint_enabled=False
+            checkpoint_enabled=False,
         )
 
         print(f"\n⏱️  开始CPU测试，持续 {duration} 秒...\n")
@@ -427,8 +408,8 @@ def run_cpu_baseline_test(targets: Set[str], duration: int = 10) -> Dict:
         print("=" * 80)
 
         return {
-            'total_checked': stats_data['total_checked'],
-            'avg_speed': stats_data['total_checked'] / elapsed
+            "total_checked": stats_data["total_checked"],
+            "avg_speed": stats_data["total_checked"] / elapsed,
         }
 
     except Exception as e:
@@ -463,9 +444,7 @@ def main():
 
     # 运行GPU测试
     gpu_result = run_gpu_collision_test(
-        targets=targets,
-        duration=60,  # 60秒测试
-        batch_size=1048576  # 1M batch size
+        targets=targets, duration=60, batch_size=1048576  # 60秒测试  # 1M batch size
     )
 
     # 可选：运行CPU基线测试（取消注释以启用）
@@ -477,7 +456,7 @@ def main():
         print("📈 性能总结")
         print("=" * 80)
 
-        gpu_speed = gpu_result['avg_speed']
+        gpu_speed = gpu_result["avg_speed"]
         print(f"  GPU速度: {gpu_speed:,.0f} keys/s")
 
         # 与典型CPU速度对比（约88 keys/s）
@@ -488,13 +467,13 @@ def main():
         print("=" * 80)
 
         # 资源使用评估
-        monitoring = gpu_result['monitoring']
-        mem_status = monitoring['memory_status']
+        monitoring = gpu_result["monitoring"]
+        mem_status = monitoring["memory_status"]
         print(f"\n💾 资源使用评估:")
         print(f"  显存使用率: {mem_status['usage_percent']:.1f}% (安全限制内)")
         print(f"  超时设置: {monitoring['current_timeout']:.1f} 秒")
 
-        if mem_status['usage_percent'] < 70:
+        if mem_status["usage_percent"] < 70:
             print(f"  ✅ 显存使用正常")
         else:
             print(f"  ⚠️ 显存使用率较高，建议监控")

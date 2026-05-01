@@ -45,9 +45,9 @@ class PerformanceOptimizationPipeline:
             reporter:         PerformanceReportGenerator 实例（可选）
             logger_instance:  日志记录器（默认使用模块级 logger）
         """
-        self.auto_tuner = auto_tuner
-        self.benchmark_suite = benchmark_suite
-        self.performance_reporter = reporter
+        self.auto_tuner: Optional[GPUAutoTuner] = auto_tuner
+        self.benchmark_suite: Optional[GPUBenchmarkSuite] = benchmark_suite
+        self.performance_reporter: Optional[PerformanceReportGenerator] = reporter
         self._logger = logger_instance or logger
 
     # ------------------------------------------------------------------
@@ -85,7 +85,8 @@ class PerformanceOptimizationPipeline:
             return current_size
 
         try:
-            suggestion = self.auto_tuner.suggest_batch_size(current_size, metrics)  # type: ignore[attr-defined]
+            tuner: Any = self.auto_tuner
+            suggestion = tuner.suggest_batch_size(current_size, metrics)
             return int(suggestion) if suggestion else current_size
         except (AttributeError, TypeError, ValueError) as exc:
             self._logger.debug(f"optimize_batch_size 委托失败，保持原值: {exc}")
@@ -112,10 +113,11 @@ class PerformanceOptimizationPipeline:
         self._logger.info("开始运行 GPU 性能基准测试")
         self._logger.info("=" * 60)
 
-        results = self.benchmark_suite.run_all_benchmarks(iterations)
-        summary = self.benchmark_suite.get_summary(results)  # type: ignore[attr-defined]
+        suite: Any = self.benchmark_suite
+        results = suite.run_all_benchmarks(iterations)
+        summary = suite.get_summary(results)
         self._logger.info("\n" + summary)
-        return results  # type: ignore[return-value]
+        return results
 
     # ------------------------------------------------------------------
     # 自动调优
@@ -143,7 +145,8 @@ class PerformanceOptimizationPipeline:
         self._logger.info("开始自动调优")
         self._logger.info("=" * 60)
 
-        results = self.auto_tuner.start_tuning(  # type: ignore[call-arg]
+        tuner: Any = self.auto_tuner
+        results = tuner.start_tuning(
             max_iterations=max_iterations,
             callback=on_new_batch_size,
         )
@@ -196,7 +199,8 @@ class PerformanceOptimizationPipeline:
         self._logger.info("生成 GPU 性能报告")
         self._logger.info("=" * 60)
 
-        report_path = self.performance_reporter.generate_report(  # type: ignore[call-arg]
+        reporter: Any = self.performance_reporter
+        report_path = reporter.generate_report(
             config=ReportConfig(
                 include_device_info=True,
                 include_benchmark_results=include_benchmarks,

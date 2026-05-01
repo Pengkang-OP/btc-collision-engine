@@ -18,8 +18,8 @@ from unittest.mock import Mock, patch, MagicMock, PropertyMock
 
 from src.collision.gpu.protocols import GPUDevice
 
-
 # ========== Fixtures ==========
+
 
 @pytest.fixture
 def mock_targets():
@@ -66,7 +66,9 @@ def mock_engine_patches(mock_targets):
         patch("src.collision.gpu.engine.CollisionCore", return_value=mock_collision_core),
         patch("src.collision.gpu.engine.SearchModeCoordinator"),
         patch("src.collision.gpu.engine.GPUEngineMonitor"),
-        patch("src.collision.gpu.engine.VendorOptimizationFactory.create", return_value=MagicMock()),
+        patch(
+            "src.collision.gpu.engine.VendorOptimizationFactory.create", return_value=MagicMock()
+        ),
         patch("src.collision.gpu.engine.GPUDeviceDetector"),
         patch("src.collision.gpu.engine.GPUMemoryCalculator"),
     ]
@@ -74,6 +76,7 @@ def mock_engine_patches(mock_targets):
 
 
 # ========== TestEngineIntegration ==========
+
 
 class TestEngineIntegration:
     """测试引擎构造函数参数完整性"""
@@ -194,23 +197,27 @@ class TestEngineIntegration:
 
 # ========== TestBackwardCompatibility ==========
 
+
 class TestBackwardCompatibility:
     """测试向后兼容性: shim 重导出, API 存在性"""
 
     def test_shim_imports_gpucollisionengine(self):
         """测试从 shim 导入 GPUCollisionEngine"""
         from src.collision.gpu_collision_engine import GPUCollisionEngine
+
         assert GPUCollisionEngine is not None
 
     def test_new_engine_imports_gpucollisionengine(self):
         """测试从新位置导入 GPUCollisionEngine"""
         from src.collision.gpu.engine import GPUCollisionEngine
+
         assert GPUCollisionEngine is not None
 
     def test_shim_and_new_are_same_class(self):
         """测试 shim 和新引擎导出的是同一个类"""
         from src.collision.gpu_collision_engine import GPUCollisionEngine as ShimEngine
         from src.collision.gpu.engine import GPUCollisionEngine as NewEngine
+
         assert ShimEngine is NewEngine
 
     def test_shim_re_exports_constants(self):
@@ -226,6 +233,7 @@ class TestBackwardCompatibility:
             MONITOR_THREAD_JOIN_TIMEOUT,
             EXCEPTION_RECOVERY_DELAY,
         )
+
         assert GPU_MAX_BATCH_SIZE == 0xFFFFFFFF
         assert UINT32_MAX == 0xFFFFFFFF
         assert INITIAL_BATCH_SIZE == 1_000_000
@@ -242,12 +250,14 @@ class TestBackwardCompatibility:
             _seed_bytes_to_u32_be_array,
             _get_gpu_monitor,
         )
+
         assert callable(_seed_bytes_to_u32_be_array)
         assert callable(_get_gpu_monitor)
 
     def test_shim_re_exports_module_attrs(self):
         """测试 shim 保留模块级属性（向后兼容 Monkey-patch）"""
         from src.collision import gpu_collision_engine
+
         assert hasattr(gpu_collision_engine, "GPUDevice")
         assert hasattr(gpu_collision_engine, "GPUContext")
         assert hasattr(gpu_collision_engine, "GPUKernel")
@@ -258,6 +268,7 @@ class TestBackwardCompatibility:
     def test_shim_monkey_patch_works(self):
         """测试 Monkey-patch shim 模块属性仍然有效"""
         from src.collision import gpu_collision_engine
+
         original = gpu_collision_engine.PYOPENCL_AVAILABLE
         try:
             gpu_collision_engine.PYOPENCL_AVAILABLE = not original
@@ -276,6 +287,7 @@ class TestBackwardCompatibility:
 
         try:
             from src.collision.gpu.engine import GPUCollisionEngine
+
             engine = GPUCollisionEngine(targets=mock_targets, data_logging_enabled=False)
 
             # 核心方法
@@ -308,7 +320,10 @@ class TestBackwardCompatibility:
 
         try:
             from src.collision.gpu.engine import GPUCollisionEngine
-            engine = GPUCollisionEngine(targets=mock_targets, batch_size=1_000_000, data_logging_enabled=False)
+
+            engine = GPUCollisionEngine(
+                targets=mock_targets, batch_size=1_000_000, data_logging_enabled=False
+            )
             assert engine.batch_size == 1_000_000
 
             # 设置新值
@@ -325,12 +340,14 @@ class TestBackwardCompatibility:
     def test_static_method_is_gpu_available(self):
         """测试静态方法 is_gpu_available"""
         from src.collision.gpu.engine import GPUCollisionEngine
+
         # 应该返回 bool（不抛异常）
         result = GPUCollisionEngine.is_gpu_available()
         assert isinstance(result, bool)
 
 
 # ========== TestComponentDelegation ==========
+
 
 class TestComponentDelegation:
     """测试组件委托: 验证委托到 Facade/Core/Monitoring"""
@@ -387,9 +404,9 @@ class TestComponentDelegation:
 
             engine = GPUCollisionEngine(targets=mock_targets, data_logging_enabled=False)
             # Mock GPUEngineMonitor 返回真实列表
-            engine._engine_monitor.get_adjustment_history = MagicMock(return_value=[
-                {"old_size": 1000000, "new_size": 2000000, "reason": "test"}
-            ])
+            engine._engine_monitor.get_adjustment_history = MagicMock(
+                return_value=[{"old_size": 1000000, "new_size": 2000000, "reason": "test"}]
+            )
             history = engine.get_adjustment_history(limit=5)
             assert isinstance(history, list)
             assert len(history) == 1
@@ -419,6 +436,7 @@ class TestComponentDelegation:
 
 
 # ========== TestSearchModeAccess ==========
+
 
 class TestSearchModeAccess:
     """测试搜索模式属性代理"""
@@ -451,12 +469,14 @@ class TestSearchModeAccess:
 
 # ========== TestModuleImports ==========
 
+
 class TestModuleImports:
     """测试模块导入完整性"""
 
     def test_package_version(self):
         """测试包版本号为 6.0.0"""
         from src.collision import gpu
+
         assert gpu.__version__ == "6.0.0"
 
     def test_package_all_exports(self):
@@ -480,23 +500,27 @@ class TestModuleImports:
     def test_factory_function_returns_class(self):
         """测试工厂函数返回正确的类"""
         from src.collision.gpu import get_gpu_engine_facade, GPUEngineFacade
+
         assert get_gpu_engine_facade() is GPUEngineFacade
 
     def test_constants_consistency(self):
         """测试 engine.py 和 shim 中的常量一致性"""
         from src.collision.gpu_collision_engine import GPU_MAX_BATCH_SIZE as shim_const
         from src.collision.gpu.engine import GPU_MAX_BATCH_SIZE as new_const
+
         assert shim_const == new_const
 
     def test_utility_functions_consistency(self):
         """测试 engine.py 和 shim 中的工具函数一致性"""
         from src.collision.gpu_collision_engine import _seed_bytes_to_u32_be_array as shim_fn
         from src.collision.gpu.engine import _seed_bytes_to_u32_be_array as new_fn
+
         assert shim_fn is new_fn
 
     def test_gpuenginefacade_importable(self):
         """测试 GPUEngineFacade 可以从包中导入"""
         from src.collision.gpu import GPUEngineFacade
+
         assert GPUEngineFacade is not None
         assert hasattr(GPUEngineFacade, "initialize")
         assert hasattr(GPUEngineFacade, "cleanup")
@@ -504,6 +528,7 @@ class TestModuleImports:
 
 
 # ========== TestLifecycle ==========
+
 
 class TestLifecycle:
     """测试引擎生命周期"""

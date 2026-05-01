@@ -36,9 +36,7 @@ class TestBaseAddressGeneratorInheritance(unittest.TestCase):
 
     def test_03_optimized_inherits_base(self):
         """OptimizedP2PKHAddressGenerator 继承自 BaseAddressGenerator"""
-        self.assertTrue(
-            issubclass(OptimizedP2PKHAddressGenerator, BaseAddressGenerator)
-        )
+        self.assertTrue(issubclass(OptimizedP2PKHAddressGenerator, BaseAddressGenerator))
 
     def test_04_backward_compat_alias(self):
         """AddressGenerator 是 P2PKHAddressGenerator 的向后兼容别名"""
@@ -57,34 +55,30 @@ class TestP2PKHAddressGeneratorLSP(unittest.TestCase):
 
     def setUp(self):
         self.gen = P2PKHAddressGenerator()
-        self.private_key = b'\x01' * 32  # 有效私钥 (在 [1,N) 范围内)
+        self.private_key = b"\x01" * 32  # 有效私钥 (在 [1,N) 范围内)
 
     def test_01_generate_address_no_args(self):
         """无参数调用生成随机地址"""
         addr, compressed_pk, uncompressed_pk = self.gen.generate_address()
-        self.assertTrue(addr.startswith('1'))
+        self.assertTrue(addr.startswith("1"))
         self.assertEqual(len(compressed_pk), 33)
         self.assertEqual(len(uncompressed_pk), 65)
 
     def test_02_generate_address_with_private_key(self):
         """传入私钥生成地址"""
         addr, cpk, upk = self.gen.generate_address(self.private_key)
-        self.assertTrue(addr.startswith('1'))
+        self.assertTrue(addr.startswith("1"))
         self.assertEqual(len(cpk), 33)
         self.assertEqual(len(upk), 65)
 
     def test_03_compressed_param_accepted(self):
         """compressed=True 参数被接受 (LSP 兼容)"""
-        addr, cpk, _ = self.gen.generate_address(
-            self.private_key, compressed=True
-        )
-        self.assertTrue(addr.startswith('1'))
+        addr, cpk, _ = self.gen.generate_address(self.private_key, compressed=True)
+        self.assertTrue(addr.startswith("1"))
 
     def test_04_compressed_false_param_accepted(self):
         """compressed=False 参数被接受 (P2PKH 始终返回双格式)"""
-        addr, cpk, upk = self.gen.generate_address(
-            self.private_key, compressed=False
-        )
+        addr, cpk, upk = self.gen.generate_address(self.private_key, compressed=False)
         # compressed=False 仍返回两种格式
         self.assertEqual(len(cpk), 33)
         self.assertEqual(len(upk), 65)
@@ -92,16 +86,16 @@ class TestP2PKHAddressGeneratorLSP(unittest.TestCase):
     def test_05_invalid_key_len_raises(self):
         """无效私钥长度抛出 ValueError"""
         with self.assertRaises(ValueError):
-            self.gen.generate_address(b'\x00' * 31)
+            self.gen.generate_address(b"\x00" * 31)
 
     def test_06_zero_key_raises(self):
         """零私钥抛出 ValueError"""
         with self.assertRaises(ValueError):
-            self.gen.generate_address(b'\x00' * 32)
+            self.gen.generate_address(b"\x00" * 32)
 
     def test_07_key_exceeds_order_raises(self):
         """超出曲线阶 N 的私钥抛出 ValueError"""
-        big_key = Secp256k1.N.to_bytes(32, 'big')
+        big_key = Secp256k1.N.to_bytes(32, "big")
         with self.assertRaises(ValueError):
             self.gen.generate_address(big_key)
 
@@ -112,27 +106,27 @@ class TestBaseViaSuperDelegation(unittest.TestCase):
     def setUp(self):
         self.p2pkh = P2PKHAddressGenerator()
         self.opt = OptimizedP2PKHAddressGenerator()
-        self.private_key = b'\x01' * 32
+        self.private_key = b"\x01" * 32
 
     def test_01_p2pkh_public_key_to_address_via_super(self):
         """P2PKH: public_key_to_address 通过 super() 委托基类"""
         pk = self.p2pkh.private_key_to_public_key(self.private_key)
         addr = self.p2pkh.public_key_to_address(pk)
-        self.assertTrue(addr.startswith('1'))
+        self.assertTrue(addr.startswith("1"))
         self.assertEqual(len(addr), 34)
 
     def test_02_opt_public_key_to_address_via_super_fallback(self):
         """Optimized: public_key_to_address SIMD 失败回退到 base"""
         pk = self.opt.private_key_to_public_key(self.private_key)
         addr = self.opt.public_key_to_address(pk)
-        self.assertTrue(addr.startswith('1'))
+        self.assertTrue(addr.startswith("1"))
 
     def test_03_p2pkh_generate_private_key_in_range(self):
         """P2PKH: generate_private_key 返回有效范围私钥"""
         for _ in range(5):
             pk = self.p2pkh.generate_private_key()
             self.assertEqual(len(pk), 32)
-            key_int = int.from_bytes(pk, 'big')
+            key_int = int.from_bytes(pk, "big")
             self.assertGreaterEqual(key_int, 1)
             self.assertLess(key_int, Secp256k1.N)
 
@@ -141,7 +135,7 @@ class TestBaseViaSuperDelegation(unittest.TestCase):
         for _ in range(5):
             pk = self.opt.generate_private_key()
             self.assertEqual(len(pk), 32)
-            key_int = int.from_bytes(pk, 'big')
+            key_int = int.from_bytes(pk, "big")
             self.assertGreaterEqual(key_int, 1)
             self.assertLess(key_int, Secp256k1.N)
 
@@ -153,5 +147,5 @@ class TestBaseViaSuperDelegation(unittest.TestCase):
         self.assertEqual(addr1, addr2)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -23,8 +23,7 @@ from src.collision.gpu_collision_engine import GPUCollisionEngine
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -44,7 +43,7 @@ def generate_test_targets(count: int = 5) -> Set[str]:
         "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
         "1N5czHm9q7wSjzM7X4GCe4yi7z14L9tK8",
         "1M8s2S5bgAzSSzVTeL7zruvMPLvzSkEAuv",
-        "16UwLL9Risc3QfPqBUvKofHmBQ7wMtjvM"
+        "16UwLL9Risc3QfPqBUvKofHmBQ7wMtjvM",
     ]
 
     targets = set()
@@ -67,7 +66,7 @@ def test_gpu_cleanup():
             targets=targets,
             device_index=0,  # 使用第一个GPU
             batch_size=8192,
-            data_logging_enabled=False
+            data_logging_enabled=False,
         )
 
         logger.info("GPU碰撞引擎创建成功")
@@ -97,6 +96,7 @@ def test_gpu_cleanup():
     except Exception as e:
         logger.error(f"测试失败: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -110,10 +110,7 @@ def test_multiple_start_stop():
     try:
         # 创建GPU碰撞引擎
         engine = GPUCollisionEngine(
-            targets=targets,
-            device_index=0,
-            batch_size=8192,
-            data_logging_enabled=False
+            targets=targets, device_index=0, batch_size=8192, data_logging_enabled=False
         )
 
         logger.info("GPU碰撞引擎创建成功")
@@ -133,6 +130,7 @@ def test_multiple_start_stop():
     except Exception as e:
         logger.error(f"测试失败: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -144,7 +142,7 @@ def main():
     # 运行测试
     tests = [
         ("GPU资源清理测试", test_gpu_cleanup),
-        ("多次启动和停止测试", test_multiple_start_stop)
+        ("多次启动和停止测试", test_multiple_start_stop),
     ]
 
     passed = 0

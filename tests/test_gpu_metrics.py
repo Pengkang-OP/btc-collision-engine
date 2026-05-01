@@ -138,7 +138,7 @@ class TestHistogram:
         # 精确命中桶边界
         collector.record_kernel_latency(0, 0.001)  # 桶0
         collector.record_kernel_latency(0, 0.002)  # 桶1
-        collector.record_kernel_latency(0, 1.5)    # 桶9 (inf)
+        collector.record_kernel_latency(0, 1.5)  # 桶9 (inf)
         stats = collector.get_kernel_latency_stats(0)
         assert stats["count"] == 3
 

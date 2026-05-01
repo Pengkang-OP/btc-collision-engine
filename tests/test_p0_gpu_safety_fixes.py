@@ -7,6 +7,7 @@
 - P0-3: pyproject.toml 与 requirements-base.txt 中 coincurve 版本声明一致
 - P0-4: 范围扫描首批次与后续批次的边界计算逻辑一致，覆盖全部范围
 """
+
 import os
 import re
 import sys
@@ -29,6 +30,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 # ===========================================================================
 # P0-1: snapshot 隔离测试
 # ===========================================================================
+
 
 class TestSnapshotIsolation:
     """P0-1: 验证 on_progress 传递 snapshot 而非原始 stats 对象"""
@@ -82,7 +84,7 @@ class TestSnapshotIsolation:
         from src.collision.collision_stats import CollisionStats
 
         stats = CollisionStats()
-        stats.add_match(b'\x01' * 32, "1TestAddress")
+        stats.add_match(b"\x01" * 32, "1TestAddress")
 
         snap = stats.snapshot()
         assert len(snap.matches) == 1
@@ -135,6 +137,7 @@ class TestSnapshotIsolation:
 # P0-2: _safe_invoke_match_callback 异常隔离测试
 # ===========================================================================
 
+
 class TestSafeInvokeMatchCallbackIsolation:
     """P0-2: 验证 GPU _safe_invoke_match_callback 能隔离回调异常
 
@@ -148,10 +151,7 @@ class TestSafeInvokeMatchCallbackIsolation:
 
         Phase 6: _init_gpu 已移除，改用 __init__ mock。
         """
-        with patch.object(
-                 GPUCollisionEngine, '__init__',
-                 lambda self, *args, **kwargs: None
-             ):
+        with patch.object(GPUCollisionEngine, "__init__", lambda self, *args, **kwargs: None):
             engine = GPUCollisionEngine.__new__(GPUCollisionEngine)
             engine.on_match = None
             engine.on_progress = None
@@ -163,6 +163,7 @@ class TestSafeInvokeMatchCallbackIsolation:
 
     def test_exception_in_callback_does_not_raise(self):
         """回调函数抛出异常时，_safe_invoke_match_callback 不向外传播异常"""
+
         def bad_callback(pk, addr, wif):
             raise RuntimeError("callback crash")
 
@@ -171,7 +172,7 @@ class TestSafeInvokeMatchCallbackIsolation:
         # 不应抛出任何异常
         try:
             result = self._engine._safe_invoke_match_callback(
-                b'\x01' * 32, "1TestAddress", "Kwif123"
+                b"\x01" * 32, "1TestAddress", "Kwif123"
             )
             # 异常回调应返回 False（隔离失败结果）
             assert result is False, "异常回调应返回 False"
@@ -182,9 +183,7 @@ class TestSafeInvokeMatchCallbackIsolation:
         """未设置 on_match 时，_safe_invoke_match_callback 应返回 True"""
         self._engine.on_match = None
 
-        result = self._engine._safe_invoke_match_callback(
-            b'\x01' * 32, "1TestAddress", "Kwif123"
-        )
+        result = self._engine._safe_invoke_match_callback(b"\x01" * 32, "1TestAddress", "Kwif123")
         assert result is True, "无 on_match 时应返回 True"
 
     def test_normal_callback_returns_true(self):
@@ -197,28 +196,27 @@ class TestSafeInvokeMatchCallbackIsolation:
 
         self._engine.on_match = good_callback
 
-        result = self._engine._safe_invoke_match_callback(
-            b'\x02' * 32, "1TestAddress", "Kwif456"
-        )
+        result = self._engine._safe_invoke_match_callback(b"\x02" * 32, "1TestAddress", "Kwif456")
         assert result is True, "正常回调应返回 True"
         assert len(called) == 1, "回调应被调用一次"
         assert called[0][0] == "1TestAddress"
 
     def test_timeout_callback_returns_false_on_windows(self):
         """Windows 下超时回调应返回 False（通过线程超时机制）"""
-        if os.name != 'nt':
+        if os.name != "nt":
             pytest.skip("该测试仅适用于 Windows 平台")
 
         def slow_callback(pk, addr, wif):
             import time
+
             time.sleep(10)
 
         self._engine.on_match = slow_callback
 
         # mock Thread.is_alive 返回 True 模拟超时
-        with patch.object(threading.Thread, 'is_alive', return_value=True):
+        with patch.object(threading.Thread, "is_alive", return_value=True):
             result = self._engine._safe_invoke_match_callback(
-                b'\x03' * 32, "1TestAddress", "Kwif789"
+                b"\x03" * 32, "1TestAddress", "Kwif789"
             )
         assert result is False, "超时回调应返回 False"
 
@@ -226,6 +224,7 @@ class TestSafeInvokeMatchCallbackIsolation:
 # ===========================================================================
 # P0-3: coincurve 版本一致性测试
 # ===========================================================================
+
 
 class TestCoinCurveVersionConsistency:
     """P0-3: 验证 coincurve 版本声明在各配置文件中一致"""
@@ -236,7 +235,7 @@ class TestCoinCurveVersionConsistency:
         assert pyproject_path.exists(), "pyproject.toml 文件不存在"
 
         content = pyproject_path.read_text(encoding="utf-8")
-        match = re.search(r'coincurve>=([\d.]+)', content)
+        match = re.search(r"coincurve>=([\d.]+)", content)
         assert match is not None, "pyproject.toml 中未找到 coincurve>= 声明"
 
     def test_coincurve_declared_in_requirements_base(self):
@@ -245,7 +244,7 @@ class TestCoinCurveVersionConsistency:
         assert req_path.exists(), "requirements-base.txt 文件不存在"
 
         content = req_path.read_text(encoding="utf-8")
-        match = re.search(r'coincurve>=([\d.]+)', content)
+        match = re.search(r"coincurve>=([\d.]+)", content)
         assert match is not None, "requirements-base.txt 中未找到 coincurve>= 声明"
 
     def test_coincurve_version_consistency(self):
@@ -256,8 +255,8 @@ class TestCoinCurveVersionConsistency:
         pyproject_content = pyproject_path.read_text(encoding="utf-8")
         req_content = req_path.read_text(encoding="utf-8")
 
-        match_toml = re.search(r'coincurve>=([\d.]+)', pyproject_content)
-        match_req = re.search(r'coincurve>=([\d.]+)', req_content)
+        match_toml = re.search(r"coincurve>=([\d.]+)", pyproject_content)
+        match_req = re.search(r"coincurve>=([\d.]+)", req_content)
 
         assert match_toml is not None, "pyproject.toml 中未找到 coincurve>= 声明"
         assert match_req is not None, "requirements-base.txt 中未找到 coincurve>= 声明"
@@ -275,10 +274,10 @@ class TestCoinCurveVersionConsistency:
         """coincurve 最低版本要求不低于 18.0.0"""
         pyproject_path = PROJECT_ROOT / "pyproject.toml"
         content = pyproject_path.read_text(encoding="utf-8")
-        match = re.search(r'coincurve>=([\d.]+)', content)
+        match = re.search(r"coincurve>=([\d.]+)", content)
         assert match is not None
 
-        version_parts = [int(x) for x in match.group(1).split('.')]
+        version_parts = [int(x) for x in match.group(1).split(".")]
         major = version_parts[0]
         assert major >= 18, f"coincurve 最低版本应 >=18，当前声明: {match.group(1)}"
 
@@ -287,20 +286,24 @@ class TestCoinCurveVersionConsistency:
 # P0-4: 范围扫描边界一致性测试
 # ===========================================================================
 
+
 class TestRangeScanBoundaryConsistency:
     """P0-4: 验证范围扫描首批次和后续批次边界逻辑一致，不重不漏"""
 
-    @pytest.mark.parametrize("start,end,batch_size", [
-        (1, 100, 33),
-        (1, 10, 20),    # 范围小于 batch_size
-        (90, 100, 20),  # 末尾不足 batch_size
-        (1, 33, 33),    # 恰好整数倍
-        (0, 0, 10),     # 单个元素
-        (5, 5, 1),      # 单个元素，batch_size=1
-        (1, 1000, 256), # 大范围
-        (100, 199, 50), # 整数倍边界
-        (1, 99, 10),    # 末尾余1
-    ])
+    @pytest.mark.parametrize(
+        "start,end,batch_size",
+        [
+            (1, 100, 33),
+            (1, 10, 20),  # 范围小于 batch_size
+            (90, 100, 20),  # 末尾不足 batch_size
+            (1, 33, 33),  # 恰好整数倍
+            (0, 0, 10),  # 单个元素
+            (5, 5, 1),  # 单个元素，batch_size=1
+            (1, 1000, 256),  # 大范围
+            (100, 199, 50),  # 整数倍边界
+            (1, 99, 10),  # 末尾余1
+        ],
+    )
     def test_boundary_no_gap_no_overlap(self, start, end, batch_size):
         """批次迭代不遗漏、不重复地覆盖 [start, end] 全范围"""
         current = start
@@ -333,8 +336,7 @@ class TestRangeScanBoundaryConsistency:
         for i, (b_start, b_end) in enumerate(batches):
             expected_end = min(b_start + batch_size, end + 1)
             assert b_end == expected_end, (
-                f"批次 {i} 的 batch_end 计算不一致: "
-                f"得到 {b_end}，期望 {expected_end}"
+                f"批次 {i} 的 batch_end 计算不一致: " f"得到 {b_end}，期望 {expected_end}"
             )
 
     def test_each_batch_size_within_limit(self):
@@ -370,7 +372,6 @@ class TestRangeScanBoundaryConsistency:
         last_batch = batches[-1]
         remainder = (end - start + 1) % batch_size
         if remainder != 0:
-            assert len(last_batch) == remainder, (
-                f"最后批次大小应为 {remainder}，实际为 {len(last_batch)}"
-            )
-
+            assert (
+                len(last_batch) == remainder
+            ), f"最后批次大小应为 {remainder}，实际为 {len(last_batch)}"

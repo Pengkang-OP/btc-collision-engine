@@ -17,15 +17,16 @@ import tempfile
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 
-
 # ============================================================================
 # Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def reset_logging_config():
     """每个测试前后重置 LoggingConfig 单例，并清理 root logger handlers"""
     from src.utils.logging_config import LoggingConfig
+
     # 保存原始 root logger 状态
     root_logger = logging.getLogger()
     original_handlers = list(root_logger.handlers)
@@ -76,29 +77,34 @@ def temp_log_dir():
 # LoggingConfig 单例与初始化测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestLoggingConfigSingleton:
     """单例模式测试"""
 
     def test_singleton_returns_same_instance(self, reset_logging_config):
         from src.utils.logging_config import LoggingConfig
+
         a = LoggingConfig()
         b = LoggingConfig()
         assert a is b
 
     def test_new_creates_instance(self, reset_logging_config):
         from src.utils.logging_config import LoggingConfig
+
         instance = LoggingConfig()
         assert isinstance(instance, LoggingConfig)
 
     def test_init_sets_initialized_flag(self, reset_logging_config):
         from src.utils.logging_config import LoggingConfig
+
         lc = LoggingConfig()
         lc.init()
         assert lc._initialized is True
 
     def test_init_uses_default_config(self, reset_logging_config):
         from src.utils.logging_config import LoggingConfig
+
         lc = LoggingConfig()
         lc.init()
         config = lc.get_config()
@@ -108,6 +114,7 @@ class TestLoggingConfigSingleton:
 
     def test_init_with_custom_config(self, reset_logging_config, temp_log_dir):
         from src.utils.logging_config import LoggingConfig
+
         log_file = os.path.join(temp_log_dir, "custom.log")
         lc = LoggingConfig()
         lc.init({"level": "DEBUG", "file": log_file, "enable_console": False})
@@ -119,6 +126,7 @@ class TestLoggingConfigSingleton:
     def test_init_idempotent(self, reset_logging_config):
         """重复 init() 不应报错"""
         from src.utils.logging_config import LoggingConfig
+
         lc = LoggingConfig()
         lc.init()
         # 第二次调用不应异常
@@ -127,6 +135,7 @@ class TestLoggingConfigSingleton:
 
     def test_init_creates_log_directory(self, reset_logging_config, temp_log_dir):
         from src.utils.logging_config import LoggingConfig
+
         log_subdir = os.path.join(temp_log_dir, "logs")
         log_file = os.path.join(log_subdir, "test.log")
         lc = LoggingConfig()
@@ -138,12 +147,14 @@ class TestLoggingConfigSingleton:
 # 配置获取测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestLoggingConfigGet:
     """配置获取测试"""
 
     def test_get_config_returns_dict(self, reset_logging_config):
         from src.utils.logging_config import LoggingConfig
+
         lc = LoggingConfig()
         lc.init()
         config = lc.get_config()
@@ -152,6 +163,7 @@ class TestLoggingConfigGet:
 
     def test_get_config_before_init_returns_default(self, reset_logging_config):
         from src.utils.logging_config import LoggingConfig
+
         lc = LoggingConfig()
         config = lc.get_config()
         assert config["level"] == "INFO"
@@ -161,12 +173,14 @@ class TestLoggingConfigGet:
 # 磁盘空间检查测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestDiskSpaceCheck:
     """磁盘空间检查测试"""
 
     def test_check_disk_space_sufficient(self, reset_logging_config):
         from src.utils.logging_config import LoggingConfig
+
         lc = LoggingConfig()
         lc.init()
         # 要求极小空间，应通过
@@ -176,21 +190,27 @@ class TestDiskSpaceCheck:
     def test_check_disk_space_insufficient(self, reset_logging_config):
         """mock磁盘空间不足场景，不依赖真实磁盘"""
         from src.utils.logging_config import LoggingConfig
+
         lc = LoggingConfig()
         lc.init({"file": "/tmp/test.log", "enable_console": False})
-        with patch('shutil.disk_usage') as mock_du:
+        with patch("shutil.disk_usage") as mock_du:
             # 模拟磁盘只有 1MB 可用
-            mock_du.return_value = Mock(free=1 * 1024 * 1024, total=1024 * 1024 * 1024, used=1023 * 1024 * 1024)
+            mock_du.return_value = Mock(
+                free=1 * 1024 * 1024, total=1024 * 1024 * 1024, used=1023 * 1024 * 1024
+            )
             result = lc.check_disk_space(min_free_mb=100)
             assert result is False
 
     def test_check_disk_space_with_shutil(self, reset_logging_config):
         """mock shutil.disk_usage 模拟磁盘空间"""
         from src.utils.logging_config import LoggingConfig
+
         lc = LoggingConfig()
         lc.init({"file": "/tmp/test.log", "enable_console": False})
-        with patch('shutil.disk_usage') as mock_du:
-            mock_du.return_value = Mock(free=50 * 1024 * 1024, total=1024 * 1024 * 1024, used=974 * 1024 * 1024)
+        with patch("shutil.disk_usage") as mock_du:
+            mock_du.return_value = Mock(
+                free=50 * 1024 * 1024, total=1024 * 1024 * 1024, used=974 * 1024 * 1024
+            )
             result = lc.check_disk_space(min_free_mb=100)
             assert result is False
 
@@ -199,12 +219,14 @@ class TestDiskSpaceCheck:
 # SafeRotatingFileHandler 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestSafeRotatingFileHandler:
     """安全日志轮转测试"""
 
     def test_creates_handler(self, temp_log_dir):
         from src.utils.logging_config import SafeRotatingFileHandler
+
         log_file = os.path.join(temp_log_dir, "test.log")
         handler = SafeRotatingFileHandler(log_file, maxBytes=1024, backupCount=2)
         assert handler is not None
@@ -213,10 +235,9 @@ class TestSafeRotatingFileHandler:
     def test_doRollover_windows_retry(self, temp_log_dir):
         """Windows 下 doRollover 重试不会崩溃"""
         from src.utils.logging_config import SafeRotatingFileHandler
+
         log_file = os.path.join(temp_log_dir, "test_retry.log")
-        handler = SafeRotatingFileHandler(
-            log_file, maxBytes=100, backupCount=1, encoding="utf-8"
-        )
+        handler = SafeRotatingFileHandler(log_file, maxBytes=100, backupCount=1, encoding="utf-8")
         # 写入一些数据
         record = logging.LogRecord("test", logging.INFO, "", 0, "test message", (), None)
         handler.emit(record)
@@ -231,6 +252,7 @@ class TestSafeRotatingFileHandler:
         if sys.platform == "win32":
             pytest.skip("当前平台为 Windows，测试不适用")
         from src.utils.logging_config import SafeRotatingFileHandler
+
         log_file = os.path.join(temp_log_dir, "test_linux.log")
         handler = SafeRotatingFileHandler(log_file, maxBytes=10000, backupCount=1)
         assert not handler._is_windows
@@ -241,6 +263,7 @@ class TestSafeRotatingFileHandler:
 # init_logging / get_configured_logger 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestLoggingInitFunctions:
     """初始化函数测试"""
@@ -248,17 +271,20 @@ class TestLoggingInitFunctions:
     def test_init_logging_returns_none(self, reset_logging_config):
         """init_logging() 返回 None（无返回值）"""
         from src.utils import init_logging
+
         result = init_logging()
         assert result is None
 
     def test_get_configured_logger_returns_logger(self):
         from src.utils import get_configured_logger
+
         logger = get_configured_logger("TestModule")
         assert isinstance(logger, logging.Logger)
         assert logger.name == "TestModule"
 
     def test_get_configured_logger_same_name_returns_same(self):
         from src.utils import get_configured_logger
+
         a = get_configured_logger("SameName")
         b = get_configured_logger("SameName")
         assert a is b
@@ -268,12 +294,14 @@ class TestLoggingInitFunctions:
 # 集成测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestLoggingConfigIntegration:
     """集成测试"""
 
     def test_full_init_workflow(self, reset_logging_config, temp_log_dir):
         from src.utils.logging_config import LoggingConfig
+
         log_file = os.path.join(temp_log_dir, "full_test.log")
         lc = LoggingConfig()
         lc.init({"level": "WARNING", "file": log_file, "enable_console": True})
@@ -285,6 +313,7 @@ class TestLoggingConfigIntegration:
 
     def test_console_only_config(self, reset_logging_config):
         from src.utils.logging_config import LoggingConfig
+
         lc = LoggingConfig()
         lc.init({"enable_console": True, "enable_file": False})
         config = lc.get_config()
@@ -293,6 +322,7 @@ class TestLoggingConfigIntegration:
 
     def test_file_only_config(self, reset_logging_config, temp_log_dir):
         from src.utils.logging_config import LoggingConfig
+
         log_file = os.path.join(temp_log_dir, "file_only.log")
         lc = LoggingConfig()
         lc.init({"enable_console": False, "enable_file": True, "file": log_file})

@@ -384,7 +384,11 @@ class EnhancedMonitoringSystem:
     def generate_report(self) -> Dict[str, Any]:
         """生成报告"""
         # 生成原始报告
-        original_report = self.report_generator.generate_daily_report() if self.report_generator is not None else {}
+        original_report = (
+            self.report_generator.generate_daily_report()
+            if self.report_generator is not None
+            else {}
+        )
 
         # 生成数据日志报告
         data_report = self.data_logger.generate_report("daily") if self.data_logger else {}

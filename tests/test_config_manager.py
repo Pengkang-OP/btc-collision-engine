@@ -1,4 +1,5 @@
 """ConfigManager 单元测试 - 配置加载/保存/合并/验证"""
+
 import json
 import os
 import tempfile
@@ -18,6 +19,7 @@ class TestConfigManagerBasic(unittest.TestCase):
         self.test_dir = tempfile.mkdtemp()
         self.config_file = os.path.join(self.test_dir, "test_config.json")
         from src.config.config_manager import ConfigManager as CM
+
         self.cm_class = CM
 
     def tearDown(self):
@@ -43,30 +45,28 @@ class TestConfigManagerBasic(unittest.TestCase):
     def test_load_config_from_file(self):
         """从文件加载配置"""
         # 创建测试配置文件（不包含GUI）
-        test_config = {
-            "logging": {
-                "level": "DEBUG"
-            }
-        }
-        with open(self.config_file, 'w', encoding='utf-8') as f:
+        test_config = {"logging": {"level": "DEBUG"}}
+        with open(self.config_file, "w", encoding="utf-8") as f:
             json.dump(test_config, f)
 
         mgr = ConfigManager(config_file=self.config_file)
         self.assertEqual(mgr.get("logging.level"), "DEBUG")
         # 默认值应该保留
-        self.assertEqual(mgr.get("logging.format"), "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        self.assertEqual(
+            mgr.get("logging.format"), "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
 
     def test_save_config_to_file(self):
         """保存配置到文件"""
         mgr = ConfigManager(config_file=self.config_file)
         mgr.set("logging.level", "WARNING")
-        
+
         result = mgr.save_config()
         self.assertTrue(result)
         self.assertTrue(os.path.exists(self.config_file))
 
         # 验证文件内容
-        with open(self.config_file, 'r', encoding='utf-8') as f:
+        with open(self.config_file, "r", encoding="utf-8") as f:
             saved_config = json.load(f)
         self.assertEqual(saved_config["logging"]["level"], "WARNING")
 
@@ -142,6 +142,7 @@ class TestConfigManagerMerge(unittest.TestCase):
         self.test_dir = tempfile.mkdtemp()
         self.config_file = os.path.join(self.test_dir, "test_config.json")
         from src.config.config_manager import ConfigManager as CM
+
         self.cm_class = CM
 
     def tearDown(self):
@@ -149,13 +150,8 @@ class TestConfigManagerMerge(unittest.TestCase):
 
     def test_merge_partial_config(self):
         """部分配置合并"""
-        test_config = {
-            "logging": {
-                "level": "DEBUG",
-                "format": "%(message)s"
-            }
-        }
-        with open(self.config_file, 'w', encoding='utf-8') as f:
+        test_config = {"logging": {"level": "DEBUG", "format": "%(message)s"}}
+        with open(self.config_file, "w", encoding="utf-8") as f:
             json.dump(test_config, f)
 
         mgr = self.cm_class(config_file=self.config_file)
@@ -168,15 +164,10 @@ class TestConfigManagerMerge(unittest.TestCase):
     def test_merge_complete_override(self):
         """完全覆盖配置"""
         test_config = {
-            "collision": {
-                "max_workers": 16,
-                "progress_interval": 500
-            },
-            "logging": {
-                "level": "CRITICAL"
-            }
+            "collision": {"max_workers": 16, "progress_interval": 500},
+            "logging": {"level": "CRITICAL"},
         }
-        with open(self.config_file, 'w', encoding='utf-8') as f:
+        with open(self.config_file, "w", encoding="utf-8") as f:
             json.dump(test_config, f)
 
         mgr = ConfigManager(config_file=self.config_file)
@@ -187,15 +178,10 @@ class TestConfigManagerMerge(unittest.TestCase):
         """合并保持配置结构"""
         # 使用Schema中已定义的字段来测试合并功能
         test_config = {
-            "collision": {
-                "max_workers": 8,
-                "progress_interval": 2000
-            },
-            "logging": {
-                "level": "DEBUG"
-            }
+            "collision": {"max_workers": 8, "progress_interval": 2000},
+            "logging": {"level": "DEBUG"},
         }
-        with open(self.config_file, 'w', encoding='utf-8') as f:
+        with open(self.config_file, "w", encoding="utf-8") as f:
             json.dump(test_config, f)
 
         mgr = ConfigManager(config_file=self.config_file)
@@ -216,6 +202,7 @@ class TestConfigManagerValidation(unittest.TestCase):
 
     def setUp(self):
         from src.config.config_manager import ConfigManager as CM
+
         self.cm_class = CM
 
     def test_validate_default_config(self):
@@ -309,6 +296,7 @@ class TestConfigManagerEdgeCases(unittest.TestCase):
         self.test_dir = tempfile.mkdtemp()
         self.config_file = os.path.join(self.test_dir, "test_config.json")
         from src.config.config_manager import ConfigManager as CM
+
         self.cm_class = CM
 
     def tearDown(self):
@@ -316,7 +304,7 @@ class TestConfigManagerEdgeCases(unittest.TestCase):
 
     def test_load_corrupted_json(self):
         """加载损坏的JSON文件"""
-        with open(self.config_file, 'w', encoding='utf-8') as f:
+        with open(self.config_file, "w", encoding="utf-8") as f:
             f.write("{invalid json")
 
         mgr = self.cm_class(config_file=self.config_file)
@@ -327,7 +315,7 @@ class TestConfigManagerEdgeCases(unittest.TestCase):
 
     def test_load_empty_file(self):
         """加载空文件"""
-        with open(self.config_file, 'w', encoding='utf-8') as f:
+        with open(self.config_file, "w", encoding="utf-8") as f:
             f.write("")
 
         mgr = ConfigManager(config_file=self.config_file)
@@ -347,13 +335,9 @@ class TestConfigManagerEdgeCases(unittest.TestCase):
 
     def test_unicode_in_config(self):
         """配置中包含Unicode字符"""
-        test_config = {
-            "logging": {
-                "file": "日志/collision.log"
-            }
-        }
+        test_config = {"logging": {"file": "日志/collision.log"}}
         config_file = os.path.join(self.test_dir, "unicode_config.json")
-        with open(config_file, 'w', encoding='utf-8') as f:
+        with open(config_file, "w", encoding="utf-8") as f:
             json.dump(test_config, f)
 
         mgr2 = ConfigManager(config_file=config_file)

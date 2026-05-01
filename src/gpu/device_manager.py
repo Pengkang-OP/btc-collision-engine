@@ -363,9 +363,7 @@ class GPUDeviceManager:
 
             # 初始化双缓冲
             executor = self._require_async_executor()
-            executor.initialize_buffers(
-                dev.context, num_keys=batch_size
-            )
+            executor.initialize_buffers(dev.context, num_keys=batch_size)
 
             self.logger.info(f"✅ GPU异步执行器已初始化(双缓冲, 队列深度: {queue_depth})")
         else:

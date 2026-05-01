@@ -50,8 +50,8 @@ class DeviceManagerAdapter:
         self._default_device_index = device_index
 
         # 内部状态：持有底层 GPUDevice 和 GPUContext 实例
-        self._gpu_device: Any = None          # src.gpu.device.GPUDevice
-        self._gpu_context: Any = None         # src.gpu.context.GPUContext
+        self._gpu_device: Any = None  # src.gpu.device.GPUDevice
+        self._gpu_context: Any = None  # src.gpu.context.GPUContext
         self._selected_device: Optional[GPUDevice] = None
         self._selected_context: Optional[GPUContext] = None
 
@@ -175,7 +175,7 @@ class DeviceManagerAdapter:
             self._gpu_context = GPUContextImpl(self._gpu_device)
 
             # 应用优化
-            if hasattr(self._gpu_context, 'apply_optimizations'):
+            if hasattr(self._gpu_context, "apply_optimizations"):
                 self._gpu_context.apply_optimizations()
 
             # 创建协议层 GPUContext
@@ -200,13 +200,13 @@ class DeviceManagerAdapter:
         """
         try:
             # 释放上下文
-            if self._gpu_context and hasattr(self._gpu_context, 'cleanup'):
+            if self._gpu_context and hasattr(self._gpu_context, "cleanup"):
                 self._gpu_context.cleanup()
                 self._gpu_context = None
                 self._selected_context = None
 
             # 释放设备
-            if self._gpu_device and hasattr(self._gpu_device, 'cleanup'):
+            if self._gpu_device and hasattr(self._gpu_device, "cleanup"):
                 self._gpu_device.cleanup()
                 self._gpu_device = None
                 self._selected_device = None

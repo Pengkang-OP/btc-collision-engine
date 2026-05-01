@@ -7,12 +7,13 @@
 2. thread_safe=True 触发弃用警告
 3. 原生logger线程安全
 """
+
 import sys
 import os
 import warnings
 
 # 添加项目根目录到路径
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.utils import init_logging, get_configured_logger
 
@@ -34,7 +35,7 @@ print("\n[测试2] thread_safe=True 触发弃用警告")
 with warnings.catch_warnings(record=True) as w:
     warnings.simplefilter("always")
     logger2 = get_configured_logger("TestLogger2", thread_safe=True)
-    
+
     if len(w) == 1 and issubclass(w[0].category, DeprecationWarning):
         print("[PASS] thread_safe=True 正确触发弃用警告")
         print(f"   警告: {w[0].message}")
@@ -50,10 +51,12 @@ import time
 test_logger = get_configured_logger("ThreadSafetyTest", thread_safe=False)
 messages = []
 
+
 def log_messages(thread_id, count):
     for i in range(count):
         test_logger.debug(f"Thread-{thread_id} message-{i}")
         messages.append(f"Thread-{thread_id}-{i}")
+
 
 # 创建5个线程，每个线程记录100条消息
 threads = []
@@ -84,7 +87,7 @@ modules = [
     "AddressValidator",
     "TargetResolver",
     "AddressMatcher",
-    "ValidationMonitor"
+    "ValidationMonitor",
 ]
 
 for module in modules:

@@ -734,11 +734,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         try:
             from ..core.wif import WIF
 
-            pk_bytes = (
-                bytes(private_key)
-                if not isinstance(private_key, bytes)
-                else private_key
-            )
+            pk_bytes = bytes(private_key) if not isinstance(private_key, bytes) else private_key
             wif = WIF.encode(pk_bytes, compressed=True)
             local_matches.append((pk_bytes, matched_address, wif))
         except (ValueError, TypeError, OverflowError) as e:
@@ -747,9 +743,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             )
             return True  # 继续运行
         except Exception as e:
-            logger.exception(
-                f"Random worker {worker_id}: WIF编码未知错误 addr={matched_address}"
-            )
+            logger.exception(f"Random worker {worker_id}: WIF编码未知错误 addr={matched_address}")
             return True  # 继续运行
 
         # 记录匹配发现
@@ -819,6 +813,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
                     # 短期缓存 + 去重检查
                     import hashlib
+
                     key_fp = hashlib.sha256(private_key).digest()[:8]
                     if key_fp in recent_keys:
                         continue
@@ -827,7 +822,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
                     recent_keys.add(key_fp)
                     if len(recent_keys) > max_recent_size:
-                        recent_keys = set(list(recent_keys)[max_recent_size // 2:])
+                        recent_keys = set(list(recent_keys)[max_recent_size // 2 :])
 
                     # 生成地址（P1-1: 错误日志通过 _log_throttled_error 统一处理）
                     try:
@@ -877,8 +872,11 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
                     if matched_address:
                         if not self._process_key_match(
-                            private_key, matched_address, matched_compressed,
-                            local_matches, worker_id
+                            private_key,
+                            matched_address,
+                            matched_compressed,
+                            local_matches,
+                            worker_id,
                         ):
                             break
 
@@ -1915,7 +1913,9 @@ class KeyCollisionEngine(BaseCollisionEngine):
     def __enter__(self) -> "KeyCollisionEngine":
         return self
 
-    def __exit__(self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]) -> None:
+    def __exit__(
+        self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]
+    ) -> None:
         self.stop()
         return
 

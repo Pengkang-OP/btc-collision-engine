@@ -13,16 +13,17 @@ import logging
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 
-
 # ============================================================================
 # Fixtures
 # ============================================================================
+
 
 @pytest.fixture(autouse=True)
 def reset_log_window():
     """每个测试后清理日志窗口单例"""
     yield
     from src.cli.log_window import reset_log_window_instance
+
     reset_log_window_instance()
 
 
@@ -30,12 +31,14 @@ def reset_log_window():
 # LogWindow 基本属性测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestLogWindowBasic:
     """LogWindow 基本属性测试"""
 
     def test_create_log_window(self):
         from src.cli.log_window import LogWindow
+
         window = LogWindow(title="Test", width=400, height=300)
         assert window.title == "Test"
         assert window.width == 400
@@ -45,6 +48,7 @@ class TestLogWindowBasic:
 
     def test_default_values(self):
         from src.cli.log_window import LogWindow
+
         window = LogWindow()
         assert window.title == "引擎日志"
         assert window.width == 800
@@ -52,6 +56,7 @@ class TestLogWindowBasic:
 
     def test_log_queues_message(self):
         from src.cli.log_window import LogWindow
+
         window = LogWindow()
         window.log("test message", "INFO")
         assert not window.log_queue.empty()
@@ -63,6 +68,7 @@ class TestLogWindowBasic:
         """队列满时不应崩溃"""
         from src.cli.log_window import LogWindow
         import queue
+
         window = LogWindow()
         # 使用一个很小的队列模拟满的情况
         window.log_queue = queue.Queue(maxsize=2)
@@ -72,12 +78,14 @@ class TestLogWindowBasic:
 
     def test_stop_when_not_running(self):
         from src.cli.log_window import LogWindow
+
         window = LogWindow()
         # 未 start 的情况下 stop 不应崩溃
         window.stop()
 
     def test_stop_sets_running_false(self):
         from src.cli.log_window import LogWindow
+
         window = LogWindow()
         window.running = True
         window.stop()
@@ -88,32 +96,31 @@ class TestLogWindowBasic:
 # LogWindowHandler 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestLogWindowHandler:
     """日志窗口处理器测试"""
 
     def test_emit_delegates_to_log_window(self):
         from src.cli.log_window import LogWindowHandler, LogWindow
+
         window = LogWindow()
         handler = LogWindowHandler(window)
         handler.setFormatter(logging.Formatter("%(message)s"))
 
-        record = logging.LogRecord(
-            "test_logger", logging.INFO, "", 0, "handler test", (), None
-        )
+        record = logging.LogRecord("test_logger", logging.INFO, "", 0, "handler test", (), None)
         handler.emit(record)
         # 消息应进入队列
         assert not window.log_queue.empty()
 
     def test_emit_preserves_level(self):
         from src.cli.log_window import LogWindowHandler, LogWindow
+
         window = LogWindow()
         handler = LogWindowHandler(window)
         handler.setFormatter(logging.Formatter("%(message)s"))
 
-        record = logging.LogRecord(
-            "test", logging.ERROR, "", 0, "error msg", (), None
-        )
+        record = logging.LogRecord("test", logging.ERROR, "", 0, "error msg", (), None)
         handler.emit(record)
         entry = window.log_queue.get_nowait()
         assert "[ERROR]" in entry
@@ -121,6 +128,7 @@ class TestLogWindowHandler:
     def test_emit_handles_format_error(self):
         """格式化错误时不应崩溃"""
         from src.cli.log_window import LogWindowHandler, LogWindow
+
         window = LogWindow()
         handler = LogWindowHandler(window)
         # 使用一个会出错的 formatter
@@ -134,6 +142,7 @@ class TestLogWindowHandler:
 # ============================================================================
 # reset_log_window_instance 测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestResetLogWindow:
@@ -171,6 +180,7 @@ class TestResetLogWindow:
 
     def test_reset_when_none_is_safe(self):
         from src.cli.log_window import reset_log_window_instance
+
         # 重复 reset 应安全
         reset_log_window_instance()
         reset_log_window_instance()  # 不应崩溃
@@ -179,6 +189,7 @@ class TestResetLogWindow:
 # ============================================================================
 # create_log_window 测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestCreateLogWindow:
@@ -193,8 +204,10 @@ class TestCreateLogWindow:
         lw._log_window_instance = None
 
         # 使用 mock 避免实际创建 tkinter 窗口
-        with patch('src.cli.log_window.LogWindow.start') as mock_start, \
-             patch('src.cli.log_window.LogWindow') as mock_log_window_cls:
+        with (
+            patch("src.cli.log_window.LogWindow.start") as mock_start,
+            patch("src.cli.log_window.LogWindow") as mock_log_window_cls,
+        ):
             mock_instance1 = MagicMock()
             mock_instance2 = MagicMock()
             mock_log_window_cls.side_effect = [mock_instance1, mock_instance2]
@@ -214,8 +227,10 @@ class TestCreateLogWindow:
 
         lw._log_window_instance = None
 
-        with patch('src.cli.log_window.LogWindow.start') as mock_start, \
-             patch('src.cli.log_window.LogWindow') as mock_log_window_cls:
+        with (
+            patch("src.cli.log_window.LogWindow.start") as mock_start,
+            patch("src.cli.log_window.LogWindow") as mock_log_window_cls,
+        ):
             mock_instance = MagicMock()
             mock_log_window_cls.return_value = mock_instance
 

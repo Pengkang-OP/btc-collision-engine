@@ -21,7 +21,6 @@ from src.core.base58 import Base58
 from src.core.wif import WIF
 from src.core.address_converter import AddressConverter
 
-
 # ---------------------------------------------------------------------------
 # 测试数据常量
 # ---------------------------------------------------------------------------
@@ -41,28 +40,33 @@ _EXPECTED_ADDRESS_UNCOMPRESSED = "1GAehh7TsJAHuUAeKZcXf5CnwuGuGgyX2S"
 # EncodingUtils 测试
 # ---------------------------------------------------------------------------
 
+
 class TestEncodingUtils(unittest.TestCase):
     """文件编码检测和转换工具测试"""
 
     def test_detect_utf8_encoding(self):
         """检测UTF-8编码文件"""
         content = "Hello World! 你好世界!"
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False, encoding='utf-8') as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".txt", delete=False, encoding="utf-8"
+        ) as f:
             f.write(content)
             temp_path = f.name
-        
+
         try:
             encoding = EncodingUtils.detect_file_encoding(temp_path)
-            self.assertEqual(encoding, 'utf-8')
+            self.assertEqual(encoding, "utf-8")
         finally:
             os.unlink(temp_path)
 
     def test_read_write_file(self):
         """文件读写往返测试"""
         content = "Test content with 中文"
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False, encoding='utf-8') as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".txt", delete=False, encoding="utf-8"
+        ) as f:
             temp_path = f.name
-        
+
         try:
             EncodingUtils.write_file(temp_path, content)
             read_content = EncodingUtils.read_file(temp_path)
@@ -73,18 +77,18 @@ class TestEncodingUtils(unittest.TestCase):
     def test_convert_file_encoding(self):
         """文件编码转换测试"""
         content = "测试内容 Test Content"
-        with tempfile.NamedTemporaryFile(suffix='.txt', delete=False) as src_file:
+        with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as src_file:
             src_path = src_file.name
-        with tempfile.NamedTemporaryFile(suffix='.txt', delete=False) as dst_file:
+        with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as dst_file:
             dst_path = dst_file.name
-        
+
         try:
-            EncodingUtils.write_file(src_path, content, encoding='gbk')
-            result = EncodingUtils.convert_file_encoding(src_path, dst_path, dst_encoding='utf-8')
+            EncodingUtils.write_file(src_path, content, encoding="gbk")
+            result = EncodingUtils.convert_file_encoding(src_path, dst_path, dst_encoding="utf-8")
             self.assertTrue(result)
-            
+
             # 验证转换后的内容
-            converted_content = EncodingUtils.read_file(dst_path, encoding='utf-8')
+            converted_content = EncodingUtils.read_file(dst_path, encoding="utf-8")
             self.assertEqual(converted_content, content)
         finally:
             os.unlink(src_path)
@@ -92,9 +96,9 @@ class TestEncodingUtils(unittest.TestCase):
 
     def test_detect_encoding_from_bytes(self):
         """从字节数据检测编码"""
-        utf8_data = "Hello 世界".encode('utf-8')
+        utf8_data = "Hello 世界".encode("utf-8")
         encoding = EncodingUtils.detect_encoding_from_bytes(utf8_data)
-        self.assertEqual(encoding, 'utf-8')
+        self.assertEqual(encoding, "utf-8")
 
     def test_ensure_utf8_compatible(self):
         """确保UTF-8兼容性处理"""
@@ -107,12 +111,13 @@ class TestEncodingUtils(unittest.TestCase):
 # Base58 测试
 # ---------------------------------------------------------------------------
 
+
 class TestBase58(unittest.TestCase):
     """Base58编解码测试"""
 
     def test_encode_decode_roundtrip(self):
         """Base58编码解码往返测试"""
-        data = b'\x00\x01\x02\x03\x04'
+        data = b"\x00\x01\x02\x03\x04"
         encoded = Base58.encode(data)
         decoded = Base58.decode(encoded)
         self.assertEqual(decoded, data)
@@ -122,23 +127,23 @@ class TestBase58(unittest.TestCase):
         version = 0x00
         payload = bytes.fromhex("751e76e8199196d454941c45d1b3a323f1433bd6")
         encoded = Base58.check_encode(version, payload)
-        
+
         decoded_version, decoded_payload = Base58.check_decode(encoded)
         self.assertEqual(decoded_version, version)
         self.assertEqual(decoded_payload, payload)
 
     def test_encode_empty(self):
         """空数据编码"""
-        self.assertEqual(Base58.encode(b''), '')
+        self.assertEqual(Base58.encode(b""), "")
 
     def test_decode_empty(self):
         """空字符串解码"""
-        self.assertEqual(Base58.decode(''), b'')
+        self.assertEqual(Base58.decode(""), b"")
 
     def test_invalid_base58_char(self):
         """无效Base58字符应抛出异常"""
         with self.assertRaises(ValueError):
-            Base58.decode('O')  # 'O'不在Base58字符集
+            Base58.decode("O")  # 'O'不在Base58字符集
 
     def test_check_decode_invalid_checksum(self):
         """无效校验和应抛出异常"""
@@ -151,6 +156,7 @@ class TestBase58(unittest.TestCase):
 # WIF 测试
 # ---------------------------------------------------------------------------
 
+
 class TestWIF(unittest.TestCase):
     """WIF编解码测试"""
 
@@ -158,13 +164,13 @@ class TestWIF(unittest.TestCase):
         """压缩WIF编码"""
         wif = WIF.encode(_TEST_PRIVATE_KEY, compressed=True)
         self.assertEqual(wif, _EXPECTED_WIF_COMPRESSED)
-        self.assertTrue(wif.startswith(('K', 'L')))
+        self.assertTrue(wif.startswith(("K", "L")))
 
     def test_encode_uncompressed(self):
         """非压缩WIF编码"""
         wif = WIF.encode(_TEST_PRIVATE_KEY, compressed=False)
         self.assertEqual(wif, _EXPECTED_WIF_UNCOMPRESSED)
-        self.assertTrue(wif.startswith('5'))
+        self.assertTrue(wif.startswith("5"))
 
     def test_decode_compressed(self):
         """压缩WIF解码"""
@@ -189,7 +195,7 @@ class TestWIF(unittest.TestCase):
     def test_invalid_private_key_length(self):
         """无效私钥长度应抛出异常"""
         with self.assertRaises(ValueError):
-            WIF.encode(b'\x00' * 31)  # 31字节，应为32字节
+            WIF.encode(b"\x00" * 31)  # 31字节，应为32字节
 
     def test_invalid_wif(self):
         """无效WIF字符串应抛出异常"""
@@ -201,6 +207,7 @@ class TestWIF(unittest.TestCase):
 # AddressConverter 测试
 # ---------------------------------------------------------------------------
 
+
 class TestAddressConverter(unittest.TestCase):
     """地址转换工具测试"""
 
@@ -210,29 +217,29 @@ class TestAddressConverter(unittest.TestCase):
     def test_private_key_to_address_compressed(self):
         """私钥转压缩格式地址"""
         result = self.converter.private_key_to_address(_TEST_PRIVATE_KEY, compressed=True)
-        self.assertEqual(result['address'], _EXPECTED_ADDRESS_COMPRESSED)
-        self.assertTrue(result['compressed'])
+        self.assertEqual(result["address"], _EXPECTED_ADDRESS_COMPRESSED)
+        self.assertTrue(result["compressed"])
 
     def test_private_key_to_address_uncompressed(self):
         """私钥转非压缩格式地址"""
         result = self.converter.private_key_to_address(_TEST_PRIVATE_KEY, compressed=False)
-        self.assertEqual(result['address'], _EXPECTED_ADDRESS_UNCOMPRESSED)
-        self.assertFalse(result['compressed'])
+        self.assertEqual(result["address"], _EXPECTED_ADDRESS_UNCOMPRESSED)
+        self.assertFalse(result["compressed"])
 
     def test_private_key_to_all(self):
         """私钥转所有格式"""
         result = self.converter.private_key_to_all(_TEST_PRIVATE_KEY)
-        
-        self.assertEqual(result['private_key'], _TEST_PRIVATE_KEY)
-        self.assertEqual(result['address_compressed'], _EXPECTED_ADDRESS_COMPRESSED)
-        self.assertEqual(result['address_uncompressed'], _EXPECTED_ADDRESS_UNCOMPRESSED)
-        self.assertEqual(result['wif_compressed'], _EXPECTED_WIF_COMPRESSED)
-        self.assertEqual(result['wif_uncompressed'], _EXPECTED_WIF_UNCOMPRESSED)
+
+        self.assertEqual(result["private_key"], _TEST_PRIVATE_KEY)
+        self.assertEqual(result["address_compressed"], _EXPECTED_ADDRESS_COMPRESSED)
+        self.assertEqual(result["address_uncompressed"], _EXPECTED_ADDRESS_UNCOMPRESSED)
+        self.assertEqual(result["wif_compressed"], _EXPECTED_WIF_COMPRESSED)
+        self.assertEqual(result["wif_uncompressed"], _EXPECTED_WIF_UNCOMPRESSED)
 
     def test_wif_to_address(self):
         """WIF转地址"""
         result = self.converter.wif_to_address(_EXPECTED_WIF_COMPRESSED)
-        self.assertEqual(result['address'], _EXPECTED_ADDRESS_COMPRESSED)
+        self.assertEqual(result["address"], _EXPECTED_ADDRESS_COMPRESSED)
 
     def test_validate_conversion(self):
         """验证转换正确性"""
@@ -243,20 +250,20 @@ class TestAddressConverter(unittest.TestCase):
     def test_validate_with_expected_address(self):
         """使用期望地址验证转换"""
         valid, message = self.converter.validate_conversion(
-            _TEST_PRIVATE_KEY, 
-            expected_address=_EXPECTED_ADDRESS_COMPRESSED
+            _TEST_PRIVATE_KEY, expected_address=_EXPECTED_ADDRESS_COMPRESSED
         )
         self.assertTrue(valid)
 
     def test_invalid_private_key_length(self):
         """无效私钥长度应抛出异常"""
         with self.assertRaises(ValueError):
-            self.converter.private_key_to_address(b'\x00' * 31)
+            self.converter.private_key_to_address(b"\x00" * 31)
 
 
 # ---------------------------------------------------------------------------
 # 集成测试
 # ---------------------------------------------------------------------------
+
 
 class TestDataConversionIntegration(unittest.TestCase):
     """数据转换集成测试"""
@@ -264,31 +271,33 @@ class TestDataConversionIntegration(unittest.TestCase):
     def test_full_conversion_chain(self):
         """完整转换链: 私钥 -> WIF -> 地址"""
         converter = AddressConverter()
-        
+
         # 私钥 -> 所有格式
         result = converter.private_key_to_all(_TEST_PRIVATE_KEY)
-        
+
         # WIF -> 地址
-        wif_result = converter.wif_to_address(result['wif_compressed'])
-        
+        wif_result = converter.wif_to_address(result["wif_compressed"])
+
         # 验证一致性
-        self.assertEqual(result['address_compressed'], wif_result['address'])
+        self.assertEqual(result["address_compressed"], wif_result["address"])
 
     def test_encoding_and_wif_combined(self):
         """编码工具与WIF的组合测试"""
         wif = _EXPECTED_WIF_COMPRESSED
-        
+
         # 将WIF写入文件再读取
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False, encoding='utf-8') as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".txt", delete=False, encoding="utf-8"
+        ) as f:
             f.write(wif)
             temp_path = f.name
-        
+
         try:
             read_wif = EncodingUtils.read_file(temp_path)
             converter = AddressConverter()
             result = converter.wif_to_address(read_wif.strip())
-            
-            self.assertEqual(result['address'], _EXPECTED_ADDRESS_COMPRESSED)
+
+            self.assertEqual(result["address"], _EXPECTED_ADDRESS_COMPRESSED)
         finally:
             os.unlink(temp_path)
 

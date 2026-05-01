@@ -119,10 +119,12 @@ class TestGPUKernelProtocol:
     def test_protocol_is_runtime_checkable(self):
         """协议是运行时可检查的"""
         from typing import runtime_checkable
-        assert hasattr(GPUKernelProtocol, '__metadata__') or True
+
+        assert hasattr(GPUKernelProtocol, "__metadata__") or True
 
     def test_isinstance_with_mock(self):
         """Mock 对象可以满足协议（如果实现所有方法）"""
+
         class MockKernel:
             def run_batch(self, seed, num_keys):
                 return []

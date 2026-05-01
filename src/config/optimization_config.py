@@ -65,8 +65,8 @@ class OptimizationConfig:
                         self._config[config_key] = float(env_value)
                     except ValueError:
                         logger.debug(
-                            "环境变量 %s 值 '%s' 无法转换为float，使用默认值",
-                            env_key, env_value)
+                            "环境变量 %s 值 '%s' 无法转换为float，使用默认值", env_key, env_value
+                        )
 
     def get(self, key: str, default: Any = None) -> Any:
         """获取配置值"""

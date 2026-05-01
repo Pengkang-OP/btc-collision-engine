@@ -15,7 +15,6 @@ import time
 from unittest.mock import Mock, patch, MagicMock, PropertyMock
 from typing import Dict, Any
 
-
 # ============================================================================
 # DataLoggerAdapter 测试
 # ============================================================================
@@ -41,7 +40,10 @@ class TestDataLoggerAdapter:
         """测试无引擎时创建独立 DataLogger"""
         from src.collision.gpu.data_logger_adapter import DataLoggerAdapter
 
-        with patch("src.collision.gpu.data_logger_adapter.DataLoggerAdapter.__init__", lambda self, engine=None, config=None: None):
+        with patch(
+            "src.collision.gpu.data_logger_adapter.DataLoggerAdapter.__init__",
+            lambda self, engine=None, config=None: None,
+        ):
             pass  # skip actual DataLogger creation
 
         # 使用 mock DataLogger
@@ -50,7 +52,6 @@ class TestDataLoggerAdapter:
         adapter._owns_logger = False
         adapter.config = {}
         assert adapter.is_available() is False
-
 
     def test_log_performance_maps_to_record_performance_data(self):
         """测试 log_performance 正确桥接到 record_performance_data"""
@@ -63,15 +64,17 @@ class TestDataLoggerAdapter:
         adapter._logger = mock_logger
 
         # 完整参数
-        adapter.log_performance({
-            "batch_size": 1_000_000,
-            "execution_time_ms": 50.5,
-            "speed": 20_000_000.0,
-            "match_count": 3,
-            "cpu_usage": 45.2,
-            "memory_usage": 512.0,
-            "thread_count": 8,
-        })
+        adapter.log_performance(
+            {
+                "batch_size": 1_000_000,
+                "execution_time_ms": 50.5,
+                "speed": 20_000_000.0,
+                "match_count": 3,
+                "cpu_usage": 45.2,
+                "memory_usage": 512.0,
+                "thread_count": 8,
+            }
+        )
 
         mock_logger.record_performance_data.assert_called_once_with(
             speed=20_000_000.0,
@@ -92,11 +95,13 @@ class TestDataLoggerAdapter:
         mock_logger = Mock()
         adapter._logger = mock_logger
 
-        adapter.log_performance({
-            "keys_per_second": 15_000_000.0,
-            "total_checked": 500_000,
-            "matches_found": 1,
-        })
+        adapter.log_performance(
+            {
+                "keys_per_second": 15_000_000.0,
+                "total_checked": 500_000,
+                "matches_found": 1,
+            }
+        )
 
         mock_logger.record_performance_data.assert_called_once_with(
             speed=15_000_000.0,
@@ -281,10 +286,12 @@ class TestPerformanceMonitoringPipeline:
         pipeline = PerformanceMonitoringPipeline()
 
         # Mock 所有工厂方法
-        with patch.object(pipeline, "_create_performance_monitor", return_value=None), \
-             patch.object(pipeline, "_create_engine_monitor", return_value=None), \
-             patch.object(pipeline, "_create_data_logger", return_value=None), \
-             patch.object(pipeline, "_create_vendor_monitors", return_value=[]):
+        with (
+            patch.object(pipeline, "_create_performance_monitor", return_value=None),
+            patch.object(pipeline, "_create_engine_monitor", return_value=None),
+            patch.object(pipeline, "_create_data_logger", return_value=None),
+            patch.object(pipeline, "_create_vendor_monitors", return_value=[]),
+        ):
 
             pipeline.start()
             assert pipeline.is_running() is True
@@ -298,10 +305,12 @@ class TestPerformanceMonitoringPipeline:
 
         pipeline = PerformanceMonitoringPipeline()
 
-        with patch.object(pipeline, "_create_performance_monitor", return_value=None), \
-             patch.object(pipeline, "_create_engine_monitor", return_value=None), \
-             patch.object(pipeline, "_create_data_logger", return_value=None), \
-             patch.object(pipeline, "_create_vendor_monitors", return_value=[]):
+        with (
+            patch.object(pipeline, "_create_performance_monitor", return_value=None),
+            patch.object(pipeline, "_create_engine_monitor", return_value=None),
+            patch.object(pipeline, "_create_data_logger", return_value=None),
+            patch.object(pipeline, "_create_vendor_monitors", return_value=[]),
+        ):
 
             pipeline.start()
             pipeline.start()  # 不应抛出异常
@@ -469,9 +478,7 @@ class TestPerformanceMonitoringPipeline:
         """测试慢操作异常检测"""
         from src.collision.gpu.monitoring import PerformanceMonitoringPipeline
 
-        pipeline = PerformanceMonitoringPipeline(
-            config={"slow_threshold_ms": 100}
-        )
+        pipeline = PerformanceMonitoringPipeline(config={"slow_threshold_ms": 100})
 
         with patch("src.collision.gpu.monitoring.logger") as mock_logger:
             pipeline._detect_anomalies(
@@ -486,9 +493,7 @@ class TestPerformanceMonitoringPipeline:
         """测试正常执行不触发告警"""
         from src.collision.gpu.monitoring import PerformanceMonitoringPipeline
 
-        pipeline = PerformanceMonitoringPipeline(
-            config={"slow_threshold_ms": 5000}
-        )
+        pipeline = PerformanceMonitoringPipeline(config={"slow_threshold_ms": 5000})
 
         with patch("src.collision.gpu.monitoring.logger") as mock_logger:
             pipeline._detect_anomalies(
@@ -504,9 +509,7 @@ class TestPerformanceMonitoringPipeline:
         """测试高错误率检测"""
         from src.collision.gpu.monitoring import PerformanceMonitoringPipeline
 
-        pipeline = PerformanceMonitoringPipeline(
-            config={"error_rate_threshold": 0.01}
-        )
+        pipeline = PerformanceMonitoringPipeline(config={"error_rate_threshold": 0.01})
 
         with patch("src.collision.gpu.monitoring.logger") as mock_logger:
             pipeline._detect_anomalies(
@@ -520,9 +523,7 @@ class TestPerformanceMonitoringPipeline:
         """测试正常错误率不触发告警"""
         from src.collision.gpu.monitoring import PerformanceMonitoringPipeline
 
-        pipeline = PerformanceMonitoringPipeline(
-            config={"error_rate_threshold": 0.01}
-        )
+        pipeline = PerformanceMonitoringPipeline(config={"error_rate_threshold": 0.01})
 
         with patch("src.collision.gpu.monitoring.logger") as mock_logger:
             pipeline._detect_anomalies(
@@ -541,7 +542,9 @@ class TestPerformanceMonitoringPipeline:
         mock_engine = Mock()
         mock_engine._gpu_device = Mock()
 
-        with patch("src.collision.gpu.monitoring.PerformanceMonitoringPipeline._detect_vendor") as mock_detect:
+        with patch(
+            "src.collision.gpu.monitoring.PerformanceMonitoringPipeline._detect_vendor"
+        ) as mock_detect:
             mock_detect.return_value = "nvidia"
 
             pipeline = PerformanceMonitoringPipeline(engine=mock_engine)
@@ -582,9 +585,7 @@ class TestFactoryMethods:
     @patch("src.collision.gpu.monitoring.PerformanceMonitoringPipeline._create_engine_monitor")
     @patch("src.collision.gpu.monitoring.PerformanceMonitoringPipeline._create_data_logger")
     @patch("src.collision.gpu.monitoring.PerformanceMonitoringPipeline._create_vendor_monitors")
-    def test_start_invokes_all_factories(
-        self, mock_vendor, mock_dl, mock_engine, mock_perf
-    ):
+    def test_start_invokes_all_factories(self, mock_vendor, mock_dl, mock_engine, mock_perf):
         """测试 start 调用所有工厂方法"""
         from src.collision.gpu.monitoring import PerformanceMonitoringPipeline
 
@@ -605,9 +606,7 @@ class TestFactoryMethods:
     @patch("src.collision.gpu.monitoring.PerformanceMonitoringPipeline._create_engine_monitor")
     @patch("src.collision.gpu.monitoring.PerformanceMonitoringPipeline._create_data_logger")
     @patch("src.collision.gpu.monitoring.PerformanceMonitoringPipeline._create_vendor_monitors")
-    def test_start_with_all_monitors(
-        self, mock_vendor, mock_dl, mock_engine, mock_perf
-    ):
+    def test_start_with_all_monitors(self, mock_vendor, mock_dl, mock_engine, mock_perf):
         """测试启动时所有监控器 start() 被调用"""
         from src.collision.gpu.monitoring import PerformanceMonitoringPipeline
 
@@ -629,9 +628,7 @@ class TestFactoryMethods:
     @patch("src.collision.gpu.monitoring.PerformanceMonitoringPipeline._create_engine_monitor")
     @patch("src.collision.gpu.monitoring.PerformanceMonitoringPipeline._create_data_logger")
     @patch("src.collision.gpu.monitoring.PerformanceMonitoringPipeline._create_vendor_monitors")
-    def test_stop_stops_all_monitors_in_order(
-        self, mock_vendor, mock_dl, mock_engine, mock_perf
-    ):
+    def test_stop_stops_all_monitors_in_order(self, mock_vendor, mock_dl, mock_engine, mock_perf):
         """测试 stop 按正确顺序停止所有监控器"""
         from src.collision.gpu.monitoring import PerformanceMonitoringPipeline
 
@@ -681,17 +678,20 @@ class TestModuleImports:
     def test_import_data_logger_adapter(self):
         """测试 DataLoggerAdapter 导入"""
         from src.collision.gpu.data_logger_adapter import DataLoggerAdapter
+
         assert DataLoggerAdapter is not None
 
     def test_import_from_module_init(self):
         """测试从 __init__ 导入 Phase 3 适配器"""
         from src.collision.gpu import DataLoggerAdapter, get_data_logger_adapter
+
         assert DataLoggerAdapter is not None
         assert callable(get_data_logger_adapter)
 
     def test_module_version(self):
         """测试模块版本号"""
         from src.collision import gpu
+
         assert gpu.__version__ == "6.0.0"
 
     def test_all_exports_include_phase3(self):
@@ -709,6 +709,7 @@ class TestModuleImports:
     def test_monitoring_pipeline_import(self):
         """测试 PerformanceMonitoringPipeline 导入"""
         from src.collision.gpu.monitoring import PerformanceMonitoringPipeline
+
         assert PerformanceMonitoringPipeline is not None
 
     def test_no_todos_in_phase3_files(self):
@@ -739,9 +740,7 @@ class TestPipelineIntegration:
     @patch("src.collision.gpu.monitoring.PerformanceMonitoringPipeline._create_performance_monitor")
     @patch("src.collision.gpu.monitoring.PerformanceMonitoringPipeline._create_engine_monitor")
     @patch("src.collision.gpu.monitoring.PerformanceMonitoringPipeline._create_vendor_monitors")
-    def test_record_metrics_to_data_logger_integration(
-        self, mock_vendor, mock_engine, mock_perf
-    ):
+    def test_record_metrics_to_data_logger_integration(self, mock_vendor, mock_engine, mock_perf):
         """测试 record_metrics → DataLoggerAdapter.log_performance 完整流程"""
         from src.collision.gpu.monitoring import PerformanceMonitoringPipeline
 
@@ -755,6 +754,7 @@ class TestPipelineIntegration:
 
         # 使用真实的 DataLoggerAdapter
         from src.collision.gpu.data_logger_adapter import DataLoggerAdapter
+
         mock_adapter = MagicMock(spec=DataLoggerAdapter)
         pipeline._data_logger = mock_adapter
 
@@ -778,9 +778,7 @@ class TestPipelineIntegration:
     @patch("src.collision.gpu.monitoring.PerformanceMonitoringPipeline._create_engine_monitor")
     @patch("src.collision.gpu.monitoring.PerformanceMonitoringPipeline._create_data_logger")
     @patch("src.collision.gpu.monitoring.PerformanceMonitoringPipeline._create_vendor_monitors")
-    def test_full_lifecycle_with_data_logger(
-        self, mock_vendor, mock_dl, mock_engine, mock_perf
-    ):
+    def test_full_lifecycle_with_data_logger(self, mock_vendor, mock_dl, mock_engine, mock_perf):
         """测试完整生命周期：start → record → get_stats → stop"""
         from src.collision.gpu.monitoring import PerformanceMonitoringPipeline
 
@@ -815,9 +813,7 @@ class TestPipelineIntegration:
     @patch("src.collision.gpu.monitoring.PerformanceMonitoringPipeline._create_engine_monitor")
     @patch("src.collision.gpu.monitoring.PerformanceMonitoringPipeline._create_data_logger")
     @patch("src.collision.gpu.monitoring.PerformanceMonitoringPipeline._create_vendor_monitors")
-    def test_start_failure_triggers_stop(
-        self, mock_vendor, mock_dl, mock_engine, mock_perf
-    ):
+    def test_start_failure_triggers_stop(self, mock_vendor, mock_dl, mock_engine, mock_perf):
         """测试启动失败时触发 stop 清理"""
         from src.collision.gpu.monitoring import PerformanceMonitoringPipeline
 

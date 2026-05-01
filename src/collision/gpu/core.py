@@ -100,7 +100,9 @@ class CollisionCore(ICollisionCore):
         self.checkpoint_interval = self.config.get("checkpoint_interval", 30)
         self.dedup_enabled = self.config.get("dedup_enabled", False)
         self.checkpoint_enabled = self.config.get("checkpoint_enabled", False)
-        self.progress_interval = self.config.get("progress_interval", 1.0)  # Phase 4: 进度回调间隔(秒)
+        self.progress_interval = self.config.get(
+            "progress_interval", 1.0
+        )  # Phase 4: 进度回调间隔(秒)
 
         logger.debug("CollisionCore 初始化完成")
 
@@ -353,6 +355,7 @@ class CollisionCore(ICollisionCore):
         try:
             if self._engine is not None:
                 from ...gpu.search_mode_coordinator import SearchModeCoordinator
+
                 self.search_coordinator = SearchModeCoordinator(self._engine)
                 logger.debug("搜索协调器已初始化 (通过engine注入)")
             else:
@@ -369,6 +372,7 @@ class CollisionCore(ICollisionCore):
         存根实现了 start/stop/pause/resume/get_current_mode 等基本接口，
         所有操作均为无操作，确保 CollisionCore 可以正常运行统计/断点/去重功能。
         """
+
         class _SearchCoordinatorStub:
             def __init__(self):
                 self._current_mode = None

@@ -18,7 +18,8 @@ from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
 import sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.utils.data_cleanup import DataCleaner
 
@@ -29,12 +30,12 @@ class TestDataCleanerBasic(TestCase):
     def setUp(self):
         """创建临时项目目录结构"""
         self.test_dir = tempfile.mkdtemp()
-        
+
         # 创建必要的子目录
-        os.makedirs(os.path.join(self.test_dir, 'data_logs'), exist_ok=True)
-        os.makedirs(os.path.join(self.test_dir, 'logs'), exist_ok=True)
-        os.makedirs(os.path.join(self.test_dir, 'monitoring_data'), exist_ok=True)
-        
+        os.makedirs(os.path.join(self.test_dir, "data_logs"), exist_ok=True)
+        os.makedirs(os.path.join(self.test_dir, "logs"), exist_ok=True)
+        os.makedirs(os.path.join(self.test_dir, "monitoring_data"), exist_ok=True)
+
         self.cleaner = DataCleaner(project_root=self.test_dir)
 
     def tearDown(self):
@@ -46,23 +47,23 @@ class TestDataCleanerBasic(TestCase):
         """初始化测试"""
         self.assertIsNotNone(self.cleaner.project_root)
         self.assertEqual(self.cleaner.project_root, self.test_dir)
-        
+
         # 验证初始统计
-        self.assertEqual(self.cleaner.stats['files_removed'], 0)
-        self.assertEqual(self.cleaner.stats['space_freed_bytes'], 0)
-        self.assertEqual(self.cleaner.stats['errors'], 0)
+        self.assertEqual(self.cleaner.stats["files_removed"], 0)
+        self.assertEqual(self.cleaner.stats["space_freed_bytes"], 0)
+        self.assertEqual(self.cleaner.stats["errors"], 0)
 
     def test_initialization_default_path(self):
         """默认路径初始化"""
         cleaner = DataCleaner()
-        
+
         # 应该使用项目根目录
         self.assertIsNotNone(cleaner.project_root)
 
     def test_stats_structure(self):
         """统计数据结构测试"""
-        expected_keys = ['files_removed', 'space_freed_bytes', 'dirs_cleaned', 'errors']
-        
+        expected_keys = ["files_removed", "space_freed_bytes", "dirs_cleaned", "errors"]
+
         for key in expected_keys:
             self.assertIn(key, self.cleaner.stats)
 
@@ -73,11 +74,11 @@ class TestDataCleanerTempFiles(TestCase):
     def setUp(self):
         """创建临时项目目录结构"""
         self.test_dir = tempfile.mkdtemp()
-        
+
         # 创建必要的子目录
-        os.makedirs(os.path.join(self.test_dir, 'data_logs'), exist_ok=True)
-        os.makedirs(os.path.join(self.test_dir, 'logs'), exist_ok=True)
-        
+        os.makedirs(os.path.join(self.test_dir, "data_logs"), exist_ok=True)
+        os.makedirs(os.path.join(self.test_dir, "logs"), exist_ok=True)
+
         self.cleaner = DataCleaner(project_root=self.test_dir)
 
     def tearDown(self):
@@ -88,47 +89,47 @@ class TestDataCleanerTempFiles(TestCase):
     def test_clean_temp_files_no_files(self):
         """无临时文件时清理"""
         removed, freed = self.cleaner.clean_temp_files()
-        
+
         self.assertEqual(removed, 0)
         self.assertEqual(freed, 0)
 
     def test_clean_temp_files_old_files(self):
         """清理旧临时文件"""
         # 创建旧临时文件（修改时间为8天前）
-        old_file = Path(self.test_dir) / 'data_logs' / 'old_file.tmp'
+        old_file = Path(self.test_dir) / "data_logs" / "old_file.tmp"
         old_file.touch()
-        
+
         # 设置文件时间为8天前
         old_time = time.time() - (8 * 24 * 3600)
         os.utime(old_file, (old_time, old_time))
-        
+
         removed, freed = self.cleaner.clean_temp_files(max_age_days=7, dry_run=False)
-        
+
         self.assertEqual(removed, 1)
         self.assertFalse(old_file.exists())
 
     def test_clean_temp_files_new_files(self):
         """不清理新临时文件"""
         # 创建新临时文件
-        new_file = Path(self.test_dir) / 'data_logs' / 'new_file.tmp'
+        new_file = Path(self.test_dir) / "data_logs" / "new_file.tmp"
         new_file.touch()
-        
+
         removed, freed = self.cleaner.clean_temp_files(max_age_days=7, dry_run=False)
-        
+
         self.assertEqual(removed, 0)
         self.assertTrue(new_file.exists())
 
     def test_clean_temp_files_dry_run(self):
         """试运行模式清理"""
         # 创建旧临时文件
-        old_file = Path(self.test_dir) / 'data_logs' / 'old_file.tmp'
+        old_file = Path(self.test_dir) / "data_logs" / "old_file.tmp"
         old_file.touch()
-        
+
         old_time = time.time() - (8 * 24 * 3600)
         os.utime(old_file, (old_time, old_time))
-        
+
         removed, freed = self.cleaner.clean_temp_files(max_age_days=7, dry_run=True)
-        
+
         # 试运行应该报告文件但实际不删除
         self.assertEqual(removed, 1)
         self.assertTrue(old_file.exists())  # 文件仍然存在
@@ -136,18 +137,18 @@ class TestDataCleanerTempFiles(TestCase):
     def test_clean_temp_files_multiple_dirs(self):
         """清理多个目录的临时文件"""
         # 在data_logs创建旧文件
-        old_file1 = Path(self.test_dir) / 'data_logs' / 'old1.tmp'
+        old_file1 = Path(self.test_dir) / "data_logs" / "old1.tmp"
         old_file1.touch()
         old_time = time.time() - (8 * 24 * 3600)
         os.utime(old_file1, (old_time, old_time))
-        
+
         # 在logs创建旧文件
-        old_file2 = Path(self.test_dir) / 'logs' / 'old2.tmp'
+        old_file2 = Path(self.test_dir) / "logs" / "old2.tmp"
         old_file2.touch()
         os.utime(old_file2, (old_time, old_time))
-        
+
         removed, freed = self.cleaner.clean_temp_files(max_age_days=7, dry_run=False)
-        
+
         self.assertEqual(removed, 2)
         self.assertFalse(old_file1.exists())
         self.assertFalse(old_file2.exists())
@@ -159,8 +160,8 @@ class TestDataCleanerOldData(TestCase):
     def setUp(self):
         """创建临时项目目录结构"""
         self.test_dir = tempfile.mkdtemp()
-        os.makedirs(os.path.join(self.test_dir, 'data_logs'), exist_ok=True)
-        
+        os.makedirs(os.path.join(self.test_dir, "data_logs"), exist_ok=True)
+
         self.cleaner = DataCleaner(project_root=self.test_dir)
 
     def tearDown(self):
@@ -171,60 +172,60 @@ class TestDataCleanerOldData(TestCase):
     def test_clean_old_data_no_files(self):
         """无历史数据时清理"""
         removed, freed = self.cleaner.clean_old_data()
-        
+
         self.assertEqual(removed, 0)
         self.assertEqual(freed, 0)
 
     def test_clean_old_data_old_files(self):
         """清理旧历史数据"""
         # 创建旧历史数据文件（31天前）
-        old_file = Path(self.test_dir) / 'data_logs' / 'history_data_old.json'
+        old_file = Path(self.test_dir) / "data_logs" / "history_data_old.json"
         old_file.touch()
-        
+
         old_time = time.time() - (31 * 24 * 3600)
         os.utime(old_file, (old_time, old_time))
-        
+
         removed, freed = self.cleaner.clean_old_data(max_age_days=30, dry_run=False)
-        
+
         self.assertEqual(removed, 1)
         self.assertFalse(old_file.exists())
 
     def test_clean_old_data_new_files(self):
         """不清理新历史数据"""
         # 创建新历史数据文件
-        new_file = Path(self.test_dir) / 'data_logs' / 'history_data_new.json'
+        new_file = Path(self.test_dir) / "data_logs" / "history_data_new.json"
         new_file.touch()
-        
+
         removed, freed = self.cleaner.clean_old_data(max_age_days=30, dry_run=False)
-        
+
         self.assertEqual(removed, 0)
         self.assertTrue(new_file.exists())
 
     def test_clean_old_data_dry_run(self):
         """试运行模式"""
         # 创建旧历史数据文件
-        old_file = Path(self.test_dir) / 'data_logs' / 'history_data_old.json'
+        old_file = Path(self.test_dir) / "data_logs" / "history_data_old.json"
         old_file.touch()
-        
+
         old_time = time.time() - (31 * 24 * 3600)
         os.utime(old_file, (old_time, old_time))
-        
+
         removed, freed = self.cleaner.clean_old_data(max_age_days=30, dry_run=True)
-        
+
         self.assertEqual(removed, 1)
         self.assertTrue(old_file.exists())
 
     def test_clean_old_data_non_matching_files(self):
         """不清理不匹配模式的文件"""
         # 创建不匹配的文件
-        other_file = Path(self.test_dir) / 'data_logs' / 'other_file.txt'
+        other_file = Path(self.test_dir) / "data_logs" / "other_file.txt"
         other_file.touch()
-        
+
         old_time = time.time() - (31 * 24 * 3600)
         os.utime(other_file, (old_time, old_time))
-        
+
         removed, freed = self.cleaner.clean_old_data(max_age_days=30, dry_run=False)
-        
+
         # 只清理history_data_*.json文件
         self.assertEqual(removed, 0)
         self.assertTrue(other_file.exists())
@@ -236,8 +237,8 @@ class TestDataCleanerLogRotation(TestCase):
     def setUp(self):
         """创建临时项目目录结构"""
         self.test_dir = tempfile.mkdtemp()
-        os.makedirs(os.path.join(self.test_dir, 'logs'), exist_ok=True)
-        
+        os.makedirs(os.path.join(self.test_dir, "logs"), exist_ok=True)
+
         self.cleaner = DataCleaner(project_root=self.test_dir)
 
     def tearDown(self):
@@ -248,32 +249,32 @@ class TestDataCleanerLogRotation(TestCase):
     def test_rotate_logs_no_files(self):
         """无日志文件时轮转"""
         removed = self.cleaner.rotate_log_files()
-        
+
         self.assertEqual(removed, 0)
 
     def test_rotate_logs_under_limit(self):
         """日志文件未超过限制"""
         # 创建3个日志文件（限制5个）
         for i in range(3):
-            log_file = Path(self.test_dir) / 'logs' / f'app_{i}.log'
+            log_file = Path(self.test_dir) / "logs" / f"app_{i}.log"
             log_file.touch()
-        
+
         removed = self.cleaner.rotate_log_files(max_files=5)
-        
+
         self.assertEqual(removed, 0)
 
     def test_rotate_logs_over_limit(self):
         """日志文件超过限制"""
         # 创建7个日志文件（限制5个）
         for i in range(7):
-            log_file = Path(self.test_dir) / 'logs' / f'app_{i}.log'
+            log_file = Path(self.test_dir) / "logs" / f"app_{i}.log"
             log_file.touch()
             # 设置不同的修改时间
             old_time = time.time() - (i * 3600)
             os.utime(log_file, (old_time, old_time))
-        
+
         removed = self.cleaner.rotate_log_files(max_files=5)
-        
+
         # 应该删除最旧的2个文件
         self.assertEqual(removed, 2)
 
@@ -281,18 +282,18 @@ class TestDataCleanerLogRotation(TestCase):
         """试运行模式"""
         # 创建7个日志文件
         for i in range(7):
-            log_file = Path(self.test_dir) / 'logs' / f'app_{i}.log'
+            log_file = Path(self.test_dir) / "logs" / f"app_{i}.log"
             log_file.touch()
             old_time = time.time() - (i * 3600)
             os.utime(log_file, (old_time, old_time))
-        
+
         removed = self.cleaner.rotate_log_files(max_files=5, dry_run=True)
-        
+
         # 试运行应该报告但实际不删除
         self.assertEqual(removed, 2)
-        
+
         # 所有文件应该仍然存在
-        log_count = len(list((Path(self.test_dir) / 'logs').glob('*.log*')))
+        log_count = len(list((Path(self.test_dir) / "logs").glob("*.log*")))
         self.assertEqual(log_count, 7)
 
 
@@ -302,8 +303,8 @@ class TestDataCleanerMonitoringData(TestCase):
     def setUp(self):
         """创建临时项目目录结构"""
         self.test_dir = tempfile.mkdtemp()
-        os.makedirs(os.path.join(self.test_dir, 'monitoring_data'), exist_ok=True)
-        
+        os.makedirs(os.path.join(self.test_dir, "monitoring_data"), exist_ok=True)
+
         self.cleaner = DataCleaner(project_root=self.test_dir)
 
     def tearDown(self):
@@ -314,35 +315,35 @@ class TestDataCleanerMonitoringData(TestCase):
     def test_clean_monitoring_data_no_files(self):
         """无监控数据时清理"""
         removed, freed = self.cleaner.clean_monitoring_data()
-        
+
         self.assertEqual(removed, 0)
         self.assertEqual(freed, 0)
 
     def test_clean_monitoring_data_old_files(self):
         """清理旧监控数据"""
         # 创建旧监控数据文件（31天前）
-        old_file = Path(self.test_dir) / 'monitoring_data' / 'metrics_old.json'
+        old_file = Path(self.test_dir) / "monitoring_data" / "metrics_old.json"
         old_file.touch()
-        
+
         old_time = time.time() - (31 * 24 * 3600)
         os.utime(old_file, (old_time, old_time))
-        
+
         removed, freed = self.cleaner.clean_monitoring_data(max_age_days=30, dry_run=False)
-        
+
         self.assertEqual(removed, 1)
         self.assertFalse(old_file.exists())
 
     def test_clean_monitoring_data_dry_run(self):
         """试运行模式"""
         # 创建旧监控数据文件
-        old_file = Path(self.test_dir) / 'monitoring_data' / 'metrics_old.json'
+        old_file = Path(self.test_dir) / "monitoring_data" / "metrics_old.json"
         old_file.touch()
-        
+
         old_time = time.time() - (31 * 24 * 3600)
         os.utime(old_file, (old_time, old_time))
-        
+
         removed, freed = self.cleaner.clean_monitoring_data(max_age_days=30, dry_run=True)
-        
+
         self.assertEqual(removed, 1)
         self.assertTrue(old_file.exists())
 
@@ -353,12 +354,12 @@ class TestDataCleanerCleanAll(TestCase):
     def setUp(self):
         """创建临时项目目录结构"""
         self.test_dir = tempfile.mkdtemp()
-        
+
         # 创建所有子目录
-        os.makedirs(os.path.join(self.test_dir, 'data_logs'), exist_ok=True)
-        os.makedirs(os.path.join(self.test_dir, 'logs'), exist_ok=True)
-        os.makedirs(os.path.join(self.test_dir, 'monitoring_data'), exist_ok=True)
-        
+        os.makedirs(os.path.join(self.test_dir, "data_logs"), exist_ok=True)
+        os.makedirs(os.path.join(self.test_dir, "logs"), exist_ok=True)
+        os.makedirs(os.path.join(self.test_dir, "monitoring_data"), exist_ok=True)
+
         self.cleaner = DataCleaner(project_root=self.test_dir)
 
     def tearDown(self):
@@ -369,30 +370,30 @@ class TestDataCleanerCleanAll(TestCase):
     def test_clean_all_empty_dirs(self):
         """清理空目录"""
         result = self.cleaner.clean_all(dry_run=False)
-        
-        self.assertIn('files_removed', result)
-        self.assertIn('space_freed_bytes', result)
-        self.assertIn('errors', result)
+
+        self.assertIn("files_removed", result)
+        self.assertIn("space_freed_bytes", result)
+        self.assertIn("errors", result)
 
     def test_clean_all_dry_run(self):
         """试运行清理所有"""
         result = self.cleaner.clean_all(dry_run=True)
-        
+
         # 试运行不应该有错误
-        self.assertEqual(result['errors'], 0)
+        self.assertEqual(result["errors"], 0)
 
     def test_clean_all_stats_accumulation(self):
         """清理统计累积"""
         # 创建一些旧文件
-        old_file = Path(self.test_dir) / 'data_logs' / 'old.tmp'
+        old_file = Path(self.test_dir) / "data_logs" / "old.tmp"
         old_file.touch()
         old_time = time.time() - (8 * 24 * 3600)
         os.utime(old_file, (old_time, old_time))
-        
+
         result = self.cleaner.clean_all(dry_run=False)
-        
+
         # 应该至少删除1个文件
-        self.assertGreaterEqual(result['files_removed'], 1)
+        self.assertGreaterEqual(result["files_removed"], 1)
 
 
 class TestDataCleanerDiskUsage(TestCase):
@@ -411,16 +412,16 @@ class TestDataCleanerDiskUsage(TestCase):
     def test_get_disk_usage(self):
         """获取磁盘使用情况"""
         usage = self.cleaner.get_disk_usage()
-        
-        self.assertIn('total_gb', usage)
-        self.assertIn('used_gb', usage)
-        self.assertIn('free_gb', usage)
-        self.assertIn('usage_percent', usage)
-        
+
+        self.assertIn("total_gb", usage)
+        self.assertIn("used_gb", usage)
+        self.assertIn("free_gb", usage)
+        self.assertIn("usage_percent", usage)
+
         # 验证数值合理性
-        self.assertGreater(usage['total_gb'], 0)
-        self.assertGreaterEqual(usage['usage_percent'], 0)
-        self.assertLessEqual(usage['usage_percent'], 100)
+        self.assertGreater(usage["total_gb"], 0)
+        self.assertGreaterEqual(usage["usage_percent"], 0)
+        self.assertLessEqual(usage["usage_percent"], 100)
 
 
 class TestDataCleanerEdgeCases(TestCase):
@@ -437,12 +438,12 @@ class TestDataCleanerEdgeCases(TestCase):
 
     def test_nonexistent_project_root(self):
         """不存在的项目根目录"""
-        nonexistent_dir = os.path.join(self.test_dir, 'nonexistent')
+        nonexistent_dir = os.path.join(self.test_dir, "nonexistent")
         cleaner = DataCleaner(project_root=nonexistent_dir)
-        
+
         # 应该能正常初始化
         self.assertIsNotNone(cleaner.project_root)
-        
+
         # 清理应该能处理不存在的目录
         result = cleaner.clean_all(dry_run=True)
         self.assertIsInstance(result, dict)
@@ -451,28 +452,29 @@ class TestDataCleanerEdgeCases(TestCase):
         """清理时遇到权限错误"""
         # 在Windows上难以真正测试权限问题
         # 这里测试正常情况
-        os.makedirs(os.path.join(self.test_dir, 'data_logs'), exist_ok=True)
+        os.makedirs(os.path.join(self.test_dir, "data_logs"), exist_ok=True)
         cleaner = DataCleaner(project_root=self.test_dir)
-        
+
         result = cleaner.clean_all(dry_run=True)
         self.assertIsInstance(result, dict)
 
     def test_multiple_clean_operations(self):
         """多次清理操作"""
-        os.makedirs(os.path.join(self.test_dir, 'data_logs'), exist_ok=True)
+        os.makedirs(os.path.join(self.test_dir, "data_logs"), exist_ok=True)
         cleaner = DataCleaner(project_root=self.test_dir)
-        
+
         # 第一次清理
         result1 = cleaner.clean_all(dry_run=True)
-        
+
         # 第二次清理
         result2 = cleaner.clean_all(dry_run=True)
-        
+
         # 两次都应该成功
         self.assertIsInstance(result1, dict)
         self.assertIsInstance(result2, dict)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import unittest
+
     unittest.main()

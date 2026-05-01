@@ -54,7 +54,7 @@ class SafeStreamHandler(logging.StreamHandler):
             msg = self.format(record)
             stream = self.stream
             # 检测流是否已被关闭（如测试替换 sys.stdout 后恢复导致的）
-            if stream is None or getattr(stream, 'closed', False):
+            if stream is None or getattr(stream, "closed", False):
                 return
             # 如果是 Windows 且流编码不是 UTF-8，尝试将消息安全转换
             enc = getattr(stream, "encoding", "") or ""
@@ -334,7 +334,9 @@ def setup_logger(
             os.makedirs(log_dir, mode=0o750, exist_ok=True)
 
         # 使用 SafeRotatingFileHandler 自动轮转（Windows 安全）
-        file_handler: logging.FileHandler = _make_rotating_handler(log_file, max_bytes, backup_count)
+        file_handler: logging.FileHandler = _make_rotating_handler(
+            log_file, max_bytes, backup_count
+        )
         file_handler.setLevel(getattr(logging, level))
         file_handler.setFormatter(logging.Formatter(format))
         logger.addHandler(file_handler)
@@ -539,7 +541,9 @@ class AsyncFileHandler(logging.Handler):
 
         # 创建底层文件处理器
         if max_bytes > 0:
-            self._handler: logging.Handler = _make_rotating_handler(filename, max_bytes, backup_count)
+            self._handler: logging.Handler = _make_rotating_handler(
+                filename, max_bytes, backup_count
+            )
         else:
             self._handler = logging.FileHandler(filename, encoding="utf-8")
 

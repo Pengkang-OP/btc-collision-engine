@@ -14,7 +14,8 @@
 
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 import inspect
 from src.core.secp256k1 import EllipticCurve, ECPoint, Secp256k1
@@ -35,9 +36,10 @@ class TestP1_1ConstTimeSelectFix:
     def test_a_old_condition_branch_removed(self):
         """验证 _const_time_select 源码中不再包含 condition==0 显式分支"""
         import inspect
+
         source = inspect.getsource(self.ec._const_time_select)
 
-        lines = source.split('\n')
+        lines = source.split("\n")
 
         # 跳过文档字符串（第1个 """ 到第2个 """ 之间的内容）
         in_docstring = False
@@ -55,13 +57,13 @@ class TestP1_1ConstTimeSelectFix:
                     continue
             if in_docstring:
                 continue
-            if stripped.startswith('#'):
+            if stripped.startswith("#"):
                 continue
             if stripped:
                 code_lines.append(stripped)
 
         # 检查是否存在 if condition == 0 的条件分支（排除注释/文档字符串）
-        found_old_pattern = any('condition == 0' in l for l in code_lines)
+        found_old_pattern = any("condition == 0" in l for l in code_lines)
         assert not found_old_pattern, (
             "_const_time_select 中不应再包含 `if condition == 0` 分支！\n"
             "P1-1 修复需要消除此密钥相关分支。"
@@ -75,11 +77,11 @@ class TestP1_1ConstTimeSelectFix:
         source = inspect.getsource(self.ec._const_time_select)
 
         # 关键行必须存在
-        assert 'mask = -condition' in source, "应使用位掩码"
-        assert 'if a.is_infinity' in source, "应将无穷远点映射到 (0,0)"
-        assert 'result_inf' in source, "应使用掩码选择无穷远标志"
-        assert '(a_x & ~mask) | (b_x & mask)' in source, "应使用位掩码选择 x 坐标"
-        assert '(a_y & ~mask) | (b_y & mask)' in source, "应使用位掩码选择 y 坐标"
+        assert "mask = -condition" in source, "应使用位掩码"
+        assert "if a.is_infinity" in source, "应将无穷远点映射到 (0,0)"
+        assert "result_inf" in source, "应使用掩码选择无穷远标志"
+        assert "(a_x & ~mask) | (b_x & mask)" in source, "应使用位掩码选择 x 坐标"
+        assert "(a_y & ~mask) | (b_y & mask)" in source, "应使用位掩码选择 y 坐标"
 
     # ================================================================
     # 验证 C: 无穷远点组合正确性
@@ -87,14 +89,14 @@ class TestP1_1ConstTimeSelectFix:
     def test_c_all_infinity_combinations(self):
         """验证所有无穷远点+普通点组合的 _const_time_select 正确性"""
         test_cases = [
-            (0, self.inf, self.G, 'a=inf, b=G, cond=0 → inf'),
-            (1, self.inf, self.G, 'a=inf, b=G, cond=1 → G'),
-            (0, self.G, self.inf, 'a=G, b=inf, cond=0 → G'),
-            (1, self.G, self.inf, 'a=G, b=inf, cond=1 → inf'),
-            (0, self.inf, self.inf, 'a=inf, b=inf, cond=0 → inf'),
-            (1, self.inf, self.inf, 'a=inf, b=inf, cond=1 → inf'),
-            (0, self.G, self.G, 'a=G, b=G, cond=0 → G'),
-            (1, self.G, self.G, 'a=G, b=G, cond=1 → G'),
+            (0, self.inf, self.G, "a=inf, b=G, cond=0 → inf"),
+            (1, self.inf, self.G, "a=inf, b=G, cond=1 → G"),
+            (0, self.G, self.inf, "a=G, b=inf, cond=0 → G"),
+            (1, self.G, self.inf, "a=G, b=inf, cond=1 → inf"),
+            (0, self.inf, self.inf, "a=inf, b=inf, cond=0 → inf"),
+            (1, self.inf, self.inf, "a=inf, b=inf, cond=1 → inf"),
+            (0, self.G, self.G, "a=G, b=G, cond=0 → G"),
+            (1, self.G, self.G, "a=G, b=G, cond=1 → G"),
         ]
 
         for cond, a, b, desc in test_cases:
@@ -112,18 +114,13 @@ class TestP1_1ConstTimeSelectFix:
     def test_d_montgomery_ladder_consistency(self):
         """验证修复后 Montgomery Ladder 与普通标量乘法结果一致"""
         # 测试多个密钥值
-        keys = [1, 2, 3, 10, 100, 1000,
-                Secp256k1.N - 1,
-                Secp256k1.N - 2,
-                0xabcdef1234567890]
+        keys = [1, 2, 3, 10, 100, 1000, Secp256k1.N - 1, Secp256k1.N - 2, 0xABCDEF1234567890]
 
         for k in keys:
             r_const = self.ec.scalar_multiply_const_time(k, self.G)
             r_reg = self.ec.scalar_multiply(k, self.G)
             assert r_const == r_reg, (
-                f"k={k} 时结果不一致！\n"
-                f"  const_time={r_const}\n"
-                f"  regular={r_reg}"
+                f"k={k} 时结果不一致！\n" f"  const_time={r_const}\n" f"  regular={r_reg}"
             )
 
     # ================================================================

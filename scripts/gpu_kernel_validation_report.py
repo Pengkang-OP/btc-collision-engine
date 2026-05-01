@@ -8,14 +8,16 @@ import os
 import time
 
 # 添加项目根目录到路径
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)
+
 
 def print_header(title):
     """打印标题"""
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print(f"  {title}")
-    print("="*80)
+    print("=" * 80)
+
 
 def print_section(title):
     """打印章节"""
@@ -23,12 +25,14 @@ def print_section(title):
     print(f"  {title}")
     print(f"{'─'*80}")
 
+
 def print_result(test_name, passed, detail=""):
     """打印测试结果"""
     status = "✅ PASS" if passed else "❌ FAIL"
     print(f"  {status} | {test_name}")
     if detail:
         print(f"         {detail}")
+
 
 def main():
     """主测试函数"""
@@ -47,6 +51,7 @@ def main():
     try:
         # Python版本
         import sys
+
         py_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
         print_result("Python版本", True, f"Python {py_version}")
         all_results.append(True)
@@ -54,6 +59,7 @@ def main():
         # PyOpenCL
         try:
             import pyopencl as cl
+
             print_result("PyOpenCL", True, f"版本 {cl.VERSION_TEXT}")
             all_results.append(True)
         except ImportError:
@@ -64,6 +70,7 @@ def main():
         # NumPy
         try:
             import numpy as np
+
             print_result("NumPy", True, f"版本 {np.__version__}")
             all_results.append(True)
         except ImportError:
@@ -100,22 +107,22 @@ def main():
         from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
         # 基本统计
-        lines = OPENCL_KERNEL_SOURCE.split('\n')
+        lines = OPENCL_KERNEL_SOURCE.split("\n")
         print_result("源码加载", True, f"{len(OPENCL_KERNEL_SOURCE)} 字符, {len(lines)} 行")
         all_results.append(True)
 
         # 内核函数计数
-        kernel_count = OPENCL_KERNEL_SOURCE.count('__kernel')
+        kernel_count = OPENCL_KERNEL_SOURCE.count("__kernel")
         print_result("内核函数", kernel_count == 3, f"发现 {kernel_count} 个内核函数")
         all_results.append(kernel_count == 3)
 
         # 关键组件检查
         components = {
-            'uint256_t类型': 'typedef struct',
-            'GX常量': 'constant uint GX[8]',
-            'GY常量': 'constant uint GY[8]',
-            '素数P': 'constant uint SECP256K1_P[8]',
-            '曲线阶N': 'constant uint SECP256K1_N[8]',
+            "uint256_t类型": "typedef struct",
+            "GX常量": "constant uint GX[8]",
+            "GY常量": "constant uint GY[8]",
+            "素数P": "constant uint SECP256K1_P[8]",
+            "曲线阶N": "constant uint SECP256K1_N[8]",
         }
 
         for name, pattern in components.items():
@@ -136,16 +143,16 @@ def main():
         from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
         math_functions = [
-            ('uint256加法', 'uint uint256_add'),
-            ('uint256减法', 'void uint256_sub'),
-            ('uint256乘法', 'void uint256_mul'),
-            ('uint256比较', 'int uint256_cmp'),
-            ('模加法', 'void mod_add'),
-            ('模减法', 'void mod_sub'),
-            ('模乘法', 'void mod_mul'),
-            ('模平方', 'void mod_sqr'),
-            ('模幂运算', 'void mod_pow'),
-            ('模逆运算', 'void mod_inverse'),
+            ("uint256加法", "uint uint256_add"),
+            ("uint256减法", "void uint256_sub"),
+            ("uint256乘法", "void uint256_mul"),
+            ("uint256比较", "int uint256_cmp"),
+            ("模加法", "void mod_add"),
+            ("模减法", "void mod_sub"),
+            ("模乘法", "void mod_mul"),
+            ("模平方", "void mod_sqr"),
+            ("模幂运算", "void mod_pow"),
+            ("模逆运算", "void mod_inverse"),
         ]
 
         for name, pattern in math_functions:
@@ -166,9 +173,9 @@ def main():
         from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
         ec_functions = [
-            ('点倍乘', 'void ec_point_double'),
-            ('点加法', 'void ec_point_add'),
-            ('标量乘法', 'void ec_scalar_multiply'),
+            ("点倍乘", "void ec_point_double"),
+            ("点加法", "void ec_point_add"),
+            ("标量乘法", "void ec_scalar_multiply"),
         ]
 
         for name, pattern in ec_functions:
@@ -189,10 +196,10 @@ def main():
         from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
         hash_functions = [
-            ('SHA-256', 'void sha256'),
-            ('RIPEMD-160', 'void ripemd160'),
-            ('Hash160', 'void hash160'),
-            ('SHA-256轮常量', 'constant uint SHA256_K[64]'),
+            ("SHA-256", "void sha256"),
+            ("RIPEMD-160", "void ripemd160"),
+            ("Hash160", "void hash160"),
+            ("SHA-256轮常量", "constant uint SHA256_K[64]"),
         ]
 
         for name, pattern in hash_functions:
@@ -226,9 +233,9 @@ def main():
 
         # 验证内核函数
         kernels = {
-            'batch_check': '批量碰撞检测',
-            'verify_arithmetic': '算术验证',
-            'debug_hash': '哈希调试',
+            "batch_check": "批量碰撞检测",
+            "verify_arithmetic": "算术验证",
+            "debug_hash": "哈希调试",
         }
 
         for name, desc in kernels.items():
@@ -280,8 +287,8 @@ def main():
         expected_x = "c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5"
         expected_y = "1ae168fea63dc339a3c58419466ceaeef7f632653266d0e1236431a950cfe52a"
 
-        x_correct = (x_hex == expected_x)
-        y_correct = (y_hex == expected_y)
+        x_correct = x_hex == expected_x
+        y_correct = y_hex == expected_y
 
         print_result("2*G X坐标", x_correct, f"0x{x_hex}")
         all_results.append(x_correct)
@@ -295,6 +302,7 @@ def main():
     except Exception as e:
         print_result("算术验证", False, str(e))
         import traceback
+
         traceback.print_exc()
         all_results.append(False)
 
@@ -324,9 +332,17 @@ def main():
         qx_buf = cl.Buffer(context, cl.mem_flags.WRITE_ONLY, qx_out.nbytes)
         qy_buf = cl.Buffer(context, cl.mem_flags.WRITE_ONLY, qy_out.nbytes)
 
-        program.debug_hash(queue, (1,), None, pubkey_buf,
-                          cl.Buffer(context, cl.mem_flags.WRITE_ONLY, 32),
-                          hash160_buf, np.uint32(1), qx_buf, qy_buf)
+        program.debug_hash(
+            queue,
+            (1,),
+            None,
+            pubkey_buf,
+            cl.Buffer(context, cl.mem_flags.WRITE_ONLY, 32),
+            hash160_buf,
+            np.uint32(1),
+            qx_buf,
+            qy_buf,
+        )
         queue.finish()
 
         cl.enqueue_copy(queue, pubkey_out, pubkey_buf)
@@ -354,8 +370,8 @@ def main():
         from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
         optimizations = [
-            ('uint32私钥输入', '__global const uint *private_keys', '避免global char* hang bug'),
-            ('ulong算术', 'ulong carry', '避免signed long bug'),
+            ("uint32私钥输入", "__global const uint *private_keys", "避免global char* hang bug"),
+            ("ulong算术", "ulong carry", "避免signed long bug"),
         ]
 
         for name, pattern, desc in optimizations:
@@ -366,7 +382,6 @@ def main():
     except Exception as e:
         print_result("Intel Arc优化验证", False, str(e))
         all_results.append(False)
-
 
     # ========================================================================
     # 总结
@@ -396,5 +411,5 @@ def main():
     return 0 if failed == 0 else 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

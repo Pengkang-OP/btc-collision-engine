@@ -191,7 +191,7 @@ class TestLogFileNotification(unittest.TestCase):
         )
         ch.send(alert)
 
-        with open(self.log_path, 'r', encoding='utf-8') as f:
+        with open(self.log_path, "r", encoding="utf-8") as f:
             content = f.read()
         self.assertIn("CRITICAL", content)
         self.assertIn("吞吐量严重下降", content)
@@ -216,7 +216,7 @@ class TestLogFileNotification(unittest.TestCase):
         ch.send(a1)
         ch.send(a2)
 
-        with open(self.log_path, 'r', encoding='utf-8') as f:
+        with open(self.log_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
         self.assertEqual(len(lines), 2)
         self.assertIn("告警A", lines[0])
@@ -411,5 +411,5 @@ class TestAlertSystemIntegration(unittest.TestCase):
         self.assertIn("回调兼容测试", sent)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -1,4 +1,5 @@
 """统一测试工具模块 - 提供通用的Mock工厂和测试辅助函数"""
+
 import unittest
 from unittest.mock import Mock, MagicMock, patch, call
 from contextlib import contextmanager
@@ -19,10 +20,12 @@ class TestUtils:
     @contextmanager
     def temp_file(content: str = "", suffix: str = ""):
         """创建临时文件上下文管理器"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix=suffix, delete=False, encoding='utf-8') as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=suffix, delete=False, encoding="utf-8"
+        ) as f:
             f.write(content)
             temp_path = f.name
-        
+
         try:
             yield temp_path
         finally:
@@ -33,10 +36,12 @@ class TestUtils:
     @contextmanager
     def temp_json_file(data: Dict):
         """创建临时JSON文件上下文管理器"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False, encoding='utf-8') as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False, encoding="utf-8"
+        ) as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
             temp_path = f.name
-        
+
         try:
             yield temp_path
         finally:
@@ -48,11 +53,12 @@ class TestUtils:
     def temp_directory():
         """创建临时目录上下文管理器"""
         temp_dir = tempfile.mkdtemp()
-        
+
         try:
             yield temp_dir
         finally:
             import shutil
+
             shutil.rmtree(temp_dir, ignore_errors=True)
 
     # -------------------------------------------------------------------------
@@ -108,19 +114,22 @@ class TestUtils:
         """比较两个字典，忽略指定的键"""
         if ignore_keys is None:
             ignore_keys = []
-        
+
         d1_filtered = {k: v for k, v in d1.items() if k not in ignore_keys}
         d2_filtered = {k: v for k, v in d2.items() if k not in ignore_keys}
-        
-        assert d1_filtered == d2_filtered, f"字典不相等（忽略键: {ignore_keys}）\n{d1_filtered}\n{d2_filtered}"
+
+        assert (
+            d1_filtered == d2_filtered
+        ), f"字典不相等（忽略键: {ignore_keys}）\n{d1_filtered}\n{d2_filtered}"
 
     @staticmethod
     def assert_call_count(mock_obj, method_name: str, expected_count: int):
         """断言mock方法被调用的次数"""
         method = getattr(mock_obj, method_name, None)
         assert method is not None, f"对象没有方法: {method_name}"
-        assert method.call_count == expected_count, \
-            f"方法 {method_name} 调用次数不符: 预期 {expected_count}, 实际 {method.call_count}"
+        assert (
+            method.call_count == expected_count
+        ), f"方法 {method_name} 调用次数不符: 预期 {expected_count}, 实际 {method.call_count}"
 
     # -------------------------------------------------------------------------
     # 时间相关Mock
@@ -130,14 +139,14 @@ class TestUtils:
     @contextmanager
     def mock_time(fixed_time: float = 1234567890.0):
         """Mock time模块，返回固定时间"""
-        with patch('time.time', return_value=fixed_time):
+        with patch("time.time", return_value=fixed_time):
             yield fixed_time
 
     @staticmethod
     @contextmanager
     def mock_sleep():
         """Mock time.sleep，不实际等待"""
-        with patch('time.sleep'):
+        with patch("time.sleep"):
             yield
 
     # -------------------------------------------------------------------------
@@ -149,22 +158,22 @@ class TestUtils:
     def capture_logs(logger_name: str):
         """捕获指定logger的日志输出"""
         import logging
+
         logger = logging.getLogger(logger_name)
         original_level = logger.level
-        
+
         logs = []
+
         class LogCaptureHandler(logging.Handler):
             def emit(self, record):
-                logs.append({
-                    'level': record.levelname,
-                    'message': record.getMessage(),
-                    'name': record.name
-                })
-        
+                logs.append(
+                    {"level": record.levelname, "message": record.getMessage(), "name": record.name}
+                )
+
         handler = LogCaptureHandler()
         logger.addHandler(handler)
         logger.setLevel(logging.DEBUG)
-        
+
         try:
             yield logs
         finally:
@@ -179,6 +188,7 @@ class TestUtils:
     def measure_time(func, *args, **kwargs) -> Tuple[float, Any]:
         """测量函数执行时间并返回结果"""
         import time
+
         start = time.perf_counter()
         result = func(*args, **kwargs)
         elapsed = time.perf_counter() - start
@@ -318,7 +328,7 @@ class TestCaseWithMocks(unittest.TestCase):
         """创建临时文件并返回路径"""
         fd, path = tempfile.mkstemp()
         try:
-            os.write(fd, content.encode('utf-8'))
+            os.write(fd, content.encode("utf-8"))
         finally:
             os.close(fd)
         return path
@@ -333,11 +343,14 @@ class TestCaseWithMocks(unittest.TestCase):
 # 常用装饰器
 # -------------------------------------------------------------------------
 
+
 def skip_if_no_pyopencl(func):
     """如果没有安装pyopencl则跳过测试"""
     import unittest
+
     try:
         import pyopencl
+
         return func
     except ImportError:
         return unittest.skip("pyopencl not installed")(func)
@@ -346,8 +359,10 @@ def skip_if_no_pyopencl(func):
 def skip_if_no_gpu(func):
     """如果没有GPU设备则跳过测试"""
     import unittest
+
     try:
         import pyopencl as cl
+
         platforms = cl.get_platforms()
         if not platforms:
             return unittest.skip("No OpenCL platforms available")(func)
@@ -370,20 +385,22 @@ def timeout(seconds: int):
     """测试超时装饰器"""
     import signal
     import functools
-    
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             def handler(signum, frame):
                 raise TimeoutError(f"测试超时（超过{seconds}秒）")
-            
+
             signal.signal(signal.SIGALRM, handler)
             signal.alarm(seconds)
             try:
                 return func(*args, **kwargs)
             finally:
                 signal.alarm(0)
+
         return wrapper
+
     return decorator
 
 
@@ -395,21 +412,11 @@ def timeout(seconds: int):
 TEST_TARGET_ADDRESSES = [
     "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
     "1BitcoinEaterAddressDontSendf59kuE",
-    "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"
+    "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
 ]
 
 TEST_CONFIG = {
-    "collision": {
-        "max_workers": 4,
-        "progress_interval": 1000,
-        "checkpoint_interval": 30
-    },
-    "logging": {
-        "level": "DEBUG",
-        "enable_console": True
-    },
-    "gpu": {
-        "use_gpu": False,
-        "batch_size": 65536
-    }
+    "collision": {"max_workers": 4, "progress_interval": 1000, "checkpoint_interval": 30},
+    "logging": {"level": "DEBUG", "enable_console": True},
+    "gpu": {"use_gpu": False, "batch_size": 65536},
 }

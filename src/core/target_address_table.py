@@ -155,19 +155,19 @@ class BitcoinTargetTable:
         返回:
             成功加载的目标地址数量
         """
-        filepath = Path(filepath)  # type: ignore[assignment]
+        path = Path(filepath)
 
-        if not filepath.exists():  # type: ignore[attr-defined]
-            raise FileNotFoundError(f"文件不存在: {filepath}")
+        if not path.exists():
+            raise FileNotFoundError(f"文件不存在: {path}")
 
-        suffix = filepath.suffix.lower()  # type: ignore[attr-defined]
+        suffix = path.suffix.lower()
 
         if suffix == ".json":
-            return self._load_from_json(filepath)  # type: ignore[arg-type]
+            return self._load_from_json(path)
         elif suffix == ".csv":
-            return self._load_from_csv(filepath)  # type: ignore[arg-type]
+            return self._load_from_csv(path)
         elif suffix == ".txt":
-            return self._load_from_txt(filepath)  # type: ignore[arg-type]
+            return self._load_from_txt(path)
         else:
             raise ValueError(f"不支持的文件格式: {suffix}")
 

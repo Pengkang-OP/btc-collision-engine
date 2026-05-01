@@ -18,10 +18,10 @@ import tempfile
 from unittest.mock import Mock
 from collections import Counter
 
-
 # ============================================================================
 # EventBus 并发测试
 # ============================================================================
+
 
 @pytest.mark.thread_safety
 class TestEventBusConcurrency:
@@ -31,6 +31,7 @@ class TestEventBusConcurrency:
         """多线程并发发布不应有数据竞争"""
         from src.collision.event_bus import EventBus, reset_event_bus
         from src.collision.events import EngineProgressEvent, EventType
+
         reset_event_bus()
 
         bus = EventBus(async_mode=False)
@@ -74,6 +75,7 @@ class TestEventBusConcurrency:
         """并发订阅/取消订阅不应导致状态不一致"""
         from src.collision.event_bus import EventBus, reset_event_bus
         from src.collision.events import EventType
+
         reset_event_bus()
 
         bus = EventBus(async_mode=False)
@@ -104,6 +106,7 @@ class TestEventBusConcurrency:
 # LogStorage 并发测试
 # ============================================================================
 
+
 @pytest.mark.thread_safety
 class TestLogStorageConcurrency:
     """LogStorage 并发测试"""
@@ -117,11 +120,13 @@ class TestLogStorageConcurrency:
 
             def writer(idx):
                 for i in range(250):
-                    s.save({
-                        "timestamp": idx * 1000 + i,
-                        "type": f"type_{idx}",
-                        "message": f"message_{idx}_{i}"
-                    })
+                    s.save(
+                        {
+                            "timestamp": idx * 1000 + i,
+                            "type": f"type_{idx}",
+                            "message": f"message_{idx}_{i}",
+                        }
+                    )
 
             threads = [threading.Thread(target=writer, args=(j,)) for j in range(8)]
             for t in threads:
@@ -179,6 +184,7 @@ class TestLogStorageConcurrency:
 # LogCollector 并发测试
 # ============================================================================
 
+
 @pytest.mark.thread_safety
 class TestLogCollectorConcurrency:
     """LogCollector 并发测试"""
@@ -204,7 +210,7 @@ class TestLogCollectorConcurrency:
                 collector.collect_from_queue(
                     LogEventType.STATUS_UPDATE,
                     {"thread_id": thread_id, "msg": "test"},
-                    source="test"
+                    source="test",
                 )
 
         threads = [threading.Thread(target=sender, args=(f"t_{j}",)) for j in range(10)]
@@ -223,6 +229,7 @@ class TestLogCollectorConcurrency:
 # ============================================================================
 # ObserverManager 并发测试
 # ============================================================================
+
 
 @pytest.mark.thread_safety
 class TestObserverManagerConcurrency:
@@ -260,6 +267,7 @@ class TestObserverManagerConcurrency:
 # 压力测试
 # ============================================================================
 
+
 @pytest.mark.thread_safety
 class TestStressTests:
     """压力测试"""
@@ -268,6 +276,7 @@ class TestStressTests:
         """高容量事件处理压力测试"""
         from src.collision.event_bus import EventBus, reset_event_bus
         from src.collision.events import EngineProgressEvent, EventType
+
         reset_event_bus()
 
         bus = EventBus(async_mode=False)
@@ -303,12 +312,14 @@ class TestStressTests:
             # 写入 5000 条日志
             start = time.perf_counter()
             for i in range(5000):
-                s.save({
-                    "timestamp": i,
-                    "type": "stress_test",
-                    "message": f"message_{i}" + "x" * 50,
-                    "data": {"index": i, "value": i * 3.14}
-                })
+                s.save(
+                    {
+                        "timestamp": i,
+                        "type": "stress_test",
+                        "message": f"message_{i}" + "x" * 50,
+                        "data": {"index": i, "value": i * 3.14},
+                    }
+                )
             elapsed = time.perf_counter() - start
 
             stats = s.get_stats()
@@ -320,6 +331,7 @@ class TestStressTests:
         """持续负载测试 - 模拟长时间运行"""
         from src.collision.event_bus import EventBus, reset_event_bus
         from src.collision.events import EngineProgressEvent, EventType
+
         reset_event_bus()
 
         bus = EventBus(async_mode=False)

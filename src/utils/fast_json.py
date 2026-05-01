@@ -53,9 +53,9 @@ try:
 
     _orjson_module = _orjson_imported
     _ORJSON_AVAILABLE = True
-    _ORJSON_OPT_INDENT_2 = getattr(_orjson_imported, 'OPT_INDENT_2', 1)
-    _ORJSON_OPT_SORT_KEYS = getattr(_orjson_imported, 'OPT_SORT_KEYS', 1 << 1)
-    _ORJSON_OPT_NON_STR_KEYS = getattr(_orjson_imported, 'OPT_NON_STR_KEYS', 1 << 2)
+    _ORJSON_OPT_INDENT_2 = getattr(_orjson_imported, "OPT_INDENT_2", 1)
+    _ORJSON_OPT_SORT_KEYS = getattr(_orjson_imported, "OPT_SORT_KEYS", 1 << 1)
+    _ORJSON_OPT_NON_STR_KEYS = getattr(_orjson_imported, "OPT_NON_STR_KEYS", 1 << 2)
     logger.debug("fast_json: 使用 orjson 加速 JSON 序列化")
 except ImportError:
     logger.info("fast_json: orjson 不可用，使用标准 json 模块（性能较低）")

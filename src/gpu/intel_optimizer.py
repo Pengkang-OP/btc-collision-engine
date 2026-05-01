@@ -5,9 +5,10 @@
 - Intel 监控和调优组件初始化
 - 超时保护配置
 - 驱动版本检测
-
-通过 IntelGPUOptimizer 类提供统一接口，供 GPUCollisionEngine 委托调用。
+- 通过 IntelGPUOptimizer 类提供统一接口，供 GPUCollisionEngine 委托调用。
 """
+
+from __future__ import annotations
 
 import logging
 from ..utils import init_logging, get_configured_logger
@@ -42,11 +43,11 @@ class IntelGPUOptimizer:
         self._logger = engine_logger or logger
 
         # 维持对监控组件的引用（注入到 engine 的属性中）
-        self._timeout_manager: Any = None
-        self._memory_monitor: Any = None
-        self._benchmark_suite: Any = None
-        self._auto_tuner: Any = None
-        self._performance_reporter: Any = None
+        self._timeout_manager: Optional[AdaptiveTimeoutManager] = None
+        self._memory_monitor: Optional[IntelMemoryMonitor] = None
+        self._benchmark_suite: Optional[GPUBenchmarkSuite] = None
+        self._auto_tuner: Optional[GPUAutoTuner] = None
+        self._performance_reporter: Optional[PerformanceReportGenerator] = None
 
     # ------------------------------------------------------------------
     # 公共接口
@@ -216,7 +217,8 @@ class IntelGPUOptimizer:
                         )
                     else:
                         self._memory_monitor = _memory_cls(
-                            total_memory_bytes=total_memory, safe_usage_ratio=INTEL_SAFE_MEMORY_RATIO  # Intel 保守策略
+                            total_memory_bytes=total_memory,
+                            safe_usage_ratio=INTEL_SAFE_MEMORY_RATIO,  # Intel 保守策略
                         )
                         self._logger.info(
                             f"✅ 显存监控器已初始化 " f"(总显存: {total_memory / 1024 ** 3:.1f}GB)"
@@ -330,27 +332,27 @@ class IntelGPUOptimizer:
     @property
     def timeout_manager(self) -> Optional["AdaptiveTimeoutManager"]:
         """自适应超时管理器"""
-        return self._timeout_manager  # type: ignore[no-any-return]
+        return self._timeout_manager
 
     @property
-    def memory_monitor(self) -> Optional["IntelMemoryMonitor"]:
+    def memory_monitor(self) -> Optional[IntelMemoryMonitor]:
         """显存监控器"""
-        return self._memory_monitor  # type: ignore[no-any-return]
+        return self._memory_monitor
 
     @property
-    def benchmark_suite(self) -> Optional["GPUBenchmarkSuite"]:
+    def benchmark_suite(self) -> Optional[GPUBenchmarkSuite]:
         """基准测试套件"""
-        return self._benchmark_suite  # type: ignore[no-any-return]
+        return self._benchmark_suite
 
     @property
-    def auto_tuner(self) -> Optional["GPUAutoTuner"]:
+    def auto_tuner(self) -> Optional[GPUAutoTuner]:
         """自动调优器"""
-        return self._auto_tuner  # type: ignore[no-any-return]
+        return self._auto_tuner
 
     @property
-    def performance_reporter(self) -> Optional["PerformanceReportGenerator"]:
+    def performance_reporter(self) -> Optional[PerformanceReportGenerator]:
         """性能报告生成器"""
-        return self._performance_reporter  # type: ignore[no-any-return]
+        return self._performance_reporter
 
     # ------------------------------------------------------------------
     # 内部工具方法

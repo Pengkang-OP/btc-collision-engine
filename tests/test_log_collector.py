@@ -19,10 +19,10 @@ from unittest.mock import Mock, patch, call
 from src.logging.log_collector import LogCollector, _CollectorLogHandler
 from src.logging.events import LogEvent, LogEventType
 
-
 # ============================================================================
 # 初始化测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestLogCollectorInit:
@@ -49,6 +49,7 @@ class TestLogCollectorInit:
 # ============================================================================
 # 启停生命周期测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestLogCollectorStartStop:
@@ -91,6 +92,7 @@ class TestLogCollectorStartStop:
 # 日志收集测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestLogCollectorCollection:
     """日志收集功能测试"""
@@ -102,9 +104,7 @@ class TestLogCollectorCollection:
         collector.start()
 
         collector.collect_from_queue(
-            LogEventType.STATUS_UPDATE,
-            {"message": "test"},
-            source="test_source"
+            LogEventType.STATUS_UPDATE, {"message": "test"}, source="test_source"
         )
 
         # 给收集线程一点时间处理
@@ -147,6 +147,7 @@ class TestLogCollectorCollection:
 # Handler 注册/取消测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestLogCollectorHandlers:
     """Handler 管理测试"""
@@ -180,6 +181,7 @@ class TestLogCollectorHandlers:
 # ============================================================================
 # Logger 附加/分离测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestLogCollectorLoggerAttachment:
@@ -221,6 +223,7 @@ class TestLogCollectorLoggerAttachment:
 # _CollectorLogHandler 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestCollectorLogHandler:
     """_CollectorLogHandler 内部类测试"""
@@ -230,8 +233,13 @@ class TestCollectorLogHandler:
         handler = _CollectorLogHandler(collector)
 
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="", lineno=0,
-            msg="test message", args=(), exc_info=None
+            name="test",
+            level=logging.INFO,
+            pathname="",
+            lineno=0,
+            msg="test message",
+            args=(),
+            exc_info=None,
         )
         handler.emit(record)
         # 不应抛异常
@@ -243,7 +251,12 @@ class TestCollectorLogHandler:
         handler = _CollectorLogHandler(collector)
 
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="", lineno=0,
-            msg="test", args=(), exc_info=None
+            name="test",
+            level=logging.INFO,
+            pathname="",
+            lineno=0,
+            msg="test",
+            args=(),
+            exc_info=None,
         )
         handler.emit(record)  # 不应抛异常

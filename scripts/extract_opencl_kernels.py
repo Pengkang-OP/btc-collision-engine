@@ -9,21 +9,22 @@ import os
 import sys
 
 # 添加项目根目录到路径
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)
 
 # 现在可以导入src模块
 from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
+
 def create_kernel_files():
     """创建OpenCL内核文件"""
 
-    kernel_dir = os.path.join(os.path.dirname(__file__), 'kernels')
+    kernel_dir = os.path.join(os.path.dirname(__file__), "kernels")
     os.makedirs(kernel_dir, exist_ok=True)
 
     # 1. 创建主碰撞检测内核文件
-    main_kernel_path = os.path.join(kernel_dir, 'btc_collision.cl')
-    with open(main_kernel_path, 'w', encoding='utf-8') as f:
+    main_kernel_path = os.path.join(kernel_dir, "btc_collision.cl")
+    with open(main_kernel_path, "w", encoding="utf-8") as f:
         f.write("""// ============================================================================
 // 比特币 secp256k1 GPU 碰撞检测内核
 // ============================================================================
@@ -63,8 +64,8 @@ def create_kernel_files():
     print(f"  行数: {sum(1 for _ in open(main_kernel_path, 'r', encoding='utf-8'))} 行")
 
     # 2. 创建README说明文件
-    readme_path = os.path.join(kernel_dir, 'README.md')
-    with open(readme_path, 'w', encoding='utf-8') as f:
+    readme_path = os.path.join(kernel_dir, "README.md")
+    with open(readme_path, "w", encoding="utf-8") as f:
         f.write("""# OpenCL 内核文件
 
 ## 文件说明
@@ -143,12 +144,13 @@ python -c "from src.gpu.kernel import OPENCL_KERNEL_SOURCE; print(f'内核源码
 
     # 4. 统计信息
     print("\n内核统计信息:")
-    lines = OPENCL_KERNEL_SOURCE.split('\n')
+    lines = OPENCL_KERNEL_SOURCE.split("\n")
     print(f"  总行数: {len(lines)}")
     print(f"  注释行数: {sum(1 for line in lines if line.strip().startswith('//'))}")
     print(f"  空行数: {sum(1 for line in lines if not line.strip())}")
 
     print("\n✅ OpenCL内核文件创建完成！")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     create_kernel_files()

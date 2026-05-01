@@ -17,18 +17,20 @@ from unittest.mock import Mock, patch, MagicMock
 
 from src.config.config_coordinator import ConfigCoordinator
 
-
 # ============================================================================
 # Fixtures
 # ============================================================================
 
+
 @pytest.fixture
 def _mock_config_validations():
     """Mock 所有配置验证和保存操作，避免深层 patch 嵌套"""
-    with patch('src.config.config_manager.ConfigManager.validate', return_value=[]), \
-         patch('src.config.crypto_config.CryptoConfig.validate', return_value=[]), \
-         patch('src.config.crypto_config.CryptoConfig.set', return_value=True), \
-         patch('src.config.crypto_config.CryptoConfig.apply_to_crypto_manager', return_value=True):
+    with (
+        patch("src.config.config_manager.ConfigManager.validate", return_value=[]),
+        patch("src.config.crypto_config.CryptoConfig.validate", return_value=[]),
+        patch("src.config.crypto_config.CryptoConfig.set", return_value=True),
+        patch("src.config.crypto_config.CryptoConfig.apply_to_crypto_manager", return_value=True),
+    ):
         yield
 
 
@@ -53,9 +55,7 @@ def temp_config_file():
         },
         "logging": {"level": "INFO", "enable_console": True},
     }
-    with tempfile.NamedTemporaryFile(
-        mode='w', suffix='.json', delete=False, encoding='utf-8'
-    ) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as f:
         json.dump(config_data, f)
         config_path = f.name
 
@@ -74,6 +74,7 @@ def coordinator(temp_config_file, _mock_config_validations):
 # ============================================================================
 # 初始化测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestConfigCoordinatorInit:

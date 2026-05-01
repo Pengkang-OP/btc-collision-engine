@@ -88,9 +88,7 @@ class EventBus:
 
             self._event_queue = queue.Queue(maxsize=max_queue_size)
             self._running = True
-            self._worker_thread = threading.Thread(
-                target=self._process_events, daemon=True
-            )
+            self._worker_thread = threading.Thread(target=self._process_events, daemon=True)
             self._worker_thread.start()
             logger.info("事件总线已启动 (异步模式)")
         else:
