@@ -287,11 +287,12 @@ class TestSampledLogger:
         from src.utils.logger import SampledLogger
         base = MagicMock(spec=logging.Logger)
         sampled = SampledLogger(base, sample_rate=1, max_per_second=2)
-        # 快速连续调用，每秒最多2条
-        for i in range(5):
-            sampled.info("msg %d", i)
-        # 同一时间窗口最多2条
-        assert base.info.call_count <= 2
+        # 用 mock time.monotonic() 控制时间窗口，确保确定性
+        with patch('time.monotonic', side_effect=[100.0, 100.1, 100.2, 100.3, 100.4]):
+            for i in range(5):
+                sampled.info("msg %d", i)
+        # 同一时间窗口最多2条 → 调用次数精确 == 2
+        assert base.info.call_count == 2
 
     def test_debug_uses_prefix(self):
         from src.utils.logger import SampledLogger
@@ -356,15 +357,16 @@ class TestAsyncLogger:
 
     def test_emit_queues_record(self):
         from src.utils.logger import AsyncLogger
+        from conftest import poll_until
         al = AsyncLogger(max_queue_size=100)
         try:
             handler = MagicMock(spec=logging.Handler)
             al._handler = handler
             record = logging.LogRecord("test", logging.INFO, "", 0, "async msg", (), None)
             al.emit(record)
-            # 给后台线程一点时间处理
-            time.sleep(0.2)
-            assert handler.emit.called
+            # 用 poll_until 等待后台线程处理，比 time.sleep(0.2) 更稳定
+            assert poll_until(lambda: handler.emit.called, timeout=2.0), \
+                "AsyncLogger writer thread did not process record within timeout"
         finally:
             al.close()
 

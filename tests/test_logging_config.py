@@ -174,12 +174,15 @@ class TestDiskSpaceCheck:
         assert result is True
 
     def test_check_disk_space_insufficient(self, reset_logging_config):
+        """mock磁盘空间不足场景，不依赖真实磁盘"""
         from src.utils.logging_config import LoggingConfig
         lc = LoggingConfig()
-        lc.init()
-        # 要求极大空间，应失败
-        result = lc.check_disk_space(min_free_mb=10 * 1024 * 1024)
-        assert result is False
+        lc.init({"file": "/tmp/test.log", "enable_console": False})
+        with patch('shutil.disk_usage') as mock_du:
+            # 模拟磁盘只有 1MB 可用
+            mock_du.return_value = Mock(free=1 * 1024 * 1024, total=1024 * 1024 * 1024, used=1023 * 1024 * 1024)
+            result = lc.check_disk_space(min_free_mb=100)
+            assert result is False
 
     def test_check_disk_space_with_shutil(self, reset_logging_config):
         """mock shutil.disk_usage 模拟磁盘空间"""
