@@ -38,7 +38,7 @@ import os
 import threading
 import logging
 import time
-from typing import Callable, Any, Optional, List, Dict
+from typing import Callable, Any, Optional, List, Dict, cast
 from collections import deque
 from concurrent.futures import Future
 
@@ -240,7 +240,7 @@ class WorkStealingThreadPool:
         # 1. 尝试从本地队列获取
         with self._queue_locks[thread_id]:
             if self._queues[thread_id]:
-                return self._queues[thread_id].popleft()  # type: ignore[no-any-return]
+                return cast(Optional[tuple], self._queues[thread_id].popleft())
 
         # 2. 工作窃取: 从其他队列获取
         if self.enable_work_stealing:
@@ -270,7 +270,7 @@ class WorkStealingThreadPool:
                     # 从队列尾部窃取(减少竞争)
                     task = self._queues[victim_id].pop()
                     self._tasks_stolen += 1
-                    return task  # type: ignore[no-any-return]
+                    return cast(Optional[tuple], task)
 
         return None
 
@@ -399,17 +399,20 @@ class GlobalThreadPoolManager:
     - 关闭时输出完整统计
     """
 
-    _instance = None
+    _instance: Optional["GlobalThreadPoolManager"] = None
     _lock = threading.Lock()
+    _pool: Optional[WorkStealingThreadPool] = None
+    _initialized: bool = False
+    _shutdown_complete: bool = False
 
     def __new__(cls) -> "GlobalThreadPoolManager":
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None:
                     cls._instance = super().__new__(cls)
-                    cls._instance._pool: Optional[WorkStealingThreadPool] = None  # type: ignore[misc,has-type]
-                    cls._instance._initialized = False  # type: ignore[has-type]
-                    cls._instance._shutdown_complete = False  # type: ignore[has-type]
+                    cls._instance._pool = None
+                    cls._instance._initialized = False
+                    cls._instance._shutdown_complete = False
         return cls._instance
 
     def initialize(self, num_threads: Optional[int] = None) -> None:
@@ -419,11 +422,11 @@ class GlobalThreadPoolManager:
         参数:
             num_threads: 线程数，None则自动检测。会被边界校验修正。
         """
-        if self._initialized:  # type: ignore[has-type]
+        if self._initialized:
             return
 
         with self._lock:
-            if not self._initialized:  # type: ignore[has-type]
+            if not self._initialized:
                 self._pool = WorkStealingThreadPool(num_threads)
                 self._pool.start()
                 self._initialized = True
@@ -502,4 +505,5 @@ def get_thread_pool() -> WorkStealingThreadPool:
     if pool is None:
         thread_pool_manager.initialize()
         pool = thread_pool_manager.get_pool()
-    return pool  # type: ignore[return-value]
+    assert pool is not None
+    return pool
