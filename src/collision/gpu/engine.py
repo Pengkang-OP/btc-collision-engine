@@ -661,8 +661,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 def timeout_handler(signum: int, frame: Any) -> None:
                     raise TimeoutError(f"匹配回调执行超时 ({self._match_callback_timeout}秒)")
 
-                _sigalrm = signal.SIGALRM  # type: ignore[attr-defined]  # Unix-only API
-                old_handler = signal.signal(_sigalrm, timeout_handler)
+                _sigalrm = signal.SIGALRM  # type: ignore[attr-defined]  # noqa: E501  # Unix-only API
+                old_handler = signal.signal(_sigalrm, timeout_handler)  # noqa: E501
                 _alarm = signal.alarm  # type: ignore[attr-defined]  # Unix-only API
                 _alarm(int(self._match_callback_timeout))
                 try:
