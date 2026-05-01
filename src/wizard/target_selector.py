@@ -8,7 +8,7 @@
 
 import sys
 import os
-from typing import Tuple, List, Optional, Dict
+from typing import Tuple, List, Optional, Dict, cast
 
 from .selector_protocol import SelectorProtocol
 
@@ -74,7 +74,7 @@ class TargetSelector(SelectorProtocol):
             print("    [ERROR] 地址不能为空")
             return self._select_single()
 
-        targets: Dict[str, Optional[str]] = self.resolver.resolve_multiple([address])
+        targets = cast(Dict[str, Optional[str]], self.resolver.resolve_multiple([address]))
 
         if not targets:
             print(f"    [ERROR] 无效的地址格式: {address}")
@@ -122,7 +122,7 @@ class TargetSelector(SelectorProtocol):
             print("[ERROR] 地址不能为空")
             return self._select_compact()
 
-        targets: Dict[str, Optional[str]] = self.resolver.resolve_multiple([address])
+        targets = cast(Dict[str, Optional[str]], self.resolver.resolve_multiple([address]))
 
         if not targets:
             print(f"[ERROR] 无效的地址格式: {address}")

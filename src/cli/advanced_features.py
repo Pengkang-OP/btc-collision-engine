@@ -229,7 +229,7 @@ def recommend_parameters(args: Any) -> dict:
 
     # 3. 检查GPU可用性
     try:
-        import pyopencl
+        import pyopencl  # noqa: F401
 
         recommendations.append("--use-gpu")
         reasons.append("检测到GPU可用，建议启用GPU加速（速度提升1000-2000倍）")

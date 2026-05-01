@@ -18,7 +18,7 @@
 - "Speeding up Elliptic Curve Cryptography" - Brown et al.
 """
 
-from typing import Any, Dict, List, cast
+from typing import Any, Dict, List
 
 # 导入日志配置
 from ..utils import init_logging, get_configured_logger
@@ -86,8 +86,9 @@ class PrecomputedPointTable:
             self.G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
         else:
             self.ec = ec
-            self.G = cast(Any, ec.curve.G) if hasattr(ec.curve, "G") else None
-            if self.G is None:
+            if hasattr(ec.curve, "G"):
+                self.G = ec.curve.G  # type: ignore[assignment]
+            else:
                 from .secp256k1 import Secp256k1, ECPoint
 
                 self.G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
