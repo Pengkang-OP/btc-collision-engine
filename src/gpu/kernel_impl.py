@@ -37,6 +37,100 @@ from ..monitoring.gpu_performance_monitor import get_gpu_performance_monitor
 
 logger = get_configured_logger("GPUKernel")
 
+# DEF-2修复: 内核编译重试配置
+GPU_KERNEL_COMPILE_MAX_RETRIES = 3
+GPU_KERNEL_COMPILE_RETRY_DELAY_BASE = 2.0  # 基础延迟(秒), 指数退避: 2s(第1次失败后), 4s(第2次失败后)
+
+# DEF-2修复: 渐进编译策略 — 每次重试尝试不同的编译选项
+COMPILE_STRATEGIES = [
+    ("标准编译", []),
+    ("CL2.0标准编译", ["-cl-std=CL2.0"]),
+    ("降级CL1.2编译", ["-cl-std=CL1.2", "-cl-mad-enable", "-cl-no-signed-zeros"]),
+]
+
+
+def compile_kernel_with_retry(
+    ctx,  # OpenCL context
+    source: str,
+    strategies: Optional[list] = None,
+    max_retries: int = GPU_KERNEL_COMPILE_MAX_RETRIES,
+    retry_delay_base: float = GPU_KERNEL_COMPILE_RETRY_DELAY_BASE,
+    log=None,
+):
+    """共享的GPU内核编译重试函数 (DEF-2修复)
+
+    kernel_impl._compile() 和 context._get_or_compile_kernel() 共享此函数，
+    消除代码重复并提供统一的重试+降级编译策略。
+
+    Args:
+        ctx: OpenCL context (pyopencl.Context)
+        source: OpenCL 内核源码字符串
+        strategies: 编译策略列表 [(描述, 选项列表), ...]，默认使用 COMPILE_STRATEGIES
+        max_retries: 最大尝试次数
+        retry_delay_base: 指数退避基础延迟(秒)
+        log: 日志记录器（默认使用模块级 logger）
+
+    Returns:
+        编译后的 pyopencl.Program 对象和使用的策略索引 (program, strategy_idx)
+
+    Raises:
+        RuntimeError: 所有重试均失败
+    """
+    if log is None:
+        log = logger
+    if strategies is None:
+        strategies = COMPILE_STRATEGIES
+
+    last_error = None
+    compile_time_total = 0.0
+
+    for attempt in range(max_retries):
+        strategy_idx = min(attempt, len(strategies) - 1)
+        strategy_desc, build_options = strategies[strategy_idx]
+
+        compile_start = time.time()
+        try:
+            if build_options:
+                program = cl.Program(ctx, source).build(options=build_options)
+            else:
+                program = cl.Program(ctx, source).build()
+
+            compile_time_ms = (time.time() - compile_start) * 1000
+            compile_time_total += compile_time_ms
+
+            if attempt > 0:
+                log.info(
+                    f"OpenCL 内核编译成功 (第{attempt + 1}次尝试/{strategy_desc}): "
+                    f"{compile_time_ms:.0f}ms (累计{compile_time_total:.0f}ms)"
+                )
+            else:
+                log.info(f"OpenCL 内核编译成功 ({strategy_desc}): {compile_time_ms:.0f}ms")
+
+            return program, strategy_idx  # DEF-2: 返回策略索引供调用方决定是否缓存
+
+        except Exception as e:
+            compile_time_ms = (time.time() - compile_start) * 1000
+            compile_time_total += compile_time_ms
+            last_error = e
+
+            if attempt < max_retries - 1:
+                delay = retry_delay_base * (2 ** attempt)
+                log.warning(
+                    f"OpenCL 内核编译失败 (第{attempt + 1}/{max_retries}次/{strategy_desc}): "
+                    f"{type(e).__name__}: {e} ({compile_time_ms:.0f}ms), "
+                    f"{delay:.0f}s后重试..."
+                )
+                time.sleep(delay)
+            else:
+                log.error(
+                    f"OpenCL 内核编译彻底失败 (已重试{max_retries}次): "
+                    f"{type(e).__name__}: {e} (累计{compile_time_total:.0f}ms)"
+                )
+
+    raise RuntimeError(
+        f"GPU 内核编译失败 (已重试{max_retries}次): {last_error}"
+    ) from last_error
+
 
 def get_gpu_optimizer() -> Optional[Any]:
     """获取GPU优化器"""
@@ -110,30 +204,30 @@ class GPUKernel(GPUKernelProtocol):
 
         self._max_batch_size = max_batch_size
         self._program = program  # 可能为None（需要自行编译）
-        self._batch_kernel: Optional[Any] = None
-        self._batch_kernel_local: Optional[Any] = None  # local memory版本内核引用
+        self._batch_kernel = None
+        self._batch_kernel_local = None  # local memory版本内核引用
         # 查询设备local memory大小（OpenCL标准属性），回退默认值16KB
         try:
-            self._local_mem_size = device.device.local_mem_size  # type: ignore[attr-defined]  # PyOpenCL C扩展设备属性
+            self._local_mem_size = device.device.local_mem_size  # type: ignore[attr-defined]  # PyOpenCL C扩展无stubs
         except Exception:
             self._local_mem_size = 16384  # 默认16KB
 
         # P2-2修复: 初始化缓冲区追踪器
         self._buffer_tracker = GPUBufferTracker()
 
-        # 持久化 Buffer - 避免频繁分配/释放
-        self._seed_buf: Optional[Any] = None  # PRNG模式：仅存傤32字节种子
+        # 持久化 Buffer - 避免频繁分配/释放（PyOpenCL C扩展类型，无stubs故用Any）
+        self._seed_buf = None  # PRNG模式：仅存傤32字节种子
         # self._keys_buf 已于 v4.0 PRNG 改造时移除，不再使用
-        self._match_buf: Optional[Any] = None
-        self._targets_buf: Optional[Any] = None
+        self._match_buf = None
+        self._targets_buf = None
         self._target_hash160s: Optional[bytes] = None  # P3修复: 添加目标地址缓存
         self._targets_cached: Optional[bytes] = None
         self._num_targets_cached = 0
         self._check_uncompressed = 0  # v4.0: 0=仅压缩, 1=也检查非压缩
-        self._precomp_buf: Optional[Any] = None  # 预计算表常量缓冲区（生命周期与 kernel 一致）
+        self._precomp_buf = None  # 预计算表常量缓冲区（生命周期与 kernel 一致）
 
         # 预分配主机内存
-        self._match_flags: Optional[Any] = None
+        self._match_flags = None
 
         # 校验 GPUDevice 已正确初始化
         if not getattr(self.device, "context", None) or not getattr(self.device, "queue", None):
@@ -188,45 +282,60 @@ class GPUKernel(GPUKernelProtocol):
         return self._program
 
     def _compile(self):
-        """编译 OpenCL 内核（带性能监控和缓存）
+        """编译 OpenCL 内核（带性能监控、缓存和重试机制）
 
         P2-6修复: 添加内核编译缓存机制，避免每次启动都重新编译
+        DEF-2修复: 编译失败时自动重试（最多3次，渐进策略+指数退避）
+            第1次: 标准编译
+            第2次: CL2.0标准编译 (延迟2s)
+            第3次: 降级CL1.2编译 (延迟4s, -cl-std=CL1.2 -cl-mad-enable -cl-no-signed-zeros)
         """
         import time
 
-        # P2-6修复: 尝试从缓存加载
+        # P2-6修复: 尝试从缓存加载（标准编译的缓存）
         if self._load_kernel_cache():
             logger.info("使用缓存的OpenCL内核二进制")
             return
 
-        compile_start = time.time()
+        compile_start_total = time.time()
+
         try:
-            # 使用新模块的内核源码
-            self._program = cl.Program(self.device.context, OPENCL_KERNEL_SOURCE).build()
-            compile_time_ms = (time.time() - compile_start) * 1000
+            # DEF-2修复: 使用共享重试编译函数
+            self._program, strategy_idx = compile_kernel_with_retry(
+                ctx=self.device.context,
+                source=OPENCL_KERNEL_SOURCE,
+                strategies=COMPILE_STRATEGIES,
+                max_retries=GPU_KERNEL_COMPILE_MAX_RETRIES,
+                retry_delay_base=GPU_KERNEL_COMPILE_RETRY_DELAY_BASE,
+                log=logger,
+            )
 
-            logger.info(f"OpenCL 内核编译成功: {compile_time_ms:.0f}ms")
+            total_compile_time_ms = (time.time() - compile_start_total) * 1000
 
-            # P2-6修复: 保存编译结果到缓存
-            self._save_kernel_cache()
+            # DEF-2修复: 仅缓存标准编译结果（strategy_idx=0），
+            # 降级编译不缓存，避免驱动升级后永久锁定在降级性能
+            if strategy_idx == 0:
+                self._save_kernel_cache()
+            else:
+                logger.info(
+                    f"内核使用降级策略({COMPILE_STRATEGIES[strategy_idx][0]})编译成功，"
+                    f"不缓存以避免锁定降级性能"
+                )
 
             # 记录编译性能
             try:
-                # 获取设备信息
                 device_name = self.device.device.name
                 vendor_str = self.device.device.vendor
                 global_mem = self.device.device.global_mem_size
 
-                # 创建优化配置
                 if self.gpu_optimizer:
                     profile = self.gpu_optimizer.create_optimized_profile(
                         device_name=device_name,
                         vendor_str=vendor_str,
                         global_mem_size=global_mem,
-                        compile_time_ms=compile_time_ms,
+                        compile_time_ms=total_compile_time_ms,
                     )
 
-                    # 如果配置文件指定了batch_size，更新
                     if profile.max_batch_size != self.max_batch_size:
                         logger.info(
                             f"根据性能优化调整batch_size: "
@@ -239,11 +348,9 @@ class GPUKernel(GPUKernelProtocol):
             except Exception as opt_error:
                 logger.warning(f"GPU性能优化失败: {opt_error}")
 
-        except Exception as e:
-            # 编译失败或其他错误
-            compile_time_ms = (time.time() - compile_start) * 1000
-            logger.error(f"OpenCL 内核编译失败: {type(e).__name__}: {e} ({compile_time_ms:.0f}ms)")
-            raise RuntimeError(f"GPU 内核编译失败: {e}") from e
+        except RuntimeError:
+            # compile_kernel_with_retry 已经记录了详细日志，直接向上传播
+            raise
 
     def _verify(self):
         """ALG-3修复: 验证 GPU 计算正确性（增强版）
@@ -270,7 +377,7 @@ class GPUKernel(GPUKernelProtocol):
 
         # 将种子写入GPU seed缓冲区
         seed_array = _seed_bytes_to_u32_be_array(test_seed_bytes)
-        cl.enqueue_copy(  # type: ignore[call-overload]  # PyOpenCL C扩展，mypy无法解析重载
+        cl.enqueue_copy(
             self.device.queue, self._seed_buf, seed_array
         )
 
@@ -278,16 +385,16 @@ class GPUKernel(GPUKernelProtocol):
         self.set_targets(test_targets, num_targets, check_uncompressed=0)
 
         # 清空匹配结果缓冲区
-        cl.enqueue_fill_buffer(  # type: ignore[arg-type]  # PyOpenCL C扩展缓冲区类型
+        cl.enqueue_fill_buffer(
             self.device.queue,
-            self._match_buf,  # type: ignore[arg-type]
+            self._match_buf,
             np.int32(0),
             0,
-            num_keys * 4,  # type: ignore[arg-type]
+            num_keys * 4,
         )
 
         # 执行GPU batch计算
-        self._batch_kernel(  # type: ignore[misc]  # PyOpenCL C扩展内核调用
+        self._batch_kernel(
             self.device.queue,
             (num_keys,),
             None,
@@ -302,7 +409,7 @@ class GPUKernel(GPUKernelProtocol):
 
         # 读取结果
         match_flags: np.ndarray[Any, Any] = np.zeros(num_keys, dtype=np.int32)
-        cl.enqueue_copy(  # type: ignore[call-overload]  # PyOpenCL C扩展，mypy无法解析重载
+        cl.enqueue_copy(
             self.device.queue, match_flags, self._match_buf
         )
 
@@ -333,16 +440,16 @@ class GPUKernel(GPUKernelProtocol):
             self.set_targets(test_hash160, 1, check_uncompressed=0)
 
             # 清空匹配结果缓冲区
-            cl.enqueue_fill_buffer(  # type: ignore[arg-type]  # PyOpenCL C扩展缓冲区类型
+            cl.enqueue_fill_buffer(
                 self.device.queue,
-                self._match_buf,  # type: ignore[arg-type]
+                self._match_buf,
                 np.int32(0),
                 0,
-                num_keys * 4,  # type: ignore[arg-type]
+                num_keys * 4,
             )
 
             # 执行GPU batch计算
-            self._batch_kernel(  # type: ignore[misc]  # PyOpenCL C扩展内核调用
+            self._batch_kernel(
                 self.device.queue,
                 (num_keys,),
                 None,
@@ -357,7 +464,7 @@ class GPUKernel(GPUKernelProtocol):
 
             # 读取结果
             match_flags = np.zeros(num_keys, dtype=np.int32)
-            cl.enqueue_copy(  # type: ignore[call-overload]  # PyOpenCL C扩展，mypy无法解析重载
+            cl.enqueue_copy(
                 self.device.queue, match_flags, self._match_buf
             )
 
@@ -444,23 +551,35 @@ class GPUKernel(GPUKernelProtocol):
             return False
 
     def _save_kernel_cache(self):
-        """P2-6修复: 保存内核二进制到缓存"""
+        """P2-6修复 + DEF-2审查: 原子写入内核二进制到缓存
+
+        使用 tmp + os.replace 原子写入，防止并发写入导致缓存损坏。
+        """
         cache_file = self._get_cache_file()
+        tmp_file = cache_file + ".tmp"
 
         try:
             # 获取编译后的二进制
             assert self._program is not None, "_save_kernel_cache 应在编译成功后调用"
-            binaries = self._program.get_info(cl.program_info.BINARIES)  # type: ignore[union-attr]  # PyOpenCL C扩展
+            binaries = self._program.get_info(cl.program_info.BINARIES)
             if binaries and len(binaries) > 0:
                 binary = binaries[0]
 
-                with open(cache_file, "wb") as f:
+                # 原子写入: 先写临时文件，再原子替换
+                with open(tmp_file, "wb") as f:
                     f.write(binary)
+                os.replace(tmp_file, cache_file)  # 原子操作（Windows上也基本原子）
 
                 logger.debug(f"内核缓存已保存: {cache_file} ({len(binary)} bytes)")
 
         except Exception as e:
             logger.warning(f"保存内核缓存失败: {e}")
+            # 清理可能的临时文件
+            try:
+                if os.path.exists(tmp_file):
+                    os.remove(tmp_file)
+            except OSError:
+                pass
 
     def _calculate_optimal_batch_size(self) -> int:
         """根据GPU显存大小计算最优batch_size
@@ -497,11 +616,11 @@ class GPUKernel(GPUKernelProtocol):
         # 节省显存: max_batch_size * 32 字节（例: 1M keys 节省约32MB）
         if memory_pool:
             # 内存池不支持如此小的分配，直接创建
-            self._seed_buf = cl.Buffer(  # type: ignore[assignment]  # PyOpenCL C扩展构造，mypy无法推断类型
+            self._seed_buf = cl.Buffer(
                 self.device.context, cl.mem_flags.READ_ONLY, size=32  # 固定32字节
             )
         else:
-            self._seed_buf = cl.Buffer(  # type: ignore[assignment]  # PyOpenCL C扩展构造，mypy无法推断类型
+            self._seed_buf = cl.Buffer(
                 self.device.context, cl.mem_flags.READ_ONLY, size=32  # 固定32字节
             )
         logger.info(
@@ -518,7 +637,7 @@ class GPUKernel(GPUKernelProtocol):
             logger.debug(f"使用内存池分配匹配缓冲区: {match_buf_size}字节")
         else:
             # 直接分配（回退模式）
-            self._match_buf = cl.Buffer(  # type: ignore[assignment]
+            self._match_buf = cl.Buffer(
                 self.device.context, cl.mem_flags.WRITE_ONLY, size=match_buf_size
             )
             logger.debug(f"直接分配匹配缓冲区: {match_buf_size}字节")
@@ -527,14 +646,14 @@ class GPUKernel(GPUKernelProtocol):
         self._buffer_tracker.track_buffer("_match_buf", self._match_buf, match_buf_size)
 
         # 预分配主机内存
-        self._match_flags = np.zeros(self.max_batch_size, dtype=np.int32)  # type: ignore[assignment]
+        self._match_flags = np.zeros(self.max_batch_size, dtype=np.int32)
 
         # 预计算表常量缓冲区
         if self._precomp_buf is None:
             from .precompute import get_precomp_table
 
             precomp_data = get_precomp_table()
-            self._precomp_buf = cl.Buffer(  # type: ignore[assignment]
+            self._precomp_buf = cl.Buffer(
                 self.device.context,
                 cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR,
                 hostbuf=precomp_data,
@@ -595,7 +714,7 @@ class GPUKernel(GPUKernelProtocol):
 
         # 创建新的目标缓冲区
         targets_array = np.frombuffer(target_hash160s, dtype=np.uint8)
-        self._targets_buf = cl.Buffer(  # type: ignore[assignment]
+        self._targets_buf = cl.Buffer(  # type: ignore[assignment]  # PyOpenCL C扩展无stubs
             self.device.context,
             cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR,
             hostbuf=targets_array,
@@ -607,7 +726,7 @@ class GPUKernel(GPUKernelProtocol):
                 "_targets_buf", self._targets_buf, len(target_hash160s)
             )
 
-        self._targets_cached = target_hash160s  # type: ignore[assignment]
+        self._targets_cached = target_hash160s
         self._num_targets_cached = num_targets
 
         logger.info(f"GPU 目标地址设置完成: {num_targets} 个目标")
@@ -675,7 +794,7 @@ class GPUKernel(GPUKernelProtocol):
 
         seed_array = _seed_bytes_to_u32_be_array(seed)
         try:
-            cl.enqueue_copy(  # type: ignore[call-overload]
+            cl.enqueue_copy(
                 self.device.queue, self._seed_buf, seed_array
             )
         except Exception as e:
@@ -689,7 +808,7 @@ class GPUKernel(GPUKernelProtocol):
 
         try:
             cl.enqueue_fill_buffer(
-                self.device.queue, self._match_buf, np.int32(0), 0, num_keys * 4  # type: ignore[arg-type]
+                self.device.queue, self._match_buf, np.int32(0), 0, num_keys * 4
             )
         except Exception as e:
             logger.error(f"清空 match_buf 失败: {e}")
@@ -697,7 +816,7 @@ class GPUKernel(GPUKernelProtocol):
 
         # 执行内核（异步）
         if self._batch_kernel is None:
-            self._batch_kernel = self.program.batch_check  # type: ignore[union-attr]
+            self._batch_kernel = self.program.batch_check
 
         # v2.3.0优化: 显式设置local_work_size提升性能
         # 从配置中获取work_group_size，避免OpenCL自动选择次优值
@@ -725,7 +844,7 @@ class GPUKernel(GPUKernelProtocol):
             logger.debug(
                 f"使用local memory版内核: 目标数据{target_bytes}B 设备local_mem={local_mem_size}B"
             )
-            self._batch_kernel_local(  # type: ignore[misc]
+            self._batch_kernel_local(
                 self.device.queue,
                 (global_work_size,),
                 (local_work_size,),
@@ -739,7 +858,7 @@ class GPUKernel(GPUKernelProtocol):
                 self._precomp_buf,
             )
         else:
-            self._batch_kernel(  # type: ignore[misc]
+            self._batch_kernel(
                 self.device.queue,
                 (global_work_size,),
                 (local_work_size,),
@@ -753,7 +872,7 @@ class GPUKernel(GPUKernelProtocol):
             )
 
         # 异步读取结果
-        match_view = self._match_flags[:num_keys]  # type: ignore[index]
+        match_view = self._match_flags[:num_keys]
         read_event = cl.enqueue_copy(self.device.queue, match_view, self._match_buf)
 
         # 方案B: 添加超时保护机制(防止Intel Arc A770等GPU永久卡死)
@@ -944,7 +1063,7 @@ class GPUKernel(GPUKernelProtocol):
                 estimated_memory = num_keys * 36  # 每个私钥约 36 字节
                 self.memory_monitor.track_allocation(
                     estimated_memory,
-                    batch_count=self.stats.total_batches,  # type: ignore[attr-defined]
+                    batch_count=self.stats.total_batches,
                 )
 
                 # 降低显存检查频率：每 100 个批次检查一次

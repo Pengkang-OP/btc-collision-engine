@@ -54,6 +54,7 @@ PROGRESS_INTERVAL_COUNT = 1000  # 每N次检测触发一次进度回调
 DATA_LOG_SAVE_FREQUENCY = 3  # 每N次记录保存一次数据日志
 ERROR_LOG_INTERVAL_SEC = 5.0  # 错误日志记录间隔（秒）
 CPU_CACHE_INTERVAL_SEC = 1.0  # CPU使用率缓存更新间隔（秒）
+MATCH_BATCH_FLUSH_THRESHOLD = 10  # P2-2修复: 匹配结果批量提交阈值
 
 
 class KeyCollisionEngine(BaseCollisionEngine):
@@ -663,11 +664,110 @@ class KeyCollisionEngine(BaseCollisionEngine):
         except Exception as e:
             logger.error(f"加密后端初始化失败: {e}，使用默认后端")
 
+    def _log_throttled_error(
+        self, error_type: str, message: str, exception: Exception, worker_id: int
+    ) -> None:
+        """限频记录错误日志（线程安全）
+
+        P1-1重构: 从 _random_search_worker 提取重复的错误日志限频逻辑。
+
+        Args:
+            error_type: 错误类型标识
+            message: 错误描述
+            exception: 异常对象
+            worker_id: 工作线程ID
+        """
+        if not (self.data_logging_enabled and self.data_logger):
+            return
+
+        current_time = time.time()
+        should_log = False
+
+        with self._state_lock:
+            if current_time - self._last_error_log_time >= self._error_log_interval:
+                self._last_error_log_time = current_time
+                should_log = True
+
+        if should_log:
+            self.data_logger.record_error(
+                error_type=error_type,
+                message=message,
+                exception=exception,
+                context={"worker_id": worker_id},
+            )
+
+    def _process_key_match(
+        self,
+        private_key,
+        matched_address: str,
+        matched_compressed: bool,
+        local_matches: list,
+        worker_id: int,
+    ) -> bool:
+        """处理密钥匹配：WIF编码、记录匹配、触发回调
+
+        P1-1重构: 从 _random_search_worker 提取匹配处理逻辑。
+
+        Args:
+            private_key: 匹配的私钥（bytes或memoryview）
+            matched_address: 匹配的比特币地址
+            matched_compressed: 是否为压缩格式地址
+            local_matches: 本地匹配结果列表（可变）
+            worker_id: 工作线程ID
+
+        Returns:
+            True 表示应继续运行，False 表示应停止引擎
+        """
+        try:
+            from ..core.wif import WIF
+
+            pk_bytes = (
+                bytes(private_key)
+                if not isinstance(private_key, bytes)
+                else private_key
+            )
+            wif = WIF.encode(pk_bytes, compressed=True)
+            local_matches.append((pk_bytes, matched_address, wif))
+        except (ValueError, TypeError, OverflowError) as e:
+            logger.error(
+                f"Random worker {worker_id}: WIF编码参数错误 addr={matched_address}: {type(e).__name__}"
+            )
+            return True  # 继续运行
+        except Exception as e:
+            logger.exception(
+                f"Random worker {worker_id}: WIF编码未知错误 addr={matched_address}"
+            )
+            return True  # 继续运行
+
+        # 记录匹配发现
+        format_type = "压缩" if matched_compressed else "非压缩"
+        logger.info(f"🎯 发现匹配! 地址={matched_address} (格式: {format_type})")
+
+        # 批量提交匹配结果（每MATCH_BATCH_FLUSH_THRESHOLD个一批）
+        if len(local_matches) >= MATCH_BATCH_FLUSH_THRESHOLD:
+            for pk, addr, wif_str in local_matches:
+                self.stats.add_match(pk, addr)
+            if self.on_match:
+                for pk, addr, wif_str in local_matches:
+                    self._safe_invoke_match_callback(pk, addr, wif_str)
+            local_matches.clear()
+
+        # 如果没有on_match回调，找到匹配后停止
+        if not self.on_match:
+            logger.info("找到匹配且无回调，停止对撞")
+            self._stop_event.set()
+            return False  # 停止运行
+
+        return True  # 继续运行
+
     def _random_search_worker(self, worker_id: int = 0) -> int:
         """
         随机碰撞模式的工作线程函数（安全增强版）
 
         使用SecureKeyManager确保每个私钥在使用后立即清零。
+
+        P1-1重构: 提取 _log_throttled_error / _process_key_match，
+        方法从 248 行缩减至 ~160 行。
 
         参数:
             worker_id: 工作线程标识符，用于日志区分，默认0
@@ -676,7 +776,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             本线程处理的私钥总数
         """
         local_count = 0
-        local_matches = []
+        local_matches: list[tuple[bytes, str, str]] = []
         batch_start_time = time.time()
 
         # BL-4修复: 添加短期去重缓存，减少DeduplicationFilter的压力
@@ -686,123 +786,71 @@ class KeyCollisionEngine(BaseCollisionEngine):
         logger.debug(f"工作线程 {worker_id} 启动，批量大小={self._batch_size}")
 
         while not self._stop_event.is_set():
-            # 批量生成和检查
             batch_count = 0
             batch_start = time.time()
 
-            # 优化：批内复用SecureKeyManager实例（减少对象创建开销）
             with SecureKeyManager() as key_mgr:
                 for _ in range(self._batch_size):
                     if self._stop_event.is_set():
                         break
 
-                    # 生成新私钥（复用key_mgr实例，清零后重新生成）
                     key_mgr.generate_key()
                     private_key = key_mgr.get_key()
 
-                    # 转换为整数验证范围
                     k = int.from_bytes(private_key, "big")
-                    # v2.2.1迁移: 使用曲线阶数常量（原Secp256k1.N）
                     if (
                         k < 1
                         or k >= 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
                     ):
-                        continue  # with块会正确执行__exit__清零私钥
+                        continue
 
-                    # BL-4修复: 先检查短期缓存，再检查DeduplicationFilter
+                    # 短期缓存 + 去重检查
                     import hashlib
-
                     key_fp = hashlib.sha256(private_key).digest()[:8]
                     if key_fp in recent_keys:
-                        continue  # 短期缓存命中，跳过
-
-                    # 去重检查（DeduplicationFilter内部已有锁保护）
+                        continue
                     if not self.dedup_filter.check_and_add(bytes(private_key)):
-                        continue  # with块会正确执行__exit__清零私钥
+                        continue
 
-                    # 添加到短期缓存
                     recent_keys.add(key_fp)
                     if len(recent_keys) > max_recent_size:
-                        # 缓存满时，清空一半（保留最近的）
-                        recent_keys = set(list(recent_keys)[max_recent_size // 2 :])
+                        recent_keys = set(list(recent_keys)[max_recent_size // 2:])
 
-                    # 生成地址
+                    # 生成地址（P1-1: 错误日志通过 _log_throttled_error 统一处理）
                     try:
                         if self.check_uncompressed:
-                            # 同时生成压缩和非压缩格式地址
-                            compressed_addr, compressed_pub, _ = self.generator.generate_address(
+                            compressed_addr, _, _ = self.generator.generate_address(
                                 private_key, compressed=True
                             )
-                            uncompressed_addr, uncompressed_pub, _ = (
-                                self.generator.generate_address(private_key, compressed=False)
+                            uncompressed_addr, _, _ = self.generator.generate_address(
+                                private_key, compressed=False
                             )
                         else:
-                            # 仅生成压缩格式地址（默认）
-                            compressed_addr, compressed_pub, _ = self.generator.generate_address(
+                            compressed_addr, _, _ = self.generator.generate_address(
                                 private_key, compressed=True
                             )
                             uncompressed_addr = None
                     except ValueError as e:
                         logger.warning(f"Random worker {worker_id}: 私钥无效，跳过: {e}")
-                        if self.data_logging_enabled and self.data_logger:
-                            current_time = time.time()
-                            should_log = False
-
-                            # 使用锁保护限频检查和更新（避免竞态条件）
-                            with self._state_lock:
-                                if (
-                                    current_time - self._last_error_log_time
-                                    >= self._error_log_interval
-                                ):
-                                    self._last_error_log_time = current_time
-                                    should_log = True
-
-                            # 在锁外执行I/O操作
-                            if should_log and self.data_logger:
-                                self.data_logger.record_error(
-                                    error_type="invalid_key",
-                                    message=f"随机私钥无效",
-                                    exception=e,
-                                    context={"worker_id": worker_id},
-                                )
-                        continue  # with块会正确执行__exit__清零私钥
+                        self._log_throttled_error("invalid_key", "随机私钥无效", e, worker_id)
+                        continue
                     except Exception as e:
                         logger.error(f"Random worker {worker_id}: 生成地址失败: {e}", exc_info=True)
-                        if self.data_logging_enabled and self.data_logger:
-                            current_time = time.time()
-                            should_log = False
-
-                            # 使用锁保护限频检查和更新（避免竞态条件）
-                            with self._state_lock:
-                                if (
-                                    current_time - self._last_error_log_time
-                                    >= self._error_log_interval
-                                ):
-                                    self._last_error_log_time = current_time
-                                    should_log = True
-
-                            # 在锁外执行I/O操作
-                            if should_log and self.data_logger:
-                                self.data_logger.record_error(
-                                    error_type="address_generation_failed",
-                                    message=f"生成地址失败",
-                                    exception=e,
-                                    context={"worker_id": worker_id},
-                                )
-                        continue  # with块会正确执行__exit__清零私钥
+                        self._log_throttled_error(
+                            "address_generation_failed", "生成地址失败", e, worker_id
+                        )
+                        continue
 
                     local_count += 1
                     batch_count += 1
 
-                    # 实时更新共享计数器（每 32 次更新一次，均衡锁争用与实时性）
                     if local_count % 32 == 0:
                         with self._state_lock:
                             self._live_range_count += 32
 
-                    # 检查匹配：先检查压缩格式，再检查非压缩格式（如果启用）
+                    # 检查匹配（P1-1: 匹配处理通过 _process_key_match 统一处理）
                     matched_address = None
                     matched_compressed = None
-
                     if compressed_addr.lower() in self.targets:
                         matched_address = compressed_addr
                         matched_compressed = True
@@ -815,54 +863,11 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         matched_compressed = False
 
                     if matched_address:
-                        try:
-                            from ..core.wif import WIF
-
-                            # 将private_key转换为bytes（可能是memoryview）
-                            pk_bytes = (
-                                bytes(private_key)
-                                if not isinstance(private_key, bytes)
-                                else private_key
-                            )
-                            # 在with块内编码WIF（私钥还未清零）
-                            wif = WIF.encode(pk_bytes, compressed=True)
-                            # 保存私钥的副本（调用者负责安全处理）
-                            # ⚠️ 注意：local_matches中的private_key是bytes副本
-                            #    回调函数on_match接收后需要负责安全处理
-                            local_matches.append((bytes(private_key), matched_address, wif))
-                        except (ValueError, TypeError, OverflowError) as e:
-                            # WIF编码参数错误
-                            logger.error(
-                                f"Random worker {worker_id}: WIF编码参数错误 addr={matched_address}: {type(e).__name__}"
-                            )
-                            continue  # with块会正确执行__exit__清零私钥
-                        except Exception as e:
-                            # 未知错误：记录完整堆栈
-                            logger.exception(
-                                f"Random worker {worker_id}: WIF编码未知错误 addr={matched_address}"
-                            )
-                            continue  # with块会正确执行__exit__清零私钥
-
-                        # 记录匹配发现
-                        format_type = "压缩" if matched_compressed else "非压缩"
-                        logger.info(f"🎯 发现匹配! 地址={matched_address} (格式: {format_type})")
-
-                        # 批量提交匹配结果
-                        if len(local_matches) >= 10:
-                            for pk, addr, wif_str in local_matches:
-                                self.stats.add_match(pk, addr)
-                            if self.on_match:
-                                for pk, addr, wif_str in local_matches:
-                                    self._safe_invoke_match_callback(pk, addr, wif_str)
-                            local_matches.clear()
-
-                        # 如果没有on_match回调，找到匹配后停止
-                        if not self.on_match:
-                            logger.info("找到匹配且无回调，停止对撞")
-                            self._stop_event.set()
+                        if not self._process_key_match(
+                            private_key, matched_address, matched_compressed,
+                            local_matches, worker_id
+                        ):
                             break
-
-                    # 退出with语句时private_key自动清零
 
             # 批次结束：key_mgr实例退出with块，最后一次私钥清零
 
@@ -1184,7 +1189,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
                 # 检查匹配：先检查压缩格式，再检查非压缩格式（如果启用）
                 matched_address = None
-                matched_compressed = None
+                matched_compressed: bool = False
 
                 if compressed_addr.lower() in self.targets:
                     matched_address = compressed_addr
