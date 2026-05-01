@@ -53,6 +53,9 @@ class SafeStreamHandler(logging.StreamHandler):
         try:
             msg = self.format(record)
             stream = self.stream
+            # 检测流是否已被关闭（如测试替换 sys.stdout 后恢复导致的）
+            if stream is None or getattr(stream, 'closed', False):
+                return
             # 如果是 Windows 且流编码不是 UTF-8，尝试将消息安全转换
             enc = getattr(stream, "encoding", "") or ""
             if enc.lower() not in ("utf-8", "utf8"):
@@ -62,6 +65,9 @@ class SafeStreamHandler(logging.StreamHandler):
             self.flush()
         except RecursionError:
             raise
+        except (ValueError, OSError):
+            # I/O operation on closed file 等流关闭异常，静默跳过
+            return
         except Exception:
             self.handleError(record)
 

@@ -101,6 +101,8 @@ markers = [
     # 测试类型标记
     "unit: Unit tests (单元测试)",
     "integration: Integration tests (集成测试)",
+    "smoke: Smoke tests - quick core verification (冒烟测试)",
+    "regression: Regression tests for known bugs (回归测试)",
     # 功能域标记
     "entropy: Entropy pool health check tests (熵池健康检查测试)",
     "deprecation: Deprecation warning tests (弃用警告测试)",

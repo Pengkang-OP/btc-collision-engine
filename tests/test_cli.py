@@ -187,7 +187,7 @@ class TestCLI:
 
         # 创建 mock 引擎实例
         mock_instance = Mock()
-        mock_instance.is_running.side_effect = [True, False]
+        mock_instance.is_running.side_effect = [True, False, False]
 
         mock_stats = Mock()
         mock_stats.total_checked = 1000
@@ -234,7 +234,7 @@ class TestCLI:
 
         # 创建 mock 引擎实例
         mock_instance = Mock()
-        mock_instance.is_running.side_effect = [True, False]
+        mock_instance.is_running.side_effect = [True, False, False]
 
         mock_stats = Mock()
         mock_stats.total_checked = 500
@@ -278,7 +278,7 @@ class TestCLI:
 
         # 创建 mock 引擎实例
         mock_instance = Mock()
-        mock_instance.is_running.side_effect = [True, False]
+        mock_instance.is_running.side_effect = [True, False, False]
 
         mock_stats = Mock()
         mock_stats.total_checked = 2000
