@@ -56,7 +56,7 @@ class RandomSearchMode(BaseSearchMode):
     消除主循环中 os.urandom() 的阻塞等待，进一步平滑 GPU 利用率。
     """
 
-    def __init__(self, engine: Any, seed_prefetch_size: int = SEED_PREFETCH_SIZE) -> None:  # type: ignore[override]
+    def __init__(self, engine: "GPUCollisionEngine", seed_prefetch_size: int = SEED_PREFETCH_SIZE) -> None:  # type: ignore[override]
         super().__init__(engine)
         # BUG-6: 支持从外部传入 seed_prefetch_size，不再硬编码 SEED_PREFETCH_SIZE
         self._seed_prefetch_size = seed_prefetch_size
@@ -181,7 +181,7 @@ class RandomSearchMode(BaseSearchMode):
 
                 # 更新统计数据
                 batch_count += current_batch_size
-                engine.stats.update(batch_count)  # type: ignore[attr-defined]
+                engine.stats.update(batch_count)
 
                 # 记录性能指标
                 engine._update_performance_metrics(current_batch_size, execution_time_ms)
@@ -223,9 +223,9 @@ class RandomSearchMode(BaseSearchMode):
 
         logger.info(f"GPU _random_search 结束: 共处理 {batch_count} 个私钥")
         engine._running = False
-        engine.stats.update(batch_count)  # type: ignore[attr-defined]
+        engine.stats.update(batch_count)
         if engine.on_complete:
-            engine.on_complete(engine.stats.snapshot())  # type: ignore[attr-defined]
+            engine.on_complete(engine.stats.snapshot())
 
     # ------------------------------------------------------------------
     # 异步双缓冲执行模式
@@ -362,7 +362,7 @@ class RandomSearchMode(BaseSearchMode):
                     batch_count += batch_size  # type: ignore[operator]
 
                     # 更新统计数据（与同步模式保持一致）
-                    engine.stats.update(batch_count)  # type: ignore[attr-defined]
+                    engine.stats.update(batch_count)
 
                     # 处理匹配结果（与同步模式保持一致，使用 engine._process_gpu_matches_prng）
                     if matches:
@@ -446,9 +446,9 @@ class RandomSearchMode(BaseSearchMode):
 
         logger.info(f"GPU异步执行结束: 共处理 {batch_count} 个私钥")
         engine._running = False
-        engine.stats.update(batch_count)  # type: ignore[attr-defined]
+        engine.stats.update(batch_count)
         if engine.on_complete:
-            engine.on_complete(engine.stats.snapshot())  # type: ignore[attr-defined]
+            engine.on_complete(engine.stats.snapshot())
 
     # ------------------------------------------------------------------
     # 辅助方法
@@ -493,7 +493,7 @@ class RandomSearchMode(BaseSearchMode):
 
                 # 记录统计信息
                 if hasattr(engine, "stats") and hasattr(engine.stats, "add_match"):
-                    engine.stats.add_match(private_key, address)  # type: ignore[attr-defined]
+                    engine.stats.add_match(private_key, address)
 
                 # 触发回调
                 if hasattr(engine, "on_match") and engine.on_match:

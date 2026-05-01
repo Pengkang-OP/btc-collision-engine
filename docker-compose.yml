@@ -14,7 +14,7 @@ services:
     image: btc-collision-engine:latest
     container_name: btc-collision-cpu
     restart: unless-stopped
-    
+
     # 环境变量
     environment:
       - PYTHONUNBUFFERED=1
@@ -22,7 +22,7 @@ services:
       - COLLISION_MODE=random
       - CHECKPOINT_ENABLED=true
       - DEDUP_ENABLED=true
-    
+
     # 配置文件
     volumes:
       - ./config.production.json:/opt/btc-collision-engine/config.production.json:ro
@@ -30,7 +30,7 @@ services:
       - btc-data:/opt/btc-collision-engine/data_logs
       - btc-logs:/opt/btc-collision-engine/logs
       - btc-monitor:/opt/btc-collision-engine/monitoring_data
-    
+
     # 资源限制
     deploy:
       resources:
@@ -40,7 +40,7 @@ services:
         reservations:
           cpus: '2.0'
           memory: 4G
-    
+
     # 日志配置
     logging:
       driver: "json-file"
@@ -48,7 +48,7 @@ services:
         max-size: "50m"
         max-file: "10"
         compress: "true"
-    
+
     # 健康检查
     healthcheck:
       test: ["CMD", "python", "-m", "src.utils.health_check", "--quiet"]
@@ -56,7 +56,7 @@ services:
       timeout: 30s
       retries: 3
       start_period: 120s
-    
+
     # 覆盖默认命令
     command: >
       python key_collision_cli.py
@@ -65,10 +65,10 @@ services:
       --checkpoint
       --dedup
       --workers 8
-    
+
     profiles:
       - cpu
-  
+
   # GPU模式（NVIDIA）
   btc-engine-gpu-nvidia:
     build:
@@ -79,7 +79,7 @@ services:
     image: btc-collision-engine:gpu
     container_name: btc-collision-gpu
     restart: unless-stopped
-    
+
     # GPU支持
     runtime: nvidia
     environment:
@@ -90,7 +90,7 @@ services:
       - COLLISION_MODE=random
       - CHECKPOINT_ENABLED=true
       - DEDUP_ENABLED=true
-    
+
     # 配置文件
     volumes:
       - ./config.production.json:/opt/btc-collision-engine/config.production.json:ro
@@ -98,7 +98,7 @@ services:
       - btc-data:/opt/btc-collision-engine/data_logs
       - btc-logs:/opt/btc-collision-engine/logs
       - btc-monitor:/opt/btc-collision-engine/monitoring_data
-    
+
     # 资源限制
     deploy:
       resources:
@@ -108,7 +108,7 @@ services:
         reservations:
           cpus: '1.0'
           memory: 2G
-    
+
     # 日志配置
     logging:
       driver: "json-file"
@@ -116,7 +116,7 @@ services:
         max-size: "50m"
         max-file: "10"
         compress: "true"
-    
+
     # 健康检查
     healthcheck:
       test: ["CMD", "python", "-m", "src.utils.health_check", "--quiet", "--gpu"]
@@ -124,7 +124,7 @@ services:
       timeout: 30s
       retries: 3
       start_period: 120s
-    
+
     # 覆盖默认命令
     command: >
       python key_collision_cli.py
@@ -134,11 +134,11 @@ services:
       --dedup
       --gpu
       --gpu-batch-size 65536
-    
+
     profiles:
       - gpu
       - nvidia
-  
+
   # GPU模式（AMD）
   btc-engine-gpu-amd:
     build:
@@ -149,19 +149,19 @@ services:
     image: btc-collision-engine:gpu-amd
     container_name: btc-collision-gpu-amd
     restart: unless-stopped
-    
+
     # GPU支持（AMD需要设备映射）
     devices:
       - /dev/kfd:/dev/kfd
       - /dev/dri:/dev/dri
-    
+
     environment:
       - PYTHONUNBUFFERED=1
       - RUN_MODE=gpu
       - COLLISION_MODE=random
       - CHECKPOINT_ENABLED=true
       - DEDUP_ENABLED=true
-    
+
     # 配置文件
     volumes:
       - ./config.production.json:/opt/btc-collision-engine/config.production.json:ro
@@ -169,7 +169,7 @@ services:
       - btc-data:/opt/btc-collision-engine/data_logs
       - btc-logs:/opt/btc-collision-engine/logs
       - btc-monitor:/opt/btc-collision-engine/monitoring_data
-    
+
     # 资源限制
     deploy:
       resources:
@@ -179,7 +179,7 @@ services:
         reservations:
           cpus: '1.0'
           memory: 2G
-    
+
     # 日志配置
     logging:
       driver: "json-file"
@@ -187,7 +187,7 @@ services:
         max-size: "50m"
         max-file: "10"
         compress: "true"
-    
+
     # 健康检查
     healthcheck:
       test: ["CMD", "python", "-m", "src.utils.health_check", "--quiet", "--gpu"]
@@ -195,7 +195,7 @@ services:
       timeout: 30s
       retries: 3
       start_period: 120s
-    
+
     # 覆盖默认命令
     command: >
       python key_collision_cli.py
@@ -205,11 +205,11 @@ services:
       --dedup
       --gpu
       --gpu-batch-size 65536
-    
+
     profiles:
       - gpu
       - amd
-  
+
   # 监控服务（可选）
   monitoring:
     image: grafana/grafana:latest
@@ -217,39 +217,39 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
-    
+
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=${GF_ADMIN_PASSWORD:-changeme}
-    
+      - GF_SECURITY_ADMIN_USER=${GF_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_ADMIN_PASSWORD:?GF_ADMIN_PASSWORD must be set for security}
+
     volumes:
       - grafana-data:/var/lib/grafana
       - ./deploy/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
       - ./deploy/grafana/datasources:/etc/grafana/provisioning/datasources:ro
-    
+
     profiles:
       - monitoring
-  
+
   # Prometheus（可选）
   prometheus:
     image: prom/prometheus:latest
     container_name: btc-prometheus
     restart: unless-stopped
-    
+
     volumes:
       - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
-    
+
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
       - '--web.console.libraries=/etc/prometheus/console_libraries'
       - '--web.console.templates=/etc/prometheus/consoles'
       - '--storage.tsdb.retention.time=30d'
-    
+
     ports:
       - "9090:9090"
-    
+
     profiles:
       - monitoring
 
@@ -261,24 +261,24 @@ volumes:
       type: none
       o: bind
       device: ./data
-  
+
   btc-logs:
     driver: local
     driver_opts:
       type: none
       o: bind
       device: ./logs
-  
+
   btc-monitor:
     driver: local
     driver_opts:
       type: none
       o: bind
       device: ./monitoring
-  
+
   grafana-data:
     driver: local
-  
+
   prometheus-data:
     driver: local
 

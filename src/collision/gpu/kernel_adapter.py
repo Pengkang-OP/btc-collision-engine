@@ -93,7 +93,7 @@ class GPUKernelAdapter(IKernelExecutor):
 
         except Exception as e:
             logger.error(f"GPU内核编译失败: {e}")
-            raise RuntimeError(f"GPU内核编译失败: {e}") from e
+            raise  # DEF-2修复: 直接重抛，保留内层已含重试次数的详细异常消息
 
     def execute_batch(
         self, kernel: GPUKernel, seed: bytes, batch_size: int, stop_event: Any = None

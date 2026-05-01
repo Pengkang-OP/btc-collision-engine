@@ -23,7 +23,7 @@ import threading
 import time
 import logging
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple, Union, Dict, Any
+from typing import Optional, Tuple, Union, Dict, Any, cast
 from enum import Enum, auto
 
 # 导入日志配置
@@ -124,9 +124,9 @@ class PurePythonBackend(CryptoBackend):
 
     def generate_public_key(self, private_key: bytes, compressed: bool = True) -> bytes:
         if self._use_const_time:
-            return self.ec.generate_public_key_const_time(private_key, compressed)  # type: ignore[no-any-return,attr-defined]
+            return self.ec.generate_public_key_const_time(private_key, compressed)  # type: ignore[attr-defined]
         else:
-            return self.ec.generate_public_key(private_key, compressed)  # type: ignore[no-any-return]
+            return self.ec.generate_public_key(private_key, compressed)
 
     def scalar_multiply(self, k: int, point_x: int, point_y: int) -> Tuple[int, int]:
         from .secp256k1 import ECPoint
@@ -138,7 +138,7 @@ class PurePythonBackend(CryptoBackend):
         else:
             result = self.ec.scalar_multiply(k, point)
 
-        return result.x, result.y  # type: ignore[return-value]
+        return cast(Tuple[int, int], (result.x, result.y))
 
     def is_constant_time(self) -> bool:
         return self._use_const_time
@@ -196,11 +196,11 @@ class OpenSSLBackend(CryptoBackend):
         if compressed:
             # 压缩格式: 0x02 (y为偶数) 或 0x03 (y为奇数) + x坐标
             prefix = b"\x02" if (y % 2 == 0) else b"\x03"
-            return prefix + x_bytes  # type: ignore[no-any-return]
+            return prefix + x_bytes
         else:
             # 非压缩格式: 0x04 + x坐标 + y坐标
             y_bytes = y.to_bytes(32, "big")
-            return b"\x04" + x_bytes + y_bytes  # type: ignore[no-any-return]
+            return b"\x04" + x_bytes + y_bytes
 
     def scalar_multiply(self, k: int, point_x: int, point_y: int) -> Tuple[int, int]:
         """
@@ -224,7 +224,7 @@ class OpenSSLBackend(CryptoBackend):
         ec_impl = EllipticCurve()
         result = ec_impl.scalar_multiply(k, ECPoint(point_x, point_y))
 
-        return result.x, result.y  # type: ignore[return-value]
+        return cast(Tuple[int, int], (result.x, result.y))
 
     def is_constant_time(self) -> bool:
         # P1-6 fix: generate_public_key() IS constant-time (uses OpenSSL ec.derive_private_key),
@@ -268,7 +268,7 @@ class CoincurveBackend(CryptoBackend):
 
         # 使用coincurve生成公钥
         private_key_obj = coincurve.PrivateKey(private_key)
-        return private_key_obj.public_key.format(compressed=compressed)  # type: ignore[no-any-return]
+        return private_key_obj.public_key.format(compressed=compressed)
 
     def scalar_multiply(self, k: int, point_x: int, point_y: int) -> Tuple[int, int]:
         """
@@ -292,9 +292,10 @@ class CoincurveBackend(CryptoBackend):
             result = pubkey.multiply(k.to_bytes(32, "big"))
 
             # 解析结果
-            if result[0] == 0x04:  # type: ignore[index]
-                rx = int.from_bytes(result[1:33], "big")  # type: ignore[index]
-                ry = int.from_bytes(result[33:65], "big")  # type: ignore[index]
+            assert isinstance(result, bytes)
+            if result[0] == 0x04:
+                rx = int.from_bytes(result[1:33], "big")
+                ry = int.from_bytes(result[33:65], "big")
                 return rx, ry
         except AttributeError:
             # 如果multiply不可用，使用纯Python回退
@@ -304,8 +305,8 @@ class CoincurveBackend(CryptoBackend):
         from .secp256k1 import EllipticCurve, ECPoint
 
         ec_impl = EllipticCurve()
-        result = ec_impl.scalar_multiply(k, ECPoint(point_x, point_y))  # type: ignore[assignment]
-        return result.x, result.y  # type: ignore[return-value,attr-defined]
+        ec_result = ec_impl.scalar_multiply(k, ECPoint(point_x, point_y))
+        return cast(Tuple[int, int], (ec_result.x, ec_result.y))
 
     def is_constant_time(self) -> bool:
         # libsecp256k1使用恒定时间算法
@@ -349,9 +350,9 @@ class ECDSABackend(CryptoBackend):
         verifying_key = signing_key.get_verifying_key()
 
         if compressed:
-            return verifying_key.to_string("compressed")  # type: ignore[no-any-return]
+            return cast(bytes, verifying_key.to_string("compressed"))
         else:
-            return b"\x04" + verifying_key.to_string()  # type: ignore[no-any-return]
+            return cast(bytes, b"\x04" + verifying_key.to_string())
 
     def scalar_multiply(self, k: int, point_x: int, point_y: int) -> Tuple[int, int]:
         """
@@ -363,7 +364,7 @@ class ECDSABackend(CryptoBackend):
 
         ec_impl = EllipticCurve()
         result = ec_impl.scalar_multiply(k, ECPoint(point_x, point_y))
-        return result.x, result.y  # type: ignore[return-value]
+        return cast(Tuple[int, int], (result.x, result.y))
 
     def is_constant_time(self) -> bool:
         # ecdsa库可能不使用恒定时间算法
@@ -415,7 +416,8 @@ class CryptoBackendManager:
         self._select_best_backend()
 
         available = [bt.name for bt, backend in self._backends.items() if backend.is_available]
-        logger.info(f"加密后端初始化完成: 可用={available}, 当前={self._current_backend.name}")  # type: ignore[attr-defined]
+        assert self._current_backend is not None
+        logger.info(f"加密后端初始化完成: 可用={available}, 当前={self._current_backend.name}")
 
     def _select_best_backend(self):
         """选择最佳可用后端（内部方法，调用者需持有锁）"""
@@ -454,7 +456,7 @@ class CryptoBackendManager:
             backend = self._current_backend
         if backend is None:
             raise RuntimeError("No crypto backend available")
-        return backend  # type: ignore[no-any-return]
+        return cast(CryptoBackend, backend)
 
     def set_backend(self, backend_type: BackendType, **kwargs) -> bool:
         """

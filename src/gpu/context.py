@@ -1,6 +1,8 @@
 """GPU上下文管理
 
 管理GPU设备上下文、厂商优化器和内核编译。
+
+DEF-2修复: 使用 kernel_impl.compile_kernel_with_retry() 共享重试逻辑
 """
 
 import hashlib
@@ -15,6 +17,7 @@ from .vendors.base import GPUVendorBase
 from .vendors.nvidia import NVIDIAGPUVendor
 from .vendors.amd import AMDGPUVendor
 from .vendors.intel import IntelGPUVendor
+from .kernel_impl import compile_kernel_with_retry  # DEF-2修复: 共享重试函数
 
 logger = get_configured_logger("GPUContext")
 
@@ -146,11 +149,14 @@ class GPUContext:
 
     def _get_or_compile_kernel(self, kernel_source: str):
         """
-        获取或编译OpenCL内核（内核缓存）
+        获取或编译OpenCL内核（内核缓存 + 重试机制）
 
         OpenCL Program 不能跨 context 共享，但同一 context 内相同源码可以复用。
         缓存策略: 以 (source_hash + build_options) 为键，避免同一 context 内
         重复编译相同源码的内核。
+
+        DEF-2修复: 使用 compile_kernel_with_retry() 共享重试逻辑，
+        支持渐进降级策略 (厂商选项 → CL2.0 → CL1.2)。
 
         Args:
             kernel_source: OpenCL内核源码
@@ -158,13 +164,13 @@ class GPUContext:
         Returns:
             编译后的Program对象
         """
-        build_options = self._get_build_options()
+        vendor_options = self._get_build_options()
 
         # 计算缓存键: 源码哈希 + 编译选项
         source_hash = hashlib.md5(kernel_source.encode("utf-8"), usedforsecurity=False).hexdigest()[
             :16
         ]
-        cache_key = f"{source_hash}_{build_options.replace(' ', '_')}"
+        cache_key = f"{source_hash}_{vendor_options.replace(' ', '_')}"
 
         # 检查缓存
         if cache_key in self._kernel_cache:
@@ -180,12 +186,25 @@ class GPUContext:
 
             logger.info(
                 f"编译新内核 [厂商={self.vendor_handler.get_vendor_name()}, "
-                f"options='{build_options}', source_hash={source_hash}]"
+                f"options='{vendor_options}', source_hash={source_hash}]"
             )
 
-            # 编译内核
-            self.program = cl.Program(self.device.context, kernel_source).build(  # type: ignore[call-overload]
-                options=build_options
+            # DEF-2修复: 构建渐进编译策略（厂商优选 → 通用回退）
+            vendor_options_list = vendor_options.split() if vendor_options else []
+            context_strategies = [
+                (f"厂商编译({vendor_options or '默认'})", vendor_options_list),
+                ("CL2.0标准编译", ["-cl-std=CL2.0"]),
+                ("降级CL1.2编译", ["-cl-std=CL1.2", "-cl-mad-enable", "-cl-no-signed-zeros"]),
+            ]
+
+            # DEF-2修复: 使用共享重试函数
+            self.program, _strategy_idx = compile_kernel_with_retry(
+                ctx=self.device.context,
+                source=kernel_source,
+                strategies=context_strategies,
+                max_retries=3,
+                retry_delay_base=2.0,
+                log=logger,
             )
 
             # 存入缓存
@@ -193,9 +212,9 @@ class GPUContext:
             logger.info(f"OpenCL内核编译成功，已存入缓存 (key={cache_key})")
             return self.program
 
-        except Exception as e:
-            logger.error(f"OpenCL内核编译失败: {e}")
-            raise RuntimeError(f"GPU内核编译失败: {e}")
+        except RuntimeError:
+            # compile_kernel_with_retry 已经记录了详细日志
+            raise
 
     def _get_build_options(self) -> str:
         """

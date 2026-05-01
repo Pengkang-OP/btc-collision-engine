@@ -81,9 +81,9 @@ class LogManager:
         self.storage = LogStorage(storage_dir) if enable_file else None
         self.query = LogQuery(storage_dir)
 
-        # 设置敏感数据过滤器
+        # 设置敏感数据脱敏器（脱敏而非丢弃事件）
         if redact_sensitive:
-            self.processor.add_filter(SensitiveDataFilter().filter)
+            self.processor.add_redactor(SensitiveDataFilter().redact_data)
 
         # 注册默认处理器
         self._register_default_handlers()

@@ -55,7 +55,7 @@ class GPUMetricsCollector:
     )
 
     def __init__(self) -> None:
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         self._created_at = time.time()
 
         # --- Counters (单调递增) ---

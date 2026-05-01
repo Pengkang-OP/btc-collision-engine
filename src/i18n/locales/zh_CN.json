@@ -180,7 +180,7 @@
             "start_success": "碰撞引擎启动成功",
             "stop_success": "碰撞引擎停止成功",
             "start_failed": "碰撞引擎启动失败: {error}",
-            "stop_failed": "�碌撞引擎停止失败: {error}",
+            "stop_failed": "碰撞引擎停止失败: {error}",
             "invalid_command": "无效命令: {command}",
             "missing_argument": "缺少必需参数: {arg}",
             "invalid_option": "无效选项: {option}",

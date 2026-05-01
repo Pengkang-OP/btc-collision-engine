@@ -11,6 +11,7 @@
 
 import logging
 from ..utils import init_logging, get_configured_logger
+from ..collision.constants import INTEL_SAFE_MEMORY_RATIO
 from typing import Optional, Any, Dict, TYPE_CHECKING
 
 logger = get_configured_logger("IntelOptimizer")
@@ -215,7 +216,7 @@ class IntelGPUOptimizer:
                         )
                     else:
                         self._memory_monitor = _memory_cls(
-                            total_memory_bytes=total_memory, safe_usage_ratio=0.45  # Intel 保守策略
+                            total_memory_bytes=total_memory, safe_usage_ratio=INTEL_SAFE_MEMORY_RATIO  # Intel 保守策略
                         )
                         self._logger.info(
                             f"✅ 显存监控器已初始化 " f"(总显存: {total_memory / 1024 ** 3:.1f}GB)"

@@ -84,12 +84,14 @@
 
 - [security-guidelines.md](security-guidelines.md) - 安全指南
 - [secure-key-management.md](secure-key-management.md) - 安全密钥管理
+- [windows-memory-lock.md](windows-memory-lock.md) - Windows 内存锁机制
 - [quick-reference-private-key-security.md](quick-reference-private-key-security.md) - 私钥安全速查
 
 #### 监控系统
 
 - [monitoring-system-guide.md](monitoring-system-guide.md) - 监控系统指南
-- [data-logging-guide.md](archive/日志相关/data-logging-guide.md) - 数据日志系统指南（TODO）
+- [data-logging-guide.md](archive/日志相关/data-logging-guide.md) - 数据日志系统指南
+- [Web 监控仪表板](../src/web/dashboard.py) - Flask Web 仪表板 (`python start_dashboard.py`)
 
 #### GPU加速
 

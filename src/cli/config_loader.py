@@ -33,6 +33,12 @@ def load_config_with_validation(config_file: Optional[str] = None) -> Optional[d
     """
     if config_file:
         config_path = os.path.abspath(config_file)
+        # 安全: 检测路径遍历，防止读取项目目录外的敏感文件
+        _real_path = os.path.realpath(config_path)
+        _project_real = os.path.realpath(_project_root)
+        if not _real_path.startswith(_project_real + os.sep) and _real_path != _project_real:
+            logger.error(f"配置文件路径超出项目目录范围，拒绝加载: {config_file}")
+            return None
     else:
         config_path = os.path.join(_project_root, "config.json")
 
