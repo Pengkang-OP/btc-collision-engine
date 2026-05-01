@@ -23,6 +23,7 @@ from ..utils.logger import get_sampled_logger, PerformanceMonitor
 from ..utils.exception_handler import ExceptionHandler
 from ..monitoring.data_logger import DataLogger
 from ..monitoring.enhanced_monitoring import EnhancedMonitoringSystem
+from ..logging.log_processor import SensitiveDataFilter
 
 # P3-8: 线程池配置校验
 from ..core.thread_pool import _validate_worker_count
@@ -689,10 +690,17 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 should_log = True
 
         if should_log:
+            # 脱敏: 对消息和异常字符串进行敏感数据过滤，保留异常类型
+            safe_message = SensitiveDataFilter.redact(message) if message else message
+            safe_exception = exception
+            if exception is not None:
+                safe_exc_str = SensitiveDataFilter.redact(str(exception))
+                if safe_exc_str != str(exception):
+                    safe_exception = type(exception)(safe_exc_str)
             self.data_logger.record_error(
                 error_type=error_type,
-                message=message,
-                exception=exception,
+                message=safe_message,
+                exception=safe_exception,
                 context={"worker_id": worker_id},
             )
 
@@ -850,7 +858,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
                     # 检查匹配（P1-1: 匹配处理通过 _process_key_match 统一处理）
                     matched_address = None
-                    matched_compressed = None
+                    matched_compressed = False
                     if compressed_addr.lower() in self.targets:
                         matched_address = compressed_addr
                         matched_compressed = True
