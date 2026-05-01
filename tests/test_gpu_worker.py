@@ -18,6 +18,8 @@ from unittest.mock import Mock, patch
 from src.gpu.gpu_config import WorkerConfig
 from src.gpu.worker import SingleGPUWorker
 
+pytestmark = pytest.mark.gpu
+
 
 @pytest.fixture
 def worker_config():

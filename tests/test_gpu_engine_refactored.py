@@ -13,6 +13,8 @@ Phase 1集成测试框架，验证:
 import pytest
 import sys
 
+pytestmark = pytest.mark.gpu
+
 
 class TestModuleImports:
     """测试模块导入"""

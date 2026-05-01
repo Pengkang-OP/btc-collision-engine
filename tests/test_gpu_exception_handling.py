@@ -19,6 +19,8 @@ from src.collision.collision_stats import CollisionStats
 from src.collision.checkpoint_manager import CheckpointManager
 from src.utils.exception_handler import ExceptionHandler
 
+pytestmark = pytest.mark.gpu
+
 
 class TestGPURuntimeErrors:
     """GPU运行时异常测试"""

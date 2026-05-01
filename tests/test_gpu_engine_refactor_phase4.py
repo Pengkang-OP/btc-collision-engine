@@ -19,6 +19,8 @@ import threading
 from unittest.mock import MagicMock
 from typing import Set, Dict, Any
 
+pytestmark = pytest.mark.gpu
+
 # ========== Fixtures ==========
 
 

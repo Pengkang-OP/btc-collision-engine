@@ -13,6 +13,9 @@ GPU性能验证测试 - v2.2.1优化效果确认
 import sys
 import time
 from pathlib import Path
+import pytest
+
+pytestmark = pytest.mark.gpu
 
 # 添加项目根目录
 sys.path.insert(0, str(Path(__file__).parent.parent))

@@ -7,6 +7,9 @@ GPU自适应性能优化器测试
 import sys
 import os
 import unittest
+import pytest
+
+pytestmark = pytest.mark.gpu
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

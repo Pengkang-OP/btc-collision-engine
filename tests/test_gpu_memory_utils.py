@@ -11,6 +11,8 @@ from src.utils.gpu_memory_utils import (
     BatchSizeConfig,
 )
 
+pytestmark = pytest.mark.gpu
+
 
 class MockDeviceObj:
     """模拟GPU设备对象"""

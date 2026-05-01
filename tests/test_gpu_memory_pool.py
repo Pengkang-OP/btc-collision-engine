@@ -9,6 +9,8 @@ from src.gpu.memory_pool import (
     GlobalGPUMemoryManager,
 )
 
+pytestmark = pytest.mark.gpu
+
 
 class TestGPUMemoryPool:
     """GPU内存池测试类"""

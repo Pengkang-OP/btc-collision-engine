@@ -15,6 +15,9 @@ import unittest
 from typing import Dict, Any
 
 from src.gpu.scorer import GPUDeviceScorer, get_gpu_scorer, reset_gpu_scorer
+import pytest
+
+pytestmark = pytest.mark.gpu
 
 
 # ──────────────────────────────────────────────

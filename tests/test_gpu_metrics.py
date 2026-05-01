@@ -20,6 +20,8 @@ from src.gpu.metrics import (
     reset_metrics_collector,
 )
 
+pytestmark = pytest.mark.gpu
+
 
 @pytest.fixture(autouse=True)
 def reset_metrics():

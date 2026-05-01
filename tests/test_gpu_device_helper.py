@@ -14,6 +14,9 @@
 import logging
 from unittest.mock import Mock
 from src.gpu.device_helper import GPUDeviceHelper
+import pytest
+
+pytestmark = pytest.mark.gpu
 
 
 # P2修复：提取FakeGPUDevice类消除重复代码

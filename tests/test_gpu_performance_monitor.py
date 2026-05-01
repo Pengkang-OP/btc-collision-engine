@@ -14,6 +14,8 @@ from src.monitoring.gpu_performance_monitor import (
     reset_gpu_performance_monitor,
 )
 
+pytestmark = pytest.mark.gpu
+
 
 class TestGPUKernelMetrics:
     """GPU内核指标测试"""

@@ -11,7 +11,6 @@
 测试结果将生成详细的测试报告。
 """
 
-
 import sys  # noqa: E402
 import os  # noqa: E402
 import time  # noqa: E402
@@ -25,8 +24,7 @@ from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine  # noqa: E402
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -55,7 +53,7 @@ class ComprehensiveTest:
             "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
             "1N5czHm9q7wSjzM7X4GCe4yi7z14L9tK8",
             "1M8s2S5bgAzSSzVTeL7zruvMPLvzSkEAuv",
-            "16UwLL9Risc3QfPqBUvKofHmBQ7wMtjvM"
+            "16UwLL9Risc3QfPqBUvKofHmBQ7wMtjvM",
         ]
 
         targets = set()
@@ -80,10 +78,10 @@ class ComprehensiveTest:
             duration = time.time() - start_time
 
             test_result = {
-                'name': test_name,
-                'status': 'pass',
-                'duration': duration,
-                'result': result
+                "name": test_name,
+                "status": "pass",
+                "duration": duration,
+                "result": result,
             }
             logger.info(f"测试通过: {test_name} (耗时: {duration:.2f}秒)")
 
@@ -91,10 +89,10 @@ class ComprehensiveTest:
             duration = time.time() - start_time
 
             test_result = {
-                'name': test_name,
-                'status': 'fail',
-                'duration': duration,
-                'error': str(e)
+                "name": test_name,
+                "status": "fail",
+                "duration": duration,
+                "error": str(e),
             }
             logger.error(f"测试失败: {test_name} (耗时: {duration:.2f}秒) - 错误: {e}")
 
@@ -105,9 +103,7 @@ class ComprehensiveTest:
         """测试基本功能"""
         targets = self.generate_test_targets(10)
 
-        engine = MultiGPUCollisionEngine({
-            'enable_async_execution': True
-        })
+        engine = MultiGPUCollisionEngine({"enable_async_execution": True})
 
         # 初始化引擎
         if not engine.initialize(device_count=1):
@@ -118,11 +114,7 @@ class ComprehensiveTest:
             raise Exception("引擎初始化失败")
 
         # 启动碰撞
-        if not engine.start(
-            targets=targets,
-            mode='random',
-            total_keys=100000
-        ):
+        if not engine.start(targets=targets, mode="random", total_keys=100000):
             try:
                 engine.cleanup()
             except Exception:
@@ -147,10 +139,7 @@ class ComprehensiveTest:
         """测试多GPU功能"""
         targets = self.generate_test_targets(10)
 
-        engine = MultiGPUCollisionEngine({
-            'enable_async_execution': True,
-            'auto_rebalance': True
-        })
+        engine = MultiGPUCollisionEngine({"enable_async_execution": True, "auto_rebalance": True})
 
         # 初始化引擎，使用所有可用GPU
         if not engine.initialize(device_count=-1):
@@ -161,11 +150,7 @@ class ComprehensiveTest:
             raise Exception("引擎初始化失败")
 
         # 启动碰撞
-        if not engine.start(
-            targets=targets,
-            mode='random',
-            total_keys=500000
-        ):
+        if not engine.start(targets=targets, mode="random", total_keys=500000):
             try:
                 engine.cleanup()
             except Exception:
@@ -195,12 +180,12 @@ class ComprehensiveTest:
         results = []
 
         for batch_size in batch_sizes:
-            engine = MultiGPUCollisionEngine({
-                'enable_async_execution': True,
-                'per_device_config': {
-                    '0': {'batch_size': batch_size}
+            engine = MultiGPUCollisionEngine(
+                {
+                    "enable_async_execution": True,
+                    "per_device_config": {"0": {"batch_size": batch_size}},
                 }
-            })
+            )
 
             if not engine.initialize(device_count=1):
                 try:
@@ -209,11 +194,7 @@ class ComprehensiveTest:
                     pass
                 raise Exception(f"引擎初始化失败(批次大小: {batch_size})")
 
-            if not engine.start(
-                targets=targets,
-                mode='random',
-                total_keys=200000
-            ):
+            if not engine.start(targets=targets, mode="random", total_keys=200000):
                 try:
                     engine.cleanup()
                 except Exception:
@@ -228,10 +209,9 @@ class ComprehensiveTest:
 
             # 获取统计信息
             stats = engine.get_combined_stats()
-            results.append({
-                'batch_size': batch_size,
-                'throughput': stats.get('combined_throughput', 0)
-            })
+            results.append(
+                {"batch_size": batch_size, "throughput": stats.get("combined_throughput", 0)}
+            )
 
             # 清理资源
             engine.cleanup()
@@ -242,10 +222,9 @@ class ComprehensiveTest:
         """测试系统稳定性"""
         targets = self.generate_test_targets(10)
 
-        engine = MultiGPUCollisionEngine({
-            'enable_async_execution': True,
-            'workload_monitor_interval': 2
-        })
+        engine = MultiGPUCollisionEngine(
+            {"enable_async_execution": True, "workload_monitor_interval": 2}
+        )
 
         if not engine.initialize(device_count=1):
             try:
@@ -254,11 +233,7 @@ class ComprehensiveTest:
                 pass
             raise Exception("引擎初始化失败")
 
-        if not engine.start(
-            targets=targets,
-            mode='random',
-            total_keys=1000000
-        ):
+        if not engine.start(targets=targets, mode="random", total_keys=1000000):
             try:
                 engine.cleanup()
             except Exception:
@@ -284,9 +259,7 @@ class ComprehensiveTest:
         # 测试最小目标数量
         min_targets = set(["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"])
 
-        engine = MultiGPUCollisionEngine({
-            'enable_async_execution': True
-        })
+        engine = MultiGPUCollisionEngine({"enable_async_execution": True})
 
         if not engine.initialize(device_count=1):
             try:
@@ -295,11 +268,7 @@ class ComprehensiveTest:
                 pass
             raise Exception("引擎初始化失败")
 
-        if not engine.start(
-            targets=min_targets,
-            mode='random',
-            total_keys=50000
-        ):
+        if not engine.start(targets=min_targets, mode="random", total_keys=50000):
             try:
                 engine.cleanup()
             except Exception:
@@ -322,9 +291,7 @@ class ComprehensiveTest:
         # 测试空目标集合
         empty_targets = set()
 
-        engine = MultiGPUCollisionEngine({
-            'enable_async_execution': True
-        })
+        engine = MultiGPUCollisionEngine({"enable_async_execution": True})
 
         if not engine.initialize(device_count=1):
             try:
@@ -335,11 +302,7 @@ class ComprehensiveTest:
 
         # 启动应该失败，但系统应该能正常处理
         try:
-            engine.start(
-                targets=empty_targets,
-                mode='random',
-                total_keys=50000
-            )
+            engine.start(targets=empty_targets, mode="random", total_keys=50000)
         except Exception as e:
             logger.info(f"预期的错误: {e}")
         finally:
@@ -352,10 +315,9 @@ class ComprehensiveTest:
         """测试内存管理"""
         targets = self.generate_test_targets(10)
 
-        engine = MultiGPUCollisionEngine({
-            'enable_async_execution': True,
-            'total_pool_mb': 256  # 较小的内存池，测试内存管理
-        })
+        engine = MultiGPUCollisionEngine(
+            {"enable_async_execution": True, "total_pool_mb": 256}  # 较小的内存池，测试内存管理
+        )
 
         if not engine.initialize(device_count=1):
             try:
@@ -364,11 +326,7 @@ class ComprehensiveTest:
                 pass
             raise Exception("引擎初始化失败")
 
-        if not engine.start(
-            targets=targets,
-            mode='random',
-            total_keys=300000
-        ):
+        if not engine.start(targets=targets, mode="random", total_keys=300000):
             try:
                 engine.cleanup()
             except Exception:
@@ -393,11 +351,9 @@ class ComprehensiveTest:
         """测试负载均衡"""
         targets = self.generate_test_targets(10)
 
-        engine = MultiGPUCollisionEngine({
-            'enable_async_execution': True,
-            'auto_rebalance': True,
-            'workload_monitor_interval': 2
-        })
+        engine = MultiGPUCollisionEngine(
+            {"enable_async_execution": True, "auto_rebalance": True, "workload_monitor_interval": 2}
+        )
 
         # 初始化引擎，使用所有可用GPU
         if not engine.initialize(device_count=-1):
@@ -407,11 +363,7 @@ class ComprehensiveTest:
                 pass
             raise Exception("引擎初始化失败")
 
-        if not engine.start(
-            targets=targets,
-            mode='random',
-            total_keys=1000000
-        ):
+        if not engine.start(targets=targets, mode="random", total_keys=1000000):
             try:
                 engine.cleanup()
             except Exception:
@@ -431,10 +383,7 @@ class ComprehensiveTest:
         # 清理资源
         engine.cleanup()
 
-        return {
-            'performance_stats': stats,
-            'workload_stats': workload_stats
-        }
+        return {"performance_stats": stats, "workload_stats": workload_stats}
 
     def run_all_tests(self):
         """运行所有测试"""
@@ -450,7 +399,7 @@ class ComprehensiveTest:
             ("边界条件测试", self.test_boundary_conditions),
             ("错误处理测试", self.test_error_handling),
             ("内存管理测试", self.test_memory_management),
-            ("负载均衡测试", self.test_load_balancing)
+            ("负载均衡测试", self.test_load_balancing),
         ]
 
         for test_name, test_func in tests:
@@ -466,7 +415,7 @@ class ComprehensiveTest:
         """生成测试报告"""
         total_time = self.end_time - self.start_time if self.end_time else 0
         total_tests = len(self.test_results)
-        passed_tests = sum(1 for r in self.test_results if r['status'] == 'pass')
+        passed_tests = sum(1 for r in self.test_results if r["status"] == "pass")
         failed_tests = total_tests - passed_tests
         pass_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0.0
 
@@ -484,21 +433,21 @@ class ComprehensiveTest:
 """
 
         for result in self.test_results:
-            status = "[PASS]" if result['status'] == 'pass' else "[FAIL]"
+            status = "[PASS]" if result["status"] == "pass" else "[FAIL]"
             report += f"\n### {result['name']}\n"
             report += f"状态: {status}\n"
             report += f"耗时: {result['duration']:.2f}秒\n"
 
-            if result['status'] == 'pass':
-                if 'result' in result:
+            if result["status"] == "pass":
+                if "result" in result:
                     report += f"结果: {result['result']}\n"
             else:
-                if 'error' in result:
+                if "error" in result:
                     report += f"错误: {result['error']}\n"
 
         # 保存测试报告
-        report_path = os.path.join(os.path.dirname(__file__), 'test_report.md')
-        with open(report_path, 'w', encoding='utf-8') as f:
+        report_path = os.path.join(os.path.dirname(__file__), "test_report.md")
+        with open(report_path, "w", encoding="utf-8") as f:
             f.write(report)
 
         logger.info(f"测试报告已生成: {report_path}")

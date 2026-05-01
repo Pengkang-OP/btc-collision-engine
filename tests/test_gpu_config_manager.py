@@ -14,6 +14,8 @@ import logging
 from unittest.mock import patch
 from src.collision.gpu_config_manager import GPUConfigManager
 
+pytestmark = pytest.mark.gpu
+
 
 class TestGPUConfigManagerInit:
     """测试GPUConfigManager初始化"""

@@ -16,6 +16,8 @@ from unittest.mock import Mock, patch
 import sys
 import os
 
+pytestmark = pytest.mark.gpu
+
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 

@@ -13,6 +13,8 @@
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 
+pytestmark = pytest.mark.gpu
+
 # ============================================================================
 # DataLoggerAdapter 测试
 # ============================================================================

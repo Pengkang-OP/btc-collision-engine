@@ -7,6 +7,9 @@
 import unittest
 import threading
 import time
+import pytest
+
+pytestmark = pytest.mark.gpu
 
 
 class TestLockPerformance(unittest.TestCase):
