@@ -440,6 +440,7 @@ class ComprehensiveTest:
         total_tests = len(self.test_results)
         passed_tests = sum(1 for r in self.test_results if r['status'] == 'pass')
         failed_tests = total_tests - passed_tests
+        pass_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0.0
 
         report = f"""# 深度全面测试报告
 
@@ -449,7 +450,7 @@ class ComprehensiveTest:
 - 总测试数: {total_tests}
 - 通过测试数: {passed_tests}
 - 失败测试数: {failed_tests}
-- 测试通过率: {passed_tests / total_tests * 100:.1f}%
+- 测试通过率: {pass_rate:.1f}%
 
 ## 详细测试结果
 """
@@ -480,7 +481,7 @@ class ComprehensiveTest:
         logger.info(f"- 总测试数: {total_tests}")
         logger.info(f"- 通过测试数: {passed_tests}")
         logger.info(f"- 失败测试数: {failed_tests}")
-        logger.info(f"- 测试通过率: {passed_tests / total_tests * 100:.1f}%")
+        logger.info(f"- 测试通过率: {pass_rate:.1f}%")
 
 
 def main():
