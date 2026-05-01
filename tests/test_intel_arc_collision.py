@@ -279,12 +279,12 @@ def run_gpu_collision_test(
         print(f"\n⏱️  开始测试，持续 {duration} 秒...\n")
         print("-" * 80)
 
-        # 启动监控
-        monitor.start()
-
         # 启动引擎
         start_time = time.time()
         engine.start(mode="random")
+
+        # 启动监控 (在引擎启动后，避免引擎启动失败时 monitor.cleanup() 被跳过)
+        monitor.start()
 
         # 运行指定时长
         batch_times = []
@@ -453,7 +453,6 @@ def main():
         # 使用默认测试地址
         targets = {"12ib7dApVFvg82TXKycWBNpN8kFyiAN1dr"}
         print(f"  使用默认测试地址: {next(iter(targets))}")
-        targets = {"12ib7dApVFvg82TXKycWBNpN8kFyiAN1dr"}
     else:
         print(f"  ✅ 加载了 {len(targets)} 个目标地址")
         # 显示前5个

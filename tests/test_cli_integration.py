@@ -111,6 +111,13 @@ def _make_mock_engine(stats: Mock = None) -> Mock:
 class TestCLIEndToEnd:
     """参数解析 -> 验证 -> 执行的端到端集成流测试"""
 
+    def setup_method(self):
+        """每个测试前重置 CLIOutput 和 LogWindow 单例，确保测试隔离"""
+        from src.cli.output import CLIOutput
+        CLIOutput.reset_instance()
+        from src.cli.log_window import reset_log_window_instance
+        reset_log_window_instance()
+
     def test_parse_validate_load_flow(self, tmp_path, monkeypatch):
         """参数解析->验证->目标加载完整流"""
         # 创建临时地址文件（放在项目内部 tests/data_logs 避免路径拦截）
@@ -262,6 +269,13 @@ class TestCLIEndToEnd:
 class TestGPUIntegration:
     """GPU 引擎构建、降级和错误处理集成测试"""
 
+    def setup_method(self):
+        """每个测试前重置 CLIOutput 和 LogWindow 单例，确保测试隔离"""
+        from src.cli.output import CLIOutput
+        CLIOutput.reset_instance()
+        from src.cli.log_window import reset_log_window_instance
+        reset_log_window_instance()
+
     def test_single_gpu_engine_lifecycle(self, monkeypatch):
         """单 GPU 引擎构建 -> 运行 -> 统计"""
         import src.cli.engine_builder as eb
@@ -358,6 +372,13 @@ class TestGPUIntegration:
 class TestPerformanceBenchmark:
     """关键路径性能基准（宽松阈值，适应 CI 环境）"""
 
+    def setup_method(self):
+        """每个测试前重置 CLIOutput 和 LogWindow 单例，确保测试隔离"""
+        from src.cli.output import CLIOutput
+        CLIOutput.reset_instance()
+        from src.cli.log_window import reset_log_window_instance
+        reset_log_window_instance()
+
     def test_parse_args_performance(self, monkeypatch):
         """参数解析单次 < 200ms（100次平均）"""
         monkeypatch.setattr("sys.argv", [
@@ -439,6 +460,13 @@ class TestPerformanceBenchmark:
 
 class TestEdgeCases:
     """边界条件测试"""
+
+    def setup_method(self):
+        """每个测试前重置 CLIOutput 和 LogWindow 单例，确保测试隔离"""
+        from src.cli.output import CLIOutput
+        CLIOutput.reset_instance()
+        from src.cli.log_window import reset_log_window_instance
+        reset_log_window_instance()
 
     def test_max_range_2_256(self, monkeypatch, capsys):
         """超大范围 2^256 触发警告，validate_args 仍返回 True"""
@@ -535,6 +563,13 @@ class TestEdgeCases:
 
 class TestConfigMigration:
     """配置版本迁移工具（src.cli.config_migration）测试"""
+
+    def setup_method(self):
+        """每个测试前重置 CLIOutput 和 LogWindow 单例，确保测试隔离"""
+        from src.cli.output import CLIOutput
+        CLIOutput.reset_instance()
+        from src.cli.log_window import reset_log_window_instance
+        reset_log_window_instance()
 
     def test_detect_config_version(self):
         """版本检测 - v2.x / v3.0.0 / v3.1.0"""
