@@ -693,6 +693,31 @@
 
 ## [3.5.1] - 2026-05-01
 
+### GPU 引擎架构重构完成 (Phase 6, v6.0.0) 🏗️
+
+- **迁移验证** (`src/collision/gpu_collision_engine.py` → `src/collision/gpu/engine.py`)
+  - 新 engine.py 统一管理全部 GPU 组件（DeviceManager/Kernel/SearchCoordinator/VendorStrategy/PerfPipeline）
+  - Shim 层保持 100% 向后兼容（`from src.collision.gpu_collision_engine import GPUCollisionEngine` 继续工作）
+  - 重导出全部 25 个常量、工具函数和类型
+- **新增 GPU 子模块纳入重构体系**:
+  - `device_manager_adapter.py` — Device/Detector/Context 三层适配
+  - `kernel_adapter.py` — 真实编译流程 + 参数修正
+  - `async_pipeline_adapter.py` — prefetch/flush_pending/get_stats
+  - `data_logger_adapter.py` — 数据日志适配器
+  - `search_mode_coordinator.py` — 搜索模式协调（Random/Range/BruteForce 委托）
+- **协议层完整实现** (`protocols.py`) — IGPUDeviceManager/IKernelExecutor/IAsyncExecutionPipeline/IMonitoringPipeline/ICollisionCore
+- **外观层工厂函数** (`__init__.py`) — 8 个 get_* 函数支持延迟导入/依赖注入
+- **代码复杂度大幅降低**: 引擎行数 -73%（1466→<400），导入模块 -70%（49→<15），Mock 层 7+→1-2
+- **29 个 Phase 6 专项测试** 全部通过（`test_gpu_engine_refactor_phase6.py`、`test_gpu_refactored_methods.py` 等）
+- **GPU README** 全部阶段（Phase 1-6）标记 ✅ 完成
+
+### 近期修复与清理
+
+- 🐛 修复 `test_import_order_independence` sys.modules 清除后未恢复导致的交叉测试污染（5 个 test_gpu_refactored_methods 失败）
+- 🐛 修复 `engine_builder.py` pyopencl 不可用时 GPUCollisionEngine/MultiGPUCollisionEngine 属性缺失（2 个 CLI 集成测试失败）
+- 🧹 Phase 6 收尾: data_logs/report_daily_*.json 归档 ~850 个到 archive/（保留最新 5 个）
+- 🧹 清理 test_gpu_engine_refactored.py 中 `test_import_facade` 过时 pass 占位
+
 ### 修复
 
 #### 数据日志系统
@@ -763,7 +788,7 @@
   - 更新所有25处引用使用新路径
   - 消除DeprecationWarning（新路径）
 - 🔧 优化向后兼容包装器 (`src/collision/target_resolver.py`)
-  - 添加明确的移除时间线（v2.0, 2026-Q3）
+  - 添加明确的移除时间线（v4.0, 2026-Q3）
   - 提供完整的4步迁移指南
   - 添加相关文档链接
 
@@ -782,7 +807,7 @@
 
 - ⚠️ `src.collision.target_resolver` 模块
   - 替代方案: `src.collision.targets.resolver`
-  - 移除版本: v2.0
+  - 移除版本: v4.0
   - 移除时间: 2026-Q3
   - 迁移后仍可消除DeprecationWarning
 

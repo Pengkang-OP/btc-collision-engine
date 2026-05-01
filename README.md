@@ -3,7 +3,7 @@
 比特币私钥碰撞引擎，支持CPU和GPU加速，用于学习和研究比特币地址碰撞。
 
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
-[![Version](https://img.shields.io/badge/Version-3.5.1-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-3.5.1--Phase6-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Contributions](https://img.shields.io/badge/Contributions-Welcome-orange.svg)](CONTRIBUTING.md)
 
@@ -47,16 +47,14 @@
   - **异步双缓冲架构** (计算队列+传输队列,性能+63.9%)
   - **GPU 引擎架构重构** (协议层+外观层+核心层+监控管道+厂商策略)
   - Intel Arc A770: **4.89M keys/s**（异步模式,峰值5.08M）
-- ✅ **代码质量** (v3.5.0)
-  - 全模块类型提示补全 (104 文件, P3-3)
-  - 配置热重载 (运行时检测并生效)
-  - 多渠道告警系统 (Console/LogFile/Composite)
-  - 地址生成器架构去重 (BaseAddressGenerator)
-  - GPU 设备评分统一 (GPUDeviceScorer)
-  - 序列化性能优化 (orjson 优先)
-  - 内存池自适应调优 (shrink/hit_ratio/auto_tune)
+- ✅ **GPU 引擎架构重构** (v6.0.0 Phase 6, 2026-05)
+  - 协议层+外观层+核心层+监控管道+厂商策略 完整解耦
+  - 代码复杂度 -73%（1466→<400行），导入模块 -70%（49→<15）
+  - Shim 层 100% 向后兼容，29 个专项测试全部通过
+  - 新增 search_mode_coordinator / data_logger_adapter 等 5 个子模块
 
-> 📢 **v3.5.0 类型系统工程化**: 全模块类型提示补全 (104 文件)、配置热重载、多渠道告警系统、地址生成器架构去重、GPU 评分统一、内存池自适应调优、序列化优化。详见 [CHANGELOG](CHANGELOG.md) 和 [v3.5.0 发布说明](docs/RELEASE_NOTES_v3.5.0.md)。
+> 📢 **v3.5.1 Phase 6**: GPU 引擎架构重构完成（引擎行数 -73%, 导入模块 -70%）, 29 项专项测试全通过, 测试交叉污染修复, data_logs 归档清理。详见 [CHANGELOG](CHANGELOG.md)。
+> 📢 **v3.5.0 类型系统工程化**: 全模块类型提示补全 (104 文件)、配置热重载、多渠道告警系统、地址生成器架构去重、GPU 评分统一、内存池自适应调优、序列化优化。详见 [v3.5.0 发布说明](docs/RELEASE_NOTES_v3.5.0.md)。
 
 ## 快速开始
 
@@ -92,13 +90,20 @@ btc-collision-engine/
 │   │   └── message_queue.py          # 消息队列
 │   ├── collision/            # 碰撞引擎
 │   │   ├── key_collision_engine.py    # CPU碰撞引擎
-│   │   ├── gpu_collision_engine.py    # GPU碰撞引擎
-│   │   ├── gpu/                       # GPU引擎重构模块 (v3.4.0)
-│   │   │   ├── protocols.py           # 核心协议定义
+│   │   ├── gpu_collision_engine.py    # GPU碰撞引擎 (Shim层, v6.0.0)
+│   │   ├── gpu/                       # GPU引擎重构模块 (Phase 1-6 ✅)
+│   │   │   ├── engine.py              # 引擎协调器 (Phase 6, <400行)
+│   │   │   ├── __init__.py            # 模块入口+工厂函数 (8个get_*)
+│   │   │   ├── protocols.py           # 核心协议定义 (5个接口)
 │   │   │   ├── facade.py              # GPU引擎外观层
-│   │   │   ├── core.py                # 碰撞核心逻辑
+│   │   │   ├── core.py                # 碰撞核心 (stats/checkpoint/dedup)
 │   │   │   ├── monitoring.py          # 性能监控管道
-│   │   │   └── vendor_strategy.py     # 厂商优化策略
+│   │   │   ├── vendor_strategy.py     # 厂商优化策略工厂
+│   │   │   ├── device_manager_adapter.py   # 设备管理器适配器
+│   │   │   ├── kernel_adapter.py           # 内核执行器适配器
+│   │   │   ├── async_pipeline_adapter.py   # 异步管道适配器
+│   │   │   ├── data_logger_adapter.py      # 数据日志适配器
+│   │   │   └── search_mode_coordinator.py  # 搜索模式协调器
 │   │   ├── checkpoint_manager.py      # 断点管理
 │   │   ├── deduplication_filter.py    # 去重过滤器
 │   │   ├── collision_stats.py         # 统计数据
