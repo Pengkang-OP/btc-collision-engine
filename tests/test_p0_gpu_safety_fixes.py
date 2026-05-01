@@ -138,17 +138,19 @@ class TestSnapshotIsolation:
 class TestSafeInvokeMatchCallbackIsolation:
     """P0-2: 验证 GPU _safe_invoke_match_callback 能隔离回调异常
 
-    通过 mock _init_gpu 跳过完整 GPU 初始化流程，
+    通过 mock __init__ 跳过完整 GPU 初始化流程，
     直接构造最小化引擎实例来测试回调安全机制。
     """
 
     @pytest.fixture(autouse=True)
     def _mock_engine(self):
-        """创建跳过 GPU 初始化的最小化引擎实例"""
-        with patch('src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE', True), \
-             patch.object(
-                 GPUCollisionEngine, '_init_gpu',
-                 lambda self: None
+        """创建跳过 GPU 初始化的最小化引擎实例
+
+        Phase 6: _init_gpu 已移除，改用 __init__ mock。
+        """
+        with patch.object(
+                 GPUCollisionEngine, '__init__',
+                 lambda self, *args, **kwargs: None
              ):
             engine = GPUCollisionEngine.__new__(GPUCollisionEngine)
             engine.on_match = None

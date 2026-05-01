@@ -15,7 +15,7 @@ import time
 import threading
 import hashlib
 from unittest.mock import Mock, patch, MagicMock
-from src.collision.gpu_collision_engine import (
+from src.collision.gpu.engine import (
     GPUCollisionEngine,
     INITIAL_BATCH_SIZE,
     ASYNC_KEY_GEN_TIMEOUT,
@@ -25,48 +25,59 @@ from src.collision.gpu_collision_engine import (
 )
 
 
-def create_mock_gpu_engine(test_targets):
-    """创建mock GPU引擎的统一辅助函数"""
-    with patch('src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE', True):
-        with patch('src.collision.gpu_collision_engine.GPUDevice') as mock_device, \
-             patch('src.collision.gpu_collision_engine.GPUContext') as mock_context, \
-             patch('src.collision.gpu_collision_engine.GPUKernel') as mock_kernel, \
-             patch('src.collision.gpu_collision_engine.AsyncGPUExecutor') as mock_async_executor:
+def _create_phase6_mock_core():
+    """创建 Phase 6 CollisionCore Mock（跳过真实 GPU 初始化）"""
+    mock_device_manager = MagicMock()
+    mock_device = MagicMock()
+    mock_device.name = "Mock GPU"
+    mock_device.vendor = "nvidia"
+    mock_device_manager.device = mock_device
+    mock_device_manager.context = MagicMock()
+    mock_device_manager.kernel = MagicMock()
+    mock_device_manager.kernel.run_batch = MagicMock(return_value=[])
+    mock_device_manager.async_executor = None  # 禁用异步路径，简化测试
+    mock_device_manager.memory_pool = MagicMock()
+    mock_device_manager.initialize = MagicMock()
 
-            mock_device_instance = Mock()
-            mock_device_instance.context = Mock()
-            mock_device_instance.queue = Mock()
-            mock_device_instance.device_info = {'name': 'Test', 'vendor': 'Test', 'global_mem_size': 1024**3}
-            mock_device_instance.initialize = Mock()
-            mock_device_instance.get_device_info = Mock(return_value=mock_device_instance.device_info)
-            mock_device_instance.cleanup = Mock()
-            mock_device.return_value = mock_device_instance
+    mock_collision_stats = MagicMock()
+    mock_collision_stats.matches = []
+    mock_collision_stats.total_checked = 0
+    mock_collision_core = MagicMock()
+    mock_collision_core.stats = mock_collision_stats
+    mock_collision_core.checkpoint = MagicMock()
+    mock_collision_core.dedup_filter = MagicMock()
 
-            mock_context_instance = Mock()
-            mock_context_instance.program = Mock()
-            mock_context_instance.apply_optimizations = Mock()
-            mock_context_instance.calculate_batch_size = Mock(return_value=65536)
-            mock_context_instance.compile_kernel = Mock()
-            mock_context_instance.cleanup = Mock()
-            mock_context.return_value = mock_context_instance
+    return mock_device_manager, mock_collision_core
 
-            mock_kernel_instance = Mock()
-            mock_kernel_instance.run_batch = Mock(return_value=[])
-            mock_kernel_instance.set_targets = Mock()
-            mock_kernel_instance.cleanup = Mock()
-            mock_kernel_instance.max_batch_size = 65536
-            mock_kernel.return_value = mock_kernel_instance
 
-            # Mock异步执行器
-            mock_async_instance = Mock()
-            mock_async_instance.initialize_buffers = Mock()
-            mock_async_instance.run_batch_async = Mock(return_value=([], 50.0))
-            mock_async_instance.cleanup = Mock()
-            mock_async_executor.return_value = mock_async_instance
+_PHASE6_PATCHERS = [
+    patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
+    patch("src.collision.gpu.engine.SearchModeCoordinator"),
+    patch("src.collision.gpu.engine.GPUEngineMonitor"),
+    patch("src.collision.gpu.engine.VendorOptimizationFactory.create", return_value=MagicMock()),
+    patch("src.collision.gpu.engine.GPUDeviceDetector"),
+    patch("src.collision.gpu.engine.GPUMemoryCalculator"),
+]
 
-            with patch('src.collision.gpu_collision_engine.GPUProfileLoader') as mock_profile:
-                mock_profile.return_value.get_profile.return_value = None
-                return GPUCollisionEngine(test_targets)
+
+def create_mock_gpu_engine(test_targets, batch_size=65536):
+    """创建mock GPU引擎的统一辅助函数 (Phase 6 兼容)"""
+    mock_dm, mock_core = _create_phase6_mock_core()
+
+    all_patchers = [
+        patch("src.collision.gpu.engine.GPUDeviceManager", return_value=mock_dm),
+        patch("src.collision.gpu.engine.CollisionCore", return_value=mock_core),
+    ] + [p for p in _PHASE6_PATCHERS]
+
+    active = []
+    try:
+        for p in all_patchers:
+            p.start()
+            active.append(p)
+        return GPUCollisionEngine(test_targets, batch_size=batch_size)
+    finally:
+        for p in active:
+            p.stop()
 
 
 class TestAsyncKeyGeneration:
@@ -77,72 +88,33 @@ class TestAsyncKeyGeneration:
         self.test_targets = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}
 
     def _create_mock_engine(self):
-        """创建mock引擎"""
-        with patch('src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE', True):
-            with patch('src.collision.gpu_collision_engine.GPUDevice') as mock_device, \
-                 patch('src.collision.gpu_collision_engine.GPUContext') as mock_context, \
-                 patch('src.collision.gpu_collision_engine.GPUKernel') as mock_kernel, \
-                 patch('src.collision.gpu_collision_engine.AsyncGPUExecutor') as mock_async_executor:
+        """创建mock引擎 (Phase 6 兼容)"""
+        engine = create_mock_gpu_engine(self.test_targets)
 
-                mock_device_instance = Mock()
-                mock_device_instance.context = Mock()
-                mock_device_instance.queue = Mock()
-                mock_device_instance.device_info = {'name': 'Test', 'vendor': 'Test', 'global_mem_size': 1024**3}
-                mock_device_instance.initialize = Mock()
-                mock_device_instance.get_device_info = Mock(return_value=mock_device_instance.device_info)
-                mock_device_instance.cleanup = Mock()
-                mock_device.return_value = mock_device_instance
+        # v4.0 PRNG改造后，_start_async_key_generation 和
+        # _wait_for_async_key_generation 已从 RandomSearchMode 删除。
+        # 为保持测试延续性，在 _random_search_mode 上增加兼容方法。
+        def _start_async_key_generation(batch_size):
+            """PRNG延续层：启动异步私鑰生成"""
+            result_list = [None]
+            def _gen():
+                import os
+                result_list[0] = os.urandom(batch_size * 32)
+            t = threading.Thread(target=_gen, daemon=True)
+            t.start()
+            return t, result_list
 
-                mock_context_instance = Mock()
-                mock_context_instance.program = Mock()
-                mock_context_instance.apply_optimizations = Mock()
-                mock_context_instance.calculate_batch_size = Mock(return_value=65536)
-                mock_context_instance.compile_kernel = Mock()
-                mock_context_instance.cleanup = Mock()
-                mock_context.return_value = mock_context_instance
+        def _wait_for_async_key_generation(gen_thread, gen_result, batch_num):
+            """PRNG延续层：等待异步私鑰生成完成"""
+            import os
+            gen_thread.join(timeout=2.0)
+            if gen_result[0] is None:
+                return os.urandom(engine.batch_size * 32)
+            return gen_result[0]
 
-                mock_kernel_instance = Mock()
-                mock_kernel_instance.run_batch = Mock(return_value=[])
-                mock_kernel_instance.set_targets = Mock()
-                mock_kernel_instance.cleanup = Mock()
-                mock_kernel_instance.max_batch_size = 65536
-                mock_kernel.return_value = mock_kernel_instance
-
-                mock_async_instance = Mock()
-                mock_async_instance.initialize_buffers = Mock()
-                mock_async_instance.run_batch_async = Mock(return_value=([], 50.0))
-                mock_async_instance.cleanup = Mock()
-                mock_async_executor.return_value = mock_async_instance
-
-                with patch('src.collision.gpu_collision_engine.GPUProfileLoader') as mock_profile:
-                    mock_profile.return_value.get_profile.return_value = None
-                    engine = GPUCollisionEngine(self.test_targets, batch_size=65536)
-
-                    # v4.0 PRNG改造后，_start_async_key_generation 和
-                    # _wait_for_async_key_generation 已从 RandomSearchMode 删除。
-                    # 为保持测试延续性，在 _random_search_mode 上增加兼容方法。
-                    def _start_async_key_generation(batch_size):
-                        """PRNG延续层：启动异步私鑰生成"""
-                        result_list = [None]
-                        def _gen():
-                            import os
-                            result_list[0] = os.urandom(batch_size * 32)
-                        t = threading.Thread(target=_gen, daemon=True)
-                        t.start()
-                        return t, result_list
-
-                    def _wait_for_async_key_generation(gen_thread, gen_result, batch_num):
-                        """PRNG延续层：等待异步私鑰生成完成"""
-                        import os
-                        # 使用短超时避免测试超时（ASYNC_KEY_GEN_TIMEOUT=30s过长）
-                        gen_thread.join(timeout=2.0)
-                        if gen_result[0] is None:
-                            return os.urandom(engine.batch_size * 32)
-                        return gen_result[0]
-
-                    engine._random_search_mode._start_async_key_generation = _start_async_key_generation
-                    engine._random_search_mode._wait_for_async_key_generation = _wait_for_async_key_generation
-                    return engine
+        engine._random_search_mode._start_async_key_generation = _start_async_key_generation
+        engine._random_search_mode._wait_for_async_key_generation = _wait_for_async_key_generation
+        return engine
 
     def test_start_async_key_generation(self):
         """测试启动异步私钥生成"""
@@ -224,46 +196,8 @@ class TestExecuteGPUBatch:
         self.test_targets = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}
 
     def _create_mock_engine(self):
-        """创建mock引擎"""
-        with patch('src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE', True):
-            with patch('src.collision.gpu_collision_engine.GPUDevice') as mock_device, \
-                 patch('src.collision.gpu_collision_engine.GPUContext') as mock_context, \
-                 patch('src.collision.gpu_collision_engine.GPUKernel') as mock_kernel, \
-                 patch('src.collision.gpu_collision_engine.AsyncGPUExecutor') as mock_async_executor:
-
-                mock_device_instance = Mock()
-                mock_device_instance.context = Mock()
-                mock_device_instance.queue = Mock()
-                mock_device_instance.device_info = {'name': 'Test', 'vendor': 'Test', 'global_mem_size': 1024**3}
-                mock_device_instance.initialize = Mock()
-                mock_device_instance.get_device_info = Mock(return_value=mock_device_instance.device_info)
-                mock_device_instance.cleanup = Mock()
-                mock_device.return_value = mock_device_instance
-
-                mock_context_instance = Mock()
-                mock_context_instance.program = Mock()
-                mock_context_instance.apply_optimizations = Mock()
-                mock_context_instance.calculate_batch_size = Mock(return_value=65536)
-                mock_context_instance.compile_kernel = Mock()
-                mock_context_instance.cleanup = Mock()
-                mock_context.return_value = mock_context_instance
-
-                mock_kernel_instance = Mock()
-                mock_kernel_instance.run_batch = Mock(return_value=[])
-                mock_kernel_instance.set_targets = Mock()
-                mock_kernel_instance.cleanup = Mock()
-                mock_kernel_instance.max_batch_size = 65536
-                mock_kernel.return_value = mock_kernel_instance
-
-                mock_async_instance = Mock()
-                mock_async_instance.initialize_buffers = Mock()
-                mock_async_instance.run_batch_async = Mock(return_value=([], 50.0))
-                mock_async_instance.cleanup = Mock()
-                mock_async_executor.return_value = mock_async_instance
-
-                with patch('src.collision.gpu_collision_engine.GPUProfileLoader') as mock_profile:
-                    mock_profile.return_value.get_profile.return_value = None
-                    return GPUCollisionEngine(self.test_targets)
+        """创建mock引擎 (Phase 6 兼容)"""
+        return create_mock_gpu_engine(self.test_targets)
 
     def test_execute_gpu_batch_no_matches(self):
         """测试执行GPU batch无匹配"""
@@ -306,7 +240,7 @@ class TestExecuteGPUBatch:
         seed = os.urandom(32)
 
         # 测试初始批次（应该记录日志）
-        with patch('src.collision.gpu_collision_engine.logger') as mock_logger:
+        with patch('src.collision.gpu.engine.logger') as mock_logger:
             engine._execute_gpu_batch(seed, 100, 1)
             # batch_num=1 <= INITIAL_BATCHES_LOG=3，应该记录日志
             assert mock_logger.debug.call_count >= 1
@@ -335,50 +269,13 @@ class TestProcessGPUMatches:
         self.target_list = ["1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"]
 
     def _create_mock_engine(self):
-        """创建mock引擎"""
-        with patch('src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE', True):
-            with patch('src.collision.gpu_collision_engine.GPUDevice') as mock_device, \
-                 patch('src.collision.gpu_collision_engine.GPUContext') as mock_context, \
-                 patch('src.collision.gpu_collision_engine.GPUKernel') as mock_kernel, \
-                 patch('src.collision.gpu_collision_engine.AsyncGPUExecutor') as mock_async_executor:
-
-                mock_device_instance = Mock()
-                mock_device_instance.context = Mock()
-                mock_device_instance.queue = Mock()
-                mock_device_instance.device_info = {'name': 'Test', 'vendor': 'Test', 'global_mem_size': 1024**3}
-                mock_device_instance.initialize = Mock()
-                mock_device_instance.get_device_info = Mock(return_value=mock_device_instance.device_info)
-                mock_device_instance.cleanup = Mock()
-                mock_device.return_value = mock_device_instance
-
-                mock_context_instance = Mock()
-                mock_context_instance.program = Mock()
-                mock_context_instance.apply_optimizations = Mock()
-                mock_context_instance.calculate_batch_size = Mock(return_value=65536)
-                mock_context_instance.compile_kernel = Mock()
-                mock_context_instance.cleanup = Mock()
-                mock_context.return_value = mock_context_instance
-
-                mock_kernel_instance = Mock()
-                mock_kernel_instance.run_batch = Mock(return_value=[])
-                mock_kernel_instance.set_targets = Mock()
-                mock_kernel_instance.cleanup = Mock()
-                mock_kernel_instance.max_batch_size = 65536
-                mock_kernel.return_value = mock_kernel_instance
-
-                mock_async_instance = Mock()
-                mock_async_instance.initialize_buffers = Mock()
-                mock_async_instance.run_batch_async = Mock(return_value=([], 50.0))
-                mock_async_instance.cleanup = Mock()
-                mock_async_executor.return_value = mock_async_instance
-
-                with patch('src.collision.gpu_collision_engine.GPUProfileLoader') as mock_profile:
-                    mock_profile.return_value.get_profile.return_value = None
-                    return GPUCollisionEngine(self.test_targets)
+        """创建mock引擎 (Phase 6 兼容)"""
+        return create_mock_gpu_engine(self.test_targets)
 
     def test_process_matches_success(self):
         """测试成功处理匹配"""
         engine = self._create_mock_engine()
+        engine._target_list = self.target_list  # Phase 6: 手动注入目标列表
 
         # 创建mock回调
         match_callback = Mock()
@@ -401,12 +298,14 @@ class TestProcessGPUMatches:
     def test_process_matches_deduplication(self):
         """测试去重过滤"""
         engine = self._create_mock_engine()
+        engine._target_list = self.target_list  # Phase 6: 手动注入目标列表
 
         match_callback = Mock()
         engine.on_match = match_callback
 
-        # 确保去重过滤器已启用
+        # 确保去重过滤器已启用并配置check_and_add: 首次True(允许), 二次False(重复)
         engine.dedup_filter.enabled = True
+        engine.dedup_filter.check_and_add = Mock(side_effect=[True, False])
 
         private_keys = b'\x01' * 32
         matches = [{"key_index": 0, "target_index": 0}]
@@ -422,7 +321,7 @@ class TestProcessGPUMatches:
         time.sleep(0.1)
         call_count_2 = match_callback.call_count
 
-        # 验证第二次没有触发回调（去重）
+        # 验证第二次没有触发额外回调（去重生效）
         assert call_count_2 == call_count_1
 
 
@@ -434,46 +333,8 @@ class TestPerformanceMetrics:
         self.test_targets = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}
 
     def _create_mock_engine(self):
-        """创建mock引擎"""
-        with patch('src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE', True):
-            with patch('src.collision.gpu_collision_engine.GPUDevice') as mock_device, \
-                 patch('src.collision.gpu_collision_engine.GPUContext') as mock_context, \
-                 patch('src.collision.gpu_collision_engine.GPUKernel') as mock_kernel, \
-                 patch('src.collision.gpu_collision_engine.AsyncGPUExecutor') as mock_async_executor:
-
-                mock_device_instance = Mock()
-                mock_device_instance.context = Mock()
-                mock_device_instance.queue = Mock()
-                mock_device_instance.device_info = {'name': 'Test', 'vendor': 'Test', 'global_mem_size': 1024**3}
-                mock_device_instance.initialize = Mock()
-                mock_device_instance.get_device_info = Mock(return_value=mock_device_instance.device_info)
-                mock_device_instance.cleanup = Mock()
-                mock_device.return_value = mock_device_instance
-
-                mock_context_instance = Mock()
-                mock_context_instance.program = Mock()
-                mock_context_instance.apply_optimizations = Mock()
-                mock_context_instance.calculate_batch_size = Mock(return_value=65536)
-                mock_context_instance.compile_kernel = Mock()
-                mock_context_instance.cleanup = Mock()
-                mock_context.return_value = mock_context_instance
-
-                mock_kernel_instance = Mock()
-                mock_kernel_instance.run_batch = Mock(return_value=[])
-                mock_kernel_instance.set_targets = Mock()
-                mock_kernel_instance.cleanup = Mock()
-                mock_kernel_instance.max_batch_size = 65536
-                mock_kernel.return_value = mock_kernel_instance
-
-                mock_async_instance = Mock()
-                mock_async_instance.initialize_buffers = Mock()
-                mock_async_instance.run_batch_async = Mock(return_value=([], 50.0))
-                mock_async_instance.cleanup = Mock()
-                mock_async_executor.return_value = mock_async_instance
-
-                with patch('src.collision.gpu_collision_engine.GPUProfileLoader') as mock_profile:
-                    mock_profile.return_value.get_profile.return_value = None
-                    return GPUCollisionEngine(self.test_targets)
+        """创建mock引擎 (Phase 6 兼容)"""
+        return create_mock_gpu_engine(self.test_targets)
 
     def test_update_performance_metrics(self):
         """测试更新性能指标"""
@@ -482,6 +343,8 @@ class TestPerformanceMetrics:
         # 创建mock性能监控器
         mock_monitor = Mock()
         engine.gpu_performance_monitor = mock_monitor
+        # Mock _calculate_gpu_memory_usage 避免内部异常导致 record_kernel_metrics 未被调用
+        engine._calculate_gpu_memory_usage = Mock(return_value=128.0)
 
         # 更新性能指标
         engine._update_performance_metrics(batch_size=1000, execution_time_ms=50.5)
@@ -509,46 +372,8 @@ class TestProgressReporting:
         self.test_targets = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}
 
     def _create_mock_engine(self):
-        """创建mock引擎"""
-        with patch('src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE', True):
-            with patch('src.collision.gpu_collision_engine.GPUDevice') as mock_device, \
-                 patch('src.collision.gpu_collision_engine.GPUContext') as mock_context, \
-                 patch('src.collision.gpu_collision_engine.GPUKernel') as mock_kernel, \
-                 patch('src.collision.gpu_collision_engine.AsyncGPUExecutor') as mock_async_executor:
-
-                mock_device_instance = Mock()
-                mock_device_instance.context = Mock()
-                mock_device_instance.queue = Mock()
-                mock_device_instance.device_info = {'name': 'Test', 'vendor': 'Test', 'global_mem_size': 1024**3}
-                mock_device_instance.initialize = Mock()
-                mock_device_instance.get_device_info = Mock(return_value=mock_device_instance.device_info)
-                mock_device_instance.cleanup = Mock()
-                mock_device.return_value = mock_device_instance
-
-                mock_context_instance = Mock()
-                mock_context_instance.program = Mock()
-                mock_context_instance.apply_optimizations = Mock()
-                mock_context_instance.calculate_batch_size = Mock(return_value=65536)
-                mock_context_instance.compile_kernel = Mock()
-                mock_context_instance.cleanup = Mock()
-                mock_context.return_value = mock_context_instance
-
-                mock_kernel_instance = Mock()
-                mock_kernel_instance.run_batch = Mock(return_value=[])
-                mock_kernel_instance.set_targets = Mock()
-                mock_kernel_instance.cleanup = Mock()
-                mock_kernel_instance.max_batch_size = 65536
-                mock_kernel.return_value = mock_kernel_instance
-
-                mock_async_instance = Mock()
-                mock_async_instance.initialize_buffers = Mock()
-                mock_async_instance.run_batch_async = Mock(return_value=([], 50.0))
-                mock_async_instance.cleanup = Mock()
-                mock_async_executor.return_value = mock_async_instance
-
-                with patch('src.collision.gpu_collision_engine.GPUProfileLoader') as mock_profile:
-                    mock_profile.return_value.get_profile.return_value = None
-                    return GPUCollisionEngine(self.test_targets)
+        """创建mock引擎 (Phase 6 兼容)"""
+        return create_mock_gpu_engine(self.test_targets)
 
     def test_progress_report_trigger(self):
         """测试进度报告触发"""

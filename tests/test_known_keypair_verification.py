@@ -219,8 +219,9 @@ class TestEndToEnd:
             data_logging_enabled=False,
             use_enhanced_monitoring=False,
         )
-        assert KNOWN_ADDRESS in engine.targets, (
-            f"目标地址应在engine.targets中，实际targets: {engine.targets}"
+        # KeyCollisionEngine 自动将地址转为小写（行137: set(addr.lower() for addr in targets)）
+        assert any(KNOWN_ADDRESS.lower() == t.lower() for t in engine.targets), (
+            f"目标地址应在engine.targets中（忽略大小写），实际targets: {engine.targets}"
         )
 
     def test_data_logger_recording(self, tmp_path):
@@ -307,8 +308,9 @@ class TestCollisionDetection:
             data_logging_enabled=False,
             use_enhanced_monitoring=False,
         )
-        assert KNOWN_ADDRESS in engine.targets, (
-            f"目标地址未加载到engine.targets，实际: {engine.targets}"
+        # KeyCollisionEngine 自动将地址转为小写（行137: set(addr.lower() for addr in targets)）
+        assert any(KNOWN_ADDRESS.lower() == t.lower() for t in engine.targets), (
+            f"目标地址未加载到engine.targets（忽略大小写），实际: {engine.targets}"
         )
 
     def test_checkpoint_save_load(self, tmp_path):
@@ -349,8 +351,8 @@ class TestCollisionDetection:
             use_enhanced_monitoring=False,
         )
 
-        # 验证目标地址在engine.targets中（匹配条件成立）
-        assert KNOWN_ADDRESS in engine.targets
+        # 验证目标地址在engine.targets中（匹配条件成立，KeyCollisionEngine自动转小写）
+        assert any(KNOWN_ADDRESS.lower() == t.lower() for t in engine.targets)
 
         # 如果引擎存在 _safe_invoke_match_callback，手动触发验证回调机制
         if hasattr(engine, "_safe_invoke_match_callback"):
