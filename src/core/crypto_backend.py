@@ -152,7 +152,7 @@ class OpenSSLBackend(CryptoBackend):
 
     def _check_availability(self) -> bool:
         try:
-            from cryptography.hazmat.primitives.asymmetric import ec
+            from cryptography.hazmat.primitives.asymmetric import ec  # noqa: F401
 
             return True
         except ImportError:
@@ -241,7 +241,7 @@ class CoincurveBackend(CryptoBackend):
 
     def _check_availability(self) -> bool:
         try:
-            import coincurve
+            import coincurve  # noqa: F401
 
             return True
         except ImportError:
@@ -322,7 +322,7 @@ class ECDSABackend(CryptoBackend):
 
     def _check_availability(self) -> bool:
         try:
-            import ecdsa
+            import ecdsa  # noqa: F401
 
             return True
         except ImportError:
