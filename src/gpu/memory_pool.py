@@ -32,7 +32,7 @@
 
 import threading
 import time
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 # 导入日志配置
 from ..utils import init_logging, get_configured_logger
@@ -415,7 +415,7 @@ class GPUMemoryPool:
 
             # 从对应池分组中移除
             if lru_type != "generic" and lru_type in self._type_pools:
-                pool_list = self._type_pools[lru_type].get(lru_size, [])
+                pool_list = self._type_pools[lru_type].get(cast(int, lru_size), [])
                 for i, b in enumerate(pool_list):
                     if id(b) == lru_id:
                         pool_list.pop(i)
