@@ -696,7 +696,10 @@ class KeyCollisionEngine(BaseCollisionEngine):
             if exception is not None:
                 safe_exc_str = SensitiveDataFilter.redact(str(exception))
                 if safe_exc_str != str(exception):
-                    safe_exception = type(exception)(safe_exc_str)
+                    try:
+                        safe_exception = type(exception)(safe_exc_str)
+                    except (TypeError, ValueError):
+                        safe_exception = RuntimeError(safe_exc_str)
             self.data_logger.record_error(
                 error_type=error_type,
                 message=safe_message,

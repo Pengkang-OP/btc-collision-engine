@@ -360,11 +360,15 @@ class GPUMemoryPool:
         if allocated > 0:
             logger.info(f"GPU内存池预分配完成: {allocated}个{buffer_type}类型缓冲区")
 
-    def _evict_lru_locked(self, count: int = 1) -> int:
+    def _evict_lru_locked(self, count: int = 1, min_idle_seconds: float = 0) -> int:
         """淘汰最久未使用的空闲缓冲区（必须在持有 _lock 时调用）
+
+        P1-6增强: 支持 min_idle_seconds 过滤，仅淘汰空闲超过指定秒数的缓冲区。
 
         Args:
             count: 要淘汰的缓冲区数量（默认1）
+            min_idle_seconds: 最短空闲时间(秒)，仅淘汰空闲超过此时间的缓冲区。
+                              0 = 无限制（与旧行为一致）
 
         Returns:
             实际淘汰的缓冲区数量
@@ -377,6 +381,7 @@ class GPUMemoryPool:
         - 直接遍历池中的缓冲区寻找 LRU 候选，而非扫描全部 _access_times
         - 这双重保证了不会选到使用中的缓冲区
         """
+        now = time.monotonic() if min_idle_seconds > 0 else 0
         evicted = 0
         for _ in range(count):
             candidate = None  # (timestamp, buf_id, size, buf, type)
@@ -386,6 +391,9 @@ class GPUMemoryPool:
                 for buf in pool_list:
                     buf_id = id(buf)
                     ts = self._access_times.get(buf_id, 0)  # 无记录视为最旧
+                    # P1-6: min_idle_seconds 过滤 — 跳过空闲时间未达标的缓冲区
+                    if min_idle_seconds > 0 and ts > 0 and (now - ts) < min_idle_seconds:
+                        continue
                     if candidate is None or ts < candidate[0]:
                         candidate = (ts, buf_id, size, buf, "generic")
 
@@ -395,11 +403,13 @@ class GPUMemoryPool:
                     for buf in pool_list:
                         buf_id = id(buf)
                         ts = self._access_times.get(buf_id, 0)  # 无记录视为最旧
+                        if min_idle_seconds > 0 and ts > 0 and (now - ts) < min_idle_seconds:
+                            continue
                         if candidate is None or ts < candidate[0]:
                             candidate = (ts, buf_id, size, buf, buffer_type)
 
             if candidate is None:
-                break  # 池中无更多空闲缓冲区
+                break  # 池中无更多符合条件的空闲缓冲区
 
             _, lru_id, lru_size, lru_buf, lru_type = candidate
 
@@ -767,11 +777,26 @@ class GlobalGPUMemoryManager:
     """全局GPU内存管理器
 
     管理所有GPU设备的内存池。
+
+    P1-6增强:
+    - start_auto_cleanup(): 启动后台定时自动清理线程
+    - stop_auto_cleanup(): 停止自动清理线程
+    - 自动清理线程定期淘汰LRU缓冲区 + 按需缩容
     """
 
     _instance = None
     _lock = threading.Lock()
     _pools: Dict[int, "GPUMemoryPool"] = {}
+
+    # P1-6: 自动清理线程 — 类级别类型声明供 mypy 检查
+    _cleanup_thread: Optional[threading.Thread] = None
+    _cleanup_stop_event: threading.Event = threading.Event()
+
+    # P1-6: 默认自动清理间隔(秒)
+    DEFAULT_AUTO_CLEANUP_INTERVAL = 300  # 5分钟
+
+    # P1-6: LRU空闲超时(秒) — 空闲超过此时间的缓冲区被淘汰
+    DEFAULT_LRU_IDLE_TIMEOUT = 600  # 10分钟
 
     def __new__(cls) -> "GlobalGPUMemoryManager":
         if cls._instance is None:
@@ -779,6 +804,9 @@ class GlobalGPUMemoryManager:
                 if cls._instance is None:
                     cls._instance = super().__new__(cls)
                     cls._instance._pools = {}
+                    # P1-6: 自动清理线程 — 类级别已声明类型，此处仅初始化
+                    cls._instance._cleanup_thread = None
+                    cls._instance._cleanup_stop_event = threading.Event()
         return cls._instance
 
     def get_pool(self, context: Any, max_buffers: int = 100) -> GPUMemoryPool:
@@ -805,6 +833,88 @@ class GlobalGPUMemoryManager:
                 pool.clear()
             self._pools.clear()
             logger.info("所有GPU内存池已清空")
+
+    # ──────────────────────────── P1-6: 自动清理 ────────────────────────────
+
+    def _auto_cleanup_loop(self, interval: float, lru_timeout: float) -> None:
+        """GPU自动清理后台循环（daemon 线程入口）
+
+        定期对所有池执行:
+        1. LRU淘汰: 清除空闲超过 lru_timeout 秒的缓冲区
+        2. 容量适配: 根据显存压力调整池大小
+
+        参数:
+            interval: 清理间隔(秒)
+            lru_timeout: LRU空闲超时(秒)
+        """
+        logger.info(f"GPU内存池自动清理已启动 (间隔={interval:.0f}s, LRU超时={lru_timeout:.0f}s)")
+        while not self._cleanup_stop_event.wait(interval):
+            try:
+                total_evicted = 0
+                with self._lock:
+                    for pool in self._pools.values():
+                        # LRU淘汰: 清除空闲超过 lru_timeout 秒的缓冲区
+                        evicted = pool._evict_lru_locked(count=5, min_idle_seconds=lru_timeout)
+                        total_evicted += evicted
+                        # 容量适配: 根据显存压力调整
+                        pool.adapt_capacity(context=pool._context)
+                if total_evicted > 0:
+                    logger.debug(f"GPU内存池自动清理: 淘汰{total_evicted}个空闲缓冲区")
+            except Exception:
+                logger.error("GPU内存池自动清理异常", exc_info=True)
+        logger.info("GPU内存池自动清理已停止")
+
+    def start_auto_cleanup(
+        self,
+        interval_seconds: Optional[float] = None,
+        lru_idle_timeout: Optional[float] = None,
+    ) -> None:
+        """
+        P1-6新增: 启动GPU后台自动清理线程
+
+        启动一个 daemon 线程，定期对所有GPU内存池执行:
+        - LRU淘汰: 清除空闲过久的缓冲区
+        - 容量适配: 根据显存压力动态调整池容量
+
+        参数:
+            interval_seconds: 清理间隔(秒)，默认 300s (5分钟)
+            lru_idle_timeout: LRU空闲超时(秒)，默认 600s (10分钟)
+
+        注意:
+            - 重复调用安全（已启动则跳过）
+            - 线程为 daemon 模式，主进程退出时自动终止
+        """
+        if self._cleanup_thread is not None and self._cleanup_thread.is_alive():
+            logger.debug("GPU内存池自动清理已在运行，跳过重复启动")
+            return
+
+        interval = interval_seconds if interval_seconds is not None else self.DEFAULT_AUTO_CLEANUP_INTERVAL
+        lru_timeout = lru_idle_timeout if lru_idle_timeout is not None else self.DEFAULT_LRU_IDLE_TIMEOUT
+        self._cleanup_stop_event.clear()
+        self._cleanup_thread: Optional[threading.Thread] = threading.Thread(
+            target=self._auto_cleanup_loop,
+            args=(interval, lru_timeout),
+            daemon=True,
+            name="gpu-pool-cleanup",
+        )
+        self._cleanup_thread.start()
+
+    def stop_auto_cleanup(self, timeout: Optional[float] = 5.0) -> None:
+        """
+        P1-6新增: 停止自动清理线程
+
+        参数:
+            timeout: 等待线程结束的超时时间(秒)，默认5秒
+        """
+        if self._cleanup_thread is None or not self._cleanup_thread.is_alive():
+            return
+
+        self._cleanup_stop_event.set()
+        self._cleanup_thread.join(timeout=timeout)
+        if self._cleanup_thread.is_alive():
+            logger.warning("GPU内存池自动清理线程未能在超时内停止")
+        else:
+            self._cleanup_thread = None
 
 
 # 全局单例
