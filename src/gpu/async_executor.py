@@ -517,7 +517,7 @@ class AsyncGPUExecutor:
                 cl.enqueue_fill_buffer(
                     self.device.compute_queue,
                     current_buf["matches"],
-                    np.int32(0),
+                    np.int32(0),  # type: ignore[arg-type]
                     0,
                     num_keys * 4,  # type: ignore[arg-type]
                 )
@@ -720,7 +720,7 @@ class AsyncGPUExecutor:
             cl.enqueue_fill_buffer(
                 self.device.queue,
                 temp_buf["matches"],
-                np.int32(0),
+                np.int32(0),  # type: ignore[arg-type]
                 0,
                 num_keys * 4,  # type: ignore[arg-type]
             )
@@ -736,7 +736,7 @@ class AsyncGPUExecutor:
                 cl.enqueue_fill_buffer(
                     self.device.queue,
                     temp_buf["matches"],
-                    np.int32(0),
+                    np.int32(0),  # type: ignore[arg-type]
                     0,
                     num_keys * 4,  # type: ignore[arg-type]
                 )
@@ -758,7 +758,7 @@ class AsyncGPUExecutor:
                 cl.enqueue_fill_buffer(
                     self.device.queue,
                     temp_buf["matches"],
-                    np.int32(0),
+                    np.int32(0),  # type: ignore[arg-type]
                     0,
                     num_keys * 4,  # type: ignore[arg-type]
                 )

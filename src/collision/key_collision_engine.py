@@ -355,10 +355,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 def timeout_handler(signum: int, frame: Any) -> None:
                     raise TimeoutError(f"匹配回调执行超时 ({self._match_callback_timeout}秒)")
 
-                # type: ignore[attr-defined]  # signal.SIGALRM 仅 Unix 可用
-                old_handler = signal.signal(signal.SIGALRM, timeout_handler)
-                # type: ignore[attr-defined]  # signal.alarm 仅 Unix 可用
-                signal.alarm(self._match_callback_timeout)
+                old_handler = signal.signal(signal.SIGALRM, timeout_handler)  # type: ignore[attr-defined]  # signal.SIGALRM 仅 Unix 可用
+                signal.alarm(self._match_callback_timeout)  # type: ignore[attr-defined]  # signal.alarm 仅 Unix 可用
 
                 try:
                     on_match(private_key, address, wif)
@@ -370,8 +368,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     return False
                 finally:
                     signal.alarm(0)  # type: ignore[attr-defined]  # 取消超时定时器
-                    # type: ignore[attr-defined]  # 恢复原始信号处理器
-                    signal.signal(signal.SIGALRM, old_handler)
+                    signal.signal(signal.SIGALRM, old_handler)  # type: ignore[attr-defined]  # 恢复原始信号处理器
 
             if self._match_callback_audit_enabled:
                 logger.debug(f"匹配回调执行成功: address={address}")
