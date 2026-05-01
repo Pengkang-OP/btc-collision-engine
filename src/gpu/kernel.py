@@ -43,7 +43,7 @@ For complete technical specs, API docs and usage guide, see:
 - **Constant definitions**: 20 (including macros)
 """
 
-# flake8: noqa: W605
+# flake8: noqa: W605, E501
 
 from typing import Optional, List, Dict, Tuple
 
@@ -206,16 +206,16 @@ typedef struct {
 // ============================================================================
 
 // Gx = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798
-constant uint GX[8] = {0x16F81798, 0x59F2815B, 0x2DCE28D9, 0x029BFCDB, 0xCE870B07, 0x55A06295, 0xF9DCBBAC, 0x79BE667E};  # noqa: E501
+constant uint GX[8] = {0x16F81798, 0x59F2815B, 0x2DCE28D9, 0x029BFCDB, 0xCE870B07, 0x55A06295, 0xF9DCBBAC, 0x79BE667E};
 
 // Gy = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8
-constant uint GY[8] = {0xFB10D4B8, 0x9C47D08F, 0xA6855419, 0xFD17B448, 0x0E1108A8, 0x5DA4FBFC, 0x26A3C465, 0x483ADA77};  # noqa: E501
+constant uint GY[8] = {0xFB10D4B8, 0x9C47D08F, 0xA6855419, 0xFD17B448, 0x0E1108A8, 0x5DA4FBFC, 0x26A3C465, 0x483ADA77};
 
 // P = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
-constant uint SECP256K1_P[8] = {0xFFFFFC2F, 0xFFFFFFFE, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF};  # noqa: E501
+constant uint SECP256K1_P[8] = {0xFFFFFC2F, 0xFFFFFFFE, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF};
 
 // N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141 (curve order)
-constant uint SECP256K1_N[8] = {0xD0364141, 0xBFD25E8C, 0xAF48A03B, 0xBAAEDCE6, 0xFFFFFFFE, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF};  # noqa: E501
+constant uint SECP256K1_N[8] = {0xD0364141, 0xBFD25E8C, 0xAF48A03B, 0xBAAEDCE6, 0xFFFFFFFE, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF};
 
 // Zero constant
 constant uint ZERO[8] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -338,7 +338,7 @@ void uint256_to_bytes(const uint256_t *a, uchar *bytes) {
 // uint256 multiplication (512-bit result)
 // ============================================================================
 
-void uint256_mul(const uint256_t *a, const uint256_t *b, uint256_t *result_lo, uint256_t *result_hi) {  # noqa: E501
+void uint256_mul(const uint256_t *a, const uint256_t *b, uint256_t *result_lo, uint256_t *result_hi) {
     uint512_t temp;
 
     // Initialize temp result to 0
@@ -1404,15 +1404,15 @@ void hash160(const uchar *data, uint len, uchar *result) {
 do { \
     for (uint _t = 0; _t < (n_targets) && (match) == 0; _t++) { \
         const uchar *_src = (src_base) + _t * 20u; \
-        uint _t0 = (uint)_src[0]  | ((uint)_src[1]  << 8) | ((uint)_src[2]  << 16) | ((uint)_src[3]  << 24); \  # noqa: E501, W605
+        uint _t0 = (uint)_src[0]  | ((uint)_src[1]  << 8) | ((uint)_src[2]  << 16) | ((uint)_src[3]  << 24); \
         if (_t0 != (h0)) continue; \
-        uint _t1 = (uint)_src[4]  | ((uint)_src[5]  << 8) | ((uint)_src[6]  << 16) | ((uint)_src[7]  << 24); \  # noqa: E501, W605
+        uint _t1 = (uint)_src[4]  | ((uint)_src[5]  << 8) | ((uint)_src[6]  << 16) | ((uint)_src[7]  << 24); \
         if (_t1 != (h1)) continue; \
-        uint _t2 = (uint)_src[8]  | ((uint)_src[9]  << 8) | ((uint)_src[10] << 16) | ((uint)_src[11] << 24); \  # noqa: E501, W605
+        uint _t2 = (uint)_src[8]  | ((uint)_src[9]  << 8) | ((uint)_src[10] << 16) | ((uint)_src[11] << 24); \
         if (_t2 != (h2)) continue; \
-        uint _t3 = (uint)_src[12] | ((uint)_src[13] << 8) | ((uint)_src[14] << 16) | ((uint)_src[15] << 24); \  # noqa: E501, W605
+        uint _t3 = (uint)_src[12] | ((uint)_src[13] << 8) | ((uint)_src[14] << 16) | ((uint)_src[15] << 24); \
         if (_t3 != (h3)) continue; \
-        uint _t4 = (uint)_src[16] | ((uint)_src[17] << 8) | ((uint)_src[18] << 16) | ((uint)_src[19] << 24); \  # noqa: E501, W605
+        uint _t4 = (uint)_src[16] | ((uint)_src[17] << 8) | ((uint)_src[18] << 16) | ((uint)_src[19] << 24); \
         if (_t4 != (h4)) continue; \
         match = (int)(_t + 1); \
     } \
@@ -1423,9 +1423,9 @@ __kernel void batch_check(
     const uint num_keys,
     __global const uchar *target_hash160s,  // Input: num_targets * 20 bytes
     const uint num_targets,
-    __global int *match_flags,              // Output: num_keys flags (0=no match, target_index+1=match)  # noqa: E501
-    const uint check_uncompressed,          // v4.0: 0=compressed only, 1=also check uncompressed format  # noqa: E501
-    __constant const uint *precomp_table    // Precomputed table: 31x2x8 = 496 uint32 (G1..G31 affine)  # noqa: E501
+    __global int *match_flags,              // Output: num_keys flags (0=no match, target_index+1=match)
+    const uint check_uncompressed,          // v4.0: 0=compressed only, 1=also check uncompressed format
+    __constant const uint *precomp_table    // Precomputed table: 31x2x8 = 496 uint32 (G1..G31 affine)
 ) {
     // P1-2 fix: ulong gid prevents 32-bit overflow when batch_size >= 2^32
     ulong gid = get_global_id(0);
@@ -1465,13 +1465,13 @@ __kernel void batch_check(
     uchar hash160_result[20];
     hash160(pubkey, 33, hash160_result);
 
-    // Compare against all target Hash160 (uint32 vectorized: 5 uint compares vs 20 uchar, with progressive early-exit)  # noqa: E501
+    // Compare against all target Hash160 (uint32 vectorized: 5 uint compares vs 20 uchar, with progressive early-exit)
     // Pre-assemble hash160_result as 5 uint32 (little-endian)
-    uint h0 = (uint)hash160_result[0]  | ((uint)hash160_result[1]  << 8) | ((uint)hash160_result[2]  << 16) | ((uint)hash160_result[3]  << 24);  # noqa: E501
-    uint h1 = (uint)hash160_result[4]  | ((uint)hash160_result[5]  << 8) | ((uint)hash160_result[6]  << 16) | ((uint)hash160_result[7]  << 24);  # noqa: E501
-    uint h2 = (uint)hash160_result[8]  | ((uint)hash160_result[9]  << 8) | ((uint)hash160_result[10] << 16) | ((uint)hash160_result[11] << 24);  # noqa: E501
-    uint h3 = (uint)hash160_result[12] | ((uint)hash160_result[13] << 8) | ((uint)hash160_result[14] << 16) | ((uint)hash160_result[15] << 24);  # noqa: E501
-    uint h4 = (uint)hash160_result[16] | ((uint)hash160_result[17] << 8) | ((uint)hash160_result[18] << 16) | ((uint)hash160_result[19] << 24);  # noqa: E501
+    uint h0 = (uint)hash160_result[0]  | ((uint)hash160_result[1]  << 8) | ((uint)hash160_result[2]  << 16) | ((uint)hash160_result[3]  << 24);
+    uint h1 = (uint)hash160_result[4]  | ((uint)hash160_result[5]  << 8) | ((uint)hash160_result[6]  << 16) | ((uint)hash160_result[7]  << 24);
+    uint h2 = (uint)hash160_result[8]  | ((uint)hash160_result[9]  << 8) | ((uint)hash160_result[10] << 16) | ((uint)hash160_result[11] << 24);
+    uint h3 = (uint)hash160_result[12] | ((uint)hash160_result[13] << 8) | ((uint)hash160_result[14] << 16) | ((uint)hash160_result[15] << 24);
+    uint h4 = (uint)hash160_result[16] | ((uint)hash160_result[17] << 8) | ((uint)hash160_result[18] << 16) | ((uint)hash160_result[19] << 24);
 
     int match = 0;
     HASH160_TARGET_SCAN(target_hash160s, h0, h1, h2, h3, h4, num_targets, match);
@@ -1488,11 +1488,11 @@ __kernel void batch_check(
         hash160(pubkey_uncomp, 65, hash160_result);
 
         // Re-pack hash160_result as 5 uint32 (little-endian)
-        h0 = (uint)hash160_result[0]  | ((uint)hash160_result[1]  << 8) | ((uint)hash160_result[2]  << 16) | ((uint)hash160_result[3]  << 24);  # noqa: E501
-        h1 = (uint)hash160_result[4]  | ((uint)hash160_result[5]  << 8) | ((uint)hash160_result[6]  << 16) | ((uint)hash160_result[7]  << 24);  # noqa: E501
-        h2 = (uint)hash160_result[8]  | ((uint)hash160_result[9]  << 8) | ((uint)hash160_result[10] << 16) | ((uint)hash160_result[11] << 24);  # noqa: E501
-        h3 = (uint)hash160_result[12] | ((uint)hash160_result[13] << 8) | ((uint)hash160_result[14] << 16) | ((uint)hash160_result[15] << 24);  # noqa: E501
-        h4 = (uint)hash160_result[16] | ((uint)hash160_result[17] << 8) | ((uint)hash160_result[18] << 16) | ((uint)hash160_result[19] << 24);  # noqa: E501
+        h0 = (uint)hash160_result[0]  | ((uint)hash160_result[1]  << 8) | ((uint)hash160_result[2]  << 16) | ((uint)hash160_result[3]  << 24);
+        h1 = (uint)hash160_result[4]  | ((uint)hash160_result[5]  << 8) | ((uint)hash160_result[6]  << 16) | ((uint)hash160_result[7]  << 24);
+        h2 = (uint)hash160_result[8]  | ((uint)hash160_result[9]  << 8) | ((uint)hash160_result[10] << 16) | ((uint)hash160_result[11] << 24);
+        h3 = (uint)hash160_result[12] | ((uint)hash160_result[13] << 8) | ((uint)hash160_result[14] << 16) | ((uint)hash160_result[15] << 24);
+        h4 = (uint)hash160_result[16] | ((uint)hash160_result[17] << 8) | ((uint)hash160_result[18] << 16) | ((uint)hash160_result[19] << 24);
 
         // Compare uncompressed Hash160 against all targets
         HASH160_TARGET_SCAN(target_hash160s, h0, h1, h2, h3, h4, num_targets, match);
@@ -1502,7 +1502,7 @@ __kernel void batch_check(
 }
 
 // ============================================================================
-// Main kernel (local memory): batch check private keys - cache target Hash160 in workgroup shared memory  # noqa: E501
+// Main kernel (local memory): batch check private keys - cache target Hash160 in workgroup shared memory
 // ============================================================================
 
 __kernel void batch_check_local_mem(
@@ -1511,9 +1511,9 @@ __kernel void batch_check_local_mem(
     __global const uchar *target_hash160s,  // Input: num_targets * 20 bytes
     const uint num_targets,
     __global int *match_flags,              // Output: num_keys flags
-    const uint check_uncompressed,          // v4.0: 0=compressed only, 1=also check uncompressed format  # noqa: E501
+    const uint check_uncompressed,          // v4.0: 0=compressed only, 1=also check uncompressed format
     __local uchar *cached_targets,          // local memory cache: num_targets * 20 bytes
-    __constant const uint *precomp_table    // Precomputed table: 31x2x8 = 496 uint32 (G1..G31 affine)  # noqa: E501
+    __constant const uint *precomp_table    // Precomputed table: 31x2x8 = 496 uint32 (G1..G31 affine)
 ) {
     // P1-2 fix: ulong gid prevents 32-bit overflow when batch_size >= 2^32
     ulong gid = get_global_id(0);
@@ -1561,13 +1561,13 @@ __kernel void batch_check_local_mem(
     uchar hash160_result[20];
     hash160(pubkey, 33, hash160_result);
 
-    // Compare against all target Hash160 (local memory version, uint32 vectorized, 5 uint compares, progressive early-exit)  # noqa: E501
+    // Compare against all target Hash160 (local memory version, uint32 vectorized, 5 uint compares, progressive early-exit)
     // Pre-assemble hash160_result as 5 uint32 (little-endian)
-    uint h0 = (uint)hash160_result[0]  | ((uint)hash160_result[1]  << 8) | ((uint)hash160_result[2]  << 16) | ((uint)hash160_result[3]  << 24);  # noqa: E501
-    uint h1 = (uint)hash160_result[4]  | ((uint)hash160_result[5]  << 8) | ((uint)hash160_result[6]  << 16) | ((uint)hash160_result[7]  << 24);  # noqa: E501
-    uint h2 = (uint)hash160_result[8]  | ((uint)hash160_result[9]  << 8) | ((uint)hash160_result[10] << 16) | ((uint)hash160_result[11] << 24);  # noqa: E501
-    uint h3 = (uint)hash160_result[12] | ((uint)hash160_result[13] << 8) | ((uint)hash160_result[14] << 16) | ((uint)hash160_result[15] << 24);  # noqa: E501
-    uint h4 = (uint)hash160_result[16] | ((uint)hash160_result[17] << 8) | ((uint)hash160_result[18] << 16) | ((uint)hash160_result[19] << 24);  # noqa: E501
+    uint h0 = (uint)hash160_result[0]  | ((uint)hash160_result[1]  << 8) | ((uint)hash160_result[2]  << 16) | ((uint)hash160_result[3]  << 24);
+    uint h1 = (uint)hash160_result[4]  | ((uint)hash160_result[5]  << 8) | ((uint)hash160_result[6]  << 16) | ((uint)hash160_result[7]  << 24);
+    uint h2 = (uint)hash160_result[8]  | ((uint)hash160_result[9]  << 8) | ((uint)hash160_result[10] << 16) | ((uint)hash160_result[11] << 24);
+    uint h3 = (uint)hash160_result[12] | ((uint)hash160_result[13] << 8) | ((uint)hash160_result[14] << 16) | ((uint)hash160_result[15] << 24);
+    uint h4 = (uint)hash160_result[16] | ((uint)hash160_result[17] << 8) | ((uint)hash160_result[18] << 16) | ((uint)hash160_result[19] << 24);
 
     int match = 0;
     HASH160_TARGET_SCAN(cached_targets, h0, h1, h2, h3, h4, num_targets, match);
@@ -1584,11 +1584,11 @@ __kernel void batch_check_local_mem(
         hash160(pubkey_uncomp, 65, hash160_result);
 
         // Re-pack hash160_result as 5 uint32 (little-endian)
-        h0 = (uint)hash160_result[0]  | ((uint)hash160_result[1]  << 8) | ((uint)hash160_result[2]  << 16) | ((uint)hash160_result[3]  << 24);  # noqa: E501
-        h1 = (uint)hash160_result[4]  | ((uint)hash160_result[5]  << 8) | ((uint)hash160_result[6]  << 16) | ((uint)hash160_result[7]  << 24);  # noqa: E501
-        h2 = (uint)hash160_result[8]  | ((uint)hash160_result[9]  << 8) | ((uint)hash160_result[10] << 16) | ((uint)hash160_result[11] << 24);  # noqa: E501
-        h3 = (uint)hash160_result[12] | ((uint)hash160_result[13] << 8) | ((uint)hash160_result[14] << 16) | ((uint)hash160_result[15] << 24);  # noqa: E501
-        h4 = (uint)hash160_result[16] | ((uint)hash160_result[17] << 8) | ((uint)hash160_result[18] << 16) | ((uint)hash160_result[19] << 24);  # noqa: E501
+        h0 = (uint)hash160_result[0]  | ((uint)hash160_result[1]  << 8) | ((uint)hash160_result[2]  << 16) | ((uint)hash160_result[3]  << 24);
+        h1 = (uint)hash160_result[4]  | ((uint)hash160_result[5]  << 8) | ((uint)hash160_result[6]  << 16) | ((uint)hash160_result[7]  << 24);
+        h2 = (uint)hash160_result[8]  | ((uint)hash160_result[9]  << 8) | ((uint)hash160_result[10] << 16) | ((uint)hash160_result[11] << 24);
+        h3 = (uint)hash160_result[12] | ((uint)hash160_result[13] << 8) | ((uint)hash160_result[14] << 16) | ((uint)hash160_result[15] << 24);
+        h4 = (uint)hash160_result[16] | ((uint)hash160_result[17] << 8) | ((uint)hash160_result[18] << 16) | ((uint)hash160_result[19] << 24);
 
         // Compare uncompressed Hash160 against local cached targets
         HASH160_TARGET_SCAN(cached_targets, h0, h1, h2, h3, h4, num_targets, match);
