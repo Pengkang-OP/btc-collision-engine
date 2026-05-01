@@ -630,7 +630,7 @@ def _format_device_label(device: dict, index: int) -> str:
             mem_mb = mem_size / (1024**2)
             mem_str = f"{mem_mb:.0f}MB"
         return f"{name} ({mem_str})"
-    return name  # type: ignore[no-any-return]
+    return name
 
 
 def _detect_gpu_devices_with_timeout(timeout: float = 5.0) -> List[dict]:
@@ -799,9 +799,9 @@ def _cmd_quick_run(executor: Optional[Callable[[], None]] = None) -> None:
         output.print("\n[bold cyan]使用默认配置快速启动...[/bold cyan]\n")
 
         # 默认目标：检查targets.txt是否存在
-        target_file = QUICK_RUN_DEFAULTS["target_file"]
+        target_file = str(QUICK_RUN_DEFAULTS["target_file"])
         targets: List[str] = []
-        target_file_exists = Path(target_file).exists()  # type: ignore[arg-type]
+        target_file_exists = Path(target_file).exists()
 
         if target_file_exists:
             # 统计文件中的地址数量并预览
@@ -810,7 +810,7 @@ def _cmd_quick_run(executor: Optional[Callable[[], None]] = None) -> None:
             max_preview = PREVIEW_CONFIG["max_preview_addresses"]
             max_display_len = PREVIEW_CONFIG["max_address_display_length"]
             try:
-                with open(target_file, "r", encoding="utf-8") as f:  # type: ignore[call-overload]
+                with open(target_file, "r", encoding="utf-8") as f:
                     for line_num, line in enumerate(f, 1):
                         stripped = line.strip()
                         if stripped and not stripped.startswith("#"):
@@ -842,7 +842,7 @@ def _cmd_quick_run(executor: Optional[Callable[[], None]] = None) -> None:
                     output.print(f"  ... 及其他 {address_count - max_preview} 个地址")
                 output.print("")
 
-            cmd_parts = ["python", "key_collision_cli.py", "-f", target_file]
+            cmd_parts: list[str] = ["python", "key_collision_cli.py", "-f", target_file]
         else:
             output.warning(f"未找到 {target_file}，请使用 -t 或 -f 指定目标")
             output.print("\n[TIP] 快速模式示例:")
@@ -851,7 +851,7 @@ def _cmd_quick_run(executor: Optional[Callable[[], None]] = None) -> None:
             return
 
         # 默认配置：使用常量配置
-        cmd_parts.extend(["-m", QUICK_RUN_DEFAULTS["mode"]])
+        cmd_parts.extend(["-m", str(QUICK_RUN_DEFAULTS["mode"])])
         if QUICK_RUN_DEFAULTS["checkpoint"]:
             cmd_parts.append("--checkpoint")
         if QUICK_RUN_DEFAULTS["dedup"]:
@@ -878,12 +878,12 @@ def _cmd_quick_run(executor: Optional[Callable[[], None]] = None) -> None:
             output.print(f"  {key}: {value}")
 
         # 询问是否执行（使用可配置的倒计时）
-        countdown = QUICK_RUN_DEFAULTS["countdown_seconds"]
+        countdown = int(QUICK_RUN_DEFAULTS["countdown_seconds"])  # type: ignore[call-overload]
         output.print(f"\n[bold green]{countdown}秒后自动开始... (按Ctrl+C取消)[/bold green]")
         try:
             import time
 
-            for i in range(countdown, 0, -1):  # type: ignore[call-overload]
+            for i in range(countdown, 0, -1):
                 output.print(f"  {i}...")
                 time.sleep(1)
         except KeyboardInterrupt:
@@ -894,12 +894,12 @@ def _cmd_quick_run(executor: Optional[Callable[[], None]] = None) -> None:
         output.header(_t("cli.messages.starting"))
         if executor is not None:
             argv = list(cmd_parts)
-            if argv and argv[0].lower() in ("python", "python3", "python.exe", "python3.exe"):  # type: ignore[attr-defined]
+            if argv and argv[0].lower() in ("python", "python3", "python.exe", "python3.exe"):
                 argv = argv[1:]
-            sys.argv = argv  # type: ignore[assignment]
+            sys.argv = argv
             executor()
         else:
-            output.print("\n请手动运行: " + " ".join(cmd_parts))  # type: ignore[arg-type]
+            output.print("\n请手动运行: " + " ".join(cmd_parts))
 
     except KeyboardInterrupt:
         output.warning(_t("errors.keyboard_interrupt"))
@@ -1107,7 +1107,7 @@ def _handle_wizard_and_quickstart(args: argparse.Namespace, run_main_fn=None) ->
         try:
             from src.utils.first_run_wizard import FirstRunWizard
         except ImportError:
-            from ..utils.first_run_wizard import FirstRunWizard  # type: ignore
+            from ..utils.first_run_wizard import FirstRunWizard
 
         wizard = FirstRunWizard()
         wizard.run()
@@ -1125,7 +1125,7 @@ def _handle_system_commands(args: argparse.Namespace) -> bool:
         try:
             from src.utils.health_check import HealthChecker
         except ImportError:
-            from ..utils.health_check import HealthChecker  # type: ignore
+            from ..utils.health_check import HealthChecker
         checker = HealthChecker()
         results = checker.run_all_checks()
         checker.generate_report()
@@ -1137,7 +1137,7 @@ def _handle_system_commands(args: argparse.Namespace) -> bool:
         try:
             from src.utils.platform_check import PlatformChecker
         except ImportError:
-            from ..utils.platform_check import PlatformChecker  # type: ignore
+            from ..utils.platform_check import PlatformChecker
         checker = PlatformChecker()  # type: ignore[assignment]
         all_passed, _ = checker.run_all_checks()
         checker.print_report()  # type: ignore[attr-defined]
@@ -1148,7 +1148,7 @@ def _handle_system_commands(args: argparse.Namespace) -> bool:
         try:
             from src.utils.data_cleanup import DataCleaner
         except ImportError:
-            from ..utils.data_cleanup import DataCleaner  # type: ignore
+            from ..utils.data_cleanup import DataCleaner
         cleaner = DataCleaner()
         dry_run = getattr(args, "dry_run", False)
         result = cleaner.clean_all(dry_run=dry_run)

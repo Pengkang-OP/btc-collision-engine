@@ -421,7 +421,8 @@ class MultiprocessCollisionEngine:
         }
 
         try:
-            self.task_queue.put(task, timeout=1.0)  # type: ignore[union-attr]
+            assert self.task_queue is not None
+            self.task_queue.put(task, timeout=1.0)
         except Exception as e:
             logger.error(f"提交任务失败: {e}")
 
@@ -444,14 +445,16 @@ class MultiprocessCollisionEngine:
 
         try:
             while True:
-                batch = self.result_queue.get(timeout=timeout)  # type: ignore[union-attr]
+                assert self.result_queue is not None
+                batch = self.result_queue.get(timeout=timeout)
 
                 # 如果启用加密，则解密
                 if self._enable_encryption and isinstance(batch, bytes):
                     try:
                         from cryptography.fernet import Fernet, InvalidToken
 
-                        fernet = Fernet(self._encryption_key)  # type: ignore[arg-type]
+                        assert self._encryption_key is not None
+                        fernet = Fernet(bytes(self._encryption_key))
                         decrypted_data = fernet.decrypt(batch)
                         batch = json.loads(decrypted_data)
                     except InvalidToken:
@@ -488,7 +491,8 @@ class MultiprocessCollisionEngine:
             # 收集所有工作进程的统计
             try:
                 while True:
-                    stats = self.stats_queue.get_nowait()  # type: ignore[union-attr]
+                    assert self.stats_queue is not None
+                    stats = self.stats_queue.get_nowait()
                     self.worker_stats[stats["worker_id"]] = stats
             except Empty:
                 # 队列为空，收集完毕
@@ -524,12 +528,14 @@ class MultiprocessCollisionEngine:
         logger.info("停止多进程引擎...")
 
         # 设置停止事件
-        self.stop_event.set()  # type: ignore[union-attr]
+        assert self.stop_event is not None
+        self.stop_event.set()
 
         # 发送毒丸信号
         for _ in self.workers:
             try:
-                self.task_queue.put(None, timeout=1.0)  # type: ignore[union-attr]
+                assert self.task_queue is not None
+                self.task_queue.put(None, timeout=1.0)
             except Full:
                 logger.warning("任务队列已满，跳过毒丸信号")
             except Exception as e:
@@ -559,7 +565,8 @@ class MultiprocessCollisionEngine:
             if os.name != "nt":
                 for z in zombie_processes:
                     try:
-                        os.kill(z["pid"], signal.SIGKILL)  # type: ignore[attr-defined,arg-type]
+                        assert z["pid"] is not None
+                        os.kill(z["pid"], signal.SIGKILL)  # type: ignore[attr-defined]
                         logger.info(f"已发送SIGKILL到进程 {z['pid']}")
                     except Exception as e:
                         logger.error(f"发送SIGKILL失败 {z['pid']}: {e}")
@@ -628,7 +635,7 @@ class MultiprocessCollisionEngine:
     ) -> None:
         """上下文管理器出口"""
         self.cleanup()
-        return False  # type: ignore[return-value]
+        return None
 
 
 class HybridCollisionEngine:
@@ -686,9 +693,10 @@ class HybridCollisionEngine:
             from ..collision import KeyCollisionEngine
 
             self.thread_engine = KeyCollisionEngine(
-                targets=kwargs.get("targets", []), max_workers=self.num_workers  # type: ignore[call-arg]
+                targets=kwargs.get("targets", []), max_workers=self.num_workers or 4
             )
-            return self.thread_engine.start(**kwargs)  # type: ignore[no-any-return,return-value,func-returns-value]
+            self.thread_engine.start(**kwargs)
+            return True
 
     def stop(self, **kwargs) -> None:
         """停止引擎"""
@@ -702,7 +710,7 @@ class HybridCollisionEngine:
         if self.mp_engine:
             return self.mp_engine.get_stats()
         if self.thread_engine:
-            return self.thread_engine.get_stats()  # type: ignore[no-any-return]
+            return dict(self.thread_engine.get_stats())
         return {}
 
     def cleanup(self) -> None:

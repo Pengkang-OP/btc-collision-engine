@@ -56,7 +56,7 @@ class RandomSearchMode(BaseSearchMode):
     消除主循环中 os.urandom() 的阻塞等待，进一步平滑 GPU 利用率。
     """
 
-    def __init__(self, engine: "GPUCollisionEngine", seed_prefetch_size: int = SEED_PREFETCH_SIZE) -> None:  # type: ignore[override]
+    def __init__(self, engine: "GPUCollisionEngine", seed_prefetch_size: int = SEED_PREFETCH_SIZE) -> None:
         super().__init__(engine)
         # BUG-6: 支持从外部传入 seed_prefetch_size，不再硬编码 SEED_PREFETCH_SIZE
         self._seed_prefetch_size = seed_prefetch_size
@@ -136,6 +136,7 @@ class RandomSearchMode(BaseSearchMode):
         import psutil
 
         engine = self.engine
+        assert engine.stats is not None
         logger.info("GPU _random_search 启动 (PRNG + CPU过载保护模式)")
 
         batch_count = 0
@@ -234,6 +235,7 @@ class RandomSearchMode(BaseSearchMode):
     def _execute_async(self) -> None:
         """异步执行版本（双缓冲 + PRNG + CPU过载保护）"""
         engine = self.engine
+        assert engine.stats is not None
 
         # 检查异步执行器是否可用
         if not hasattr(engine, "_async_executor") or engine._async_executor is None:
@@ -288,7 +290,7 @@ class RandomSearchMode(BaseSearchMode):
             import psutil
 
             # 预生成第一个种子
-            buffer_data["A"]["seed"] = self._generate_seed()  # type: ignore[assignment]
+            buffer_data["A"]["seed"] = self._generate_seed()
             buffer_data["A"]["batch_size"] = current_batch_size
 
             while not engine._stop_event.is_set():
@@ -331,7 +333,7 @@ class RandomSearchMode(BaseSearchMode):
 
                     # 获取当前缓冲区的种子和批次大小
                     seed = buffer_data[current_buffer]["seed"]
-                    batch_size = buffer_data[current_buffer]["batch_size"]  # type: ignore[assignment]
+                    batch_size = buffer_data[current_buffer]["batch_size"]
 
                     # 预生成下一个缓冲区的种子（双缓冲关键）
                     next_buffer = "B" if current_buffer == "A" else "A"
@@ -347,7 +349,7 @@ class RandomSearchMode(BaseSearchMode):
                         break
 
                     # 执行GPU异步批处理
-                    matches, execution_time_ms = engine._async_executor.run_batch_async(  # type: ignore[arg-type]
+                    matches, execution_time_ms = engine._async_executor.run_batch_async(
                         seed,
                         batch_size,
                         engine._gpu_kernel.program,
@@ -359,14 +361,14 @@ class RandomSearchMode(BaseSearchMode):
                     if engine._stop_event.is_set():
                         break
 
-                    batch_count += batch_size  # type: ignore[operator]
+                    batch_count += batch_size
 
                     # 更新统计数据（与同步模式保持一致）
                     engine.stats.update(batch_count)
 
                     # 处理匹配结果（与同步模式保持一致，使用 engine._process_gpu_matches_prng）
                     if matches:
-                        engine._process_gpu_matches_prng(seed, matches)  # type: ignore[arg-type]
+                        engine._process_gpu_matches_prng(seed, matches)
 
                     # 检查停止信号
                     if engine._stop_event.is_set():
@@ -376,14 +378,14 @@ class RandomSearchMode(BaseSearchMode):
                     # v4.0 修复: 异步模式下 execution_time_ms 可能为 0
                     # (GPU快到submit+return耗时小于1ms时钟精度)
                     effective_time_ms = max(execution_time_ms, 0.001)
-                    speed = batch_size / (effective_time_ms / 1000)  # type: ignore[operator]
+                    speed = batch_size / (effective_time_ms / 1000)
                     if batch_num <= 5 or batch_num % 10 == 0:
                         logger.debug(
                             f"GPU batch {batch_num}: {batch_size:,} keys, {execution_time_ms:.2f}ms, {speed:.0f} keys/s"
                         )
 
                     # 记录性能数据
-                    batch_optimizer.record_performance(batch_size, execution_time_ms, speed)  # type: ignore[arg-type]
+                    batch_optimizer.record_performance(batch_size, execution_time_ms, speed)
 
                     # 记录内存使用
                     if hasattr(engine, "_gpu_device") and engine._gpu_device:
@@ -466,13 +468,14 @@ class RandomSearchMode(BaseSearchMode):
         try:
             seed = self._seed_queue.get_nowait()
             logger.debug("使用预生成种子（缓存命中）")
-            return seed  # type: ignore[no-any-return]
+            return seed
         except queue.Empty:
             return os.urandom(32)
 
     def _process_matches(self, matches, seed, batch_size) -> None:
         """处理匹配结果"""
         engine = self.engine
+        assert engine.stats is not None
         for match in matches:
             private_key = match.get("private_key")
             address = match.get("address")
@@ -498,6 +501,6 @@ class RandomSearchMode(BaseSearchMode):
                 # 触发回调
                 if hasattr(engine, "on_match") and engine.on_match:
                     try:
-                        engine.on_match(result)  # type: ignore[call-arg,arg-type]
+                        engine.on_match(result)
                     except Exception as e:
                         logger.error(f"匹配回调异常: {e}")

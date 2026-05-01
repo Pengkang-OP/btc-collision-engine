@@ -213,7 +213,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self._engine_monitor = GPUEngineMonitor(engine=self)
 
         # 异步日志
-        self._async_log_handler = None
+        self._async_log_handler: Optional[Any] = None
         if use_async_logging and ASYNC_LOG_AVAILABLE:
             self._setup_async_logging(async_log_file, async_log_max_bytes, async_log_backup_count)
         elif use_async_logging and not ASYNC_LOG_AVAILABLE:
@@ -351,7 +351,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
             self._core._init_dedup_filter()
             self.dedup_filter = self._core.dedup_filter
 
-        self.stats.start_time = time.time()  # type: ignore[attr-defined]
+        assert self.stats is not None
+        self.stats.start_time = time.time()
 
         # 在后台线程中启动搜索（start() 非阻塞，stop() 负责终止）
         self._thread = threading.Thread(
@@ -436,7 +437,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 self._async_executor.cleanup()
             except Exception as e:
                 logger.error(f"清理异步执行器失败: {e}", exc_info=True)
-            self._async_executor = None  # type: ignore[assignment]  # cleanup重置
+            self._async_executor = None  # cleanup重置
 
         # 清理设备管理器
         if self._device_manager:
@@ -466,7 +467,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
     def get_stats(self) -> CollisionStats:
         """获取统计信息"""
-        return self.stats  # type: ignore[return-value]
+        assert self.stats is not None
+        return self.stats
 
     def get_adjustment_history(self, limit: int = 10) -> List[Dict[str, Any]]:
         """获取调整历史"""
@@ -627,18 +629,19 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
     def _safe_invoke_match_callback(self, private_key: bytes, address: str, wif: str) -> bool:
         """安全调用匹配回调函数，提供超时控制与异常隔离"""
-        if not self.on_match:
+        on_match = self.on_match
+        if not on_match:
             return True
         try:
             if os.name == "nt":
-                result = [None]
-                exception = [None]
+                result: list[Optional[Any]] = [None]
+                exception: list[Optional[BaseException]] = [None]
 
                 def target() -> None:
                     try:
-                        result[0] = self.on_match(private_key, address, wif)  # type: ignore[misc]  # 线程间数据传递
+                        result[0] = on_match(private_key, address, wif)
                     except Exception as e:
-                        exception[0] = e  # type: ignore[call-overload]  # 线程间异常传递
+                        exception[0] = e
 
                 callback_thread = threading.Thread(target=target, daemon=True)
                 callback_thread.start()
@@ -656,7 +659,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 old_handler = signal.signal(signal.SIGALRM, timeout_handler)  # type: ignore[attr-defined]  # Unix-only API
                 signal.alarm(int(self._match_callback_timeout))  # type: ignore[attr-defined]  # Unix-only API
                 try:
-                    self.on_match(private_key, address, wif)
+                    on_match(private_key, address, wif)
                 except TimeoutError as e:
                     logger.critical(str(e))
                     return False
@@ -678,12 +681,13 @@ class GPUCollisionEngine(BaseCollisionEngine):
         for match in matches:
             key_idx = match["key_index"]
             private_key = private_keys[key_idx * 32 : (key_idx + 1) * 32]
-            if not self.dedup_filter.check_and_add(private_key):  # type: ignore[attr-defined]
+            if self.dedup_filter is not None and not self.dedup_filter.check_and_add(private_key):
                 continue
             target_idx = match["target_index"]
             address = self._target_list[target_idx]
             wif = WIF.encode(private_key, compressed=True)
-            self.stats.add_match(private_key, address)  # type: ignore[attr-defined]
+            if self.stats is not None:
+                self.stats.add_match(private_key, address)
             if not self._safe_invoke_match_callback(private_key, address, wif):
                 logger.warning(f"GPU匹配回调处理失败，跳过地址: {address[:6]}...{address[-4:]}")
 
@@ -694,12 +698,13 @@ class GPUCollisionEngine(BaseCollisionEngine):
             key_idx = match["key_index"]
             key_int = (seed_int + key_idx) % (2**256)
             private_key = key_int.to_bytes(32, "big")
-            if not self.dedup_filter.check_and_add(private_key):  # type: ignore[attr-defined]
+            if self.dedup_filter is not None and not self.dedup_filter.check_and_add(private_key):
                 continue
             target_idx = match["target_index"]
             address = self._target_list[target_idx]
             wif = WIF.encode(private_key, compressed=True)
-            self.stats.add_match(private_key, address)  # type: ignore[attr-defined]
+            if self.stats is not None:
+                self.stats.add_match(private_key, address)
             if not self._safe_invoke_match_callback(private_key, address, wif):
                 logger.warning(f"GPU匹配回调处理失败，跳过地址: {address[:6]}...{address[-4:]}")
 
@@ -779,7 +784,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
             return
         logger.debug(f"GPU 进度回调: batch_count={batch_count}")
         if self.on_progress:
-            self.on_progress(self.stats.snapshot())  # type: ignore[attr-defined]
+            assert self.stats is not None
+            self.on_progress(self.stats.snapshot())
         self._save_checkpoint(batch_count)
         self._last_progress_time = current_time
 
@@ -829,47 +835,58 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
     def _random_search(self) -> None:
         """随机碰撞模式"""
-        return self._random_search_mode.execute()  # type: ignore[no-any-return,attr-defined,union-attr]
+        assert self._random_search_mode is not None
+        self._random_search_mode.execute()
 
     def _start_range_scan(self) -> None:
         """启动范围扫描"""
-        return self._range_scan(self._range_start, self._range_end)  # type: ignore[no-any-return,arg-type]
+        assert self._range_start is not None
+        assert self._range_end is not None
+        self._range_scan(self._range_start, self._range_end)
 
     def _start_brute_force(self):
         """启动暴力穷举"""
-        return self._brute_force(self._range_start)  # type: ignore[arg-type]
+        assert self._range_start is not None
+        return self._brute_force(self._range_start)
 
     def _random_search_sync(self):
         """同步执行版本"""
-        return self._random_search_mode._execute_sync()  # type: ignore[attr-defined]
+        assert self._random_search_mode is not None
+        return self._random_search_mode._execute_sync()
 
     def _random_search_async(self):
         """异步执行版本(双缓冲优化)"""
-        return self._random_search_mode._execute_async()  # type: ignore[attr-defined]
+        assert self._random_search_mode is not None
+        return self._random_search_mode._execute_async()
 
     def _calculate_key_gen_timeout(self, batch_size: int) -> float:
         """异步私钥生成超时计算"""
-        return self._random_search_mode._calculate_key_gen_timeout(batch_size)  # type: ignore[no-any-return,attr-defined,union-attr]
+        assert self._random_search_mode is not None
+        return cast(float, self._random_search_mode._calculate_key_gen_timeout(batch_size))
 
     def _start_async_key_generation(self, batch_size: int) -> Tuple[threading.Thread, List[Any]]:
         """启动异步私钥生成线程"""
-        return self._random_search_mode._start_async_key_generation(batch_size)  # type: ignore[no-any-return,attr-defined,union-attr]
+        assert self._random_search_mode is not None
+        return cast(Tuple[threading.Thread, List[Any]], self._random_search_mode._start_async_key_generation(batch_size))
 
     def _wait_for_async_key_generation(
         self, gen_thread: threading.Thread, gen_result: List[Any], batch_num: int
     ) -> bytes:
         """等待异步私钥生成完成"""
-        return self._random_search_mode._wait_for_async_key_generation(  # type: ignore[no-any-return,attr-defined,union-attr]
+        assert self._random_search_mode is not None
+        return cast(bytes, self._random_search_mode._wait_for_async_key_generation(
             gen_thread, gen_result, batch_num
-        )
+        ))
 
     def _range_scan(self, start: int, end: int):
         """范围扫描模式"""
-        return self._range_scan_mode.execute(start, end)  # type: ignore[attr-defined,union-attr]
+        assert self._range_scan_mode is not None
+        return self._range_scan_mode.execute(start, end)
 
     def _brute_force(self, start: int):
         """暴力穷举模式"""
-        return self._brute_force_mode.execute(start)  # type: ignore[attr-defined,union-attr]
+        assert self._brute_force_mode is not None
+        return self._brute_force_mode.execute(start)
 
     def _execute_batch_loop(
         self,
@@ -878,11 +895,12 @@ class GPUCollisionEngine(BaseCollisionEngine):
         stop_condition_fn: Optional[Callable[[], bool]] = None,
     ) -> int:
         """通用批处理执行循环"""
-        return self._brute_force_mode._execute_batch_loop(  # type: ignore[no-any-return,attr-defined,union-attr]
+        assert self._brute_force_mode is not None
+        return cast(int, self._brute_force_mode._execute_batch_loop(
             key_generator_fn=key_generator_fn,
             mode_name=mode_name,
             stop_condition_fn=stop_condition_fn,
-        )
+        ))
 
     # ========== 异步日志 ==========
 
@@ -894,11 +912,12 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 os.makedirs(log_dir, mode=0o750, exist_ok=True)
             from ...utils.logger import AsyncFileHandler
 
-            self._async_log_handler = AsyncFileHandler(  # type: ignore[assignment]
+            handler = AsyncFileHandler(
                 log_file, max_bytes=max_bytes, backup_count=backup_count
             )
-            self._async_log_handler.setLevel(logging.DEBUG)  # type: ignore[attr-defined]
-            logger.addHandler(self._async_log_handler)  # type: ignore[arg-type]
+            self._async_log_handler = handler
+            handler.setLevel(logging.DEBUG)
+            logger.addHandler(handler)
             logger.info(f"GPU异步日志已启用: {log_file} (max={max_bytes/1024/1024:.0f}MB)")
         except Exception as e:
             logger.warning(f"异步日志启用失败: {e}，使用同步日志")
@@ -939,7 +958,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         if GPU_CONFIG_MANAGER_AVAILABLE and GPUConfigManager is not None:
             try:
                 config_manager = GPUConfigManager()
-                return config_manager.merge_gpu_configs(auto_config, profile_config)  # type: ignore[no-any-return]
+                return cast(Dict, config_manager.merge_gpu_configs(auto_config, profile_config))
             except Exception as e:
                 logger.warning(f"GPUConfigManager合并失败，使用原有逻辑: {e}")
         merged = auto_config.copy()
@@ -993,13 +1012,14 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
     def run_benchmark(self, iterations: int = 5, save_report: bool = True) -> Dict[str, Any]:
         """运行性能基准测试 (P2)"""
-        results = self._get_perf_pipeline().run_benchmark(iterations)  # type: ignore[attr-defined]
+        pipeline: Any = self._get_perf_pipeline()
+        results = pipeline.run_benchmark(iterations)
         if save_report and results:
             report_path = self.generate_performance_report(
                 include_benchmarks=True, include_tuning=False, include_recommendations=True
             )
             logger.info(f"基准测试报告已保存: {report_path}")
-        return results  # type: ignore[no-any-return]
+        return cast(Dict[str, Any], results)
 
     def start_auto_tuning(
         self, max_iterations: int = 30, save_report: bool = True, auto_apply: bool = False
@@ -1018,7 +1038,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
             else:
                 logger.info(f"建议 batch_size: {new_size:,} (当前: {self.batch_size:,})")
 
-        results = self._get_perf_pipeline().start_auto_tuning(  # type: ignore[attr-defined]
+        pipeline: Any = self._get_perf_pipeline()
+        results = pipeline.start_auto_tuning(
             max_iterations=max_iterations, on_new_batch_size=on_new_batch_size
         )
         optimal_size = results.get("optimal_batch_size")
@@ -1029,7 +1050,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 include_benchmarks=False, include_tuning=True, include_recommendations=True
             )
             logger.info(f"调优报告已保存: {report_path}")
-        return results  # type: ignore[no-any-return]
+        return cast(Dict[str, Any], results)
 
     def generate_performance_report(
         self,
@@ -1041,7 +1062,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
         output_dir: Optional[str] = None,
     ) -> str:
         """生成性能报告 (P2)"""
-        return self._get_perf_pipeline().generate_report(  # type: ignore[attr-defined]
+        pipeline: Any = self._get_perf_pipeline()
+        return pipeline.generate_report(
             include_benchmarks=include_benchmarks,
             include_tuning=include_tuning,
             include_history=include_history,
