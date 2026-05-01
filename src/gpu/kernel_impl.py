@@ -197,7 +197,7 @@ class GPUKernel(GPUKernelProtocol):
         self._batch_kernel_local = None  # local memory版本内核引用
         # 查询设备local memory大小（OpenCL标准属性），回退默认值16KB
         try:
-            self._local_mem_size = device.device.local_mem_size  # type: ignore[attr-defined]
+            self._local_mem_size = device.device.local_mem_size  # type: ignore[attr-defined]  # noqa: E501
         except Exception:
             self._local_mem_size = 16384  # 默认16KB
 
