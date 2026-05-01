@@ -122,7 +122,6 @@ class TestWIFEncoder(unittest.TestCase):
 
     def test_invalid_checksum(self):
         """篡改校验和应抛出 ValueError"""
-        import base58
         privkey = bytes.fromhex(_TV_PRIVKEY_HEX)
         wif = WIFEncoder.encode(privkey, compressed=True)
         # 修改最后一个字符

@@ -31,7 +31,7 @@ class TestCheckResult(TestCase):
     def test_create_result_pass(self):
         """创建通过的检查结果"""
         result = CheckResult("测试检查", True, "通过", "详细信息")
-        
+
         self.assertEqual(result.name, "测试检查")
         self.assertTrue(result.passed)
         self.assertEqual(result.message, "通过")
@@ -40,7 +40,7 @@ class TestCheckResult(TestCase):
     def test_create_result_fail(self):
         """创建失败的检查结果"""
         result = CheckResult("测试检查", False, "失败", "错误详情")
-        
+
         self.assertEqual(result.name, "测试检查")
         self.assertFalse(result.passed)
         self.assertEqual(result.message, "失败")
@@ -49,7 +49,7 @@ class TestCheckResult(TestCase):
         """通过的检查结果字符串表示"""
         result = CheckResult("测试", True, "OK")
         repr_str = repr(result)
-        
+
         self.assertIn("✅", repr_str)
         self.assertIn("测试", repr_str)
         self.assertIn("OK", repr_str)
@@ -58,14 +58,14 @@ class TestCheckResult(TestCase):
         """失败的检查结果字符串表示"""
         result = CheckResult("测试", False, "失败")
         repr_str = repr(result)
-        
+
         self.assertIn("⚠️", repr_str)
         self.assertIn("测试", repr_str)
 
     def test_create_result_no_detail(self):
         """创建无详细信息的检查结果"""
         result = CheckResult("测试", True, "通过")
-        
+
         self.assertEqual(result.detail, "")
 
 
@@ -95,7 +95,7 @@ class TestPlatformCheckerBasic(TestCase):
     def test_add_result(self):
         """添加检查结果"""
         result = self.checker._add("测试检查", True, "通过", "详情")
-        
+
         self.assertEqual(len(self.checker.results), 1)
         self.assertEqual(result.name, "测试检查")
         self.assertTrue(result.passed)
@@ -117,11 +117,11 @@ class TestPlatformCheckerChecks(TestCase):
     def test_check_os(self):
         """操作系统检查"""
         result = self.checker.check_os()
-        
+
         self.assertIsNotNone(result)
         self.assertIsInstance(result, CheckResult)
         self.assertEqual(result.name, "操作系统")
-        
+
         # 常见操作系统应该通过
         import platform
         system = platform.system()
@@ -131,21 +131,21 @@ class TestPlatformCheckerChecks(TestCase):
     def test_check_python_version(self):
         """Python版本检查"""
         result = self.checker.check_python_version()
-        
+
         self.assertIsNotNone(result)
         self.assertIsInstance(result, CheckResult)
         self.assertEqual(result.name, "Python 版本")
-        
+
         # Python 3.9+ 应该通过
         if sys.version_info >= (3, 9):
             self.assertTrue(result.passed)
-            self.assertIn("OK", result.message)
+            self.assertIn("Python", result.message)  # 中英文均包含 "Python"
 
     def test_check_path_length_windows_short(self):
         """Windows短路径检查"""
         with patch('platform.system', return_value='Windows'):
             result = self.checker.check_path_length()
-            
+
             # 短路径应该通过
             self.assertTrue(result.passed)
             self.assertIn("限制", result.message)
@@ -155,16 +155,16 @@ class TestPlatformCheckerChecks(TestCase):
         # 创建一个超长路径
         long_path = self.test_dir + "\\a" * 250
         os.makedirs(long_path, exist_ok=True)
-        
+
         checker = PlatformChecker(project_root=long_path)
-        
+
         with patch('platform.system', return_value='Windows'):
             result = checker.check_path_length()
-            
+
             # 长路径应该警告
             self.assertFalse(result.passed)
             self.assertIn("较长", result.message)
-        
+
         # 清理
         shutil.rmtree(long_path, ignore_errors=True)
 
@@ -172,14 +172,14 @@ class TestPlatformCheckerChecks(TestCase):
         """非Windows系统路径检查"""
         with patch('platform.system', return_value='Linux'):
             result = self.checker.check_path_length()
-            
+
             # 非Windows系统应该通过
             self.assertTrue(result.passed)
 
     def test_check_terminal_encoding(self):
         """终端编码检查"""
         result = self.checker.check_encoding()
-        
+
         self.assertIsNotNone(result)
         self.assertIsInstance(result, CheckResult)
         self.assertEqual(result.name, "终端编码")
@@ -187,22 +187,22 @@ class TestPlatformCheckerChecks(TestCase):
     def test_check_directory_permissions(self):
         """目录权限检查"""
         result = self.checker.check_directory_permissions()
-        
+
         self.assertIsNotNone(result)
         self.assertIsInstance(result, CheckResult)
         self.assertEqual(result.name, "目录权限")
-        
+
         # 临时目录应该有权限
         self.assertTrue(result.passed)
 
     def test_check_disk_space(self):
         """磁盘空间检查"""
         result = self.checker.check_disk_space()
-        
+
         self.assertIsNotNone(result)
         self.assertIsInstance(result, CheckResult)
         self.assertEqual(result.name, "磁盘空间")
-        
+
         # 应该有足够空间
         self.assertTrue(result.passed)
 
@@ -212,9 +212,9 @@ class TestPlatformCheckerChecks(TestCase):
             with patch('subprocess.run') as mock_run:
                 # 模拟长路径支持已启用
                 mock_run.return_value = MagicMock(returncode=0, stdout='1')
-                
+
                 result = self.checker.check_long_path_support()
-                
+
                 self.assertIsNotNone(result)
                 self.assertIsInstance(result, CheckResult)
 
@@ -222,14 +222,14 @@ class TestPlatformCheckerChecks(TestCase):
         """非Windows长路径支持检查"""
         with patch('platform.system', return_value='Linux'):
             result = self.checker.check_long_path_support()
-            
+
             # 非Windows系统应该跳过
             self.assertTrue(result.passed)
 
     def test_check_symlink_support(self):
         """符号链接支持检查"""
         result = self.checker.check_symlink_support()
-        
+
         self.assertIsNotNone(result)
         self.assertIsInstance(result, CheckResult)
         self.assertEqual(result.name, "符号链接")
@@ -251,11 +251,11 @@ class TestPlatformCheckerRunAll(TestCase):
     def test_run_all_checks(self):
         """运行所有检查"""
         ok, issues = self.checker.run_all_checks()
-        
+
         # 应该返回布尔值和問題列表
         self.assertIsInstance(ok, bool)
         self.assertIsInstance(issues, list)
-        
+
         # 应该有检查结果
         self.assertGreater(len(self.checker.results), 0)
 
@@ -264,17 +264,17 @@ class TestPlatformCheckerRunAll(TestCase):
         # 先添加一些旧结果
         self.checker._add("旧检查", False, "旧结果")
         old_count = len(self.checker.results)
-        
+
         # 运行所有检查
         self.checker.run_all_checks()
-        
+
         # 结果应该被清空并重新添加
         self.assertGreater(len(self.checker.results), 0)
 
     def test_print_report(self):
         """打印报告"""
         self.checker.run_all_checks()
-        
+
         # 不应该抛出异常
         try:
             self.checker.print_report()
@@ -298,7 +298,7 @@ class TestPlatformCheckerEdgeCases(TestCase):
         """不存在的项目根目录"""
         nonexistent_dir = os.path.join(self.test_dir, 'nonexistent')
         checker = PlatformChecker(project_root=nonexistent_dir)
-        
+
         # 应该能正常初始化
         self.assertIsNotNone(checker.project_root)
 
@@ -308,7 +308,7 @@ class TestPlatformCheckerEdgeCases(TestCase):
         # 这里测试正常情况
         checker = PlatformChecker(project_root=self.test_dir)
         result = checker.check_directory_permissions()
-        
+
         # 临时目录应该有权限
         self.assertTrue(result.passed)
 
@@ -316,7 +316,7 @@ class TestPlatformCheckerEdgeCases(TestCase):
         """多个检查器实例"""
         checker1 = PlatformChecker(project_root=self.test_dir)
         checker2 = PlatformChecker(project_root=self.test_dir)
-        
+
         # 两个实例应独立
         self.assertIsNot(checker1, checker2)
         self.assertEqual(checker1.results, [])
@@ -325,11 +325,11 @@ class TestPlatformCheckerEdgeCases(TestCase):
     def test_check_results_accumulation(self):
         """检查结果累积"""
         checker = PlatformChecker(project_root=self.test_dir)
-        
+
         checker._add("检查1", True, "通过")
         checker._add("检查2", False, "失败")
         checker._add("检查3", True, "通过")
-        
+
         self.assertEqual(len(checker.results), 3)
         self.assertTrue(checker.results[0].passed)
         self.assertFalse(checker.results[1].passed)
@@ -562,11 +562,15 @@ class TestUnsupportedPlatform(unittest.TestCase):
     @patch('platform.release', return_value='13.0')
     @patch('platform.machine', return_value='amd64')
     def test_check_os_unsupported(self, mock_machine, mock_release, mock_system):
-        """未支持的平台检查应失败并说明未经测试。"""
+        """未支持的平台检查应失败。"""
         checker = PlatformChecker(project_root=self.test_dir)
         result = checker.check_os()
         self.assertFalse(result.passed)
-        self.assertIn('未经测试', result.message)
+        # 消息内容取决于i18n：中文"不支持" / 英文"Unsupported"
+        self.assertTrue(
+            '不支持' in result.message or 'Unsupported' in result.message,
+            f"期望包含'不支持'或'Unsupported'，实际: {result.message}"
+        )
 
 
 if __name__ == '__main__':

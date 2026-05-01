@@ -7,6 +7,7 @@
 import pytest
 import os
 import sys
+import threading
 from unittest.mock import Mock, patch
 from src.collision.gpu_collision_engine import GPUCollisionEngine, GPUDevice
 from src.gpu.device import GPUDeviceDetector
@@ -195,12 +196,16 @@ class TestGPUCollisionEngine:
         此测试验证GPUCollisionEngine.start()方法的参数验证逻辑，
         确保传入无效模式时抛出ValueError。
 
+        Phase 6: start() 通过 _search_coordinator 在后台线程验证模式，
+        ValueError 在后台线程中抛出，通过 threading.excepthook 捕获断言。
+
         注意: 此测试通过Mock GPUDeviceManager来避免真实的GPU初始化，
         只验证参数验证逻辑，不需要真实GPU硬件。
         """
         # 策略：直接Mock GPUDeviceManager，完全绕过GPU初始化流程
-        # 这样可以消除歧义，确保测试的是"无效模式"而非"设备不可用"
-        with patch('src.collision.gpu_collision_engine.GPUDeviceManager') as MockDeviceManager:
+        # Phase 6: engine.py 从 src.gpu.device_manager 导入，需要 patch 正确路径
+        with patch('src.collision.gpu.engine.GPUDeviceManager') as MockDeviceManager, \
+             patch('src.collision.gpu.engine.PYOPENCL_AVAILABLE', True):
             # 配置Mock使其跳过GPU初始化，但允许引擎创建成功
             mock_device_manager = Mock()
             mock_device_manager.initialize = Mock()  # 不执行任何操作
@@ -228,10 +233,31 @@ class TestGPUCollisionEngine:
             MockDeviceManager.assert_called_once()
             mock_device_manager.initialize.assert_called_once()
 
-            # 明确测试：无效模式应该抛出ValueError
-            # 这是此测试的唯一目标，没有任何歧义路径
-            with pytest.raises(ValueError, match="未知模式|无效模式|invalid"):
+            # Phase 6: start() 在后台线程中异步验证模式
+            # 使用 threading.excepthook 捕获后台线程异常
+            captured_exceptions = []
+            original_hook = threading.excepthook
+
+            def capture_hook(args):
+                captured_exceptions.append(args.exc_value)
+
+            threading.excepthook = capture_hook
+            try:
                 engine.start(mode="invalid_mode")
+                # 等待后台线程抛出异常
+                import time
+                time.sleep(0.5)
+
+                # 验证后台线程捕获到 ValueError
+                assert len(captured_exceptions) > 0, "应捕获到后台线程异常"
+                assert any(
+                    isinstance(exc, ValueError) and ("未知" in str(exc) or "无效" in str(exc) or "invalid" in str(exc).lower())
+                    for exc in captured_exceptions
+                ), f"应捕获到包含'未知/无效/invalid'的ValueError，实际: {captured_exceptions}"
+            finally:
+                threading.excepthook = original_hook
+                if engine.is_running():
+                    engine.stop()
 
     @pytest.mark.skip(reason="[GPU-HW-003] 需要真实GPU硬件: pyopencl C扩展类型检查无法完美Mock。详见: test_results/PYOPENCL_MOCK_SOLUTION.md")
     def test_gpu_engine_get_device_info(self, mock_gpu_setup):
