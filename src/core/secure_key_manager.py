@@ -15,7 +15,7 @@ from contextlib import contextmanager
 
 # 尝试导入密码学库
 try:
-    pass
+    import cryptography
 
     HAS_CRYPTOGRAPHY = True
 except ImportError:
