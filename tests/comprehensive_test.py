@@ -123,6 +123,10 @@ class ComprehensiveTest:
             mode='random',
             total_keys=100000
         ):
+            try:
+                engine.cleanup()
+            except Exception:
+                pass
             raise Exception("引擎启动失败")
 
         # 运行一小段时间
@@ -162,6 +166,10 @@ class ComprehensiveTest:
             mode='random',
             total_keys=500000
         ):
+            try:
+                engine.cleanup()
+            except Exception:
+                pass
             raise Exception("引擎启动失败")
 
         # 运行一小段时间
@@ -206,6 +214,10 @@ class ComprehensiveTest:
                 mode='random',
                 total_keys=200000
             ):
+                try:
+                    engine.cleanup()
+                except Exception:
+                    pass
                 raise Exception(f"引擎启动失败 (批次大小: {batch_size})")
 
             # 运行一小段时间
@@ -247,6 +259,10 @@ class ComprehensiveTest:
             mode='random',
             total_keys=1000000
         ):
+            try:
+                engine.cleanup()
+            except Exception:
+                pass
             raise Exception("引擎启动失败")
 
         # 运行较长时间
@@ -284,6 +300,10 @@ class ComprehensiveTest:
             mode='random',
             total_keys=50000
         ):
+            try:
+                engine.cleanup()
+            except Exception:
+                pass
             raise Exception("引擎启动失败")
 
         # 运行一小段时间
@@ -349,6 +369,10 @@ class ComprehensiveTest:
             mode='random',
             total_keys=300000
         ):
+            try:
+                engine.cleanup()
+            except Exception:
+                pass
             raise Exception("引擎启动失败")
 
         # 运行一小段时间
@@ -388,6 +412,10 @@ class ComprehensiveTest:
             mode='random',
             total_keys=1000000
         ):
+            try:
+                engine.cleanup()
+            except Exception:
+                pass
             raise Exception("引擎启动失败")
 
         # 运行一段时间，让负载均衡器工作
