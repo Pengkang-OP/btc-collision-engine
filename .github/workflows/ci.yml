@@ -35,7 +35,7 @@ jobs:
 
     - name: 运行测试
       run: |
-        python -m pytest tests/ -v --tb=short --cov=src --cov-report=xml
+        python -m pytest tests/ -v --tb=short --cov=src --cov-report=xml --cov-fail-under=40 -m "not (gpu or gpu_kernel)"
 
     - name: 上传覆盖率报告
       uses: codecov/codecov-action@v4
@@ -145,6 +145,52 @@ jobs:
         echo "📚 检查文档结构..."
         ls -la docs/
         echo "✅ 文档检查完成"
+
+  # ──────────────────────────────────────────
+  # P0 新增: CI 门禁检查 (必须全部通过)
+  # ──────────────────────────────────────────
+  gate:
+    name: CI 门禁检查
+    runs-on: ubuntu-latest
+    needs: [code-quality, lint, critical-tests]
+    if: always()
+
+    steps:
+    - name: 验证所有门禁通过
+      run: |
+        echo "🔐 CI 门禁检查..."
+
+        # 检查所有依赖 job 是否成功
+        FAILED=0
+
+        if [ "${{ needs.code-quality.result }}" != "success" ]; then
+          echo "❌ code-quality 未通过: ${{ needs.code-quality.result }}"
+          FAILED=1
+        else
+          echo "✅ code-quality 通过"
+        fi
+
+        if [ "${{ needs.lint.result }}" != "success" ]; then
+          echo "❌ lint 未通过: ${{ needs.lint.result }}"
+          FAILED=1
+        else
+          echo "✅ lint 通过"
+        fi
+
+        if [ "${{ needs.critical-tests.result }}" != "success" ]; then
+          echo "❌ critical-tests 未通过: ${{ needs.critical-tests.result }}"
+          FAILED=1
+        else
+          echo "✅ critical-tests 通过"
+        fi
+
+        if [ $FAILED -eq 1 ]; then
+          echo ""
+          echo "⛔ CI 门禁未通过！请修复上述问题后重新提交。"
+          exit 1
+        fi
+
+        echo "✅ 所有 CI 门禁通过！"
 
   # ──────────────────────────────────────────
   # P0 新增: 安全扫描 (Bandit)

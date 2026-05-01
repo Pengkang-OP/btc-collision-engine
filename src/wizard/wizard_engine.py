@@ -91,9 +91,9 @@ class WizardEngine:
                 if handler:
                     handler()
 
-            if self._running:
+            if self._running and not self.result.error_message:
                 self._complete()
-            else:
+            elif not self._running:
                 self._cancelled()
 
         except KeyboardInterrupt:
