@@ -379,6 +379,8 @@ def skip_if_no_gpu(func):
         return func
     except ImportError:
         return unittest.skip("pyopencl not installed")(func)
+    except Exception:
+        return unittest.skip("OpenCL platform error (no GPU/OpenCL runtime)")(func)
 
 
 def timeout(seconds: int):
