@@ -9,6 +9,7 @@
 - log_collector.py (LogCollector)
 - log_manager.py (LogManager)
 """
+
 import pytest
 import os
 import sys
@@ -24,20 +25,28 @@ from src.logging.log_query import LogQuery
 from src.logging.log_collector import LogCollector
 from src.logging.log_manager import LogManager, LogLevel
 
-
 # ============================================================================
 # 1. LogEvent & LogEventType 测试
 # ============================================================================
+
 
 class TestLogEventType:
     """LogEventType 枚举测试"""
 
     def test_all_event_types_defined(self):
         expected = [
-            "engine_start", "engine_stop", "engine_error",
-            "engine_pause", "engine_resume", "gpu_detected",
-            "gpu_usage_update", "performance_update", "match_found",
-            "checkpoint_saved", "config_loaded", "status_update",
+            "engine_start",
+            "engine_stop",
+            "engine_error",
+            "engine_pause",
+            "engine_resume",
+            "gpu_detected",
+            "gpu_usage_update",
+            "performance_update",
+            "match_found",
+            "checkpoint_saved",
+            "config_loaded",
+            "status_update",
         ]
         for name in expected:
             assert hasattr(LogEventType, name.upper())
@@ -91,6 +100,7 @@ class TestLogEvent:
 # ============================================================================
 # 2. LogProcessor & SensitiveDataFilter 测试
 # ============================================================================
+
 
 class TestLogProcessor:
     """LogProcessor 测试"""
@@ -173,18 +183,12 @@ class TestSensitiveDataFilter:
 
     def test_enabled_blocks_private_key(self):
         f = SensitiveDataFilter(enabled=True)
-        event = LogEvent(
-            LogEventType.STATUS_UPDATE,
-            {"private_key": "a" * 64}
-        )
+        event = LogEvent(LogEventType.STATUS_UPDATE, {"private_key": "a" * 64})
         assert f.filter(event) is False
 
     def test_disabled_allows_all(self):
         f = SensitiveDataFilter(enabled=False)
-        event = LogEvent(
-            LogEventType.STATUS_UPDATE,
-            {"private_key": "a" * 64}
-        )
+        event = LogEvent(LogEventType.STATUS_UPDATE, {"private_key": "a" * 64})
         assert f.filter(event) is True
 
     def test_non_sensitive_passes(self):
@@ -205,8 +209,7 @@ class TestSensitiveDataFilter:
     def test_blocks_p2pkh_address_in_event(self):
         f = SensitiveDataFilter(enabled=True)
         event = LogEvent(
-            LogEventType.MATCH_FOUND,
-            {"address": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
+            LogEventType.MATCH_FOUND, {"address": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
         )
         assert f.filter(event) is False
 
@@ -214,6 +217,7 @@ class TestSensitiveDataFilter:
 # ============================================================================
 # 3. LogStorage 测试
 # ============================================================================
+
 
 class TestLogStorage:
     """LogStorage 测试"""
@@ -237,10 +241,7 @@ class TestLogStorage:
         assert stats["total_count"] == 1
 
     def test_save_batch(self, storage):
-        events = [
-            {"type": "status_update", "message": f"msg{i}"}
-            for i in range(5)
-        ]
+        events = [{"type": "status_update", "message": f"msg{i}"} for i in range(5)]
         count = storage.save_batch(events)
         assert count == 5
 
@@ -303,6 +304,7 @@ class TestLogStorage:
 # 4. LogQuery 测试
 # ============================================================================
 
+
 class TestLogQuery:
     """LogQuery 测试"""
 
@@ -313,9 +315,24 @@ class TestLogQuery:
         os.makedirs(storage_dir, exist_ok=True)
         log_file = os.path.join(storage_dir, "wizard.log")
         events = [
-            {"type": "engine_start", "message": "engine started", "timestamp": time.time() - 60, "source": "engine"},
-            {"type": "status_update", "message": "processing keys", "timestamp": time.time() - 30, "source": "engine"},
-            {"type": "engine_error", "message": "GPU timeout", "timestamp": time.time(), "source": "gpu"},
+            {
+                "type": "engine_start",
+                "message": "engine started",
+                "timestamp": time.time() - 60,
+                "source": "engine",
+            },
+            {
+                "type": "status_update",
+                "message": "processing keys",
+                "timestamp": time.time() - 30,
+                "source": "engine",
+            },
+            {
+                "type": "engine_error",
+                "message": "GPU timeout",
+                "timestamp": time.time(),
+                "source": "gpu",
+            },
         ]
         with open(log_file, "w", encoding="utf-8") as f:
             for e in events:
@@ -373,7 +390,7 @@ class TestLogQuery:
         log_file = os.path.join(storage_dir, "wizard.log")
         with open(log_file, "w", encoding="utf-8") as f:
             f.write('{"type": "good", "message": "ok"}\n')
-            f.write('invalid json line\n')
+            f.write("invalid json line\n")
             f.write('{"type": "good2", "message": "ok2"}\n')
         query = LogQuery(storage_dir=storage_dir)
         results = query.get_recent()
@@ -433,26 +450,22 @@ class TestLogCollector:
         collector = LogCollector()
         collector.attach_to_logger("test_attach")
         import logging
+
         logger = logging.getLogger("test_attach")
         # 验证 _CollectorLogHandler 已被附加到 logger
         assert any(
-            hasattr(h, 'emit') and h is collector._log_handler
-            for h in logger.handlers
+            hasattr(h, "emit") and h is collector._log_handler for h in logger.handlers
         ), "_CollectorLogHandler 未被附加到 logger"
         collector.detach_from_logger("test_attach")
         # 验证 handler 已被移除
-        assert collector._log_handler not in logger.handlers, (
-            "_CollectorLogHandler 未被成功移除"
-        )
+        assert collector._log_handler not in logger.handlers, "_CollectorLogHandler 未被成功移除"
 
     def test_handler_is_called(self):
         collector = LogCollector()
         received_events = []
         collector.register_handler("status_update", received_events.append)
         collector.start()
-        collector.collect_from_queue(
-            LogEventType.STATUS_UPDATE, {"key": "val"}, source="test"
-        )
+        collector.collect_from_queue(LogEventType.STATUS_UPDATE, {"key": "val"}, source="test")
         poll_until(lambda: len(received_events) >= 1)
         collector.stop()
         assert len(received_events) >= 1
@@ -462,9 +475,7 @@ class TestLogCollector:
     def test_queue_full_dropped(self):
         collector = LogCollector(max_queue_size=2)
         for i in range(10):
-            collector.collect_from_queue(
-                LogEventType.STATUS_UPDATE, {"idx": i}, source="test"
-            )
+            collector.collect_from_queue(LogEventType.STATUS_UPDATE, {"idx": i}, source="test")
         # 队列最大2，所以应只有2条（不阻塞）
         assert collector._queue.qsize() <= 2
 
@@ -472,6 +483,7 @@ class TestLogCollector:
 # ============================================================================
 # 6. LogManager 测试
 # ============================================================================
+
 
 class TestLogLevel:
     """LogLevel 枚举测试"""

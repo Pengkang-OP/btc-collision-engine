@@ -13,7 +13,8 @@
 
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 import inspect
 import threading
@@ -42,31 +43,26 @@ class TestP1_4RangeScanPrecisionFix:
         source = inspect.getsource(KeyCollisionEngine.range_scan)
 
         # 必须在 Executor 退出后包含 final_count = total_count + _live_range_count
-        assert 'final_count' in source, (
-            "range_scan 应使用 final_count 变量"
-        )
-        assert 'total_count + self._live_range_count' in source, (
-            "range_scan final_count 应合并 _live_range_count"
-        )
+        assert "final_count" in source, "range_scan 应使用 final_count 变量"
+        assert (
+            "total_count + self._live_range_count" in source
+        ), "range_scan final_count 应合并 _live_range_count"
         # 确保不再用空 total_count 更新 stats
-        lines = source.split('\n')
+        lines = source.split("\n")
         # 在 self._executor = None 之后不应有 self.stats.update(total_count, ...
         executor_none_idx = None
         for i, l in enumerate(lines):
-            if 'self._executor = None' in l:
+            if "self._executor = None" in l:
                 executor_none_idx = i
                 break
         assert executor_none_idx is not None
 
         after_exec = lines[executor_none_idx:]
         bad_pattern = any(
-            'self.stats.update(total_count' in l
-            and 'total_range' in l
-            for l in after_exec
+            "self.stats.update(total_count" in l and "total_range" in l for l in after_exec
         )
         assert not bad_pattern, (
-            "range_scan 不应再用 total_count 直接更新 stats，"
-            "应使用 final_count"
+            "range_scan 不应再用 total_count 直接更新 stats，" "应使用 final_count"
         )
 
     # ================================================================
@@ -96,9 +92,7 @@ class TestP1_4RangeScanPrecisionFix:
 
         # _live_range_count 应为0
         live = self.engine._live_range_count
-        assert live == 0, (
-            f"range_scan 停止后 _live_range_count 应为0，实际为 {live}"
-        )
+        assert live == 0, f"range_scan 停止后 _live_range_count 应为0，实际为 {live}"
 
     # ================================================================
     # 验证 C: random_search pattern 一致性
@@ -107,12 +101,10 @@ class TestP1_4RangeScanPrecisionFix:
         """验证 random_search 的 final_count 逻辑未被破坏"""
         source = inspect.getsource(KeyCollisionEngine.random_search)
 
-        assert 'final_count = total_count + self._live_range_count' in source, (
-            "random_search 应保持 final_count = total_count + _live_range_count"
-        )
-        assert "self._live_range_count = 0" in source, (
-            "random_search 应重置 _live_range_count"
-        )
+        assert (
+            "final_count = total_count + self._live_range_count" in source
+        ), "random_search 应保持 final_count = total_count + _live_range_count"
+        assert "self._live_range_count = 0" in source, "random_search 应重置 _live_range_count"
 
     # ================================================================
     # 验证 D: _range_scan_worker 有余数提交
@@ -121,15 +113,11 @@ class TestP1_4RangeScanPrecisionFix:
         """验证 _range_scan_worker 有 500步余数提交"""
         source = inspect.getsource(KeyCollisionEngine._range_scan_worker)
 
-        assert 'local_count % 500' in source, (
-            "_range_scan_worker 应有余数提交（local_count % 500）"
-        )
-        assert 'self._live_range_count +=' in source, (
-            "_range_scan_worker 应提交余数到 _live_range_count"
-        )
-        assert 'remainder' in source, (
-            "_range_scan_worker 应有 remainder 变量"
-        )
+        assert "local_count % 500" in source, "_range_scan_worker 应有余数提交（local_count % 500）"
+        assert (
+            "self._live_range_count +=" in source
+        ), "_range_scan_worker 应提交余数到 _live_range_count"
+        assert "remainder" in source, "_range_scan_worker 应有 remainder 变量"
 
     # ================================================================
     # 验证 E: range_scan data_logging 使用 final_count
@@ -139,6 +127,6 @@ class TestP1_4RangeScanPrecisionFix:
         source = inspect.getsource(KeyCollisionEngine.range_scan)
 
         # 确认 data_logging current_position 使用 final_count
-        assert 'current_position=final_count' in source, (
-            "data_logging 的 current_position 应使用 final_count"
-        )
+        assert (
+            "current_position=final_count" in source
+        ), "data_logging 的 current_position 应使用 final_count"

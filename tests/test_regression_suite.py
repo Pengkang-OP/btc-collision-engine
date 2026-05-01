@@ -18,10 +18,10 @@ import os
 import time
 from unittest.mock import Mock, patch
 
-
 # ============================================================================
 # P0 安全相关修复回归
 # ============================================================================
+
 
 @pytest.mark.regression
 class TestP0SecurityRegression:
@@ -58,6 +58,7 @@ class TestP0SecurityRegression:
         """None 事件和 None event_type 应被安全处理"""
         from src.collision.event_bus import EventBus, reset_event_bus
         from src.collision.events import CollisionEvent
+
         reset_event_bus()
 
         bus = EventBus(async_mode=False)
@@ -76,6 +77,7 @@ class TestP0SecurityRegression:
 # ============================================================================
 # P1 数据完整性回归
 # ============================================================================
+
 
 @pytest.mark.regression
 class TestP1DataIntegrityRegression:
@@ -117,6 +119,7 @@ class TestP1DataIntegrityRegression:
         """一个 handler 异常不影响其他 handler"""
         from src.collision.event_bus import EventBus, reset_event_bus
         from src.collision.events import EngineStartEvent, EventType
+
         reset_event_bus()
 
         bus = EventBus(async_mode=False)
@@ -153,6 +156,7 @@ class TestP1DataIntegrityRegression:
 # P2 边界条件回归
 # ============================================================================
 
+
 @pytest.mark.regression
 class TestP2BoundaryRegression:
     """P2 边界条件回归测试"""
@@ -175,12 +179,14 @@ class TestP2BoundaryRegression:
     def test_base58_empty_string(self):
         """Base58 空字符串编解码"""
         from src.core.base58 import Base58
+
         result = Base58.decode("")
         assert result == b""
 
     def test_log_storage_empty_queries(self):
         """空存储查询返回空"""
         from src.logging.log_storage import LogStorage
+
         with tempfile.TemporaryDirectory() as tmpdir:
             s = LogStorage(storage_dir=tmpdir)
             assert s.get_recent() == []
@@ -192,6 +198,7 @@ class TestP2BoundaryRegression:
         """清空后重新发布"""
         from src.collision.event_bus import EventBus, reset_event_bus
         from src.collision.events import EngineStartEvent, EventType
+
         reset_event_bus()
 
         bus = EventBus(async_mode=False)
@@ -208,6 +215,7 @@ class TestP2BoundaryRegression:
 # P3 API兼容性回归
 # ============================================================================
 
+
 @pytest.mark.regression
 class TestP3APICompatibility:
     """P3 API兼容性回归测试"""
@@ -216,6 +224,7 @@ class TestP3APICompatibility:
         """验证上下文管理器 API 正常工作"""
         from src.collision.event_bus import EventBus, reset_event_bus
         from src.collision.events import EngineStartEvent, EventType
+
         reset_event_bus()
 
         with EventBus(async_mode=False) as bus:
@@ -261,6 +270,7 @@ class TestP3APICompatibility:
 # 安全性回归测试
 # ============================================================================
 
+
 @pytest.mark.regression
 class TestSecurityRegression:
     """安全性回归测试"""
@@ -273,7 +283,7 @@ class TestSecurityRegression:
             private_key=b"\x01" * 32,
             address="1TestAddress",
             wif="TestWIF",
-            target_address="1Target"
+            target_address="1Target",
         )
         assert "private_key" not in event.metadata
         assert "wif" not in event.metadata
@@ -287,8 +297,8 @@ class TestSecurityRegression:
 
         # 验证每种地址类型都能被匹配
         test_addresses = [
-            "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",    # P2PKH
-            "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",    # P2SH
+            "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",  # P2PKH
+            "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",  # P2SH
             "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",  # Bech32
             "bc1p5d7rjq7g6rdk2yhzks9smlaqtedr4dekq08ge8qt2acpp2ys4tqmpyuf4v",  # Bech32m
         ]

@@ -1,4 +1,5 @@
 """ConfigManager配置验证一致性测试 - 确保JSON Schema和手动验证逻辑一致"""
+
 import unittest
 import sys
 import os
@@ -21,7 +22,7 @@ class TestConfigValidationConsistency(unittest.TestCase):
                 "max_workers": 8,
                 "progress_interval": 1000,
                 "checkpoint_interval": 30,
-                "dedup_max_size": 1000000
+                "dedup_max_size": 1000000,
             },
             "logging": {
                 "level": "DEBUG",
@@ -34,7 +35,7 @@ class TestConfigValidationConsistency(unittest.TestCase):
                 "rotation_type": "size",
                 "rotation_when": "midnight",
                 "rotation_interval": 1,
-                "compress_backups": False
+                "compress_backups": False,
             },
             "gpu": {
                 "use_gpu": True,
@@ -42,56 +43,44 @@ class TestConfigValidationConsistency(unittest.TestCase):
                 "batch_size": 65536,
                 "auto_detect": True,
                 "memory_usage_ratio": 0.5,
-                "enable_vendor_optimizations": True
+                "enable_vendor_optimizations": True,
             },
             "performance_monitoring": {
                 "enabled": True,
                 "track_slow_operations": True,
                 "slow_threshold_ms": 1000,
                 "max_records": 10000,
-                "log_level": "INFO"
+                "log_level": "INFO",
             },
             "crypto": {
                 "backend": "auto",
                 "constant_time": False,
                 "verify_checksums": True,
-                "strict_wif_validation": True
-            }
+                "strict_wif_validation": True,
+            },
         }
-        
+
         errors = self.mgr.validate(valid_config)
         self.assertEqual(len(errors), 0, f"有效配置不应有错误: {errors}")
 
     def test_invalid_max_workers_fails_validation(self):
         """无效的max_workers应该被检测到"""
-        invalid_config = {
-            "collision": {
-                "max_workers": -1
-            }
-        }
-        
+        invalid_config = {"collision": {"max_workers": -1}}
+
         errors = self.mgr.validate(invalid_config)
         self.assertIn("collision.max_workers", errors)
 
     def test_invalid_log_level_fails_validation(self):
         """无效的日志级别应该被检测到"""
-        invalid_config = {
-            "logging": {
-                "level": "INVALID_LEVEL"
-            }
-        }
-        
+        invalid_config = {"logging": {"level": "INVALID_LEVEL"}}
+
         errors = self.mgr.validate(invalid_config)
         self.assertIn("logging.level", errors)
 
     def test_invalid_gpu_batch_size_fails_validation(self):
         """无效的GPU批处理大小应该被检测到"""
-        invalid_config = {
-            "gpu": {
-                "batch_size": 0
-            }
-        }
-        
+        invalid_config = {"gpu": {"batch_size": 0}}
+
         errors = self.mgr.validate(invalid_config)
         self.assertIn("gpu.batch_size", errors)
 
@@ -99,14 +88,10 @@ class TestConfigValidationConsistency(unittest.TestCase):
         """严格的布尔值检查 - 整数不应被接受为布尔值"""
         # 测试布尔值字段接收整数的情况
         invalid_config = {
-            "gpu": {
-                "use_gpu": 1  # 应该是布尔值，不是整数
-            },
-            "logging": {
-                "enable_console": 0  # 应该是布尔值，不是整数
-            }
+            "gpu": {"use_gpu": 1},  # 应该是布尔值，不是整数
+            "logging": {"enable_console": 0},  # 应该是布尔值，不是整数
         }
-        
+
         errors = self.mgr.validate(invalid_config)
         # 确保整数不会被误判为布尔值
         self.assertIn("gpu.use_gpu", errors)
@@ -117,26 +102,18 @@ class TestConfigValidationConsistency(unittest.TestCase):
         # 配置依赖关系验证仅在手动验证模式下生效
         # 当jsonschema可用时，validate()优先使用Schema验证
         from src.config.config_manager import HAS_JSONSCHEMA
-        
+
         if not HAS_JSONSCHEMA:
             # 仅在没有jsonschema时测试依赖关系验证
             # size轮转模式需要max_bytes
-            size_without_max_bytes = {
-                "logging": {
-                    "rotation_type": "size"
-                }
-            }
-            
+            size_without_max_bytes = {"logging": {"rotation_type": "size"}}
+
             errors = self.mgr.validate(size_without_max_bytes)
             self.assertIn("logging.max_bytes", errors)
 
             # time轮转模式需要rotation_when
-            time_without_when = {
-                "logging": {
-                    "rotation_type": "time"
-                }
-            }
-            
+            time_without_when = {"logging": {"rotation_type": "time"}}
+
             errors = self.mgr.validate(time_without_when)
             self.assertIn("logging.rotation_when", errors)
         else:
@@ -146,16 +123,11 @@ class TestConfigValidationConsistency(unittest.TestCase):
     def test_additional_properties_rejected(self):
         """额外属性应该被拒绝（Schema验证）"""
         config_with_extra = {
-            "collision": {
-                "max_workers": 8,
-                "invalid_extra_field": "value"  # 不应该被允许
-            },
-            "logging": {
-                "level": "INFO"
-            },
-            "unknown_top_level_key": "value"  # 不应该被允许
+            "collision": {"max_workers": 8, "invalid_extra_field": "value"},  # 不应该被允许
+            "logging": {"level": "INFO"},
+            "unknown_top_level_key": "value",  # 不应该被允许
         }
-        
+
         if HAS_JSONSCHEMA:
             errors = self.mgr.validate(config_with_extra)
             # JSON Schema应该拒绝额外属性
@@ -173,7 +145,7 @@ class TestConfigValidationConsistency(unittest.TestCase):
         mgr.set("collision.max_workers", 16)
         mgr.set("logging.level", "DEBUG")
         mgr.set("gpu.batch_size", 131072)
-        
+
         errors = mgr.validate()
         self.assertEqual(len(errors), 0, f"合并配置不应有错误: {errors}")
 
@@ -187,14 +159,10 @@ class TestConfigValidationConsistency(unittest.TestCase):
     def test_none_values_validation(self):
         """None值应该被正确处理"""
         config_with_none = {
-            "collision": {
-                "max_workers": None  # None是有效的
-            },
-            "logging": {
-                "level": "INFO"
-            }
+            "collision": {"max_workers": None},  # None是有效的
+            "logging": {"level": "INFO"},
         }
-        
+
         errors = self.mgr.validate(config_with_none)
         self.assertEqual(len(errors), 0, f"None值配置不应有错误: {errors}")
 
@@ -205,17 +173,17 @@ class TestConfigValidationEdgeCases(unittest.TestCase):
     def test_max_workers_boundary(self):
         """max_workers边界值测试"""
         mgr = ConfigManager()
-        
+
         # 最小值边界
         mgr.set("collision.max_workers", 1)
         errors = mgr.validate()
         self.assertEqual(len(errors), 0)
-        
+
         # 最大值边界
         mgr.set("collision.max_workers", 1024)
         errors = mgr.validate()
         self.assertEqual(len(errors), 0)
-        
+
         # 超过最大值
         mgr.set("collision.max_workers", 1025)
         errors = mgr.validate()
@@ -224,17 +192,17 @@ class TestConfigValidationEdgeCases(unittest.TestCase):
     def test_gpu_batch_size_boundary(self):
         """GPU批处理大小边界值测试"""
         mgr = ConfigManager()
-        
+
         # 最小值边界
         mgr.set("gpu.batch_size", 1)
         errors = mgr.validate()
         self.assertEqual(len(errors), 0)
-        
+
         # 最大值边界
         mgr.set("gpu.batch_size", 16777216)
         errors = mgr.validate()
         self.assertEqual(len(errors), 0)
-        
+
         # 超过最大值
         mgr.set("gpu.batch_size", 16777217)
         errors = mgr.validate()
@@ -243,17 +211,17 @@ class TestConfigValidationEdgeCases(unittest.TestCase):
     def test_memory_ratio_boundary(self):
         """内存比率边界值测试"""
         mgr = ConfigManager()
-        
+
         # 边界值
         mgr.set("gpu.memory_usage_ratio", 1.0)
         errors = mgr.validate()
         self.assertEqual(len(errors), 0)
-        
+
         # 无效值（小于等于0）
         mgr.set("gpu.memory_usage_ratio", 0)
         errors = mgr.validate()
         self.assertIn("gpu.memory_usage_ratio", errors)
-        
+
         # 无效值（大于1）
         mgr.set("gpu.memory_usage_ratio", 1.5)
         errors = mgr.validate()

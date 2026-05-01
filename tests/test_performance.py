@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """性能基准测试 - 测试各模块的性能指标"""
+
 import pytest
 import time
 import os
@@ -17,8 +18,8 @@ class TestPerformanceBenchmarks:
 
     # 性能基线（可根据实际硬件调整）
     BASELINE_PRIVATE_KEY_GEN = 10000  # 私钥生成: 次/秒
-    BASELINE_ADDRESS_GEN = 5000       # 地址生成: 次/秒
-    BASELINE_COLLISION_CHECK = 3000   # 碰撞检测: 次/秒
+    BASELINE_ADDRESS_GEN = 5000  # 地址生成: 次/秒
+    BASELINE_COLLISION_CHECK = 3000  # 碰撞检测: 次/秒
 
     @staticmethod
     def _safe_elapsed(elapsed: float, min_val: float = 0.001) -> float:
@@ -51,8 +52,9 @@ class TestPerformanceBenchmarks:
         print(f"   基线: {self.BASELINE_PRIVATE_KEY_GEN} 次/秒")
 
         # 应该达到合理性能
-        assert speed > self.BASELINE_PRIVATE_KEY_GEN * 0.1, \
-            f"私钥生成速度过低: {speed:.0f} < {self.BASELINE_PRIVATE_KEY_GEN * 0.1}"
+        assert (
+            speed > self.BASELINE_PRIVATE_KEY_GEN * 0.1
+        ), f"私钥生成速度过低: {speed:.0f} < {self.BASELINE_PRIVATE_KEY_GEN * 0.1}"
 
     def test_public_key_derivation_speed(self):
         """测试公钥推导速度"""
@@ -89,7 +91,7 @@ class TestPerformanceBenchmarks:
         for _ in range(iterations):
             address = generator.generate_address()[0]  # 只取地址
             assert address is not None
-            assert address.startswith('1')
+            assert address.startswith("1")
             assert len(address) >= 26 and len(address) <= 35
         end_time = time.time()
 
@@ -108,7 +110,7 @@ class TestPerformanceBenchmarks:
     def test_base58_encode_speed(self):
         """测试Base58编码速度"""
         iterations = 10000
-        test_data = b'\x00' * 20 + b'\xff' * 20  # 40字节测试数据
+        test_data = b"\x00" * 20 + b"\xff" * 20  # 40字节测试数据
 
         start_time = time.time()
         for _ in range(iterations):
@@ -154,7 +156,7 @@ class TestPerformanceBenchmarks:
         from src.core.hash_utils import HashUtils
 
         iterations = 10000
-        test_data = b'test data for hashing' * 10
+        test_data = b"test data for hashing" * 10
 
         start_time = time.time()
         for _ in range(iterations):
@@ -184,7 +186,7 @@ class TestPerformanceBenchmarks:
 
         start_time = time.time()
         for i in range(iterations):
-            private_key = i.to_bytes(32, 'big')
+            private_key = i.to_bytes(32, "big")
             is_new = dedup.check_and_add(private_key)
             assert is_new is True
         end_time = time.time()
@@ -292,7 +294,7 @@ class TestPerformanceBenchmarks:
 
             # 添加数据
             for i in range(size):
-                private_key = i.to_bytes(32, 'big')
+                private_key = i.to_bytes(32, "big")
                 dedup.check_and_add(private_key)
 
             # 估算内存使用（简化）
@@ -321,7 +323,7 @@ class TestPerformanceBenchmarks:
             address = generator.public_key_to_address(public_key)
 
             # 4. 验证地址格式
-            assert address.startswith('1')
+            assert address.startswith("1")
             assert len(address) >= 26
         end_time = time.time()
 
@@ -380,7 +382,9 @@ class TestPerformanceComparison:
 
         print(f"\n[Performance] 去重性能对比:")
         print(f"   禁用去重: {stats_no_dedup.total_checked} 个 ({stats_no_dedup.speed:.0f} 次/秒)")
-        print(f"   启用去重: {stats_with_dedup.total_checked} 个 ({stats_with_dedup.speed:.0f} 次/秒)")
+        print(
+            f"   启用去重: {stats_with_dedup.total_checked} 个 ({stats_with_dedup.speed:.0f} 次/秒)"
+        )
 
         # 去重应该有性能开销，但不应过大
         if stats_no_dedup.speed > 0:

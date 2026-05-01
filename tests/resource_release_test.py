@@ -4,13 +4,14 @@
 
 此脚本用于测试修复后的GPU资源释放功能，确保在引擎停止后GPU资源能够被正确释放。
 """
+
 import time
 import logging
 import sys
 import os
 
 # 添加项目根目录到Python路径
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import pytest
 
@@ -20,10 +21,10 @@ from src.collision.gpu_collision_engine import GPUCollisionEngine
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 def test_resource_release():
     """测试GPU资源释放功能"""
@@ -34,7 +35,7 @@ def test_resource_release():
     try:
         # 创建一个测试目标地址集合（使用有效的比特币地址格式）
         # 注意：这是一个无效的测试地址，但格式正确
-        test_targets = {'1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'}
+        test_targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
         engine = GPUCollisionEngine(device_index=0, batch_size=1024, targets=test_targets)
         logger.info("GPU碰撞引擎初始化成功")
 
@@ -59,6 +60,7 @@ def test_resource_release():
     except Exception as e:
         logger.error(f"测试过程中出现错误: {e}")
         import traceback
+
         traceback.print_exc()
         return False
     finally:
@@ -67,6 +69,7 @@ def test_resource_release():
                 engine.stop()
             except Exception as e:
                 logger.warning(f"停止引擎时出现错误: {e}")
+
 
 if __name__ == "__main__":
     success = test_resource_release()

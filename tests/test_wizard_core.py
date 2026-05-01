@@ -11,6 +11,7 @@
 - events.py (WizardEvent, WizardEventType)
 - message_queue.py (MessageQueue)
 """
+
 import pytest
 import os
 import sys
@@ -25,12 +26,17 @@ from src.wizard.mode_selector import ModeSelector
 from src.wizard.gpu_selector import GPUSelector
 from src.wizard.config_builder import ConfigBuilder
 from src.wizard.events import WizardEvent, WizardEventType
-from src.wizard.message_queue import WizardMessageQueue, get_message_queue, set_message_queue, reset_message_queue
-
+from src.wizard.message_queue import (
+    WizardMessageQueue,
+    get_message_queue,
+    set_message_queue,
+    reset_message_queue,
+)
 
 # ============================================================================
 # 1. WizardMode & WizardConfig & WizardResult 测试
 # ============================================================================
+
 
 class TestWizardMode:
     """WizardMode 枚举测试"""
@@ -127,6 +133,7 @@ class TestWizardResult:
 # 2. ModeSelector 测试
 # ============================================================================
 
+
 class TestModeSelector:
     """ModeSelector 测试"""
 
@@ -177,6 +184,7 @@ class TestModeSelector:
 # ============================================================================
 # 3. GPUSelector 测试
 # ============================================================================
+
 
 class TestGPUSelector:
     """GPUSelector 测试"""
@@ -234,6 +242,7 @@ class TestGPUSelector:
 # 4. SelectorProtocol 测试
 # ============================================================================
 
+
 class TestSelectorProtocol:
     """SelectorProtocol 抽象类测试"""
 
@@ -253,6 +262,7 @@ class TestSelectorProtocol:
 # ============================================================================
 # 5. ConfigBuilder 测试
 # ============================================================================
+
 
 class TestConfigBuilder:
     """ConfigBuilder 测试"""
@@ -290,12 +300,20 @@ class TestConfigBuilder:
 # 6. WizardEvent & WizardEventType 测试
 # ============================================================================
 
+
 class TestWizardEventType:
     """WizardEventType 测试"""
 
     def test_events_defined(self):
-        expected = ["wizard_start", "target_selected", "mode_selected",
-                    "gpu_selected", "wizard_complete", "wizard_error", "wizard_cancelled"]
+        expected = [
+            "wizard_start",
+            "target_selected",
+            "mode_selected",
+            "gpu_selected",
+            "wizard_complete",
+            "wizard_error",
+            "wizard_cancelled",
+        ]
         for name in expected:
             assert hasattr(WizardEventType, name.upper())
 
@@ -327,6 +345,7 @@ class TestWizardEvent:
 # ============================================================================
 # 7. MessageQueue 测试
 # ============================================================================
+
 
 class TestWizardMessageQueue:
     """WizardMessageQueue 测试"""
@@ -406,6 +425,7 @@ class TestGlobalMessageQueue:
     def _isolate_global_queue(self):
         """测试前后保存/恢复全局队列状态，防止测试间相互干扰"""
         import src.wizard.message_queue as mq_mod
+
         saved = mq_mod._global_message_queue
         yield
         mq_mod._global_message_queue = saved

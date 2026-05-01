@@ -98,10 +98,10 @@ class TestLockMonitorRecording:
 
     def test_record_acquire_and_release(self, monitor):
         """组合获取和释放"""
-        monitor.record_lock_acquire("combo", 3.0)   # wait 3ms
+        monitor.record_lock_acquire("combo", 3.0)  # wait 3ms
         monitor.record_lock_release("combo", 12.0)  # hold 12ms
-        monitor.record_lock_acquire("combo", 7.0)   # wait 7ms
-        monitor.record_lock_release("combo", 8.0)   # hold 8ms
+        monitor.record_lock_acquire("combo", 7.0)  # wait 7ms
+        monitor.record_lock_release("combo", 8.0)  # hold 8ms
 
         stats = monitor.get_stats("combo")
         assert stats["acquisitions"] == 2
@@ -255,6 +255,7 @@ class TestMonitoredLock:
         # 直接使用 threading.Lock 测试超时行为
         shared_lock.acquire()
         result = None
+
         def try_acquire():
             nonlocal result
             result = shared_lock.acquire(blocking=True, timeout=0.05)

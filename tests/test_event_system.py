@@ -9,6 +9,7 @@
 - 事件适配器
 - 向后兼容性
 """
+
 import unittest
 import threading
 import time
@@ -21,14 +22,14 @@ from src.collision.events import (
     EngineProgressEvent,
     EngineMatchEvent,
     EngineErrorEvent,
-    EngineCompleteEvent
+    EngineCompleteEvent,
 )
 from src.collision.event_bus import EventBus, get_event_bus, reset_event_bus
 from src.collision.collision_stats import CollisionStats
 from src.monitoring.event_adapters import (
     DataLoggerAdapter,
     EnhancedMonitoringAdapter,
-    setup_data_logging
+    setup_data_logging,
 )
 
 
@@ -61,7 +62,7 @@ class TestCollisionEvent(unittest.TestCase):
             avg_speed=500000.0,
             matches_found=0,
             cpu_usage=45.2,
-            memory_usage=60.5
+            memory_usage=60.5,
         )
 
         self.assertEqual(event.total_checked, 1000000)
@@ -72,22 +73,20 @@ class TestCollisionEvent(unittest.TestCase):
     def test_engine_match_event(self):
         """测试引擎匹配事件"""
         event = EngineMatchEvent(
-            private_key=b'test_key',
+            private_key=b"test_key",
             address="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
-            wif="5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ"
+            wif="5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ",
         )
 
         self.assertEqual(event.address, "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
-        self.assertEqual(event.private_key, b'test_key')
+        self.assertEqual(event.private_key, b"test_key")
         self.assertEqual(event.event_type, EventType.ENGINE_MATCH)
 
     def test_engine_error_event(self):
         """测试引擎错误事件"""
         error = ValueError("Test error")
         event = EngineErrorEvent(
-            error_type="ValueError",
-            error_message="Test error",
-            exception=error
+            error_type="ValueError", error_message="Test error", exception=error
         )
 
         self.assertEqual(event.error_type, "ValueError")
@@ -126,10 +125,10 @@ class TestEventBus(unittest.TestCase):
         results = []
 
         def handler1(event):
-            results.append(('h1', event.total_checked))
+            results.append(("h1", event.total_checked))
 
         def handler2(event):
-            results.append(('h2', event.total_checked))
+            results.append(("h2", event.total_checked))
 
         bus.subscribe(EventType.ENGINE_PROGRESS, handler1)
         bus.subscribe(EventType.ENGINE_PROGRESS, handler2)
@@ -138,8 +137,8 @@ class TestEventBus(unittest.TestCase):
         bus.publish(event)
 
         self.assertEqual(len(results), 2)
-        self.assertIn(('h1', 5000), results)
-        self.assertIn(('h2', 5000), results)
+        self.assertIn(("h1", 5000), results)
+        self.assertIn(("h2", 5000), results)
 
     def test_unsubscribe(self):
         """测试取消订阅"""
@@ -225,7 +224,7 @@ class TestEventBus(unittest.TestCase):
         bus.subscribe_to_all(handler)
 
         bus.publish(EngineProgressEvent())
-        bus.publish(EngineMatchEvent(private_key=b'key', address='addr', wif='wif'))
+        bus.publish(EngineMatchEvent(private_key=b"key", address="addr", wif="wif"))
 
         self.assertEqual(len(all_events), 2)
 
@@ -288,8 +287,10 @@ class TestEventBusThreadSafety(unittest.TestCase):
 
         def subscribe_worker(worker_id):
             try:
+
                 def handler(event):
                     pass
+
                 bus.subscribe(EventType.ENGINE_PROGRESS, handler)
             except Exception as e:
                 errors.append(e)
@@ -385,11 +386,7 @@ class TestDataLoggerAdapter(unittest.TestCase):
         adapter = setup_data_logging(bus, mock_logger)
 
         # 发布进度事件
-        event = EngineProgressEvent(
-            total_checked=1000000,
-            speed=537000.0,
-            matches_found=0
-        )
+        event = EngineProgressEvent(total_checked=1000000, speed=537000.0, matches_found=0)
         bus.publish(event)
 
         # 验证DataLogger被调用
@@ -426,5 +423,5 @@ class TestDependencyInjection(unittest.TestCase):
         mock_bus.publish.assert_called()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

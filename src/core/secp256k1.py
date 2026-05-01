@@ -328,7 +328,9 @@ class EllipticCurve:
 
         # 验证 y² ≡ x³ + ax + b (mod p)
         left_side = pow(point.y, 2, self.curve.P)
-        right_side = (pow(point.x, 3, self.curve.P) + self.curve.A * point.x + self.curve.B) % self.curve.P
+        right_side = (
+            pow(point.x, 3, self.curve.P) + self.curve.A * point.x + self.curve.B
+        ) % self.curve.P
 
         return left_side == right_side
 
@@ -594,7 +596,9 @@ class EllipticCurve:
             y_bytes = public_point.y.to_bytes(32, "big")
             return b"\x04" + x_bytes + y_bytes
 
-    def generate_public_key_const_time(self, private_key: Union[bytes, int], compressed: bool = True) -> bytes:
+    def generate_public_key_const_time(
+        self, private_key: Union[bytes, int], compressed: bool = True
+    ) -> bytes:
         """恒定时间公钥生成 (generate_public_key 的显式别名)
 
         generate_public_key 内部已使用 scalar_multiply_const_time (Montgomery Ladder),

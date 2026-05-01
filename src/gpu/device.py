@@ -432,7 +432,7 @@ class GPUDevice:
         self.device = None
         self.device_info: Dict[str, Any] = {}
         self.vendor = None
-        self.profile = None
+        self.profile: Optional[Dict[str, Any]] = None
         self.profile_loader = GPUProfileLoader()
 
         # 驱动相关
@@ -650,7 +650,7 @@ class GPUDevice:
         vendor = identify_vendor(device_name, cast(str, self.vendor))
 
         # 加载配置
-        self.profile = self.profile_loader.get_profile(vendor, device_name)  # type: ignore[assignment]  # 动态加载的配置字典
+        self.profile = self.profile_loader.get_profile(vendor, device_name)
 
         if self.profile:
             logger.info(

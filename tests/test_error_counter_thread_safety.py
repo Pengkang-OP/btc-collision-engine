@@ -4,6 +4,7 @@
 验证_consecutive_gpu_errors的锁保护逻辑和重试限制机制。
 Phase 6 兼容版：使用 src.collision.gpu.engine 路径和 GPUDeviceManager mock。
 """
+
 import pytest
 import threading
 import time
@@ -44,7 +45,9 @@ def _create_phase6_mock_fixture():
         patch("src.collision.gpu.engine.CollisionCore", return_value=mock_collision_core),
         patch("src.collision.gpu.engine.SearchModeCoordinator"),
         patch("src.collision.gpu.engine.GPUEngineMonitor"),
-        patch("src.collision.gpu.engine.VendorOptimizationFactory.create", return_value=MagicMock()),
+        patch(
+            "src.collision.gpu.engine.VendorOptimizationFactory.create", return_value=MagicMock()
+        ),
         patch("src.collision.gpu.engine.GPUDeviceDetector"),
         patch("src.collision.gpu.engine.GPUMemoryCalculator"),
     ]
@@ -65,9 +68,9 @@ class TestErrorCounterThreadSafety:
                 p.start()
                 active.append(p)
             yield {
-                'device_manager': mock_device_manager,
-                'core': mock_collision_core,
-                'device': mock_device_manager.device,
+                "device_manager": mock_device_manager,
+                "core": mock_collision_core,
+                "device": mock_device_manager.device,
             }
         finally:
             for p in active:
@@ -77,8 +80,8 @@ class TestErrorCounterThreadSafety:
         """测试错误计数器初始化"""
         engine = GPUCollisionEngine({"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"})
 
-        assert hasattr(engine, '_consecutive_gpu_errors')
-        assert hasattr(engine, '_max_gpu_error_retries')
+        assert hasattr(engine, "_consecutive_gpu_errors")
+        assert hasattr(engine, "_max_gpu_error_retries")
         assert engine._consecutive_gpu_errors == 0
         assert engine._max_gpu_error_retries == 100  # 默认值
 
@@ -192,19 +195,15 @@ class TestErrorCounterThreadSafety:
     def test_config_max_error_retries(self, mock_gpu_engine):
         """测试从配置文件读取max_error_retries (Phase 6: 使用 __new__ 绕过 GPU 初始化)"""
         engine = GPUCollisionEngine.__new__(GPUCollisionEngine)
-        engine.config = {
-            'gpu': {
-                'max_error_retries': 200
-            }
-        }
+        engine.config = {"gpu": {"max_error_retries": 200}}
         engine._batch_size_lock = threading.Lock()
         engine._max_gpu_error_retries = 100  # 默认值
 
         # 模拟从配置读取
-        if hasattr(engine, 'config') and engine.config:
-            gpu_config = engine.config.get('gpu', {})
-            if 'max_error_retries' in gpu_config:
-                engine._max_gpu_error_retries = gpu_config['max_error_retries']
+        if hasattr(engine, "config") and engine.config:
+            gpu_config = engine.config.get("gpu", {})
+            if "max_error_retries" in gpu_config:
+                engine._max_gpu_error_retries = gpu_config["max_error_retries"]
 
         assert engine._max_gpu_error_retries == 200
 
@@ -223,8 +222,8 @@ class TestCallbackSnapshotSafety:
                 p.start()
                 active.append(p)
             yield {
-                'device_manager': mock_device_manager,
-                'core': mock_collision_core,
+                "device_manager": mock_device_manager,
+                "core": mock_collision_core,
             }
         finally:
             for p in active:
@@ -240,8 +239,7 @@ class TestCallbackSnapshotSafety:
             received_stats.append(stats)
 
         engine = GPUCollisionEngine(
-            {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"},
-            on_complete=on_complete_callback
+            {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}, on_complete=on_complete_callback
         )
 
         # 使用真实 CollisionStats，绕过 MagicMock 嵌套问题

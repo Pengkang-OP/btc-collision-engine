@@ -8,27 +8,30 @@
 3. SampledLogger 计数器溢出保护
 4. ThreadSafeLogger 弃用警告
 """
+
 import sys
 import os
 import warnings
 import time
 
 # 添加项目根目录到路径
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.core.secp256k1 import Secp256k1, ECPoint, EllipticCurve
 from src.utils.logger import (
-    ThreadSafeLogger, SampledLogger,
-    AsyncLogger, AsyncFileHandler,
-    setup_logger
+    ThreadSafeLogger,
+    SampledLogger,
+    AsyncLogger,
+    AsyncFileHandler,
+    setup_logger,
 )
 
 
 def test_secp256k1_deprecation_warning():
     """测试 secp256k1 的弃用警告"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("测试 1: secp256k1.py 弃用警告")
-    print("="*60)
+    print("=" * 60)
 
     ec = EllipticCurve()
     G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
@@ -71,9 +74,9 @@ def test_secp256k1_deprecation_warning():
 
 def test_threadsafe_logger_deprecation():
     """测试 ThreadSafeLogger 的弃用警告"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("测试 2: ThreadSafeLogger 弃用警告")
-    print("="*60)
+    print("=" * 60)
 
     logger = setup_logger("test_threadsafe", level="WARNING")
 
@@ -96,9 +99,9 @@ def test_threadsafe_logger_deprecation():
 
 def test_sampled_logger_counter_overflow():
     """测试 SampledLogger 计数器溢出保护"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("测试 3: SampledLogger 计数器溢出保护")
-    print("="*60)
+    print("=" * 60)
 
     logger = setup_logger("test_sampled", level="DEBUG")
     sampled = SampledLogger(logger, sample_rate=100)
@@ -121,19 +124,19 @@ def test_sampled_logger_counter_overflow():
 
 def test_async_logger():
     """测试异步日志功能"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("测试 4: 异步日志功能")
-    print("="*60)
+    print("=" * 60)
 
     import tempfile
 
     # 创建临时日志文件
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.log', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".log", delete=False) as f:
         log_file = f.name
 
     try:
         # 创建异步处理器
-        async_handler = AsyncFileHandler(log_file, max_bytes=1024*1024, backup_count=2)
+        async_handler = AsyncFileHandler(log_file, max_bytes=1024 * 1024, backup_count=2)
         async_handler.setLevel("DEBUG")
 
         # 创建日志器
@@ -171,12 +174,13 @@ def test_async_logger():
 
 def test_secp256k1_documentation():
     """测试 secp256k1 的文档字符串"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("测试 5: secp256k1.py 文档完善")
-    print("="*60)
+    print("=" * 60)
 
     # 检查模块级文档
     from src.core import secp256k1
+
     doc = secp256k1.__doc__
 
     assert "教学参考实现" in doc, "缺少教学参考实现说明"
@@ -203,9 +207,9 @@ def test_secp256k1_documentation():
 
 def main():
     """运行所有测试"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("BTC碰撞引擎核心模块修复验证")
-    print("="*60)
+    print("=" * 60)
 
     tests = [
         test_secp256k1_deprecation_warning,
@@ -227,11 +231,12 @@ def main():
             print(f"\n❌ 测试失败: {test.__name__}")
             print(f"   错误: {e}")
             import traceback
+
             traceback.print_exc()
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("测试总结")
-    print("="*60)
+    print("=" * 60)
     print(f"✅ 通过: {passed}/{len(tests)}")
     print(f"❌ 失败: {failed}/{len(tests)}")
 

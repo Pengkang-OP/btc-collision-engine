@@ -21,14 +21,14 @@ import pytest
 from unittest.mock import MagicMock, Mock, patch
 
 # 添加项目根目录到路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.gpu.optimization_pipeline import PerformanceOptimizationPipeline
-
 
 # ---------------------------------------------------------------------------
 # 辅助工厂
 # ---------------------------------------------------------------------------
+
 
 def _make_mock_auto_tuner(suggest_return=200_000, tuning_result=None):
     """创建 Mock GPUAutoTuner"""
@@ -36,8 +36,8 @@ def _make_mock_auto_tuner(suggest_return=200_000, tuning_result=None):
     tuner.suggest_batch_size = Mock(return_value=suggest_return)
     if tuning_result is None:
         tuning_result = {
-            'optimal_batch_size': suggest_return,
-            'expected_throughput': 1_000_000,
+            "optimal_batch_size": suggest_return,
+            "expected_throughput": 1_000_000,
         }
     tuner.start_tuning = Mock(return_value=tuning_result)
     return tuner
@@ -47,7 +47,7 @@ def _make_mock_benchmark_suite(run_all_result=None):
     """创建 Mock GPUBenchmarkSuite"""
     suite = Mock()
     if run_all_result is None:
-        run_all_result = {'batch_test': {'keys_per_second': 500_000}}
+        run_all_result = {"batch_test": {"keys_per_second": 500_000}}
     suite.run_all_benchmarks = Mock(return_value=run_all_result)
     suite.get_summary = Mock(return_value="Mock benchmark summary")
     return suite
@@ -63,6 +63,7 @@ def _make_mock_reporter(report_path="/tmp/mock_report.json"):
 # ---------------------------------------------------------------------------
 # 测试类
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 @pytest.mark.gpu
@@ -112,7 +113,7 @@ class TestInitialize(unittest.TestCase):
         """initialize() 对任意 device_info 不应抛出异常"""
         pipeline = PerformanceOptimizationPipeline()
         # 不应抛出
-        pipeline.initialize({'name': 'Mock GPU', 'global_mem_size': 8 * 1024 ** 3})
+        pipeline.initialize({"name": "Mock GPU", "global_mem_size": 8 * 1024**3})
 
     def test_initialize_empty_device_info(self):
         """initialize() 对空 device_info 也不应抛出"""
@@ -128,7 +129,7 @@ class TestOptimizeBatchSize(unittest.TestCase):
     def test_no_auto_tuner_returns_current_size(self):
         """无 auto_tuner 时应原样返回 current_size"""
         pipeline = PerformanceOptimizationPipeline()
-        result = pipeline.optimize_batch_size(100_000, {'keys_per_second': 500_000})
+        result = pipeline.optimize_batch_size(100_000, {"keys_per_second": 500_000})
         self.assertEqual(result, 100_000)
 
     def test_with_auto_tuner_returns_suggestion(self):
@@ -136,9 +137,9 @@ class TestOptimizeBatchSize(unittest.TestCase):
         tuner = _make_mock_auto_tuner(suggest_return=200_000)
         pipeline = PerformanceOptimizationPipeline(auto_tuner=tuner)
 
-        result = pipeline.optimize_batch_size(100_000, {'keys_per_second': 500_000})
+        result = pipeline.optimize_batch_size(100_000, {"keys_per_second": 500_000})
         self.assertEqual(result, 200_000)
-        tuner.suggest_batch_size.assert_called_once_with(100_000, {'keys_per_second': 500_000})
+        tuner.suggest_batch_size.assert_called_once_with(100_000, {"keys_per_second": 500_000})
 
     def test_auto_tuner_returns_none_falls_back(self):
         """auto_tuner 返回 None 时应回退到 current_size"""
@@ -211,7 +212,7 @@ class TestRunBenchmark(unittest.TestCase):
 
     def test_with_benchmark_suite_calls_run_all(self):
         """有 benchmark_suite 时应调用 run_all_benchmarks"""
-        mock_results = {'test': {'avg_keys_per_sec': 1_000_000}}
+        mock_results = {"test": {"avg_keys_per_sec": 1_000_000}}
         suite = _make_mock_benchmark_suite(run_all_result=mock_results)
         pipeline = PerformanceOptimizationPipeline(benchmark_suite=suite)
 
@@ -245,7 +246,7 @@ class TestRunBenchmark(unittest.TestCase):
 
     def test_run_benchmark_returns_suite_results(self):
         """返回值应与 benchmark_suite.run_all_benchmarks 返回的结果相同"""
-        expected = {'batch_1m': {'throughput': 800_000}, 'batch_2m': {'throughput': 750_000}}
+        expected = {"batch_1m": {"throughput": 800_000}, "batch_2m": {"throughput": 750_000}}
         suite = _make_mock_benchmark_suite(run_all_result=expected)
         pipeline = PerformanceOptimizationPipeline(benchmark_suite=suite)
 
@@ -285,7 +286,7 @@ class TestStartAutoTuning(unittest.TestCase):
 
         pipeline.start_auto_tuning(max_iterations=50)
         call_kwargs = tuner.start_tuning.call_args[1]
-        self.assertEqual(call_kwargs.get('max_iterations'), 50)
+        self.assertEqual(call_kwargs.get("max_iterations"), 50)
 
     def test_callback_passed_to_tuner(self):
         """on_new_batch_size 回调应传递给 auto_tuner.start_tuning"""
@@ -295,13 +296,13 @@ class TestStartAutoTuning(unittest.TestCase):
         callback = Mock()
         pipeline.start_auto_tuning(on_new_batch_size=callback)
         call_kwargs = tuner.start_tuning.call_args[1]
-        self.assertIs(call_kwargs.get('callback'), callback)
+        self.assertIs(call_kwargs.get("callback"), callback)
 
     def test_returns_tuner_results(self):
         """应返回 auto_tuner.start_tuning 的结果"""
         expected_result = {
-            'optimal_batch_size': 300_000,
-            'expected_throughput': 2_000_000,
+            "optimal_batch_size": 300_000,
+            "expected_throughput": 2_000_000,
         }
         tuner = _make_mock_auto_tuner(tuning_result=expected_result)
         pipeline = PerformanceOptimizationPipeline(auto_tuner=tuner)
@@ -316,7 +317,7 @@ class TestStartAutoTuning(unittest.TestCase):
 
         pipeline.start_auto_tuning()
         call_kwargs = tuner.start_tuning.call_args[1]
-        self.assertEqual(call_kwargs.get('max_iterations'), 30)
+        self.assertEqual(call_kwargs.get("max_iterations"), 30)
 
 
 @pytest.mark.unit
@@ -341,11 +342,11 @@ class TestGenerateReport(unittest.TestCase):
         reporter = _make_mock_reporter()
         pipeline = PerformanceOptimizationPipeline(reporter=reporter)
 
-        with patch.dict('sys.modules', {'src.gpu.performance_reporter': None}):
+        with patch.dict("sys.modules", {"src.gpu.performance_reporter": None}):
             # ImportError 场景
             with patch(
-                'src.gpu.optimization_pipeline.PerformanceOptimizationPipeline.generate_report',
-                return_value=""
+                "src.gpu.optimization_pipeline.PerformanceOptimizationPipeline.generate_report",
+                return_value="",
             ):
                 result = pipeline.generate_report()
                 self.assertEqual(result, "")
@@ -361,8 +362,8 @@ class TestGenerateReport(unittest.TestCase):
         mock_config_cls.return_value = mock_config_instance
 
         with patch(
-            'src.gpu.optimization_pipeline.PerformanceOptimizationPipeline.generate_report',
-            return_value=mock_path
+            "src.gpu.optimization_pipeline.PerformanceOptimizationPipeline.generate_report",
+            return_value=mock_path,
         ) as mock_gen:
             result = pipeline.generate_report()
             self.assertEqual(result, mock_path)
@@ -399,5 +400,5 @@ class TestPipelineComponentAccess(unittest.TestCase):
         self.assertFalse(pipeline.performance_reporter)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

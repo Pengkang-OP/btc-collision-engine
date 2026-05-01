@@ -28,14 +28,14 @@ def test_module_imports():
     print("=" * 70)
 
     modules = [
-        'src.collision.gpu',
-        'src.collision.gpu.protocols',
-        'src.collision.gpu.facade',
-        'src.collision.gpu.monitoring',
-        'src.collision.gpu.core',
-        'src.collision.gpu.vendor_strategy',
-        'src.collision.gpu.kernel_adapter',
-        'src.collision.gpu.async_pipeline_adapter',
+        "src.collision.gpu",
+        "src.collision.gpu.protocols",
+        "src.collision.gpu.facade",
+        "src.collision.gpu.monitoring",
+        "src.collision.gpu.core",
+        "src.collision.gpu.vendor_strategy",
+        "src.collision.gpu.kernel_adapter",
+        "src.collision.gpu.async_pipeline_adapter",
     ]
 
     for module_name in modules:
@@ -57,7 +57,7 @@ def test_no_circular_dependency():
     print("=" * 70)
 
     # 清除已导入模块
-    modules_to_clear = [k for k in list(sys.modules.keys()) if 'src.collision.gpu' in k]
+    modules_to_clear = [k for k in list(sys.modules.keys()) if "src.collision.gpu" in k]
     for mod in modules_to_clear:
         del sys.modules[mod]
 
@@ -68,6 +68,7 @@ def test_no_circular_dependency():
             CollisionCore,
             VendorOptimizationFactory,
         )
+
         print("  ✅ 无循环依赖检测通过\n")
         return True
     except ImportError as e:
@@ -94,7 +95,7 @@ def test_protocol_definitions():
         )
 
         # 测试数据类实例化
-        context = GPUExecutionContext(batch_size=1000000, vendor='intel')
+        context = GPUExecutionContext(batch_size=1000000, vendor="intel")
         assert context.batch_size == 1000000
 
         result = CollisionResult(matches=[], execution_time_ms=50.0, batch_size=1000)
@@ -124,13 +125,13 @@ def test_component_instantiation():
         assert monitoring is not None
         print("  ✅ PerformanceMonitoringPipeline 实例化成功")
 
-        targets = {'1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'}
+        targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
         core = CollisionCore(targets=targets, config={})
         assert core is not None
         print("  ✅ CollisionCore 实例化成功")
 
         # 测试厂商工厂
-        intel_strategy = VendorOptimizationFactory.create('intel')
+        intel_strategy = VendorOptimizationFactory.create("intel")
         assert intel_strategy is not None
         print("  ✅ VendorOptimizationFactory 创建Intel策略成功")
 
@@ -140,6 +141,7 @@ def test_component_instantiation():
     except Exception as e:
         print(f"  ❌ 组件实例化失败: {e}\n")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -163,13 +165,13 @@ def test_vendor_factory():
         vendors = VendorOptimizationFactory.get_supported_vendors()
         print(f"  支持的厂商: {vendors}")
 
-        for vendor in ['intel', 'nvidia', 'amd']:
+        for vendor in ["intel", "nvidia", "amd"]:
             strategy = VendorOptimizationFactory.create(vendor)
             assert strategy is not None
             print(f"  ✅ {vendor} 策略创建成功")
 
         # 测试未知厂商
-        unknown = VendorOptimizationFactory.create('unknown')
+        unknown = VendorOptimizationFactory.create("unknown")
         assert isinstance(unknown, DefaultOptimizationStrategy)
         print(f"  ✅ 未知厂商回退到默认策略成功")
 
@@ -179,6 +181,7 @@ def test_vendor_factory():
     except Exception as e:
         print(f"  ❌ 厂商工厂测试失败: {e}\n")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -232,5 +235,5 @@ def main():
         return 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

@@ -27,9 +27,11 @@ sys.path.insert(0, str(_root))
 # 基准测试项
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def bench_key_generation(duration: float = 10.0) -> Dict[str, Any]:
     """基准测试: 私钥生成速度"""
     from src.core.key_generator import SecureKeyGenerator
+
     gen = SecureKeyGenerator()
 
     start = time.perf_counter()
@@ -148,6 +150,7 @@ def bench_gpu_engine(duration: float = 15.0) -> Optional[Dict[str, Any]]:
 
     try:
         from src.collision.gpu_collision_engine import GPUCollisionEngine
+
         engine = GPUCollisionEngine(
             targets={"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"},
         )
@@ -177,6 +180,7 @@ def bench_gpu_engine(duration: float = 15.0) -> Optional[Dict[str, Any]]:
 # ─────────────────────────────────────────────────────────────────────────────
 # 汇总与报告
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def _fmt_speed(speed: float) -> str:
     if speed >= 1_000_000:
@@ -227,6 +231,7 @@ def run_all(duration: float = 10.0, quick: bool = False) -> Dict[str, Any]:
 
 def _get_platform_info() -> Dict[str, str]:
     import platform
+
     return {
         "os": platform.system(),
         "python": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
@@ -262,11 +267,10 @@ def print_report(report: Dict[str, Any]):
         print(f"  {name:<24} {_fmt_speed(speed):>15} {total:>12,}")
 
     # CPU vs GPU 对比
-    cpu_speed = next(
-        (b["keys_per_sec"] for b in benches if "CPU" in b.get("name", "")), None
-    )
+    cpu_speed = next((b["keys_per_sec"] for b in benches if "CPU" in b.get("name", "")), None)
     gpu_speed = next(
-        (b["keys_per_sec"] for b in benches if "GPU" in b.get("name", "") and not b.get("error")), None
+        (b["keys_per_sec"] for b in benches if "GPU" in b.get("name", "") and not b.get("error")),
+        None,
     )
     if cpu_speed and gpu_speed and cpu_speed > 0:
         ratio = gpu_speed / cpu_speed
@@ -280,10 +284,9 @@ def print_report(report: Dict[str, Any]):
 # CLI 入口
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def main():
-    parser = argparse.ArgumentParser(
-        description="BTC碰撞引擎 - 性能基准测试自动化"
-    )
+    parser = argparse.ArgumentParser(description="BTC碰撞引擎 - 性能基准测试自动化")
     parser.add_argument("--quick", action="store_true", help="快速模式（跳过引擎测试）")
     parser.add_argument("--json", action="store_true", help="以 JSON 格式输出结果")
     parser.add_argument("--duration", type=float, default=10.0, help="每项测试时长（秒，默认: 10）")
@@ -304,7 +307,7 @@ def main():
         if args.json:
             print(output)
         if args.save:
-            Path(args.save).write_text(output, encoding='utf-8')
+            Path(args.save).write_text(output, encoding="utf-8")
             print(f"\n  报告已保存: {args.save}")
     else:
         print_report(report)

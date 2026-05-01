@@ -60,16 +60,18 @@ class StabilityTestRunner:
         record = {
             "timestamp": timestamp,
             "elapsed_hours": (time.time() - self.start_time) / 3600,
-            **metrics
+            **metrics,
         }
         self.metrics_history.append(record)
 
         # 打印当前指标
-        print(f"  [{record['elapsed_hours']:.2f}h] "
-              f"吞吐量: {metrics['throughput']:>10,.0f} keys/s | "
-              f"错误率: {metrics['error_rate']:>6.2f}% | "
-              f"显存: {metrics['memory_mb']:>8.2f} MB | "
-              f"批次: {metrics['total_batches']:>6}")
+        print(
+            f"  [{record['elapsed_hours']:.2f}h] "
+            f"吞吐量: {metrics['throughput']:>10,.0f} keys/s | "
+            f"错误率: {metrics['error_rate']:>6.2f}% | "
+            f"显存: {metrics['memory_mb']:>8.2f} MB | "
+            f"批次: {metrics['total_batches']:>6}"
+        )
 
     def save_intermediate_report(self):
         """保存中间报告"""
@@ -83,7 +85,7 @@ class StabilityTestRunner:
         }
 
         report_path = self.test_data_dir / "stability_test_intermediate.json"
-        with open(report_path, 'w', encoding='utf-8') as f:
+        with open(report_path, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
     def check_memory_leak(self) -> bool:
@@ -92,8 +94,8 @@ class StabilityTestRunner:
             return True
 
         # 比较初始和当前显存使用
-        initial_memory = self.metrics_history[0]['memory_mb']
-        current_memory = self.metrics_history[-1]['memory_mb']
+        initial_memory = self.metrics_history[0]["memory_mb"]
+        current_memory = self.metrics_history[-1]["memory_mb"]
 
         # 防止除零: 初始显存为0时视为无泄漏（监控未采集到数据）
         if initial_memory <= 0:
@@ -117,8 +119,8 @@ class StabilityTestRunner:
             return True
 
         # 计算吞吐量下降率
-        initial_throughput = self.metrics_history[0]['throughput']
-        current_throughput = self.metrics_history[-1]['throughput']
+        initial_throughput = self.metrics_history[0]["throughput"]
+        current_throughput = self.metrics_history[-1]["throughput"]
 
         if initial_throughput == 0:
             return True
@@ -139,7 +141,7 @@ class StabilityTestRunner:
         if not self.metrics_history:
             return True
 
-        latest_error_rate = self.metrics_history[-1]['error_rate']
+        latest_error_rate = self.metrics_history[-1]["error_rate"]
         is_ok = latest_error_rate == 0.0
 
         if not is_ok:
@@ -153,9 +155,9 @@ class StabilityTestRunner:
         if not self.metrics_history:
             return {}
 
-        throughputs = [m['throughput'] for m in self.metrics_history]
-        error_rates = [m['error_rate'] for m in self.metrics_history]
-        memory_usages = [m['memory_mb'] for m in self.metrics_history]
+        throughputs = [m["throughput"] for m in self.metrics_history]
+        error_rates = [m["error_rate"] for m in self.metrics_history]
+        memory_usages = [m["memory_mb"] for m in self.metrics_history]
 
         report = {
             "test_info": {
@@ -169,7 +171,11 @@ class StabilityTestRunner:
                 "avg_throughput": sum(throughputs) / len(throughputs),
                 "max_throughput": max(throughputs),
                 "min_throughput": min(throughputs),
-                "throughput_std": (sum((x - sum(throughputs)/len(throughputs))**2 for x in throughputs) / len(throughputs)) ** 0.5,
+                "throughput_std": (
+                    sum((x - sum(throughputs) / len(throughputs)) ** 2 for x in throughputs)
+                    / len(throughputs)
+                )
+                ** 0.5,
             },
             "error_summary": {
                 "avg_error_rate": sum(error_rates) / len(error_rates),
@@ -181,7 +187,9 @@ class StabilityTestRunner:
                 "max_memory_mb": max(memory_usages),
                 "min_memory_mb": min(memory_usages),
                 "memory_growth_mb": memory_usages[-1] - memory_usages[0],
-                "memory_growth_percent": (memory_usages[-1] - memory_usages[0]) / memory_usages[0] * 100,
+                "memory_growth_percent": (memory_usages[-1] - memory_usages[0])
+                / memory_usages[0]
+                * 100,
             },
             "stability_checks": {
                 "memory_leak_detected": not self.check_memory_leak(),
@@ -203,7 +211,9 @@ class StabilityTestRunner:
         print(f"  批次大小: 262,144")
         print(f"  目标地址: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
         print(f"\n开始时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"预计结束: {(datetime.now() + timedelta(hours=self.duration_hours)).strftime('%Y-%m-%d %H:%M:%S')}")
+        print(
+            f"预计结束: {(datetime.now() + timedelta(hours=self.duration_hours)).strftime('%Y-%m-%d %H:%M:%S')}"
+        )
 
         # 初始化引擎
         print(f"\n初始化GPU引擎...")
@@ -295,16 +305,16 @@ class StabilityTestRunner:
             final_report = self.generate_final_report()
 
             report_path = self.test_data_dir / "stability_test_final_report.json"
-            with open(report_path, 'w', encoding='utf-8') as f:
+            with open(report_path, "w", encoding="utf-8") as f:
                 json.dump(final_report, f, indent=2, ensure_ascii=False)
 
             # 打印总结
             self.print_header("测试总结")
 
-            perf = final_report['performance_summary']
-            mem = final_report['memory_summary']
-            err = final_report['error_summary']
-            checks = final_report['stability_checks']
+            perf = final_report["performance_summary"]
+            mem = final_report["memory_summary"]
+            err = final_report["error_summary"]
+            checks = final_report["stability_checks"]
 
             print(f"性能指标:")
             print(f"  平均吞吐量: {perf['avg_throughput']:,.0f} keys/s")
@@ -315,17 +325,27 @@ class StabilityTestRunner:
             print(f"\n错误率:")
             print(f"  平均错误率: {err['avg_error_rate']:.4f}%")
             print(f"  最大错误率: {err['max_error_rate']:.4f}%")
-            print(f"  零错误检查: {err['zero_error_checks']}/{final_report['test_info']['total_checks']}")
+            print(
+                f"  零错误检查: {err['zero_error_checks']}/{final_report['test_info']['total_checks']}"
+            )
 
             print(f"\n显存使用:")
             print(f"  平均显存: {mem['avg_memory_mb']:.2f} MB")
             print(f"  峰值显存: {mem['max_memory_mb']:.2f} MB")
-            print(f"  显存增长: {mem['memory_growth_mb']:.2f} MB ({mem['memory_growth_percent']:.2f}%)")
+            print(
+                f"  显存增长: {mem['memory_growth_mb']:.2f} MB ({mem['memory_growth_percent']:.2f}%)"
+            )
 
             print(f"\n稳定性检查:")
-            print(f"  内存泄漏: {'[FAIL] 检测到' if checks['memory_leak_detected'] else '[PASS] 未检测到'}")
-            print(f"  性能稳定: {'[FAIL] 不稳定' if checks['performance_unstable'] else '[PASS] 稳定'}")
-            print(f"  错误检测: {'[FAIL] 有错误' if checks['errors_detected'] else '[PASS] 无错误'}")
+            print(
+                f"  内存泄漏: {'[FAIL] 检测到' if checks['memory_leak_detected'] else '[PASS] 未检测到'}"
+            )
+            print(
+                f"  性能稳定: {'[FAIL] 不稳定' if checks['performance_unstable'] else '[PASS] 稳定'}"
+            )
+            print(
+                f"  错误检测: {'[FAIL] 有错误' if checks['errors_detected'] else '[PASS] 无错误'}"
+            )
 
             # 总体评估
             all_passed = not any(checks.values())
@@ -356,6 +376,7 @@ class StabilityTestRunner:
         except Exception as e:
             print(f"\n\n[ERROR] 测试异常: {e}")
             import traceback
+
             traceback.print_exc()
 
             if self.engine:
@@ -371,16 +392,13 @@ def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='GPU碰撞引擎24小时稳定性测试')
-    parser.add_argument('--hours', type=float, default=24, help='测试时长(小时),默认24')
-    parser.add_argument('--interval', type=int, default=300, help='检查间隔(秒),默认300')
+    parser = argparse.ArgumentParser(description="GPU碰撞引擎24小时稳定性测试")
+    parser.add_argument("--hours", type=float, default=24, help="测试时长(小时),默认24")
+    parser.add_argument("--interval", type=int, default=300, help="检查间隔(秒),默认300")
 
     args = parser.parse_args()
 
-    runner = StabilityTestRunner(
-        duration_hours=args.hours,
-        check_interval=args.interval
-    )
+    runner = StabilityTestRunner(duration_hours=args.hours, check_interval=args.interval)
 
     runner.run()
 

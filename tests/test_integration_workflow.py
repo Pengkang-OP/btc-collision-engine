@@ -25,18 +25,23 @@ from src.logging.log_manager import LogManager
 
 from src.collision.event_bus import EventBus, get_event_bus, reset_event_bus
 from src.collision.events import (
-    EngineStartEvent, EngineProgressEvent, EngineMatchEvent,
-    EngineErrorEvent, EngineCompleteEvent, EventType,
+    EngineStartEvent,
+    EngineProgressEvent,
+    EngineMatchEvent,
+    EngineErrorEvent,
+    EngineCompleteEvent,
+    EventType,
 )
 from src.collision.observers import (
-    BaseCollisionObserver, ObserverManager,
+    BaseCollisionObserver,
+    ObserverManager,
 )
 from src.collision.collision_stats import CollisionStats
-
 
 # ============================================================================
 # Fixtures
 # ============================================================================
+
 
 @pytest.fixture(autouse=True)
 def reset_global():
@@ -49,6 +54,7 @@ def reset_global():
 # ============================================================================
 # 数据流集成测试: Collector → Processor → Storage
 # ============================================================================
+
 
 @pytest.mark.integration
 class TestLoggingPipeline:
@@ -82,9 +88,7 @@ class TestLoggingPipeline:
             collector.collect_from_queue(
                 LogEventType.STATUS_UPDATE, {"message": "引擎运行中", "progress": 50}
             )
-            collector.collect_from_queue(
-                LogEventType.ENGINE_ERROR, {"error": "GPU内存不足"}
-            )
+            collector.collect_from_queue(LogEventType.ENGINE_ERROR, {"error": "GPU内存不足"})
 
             time.sleep(0.3)
             collector.stop()
@@ -123,13 +127,10 @@ class TestLoggingPipelineWithSensitiveFilter:
             # 发送包含敏感数据的事件
             collector.collect_from_queue(
                 LogEventType.MATCH_FOUND,
-                {"message": "找到匹配!", "address": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
+                {"message": "找到匹配!", "address": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"},
             )
             # 发送安全数据
-            collector.collect_from_queue(
-                LogEventType.STATUS_UPDATE,
-                {"message": "正常运行"}
-            )
+            collector.collect_from_queue(LogEventType.STATUS_UPDATE, {"message": "正常运行"})
 
             time.sleep(0.3)
             collector.stop()
@@ -142,6 +143,7 @@ class TestLoggingPipelineWithSensitiveFilter:
 # ============================================================================
 # EventBus + Observer 集成测试
 # ============================================================================
+
 
 @pytest.mark.integration
 class TestEventBusObserverIntegration:
@@ -180,12 +182,14 @@ class TestEventBusObserverIntegration:
         # 模拟引擎运行
         bus.publish(EngineProgressEvent(total_checked=1000, speed=50000.0))
         bus.publish(EngineProgressEvent(total_checked=2000, speed=52000.0))
-        bus.publish(EngineMatchEvent(
-            private_key=b"\x01" * 32,
-            address="1TestAddress",
-            wif="TestWIF",
-            target_address="1TargetAddr"
-        ))
+        bus.publish(
+            EngineMatchEvent(
+                private_key=b"\x01" * 32,
+                address="1TestAddress",
+                wif="TestWIF",
+                target_address="1TargetAddr",
+            )
+        )
         bus.publish(EngineProgressEvent(total_checked=3000, speed=51000.0))
 
         bus.stop()
@@ -200,6 +204,7 @@ class TestEventBusObserverIntegration:
 # ============================================================================
 # 引擎生命周期集成测试
 # ============================================================================
+
 
 @pytest.mark.integration
 class TestEngineLifecycleIntegration:
@@ -219,26 +224,25 @@ class TestEngineLifecycleIntegration:
         bus.publish(EngineStartEvent(mode="random", target_count=5, batch_size=65536))
         # 进度更新 (3次)
         for i in range(3):
-            bus.publish(EngineProgressEvent(
-                total_checked=(i + 1) * 10000,
-                speed=50000.0,
-                matches_found=0
-            ))
+            bus.publish(
+                EngineProgressEvent(total_checked=(i + 1) * 10000, speed=50000.0, matches_found=0)
+            )
         # 错误事件
-        bus.publish(EngineErrorEvent(
-            error_type="RecoverableError",
-            error_message="GPU timeout, retrying",
-            recoverable=True
-        ))
+        bus.publish(
+            EngineErrorEvent(
+                error_type="RecoverableError",
+                error_message="GPU timeout, retrying",
+                recoverable=True,
+            )
+        )
         # 更多进度
         bus.publish(EngineProgressEvent(total_checked=50000, speed=48000.0))
         # 完成
-        bus.publish(EngineCompleteEvent(
-            total_checked=50000,
-            matches_found=0,
-            elapsed_time=1.0,
-            stop_reason="normal"
-        ))
+        bus.publish(
+            EngineCompleteEvent(
+                total_checked=50000, matches_found=0, elapsed_time=1.0, stop_reason="normal"
+            )
+        )
 
         bus.stop()
 
@@ -252,6 +256,7 @@ class TestEngineLifecycleIntegration:
 # ============================================================================
 # LogManager 集成测试
 # ============================================================================
+
 
 @pytest.mark.integration
 class TestLogManagerIntegration:

@@ -6,7 +6,8 @@
 """
 
 import sys
-sys.path.insert(0, '.')
+
+sys.path.insert(0, ".")
 
 print("=" * 80)
 print("  性能回退原因分析")

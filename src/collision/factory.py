@@ -2,7 +2,12 @@
 
 import logging
 import warnings
-from typing import Any, Optional, Set
+from typing import Any, Optional, Set, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .dependency_container import DependencyContainer
+    from .key_collision_engine import KeyCollisionEngine
+    from .gpu_collision_engine import GPUCollisionEngine
 
 logger = logging.getLogger(__name__)
 
@@ -30,12 +35,12 @@ class EngineFactory:
     @staticmethod
     def create_cpu_engine(
         targets: Set[str],
-        container: Optional["DependencyContainer"] = None,  # type: ignore[name-defined]  # 字符串前向引用
+        container: Optional[DependencyContainer] = None,
         stats: Any = None,
         event_bus: Any = None,
         data_logger: Any = None,
         **kwargs,
-    ) -> "KeyCollisionEngine":  # type: ignore[name-defined]  # 字符串前向引用
+    ) -> KeyCollisionEngine:
         """创建 CPU 碰撞引擎
 
         Args:
@@ -58,34 +63,32 @@ class EngineFactory:
             warnings.warn(
                 "'stats' parameter is deprecated and ignored. "
                 "KeyCollisionEngine now creates its own CollisionStats internally.",
-                DeprecationWarning, stacklevel=2
+                DeprecationWarning,
+                stacklevel=2,
             )
         if data_logger is not None:
             warnings.warn(
                 "'data_logger' parameter is deprecated and ignored. "
                 "KeyCollisionEngine now creates its own DataLogger internally.",
-                DeprecationWarning, stacklevel=2
+                DeprecationWarning,
+                stacklevel=2,
             )
 
         # 直接参数优先于容器（仅 event_bus 仍有效传递）
         if container:
             event_bus = event_bus or container.event_bus
 
-        return KeyCollisionEngine(  # type: ignore[call-arg]  # 工厂透传**kwargs
-            targets=targets,
-            event_bus=event_bus,
-            **kwargs
-        )
+        return KeyCollisionEngine(targets=targets, event_bus=event_bus, **kwargs)
 
     @staticmethod
     def create_gpu_engine(
         targets: Set[str],
-        container: Optional["DependencyContainer"] = None,  # type: ignore[name-defined]  # 字符串前向引用
+        container: Optional[DependencyContainer] = None,
         stats: Any = None,
         event_bus: Any = None,
         data_logger: Any = None,
         **kwargs,
-    ) -> "GPUCollisionEngine":  # type: ignore[name-defined]  # 字符串前向引用
+    ) -> GPUCollisionEngine:
         """创建 GPU 碰撞引擎
 
         Args:
@@ -109,22 +112,22 @@ class EngineFactory:
             warnings.warn(
                 "'stats' parameter is deprecated and ignored. "
                 "GPUCollisionEngine now creates its own CollisionStats internally.",
-                DeprecationWarning, stacklevel=2
+                DeprecationWarning,
+                stacklevel=2,
             )
         if event_bus is not None:
             warnings.warn(
                 "'event_bus' parameter is deprecated and ignored. "
                 "GPUCollisionEngine now creates its own EventBus internally.",
-                DeprecationWarning, stacklevel=2
+                DeprecationWarning,
+                stacklevel=2,
             )
         if data_logger is not None:
             warnings.warn(
                 "'data_logger' parameter is deprecated and ignored. "
                 "GPUCollisionEngine now creates its own DataLogger internally.",
-                DeprecationWarning, stacklevel=2
+                DeprecationWarning,
+                stacklevel=2,
             )
 
-        return GPUCollisionEngine(  # type: ignore[call-arg]  # 工厂透传**kwargs
-            targets=targets,
-            **kwargs
-        )
+        return GPUCollisionEngine(targets=targets, **kwargs)

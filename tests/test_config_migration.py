@@ -15,10 +15,10 @@ import tempfile
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 
-
 # ============================================================================
 # Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def temp_config_dir():
@@ -66,25 +66,30 @@ def v31_config():
 # detect_config_version 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestDetectConfigVersion:
     """版本检测测试"""
 
     def test_detect_v31(self, v31_config):
         from src.cli.config_migration import detect_config_version
+
         assert detect_config_version(v31_config) == "3.1.0"
 
     def test_detect_v30(self, v30_config):
         from src.cli.config_migration import detect_config_version
+
         assert detect_config_version(v30_config) == "3.0.0"
 
     def test_detect_v2x(self, v2_config):
         from src.cli.config_migration import detect_config_version
+
         assert detect_config_version(v2_config) == "2.x"
 
     def test_detect_v2x_with_extra_fields(self):
         """v2.x 可能有一些额外字段但不含 gpu+monitoring"""
         from src.cli.config_migration import detect_config_version
+
         config = {
             "crypto": {},
             "collision": {},
@@ -96,10 +101,12 @@ class TestDetectConfigVersion:
 
     def test_unknown_empty(self):
         from src.cli.config_migration import detect_config_version
+
         assert detect_config_version({}) == "unknown"
 
     def test_unknown_non_dict(self):
         from src.cli.config_migration import detect_config_version
+
         assert detect_config_version("not a dict") == "unknown"
         assert detect_config_version(None) == "unknown"
         assert detect_config_version([]) == "unknown"
@@ -107,6 +114,7 @@ class TestDetectConfigVersion:
     def test_ignores_comment_keys(self):
         """_comment 开头的键应被忽略"""
         from src.cli.config_migration import detect_config_version
+
         config = {
             "_comment": "test",
             "crypto": {},
@@ -120,12 +128,14 @@ class TestDetectConfigVersion:
 # migrate_config 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestMigrateConfig:
     """配置迁移测试"""
 
     def test_migrate_v2_to_v31(self, v2_config):
         from src.cli.config_migration import migrate_config, CONFIG_VERSION
+
         result, changelog = migrate_config(v2_config, target_version=CONFIG_VERSION)
         assert isinstance(result, dict)
         assert isinstance(changelog, list)
@@ -140,6 +150,7 @@ class TestMigrateConfig:
 
     def test_migrate_v30_to_v31(self, v30_config):
         from src.cli.config_migration import migrate_config, CONFIG_VERSION
+
         result, changelog = migrate_config(v30_config, target_version=CONFIG_VERSION)
         # 应新增 performance_monitoring
         assert "performance_monitoring" in result
@@ -150,14 +161,14 @@ class TestMigrateConfig:
 
     def test_migrate_already_v31(self, v31_config):
         from src.cli.config_migration import migrate_config, CONFIG_VERSION
+
         result, changelog = migrate_config(v31_config, target_version=CONFIG_VERSION)
-        assert "配置已是最新版本" in changelog[-2] or any(
-            "无需迁移" in e for e in changelog
-        )
+        assert "配置已是最新版本" in changelog[-2] or any("无需迁移" in e for e in changelog)
 
     def test_migrate_preserves_user_values(self):
         """迁移不应覆盖用户自定义值"""
         from src.cli.config_migration import migrate_config, CONFIG_VERSION
+
         config = {
             "crypto": {"backend": "custom_backend", "use_gpu": False},
             "collision": {
@@ -174,6 +185,7 @@ class TestMigrateConfig:
     def test_migrate_unknown_version(self):
         """unknown 版本应尝试全部迁移规则"""
         from src.cli.config_migration import migrate_config, CONFIG_VERSION
+
         config = {"unknown_section": {}}
         result, changelog = migrate_config(config, target_version=CONFIG_VERSION)
         assert "无法识别版本" in str(changelog)
@@ -184,6 +196,7 @@ class TestMigrateConfig:
     def test_migrate_does_not_modify_original(self, v2_config):
         from src.cli.config_migration import migrate_config, CONFIG_VERSION
         import copy
+
         original = copy.deepcopy(v2_config)
         result, _ = migrate_config(v2_config, target_version=CONFIG_VERSION)
         # 原始配置不应被修改
@@ -194,6 +207,7 @@ class TestMigrateConfig:
     def test_migrate_section_already_exists(self):
         """已有段不应被覆盖"""
         from src.cli.config_migration import migrate_config, CONFIG_VERSION
+
         config = {
             "crypto": {},
             "collision": {},
@@ -209,12 +223,14 @@ class TestMigrateConfig:
 # backup_config 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestBackupConfig:
     """配置备份测试"""
 
     def test_backup_creates_file(self, temp_config_dir):
         from src.cli.config_migration import backup_config
+
         config_path = os.path.join(temp_config_dir, "config.json")
         with open(config_path, "w") as f:
             json.dump({"test": True}, f)
@@ -226,11 +242,13 @@ class TestBackupConfig:
 
     def test_backup_file_not_found(self):
         from src.cli.config_migration import backup_config
+
         with pytest.raises(FileNotFoundError):
             backup_config("nonexistent_config.json")
 
     def test_backup_preserves_content(self, temp_config_dir):
         from src.cli.config_migration import backup_config
+
         config_path = os.path.join(temp_config_dir, "config.json")
         original = {"crypto": {"key": "value"}, "logging": {"level": "DEBUG"}}
         with open(config_path, "w") as f:
@@ -246,18 +264,21 @@ class TestBackupConfig:
 # validate_migrated_config 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestValidateMigratedConfig:
     """配置验证测试"""
 
     def test_valid_v31_passes(self, v31_config):
         from src.cli.config_migration import validate_migrated_config
+
         is_valid, issues = validate_migrated_config(v31_config)
         assert is_valid is True
         assert len(issues) == 0
 
     def test_missing_required_sections(self):
         from src.cli.config_migration import validate_migrated_config
+
         is_valid, issues = validate_migrated_config({"crypto": {}})
         assert is_valid is False
         assert len(issues) > 0
@@ -265,12 +286,14 @@ class TestValidateMigratedConfig:
 
     def test_non_dict_root(self):
         from src.cli.config_migration import validate_migrated_config
+
         is_valid, issues = validate_migrated_config("not dict")
         assert is_valid is False
         assert any("JSON 对象" in i for i in issues)
 
     def test_crypto_type_errors(self):
         from src.cli.config_migration import validate_migrated_config
+
         config = {
             "crypto": {"backend": 123, "use_gpu": "not_bool"},
             "collision": {},
@@ -286,6 +309,7 @@ class TestValidateMigratedConfig:
 
     def test_logging_type_errors(self):
         from src.cli.config_migration import validate_migrated_config
+
         config = {
             "crypto": {},
             "collision": {},
@@ -301,6 +325,7 @@ class TestValidateMigratedConfig:
 
     def test_gpu_memory_usage_ratio_bounds(self):
         from src.cli.config_migration import validate_migrated_config
+
         config = {
             "crypto": {},
             "collision": {},
@@ -315,6 +340,7 @@ class TestValidateMigratedConfig:
 
     def test_gpu_valid_ratio_passes(self):
         from src.cli.config_migration import validate_migrated_config
+
         config = {
             "crypto": {},
             "collision": {},
@@ -328,6 +354,7 @@ class TestValidateMigratedConfig:
 
     def test_monitoring_type_errors(self):
         from src.cli.config_migration import validate_migrated_config
+
         config = {
             "crypto": {},
             "collision": {},
@@ -343,6 +370,7 @@ class TestValidateMigratedConfig:
 
     def test_performance_monitoring_type_errors(self):
         from src.cli.config_migration import validate_migrated_config
+
         config = {
             "crypto": {},
             "collision": {},
@@ -363,6 +391,7 @@ class TestValidateMigratedConfig:
 
     def test_section_not_dict(self):
         from src.cli.config_migration import validate_migrated_config
+
         config = {
             "crypto": "not_a_dict",
             "collision": {},
@@ -380,17 +409,20 @@ class TestValidateMigratedConfig:
 # MIGRATION_RULES 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestMigrationRules:
     """迁移规则结构测试"""
 
     def test_rules_have_expected_keys(self):
         from src.cli.config_migration import MIGRATION_RULES
+
         assert "2.x_to_3.0" in MIGRATION_RULES
         assert "3.0_to_3.1" in MIGRATION_RULES
 
     def test_rules_have_all_sections(self):
         from src.cli.config_migration import MIGRATION_RULES
+
         for rule_key, rule in MIGRATION_RULES.items():
             assert "add_sections" in rule
             assert "add_fields" in rule
@@ -398,12 +430,14 @@ class TestMigrationRules:
 
     def test_2x_to_30_adds_gpu_monitoring(self):
         from src.cli.config_migration import MIGRATION_RULES
+
         rule = MIGRATION_RULES["2.x_to_3.0"]
         assert "gpu" in rule["add_sections"]
         assert "monitoring" in rule["add_sections"]
 
     def test_30_to_31_adds_performance_monitoring(self):
         from src.cli.config_migration import MIGRATION_RULES
+
         rule = MIGRATION_RULES["3.0_to_3.1"]
         assert "performance_monitoring" in rule["add_sections"]
         assert "per_device_config" in rule["add_fields"]["gpu"]

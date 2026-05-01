@@ -26,12 +26,13 @@ pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
 from src.collision.gpu_collision_engine import GPUCollisionEngine
 from src.collision.collision_stats import CollisionStats
 
+
 def test_2m_batch_size(duration=60):
     """测试2M批次大小"""
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("🚀 Intel Arc GPU 2M批次大小性能测试")
-    print("="*80)
+    print("=" * 80)
     print(f"测试时长: {duration} 秒")
     print(f"批次大小: 2,097,152 (2M)")
     print(f"目标地址: 38 个 (valid_addresses.txt)")
@@ -53,12 +54,7 @@ def test_2m_batch_size(duration=60):
     print(f"✅ 加载 {len(targets)} 个目标地址\n")
 
     # 统计数据
-    stats_data = {
-        'total_checked': 0,
-        'speed': 0.0,
-        'elapsed': 0.0,
-        'matches': []
-    }
+    stats_data = {"total_checked": 0, "speed": 0.0, "elapsed": 0.0, "matches": []}
 
     batch_count = 0
     speed_history = []
@@ -67,10 +63,10 @@ def test_2m_batch_size(duration=60):
         """进度回调"""
         nonlocal batch_count
 
-        stats_data['total_checked'] = stats.total_checked
-        stats_data['speed'] = stats.speed
-        stats_data['elapsed'] = stats.elapsed
-        stats_data['matches'] = stats.matches
+        stats_data["total_checked"] = stats.total_checked
+        stats_data["speed"] = stats.speed
+        stats_data["elapsed"] = stats.elapsed
+        stats_data["matches"] = stats.matches
 
         # 记录速度历史
         if stats.speed > 0:
@@ -81,21 +77,21 @@ def test_2m_batch_size(duration=60):
         mins = int(elapsed // 60)
         secs = int(elapsed % 60)
 
-        print(f"  [{mins:02d}:{secs:02d}] "
-              f"已检查: {stats.total_checked:>12,} | "
-              f"速度: {stats.speed:>12,.0f} keys/s | "
-              f"批次: {batch_count}")
+        print(
+            f"  [{mins:02d}:{secs:02d}] "
+            f"已检查: {stats.total_checked:>12,} | "
+            f"速度: {stats.speed:>12,.0f} keys/s | "
+            f"批次: {batch_count}"
+        )
 
     def on_match(private_key: bytes, address: str, wif: str):
         """匹配回调"""
         print(f"\n🎯 发现匹配: {address}")
         print(f"   私钥: {private_key.hex()}")
         print(f"   WIF: {wif}\n")
-        stats_data['matches'].append({
-            'address': address,
-            'private_key': private_key.hex(),
-            'wif': wif
-        })
+        stats_data["matches"].append(
+            {"address": address, "private_key": private_key.hex(), "wif": wif}
+        )
 
     try:
         # 初始化GPU引擎（2M批次）
@@ -109,7 +105,7 @@ def test_2m_batch_size(duration=60):
             checkpoint_enabled=False,
             dedup_enabled=False,
             data_logging_enabled=False,
-            use_enhanced_monitoring=True
+            use_enhanced_monitoring=True,
         )
 
         # 获取设备信息
@@ -140,7 +136,7 @@ def test_2m_batch_size(duration=60):
         elapsed = time.time() - start_time
 
         # 计算统计
-        avg_speed = stats_data['total_checked'] / elapsed if elapsed > 0 else 0
+        avg_speed = stats_data["total_checked"] / elapsed if elapsed > 0 else 0
         peak_speed = max(speed_history) if speed_history else 0
         min_speed = min(speed_history) if speed_history else 0
 
@@ -182,22 +178,22 @@ def test_2m_batch_size(duration=60):
 
         # 保存测试结果
         test_result = {
-            'timestamp': datetime.now().isoformat(),
-            'test_type': '2M_batch_size_test',
-            'device': device_info,
-            'batch_size': 2097152,
-            'duration_seconds': elapsed,
-            'total_checked': stats_data['total_checked'],
-            'avg_speed': avg_speed,
-            'peak_speed': peak_speed,
-            'min_speed': min_speed,
-            'batch_count': batch_count,
-            'estimated_memory_mb': estimated_memory_mb,
-            'improvement_vs_1m_percent': improvement
+            "timestamp": datetime.now().isoformat(),
+            "test_type": "2M_batch_size_test",
+            "device": device_info,
+            "batch_size": 2097152,
+            "duration_seconds": elapsed,
+            "total_checked": stats_data["total_checked"],
+            "avg_speed": avg_speed,
+            "peak_speed": peak_speed,
+            "min_speed": min_speed,
+            "batch_count": batch_count,
+            "estimated_memory_mb": estimated_memory_mb,
+            "improvement_vs_1m_percent": improvement,
         }
 
         result_file = f"intel_arc_2m_test_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        with open(result_file, 'w', encoding='utf-8') as f:
+        with open(result_file, "w", encoding="utf-8") as f:
             json.dump(test_result, f, indent=2, ensure_ascii=False)
 
         print(f"\n💾 测试结果已保存到: {result_file}")
@@ -207,15 +203,16 @@ def test_2m_batch_size(duration=60):
     except Exception as e:
         print(f"\n❌ 测试失败: {e}")
         import traceback
+
         traceback.print_exc()
         return None
 
 
 def main():
     """主函数"""
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("Intel Arc GPU 批次大小优化测试")
-    print("="*80)
+    print("=" * 80)
     print(f"测试时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print()
     print("测试目标:")
@@ -227,23 +224,23 @@ def main():
     result = test_2m_batch_size(duration=60)
 
     if result:
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("🎉 测试完成！")
-        print("="*80)
+        print("=" * 80)
 
         print(f"\n📊 核心结果:")
         print(f"  平均速度: {result['avg_speed']:,.0f} keys/s")
         print(f"  性能提升: {result['improvement_vs_1m_percent']:+.1f}%")
         print(f"  显存使用: {result['estimated_memory_mb']:.0f} MB")
 
-        if result['improvement_vs_1m_percent'] > 2:
+        if result["improvement_vs_1m_percent"] > 2:
             print(f"\n✅ 建议: 使用2M批次大小（性能提升显著）")
-        elif result['improvement_vs_1m_percent'] > 0:
+        elif result["improvement_vs_1m_percent"] > 0:
             print(f"\n✅ 建议: 可以使用2M批次大小（轻微提升）")
         else:
             print(f"\n⚠️ 建议: 保持1M批次大小（2M未见优势）")
 
-        print("="*80)
+        print("=" * 80)
         return 0
     else:
         print("\n❌ 测试失败")

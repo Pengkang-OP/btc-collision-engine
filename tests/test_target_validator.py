@@ -13,10 +13,10 @@
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 
-
 # ============================================================================
 # ValidationResult 测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestValidationResult:
@@ -24,10 +24,9 @@ class TestValidationResult:
 
     def test_valid_result(self):
         from src.collision.targets.validator import ValidationResult
+
         result = ValidationResult(
-            address="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
-            valid=True,
-            format_type="p2pkh"
+            address="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", valid=True, format_type="p2pkh"
         )
         assert result.valid is True
         assert result.validated is True  # default
@@ -35,14 +34,14 @@ class TestValidationResult:
 
     def test_invalid_result(self):
         from src.collision.targets.validator import ValidationResult
-        result = ValidationResult(
-            address="invalid", valid=False, error="bad format"
-        )
+
+        result = ValidationResult(address="invalid", valid=False, error="bad format")
         assert result.valid is False
         assert result.error == "bad format"
 
     def test_defaults(self):
         from src.collision.targets.validator import ValidationResult
+
         result = ValidationResult(address="addr", valid=False)
         assert result.validated is True
         assert result.format_type == "unknown"
@@ -50,15 +49,19 @@ class TestValidationResult:
 
     def test_repr_valid(self):
         from src.collision.targets.validator import ValidationResult
+
         result = ValidationResult(address="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", valid=True)
         r = repr(result)
         assert "valid=True" in r
 
     def test_repr_not_validated(self):
         from src.collision.targets.validator import ValidationResult
+
         result = ValidationResult(
             address="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
-            valid=False, validated=False, error="aborted"
+            valid=False,
+            validated=False,
+            error="aborted",
         )
         r = repr(result)
         assert "validated=False" in r
@@ -68,18 +71,21 @@ class TestValidationResult:
 # AddressBatchValidator 初始化测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestValidatorInit:
     """初始化测试"""
 
     def test_default_max_workers(self):
         from src.collision.targets.validator import AddressBatchValidator
+
         validator = AddressBatchValidator()
         assert validator.max_workers == 4
         assert validator.total_validated == 0
 
     def test_custom_max_workers(self):
         from src.collision.targets.validator import AddressBatchValidator
+
         validator = AddressBatchValidator(max_workers=8)
         assert validator.max_workers == 8
 
@@ -88,18 +94,21 @@ class TestValidatorInit:
 # validate_batch 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestValidateBatch:
     """批量验证测试"""
 
     def test_invalid_strategy_raises(self):
         from src.collision.targets.validator import AddressBatchValidator
+
         validator = AddressBatchValidator()
         with pytest.raises(ValueError, match="无效的策略"):
             validator.validate_batch(["addr1"], strict_mode=True, on_type_error="invalid_strategy")
 
     def test_empty_list(self):
         from src.collision.targets.validator import AddressBatchValidator
+
         validator = AddressBatchValidator()
         results = validator.validate_batch([])
         assert isinstance(results, dict)
@@ -107,12 +116,14 @@ class TestValidateBatch:
 
     def test_valid_addresses(self):
         from src.collision.targets.validator import AddressBatchValidator
+
         validator = AddressBatchValidator(max_workers=1)
         results = validator.validate_batch(["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"])
         assert len(results) >= 1
 
     def test_strict_mode_abort_on_non_string(self):
         from src.collision.targets.validator import AddressBatchValidator
+
         validator = AddressBatchValidator(max_workers=1)
         results = validator.validate_batch(
             ["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", 12345],
@@ -127,6 +138,7 @@ class TestValidateBatch:
 
     def test_strict_mode_skip_non_string(self):
         from src.collision.targets.validator import AddressBatchValidator
+
         validator = AddressBatchValidator(max_workers=1)
         results = validator.validate_batch(
             ["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", 12345],
@@ -138,6 +150,7 @@ class TestValidateBatch:
 
     def test_strict_mode_convert_int(self):
         from src.collision.targets.validator import AddressBatchValidator
+
         validator = AddressBatchValidator(max_workers=1)
         # int 是 safe_type，可被转换
         results = validator.validate_batch(
@@ -150,12 +163,14 @@ class TestValidateBatch:
     def test_loose_mode_converts(self):
         """宽松模式自动转换非字符串"""
         from src.collision.targets.validator import AddressBatchValidator
+
         validator = AddressBatchValidator(max_workers=1)
         results = validator.validate_batch(["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"])
         assert len(results) >= 1
 
     def test_invalid_address(self):
         from src.collision.targets.validator import AddressBatchValidator
+
         validator = AddressBatchValidator(max_workers=1)
         results = validator.validate_batch(["not_a_valid_address_xyz"])
         assert len(results) == 1
@@ -167,12 +182,14 @@ class TestValidateBatch:
 # filter_valid 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestFilterValid:
     """过滤有效地址测试"""
 
     def test_filters_only_valid(self):
         from src.collision.targets.validator import AddressBatchValidator
+
         validator = AddressBatchValidator(max_workers=1)
         # 使用已知的混合地址列表
         valid = validator.filter_valid(["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", "invalid"])
@@ -184,12 +201,14 @@ class TestFilterValid:
 # get_summary / get_validation_summary / get_validation_coverage 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestSummary:
     """统计摘要测试"""
 
     def test_get_summary_initially_zero(self):
         from src.collision.targets.validator import AddressBatchValidator
+
         validator = AddressBatchValidator()
         summary = validator.get_summary()
         assert summary["total_validated"] == 0
@@ -197,6 +216,7 @@ class TestSummary:
 
     def test_get_validation_summary_empty(self):
         from src.collision.targets.validator import AddressBatchValidator
+
         validator = AddressBatchValidator()
         summary = validator.get_validation_summary({})
         assert summary["total"] == 0
@@ -204,6 +224,7 @@ class TestSummary:
 
     def test_get_validation_coverage_empty(self):
         from src.collision.targets.validator import AddressBatchValidator
+
         validator = AddressBatchValidator()
         coverage = validator.get_validation_coverage({})
         assert coverage["total"] == 0
@@ -211,11 +232,14 @@ class TestSummary:
 
     def test_get_validation_coverage_mixed(self):
         from src.collision.targets.validator import AddressBatchValidator, ValidationResult
+
         validator = AddressBatchValidator()
         results = {
             "addr1": ValidationResult(address="addr1", valid=True, validated=True),
             "addr2": ValidationResult(address="addr2", valid=False, validated=True, error="bad"),
-            "addr3": ValidationResult(address="addr3", valid=False, validated=False, error="aborted"),
+            "addr3": ValidationResult(
+                address="addr3", valid=False, validated=False, error="aborted"
+            ),
         }
         coverage = validator.get_validation_coverage(results)
         assert coverage["total"] == 3
@@ -226,6 +250,7 @@ class TestSummary:
 
     def test_get_validation_summary_counts(self):
         from src.collision.targets.validator import AddressBatchValidator, ValidationResult
+
         validator = AddressBatchValidator()
         results = {
             "a": ValidationResult(address="a", valid=True),

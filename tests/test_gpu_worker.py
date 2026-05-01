@@ -167,8 +167,15 @@ class TestWorkerInit:
             config=worker_config,
         )
         expected_keys = {
-            "device_idx", "status", "keys_checked", "matches_found",
-            "start_time", "elapsed_time", "throughput", "error_count", "last_error",
+            "device_idx",
+            "status",
+            "keys_checked",
+            "matches_found",
+            "start_time",
+            "elapsed_time",
+            "throughput",
+            "error_count",
+            "last_error",
         }
         assert expected_keys.issubset(worker._stats.keys())
 
@@ -289,12 +296,14 @@ class TestStatsManagement:
     def test_get_stats_thread_safety(self, worker):
         """并发 get_stats 不应崩溃"""
         errors = []
+
         def getter():
             try:
                 for _ in range(100):
                     worker.get_stats()
             except Exception as e:
                 errors.append(e)
+
         threads = [threading.Thread(target=getter) for _ in range(4)]
         for t in threads:
             t.start()
@@ -331,8 +340,10 @@ class TestDeltaStatsIntegration:
 
     def test_delta_stats_created_when_enabled(self, sample_targets):
         """当 delta_stats 功能启用时应创建 ThreadLocalDeltaStats"""
-        with patch("src.gpu.worker._delta_stats_available", True), \
-             patch("src.gpu.worker.ThreadLocalDeltaStats") as mock_stats_cls:
+        with (
+            patch("src.gpu.worker._delta_stats_available", True),
+            patch("src.gpu.worker.ThreadLocalDeltaStats") as mock_stats_cls,
+        ):
             mock_stats = Mock()
             mock_stats_cls.return_value = mock_stats
             worker = SingleGPUWorker(

@@ -142,7 +142,7 @@ class PlatformAdapter:
                 return False
         else:
             try:
-                return getattr(os, 'geteuid', lambda: -1)() == 0  # Unix-only，mypy无类型信息
+                return getattr(os, "geteuid", lambda: -1)() == 0  # Unix-only，mypy无类型信息
             except Exception:
                 return False
 
@@ -159,7 +159,9 @@ class PlatformAdapter:
                 import ctypes
 
                 kernel32 = ctypes.windll.kernel32
-                return cast(int, kernel32.GetPriorityClass(kernel32.GetCurrentProcess()))  # Windows ctypes API
+                return cast(
+                    int, kernel32.GetPriorityClass(kernel32.GetCurrentProcess())
+                )  # Windows ctypes API
             except Exception:
                 return 0
         else:
@@ -187,7 +189,9 @@ class PlatformAdapter:
                 import ctypes
 
                 kernel32 = ctypes.windll.kernel32
-                return cast(bool, kernel32.SetPriorityClass(kernel32.GetCurrentProcess(), priority) != 0)  # Windows ctypes API
+                return cast(
+                    bool, kernel32.SetPriorityClass(kernel32.GetCurrentProcess(), priority) != 0
+                )  # Windows ctypes API
             except Exception:
                 return False
         else:
@@ -237,9 +241,12 @@ class PlatformAdapter:
         """
         from .logging_config import SafeRotatingFileHandler
 
-        return cast(logging.Handler, SafeRotatingFileHandler(
-            filename, maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8"
-        ))
+        return cast(
+            logging.Handler,
+            SafeRotatingFileHandler(
+                filename, maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8"
+            ),
+        )
 
     def _get_unix_file_handler(self, filename: str, level: int) -> logging.Handler:
         """
@@ -254,9 +261,12 @@ class PlatformAdapter:
         """
         from logging.handlers import RotatingFileHandler
 
-        return cast(logging.Handler, RotatingFileHandler(
-            filename, maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8"
-        ))
+        return cast(
+            logging.Handler,
+            RotatingFileHandler(
+                filename, maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8"
+            ),
+        )
 
     def _get_windows_console_handler(self, level: int) -> logging.Handler:
         """

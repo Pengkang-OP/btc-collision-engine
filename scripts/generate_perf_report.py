@@ -21,10 +21,13 @@ def load_raw_results():
 def load_daily_summary():
     log_dir = os.path.join(ROOT, "data_logs")
     # 取最新的日报文件
-    reports = sorted([
-        f for f in os.listdir(log_dir)
-        if f.startswith("report_daily_20260423") and f.endswith(".json")
-    ])
+    reports = sorted(
+        [
+            f
+            for f in os.listdir(log_dir)
+            if f.startswith("report_daily_20260423") and f.endswith(".json")
+        ]
+    )
     if not reports:
         return {}
     with open(os.path.join(log_dir, reports[-1]), "r", encoding="utf-8") as f:
@@ -45,7 +48,7 @@ def build_report(raw, daily):
             "generated_at": datetime.now().isoformat(),
             "test_date": "2026-04-23",
             "test_duration_per_mode_sec": 15,
-            "source_file": "test_results/gpu_vs_cpu_comparison.json"
+            "source_file": "test_results/gpu_vs_cpu_comparison.json",
         },
         "test_environment": {
             "os": "Windows 25H2",
@@ -60,8 +63,8 @@ def build_report(raw, daily):
                     "gmpy2 Comba乘法",
                     "pycryptodome SIMD/AES-NI",
                     "PrecomputedTable window_size=8",
-                    "ECPoint MemoryPool"
-                ]
+                    "ECPoint MemoryPool",
+                ],
             },
             "gpu_config": {
                 "device": "Intel(R) Arc(TM) A770 Graphics",
@@ -78,9 +81,9 @@ def build_report(raw, daily):
                     "Intel专项调优",
                     "自适应超时管理器",
                     "显存监控器 (45%安全上限)",
-                    "自动调优器"
-                ]
-            }
+                    "自动调优器",
+                ],
+            },
         },
         "results": {
             "cpu": {
@@ -89,7 +92,7 @@ def build_report(raw, daily):
                 "elapsed_sec": round(cpu["elapsed"], 3),
                 "speed_keys_per_sec": round(cpu["speed"], 2),
                 "matches_found": 0,
-                "workers": cpu.get("workers", 16)
+                "workers": cpu.get("workers", 16),
             },
             "gpu": {
                 "mode": "GPU",
@@ -101,8 +104,8 @@ def build_report(raw, daily):
                 "stable_speed_keys_per_sec": 510000,
                 "matches_found": 0,
                 "batches_processed": 29,
-                "init_time_ms": 796.68
-            }
+                "init_time_ms": 796.68,
+            },
         },
         "comparison": {
             "speedup_ratio": round(speedup, 2),
@@ -113,7 +116,7 @@ def build_report(raw, daily):
                 f"GPU模式比CPU模式快{speedup:.0f}倍，"
                 f"15秒内处理了{gpu['total_checked']:,}个私钥，"
                 "强烈建议生产环境启用GPU加速"
-            )
+            ),
         },
         "gpu_monitoring": {
             "peak_throughput_keys_per_sec": 2235270,
@@ -123,7 +126,7 @@ def build_report(raw, daily):
             "memory_leak_detected": False,
             "buffers_auto_released": 2,
             "monitoring_components_ok": 5,
-            "monitoring_components_total": 5
+            "monitoring_components_total": 5,
         },
         "daily_summary_today": {
             "data_points": ds.get("data_points", daily.get("data_points", 0)),
@@ -132,7 +135,7 @@ def build_report(raw, daily):
             "max_speed_keys_per_sec": round(ds.get("max_speed", 0), 2),
             "avg_cpu_usage_pct": round(ds.get("avg_cpu_usage", 0), 2),
             "avg_memory_mb": round(ds.get("avg_memory_usage", 0), 2),
-            "error_count": ds.get("error_count", 0)
+            "error_count": ds.get("error_count", 0),
         },
         "recommendations": [
             "生产环境强烈建议启用GPU模式（加速比 4292x）",
@@ -140,8 +143,8 @@ def build_report(raw, daily):
             "可考虑散热优化以减少从峰值2.2M到稳定510K的退化（当前退化率~22%）",
             "当前GPU配置（batch_size=262144, async=True）运行正常，无需调整",
             "CPU模式适用于开发调试和无GPU的低负载环境",
-            "CLI暂不支持 --gpu 参数，GPU模式需通过专用脚本 test_gpu_vs_cpu.py 调用"
-        ]
+            "CLI暂不支持 --gpu 参数，GPU模式需通过专用脚本 test_gpu_vs_cpu.py 调用",
+        ],
     }
 
 

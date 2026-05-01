@@ -1,4 +1,5 @@
 """CollisionStats 单元测试 - 线程安全、snapshot、add_match 不存私钥"""
+
 import hashlib
 import threading
 import time
@@ -54,7 +55,7 @@ class TestCollisionStatsBasic(unittest.TestCase):
     def test_add_match_multiple(self):
         """多次 add_match 计数正确"""
         for i in range(5):
-            pk = (i + 1).to_bytes(32, 'big')
+            pk = (i + 1).to_bytes(32, "big")
             self.stats.add_match(pk, f"1Address{i}")
         self.assertEqual(len(self.stats.matches), 5)
         self.assertEqual(self.stats._match_count, 5)
@@ -74,7 +75,7 @@ class TestCollisionStatsBasic(unittest.TestCase):
         self.stats.start_time = time.time() - 65  # 模拟65秒前启动
         result = self.stats.format_elapsed()
         # 应为 HH:MM:SS 格式
-        self.assertRegex(result, r'^\d{2}:\d{2}:\d{2}$')
+        self.assertRegex(result, r"^\d{2}:\d{2}:\d{2}$")
 
 
 class TestCollisionStatsSnapshot(unittest.TestCase):
@@ -91,7 +92,7 @@ class TestCollisionStatsSnapshot(unittest.TestCase):
         snap = stats.snapshot()
         # 修改原始 stats 不影响 snap
         stats.update(9999)
-        stats.add_match(b'\x01' * 32, "1Another")
+        stats.add_match(b"\x01" * 32, "1Another")
 
         self.assertEqual(snap.total_checked, 500)
         self.assertEqual(len(snap.matches), 1)
@@ -117,7 +118,7 @@ class TestCollisionStatsThreadSafety(unittest.TestCase):
 
         def add_matches(thread_id: int):
             for i in range(n_per_thread):
-                pk = (thread_id * n_per_thread + i + 1).to_bytes(32, 'big')
+                pk = (thread_id * n_per_thread + i + 1).to_bytes(32, "big")
                 stats.add_match(pk, f"1Addr{thread_id}_{i}")
 
         threads = [threading.Thread(target=add_matches, args=(i,)) for i in range(n_threads)]

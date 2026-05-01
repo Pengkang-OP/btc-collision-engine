@@ -24,7 +24,7 @@ _ROOT = Path(__file__).parent
 sys.path.insert(0, str(_ROOT))
 
 BASELINE_KEYS_PER_SEC = 3_070_000  # 3.07M keys/s 基线
-TARGET_KEYS_PER_SEC   = 3_400_000  # 3.40M keys/s 目标（+10%）
+TARGET_KEYS_PER_SEC = 3_400_000  # 3.40M keys/s 目标（+10%）
 
 
 def load_config(config_path: str) -> dict:
@@ -33,7 +33,8 @@ def load_config(config_path: str) -> dict:
         raw = f.read()
     # 剥离 JSON5 风格注释（//...行）
     import re
-    raw = re.sub(r'//[^\n]*', '', raw)
+
+    raw = re.sub(r"//[^\n]*", "", raw)
     return json.loads(raw)
 
 
@@ -131,6 +132,7 @@ def run_benchmark(duration_sec: int = 30) -> dict:
     except Exception as e:
         print(f"    [ERROR] 引擎初始化失败: {e}")
         import traceback
+
         traceback.print_exc()
         return {"error": str(e), "success": False}
 
@@ -138,19 +140,25 @@ def run_benchmark(duration_sec: int = 30) -> dict:
     print("\n[4/5] 验证优化特性...")
     # 检查 queue_depth
     async_executor = getattr(engine, "_async_executor", None)
-    actual_queue_depth = getattr(async_executor, "queue_depth", "N/A") if async_executor else "N/A（同步模式）"
+    actual_queue_depth = (
+        getattr(async_executor, "queue_depth", "N/A") if async_executor else "N/A（同步模式）"
+    )
     print(f"    AsyncGPUExecutor.queue_depth = {actual_queue_depth}")
 
     # 检查种子预生成线程
     random_mode = getattr(engine, "_random_search_mode", None)
     seed_thread = getattr(random_mode, "_seed_thread", None)
     seed_thread_alive = seed_thread.is_alive() if seed_thread else False
-    seed_prefetch_actual = getattr(random_mode, "_seed_prefetch_size", "N/A") if random_mode else "N/A"
+    seed_prefetch_actual = (
+        getattr(random_mode, "_seed_prefetch_size", "N/A") if random_mode else "N/A"
+    )
     print(f"    SeedPrefetch 线程运行中 = {seed_thread_alive}")
     print(f"    SeedPrefetch 缓存深度   = {seed_prefetch_actual}")
 
     # 检查异步执行器
-    async_exec_enabled = getattr(getattr(engine, "_gpu_device", None), "enable_async_execution", False)
+    async_exec_enabled = getattr(
+        getattr(engine, "_gpu_device", None), "enable_async_execution", False
+    )
     print(f"    异步执行已启用 = {async_exec_enabled}")
 
     # ── 5. 运行测试 ─────────────────────────────────────────
@@ -165,6 +173,7 @@ def run_benchmark(duration_sec: int = 30) -> dict:
     except Exception as e:
         print(f"    [ERROR] 引擎启动失败: {e}")
         import traceback
+
         traceback.print_exc()
         return {"error": str(e), "success": False}
 
@@ -180,7 +189,9 @@ def run_benchmark(duration_sec: int = 30) -> dict:
         if speed_samples:
             recent_speed = speed_samples[-1]
             interval_speeds.append(recent_speed)
-            print(f"  {elapsed:5.0f}s  {recent_speed/1e6:12.3f}M/s  {total_checked:>14,}  {len(speed_samples):>6}")
+            print(
+                f"  {elapsed:5.0f}s  {recent_speed/1e6:12.3f}M/s  {total_checked:>14,}  {len(speed_samples):>6}"
+            )
 
     # 停止引擎
     try:
@@ -202,7 +213,9 @@ def run_benchmark(duration_sec: int = 30) -> dict:
 
         # 去除前3个预热采样（如果足够多）
         warmup_skip = 3
-        stable_samples = speed_samples[warmup_skip:] if len(speed_samples) > warmup_skip + 2 else speed_samples
+        stable_samples = (
+            speed_samples[warmup_skip:] if len(speed_samples) > warmup_skip + 2 else speed_samples
+        )
         stable_avg = statistics.mean(stable_samples) if stable_samples else avg_speed
     else:
         avg_speed = max_speed = min_speed = std_speed = stable_avg = 0.0
@@ -242,9 +255,9 @@ def run_benchmark(duration_sec: int = 30) -> dict:
 
     print("\n  --- 对比分析 ---")
     baseline = BASELINE_KEYS_PER_SEC
-    target   = TARGET_KEYS_PER_SEC
+    target = TARGET_KEYS_PER_SEC
     delta_vs_baseline = (stable_avg - baseline) / baseline * 100 if baseline > 0 else 0
-    delta_vs_target   = (stable_avg - target) / target * 100 if target > 0 else 0
+    delta_vs_target = (stable_avg - target) / target * 100 if target > 0 else 0
 
     print(f"  基线 (3.07M)   : {baseline/1e6:.2f}M keys/s")
     print(f"  目标 (+10%)    : {target/1e6:.2f}M keys/s")
@@ -301,8 +314,7 @@ def run_benchmark(duration_sec: int = 30) -> dict:
 
 def main():
     parser = argparse.ArgumentParser(description="Task #57: GPU 性能基准测试")
-    parser.add_argument("--duration", type=int, default=60,
-                        help="测试时长（秒），默认60秒")
+    parser.add_argument("--duration", type=int, default=60, help="测试时长（秒），默认60秒")
     args = parser.parse_args()
 
     result = run_benchmark(duration_sec=args.duration)

@@ -1,4 +1,5 @@
 """KeyCollisionEngine 单元测试 - 启动/停止、进度回调、匹配回调"""
+
 import threading
 import time
 import unittest
@@ -16,7 +17,7 @@ from src.core.address_generator import P2PKHAddressGenerator
 def _get_known_target() -> tuple:
     """获取一个已知私钥对应的地址（用于匹配测试）"""
     # 私钥 = 1
-    pk = (1).to_bytes(32, 'big')
+    pk = (1).to_bytes(32, "big")
     gen = P2PKHAddressGenerator()
     addr, _, _ = gen.generate_address(pk)
     return pk, addr
@@ -73,7 +74,7 @@ class TestKeyCollisionEngineCallbacks(unittest.TestCase):
     def test_progress_callback_called(self):
         """进度回调在运行期间被调用"""
         progress_events = []
-        
+
         def on_progress(stats: CollisionStats):
             progress_events.append(stats.total_checked)
 
@@ -91,7 +92,7 @@ class TestKeyCollisionEngineCallbacks(unittest.TestCase):
     def test_complete_callback_called(self):
         """完成回调在停止后被调用"""
         complete_called = threading.Event()
-        
+
         def on_complete(stats: CollisionStats):
             complete_called.set()
 
@@ -131,7 +132,7 @@ class TestKeyCollisionEngineCallbacks(unittest.TestCase):
         self.assertGreater(len(match_results), 0)
         _, found_addr, wif = match_results[0]
         self.assertEqual(found_addr, known_addr)
-        self.assertTrue(wif.startswith(('K', 'L', '5')))
+        self.assertTrue(wif.startswith(("K", "L", "5")))
 
 
 class TestKeyCollisionEngineRangeScan(unittest.TestCase):
@@ -151,7 +152,7 @@ class TestKeyCollisionEngineRangeScan(unittest.TestCase):
     def test_range_scan_counts_checked(self):
         """范围扫描后检查数正确"""
         complete_event = threading.Event()
-        
+
         def on_complete(stats):
             complete_event.set()
 

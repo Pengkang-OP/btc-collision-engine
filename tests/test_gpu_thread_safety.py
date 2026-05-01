@@ -7,6 +7,7 @@
 - GPU超时监控
 - 停止引擎
 """
+
 import pytest
 import os
 import sys
@@ -89,8 +90,8 @@ class TestConcurrentAccess:
 
         # 验证统计
         stats = dedup.get_stats()
-        assert stats['checks_total'] == num_threads * checks_per_thread
-        assert stats['duplicates_found'] == 0
+        assert stats["checks_total"] == num_threads * checks_per_thread
+        assert stats["duplicates_found"] == 0
 
     def test_concurrent_checkpoint_save(self):
         """测试并发保存断点"""
@@ -112,7 +113,7 @@ class TestConcurrentAccess:
                     current_position=thread_id * 1000,
                     total_checked=thread_id * 1000,
                     matches=[],
-                    force=True
+                    force=True,
                 )
 
             # 创建10个线程并发保存
@@ -171,7 +172,7 @@ class TestAsyncKeyGeneration:
 
         def slow_generation():
             time.sleep(35)  # 超时
-            result[0] = b'test'
+            result[0] = b"test"
 
         # 启动超时线程
         thread = threading.Thread(target=slow_generation, daemon=True)

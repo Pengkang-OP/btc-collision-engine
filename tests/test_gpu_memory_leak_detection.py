@@ -3,6 +3,7 @@ import time
 from src.collision.gpu_collision_engine import GPUCollisionEngine
 from src.collision.targets.resolver import TargetResolver
 
+
 @pytest.mark.gpu
 def test_memory_leak_detection():
     """
@@ -10,19 +11,15 @@ def test_memory_leak_detection():
     """
     # 创建目标解析器和目标地址
     resolver = TargetResolver()
-    resolved = resolver.resolve('1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa')  # 中本聪的地址
+    resolved = resolver.resolve("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")  # 中本聪的地址
     targets = {resolved} if resolved else set()  # 引擎期望 Set[str]
 
     # 创建GPU碰撞引擎
-    engine = GPUCollisionEngine(
-        targets=targets,
-        device_index=0,
-        batch_size=100000
-    )
+    engine = GPUCollisionEngine(targets=targets, device_index=0, batch_size=100000)
 
     try:
         # 执行一些批次，产生一些缓冲区
-        seed = b'\x00' * 32
+        seed = b"\x00" * 32
         batch_size = 100000
 
         # 执行几个批次
@@ -41,6 +38,7 @@ def test_memory_leak_detection():
         # 清理资源
         engine.stop()
 
+
 @pytest.mark.gpu
 def test_buffer_release():
     """
@@ -48,19 +46,15 @@ def test_buffer_release():
     """
     # 创建目标解析器和目标地址
     resolver = TargetResolver()
-    resolved = resolver.resolve('1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa')  # 中本聪的地址
+    resolved = resolver.resolve("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")  # 中本聪的地址
     targets = {resolved} if resolved else set()  # 引擎期望 Set[str]
 
     # 创建GPU碰撞引擎
-    engine = GPUCollisionEngine(
-        targets=targets,
-        device_index=0,
-        batch_size=100000
-    )
+    engine = GPUCollisionEngine(targets=targets, device_index=0, batch_size=100000)
 
     try:
         # 执行一些批次，产生一些缓冲区
-        seed = b'\x00' * 32
+        seed = b"\x00" * 32
         batch_size = 100000
 
         # 执行几个批次
@@ -80,6 +74,7 @@ def test_buffer_release():
         # 确保资源被释放
         if engine._running:
             engine.stop()
+
 
 if __name__ == "__main__":
     # 运行测试

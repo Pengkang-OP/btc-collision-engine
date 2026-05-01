@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """使用真实目标地址的集成测试"""
+
 import pytest
 import time
 import os
@@ -17,18 +18,17 @@ class TestRealAddressIntegration:
         """设置测试环境"""
         # 加载真实目标地址
         self.address_file = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            "valid_addresses.txt"
+            os.path.dirname(os.path.abspath(__file__)), "valid_addresses.txt"
         )
         self.targets = self._load_addresses()
 
     def _load_addresses(self):
         """从文件加载目标地址"""
         addresses = set()
-        with open(self.address_file, 'r') as f:
+        with open(self.address_file, "r") as f:
             for line in f:
                 line = line.strip()
-                if line and not line.startswith('#'):
+                if line and not line.startswith("#"):
                     addresses.add(line)
         return addresses
 
@@ -82,7 +82,7 @@ class TestRealAddressIntegration:
         """测试目标地址验证"""
         # 所有地址应该是有效的P2PKH地址（以1开头）
         for addr in self.targets:
-            assert addr.startswith('1'), f"地址 {addr} 不是有效的P2PKH地址"
+            assert addr.startswith("1"), f"地址 {addr} 不是有效的P2PKH地址"
             assert len(addr) >= 26 and len(addr) <= 35, f"地址 {addr} 长度不正确"
 
     @pytest.mark.flaky(reruns=2, reruns_delay=1)  # 允许重试2次
@@ -122,7 +122,9 @@ class TestRealAddressIntegration:
 
         stats = engine.get_stats()
         assert stats.total_checked > 0, "多工作线程应该检查了一些私钥"
-        print(f"\n[OK] 4个工作线程检查了 {stats.total_checked} 个私钥，速度: {stats.speed:.0f} 次/秒")
+        print(
+            f"\n[OK] 4个工作线程检查了 {stats.total_checked} 个私钥，速度: {stats.speed:.0f} 次/秒"
+        )
 
     @pytest.mark.flaky(reruns=2, reruns_delay=1)
     def test_engine_stats_with_real_targets(self):
@@ -199,8 +201,9 @@ class TestRealAddressIntegration:
         # 主要验证引擎能够正常重启并继续工作
         tolerance = 0.50  # 50%容差
         min_expected = stats1.total_checked * (1 - tolerance)
-        assert stats2.total_checked >= min_expected, \
-            f"第二次运行检查数量过低: {stats2.total_checked} < {min_expected:.0f} (第一次: {stats1.total_checked})"
+        assert (
+            stats2.total_checked >= min_expected
+        ), f"第二次运行检查数量过低: {stats2.total_checked} < {min_expected:.0f} (第一次: {stats1.total_checked})"
         print(f"\n[OK] 重启测试通过: 第一次={stats1.total_checked}, 第二次={stats2.total_checked}")
 
 

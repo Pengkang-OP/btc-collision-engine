@@ -581,7 +581,11 @@ class DriverManager:
                 'recommendations': ['建议列表']
             }
         """
-        result: Dict[str, Any] = {"status": "good", "message": "驱动版本正常", "recommendations": []}
+        result: Dict[str, Any] = {
+            "status": "good",
+            "message": "驱动版本正常",
+            "recommendations": [],
+        }
 
         if not driver_version:
             result["status"] = "warning"

@@ -14,15 +14,18 @@ import logging
 from unittest.mock import Mock, MagicMock, patch
 
 from src.collision.observers import (
-    CollisionObserver, BaseCollisionObserver,
-    MonitoringObserver, LoggingObserver, ObserverManager,
+    CollisionObserver,
+    BaseCollisionObserver,
+    MonitoringObserver,
+    LoggingObserver,
+    ObserverManager,
 )
 from src.collision.collision_stats import CollisionStats
-
 
 # ============================================================================
 # Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def stats():
@@ -53,6 +56,7 @@ def mock_logger():
 # ============================================================================
 # CollisionObserver 接口测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestCollisionObserverInterface:
@@ -109,6 +113,7 @@ class TestBaseCollisionObserver:
 # MonitoringObserver 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestMonitoringObserver:
     """MonitoringObserver 测试"""
@@ -122,7 +127,7 @@ class TestMonitoringObserver:
         observer.on_match(
             b"\x01" * 32,
             "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
-            "KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qYjgd9M7rFU72sVhvfoj"
+            "KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qYjgd9M7rFU72sVhvfoj",
         )
         mock_monitoring_system.data_logger.record_error.assert_called_once()
         call_kwargs = mock_monitoring_system.data_logger.record_error.call_args[1]
@@ -152,6 +157,7 @@ class TestMonitoringObserver:
 # ============================================================================
 # LoggingObserver 测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestLoggingObserver:
@@ -188,6 +194,7 @@ class TestLoggingObserver:
 # ============================================================================
 # ObserverManager 测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestObserverManager:

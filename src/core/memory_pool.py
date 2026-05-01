@@ -624,7 +624,9 @@ class GlobalPoolManager:
             logger.debug("CPU内存池自动清理已在运行，跳过重复启动")
             return
 
-        interval = interval_seconds if interval_seconds is not None else self.DEFAULT_AUTO_CLEANUP_INTERVAL
+        interval = (
+            interval_seconds if interval_seconds is not None else self.DEFAULT_AUTO_CLEANUP_INTERVAL
+        )
         self._cleanup_stop_event.clear()
         self._cleanup_thread: Optional[threading.Thread] = threading.Thread(
             target=self._auto_cleanup_loop,

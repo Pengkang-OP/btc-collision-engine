@@ -56,7 +56,9 @@ class RandomSearchMode(BaseSearchMode):
     消除主循环中 os.urandom() 的阻塞等待，进一步平滑 GPU 利用率。
     """
 
-    def __init__(self, engine: "GPUCollisionEngine", seed_prefetch_size: int = SEED_PREFETCH_SIZE) -> None:
+    def __init__(
+        self, engine: "GPUCollisionEngine", seed_prefetch_size: int = SEED_PREFETCH_SIZE
+    ) -> None:
         super().__init__(engine)
         # BUG-6: 支持从外部传入 seed_prefetch_size，不再硬编码 SEED_PREFETCH_SIZE
         self._seed_prefetch_size = seed_prefetch_size

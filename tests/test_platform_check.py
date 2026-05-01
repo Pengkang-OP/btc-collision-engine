@@ -20,7 +20,8 @@ from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
 import sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.utils.platform_check import PlatformChecker, CheckResult
 
@@ -124,6 +125,7 @@ class TestPlatformCheckerChecks(TestCase):
 
         # 常见操作系统应该通过
         import platform
+
         system = platform.system()
         if system in ("Windows", "Linux", "Darwin"):
             self.assertTrue(result.passed)
@@ -143,7 +145,7 @@ class TestPlatformCheckerChecks(TestCase):
 
     def test_check_path_length_windows_short(self):
         """Windows短路径检查"""
-        with patch('platform.system', return_value='Windows'):
+        with patch("platform.system", return_value="Windows"):
             result = self.checker.check_path_length()
 
             # 短路径应该通过
@@ -158,7 +160,7 @@ class TestPlatformCheckerChecks(TestCase):
 
         checker = PlatformChecker(project_root=long_path)
 
-        with patch('platform.system', return_value='Windows'):
+        with patch("platform.system", return_value="Windows"):
             result = checker.check_path_length()
 
             # 长路径应该警告
@@ -170,7 +172,7 @@ class TestPlatformCheckerChecks(TestCase):
 
     def test_check_path_length_non_windows(self):
         """非Windows系统路径检查"""
-        with patch('platform.system', return_value='Linux'):
+        with patch("platform.system", return_value="Linux"):
             result = self.checker.check_path_length()
 
             # 非Windows系统应该通过
@@ -208,10 +210,10 @@ class TestPlatformCheckerChecks(TestCase):
 
     def test_check_long_path_support_windows(self):
         """Windows长路径支持检查"""
-        with patch('platform.system', return_value='Windows'):
-            with patch('subprocess.run') as mock_run:
+        with patch("platform.system", return_value="Windows"):
+            with patch("subprocess.run") as mock_run:
                 # 模拟长路径支持已启用
-                mock_run.return_value = MagicMock(returncode=0, stdout='1')
+                mock_run.return_value = MagicMock(returncode=0, stdout="1")
 
                 result = self.checker.check_long_path_support()
 
@@ -220,7 +222,7 @@ class TestPlatformCheckerChecks(TestCase):
 
     def test_check_long_path_support_non_windows(self):
         """非Windows长路径支持检查"""
-        with patch('platform.system', return_value='Linux'):
+        with patch("platform.system", return_value="Linux"):
             result = self.checker.check_long_path_support()
 
             # 非Windows系统应该跳过
@@ -296,7 +298,7 @@ class TestPlatformCheckerEdgeCases(TestCase):
 
     def test_nonexistent_project_root(self):
         """不存在的项目根目录"""
-        nonexistent_dir = os.path.join(self.test_dir, 'nonexistent')
+        nonexistent_dir = os.path.join(self.test_dir, "nonexistent")
         checker = PlatformChecker(project_root=nonexistent_dir)
 
         # 应该能正常初始化
@@ -340,6 +342,7 @@ class TestPlatformCheckerEdgeCases(TestCase):
 # 编码检测增强测试
 # ============================================================================
 
+
 class TestEncodingDetection(unittest.TestCase):
     """编码检测增强测试。"""
 
@@ -354,8 +357,8 @@ class TestEncodingDetection(unittest.TestCase):
     def test_check_encoding_utf8_passes(self):
         """UTF-8 编码应该通过检查。"""
         mock_stdout = MagicMock()
-        mock_stdout.encoding = 'utf-8'
-        with patch('sys.stdout', mock_stdout):
+        mock_stdout.encoding = "utf-8"
+        with patch("sys.stdout", mock_stdout):
             result = self.checker.check_encoding()
         self.assertIsNotNone(result)
         self.assertIsInstance(result, CheckResult)
@@ -363,20 +366,20 @@ class TestEncodingDetection(unittest.TestCase):
     def test_check_encoding_gbk(self):
         """GBK 编码（非 UTF-8）应给出警告。"""
         mock_stdout = MagicMock()
-        mock_stdout.encoding = 'gbk'
-        with patch('sys.stdout', mock_stdout):
+        mock_stdout.encoding = "gbk"
+        with patch("sys.stdout", mock_stdout):
             result = self.checker.check_encoding()
         self.assertIsNotNone(result)
         self.assertIsInstance(result, CheckResult)
         # GBK 非 UTF-8，检查应失败并包含编码信息
         self.assertFalse(result.passed)
-        self.assertIn('gbk', result.message.lower())
+        self.assertIn("gbk", result.message.lower())
 
     def test_check_encoding_gb2312(self):
         """GB2312 编码（非 UTF-8）应给出警告。"""
         mock_stdout = MagicMock()
-        mock_stdout.encoding = 'gb2312'
-        with patch('sys.stdout', mock_stdout):
+        mock_stdout.encoding = "gb2312"
+        with patch("sys.stdout", mock_stdout):
             result = self.checker.check_encoding()
         self.assertIsNotNone(result)
         self.assertIsInstance(result, CheckResult)
@@ -385,23 +388,20 @@ class TestEncodingDetection(unittest.TestCase):
     def test_check_encoding_cp936(self):
         """CP936（GBK 变体）应给出警告。"""
         mock_stdout = MagicMock()
-        mock_stdout.encoding = 'cp936'
-        with patch('sys.stdout', mock_stdout):
+        mock_stdout.encoding = "cp936"
+        with patch("sys.stdout", mock_stdout):
             result = self.checker.check_encoding()
         self.assertIsNotNone(result)
         self.assertFalse(result.passed)
 
     def test_check_encoding_utf8_variants(self):
         """UTF-8 的各种写法变体都应通过。"""
-        for enc in ('UTF-8', 'utf-8', 'utf8', 'UTF8', 'UTF_8'):
+        for enc in ("UTF-8", "utf-8", "utf8", "UTF8", "UTF_8"):
             mock_stdout = MagicMock()
             mock_stdout.encoding = enc
-            with patch('sys.stdout', mock_stdout):
+            with patch("sys.stdout", mock_stdout):
                 result = self.checker.check_encoding()
-            self.assertTrue(
-                result.passed,
-                f"编码 '{enc}' 应该通过检查，但失败了: {result.message}"
-            )
+            self.assertTrue(result.passed, f"编码 '{enc}' 应该通过检查，但失败了: {result.message}")
 
     def test_check_encoding_result_name(self):
         """检查结果名称为 '终端编码'。"""
@@ -412,6 +412,7 @@ class TestEncodingDetection(unittest.TestCase):
 # ============================================================================
 # get_platform_info 测试
 # ============================================================================
+
 
 class TestGetPlatformInfo(unittest.TestCase):
     """平台信息获取测试。"""
@@ -433,10 +434,16 @@ class TestGetPlatformInfo(unittest.TestCase):
         """get_platform_info 包含所有必要字段。"""
         info = self.checker.get_platform_info()
         required_keys = [
-            'os', 'os_release', 'os_version', 'machine',
-            'python_version', 'python_executable',
-            'encoding_fs', 'encoding_stdout',
-            'project_root', 'cwd'
+            "os",
+            "os_release",
+            "os_version",
+            "machine",
+            "python_version",
+            "python_executable",
+            "encoding_fs",
+            "encoding_stdout",
+            "project_root",
+            "cwd",
         ]
         for key in required_keys:
             self.assertIn(key, info, f"缺少键: {key}")
@@ -444,13 +451,14 @@ class TestGetPlatformInfo(unittest.TestCase):
     def test_get_platform_info_os_value(self):
         """get_platform_info 的 os 字段与实际系统一致。"""
         import platform
+
         info = self.checker.get_platform_info()
-        self.assertEqual(info['os'], platform.system())
+        self.assertEqual(info["os"], platform.system())
 
     def test_get_platform_info_python_version_format(self):
         """python_version 格式为 X.Y.Z。"""
         info = self.checker.get_platform_info()
-        parts = info['python_version'].split('.')
+        parts = info["python_version"].split(".")
         self.assertEqual(len(parts), 3)
         for part in parts:
             self.assertTrue(part.isdigit(), f"版本号部分 '{part}' 不是数字")
@@ -458,12 +466,12 @@ class TestGetPlatformInfo(unittest.TestCase):
     def test_get_platform_info_project_root_matches(self):
         """project_root 字段与 checker 的项目根目录一致。"""
         info = self.checker.get_platform_info()
-        self.assertEqual(info['project_root'], str(self.checker.project_root))
+        self.assertEqual(info["project_root"], str(self.checker.project_root))
 
     def test_get_platform_info_cwd_is_directory(self):
         """cwd 字段为存在的目录。"""
         info = self.checker.get_platform_info()
-        self.assertTrue(os.path.isdir(info['cwd']))
+        self.assertTrue(os.path.isdir(info["cwd"]))
 
     def test_get_platform_info_values_are_strings(self):
         """所有字段值都是字符串。"""
@@ -476,6 +484,7 @@ class TestGetPlatformInfo(unittest.TestCase):
 # macOS 平台 Mock 测试
 # ============================================================================
 
+
 class TestMacOSPlatform(unittest.TestCase):
     """macOS 平台特定测试。"""
 
@@ -486,35 +495,36 @@ class TestMacOSPlatform(unittest.TestCase):
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir)
 
-    @patch('platform.system', return_value='Darwin')
-    @patch('platform.release', return_value='23.0.0')
-    @patch('platform.machine', return_value='arm64')
+    @patch("platform.system", return_value="Darwin")
+    @patch("platform.release", return_value="23.0.0")
+    @patch("platform.machine", return_value="arm64")
     def test_check_os_macos(self, mock_machine, mock_release, mock_system):
         """macOS (Darwin) 平台检查应通过。"""
         checker = PlatformChecker(project_root=self.test_dir)
         result = checker.check_os()
         self.assertTrue(result.passed)
-        self.assertIn('Darwin', result.message)
+        self.assertIn("Darwin", result.message)
 
-    @patch('platform.system', return_value='Darwin')
+    @patch("platform.system", return_value="Darwin")
     def test_check_path_length_macos_skips_windows_check(self, mock_system):
         """macOS 上路径长度检查跳过 Windows 限制。"""
         checker = PlatformChecker(project_root=self.test_dir)
         result = checker.check_path_length()
         self.assertTrue(result.passed)
 
-    @patch('platform.system', return_value='Darwin')
+    @patch("platform.system", return_value="Darwin")
     def test_check_long_path_support_macos_skips(self, mock_system):
         """macOS 上长路径支持检查跳过。"""
         checker = PlatformChecker(project_root=self.test_dir)
         result = checker.check_long_path_support()
         self.assertTrue(result.passed)
-        self.assertIn('非 Windows', result.message)
+        self.assertIn("非 Windows", result.message)
 
 
 # ============================================================================
 # Linux 平台 Mock 测试
 # ============================================================================
+
 
 class TestLinuxPlatform(unittest.TestCase):
     """Linux 平台特定测试。"""
@@ -526,17 +536,17 @@ class TestLinuxPlatform(unittest.TestCase):
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir)
 
-    @patch('platform.system', return_value='Linux')
-    @patch('platform.release', return_value='6.1.0')
-    @patch('platform.machine', return_value='x86_64')
+    @patch("platform.system", return_value="Linux")
+    @patch("platform.release", return_value="6.1.0")
+    @patch("platform.machine", return_value="x86_64")
     def test_check_os_linux(self, mock_machine, mock_release, mock_system):
         """Linux 平台检查应通过。"""
         checker = PlatformChecker(project_root=self.test_dir)
         result = checker.check_os()
         self.assertTrue(result.passed)
-        self.assertIn('Linux', result.message)
+        self.assertIn("Linux", result.message)
 
-    @patch('platform.system', return_value='Linux')
+    @patch("platform.system", return_value="Linux")
     def test_check_long_path_support_linux_skips(self, mock_system):
         """Linux 上长路径支持检查跳过。"""
         checker = PlatformChecker(project_root=self.test_dir)
@@ -548,6 +558,7 @@ class TestLinuxPlatform(unittest.TestCase):
 # 不支持的平台测试
 # ============================================================================
 
+
 class TestUnsupportedPlatform(unittest.TestCase):
     """未经测试的平台测试。"""
 
@@ -558,9 +569,9 @@ class TestUnsupportedPlatform(unittest.TestCase):
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir)
 
-    @patch('platform.system', return_value='FreeBSD')
-    @patch('platform.release', return_value='13.0')
-    @patch('platform.machine', return_value='amd64')
+    @patch("platform.system", return_value="FreeBSD")
+    @patch("platform.release", return_value="13.0")
+    @patch("platform.machine", return_value="amd64")
     def test_check_os_unsupported(self, mock_machine, mock_release, mock_system):
         """未支持的平台检查应失败。"""
         checker = PlatformChecker(project_root=self.test_dir)
@@ -568,11 +579,12 @@ class TestUnsupportedPlatform(unittest.TestCase):
         self.assertFalse(result.passed)
         # 消息内容取决于i18n：中文"不支持" / 英文"Unsupported"
         self.assertTrue(
-            '不支持' in result.message or 'Unsupported' in result.message,
-            f"期望包含'不支持'或'Unsupported'，实际: {result.message}"
+            "不支持" in result.message or "Unsupported" in result.message,
+            f"期望包含'不支持'或'Unsupported'，实际: {result.message}",
         )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import unittest
+
     unittest.main()

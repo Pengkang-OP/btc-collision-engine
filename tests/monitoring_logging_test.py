@@ -4,13 +4,14 @@
 
 此脚本用于测试监控系统和日志系统的功能，确保它们与修改后的资源释放逻辑兼容。
 """
+
 import time
 import logging
 import sys
 import os
 
 # 添加项目根目录到Python路径
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.monitoring.monitoring_system import MonitoringSystem
 from src.utils import init_logging, get_configured_logger
@@ -19,67 +20,72 @@ from src.utils import init_logging, get_configured_logger
 init_logging()
 logger = get_configured_logger("MonitoringLoggingTest")
 
+
 def test_logging_system():
     """测试日志系统功能"""
     logger.info("开始测试日志系统功能")
-    
+
     # 测试不同级别的日志
     logger.debug("这是一条DEBUG级别的日志")
     logger.info("这是一条INFO级别的日志")
     logger.warning("这是一条WARNING级别的日志")
     logger.error("这是一条ERROR级别的日志")
     logger.critical("这是一条CRITICAL级别的日志")
-    
+
     # 测试异常日志
     try:
         1 / 0
     except Exception as e:
         logger.exception(f"测试异常日志: {e}")
-    
+
     logger.info("日志系统测试完成")
+
 
 def test_monitoring_system():
     """测试监控系统功能"""
     logger.info("开始测试监控系统功能")
-    
+
     # 创建监控系统实例
     monitoring_system = MonitoringSystem()
-    
+
     # 启动监控系统
     monitoring_system.start()
     logger.info("监控系统已启动")
-    
+
     # 等待一段时间，让监控系统收集数据
     time.sleep(10)
-    
+
     # 获取当前状态
     current_status = monitoring_system.get_current_status()
     logger.info(f"监控系统当前状态: {current_status}")
-    
+
     # 生成报告
     report = monitoring_system.generate_report()
     logger.info(f"监控系统报告: {report}")
-    
+
     # 停止监控系统
     monitoring_system.stop()
     logger.info("监控系统已停止")
-    
+
     logger.info("监控系统测试完成")
+
 
 def main():
     """主函数"""
     try:
         # 测试日志系统
         test_logging_system()
-        
+
         # 测试监控系统
         test_monitoring_system()
-        
+
         logger.info("✅ 监控和日志系统测试成功")
     except Exception as e:
         logger.error(f"❌ 测试过程中出现错误: {e}")
         import traceback
+
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     main()

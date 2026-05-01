@@ -25,7 +25,6 @@ from src.collision.targets.resolver import (
     TargetResolver,
 )
 
-
 # ---------------------------------------------------------------------------
 # WIF 测试向量  (来自 Bitcoin Core / BIP-0032 官方文档)
 # ---------------------------------------------------------------------------
@@ -50,7 +49,7 @@ class TestWIFEncoder(unittest.TestCase):
         wif = WIFEncoder.encode(privkey, compressed=True, testnet=False)
         self.assertEqual(wif, _TV_WIF_COMPRESSED)
         self.assertEqual(len(wif), 52)
-        self.assertTrue(wif.startswith(('K', 'L')))
+        self.assertTrue(wif.startswith(("K", "L")))
 
     def test_encode_uncompressed_mainnet(self):
         """官方测试向量: 非压缩WIF主网编码"""
@@ -58,7 +57,7 @@ class TestWIFEncoder(unittest.TestCase):
         wif = WIFEncoder.encode(privkey, compressed=False, testnet=False)
         self.assertEqual(wif, _TV_WIF_UNCOMPRESSED)
         self.assertEqual(len(wif), 51)
-        self.assertTrue(wif.startswith('5'))
+        self.assertTrue(wif.startswith("5"))
 
     def test_decode_compressed_mainnet(self):
         """官方测试向量: 压缩WIF主网解码"""
@@ -97,14 +96,14 @@ class TestWIFEncoder(unittest.TestCase):
         privkey = bytes.fromhex(_TV_PRIVKEY_HEX)
         wif = WIFEncoder.encode(privkey, compressed=True, testnet=True)
         # 测试网压缩WIF以 'c' 开头
-        self.assertTrue(wif.startswith('c'), f"Expected 'c' prefix, got: {wif[0]}")
+        self.assertTrue(wif.startswith("c"), f"Expected 'c' prefix, got: {wif[0]}")
 
     def test_encode_testnet_uncompressed(self):
         """测试网非压缩WIF编码"""
         privkey = bytes.fromhex(_TV_PRIVKEY_HEX)
         wif = WIFEncoder.encode(privkey, compressed=False, testnet=True)
         # 测试网非压缩WIF以 '9' 开头
-        self.assertTrue(wif.startswith('9'), f"Expected '9' prefix, got: {wif[0]}")
+        self.assertTrue(wif.startswith("9"), f"Expected '9' prefix, got: {wif[0]}")
 
     def test_decode_testnet(self):
         """测试网WIF解码: is_testnet=True"""
@@ -118,14 +117,14 @@ class TestWIFEncoder(unittest.TestCase):
     def test_invalid_key_length(self):
         """私钥长度错误应抛出 ValueError"""
         with self.assertRaises(ValueError):
-            WIFEncoder.encode(b'\x01' * 31)  # 31字节
+            WIFEncoder.encode(b"\x01" * 31)  # 31字节
 
     def test_invalid_checksum(self):
         """篡改校验和应抛出 ValueError"""
         privkey = bytes.fromhex(_TV_PRIVKEY_HEX)
         wif = WIFEncoder.encode(privkey, compressed=True)
         # 修改最后一个字符
-        corrupted = wif[:-1] + ('A' if wif[-1] != 'A' else 'B')
+        corrupted = wif[:-1] + ("A" if wif[-1] != "A" else "B")
         with self.assertRaises(ValueError):
             WIFEncoder.decode(corrupted)
 
@@ -149,12 +148,14 @@ _BECH32_TV = [
     # (address, hrp, witness_version, witness_program_hex)
     (
         "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
-        "bc", 0,
+        "bc",
+        0,
         "751e76e8199196d454941c45d1b3a323f1433bd6",  # 20字节 P2WPKH
     ),
     (
         "bc1qrp33g0q5b5698ahp5jnf0y5emu8fh3ks0r3ta",
-        "bc", 0,
+        "bc",
+        0,
         "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"[2:42],  # 简化测试
     ),
 ]
@@ -164,7 +165,7 @@ _BIP173_VALID = [
     "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
     "bc1qrp33g0q5b5698ahp5jnf0y5emu8fh3ks0r3ta",
     # P2WSH 32字节
-    "bc1qrp33g0q5b5698ahp5jnf0y5emu8fh3ks0r3taxlh08kq" ,
+    "bc1qrp33g0q5b5698ahp5jnf0y5emu8fh3ks0r3taxlh08kq",
 ]
 
 # Bech32m 测试向量 (BIP-350, Taproot bc1p)
@@ -177,8 +178,8 @@ _BECH32M_TV = [
 # BIP-173 无效地址
 _BIP173_INVALID = [
     "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t5",  # 校验和错误
-    "BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4",   # 全大写（有效，测试大小写）
-    "bc1qw508d6qejxtdg4Y5r3zarvary0c5xw7kv8f3t4",   # 大小写混合（无效）
+    "BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4",  # 全大写（有效，测试大小写）
+    "bc1qw508d6qejxtdg4Y5r3zarvary0c5xw7kv8f3t4",  # 大小写混合（无效）
 ]
 
 
@@ -249,7 +250,9 @@ class TestBech32Decode(unittest.TestCase):
 
     def test_convertbits_roundtrip(self):
         """convertbits 8->5->8 往返验证"""
-        original = list(b'\x75\x1e\x76\xe8\x19\x91\x96\xd4\x54\x94\x1c\x45\xd1\xb3\xa3\x23\xf1\x43\x3b\xd6')
+        original = list(
+            b"\x75\x1e\x76\xe8\x19\x91\x96\xd4\x54\x94\x1c\x45\xd1\xb3\xa3\x23\xf1\x43\x3b\xd6"
+        )
         encoded = _convertbits(original, 8, 5)
         self.assertIsNotNone(encoded)
         decoded = _convertbits(encoded, 5, 8, False)
@@ -269,14 +272,14 @@ class TestResolverBech32Integration(unittest.TestCase):
         result = self.resolver.resolve(addr)
         self.assertIsNotNone(result, f"Failed to resolve: {addr}")
         # 结果应是有效的 P2PKH 地址
-        self.assertTrue(result.startswith('1'), f"Expected P2PKH, got: {result}")
+        self.assertTrue(result.startswith("1"), f"Expected P2PKH, got: {result}")
 
     def test_resolve_taproot(self):
         """TargetResolver 应能解析 bc1p Taproot 地址"""
         addr = "bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0"
         result = self.resolver.resolve(addr)
         self.assertIsNotNone(result, f"Failed to resolve Taproot: {addr}")
-        self.assertTrue(result.startswith('1'), f"Expected P2PKH, got: {result}")
+        self.assertTrue(result.startswith("1"), f"Expected P2PKH, got: {result}")
 
     def test_resolve_mixed_case_invalid(self):
         """大小写混合 Bech32 地址应解析失败"""

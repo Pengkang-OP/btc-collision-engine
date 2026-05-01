@@ -29,7 +29,9 @@ from src.collision.events import (
 )
 from src.collision.event_bus import EventBus
 from src.monitoring.data_logger import DataLogger
-from src.monitoring.enhanced_monitoring import EnhancedMonitoringSystem  # noqa: F401 — type annotation reference
+from src.monitoring.enhanced_monitoring import (
+    EnhancedMonitoringSystem,
+)  # noqa: F401 — type annotation reference
 
 logger = logging.getLogger(__name__)
 

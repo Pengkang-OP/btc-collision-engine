@@ -24,8 +24,7 @@ from src.gpu.device import GPUDeviceDetector, identify_vendor, identify_gpu_mode
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -45,7 +44,7 @@ def generate_test_targets(count: int = 5) -> Set[str]:
         "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
         "1N5czHm9q7wSjzM7X4GCe4yi7z14L9tK8",
         "1M8s2S5bgAzSSzVTeL7zruvMPLvzSkEAuv",
-        "16UwLL9Risc3QfPqBUvKofHmBQ7wMtjvM"
+        "16UwLL9Risc3QfPqBUvKofHmBQ7wMtjvM",
     ]
 
     targets = set()
@@ -65,8 +64,8 @@ def test_gpu_device_detection():
         logger.info(f"检测到 {len(devices)} 个GPU设备")
 
         for i, device in enumerate(devices):
-            device_name = device.get('name', 'Unknown')
-            vendor = device.get('vendor', 'Unknown')
+            device_name = device.get("name", "Unknown")
+            vendor = device.get("vendor", "Unknown")
             vendor_identifier = identify_vendor(device_name, vendor)
             gpu_model = identify_gpu_model(device_name, vendor_identifier)
 
@@ -82,6 +81,7 @@ def test_gpu_device_detection():
     except Exception as e:
         logger.error(f"测试失败: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -103,10 +103,7 @@ def test_gpu_initialization(device_index: int):
     try:
         # 创建GPU碰撞引擎
         engine = GPUCollisionEngine(
-            targets=targets,
-            device_index=device_index,
-            batch_size=8192,
-            data_logging_enabled=False
+            targets=targets, device_index=device_index, batch_size=8192, data_logging_enabled=False
         )
 
         logger.info(f"GPU设备 [{device_index}] 初始化成功")
@@ -128,6 +125,7 @@ def test_gpu_initialization(device_index: int):
         error_msg = f"GPU设备 [{device_index}] 测试失败: {e}"
         logger.error(error_msg)
         import traceback
+
         traceback.print_exc()
         return False, error_msg
 
@@ -158,7 +156,7 @@ def test_gpu_batch_sizes(device_index: int):
                 targets=targets,
                 device_index=device_index,
                 batch_size=batch_size,
-                data_logging_enabled=False
+                data_logging_enabled=False,
             )
 
             # 启动引擎
@@ -194,24 +192,28 @@ def test_all_gpus():
     test_results = []
 
     for i, device in enumerate(devices):
-        device_name = device.get('name', 'Unknown')
+        device_name = device.get("name", "Unknown")
         logger.info(f"\n=== 测试 GPU 设备 [{i}]: {device_name} ===")
 
         # 测试设备初始化
         init_success, init_error = test_gpu_initialization(i)
 
         # 测试不同批次大小
-        batch_success, batch_error = test_gpu_batch_sizes(i) if init_success else (False, "初始化失败")
+        batch_success, batch_error = (
+            test_gpu_batch_sizes(i) if init_success else (False, "初始化失败")
+        )
 
         # 记录测试结果
-        test_results.append({
-            'device_index': i,
-            'device_name': device_name,
-            'init_success': init_success,
-            'init_error': init_error,
-            'batch_success': batch_success,
-            'batch_error': batch_error
-        })
+        test_results.append(
+            {
+                "device_index": i,
+                "device_name": device_name,
+                "init_success": init_success,
+                "init_error": init_error,
+                "batch_success": batch_success,
+                "batch_error": batch_error,
+            }
+        )
 
     return test_results
 
@@ -232,25 +234,29 @@ def generate_compatibility_report(test_results: List[Dict]):
         return
 
     total_devices = len(test_results)
-    init_success_count = sum(1 for result in test_results if result['init_success'])
-    batch_success_count = sum(1 for result in test_results if result['batch_success'])
+    init_success_count = sum(1 for result in test_results if result["init_success"])
+    batch_success_count = sum(1 for result in test_results if result["batch_success"])
 
     logger.info(f"测试设备数量: {total_devices}")
-    logger.info(f"初始化成功: {init_success_count}/{total_devices} ({init_success_count/total_devices*100:.1f}%)")
-    logger.info(f"批次大小测试成功: {batch_success_count}/{total_devices} ({batch_success_count/total_devices*100:.1f}%)")
+    logger.info(
+        f"初始化成功: {init_success_count}/{total_devices} ({init_success_count/total_devices*100:.1f}%)"
+    )
+    logger.info(
+        f"批次大小测试成功: {batch_success_count}/{total_devices} ({batch_success_count/total_devices*100:.1f}%)"
+    )
 
     for result in test_results:
-        device_index = result['device_index']
-        device_name = result['device_name']
-        init_status = "✅ 成功" if result['init_success'] else "❌ 失败"
-        batch_status = "✅ 成功" if result['batch_success'] else "❌ 失败"
+        device_index = result["device_index"]
+        device_name = result["device_name"]
+        init_status = "✅ 成功" if result["init_success"] else "❌ 失败"
+        batch_status = "✅ 成功" if result["batch_success"] else "❌ 失败"
 
         logger.info(f"\n设备 [{device_index}]: {device_name}")
         logger.info(f"  初始化: {init_status}")
-        if not result['init_success'] and result['init_error']:
+        if not result["init_success"] and result["init_error"]:
             logger.info(f"    错误: {result['init_error']}")
         logger.info(f"  批次大小测试: {batch_status}")
-        if not result['batch_success'] and result['batch_error']:
+        if not result["batch_success"] and result["batch_error"]:
             logger.info(f"    错误: {result['batch_error']}")
 
 

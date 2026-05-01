@@ -4,13 +4,14 @@
 
 此脚本用于测试单GPU的功能，包括初始化、碰撞检测和资源释放等。
 """
+
 import time
 import logging
 import sys
 import os
 
 # 添加项目根目录到Python路径
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import pytest
 
@@ -23,12 +24,13 @@ from src.utils import init_logging, get_configured_logger
 init_logging()
 logger = get_configured_logger("SingleGPUTest")
 
+
 def test_single_gpu_initialization():
     """测试单GPU初始化"""
     logger.info("开始测试单GPU初始化")
 
     # 创建一个测试目标地址集合
-    test_targets = {'1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'}
+    test_targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
 
     # 初始化GPU碰撞引擎
     engine = None
@@ -44,6 +46,7 @@ def test_single_gpu_initialization():
     except Exception as e:
         logger.error(f"❌ 单GPU初始化失败: {e}")
         import traceback
+
         traceback.print_exc()
         return False
     finally:
@@ -54,12 +57,13 @@ def test_single_gpu_initialization():
             except Exception as e:
                 logger.warning(f"停止引擎时出现错误: {e}")
 
+
 def test_single_gpu_collision_detection():
     """测试单GPU碰撞检测"""
     logger.info("开始测试单GPU碰撞检测")
 
     # 创建一个测试目标地址集合
-    test_targets = {'1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'}
+    test_targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
 
     # 初始化GPU碰撞引擎
     engine = None
@@ -71,7 +75,7 @@ def test_single_gpu_collision_detection():
         logger.info("运行碰撞检测任务...")
 
         # 生成一个测试种子
-        test_seed = b'\x00' * 31 + b'\x01'
+        test_seed = b"\x00" * 31 + b"\x01"
 
         # 运行碰撞检测
         start_time = time.time()
@@ -83,6 +87,7 @@ def test_single_gpu_collision_detection():
     except Exception as e:
         logger.error(f"❌ 单GPU碰撞检测失败: {e}")
         import traceback
+
         traceback.print_exc()
         return False
     finally:
@@ -93,12 +98,13 @@ def test_single_gpu_collision_detection():
             except Exception as e:
                 logger.warning(f"停止引擎时出现错误: {e}")
 
+
 def test_single_gpu_resource_release():
     """测试单GPU资源释放"""
     logger.info("开始测试单GPU资源释放")
 
     # 创建一个测试目标地址集合
-    test_targets = {'1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'}
+    test_targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
 
     # 初始化GPU碰撞引擎
     engine = None
@@ -123,8 +129,10 @@ def test_single_gpu_resource_release():
     except Exception as e:
         logger.error(f"❌ 单GPU资源释放失败: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def main():
     """主函数"""
@@ -145,7 +153,9 @@ def main():
     except Exception as e:
         logger.error(f"❌ 测试过程中出现错误: {e}")
         import traceback
+
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     main()

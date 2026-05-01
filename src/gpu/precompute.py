@@ -18,7 +18,9 @@ _EXPECTED_2G_X = 0xC6047F9441ED7D6D3045406E95C07CD85C778E4B8CEF3CA7ABAC09B95C709
 _EXPECTED_2G_Y = 0x1AE168FEA63DC339A3C58419466CEAEEF7F632653266D0E1236431A950CFE52A
 
 
-def _point_add(p1: Optional[Tuple[int, int]], p2: Optional[Tuple[int, int]]) -> Optional[Tuple[int, int]]:
+def _point_add(
+    p1: Optional[Tuple[int, int]], p2: Optional[Tuple[int, int]]
+) -> Optional[Tuple[int, int]]:
     """仿射坐标下的椭圆曲线点加法 (secp256k1)
 
     Args:

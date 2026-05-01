@@ -14,31 +14,31 @@ from unittest.mock import Mock, MagicMock, patch, PropertyMock
 from contextlib import contextmanager
 from typing import List, Optional, Dict, Any
 
-
 # ---------------------------------------------------------------------------
 # OpenCL 常量（优先从真实 pyopencl 读取，不可用时用字面量兜底）
 # ---------------------------------------------------------------------------
 try:
     import pyopencl as _cl
     import pyopencl as cl
-    _CL_DEVICE_TYPE       = _cl.device_info.TYPE
-    _CL_DEVICE_NAME       = _cl.device_info.NAME
-    _CL_DEVICE_VENDOR     = _cl.device_info.VENDOR
-    _CL_DEVICE_TYPE_GPU   = _cl.device_type.GPU
-    _CL_DEVICE_TYPE_CPU   = _cl.device_type.CPU
-    _CL_PLATFORM_NAME     = _cl.platform_info.NAME
-    _PYOPENCL_AVAILABLE   = True
-    HAS_PYOPENCL          = True
+
+    _CL_DEVICE_TYPE = _cl.device_info.TYPE
+    _CL_DEVICE_NAME = _cl.device_info.NAME
+    _CL_DEVICE_VENDOR = _cl.device_info.VENDOR
+    _CL_DEVICE_TYPE_GPU = _cl.device_type.GPU
+    _CL_DEVICE_TYPE_CPU = _cl.device_type.CPU
+    _CL_PLATFORM_NAME = _cl.platform_info.NAME
+    _PYOPENCL_AVAILABLE = True
+    HAS_PYOPENCL = True
 except ImportError:
-    cl                    = None
-    _CL_DEVICE_TYPE       = 0x1000
-    _CL_DEVICE_NAME       = 0x1001
-    _CL_DEVICE_VENDOR     = 0x1002
-    _CL_DEVICE_TYPE_GPU   = 0x4
-    _CL_DEVICE_TYPE_CPU   = 0x2
-    _CL_PLATFORM_NAME     = 0x0900
-    _PYOPENCL_AVAILABLE   = False
-    HAS_PYOPENCL          = False
+    cl = None
+    _CL_DEVICE_TYPE = 0x1000
+    _CL_DEVICE_NAME = 0x1001
+    _CL_DEVICE_VENDOR = 0x1002
+    _CL_DEVICE_TYPE_GPU = 0x4
+    _CL_DEVICE_TYPE_CPU = 0x2
+    _CL_PLATFORM_NAME = 0x0900
+    _PYOPENCL_AVAILABLE = False
+    HAS_PYOPENCL = False
 
 
 # ---------------------------------------------------------------------------
@@ -47,35 +47,35 @@ except ImportError:
 PRESET_NVIDIA = dict(
     name="NVIDIA GeForce RTX 3080",
     vendor="NVIDIA Corporation",
-    mem_size=8 * 1024 ** 3,
+    mem_size=8 * 1024**3,
     compute_units=68,
 )
 
 PRESET_AMD = dict(
     name="AMD Radeon RX 6800 XT",
     vendor="Advanced Micro Devices, Inc.",
-    mem_size=16 * 1024 ** 3,
+    mem_size=16 * 1024**3,
     compute_units=72,
 )
 
 PRESET_INTEL_ARC = dict(
     name="Intel(R) Arc(TM) A770 Graphics",
     vendor="Intel Corporation",
-    mem_size=16 * 1024 ** 3,
+    mem_size=16 * 1024**3,
     compute_units=512,
 )
 
 PRESET_INTEL_UHD = dict(
     name="Intel(R) UHD Graphics 630",
     vendor="Intel Corporation",
-    mem_size=8 * 1024 ** 3,
+    mem_size=8 * 1024**3,
     compute_units=24,
 )
 
 PRESET_CPU = dict(
     name="Intel(R) Core(TM) i7-10700K",
     vendor="Intel(R) Corporation",
-    mem_size=32 * 1024 ** 3,
+    mem_size=32 * 1024**3,
     compute_units=16,
     device_type=_CL_DEVICE_TYPE_CPU,
 )
@@ -95,7 +95,7 @@ class GPUMockFactory:
     def create_cl_device(
         name: str = "Mock GPU",
         vendor: str = "Mock Vendor",
-        mem_size: int = 8 * 1024 ** 3,
+        mem_size: int = 8 * 1024**3,
         compute_units: int = 32,
         device_type: int = _CL_DEVICE_TYPE_GPU,
     ) -> Mock:
@@ -125,8 +125,8 @@ class GPUMockFactory:
 
         # get_info() 响应真实 cl.device_info 常量
         _info_map: Dict[int, Any] = {
-            _CL_DEVICE_TYPE:   device_type,
-            _CL_DEVICE_NAME:   name,
+            _CL_DEVICE_TYPE: device_type,
+            _CL_DEVICE_NAME: name,
             _CL_DEVICE_VENDOR: vendor,
         }
 
@@ -186,7 +186,7 @@ class GPUMockFactory:
 
         重要: pyopencl.Buffer 的构造函数签名为:
             Buffer(context, flags, size=0, hostbuf=None)
-        
+
         因此 Mock 必须能够接受这些参数并返回有效的 Mock 对象。
 
         Args:
@@ -200,12 +200,12 @@ class GPUMockFactory:
         else:
             buf = Mock()
         buf.size = size
-        
+
         # 关键修复: Buffer 构造函数需要正确处理参数
         # 当代码调用 cl.Buffer(context, flags, hostbuf=...) 时
         # Mock 必须能够接受这些位置参数和关键字参数
         buf_constructor = Mock(return_value=buf)
-        
+
         return buf
 
     @staticmethod
@@ -242,7 +242,7 @@ class GPUMockFactory:
     def create_gpu_device(
         name: str = "Mock GPU",
         vendor: str = "Mock Vendor",
-        mem_size: int = 8 * 1024 ** 3,
+        mem_size: int = 8 * 1024**3,
     ) -> Mock:
         """创建标准 Mock ``GPUDevice`` 包装对象。
 
@@ -258,24 +258,24 @@ class GPUMockFactory:
             配置好的 Mock GPUDevice 对象
         """
         device_info = {
-            "name":            name,
-            "vendor":          vendor,
+            "name": name,
+            "vendor": vendor,
             "global_mem_size": mem_size,
         }
 
         device = Mock()
-        device.context   = Mock()
-        device.queue     = Mock()
+        device.context = Mock()
+        device.queue = Mock()
         device.device_info = device_info
 
         # 方法接口
-        device.initialize             = Mock()
-        device.get_device_info        = Mock(return_value=device_info)
-        device.cleanup                = Mock()
+        device.initialize = Mock()
+        device.get_device_info = Mock(return_value=device_info)
+        device.cleanup = Mock()
 
         # 性能相关属性（部分路径会做数值运算，需为 float/int）
-        device.memory_efficiency      = 0.85
-        device.compute_efficiency     = 0.90
+        device.memory_efficiency = 0.85
+        device.compute_efficiency = 0.90
 
         return device
 
@@ -290,11 +290,11 @@ class GPUMockFactory:
             配置好的 Mock GPUContext 对象
         """
         ctx = Mock()
-        ctx.program                = Mock()
-        ctx.apply_optimizations    = Mock()
-        ctx.calculate_batch_size   = Mock(return_value=batch_size)
-        ctx.compile_kernel         = Mock()
-        ctx.cleanup                = Mock()
+        ctx.program = Mock()
+        ctx.apply_optimizations = Mock()
+        ctx.calculate_batch_size = Mock(return_value=batch_size)
+        ctx.compile_kernel = Mock()
+        ctx.cleanup = Mock()
         return ctx
 
     @staticmethod
@@ -317,10 +317,10 @@ class GPUMockFactory:
             run_batch_result = ([], 1.0)
 
         kernel = Mock()
-        kernel.max_batch_size  = batch_size
-        kernel.set_targets     = Mock()
-        kernel.cleanup         = Mock()
-        kernel.gpu_optimizer   = Mock()
+        kernel.max_batch_size = batch_size
+        kernel.set_targets = Mock()
+        kernel.cleanup = Mock()
+        kernel.gpu_optimizer = Mock()
         kernel.gpu_optimizer.analyze_and_adjust = Mock(return_value=(batch_size, {}))
 
         # run_batch 同步接口（_execute_gpu_batch 使用）
@@ -354,10 +354,10 @@ class GPUMockFactory:
             GPU = 0x4
 
         class device_info:
-            TYPE             = 0x1000
-            NAME             = 0x1001
-            VENDOR           = 0x1002
-            GLOBAL_MEM_SIZE  = 0x1003
+            TYPE = 0x1000
+            NAME = 0x1001
+            VENDOR = 0x1002
+            GLOBAL_MEM_SIZE = 0x1003
             MAX_COMPUTE_UNITS = 0x1004
 
         class platform_info:
@@ -365,35 +365,35 @@ class GPUMockFactory:
 
         class command_queue_properties:
             PROFILING_ENABLE = 0x1
-        
+
         class mem_flags:
             READ_ONLY = 0x0001
             READ_WRITE = 0x0002
             WRITE_ONLY = 0x0004
             COPY_HOST_PTR = 0x0010
 
-        mock_cl.device_type                = device_type
-        mock_cl.device_info                = device_info
-        mock_cl.platform_info              = platform_info
-        mock_cl.command_queue_properties   = command_queue_properties
-        mock_cl.mem_flags                  = mem_flags
+        mock_cl.device_type = device_type
+        mock_cl.device_info = device_info
+        mock_cl.platform_info = platform_info
+        mock_cl.command_queue_properties = command_queue_properties
+        mock_cl.mem_flags = mem_flags
 
         # 常用异常类型
-        mock_cl.Error                      = Exception
-        mock_cl.MemoryError                = MemoryError
-        mock_cl.RuntimeError               = RuntimeError
+        mock_cl.Error = Exception
+        mock_cl.MemoryError = MemoryError
+        mock_cl.RuntimeError = RuntimeError
 
         # 关键修复: pyopencl.Buffer 的 Mock 必须正确处理构造函数签名
         # Buffer(context, flags, size=0, hostbuf=None)
         mock_buffer_instance = Mock()
         mock_buffer_instance.size = 1024
         mock_cl.Buffer = Mock(return_value=mock_buffer_instance)
-        
+
         # 常用函数桩（可被测试用例覆盖）
-        mock_cl.get_platforms              = Mock(return_value=[])
-        mock_cl.Program                    = Mock(return_value=GPUMockFactory.create_cl_program())
-        mock_cl.CommandQueue               = Mock(return_value=GPUMockFactory.create_cl_queue())
-        mock_cl.Context                    = Mock(return_value=GPUMockFactory.create_cl_context())
+        mock_cl.get_platforms = Mock(return_value=[])
+        mock_cl.Program = Mock(return_value=GPUMockFactory.create_cl_program())
+        mock_cl.CommandQueue = Mock(return_value=GPUMockFactory.create_cl_queue())
+        mock_cl.Context = Mock(return_value=GPUMockFactory.create_cl_context())
 
         return mock_cl
 
@@ -439,33 +439,41 @@ class GPUMockFactory:
                 engine = GPUCollisionEngine(targets, batch_size=100)
                 engine.start(mode="random")
         """
-        mock_device  = GPUMockFactory.create_gpu_device()
+        mock_device = GPUMockFactory.create_gpu_device()
         mock_context = GPUMockFactory.create_gpu_context(batch_size)
-        mock_kernel  = GPUMockFactory.create_gpu_kernel(
+        mock_kernel = GPUMockFactory.create_gpu_kernel(
             batch_size=batch_size,
             run_batch_side_effect=run_batch_side_effect,
         )
-        mock_buffer  = GPUMockFactory.create_cl_buffer()
+        mock_buffer = GPUMockFactory.create_cl_buffer()
 
-        with patch("src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE", True), \
-             patch("src.collision.gpu_collision_engine.GPUDevice",           return_value=mock_device), \
-             patch("src.collision.gpu_collision_engine.GPUContext",          return_value=mock_context), \
-             patch("src.collision.gpu_collision_engine.GPUKernel",           return_value=mock_kernel), \
-             patch("src.collision.gpu_collision_engine.GPUProfileLoader")    as mock_loader, \
-             patch("pyopencl.Buffer",                                         return_value=mock_buffer), \
-             patch("src.gpu.async_executor.AsyncGPUExecutor.initialize_buffers"), \
-             patch("src.gpu.async_executor.AsyncGPUExecutor.run_batch_async",
-                   side_effect=mock_kernel.run_batch_async.side_effect,
-                   return_value=mock_kernel.run_batch_async.return_value if run_batch_side_effect is None else None):
+        with (
+            patch("src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE", True),
+            patch("src.collision.gpu_collision_engine.GPUDevice", return_value=mock_device),
+            patch("src.collision.gpu_collision_engine.GPUContext", return_value=mock_context),
+            patch("src.collision.gpu_collision_engine.GPUKernel", return_value=mock_kernel),
+            patch("src.collision.gpu_collision_engine.GPUProfileLoader") as mock_loader,
+            patch("pyopencl.Buffer", return_value=mock_buffer),
+            patch("src.gpu.async_executor.AsyncGPUExecutor.initialize_buffers"),
+            patch(
+                "src.gpu.async_executor.AsyncGPUExecutor.run_batch_async",
+                side_effect=mock_kernel.run_batch_async.side_effect,
+                return_value=(
+                    mock_kernel.run_batch_async.return_value
+                    if run_batch_side_effect is None
+                    else None
+                ),
+            ),
+        ):
 
             mock_loader.return_value.get_profile.return_value = None
 
             yield {
-                "device":  mock_device,
+                "device": mock_device,
                 "context": mock_context,
-                "kernel":  mock_kernel,
-                "buffer":  mock_buffer,
-                "loader":  mock_loader,
+                "kernel": mock_kernel,
+                "buffer": mock_buffer,
+                "loader": mock_loader,
             }
 
     # ------------------------------------------------------------------
@@ -503,6 +511,7 @@ class GPUMockFactory:
     def multi_vendor_platforms(cls) -> List[Mock]:
         """返回包含 NVIDIA / AMD / Intel Arc 三种设备的多平台列表。"""
         platform1 = cls.create_cl_platform("Platform NVIDIA", [cls.nvidia_device()])
-        platform2 = cls.create_cl_platform("Platform AMD-Intel",
-                                           [cls.amd_device(), cls.intel_arc_device()])
+        platform2 = cls.create_cl_platform(
+            "Platform AMD-Intel", [cls.amd_device(), cls.intel_arc_device()]
+        )
         return [platform1, platform2]

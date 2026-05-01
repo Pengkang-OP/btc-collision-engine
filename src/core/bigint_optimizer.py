@@ -87,9 +87,10 @@ class BigIntOptimizer:
             ValueError: 当逆元不存在时
         """
         if self.use_gmpy2:
+            assert self.gmpy2 is not None and self.mpz is not None
             # 使用gmpy2.invert() - 基于扩展欧几里得的优化实现
             try:
-                return int(self.gmpy2.invert(self.mpz(a), self.mpz(m)))  # type: ignore[union-attr,misc]
+                return int(self.gmpy2.invert(self.mpz(a), self.mpz(m)))
             except ZeroDivisionError:
                 raise ValueError(f"模逆元不存在: {a} 在模 {m} 下")
         else:
@@ -132,8 +133,9 @@ class BigIntOptimizer:
             (a * b) % m
         """
         if self.use_gmpy2:
+            assert self.gmpy2 is not None and self.mpz is not None
             # gmpy2内部使用Comba乘法,比Python int快30-40%
-            return int((self.mpz(a) * self.mpz(b)) % self.mpz(m))  # type: ignore[misc]
+            return int((self.mpz(a) * self.mpz(b)) % self.mpz(m))
         else:
             return (a * b) % m
 
@@ -150,7 +152,8 @@ class BigIntOptimizer:
             (a + b) % m
         """
         if self.use_gmpy2:
-            return int((self.mpz(a) + self.mpz(b)) % self.mpz(m))  # type: ignore[misc]
+            assert self.gmpy2 is not None and self.mpz is not None
+            return int((self.mpz(a) + self.mpz(b)) % self.mpz(m))
         else:
             return (a + b) % m
 
@@ -167,7 +170,8 @@ class BigIntOptimizer:
             (a - b) % m
         """
         if self.use_gmpy2:
-            return int((self.mpz(a) - self.mpz(b)) % self.mpz(m))  # type: ignore[misc]
+            assert self.gmpy2 is not None and self.mpz is not None
+            return int((self.mpz(a) - self.mpz(b)) % self.mpz(m))
         else:
             return (a - b) % m
 
@@ -184,7 +188,8 @@ class BigIntOptimizer:
             (base ^ exp) % m
         """
         if self.use_gmpy2:
-            return int(pow(self.mpz(base), self.mpz(exp), self.mpz(m)))  # type: ignore[misc]
+            assert self.gmpy2 is not None and self.mpz is not None
+            return int(pow(self.mpz(base), self.mpz(exp), self.mpz(m)))
         else:
             return pow(base, exp, m)
 

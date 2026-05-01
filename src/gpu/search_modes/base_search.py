@@ -61,6 +61,7 @@ class BaseSearchMode:
             本次循环共处理的私钥总数 (batch_count)
         """
         engine = self.engine
+        assert engine.stats is not None
         batch_count = 0
 
         while not engine._stop_event.is_set():
@@ -89,13 +90,13 @@ class BaseSearchMode:
                     from ...core.wif import WIF
 
                     wif = WIF.encode(private_key, compressed=True)
-                    engine.stats.add_match(private_key, address)  # type: ignore[attr-defined]
+                    engine.stats.add_match(private_key, address)
                     if engine.on_match:
                         engine.on_match(private_key, address, wif)
 
                 # 更新统计
                 batch_count += actual_batch_size
-                engine.stats.update(batch_count)  # type: ignore[attr-defined]
+                engine.stats.update(batch_count)
 
                 # 成功后重置连续错误计数
                 with engine._batch_size_lock:
@@ -105,9 +106,9 @@ class BaseSearchMode:
                 current_time = time.time()
                 if current_time - engine._last_progress_time >= engine._progress_interval_sec:
                     if engine.on_progress:
-                        engine.on_progress(engine.stats.snapshot())  # type: ignore[attr-defined]
+                        engine.on_progress(engine.stats.snapshot())
                     engine._save_checkpoint(batch_count)
-                    engine._last_progress_time = current_time  # type: ignore[assignment]
+                    engine._last_progress_time = current_time
 
             except Exception as e:
                 # 保持现有的 ExceptionHandler 调用
@@ -120,7 +121,8 @@ class BaseSearchMode:
                     # OOM: 缩减 batch_size
                     logger.warning(f"GPU内存不足，尝试缩减batch_size")
                     with engine._batch_size_lock:
-                        new_size = max(engine._batch_size // 2, 1024)  # type: ignore[operator]
+                        assert engine._batch_size is not None
+                        new_size = max(engine._batch_size // 2, 1024)
                         engine._batch_size = new_size
                         logger.info(f"batch_size已缩减至 {new_size}")
                     continue

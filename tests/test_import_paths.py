@@ -26,11 +26,11 @@ class TestNewImportPaths:
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             from src.collision import TargetResolver
-            
+
             # 验证没有DeprecationWarning
             deprecation_warnings = [x for x in w if issubclass(x.category, DeprecationWarning)]
             assert len(deprecation_warnings) == 0, "新路径不应产生DeprecationWarning"
-            
+
             # 验证导入成功
             assert TargetResolver is not None
             assert callable(TargetResolver)
@@ -40,11 +40,11 @@ class TestNewImportPaths:
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             from src.collision.targets.resolver import TargetResolver
-            
+
             # 验证没有DeprecationWarning
             deprecation_warnings = [x for x in w if issubclass(x.category, DeprecationWarning)]
             assert len(deprecation_warnings) == 0, "新路径不应产生DeprecationWarning"
-            
+
             # 验证导入成功
             assert TargetResolver is not None
 
@@ -53,14 +53,13 @@ class TestNewImportPaths:
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             from src.collision.targets import TargetResolver
-            
+
             # 验证没有DeprecationWarning
             deprecation_warnings = [x for x in w if issubclass(x.category, DeprecationWarning)]
             assert len(deprecation_warnings) == 0, "新路径不应产生DeprecationWarning"
-            
+
             # 验证导入成功
             assert TargetResolver is not None
-
 
 
 class TestImportConsistency:
@@ -72,11 +71,11 @@ class TestImportConsistency:
         from src.collision import TargetResolver as TR1
         from src.collision.targets.resolver import TargetResolver as TR2
         from src.collision.targets import TargetResolver as TR3
-        
+
         # 验证都是同一个类
         assert TR1 is TR2, "包导入和完整路径导入应该返回同一个类"
         assert TR2 is TR3, "完整路径导入和子包导入应该返回同一个类"
-        
+
         # 验证类名
         assert TR1.__name__ == "TargetResolver"
         assert TR2.__name__ == "TargetResolver"
@@ -88,15 +87,15 @@ class TestImportConsistency:
         from src.collision import TargetResolver as TR1
         from src.collision.targets.resolver import TargetResolver as TR2
         from src.collision.targets import TargetResolver as TR3
-        
+
         # 验证都可以实例化
         instances = []
         for TR in [TR1, TR2, TR3]:
             instance = TR(enable_cache=False)
             instances.append(instance)
             assert instance is not None
-            assert hasattr(instance, 'resolve')
-        
+            assert hasattr(instance, "resolve")
+
         # 验证所有实例类型相同
         assert type(instances[0]) == type(instances[1])
         assert type(instances[1]) == type(instances[2])

@@ -644,9 +644,10 @@ class MultiGPUCollisionEngine:
             问题列表
         """
         if self._monitor_enabled:
-            return cast(List[Dict], self.data_monitor.get_issues(
-                severity=severity, device_idx=device_idx, limit=limit
-            ))
+            return cast(
+                List[Dict],
+                self.data_monitor.get_issues(severity=severity, device_idx=device_idx, limit=limit),
+            )
         else:
             return []
 

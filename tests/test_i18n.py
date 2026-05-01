@@ -35,6 +35,7 @@ _LOCALES_DIR = Path(__file__).parent.parent / "src" / "i18n" / "locales"
 # 辅助函数
 # ---------------------------------------------------------------------------
 
+
 def _extract_keys(data: dict, prefix: str = "") -> set:
     """递归提取字典中所有叶节点的点分隔 key。"""
     keys: set = set()
@@ -50,6 +51,7 @@ def _extract_keys(data: dict, prefix: str = "") -> set:
 # ===========================================================================
 # 1. TestTranslator — 翻译器核心功能
 # ===========================================================================
+
 
 class TestTranslator(unittest.TestCase):
     """翻译器核心功能测试。"""
@@ -183,6 +185,7 @@ class TestTranslator(unittest.TestCase):
 # 2. TestLanguageDetector — 语言检测
 # ===========================================================================
 
+
 class TestLanguageDetector(unittest.TestCase):
     """语言检测测试。"""
 
@@ -229,9 +232,11 @@ class TestLanguageDetector(unittest.TestCase):
         """
         os.environ["BTC_LANGUAGE"] = "fr_FR"
         # 同时 mock 平台检测和 locale 回退，确保最终回退到 en_US
-        with patch("src.i18n.language_detector._detect_windows_language", return_value=None), \
-             patch("src.i18n.language_detector._detect_unix_language", return_value=None), \
-             patch("locale.getdefaultlocale", return_value=(None, None)):
+        with (
+            patch("src.i18n.language_detector._detect_windows_language", return_value=None),
+            patch("src.i18n.language_detector._detect_unix_language", return_value=None),
+            patch("locale.getdefaultlocale", return_value=(None, None)),
+        ):
             result = detect_system_language()
         self.assertEqual(result, "en_US")
 
@@ -337,12 +342,14 @@ class TestLanguageDetector(unittest.TestCase):
 # 3. TestLanguageSwitching — 运行时语言切换
 # ===========================================================================
 
+
 class TestLanguageSwitching(unittest.TestCase):
     """运行时语言切换测试。"""
 
     def setUp(self):
         """保存并重置全局翻译器语言状态。"""
         import src.i18n as i18n_module
+
         self._original_lang = i18n_module._translator.current_language
 
     def tearDown(self):
@@ -400,6 +407,7 @@ class TestLanguageSwitching(unittest.TestCase):
 # 4. TestTranslationCompleteness — 翻译完整性验证
 # ===========================================================================
 
+
 class TestTranslationCompleteness(unittest.TestCase):
     """验证 zh_CN.json 与 en_US.json 的翻译 key 完全一致。"""
 
@@ -455,6 +463,7 @@ class TestTranslationCompleteness(unittest.TestCase):
 
     def test_all_zh_values_are_non_empty_strings(self):
         """zh_CN 所有叶节点 value 应为非空字符串。"""
+
         def check_values(data: dict, path: str = ""):
             for k, v in data.items():
                 full = f"{path}.{k}" if path else k
@@ -463,10 +472,12 @@ class TestTranslationCompleteness(unittest.TestCase):
                 else:
                     self.assertIsInstance(v, str, f"zh_CN key '{full}' 的 value 不是字符串")
                     self.assertGreater(len(v), 0, f"zh_CN key '{full}' 的 value 为空字符串")
+
         check_values(self.zh_data)
 
     def test_all_en_values_are_non_empty_strings(self):
         """en_US 所有叶节点 value 应为非空字符串。"""
+
         def check_values(data: dict, path: str = ""):
             for k, v in data.items():
                 full = f"{path}.{k}" if path else k
@@ -475,6 +486,7 @@ class TestTranslationCompleteness(unittest.TestCase):
                 else:
                     self.assertIsInstance(v, str, f"en_US key '{full}' 的 value 不是字符串")
                     self.assertGreater(len(v), 0, f"en_US key '{full}' 的 value 为空字符串")
+
         check_values(self.en_data)
 
     def test_key_count_matches(self):
@@ -490,12 +502,14 @@ class TestTranslationCompleteness(unittest.TestCase):
 # 5. TestCLILanguageIntegration — CLI --language 参数集成
 # ===========================================================================
 
+
 class TestCLILanguageIntegration(unittest.TestCase):
     """CLI --language 参数集成测试。"""
 
     def setUp(self):
         """保存并重置全局翻译器语言状态。"""
         import src.i18n as i18n_module
+
         self._original_lang = i18n_module._translator.current_language
 
     def tearDown(self):

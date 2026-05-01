@@ -42,43 +42,45 @@ from src.cli.config_migration import (
 )
 from src.collision.collision_stats import CollisionStats
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # 通用辅助函数
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def _make_full_args(**kwargs):
     """构造具有所有必填字段的 Args 对象"""
+
     class Args:
         pass
+
     a = Args()
-    a.targets       = kwargs.get("targets", ["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"])
-    a.file          = kwargs.get("file", None)
-    a.mode          = kwargs.get("mode", "random")
-    a.start         = kwargs.get("start", None)
-    a.end           = kwargs.get("end", None)
-    a.workers       = kwargs.get("workers", 4)
-    a.duration      = kwargs.get("duration", 60)
-    a.health_check  = kwargs.get("health_check", False)
-    a.platform_check= kwargs.get("platform_check", False)
-    a.cleanup       = kwargs.get("cleanup", False)
+    a.targets = kwargs.get("targets", ["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"])
+    a.file = kwargs.get("file", None)
+    a.mode = kwargs.get("mode", "random")
+    a.start = kwargs.get("start", None)
+    a.end = kwargs.get("end", None)
+    a.workers = kwargs.get("workers", 4)
+    a.duration = kwargs.get("duration", 60)
+    a.health_check = kwargs.get("health_check", False)
+    a.platform_check = kwargs.get("platform_check", False)
+    a.cleanup = kwargs.get("cleanup", False)
     a.validate_addresses = kwargs.get("validate_addresses", None)
-    a.examples      = kwargs.get("examples", False)
-    a.config_check  = kwargs.get("config_check", False)
-    a.quick_start   = kwargs.get("quick_start", False)
-    a.use_gpu       = kwargs.get("use_gpu", False)
-    a.multi_gpu     = kwargs.get("multi_gpu", False)
-    a.checkpoint    = kwargs.get("checkpoint", False)
+    a.examples = kwargs.get("examples", False)
+    a.config_check = kwargs.get("config_check", False)
+    a.quick_start = kwargs.get("quick_start", False)
+    a.use_gpu = kwargs.get("use_gpu", False)
+    a.multi_gpu = kwargs.get("multi_gpu", False)
+    a.checkpoint = kwargs.get("checkpoint", False)
     a.checkpoint_interval = kwargs.get("checkpoint_interval", 30)
-    a.dedup         = kwargs.get("dedup", False)
-    a.dedup_max_size= kwargs.get("dedup_max_size", 1_000_000)
-    a.window_size   = kwargs.get("window_size", 8)
-    a.no_optimize   = kwargs.get("no_optimize", False)
-    a.no_simd       = kwargs.get("no_simd", False)
-    a.no_memory_pool= kwargs.get("no_memory_pool", False)
-    a.sensitive_mode= kwargs.get("sensitive_mode", "full")
+    a.dedup = kwargs.get("dedup", False)
+    a.dedup_max_size = kwargs.get("dedup_max_size", 1_000_000)
+    a.window_size = kwargs.get("window_size", 8)
+    a.no_optimize = kwargs.get("no_optimize", False)
+    a.no_simd = kwargs.get("no_simd", False)
+    a.no_memory_pool = kwargs.get("no_memory_pool", False)
+    a.sensitive_mode = kwargs.get("sensitive_mode", "full")
     a.export_progress = kwargs.get("export_progress", None)
-    a.export_matches  = kwargs.get("export_matches", None)
+    a.export_matches = kwargs.get("export_matches", None)
     return a
 
 
@@ -86,11 +88,11 @@ def _make_mock_stats(total_checked: int = 1000) -> Mock:
     """创建标准 mock stats 对象"""
     stats = Mock()
     stats.total_checked = total_checked
-    stats.elapsed       = 1.0
-    stats.start_time    = 1000.0
-    stats.matches       = []
+    stats.elapsed = 1.0
+    stats.start_time = 1000.0
+    stats.matches = []
     stats.format_elapsed = lambda: "0:00:01"
-    stats.format_speed   = lambda: "1,000 次/秒"
+    stats.format_speed = lambda: "1,000 次/秒"
     return stats
 
 
@@ -100,7 +102,7 @@ def _make_mock_engine(stats: Mock = None) -> Mock:
     engine.is_running.side_effect = [True, False]
     engine.get_stats.return_value = stats or _make_mock_stats()
     engine.start = Mock()
-    engine.stop  = Mock()
+    engine.stop = Mock()
     return engine
 
 
@@ -108,14 +110,17 @@ def _make_mock_engine(stats: Mock = None) -> Mock:
 # TestCLIEndToEnd: 端到端流程测试
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestCLIEndToEnd:
     """参数解析 -> 验证 -> 执行的端到端集成流测试"""
 
     def setup_method(self):
         """每个测试前重置 CLIOutput 和 LogWindow 单例，确保测试隔离"""
         from src.cli.output import CLIOutput
+
         CLIOutput.reset_instance()
         from src.cli.log_window import reset_log_window_instance
+
         reset_log_window_instance()
 
     def test_parse_validate_load_flow(self, tmp_path, monkeypatch):
@@ -123,16 +128,20 @@ class TestCLIEndToEnd:
         # 创建临时地址文件（放在项目内部 tests/data_logs 避免路径拦截）
         addr_file = tmp_path / "targets.txt"
         addr_file.write_text(
-            "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n"
-            "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH\n",
+            "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n" "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH\n",
             encoding="utf-8",
         )
 
-        monkeypatch.setattr("sys.argv", [
-            "cli.py",
-            "-f", str(addr_file),
-            "-m", "random",
-        ])
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "cli.py",
+                "-f",
+                str(addr_file),
+                "-m",
+                "random",
+            ],
+        )
         args = parse_args()
         assert args.file == str(addr_file)
         assert args.mode == "random"
@@ -155,16 +164,23 @@ class TestCLIEndToEnd:
         """随机模式完整生命周期（mock引擎）"""
         from src.cli.main import main
 
-        monkeypatch.setattr("sys.argv", [
-            "cli.py",
-            "-t", "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
-            "-m", "random",
-            "--duration", "1",
-        ])
-        stats   = _make_mock_stats(total_checked=500)
-        engine  = _make_mock_engine(stats)
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "cli.py",
+                "-t",
+                "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+                "-m",
+                "random",
+                "--duration",
+                "1",
+            ],
+        )
+        stats = _make_mock_stats(total_checked=500)
+        engine = _make_mock_engine(stats)
 
         _time_count = [0]
+
         def _mock_time():
             _time_count[0] += 1
             return 1000 if _time_count[0] == 1 else 2000
@@ -183,19 +199,29 @@ class TestCLIEndToEnd:
         from src.cli.main import main
 
         export_file = str(tmp_path / "progress_out.json")
-        monkeypatch.setattr("sys.argv", [
-            "cli.py",
-            "-t", "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
-            "-m", "range",
-            "--start", "1",
-            "--end", "FFFF",
-            "--duration", "1",
-            "--export-progress", export_file,
-        ])
-        stats  = _make_mock_stats(total_checked=100)
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "cli.py",
+                "-t",
+                "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+                "-m",
+                "range",
+                "--start",
+                "1",
+                "--end",
+                "FFFF",
+                "--duration",
+                "1",
+                "--export-progress",
+                export_file,
+            ],
+        )
+        stats = _make_mock_stats(total_checked=100)
         engine = _make_mock_engine(stats)
 
         _time_count = [0]
+
         def _mock_time():
             _time_count[0] += 1
             return 1000 if _time_count[0] == 1 else 2000
@@ -224,6 +250,7 @@ class TestCLIEndToEnd:
 
         # 用 load_config_with_validation 加载
         import importlib
+
         main_mod = importlib.import_module("src.cli.main")
         monkeypatch.setattr(main_mod, "_project_root", str(tmp_path))
         loaded = main_mod.load_config_with_validation()
@@ -236,19 +263,22 @@ class TestCLIEndToEnd:
 
         monkeypatch.setattr("sys.platform", "linux")
         import src.cli.commands as cmd_mod
+
         monkeypatch.setattr(cmd_mod.sys, "platform", "linux")
 
         # 模拟用户交互（单地址 -> random -> 不启用 checkpoint -> 不启用 dedup -> 0 -> CPU -> 不执行）
-        inputs = iter([
-            "1",                                  # 单个地址
-            "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",# 输入地址
-            "1",                                  # random 模式
-            "n",                                  # 不启用 checkpoint
-            "n",                                  # 不启用 dedup
-            "1",                                  # duration=无限（1=无限，旧版用0）
-            "1",                                  # CPU
-            "n",                                  # 不执行
-        ])
+        inputs = iter(
+            [
+                "1",  # 单个地址
+                "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",  # 输入地址
+                "1",  # random 模式
+                "n",  # 不启用 checkpoint
+                "n",  # 不启用 dedup
+                "1",  # duration=无限（1=无限，旧版用0）
+                "1",  # CPU
+                "n",  # 不执行
+            ]
+        )
         monkeypatch.setattr("builtins.input", lambda _="": next(inputs))
 
         buf = StringIO()
@@ -266,14 +296,17 @@ class TestCLIEndToEnd:
 # TestGPUIntegration: GPU 引擎集成测试
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestGPUIntegration:
     """GPU 引擎构建、降级和错误处理集成测试"""
 
     def setup_method(self):
         """每个测试前重置 CLIOutput 和 LogWindow 单例，确保测试隔离"""
         from src.cli.output import CLIOutput
+
         CLIOutput.reset_instance()
         from src.cli.log_window import reset_log_window_instance
+
         reset_log_window_instance()
 
     def test_single_gpu_engine_lifecycle(self, monkeypatch):
@@ -284,7 +317,7 @@ class TestGPUIntegration:
         mock_gpu_engine.is_running.side_effect = [True, False]
         mock_gpu_engine.get_stats.return_value = _make_mock_stats(200)
         mock_gpu_engine.start = Mock()
-        mock_gpu_engine.stop  = Mock()
+        mock_gpu_engine.stop = Mock()
 
         monkeypatch.setattr(eb, "GPU_AVAILABLE", True)
         monkeypatch.setattr(eb, "GPUCollisionEngine", lambda **kw: mock_gpu_engine)
@@ -369,23 +402,31 @@ class TestGPUIntegration:
 # TestPerformanceBenchmark: 性能基准测试
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestPerformanceBenchmark:
     """关键路径性能基准（宽松阈值，适应 CI 环境）"""
 
     def setup_method(self):
         """每个测试前重置 CLIOutput 和 LogWindow 单例，确保测试隔离"""
         from src.cli.output import CLIOutput
+
         CLIOutput.reset_instance()
         from src.cli.log_window import reset_log_window_instance
+
         reset_log_window_instance()
 
     def test_parse_args_performance(self, monkeypatch):
         """参数解析单次 < 200ms（100次平均）"""
-        monkeypatch.setattr("sys.argv", [
-            "cli.py",
-            "-t", "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
-            "-m", "random",
-        ])
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "cli.py",
+                "-t",
+                "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+                "-m",
+                "random",
+            ],
+        )
 
         # 预热
         parse_args()
@@ -453,10 +494,10 @@ class TestPerformanceBenchmark:
         assert len(targets) == 10_000
 
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # TestEdgeCases: 边界条件与并发安全
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class TestEdgeCases:
     """边界条件测试"""
@@ -464,14 +505,16 @@ class TestEdgeCases:
     def setup_method(self):
         """每个测试前重置 CLIOutput 和 LogWindow 单例，确保测试隔离"""
         from src.cli.output import CLIOutput
+
         CLIOutput.reset_instance()
         from src.cli.log_window import reset_log_window_instance
+
         reset_log_window_instance()
 
     def test_max_range_2_256(self, monkeypatch, capsys):
         """超大范围 2^256 触发警告，validate_args 仍返回 True"""
         start_val = 1
-        end_val = start_val + (2 ** 64) + 10000
+        end_val = start_val + (2**64) + 10000
         args = _make_full_args(
             mode="range",
             start=hex(start_val)[2:],
@@ -533,17 +576,24 @@ class TestEdgeCases:
 
         monkeypatch.setattr(_signal, "signal", _fake_signal)
 
-        stats  = _make_mock_stats(100)
+        stats = _make_mock_stats(100)
         engine = _make_mock_engine(stats)
 
-        monkeypatch.setattr("sys.argv", [
-            "cli.py",
-            "-t", "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
-            "-m", "random",
-            "--duration", "1",
-        ])
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "cli.py",
+                "-t",
+                "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+                "-m",
+                "random",
+                "--duration",
+                "1",
+            ],
+        )
 
         _time_count = [0]
+
         def _mock_time():
             _time_count[0] += 1
             return 1000 if _time_count[0] == 1 else 2000
@@ -561,14 +611,17 @@ class TestEdgeCases:
 # TestConfigMigration: 配置版本迁移工具测试
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestConfigMigration:
     """配置版本迁移工具（src.cli.config_migration）测试"""
 
     def setup_method(self):
         """每个测试前重置 CLIOutput 和 LogWindow 单例，确保测试隔离"""
         from src.cli.output import CLIOutput
+
         CLIOutput.reset_instance()
         from src.cli.log_window import reset_log_window_instance
+
         reset_log_window_instance()
 
     def test_detect_config_version(self):
@@ -641,7 +694,7 @@ class TestConfigMigration:
             "crypto": {"backend": "secp256k1"},
             "collision": {
                 "mode": "range",
-                "max_workers": 8,       # 用户自定义
+                "max_workers": 8,  # 用户自定义
                 "use_performance_optimization": False,  # 用户已有
             },
             "logging": {"level": "DEBUG"},

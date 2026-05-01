@@ -20,10 +20,9 @@ import pytest
 from unittest.mock import MagicMock, Mock, patch, PropertyMock
 
 # 添加项目根目录到路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.gpu.intel_optimizer import IntelGPUOptimizer
-
 
 # ---------------------------------------------------------------------------
 # 辅助工厂
@@ -57,7 +56,7 @@ __kernel void btc_collision(
 def _make_intel_device(
     name: str = "Intel(R) Arc(TM) A770 Graphics",
     vendor: str = "Intel Corporation",
-    global_mem_size: int = 16 * 1024 ** 3,
+    global_mem_size: int = 16 * 1024**3,
     timeout_seconds: float = 30.0,
     enable_async_execution: bool = True,
     memory_efficiency: float = 0.70,
@@ -68,9 +67,9 @@ def _make_intel_device(
     device.name = name
     device.vendor = vendor
     device.device_info = {
-        'name': name,
-        'vendor': vendor,
-        'global_mem_size': global_mem_size,
+        "name": name,
+        "vendor": vendor,
+        "global_mem_size": global_mem_size,
     }
     device.timeout_seconds = timeout_seconds
     device.enable_async_execution = enable_async_execution
@@ -91,6 +90,7 @@ def _make_optimizer_with_no_imports(device=None, config=None):
 # ---------------------------------------------------------------------------
 # 测试类
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 @pytest.mark.gpu
@@ -115,7 +115,7 @@ class TestIntelGPUOptimizerInit(unittest.TestCase):
 
     def test_config_stored_correctly(self):
         """配置字典应被正确存储"""
-        config = {'some_key': 'some_value'}
+        config = {"some_key": "some_value"}
         device = _make_intel_device()
         optimizer = IntelGPUOptimizer(device=device, config=config)
         self.assertIs(optimizer._config, config)
@@ -183,8 +183,8 @@ class TestApplyOptimizationsSuccess(unittest.TestCase):
     def _make_engine_context(self, kernel_source=None):
         """构建测试用的 engine_context"""
         return {
-            'kernel_source': kernel_source or _VALID_KERNEL_SOURCE,
-            'engine': Mock(),
+            "kernel_source": kernel_source or _VALID_KERNEL_SOURCE,
+            "engine": Mock(),
         }
 
     def test_returns_dict(self):
@@ -197,59 +197,59 @@ class TestApplyOptimizationsSuccess(unittest.TestCase):
         """成功时 result 应包含 uint32_workaround_verified=True"""
         context = self._make_engine_context()
         result = self.optimizer.apply_optimizations(context)
-        self.assertTrue(result.get('uint32_workaround_verified'))
+        self.assertTrue(result.get("uint32_workaround_verified"))
 
     def test_timeout_seconds_in_result(self):
         """成功时 result 应包含 timeout_seconds"""
         context = self._make_engine_context()
         result = self.optimizer.apply_optimizations(context)
-        self.assertIn('timeout_seconds', result)
-        self.assertEqual(result['timeout_seconds'], 30.0)
+        self.assertIn("timeout_seconds", result)
+        self.assertEqual(result["timeout_seconds"], 30.0)
 
     def test_async_enabled_in_result(self):
         """成功时 result 应包含 async_enabled"""
         context = self._make_engine_context()
         result = self.optimizer.apply_optimizations(context)
-        self.assertIn('async_enabled', result)
-        self.assertTrue(result['async_enabled'])
+        self.assertIn("async_enabled", result)
+        self.assertTrue(result["async_enabled"])
 
     def test_memory_efficiency_in_result(self):
         """成功时 result 应包含 memory_efficiency"""
         context = self._make_engine_context()
         result = self.optimizer.apply_optimizations(context)
-        self.assertIn('memory_efficiency', result)
-        self.assertAlmostEqual(result['memory_efficiency'], 0.70)
+        self.assertIn("memory_efficiency", result)
+        self.assertAlmostEqual(result["memory_efficiency"], 0.70)
 
     def test_driver_version_in_result(self):
         """成功时 result 应包含 driver_version"""
         context = self._make_engine_context()
         result = self.optimizer.apply_optimizations(context)
-        self.assertIn('driver_version', result)
-        self.assertEqual(result['driver_version'], "31.0.101.4255")
+        self.assertIn("driver_version", result)
+        self.assertEqual(result["driver_version"], "31.0.101.4255")
 
     def test_monitoring_components_in_result(self):
         """成功时 result 应包含 monitoring_components 字典"""
         context = self._make_engine_context()
         result = self.optimizer.apply_optimizations(context)
-        self.assertIn('monitoring_components', result)
-        self.assertIsInstance(result['monitoring_components'], dict)
+        self.assertIn("monitoring_components", result)
+        self.assertIsInstance(result["monitoring_components"], dict)
 
     def test_device_without_driver_version(self):
         """设备没有 driver_version 时 result['driver_version'] 应为 None"""
         device = _make_intel_device()
         del device.driver_version  # 移除属性
         optimizer = IntelGPUOptimizer(device=device, config={})
-        context = {'kernel_source': _VALID_KERNEL_SOURCE, 'engine': Mock()}
+        context = {"kernel_source": _VALID_KERNEL_SOURCE, "engine": Mock()}
         result = optimizer.apply_optimizations(context)
-        self.assertIsNone(result['driver_version'])
+        self.assertIsNone(result["driver_version"])
 
     def test_async_disabled_device(self):
         """异步执行未启用的设备应正确反映在结果中"""
         device = _make_intel_device(enable_async_execution=False)
         optimizer = IntelGPUOptimizer(device=device, config={})
-        context = {'kernel_source': _VALID_KERNEL_SOURCE, 'engine': Mock()}
+        context = {"kernel_source": _VALID_KERNEL_SOURCE, "engine": Mock()}
         result = optimizer.apply_optimizations(context)
-        self.assertFalse(result['async_enabled'])
+        self.assertFalse(result["async_enabled"])
 
 
 @pytest.mark.unit
@@ -262,18 +262,18 @@ class TestApplyOptimizationsFailure(unittest.TestCase):
         device = _make_intel_device()
         optimizer = IntelGPUOptimizer(device=device, config={})
         context = {
-            'kernel_source': _INVALID_KERNEL_SOURCE,
-            'engine': Mock(),
+            "kernel_source": _INVALID_KERNEL_SOURCE,
+            "engine": Mock(),
         }
         with self.assertRaises(RuntimeError) as cm:
             optimizer.apply_optimizations(context)
-        self.assertIn('workaround', str(cm.exception).lower())
+        self.assertIn("workaround", str(cm.exception).lower())
 
     def test_empty_kernel_raises_runtime_error(self):
         """空内核源码应导致 RuntimeError"""
         device = _make_intel_device()
         optimizer = IntelGPUOptimizer(device=device, config={})
-        context = {'kernel_source': '', 'engine': Mock()}
+        context = {"kernel_source": "", "engine": Mock()}
         with self.assertRaises(RuntimeError):
             optimizer.apply_optimizations(context)
 
@@ -281,7 +281,7 @@ class TestApplyOptimizationsFailure(unittest.TestCase):
         """engine_context 不含 kernel_source 时（默认空字符串）应抛出 RuntimeError"""
         device = _make_intel_device()
         optimizer = IntelGPUOptimizer(device=device, config={})
-        context = {'engine': Mock()}  # 无 kernel_source
+        context = {"engine": Mock()}  # 无 kernel_source
         with self.assertRaises(RuntimeError):
             optimizer.apply_optimizations(context)
 
@@ -296,18 +296,18 @@ class TestInitMonitoringAndTuning(unittest.TestCase):
         self.optimizer = IntelGPUOptimizer(device=self.device, config={})
 
     def _make_context(self):
-        return {'engine': Mock()}
+        return {"engine": Mock()}
 
     def test_returns_dict_with_required_keys(self):
         """应返回包含 5 个组件键的字典"""
         context = self._make_context()
         result = self.optimizer.init_monitoring_and_tuning(context)
         required_keys = {
-            'timeout_manager',
-            'memory_monitor',
-            'benchmark_suite',
-            'auto_tuner',
-            'performance_reporter',
+            "timeout_manager",
+            "memory_monitor",
+            "benchmark_suite",
+            "auto_tuner",
+            "performance_reporter",
         }
         self.assertEqual(set(result.keys()), required_keys)
 
@@ -316,54 +316,54 @@ class TestInitMonitoringAndTuning(unittest.TestCase):
         context = self._make_context()
 
         import_patches = {
-            'src.gpu.intel_timeout_manager': None,
-            'src.gpu.intel_memory_monitor': None,
-            'src.gpu.benchmark_suite': None,
-            'src.gpu.auto_tuner': None,
-            'src.gpu.performance_reporter': None,
+            "src.gpu.intel_timeout_manager": None,
+            "src.gpu.intel_memory_monitor": None,
+            "src.gpu.benchmark_suite": None,
+            "src.gpu.auto_tuner": None,
+            "src.gpu.performance_reporter": None,
         }
-        with patch.dict('sys.modules', import_patches):
+        with patch.dict("sys.modules", import_patches):
             result = self.optimizer.init_monitoring_and_tuning(context)
 
-        self.assertIsNone(result['timeout_manager'])
-        self.assertIsNone(result['memory_monitor'])
-        self.assertIsNone(result['benchmark_suite'])
-        self.assertIsNone(result['auto_tuner'])
-        self.assertIsNone(result['performance_reporter'])
+        self.assertIsNone(result["timeout_manager"])
+        self.assertIsNone(result["memory_monitor"])
+        self.assertIsNone(result["benchmark_suite"])
+        self.assertIsNone(result["auto_tuner"])
+        self.assertIsNone(result["performance_reporter"])
 
     def test_no_engine_in_context_skips_p2_components(self):
         """engine_context 中无 engine 时，P2 组件（benchmark/tuner/reporter）应为 None"""
         context = {}  # 无 engine
 
         import_patches = {
-            'src.gpu.intel_timeout_manager': None,
-            'src.gpu.intel_memory_monitor': None,
+            "src.gpu.intel_timeout_manager": None,
+            "src.gpu.intel_memory_monitor": None,
         }
-        with patch.dict('sys.modules', import_patches):
+        with patch.dict("sys.modules", import_patches):
             result = self.optimizer.init_monitoring_and_tuning(context)
 
-        self.assertIsNone(result['benchmark_suite'])
-        self.assertIsNone(result['auto_tuner'])
-        self.assertIsNone(result['performance_reporter'])
+        self.assertIsNone(result["benchmark_suite"])
+        self.assertIsNone(result["auto_tuner"])
+        self.assertIsNone(result["performance_reporter"])
 
     def test_properties_updated_after_init(self):
         """init 后内部属性应与返回字典的值一致"""
         context = self._make_context()
         import_patches = {
-            'src.gpu.intel_timeout_manager': None,
-            'src.gpu.intel_memory_monitor': None,
-            'src.gpu.benchmark_suite': None,
-            'src.gpu.auto_tuner': None,
-            'src.gpu.performance_reporter': None,
+            "src.gpu.intel_timeout_manager": None,
+            "src.gpu.intel_memory_monitor": None,
+            "src.gpu.benchmark_suite": None,
+            "src.gpu.auto_tuner": None,
+            "src.gpu.performance_reporter": None,
         }
-        with patch.dict('sys.modules', import_patches):
+        with patch.dict("sys.modules", import_patches):
             result = self.optimizer.init_monitoring_and_tuning(context)
 
-        self.assertIs(self.optimizer._timeout_manager, result['timeout_manager'])
-        self.assertIs(self.optimizer._memory_monitor, result['memory_monitor'])
-        self.assertIs(self.optimizer._benchmark_suite, result['benchmark_suite'])
-        self.assertIs(self.optimizer._auto_tuner, result['auto_tuner'])
-        self.assertIs(self.optimizer._performance_reporter, result['performance_reporter'])
+        self.assertIs(self.optimizer._timeout_manager, result["timeout_manager"])
+        self.assertIs(self.optimizer._memory_monitor, result["memory_monitor"])
+        self.assertIs(self.optimizer._benchmark_suite, result["benchmark_suite"])
+        self.assertIs(self.optimizer._auto_tuner, result["auto_tuner"])
+        self.assertIs(self.optimizer._performance_reporter, result["performance_reporter"])
 
     def test_device_info_not_dict_skips_memory_monitor(self):
         """device.device_info 不是字典时应跳过显存监控器初始化"""
@@ -376,38 +376,41 @@ class TestInitMonitoringAndTuning(unittest.TestCase):
         mock_timeout_cls = Mock()
         mock_timeout_cls.return_value = Mock()
 
-        with patch.dict('sys.modules', {
-            'src.gpu.benchmark_suite': None,
-            'src.gpu.auto_tuner': None,
-            'src.gpu.performance_reporter': None,
-        }):
-            with patch('src.gpu.intel_optimizer.open', side_effect=ImportError, create=True):
-                context = {'engine': Mock()}
+        with patch.dict(
+            "sys.modules",
+            {
+                "src.gpu.benchmark_suite": None,
+                "src.gpu.auto_tuner": None,
+                "src.gpu.performance_reporter": None,
+            },
+        ):
+            with patch("src.gpu.intel_optimizer.open", side_effect=ImportError, create=True):
+                context = {"engine": Mock()}
                 result = optimizer.init_monitoring_and_tuning(context)
 
-        self.assertIsNone(result['memory_monitor'])
+        self.assertIsNone(result["memory_monitor"])
 
     def test_zero_global_mem_size_skips_memory_monitor(self):
         """device_info['global_mem_size'] == 0 时应跳过显存监控器"""
         device = _make_intel_device()
         device.device_info = {
-            'name': 'Test',
-            'vendor': 'Intel',
-            'global_mem_size': 0,  # 零大小
+            "name": "Test",
+            "vendor": "Intel",
+            "global_mem_size": 0,  # 零大小
         }
         optimizer = IntelGPUOptimizer(device=device, config={})
 
         import_patches = {
-            'src.gpu.intel_timeout_manager': None,
-            'src.gpu.benchmark_suite': None,
-            'src.gpu.auto_tuner': None,
-            'src.gpu.performance_reporter': None,
+            "src.gpu.intel_timeout_manager": None,
+            "src.gpu.benchmark_suite": None,
+            "src.gpu.auto_tuner": None,
+            "src.gpu.performance_reporter": None,
         }
-        with patch.dict('sys.modules', import_patches):
-            context = {'engine': Mock()}
+        with patch.dict("sys.modules", import_patches):
+            context = {"engine": Mock()}
             result = optimizer.init_monitoring_and_tuning(context)
 
-        self.assertIsNone(result['memory_monitor'])
+        self.assertIsNone(result["memory_monitor"])
 
 
 @pytest.mark.unit
@@ -428,15 +431,15 @@ class TestGetOptimizationFlags(unittest.TestCase):
         optimizer = IntelGPUOptimizer(device=device, config={})
         result = optimizer.get_optimization_flags()
         required_keys = {
-            'async_execution',
-            'timeout_seconds',
-            'memory_efficiency',
-            'driver_version',
-            'timeout_manager_active',
-            'memory_monitor_active',
-            'benchmark_suite_active',
-            'auto_tuner_active',
-            'performance_reporter_active',
+            "async_execution",
+            "timeout_seconds",
+            "memory_efficiency",
+            "driver_version",
+            "timeout_manager_active",
+            "memory_monitor_active",
+            "benchmark_suite_active",
+            "auto_tuner_active",
+            "performance_reporter_active",
         }
         self.assertTrue(required_keys.issubset(set(result.keys())))
 
@@ -445,46 +448,46 @@ class TestGetOptimizationFlags(unittest.TestCase):
         device = _make_intel_device()
         optimizer = IntelGPUOptimizer(device=device, config={})
         result = optimizer.get_optimization_flags()
-        self.assertFalse(result['timeout_manager_active'])
-        self.assertFalse(result['memory_monitor_active'])
-        self.assertFalse(result['benchmark_suite_active'])
-        self.assertFalse(result['auto_tuner_active'])
-        self.assertFalse(result['performance_reporter_active'])
+        self.assertFalse(result["timeout_manager_active"])
+        self.assertFalse(result["memory_monitor_active"])
+        self.assertFalse(result["benchmark_suite_active"])
+        self.assertFalse(result["auto_tuner_active"])
+        self.assertFalse(result["performance_reporter_active"])
 
     def test_async_execution_reads_device_attribute(self):
         """async_execution 应读取 device.enable_async_execution"""
         device = _make_intel_device(enable_async_execution=True)
         optimizer = IntelGPUOptimizer(device=device, config={})
         result = optimizer.get_optimization_flags()
-        self.assertTrue(result['async_execution'])
+        self.assertTrue(result["async_execution"])
 
     def test_async_execution_false_when_disabled(self):
         """async_execution 应在 device 禁用时返回 False"""
         device = _make_intel_device(enable_async_execution=False)
         optimizer = IntelGPUOptimizer(device=device, config={})
         result = optimizer.get_optimization_flags()
-        self.assertFalse(result['async_execution'])
+        self.assertFalse(result["async_execution"])
 
     def test_timeout_seconds_reads_device_attribute(self):
         """timeout_seconds 应读取 device.timeout_seconds"""
         device = _make_intel_device(timeout_seconds=60.0)
         optimizer = IntelGPUOptimizer(device=device, config={})
         result = optimizer.get_optimization_flags()
-        self.assertEqual(result['timeout_seconds'], 60.0)
+        self.assertEqual(result["timeout_seconds"], 60.0)
 
     def test_memory_efficiency_reads_device_attribute(self):
         """memory_efficiency 应读取 device.memory_efficiency"""
         device = _make_intel_device(memory_efficiency=0.85)
         optimizer = IntelGPUOptimizer(device=device, config={})
         result = optimizer.get_optimization_flags()
-        self.assertAlmostEqual(result['memory_efficiency'], 0.85)
+        self.assertAlmostEqual(result["memory_efficiency"], 0.85)
 
     def test_driver_version_reads_device_attribute(self):
         """driver_version 应读取 device.driver_version"""
         device = _make_intel_device(driver_version="31.0.101.4255")
         optimizer = IntelGPUOptimizer(device=device, config={})
         result = optimizer.get_optimization_flags()
-        self.assertEqual(result['driver_version'], "31.0.101.4255")
+        self.assertEqual(result["driver_version"], "31.0.101.4255")
 
     def test_component_active_after_manual_set(self):
         """手动设置内部组件后，对应 _active 标志应变为 True"""
@@ -495,9 +498,9 @@ class TestGetOptimizationFlags(unittest.TestCase):
         optimizer._memory_monitor = Mock()
 
         result = optimizer.get_optimization_flags()
-        self.assertTrue(result['timeout_manager_active'])
-        self.assertTrue(result['memory_monitor_active'])
-        self.assertFalse(result['benchmark_suite_active'])
+        self.assertTrue(result["timeout_manager_active"])
+        self.assertTrue(result["memory_monitor_active"])
+        self.assertFalse(result["benchmark_suite_active"])
 
     def test_default_values_when_device_missing_attrs(self):
         """设备缺少属性时应使用默认值"""
@@ -505,10 +508,10 @@ class TestGetOptimizationFlags(unittest.TestCase):
         optimizer = IntelGPUOptimizer(device=device, config={})
         result = optimizer.get_optimization_flags()
         # 应有默认值而非抛出异常
-        self.assertFalse(result['async_execution'])
-        self.assertEqual(result['timeout_seconds'], 30)
-        self.assertAlmostEqual(result['memory_efficiency'], 0.70)
-        self.assertIsNone(result['driver_version'])
+        self.assertFalse(result["async_execution"])
+        self.assertEqual(result["timeout_seconds"], 30)
+        self.assertAlmostEqual(result["memory_efficiency"], 0.70)
+        self.assertIsNone(result["driver_version"])
 
 
 @pytest.mark.unit
@@ -571,5 +574,5 @@ class TestComponentProperties(unittest.TestCase):
         self.assertIs(self.optimizer.performance_reporter, mock_pr)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

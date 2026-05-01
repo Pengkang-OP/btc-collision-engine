@@ -31,9 +31,9 @@ class TestGPUBenchmarkSuite:
         # 模拟设备
         self.mock_device = Mock()
         self.mock_device.device_info = {
-            'name': 'Test GPU',
-            'vendor': 'Test Vendor',
-            'global_mem_size': 8 * 1024**3
+            "name": "Test GPU",
+            "vendor": "Test Vendor",
+            "global_mem_size": 8 * 1024**3,
         }
         self.mock_engine._gpu_device = self.mock_device
 
@@ -60,8 +60,8 @@ class TestGPUBenchmarkSuite:
         # 验证结果类型
         for result in results:
             assert isinstance(result, BenchmarkResult)
-            assert result.device_name == 'Test GPU'
-            assert result.vendor == 'Test Vendor'
+            assert result.device_name == "Test GPU"
+            assert result.vendor == "Test Vendor"
 
     def test_benchmark_kernel_compile(self):
         """测试内核编译基准"""
@@ -89,7 +89,7 @@ class TestGPUBenchmarkSuite:
         assert len(results) > 0
 
         # 验证不同 batch_size 的测试结果
-        batch_sizes = [r.parameters.get('batch_size') for r in results]
+        batch_sizes = [r.parameters.get("batch_size") for r in results]
         assert 10000 in batch_sizes
         assert 50000 in batch_sizes
         assert 100000 in batch_sizes
@@ -107,7 +107,7 @@ class TestGPUBenchmarkSuite:
             mean_ms=100.0,
             min_ms=90.0,
             max_ms=110.0,
-            parameters={'batch_size': 100000}
+            parameters={"batch_size": 100000},
         )
         self.suite.results = [result]
 
@@ -129,8 +129,7 @@ class TestGPUAutoTuner:
         self.mock_kernel.run_batch = Mock(return_value=[])
 
         config = TuningConfig(
-            exploration_iterations=2,
-            exploration_batch_sizes=[10000, 50000, 100000]
+            exploration_iterations=2, exploration_batch_sizes=[10000, 50000, 100000]
         )
 
         self.tuner = GPUAutoTuner(self.mock_engine, config)
@@ -146,8 +145,8 @@ class TestGPUAutoTuner:
         optimal = self.tuner.start_tuning()
 
         assert isinstance(optimal, dict)
-        assert 'batch_size' in optimal
-        assert optimal['batch_size'] in [10000, 50000, 100000]
+        assert "batch_size" in optimal
+        assert optimal["batch_size"] in [10000, 50000, 100000]
 
     def test_get_optimal_config(self):
         """测试获取最优配置"""
@@ -158,7 +157,7 @@ class TestGPUAutoTuner:
         config = self.tuner.get_optimal_config()
 
         assert config == optimal
-        assert 'batch_size' in config
+        assert "batch_size" in config
 
     def test_should_re_tune(self):
         """测试是否应该重新调优"""
@@ -175,13 +174,16 @@ class TestGPUAutoTuner:
 
         # 添加性能下降的历史记录
         from src.gpu.auto_tuner import PerformanceRecord
+
         for i in range(5):
-            self.tuner.performance_history.append(PerformanceRecord(
-                batch_size=100000,
-                throughput=400000,  # 比最优低 20%
-                execution_time_ms=250,
-                timestamp=time.time()
-            ))
+            self.tuner.performance_history.append(
+                PerformanceRecord(
+                    batch_size=100000,
+                    throughput=400000,  # 比最优低 20%
+                    execution_time_ms=250,
+                    timestamp=time.time(),
+                )
+            )
 
         # 现在应该重新调优
         assert self.tuner.should_re_tune() == True
@@ -191,7 +193,7 @@ class TestGPUAutoTuner:
         result = self.tuner.monitor_performance()
 
         assert isinstance(result, dict)
-        assert 'status' in result
+        assert "status" in result
 
     def test_performance_history(self):
         """测试性能历史记录"""
@@ -203,9 +205,9 @@ class TestGPUAutoTuner:
 
         # 验证记录格式
         for record in self.tuner.performance_history:
-            assert hasattr(record, 'batch_size')
-            assert hasattr(record, 'throughput')
-            assert hasattr(record, 'timestamp')
+            assert hasattr(record, "batch_size")
+            assert hasattr(record, "throughput")
+            assert hasattr(record, "timestamp")
 
     def test_get_tuning_report(self):
         """测试生成调优报告"""
@@ -234,10 +236,10 @@ class TestPerformanceReportGenerator:
         self.mock_engine = Mock()
         self.mock_device = Mock()
         self.mock_device.device_info = {
-            'name': 'Test GPU',
-            'vendor': 'Test Vendor',
-            'global_mem_size': 8 * 1024**3,
-            'max_compute_units': 20
+            "name": "Test GPU",
+            "vendor": "Test Vendor",
+            "global_mem_size": 8 * 1024**3,
+            "max_compute_units": 20,
         }
         self.mock_device.driver_version = "31.0.101.4500"
         self.mock_engine._gpu_device = self.mock_device
@@ -247,9 +249,9 @@ class TestPerformanceReportGenerator:
 
         self.mock_tuner = Mock()
         self.mock_tuner.best_config = {
-            'batch_size': 100000,
-            'throughput': 500000,
-            'avg_time_ms': 200
+            "batch_size": 100000,
+            "throughput": 500000,
+            "avg_time_ms": 200,
         }
         self.mock_tuner.best_throughput = 500000
         self.mock_tuner.performance_history = []
@@ -257,9 +259,7 @@ class TestPerformanceReportGenerator:
         self.mock_tuner.get_tuning_report = Mock(return_value="# 调优报告\n\n测试数据")
 
         self.generator = PerformanceReportGenerator(
-            self.mock_engine,
-            self.mock_benchmark,
-            self.mock_tuner
+            self.mock_engine, self.mock_benchmark, self.mock_tuner
         )
 
     def test_initialization(self):
@@ -271,9 +271,7 @@ class TestPerformanceReportGenerator:
     def test_generate_markdown_report(self):
         """测试生成 Markdown 报告"""
         config = ReportConfig(
-            include_device_info=True,
-            include_benchmark_results=True,
-            include_tuning_results=True
+            include_device_info=True, include_benchmark_results=True, include_tuning_results=True
         )
 
         report = self.generator.generate_report(config)
@@ -292,8 +290,8 @@ class TestPerformanceReportGenerator:
         data = json.loads(report)
 
         assert isinstance(data, dict)
-        assert 'metadata' in data
-        assert 'device_info' in data
+        assert "metadata" in data
+        assert "device_info" in data
 
     def test_generate_device_info_section(self):
         """测试生成设备信息章节"""
@@ -322,10 +320,11 @@ class TestPerformanceReportGenerator:
 
         # 验证文件存在
         import os
+
         assert os.path.exists(filepath)
 
         # 验证内容
-        with open(filepath, 'r', encoding='utf-8') as f:
+        with open(filepath, "r", encoding="utf-8") as f:
             content = f.read()
             assert content == report
 
@@ -344,9 +343,9 @@ class TestIntegration:
 
         mock_device = Mock()
         mock_device.device_info = {
-            'name': 'Integration Test GPU',
-            'vendor': 'Test Vendor',
-            'global_mem_size': 8 * 1024**3
+            "name": "Integration Test GPU",
+            "vendor": "Test Vendor",
+            "global_mem_size": 8 * 1024**3,
         }
         mock_engine._gpu_device = mock_device
 
@@ -360,7 +359,7 @@ class TestIntegration:
         tuner = GPUAutoTuner(mock_engine)
         optimal_config = tuner.start_tuning()
 
-        assert 'batch_size' in optimal_config
+        assert "batch_size" in optimal_config
 
         # 3. 生成报告
         generator = PerformanceReportGenerator(mock_engine, benchmark, tuner)

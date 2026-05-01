@@ -17,10 +17,10 @@ from unittest.mock import Mock
 from src.logging.log_processor import LogProcessor, SensitiveDataFilter
 from src.logging.events import LogEvent, LogEventType
 
-
 # ============================================================================
 # LogProcessor 测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestLogProcessorFormat:
@@ -29,9 +29,7 @@ class TestLogProcessorFormat:
     def test_process_basic_event(self):
         processor = LogProcessor()
         event = LogEvent(
-            event_type=LogEventType.STATUS_UPDATE,
-            data={"message": "引擎启动"},
-            source="test"
+            event_type=LogEventType.STATUS_UPDATE, data={"message": "引擎启动"}, source="test"
         )
         result = processor.process(event)
         assert result is not None
@@ -44,10 +42,7 @@ class TestLogProcessorFormat:
         # 添加一个始终返回 False 的过滤器
         processor.add_filter(lambda e: False)
 
-        event = LogEvent(
-            event_type=LogEventType.STATUS_UPDATE,
-            data={"message": "test"}
-        )
+        event = LogEvent(event_type=LogEventType.STATUS_UPDATE, data={"message": "test"})
         result = processor.process(event)
         assert result is None  # 被过滤
 
@@ -55,10 +50,7 @@ class TestLogProcessorFormat:
         processor = LogProcessor()
         processor.add_filter(lambda e: True)
 
-        event = LogEvent(
-            event_type=LogEventType.ENGINE_START,
-            data={"mode": "random"}
-        )
+        event = LogEvent(event_type=LogEventType.ENGINE_START, data={"mode": "random"})
         result = processor.process(event)
         assert result is not None
         assert result["type"] == "engine_start"
@@ -66,9 +58,7 @@ class TestLogProcessorFormat:
     def test_format_output_structure(self):
         processor = LogProcessor()
         event = LogEvent(
-            event_type=LogEventType.ENGINE_ERROR,
-            data={"error": "GPU OOM"},
-            source="gpu"
+            event_type=LogEventType.ENGINE_ERROR, data={"error": "GPU OOM"}, source="gpu"
         )
         result = processor.format(event)
         assert "timestamp" in result
@@ -81,46 +71,31 @@ class TestLogProcessorFormat:
 
     def test_build_message_with_message_key(self):
         processor = LogProcessor()
-        event = LogEvent(
-            event_type=LogEventType.STATUS_UPDATE,
-            data={"message": "hello world"}
-        )
+        event = LogEvent(event_type=LogEventType.STATUS_UPDATE, data={"message": "hello world"})
         result = processor.format(event)
         assert "hello world" in result["message"]
 
     def test_build_message_with_error_key(self):
         processor = LogProcessor()
-        event = LogEvent(
-            event_type=LogEventType.ENGINE_ERROR,
-            data={"error": "connection refused"}
-        )
+        event = LogEvent(event_type=LogEventType.ENGINE_ERROR, data={"error": "connection refused"})
         result = processor.format(event)
         assert "connection refused" in result["message"]
 
     def test_build_message_with_status_key(self):
         processor = LogProcessor()
-        event = LogEvent(
-            event_type=LogEventType.STATUS_UPDATE,
-            data={"status": "running"}
-        )
+        event = LogEvent(event_type=LogEventType.STATUS_UPDATE, data={"status": "running"})
         result = processor.format(event)
         assert "running" in result["message"]
 
     def test_build_message_non_dict_data(self):
         processor = LogProcessor()
-        event = LogEvent(
-            event_type=LogEventType.STATUS_UPDATE,
-            data="plain string data"
-        )
+        event = LogEvent(event_type=LogEventType.STATUS_UPDATE, data="plain string data")
         result = processor.format(event)
         assert "plain string data" in result["message"]
 
     def test_format_to_json(self):
         processor = LogProcessor()
-        event = LogEvent(
-            event_type=LogEventType.ENGINE_START,
-            data={"mode": "random"}
-        )
+        event = LogEvent(event_type=LogEventType.ENGINE_START, data={"mode": "random"})
         json_str = processor.format_to_json(event)
         parsed = json.loads(json_str)
         assert parsed["type"] == "engine_start"
@@ -128,10 +103,7 @@ class TestLogProcessorFormat:
 
     def test_format_to_text(self):
         processor = LogProcessor()
-        event = LogEvent(
-            event_type=LogEventType.STATUS_UPDATE,
-            data={"message": "test text"}
-        )
+        event = LogEvent(event_type=LogEventType.STATUS_UPDATE, data={"message": "test text"})
         text = processor.format_to_text(event)
         assert "test text" in text
 
@@ -209,6 +181,7 @@ class TestLogProcessorFormatterManagement:
 # SensitiveDataFilter 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 @pytest.mark.security
 class TestSensitiveDataFilterInit:
@@ -233,7 +206,7 @@ class TestSensitiveDataFilterPrivacy:
         sf = SensitiveDataFilter()
         event = LogEvent(
             LogEventType.STATUS_UPDATE,
-            data={"key": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"}
+            data={"key": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"},
         )
         assert sf.filter(event) is False
 
@@ -241,8 +214,7 @@ class TestSensitiveDataFilterPrivacy:
         """P2PKH 地址应被过滤"""
         sf = SensitiveDataFilter()
         event = LogEvent(
-            LogEventType.MATCH_FOUND,
-            data={"address": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
+            LogEventType.MATCH_FOUND, data={"address": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
         )
         assert sf.filter(event) is False
 
@@ -250,8 +222,7 @@ class TestSensitiveDataFilterPrivacy:
         """P2SH 地址应被过滤"""
         sf = SensitiveDataFilter()
         event = LogEvent(
-            LogEventType.MATCH_FOUND,
-            data={"address": "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"}
+            LogEventType.MATCH_FOUND, data={"address": "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"}
         )
         assert sf.filter(event) is False
 
@@ -259,8 +230,7 @@ class TestSensitiveDataFilterPrivacy:
         """Bech32 地址应被过滤"""
         sf = SensitiveDataFilter()
         event = LogEvent(
-            LogEventType.MATCH_FOUND,
-            data={"address": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"}
+            LogEventType.MATCH_FOUND, data={"address": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"}
         )
         assert sf.filter(event) is False
 
@@ -269,7 +239,7 @@ class TestSensitiveDataFilterPrivacy:
         sf = SensitiveDataFilter()
         event = LogEvent(
             LogEventType.MATCH_FOUND,
-            data={"address": "bc1p5d7rjq7g6rdk2yhzks9smlaqtedr4dekq08ge8qt2acpp2ys4tqmpyuf4v"}
+            data={"address": "bc1p5d7rjq7g6rdk2yhzks9smlaqtedr4dekq08ge8qt2acpp2ys4tqmpyuf4v"},
         )
         assert sf.filter(event) is False
 
@@ -277,8 +247,7 @@ class TestSensitiveDataFilterPrivacy:
         """安全数据(不含敏感信息)应通过"""
         sf = SensitiveDataFilter()
         event = LogEvent(
-            LogEventType.STATUS_UPDATE,
-            data={"message": "引擎运行正常", "speed": 500000}
+            LogEventType.STATUS_UPDATE, data={"message": "引擎运行正常", "speed": 500000}
         )
         assert sf.filter(event) is True
 
@@ -286,8 +255,7 @@ class TestSensitiveDataFilterPrivacy:
         """禁用时所有数据应通过"""
         sf = SensitiveDataFilter(enabled=False)
         event = LogEvent(
-            LogEventType.MATCH_FOUND,
-            data={"address": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
+            LogEventType.MATCH_FOUND, data={"address": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
         )
         assert sf.filter(event) is True
 

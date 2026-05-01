@@ -13,10 +13,10 @@ import os
 import json
 import tempfile
 
-
 # ============================================================================
 # P0-2: crypto_backend.py generate_public_key_const_time 不存在
 # ============================================================================
+
 
 class TestCryptoBackendConstTime:
     """验证 PurePythonBackend 不再调用不存在的方法"""
@@ -48,6 +48,7 @@ class TestCryptoBackendConstTime:
 # ============================================================================
 # P0-3: bitcoin_key_validator.py 安全模式私钥泄漏
 # ============================================================================
+
 
 class TestBitcoinKeyValidatorSecureMode:
     """验证安全模式下私钥不会泄漏到验证报告"""
@@ -108,6 +109,7 @@ class TestBitcoinKeyValidatorSecureMode:
 # P0-4: bitcoin_key_validator.py 绝对导入修复
 # ============================================================================
 
+
 class TestBitcoinKeyValidatorImport:
     """验证相对导入可正常使用"""
 
@@ -122,6 +124,7 @@ class TestBitcoinKeyValidatorImport:
 # ============================================================================
 # P0-10: SensitiveDataFilter 脱敏 vs 丢弃
 # ============================================================================
+
 
 class TestSensitiveDataFilterRedact:
     """验证敏感数据脱敏器正确脱敏而非丢弃事件"""
@@ -207,6 +210,7 @@ class TestSensitiveDataFilterRedact:
 # P0-6: ContinuousMatcher 计数器竞态修复
 # ============================================================================
 
+
 class TestContinuousMatcherThreadSafety:
     """验证 ContinuousMatcher 计数器线程安全"""
 
@@ -234,14 +238,15 @@ class TestContinuousMatcherThreadSafety:
             t.join()
 
         expected = iterations * num_threads
-        assert matcher.total_checked == expected, (
-            f"Expected {expected}, got {matcher.total_checked}"
-        )
+        assert (
+            matcher.total_checked == expected
+        ), f"Expected {expected}, got {matcher.total_checked}"
 
 
 # ============================================================================
 # P0-5: 检查点保存 KeyError 验证
 # ============================================================================
+
 
 class TestCheckpointFieldName:
     """验证 CollisionStats.matches 使用正确的字段名"""
@@ -266,14 +271,14 @@ class TestCheckpointFieldName:
 # P0-7: zh_CN.json 翻译乱码修复
 # ============================================================================
 
+
 class TestI18NFix:
     """验证 i18n 翻译文件中不再有乱码"""
 
     def test_stop_failed_not_garbled(self):
         """stop_failed 翻译不应包含乱码字符"""
         i18n_dir = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)),
-            "src", "i18n", "locales"
+            os.path.dirname(os.path.dirname(__file__)), "src", "i18n", "locales"
         )
         zh_file = os.path.join(i18n_dir, "zh_CN.json")
 
@@ -308,14 +313,14 @@ class TestI18NFix:
 # P0-16: docker-compose.yml Grafana 弱密码修复
 # ============================================================================
 
+
 class TestDockerComposeSecurity:
     """验证 docker-compose 不再包含弱密码"""
 
     def test_grafana_no_hardcoded_weak_password(self):
         """Grafana 密码不应包含硬编码弱密码"""
         compose_file = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)),
-            "docker-compose.yml"
+            os.path.dirname(os.path.dirname(__file__)), "docker-compose.yml"
         )
 
         if os.path.exists(compose_file):

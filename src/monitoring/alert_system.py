@@ -7,7 +7,7 @@
 import logging
 import time
 from enum import Enum
-from typing import Dict, List, Optional, Callable, Any
+from typing import Dict, List, Optional, Callable, Any, cast
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -213,7 +213,7 @@ class AlertSystem:
         def check_performance_degradation(metrics: Dict) -> bool:
             if "degradation_rate" not in metrics:
                 return False
-            return metrics["degradation_rate"] > 20.0  # type: ignore[no-any-return]
+            return cast(bool, metrics["degradation_rate"] > 20.0)
 
         self.add_rule(
             AlertRule(
@@ -230,7 +230,7 @@ class AlertSystem:
         def check_memory_usage(metrics: Dict) -> bool:
             if "memory_usage_percent" not in metrics:
                 return False
-            return metrics["memory_usage_percent"] > 80.0  # type: ignore[no-any-return]
+            return cast(bool, metrics["memory_usage_percent"] > 80.0)
 
         self.add_rule(
             AlertRule(
@@ -247,7 +247,7 @@ class AlertSystem:
         def check_gpu_temperature(metrics: Dict) -> bool:
             if "gpu_temperature" not in metrics:
                 return False
-            return metrics["gpu_temperature"] > 85.0  # type: ignore[no-any-return]
+            return cast(bool, metrics["gpu_temperature"] > 85.0)
 
         self.add_rule(
             AlertRule(
@@ -264,7 +264,7 @@ class AlertSystem:
         def check_error_rate(metrics: Dict) -> bool:
             if "error_rate" not in metrics:
                 return False
-            return metrics["error_rate"] > 0.05  # type: ignore[no-any-return]
+            return cast(bool, metrics["error_rate"] > 0.05)
 
         self.add_rule(
             AlertRule(
@@ -286,7 +286,7 @@ class AlertSystem:
             drop_rate = (metrics["baseline_throughput"] - metrics["throughput"]) / metrics[
                 "baseline_throughput"
             ]
-            return drop_rate > 0.5  # type: ignore[no-any-return]
+            return cast(bool, drop_rate > 0.5)
 
         self.add_rule(
             AlertRule(

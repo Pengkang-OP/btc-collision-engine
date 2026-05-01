@@ -17,10 +17,10 @@ import time
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 
-
 # ============================================================================
 # MemoryStatus / MemorySnapshot 测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestMemoryStatus:
@@ -28,6 +28,7 @@ class TestMemoryStatus:
 
     def test_all_status_values(self):
         from src.gpu.intel_memory_monitor import MemoryStatus
+
         assert MemoryStatus.NORMAL.value == "normal"
         assert MemoryStatus.WARNING.value == "warning"
         assert MemoryStatus.CRITICAL.value == "critical"
@@ -35,6 +36,7 @@ class TestMemoryStatus:
 
     def test_status_is_enum(self):
         from src.gpu.intel_memory_monitor import MemoryStatus
+
         assert isinstance(MemoryStatus.NORMAL, MemoryStatus)
 
 
@@ -44,6 +46,7 @@ class TestMemorySnapshot:
 
     def test_creates_snapshot(self):
         from src.gpu.intel_memory_monitor import MemorySnapshot, MemoryStatus
+
         snap = MemorySnapshot(
             timestamp=12345.0,
             allocated_bytes=1024,
@@ -61,6 +64,7 @@ class TestMemorySnapshot:
 
     def test_default_batch_count(self):
         from src.gpu.intel_memory_monitor import MemorySnapshot, MemoryStatus
+
         snap = MemorySnapshot(0, 0, 0, 0, MemoryStatus.NORMAL)
         assert snap.batch_count == 0
 
@@ -69,12 +73,14 @@ class TestMemorySnapshot:
 # IntelMemoryMonitor 初始化测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestIntelMemoryMonitorInit:
     """初始化测试"""
 
     def test_init_defaults(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         total = 8 * 1024**3  # 8GB
         monitor = IntelMemoryMonitor(total)
         assert monitor.total_memory == total
@@ -86,6 +92,7 @@ class TestIntelMemoryMonitorInit:
 
     def test_init_custom_thresholds(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         total = 4 * 1024**3  # 4GB
         monitor = IntelMemoryMonitor(
             total,
@@ -104,12 +111,14 @@ class TestIntelMemoryMonitorInit:
 # track_allocation 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestTrackAllocation:
     """显存分配跟踪测试"""
 
     def test_track_valid_allocation(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         monitor = IntelMemoryMonitor(8 * 1024**3)
         result = monitor.track_allocation(1024 * 1024 * 100)  # 100MB
         assert result is True
@@ -118,6 +127,7 @@ class TestTrackAllocation:
 
     def test_track_zero_allocation(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         monitor = IntelMemoryMonitor(8 * 1024**3)
         result = monitor.track_allocation(0)
         assert result is False
@@ -125,6 +135,7 @@ class TestTrackAllocation:
 
     def test_track_negative_allocation(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         monitor = IntelMemoryMonitor(8 * 1024**3)
         result = monitor.track_allocation(-100)
         assert result is False
@@ -132,6 +143,7 @@ class TestTrackAllocation:
 
     def test_track_exceeds_safe_limit(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         total = 8 * 1024**3
         monitor = IntelMemoryMonitor(total, safe_usage_ratio=0.1)  # 10% safe limit
         # safe_limit = 0.8GB
@@ -142,6 +154,7 @@ class TestTrackAllocation:
 
     def test_peak_usage_tracking(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         monitor = IntelMemoryMonitor(8 * 1024**3)
         monitor.track_allocation(1024 * 1024 * 200)  # 200MB
         monitor.track_allocation(1024 * 1024 * 100)  # 100MB, total 300MB
@@ -150,6 +163,7 @@ class TestTrackAllocation:
 
     def test_history_recorded_on_allocation(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         monitor = IntelMemoryMonitor(8 * 1024**3)
         monitor.track_allocation(1024 * 1024 * 100)
         history = monitor.get_history(1)
@@ -161,12 +175,14 @@ class TestTrackAllocation:
 # track_deallocation 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestTrackDeallocation:
     """显存释放跟踪测试"""
 
     def test_track_valid_deallocation(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         monitor = IntelMemoryMonitor(8 * 1024**3)
         monitor.track_allocation(1024 * 1024 * 200)
         monitor.track_deallocation(1024 * 1024 * 50)
@@ -175,6 +191,7 @@ class TestTrackDeallocation:
 
     def test_track_zero_deallocation(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         monitor = IntelMemoryMonitor(8 * 1024**3)
         monitor.track_allocation(1024 * 1024 * 100)
         monitor.track_deallocation(0)
@@ -183,6 +200,7 @@ class TestTrackDeallocation:
 
     def test_track_negative_deallocation(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         monitor = IntelMemoryMonitor(8 * 1024**3)
         monitor.track_allocation(1024 * 1024 * 100)
         monitor.track_deallocation(-50)
@@ -190,6 +208,7 @@ class TestTrackDeallocation:
 
     def test_deallocation_cannot_go_negative(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         monitor = IntelMemoryMonitor(8 * 1024**3)
         monitor.track_allocation(1024 * 1024 * 100)
         monitor.track_deallocation(1024 * 1024 * 999)  # more than allocated
@@ -200,12 +219,14 @@ class TestTrackDeallocation:
 # get_status 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestGetStatus:
     """状态查询测试"""
 
     def test_normal_status(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor, MemoryStatus
+
         monitor = IntelMemoryMonitor(8 * 1024**3)
         monitor.track_allocation(1024 * 1024 * 50)  # 50MB, well below safe limit
         status = monitor.get_status()
@@ -213,6 +234,7 @@ class TestGetStatus:
 
     def test_emergency_status(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor, MemoryStatus
+
         total = 8 * 1024**3
         monitor = IntelMemoryMonitor(total, safe_usage_ratio=0.1)
         # safe_limit = 0.8GB, allocate close to safe_limit to get high usage ratio
@@ -223,18 +245,28 @@ class TestGetStatus:
 
     def test_status_returns_all_keys(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         monitor = IntelMemoryMonitor(8 * 1024**3)
         status = monitor.get_status()
         expected_keys = [
-            "status", "current_bytes", "current_mb", "peak_bytes", "peak_mb",
-            "safe_limit_bytes", "safe_limit_mb", "usage_percent",
-            "total_memory_gb", "total_allocations", "total_deallocations",
+            "status",
+            "current_bytes",
+            "current_mb",
+            "peak_bytes",
+            "peak_mb",
+            "safe_limit_bytes",
+            "safe_limit_mb",
+            "usage_percent",
+            "total_memory_gb",
+            "total_allocations",
+            "total_deallocations",
         ]
         for key in expected_keys:
             assert key in status
 
     def test_total_memory_gb_conversion(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         monitor = IntelMemoryMonitor(8 * 1024**3)
         status = monitor.get_status()
         assert status["total_memory_gb"] == 8.0
@@ -244,18 +276,21 @@ class TestGetStatus:
 # check_warnings 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestCheckWarnings:
     """警告检测测试"""
 
     def test_no_warnings_normal(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         monitor = IntelMemoryMonitor(8 * 1024**3)
         warnings = monitor.check_warnings()
         assert warnings == []
 
     def test_warning_on_high_usage(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         total = 8 * 1024**3
         monitor = IntelMemoryMonitor(total, safe_usage_ratio=0.5)
         # Fill to just above warning threshold
@@ -265,6 +300,7 @@ class TestCheckWarnings:
 
     def test_emergency_warning(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         total = 8 * 1024**3
         monitor = IntelMemoryMonitor(total, safe_usage_ratio=0.1)
         monitor.track_allocation(monitor.emergency_limit + 1)
@@ -276,18 +312,21 @@ class TestCheckWarnings:
 # should_reduce_batch_size / get_recommended_batch_reduction 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestBatchReduction:
     """批次缩减建议测试"""
 
     def test_normal_no_reduction(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         monitor = IntelMemoryMonitor(8 * 1024**3)
         assert monitor.should_reduce_batch_size() is False
         assert monitor.get_recommended_batch_reduction() == 0.0
 
     def test_critical_reduction(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         total = 8 * 1024**3
         monitor = IntelMemoryMonitor(total, safe_usage_ratio=0.1)
         # Fill to critical level
@@ -297,6 +336,7 @@ class TestBatchReduction:
 
     def test_emergency_reduction(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         total = 8 * 1024**3
         monitor = IntelMemoryMonitor(total, safe_usage_ratio=0.1)
         monitor.track_allocation(monitor.emergency_limit + 1)
@@ -305,6 +345,7 @@ class TestBatchReduction:
 
     def test_warning_reduction(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         total = 8 * 1024**3
         monitor = IntelMemoryMonitor(total, safe_usage_ratio=0.1)
         monitor.track_allocation(int(monitor.warning_limit * 1.01))
@@ -316,12 +357,14 @@ class TestBatchReduction:
 # _detect_memory_leak 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestDetectMemoryLeak:
     """泄漏检测测试"""
 
     def test_no_leak_with_few_allocations(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         monitor = IntelMemoryMonitor(8 * 1024**3)
         # < 10 allocations, should not detect leak
         for i in range(5):
@@ -332,6 +375,7 @@ class TestDetectMemoryLeak:
 
     def test_leak_detected_high_ratio(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         monitor = IntelMemoryMonitor(8 * 1024**3, safe_usage_ratio=0.9)
         # Many allocations, no deallocations
         for i in range(30):
@@ -342,6 +386,7 @@ class TestDetectMemoryLeak:
 
     def test_no_leak_with_balanced_ops(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         monitor = IntelMemoryMonitor(8 * 1024**3, safe_usage_ratio=0.9)
         for i in range(30):
             monitor.track_allocation(1024 * 1024)
@@ -355,12 +400,14 @@ class TestDetectMemoryLeak:
 # get_history / reset / get_report 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestHistoryAndReset:
     """历史记录与重置测试"""
 
     def test_history_limited_to_max(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         monitor = IntelMemoryMonitor(8 * 1024**3)
         # Add more than max_history (100) records
         for i in range(150):
@@ -370,6 +417,7 @@ class TestHistoryAndReset:
 
     def test_reset_clears_all(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         monitor = IntelMemoryMonitor(8 * 1024**3)
         monitor.track_allocation(1024 * 1024 * 100)
         monitor.track_deallocation(1024 * 1024 * 50)
@@ -382,6 +430,7 @@ class TestHistoryAndReset:
 
     def test_get_report_contains_info(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         monitor = IntelMemoryMonitor(8 * 1024**3)
         monitor.track_allocation(1024 * 1024 * 100)
         report = monitor.get_report()
@@ -391,6 +440,7 @@ class TestHistoryAndReset:
 
     def test_get_report_with_warnings(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         total = 8 * 1024**3
         monitor = IntelMemoryMonitor(total, safe_usage_ratio=0.1)
         monitor.track_allocation(monitor.warning_limit + 1)
@@ -399,6 +449,7 @@ class TestHistoryAndReset:
 
     def test_get_history_default_last_10(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         monitor = IntelMemoryMonitor(8 * 1024**3)
         for i in range(20):
             monitor.track_allocation(1024 * 1024)
@@ -407,6 +458,7 @@ class TestHistoryAndReset:
 
     def test_allocation_sizes_window(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+
         monitor = IntelMemoryMonitor(8 * 1024**3)
         # Add more records than the leak detection window
         for i in range(60):

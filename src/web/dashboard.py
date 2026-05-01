@@ -26,15 +26,18 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+Flask: Any
+jsonify: Any
+render_template_string: Any
+request: Any
+
 try:
     from flask import Flask, jsonify, render_template_string, request
+
     FLASK_AVAILABLE = True
 except ImportError:
     FLASK_AVAILABLE = False
-    Flask = None  # type: ignore[assignment]
-    jsonify = None  # type: ignore[assignment]
-    render_template_string = None  # type: ignore[assignment]
-    request = None  # type: ignore[assignment]
+    Flask = jsonify = render_template_string = request = None
 
 logger = logging.getLogger(__name__)
 
@@ -194,6 +197,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
 # 数据读取工具
 # ──────────────────────────────────────────────────────────────────
 
+
 def _find_data_logs_dir() -> Path:
     """查找 data_logs 目录"""
     candidates = [
@@ -235,12 +239,18 @@ def get_current_stats(data_dir: Path) -> Dict[str, Any]:
         "memory_usage": perf.get("memory_usage", 0) if isinstance(perf, dict) else 0,
         "thread_count": perf.get("thread_count", 0) if isinstance(perf, dict) else 0,
         "uptime": data.get("uptime", 0),
-        "is_running": engine_info.get("is_running", False) if isinstance(engine_info, dict) else False,
+        "is_running": (
+            engine_info.get("is_running", False) if isinstance(engine_info, dict) else False
+        ),
         "mode": engine_info.get("mode", "") if isinstance(engine_info, dict) else "",
         "target_count": engine_info.get("target_count", 0) if isinstance(engine_info, dict) else 0,
-        "current_position": engine_info.get("current_position", 0) if isinstance(engine_info, dict) else 0,
+        "current_position": (
+            engine_info.get("current_position", 0) if isinstance(engine_info, dict) else 0
+        ),
         "os": system_info.get("os", "N/A") if isinstance(system_info, dict) else "N/A",
-        "python_version": system_info.get("python_version", "N/A") if isinstance(system_info, dict) else "N/A",
+        "python_version": (
+            system_info.get("python_version", "N/A") if isinstance(system_info, dict) else "N/A"
+        ),
         "pid": system_info.get("pid", "N/A") if isinstance(system_info, dict) else "N/A",
         "generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
     }
@@ -278,6 +288,7 @@ def format_uptime(seconds: float) -> str:
 # Flask 应用工厂
 # ──────────────────────────────────────────────────────────────────
 
+
 def create_app(data_dir: Optional[Path] = None) -> "Flask":
     """创建 Flask 应用
 
@@ -288,9 +299,7 @@ def create_app(data_dir: Optional[Path] = None) -> "Flask":
         Flask 应用实例
     """
     if not FLASK_AVAILABLE:
-        raise ImportError(
-            "Flask 未安装。请运行: pip install flask"
-        )
+        raise ImportError("Flask 未安装。请运行: pip install flask")
 
     app = Flask(__name__)
     data_logs_dir = data_dir or _find_data_logs_dir()
@@ -298,6 +307,7 @@ def create_app(data_dir: Optional[Path] = None) -> "Flask":
     # 从 web 包元数据获取版本号（避免硬编码和触发 OpenCL 初始化）
     try:
         from . import __version__ as web_version
+
         version = web_version
     except ImportError:
         version = "1.0.0"
@@ -368,22 +378,24 @@ def create_app(data_dir: Optional[Path] = None) -> "Flask":
         avg_speed = sum(speeds) / len(speeds) if speeds else 0
         max_speed = max(speeds) if speeds else 0
 
-        return jsonify({
-            "generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "summary": {
-                "total_checked": stats.get("total_checked", 0),
-                "matches_found": stats.get("matches_found", 0),
-                "avg_speed": round(avg_speed, 2),
-                "max_speed": round(max_speed, 2),
-                "uptime_seconds": stats.get("uptime", 0),
-                "cpu_usage": stats.get("cpu_usage", 0),
-                "memory_usage": stats.get("memory_usage", 0),
-            },
-            "engine": {
-                "mode": stats.get("mode", ""),
-                "is_running": stats.get("is_running", False),
-            },
-        })
+        return jsonify(
+            {
+                "generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "summary": {
+                    "total_checked": stats.get("total_checked", 0),
+                    "matches_found": stats.get("matches_found", 0),
+                    "avg_speed": round(avg_speed, 2),
+                    "max_speed": round(max_speed, 2),
+                    "uptime_seconds": stats.get("uptime", 0),
+                    "cpu_usage": stats.get("cpu_usage", 0),
+                    "memory_usage": stats.get("memory_usage", 0),
+                },
+                "engine": {
+                    "mode": stats.get("mode", ""),
+                    "is_running": stats.get("is_running", False),
+                },
+            }
+        )
 
     @app.route("/health")
     def health():
@@ -441,6 +453,7 @@ def run_dashboard(
 # ──────────────────────────────────────────────────────────────────
 # CLI 入口
 # ──────────────────────────────────────────────────────────────────
+
 
 def main():
     parser = argparse.ArgumentParser(

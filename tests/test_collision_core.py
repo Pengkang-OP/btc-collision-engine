@@ -35,6 +35,7 @@ class TestBaseCollisionEngine:
 
     def test_concrete_subclass(self):
         """具体子类可以实例化"""
+
         class MyEngine(BaseCollisionEngine):
             def __init__(self, targets, **kwargs):
                 self.targets = targets
@@ -51,6 +52,7 @@ class TestBaseCollisionEngine:
 
             def get_stats(self):
                 from src.collision.collision_stats import CollisionStats
+
                 return CollisionStats()
 
         engine = MyEngine(targets={"addr1", "addr2"})
@@ -62,13 +64,23 @@ class TestBaseCollisionEngine:
 
     def test_get_device_info_default(self):
         """默认 get_device_info 返回空字典"""
+
         class MyEngine(BaseCollisionEngine):
-            def __init__(self, targets, **kwargs): pass
-            def start(self, **kwargs): pass
-            def stop(self, timeout=None): pass
-            def is_running(self): return False
+            def __init__(self, targets, **kwargs):
+                pass
+
+            def start(self, **kwargs):
+                pass
+
+            def stop(self, timeout=None):
+                pass
+
+            def is_running(self):
+                return False
+
             def get_stats(self):
                 from src.collision.collision_stats import CollisionStats
+
                 return CollisionStats()
 
         engine = MyEngine(targets=set())
@@ -76,13 +88,23 @@ class TestBaseCollisionEngine:
 
     def test_get_supported_modes_default(self):
         """默认 get_supported_modes 返回三种模式"""
+
         class MyEngine(BaseCollisionEngine):
-            def __init__(self, targets, **kwargs): pass
-            def start(self, **kwargs): pass
-            def stop(self, timeout=None): pass
-            def is_running(self): return False
+            def __init__(self, targets, **kwargs):
+                pass
+
+            def start(self, **kwargs):
+                pass
+
+            def stop(self, timeout=None):
+                pass
+
+            def is_running(self):
+                return False
+
             def get_stats(self):
                 from src.collision.collision_stats import CollisionStats
+
                 return CollisionStats()
 
         engine = MyEngine(targets=set())
@@ -183,46 +205,55 @@ class TestCollisionTypes:
     def test_progress_callback_type(self):
         """验证 ProgressCallback 类型别名可用"""
         from src.collision.types import ProgressCallback
+
         assert ProgressCallback is not None
 
     def test_match_callback_type(self):
         """验证 MatchCallback 类型别名可用"""
         from src.collision.types import MatchCallback
+
         assert MatchCallback is not None
 
     def test_complete_callback_type(self):
         """验证 CompleteCallback 类型别名可用"""
         from src.collision.types import CompleteCallback
+
         assert CompleteCallback is not None
 
     def test_error_callback_type(self):
         """验证 ErrorCallback 类型别名可用"""
         from src.collision.types import ErrorCallback
+
         assert ErrorCallback is not None
 
     def test_event_handler_type(self):
         """验证 EventHandler 类型别名可用"""
         from src.collision.types import EventHandler
+
         assert EventHandler is not None
 
     def test_error_handler_type(self):
         """验证 ErrorHandler 类型别名可用"""
         from src.collision.types import ErrorHandler
+
         assert ErrorHandler is not None
 
     def test_target_addresses_type(self):
         """验证 TargetAddresses 类型别名可用"""
         from src.collision.types import TargetAddresses
+
         assert TargetAddresses is not None
 
     def test_engine_config_type(self):
         """验证 EngineConfig 类型别名可用"""
         from src.collision.types import EngineConfig
+
         assert EngineConfig is not None
 
     def test_match_result_type(self):
         """验证 MatchResult 类型别名可用"""
         from src.collision.types import MatchResult
+
         assert MatchResult is not None
 
 
@@ -242,8 +273,8 @@ class TestEngineFactory:
         targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", "1F1tAaz5x1HUXrCNLbtMDqcw6o5GNn4xqX"}
         engine = EngineFactory.create_cpu_engine(targets)
         assert engine is not None
-        assert hasattr(engine, 'start')
-        assert hasattr(engine, 'stop')
+        assert hasattr(engine, "start")
+        assert hasattr(engine, "stop")
         assert len(engine.targets) == 2
 
     def test_create_cpu_engine_passes_targets(self):
@@ -282,21 +313,21 @@ class TestCollisionHelpers:
     def test_encode_private_key_to_wif_valid(self):
         """有效私钥编码为 WIF"""
         # 使用已知测试私钥: 全1
-        pk = b'\x01' * 32
+        pk = b"\x01" * 32
         wif = encode_private_key_to_wif(pk, compressed=True)
         assert isinstance(wif, str)
         assert len(wif) > 30
 
     def test_encode_private_key_to_wif_uncompressed(self):
         """非压缩格式 WIF"""
-        pk = b'\x01' * 32
+        pk = b"\x01" * 32
         wif = encode_private_key_to_wif(pk, compressed=False)
         assert isinstance(wif, str)
         assert len(wif) > 30
 
     def test_format_match_result(self):
         """格式化匹配结果"""
-        pk = b'\x02' * 32
+        pk = b"\x02" * 32
         addr = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
         result = format_match_result(pk, addr)
         assert result[0] == pk
@@ -305,22 +336,25 @@ class TestCollisionHelpers:
 
     def test_safe_wif_encode_valid(self):
         """安全 WIF 编码 - 有效私钥"""
-        pk = b'\x03' * 32
+        pk = b"\x03" * 32
         wif = safe_wif_encode(pk)
         assert wif is not None
         assert isinstance(wif, str)
 
     def test_safe_wif_encode_invalid_returns_none(self):
         """安全 WIF 编码 - 无效私钥返回 None"""
-        pk = b'\x00' * 31  # 长度不对
+        pk = b"\x00" * 31  # 长度不对
         wif = safe_wif_encode(pk)
         assert wif is None
 
-    @pytest.mark.parametrize("pk_bytes", [
-        b'\x01' * 32,
-        b'\x00' * 31 + b'\x01',
-        os.urandom(32),
-    ])
+    @pytest.mark.parametrize(
+        "pk_bytes",
+        [
+            b"\x01" * 32,
+            b"\x00" * 31 + b"\x01",
+            os.urandom(32),
+        ],
+    )
     def test_encode_wif_roundtrip(self, pk_bytes):
         """WIF 编码参数化测试"""
         try:
@@ -381,11 +415,13 @@ class TestDeltaStats:
             ds.queue_update({"total_checked": 100})
             ds.queue_update({"matches_found": 3})
             ds.queue_update({"gpu_errors": 1})
-            poll_until(lambda: (
-                ds.get_stats()["total_checked"] >= 100
-                and ds.get_stats()["matches_found"] >= 3
-                and ds.get_stats()["gpu_errors"] >= 1
-            ))
+            poll_until(
+                lambda: (
+                    ds.get_stats()["total_checked"] >= 100
+                    and ds.get_stats()["matches_found"] >= 3
+                    and ds.get_stats()["gpu_errors"] >= 1
+                )
+            )
             stats = ds.get_stats()
             assert stats["total_checked"] >= 100
             assert stats["matches_found"] >= 3
@@ -551,15 +587,15 @@ class TestMatchDataStorage:
             "found_at": "2024-01-01T00:00:00",
             "hash160": "a" * 40,
             "generated": {
-                "private_key": b'\x01' * 32,
+                "private_key": b"\x01" * 32,
                 "wif_compressed": "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ",
                 "wif_uncompressed": "5KC2XtyH4HFbi6hZWfHd3zm5TXmZ2eWykSNJsknVgYkF4vTJm7q",
-                "public_key_compressed": b'\x02' * 33,
-                "public_key_uncompressed": b'\x04' * 65,
+                "public_key_compressed": b"\x02" * 33,
+                "public_key_uncompressed": b"\x04" * 65,
                 "address_compressed": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
                 "address_uncompressed": "1HLoD9E4SDFFPDiYfNYnkBLQ85Y51J3Zb1",
-                "hash160_compressed": b'\x03' * 20,
-                "hash160_uncompressed": b'\x04' * 20,
+                "hash160_compressed": b"\x03" * 20,
+                "hash160_uncompressed": b"\x04" * 20,
             },
             "target": {"address": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"},
         }
@@ -581,15 +617,15 @@ class TestMatchDataStorage:
         match_template = {
             "hash160": "",  # placeholder
             "generated": {
-                "private_key": b'\x01' * 32,
+                "private_key": b"\x01" * 32,
                 "wif_compressed": "Kx",
                 "wif_uncompressed": "5J",
-                "public_key_compressed": b'\x02' * 33,
-                "public_key_uncompressed": b'\x04' * 65,
+                "public_key_compressed": b"\x02" * 33,
+                "public_key_uncompressed": b"\x04" * 65,
                 "address_compressed": "addr1",
                 "address_uncompressed": "addr2",
-                "hash160_compressed": b'\x03' * 20,
-                "hash160_uncompressed": b'\x04' * 20,
+                "hash160_compressed": b"\x03" * 20,
+                "hash160_uncompressed": b"\x04" * 20,
             },
             "target": {},
         }
@@ -611,15 +647,15 @@ class TestMatchDataStorage:
         match_data = {
             "hash160": "c" * 40,
             "generated": {
-                "private_key": b'\x05' * 32,
+                "private_key": b"\x05" * 32,
                 "wif_compressed": "abc",
                 "wif_uncompressed": "def",
-                "public_key_compressed": b'\x02' * 33,
-                "public_key_uncompressed": b'\x04' * 65,
+                "public_key_compressed": b"\x02" * 33,
+                "public_key_uncompressed": b"\x04" * 65,
                 "address_compressed": "test_addr",
                 "address_uncompressed": "test_addr2",
-                "hash160_compressed": b'\x03' * 20,
-                "hash160_uncompressed": b'\x04' * 20,
+                "hash160_compressed": b"\x03" * 20,
+                "hash160_uncompressed": b"\x04" * 20,
             },
             "target": {},
         }
@@ -651,6 +687,6 @@ class TestMatchDataStorage:
         storage_path = tmp_path / "matches"
         storage = MatchDataStorage(str(storage_path))
         # 尝试写入只读目录（通过 mock）
-        with patch.object(storage, '_build_complete_data', side_effect=TypeError("Invalid data")):
+        with patch.object(storage, "_build_complete_data", side_effect=TypeError("Invalid data")):
             with pytest.raises(Exception):
                 storage.save_match({"hash160": "", "generated": None, "target": {}})

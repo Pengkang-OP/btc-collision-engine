@@ -36,26 +36,28 @@ if _PROJECT_ROOT not in sys.path:
 # ─────────────────────────────────────────────
 try:
     import colorama
+
     colorama.init(autoreset=True)
-    GREEN  = "\033[32m"
+    GREEN = "\033[32m"
     YELLOW = "\033[33m"
-    RED    = "\033[31m"
-    CYAN   = "\033[36m"
-    BOLD   = "\033[1m"
-    RESET  = "\033[0m"
+    RED = "\033[31m"
+    CYAN = "\033[36m"
+    BOLD = "\033[1m"
+    RESET = "\033[0m"
 except ImportError:
     GREEN = YELLOW = RED = CYAN = BOLD = RESET = ""
 
-PASS  = f"{GREEN}[PASS]{RESET}"
-WARN  = f"{YELLOW}[WARN]{RESET}"
-FAIL  = f"{RED}[FAIL]{RESET}"
-INFO  = f"{CYAN}[INFO]{RESET}"
-SEP   = "─" * 60
+PASS = f"{GREEN}[PASS]{RESET}"
+WARN = f"{YELLOW}[WARN]{RESET}"
+FAIL = f"{RED}[FAIL]{RESET}"
+INFO = f"{CYAN}[INFO]{RESET}"
+SEP = "─" * 60
 
 
 # ─────────────────────────────────────────────
 # 检查函数
 # ─────────────────────────────────────────────
+
 
 def check_python_version() -> Tuple[bool, str]:
     """检查 Python 版本 >= 3.7"""
@@ -69,17 +71,17 @@ def check_python_version() -> Tuple[bool, str]:
 def check_core_deps() -> List[Dict[str, Any]]:
     """检查核心必选依赖"""
     deps = [
-        ("hashlib",       "内置",    "哈希计算"),
-        ("hmac",          "内置",    "HMAC"),
-        ("struct",        "内置",    "二进制解析"),
-        ("threading",     "内置",    "多线程"),
-        ("json",          "内置",    "配置解析"),
-        ("Crypto",        "pycryptodome", "SHA256/RIPEMD160 加速"),
-        ("bech32",        "bech32",  "Bech32 地址编码（可选）"),
-        ("bitarray",      "bitarray","Bloom 过滤器"),
-        ("requests",      "requests","HTTP 通信"),
-        ("chardet",       "chardet", "字符编码检测"),
-        ("setproctitle",  "setproctitle", "进程标题（可选）"),
+        ("hashlib", "内置", "哈希计算"),
+        ("hmac", "内置", "HMAC"),
+        ("struct", "内置", "二进制解析"),
+        ("threading", "内置", "多线程"),
+        ("json", "内置", "配置解析"),
+        ("Crypto", "pycryptodome", "SHA256/RIPEMD160 加速"),
+        ("bech32", "bech32", "Bech32 地址编码（可选）"),
+        ("bitarray", "bitarray", "Bloom 过滤器"),
+        ("requests", "requests", "HTTP 通信"),
+        ("chardet", "chardet", "字符编码检测"),
+        ("setproctitle", "setproctitle", "进程标题（可选）"),
     ]
     results = []
     for module, pkg, desc in deps:
@@ -87,7 +89,9 @@ def check_core_deps() -> List[Dict[str, Any]]:
             __import__(module)
             results.append({"module": module, "pkg": pkg, "desc": desc, "ok": True, "error": None})
         except ImportError as e:
-            results.append({"module": module, "pkg": pkg, "desc": desc, "ok": False, "error": str(e)})
+            results.append(
+                {"module": module, "pkg": pkg, "desc": desc, "ok": False, "error": str(e)}
+            )
     return results
 
 
@@ -95,21 +99,37 @@ def check_perf_deps() -> List[Dict[str, Any]]:
     """检查可选性能依赖"""
     deps = [
         ("coincurve", "coincurve", "libsecp256k1 绑定（3-5x 加速，强烈推荐）"),
-        ("gmpy2",     "gmpy2",     "GMP 大整数加速（椭圆曲线计算）"),
-        ("numpy",     "numpy",     "数值计算加速"),
-        ("ecdsa",     "ecdsa",     "纯 Python ECDSA 后备"),
-        ("pyopencl",  "pyopencl",  "OpenCL GPU 支持"),
+        ("gmpy2", "gmpy2", "GMP 大整数加速（椭圆曲线计算）"),
+        ("numpy", "numpy", "数值计算加速"),
+        ("ecdsa", "ecdsa", "纯 Python ECDSA 后备"),
+        ("pyopencl", "pyopencl", "OpenCL GPU 支持"),
     ]
     results = []
     for module, pkg, desc in deps:
         try:
             mod = __import__(module)
             ver = getattr(mod, "__version__", "未知版本")
-            results.append({"module": module, "pkg": pkg, "desc": desc,
-                             "ok": True, "version": ver, "error": None})
+            results.append(
+                {
+                    "module": module,
+                    "pkg": pkg,
+                    "desc": desc,
+                    "ok": True,
+                    "version": ver,
+                    "error": None,
+                }
+            )
         except ImportError as e:
-            results.append({"module": module, "pkg": pkg, "desc": desc,
-                             "ok": False, "version": None, "error": str(e)})
+            results.append(
+                {
+                    "module": module,
+                    "pkg": pkg,
+                    "desc": desc,
+                    "ok": False,
+                    "version": None,
+                    "error": str(e),
+                }
+            )
     return results
 
 
@@ -143,16 +163,18 @@ def check_gpu(quick: bool = False) -> List[Dict[str, Any]]:
         for pi, platform in enumerate(cl.get_platforms()):
             for di, device in enumerate(platform.get_devices()):
                 mem_mb = device.global_mem_size // (1024 * 1024)
-                devices.append({
-                    "platform_index": pi,
-                    "device_index": di,
-                    "platform": platform.name,
-                    "name": device.name,
-                    "vendor": device.vendor,
-                    "vram_mb": mem_mb,
-                    "max_work_group": device.max_work_group_size,
-                    "opencl_version": device.version,
-                })
+                devices.append(
+                    {
+                        "platform_index": pi,
+                        "device_index": di,
+                        "platform": platform.name,
+                        "name": device.name,
+                        "vendor": device.vendor,
+                        "vram_mb": mem_mb,
+                        "max_work_group": device.max_work_group_size,
+                        "opencl_version": device.version,
+                    }
+                )
     except Exception as e:
         return [{"error": f"OpenCL 设备枚举失败: {e}"}]
 
@@ -186,6 +208,7 @@ def check_cli_import() -> Tuple[bool, str]:
     """检查 CLI 入口能否正常导入"""
     try:
         from src.cli.main import main  # noqa: F401
+
         return True, "src.cli.main 导入成功"
     except ImportError as e:
         return False, f"src.cli.main 导入失败: {e}"
@@ -197,6 +220,7 @@ def check_crypto_backend() -> Tuple[str, str]:
     """检测当前使用的加密后端"""
     try:
         from src.crypto.backend import get_backend_name
+
         name = get_backend_name()
         return name, "正常"
     except Exception:
@@ -205,9 +229,9 @@ def check_crypto_backend() -> Tuple[str, str]:
     # 按优先级手动检测
     for mod, name in [
         ("coincurve", "coincurve (libsecp256k1)"),
-        ("gmpy2",     "gmpy2"),
-        ("Crypto",    "pycryptodome"),
-        ("ecdsa",     "ecdsa (纯Python)"),
+        ("gmpy2", "gmpy2"),
+        ("Crypto", "pycryptodome"),
+        ("ecdsa", "ecdsa (纯Python)"),
     ]:
         try:
             __import__(mod)
@@ -220,6 +244,7 @@ def check_crypto_backend() -> Tuple[str, str]:
 # ─────────────────────────────────────────────
 # 报告输出
 # ─────────────────────────────────────────────
+
 
 def print_report(results: Dict[str, Any], as_json: bool = False):
     if as_json:
@@ -252,7 +277,9 @@ def print_report(results: Dict[str, Any], as_json: bool = False):
     disk = results["disk"]
     if "error" not in disk:
         tag = PASS if disk["ok"] else WARN
-        print(f"{tag} 磁盘空间: {disk['free_mb']} MB 可用 / {disk['total_mb']} MB 总计（已用 {disk['used_pct']}%）")
+        print(
+            f"{tag} 磁盘空间: {disk['free_mb']} MB 可用 / {disk['total_mb']} MB 总计（已用 {disk['used_pct']}%）"
+        )
     else:
         print(f"{WARN} 磁盘空间: 检查失败 - {disk['error']}")
 
@@ -284,8 +311,10 @@ def print_report(results: Dict[str, Any], as_json: bool = False):
             print(f"  {INFO} {dev['note']}")
         else:
             print(f"  {PASS} [{dev['platform_index']}:{dev['device_index']}] {dev['name']}")
-            print(f"         厂商={dev['vendor']}  VRAM={dev['vram_mb']} MB  "
-                  f"MaxWG={dev['max_work_group']}  OpenCL={dev['opencl_version']}")
+            print(
+                f"         厂商={dev['vendor']}  VRAM={dev['vram_mb']} MB  "
+                f"MaxWG={dev['max_work_group']}  OpenCL={dev['opencl_version']}"
+            )
 
     # 总结
     print(f"\n{BOLD}{SEP}{RESET}")
@@ -296,7 +325,9 @@ def print_report(results: Dict[str, Any], as_json: bool = False):
     if not ok_py or not ok_cli or fail_cnt > 0:
         print(f"{RED}{BOLD}  诊断结果: 存在 {fail_cnt} 个严重问题，需要修复{RESET}")
     elif warn_cnt > 0:
-        print(f"{YELLOW}{BOLD}  诊断结果: 基本可用，{warn_cnt} 个可选依赖未安装（不影响基础功能）{RESET}")
+        print(
+            f"{YELLOW}{BOLD}  诊断结果: 基本可用，{warn_cnt} 个可选依赖未安装（不影响基础功能）{RESET}"
+        )
     else:
         print(f"{GREEN}{BOLD}  诊断结果: 一切正常，可以正常运行{RESET}")
     print(f"{BOLD}{SEP}{RESET}\n")
@@ -306,24 +337,25 @@ def print_report(results: Dict[str, Any], as_json: bool = False):
 # 主函数
 # ─────────────────────────────────────────────
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="BTC 碰撞引擎自助诊断工具",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--quick", action="store_true", help="快速模式（跳过 GPU 检测）")
-    parser.add_argument("--json",  action="store_true", help="输出 JSON 格式报告")
+    parser.add_argument("--json", action="store_true", help="输出 JSON 格式报告")
     args = parser.parse_args()
 
     results = {
-        "python":        check_python_version(),
-        "cli_import":    check_cli_import(),
-        "crypto_backend":check_crypto_backend(),
-        "config":        check_config(),
-        "core_deps":     check_core_deps(),
-        "perf_deps":     check_perf_deps(),
-        "gpu":           check_gpu(quick=args.quick),
-        "disk":          check_disk(),
+        "python": check_python_version(),
+        "cli_import": check_cli_import(),
+        "crypto_backend": check_crypto_backend(),
+        "config": check_config(),
+        "core_deps": check_core_deps(),
+        "perf_deps": check_perf_deps(),
+        "gpu": check_gpu(quick=args.quick),
+        "disk": check_disk(),
     }
 
     print_report(results, as_json=args.json)

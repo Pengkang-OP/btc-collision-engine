@@ -307,8 +307,14 @@ class TestGPUKernelAdapter:
 
         adapter = GPUKernelAdapter()
         raw = [
-            {"address": "1A1z...", "private_key": "abc", "public_key": "xyz",
-             "hash160": "deadbeef", "index": 42, "seed": "seed1"},
+            {
+                "address": "1A1z...",
+                "private_key": "abc",
+                "public_key": "xyz",
+                "hash160": "deadbeef",
+                "index": 42,
+                "seed": "seed1",
+            },
         ]
         matches = adapter._convert_matches(raw)
         assert len(matches) == 1
@@ -335,6 +341,7 @@ class TestModuleImports:
     def test_import_collision_gpu_module(self):
         """测试 collision.gpu 模块导入"""
         from src.collision import gpu
+
         assert hasattr(gpu, "GPUEngineFacade")
         assert hasattr(gpu, "CollisionCore")
         assert hasattr(gpu, "PerformanceMonitoringPipeline")
@@ -347,6 +354,7 @@ class TestModuleImports:
             GPUKernelAdapter,
             AsyncPipelineAdapter,
         )
+
         assert DeviceManagerAdapter is not None
         assert GPUKernelAdapter is not None
         assert AsyncPipelineAdapter is not None
@@ -359,6 +367,7 @@ class TestModuleImports:
             get_kernel_adapter,
             get_async_pipeline_adapter,
         )
+
         assert callable(get_gpu_engine_facade)
         assert callable(get_device_manager_adapter)
         assert callable(get_kernel_adapter)
@@ -367,11 +376,13 @@ class TestModuleImports:
     def test_module_version(self):
         """测试模块版本号"""
         from src.collision import gpu
+
         assert gpu.__version__ == "6.0.0"
 
     def test_all_exports(self):
         """测试 __all__ 导出列表"""
         from src.collision.gpu import __all__
+
         expected = [
             "GPUEngineFacade",
             "PerformanceMonitoringPipeline",

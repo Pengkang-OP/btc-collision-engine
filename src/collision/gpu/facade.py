@@ -84,9 +84,7 @@ class GPUEngineFacade:
         # 编译内核
         if self.context is not None and device is not None:
             try:
-                kernel = self._kernel_adapter.compile_kernel(
-                    device, self.context
-                )
+                kernel = self._kernel_adapter.compile_kernel(device, self.context)
                 self.kernel = kernel
             except Exception as e:
                 logger.error(f"内核编译失败: {e}")

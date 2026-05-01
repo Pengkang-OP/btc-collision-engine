@@ -16,10 +16,10 @@ import sqlite3
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 
-
 # ============================================================================
 # Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def temp_dir():
@@ -40,44 +40,54 @@ def sample_addresses():
 # validate_bitcoin_address 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestValidateBitcoinAddress:
     """地址格式验证测试"""
 
     def test_valid_p2pkh(self):
         from src.collision.targets.storage import validate_bitcoin_address
+
         assert validate_bitcoin_address("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa") is True
 
     def test_valid_p2sh(self):
         from src.collision.targets.storage import validate_bitcoin_address
+
         assert validate_bitcoin_address("3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy") is True
 
     def test_valid_bech32(self):
         from src.collision.targets.storage import validate_bitcoin_address
+
         assert validate_bitcoin_address("bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq") is True
 
     def test_invalid_too_short(self):
         from src.collision.targets.storage import validate_bitcoin_address
+
         assert validate_bitcoin_address("1short") is False
 
     def test_invalid_too_long(self):
         from src.collision.targets.storage import validate_bitcoin_address
+
         assert validate_bitcoin_address("1" + "A" * 62) is False
 
     def test_empty_string(self):
         from src.collision.targets.storage import validate_bitcoin_address
+
         assert validate_bitcoin_address("") is False
 
     def test_none(self):
         from src.collision.targets.storage import validate_bitcoin_address
+
         assert validate_bitcoin_address(None) is False
 
     def test_sql_injection_chars(self):
         from src.collision.targets.storage import validate_bitcoin_address
+
         assert validate_bitcoin_address("1A1z'; DROP TABLE targets;--") is False
 
     def test_unknown_format(self):
         from src.collision.targets.storage import validate_bitcoin_address
+
         assert validate_bitcoin_address("xyz123notvalid") is False
 
 
@@ -85,23 +95,27 @@ class TestValidateBitcoinAddress:
 # ADDRESS_PATTERNS 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestAddressPatterns:
     """地址正则模式测试"""
 
     def test_patterns_exist(self):
         from src.collision.targets.storage import ADDRESS_PATTERNS
+
         assert "P2PKH" in ADDRESS_PATTERNS
         assert "P2SH" in ADDRESS_PATTERNS
         assert "BECH32" in ADDRESS_PATTERNS
 
     def test_p2pkh_pattern(self):
         from src.collision.targets.storage import ADDRESS_PATTERNS
+
         assert ADDRESS_PATTERNS["P2PKH"].match("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
         assert ADDRESS_PATTERNS["P2PKH"].match("3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy")
 
     def test_bech32_pattern(self):
         from src.collision.targets.storage import ADDRESS_PATTERNS
+
         assert ADDRESS_PATTERNS["BECH32"].match("bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq")
         assert ADDRESS_PATTERNS["BECH32"].match("bc1p5d7rjq7g6rdk2yhzks9smlaqtedr4dekq08ge8qt")
 
@@ -110,12 +124,14 @@ class TestAddressPatterns:
 # AddressStorage 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestAddressStorageJson:
     """JSON 存储测试"""
 
     def test_init_creates_directory(self, temp_dir):
         from src.collision.targets.storage import AddressStorage
+
         storage_path = os.path.join(temp_dir, "targets.json")
         storage = AddressStorage(storage_type="json", path=storage_path)
         # 应创建目录
@@ -123,6 +139,7 @@ class TestAddressStorageJson:
 
     def test_save_and_load_json(self, temp_dir, sample_addresses):
         from src.collision.targets.storage import AddressStorage
+
         storage_path = os.path.join(temp_dir, "targets.json")
         storage = AddressStorage(storage_type="json", path=storage_path)
         success = storage.save_targets(sample_addresses)
@@ -135,6 +152,7 @@ class TestAddressStorageJson:
 
     def test_save_with_metadata(self, temp_dir, sample_addresses):
         from src.collision.targets.storage import AddressStorage
+
         storage_path = os.path.join(temp_dir, "targets_meta.json")
         storage = AddressStorage(storage_type="json", path=storage_path)
         meta = {"name": "test", "version": 1}
@@ -144,6 +162,7 @@ class TestAddressStorageJson:
 
     def test_load_nonexistent_json(self, temp_dir):
         from src.collision.targets.storage import AddressStorage
+
         storage_path = os.path.join(temp_dir, "nonexistent.json")
         storage = AddressStorage(storage_type="json", path=storage_path)
         targets, metadata = storage.load_targets()
@@ -157,12 +176,14 @@ class TestAddressStorageSqlite:
 
     def test_init_creates_directory(self, temp_dir):
         from src.collision.targets.storage import AddressStorage
+
         storage_path = os.path.join(temp_dir, "targets.db")
         storage = AddressStorage(storage_type="sqlite", path=storage_path)
         assert os.path.exists(os.path.dirname(storage_path) or ".")
 
     def test_save_and_load_sqlite(self, temp_dir, sample_addresses):
         from src.collision.targets.storage import AddressStorage
+
         storage_path = os.path.join(temp_dir, "targets.db")
         storage = AddressStorage(storage_type="sqlite", path=storage_path)
         success = storage.save_targets(sample_addresses)
@@ -173,6 +194,7 @@ class TestAddressStorageSqlite:
 
     def test_save_filters_invalid(self, temp_dir):
         from src.collision.targets.storage import AddressStorage
+
         storage_path = os.path.join(temp_dir, "filtered.db")
         storage = AddressStorage(storage_type="sqlite", path=storage_path)
         mixed = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", "not_a_valid_address_xyz"}
@@ -188,6 +210,7 @@ class TestAddressStorageCsv:
 
     def test_save_and_load_csv(self, temp_dir, sample_addresses):
         from src.collision.targets.storage import AddressStorage
+
         storage_path = os.path.join(temp_dir, "targets.csv")
         storage = AddressStorage(storage_type="csv", path=storage_path)
         success = storage.save_targets(sample_addresses)
@@ -198,6 +221,7 @@ class TestAddressStorageCsv:
 
     def test_export_csv(self, temp_dir, sample_addresses):
         from src.collision.targets.storage import AddressStorage
+
         storage_path = os.path.join(temp_dir, "storage.json")
         export_path = os.path.join(temp_dir, "export.csv")
         storage = AddressStorage(storage_type="json", path=storage_path)
@@ -212,6 +236,7 @@ class TestGetStorageInfo:
 
     def test_info_for_existing(self, temp_dir, sample_addresses):
         from src.collision.targets.storage import AddressStorage
+
         storage_path = os.path.join(temp_dir, "info.json")
         storage = AddressStorage(storage_type="json", path=storage_path)
         storage.save_targets(sample_addresses)
@@ -222,6 +247,7 @@ class TestGetStorageInfo:
 
     def test_info_for_nonexistent(self, temp_dir):
         from src.collision.targets.storage import AddressStorage
+
         storage_path = os.path.join(temp_dir, "noexist.json")
         storage = AddressStorage(storage_type="json", path=storage_path)
         info = storage.get_storage_info()

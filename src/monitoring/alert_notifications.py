@@ -303,7 +303,7 @@ class WeComWebhookNotifier(BaseNotifier):
         self.timeout = timeout
 
         # 安全: 不记录完整URL（仅记录脱敏后的地址）
-        _safe_url = re.sub(r'(key=|token=|secret=)[^&]+', r'\1***REDACTED***', self.webhook_url)
+        _safe_url = re.sub(r"(key=|token=|secret=)[^&]+", r"\1***REDACTED***", self.webhook_url)
         logger.info(f"企业微信Webhook通知器初始化: {_safe_url}")
 
     def _send_notification(self, alert: AlertRecord):

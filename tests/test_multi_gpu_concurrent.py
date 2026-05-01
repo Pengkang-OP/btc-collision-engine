@@ -54,7 +54,7 @@ class TestConcurrentAccess(unittest.TestCase):
             try:
                 for i in range(50):
                     with engine._workers_lock:
-                        engine.workers[f'worker_{i}'] = Mock()
+                        engine.workers[f"worker_{i}"] = Mock()
                         time.sleep(0.001)
             except Exception as e:
                 errors.append(str(e))
@@ -88,25 +88,21 @@ class TestConcurrentAccess(unittest.TestCase):
 
         engine = MultiGPUCollisionEngine()
         engine._initialized = True
-        results = {'starts': 0, 'stops': 0}
+        results = {"starts": 0, "stops": 0}
         lock = threading.Lock()
 
         def try_start():
             """尝试启动"""
-            result = engine.start(
-                targets=set(),
-                mode='random',
-                total_keys=1000
-            )
+            result = engine.start(targets=set(), mode="random", total_keys=1000)
             if result:
                 with lock:
-                    results['starts'] += 1
+                    results["starts"] += 1
 
         def try_stop():
             """尝试停止"""
             engine.stop()
             with lock:
-                results['stops'] += 1
+                results["stops"] += 1
 
         # 并发调用start和stop
         threads = []
@@ -119,7 +115,7 @@ class TestConcurrentAccess(unittest.TestCase):
             t.join()
 
         # 验证最多只有1次成功启动
-        self.assertLessEqual(results['starts'], 1, "并发启动应该只有1次成功")
+        self.assertLessEqual(results["starts"], 1, "并发启动应该只有1次成功")
 
 
 class TestThreadSafety(unittest.TestCase):
@@ -129,12 +125,7 @@ class TestThreadSafety(unittest.TestCase):
         """测试工作器统计信息线程安全"""
         from src.gpu.worker import SingleGPUWorker
 
-        worker = SingleGPUWorker(
-            device_idx=0,
-            key_range=(0, 1000),
-            targets=set(),
-            config={}
-        )
+        worker = SingleGPUWorker(device_idx=0, key_range=(0, 1000), targets=set(), config={})
         errors = []
 
         def update_stats():
@@ -142,7 +133,7 @@ class TestThreadSafety(unittest.TestCase):
             try:
                 for _ in range(100):
                     with worker._lock:
-                        worker._stats['keys_checked'] += 1
+                        worker._stats["keys_checked"] += 1
                         time.sleep(0.001)
             except Exception as e:
                 errors.append(str(e))
@@ -152,7 +143,7 @@ class TestThreadSafety(unittest.TestCase):
             try:
                 for _ in range(100):
                     stats = worker.get_stats()
-                    assert 'keys_checked' in stats
+                    assert "keys_checked" in stats
                     time.sleep(0.001)
             except Exception as e:
                 errors.append(str(e))
@@ -172,18 +163,13 @@ class TestThreadSafety(unittest.TestCase):
 
         # 验证统计数据正确
         final_stats = worker.get_stats()
-        self.assertEqual(final_stats['keys_checked'], 500)  # 5线程 × 100次
+        self.assertEqual(final_stats["keys_checked"], 500)  # 5线程 × 100次
 
     def test_worker_event_control(self):
         """测试工作器事件控制"""
         from src.gpu.worker import SingleGPUWorker
 
-        worker = SingleGPUWorker(
-            device_idx=0,
-            key_range=(0, 1000),
-            targets=set(),
-            config={}
-        )
+        worker = SingleGPUWorker(device_idx=0, key_range=(0, 1000), targets=set(), config={})
 
         # 测试停止事件
         self.assertFalse(worker._stop_event.is_set())
@@ -260,11 +246,7 @@ class TestDeadlockPrevention(unittest.TestCase):
 
         # 快速启动停止10次
         for _ in range(10):
-            engine.start(
-                targets=set(),
-                mode='random',
-                total_keys=100
-            )
+            engine.start(targets=set(), mode="random", total_keys=100)
             engine.stop()
 
         # 如果能执行到这里,说明没有死锁
@@ -282,7 +264,7 @@ class TestDeadlockPrevention(unittest.TestCase):
             """执行操作"""
             try:
                 for _ in range(20):
-                    engine.start(targets=set(), mode='random', total_keys=100)
+                    engine.start(targets=set(), mode="random", total_keys=100)
                     engine.pause()
                     engine.resume()
                     engine.stop()
@@ -304,5 +286,5 @@ class TestDeadlockPrevention(unittest.TestCase):
         self.assertFalse(deadlock_detected[0], "检测到死锁!")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

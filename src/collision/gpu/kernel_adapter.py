@@ -61,12 +61,12 @@ class GPUKernelAdapter(IKernelExecutor):
 
             # 底层 GPUContext 对象 - 先编译内核
             native_context = context.context_obj
-            if native_context and hasattr(native_context, 'compile_kernel'):
+            if native_context and hasattr(native_context, "compile_kernel"):
                 native_context.compile_kernel(OPENCL_KERNEL_SOURCE)
 
             # 获取已编译的 program
             program = None
-            if native_context and hasattr(native_context, 'program'):
+            if native_context and hasattr(native_context, "program"):
                 program = native_context.program
 
             # 使用 GPUKernelImpl 创建内核

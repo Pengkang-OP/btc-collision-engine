@@ -17,10 +17,10 @@ import time
 import pytest
 from unittest.mock import Mock, patch, MagicMock, PropertyMock
 
-
 # ============================================================================
 # MultiprocessCollisionEngine 初始化测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestMultiprocessEngineInit:
@@ -28,6 +28,7 @@ class TestMultiprocessEngineInit:
 
     def test_init_defaults(self):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
+
         engine = MultiprocessCollisionEngine()
         assert engine.num_workers > 0  # defaults to cpu_count
         assert engine.batch_size == 10000
@@ -44,22 +45,26 @@ class TestMultiprocessEngineInit:
 
     def test_init_custom_workers(self):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
+
         engine = MultiprocessCollisionEngine(num_workers=4)
         assert engine.num_workers == 4
 
     def test_init_custom_batch_size(self):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
+
         engine = MultiprocessCollisionEngine(batch_size=50000)
         assert engine.batch_size == 50000
 
     def test_init_with_targets(self):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
+
         targets = ["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"]
         engine = MultiprocessCollisionEngine(target_addresses=targets)
         assert engine.target_addresses == targets
 
     def test_init_all_params(self):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
+
         targets = ["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", "1HLoD9E4SDFFPDiYfNYnkBLQ85Y51J3Zb1"]
         engine = MultiprocessCollisionEngine(
             num_workers=2, batch_size=20000, target_addresses=targets
@@ -73,12 +78,14 @@ class TestMultiprocessEngineInit:
 # MultiprocessCollisionEngine start 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestMultiprocessEngineStart:
     """启动测试"""
 
     def test_start_already_running_returns_false(self):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
+
         engine = MultiprocessCollisionEngine()
         engine._running = True
         result = engine.start()
@@ -89,6 +96,7 @@ class TestMultiprocessEngineStart:
     @patch("src.collision.multiprocess_engine.Queue")
     def test_start_normal(self, mock_queue_cls, mock_event_cls, mock_process_cls):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
+
         mock_queue = MagicMock()
         mock_queue_cls.return_value = mock_queue
         mock_event = MagicMock()
@@ -114,6 +122,7 @@ class TestMultiprocessEngineStart:
     @patch("src.collision.multiprocess_engine.Queue")
     def test_start_with_encryption(self, mock_queue_cls, mock_event_cls, mock_process_cls):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
+
         mock_queue = MagicMock()
         mock_queue_cls.return_value = mock_queue
         mock_event = MagicMock()
@@ -131,8 +140,11 @@ class TestMultiprocessEngineStart:
     @patch("src.collision.multiprocess_engine.Process")
     @patch("src.collision.multiprocess_engine.mp.Event")
     @patch("src.collision.multiprocess_engine.Queue")
-    def test_start_encryption_no_cryptography(self, mock_queue_cls, mock_event_cls, mock_process_cls):
+    def test_start_encryption_no_cryptography(
+        self, mock_queue_cls, mock_event_cls, mock_process_cls
+    ):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
+
         mock_queue = MagicMock()
         mock_queue_cls.return_value = mock_queue
         mock_event = MagicMock()
@@ -143,6 +155,7 @@ class TestMultiprocessEngineStart:
         engine = MultiprocessCollisionEngine(num_workers=1)
         # Block cryptography.fernet import inside start() to trigger ImportError path
         import sys
+
         with patch.dict(sys.modules, {"cryptography.fernet": None}):
             result = engine.start(enable_encryption=True)
 
@@ -152,8 +165,11 @@ class TestMultiprocessEngineStart:
     @patch("src.collision.multiprocess_engine.Process")
     @patch("src.collision.multiprocess_engine.mp.Event")
     @patch("src.collision.multiprocess_engine.Queue")
-    def test_start_with_sequential_generator(self, mock_queue_cls, mock_event_cls, mock_process_cls):
+    def test_start_with_sequential_generator(
+        self, mock_queue_cls, mock_event_cls, mock_process_cls
+    ):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
+
         mock_queue = MagicMock()
         mock_queue_cls.return_value = mock_queue
         mock_event = MagicMock()
@@ -170,18 +186,21 @@ class TestMultiprocessEngineStart:
 # MultiprocessCollisionEngine submit_task 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestSubmitTask:
     """任务提交测试"""
 
     def test_submit_not_running(self):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
+
         engine = MultiprocessCollisionEngine()
         engine.submit_task()
         # Should log warning but not crash
 
     def test_submit_with_default_batch_size(self):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
+
         engine = MultiprocessCollisionEngine(batch_size=50000)
         engine._running = True
         engine.task_queue = MagicMock()
@@ -194,6 +213,7 @@ class TestSubmitTask:
 
     def test_submit_with_custom_batch_size(self):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
+
         engine = MultiprocessCollisionEngine(batch_size=50000)
         engine._running = True
         engine.task_queue = MagicMock()
@@ -205,6 +225,7 @@ class TestSubmitTask:
 
     def test_submit_queue_exception(self):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
+
         engine = MultiprocessCollisionEngine()
         engine._running = True
         engine.task_queue = MagicMock()
@@ -217,6 +238,7 @@ class TestSubmitTask:
 # ============================================================================
 # MultiprocessCollisionEngine get_results 测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestGetResults:
@@ -289,6 +311,7 @@ class TestGetResults:
 # MultiprocessCollisionEngine get_stats 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestGetStats:
     """统计信息测试"""
@@ -317,8 +340,20 @@ class TestGetStats:
         engine.stats_queue = MagicMock()
 
         worker_stats = [
-            {"worker_id": 0, "total_checked": 50000, "matches_found": 2, "speed": 10000, "elapsed": 5.0},
-            {"worker_id": 1, "total_checked": 45000, "matches_found": 1, "speed": 9000, "elapsed": 5.0},
+            {
+                "worker_id": 0,
+                "total_checked": 50000,
+                "matches_found": 2,
+                "speed": 10000,
+                "elapsed": 5.0,
+            },
+            {
+                "worker_id": 1,
+                "total_checked": 45000,
+                "matches_found": 1,
+                "speed": 9000,
+                "elapsed": 5.0,
+            },
         ]
         engine.stats_queue.get_nowait.side_effect = [worker_stats[0], worker_stats[1], Empty]
 
@@ -345,17 +380,20 @@ class TestGetStats:
 # MultiprocessCollisionEngine stop 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestStop:
     """停止测试"""
 
     def test_stop_not_running(self):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
+
         engine = MultiprocessCollisionEngine()
         engine.stop()  # Should do nothing, not crash
 
     def test_stop_sends_poison_pills(self):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
+
         engine = MultiprocessCollisionEngine(num_workers=2)
         engine._running = True
         engine.stop_event = MagicMock()
@@ -374,6 +412,7 @@ class TestStop:
 
     def test_stop_zombie_processes(self):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
+
         engine = MultiprocessCollisionEngine(num_workers=1)
         engine._running = True
         engine.stop_event = MagicMock()
@@ -396,17 +435,20 @@ class TestStop:
 # is_running / cleanup / context manager 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestIsRunning:
     """状态检查测试"""
 
     def test_not_running_initially(self):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
+
         engine = MultiprocessCollisionEngine()
         assert engine.is_running() is False
 
     def test_running_after_start(self):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
+
         engine = MultiprocessCollisionEngine()
         engine._running = True
         assert engine.is_running() is True
@@ -418,6 +460,7 @@ class TestCleanup:
 
     def test_cleanup_not_running(self):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
+
         engine = MultiprocessCollisionEngine()
         engine.cleanup()  # Should not crash
 
@@ -426,6 +469,7 @@ class TestCleanup:
     @patch("src.collision.multiprocess_engine.Queue")
     def test_cleanup_after_start(self, mock_q, mock_e, mock_p):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
+
         mock_q.return_value = MagicMock()
         mock_e.return_value = MagicMock()
 
@@ -449,12 +493,14 @@ class TestContextManager:
 
     def test_enter_returns_self(self):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
+
         engine = MultiprocessCollisionEngine()
         with engine as e:
             assert e is engine
 
     def test_exit_calls_cleanup(self):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
+
         engine = MultiprocessCollisionEngine()
         engine.cleanup = MagicMock()
 
@@ -464,6 +510,7 @@ class TestContextManager:
 
     def test_exit_does_not_suppress_exceptions(self):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
+
         engine = MultiprocessCollisionEngine()
         result = engine.__exit__(None, None, None)
         assert result is False  # does not suppress
@@ -472,6 +519,7 @@ class TestContextManager:
 # ============================================================================
 # _cleanup_queues 内部方法测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestCleanupQueues:
@@ -510,6 +558,7 @@ class TestCleanupQueues:
 # 工厂函数测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestFactoryFunctions:
     """工厂函数测试"""
@@ -519,6 +568,7 @@ class TestFactoryFunctions:
             create_multiprocess_engine,
             MultiprocessCollisionEngine,
         )
+
         engine = create_multiprocess_engine(num_workers=4, batch_size=20000)
         assert isinstance(engine, MultiprocessCollisionEngine)
         assert engine.num_workers == 4
@@ -526,6 +576,7 @@ class TestFactoryFunctions:
 
     def test_create_multiprocess_engine_with_targets(self):
         from src.collision.multiprocess_engine import create_multiprocess_engine
+
         targets = ["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"]
         engine = create_multiprocess_engine(targets=targets)
         assert engine.target_addresses == targets
@@ -535,15 +586,15 @@ class TestFactoryFunctions:
             create_hybrid_engine,
             HybridCollisionEngine,
         )
+
         engine = create_hybrid_engine()
         assert isinstance(engine, HybridCollisionEngine)
         assert engine.use_multiprocess is True
 
     def test_create_hybrid_engine_with_params(self):
         from src.collision.multiprocess_engine import create_hybrid_engine
-        engine = create_hybrid_engine(
-            use_multiprocess=False, num_workers=8, batch_size=50000
-        )
+
+        engine = create_hybrid_engine(use_multiprocess=False, num_workers=8, batch_size=50000)
         assert engine.use_multiprocess is False
         assert engine.num_workers == 8
         assert engine.batch_size == 50000
@@ -553,12 +604,14 @@ class TestFactoryFunctions:
 # HybridCollisionEngine 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestHybridEngineInit:
     """混合引擎初始化测试"""
 
     def test_init_defaults(self):
         from src.collision.multiprocess_engine import HybridCollisionEngine
+
         engine = HybridCollisionEngine()
         assert engine.use_multiprocess is True
         assert engine.num_workers is not None
@@ -568,6 +621,7 @@ class TestHybridEngineInit:
 
     def test_init_thread_mode(self):
         from src.collision.multiprocess_engine import HybridCollisionEngine
+
         engine = HybridCollisionEngine(use_multiprocess=False)
         assert engine.use_multiprocess is False
 
@@ -581,6 +635,7 @@ class TestHybridEngineStart:
     @patch("src.collision.multiprocess_engine.Queue")
     def test_start_multiprocess(self, mock_q, mock_e, mock_p):
         from src.collision.multiprocess_engine import HybridCollisionEngine
+
         mock_q.return_value = MagicMock()
         mock_e.return_value = MagicMock()
         mock_worker = MagicMock()
@@ -596,9 +651,11 @@ class TestHybridEngineStart:
     def test_start_thread_mode(self):
         """线程模式启动：若 KeyCollisionEngine 可导入则验证 start 返回布尔值"""
         from src.collision.multiprocess_engine import HybridCollisionEngine
+
         # 显式跳过不可导入的模块，而非静默吞掉异常
-        pytest.importorskip("src.collision.key_collision",
-                            reason="KeyCollisionEngine 在当前环境不可导入")
+        pytest.importorskip(
+            "src.collision.key_collision", reason="KeyCollisionEngine 在当前环境不可导入"
+        )
         engine = HybridCollisionEngine(use_multiprocess=False, num_workers=2)
         result = engine.start(targets=["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"])
         assert isinstance(result, bool)
@@ -610,6 +667,7 @@ class TestHybridEngineStop:
 
     def test_stop_both_engines(self):
         from src.collision.multiprocess_engine import HybridCollisionEngine
+
         engine = HybridCollisionEngine()
         engine.mp_engine = MagicMock()
         engine.thread_engine = MagicMock()
@@ -621,6 +679,7 @@ class TestHybridEngineStop:
 
     def test_stop_only_mp_engine(self):
         from src.collision.multiprocess_engine import HybridCollisionEngine
+
         engine = HybridCollisionEngine()
         engine.mp_engine = MagicMock()
         engine.thread_engine = None
@@ -636,6 +695,7 @@ class TestHybridEngineGetStats:
 
     def test_get_stats_from_mp_engine(self):
         from src.collision.multiprocess_engine import HybridCollisionEngine
+
         engine = HybridCollisionEngine()
         engine.mp_engine = MagicMock()
         engine.mp_engine.get_stats.return_value = {"total_checked": 1000}
@@ -645,6 +705,7 @@ class TestHybridEngineGetStats:
 
     def test_get_stats_from_thread_engine(self):
         from src.collision.multiprocess_engine import HybridCollisionEngine
+
         engine = HybridCollisionEngine()
         engine.mp_engine = None
         engine.thread_engine = MagicMock()
@@ -655,6 +716,7 @@ class TestHybridEngineGetStats:
 
     def test_get_stats_empty(self):
         from src.collision.multiprocess_engine import HybridCollisionEngine
+
         engine = HybridCollisionEngine()
         stats = engine.get_stats()
         assert stats == {}
@@ -666,6 +728,7 @@ class TestHybridEngineCleanup:
 
     def test_cleanup_both(self):
         from src.collision.multiprocess_engine import HybridCollisionEngine
+
         engine = HybridCollisionEngine()
         engine.mp_engine = MagicMock()
         engine.thread_engine = MagicMock()
@@ -677,6 +740,7 @@ class TestHybridEngineCleanup:
 
     def test_cleanup_none_set(self):
         from src.collision.multiprocess_engine import HybridCollisionEngine
+
         engine = HybridCollisionEngine()
         engine.cleanup()  # Should not crash
 
@@ -685,6 +749,7 @@ class TestHybridEngineCleanup:
 # _worker_process 函数级测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestWorkerProcessFunc:
     """_worker_process 函数测试"""
@@ -692,4 +757,5 @@ class TestWorkerProcessFunc:
     def test_worker_function_exists(self):
         """验证 _worker_process 函数存在且可导入"""
         from src.collision.multiprocess_engine import _worker_process
+
         assert callable(_worker_process)

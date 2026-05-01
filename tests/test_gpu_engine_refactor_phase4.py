@@ -19,8 +19,8 @@ import threading
 from unittest.mock import MagicMock, patch, PropertyMock
 from typing import Set, Dict, Any
 
-
 # ========== Fixtures ==========
+
 
 @pytest.fixture
 def sample_targets() -> Set[str]:
@@ -87,12 +87,14 @@ def mock_dedup():
 
 # ========== Test: 初始化 ==========
 
+
 class TestCollisionCoreInit:
     """测试 CollisionCore 初始化"""
 
     def test_basic_init(self, sample_targets, sample_config):
         """基本初始化"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets, config=sample_config)
         assert core.targets == sample_targets
         assert core.config == sample_config
@@ -106,6 +108,7 @@ class TestCollisionCoreInit:
     def test_init_with_engine(self, sample_targets):
         """带引擎引用初始化"""
         from src.collision.gpu.core import CollisionCore
+
         mock_engine = MagicMock()
         core = CollisionCore(targets=sample_targets, engine=mock_engine)
         assert core._engine is mock_engine
@@ -149,6 +152,7 @@ class TestCollisionCoreInit:
     def test_init_config_defaults(self, sample_targets):
         """验证配置默认值"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets)
         assert core.checkpoint_interval == 30
         assert core.dedup_enabled is False
@@ -158,6 +162,7 @@ class TestCollisionCoreInit:
     def test_init_config_custom(self, sample_targets, sample_config_full):
         """自定义配置参数"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets, config=sample_config_full)
         assert core.checkpoint_interval == 5
         assert core.dedup_enabled is True
@@ -167,6 +172,7 @@ class TestCollisionCoreInit:
     def test_init_progress_tracking_vars(self, sample_targets):
         """验证进度追踪变量初始化"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets)
         assert core._last_progress_time == 0.0
         assert core.progress_interval == 1.0
@@ -174,12 +180,14 @@ class TestCollisionCoreInit:
 
 # ========== Test: 生命周期管理 ==========
 
+
 class TestCollisionCoreLifecycle:
     """测试 CollisionCore 启动/停止/暂停/恢复"""
 
     def test_start_with_stats_init(self, sample_targets, sample_config):
         """启动时初始化统计组件"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets, config=sample_config)
         core.start(mode="random")
         assert core.stats is not None
@@ -189,6 +197,7 @@ class TestCollisionCoreLifecycle:
     def test_start_double_call_is_safe(self, sample_targets, sample_config):
         """重复启动应被安全忽略"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets, config=sample_config)
         core.start(mode="random")
         core.start(mode="random")  # 不应抛出异常
@@ -198,6 +207,7 @@ class TestCollisionCoreLifecycle:
     def test_stop_cleans_up(self, sample_targets, sample_config):
         """停止时清理运行状态"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets, config=sample_config)
         core.start(mode="random")
         core.stop()
@@ -207,6 +217,7 @@ class TestCollisionCoreLifecycle:
     def test_stop_when_not_running_is_safe(self, sample_targets, sample_config):
         """未运行时停止应安全"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets, config=sample_config)
         core.stop()  # 不应抛出异常
         assert core._running is False
@@ -214,6 +225,7 @@ class TestCollisionCoreLifecycle:
     def test_pause_resume_cycle(self, sample_targets, sample_config):
         """暂停和恢复循环"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets, config=sample_config)
         core.start(mode="random")
         assert core._running is True
@@ -230,6 +242,7 @@ class TestCollisionCoreLifecycle:
     def test_pause_when_not_running_is_safe(self, sample_targets, sample_config):
         """未运行时暂停应安全"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets, config=sample_config)
         core.pause()  # 不应抛出异常
         assert core._paused is False
@@ -237,6 +250,7 @@ class TestCollisionCoreLifecycle:
     def test_resume_when_not_paused_is_safe(self, sample_targets, sample_config):
         """未暂停时恢复应安全"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets, config=sample_config)
         core.start(mode="random")
         core.resume()  # 不应抛出异常 (未暂停)
@@ -246,6 +260,7 @@ class TestCollisionCoreLifecycle:
     def test_is_running_reflects_state(self, sample_targets, sample_config):
         """is_running 反映当前状态"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets, config=sample_config)
         assert core.is_running() is False
         core.start(mode="random")
@@ -256,6 +271,7 @@ class TestCollisionCoreLifecycle:
     def test_reset_stats(self, sample_targets, sample_config):
         """重置统计"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets, config=sample_config)
         core.start(mode="random")
         core.stats.update(1000)
@@ -266,6 +282,7 @@ class TestCollisionCoreLifecycle:
     def test_start_with_checkpoint_enabled(self, sample_targets, sample_config_full):
         """启用断点时启动，应初始化断点管理器"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets, config=sample_config_full)
         core.start(mode="random")
         assert core.checkpoint is not None
@@ -275,6 +292,7 @@ class TestCollisionCoreLifecycle:
     def test_start_with_dedup_enabled(self, sample_targets, sample_config_full):
         """启用了去重时启动，应初始化去重过滤器"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets, config=sample_config_full)
         core.start(mode="random")
         assert core.dedup_filter is not None
@@ -284,6 +302,7 @@ class TestCollisionCoreLifecycle:
     def test_start_sets_timestamps(self, sample_targets, sample_config):
         """启动时设置正确的时间戳"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets, config=sample_config)
         before = time.time()
         core.start(mode="random")
@@ -297,6 +316,7 @@ class TestCollisionCoreLifecycle:
     def test_start_with_resume_kwarg(self, sample_targets, sample_config_full):
         """启动时传递 resume=True 会尝试恢复断点"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets, config=sample_config_full)
         core.start(mode="random", resume=True)
         assert core._running is True
@@ -306,12 +326,14 @@ class TestCollisionCoreLifecycle:
 
 # ========== Test: 批次完成回调 ==========
 
+
 class TestOnBatchComplete:
     """测试 on_batch_complete 批次回调"""
 
     def test_stats_updated_on_batch(self, sample_targets, sample_config):
         """批次完成后更新统计"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets, config=sample_config)
         core.start(mode="random")
         initial_checked = core.stats.total_checked
@@ -322,6 +344,7 @@ class TestOnBatchComplete:
     def test_skips_when_not_running(self, sample_targets, sample_config):
         """未运行时跳过批次处理"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets, config=sample_config)
         core._running = False
         core.stats = MagicMock()
@@ -331,6 +354,7 @@ class TestOnBatchComplete:
     def test_skips_when_paused(self, sample_targets, sample_config):
         """暂停时跳过批次处理"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets, config=sample_config)
         core.start(mode="random")
         core.pause()
@@ -510,6 +534,7 @@ class TestOnBatchComplete:
     def test_batch_when_stats_is_none_skips(self, sample_targets, sample_config):
         """stats 为 None 时，批次回调安全跳过"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets, config=sample_config)
         core._running = True
         core.stats = None
@@ -518,6 +543,7 @@ class TestOnBatchComplete:
 
 
 # ========== Test: 断点恢复 ==========
+
 
 class TestCheckpointRestore:
     """测试 _restore_checkpoint 断点恢复"""
@@ -569,6 +595,7 @@ class TestCheckpointRestore:
     def test_restore_when_no_checkpoint_manager(self, sample_targets, sample_config):
         """无断点管理器时恢复安全"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets, config=sample_config)
         core.checkpoint = None
         core.stats = MagicMock()
@@ -619,6 +646,7 @@ class TestCheckpointRestore:
 
 
 # ========== Test: 搜索协调器初始化 ==========
+
 
 class TestSearchCoordinatorInit:
     """测试 _init_search_coordinator"""
@@ -692,6 +720,7 @@ class TestSearchCoordinatorInit:
     def test_stub_supports_switch_mode(self, sample_targets):
         """存根支持切换模式"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets)
         stub = core._create_search_stub()
         stub.start("random")
@@ -701,6 +730,7 @@ class TestSearchCoordinatorInit:
 
 
 # ========== Test: 进度节流 ==========
+
 
 class TestProgressThrottling:
     """测试进度回调节流"""
@@ -780,6 +810,7 @@ class TestProgressThrottling:
     def test_no_progress_callback_safe(self, sample_targets):
         """无进度回调时 _maybe_call_progress 安全"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets)
         core.stats = MagicMock()
         core._maybe_call_progress()  # 不应抛出异常
@@ -787,6 +818,7 @@ class TestProgressThrottling:
     def test_no_stats_safe(self, sample_targets):
         """stats 为 None 时 _maybe_call_progress 安全"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets)
         core._maybe_call_progress()  # 不应抛出异常
 
@@ -833,12 +865,14 @@ class TestProgressThrottling:
 
 # ========== Test: 获取统计信息 ==========
 
+
 class TestGetStats:
     """测试 get_stats"""
 
     def test_get_stats_returns_dict(self, sample_targets, sample_config):
         """返回字典类型的统计信息"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets, config=sample_config)
         core.start(mode="random")
         stats = core.get_stats()
@@ -848,12 +882,14 @@ class TestGetStats:
     def test_get_stats_when_not_started(self, sample_targets):
         """未启动时返回空字典"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets)
         assert core.get_stats() == {}
 
     def test_get_stats_includes_running_status(self, sample_targets, sample_config):
         """包含 running 状态"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets, config=sample_config)
         core.start(mode="random")
         stats = core.get_stats()
@@ -867,6 +903,7 @@ class TestGetStats:
     def test_get_stats_includes_elapsed_time(self, sample_targets, sample_config):
         """包含已运行时间"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets, config=sample_config)
         core.start(mode="random")
         time.sleep(0.1)
@@ -878,6 +915,7 @@ class TestGetStats:
     def test_get_stats_without_to_dict(self, sample_targets, sample_config):
         """stats 无 to_dict 方法时返回仅额外信息 (running/elapsed_time)"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets, config=sample_config)
         core.start(mode="random")
         # CollisionStats 原生没有 to_dict 方法,
@@ -890,38 +928,45 @@ class TestGetStats:
 
 # ========== Test: 模块导入与版本 ==========
 
+
 class TestModuleImports:
     """测试模块导入和版本"""
 
     def test_import_collision_core(self):
         """测试导入 CollisionCore"""
         from src.collision.gpu.core import CollisionCore
+
         assert CollisionCore is not None
 
     def test_import_from_gpu_package(self):
         """测试从 gpu 包导入"""
         from src.collision.gpu import CollisionCore
+
         assert CollisionCore is not None
 
     def test_module_version(self):
         """测试模块版本号 v4.0.0"""
         from src.collision import gpu
+
         assert gpu.__version__ == "6.0.0"
 
     def test_collision_core_in_all(self):
         """验证 CollisionCore 在 __all__ 中"""
         from src.collision.gpu import __all__ as gpu_all
+
         assert "CollisionCore" in gpu_all
 
     def test_factory_get_collision_core(self):
         """测试工厂函数"""
         from src.collision.gpu import get_collision_core
         from src.collision.gpu.core import CollisionCore
+
         assert get_collision_core() is CollisionCore
 
     def test_no_phase4_todos_in_core(self):
         """验证 core.py 中无 Phase 4 TODO"""
         import os
+
         core_path = os.path.join(
             os.path.dirname(__file__),
             "..",
@@ -941,12 +986,15 @@ class TestModuleImports:
     def test_types_import(self):
         """验证 TYPE_CHECKING 导入正常工作"""
         import typing
+
         # 验证在非类型检查时导入不触发
         from src.collision.gpu.core import CollisionCore
+
         # 如果能正常导入，说明 TYPE_CHECKING 守卫正确
 
 
 # ========== Test: 集成测试 ==========
+
 
 class TestCollisionCoreIntegration:
     """集成场景测试"""
@@ -1001,6 +1049,7 @@ class TestCollisionCoreIntegration:
     def test_huge_batch_size_overflow_safe(self, sample_targets, sample_config):
         """大批次大小不会溢出"""
         from src.collision.gpu.core import CollisionCore
+
         core = CollisionCore(targets=sample_targets, config=sample_config)
         core.start(mode="random")
         # 十亿级批次
@@ -1054,9 +1103,7 @@ class TestCollisionCoreIntegration:
             try:
                 for _ in range(10):
                     core.on_batch_complete(
-                        matches=[
-                            {"address": "1Test", "private_key": "d" * 64, "wif": "5KTest"}
-                        ],
+                        matches=[{"address": "1Test", "private_key": "d" * 64, "wif": "5KTest"}],
                         batch_size=100,
                     )
             except Exception as e:

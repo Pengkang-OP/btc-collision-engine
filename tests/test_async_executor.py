@@ -18,10 +18,10 @@ import pytest
 from unittest.mock import Mock, patch, MagicMock, PropertyMock
 import numpy as np
 
-
 # ============================================================================
 # _seed_bytes_to_u32_be_array 测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestSeedBytesToU32:
@@ -29,6 +29,7 @@ class TestSeedBytesToU32:
 
     def test_valid_32_byte_seed(self):
         from src.gpu.async_executor import _seed_bytes_to_u32_be_array
+
         seed = bytes(range(32))
         result = _seed_bytes_to_u32_be_array(seed)
         assert isinstance(result, np.ndarray)
@@ -38,31 +39,36 @@ class TestSeedBytesToU32:
     def test_invalid_length_raises(self):
         from src.gpu.async_executor import _seed_bytes_to_u32_be_array
         import pytest as pt
+
         with pt.raises(ValueError, match="32 bytes"):
             _seed_bytes_to_u32_be_array(b"short")
 
     def test_empty_seed_raises(self):
         from src.gpu.async_executor import _seed_bytes_to_u32_be_array
         import pytest as pt
+
         with pt.raises(ValueError, match="32 bytes"):
             _seed_bytes_to_u32_be_array(b"")
 
     def test_33_byte_seed_raises(self):
         from src.gpu.async_executor import _seed_bytes_to_u32_be_array
         import pytest as pt
+
         with pt.raises(ValueError, match="32 bytes"):
             _seed_bytes_to_u32_be_array(b"x" * 33)
 
     def test_all_zeros_seed(self):
         from src.gpu.async_executor import _seed_bytes_to_u32_be_array
+
         seed = b"\x00" * 32
         result = _seed_bytes_to_u32_be_array(seed)
         assert np.all(result == 0)
 
     def test_endianness_conversion(self):
         from src.gpu.async_executor import _seed_bytes_to_u32_be_array
+
         # 0xDEADBEEF in big-endian
-        seed = b"\x00" * 28 + b"\xDE\xAD\xBE\xEF"
+        seed = b"\x00" * 28 + b"\xde\xad\xbe\xef"
         result = _seed_bytes_to_u32_be_array(seed)
         # On little-endian x86, last element should be 0xDEADBEEF as native uint32
         assert result[7] == 0xDEADBEEF
@@ -72,6 +78,7 @@ class TestSeedBytesToU32:
 # GPU_SPECIFIC_CONFIG 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestGpuSpecificConfig:
     """GPU配置完整性测试"""
@@ -80,39 +87,57 @@ class TestGpuSpecificConfig:
 
     def test_default_config_exists(self):
         from src.gpu.async_executor import GPU_SPECIFIC_CONFIG
+
         assert "default" in GPU_SPECIFIC_CONFIG
 
     def test_all_gpu_configs_have_required_keys(self):
         from src.gpu.async_executor import GPU_SPECIFIC_CONFIG
+
         for gpu_model, config in GPU_SPECIFIC_CONFIG.items():
             for key in self.REQUIRED_KEYS:
                 assert key in config, f"{gpu_model} missing key: {key}"
 
     def test_known_gpu_models_exist(self):
         from src.gpu.async_executor import GPU_SPECIFIC_CONFIG
-        expected_models = ["1660", "rtx30", "rtx40", "10", "9", "amd6000", "amd7000", "intel", "default"]
+
+        expected_models = [
+            "1660",
+            "rtx30",
+            "rtx40",
+            "10",
+            "9",
+            "amd6000",
+            "amd7000",
+            "intel",
+            "default",
+        ]
         for model in expected_models:
             assert model in GPU_SPECIFIC_CONFIG, f"Missing GPU config: {model}"
 
     def test_all_queue_depths_positive(self):
         from src.gpu.async_executor import GPU_SPECIFIC_CONFIG
+
         for model, config in GPU_SPECIFIC_CONFIG.items():
             assert config["queue_depth"] >= 1, f"{model} queue_depth <= 0"
 
     def test_all_batch_sizes_positive(self):
         from src.gpu.async_executor import GPU_SPECIFIC_CONFIG
+
         for model, config in GPU_SPECIFIC_CONFIG.items():
             assert config["initial_batch_size"] > 0, f"{model} initial_batch_size <= 0"
-            assert config["max_batch_size"] >= config["initial_batch_size"], \
-                f"{model} max < initial"
+            assert (
+                config["max_batch_size"] >= config["initial_batch_size"]
+            ), f"{model} max < initial"
 
     def test_memory_factors_valid(self):
         from src.gpu.async_executor import GPU_SPECIFIC_CONFIG
+
         for model, config in GPU_SPECIFIC_CONFIG.items():
             assert 0 < config["memory_factor"] <= 1.0, f"{model} invalid memory_factor"
 
     def test_default_queue_depth_constant(self):
         from src.gpu.async_executor import DEFAULT_QUEUE_DEPTH
+
         assert DEFAULT_QUEUE_DEPTH == 4
 
 
@@ -120,12 +145,14 @@ class TestGpuSpecificConfig:
 # _PendingBatch 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestPendingBatch:
     """待处理批次数据类测试"""
 
     def test_create_pending_batch(self):
         from src.gpu.async_executor import _PendingBatch
+
         read_event = Mock()
         buf = {"matches": Mock(), "match_flags": np.zeros(10, dtype=np.int32)}
         pb = _PendingBatch(read_event=read_event, buf=buf, num_keys=1000, seed=b"x" * 32)
@@ -136,6 +163,7 @@ class TestPendingBatch:
 
     def test_has_slots(self):
         from src.gpu.async_executor import _PendingBatch
+
         pb = _PendingBatch(Mock(), {}, 0, b"")
         assert hasattr(pb, "read_event")
         assert hasattr(pb, "buf")
@@ -147,12 +175,14 @@ class TestPendingBatch:
 # AsyncGPUExecutor 初始化测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestAsyncExecutorInit:
     """异步执行器初始化测试"""
 
     def test_init_defaults(self):
         from src.gpu.async_executor import AsyncGPUExecutor
+
         gpu_device = MagicMock()
         # No device_info → default model
         gpu_device.device_info = None
@@ -163,6 +193,7 @@ class TestAsyncExecutorInit:
 
     def test_init_custom_queue_depth(self):
         from src.gpu.async_executor import AsyncGPUExecutor
+
         gpu_device = MagicMock()
         gpu_device.device_info = None
         executor = AsyncGPUExecutor(gpu_device, max_batch_size=262144, queue_depth=6)
@@ -170,6 +201,7 @@ class TestAsyncExecutorInit:
 
     def test_init_queue_depth_min_one(self):
         from src.gpu.async_executor import AsyncGPUExecutor
+
         gpu_device = MagicMock()
         gpu_device.device_info = None
         executor = AsyncGPUExecutor(gpu_device, max_batch_size=262144, queue_depth=0)
@@ -177,6 +209,7 @@ class TestAsyncExecutorInit:
 
     def test_init_uses_gpu_specific_max_batch(self):
         from src.gpu.async_executor import AsyncGPUExecutor
+
         gpu_device = MagicMock()
         gpu_device.device_info = {"name": "NVIDIA GeForce GTX 1660 SUPER"}
         executor = AsyncGPUExecutor(gpu_device, max_batch_size=10000)
@@ -185,6 +218,7 @@ class TestAsyncExecutorInit:
 
     def test_init_initial_state(self):
         from src.gpu.async_executor import AsyncGPUExecutor
+
         gpu_device = MagicMock()
         gpu_device.device_info = None
         executor = AsyncGPUExecutor(gpu_device, max_batch_size=262144)
@@ -202,12 +236,14 @@ class TestAsyncExecutorInit:
 # _detect_gpu_model 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestDetectGpuModel:
     """GPU型号检测测试"""
 
     def _make_executor_with_name(self, name):
         from src.gpu.async_executor import AsyncGPUExecutor
+
         gpu_device = MagicMock()
         gpu_device.device_info = {"name": name}
         return AsyncGPUExecutor(gpu_device, max_batch_size=262144)
@@ -258,6 +294,7 @@ class TestDetectGpuModel:
 
     def test_detect_no_device_info(self):
         from src.gpu.async_executor import AsyncGPUExecutor
+
         gpu_device = MagicMock()
         gpu_device.device_info = None
         executor = AsyncGPUExecutor(gpu_device, max_batch_size=262144)
@@ -268,12 +305,14 @@ class TestDetectGpuModel:
 # _get_gpu_config 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestGetGpuConfig:
     """GPU配置获取测试"""
 
     def test_get_known_model_config(self):
         from src.gpu.async_executor import AsyncGPUExecutor, GPU_SPECIFIC_CONFIG
+
         gpu_device = MagicMock()
         gpu_device.device_info = None
         executor = AsyncGPUExecutor(gpu_device, max_batch_size=262144)
@@ -282,6 +321,7 @@ class TestGetGpuConfig:
 
     def test_get_unknown_model_returns_default(self):
         from src.gpu.async_executor import AsyncGPUExecutor, GPU_SPECIFIC_CONFIG
+
         gpu_device = MagicMock()
         gpu_device.device_info = None
         executor = AsyncGPUExecutor(gpu_device, max_batch_size=262144)
@@ -293,12 +333,14 @@ class TestGetGpuConfig:
 # _is_buffer_valid 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestIsBufferValid:
     """缓冲区有效性检查测试"""
 
     def test_valid_buffers(self):
         from src.gpu.async_executor import AsyncGPUExecutor
+
         gpu_device = MagicMock()
         gpu_device.device_info = None
         gpu_device.transfer_queue = MagicMock()
@@ -308,6 +350,7 @@ class TestIsBufferValid:
 
     def test_null_seed_buffer(self):
         from src.gpu.async_executor import AsyncGPUExecutor
+
         gpu_device = MagicMock()
         gpu_device.device_info = None
         gpu_device.transfer_queue = MagicMock()
@@ -317,6 +360,7 @@ class TestIsBufferValid:
 
     def test_null_transfer_queue(self):
         from src.gpu.async_executor import AsyncGPUExecutor
+
         gpu_device = MagicMock()
         gpu_device.device_info = None
         gpu_device.transfer_queue = None
@@ -326,6 +370,7 @@ class TestIsBufferValid:
 
     def test_no_transfer_queue_attr(self):
         from src.gpu.async_executor import AsyncGPUExecutor
+
         gpu_device = MagicMock()
         gpu_device.device_info = None
         del gpu_device.transfer_queue  # remove attribute
@@ -338,12 +383,14 @@ class TestIsBufferValid:
 # prefetch_next_batch 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestPrefetchNextBatch:
     """预取下一批次测试"""
 
     def test_prefetch_disabled(self):
         from src.gpu.async_executor import AsyncGPUExecutor
+
         gpu_device = MagicMock()
         gpu_device.device_info = None
         executor = AsyncGPUExecutor(gpu_device, max_batch_size=262144)
@@ -356,6 +403,7 @@ class TestPrefetchNextBatch:
 
     def test_prefetch_with_valid_seed(self):
         from src.gpu.async_executor import AsyncGPUExecutor
+
         gpu_device = MagicMock()
         gpu_device.device_info = None
         executor = AsyncGPUExecutor(gpu_device, max_batch_size=262144)
@@ -369,6 +417,7 @@ class TestPrefetchNextBatch:
 
     def test_prefetch_exception_clears_event(self):
         from src.gpu.async_executor import AsyncGPUExecutor
+
         gpu_device = MagicMock()
         gpu_device.device_info = None
         executor = AsyncGPUExecutor(gpu_device, max_batch_size=262144)
@@ -386,12 +435,14 @@ class TestPrefetchNextBatch:
 # flush_pending 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestFlushPending:
     """结果回收测试"""
 
     def test_flush_empty_queue(self):
         from src.gpu.async_executor import AsyncGPUExecutor
+
         gpu_device = MagicMock()
         gpu_device.device_info = None
         executor = AsyncGPUExecutor(gpu_device, max_batch_size=262144)
@@ -403,6 +454,7 @@ class TestFlushPending:
 
     def test_flush_with_pending_event(self):
         from src.gpu.async_executor import AsyncGPUExecutor
+
         gpu_device = MagicMock()
         gpu_device.device_info = None
         executor = AsyncGPUExecutor(gpu_device, max_batch_size=262144)
@@ -414,6 +466,7 @@ class TestFlushPending:
         }
         seed = b"s" * 32
         from src.gpu.async_executor import _PendingBatch
+
         pb = _PendingBatch(read_event=mock_event, buf=mock_buf, num_keys=5, seed=seed)
         executor._prefetch_events.append(pb)
         executor.pending_event = mock_event
@@ -434,12 +487,14 @@ class TestFlushPending:
 # get_stats 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestGetStats:
     """统计信息测试"""
 
     def test_get_stats_initial(self):
         from src.gpu.async_executor import AsyncGPUExecutor
+
         gpu_device = MagicMock()
         gpu_device.device_info = None
         executor = AsyncGPUExecutor(gpu_device, max_batch_size=262144)
@@ -453,6 +508,7 @@ class TestGetStats:
 
     def test_get_stats_after_executions(self):
         from src.gpu.async_executor import AsyncGPUExecutor
+
         gpu_device = MagicMock()
         gpu_device.device_info = None
         executor = AsyncGPUExecutor(gpu_device, max_batch_size=262144)
@@ -469,15 +525,22 @@ class TestGetStats:
 
     def test_get_stats_all_keys_present(self):
         from src.gpu.async_executor import AsyncGPUExecutor
+
         gpu_device = MagicMock()
         gpu_device.device_info = None
         executor = AsyncGPUExecutor(gpu_device, max_batch_size=262144)
 
         stats = executor.get_stats()
         expected_keys = [
-            "async_executions", "sync_fallbacks", "total_executions",
-            "async_rate_percent", "prefetch_hits", "prefetch_misses",
-            "prefetch_rate_percent", "queue_depth", "queue_depth_hits",
+            "async_executions",
+            "sync_fallbacks",
+            "total_executions",
+            "async_rate_percent",
+            "prefetch_hits",
+            "prefetch_misses",
+            "prefetch_rate_percent",
+            "queue_depth",
+            "queue_depth_hits",
             "current_queue_depth",
         ]
         for key in expected_keys:
@@ -485,6 +548,7 @@ class TestGetStats:
 
     def test_get_stats_current_queue_depth(self):
         from src.gpu.async_executor import AsyncGPUExecutor
+
         gpu_device = MagicMock()
         gpu_device.device_info = None
         executor = AsyncGPUExecutor(gpu_device, max_batch_size=262144)
@@ -496,12 +560,14 @@ class TestGetStats:
 # cleanup 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestCleanup:
     """资源清理测试"""
 
     def test_cleanup_no_buffers(self):
         from src.gpu.async_executor import AsyncGPUExecutor
+
         gpu_device = MagicMock()
         gpu_device.device_info = None
         gpu_device.compute_queue = MagicMock()
@@ -516,6 +582,7 @@ class TestCleanup:
 
     def test_cleanup_with_seed_buffer(self):
         from src.gpu.async_executor import AsyncGPUExecutor
+
         gpu_device = MagicMock()
         gpu_device.device_info = None
         gpu_device.compute_queue = MagicMock()
@@ -532,6 +599,7 @@ class TestCleanup:
 
     def test_cleanup_with_precomp_buffer(self):
         from src.gpu.async_executor import AsyncGPUExecutor
+
         gpu_device = MagicMock()
         gpu_device.device_info = None
         gpu_device.compute_queue = MagicMock()
@@ -548,6 +616,7 @@ class TestCleanup:
 
     def test_cleanup_with_pool_buffers(self):
         from src.gpu.async_executor import AsyncGPUExecutor
+
         gpu_device = MagicMock()
         gpu_device.device_info = None
         gpu_device.compute_queue = MagicMock()
@@ -569,6 +638,7 @@ class TestCleanup:
 
     def test_cleanup_release_exception_handled(self):
         from src.gpu.async_executor import AsyncGPUExecutor
+
         gpu_device = MagicMock()
         gpu_device.device_info = None
         gpu_device.compute_queue = MagicMock()
@@ -583,6 +653,7 @@ class TestCleanup:
 
     def test_cleanup_with_pending_event(self):
         from src.gpu.async_executor import AsyncGPUExecutor
+
         gpu_device = MagicMock()
         gpu_device.device_info = None
         gpu_device.compute_queue = MagicMock()

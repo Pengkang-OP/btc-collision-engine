@@ -211,7 +211,7 @@ class DataStorage:
                 os.fsync(f.fileno())  # 确保数据写入磁盘
 
             # 设置安全权限: 仅所有者可读写 (Unix only; Windows 通过 ACL 控制)
-            if os.name != 'nt':
+            if os.name != "nt":
                 os.chmod(temp_file, 0o600)
 
             # 原子替换
@@ -250,7 +250,7 @@ class DataStorage:
                 os.fsync(f.fileno())
 
             # 设置安全权限: 仅所有者可读写 (Unix only; Windows 通过 ACL 控制)
-            if os.name != 'nt':
+            if os.name != "nt":
                 os.chmod(temp_file, 0o600)
 
             # 原子替换
@@ -411,7 +411,7 @@ class DataStorage:
                 os.fsync(f.fileno())
 
             # 设置安全权限: 仅所有者可读写 (Unix only; Windows 通过 ACL 控制)
-            if os.name != 'nt':
+            if os.name != "nt":
                 os.chmod(temp_file, 0o600)
 
             # 原子替换

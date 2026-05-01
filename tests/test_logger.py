@@ -20,10 +20,10 @@ import time
 import warnings
 from unittest.mock import Mock, patch, MagicMock
 
-
 # ============================================================================
 # Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def temp_log_dir():
@@ -39,6 +39,7 @@ def temp_log_dir():
             pass
     root.handlers.clear()
     import shutil
+
     try:
         shutil.rmtree(tmpdir)
     except PermissionError:
@@ -66,15 +67,17 @@ def clean_logger():
 # ColoredFormatter 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestColoredFormatter:
     """彩色格式化器测试"""
 
     def test_format_adds_color_for_tty(self):
         from src.utils.logger import ColoredFormatter
+
         fmt = ColoredFormatter("%(levelname)s - %(message)s")
         record = logging.LogRecord("test", logging.INFO, "", 0, "hello", (), None)
-        with patch.object(sys.stdout, 'isatty', return_value=True):
+        with patch.object(sys.stdout, "isatty", return_value=True):
             result = fmt.format(record)
         assert "INFO" in result
         assert "hello" in result
@@ -83,9 +86,10 @@ class TestColoredFormatter:
 
     def test_format_no_color_for_non_tty(self):
         from src.utils.logger import ColoredFormatter
+
         fmt = ColoredFormatter("%(levelname)s - %(message)s")
         record = logging.LogRecord("test", logging.ERROR, "", 0, "error msg", (), None)
-        with patch.object(sys.stdout, 'isatty', return_value=False):
+        with patch.object(sys.stdout, "isatty", return_value=False):
             result = fmt.format(record)
         assert "ERROR" in result
         assert "error msg" in result
@@ -94,15 +98,17 @@ class TestColoredFormatter:
 
     def test_format_restores_levelname(self):
         from src.utils.logger import ColoredFormatter
+
         fmt = ColoredFormatter("%(levelname)s")
         record = logging.LogRecord("test", logging.WARNING, "", 0, "w", (), None)
         orig = record.levelname
-        with patch.object(sys.stdout, 'isatty', return_value=True):
+        with patch.object(sys.stdout, "isatty", return_value=True):
             fmt.format(record)
         assert record.levelname == orig
 
     def test_all_levels_have_color(self):
         from src.utils.logger import ColoredFormatter
+
         for level in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
             assert level in ColoredFormatter.COLORS
 
@@ -111,12 +117,14 @@ class TestColoredFormatter:
 # SafeStreamHandler 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestSafeStreamHandler:
     """安全流处理器测试"""
 
     def test_emit_writes_message(self, capsys):
         from src.utils.logger import SafeStreamHandler
+
         handler = SafeStreamHandler(sys.stdout)
         handler.setFormatter(logging.Formatter("%(message)s"))
         record = logging.LogRecord("test", logging.INFO, "", 0, "test message", (), None)
@@ -128,6 +136,7 @@ class TestSafeStreamHandler:
         """关闭的流不会抛出异常"""
         from src.utils.logger import SafeStreamHandler
         import io
+
         closed_stream = io.StringIO()
         closed_stream.close()
         handler = SafeStreamHandler(closed_stream)
@@ -138,6 +147,7 @@ class TestSafeStreamHandler:
     def test_emit_handles_none_stream(self):
         """None stream 不会抛出异常"""
         from src.utils.logger import SafeStreamHandler
+
         handler = SafeStreamHandler(sys.stdout)
         handler.stream = None
         record = logging.LogRecord("test", logging.INFO, "", 0, "msg", (), None)
@@ -146,6 +156,7 @@ class TestSafeStreamHandler:
     def test_emit_gbk_encoding_safe(self):
         """GBK 编码下中文不会崩溃"""
         from src.utils.logger import SafeStreamHandler
+
         handler = SafeStreamHandler(sys.stdout)
         handler.setFormatter(logging.Formatter("%(message)s"))
         record = logging.LogRecord("test", logging.INFO, "", 0, "中文测试日志", (), None)
@@ -157,12 +168,14 @@ class TestSafeStreamHandler:
 # ThreadSafeLogger（已弃用）测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestThreadSafeLogger:
     """线程安全日志器测试（兼容性）"""
 
     def test_init_emits_deprecation_warning(self):
         from src.utils.logger import ThreadSafeLogger
+
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             logger = logging.getLogger("test_ts")
@@ -173,6 +186,7 @@ class TestThreadSafeLogger:
 
     def test_info_delegates_to_logger(self):
         from src.utils.logger import ThreadSafeLogger
+
         base = MagicMock(spec=logging.Logger)
         ts = ThreadSafeLogger.__new__(ThreadSafeLogger)
         ts._logger = base
@@ -182,6 +196,7 @@ class TestThreadSafeLogger:
 
     def test_error_delegates_to_logger(self):
         from src.utils.logger import ThreadSafeLogger
+
         base = MagicMock(spec=logging.Logger)
         ts = ThreadSafeLogger.__new__(ThreadSafeLogger)
         ts._logger = base
@@ -191,6 +206,7 @@ class TestThreadSafeLogger:
 
     def test_exception_delegates_to_logger(self):
         from src.utils.logger import ThreadSafeLogger
+
         base = MagicMock(spec=logging.Logger)
         ts = ThreadSafeLogger.__new__(ThreadSafeLogger)
         ts._logger = base
@@ -200,6 +216,7 @@ class TestThreadSafeLogger:
 
     def test_critical_delegates_to_logger(self):
         from src.utils.logger import ThreadSafeLogger
+
         base = MagicMock(spec=logging.Logger)
         ts = ThreadSafeLogger.__new__(ThreadSafeLogger)
         ts._logger = base
@@ -210,6 +227,7 @@ class TestThreadSafeLogger:
     def test_all_methods_hold_lock(self):
         from src.utils.logger import ThreadSafeLogger
         import threading
+
         base = MagicMock(spec=logging.Logger)
         ts = ThreadSafeLogger.__new__(ThreadSafeLogger)
         ts._logger = base
@@ -224,12 +242,14 @@ class TestThreadSafeLogger:
 # PerformanceMonitor 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestPerformanceMonitor:
     """性能监控测试"""
 
     def test_context_manager_logs_elapsed(self):
         from src.utils.logger import PerformanceMonitor
+
         mock_logger = MagicMock(spec=logging.Logger)
         with PerformanceMonitor(mock_logger, "test_op", level="INFO"):
             pass
@@ -240,6 +260,7 @@ class TestPerformanceMonitor:
 
     def test_elapsed_ms_property(self):
         from src.utils.logger import PerformanceMonitor
+
         mock_logger = MagicMock(spec=logging.Logger)
         monitor = PerformanceMonitor(mock_logger, "op")
         monitor.start_time = time.perf_counter()
@@ -248,6 +269,7 @@ class TestPerformanceMonitor:
 
     def test_exception_logs_failure(self):
         from src.utils.logger import PerformanceMonitor
+
         mock_logger = MagicMock(spec=logging.Logger)
         try:
             with PerformanceMonitor(mock_logger, "failing_op"):
@@ -261,6 +283,7 @@ class TestPerformanceMonitor:
 
     def test_default_level_is_debug(self):
         from src.utils.logger import PerformanceMonitor
+
         mock_logger = MagicMock(spec=logging.Logger)
         monitor = PerformanceMonitor(mock_logger, "op")
         assert monitor.level == logging.DEBUG
@@ -270,12 +293,14 @@ class TestPerformanceMonitor:
 # SampledLogger 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestSampledLogger:
     """采样日志测试"""
 
     def test_logs_only_at_sample_rate(self):
         from src.utils.logger import SampledLogger
+
         base = MagicMock(spec=logging.Logger)
         sampled = SampledLogger(base, sample_rate=5)
         for i in range(10):
@@ -285,10 +310,11 @@ class TestSampledLogger:
 
     def test_respects_max_per_second(self):
         from src.utils.logger import SampledLogger
+
         base = MagicMock(spec=logging.Logger)
         sampled = SampledLogger(base, sample_rate=1, max_per_second=2)
         # 用 mock time.monotonic() 控制时间窗口，确保确定性
-        with patch('time.monotonic', side_effect=[100.0, 100.1, 100.2, 100.3, 100.4]):
+        with patch("time.monotonic", side_effect=[100.0, 100.1, 100.2, 100.3, 100.4]):
             for i in range(5):
                 sampled.info("msg %d", i)
         # 同一时间窗口最多2条 → 调用次数精确 == 2
@@ -296,6 +322,7 @@ class TestSampledLogger:
 
     def test_debug_uses_prefix(self):
         from src.utils.logger import SampledLogger
+
         base = MagicMock(spec=logging.Logger)
         sampled = SampledLogger(base, sample_rate=1)
         sampled.debug("test")
@@ -304,6 +331,7 @@ class TestSampledLogger:
 
     def test_warning_uses_prefix(self):
         from src.utils.logger import SampledLogger
+
         base = MagicMock(spec=logging.Logger)
         sampled = SampledLogger(base, sample_rate=1)
         sampled.warning("test")
@@ -313,6 +341,7 @@ class TestSampledLogger:
     def test_error_always_logs_at_rate_1(self):
         """rate=1 时每条都记录"""
         from src.utils.logger import SampledLogger
+
         base = MagicMock(spec=logging.Logger)
         sampled = SampledLogger(base, sample_rate=1)
         for i in range(3):
@@ -322,6 +351,7 @@ class TestSampledLogger:
     def test_counter_wraps_at_max(self):
         """计数器超过上限后应重置为0"""
         from src.utils.logger import SampledLogger
+
         base = MagicMock(spec=logging.Logger)
         sampled = SampledLogger(base, sample_rate=1)
         sampled._counter = sampled._COUNTER_MAX - 1
@@ -332,6 +362,7 @@ class TestSampledLogger:
     def test_max_per_second_zero_disabled(self):
         """max_per_second=0 表示不限频"""
         from src.utils.logger import SampledLogger
+
         base = MagicMock(spec=logging.Logger)
         sampled = SampledLogger(base, sample_rate=1, max_per_second=0)
         for i in range(5):
@@ -343,12 +374,14 @@ class TestSampledLogger:
 # AsyncLogger / AsyncFileHandler 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestAsyncLogger:
     """异步日志器测试"""
 
     def test_init_starts_writer_thread(self):
         from src.utils.logger import AsyncLogger
+
         al = AsyncLogger(max_queue_size=100)
         try:
             assert al._writer_thread.is_alive()
@@ -358,6 +391,7 @@ class TestAsyncLogger:
     def test_emit_queues_record(self):
         from src.utils.logger import AsyncLogger
         from conftest import poll_until
+
         al = AsyncLogger(max_queue_size=100)
         try:
             handler = MagicMock(spec=logging.Handler)
@@ -365,13 +399,15 @@ class TestAsyncLogger:
             record = logging.LogRecord("test", logging.INFO, "", 0, "async msg", (), None)
             al.emit(record)
             # 用 poll_until 等待后台线程处理，比 time.sleep(0.2) 更稳定
-            assert poll_until(lambda: handler.emit.called, timeout=2.0), \
-                "AsyncLogger writer thread did not process record within timeout"
+            assert poll_until(
+                lambda: handler.emit.called, timeout=2.0
+            ), "AsyncLogger writer thread did not process record within timeout"
         finally:
             al.close()
 
     def test_close_stops_thread(self):
         from src.utils.logger import AsyncLogger
+
         al = AsyncLogger(max_queue_size=100)
         al.close()
         al._writer_thread.join(timeout=2)
@@ -379,6 +415,7 @@ class TestAsyncLogger:
 
     def test_emit_queue_full_drops(self):
         from src.utils.logger import AsyncLogger
+
         al = AsyncLogger(max_queue_size=2)
         try:
             al._handler = MagicMock(spec=logging.Handler)
@@ -392,6 +429,7 @@ class TestAsyncLogger:
 
     def test_get_stats(self):
         from src.utils.logger import AsyncLogger
+
         al = AsyncLogger(max_queue_size=100)
         try:
             stats = al.get_stats()
@@ -409,6 +447,7 @@ class TestAsyncFileHandler:
 
     def test_creates_handler(self, temp_log_dir):
         from src.utils.logger import AsyncFileHandler
+
         log_file = os.path.join(temp_log_dir, "async.log")
         handler = AsyncFileHandler(log_file)
         try:
@@ -422,6 +461,7 @@ class TestAsyncFileHandler:
 
     def test_rotating_handler(self, temp_log_dir):
         from src.utils.logger import AsyncFileHandler
+
         log_file = os.path.join(temp_log_dir, "rotate.log")
         handler = AsyncFileHandler(log_file, max_bytes=1024, backup_count=2)
         try:
@@ -435,12 +475,14 @@ class TestAsyncFileHandler:
 # setup_logger / get_logger 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestSetupLogger:
     """setup_logger 函数测试"""
 
     def test_creates_logger_with_console_handler(self):
         from src.utils.logger import setup_logger
+
         logger = setup_logger("test_setup", level="DEBUG")
         try:
             assert isinstance(logger, logging.Logger)
@@ -452,6 +494,7 @@ class TestSetupLogger:
 
     def test_creates_file_handler(self, temp_log_dir):
         from src.utils.logger import setup_logger
+
         log_file = os.path.join(temp_log_dir, "setup_test.log")
         logger = setup_logger("test_file", log_file=log_file, use_color=False)
         try:
@@ -468,6 +511,7 @@ class TestSetupLogger:
 
     def test_creates_log_directory(self, temp_log_dir):
         from src.utils.logger import setup_logger
+
         log_subdir = os.path.join(temp_log_dir, "logs")
         log_file = os.path.join(log_subdir, "test.log")
         logger = setup_logger("test_dir", log_file=log_file)
@@ -488,12 +532,14 @@ class TestGetLogger:
 
     def test_returns_existing_logger(self):
         from src.utils.logger import get_logger
+
         logger = get_logger("test_existing")
         assert isinstance(logger, logging.Logger)
 
     def test_thread_safe_returns_wrapper(self):
         from src.utils.logger import get_logger
         from src.utils.logger import ThreadSafeLogger
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
             result = get_logger("test_ts_get", thread_safe=True)
@@ -506,11 +552,13 @@ class TestGetSampledLogger:
 
     def test_returns_sampled_logger(self):
         from src.utils.logger import get_sampled_logger, SampledLogger
+
         sampled = get_sampled_logger("test_sampled", sample_rate=10)
         assert isinstance(sampled, SampledLogger)
         assert sampled.sample_rate == 10
 
     def test_default_max_per_second_zero(self):
         from src.utils.logger import get_sampled_logger
+
         sampled = get_sampled_logger("test_sampled2")
         assert sampled.max_per_second == 0.0
