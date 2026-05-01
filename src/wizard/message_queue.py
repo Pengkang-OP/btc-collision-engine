@@ -8,7 +8,6 @@
 
 import queue
 import threading
-import time
 import logging
 from typing import Optional, Dict, Any
 from .events import WizardEvent, WizardEventType

@@ -29,8 +29,6 @@ logger = get_configured_logger("AddressGenerator")
 class PerformanceWarning(UserWarning):
     """性能警告：当前配置可能不是最优"""
 
-    pass
-
 
 def secure_clear_bytearray(buffer: bytearray) -> None:
     """
@@ -63,7 +61,7 @@ def secure_clear_bytearray(buffer: bytearray) -> None:
     if not isinstance(buffer, bytearray):
         raise TypeError(
             f"必须传入bytearray类型，当前为{type(buffer).__name__}。"
-            f"bytes对象不可变，无法清零。请先转换为bytearray。"
+            "bytes对象不可变，无法清零。请先转换为bytearray。"
         )
 
     try:
@@ -313,7 +311,7 @@ class P2PKHAddressGenerator(BaseAddressGenerator):
             if key_int == 0:
                 raise ValueError("私钥不能为零，必须在范围 [1, N) 内")
             elif key_int >= Secp256k1.N:
-                raise ValueError(f"私钥超出曲线阶 N = {Secp256k1.N}。" f"私钥必须在范围 [1, N) 内")
+                raise ValueError(f"私钥超出曲线阶 N = {Secp256k1.N}。" "私钥必须在范围 [1, N) 内")
 
         # 生成压缩公钥
         compressed_pk = self.private_key_to_public_key(private_key, compressed=True)

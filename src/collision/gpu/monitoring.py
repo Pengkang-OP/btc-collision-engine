@@ -14,11 +14,11 @@
 更新日期: 2026-04-30
 """
 
-from typing import Optional, Dict, Any, List, cast
+from typing import Optional, Dict, Any, List
 import logging
 import time
 
-from .protocols import IMonitoringPipeline, MatchResult
+from .protocols import IMonitoringPipeline
 from .data_logger_adapter import DataLoggerAdapter
 
 logger = logging.getLogger(__name__)
@@ -267,7 +267,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
         Returns:
             厂商监控器列表
         """
-        monitors = []
+        monitors: List[Any] = []
 
         # 检测GPU厂商
         vendor = self._detect_vendor()
@@ -280,7 +280,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
 
                 if self.engine and hasattr(self.engine, "_gpu_device"):
                     monitors.append(IntelMemoryMonitor(self.engine._gpu_device))
-                    monitors.append(AdaptiveTimeoutManager())  # type: ignore[arg-type]
+                    monitors.append(AdaptiveTimeoutManager())
             except Exception as e:
                 logger.warning(f"创建Intel监控器失败: {e}")
 

@@ -5,8 +5,7 @@
 支持多厂商GPU(NVIDIA/AMD/Intel)的智能评估。
 """
 
-import logging
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 import threading
 from typing import List, Dict, Optional, Any
 

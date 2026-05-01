@@ -58,7 +58,7 @@ except ImportError:
 
 # 异步日志支持
 try:
-    from ...utils.logger import AsyncFileHandler
+    pass
 
     ASYNC_LOG_AVAILABLE = True
 except ImportError:
@@ -71,29 +71,30 @@ try:
     GPU_CONFIG_MANAGER_AVAILABLE = True
 except ImportError:
     GPU_CONFIG_MANAGER_AVAILABLE = False
-    GPUConfigManager = None  # type: ignore[assignment,misc]  # 条件导入回退
+    GPUConfigManager: Any = None  # 条件导入回退
 
 # 基础依赖
-from ...gpu.device import GPUDeviceDetector
-from ...gpu.engine_monitor import GPUEngineMonitor
-from ...gpu.search_mode_coordinator import SearchModeCoordinator
-from ...gpu.device_manager import GPUDeviceManager
-from ...gpu.memory_calculator import GPUMemoryCalculator
+from ...gpu.device import GPUDeviceDetector  # noqa: E402
+from ...gpu.engine_monitor import GPUEngineMonitor  # noqa: E402
+from ...gpu.search_mode_coordinator import SearchModeCoordinator  # noqa: E402
+from ...gpu.device_manager import GPUDeviceManager  # noqa: E402
+from ...gpu.memory_calculator import GPUMemoryCalculator  # noqa: E402
 
 # 碰撞基础
-from ..collision_stats import CollisionStats
-from ..checkpoint_manager import CheckpointManager
-from ..deduplication_filter import DeduplicationFilter
-from ..base_engine import BaseCollisionEngine
+from ..collision_stats import CollisionStats  # noqa: E402
+from ..base_engine import BaseCollisionEngine  # noqa: E402
 
 # 加密
-from ...core.base58 import Base58
-from ...core.wif import WIF
+from ...core.base58 import Base58  # noqa: E402
+from ...core.wif import WIF  # noqa: E402
 
 # 监控
-from ...monitoring.data_logger import DataLogger
-from ...monitoring.enhanced_monitoring import EnhancedMonitoringSystem
-from ...monitoring.gpu_performance_monitor import GPUPerformanceMonitor, get_gpu_performance_monitor
+from ...monitoring.data_logger import DataLogger  # noqa: E402
+from ...monitoring.enhanced_monitoring import EnhancedMonitoringSystem  # noqa: E402
+from ...monitoring.gpu_performance_monitor import (  # noqa: E402
+    GPUPerformanceMonitor,
+    get_gpu_performance_monitor,
+)  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -319,7 +320,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         if value >= GPU_MAX_BATCH_SIZE:
             raise ValueError(
                 f"P1-2: batch_size ({value:,}) >= UINT32_MAX ({GPU_MAX_BATCH_SIZE:,}) "
-                f"会导致 GPU 内核 gid 溢出"
+                "会导致 GPU 内核 gid 溢出"
             )
         with self._batch_size_lock:
             self._batch_size = value
@@ -660,8 +661,10 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 def timeout_handler(signum: int, frame: Any) -> None:
                     raise TimeoutError(f"匹配回调执行超时 ({self._match_callback_timeout}秒)")
 
-                old_handler = signal.signal(signal.SIGALRM, timeout_handler)  # type: ignore[attr-defined]  # Unix-only API
-                signal.alarm(int(self._match_callback_timeout))  # type: ignore[attr-defined]  # Unix-only API
+                # type: ignore[attr-defined]  # Unix-only API
+                old_handler = signal.signal(signal.SIGALRM, timeout_handler)
+                # type: ignore[attr-defined]  # Unix-only API
+                signal.alarm(int(self._match_callback_timeout))
                 try:
                     on_match(private_key, address, wif)
                 except TimeoutError as e:
@@ -672,7 +675,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
                     return False
                 finally:
                     signal.alarm(0)  # type: ignore[attr-defined]  # Unix-only API
-                    signal.signal(signal.SIGALRM, old_handler)  # type: ignore[attr-defined]  # Unix-only API
+                    # type: ignore[attr-defined]  # Unix-only API
+                    signal.signal(signal.SIGALRM, old_handler)
             return True
         except Exception as e:
             logger.error(f"匹配回调调用失败: {e}", exc_info=True)
@@ -931,7 +935,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             self._async_log_handler = handler
             handler.setLevel(logging.DEBUG)
             logger.addHandler(handler)
-            logger.info(f"GPU异步日志已启用: {log_file} (max={max_bytes/1024/1024:.0f}MB)")
+            logger.info(f"GPU异步日志已启用: {log_file} (max={max_bytes / 1024 / 1024:.0f}MB)")
         except Exception as e:
             logger.warning(f"异步日志启用失败: {e}，使用同步日志")
 

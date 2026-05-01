@@ -6,11 +6,9 @@ GPU监控模块
 提供GPU使用率、显存使用等监控指标
 """
 
-import os
 import time
 import logging
-from typing import Dict, Optional, Any
-from datetime import datetime
+from typing import Dict, Any
 
 logger = logging.getLogger("GPUMonitor")
 

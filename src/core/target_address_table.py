@@ -2,7 +2,6 @@
 """比特币目标地址表 - 支持高效查询与比对"""
 
 import json
-import os
 import threading
 from typing import Dict, Set, Tuple, Optional, List
 from datetime import datetime

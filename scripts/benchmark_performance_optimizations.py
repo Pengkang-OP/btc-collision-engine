@@ -91,7 +91,7 @@ class PerformanceBenchmark:
                 assert aligned >= size, f"对齐后小于原大小: {aligned} < {size}"
 
             print("✅ 内存池对齐测试通过")
-            print(f"   测试的对齐结果:")
+            print("   测试的对齐结果:")
             for original, aligned in aligned_results:
                 print(f"   - {original:,} bytes -> {aligned:,} bytes (对齐)")
 
@@ -144,7 +144,7 @@ class PerformanceBenchmark:
             print("✅ 激进调整策略测试通过")
             print(f"   - 当前batch: {current_batch:,}")
             print(f"   - 调整后batch: {new_batch:,}")
-            print(f"   - 增长倍数: {new_batch/current_batch:.1f}x")
+            print(f"   - 增长倍数: {new_batch / current_batch:.1f}x")
 
             if "performance_good" in adjustments:
                 time_ratio = adjustments["performance_good"].get("time_ratio", 0)
@@ -154,7 +154,7 @@ class PerformanceBenchmark:
                 {
                     "test": "performance_optimizer_aggressive",
                     "status": "PASS",
-                    "details": f"batch增长{new_batch/current_batch:.1f}x",
+                    "details": f"batch增长{new_batch / current_batch:.1f}x",
                 }
             )
 

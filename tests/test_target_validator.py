@@ -11,7 +11,6 @@
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 
 # ============================================================================
 # ValidationResult 测试

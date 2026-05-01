@@ -25,7 +25,7 @@ def test_memory_leak_detection():
         # 执行几个批次
         for i in range(3):
             matches, execution_time_ms = engine._execute_gpu_batch(seed, batch_size, i + 1)
-            print(f"批次 {i+1} 执行时间: {execution_time_ms:.2f}ms")
+            print(f"批次 {i + 1} 执行时间: {execution_time_ms:.2f}ms")
             time.sleep(0.1)  # 短暂暂停
 
         # 调用内存泄漏检查
@@ -60,7 +60,7 @@ def test_buffer_release():
         # 执行几个批次
         for i in range(3):
             matches, execution_time_ms = engine._execute_gpu_batch(seed, batch_size, i + 1)
-            print(f"批次 {i+1} 执行时间: {execution_time_ms:.2f}ms")
+            print(f"批次 {i + 1} 执行时间: {execution_time_ms:.2f}ms")
             time.sleep(0.1)  # 短暂暂停
 
         # 模拟关闭过程中的缓冲区释放

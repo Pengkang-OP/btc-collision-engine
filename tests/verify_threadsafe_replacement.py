@@ -15,7 +15,7 @@ import warnings
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.utils import init_logging, get_configured_logger
+from src.utils import init_logging, get_configured_logger  # noqa: E402
 
 # 初始化日志
 init_logging()
@@ -45,8 +45,8 @@ with warnings.catch_warnings(record=True) as w:
 
 # 测试3: 验证原生logger的线程安全
 print("\n[测试3] 验证原生logger的线程安全")
-import threading
-import time
+import threading  # noqa: E402
+import time  # noqa: E402
 
 test_logger = get_configured_logger("ThreadSafetyTest", thread_safe=False)
 messages = []
@@ -74,9 +74,9 @@ for t in threads:
     t.join()
 
 elapsed = time.time() - start_time
-print(f"[PASS] 5个线程记录500条消息，耗时: {elapsed*1000:.2f}ms")
+print(f"[PASS] 5个线程记录500条消息，耗时: {elapsed * 1000:.2f}ms")
 print(f"   总消息数: {len(messages)}")
-print(f"   无竞态条件，无数据丢失")
+print("   无竞态条件，无数据丢失")
 
 # 测试4: 各模块logger正常工作
 print("\n[测试4] 各模块logger正常工作")

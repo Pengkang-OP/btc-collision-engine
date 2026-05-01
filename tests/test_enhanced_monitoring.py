@@ -22,15 +22,14 @@ import time
 import shutil
 import tempfile
 import logging
-from unittest.mock import Mock, MagicMock, patch
-from datetime import datetime
+from unittest.mock import MagicMock
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.monitoring.enhanced_monitoring import EnhancedMonitoringSystem
-from src.monitoring.monitor_config import MonitorConfig
-from src.monitoring.data_logger import DataLogger
+from src.monitoring.enhanced_monitoring import EnhancedMonitoringSystem  # noqa: E402
+from src.monitoring.monitor_config import MonitorConfig  # noqa: E402
+from src.monitoring.data_logger import DataLogger  # noqa: E402
 
 
 class TestEnhancedMonitoringSystemInit:
@@ -100,7 +99,7 @@ class TestEnhancedMonitoringSystemInit:
         config = MonitorConfig(alert_threshold=1.5)
 
         with caplog.at_level(logging.WARNING):
-            monitor = EnhancedMonitoringSystem(engine=None, config=config)
+            monitor = EnhancedMonitoringSystem(engine=None, config=config)  # noqa: F841
 
             # 应该记录警告
             assert any("配置验证失败" in record.message for record in caplog.records)
@@ -108,7 +107,7 @@ class TestEnhancedMonitoringSystemInit:
     def test_init_logs_message(self, caplog):
         """测试初始化时记录日志"""
         with caplog.at_level(logging.INFO):
-            monitor = EnhancedMonitoringSystem(engine=None)
+            monitor = EnhancedMonitoringSystem(engine=None)  # noqa: F841
 
             assert any("增强版监控系统初始化完成" in record.message for record in caplog.records)
 

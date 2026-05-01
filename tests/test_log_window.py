@@ -8,10 +8,9 @@
 - create_log_window 单例模式
 """
 
-import sys
 import logging
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 
 # ============================================================================
 # Fixtures
@@ -149,7 +148,7 @@ class TestResetLogWindow:
     """单例重置测试"""
 
     def test_reset_cleans_global_instance(self):
-        from src.cli.log_window import reset_log_window_instance, LogWindowHandler
+        from src.cli.log_window import reset_log_window_instance
         import src.cli.log_window as lw
 
         # 设置一个模拟的单例
@@ -197,7 +196,7 @@ class TestCreateLogWindow:
 
     def test_returns_same_instance(self):
         """单例模式：重复调用返回同一实例"""
-        from src.cli.log_window import create_log_window, reset_log_window_instance
+        from src.cli.log_window import create_log_window
         import src.cli.log_window as lw
 
         # 确保单例为空
@@ -205,7 +204,7 @@ class TestCreateLogWindow:
 
         # 使用 mock 避免实际创建 tkinter 窗口
         with (
-            patch("src.cli.log_window.LogWindow.start") as mock_start,
+            patch("src.cli.log_window.LogWindow.start") as mock_start,  # noqa: F841
             patch("src.cli.log_window.LogWindow") as mock_log_window_cls,
         ):
             mock_instance1 = MagicMock()
@@ -222,13 +221,13 @@ class TestCreateLogWindow:
 
     def test_adds_handler_to_root(self):
         """应添加 LogWindowHandler 到根日志器"""
-        from src.cli.log_window import create_log_window, reset_log_window_instance
+        from src.cli.log_window import create_log_window
         import src.cli.log_window as lw
 
         lw._log_window_instance = None
 
         with (
-            patch("src.cli.log_window.LogWindow.start") as mock_start,
+            patch("src.cli.log_window.LogWindow.start") as mock_start,  # noqa: F841
             patch("src.cli.log_window.LogWindow") as mock_log_window_cls,
         ):
             mock_instance = MagicMock()

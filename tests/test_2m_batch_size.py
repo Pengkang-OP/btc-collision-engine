@@ -19,12 +19,12 @@ from datetime import datetime
 # 添加项目根目录
 sys.path.insert(0, str(Path(__file__).parent))
 
-import pytest
+import pytest  # noqa: E402
 
 pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine
-from src.collision.collision_stats import CollisionStats
+from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
+from src.collision.collision_stats import CollisionStats  # noqa: E402
 
 
 def test_2m_batch_size(duration=60):
@@ -34,8 +34,8 @@ def test_2m_batch_size(duration=60):
     print("🚀 Intel Arc GPU 2M批次大小性能测试")
     print("=" * 80)
     print(f"测试时长: {duration} 秒")
-    print(f"批次大小: 2,097,152 (2M)")
-    print(f"目标地址: 38 个 (valid_addresses.txt)")
+    print("批次大小: 2,097,152 (2M)")
+    print("目标地址: 38 个 (valid_addresses.txt)")
     print()
 
     # 加载目标地址
@@ -48,7 +48,7 @@ def test_2m_batch_size(duration=60):
                     targets.add(addr)
         if not targets:
             targets = {"12ib7dApVFvg82TXKycWBNpN8kFyiAN1dr"}
-    except:
+    except BaseException:
         targets = {"12ib7dApVFvg82TXKycWBNpN8kFyiAN1dr"}
 
     print(f"✅ 加载 {len(targets)} 个目标地址\n")
@@ -110,7 +110,7 @@ def test_2m_batch_size(duration=60):
 
         # 获取设备信息
         device_info = engine._gpu_device.get_device_info()
-        print(f"\n✅ GPU引擎初始化完成")
+        print("\n✅ GPU引擎初始化完成")
         print(f"   设备: {device_info.get('name', 'Unknown')}")
         print(f"   厂商: {device_info.get('vendor', 'Unknown')}")
         print(f"   显存: {device_info.get('global_mem_size', 0) / 1024**3:.1f} GB")
@@ -142,7 +142,7 @@ def test_2m_batch_size(duration=60):
 
         # 打印结果
         print("-" * 80)
-        print(f"\n📊 2M批次测试完成！")
+        print("\n📊 2M批次测试完成！")
         print("=" * 80)
         print(f"  总检查数   : {stats_data['total_checked']:,}")
         print(f"  运行时间   : {elapsed:.2f} 秒")
@@ -155,14 +155,14 @@ def test_2m_batch_size(duration=60):
 
         # 显存估算
         estimated_memory_mb = (2097152 / 1048576) * 42  # 1M ≈ 42MB
-        print(f"\n💾 显存使用估算:")
+        print("\n💾 显存使用估算:")
         print(f"  预计占用: ~{estimated_memory_mb:.0f} MB")
-        print(f"  总显存: 16,384 MB (16GB)")
-        print(f"  使用率: {estimated_memory_mb/16384*100:.2f}%")
-        print(f"  状态: ✅ 非常安全")
+        print("  总显存: 16,384 MB (16GB)")
+        print(f"  使用率: {estimated_memory_mb / 16384 * 100:.2f}%")
+        print("  状态: ✅ 非常安全")
 
         # 与1M批次对比
-        print(f"\n📈 性能对比（vs 1M批次 ~522,928 keys/s）:")
+        print("\n📈 性能对比（vs 1M批次 ~522,928 keys/s）:")
         baseline_1m = 522928
         improvement = (avg_speed - baseline_1m) / baseline_1m * 100
         print(f"  1M批次基线: {baseline_1m:,.0f} keys/s")
@@ -170,9 +170,9 @@ def test_2m_batch_size(duration=60):
         print(f"  性能提升: {improvement:+.1f}%")
 
         if improvement > 0:
-            print(f"  ✅ 2M批次性能更优！")
+            print("  ✅ 2M批次性能更优！")
         else:
-            print(f"  ⚠️ 2M批次未见明显提升")
+            print("  ⚠️ 2M批次未见明显提升")
 
         print("=" * 80)
 
@@ -228,17 +228,17 @@ def main():
         print("🎉 测试完成！")
         print("=" * 80)
 
-        print(f"\n📊 核心结果:")
+        print("\n📊 核心结果:")
         print(f"  平均速度: {result['avg_speed']:,.0f} keys/s")
         print(f"  性能提升: {result['improvement_vs_1m_percent']:+.1f}%")
         print(f"  显存使用: {result['estimated_memory_mb']:.0f} MB")
 
         if result["improvement_vs_1m_percent"] > 2:
-            print(f"\n✅ 建议: 使用2M批次大小（性能提升显著）")
+            print("\n✅ 建议: 使用2M批次大小（性能提升显著）")
         elif result["improvement_vs_1m_percent"] > 0:
-            print(f"\n✅ 建议: 可以使用2M批次大小（轻微提升）")
+            print("\n✅ 建议: 可以使用2M批次大小（轻微提升）")
         else:
-            print(f"\n⚠️ 建议: 保持1M批次大小（2M未见优势）")
+            print("\n⚠️ 建议: 保持1M批次大小（2M未见优势）")
 
         print("=" * 80)
         return 0

@@ -15,7 +15,6 @@ import pytest
 import time
 import threading
 import tempfile
-from unittest.mock import Mock
 from collections import Counter
 
 # ============================================================================
@@ -84,7 +83,10 @@ class TestEventBusConcurrency:
         def sub_unsub_loop():
             try:
                 for _ in range(50):
-                    handler = lambda e: None
+
+                    def handler(e):
+                        return None
+
                     bus.subscribe(EventType.ENGINE_PROGRESS, handler)
                     bus.unsubscribe(EventType.ENGINE_PROGRESS, handler)
             except Exception as e:

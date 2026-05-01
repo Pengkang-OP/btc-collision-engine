@@ -64,7 +64,7 @@ class ValidationResult:
                 f"ValidationResult({self.address[:10]}..., valid=True, format={self.format_type})"
             )
         elif not self.validated:
-            return f"ValidationResult({self.address[:10]}..., valid=False, validated=False, error={self.error})"
+            return f"ValidationResult({self.address[:10]}..., valid=False, validated=False, error={self.error})"  # noqa: E501
         else:
             return f"ValidationResult({self.address[:10]}..., valid=False, error={self.error})"
 
@@ -121,10 +121,10 @@ class AddressBatchValidator:
             >>> results = validator.validate_batch(addresses, strict_mode=True)
 
             >>> # 跳过非字符串类型
-            >>> results = validator.validate_batch(addresses, strict_mode=True, on_type_error='skip')
+            >>> results = validator.validate_batch(addresses, strict_mode=True, on_type_error='skip')  # noqa: E501
 
             >>> # 尝试转换类型
-            >>> results = validator.validate_batch(addresses, strict_mode=True, on_type_error='convert')
+            >>> results = validator.validate_batch(addresses, strict_mode=True, on_type_error='convert')  # noqa: E501
         """
         # 验证策略参数
         valid_strategies = {"abort", "skip", "convert"}
@@ -141,7 +141,7 @@ class AddressBatchValidator:
                 if stripped:
                     str_addresses.append(stripped)
                 else:
-                    logger.debug(f"地址为空字符串，跳过 [原始字符串]")
+                    logger.debug("地址为空字符串，跳过 [原始字符串]")
                     skipped_count += 1
             elif strict_mode:
                 # 严格模式：根据策略处理非字符串类型
@@ -193,7 +193,7 @@ class AddressBatchValidator:
                                 str_addresses.append(str_addr)
                                 logger.debug(f"类型转换成功: {type(addr).__name__} -> str")
                             else:
-                                logger.debug(f"地址转换为空字符串，跳过 [convert策略]")
+                                logger.debug("地址转换为空字符串，跳过 [convert策略]")
                                 skipped_count += 1
                         except Exception as e:
                             logger.error(
@@ -211,7 +211,7 @@ class AddressBatchValidator:
                     if str_addr:
                         str_addresses.append(str_addr)
                     else:
-                        logger.debug(f"地址转换为空字符串，跳过 [宽松模式]")
+                        logger.debug("地址转换为空字符串，跳过 [宽松模式]")
                         skipped_count += 1
                 except Exception as e:
                     logger.error(f"地址类型转换失败: {type(addr).__name__}, " f"错误={e}")
@@ -255,7 +255,7 @@ class AddressBatchValidator:
 
         logger.info(
             f"批量验证完成: 总数={len(results)}, 有效={valid_count}, "
-            f"无效={invalid_count}, 有效率={(valid_count/len(results)*100) if len(results) > 0 else 0:.1f}%"
+            f"无效={invalid_count}, 有效率={(valid_count / len(results) * 100) if len(results) > 0 else 0:.1f}%"  # noqa: E501
         )
 
         return results

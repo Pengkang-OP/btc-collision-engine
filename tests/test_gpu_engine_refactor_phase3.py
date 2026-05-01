@@ -11,9 +11,7 @@
 """
 
 import pytest
-import time
-from unittest.mock import Mock, patch, MagicMock, PropertyMock
-from typing import Dict, Any
+from unittest.mock import Mock, patch, MagicMock
 
 # ============================================================================
 # DataLoggerAdapter 测试

@@ -7,7 +7,7 @@
 """
 
 from enum import Enum
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from dataclasses import dataclass, field
 import time
 import logging

@@ -2,8 +2,6 @@
 """多GPU功能单元测试"""
 
 import unittest
-from unittest.mock import Mock, patch
-from typing import Dict, List
 
 
 class TestGPUDeviceSelector(unittest.TestCase):
@@ -81,7 +79,6 @@ class TestGPULoadBalancer(unittest.TestCase):
 
     def setUp(self):
         """测试准备"""
-        from src.gpu.load_balancer import GPULoadBalancer
 
         self.devices = [
             {

@@ -7,7 +7,6 @@
 import unittest
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 class TestLockPerformance(unittest.TestCase):
@@ -46,7 +45,7 @@ class TestLockPerformance(unittest.TestCase):
         self.assertEqual(operations[0], 20000)
 
         # 验证性能(应该<5秒)
-        print(f"\n状态锁吞吐量: {operations[0]/elapsed:.0f} ops/sec")
+        print(f"\n状态锁吞吐量: {operations[0] / elapsed:.0f} ops/sec")
         self.assertLess(elapsed, 5.0, f"锁吞吐量过低: {elapsed:.2f}s")
 
     def test_workers_lock_throughput(self):
@@ -83,7 +82,7 @@ class TestLockPerformance(unittest.TestCase):
         self.assertEqual(operations[0], 5000)
 
         # 验证性能
-        print(f"\n工作器锁吞吐量: {operations[0]/elapsed:.0f} ops/sec")
+        print(f"\n工作器锁吞吐量: {operations[0] / elapsed:.0f} ops/sec")
         self.assertLess(elapsed, 10.0, f"锁吞吐量过低: {elapsed:.2f}s")
 
 

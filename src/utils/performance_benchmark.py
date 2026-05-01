@@ -23,7 +23,7 @@ from datetime import datetime
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from src.utils import init_logging, get_configured_logger
+from src.utils import init_logging, get_configured_logger  # noqa: E402
 
 # 初始化日志
 init_logging()
@@ -52,7 +52,10 @@ class BenchmarkResult:
         """停止测试"""
         self.end_time = time.time()
 
-        elapsed = (self.end_time - self.start_time) if self.end_time is not None and self.start_time is not None else 0.0  # type: ignore[operator]
+        if self.end_time is not None and self.start_time is not None:
+            elapsed = self.end_time - self.start_time
+        else:
+            elapsed = 0.0
         self.avg_speed = self.total_processed / elapsed if elapsed > 0 else 0
 
     def to_dict(self) -> Dict[str, Any]:
@@ -60,7 +63,11 @@ class BenchmarkResult:
         return {
             "name": self.name,
             "config": self.config,
-            "elapsed_seconds": (self.end_time - self.start_time) if self.end_time is not None and self.start_time is not None else 0,  # type: ignore[operator]
+            "elapsed_seconds": (
+                (self.end_time - self.start_time)
+                if self.end_time is not None and self.start_time is not None
+                else 0
+            ),
             "total_processed": self.total_processed,
             "matches_found": self.matches_found,
             "avg_speed_keys_per_sec": self.avg_speed,
@@ -106,7 +113,7 @@ class PerformanceBenchmark:
             )
             result.start()
 
-            sha256_results = optimizer.batch_sha256(test_data)
+            optimizer.batch_sha256(test_data)
             result.total_processed = batch_size
             result.stop()
 
@@ -122,7 +129,7 @@ class PerformanceBenchmark:
             )
             result.start()
 
-            hash160_results = optimizer.batch_hash160(test_data)
+            optimizer.batch_hash160(test_data)
             result.total_processed = batch_size
             result.stop()
 
@@ -176,7 +183,7 @@ class PerformanceBenchmark:
                     return hashlib.sha256(pk).hexdigest()[:34]
 
             # 启动引擎
-            engine.start(  # type: ignore[call-arg]  # 动态参数透传
+            cast(Any, engine).start(
                 generator_func=generate_keys, address_generator=MockAddressGenerator()
             )
 
@@ -279,7 +286,7 @@ class PerformanceBenchmark:
         )
         result_simd.start()
 
-        simd_results = [hashlib.sha256(data).digest() for data in test_data]
+        [hashlib.sha256(data).digest() for data in test_data]
         result_simd.total_processed = batch_size
         result_simd.stop()
 

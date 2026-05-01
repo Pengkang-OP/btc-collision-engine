@@ -9,7 +9,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.collision.collision_stats import CollisionStats
+from src.collision.collision_stats import CollisionStats  # noqa: E402
 
 
 class TestCollisionStatsBasic(unittest.TestCase):

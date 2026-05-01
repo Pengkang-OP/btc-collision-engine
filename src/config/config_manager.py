@@ -18,7 +18,6 @@ logger = get_configured_logger("ConfigManager")
 # DF-3修复: 添加JSON Schema验证
 try:
     from jsonschema import Draft7Validator
-    import jsonschema
 
     HAS_JSONSCHEMA = True
 except ImportError:
@@ -345,7 +344,7 @@ class ConfigManager:
             validation_errors = self.validate(user_config)
             if validation_errors:
                 error_msgs = [f"{k}: {v}" for k, v in validation_errors.items()]
-                logger.error(f"配置文件格式错误:\n" + "\n".join(error_msgs))
+                logger.error("配置文件格式错误:\n" + "\n".join(error_msgs))
                 return False
 
             # 线程安全：在锁内合并配置
@@ -453,7 +452,7 @@ class ConfigManager:
             logger.warning("无法启动配置监听: 未设置配置文件路径")
             return False
 
-        from .config_watcher import ConfigWatcher
+        from .config_watcher import ConfigWatcher  # noqa: F811
 
         # C2修复: 加锁保护 _watcher 的读写，防止并发 start/stop 竞态
         with self._lock:
@@ -462,7 +461,7 @@ class ConfigManager:
 
             self._watcher = ConfigWatcher(
                 config_path=self.config_file,
-                on_reload=self.reload_config,  # type: ignore[arg-type]
+                on_reload=lambda: self.reload_config(),
                 debounce_seconds=debounce_seconds,
                 poll_interval=poll_interval,
             )
@@ -520,10 +519,10 @@ class ConfigManager:
         keys = key.split(".")
         # DF-1修复：整个遍历过程在锁内完成，确保真正的线程安全
         with self._lock:
-            value = self.config
+            value: Any = self.config
             for k in keys:
                 if isinstance(value, dict) and k in value:
-                    value = value[k]  # type: ignore[assignment]
+                    value = value[k]
                 else:
                     return default
 
@@ -543,12 +542,12 @@ class ConfigManager:
         keys = key.split(".")
         # 线程安全：在锁内修改配置
         with self._lock:
-            config = self.config
+            config: Dict[str, Any] = self.config
 
             for i, k in enumerate(keys[:-1]):
                 if k not in config or not isinstance(config[k], dict):
                     config[k] = {}
-                config = config[k]  # type: ignore[assignment]
+                config = config[k]
 
             config[keys[-1]] = value
         return True

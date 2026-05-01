@@ -24,7 +24,7 @@
 """
 
 import threading
-from typing import Any, Callable, Dict, List, Optional, cast
+from typing import Any, Callable, Dict, List, Optional
 from collections import defaultdict
 import logging
 
@@ -172,7 +172,7 @@ class EventBus:
             assert self._event_queue is not None
             try:
                 self._event_queue.put_nowait(event)
-            except Exception as e:
+            except Exception as e:  # noqa: F841
                 logger.warning(f"事件队列已满，丢弃事件: {event.event_type.value}")
         else:
             # 同步模式: 直接处理
@@ -186,7 +186,7 @@ class EventBus:
             event: 事件对象
         """
         with self._lock:
-            handlers = self._subscribers.get(event.event_type, []).copy()  # type: ignore[arg-type]
+            handlers = list(self._subscribers.get(event.event_type, []))
 
         if not handlers:
             logger.debug(f"事件无订阅者: {event.event_type.value if event.event_type else 'N/A'}")

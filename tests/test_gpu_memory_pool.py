@@ -2,13 +2,11 @@
 """GPU内存池优化模块单元测试"""
 
 import pytest
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
 from src.gpu.memory_pool import (
     GPUMemoryPool,
     GPUBufferAllocator,
     GlobalGPUMemoryManager,
-    gpu_memory_manager,
-    get_gpu_memory_pool,
 )
 
 
@@ -26,7 +24,7 @@ class TestGPUMemoryPool:
     def test_allocate_new_buffer(self):
         """测试分配新缓冲区"""
         try:
-            import pyopencl as cl
+            pass
         except ImportError:
             pytest.skip("pyopencl未安装,跳过GPU测试")
             return
@@ -46,7 +44,7 @@ class TestGPUMemoryPool:
     def test_reuse_buffer(self):
         """测试缓冲区复用"""
         try:
-            import pyopencl as cl
+            pass
         except ImportError:
             pytest.skip("pyopencl未安装")
             return
@@ -71,7 +69,7 @@ class TestGPUMemoryPool:
             pool.release(buf1, size=1024)
 
             # 第二次分配(应该复用)
-            buf2 = pool.allocate(1024)
+            pool.allocate(1024)
 
             # 仍然只有1次分配调用
             assert call_count["count"] == 1

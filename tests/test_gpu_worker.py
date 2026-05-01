@@ -13,8 +13,7 @@
 
 import pytest
 import threading
-from unittest.mock import Mock, patch, MagicMock
-from queue import Queue, Empty
+from unittest.mock import Mock, patch
 
 from src.gpu.gpu_config import WorkerConfig
 from src.gpu.worker import SingleGPUWorker

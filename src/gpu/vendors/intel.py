@@ -8,13 +8,12 @@
 """
 
 from typing import Any, Dict, Optional
-import logging
 
 # P3-5: 统一日志获取
-from ...utils import init_logging, get_configured_logger
+from ...utils import get_configured_logger
 import time
 from .base import GPUVendorBase
-from ..constants import PER_KEY_MEMORY_BYTES, MIN_BATCH_SIZE, align_batch_size
+from ..constants import PER_KEY_MEMORY_BYTES, align_batch_size
 
 logger = get_configured_logger("IntelVendor")
 
@@ -155,7 +154,7 @@ class IntelGPUVendor(GPUVendorBase):
         memory_efficiency = profile.get("memory_efficiency", 0.70)
         device.memory_efficiency = memory_efficiency
         _rate_logger.info(
-            f"✅ Intel GPU内存效率: {memory_efficiency*100:.0f}% (v2.2.1优化)",
+            f"✅ Intel GPU内存效率: {memory_efficiency * 100:.0f}% (v2.2.1优化)",
             key="intel_memory_efficiency",
         )
 
@@ -186,7 +185,7 @@ class IntelGPUVendor(GPUVendorBase):
         logger.info(
             f"Intel batch_size计算: recommended={recommended}, "
             f"mem_based={mem_based_max}, optimal={optimal} "
-            f"(保守策略)"
+            "(保守策略)"
         )
 
         return optimal
@@ -213,7 +212,7 @@ class IntelGPUVendor(GPUVendorBase):
                 if (major, minor, build, revision) < (31, 0, 101, 4500):
                     _rate_logger.warning(
                         f"⚠️ Intel驱动版本 {driver_version} 较旧，"
-                        f"建议更新到 31.0.101.4500+ 以获得更好的稳定性",
+                        "建议更新到 31.0.101.4500+ 以获得更好的稳定性",
                         key=f"intel_driver_old_{driver_version}",
                     )
                 else:

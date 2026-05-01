@@ -18,8 +18,7 @@
 - "Speeding up Elliptic Curve Cryptography" - Brown et al.
 """
 
-import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, cast
 
 # 导入日志配置
 from ..utils import init_logging, get_configured_logger
@@ -87,7 +86,7 @@ class PrecomputedPointTable:
             self.G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
         else:
             self.ec = ec
-            self.G = ec.curve.G if hasattr(ec.curve, "G") else None  # type: ignore[assignment]
+            self.G = cast(Any, ec.curve.G) if hasattr(ec.curve, "G") else None
             if self.G is None:
                 from .secp256k1 import Secp256k1, ECPoint
 
@@ -113,7 +112,6 @@ class PrecomputedPointTable:
         返回:
             预计算点列表,索引i对应(i+1)*G
         """
-        from .secp256k1 import ECPoint
 
         table = []
 
@@ -132,7 +130,8 @@ class PrecomputedPointTable:
 
         return table
 
-    def scalar_multiply_with_table(self, k: int, ec: Any = None) -> Any:  # type: ignore[name-defined]
+    # type: ignore[name-defined]
+    def scalar_multiply_with_table(self, k: int, ec: Any = None) -> Any:
         """
         使用预计算表加速标量乘法
 

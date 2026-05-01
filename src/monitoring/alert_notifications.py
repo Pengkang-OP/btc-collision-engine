@@ -32,17 +32,16 @@
 
 import logging
 import smtplib
-import json
 import os
 import re
 import requests  # type: ignore[import-untyped]
 from abc import ABC, abstractmethod
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from datetime import datetime
 
-from .alert_system import AlertRecord, AlertLevel, AlertType
+from .alert_system import AlertRecord, AlertLevel
 
 logger = logging.getLogger(__name__)
 
@@ -201,7 +200,7 @@ class EmailNotifier(BaseNotifier):
 
     def _create_text_content(self, alert: AlertRecord) -> str:
         """创建纯文本内容"""
-        content = f"""GPU告警通知
+        content = """GPU告警通知
 
 告警类型: {alert.alert_type.value}
 告警级别: {alert.level.value.upper()}
@@ -227,12 +226,12 @@ class EmailNotifier(BaseNotifier):
             AlertLevel.CRITICAL: "#EF5350",
             AlertLevel.EMERGENCY: "#FF1744",
         }
-        color = level_colors.get(alert.level, "#9E9E9E")
+        color = level_colors.get(alert.level, "#9E9E9E")  # noqa: F841
 
-        html = f"""
+        html = """
 <html>
 <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
-    <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px;">  # noqa: E501
         <h2 style="color: {color}; border-bottom: 2px solid {color}; padding-bottom: 10px;">
             GPU告警通知
         </h2>
@@ -244,7 +243,7 @@ class EmailNotifier(BaseNotifier):
             </tr>
             <tr style="background-color: #f9f9f9;">
                 <td style="padding: 8px; font-weight: bold;">告警级别:</td>
-                <td style="padding: 8px; color: {color}; font-weight: bold;">{alert.level.value.upper()}</td>
+                <td style="padding: 8px; color: {color}; font-weight: bold;">{alert.level.value.upper()}</td>  # noqa: E501
             </tr>
             <tr>
                 <td style="padding: 8px; font-weight: bold;">触发时间:</td>
@@ -260,14 +259,14 @@ class EmailNotifier(BaseNotifier):
         <table style="width: 100%; border-collapse: collapse; background-color: #f9f9f9;">
 """
         for key, value in alert.metrics.items():
-            html += f"""
+            html += """
             <tr>
                 <td style="padding: 8px; font-weight: bold; width: 200px;">{key}:</td>
                 <td style="padding: 8px;">{value}</td>
             </tr>
 """
 
-        html += f"""
+        html += """
         </table>
 
         <p style="margin-top: 20px; color: #999; font-size: 12px;">
@@ -388,7 +387,7 @@ class DingTalkWebhookNotifier(BaseNotifier):
         self.at_all = at_all
         self.timeout = timeout
 
-        logger.info(f"钉钉Webhook通知器初始化")
+        logger.info("钉钉Webhook通知器初始化")
 
     def _send_notification(self, alert: AlertRecord):
         """发送钉钉通知"""
@@ -484,7 +483,7 @@ class SlackWebhookNotifier(BaseNotifier):
         self.username = username
         self.timeout = timeout
 
-        logger.info(f"Slack Webhook通知器初始化")
+        logger.info("Slack Webhook通知器初始化")
 
     def _send_notification(self, alert: AlertRecord):
         """发送Slack通知"""

@@ -8,12 +8,12 @@ import pytest
 import os
 import sys
 import tempfile
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from src.monitoring.monitoring_system import (
+from src.monitoring.monitoring_system import (  # noqa: E402
     AnomalyDetector,
     MonitoringAlertAdapter as AlertSystem,
     ReportGenerator,
@@ -132,7 +132,6 @@ class TestDependencyInjectionFix:
             generator = ReportGenerator(storage=storage, detector=None)
 
             # 添加一些测试数据
-            import time
             from datetime import datetime, timedelta
 
             # 创建今天的数据
@@ -181,7 +180,6 @@ class TestDependencyInjectionFix:
             generator = ReportGenerator(storage=storage, detector=detector)
 
             # 添加测试数据
-            import time
             from datetime import datetime, timedelta
             import json
 

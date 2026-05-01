@@ -16,7 +16,6 @@
     D  (0-10):   低端/核显
 """
 
-import logging
 from typing import Dict, Any, Optional, List, Tuple
 
 from ..utils import get_configured_logger

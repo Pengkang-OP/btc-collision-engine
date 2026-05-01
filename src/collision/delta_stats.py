@@ -5,7 +5,7 @@
 
 import threading
 import time
-from typing import Dict, Any, List
+from typing import Dict, Any, List, cast, cast  # noqa: F811
 
 
 class DeltaStats:
@@ -138,7 +138,7 @@ class ThreadLocalDeltaStats:
                 "gpu_errors": 0,
                 "worker_errors": 0,
             }
-        return self._local.buffer  # type: ignore[no-any-return]
+        return cast(Dict[str, int], self._local.buffer)
 
     def add_check(self, count: int = 1) -> None:
         """记录检查数量（无锁操作）"""

@@ -17,13 +17,12 @@ import sys
 import os
 import json
 import tempfile
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from src.cli.advanced_features import (
+from src.cli.advanced_features import (  # noqa: E402
     CONFIG_TEMPLATES,
     deep_merge,
     apply_template,
@@ -138,8 +137,8 @@ class TestConfigTemplateSystem:
 
         assert base["collision"]["mode"] == "random"  # 保留
         assert base["collision"]["workers"] == 8  # 覆盖
-        assert base["collision"]["checkpoint"] == True  # 新增
-        assert base["gpu"]["enabled"] == True  # 覆盖
+        assert base["collision"]["checkpoint"] is True  # 新增
+        assert base["gpu"]["enabled"] is True  # 覆盖
         assert base["gpu"]["device"] == 0  # 新增
 
     def test_apply_template_new_file(self, temp_config_file):
@@ -156,14 +155,14 @@ class TestConfigTemplateSystem:
         try:
             success = apply_template("quick-test", temp_config_file)
 
-            assert success == True
+            assert success is True
             assert os.path.exists(temp_config_file)
 
             # 验证配置内容
             with open(temp_config_file, "r", encoding="utf-8") as f:
                 config = json.load(f)
 
-            assert config["collision"]["use_performance_optimization"] == False
+            assert config["collision"]["use_performance_optimization"] is False
             assert config["collision"]["max_workers"] == 2
             assert config["logging"]["level"] == "DEBUG"
         finally:
@@ -189,7 +188,7 @@ class TestConfigTemplateSystem:
         try:
             success = apply_template("gpu-performance", temp_config_file)
 
-            assert success == True
+            assert success is True
 
             # 验证配置合并
             with open(temp_config_file, "r", encoding="utf-8") as f:
@@ -201,7 +200,7 @@ class TestConfigTemplateSystem:
             assert config["custom_key"] == "custom_value"
 
             # 应用新配置
-            assert config["collision"]["use_performance_optimization"] == True
+            assert config["collision"]["use_performance_optimization"] is True
             assert config["gpu"]["mode"] == "single"
         finally:
             sys.stdout = old_stdout
@@ -210,7 +209,7 @@ class TestConfigTemplateSystem:
         """测试应用不存在的模板"""
         success = apply_template("invalid-template", temp_config_file)
 
-        assert success == False
+        assert success is False
         captured = capsys.readouterr()
         assert "未知模板" in captured.out
         assert "可用模板" in captured.out
@@ -229,7 +228,7 @@ class TestConfigTemplateSystem:
 
             try:
                 success = apply_template(template_name, test_file)
-                assert success == True, f"模板 {template_name} 应用失败"
+                assert success is True, f"模板 {template_name} 应用失败"
                 assert os.path.exists(test_file)
             finally:
                 sys.stdout = old_stdout
@@ -256,7 +255,7 @@ class TestParameterRecommendation:
 
     def test_recommend_with_many_targets(self, mock_args):
         """测试多目标地址推荐"""
-        mock_args.targets = [f"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa" for _ in range(15)]
+        mock_args.targets = ["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa" for _ in range(15)]
 
         rec = recommend_parameters(mock_args)
 
@@ -294,7 +293,7 @@ class TestParameterRecommendation:
 
         # 检查是否推荐GPU
         gpu_recommended = any("GPU" in reason for reason in rec["reasons"])
-        assert gpu_recommended == True
+        assert gpu_recommended is True
 
     def test_recommend_reasons_provided(self, mock_args):
         """测试推荐理由是否提供"""
@@ -325,7 +324,7 @@ class TestProgressExport:
             mock_stats, mode="random", engine_type="cpu", output_file=temp_output_file
         )
 
-        assert success == True
+        assert success is True
         assert os.path.exists(temp_output_file)
 
         # 验证JSON内容
@@ -348,7 +347,7 @@ class TestProgressExport:
             total_range=10000000,
         )
 
-        assert success == True
+        assert success is True
 
         with open(temp_output_file, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -366,7 +365,7 @@ class TestProgressExport:
             output_file="/invalid/path/that/does/not/exist.json",
         )
 
-        assert success == False
+        assert success is False
 
     def test_export_progress_json_structure(self, mock_stats, temp_output_file):
         """测试导出JSON结构完整性"""
@@ -414,7 +413,7 @@ class TestMatchesExport:
 
         success = export_matches(matches, temp_output_file)
 
-        assert success == True
+        assert success is True
         assert os.path.exists(temp_output_file)
 
         with open(temp_output_file, "r", encoding="utf-8") as f:
@@ -428,7 +427,7 @@ class TestMatchesExport:
         """测试导出空匹配列表"""
         success = export_matches([], temp_output_file)
 
-        assert success == True
+        assert success is True
 
         with open(temp_output_file, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -449,7 +448,7 @@ class TestMatchesExport:
 
         success = export_matches(matches, temp_output_file)
 
-        assert success == True
+        assert success is True
 
         with open(temp_output_file, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -462,7 +461,7 @@ class TestMatchesExport:
         matches = [{"address": "test"}]
         success = export_matches(matches, "/invalid/path/that/does/not/exist.json")
 
-        assert success == False
+        assert success is False
 
 
 # ============================================================================
@@ -479,7 +478,7 @@ class TestGPUErrorHandler:
         result = GPUErrorHandler.handle_initialization_error(error)
 
         assert result["type"] == "no_gpu"
-        assert result["recoverable"] == False
+        assert result["recoverable"] is False
         assert "solution" in result
 
     def test_handle_out_of_memory_error(self):
@@ -488,7 +487,7 @@ class TestGPUErrorHandler:
         result = GPUErrorHandler.handle_initialization_error(error)
 
         assert result["type"] == "out_of_memory"
-        assert result["recoverable"] == True
+        assert result["recoverable"] is True
         assert "batch_size" in result["solution"].lower() or "减小" in result["solution"]
 
     def test_handle_driver_error(self):
@@ -497,7 +496,7 @@ class TestGPUErrorHandler:
         result = GPUErrorHandler.handle_initialization_error(error)
 
         assert result["type"] == "driver_issue"
-        assert result["recoverable"] == False
+        assert result["recoverable"] is False
 
     def test_handle_unknown_error(self):
         """测试未知错误处理"""
@@ -542,7 +541,7 @@ class TestEndToEndIntegration:
 
         try:
             success = apply_template("gpu-performance", temp_config_file)
-            assert success == True
+            assert success is True
         finally:
             sys.stdout = old_stdout
 
@@ -565,7 +564,7 @@ class TestEndToEndIntegration:
         success = export_progress_data(
             mock_stats, mode="random", engine_type="cpu", output_file=temp_output_file
         )
-        assert success == True
+        assert success is True
 
         # 3. 验证导出文件
         with open(temp_output_file, "r", encoding="utf-8") as f:

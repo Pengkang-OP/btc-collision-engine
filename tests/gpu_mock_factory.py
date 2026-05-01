@@ -10,7 +10,7 @@ GPU Mock 测试基础设施 - 统一的 Mock 工厂
 - pyopencl 模块级 patch 辅助
 """
 
-from unittest.mock import Mock, MagicMock, patch, PropertyMock
+from unittest.mock import Mock, patch
 from contextlib import contextmanager
 from typing import List, Optional, Dict, Any
 
@@ -204,7 +204,7 @@ class GPUMockFactory:
         # 关键修复: Buffer 构造函数需要正确处理参数
         # 当代码调用 cl.Buffer(context, flags, hostbuf=...) 时
         # Mock 必须能够接受这些位置参数和关键字参数
-        buf_constructor = Mock(return_value=buf)
+        buf_constructor = Mock(return_value=buf)  # noqa: F841
 
         return buf
 
@@ -412,7 +412,7 @@ class GPUMockFactory:
                 ...  # mock_buf 是 Buffer 的 Mock 返回值
         """
         mock_buf = Mock()
-        with patch("pyopencl.Buffer", return_value=mock_buf) as _patch:
+        with patch("pyopencl.Buffer", return_value=mock_buf) as _patch:  # noqa: F841
             yield mock_buf
 
     @staticmethod

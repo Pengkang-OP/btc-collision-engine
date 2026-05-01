@@ -8,22 +8,17 @@
 4. 模拟完整碰撞引擎运行周期
 """
 
-import os
-import json
 import time
 import tempfile
 import pytest
-import threading
-from unittest.mock import Mock, patch
 
 from src.logging.log_collector import LogCollector
 from src.logging.log_processor import LogProcessor, SensitiveDataFilter
 from src.logging.log_storage import LogStorage
-from src.logging.log_query import LogQuery
-from src.logging.events import LogEvent, LogEventType
+from src.logging.events import LogEventType
 from src.logging.log_manager import LogManager
 
-from src.collision.event_bus import EventBus, get_event_bus, reset_event_bus
+from src.collision.event_bus import EventBus, reset_event_bus
 from src.collision.events import (
     EngineStartEvent,
     EngineProgressEvent,

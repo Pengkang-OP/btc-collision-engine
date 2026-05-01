@@ -14,7 +14,7 @@
 import hashlib
 import hmac
 import time
-from typing import Tuple, Optional, Dict, Any, List
+from typing import Tuple, Dict, Any, List
 from enum import Enum
 
 import bech32
@@ -65,7 +65,7 @@ class WIFEncoder:
             data += bytes([0x01])  # 压缩标志
         # 校验和: 双SHA256前4字节
         checksum = HashUtils.double_sha256(data)[:4]
-        return Base58.encode(data + checksum)  # type: ignore[no-any-return]
+        return Base58.encode(data + checksum)
 
     @staticmethod
     def decode(wif: str) -> Tuple[bytes, bool, bool]:
@@ -141,10 +141,10 @@ class KeyValidationResult:
         self.warnings: List[str] = []
         self.details: Dict[str, Any] = {}
 
-    def add_error(self, error: str) -> None:
+    def add_error(self, error: str) -> "KeyValidationResult":
         self.success = False
         self.errors.append(error)
-        return self  # type: ignore[return-value]  # 支持链式调用
+        return self  # 支持链式调用
 
     def add_warning(self, warning: str) -> None:
         self.warnings.append(warning)
@@ -204,7 +204,7 @@ class BitcoinKeyValidator:
 
         # Base58Check编码
         checksum = hashlib.sha256(hashlib.sha256(versioned).digest()).digest()[:4]
-        return Base58.encode(versioned + checksum)  # type: ignore[no-any-return]
+        return Base58.encode(versioned + checksum)
 
     @staticmethod
     def generate_bech32_address(public_key: bytes, hrp: str = "bc") -> str:
@@ -362,7 +362,7 @@ class BitcoinKeyValidator:
         if k < 1:
             result.add_error("私钥数值为0，无效")
         elif k >= Secp256k1.N:
-            result.add_error(f"私钥数值超出范围: >= N (曲线阶数)")
+            result.add_error("私钥数值超出范围: >= N (曲线阶数)")
         else:
             result.add_detail("private_key_range_valid", True)
 
@@ -414,7 +414,7 @@ class BitcoinKeyValidator:
             # 5. 序列化公钥
             if compressed:
                 # 压缩格式：33字节，02或03开头
-                prefix = b"\x02" if public_key_point.y % 2 == 0 else b"\x03"  # type: ignore[operator]
+                prefix = b"\x02" if int(public_key_point.y) % 2 == 0 else b"\x03"
                 public_key_bytes = prefix + public_key_point.x.to_bytes(32, "big")
                 result.add_detail("public_key_format", "compressed")
                 result.add_detail(
@@ -621,9 +621,10 @@ class BitcoinKeyValidator:
                 len(address) < KeyValidationConstants.P2PKH_ADDRESS_MIN_LENGTH
                 or len(address) > KeyValidationConstants.P2PKH_ADDRESS_MAX_LENGTH
             ):
-                result.add_error(
-                    f"地址长度错误: {len(address)}，应为{KeyValidationConstants.P2PKH_ADDRESS_MIN_LENGTH}-{KeyValidationConstants.P2PKH_ADDRESS_MAX_LENGTH}字符"
-                )
+                result.add_error(f"地址长度错误: {
+                    len(address)}，应为{
+                    KeyValidationConstants.P2PKH_ADDRESS_MIN_LENGTH}-{
+                    KeyValidationConstants.P2PKH_ADDRESS_MAX_LENGTH}字符")
 
             # 验证Base58字符集
             valid_chars = set(Base58.ALPHABET)
@@ -640,16 +641,16 @@ class BitcoinKeyValidator:
                     addr_type == AddressType.P2PKH
                     and version != KeyValidationConstants.P2PKH_VERSION_BYTE
                 ):
-                    result.add_warning(
-                        f"P2PKH地址版本字节应为0x{KeyValidationConstants.P2PKH_VERSION_BYTE:02x}，当前: 0x{version:02x}"
-                    )
+                    result.add_warning(f"P2PKH地址版本字节应为0x{
+                        KeyValidationConstants.P2PKH_VERSION_BYTE:02x}，当前: 0x{
+                        version:02x}")
                 elif (
                     addr_type == AddressType.P2SH
                     and version != KeyValidationConstants.P2SH_VERSION_BYTE
                 ):
-                    result.add_warning(
-                        f"P2SH地址版本字节应为0x{KeyValidationConstants.P2SH_VERSION_BYTE:02x}，当前: 0x{version:02x}"
-                    )
+                    result.add_warning(f"P2SH地址版本字节应为0x{
+                        KeyValidationConstants.P2SH_VERSION_BYTE:02x}，当前: 0x{
+                        version:02x}")
 
                 result.add_detail("checksum_valid", True)
 
@@ -684,8 +685,9 @@ class BitcoinKeyValidator:
                     result.add_error(f"Bech32地址HRP错误: 期望'bc'或'tb'，实际'{hrp}'")
 
                 # 验证数据长度
-                # P2WPKH: witness version 0 (5 bits) + 20-byte witness program (160 bits) = 33 bytes in 5-bit groups
-                # P2WSH: witness version 0 (5 bits) + 32-byte witness program (256 bits) = 53 bytes in 5-bit groups
+                # P2WPKH: witness version 0 (5 bits) + 20-byte witness program (160 bits) = 33 bytes in 5-bit groups  # noqa: E501
+                # P2WSH: witness version 0 (5 bits) + 32-byte witness program (256 bits) =
+                # 53 bytes in 5-bit groups
                 data_length = len(data)
                 if data_length not in [33, 53]:
                     result.add_error(
@@ -754,9 +756,9 @@ class BitcoinKeyValidator:
                     result.add_warning(f"压缩WIF应以'K'或'L'开头，当前: {wif[0]}")
             else:
                 if len(wif) != KeyValidationConstants.UNCOMPRESSED_WIF_LENGTH:
-                    result.add_warning(
-                        f"非压缩WIF长度应为{KeyValidationConstants.UNCOMPRESSED_WIF_LENGTH}字符，当前: {len(wif)}"
-                    )
+                    result.add_warning(f"非压缩WIF长度应为{
+                        KeyValidationConstants.UNCOMPRESSED_WIF_LENGTH}字符，当前: {
+                        len(wif)}")
                 if not wif.startswith("5"):
                     result.add_warning(f"非压缩WIF应以'5'开头，当前: {wif[0]}")
 
@@ -814,14 +816,14 @@ class BitcoinKeyValidator:
                         f"压缩WIF长度应为{KeyValidationConstants.COMPRESSED_WIF_LENGTH}字符"
                     )
                 if not wif.startswith(("K", "L")):
-                    result.add_warning(f"压缩WIF应以'K'或'L'开头")
+                    result.add_warning("压缩WIF应以'K'或'L'开头")
             else:
                 if len(wif) != KeyValidationConstants.UNCOMPRESSED_WIF_LENGTH:
                     result.add_warning(
                         f"非压缩WIF长度应为{KeyValidationConstants.UNCOMPRESSED_WIF_LENGTH}字符"
                     )
                 if not wif.startswith("5"):
-                    result.add_warning(f"非压缩WIF应以'5'开头")
+                    result.add_warning("非压缩WIF应以'5'开头")
 
             return result, private_key, compressed
 

@@ -19,8 +19,8 @@ from pathlib import Path
 # 添加项目根目录
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.core.optimized_address_generator import OptimizedP2PKHAddressGenerator
-from src.monitoring.optimization_monitor import OptimizationPerformanceMonitor
+from src.core.optimized_address_generator import OptimizedP2PKHAddressGenerator  # noqa: E402
+from src.monitoring.optimization_monitor import OptimizationPerformanceMonitor  # noqa: E402
 
 
 def stress_test_1_large_volume():
@@ -71,14 +71,14 @@ def stress_test_1_large_volume():
                 speed = total_generated / elapsed
                 print(
                     f"  进度: {total_generated:,}/{total_addresses:,} "
-                    f"({total_generated/total_addresses*100:.1f}%) - "
+                    f"({total_generated / total_addresses * 100:.1f}%) - "
                     f"{speed:.0f} addr/s"
                 )
 
         total_elapsed = time.perf_counter() - start_time
         avg_speed = total_generated / total_elapsed
 
-        print(f"\n  ✅ 完成!")
+        print("\n  ✅ 完成!")
         print(f"  总地址数: {total_generated:,}")
         print(f"  总耗时: {total_elapsed:.2f}s")
         print(f"  平均速度: {avg_speed:.0f} addr/s")
@@ -129,10 +129,10 @@ def stress_test_2_long_running():
             elapsed = time.perf_counter() - start_time
             if int(elapsed) % 30 == 0:
                 speed = total_generated / elapsed
-                remaining = duration - elapsed
+                duration - elapsed
                 print(
                     f"  已运行: {elapsed:.0f}s/{duration}s "
-                    f"({elapsed/duration*100:.1f}%) - "
+                    f"({elapsed / duration * 100:.1f}%) - "
                     f"已生成: {total_generated:,} - "
                     f"速度: {speed:.0f} addr/s"
                 )
@@ -141,7 +141,7 @@ def stress_test_2_long_running():
         total_elapsed = time.perf_counter() - start_time
         avg_speed = total_generated / total_elapsed
 
-        print(f"\n  ✅ 完成!")
+        print("\n  ✅ 完成!")
         print(f"  运行时间: {total_elapsed:.0f}s")
         print(f"  总地址数: {total_generated:,}")
         print(f"  平均速度: {avg_speed:.0f} addr/s")
@@ -177,7 +177,7 @@ def stress_test_3_high_concurrency():
                 pk = secrets.token_bytes(32)
 
                 pk_start = time.perf_counter()
-                addr = generator.generate_from_private_key(pk)
+                generator.generate_from_private_key(pk)
                 pk_time = (time.perf_counter() - pk_start) * 1000
 
                 generation_times.append(pk_time)
@@ -205,22 +205,22 @@ def stress_test_3_high_concurrency():
     # 等待完成
     for i, t in enumerate(threads):
         t.join()
-        print(f"  线程 {i+1}/{num_threads} 完成")
+        print(f"  线程 {i + 1}/{num_threads} 完成")
 
     total_elapsed = time.perf_counter() - start_time
     total_generated = sum(results)
 
-    print(f"\n  ✅ 完成!")
+    print("\n  ✅ 完成!")
     print(f"  线程数: {num_threads}")
     print(f"  总地址数: {total_generated:,}")
     print(f"  总耗时: {total_elapsed:.2f}s")
-    print(f"  平均速度: {total_generated/total_elapsed:.0f} addr/s")
+    print(f"  平均速度: {total_generated / total_elapsed:.0f} addr/s")
     print(f"  错误数: {len(errors)}")
 
     monitor.stop()
 
     if errors:
-        print(f"\n  ❌ 发现错误:")
+        print("\n  ❌ 发现错误:")
         for thread_id, error in errors:
             print(f"    线程 {thread_id}: {error}")
 
@@ -251,7 +251,15 @@ def stress_test_4_memory_stability():
 
         # 检查内存
         current, peak = tracemalloc.get_traced_memory()
-        print(f"  批次 {batch+1}: 当前={current/1024/1024:.2f}MB, " f"峰值={peak/1024/1024:.2f}MB")
+        print(f"  批次 {
+            batch
+            + 1}: 当前={
+            current
+            / 1024
+            / 1024:.2f}MB, " f"峰值={
+                peak
+                / 1024
+            / 1024:.2f}MB")
 
     # 最终内存
     final_snapshot = tracemalloc.take_snapshot()
@@ -260,12 +268,12 @@ def stress_test_4_memory_stability():
     # 分析内存差异
     top_stats = final_snapshot.compare_to(initial_snapshot, "lineno")
 
-    print(f"\n  ✅ 完成!")
-    print(f"  当前内存: {current/1024/1024:.2f}MB")
-    print(f"  峰值内存: {peak/1024/1024:.2f}MB")
+    print("\n  ✅ 完成!")
+    print(f"  当前内存: {current / 1024 / 1024:.2f}MB")
+    print(f"  峰值内存: {peak / 1024 / 1024:.2f}MB")
 
     # 显示前5个内存增长最多的位置
-    print(f"\n  内存增长TOP 5:")
+    print("\n  内存增长TOP 5:")
     for stat in top_stats[:5]:
         print(f"    {stat}")
 

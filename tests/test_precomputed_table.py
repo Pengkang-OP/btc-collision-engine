@@ -9,7 +9,7 @@ from src.core.precomputed_table import (
     get_precomputed_table,
     precomputed_table_manager,
 )
-from src.core.secp256k1 import EllipticCurve, Secp256k1, ECPoint
+from src.core.secp256k1 import Secp256k1, ECPoint
 
 
 class TestPrecomputedPointTable:

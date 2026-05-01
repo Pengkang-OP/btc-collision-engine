@@ -8,8 +8,7 @@ import unittest
 import threading
 import time
 import pytest
-from unittest.mock import Mock, patch
-from typing import Dict, List
+from unittest.mock import Mock
 
 
 class TestConcurrentAccess(unittest.TestCase):

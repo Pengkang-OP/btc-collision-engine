@@ -56,7 +56,7 @@ class TestP2SHAddressGeneration:
         address2 = BitcoinKeyValidator.generate_p2sh_address(public_key2)
 
         assert address1 != address2, "不同公钥应生成不同的P2SH地址"
-        print(f"\n[OK] P2SH地址区分验证通过:")
+        print("\n[OK] P2SH地址区分验证通过:")
         print(f"  公钥1 -> {address1}")
         print(f"  公钥2 -> {address2}")
 
@@ -79,7 +79,7 @@ class TestP2SHAddressGeneration:
         # 压缩和未压缩公钥应生成不同的地址
         assert address_compressed != address_uncompressed, "压缩和未压缩公钥应生成不同的P2SH地址"
 
-        print(f"\n[OK] P2SH压缩/未压缩公钥区分验证通过:")
+        print("\n[OK] P2SH压缩/未压缩公钥区分验证通过:")
         print(f"  压缩公钥 -> {address_compressed}")
         print(f"  未压缩公钥 -> {address_uncompressed}")
 
@@ -156,7 +156,7 @@ class TestBech32AddressGeneration:
         address2 = BitcoinKeyValidator.generate_bech32_address(public_key2)
 
         assert address1 != address2, "不同公钥应生成不同的Bech32地址"
-        print(f"\n[OK] Bech32地址区分验证通过:")
+        print("\n[OK] Bech32地址区分验证通过:")
         print(f"  公钥1 -> {address1}")
         print(f"  公钥2 -> {address2}")
 
@@ -172,7 +172,7 @@ class TestBech32AddressGeneration:
         with pytest.raises(ValueError, match="Bech32地址仅支持压缩公钥"):
             BitcoinKeyValidator.generate_bech32_address(uncompressed_key)
 
-        print(f"\n[OK] Bech32拒绝未压缩公钥验证通过")
+        print("\n[OK] Bech32拒绝未压缩公钥验证通过")
 
     def test_bech32_testnet_address(self):
         """测试Testnet Bech32地址生成（以'tb1'开头）"""
@@ -305,7 +305,7 @@ class TestAddressGenerationIntegration:
         assert p2sh_address.startswith("3"), f"P2SH地址应以'3'开头，实际: {p2sh_address}"
         assert bech32_address.startswith("bc1"), f"Bech32地址应以'bc1'开头，实际: {bech32_address}"
 
-        print(f"\n[OK] 所有地址类型生成成功:")
+        print("\n[OK] 所有地址类型生成成功:")
         print(f"  P2PKH:  {p2pkh_address}")
         print(f"  P2SH:   {p2sh_address}")
         print(f"  Bech32: {bech32_address}")
@@ -330,7 +330,7 @@ class TestAddressGenerationIntegration:
         assert p2pkh_address.startswith("1"), "P2PKH地址应以'1'开头"
         assert p2sh_address.startswith("3"), "P2SH地址应以'3'开头"
 
-        print(f"\n[OK] 已知测试向量验证通过:")
+        print("\n[OK] 已知测试向量验证通过:")
         print(f"  P2PKH: {p2pkh_address}")
         print(f"  P2SH:  {p2sh_address}")
 

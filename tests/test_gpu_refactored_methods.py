@@ -10,11 +10,9 @@
 6. _check_and_report_progress
 """
 
-import pytest
 import os
 import time
 import threading
-import hashlib
 from unittest.mock import Mock, patch, MagicMock
 from src.collision.gpu.engine import (
     GPUCollisionEngine,

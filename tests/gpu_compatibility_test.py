@@ -15,12 +15,12 @@ from typing import Set, List, Dict
 # 添加项目根目录到Python模块路径
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
-import pytest
+import pytest  # noqa: E402
 
 pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine
-from src.gpu.device import GPUDeviceDetector, identify_vendor, identify_gpu_model
+from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
+from src.gpu.device import GPUDeviceDetector, identify_vendor, identify_gpu_model  # noqa: E402
 
 # 配置日志
 logging.basicConfig(
@@ -73,7 +73,7 @@ def test_gpu_device_detection():
             logger.info(f"    - 厂商: {vendor}")
             logger.info(f"    - 厂商标识: {vendor_identifier}")
             logger.info(f"    - 型号标识: {gpu_model}")
-            logger.info(f"    - 显存: {device.get('global_mem_size', 0)/(1024**3):.1f} GB")
+            logger.info(f"    - 显存: {device.get('global_mem_size', 0) / (1024**3):.1f} GB")
             logger.info(f"    - 计算单元: {device.get('max_compute_units', 'N/A')}")
 
         return True
@@ -238,12 +238,10 @@ def generate_compatibility_report(test_results: List[Dict]):
     batch_success_count = sum(1 for result in test_results if result["batch_success"])
 
     logger.info(f"测试设备数量: {total_devices}")
-    logger.info(
-        f"初始化成功: {init_success_count}/{total_devices} ({init_success_count/total_devices*100:.1f}%)"
-    )
-    logger.info(
-        f"批次大小测试成功: {batch_success_count}/{total_devices} ({batch_success_count/total_devices*100:.1f}%)"
-    )
+    logger.info(f"初始化成功: {init_success_count}/{total_devices} ({
+        init_success_count / total_devices * 100:.1f}%)")
+    logger.info(f"批次大小测试成功: {batch_success_count}/{total_devices} ({
+        batch_success_count / total_devices * 100:.1f}%)")
 
     for result in test_results:
         device_index = result["device_index"]

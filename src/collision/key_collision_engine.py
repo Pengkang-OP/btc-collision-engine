@@ -3,12 +3,10 @@
 import os
 import time
 import threading
-import secrets
 import concurrent.futures
 import psutil
 import signal
-from typing import Set, Optional, Callable, Tuple, List, Dict, Any, cast
-from ..core.address_generator import P2PKHAddressGenerator
+from typing import Set, Optional, Tuple, List, Dict, Any, cast
 from ..core.optimized_address_generator import OptimizedP2PKHAddressGenerator
 
 # v2.2.1迁移: 使用crypto_backend替代secp256k1.py（性能提升1000倍）
@@ -19,7 +17,7 @@ from .checkpoint_manager import CheckpointManager
 from .deduplication_filter import DeduplicationFilter
 from .base_engine import BaseCollisionEngine
 from ..utils import init_logging, get_configured_logger
-from ..utils.logger import get_sampled_logger, PerformanceMonitor
+from ..utils.logger import get_sampled_logger
 from ..utils.exception_handler import ExceptionHandler
 from ..monitoring.data_logger import DataLogger
 from ..monitoring.enhanced_monitoring import EnhancedMonitoringSystem
@@ -29,15 +27,7 @@ from ..logging.log_processor import SensitiveDataFilter
 from ..core.thread_pool import _validate_worker_count
 
 # v3.2.0: 事件系统支持
-from .event_bus import EventBus, get_event_bus
-from .events import (
-    EngineProgressEvent,
-    EngineMatchEvent,
-    EngineErrorEvent,
-    EngineCompleteEvent,
-    EngineStartEvent,
-    EngineStopEvent,
-)
+from .event_bus import EventBus
 from .types import ProgressCallback, MatchCallback, CompleteCallback
 
 # 初始化日志系统（如果尚未初始化）
@@ -164,7 +154,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 window_size=precomputed_window_size,
             )
             logger.info(
-                f"KeyCollisionEngine 使用优化版地址生成器: "
+                "KeyCollisionEngine 使用优化版地址生成器: "
                 f"window_size={precomputed_window_size}, "
                 f"simd={use_simd_hash}, pool={use_memory_pool}"
             )
@@ -256,7 +246,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         # v3.2.0: 初始化数据日志系统（使用事件适配器）
         if data_logging_enabled:
             try:
-                from src.monitoring.event_adapters import DataLoggerAdapter, setup_data_logging
+                from src.monitoring.event_adapters import setup_data_logging
 
                 if use_enhanced_monitoring:
                     # 使用增强监控系统（推荐）
@@ -365,8 +355,10 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 def timeout_handler(signum: int, frame: Any) -> None:
                     raise TimeoutError(f"匹配回调执行超时 ({self._match_callback_timeout}秒)")
 
-                old_handler = signal.signal(signal.SIGALRM, timeout_handler)  # type: ignore[attr-defined]  # signal.SIGALRM 仅 Unix 可用
-                signal.alarm(self._match_callback_timeout)  # type: ignore[attr-defined]  # signal.alarm 仅 Unix 可用
+                # type: ignore[attr-defined]  # signal.SIGALRM 仅 Unix 可用
+                old_handler = signal.signal(signal.SIGALRM, timeout_handler)
+                # type: ignore[attr-defined]  # signal.alarm 仅 Unix 可用
+                signal.alarm(self._match_callback_timeout)
 
                 try:
                     on_match(private_key, address, wif)
@@ -378,7 +370,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     return False
                 finally:
                     signal.alarm(0)  # type: ignore[attr-defined]  # 取消超时定时器
-                    signal.signal(signal.SIGALRM, old_handler)  # type: ignore[attr-defined]  # 恢复原始信号处理器
+                    # type: ignore[attr-defined]  # 恢复原始信号处理器
+                    signal.signal(signal.SIGALRM, old_handler)
 
             if self._match_callback_audit_enabled:
                 logger.debug(f"匹配回调执行成功: address={address}")
@@ -742,7 +735,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 f"Random worker {worker_id}: WIF编码参数错误 addr={matched_address}: {type(e).__name__}"
             )
             return True  # 继续运行
-        except Exception as e:
+        except Exception:
             logger.exception(f"Random worker {worker_id}: WIF编码未知错误 addr={matched_address}")
             return True  # 继续运行
 
@@ -1118,8 +1111,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
             )
             # 生成报告
             try:
-                report = self.data_logger.generate_report("daily")
-                logger.info(f"数据日志报告已生成")
+                self.data_logger.generate_report("daily")
+                logger.info("数据日志报告已生成")
             except Exception as e:
                 logger.error(f"生成数据日志报告失败: {e}")
 
@@ -1239,9 +1232,10 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     except (ValueError, TypeError, OverflowError) as e:
                         # WIF编码或回调参数错误
                         logger.error(
-                            f"Worker {worker_id}: 匹配处理参数错误 addr={matched_address}: {type(e).__name__}: {e}"
+                            f"Worker {worker_id}: 匹配处理参数错误 addr={matched_address}: {
+                                type(e).__name__}: {e}"
                         )
-                    except Exception as e:
+                    except Exception:
                         # 未知错误：记录完整堆栈
                         logger.exception(
                             f"Worker {worker_id}: 匹配处理未知错误 addr={matched_address}"
@@ -1307,7 +1301,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 if i > 0 and worker_start <= (start + (i - 1) * chunk_size):
                     logger.warning(
                         f"RangeScan worker {i}: 边界重叠 detected! "
-                        f"start={worker_start}, prev_end={start + (i-1) * chunk_size}"
+                        f"start={worker_start}, prev_end={start + (i - 1) * chunk_size}"
                     )
 
                 logger.debug(
@@ -1338,10 +1332,10 @@ class KeyCollisionEngine(BaseCollisionEngine):
                             total_count += local_count
                     except concurrent.futures.CancelledError:
                         # 线程被取消（正常停止）
-                        logger.debug(f"工作线程被取消")
+                        logger.debug("工作线程被取消")
                     except KeyboardInterrupt:
                         # 用户中断程序，重新抛出让主线程处理
-                        logger.info(f"工作线程被用户中断")
+                        logger.info("工作线程被用户中断")
                         raise
                     except (RuntimeError, ValueError) as e:
                         # 使用统一异常处理器
@@ -1404,8 +1398,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
             )
             # 生成报告
             try:
-                report = self.data_logger.generate_report("daily")
-                logger.info(f"数据日志报告已生成")
+                self.data_logger.generate_report("daily")
+                logger.info("数据日志报告已生成")
             except Exception as e:
                 logger.error(f"生成数据日志报告失败: {e}")
 
@@ -1457,7 +1451,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         break
 
                     # 验证范围（使用crypto_backend的曲线参数）
-                    # Secp256k1.N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+                    # Secp256k1.N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141  # noqa: E501
                     if (
                         k < 1
                         or k >= 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
@@ -1486,7 +1480,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                             f"BruteForce worker {worker_id}: 私钥转换错误 k={k}: {type(e).__name__}: {e}"
                         )
                         continue
-                    except Exception as e:
+                    except Exception:
                         # 未知错误：记录完整堆栈
                         logger.exception(f"BruteForce worker {worker_id}: 生成地址未知错误 k={k}")
                         continue
@@ -1516,9 +1510,10 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         except (ValueError, TypeError, OverflowError) as e:
                             # WIF编码或回调参数错误
                             logger.error(
-                                f"BruteForce worker {worker_id}: 匹配处理参数错误 addr={address}: {type(e).__name__}"
+                                f"BruteForce worker {worker_id}: 匹配处理参数错误 addr={address}: {
+                                    type(e).__name__}"
                             )
-                        except Exception as e:
+                        except Exception:
                             # 未知错误：记录完整堆栈
                             logger.exception(
                                 f"BruteForce worker {worker_id}: 匹配处理未知错误 addr={address}"
@@ -1585,10 +1580,10 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         total_count += local_count
                 except concurrent.futures.CancelledError:
                     # 线程被取消（正常停止）
-                    logger.debug(f"BruteForce 工作线程被取消")
+                    logger.debug("BruteForce 工作线程被取消")
                 except KeyboardInterrupt:
                     # 用户中断程序，重新抛出让主线程处理
-                    logger.info(f"BruteForce 工作线程被用户中断")
+                    logger.info("BruteForce 工作线程被用户中断")
                     raise
                 except (RuntimeError, ValueError) as e:
                     # 使用统一异常处理器
@@ -1633,8 +1628,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
             )
             # 生成报告
             try:
-                report = self.data_logger.generate_report("daily")
-                logger.info(f"数据日志报告已生成")
+                self.data_logger.generate_report("daily")
+                logger.info("数据日志报告已生成")
             except Exception as e:
                 logger.error(f"生成数据日志报告失败: {e}")
 
@@ -1780,13 +1775,14 @@ class KeyCollisionEngine(BaseCollisionEngine):
             if mode == "random":
                 target_fn = self.random_search
             elif mode == "range":
-                target_fn = lambda: self.range_scan(
-                    kwargs.get("start", 1), kwargs.get("end", 2**32)
-                )
+
+                def target_fn():
+                    return self.range_scan(kwargs.get("start", 1), kwargs.get("end", 2**32))
+
             elif mode == "brute_force":
-                target_fn = lambda: self.brute_force(
-                    kwargs.get("start", 1), kwargs.get("max_keys", None)
-                )
+
+                def target_fn():
+                    return self.brute_force(kwargs.get("start", 1), kwargs.get("max_keys", None))
 
             logger.info(
                 f"启动工作线程: {target_fn.__name__ if hasattr(target_fn, '__name__') else 'lambda'}"
@@ -1946,7 +1942,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 # 有实时计数：合并到 stats。
                 # 注意：不重置 _live_range_count，它由主循环自行管理。
                 # 将 live_count 直接作为近似总计数更新到 stats。
-                # （主循环会定期调用 stats.update(safe_count)，其中 safe_count = total_count + _live_range_count）
+                # （主循环会定期调用 stats.update(safe_count)，其中 safe_count = total_count + _live_range_count）  # noqa: E501
                 self.stats.update(max(live_count, self.stats.total_checked))
             elif self.stats.start_time > 0 and self.stats.total_checked > 0:
                 # 即使 live_range_count 为 0，也尝试刷新 elapsed 和 speed

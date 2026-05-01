@@ -10,26 +10,24 @@
 
 import os
 import sys
-import pytest
 
 # 确保项目根目录在 sys.path 中
 _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _root not in sys.path:
     sys.path.insert(0, _root)
 
-from src.core.wif import WIF
-from src.core.base58 import Base58
-from src.core.address_generator import P2PKHAddressGenerator
-from src.core.bitcoin_key_validator import (
+from src.core.wif import WIF  # noqa: E402
+from src.core.base58 import Base58  # noqa: E402
+from src.core.address_generator import P2PKHAddressGenerator  # noqa: E402
+from src.core.bitcoin_key_validator import (  # noqa: E402
     BitcoinKeyValidator,
-    KeyValidationResult,
     KeyValidationConstants,
     AddressType,
 )
-from src.core.secp256k1 import Secp256k1
-from src.collision.key_collision_engine import KeyCollisionEngine
-from src.collision.checkpoint_manager import CheckpointManager
-from src.monitoring.data_logger import DataLogger
+from src.core.secp256k1 import Secp256k1  # noqa: E402
+from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
+from src.collision.checkpoint_manager import CheckpointManager  # noqa: E402
+from src.monitoring.data_logger import DataLogger  # noqa: E402
 
 # ──────────────────────────────────────────────
 # 已知测试数据常量

@@ -20,7 +20,7 @@ def test_kernel_load():
     try:
         from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
-        print(f"   ✅ 成功加载")
+        print("   ✅ 成功加载")
         print(f"   长度: {len(OPENCL_KERNEL_SOURCE)} 字符")
         print(f"   内核函数数: {OPENCL_KERNEL_SOURCE.count('__kernel')}")
     except Exception as e:
@@ -32,11 +32,11 @@ def test_kernel_load():
     try:
         import pyopencl as cl
 
-        print(f"   ✅ PyOpenCL可用")
+        print("   ✅ PyOpenCL可用")
         print(f"   版本: {cl.VERSION_TEXT}")
     except ImportError:
-        print(f"   ❌ PyOpenCL未安装")
-        print(f"   安装命令: pip install pyopencl")
+        print("   ❌ PyOpenCL未安装")
+        print("   安装命令: pip install pyopencl")
         return False
 
     # 3. 检查GPU设备
@@ -53,11 +53,11 @@ def test_kernel_load():
         if gpu_devices:
             print(f"   ✅ 找到 {len(gpu_devices)} 个GPU设备")
             for i, device in enumerate(gpu_devices):
-                print(f"   {i+1}. {device.name}")
+                print(f"   {i + 1}. {device.name}")
                 print(f"      厂商: {device.vendor}")
                 print(f"      内存: {device.global_mem_size // (1024**2)} MB")
         else:
-            print(f"   ⚠️  未找到GPU设备")
+            print("   ⚠️  未找到GPU设备")
             return False
 
     except Exception as e:
@@ -75,16 +75,16 @@ def test_kernel_load():
         program = cl.Program(context, OPENCL_KERNEL_SOURCE).build()
 
         # 检查内核是否存在
-        batch_check = program.batch_check
+        program.batch_check
         verify_arithmetic = program.verify_arithmetic
-        debug_hash = program.debug_hash
+        program.debug_hash
 
-        print(f"   ✅ 内核编译成功")
+        print("   ✅ 内核编译成功")
         print(f"   设备: {device.name}")
-        print(f"   可用内核函数:")
-        print(f"     - batch_check")
-        print(f"     - verify_arithmetic")
-        print(f"     - debug_hash")
+        print("   可用内核函数:")
+        print("     - batch_check")
+        print("     - verify_arithmetic")
+        print("     - debug_hash")
 
     except Exception as e:
         print(f"   ❌ 内核编译失败: {e}")
@@ -130,10 +130,10 @@ def test_kernel_load():
         expected_y = 0x1AE168FEA63DC339A3C58419466CEAEEF7F632653266D0E1236431A950CFE52A
 
         if x_val == expected_x and y_val == expected_y:
-            print(f"   ✅ 算术验证通过")
-            print(f"   2*G计算正确")
+            print("   ✅ 算术验证通过")
+            print("   2*G计算正确")
         else:
-            print(f"   ⚠️  算术验证失败")
+            print("   ⚠️  算术验证失败")
             print(f"   预期X: {hex(expected_x)}")
             print(f"   实际X: {hex(x_val)}")
             print(f"   预期Y: {hex(expected_y)}")

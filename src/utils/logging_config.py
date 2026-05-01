@@ -59,7 +59,7 @@ class SafeRotatingFileHandler(RotatingFileHandler):
 
 
 # 导入安全过滤器（P0-2修复）
-from .security_log_filter import SecurityLogFilter
+from .security_log_filter import SecurityLogFilter  # noqa: E402
 
 # 幂等守卫：防止多次 import 重复执行安全过滤器初始化
 _security_filter_initialized: bool = False
@@ -277,7 +277,7 @@ class LoggingConfig:
                             self._disk_full_warned = True
                             print(
                                 f"[日志警告] 日志文件写入失败（磁盘可能已满）: {os_err}"
-                                f" 请清理磁盘或调整 logging.file 路径",
+                                " 请清理磁盘或调整 logging.file 路径",
                                 file=sys.stderr,
                             )
 
@@ -325,7 +325,7 @@ class LoggingConfig:
             import warnings
 
             warnings.warn(
-                f"get_logger(thread_safe=True)已弃用。Python的logging.Logger本身是线程安全的，"
+                "get_logger(thread_safe=True)已弃用。Python的logging.Logger本身是线程安全的，"
                 f"请直接使用 get_logger('{name}', thread_safe=False) 或省略该参数。",
                 DeprecationWarning,
                 stacklevel=2,

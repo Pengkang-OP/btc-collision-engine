@@ -9,7 +9,7 @@ import tempfile
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)
 
-from src.collision.checkpoint_manager import CheckpointManager
+from src.collision.checkpoint_manager import CheckpointManager  # noqa: E402
 
 
 class TestACLEnvironmentVariable(unittest.TestCase):
@@ -39,14 +39,14 @@ class TestACLEnvironmentVariable(unittest.TestCase):
                         ["icacls", self.test_file, "/reset"], capture_output=True, timeout=2
                     )
                 os.remove(self.test_file)
-            except:
+            except BaseException:
                 pass
 
         temp_file = self.test_file + ".tmp"
         if os.path.exists(temp_file):
             try:
                 os.remove(temp_file)
-            except:
+            except BaseException:
                 pass
 
     def test_skip_acl_true(self):
@@ -152,7 +152,7 @@ class TestACLEnvironmentVariable(unittest.TestCase):
                                 ["icacls", test_file, "/reset"], capture_output=True, timeout=2
                             )
                         os.remove(test_file)
-                    except:
+                    except BaseException:
                         pass
 
     def test_skip_acl_with_engine_integration(self):

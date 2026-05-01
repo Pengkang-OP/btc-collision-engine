@@ -106,7 +106,7 @@ class TestGPUPerformanceMonitor:
     def test_creation(self):
         """测试创建"""
         monitor = GPUPerformanceMonitor()
-        assert monitor._running == False
+        assert monitor._running is False
         assert monitor._total_batches == 0
         assert monitor._peak_throughput == 0.0
 
@@ -114,10 +114,10 @@ class TestGPUPerformanceMonitor:
         """测试启动和停止"""
         monitor = GPUPerformanceMonitor()
         monitor.start()
-        assert monitor._running == True
+        assert monitor._running is True
 
         monitor.stop()
-        assert monitor._running == False
+        assert monitor._running is False
 
     def test_record_kernel_metrics(self):
         """测试记录内核指标"""
@@ -237,7 +237,7 @@ class TestGPUPerformanceMonitor:
             memory_allocated_mb=128.0,
         )
 
-        assert degradation_detected[0] == True
+        assert degradation_detected[0] is True
 
     def test_export_metrics_json(self):
         """测试导出JSON格式"""

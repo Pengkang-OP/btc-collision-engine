@@ -6,8 +6,7 @@
 迁移日期: 2026-04-22
 """
 
-import logging
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 from typing import Optional, Any
 
 logger = get_configured_logger("GPUDeviceHelper")

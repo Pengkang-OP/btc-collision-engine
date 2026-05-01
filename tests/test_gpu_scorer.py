@@ -12,7 +12,7 @@
 """
 
 import unittest
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 from src.gpu.scorer import GPUDeviceScorer, get_gpu_scorer, reset_gpu_scorer
 

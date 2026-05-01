@@ -12,11 +12,9 @@
 
 import pytest
 import os
-import sys
 import json
 import time
-import tempfile
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock
 
 from src.logging.events import LogEvent, LogEventType
 from src.logging.log_processor import LogProcessor, SensitiveDataFilter
@@ -163,7 +161,10 @@ class TestLogProcessor:
 
     def test_add_remove_filter(self):
         processor = LogProcessor()
-        f = lambda e: True
+
+        def f(e):  # noqa: E306
+            return True
+
         processor.add_filter(f)
         assert len(processor._filters) == 1
         processor.remove_filter(f)
@@ -171,7 +172,10 @@ class TestLogProcessor:
 
     def test_add_remove_formatter(self):
         processor = LogProcessor()
-        fmt = lambda d: d
+
+        def fmt(d):  # noqa: E306
+            return d
+
         processor.add_formatter("status_update", fmt)
         assert "status_update" in processor._formatters
         processor.remove_formatter("status_update")
@@ -401,7 +405,7 @@ class TestLogQuery:
 # 5. LogCollector 测试
 # ============================================================================
 
-from conftest import poll_until
+from conftest import poll_until  # noqa: E402
 
 
 class TestLogCollector:

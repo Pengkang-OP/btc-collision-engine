@@ -17,8 +17,8 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-import inspect
-from src.core.secp256k1 import EllipticCurve, ECPoint, Secp256k1
+import inspect  # noqa: E402
+from src.core.secp256k1 import EllipticCurve, ECPoint, Secp256k1  # noqa: E402
 
 
 class TestP1_1ConstTimeSelectFix:
@@ -45,7 +45,7 @@ class TestP1_1ConstTimeSelectFix:
         in_docstring = False
         docstring_ended = False
         code_lines = []
-        for l in lines:
+        for l in lines:  # noqa: E741
             stripped = l.strip()
             if not docstring_ended and stripped.startswith('"""') or stripped.endswith('"""'):
                 if in_docstring:
@@ -63,7 +63,7 @@ class TestP1_1ConstTimeSelectFix:
                 code_lines.append(stripped)
 
         # 检查是否存在 if condition == 0 的条件分支（排除注释/文档字符串）
-        found_old_pattern = any("condition == 0" in l for l in code_lines)
+        found_old_pattern = any("condition == 0" in l for l in code_lines)  # noqa: E741
         assert not found_old_pattern, (
             "_const_time_select 中不应再包含 `if condition == 0` 分支！\n"
             "P1-1 修复需要消除此密钥相关分支。"

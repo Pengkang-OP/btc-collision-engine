@@ -23,7 +23,6 @@ import json
 import argparse
 import shutil
 import time
-import traceback
 from typing import Dict, Any, List, Tuple
 
 # 确保可以导入项目模块
@@ -137,7 +136,7 @@ def check_config() -> Tuple[bool, str, Dict]:
     """检查 config.json 是否存在且有效"""
     config_path = os.path.join(_PROJECT_ROOT, "config.json")
     if not os.path.exists(config_path):
-        return False, f"config.json 不存在（请执行: copy config.example.json config.json）", {}
+        return False, "config.json 不存在（请执行: copy config.example.json config.json）", {}
     try:
         with open(config_path, "r", encoding="utf-8") as f:
             cfg = json.load(f)
@@ -277,9 +276,10 @@ def print_report(results: Dict[str, Any], as_json: bool = False):
     disk = results["disk"]
     if "error" not in disk:
         tag = PASS if disk["ok"] else WARN
-        print(
-            f"{tag} 磁盘空间: {disk['free_mb']} MB 可用 / {disk['total_mb']} MB 总计（已用 {disk['used_pct']}%）"
-        )
+        print(f"{tag} 磁盘空间: {
+            disk['free_mb']} MB 可用 / {
+            disk['total_mb']} MB 总计（已用 {
+            disk['used_pct']}%）")
     else:
         print(f"{WARN} 磁盘空间: 检查失败 - {disk['error']}")
 

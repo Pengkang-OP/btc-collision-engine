@@ -17,19 +17,18 @@ import sys
 import time
 import json
 import logging
-import os
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Set
+from typing import Dict, Set
 
 # 添加项目根目录
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_PROJECT_ROOT))
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine
-from src.collision.collision_stats import CollisionStats
-from src.gpu.intel_memory_monitor import IntelMemoryMonitor
-from src.gpu.intel_timeout_manager import AdaptiveTimeoutManager
+from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
+from src.collision.collision_stats import CollisionStats  # noqa: E402
+from src.gpu.intel_memory_monitor import IntelMemoryMonitor  # noqa: E402
+from src.gpu.intel_timeout_manager import AdaptiveTimeoutManager  # noqa: E402
 
 # 输出目录
 _TEST_OUTPUT_DIR = _PROJECT_ROOT / "test_results"
@@ -248,7 +247,7 @@ def run_gpu_collision_test(
 
         # 获取设备信息
         device_info = engine._gpu_device.get_device_info()
-        print(f"\n✅ GPU引擎初始化完成")
+        print("\n✅ GPU引擎初始化完成")
         print(f"   设备: {device_info.get('name', 'Unknown')}")
         print(f"   厂商: {device_info.get('vendor', 'Unknown')}")
         print(f"   显存: {device_info.get('global_mem_size', 0) / 1024**3:.1f} GB")
@@ -296,11 +295,11 @@ def run_gpu_collision_test(
 
         # 打印结果
         print("-" * 80)
-        print(f"\n📊 测试完成！")
+        print("\n📊 测试完成！")
         print("=" * 80)
         print(f"  总检查数   : {stats_data['total_checked']:,}")
         print(f"  运行时间   : {elapsed:.2f} 秒")
-        print(f"  平均速度   : {stats_data['total_checked']/elapsed:,.0f} keys/s")
+        print(f"  平均速度   : {stats_data['total_checked'] / elapsed:,.0f} keys/s")
         print(f"  峰值速度   : {stats_data['speed']:,.0f} keys/s")
         print(f"  发现匹配   : {len(stats_data['matches'])} 个")
         print("=" * 80)
@@ -400,11 +399,11 @@ def run_cpu_baseline_test(targets: Set[str], duration: int = 10) -> Dict:
         elapsed = time.time() - start_time
 
         print("-" * 80)
-        print(f"\n📊 CPU测试完成！")
+        print("\n📊 CPU测试完成！")
         print("=" * 80)
         print(f"  总检查数   : {stats_data['total_checked']:,}")
         print(f"  运行时间   : {elapsed:.2f} 秒")
-        print(f"  平均速度   : {stats_data['total_checked']/elapsed:,.2f} keys/s")
+        print(f"  平均速度   : {stats_data['total_checked'] / elapsed:,.2f} keys/s")
         print("=" * 80)
 
         return {
@@ -438,7 +437,7 @@ def main():
         print(f"  ✅ 加载了 {len(targets)} 个目标地址")
         # 显示前5个
         for i, addr in enumerate(list(targets)[:5]):
-            print(f"    {i+1}. {addr}")
+            print(f"    {i + 1}. {addr}")
         if len(targets) > 5:
             print(f"    ... 还有 {len(targets) - 5} 个地址")
 
@@ -469,14 +468,14 @@ def main():
         # 资源使用评估
         monitoring = gpu_result["monitoring"]
         mem_status = monitoring["memory_status"]
-        print(f"\n💾 资源使用评估:")
+        print("\n💾 资源使用评估:")
         print(f"  显存使用率: {mem_status['usage_percent']:.1f}% (安全限制内)")
         print(f"  超时设置: {monitoring['current_timeout']:.1f} 秒")
 
         if mem_status["usage_percent"] < 70:
-            print(f"  ✅ 显存使用正常")
+            print("  ✅ 显存使用正常")
         else:
-            print(f"  ⚠️ 显存使用率较高，建议监控")
+            print("  ⚠️ 显存使用率较高，建议监控")
 
         print("\n🎉 Intel Arc GPU碰撞测试完成！")
 

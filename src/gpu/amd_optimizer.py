@@ -18,8 +18,7 @@
 SHA256/RIPEMD160/secp256k1 等加密/哈希运算的精度。
 """
 
-import logging
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 import re
 from typing import Any, Dict, Optional, TYPE_CHECKING
 
@@ -127,7 +126,7 @@ class AmdDriverDetector:
                     result["recommendation"] = (
                         f"ROCm 版本 {major}.{minor or 0} 较旧，"
                         f"建议升级至 ROCm {self.MIN_ROCM_MAJOR}.{self.MIN_ROCM_MINOR}+ "
-                        f"以获得完整 OpenCL 2.0 支持"
+                        "以获得完整 OpenCL 2.0 支持"
                     )
                 elif major < self.RECOMMENDED_ROCM_MAJOR:
                     result["recommendation"] = (
@@ -146,7 +145,7 @@ class AmdDriverDetector:
                     result["recommendation"] = (
                         f"AMD Adrenalin 驱动版本 {year}.{minor} 较旧，"
                         f"建议升级至 {self.MIN_ADRENALIN_YEAR}.{self.MIN_ADRENALIN_MINOR}+ "
-                        f"以获得更好的 OpenCL 稳定性"
+                        "以获得更好的 OpenCL 稳定性"
                     )
                 elif year < self.RECOMMENDED_ADRENALIN_YEAR:
                     result["recommendation"] = (
@@ -632,7 +631,7 @@ class AmdMemoryOptimizer:
             {
                 'memory_ratio': float,          # 显存使用比例
                 'global_mem_gb': float,         # 显存大小（GB）
-                'memory_type': str,             # 'HBM' / 'HBM2' / 'HBM2e' / 'HBM3' / 'GDDR6' / 'GDDR5' / 'Unknown'
+                'memory_type': str,             # 'HBM' / 'HBM2' / 'HBM2e' / 'HBM3' / 'GDDR6' / 'GDDR5' / 'Unknown'  # noqa: E501
                 'infinity_cache_hint': bool,    # 是否建议利用 Infinity Cache
                 'infinity_cache_bonus': float,  # Infinity Cache 提升的 ratio 附加值
             }
@@ -774,14 +773,14 @@ class AmdGPUOptimizer:
         except (OSError, FileNotFoundError) as e:
             self._logger.warning(
                 f"⚠️ AMD 驱动检测系统错误（非致命）: {type(e).__name__}: {e}\n"
-                f"   驱动版本信息将不可用"
+                "   驱动版本信息将不可用"
             )
             self._driver_info = {}
             result["driver"] = {}
         except Exception as e:
             self._logger.warning(
                 f"⚠️ AMD 驱动检测失败（非致命）: {type(e).__name__}: {e}\n"
-                f"   驱动版本信息将不可用"
+                "   驱动版本信息将不可用"
             )
             self._driver_info = {}
             result["driver"] = {}
@@ -807,7 +806,7 @@ class AmdGPUOptimizer:
         except (ValueError, KeyError) as e:
             self._logger.warning(
                 f"⚠️ AMD 架构识别数据异常（非致命）: {type(e).__name__}: {e}\n"
-                f"   架构特性将使用保守默认值（GCN，Wavefront=64）"
+                "   架构特性将使用保守默认值（GCN，Wavefront=64）"
             )
             self._arch_info = {
                 "arch": "Unknown",
@@ -822,7 +821,7 @@ class AmdGPUOptimizer:
         except Exception as e:
             self._logger.warning(
                 f"⚠️ AMD 架构识别失败（非致命）: {type(e).__name__}: {e}\n"
-                f"   架构特性将使用保守默认值（GCN，Wavefront=64）"
+                "   架构特性将使用保守默认值（GCN，Wavefront=64）"
             )
             self._arch_info = {
                 "arch": "Unknown",
@@ -847,7 +846,7 @@ class AmdGPUOptimizer:
 
             if self._wavefront_result["valid"]:
                 self._logger.info(
-                    f"✅ AMD Wavefront 对齐验证通过: "
+                    "✅ AMD Wavefront 对齐验证通过: "
                     f"work_group_size={work_group_size} 是 "
                     f"Wavefront({self._wavefront_result['wavefront_size']}) 的整数倍"
                 )
@@ -855,14 +854,14 @@ class AmdGPUOptimizer:
         except (ValueError, TypeError) as e:
             self._logger.warning(
                 f"⚠️ AMD Wavefront 验证参数异常（非致命）: {type(e).__name__}: {e}\n"
-                f"   Wavefront 对齐将跳过"
+                "   Wavefront 对齐将跳过"
             )
             self._wavefront_result = {}
             result["wavefront"] = {}
         except Exception as e:
             self._logger.warning(
                 f"⚠️ AMD Wavefront 验证失败（非致命）: {type(e).__name__}: {e}\n"
-                f"   Wavefront 对齐将跳过"
+                "   Wavefront 对齐将跳过"
             )
             self._wavefront_result = {}
             result["wavefront"] = {}
@@ -894,7 +893,7 @@ class AmdGPUOptimizer:
         except (ValueError, KeyError, TypeError) as e:
             self._logger.warning(
                 f"⚠️ AMD 显存优化配置数据异常（非致命）: {type(e).__name__}: {e}\n"
-                f"   显存配置将使用保守默认值"
+                "   显存配置将使用保守默认值"
             )
             self._memory_config = {
                 "memory_ratio": 0.60,
@@ -907,7 +906,7 @@ class AmdGPUOptimizer:
         except Exception as e:
             self._logger.warning(
                 f"⚠️ AMD 显存优化配置失败（非致命）: {type(e).__name__}: {e}\n"
-                f"   显存配置将使用保守默认值"
+                "   显存配置将使用保守默认值"
             )
             self._memory_config = {
                 "memory_ratio": 0.60,

@@ -9,8 +9,7 @@
 """
 
 import os
-import sys
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Optional
 import chardet
 
 # 直接从具体模块导入，避免循环导入
@@ -193,7 +192,6 @@ class EncodingUtils:
                 if enc != encoding and enc not in encodings_to_try:
                     encodings_to_try.append(enc)
 
-        last_error = None
         for enc in encodings_to_try:
             try:
                 with open(filepath, "r", encoding=enc) as f:
@@ -203,7 +201,6 @@ class EncodingUtils:
                 return content
             except UnicodeDecodeError as e:
                 logger.debug(f"编码 {enc} 尝试失败: {e}")
-                last_error = e
                 continue
             except Exception as e:
                 logger.error(f"文件读取失败: {filepath}, 错误={e}")

@@ -3,17 +3,14 @@
 负责GPU设备的初始化、配置和管理。
 """
 
-import logging
-
 # P3-5: 统一日志获取
-from ..utils import init_logging, get_configured_logger
-import time
+from ..utils import get_configured_logger
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Any, Tuple, cast
+from typing import Dict, Optional, Set, Any, cast
 
 from ..utils.exception_handler import ExceptionHandler
 from ..utils.performance_monitor import EnhancedPerformanceMonitor
-from .device import GPUDevice, GPUDeviceDetector, identify_vendor
+from .device import GPUDevice, GPUDeviceDetector
 from .context import GPUContext
 from .kernel_impl import GPUKernel
 from .profiles.loader import GPUProfileLoader
@@ -144,7 +141,8 @@ class GPUDeviceManager:
                 self.logger.info(
                     f"GPU 设备初始化成功: {device_info.get('name', 'Unknown')} "
                     f"(厂商: {device_info.get('vendor', 'Unknown')}, batch_size: {batch_size}, "
-                    f"work_group_size: {self._gpu_kernel._work_group_size if self._gpu_kernel else 'N/A'})"
+                    f"work_group_size: {
+                        self._gpu_kernel._work_group_size if self._gpu_kernel else 'N/A'})"
                 )
 
                 pm.add_metadata("device_name", device_info.get("name", "Unknown"))
@@ -157,14 +155,14 @@ class GPUDeviceManager:
                 # 提供回退机制提示
                 self.logger.error(
                     f"GPU初始化失败: {e}\n"
-                    f"建议操作:\n"
-                    f"  1. 检查GPU驱动是否正常\n"
-                    f"  2. 验证OpenCL环境配置\n"
-                    f"  3. 使用CPU引擎作为备选方案\n"
-                    f"  4. 查看日志获取详细错误信息"
+                    "建议操作:\n"
+                    "  1. 检查GPU驱动是否正常\n"
+                    "  2. 验证OpenCL环境配置\n"
+                    "  3. 使用CPU引擎作为备选方案\n"
+                    "  4. 查看日志获取详细错误信息"
                 )
                 raise RuntimeError(
-                    f"GPU初始化失败: {e}。" f"请检查GPU驱动和OpenCL环境,或使用CPU引擎作为备选方案。"
+                    f"GPU初始化失败: {e}。" "请检查GPU驱动和OpenCL环境,或使用CPU引擎作为备选方案。"
                 ) from e
 
         return self
@@ -275,7 +273,8 @@ class GPUDeviceManager:
     def _calculate_optimal_batch_size(self) -> int:
         """计算最优batch_size"""
         self._require_device()
-        device_info: Dict[str, Any] = self._gpu_device.get_device_info()  # type: ignore[union-attr]  # _require_device ensures non-None
+        assert self._gpu_device is not None  # _require_device ensures non-None
+        device_info: Dict[str, Any] = self._gpu_device.get_device_info()
         device_name = device_info.get("name", "")
         vendor = device_info.get("vendor_identifier", "unknown")
 
@@ -374,7 +373,7 @@ class GPUDeviceManager:
         """应用厂商特定优化"""
         dev = self._require_device()
         device_info = dev.get_device_info()
-        device_name = device_info.get("name", "")
+        device_info.get("name", "")
         vendor = device_info.get("vendor", "")
         vendor_lower = vendor.lower()
 

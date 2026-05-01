@@ -16,14 +16,13 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple, Dict, Any
 
 from src.i18n import _t
 from src.utils.platform_utils import PlatformUtils
 from src.cli.output import CLIOutput
 from src.cli.constants import (
     REQUIRED_CONFIG_SECTIONS,
-    REQUIRED_DIRECTORIES,
     SEPARATOR_EQUAL,
     SEPARATOR_DASHED,
     SEPARATOR_DASHED_SHORT,
@@ -36,7 +35,7 @@ from src.cli.validation import validate_file_path
 logger = logging.getLogger(__name__)
 
 # 快速模式默认配置常量
-QUICK_RUN_DEFAULTS = {
+QUICK_RUN_DEFAULTS: Dict[str, Any] = {
     "target_file": "targets.txt",
     "mode": "random",
     "checkpoint": True,
@@ -106,13 +105,13 @@ def _cmd_validate_addresses(file_path: str) -> None:
     print(SEPARATOR_DASHED_SHORT)
 
     if valid_list:
-        print(f"\n有效地址示例（最多显示 5 个）:")
+        print("\n有效地址示例（最多显示 5 个）:")
         for r in valid_list[:5]:
             fmt = getattr(r, "format_type", "unknown") or "unknown"
             print(f"  [OK] {r.address}  [{fmt}]")
 
     if invalid_list:
-        print(f"\n无效地址（最多显示 10 个）:")
+        print("\n无效地址（最多显示 10 个）:")
         for r in invalid_list[:10]:
             err = getattr(r, "error", "") or ""
             print(f"  [!]  {r.address}  原因: {err}")
@@ -147,7 +146,7 @@ def _cmd_examples() -> None:
         {
             "title": "3. 断点续传（推荐）",
             "desc": "启用断点续传和去重，运行1小时后自动停止",
-            "cmd": "start.bat -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random --checkpoint --dedup --duration 3600",
+            "cmd": "start.bat -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random --checkpoint --dedup --duration 3600",  # noqa: E501
         },
         {
             "title": "4. 从文件加载目标",
@@ -167,7 +166,7 @@ def _cmd_examples() -> None:
         {
             "title": "7. 范围扫描",
             "desc": "在指定私钥范围内搜索",
-            "cmd": "start.bat -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m range --start 1 --end FFFFFFFF",
+            "cmd": "start.bat -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m range --start 1 --end FFFFFFFF",  # noqa: E501
         },
         {
             "title": "8. 交互式向导",
@@ -751,9 +750,7 @@ def _quick_start_select_gpu() -> List[str]:
                 output.print(f"     {i + 1}. {label}")
             default_indices = " ".join(str(i + 1) for i in range(len(devices)))
             raw = (
-                input(
-                    f"   请选择要使用的 GPU 设备编号（空格分隔，如 1 2，直接回车=全部）: "
-                ).strip()
+                input("   请选择要使用的 GPU 设备编号（空格分隔，如 1 2，直接回车=全部）: ").strip()
                 or default_indices
             )
             selected_indices: List[int] = []
@@ -800,7 +797,7 @@ def _cmd_quick_run(executor: Optional[Callable[[], None]] = None) -> None:
 
         # 默认目标：检查targets.txt是否存在
         target_file = str(QUICK_RUN_DEFAULTS["target_file"])
-        targets: List[str] = []
+        targets: List[str] = []  # noqa: F841
         target_file_exists = Path(target_file).exists()
 
         if target_file_exists:
@@ -824,7 +821,7 @@ def _cmd_quick_run(executor: Optional[Callable[[], None]] = None) -> None:
             if address_count == 0:
                 output.warning(f"{target_file} 中没有有效的目标地址")
                 output.print("\n[TIP] 请先在文件中添加目标地址，或使用以下命令:")
-                output.print(f"  start.bat -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random\n")
+                output.print("  start.bat -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random\n")
                 return
 
             output.success(f"发现目标文件: {target_file} ({address_count} 个地址)")
@@ -878,7 +875,7 @@ def _cmd_quick_run(executor: Optional[Callable[[], None]] = None) -> None:
             output.print(f"  {key}: {value}")
 
         # 询问是否执行（使用可配置的倒计时）
-        countdown = int(QUICK_RUN_DEFAULTS["countdown_seconds"])  # type: ignore[call-overload]
+        countdown: int = QUICK_RUN_DEFAULTS["countdown_seconds"]
         output.print(f"\n[bold green]{countdown}秒后自动开始... (按Ctrl+C取消)[/bold green]")
         try:
             import time
@@ -1070,12 +1067,12 @@ def _handle_info_commands(args: argparse.Namespace) -> bool:
         print(SEPARATOR_EQUAL)
         print(_t("cli.main.recommend_title"))
         print(SEPARATOR_EQUAL)
-        print(f"\n[Info] " + _t("cli.main.recommend_params"))
+        print("\n[Info] " + _t("cli.main.recommend_params"))
         if rec["recommendations"]:
             print(f"   {' '.join(rec['recommendations'])}")
         else:
-            print(f"   " + _t("cli.main.recommend_default"))
-        print(f"\n[Info] " + _t("cli.main.recommend_reasons"))
+            print("   " + _t("cli.main.recommend_default"))
+        print("\n[Info] " + _t("cli.main.recommend_reasons"))
         for i, reason in enumerate(rec["reasons"], 1):
             print(f"   {i}. {reason}")
         print("\n" + SEPARATOR_EQUAL)
@@ -1138,9 +1135,9 @@ def _handle_system_commands(args: argparse.Namespace) -> bool:
             from src.utils.platform_check import PlatformChecker
         except ImportError:
             from ..utils.platform_check import PlatformChecker
-        checker = PlatformChecker()  # type: ignore[assignment]
+        checker = PlatformChecker()
         all_passed, _ = checker.run_all_checks()
-        checker.print_report()  # type: ignore[attr-defined]
+        checker.print_report()
         sys.exit(0 if all_passed else 1)
 
     # --cleanup

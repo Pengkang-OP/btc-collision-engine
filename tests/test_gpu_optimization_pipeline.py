@@ -18,12 +18,12 @@ import os
 import unittest
 import logging
 import pytest
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from src.gpu.optimization_pipeline import PerformanceOptimizationPipeline
+from src.gpu.optimization_pipeline import PerformanceOptimizationPipeline  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # 辅助工厂
@@ -364,7 +364,7 @@ class TestGenerateReport(unittest.TestCase):
         with patch(
             "src.gpu.optimization_pipeline.PerformanceOptimizationPipeline.generate_report",
             return_value=mock_path,
-        ) as mock_gen:
+        ) as mock_gen:  # noqa: F841
             result = pipeline.generate_report()
             self.assertEqual(result, mock_path)
 

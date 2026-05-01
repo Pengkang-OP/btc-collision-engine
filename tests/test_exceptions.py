@@ -6,7 +6,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.utils.exceptions import (
+from src.utils.exceptions import (  # noqa: E402
     CollisionError,
     ConfigError,
     ValidationError,

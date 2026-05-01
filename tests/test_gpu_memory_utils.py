@@ -518,10 +518,10 @@ class TestBatchSizeConfig:
     def test_post_init_auto_validation(self):
         """测试__post_init__自动验证"""
         # 有效配置 - 自动验证通过
-        config1 = BatchSizeConfig()
+        BatchSizeConfig()
         # 如果验证失败，会在创建时抛出异常
 
-        config2 = BatchSizeConfig(memory_usage_ratio=0.7, min_batch_size=2048)
+        config2 = BatchSizeConfig(memory_usage_ratio=0.7, min_batch_size=2048)  # noqa: F841
         # 自动验证通过
 
         # 无效配置 - 自动验证失败

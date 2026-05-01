@@ -13,7 +13,6 @@
       请使用 src.collision.targets.resolver 或 src.collision。
 """
 
-import pytest
 import warnings
 
 
@@ -97,5 +96,5 @@ class TestImportConsistency:
             assert hasattr(instance, "resolve")
 
         # 验证所有实例类型相同
-        assert type(instances[0]) == type(instances[1])
-        assert type(instances[1]) == type(instances[2])
+        assert isinstance(instances[0], type(instances[1]))
+        assert isinstance(instances[1], type(instances[2]))

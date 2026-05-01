@@ -4,16 +4,14 @@
 通过 self.engine 访问所有引擎状态，不复制状态。
 """
 
-import logging
-
 # P3-5: 统一日志获取
-from ...utils import init_logging, get_configured_logger
-from typing import TYPE_CHECKING, Tuple
+from ...utils import get_configured_logger
+from typing import TYPE_CHECKING, Tuple, Any
 
 from .base_search import BaseSearchMode
 
 if TYPE_CHECKING:
-    from ...collision.gpu_collision_engine import GPUCollisionEngine
+    pass
 
 logger = get_configured_logger("RangeScanSearch")
 
@@ -65,7 +63,8 @@ class RangeScanSearchMode(BaseSearchMode):
             stop_condition_fn=stop_cond,
         )
 
-        engine._running = False
-        engine.stats.update(batch_count)  # type: ignore[attr-defined]
-        if engine.on_complete:
-            engine.on_complete(engine.stats.snapshot())  # type: ignore[attr-defined]  # P1-2修复: 使用线程安全快照
+        eng: Any = engine
+        eng._running = False
+        eng.stats.update(batch_count)
+        if eng.on_complete:
+            eng.on_complete(eng.stats.snapshot())

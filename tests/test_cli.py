@@ -5,13 +5,18 @@ import pytest
 import sys
 import os
 from unittest.mock import Mock, patch
-from io import StringIO
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.cli.main import parse_args, validate_args, load_targets, format_progress, main
-from src.collision.collision_stats import CollisionStats
+from src.cli.main import (  # noqa: E402
+    parse_args,
+    validate_args,
+    load_targets,
+    format_progress,
+    main,
+)  # noqa: E402
+from src.collision.collision_stats import CollisionStats  # noqa: E402
 
 
 class TestCLI:
@@ -434,14 +439,11 @@ class TestCLI:
     def test_import_compatibility(self):
         """确保拆分后的导入路径兼容"""
         # 旧路径（向后兼容）
-        from src.cli.main import parse_args, validate_args, load_targets, format_progress, main
+        from src.cli.main import validate_args, format_progress
 
         # 新路径
         from src.cli.validation import validate_args as va
-        from src.cli.commands import _cmd_examples
-        from src.cli.engine_builder import build_engine
         from src.cli.progress import format_progress as fp
-        from src.cli.constants import TAG_ERROR, TAG_TIP
 
         # 验证是同一个函数对象
         assert validate_args is va
@@ -478,7 +480,6 @@ class TestLoadConfigWithValidation:
 
     def test_config_not_found(self, tmp_path, monkeypatch):
         """config.json不存在时返回None"""
-        import src.cli.config_loader as config_loader_mod
 
         mod = self._get_config_loader_module()
         monkeypatch.setattr(mod, "_project_root", str(tmp_path))
@@ -664,7 +665,6 @@ class TestUtilityCommands:
     def test_validate_addresses_file_not_found(self, monkeypatch, tmp_path):
         """验证不存在的地址文件时应触发 SystemExit"""
         from src.cli.commands import _cmd_validate_addresses
-        from pathlib import Path
 
         # 使用 tmp_path 下不存在的路径（tmp_path 是真实绝对路径，且文件不存在）
         nonexistent = str(tmp_path / "nonexistent_test_addresses_xyz.txt")
@@ -829,9 +829,6 @@ class TestModuleExports:
         from src.cli import (
             apply_template,
             recommend_parameters,
-            export_progress_data,
-            export_matches,
-            GPUErrorHandler,
         )
 
         assert callable(apply_template)

@@ -6,13 +6,10 @@
 """
 
 import pytest
-import os
-import sys
 import threading
 from unittest.mock import Mock, patch
-from src.collision.gpu_collision_engine import GPUCollisionEngine, GPUDevice
+from src.collision.gpu_collision_engine import GPUCollisionEngine
 from src.gpu.device import GPUDeviceDetector
-from tests.gpu_mock_patch import mock_gpu_collision_engine_full
 
 
 @pytest.fixture
@@ -128,7 +125,7 @@ class TestGPUCollisionEngine:
             available = GPUCollisionEngine.is_gpu_available()
             # 无论结果如何，测试应该通过
             assert isinstance(available, bool)
-        except Exception as e:
+        except Exception as e:  # noqa: F841
             # 如果 pyopencl 不可用，也应该优雅处理
             pass
 
@@ -138,7 +135,7 @@ class TestGPUCollisionEngine:
         try:
             devices = GPUDeviceDetector.detect_devices()
             assert isinstance(devices, list)
-        except Exception as e:
+        except Exception as e:  # noqa: F841
             # 如果 pyopencl 不可用，也应该优雅处理
             pass
 
@@ -172,7 +169,7 @@ class TestGPUCollisionEngine:
                     GPUCollisionEngine(self.test_targets)
 
     @pytest.mark.skip(
-        reason="[GPU-HW-001] 需要真实GPU硬件: pyopencl C扩展类型检查无法完美Mock。详见: test_results/PYOPENCL_MOCK_SOLUTION.md"
+        reason="[GPU-HW-001] 需要真实GPU硬件: pyopencl C扩展类型检查无法完美Mock。详见: test_results/PYOPENCL_MOCK_SOLUTION.md"  # noqa: E501
     )
     def test_gpu_engine_initialization_with_mock_device(self, mock_gpu_setup):
         """使用 Mock 设备测试 GPU 引擎初始化
@@ -192,7 +189,7 @@ class TestGPUCollisionEngine:
         assert engine.batch_size > 0
 
     @pytest.mark.skip(
-        reason="[GPU-HW-002] 需要真实GPU硬件: pyopencl C扩展类型检查无法完美Mock。详见: test_results/PYOPENCL_MOCK_SOLUTION.md"
+        reason="[GPU-HW-002] 需要真实GPU硬件: pyopencl C扩展类型检查无法完美Mock。详见: test_results/PYOPENCL_MOCK_SOLUTION.md"  # noqa: E501
     )
     def test_gpu_engine_lifecycle_start_stop(self, mock_gpu_setup):
         """测试 GPU 引擎的生命周期（启动和停止）
@@ -291,7 +288,7 @@ class TestGPUCollisionEngine:
                     engine.stop()
 
     @pytest.mark.skip(
-        reason="[GPU-HW-003] 需要真实GPU硬件: pyopencl C扩展类型检查无法完美Mock。详见: test_results/PYOPENCL_MOCK_SOLUTION.md"
+        reason="[GPU-HW-003] 需要真实GPU硬件: pyopencl C扩展类型检查无法完美Mock。详见: test_results/PYOPENCL_MOCK_SOLUTION.md"  # noqa: E501
     )
     def test_gpu_engine_get_device_info(self, mock_gpu_setup):
         """测试获取 GPU 设备信息

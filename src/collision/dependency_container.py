@@ -75,7 +75,7 @@ class DependencyContainer:
 
     def __repr__(self) -> str:
         return (
-            f"DependencyContainer("
+            "DependencyContainer("
             f"stats={'set' if self._stats else 'lazy'}, "
             f"event_bus={'set' if self._event_bus else 'lazy'}, "
             f"data_logger={'set' if self._data_logger else 'lazy'})"

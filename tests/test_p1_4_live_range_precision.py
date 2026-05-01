@@ -16,10 +16,10 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-import inspect
-import threading
-import time
-from src.collision.key_collision_engine import KeyCollisionEngine
+import inspect  # noqa: E402
+import threading  # noqa: E402
+import time  # noqa: E402
+from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
 
 
 class TestP1_4RangeScanPrecisionFix:
@@ -59,7 +59,8 @@ class TestP1_4RangeScanPrecisionFix:
 
         after_exec = lines[executor_none_idx:]
         bad_pattern = any(
-            "self.stats.update(total_count" in l and "total_range" in l for l in after_exec
+            "self.stats.update(total_count" in l and "total_range" in l
+            for l in after_exec  # noqa: E741, E501
         )
         assert not bad_pattern, (
             "range_scan 不应再用 total_count 直接更新 stats，" "应使用 final_count"

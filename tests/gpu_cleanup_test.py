@@ -15,11 +15,11 @@ from typing import Set
 # 添加项目根目录到Python模块路径
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
-import pytest
+import pytest  # noqa: E402
 
 pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine
+from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
 
 # 配置日志
 logging.basicConfig(
@@ -117,10 +117,10 @@ def test_multiple_start_stop():
 
         # 多次启动和停止
         for i in range(3):
-            logger.info(f"第{i+1}次启动引擎...")
+            logger.info(f"第{i + 1}次启动引擎...")
             engine.start(mode="random")
             time.sleep(2)
-            logger.info(f"第{i+1}次停止引擎...")
+            logger.info(f"第{i + 1}次停止引擎...")
             engine.stop()
             time.sleep(1)
 
@@ -157,7 +157,7 @@ def main():
             logger.info(f"❌ {test_name} 失败")
 
     # 生成测试报告
-    logger.info(f"\n测试完成！")
+    logger.info("\n测试完成！")
     logger.info(f"总测试数: {total}")
     logger.info(f"通过测试数: {passed}")
     logger.info(f"测试通过率: {passed / total * 100:.1f}%")

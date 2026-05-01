@@ -21,8 +21,7 @@
 """
 
 import os
-import logging
-from typing import List, Set, Optional, Tuple, Dict, Union
+from typing import List, Set, Optional, Tuple, Dict
 from ...core.address_generator import P2PKHAddressGenerator
 from ...core.base58 import Base58
 from .cache import AddressCache
@@ -234,7 +233,7 @@ class TargetResolver:
         logger.info(
             f"TargetResolver 初始化: 缓存={'启用' if enable_cache else '禁用'}, "
             f"缓存容量={cache_max_size if enable_cache else 'N/A'}, "
-            f"最大文件大小={max_file_size_bytes//(1024*1024)}MB, "
+            f"最大文件大小={max_file_size_bytes // (1024 * 1024)}MB, "
             f"最大行数={max_lines}"
         )
 
@@ -394,8 +393,8 @@ class TargetResolver:
                     # 仅支持 witness version 0 (P2WPKH/P2WSH)
                     if witness_version != 0:
                         logger.warning(
-                            f"bech32_address格式仅支持witness version 0, 当前={witness_version}: {input_str}"
-                        )
+                            f"bech32_address格式仅支持witness version 0, 当前={witness_version}: {input_str}"  # noqa: E501
+                        )  # noqa: E501
                         return None
 
                     prog_len = len(witness_program)
@@ -439,8 +438,8 @@ class TargetResolver:
 
                     if witness_version != 1:
                         logger.warning(
-                            f"taproot_address格式期望witness version 1, 当前={witness_version}: {input_str}"
-                        )
+                            f"taproot_address格式期望witness version 1, 当前={witness_version}: {input_str}"  # noqa: E501
+                        )  # noqa: E501
                         return None
 
                     if len(witness_program) != 32:
@@ -541,8 +540,8 @@ class TargetResolver:
         """
         logger.info(f"开始批量解析: 总数={len(inputs)}")
 
-        results = {}
-        to_resolve = []
+        results: Dict[str, Optional[str]] = {}
+        to_resolve: List[str] = []
 
         # 第一遍:检查缓存（统一使用cache.get()方法，确保统计一致性）
         for inp in inputs:
@@ -553,23 +552,23 @@ class TargetResolver:
                 to_resolve.append(inp)
 
         logger.debug(
-            f"批量解析缓存命中: {len(results)}/{len(inputs)} ({(len(results)/len(inputs)*100) if len(inputs) > 0 else 0:.1f}%)"
+            f"批量解析缓存命中: {len(results)}/{len(inputs)} ({(len(results) / len(inputs) * 100) if len(inputs) > 0 else 0:.1f}%)"  # noqa: E501
         )
 
         # 第二遍:解析未缓存的
         if to_resolve:
             logger.debug(f"需要解析的地址数: {len(to_resolve)}")
             for inp in to_resolve:
-                results[inp] = self.resolve(inp)  # type: ignore[assignment]
+                results[inp] = self.resolve(inp)
 
         success_count = sum(1 for v in results.values() if v is not None)
         cache_hits = len(results) - len(to_resolve)
         logger.info(
             f"批量解析完成: 总数={len(inputs)}, 成功={success_count}, "
-            f"失败={len(inputs)-success_count}, 缓存命中={cache_hits}"
+            f"失败={len(inputs) - success_count}, 缓存命中={cache_hits}"
         )
 
-        return results  # type: ignore[return-value]
+        return results
 
     def load_from_file(self, filepath: str) -> Set[str]:
         """
@@ -596,11 +595,11 @@ class TargetResolver:
         if file_size > self._max_file_size_bytes:
             max_size_mb = self._max_file_size_bytes // (1024 * 1024)
             logger.error(
-                f"文件过大(>{max_size_mb}MB): {real_path}, 大小={file_size/1024/1024:.1f}MB"
+                f"文件过大(>{max_size_mb}MB): {real_path}, 大小={file_size / 1024 / 1024:.1f}MB"
             )
             return addresses
 
-        logger.info(f"开始从文件加载目标地址: {real_path}, 大小={file_size/1024:.1f}KB")
+        logger.info(f"开始从文件加载目标地址: {real_path}, 大小={file_size / 1024:.1f}KB")
 
         # 安全读取文件
         try:

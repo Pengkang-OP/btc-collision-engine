@@ -7,13 +7,13 @@
 import logging
 
 # P3-5: 统一日志获取
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 from typing import Any, Callable, Dict, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..gpu.auto_tuner import GPUAutoTuner
     from ..gpu.benchmark_suite import GPUBenchmarkSuite
-    from ..gpu.performance_reporter import PerformanceReportGenerator, ReportConfig
+    from ..gpu.performance_reporter import PerformanceReportGenerator
 
 logger = get_configured_logger("GPUOptimizationPipeline")
 
@@ -61,7 +61,7 @@ class PerformanceOptimizationPipeline:
             device_info: GPU 设备信息字典
         """
         self._logger.debug(
-            f"PerformanceOptimizationPipeline.initialize called: "
+            "PerformanceOptimizationPipeline.initialize called: "
             f"device={device_info.get('name', 'unknown')}"
         )
 

@@ -4,13 +4,21 @@
 继承自 BaseAddressGenerator，添加预计算表/SIMD/内存池优化。
 """
 
-from typing import List, Optional
+from __future__ import annotations
+
+from typing import List, Optional, TYPE_CHECKING
 from .secp256k1 import Secp256k1, ECPoint
 from .hash_utils import HashUtils
 from .base58 import Base58
 from .precomputed_table import get_precomputed_table
 from .simd_hash import get_simd_hash_optimizer
 from .memory_pool import get_pool_manager
+
+if TYPE_CHECKING:
+    from .precomputed_table import PrecomputedPointTable
+    from .simd_hash import SIMDHashOptimizer
+    from .memory_pool import ECPointPool
+
 from .address_generator import BaseAddressGenerator
 
 # 导入日志配置
@@ -65,7 +73,7 @@ class OptimizedP2PKHAddressGenerator(BaseAddressGenerator):
         self.use_memory_pool = use_memory_pool
 
         # 初始化预计算表
-        self.precomputed_table: Optional["PrecomputedPointTable"] = None  # type: ignore[name-defined]
+        self.precomputed_table: Optional[PrecomputedPointTable] = None
         if use_precomputed_table:
             self.precomputed_table = get_precomputed_table(window_size=window_size)
             logger.info(f"预计算点表已启用: window_size={window_size}")
@@ -73,7 +81,7 @@ class OptimizedP2PKHAddressGenerator(BaseAddressGenerator):
             logger.info("预计算点表未启用,使用标准标量乘法")
 
         # 初始化SIMD哈希优化器
-        self.simd_optimizer: Optional["SIMDHashOptimizer"] = None  # type: ignore[name-defined]
+        self.simd_optimizer: Optional[SIMDHashOptimizer] = None
         if use_simd_hash:
             self.simd_optimizer = get_simd_hash_optimizer()
             logger.info(f"SIMD哈希优化已启用: {self.simd_optimizer.get_backend_name()}")
@@ -81,7 +89,7 @@ class OptimizedP2PKHAddressGenerator(BaseAddressGenerator):
             pass
 
         # 初始化内存池
-        self.ecpoint_pool: Optional["ECPointPool"] = None  # type: ignore[name-defined]
+        self.ecpoint_pool: Optional[ECPointPool] = None
         if use_memory_pool:
             self.pool_manager = get_pool_manager()
             self.pool_manager.initialize()

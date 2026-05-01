@@ -9,10 +9,7 @@
 """
 
 import pytest
-import time
-import secrets
-from unittest.mock import Mock, patch, MagicMock
-from typing import List
+from unittest.mock import Mock
 
 # 导入被测试模块
 from src.gpu.intel_timeout_manager import AdaptiveTimeoutManager
@@ -125,7 +122,7 @@ class TestAdaptiveTimeoutManager:
             self.timeout_mgr.record_execution_time(100.0)
 
         # 80ms 应该不警告（80% 阈值）
-        assert self.timeout_mgr.should_warn(80.0) == False or True  # 取决于计算
+        assert self.timeout_mgr.should_warn(80.0) is False or True  # 取决于计算
 
         # 200ms 可能触发警告
         # 具体取决于动态计算的超时值
@@ -155,7 +152,7 @@ class TestIntelMemoryMonitor:
         size = 512 * 1024**2
         result = self.monitor.track_allocation(size)
 
-        assert result == True
+        assert result is True
         assert self.monitor.current_usage == size
         assert self.monitor.peak_usage == size
         assert self.monitor.total_allocations == 1
@@ -163,21 +160,21 @@ class TestIntelMemoryMonitor:
     def test_track_invalid_allocation(self):
         """测试无效分配"""
         result = self.monitor.track_allocation(0)
-        assert result == False
+        assert result is False
 
         result = self.monitor.track_allocation(-100)
-        assert result == False
+        assert result is False
 
     def test_allocation_exceeds_limit(self):
         """测试超出安全限制的分配"""
         # 分配接近限制
         safe_limit = self.monitor.safe_limit
         result1 = self.monitor.track_allocation(safe_limit - 1000)
-        assert result1 == True
+        assert result1 is True
 
         # 再次分配应该失败
         result2 = self.monitor.track_allocation(2000)
-        assert result2 == False
+        assert result2 is False
 
     def test_track_deallocation(self):
         """测试跟踪释放"""
@@ -245,12 +242,12 @@ class TestIntelMemoryMonitor:
         # 正常使用不应该需要减少
         size = int(self.monitor.safe_limit * 0.5)
         self.monitor.track_allocation(size)
-        assert self.monitor.should_reduce_batch_size() == False
+        assert self.monitor.should_reduce_batch_size() is False
 
         # 严重状态应该需要减少
         # 注意：由于 track_allocation 会检查限制，这里需要特殊处理
         self.monitor.current_usage = int(self.monitor.safe_limit * 0.90)
-        assert self.monitor.should_reduce_batch_size() == True
+        assert self.monitor.should_reduce_batch_size() is True
 
     def test_get_recommended_batch_reduction(self):
         """测试建议的 batch_size 减少比例"""
@@ -275,7 +272,7 @@ class TestIntelMemoryMonitor:
             self.monitor.track_allocation(1024 * 1024)  # 1MB
 
         # 应该检测到可能的泄漏
-        assert self.monitor._detect_memory_leak() == True
+        assert self.monitor._detect_memory_leak() is True
 
         # 正常分配释放
         monitor2 = IntelMemoryMonitor(total_memory_bytes=self.total_memory)
@@ -283,7 +280,7 @@ class TestIntelMemoryMonitor:
             monitor2.track_allocation(1024 * 1024)
             monitor2.track_deallocation(1024 * 1024)
 
-        assert monitor2._detect_memory_leak() == False
+        assert monitor2._detect_memory_leak() is False
 
     def test_get_report(self):
         """测试生成报告"""
@@ -344,7 +341,7 @@ class TestIntelGPUVendor:
         stats.record_gpu_error = Mock()
 
         result = self.vendor.handle_errors(error, stats)
-        assert result == True  # 应该继续执行
+        assert result is True  # 应该继续执行
         stats.record_gpu_error.assert_called_once()
 
     def test_handle_errors_hang(self):
@@ -354,7 +351,7 @@ class TestIntelGPUVendor:
         stats.record_gpu_error = Mock()
 
         result = self.vendor.handle_errors(error, stats)
-        assert result == True
+        assert result is True
         stats.record_gpu_error.assert_called_once_with(is_resource_error=True)
 
     def test_handle_errors_out_of_memory(self):
@@ -364,7 +361,7 @@ class TestIntelGPUVendor:
         stats.record_gpu_error = Mock()
 
         result = self.vendor.handle_errors(error, stats)
-        assert result == True
+        assert result is True
         stats.record_gpu_error.assert_called_once_with(is_resource_error=True)
 
 

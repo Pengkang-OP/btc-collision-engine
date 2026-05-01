@@ -103,7 +103,7 @@ class TestGauges:
         """记录 GPU 内存使用"""
         collector.record_memory_usage(0, 1024 * 1024 * 512)  # 512MB
         prom = collector.export_prometheus()
-        assert f'gpu_memory_usage_bytes{{device="0"}} {1024*1024*512}' in prom
+        assert f'gpu_memory_usage_bytes{{device="0"}} {1024 * 1024 * 512}' in prom
 
     def test_record_device_status(self, collector):
         """记录设备活跃状态"""

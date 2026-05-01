@@ -15,7 +15,6 @@ import os
 import json
 import tempfile
 import pytest
-import time
 from unittest.mock import patch
 
 from src.logging.log_storage import LogStorage

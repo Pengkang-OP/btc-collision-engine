@@ -8,12 +8,11 @@
 """
 
 from typing import Any, Dict, Optional
-import logging
 
 # P3-5: 统一日志获取
-from ...utils import init_logging, get_configured_logger
+from ...utils import get_configured_logger
 from .base import GPUVendorBase
-from ..constants import PER_KEY_MEMORY_BYTES, MIN_BATCH_SIZE, align_batch_size
+from ..constants import PER_KEY_MEMORY_BYTES, align_batch_size
 
 logger = get_configured_logger("NvidiaVendor")
 
@@ -75,7 +74,7 @@ class NVIDIAGPUVendor(GPUVendorBase):
 
         # 记录内存效率
         memory_efficiency = profile.get("memory_efficiency", 0.5)
-        logger.debug(f"NVIDIA GPU内存效率: {memory_efficiency*100:.0f}%")
+        logger.debug(f"NVIDIA GPU内存效率: {memory_efficiency * 100:.0f}%")
 
     def calculate_batch_size(self, device: Any, profile: Dict[str, Any]) -> int:
         """

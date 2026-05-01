@@ -11,10 +11,9 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.collision.key_collision_engine import KeyCollisionEngine
-from src.collision.deduplication_filter import DeduplicationFilter
-from src.core.address_generator import P2PKHAddressGenerator
-from src.core.secp256k1 import Secp256k1
+from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
+from src.collision.deduplication_filter import DeduplicationFilter  # noqa: E402
+from src.core.address_generator import P2PKHAddressGenerator  # noqa: E402
 
 
 class TestPerformanceBenchmarks:

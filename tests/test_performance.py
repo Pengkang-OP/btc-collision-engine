@@ -3,11 +3,8 @@
 
 import pytest
 import time
-import os
 from src.core.address_generator import P2PKHAddressGenerator
-from src.core.secp256k1 import Secp256k1
 from src.core.base58 import Base58
-from src.core.crypto_backend import CryptoBackend
 from src.collision.key_collision_engine import KeyCollisionEngine
 from src.collision.deduplication_filter import DeduplicationFilter
 from src.collision.collision_stats import CollisionStats
@@ -45,7 +42,7 @@ class TestPerformanceBenchmarks:
         elapsed = self._safe_elapsed(end_time - start_time)
         speed = iterations / elapsed
 
-        print(f"\n[Performance] 私钥生成性能:")
+        print("\n[Performance] 私钥生成性能:")
         print(f"   生成数量: {iterations}")
         print(f"   耗时: {elapsed:.4f}秒")
         print(f"   速度: {speed:.0f} 次/秒")
@@ -74,7 +71,7 @@ class TestPerformanceBenchmarks:
         elapsed = self._safe_elapsed(end_time - start_time)
         speed = iterations / elapsed
 
-        print(f"\n[Performance] 公钥推导性能:")
+        print("\n[Performance] 公钥推导性能:")
         print(f"   推导数量: {iterations}")
         print(f"   耗时: {elapsed:.4f}秒")
         print(f"   速度: {speed:.0f} 次/秒")
@@ -98,7 +95,7 @@ class TestPerformanceBenchmarks:
         elapsed = self._safe_elapsed(end_time - start_time)
         speed = iterations / elapsed
 
-        print(f"\n[Performance] 地址生成性能:")
+        print("\n[Performance] 地址生成性能:")
         print(f"   生成数量: {iterations}")
         print(f"   耗时: {elapsed:.4f}秒")
         print(f"   速度: {speed:.0f} 次/秒")
@@ -122,7 +119,7 @@ class TestPerformanceBenchmarks:
         elapsed = self._safe_elapsed(end_time - start_time)
         speed = iterations / elapsed
 
-        print(f"\n[Performance] Base58编码性能:")
+        print("\n[Performance] Base58编码性能:")
         print(f"   编码数量: {iterations}")
         print(f"   耗时: {elapsed:.4f}秒")
         print(f"   速度: {speed:.0f} 次/秒")
@@ -144,7 +141,7 @@ class TestPerformanceBenchmarks:
         elapsed = self._safe_elapsed(end_time - start_time)
         speed = iterations / elapsed
 
-        print(f"\n[Performance] Base58解码性能:")
+        print("\n[Performance] Base58解码性能:")
         print(f"   解码数量: {iterations}")
         print(f"   耗时: {elapsed:.4f}秒")
         print(f"   速度: {speed:.0f} 次/秒")
@@ -172,7 +169,7 @@ class TestPerformanceBenchmarks:
         elapsed = self._safe_elapsed(end_time - start_time)
         speed = iterations / elapsed
 
-        print(f"\n[Performance] 哈希计算性能:")
+        print("\n[Performance] 哈希计算性能:")
         print(f"   计算数量: {iterations}")
         print(f"   耗时: {elapsed:.4f}秒")
         print(f"   速度: {speed:.0f} 次/秒 (含SHA256+RIPEMD160)")
@@ -194,7 +191,7 @@ class TestPerformanceBenchmarks:
         elapsed = self._safe_elapsed(end_time - start_time)
         speed = iterations / elapsed
 
-        print(f"\n[Performance] 去重过滤器性能:")
+        print("\n[Performance] 去重过滤器性能:")
         print(f"   添加数量: {iterations}")
         print(f"   耗时: {elapsed:.4f}秒")
         print(f"   速度: {speed:.0f} 次/秒")
@@ -216,7 +213,7 @@ class TestPerformanceBenchmarks:
         elapsed = self._safe_elapsed(end_time - start_time)
         speed = iterations / elapsed
 
-        print(f"\n[Performance] 统计信息更新性能:")
+        print("\n[Performance] 统计信息更新性能:")
         print(f"   更新次数: {iterations}")
         print(f"   耗时: {elapsed:.4f}秒")
         print(f"   速度: {speed:.0f} 次/秒")
@@ -242,7 +239,7 @@ class TestPerformanceBenchmarks:
         stats = engine.get_stats()
         speed = stats.speed
 
-        print(f"\n[Performance] 引擎单线程吞吐量:")
+        print("\n[Performance] 引擎单线程吞吐量:")
         print(f"   检查数量: {stats.total_checked}")
         print(f"   运行时间: {stats.format_elapsed()}")
         print(f"   吞吐量: {speed:.0f} 次/秒")
@@ -274,8 +271,8 @@ class TestPerformanceBenchmarks:
 
         speed = stats.speed
 
-        print(f"\n[Performance] 引擎多线程吞吐量:")
-        print(f"   工作线程: 4")
+        print("\n[Performance] 引擎多线程吞吐量:")
+        print("   工作线程: 4")
         print(f"   检查数量: {stats.total_checked}")
         print(f"   运行时间: {stats.format_elapsed()}")
         print(f"   吞吐量: {speed:.0f} 次/秒")
@@ -284,7 +281,6 @@ class TestPerformanceBenchmarks:
 
     def test_memory_usage_dedup(self):
         """测试去重过滤器内存使用"""
-        import sys
 
         # 测试不同大小的内存占用
         sizes = [1000, 10000, 50000]
@@ -330,11 +326,11 @@ class TestPerformanceBenchmarks:
         elapsed = self._safe_elapsed(end_time - start_time)
         speed = iterations / elapsed
 
-        print(f"\n[Performance] 完整流水线性能:")
+        print("\n[Performance] 完整流水线性能:")
         print(f"   处理数量: {iterations}")
         print(f"   耗时: {elapsed:.4f}秒")
         print(f"   速度: {speed:.0f} 次/秒")
-        print(f"   流程: 私钥→公钥→地址→验证")
+        print("   流程: 私钥→公钥→地址→验证")
 
         # 完整流水线包含椭圆曲线运算，纯Python实现性能较低
         # coincurve后端：>100次/秒，纯Python：>20次/秒
@@ -380,7 +376,7 @@ class TestPerformanceComparison:
             stats_no_dedup = engine_no_dedup.get_stats()
             stats_with_dedup = engine_with_dedup.get_stats()
 
-        print(f"\n[Performance] 去重性能对比:")
+        print("\n[Performance] 去重性能对比:")
         print(f"   禁用去重: {stats_no_dedup.total_checked} 个 ({stats_no_dedup.speed:.0f} 次/秒)")
         print(
             f"   启用去重: {stats_with_dedup.total_checked} 个 ({stats_with_dedup.speed:.0f} 次/秒)"
@@ -415,7 +411,7 @@ class TestPerformanceComparison:
 
             print(f"   {threads}线程: {stats.total_checked} 个 ({stats.speed:.0f} 次/秒)")
 
-        print(f"\n[Performance] 线程扩展性:")
+        print("\n[Performance] 线程扩展性:")
         for threads, count in results.items():
             print(f"   {threads}线程: {count}")
 

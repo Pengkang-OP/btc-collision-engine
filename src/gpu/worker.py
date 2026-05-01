@@ -11,7 +11,6 @@
 
 import threading
 import time
-import logging
 from typing import Set, Dict, Optional, Tuple, Callable, Union, Any, TYPE_CHECKING, cast
 from queue import Queue, Empty
 
@@ -19,7 +18,7 @@ if TYPE_CHECKING:
     from ..collision.gpu_collision_engine import GPUCollisionEngine
 
 # P3-5: 统一日志获取
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 
 from ..config.optimization_config import is_feature_enabled
 
@@ -32,7 +31,7 @@ if _delta_stats_available:
 if _monitor_available:
     from ..cli.stats_performance_monitor import profile_stats_update
 
-from .gpu_config import WorkerConfig
+from .gpu_config import WorkerConfig  # noqa: E402
 
 logger = get_configured_logger("GPUWorker")
 
@@ -245,7 +244,6 @@ class SingleGPUWorker(threading.Thread):
                 _min_interval = 0.2
                 _max_interval = 1.0
                 _adaptive_interval = _base_interval
-                _last_throughput = 0
 
                 while not self._stop_event.is_set():
                     # 检查暂停状态
@@ -264,7 +262,6 @@ class SingleGPUWorker(threading.Thread):
                         _adaptive_interval = _max_interval  # 降低开销
                     else:
                         _adaptive_interval = _base_interval
-                    _last_throughput = current_throughput
 
                     # random 模式不按范围判断结束；range/brute_force 按已检查量
                     if self.mode != "random" and self._stats["keys_checked"] >= total_keys:

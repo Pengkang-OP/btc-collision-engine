@@ -11,7 +11,6 @@
 import pytest
 import threading
 import time
-from unittest.mock import patch
 
 from src.gpu.lock_monitor import (
     LockMonitor,

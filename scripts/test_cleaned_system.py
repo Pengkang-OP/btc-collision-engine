@@ -8,13 +8,12 @@
 import os
 import sys
 import time
-import logging
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.utils import init_logging, get_configured_logger
-from src.collision.gpu_collision_engine import GPUCollisionEngine
+from src.utils import init_logging, get_configured_logger  # noqa: E402
+from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
 
 # 配置日志
 init_logging()
@@ -94,7 +93,7 @@ def test_system_stability():
 
     # 测试多次初始化和停止
     for i in range(3):
-        logger.info(f"稳定性测试循环 {i+1}/3")
+        logger.info(f"稳定性测试循环 {i + 1}/3")
 
         # 创建一个测试目标地址集合
         test_targets = {

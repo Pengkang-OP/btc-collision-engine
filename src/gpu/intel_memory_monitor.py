@@ -10,11 +10,10 @@
 """
 
 import time
-import logging
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 from ..collision.constants import INTEL_SAFE_MEMORY_RATIO
-from typing import Dict, Optional, List
-from dataclasses import dataclass, field
+from typing import Dict, List
+from dataclasses import dataclass
 from enum import Enum
 
 logger = get_configured_logger("IntelMemoryMonitor")
@@ -94,9 +93,9 @@ class IntelMemoryMonitor:
         self._leak_detection_window = 50  # 检测窗口大小
 
         logger.info(
-            f"Intel 显存监控器已初始化: "
-            f"total={total_memory_bytes/1024**3:.1f}GB, "
-            f"safe_limit={self.safe_limit/1024**2:.0f}MB ({safe_usage_ratio*100:.0f}%)"
+            "Intel 显存监控器已初始化: "
+            f"total={total_memory_bytes / 1024**3:.1f}GB, "
+            f"safe_limit={self.safe_limit / 1024**2:.0f}MB ({safe_usage_ratio * 100:.0f}%)"
         )
 
     def track_allocation(self, size_bytes: int, batch_count: int = 0) -> bool:
@@ -118,8 +117,8 @@ class IntelMemoryMonitor:
         # 检查是否超出安全限制
         if new_usage > self.safe_limit:
             logger.warning(
-                f"显存分配将超出安全限制: "
-                f"{new_usage/1024**2:.0f}MB > {self.safe_limit/1024**2:.0f}MB"
+                "显存分配将超出安全限制: "
+                f"{new_usage / 1024**2:.0f}MB > {self.safe_limit / 1024**2:.0f}MB"
             )
             return False
 
@@ -136,7 +135,8 @@ class IntelMemoryMonitor:
         self._record_snapshot(batch_count)
 
         logger.debug(
-            f"显存分配: +{size_bytes/1024**2:.1f}MB, " f"总计: {self.current_usage/1024**2:.1f}MB"
+            f"显存分配: +{size_bytes / 1024**2:.1f}MB, "
+            f"总计: {self.current_usage / 1024**2:.1f}MB"
         )
 
         return True
@@ -158,7 +158,8 @@ class IntelMemoryMonitor:
         self._record_snapshot(batch_count)
 
         logger.debug(
-            f"显存释放: -{size_bytes/1024**2:.1f}MB, " f"总计: {self.current_usage/1024**2:.1f}MB"
+            f"显存释放: -{size_bytes / 1024**2:.1f}MB, "
+            f"总计: {self.current_usage / 1024**2:.1f}MB"
         )
 
     def get_status(self) -> Dict:
@@ -223,7 +224,7 @@ class IntelMemoryMonitor:
         leak_detected = self._detect_memory_leak()
         if leak_detected:
             warnings.append(
-                f"🔍 疑似显存泄漏: "
+                "🔍 疑似显存泄漏: "
                 f"分配={self.total_allocations}, "
                 f"释放={self.total_deallocations}, "
                 f"未释放={self.total_allocations - self.total_deallocations}"

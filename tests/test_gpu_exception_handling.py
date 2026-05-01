@@ -11,11 +11,9 @@
 
 import pytest
 import os
-import sys
 import time
 import tempfile
-import logging
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from src.collision.gpu_collision_engine import GPUCollisionEngine
 from src.collision.collision_stats import CollisionStats
 from src.collision.checkpoint_manager import CheckpointManager
@@ -125,7 +123,6 @@ class TestGPURuntimeErrors:
 
     def test_gpu_kernel_compile_failure(self):
         """测试GPU内核编译失败"""
-        import pyopencl as cl
 
         mock_device = Mock()
         mock_device.context = Mock()

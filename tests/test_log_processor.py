@@ -143,7 +143,10 @@ class TestLogProcessorFilterManagement:
 
     def test_add_remove_filter(self):
         processor = LogProcessor()
-        f1 = lambda e: True
+
+        def f1(e):  # noqa: E306
+            return True
+
         processor.add_filter(f1)
         assert len(processor._filters) == 1
         processor.remove_filter(f1)

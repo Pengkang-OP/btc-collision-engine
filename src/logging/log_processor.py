@@ -9,8 +9,7 @@
 import re
 import json
 from typing import Dict, Any, Optional, List
-from datetime import datetime
-from .events import LogEvent, LogEventType
+from .events import LogEvent
 
 
 class LogProcessor:

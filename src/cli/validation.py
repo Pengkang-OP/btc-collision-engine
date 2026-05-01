@@ -11,13 +11,9 @@ CLI参数验证模块
 import argparse
 import logging
 import os
-import sys
 
 from src.i18n import _t
 from src.cli.constants import (
-    TAG_ERROR,
-    TAG_TIP,
-    TAG_WARN,
     DEFAULT_DEDUP_MAX_SIZE,
     DEFAULT_CHECKPOINT_INTERVAL,
 )
@@ -47,7 +43,7 @@ def validate_args(args: argparse.Namespace) -> bool:
     )
     if not is_util_cmd and not args.targets and not args.file:
         output.error(_t("cli.validation.need_target"))
-        output.print(f"  提示: 使用 -t <地址> 指定目标，或 --quick-start 启动引导")
+        output.print("  提示: 使用 -t <地址> 指定目标，或 --quick-start 启动引导")
         return False
 
     # -f 文件路径验证
@@ -58,36 +54,36 @@ def validate_args(args: argparse.Namespace) -> bool:
     if args.mode in ("range", "brute_force"):
         if args.start is None:
             output.error(_t("cli.validation.start_required", mode=args.mode))
-            output.print(f"  提示: 添加 --start <十六进制私钥>，例如 --start 1")
+            output.print("  提示: 添加 --start <十六进制私钥>，例如 --start 1")
             return False
         try:
             int(args.start, 16)
         except ValueError:
             output.error(_t("cli.validation.start_invalid", value=args.start))
-            output.print(f"  提示: --start 必须为十六进制数字，例如 --start 1A2B3C")
+            output.print("  提示: --start 必须为十六进制数字，例如 --start 1A2B3C")
             return False
 
     if args.mode == "range":
         if args.end is None:
             output.error(_t("cli.validation.end_required"))
-            output.print(f"  提示: 添加 --end <十六进制私钥>，例如 --end FFFFFFFF")
+            output.print("  提示: 添加 --end <十六进制私钥>，例如 --end FFFFFFFF")
             return False
         try:
             int(args.end, 16)
         except ValueError:
             output.error(_t("cli.validation.end_invalid", value=args.end))
-            output.print(f"  提示: --end 必须为十六进制数字，例如 --end FFFFFFFF")
+            output.print("  提示: --end 必须为十六进制数字，例如 --end FFFFFFFF")
             return False
 
         start_val = int(args.start, 16)
         end_val = int(args.end, 16)
         if start_val >= end_val:
             output.error(_t("cli.validation.range_order", start=args.start, end=args.end))
-            output.print(f"  提示: --start 值必须小于 --end 值")
+            output.print("  提示: --start 值必须小于 --end 值")
             return False
         if start_val < 1:
             output.error(_t("cli.validation.start_min"))
-            output.print(f"  提示: --start 最小值为 1 (0x1)")
+            output.print("  提示: --start 最小值为 1 (0x1)")
             return False
 
         # 范围过大警告（2^64约需数百年才能穷举）
@@ -138,31 +134,31 @@ def validate_args(args: argparse.Namespace) -> bool:
     if checkpoint_interval != DEFAULT_CHECKPOINT_INTERVAL and not getattr(
         args, "checkpoint", False
     ):
-        output.print(f"  提示: 已自动启用 --checkpoint（因为指定了 --checkpoint-interval）")
+        output.print("  提示: 已自动启用 --checkpoint（因为指定了 --checkpoint-interval）")
         args.checkpoint = True
 
     # dedup-max-size 依赖性检查（自动启用 --dedup）
     if getattr(
         args, "dedup_max_size", DEFAULT_DEDUP_MAX_SIZE
     ) != DEFAULT_DEDUP_MAX_SIZE and not getattr(args, "dedup", False):
-        output.print(f"  提示: 已自动启用 --dedup（因为指定了 --dedup-max-size）")
+        output.print("  提示: 已自动启用 --dedup（因为指定了 --dedup-max-size）")
         args.dedup = True
 
     # window-size 范围验证
     window_size = getattr(args, "window_size", 8)
     if window_size < 4 or window_size > 8:
         output.error(_t("cli.validation.window_size_range", value=window_size))
-        output.print(f"  提示: --window-size 有效范围为 4-8")
+        output.print("  提示: --window-size 有效范围为 4-8")
         return False
 
     if args.workers is not None and args.workers < 1:
         output.error(f"--workers 值无效: {args.workers}")
-        output.print(f"  提示: --workers 必须 >= 1")
+        output.print("  提示: --workers 必须 >= 1")
         return False
 
     if args.duration < 0:
         output.error(f"--duration 值无效: {args.duration}")
-        output.print(f"  提示: --duration 必须 >= 0（0 表示无限运行）")
+        output.print("  提示: --duration 必须 >= 0（0 表示无限运行）")
         return False
 
     return True
@@ -194,17 +190,17 @@ def validate_file_path(file_path: str) -> bool:
 
     if not resolved.exists():
         output.error(f"文件不存在: {file_path}")
-        output.print(f"  提示: 确认路径是否正确，或使用 -t <地址> 直接指定目标")
+        output.print("  提示: 确认路径是否正确，或使用 -t <地址> 直接指定目标")
         return False
 
     if not resolved.is_file():
         output.error(f"路径不是文件: {file_path}")
-        output.print(f"  提示: 请指定一个有效的文件路径，而非目录")
+        output.print("  提示: 请指定一个有效的文件路径，而非目录")
         return False
 
     if not os.access(resolved, os.R_OK):
         output.error(f"文件无读取权限: {file_path}")
-        output.print(f"  提示: 检查文件权限，确保当前用户可以读取该文件")
+        output.print("  提示: 检查文件权限，确保当前用户可以读取该文件")
         return False
 
     # 大文件警告（不阻止运行）

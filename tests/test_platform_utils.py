@@ -16,11 +16,11 @@
 import os
 import sys
 import unittest
-from unittest.mock import patch, MagicMock, PropertyMock
+from unittest.mock import patch, MagicMock
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.utils.platform_utils import PlatformUtils, get_platform_fonts
+from src.utils.platform_utils import PlatformUtils, get_platform_fonts  # noqa: E402
 
 # ============================================================================
 # 平台检测测试
@@ -617,7 +617,6 @@ class TestDirectoryUtils(unittest.TestCase):
 
     def test_get_config_dir_creates_directory(self):
         """get_config_dir 确保目录被创建。"""
-        import tempfile
         import shutil
 
         # 使用唯一名称避免冲突

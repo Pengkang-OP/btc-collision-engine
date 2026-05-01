@@ -10,8 +10,7 @@
 """
 
 import pytest
-import logging
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock
 
 from src.collision.observers import (
     CollisionObserver,

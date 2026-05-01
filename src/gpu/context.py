@@ -6,11 +6,10 @@ DEF-2修复: 使用 kernel_impl.compile_kernel_with_retry() 共享重试逻辑
 """
 
 import hashlib
-import logging
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional, cast  # noqa: F401
 
 # P3-5: 统一日志获取
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 
 from .device import GPUDevice, identify_vendor
 from .vendors.base import GPUVendorBase
@@ -25,7 +24,7 @@ logger = get_configured_logger("GPUContext")
 # 厂商编译选项配置
 # 注意: 加密/哈希运算（椭圆曲线、SHA256、RIPEMD160）不使用 -cl-fast-relaxed-math，
 # 快速数学优化会破坏加密精度，仅 NVIDIA 在验证稳定的情况下保留。
-VENDOR_BUILD_OPTIONS = {
+VENDOR_BUILD_OPTIONS: Dict[str, Dict[str, Any]] = {
     "nvidia": {
         "options": ["-cl-fast-relaxed-math"],  # NVIDIA: 快速数学经测试可接受
         "cl_version": None,  # NVIDIA默认CL1.2即可
@@ -99,7 +98,7 @@ class GPUContext:
             return IntelGPUVendor()
         else:
             logger.warning(f"未知GPU厂商: {vendor},使用默认优化器")
-            return GPUVendorBase()  # type: ignore[abstract]
+            return cast(GPUVendorBase, GPUVendorBase())
 
     def apply_optimizations(self) -> None:
         """
@@ -182,7 +181,7 @@ class GPUContext:
             return self.program
 
         try:
-            import pyopencl as cl
+            pass
 
             logger.info(
                 f"编译新内核 [厂商={self.vendor_handler.get_vendor_name()}, "
@@ -234,10 +233,10 @@ class GPUContext:
         # 从配置表获取编译选项
         vendor_cfg = VENDOR_BUILD_OPTIONS.get(vendor_name)
         if vendor_cfg is not None:
-            options = vendor_cfg["options"][:]  # type: ignore[index]
+            options: List[str] = vendor_cfg["options"][:]
             logger.debug(
                 f"使用厂商编译配置 [{vendor_name}]: {' '.join(options)} "
-                f"— {vendor_cfg['description']}"  # type: ignore[index]
+                f"— {vendor_cfg['description']}"
             )
             return " ".join(options)
 

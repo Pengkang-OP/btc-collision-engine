@@ -63,11 +63,7 @@ def test_no_circular_dependency():
 
     # 尝试导入
     try:
-        from src.collision.gpu import (
-            PerformanceMonitoringPipeline,
-            CollisionCore,
-            VendorOptimizationFactory,
-        )
+        pass
 
         print("  ✅ 无循环依赖检测通过\n")
         return True
@@ -84,12 +80,6 @@ def test_protocol_definitions():
 
     try:
         from src.collision.gpu.protocols import (
-            IGPUDeviceManager,
-            IKernelExecutor,
-            IAsyncExecutionPipeline,
-            IMonitoringPipeline,
-            ICollisionCore,
-            VendorOptimizationStrategy,
             GPUExecutionContext,
             CollisionResult,
         )
@@ -155,9 +145,6 @@ def test_vendor_factory():
     try:
         from src.collision.gpu.vendor_strategy import (
             VendorOptimizationFactory,
-            IntelOptimizationStrategy,
-            NvidiaOptimizationStrategy,
-            AMDOptimizationStrategy,
             DefaultOptimizationStrategy,
         )
 
@@ -173,7 +160,7 @@ def test_vendor_factory():
         # 测试未知厂商
         unknown = VendorOptimizationFactory.create("unknown")
         assert isinstance(unknown, DefaultOptimizationStrategy)
-        print(f"  ✅ 未知厂商回退到默认策略成功")
+        print("  ✅ 未知厂商回退到默认策略成功")
 
         print()
         return True

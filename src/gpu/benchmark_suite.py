@@ -13,13 +13,10 @@
 - 不同 batch_size 的性能影响
 """
 
-import os
-import sys
 import time
-import logging
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 import statistics
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -157,10 +154,10 @@ class GPUBenchmarkSuite:
                 duration_ms = (time.time() - start_time) * 1000
                 compile_times.append(duration_ms)
 
-                logger.info(f"  编译 #{i+1}: {duration_ms:.0f}ms")
+                logger.info(f"  编译 #{i + 1}: {duration_ms:.0f}ms")
 
             except Exception as e:
-                logger.error(f"  编译 #{i+1} 失败: {e}")
+                logger.error(f"  编译 #{i + 1} 失败: {e}")
                 compile_times.append(0)
 
         # 创建结果
@@ -211,7 +208,7 @@ class GPUBenchmarkSuite:
                 try:
                     # 执行批次
                     if hasattr(self.gpu_engine, "_gpu_kernel"):
-                        matches = self.gpu_engine._gpu_kernel.run_batch(
+                        matches = self.gpu_engine._gpu_kernel.run_batch(  # noqa: F841
                             seed=seed,
                             num_keys=batch_size,
                         )
@@ -224,12 +221,12 @@ class GPUBenchmarkSuite:
 
                     logger.info(
                         f"  batch_size={batch_size:>6}, "
-                        f"#{i+1}: {duration_ms:.0f}ms "
+                        f"#{i + 1}: {duration_ms:.0f}ms "
                         f"({keys_per_sec:.0f} keys/sec)"
                     )
 
                 except Exception as e:
-                    logger.error(f"  batch_size={batch_size}, #{i+1} 失败: {e}")
+                    logger.error(f"  batch_size={batch_size}, #{i + 1} 失败: {e}")
                     exec_times.append(0)
 
             # 创建结果
@@ -337,12 +334,12 @@ class GPUBenchmarkSuite:
 
                     logger.info(
                         f"    batch_size={batch_size:>7}, "
-                        f"#{i+1}: {duration_ms:.0f}ms "
+                        f"#{i + 1}: {duration_ms:.0f}ms "
                         f"({keys_per_sec:,.0f} keys/sec)"
                     )
 
                 except Exception as e:
-                    logger.error(f"    batch_size={batch_size}, #{i+1} 失败: {e}")
+                    logger.error(f"    batch_size={batch_size}, #{i + 1} 失败: {e}")
                     exec_times.append(0)
 
             # 创建结果
@@ -419,14 +416,16 @@ class GPUBenchmarkSuite:
             report_lines.append(
                 f"  {'Batch Size':>12} | {'平均时间':>10} | {'吞吐量':>12} | {'最小':>10} | {'最大':>10}"
             )
-            report_lines.append(f"  {'-'*12}-+-{'-'*10}-+-{'-'*12}-+-{'-'*10}-+-{'-'*10}")
+            report_lines.append(f"  {'-' * 12}-+-{'-' * 10}-+-{'-' * 12}-+-{'-' * 10}-+-{'-' * 10}")
 
             for result in by_type[BenchmarkType.BATCH_EXECUTION.value]:
                 batch_size = result.parameters.get("batch_size", 0)
-                report_lines.append(
-                    f"  {batch_size:>12,} | {result.mean_ms:>8.0f}ms | "
-                    f"{result.throughput:>10,.0f}/s | {result.min_ms:>8.0f}ms | {result.max_ms:>8.0f}ms"
-                )
+                report_lines.append(f"  {
+                        batch_size:>12,} | {  # noqa: E126
+                        result.mean_ms:>8.0f}ms | " f"{  # noqa: E126
+                        result.throughput:>10,.0f}/s | {  # noqa: E126
+                        result.min_ms:>8.0f}ms | {  # noqa: E126
+                        result.max_ms:>8.0f}ms")  # noqa: E126
             report_lines.append("")
 
         # 显存带宽测试
@@ -448,7 +447,7 @@ class GPUBenchmarkSuite:
             report_lines.append(
                 f"  {'Batch Size':>12} | {'平均时间':>10} | {'吞吐量':>14} | {'效率':>8}"
             )
-            report_lines.append(f"  {'-'*12}-+-{'-'*10}-+-{'-'*14}-+-{'-'*8}")
+            report_lines.append(f"  {'-' * 12}-+-{'-' * 10}-+-{'-' * 14}-+-{'-' * 8}")
 
             # 计算最佳吞吐量作为基准
             max_throughput = max(r.throughput for r in by_type[BenchmarkType.SCALABILITY.value])

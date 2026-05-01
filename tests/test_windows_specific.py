@@ -50,7 +50,6 @@ class TestWindowsAtomicOperations(unittest.TestCase):
         import tempfile
         import shutil
         import threading
-        import time
 
         test_dir = tempfile.mkdtemp()
         target_path = os.path.join(test_dir, "concurrent_test.txt")

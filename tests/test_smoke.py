@@ -16,10 +16,8 @@
 import pytest
 import time
 import os
-import sys
 import json
 import tempfile
-import hashlib
 
 # ============================================================================
 # 1. 核心加密模块冒烟检查
@@ -123,7 +121,7 @@ class TestEventSystemSmoke:
     """事件系统冒烟测试"""
 
     def test_event_bus_publish_subscribe(self):
-        from src.collision.event_bus import EventBus, get_event_bus, reset_event_bus
+        from src.collision.event_bus import EventBus, reset_event_bus
         from src.collision.events import EngineStartEvent, EventType
 
         reset_event_bus()
@@ -218,13 +216,6 @@ class TestTypeDefinitionsSmoke:
     def test_collision_event_types_import(self):
         from src.collision.events import (
             EventType,
-            CollisionEvent,
-            EngineStartEvent,
-            EngineProgressEvent,
-            EngineMatchEvent,
-            EngineErrorEvent,
-            EngineCompleteEvent,
-            EngineStopEvent,
         )
 
         assert EventType.ENGINE_START.value == "engine.start"
@@ -235,13 +226,6 @@ class TestTypeDefinitionsSmoke:
         from src.collision.types import (
             ProgressCallback,
             MatchCallback,
-            CompleteCallback,
-            ErrorCallback,
-            EventHandler,
-            ErrorHandler,
-            TargetAddresses,
-            EngineConfig,
-            MatchResult,
         )
 
         assert ProgressCallback is not None
@@ -271,8 +255,6 @@ class TestImportSmoke:
     def test_utils_imports(self):
         from src.utils.exceptions import (
             CollisionError,
-            ConfigError,
-            ValidationError,
             CryptoBackendError,
         )
 

@@ -34,7 +34,7 @@ ProgressCallback = Callable[[CollisionStats], None]
     ...     print(f"速度: {stats.speed} keys/s")
     ...     print(f"已检测: {stats.total_checked}")
     ...     print(f"匹配数: {stats.matches_found}")
-    >>> 
+    >>>
     >>> engine = KeyCollisionEngine(
     ...     targets=targets,
     ...     on_progress=handle_progress
@@ -60,10 +60,10 @@ MatchCallback = Callable[[bytes, str, str], None]
     >>> def handle_match(private_key: bytes, address: str, wif: str) -> None:
     ...     # 保存匹配结果
     ...     save_match(address, wif)
-    ...     
+    ...
     ...     # 安全清零私钥
     ...     secure_clear_bytearray(private_key)
-    >>> 
+    >>>
     >>> engine = KeyCollisionEngine(
     ...     targets=targets,
     ...     on_match=handle_match
@@ -81,11 +81,11 @@ CompleteCallback = Callable[[CollisionStats], None]
 
 示例:
     >>> def handle_complete(stats: CollisionStats) -> None:
-    ...     print(f"碰撞完成!")
+    ...     print("碰撞完成!")
     ...     print(f"总检测: {stats.total_checked}")
     ...     print(f"总匹配: {stats.matches_found}")
     ...     print(f"平均速度: {stats.avg_speed} keys/s")
-    >>> 
+    >>>
     >>> engine = KeyCollisionEngine(
     ...     targets=targets,
     ...     on_complete=handle_complete
@@ -108,7 +108,7 @@ ErrorCallback = Callable[[str, str, Optional[Exception]], None]
     ...     print(f"错误 [{error_type}]: {message}")
     ...     if exception:
     ...         print(f"异常详情: {exception}")
-    >>> 
+    >>>
     >>> engine = KeyCollisionEngine(
     ...     targets=targets
     ... )
@@ -120,7 +120,7 @@ ErrorCallback = Callable[[str, str, Optional[Exception]], None]
 # 事件处理器类型
 # ============================================================================
 
-from .events import CollisionEvent
+from .events import CollisionEvent  # noqa: E402
 
 EventHandler = Callable[[CollisionEvent], None]
 """
@@ -133,11 +133,11 @@ EventHandler = Callable[[CollisionEvent], None]
 
 示例:
     >>> from src.collision.events import EngineProgressEvent
-    >>> 
+    >>>
     >>> def handle_event(event: CollisionEvent) -> None:
     ...     if isinstance(event, EngineProgressEvent):
     ...         print(f"进度: {event.total_checked}")
-    >>> 
+    >>>
     >>> event_bus.subscribe(EventType.ENGINE_PROGRESS, handle_event)
 """
 
@@ -155,7 +155,7 @@ ErrorHandler = Callable[[CollisionEvent, Exception], None]
     >>> def handle_error(event: CollisionEvent, exception: Exception) -> None:
     ...     print(f"事件处理失败: {exception}")
     ...     logger.error(f"事件: {event.event_type}, 错误: {exception}")
-    >>> 
+    >>>
     >>> event_bus.set_error_handler(handle_error)
 """
 

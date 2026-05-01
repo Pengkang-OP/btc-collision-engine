@@ -14,7 +14,7 @@ _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
-from src.i18n import _t
+from src.i18n import _t  # noqa: E402
 
 # 从包版本读取版本号
 try:
@@ -91,7 +91,7 @@ def parse_args() -> argparse.Namespace:  # noqa: D401
         "-t", "--targets", metavar="ADDRESS", nargs="+", help="目标比特币地址，多个地址以空格分隔"
     )
     target_ex.add_argument(
-        "-f", "--file", metavar="FILE", help="从文件批量加载目标地址，每行一个，支持 # 注释"
+        "-", "--file", metavar="FILE", help="从文件批量加载目标地址，每行一个，支持 # 注释"
     )
     core_group.add_argument(
         "-m",

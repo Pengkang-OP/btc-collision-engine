@@ -8,7 +8,7 @@ GPU异常恢复管理器测试
 import unittest
 import time
 import threading
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 import sys
 import os
@@ -16,7 +16,7 @@ import os
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from src.gpu.gpu_recovery_manager import (
+from src.gpu.gpu_recovery_manager import (  # noqa: E402
     GPURecoveryManager,
     GPUFailureType,
     RecoveryStrategy,

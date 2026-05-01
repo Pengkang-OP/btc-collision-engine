@@ -6,8 +6,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from src.core.secp256k1 import Secp256k1, ECPoint, EllipticCurve
-from src.core.address_generator import P2PKHAddressGenerator
+from src.core.secp256k1 import Secp256k1, ECPoint, EllipticCurve  # noqa: E402
+from src.core.address_generator import P2PKHAddressGenerator  # noqa: E402
 
 
 class TestModInverse(unittest.TestCase):

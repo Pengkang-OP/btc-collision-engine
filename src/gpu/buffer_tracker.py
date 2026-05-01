@@ -5,11 +5,10 @@
 
 import time
 import threading
-import logging
 from typing import Any, Dict, List, Optional
 
 # P3-5: 统一日志获取
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 
 logger = get_configured_logger("GPUBufferTracker")
 
@@ -75,13 +74,17 @@ class GPUBufferTracker:
             # 检查内存使用是否超过阈值
             total_size = sum(info["size"] for info in self._allocated_buffers.values())
             if total_size > self._memory_threshold:
-                logger.warning(
-                    f"GPU内存使用超过阈值: {total_size/1024/1024:.1f}MB > {self._memory_threshold/1024/1024:.1f}MB"
-                )
+                logger.warning(f"GPU内存使用超过阈值: {
+                    total_size
+                    / 1024
+                    / 1024:.1f}MB > {
+                    self._memory_threshold
+                    / 1024
+                    / 1024:.1f}MB")
                 # 触发自动清理
                 self.cleanup_timed_out_buffers()
 
-        logger.debug(f"GPU Buffer追踪: 分配 {name} ({size/1024:.1f} KB, 类型: {buffer_type})")
+        logger.debug(f"GPU Buffer追踪: 分配 {name} ({size / 1024:.1f} KB, 类型: {buffer_type})")
 
     def release_buffer(self, name: str) -> None:
         """注销缓冲区
@@ -327,9 +330,11 @@ class GPUBufferTracker:
         final_size = recent[-1]["total_size_bytes"]
 
         if final_size > initial_size * 1.5:  # 内存使用增长超过50%
-            logger.warning(
-                f"GPU内存使用持续增长: {initial_size/1024/1024:.1f}MB -> {final_size/1024/1024:.1f}MB"
-            )
+            logger.warning(f"GPU内存使用持续增长: {initial_size
+                                           / 1024
+                                           / 1024:.1f}MB -> {final_size /  # noqa: W504
+                                                             1024
+                                                             / 1024:.1f}MB")
             # 尝试清理所有超时缓冲区
             self.cleanup_timed_out_buffers()
 
@@ -398,7 +403,7 @@ class GPUBufferTracker:
         elif remaining > 0:
             logger.info(
                 f"GPU引擎关闭时释放了{remaining}个缓冲区 "
-                f"(总大小: {total_size/1024:.1f}KB): {', '.join(buffer_names)}"
+                f"(总大小: {total_size / 1024:.1f}KB): {', '.join(buffer_names)}"
             )
         else:
             logger.info("GPU引擎关闭时所有缓冲区已正确释放")

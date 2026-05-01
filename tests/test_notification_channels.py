@@ -28,7 +28,6 @@ from src.monitoring.alert_system import (
     AlertRecord,
     AlertLevel,
     AlertType,
-    AlertRule,
 )
 
 

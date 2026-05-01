@@ -259,7 +259,7 @@ class FirstRunWizard:
 
         # 检查 PyOpenCL 是否可用
         try:
-            import pyopencl
+            pass
 
             has_opencl = True
         except ImportError:
@@ -374,11 +374,11 @@ class FirstRunWizard:
         print("  配置完成！下一步操作：")
         print("=" * 65)
         if target and Path(target).exists():
-            print(f"\n  1. 开始随机碰撞（使用地址文件）:")
+            print("\n  1. 开始随机碰撞（使用地址文件）:")
             print(f"     python key_collision_cli.py -f {target} -m random\n")
         else:
             addr = target or "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
-            print(f"\n  1. 开始随机碰撞（单个地址）:")
+            print("\n  1. 开始随机碰撞（单个地址）:")
             print(f"     python key_collision_cli.py -t {addr} -m random\n")
 
         print("  2. 运行健康检查:")

@@ -8,8 +8,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine
-from src.gpu.device import GPUDeviceDetector
+from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
+from src.gpu.device import GPUDeviceDetector  # noqa: E402
 
 
 def main():
@@ -78,7 +78,7 @@ def main():
         throughputs.append(throughput)
 
         print(
-            f"  [{(i+1)*5}s] 吞吐量: {throughput:>10,.0f} keys/s | "
+            f"  [{(i + 1) * 5}s] 吞吐量: {throughput:>10,.0f} keys/s | "
             f"错误率: {report.error_rate_percent:>6.2f}% | "
             f"批次: {report.total_batches}"
         )
@@ -108,7 +108,7 @@ def main():
 
     # 对比
     print("性能对比:")
-    print(f"  优化前(同步): ~44,000 keys/s")
+    print("  优化前(同步): ~44,000 keys/s")
     print(f"  优化后(异步): {avg_throughput:,.0f} keys/s")
 
     if avg_throughput > 44000:
@@ -117,7 +117,7 @@ def main():
         print()
         print("[PASS] 异步优化成功! 性能显著提升!")
     else:
-        print(f"  性能提升: 未达预期")
+        print("  性能提升: 未达预期")
         print()
         print("[WARN] 异步优化效果不明显")
 

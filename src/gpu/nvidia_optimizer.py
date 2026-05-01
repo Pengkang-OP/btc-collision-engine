@@ -18,8 +18,7 @@
 SHA256/RIPEMD160/secp256k1 等加密/哈希运算的精度。
 """
 
-import logging
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 import re
 from typing import Any, Dict, Optional, TYPE_CHECKING
 
@@ -567,7 +566,7 @@ class NvidiaGPUOptimizer:
         except Exception as e:
             self._logger.warning(
                 f"⚠️ NVIDIA 驱动检测失败（非致命）: {type(e).__name__}: {e}\n"
-                f"   驱动版本信息将不可用"
+                "   驱动版本信息将不可用"
             )
             self._driver_info = {}
             result["driver"] = {}
@@ -592,7 +591,7 @@ class NvidiaGPUOptimizer:
         except Exception as e:
             self._logger.warning(
                 f"⚠️ NVIDIA 架构识别失败（非致命）: {type(e).__name__}: {e}\n"
-                f"   架构特性将使用保守默认值"
+                "   架构特性将使用保守默认值"
             )
             self._arch_info = {"arch": "Unknown", "async_copy": False, "fp64_native": False}
             result["arch"] = self._arch_info
@@ -617,7 +616,7 @@ class NvidiaGPUOptimizer:
         except Exception as e:
             self._logger.warning(
                 f"⚠️ NVIDIA 显存优化配置失败（非致命）: {type(e).__name__}: {e}\n"
-                f"   显存配置将使用保守默认值"
+                "   显存配置将使用保守默认值"
             )
             self._memory_config = {
                 "memory_ratio": 0.60,

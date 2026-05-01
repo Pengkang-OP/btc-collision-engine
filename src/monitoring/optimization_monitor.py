@@ -15,7 +15,7 @@ import threading
 import logging
 from typing import Dict, List, Optional, Any, Callable
 from collections import deque
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 
 logger = logging.getLogger("PerformanceMonitor")
@@ -123,7 +123,7 @@ class OptimizationPerformanceMonitor:
         self._degradation_callbacks: list[Callable] = []
 
         logger.info(
-            f"OptimizationPerformanceMonitor初始化: "
+            "OptimizationPerformanceMonitor初始化: "
             f"check_interval={check_interval}s, "
             f"degradation_threshold={degradation_threshold}"
         )
@@ -403,7 +403,7 @@ class OptimizationPerformanceMonitor:
         degradation_ratio = metrics.speed / self._peak_speed if self._peak_speed > 0 else 0
 
         logger.warning(
-            f"⚠️ 检测到性能退化: "
+            "⚠️ 检测到性能退化: "
             f"当前={metrics.speed:.0f} addr/s, "
             f"峰值={self._peak_speed:.0f} addr/s, "
             f"退化率={degradation_ratio:.2%}"

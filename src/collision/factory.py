@@ -1,5 +1,7 @@
 """引擎工厂 — 简化引擎创建并支持依赖注入"""
 
+from __future__ import annotations
+
 import logging
 import warnings
 from typing import Any, Optional, Set, TYPE_CHECKING

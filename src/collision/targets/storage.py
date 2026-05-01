@@ -224,7 +224,7 @@ class AddressStorage:
                     # 参数化查询防止SQL注入
                     cursor.execute("INSERT OR IGNORE INTO targets (address) VALUES (?)", (addr,))
                     inserted += cursor.rowcount
-                except sqlite3.IntegrityError as e:
+                except sqlite3.IntegrityError as e:  # noqa: F841
                     logger.debug(f"地址已存在，跳过: {addr[:10]}...")
                 except (sqlite3.Error, ValueError) as e:
                     logger.warning(f"插入地址失败 {addr[:10]}...: {e}")
@@ -500,8 +500,8 @@ class AddressStorage:
             # 检查文件大小
             file_size = os.path.getsize(real_source_path)
             if file_size > 100 * 1024 * 1024:  # 100MB
-                result["error"] = f"文件过大(>100MB)"
-                logger.error(f"文件过大: {real_source_path}, 大小={file_size/1024/1024:.1f}MB")
+                result["error"] = "文件过大(>100MB)"
+                logger.error(f"文件过大: {real_source_path}, 大小={file_size / 1024 / 1024:.1f}MB")
                 return result
 
             # 根据文件扩展名选择读取方式

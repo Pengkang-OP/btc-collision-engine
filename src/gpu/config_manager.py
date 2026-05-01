@@ -3,10 +3,8 @@
 负责GPU配置的加载、合并、验证和应用。
 """
 
-import logging
-
 # P3-5: 统一日志获取
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 from typing import Dict, Optional, Any
 
 from .profiles.loader import GPUProfileLoader
@@ -28,13 +26,15 @@ class GPUConfigManager:
     PRIORITY_AUTO = 3  # 自动生成配置
     PRIORITY_DEFAULT = 4  # 默认值
 
-    def __init__(self, user_config: Optional[Dict] = None, logger: Optional[Any] = None) -> None:
+    def __init__(
+        self, user_config: Optional[Dict[str, Any]] = None, logger: Optional[Any] = None
+    ) -> None:  # noqa: E501
         """
         Args:
             user_config: 用户提供的配置
             logger: 日志记录器
         """
-        self.user_config = user_config or {}
+        self.user_config: Dict[str, Any] = user_config or {}
         self.logger = logger or _logger
 
         self._auto_configurator = get_gpu_configurator()
@@ -59,7 +59,7 @@ class GPUConfigManager:
         profile_config = self._load_profile_config(device_info)
 
         # 3. 合并配置
-        merged_config = self._merge_configs(auto_config, profile_config, self.user_config)  # type: ignore[arg-type]
+        merged_config = self._merge_configs(auto_config, profile_config, self.user_config)
 
         # 4. 处理用户指定的batch_size
         if user_batch_size is not None:

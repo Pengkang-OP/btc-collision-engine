@@ -13,8 +13,7 @@ import os
 import json
 import tempfile
 import pytest
-from datetime import datetime, timedelta, timezone
-from unittest.mock import patch
+from datetime import datetime, timezone
 
 from src.logging.log_query import LogQuery
 

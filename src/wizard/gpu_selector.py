@@ -8,7 +8,6 @@ GPU选择器
 
 import sys
 import os
-import time
 from typing import Tuple, List
 
 from .selector_protocol import SelectorProtocol
@@ -83,7 +82,7 @@ class GPUSelector(SelectorProtocol):
         print()
         print("    检测到以下 GPU 设备:")
         for i, gpu in enumerate(gpu_info):
-            print(f"      {i+1}. {gpu['name']}")
+            print(f"      {i + 1}. {gpu['name']}")
         print()
 
         while True:
@@ -107,7 +106,7 @@ class GPUSelector(SelectorProtocol):
         print()
         print("    检测到以下 GPU 设备:")
         for i, gpu in enumerate(gpu_info):
-            print(f"      {i+1}. {gpu['name']}")
+            print(f"      {i + 1}. {gpu['name']}")
         print()
 
         print("    请选择要使用的 GPU 设备编号（空格分隔，如 1 2，直接回车=全部）:")

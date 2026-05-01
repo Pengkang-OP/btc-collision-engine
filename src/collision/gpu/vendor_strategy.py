@@ -14,7 +14,7 @@
 更新日期: 2026-04-30
 """
 
-from typing import Dict, Any, Optional, cast
+from typing import Dict, Any, cast
 import logging
 
 from .protocols import VendorOptimizationStrategy, GPUExecutionContext
@@ -40,13 +40,13 @@ class IntelOptimizationStrategy:
             # 1. 超时管理器
             from ...gpu.intel_timeout_manager import AdaptiveTimeoutManager
 
-            components["timeout_manager"] = AdaptiveTimeoutManager(config=context.config)  # type: ignore[call-arg]
+            components["timeout_manager"] = cast(Any, AdaptiveTimeoutManager)(config=context.config)
 
             # 2. 内存监控器
             from ...gpu.intel_memory_monitor import IntelMemoryMonitor
 
             if context.device:
-                components["memory_monitor"] = IntelMemoryMonitor(context.device)  # type: ignore[arg-type]
+                components["memory_monitor"] = cast(Any, IntelMemoryMonitor)(context.device)
 
             # 3. Intel优化器
             from ...gpu.intel_optimizer import IntelGPUOptimizer

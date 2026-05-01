@@ -11,14 +11,13 @@ import pytest
 import hashlib
 import os
 import secrets
-import struct
-from unittest.mock import MagicMock, patch, Mock
+from unittest.mock import Mock
 
 # 项目内部导入
 from src.core.secp256k1 import Secp256k1, ECPoint, EllipticCurve
 from src.core.base58 import Base58
 from src.core.wif import WIF
-from tests.gpu_mock_factory import GPUMockFactory, PRESET_NVIDIA, PRESET_AMD, PRESET_INTEL_ARC
+from tests.gpu_mock_factory import GPUMockFactory
 
 # ---------------------------------------------------------------------------
 # secp256k1曲线阶 N（常量）
@@ -157,7 +156,7 @@ class TestKnownBitcoinVectors:
         """私钥 0x01 → 压缩公钥验证（Bitcoin Core 官方向量）"""
         pubkey = _privkey_to_compressed_pubkey(self.PRIVKEY_01)
         assert pubkey == self.EXPECTED_COMPRESSED_PUBKEY, (
-            f"私钥 0x01 对应的压缩公钥不正确\n"
+            "私钥 0x01 对应的压缩公钥不正确\n"
             f"期望: {self.EXPECTED_COMPRESSED_PUBKEY.hex()}\n"
             f"实际: {pubkey.hex()}"
         )
@@ -167,7 +166,7 @@ class TestKnownBitcoinVectors:
         pubkey = _privkey_to_compressed_pubkey(self.PRIVKEY_01)
         hash160 = _compute_hash160(pubkey)
         assert hash160 == self.EXPECTED_HASH160, (
-            f"Hash160 不正确\n" f"期望: {self.EXPECTED_HASH160.hex()}\n" f"实际: {hash160.hex()}"
+            "Hash160 不正确\n" f"期望: {self.EXPECTED_HASH160.hex()}\n" f"实际: {hash160.hex()}"
         )
 
     def test_privkey_1_p2pkh_address(self):
@@ -176,7 +175,7 @@ class TestKnownBitcoinVectors:
         hash160 = _compute_hash160(pubkey)
         address = Base58.check_encode(0x00, hash160)
         assert address == self.EXPECTED_P2PKH_ADDRESS, (
-            f"P2PKH 地址不正确\n" f"期望: {self.EXPECTED_P2PKH_ADDRESS}\n" f"实际: {address}"
+            "P2PKH 地址不正确\n" f"期望: {self.EXPECTED_P2PKH_ADDRESS}\n" f"实际: {address}"
         )
 
     def test_full_chain_privkey_to_address(self):
@@ -470,7 +469,7 @@ class TestWIFEncoding:
             decoded_privkey, compressed = WIF.decode(wif)
             assert compressed is True
             assert decoded_privkey == privkey, (
-                f"WIF 解码后私钥与原始不一致\n"
+                "WIF 解码后私钥与原始不一致\n"
                 f"原始: {privkey.hex()}\n解码: {decoded_privkey.hex()}"
             )
 
@@ -492,7 +491,7 @@ class TestWIFEncoding:
         # 验证可逆性：解码后还原原始私钥
         decoded_privkey, compressed = WIF.decode(wif)
         assert compressed is True
-        assert decoded_privkey == privkey, f"WIF 解码后与原始私钥不一致"
+        assert decoded_privkey == privkey, "WIF 解码后与原始私钥不一致"
 
     def test_wif_only_valid_base58_chars(self):
         """WIF 字符串只包含合法 Base58 字符（不含 0, O, I, l）"""

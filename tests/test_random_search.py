@@ -11,10 +11,8 @@
 - 常量验证
 """
 
-import time
 import pytest
-from unittest.mock import Mock, patch, MagicMock, PropertyMock
-import queue
+from unittest.mock import patch, MagicMock
 
 # ============================================================================
 # 常量验证测试
@@ -120,7 +118,7 @@ class TestRandomSearchModeInit:
         from src.gpu.search_modes.random_search import RandomSearchMode
 
         engine = _make_engine_stub()
-        mode = RandomSearchMode(engine)
+        RandomSearchMode(engine)
         assert mock_thread.called
         # Thread started with daemon=True
         call_kwargs = mock_thread.call_args[1]
@@ -262,7 +260,6 @@ class TestSeedPrefetchWorker:
     @patch("src.gpu.search_modes.random_search.threading.Thread")
     def test_worker_queue_full_no_block(self, mock_thread):
         from src.gpu.search_modes.random_search import RandomSearchMode
-        import os
 
         engine = _make_engine_stub()
         mode = RandomSearchMode(engine, seed_prefetch_size=2)

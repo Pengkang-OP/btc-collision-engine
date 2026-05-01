@@ -23,13 +23,11 @@ import time
 import shutil
 import tempfile
 import json
-from unittest.mock import Mock, patch
-from datetime import datetime, timedelta
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.monitoring.data_logger import DataLogger
+from src.monitoring.data_logger import DataLogger  # noqa: E402
 
 
 class TestDataLoggerInit:
@@ -62,13 +60,13 @@ class TestDataLoggerInit:
     def test_init_creates_directory(self):
         """测试初始化时创建目录"""
         new_dir = os.path.join(self.test_dir, "new_logs")
-        logger = DataLogger(storage_dir=new_dir)
+        logger = DataLogger(storage_dir=new_dir)  # noqa: F841
 
         assert os.path.exists(new_dir)
 
     def test_init_performance_log_file(self):
         """测试性能日志文件初始化"""
-        logger = DataLogger(storage_dir=self.test_dir)
+        logger = DataLogger(storage_dir=self.test_dir)  # noqa: F841
 
         # 验证性能日志文件存在
         perf_log_path = os.path.join(self.test_dir, "performance.log")

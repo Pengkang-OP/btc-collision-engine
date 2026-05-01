@@ -15,7 +15,7 @@ import logging
 import shutil
 import tempfile
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 # ============================================================================
 # Fixtures

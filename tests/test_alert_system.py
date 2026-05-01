@@ -7,12 +7,11 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.monitoring.alert_system import (
+from src.monitoring.alert_system import (  # noqa: E402
     AlertSystem,
     AlertLevel,
     AlertType,
     AlertRule,
-    AlertRecord,
     get_alert_system,
 )
 

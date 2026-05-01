@@ -9,7 +9,7 @@ import sys
 
 sys.path.insert(0, ".")
 
-from src.gpu.auto_config import GPUAutoConfigurator
+from src.gpu.auto_config import GPUAutoConfigurator  # noqa: E402
 
 print("=" * 80)
 print("  Intel Arc配置修复验证")
@@ -54,7 +54,7 @@ test_config = {"batch_size": 262144, "memory_usage_ratio": 0.70}
 ac2 = GPUAutoConfigurator()
 result = ac2._adjust_for_memory(device, test_config)
 
-print(f"  请求batch_size: 262,144")
+print("  请求batch_size: 262,144")
 print(f"  调整后batch_size: {test_config['batch_size']:,}")
 
 if test_config["batch_size"] == 262144:

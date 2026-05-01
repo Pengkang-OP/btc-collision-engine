@@ -11,7 +11,6 @@
 - get_device_capabilities()设备能力查询
 """
 
-import pytest
 import logging
 from unittest.mock import Mock
 from src.gpu.device_helper import GPUDeviceHelper

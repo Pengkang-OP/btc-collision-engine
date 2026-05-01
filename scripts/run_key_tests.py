@@ -8,7 +8,7 @@ import os
 # 禁用pytest的capture插件以避免Python 3.14问题
 os.environ["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = ""
 
-import pytest
+import pytest  # noqa: E402
 
 
 def main():
@@ -33,7 +33,7 @@ def main():
     for f in existing_tests:
         print(f"  - {f}")
 
-    print(f"\n{'='*80}\n")
+    print(f"\n{'=' * 80}\n")
 
     # 使用pytest API运行
     args = [

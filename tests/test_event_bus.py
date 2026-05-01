@@ -14,7 +14,7 @@
 import pytest
 import time
 import threading
-from unittest.mock import Mock, call
+from unittest.mock import Mock
 
 from src.collision.event_bus import EventBus, get_event_bus, reset_event_bus
 from src.collision.events import (
@@ -360,7 +360,10 @@ class TestEventBusThreadSafety:
     def test_concurrent_publish(self, sync_bus):
         """多线程同时发布不应损坏数据"""
         results = []
-        handler = lambda e: results.append(e.total_checked)
+
+        def handler(e):  # noqa: E306
+            return results.append(e.total_checked)
+
         sync_bus.subscribe(EventType.ENGINE_PROGRESS, handler)
 
         def publish_events(start, count):
@@ -388,7 +391,10 @@ class TestEventBusThreadSafety:
         def subscribe_loop():
             try:
                 for i in range(100):
-                    handler = lambda e: None
+
+                    def handler(e):
+                        return None
+
                     sync_bus.subscribe(EventType.ENGINE_PROGRESS, handler)
                     sync_bus.unsubscribe(EventType.ENGINE_PROGRESS, handler)
             except Exception as e:

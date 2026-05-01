@@ -1,9 +1,9 @@
 """统一测试工具模块 - 提供通用的Mock工厂和测试辅助函数"""
 
 import unittest
-from unittest.mock import Mock, MagicMock, patch, call
+from unittest.mock import Mock, patch
 from contextlib import contextmanager
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 import tempfile
 import os
 import json
@@ -349,7 +349,7 @@ def skip_if_no_pyopencl(func):
     import unittest
 
     try:
-        import pyopencl
+        pass
 
         return func
     except ImportError:

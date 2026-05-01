@@ -13,7 +13,7 @@ import time
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine
+from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
 
 
 def test_fast_math_optimization(test_duration=30):
@@ -44,7 +44,7 @@ def test_fast_math_optimization(test_duration=30):
         )
 
     def on_match(match_info):
-        print(f"  [MATCH] 发现匹配!")
+        print("  [MATCH] 发现匹配!")
 
     try:
         # 初始化引擎
@@ -108,9 +108,9 @@ def test_fast_math_optimization(test_duration=30):
             else:
                 cv = 0
 
-            print(f"\n{'='*80}")
+            print(f"\n{'=' * 80}")
             print("  测试结果 (快速数学优化已启用)")
-            print(f"{'='*80}")
+            print(f"{'=' * 80}")
             print(f"    总运行时间:   {time.time() - start_time:.2f}秒")
             print(f"    总检查数:     {total_keys:,} keys")
             print(f"    平均速度:     {avg_speed:,.2f} keys/s")
@@ -120,37 +120,37 @@ def test_fast_math_optimization(test_duration=30):
             print()
 
             # 与历史数据对比
-            print(f"{'='*80}")
+            print(f"{'=' * 80}")
             print("  性能对比历史数据")
-            print(f"{'='*80}")
-            print(f"    优化前(65K):     44,096 keys/s (基线)")
-            print(f"    优化1(262K):     47,799 keys/s (+8.4%)")
+            print(f"{'=' * 80}")
+            print("    优化前(65K):     44,096 keys/s (基线)")
+            print("    优化1(262K):     47,799 keys/s (+8.4%)")
             print(
-                f"    快速数学(262K):  {avg_speed:,.2f} keys/s ({((avg_speed - 47799) / 47799 * 100):+.1f}%)"
+                f"    快速数学(262K):  {avg_speed:,.2f} keys/s ({((avg_speed - 47799) / 47799 * 100):+.1f}%)"  # noqa: E501
             )
             print()
 
             # 评估优化效果
             improvement = (avg_speed - 47799) / 47799 * 100
 
-            print(f"{'='*80}")
+            print(f"{'=' * 80}")
             print("  快速数学优化评估")
-            print(f"{'='*80}")
+            print(f"{'=' * 80}")
 
             if improvement > 5:
                 print(f"    效果: ✅ 显著提升 (+{improvement:.1f}%)")
-                print(f"    建议: 保留快速数学优化")
+                print("    建议: 保留快速数学优化")
             elif improvement > 0:
                 print(f"    效果: ⚠️  轻微提升 (+{improvement:.1f}%)")
-                print(f"    建议: 可以保留，继续观察")
+                print("    建议: 可以保留，继续观察")
             elif improvement > -3:
                 print(f"    效果: ⚠️  轻微下降 ({improvement:.1f}%)")
-                print(f"    建议: 在统计误差范围内，可保留")
+                print("    建议: 在统计误差范围内，可保留")
             else:
                 print(f"    效果: ❌ 显著下降 ({improvement:.1f}%)")
-                print(f"    建议: 考虑禁用快速数学")
+                print("    建议: 考虑禁用快速数学")
 
-            print(f"{'='*80}")
+            print(f"{'=' * 80}")
 
             return {
                 "batch_size": 262144,
@@ -175,10 +175,10 @@ if __name__ == "__main__":
     result = test_fast_math_optimization(test_duration=60)
 
     if result:
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("  测试完成!")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
     else:
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("  测试失败!")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")

@@ -15,16 +15,14 @@ import sys
 import os
 import time
 import logging
-import signal
-from typing import Dict, Any
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.monitoring.monitor_config import MonitorConfig
-from src.monitoring.enhanced_monitoring import EnhancedMonitoringSystem
-from src.collision.key_collision_engine import KeyCollisionEngine
-from src.collision.collision_stats import CollisionStats
+from src.monitoring.monitor_config import MonitorConfig  # noqa: E402
+from src.monitoring.enhanced_monitoring import EnhancedMonitoringSystem  # noqa: E402
+from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
+from src.collision.collision_stats import CollisionStats  # noqa: E402
 
 # 配置日志
 logging.basicConfig(
@@ -103,14 +101,14 @@ class EngineMonitorIntegration:
             use_enhanced_monitoring=True,
         )
 
-        logger.info(f"✅ 碰撞引擎初始化完成")
+        logger.info("✅ 碰撞引擎初始化完成")
         logger.info(f"   目标地址数: {len(targets)}")
         logger.info(f"   数据日志: {'启用' if self.engine.data_logging_enabled else '禁用'}")
         logger.info(f"   增强监控: {'启用' if self.engine.enhanced_monitoring else '禁用'}")
 
     def on_progress(self, stats: CollisionStats):
         """进度回调"""
-        speed_str = f"{stats.speed:.2f}/s" if stats.speed < 1000 else f"{stats.speed/1000:.2f}K/s"
+        speed_str = f"{stats.speed:.2f}/s" if stats.speed < 1000 else f"{stats.speed / 1000:.2f}K/s"
         logger.info(
             f"📊 进度: 已检测={stats.total_checked:,} | "
             f"速度={speed_str} | "
@@ -189,7 +187,7 @@ class EngineMonitorIntegration:
             if "data_stats" in status:
                 stats = status["data_stats"]
                 logger.info(
-                    f"\n📈 监控状态: "
+                    "\n📈 监控状态: "
                     f"速度={stats.get('speed', 0):.2f}/s | "
                     f"检测={stats.get('total_checks', 0):,} | "
                     f"匹配={stats.get('total_matches', 0)} | "

@@ -17,7 +17,7 @@ from pathlib import Path
 # 添加项目根目录
 sys.path.insert(0, str(Path(__file__).parent))
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine
+from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
 
 
 def test_memory_pool_fix():
@@ -57,10 +57,10 @@ def test_memory_pool_fix():
     pool = engine._gpu_memory_pool
     initial_stats = pool.get_stats()
 
-    print(f"\n📊 初始内存池状态:")
+    print("\n📊 初始内存池状态:")
     print(f"  已分配: {initial_stats['total_allocated']}")
     print(f"  已复用: {initial_stats['total_reused']}")
-    print(f"  复用率: {initial_stats['reuse_rate']*100:.1f}%")
+    print(f"  复用率: {initial_stats['reuse_rate'] * 100:.1f}%")
     print(f"  池中缓冲区: {initial_stats['pooled_buffers']}")
     print(f"  当前内存: {initial_stats['current_memory_mb']:.1f} MB")
 
@@ -68,10 +68,10 @@ def test_memory_pool_fix():
     if initial_stats["total_allocated"] > 0:
         print(f"\n✅ 预分配功能已生效 (预分配了{initial_stats['total_allocated']}个缓冲区)")
     else:
-        print(f"\n⚠️ 预分配功能未生效")
+        print("\n⚠️ 预分配功能未生效")
 
     # 运行一小段时间
-    print(f"\n⏱️  运行5秒测试...")
+    print("\n⏱️  运行5秒测试...")
 
     stats_data = {"total_checked": 0, "speed": 0.0}
 
@@ -93,17 +93,17 @@ def test_memory_pool_fix():
     # 检查最终统计
     final_stats = pool.get_stats()
 
-    print(f"\n📊 最终内存池状态:")
+    print("\n📊 最终内存池状态:")
     print(f"  已分配: {final_stats['total_allocated']}")
     print(f"  已复用: {final_stats['total_reused']}")
-    print(f"  复用率: {final_stats['reuse_rate']*100:.1f}%")
+    print(f"  复用率: {final_stats['reuse_rate'] * 100:.1f}%")
     print(f"  池中缓冲区: {final_stats['pooled_buffers']}")
     print(f"  当前内存: {final_stats['current_memory_mb']:.1f} MB")
 
     # 验证修复
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("📝 验证结果")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
 
     success = True
 
@@ -111,14 +111,14 @@ def test_memory_pool_fix():
     if final_stats["total_allocated"] > 0:
         print(f"✅ 内存池已使用 (分配了{final_stats['total_allocated']}个缓冲区)")
     else:
-        print(f"❌ 内存池未使用")
+        print("❌ 内存池未使用")
         success = False
 
     # 2. 检查预分配
     if initial_stats["total_allocated"] >= 4:  # 2个大小 × 2个 = 4个
         print(f"✅ 预分配功能正常 (预分配{initial_stats['total_allocated']}个)")
     else:
-        print(f"⚠️ 预分配可能未完全生效")
+        print("⚠️ 预分配可能未完全生效")
 
     # 3. 检查性能
     if stats_data["speed"] > 400000:  # 预期>400K keys/s
@@ -127,9 +127,9 @@ def test_memory_pool_fix():
         print(f"⚠️ 性能偏低 ({stats_data['speed']:,.0f} keys/s)")
 
     # 4. 检查复用率 (第一次运行可能为0，这是正常的)
-    print(f"ℹ️  复用率: {final_stats['reuse_rate']*100:.1f}% (首次运行可能为0)")
+    print(f"ℹ️  复用率: {final_stats['reuse_rate'] * 100:.1f}% (首次运行可能为0)")
 
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
 
     if success:
         print("✅ 内存池修复验证通过！")
@@ -140,7 +140,7 @@ def test_memory_pool_fix():
     else:
         print("❌ 内存池修复验证失败")
 
-    print(f"{'='*80}\n")
+    print(f"{'=' * 80}\n")
 
     return success
 

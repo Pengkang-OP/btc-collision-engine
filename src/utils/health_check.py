@@ -190,7 +190,6 @@ class HealthChecker:
             from src.monitoring.monitoring_system import DataStorage
 
             # 检查监控系统依赖
-            import psutil
 
             # 检查数据存储目录
             storage = DataStorage()

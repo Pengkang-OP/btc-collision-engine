@@ -4,9 +4,8 @@
 验证GPU配置参数的合法性,提供配置建议和错误提示。
 """
 
-import logging
-from ..utils import init_logging, get_configured_logger
-from typing import Dict, List, Optional, Tuple
+from ..utils import get_configured_logger
+from typing import Dict, List, Optional, Tuple, Any, cast
 
 logger = get_configured_logger("GPUConfigValidator")
 
@@ -41,7 +40,6 @@ class GPUConfigValidator:
 
     def __init__(self) -> None:
         """初始化配置验证器"""
-        pass
 
     def validate_config(self, config: Dict) -> Tuple[bool, List[str]]:
         """验证GPU配置
@@ -190,7 +188,7 @@ class GPUConfigValidator:
 
             for device in devices:
                 device_config = configurator.configure_for_device(device)
-                config["per_device_config"][str(device["global_index"])] = {  # type: ignore[index]
+                cast(Dict[str, Any], config["per_device_config"])[str(device["global_index"])] = {
                     "batch_size": device_config["batch_size"],
                     "work_group_size": device_config["work_group_size"],
                 }
@@ -229,7 +227,7 @@ class GPUConfigValidator:
         vendors = set(d.get("vendor", "unknown") for d in devices)
         if len(vendors) > 1:
             warnings.append(
-                f"检测到混合厂商GPU: {vendors}\n" f"可能导致性能不均衡,建议手动配置负载分配"
+                f"检测到混合厂商GPU: {vendors}\n" "可能导致性能不均衡,建议手动配置负载分配"
             )
 
         # 检查显存差异
@@ -240,7 +238,7 @@ class GPUConfigValidator:
             if max_mem > 0 and (max_mem / min_mem) > 3:
                 warnings.append(
                     f"GPU显存差异较大: {min_mem:.1f}GB - {max_mem:.1f}GB\n"
-                    f"建议使用'performance'负载均衡策略"
+                    "建议使用'performance'负载均衡策略"
                 )
 
         # 检查Intel Arc(需要特殊配置)

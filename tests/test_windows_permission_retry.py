@@ -6,16 +6,15 @@
 
 import os
 import sys
-import time
 import json
 import tempfile
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.monitoring.data_logger import DataLogger
+from src.monitoring.data_logger import DataLogger  # noqa: E402
 
 
 class TestWindowsPermissionRetry(unittest.TestCase):

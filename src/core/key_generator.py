@@ -94,7 +94,7 @@ class SecureKeyGenerator:
                 if entropy < self.min_entropy_bits:
                     logger.warning(
                         f"系统熵池较低: {entropy} bits (< {self.min_entropy_bits}), "
-                        f"建议安装haveged或rng-tools"
+                        "建议安装haveged或rng-tools"
                     )
                     self.stats["low_entropy_count"] = self.stats.get("low_entropy_count", 0) + 1
 
@@ -130,7 +130,7 @@ class SecureKeyGenerator:
                 system = platform.system()
                 logger.debug(
                     f"{system}系统使用系统级CSPRNG (CryptGenRandom/SecureRandom)，"
-                    f"不依赖/dev/random熵池，安全性由操作系统保证"
+                    "不依赖/dev/random熵池，安全性由操作系统保证"
                 )
                 self.stats["entropy_checks"] = 1
             return True
@@ -197,7 +197,7 @@ class SecureKeyGenerator:
         # BL-2修复: 检查是否生成了任何有效私钥
         if len(private_keys) == 0 and count > 0:
             raise RuntimeError(
-                f"无法生成任何有效私钥 (请求{count}个)。" f"这可能是系统熵池严重不足或CSPRNG故障。"
+                f"无法生成任何有效私钥 (请求{count}个)。" "这可能是系统熵池严重不足或CSPRNG故障。"
             )
 
         return private_keys

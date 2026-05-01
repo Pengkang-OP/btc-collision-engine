@@ -7,10 +7,10 @@ import logging
 import os
 import time
 import threading
-from typing import Optional, Any, List, Dict, cast
+from typing import Optional, Any, List, Dict
 
 # P3-5: 统一日志获取
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 
 import numpy as np
 import pyopencl as cl
@@ -18,19 +18,8 @@ import pyopencl as cl
 from .kernel_protocol import GPUKernelProtocol
 from .device import GPUDevice
 from .kernel import OPENCL_KERNEL_SOURCE
-from .profiles.loader import GPUProfileLoader
-from .async_executor import AsyncGPUExecutor
-from .memory_pool import get_gpu_memory_pool
-from .amd_optimizer import AmdGPUOptimizer
-from .nvidia_optimizer import NvidiaGPUOptimizer
-from .intel_optimizer import IntelGPUOptimizer
 from .buffer_tracker import GPUBufferTracker
-from .precompute import get_precomp_table
-from ..utils.exception_handler import ExceptionHandler
-from ..utils.performance_monitor import EnhancedPerformanceMonitor
-from ..utils.performance_monitor import PerformanceMetrics as UtilsPerformanceMetrics
 from .performance_optimizer import PerformanceMetrics
-from ..utils.gpu_memory_utils import calculate_optimal_batch_size
 from ..core.address_generator import P2PKHAddressGenerator
 from ..core.hash_utils import HashUtils
 from ..monitoring.gpu_performance_monitor import get_gpu_performance_monitor
@@ -199,7 +188,7 @@ class GPUKernel(GPUKernelProtocol):
         if max_batch_size > MAX_BATCH_SIZE_LIMIT:
             raise ValueError(
                 f"batch_size {max_batch_size} 超出最大限制 {MAX_BATCH_SIZE_LIMIT} "
-                f"(配置层与引擎层统一上限)"
+                "(配置层与引擎层统一上限)"
             )
 
         self._max_batch_size = max_batch_size
@@ -208,7 +197,8 @@ class GPUKernel(GPUKernelProtocol):
         self._batch_kernel_local = None  # local memory版本内核引用
         # 查询设备local memory大小（OpenCL标准属性），回退默认值16KB
         try:
-            self._local_mem_size = device.device.local_mem_size  # type: ignore[attr-defined]  # PyOpenCL C扩展无stubs
+            # type: ignore[attr-defined]  # PyOpenCL C扩展无stubs
+            self._local_mem_size = device.device.local_mem_size
         except Exception:
             self._local_mem_size = 16384  # 默认16KB
 
@@ -319,7 +309,7 @@ class GPUKernel(GPUKernelProtocol):
             else:
                 logger.info(
                     f"内核使用降级策略({COMPILE_STRATEGIES[strategy_idx][0]})编译成功，"
-                    f"不缓存以避免锁定降级性能"
+                    "不缓存以避免锁定降级性能"
                 )
 
             # 记录编译性能
@@ -338,7 +328,7 @@ class GPUKernel(GPUKernelProtocol):
 
                     if profile.max_batch_size != self.max_batch_size:
                         logger.info(
-                            f"根据性能优化调整batch_size: "
+                            "根据性能优化调整batch_size: "
                             f"{self.max_batch_size} -> {profile.max_batch_size}"
                         )
                         self._max_batch_size = profile.max_batch_size
@@ -465,7 +455,7 @@ class GPUKernel(GPUKernelProtocol):
             # 验证: 私钥1应该匹配它的地址
             if match_flags[0] != 1:
                 raise RuntimeError(
-                    f"GPU内核增强验证失败: "
+                    "GPU内核增强验证失败: "
                     f"私钥1应该匹配地址{test_address},但match_flags[0]={match_flags[0]}"
                 )
 
@@ -618,7 +608,7 @@ class GPUKernel(GPUKernelProtocol):
                 self.device.context, cl.mem_flags.READ_ONLY, size=32  # 固定32字节
             )
         logger.info(
-            f"PRNG模式: 创建 seed_buf 32字节（替代原 keys_buf "
+            "PRNG模式: 创建 seed_buf 32字节（替代原 keys_buf "
             f"{self.max_batch_size * self.KEYS_BUFFER_SIZE_FACTOR // 1024 // 1024}MB）"
         )
         self._buffer_tracker.track_buffer("_seed_buf", self._seed_buf, 32)
@@ -664,12 +654,12 @@ class GPUKernel(GPUKernelProtocol):
         if memory_pool:
             pool_stats = memory_pool.get_stats()
             logger.info(
-                f"GPU内存池状态 (v3.3.0纯持久化设计): "
+                "GPU内存池状态 (v3.3.0纯持久化设计): "
                 f"已分配={pool_stats['total_allocated']}, "
                 f"已复用={pool_stats['total_reused']}, "
                 f"当前内存={pool_stats['current_memory_mb']:.1f}MB, "
                 f"池内缓冲={pool_stats['pooled_buffers']}个 | "
-                f"设计: 持久化缓冲区在引擎生命周期内重复使用，零运行时分配开销"
+                "设计: 持久化缓冲区在引擎生命周期内重复使用，零运行时分配开销"
             )
 
     def set_targets(
@@ -773,9 +763,13 @@ class GPUKernel(GPUKernelProtocol):
 
         if required_memory_with_overhead > safe_memory_limit:
             raise MemoryError(
-                f"所需显存 {required_memory_with_overhead/1024**2:.0f}MB 超过安全限制 {safe_memory_limit/1024**2:.0f}MB\n"
-                f"建议: 减小 batch_size 从 {num_keys} 到 {int(num_keys * safe_memory_limit / required_memory_with_overhead)}"
-            )
+                f"所需显存 {required_memory_with_overhead /  # noqa: W504
+                                      1024**2:.0f}MB 超过安全限制 {safe_memory_limit /  # noqa: W504, E127
+                                                             1024**2:.0f}MB\n"
+                f"建议: 减小 batch_size 从 {num_keys} 到 {int(num_keys *  # noqa: E501, W504
+                                                                                                                       safe_memory_limit /  # noqa: E501, W504, E127
+                                                                                                                       required_memory_with_overhead)}"  # noqa: E127, E501
+            )  # noqa: E501
 
         # 设置目标（仅在第一次或目标变化时）
         if target_hash160s is not None:
@@ -917,7 +911,7 @@ class GPUKernel(GPUKernelProtocol):
                 # 防止无限循环(安全网)
                 if iteration_count > max_iterations:
                     logger.warning(
-                        f"轮询次数超过最大值({max_iterations}),强制退出 " f"(可能GPU状态查询异常)"
+                        f"轮询次数超过最大值({max_iterations}),强制退出 " "(可能GPU状态查询异常)"
                     )
                     execution_completed[0] = False
                     break
@@ -944,7 +938,7 @@ class GPUKernel(GPUKernelProtocol):
                 # GPU未完成时才检查停止信号(避免竞态条件)
                 if stop_event is not None and stop_event.is_set():
                     logger.info(
-                        f"检测到停止信号,中断GPU等待 "
+                        "检测到停止信号,中断GPU等待 "
                         f"(已轮询{iteration_count}次, 耗时{iteration_count * poll_interval:.1f}秒)"
                     )
                     execution_completed[0] = False
@@ -1043,8 +1037,8 @@ class GPUKernel(GPUKernelProtocol):
                         if self.timeout_manager.should_warn(execution_time_ms):
                             timeout = self.timeout_manager.get_timeout()
                             logger.warning(
-                                f"⚠️ 执行时间接近超时阈值: "
-                                f"{execution_time_ms:.0f}ms / {timeout*1000:.0f}ms"
+                                "⚠️ 执行时间接近超时阈值: "
+                                f"{execution_time_ms:.0f}ms / {timeout * 1000:.0f}ms"
                             )
 
             # P1: 显存监控（每个批次都跟踪，但降低检查频率）
@@ -1073,7 +1067,7 @@ class GPUKernel(GPUKernelProtocol):
                         if reduction > 0:
                             new_batch_size = int(num_keys * (1 - reduction))
                             logger.info(
-                                f"💡 显存压力，建议减小 batch_size: "
+                                "💡 显存压力，建议减小 batch_size: "
                                 f"{num_keys} -> {new_batch_size}"
                             )
         except Exception as perf_error:
@@ -1121,7 +1115,7 @@ class GPUKernel(GPUKernelProtocol):
                 # 审查修复#3: 使用修正后的语义
                 if leak_report["has_unreleased"] or leak_report["has_leak"]:
                     logger.warning(
-                        f"GPU内存泄漏检测报告: "
+                        "GPU内存泄漏检测报告: "
                         f"未释放={leak_report['remaining_buffers']}, "
                         f"释放成功={len(leak_report['released'])}, "
                         f"释放失败={len(leak_report['release_failed'])}"
@@ -1129,7 +1123,7 @@ class GPUKernel(GPUKernelProtocol):
                     if leak_report["has_leak"]:
                         logger.error(
                             f"发现{len(leak_report['release_failed'])}个缓冲区释放失败，"
-                            f"可能存在内存泄漏"
+                            "可能存在内存泄漏"
                         )
             except Exception as e:
                 logger.error(f"内存泄漏检查失败: {e}")
@@ -1207,7 +1201,7 @@ class GPUKernel(GPUKernelProtocol):
             # 添加到GPU引擎logger
             logger.addHandler(self._async_log_handler)
 
-            logger.info(f"GPU异步日志已启用: {log_file} (max={max_bytes/1024/1024:.0f}MB)")
+            logger.info(f"GPU异步日志已启用: {log_file} (max={max_bytes / 1024 / 1024:.0f}MB)")
 
         except Exception as e:
             logger.warning(f"异步日志启用失败: {e}，使用同步日志")

@@ -28,8 +28,7 @@
 - SIMD: Single Instruction Multiple Data
 """
 
-import logging
-from typing import List, Optional
+from typing import List
 import hashlib
 
 # 导入日志配置

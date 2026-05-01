@@ -14,10 +14,9 @@ queue_depth 队列深度优化完整验证测试
 
 import sys
 import json
-import time
 import unittest
 from pathlib import Path
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, patch
 
 ROOT = Path(__file__).parent
 sys.path.insert(0, str(ROOT))
@@ -40,11 +39,11 @@ class TestQueueDepthSchema(unittest.TestCase):
 
     def test_valid_queue_depth_1_min(self):
         errors = self.cm.validate({"gpu": {"queue_depth": 1}})
-        self.assertNotIn("gpu.queue_depth", errors, f"queue_depth=1 (最小值) 应通过验证")
+        self.assertNotIn("gpu.queue_depth", errors, "queue_depth=1 (最小值) 应通过验证")
 
     def test_valid_queue_depth_16_max(self):
         errors = self.cm.validate({"gpu": {"queue_depth": 16}})
-        self.assertNotIn("gpu.queue_depth", errors, f"queue_depth=16 (最大值) 应通过验证")
+        self.assertNotIn("gpu.queue_depth", errors, "queue_depth=16 (最大值) 应通过验证")
 
     def test_invalid_queue_depth_0(self):
         errors = self.cm.validate({"gpu": {"queue_depth": 0}})

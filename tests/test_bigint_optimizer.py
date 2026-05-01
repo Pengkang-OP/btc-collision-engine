@@ -173,7 +173,7 @@ class TestBigIntOptimizer:
         assert isinstance(optimizer.is_optimized(), bool)
 
         if optimizer.gmpy2 is not None:
-            assert optimizer.is_optimized() == True
+            assert optimizer.is_optimized() is True
 
     def test_get_backend_name(self):
         """测试后端名称获取"""
@@ -210,4 +210,4 @@ class TestGlobalBigIntOptimizer:
 
 
 # 导入Secp256k1用于性能测试
-from src.core.secp256k1 import Secp256k1
+from src.core.secp256k1 import Secp256k1  # noqa: E402

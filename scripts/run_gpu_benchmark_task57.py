@@ -12,7 +12,6 @@ Task #57: GPU 性能基准测试
 
 import argparse
 import json
-import os
 import sys
 import time
 import statistics
@@ -65,8 +64,8 @@ def run_benchmark(duration_sec: int = 30) -> dict:
     print("=" * 70)
     print(f"  时间   : {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"  测试时长: {duration_sec} 秒")
-    print(f"  基线   : {BASELINE_KEYS_PER_SEC/1e6:.2f}M keys/s")
-    print(f"  目标   : {TARGET_KEYS_PER_SEC/1e6:.2f}M keys/s (+10%)")
+    print(f"  基线   : {BASELINE_KEYS_PER_SEC / 1e6:.2f}M keys/s")
+    print(f"  目标   : {TARGET_KEYS_PER_SEC / 1e6:.2f}M keys/s (+10%)")
     print("=" * 70 + "\n")
 
     # ── 1. 加载配置 ──────────────────────────────────────────
@@ -177,7 +176,7 @@ def run_benchmark(duration_sec: int = 30) -> dict:
         traceback.print_exc()
         return {"error": str(e), "success": False}
 
-    last_print_time = time.time()
+    last_print_time = time.time()  # noqa: F841
     test_start = time.time()
     interval_speeds = []
 
@@ -190,8 +189,9 @@ def run_benchmark(duration_sec: int = 30) -> dict:
             recent_speed = speed_samples[-1]
             interval_speeds.append(recent_speed)
             print(
-                f"  {elapsed:5.0f}s  {recent_speed/1e6:12.3f}M/s  {total_checked:>14,}  {len(speed_samples):>6}"
-            )
+                f"  {elapsed:5.0f}s  {recent_speed
+                                        / 1e6:12.3f}M/s  {total_checked:>14,}  {len(speed_samples):>6}"  # noqa: E501, E127
+            )  # noqa: E501
 
     # 停止引擎
     try:
@@ -234,11 +234,11 @@ def run_benchmark(duration_sec: int = 30) -> dict:
     print("=" * 70)
     print(f"  测试时长       : {duration_sec}s")
     print(f"  采样次数       : {len(speed_samples)}")
-    print(f"  最高速度       : {max_speed/1e6:.3f}M keys/s")
-    print(f"  平均速度       : {avg_speed/1e6:.3f}M keys/s")
-    print(f"  稳定平均速度   : {stable_avg/1e6:.3f}M keys/s（跳过前{warmup_skip}个预热采样）")
-    print(f"  最低速度       : {min_speed/1e6:.3f}M keys/s")
-    print(f"  速度标准差     : {std_speed/1e6:.3f}M keys/s")
+    print(f"  最高速度       : {max_speed / 1e6:.3f}M keys/s")
+    print(f"  平均速度       : {avg_speed / 1e6:.3f}M keys/s")
+    print(f"  稳定平均速度   : {stable_avg / 1e6:.3f}M keys/s（跳过前{warmup_skip}个预热采样）")
+    print(f"  最低速度       : {min_speed / 1e6:.3f}M keys/s")
+    print(f"  速度标准差     : {std_speed / 1e6:.3f}M keys/s")
     print(f"  总检查密钥数   : {total_checked:,}")
 
     print("\n  --- 优化特性验证 ---")
@@ -259,18 +259,22 @@ def run_benchmark(duration_sec: int = 30) -> dict:
     delta_vs_baseline = (stable_avg - baseline) / baseline * 100 if baseline > 0 else 0
     delta_vs_target = (stable_avg - target) / target * 100 if target > 0 else 0
 
-    print(f"  基线 (3.07M)   : {baseline/1e6:.2f}M keys/s")
-    print(f"  目标 (+10%)    : {target/1e6:.2f}M keys/s")
-    print(f"  实测稳定速度   : {stable_avg/1e6:.3f}M keys/s")
+    print(f"  基线 (3.07M)   : {baseline / 1e6:.2f}M keys/s")
+    print(f"  目标 (+10%)    : {target / 1e6:.2f}M keys/s")
+    print(f"  实测稳定速度   : {stable_avg / 1e6:.3f}M keys/s")
     print(f"  vs 基线        : {delta_vs_baseline:+.1f}%")
     print(f"  vs 目标        : {delta_vs_target:+.1f}%")
 
     if stable_avg >= target:
-        print(f"\n  ✅ 性能目标达成！实测 {stable_avg/1e6:.3f}M >= 目标 {target/1e6:.2f}M keys/s")
+        print(
+            f"\n  ✅ 性能目标达成！实测 {stable_avg / 1e6:.3f}M >= 目标 {target / 1e6:.2f}M keys/s"
+        )
     elif stable_avg >= baseline:
-        print(f"\n  ⚠️  性能有所提升但未达目标（{stable_avg/1e6:.3f}M vs 目标 {target/1e6:.2f}M）")
+        print(
+            f"\n  ⚠️  性能有所提升但未达目标（{stable_avg / 1e6:.3f}M vs 目标 {target / 1e6:.2f}M）"
+        )
     else:
-        print(f"\n  ❌ 性能未提升（{stable_avg/1e6:.3f}M vs 基线 {baseline/1e6:.2f}M）")
+        print(f"\n  ❌ 性能未提升（{stable_avg / 1e6:.3f}M vs 基线 {baseline / 1e6:.2f}M）")
 
     print("=" * 70 + "\n")
 

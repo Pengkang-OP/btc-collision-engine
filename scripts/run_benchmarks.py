@@ -10,13 +10,12 @@
 """
 
 import sys
-import os
 import time
 import json
 import argparse
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional
 
 # 确保项目根目录在路径中
 _root = Path(__file__).resolve().parent.parent
@@ -109,7 +108,6 @@ def bench_address_lookup(duration: float = 10.0, target_count: int = 1000) -> Di
 
 def bench_cpu_engine(duration: float = 15.0) -> Dict[str, Any]:
     """基准测试: CPU 碰撞引擎吞吐量"""
-    import threading
     from src.collision.key_collision_engine import KeyCollisionEngine
 
     results = {"keys_checked": 0, "speed": 0.0, "error": None}
@@ -144,7 +142,7 @@ def bench_cpu_engine(duration: float = 15.0) -> Dict[str, Any]:
 def bench_gpu_engine(duration: float = 15.0) -> Optional[Dict[str, Any]]:
     """基准测试: GPU 碰撞引擎吞吐量（需要 PyOpenCL）"""
     try:
-        import pyopencl
+        pass
     except ImportError:
         return None
 

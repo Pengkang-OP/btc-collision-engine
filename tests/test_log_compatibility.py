@@ -10,20 +10,17 @@ import os
 import sys
 import unittest
 import logging
-import platform
 import tempfile
-import json
-from typing import Dict, Any
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.utils.logger import setup_logger, get_logger, get_sampled_logger
-from src.utils.logging_config import init_logging, get_configured_logger
-from src.utils.log_collection_rules import init_log_collection_rules, get_rule_manager
-from src.utils.log_dependency_manager import init_log_dependencies, check_dependencies
-from src.utils.log_performance_optimizer import get_performance_optimizer, optimize_logger
-from src.utils.log_platform_adapter import get_platform_adapter, get_platform_info
+from src.utils.logger import setup_logger, get_logger, get_sampled_logger  # noqa: E402
+from src.utils.logging_config import init_logging, get_configured_logger  # noqa: E402
+from src.utils.log_collection_rules import init_log_collection_rules  # noqa: E402
+from src.utils.log_dependency_manager import init_log_dependencies, check_dependencies  # noqa: E402
+from src.utils.log_performance_optimizer import get_performance_optimizer  # noqa: E402
+from src.utils.log_platform_adapter import get_platform_adapter, get_platform_info  # noqa: E402
 
 
 class TestLogCompatibility(unittest.TestCase):

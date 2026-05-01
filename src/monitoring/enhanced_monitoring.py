@@ -9,20 +9,14 @@ P1-2修复: 使用MonitorConfig配置对象，解耦配置循环引用
 """
 
 import os
-import sys
 import time
 import threading
-import logging
-import json
-import statistics
-from datetime import datetime
-from typing import Dict, List, Optional, Callable, Any
+from typing import Dict, Optional, Any
 import psutil
 
 # 导入现有模块
 from src.utils import get_configured_logger
 from src.monitoring.monitoring_system import (
-    MonitoringSystem,
     DataCollector,
     DataStorage,
     AnomalyDetector,
@@ -33,7 +27,7 @@ from src.monitoring.monitoring_system import (
 from src.monitoring.data_logger import DataLogger
 
 # P1-2修复：导入配置对象
-from src.monitoring.monitor_config import MonitorConfig, DEFAULT_CONFIG
+from src.monitoring.monitor_config import MonitorConfig
 
 
 class EnhancedMonitoringSystem:
@@ -149,7 +143,7 @@ class EnhancedMonitoringSystem:
         self._report_interval = self.config.report_interval
 
         self.logger.info(
-            f"增强版监控系统初始化完成 "
+            "增强版监控系统初始化完成 "
             f"(monitoring_data={self.config.enable_monitoring_data}, "
             f"config={type(self.config).__name__})"
         )
@@ -315,7 +309,7 @@ class EnhancedMonitoringSystem:
         """获取CPU使用率"""
         try:
             process = psutil.Process(os.getpid())
-            return process.cpu_percent(interval=0.1)  # type: ignore[no-any-return]
+            return float(process.cpu_percent(interval=0.1))
         except (TypeError, ValueError, KeyError):
             return 0.0
 
@@ -324,7 +318,7 @@ class EnhancedMonitoringSystem:
         try:
             process = psutil.Process(os.getpid())
             memory_info = process.memory_info()
-            return memory_info.rss / (1024 * 1024)  # type: ignore[no-any-return]
+            return float(memory_info.rss) / (1024 * 1024)
         except (TypeError, ValueError, KeyError):
             return 0.0
 
@@ -395,6 +389,6 @@ class EnhancedMonitoringSystem:
 
         return {"original_report": original_report, "data_report": data_report}
 
-    def get_data_logger(self) -> DataLogger:
+    def get_data_logger(self) -> Optional[DataLogger]:
         """获取数据日志记录器"""
-        return self.data_logger  # type: ignore[return-value]
+        return self.data_logger

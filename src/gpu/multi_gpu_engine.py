@@ -13,27 +13,26 @@
 - 分布式统计聚合（减少锁竞争，可配置）
 """
 
-import logging
 import time
 import threading
 from typing import Set, Dict, List, Optional, Callable, Any, Union, cast
 
 # P3-5: 统一日志获取
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 
 from ..config.optimization_config import is_feature_enabled
 
 # 根据配置条件导入优化模块
 _aggregator_available = is_feature_enabled("distributed_aggregator")
 
-from .selector import get_gpu_selector
-from .load_balancer import GPULoadBalancer
-from .worker import SingleGPUWorker
-from .data_monitor import DataMonitor
-from .gpu_recovery_manager import GPURecoveryManager
-from .memory_pool import GPUMemoryPool
-from .gpu_config import MultiGPUConfig, GPURecoveryConfig, DataMonitorConfig, WorkerConfig
-from .metrics import get_metrics_collector
+from .selector import get_gpu_selector  # noqa: E402
+from .load_balancer import GPULoadBalancer  # noqa: E402
+from .worker import SingleGPUWorker  # noqa: E402
+from .data_monitor import DataMonitor  # noqa: E402
+from .gpu_recovery_manager import GPURecoveryManager  # noqa: E402
+from .memory_pool import GPUMemoryPool  # noqa: E402
+from .gpu_config import MultiGPUConfig, WorkerConfig  # noqa: E402
+from .metrics import get_metrics_collector  # noqa: E402
 
 if _aggregator_available:
     from .distributed_stats_aggregator import DistributedStatsAggregator
@@ -103,7 +102,7 @@ class MultiGPUCollisionEngine:
         self._total_keys_checked = 0
 
         # 数据监控器
-        self.data_monitor = DataMonitor(config=self.config.data_monitor)  # type: ignore[arg-type]
+        self.data_monitor = DataMonitor(config=cast(Any, self.config.data_monitor))
         self._monitor_enabled = self.config.enable_data_monitor
 
         # GPU恢复管理器
@@ -585,7 +584,7 @@ class MultiGPUCollisionEngine:
             issue: 数据质量问题
         """
         severity = issue.get("severity", "low")
-        issue_type = issue.get("issue_type", "unknown")
+        issue.get("issue_type", "unknown")
         message = issue.get("message", "")
 
         # 根据严重程度采取不同措施
@@ -960,7 +959,7 @@ class MultiGPUCollisionEngine:
 
             # 记录到结构化 metrics（可观测性增强）
             for device_idx, worker_stats in stats["per_device"].items():
-                keys = worker_stats.get("keys_checked", 0)
+                worker_stats.get("keys_checked", 0)
                 throughput = worker_stats.get("throughput", 0)
                 if throughput > 0:
                     self._metrics.record_throughput(device_idx, throughput)
@@ -971,7 +970,7 @@ class MultiGPUCollisionEngine:
 
             # 记录负载均衡器状态
             if self.load_balancer:
-                load_stats = self.load_balancer.get_all_loads()
+                self.load_balancer.get_all_loads()
                 # 记录性能数据到负载均衡器
                 for device_idx, worker_stats in stats["per_device"].items():
                     throughput = worker_stats.get("throughput", 0)
@@ -1005,7 +1004,7 @@ class MultiGPUCollisionEngine:
             # 检查是否需要重平衡
             if self.load_balancer.should_rebalance():
                 logger.info("触发自动负载重平衡")
-                new_weights = self.load_balancer.redistribute_load()
+                self.load_balancer.redistribute_load()
 
                 # 这里可以添加工作负载重新分配的逻辑
                 # 例如，根据新的权重调整工作器的任务范围
@@ -1059,7 +1058,7 @@ class MultiGPUCollisionEngine:
         """析构函数"""
         try:
             self.cleanup()
-        except Exception as cleanup_error:
+        except Exception as cleanup_error:  # noqa: F841
             # A类修复: 析构函数中资源清理失败静默处理
             # 因为此时对象正在销毁，无法做更多处理
             pass

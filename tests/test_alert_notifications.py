@@ -3,18 +3,18 @@
 import pytest
 import sys
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.monitoring.alert_notifications import (
+from src.monitoring.alert_notifications import (  # noqa: E402
     BaseNotifier,
     EmailNotifier,
     WeComWebhookNotifier,
     DingTalkWebhookNotifier,
     SlackWebhookNotifier,
 )
-from src.monitoring.alert_system import AlertRecord, AlertLevel, AlertType
+from src.monitoring.alert_system import AlertRecord, AlertLevel, AlertType  # noqa: E402
 
 
 class TestBaseNotifier:

@@ -7,14 +7,13 @@
 """
 
 import sys
-import io
 from pathlib import Path
 
 # 添加项目根目录到路径
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from tools.check_document_quality import (
+from tools.check_document_quality import (  # noqa: E402
     DocumentQualityChecker,
     ScoringConfig,
     Issue,
@@ -132,7 +131,6 @@ def test_score_bounds():
 
 def test_config_load_save():
     """测试配置加载和保存"""
-    import json
     import tempfile
 
     # 创建默认配置
@@ -183,7 +181,6 @@ def test_issue_type_constants():
 
 def test_config_validation_negative_weight():
     """测试配置验证 - 负权重"""
-    import pytest
 
     try:
         config = ScoringConfig(error_weight=-1.0)

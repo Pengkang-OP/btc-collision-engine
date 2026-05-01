@@ -20,16 +20,16 @@ import os
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine
+from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
 
 
 def test_performance_optimization(batch_size: int, test_duration: int = 30):
     """测试特定批次大小的性能"""
 
-    print(f"\n{'='*80}")
-    print(f"测试批次大小: {batch_size:,} ({batch_size/1024/1024:.2f}M)")
+    print(f"\n{'=' * 80}")
+    print(f"测试批次大小: {batch_size:,} ({batch_size / 1024 / 1024:.2f}M)")
     print(f"测试时长: {test_duration}秒")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
 
     # 目标地址
     targets = {"12ib7dApVFvg82TXKycWBNpN8kFyiAN1dr"}
@@ -92,7 +92,7 @@ def test_performance_optimization(batch_size: int, test_duration: int = 30):
         engine.stop()
 
     # 统计结果
-    print(f"\n[3/4] 统计结果...")
+    print("\n[3/4] 统计结果...")
     if speeds:
         avg_speed = sum(speeds) / len(speeds)
         max_speed = max(speeds)
@@ -108,14 +108,14 @@ def test_performance_optimization(batch_size: int, test_duration: int = 30):
 
     # 检查内存池状态
     final_stats = pool.get_stats()
-    print(f"\n  最终内存池状态:")
+    print("\n  最终内存池状态:")
     print(f"    已分配: {final_stats['total_allocated']}")
     print(f"    已复用: {final_stats['total_reused']}")
-    print(f"    复用率: {final_stats['reuse_rate']*100:.1f}%")
+    print(f"    复用率: {final_stats['reuse_rate'] * 100:.1f}%")
     print(f"    池中缓冲区: {final_stats['pooled_buffers']}")
     print(f"    当前内存: {final_stats['current_memory_mb']:.1f} MB")
 
-    print(f"\n[4/4] 清理资源...")
+    print("\n[4/4] 清理资源...")
     engine.cleanup()
     print("  ✅ 资源已清理")
 
@@ -157,37 +157,37 @@ def main():
         time.sleep(2)
 
     # 总结
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("性能测试结果总结")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
 
     print(f"\n{'批次大小':<15} {'平均速度':<15} {'最高速度':<15} {'复用率':<10} {'显存':<10}")
     print("-" * 80)
 
     for r in results:
         print(
-            f"{r['batch_size']/1024/1024:>8.2f}M  "
+            f"{r['batch_size'] / 1024 / 1024:>8.2f}M  "
             f"{r['avg_speed']:>12,.0f}  "
             f"{r['max_speed']:>12,.0f}  "
-            f"{r['reuse_rate']*100:>8.1f}%  "
+            f"{r['reuse_rate'] * 100:>8.1f}%  "
             f"{r['memory_mb']:>8.1f}MB"
         )
 
     # 找到最佳结果
     if results:
         best = max(results, key=lambda x: x["avg_speed"])
-        print(f"\n🏆 最佳配置: {best['batch_size']/1024/1024:.2f}M批次")
+        print(f"\n🏆 最佳配置: {best['batch_size'] / 1024 / 1024:.2f}M批次")
         print(f"   平均速度: {best['avg_speed']:,.0f} keys/s")
 
         if best["avg_speed"] > 600000:
-            print(f"   ✅ 突破600K目标！超出{(best['avg_speed']-600000)/600000*100:.1f}%")
+            print(f"   ✅ 突破600K目标！超出{(best['avg_speed'] - 600000) / 600000 * 100:.1f}%")
         else:
             gap = 600000 - best["avg_speed"]
-            print(f"   ⚠️ 距离600K目标还差{gap:,.0f} keys/s ({gap/600000*100:.1f}%)")
+            print(f"   ⚠️ 距离600K目标还差{gap:,.0f} keys/s ({gap / 600000 * 100:.1f}%)")
 
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("测试完成")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
 
 
 if __name__ == "__main__":

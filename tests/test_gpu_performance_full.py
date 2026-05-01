@@ -24,8 +24,8 @@ from datetime import datetime
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_PROJECT_ROOT))
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine
-from src.collision.targets.resolver import TargetResolver
+from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
+from src.collision.targets.resolver import TargetResolver  # noqa: E402
 
 
 class GPUPerformanceTester:
@@ -140,7 +140,7 @@ class GPUPerformanceTester:
         print(f"✓ GPU设备: {device_info.get('name', 'Unknown')}")
         print(f"✓ 显存: {global_mem_gb:.2f} GB")
         print(f"✓ 计算单元: {compute_units}")
-        print(f"✓ 显存效率: {memory_efficiency*100:.0f}%")
+        print(f"✓ 显存效率: {memory_efficiency * 100:.0f}%")
         print(f"✓ 批次大小: {engine.batch_size:,}")
         print(f"✓ 初始化时间: {init_time:.2f}秒")
 
@@ -195,7 +195,7 @@ class GPUPerformanceTester:
                 "speed_samples": len(speeds),
             }
 
-            print(f"\n  基准测试结果:")
+            print("\n  基准测试结果:")
             print(f"    总检查数: {total_keys:,} keys")
             print(f"    平均速度: {avg_speed:,.2f} keys/s")
             print(f"    峰值速度: {max_speed:,.2f} keys/s")
@@ -265,7 +265,7 @@ class GPUPerformanceTester:
                 "max_memory_mb": max_memory,
             }
 
-            print(f"\n  压力测试结果:")
+            print("\n  压力测试结果:")
             print(f"    总检查数: {total_keys:,} keys")
             print(f"    平均速度: {avg_speed:,.2f} keys/s")
             print(f"    峰值速度: {max_speed:,.2f} keys/s")
@@ -299,10 +299,10 @@ class GPUPerformanceTester:
             if speeds:
                 avg = statistics.mean([s for s in speeds if s > 0])
                 all_speeds.append(avg)
-                print(f"  测试 {i+1}/{test_count}: {avg:,.2f} keys/s")
+                print(f"  测试 {i + 1}/{test_count}: {avg:,.2f} keys/s")
             else:
                 all_speeds.append(0)
-                print(f"  测试 {i+1}/{test_count}: 0.00 keys/s")
+                print(f"  测试 {i + 1}/{test_count}: 0.00 keys/s")
 
             time.sleep(1)  # 等待资源释放
 
@@ -326,7 +326,7 @@ class GPUPerformanceTester:
                 "individual_results": all_speeds,
             }
 
-            print(f"\n  稳定性结果:")
+            print("\n  稳定性结果:")
             print(f"    平均速度: {overall_avg:,.2f} keys/s")
             print(f"    标准差: {std_dev:,.2f}")
             print(f"    变异系数: {cv:.2f}% (越低越稳定)")
@@ -338,7 +338,7 @@ class GPUPerformanceTester:
         print("=" * 80)
 
         # 设备信息
-        print(f"\n📊 GPU设备信息:")
+        print("\n📊 GPU设备信息:")
         print(f"  设备名称: {self.results['device_info'].get('name', 'N/A')}")
         print(f"  厂商: {self.results['device_info'].get('vendor', 'N/A')}")
         print(f"  显存: {self.results['device_info'].get('global_mem_gb', 0):.2f} GB")
@@ -364,15 +364,15 @@ class GPUPerformanceTester:
 
         # 稳定性测试
         if "overall_avg_speed" in self.results.get("stability", {}):
-            print(f"\n📈 稳定性测试:")
+            print("\n📈 稳定性测试:")
             print(f"  平均速度: {self.results['stability']['overall_avg_speed']:>12,.2f} keys/s")
             print(f"  变异系数: {self.results['stability']['coefficient_of_variation']:>12.2f}%")
 
         # 综合评估
-        print(f"\n⭐ 综合评估:")
+        print("\n⭐ 综合评估:")
 
         benchmark_speed = self.results.get("benchmark", {}).get("avg_speed", 0)
-        stress_speed = self.results.get("stress_test", {}).get("avg_speed", 0)
+        self.results.get("stress_test", {}).get("avg_speed", 0)
         stability_cv = self.results.get("stability", {}).get("coefficient_of_variation", 100)
 
         # 性能评级

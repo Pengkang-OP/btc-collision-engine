@@ -12,8 +12,7 @@
 import pytest
 import time
 import logging
-from unittest.mock import Mock, MagicMock, patch
-from typing import List, Dict
+from unittest.mock import Mock, patch
 
 logger = logging.getLogger(__name__)
 
@@ -141,7 +140,6 @@ class TestGPUDeviceSelection:
 
     def test_select_device_by_index(self):
         """测试根据索引选择设备"""
-        from src.gpu.device_helper import GPUDeviceHelper
 
         devices = [
             {"name": "GPU 0", "device": Mock()},
@@ -272,7 +270,7 @@ class TestGPUFaultRecovery:
         timeout_seconds = 30
 
         # 模拟超时
-        start_time = time.time()
+        time.time()
         timeout_occurred = False
 
         # 模拟长时间操作

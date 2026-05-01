@@ -19,28 +19,25 @@ import time
 import pytest
 
 from io import StringIO
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 # 确保项目根目录在 sys.path
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
-from src.cli.main import parse_args, validate_args, load_targets, format_progress
-from src.cli.validation import validate_args as _validate_args
-from src.cli.advanced_features import (
+from src.cli.main import parse_args, validate_args, load_targets, format_progress  # noqa: E402
+from src.cli.advanced_features import (  # noqa: E402
     apply_template,
     export_progress_data,
-    export_matches,
     GPUErrorHandler,
 )
-from src.cli.config_migration import (
+from src.cli.config_migration import (  # noqa: E402
     detect_config_version,
     migrate_config,
     backup_config,
 )
-from src.collision.collision_stats import CollisionStats
+from src.collision.collision_stats import CollisionStats  # noqa: E402
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 通用辅助函数

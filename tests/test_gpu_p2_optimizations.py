@@ -9,8 +9,7 @@
 import pytest
 import time
 import json
-from unittest.mock import Mock, patch, MagicMock
-from typing import Dict
+from unittest.mock import Mock
 
 # 导入被测试模块
 from src.gpu.benchmark_suite import GPUBenchmarkSuite, BenchmarkResult, BenchmarkType
@@ -138,7 +137,7 @@ class TestGPUAutoTuner:
         """测试初始化"""
         assert self.tuner.gpu_engine == self.mock_engine
         assert self.tuner.phase == TuningPhase.EXPLORATION
-        assert self.tuner.is_tuning == False
+        assert self.tuner.is_tuning is False
 
     def test_start_tuning(self):
         """测试开始调优"""
@@ -162,7 +161,7 @@ class TestGPUAutoTuner:
     def test_should_re_tune(self):
         """测试是否应该重新调优"""
         # 初始状态不应该重新调优
-        assert self.tuner.should_re_tune() == False
+        assert self.tuner.should_re_tune() is False
 
         # 设置上次调优时间为很久以前
         self.tuner.last_tuning_time = time.time() - 7200  # 2 小时前
@@ -186,7 +185,7 @@ class TestGPUAutoTuner:
             )
 
         # 现在应该重新调优
-        assert self.tuner.should_re_tune() == True
+        assert self.tuner.should_re_tune() is True
 
     def test_monitor_performance(self):
         """测试性能监控"""
@@ -377,7 +376,7 @@ class TestIntegration:
 
         # 基准测试
         benchmark = GPUBenchmarkSuite(mock_engine)
-        results = benchmark.benchmark_batch_execution(iterations=2)
+        results = benchmark.benchmark_batch_execution(iterations=2)  # noqa: F841
 
         # 使用基准测试结果指导调优
         tuner = GPUAutoTuner(mock_engine)

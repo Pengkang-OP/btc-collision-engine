@@ -12,16 +12,16 @@ import argparse
 import hashlib
 import logging
 import sys
-from typing import Any, Optional, Set, Tuple
+from typing import Any, Optional, Set, Tuple, cast
 
 # P3-3: 统一回调类型别名
 from src.collision.types import ProgressCallback, MatchCallback
 
 logger = logging.getLogger(__name__)
 
-from src.collision import KeyCollisionEngine
-from src.cli.constants import SEPARATOR_EQUAL
-from src.i18n import _t
+from src.collision import KeyCollisionEngine  # noqa: E402
+from src.cli.constants import SEPARATOR_EQUAL  # noqa: E402
+from src.i18n import _t  # noqa: E402
 
 # GPU 引擎延迟导入（pyopencl 可选依赖）
 try:
@@ -31,8 +31,8 @@ try:
     GPU_AVAILABLE = True
 except ImportError:
     GPU_AVAILABLE = False
-    GPUCollisionEngine = None  # type: ignore[assignment]
-    MultiGPUCollisionEngine = None  # type: ignore[assignment]
+    GPUCollisionEngine: Any = None
+    MultiGPUCollisionEngine: Any = None
 
 
 def on_match_callback(sensitive_mode: str = "full") -> MatchCallback:
@@ -54,9 +54,9 @@ def on_match_callback(sensitive_mode: str = "full") -> MatchCallback:
 
         print("\n" + SEPARATOR_EQUAL)
         print("🎯 " + _t("cli.engine.match_found"))
-        print(f"  " + _t("cli.engine.match_address") + f" : {address}")
-        print(f"  " + _t("cli.engine.match_privkey") + f" : {pk_display}")
-        print(f"  " + _t("cli.engine.match_wif") + f"      : {wif_display}")
+        print("  " + _t("cli.engine.match_address") + f" : {address}")
+        print("  " + _t("cli.engine.match_privkey") + f" : {pk_display}")
+        print("  " + _t("cli.engine.match_wif") + f"      : {wif_display}")
         print(SEPARATOR_EQUAL + "\n")
 
     return _callback
@@ -97,7 +97,7 @@ def build_engine(
         except Exception as e:
             logger.error(f"Multi-GPU initialization failed: {e}")
             print(f"\n[ERROR] Multi-GPU initialization failed: {e}", file=sys.stderr)
-            print(f"  Check GPU drivers and OpenCL environment.", file=sys.stderr)
+            print("  Check GPU drivers and OpenCL environment.", file=sys.stderr)
             sys.exit(1)
 
     # ── 单GPU 模式 ──────────────────────────────────────────────
@@ -110,7 +110,7 @@ def build_engine(
             engine = GPUCollisionEngine(
                 targets=targets,
                 device_index=getattr(args, "gpu_device", -1),
-                batch_size=getattr(args, "gpu_batch_size", None),  # type: ignore[arg-type]
+                batch_size=cast(int, getattr(args, "gpu_batch_size", None)),
                 on_progress=on_progress if on_progress else lambda s: None,
                 on_match=match_cb,
                 checkpoint_enabled=args.checkpoint,
@@ -123,20 +123,20 @@ def build_engine(
             return engine, "gpu"
         except RuntimeError as e:
             error_msg = str(e)
-            print(f"\n[ERROR] GPU initialization failed", file=sys.stderr)
+            print("\n[ERROR] GPU initialization failed", file=sys.stderr)
             print(f"  {error_msg}", file=sys.stderr)
-            print(f"\nSuggestions:", file=sys.stderr)
-            print(f"  1. Check GPU driver installation", file=sys.stderr)
-            print(f"  2. Verify PyOpenCL environment", file=sys.stderr)
+            print("\nSuggestions:", file=sys.stderr)
+            print("  1. Check GPU driver installation", file=sys.stderr)
+            print("  2. Verify PyOpenCL environment", file=sys.stderr)
             print(
-                f"  3. Try CPU mode: python key_collision_cli.py -t <address> -m random",
+                "  3. Try CPU mode: python key_collision_cli.py -t <address> -m random",
                 file=sys.stderr,
             )
             sys.exit(1)
         except Exception as e:
             logger.error(f"GPU initialization error: {e}")
             print(f"\n[ERROR] GPU initialization error: {e}", file=sys.stderr)
-            print(f"  Try CPU mode instead.", file=sys.stderr)
+            print("  Try CPU mode instead.", file=sys.stderr)
             sys.exit(1)
 
     # ── CPU 模式（默认）────────────────────────────────────────

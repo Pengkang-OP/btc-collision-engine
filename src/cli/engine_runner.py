@@ -19,12 +19,11 @@ _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
-from src.i18n import _t
-from src.cli.engine_builder import build_engine
-from src.cli.progress import format_progress
-from src.cli.constants import SEPARATOR_DASHED
-from src.cli.output import CLIOutput
-from src.cli.stats_reporter import _print_detailed_stats
+from src.i18n import _t  # noqa: E402
+from src.cli.engine_builder import build_engine  # noqa: E402
+from src.cli.progress import format_progress  # noqa: E402
+from src.cli.output import CLIOutput  # noqa: E402
+from src.cli.stats_reporter import _print_detailed_stats  # noqa: E402
 
 # ── 运行时日志抑制 ───────────────────────────────────────────────────
 _suppressed_handlers: list = []  # 保存被抑制的 (handler, original_level) 对
@@ -77,7 +76,7 @@ def _setup_and_start_engine(
         try:
             from ..monitoring.alert_system import AlertSystem
         except ImportError:
-            AlertSystem = None  # type: ignore[misc,assignment]
+            AlertSystem: Any = None
 
     if AlertSystem is not None:
         try:
@@ -87,7 +86,7 @@ def _setup_and_start_engine(
             def _on_alert(alert_record: Any) -> None:
                 level = getattr(alert_record.level, "value", str(alert_record.level)).upper()
                 msg = getattr(alert_record, "message", str(alert_record))
-                print(f"\n[WARN] [" + _t("common.warning") + f"/{level}] {msg}")
+                print("\n[WARN] [" + _t("common.warning") + f"/{level}] {msg}")
 
             alert_system.add_alert_callback(_on_alert)
             logger.info("告警系统已集成：%d 条规则", len(alert_system.rules))
@@ -148,7 +147,7 @@ def _run_collision_loop(
 
     output = CLIOutput.get_instance()
     start_time = time.time()
-    last_hint_time = start_time  # 定期重复快捷键提示计时
+    last_hint_time = start_time  # 定期重复快捷键提示计时  # noqa: F841
     paused = False
     pause_start: Optional[float] = None
     total_pause_time = 0.0
@@ -229,10 +228,10 @@ def _run_collision_loop(
                 m_t, s = divmod(rem, 60)
                 elapsed_fmt = f"{h:02d}:{m_t:02d}:{s:02d}"
                 speed_fmt = (
-                    f"{throughput/1_000_000:.2f}M/s"
+                    f"{throughput / 1_000_000:.2f}M/s"
                     if throughput >= 1_000_000
                     else (
-                        f"{throughput/1_000:.1f}K/s"
+                        f"{throughput / 1_000:.1f}K/s"
                         if throughput >= 1_000
                         else f"{throughput:.0f}/s"
                     )

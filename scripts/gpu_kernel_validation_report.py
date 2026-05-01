@@ -21,9 +21,9 @@ def print_header(title):
 
 def print_section(title):
     """打印章节"""
-    print(f"\n{'─'*80}")
+    print(f"\n{'─' * 80}")
     print(f"  {title}")
-    print(f"{'─'*80}")
+    print(f"{'─' * 80}")
 
 
 def print_result(test_name, passed, detail=""):
@@ -88,7 +88,7 @@ def main():
             print_result("GPU设备检测", True, f"发现 {len(gpu_devices)} 个GPU")
             for i, dev in enumerate(gpu_devices[:3]):
                 mem_gb = dev.global_mem_size / (1024**3)
-                print(f"         {i+1}. {dev.name} ({mem_gb:.1f} GB)")
+                print(f"         {i + 1}. {dev.name} ({mem_gb:.1f} GB)")
             all_results.append(True)
         else:
             print_result("GPU设备检测", False, "未发现GPU设备")
@@ -395,18 +395,18 @@ def main():
     print(f"\n  总测试数: {total}")
     print(f"  通过: {passed} ✅")
     print(f"  失败: {failed} {'❌' if failed > 0 else ''}")
-    print(f"  通过率: {passed/total*100:.1f}%")
+    print(f"  通过率: {passed / total * 100:.1f}%")
 
     if failed == 0:
-        print(f"\n  🎉 所有测试通过！GPU内核完全可用！")
-        print(f"  ✅ 可以立即使用GPU模式运行碰撞引擎")
-        print(f"\n  示例命令:")
-        print(f"    python -m src.cli.main --mode random_search --gpu")
+        print("\n  🎉 所有测试通过！GPU内核完全可用！")
+        print("  ✅ 可以立即使用GPU模式运行碰撞引擎")
+        print("\n  示例命令:")
+        print("    python -m src.cli.main --mode random_search --gpu")
     else:
         print(f"\n  ⚠️  {failed} 个测试未通过")
-        print(f"  请检查失败项并重试")
+        print("  请检查失败项并重试")
 
-    print(f"\n{'='*80}\n")
+    print(f"\n{'=' * 80}\n")
 
     return 0 if failed == 0 else 1
 

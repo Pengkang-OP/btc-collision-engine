@@ -69,6 +69,6 @@ warnings.warn(
     stacklevel=2,
 )
 
-from .targets.resolver import TargetResolver
+from .targets.resolver import TargetResolver  # noqa: E402
 
 __all__ = ["TargetResolver"]

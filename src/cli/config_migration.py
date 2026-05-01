@@ -11,7 +11,7 @@ import json
 import shutil
 import time
 from pathlib import Path
-from typing import Dict, Any, Optional, Tuple, List
+from typing import Dict, Any, Tuple, List
 
 from src.i18n import _t
 
@@ -324,7 +324,7 @@ def migrate_config_file(config_path: str = "config.json") -> bool:
     from src.cli.constants import TAG_OK, TAG_ERROR, TAG_TIP
 
     print(f"\n{'=' * 60}")
-    print(f"  " + _t("cli.migration.title") + f"  (目标版本: {CONFIG_VERSION})")
+    print("  " + _t("cli.migration.title") + f"  (目标版本: {CONFIG_VERSION})")
     print(f"{'=' * 60}")
 
     # ── 步骤 1: 读取配置文件 ────────────────────────────────────────────────
@@ -349,15 +349,15 @@ def migrate_config_file(config_path: str = "config.json") -> bool:
 
     # ── 步骤 2: 检测当前版本 ────────────────────────────────────────────────
     current_version = detect_config_version(config)
-    print(f"\n[Info] " + _t("cli.migration.current_version", version=current_version))
-    print(f"[Info] " + _t("cli.migration.target_version", version=CONFIG_VERSION))
+    print("\n[Info] " + _t("cli.migration.current_version", version=current_version))
+    print("[Info] " + _t("cli.migration.target_version", version=CONFIG_VERSION))
 
     if current_version == CONFIG_VERSION:
         print(f"\n{TAG_OK} " + _t("cli.migration.already_latest", version=CONFIG_VERSION))
         return True
 
     if current_version == "unknown":
-        print(f"[Warn] " + _t("cli.migration.unknown_version_warn"))
+        print("[Warn] " + _t("cli.migration.unknown_version_warn"))
 
     # ── 步骤 3: 备份原始配置 ────────────────────────────────────────────────
     try:
@@ -375,7 +375,7 @@ def migrate_config_file(config_path: str = "config.json") -> bool:
         print(f"{TAG_ERROR} " + _t("errors.unexpected", error=str(e)))
         return False
 
-    print(f"\n[Info] " + _t("cli.migration.changelog_title") + ":")
+    print("\n[Info] " + _t("cli.migration.changelog_title") + ":")
     for entry in changelog:
         print(f"  {entry}")
 

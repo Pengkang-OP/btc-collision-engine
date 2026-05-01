@@ -15,7 +15,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.collision.key_collision_engine import KeyCollisionEngine
+from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
 
 
 class TestLiveRangeCountFix(unittest.TestCase):
@@ -46,7 +46,7 @@ class TestLiveRangeCountFix(unittest.TestCase):
 
         # 追踪 _live_range_count 的中间值
         live_counts = []
-        original_live_count = self.engine._live_range_count
+        self.engine._live_range_count
 
         self.engine.start(mode="random")
         time.sleep(1.5)  # 等待一些批次完成
@@ -169,7 +169,9 @@ class TestLiveRangeCountFix(unittest.TestCase):
 
         # 检查："_live_range_count += batch_count" 只应出现在注释中
         lines = worker_source.split("\n")
-        exec_lines = [l for l in lines if "self._live_range_count += batch_count" in l]
+        exec_lines = [
+            l for l in lines if "self._live_range_count += batch_count" in l  # noqa: E741
+        ]  # noqa: E741, E501
 
         for line in exec_lines:
             stripped = line.strip()
@@ -191,7 +193,7 @@ class TestLiveRangeCountFix(unittest.TestCase):
             "缺少已完成worker live计数转移代码",
         )
 
-        print(f"\n[P1-5-E ✓] 代码中无重复提交，余数提交和计数转移代码均存在")
+        print("\n[P1-5-E ✓] 代码中无重复提交，余数提交和计数转移代码均存在")
 
     def test_progress_callback_counts_monotonic(self):
         """P1-5-F: 进度回调中的total_checked单调递增（不翻倍）"""
@@ -218,7 +220,7 @@ class TestLiveRangeCountFix(unittest.TestCase):
                 self.assertGreaterEqual(
                     progress_counts[i],
                     progress_counts[i - 1],
-                    f"进度计数应单调递增: {progress_counts[i-1]} -> {progress_counts[i]}",
+                    f"进度计数应单调递增: {progress_counts[i - 1]} -> {progress_counts[i]}",
                 )
 
             # 检查没有异常跳跃（翻倍迹象）
@@ -233,7 +235,7 @@ class TestLiveRangeCountFix(unittest.TestCase):
                     ratio,
                     5.0,
                     f"进度计数跳跃异常 (ratio={ratio:.2f}): "
-                    f"{progress_counts[i-1]} -> {progress_counts[i]}",
+                    f"{progress_counts[i - 1]} -> {progress_counts[i]}",
                 )
 
             print(f"\n[P1-5-F ✓] 进度计数单调递增: {progress_counts}")

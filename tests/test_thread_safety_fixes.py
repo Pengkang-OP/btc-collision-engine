@@ -204,7 +204,7 @@ class TestThreadSafetyFixes:
         ), f"错误计数不准确: 期望{expected_count}, 实际{actual_count}"
 
         # 输出性能信息
-        print(f"\nrecord_worker_error并发测试完成:")
+        print("\nrecord_worker_error并发测试完成:")
         print(f"  线程数: {thread_count}")
         print(f"  每线程迭代: {iterations}")
         print(f"  总调用次数: {expected_count}")
@@ -261,8 +261,8 @@ class TestThreadSafetyFixes:
             call_count[0] == 1
         ), f"限频失效: 在{elapsed:.3f}秒内记录了{call_count[0]}次（期望1次）"
 
-        print(f"\n错误日志限频测试完成:")
-        print(f"  触发次数: 10")
+        print("\n错误日志限频测试完成:")
+        print("  触发次数: 10")
         print(f"  实际记录: {call_count[0]}")
         print(f"  限频间隔: {engine._error_log_interval}秒")
         print(f"  测试时长: {elapsed:.3f}秒")

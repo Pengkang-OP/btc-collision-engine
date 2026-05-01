@@ -5,7 +5,7 @@ import json
 import time
 import threading
 from datetime import datetime
-from typing import Dict, List, Optional, Set, Any
+from typing import Dict, List, Optional, Set, Any, cast, cast  # noqa: F811
 
 # 导入日志配置
 from ..utils import init_logging, get_configured_logger
@@ -31,8 +31,7 @@ class CheckpointManager:
         """检查pywin32是否可用（类级别的一次性检查）"""
         if cls._has_win32_security is None:
             try:
-                import win32security
-                import ntsecuritycon
+                pass
 
                 cls._has_win32_security = True
             except ImportError:
@@ -60,9 +59,9 @@ class CheckpointManager:
         self._lock = threading.Lock()  # 线程锁保护文件操作
         self._dirty = False  # 脏标志，标记是否有未保存的更改
         self._buffer: Optional[Dict[str, Any]] = None  # 缓冲区，用于批量保存
-        logger.debug(
-            f"CheckpointManager 初始化: 文件={self.filepath}, 自动保存间隔={auto_save_interval}秒, pywin32可用={self._has_win32_security}"
-        )
+        logger.debug(f"CheckpointManager 初始化: 文件={
+            self.filepath}, 自动保存间隔={auto_save_interval}秒, pywin32可用={
+            self._has_win32_security}")
 
     def save(
         self,
@@ -154,7 +153,7 @@ class CheckpointManager:
             if not PlatformUtils.is_windows():
                 try:
                     os.chmod(temp_filepath, 0o600)
-                    logger.debug(f"已设置临时文件权限: 0o600")
+                    logger.debug("已设置临时文件权限: 0o600")
                 except OSError as e:
                     logger.debug(f"临时文件权限设置失败（非致命）: {e}")
 
@@ -168,7 +167,7 @@ class CheckpointManager:
                 if not PlatformUtils.is_windows():
                     # Linux/macOS: 设置为仅所有者可读写
                     os.chmod(self.filepath, 0o600)
-                    logger.debug(f"已设置文件权限: 0o600 (仅所有者可读写)")
+                    logger.debug("已设置文件权限: 0o600 (仅所有者可读写)")
                 else:
                     # Windows: 尝试设置ACL（仅所有者可访问）
                     if self._has_win32_security:
@@ -214,7 +213,7 @@ class CheckpointManager:
                                     "icacls",
                                     self.filepath,
                                     "/inheritance:r",  # 移除继承
-                                    f"/grant:r",
+                                    "/grant:r",
                                     f"{username}:F",  # 授予当前用户完全控制权限
                                     "/Q",  # 静默执行
                                 ]
@@ -226,7 +225,7 @@ class CheckpointManager:
                                     )
                                 else:
                                     logger.warning(f"icacls权限设置失败: {result.stderr}")
-                            except Exception as e:
+                            except Exception:
                                 # icacls命令也失败，跳过Windows权限设置
                                 logger.debug("icacls命令执行失败，跳过Windows权限设置")
                     else:
@@ -242,7 +241,7 @@ class CheckpointManager:
                                 "icacls",
                                 self.filepath,
                                 "/inheritance:r",  # 移除继承
-                                f"/grant:r",
+                                "/grant:r",
                                 f"{username}:F",  # 授予当前用户完全控制权限
                                 "/Q",  # 静默执行
                             ]
@@ -252,7 +251,7 @@ class CheckpointManager:
                                 logger.debug("已使用icacls设置Windows文件权限（仅当前用户可访问）")
                             else:
                                 logger.warning(f"icacls权限设置失败: {result.stderr}")
-                        except Exception as e:
+                        except Exception:
                             # icacls命令也失败，跳过Windows权限设置
                             logger.debug("pywin32未安装且icacls命令执行失败，跳过Windows权限设置")
             except Exception as e:
@@ -264,9 +263,10 @@ class CheckpointManager:
 
             self._last_save_time = time.time()
             self._dirty = False
-            logger.debug(
-                f"断点已保存: {self.filepath}, 位置={self._buffer.get('current_position')}, 已检查={self._buffer.get('total_checked')}"
-            )
+            logger.debug(f"断点已保存: {
+                self.filepath}, 位置={
+                self._buffer.get('current_position')}, 已检查={
+                self._buffer.get('total_checked')}")
         except PermissionError as e:
             logger.error(f"保存断点失败（权限不足）: {e}")
             logger.error(f"文件路径: {self.filepath}")
@@ -334,7 +334,7 @@ class CheckpointManager:
                     f"断点已加载: {self.filepath}, 模式={data.get('mode')}, "
                     f"已检查={data.get('total_checked', 0)}, 匹配数={len(data.get('matches', []))}"
                 )
-                return data  # type: ignore[no-any-return]
+                return cast(Dict[str, Any], data)
             except FileNotFoundError:
                 logger.debug(f"断点文件不存在: {self.filepath}")
                 return None

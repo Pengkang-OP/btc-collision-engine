@@ -7,15 +7,16 @@
 提供实时数据采集、分析和告警功能。
 """
 
+from __future__ import annotations
+
 import os
 import sys
 import time
 import threading
-import logging
 import json
 import statistics
 from datetime import datetime
-from typing import Dict, List, Optional, Callable, Any
+from typing import Dict, List, Optional, Any, TYPE_CHECKING  # noqa: F401
 import psutil
 
 # P3-10: 高性能JSON序列化
@@ -43,7 +44,7 @@ class MonitoringData:
         }
         self.system: Dict[str, Any] = {
             "os": os.name,
-            "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+            "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",  # noqa: E501
             "pid": os.getpid(),
             "uptime": 0.0,  # 系统运行时间
         }
@@ -145,7 +146,10 @@ class DataCollector:
         uptime = time.time() - self.start_time
         return {
             "os": os.name,
-            "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+            "python_version": f"{
+                sys.version_info.major}.{
+                sys.version_info.minor}.{
+                sys.version_info.micro}",
             "pid": os.getpid(),
             "uptime": uptime,
         }
@@ -277,7 +281,6 @@ class DataStorage:
             sample_rate: 采样率，0.1表示保留10%的数据（默认0.1）
         """
         try:
-            import gzip
             from datetime import datetime, timedelta
 
             # 计算截止日期
@@ -337,7 +340,7 @@ class DataStorage:
 
             logger.info(
                 f"数据压缩完成: {len(old_data)}条旧数据 -> {len(compressed_data)}条 "
-                f"(采样率{sample_rate*100:.0f}%), 保留{len(new_data)}条新数据"
+                f"(采样率{sample_rate * 100:.0f}%), 保留{len(new_data)}条新数据"
             )
 
         except Exception as e:
@@ -451,7 +454,7 @@ class DataStorage:
                 if isinstance(data, list):
                     return data
                 else:
-                    logger.warning(f"历史数据格式错误，重置为空列表")
+                    logger.warning("历史数据格式错误，重置为空列表")
                     return []
         except json.JSONDecodeError as e:
             # JSON文件损坏，尝试恢复
@@ -747,9 +750,10 @@ class MonitoringAlertAdapter:
         # 打印告警
         level_color = "\033[91m" if alert["level"] == "critical" else "\033[93m"
         reset_color = "\033[0m"
-        print(
-            f"{level_color}[ALERT] {datetime.fromtimestamp(alert['timestamp']).strftime('%Y-%m-%d %H:%M:%S')} - {alert['message']}{reset_color}"
-        )
+        print(f"{level_color}[ALERT] {
+            datetime.fromtimestamp(
+                alert['timestamp']).strftime('%Y-%m-%d %H:%M:%S')} - {
+            alert['message']}{reset_color}")
 
         # 记录到日志
         logger.warning(f"ALERT: {alert['message']} - Details: {fast_dumps(anomaly)}")
@@ -857,7 +861,7 @@ class ReportGenerator:
         # 如果系统跨时区部署，建议使用UTC时区：
         #   from datetime import timezone
         #   today = datetime.now(timezone.utc).date()
-        #   today_start_ts = datetime.combine(today, datetime.min.time(), tzinfo=timezone.utc).timestamp()
+        #   today_start_ts = datetime.combine(today, datetime.min.time(), tzinfo=timezone.utc).timestamp()  # noqa: E501
         today = datetime.now().date()
         # 计算今天的开始时间戳（避免每次都调用datetime.fromtimestamp）
         today_start_ts = datetime.combine(today, datetime.min.time()).timestamp()
@@ -1072,7 +1076,7 @@ class MonitoringSystem:
         self.report_generator = ReportGenerator(self.storage, self.detector)
 
         # 集成日志监控系统
-        self.log_integrator: Optional["LogMonitoringIntegrator"] = None  # type: ignore[name-defined]
+        self.log_integrator: Optional["LogMonitoringIntegrator"] = None  # noqa: F821
         try:
             from .log_monitoring_integrator import get_log_monitoring_integrator
 

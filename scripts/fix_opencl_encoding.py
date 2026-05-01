@@ -3,7 +3,6 @@ Fix encoding issues in OpenCL kernel files.
 Replace all non-ASCII characters (Chinese comments) with English equivalents.
 """
 
-import re
 import os
 
 # Map of Chinese text -> English translation
@@ -299,7 +298,7 @@ REPLACEMENTS = [
     ("4. 最终转换到仿射坐标（1次mod_inverse）", "4. Final conversion to affine (1 mod_inverse)"),
     (
         "precomp_table 布局: [G1x(8 uint), G1y(8 uint), G2x(8 uint), G2y(8 uint), ..., G31x, G31y]",
-        "precomp_table layout: [G1x(8 uint), G1y(8 uint), G2x(8 uint), G2y(8 uint), ..., G31x, G31y]",
+        "precomp_table layout: [G1x(8 uint), G1y(8 uint), G2x(8 uint), G2y(8 uint), ..., G31x, G31y]",  # noqa: E501
     ),
     ("共 31\u00d72\u00d78 = 496 个 uint32", "Total: 31x2x8 = 496 uint32"),
     ("共 31×2×8 = 496 个 uint32", "Total: 31x2x8 = 496 uint32"),
@@ -356,7 +355,7 @@ REPLACEMENTS = [
     ),
     (
         "RIPEMD-160 轮常量（左路: KL, 右路: KR），存入__constant内存以提升访问性能",
-        "RIPEMD-160 round constants (left: KL, right: KR), stored in __constant memory for performance",
+        "RIPEMD-160 round constants (left: KL, right: KR), stored in __constant memory for performance",  # noqa: E501
     ),
     ("左路第1轮 (0-15)", "Left path round 1 (0-15)"),
     ("左路第2轮 (16-31)", "Left path round 2 (16-31)"),
@@ -441,7 +440,7 @@ REPLACEMENTS = [
     ("Hash160(公钥) -> 20 字节", "Hash160(pubkey) -> 20 bytes"),
     (
         "与所有目标 Hash160 比对（uint32向量化：5次uint比对替代20次uchar比对，带渐进式early-exit）",
-        "Compare against all target Hash160 (uint32 vectorized: 5 uint compares vs 20 uchar, with progressive early-exit)",
+        "Compare against all target Hash160 (uint32 vectorized: 5 uint compares vs 20 uchar, with progressive early-exit)",  # noqa: E501
     ),
     (
         "预组装hash160_result为5个uint32（小端序）",
@@ -451,7 +450,7 @@ REPLACEMENTS = [
     # batch_check_local_mem kernel
     (
         "主内核(local memory版): 批量检查私钥 - 将目标Hash160缓存到工作组shared memory",
-        "Main kernel (local memory): batch check private keys - cache target Hash160 in workgroup shared memory",
+        "Main kernel (local memory): batch check private keys - cache target Hash160 in workgroup shared memory",  # noqa: E501
     ),
     ("输入: num_keys * 8 uints", "Input: num_keys * 8 uints"),
     ("输出: num_keys 个标志", "Output: num_keys flags"),
@@ -468,7 +467,7 @@ REPLACEMENTS = [
     ("检查私钥是否为 0", "Check if private key is zero"),
     (
         "与所有目标 Hash160 比对（local memory版，uint32向量化：5次uint比对替代20次uchar比对，带渐进式early-exit）",
-        "Compare against all target Hash160 (local memory version, uint32 vectorized, 5 uint compares, progressive early-exit)",
+        "Compare against all target Hash160 (local memory version, uint32 vectorized, 5 uint compares, progressive early-exit)",  # noqa: E501
     ),
     # debug_hash kernel
     ("调试内核: 调试哈希计算流程", "Debug kernel: debug hash computation flow"),
@@ -522,7 +521,7 @@ def fix_file(filepath: str) -> int:
             f.write(content)
         print(f"  -> File updated, {count} patterns replaced.")
     else:
-        print(f"  -> No changes made.")
+        print("  -> No changes made.")
 
     return len(remaining)
 
@@ -539,7 +538,7 @@ def main():
         remaining = fix_file(filepath)
         total_remaining += remaining
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     if total_remaining == 0:
         print("SUCCESS: All non-ASCII characters have been replaced.")
     else:

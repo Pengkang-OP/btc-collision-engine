@@ -16,12 +16,11 @@
 
 import time
 import threading
-import logging
 from collections import deque
 from typing import Dict, Any, List, Optional, TYPE_CHECKING
 
 # P3-5: 统一日志获取 + 修复缺失导入
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 
 if TYPE_CHECKING:
     # 避免循环导入：仅在类型检查时引用引擎

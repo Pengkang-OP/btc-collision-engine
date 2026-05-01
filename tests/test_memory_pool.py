@@ -7,7 +7,6 @@ from src.core.memory_pool import (
     ObjectPool,
     ECPointPool,
     ByteArrayPool,
-    GlobalPoolManager,
     pool_manager,
     get_pool_manager,
 )
@@ -53,11 +52,11 @@ class TestObjectPool:
         pool = ObjectPool(lambda: [], initial_size=2, max_size=5)
 
         # 获取所有对象
-        obj1 = pool.acquire()
-        obj2 = pool.acquire()
+        pool.acquire()
+        pool.acquire()
 
         # 池耗尽,应该创建新对象
-        obj3 = pool.acquire()
+        pool.acquire()
 
         stats = pool.get_stats()
         assert stats["created_count"] == 3  # 2个预分配 + 1个新创建
@@ -189,7 +188,7 @@ class TestGlobalPoolManager:
         manager = get_pool_manager()
         manager.initialize()
 
-        assert manager._initialized == True
+        assert manager._initialized is True
         assert hasattr(manager, "ecpoint_pool")
         assert hasattr(manager, "bytearray_pool_32")
 

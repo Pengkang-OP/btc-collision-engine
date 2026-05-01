@@ -4,7 +4,6 @@
 替代基于日志级别的脆弱监控方式。
 """
 
-import logging
 from typing import Dict, Any, Optional, Callable, List
 from dataclasses import dataclass
 from datetime import datetime
@@ -110,7 +109,7 @@ class ValidationMonitor:
         self.alert_history: List[Dict[str, Any]] = []
 
         logger.info(
-            f"ValidationMonitor 初始化: "
+            "ValidationMonitor 初始化: "
             f"coverage_warning={self.thresholds.coverage_warning}%, "
             f"unvalidated_warning={self.thresholds.unvalidated_warning:.0%}, "
             f"max_history_size={self.MAX_HISTORY_SIZE}"
@@ -171,7 +170,7 @@ class ValidationMonitor:
             # 自动清理: 超过最大大小时保留最近HISTORY_TRIM_SIZE条
             if len(self.alert_history) > self.MAX_HISTORY_SIZE:
                 self.alert_history = self.alert_history[-self.HISTORY_TRIM_SIZE :]
-                logger.debug(f"告警历史记录已清理: " f"保留最近{self.HISTORY_TRIM_SIZE}条记录")
+                logger.debug("告警历史记录已清理: " f"保留最近{self.HISTORY_TRIM_SIZE}条记录")
 
             self.alert_callback(
                 alert_level, self._format_alert_message(alert_level, metrics, batch_id), metrics
@@ -262,18 +261,18 @@ class ValidationMonitor:
                 f"验证质量严重告警{context_str}: "
                 f"覆盖率={metrics.coverage:.1f}%, "
                 f"未验证={metrics.unvalidated}/{metrics.total} "
-                f"({metrics.unvalidated/metrics.total:.0%}"
+                f"({metrics.unvalidated / metrics.total:.0%}"
                 if metrics.total > 0
-                else "(0%)" f"), " f"成功率={metrics.success_rate:.1f}%"
+                else "(0%)" "), " f"成功率={metrics.success_rate:.1f}%"
             )
         elif alert_level == "warning":
             logger.warning(
                 f"验证质量警告{context_str}: "
                 f"覆盖率={metrics.coverage:.1f}%, "
                 f"未验证={metrics.unvalidated}/{metrics.total} "
-                f"({metrics.unvalidated/metrics.total:.0%}"
+                f"({metrics.unvalidated / metrics.total:.0%}"
                 if metrics.total > 0
-                else "(0%)" f"), " f"成功率={metrics.success_rate:.1f}%"
+                else "(0%)" "), " f"成功率={metrics.success_rate:.1f}%"
             )
         else:
             logger.debug(

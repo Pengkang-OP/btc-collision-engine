@@ -9,7 +9,6 @@ import pytest
 from src.utils.performance_monitor import (
     PerformanceTracker,
     EnhancedPerformanceMonitor,
-    PerformanceMetrics,
     get_performance_tracker,
     is_performance_monitoring_enabled,
 )
@@ -40,7 +39,7 @@ class TestPerformanceMonitorOverhead:
         overhead = (with_monitor - baseline) / iterations
 
         # 单次调用应该<0.2ms（考虑到异常隔离的额外开销）
-        assert overhead < 0.0002, f"监控开销过大: {overhead*1000:.4f}ms/次"
+        assert overhead < 0.0002, f"监控开销过大: {overhead * 1000:.4f}ms/次"
 
     def test_tracker_record_overhead(self):
         """测试追踪器记录开销"""
@@ -56,7 +55,7 @@ class TestPerformanceMonitorOverhead:
         avg_overhead = elapsed / iterations
 
         # 单次记录应该<0.05ms
-        assert avg_overhead < 0.00005, f"记录开销过大: {avg_overhead*1000:.4f}ms/次"
+        assert avg_overhead < 0.00005, f"记录开销过大: {avg_overhead * 1000:.4f}ms/次"
 
     def test_nested_monitor_overhead(self):
         """测试嵌套监控开销"""
@@ -257,7 +256,7 @@ class TestConfiguration:
         assert "log_level" in config
 
         # 验证默认值
-        assert config["enabled"] == True
+        assert config["enabled"] is True
         assert config["max_records"] == 10000
         assert config["slow_threshold_ms"] == 1000
 

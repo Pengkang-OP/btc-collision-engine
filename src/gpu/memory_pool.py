@@ -32,7 +32,7 @@
 
 import threading
 import time
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Union, cast
 
 # 导入日志配置
 from ..utils import init_logging, get_configured_logger
@@ -130,7 +130,7 @@ class GPUMemoryPool:
         self._adjustment_interval = 60  # 60秒调整一次
 
         logger.info(
-            f"GPU内存池初始化: max_buffers={max_buffers}, max_memory={max_memory_mb}MB, dynamic_adjustment={enable_dynamic_adjustment}"
+            f"GPU内存池初始化: max_buffers={max_buffers}, max_memory={max_memory_mb}MB, dynamic_adjustment={enable_dynamic_adjustment}"  # noqa: E501
         )
 
     def allocate(self, size: int, flags: Optional[Any] = None, buffer_type: str = "generic") -> Any:
@@ -174,7 +174,8 @@ class GPUMemoryPool:
                     self._buf_size_by_id.pop(buf_id, None)
                     self._buf_type_by_id.pop(buf_id, None)
                     logger.debug(
-                        f"复用{buffer_type}类型GPU缓冲区: {size}字节(对齐{aligned_size}) (总复用: {self._total_reused})"
+                        f"复用{buffer_type}类型GPU缓冲区: {size}字节(对齐{aligned_size}) (总复用: {
+                            self._total_reused})"
                     )
                     return buf
 
@@ -235,7 +236,7 @@ class GPUMemoryPool:
             if total_buffers >= self._max_buffers * 0.9:
                 logger.warning(
                     f"GPU内存池接近容量限制: {total_buffers}/{self._max_buffers} "
-                    f"({total_buffers/self._max_buffers*100:.0f}%)"
+                    f"({total_buffers / self._max_buffers * 100:.0f}%)"
                 )
             # 如果池已满，使用LRU批量淘汰（每次淘汰10%池容量，最少2个）
             if total_buffers >= self._max_buffers:
@@ -464,7 +465,7 @@ class GPUMemoryPool:
         if len(self._memory_usage_history) >= 10:
             recent_usage = self._memory_usage_history[-10:]
             avg_memory = sum(item["current_memory_mb"] for item in recent_usage) / len(recent_usage)
-            max_memory = max(item["current_memory_mb"] for item in recent_usage)
+            max(item["current_memory_mb"] for item in recent_usage)
 
             # 如果平均内存使用超过最大内存的70%，尝试扩展内存池
             if avg_memory > self._max_memory_bytes / (1024 * 1024) * 0.7:
@@ -534,14 +535,14 @@ class GPUMemoryPool:
             # 显存充足：尝试扩展池容量
             new_max = min(self._max_buffers * 2, 500)
             if new_max != self._max_buffers:
-                logger.info(f"显存充足，扩展内存池容量: " f"{self._max_buffers} -> {new_max}")
+                logger.info("显存充足，扩展内存池容量: " f"{self._max_buffers} -> {new_max}")
                 self._max_buffers = new_max
         except Exception:
             logger.debug("内存池容量适配失败，显存可能紧张", exc_info=True)
             # 显存紧张：缩减池容量并主动淘汰
             new_max = max(self._max_buffers // 2, 20)
             if new_max != self._max_buffers:
-                logger.warning(f"显存紧张，缩减内存池容量: " f"{self._max_buffers} -> {new_max}")
+                logger.warning("显存紧张，缩减内存池容量: " f"{self._max_buffers} -> {new_max}")
                 self._max_buffers = new_max
             # 主动淘汰LRU缓冲区释放压力
             self._evict_lru()
@@ -630,7 +631,8 @@ class GPUMemoryPool:
                             logger.debug(f"释放{buffer_type}类型缓冲区失败 (size={size}): {e}")
                         except Exception as e:
                             logger.debug(
-                                f"释放{buffer_type}类型缓冲区时发生未预期异常 (size={size}): {type(e).__name__}: {e}"
+                                f"释放{buffer_type}类型缓冲区时发生未预期异常 (size={size}): {
+                                    type(e).__name__}: {e}"
                             )
 
             # 清空所有池
@@ -693,7 +695,7 @@ class GPUMemoryPool:
             logger.info(
                 f"GPU {i} ({device.get('name', 'Unknown')}): "
                 f"显存 {device_vram_gb:.1f}GB, "
-                f"内存池 {device_pool_mb}MB ({proportion*100:.1f}%)"
+                f"内存池 {device_pool_mb}MB ({proportion * 100:.1f}%)"
             )
 
             pools[i] = cls(context=ctx, max_memory_mb=device_pool_mb)

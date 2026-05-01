@@ -11,8 +11,8 @@ import time
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.collision.key_collision_engine import KeyCollisionEngine
-from src.core.address_generator import P2PKHAddressGenerator
+from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
+from src.core.address_generator import P2PKHAddressGenerator  # noqa: E402
 
 
 def test_secure_integration():
@@ -38,13 +38,13 @@ def test_secure_integration():
 
     def on_match(pk, addr, wif):
         matches.append((pk, addr, wif))
-        print(f"\n🎯 找到匹配!")
+        print("\n🎯 找到匹配!")
         print(f"   地址: {addr}")
         print(f"   WIF: {wif[:20]}...")
 
     engine = KeyCollisionEngine(targets={test_address}, on_match=on_match, max_workers=2)
 
-    print(f"\n启动碰撞引擎...")
+    print("\n启动碰撞引擎...")
     print(f"目标地址数: {len(engine.targets)}")
     print(f"工作线程数: {engine.max_workers}")
 
@@ -72,20 +72,20 @@ def test_secure_integration():
     time.sleep(0.5)
 
     stats = engine.get_stats()
-    print(f"\n\n最终统计:")
+    print("\n\n最终统计:")
     print(f"  总检查数: {stats.total_checked}")
     print(f"  匹配数: {len(stats.matches)}")
     print(f"  运行时间: {stats.elapsed:.2f}秒")
     print(f"  平均速度: {stats.speed:.0f} 次/秒")
 
     if matches:
-        print(f"\n[OK] 测试通过: SecureKeyManager集成成功!")
-        print(f"   私钥在匹配时被正确保存")
-        print(f"   未匹配的私钥已自动清零")
+        print("\n[OK] 测试通过: SecureKeyManager集成成功!")
+        print("   私钥在匹配时被正确保存")
+        print("   未匹配的私钥已自动清零")
         return True
     else:
-        print(f"\n[WARN] 未找到匹配（正常，概率极低）")
-        print(f"   但至少验证了引擎可以正常运行")
+        print("\n[WARN] 未找到匹配（正常，概率极低）")
+        print("   但至少验证了引擎可以正常运行")
         return True
 
 
@@ -160,14 +160,14 @@ def test_memory_safety():
         with SecureKeyManager() as key_mgr:
             key_mgr.generate_key()
             private_key = key_mgr.get_key()
-            original = bytes(private_key)
+            bytes(private_key)
 
         # 验证已清零
         if key_mgr._key:
             cleared = all(b == 0 for b in key_mgr._key)
-            print(f"  测试 {i+1}: {'[OK] 已清零' if cleared else '[FAIL] 未清零'}")
+            print(f"  测试 {i + 1}: {'[OK] 已清零' if cleared else '[FAIL] 未清零'}")
         else:
-            print(f"  测试 {i+1}: ❌ 密钥对象不存在")
+            print(f"  测试 {i + 1}: ❌ 密钥对象不存在")
 
     print("\n[OK] 所有私钥都已安全清零")
     return True

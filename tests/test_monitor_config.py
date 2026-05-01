@@ -325,7 +325,7 @@ class TestPostInit:
     def test_post_init_valid_config(self, caplog):
         """测试__post_init__验证有效配置（无警告）"""
         with caplog.at_level(logging.WARNING):
-            config = MonitorConfig()
+            MonitorConfig()
 
             # 不应有警告
             assert len(caplog.records) == 0
@@ -333,7 +333,7 @@ class TestPostInit:
     def test_post_init_invalid_config_warning(self, caplog):
         """测试__post_init__验证无效配置（记录警告）"""
         with caplog.at_level(logging.WARNING):
-            config = MonitorConfig(alert_threshold=1.5)
+            config = MonitorConfig(alert_threshold=1.5)  # noqa: F841
 
             # 应记录警告
             assert len(caplog.records) == 1
@@ -344,7 +344,7 @@ class TestPostInit:
         """测试__post_init__验证多个无效值"""
         with caplog.at_level(logging.WARNING):
             # 第一个无效值就会触发异常
-            config = MonitorConfig(alert_threshold=1.5, data_logging_interval=-1.0)
+            config = MonitorConfig(alert_threshold=1.5, data_logging_interval=-1.0)  # noqa: F841
 
             # 应记录警告（只报告第一个错误）
             assert len(caplog.records) == 1

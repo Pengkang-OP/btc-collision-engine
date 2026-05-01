@@ -6,7 +6,7 @@ P1-3修复: 熵池健康检查单元测试
 """
 
 import unittest
-from unittest.mock import patch, mock_open, MagicMock
+from unittest.mock import patch, mock_open
 import sys
 import os
 import pytest
@@ -14,7 +14,7 @@ import pytest
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from src.core.key_generator import SecureKeyGenerator
+from src.core.key_generator import SecureKeyGenerator  # noqa: E402
 
 
 @pytest.mark.unit

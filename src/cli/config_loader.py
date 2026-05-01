@@ -15,9 +15,9 @@ _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
-from src.utils import get_configured_logger
-from src.i18n import _t
-from typing import Optional
+from src.utils import get_configured_logger  # noqa: E402
+from src.i18n import _t  # noqa: E402
+from typing import Optional  # noqa: E402
 
 logger = get_configured_logger("CLI")
 
@@ -46,7 +46,7 @@ def load_config_with_validation(config_file: Optional[str] = None) -> Optional[d
     if not os.path.exists(config_path):
         logger.warning(f"配置文件不存在: {config_path}")
         logger.info(
-            "请运行: copy config.example.json config.json (Windows) 或 cp config.example.json config.json (Linux/macOS)"
+            "请运行: copy config.example.json config.json (Windows) 或 cp config.example.json config.json (Linux/macOS)"  # noqa: E501
         )
         return None
 
@@ -72,7 +72,7 @@ def load_config_with_validation(config_file: Optional[str] = None) -> Optional[d
         logger.error(_t("errors.io_error", detail=str(e)))
         logger.error("请确保配置文件使用UTF-8编码")
         return None
-    except PermissionError as e:
+    except PermissionError as e:  # noqa: F841
         logger.error(_t("errors.permission_denied", path=config_path))
         logger.error("请检查文件读取权限")
         return None

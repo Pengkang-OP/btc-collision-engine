@@ -128,7 +128,7 @@ def print_report(issues: list) -> None:
     """打印检查报告"""
     if not issues:
         print("✅ 所有导入路径正确")
-        print(f"\n推荐的导入方式:")
+        print("\n推荐的导入方式:")
         for imp in RECOMMENDED_IMPORTS:
             print(f"  ✅ {imp}")
         return

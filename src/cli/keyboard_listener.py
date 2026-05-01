@@ -46,7 +46,7 @@ class KeyboardListener:
 
         if os.name == "nt":
             try:
-                import msvcrt  # noqa: PLC0415
+                import msvcrt  # noqa: PLC0415, F401
 
                 cls._platform_available = True
             except ImportError:
@@ -54,9 +54,9 @@ class KeyboardListener:
                 cls._platform_unavailable_reason = "msvcrt 模块不可用"
         else:
             try:
-                import select  # noqa: PLC0415
+                import select  # noqa: PLC0415, F401
                 import termios  # noqa: PLC0415
-                import tty  # noqa: PLC0415
+                import tty  # noqa: PLC0415, F401
 
                 fd = sys.stdin.fileno()
                 getattr(termios, "tcgetattr")(fd)  # 若非 TTY 会抛出 termios.error
@@ -65,7 +65,8 @@ class KeyboardListener:
                 cls._platform_available = False
                 cls._platform_unavailable_reason = str(exc)
 
-        return cls._platform_available  # type: ignore[return-value]
+        assert cls._platform_available is not None
+        return cls._platform_available
 
     @classmethod
     def unavailable_reason(cls) -> str:

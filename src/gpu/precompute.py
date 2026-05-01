@@ -6,7 +6,7 @@
 """
 
 import numpy as np
-from typing import Optional, Tuple
+from typing import Optional, Tuple, cast
 
 # secp256k1 曲线参数
 _P = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
@@ -102,7 +102,7 @@ def generate_secp256k1_precomp_table() -> np.ndarray:
         table[offset + 8 : offset + 16] = _int_to_uint32_le(y)  # y 坐标
 
         # 下一个点
-        current = _point_add(current, G)  # type: ignore[assignment]
+        current = cast(Tuple[int, int], _point_add(current, G))
 
     # === 验证 ===
     # 验证 1G

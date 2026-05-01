@@ -8,13 +8,12 @@ SecureKeyManager内存锁定功能测试
 import unittest
 import sys
 import os
-import ctypes
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from src.core.secure_key_manager import SecureKeyManager, SecureMemoryError
+from src.core.secure_key_manager import SecureKeyManager, SecureMemoryError  # noqa: E402
 
 
 class TestMemoryLockingPosix(unittest.TestCase):
@@ -267,7 +266,7 @@ class TestMemoryLockingSecurity(unittest.TestCase):
         key = manager.get_key()
 
         # 记录原始密钥
-        original_key = bytes(key)
+        bytes(key)
 
         # 清零
         manager.clear()

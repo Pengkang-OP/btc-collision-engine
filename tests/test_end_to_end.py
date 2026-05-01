@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """端到端测试：从地址导入到碰撞检测"""
 
-import os
-import tempfile
 import json
 import logging
 import time
@@ -10,9 +8,8 @@ import time
 # 禁用日志以避免文件锁定问题
 logging.basicConfig(level=logging.CRITICAL)
 
-from src.collision.targets.storage import AddressStorage
-from src.collision.factory import EngineFactory
-from src.collision.key_collision_engine import KeyCollisionEngine
+from src.collision.targets.storage import AddressStorage  # noqa: E402
+from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
 
 
 def test_end_to_end_address_import():
@@ -69,7 +66,7 @@ def test_end_to_end_address_import():
 
         print(f"   引擎类型: {type(engine).__name__}")
         print(f"   目标地址数: {len(targets)}")
-        print(f"   引擎初始化: 成功")
+        print("   引擎初始化: 成功")
 
     except Exception as e:
         print(f"   引擎初始化失败: {str(e)}")
