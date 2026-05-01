@@ -6,7 +6,6 @@
 创建一个独立的窗口来显示引擎执行的日志，与主交互界面分离。
 """
 
-import sys
 import threading
 import queue
 import time
@@ -203,7 +202,6 @@ class LogWindow:
             return
 
         import tkinter.filedialog as filedialog
-        import os
 
         file_path = filedialog.asksaveasfilename(
             defaultextension=".log",

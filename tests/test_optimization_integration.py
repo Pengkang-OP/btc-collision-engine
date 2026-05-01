@@ -21,8 +21,7 @@ from pathlib import Path
 # 添加项目根目录
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.collision.key_collision_engine import KeyCollisionEngine
-from src.core.address_generator import P2PKHAddressGenerator
+from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
 
 
 def test_optimized_engine():
@@ -48,7 +47,7 @@ def test_optimized_engine():
     )
     elapsed_init = time.perf_counter() - start
 
-    print(f"  初始化时间: {elapsed_init*1000:.2f}ms")
+    print(f"  初始化时间: {elapsed_init * 1000:.2f}ms")
     print(f"  生成器类型: {type(engine_opt.generator).__name__}")
     print(f"  目标地址数: {len(engine_opt.targets)}")
 
@@ -60,7 +59,7 @@ def test_optimized_engine():
     engine_std = KeyCollisionEngine(targets=test_targets, use_performance_optimization=False)
     elapsed_init_std = time.perf_counter() - start
 
-    print(f"  初始化时间: {elapsed_init_std*1000:.2f}ms")
+    print(f"  初始化时间: {elapsed_init_std * 1000:.2f}ms")
     print(f"  生成器类型: {type(engine_std.generator).__name__}")
     print(f"  目标地址数: {len(engine_std.targets)}")
 
@@ -84,10 +83,10 @@ def test_optimized_engine():
 
     speedup = elapsed_std / elapsed_opt
 
-    print(f"  优化版: {elapsed_opt:.4f}s ({elapsed_opt/100*1000:.2f}ms/地址)")
-    print(f"  标准版: {elapsed_std:.4f}s ({elapsed_std/100*1000:.2f}ms/地址)")
+    print(f"  优化版: {elapsed_opt:.4f}s ({elapsed_opt / 100 * 1000:.2f}ms/地址)")
+    print(f"  标准版: {elapsed_std:.4f}s ({elapsed_std / 100 * 1000:.2f}ms/地址)")
     print(f"  性能提升: {speedup:.2f}x")
-    print(f"  速度: {100/elapsed_opt:.0f} 地址/秒")
+    print(f"  速度: {100 / elapsed_opt:.0f} 地址/秒")
 
     # 测试4: 不同配置对比
     print("\n[测试4] 不同优化配置对比")
@@ -117,7 +116,7 @@ def test_optimized_engine():
                 engine.generator.generate_address(pk)
         elapsed = time.perf_counter() - start
 
-        print(f"  {name:15s}: {elapsed:.4f}s ({elapsed/20*1000:.2f}ms/地址)")
+        print(f"  {name:15s}: {elapsed:.4f}s ({elapsed / 20 * 1000:.2f}ms/地址)")
 
     print("\n" + "=" * 80)
     print("集成测试完成!")

@@ -9,15 +9,14 @@ PRNG改造 (v4.0): CPU仅生成 32 字节种子，GPU内核自行计算 key = se
 CPU过载保护: 主循环内添加节流机制，防止 CPU 飞升。
 """
 
-import logging
 import os
 import queue
 import threading
 import time
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 # P3-5: 统一日志获取 + 修复缺失导入
-from ...utils import init_logging, get_configured_logger
+from ...utils import get_configured_logger
 from ...utils.exception_handler import ExceptionHandler
 from .base_search import BaseSearchMode
 
@@ -255,7 +254,7 @@ class RandomSearchMode(BaseSearchMode):
         consecutive_errors = 0
         batch_num = 0
         batch_count = 0
-        start_time = time.time()
+        time.time()
 
         # 双缓冲机制：一个缓冲区用于GPU计算，一个用于CPU准备
         current_buffer = "A"
@@ -303,7 +302,8 @@ class RandomSearchMode(BaseSearchMode):
                     cpu_pct = psutil.cpu_percent(interval=None)
                     if cpu_pct > CPU_OVERLOAD_THRESHOLD:
                         logger.debug(
-                            f"CPU使用率 {cpu_pct:.1f}% 超过阈值 {CPU_OVERLOAD_THRESHOLD}%, 节流 {CPU_THROTTLE_SLEEP}s"
+                            f"CPU使用率 {
+                            cpu_pct:.1f}% 超过阈值 {CPU_OVERLOAD_THRESHOLD}%, 节流 {CPU_THROTTLE_SLEEP}s"  # noqa: E122, E501
                         )
                         current_batch_size = max(current_batch_size // 2, 10000)
                         time.sleep(CPU_THROTTLE_SLEEP)
@@ -382,9 +382,10 @@ class RandomSearchMode(BaseSearchMode):
                     effective_time_ms = max(execution_time_ms, 0.001)
                     speed = batch_size / (effective_time_ms / 1000)
                     if batch_num <= 5 or batch_num % 10 == 0:
-                        logger.debug(
-                            f"GPU batch {batch_num}: {batch_size:,} keys, {execution_time_ms:.2f}ms, {speed:.0f} keys/s"
-                        )
+                        logger.debug(f"GPU batch {batch_num}: {
+                            batch_size:,                            } keys, {
+                            execution_time_ms:.2f}ms, {
+                            speed:.0f} keys/s")
 
                     # 记录性能数据
                     batch_optimizer.record_performance(batch_size, execution_time_ms, speed)

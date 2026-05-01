@@ -7,7 +7,7 @@ import sys
 from unittest.mock import patch
 from src.collision.targets.resolver import TargetResolver
 from src.collision.targets.cache import AddressCache
-from src.collision.targets.validator import AddressBatchValidator, ValidationResult
+from src.collision.targets.validator import AddressBatchValidator
 from src.collision.targets.matcher import AddressMatcher
 from src.collision.targets.storage import AddressStorage
 from src.utils.encoding_utils import EncodingUtils
@@ -101,7 +101,7 @@ class TestTargetResolver:
         stats = resolver.get_cache_stats()
         # 验证统计字段存在
         assert "hits" in stats, f"缓存统计缺少'hits'字段: {stats.keys()}"
-        assert "misses" in stats, f"缓存统计缺少'misses'字段"
+        assert "misses" in stats, "缓存统计缺少'misses'字段"
         # 第二次应该命中缓存
         assert stats["hits"] >= 1, f"缓存命中次数应该>=1，实际: {stats['hits']}"
         assert stats["misses"] >= 1, f"缓存未命中次数应该>=1，实际: {stats['misses']}"

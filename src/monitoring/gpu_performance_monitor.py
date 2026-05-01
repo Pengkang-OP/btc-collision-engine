@@ -16,7 +16,7 @@ import threading
 import logging
 from typing import Dict, List, Optional, Any, Callable
 from collections import deque
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 
 logger = logging.getLogger("GPUPerformanceMonitor")
@@ -219,7 +219,7 @@ class GPUPerformanceMonitor:
             self._init_device_info()
 
         logger.info(
-            f"GPUPerformanceMonitor初始化: "
+            "GPUPerformanceMonitor初始化: "
             f"device={self._device_name}, "
             f"check_interval={check_interval}s"
         )
@@ -661,7 +661,7 @@ class GPUPerformanceMonitor:
                 # 如果后半段比前半段高20%以上,可能存在泄漏
                 if avg_first_half > 0 and (avg_second_half - avg_first_half) / avg_first_half > 0.2:
                     logger.warning(
-                        f"⚠️ 检测到可能的显存泄漏: "
+                        "⚠️ 检测到可能的显存泄漏: "
                         f"前半段={avg_first_half:.1f}MB, "
                         f"后半段={avg_second_half:.1f}MB"
                     )
@@ -727,7 +727,7 @@ class GPUPerformanceMonitor:
         degradation_percent = (1 - degradation_ratio) * 100
 
         logger.warning(
-            f"⚠️ GPU性能退化: "
+            "⚠️ GPU性能退化: "
             f"当前={metrics.keys_per_second:,.0f} keys/s, "
             f"峰值={self._peak_throughput:,.0f} keys/s, "
             f"退化率={degradation_ratio:.2%}"

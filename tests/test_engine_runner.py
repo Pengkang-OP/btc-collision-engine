@@ -9,7 +9,6 @@
 
 import sys
 import logging
-import argparse
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 

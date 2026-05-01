@@ -16,7 +16,7 @@ import pytest
 import time
 import secrets
 import random
-from unittest.mock import MagicMock, patch, Mock, call
+from unittest.mock import Mock
 
 from src.gpu.gpu_recovery_manager import GPURecoveryManager, GPUFailureType
 from src.gpu.load_balancer import GPULoadBalancer

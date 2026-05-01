@@ -19,15 +19,14 @@ import sys
 import os
 import time
 import json
-from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Dict, Any
 
 # 添加项目根目录到路径
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine
+from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
 
 
 class V330PerformanceVerifier:
@@ -145,7 +144,7 @@ class V330PerformanceVerifier:
                 max_speed = max(speeds) if speeds else 0
                 min_speed = min(speeds) if speeds else 0
 
-                print(f"\n  📊 测试结果:")
+                print("\n  📊 测试结果:")
                 print(f"    总检查数: {total_keys:,} keys")
                 print(f"    平均速度: {avg_speed:,.2f} keys/s")
                 print(f"    峰值速度: {max_speed:,.2f} keys/s")
@@ -216,7 +215,7 @@ class V330PerformanceVerifier:
             print(f"  GPU设备: {device_info.get('name', 'Unknown')}")
             print(f"  厂商: {device_info.get('vendor', 'Unknown')}")
             print(f"  批次大小: {batch_size:,}")
-            print(f"  异步执行: 已启用")
+            print("  异步执行: 已启用")
             print(f"  初始化时间: {init_time:.2f}秒")
             print()
 
@@ -272,7 +271,7 @@ class V330PerformanceVerifier:
                 max_speed = max(speeds) if speeds else 0
                 min_speed = min(speeds) if speeds else 0
 
-                print(f"\n  📊 测试结果:")
+                print("\n  📊 测试结果:")
                 print(f"    总检查数: {total_keys:,} keys")
                 print(f"    平均速度: {avg_speed:,.2f} keys/s")
                 print(f"    峰值速度: {max_speed:,.2f} keys/s")
@@ -305,9 +304,9 @@ class V330PerformanceVerifier:
         if not self.results:
             return "❌ 无测试结果"
 
-        async_result = self.results[0]
+        self.results[0]
 
-        report = f"""
+        report = """
 {'='*80}
   v3.3.0 异步双缓冲性能测试报告
 {'='*80}
@@ -334,7 +333,7 @@ class V330PerformanceVerifier:
 峰值速度:     {async_result['max_speed']:>15,.2f} keys/s
 最低速度:     {async_result['min_speed']:>15,.2f} keys/s
 初始化时间:   {async_result['init_time']:>15.2f} 秒
-速度稳定性:   {(1 - (async_result['max_speed'] - async_result['min_speed']) / async_result['avg_speed']) * 100:>14.1f}%
+速度稳定性:   {(1 - (async_result['max_speed'] - async_result['min_speed']) / async_result['avg_speed']) * 100:>14.1f}%  # noqa: E501
 
 {'─'*80}
   性能评估

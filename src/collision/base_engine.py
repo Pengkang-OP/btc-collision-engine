@@ -4,7 +4,7 @@
 """
 
 from abc import ABC, abstractmethod
-from typing import Set, Optional, Callable, Dict, Any
+from typing import Set, Optional, Dict, Any
 from .collision_stats import CollisionStats
 
 
@@ -23,7 +23,6 @@ class BaseCollisionEngine(ABC):
             targets: 目标地址集合
             **kwargs: 引擎特定参数
         """
-        pass
 
     @abstractmethod
     def start(self, mode: str = "random", resume: bool = False, **kwargs) -> None:
@@ -37,7 +36,6 @@ class BaseCollisionEngine(ABC):
                      - range模式: start, end
                      - brute_force模式: start
         """
-        pass
 
     @abstractmethod
     def stop(self, timeout: Optional[float] = None) -> None:
@@ -47,7 +45,6 @@ class BaseCollisionEngine(ABC):
         参数:
             timeout: 等待停止的超时时间(秒)
         """
-        pass
 
     @abstractmethod
     def is_running(self) -> bool:
@@ -57,7 +54,6 @@ class BaseCollisionEngine(ABC):
         返回:
             True表示引擎正在运行
         """
-        pass
 
     @abstractmethod
     def get_stats(self) -> CollisionStats:
@@ -67,7 +63,6 @@ class BaseCollisionEngine(ABC):
         返回:
             CollisionStats对象
         """
-        pass
 
     def get_device_info(self) -> Dict[str, Any]:
         """

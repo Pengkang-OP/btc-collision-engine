@@ -9,14 +9,13 @@ import os
 import sys
 import time
 import psutil
-import logging
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.utils import init_logging, get_configured_logger
-from src.collision.gpu_collision_engine import GPUCollisionEngine
-from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
+from src.utils import init_logging, get_configured_logger  # noqa: E402
+from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
+from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine  # noqa: E402
 
 # 配置日志
 init_logging()
@@ -53,13 +52,14 @@ def test_gpu_collision_engine_memory_leak():
 
     # 初始内存使用情况
     initial_memory = get_memory_usage()
-    logger.info(
-        f"初始内存使用: RSS={initial_memory['rss']:.2f}MB, VMS={initial_memory['vms']:.2f}MB, 使用率={initial_memory['percent']:.2f}%"
-    )
+    logger.info(f"初始内存使用: RSS={
+        initial_memory['rss']:.2f}MB, VMS={
+        initial_memory['vms']:.2f}MB, 使用率={
+        initial_memory['percent']:.2f}%")
 
     # 测试循环
     for i in range(5):
-        logger.info(f"测试循环 {i+1}/5")
+        logger.info(f"测试循环 {i + 1}/5")
 
         # 初始化GPU碰撞引擎
         engine = None
@@ -92,9 +92,11 @@ def test_gpu_collision_engine_memory_leak():
 
         # 检查内存使用情况
         current_memory = get_memory_usage()
-        logger.info(
-            f"循环 {i+1} 内存使用: RSS={current_memory['rss']:.2f}MB, VMS={current_memory['vms']:.2f}MB, 使用率={current_memory['percent']:.2f}%"
-        )
+        logger.info(f"循环 {
+            i + 1} 内存使用: RSS={
+            current_memory['rss']:.2f}MB, VMS={
+            current_memory['vms']:.2f}MB, 使用率={
+            current_memory['percent']:.2f}%")
 
         # 计算内存变化
         rss_diff = current_memory["rss"] - initial_memory["rss"]
@@ -106,9 +108,10 @@ def test_gpu_collision_engine_memory_leak():
 
     # 最终内存使用情况
     final_memory = get_memory_usage()
-    logger.info(
-        f"最终内存使用: RSS={final_memory['rss']:.2f}MB, VMS={final_memory['vms']:.2f}MB, 使用率={final_memory['percent']:.2f}%"
-    )
+    logger.info(f"最终内存使用: RSS={
+        final_memory['rss']:.2f}MB, VMS={
+        final_memory['vms']:.2f}MB, 使用率={
+        final_memory['percent']:.2f}%")
 
     # 计算总内存变化
     total_rss_diff = final_memory["rss"] - initial_memory["rss"]
@@ -138,13 +141,14 @@ def test_multi_gpu_engine_memory_leak():
 
     # 初始内存使用情况
     initial_memory = get_memory_usage()
-    logger.info(
-        f"初始内存使用: RSS={initial_memory['rss']:.2f}MB, VMS={initial_memory['vms']:.2f}MB, 使用率={initial_memory['percent']:.2f}%"
-    )
+    logger.info(f"初始内存使用: RSS={
+        initial_memory['rss']:.2f}MB, VMS={
+        initial_memory['vms']:.2f}MB, 使用率={
+        initial_memory['percent']:.2f}%")
 
     # 测试循环
     for i in range(3):
-        logger.info(f"测试循环 {i+1}/3")
+        logger.info(f"测试循环 {i + 1}/3")
 
         # 初始化多GPU碰撞引擎
         engine = None
@@ -193,9 +197,11 @@ def test_multi_gpu_engine_memory_leak():
 
         # 检查内存使用情况
         current_memory = get_memory_usage()
-        logger.info(
-            f"循环 {i+1} 内存使用: RSS={current_memory['rss']:.2f}MB, VMS={current_memory['vms']:.2f}MB, 使用率={current_memory['percent']:.2f}%"
-        )
+        logger.info(f"循环 {
+            i + 1} 内存使用: RSS={
+            current_memory['rss']:.2f}MB, VMS={
+            current_memory['vms']:.2f}MB, 使用率={
+            current_memory['percent']:.2f}%")
 
         # 计算内存变化
         rss_diff = current_memory["rss"] - initial_memory["rss"]
@@ -207,9 +213,10 @@ def test_multi_gpu_engine_memory_leak():
 
     # 最终内存使用情况
     final_memory = get_memory_usage()
-    logger.info(
-        f"最终内存使用: RSS={final_memory['rss']:.2f}MB, VMS={final_memory['vms']:.2f}MB, 使用率={final_memory['percent']:.2f}%"
-    )
+    logger.info(f"最终内存使用: RSS={
+        final_memory['rss']:.2f}MB, VMS={
+        final_memory['vms']:.2f}MB, 使用率={
+        final_memory['percent']:.2f}%")
 
     # 计算总内存变化
     total_rss_diff = final_memory["rss"] - initial_memory["rss"]

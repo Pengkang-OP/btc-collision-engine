@@ -17,8 +17,6 @@ from typing import Optional
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
-from rich.text import Text
-from rich.rule import Rule
 
 
 def _get_utf8_console(stderr: bool = False, no_color: bool = False) -> Console:

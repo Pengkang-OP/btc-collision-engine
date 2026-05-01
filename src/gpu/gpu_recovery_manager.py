@@ -6,17 +6,14 @@ GPU异常恢复管理器
 解决P1-2问题：GPU碰撞引擎异常恢复机制不完善。
 """
 
-import logging
-
 # P3-5: 统一日志获取
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 import time
 import threading
 import concurrent.futures  # M3修复: 移到文件顶部
 from typing import Dict, Set, Optional, Callable, Any
 from enum import Enum
 from dataclasses import dataclass, field
-from datetime import datetime
 
 logger = get_configured_logger("GPURecoveryManager")
 
@@ -506,12 +503,12 @@ class GPURecoveryManager:
                         cancelled = future.cancel()
                         if cancelled:
                             logger.warning(
-                                f"GPU {gpu_id} 健康检查超时（{timeout}秒），" f"已取消未执行的任务"
+                                f"GPU {gpu_id} 健康检查超时（{timeout}秒），" "已取消未执行的任务"
                             )
                         else:
                             logger.warning(
                                 f"GPU {gpu_id} 健康检查超时（{timeout}秒），"
-                                f"任务已在运行，无法取消"
+                                "任务已在运行，无法取消"
                             )
                         return False
 
@@ -527,7 +524,7 @@ class GPURecoveryManager:
                         logger.debug(f"GPU {gpu_id} 健康检查通过")
                     else:
                         logger.warning(f"GPU {gpu_id} 健康检查失败")
-                    return healthy  # type: ignore[return-value]
+                    return bool(healthy)
 
                 # 其他类型，转换为bool
                 return bool(result)

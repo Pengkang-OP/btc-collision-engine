@@ -12,7 +12,7 @@ import time
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -115,7 +115,7 @@ class TestGPUPerformanceBaseline:
         for _ in range(10):
             start = time.time()
             # 模拟内存分配
-            buffer = bytearray(1024 * 1024)  # 1MB
+            buffer = bytearray(1024 * 1024)  # 1MB  # noqa: F841
             elapsed = (time.time() - start) * 1000
             allocations.append(elapsed)
 

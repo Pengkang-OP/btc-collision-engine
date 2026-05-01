@@ -11,18 +11,18 @@ import os
 import threading
 import time
 from enum import Enum
-from typing import Optional, Dict, Any, Callable
+from typing import Optional, Dict, Any
 
 # 添加项目根目录到路径
 _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
-from .log_collector import LogCollector
-from .log_processor import LogProcessor, SensitiveDataFilter
-from .log_storage import LogStorage
-from .log_query import LogQuery
-from .events import LogEvent, LogEventType
+from .log_collector import LogCollector  # noqa: E402
+from .log_processor import LogProcessor, SensitiveDataFilter  # noqa: E402
+from .log_storage import LogStorage  # noqa: E402
+from .log_query import LogQuery  # noqa: E402
+from .events import LogEvent, LogEventType  # noqa: E402
 
 
 class LogLevel(Enum):
@@ -157,7 +157,7 @@ class LogManager:
             self.collector.start()
 
             # 附加到Python logging
-            root_logger = logging.getLogger()
+            logging.getLogger()
             self.collector.attach_to_logger()
 
     def stop(self):
@@ -275,7 +275,7 @@ class LogManager:
 
 
 # 导入logging模块（避免循环导入）
-import logging
+import logging  # noqa: E402
 
 
 def main():

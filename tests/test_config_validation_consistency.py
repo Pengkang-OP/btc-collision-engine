@@ -6,7 +6,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.config.config_manager import ConfigManager, HAS_JSONSCHEMA
+from src.config.config_manager import ConfigManager, HAS_JSONSCHEMA  # noqa: E402
 
 
 class TestConfigValidationConsistency(unittest.TestCase):

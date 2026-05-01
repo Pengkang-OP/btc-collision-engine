@@ -9,9 +9,8 @@
 import os
 import json
 import threading
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, List
 from collections import deque
-from datetime import datetime
 
 
 class LogStorage:

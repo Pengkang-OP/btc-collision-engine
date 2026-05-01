@@ -14,8 +14,8 @@ import threading
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from src.collision.key_collision_engine import KeyCollisionEngine
-from src.utils import init_logging
+from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
+from src.utils import init_logging  # noqa: E402
 
 
 def test_stats_consistency():
@@ -46,7 +46,7 @@ def test_stats_consistency():
 
     # 验证统计信息
     stats = engine.get_stats()
-    print(f"\n最终统计:")
+    print("\n最终统计:")
     print(f"  总检查数: {stats.total_checked:,}")
     print(f"  运行时间: {stats.elapsed:.2f}秒")
     print(f"  平均速度: {stats.speed:,.0f} 次/秒")
@@ -103,9 +103,9 @@ def test_data_logging_thread_safety():
     thread.join(timeout=5)
 
     stats = stats_snapshot
-    print(f"\n高并发测试结果:")
+    print("\n高并发测试结果:")
     print(f"  总检查数: {stats.total_checked:,}")
-    print(f"  工作线程: 8")
+    print("  工作线程: 8")
     print(f"  平均速度: {stats.speed:,.0f} 次/秒")
 
     assert stats.total_checked > 0, "高并发下总检查数应大于0"
@@ -151,7 +151,7 @@ def test_error_logging_rate_limit():
     thread.join(timeout=5)
 
     stats = engine.get_stats()
-    print(f"\n错误限频测试结果:")
+    print("\n错误限频测试结果:")
     print(f"  总检查数: {stats.total_checked:,}")
     print(f"  运行时间: {stats.elapsed:.2f}秒")
 
@@ -220,7 +220,7 @@ def test_cpu_cache_mechanism():
     # 使用 stop 前的快照数据做验证
     stats = stats_snapshot
 
-    print(f"\nCPU缓存机制测试结果:")
+    print("\nCPU缓存机制测试结果:")
     print(f"  总检查数: {stats.total_checked:,}")
     print(f"  运行时间: {elapsed:.2f}秒")
     # 用外部计时和total_checked自行计算速度，不依赖引擎内部的speed缓存值
@@ -272,13 +272,13 @@ def test_data_save_frequency():
 
         with open(history_file, "r", encoding="utf-8") as f:
             history = json.load(f)
-        print(f"\n数据保存频率测试结果:")
+        print("\n数据保存频率测试结果:")
         print(f"  总检查数: {stats.total_checked:,}")
         print(f"  历史记录数: {len(history)}")
-        print(f"  记录间隔: 1秒")
-        print(f"  运行时间: 3秒")
+        print("  记录间隔: 1秒")
+        print("  运行时间: 3秒")
         # 3秒运行，1秒间隔，应该约有3条记录（但只保存1次）
-        print(f"  保存频率: 每3次记录保存1次")
+        print("  保存频率: 每3次记录保存1次")
 
     print("\n✅ 数据保存频率测试通过")
     return True

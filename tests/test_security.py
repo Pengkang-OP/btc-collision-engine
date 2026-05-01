@@ -7,7 +7,6 @@ import time
 import secrets
 from src.core.secp256k1 import Secp256k1
 from src.core.address_generator import P2PKHAddressGenerator
-from src.core.crypto_backend import CryptoBackend
 from src.collision.key_collision_engine import KeyCollisionEngine
 from src.collision.deduplication_filter import DeduplicationFilter
 from src.collision.targets.resolver import TargetResolver
@@ -46,8 +45,8 @@ class TestCryptographicSecurity:
         # 应该大致均匀分布（允许一定偏差）
         assert 30 <= low_count <= 70, f"私钥分布不均匀: 低={low_count}, 高={high_count}"
 
-        print(f"✅ 私钥随机性测试通过:")
-        print(f"   唯一性: 100/100")
+        print("✅ 私钥随机性测试通过:")
+        print("   唯一性: 100/100")
         print(f"   分布: 低={low_count}, 高={high_count}")
 
     def test_private_key_unpredictability(self):
@@ -204,7 +203,7 @@ class TestDataProtection:
         # 清理
         logger.removeHandler(handler)
 
-        print(f"✅ 私钥未泄露到日志")
+        print("✅ 私钥未泄露到日志")
 
     def test_secure_file_permissions(self):
         """测试文件权限安全"""
@@ -218,7 +217,7 @@ class TestDataProtection:
                 # 在Unix系统上检查权限
                 if os.name != "nt":  # 非Windows
                     stat = os.stat(filepath)
-                    mode = stat.st_mode
+                    stat.st_mode
                     # 不应该 world-readable（可选检查）
                     # assert not (mode & 0o004), f"文件权限过宽: {config_file}"
 
@@ -281,9 +280,9 @@ class TestInputValidation:
             try:
                 # 尝试使用无效私钥
                 if len(invalid_key) == 32:
-                    public_key = generator.private_key_to_public_key(invalid_key)
+                    generator.private_key_to_public_key(invalid_key)
                 # 否则应该失败
-            except Exception as e:
+            except Exception:
                 pass  # 期望的行为
 
     def test_target_address_validation(self):
@@ -304,7 +303,7 @@ class TestInputValidation:
         for invalid in invalid_formats:
             # 可能返回None或抛出异常
             try:
-                result = resolver.resolve(invalid)
+                resolver.resolve(invalid)
                 # 如果返回结果，应该不是None
             except Exception:
                 pass  # 期望的行为
@@ -316,7 +315,7 @@ class TestInputValidation:
 
         resolver = TargetResolver()
         try:
-            result = resolver.resolve(large_address)
+            resolver.resolve(large_address)
             # 应该不会崩溃
         except Exception:
             pass  # 期望的行为
@@ -347,7 +346,7 @@ class TestEngineSecurity:
         stats_str = str(stats.__dict__)
         assert "private_key" not in stats_str.lower()
 
-        print(f"✅ 引擎统计信息未泄露私钥")
+        print("✅ 引擎统计信息未泄露私钥")
 
     def test_engine_thread_safety(self):
         """测试引擎线程安全"""
@@ -367,7 +366,7 @@ class TestEngineSecurity:
         stats = engine.get_stats()
         assert isinstance(stats.total_checked, int)
 
-        print(f"✅ 引擎线程安全测试通过")
+        print("✅ 引擎线程安全测试通过")
 
 
 class TestComplianceChecklist:
@@ -394,7 +393,7 @@ class TestComplianceChecklist:
             random_bytes = secrets.token_bytes(32)
             assert len(random_bytes) == 32
             checklist["使用安全随机数源"] = True
-        except:
+        except BaseException:
             pass
 
         # 2. 检查私钥范围
@@ -403,7 +402,7 @@ class TestComplianceChecklist:
             pk_int = int.from_bytes(pk_bytes, "big")
             assert 0 < pk_int < Secp256k1.N
             checklist["私钥在有效范围内"] = True
-        except:
+        except BaseException:
             pass
 
         # 3. 检查私钥不可预测性（放宽要求）
@@ -416,7 +415,7 @@ class TestComplianceChecklist:
             # 放宽阈值，从 N//10 改为 N//100
             assert diff > Secp256k1.N // 100
             checklist["私钥不可预测"] = True
-        except:
+        except BaseException:
             pass
 
         # 4. 检查无硬编码私钥
@@ -426,7 +425,7 @@ class TestComplianceChecklist:
                 pk_int = int.from_bytes(pk_bytes, "big")
                 assert pk_int not in [1, 2, 3, 12345]
             checklist["无硬编码私钥"] = True
-        except:
+        except BaseException:
             pass
 
         # 5. 检查地址校验和
@@ -436,7 +435,7 @@ class TestComplianceChecklist:
             version, payload = Base58.check_decode("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
             assert version == 0x00 and len(payload) == 20
             checklist["地址校验和验证"] = True
-        except:
+        except BaseException:
             pass
 
         # 6-9. 其他检查通过前面的测试覆盖
@@ -446,7 +445,7 @@ class TestComplianceChecklist:
         checklist["内存管理安全"] = True
 
         # 打印结果
-        print(f"\n🔒 安全合规检查清单:")
+        print("\n🔒 安全合规检查清单:")
         passed = sum(1 for v in checklist.values() if v)
         total = len(checklist)
 

@@ -6,13 +6,12 @@
 """
 
 import os
-import logging
 import sys
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.utils import init_logging, get_configured_logger
+from src.utils import init_logging, get_configured_logger  # noqa: E402
 
 # 配置日志
 init_logging()

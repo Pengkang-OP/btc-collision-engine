@@ -6,7 +6,7 @@
 提供分页功能，用于显示大量数据，如匹配结果、性能数据和错误日志。
 """
 
-from typing import List, Any, Optional, Callable
+from typing import List, Any, Callable
 
 
 class PaginationManager:
@@ -206,7 +206,9 @@ def display_paginated_performance(data: List[dict], title: str = "性能数据")
 
         time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
 
-        return f"时间: {time_str} | 速度: {speed:,}/s | 总尝试: {total_checked:,} | GPU: {gpu_usage}% | 内存: {memory_used}MB"
+        return f"时间: {time_str} | 速度: {
+            speed:,                                       }/s | 总尝试: {
+            total_checked:,                                                                                                 } | GPU: {gpu_usage}% | 内存: {memory_used}MB"  # noqa: E501
 
     paginator = PaginationManager(data, page_size=8)
 

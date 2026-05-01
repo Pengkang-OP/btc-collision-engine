@@ -8,8 +8,7 @@
 不依赖具体的 GPU 设备对象，便于单元测试和复用。
 """
 
-import logging
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 from typing import Dict
 
 logger = get_configured_logger("GPUMemoryCalculator")
@@ -116,7 +115,7 @@ class GPUMemoryCalculator:
         if remaining <= 0:
             logger.warning(
                 f"可用显存 {available_memory / GPUMemoryCalculator.BYTES_PER_MB:.1f} MB "
-                f"不足以容纳目标地址缓冲区 "
+                "不足以容纳目标地址缓冲区 "
                 f"{targets_bytes / GPUMemoryCalculator.BYTES_PER_MB:.1f} MB"
             )
             return 10_000  # 返回最小安全值
@@ -126,7 +125,7 @@ class GPUMemoryCalculator:
         remaining -= fixed_bytes
 
         if remaining <= 0:
-            logger.warning(f"可用显存扣除固定缓冲区后不足，使用最小 batch_size")
+            logger.warning("可用显存扣除固定缓冲区后不足，使用最小 batch_size")
             return 10_000
 
         # 每个 key 消耗的字节数（含 20% overhead，PRNG 模式下仅 match_flags）

@@ -79,11 +79,11 @@ def format_speed(speed: float) -> str:
     if speed < 1000:
         return f"{speed:.0f}/s"
     elif speed < 1000000:
-        return f"{speed/1000:.2f}K/s"
+        return f"{speed / 1000:.2f}K/s"
     elif speed < 1000000000:
-        return f"{speed/1000000:.2f}M/s"
+        return f"{speed / 1000000:.2f}M/s"
     else:
-        return f"{speed/1000000000:.2f}B/s"
+        return f"{speed / 1000000000:.2f}B/s"
 
 
 def format_elapsed_time(seconds: float) -> str:
@@ -122,11 +122,11 @@ def format_eta(seconds: float) -> str:
     if seconds < 60:
         return f"{seconds:.0f}s"
     elif seconds < 3600:
-        return f"{seconds/60:.1f}m"
+        return f"{seconds / 60:.1f}m"
     elif seconds < 86400:
-        return f"{seconds/3600:.1f}h"
+        return f"{seconds / 3600:.1f}h"
     else:
-        return f"{seconds/86400:.1f}d"
+        return f"{seconds / 86400:.1f}d"
 
 
 def truncate_address(address: str, max_length: int = 20) -> str:

@@ -11,8 +11,7 @@
 import pytest
 import json
 import logging
-from pathlib import Path
-from unittest.mock import patch, mock_open, MagicMock
+from unittest.mock import patch
 from src.collision.gpu_config_manager import GPUConfigManager
 
 
@@ -27,7 +26,7 @@ class TestGPUConfigManagerInit:
     def test_init_logs_debug_message(self, caplog):
         """测试初始化输出调试日志"""
         with caplog.at_level(logging.DEBUG):
-            manager = GPUConfigManager()
+            GPUConfigManager()
             assert "GPUConfigManager已初始化" in caplog.text
 
 

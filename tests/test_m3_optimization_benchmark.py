@@ -2,10 +2,8 @@
 
 import time
 import pytest
-from pytest_benchmark.fixture import BenchmarkFixture
 from src.collision.key_collision_engine import KeyCollisionEngine
 from src.core.secure_key_manager import SecureKeyManager
-from src.core.secp256k1 import Secp256k1
 
 
 class TestM3OptimizationBenchmark:
@@ -27,7 +25,7 @@ class TestM3OptimizationBenchmark:
         # 验证结果正确
         assert len(result) == 32
 
-        print(f"\n单个SecureKeyManager创建性能:")
+        print("\n单个SecureKeyManager创建性能:")
         print(f"  平均时间: {benchmark.stats.stats.mean * 1000:.3f}ms")
         print(f"  中位数: {benchmark.stats.stats.median * 1000:.3f}ms")
         print(f"  OPS: {benchmark.stats.stats.ops:.0f}/s")
@@ -55,8 +53,8 @@ class TestM3OptimizationBenchmark:
         assert len(result) == 100
         assert all(len(k) == 32 for k in result)
 
-        print(f"\n批内复用SecureKeyManager性能:")
-        print(f"  批次大小: 100")
+        print("\n批内复用SecureKeyManager性能:")
+        print("  批次大小: 100")
         print(f"  平均时间: {benchmark.stats.stats.mean * 1000:.3f}ms")
         print(f"  中位数: {benchmark.stats.stats.median * 1000:.3f}ms")
         print(f"  OPS: {benchmark.stats.stats.ops:.0f} 批次/s")
@@ -85,11 +83,11 @@ class TestM3OptimizationBenchmark:
         else:
             improvement = 0
 
-        print(f"\nSecureKeyManager对象创建开销对比:")
+        print("\nSecureKeyManager对象创建开销对比:")
         print(f"  优化前（每私钥创建）: {time_before * 1000:.3f}ms (100私钥)")
         print(f"  优化后（批内复用）: {time_after * 1000:.3f}ms (100私钥)")
         print(f"  性能提升: {improvement:.2f}%")
-        print(f"  对象创建减少: 99%")
+        print("  对象创建减少: 99%")
 
         # 验证优化后确实更快或相当
         assert time_after <= time_before * 1.1, "优化后不应该更慢"
@@ -110,7 +108,7 @@ class TestM3OptimizationBenchmark:
 
         speed = result / elapsed if elapsed > 0 else 0
 
-        print(f"\n范围扫描性能（M3优化后）:")
+        print("\n范围扫描性能（M3优化后）:")
         print(f"  扫描私钥数: {result}")
         print(f"  耗时: {elapsed * 1000:.2f}ms")
         print(f"  速度: {speed:.0f} keys/s")
@@ -126,7 +124,7 @@ class TestM3OptimizationBenchmark:
 
         result = engine.stats.total_checked
 
-        print(f"\n暴力穷举性能（M3优化后）:")
+        print("\n暴力穷举性能（M3优化后）:")
         print(f"  扫描私钥数: {result}")
 
     def test_m3_optimization_memory_safety(self):
@@ -151,11 +149,11 @@ class TestM3OptimizationBenchmark:
         unique_keys = set(leaked_keys)
         assert len(unique_keys) == 10, "应该生成10个不同的私钥"
 
-        print(f"\nM3优化内存安全验证:")
-        print(f"  生成私钥数: 10")
+        print("\nM3优化内存安全验证:")
+        print("  生成私钥数: 10")
         print(f"  不同私钥数: {len(unique_keys)}")
-        print(f"  私钥清零机制: ✓ 正常")
-        print(f"  内存安全性: ✓ 通过")
+        print("  私钥清零机制: ✓ 正常")
+        print("  内存安全性: ✓ 通过")
 
 
 class TestM3OptimizationComparison:
@@ -182,12 +180,12 @@ class TestM3OptimizationComparison:
         speedup = time_before / time_after
         improvement = ((time_before - time_after) / time_before) * 100
 
-        print(f"\nM3优化效果量化:")
+        print("\nM3优化效果量化:")
         print(f"  优化前: {time_before * 1000:.2f}ms (1000私钥)")
         print(f"  优化后: {time_after * 1000:.2f}ms (1000私钥)")
         print(f"  加速比: {speedup:.2f}x")
         print(f"  性能提升: {improvement:.2f}%")
-        print(f"  对象创建减少: 99.9%")
+        print("  对象创建减少: 99.9%")
 
         # 验证优化有效
         assert time_after < time_before, "优化后应该显著更快"
@@ -217,9 +215,9 @@ class TestM3OptimizationComparison:
         # 验证大批量更高效
         assert results[5000] < results[10], "大批量应该更高效"
 
-        print(f"\n批量大小性能对比:")
-        print(f"  最优批量: 5000")
-        print(f"  最差批量: 10")
+        print("\n批量大小性能对比:")
+        print("  最优批量: 5000")
+        print("  最差批量: 10")
         print(f"  性能差异: {results[10] / results[5000]:.2f}x")
 
 

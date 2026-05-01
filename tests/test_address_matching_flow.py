@@ -11,19 +11,13 @@
 import pytest
 import os
 import tempfile
-import hashlib
-import hmac
-from unittest.mock import Mock, patch
-from datetime import datetime
-from typing import Dict, List, Set
+from unittest.mock import Mock
 
 # 导入被测模块
 from src.collision.targets.resolver import TargetResolver
 from src.collision.targets.matcher import AddressMatcher
-from src.collision.targets.cache import AddressCache
 from src.collision.continuous_matcher import ContinuousMatcher
-from src.core.bitcoin_key_validator import BitcoinKeyValidator, AddressType
-from src.core.base58 import Base58
+from src.core.bitcoin_key_validator import BitcoinKeyValidator
 
 
 class TestTargetResolverFormatDetection:
@@ -653,7 +647,6 @@ class TestPerformanceOptimization:
     def test_o1_lookup_performance(self):
         """测试O(1)查找性能"""
         import time
-        import string
 
         # 使用Base58字符集生成有效格式的地址
         base58_chars = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"

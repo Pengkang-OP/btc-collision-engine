@@ -14,9 +14,9 @@ import json
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine
-from src.collision.key_collision_engine import KeyCollisionEngine
-from src.collision import TargetResolver
+from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
+from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
+from src.collision import TargetResolver  # noqa: E402
 
 
 def run_cpu_test(targets, duration=15):
@@ -38,7 +38,7 @@ def run_cpu_test(targets, duration=15):
         use_memory_pool=True,
     )
 
-    print(f"启动CPU引擎...")
+    print("启动CPU引擎...")
     engine.start(mode="random")
     start_time = time.time()
 
@@ -51,10 +51,10 @@ def run_cpu_test(targets, duration=15):
     stats = engine.get_stats()
     elapsed = time.time() - start_time
 
-    print(f"\n✅ CPU测试完成:")
+    print("\n✅ CPU测试完成:")
     print(f"  总检查数: {stats.total_checked:,}")
     print(f"  运行时间: {elapsed:.2f}秒")
-    print(f"  平均速度: {stats.total_checked/elapsed:.2f} keys/s")
+    print(f"  平均速度: {stats.total_checked / elapsed:.2f} keys/s")
 
     return {
         "mode": "CPU",
@@ -83,7 +83,7 @@ def run_gpu_test(targets, duration=15):
             use_gpu_memory_pool=True,
         )
 
-        print(f"启动GPU引擎...")
+        print("启动GPU引擎...")
         engine.start(mode="random")
         start_time = time.time()
 
@@ -96,10 +96,10 @@ def run_gpu_test(targets, duration=15):
         stats = engine.get_stats()
         elapsed = time.time() - start_time
 
-        print(f"\n✅ GPU测试完成:")
+        print("\n✅ GPU测试完成:")
         print(f"  总检查数: {stats.total_checked:,}")
         print(f"  运行时间: {elapsed:.2f}秒")
-        print(f"  平均速度: {stats.total_checked/elapsed:.2f} keys/s")
+        print(f"  平均速度: {stats.total_checked / elapsed:.2f} keys/s")
 
         return {
             "mode": "GPU",
@@ -148,7 +148,7 @@ def compare_results(cpu_result, gpu_result):
             improvement = (speedup - 1) * 100
             print(f"✅ GPU性能提升: {improvement:.1f}%")
         else:
-            print(f"⚠️  GPU性能未超越CPU")
+            print("⚠️  GPU性能未超越CPU")
 
     print("\n" + "=" * 70)
 

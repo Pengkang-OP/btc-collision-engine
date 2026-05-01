@@ -10,11 +10,8 @@
 """
 
 import os
-import json
 import tempfile
-import sqlite3
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 
 # ============================================================================
 # Fixtures
@@ -133,7 +130,7 @@ class TestAddressStorageJson:
         from src.collision.targets.storage import AddressStorage
 
         storage_path = os.path.join(temp_dir, "targets.json")
-        storage = AddressStorage(storage_type="json", path=storage_path)
+        storage = AddressStorage(storage_type="json", path=storage_path)  # noqa: F841
         # 应创建目录
         assert os.path.exists(os.path.dirname(storage_path) or ".")
 
@@ -178,7 +175,7 @@ class TestAddressStorageSqlite:
         from src.collision.targets.storage import AddressStorage
 
         storage_path = os.path.join(temp_dir, "targets.db")
-        storage = AddressStorage(storage_type="sqlite", path=storage_path)
+        storage = AddressStorage(storage_type="sqlite", path=storage_path)  # noqa: F841
         assert os.path.exists(os.path.dirname(storage_path) or ".")
 
     def test_save_and_load_sqlite(self, temp_dir, sample_addresses):

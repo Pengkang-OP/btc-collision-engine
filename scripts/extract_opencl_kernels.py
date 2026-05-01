@@ -13,7 +13,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)
 
 # 现在可以导入src模块
-from src.gpu.kernel import OPENCL_KERNEL_SOURCE
+from src.gpu.kernel import OPENCL_KERNEL_SOURCE  # noqa: E402
 
 
 def create_kernel_files():
@@ -121,7 +121,7 @@ def create_kernel_files():
 
 运行以下命令验证内核正确性：
 ```bash
-python -c "from src.gpu.kernel import OPENCL_KERNEL_SOURCE; print(f'内核源码长度: {len(OPENCL_KERNEL_SOURCE)} 字符')"
+python -c "from src.gpu.kernel import OPENCL_KERNEL_SOURCE; print(f'内核源码长度: {len(OPENCL_KERNEL_SOURCE)} 字符')"  # noqa: E501
 ```
 
 ## 相关文档

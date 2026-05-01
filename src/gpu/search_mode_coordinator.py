@@ -3,14 +3,11 @@
 负责管理所有搜索模式的创建、切换和执行。
 """
 
-import logging
-
 # P3-5: 统一日志获取
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 from typing import Dict, Optional, List, Any, TYPE_CHECKING, cast
 
 from ..gpu.search_modes import RandomSearchMode, BruteForceSearchMode, RangeScanSearchMode
-from ..collision.checkpoint_manager import CheckpointManager
 from ..collision.collision_stats import CollisionStats
 
 if TYPE_CHECKING:
@@ -102,7 +99,7 @@ class SearchModeCoordinator:
 
     def _execute_random_search(self, search_mode: RandomSearchMode, **kwargs):
         """执行随机搜索"""
-        resume = kwargs.get("resume", False)
+        kwargs.get("resume", False)
 
         # 调用RandomSearchMode的execute方法，它会自动选择同步或异步模式
         search_mode.execute()
@@ -145,7 +142,7 @@ class SearchModeCoordinator:
         """保存当前模式的状态"""
         if self.engine.checkpoint_mgr:
             try:
-                self.engine._save_checkpoint(self.engine.stats.total_keys)  # type: ignore[attr-defined]  # 动态属性，已知存在  # 动态属性，已知存在
+                cast(Any, self.engine)._save_checkpoint(self.engine.stats.total_keys)
                 self.logger.info("当前状态已保存到检查点")
             except Exception as e:
                 self.logger.error(f"保存检查点失败: {e}")

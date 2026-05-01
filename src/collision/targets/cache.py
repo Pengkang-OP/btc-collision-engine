@@ -7,9 +7,8 @@
 - 增强的线程安全和跨平台兼容性
 """
 
-import time
 import threading
-from typing import Optional, Dict, Any, Union
+from typing import Optional, Dict, Any
 from cachetools import LRUCache, TTLCache
 
 # 导入日志配置

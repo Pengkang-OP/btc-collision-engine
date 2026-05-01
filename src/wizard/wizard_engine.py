@@ -9,7 +9,6 @@
 import sys
 import os
 import time
-import traceback
 import logging
 
 logger = logging.getLogger(__name__)
@@ -19,15 +18,15 @@ _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
-from typing import Optional, List, Callable
-from .interfaces import WizardResult, WizardConfig, WizardMode
-from .events import WizardEvent, WizardEventType, EventDispatcher
-from .message_queue import WizardMessageQueue, get_message_queue
-from .target_selector import TargetSelector
-from .mode_selector import ModeSelector
-from .option_selector import OptionSelector
-from .gpu_selector import GPUSelector
-from .config_builder import ConfigBuilder
+from typing import Optional, Callable  # noqa: E402
+from .interfaces import WizardResult, WizardConfig, WizardMode  # noqa: E402
+from .events import WizardEventType, EventDispatcher  # noqa: E402
+from .message_queue import WizardMessageQueue, get_message_queue  # noqa: E402
+from .target_selector import TargetSelector  # noqa: E402
+from .mode_selector import ModeSelector  # noqa: E402
+from .option_selector import OptionSelector  # noqa: E402
+from .gpu_selector import GPUSelector  # noqa: E402
+from .config_builder import ConfigBuilder  # noqa: E402
 
 
 class WizardEngine:
@@ -176,7 +175,7 @@ class WizardEngine:
             self._show_summary()
 
         if not self.config.auto_continue:
-            response = input(f"\n是否立即执行? [y/n] (推荐: Y): ").strip().lower()
+            response = input("\n是否立即执行? [y/n] (推荐: Y): ").strip().lower()
             if response and response[0] != "y":
                 self.result.success = False
                 self.result.error_message = "用户取消执行"

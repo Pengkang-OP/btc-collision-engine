@@ -13,11 +13,10 @@
 
 import time
 import threading
-import logging
-from typing import Dict, List, Optional, Any
+from typing import Dict, List
 
 # P3-5: 统一日志获取
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 
 logger = get_configured_logger("BatchSizeOptimizer")
 
@@ -74,9 +73,10 @@ class SmartBatchSizeOptimizer:
         # 当前批次大小
         self._current_batch_size: int = self._initial_batch_size
 
-        logger.info(
-            f"智能批次大小优化器初始化: GPU型号={gpu_model}, 初始批次={self._initial_batch_size}, 范围={self._min_batch_size}-{self._max_batch_size}"
-        )
+        logger.info(f"智能批次大小优化器初始化: GPU型号={gpu_model}, 初始批次={
+            self._initial_batch_size}, 范围={
+            self._min_batch_size}-{
+            self._max_batch_size}")
 
     def _get_gpu_config(self, gpu_model: str) -> Dict:
         """

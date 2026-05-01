@@ -32,11 +32,6 @@ from unittest.mock import Mock, patch
 from contextlib import ExitStack, contextmanager
 
 # 导入GPU Mock修复补丁
-from tests.gpu_mock_patch import (
-    mock_pyopencl_buffer,
-    mock_pyopencl_full,
-    mock_gpu_collision_engine_full,
-)
 
 # ============================================================================
 # GPU测试常量定义

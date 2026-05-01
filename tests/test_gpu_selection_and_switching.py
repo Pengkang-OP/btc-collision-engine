@@ -6,13 +6,10 @@ GPU设备选择和切换功能全面测试
 """
 
 import sys
-import os
 import time
-import json
 import unittest
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
-from typing import Dict, List
 
 # 修复Windows编码（Python 3.7+: reconfigure 安全无副作用）
 if sys.platform == "win32":
@@ -26,8 +23,8 @@ if sys.platform == "win32":
 # 添加项目根目录
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.gpu.selector import GPUDeviceSelector, get_gpu_selector, reset_gpu_selector
-from src.gpu.device import GPUDeviceDetector, identify_vendor, GPUDevice
+from src.gpu.selector import GPUDeviceSelector, get_gpu_selector, reset_gpu_selector  # noqa: E402
+from src.gpu.device import GPUDeviceDetector, identify_vendor, GPUDevice  # noqa: E402
 
 
 # Mock pyopencl常量
@@ -298,7 +295,7 @@ class TestGPUDeviceDetection(unittest.TestCase):
             result3 = GPUDeviceDetector.is_gpu_available()
             self.assertTrue(result3)
             self.assertEqual(call_count, first_call_count + 1)
-            print(f"  ✅ 缓存清除后重新检测成功")
+            print("  ✅ 缓存清除后重新检测成功")
 
 
 class TestGPUVendorIdentification(unittest.TestCase):
@@ -467,7 +464,7 @@ class TestGPUDeviceScoring(unittest.TestCase):
         self.assertIn("Arc A770", best["name"])
 
         print(f"  ✅ 最佳GPU选择: {best['name']} (评分: {best['score']:.1f})")
-        print(f"     所有设备评分:")
+        print("     所有设备评分:")
         for dev in sorted(devices, key=lambda d: d["score"], reverse=True):
             print(f"       - {dev['name']}: {dev['score']:.1f}")
 
@@ -508,7 +505,7 @@ class TestGPUDeviceScoring(unittest.TestCase):
             device_invalid = self.selector.get_device_info(99)
             self.assertIsNone(device_invalid)
 
-            print(f"  ✅ 索引选择功能正常")
+            print("  ✅ 索引选择功能正常")
 
     def test_06_recommend_batch_size(self):
         """测试3.6: 推荐批次大小"""
@@ -754,7 +751,7 @@ class TestGPURunningStability(unittest.TestCase):
                         self.assertIsNone(gpu_device.context)
                         self.assertIsNone(gpu_device.queue)
 
-                        print(f"  ✅ 循环 {i+1}/5: 初始化/清理成功")
+                        print(f"  ✅ 循环 {i + 1}/5: 初始化/清理成功")
 
     def test_02_resource_cleanup_completeness(self):
         """测试6.2: 资源清理完整性"""
@@ -803,7 +800,7 @@ class TestGPURunningStability(unittest.TestCase):
                     self.assertIsNone(gpu_device.transfer_queue)
                     self.assertIsNone(gpu_device.device)
 
-                    print(f"  ✅ 所有资源已完全清理")
+                    print("  ✅ 所有资源已完全清理")
 
 
 class TestMultiGPUIntegration(unittest.TestCase):

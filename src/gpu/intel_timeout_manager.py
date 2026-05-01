@@ -11,11 +11,9 @@
 - 设置上下限防止极端值
 """
 
-import time
-import logging
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 import statistics
-from typing import List, Optional, Dict, Any
+from typing import Dict, Any
 from collections import deque
 
 logger = get_configured_logger("IntelTimeoutManager")
@@ -67,7 +65,7 @@ class AdaptiveTimeoutManager:
         self._last_timeout = base_timeout
 
         logger.info(
-            f"自适应超时管理器已初始化: "
+            "自适应超时管理器已初始化: "
             f"base={base_timeout}s, history={history_size}, "
             f"safety={safety_factor}x, range=[{min_timeout}s, {max_timeout}s]"
         )

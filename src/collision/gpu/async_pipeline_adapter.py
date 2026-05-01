@@ -71,7 +71,7 @@ class AsyncPipelineAdapter(IAsyncExecutionPipeline):
             )
 
             logger.info(
-                f"异步管道初始化完成: "
+                "异步管道初始化完成: "
                 f"batch_size={batch_size:,}, "
                 f"queue_depth={self._pipeline.queue_depth}"
             )
@@ -114,7 +114,7 @@ class AsyncPipelineAdapter(IAsyncExecutionPipeline):
             total_elapsed_ms = (time.time() - start_time) * 1000
 
             logger.debug(
-                f"异步批次执行完成: "
+                "异步批次执行完成: "
                 f"batch_size={batch_size:,}, "
                 f"matches={len(matches)}, "
                 f"gpu_time={exec_time_ms:.0f}ms, "

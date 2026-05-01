@@ -23,8 +23,8 @@ from typing import Dict, List, Any
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_PROJECT_ROOT))
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine
-from src.monitoring.gpu_performance_monitor import GPUPerformanceMonitor
+from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
+from src.monitoring.gpu_performance_monitor import GPUPerformanceMonitor  # noqa: E402
 
 
 class StabilityTestRunner:
@@ -50,9 +50,9 @@ class StabilityTestRunner:
 
     def print_header(self, title: str):
         """打印标题"""
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(f"  {title}")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
 
     def log_metrics(self, metrics: Dict[str, Any]):
         """记录性能指标"""
@@ -106,7 +106,7 @@ class StabilityTestRunner:
         has_leak = growth_rate > 10.0
 
         if has_leak:
-            print(f"\n⚠️  警告: 检测到显存泄漏!")
+            print("\n⚠️  警告: 检测到显存泄漏!")
             print(f"   初始显存: {initial_memory:.2f} MB")
             print(f"   当前显存: {current_memory:.2f} MB")
             print(f"   增长率: {growth_rate:.2f}%")
@@ -129,7 +129,7 @@ class StabilityTestRunner:
         is_stable = decline_rate < 10.0  # 下降超过10%视为不稳定
 
         if not is_stable:
-            print(f"\n⚠️  警告: 检测到性能下降!")
+            print("\n⚠️  警告: 检测到性能下降!")
             print(f"   初始吞吐量: {initial_throughput:,.0f} keys/s")
             print(f"   当前吞吐量: {current_throughput:,.0f} keys/s")
             print(f"   下降率: {decline_rate:.2f}%")
@@ -145,7 +145,7 @@ class StabilityTestRunner:
         is_ok = latest_error_rate == 0.0
 
         if not is_ok:
-            print(f"\n❌ 错误: 检测到错误率 > 0!")
+            print("\n❌ 错误: 检测到错误率 > 0!")
             print(f"   当前错误率: {latest_error_rate:.2f}%")
 
         return is_ok
@@ -205,18 +205,18 @@ class StabilityTestRunner:
         """运行稳定性测试"""
         self.print_header("GPU碰撞引擎24小时稳定性测试")
 
-        print(f"测试配置:")
+        print("测试配置:")
         print(f"  测试时长: {self.duration_hours} 小时")
         print(f"  检查间隔: {self.check_interval} 秒")
-        print(f"  批次大小: 262,144")
-        print(f"  目标地址: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
+        print("  批次大小: 262,144")
+        print("  目标地址: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
         print(f"\n开始时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(
-            f"预计结束: {(datetime.now() + timedelta(hours=self.duration_hours)).strftime('%Y-%m-%d %H:%M:%S')}"
+            f"预计结束: {(datetime.now() + timedelta(hours=self.duration_hours)).strftime('%Y-%m-%d %H:%M:%S')}"  # noqa: E501
         )
 
         # 初始化引擎
-        print(f"\n初始化GPU引擎...")
+        print("\n初始化GPU引擎...")
         test_targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
 
         self.engine = GPUCollisionEngine(
@@ -245,10 +245,10 @@ class StabilityTestRunner:
         thread = threading.Thread(target=run_engine, daemon=True)
         thread.start()
 
-        print(f"\n引擎已启动,开始监控...\n")
+        print("\n引擎已启动,开始监控...\n")
         print(f"  {'时间':>8} | {'吞吐量':>15} | {'错误率':>8} | {'显存':>10} | {'批次':>6}")
         print(f"  {'(小时)':>8} | {'(keys/s)':>15} | {'(%)':>8} | {'(MB)':>10} | {'':>6}")
-        print(f"  {'-'*8}-+-{'-'*15}-+-{'-'*8}-+-{'-'*10}-+-{'-'*6}")
+        print(f"  {'-' * 8}-+-{'-' * 15}-+-{'-' * 8}-+-{'-' * 10}-+-{'-' * 6}")
 
         try:
             # 主循环
@@ -289,7 +289,7 @@ class StabilityTestRunner:
                     break
 
             # 停止引擎
-            print(f"\n停止引擎...")
+            print("\n停止引擎...")
             self.engine.stop()
             thread.join(timeout=10)
 
@@ -301,7 +301,7 @@ class StabilityTestRunner:
                     pass
 
             # 生成最终报告
-            print(f"\n生成最终报告...")
+            print("\n生成最终报告...")
             final_report = self.generate_final_report()
 
             report_path = self.test_data_dir / "stability_test_final_report.json"
@@ -316,27 +316,27 @@ class StabilityTestRunner:
             err = final_report["error_summary"]
             checks = final_report["stability_checks"]
 
-            print(f"性能指标:")
+            print("性能指标:")
             print(f"  平均吞吐量: {perf['avg_throughput']:,.0f} keys/s")
             print(f"  峰值吞吐量: {perf['max_throughput']:,.0f} keys/s")
             print(f"  最低吞吐量: {perf['min_throughput']:,.0f} keys/s")
             print(f"  标准差: {perf['throughput_std']:,.0f} keys/s")
 
-            print(f"\n错误率:")
+            print("\n错误率:")
             print(f"  平均错误率: {err['avg_error_rate']:.4f}%")
             print(f"  最大错误率: {err['max_error_rate']:.4f}%")
             print(
                 f"  零错误检查: {err['zero_error_checks']}/{final_report['test_info']['total_checks']}"
             )
 
-            print(f"\n显存使用:")
+            print("\n显存使用:")
             print(f"  平均显存: {mem['avg_memory_mb']:.2f} MB")
             print(f"  峰值显存: {mem['max_memory_mb']:.2f} MB")
             print(
                 f"  显存增长: {mem['memory_growth_mb']:.2f} MB ({mem['memory_growth_percent']:.2f}%)"
             )
 
-            print(f"\n稳定性检查:")
+            print("\n稳定性检查:")
             print(
                 f"  内存泄漏: {'[FAIL] 检测到' if checks['memory_leak_detected'] else '[PASS] 未检测到'}"
             )
@@ -349,18 +349,18 @@ class StabilityTestRunner:
 
             # 总体评估
             all_passed = not any(checks.values())
-            print(f"\n{'='*80}")
+            print(f"\n{'=' * 80}")
             if all_passed:
-                print(f"  [PASS] 24小时稳定性测试通过!")
+                print("  [PASS] 24小时稳定性测试通过!")
             else:
-                print(f"  [WARN] 24小时稳定性测试未完全通过,请检查上述警告")
-            print(f"{'='*80}")
+                print("  [WARN] 24小时稳定性测试未完全通过,请检查上述警告")
+            print(f"{'=' * 80}")
 
             print(f"\n详细报告已保存: {report_path}")
             print(f"中间数据已保存: {self.test_data_dir / 'stability_test_intermediate.json'}")
 
         except KeyboardInterrupt:
-            print(f"\n\n⚠️  用户中断测试")
+            print("\n\n⚠️  用户中断测试")
             if self.engine:
                 self.engine.stop()
             if self._monitor:

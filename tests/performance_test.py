@@ -19,18 +19,17 @@
 import sys
 import os
 import time
-import random
 import logging
-from typing import Set, List, Dict
+from typing import Set
 
 # 添加项目根目录到Python模块路径
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
-import pytest
+import pytest  # noqa: E402
 
 pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
 
-from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
+from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine  # noqa: E402
 
 # 配置日志
 logging.basicConfig(
@@ -93,7 +92,7 @@ def test_single_gpu_performance():
     test_duration = 30  # 测试持续时间(秒)
 
     # 启动碰撞
-    start_time = time.time()
+    time.time()
     if not engine.start(targets=targets, mode="random", total_keys=total_keys):
         logger.error("无法启动单GPU测试")
         engine.cleanup()
@@ -111,7 +110,7 @@ def test_single_gpu_performance():
     total_keys_checked = stats.get("total_keys_checked", 0)
     throughput = stats.get("combined_throughput", 0)
 
-    logger.info(f"单GPU测试结果:")
+    logger.info("单GPU测试结果:")
     logger.info(f"  总检查私钥数: {total_keys_checked:,}")
     logger.info(f"  运行时间: {elapsed_time:.2f}秒")
     logger.info(f"  吞吐量: {throughput:.0f} keys/s")
@@ -144,7 +143,7 @@ def test_multi_gpu_performance():
     test_duration = 60  # 测试持续时间(秒)
 
     # 启动碰撞
-    start_time = time.time()
+    time.time()
     if not engine.start(targets=targets, mode="random", total_keys=total_keys):
         logger.error("无法启动多GPU测试")
         engine.cleanup()
@@ -163,7 +162,7 @@ def test_multi_gpu_performance():
     throughput = stats.get("combined_throughput", 0)
     device_count = stats.get("device_count", 0)
 
-    logger.info(f"多GPU测试结果:")
+    logger.info("多GPU测试结果:")
     logger.info(f"  GPU数量: {device_count}")
     logger.info(f"  总检查私钥数: {total_keys_checked:,}")
     logger.info(f"  运行时间: {elapsed_time:.2f}秒")

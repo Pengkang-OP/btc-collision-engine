@@ -15,15 +15,12 @@ import sys
 import unittest
 import tempfile
 import shutil
-from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
-import sys
-
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.utils.platform_check import PlatformChecker, CheckResult
+from src.utils.platform_check import PlatformChecker, CheckResult  # noqa: E402
 
 
 class TestCheckResult(TestCase):
@@ -265,7 +262,7 @@ class TestPlatformCheckerRunAll(TestCase):
         """运行所有检查前清空结果"""
         # 先添加一些旧结果
         self.checker._add("旧检查", False, "旧结果")
-        old_count = len(self.checker.results)
+        len(self.checker.results)
 
         # 运行所有检查
         self.checker.run_all_checks()

@@ -10,7 +10,7 @@ IGPUDeviceManager 协议接口，使外观层能够通过统一协议管理设�
 from typing import Any, Dict, List, Optional
 import logging
 
-from .protocols import IGPUDeviceManager, GPUDevice, GPUContext
+from .protocols import GPUDevice, GPUContext
 
 logger = logging.getLogger(__name__)
 

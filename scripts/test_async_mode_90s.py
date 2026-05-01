@@ -17,14 +17,13 @@ import json
 import threading
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any
 
 # 添加项目根目录到路径
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_PROJECT_ROOT))
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine
-from src.collision.collision_stats import CollisionStats
+from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
+from src.collision.collision_stats import CollisionStats  # noqa: E402
 
 # 输出目录
 _TEST_OUTPUT_DIR = _PROJECT_ROOT / "test_results"
@@ -38,8 +37,8 @@ def test_async_mode(test_duration: int = 90, analysis_duration: int = 60):
     print("=" * 80)
     print(f"  测试时长: {test_duration}秒 (含 {test_duration - analysis_duration}s 缓冲)")
     print(f"  数据分析: 前{analysis_duration}秒")
-    print(f"  批次大小: 1,048,576")
-    print(f"  目标地址: 2个")
+    print("  批次大小: 1,048,576")
+    print("  目标地址: 2个")
     print()
 
     targets = ["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", "12cbQLTFMXRnSzktFkuoG3eHoMeFtpTu3S"]

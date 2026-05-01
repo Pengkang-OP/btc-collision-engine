@@ -14,19 +14,16 @@
 import pytest
 import os
 import sys
-import time
-from typing import Set
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.core.bitcoin_key_validator import (
+from src.core.bitcoin_key_validator import (  # noqa: E402
     BitcoinKeyValidator,
-    KeyValidationResult,
     AddressType,
     validate_bitcoin_key_chain,
 )
-from src.core.secp256k1 import Secp256k1
+from src.core.secp256k1 import Secp256k1  # noqa: E402
 
 
 class TestPrivateKeyValidation:

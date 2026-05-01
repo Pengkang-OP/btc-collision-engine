@@ -13,9 +13,7 @@
 - MemoryStatus 枚举
 """
 
-import time
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 
 # ============================================================================
 # MemoryStatus / MemorySnapshot 测试

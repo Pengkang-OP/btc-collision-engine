@@ -5,8 +5,7 @@
 支持NVIDIA、AMD、Intel Arc的特定优化。
 """
 
-import logging
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 from ..collision.constants import INTEL_SAFE_MEMORY_RATIO
 import threading
 from typing import Any, Dict

@@ -19,14 +19,14 @@ import json
 import threading
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Dict, Any
 
 # 添加项目根目录到路径
 project_root = str(Path(__file__).parent.parent)
 sys.path.insert(0, project_root)
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine
-from src.collision.collision_stats import CollisionStats
+from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
+from src.collision.collision_stats import CollisionStats  # noqa: E402
 
 
 class GPUMonitor:
@@ -56,7 +56,7 @@ class GPUMonitor:
         self._running = False
         if self._monitor_thread:
             self._monitor_thread.join(timeout=5)
-        print(f"  [监控] GPU利用率监控已停止")
+        print("  [监控] GPU利用率监控已停止")
 
     def _monitor_loop(self, engine: GPUCollisionEngine, interval: float):
         """监控循环"""
@@ -121,8 +121,8 @@ def test_gpu_utilization(mode: str = "async", duration: int = 60):
     print(f"  GPU利用率监控测试 - {mode.upper()}模式")
     print("=" * 80)
     print(f"  测试时长: {duration}秒")
-    print(f"  批次大小: 1,048,576")
-    print(f"  目标地址: 2个")
+    print("  批次大小: 1,048,576")
+    print("  目标地址: 2个")
     print()
 
     targets = ["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", "12cbQLTFMXRnSzktFkuoG3eHoMeFtpTu3S"]
@@ -158,13 +158,13 @@ def test_gpu_utilization(mode: str = "async", duration: int = 60):
         if mode == "sync":
             if hasattr(engine, "_async_executor") and engine._async_executor:
                 engine._async_executor = None
-                print(f"  [配置] ✓ 异步执行器已禁用(同步模式)")
+                print("  [配置] ✓ 异步执行器已禁用(同步模式)")
         else:
             if hasattr(engine, "_async_executor") and engine._async_executor:
                 queue_depth = getattr(engine._async_executor, "queue_depth", "N/A")
                 print(f"  [配置] ✓ 异步执行器已启用 (队列深度: {queue_depth})")
             else:
-                print(f"  [错误] ✗ 异步执行器未启用!")
+                print("  [错误] ✗ 异步执行器未启用!")
                 return
 
         init_time = time.time() - init_start
@@ -211,9 +211,9 @@ def test_gpu_utilization(mode: str = "async", duration: int = 60):
         # 获取监控摘要
         summary = monitor.get_summary()
 
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(f"  GPU利用率监控结果 - {mode.upper()}模式")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
         print(f"  采样点数: {summary['samples']}")
         print(f"  平均速度: {summary['avg_speed']:,.0f} keys/s")
         print(f"  峰值速度: {summary['max_speed']:,.0f} keys/s")

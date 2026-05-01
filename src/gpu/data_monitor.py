@@ -16,9 +16,9 @@
 import threading
 import time
 import logging
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 import hashlib
-from typing import Any, Dict, List, Set, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 from collections import defaultdict, deque
 from datetime import datetime
 
@@ -439,7 +439,7 @@ class DataMonitor:
         """
         private_key = match_data.get("private_key", "")
         address = match_data.get("address", "")
-        target_address = match_data.get("target_address", "")
+        match_data.get("target_address", "")
 
         # 验证私钥格式
         if not private_key or len(private_key) != 64:
@@ -641,7 +641,7 @@ class DataMonitor:
         total_time = history[-1]["timestamp"] - history[0]["timestamp"]
 
         if total_time > 0:
-            return total_keys / total_time  # type: ignore[no-any-return]
+            return cast(float, total_keys / total_time)
 
         return 0.0
 

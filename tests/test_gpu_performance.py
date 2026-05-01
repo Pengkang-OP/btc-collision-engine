@@ -9,14 +9,11 @@
 
 import pytest
 import os
-import sys
 import time
 import psutil
-from unittest.mock import Mock, patch
 from src.gpu.performance_optimizer import (
     GPUPerformanceOptimizer,
     PerformanceMetrics,
-    GPUProfile,
     GPUVendor,
 )
 from src.collision.collision_stats import CollisionStats
@@ -71,7 +68,7 @@ class TestPerformanceOptimizer:
         optimizer = GPUPerformanceOptimizer()
 
         # 先创建配置文件(必需)
-        profile = optimizer.create_optimized_profile(
+        profile = optimizer.create_optimized_profile(  # noqa: F841
             device_name="Test GPU", vendor_str="NVIDIA Corporation", global_mem_size=8 * 1024**3
         )
 
@@ -166,7 +163,7 @@ class TestMemoryUsage:
             stats.update(i + 1)
 
             # 创建快照
-            snapshot = stats.snapshot()
+            stats.snapshot()
 
             # 记录错误
             if i % 100 == 0:
@@ -200,7 +197,7 @@ class TestSecurityValidation:
         from src.utils.exception_handler import ExceptionHandler
 
         private_key = b"\x01" * 32
-        error = RuntimeError(f"Error with key")  # 不包含私钥
+        error = RuntimeError("Error with key")  # 不包含私钥
 
         ExceptionHandler.handle_engine_error("GPU", error)
 

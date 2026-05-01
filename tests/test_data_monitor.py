@@ -10,7 +10,6 @@
 
 import unittest
 import time
-import threading
 from src.gpu.data_monitor import DataMonitor, DataQualityIssue
 
 

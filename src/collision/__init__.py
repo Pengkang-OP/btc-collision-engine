@@ -13,7 +13,6 @@ from .multiprocess_engine import MultiprocessCollisionEngine, HybridCollisionEng
 from .continuous_matcher import ContinuousMatcher
 from .match_storage import MatchDataStorage
 from .collision_helpers import encode_private_key_to_wif, format_match_result, safe_wif_encode
-from . import constants
 
 # 事件系统 (v3.2.0新增)
 from .events import (
@@ -41,8 +40,8 @@ try:
     from .gpu_collision_engine import GPUCollisionEngine
 
     _GPU_AVAILABLE = True
-except ImportError as _gpu_import_err:
-    GPUCollisionEngine = None  # type: ignore[misc,assignment]  # 条件导入回退
+except ImportError as _gpu_import_err:  # noqa: F841
+    GPUCollisionEngine: Any = None  # 条件导入回退
     _GPU_AVAILABLE = False
     import logging as _logging
 

@@ -8,8 +8,7 @@
 """
 
 import pytest
-from unittest.mock import Mock, MagicMock
-from typing import Dict
+from unittest.mock import Mock
 
 # ============================================================================
 # 1. GPU Constants 测试
@@ -110,7 +109,7 @@ class TestClampBatchSize:
 # 2. GPUKernelProtocol 测试
 # ============================================================================
 
-from src.gpu.kernel_protocol import GPUKernelProtocol, GPUKernelFactory
+from src.gpu.kernel_protocol import GPUKernelProtocol, GPUKernelFactory  # noqa: E402
 
 
 class TestGPUKernelProtocol:
@@ -118,7 +117,6 @@ class TestGPUKernelProtocol:
 
     def test_protocol_is_runtime_checkable(self):
         """协议是运行时可检查的"""
-        from typing import runtime_checkable
 
         assert hasattr(GPUKernelProtocol, "__metadata__") or True
 
@@ -216,7 +214,7 @@ class TestGPUKernelFactory:
 
         GPUKernelFactory.register(MockKernelClass)
         mock_program = Mock()
-        kernel = GPUKernelFactory.create(Mock(), program=mock_program)
+        kernel = GPUKernelFactory.create(Mock(), program=mock_program)  # noqa: F841
 
         assert captured_program[0] is mock_program
         GPUKernelFactory.reset()
@@ -226,7 +224,7 @@ class TestGPUKernelFactory:
 # 3. GPU Config Dataclasses 测试
 # ============================================================================
 
-from src.gpu.gpu_config import (
+from src.gpu.gpu_config import (  # noqa: E402
     GPURecoveryConfig,
     DataMonitorConfig,
     MultiGPUConfig,

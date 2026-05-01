@@ -270,7 +270,9 @@ class TestSaveAddressToTargetsFile:
         # 不应重复添加
         with open(targets_path, "r") as f:
             lines = f.readlines()
-        addr_lines = [l.strip() for l in lines if l.strip() and not l.strip().startswith("#")]
+        addr_lines = [
+            l.strip() for l in lines if l.strip() and not l.strip().startswith("#")  # noqa: E741
+        ]  # noqa: E741, E501
         assert addr_lines.count(addr) == 1
 
 
@@ -296,7 +298,7 @@ class TestHandleInfoCommands:
             patch("src.cli.commands._cmd_examples") as mock_cmd,
             patch.object(sys, "exit") as mock_exit,
         ):
-            result = _handle_info_commands(args)
+            _handle_info_commands(args)
         # sys.exit 被调用即说明匹配到了命令
         mock_exit.assert_called_once_with(0)
         mock_cmd.assert_called_once()
@@ -331,7 +333,7 @@ class TestHandleSystemCommands:
             patch("src.cli.commands._cmd_validate_addresses") as mock_cmd,
             patch.object(sys, "exit") as mock_exit,
         ):
-            result = _handle_system_commands(args)
+            _handle_system_commands(args)
         mock_cmd.assert_called_once_with("test.txt")
         mock_exit.assert_called_once_with(0)
 
@@ -351,7 +353,7 @@ class TestHandleSystemCommands:
             ) as mock_migrate,
             patch.object(sys, "exit") as mock_exit,
         ):
-            result = _handle_system_commands(args)
+            _handle_system_commands(args)
         mock_migrate.assert_called_once()
         mock_exit.assert_called_once_with(0)
 
@@ -397,7 +399,7 @@ class TestDispatchUtilityCommands:
             patch("src.cli.commands._cmd_examples") as mock_cmd,
             patch.object(sys, "exit") as mock_exit,
         ):
-            result = _dispatch_utility_commands(args)
+            _dispatch_utility_commands(args)
         mock_cmd.assert_called_once()
         mock_exit.assert_called_once_with(0)
 
@@ -417,6 +419,6 @@ class TestDispatchUtilityCommands:
         args.validate_addresses = None
         args.migrate_config = False
         # 需要 mock Path 来绕过首次运行检测
-        with patch("src.cli.commands.Path", wraps=Path) as mock_path:
+        with patch("src.cli.commands.Path", wraps=Path) as mock_path:  # noqa: F841
             result = _dispatch_utility_commands(args)
         assert result is False

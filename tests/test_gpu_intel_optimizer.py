@@ -17,12 +17,12 @@ import os
 import unittest
 import logging
 import pytest
-from unittest.mock import MagicMock, Mock, patch, PropertyMock
+from unittest.mock import Mock, patch
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from src.gpu.intel_optimizer import IntelGPUOptimizer
+from src.gpu.intel_optimizer import IntelGPUOptimizer  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # 辅助工厂
@@ -372,7 +372,7 @@ class TestInitMonitoringAndTuning(unittest.TestCase):
         optimizer = IntelGPUOptimizer(device=device, config={})
 
         # Mock IntelMemoryMonitor 可导入
-        mock_mem_cls = Mock()
+        Mock()
         mock_timeout_cls = Mock()
         mock_timeout_cls.return_value = Mock()
 

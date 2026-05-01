@@ -111,7 +111,7 @@ def test_verify_arithmetic():
         x_hex = uint256_to_hex(result_x)
         y_hex = uint256_to_hex(result_y)
 
-        print(f"✓ 2*G计算完成")
+        print("✓ 2*G计算完成")
         print(f"  X坐标: 0x{x_hex}")
         print(f"  Y坐标: 0x{y_hex}")
 
@@ -120,10 +120,10 @@ def test_verify_arithmetic():
         expected_y = "1ae168fea63dc339a3c58419466ceaeef7f632653266d0e1236431a950cfe52a"
 
         if x_hex == expected_x and y_hex == expected_y:
-            print(f"✓ 算术验证通过 - 2*G计算正确")
+            print("✓ 算术验证通过 - 2*G计算正确")
             return True
         else:
-            print(f"⚠️  算术验证结果不匹配")
+            print("⚠️  算术验证结果不匹配")
             print(f"  预期X: 0x{expected_x}")
             print(f"  预期Y: 0x{expected_y}")
             # 注意：这不一定是错误，可能是字节序问题
@@ -181,7 +181,7 @@ def test_debug_hash():
         cl.enqueue_copy(queue, qx_out, qx_buf)
         cl.enqueue_copy(queue, qy_out, qy_buf)
 
-        print(f"✓ 哈希计算完成 (k=1)")
+        print("✓ 哈希计算完成 (k=1)")
         print(f"  压缩公钥: {pubkey_out[:5].tobytes().hex()}... ({len(pubkey_out)}字节)")
         print(f"  SHA-256: {sha256_out[:8].tobytes().hex()}...")
         print(f"  Hash160: {hash160_out.tobytes().hex()}")
@@ -223,7 +223,7 @@ def test_batch_check_structure():
         batch_kernel = program.batch_check
 
         # 获取内核信息
-        print(f"✓ batch_check内核存在")
+        print("✓ batch_check内核存在")
         print(f"  内核函数对象: {batch_kernel}")
 
         # 验证内核源码包含关键功能
@@ -241,7 +241,7 @@ def test_batch_check_structure():
                 print(f"  ❌ {desc}缺失: {pattern}")
                 return False
 
-        print(f"✓ 批量检查内核结构验证通过")
+        print("✓ 批量检查内核结构验证通过")
         return True
 
     except Exception as e:
@@ -263,18 +263,18 @@ def test_intel_arc_workaround():
 
         # 检查是否使用uint32替代uchar
         if "__global const uint *private_keys" in OPENCL_KERNEL_SOURCE:
-            print(f"✓ 使用uint32私钥输入（避免Intel Arc hang bug）")
+            print("✓ 使用uint32私钥输入（避免Intel Arc hang bug）")
         else:
-            print(f"❌ 未使用uint32优化")
+            print("❌ 未使用uint32优化")
             return False
 
         # 检查是否使用ulong算术
         if "ulong carry" in OPENCL_KERNEL_SOURCE or "ulong sum" in OPENCL_KERNEL_SOURCE:
-            print(f"✓ 使用ulong算术（避免signed long bug）")
+            print("✓ 使用ulong算术（避免signed long bug）")
         else:
-            print(f"⚠️  未检测到ulong算术")
+            print("⚠️  未检测到ulong算术")
 
-        print(f"✓ Intel Arc workaround验证通过")
+        print("✓ Intel Arc workaround验证通过")
         return True
 
     except Exception as e:

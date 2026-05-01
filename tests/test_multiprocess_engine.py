@@ -12,10 +12,8 @@
 - _worker_process 函数级测试
 """
 
-import os
-import time
 import pytest
-from unittest.mock import Mock, patch, MagicMock, PropertyMock
+from unittest.mock import patch, MagicMock
 
 # ============================================================================
 # MultiprocessCollisionEngine 初始化测试
@@ -527,7 +525,6 @@ class TestCleanupQueues:
 
     def test_cleanup_empty_queues(self):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
-        from multiprocessing.queues import Empty
 
         engine = MultiprocessCollisionEngine()
         mock_q = MagicMock()
@@ -541,7 +538,6 @@ class TestCleanupQueues:
 
     def test_cleanup_queues_with_items(self):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
-        from multiprocessing.queues import Empty
 
         engine = MultiprocessCollisionEngine()
         mock_q = MagicMock()

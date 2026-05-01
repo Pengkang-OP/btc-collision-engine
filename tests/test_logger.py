@@ -18,7 +18,7 @@ import tempfile
 import pytest
 import time
 import warnings
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 
 # ============================================================================
 # Fixtures
@@ -179,7 +179,7 @@ class TestThreadSafeLogger:
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             logger = logging.getLogger("test_ts")
-            ts = ThreadSafeLogger(logger)
+            ThreadSafeLogger(logger)
             assert len(w) >= 1
             deprecation_warnings = [x for x in w if issubclass(x.category, DeprecationWarning)]
             assert len(deprecation_warnings) >= 1

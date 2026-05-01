@@ -14,14 +14,14 @@
 更新日期: 2026-04-30
 """
 
-from typing import Set, Optional, Dict, Any, List, Callable, TYPE_CHECKING, cast
+from typing import Set, Optional, Dict, Any, List, Callable, TYPE_CHECKING
 import logging
 import time
 
 # P3-3: 统一回调类型别名
 from ..types import ProgressCallback, MatchCallback
 
-from .protocols import ICollisionCore, CollisionResult, MatchResult
+from .protocols import ICollisionCore, MatchResult
 
 if TYPE_CHECKING:
     from ..gpu_collision_engine import GPUCollisionEngine

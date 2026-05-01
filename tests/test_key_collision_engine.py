@@ -9,9 +9,9 @@ import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.collision.key_collision_engine import KeyCollisionEngine
-from src.collision.collision_stats import CollisionStats
-from src.core.address_generator import P2PKHAddressGenerator
+from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
+from src.collision.collision_stats import CollisionStats  # noqa: E402
+from src.core.address_generator import P2PKHAddressGenerator  # noqa: E402
 
 
 def _get_known_target() -> tuple:

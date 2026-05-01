@@ -36,7 +36,6 @@ P3-8增强：
 
 import os
 import threading
-import logging
 import time
 from typing import Callable, Any, Optional, List, Dict, cast
 from collections import deque
@@ -282,8 +281,8 @@ class WorkStealingThreadPool:
             包含统计数据的字典
         """
         with self._stats_lock:
-            total_tasks = sum(self._thread_tasks)
-            total_idle = sum(self._thread_idle_cycles)
+            sum(self._thread_tasks)
+            sum(self._thread_idle_cycles)
 
             return {
                 "num_threads": self.num_threads,
@@ -477,7 +476,7 @@ class GlobalThreadPoolManager:
             return False
 
         logger.info(
-            f"线程池缩容: {self._pool.num_threads} -> {new_num_threads} " f"(将在下次启动时生效)"
+            f"线程池缩容: {self._pool.num_threads} -> {new_num_threads} " "(将在下次启动时生效)"
         )
         # 保存意图（实际缩容在下次 start 时生效）
         self._resize_pending = new_num_threads

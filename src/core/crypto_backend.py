@@ -17,17 +17,15 @@
 - 加密操作本身在锁外执行，避免性能瓶颈
 """
 
-import os
-import hashlib
 import threading
 import time
 import logging
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple, Union, Dict, Any, cast
+from typing import Tuple, Dict, Any, cast
 from enum import Enum, auto
 
 # 导入日志配置
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 
 # 注意：不在模块级别调用init_logging()，由CLI入口统一初始化
 # init_logging()  # ← 已移除，避免重复初始化
@@ -56,13 +54,11 @@ class CryptoBackend(ABC):
     @abstractmethod
     def name(self) -> str:
         """后端名称"""
-        pass
 
     @property
     @abstractmethod
     def is_available(self) -> bool:
         """检查后端是否可用"""
-        pass
 
     @abstractmethod
     def generate_public_key(self, private_key: bytes, compressed: bool = True) -> bytes:
@@ -76,7 +72,6 @@ class CryptoBackend(ABC):
         返回:
             公钥字节串
         """
-        pass
 
     @abstractmethod
     def scalar_multiply(self, k: int, point_x: int, point_y: int) -> Tuple[int, int]:
@@ -91,7 +86,6 @@ class CryptoBackend(ABC):
         返回:
             (rx, ry) 结果点坐标
         """
-        pass
 
     @abstractmethod
     def is_constant_time(self) -> bool:
@@ -101,7 +95,6 @@ class CryptoBackend(ABC):
         返回:
             True表示使用恒定时间算法
         """
-        pass
 
 
 class PurePythonBackend(CryptoBackend):
@@ -124,7 +117,7 @@ class PurePythonBackend(CryptoBackend):
 
     def generate_public_key(self, private_key: bytes, compressed: bool = True) -> bytes:
         if self._use_const_time:
-            return self.ec.generate_public_key_const_time(private_key, compressed)  # type: ignore[attr-defined]
+            return cast(Any, self.ec).generate_public_key_const_time(private_key, compressed)
         else:
             return self.ec.generate_public_key(private_key, compressed)
 
@@ -159,7 +152,7 @@ class OpenSSLBackend(CryptoBackend):
 
     def _check_availability(self) -> bool:
         try:
-            from cryptography.hazmat.primitives.asymmetric import ec
+            pass
 
             return True
         except ImportError:
@@ -214,7 +207,9 @@ class OpenSSLBackend(CryptoBackend):
 
         # 创建一个基于目标点的公钥
         # 然后使用标量乘法
-        point = ec.EllipticCurvePublicNumbers(x=point_x, y=point_y, curve=self._SECP256K1)
+        point = ec.EllipticCurvePublicNumbers(  # noqa: F841
+            x=point_x, y=point_y, curve=self._SECP256K1
+        )  # noqa: F841, E501
 
         # 这里我们需要使用底层操作
         # 由于cryptography库的限制，我们使用纯Python实现作为回退
@@ -246,7 +241,7 @@ class CoincurveBackend(CryptoBackend):
 
     def _check_availability(self) -> bool:
         try:
-            import coincurve
+            pass
 
             return True
         except ImportError:
@@ -327,7 +322,7 @@ class ECDSABackend(CryptoBackend):
 
     def _check_availability(self) -> bool:
         try:
-            import ecdsa
+            pass
 
             return True
         except ImportError:

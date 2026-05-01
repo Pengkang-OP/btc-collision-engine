@@ -6,8 +6,6 @@
 负责功能选项的配置。
 """
 
-import sys
-import os
 from typing import Tuple
 
 from .selector_protocol import SelectorProtocol

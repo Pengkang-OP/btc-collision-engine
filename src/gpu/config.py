@@ -4,10 +4,8 @@
 """
 
 import os
-import json
 from src.utils.fast_json import fast_load, fast_dump
-import logging
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 from typing import Dict, Any, Optional
 
 from .device import GPUDevice, GPUDeviceDetector

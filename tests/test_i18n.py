@@ -14,18 +14,18 @@ import os
 import sys
 import unittest
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 # 确保项目根目录在 sys.path 中
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.i18n import _t, get_language, get_supported_languages, set_language
-from src.i18n.language_detector import (
+from src.i18n import _t, get_language, get_supported_languages, set_language  # noqa: E402
+from src.i18n.language_detector import (  # noqa: E402
     _normalize_language_code,
     detect_system_language,
     is_language_supported,
 )
-from src.i18n.translator import Translator
+from src.i18n.translator import Translator  # noqa: E402
 
 # locales 目录绝对路径（供翻译完整性测试使用）
 _LOCALES_DIR = Path(__file__).parent.parent / "src" / "i18n" / "locales"

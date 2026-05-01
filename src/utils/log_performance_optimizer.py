@@ -8,14 +8,13 @@
 """
 
 import os
-import sys
 import time
 import threading
 import queue
 import logging
 import platform
 from typing import Optional, Dict, Any, List, Callable, cast
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass

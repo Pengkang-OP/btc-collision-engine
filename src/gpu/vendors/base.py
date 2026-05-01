@@ -5,10 +5,9 @@
 
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
-import logging
 
 # P3-5: 统一日志获取
-from ...utils import init_logging, get_configured_logger
+from ...utils import get_configured_logger
 
 logger = get_configured_logger("BaseVendor")
 
@@ -24,7 +23,6 @@ class GPUVendorBase(ABC):
         Returns:
             厂商名称字符串
         """
-        pass
 
     @abstractmethod
     def apply_optimizations(self, device: Any, profile: Dict[str, Any]) -> None:
@@ -35,7 +33,6 @@ class GPUVendorBase(ABC):
             device: GPUDevice实例
             profile: GPU型号配置字典
         """
-        pass
 
     @abstractmethod
     def calculate_batch_size(self, device: Any, profile: Dict[str, Any]) -> int:
@@ -49,7 +46,6 @@ class GPUVendorBase(ABC):
         Returns:
             推荐的batch_size值
         """
-        pass
 
     def handle_errors(self, error: Exception, stats: Optional[Any] = None) -> bool:
         """

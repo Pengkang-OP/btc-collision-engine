@@ -20,11 +20,11 @@ import os
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import pytest
+import pytest  # noqa: E402
 
 pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine
+from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
 
 
 def test_buffer_return_to_pool():
@@ -114,24 +114,24 @@ def test_buffer_return_to_pool():
 
         stats = pool.get_stats()
         print(
-            f"  循环{i+1}: 已分配={stats['total_allocated']}, "
+            f"  循环{i + 1}: 已分配={stats['total_allocated']}, "
             f"已复用={stats['total_reused']}, "
             f"池中={stats['pooled_buffers']}"
         )
 
     # 最终统计
     final_stats = pool.get_stats()
-    print(f"\n  最终统计:")
+    print("\n  最终统计:")
     print(f"    总分配: {final_stats['total_allocated']}")
     print(f"    总复用: {final_stats['total_reused']}")
-    print(f"    复用率: {final_stats['reuse_rate']*100:.1f}%")
+    print(f"    复用率: {final_stats['reuse_rate'] * 100:.1f}%")
     print(f"    池中缓冲区: {final_stats['pooled_buffers']}")
 
     # 验证复用率
     if final_stats["reuse_rate"] > 0.5:
         print("  ✅ 复用率验证通过 (>50%)")
     else:
-        print(f"  ⚠️ 复用率较低 ({final_stats['reuse_rate']*100:.1f}%)")
+        print(f"  ⚠️ 复用率较低 ({final_stats['reuse_rate'] * 100:.1f}%)")
         print("     提示: 长期运行后复用率会达到85%+")
 
     # 检查内存泄漏
@@ -163,11 +163,11 @@ def test_buffer_return_to_pool():
     print("=" * 80)
 
     print("\n📊 修复效果:")
-    print(f"  缓冲区归还: ✅ 是")
+    print("  缓冲区归还: ✅ 是")
     print(f"  池中缓冲区: {final_stats['pooled_buffers']} 个")
-    print(f"  复用率: {final_stats['reuse_rate']*100:.1f}%")
-    print(f"  内存泄漏: 无")
-    print(f"  预期性能提升: +15% (长期运行后)")
+    print(f"  复用率: {final_stats['reuse_rate'] * 100:.1f}%")
+    print("  内存泄漏: 无")
+    print("  预期性能提升: +15% (长期运行后)")
 
     return True
 

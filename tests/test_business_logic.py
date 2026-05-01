@@ -8,7 +8,6 @@ import os
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.abspath("."))
 
-import secrets
 
 print("=" * 60)
 print("测试业务逻辑核心模块")

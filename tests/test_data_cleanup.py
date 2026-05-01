@@ -15,13 +15,12 @@ import tempfile
 import shutil
 from pathlib import Path
 from unittest import TestCase
-from unittest.mock import patch, MagicMock
 
 import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.utils.data_cleanup import DataCleaner
+from src.utils.data_cleanup import DataCleaner  # noqa: E402
 
 
 class TestDataCleanerBasic(TestCase):

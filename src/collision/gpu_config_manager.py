@@ -129,7 +129,7 @@ class GPUConfigManager:
         self._validate_merged_config(merged)
 
         logger.info(
-            f"GPU配置合并完成: "
+            "GPU配置合并完成: "
             f"batch_size={merged.get('batch_size', 'N/A')}, "
             f"work_group={merged.get('work_group_size', 'N/A')}, "
             f"mem_ratio={merged.get('memory_usage_ratio', 'N/A')}"
@@ -198,7 +198,7 @@ class GPUConfigManager:
             配置摘要字符串
         """
         return (
-            f"GPU配置摘要:\n"
+            "GPU配置摘要:\n"
             f"  - batch_size: {config.get('batch_size', 'N/A')}\n"
             f"  - work_group_size: {config.get('work_group_size', 'N/A')}\n"
             f"  - memory_usage_ratio: {config.get('memory_usage_ratio', 'N/A')}\n"

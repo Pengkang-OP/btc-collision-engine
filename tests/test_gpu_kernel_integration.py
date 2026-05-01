@@ -9,10 +9,8 @@
 """
 
 import pytest
-import time
 import logging
-from unittest.mock import Mock, MagicMock, patch
-from typing import List, Dict
+from unittest.mock import patch
 
 logger = logging.getLogger(__name__)
 
@@ -69,8 +67,6 @@ class TestGPUKernelExecution:
     @patch("pyopencl.create_some_context")
     def test_kernel_initialization(self, mock_context, mock_verify):
         """测试内核初始化"""
-        from src.collision.gpu_collision_engine import GPUKernel
-        from src.gpu.device import GPUDevice
 
         # 这个测试需要真实的GPU设备，跳过
         pytest.skip("需要真实GPU环境")
@@ -78,7 +74,6 @@ class TestGPUKernelExecution:
     @patch("src.collision.gpu_collision_engine.GPUKernel._verify")
     def test_kernel_batch_size_validation(self, mock_verify):
         """测试内核批次大小验证"""
-        from src.collision.gpu_collision_engine import GPUKernel
 
         # 测试不同批次大小
         valid_sizes = [1024, 65536, 1048576]

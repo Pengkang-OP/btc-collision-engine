@@ -4,7 +4,6 @@
 测试优化模块在实际碰撞引擎中的表现
 """
 
-import pytest
 import time
 import secrets
 import threading
@@ -161,7 +160,7 @@ class TestPerformanceComparison:
         # 记录性能数据(不assert,因为取决于后端)
         print(f"\n  优化版: {elapsed_opt:.4f}s")
         print(f"  标准版: {elapsed_std:.4f}s")
-        print(f"  比值: {elapsed_std/elapsed_opt:.2f}x")
+        print(f"  比值: {elapsed_std / elapsed_opt:.2f}x")
 
     def test_optimized_vs_standard_batch(self):
         """测试批量生成性能对比"""
@@ -183,7 +182,7 @@ class TestPerformanceComparison:
 
         print(f"\n  优化版(批量): {elapsed_opt:.4f}s")
         print(f"  标准版(逐个): {elapsed_std:.4f}s")
-        print(f"  比值: {elapsed_std/elapsed_opt:.2f}x")
+        print(f"  比值: {elapsed_std / elapsed_opt:.2f}x")
 
 
 class TestOptimizationConfigs:

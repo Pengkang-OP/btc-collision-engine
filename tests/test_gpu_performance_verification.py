@@ -50,15 +50,15 @@ def test_crypto_backend_performance():
     speedup = pp_time / cc_time if cc_time > 0 else 0
 
     print(f"\n结果 ({iterations}次公钥生成):")
-    print(f"  Pure Python:  {pp_time:.2f}ms ({pp_time/iterations:.3f}ms/次)")
-    print(f"  Coincurve:    {cc_time:.2f}ms ({cc_time/iterations:.3f}ms/次)")
+    print(f"  Pure Python:  {pp_time:.2f}ms ({pp_time / iterations:.3f}ms/次)")
+    print(f"  Coincurve:    {cc_time:.2f}ms ({cc_time / iterations:.3f}ms/次)")
     print(f"  性能提升:     {speedup:.0f}倍")
 
     if speedup >= 100:
-        print(f"  [PASS] 性能提升 >= 100倍，达到预期")
+        print("  [PASS] 性能提升 >= 100倍，达到预期")
         return True
     else:
-        print(f"  [WARN] 性能提升 < 100倍，低于预期")
+        print("  [WARN] 性能提升 < 100倍，低于预期")
         return False
 
 
@@ -122,10 +122,10 @@ def test_gpu_initialization():
             )
 
             print("[3/3] 验证配置...")
-            print(f"  GPU设备: Intel Arc A770")
-            print(f"  批次大小: 65536")
-            print(f"  显存效率: 70% (v2.2.1优化)")
-            print(f"  [PASS] GPU引擎初始化成功")
+            print("  GPU设备: Intel Arc A770")
+            print("  批次大小: 65536")
+            print("  显存效率: 70% (v2.2.1优化)")
+            print("  [PASS] GPU引擎初始化成功")
 
             # 清理（安全检查）
             if hasattr(engine, "cleanup"):
@@ -208,7 +208,7 @@ def test_memory_leak_fix():
                     print(f"  [FAIL] 缓冲区释放次数: {release_count} (存在双重释放)")
                     return False
             else:
-                print(f"  [WARN] cleanup方法不存在，跳过测试")
+                print("  [WARN] cleanup方法不存在，跳过测试")
                 return True
 
     except Exception as e:

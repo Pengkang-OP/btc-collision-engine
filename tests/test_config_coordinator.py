@@ -13,7 +13,7 @@ import os
 import json
 import tempfile
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch
 
 from src.config.config_coordinator import ConfigCoordinator
 

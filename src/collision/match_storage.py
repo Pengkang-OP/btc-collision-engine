@@ -247,4 +247,4 @@ class MatchDataStorage:
 
 
 # 导入List类型
-from typing import List
+from typing import List  # noqa: E402

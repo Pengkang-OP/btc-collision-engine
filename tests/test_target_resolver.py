@@ -11,7 +11,6 @@
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 
 # ============================================================================
 # bech32_decode 测试
@@ -65,7 +64,6 @@ class TestBech32Decode:
 
     def test_valid_taproot(self):
         """Taproot地址应使用 bech32m 编码"""
-        from src.collision.targets.resolver import bech32_decode, _BECH32M_CONST
 
         # 使用格式检测验证，不依赖具体地址校验
         from src.collision.targets.resolver import TargetResolver

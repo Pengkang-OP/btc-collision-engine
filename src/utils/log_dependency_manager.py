@@ -7,10 +7,9 @@
 - 支持依赖注入
 """
 
-from typing import Dict, List, Optional, Set, Any, Callable
+from typing import Dict, List, Optional, Set
 from dataclasses import dataclass, field
 import importlib
-import sys
 
 
 @dataclass

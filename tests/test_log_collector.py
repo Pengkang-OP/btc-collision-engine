@@ -14,7 +14,7 @@
 import pytest
 import logging
 import time
-from unittest.mock import Mock, patch, call
+from unittest.mock import Mock
 
 from src.logging.log_collector import LogCollector, _CollectorLogHandler
 from src.logging.events import LogEvent, LogEventType

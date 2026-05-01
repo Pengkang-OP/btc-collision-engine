@@ -8,7 +8,7 @@
 import os
 import threading
 import time
-from typing import Callable, List, Optional
+from typing import Callable, Optional
 
 from ..utils import init_logging, get_configured_logger
 

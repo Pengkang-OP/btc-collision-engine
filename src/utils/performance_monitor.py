@@ -10,7 +10,7 @@
 import time
 import logging
 import threading
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
 
@@ -268,7 +268,8 @@ class EnhancedPerformanceMonitor:
                 return
 
             self.end_time = time.perf_counter()
-            elapsed_ms = (self.end_time - self.start_time) * 1000  # type: ignore[operator]
+            assert self.start_time is not None
+            elapsed_ms = (self.end_time - self.start_time) * 1000
 
             success = exc_type is None
 
@@ -280,10 +281,10 @@ class EnhancedPerformanceMonitor:
                             self.level, f"[Performance] {self.operation}: {elapsed_ms:.2f}ms"
                         )
                     else:
-                        self.logger.error(
-                            f"[Performance] {self.operation}: FAILED after {elapsed_ms:.2f}ms - {exc_val}"
-                        )
-                except Exception as log_error:
+                        self.logger.error(f"[Performance] {
+                            self.operation}: FAILED after {
+                            elapsed_ms:.2f}ms - {exc_val}")
+                except Exception as log_error:  # noqa: F841
                     # 日志失败不应影响业务，静默失败
                     pass
 
@@ -306,7 +307,7 @@ class EnhancedPerformanceMonitor:
                             f"[Performance] 慢操作检测: {self.operation} "
                             f"耗时 {elapsed_ms:.2f}ms > {config['slow_threshold_ms']}ms"
                         )
-                except Exception as track_error:
+                except Exception as track_error:  # noqa: F841
                     # 追踪失败不应影响业务，静默失败
                     pass
         except (OSError, ValueError):
@@ -321,8 +322,10 @@ class EnhancedPerformanceMonitor:
     def elapsed_ms(self) -> float:
         """获取已耗时的毫秒数"""
         if self.end_time is None:
-            return (time.perf_counter() - self.start_time) * 1000  # type: ignore[operator]
-        return (self.end_time - self.start_time) * 1000  # type: ignore[operator]
+            assert self.start_time is not None
+            return (time.perf_counter() - self.start_time) * 1000
+        assert self.start_time is not None
+        return (self.end_time - self.start_time) * 1000
 
 
 def log_performance_summary(

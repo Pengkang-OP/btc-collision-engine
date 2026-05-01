@@ -5,7 +5,7 @@ import sys
 
 sys.path.insert(0, ".")
 
-from src.gpu.auto_config import GPUAutoConfigurator
+from src.gpu.auto_config import GPUAutoConfigurator  # noqa: E402
 
 # 模拟Intel Arc A770设备
 device = {

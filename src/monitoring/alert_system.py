@@ -8,10 +8,9 @@ import logging
 import time
 from enum import Enum
 from typing import Dict, List, Optional, Callable, Any, cast
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-import json
 from src.utils.fast_json import fast_dump, fast_load
 
 logger = logging.getLogger(__name__)
@@ -174,7 +173,7 @@ class AlertSystem:
             callback: 回调函数,接收AlertRecord参数
         """
         self.alert_callbacks.append(callback)
-        logger.info(f"添加告警回调函数")
+        logger.info("添加告警回调函数")
 
     # ── P2-7: 多渠道通知支持 ──
     def add_notification_channel(self, channel) -> None:

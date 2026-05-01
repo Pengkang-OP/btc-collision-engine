@@ -9,9 +9,6 @@ P3-6增强：
 - 细化 handle_gpu_error(): 增加 MemoryError/ImportError 分类
 """
 
-import logging
-from typing import Optional
-
 # P3-5: 统一日志获取
 from .logging_config import get_configured_logger
 from typing import Any

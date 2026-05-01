@@ -43,11 +43,11 @@ For complete technical specs, API docs and usage guide, see:
 - **Constant definitions**: 20 (including macros)
 """
 
-import logging
-from typing import Optional, Any, List, Dict, Tuple
+# flake8: noqa: W605
+
+from typing import Optional, List, Dict, Tuple
 
 # P1-2 fix: implement interface
-from .kernel_protocol import GPUKernelProtocol
 
 # ============================================================================
 # Kernel version management
@@ -206,16 +206,16 @@ typedef struct {
 // ============================================================================
 
 // Gx = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798
-constant uint GX[8] = {0x16F81798, 0x59F2815B, 0x2DCE28D9, 0x029BFCDB, 0xCE870B07, 0x55A06295, 0xF9DCBBAC, 0x79BE667E};
+constant uint GX[8] = {0x16F81798, 0x59F2815B, 0x2DCE28D9, 0x029BFCDB, 0xCE870B07, 0x55A06295, 0xF9DCBBAC, 0x79BE667E};  # noqa: E501
 
 // Gy = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8
-constant uint GY[8] = {0xFB10D4B8, 0x9C47D08F, 0xA6855419, 0xFD17B448, 0x0E1108A8, 0x5DA4FBFC, 0x26A3C465, 0x483ADA77};
+constant uint GY[8] = {0xFB10D4B8, 0x9C47D08F, 0xA6855419, 0xFD17B448, 0x0E1108A8, 0x5DA4FBFC, 0x26A3C465, 0x483ADA77};  # noqa: E501
 
 // P = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
-constant uint SECP256K1_P[8] = {0xFFFFFC2F, 0xFFFFFFFE, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF};
+constant uint SECP256K1_P[8] = {0xFFFFFC2F, 0xFFFFFFFE, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF};  # noqa: E501
 
 // N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141 (curve order)
-constant uint SECP256K1_N[8] = {0xD0364141, 0xBFD25E8C, 0xAF48A03B, 0xBAAEDCE6, 0xFFFFFFFE, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF};
+constant uint SECP256K1_N[8] = {0xD0364141, 0xBFD25E8C, 0xAF48A03B, 0xBAAEDCE6, 0xFFFFFFFE, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF};  # noqa: E501
 
 // Zero constant
 constant uint ZERO[8] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -317,9 +317,9 @@ void uint256_from_bytes_global(__global const uint *bytes, uint256_t *result) {
 // Load from byte array (big-endian input -> little-endian uint256) - private memory version
 void uint256_from_bytes(const uchar *bytes, uint256_t *result) {
     for (int i = 0; i < 8; i++) {
-        result->d[7 - i] = ((uint)bytes[i * 4] << 24) | 
-                           ((uint)bytes[i * 4 + 1] << 16) | 
-                           ((uint)bytes[i * 4 + 2] << 8) | 
+        result->d[7 - i] = ((uint)bytes[i * 4] << 24) |
+                           ((uint)bytes[i * 4 + 1] << 16) |
+                           ((uint)bytes[i * 4 + 2] << 8) |
                            ((uint)bytes[i * 4 + 3]);
     }
 }
@@ -338,14 +338,14 @@ void uint256_to_bytes(const uint256_t *a, uchar *bytes) {
 // uint256 multiplication (512-bit result)
 // ============================================================================
 
-void uint256_mul(const uint256_t *a, const uint256_t *b, uint256_t *result_lo, uint256_t *result_hi) {
+void uint256_mul(const uint256_t *a, const uint256_t *b, uint256_t *result_lo, uint256_t *result_hi) {  # noqa: E501
     uint512_t temp;
-    
+
     // Initialize temp result to 0
     for (int i = 0; i < 16; i++) {
         temp.d[i] = 0;
     }
-    
+
     // Multiply
     for (int i = 0; i < 8; i++) {
         uint carry = 0;
@@ -356,7 +356,7 @@ void uint256_mul(const uint256_t *a, const uint256_t *b, uint256_t *result_lo, u
         }
         temp.d[i + 8] = carry;
     }
-    
+
     // Copy results
     for (int i = 0; i < 8; i++) {
         result_lo->d[i] = temp.d[i];
@@ -376,18 +376,18 @@ void uint256_mul(const uint256_t *a, const uint256_t *b, uint256_t *result_lo, u
 void uint256_mod_p(const uint256_t *a, uint256_t *result) {
     uint256_t r;
     uint256_copy(a, &r);
-    
+
     // For 256-bit input, just ensure result < P
     // Since a is already 256-bit, at most one subtraction needed
     uint256_t p;
     for (int i = 0; i < 8; i++) p.d[i] = SECP256K1_P[i];
-    
+
     // If r >= P, then r -= P
     if (uint256_cmp(&r, &p) >= 0) {
         int borrow;
         uint256_sub(&r, &p, &r, &borrow);
     }
-    
+
     uint256_copy(&r, result);
 }
 
@@ -398,12 +398,12 @@ void uint256_mod_p(const uint256_t *a, uint256_t *result) {
 void uint512_mod_p(const uint256_t *lo, const uint256_t *hi, uint256_t *result) {
     uint256_t p;
     for (int i = 0; i < 8; i++) p.d[i] = SECP256K1_P[i];
-    
+
     // Current hi and lo
     uint256_t current_lo, current_hi;
     uint256_copy(lo, &current_lo);
     uint256_copy(hi, &current_hi);
-    
+
     // Iterative reduction: hi * 2^256 == hi * (2^32 + 977) mod p
     // After each reduction the new 'hi' part gets smaller
     // At most 2-3 iterations needed
@@ -417,7 +417,7 @@ void uint512_mod_p(const uint256_t *lo, const uint256_t *hi, uint256_t *result) 
             hi_977.d[i] = (uint)prod;
             carry_977 = prod >> 32;
         }
-        
+
         // Compute hi << 32 (result = 256-bit part + overflow d[7])
         uint256_t hi_shifted;
         uint hi_overflow = current_hi.d[7];  // MSB shifted out
@@ -425,25 +425,25 @@ void uint512_mod_p(const uint256_t *lo, const uint256_t *hi, uint256_t *result) 
         for (int i = 1; i < 8; i++) {
             hi_shifted.d[i] = current_hi.d[i - 1];
         }
-        
+
         // hi_term = hi_shifted + hi_977
         uint256_t hi_term;
         ulong carry1 = (ulong)uint256_add(&hi_shifted, &hi_977, &hi_term);
-        
+
         // new lo = current_lo + hi_term
         uint256_t new_lo;
         ulong carry2 = (ulong)uint256_add(&current_lo, &hi_term, &new_lo);
-        
+
         // total overflow = carry_977 + hi_overflow + carry1 + carry2
         // These overflows represent (overflow) * 2^256, used as new hi
         ulong total_overflow = carry_977 + (ulong)hi_overflow + carry1 + carry2;
-        
+
         uint256_copy(&new_lo, &current_lo);
         uint256_set_zero(&current_hi);
         current_hi.d[0] = (uint)total_overflow;
         current_hi.d[1] = (uint)(total_overflow >> 32);
     }
-    
+
     // Final reduction: ensure result < P
     // May need to subtract P multiple times (at most 2-3)
     for (int i = 0; i < 3; i++) {
@@ -452,7 +452,7 @@ void uint512_mod_p(const uint256_t *lo, const uint256_t *hi, uint256_t *result) 
             uint256_sub(&current_lo, &p, &current_lo, &borrow);
         }
     }
-    
+
     uint256_copy(&current_lo, result);
 }
 
@@ -460,11 +460,11 @@ void uint512_mod_p(const uint256_t *lo, const uint256_t *hi, uint256_t *result) 
 void mod_add(const uint256_t *a, const uint256_t *b, uint256_t *result) {
     uint256_t sum;
     uint carry = uint256_add(a, b, &sum);
-    
+
     // If overflow or sum >= P, subtract P
     uint256_t p;
     for (int i = 0; i < 8; i++) p.d[i] = SECP256K1_P[i];
-    
+
     if (carry || uint256_cmp(&sum, &p) >= 0) {
         int borrow;
         uint256_sub(&sum, &p, result, &borrow);
@@ -477,10 +477,10 @@ void mod_add(const uint256_t *a, const uint256_t *b, uint256_t *result) {
 void mod_sub(const uint256_t *a, const uint256_t *b, uint256_t *result) {
     uint256_t p;
     for (int i = 0; i < 8; i++) p.d[i] = SECP256K1_P[i];
-    
+
     int borrow;
     uint256_sub(a, b, result, &borrow);
-    
+
     if (borrow) {
         // Result is negative, add P
         uint256_add(result, &p, result);
@@ -491,7 +491,7 @@ void mod_sub(const uint256_t *a, const uint256_t *b, uint256_t *result) {
 void mod_mul(const uint256_t *a, const uint256_t *b, uint256_t *result) {
     uint256_t lo, hi;
     uint256_mul(a, b, &lo, &hi);
-    
+
     // Use 512-bit mod reduction
     uint512_mod_p(&lo, &hi, result);
 }
@@ -517,85 +517,85 @@ void mod_sqr(const uint256_t *a, uint256_t *result) {
 void mod_inverse(const uint256_t *a, uint256_t *result) {
     uint256_t x2, x3, x6, x9, x11, x22, x44, x88, x176, x220, x223, t1;
     int i;
-    
+
     // x2 = a^(2^2-1) = a^3
     mod_sqr(a, &x2);           // a^2
     mod_mul(&x2, a, &x2);      // a^3
-    
+
     // x3 = a^(2^3-1) = a^7
     mod_sqr(&x2, &x3);         // a^6
     mod_mul(&x3, a, &x3);      // a^7
-    
+
     // x6 = a^(2^6-1)
     mod_sqr(&x3, &x6);
     mod_sqr(&x6, &x6);
     mod_sqr(&x6, &x6);
     mod_mul(&x6, &x3, &x6);
-    
+
     // x9 = a^(2^9-1)
     mod_sqr(&x6, &x9);
     mod_sqr(&x9, &x9);
     mod_sqr(&x9, &x9);
     mod_mul(&x9, &x3, &x9);
-    
+
     // x11 = a^(2^11-1)
     mod_sqr(&x9, &x11);
     mod_sqr(&x11, &x11);
     mod_mul(&x11, &x2, &x11);
-    
+
     // x22 = a^(2^22-1)
     mod_sqr(&x11, &x22);
     for (i = 1; i < 11; i++) mod_sqr(&x22, &x22);
     mod_mul(&x22, &x11, &x22);
-    
+
     // x44 = a^(2^44-1)
     mod_sqr(&x22, &x44);
     for (i = 1; i < 22; i++) mod_sqr(&x44, &x44);
     mod_mul(&x44, &x22, &x44);
-    
+
     // x88 = a^(2^88-1)
     mod_sqr(&x44, &x88);
     for (i = 1; i < 44; i++) mod_sqr(&x88, &x88);
     mod_mul(&x88, &x44, &x88);
-    
+
     // x176 = a^(2^176-1)
     mod_sqr(&x88, &x176);
     for (i = 1; i < 88; i++) mod_sqr(&x176, &x176);
     mod_mul(&x176, &x88, &x176);
-    
+
     // x220 = a^(2^220-1)
     mod_sqr(&x176, &x220);
     for (i = 1; i < 44; i++) mod_sqr(&x220, &x220);
     mod_mul(&x220, &x44, &x220);
-    
+
     // x223 = a^(2^223-1)
     mod_sqr(&x220, &x223);
     mod_sqr(&x223, &x223);
     mod_sqr(&x223, &x223);
     mod_mul(&x223, &x3, &x223);
-    
+
     // Build remaining part of P-2 (bits 32..0)
-    
+
     // bit32 = 0: sqr only
     mod_sqr(&x223, &t1);
-    
+
     // bits 31..10: 22 ones: sqr 22 times then mul x22
     for (i = 0; i < 22; i++) mod_sqr(&t1, &t1);
     mod_mul(&t1, &x22, &t1);
-    
+
     // bits 9..6: 0000: sqr 4 times
     mod_sqr(&t1, &t1);
     mod_sqr(&t1, &t1);
     mod_sqr(&t1, &t1);
     mod_sqr(&t1, &t1);
-    
+
     // bit5 = 1
     mod_sqr(&t1, &t1);
     mod_mul(&t1, a, &t1);
-    
+
     // bit4 = 0
     mod_sqr(&t1, &t1);
-    
+
     // bits 3..2 = 11: sqr 2 times then mul x2 (= a^3)
     // Handle bit3=1: sqr+mul_a
     mod_sqr(&t1, &t1);
@@ -603,14 +603,14 @@ void mod_inverse(const uint256_t *a, uint256_t *result) {
     // Handle bit2=1: sqr+mul_a
     mod_sqr(&t1, &t1);
     mod_mul(&t1, a, &t1);
-    
+
     // bit1 = 0
     mod_sqr(&t1, &t1);
-    
+
     // bit0 = 1
     mod_sqr(&t1, &t1);
     mod_mul(&t1, a, &t1);
-    
+
     uint256_copy(&t1, result);
 }
 
@@ -639,49 +639,49 @@ void jac_point_double(const uint256_t *px, const uint256_t *py, const uint256_t 
         uint256_set_zero(rz);
         return;
     }
-    
+
     // Copy inputs to internal vars before computation (prevent input/output aliasing)
     uint256_t X, Y, Z;
     uint256_copy(px, &X);
     uint256_copy(py, &Y);
     uint256_copy(pz, &Z);
-    
+
     uint256_t t1, t2, t3, t4, t5;
     uint256_t out_x, out_y, out_z;
-    
+
     // Jacobian point double formula for secp256k1 a=0:
     // S = 4*X*Y^2
     // M = 3*X^2  (secp256k1 a=0, no a*Z^4 term needed)
     // X3 = M^2 - 2*S
     // Y3 = M*(S - X3) - 8*Y^4
     // Z3 = 2*Y*Z
-    
+
     // t1 = Y^2
     mod_sqr(&Y, &t1);
-    
+
     // t2 = X*Y^2 (X * t1)
     mod_mul(&X, &t1, &t2);
-    
+
     // t3 = S = 4*X*Y^2 = 4*t2
     mod_add(&t2, &t2, &t3);  // t3 = 2*t2
     mod_add(&t3, &t3, &t3);  // t3 = 4*t2 = S
-    
+
     // t4 = X^2
     mod_sqr(&X, &t4);
-    
+
     // t5 = M = 3*X^2 = 3*t4
     mod_add(&t4, &t4, &t5);  // t5 = 2*t4
     mod_add(&t5, &t4, &t5);  // t5 = 3*t4 = M
-    
+
     // out_x = M^2 - 2*S
     mod_sqr(&t5, &t4);        // t4 = M^2
     mod_add(&t3, &t3, &t2);   // t2 = 2*S
     mod_sub(&t4, &t2, &out_x);  // out_x = M^2 - 2*S = X3
-    
+
     // out_z = 2*Y*Z
     mod_mul(&Y, &Z, &t4);     // t4 = Y*Z
     mod_add(&t4, &t4, &out_z); // out_z = 2*Y*Z = Z3
-    
+
     // out_y = M*(S - X3) - 8*Y^4
     mod_sub(&t3, &out_x, &t4);  // t4 = S - X3
     mod_mul(&t5, &t4, &t3);     // t3 = M*(S - X3)
@@ -690,7 +690,7 @@ void jac_point_double(const uint256_t *px, const uint256_t *py, const uint256_t 
     mod_add(&t2, &t2, &t2);     // t2 = 4*Y^4
     mod_add(&t2, &t2, &t2);     // t2 = 8*Y^4
     mod_sub(&t3, &t2, &out_y);  // out_y = M*(S-X3) - 8*Y^4 = Y3
-    
+
     // Unified output assignment (safe even if input/output share address)
     uint256_copy(&out_x, rx);
     uint256_copy(&out_y, ry);
@@ -712,16 +712,16 @@ void jac_point_add_affine(const uint256_t *p1x, const uint256_t *p1y, const uint
         rz->d[0] = 1;  // Z=1 denotes affine point
         return;
     }
-    
+
     // Copy inputs to internal vars (prevent aliasing)
     uint256_t X1, Y1, Z1;
     uint256_copy(p1x, &X1);
     uint256_copy(p1y, &Y1);
     uint256_copy(p1z, &Z1);
-    
+
     uint256_t t1, t2, t3, t4, t5, t6;
     uint256_t out_x, out_y, out_z;
-    
+
     // Mixed addition formula (P2 has Z2=1):
     // U2 = X2*Z1^2
     // S2 = Y2*Z1^3
@@ -730,25 +730,25 @@ void jac_point_add_affine(const uint256_t *p1x, const uint256_t *p1y, const uint
     // X3 = R^2 - H^3 - 2*X1*H^2
     // Y3 = R*(X1*H^2 - X3) - Y1*H^3
     // Z3 = H*Z1
-    
+
     // t1 = Z1^2
     mod_sqr(&Z1, &t1);
-    
+
     // t2 = U2 = X2 * Z1^2
     mod_mul(p2x, &t1, &t2);
-    
+
     // t3 = Z1^3 = Z1 * Z1^2
     mod_mul(&Z1, &t1, &t3);
-    
+
     // t4 = S2 = Y2 * Z1^3
     mod_mul(p2y, &t3, &t4);
-    
+
     // t5 = H = U2 - X1
     mod_sub(&t2, &X1, &t5);
-    
+
     // t6 = R = S2 - Y1
     mod_sub(&t4, &Y1, &t6);
-    
+
     // Handle special case P1 == P2 (H==0, R==0 -> point double)
     if (uint256_is_zero(&t5) && uint256_is_zero(&t6)) {
         // P1 == P2, need point double
@@ -759,7 +759,7 @@ void jac_point_add_affine(const uint256_t *p1x, const uint256_t *p1y, const uint
         jac_point_double(p2x, p2y, &one, rx, ry, rz);
         return;
     }
-    
+
     // H == 0, R != 0 -> P1 == -P2, result is point at infinity
     if (uint256_is_zero(&t5)) {
         uint256_set_zero(rx);
@@ -767,31 +767,31 @@ void jac_point_add_affine(const uint256_t *p1x, const uint256_t *p1y, const uint
         uint256_set_zero(rz);
         return;
     }
-    
+
     // t1 = H^2
     mod_sqr(&t5, &t1);
-    
+
     // t3 = H^3 = H * H^2
     mod_mul(&t5, &t1, &t3);
-    
+
     // t2 = X1*H^2
     mod_mul(&X1, &t1, &t2);
-    
+
     // out_x = R^2 - H^3 - 2*X1*H^2
     mod_sqr(&t6, &t4);          // t4 = R^2
     mod_sub(&t4, &t3, &t4);     // t4 = R^2 - H^3
     mod_add(&t2, &t2, &t1);     // t1 = 2*X1*H^2
     mod_sub(&t4, &t1, &out_x);  // out_x = R^2 - H^3 - 2*X1*H^2 = X3
-    
+
     // out_y = R*(X1*H^2 - X3) - Y1*H^3
     mod_sub(&t2, &out_x, &t4);  // t4 = X1*H^2 - X3
     mod_mul(&t6, &t4, &t1);     // t1 = R*(X1*H^2 - X3)
     mod_mul(&Y1, &t3, &t4);     // t4 = Y1*H^3
     mod_sub(&t1, &t4, &out_y);  // out_y = R*(X1*H^2 - X3) - Y1*H^3 = Y3
-    
+
     // out_z = H * Z1
     mod_mul(&t5, &Z1, &out_z);  // out_z = H*Z1 = Z3
-    
+
     // Unified output assignment
     uint256_copy(&out_x, rx);
     uint256_copy(&out_y, ry);
@@ -803,19 +803,19 @@ void jac_point_add_affine(const uint256_t *p1x, const uint256_t *p1y, const uint
 void jac_to_affine(const uint256_t *jx, const uint256_t *jy, const uint256_t *jz,
                    uint256_t *ax, uint256_t *ay) {
     uint256_t z_inv, z_inv2, z_inv3;
-    
+
     // z_inv = Z^(-1)
     mod_inverse(jz, &z_inv);
-    
+
     // z_inv2 = Z^(-2)
     mod_sqr(&z_inv, &z_inv2);
-    
+
     // z_inv3 = Z^(-3) = Z^(-1) * Z^(-2)
     mod_mul(&z_inv, &z_inv2, &z_inv3);
-    
+
     // ax = X * Z^(-2)
     mod_mul(jx, &z_inv2, ax);
-    
+
     // ay = Y * Z^(-3)
     mod_mul(jy, &z_inv3, ay);
 }
@@ -827,33 +827,33 @@ void ec_point_double(const uint256_t *px, const uint256_t *py, uint256_t *rx, ui
         uint256_set_zero(ry);
         return;
     }
-    
+
     uint256_t lambda, temp1, temp2, temp3, two_y_inv;
-    
+
     // lambda = (3*x^2) * (2*y)^(-1) mod p
     // secp256k1 has a = 0
-    
+
     // temp1 = x^2
     mod_sqr(px, &temp1);
-    
+
     // temp3 = 3*x^2 = x^2 + x^2 + x^2
     mod_add(&temp1, &temp1, &temp2);  // temp2 = 2*x^2
     mod_add(&temp2, &temp1, &temp3);  // temp3 = 3*x^2
-    
+
     // temp2 = 2*y
     mod_add(py, py, &temp2);
-    
+
     // two_y_inv = (2*y)^(-1)
     mod_inverse(&temp2, &two_y_inv);
-    
+
     // lambda = 3*x^2 * (2*y)^(-1)
     mod_mul(&temp3, &two_y_inv, &lambda);
-    
+
     // rx = lambda^2 - 2*x
     mod_sqr(&lambda, &temp1);  // temp1 = lambda^2
     mod_add(px, px, &temp2);   // temp2 = 2*x
     mod_sub(&temp1, &temp2, rx);  // rx = lambda^2 - 2*x
-    
+
     // ry = lambda*(x - rx) - y
     mod_sub(px, rx, &temp2);   // temp2 = x - rx
     mod_mul(&lambda, &temp2, &temp1);  // temp1 = lambda*(x - rx)
@@ -885,18 +885,18 @@ void ec_scalar_multiply(const uint256_t *k,
             precomp_y[i].d[j] = precomp_table[offset + 8 + j];
         }
     }
-    
+
     // Jacobian result initialized to point at infinity
     uint256_t jac_x, jac_y, jac_z;
     uint256_t temp2x, temp2y;  // temp vars for double/add output
     uint256_set_zero(&jac_x);
     uint256_set_zero(&jac_y);
     uint256_set_zero(&jac_z);
-    
+
     // MSB-first window algorithm (w=5)
     // 256-bit decomposed as: top 1 bit(bit255) + 51 groups of 5 bits(bits 254..0)
     // Order: bit255 first, then high to low in 5-bit groups
-    
+
     // Step 1: Handle top bit (bit255)
     {
         // Get bit 255 of private key: bit 31 of k->d[7] (bit 255 = d[7]>>31)
@@ -910,7 +910,7 @@ void ec_scalar_multiply(const uint256_t *k,
         }
         // top_bit==0: result remains point at infinity (jac_z=0)
     }
-    
+
     // Step 2: Loop 51 groups, 5 bits each, high to low
     // grp=50: bits 254..250
     // grp=49: bits 249..245
@@ -923,7 +923,7 @@ void ec_scalar_multiply(const uint256_t *k,
         int bit_start = grp * 5;  // lowest bit position
         int d_idx = bit_start / 32;
         int d_shift = bit_start % 32;
-        
+
         // Extract 5 bits: may span two limbs
         int window;
         if (d_shift <= 27) {
@@ -935,14 +935,14 @@ void ec_scalar_multiply(const uint256_t *k,
             uint hi = (d_idx + 1 < 8) ? (k->d[d_idx + 1] << (32 - d_shift)) : 0;
             window = (int)((lo | hi) & 0x1F);
         }
-        
+
         // 5 Jacobian point doubles (no mod_inverse!)
         for (int j = 0; j < 5; j++) {
             jac_point_double(&jac_x, &jac_y, &jac_z, &temp2x, &temp2y, &jac_z);
             uint256_copy(&temp2x, &jac_x);
             uint256_copy(&temp2y, &jac_y);
         }
-        
+
         // Table lookup add (Jacobian+affine mixed, no mod_inverse!)
         if (window > 0) {
             int index = window - 1;
@@ -953,7 +953,7 @@ void ec_scalar_multiply(const uint256_t *k,
             uint256_copy(&temp2y, &jac_y);
         }
     }
-    
+
     // Final: Jacobian -> affine (1 mod_inverse)
     jac_to_affine(&jac_x, &jac_y, &jac_z, rx, ry);
 }
@@ -984,17 +984,17 @@ __constant uint SHA256_K[64] = {
 void sha256_transform(uint *state, const uchar *data) {
     uint a, b, c, d, e, f, g, h;
     uint w[64];
-    
+
     // Prepare message schedule
     for (int i = 0; i < 16; i++) {
-        w[i] = ((uint)data[i * 4] << 24) | ((uint)data[i * 4 + 1] << 16) | 
+        w[i] = ((uint)data[i * 4] << 24) | ((uint)data[i * 4 + 1] << 16) |
                ((uint)data[i * 4 + 2] << 8) | ((uint)data[i * 4 + 3]);
     }
-    
+
     for (int i = 16; i < 64; i++) {
         w[i] = SHA256_SIG1(w[i - 2]) + w[i - 7] + SHA256_SIG0(w[i - 15]) + w[i - 16];
     }
-    
+
     // Initialize working variables
     a = state[0];
     b = state[1];
@@ -1004,7 +1004,7 @@ void sha256_transform(uint *state, const uchar *data) {
     f = state[5];
     g = state[6];
     h = state[7];
-    
+
     // 64 rounds of compression
     for (int i = 0; i < 64; i++) {
         uint t1 = h + SHA256_EP1(e) + SHA256_CH(e, f, g) + SHA256_K[i] + w[i];
@@ -1018,7 +1018,7 @@ void sha256_transform(uint *state, const uchar *data) {
         b = a;
         a = t1 + t2;
     }
-    
+
     // Update state
     state[0] += a;
     state[1] += b;
@@ -1035,25 +1035,25 @@ void sha256(const uchar *data, uint len, uchar *hash) {
         0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
         0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
     };
-    
+
     uchar buffer[64];
     uint buffer_len = 0;
     uint total_len = 0;
-    
+
     // Process input data
     for (uint i = 0; i < len; i++) {
         buffer[buffer_len++] = data[i];
         total_len++;
-        
+
         if (buffer_len == 64) {
             sha256_transform(state, buffer);
             buffer_len = 0;
         }
     }
-    
+
     // Padding
     buffer[buffer_len++] = 0x80;
-    
+
     if (buffer_len > 56) {
         while (buffer_len < 64) {
             buffer[buffer_len++] = 0;
@@ -1061,11 +1061,11 @@ void sha256(const uchar *data, uint len, uchar *hash) {
         sha256_transform(state, buffer);
         buffer_len = 0;
     }
-    
+
     while (buffer_len < 56) {
         buffer[buffer_len++] = 0;
     }
-    
+
     // Append length (bits)
     ulong bit_len = (ulong)total_len * 8;
     buffer[56] = (uchar)(bit_len >> 56);
@@ -1076,9 +1076,9 @@ void sha256(const uchar *data, uint len, uchar *hash) {
     buffer[61] = (uchar)(bit_len >> 16);
     buffer[62] = (uchar)(bit_len >> 8);
     buffer[63] = (uchar)(bit_len);
-    
+
     sha256_transform(state, buffer);
-    
+
     // Output result (big-endian)
     for (int i = 0; i < 8; i++) {
         hash[i * 4] = (uchar)(state[i] >> 24);
@@ -1126,13 +1126,13 @@ __constant uint RIPEMD160_KR[5] = {
 void ripemd160_transform(uint *state, const uchar *data) {
     uint x[16];
     for (int i = 0; i < 16; i++) {
-        x[i] = ((uint)data[i * 4]) | ((uint)data[i * 4 + 1] << 8) | 
+        x[i] = ((uint)data[i * 4]) | ((uint)data[i * 4 + 1] << 8) |
                ((uint)data[i * 4 + 2] << 16) | ((uint)data[i * 4 + 3] << 24);
     }
-    
+
     uint a1 = state[0], b1 = state[1], c1 = state[2], d1 = state[3], e1 = state[4];
     uint a2 = state[0], b2 = state[1], c2 = state[2], d2 = state[3], e2 = state[4];
-    
+
     // Left path (using K values: 0, 1, 2, 3, 4)
     // Round 1 (0-15): F0, K0=0x00000000
     ROL(a1, b1, c1, d1, e1, f0, 0x00000000,  0, 11);
@@ -1151,7 +1151,7 @@ void ripemd160_transform(uint *state, const uchar *data) {
     ROL(c1, d1, e1, a1, b1, f0, 0x00000000, 13,  7);
     ROL(b1, c1, d1, e1, a1, f0, 0x00000000, 14,  9);
     ROL(a1, b1, c1, d1, e1, f0, 0x00000000, 15,  8);
-    
+
     // Round 2 (16-31): F1, K1=0x5a827999
     ROL(e1, a1, b1, c1, d1, f1, 0x5a827999,  7,  7);
     ROL(d1, e1, a1, b1, c1, f1, 0x5a827999,  4,  6);
@@ -1169,7 +1169,7 @@ void ripemd160_transform(uint *state, const uchar *data) {
     ROL(b1, c1, d1, e1, a1, f1, 0x5a827999, 14,  7);
     ROL(a1, b1, c1, d1, e1, f1, 0x5a827999, 11, 13);
     ROL(e1, a1, b1, c1, d1, f1, 0x5a827999,  8, 12);
-    
+
     // Round 3 (32-47): F2, K2=0x6ed9eba1
     ROL(d1, e1, a1, b1, c1, f2, 0x6ed9eba1,  3, 11);
     ROL(c1, d1, e1, a1, b1, f2, 0x6ed9eba1, 10, 13);
@@ -1187,7 +1187,7 @@ void ripemd160_transform(uint *state, const uchar *data) {
     ROL(a1, b1, c1, d1, e1, f2, 0x6ed9eba1, 11, 12);
     ROL(e1, a1, b1, c1, d1, f2, 0x6ed9eba1,  5,  7);
     ROL(d1, e1, a1, b1, c1, f2, 0x6ed9eba1, 12,  5);
-    
+
     // Round 4 (48-63): F3, K3=0x8f1bbcdc
     ROL(c1, d1, e1, a1, b1, f3, 0x8f1bbcdc,  1, 11);
     ROL(b1, c1, d1, e1, a1, f3, 0x8f1bbcdc,  9, 12);
@@ -1205,7 +1205,7 @@ void ripemd160_transform(uint *state, const uchar *data) {
     ROL(e1, a1, b1, c1, d1, f3, 0x8f1bbcdc,  5,  6);
     ROL(d1, e1, a1, b1, c1, f3, 0x8f1bbcdc,  6,  5);
     ROL(c1, d1, e1, a1, b1, f3, 0x8f1bbcdc,  2, 12);
-    
+
     // Round 5 (64-79): F4, K4=0xa953fd4e
     ROL(b1, c1, d1, e1, a1, f4, 0xa953fd4e,  4,  9);
     ROL(a1, b1, c1, d1, e1, f4, 0xa953fd4e,  0, 15);
@@ -1223,7 +1223,7 @@ void ripemd160_transform(uint *state, const uchar *data) {
     ROL(d1, e1, a1, b1, c1, f4, 0xa953fd4e,  6,  8);
     ROL(c1, d1, e1, a1, b1, f4, 0xa953fd4e, 15,  5);
     ROL(b1, c1, d1, e1, a1, f4, 0xa953fd4e, 13,  6);
-    
+
     // Right path (using K' values, note reversed order)
     // Right path round 1 (0-15): F4, K0'=0x50a28be6
     ROL(a2, b2, c2, d2, e2, f4, 0x50a28be6,  5,  8);
@@ -1242,7 +1242,7 @@ void ripemd160_transform(uint *state, const uchar *data) {
     ROL(c2, d2, e2, a2, b2, f4, 0x50a28be6, 10, 14);
     ROL(b2, c2, d2, e2, a2, f4, 0x50a28be6,  3, 12);
     ROL(a2, b2, c2, d2, e2, f4, 0x50a28be6, 12,  6);
-    
+
     // Right path round 2 (16-31): F3, K1'=0x5c4dd124
     ROL(e2, a2, b2, c2, d2, f3, 0x5c4dd124,  6,  9);
     ROL(d2, e2, a2, b2, c2, f3, 0x5c4dd124, 11, 13);
@@ -1260,7 +1260,7 @@ void ripemd160_transform(uint *state, const uchar *data) {
     ROL(b2, c2, d2, e2, a2, f3, 0x5c4dd124,  9, 15);
     ROL(a2, b2, c2, d2, e2, f3, 0x5c4dd124,  1, 13);
     ROL(e2, a2, b2, c2, d2, f3, 0x5c4dd124,  2, 11);
-    
+
     // Right path round 3 (32-47): F2, K2'=0x6d703ef3
     ROL(d2, e2, a2, b2, c2, f2, 0x6d703ef3, 15,  9);
     ROL(c2, d2, e2, a2, b2, f2, 0x6d703ef3,  5,  7);
@@ -1278,7 +1278,7 @@ void ripemd160_transform(uint *state, const uchar *data) {
     ROL(a2, b2, c2, d2, e2, f2, 0x6d703ef3,  0, 13);
     ROL(e2, a2, b2, c2, d2, f2, 0x6d703ef3,  4,  7);
     ROL(d2, e2, a2, b2, c2, f2, 0x6d703ef3, 13,  5);
-    
+
     // Right path round 4 (48-63): F1, K3'=0x7a6d76e9
     ROL(c2, d2, e2, a2, b2, f1, 0x7a6d76e9,  8, 15);
     ROL(b2, c2, d2, e2, a2, f1, 0x7a6d76e9,  6,  5);
@@ -1296,7 +1296,7 @@ void ripemd160_transform(uint *state, const uchar *data) {
     ROL(e2, a2, b2, c2, d2, f1, 0x7a6d76e9,  7,  5);
     ROL(d2, e2, a2, b2, c2, f1, 0x7a6d76e9, 10, 15);
     ROL(c2, d2, e2, a2, b2, f1, 0x7a6d76e9, 14,  8);
-    
+
     // Right path round 5 (64-79): F0, K4'=0x00000000
     ROL(b2, c2, d2, e2, a2, f0, 0x00000000, 12,  8);
     ROL(a2, b2, c2, d2, e2, f0, 0x00000000, 15,  5);
@@ -1314,7 +1314,7 @@ void ripemd160_transform(uint *state, const uchar *data) {
     ROL(d2, e2, a2, b2, c2, f0, 0x00000000,  3, 13);
     ROL(c2, d2, e2, a2, b2, f0, 0x00000000,  9, 11);
     ROL(b2, c2, d2, e2, a2, f0, 0x00000000, 11, 11);
-    
+
     // Combine results
     uint t = state[1] + c1 + d2;
     state[1] = state[2] + d1 + e2;
@@ -1326,25 +1326,25 @@ void ripemd160_transform(uint *state, const uchar *data) {
 
 void ripemd160(const uchar *data, uint len, uchar *hash) {
     uint state[5] = {0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0};
-    
+
     uchar buffer[64];
     uint buffer_len = 0;
     uint total_len = 0;
-    
+
     // Process input data
     for (uint i = 0; i < len; i++) {
         buffer[buffer_len++] = data[i];
         total_len++;
-        
+
         if (buffer_len == 64) {
             ripemd160_transform(state, buffer);
             buffer_len = 0;
         }
     }
-    
+
     // Padding
     buffer[buffer_len++] = 0x80;
-    
+
     if (buffer_len > 56) {
         while (buffer_len < 64) {
             buffer[buffer_len++] = 0;
@@ -1352,11 +1352,11 @@ void ripemd160(const uchar *data, uint len, uchar *hash) {
         ripemd160_transform(state, buffer);
         buffer_len = 0;
     }
-    
+
     while (buffer_len < 56) {
         buffer[buffer_len++] = 0;
     }
-    
+
     // Append length (bits, little-endian)
     ulong bit_len = (ulong)total_len * 8;
     buffer[56] = (uchar)(bit_len);
@@ -1367,9 +1367,9 @@ void ripemd160(const uchar *data, uint len, uchar *hash) {
     buffer[61] = (uchar)(bit_len >> 40);
     buffer[62] = (uchar)(bit_len >> 48);
     buffer[63] = (uchar)(bit_len >> 56);
-    
+
     ripemd160_transform(state, buffer);
-    
+
     // Output result (little-endian)
     for (int i = 0; i < 5; i++) {
         hash[i * 4] = (uchar)(state[i]);
@@ -1404,15 +1404,15 @@ void hash160(const uchar *data, uint len, uchar *result) {
 do { \
     for (uint _t = 0; _t < (n_targets) && (match) == 0; _t++) { \
         const uchar *_src = (src_base) + _t * 20u; \
-        uint _t0 = (uint)_src[0]  | ((uint)_src[1]  << 8) | ((uint)_src[2]  << 16) | ((uint)_src[3]  << 24); \
+        uint _t0 = (uint)_src[0]  | ((uint)_src[1]  << 8) | ((uint)_src[2]  << 16) | ((uint)_src[3]  << 24); \  # noqa: E501, W605
         if (_t0 != (h0)) continue; \
-        uint _t1 = (uint)_src[4]  | ((uint)_src[5]  << 8) | ((uint)_src[6]  << 16) | ((uint)_src[7]  << 24); \
+        uint _t1 = (uint)_src[4]  | ((uint)_src[5]  << 8) | ((uint)_src[6]  << 16) | ((uint)_src[7]  << 24); \  # noqa: E501, W605
         if (_t1 != (h1)) continue; \
-        uint _t2 = (uint)_src[8]  | ((uint)_src[9]  << 8) | ((uint)_src[10] << 16) | ((uint)_src[11] << 24); \
+        uint _t2 = (uint)_src[8]  | ((uint)_src[9]  << 8) | ((uint)_src[10] << 16) | ((uint)_src[11] << 24); \  # noqa: E501, W605
         if (_t2 != (h2)) continue; \
-        uint _t3 = (uint)_src[12] | ((uint)_src[13] << 8) | ((uint)_src[14] << 16) | ((uint)_src[15] << 24); \
+        uint _t3 = (uint)_src[12] | ((uint)_src[13] << 8) | ((uint)_src[14] << 16) | ((uint)_src[15] << 24); \  # noqa: E501, W605
         if (_t3 != (h3)) continue; \
-        uint _t4 = (uint)_src[16] | ((uint)_src[17] << 8) | ((uint)_src[18] << 16) | ((uint)_src[19] << 24); \
+        uint _t4 = (uint)_src[16] | ((uint)_src[17] << 8) | ((uint)_src[18] << 16) | ((uint)_src[19] << 24); \  # noqa: E501, W605
         if (_t4 != (h4)) continue; \
         match = (int)(_t + 1); \
     } \
@@ -1423,18 +1423,18 @@ __kernel void batch_check(
     const uint num_keys,
     __global const uchar *target_hash160s,  // Input: num_targets * 20 bytes
     const uint num_targets,
-    __global int *match_flags,              // Output: num_keys flags (0=no match, target_index+1=match)
-    const uint check_uncompressed,          // v4.0: 0=compressed only, 1=also check uncompressed format
-    __constant const uint *precomp_table    // Precomputed table: 31x2x8 = 496 uint32 (G1..G31 affine)
+    __global int *match_flags,              // Output: num_keys flags (0=no match, target_index+1=match)  # noqa: E501
+    const uint check_uncompressed,          // v4.0: 0=compressed only, 1=also check uncompressed format  # noqa: E501
+    __constant const uint *precomp_table    // Precomputed table: 31x2x8 = 496 uint32 (G1..G31 affine)  # noqa: E501
 ) {
     // P1-2 fix: ulong gid prevents 32-bit overflow when batch_size >= 2^32
     ulong gid = get_global_id(0);
     if (gid >= num_keys) return;
-    
+
     // Generate private key on GPU: k = seed + gid (256-bit addition)
     uint256_t k;
     generate_private_key(seed, gid, &k);
-    
+
     // P1-3 fix: Validate private key range (1 <= k < N)
     // Previously only checked k==0, missing k >= N check.
     // k >= N would produce a point on the curve but with incorrect discrete log.
@@ -1444,11 +1444,11 @@ __kernel void batch_check(
         match_flags[gid] = 0;
         return;
     }
-    
+
     // Scalar multiply: Q = k * G
     uint256_t qx, qy;
     ec_scalar_multiply(&k, precomp_table, &qx, &qy);
-    
+
     // Serialize compressed public key (0x02/0x03 + x)
     uchar pubkey[33];
     // Check y parity (look at lowest bit of lowest limb)
@@ -1457,21 +1457,21 @@ __kernel void batch_check(
     } else {
         pubkey[0] = 0x02;  // even
     }
-    
+
     // Convert x coordinate to big-endian
     uint256_to_bytes(&qx, &pubkey[1]);
-    
+
     // Hash160(pubkey) -> 20 bytes
     uchar hash160_result[20];
     hash160(pubkey, 33, hash160_result);
-    
-    // Compare against all target Hash160 (uint32 vectorized: 5 uint compares vs 20 uchar, with progressive early-exit)
+
+    // Compare against all target Hash160 (uint32 vectorized: 5 uint compares vs 20 uchar, with progressive early-exit)  # noqa: E501
     // Pre-assemble hash160_result as 5 uint32 (little-endian)
-    uint h0 = (uint)hash160_result[0]  | ((uint)hash160_result[1]  << 8) | ((uint)hash160_result[2]  << 16) | ((uint)hash160_result[3]  << 24);
-    uint h1 = (uint)hash160_result[4]  | ((uint)hash160_result[5]  << 8) | ((uint)hash160_result[6]  << 16) | ((uint)hash160_result[7]  << 24);
-    uint h2 = (uint)hash160_result[8]  | ((uint)hash160_result[9]  << 8) | ((uint)hash160_result[10] << 16) | ((uint)hash160_result[11] << 24);
-    uint h3 = (uint)hash160_result[12] | ((uint)hash160_result[13] << 8) | ((uint)hash160_result[14] << 16) | ((uint)hash160_result[15] << 24);
-    uint h4 = (uint)hash160_result[16] | ((uint)hash160_result[17] << 8) | ((uint)hash160_result[18] << 16) | ((uint)hash160_result[19] << 24);
+    uint h0 = (uint)hash160_result[0]  | ((uint)hash160_result[1]  << 8) | ((uint)hash160_result[2]  << 16) | ((uint)hash160_result[3]  << 24);  # noqa: E501
+    uint h1 = (uint)hash160_result[4]  | ((uint)hash160_result[5]  << 8) | ((uint)hash160_result[6]  << 16) | ((uint)hash160_result[7]  << 24);  # noqa: E501
+    uint h2 = (uint)hash160_result[8]  | ((uint)hash160_result[9]  << 8) | ((uint)hash160_result[10] << 16) | ((uint)hash160_result[11] << 24);  # noqa: E501
+    uint h3 = (uint)hash160_result[12] | ((uint)hash160_result[13] << 8) | ((uint)hash160_result[14] << 16) | ((uint)hash160_result[15] << 24);  # noqa: E501
+    uint h4 = (uint)hash160_result[16] | ((uint)hash160_result[17] << 8) | ((uint)hash160_result[18] << 16) | ((uint)hash160_result[19] << 24);  # noqa: E501
 
     int match = 0;
     HASH160_TARGET_SCAN(target_hash160s, h0, h1, h2, h3, h4, num_targets, match);
@@ -1483,17 +1483,17 @@ __kernel void batch_check(
         pubkey_uncomp[0] = 0x04;
         uint256_to_bytes(&qx, &pubkey_uncomp[1]);
         uint256_to_bytes(&qy, &pubkey_uncomp[33]);
-        
+
         // Hash160(uncompressed pubkey) -> 20 bytes
         hash160(pubkey_uncomp, 65, hash160_result);
-        
+
         // Re-pack hash160_result as 5 uint32 (little-endian)
-        h0 = (uint)hash160_result[0]  | ((uint)hash160_result[1]  << 8) | ((uint)hash160_result[2]  << 16) | ((uint)hash160_result[3]  << 24);
-        h1 = (uint)hash160_result[4]  | ((uint)hash160_result[5]  << 8) | ((uint)hash160_result[6]  << 16) | ((uint)hash160_result[7]  << 24);
-        h2 = (uint)hash160_result[8]  | ((uint)hash160_result[9]  << 8) | ((uint)hash160_result[10] << 16) | ((uint)hash160_result[11] << 24);
-        h3 = (uint)hash160_result[12] | ((uint)hash160_result[13] << 8) | ((uint)hash160_result[14] << 16) | ((uint)hash160_result[15] << 24);
-        h4 = (uint)hash160_result[16] | ((uint)hash160_result[17] << 8) | ((uint)hash160_result[18] << 16) | ((uint)hash160_result[19] << 24);
-        
+        h0 = (uint)hash160_result[0]  | ((uint)hash160_result[1]  << 8) | ((uint)hash160_result[2]  << 16) | ((uint)hash160_result[3]  << 24);  # noqa: E501
+        h1 = (uint)hash160_result[4]  | ((uint)hash160_result[5]  << 8) | ((uint)hash160_result[6]  << 16) | ((uint)hash160_result[7]  << 24);  # noqa: E501
+        h2 = (uint)hash160_result[8]  | ((uint)hash160_result[9]  << 8) | ((uint)hash160_result[10] << 16) | ((uint)hash160_result[11] << 24);  # noqa: E501
+        h3 = (uint)hash160_result[12] | ((uint)hash160_result[13] << 8) | ((uint)hash160_result[14] << 16) | ((uint)hash160_result[15] << 24);  # noqa: E501
+        h4 = (uint)hash160_result[16] | ((uint)hash160_result[17] << 8) | ((uint)hash160_result[18] << 16) | ((uint)hash160_result[19] << 24);  # noqa: E501
+
         // Compare uncompressed Hash160 against all targets
         HASH160_TARGET_SCAN(target_hash160s, h0, h1, h2, h3, h4, num_targets, match);
     }
@@ -1502,7 +1502,7 @@ __kernel void batch_check(
 }
 
 // ============================================================================
-// Main kernel (local memory): batch check private keys - cache target Hash160 in workgroup shared memory
+// Main kernel (local memory): batch check private keys - cache target Hash160 in workgroup shared memory  # noqa: E501
 // ============================================================================
 
 __kernel void batch_check_local_mem(
@@ -1511,9 +1511,9 @@ __kernel void batch_check_local_mem(
     __global const uchar *target_hash160s,  // Input: num_targets * 20 bytes
     const uint num_targets,
     __global int *match_flags,              // Output: num_keys flags
-    const uint check_uncompressed,          // v4.0: 0=compressed only, 1=also check uncompressed format
+    const uint check_uncompressed,          // v4.0: 0=compressed only, 1=also check uncompressed format  # noqa: E501
     __local uchar *cached_targets,          // local memory cache: num_targets * 20 bytes
-    __constant const uint *precomp_table    // Precomputed table: 31x2x8 = 496 uint32 (G1..G31 affine)
+    __constant const uint *precomp_table    // Precomputed table: 31x2x8 = 496 uint32 (G1..G31 affine)  # noqa: E501
 ) {
     // P1-2 fix: ulong gid prevents 32-bit overflow when batch_size >= 2^32
     ulong gid = get_global_id(0);
@@ -1545,7 +1545,7 @@ __kernel void batch_check_local_mem(
     // Scalar multiply: Q = k * G
     uint256_t qx, qy;
     ec_scalar_multiply(&k, precomp_table, &qx, &qy);
-    
+
     // Serialize compressed public key (0x02/0x03 + x)
     uchar pubkey[33];
     if (qy.d[0] & 1) {
@@ -1561,13 +1561,13 @@ __kernel void batch_check_local_mem(
     uchar hash160_result[20];
     hash160(pubkey, 33, hash160_result);
 
-    // Compare against all target Hash160 (local memory version, uint32 vectorized, 5 uint compares, progressive early-exit)
+    // Compare against all target Hash160 (local memory version, uint32 vectorized, 5 uint compares, progressive early-exit)  # noqa: E501
     // Pre-assemble hash160_result as 5 uint32 (little-endian)
-    uint h0 = (uint)hash160_result[0]  | ((uint)hash160_result[1]  << 8) | ((uint)hash160_result[2]  << 16) | ((uint)hash160_result[3]  << 24);
-    uint h1 = (uint)hash160_result[4]  | ((uint)hash160_result[5]  << 8) | ((uint)hash160_result[6]  << 16) | ((uint)hash160_result[7]  << 24);
-    uint h2 = (uint)hash160_result[8]  | ((uint)hash160_result[9]  << 8) | ((uint)hash160_result[10] << 16) | ((uint)hash160_result[11] << 24);
-    uint h3 = (uint)hash160_result[12] | ((uint)hash160_result[13] << 8) | ((uint)hash160_result[14] << 16) | ((uint)hash160_result[15] << 24);
-    uint h4 = (uint)hash160_result[16] | ((uint)hash160_result[17] << 8) | ((uint)hash160_result[18] << 16) | ((uint)hash160_result[19] << 24);
+    uint h0 = (uint)hash160_result[0]  | ((uint)hash160_result[1]  << 8) | ((uint)hash160_result[2]  << 16) | ((uint)hash160_result[3]  << 24);  # noqa: E501
+    uint h1 = (uint)hash160_result[4]  | ((uint)hash160_result[5]  << 8) | ((uint)hash160_result[6]  << 16) | ((uint)hash160_result[7]  << 24);  # noqa: E501
+    uint h2 = (uint)hash160_result[8]  | ((uint)hash160_result[9]  << 8) | ((uint)hash160_result[10] << 16) | ((uint)hash160_result[11] << 24);  # noqa: E501
+    uint h3 = (uint)hash160_result[12] | ((uint)hash160_result[13] << 8) | ((uint)hash160_result[14] << 16) | ((uint)hash160_result[15] << 24);  # noqa: E501
+    uint h4 = (uint)hash160_result[16] | ((uint)hash160_result[17] << 8) | ((uint)hash160_result[18] << 16) | ((uint)hash160_result[19] << 24);  # noqa: E501
 
     int match = 0;
     HASH160_TARGET_SCAN(cached_targets, h0, h1, h2, h3, h4, num_targets, match);
@@ -1579,17 +1579,17 @@ __kernel void batch_check_local_mem(
         pubkey_uncomp[0] = 0x04;
         uint256_to_bytes(&qx, &pubkey_uncomp[1]);
         uint256_to_bytes(&qy, &pubkey_uncomp[33]);
-        
+
         // Hash160(uncompressed pubkey) -> 20 bytes
         hash160(pubkey_uncomp, 65, hash160_result);
-        
+
         // Re-pack hash160_result as 5 uint32 (little-endian)
-        h0 = (uint)hash160_result[0]  | ((uint)hash160_result[1]  << 8) | ((uint)hash160_result[2]  << 16) | ((uint)hash160_result[3]  << 24);
-        h1 = (uint)hash160_result[4]  | ((uint)hash160_result[5]  << 8) | ((uint)hash160_result[6]  << 16) | ((uint)hash160_result[7]  << 24);
-        h2 = (uint)hash160_result[8]  | ((uint)hash160_result[9]  << 8) | ((uint)hash160_result[10] << 16) | ((uint)hash160_result[11] << 24);
-        h3 = (uint)hash160_result[12] | ((uint)hash160_result[13] << 8) | ((uint)hash160_result[14] << 16) | ((uint)hash160_result[15] << 24);
-        h4 = (uint)hash160_result[16] | ((uint)hash160_result[17] << 8) | ((uint)hash160_result[18] << 16) | ((uint)hash160_result[19] << 24);
-        
+        h0 = (uint)hash160_result[0]  | ((uint)hash160_result[1]  << 8) | ((uint)hash160_result[2]  << 16) | ((uint)hash160_result[3]  << 24);  # noqa: E501
+        h1 = (uint)hash160_result[4]  | ((uint)hash160_result[5]  << 8) | ((uint)hash160_result[6]  << 16) | ((uint)hash160_result[7]  << 24);  # noqa: E501
+        h2 = (uint)hash160_result[8]  | ((uint)hash160_result[9]  << 8) | ((uint)hash160_result[10] << 16) | ((uint)hash160_result[11] << 24);  # noqa: E501
+        h3 = (uint)hash160_result[12] | ((uint)hash160_result[13] << 8) | ((uint)hash160_result[14] << 16) | ((uint)hash160_result[15] << 24);  # noqa: E501
+        h4 = (uint)hash160_result[16] | ((uint)hash160_result[17] << 8) | ((uint)hash160_result[18] << 16) | ((uint)hash160_result[19] << 24);  # noqa: E501
+
         // Compare uncompressed Hash160 against local cached targets
         HASH160_TARGET_SCAN(cached_targets, h0, h1, h2, h3, h4, num_targets, match);
     }
@@ -1614,16 +1614,16 @@ __kernel void debug_hash(
     uint256_t k;
     uint256_set_zero(&k);
     k.d[0] = key_value;
-    
+
     uint256_t qx, qy;
     ec_scalar_multiply(&k, precomp_table, &qx, &qy);
-    
+
     // Output Qx and Qy
     for (int i = 0; i < 8; i++) {
         qx_out[i] = qx.d[i];
         qy_out[i] = qy.d[i];
     }
-    
+
     // Serialize compressed public key
     uchar pubkey[33];
     if (qy.d[0] & 1) {
@@ -1632,15 +1632,15 @@ __kernel void debug_hash(
         pubkey[0] = 0x02;
     }
     uint256_to_bytes(&qx, &pubkey[1]);
-    
+
     // Output public key
     for (int i = 0; i < 33; i++) pubkey_out[i] = pubkey[i];
-    
+
     // SHA-256
     uchar sha_hash[32];
     sha256(pubkey, 33, sha_hash);
     for (int i = 0; i < 32; i++) sha256_out[i] = sha_hash[i];
-    
+
     // RIPEMD-160
     uchar ripe_hash[20];
     ripemd160(sha_hash, 32, ripe_hash);
@@ -1656,16 +1656,16 @@ __kernel void verify_arithmetic(
     __global uint *result_y   // Output: y coordinate of 2*G (8 uints)
 ) {
     uint256_t gx, gy, rx, ry;
-    
+
     // Load G
     for (int i = 0; i < 8; i++) {
         gx.d[i] = GX[i];
         gy.d[i] = GY[i];
     }
-    
+
     // Compute 2*G
     ec_point_double(&gx, &gy, &rx, &ry);
-    
+
     // Output result
     for (int i = 0; i < 8; i++) {
         result_x[i] = rx.d[i];

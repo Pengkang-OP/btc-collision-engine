@@ -116,7 +116,7 @@ def test_all():
         from src.monitoring.monitor_config import MonitorConfig
 
         # 创建无效配置（应记录警告）
-        bad_config = MonitorConfig(alert_threshold=1.5)
+        bad_config = MonitorConfig(alert_threshold=1.5)  # noqa: F841
         print("  ✅ 无效配置创建成功（警告已记录）")
         print("  ✅ P3优化验证通过（自动验证执行）")
     except Exception as e:
@@ -132,7 +132,6 @@ def test_all():
         from src.gpu.kernel_protocol import GPUKernelProtocol
         from src.monitoring.monitor_config import MonitorConfig
         from src.monitoring.enhanced_monitoring import EnhancedMonitoringSystem
-        from src.collision.gpu_collision_engine import GPUCollisionEngine
 
         print("  ✅ 所有模块导入成功")
         print("  ✅ 无循环依赖")

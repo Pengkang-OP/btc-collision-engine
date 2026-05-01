@@ -16,39 +16,50 @@
 - 型号数据库驱动的配置
 """
 
-from .device import GPUDeviceDetector, GPUDevice, identify_vendor
-from .config import GPUConfig
-from .context import GPUContext
-from .driver_manager import DriverManager, DriverVersionParser
-from .kernel import (
+from .device import GPUDeviceDetector, GPUDevice, identify_vendor  # noqa: E402
+from .config import GPUConfig  # noqa: E402
+from .context import GPUContext  # noqa: E402
+from .driver_manager import DriverManager, DriverVersionParser  # noqa: E402
+from .kernel import (  # noqa: E402
     OPENCL_KERNEL_SOURCE,
-    get_kernel_version,
-    validate_kernel_version,
-    get_version_changelog,
 )
-from .gpu_config import MultiGPUConfig, GPURecoveryConfig, DataMonitorConfig, WorkerConfig
-from .metrics import GPUMetricsCollector, get_metrics_collector
+from .gpu_config import (  # noqa: E402
+    MultiGPUConfig,
+    GPURecoveryConfig,
+    DataMonitorConfig,
+    WorkerConfig,
+)  # noqa: E402
+from .metrics import GPUMetricsCollector, get_metrics_collector  # noqa: E402
 
 # 多GPU支持模块
-from .selector import GPUDeviceSelector, get_gpu_selector, reset_gpu_selector
-from .load_balancer import GPULoadBalancer
-from .scorer import GPUDeviceScorer, get_gpu_scorer, reset_gpu_scorer
-from .worker import SingleGPUWorker
-from .multi_gpu_engine import MultiGPUCollisionEngine
-from .auto_config import GPUAutoConfigurator, get_gpu_configurator, reset_gpu_configurator
-from .lock_monitor import LockMonitor, MonitoredLock, get_lock_monitor, create_monitored_lock
-from .data_monitor import DataMonitor, DataQualityIssue
+from .selector import GPUDeviceSelector, get_gpu_selector, reset_gpu_selector  # noqa: E402
+from .load_balancer import GPULoadBalancer  # noqa: E402
+from .scorer import GPUDeviceScorer, get_gpu_scorer, reset_gpu_scorer  # noqa: E402
+from .worker import SingleGPUWorker  # noqa: E402
+from .multi_gpu_engine import MultiGPUCollisionEngine  # noqa: E402
+from .auto_config import (  # noqa: E402
+    GPUAutoConfigurator,
+    get_gpu_configurator,
+    reset_gpu_configurator,
+)  # noqa: E402
+from .lock_monitor import (  # noqa: E402
+    LockMonitor,
+    MonitoredLock,
+    get_lock_monitor,
+    create_monitored_lock,
+)  # noqa: E402
+from .data_monitor import DataMonitor, DataQualityIssue  # noqa: E402
 
 # 提取的独立模块
-from .intel_optimizer import IntelGPUOptimizer
-from .nvidia_optimizer import NvidiaGPUOptimizer
-from .amd_optimizer import AmdGPUOptimizer
-from .memory_calculator import GPUMemoryCalculator
-from .optimization_pipeline import PerformanceOptimizationPipeline
-from .engine_monitor import GPUEngineMonitor
+from .intel_optimizer import IntelGPUOptimizer  # noqa: E402
+from .nvidia_optimizer import NvidiaGPUOptimizer  # noqa: E402
+from .amd_optimizer import AmdGPUOptimizer  # noqa: E402
+from .memory_calculator import GPUMemoryCalculator  # noqa: E402
+from .optimization_pipeline import PerformanceOptimizationPipeline  # noqa: E402
+from .engine_monitor import GPUEngineMonitor  # noqa: E402
 
 # GPU全局常量模块
-from .constants import (
+from .constants import (  # noqa: E402
     PER_KEY_MEMORY_BYTES,
     BYTES_PER_MB,
     BATCH_SIZE_ALIGNMENT,

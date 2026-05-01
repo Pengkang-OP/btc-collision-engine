@@ -13,8 +13,7 @@
 """
 
 import pytest
-import threading
-from unittest.mock import Mock, patch, MagicMock, PropertyMock
+from unittest.mock import patch, MagicMock
 
 from src.collision.gpu.protocols import GPUDevice
 
@@ -146,7 +145,9 @@ class TestEngineIntegration:
         try:
             from src.collision.gpu.engine import GPUCollisionEngine, CollisionCore
 
-            engine = GPUCollisionEngine(targets=mock_targets, data_logging_enabled=False)
+            engine = GPUCollisionEngine(  # noqa: F841
+                targets=mock_targets, data_logging_enabled=False
+            )  # noqa: F841, E501
             CollisionCore.assert_called_once()
         finally:
             for p in active_patches:
@@ -400,7 +401,7 @@ class TestComponentDelegation:
             active_patches.append(p)
 
         try:
-            from src.collision.gpu.engine import GPUCollisionEngine, GPUEngineMonitor
+            from src.collision.gpu.engine import GPUCollisionEngine
 
             engine = GPUCollisionEngine(targets=mock_targets, data_logging_enabled=False)
             # Mock GPUEngineMonitor 返回真实列表

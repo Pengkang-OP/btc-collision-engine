@@ -16,7 +16,7 @@
 import pytest
 import time
 import threading
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock
 from typing import Set, Dict, Any
 
 # ========== Fixtures ==========
@@ -985,10 +985,8 @@ class TestModuleImports:
 
     def test_types_import(self):
         """验证 TYPE_CHECKING 导入正常工作"""
-        import typing
 
         # 验证在非类型检查时导入不触发
-        from src.collision.gpu.core import CollisionCore
 
         # 如果能正常导入，说明 TYPE_CHECKING 守卫正确
 

@@ -6,17 +6,14 @@ GPU自适应性能优化器测试
 
 import sys
 import os
-import time
 import unittest
-from unittest.mock import Mock, MagicMock
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.gpu.performance_optimizer import (
+from src.gpu.performance_optimizer import (  # noqa: E402
     GPUPerformanceOptimizer,
     PerformanceMetrics,
-    GPUProfile,
     GPUVendor,
     get_gpu_optimizer,
 )

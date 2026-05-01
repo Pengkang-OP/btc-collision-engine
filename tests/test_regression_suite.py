@@ -12,11 +12,9 @@
 """
 
 import pytest
-import json
 import tempfile
-import os
 import time
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 # ============================================================================
 # P0 安全相关修复回归
@@ -46,7 +44,7 @@ class TestP0SecurityRegression:
         """确保地址在过滤时不会被日志泄露"""
         from src.logging.log_processor import SensitiveDataFilter
 
-        sf = SensitiveDataFilter()
+        sf = SensitiveDataFilter()  # noqa: F841
 
         # P2PKH地址
         test_addr = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"

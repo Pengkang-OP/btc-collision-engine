@@ -15,8 +15,8 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.core.bitcoin_key_validator import WIFEncoder
-from src.collision.targets.resolver import (
+from src.core.bitcoin_key_validator import WIFEncoder  # noqa: E402
+from src.collision.targets.resolver import (  # noqa: E402
     bech32_decode,
     decode_segwit_address,
     _convertbits,

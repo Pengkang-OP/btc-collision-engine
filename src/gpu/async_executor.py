@@ -8,11 +8,10 @@
 
 import time
 import threading
-import logging
 from typing import Any, List, Dict, Optional, Tuple
 
 # P3-5: 统一日志获取 + 修复缺失导入
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 
 import numpy as np
 
@@ -192,7 +191,7 @@ class AsyncGPUExecutor:
         self.queue_depth_hits = 0  # 队列深度优化命中（GPU 不等待 CPU）
 
         logger.info(
-            f"异步GPU执行器已初始化: "
+            "异步GPU执行器已初始化: "
             f"GPU型号={gpu_model}, "
             f"max_batch={self.max_batch_size}, "
             f"initial_batch={self.initial_batch_size}, "
@@ -484,8 +483,7 @@ class AsyncGPUExecutor:
                 if buffer_size < num_keys:
                     logger.warning(f"缓冲区大小不足: 需要{num_keys}个元素, 实际{buffer_size}个元素")
                     # 动态调整缓冲区大小
-                    import pyopencl as cl
-                    import numpy as np
+                    import pyopencl as cl  # noqa: F811
 
                     # 释放旧缓冲区
                     if current_buf["matches"] is not None:
@@ -517,7 +515,11 @@ class AsyncGPUExecutor:
                         )
 
                 cl.enqueue_fill_buffer(
-                    self.device.compute_queue, current_buf["matches"], np.int32(0), 0, num_keys * 4  # type: ignore[arg-type]
+                    self.device.compute_queue,
+                    current_buf["matches"],
+                    np.int32(0),
+                    0,
+                    num_keys * 4,  # type: ignore[arg-type]
                 )
             except (RuntimeError, MemoryError) as e:
                 logger.warning(f"清空缓冲区OpenCL错误: {type(e).__name__}: {e}，回退到同步模式")
@@ -557,7 +559,7 @@ class AsyncGPUExecutor:
                 # 如果该版本 pyopencl 不支持 wait_for，先同步等待传输完成
                 try:
                     transfer_event.wait()
-                    kernel_event = batch_kernel(
+                    kernel_event = batch_kernel(  # noqa: F841
                         self.device.compute_queue,
                         (num_keys,),
                         None,
@@ -716,7 +718,11 @@ class AsyncGPUExecutor:
 
         try:
             cl.enqueue_fill_buffer(
-                self.device.queue, temp_buf["matches"], np.int32(0), 0, num_keys * 4  # type: ignore[arg-type]
+                self.device.queue,
+                temp_buf["matches"],
+                np.int32(0),
+                0,
+                num_keys * 4,  # type: ignore[arg-type]
             )
         except (RuntimeError, MemoryError) as e:
             logger.error(f"同步模式下清空缓冲区OpenCL错误: {type(e).__name__}: {e}")
@@ -728,7 +734,11 @@ class AsyncGPUExecutor:
                     self.device.context, cl.mem_flags.READ_WRITE, size=num_keys * 4
                 )
                 cl.enqueue_fill_buffer(
-                    self.device.queue, temp_buf["matches"], np.int32(0), 0, num_keys * 4  # type: ignore[arg-type]
+                    self.device.queue,
+                    temp_buf["matches"],
+                    np.int32(0),
+                    0,
+                    num_keys * 4,  # type: ignore[arg-type]
                 )
             except (RuntimeError, MemoryError) as create_err:
                 logger.error(f"创建临时缓冲区OpenCL错误: {create_err}")
@@ -746,7 +756,11 @@ class AsyncGPUExecutor:
                     self.device.context, cl.mem_flags.READ_WRITE, size=num_keys * 4
                 )
                 cl.enqueue_fill_buffer(
-                    self.device.queue, temp_buf["matches"], np.int32(0), 0, num_keys * 4  # type: ignore[arg-type]
+                    self.device.queue,
+                    temp_buf["matches"],
+                    np.int32(0),
+                    0,
+                    num_keys * 4,  # type: ignore[arg-type]
                 )
             except (RuntimeError, MemoryError) as create_err:
                 logger.error(f"创建临时缓冲区OpenCL错误: {create_err}")
@@ -803,8 +817,8 @@ class AsyncGPUExecutor:
         if hasattr(self.device, "compute_queue") and self.device.compute_queue:
             try:
                 # 设置超时，确保清理过程不会卡住
-                start_time = time.time()
-                timeout = 10  # 10秒超时
+                time.time()
+                timeout = 10  # 10秒超时  # noqa: F841
 
                 # 尝试完成队列中的所有命令
                 self.device.compute_queue.finish()

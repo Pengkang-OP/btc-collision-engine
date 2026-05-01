@@ -1,10 +1,11 @@
 """验证 vendor 匹配修复：configure_for_device 路由正确性"""
 
-import sys, logging
+import sys
+import logging
 
 sys.path.insert(0, ".")
 logging.disable(logging.CRITICAL)
-from src.gpu.auto_config import GPUAutoConfigurator
+from src.gpu.auto_config import GPUAutoConfigurator  # noqa: E402
 
 c = GPUAutoConfigurator()
 
@@ -113,7 +114,7 @@ for label, dev, exp_branch, exp_async, exp_workaround in cases:
         failed += 1
 
     print(
-        f"{label:<32} {branch:^8} {str(cfg['enable_async']):^6} {str(cfg['use_uint32_workaround']):^10} {status:^6}"
+        f"{label:<32} {branch:^8} {str(cfg['enable_async']):^6} {str(cfg['use_uint32_workaround']):^10} {status:^6}"  # noqa: E501
     )
     if not ok:
         if not ok_branch:
@@ -141,8 +142,8 @@ print(f"  enable_async    = {arc_cfg['enable_async']}      (期望 True)")
 print(f"  workaround      = {arc_cfg['use_uint32_workaround']}      (期望 True)")
 assert arc_cfg["batch_size"] == 262144, f"batch_size 错误: {arc_cfg['batch_size']}"
 assert arc_cfg["work_group_size"] == 512, f"work_group_size 错误: {arc_cfg['work_group_size']}"
-assert arc_cfg["enable_async"] == True, f"enable_async 错误"
-assert arc_cfg["use_uint32_workaround"] == True, "workaround 错误"
+assert arc_cfg["enable_async"] is True, "enable_async 错误"
+assert arc_cfg["use_uint32_workaround"] is True, "workaround 错误"
 print("  Arc A770 所有关键字段: PASS")
 
 sys.exit(failed)

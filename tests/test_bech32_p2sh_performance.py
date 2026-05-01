@@ -8,7 +8,6 @@
 """
 
 import pytest
-import time
 from src.collision.targets.resolver import TargetResolver
 
 

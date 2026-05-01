@@ -4,13 +4,12 @@
 搜索模式通过引擎引用（engine reference）访问引擎状态，不复制状态。
 """
 
-import logging
 import struct
 import time
 from typing import TYPE_CHECKING, Callable, Optional, Tuple
 
 # P3-5: 统一日志获取 + 修复缺失导入
-from ...utils import init_logging, get_configured_logger
+from ...utils import get_configured_logger
 from ...utils.exception_handler import ExceptionHandler
 
 if TYPE_CHECKING:
@@ -119,7 +118,7 @@ class BaseSearchMode:
 
                 if "out of memory" in error_str or "mem_object_allocation_failure" in error_str:
                     # OOM: 缩减 batch_size
-                    logger.warning(f"GPU内存不足，尝试缩减batch_size")
+                    logger.warning("GPU内存不足，尝试缩减batch_size")
                     with engine._batch_size_lock:
                         assert engine._batch_size is not None
                         new_size = max(engine._batch_size // 2, 1024)
@@ -155,7 +154,7 @@ class BaseSearchMode:
                     if engine._consecutive_gpu_errors >= engine._max_gpu_error_retries:
                         logger.critical(
                             f"GPU连续错误次数达到上限({engine._max_gpu_error_retries}), "
-                            f"强制停止引擎以防止无限循环"
+                            "强制停止引擎以防止无限循环"
                         )
                         engine._running = False
                         return batch_count

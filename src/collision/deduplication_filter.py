@@ -55,7 +55,7 @@ class DeduplicationFilter:
 
         logger.debug(
             f"DeduplicationFilter 初始化: max_size={max_size}, enabled={enabled}, "
-            f"false_positive_rate={false_positive_rate*100:.2f}%"
+            f"false_positive_rate={false_positive_rate * 100:.2f}%"
         )
 
     def _fingerprint(self, private_key: bytes) -> bytes:
@@ -91,7 +91,7 @@ class DeduplicationFilter:
             # 达到半满时，将当前集合移入待淘汰，清空当前
             if self._current_size >= self._half_size:
                 logger.debug(
-                    f"缓冲区轮换: current={len(self._current)} -> pending, 总跟踪={len(self._current) + len(self._pending)}"
+                    f"缓冲区轮换: current={len(self._current)} -> pending, 总跟踪={len(self._current) + len(self._pending)}"  # noqa: E501
                 )
                 self._pending = self._current
                 self._current = set()

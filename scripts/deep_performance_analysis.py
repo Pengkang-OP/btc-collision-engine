@@ -2,7 +2,6 @@
 """深度性能分析 - 验证46k keys/s是否为真正的最佳性能"""
 
 import sys
-import time
 
 sys.path.insert(0, "f:/Qoder/btc-collision-engine")
 
@@ -34,10 +33,10 @@ try:
                 # 每个EU每个时钟周期可以执行一定数量的操作
                 # Intel Arc: 每个EU可以处理7个线程
                 peak_ops = device.max_compute_units * 7 * device.max_clock_frequency * 1e6
-                print(f"\n  理论峰值操作数: {peak_ops/1e9:.1f} GOPS")
-                print(
-                    f"  (基于: {device.max_compute_units} EUs × 7线程 × {device.max_clock_frequency} MHz)"
-                )
+                print(f"\n  理论峰值操作数: {peak_ops / 1e9:.1f} GOPS")
+                print(f"  (基于: {
+                    device.max_compute_units} EUs × 7线程 × {
+                    device.max_clock_frequency} MHz)")
 
 except Exception as e:
     print(f"❌ GPU检测失败: {e}")
@@ -60,14 +59,14 @@ print()
 ops_per_key = 256 * (10 + 0.5 * 15) * 10  # 约43,520次uint32操作
 total_ops = current_speed * ops_per_key
 
-print(f"每个私钥的运算量:")
-print(f"  - 椭圆曲线点乘: 256位")
-print(f"  - 平均每次点乘: ~10次点倍加 + ~7次点加")
-print(f"  - 每次点运算: ~10-15次模运算")
-print(f"  - 每次模运算: ~10次uint32操作")
+print("每个私钥的运算量:")
+print("  - 椭圆曲线点乘: 256位")
+print("  - 平均每次点乘: ~10次点倍加 + ~7次点加")
+print("  - 每次点运算: ~10-15次模运算")
+print("  - 每次模运算: ~10次uint32操作")
 print(f"  - 总计: ~{ops_per_key:,} 次uint32操作/密钥")
 print()
-print(f"总运算量: {total_ops/1e9:.2f} GOPS (十亿次操作/秒)")
+print(f"总运算量: {total_ops / 1e9:.2f} GOPS (十亿次操作/秒)")
 
 # 3. 对比理论性能
 print("\n📊 步骤3: 性能对比分析")
@@ -80,9 +79,9 @@ theoretical_peak = 512 * 7 * 2.4e9
 
 efficiency = (total_ops / theoretical_peak) * 100
 
-print(f"Intel Arc A770理论性能:")
-print(f"  - 512 EUs × 7线程 × 2.4 GHz = {theoretical_peak/1e12:.2f} TOPS")
-print(f"  - 当前使用: {total_ops/1e9:.2f} GOPS")
+print("Intel Arc A770理论性能:")
+print(f"  - 512 EUs × 7线程 × 2.4 GHz = {theoretical_peak / 1e12:.2f} TOPS")
+print(f"  - 当前使用: {total_ops / 1e9:.2f} GOPS")
 print(f"  - GPU利用率: {efficiency:.4f}%")
 print()
 
@@ -187,7 +186,7 @@ print()
 
 batch_improvement = (67108864 - 786688) / 67108864 * 100
 print(f"模逆运算改进: {batch_improvement:.2f}%")
-print(f"预期性能提升: 30-50% (模逆是主要瓶颈之一)")
+print("预期性能提升: 30-50% (模逆是主要瓶颈之一)")
 print()
 
 # 7. 综合评估
@@ -208,9 +207,9 @@ print()
 conservative = 46487 * 1.2 * 1.3 * 1.2 * 1.1
 optimistic = 46487 * 1.3 * 1.5 * 1.4 * 1.2
 
-print(f"预期性能范围:")
-print(f"  保守估计: {conservative:,.0f} keys/s (+{((conservative/46487-1)*100):.0f}%)")
-print(f"  乐观估计: {optimistic:,.0f} keys/s (+{((optimistic/46487-1)*100):.0f}%)")
+print("预期性能范围:")
+print(f"  保守估计: {conservative:,.0f} keys/s (+{((conservative / 46487 - 1) * 100):.0f}%)")
+print(f"  乐观估计: {optimistic:,.0f} keys/s (+{((optimistic / 46487 - 1) * 100):.0f}%)")
 print()
 
 print("结论:")

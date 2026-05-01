@@ -6,7 +6,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.core.crypto_backend import crypto_manager, BackendType
+from src.core.crypto_backend import crypto_manager, BackendType  # noqa: E402
 
 
 class TestCryptoBackendManager(unittest.TestCase):
@@ -132,7 +132,7 @@ class TestCryptoBackendManager(unittest.TestCase):
         backend = crypto_manager.current_backend
         print(f"\n后端: {backend.name}")
         print(f"{iterations}次公钥生成耗时: {elapsed:.4f}秒")
-        print(f"速度: {iterations/elapsed:.2f} ops/sec")
+        print(f"速度: {iterations / elapsed:.2f} ops/sec")
 
     def test_invalid_private_key_handling(self):
         """无效私钥处理 - 后端应能处理各种输入"""

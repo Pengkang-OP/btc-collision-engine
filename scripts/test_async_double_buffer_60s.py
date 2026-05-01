@@ -34,18 +34,16 @@ import sys
 import os
 import time
 import json
-import signal
-from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Dict, Any
 import subprocess
 
 # 添加项目根目录到路径
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine
-from src.collision.collision_stats import CollisionStats
+from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
+from src.collision.collision_stats import CollisionStats  # noqa: E402
 
 
 class AsyncDoubleBufferTest:
@@ -121,11 +119,10 @@ class AsyncDoubleBufferTest:
         print("=" * 80)
         print(f"  测试时长: {self.test_duration}秒")
         print(f"  数据分析: 前{self.analysis_duration}秒")
-        print(f"  批次大小: 1,048,576")
+        print("  批次大小: 1,048,576")
         print()
 
         stats_history = []
-        batch_times = []
         total_keys = 0
         start_time = time.time()
         engine = None  # 初始化engine变量
@@ -330,11 +327,10 @@ class AsyncDoubleBufferTest:
         print("=" * 80)
         print(f"  测试时长: {self.test_duration}秒")
         print(f"  数据分析: 前{self.analysis_duration}秒")
-        print(f"  批次大小: 1,048,576")
+        print("  批次大小: 1,048,576")
         print()
 
         stats_history = []
-        batch_times = []
         total_keys = 0
         start_time = time.time()
 
@@ -607,9 +603,11 @@ class AsyncDoubleBufferTest:
 
             print(f"\n  {'指标':<20} {'同步模式':>15} {'异步模式':>15} {'提升':>10}")
             print("  " + "-" * 65)
-            print(
-                f"  {'平均速度 (keys/s)':<20} {sync_speed:>15,.0f} {async_speed:>15,.0f} {improvement:>+9.1f}%"
-            )
+            print(f"  {
+                '平均速度 (keys/s)':<20} {
+                sync_speed:>15,.0f} {
+                async_speed:>15,.0f} {
+                improvement:>+9.1f}%")
             print(f"  {'总密钥数':<20} {sync['total_keys']:>15,} {async_mode['total_keys']:>15,}")
             print(
                 f"  {'测试时长 (秒)':<20} {sync['duration']:>15.2f} {async_mode['duration']:>15.2f}"
@@ -619,12 +617,14 @@ class AsyncDoubleBufferTest:
             )
 
             if "max_speed" in sync and "max_speed" in async_mode:
-                print(
-                    f"  {'最高速度 (keys/s)':<20} {sync['max_speed']:>15,.0f} {async_mode['max_speed']:>15,.0f}"
-                )
-                print(
-                    f"  {'最低速度 (keys/s)':<20} {sync['min_speed']:>15,.0f} {async_mode['min_speed']:>15,.0f}"
-                )
+                print(f"  {
+                    '最高速度 (keys/s)':<20} {
+                    sync['max_speed']:>15,.0f} {
+                    async_mode['max_speed']:>15,.0f}")
+                print(f"  {
+                    '最低速度 (keys/s)':<20} {
+                    sync['min_speed']:>15,.0f} {
+                    async_mode['min_speed']:>15,.0f}")
                 print(
                     f"  {'速度标准差':<20} {sync['speed_std']:>15,.0f} {async_mode['speed_std']:>15,.0f}"
                 )
@@ -693,15 +693,15 @@ def generate_markdown_report(comparison: Dict, filepath: str):
     with open(filepath, "w", encoding="utf-8") as f:
         f.write("# 异步双缓冲60秒性能对比测试报告\n\n")
         f.write(f"> **测试时间**: {comparison.get('timestamp', 'N/A')}\n")
-        f.write(f"> **测试版本**: v3.3.0\n")
+        f.write("> **测试版本**: v3.3.0\n")
         f.write(f"> **GPU设备**: {comparison.get('device', 'Unknown')}\n\n")
 
         f.write("## 测试配置\n\n")
         f.write(f"- **测试时长**: {comparison['test_duration']}秒/模式\n")
-        f.write(f"- **批次大小**: 1,048,576 (1M)\n")
-        f.write(f"- **目标地址**: 2个真实比特币地址\n")
-        f.write(f"- **同步模式**: 单缓冲，队列深度=1\n")
-        f.write(f"- **异步模式**: 双缓冲，队列深度=2\n\n")
+        f.write("- **批次大小**: 1,048,576 (1M)\n")
+        f.write("- **目标地址**: 2个真实比特币地址\n")
+        f.write("- **同步模式**: 单缓冲，队列深度=1\n")
+        f.write("- **异步模式**: 双缓冲，队列深度=2\n\n")
 
         if "error" not in comparison:
             sync = comparison["sync"]
@@ -711,9 +711,10 @@ def generate_markdown_report(comparison: Dict, filepath: str):
             f.write("## 性能对比结果\n\n")
             f.write("| 指标 | 同步模式 | 异步模式 | 变化 |\n")
             f.write("|------|----------|----------|------|\n")
-            f.write(
-                f"| 平均速度 (keys/s) | {sync['avg_speed']:,.0f} | {async_mode['avg_speed']:,.0f} | {improvement:+.1f}% |\n"
-            )
+            f.write(f"| 平均速度 (keys/s) | {
+                    sync['avg_speed']:,.0f} | {
+                    async_mode['avg_speed']:,.0f} | {
+                    improvement:+.1f}% |\n")
             f.write(f"| 总密钥数 | {sync['total_keys']:,} | {async_mode['total_keys']:,} | - |\n")
             f.write(
                 f"| 测试时长 (秒) | {sync['duration']:.2f} | {async_mode['duration']:.2f} | - |\n"
@@ -723,12 +724,12 @@ def generate_markdown_report(comparison: Dict, filepath: str):
             )
 
             if "max_speed" in sync:
-                f.write(
-                    f"| 最高速度 (keys/s) | {sync['max_speed']:,.0f} | {async_mode['max_speed']:,.0f} | - |\n"
-                )
-                f.write(
-                    f"| 最低速度 (keys/s) | {sync['min_speed']:,.0f} | {async_mode['min_speed']:,.0f} | - |\n"
-                )
+                f.write(f"| 最高速度 (keys/s) | {
+                        sync['max_speed']:,.0f} | {
+                        async_mode['max_speed']:,.0f} | - |\n")
+                f.write(f"| 最低速度 (keys/s) | {
+                        sync['min_speed']:,.0f} | {
+                        async_mode['min_speed']:,.0f} | - |\n")
                 f.write(
                     f"| 速度标准差 | {sync['speed_std']:,.0f} | {async_mode['speed_std']:,.0f} | - |\n"
                 )

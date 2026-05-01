@@ -1,14 +1,13 @@
 """DeduplicationFilter 单元测试 - 双缓冲轮换、内存上限、并发安全"""
 
 import threading
-import time
 import unittest
 import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.collision.deduplication_filter import DeduplicationFilter
+from src.collision.deduplication_filter import DeduplicationFilter  # noqa: E402
 
 
 class TestDeduplicationFilterBasic(unittest.TestCase):

@@ -16,15 +16,13 @@
 
 import os
 import multiprocessing as mp
-from multiprocessing import Process, Queue, Manager
-from multiprocessing.queues import Empty, Full  # type: ignore[attr-defined]
-from typing import List, Dict, Any, Optional, Callable
+from multiprocessing import Process, Queue
+from queue import Empty, Full
+from typing import List, Dict, Any, Optional
 import time
-import logging
 import signal
 import threading
 import json
-import base64
 import gc
 
 # 导入日志配置
@@ -43,7 +41,7 @@ def _worker_process(
     task_queue: Queue,
     result_queue: Queue,
     stats_queue: Queue,
-    stop_event: mp.Event,  # type: ignore[valid-type]
+    stop_event: "mp.synchronize.Event",
     generator_func_name: str,
     batch_size: int = 10000,
     encryption_key: Optional[bytes] = None,
@@ -133,7 +131,7 @@ def _worker_process(
     matches_found = 0
 
     try:
-        while not stop_event.is_set():  # type: ignore[attr-defined]
+        while not stop_event.is_set():
             try:
                 # 从任务队列获取任务（超时避免永久阻塞）
                 task = task_queue.get(timeout=1.0)
@@ -566,7 +564,7 @@ class MultiprocessCollisionEngine:
                 for z in zombie_processes:
                     try:
                         assert z["pid"] is not None
-                        os.kill(z["pid"], signal.SIGKILL)  # type: ignore[attr-defined]
+                        os.kill(z["pid"], int(getattr(signal, "SIGKILL", 9)))
                         logger.info(f"已发送SIGKILL到进程 {z['pid']}")
                     except Exception as e:
                         logger.error(f"发送SIGKILL失败 {z['pid']}: {e}")

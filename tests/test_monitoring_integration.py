@@ -18,14 +18,13 @@ import os
 import sys
 import tempfile
 import shutil
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from conftest import poll_until
-from src.collision.key_collision_engine import KeyCollisionEngine
-from src.monitoring.monitor_config import MonitorConfig
+from conftest import poll_until  # noqa: E402
+from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
 
 
 class TestEngineMonitoringIntegration:
@@ -258,7 +257,7 @@ class TestMonitoringErrorScenarios:
         )
 
         # 模拟数据记录器错误
-        original_record = engine.data_logger.record_performance_data
+        engine.data_logger.record_performance_data
         engine.data_logger.record_performance_data = Mock(side_effect=RuntimeError("Record failed"))
 
         engine.start(mode="random")

@@ -7,18 +7,16 @@
 4. 防止内存溢出和资源竞争
 """
 
-import os
 import time
-import logging
 
 # P3-5: 统一日志获取
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 import threading
-from typing import Dict, Any, Optional, List, Tuple
+from typing import Dict, Any, Optional, List, Tuple, cast
 from dataclasses import dataclass, field
 from enum import Enum
 
-from .constants import MIN_BATCH_SIZE, MAX_BATCH_SIZE, clamp_batch_size
+from .constants import clamp_batch_size
 
 logger = get_configured_logger("GPUPerformanceOptimizer")
 
@@ -99,7 +97,7 @@ class GPUPerformanceOptimizer:
         self._vendor_profiles = self._init_vendor_profiles()
         self._performance_degraded = False
         self._adjustment_count = 0
-        self._last_adjustment_time = 0
+        self._last_adjustment_time = 0.0
         self._adjustment_cooldown_sec = 10  # 调整冷却期10秒
 
         logger.info("GPU性能优化器初始化完成")
@@ -354,7 +352,7 @@ class GPUPerformanceOptimizer:
                     "new_batch": new_batch_size,
                 }
                 logger.warning(
-                    f"执行时间过长({avg_execution_time:.0f}ms)，减小batch: {current_batch_size} -> {new_batch_size}"
+                    f"执行时间过长({avg_execution_time:.0f}ms)，减小batch: {current_batch_size} -> {new_batch_size}"  # noqa: E501
                 )
 
             # 3. 性能良好且有余量 - 增大batch_size（优化v2.2.1: 更激进的策略）
@@ -407,8 +405,8 @@ class GPUPerformanceOptimizer:
             # 4. 记录调整
             if new_batch_size != current_batch_size:
                 self._adjustment_count += 1
-                self._last_adjustment_time = now  # type: ignore[assignment]  # 记录调整时间
-                adjustments["adjustment_count"] = self._adjustment_count  # type: ignore[assignment]
+                self._last_adjustment_time = now
+                cast(Dict[str, Any], adjustments)["adjustment_count"] = self._adjustment_count
 
             return new_batch_size, adjustments
 
@@ -501,7 +499,7 @@ class GPUPerformanceOptimizer:
             self._metrics_history.clear()
             self._current_profile = None
             self._adjustment_count = 0
-            self._last_adjustment_time = 0
+            self._last_adjustment_time = 0.0
         logger.info("GPU性能优化器已重置")
 
 

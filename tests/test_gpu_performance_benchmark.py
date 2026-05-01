@@ -15,16 +15,14 @@ import sys
 import os
 import time
 import logging
-from typing import Dict, Any, Tuple
+from typing import Dict, Any
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.collision.key_collision_engine import KeyCollisionEngine
-from src.collision.gpu_collision_engine import GPUCollisionEngine
-from src.collision.collision_stats import CollisionStats
-from src.monitoring.monitor_config import MonitorConfig
-from src.monitoring.enhanced_monitoring import EnhancedMonitoringSystem
+from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
+from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
+from src.collision.collision_stats import CollisionStats  # noqa: E402
 
 # 配置日志
 logging.basicConfig(
@@ -84,9 +82,9 @@ class GPUPerformanceBenchmark:
                 use_enhanced_monitoring=True,
             )
 
-            logger.info(f"✅ CPU引擎初始化完成")
+            logger.info("✅ CPU引擎初始化完成")
             logger.info(f"   加密后端: {type(engine.generator).__name__}")
-            logger.info(f"   工作线程: 默认(CPU核心数)")
+            logger.info("   工作线程: 默认(CPU核心数)")
 
             # 启动引擎（brute_force模式，从1开始）
             engine.start(mode="brute_force")
@@ -104,7 +102,7 @@ class GPUPerformanceBenchmark:
             self.cpu_time = time.time() - start_time
             self.cpu_stats = stats_data
 
-            logger.info(f"\n📊 CPU模式测试结果:")
+            logger.info("\n📊 CPU模式测试结果:")
             logger.info(f"   总检测数: {stats_data['total_checked']:,}")
             logger.info(f"   平均速度: {stats_data['speed']:.2f} keys/s")
             logger.info(f"   运行时间: {self.cpu_time:.2f}秒")
@@ -186,7 +184,7 @@ class GPUPerformanceBenchmark:
                 use_enhanced_monitoring=True,
             )
 
-            logger.info(f"✅ GPU引擎初始化完成")
+            logger.info("✅ GPU引擎初始化完成")
             logger.info(f"   设备: {engine._gpu_device.get_device_info().get('name', 'Unknown')}")
             logger.info(f"   Batch Size: {engine.batch_size}")
 
@@ -206,7 +204,7 @@ class GPUPerformanceBenchmark:
             self.gpu_time = time.time() - start_time
             self.gpu_stats = stats_data
 
-            logger.info(f"\n📊 GPU模式测试结果:")
+            logger.info("\n📊 GPU模式测试结果:")
             logger.info(f"   总检测数: {stats_data['total_checked']:,}")
             logger.info(f"   平均速度: {stats_data['speed']:.2f} keys/s")
             logger.info(f"   运行时间: {self.gpu_time:.2f}秒")
@@ -229,14 +227,14 @@ class GPUPerformanceBenchmark:
 
         if self.cpu_stats and self.cpu_stats["speed"] > 0:
             cpu_speed = self.cpu_stats["speed"]
-            logger.info(f"\n🔵 CPU模式:")
+            logger.info("\n🔵 CPU模式:")
             logger.info(f"   速度: {cpu_speed:,.2f} keys/s")
             logger.info(f"   检测数: {self.cpu_stats['total_checked']:,}")
             logger.info(f"   时间: {self.cpu_time:.2f}秒")
 
         if self.gpu_stats and self.gpu_stats["speed"] > 0:
             gpu_speed = self.gpu_stats["speed"]
-            logger.info(f"\n🟢 GPU模式:")
+            logger.info("\n🟢 GPU模式:")
             logger.info(f"   速度: {gpu_speed:,.2f} keys/s")
             logger.info(f"   检测数: {self.gpu_stats['total_checked']:,}")
             logger.info(f"   时间: {self.gpu_time:.2f}秒")
@@ -249,16 +247,16 @@ class GPUPerformanceBenchmark:
                 speedup = gpu_speed / cpu_speed
                 improvement = ((gpu_speed - cpu_speed) / cpu_speed) * 100
 
-                logger.info(f"\n🚀 性能提升:")
+                logger.info("\n🚀 性能提升:")
                 logger.info(f"   加速倍数: {speedup:.2f}x")
                 logger.info(f"   性能提升: {improvement:.1f}%")
 
                 if speedup >= 10:
-                    logger.info(f"   ✅ GPU加速效果显著!")
+                    logger.info("   ✅ GPU加速效果显著!")
                 elif speedup >= 2:
-                    logger.info(f"   ✅ GPU加速效果良好")
+                    logger.info("   ✅ GPU加速效果良好")
                 else:
-                    logger.info(f"   ⚠️ GPU加速效果一般，可能需要优化")
+                    logger.info("   ⚠️ GPU加速效果一般，可能需要优化")
 
         logger.info("\n" + "=" * 70)
 
@@ -294,23 +292,23 @@ def main():
     # 测试时长（秒）
     test_duration = 15
 
-    logger.info(f"\n💡 测试策略:")
+    logger.info("\n💡 测试策略:")
     logger.info(f"   - 先测试CPU模式 {test_duration}秒")
     logger.info(f"   - 再测试GPU模式 {test_duration}秒")
-    logger.info(f"   - 对比性能差异")
-    logger.info(f"   - 记录监控数据")
+    logger.info("   - 对比性能差异")
+    logger.info("   - 记录监控数据")
 
     time.sleep(2)
 
     # 1. 测试CPU模式
-    cpu_stats = benchmark.test_cpu_mode(targets, duration=test_duration)
+    cpu_stats = benchmark.test_cpu_mode(targets, duration=test_duration)  # noqa: F841
 
     # 等待2秒让系统稳定
     logger.info("\n⏳ 等待系统稳定...")
     time.sleep(2)
 
     # 2. 测试GPU模式
-    gpu_stats = benchmark.test_gpu_mode(targets, duration=test_duration)
+    gpu_stats = benchmark.test_gpu_mode(targets, duration=test_duration)  # noqa: F841
 
     # 3. 打印对比报告
     benchmark.print_comparison_report()

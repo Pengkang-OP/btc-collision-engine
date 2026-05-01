@@ -16,7 +16,7 @@ import pytest
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from src.gpu.buffer_tracker import GPUBufferTracker
+from src.gpu.buffer_tracker import GPUBufferTracker  # noqa: E402
 
 
 @pytest.mark.unit
@@ -152,7 +152,7 @@ class TestGPUBufferTracker(unittest.TestCase):
         import threading
 
         # 使用线程ID避免名称冲突
-        thread_local = threading.local()
+        threading.local()
 
         def track_buffers(thread_id):
             try:

@@ -85,7 +85,7 @@ class GPUKernelAdapter(IKernelExecutor):
             )
 
             logger.info(
-                f"GPU内核编译完成: "
+                "GPU内核编译完成: "
                 f"work_group_size={getattr(kernel_impl, '_work_group_size', 'N/A')}, "
                 f"max_batch_size={getattr(kernel_impl, '_max_batch_size', 'N/A')}"
             )
@@ -132,7 +132,7 @@ class GPUKernelAdapter(IKernelExecutor):
             matches = self._convert_matches(raw_matches)
 
             logger.debug(
-                f"批次执行完成: "
+                "批次执行完成: "
                 f"batch_size={batch_size:,}, "
                 f"matches={len(matches)}, "
                 f"time={execution_time_ms:.0f}ms"

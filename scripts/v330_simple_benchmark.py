@@ -8,7 +8,6 @@ v3.3.0 异步双缓冲性能验证 - 简化版
 
 import sys
 import os
-import time
 import json
 from pathlib import Path
 from datetime import datetime
@@ -71,11 +70,11 @@ def generate_v330_report():
 
     benchmarks = data.get("benchmarks", {})
 
-    print(f"\n{'─'*80}")
-    print(f"  性能指标")
-    print(f"{'─'*80}")
+    print(f"\n{'─' * 80}")
+    print("  性能指标")
+    print(f"{'─' * 80}")
     print(f"\n{'测试项':<30} {'操作/秒':>15} {'平均时间':>15} {'标准差':>15}")
-    print(f"{'─'*80}")
+    print(f"{'─' * 80}")
 
     for name, result in benchmarks.items():
         if result.get("success", False):
@@ -88,9 +87,9 @@ def generate_v330_report():
     # 对比分析
     comparison = data.get("comparison", {})
     if comparison.get("baseline_file"):
-        print(f"\n{'─'*80}")
+        print(f"\n{'─' * 80}")
         print(f"  性能对比（基线: {comparison['baseline_file']}）")
-        print(f"{'─'*80}")
+        print(f"{'─' * 80}")
 
         regressions = comparison.get("regressions", [])
         improvements = comparison.get("improvements", [])
@@ -98,19 +97,23 @@ def generate_v330_report():
         if regressions:
             print(f"\n⚠️  发现 {len(regressions)} 处性能回归:")
             for r in regressions:
-                print(
-                    f"  - {r['name']}: {r['baseline_ops_per_sec']:,.2f} → {r['current_ops_per_sec']:,.2f} ({r['change_pct']:+.1f}%)"
-                )
+                print(f"  - {
+                    r['name']}: {
+                    r['baseline_ops_per_sec']:,.2f} → {
+                    r['current_ops_per_sec']:,.2f} ({
+                    r['change_pct']:+.1f}%)")
 
         if improvements:
             print(f"\n✅ 发现 {len(improvements)} 处性能提升:")
             for r in improvements:
-                print(
-                    f"  + {r['name']}: {r['baseline_ops_per_sec']:,.2f} → {r['current_ops_per_sec']:,.2f} ({r['change_pct']:+.1f}%)"
-                )
+                print(f"  + {
+                    r['name']}: {
+                    r['baseline_ops_per_sec']:,.2f} → {
+                    r['current_ops_per_sec']:,.2f} ({
+                    r['change_pct']:+.1f}%)")
 
         if not regressions and not improvements:
-            print(f"\n✅ 性能稳定，无显著变化")
+            print("\n✅ 性能稳定，无显著变化")
 
     # 保存报告
     report_file = os.path.join(
@@ -123,9 +126,9 @@ def generate_v330_report():
     with open(report_file, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
-    print(f"\n{'─'*80}")
+    print(f"\n{'─' * 80}")
     print(f"  报告已保存: {report_file}")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
 
 
 if __name__ == "__main__":

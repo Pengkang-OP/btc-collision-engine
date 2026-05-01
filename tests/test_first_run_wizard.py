@@ -12,15 +12,14 @@ import os
 import json
 import tempfile
 import shutil
-from pathlib import Path
-from unittest import TestCase, mock
-from unittest.mock import patch, MagicMock
+from unittest import TestCase
+from unittest.mock import patch
 
 import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.utils.first_run_wizard import FirstRunWizard
+from src.utils.first_run_wizard import FirstRunWizard  # noqa: E402
 
 
 class TestFirstRunWizardBasic(TestCase):

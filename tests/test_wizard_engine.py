@@ -11,8 +11,7 @@
 - 消息队列注入
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from src.wizard.interfaces import WizardConfig, WizardResult, WizardMode
 from src.wizard.wizard_engine import WizardEngine
 from src.wizard.message_queue import WizardMessageQueue

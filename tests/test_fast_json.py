@@ -2,7 +2,6 @@
 """P3-10: fast_json 模块单元测试"""
 
 import json
-import pytest
 import tempfile
 import os
 from src.utils.fast_json import fast_dumps, fast_loads, fast_dump, fast_load, is_orjson_available
@@ -36,7 +35,8 @@ class TestFastDumps:
         result = fast_dumps(data, sort_keys=True)
         loaded = json.loads(result)
         assert loaded == data
-        # Ensure keys are sorted (JSON has no key order guarantee in spec, but both json and orjson output sorted)
+        # Ensure keys are sorted (JSON has no key order guarantee in spec, but
+        # both json and orjson output sorted)
         assert result.index('"a"') < result.index('"z"')
 
 

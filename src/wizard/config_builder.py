@@ -18,7 +18,7 @@ _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
-from .interfaces import WizardResult
+from .interfaces import WizardResult  # noqa: E402
 
 
 class ConfigBuilder:

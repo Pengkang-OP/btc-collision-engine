@@ -10,7 +10,6 @@
 import logging
 import re
 import hashlib
-from typing import Optional
 
 
 class SecurityLogFilter(logging.Filter):

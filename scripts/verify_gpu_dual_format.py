@@ -10,7 +10,6 @@
 
 import sys
 import os
-import time
 import numpy as np
 
 # 添加项目根目录到路径
@@ -62,7 +61,7 @@ def run_tests():
         kernel_batch_check = program.batch_check
         kernel_local_mem = program.batch_check_local_mem
         kernels = program.all_kernels()
-        print(f"   ✅ 编译成功")
+        print("   ✅ 编译成功")
         print(f"   函数数: {len(kernels)}")
         for k in kernels:
             print(f"     - {k.function_name}")
@@ -116,7 +115,7 @@ def run_tests():
         ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=precomp_array
     )
 
-    print(f"   ✅ 缓冲区创建完成")
+    print("   ✅ 缓冲区创建完成")
 
     # ========== 5. 运行测试 ==========
     results = []
@@ -214,7 +213,7 @@ def run_tests():
 
         local_mem_matched = match_flags[0] > 0
         if local_mem_matched:
-            print(f"   ✅ batch_check_local_mem: 非压缩目标匹配成功 (check_uncompressed=1)")
+            print("   ✅ batch_check_local_mem: 非压缩目标匹配成功 (check_uncompressed=1)")
             results.append(True)
         else:
             print(

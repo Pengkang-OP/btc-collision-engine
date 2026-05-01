@@ -17,7 +17,7 @@
 """
 
 import logging
-from typing import Optional
+from typing import Optional, Any, cast
 
 from src.collision.events import (
     CollisionEvent,
@@ -246,7 +246,7 @@ class EnhancedMonitoringAdapter:
         """处理错误事件"""
         if self.monitoring_system:
             try:
-                self.monitoring_system.handle_error(  # type: ignore[attr-defined]
+                cast(Any, self.monitoring_system).handle_error(
                     error=event.exception or Exception(event.error_message), context=event.context
                 )
             except Exception as e:

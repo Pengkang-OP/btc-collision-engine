@@ -14,7 +14,7 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.gpu.kernel import OPENCL_KERNEL_SOURCE
+from src.gpu.kernel import OPENCL_KERNEL_SOURCE  # noqa: E402
 
 
 class TestP1_3_KeyRangeValidation(unittest.TestCase):
@@ -51,7 +51,7 @@ class TestP1_3_KeyRangeValidation(unittest.TestCase):
                 # 获取上下文（前后各2行）
                 start = max(0, i - 1)
                 end = min(len(lines), i + 3)
-                context = "\n".join(lines[start:end])
+                context = "\n".join(lines[start:end])  # noqa: F841
 
                 # 确认它不是单独的条件（应该包含 || uint256_cmp）
                 stripped = line.strip()
@@ -72,10 +72,10 @@ class TestP1_3_KeyRangeValidation(unittest.TestCase):
         self.assertEqual(
             len(old_pattern),
             0,
-            f"旧代码 'if (uint256_is_zero(&k)) {{' 应已被替换，" f"但仍找到 {len(old_pattern)} 处",
+            "旧代码 'if (uint256_is_zero(&k)) {{' 应已被替换，" f"但仍找到 {len(old_pattern)} 处",
         )
 
-        print(f"\n[P1-3-B ✓] 旧独占条件已全部替换")
+        print("\n[P1-3-B ✓] 旧独占条件已全部替换")
 
     def test_n_val_loaded_from_constant(self):
         """P1-3-C: n_val 从 SECP256K1_N 常量正确加载"""
@@ -90,7 +90,7 @@ class TestP1_3_KeyRangeValidation(unittest.TestCase):
         import re
 
         load_loops = re.findall(
-            r"for\s*\(\s*int\s+i\s*=\s*0\s*;\s*i\s*<\s*8\s*;\s*i\+\+\s*\)\s*n_val\.d\[i\]\s*=\s*SECP256K1_N\[i\]",
+            r"for\s*\(\s*int\s+i\s*=\s*0\s*;\s*i\s*<\s*8\s*;\s*i\+\+\s*\)\s*n_val\.d\[i\]\s*=\s*SECP256K1_N\[i\]",  # noqa: E501
             source,
         )
         # 应该有4处（kernel.py和.cl各两个内核）
@@ -134,7 +134,7 @@ class TestP1_3_KeyRangeValidation(unittest.TestCase):
 
                 print(f"  [{kernel_name}] ✓ k>=N 验证存在")
 
-        print(f"\n[P1-3-D ✓] 所有batch_check变体均已修复")
+        print("\n[P1-3-D ✓] 所有batch_check变体均已修复")
 
     def test_n_boundary_values(self):
         """P1-3-F: 验证 N 常量值正确性"""
@@ -166,7 +166,7 @@ class TestP1_3_KeyRangeValidation(unittest.TestCase):
         for i, (actual, expected) in enumerate(zip(n_values, expected_n)):
             self.assertEqual(actual, expected, f"N[{i}] = {hex(actual)} 不等于预期 {hex(expected)}")
 
-        print(f"\n[P1-3-F ✓] SECP256K1_N 常量值正确")
+        print("\n[P1-3-F ✓] SECP256K1_N 常量值正确")
 
 
 if __name__ == "__main__":

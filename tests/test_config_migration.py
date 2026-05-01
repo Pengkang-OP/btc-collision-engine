@@ -13,7 +13,6 @@ import os
 import json
 import tempfile
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 
 # ============================================================================
 # Fixtures

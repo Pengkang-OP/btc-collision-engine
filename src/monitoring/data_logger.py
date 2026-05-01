@@ -13,11 +13,9 @@ import sys
 import time
 import json
 from src.utils.fast_json import fast_dump, fast_load, fast_loads
-import logging
 import statistics
 import threading
 import copy
-import re
 import tempfile
 from datetime import datetime
 from typing import Dict, List, Optional, Any
@@ -25,7 +23,6 @@ from collections import deque
 
 # 导入现有日志系统
 from src.utils import get_configured_logger
-from src.utils.logger import PerformanceMonitor
 from src.monitoring.storage_config import DataStorageConfig
 
 
@@ -134,7 +131,7 @@ class DataLogger:
                     f.write("# 性能日志 - 比特币密钥碰撞检测\n")
                     f.write(f"# 创建时间: {datetime.now().isoformat()}\n")
                     f.write(
-                        "# 格式: timestamp,speed,total_checked,matches,cpu_usage,memory_usage,threads\n"
+                        "# 格式: timestamp,speed,total_checked,matches,cpu_usage,memory_usage,threads\n"  # noqa: E501
                     )
         except Exception as e:
             self.logger.error(f"初始化数据文件失败: {e}")
@@ -218,7 +215,7 @@ class DataLogger:
 
         # 在锁外写入CSV日志（提升并发性能）
         try:
-            csv_line = f"{timestamp},{speed},{total_checked},{matches_found},{cpu_usage},{memory_usage},{thread_count}\n"
+            csv_line = f"{timestamp},{speed},{total_checked},{matches_found},{cpu_usage},{memory_usage},{thread_count}\n"  # noqa: E501
             with open(self.performance_log_file, "a", encoding="utf-8") as f:
                 f.write(csv_line)
         except Exception as e:
@@ -505,7 +502,7 @@ class DataLogger:
                 if isinstance(data, list):
                     return data
                 else:
-                    self.logger.warning(f"历史数据格式错误，重置为空列表")
+                    self.logger.warning("历史数据格式错误，重置为空列表")
                     return []
         except json.JSONDecodeError as e:
             # JSON文件损坏，尝试恢复
@@ -524,9 +521,13 @@ class DataLogger:
             file_size = os.path.getsize(self.history_data_file)
             max_size = 10 * 1024 * 1024  # 10MB限制
             if file_size > max_size:
-                self.logger.error(
-                    f"历史文件过大({file_size / 1024 / 1024:.2f}MB)，超过限制({max_size / 1024 / 1024:.0f}MB)，跳过恢复"
-                )
+                self.logger.error(f"历史文件过大({
+                    file_size
+                    / 1024
+                    / 1024:.2f}MB)，超过限制({
+                    max_size
+                    / 1024
+                    / 1024:.0f}MB)，跳过恢复")
                 return []
 
             with open(self.history_data_file, "r", encoding="utf-8") as f:

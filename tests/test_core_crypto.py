@@ -6,11 +6,11 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.core.secp256k1 import Secp256k1
-from src.core.hash_utils import HashUtils
-from src.core.base58 import Base58
-from src.core.wif import WIF
-from src.core.address_generator import P2PKHAddressGenerator
+from src.core.secp256k1 import Secp256k1  # noqa: E402
+from src.core.hash_utils import HashUtils  # noqa: E402
+from src.core.base58 import Base58  # noqa: E402
+from src.core.wif import WIF  # noqa: E402
+from src.core.address_generator import P2PKHAddressGenerator  # noqa: E402
 
 
 class TestSecp256k1(unittest.TestCase):

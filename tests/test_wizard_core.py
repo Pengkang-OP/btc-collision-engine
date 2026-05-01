@@ -13,12 +13,7 @@
 """
 
 import pytest
-import os
-import sys
-import json
-import tempfile
-from unittest.mock import Mock, patch, MagicMock
-from typing import List, Tuple
+from unittest.mock import patch
 
 from src.wizard.interfaces import WizardMode, WizardConfig, WizardResult
 from src.wizard.selector_protocol import SelectorProtocol
@@ -399,7 +394,10 @@ class TestWizardMessageQueue:
 
     def test_unsubscribe(self):
         mq = WizardMessageQueue()
-        cb = lambda e: None
+
+        def cb(e):  # noqa: E306
+            return None
+
         mq.subscribe(cb)
         mq.unsubscribe(cb)
         assert len(mq._subscribers) == 0

@@ -10,8 +10,7 @@
 
 from __future__ import annotations
 
-import logging
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 from ..collision.constants import INTEL_SAFE_MEMORY_RATIO
 from typing import Optional, Any, Dict, TYPE_CHECKING
 
@@ -194,7 +193,7 @@ class IntelGPUOptimizer:
             except (RuntimeError, ValueError, TypeError, AttributeError) as e:
                 self._logger.warning(
                     f"⚠️ 自适应超时管理器初始化失败（非致命）: {type(e).__name__}: {e}\n"
-                    f"   超时管理功能将被禁用，使用固定超时保护",
+                    "   超时管理功能将被禁用，使用固定超时保护",
                     exc_info=True,
                 )
 
@@ -206,7 +205,7 @@ class IntelGPUOptimizer:
                 if not isinstance(device_info, dict):
                     self._logger.warning(
                         f"⚠️ device_info 类型异常: {type(device_info).__name__}，跳过显存监控器初始化\n"
-                        f"   显存监控功能将被禁用"
+                        "   显存监控功能将被禁用"
                     )
                 else:
                     total_memory = device_info.get("global_mem_size", 0)
@@ -221,12 +220,12 @@ class IntelGPUOptimizer:
                             safe_usage_ratio=INTEL_SAFE_MEMORY_RATIO,  # Intel 保守策略
                         )
                         self._logger.info(
-                            f"✅ 显存监控器已初始化 " f"(总显存: {total_memory / 1024 ** 3:.1f}GB)"
+                            "✅ 显存监控器已初始化 " f"(总显存: {total_memory / 1024 ** 3:.1f}GB)"
                         )
             except (RuntimeError, ValueError, TypeError, AttributeError) as e:
                 self._logger.warning(
                     f"⚠️ 显存监控器初始化失败（非致命）: {type(e).__name__}: {e}\n"
-                    f"   显存监控功能将被禁用",
+                    "   显存监控功能将被禁用",
                     exc_info=True,
                 )
 
@@ -239,7 +238,7 @@ class IntelGPUOptimizer:
             except (RuntimeError, ValueError, TypeError, AttributeError) as e:
                 self._logger.warning(
                     f"⚠️ 基准测试套件初始化失败（非致命）: {type(e).__name__}: {e}\n"
-                    f"   基准测试功能将被禁用",
+                    "   基准测试功能将被禁用",
                     exc_info=True,
                 )
 
@@ -252,7 +251,7 @@ class IntelGPUOptimizer:
             except (RuntimeError, ValueError, TypeError, AttributeError) as e:
                 self._logger.warning(
                     f"⚠️ 自动调优器初始化失败（非致命）: {type(e).__name__}: {e}\n"
-                    f"   自动调优功能将被禁用",
+                    "   自动调优功能将被禁用",
                     exc_info=True,
                 )
 
@@ -269,7 +268,7 @@ class IntelGPUOptimizer:
             except (RuntimeError, ValueError, TypeError, AttributeError) as e:
                 self._logger.warning(
                     f"⚠️ 性能报告生成器初始化失败（非致命）: {type(e).__name__}: {e}\n"
-                    f"   性能报告功能将被禁用",
+                    "   性能报告功能将被禁用",
                     exc_info=True,
                 )
 
@@ -290,7 +289,7 @@ class IntelGPUOptimizer:
             self._logger.warning(
                 f"⚠️ {initialized_count}/5 个组件初始化成功，"
                 f"{5 - initialized_count} 个组件被禁用\n"
-                f"   引擎仍可正常运行，但部分监控功能不可用\n"
+                "   引擎仍可正常运行，但部分监控功能不可用\n"
             )
         else:
             self._logger.error(

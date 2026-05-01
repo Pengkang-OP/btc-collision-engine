@@ -9,17 +9,16 @@
 import argparse
 import os
 import sys
-from typing import Any, Optional
+from typing import Any
 
 # 将项目根目录加入路径
 _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
-from src.i18n import _t
-from src.cli.advanced_features import export_progress_data, export_matches
-from src.cli.constants import SEPARATOR_EQUAL, SEPARATOR_DASHED
-from src.cli.output import CLIOutput
+from src.i18n import _t  # noqa: E402
+from src.cli.advanced_features import export_progress_data, export_matches  # noqa: E402
+from src.cli.output import CLIOutput  # noqa: E402
 
 
 def _print_detailed_stats(stats: Any) -> None:
@@ -65,9 +64,9 @@ def _print_final_summary(engine: Any, engine_type: str, args: argparse.Namespace
         m_t, s = divmod(rem, 60)
         elapsed_fmt = f"{h:02d}:{m_t:02d}:{s:02d}"
         speed_fmt = (
-            f"{throughput/1_000_000:.2f}M/s"
+            f"{throughput / 1_000_000:.2f}M/s"
             if throughput >= 1_000_000
-            else f"{throughput/1_000:.1f}K/s" if throughput >= 1_000 else f"{throughput:.0f}/s"
+            else f"{throughput / 1_000:.1f}K/s" if throughput >= 1_000 else f"{throughput:.0f}/s"
         )
         stats_dict[_t("cli.main.accel_mode")] = f"多GPU ({device_count} 个设备)"
         stats_dict[_t("cli.main.total_checked")] = f"{total_checked:,}"
@@ -81,13 +80,13 @@ def _print_final_summary(engine: Any, engine_type: str, args: argparse.Namespace
                 dev_keys = dev_stats.get("keys_checked", 0)
                 dev_tp = dev_stats.get("throughput", 0)
                 dev_speed_fmt = (
-                    f"{dev_tp/1_000_000:.2f}M/s"
+                    f"{dev_tp / 1_000_000:.2f}M/s"
                     if dev_tp >= 1_000_000
-                    else f"{dev_tp/1_000:.1f}K/s" if dev_tp >= 1_000 else f"{dev_tp:.0f}/s"
+                    else f"{dev_tp / 1_000:.1f}K/s" if dev_tp >= 1_000 else f"{dev_tp:.0f}/s"
                 )
                 stats_dict[f"GPU {dev_idx}"] = (
                     _t("cli.main.gpu_checked", count=dev_keys)
-                    + f" | "
+                    + " | "
                     + _t("cli.main.gpu_speed", speed=dev_speed_fmt)
                 )
         engine.cleanup()

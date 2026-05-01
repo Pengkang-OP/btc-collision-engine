@@ -5,12 +5,11 @@
 import sys
 import os
 import time
-import threading
 import logging
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from src.collision import KeyCollisionEngine, CollisionStats
+from src.collision import KeyCollisionEngine  # noqa: E402
 
 # 设置日志级别为DEBUG
 logging.basicConfig(
@@ -53,7 +52,7 @@ def diagnose_engine():
     print("3. 监控引擎状态 (10秒)...")
     print()
 
-    start_time = time.time()
+    time.time()
     last_count = 0
 
     for i in range(10):
@@ -69,7 +68,7 @@ def diagnose_engine():
         live_count = engine._live_range_count if hasattr(engine, "_live_range_count") else 0
 
         print(
-            f"   [{i+1:2d}s] 运行={is_running}, 线程={thread_alive}, "
+            f"   [{i + 1:2d}s] 运行={is_running}, 线程={thread_alive}, "
             f"已检查={stats.total_checked:,}, 速度={stats.speed:,.0f} keys/s, "
             f"live_count={live_count:,}"
         )
@@ -78,7 +77,7 @@ def diagnose_engine():
         if stats.total_checked > last_count:
             print(f"         OK 计数增长: +{stats.total_checked - last_count:,}")
         elif stats.total_checked == 0 and i > 2:
-            print(f"         WARNING: 运行{i+1}秒后仍为0")
+            print(f"         WARNING: 运行{i + 1}秒后仍为0")
 
         last_count = stats.total_checked
 
@@ -90,7 +89,7 @@ def diagnose_engine():
     time.sleep(1)
 
     final_stats = engine.get_stats()
-    print(f"   OK 引擎已停止")
+    print("   OK 引擎已停止")
     print()
 
     # 最终统计

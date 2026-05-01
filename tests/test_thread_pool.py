@@ -3,7 +3,6 @@
 
 import pytest
 import time
-import threading
 from src.core.thread_pool import (
     WorkStealingThreadPool,
     TaskBatch,
@@ -182,7 +181,7 @@ class TestGlobalThreadPoolManager:
 
         manager.initialize(num_threads=4)
 
-        assert manager._initialized == True
+        assert manager._initialized is True
         assert manager._pool.num_threads == 4
 
     def test_get_pool(self):

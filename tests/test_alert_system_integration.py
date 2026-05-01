@@ -7,8 +7,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.monitoring.gpu_performance_monitor import GPUPerformanceMonitor, GPUKernelMetrics
-from src.monitoring.alert_system import get_alert_system, AlertType, AlertLevel
+from src.monitoring.gpu_performance_monitor import GPUPerformanceMonitor  # noqa: E402
+from src.monitoring.alert_system import AlertType, AlertLevel  # noqa: E402
 
 
 class TestAlertSystemIntegration:

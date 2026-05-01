@@ -15,8 +15,8 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.config.config_manager import ConfigManager
-from src.config.config_watcher import ConfigWatcher, HAS_WATCHDOG
+from src.config.config_manager import ConfigManager  # noqa: E402
+from src.config.config_watcher import ConfigWatcher  # noqa: E402
 
 # ═══════════════════════════════════════════════════════════════════
 # ConfigWatcher 测试

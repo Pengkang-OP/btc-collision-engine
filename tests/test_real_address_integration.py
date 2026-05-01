@@ -5,7 +5,6 @@ import pytest
 import time
 import os
 from src.collision.key_collision_engine import KeyCollisionEngine
-from src.collision.collision_stats import CollisionStats
 
 # 标记不稳定的测试（竞态条件敏感）
 # 优化：使用flaky标记自动重试，减少假阴性失败

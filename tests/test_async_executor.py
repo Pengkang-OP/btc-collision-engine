@@ -15,7 +15,7 @@
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock, PropertyMock
+from unittest.mock import Mock, MagicMock
 import numpy as np
 
 # ============================================================================

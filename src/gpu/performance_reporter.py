@@ -15,13 +15,9 @@
 """
 
 import os
-import sys
-import time
-import json
 from src.utils.fast_json import fast_dumps
-import logging
-from ..utils import init_logging, get_configured_logger
-from typing import Any, Dict, List, Optional
+from ..utils import get_configured_logger
+from typing import Any, Dict, List, Optional, cast
 from datetime import datetime
 from dataclasses import dataclass
 
@@ -227,7 +223,7 @@ class PerformanceReportGenerator:
         recommendations = self._generate_recommendations()
 
         if recommendations:
-            for i, rec in enumerate(recommendations, 1):  # type: ignore[arg-type]
+            for i, rec in enumerate(recommendations, 1):
                 lines.append(f"{i}. {rec}")
         else:
             lines.append("当前配置已优化，暂无额外建议。\n")
@@ -308,7 +304,7 @@ class PerformanceReportGenerator:
                         "duration_ms": r.duration_ms,
                         "parameters": r.parameters,
                     }
-                    for r in self.benchmark_suite.results  # type: ignore[union-attr]
+                    for r in cast(Any, self.benchmark_suite).results
                 ]
 
         # 添加调优结果

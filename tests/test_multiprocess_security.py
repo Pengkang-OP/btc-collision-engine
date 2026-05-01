@@ -19,12 +19,11 @@ import hashlib
 import logging
 import json
 from io import StringIO
-from unittest.mock import patch, MagicMock
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.collision.multiprocess_engine import MultiprocessCollisionEngine, _worker_process
+from src.collision.multiprocess_engine import MultiprocessCollisionEngine  # noqa: E402
 
 
 class TestPrivateKeySecurity(unittest.TestCase):
@@ -207,7 +206,6 @@ class TestQueueLimits(unittest.TestCase):
 
     def test_queue_has_maxsize(self):
         """测试Queue有大小限制"""
-        from multiprocessing import Queue
 
         # 创建引擎
         engine = MultiprocessCollisionEngine(
@@ -225,7 +223,7 @@ class TestQueueLimits(unittest.TestCase):
         engine = MultiprocessCollisionEngine(num_workers=2, batch_size=1000)
 
         # 预期的Queue限制
-        expected_limits = {"task_queue": 100, "result_queue": 1000, "stats_queue": 50}
+        expected_limits = {"task_queue": 100, "result_queue": 1000, "stats_queue": 50}  # noqa: F841
 
         # 验证配置值
         # （实际Queue在start()时创建）
@@ -333,7 +331,7 @@ class TestExceptionHandling(unittest.TestCase):
         try:
             # 模拟异常
             raise RuntimeError("测试异常")
-        except:
+        except BaseException:
             pass
         finally:
             # 清理
@@ -485,7 +483,6 @@ class TestEnhancedSecurity(unittest.TestCase):
     def test_gc_interval_optimized(self):
         """测试GC间隔优化（200,000次）"""
         # 验证GC间隔从50,000提升到200,000
-        expected_interval = 200000
 
         # 验证整除
         self.assertEqual(200000 % 10000, 0)  # 是10000的倍数

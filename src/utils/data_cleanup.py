@@ -8,9 +8,9 @@ import logging
 import os
 import shutil
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -444,9 +444,10 @@ def main() -> None:
     # 显示磁盘使用情况
     disk_usage = cleaner.get_disk_usage()
     if disk_usage:
-        print(
-            f"磁盘使用: {disk_usage['used_gb']:.2f}GB / {disk_usage['total_gb']:.2f}GB ({disk_usage['usage_percent']:.1f}%)"
-        )
+        print(f"磁盘使用: {
+            disk_usage['used_gb']:.2f}GB / {
+            disk_usage['total_gb']:.2f}GB ({
+            disk_usage['usage_percent']:.1f}%)")
         print(f"可用空间: {disk_usage['free_gb']:.2f}GB")
         print()
 

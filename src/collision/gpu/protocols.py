@@ -7,7 +7,7 @@
 创建日期: 2026-04-29
 """
 
-from typing import Protocol, Set, Optional, Callable, Dict, Any, List, Tuple, TypedDict
+from typing import Protocol, Optional, Dict, Any, List, Tuple, TypedDict
 from dataclasses import dataclass, field
 
 # ========== GPU类型定义 ==========

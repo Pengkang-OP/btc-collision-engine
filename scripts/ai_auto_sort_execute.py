@@ -22,7 +22,7 @@ import json
 import subprocess
 from pathlib import Path
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import List
 from dataclasses import dataclass, asdict
 
 # 添加项目根目录
@@ -88,13 +88,13 @@ class AISortExecutor:
             )
             unpushed = result.stdout.strip().split("\n") if result.stdout.strip() else []
 
-            print(f"\n📦 Git状态:")
+            print("\n📦 Git状态:")
             print(f"  未推送commits: {len(unpushed)}个")
             if unpushed:
                 for commit in unpushed[:5]:
                     print(f"    - {commit}")
                 if len(unpushed) > 5:
-                    print(f"    ... 还有{len(unpushed)-5}个")
+                    print(f"    ... 还有{len(unpushed) - 5}个")
 
         except Exception as e:
             print(f"  ⚠️ 无法检查git状态: {e}")
@@ -110,7 +110,7 @@ class AISortExecutor:
             modified = [f for f in changes if f.startswith(" M")]
             untracked = [f for f in changes if f.startswith("??")]
 
-            print(f"\n📝 文件变更:")
+            print("\n📝 文件变更:")
             print(f"  已修改: {len(modified)}个")
             print(f"  未跟踪: {len(untracked)}个")
 
@@ -204,12 +204,15 @@ class AISortExecutor:
 
         for i, task in enumerate(self.tasks, 1):
             priority_level = "P0" if i <= 1 else "P1" if i <= 3 else "P2" if i <= 5 else "P3"
-            print(
-                f"{priority_level:<6} {task.id:<8} {task.name:<35} {task.priority_score:<8.1f} {task.category:<12}"
-            )
+            print(f"{
+                priority_level:<6} {
+                task.id:<8} {
+                task.name:<35} {
+                task.priority_score:<8.1f} {
+                task.category:<12}")
 
         print("-" * 80)
-        print(f"\n排序公式: 优先级得分 = (影响程度 × 紧急程度) / 工时 × 100")
+        print("\n排序公式: 优先级得分 = (影响程度 × 紧急程度) / 工时 × 100")
 
     def execute_tasks(self, max_tasks: int = 3):
         """执行高优先级任务"""
@@ -220,9 +223,9 @@ class AISortExecutor:
         tasks_to_execute = self.tasks[:max_tasks]
 
         for task in tasks_to_execute:
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"执行任务: {task.id} - {task.name}")
-            print(f"{'='*60}")
+            print(f"{'=' * 60}")
 
             task.status = "running"
 

@@ -4,8 +4,7 @@
 支持Windows和Linux平台。
 """
 
-import logging
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 import re
 import subprocess
 import platform

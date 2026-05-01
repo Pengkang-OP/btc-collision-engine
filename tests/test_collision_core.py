@@ -15,8 +15,7 @@ import pytest
 import os
 import json
 import threading
-from unittest.mock import Mock, patch, MagicMock
-from typing import Set
+from unittest.mock import patch, MagicMock
 
 # ============================================================================
 # 1. BaseCollisionEngine 抽象基类测试
@@ -118,7 +117,7 @@ class TestBaseCollisionEngine:
 # 2. 常量定义测试
 # ============================================================================
 
-from src.collision import constants as c
+from src.collision import constants as c  # noqa: E402
 
 
 class TestCollisionConstants:
@@ -195,9 +194,6 @@ class TestCollisionConstants:
 # 3. 类型别名测试
 # ============================================================================
 
-from src.collision import types as collision_types
-from src.collision.collision_stats import CollisionStats
-
 
 class TestCollisionTypes:
     """测试碰撞引擎类型别名"""
@@ -261,8 +257,7 @@ class TestCollisionTypes:
 # 4. EngineFactory 测试
 # ============================================================================
 
-from src.collision.factory import EngineFactory
-from src.collision.dependency_container import DependencyContainer
+from src.collision.factory import EngineFactory  # noqa: E402
 
 
 class TestEngineFactory:
@@ -300,7 +295,7 @@ class TestEngineFactory:
 # 5. collision_helpers 测试
 # ============================================================================
 
-from src.collision.collision_helpers import (
+from src.collision.collision_helpers import (  # noqa: E402
     encode_private_key_to_wif,
     format_match_result,
     safe_wif_encode,
@@ -362,7 +357,7 @@ class TestCollisionHelpers:
             if wif is not None:
                 assert isinstance(wif, str)
                 assert len(wif) > 30
-        except Exception as e:
+        except Exception as e:  # noqa: F841
             # 某些随机私钥可能无效，safe_wif_encode 返回 None
             pass
 
@@ -371,8 +366,8 @@ class TestCollisionHelpers:
 # 6. DeltaStats 测试
 # ============================================================================
 
-from src.collision.delta_stats import DeltaStats, ThreadLocalDeltaStats
-from conftest import poll_until
+from src.collision.delta_stats import DeltaStats, ThreadLocalDeltaStats  # noqa: E402
+from conftest import poll_until  # noqa: E402
 
 
 class TestDeltaStats:
@@ -560,7 +555,7 @@ class TestThreadLocalDeltaStats:
 # 7. MatchDataStorage 测试
 # ============================================================================
 
-from src.collision.match_storage import MatchDataStorage
+from src.collision.match_storage import MatchDataStorage  # noqa: E402
 
 
 class TestMatchDataStorage:
@@ -568,14 +563,14 @@ class TestMatchDataStorage:
 
     def test_init_creates_directory(self, tmp_path):
         storage_path = tmp_path / "matches"
-        storage = MatchDataStorage(str(storage_path))
+        MatchDataStorage(str(storage_path))
         assert storage_path.exists()
         assert storage_path.is_dir()
 
     def test_init_nonexistent_path(self, tmp_path):
         """初始化不存在的路径会自动创建"""
         storage_path = tmp_path / "new_matches" / "subdir"
-        storage = MatchDataStorage(str(storage_path))
+        MatchDataStorage(str(storage_path))
         assert storage_path.exists()
 
     def test_save_match_atomic(self, tmp_path):

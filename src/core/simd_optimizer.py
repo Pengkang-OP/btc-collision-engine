@@ -27,10 +27,8 @@
 - 不支持GPU的环境
 """
 
-import numpy as np
-from typing import List, Tuple, Optional
+from typing import List, Tuple
 import hashlib
-import logging
 
 # 导入日志配置
 from ..utils import init_logging, get_configured_logger
@@ -42,7 +40,7 @@ init_logging()
 logger = get_configured_logger("SIMDOptimizer")
 
 # 导入secp256k1参数
-from .secp256k1 import Secp256k1
+from .secp256k1 import Secp256k1  # noqa: E402
 
 
 class BatchOptimizer:

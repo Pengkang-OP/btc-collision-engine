@@ -10,7 +10,7 @@
 import os
 import json
 import logging
-from typing import Dict, List, Optional, Any, Pattern, Union
+from typing import Dict, List, Optional, Any, Pattern
 import re
 from dataclasses import dataclass, field
 

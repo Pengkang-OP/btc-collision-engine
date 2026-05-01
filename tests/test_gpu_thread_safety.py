@@ -8,18 +8,15 @@
 - 停止引擎
 """
 
-import pytest
 import os
-import sys
 import time
 import threading
 import secrets
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 from src.collision.collision_stats import CollisionStats
 from src.collision.checkpoint_manager import CheckpointManager
 from src.collision.deduplication_filter import DeduplicationFilter
 from src.collision.gpu_collision_engine import GPUCollisionEngine
-from tests.test_helpers import MockAssertions
 
 
 class TestConcurrentAccess:
@@ -106,7 +103,7 @@ class TestConcurrentAccess:
 
             def save_checkpoint(thread_id):
                 barrier.wait()
-                targets = {f"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}
+                targets = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}
                 checkpoint_mgr.save(
                     mode="random",
                     targets=targets,

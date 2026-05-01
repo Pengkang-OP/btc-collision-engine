@@ -6,12 +6,10 @@ P0修复验证测试
 验证代码审查中发现的P0关键问题的修复效果。
 """
 
-import pytest
 import hashlib
 import threading
 import os
 import json
-import tempfile
 
 # ============================================================================
 # P0-2: crypto_backend.py generate_public_key_const_time 不存在
@@ -160,7 +158,7 @@ class TestSensitiveDataFilterRedact:
         """BIP32扩展密钥应被替换"""
         from src.logging.log_processor import SensitiveDataFilter
 
-        fake_xprv = "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbN6mRyPHQpQ4QnZt7nEk2RgvXVcqvNNt5ThEZQUQoFwSsXPyDyoB6F5TsPgpXfXaM"
+        fake_xprv = "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbN6mRyPHQpQ4QnZt7nEk2RgvXVcqvNNt5ThEZQUQoFwSsXPyDyoB6F5TsPgpXfXaM"  # noqa: E501
         result = SensitiveDataFilter.redact(f"key: {fake_xprv}")
         assert fake_xprv not in result
         assert "[BIP32_EXTENDED_KEY]" in result

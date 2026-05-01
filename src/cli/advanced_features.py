@@ -13,7 +13,6 @@ CLI高级功能扩展模块
 
 import json
 import os
-import sys
 from pathlib import Path
 from typing import Optional, Dict, Any, cast
 
@@ -131,10 +130,10 @@ def apply_template(template_name: str, config_path: str = "config.json") -> bool
     """
     if template_name not in CONFIG_TEMPLATES:
         print(f"\n[ERROR] 未知模板: {template_name}")
-        print(f"\n[Info] 可用模板:")
+        print("\n[Info] 可用模板:")
         for name, info in CONFIG_TEMPLATES.items():
             print(f"   - {name}: {info['description']}")
-        print(f"\n[Tip] 用法: python key_collision_cli.py --template gpu-performance")
+        print("\n[Tip] 用法: python key_collision_cli.py --template gpu-performance")
         return False
 
     template = CONFIG_TEMPLATES[template_name]
@@ -162,13 +161,13 @@ def apply_template(template_name: str, config_path: str = "config.json") -> bool
         print(f"\n[OK] 模板 '{template_name}' 已应用")
         print(f"[Info] 配置名称: {template['name']}")
         print(f"[Info] 配置文件: {config_path}")
-        print(f"\n[Info] 应用的配置项:")
+        print("\n[Info] 应用的配置项:")
         for section, values in updates.items():
             print(f"   [{section}]")
             for key, value in values.items():
                 print(f"     {key} = {value}")
-        print(f"\n[Tip] 现在可以运行碰撞引擎")
-        print(f"   python key_collision_cli.py -t <地址> -m random")
+        print("\n[Tip] 现在可以运行碰撞引擎")
+        print("   python key_collision_cli.py -t <地址> -m random")
         return True
     except Exception as e:
         print(f"\n[ERROR] 保存配置失败: {e}")
@@ -200,7 +199,7 @@ def recommend_parameters(args: Any) -> dict:
     elif args.file:
         try:
             with open(args.file, "r", encoding="utf-8") as f:
-                lines = [l.strip() for l in f if l.strip() and not l.startswith("#")]
+                lines = [l.strip() for l in f if l.strip() and not l.startswith("#")]  # noqa: E741
                 target_count = len(lines)
         except (OSError, ValueError, UnicodeDecodeError):
             pass
@@ -230,7 +229,7 @@ def recommend_parameters(args: Any) -> dict:
 
     # 3. 检查GPU可用性
     try:
-        import pyopencl
+        pass
 
         recommendations.append("--use-gpu")
         reasons.append("检测到GPU可用，建议启用GPU加速（速度提升1000-2000倍）")

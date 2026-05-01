@@ -21,7 +21,7 @@
 import os
 import sys
 import time
-from typing import Any, Optional, Set
+from typing import Any, Set, cast
 
 # 将项目根目录加入路径
 _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -29,15 +29,17 @@ if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
 # ── 仅导入轻量级模块（--help/--version 等命令不触发重量级导入） ─────────────
-from src.utils import init_logging, get_configured_logger
-from src.cli.arg_parser import parse_args
-from src.cli.validation import validate_args, validate_file_path
-from src.cli.commands import _dispatch_utility_commands
-from src.i18n import _t, set_language
-from src.cli.progress import format_progress  # re-export for backward compat
-from src.cli.config_loader import load_config_with_validation
-from src.cli.output import CLIOutput
-from src.cli.stats_reporter import _print_final_summary
+from src.utils import init_logging, get_configured_logger  # noqa: E402
+from src.cli.arg_parser import parse_args  # noqa: E402
+from src.cli.validation import validate_args, validate_file_path  # noqa: E402
+from src.cli.commands import _dispatch_utility_commands  # noqa: E402
+from src.i18n import _t, set_language  # noqa: E402
+from src.cli.progress import (  # noqa: E402, F401
+    format_progress,
+)  # re-export for backward compat
+from src.cli.config_loader import load_config_with_validation  # noqa: E402
+from src.cli.output import CLIOutput  # noqa: E402
+from src.cli.stats_reporter import _print_final_summary  # noqa: E402
 
 # 初始化日志
 init_logging()
@@ -91,7 +93,7 @@ def load_targets(args: Any) -> Set[str]:
     quiet = getattr(args, "quiet", False)
     if args.file:
         if not validate_file_path(args.file):
-            print(f"[Error] 文件路径验证失败", file=sys.stderr)
+            print("[Error] 文件路径验证失败", file=sys.stderr)
             sys.exit(1)
         targets = resolver.load_from_file(args.file)
         if not targets:
@@ -103,7 +105,7 @@ def load_targets(args: Any) -> Set[str]:
         if not quiet:
             print(_t("address.loaded", count=len(targets)))
     else:
-        targets = resolver.resolve_multiple(args.targets)  # type: ignore[assignment]
+        targets = cast(Set[str], resolver.resolve_multiple(args.targets))
         if not targets:
             print(_t("address.load_failed", error="未能解析任何有效的目标地址"), file=sys.stderr)
             sys.exit(1)
@@ -220,8 +222,8 @@ def main() -> None:
     # 确保 stdout/stderr 在非 UTF-8 环境下不会因无法编码字符而崩溃
     try:
         if hasattr(sys.stdout, "reconfigure"):
-            sys.stdout.reconfigure(errors="replace")  # type: ignore[union-attr]
-            sys.stderr.reconfigure(errors="replace")  # type: ignore[union-attr]
+            cast(Any, sys.stdout).reconfigure(errors="replace")
+            cast(Any, sys.stderr).reconfigure(errors="replace")
     except Exception:
         pass
     try:

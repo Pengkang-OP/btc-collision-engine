@@ -12,13 +12,12 @@
 - 细粒度负载调整
 """
 
-import logging
 from typing import List, Dict, Tuple, Optional, Any, cast
 import time
 import statistics
 
 # P3-5: 统一日志获取
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 
 # P3-11: 统一GPU评分
 from .scorer import GPUDeviceScorer, get_gpu_scorer
@@ -88,7 +87,7 @@ class GPULoadBalancer:
         self._calculate_initial_weights()
 
         logger.info(
-            f"GPU负载均衡器已初始化: "
+            "GPU负载均衡器已初始化: "
             f"设备数={len(devices)}, 策略={strategy}, "
             f"重平衡间隔={rebalance_interval}s"
         )

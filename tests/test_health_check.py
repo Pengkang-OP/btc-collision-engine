@@ -21,7 +21,7 @@ import json
 import sys
 import tempfile
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 from src.utils.health_check import HealthChecker, main
 

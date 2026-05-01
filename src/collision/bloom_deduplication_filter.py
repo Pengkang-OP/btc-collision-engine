@@ -7,7 +7,6 @@
 import math
 import hashlib
 import threading
-from typing import Optional
 from bitarray import bitarray
 
 # 导入日志配置
@@ -57,7 +56,7 @@ class BloomFilter:
 
         logger.info(
             f"Bloom Filter初始化: 容量={max_elements}, "
-            f"误判率={false_positive_rate*100:.2f}%, "
+            f"误判率={false_positive_rate * 100:.2f}%, "
             f"位数组大小={self.bit_size}, "
             f"哈希函数数量={self.hash_count}"
         )
@@ -237,9 +236,9 @@ class BloomDeduplicationFilter:
         self._lock = threading.Lock()
 
         logger.info(
-            f"BloomDeduplicationFilter初始化: "
+            "BloomDeduplicationFilter初始化: "
             f"max_size={max_size}, "
-            f"false_positive_rate={false_positive_rate*100:.3f}%"
+            f"false_positive_rate={false_positive_rate * 100:.3f}%"
         )
 
     def _fingerprint(self, private_key: bytes) -> bytes:

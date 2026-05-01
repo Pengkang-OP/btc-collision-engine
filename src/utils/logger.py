@@ -20,7 +20,7 @@ import threading
 import time
 import queue
 import platform
-from typing import Any, Callable, Dict, Optional, Union, cast
+from typing import Any, Callable, Optional, Union
 from logging.handlers import RotatingFileHandler
 from functools import wraps
 
@@ -171,7 +171,8 @@ class PerformanceMonitor:
         self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]
     ) -> None:
         self.end_time = time.perf_counter()
-        elapsed_ms = (self.end_time - self.start_time) * 1000  # type: ignore[operator]
+        assert self.start_time is not None
+        elapsed_ms = (self.end_time - self.start_time) * 1000
 
         if exc_type is None:
             self.logger.log(self.level, f"[Performance] {self.operation}: {elapsed_ms:.2f}ms")
@@ -184,8 +185,10 @@ class PerformanceMonitor:
     def elapsed_ms(self) -> float:
         """获取已耗时的毫秒数"""
         if self.end_time is None:
-            return (time.perf_counter() - self.start_time) * 1000  # type: ignore[operator]
-        return (self.end_time - self.start_time) * 1000  # type: ignore[operator]
+            assert self.start_time is not None
+            return (time.perf_counter() - self.start_time) * 1000
+        assert self.start_time is not None
+        return (self.end_time - self.start_time) * 1000
 
 
 class SampledLogger:

@@ -12,12 +12,10 @@
 """
 
 import pytest
-import time
-from unittest.mock import MagicMock, patch, Mock, PropertyMock
+from unittest.mock import MagicMock, patch, Mock
 
 from src.gpu.load_balancer import GPULoadBalancer
 from src.gpu.gpu_recovery_manager import GPURecoveryManager, GPUFailureType
-from tests.gpu_mock_factory import GPUMockFactory, PRESET_NVIDIA, PRESET_AMD, PRESET_INTEL_ARC
 
 # ---------------------------------------------------------------------------
 # 辅助函数：构建标准设备字典
@@ -161,7 +159,7 @@ class TestSameVendorDifferentModel:
         # 4090 分配量超过 60%
         assert (
             assigned_1 > total_assigned * 0.6
-        ), f"RTX 4090 分配 {assigned_1:,}，期望超过 60%（{int(total_assigned*0.6):,}）"
+        ), f"RTX 4090 分配 {assigned_1:,}，期望超过 60%（{int(total_assigned * 0.6):,}）"
 
     def test_amd_mixed_models_performance_weight(self):
         """RX 6800 XT（16GB/72CU） + RX 7900 XTX（24GB/96CU），7900 XTX 权重更大"""
@@ -188,7 +186,7 @@ class TestSameVendorDifferentModel:
 
         assert weights[1] > weights[0], "显存更大的 GPU 权重应更大"
         # 16GB vs 8GB，权重比约 2:1
-        assert weights[1] / weights[0] > 1.5, f"权重比 {weights[1]/weights[0]:.2f}，期望 > 1.5"
+        assert weights[1] / weights[0] > 1.5, f"权重比 {weights[1] / weights[0]:.2f}，期望 > 1.5"
 
 
 # ---------------------------------------------------------------------------
@@ -464,7 +462,7 @@ class TestDynamicRebalancing:
 
         # 记录初始权重
         initial_weights = balancer.calculate_weights()
-        w0_initial = initial_weights[0]
+        initial_weights[0]
 
         # GPU 0 性能降低 50%，GPU 1 保持正常
         balancer.record_performance(device_idx=0, throughput=500_000, error_rate=0.0)
@@ -647,8 +645,6 @@ class TestKernelCompilationCache:
         """GPUContext._kernel_cache 初始化为空"""
         from src.gpu.context import GPUContext
 
-        import hashlib
-
         ctx = GPUContext.__new__(GPUContext)
         ctx._kernel_cache = {}
         ctx.program = None
@@ -723,7 +719,7 @@ class TestProportionalMemoryPools:
 
         assert mb1 > mb0, f"RTX 4090 内存池 ({mb1}MB) 应大于 RTX 3080 ({mb0}MB)"
         # 4090 显存是 3080 的 3 倍，内存池比也应达到2:1 以上
-        assert mb1 / mb0 >= 2.0, f"内存池比 {mb1/mb0:.2f}，期望 >= 2.0"
+        assert mb1 / mb0 >= 2.0, f"内存池比 {mb1 / mb0:.2f}，期望 >= 2.0"
 
     def test_zero_vram_equal_fallback(self):
         """无法获取显存信息时，均分内存池"""

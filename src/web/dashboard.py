@@ -17,7 +17,6 @@ API 端点:
     GET  /                 - 仪表板 HTML 页面
 """
 
-import os
 import json
 import sys
 import argparse
@@ -32,7 +31,10 @@ try:
     FLASK_AVAILABLE = True
 except ImportError:
     FLASK_AVAILABLE = False
-    Flask = jsonify = render_template_string = request = None  # type: ignore[assignment]
+    Flask: Any = None
+    jsonify: Any = None
+    render_template_string: Any = None
+    request: Any = None
 
 logger = logging.getLogger(__name__)
 
@@ -56,19 +58,19 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         }
         h1 { color: #58a6ff; font-size: 1.8em; margin-bottom: 10px; }
         .subtitle { color: #8b949e; font-size: 0.9em; margin-bottom: 24px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px; }  # noqa: E501
         .card {
             background: #161b22; border: 1px solid #30363d;
             border-radius: 8px; padding: 20px;
         }
-        .card h3 { color: #58a6ff; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .card h3 { color: #58a6ff; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }  # noqa: E501
         .card .value { font-size: 2.2em; font-weight: 700; color: #f0f6fc; }
         .card .label { color: #8b949e; font-size: 0.8em; margin-top: 4px; }
         .status-ok { color: #3fb950; }
         .status-warn { color: #d29922; }
         .status-error { color: #f85149; }
         .section { margin-bottom: 24px; }
-        .section h2 { color: #58a6ff; font-size: 1.2em; margin-bottom: 12px; border-bottom: 1px solid #30363d; padding-bottom: 8px; }
+        .section h2 { color: #58a6ff; font-size: 1.2em; margin-bottom: 12px; border-bottom: 1px solid #30363d; padding-bottom: 8px; }  # noqa: E501
         table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
         th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid #21262d; }
         th { color: #8b949e; font-weight: 600; background: #161b22; }
@@ -92,8 +94,8 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
     <div class="grid">
         <div class="card">
             <h3>检测速率</h3>
-            <div class="value">{{ "%.0f"|format(stats.get('speed', 0)) }}<span style="font-size:0.5em">/s</span></div>
-            <div class="label">平均: {{ "%.0f"|format(stats.get('avg_speed', 0)) }}/s | 最大: {{ "%.0f"|format(stats.get('max_speed', 0)) }}/s</div>
+            <div class="value">{{ "%.0f"|format(stats.get('speed', 0)) }}<span style="font-size:0.5em">/s</span></div>  # noqa: E501
+            <div class="label">平均: {{ "%.0f"|format(stats.get('avg_speed', 0)) }}/s | 最大: {{ "%.0f"|format(stats.get('max_speed', 0)) }}/s</div>  # noqa: E501
         </div>
         <div class="card">
             <h3>已检测总数</h3>
@@ -104,7 +106,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
             <h3>运行时间</h3>
             <div class="value">{{ uptime_display }}</div>
             <div class="label">引擎状态:
-                <span class="{% if stats.get('is_running', false) %}status-ok{% else %}status-warn{% endif %}">
+                <span class="{% if stats.get('is_running', false) %}status-ok{% else %}status-warn{% endif %}">  # noqa: E501
                     {{ "运行中" if stats.get('is_running', false) else "已停止" }}
                 </span>
             </div>
@@ -123,7 +125,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
     <div class="grid">
         <div class="card">
             <h3>运行模式</h3>
-            <div class="value" style="font-size:1.2em"><span class="badge badge-info">{{ engine.mode or "N/A" }}</span></div>
+            <div class="value" style="font-size:1.2em"><span class="badge badge-info">{{ engine.mode or "N/A" }}</span></div>  # noqa: E501
         </div>
         <div class="card">
             <h3>目标地址</h3>
@@ -131,12 +133,12 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         </div>
         <div class="card">
             <h3>当前位置</h3>
-            <div class="value" style="font-size:1.2em">{{ "{:,}".format(engine.current_position or 0) }}</div>
+            <div class="value" style="font-size:1.2em">{{ "{:,}".format(engine.current_position or 0) }}</div>  # noqa: E501
         </div>
         <div class="card">
             <h3>操作系统</h3>
             <div class="value" style="font-size:1.2em">{{ system.os or "N/A" }}</div>
-            <div class="label">Python {{ system.python_version or "N/A" }} | PID: {{ system.pid or "N/A" }}</div>
+            <div class="label">Python {{ system.python_version or "N/A" }} | PID: {{ system.pid or "N/A" }}</div>  # noqa: E501
         </div>
     </div></div>
 
@@ -423,7 +425,7 @@ def run_dashboard(
     data_path = Path(data_dir) if data_dir else None
     app = create_app(data_dir=data_path)
 
-    print(f"""
+    print("""
 ╔══════════════════════════════════════════════════════╗
 ║     BTC 碰撞引擎 - Web 监控仪表板 v1.0               ║
 ╠══════════════════════════════════════════════════════╣

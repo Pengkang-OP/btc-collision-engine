@@ -9,7 +9,6 @@ UTF-8编码支持单元测试
 import sys
 import os
 import unittest
-from unittest.mock import patch, MagicMock
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

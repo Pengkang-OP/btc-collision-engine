@@ -18,13 +18,11 @@
     ok, issues = checker.run_all_checks()
 """
 
-import os
 import sys
 import platform
 import locale
 import shutil
 import tempfile
-import subprocess
 from pathlib import Path
 from typing import List, Tuple, Dict, Any, Optional
 
@@ -344,7 +342,10 @@ class PlatformChecker:
             "os_release": platform.release(),
             "os_version": platform.version(),
             "machine": platform.machine(),
-            "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+            "python_version": f"{
+                sys.version_info.major}.{
+                sys.version_info.minor}.{
+                sys.version_info.micro}",
             "python_executable": sys.executable,
             "encoding_fs": sys.getfilesystemencoding(),
             "encoding_stdout": getattr(sys.stdout, "encoding", "unknown"),
@@ -366,7 +367,7 @@ class PlatformChecker:
         print("  " + _t("platform.check.report_title"))
         print("=" * 60)
         print(
-            f"  "
+            "  "
             + _t(
                 "platform.check.report_os",
                 os=info["os"],
@@ -375,15 +376,15 @@ class PlatformChecker:
             )
         )
         print(
-            f"  "
+            "  "
             + _t(
                 "platform.check.report_python",
                 version=info["python_version"],
                 executable=info["python_executable"],
             )
         )
-        print(f"  " + _t("platform.check.report_root", root=info["project_root"]))
-        print(f"  " + _t("platform.check.report_encoding", encoding=info["encoding_stdout"]))
+        print("  " + _t("platform.check.report_root", root=info["project_root"]))
+        print("  " + _t("platform.check.report_encoding", encoding=info["encoding_stdout"]))
         print("-" * 60)
 
         passed_count = sum(1 for r in self.results if r.passed)

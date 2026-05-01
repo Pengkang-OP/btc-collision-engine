@@ -78,10 +78,10 @@ def test_crypto_backend_in_gpu():
             crypto_manager.current_backend.generate_public_key(test_key)
         cc_time = (time.perf_counter() - start) * 1000
 
-        print(f"\n  📊 性能对比 (10次公钥生成):")
+        print("\n  📊 性能对比 (10次公钥生成):")
         print(f"     Pure Python: {pp_time:.2f}ms")
         print(f"     Coincurve:   {cc_time:.2f}ms")
-        print(f"     性能提升:    {pp_time/cc_time:.0f}倍")
+        print(f"     性能提升:    {pp_time / cc_time:.0f}倍")
 
     except Exception as e:
         print(f"  ❌ 后端切换测试失败: {e}")
@@ -151,7 +151,9 @@ def test_cpu_engine_performance():
         from src.core.crypto_backend import crypto_manager
 
         print("\n[1/2] 创建CPU引擎实例...")
-        engine = KeyCollisionEngine(targets={"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}, max_workers=2)
+        engine = KeyCollisionEngine(  # noqa: F841
+            targets={"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}, max_workers=2
+        )  # noqa: F841, E501
         print("  ✅ CPU引擎创建成功")
 
         print("\n[2/2] 验证后端配置...")
@@ -179,30 +181,30 @@ def generate_performance_report():
     print("📊 性能报告总结")
     print("=" * 70)
 
-    from src.core.crypto_backend import crypto_manager, BackendType
+    from src.core.crypto_backend import crypto_manager
 
     # 获取当前后端
-    backend = crypto_manager.current_backend
+    crypto_manager.current_backend
 
-    print(f"""
+    print("""
 🎯 crypto_backend迁移成果:
-   
+
    当前后端:     {backend.name}
    恒定时间:     {backend.is_constant_time()}
    性能提升:     283倍 (vs Pure Python)
-   
+
    测试结果:
    ✅ 16/16 单元测试通过
    ✅ GPU引擎导入成功
    ✅ CPU引擎导入成功
    ✅ 后端切换功能正常
    ✅ 性能对比验证通过
-   
+
    预期影响:
    📈 CPU引擎: +200-250% 性能提升
    📈 GPU引擎: +10-15% 后处理性能提升
    🔒 安全性: 从教学级升级到生产级
-   
+
    生产就绪度: ✅ 是
 """)
 

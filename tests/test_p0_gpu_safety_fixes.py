@@ -10,11 +10,10 @@
 
 import os
 import re
-import sys
 import pytest
 import threading
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 from src.collision.gpu_collision_engine import GPUCollisionEngine
 
@@ -265,7 +264,7 @@ class TestCoinCurveVersionConsistency:
         version_req = match_req.group(1)
 
         assert version_toml == version_req, (
-            f"coincurve 版本不一致: "
+            "coincurve 版本不一致: "
             f"pyproject.toml={version_toml}, "
             f"requirements-base.txt={version_req}"
         )

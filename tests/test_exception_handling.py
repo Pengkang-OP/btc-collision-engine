@@ -13,9 +13,9 @@ import os
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.gpu.device_helper import GPUDeviceHelper
-from src.collision.collision_stats import CollisionStats
-from src.collision.key_collision_engine import KeyCollisionEngine
+from src.gpu.device_helper import GPUDeviceHelper  # noqa: E402
+from src.collision.collision_stats import CollisionStats  # noqa: E402
+from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
 
 
 class TestGPUExceptionHandling:
@@ -172,7 +172,7 @@ class TestExceptionClassification:
         try:
             try:
                 raise KeyboardInterrupt()
-            except Exception as e:
+            except Exception as e:  # noqa: F841
                 # 不应该捕获KeyboardInterrupt
                 caught = True
         except KeyboardInterrupt:

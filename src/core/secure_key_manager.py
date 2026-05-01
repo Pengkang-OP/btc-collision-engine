@@ -10,14 +10,12 @@ import os
 import sys
 import secrets
 import warnings
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 from contextlib import contextmanager
 
 # 尝试导入密码学库
 try:
-    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-    from cryptography.hazmat.backends import default_backend
-    from cryptography.hazmat.primitives import constant_time
+    pass
 
     HAS_CRYPTOGRAPHY = True
 except ImportError:
@@ -36,8 +34,6 @@ import ctypes
 
 class SecureMemoryError(Exception):
     """安全内存操作异常"""
-
-    pass
 
 
 class SecureKeyManager:
@@ -321,7 +317,7 @@ class SecureKeyManager:
                     import logging
 
                     logger = logging.getLogger(__name__)
-                    logger.warning(f"Windows VirtualUnlock失败")
+                    logger.warning("Windows VirtualUnlock失败")
                     return False
 
             elif os.name == "posix" and hasattr(self, "_libc"):
@@ -337,7 +333,7 @@ class SecureKeyManager:
                     import logging
 
                     logger = logging.getLogger(__name__)
-                    logger.warning(f"POSIX munlock失败")
+                    logger.warning("POSIX munlock失败")
                     return False
             else:
                 return False
@@ -470,7 +466,7 @@ class SecureKeyManager:
                 ctypes.memset(
                     ctypes.addressof(ctypes.c_char.from_buffer(self._key)), 0, len(self._key)
                 )
-            except (TypeError, ValueError, OSError) as e:
+            except (TypeError, ValueError, OSError):
                 # 如果无法清零，至少覆盖为0
                 for i in range(len(self._key)):
                     self._key[i] = 0
@@ -484,7 +480,7 @@ class SecureKeyManager:
     ) -> None:
         """上下文管理器出口 - 自动清零"""
         self.clear()
-        return False  # type: ignore[return-value]
+        return None
 
     def __del__(self) -> None:
         """析构函数 - 确保清零"""

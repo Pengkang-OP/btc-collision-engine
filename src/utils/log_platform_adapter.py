@@ -12,7 +12,7 @@ import sys
 import platform
 import logging
 import ctypes
-from typing import Optional, Dict, Any, Callable, List, cast
+from typing import Optional, Dict, Any, Callable, cast
 
 
 class PlatformAdapter:

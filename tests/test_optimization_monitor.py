@@ -3,7 +3,6 @@
 性能监控模块单元测试
 """
 
-import pytest
 import time
 import threading
 from src.monitoring.optimization_monitor import (
@@ -34,7 +33,7 @@ class TestPerformanceMetrics:
 
         assert metrics.addresses_generated == 100
         assert metrics.speed == 10.0
-        assert metrics.optimization_enabled == True
+        assert metrics.optimization_enabled is True
 
     def test_to_dict(self):
         """测试转换为字典"""
@@ -57,7 +56,7 @@ class TestPerformanceMetrics:
         assert "datetime" in d
         assert d["addresses_generated"] == 100
         assert d["speed"] == 10.0
-        assert d["optimization_enabled"] == True
+        assert d["optimization_enabled"] is True
 
 
 class TestOptimizationPerformanceMonitor:
@@ -81,13 +80,13 @@ class TestOptimizationPerformanceMonitor:
 
         # 启动
         monitor.start()
-        assert monitor._running == True
+        assert monitor._running is True
         assert monitor._thread is not None
         assert monitor._thread.is_alive()
 
         # 停止
         monitor.stop()
-        assert monitor._running == False
+        assert monitor._running is False
 
     def test_record_metrics(self):
         """测试记录指标"""

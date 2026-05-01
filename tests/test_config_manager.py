@@ -9,7 +9,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.config.config_manager import ConfigManager
+from src.config.config_manager import ConfigManager  # noqa: E402
 
 
 class TestConfigManagerBasic(unittest.TestCase):
@@ -265,17 +265,14 @@ class TestConfigManagerValidation(unittest.TestCase):
     def test_validate_invalid_window_width(self):
         """验证无效窗口宽度 - GUI已移除，测试跳过"""
         # 此测试已过时，跳过
-        pass
 
     def test_validate_invalid_window_height(self):
         """验证无效窗口高度 - GUI已移除，测试跳过"""
         # 此测试已过时，跳过
-        pass
 
     def test_validate_invalid_font_size(self):
         """验证无效字体大小 - GUI已移除，测试跳过"""
         # 此测试已过时，跳过
-        pass
 
     def test_validate_multiple_errors(self):
         """验证多个错误"""

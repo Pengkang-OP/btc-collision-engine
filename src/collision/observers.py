@@ -26,7 +26,6 @@ class CollisionObserver(ABC):
         Args:
             stats: 当前碰撞统计信息
         """
-        pass
 
     @abstractmethod
     def on_match(self, private_key: bytes, address: str, wif: str) -> None:
@@ -37,7 +36,6 @@ class CollisionObserver(ABC):
             address: 匹配的地址
             wif: WIF格式私钥
         """
-        pass
 
     @abstractmethod
     def on_complete(self, stats: CollisionStats) -> None:
@@ -46,7 +44,6 @@ class CollisionObserver(ABC):
         Args:
             stats: 最终碰撞统计信息
         """
-        pass
 
     def on_error(self, error: Exception, context: Optional[Dict[str, Any]] = None) -> None:
         """错误事件（可选实现）
@@ -55,7 +52,6 @@ class CollisionObserver(ABC):
             error: 异常对象
             context: 错误上下文信息
         """
-        pass
 
 
 class BaseCollisionObserver(CollisionObserver):
@@ -66,19 +62,15 @@ class BaseCollisionObserver(CollisionObserver):
 
     def on_progress(self, stats: CollisionStats) -> None:
         """默认不处理进度事件"""
-        pass
 
     def on_match(self, private_key: bytes, address: str, wif: str) -> None:
         """默认不处理匹配事件"""
-        pass
 
     def on_complete(self, stats: CollisionStats) -> None:
         """默认不处理完成事件"""
-        pass
 
     def on_error(self, error: Exception, context: Optional[Dict[str, Any]] = None) -> None:
         """默认不处理错误事件"""
-        pass
 
 
 class MonitoringObserver(BaseCollisionObserver):

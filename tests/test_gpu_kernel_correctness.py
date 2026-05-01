@@ -19,7 +19,7 @@ import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from tests.test_utils import skip_if_no_gpu
+from tests.test_utils import skip_if_no_gpu  # noqa: E402
 
 # ── secp256k1 已知向量 (SEC2 规范) ─────────────────
 

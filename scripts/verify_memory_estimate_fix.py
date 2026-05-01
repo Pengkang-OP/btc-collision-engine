@@ -9,7 +9,7 @@ import sys
 
 sys.path.insert(0, ".")
 
-from src.gpu.auto_config import GPUAutoConfigurator
+from src.gpu.auto_config import GPUAutoConfigurator  # noqa: E402
 
 
 def test_memory_estimate(gpu_name, memory_gb, batch_size, expected_adjusted=None):
@@ -25,7 +25,7 @@ def test_memory_estimate(gpu_name, memory_gb, batch_size, expected_adjusted=None
 
     ac = GPUAutoConfigurator()
     original_batch = config["batch_size"]
-    result = ac._adjust_for_memory(device, config)
+    ac._adjust_for_memory(device, config)
 
     adjusted = config["batch_size"]
     was_adjusted = adjusted != original_batch
@@ -38,7 +38,7 @@ def test_memory_estimate(gpu_name, memory_gb, batch_size, expected_adjusted=None
         ratio = adjusted / original_batch * 100
         print(f"  ⚠️  被降级: {ratio:.1f}%")
     else:
-        print(f"  ✅ 未被降级")
+        print("  ✅ 未被降级")
 
     # 计算显存使用
     estimated_mb = (batch_size * 42) / (1024**2)
@@ -47,7 +47,7 @@ def test_memory_estimate(gpu_name, memory_gb, batch_size, expected_adjusted=None
 
     if expected_adjusted is not None:
         if adjusted == expected_adjusted:
-            print(f"  ✅ 符合预期")
+            print("  ✅ 符合预期")
         else:
             print(f"  ❌ 不符合预期 (期望: {expected_adjusted:,})")
 

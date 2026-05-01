@@ -6,8 +6,8 @@
 创建日期: 2026-04-22
 """
 
-from dataclasses import dataclass, field, asdict
-from typing import Optional, Dict, Any
+from dataclasses import dataclass, asdict
+from typing import Dict, Any
 
 
 @dataclass

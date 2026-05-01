@@ -5,10 +5,9 @@
 
 import json
 import os
-import logging
 
 # P3-5: 统一日志获取
-from ...utils import init_logging, get_configured_logger
+from ...utils import get_configured_logger
 from typing import Dict, Optional, List, Any
 
 logger = get_configured_logger("GPUProfileLoader")
@@ -47,7 +46,7 @@ class GPUProfileLoader:
             version = data.get("_version", "1.0")
             if version != "1.0":
                 logger.warning(
-                    f"不支持的配置文件版本: {version}, " f"当前支持1.0。可能导致配置加载错误"
+                    f"不支持的配置文件版本: {version}, " "当前支持1.0。可能导致配置加载错误"
                 )
 
             self.profiles = data
@@ -102,7 +101,8 @@ class GPUProfileLoader:
                 # 确保series_data是字典
                 if not isinstance(series_data, dict):
                     logger.warning(
-                        f"跳过无效的系列配置 {vendor}/{arch_name}/{series_name}: 期望dict, 得到{type(series_data).__name__}"
+                        f"跳过无效的系列配置 {vendor}/{arch_name}/{series_name}: 期望dict, 得到{
+                            type(series_data).__name__}"
                     )
                     continue
 
@@ -214,9 +214,9 @@ class GPUProfileLoader:
             profile.get("max_batch_size"), (int, float)
         ):
             if profile["max_batch_size"] < profile["recommended_batch_size"]:
-                errors.append(
-                    f"max_batch_size ({profile['max_batch_size']}) < recommended_batch_size ({profile['recommended_batch_size']})"
-                )
+                errors.append(f"max_batch_size ({
+                    profile['max_batch_size']}) < recommended_batch_size ({
+                    profile['recommended_batch_size']})")
 
         # 验证optimizations字段（如果存在）
         if "optimizations" in profile:

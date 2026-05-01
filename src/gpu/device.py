@@ -4,11 +4,10 @@
 复用现有gpu_engine.py的逻辑并保持API兼容。
 """
 
-import logging
 from typing import Any, List, Dict, Optional, Tuple, cast
 
 # P3-5: 统一日志获取
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger
 
 # 尝试导入pyopencl
 try:
@@ -19,8 +18,8 @@ except ImportError:
     PYOPENCL_AVAILABLE = False
 
 from .profiles.loader import GPUProfileLoader
-from .driver_manager import DriverManager, DriverVersionParser
-from .scorer import get_gpu_scorer, GPUDeviceScorer
+from .driver_manager import DriverManager
+from .scorer import get_gpu_scorer
 
 logger = get_configured_logger("GPUDevice")
 
@@ -408,7 +407,7 @@ class GPUDeviceDetector:
         # 记录选择原因
         logger.info(
             f"自动选择最佳设备: {best_device['name']}\n"
-            f"  - 显存: {best_device.get('global_mem_size', 0)/(1024**3):.1f} GB\n"
+            f"  - 显存: {best_device.get('global_mem_size', 0) / (1024**3):.1f} GB\n"
             f"  - 计算单元: {best_device.get('max_compute_units', 'N/A')}\n"
             f"  - 统一评分: {best_device.get('_score', 0):.1f}"
         )
@@ -475,12 +474,12 @@ class GPUDevice:
             if device_index >= len(devices):
                 # 抛出异常,提供可用设备列表
                 available = [
-                    f"  [{i}] {d['name']} ({d.get('global_mem_size', 0)/(1024**3):.1f}GB)"
+                    f"  [{i}] {d['name']} ({d.get('global_mem_size', 0) / (1024**3):.1f}GB)"
                     for i, d in enumerate(devices)
                 ]
                 raise ValueError(
-                    f"设备索引 {device_index} 超出范围 (0-{len(devices)-1})\n"
-                    f"可用设备:\n" + "\n".join(available)
+                    f"设备索引 {device_index} 超出范围 (0-{len(devices) - 1})\n"
+                    "可用设备:\n" + "\n".join(available)
                 )
             else:
                 device_info = devices[device_index]
@@ -490,7 +489,7 @@ class GPUDevice:
             # 其他负数索引,视为无效
             raise ValueError(
                 f"无效的设备索引 {device_index}\n"
-                f"有效值: -1(自动选择) 或 0-{len(devices)-1}(指定设备)"
+                f"有效值: -1(自动选择) 或 0-{len(devices) - 1}(指定设备)"
             )
 
         # 保存设备对象
@@ -509,8 +508,8 @@ class GPUDevice:
             if version_num < 1.2:
                 logger.warning(
                     f"COMP-2警告: OpenCL版本过低 ({version_num})，部分功能可能不可用\n"
-                    f"  最低要求: OpenCL 1.2\n"
-                    f"  建议: 更新GPU驱动或使用更高版本的设备"
+                    "  最低要求: OpenCL 1.2\n"
+                    "  建议: 更新GPU驱动或使用更高版本的设备"
                 )
                 # 标记为不兼容模式，某些高级功能需要禁用
                 self._legacy_mode = True
@@ -521,10 +520,10 @@ class GPUDevice:
                 # 为OpenCL 3.0+提供额外优化建议
                 if version_num >= 3.0:
                     logger.info(
-                        f"检测到OpenCL 3.0+，可以使用最新特性:\n"
-                        f"  - Sub-groups (SIMD)\n"
-                        f"  - 3D image support\n"
-                        f"  - Extended atomic operations"
+                        "检测到OpenCL 3.0+，可以使用最新特性:\n"
+                        "  - Sub-groups (SIMD)\n"
+                        "  - 3D image support\n"
+                        "  - Extended atomic operations"
                     )
         except (ValueError, IndexError):
             logger.warning(f"无法解析OpenCL版本: {opencl_version}")
@@ -571,7 +570,8 @@ class GPUDevice:
         self._detect_and_validate_driver()
 
         # 创建OpenCL上下文和命令队列
-        self.context = cl.Context([self.device])  # type: ignore[assignment,list-item]  # PyOpenCL C扩展
+        # type: ignore[assignment,list-item]  # PyOpenCL C扩展
+        self.context = cl.Context([self.device])
 
         # 异步优化: 创建双队列(计算+传输)
         if self.enable_async_execution:
@@ -594,16 +594,17 @@ class GPUDevice:
             logger.info("  - 传输队列: 已创建(支持异步传输)")
         else:
             # 传统模式: 单一队列
-            self.queue = cl.CommandQueue(self.context, self.device)  # type: ignore[assignment,arg-type]  # PyOpenCL C扩展
+            # type: ignore[assignment,arg-type]  # PyOpenCL C扩展
+            self.queue = cl.CommandQueue(self.context, self.device)
             logger.info("使用传统单队列模式(同步执行)")
 
         logger.info(
             f"GPU设备初始化成功: {self.device_info['name']} "
             f"({self.device_info['vendor']})\n"
-            f"  - 显存: {self.device_info['global_mem_size']/(1024**3):.1f} GB\n"
+            f"  - 显存: {self.device_info['global_mem_size'] / (1024**3):.1f} GB\n"
             f"  - 计算单元: {self.device_info['max_compute_units']}\n"
             f"  - 最大工作组大小: {self.device_info.get('max_work_group_size', 'N/A')}\n"
-            f"  - 本地内存: {self.device_info.get('local_mem_size', 0)/1024:.0f} KB\n"
+            f"  - 本地内存: {self.device_info.get('local_mem_size', 0) / 1024:.0f} KB\n"
             f"  - 平台: {self.device_info['platform']}\n"
             f"  - 异步执行: {'已启用' if self.enable_async_execution else '未启用'}"
         )
@@ -624,7 +625,7 @@ class GPUDevice:
         # 检查计算单元
         if compute_units < min_compute_units:
             logger.warning(
-                f"设备计算单元过少: {compute_units} (建议 >= {min_compute_units}), " f"性能可能受限"
+                f"设备计算单元过少: {compute_units} (建议 >= {min_compute_units}), " "性能可能受限"
             )
 
         # 检查显存
@@ -632,7 +633,7 @@ class GPUDevice:
             logger.warning(
                 f"设备显存过小: {global_mem / (1024**2):.0f} MB "
                 f"(建议 >= {min_global_mem / (1024**2):.0f} MB), "
-                f"可能需要减小batch_size"
+                "可能需要减小batch_size"
             )
 
         logger.debug(

@@ -13,22 +13,16 @@
 import unittest
 import threading
 import time
-from unittest.mock import Mock, MagicMock
-from typing import List
+from unittest.mock import Mock
 
 from src.collision.events import (
     EventType,
-    CollisionEvent,
     EngineProgressEvent,
     EngineMatchEvent,
     EngineErrorEvent,
-    EngineCompleteEvent,
 )
 from src.collision.event_bus import EventBus, get_event_bus, reset_event_bus
-from src.collision.collision_stats import CollisionStats
 from src.monitoring.event_adapters import (
-    DataLoggerAdapter,
-    EnhancedMonitoringAdapter,
     setup_data_logging,
 )
 
@@ -383,7 +377,7 @@ class TestDataLoggerAdapter(unittest.TestCase):
         bus = EventBus()
         mock_logger = Mock(spec=DataLogger)
 
-        adapter = setup_data_logging(bus, mock_logger)
+        setup_data_logging(bus, mock_logger)
 
         # 发布进度事件
         event = EngineProgressEvent(total_checked=1000000, speed=537000.0, matches_found=0)
@@ -398,9 +392,8 @@ class TestDependencyInjection(unittest.TestCase):
 
     def test_custom_event_bus(self):
         """测试自定义事件总线注入"""
-        from src.collision.key_collision_engine import KeyCollisionEngine
 
-        custom_bus = EventBus()
+        EventBus()
 
         # 应该可以注入自定义事件总线
         # (这里只是验证构造函数接受参数，不实际运行引擎)

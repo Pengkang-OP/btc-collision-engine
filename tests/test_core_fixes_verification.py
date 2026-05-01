@@ -17,11 +17,10 @@ import time
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.core.secp256k1 import Secp256k1, ECPoint, EllipticCurve
-from src.utils.logger import (
+from src.core.secp256k1 import Secp256k1, ECPoint, EllipticCurve  # noqa: E402
+from src.utils.logger import (  # noqa: E402
     ThreadSafeLogger,
     SampledLogger,
-    AsyncLogger,
     AsyncFileHandler,
     setup_logger,
 )
@@ -84,7 +83,7 @@ def test_threadsafe_logger_deprecation():
         warnings.simplefilter("always")
 
         # 创建 ThreadSafeLogger（应触发警告）
-        ts_logger = ThreadSafeLogger(logger)
+        ThreadSafeLogger(logger)
 
         # 检查警告
         assert len(w) == 1
@@ -149,8 +148,8 @@ def test_async_logger():
             logger.debug(f"Async log message {i}")
         elapsed = time.time() - start_time
 
-        print(f"✅ 异步记录 1000 条日志耗时: {elapsed*1000:.2f}ms")
-        print(f"   平均每条: {elapsed*1000/1000:.2f}ms")
+        print(f"✅ 异步记录 1000 条日志耗时: {elapsed * 1000:.2f}ms")
+        print(f"   平均每条: {elapsed * 1000 / 1000:.2f}ms")
 
         # 检查统计信息
         stats = async_handler.get_stats()

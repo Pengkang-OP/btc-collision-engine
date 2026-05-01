@@ -5,7 +5,7 @@ import tkinter as tk
 from tkinter import messagebox
 from typing import Any, Optional
 
-from ..config.gui_config import FONT_CONFIG, COLOR_CONFIG
+from ..config.gui_config import FONT_CONFIG
 from .platform_utils import PlatformUtils
 
 

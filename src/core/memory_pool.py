@@ -40,7 +40,6 @@ P3-7增强:
 
 import threading
 import time
-import logging
 from typing import Any, Optional, List, Callable, Dict
 
 # 导入日志配置
@@ -111,7 +110,7 @@ class ObjectPool:
         if initial_size < 0:
             raise ValueError(f"initial_size必须>=0,当前为{initial_size}")
         if max_size < initial_size:
-            raise ValueError(f"max_size必须>=initial_size")
+            raise ValueError("max_size必须>=initial_size")
 
         self._factory = factory
         self._initial_size = initial_size
@@ -136,7 +135,7 @@ class ObjectPool:
 
         logger.info(
             f"对象池初始化: initial={initial_size}, max={max_size}, "
-            f"prewarm={self._prewarm_elapsed*1000:.1f}ms"
+            f"prewarm={self._prewarm_elapsed * 1000:.1f}ms"
         )
 
     def _preallocate(self, count: int):
@@ -249,7 +248,7 @@ class ObjectPool:
 
             logger.info(
                 f"对象池缩容: {current} -> {target} (释放{released}个, "
-                f"约{released*self._obj_size_estimate/1024:.1f}KB)"
+                f"约{released * self._obj_size_estimate / 1024:.1f}KB)"
             )
             return released
 

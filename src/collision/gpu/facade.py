@@ -13,7 +13,7 @@
 """
 
 import logging
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, cast
 
 from .device_manager_adapter import DeviceManagerAdapter
 from .kernel_adapter import GPUKernelAdapter
@@ -91,8 +91,9 @@ class GPUEngineFacade:
 
         # 初始化异步管道
         try:
+            assert self.kernel is not None
             self._async_pipeline.initialize(
-                kernel=self.kernel,  # type: ignore[arg-type]
+                kernel=self.kernel,
                 batch_size=batch_size or 1_000_000,
             )
         except Exception as e:
@@ -108,7 +109,7 @@ class GPUEngineFacade:
             设备信息字典
         """
         if self.device is not None:
-            return self.device.to_dict()  # type: ignore[return-value]
+            return cast(Any, self.device).to_dict()
         return {"status": "not_initialized"}
 
     def is_initialized(self) -> bool:

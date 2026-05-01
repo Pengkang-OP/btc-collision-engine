@@ -13,9 +13,8 @@
 """
 
 import time
-import logging
-from ..utils import init_logging, get_configured_logger
-from typing import Any, Dict, List, Optional, Tuple
+from ..utils import get_configured_logger
+from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
 from enum import Enum
 import statistics
@@ -162,7 +161,7 @@ class GPUAutoTuner:
                         f"耗时: {performance['avg_time_ms']:.0f}ms"
                     )
                 else:
-                    logger.warning(f"    ❌ 测试失败")
+                    logger.warning("    ❌ 测试失败")
 
             except Exception as e:
                 logger.error(f"    ❌ 测试异常: {e}")
@@ -211,7 +210,7 @@ class GPUAutoTuner:
             try:
                 # 执行批次
                 if hasattr(self.gpu_engine, "_gpu_kernel"):
-                    matches = self.gpu_engine._gpu_kernel.run_batch(
+                    matches = self.gpu_engine._gpu_kernel.run_batch(  # noqa: F841
                         seed=seed,
                         num_keys=batch_size,
                     )
@@ -220,7 +219,7 @@ class GPUAutoTuner:
                 exec_times.append(duration_ms)
 
             except Exception as e:
-                logger.debug(f"  迭代 {i+1} 失败: {e}")
+                logger.debug(f"  迭代 {i + 1} 失败: {e}")
                 continue
 
         if not exec_times:
@@ -304,7 +303,7 @@ class GPUAutoTuner:
                 logger.warning(
                     f"性能退化: {current_throughput:,.0f} vs "
                     f"最优 {self.best_throughput:,.0f} "
-                    f"({degradation_ratio*100:.1f}%)"
+                    f"({degradation_ratio * 100:.1f}%)"
                 )
 
         return {
