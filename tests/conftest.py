@@ -600,10 +600,9 @@ def pytest_sessionfinish(session, exitstatus):
     - 虽然线程都是 daemon=True，但 psutil 和文件 I/O 在 Python 关闭阶段可能阻塞
     - 导致 pytest 输出完最终总结后进程无法退出（100% 挂起）
 
-    方案：主动 stop() 所有已知的监控组件，然后用 os._exit() 强制退出。
+    方案：主动 stop() 所有已知的监控组件，让进程自然退出。
     """
     import gc
-    import os
     import logging
 
     logger = logging.getLogger(__name__)
@@ -653,15 +652,13 @@ def pytest_sessionfinish(session, exitstatus):
     # 4. 强制加入所有后台线程（最多等待 5 秒）
     import threading
 
+    main_thread = threading.main_thread()
     for thread in threading.enumerate():
-        if thread is not threading.main_thread() and thread.is_alive():
+        if thread is not main_thread and thread.is_alive():
             try:
                 thread.join(timeout=2.0)
                 logger.debug(f"已加入线程: {thread.name}")
             except Exception:
                 pass
 
-    # 5. 使用 os._exit 强制退出，绕过 Python 关闭阶段可能阻塞的线程
-    # os._exit 不会调用 atexit 处理程序或执行 finally 块
-    print("\n[conftest] 测试会话清理完成，强制退出进程", flush=True)
-    os._exit(0 if exitstatus == 0 else 1)
+    print("\n[conftest] 测试会话清理完成", flush=True)
