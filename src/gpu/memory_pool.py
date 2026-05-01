@@ -860,8 +860,11 @@ class GlobalGPUMemoryManager:
                         pool.adapt_capacity(context=pool._context)
                 if total_evicted > 0:
                     logger.debug(f"GPU内存池自动清理: 淘汰{total_evicted}个空闲缓冲区")
+            except MemoryError:
+                logger.error("GPU内存池自动清理: 内存耗尽, 停止清理线程", exc_info=True)
+                break
             except Exception:
-                logger.error("GPU内存池自动清理异常", exc_info=True)
+                logger.error("GPU内存池自动清理异常, 继续运行", exc_info=True)
         logger.info("GPU内存池自动清理已停止")
 
     def start_auto_cleanup(
@@ -891,7 +894,7 @@ class GlobalGPUMemoryManager:
         interval = interval_seconds if interval_seconds is not None else self.DEFAULT_AUTO_CLEANUP_INTERVAL
         lru_timeout = lru_idle_timeout if lru_idle_timeout is not None else self.DEFAULT_LRU_IDLE_TIMEOUT
         self._cleanup_stop_event.clear()
-        self._cleanup_thread: Optional[threading.Thread] = threading.Thread(
+        self._cleanup_thread = threading.Thread(
             target=self._auto_cleanup_loop,
             args=(interval, lru_timeout),
             daemon=True,

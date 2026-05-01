@@ -364,7 +364,16 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self._thread.start()
 
     def stop(self, timeout: Optional[float] = None) -> None:
-        """停止对撞"""
+        """停止对撞（幂等，重复调用安全）
+
+        GPU-1修复: 使用 _stop_event 防止重复调用导致异常。
+        当 _stop_event 已被设置时，说明 stop() 已执行过，直接返回。
+        """
+        # GPU-1: 防止重复调用 stop()
+        if self._stop_event.is_set():
+            logger.debug("stop() 已执行过，跳过重复调用")
+            return
+
         self._search_coordinator.stop()
         self._stop_event.set()
         self._running = False
@@ -375,7 +384,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         if self.checkpoint_mgr:
             try:
                 matches_list = [
-                    {"private_key": m["private_key_hex"], "address": m["address"]}
+                    {"private_key_hash": m["private_key_hash"], "address": m["address"]}
                     for m in self.stats.matches
                 ]
                 self.checkpoint_mgr.save(
@@ -388,20 +397,20 @@ class GPUCollisionEngine(BaseCollisionEngine):
                     range_end=self._range_end,
                 )
             except Exception as e:
-                logger.error(f"保存最终断点失败: {e}")
+                logger.error(f"保存最终断点失败: {e}", exc_info=True)
 
         # 停止监控
         if self.enhanced_monitoring:
             try:
                 self.enhanced_monitoring.stop()
             except Exception as e:
-                logger.error(f"停止监控系统失败: {e}")
+                logger.error(f"停止监控系统失败: {e}", exc_info=True)
 
         if self.gpu_performance_monitor:
             try:
                 self.gpu_performance_monitor.stop()
             except Exception as e:
-                logger.error(f"停止GPU性能监控器失败: {e}")
+                logger.error(f"停止GPU性能监控器失败: {e}", exc_info=True)
 
         # 清理去重过滤器
         if self.dedup_filter and self.dedup_filter.enabled:
@@ -412,7 +421,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             try:
                 self.data_logger.flush()
             except Exception as e:
-                logger.error(f"刷写数据日志失败: {e}")
+                logger.error(f"刷写数据日志失败: {e}", exc_info=True)
 
         # 停止种子预生成
         if hasattr(self, "_random_search_mode") and self._random_search_mode:
@@ -426,7 +435,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             try:
                 self._async_executor.cleanup()
             except Exception as e:
-                logger.error(f"清理异步执行器失败: {e}")
+                logger.error(f"清理异步执行器失败: {e}", exc_info=True)
             self._async_executor = None  # type: ignore[assignment]  # cleanup重置
 
         # 清理设备管理器
@@ -434,9 +443,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
             try:
                 self._device_manager.cleanup()
             except Exception as e:
-                logger.error(f"清理设备管理器失败: {e}")
+                logger.error(f"清理设备管理器失败: {e}", exc_info=True)
 
-        self._running = False
         self._thread = None
         logger.info("GPU引擎：资源清理完成")
 
@@ -553,7 +561,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
                     stats = self._gpu_kernel._buffer_tracker.get_stats()
                     logger.debug(f"内存检查: {stats['count']}个缓冲区, {stats['total_size_mb']:.2f} MB")
                 except Exception as e:
-                    logger.error(f"内存泄漏检查失败: {e}")
+                    logger.error(f"内存泄漏检查失败: {e}", exc_info=True)
 
     # ========== GPU 批次执行 ==========
 
@@ -653,14 +661,14 @@ class GPUCollisionEngine(BaseCollisionEngine):
                     logger.critical(str(e))
                     return False
                 except Exception as e:
-                    logger.error(f"匹配回调异常: {e}")
+                    logger.error(f"匹配回调异常: {e}", exc_info=True)
                     return False
                 finally:
                     signal.alarm(0)  # type: ignore[attr-defined]  # Unix-only API
                     signal.signal(signal.SIGALRM, old_handler)  # type: ignore[attr-defined]  # Unix-only API
             return True
         except Exception as e:
-            logger.error(f"匹配回调调用失败: {e}")
+            logger.error(f"匹配回调调用失败: {e}", exc_info=True)
             return False
 
     # ========== 匹配处理 ==========
@@ -677,7 +685,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             wif = WIF.encode(private_key, compressed=True)
             self.stats.add_match(private_key, address)  # type: ignore[attr-defined]
             if not self._safe_invoke_match_callback(private_key, address, wif):
-                logger.warning(f"GPU匹配回调处理失败，跳过地址: {address}")
+                logger.warning(f"GPU匹配回调处理失败，跳过地址: {address[:6]}...{address[-4:]}")
 
     def _process_gpu_matches_prng(self, seed: bytes, matches: List[Dict[str, int]]) -> None:
         """处理 GPU 匹配结果 (PRNG 模式)"""
@@ -693,7 +701,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             wif = WIF.encode(private_key, compressed=True)
             self.stats.add_match(private_key, address)  # type: ignore[attr-defined]
             if not self._safe_invoke_match_callback(private_key, address, wif):
-                logger.warning(f"GPU匹配回调处理失败，跳过地址: {address}")
+                logger.warning(f"GPU匹配回调处理失败，跳过地址: {address[:6]}...{address[-4:]}")
 
     # ========== 性能指标 ==========
 
@@ -804,7 +812,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         """保存断点"""
         if self.checkpoint_mgr and self.checkpoint_mgr.should_auto_save():
             matches_list = [
-                {"private_key": m["private_key_hex"], "address": m["address"]}
+                {"private_key_hash": m["private_key_hash"], "address": m["address"]}
                 for m in self.stats.matches
             ]
             self.checkpoint_mgr.save(
@@ -920,7 +928,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             logger.info(f"GPU缓冲区调整完成: {new_batch_size:,}")
             self._record_adjustment(old_batch_size, new_batch_size, "buffer_resize")
         except Exception as e:
-            logger.error(f"GPU缓冲区调整失败: {e}")
+            logger.error(f"GPU缓冲区调整失败: {e}", exc_info=True)
             if self._gpu_kernel:
                 self.batch_size = self._gpu_kernel._max_batch_size
 

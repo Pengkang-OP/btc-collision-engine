@@ -60,6 +60,27 @@ class GPUDeviceManager:
         self._nvidia_optimizer: Optional[Any] = None
         self._amd_optimizer: Optional[Any] = None
 
+    def _require_device(self) -> GPUDevice:
+        """返回已初始化的 GPU 设备，未初始化则抛出 RuntimeError。
+
+        替代 assert，确保 python -O 模式下仍有效。
+        """
+        if self._gpu_device is None:
+            raise RuntimeError("GPU device not initialized")
+        return self._gpu_device
+
+    def _require_context(self) -> GPUContext:
+        """返回已初始化的 GPU 上下文。"""
+        if self._gpu_context is None:
+            raise RuntimeError("GPU context not initialized")
+        return self._gpu_context
+
+    def _require_async_executor(self) -> AsyncGPUExecutor:
+        """返回已初始化的异步执行器。"""
+        if self._async_executor is None:
+            raise RuntimeError("Async executor not initialized")
+        return self._async_executor
+
     def initialize(
         self, targets: Set[str], batch_size: Optional[int] = None, check_uncompressed: int = 0
     ) -> "GPUDeviceManager":
@@ -215,8 +236,7 @@ class GPUDeviceManager:
 
         # 应用配置
         if enable_async:
-            assert self._gpu_device is not None
-            self._gpu_device.enable_async_execution = True
+            self._require_device().enable_async_execution = True
             self.logger.info(f"✅ GPU异步执行已启用 (来源: {config_source}) - 双缓冲优化")
         else:
             self.logger.info(f"GPU异步执行未启用 (来源: {config_source}) - 使用同步模式")
@@ -254,8 +274,8 @@ class GPUDeviceManager:
 
     def _calculate_optimal_batch_size(self) -> int:
         """计算最优batch_size"""
-        assert self._gpu_device is not None
-        device_info = self._gpu_device.get_device_info()
+        self._require_device()
+        device_info: Dict[str, Any] = self._gpu_device.get_device_info()  # type: ignore[union-attr]  # _require_device ensures non-None
         device_name = device_info.get("name", "")
         vendor = device_info.get("vendor_identifier", "unknown")
 
@@ -281,8 +301,7 @@ class GPUDeviceManager:
     def _init_context(self):
         """初始化GPU上下文"""
         with EnhancedPerformanceMonitor(self.logger, "GPU上下文初始化", level="DEBUG"):
-            assert self._gpu_device is not None
-            self._gpu_context = GPUContext(self._gpu_device)
+            self._gpu_context = GPUContext(self._require_device())
 
             # 应用优化
             self._gpu_context.apply_optimizations()
@@ -290,14 +309,14 @@ class GPUDeviceManager:
     def _init_kernel(self, batch_size: int):
         """初始化GPU内核"""
         with EnhancedPerformanceMonitor(self.logger, "OpenCL内核编译", level="INFO"):
-            assert self._gpu_context is not None
-            assert self._gpu_device is not None
+            ctx = self._require_context()
+            dev = self._require_device()
             # 编译内核
-            self._gpu_context.compile_kernel(OPENCL_KERNEL_SOURCE)
+            ctx.compile_kernel(OPENCL_KERNEL_SOURCE)
 
             # 创建GPUKernel
             self._gpu_kernel = GPUKernel(
-                self._gpu_device,
+                dev,
                 max_batch_size=batch_size,
                 program=self._gpu_context.program,
             )
@@ -310,9 +329,8 @@ class GPUDeviceManager:
         gpu_pool_max_buffers = gpu_config.get("pool_max_buffers", 100)
 
         if use_gpu_memory_pool:
-            assert self._gpu_device is not None
             self._gpu_memory_pool = get_gpu_memory_pool(
-                self._gpu_device.context,
+                self._require_device().context,
                 max_buffers=gpu_pool_max_buffers,
             )
             self.logger.info(f"GPU内存池初始化完成: {self._gpu_memory_pool.get_stats()}")
@@ -321,8 +339,8 @@ class GPUDeviceManager:
 
     def _init_async_executor(self, batch_size: int):
         """初始化异步执行器"""
-        assert self._gpu_device is not None
-        if self._gpu_device.enable_async_execution:
+        dev = self._require_device()
+        if dev.enable_async_execution:
             self.logger.info("初始化GPU异步执行器...")
 
             # 从配置读取queue_depth
@@ -330,7 +348,7 @@ class GPUDeviceManager:
             queue_depth = gpu_config.get("queue_depth", 4)
 
             # 尝试从GPU配置文件中获取推荐的队列深度
-            device_info = self._gpu_device.get_device_info()
+            device_info = dev.get_device_info()
             device_name = device_info.get("name", "")
             vendor = device_info.get("vendor_identifier", "unknown")
 
@@ -340,13 +358,13 @@ class GPUDeviceManager:
                 self.logger.info(f"从GPU配置文件获取推荐队列深度: {queue_depth}")
 
             self._async_executor = AsyncGPUExecutor(
-                self._gpu_device, max_batch_size=batch_size, queue_depth=queue_depth
+                dev, max_batch_size=batch_size, queue_depth=queue_depth
             )
 
             # 初始化双缓冲
-            assert self._async_executor is not None
-            self._async_executor.initialize_buffers(
-                self._gpu_device.context, num_keys=batch_size
+            executor = self._require_async_executor()
+            executor.initialize_buffers(
+                dev.context, num_keys=batch_size
             )
 
             self.logger.info(f"✅ GPU异步执行器已初始化(双缓冲, 队列深度: {queue_depth})")
@@ -356,8 +374,8 @@ class GPUDeviceManager:
 
     def _apply_vendor_optimizations(self):
         """应用厂商特定优化"""
-        assert self._gpu_device is not None
-        device_info = self._gpu_device.get_device_info()
+        dev = self._require_device()
+        device_info = dev.get_device_info()
         device_name = device_info.get("name", "")
         vendor = device_info.get("vendor", "")
         vendor_lower = vendor.lower()

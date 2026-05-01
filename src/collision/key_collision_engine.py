@@ -441,7 +441,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         if self.checkpoint_mgr and self.checkpoint_mgr.should_auto_save():
             matches_list = (
                 [
-                    {"private_key": m["private_key_hex"], "address": m["address"]}
+                    {"private_key_hash": m["private_key_hash"], "address": m["address"]}
                     for m in self.stats.matches
                 ]
                 if hasattr(self.stats, "matches")
@@ -1642,7 +1642,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         if self.checkpoint_mgr:
             matches_list = (
                 [
-                    {"private_key": m["private_key_hex"], "address": m["address"]}
+                    {"private_key_hash": m["private_key_hash"], "address": m["address"]}
                     for m in self.stats.matches
                 ]
                 if hasattr(self.stats, "matches")
@@ -1844,7 +1844,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             logger.info(f"保存最终断点: 已检查={self.stats.total_checked}")
             matches_list = (
                 [
-                    {"private_key": m["private_key_hex"], "address": m["address"]}
+                    {"private_key_hash": m["private_key_hash"], "address": m["address"]}
                     for m in self.stats.matches
                 ]
                 if hasattr(self.stats, "matches")
