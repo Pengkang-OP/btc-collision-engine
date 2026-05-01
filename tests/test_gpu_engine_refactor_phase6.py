@@ -17,6 +17,8 @@ from unittest.mock import patch, MagicMock
 
 from src.collision.gpu.protocols import GPUDevice
 
+pytestmark = pytest.mark.gpu
+
 # ========== Fixtures ==========
 
 

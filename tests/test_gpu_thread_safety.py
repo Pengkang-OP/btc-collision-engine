@@ -17,6 +17,9 @@ from src.collision.collision_stats import CollisionStats
 from src.collision.checkpoint_manager import CheckpointManager
 from src.collision.deduplication_filter import DeduplicationFilter
 from src.collision.gpu_collision_engine import GPUCollisionEngine
+import pytest
+
+pytestmark = pytest.mark.gpu
 
 
 class TestConcurrentAccess:

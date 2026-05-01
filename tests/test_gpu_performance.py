@@ -18,6 +18,8 @@ from src.gpu.performance_optimizer import (
 )
 from src.collision.collision_stats import CollisionStats
 
+pytestmark = pytest.mark.gpu
+
 
 class TestPerformanceOptimizer:
     """性能优化器测试"""

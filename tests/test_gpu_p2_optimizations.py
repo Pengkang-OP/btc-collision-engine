@@ -16,6 +16,8 @@ from src.gpu.benchmark_suite import GPUBenchmarkSuite, BenchmarkResult, Benchmar
 from src.gpu.auto_tuner import GPUAutoTuner, TuningConfig, TuningPhase
 from src.gpu.performance_reporter import PerformanceReportGenerator, ReportConfig
 
+pytestmark = pytest.mark.gpu
+
 
 class TestGPUBenchmarkSuite:
     """测试 GPU 基准测试套件"""

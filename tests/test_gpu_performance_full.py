@@ -19,6 +19,9 @@ import json
 import statistics
 from pathlib import Path
 from datetime import datetime
+import pytest
+
+pytestmark = pytest.mark.gpu
 
 # 添加项目根目录到路径
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent

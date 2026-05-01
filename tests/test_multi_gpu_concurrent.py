@@ -10,6 +10,8 @@ import time
 import pytest
 from unittest.mock import Mock
 
+pytestmark = pytest.mark.gpu
+
 
 class TestConcurrentAccess(unittest.TestCase):
     """测试并发访问场景"""

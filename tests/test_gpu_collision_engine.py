@@ -11,6 +11,8 @@ from unittest.mock import Mock, patch
 from src.collision.gpu_collision_engine import GPUCollisionEngine
 from src.gpu.device import GPUDeviceDetector
 
+pytestmark = pytest.mark.gpu
+
 
 @pytest.fixture
 def mock_gpu_setup():

@@ -28,6 +28,8 @@ from src.gpu.constants import (
     clamp_batch_size,
 )
 
+pytestmark = pytest.mark.gpu
+
 
 class TestGPUConstants:
     """GPU常量定义测试"""

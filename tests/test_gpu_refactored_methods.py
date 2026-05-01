@@ -13,6 +13,7 @@
 import os
 import time
 import threading
+import pytest
 from unittest.mock import Mock, patch, MagicMock
 from src.collision.gpu.engine import (
     GPUCollisionEngine,
@@ -22,6 +23,8 @@ from src.collision.gpu.engine import (
     INITIAL_BATCHES_LOG,
     EXCEPTION_RECOVERY_DELAY,
 )
+
+pytestmark = pytest.mark.gpu
 
 
 def _create_phase6_mock_core():

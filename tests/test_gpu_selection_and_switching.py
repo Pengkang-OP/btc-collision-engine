@@ -10,6 +10,9 @@ import time
 import unittest
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
+import pytest
+
+pytestmark = pytest.mark.gpu
 
 # 修复Windows编码（Python 3.7+: reconfigure 安全无副作用）
 if sys.platform == "win32":

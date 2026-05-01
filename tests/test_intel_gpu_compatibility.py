@@ -16,6 +16,8 @@ from src.gpu.intel_timeout_manager import AdaptiveTimeoutManager
 from src.gpu.intel_memory_monitor import IntelMemoryMonitor, MemoryStatus
 from src.gpu.vendors.intel import IntelGPUVendor
 
+pytestmark = pytest.mark.gpu
+
 
 class TestAdaptiveTimeoutManager:
     """测试自适应超时管理器"""

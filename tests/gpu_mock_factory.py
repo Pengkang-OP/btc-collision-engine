@@ -13,6 +13,9 @@ GPU Mock 测试基础设施 - 统一的 Mock 工厂
 from unittest.mock import Mock, patch
 from contextlib import contextmanager
 from typing import List, Optional, Dict, Any
+import pytest
+
+pytestmark = pytest.mark.gpu
 
 # ---------------------------------------------------------------------------
 # OpenCL 常量（优先从真实 pyopencl 读取，不可用时用字面量兜底）
@@ -39,7 +42,6 @@ except ImportError:
     _CL_PLATFORM_NAME = 0x0900
     _PYOPENCL_AVAILABLE = False
     HAS_PYOPENCL = False
-
 
 # ---------------------------------------------------------------------------
 # 预置设备配置（方便测试直接引用）

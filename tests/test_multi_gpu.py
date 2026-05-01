@@ -2,6 +2,9 @@
 """多GPU功能单元测试"""
 
 import unittest
+import pytest
+
+pytestmark = pytest.mark.gpu
 
 
 class TestGPUDeviceSelector(unittest.TestCase):

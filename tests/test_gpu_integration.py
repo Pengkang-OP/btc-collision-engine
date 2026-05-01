@@ -6,6 +6,9 @@ GPU 引擎集成测试 - 验证 P0/P1/P2 所有功能集成
 import unittest
 import sys
 import os
+import pytest
+
+pytestmark = pytest.mark.gpu
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
