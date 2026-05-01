@@ -41,7 +41,7 @@ try:
 
     _GPU_AVAILABLE = True
 except ImportError as _gpu_import_err:  # noqa: F841
-    GPUCollisionEngine: Any = None  # 条件导入回退
+    GPUCollisionEngine: Any = None  # type: ignore[no-redef]  # 条件导入回退
     _GPU_AVAILABLE = False
     import logging as _logging
 

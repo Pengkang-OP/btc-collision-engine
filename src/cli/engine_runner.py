@@ -76,7 +76,7 @@ def _setup_and_start_engine(
         try:
             from ..monitoring.alert_system import AlertSystem
         except ImportError:
-            AlertSystem: Any = None
+            AlertSystem: Any = None  # type: ignore[no-redef]
 
     if AlertSystem is not None:
         try:

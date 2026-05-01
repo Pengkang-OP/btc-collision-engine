@@ -98,7 +98,7 @@ class GPUContext:
             return IntelGPUVendor()
         else:
             logger.warning(f"未知GPU厂商: {vendor},使用默认优化器")
-            return cast(GPUVendorBase, GPUVendorBase())
+            return GPUVendorBase()  # type: ignore[abstract]
 
     def apply_optimizations(self) -> None:
         """

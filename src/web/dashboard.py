@@ -31,10 +31,10 @@ try:
     FLASK_AVAILABLE = True
 except ImportError:
     FLASK_AVAILABLE = False
-    Flask: Any = None
-    jsonify: Any = None
-    render_template_string: Any = None
-    request: Any = None
+    Flask: Any = None  # type: ignore[no-redef]
+    jsonify: Any = None  # type: ignore[no-redef]
+    render_template_string: Any = None  # type: ignore[no-redef]
+    request: Any = None  # type: ignore[no-redef]
 
 logger = logging.getLogger(__name__)
 

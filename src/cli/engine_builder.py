@@ -31,8 +31,8 @@ try:
     GPU_AVAILABLE = True
 except ImportError:
     GPU_AVAILABLE = False
-    GPUCollisionEngine: Any = None
-    MultiGPUCollisionEngine: Any = None
+    GPUCollisionEngine: Any = None  # type: ignore[no-redef]
+    MultiGPUCollisionEngine: Any = None  # type: ignore[no-redef]
 
 
 def on_match_callback(sensitive_mode: str = "full") -> MatchCallback:

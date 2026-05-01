@@ -240,7 +240,7 @@ class GPUMetricsCollector:
 
             lines.append("# HELP gpu_throughput_keys_per_sec Current throughput per device.")
             lines.append("# TYPE gpu_throughput_keys_per_sec gauge")
-            for dev, val in sorted(self._throughput.items()):
+            for dev, val in sorted(self._throughput.items()):  # type: ignore[assignment]
                 lines.append(f'gpu_throughput_keys_per_sec{{device="{dev}"}} {val:.1f}')
 
             lines.append("# HELP gpu_memory_usage_bytes GPU memory usage per device.")
