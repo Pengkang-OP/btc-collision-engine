@@ -126,7 +126,7 @@ intel_arc_*.json
 test_env_use.json
 
 # 临时测试和验证脚本（非核心功能）
-comprehensive_test.py
+/comprehensive_test.py
 quick_verify_*.py
 test_*.py  # 临时测试脚本（非tests目录）
 verify_*.py  # 临时验证脚本
