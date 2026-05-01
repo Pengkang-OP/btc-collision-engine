@@ -418,8 +418,11 @@ class GlobalPoolManager:
     - 自动清理线程定期调用 auto_tune_all() + shrink_all()
     """
 
-    _instance = None
+    _instance: Optional["GlobalPoolManager"] = None
     _lock = threading.Lock()
+
+    _initialized: bool = False
+    _pools_registry: List[Any] = []
 
     # P1-6: 自动清理线程 — 类级别类型声明供 mypy 检查
     _cleanup_thread: Optional[threading.Thread] = None
@@ -437,8 +440,8 @@ class GlobalPoolManager:
             with cls._lock:
                 if cls._instance is None:
                     cls._instance = super().__new__(cls)
-                    cls._instance._initialized = False  # type: ignore[has-type]
-                    cls._instance._pools_registry: List[ObjectPool] = []  # type: ignore[misc,has-type]
+                    cls._instance._initialized = False
+                    cls._instance._pools_registry = []
                     # P1-6: 自动清理线程 — 类级别已声明类型，此处仅初始化
                     cls._instance._cleanup_thread = None
                     cls._instance._cleanup_stop_event = threading.Event()
@@ -446,11 +449,11 @@ class GlobalPoolManager:
 
     def initialize(self) -> None:
         """初始化所有全局池"""
-        if self._initialized:  # type: ignore[has-type]
+        if self._initialized:
             return
 
         with self._lock:
-            if not self._initialized:  # type: ignore[has-type]
+            if not self._initialized:
                 self.ecpoint_pool = ECPointPool(initial_size=1000, max_size=10000)
                 self.bytearray_pool_32 = ByteArrayPool(
                     buffer_size=32, initial_size=500, max_size=5000
