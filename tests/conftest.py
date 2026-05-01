@@ -589,3 +589,79 @@ def reset_cli_output_singleton():
         CLIOutput.reset_instance()
     except ImportError:
         pass
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """测试会话结束时强制清理所有监控后台线程，防止进程退出挂起。
+
+    问题背景：
+    - DataCollector 的后台 CPU 采样线程调用 psutil.cpu_percent(interval=0.5)
+    - EnhancedMonitoringSystem 的监控循环持续写入文件
+    - 虽然线程都是 daemon=True，但 psutil 和文件 I/O 在 Python 关闭阶段可能阻塞
+    - 导致 pytest 输出完最终总结后进程无法退出（100% 挂起）
+
+    方案：主动 stop() 所有已知的监控组件，然后用 os._exit() 强制退出。
+    """
+    import gc
+    import os
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    # 1. 强制停止增强版监控系统（EnhancedMonitoringSystem）
+    try:
+        from src.monitoring.enhanced_monitoring import EnhancedMonitoringSystem
+
+        for obj in gc.get_objects():
+            if isinstance(obj, EnhancedMonitoringSystem) and obj.is_running():
+                try:
+                    obj.stop()
+                    logger.debug("已停止 EnhancedMonitoringSystem 实例")
+                except Exception as e:
+                    logger.debug(f"停止 EnhancedMonitoringSystem 失败: {e}")
+    except ImportError:
+        pass
+
+    # 2. 强制停止旧版监控系统（MonitoringSystem）
+    try:
+        from src.monitoring.monitoring_system import MonitoringSystem
+
+        for obj in gc.get_objects():
+            if isinstance(obj, MonitoringSystem) and obj._running:
+                try:
+                    obj.stop()
+                    logger.debug("已停止 MonitoringSystem 实例")
+                except Exception as e:
+                    logger.debug(f"停止 MonitoringSystem 失败: {e}")
+    except ImportError:
+        pass
+
+    # 3. 强制停止 DataCollector 后台 CPU 采样线程
+    try:
+        from src.monitoring.monitoring_system import DataCollector
+
+        for obj in gc.get_objects():
+            if isinstance(obj, DataCollector):
+                try:
+                    obj.stop()
+                    logger.debug("已停止 DataCollector CPU 采样线程")
+                except Exception as e:
+                    logger.debug(f"停止 DataCollector 失败: {e}")
+    except ImportError:
+        pass
+
+    # 4. 强制加入所有后台线程（最多等待 5 秒）
+    import threading
+
+    for thread in threading.enumerate():
+        if thread is not threading.main_thread() and thread.is_alive():
+            try:
+                thread.join(timeout=2.0)
+                logger.debug(f"已加入线程: {thread.name}")
+            except Exception:
+                pass
+
+    # 5. 使用 os._exit 强制退出，绕过 Python 关闭阶段可能阻塞的线程
+    # os._exit 不会调用 atexit 处理程序或执行 finally 块
+    print("\n[conftest] 测试会话清理完成，强制退出进程", flush=True)
+    os._exit(0 if exitstatus == 0 else 1)
