@@ -1,6 +1,6 @@
 # BTC碰撞引擎架构文档
 
-> **版本**: v3.5.0 | **最后更新**: 2026-05-01
+> **版本**: v3.5.1 (Phase 6) | **最后更新**: 2026-05-01
 > **面向**: 开发者/架构师
 
 ## 目录
@@ -458,49 +458,52 @@ key_mgr.clear_key()  # 手动清零
 - 数据日志记录集成
 - **目标地址管理**（新增）：LRU缓存、批量验证、布隆过滤器匹配
 
-### 5.2 GPU碰撞引擎 (gpu_collision_engine.py) - 重构
+### 5.2 GPU碰撞引擎 (Phase 6 架构重构完成, v6.0.0)
 
-**文件位置**: `src/collision/gpu_collision_engine.py`
+**文件位置**:
+- 引擎协调器: `src/collision/gpu/engine.py` (<400行)
+- Shim 兼容层: `src/collision/gpu_collision_engine.py`
+- GPU 子模块: `src/collision/gpu/` (15 文件)
 
-**架构设计**（重构后 - 组件化架构）:
+**Phase 6 架构设计**（重构完成 — 6 阶段全部 ✅）:
+
 ```
 
-GPUCollisionEngine (GPU碰撞引擎) - 对外接口与协调层
-├── GPUDeviceManager (设备管理器)
-│   ├── 设备初始化与选择
-│   ├── 上下文创建
-│   ├── 内核编译
-│   └── 内存池管理
-├── GPUConfigManager (配置管理器)
-│   ├── 配置加载与合并
-│   ├── 配置验证
-│   └── 厂商配置适配
-├── SearchModeCoordinator (搜索模式协调器)
-│   ├── RandomSearchMode (随机搜索)
-│   ├── BruteForceSearchMode (暴力破解)
-│   └── RangeScanSearchMode (范围扫描)
-├── GPUEngineMonitor (引擎监控器)
-│   ├── 性能指标收集
-│   ├── Batch Size自适应调整
-│   └── 错误检测与恢复
-└── GPUKernel (OpenCL内核)
-    ├── uint256运算: 大数加减乘除模逆
-    ├── secp256k1点乘: 标量乘法
-    ├── SHA-256 + RIPEMD-160: 哈希计算
-    └── 批量Hash160计算
+GPUCollisionEngine (Shim 层, 100% 向后兼容)
+  └─→ engine.py (引擎协调器, <400行)
+       ├── CollisionCore (Phase 4) — stats / checkpoint / dedup / search
+       ├── GPUDeviceManager (Phase 2) — 设备 / 上下文 / 内核 / 异步执行器
+       │    ├── DeviceManagerAdapter
+       │    ├── GPUKernelAdapter
+       │    └── AsyncPipelineAdapter
+       ├── VendorOptimizationFactory (Phase 5) — NVIDIA / AMD / Intel 策略
+       ├── SearchModeCoordinator — Random / Range / BruteForce 委托
+       ├── PerformanceMonitoringPipeline (Phase 3) — 懒加载监控管道
+       ├── GPUEngineMonitor — 性能指标 / Batch Size 自适应
+       ├── DataLoggerAdapter — 数据日志适配
+       └── GPUConfigManager — 配置加载 / 验证 / 厂商适配
 
-```python
+```
 
 **分层架构说明**:
 | 层级 | 组件 | 职责 | 文件位置 |
 |------|------|------|----------|
-| 应用层 | GPUCollisionEngine | 对外接口、组件协调 | src/collision/gpu_collision_engine.py |
-| 协调层 | SearchModeCoordinator | 搜索模式管理、切换执行 | src/gpu/search_mode_coordinator.py |
-| 管理层 | GPUDeviceManager | 设备初始化、上下文管理 | src/gpu/device_manager.py |
-| 管理层 | GPUConfigManager | 配置加载、合并、验证 | src/gpu/config_manager.py |
-| 管理层 | GPUEngineMonitor | 性能监控、自适应调整 | src/gpu/engine_monitor.py |
-| 执行层 | RandomSearchMode等 | 具体搜索算法实现 | src/gpu/search_modes/*.py |
+| 兼容层 | gpu_collision_engine.py | Shim 薄层, 重导出全部 API | src/collision/gpu_collision_engine.py |
+| 协调层 | engine.py | 统一组件初始化/生命周期管理 | src/collision/gpu/engine.py |
+| 业务层 | CollisionCore | stats/checkpoint/dedup/search | src/collision/gpu/core.py |
+| 适配层 | DeviceManagerAdapter 等 | 设备/内核/管道/日志适配 | src/collision/gpu/*_adapter.py |
+| 策略层 | VendorOptimizationFactory | 多厂商优化策略 | src/collision/gpu/vendor_strategy.py |
+| 监控层 | MonitoringPipeline + Monitor | 性能监控/自适应调整 | src/collision/gpu/monitoring.py |
 | 基础设施层 | GPUKernel/GPUContext | OpenCL内核与上下文 | src/gpu/kernel.py, src/gpu/context.py |
+
+**Phase 6 重构收益**:
+| 维度 | 重构前 | 重构后 | 改进 |
+|------|--------|--------|------|
+| 引擎行数 | 1466行 | <400行 | **-73%** |
+| 导入模块 | 49个 | <15个 | **-70%** |
+| Mock 层数 | 7+层 | 1-2层 | **-80%** |
+| Phase 6 测试 | — | 29项 | **100% 通过** |
+| 向后兼容 | — | 100% | Shim 层保证 |
 
 **核心功能**:
 - GPU并行计算: 65536个工作项同时处理
@@ -510,6 +513,7 @@ GPUCollisionEngine (GPU碰撞引擎) - 对外接口与协调层
 - 错误恢复机制
 - 自适应Batch Size调整
 - 完整的搜索模式支持（随机/暴力/范围扫描）
+- 协议层接口标准化（5个核心协议）
 
 **性能对比**:
 | 指标 | CPU引擎 | GPU引擎 | 提升倍数 |
@@ -517,14 +521,6 @@ GPUCollisionEngine (GPU碰撞引擎) - 对外接口与协调层
 | 批次大小 | 1,000 | 65,536+ | 65x+ |
 | 吞吐量 | ~1,000-10,000/s | ~100,000-1,000,000/s | 100-1000x |
 | 适用场景 | 无GPU环境 | 有独立GPU | N/A |
-
-**重构收益**:
-| 维度 | 重构前 | 重构后 | 改进 |
-|------|--------|--------|------|
-| 代码行数 | ~2500行 | ~800行 | 68%减少 |
-| 职责数量 | 10+ | 2 | 职责分离 |
-| 可测试性 | 困难 | 各组件独立可测 | 显著提升 |
-| 可扩展性 | 受限 | 模块化设计 | 灵活扩展 |
 
 **工作流程**:
 ```
@@ -2390,8 +2386,8 @@ def stop(self):
 
 ---
 
-**文档版本**: v2.0
-**最后更新**: 2026-04-20
+**文档版本**: v3.5.1 (Phase 6)
+**最后更新**: 2026-05-01
 **维护者**: BTC碰撞引擎开发团队
     subgraph Core["核心模块 Core"]
         Secp["secp256k1"]

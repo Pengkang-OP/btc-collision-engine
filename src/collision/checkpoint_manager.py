@@ -150,6 +150,14 @@ class CheckpointManager:
                 json.dump(self._buffer, f, ensure_ascii=False, indent=2)
             logger.debug("临时文件写入成功")
 
+            # O-1: 临时文件也设置安全权限，防止 rename 前被其他进程读取
+            if not PlatformUtils.is_windows():
+                try:
+                    os.chmod(temp_filepath, 0o600)
+                    logger.debug(f"已设置临时文件权限: 0o600")
+                except OSError as e:
+                    logger.debug(f"临时文件权限设置失败（非致命）: {e}")
+
             # 原子重命名（跨平台兼容）
             logger.debug(f"原子重命名: {temp_filepath} -> {self.filepath}")
             os.replace(temp_filepath, self.filepath)

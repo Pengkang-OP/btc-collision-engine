@@ -27,7 +27,6 @@ from collections import deque
 from src.utils import get_configured_logger
 from src.utils.logger import PerformanceMonitor
 from src.monitoring.storage_config import DataStorageConfig
-from src.utils.platform_utils import PlatformUtils
 
 
 class DataLogger:
@@ -388,38 +387,17 @@ class DataLogger:
                     f.flush()
                     os.fsync(f.fileno())  # 确保数据写入磁盘
 
-                # 原子替换（Windows可能需要特殊处理）
-                # Windows上先删除目标文件，再重命名（避免PermissionError和WinError 183）
-                if PlatformUtils.is_windows():
-                    # Windows: 确保目标文件不存在
-                    if os.path.exists(self.current_data_file):
-                        try:
-                            # 尝试删除，如果失败则重试
-                            for retry in range(3):
-                                try:
-                                    os.remove(self.current_data_file)
-                                    break
-                                except (PermissionError, OSError) as e:
-                                    if retry < 2:
-                                        time.sleep(0.1 * (retry + 1))  # 递增等待
-                                        continue
-                                    raise
-                        except Exception as e:
-                            self.logger.warning(f"删除旧数据文件失败: {e}")
-                            # 如果删除失败，尝试覆盖
-                            if os.path.exists(self.current_data_file):
-                                try:
-                                    os.replace(temp_file, self.current_data_file)
-                                    self.logger.info("使用os.replace()成功覆盖文件")
-                                    return
-                                except Exception as replace_error:
-                                    self.logger.error(f"os.replace()也失败: {replace_error}")
-                                    raise
-                            raise
-                    os.rename(temp_file, self.current_data_file)
-                else:
-                    # Unix/Linux: 直接使用os.replace（原子操作）
+                # 原子替换：os.replace() 在所有平台上都是原子操作
+                # 直接使用 os.replace() 替代 remove+rename 两步操作，
+                # 避免竞态条件导致的 WinError 183/WinError 32
+                try:
                     os.replace(temp_file, self.current_data_file)
+                except PermissionError:
+                    # 文件被其他进程锁定，等待后重试
+                    if attempt < max_retries - 1:
+                        time.sleep(retry_delay * (attempt + 1))
+                        continue
+                    raise
 
                 # 成功，退出重试循环
                 return
@@ -480,21 +458,17 @@ class DataLogger:
                     f.flush()
                     os.fsync(f.fileno())
 
-                # 原子替换（Windows可能需要特殊处理）
-                if os.path.exists(self.history_data_file):
-                    # Windows上先删除目标文件，再重命名（避免PermissionError）
-                    if PlatformUtils.is_windows():
-                        try:
-                            os.remove(self.history_data_file)
-                        except PermissionError:
-                            # 如果文件被占用，等待后重试
-                            if attempt < max_retries - 1:
-                                time.sleep(retry_delay)
-                                continue
-                            raise
-                    os.rename(temp_file, self.history_data_file)
-                else:
-                    os.rename(temp_file, self.history_data_file)
+                # 原子替换：os.replace() 在所有平台上都是原子操作
+                # Windows 上也能正确处理目标文件已存在的情况，
+                # 避免 WinError 183 (文件已存在) 和 WinError 32 (文件被占用)
+                try:
+                    os.replace(temp_file, self.history_data_file)
+                except PermissionError:
+                    # 文件被其他进程锁定，等待后重试
+                    if attempt < max_retries - 1:
+                        time.sleep(retry_delay * (attempt + 1))  # 递增等待
+                        continue
+                    raise
 
                 # 成功，退出重试循环
                 return
