@@ -136,6 +136,21 @@ no_implicit_optional = true                               # 防止隐式Optional
 strict_equality = true                                    # 防止不安全的类型比较
 exclude = ["tests/", "benchmarks/", "tools/", "scripts/"]
 
+[tool.flake8]
+max-line-length = 100
+ignore = ["E203", "W503"]
+exclude = [
+    ".git",
+    "__pycache__",
+    ".mypy_cache",
+    ".pytest_cache",
+    "venv",
+    "scripts/venv",
+    ".history",
+    "data_logs",
+    "logs",
+]
+
 [tool.black]
 line-length = 100
 target-version = ["py312"]
