@@ -1076,7 +1076,9 @@ class MonitoringSystem:
         self.report_generator = ReportGenerator(self.storage, self.detector)
 
         # 集成日志监控系统
-        self.log_integrator: Optional["LogMonitoringIntegrator"] = None  # type: ignore[name-defined]  # noqa: F821
+        self.log_integrator: Optional["LogMonitoringIntegrator"] = (  # noqa: F821
+            None  # type: ignore[name-defined]
+        )
         try:
             from .log_monitoring_integrator import get_log_monitoring_integrator
 
