@@ -35,9 +35,9 @@ jobs:
         python scripts/check_import_paths.py
 
     - name: 运行测试
-      timeout-minutes: 90
+      timeout-minutes: 120
       run: |
-        python -m pytest tests/ -v --tb=short --cov=src --cov-report=xml --cov-fail-under=40 -m "not (gpu or gpu_kernel)" --timeout=1200 --timeout-method=thread
+        python -m pytest tests/ -v --tb=short --cov=src --cov-report=xml --cov-fail-under=40 -m "not (gpu or gpu_kernel)" --timeout=600 --timeout-method=thread -p no:cacheprovider
 
     - name: 上传覆盖率报告
       uses: codecov/codecov-action@v4
