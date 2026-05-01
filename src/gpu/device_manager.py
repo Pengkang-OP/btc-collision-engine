@@ -317,7 +317,7 @@ class GPUDeviceManager:
             self._gpu_kernel = GPUKernel(
                 dev,
                 max_batch_size=batch_size,
-                program=self._gpu_context.program,
+                program=self._gpu_context.program,  # type: ignore[union-attr]
             )
 
     def _init_memory_pool(self):

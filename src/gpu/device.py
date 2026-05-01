@@ -570,8 +570,7 @@ class GPUDevice:
         self._detect_and_validate_driver()
 
         # 创建OpenCL上下文和命令队列
-        # type: ignore[assignment,list-item]  # PyOpenCL C扩展
-        self.context = cl.Context([self.device])
+        self.context = cl.Context([self.device])  # type: ignore[assignment,list-item]  # PyOpenCL C扩展
 
         # 异步优化: 创建双队列(计算+传输)
         if self.enable_async_execution:
@@ -594,8 +593,7 @@ class GPUDevice:
             logger.info("  - 传输队列: 已创建(支持异步传输)")
         else:
             # 传统模式: 单一队列
-            # type: ignore[assignment,arg-type]  # PyOpenCL C扩展
-            self.queue = cl.CommandQueue(self.context, self.device)
+            self.queue = cl.CommandQueue(self.context, self.device)  # type: ignore[assignment,arg-type]  # PyOpenCL C扩展
             logger.info("使用传统单队列模式(同步执行)")
 
         logger.info(

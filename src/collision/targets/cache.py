@@ -9,7 +9,7 @@
 
 import threading
 from typing import Optional, Dict, Any
-from cachetools import LRUCache, TTLCache
+from cachetools import LRUCache, TTLCache  # type: ignore[import-untyped]
 
 # 导入日志配置
 from ...utils import init_logging, get_configured_logger
@@ -50,10 +50,10 @@ class AddressCache:
             enable_stats: 是否启用缓存统计，默认True
         """
         # 内存LRU缓存 - 用于持久化常用地址
-        self.lru_cache = LRUCache(maxsize=lru_size)
+        self.lru_cache: LRUCache = LRUCache(maxsize=lru_size)
 
         # TTL缓存 - 用于临时数据，自动过期
-        self.ttl_cache = TTLCache(maxsize=5000, ttl=ttl_seconds)
+        self.ttl_cache: TTLCache = TTLCache(maxsize=5000, ttl=ttl_seconds)
 
         # 缓存统计
         self.enable_stats = enable_stats
