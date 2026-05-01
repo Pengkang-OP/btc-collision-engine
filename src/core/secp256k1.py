@@ -588,3 +588,11 @@ class EllipticCurve:
             # 非压缩格式: 0x04 + x坐标 + y坐标
             y_bytes = public_point.y.to_bytes(32, "big")  # type: ignore[union-attr]
             return b"\x04" + x_bytes + y_bytes
+
+    def generate_public_key_const_time(self, private_key: Union[bytes, int], compressed: bool = True) -> bytes:
+        """恒定时间公钥生成 (generate_public_key 的显式别名)
+
+        generate_public_key 内部已使用 scalar_multiply_const_time (Montgomery Ladder),
+        本方法作为显式 API 供 crypto_backend 调用。
+        """
+        return self.generate_public_key(private_key, compressed)

@@ -27,8 +27,11 @@ class SecurityLogFilter(logging.Filter):
     # 64位十六进制（32字节私钥），支持0x前缀
     PRIVATE_KEY_HEX_PATTERN = re.compile(r"\b(?:0x)?[0-9a-fA-F]{64}\b")
 
-    # WIF格式（以5/K/L开头的Base58字符串）
-    WIF_PATTERN = re.compile(r"\b[5KL][1-9A-HJ-NP-Za-km-z]{50,51}\b")
+    # WIF格式 - 与 SensitiveDataFilter 保持精确一致
+    # 非压缩WIF: 以5开头，总长51字符 (5 + 50后续字符)
+    WIF_UNCOMPRESSED_PATTERN = re.compile(r"\b5[HJK][1-9A-HJ-NP-Za-km-z]{48,49}\b")
+    # 压缩WIF: 以K或L开头，总长52字符 (K/L + 51后续字符)
+    WIF_COMPRESSED_PATTERN = re.compile(r"\b[KL][1-9A-HJ-NP-Za-km-z]{50,51}\b")
 
     # 原始字节模式（32字节）
     RAW_KEY_PATTERN = re.compile(r"b'\\x[0-9a-fA-F]{2}(?:\\x[0-9a-fA-F]{2}){31}'")
@@ -110,8 +113,9 @@ class SecurityLogFilter(logging.Filter):
             message = self.PRIVATE_KEY_HEX_PATTERN.sub(lambda m: self._mask_key(m.group()), message)
 
         if self.mask_wif:
-            # 屏蔽WIF格式私钥
-            message = self.WIF_PATTERN.sub(lambda m: "[WIF_PRIVATE_KEY]", message)
+            # 屏蔽WIF格式私钥 (使用与SensitiveDataFilter一致的精确模式)
+            message = self.WIF_UNCOMPRESSED_PATTERN.sub("[WIF_UNCOMPRESSED_KEY]", message)
+            message = self.WIF_COMPRESSED_PATTERN.sub("[WIF_COMPRESSED_KEY]", message)
 
         # 屏蔽原始字节模式
         message = self.RAW_KEY_PATTERN.sub("[RAW_PRIVATE_KEY]", message)

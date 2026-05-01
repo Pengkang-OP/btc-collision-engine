@@ -59,20 +59,20 @@ class TestSecurityLogFilterPatterns(unittest.TestCase):
         """以 5 开头的 WIF 私钥应被屏蔽"""
         wif = '5KWDpqqbKJ6wDPobVmvQNkHFZHxQGBsHZ2qJLmcWmbFwD8GkVnM'
         result = self._sanitize(f"导入: {wif}")
-        self.assertIn('[WIF_PRIVATE_KEY]', result)
+        self.assertIn('[WIF_UNCOMPRESSED_KEY]', result)
         self.assertNotIn(wif, result)
 
     def test_masks_wif_private_key_K(self):
         """以 K 开头的 WIF 私钥应被屏蔽"""
         wif = 'KxFC1jmwwCoACiCAWZDgQLKxwFgJj7BjJwxqM5hDZJqGKV7LjJRR'
         result = self._sanitize(f"key={wif}")
-        self.assertIn('[WIF_PRIVATE_KEY]', result)
+        self.assertIn('[WIF_COMPRESSED_KEY]', result)
 
     def test_masks_wif_private_key_L(self):
         """以 L 开头的 WIF 私钥应被屏蔽"""
         wif = 'L5AQtVQHsJhCJfYfGzGJXfQvKXHwDvRqJzGx7Y6Yq8zK3wN4pQrS'
         result = self._sanitize(f"wif={wif}")
-        self.assertIn('[WIF_PRIVATE_KEY]', result)
+        self.assertIn('[WIF_COMPRESSED_KEY]', result)
 
     # ── 地址屏蔽 ──────────────────────────────
 
