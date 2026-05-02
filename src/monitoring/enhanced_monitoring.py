@@ -5,7 +5,7 @@
 
 集成数据日志系统的监控系统，提供更全面的数据记录和监控功能。
 
-P1-2修复: 使用MonitorConfig配置对象，解耦配置循环引用
+使用MonitorConfig配置对象管理所有监控参数。
 """
 
 import os
@@ -26,7 +26,6 @@ from src.monitoring.monitoring_system import (
 )
 from src.monitoring.data_logger import DataLogger
 
-# P1-2修复：导入配置对象
 from src.monitoring.monitor_config import MonitorConfig
 
 
@@ -38,7 +37,7 @@ class EnhancedMonitoringSystem:
     - 数据持久化和报告生成
     - 统一的数据接口
 
-    P1-2修复: 使用MonitorConfig配置对象，解耦配置循环引用
+    使用MonitorConfig配置对象管理所有监控参数。
 
     Attributes:
         config: 监控配置对象
@@ -87,7 +86,7 @@ class EnhancedMonitoringSystem:
         self.logger = get_configured_logger("EnhancedMonitoringSystem")
         self.engine = engine
 
-        # P1-2修复：处理配置
+        # 处理配置：优先使用配置对象，兼容旧API参数
         if config is not None:
             # 使用配置对象
             self.config = config
@@ -114,8 +113,7 @@ class EnhancedMonitoringSystem:
 
         # 数据日志系统（主数据源）
         if self.config.data_logging_enabled:
-            # P1-2修复：DataLogger只接受storage_dir参数
-            # config配置通过MonitorConfig管理，不直接传递给DataLogger
+            # DataLogger 配置通过 MonitorConfig 管理
             self.data_logger = DataLogger(storage_dir="data_logs")
         else:
             self.data_logger = None
@@ -268,45 +266,6 @@ class EnhancedMonitoringSystem:
 
             # 等待下一次采集（可被 stop() 立即中断）
             self._stop_event.wait(self.collection_interval)
-
-    def _save_to_data_logger(self, data: MonitoringData):
-        """将数据保存到数据日志系统（已弃用，保留向后兼容）"""
-        self.logger.warning("_save_to_data_logger已弃用，使用直接记录方式")
-        if not self.data_logger:
-            return
-
-        try:
-            # 记录性能数据
-            perf = data.performance
-            self.data_logger.record_performance_data(
-                speed=perf.get("speed", 0),
-                total_checked=perf.get("total_checked", 0),
-                matches_found=perf.get("matches_found", 0),
-                cpu_usage=perf.get("cpu_usage", 0),
-                memory_usage=perf.get("memory_usage", 0),
-                thread_count=perf.get("thread_count", 0),
-            )
-
-            # 记录系统数据
-            sys_data = data.system
-            self.data_logger.record_system_data(
-                os_name=sys_data.get("os", ""),
-                python_version=sys_data.get("python_version", ""),
-                pid=sys_data.get("pid", 0),
-                uptime=sys_data.get("uptime", 0),
-            )
-
-            # 记录引擎数据
-            eng_data = data.engine
-            self.data_logger.record_engine_data(
-                mode=eng_data.get("mode", ""),
-                target_count=eng_data.get("target_count", 0),
-                is_running=eng_data.get("is_running", False),
-                current_position=eng_data.get("current_position", 0),
-            )
-
-        except Exception as e:
-            self.logger.error(f"保存到数据日志系统失败: {e}")
 
     def _get_cpu_usage(self) -> float:
         """获取CPU使用率"""
