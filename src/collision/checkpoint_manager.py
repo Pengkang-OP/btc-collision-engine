@@ -31,8 +31,8 @@ class CheckpointManager:
         """检查pywin32是否可用（类级别的一次性检查）"""
         if cls._has_win32_security is None:
             try:
-                import win32security  # noqa: F811
-                import ntsecuritycon  # noqa: F811
+                import win32security  # noqa: F401
+                import ntsecuritycon  # noqa: F401
 
                 cls._has_win32_security = True
             except ImportError:
@@ -219,7 +219,9 @@ class CheckpointManager:
                                     "/Q",  # 静默执行
                                 ]
 
-                                result = subprocess.run(cmd, capture_output=True, text=True)  # nosec B603
+                                result = subprocess.run(
+                                    cmd, capture_output=True, text=True
+                                )  # nosec B603
                                 if result.returncode == 0:
                                     logger.debug(
                                         "已使用icacls设置Windows文件权限（仅当前用户可访问）"
@@ -247,7 +249,9 @@ class CheckpointManager:
                                 "/Q",  # 静默执行
                             ]
 
-                            result = subprocess.run(cmd, capture_output=True, text=True)  # nosec B603
+                            result = subprocess.run(
+                                cmd, capture_output=True, text=True
+                            )  # nosec B603
                             if result.returncode == 0:
                                 logger.debug("已使用icacls设置Windows文件权限（仅当前用户可访问）")
                             else:
