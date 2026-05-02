@@ -160,10 +160,12 @@ class TestWindowsMemoryLocking(unittest.TestCase):
             else:
                 # 获取错误码
                 error_code = ctypes.get_last_error()
-                # ERROR_NOT_ENOUGH_MEMORY (14) 或 ERROR_PRIVILEGE_NOT_HELD (1314) 是预期的
+                # ERROR_NOT_ENOUGH_MEMORY (14) 或 ERROR_WORKING_SET_QUOTA (1453)
+                # 或 ERROR_PRIVILEGE_NOT_HELD (1314) 是预期的
                 # 这些错误表示功能存在但当前用户没有权限
                 self.assertTrue(
-                    error_code in [14, 1314], f"预期的权限或内存不足错误，实际: {error_code}"
+                    error_code in [14, 1453, 1314],
+                    f"预期的权限或内存不足错误，实际: {error_code}"
                 )
 
         except Exception as e:
