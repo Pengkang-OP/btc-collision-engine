@@ -33,6 +33,9 @@ class DataLogger:
     monitoring_data目录已废弃。
     """
 
+    # 文件原子替换重试的指数退避延迟序列（秒）
+    _REPLACE_BACKOFF_DELAYS: List[float] = [1.0, 2.0, 4.0]
+
     def __init__(self, storage_dir: Optional[str] = None) -> None:
         """
         初始化数据日志记录器
@@ -355,56 +358,44 @@ class DataLogger:
             self.logger.error(f"错误记录 [{error_type}]: {message}")
 
     def save_current_data(self) -> None:
-        """保存当前数据到文件（优化：I/O操作移出锁范围 + 深拷贝确保一致性 + 重试机制）"""
+        """保存当前数据到文件
+
+        使用原子写入（临时文件 + os.replace），
+        _safe_file_replace 内部包含完整的重试+回退机制，
+        无需外层重复重试。
+        """
         # 在锁内深拷贝数据，确保嵌套字典的一致性
         with self._lock:
             save_data = {
                 "saved_at": datetime.now().isoformat(),
                 "uptime": time.time() - self._start_time,
-                **copy.deepcopy(self._current_data),  # 使用深拷贝
+                **copy.deepcopy(self._current_data),
             }
 
-        # 在锁外执行I/O操作
-        temp_file = None  # 初始化临时文件变量，避免异常处理中NameError
-        max_retries = 3
+        temp_file = None
+        try:
+            temp_fd, temp_file = tempfile.mkstemp(
+                dir=os.path.dirname(self.current_data_file),
+                suffix=".tmp",
+                prefix=".current_data_",
+            )
+            os.close(temp_fd)
 
-        for attempt in range(max_retries):
-            try:
-                # 使用原子写入：先写临时文件，再重命名
-                # 使用tempfile生成唯一文件名，避免冲突
-                temp_fd, temp_file = tempfile.mkstemp(
-                    dir=os.path.dirname(self.current_data_file),
-                    suffix=".tmp",
-                    prefix=".current_data_",
-                )
-                os.close(temp_fd)  # 关闭文件描述符，稍后用open写入
+            with open(temp_file, "w", encoding="utf-8") as f:
+                fast_dump(save_data, f, ensure_ascii=False, indent=2)
+                f.flush()
+                os.fsync(f.fileno())
 
-                with open(temp_file, "w", encoding="utf-8") as f:
-                    fast_dump(save_data, f, ensure_ascii=False, indent=2)
-                    f.flush()
-                    os.fsync(f.fileno())  # 确保数据写入磁盘
-
-                # 使用带重试和回退的原子替换
-                if self._safe_file_replace(temp_file, self.current_data_file):
-                    return  # 成功
-                else:
-                    raise OSError("文件替换失败（所有回退方案均已尝试）")
-
-            except Exception as e:
-                self.logger.error(f"保存当前数据失败 (尝试 {attempt + 1}/{max_retries}): {e}")
-                # 清理临时文件
+            if not self._safe_file_replace(temp_file, self.current_data_file):
+                self.logger.error("保存当前数据失败: 文件替换所有方案均失败")
+        except Exception as e:
+            self.logger.error(f"保存当前数据失败: {e}")
+        finally:
+            if temp_file and os.path.exists(temp_file):
                 try:
-                    if temp_file and os.path.exists(temp_file):
-                        os.remove(temp_file)
-                except Exception as cleanup_error:
-                    self.logger.debug(f"清理临时文件失败（可忽略）: {cleanup_error}")
-
-                # 如果不是最后一次尝试，等待后重试
-                if attempt < max_retries - 1:
-                    delays = [1.0, 2.0, 4.0]
-                    time.sleep(delays[min(attempt, len(delays) - 1)])
-                    continue
-                break
+                    os.remove(temp_file)
+                except OSError:
+                    pass
 
     def _safe_file_replace(self, src: str, dst: str, max_retries: int = 3) -> bool:
         """安全的原子文件替换，带指数退避重试和回退机制
@@ -422,7 +413,7 @@ class DataLogger:
         Returns:
             True 如果替换成功，False 如果所有尝试都失败
         """
-        delays = [1.0, 2.0, 4.0]  # 指数退避: 1s → 2s → 4s
+        delays = self._REPLACE_BACKOFF_DELAYS
 
         for attempt in range(max_retries):
             try:
@@ -452,8 +443,13 @@ class DataLogger:
                     )
                     time.sleep(delay)
                     continue
-                self.logger.error(f"文件替换失败 ({max_retries}/{max_retries}): {e}")
-                return False
+                # 最后一次尝试失败，也尝试回退方案
+                # （某些杀毒软件返回非标准 OSError 而非 PermissionError）
+                self.logger.warning(
+                    f"原子替换全部失败 ({max_retries}/{max_retries})，"
+                    f"回退到直接写入: {e} - {dst}"
+                )
+                return self._fallback_direct_write(src, dst)
 
         return False
 
@@ -540,71 +536,56 @@ class DataLogger:
             return False
 
     def save_history_data(self) -> None:
-        """保存历史数据到文件（优化：I/O操作移出锁范围 + 数据恢复 + 唯一临时文件 + 重试机制）"""
+        """保存历史数据到文件
+
+        _safe_file_replace 内部包含完整的重试+回退机制，
+        无需外层重复重试。
+        """
         # 在锁内获取数据
         with self._lock:
             new_data = list(self._history_buffer)
             self._history_buffer.clear()
 
         if not new_data:
-            return  # 没有新数据需要保存
+            return
 
-        # 在锁外执行I/O操作
-        temp_file = None  # 初始化临时文件变量，避免异常处理中NameError
-        max_retries = 3
+        temp_file = None
+        try:
+            history = self._load_history_with_recovery()
+            history.extend(new_data)
+            if len(history) > 1000:
+                history = history[-1000:]
 
-        for attempt in range(max_retries):
-            try:
-                # 读取现有历史数据（带恢复机制）
-                history = self._load_history_with_recovery()
+            temp_fd, temp_file = tempfile.mkstemp(
+                dir=os.path.dirname(self.history_data_file),
+                suffix=".tmp",
+                prefix=".history_data_",
+            )
+            os.close(temp_fd)
 
-                # 添加新数据
-                history.extend(new_data)
+            with open(temp_file, "w", encoding="utf-8") as f:
+                fast_dump(history, f, ensure_ascii=False, indent=2)
+                f.flush()
+                os.fsync(f.fileno())
 
-                # 限制历史数据数量
-                if len(history) > 1000:
-                    history = history[-1000:]
-
-                # 原子写入，使用唯一临时文件名
-                temp_fd, temp_file = tempfile.mkstemp(
-                    dir=os.path.dirname(self.history_data_file),
-                    suffix=".tmp",
-                    prefix=".history_data_",
-                )
-                os.close(temp_fd)
-
-                with open(temp_file, "w", encoding="utf-8") as f:
-                    fast_dump(history, f, ensure_ascii=False, indent=2)
-                    f.flush()
-                    os.fsync(f.fileno())
-
-                # 使用带重试和回退的原子替换
-                if self._safe_file_replace(temp_file, self.history_data_file):
-                    return  # 成功
-                else:
-                    # 替换失败，抛出异常进入重试流程
-                    raise OSError("文件替换失败（所有回退方案均已尝试）")
-
-            except Exception as e:
-                self.logger.error(f"保存历史数据失败 (尝试 {attempt + 1}/{max_retries}): {e}")
-                # 清理临时文件
-                try:
-                    if temp_file and os.path.exists(temp_file):
-                        os.remove(temp_file)
-                except Exception as cleanup_error:
-                    self.logger.debug(f"清理临时文件失败（可忽略）: {cleanup_error}")
-
-                # 如果不是最后一次尝试，等待后重试
-                if attempt < max_retries - 1:
-                    delays = [1.0, 2.0, 4.0]
-                    time.sleep(delays[min(attempt, len(delays) - 1)])
-                    continue
-
-                # 所有重试都失败，将数据放回缓冲区
+            if not self._safe_file_replace(temp_file, self.history_data_file):
+                self.logger.error("保存历史数据失败: 文件替换所有方案均失败")
+                # 写入失败将数据放回缓冲区
                 with self._lock:
                     for item in reversed(new_data):
                         self._history_buffer.appendleft(item)
-                break
+        except Exception as e:
+            self.logger.error(f"保存历史数据失败: {e}")
+            # 异常时也将数据放回缓冲区
+            with self._lock:
+                for item in reversed(new_data):
+                    self._history_buffer.appendleft(item)
+        finally:
+            if temp_file and os.path.exists(temp_file):
+                try:
+                    os.remove(temp_file)
+                except OSError:
+                    pass
 
     def _load_history_with_recovery(self) -> list:
         """加载历史数据，带损坏恢复机制"""
