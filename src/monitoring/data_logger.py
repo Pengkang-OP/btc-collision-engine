@@ -291,6 +291,22 @@ class DataLogger:
             current_position: 当前位置
             additional_info: 额外信息
         """
+        # 类型验证/强制转换（防御 Mock 对象等非标准输入）
+        if not isinstance(mode, str):
+            mode = str(mode) if mode else ""
+        if not isinstance(target_count, int):
+            try:
+                target_count = int(target_count)
+            except (TypeError, ValueError):
+                target_count = 0
+        if not isinstance(is_running, bool):
+            is_running = bool(is_running)
+        if not isinstance(current_position, int):
+            try:
+                current_position = int(current_position)
+            except (TypeError, ValueError):
+                current_position = 0
+
         with self._lock:
             engine_data = {
                 "timestamp": time.time(),

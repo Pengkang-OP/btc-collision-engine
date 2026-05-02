@@ -198,15 +198,20 @@ class EnhancedMonitoringSystem:
 
                 # 记录引擎数据
                 if self.data_logger and self.engine:
+                    # 安全获取引擎属性：手动类型强制转换，防止 Mock/非标准对象污染数据
+                    _raw_mode = getattr(self.engine, "_current_mode", "")
+                    _mode = _raw_mode if isinstance(_raw_mode, str) else str(_raw_mode) if _raw_mode else ""
+                    _raw_pos = getattr(self.engine, "_current_position", 0)
+                    _pos = _raw_pos if isinstance(_raw_pos, int) else int(_raw_pos) if isinstance(_raw_pos, (int, float)) else 0
                     self.data_logger.record_engine_data(
-                        mode=getattr(self.engine, "_current_mode", ""),
+                        mode=_mode,
                         target_count=len(getattr(self.engine, "targets", [])),
                         is_running=(
                             self.engine.is_running()
                             if hasattr(self.engine, "is_running")
                             else False
                         ),
-                        current_position=getattr(self.engine, "_current_position", 0),
+                        current_position=_pos,
                     )
 
                 # 记录系统数据
