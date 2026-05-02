@@ -22,7 +22,6 @@ from src.monitoring.monitoring_system import (
     AnomalyDetector,
     MonitoringAlertAdapter,
     ReportGenerator,
-    MonitoringData,
 )
 from src.monitoring.data_logger import DataLogger
 
