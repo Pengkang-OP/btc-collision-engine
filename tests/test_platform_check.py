@@ -103,12 +103,18 @@ class TestPlatformCheckerChecks(TestCase):
     """平台检查功能测试"""
 
     def setUp(self):
-        """创建临时项目目录"""
+        """创建临时项目目录并固定 i18n 为中文"""
         self.test_dir = tempfile.mkdtemp()
         self.checker = PlatformChecker(project_root=self.test_dir)
+        # 固定语言为 zh_CN，确保中文断言在任意 locale 一致
+        from src.i18n import set_language, get_language
+        self._saved_language = get_language()
+        set_language("zh_CN")
 
     def tearDown(self):
-        """清理临时目录"""
+        """清理临时目录并恢复语言"""
+        from src.i18n import set_language
+        set_language(self._saved_language)
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir)
 
@@ -487,8 +493,14 @@ class TestMacOSPlatform(unittest.TestCase):
 
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
+        # 固定语言为 zh_CN，确保中文断言在任意 locale 一致
+        from src.i18n import set_language, get_language
+        self._saved_language = get_language()
+        set_language("zh_CN")
 
     def tearDown(self):
+        from src.i18n import set_language
+        set_language(self._saved_language)
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir)
 

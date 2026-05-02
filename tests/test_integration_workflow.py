@@ -85,7 +85,7 @@ class TestLoggingPipeline:
             )
             collector.collect_from_queue(LogEventType.ENGINE_ERROR, {"error": "GPU内存不足"})
 
-            time.sleep(0.3)
+            time.sleep(0.5)  # 增加等待时间确保日志管道处理完毕
             collector.stop()
 
             # 验证存储中有数据

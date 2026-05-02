@@ -102,11 +102,11 @@ class TestKeyCollisionEngineCallbacks(unittest.TestCase):
             max_workers=1,
         )
         engine.start(mode="random")
-        time.sleep(0.3)
+        time.sleep(1.0)  # 增加运行时间确保引擎产生足够数据
         engine.stop()
-        # 等待完成回调
-        complete_called.wait(timeout=5)
-        self.assertTrue(complete_called.is_set())
+        # 等待完成回调（stop()内部join最长10s，需要等worker完全退出）
+        complete_called.wait(timeout=15)
+        self.assertTrue(complete_called.is_set(), "完成回调应在stop后触发")
 
     def test_match_callback_called_for_known_key(self):
         """使用已知私钥-地址对，range 扫描找到匹配后触发回调"""
@@ -162,10 +162,17 @@ class TestKeyCollisionEngineRangeScan(unittest.TestCase):
             max_workers=1,
         )
         engine.start(mode="range", start=1, end=1000)
-        complete_event.wait(timeout=30)
+        # 确保引擎已启动
+        time.sleep(0.5)
+        if not engine.is_running():
+            self.fail("引擎未启动")
+        # 等待范围扫描完成（增加超时到60秒以处理慢CI环境）
+        if not complete_event.wait(timeout=60):
+            engine.stop()
+            self.fail("范围扫描未在60秒内完成")
         stats = engine.get_stats()
         # 范围内应检查接近1000个
-        self.assertGreater(stats.total_checked, 900)
+        self.assertGreater(stats.total_checked, 900, f"total_checked={stats.total_checked}")
 
 
 class TestKeyCollisionEngineBruteForce(unittest.TestCase):

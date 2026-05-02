@@ -256,11 +256,13 @@ class TestRaceConditions:
     def test_race_condition_stats_update(self):
         """测试统计数据竞态条件
 
-        注意: 这个测试验证的是“弱线程安全”- 即不会崩溃
-        由于CollisionStats.update()使用赋值而非累加,多个线程同时更新时会丢失数据
+        注意: 这个测试验证的是"弱线程安全"- 即不会崩溃
+        CollisionStats.update() 使用赋值语义（设置累计值），所有调用者
+        传递的是累计检查数量，而非增量。这是有意为之的设计决策 -
+        详见 collision_stats.py 的 update() 文档。
 
-        TODO: 如果需要使用累加语义,应修改CollisionStats.update()方法:
-            self.total_checked += checked_count  # 累加而非赋值
+        如需增量累加，CollisionStats.increment(delta) 已提供线程安全的
+        累加语义（与 update() 共享同一把锁）。
 
         当前测试仅验证:
         1. 多线程并发不会导致崩溃

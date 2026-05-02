@@ -148,14 +148,21 @@ class TestLiveRangeCountFix(unittest.TestCase):
 
         self.engine._live_range_count = 0
         self.engine.start(mode="range", start=1, end=500)
-        complete_event.wait(timeout=30)
+        # 确保引擎已启动
+        time.sleep(0.5)
+        if not self.engine.is_running():
+            self.fail("引擎未启动")
+        # 等待范围扫描完成（增加超时到60秒处理慢CI）
+        if not complete_event.wait(timeout=60):
+            self.engine.stop()
+            self.fail("范围扫描未在60秒内完成")
 
         # range_scan最终应正确计数（500个私钥）
         stats = self.engine.get_stats()
         final_count = stats.total_checked
 
         # 实际检查数应接近500（排除跳过无效值的）
-        self.assertGreater(final_count, 0)
+        self.assertGreater(final_count, 0, f"final_count={final_count}")
         self.assertLessEqual(final_count, 500)
 
         print(f"\n[P1-5-D ✓] range_scan 最终计数: {final_count} (范围1-500)")

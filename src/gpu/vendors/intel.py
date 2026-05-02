@@ -144,6 +144,11 @@ class IntelGPUVendor(GPUVendorBase):
             )
 
         # 7. 记录已知问题
+        # global_char_hang_bug: Intel Arc GPU 驱动级缺陷 (v31.0.101.x 及更早)。
+        # 当内核使用 global char* 指针作为参数时，GPU 可能无限挂起直到 TDR 复位。
+        # 缓解方案: 启用 uint32_workaround，将 uchar* 缓冲区替换为 uint32* 数组，
+        # 从根源上避免 global char* 传递给内核。此问题是 Intel 官方记录的已知限制，
+        # 最新 Arc 驱动 (v32.x+) 已部分修复，但仍建议保守启用 workaround。
         if "global_char_hang_bug" in known_issues:
             _rate_logger.warning(
                 "⚠️ Intel Arc存在global char* hang bug, " "已启用uint32 workaround",

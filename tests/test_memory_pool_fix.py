@@ -12,10 +12,14 @@ GPU内存池修复验证测试
 
 import sys
 import time
+import pytest
 from pathlib import Path
 
 # 添加项目根目录
 sys.path.insert(0, str(Path(__file__).parent))
+
+# 标记为 GPU 测试，CI 中跳过
+pytestmark = pytest.mark.gpu
 
 from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
 

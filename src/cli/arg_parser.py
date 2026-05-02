@@ -91,7 +91,7 @@ def parse_args() -> argparse.Namespace:  # noqa: D401
         "-t", "--targets", metavar="ADDRESS", nargs="+", help="目标比特币地址，多个地址以空格分隔"
     )
     target_ex.add_argument(
-        "-", "--file", metavar="FILE", help="从文件批量加载目标地址，每行一个，支持 # 注释"
+        "-f", "--file", metavar="FILE", help="从文件批量加载目标地址，每行一个，支持 # 注释"
     )
     core_group.add_argument(
         "-m",

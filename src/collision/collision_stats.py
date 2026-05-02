@@ -35,24 +35,55 @@ class CollisionStats:
         # 每个match: {"address": str, "timestamp": float, "match_index": int}
 
     def update(self, checked_count: int, total_range: int = 0) -> None:
-        """更新统计数据
+        """更新统计数据（赋值语义：设置累计值）
+
+        设计说明:
+        - 赋值语义是有意为之。所有调用者传递的是累计检查数量
+          （如 engine.stats.update(safe_count)、stats.update(batch_count)），
+          而非增量。这避免了调用者需要维护局部计数器。
+        - 如需增量累加，请使用 increment() 方法。
 
         参数:
-            checked_count: 已检查数量
+            checked_count: 已检查的累计数量
             total_range: 总范围（仅 range 模式传入，用于计算 ETA）
         """
         with self._lock:
             self.total_checked = checked_count
-            self.elapsed = time.time() - self.start_time
-            self.speed = self.total_checked / self.elapsed if self.elapsed > 0 else 0
+            self._refresh_elapsed_and_speed()
             if total_range > 0:
                 self.total_range = total_range
-            # 计算 ETA
-            if self.total_range > 0 and self.speed > 0:
-                remaining = self.total_range - self.total_checked
-                self.eta_seconds = remaining / self.speed if remaining > 0 else 0.0
-            else:
-                self.eta_seconds = -1.0
+            self._calc_eta()
+
+    def increment(self, delta: int, total_range: int = 0) -> None:
+        """增量更新统计数据（累加语义）
+
+        用于调用者只知道增量（而非累计值）的场景。
+        线程安全：与 update() 共享同一把锁。
+
+        参数:
+            delta: 本次新增的检查数量（必须 >= 0）
+            total_range: 总范围（仅 range 模式传入，用于计算 ETA）
+        """
+        assert delta >= 0, f"delta must be non-negative, got {delta}"
+        with self._lock:
+            self.total_checked += delta
+            self._refresh_elapsed_and_speed()
+            if total_range > 0:
+                self.total_range = total_range
+            self._calc_eta()
+
+    def _refresh_elapsed_and_speed(self) -> None:
+        """刷新运行时间和速度（调用者需持有 _lock）"""
+        self.elapsed = time.time() - self.start_time
+        self.speed = self.total_checked / self.elapsed if self.elapsed > 0 else 0
+
+    def _calc_eta(self) -> None:
+        """计算预计剩余时间（调用者需持有 _lock）"""
+        if self.total_range > 0 and self.speed > 0:
+            remaining = self.total_range - self.total_checked
+            self.eta_seconds = remaining / self.speed if remaining > 0 else 0.0
+        else:
+            self.eta_seconds = -1.0
 
     def add_match(self, private_key: bytes, address: str) -> None:
         """记录一个匹配结果（不存储私钥）

@@ -165,7 +165,7 @@ def main():
     # 加载目标地址
     print("\n加载目标地址...")
     resolver = TargetResolver()
-    targets = resolver.load_from_file("valid_addresses.txt")
+    targets = resolver.load_from_file(os.path.join(os.path.dirname(__file__), "valid_addresses.txt"))
     print(f"加载了 {len(targets)} 个目标地址")
 
     # 运行CPU测试

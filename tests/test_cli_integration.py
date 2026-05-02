@@ -112,13 +112,25 @@ class TestCLIEndToEnd:
     """参数解析 -> 验证 -> 执行的端到端集成流测试"""
 
     def setup_method(self):
-        """每个测试前重置 CLIOutput 和 LogWindow 单例，确保测试隔离"""
+        """每个测试前重置 CLIOutput、LogWindow 单例，并固定为中文语言。"""
         from src.cli.output import CLIOutput
 
         CLIOutput.reset_instance()
         from src.cli.log_window import reset_log_window_instance
 
         reset_log_window_instance()
+
+        # 固定 i18n 语言为 zh_CN，确保中文断言在任意 locale 环境下一致
+        from src.i18n import set_language, get_language
+
+        self._saved_language = get_language()
+        set_language("zh_CN")
+
+    def teardown_method(self):
+        """每个测试后恢复原始语言，避免跨测试污染。"""
+        from src.i18n import set_language
+
+        set_language(self._saved_language)
 
     def test_parse_validate_load_flow(self, tmp_path, monkeypatch):
         """参数解析->验证->目标加载完整流"""

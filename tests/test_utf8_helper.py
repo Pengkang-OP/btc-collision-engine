@@ -48,7 +48,15 @@ class TestUTF8Helper(unittest.TestCase):
 
 
 class TestUTF8HelperMock(unittest.TestCase):
-    """使用mock的UTF-8测试（不修改真实的stdout）"""
+    """使用mock的UTF-8测试（不修改真实的stdout）。
+
+    这些测试需要访问 ctypes.windll.kernel32，仅在 Windows 平台可用。
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        if sys.platform != "win32":
+            raise unittest.SkipTest("Windows-only: ctypes.windll not available on this platform")
 
     def test_windows_api_called_on_windows(self):
         """测试Windows平台调用Windows API"""

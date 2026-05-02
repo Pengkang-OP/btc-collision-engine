@@ -150,8 +150,9 @@ class TestEnhancedMonitoringSystemLifecycle:
         self.monitor.stop()
 
         assert self.monitor.is_running() is False
-        # 等待线程完全停止
-        time.sleep(0.2)
+        # 等待线程完全停止（join已在stop内完成，额外等待确保OS调度）
+        if self.monitor._thread:
+            self.monitor._thread.join(timeout=5)
         assert self.monitor._thread.is_alive() is False
 
     def test_start_already_running(self):
