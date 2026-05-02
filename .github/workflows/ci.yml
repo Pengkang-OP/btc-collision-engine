@@ -14,37 +14,37 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.12']
+        python-version: [ "3.12" ]
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: 设置 Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: 设置 Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: 安装依赖
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pytest pytest-benchmark pytest-cov pytest-timeout
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-benchmark pytest-cov pytest-timeout
 
-    - name: 检查导入路径
-      run: |
-        python scripts/check_import_paths.py
+      - name: 检查导入路径
+        run: |
+          python scripts/check_import_paths.py
 
-    - name: 运行测试
-      timeout-minutes: 120
-      run: |
-        python -m pytest tests/ -v --tb=short --cov=src --cov-report=xml --cov-fail-under=40 -m "not (gpu or gpu_kernel)" --timeout=600 --timeout-method=thread -p no:cacheprovider
+      - name: 运行测试
+        timeout-minutes: 70
+        run: |
+          python -m pytest tests/ -v --tb=short --cov=src --cov-report=xml --cov-fail-under=40 -m "not (gpu or gpu_kernel)" --timeout=600 --timeout-method=thread -p no:cacheprovider
 
-    - name: 上传覆盖率报告
-      uses: codecov/codecov-action@v4
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
+      - name: 上传覆盖率报告
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
 
   # 导入路径专项检查
   import-check:
@@ -52,23 +52,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: 设置 Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-    - name: 安装依赖
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-    - name: 运行导入路径检查
-      run: |
-        echo "🔍 检查导入路径规范..."
-        python scripts/check_import_paths.py
-        echo "✅ 导入路径检查通过"
+      - name: 运行导入路径检查
+        run: |
+          echo "🔍 检查导入路径规范..."
+          python scripts/check_import_paths.py
+          echo "✅ 导入路径检查通过"
 
   # 关键测试
   critical-tests:
@@ -76,30 +76,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: 设置 Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-    - name: 安装依赖
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pytest pytest-benchmark
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-benchmark
 
-    - name: 运行导入路径测试
-      run: |
-        echo "🧪 运行导入路径专项测试..."
-        python -m pytest tests/test_import_paths.py -v
-        echo "✅ 导入路径测试通过"
+      - name: 运行导入路径测试
+        run: |
+          echo "🧪 运行导入路径专项测试..."
+          python -m pytest tests/test_import_paths.py -v
+          echo "✅ 导入路径测试通过"
 
-    - name: 运行Bech32/P2SH测试
-      run: |
-        echo "🧪 运行Bech32/P2SH测试..."
-        python -m pytest tests/test_bech32_p2sh_conversion.py tests/test_bech32_p2sh_performance.py -v
-        echo "✅ Bech32/P2SH测试通过"
+      - name: 运行Bech32/P2SH测试
+        run: |
+          echo "🧪 运行Bech32/P2SH测试..."
+          python -m pytest tests/test_bech32_p2sh_conversion.py tests/test_bech32_p2sh_performance.py -v
+          echo "✅ Bech32/P2SH测试通过"
 
   # 代码格式化检查
   lint:
@@ -107,25 +107,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: 设置 Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-    - name: 安装lint工具
-      run: |
-        python -m pip install --upgrade pip
-        pip install black flake8
+      - name: 安装lint工具
+        run: |
+          python -m pip install --upgrade pip
+          pip install black flake8
 
-    - name: 运行Black格式化检查
-      run: |
-        black --check --line-length=100 --target-version py312 src/ tests/ scripts/
+      - name: 运行Black格式化检查
+        run: |
+          black --check --line-length=100 --target-version py312 src/ tests/ scripts/
 
-    - name: 运行Flake8检查
-      run: |
-        flake8 src/ tests/ scripts/ --max-line-length=100 --ignore=E203,W503
+      - name: 运行Flake8检查
+        run: |
+          flake8 src/ tests/ scripts/ --max-line-length=100 --ignore=E203,W503
 
   # 文档检查
   docs-check:
@@ -133,20 +133,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: 检查Markdown文档
-      uses: DavidAnson/markdownlint-cli2-action@v15
-      with:
-        globs: '**/*.md'
-        config: .markdownlint.json
-      continue-on-error: true
+      - name: 检查Markdown文档
+        uses: DavidAnson/markdownlint-cli2-action@v15
+        with:
+          globs: "**/*.md"
+          config: .markdownlint.json
+        continue-on-error: true
 
-    - name: 验证文档链接
-      run: |
-        echo "📚 检查文档结构..."
-        ls -la docs/
-        echo "✅ 文档检查完成"
+      - name: 验证文档链接
+        run: |
+          echo "📚 检查文档结构..."
+          ls -la docs/
+          echo "✅ 文档检查完成"
 
   # ──────────────────────────────────────────
   # P0 新增: CI 门禁检查 (必须全部通过)
@@ -154,45 +154,45 @@ jobs:
   gate:
     name: CI 门禁检查
     runs-on: ubuntu-latest
-    needs: [code-quality, lint, critical-tests]
+    needs: [ code-quality, lint, critical-tests ]
     if: always()
 
     steps:
-    - name: 验证所有门禁通过
-      run: |
-        echo "🔐 CI 门禁检查..."
+      - name: 验证所有门禁通过
+        run: |
+          echo "🔐 CI 门禁检查..."
 
-        # 检查所有依赖 job 是否成功
-        FAILED=0
+          # 检查所有依赖 job 是否成功
+          FAILED=0
 
-        if [ "${{ needs.code-quality.result }}" != "success" ]; then
-          echo "❌ code-quality 未通过: ${{ needs.code-quality.result }}"
-          FAILED=1
-        else
-          echo "✅ code-quality 通过"
-        fi
+          if [ "${{ needs.code-quality.result }}" != "success" ]; then
+            echo "❌ code-quality 未通过: ${{ needs.code-quality.result }}"
+            FAILED=1
+          else
+            echo "✅ code-quality 通过"
+          fi
 
-        if [ "${{ needs.lint.result }}" != "success" ]; then
-          echo "❌ lint 未通过: ${{ needs.lint.result }}"
-          FAILED=1
-        else
-          echo "✅ lint 通过"
-        fi
+          if [ "${{ needs.lint.result }}" != "success" ]; then
+            echo "❌ lint 未通过: ${{ needs.lint.result }}"
+            FAILED=1
+          else
+            echo "✅ lint 通过"
+          fi
 
-        if [ "${{ needs.critical-tests.result }}" != "success" ]; then
-          echo "❌ critical-tests 未通过: ${{ needs.critical-tests.result }}"
-          FAILED=1
-        else
-          echo "✅ critical-tests 通过"
-        fi
+          if [ "${{ needs.critical-tests.result }}" != "success" ]; then
+            echo "❌ critical-tests 未通过: ${{ needs.critical-tests.result }}"
+            FAILED=1
+          else
+            echo "✅ critical-tests 通过"
+          fi
 
-        if [ $FAILED -eq 1 ]; then
-          echo ""
-          echo "⛔ CI 门禁未通过！请修复上述问题后重新提交。"
-          exit 1
-        fi
+          if [ $FAILED -eq 1 ]; then
+            echo ""
+            echo "⛔ CI 门禁未通过！请修复上述问题后重新提交。"
+            exit 1
+          fi
 
-        echo "✅ 所有 CI 门禁通过！"
+          echo "✅ 所有 CI 门禁通过！"
 
   # ──────────────────────────────────────────
   # P0 新增: 安全扫描 (Bandit)
@@ -202,62 +202,62 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: 设置 Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-        cache: 'pip'
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
 
-    - name: 安装依赖
-      run: |
-        python -m pip install --upgrade pip
-        pip install bandit>=1.7.0
-        # Bandit 是静态分析工具，无需安装项目运行时依赖
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit>=1.7.0
+          # Bandit 是静态分析工具，无需安装项目运行时依赖
 
-    - name: 运行 Bandit 安全扫描
-      id: bandit-scan
-      continue-on-error: true  # TODO: 源码告警清零后移除此行，启用硬阻断
-      run: |
-        echo "🔒 运行 Bandit 安全扫描..."
-        bandit -r src/ -ll -f json -o bandit-report.json
-        BANDIT_EXIT=$?
-        echo "$BANDIT_EXIT" > bandit-exit-code.txt
-        echo "--- 扫描摘要 ---"
-        if [ -s bandit-report.json ]; then
-          ISSUE_COUNT=$(jq '.results | length' bandit-report.json)
-          if [ "$ISSUE_COUNT" -gt 0 ]; then
-            echo "⚠️  发现 ${ISSUE_COUNT} 个安全问题:"
-            jq -r '.results[]? | "  [\(.test_id)] \(.filename):\(.line_number) - \(.issue_text[:120])"' bandit-report.json
-          else
-            echo "✅ 未发现安全问题"
+      - name: 运行 Bandit 安全扫描
+        id: bandit-scan
+        continue-on-error: true # TODO: 源码告警清零后移除此行，启用硬阻断
+        run: |
+          echo "🔒 运行 Bandit 安全扫描..."
+          bandit -r src/ -ll -f json -o bandit-report.json
+          BANDIT_EXIT=$?
+          echo "$BANDIT_EXIT" > bandit-exit-code.txt
+          echo "--- 扫描摘要 ---"
+          if [ -s bandit-report.json ]; then
+            ISSUE_COUNT=$(jq '.results | length' bandit-report.json)
+            if [ "$ISSUE_COUNT" -gt 0 ]; then
+              echo "⚠️  发现 ${ISSUE_COUNT} 个安全问题:"
+              jq -r '.results[]? | "  [\(.test_id)] \(.filename):\(.line_number) - \(.issue_text[:120])"' bandit-report.json
+            else
+              echo "✅ 未发现安全问题"
+            fi
           fi
-        fi
-        if [ $BANDIT_EXIT -gt 1 ]; then
-          echo "❌ Bandit 执行异常 (exit=$BANDIT_EXIT)"
-          exit $BANDIT_EXIT
-        fi
-        echo "✅ Bandit 安全扫描完成 (exit=$BANDIT_EXIT)"
-
-    - name: 验证 Bandit 未异常崩溃
-      if: always()
-      run: |
-        if [ -f bandit-exit-code.txt ]; then
-          EXIT_CODE=$(cat bandit-exit-code.txt)
-          if [ "$EXIT_CODE" -gt 1 ]; then
-            echo "❌ Bandit 异常退出 (exit=$EXIT_CODE)，非安全问题导致"
-            exit 1
+          if [ $BANDIT_EXIT -gt 1 ]; then
+            echo "❌ Bandit 执行异常 (exit=$BANDIT_EXIT)"
+            exit $BANDIT_EXIT
           fi
-        fi
-        echo "✅ Bandit 未异常崩溃"
+          echo "✅ Bandit 安全扫描完成 (exit=$BANDIT_EXIT)"
 
-    - name: 上传 Bandit 报告
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: bandit-report
-        path: bandit-report.json
+      - name: 验证 Bandit 未异常崩溃
+        if: always()
+        run: |
+          if [ -f bandit-exit-code.txt ]; then
+            EXIT_CODE=$(cat bandit-exit-code.txt)
+            if [ "$EXIT_CODE" -gt 1 ]; then
+              echo "❌ Bandit 异常退出 (exit=$EXIT_CODE)，非安全问题导致"
+              exit 1
+            fi
+          fi
+          echo "✅ Bandit 未异常崩溃"
+
+      - name: 上传 Bandit 报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: bandit-report.json
 
   # ──────────────────────────────────────────
   # P0 新增: 类型检查 (mypy)
@@ -267,27 +267,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: 设置 Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-        cache: 'pip'
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
 
-    - name: 安装依赖
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements-base.txt
-        pip install mypy>=1.0.0
-        # mypy 类型检查仅需运行时依赖 + mypy 本身
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-base.txt
+          pip install mypy>=1.0.0
+          # mypy 类型检查仅需运行时依赖 + mypy 本身
 
-    - name: 运行 mypy 类型检查
-      continue-on-error: true  # TODO: 类型错误清零后移除此行，启用硬阻断
-      run: |
-        echo "🔍 运行 mypy 类型检查..."
-        mypy src/ --config-file pyproject.toml
-        echo "✅ mypy 类型检查通过"
+      - name: 运行 mypy 类型检查
+        continue-on-error: true # TODO: 类型错误清零后移除此行，启用硬阻断
+        run: |
+          echo "🔍 运行 mypy 类型检查..."
+          mypy src/ --config-file pyproject.toml
+          echo "✅ mypy 类型检查通过"
 
   # ──────────────────────────────────────────
   # P0 新增: 性能回归检测 (Benchmark)
@@ -298,43 +298,43 @@ jobs:
     timeout-minutes: 15
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: 设置 Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-        cache: 'pip'
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
 
-    - name: 安装依赖
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-    - name: 运行性能基准测试
-      run: |
-        echo "⚡ 运行性能基准测试..."
-        # 清理旧结果文件，避免 artifact 累积
-        rm -f benchmarks/results/benchmark_[0-9]*.json
-        BASELINE="benchmarks/results/benchmark-baseline.json"
-        if [ -f "$BASELINE" ]; then
-          echo "📊 与基线对比: $BASELINE"
-          python -m benchmarks.benchmark_runner --baseline "$BASELINE" --output benchmarks/results
-          EXIT_CODE=$?
-          if [ $EXIT_CODE -ne 0 ]; then
-            echo "⚠️ 检测到性能回归！请检查上方输出。"
-            echo "如果回归是预期内的（如新增功能导致），请更新基线文件。"
-            exit $EXIT_CODE
+      - name: 运行性能基准测试
+        run: |
+          echo "⚡ 运行性能基准测试..."
+          # 清理旧结果文件，避免 artifact 累积
+          rm -f benchmarks/results/benchmark_[0-9]*.json
+          BASELINE="benchmarks/results/benchmark-baseline.json"
+          if [ -f "$BASELINE" ]; then
+            echo "📊 与基线对比: $BASELINE"
+            python -m benchmarks.benchmark_runner --baseline "$BASELINE" --output benchmarks/results
+            EXIT_CODE=$?
+            if [ $EXIT_CODE -ne 0 ]; then
+              echo "⚠️ 检测到性能回归！请检查上方输出。"
+              echo "如果回归是预期内的（如新增功能导致），请更新基线文件。"
+              exit $EXIT_CODE
+            fi
+          else
+            echo "⚠️ 未找到基线文件，跳过回归对比（仅运行基准测试）"
+            python -m benchmarks.benchmark_runner --output benchmarks/results
           fi
-        else
-          echo "⚠️ 未找到基线文件，跳过回归对比（仅运行基准测试）"
-          python -m benchmarks.benchmark_runner --output benchmarks/results
-        fi
-        echo "✅ 基准测试完成"
+          echo "✅ 基准测试完成"
 
-    - name: 上传基准测试结果
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: benchmark-results
-        path: benchmarks/results/benchmark_*.json
+      - name: 上传基准测试结果
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: benchmarks/results/benchmark_*.json
