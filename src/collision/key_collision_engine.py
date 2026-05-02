@@ -4,6 +4,7 @@ import os
 import time
 import threading
 import concurrent.futures
+import hashlib
 import psutil
 import signal
 from typing import Set, Optional, Tuple, List, Dict, Any, cast
@@ -29,6 +30,9 @@ from ..core.thread_pool import _validate_worker_count
 # v3.2.0: 事件系统支持
 from .event_bus import EventBus
 from .types import ProgressCallback, MatchCallback, CompleteCallback
+
+# WIF 编码（匹配结果导出）
+from ..core.wif import WIF
 
 # 初始化日志系统（如果尚未初始化）
 init_logging()
@@ -316,8 +320,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
             return True
 
         on_match = self.on_match
-
-        import hashlib
 
         key_hash = hashlib.sha256(private_key).hexdigest()[:16]
 
@@ -724,8 +726,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
             True 表示应继续运行，False 表示应停止引擎
         """
         try:
-            from ..core.wif import WIF
-
             pk_bytes = bytes(private_key) if not isinstance(private_key, bytes) else private_key
             wif = WIF.encode(pk_bytes, compressed=True)
             local_matches.append((pk_bytes, matched_address, wif))
@@ -804,8 +804,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         continue
 
                     # 短期缓存 + 去重检查
-                    import hashlib
-
                     key_fp = hashlib.sha256(private_key).digest()[:8]
                     if key_fp in recent_keys:
                         continue
@@ -1207,8 +1205,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
                 if matched_address:
                     try:
-                        from ..core.wif import WIF
-
                         # 将private_key转换为bytes（可能是memoryview）
                         pk_bytes = (
                             bytes(private_key)
@@ -1489,8 +1485,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     # 检查匹配（标准化为小写）
                     if address.lower() in self.targets:
                         try:
-                            from ..core.wif import WIF
-
                             # 将private_key转换为bytes（可能是memoryview）
                             pk_bytes = (
                                 bytes(private_key)

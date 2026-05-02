@@ -65,7 +65,8 @@ class KeyboardListener:
                 cls._platform_available = False
                 cls._platform_unavailable_reason = str(exc)
 
-        assert cls._platform_available is not None
+        if cls._platform_available is None:
+            raise RuntimeError("KeyboardListener 平台检测逻辑错误：_platform_available 未设置")
         return cls._platform_available
 
     @classmethod
