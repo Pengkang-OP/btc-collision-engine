@@ -15,6 +15,7 @@ from src.gpu.performance_optimizer import (
     GPUPerformanceOptimizer,
     PerformanceMetrics,
     GPUVendor,
+    get_gpu_optimizer,
 )
 from src.collision.collision_stats import CollisionStats
 
@@ -109,6 +110,80 @@ class TestPerformanceOptimizer:
         # 验证历史记录
         with optimizer._lock:
             assert len(optimizer._metrics_history) == 100
+
+    def test_vendor_detection(self):
+        """测试GPU厂商检测"""
+        optimizer = GPUPerformanceOptimizer()
+        # NVIDIA
+        assert optimizer.detect_vendor("NVIDIA GeForce RTX 3080", "NVIDIA Corporation") == GPUVendor.NVIDIA
+        assert optimizer.detect_vendor("RTX 4090", "") == GPUVendor.NVIDIA
+        # AMD
+        assert optimizer.detect_vendor("AMD Radeon RX 6800 XT", "Advanced Micro Devices") == GPUVendor.AMD
+        # Intel
+        assert optimizer.detect_vendor("Intel Arc A770", "Intel Corporation") == GPUVendor.INTEL
+        # Unknown
+        assert optimizer.detect_vendor("Unknown GPU", "Unknown") == GPUVendor.UNKNOWN
+
+    def test_singleton_pattern(self):
+        """测试单例模式"""
+        optimizer1 = get_gpu_optimizer()
+        optimizer2 = get_gpu_optimizer()
+        assert optimizer1 is optimizer2
+
+    def test_reset(self):
+        """测试重置功能"""
+        optimizer = GPUPerformanceOptimizer()
+        optimizer.record_performance(PerformanceMetrics())
+        optimizer.create_optimized_profile("Test", "Test", 8 * 1024**3)
+        optimizer.reset()
+        with optimizer._lock:
+            assert len(optimizer._metrics_history) == 0
+        assert optimizer._current_profile is None
+        assert optimizer._adjustment_count == 0
+        assert optimizer._last_adjustment_time == 0.0
+
+    def test_memory_based_batch_adjustment(self):
+        """测试基于显存的batch_size调整"""
+        optimizer = GPUPerformanceOptimizer()
+        # 小显存（1GB）
+        profile_small = optimizer.create_optimized_profile(
+            device_name="Test GPU", vendor_str="Test", global_mem_size=1 * 1024**3
+        )
+        # 大显存（16GB）
+        profile_large = optimizer.create_optimized_profile(
+            device_name="Test GPU", vendor_str="Test", global_mem_size=16 * 1024**3
+        )
+        assert profile_large.max_batch_size > profile_small.max_batch_size
+
+    def test_compile_time_based_adjustment(self):
+        """测试基于编译时间的调整"""
+        optimizer = GPUPerformanceOptimizer()
+        profile_fast = optimizer.create_optimized_profile(
+            device_name="Test GPU", vendor_str="Test",
+            global_mem_size=8 * 1024**3, compile_time_ms=5000,
+        )
+        profile_slow = optimizer.create_optimized_profile(
+            device_name="Test GPU", vendor_str="Test",
+            global_mem_size=8 * 1024**3, compile_time_ms=25000,
+        )
+        assert profile_fast.max_batch_size > profile_slow.max_batch_size
+
+    def test_get_optimization_report(self):
+        """测试优化报告生成"""
+        optimizer = GPUPerformanceOptimizer()
+        optimizer.create_optimized_profile(
+            device_name="NVIDIA RTX 3080", vendor_str="NVIDIA", global_mem_size=10 * 1024**3
+        )
+        for _ in range(5):
+            optimizer.record_performance(
+                PerformanceMetrics(batch_execution_time_ms=50, keys_per_second=100000, error_count=0)
+            )
+        report = optimizer.get_optimization_report()
+        assert report["status"] == "active"
+        assert "profile" in report
+        assert "performance" in report
+        assert "recommendations" in report
+        assert report["profile"]["vendor"] == "nvidia"
 
 
 class TestThroughput:
