@@ -1042,7 +1042,6 @@ def copy_batch_scripts(root: Path, out: Path) -> None:
         "generate_report.bat",
         "log_monitor.bat",
         "start_async_optimized.bat",
-        "start_dual.bat",
         "start_engine.bat",
         "start_monitoring.bat",
     ]

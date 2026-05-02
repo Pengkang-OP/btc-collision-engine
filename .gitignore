@@ -62,6 +62,10 @@ review_diff_*.txt
 
 # 根目录临时报告
 report.txt
+diagnostic.bat
+dual_launcher.py
+pr_page_top.png
+start_dual.bat
 
 # data_logs 运行时报告（按日期生成的 JSON）
 data_logs/report_daily_*.json
