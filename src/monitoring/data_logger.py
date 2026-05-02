@@ -89,8 +89,9 @@ class DataLogger:
                 f.flush()
                 os.fsync(f.fileno())  # 确保数据写入磁盘
 
-            # 原子替换
-            os.replace(temp_file, filepath)
+            # 原子替换（带重试和回退机制，应对 Windows 杀毒软件锁定）
+            if not self._safe_file_replace(temp_file, filepath):
+                raise OSError(f"原子替换失败: {filepath}")
 
             # 设置文件权限（仅所有者可读写）
             try:
@@ -366,7 +367,6 @@ class DataLogger:
         # 在锁外执行I/O操作
         temp_file = None  # 初始化临时文件变量，避免异常处理中NameError
         max_retries = 3
-        retry_delay = 0.5  # 秒
 
         for attempt in range(max_retries):
             try:
@@ -384,20 +384,11 @@ class DataLogger:
                     f.flush()
                     os.fsync(f.fileno())  # 确保数据写入磁盘
 
-                # 原子替换：os.replace() 在所有平台上都是原子操作
-                # 直接使用 os.replace() 替代 remove+rename 两步操作，
-                # 避免竞态条件导致的 WinError 183/WinError 32
-                try:
-                    os.replace(temp_file, self.current_data_file)
-                except PermissionError:
-                    # 文件被其他进程锁定，等待后重试
-                    if attempt < max_retries - 1:
-                        time.sleep(retry_delay * (attempt + 1))
-                        continue
-                    raise
-
-                # 成功，退出重试循环
-                return
+                # 使用带重试和回退的原子替换
+                if self._safe_file_replace(temp_file, self.current_data_file):
+                    return  # 成功
+                else:
+                    raise OSError("文件替换失败（所有回退方案均已尝试）")
 
             except Exception as e:
                 self.logger.error(f"保存当前数据失败 (尝试 {attempt + 1}/{max_retries}): {e}")
@@ -406,14 +397,124 @@ class DataLogger:
                     if temp_file and os.path.exists(temp_file):
                         os.remove(temp_file)
                 except Exception as cleanup_error:
-                    # A类修复: 资源清理失败添加DEBUG日志
                     self.logger.debug(f"清理临时文件失败（可忽略）: {cleanup_error}")
 
                 # 如果不是最后一次尝试，等待后重试
                 if attempt < max_retries - 1:
-                    time.sleep(retry_delay)
+                    delays = [1.0, 2.0, 4.0]
+                    time.sleep(delays[min(attempt, len(delays) - 1)])
                     continue
                 break
+
+    def _safe_file_replace(self, src: str, dst: str, max_retries: int = 3) -> bool:
+        """安全的原子文件替换，带指数退避重试和回退机制
+
+        Windows 上 os.replace() 可能因杀毒软件/文件索引服务
+        临时锁定目标文件而失败 (WinError 5)。此方法先尝试
+        os.replace()，失败后使用指数退避重试，最后回退到
+        直接写入（非原子但确保数据不丢失）。
+
+        Args:
+            src: 源文件路径（临时文件）
+            dst: 目标文件路径
+            max_retries: 最大重试次数
+
+        Returns:
+            True 如果替换成功，False 如果所有尝试都失败
+        """
+        delays = [1.0, 2.0, 4.0]  # 指数退避: 1s → 2s → 4s
+
+        for attempt in range(max_retries):
+            try:
+                os.replace(src, dst)
+                return True
+            except PermissionError:
+                if attempt < max_retries - 1:
+                    delay = delays[min(attempt, len(delays) - 1)]
+                    self.logger.warning(
+                        f"文件替换被拒绝 (尝试 {attempt + 1}/{max_retries})，"
+                        f"{delay:.0f}s 后重试: {dst}"
+                    )
+                    time.sleep(delay)
+                    continue
+                # 最后一次尝试失败，使用回退方案
+                self.logger.warning(
+                    f"原子替换全部失败 ({max_retries}/{max_retries})，"
+                    f"回退到直接写入: {dst}"
+                )
+                return self._fallback_direct_write(src, dst)
+            except OSError as e:
+                if attempt < max_retries - 1:
+                    delay = delays[min(attempt, len(delays) - 1)]
+                    self.logger.warning(
+                        f"文件替换失败 (尝试 {attempt + 1}/{max_retries})，"
+                        f"{delay:.0f}s 后重试: {e} - {dst}"
+                    )
+                    time.sleep(delay)
+                    continue
+                self.logger.error(f"文件替换失败 ({max_retries}/{max_retries}): {e}")
+                return False
+
+        return False
+
+    def _fallback_direct_write(self, src: str, dst: str) -> bool:
+        """回退方案：通过读取源文件内容然后直接写入目标文件
+
+        当 os.replace() 因外部锁定失败时使用此方法。
+        虽然非原子操作，但可以绕过文件替换权限问题。
+
+        Args:
+            src: 源文件路径（临时文件）
+            dst: 目标文件路径
+
+        Returns:
+            True 如果写入成功
+        """
+        try:
+            # 读取临时文件内容
+            with open(src, "r", encoding="utf-8") as f:
+                content = f.read()
+
+            # 使用唯一临时文件名，避免并发竞争
+            dst_fd, dst_tmp = tempfile.mkstemp(
+                dir=os.path.dirname(dst),
+                suffix=".direct.tmp",
+                prefix=".fallback_",
+            )
+            os.close(dst_fd)
+
+            with open(dst_tmp, "w", encoding="utf-8") as f:
+                f.write(content)
+                f.flush()
+                os.fsync(f.fileno())
+
+            # 尝试替换
+            try:
+                os.replace(dst_tmp, dst)
+            except (PermissionError, OSError):
+                # 连替换都失败，最后手段：直接覆盖
+                with open(dst, "w", encoding="utf-8") as f:
+                    f.write(content)
+                    f.flush()
+                    os.fsync(f.fileno())
+                # 清理回退临时文件
+                if os.path.exists(dst_tmp):
+                    try:
+                        os.remove(dst_tmp)
+                    except OSError:
+                        pass
+
+            # 清理源临时文件（回退路径下 src 不会被 os.replace 移动）
+            if os.path.exists(src):
+                try:
+                    os.remove(src)
+                except OSError:
+                    pass
+
+            return True
+        except Exception as e:
+            self.logger.error(f"回退直接写入也失败: {e}")
+            return False
 
     def save_history_data(self) -> None:
         """保存历史数据到文件（优化：I/O操作移出锁范围 + 数据恢复 + 唯一临时文件 + 重试机制）"""
@@ -428,7 +529,6 @@ class DataLogger:
         # 在锁外执行I/O操作
         temp_file = None  # 初始化临时文件变量，避免异常处理中NameError
         max_retries = 3
-        retry_delay = 0.5  # 秒
 
         for attempt in range(max_retries):
             try:
@@ -455,20 +555,12 @@ class DataLogger:
                     f.flush()
                     os.fsync(f.fileno())
 
-                # 原子替换：os.replace() 在所有平台上都是原子操作
-                # Windows 上也能正确处理目标文件已存在的情况，
-                # 避免 WinError 183 (文件已存在) 和 WinError 32 (文件被占用)
-                try:
-                    os.replace(temp_file, self.history_data_file)
-                except PermissionError:
-                    # 文件被其他进程锁定，等待后重试
-                    if attempt < max_retries - 1:
-                        time.sleep(retry_delay * (attempt + 1))  # 递增等待
-                        continue
-                    raise
-
-                # 成功，退出重试循环
-                return
+                # 使用带重试和回退的原子替换
+                if self._safe_file_replace(temp_file, self.history_data_file):
+                    return  # 成功
+                else:
+                    # 替换失败，抛出异常进入重试流程
+                    raise OSError("文件替换失败（所有回退方案均已尝试）")
 
             except Exception as e:
                 self.logger.error(f"保存历史数据失败 (尝试 {attempt + 1}/{max_retries}): {e}")
@@ -477,12 +569,12 @@ class DataLogger:
                     if temp_file and os.path.exists(temp_file):
                         os.remove(temp_file)
                 except Exception as cleanup_error:
-                    # A类修复: 资源清理失败添加DEBUG日志
                     self.logger.debug(f"清理临时文件失败（可忽略）: {cleanup_error}")
 
                 # 如果不是最后一次尝试，等待后重试
                 if attempt < max_retries - 1:
-                    time.sleep(retry_delay)
+                    delays = [1.0, 2.0, 4.0]
+                    time.sleep(delays[min(attempt, len(delays) - 1)])
                     continue
 
                 # 所有重试都失败，将数据放回缓冲区
