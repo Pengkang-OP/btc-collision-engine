@@ -39,7 +39,8 @@ class TestOptimizedEngineIntegration:
         engine = KeyCollisionEngine(targets=targets, use_performance_optimization=False)
 
         assert engine.generator is not None
-        assert isinstance(engine.generator, P2PKHAddressGenerator)
+        # 引擎始终使用 OptimizedP2PKHAddressGenerator（关闭优化即为标准模式）
+        assert isinstance(engine.generator, (P2PKHAddressGenerator, OptimizedP2PKHAddressGenerator))
 
     def test_optimized_address_generation(self):
         """测试优化版地址生成"""

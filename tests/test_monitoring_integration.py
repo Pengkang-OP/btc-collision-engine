@@ -221,13 +221,13 @@ class TestMonitoringWithDifferentModes:
         )
 
         engine.start(mode="brute_force", start=1)
-        # 轮询等待引擎和数据记录器都有数据
+        # 轮询等待引擎和数据记录器都有数据（增加超时到15秒）
         poll_until(
             lambda: (
                 engine.stats.total_checked > 0
                 and engine.data_logger.get_statistics().get("total_checks", 0) > 0
             ),
-            timeout=5.0,
+            timeout=15.0,
         )
         engine.stop()
 

@@ -253,7 +253,17 @@ class TestDeadlockPrevention(unittest.TestCase):
         # 如果能执行到这里,说明没有死锁
         self.assertTrue(True)
 
-    @pytest.mark.skip(reason="预存问题: MultiGPU引擎在特定条件下存在死锁风险，需引擎层面修复")
+    @pytest.mark.skip(
+        reason=(
+            "预存问题(P2): MultiGPU引擎 _state_lock 与 worker 生命周期锁在并发 "
+            "start/pause/resume/stop 场景下存在潜在死锁。根因: start() 在持有 "
+            "_state_lock 期间调用 worker.start()，若 worker 线程内部回调触发 "
+            "引擎状态变更(需获取 _state_lock)，形成锁顺序反转。需引擎层面重构 "
+            "锁策略(如使用可重入锁或拆分状态锁)。详见 MultiGPUCollisionEngine "
+            "stop() 的 _stopping 幂等守卫也是为此类竞态设计的临时缓解措施。"
+        )
+    )
+    @pytest.mark.timeout(30)  # 安全网: 即使 skip 被移除，30s 超时自动终止
     def test_no_deadlock_concurrent_operations(self):
         from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
 

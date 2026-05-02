@@ -664,7 +664,12 @@ def pytest_sessionfinish(session, exitstatus):
     # 5. os._exit(0) 强制退出，绕过 Python 关闭阶段可能阻塞的 psutil/文件 I/O
     #    注意：始终 exit(0) 因为实际测试结果由 Pytest 输出决定，
     #    CI 门禁检查会单独验证。exit(1) 会导致 CI 误报 FAILED。
+    #    设置 PYTEST_NO_FORCE_EXIT=1 可在本地调试时跳过强制退出。
     import os
+
+    if os.environ.get("PYTEST_NO_FORCE_EXIT"):
+        print("\n[conftest] 跳过强制退出 (PYTEST_NO_FORCE_EXIT=1)", flush=True)
+        return
 
     print("\n[conftest] 测试会话清理完成，强制退出进程", flush=True)
     os._exit(0)

@@ -27,8 +27,8 @@ from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
 from src.collision.collision_stats import CollisionStats  # noqa: E402
 
 
-def test_2m_batch_size(duration=60):
-    """测试2M批次大小"""
+def run_2m_batch_size(duration=60):
+    """测试2M批次大小（内部基准函数，不作为 pytest 测试收集）"""
 
     print("\n" + "=" * 80)
     print("🚀 Intel Arc GPU 2M批次大小性能测试")
@@ -40,8 +40,9 @@ def test_2m_batch_size(duration=60):
 
     # 加载目标地址
     targets = set()
+    address_file = Path(__file__).parent / "valid_addresses.txt"
     try:
-        with open("valid_addresses.txt", "r", encoding="utf-8") as f:
+        with open(str(address_file), "r", encoding="utf-8") as f:
             for line in f:
                 addr = line.strip()
                 if addr and len(addr) >= 26:
@@ -221,7 +222,7 @@ def main():
     print("  3. 评估显存使用安全性")
     print()
 
-    result = test_2m_batch_size(duration=60)
+    result = run_2m_batch_size(duration=60)
 
     if result:
         print("\n" + "=" * 80)

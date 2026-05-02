@@ -23,8 +23,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
 
 
-def test_performance_optimization(batch_size: int, test_duration: int = 30):
-    """测试特定批次大小的性能"""
+def _benchmark_batch_size(batch_size: int, test_duration: int = 30):
+    """测试特定批次大小的性能（内部函数，不作为 pytest 测试收集）"""
 
     print(f"\n{'=' * 80}")
     print(f"测试批次大小: {batch_size:,} ({batch_size / 1024 / 1024:.2f}M)")
@@ -149,7 +149,7 @@ def main():
     test_duration = 30  # 每个测试30秒
 
     for batch_size in batch_sizes:
-        result = test_performance_optimization(batch_size, test_duration)
+        result = _benchmark_batch_size(batch_size, test_duration)
         if result:
             results.append(result)
 

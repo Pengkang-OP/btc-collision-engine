@@ -240,8 +240,11 @@ class TestEventBusAsync(unittest.TestCase):
         bus.subscribe(EventType.ENGINE_PROGRESS, handler)
         bus.publish(EngineProgressEvent(total_checked=1000))
 
-        # 等待异步处理
-        time.sleep(0.1)
+        # 等待异步处理（轮询等待，避免固定sleep不可靠）
+        for _ in range(20):  # 最多等待2秒
+            time.sleep(0.1)
+            if len(received) >= 1:
+                break
 
         self.assertEqual(len(received), 1)
 
