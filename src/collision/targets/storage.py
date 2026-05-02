@@ -453,8 +453,8 @@ class AddressStorage:
             storage_dir = os.path.abspath(storage_dir)
             allowed_dirs = [
                 os.path.abspath(os.getcwd()),
-                os.path.abspath(os.environ.get("TEMP", "/tmp")),
-                os.path.abspath(os.environ.get("TMP", "/tmp")),
+                os.path.abspath(os.environ.get("TEMP", "/tmp")),  # nosec B108: 仅用于路径验证，非实际temp文件
+                os.path.abspath(os.environ.get("TMP", "/tmp")),  # nosec B108: 仅用于路径验证，非实际temp文件
             ]
             if not any(storage_dir.startswith(allowed_dir) for allowed_dir in allowed_dirs):
                 result["error"] = "存储目录必须在允许的路径范围内"

@@ -218,7 +218,6 @@ jobs:
 
       - name: 运行 Bandit 安全扫描
         id: bandit-scan
-        continue-on-error: true # TODO: 源码告警清零后移除此行，启用硬阻断
         run: |
           echo "🔒 运行 Bandit 安全扫描..."
           bandit -r src/ -ll -f json -o bandit-report.json
@@ -252,6 +251,18 @@ jobs:
           fi
           echo "✅ Bandit 未异常崩溃"
 
+      - name: 验证 Bandit 无安全问题
+        if: always()
+        run: |
+          if [ -f bandit-exit-code.txt ]; then
+            EXIT_CODE=$(cat bandit-exit-code.txt)
+            if [ "$EXIT_CODE" -eq 1 ]; then
+              echo "❌ Bandit 发现安全问题，CI 硬阻断"
+              exit 1
+            fi
+          fi
+          echo "✅ Bandit 未发现安全问题"
+
       - name: 上传 Bandit 报告
         if: always()
         uses: actions/upload-artifact@v4
@@ -283,7 +294,6 @@ jobs:
           # mypy 类型检查仅需运行时依赖 + mypy 本身
 
       - name: 运行 mypy 类型检查
-        continue-on-error: true # TODO: 类型错误清零后移除此行，启用硬阻断
         run: |
           echo "🔍 运行 mypy 类型检查..."
           mypy src/ --config-file pyproject.toml

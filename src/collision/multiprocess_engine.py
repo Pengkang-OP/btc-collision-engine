@@ -630,14 +630,13 @@ class MultiprocessCollisionEngine:
 
     def __exit__(
         self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]
-    ) -> bool:
+    ) -> None:
         """上下文管理器出口
 
-        Returns:
-            False 表示不抑制异常（让异常传播给调用者）
+        始终返回 None，表示不抑制异常（让异常传播给调用者）。
         """
         self.cleanup()
-        return False
+        return None
 
 
 class HybridCollisionEngine:

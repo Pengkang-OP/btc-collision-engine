@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
-"""性能基准测试 - 测试各模块的性能指标"""
+"""性能基准测试 - 测试各模块的性能指标
 
+CI/本地分级策略:
+  - CI 环境 (CI=true): 使用宽松阈值，低于本地阈值时发出诊断警告
+  - 本地环境: 使用严格阈值，捕获真实性能回归
+"""
+
+import os
+import warnings
 import pytest
 import time
 from src.core.address_generator import P2PKHAddressGenerator
@@ -8,6 +15,43 @@ from src.core.base58 import Base58
 from src.collision.key_collision_engine import KeyCollisionEngine
 from src.collision.deduplication_filter import DeduplicationFilter
 from src.collision.collision_stats import CollisionStats
+
+# CI/本地分级策略常量
+_IS_CI = os.environ.get("CI", "").lower() in ("true", "1")
+
+# 本地严格阈值 (有 coincurve 或其他加速库时的期望值)
+_LOCAL_THRESHOLDS = {
+    "public_key_derivation": 20,   # 次/秒
+    "address_generation": 5,        # 次/秒
+    "engine_throughput": 5,         # 次/秒
+    "full_pipeline": 20,            # 次/秒
+}
+
+# CI 宽松阈值 (纯 Python 后端，无 coincurve)
+_CI_THRESHOLDS = {
+    "public_key_derivation": 5,    # 次/秒
+    "address_generation": 3,        # 次/秒
+    "engine_throughput": 1,         # 次/秒
+    "full_pipeline": 5,             # 次/秒
+}
+
+
+def _check_perf(speed: float, key: str, label: str) -> None:
+    """分级性能检查：CI 宽松 + 诊断警告，本地严格。"""
+    local_min = _LOCAL_THRESHOLDS[key]
+    ci_min = _CI_THRESHOLDS[key]
+
+    if _IS_CI:
+        if speed < ci_min:
+            raise AssertionError(f"{label}: {speed:.0f}/s < {ci_min}/s (CI阈值)")
+        if speed < local_min:
+            warnings.warn(
+                f"CI性能偏低: {label} {speed:.0f}/s < {local_min}/s (本地阈值), "
+                f"可能因CI虚拟化/资源争抢"
+            )
+    else:
+        if speed < local_min:
+            raise AssertionError(f"{label}: {speed:.0f}/s < {local_min}/s (本地阈值)")
 
 
 class TestPerformanceBenchmarks:
@@ -77,7 +121,7 @@ class TestPerformanceBenchmarks:
         print(f"   速度: {speed:.0f} 次/秒")
 
         # 纯Python实现性能较低，调整阈值为5次/秒（CI环境无coincurve）
-        assert speed > 5, f"公钥推导速度过低: {speed:.0f}"
+        _check_perf(speed, "public_key_derivation", "公钥推导")
 
     def test_address_generation_speed(self):
         """测试地址生成速度"""
@@ -102,7 +146,7 @@ class TestPerformanceBenchmarks:
         print(f"   基线: {self.BASELINE_ADDRESS_GEN} 次/秒")
 
         # 完整地址生成包含椭圆曲线运算，调整阈值为3次/秒（CI环境无coincurve）
-        assert speed > 3, f"地址生成速度过低: {speed:.0f}"
+        _check_perf(speed, "address_generation", "地址生成")
 
     def test_base58_encode_speed(self):
         """测试Base58编码速度"""
@@ -246,7 +290,7 @@ class TestPerformanceBenchmarks:
 
         # 纯Python引擎吞吐量较低，调整阈值为1次/秒（CI环境）
         assert stats.total_checked > 0, "单线程引擎应该检查了一些私钥"
-        assert speed > 1, f"引擎吞吐量过低: {speed:.0f}"
+        _check_perf(speed, "engine_throughput", "引擎单线程吞吐量")
 
     @pytest.mark.flaky(reruns=2, reruns_delay=1)  # 允许重试2次（性能测试不稳定）
     def test_engine_throughput_multi_thread(self):
@@ -334,7 +378,7 @@ class TestPerformanceBenchmarks:
 
         # 完整流水线包含椭圆曲线运算，纯Python实现性能较低
         # coincurve后端：>100次/秒，纯Python：>5次/秒
-        assert speed > 5, f"完整流水线速度过低: {speed:.0f}"
+        _check_perf(speed, "full_pipeline", "完整流水线")
 
 
 class TestPerformanceComparison:

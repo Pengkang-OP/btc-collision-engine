@@ -511,7 +511,7 @@ class TestContextManager:
 
         engine = MultiprocessCollisionEngine()
         result = engine.__exit__(None, None, None)
-        assert result is False  # does not suppress
+        assert not result  # None/False both mean 'do not suppress exceptions'
 
 
 # ============================================================================
