@@ -492,12 +492,35 @@ class DataLogger:
             try:
                 os.replace(dst_tmp, dst)
             except (PermissionError, OSError):
-                # 连替换都失败，最后手段：直接覆盖
-                with open(dst, "w", encoding="utf-8") as f:
-                    f.write(content)
-                    f.flush()
-                    os.fsync(f.fileno())
-                # 清理回退临时文件
+                # 连替换都失败，使用新临时文件做最后一次原子替换尝试
+                # （避免直接 open(dst, "w") 的线程安全隐患）
+                dst_fd2, dst_tmp2 = tempfile.mkstemp(
+                    dir=os.path.dirname(dst),
+                    suffix=".last.tmp",
+                    prefix=".final_",
+                )
+                os.close(dst_fd2)
+                try:
+                    with open(dst_tmp2, "w", encoding="utf-8") as f:
+                        f.write(content)
+                        f.flush()
+                        os.fsync(f.fileno())
+                    try:
+                        os.replace(dst_tmp2, dst)
+                    except (PermissionError, OSError):
+                        # 绝对最后手段：直接覆盖（非原子但确保数据不丢失）
+                        with open(dst, "w", encoding="utf-8") as f:
+                            f.write(content)
+                            f.flush()
+                            os.fsync(f.fileno())
+                finally:
+                    # 清理第二级临时文件（无论成功或失败）
+                    if os.path.exists(dst_tmp2):
+                        try:
+                            os.remove(dst_tmp2)
+                        except OSError:
+                            pass
+                # 清理第一级回退临时文件
                 if os.path.exists(dst_tmp):
                     try:
                         os.remove(dst_tmp)
