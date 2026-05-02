@@ -665,10 +665,21 @@ def pytest_sessionfinish(session, exitstatus):
     #    注意：始终 exit(0) 因为实际测试结果由 Pytest 输出决定，
     #    CI 门禁检查会单独验证。exit(1) 会导致 CI 误报 FAILED。
     #    设置 PYTEST_NO_FORCE_EXIT=1 可在本地调试时跳过强制退出。
+    #
+    #    自动检测覆盖率插件：如果 pytest-cov 激活，跳过强制退出，
+    #    否则 os._exit(0) 会在 pytest-cov 写入覆盖率报告之前终止进程，
+    #    导致覆盖率输出为空。
     import os
 
     if os.environ.get("PYTEST_NO_FORCE_EXIT"):
         print("\n[conftest] 跳过强制退出 (PYTEST_NO_FORCE_EXIT=1)", flush=True)
+        return
+
+    # 检测 pytest-cov 是否激活：如果激活，必须跳过 os._exit(0)，
+    # 否则覆盖率报告会在写入前被截断。
+    cov_active = session.config.pluginmanager.hasplugin("pytest_cov")
+    if cov_active:
+        print("\n[conftest] 检测到 pytest-cov 激活，跳过强制退出以保留覆盖率输出", flush=True)
         return
 
     print("\n[conftest] 测试会话清理完成，强制退出进程", flush=True)
