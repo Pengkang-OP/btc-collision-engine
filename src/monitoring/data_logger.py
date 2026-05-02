@@ -35,6 +35,10 @@ class DataLogger:
 
     # 文件原子替换重试的指数退避延迟序列（秒）
     _REPLACE_BACKOFF_DELAYS: List[float] = [1.0, 2.0, 4.0]
+    # performance.log 轮转阈值（字节），超过此大小自动轮转
+    _PERF_LOG_MAX_SIZE: int = 50 * 1024 * 1024  # 50 MB
+    # performance.log 最大保留的轮转副本数
+    _PERF_LOG_MAX_ROTATIONS: int = 3
 
     def __init__(self, storage_dir: Optional[str] = None) -> None:
         """
@@ -58,6 +62,9 @@ class DataLogger:
 
         # 初始化文件
         self._initialize_files()
+
+        # 清理上次会话遗留的 .tmp 文件（延迟 1 小时，避免误删正在写入的文件）
+        self._cleanup_stale_temp_files(max_age_seconds=3600)
 
         # 数据缓存
         self._current_data: Dict[str, Any] = {}
@@ -220,6 +227,7 @@ class DataLogger:
         # 在锁外写入CSV日志（提升并发性能）
         try:
             csv_line = f"{timestamp},{speed},{total_checked},{matches_found},{cpu_usage},{memory_usage},{thread_count}\n"  # noqa: E501
+            self._rotate_perf_log_if_needed()
             with open(self.performance_log_file, "a", encoding="utf-8") as f:
                 f.write(csv_line)
         except Exception as e:
@@ -396,6 +404,95 @@ class DataLogger:
                     os.remove(temp_file)
                 except OSError:
                     pass
+
+    def _cleanup_stale_temp_files(self, max_age_seconds: int = 3600) -> None:
+        """清理上次会话遗留的过期 .tmp 临时文件
+
+        原子写入操作（save_current_data/save_history_data/_safe_file_replace）
+        在正常流程中会清理临时文件，但进程崩溃或杀毒软件锁定可能导致遗
+        留。此方法在 DataLogger 初始化时清理超过 max_age_seconds 的 .tmp
+        文件，避免累积占用磁盘空间。
+
+        Args:
+            max_age_seconds: 临时文件最大保留时间（秒），默认 1 小时
+        """
+        try:
+            now = time.time()
+            removed = 0
+            freed = 0
+            for entry in os.scandir(self.storage_dir):
+                if not entry.is_file(follow_symlinks=False):
+                    continue
+                if not entry.name.endswith((".tmp", ".last.tmp", ".direct.tmp")):
+                    continue
+                try:
+                    age = now - entry.stat().st_mtime
+                    if age < max_age_seconds:
+                        continue
+                    size = entry.stat().st_size
+                    os.remove(entry.path)
+                    removed += 1
+                    freed += size
+                except OSError:
+                    pass  # 文件可能已被其他进程删除或锁定
+            if removed > 0:
+                self.logger.info(
+                    f"清理了 {removed} 个过期临时文件，释放 {freed / 1024 / 1024:.2f} MB"
+                )
+        except Exception as e:
+            self.logger.debug(f"清理过期临时文件时出错（非致命）: {e}")
+
+    def _rotate_perf_log_if_needed(self) -> None:
+        """检查 performance.log 大小，超过阈值时自动轮转
+
+        轮转策略:
+        - 超过 _PERF_LOG_MAX_SIZE 时轮转
+        - 保留最近 _PERF_LOG_MAX_ROTATIONS 个副本
+        - 副本命名为 performance.log.1, performance.log.2, ...
+
+        线程安全: 使用 self._lock 保护整个轮转操作，双重检查防止 TOCTOU 竞态。
+        """
+        try:
+            # 快速路径：锁外初步检查，避免不必要的锁竞争
+            if not os.path.exists(self.performance_log_file):
+                return
+            if os.path.getsize(self.performance_log_file) < self._PERF_LOG_MAX_SIZE:
+                return
+
+            with self._lock:
+                # 双重检查：锁内再次确认（防止 TOCTOU 竞态）
+                if not os.path.exists(self.performance_log_file):
+                    return
+                size = os.path.getsize(self.performance_log_file)
+                if size < self._PERF_LOG_MAX_SIZE:
+                    return
+
+                # 执行级联轮转：.2 -> .3, .1 -> .2, current -> .1
+                for i in range(self._PERF_LOG_MAX_ROTATIONS, 0, -1):
+                    old_name = (
+                        f"{self.performance_log_file}.{i - 1}"
+                        if i > 1
+                        else self.performance_log_file
+                    )
+                    new_name = f"{self.performance_log_file}.{i}"
+                    if os.path.exists(old_name):
+                        if os.path.exists(new_name):
+                            os.remove(new_name)
+                        os.rename(old_name, new_name)
+
+                # 写入新文件头
+                with open(self.performance_log_file, "w", encoding="utf-8") as f:
+                    f.write("# 性能日志 - 比特币密钥碰撞检测 (轮转)\n")
+                    f.write(f"# 轮转时间: {datetime.now().isoformat()}\n")
+                    f.write(
+                        "# 格式: timestamp,speed,total_checked,matches,cpu_usage,memory_usage,threads\n"  # noqa: E501
+                    )
+
+                self.logger.info(
+                    f"performance.log 达到 {size / 1024 / 1024:.1f} MB，已轮转"
+                )
+        except Exception as e:
+            self.logger.warning(f"performance.log 轮转失败（非致命）: {e}")
 
     def _safe_file_replace(self, src: str, dst: str, max_retries: int = 3) -> bool:
         """安全的原子文件替换，带指数退避重试和回退机制

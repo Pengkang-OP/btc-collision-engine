@@ -1,9 +1,19 @@
-"""M3优化性能基准测试 - 量化SecureKeyManager批内复用效果"""
+"""M3优化性能基准测试 - 量化SecureKeyManager批内复用效果
 
+CI/本地分级策略:
+  - CI 环境 (CI=true): 使用宽松阈值 10x，允许较大波动
+  - 本地环境: 使用严格阈值 1.5x，验证批量优化有效
+"""
+
+import os
 import time
+import warnings
 import pytest
 from src.collision.key_collision_engine import KeyCollisionEngine
 from src.core.secure_key_manager import SecureKeyManager
+
+# CI/本地分级策略常量
+_IS_CI = os.environ.get("CI", "").lower() in ("true", "1")
 
 
 class TestM3OptimizationBenchmark:
@@ -223,8 +233,22 @@ class TestM3OptimizationComparison:
                 f"每私钥 {per_key_time * 1000:.4f}ms"
             )
 
-        # 验证大批量应该不比小批量显著更慢（CI 上放宽到10x）
-        assert results[5000] <= results[10] * 10, "大批量不应该显著更慢"
+        # 分级检查：CI 环境放宽到 10x，本地保持严格 1.5x
+        if _IS_CI:
+            if results[5000] > results[10] * 10:
+                raise AssertionError("CI环境: 大批量性能退化超过10倍")
+            if results[5000] > results[10] * 1.5:
+                warnings.warn(
+                    f"CI批量性能波动: 5000/10={results[5000]/results[10]:.1f}x > 1.5x, "
+                    f"可能因CI虚拟化/资源争抢"
+                )
+        else:
+            assert results[5000] <= results[10] * 1.5, (
+                f"大批量不应该显著更慢: "
+                f"per_key_5000={results[5000]*1000:.4f}ms, "
+                f"per_key_10={results[10]*1000:.4f}ms, "
+                f"ratio={results[5000]/results[10]:.1f}x"
+            )
 
         print("\n批量大小性能对比:")
         print("  最优批量: 5000")

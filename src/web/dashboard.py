@@ -403,7 +403,7 @@ def create_app(data_dir: Optional[Path] = None) -> "Flask":
 
 
 def run_dashboard(
-    host: str = "0.0.0.0",
+    host: str = "0.0.0.0",  # nosec B104: Web仪表板默认绑定所有接口，用户可通过--host覆盖
     port: int = 8080,
     data_dir: Optional[str] = None,
     debug: bool = False,
@@ -464,7 +464,7 @@ def main():
   python -m src.web.dashboard --debug            # 调试模式
         """,
     )
-    parser.add_argument("--host", default="0.0.0.0", help="监听地址 (默认: 0.0.0.0)")
+    parser.add_argument("--host", default="0.0.0.0", help="监听地址 (默认: 0.0.0.0)")  # nosec B104
     parser.add_argument("--port", type=int, default=8080, help="监听端口 (默认: 8080)")
     parser.add_argument("--data-dir", default=None, help="data_logs 目录路径")
     parser.add_argument("--debug", action="store_true", help="开启 Flask 调试模式")
