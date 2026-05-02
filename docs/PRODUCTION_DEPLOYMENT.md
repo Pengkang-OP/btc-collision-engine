@@ -160,10 +160,13 @@ docker-compose --profile gpu --profile nvidia --profile monitoring up -d
 ### 运行验收测试
 
 ```bash
-# 运行完整验收测试
-python production_acceptance_test.py
+# 运行完整测试套件
+python run_all_tests.py
 
-# 查看验收报告
+# 或直接使用 pytest
+pytest tests/ -v
+
+# 查看测试报告
 cat data_logs/acceptance_test/acceptance_test_summary.md
 ```
 
@@ -539,6 +542,6 @@ systemd服务已配置以下资源限制：
 
 ---
 
-**文档版本**: 1.0  
-**创建日期**: 2026-04-24  
+**文档版本**: 1.0
+**创建日期**: 2026-04-24
 **维护者**: BTC Project Team

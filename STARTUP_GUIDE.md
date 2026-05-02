@@ -16,15 +16,15 @@
 ### 1. 基本使用
 
 ```bash
-python start_collision_full.py
+python key_collision_cli.py
 ```
 
 这将：
 
-- 从 `btc_addresses_sorted.txt.txt` 加载目标地址
-- 使用GPU加速和随机碰撞模式
-- 启动完整的监控系统
-- 无限期运行（按 Ctrl+C 停止）
+- 启动交互式命令行向导
+- 支持随机碰撞、范围扫描、暴力穷举三种模式
+- 自动检测并启用 GPU 加速
+- 提供完整的监控和日志记录
 
 ### 2. 指定运行时长
 
