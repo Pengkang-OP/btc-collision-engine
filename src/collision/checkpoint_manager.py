@@ -5,7 +5,7 @@ import json
 import time
 import threading
 from datetime import datetime
-from typing import Dict, List, Optional, Set, Any, cast, cast  # noqa: F811
+from typing import Dict, List, Optional, Set, Any, cast
 
 # 导入日志配置
 from ..utils import init_logging, get_configured_logger
@@ -31,7 +31,8 @@ class CheckpointManager:
         """检查pywin32是否可用（类级别的一次性检查）"""
         if cls._has_win32_security is None:
             try:
-                pass
+                import win32security  # noqa: F811
+                import ntsecuritycon  # noqa: F811
 
                 cls._has_win32_security = True
             except ImportError:
@@ -206,7 +207,7 @@ class CheckpointManager:
                                 import getpass
 
                                 username = getpass.getuser()
-                                import subprocess
+                                import subprocess  # nosec B404: icacls is hardcoded, safe
 
                                 # 使用icacls命令设置权限：移除所有继承的权限，只允许当前用户访问
                                 cmd = [
@@ -218,7 +219,7 @@ class CheckpointManager:
                                     "/Q",  # 静默执行
                                 ]
 
-                                result = subprocess.run(cmd, capture_output=True, text=True)
+                                result = subprocess.run(cmd, capture_output=True, text=True)  # nosec B603
                                 if result.returncode == 0:
                                     logger.debug(
                                         "已使用icacls设置Windows文件权限（仅当前用户可访问）"
@@ -234,7 +235,7 @@ class CheckpointManager:
                             import getpass
 
                             username = getpass.getuser()
-                            import subprocess
+                            import subprocess  # nosec B404: icacls is hardcoded, safe
 
                             # 使用icacls命令设置权限：移除所有继承的权限，只允许当前用户访问
                             cmd = [
@@ -246,7 +247,7 @@ class CheckpointManager:
                                 "/Q",  # 静默执行
                             ]
 
-                            result = subprocess.run(cmd, capture_output=True, text=True)
+                            result = subprocess.run(cmd, capture_output=True, text=True)  # nosec B603
                             if result.returncode == 0:
                                 logger.debug("已使用icacls设置Windows文件权限（仅当前用户可访问）")
                             else:
