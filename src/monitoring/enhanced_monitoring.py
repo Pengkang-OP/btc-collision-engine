@@ -202,15 +202,13 @@ class EnhancedMonitoringSystem:
                     _raw_mode = getattr(self.engine, "_current_mode", "")
                     _mode = _raw_mode if isinstance(_raw_mode, str) else str(_raw_mode) if _raw_mode else ""
                     _raw_pos = getattr(self.engine, "_current_position", 0)
-                    _pos = _raw_pos if isinstance(_raw_pos, int) else int(_raw_pos) if isinstance(_raw_pos, (int, float)) else 0
+                    _pos = _raw_pos if isinstance(_raw_pos, int) else int(_raw_pos) if isinstance(_raw_pos, float) else 0
+                    _raw_running = self.engine.is_running() if hasattr(self.engine, "is_running") else False
+                    _running = bool(_raw_running) if isinstance(_raw_running, bool) else bool(_raw_running)
                     self.data_logger.record_engine_data(
                         mode=_mode,
                         target_count=len(getattr(self.engine, "targets", [])),
-                        is_running=(
-                            self.engine.is_running()
-                            if hasattr(self.engine, "is_running")
-                            else False
-                        ),
+                        is_running=_running,
                         current_position=_pos,
                     )
 
