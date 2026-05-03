@@ -70,6 +70,10 @@ class TestEventCreation:
         assert event.mode == "random"
         assert event.target_count == 5
         assert event.batch_size == 65536
+        # 验证 __post_init__ 正确写入 metadata
+        assert event.metadata["mode"] == "random"
+        assert event.metadata["target_count"] == 5
+        assert event.metadata["batch_size"] == 65536
 
     def test_engine_progress_event(self):
         event = EngineProgressEvent(total_checked=100000, speed=500000.0, matches_found=2)
@@ -81,13 +85,31 @@ class TestEventCreation:
         event = EngineMatchEvent(
             private_key=b"\x01" * 32,
             address="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
-            wif="KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qYjgd9M7rFU72sVhvfoj",
+            wif="KxFAKE000000000000000000000000000000000000000000000",
             target_address="1TargetAddress",
         )
         assert event.event_type == EventType.ENGINE_MATCH
         assert event.address == "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
-        # 私钥不应出现在 metadata 中（安全检查）
+        # 私钥和 WIF 不应出现在 metadata 中（安全检查）
         assert "private_key" not in event.metadata
+        assert "wif" not in event.metadata
+
+    def test_engine_match_event_to_dict(self):
+        """EngineMatchEvent.to_dict 不泄露私钥和 WIF"""
+        event = EngineMatchEvent(
+            private_key=b"\x01" * 32,
+            address="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+            wif="KxFAKE000000000000000000000000000000000000000000000",
+            target_address="1TargetAddress",
+        )
+        d = event.to_dict()
+        assert d["event_type"] == "engine.match"
+        assert d["metadata"]["address"] == "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
+        assert d["metadata"]["target_address"] == "1TargetAddress"
+        # 安全：序列化后不包含私钥和 WIF
+        assert "private_key" not in d
+        assert "private_key" not in d["metadata"]
+        assert "wif" not in d["metadata"]
 
     def test_engine_error_event(self):
         event = EngineErrorEvent(
@@ -111,6 +133,70 @@ class TestEventCreation:
         d = event.to_dict()
         assert d["event_type"] == "engine.start"
         assert d["source"] == "collision_engine"
+
+    def test_collision_event_base_to_dict_none_type(self):
+        """CollisionEvent(event_type=None) 的 to_dict 返回 event_type=None"""
+        event = CollisionEvent(event_type=None, source="test_source")
+        d = event.to_dict()
+        assert d["event_type"] is None
+        assert d["source"] == "test_source"
+        assert "timestamp" in d
+        assert "metadata" in d
+
+    def test_collision_event_base_to_dict_with_type(self):
+        """CollisionEvent 带 event_type 时正确序列化"""
+        event = CollisionEvent(
+            event_type=EventType.ENGINE_START, source="test"
+        )
+        d = event.to_dict()
+        assert d["event_type"] == "engine.start"
+
+    def test_engine_error_event_with_exception(self):
+        """EngineErrorEvent 正确存储 exception 参数"""
+        exc = ValueError("test error")
+        event = EngineErrorEvent(
+            error_type="ValueError",
+            error_message="test error",
+            exception=exc,
+        )
+        assert event.exception is exc
+        assert event.error_type == "ValueError"
+        assert event.event_type == EventType.ENGINE_ERROR
+
+    def test_engine_error_event_to_dict(self):
+        """EngineErrorEvent.to_dict 生成正确字典"""
+        event = EngineErrorEvent(
+            error_type="GPU_OOM",
+            error_message="Out of memory",
+            recoverable=False,
+        )
+        d = event.to_dict()
+        assert d["event_type"] == "engine.error"
+        assert d["metadata"]["error_type"] == "GPU_OOM"
+        assert d["metadata"]["error_message"] == "Out of memory"
+        assert d["metadata"]["recoverable"] is False
+
+    def test_engine_stop_event_to_dict(self):
+        """EngineStopEvent.to_dict 生成正确字典"""
+        event = EngineStopEvent(reason="completed", total_checked=1000000)
+        d = event.to_dict()
+        assert d["event_type"] == "engine.stop"
+        assert d["source"] == "collision_engine"
+
+    def test_engine_complete_event_to_dict(self):
+        """EngineCompleteEvent.to_dict 生成正确字典"""
+        event = EngineCompleteEvent(
+            total_checked=2000000,
+            matches_found=3,
+            elapsed_time=7200.0,
+            avg_speed=278.0,
+            stop_reason="completed",
+        )
+        d = event.to_dict()
+        assert d["event_type"] == "engine.complete"
+        assert d["metadata"]["total_checked"] == 2000000
+        assert d["metadata"]["matches_found"] == 3
+        assert d["metadata"]["stop_reason"] == "completed"
 
 
 # ============================================================================
