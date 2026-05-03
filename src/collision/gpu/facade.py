@@ -13,6 +13,7 @@
 """
 
 import logging
+import threading
 from typing import Optional, Dict, Any, List, cast
 
 from .device_manager_adapter import DeviceManagerAdapter
@@ -44,6 +45,7 @@ class GPUEngineFacade:
         """
         self.config = config or {}
         self._initialized = False
+        self._lock = threading.Lock()
 
         # Phase 2 适配器
         self._device_manager = DeviceManagerAdapter(config=self.config)
@@ -55,6 +57,15 @@ class GPUEngineFacade:
         self.context: Optional[GPUContext] = None
         self.kernel: Optional[GPUKernel] = None
         self.async_executor = self._async_pipeline
+
+    def __enter__(self) -> "GPUEngineFacade":
+        """上下文管理器入口"""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        """上下文管理器退出，自动清理资源"""
+        self.cleanup()
+        return False
 
     def initialize(
         self,
@@ -125,24 +136,25 @@ class GPUEngineFacade:
         return self._device_manager.list_devices()
 
     def cleanup(self) -> None:
-        """清理 GPU 资源"""
-        try:
-            if self._async_pipeline is not None:
-                self._async_pipeline.cleanup()
-        except Exception as e:
-            logger.error(f"清理异步管道失败: {e}")
+        """清理 GPU 资源（线程安全）"""
+        with self._lock:
+            try:
+                if self._async_pipeline is not None:
+                    self._async_pipeline.cleanup()
+            except Exception as e:
+                logger.error(f"清理异步管道失败: {e}")
 
-        try:
-            if self._device_manager is not None:
-                self._device_manager.release_all()
-        except Exception as e:
-            logger.error(f"清理设备管理器失败: {e}")
+            try:
+                if self._device_manager is not None:
+                    self._device_manager.release_all()
+            except Exception as e:
+                logger.error(f"清理设备管理器失败: {e}")
 
-        self.device = None
-        self.context = None
-        self.kernel = None
-        self._initialized = False
-        logger.info("GPUEngineFacade 资源清理完成")
+            self.device = None
+            self.context = None
+            self.kernel = None
+            self._initialized = False
+            logger.info("GPUEngineFacade 资源清理完成")
 
     def __repr__(self) -> str:
         status = "initialized" if self._initialized else "not_initialized"

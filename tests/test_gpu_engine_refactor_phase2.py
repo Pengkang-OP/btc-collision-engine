@@ -432,3 +432,98 @@ class TestProtocolConformance:
         adapter = GPUKernelAdapter()
         assert callable(getattr(adapter, "compile_kernel", None))
         assert callable(getattr(adapter, "execute_batch", None))
+
+
+# ============================================================================
+# GPUEngineFacade 上下文管理器测试
+# ============================================================================
+
+
+class TestGPUEngineFacadeContextManager:
+    """测试 GPUEngineFacade 上下文管理器"""
+
+    def test_context_manager_enter_exit(self):
+        """测试上下文管理器自动清理"""
+        from src.collision.gpu.facade import GPUEngineFacade
+
+        with patch.object(GPUEngineFacade, "cleanup") as mock_cleanup:
+            with GPUEngineFacade(config={}) as facade:
+                assert isinstance(facade, GPUEngineFacade)
+                assert facade._initialized is False
+            mock_cleanup.assert_called_once()
+
+    def test_context_manager_cleanup_on_exception(self):
+        """测试异常时上下文管理器仍执行清理"""
+        from src.collision.gpu.facade import GPUEngineFacade
+
+        cleanup_called = []
+
+        class TestFacade(GPUEngineFacade):
+            def cleanup(self):
+                cleanup_called.append(True)
+                super().cleanup()
+
+        try:
+            with TestFacade(config={}):
+                raise ValueError("测试异常")
+        except ValueError:
+            pass
+
+        assert len(cleanup_called) == 1
+
+    def test_context_manager_enter_returns_self(self):
+        """测试 __enter__ 返回自身"""
+        from src.collision.gpu.facade import GPUEngineFacade
+
+        facade = GPUEngineFacade()
+        assert facade.__enter__() is facade
+
+
+# ============================================================================
+# GPUEngineFacade 线程安全测试
+# ============================================================================
+
+
+class TestGPUEngineFacadeThreadSafety:
+    """测试 GPUEngineFacade 线程安全性"""
+
+    def test_cleanup_is_thread_safe(self):
+        """测试 cleanup 方法使用了锁保护"""
+        from src.collision.gpu.facade import GPUEngineFacade
+
+        facade = GPUEngineFacade()
+        assert hasattr(facade, "_lock")
+
+        import threading
+
+        results = []
+        errors = []
+
+        def do_cleanup():
+            try:
+                facade.cleanup()
+                results.append(True)
+            except Exception as e:
+                errors.append(e)
+
+        threads = [threading.Thread(target=do_cleanup) for _ in range(5)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=2.0)
+
+        assert len(errors) == 0
+        assert len(results) == 5
+
+    def test_lock_not_rlock(self):
+        """测试 _lock 为标准不可重入锁"""
+        from src.collision.gpu.facade import GPUEngineFacade
+
+        facade = GPUEngineFacade()
+        lock = facade._lock
+        assert lock is not None
+        acquired = lock.acquire(blocking=False)
+        assert acquired is True
+        reacquired = lock.acquire(blocking=False)
+        assert reacquired is False
+        lock.release()
