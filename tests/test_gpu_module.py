@@ -238,9 +238,15 @@ class TestBackwardCompatibility(unittest.TestCase):
 class TestGPUContext(unittest.TestCase):
     """测试GPU上下文管理"""
 
-    @patch("src.gpu.device.cl")
-    def test_context_creation(self, mock_cl):
+    def test_context_creation(self):
         """测试上下文创建"""
+        # 清理 test_gpu_memory_pool_part2.py 造成的 sys.modules mock 泄漏
+        import sys
+        from unittest.mock import Mock
+        for mod_name in ("src.gpu.context", "src.gpu.kernel_impl"):
+            if mod_name in sys.modules and isinstance(sys.modules[mod_name], Mock):
+                del sys.modules[mod_name]
+
         from src.gpu.device import GPUDevice
         from src.gpu.context import GPUContext
 
@@ -251,8 +257,6 @@ class TestGPUContext(unittest.TestCase):
 
         mock_context = Mock()
         mock_queue = Mock()
-        mock_cl.Context.return_value = mock_context
-        mock_cl.CommandQueue.return_value = mock_queue
 
         # 创建并初始化设备
         device = GPUDevice()

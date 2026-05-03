@@ -137,24 +137,27 @@ class TestGPURuntimeErrors:
         mock_device.initialize = Mock()
         mock_device.get_device_info = Mock(return_value=mock_device.device_info)
         mock_device.cleanup = Mock()
+        mock_device.vendor = "NVIDIA Corporation"
+        mock_device.profile = None
 
-        with patch("src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE", True):
-            with (
-                patch("src.collision.gpu_collision_engine.GPUDevice", return_value=mock_device),
-                patch("pyopencl.Program") as mock_program,
-                patch("src.collision.gpu_collision_engine.GPUProfileLoader") as mock_profile_loader,
-            ):
+        with (
+            patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
+            patch("src.gpu.device_manager.GPUDevice", return_value=mock_device),
+            patch("src.gpu.device_manager.GPUDeviceDetector.is_gpu_available", return_value=True),
+            patch("src.gpu.device_manager.GPUProfileLoader") as mock_profile_loader,
+            patch("pyopencl.Program") as mock_program,
+        ):
 
-                mock_profile_loader.return_value.get_profile.return_value = None
+            mock_profile_loader.return_value.get_profile.return_value = None
 
-                # 模拟编译失败
-                mock_program.return_value.build.side_effect = Exception("compile error")
+            # 模拟编译失败
+            mock_program.return_value.build.side_effect = Exception("compile error")
 
-                targets = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}
+            targets = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}
 
-                # 验证初始化失败
-                with pytest.raises(RuntimeError, match="GPU初始化失败"):
-                    GPUCollisionEngine(targets)
+            # 验证初始化失败
+            with pytest.raises(RuntimeError, match="GPU初始化失败"):
+                GPUCollisionEngine(targets)
 
 
 class TestMemoryErrors:
