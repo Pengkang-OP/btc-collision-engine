@@ -126,7 +126,7 @@ class GPUMemoryPool:
         self._allocation_patterns: Dict[int, int] = {}  # 大小 -> 使用次数
 
         # 动态调整参数
-        self._last_adjustment_time = time.time()
+        self._last_adjustment_time = time.monotonic()
         self._adjustment_interval = 60  # 60秒调整一次
 
         logger.info(
@@ -154,10 +154,9 @@ class GPUMemoryPool:
         # 将大小对齐到256字节的倍数，增加缓冲池命中率
         aligned_size = ((size + 255) // 256) * 256
 
-        # 记录分配模式
-        self._record_allocation_pattern(aligned_size)
-
         with self._lock:
+            # 记录分配模式（移入锁内，确保线程安全）
+            self._record_allocation_pattern(aligned_size)
             # 尝试复用现有缓冲区
             # 优先从类型专用池查找
             if buffer_type != "generic" and buffer_type in self._type_pools:
@@ -455,7 +454,7 @@ class GPUMemoryPool:
 
     def _adjust_pool_size(self) -> None:
         """动态调整内存池大小"""
-        current_time = time.time()
+        current_time = time.monotonic()
         if current_time - self._last_adjustment_time < self._adjustment_interval:
             return
 
@@ -465,7 +464,11 @@ class GPUMemoryPool:
         if len(self._memory_usage_history) >= 10:
             recent_usage = self._memory_usage_history[-10:]
             avg_memory = sum(item["current_memory_mb"] for item in recent_usage) / len(recent_usage)
-            max(item["current_memory_mb"] for item in recent_usage)
+            peak_memory = max(item["current_memory_mb"] for item in recent_usage)
+            logger.debug(
+                f"内存池使用分析: avg={avg_memory:.1f}MB, peak={peak_memory:.1f}MB, "
+                f"limit={self._max_memory_bytes / (1024 * 1024):.1f}MB"
+            )
 
             # 如果平均内存使用超过最大内存的70%，尝试扩展内存池
             if avg_memory > self._max_memory_bytes / (1024 * 1024) * 0.7:
@@ -498,7 +501,7 @@ class GPUMemoryPool:
         """记录内存使用情况"""
         self._memory_usage_history.append(
             {
-                "timestamp": time.time(),
+                "timestamp": time.monotonic(),
                 "current_memory_mb": self._current_memory / (1024 * 1024),
                 "allocation_count": self._allocation_count,
                 "reuse_rate": self._total_reused / max(self._total_allocated, 1),
