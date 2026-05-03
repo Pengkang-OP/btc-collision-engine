@@ -11,6 +11,8 @@ __pycache__/
 .coverage.*
 htmlcov/
 *.cover
+_cov*.txt
+cov_*.txt
 
 # 虚拟环境
 .venv/
