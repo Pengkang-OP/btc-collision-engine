@@ -283,17 +283,17 @@ class CoincurveBackend(CryptoBackend):
 
         try:
             pubkey = coincurve.PublicKey(pubkey_bytes)
-            # 使用multiply方法（如果可用）
+            # coincurve.PublicKey.multiply 返回 PublicKey 对象
             result = pubkey.multiply(k.to_bytes(32, "big"))
 
-            # 解析结果
-            assert isinstance(result, bytes)
-            if result[0] == 0x04:
-                rx = int.from_bytes(result[1:33], "big")
-                ry = int.from_bytes(result[33:65], "big")
+            # 将结果格式化为非压缩公钥字节串 (0x04 + x + y)
+            result_bytes = result.format(compressed=False) if hasattr(result, 'format') else bytes(result)
+            if result_bytes[0] == 0x04 and len(result_bytes) >= 65:
+                rx = int.from_bytes(result_bytes[1:33], "big")
+                ry = int.from_bytes(result_bytes[33:65], "big")
                 return rx, ry
-        except AttributeError:
-            # 如果multiply不可用，使用纯Python回退
+        except (AttributeError, TypeError, AssertionError):
+            # 如果multiply不可用或返回类型不匹配，使用纯Python回退
             pass
 
         # 回退到纯Python实现
@@ -471,7 +471,11 @@ class CryptoBackendManager:
         with self._instance_lock:
             if backend_type == BackendType.PURE_PYTHON:
                 use_const_time = kwargs.get("use_const_time", False)
-                self._backends[backend_type] = PurePythonBackend(use_const_time)
+                existing = self._backends.get(backend_type)
+                if existing is not None and isinstance(existing, PurePythonBackend):
+                    existing._use_const_time = use_const_time
+                else:
+                    self._backends[backend_type] = PurePythonBackend(use_const_time)
 
             backend = self._backends.get(backend_type)
             if backend is None:

@@ -96,7 +96,7 @@ def _make_mock_stats(total_checked: int = 1000) -> Mock:
 def _make_mock_engine(stats: Mock = None) -> Mock:
     """创建标准 mock engine 对象"""
     engine = Mock()
-    engine.is_running.side_effect = [True, False]
+    engine.is_running.side_effect = [True] + [False] * 100
     engine.get_stats.return_value = stats or _make_mock_stats()
     engine.start = Mock()
     engine.stop = Mock()

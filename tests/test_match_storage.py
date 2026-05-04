@@ -14,6 +14,7 @@ import json
 import tempfile
 import pytest
 from pathlib import Path
+from unittest.mock import patch, MagicMock
 
 from src.collision.match_storage import MatchDataStorage
 
@@ -76,6 +77,13 @@ class TestMatchStorageInit:
 
     def test_storage_path_is_pathlib(self, storage):
         assert isinstance(storage.storage_path, Path)
+
+    @patch("os.chmod", side_effect=OSError("chmod failed"))
+    def test_init_chmod_failure_warning(self, mock_chmod):
+        """os.chmod 失败时记录警告但不崩溃"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            s = MatchDataStorage(storage_path=tmpdir)
+            assert s.storage_path.exists()
 
 
 # ============================================================================
@@ -185,6 +193,54 @@ class TestMatchStorageList:
     def test_load_nonexistent_file(self, storage):
         loaded = storage.load_match("/nonexistent/path.json")
         assert loaded is None
+
+
+@pytest.mark.unit
+class TestMatchStorageEdgeCases:
+    """边缘情况测试"""
+
+    @patch.object(MatchDataStorage, "_create_backup", side_effect=Exception("backup fail"))
+    def test_save_match_exception_cleans_temp(self, mock_backup, storage, match_data):
+        """save_match 异常时清理临时文件并重新抛出"""
+        with pytest.raises(Exception):
+            storage.save_match(match_data)
+        # 临时文件应被清理
+        temp_files = list(storage.storage_path.glob("*.tmp"))
+        assert len(temp_files) == 0
+
+    def test_build_complete_data_non_bytes_to_hex(self, storage, match_data):
+        """to_hex 处理非 bytes 类型"""
+        # hash160_compressed 传字符串而非 bytes
+        match_data["generated"]["hash160_compressed"] = "already_hex_string"
+        filepath = storage.save_match(match_data)
+        with open(filepath, "r") as f:
+            saved = json.load(f)
+        # 字符串原样返回
+        assert saved["address"]["hash160_compressed"] == "already_hex_string"
+
+    @patch("builtins.open", side_effect=Exception("disk error"))
+    def test_create_backup_exception_caught(self, mock_open, storage, match_data):
+        """_create_backup 异常被捕获不传播"""
+        storage._create_backup(Path("/tmp/test.json"), {"key": "val"})
+
+    @patch.object(Path, "unlink", side_effect=OSError("unlink failed"))
+    def test_temp_cleanup_unlink_error(self, mock_unlink, storage, match_data):
+        """临时文件清理失败不传播异常"""
+        # 让 os.chmod 在 temp_file 仍存在时失败，触发 cleanup 代码路径
+        with patch("os.chmod", side_effect=OSError("chmod fail")):
+            with pytest.raises(OSError):
+                storage.save_match(match_data)
+
+    def test_list_matches_skips_non_file(self, storage):
+        """list_matches 跳过非文件条目"""
+        # 创建一个匹配模式但不是文件的目录
+        fake_dir = storage.storage_path / "match_20260501_dir_test.json"
+        fake_dir.mkdir()
+        try:
+            matches = storage.list_matches()
+            assert fake_dir.name not in [os.path.basename(m) for m in matches]
+        finally:
+            fake_dir.rmdir()
 
 
 @pytest.mark.unit

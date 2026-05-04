@@ -91,6 +91,31 @@ class TestHashUtils(unittest.TestCase):
         self.assertEqual(HashUtils.sha256(data), HashUtils.sha256(data))
         self.assertEqual(HashUtils.hash160(data), HashUtils.hash160(data))
 
+    def test_hash160_to_address_valid(self):
+        """Hash160转P2PKH地址 (cover line 88-90)"""
+        # 使用比特币创世区块公钥的Hash160 (known value)
+        hash160 = bytes.fromhex("751e76e8199196d454941c45d1b3a323f1433bd6")
+        address = HashUtils.hash160_to_address(hash160)
+        self.assertTrue(address.startswith("1"))
+        self.assertEqual(len(address), 34)
+
+    def test_hash160_to_address_invalid_length(self):
+        """Hash160长度非法抛出 ValueError (cover line 84-85)"""
+        with self.assertRaises(ValueError) as ctx:
+            HashUtils.hash160_to_address(b"\x00" * 10)
+        self.assertIn("20", str(ctx.exception))
+
+        with self.assertRaises(ValueError) as ctx:
+            HashUtils.hash160_to_address(b"\x00" * 30)
+        self.assertIn("20", str(ctx.exception))
+
+    def test_hash160_to_address_custom_version(self):
+        """Hash160转地址使用自定义版本字节"""
+        hash160 = bytes.fromhex("751e76e8199196d454941c45d1b3a323f1433bd6")
+        # Testnet version 0x6F
+        address = HashUtils.hash160_to_address(hash160, version=0x6F)
+        self.assertTrue(address.startswith("m") or address.startswith("n"))
+
 
 class TestBase58(unittest.TestCase):
     """Base58 编解码测试"""

@@ -9,10 +9,12 @@
 import pytest
 import sys
 import os
+from unittest.mock import MagicMock, patch
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from src.utils.exception_handler import ExceptionHandler  # noqa: E402
 from src.gpu.device_helper import GPUDeviceHelper  # noqa: E402
 from src.collision.collision_stats import CollisionStats  # noqa: E402
 from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
@@ -442,3 +444,292 @@ class TestSnapshotCompleteness:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+# ============================================================
+# ExceptionHandler 单元测试 (从 src/utils/exception_handler.py)
+# ============================================================
+
+class TestHandleEngineError:
+    """测试 handle_engine_error — 7条分支"""
+
+    def test_runtime_error(self):
+        """RuntimeError 分支: 记录 error + record_worker_error"""
+        stats = MagicMock()
+        stats.record_worker_error = MagicMock()
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            ExceptionHandler.handle_engine_error("CPU", RuntimeError("test"), stats, "处理")
+        mock_logger.error.assert_called_once()
+        stats.record_worker_error.assert_called_once()
+
+    def test_value_error(self):
+        """ValueError 分支: 同 RuntimeError 处理"""
+        stats = MagicMock()
+        stats.record_worker_error = MagicMock()
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            ExceptionHandler.handle_engine_error("GPU", ValueError("bad"), stats)
+        mock_logger.error.assert_called_once()
+        stats.record_worker_error.assert_called_once()
+
+    def test_keyboard_interrupt(self):
+        """KeyboardInterrupt 分支: raise 无异常上下文 → RuntimeError"""
+        # 注: handle_engine_error 中 `raise` 裸写, 因 static method 无异常上下文,
+        # 实际会抛出 RuntimeError: No active exception to reraise
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            with pytest.raises(RuntimeError, match="No active exception"):
+                ExceptionHandler.handle_engine_error("CPU", KeyboardInterrupt())
+        mock_logger.info.assert_called_once()
+
+    def test_memory_error(self):
+        """MemoryError 分支: 记录 critical + record_error"""
+        stats = MagicMock()
+        stats.record_error = MagicMock()
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            ExceptionHandler.handle_engine_error("GPU", MemoryError("oom"), stats)
+        mock_logger.critical.assert_called_once()
+        stats.record_error.assert_called_once()
+
+    def test_import_error(self):
+        """ImportError 分支: 记录 error + record_worker_error"""
+        stats = MagicMock()
+        stats.record_worker_error = MagicMock()
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            ExceptionHandler.handle_engine_error("GPU", ImportError("no module"), stats)
+        mock_logger.error.assert_called_once()
+        stats.record_worker_error.assert_called_once()
+
+    def test_os_error(self):
+        """OSError 分支: 记录 error + record_worker_error"""
+        stats = MagicMock()
+        stats.record_worker_error = MagicMock()
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            ExceptionHandler.handle_engine_error("CPU", OSError("io"), stats)
+        mock_logger.error.assert_called_once()
+        stats.record_worker_error.assert_called_once()
+
+    def test_unknown_error(self):
+        """未知错误分支: 记录 exception + record_worker_error"""
+        stats = MagicMock()
+        stats.record_worker_error = MagicMock()
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            ExceptionHandler.handle_engine_error("CPU", KeyError("unknown"), stats)
+        mock_logger.exception.assert_called_once()
+        stats.record_worker_error.assert_called_once()
+
+    def test_no_stats(self):
+        """无 stats 参数不崩溃"""
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            ExceptionHandler.handle_engine_error("CPU", RuntimeError("no stats"))
+        mock_logger.error.assert_called_once()
+
+    def test_stats_without_method(self):
+        """stats 无 record_worker_error 方法时也不崩溃"""
+        stats = MagicMock(spec=[])
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            ExceptionHandler.handle_engine_error("CPU", RuntimeError("x"), stats)
+        mock_logger.error.assert_called_once()
+
+
+class TestHandleGpuError:
+    """测试 handle_gpu_error — 5条分支"""
+
+    def test_resource_error(self):
+        """资源错误分支: 记录 error(gpu) + record_gpu_error(resource=True)"""
+        stats = MagicMock()
+        stats.record_gpu_error = MagicMock()
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            result = ExceptionHandler.handle_gpu_error("随机碰撞",
+                                                       RuntimeError("out of resources"), stats)
+        assert result is True
+        mock_logger.error.assert_called_once()
+        stats.record_gpu_error.assert_called_once_with(is_resource_error=True)
+
+    def test_non_resource_runtime_error(self):
+        """非资源 RuntimeError: record_gpu_error(resource=False)"""
+        stats = MagicMock()
+        stats.record_gpu_error = MagicMock()
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            ExceptionHandler.handle_gpu_error("范围扫描", RuntimeError("kernel fail"), stats)
+        mock_logger.error.assert_called_once()
+        stats.record_gpu_error.assert_called_once_with(is_resource_error=False)
+
+    def test_memory_error(self):
+        """MemoryError: 记录 critical + resource=True"""
+        stats = MagicMock()
+        stats.record_gpu_error = MagicMock()
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            ExceptionHandler.handle_gpu_error("暴力穷举", MemoryError("oom"), stats)
+        mock_logger.critical.assert_called_once()
+        stats.record_gpu_error.assert_called_once_with(is_resource_error=True)
+
+    def test_type_error_and_overflow(self):
+        """TypeError/OverflowError: 记录 error + wif_encode_error"""
+        stats = MagicMock()
+        stats.record_gpu_error = MagicMock()
+        stats.record_wif_encode_error = MagicMock()
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            ExceptionHandler.handle_gpu_error("随机碰撞", TypeError("bad type"), stats)
+        mock_logger.error.assert_called_once()
+        stats.record_gpu_error.assert_called_once_with(is_resource_error=False)
+        stats.record_wif_encode_error.assert_called_once()
+
+    def test_unknown_error(self):
+        """未知错误: 记录 exception"""
+        stats = MagicMock()
+        stats.record_gpu_error = MagicMock()
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            ExceptionHandler.handle_gpu_error("随机碰撞", KeyError("?"), stats)
+        mock_logger.exception.assert_called_once()
+        stats.record_gpu_error.assert_called_once_with(is_resource_error=False)
+
+    def test_no_stats(self):
+        """无 stats 也不崩溃"""
+        result = ExceptionHandler.handle_gpu_error("测试", RuntimeError("no stats"))
+        assert result is True
+
+
+class TestHandleGpuAsyncError:
+    """测试 handle_gpu_async_error — 4条分支"""
+
+    def test_runtime_error_returns_true(self):
+        """RuntimeError → 返回 True (可回退)"""
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            result = ExceptionHandler.handle_gpu_async_error(
+                RuntimeError("cl error"), "内核执行")
+        assert result is True
+        mock_logger.warning.assert_called_once()
+
+    def test_memory_error_returns_true(self):
+        """MemoryError → 返回 True"""
+        result = ExceptionHandler.handle_gpu_async_error(MemoryError("oom"), "缓冲清理")
+        assert result is True
+
+    def test_value_type_index_error_returns_true(self):
+        """ValueError/TypeError/IndexError → 返回 True"""
+        for err_cls in [ValueError, TypeError, IndexError]:
+            result = ExceptionHandler.handle_gpu_async_error(err_cls("data"), "结果回读")
+            assert result is True
+
+    def test_attribute_error_returns_true(self):
+        """AttributeError → 返回 True"""
+        result = ExceptionHandler.handle_gpu_async_error(AttributeError("no attr"), "种子写入")
+        assert result is True
+
+    def test_unknown_error_returns_true(self):
+        """未知错误 → 返回 True (保守策略)"""
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            result = ExceptionHandler.handle_gpu_async_error(KeyError("?"), "内核执行")
+        assert result is True
+        mock_logger.exception.assert_called_once()
+
+
+class TestHandleClResourceError:
+    """测试 handle_cl_resource_error"""
+
+    def test_resource_exhausted(self):
+        """资源耗尽 → 返回 True, 记录 warning"""
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            result = ExceptionHandler.handle_cl_resource_error(
+                RuntimeError("out of resources"), "buffer")
+        assert result is True
+        mock_logger.warning.assert_called_once()
+
+    def test_non_resource_error(self):
+        """非资源错误 → 返回 False, 记录 error"""
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            result = ExceptionHandler.handle_cl_resource_error(
+                RuntimeError("unknown kernel error"), "kernel")
+        assert result is False
+        mock_logger.error.assert_called_once()
+
+    def test_cl_out_of_host_memory(self):
+        """CL_OUT_OF_HOST_MEMORY → 识别为资源耗尽"""
+        result = ExceptionHandler.handle_cl_resource_error(
+            RuntimeError("cl_out_of_host_memory"), "buffer")
+        assert result is True
+
+    def test_invalid_buffer_size(self):
+        """invalid buffer size → 识别为资源耗尽"""
+        result = ExceptionHandler.handle_cl_resource_error(
+            RuntimeError("invalid buffer size"), "buffer")
+        assert result is True
+
+
+class TestHandleGpuCleanupError:
+    """测试 handle_gpu_cleanup_error"""
+
+    def test_runtime_error(self):
+        """RuntimeError → warning"""
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            ExceptionHandler.handle_gpu_cleanup_error(RuntimeError("cl cleanup"), "compute_queue")
+        mock_logger.warning.assert_called_once()
+
+    def test_os_error(self):
+        """OSError → warning"""
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            ExceptionHandler.handle_gpu_cleanup_error(OSError("io cleanup"), "seed_buffer")
+        mock_logger.warning.assert_called_once()
+
+    def test_unknown_error(self):
+        """未知错误 → warning"""
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            ExceptionHandler.handle_gpu_cleanup_error(KeyError("?"), "precomp_buffer")
+        mock_logger.warning.assert_called_once()
+
+
+class TestHandleConfigError:
+    """测试 handle_config_error"""
+
+    def test_file_not_found(self):
+        """FileNotFoundError → warning"""
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            ExceptionHandler.handle_config_error(FileNotFoundError("no file"), "ConfigManager")
+        mock_logger.warning.assert_called_once()
+
+    def test_value_error(self):
+        """ValueError → error"""
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            ExceptionHandler.handle_config_error(ValueError("bad config"), "CryptoConfig")
+        mock_logger.error.assert_called_once()
+
+    def test_permission_error(self):
+        """PermissionError 是 OSError 子类 → 被 FileNotFoundError/IOError 先捕获"""
+        # PermissionError 继承自 OSError, IOError 是 OSError 别名,
+        # 因此被第一个 isinstance(error, (FileNotFoundError, IOError)) 捕获
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            ExceptionHandler.handle_config_error(PermissionError("denied"), "GPUConfig")
+        mock_logger.warning.assert_called_once()
+
+    def test_unknown_error(self):
+        """未知错误 → exception"""
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            ExceptionHandler.handle_config_error(KeyError("?"), "ConfigManager")
+        mock_logger.exception.assert_called_once()
+
+
+class TestHandleFileError:
+    """测试 handle_file_error"""
+
+    def test_file_not_found(self):
+        """FileNotFoundError → error"""
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            ExceptionHandler.handle_file_error(FileNotFoundError("no file"), "读取", "/path/to/file")
+        mock_logger.error.assert_called_once()
+
+    def test_permission_error(self):
+        """PermissionError → error"""
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            ExceptionHandler.handle_file_error(PermissionError("denied"), "写入", "/path/to/file")
+        mock_logger.error.assert_called_once()
+
+    def test_io_error(self):
+        """IOError → error"""
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            ExceptionHandler.handle_file_error(IOError("io fail"), "删除", "/path/to/file")
+        mock_logger.error.assert_called_once()
+
+    def test_unknown_error(self):
+        """未知错误 → exception"""
+        with patch("src.utils.exception_handler.logger") as mock_logger:
+            ExceptionHandler.handle_file_error(KeyError("?"), "读取", "/path/to/file")
+        mock_logger.exception.assert_called_once()

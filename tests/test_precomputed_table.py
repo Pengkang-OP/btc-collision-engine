@@ -153,6 +153,55 @@ class TestPrecomputedPointTable:
                 prev_speedup = prev_table.get_speedup_estimate()
                 assert speedup > prev_speedup
 
+    def test_init_with_custom_ec_has_G(self):
+        """使用自定义 ec (有 curve.G) 初始化 (cover lines 88-90)"""
+        from src.core.secp256k1 import EllipticCurve
+
+        ec = EllipticCurve()
+        # 临时给 ec.curve 动态添加 G 属性触发 hasattr 分支
+        # 注意: 测试完必须清理, 避免污染其他测试
+        saved_G = getattr(ec.curve, "G", None)
+        ec.curve.G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
+        try:
+            table = PrecomputedPointTable(window_size=4, ec=ec)
+            assert table.ec is ec
+            assert len(table.table) > 0
+        finally:
+            if saved_G is None:
+                del ec.curve.G
+            else:
+                ec.curve.G = saved_G
+
+    def test_init_with_custom_ec_no_G(self):
+        """使用自定义 ec (无 curve.G) 初始化 (cover lines 91-94)"""
+        from src.core.secp256k1 import EllipticCurve
+
+        ec = EllipticCurve()
+        # 确保没有 test pollution
+        saved_G = getattr(ec.curve, "G", None)
+        if hasattr(ec.curve, "G"):
+            del ec.curve.G
+        try:
+            table = PrecomputedPointTable(window_size=4, ec=ec)
+            assert table.ec is ec
+            assert len(table.table) > 0
+        finally:
+            if saved_G is not None:
+                ec.curve.G = saved_G
+
+    def test_scalar_multiply_with_custom_ec(self):
+        """标量乘法传入自定义 ec (cover scalar_multiply_with_table ec 非 None 分支)"""
+        table = PrecomputedPointTable(window_size=6)
+        # 使用独立的 EllipticCurve 实例
+        from src.core.secp256k1 import EllipticCurve
+        custom_ec = EllipticCurve()
+        G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
+
+        result_table = table.scalar_multiply_with_table(100, ec=custom_ec)
+        result_std = custom_ec.scalar_multiply(100, G)
+        assert result_table.x == result_std.x
+        assert result_table.y == result_std.y
+
 
 class TestPrecomputedTableManager:
     """预计算表管理器测试类"""

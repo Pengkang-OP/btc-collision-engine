@@ -6,27 +6,35 @@ BTC 碰撞引擎的 Web 监控仪表板，提供:
 - 历史性能数据查询
 - 错误日志浏览
 
+安全:
+- 支持 API Key 认证（--api-key 参数或 DASHBOARD_API_KEY 环境变量）
+- /health 端点无需认证（供负载均衡器健康检查）
+
 启动:
-    python -m src.web.dashboard --host 0.0.0.0 --port 8080
+    python -m src.web.dashboard --host 0.0.0.0 --port 8080 --api-key YOUR_SECRET_KEY
 
 API 端点:
     GET  /api/status       - 当前运行状态
     GET  /api/history      - 历史数据 (支持 ?limit=N)
     GET  /api/errors       - 错误日志 (支持 ?limit=N)
     GET  /api/report       - 日报告摘要
+    GET  /health           - 健康检查 (无需认证)
     GET  /                 - 仪表板 HTML 页面
 """
 
 import json
+import os
 import sys
+import secrets
 import argparse
 import logging
 import time
+from functools import wraps
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 try:
-    from flask import Flask, jsonify, render_template_string, request
+    from flask import Flask, jsonify, render_template_string, request, abort
 
     FLASK_AVAILABLE = True
 except ImportError:
@@ -35,8 +43,44 @@ except ImportError:
     jsonify: Any = None  # type: ignore[no-redef]
     render_template_string: Any = None  # type: ignore[no-redef]
     request: Any = None  # type: ignore[no-redef]
+    abort: Any = None  # type: ignore[no-redef]
 
 logger = logging.getLogger(__name__)
+
+# ──────────────────────────────────────────────────────────────────
+# API Key 认证
+# ──────────────────────────────────────────────────────────────────
+
+UNPROTECTED_ROUTES = {"health"}
+
+_api_key: Optional[str] = None
+_api_key_required: bool = False
+
+
+def set_api_key(key: Optional[str]) -> None:
+    global _api_key, _api_key_required
+    _api_key = key
+    _api_key_required = key is not None and len(key) > 0
+
+
+def _validate_api_key() -> bool:
+    if not _api_key_required:
+        return True
+    provided = request.headers.get("Authorization", "").removeprefix("Bearer ").strip()
+    if not provided:
+        provided = request.args.get("api_key", "")
+    return secrets.compare_digest(provided, _api_key or "")
+
+
+def require_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if f.__name__ in UNPROTECTED_ROUTES:
+            return f(*args, **kwargs)
+        if not _validate_api_key():
+            abort(401)
+        return f(*args, **kwargs)
+    return decorated
 
 # ──────────────────────────────────────────────────────────────────
 # HTML 模板 (内嵌，无需外部文件)
@@ -301,6 +345,14 @@ def create_app(data_dir: Optional[Path] = None) -> "Flask":
     app = Flask(__name__)
     data_logs_dir = data_dir or _find_data_logs_dir()
 
+    if _api_key_required:
+        logger.info("Web 仪表板 API Key 认证已启用")
+    else:
+        logger.warning(
+            "Web 仪表板未设置 API Key，所有端点可公开访问。"
+            "请通过 --api-key 参数或 DASHBOARD_API_KEY 环境变量设置密钥。"
+        )
+
     # 从 web 包元数据获取版本号（避免硬编码和触发 OpenCL 初始化）
     try:
         from . import __version__ as web_version
@@ -310,6 +362,7 @@ def create_app(data_dir: Optional[Path] = None) -> "Flask":
         version = "1.0.0"
 
     @app.route("/")
+    @require_auth
     def index():
         """仪表板主页"""
         stats = get_current_stats(data_logs_dir)
@@ -339,11 +392,13 @@ def create_app(data_dir: Optional[Path] = None) -> "Flask":
         )
 
     @app.route("/api/status")
+    @require_auth
     def api_status():
         """API: 当前运行状态"""
         return jsonify(get_current_stats(data_logs_dir))
 
     @app.route("/api/history")
+    @require_auth
     def api_history():
         """API: 历史数据
 
@@ -355,6 +410,7 @@ def create_app(data_dir: Optional[Path] = None) -> "Flask":
         return jsonify(get_history(data_logs_dir, limit=limit))
 
     @app.route("/api/errors")
+    @require_auth
     def api_errors():
         """API: 错误日志
 
@@ -366,6 +422,7 @@ def create_app(data_dir: Optional[Path] = None) -> "Flask":
         return jsonify(get_errors(data_logs_dir, limit=limit))
 
     @app.route("/api/report")
+    @require_auth
     def api_report():
         """API: 日报告摘要"""
         stats = get_current_stats(data_logs_dir)
@@ -408,6 +465,7 @@ def run_dashboard(
     data_dir: Optional[str] = None,
     debug: bool = False,
     use_reloader: bool = False,
+    api_key: Optional[str] = None,
 ) -> None:
     """启动 Web 监控仪表板
 
@@ -417,19 +475,24 @@ def run_dashboard(
         data_dir: data_logs 目录路径
         debug: 是否开启调试模式
         use_reloader: 是否启用 Flask 自动重载 (开发模式，默认关闭)
+        api_key: API 认证密钥 (None=不启用认证)
     """
     if not FLASK_AVAILABLE:
         print("❌ Flask 未安装。请运行: pip install flask")
         sys.exit(1)
 
+    set_api_key(api_key)
+
     data_path = Path(data_dir) if data_dir else None
     app = create_app(data_dir=data_path)
 
-    print("""
+    auth_status = "已启用" if _api_key_required else "未启用 (公开访问)"  # noqa: F841
+    print(f"""
 ╔══════════════════════════════════════════════════════╗
 ║     BTC 碰撞引擎 - Web 监控仪表板 v1.0               ║
 ╠══════════════════════════════════════════════════════╣
 ║  本地访问: http://127.0.0.1:{port:<5}                  ║
+║  API Key:  {auth_status:<38}║
 ║  API 端点:                                           ║
 ║    GET /api/status  - 当前运行状态                   ║
 ║    GET /api/history - 历史数据 (?limit=N)            ║
@@ -458,10 +521,14 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
-  python -m src.web.dashboard                    # 默认 0.0.0.0:8080
-  python -m src.web.dashboard --port 3000        # 自定义端口
-  python -m src.web.dashboard --host 127.0.0.1   # 仅本地访问
-  python -m src.web.dashboard --debug            # 调试模式
+  python -m src.web.dashboard                              # 默认 0.0.0.0:8080, 无认证
+  python -m src.web.dashboard --port 3000                  # 自定义端口
+  python -m src.web.dashboard --host 127.0.0.1             # 仅本地访问
+  python -m src.web.dashboard --api-key YOUR_SECRET        # 启用 API Key 认证
+  python -m src.web.dashboard --debug                      # 调试模式
+
+环境变量:
+  DASHBOARD_API_KEY    设置 API 认证密钥 (与 --api-key 等效)
         """,
     )
     parser.add_argument("--host", default="0.0.0.0", help="监听地址 (默认: 0.0.0.0)")  # nosec B104
@@ -469,6 +536,11 @@ def main():
     parser.add_argument("--data-dir", default=None, help="data_logs 目录路径")
     parser.add_argument("--debug", action="store_true", help="开启 Flask 调试模式")
     parser.add_argument("--reload", action="store_true", help="启用 Flask 自动重载 (开发模式)")
+    parser.add_argument(
+        "--api-key",
+        default=os.environ.get("DASHBOARD_API_KEY", None),
+        help="API 认证密钥 (默认读取 DASHBOARD_API_KEY 环境变量, 不设置则不启用认证)",
+    )
     args = parser.parse_args()
 
     run_dashboard(
@@ -477,6 +549,7 @@ def main():
         data_dir=args.data_dir,
         debug=args.debug,
         use_reloader=args.reload,
+        api_key=args.api_key,
     )
 
 

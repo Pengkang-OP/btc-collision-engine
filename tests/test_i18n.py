@@ -180,6 +180,24 @@ class TestTranslator(unittest.TestCase):
         result = self.en_translator.translate("common")
         self.assertEqual(result, "common")
 
+    def test_corrupt_json_falls_back_to_hardcoded(self):
+        """JSON 文件损坏时回退到硬编码默认值。"""
+        import tempfile
+        import shutil
+        tmpdir = tempfile.mkdtemp()
+        try:
+            # 创建损坏的 en_US.json
+            en_json = Path(tmpdir) / "en_US.json"
+            en_json.write_text("not valid json{", encoding="utf-8")
+            # zh_CN 不存在，让 translate 走外语→en 回退
+            t = Translator(language="zh_CN")
+            t._locales_dir = Path(tmpdir)
+            t._cache.clear()
+            result = t.translate("common.error")
+            self.assertEqual(result, "Error")  # 硬编码默认值
+        finally:
+            shutil.rmtree(tmpdir, ignore_errors=True)
+
 
 # ===========================================================================
 # 2. TestLanguageDetector — 语言检测
@@ -336,6 +354,25 @@ class TestLanguageDetector(unittest.TestCase):
     def test_is_language_supported_false(self):
         self.assertFalse(is_language_supported("fr_FR"))
         self.assertFalse(is_language_supported(""))
+
+    # ── _detect_env_language 回退路径 ──────────────────────────
+
+    def test_detect_env_language_finds_zh_cn(self):
+        """_detect_env_language 通过 LANG 变量检测到 zh_CN。"""
+        from src.i18n.language_detector import _detect_env_language
+        os.environ["LANG"] = "zh_CN.UTF-8"
+        result = _detect_env_language()
+        self.assertEqual(result, "zh_CN")
+
+    # ── _normalize_language_code 前缀匹配 ─────────────────────
+
+    def test_normalize_prefix_match(self):
+        """前缀匹配: zh_cn_CN 通过 startswith('zh_cn') 匹配到 zh_CN。"""
+        self.assertEqual(_normalize_language_code("zh_cn_CN"), "zh_CN")
+
+    def test_normalize_prefix_no_match_returns_none(self):
+        """遍历完所有前缀均不匹配时返回 None。"""
+        self.assertIsNone(_normalize_language_code("chr_invalid_prefix"))
 
 
 # ===========================================================================
