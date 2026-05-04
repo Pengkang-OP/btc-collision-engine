@@ -25,6 +25,7 @@ def pytest_configure(config):
     """
     _apply_python314_capture_patch()
     _apply_python314_logging_patch()
+    _apply_pyopencl_editable_install_fix()
 
 
 def _apply_python314_capture_patch():
@@ -133,6 +134,27 @@ def _apply_python314_logging_patch():
         logging.StreamHandler.emit = _safe_emit
 
     except Exception:
+        pass
+
+
+def _apply_pyopencl_editable_install_fix():
+    """预导入 pyopencl 关键子模块，解决 editable install 下名称空间解析失败。
+
+    问题根因: editable install 的 MetaPathFinder 会干扰 pyopencl 内部
+    'from pyopencl.XXX import YYY' 语句的模块解析，导致
+    ModuleNotFoundError: No module named 'pyopencl.XXX'; 'pyopencl' is not a package
+
+    解决方案: 预导入 pyopencl build() 路径依赖的所有子模块/subpackage。
+    """
+    try:
+        import pyopencl._cl  # noqa: F401
+        import pyopencl.cache  # noqa: F401
+        import pyopencl.characterize  # noqa: F401
+        import pyopencl.tools  # noqa: F401
+        import pyopencl.version  # noqa: F401
+        import pyopencl.cl  # noqa: F401
+        import pyopencl.compyte  # noqa: F401
+    except ImportError:
         pass
 
 
