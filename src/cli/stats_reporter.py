@@ -43,8 +43,9 @@ def _print_detailed_stats(stats: Any) -> None:
         gpu_info = getattr(stats, "gpu_info", None)
         if gpu_info:
             rows.append(("GPU设备", str(gpu_info)))
-    except Exception:
+    except Exception as e:
         rows.append(("状态", "统计信息暂不可用"))
+        sys.stderr.write(f"详细统计获取失败: {e}\n")
     output.stats_panel("详细统计", rows)
 
 
@@ -107,8 +108,9 @@ def _print_final_summary(engine: Any, engine_type: str, args: argparse.Namespace
                 from src.cli.pagination import display_paginated_results
 
                 display_paginated_results(stats.matches, "匹配结果")
-        except Exception:
+        except Exception as e:
             stats_dict["状态"] = "统计信息暂不可用"
+            print(f"统计信息获取失败: {e}")
 
     output.final_summary(_t("cli.main.final_summary"), stats_dict)
 
