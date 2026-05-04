@@ -7,6 +7,63 @@
 
 ---
 
+## [3.5.2] - 2026-05-04
+
+### CLI 测试覆盖增强
+
+- **CLI 模块覆盖率 44%→48%**: `test_cli.py` 新增 33 条测试
+  - `progress.py` (100%): 大数格式化边界 (B/M/K 阈值 + 零耗时 ETA)
+  - `output.py` (98%): info/hint/warning/error 全覆盖 + quiet 静默模式
+  - `pagination.py` (24%): 14 条测试覆盖核心翻页/跳页/边界逻辑
+  - `optimization_cli.py` (98%): 5 条测试覆盖 main/default/settings/features
+- **新增 CLI 专项测试文件**:
+  - `tests/test_output.py` (52 测试): CLIOutput 单例/消息/结构化/运行时全路径
+  - `tests/test_advanced_features.py` (52 测试): deep_merge/apply_template/recommend/export/GPUErrorHandler
+- **GBK 编码修复**: `run_all_tests.py` Unicode 符号替换为 ASCII, 修复 Windows 终端 exit code 1
+
+### 碰撞模块测试增强
+
+- **碰撞模块覆盖率 49%→52%**: 新增 42 个测试
+- **地址生成器重构**: 提取共享 helper 减少重复代码
+
+### GPU 引擎修复
+
+- **memory_pool 死代码修复**: 测试覆盖 14%→100%
+- **GPUKernel API 适配**: 异常安全 + 自包含测试 (18/18 PASS)
+- **pyopencl 预导入修复**: 解决 editable install 兼容性问题
+
+### 测试质量
+
+- **预存测试修复**: patch 路径重定向 + mock 泄漏清理
+- **全量回归**: 1030 passed / 0 failed / 1 skipped
+
+### 构建优化
+
+- **Git 跟踪清理**: 移除 28 个 `.coverage_*` + `coverage.xml` 构建产物
+- **文档去重**: 删除 11 个与 docs/ 根目录完全相同的子目录副本
+
+### 改动文件
+
+- `tests/test_cli.py` — +33 条新测试
+- `tests/test_output.py` — 新增 52 测试
+- `tests/test_advanced_features.py` — 新增 52 测试
+- `tests/test_collision.py` — +42 条新测试
+- `src/core/address_generator.py` — 提取 helper 去重
+- `src/gpu/memory_pool.py` — 死代码修复
+- `src/gpu/kernel_impl.py` — API 适配 + 异常安全
+- `run_all_tests.py` — GBK 编码修复
+- `.gitignore` — 新增 coverage.xml / .coverage.* 规则
+
+### 破坏性变更
+
+- 无 ✅
+
+### 迁移指南
+
+- 无需迁移, 可直接升级 🔄
+
+---
+
 ## [3.5.0] - 2026-04-30
 
 ### 类型系统工程化 (v3.5.0 核心特性)
@@ -881,4 +938,4 @@
 
 ---
 
-**最后更新**: 2026-05-01
+**最后更新**: 2026-05-04
