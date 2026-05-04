@@ -218,6 +218,56 @@ class TestCLI:
         progress_str = format_progress(stats, "range", total_range=10000)
         assert "5.0%" in progress_str
 
+    def test_format_progress_billion_checked(self):
+        """checked >= 10 亿时显示 B 后缀"""
+        stats = CollisionStats()
+        stats.total_checked = 2_500_000_000
+        stats.start_time = 1000
+        stats.elapsed = 3600
+        stats.matches = []
+        progress_str = format_progress(stats, "random")
+        assert "2.50B" in progress_str
+
+    def test_format_progress_million_checked(self):
+        """checked >= 100 万时显示 M 后缀"""
+        stats = CollisionStats()
+        stats.total_checked = 8_500_000
+        stats.start_time = 1000
+        stats.elapsed = 3600
+        stats.matches = []
+        progress_str = format_progress(stats, "random")
+        assert "8.50M" in progress_str
+
+    def test_format_progress_range_billion_total(self):
+        """range 模式 total_range >= 10 亿时显示 B 后缀"""
+        stats = CollisionStats()
+        stats.total_checked = 500_000_000
+        stats.start_time = 1000
+        stats.elapsed = 3600
+        stats.matches = []
+        progress_str = format_progress(stats, "range", total_range=3_000_000_000)
+        assert "3.00B" in progress_str
+
+    def test_format_progress_range_million_total(self):
+        """range 模式 total_range >= 100 万时显示 M 后缀"""
+        stats = CollisionStats()
+        stats.total_checked = 500_000
+        stats.start_time = 1000
+        stats.elapsed = 3600
+        stats.matches = []
+        progress_str = format_progress(stats, "range", total_range=5_000_000)
+        assert "5.00M" in progress_str
+
+    def test_format_progress_zero_elapsed_eta(self):
+        """elapsed_sec <= 0 时 ETA 显示 --"""
+        stats = CollisionStats()
+        stats.total_checked = 1000
+        stats.start_time = 0
+        stats.elapsed = 0
+        stats.matches = []
+        progress_str = format_progress(stats, "range", total_range=10000)
+        assert "ETA: --" in progress_str
+
     def test_load_targets(self, tmp_path):
         """测试目标地址加载"""
         # 模拟 TargetResolver（延迟导入，需 patch collision 模块）
@@ -662,6 +712,16 @@ class TestLoadConfigWithValidation:
         result = mod.load_config_with_validation(str(config_file))
         assert isinstance(result, dict)
         assert "crypto" in result
+
+    def test_config_path_traversal_blocked(self, tmp_path, monkeypatch):
+        """config_file 路径在项目目录外 → 拒绝加载, 返回 None"""
+        mod = self._get_config_loader_module()
+        # 设置 project_root 为 tmp_path
+        monkeypatch.setattr(mod, "_project_root", str(tmp_path))
+        # 提供一个项目目录外的路径
+        outside_path = tmp_path.parent / "outside_config.json"
+        result = mod.load_config_with_validation(str(outside_path))
+        assert result is None
 
 
 class TestBuildEngine:
@@ -1294,3 +1354,365 @@ class TestCLIOutput:
         out.info("这条消息不应该出现")
         captured = capsys.readouterr()
         assert "不应该出现" not in captured.out
+
+    def test_output_info_non_quiet(self, capsys):
+        """非 quiet 模式下 info 正常输出"""
+        from src.cli.output import CLIOutput
+
+        CLIOutput.reset_instance()
+        out = CLIOutput()
+        out.info("信息消息")
+        captured = capsys.readouterr()
+        assert "信息消息" in captured.out
+        assert "INFO" in captured.out
+
+    def test_output_hint(self, capsys):
+        """hint 方法输出提示信息"""
+        from src.cli.output import CLIOutput
+
+        CLIOutput.reset_instance()
+        out = CLIOutput()
+        out.hint("这是一条提示")
+        captured = capsys.readouterr()
+        assert "这是一条提示" in captured.out
+        assert "HINT" in captured.out
+
+    def test_output_warning_with_details(self, capsys):
+        """warning 带 details 参数时输出详细信息"""
+        from src.cli.output import CLIOutput
+
+        CLIOutput.reset_instance()
+        out = CLIOutput()
+        out.warning("磁盘空间不足", details="剩余 100MB")
+        captured = capsys.readouterr()
+        assert "磁盘空间不足" in captured.out or "磁盘空间不足" in captured.err
+        assert "剩余 100MB" in captured.out or "剩余 100MB" in captured.err
+
+    def test_output_error_with_details(self, capsys):
+        """error 带 details 参数时输出详细信息"""
+        from src.cli.output import CLIOutput
+
+        CLIOutput.reset_instance()
+        out = CLIOutput()
+        out.error("配置加载失败", details="JSON 语法错误")
+        captured = capsys.readouterr()
+        assert "配置加载失败" in captured.out or "配置加载失败" in captured.err
+        assert "JSON 语法错误" in captured.out or "JSON 语法错误" in captured.err
+
+    def test_output_print_always(self, capsys):
+        """print_always 始终输出"""
+        from src.cli.output import CLIOutput
+
+        CLIOutput.reset_instance()
+        out = CLIOutput()
+        out.print_always("始终可见")
+        captured = capsys.readouterr()
+        assert "始终可见" in captured.out
+
+    def test_output_startup_panel_quiet(self, capsys):
+        """quiet 模式下 startup_panel 不输出"""
+        from src.cli.output import CLIOutput
+
+        CLIOutput.reset_instance()
+        out = CLIOutput.init(quiet=True)
+        out.startup_panel({"模式": "random"})
+        captured = capsys.readouterr()
+        assert "random" not in captured.out
+        assert "启动配置" not in captured.out
+
+    def test_output_stats_panel(self, capsys):
+        """stats_panel 输出自定义统计面板"""
+        from src.cli.output import CLIOutput
+
+        CLIOutput.reset_instance()
+        out = CLIOutput()
+        out.stats_panel("性能统计", [
+            ("速度", "10,000/s"),
+            ("GPU 温度", "65°C", "yellow"),
+        ])
+        captured = capsys.readouterr()
+        assert "性能统计" in captured.out
+        assert "10,000/s" in captured.out
+        assert "65°C" in captured.out
+
+    def test_output_status_line_quiet(self, capsys):
+        """quiet 模式下 status_line 不输出"""
+        from src.cli.output import CLIOutput
+
+        CLIOutput.reset_instance()
+        out = CLIOutput.init(quiet=True)
+        out.status_line("正在处理...")
+        captured = capsys.readouterr()
+        assert "正在处理" not in captured.out
+
+    def test_output_performance_status_quiet(self, capsys):
+        """quiet 模式下 performance_status 不输出"""
+        from src.cli.output import CLIOutput
+
+        CLIOutput.reset_instance()
+        out = CLIOutput.init(quiet=True)
+        out.performance_status({"speed": 5000, "keys_total": 100000})
+        captured = capsys.readouterr()
+        assert "性能状态" not in captured.out
+
+
+class TestPagination:
+    """PaginationManager 分页管理器测试"""
+
+    def setup_method(self):
+        """每个测试前重置 CLIOutput 单例"""
+        from src.cli.output import CLIOutput
+
+        CLIOutput.reset_instance()
+        from src.cli.log_window import reset_log_window_instance
+
+        reset_log_window_instance()
+
+    def test_pagination_init(self):
+        """初始化分页管理器，计算 total_pages"""
+        from src.cli.pagination import PaginationManager
+
+        pm = PaginationManager(list(range(25)), page_size=10)
+        assert pm.current_page == 1
+        assert pm.total_pages == 3
+        assert pm.page_size == 10
+        assert len(pm.items) == 25
+
+    def test_pagination_init_empty(self):
+        """空列表初始化 total_pages=0"""
+        from src.cli.pagination import PaginationManager
+
+        pm = PaginationManager([], page_size=10)
+        assert pm.current_page == 1
+        assert pm.total_pages == 0
+
+    def test_pagination_get_current_page(self):
+        """get_current_page_items 返回当前页数据"""
+        from src.cli.pagination import PaginationManager
+
+        pm = PaginationManager(list(range(25)), page_size=10)
+        items = pm.get_current_page_items()
+        assert items == list(range(10))
+
+    def test_pagination_get_current_page_last(self):
+        """最后一页数据量不足 page_size"""
+        from src.cli.pagination import PaginationManager
+
+        pm = PaginationManager(list(range(25)), page_size=10)
+        pm.go_to_page(3)
+        items = pm.get_current_page_items()
+        assert items == list(range(20, 25))
+
+    def test_pagination_next_page_success(self):
+        """next_page 成功翻页"""
+        from src.cli.pagination import PaginationManager
+
+        pm = PaginationManager(list(range(25)), page_size=10)
+        result = pm.next_page()
+        assert result is True
+        assert pm.current_page == 2
+
+    def test_pagination_next_page_at_last(self):
+        """最后一页时 next_page 返回 False"""
+        from src.cli.pagination import PaginationManager
+
+        pm = PaginationManager(list(range(25)), page_size=10)
+        pm.go_to_page(3)
+        result = pm.next_page()
+        assert result is False
+        assert pm.current_page == 3
+
+    def test_pagination_previous_page_success(self):
+        """previous_page 成功翻页"""
+        from src.cli.pagination import PaginationManager
+
+        pm = PaginationManager(list(range(25)), page_size=10)
+        pm.go_to_page(2)
+        result = pm.previous_page()
+        assert result is True
+        assert pm.current_page == 1
+
+    def test_pagination_previous_page_at_first(self):
+        """第一页时 previous_page 返回 False"""
+        from src.cli.pagination import PaginationManager
+
+        pm = PaginationManager(list(range(25)), page_size=10)
+        result = pm.previous_page()
+        assert result is False
+        assert pm.current_page == 1
+
+    def test_pagination_go_to_page_valid(self):
+        """跳转到有效页"""
+        from src.cli.pagination import PaginationManager
+
+        pm = PaginationManager(list(range(25)), page_size=10)
+        result = pm.go_to_page(2)
+        assert result is True
+        assert pm.current_page == 2
+
+    def test_pagination_go_to_page_invalid_low(self):
+        """跳转到第 0 页返回 False"""
+        from src.cli.pagination import PaginationManager
+
+        pm = PaginationManager(list(range(25)), page_size=10)
+        result = pm.go_to_page(0)
+        assert result is False
+        assert pm.current_page == 1
+
+    def test_pagination_go_to_page_invalid_high(self):
+        """跳转到超出范围页返回 False"""
+        from src.cli.pagination import PaginationManager
+
+        pm = PaginationManager(list(range(25)), page_size=10)
+        result = pm.go_to_page(999)
+        assert result is False
+        assert pm.current_page == 1
+
+    def test_pagination_info(self):
+        """get_pagination_info 返回完整分页信息"""
+        from src.cli.pagination import PaginationManager
+
+        pm = PaginationManager(list(range(25)), page_size=10)
+        info = pm.get_pagination_info()
+        assert info["current_page"] == 1
+        assert info["total_pages"] == 3
+        assert info["total_items"] == 25
+        assert info["page_size"] == 10
+        assert info["has_next"] is True
+        assert info["has_previous"] is False
+
+    def test_pagination_info_last_page(self):
+        """最后一页时 has_next=False, has_previous=True"""
+        from src.cli.pagination import PaginationManager
+
+        pm = PaginationManager(list(range(25)), page_size=10)
+        pm.go_to_page(3)
+        info = pm.get_pagination_info()
+        assert info["has_next"] is False
+        assert info["has_previous"] is True
+
+    def test_pagination_single_page(self):
+        """单页数据验证 has_next/has_previous 均为 False"""
+        from src.cli.pagination import PaginationManager
+
+        pm = PaginationManager([1, 2, 3], page_size=10)
+        info = pm.get_pagination_info()
+        assert info["total_pages"] == 1
+        assert info["has_next"] is False
+        assert info["has_previous"] is False
+
+
+class TestOptimizationCLI:
+    """optimization_cli 优化设置命令行测试"""
+
+    def setup_method(self):
+        from src.cli.output import CLIOutput
+
+        CLIOutput.reset_instance()
+        from src.cli.log_window import reset_log_window_instance
+
+        reset_log_window_instance()
+
+    def test_print_settings(self, monkeypatch, capsys):
+        """print_settings 输出当前优化设置"""
+        from unittest.mock import Mock
+
+        mock_config = Mock()
+        mock_config.get_all.return_value = {
+            "delta_stats_flush_interval": 30,
+            "aggregator_interval": 10,
+            "monitor_interval": 5,
+        }
+        monkeypatch.setattr(
+            "src.cli.optimization_cli.get_optimization_config",
+            lambda: mock_config,
+        )
+        monkeypatch.setattr(
+            "src.cli.optimization_cli.is_feature_enabled",
+            lambda f: {
+                "delta_stats": True,
+                "distributed_aggregator": False,
+                "performance_monitor": True,
+            }.get(f, False),
+        )
+
+        from src.cli.optimization_cli import print_settings
+
+        print_settings()
+        captured = capsys.readouterr()
+        assert "优化设置" in captured.out
+        assert "增量统计优化" in captured.out
+        assert "30" in captured.out
+
+    def test_main_default_shows_settings(self, monkeypatch, capsys):
+        """main 默认运行 print_settings"""
+        from unittest.mock import Mock
+
+        mock_config = Mock()
+        mock_config.get_all.return_value = {}
+        monkeypatch.setattr(
+            "src.cli.optimization_cli.get_optimization_config",
+            lambda: mock_config,
+        )
+        monkeypatch.setattr(
+            "src.cli.optimization_cli.is_feature_enabled",
+            lambda f: False,
+        )
+        monkeypatch.setattr("sys.argv", ["optimization_cli.py"])
+
+        from src.cli.optimization_cli import main
+
+        main()
+        captured = capsys.readouterr()
+        assert "优化设置" in captured.out
+
+    def test_main_enable_feature(self, monkeypatch, capsys):
+        """main --enable 启用功能"""
+        import src.cli.optimization_cli as opt_mod
+
+        called = []
+
+        def fake_enable(feature):
+            called.append(feature)
+
+        monkeypatch.setattr(opt_mod, "enable_feature", fake_enable)
+        monkeypatch.setattr(opt_mod, "get_optimization_config", lambda: Mock(get_all=lambda: {}))
+        monkeypatch.setattr(opt_mod, "is_feature_enabled", lambda f: False)
+        monkeypatch.setattr("sys.argv", ["optimization_cli.py", "--enable", "delta_stats"])
+
+        opt_mod.main()
+        captured = capsys.readouterr()
+        assert "已启用" in captured.out
+        assert "delta_stats" in called
+
+    def test_main_disable_feature(self, monkeypatch, capsys):
+        """main --disable 禁用功能"""
+        import src.cli.optimization_cli as opt_mod
+
+        called = []
+
+        def fake_disable(feature):
+            called.append(feature)
+
+        monkeypatch.setattr(opt_mod, "disable_feature", fake_disable)
+        monkeypatch.setattr(opt_mod, "get_optimization_config", lambda: Mock(get_all=lambda: {}))
+        monkeypatch.setattr(opt_mod, "is_feature_enabled", lambda f: False)
+        monkeypatch.setattr("sys.argv", ["optimization_cli.py", "--disable", "performance_monitor"])
+
+        opt_mod.main()
+        captured = capsys.readouterr()
+        assert "已禁用" in captured.out
+        assert "performance_monitor" in called
+
+    def test_main_list_features(self, monkeypatch, capsys):
+        """main --list 列出可用功能"""
+        import src.cli.optimization_cli as opt_mod
+
+        monkeypatch.setattr(opt_mod, "get_optimization_config", lambda: Mock(get_all=lambda: {}))
+        monkeypatch.setattr(opt_mod, "is_feature_enabled", lambda f: False)
+        monkeypatch.setattr("sys.argv", ["optimization_cli.py", "--list"])
+
+        opt_mod.main()
+        captured = capsys.readouterr()
+        assert "可用的优化功能" in captured.out
+        assert "delta_stats" in captured.out

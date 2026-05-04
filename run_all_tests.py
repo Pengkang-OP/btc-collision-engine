@@ -167,7 +167,7 @@ def main():
             print(f"\n[{suite}]")
             for f in files:
                 exists = (PROJECT_ROOT / f).exists()
-                status = "[✓]" if exists else "[✗]"
+                status = "[OK]" if exists else "[--]"
                 print(f"  {status} {f}")
         return 0
 
@@ -245,9 +245,9 @@ def main():
     elapsed = time.time() - start_time
 
     if result.returncode == 0:
-        print(f"\n✓ 全部测试通过!  ({elapsed:.1f}s)")
+        print(f"\n[OK] 全部测试通过!  ({elapsed:.1f}s)")
     else:
-        print(f"\n✗ 部分测试失败  ({elapsed:.1f}s)")
+        print(f"\n[FAIL] 部分测试失败  ({elapsed:.1f}s)")
 
     return result.returncode
 
