@@ -91,18 +91,24 @@ def _print_final_summary(engine: Any, engine_type: str, args: argparse.Namespace
                 )
         engine.cleanup()
     else:
-        stats = engine.get_stats()
-        mode_label = _t("collision.mode.gpu") if engine_type == "gpu" else _t("collision.mode.cpu")
-        stats_dict[_t("cli.main.accel_mode")] = mode_label
-        stats_dict[_t("cli.main.total_checked")] = f"{stats.total_checked:,}"
-        stats_dict[_t("cli.main.elapsed_time")] = stats.format_elapsed()
-        stats_dict[_t("cli.main.avg_speed")] = stats.format_speed()
-        stats_dict[_t("cli.main.matches_found")] = f"{len(stats.matches)} 个"
-        if stats.matches:
-            # 导入分页功能
-            from src.cli.pagination import display_paginated_results
+        try:
+            stats = engine.get_stats()
+            mode_label = (
+                _t("collision.mode.gpu") if engine_type == "gpu"
+                else _t("collision.mode.cpu")
+            )
+            stats_dict[_t("cli.main.accel_mode")] = mode_label
+            stats_dict[_t("cli.main.total_checked")] = f"{stats.total_checked:,}"
+            stats_dict[_t("cli.main.elapsed_time")] = stats.format_elapsed()
+            stats_dict[_t("cli.main.avg_speed")] = stats.format_speed()
+            stats_dict[_t("cli.main.matches_found")] = f"{len(stats.matches)} 个"
+            if stats.matches:
+                # 导入分页功能
+                from src.cli.pagination import display_paginated_results
 
-            display_paginated_results(stats.matches, "匹配结果")
+                display_paginated_results(stats.matches, "匹配结果")
+        except Exception:
+            stats_dict["状态"] = "统计信息暂不可用"
 
     output.final_summary(_t("cli.main.final_summary"), stats_dict)
 
