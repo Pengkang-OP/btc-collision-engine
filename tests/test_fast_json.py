@@ -4,6 +4,8 @@
 import json
 import tempfile
 import os
+import pytest
+from unittest.mock import patch, MagicMock
 from src.utils.fast_json import fast_dumps, fast_loads, fast_dump, fast_load, is_orjson_available
 
 
@@ -102,3 +104,202 @@ class TestIntegration:
         result = json.dumps(data)
         parsed = fast_loads(result)
         assert parsed == data
+
+    def test_default_parameter(self):
+        """default 参数传递给 json.dumps（强制 json 降级路径）"""
+        from datetime import datetime
+
+        data = {"ts": datetime(2024, 1, 1, 12, 0, 0)}
+        with patch("src.utils.fast_json._ORJSON_AVAILABLE", False):
+            result = fast_dumps(data, default=str)
+        parsed = json.loads(result)
+        assert "2024" in parsed["ts"]
+
+    def test_no_indent(self):
+        """无 indent 参数时输出紧凑格式"""
+        data = {"a": 1, "b": 2}
+        result = fast_dumps(data)
+        assert "\n" not in result
+
+    def test_ensure_ascii_true(self):
+        """ensure_ascii=True 转义非 ASCII 字符（json 降级路径）"""
+        data = {"cn": "中文"}
+        with patch("src.utils.fast_json._ORJSON_AVAILABLE", False):
+            result = fast_dumps(data, ensure_ascii=True)
+        assert "\\u" in result
+
+
+class TestFastLoadsEdge:
+    """fast_loads 边界测试"""
+
+    def test_invalid_json_raises(self):
+        """无效 JSON 抛出异常（json 降级路径）"""
+        with patch("src.utils.fast_json._ORJSON_AVAILABLE", False):
+            with pytest.raises(json.JSONDecodeError):
+                fast_loads("{invalid}")
+
+
+class TestFastDumpsOrjsonPath:
+    """fast_dumps orjson 路径测试（mock orjson 可用）"""
+
+    def test_orjson_dumps_without_default(self):
+        """orjson 可用时通过 orjson.dumps 序列化"""
+        mock_orjson = MagicMock()
+        mock_orjson.dumps.return_value = b'{"a":1}'
+
+        with patch("src.utils.fast_json._ORJSON_AVAILABLE", True), \
+             patch("src.utils.fast_json._orjson_module", mock_orjson):
+            result = fast_dumps({"a": 1})
+            assert result == '{"a":1}'
+            mock_orjson.dumps.assert_called_once()
+
+    def test_orjson_dumps_with_default(self):
+        """orjson 路径传递 default 参数"""
+        mock_orjson = MagicMock()
+        mock_orjson.dumps.return_value = b'{"a":"2024-01-01"}'
+
+        def custom_default(obj):
+            return str(obj)
+
+        with patch("src.utils.fast_json._ORJSON_AVAILABLE", True), \
+             patch("src.utils.fast_json._orjson_module", mock_orjson):
+            result = fast_dumps({"a": object()}, default=custom_default)
+            assert result == '{"a":"2024-01-01"}'
+            call_args = mock_orjson.dumps.call_args
+            assert call_args[1]["default"] is custom_default
+
+    def test_orjson_dumps_with_indent_option(self):
+        """orjson 路径 indent>=2 时设置 OPT_INDENT_2"""
+        mock_orjson = MagicMock()
+        mock_orjson.dumps.return_value = b'{"a": 1}'
+
+        with patch("src.utils.fast_json._ORJSON_AVAILABLE", True), \
+             patch("src.utils.fast_json._orjson_module", mock_orjson):
+            fast_dumps({"a": 1}, indent=2)
+            call_kwargs = mock_orjson.dumps.call_args[1]
+            option = call_kwargs["option"]
+            assert option & 1  # OPT_INDENT_2
+
+    def test_orjson_dumps_with_sort_keys_option(self):
+        """orjson 路径 sort_keys=True 时设置 OPT_SORT_KEYS"""
+        mock_orjson = MagicMock()
+        mock_orjson.dumps.return_value = b'{"a":1,"b":2}'
+
+        with patch("src.utils.fast_json._ORJSON_AVAILABLE", True), \
+             patch("src.utils.fast_json._orjson_module", mock_orjson):
+            fast_dumps({"b": 2, "a": 1}, sort_keys=True)
+            call_kwargs = mock_orjson.dumps.call_args[1]
+            option = call_kwargs["option"]
+            assert option & 2  # OPT_SORT_KEYS
+
+    def test_orjson_dumps_non_ascii_option(self):
+        """orjson 路径 ensure_ascii=False 时设置 OPT_NON_STR_KEYS"""
+        mock_orjson = MagicMock()
+        mock_orjson.dumps.return_value = b'{"key":"value"}'
+
+        with patch("src.utils.fast_json._ORJSON_AVAILABLE", True), \
+             patch("src.utils.fast_json._orjson_module", mock_orjson):
+            fast_dumps({"key": "value"}, ensure_ascii=False)
+            call_kwargs = mock_orjson.dumps.call_args[1]
+            option = call_kwargs["option"]
+            assert option & 4  # OPT_NON_STR_KEYS
+
+    def test_orjson_dumps_fallback_on_type_error(self):
+        """orjson.dumps 抛出 TypeError 时降级到 json.dumps"""
+        mock_orjson = MagicMock()
+        mock_orjson.dumps.side_effect = TypeError("not serializable")
+
+        with patch("src.utils.fast_json._ORJSON_AVAILABLE", True), \
+             patch("src.utils.fast_json._orjson_module", mock_orjson):
+            result = fast_dumps({"a": 1})
+            loaded = json.loads(result)
+            assert loaded == {"a": 1}
+
+    def test_orjson_dumps_fallback_on_value_error(self):
+        """orjson.dumps 抛出 ValueError 时降级到 json.dumps"""
+        mock_orjson = MagicMock()
+        mock_orjson.dumps.side_effect = ValueError("bad value")
+
+        with patch("src.utils.fast_json._ORJSON_AVAILABLE", True), \
+             patch("src.utils.fast_json._orjson_module", mock_orjson):
+            result = fast_dumps({"a": 1})
+            loaded = json.loads(result)
+            assert loaded == {"a": 1}
+
+    def test_orjson_dumps_fallback_on_overflow_error(self):
+        """orjson.dumps 抛出 OverflowError 时降级到 json.dumps"""
+        mock_orjson = MagicMock()
+        mock_orjson.dumps.side_effect = OverflowError("float too large")
+
+        with patch("src.utils.fast_json._ORJSON_AVAILABLE", True), \
+             patch("src.utils.fast_json._orjson_module", mock_orjson):
+            result = fast_dumps({"a": float('inf')})
+            loaded = json.loads(result)
+            assert loaded == {"a": float('inf')}
+
+    def test_orjson_dumps_returns_str_directly(self):
+        """orjson.dumps 返回 str 时直接返回不 decode"""
+        mock_orjson = MagicMock()
+        mock_orjson.dumps.return_value = '{"a":1}'
+
+        with patch("src.utils.fast_json._ORJSON_AVAILABLE", True), \
+             patch("src.utils.fast_json._orjson_module", mock_orjson):
+            result = fast_dumps({"a": 1})
+            assert result == '{"a":1}'
+
+
+class TestFastLoadsOrjsonPath:
+    """fast_loads orjson 路径测试（mock orjson 可用）"""
+
+    def test_orjson_loads(self):
+        """orjson 可用时通过 orjson.loads 反序列化"""
+        mock_orjson = MagicMock()
+        mock_orjson.loads.return_value = {"a": 1}
+
+        with patch("src.utils.fast_json._ORJSON_AVAILABLE", True), \
+             patch("src.utils.fast_json._orjson_module", mock_orjson):
+            result = fast_loads('{"a":1}')
+            assert result == {"a": 1}
+            mock_orjson.loads.assert_called_once_with('{"a":1}')
+
+    def test_orjson_loads_fallback_on_exception(self):
+        """orjson.loads 异常时降级到 json.loads"""
+        mock_orjson = MagicMock()
+        mock_orjson.loads.side_effect = ValueError("bad json")
+
+        with patch("src.utils.fast_json._ORJSON_AVAILABLE", True), \
+             patch("src.utils.fast_json._orjson_module", mock_orjson):
+            result = fast_loads('{"a":1}')
+            assert result == {"a": 1}
+
+    def test_orjson_loads_bytes_input(self):
+        """orjson 路径处理 bytes 输入"""
+        mock_orjson = MagicMock()
+        mock_orjson.loads.return_value = {"a": 1}
+
+        with patch("src.utils.fast_json._ORJSON_AVAILABLE", True), \
+             patch("src.utils.fast_json._orjson_module", mock_orjson):
+            result = fast_loads(b'{"a":1}')
+            assert result == {"a": 1}
+
+
+class TestOrjsonUnavailable:
+    """orjson 不可用时的降级行为验证"""
+
+    def test_is_orjson_available_returns_false(self):
+        """当前环境 orjson 不可用"""
+        with patch("src.utils.fast_json._ORJSON_AVAILABLE", False):
+            assert is_orjson_available() is False
+
+    def test_fast_dumps_uses_json_fallback(self):
+        """orjson 不可用时 fast_dumps 使用 json.dumps"""
+        with patch("src.utils.fast_json._ORJSON_AVAILABLE", False):
+            result = fast_dumps({"a": 1})
+            loaded = json.loads(result)
+            assert loaded == {"a": 1}
+
+    def test_fast_loads_uses_json_fallback(self):
+        """orjson 不可用时 fast_loads 使用 json.loads"""
+        with patch("src.utils.fast_json._ORJSON_AVAILABLE", False):
+            result = fast_loads('{"a":1}')
+            assert result == {"a": 1}

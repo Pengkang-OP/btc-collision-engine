@@ -92,6 +92,24 @@ class TestCLI:
             assert args.mode == "brute_force"
             assert args.start == "1"
 
+    def test_parse_args_no_color_env(self, monkeypatch):
+        """NO_COLOR 环境变量设置后 args.no_color 为 True"""
+        monkeypatch.setenv("NO_COLOR", "1")
+        with patch(
+            "sys.argv", ["cli.py", "-t", "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"]
+        ):
+            args = parse_args()
+            assert args.no_color is True
+
+    def test_parse_args_verbose_count(self):
+        """-vvv 叠加 verbose 计数为 3"""
+        with patch(
+            "sys.argv",
+            ["cli.py", "-t", "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", "-vvv"],
+        ):
+            args = parse_args()
+            assert args.verbose == 3
+
     def test_validate_args(self):
         """测试参数验证"""
 
@@ -156,6 +174,49 @@ class TestCLI:
         progress_str = format_progress(stats, "range", total_range=10000)
         assert "1.0K" in progress_str  # 已检查数量
         assert "10.0%" in progress_str  # 进度百分比
+
+    def test_format_progress_initializing_state(self):
+        """checked=0 且运行时间不足阈值时显示初始化状态"""
+        import time
+
+        stats = CollisionStats()
+        stats.total_checked = 0
+        stats.elapsed = 0.5
+        stats.start_time = time.time() - 5  # 仅运行 5 秒
+        stats.matches = []
+        progress_str = format_progress(stats, "random")
+        assert "Initializing" in progress_str
+        assert "初始化中" in progress_str
+
+    def test_format_progress_invalid_engine_type(self):
+        """无效 engine_type 降级为 cpu 标签"""
+        stats = CollisionStats()
+        stats.total_checked = 1000
+        stats.start_time = 1000
+        stats.elapsed = 20  # > INIT_CHECK_THRESHOLD，跳出初始化
+        stats.matches = []
+        progress_str = format_progress(stats, "random", engine_type="invalid")
+        assert "[CPU]" in progress_str
+
+    def test_format_progress_eta_done(self):
+        """checked >= total_range 时 ETA 显示 [Done] 完成"""
+        stats = CollisionStats()
+        stats.total_checked = 1000
+        stats.start_time = 1000
+        stats.elapsed = 20
+        stats.matches = []
+        progress_str = format_progress(stats, "range", total_range=1000)
+        assert "Done" in progress_str or "完成" in progress_str
+
+    def test_format_progress_with_total_range(self):
+        """传入有效 total_range 时显示进度条和百分比"""
+        stats = CollisionStats()
+        stats.total_checked = 500
+        stats.start_time = 1000
+        stats.elapsed = 20
+        stats.matches = []
+        progress_str = format_progress(stats, "range", total_range=10000)
+        assert "5.0%" in progress_str
 
     def test_load_targets(self, tmp_path):
         """测试目标地址加载"""
@@ -527,6 +588,80 @@ class TestLoadConfigWithValidation:
         monkeypatch.setattr(mod, "_project_root", str(tmp_path))
         result = mod.load_config_with_validation()
         assert result is None
+
+    def test_config_unicode_decode_error(self, tmp_path, monkeypatch):
+        """文件编码非UTF-8时返回None"""
+        import json as _json_mod
+
+        mod = self._get_config_loader_module()
+        config_file = tmp_path / "config.json"
+        config_file.write_text(_json_mod.dumps({"crypto": {}}), encoding="utf-8")
+        monkeypatch.setattr(mod, "_project_root", str(tmp_path))
+
+        # mock builtins.open 使其在读取 config.json 时抛出 UnicodeDecodeError
+        real_open = open
+
+        def _mock_open(file, mode="r", **kw):
+            if "config.json" in str(file) and "r" in str(mode):
+                raise UnicodeDecodeError("utf-8", b"x", 0, 1, "mock")
+            return real_open(file, mode, **kw)
+
+        import builtins
+
+        monkeypatch.setattr(builtins, "open", _mock_open)
+        result = mod.load_config_with_validation()
+        assert result is None
+
+    def test_config_permission_error(self, tmp_path, monkeypatch):
+        """文件无读取权限时返回None"""
+        import json as _json_mod
+
+        mod = self._get_config_loader_module()
+        config_file = tmp_path / "config.json"
+        config_file.write_text(_json_mod.dumps({"crypto": {}}), encoding="utf-8")
+        monkeypatch.setattr(mod, "_project_root", str(tmp_path))
+
+        real_open = open
+
+        def _mock_open(file, mode="r", **kw):
+            if "config.json" in str(file) and "r" in str(mode):
+                raise PermissionError("permission denied")
+            return real_open(file, mode, **kw)
+
+        import builtins
+
+        monkeypatch.setattr(builtins, "open", _mock_open)
+        result = mod.load_config_with_validation()
+        assert result is None
+
+    def test_config_generic_exception(self, tmp_path, monkeypatch):
+        """json.load 抛出通用异常时返回None"""
+        import json as _json_mod
+
+        mod = self._get_config_loader_module()
+        config_file = tmp_path / "config.json"
+        config_file.write_text(_json_mod.dumps({"crypto": {}}), encoding="utf-8")
+        monkeypatch.setattr(mod, "_project_root", str(tmp_path))
+        monkeypatch.setattr(
+            _json_mod, "load",
+            lambda f: (_ for _ in ()).throw(Exception("unexpected")),
+        )
+        result = mod.load_config_with_validation()
+        assert result is None
+
+    def test_config_explicit_path(self, tmp_path, monkeypatch):
+        """传入显式 config_file 路径时使用该路径加载"""
+        import json as _json_mod
+
+        mod = self._get_config_loader_module()
+        config_file = tmp_path / "my_config.json"
+        config_file.write_text(
+            _json_mod.dumps({"crypto": {}, "collision": {}}), encoding="utf-8"
+        )
+        monkeypatch.setattr(mod, "_project_root", str(tmp_path))
+        result = mod.load_config_with_validation(str(config_file))
+        assert isinstance(result, dict)
+        assert "crypto" in result
 
 
 class TestBuildEngine:
@@ -1070,3 +1205,92 @@ class TestV3Improvements:
         assert "SHA256" in captured.out
         # WIF 应被隐藏
         assert "已隐藏" in captured.out
+
+
+class TestCLIOutput:
+    """CLIOutput 输出管理器测试"""
+
+    def setup_method(self):
+        """每个测试前重置 CLIOutput 单例"""
+        from src.cli.output import CLIOutput
+
+        CLIOutput.reset_instance()
+        from src.cli.log_window import reset_log_window_instance
+
+        reset_log_window_instance()
+
+    def teardown_method(self):
+        """每个测试后重置单例"""
+        from src.cli.output import CLIOutput
+
+        CLIOutput.reset_instance()
+
+    def test_output_rule_method(self, capsys):
+        """rule 方法输出分隔线"""
+        from src.cli.output import CLIOutput
+
+        out = CLIOutput()
+        out.rule("测试标题")
+        captured = capsys.readouterr()
+        assert "测试标题" in captured.out
+
+    def test_output_header_method(self, capsys):
+        """header 方法输出大标题分隔线"""
+        from src.cli.output import CLIOutput
+
+        out = CLIOutput()
+        out.header("大标题")
+        captured = capsys.readouterr()
+        assert "大标题" in captured.out
+
+    def test_output_startup_panel(self, capsys):
+        """startup_panel 输出配置面板"""
+        from src.cli.output import CLIOutput
+
+        out = CLIOutput()
+        out.startup_panel({"模式": "random", "目标": "1A1z..."})
+        captured = capsys.readouterr()
+        assert "random" in captured.out or "启动配置" in captured.out
+
+    def test_output_final_summary(self, capsys):
+        """final_summary 输出最终统计面板"""
+        from src.cli.output import CLIOutput
+
+        out = CLIOutput()
+        out.final_summary("运行结果", {"总检查数": "1,000", "匹配数": "0"})
+        captured = capsys.readouterr()
+        assert "运行结果" in captured.out
+        assert "总检查数" in captured.out
+
+    def test_output_status_line(self, capsys):
+        """status_line 输出单行状态"""
+        from src.cli.output import CLIOutput
+
+        out = CLIOutput()
+        out.status_line("正在处理...")
+        captured = capsys.readouterr()
+        assert "正在处理" in captured.out
+
+    def test_output_performance_status(self, capsys):
+        """performance_status 输出性能状态"""
+        from src.cli.output import CLIOutput
+
+        out = CLIOutput()
+        out.performance_status({
+            "speed": 10000,
+            "keys_total": 50000,
+            "gpu_usage": 85,
+            "memory_used": 2048,
+        })
+        captured = capsys.readouterr()
+        assert "speed" in captured.out or "速度" in captured.out
+
+    def test_output_quiet_mode_suppression(self, capsys):
+        """quiet 模式下 info 不输出"""
+        from src.cli.output import CLIOutput
+
+        CLIOutput.reset_instance()
+        out = CLIOutput.init(quiet=True)
+        out.info("这条消息不应该出现")
+        captured = capsys.readouterr()
+        assert "不应该出现" not in captured.out

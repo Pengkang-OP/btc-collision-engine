@@ -253,7 +253,7 @@ class PerformanceReportGenerator:
         lines.append("|---------|-----------|----------------|---------|")
 
         current_throughput = current_performance.get("throughput", 0)
-        current_device = self._get_device_info().get("name", "Current")
+        current_device = self._get_device_info().get("设备名称", "Current")
 
         for gpu_name, perf in reference_gpus.items():
             relative = (

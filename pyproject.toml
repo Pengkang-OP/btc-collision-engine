@@ -21,7 +21,6 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
     "Topic :: Security :: Cryptography",
 ]
 
@@ -76,8 +75,8 @@ all = ["btc-collision-engine[gpu,dev]"]
 btc-collision = "src.cli.main:main"
 
 [project.urls]
-Homepage = "https://github.com/your-repo/btc-collision-engine"
-"Bug Tracker" = "https://github.com/your-repo/btc-collision-engine/issues"
+Homepage = "https://github.com/btc-project/btc-collision-engine"
+"Bug Tracker" = "https://github.com/btc-project/btc-collision-engine/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]

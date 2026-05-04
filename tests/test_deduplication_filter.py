@@ -192,5 +192,70 @@ class TestDeduplicationFilterGetStats(unittest.TestCase):
         self.assertAlmostEqual(stats["duplicate_rate"], 0.5)
 
 
+class TestDeduplicationFilterReset(unittest.TestCase):
+    """reset() 测试"""
+
+    def test_reset_clears_all_tracking(self):
+        """reset 清除所有跟踪数据"""
+        f = DeduplicationFilter(max_size=1000)
+        for i in range(10):
+            f.check_and_add(i.to_bytes(32, "big"))
+        # 确认有数据
+        self.assertGreater(f.checks_total, 0)
+
+        f.reset()
+
+        self.assertEqual(f.checks_total, 0)
+        self.assertEqual(f.duplicates_found, 0)
+        self.assertEqual(len(f._current), 0)
+        self.assertEqual(len(f._pending), 0)
+        self.assertEqual(f._current_size, 0)
+
+    def test_reset_then_reuse(self):
+        """reset 后可正常使用"""
+        f = DeduplicationFilter(max_size=1000)
+        f.check_and_add(b"key1".ljust(32, b"\x00"))
+        f.reset()
+        # 重置后可以再次添加
+        self.assertTrue(f.check_and_add(b"key2".ljust(32, b"\x00")))
+        self.assertEqual(f.checks_total, 1)
+
+    def test_reset_with_duplicates(self):
+        """reset 清除重复计数"""
+        f = DeduplicationFilter(max_size=1000)
+        pk = b"dup".ljust(32, b"\x00")
+        f.check_and_add(pk)
+        f.check_and_add(pk)  # 重复
+        self.assertEqual(f.duplicates_found, 1)
+
+        f.reset()
+        self.assertEqual(f.duplicates_found, 0)
+        # 之前的重复键可以再次通过
+        self.assertTrue(f.check_and_add(pk))
+
+
+class TestDeduplicationFilterStatsLogging(unittest.TestCase):
+    """_get_stats_unlocked 1000次日志分支测试"""
+
+    def test_stats_logging_at_thousand_boundary(self):
+        """每1000次检查触发统计日志"""
+        f = DeduplicationFilter(max_size=2000)
+        # 填满1000次检查
+        for i in range(1000):
+            f.check_and_add(i.to_bytes(32, "big"))
+        # 此时 _get_stats_unlocked 会在 1000 时记录日志
+        stats = f.get_stats()
+        self.assertEqual(stats["checks_total"], 1000)
+        self.assertEqual(stats["duplicates_found"], 0)
+
+    def test_stats_logging_multiple_boundaries(self):
+        """多次千位边界都正常"""
+        f = DeduplicationFilter(max_size=5000)
+        for i in range(2000):
+            f.check_and_add(i.to_bytes(32, "big"))
+        stats = f.get_stats()
+        self.assertGreaterEqual(stats["checks_total"], 2000)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

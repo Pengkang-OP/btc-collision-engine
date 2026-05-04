@@ -15,6 +15,7 @@ import tempfile
 import shutil
 from pathlib import Path
 from unittest import TestCase
+from unittest.mock import patch
 
 import sys
 
@@ -471,6 +472,174 @@ class TestDataCleanerEdgeCases(TestCase):
         # 两次都应该成功
         self.assertIsInstance(result1, dict)
         self.assertIsInstance(result2, dict)
+
+
+class TestDataCleanerOldReports(TestCase):
+    """报告归档测试"""
+
+    def setUp(self):
+        """创建临时项目目录"""
+        self.test_dir = tempfile.mkdtemp()
+        os.makedirs(os.path.join(self.test_dir, "data_logs"), exist_ok=True)
+        self.cleaner = DataCleaner(project_root=self.test_dir)
+
+    def tearDown(self):
+        """清理临时目录"""
+        if os.path.exists(self.test_dir):
+            shutil.rmtree(self.test_dir)
+
+    def test_clean_old_reports_no_dir(self):
+        """data_logs 不存在返回空"""
+        empty_dir = tempfile.mkdtemp()
+        try:
+            cleaner = DataCleaner(project_root=empty_dir)
+            result = cleaner.clean_old_reports()
+            self.assertEqual(result["moved"], 0)
+            self.assertEqual(result["space_freed_bytes"], 0)
+            self.assertEqual(result["errors"], 0)
+        finally:
+            shutil.rmtree(empty_dir)
+
+    def test_clean_old_reports_old_files(self):
+        """过期报告被移动到 archive/"""
+        old_file = Path(self.test_dir) / "data_logs" / "report_old.json"
+        old_file.touch()
+        old_time = time.time() - (8 * 24 * 3600)
+        os.utime(str(old_file), (old_time, old_time))
+
+        result = self.cleaner.clean_old_reports(max_age_days=7)
+        self.assertEqual(result["moved"], 1)
+        self.assertFalse(old_file.exists())
+        archive_path = Path(self.test_dir) / "data_logs" / "archive" / "report_old.json"
+        self.assertTrue(archive_path.exists())
+
+    def test_clean_old_reports_new_files(self):
+        """新报告不被移动"""
+        new_file = Path(self.test_dir) / "data_logs" / "report_new.json"
+        new_file.touch()
+
+        result = self.cleaner.clean_old_reports(max_age_days=7)
+        self.assertEqual(result["moved"], 0)
+        self.assertTrue(new_file.exists())
+
+    def test_clean_old_reports_daily_pattern(self):
+        """匹配 report_daily_*.json 模式"""
+        old_file = Path(self.test_dir) / "data_logs" / "report_daily_2024.json"
+        old_file.touch()
+        old_time = time.time() - (8 * 24 * 3600)
+        os.utime(str(old_file), (old_time, old_time))
+
+        result = self.cleaner.clean_old_reports(max_age_days=7)
+        self.assertEqual(result["moved"], 1)
+
+    def test_clean_old_reports_creates_archive(self):
+        """自动创建 archive 目录"""
+        archive_dir = Path(self.test_dir) / "data_logs" / "archive"
+        self.assertFalse(archive_dir.exists())
+
+        result = self.cleaner.clean_old_reports(max_age_days=7)
+        self.assertEqual(result["moved"], 0)
+        self.assertTrue(archive_dir.exists())
+
+    def test_clean_old_reports_empty_result(self):
+        """无匹配文件"""
+        result = self.cleaner.clean_old_reports()
+        self.assertEqual(result["moved"], 0)
+
+
+class TestRotatePerformanceLog(TestCase):
+    """性能日志轮转测试"""
+
+    def setUp(self):
+        """创建临时项目目录"""
+        self.test_dir = tempfile.mkdtemp()
+        os.makedirs(os.path.join(self.test_dir, "data_logs"), exist_ok=True)
+        self.cleaner = DataCleaner(project_root=self.test_dir)
+
+    def tearDown(self):
+        """清理临时目录"""
+        if os.path.exists(self.test_dir):
+            shutil.rmtree(self.test_dir)
+
+    def test_no_file_returns_false(self):
+        """文件不存在返回 False"""
+        result = self.cleaner.rotate_performance_log()
+        self.assertFalse(result)
+
+    def test_under_threshold_returns_false(self):
+        """文件未超 10MB 返回 False"""
+        perf_log = Path(self.test_dir) / "data_logs" / "performance.log"
+        perf_log.write_text("small content")
+
+        result = self.cleaner.rotate_performance_log(max_size_mb=10.0)
+        self.assertFalse(result)
+        self.assertTrue(perf_log.exists())
+
+    def test_over_threshold_rotates(self):
+        """超过阈值触发归档"""
+        perf_log = Path(self.test_dir) / "data_logs" / "performance.log"
+        # 写入超过 1MB 的内容（使用较小阈值测试）
+        content = "x" * (1024 * 1024 + 100)  # ~1MB+100B
+        perf_log.write_text(content)
+
+        result = self.cleaner.rotate_performance_log(max_size_mb=1.0)
+        self.assertTrue(result)
+        # 轮转后 touch() 创建了新文件
+        new_perf_log = Path(self.test_dir) / "data_logs" / "performance.log"
+        self.assertTrue(new_perf_log.exists())
+        self.assertEqual(new_perf_log.stat().st_size, 0)
+        # 归档文件存在
+        archive_dir = Path(self.test_dir) / "data_logs" / "archive"
+        archives = list(archive_dir.glob("performance_log_*.log"))
+        self.assertEqual(len(archives), 1)
+
+    def test_archive_name_collision(self):
+        """同日期归档文件已存在时添加时间戳"""
+        from datetime import datetime
+
+        perf_log = Path(self.test_dir) / "data_logs" / "performance.log"
+        content = "x" * (1024 * 1024 + 100)
+        perf_log.write_text(content)
+
+        # 预先创建同日期归档文件
+        archive_dir = Path(self.test_dir) / "data_logs" / "archive"
+        archive_dir.mkdir(parents=True, exist_ok=True)
+
+        # 使用固定日期避免午夜竞态
+        fixed_now = datetime(2026, 5, 4, 12, 0, 0)
+        date_str = fixed_now.strftime("%Y%m%d")
+        existing_archive = archive_dir / f"performance_log_{date_str}.log"
+        existing_archive.write_text("existing")
+
+        with patch("src.utils.data_cleanup.datetime") as mock_dt:
+            mock_dt.now.return_value = fixed_now
+            result = self.cleaner.rotate_performance_log(max_size_mb=1.0)
+        self.assertTrue(result)
+        self.assertTrue(existing_archive.exists())
+        # 应该创建带时间戳的归档文件
+        archives = list(archive_dir.glob("performance_log_*.log"))
+        self.assertEqual(len(archives), 2)
+
+    def test_dry_run_does_not_move(self):
+        """dry_run 不实际移动"""
+        perf_log = Path(self.test_dir) / "data_logs" / "performance.log"
+        content = "x" * (1024 * 1024 + 100)
+        perf_log.write_text(content)
+
+        result = self.cleaner.rotate_performance_log(max_size_mb=1.0, dry_run=True)
+        self.assertTrue(result)
+        # dry_run 模式下文件仍然存在
+        self.assertTrue(perf_log.exists())
+
+    def test_rotation_error_returns_false(self):
+        """OSError 返回 False"""
+        perf_log = Path(self.test_dir) / "data_logs" / "performance.log"
+        content = "x" * (1024 * 1024 + 100)
+        perf_log.write_text(content)
+
+        with patch("shutil.move", side_effect=OSError("disk full")):
+            result = self.cleaner.rotate_performance_log(max_size_mb=1.0)
+        self.assertFalse(result)
 
 
 if __name__ == "__main__":

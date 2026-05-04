@@ -29,7 +29,7 @@ TEST_SUITES = {
     ],
     "unit_core": [
         "tests/test_core_crypto.py",
-        "tests/test_base58.py",
+        "tests/test_base58_edge.py",
         "tests/test_wif_bech32.py",
         "tests/test_secp256k1_extended.py",
         "tests/test_bitcoin_key_validation.py",

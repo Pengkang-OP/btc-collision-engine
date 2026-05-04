@@ -147,5 +147,86 @@ class TestBaseViaSuperDelegation(unittest.TestCase):
         self.assertEqual(addr1, addr2)
 
 
+class TestOptimizedAddressGeneratorEdge(unittest.TestCase):
+    """OptimizedP2PKHAddressGenerator 边界路径测试"""
+
+    def test_batch_generate_empty_list(self):
+        """batch_generate 空列表返回空 (cover line 178)"""
+        gen = OptimizedP2PKHAddressGenerator()
+        result = gen.batch_generate([])
+        self.assertEqual(result, [])
+
+    def test_batch_generate_all_optimizations_off(self):
+        """batch_generate 关闭所有优化 (cover lines 189, 204-205)"""
+        gen = OptimizedP2PKHAddressGenerator(
+            use_precomputed_table=False,
+            use_simd_hash=False,
+            use_memory_pool=False,
+        )
+        result = gen.batch_generate([b"\x01" * 32, b"\x02" * 32])
+        self.assertEqual(len(result), 2)
+        for addr in result:
+            self.assertTrue(addr.startswith("1"))
+
+    def test_get_optimization_info_enabled(self):
+        """get_optimization_info 返回优化配置信息 (cover lines 219-242)"""
+        gen = OptimizedP2PKHAddressGenerator()
+        info = gen.get_optimization_info()
+        self.assertIn("precomputed_table", info)
+        self.assertIn("simd_hash", info)
+        self.assertIn("memory_pool", info)
+        self.assertTrue(info["precomputed_table"]["enabled"])
+
+    def test_get_optimization_info_all_disabled(self):
+        """get_optimization_info 全部优化禁用时"""
+        gen = OptimizedP2PKHAddressGenerator(
+            use_precomputed_table=False,
+            use_simd_hash=False,
+            use_memory_pool=False,
+        )
+        info = gen.get_optimization_info()
+        self.assertFalse(info["precomputed_table"]["enabled"])
+        self.assertFalse(info["simd_hash"]["enabled"])
+        self.assertFalse(info["memory_pool"]["enabled"])
+
+    def test_private_key_to_public_key_uncompressed(self):
+        """private_key_to_public_key compressed=False (cover line 129)"""
+        gen = OptimizedP2PKHAddressGenerator()
+        pk = gen.private_key_to_public_key(b"\x01" * 32, compressed=False)
+        self.assertEqual(len(pk), 65)  # 未压缩公钥 65 字节
+        self.assertTrue(pk.startswith(b"\x04"))
+
+    def test_private_key_to_public_key_no_precomputed(self):
+        """private_key_to_public_key 无预计算表 → line 120"""
+        gen = OptimizedP2PKHAddressGenerator(use_precomputed_table=False)
+        pk = gen.private_key_to_public_key(b"\x01" * 32, compressed=True)
+        self.assertEqual(len(pk), 33)
+
+    def test_public_key_to_address_no_simd(self):
+        """public_key_to_address SIMD 关闭回退到基类 → line 151"""
+        gen = OptimizedP2PKHAddressGenerator(use_simd_hash=False)
+        pubkey = gen.private_key_to_public_key(b"\x01" * 32)
+        addr = gen.public_key_to_address(pubkey)
+        self.assertTrue(addr.startswith("1"))
+
+    def test_generate_from_private_key(self):
+        """generate_from_private_key → line 164"""
+        gen = OptimizedP2PKHAddressGenerator()
+        addr = gen.generate_from_private_key(b"\x01" * 32)
+        self.assertTrue(addr.startswith("1"))
+
+    def test_batch_generate_with_optimizations_enabled(self):
+        """batch_generate 全优化开启路径 → lines 187, 199-201"""
+        gen = OptimizedP2PKHAddressGenerator(
+            use_precomputed_table=True,
+            use_simd_hash=True,
+            use_memory_pool=False,
+        )
+        result = gen.batch_generate([b"\x01" * 32, b"\x02" * 32])
+        self.assertEqual(len(result), 2)
+        for addr in result:
+            self.assertTrue(addr.startswith("1"))
+
+
 if __name__ == "__main__":
     unittest.main()

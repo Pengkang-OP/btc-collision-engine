@@ -16,6 +16,10 @@ MODULES = {
         "test_health_check.py", "test_logger.py", "test_logging_config.py",
         "test_helpers.py", "test_exception_handling.py",
         "test_data_conversion.py", "test_document_quality.py",
+        "test_log_throttling.py", "test_security_log_filter.py",
+        "test_utils.py", "test_utils_core.py",
+        "test_platform_utils.py", "test_performance_monitor.py",
+        "test_platform_check.py", "test_file_utils.py",
     ],
     "monitoring": [
         "test_alert_notifications.py", "test_alert_system.py",
@@ -87,7 +91,7 @@ def parse_coverage_table(output: str) -> dict:
     return result
 
 
-def module_coverage(module_files: list[str]) -> dict:
+def module_coverage(module_files: list[str], mod_name: str = "") -> dict:
     """运行指定模块测试并返回覆盖率。"""
     test_paths = []
     for pattern in module_files:
@@ -101,7 +105,7 @@ def module_coverage(module_files: list[str]) -> dict:
     cmd = [
         sys.executable, "-m", "pytest",
         *test_args,
-        "--tb=no", "--cov=src", "--cov-report=term",
+        "--tb=no", "--cov=src", f"--cov={mod_name}", "--cov-report=term",
         "-m", "not (gpu or gpu_kernel)",
         "-p", "no:cacheprovider", "-q",
     ]
@@ -133,7 +137,7 @@ def main():
         print(f"\n{'='*60}")
         print(f"📦 模块: {mod_name} ({len(patterns)} 测试文件)")
         print(f"{'='*60}")
-        cov_data = module_coverage(patterns)
+        cov_data = module_coverage(patterns, mod_name)
 
         mod_total_stmts = 0
         mod_total_miss = 0

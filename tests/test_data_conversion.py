@@ -259,6 +259,60 @@ class TestAddressConverter(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.converter.private_key_to_address(b"\x00" * 31)
 
+    def test_private_key_to_all_invalid_length(self):
+        """private_key_to_all 无效长度 (cover line 104)"""
+        with self.assertRaises(ValueError) as ctx:
+            self.converter.private_key_to_all(b"\x00" * 31)
+        self.assertIn("32", str(ctx.exception))
+
+    def test_validate_conversion_wif_mismatch(self):
+        """validate_conversion WIF 解码后私钥不匹配 (cover line 166)"""
+        from unittest.mock import patch
+
+        with patch("src.core.address_converter.WIF.decode") as mock_decode:
+            mock_decode.return_value = (b"\xff" * 32, True)
+            valid, message = self.converter.validate_conversion(_TEST_PRIVATE_KEY)
+            self.assertFalse(valid)
+            self.assertIn("WIF解码", message)
+
+    def test_validate_conversion_invalid_address_format(self):
+        """validate_conversion 地址格式无效 (cover line 170)"""
+        from unittest.mock import patch
+
+        with patch("src.core.address_converter.WIF.decode") as mock_decode:
+            mock_decode.return_value = (_TEST_PRIVATE_KEY, True)
+            with patch.object(
+                self.converter, "private_key_to_all",
+                return_value={
+                    "address_compressed": "3xxx",  # 不以'1'开头
+                    "wif_compressed": "5valid",
+                }
+            ):
+                valid, message = self.converter.validate_conversion(_TEST_PRIVATE_KEY)
+                self.assertFalse(valid)
+                self.assertIn("地址格式", message)
+
+    def test_validate_conversion_address_mismatch(self):
+        """validate_conversion 期望地址不匹配 (cover line 175)"""
+        valid, message = self.converter.validate_conversion(
+            _TEST_PRIVATE_KEY,
+            expected_address="1DifferentAddress1234567890"
+        )
+        self.assertFalse(valid)
+        self.assertIn("地址不匹配", message)
+
+    def test_validate_conversion_exception(self):
+        """validate_conversion 异常处理 (cover lines 179-180)"""
+        from unittest.mock import patch
+
+        with patch.object(
+            self.converter, "private_key_to_all",
+            side_effect=RuntimeError("模拟错误")
+        ):
+            valid, message = self.converter.validate_conversion(_TEST_PRIVATE_KEY)
+            self.assertFalse(valid)
+            self.assertEqual(message, "模拟错误")
+
 
 # ---------------------------------------------------------------------------
 # 集成测试
