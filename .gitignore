@@ -9,6 +9,7 @@ __pycache__/
 # 测试覆盖率
 .coverage
 .coverage.*
+coverage.xml
 htmlcov/
 *.cover
 _cov*.txt
