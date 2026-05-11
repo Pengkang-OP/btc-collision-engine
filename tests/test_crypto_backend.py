@@ -14,7 +14,6 @@ from src.core.crypto_backend import (
 )  # noqa: E402
 
 from unittest.mock import patch, PropertyMock, MagicMock  # noqa: E402
-import logging  # noqa: E402
 
 
 class TestPurePythonBackendDirect(unittest.TestCase):

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """快速收集ULLS优化后的性能数据"""
 
-import time
 import sys
 from pathlib import Path
 
@@ -36,7 +35,7 @@ for line in lines[-200:]:  # 检查最后200行
     if tp_match:
         tp_value = int(tp_match.group(1).replace(',', ''))
         throughputs.append(tp_value)
-    
+
     # 查找峰值
     pk_match = re.search(peak_pattern, line)
     if pk_match:
@@ -50,7 +49,7 @@ if throughputs:
     avg_tp = sum(throughputs) / len(throughputs)
     max_tp = max(throughputs)
     min_tp = min(throughputs)
-    
+
     print(f"  采样次数: {len(throughputs)}")
     print(f"  平均吞吐量: {avg_tp:,.0f} keys/s")
     print(f"  最高吞吐量: {max_tp:,} keys/s")
@@ -73,12 +72,12 @@ before_avg = 47000     # ~47K keys/s
 if peaks:
     after_peak = max(peaks)
     peak_improvement = (after_peak - before_peak) / before_peak * 100
-    
+
     print(f"  优化前峰值: {before_peak:,} keys/s")
     print(f"  优化后峰值: {after_peak:,} keys/s")
     print(f"  峰值提升: {peak_improvement:+.2f}%")
     print()
-    
+
     if 14 <= peak_improvement <= 31:
         print(f"  ✅ 达到预期效果 (14-31%提升)")
     elif peak_improvement > 31:

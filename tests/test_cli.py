@@ -723,6 +723,31 @@ class TestLoadConfigWithValidation:
         result = mod.load_config_with_validation(str(outside_path))
         assert result is None
 
+    def test_module_sys_path_insert(self, monkeypatch):
+        """模块首次加载时 _project_root 不在 sys.path → sys.path.insert (L16)。"""
+        import importlib
+        import sys
+
+        mod = self._get_config_loader_module()
+        project_root = mod._project_root
+
+        # 1. 从 sys.modules 移除
+        sys.modules.pop("src.cli.config_loader", None)
+        # 2. 临时从 sys.path 移除项目根目录
+        original_path = list(sys.path)
+        sys.path = [p for p in sys.path if p != project_root]
+        try:
+            # 3. 重新导入，触发 L16
+            new_mod = importlib.import_module("src.cli.config_loader")
+            assert new_mod is not None
+            assert hasattr(new_mod, "_project_root")
+            assert project_root in sys.path  # 验证 L16 insert 已执行
+        finally:
+            sys.path[:] = original_path
+            # 恢复模块
+            sys.modules.pop("src.cli.config_loader", None)
+            importlib.import_module("src.cli.config_loader")
+
 
 class TestBuildEngine:
     """引擎构建测试"""
@@ -1716,3 +1741,37 @@ class TestOptimizationCLI:
         captured = capsys.readouterr()
         assert "可用的优化功能" in captured.out
         assert "delta_stats" in captured.out
+
+
+# ============================================================================
+# _print_final_summary stats 异常测试
+# ============================================================================
+
+
+class TestPrintFinalSummaryException:
+    """_print_final_summary else 分支 stats 获取异常 (L111-113) 测试"""
+
+    def setup_method(self):
+        from src.cli.output import CLIOutput
+        CLIOutput.reset_instance()
+        from src.cli.log_window import reset_log_window_instance
+        reset_log_window_instance()
+
+    def test_stats_get_exception_graceful(self, monkeypatch):
+        """engine.get_stats() 抛异常 → 显示 '统计信息暂不可用'。"""
+        from src.cli.stats_reporter import _print_final_summary
+        from src.cli.output import CLIOutput
+
+        engine = Mock()
+        engine.get_stats.side_effect = RuntimeError("stats unavailable")
+
+        args = Mock()
+        args.export_progress = None
+        args.export_matches = None
+
+        # 确保 CLIOutput 可用
+        CLIOutput.reset_instance()
+
+        with patch("builtins.print"):
+            _print_final_summary(engine, "cpu", args)
+        # 不应抛出异常

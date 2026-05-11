@@ -277,6 +277,61 @@ class TestImportSmoke:
 # ============================================================================
 
 
+class TestArgParserModuleCoverage:
+    """arg_parser.py 模块级代码覆盖测试 (L15, L22-23)。"""
+
+    def test_sys_path_insert_when_root_not_in_path(self):
+        """模块首次加载时 _project_root 不在 sys.path → sys.path.insert (L15)。"""
+        import importlib
+        import sys
+
+        # 获取当前已加载模块的 _project_root
+        mod = sys.modules.get("src.cli.arg_parser")
+        if mod is None:
+            mod = importlib.import_module("src.cli.arg_parser")
+        project_root = mod._project_root
+
+        # 卸载模块，移除 project_root，重新导入
+        sys.modules.pop("src.cli.arg_parser", None)
+        original_path = list(sys.path)
+        sys.path = [p for p in sys.path if p != project_root]
+        try:
+            new_mod = importlib.import_module("src.cli.arg_parser")
+            assert new_mod is not None
+            assert hasattr(new_mod, "_project_root")
+            assert project_root in sys.path  # 验证 L15 insert 已执行
+        finally:
+            sys.path[:] = original_path
+            sys.modules.pop("src.cli.arg_parser", None)
+            importlib.import_module("src.cli.arg_parser")
+
+    def test_version_import_fallback(self):
+        """from src import __version__ 失败时回退到 '3.1.2' (L22-23)。"""
+        import builtins
+        import importlib
+        import sys
+        from unittest.mock import patch
+
+        # 卸载模块
+        sys.modules.pop("src.cli.arg_parser", None)
+
+        real_import = builtins.__import__
+
+        # 拦截 __import__('src', fromlist=['__version__']) → 抛出 ImportError
+        def mock_import(name, globals=None, locals=None, fromlist=(), level=0):
+            if name == "src" and "__version__" in (fromlist or ()):
+                raise ImportError("No module named 'src.__version__'")
+            return real_import(name, globals, locals, fromlist, level)
+
+        try:
+            with patch("builtins.__import__", side_effect=mock_import):
+                mod = importlib.import_module("src.cli.arg_parser")
+                assert mod._VERSION == "3.1.2"
+        finally:
+            sys.modules.pop("src.cli.arg_parser", None)
+            importlib.import_module("src.cli.arg_parser")
+
+
 @pytest.mark.smoke
 def test_smoke_all_modules_importable():
     """验证所有主要模块可被导入"""

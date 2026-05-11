@@ -13,6 +13,7 @@ import os
 import json
 import tempfile
 import pytest
+from unittest.mock import patch, MagicMock
 
 # ============================================================================
 # Fixtures
@@ -440,3 +441,389 @@ class TestMigrationRules:
         rule = MIGRATION_RULES["3.0_to_3.1"]
         assert "performance_monitoring" in rule["add_sections"]
         assert "per_device_config" in rule["add_fields"]["gpu"]
+
+
+# ============================================================================
+# migrate_config 边角场景
+# ============================================================================
+
+
+@pytest.mark.unit
+class TestMigrateConfigEdges:
+    """migrate_config 边界场景测试"""
+
+    def test_rule_key_not_in_migration_rules(self):
+        """migration_path 含不存在的规则 -> continue 跳过"""
+        from src.cli.config_migration import migrate_config, MIGRATION_RULES
+
+        config = {}
+        saved = MIGRATION_RULES.copy()
+        try:
+            del MIGRATION_RULES["3.0_to_3.1"]
+            result, changelog = migrate_config(config, target_version="3.1.0")
+            assert isinstance(result, dict)
+        finally:
+            MIGRATION_RULES.clear()
+            MIGRATION_RULES.update(saved)
+
+    def test_rename_fields_in_migration(self):
+        """rename_fields 规则 -> 字段重命名"""
+        from src.cli.config_migration import migrate_config, MIGRATION_RULES
+
+        config = {
+            "crypto": {"old_field": "keep_me"},
+            "collision": {},
+            "logging": {},
+        }
+        saved = MIGRATION_RULES.copy()
+        try:
+            MIGRATION_RULES.clear()
+            MIGRATION_RULES.update(saved)
+            MIGRATION_RULES["2.x_to_3.0"]["rename_fields"] = {
+                "crypto": {"old_field": "new_field"},
+            }
+            result, changelog = migrate_config(config, target_version="3.1.0")
+            assert "new_field" in result["crypto"]
+            assert result["crypto"]["new_field"] == "keep_me"
+            assert "old_field" not in result["crypto"]
+        finally:
+            MIGRATION_RULES.clear()
+            MIGRATION_RULES.update(saved)
+
+    def test_rename_fields_section_not_in_result(self):
+        """rename 目标段不存在 -> continue 跳过"""
+        from src.cli.config_migration import migrate_config, MIGRATION_RULES
+
+        config = {
+            "crypto": {},
+            "collision": {},
+            "logging": {},
+        }
+        saved = MIGRATION_RULES.copy()
+        try:
+            MIGRATION_RULES.clear()
+            MIGRATION_RULES.update(saved)
+            MIGRATION_RULES["2.x_to_3.0"]["rename_fields"] = {
+                "nonexistent_section": {"a": "b"},
+            }
+            result, _ = migrate_config(config, target_version="3.1.0")
+            assert "nonexistent_section" not in result
+        finally:
+            MIGRATION_RULES.clear()
+            MIGRATION_RULES.update(saved)
+
+    def test_rename_fields_no_conflict_with_existing(self):
+        """rename 目标字段已存在 -> 不覆盖"""
+        from src.cli.config_migration import migrate_config, MIGRATION_RULES
+
+        config = {
+            "crypto": {"old_field": "old_val", "new_field": "existing_val"},
+            "collision": {},
+            "logging": {},
+        }
+        saved = MIGRATION_RULES.copy()
+        try:
+            MIGRATION_RULES.clear()
+            MIGRATION_RULES.update(saved)
+            MIGRATION_RULES["2.x_to_3.0"]["rename_fields"] = {
+                "crypto": {"old_field": "new_field"},
+            }
+            result, _ = migrate_config(config, target_version="3.1.0")
+            # new_field 已存在，不应被 old_field 覆盖
+            assert result["crypto"]["new_field"] == "existing_val"
+            assert "old_field" in result["crypto"]
+        finally:
+            MIGRATION_RULES.clear()
+            MIGRATION_RULES.update(saved)
+
+
+# ============================================================================
+# migrate_config_file 测试
+# ============================================================================
+
+
+@pytest.mark.unit
+class TestMigrateConfigFile:
+    """migrate_config_file() 完整流程测试"""
+
+    def test_file_not_found(self):
+        """配置文件不存在 -> 返回 False"""
+        from src.cli.config_migration import migrate_config_file
+        from pathlib import Path
+
+        with patch.object(Path, "exists", return_value=False):
+            with patch("builtins.print"):
+                result = migrate_config_file("nonexistent.json")
+                assert result is False
+
+    def test_json_decode_error(self):
+        """JSON 格式错误 -> 返回 False"""
+        from src.cli.config_migration import migrate_config_file
+        from pathlib import Path
+
+        with patch.object(Path, "exists", return_value=True):
+            with patch("builtins.open", side_effect=json.JSONDecodeError("bad", "{", 0)):
+                with patch("builtins.print"):
+                    result = migrate_config_file("bad.json")
+                    assert result is False
+
+    def test_unicode_decode_error(self):
+        """文件编码错误 -> 返回 False"""
+        from src.cli.config_migration import migrate_config_file
+        from pathlib import Path
+
+        with patch.object(Path, "exists", return_value=True):
+            with patch("builtins.open", side_effect=UnicodeDecodeError("utf-8", b"", 0, 1, "bad")):
+                with patch("builtins.print"):
+                    result = migrate_config_file("bad_encoding.json")
+                    assert result is False
+
+    def test_os_error_on_read(self):
+        """读取文件 OS 错误 -> 返回 False"""
+        from src.cli.config_migration import migrate_config_file
+        from pathlib import Path
+
+        with patch.object(Path, "exists", return_value=True):
+            with patch("builtins.open", side_effect=OSError("permission denied")):
+                with patch("builtins.print"):
+                    result = migrate_config_file("locked.json")
+                    assert result is False
+
+    def test_already_latest_version(self, v31_config):
+        """v3.1 配置 -> 返回 True，无需迁移"""
+        from src.cli.config_migration import migrate_config_file
+        from pathlib import Path
+
+        with patch.object(Path, "exists", return_value=True):
+            with patch("json.load", return_value=v31_config):
+                with patch("builtins.open"):
+                    with patch("builtins.print"):
+                        result = migrate_config_file("latest.json")
+                        assert result is True
+
+    def test_backup_fails_os_error(self, v2_config):
+        """备份失败 -> 返回 False"""
+        from src.cli.config_migration import migrate_config_file
+        from pathlib import Path
+
+        with patch.object(Path, "exists", return_value=True):
+            with patch("builtins.open"):
+                with patch("json.load", return_value=v2_config):
+                    with patch("src.cli.config_migration.backup_config",
+                               side_effect=OSError("disk full")):
+                        with patch("builtins.print"):
+                            result = migrate_config_file("config.json")
+                            assert result is False
+
+    def test_migrate_raises_exception(self, v2_config):
+        """migrate_config 抛异常 -> 返回 False"""
+        from src.cli.config_migration import migrate_config_file
+        from pathlib import Path
+
+        with patch.object(Path, "exists", return_value=True):
+            with patch("builtins.open"):
+                with patch("json.load", return_value=v2_config):
+                    with patch("src.cli.config_migration.backup_config",
+                               return_value="/tmp/backup.json"):
+                        with patch("src.cli.config_migration.migrate_config",
+                                   side_effect=RuntimeError("migrate crash")):
+                            with patch("builtins.print"):
+                                result = migrate_config_file("config.json")
+                                assert result is False
+
+    def test_validation_fails(self, v2_config):
+        """迁移后验证不通过 -> 返回 False"""
+        from src.cli.config_migration import migrate_config_file
+        from pathlib import Path
+
+        with patch.object(Path, "exists", return_value=True):
+            with patch("builtins.open"):
+                with patch("json.load", return_value=v2_config):
+                    with patch("src.cli.config_migration.backup_config",
+                               return_value="/tmp/backup.json"):
+                        with patch("src.cli.config_migration.migrate_config",
+                                   return_value=({}, ["changelog"])):
+                            with patch("src.cli.config_migration.validate_migrated_config",
+                                       return_value=(False, ["缺少字段"])):
+                                with patch("builtins.print"):
+                                    result = migrate_config_file("config.json")
+                                    assert result is False
+
+    def test_write_fails_os_error(self, v2_config):
+        """写入迁移结果失败 -> 返回 False"""
+        from src.cli.config_migration import migrate_config_file
+        from pathlib import Path
+
+        mock_read = MagicMock()
+        with patch.object(Path, "exists", return_value=True):
+            with patch("json.load", return_value=v2_config):
+                with patch("src.cli.config_migration.backup_config",
+                           return_value="/tmp/backup.json"):
+                    with patch("src.cli.config_migration.migrate_config",
+                               return_value=(v2_config, ["changelog"])):
+                        with patch("src.cli.config_migration.validate_migrated_config",
+                                   return_value=(True, [])):
+                            with patch("builtins.open",
+                                       side_effect=[mock_read, OSError("write error")]):
+                                with patch("builtins.print"):
+                                    result = migrate_config_file("config.json")
+                                    assert result is False
+
+    def test_successful_migration(self, v2_config):
+        """完整成功迁移流程 -> 返回 True"""
+        from src.cli.config_migration import migrate_config_file
+        from pathlib import Path
+
+        migrated = dict(v2_config)
+        migrated["gpu"] = {}
+        migrated["monitoring"] = {}
+        migrated["performance_monitoring"] = {}
+
+        with patch.object(Path, "exists", return_value=True):
+            with patch("json.load", return_value=v2_config):
+                with patch("src.cli.config_migration.backup_config",
+                           return_value="/tmp/backup.json"):
+                    with patch("src.cli.config_migration.migrate_config",
+                               return_value=(migrated, ["迁移完成"])):
+                        with patch("src.cli.config_migration.validate_migrated_config",
+                                   return_value=(True, [])):
+                            mock_file = MagicMock()
+                            with patch("builtins.open", return_value=mock_file):
+                                with patch("json.dump"):
+                                    with patch("builtins.print"):
+                                        result = migrate_config_file("config.json")
+                                        assert result is True
+
+    def test_unknown_version_warns(self):
+        """unknown 版本 -> 打印警告但继续迁移"""
+        from src.cli.config_migration import migrate_config_file
+        from pathlib import Path
+
+        config = {"unknown_section": {}}
+        migrated = dict(config)
+        migrated["gpu"] = {}
+        migrated["monitoring"] = {}
+        migrated["performance_monitoring"] = {}
+
+        with patch.object(Path, "exists", return_value=True):
+            with patch("json.load", return_value=config):
+                with patch("src.cli.config_migration.backup_config",
+                           return_value="/tmp/backup.json"):
+                    with patch("src.cli.config_migration.migrate_config",
+                               return_value=(migrated, ["迁移完成"])):
+                        with patch("src.cli.config_migration.validate_migrated_config",
+                                   return_value=(True, [])):
+                            mock_file = MagicMock()
+                            with patch("builtins.open", return_value=mock_file):
+                                with patch("json.dump"):
+                                    with patch("builtins.print"):
+                                        result = migrate_config_file("config.json")
+                                        assert result is True
+
+
+# ============================================================================
+# validate_migrated_config 边角
+# ============================================================================
+
+
+@pytest.mark.unit
+class TestValidateMigratedConfigEdges:
+    """validate_migrated_config 边界场景测试"""
+
+    def test_logging_not_dict(self):
+        """logging 段不是 dict"""
+        from src.cli.config_migration import validate_migrated_config
+
+        config = {
+            "crypto": {}, "collision": {}, "logging": "not_a_dict",
+            "gpu": {}, "monitoring": {}, "performance_monitoring": {},
+        }
+        is_valid, issues = validate_migrated_config(config)
+        assert is_valid is False
+        assert any("logging 段" in i for i in issues)
+
+    def test_gpu_not_dict(self):
+        """gpu 段不是 dict"""
+        from src.cli.config_migration import validate_migrated_config
+
+        config = {
+            "crypto": {}, "collision": {}, "logging": {},
+            "gpu": 123, "monitoring": {}, "performance_monitoring": {},
+        }
+        is_valid, issues = validate_migrated_config(config)
+        assert is_valid is False
+        assert any("gpu 段" in i for i in issues)
+
+    def test_monitoring_not_dict(self):
+        """monitoring 段不是 dict"""
+        from src.cli.config_migration import validate_migrated_config
+
+        config = {
+            "crypto": {}, "collision": {}, "logging": {},
+            "gpu": {}, "monitoring": [], "performance_monitoring": {},
+        }
+        is_valid, issues = validate_migrated_config(config)
+        assert is_valid is False
+        assert any("monitoring 段" in i for i in issues)
+
+    def test_performance_monitoring_not_dict(self):
+        """performance_monitoring 段不是 dict"""
+        from src.cli.config_migration import validate_migrated_config
+
+        config = {
+            "crypto": {}, "collision": {}, "logging": {},
+            "gpu": {}, "monitoring": {}, "performance_monitoring": "bad_type",
+        }
+        is_valid, issues = validate_migrated_config(config)
+        assert is_valid is False
+        assert any("performance_monitoring 段" in i for i in issues)
+
+    def test_gpu_base_timeout_type_error(self):
+        """gpu.base_timeout_seconds 类型错误"""
+        from src.cli.config_migration import validate_migrated_config
+
+        config = {
+            "crypto": {}, "collision": {}, "logging": {},
+            "gpu": {"base_timeout_seconds": "not_numeric"},
+            "monitoring": {}, "performance_monitoring": {},
+        }
+        is_valid, issues = validate_migrated_config(config)
+        assert is_valid is False
+        assert any("base_timeout_seconds" in i for i in issues)
+
+    def test_gpu_memory_ratio_not_numeric(self):
+        """gpu.memory_usage_ratio 非数值类型"""
+        from src.cli.config_migration import validate_migrated_config
+
+        config = {
+            "crypto": {}, "collision": {}, "logging": {},
+            "gpu": {"memory_usage_ratio": "high"},
+            "monitoring": {}, "performance_monitoring": {},
+        }
+        is_valid, issues = validate_migrated_config(config)
+        assert is_valid is False
+        assert any("memory_usage_ratio" in i for i in issues)
+
+    def test_gpu_memory_ratio_negative(self):
+        """memory_usage_ratio=-0.1 无效"""
+        from src.cli.config_migration import validate_migrated_config
+
+        config = {
+            "crypto": {}, "collision": {}, "logging": {},
+            "gpu": {"memory_usage_ratio": -0.1},
+            "monitoring": {}, "performance_monitoring": {},
+        }
+        is_valid, issues = validate_migrated_config(config)
+        assert is_valid is False
+
+    def test_gpu_memory_ratio_zero_valid(self):
+        """memory_usage_ratio=0.0 边界有效"""
+        from src.cli.config_migration import validate_migrated_config
+
+        config = {
+            "crypto": {}, "collision": {}, "logging": {},
+            "gpu": {"memory_usage_ratio": 0.0},
+            "monitoring": {}, "performance_monitoring": {},
+        }
+        is_valid, issues = validate_migrated_config(config)
+        assert is_valid is True

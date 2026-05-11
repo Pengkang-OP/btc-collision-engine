@@ -8,7 +8,7 @@
 
 import time
 from pathlib import Path
-from typing import Optional, Callable, Any
+from typing import Optional
 
 
 def read_with_retry(
@@ -18,13 +18,13 @@ def read_with_retry(
     encoding: str = 'utf-8'
 ) -> Optional[str]:
     """带重试的文件读取
-    
+
     Args:
         file_path: 文件路径
         max_retries: 最大重试次数
         delay: 重试延迟（秒）
         encoding: 文件编码
-        
+
     Returns:
         文件内容，失败返回None
     """
@@ -47,14 +47,14 @@ def write_with_retry(
     encoding: str = 'utf-8'
 ) -> bool:
     """带重试的文件写入
-    
+
     Args:
         file_path: 文件路径
         content: 写入内容
         max_retries: 最大重试次数
         delay: 重试延迟（秒）
         encoding: 文件编码
-        
+
     Returns:
         True表示成功，False表示失败
     """

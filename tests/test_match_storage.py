@@ -14,7 +14,7 @@ import json
 import tempfile
 import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from src.collision.match_storage import MatchDataStorage
 

@@ -171,9 +171,10 @@ class LogWindow:
         if not self.text_area:
             return
 
-        # 提取日志级别
-        level_start = log_entry.find("[") + 1
-        level_end = log_entry.find("]", level_start)
+        # 提取日志级别 (第二个 [LEVEL] 括号对)
+        first_end = log_entry.find("]")
+        level_start = log_entry.find("[", first_end) + 1
+        level_end = log_entry.find("]", level_start) if level_start > 0 else -1
         if level_start > 0 and level_end > level_start:
             level = log_entry[level_start:level_end]
         else:

@@ -2,7 +2,7 @@
 """SecureKeyManager 单元测试 - 覆盖密钥管理、清零、统计、上下文等可测试路径"""
 
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from src.core.secure_key_manager import (
     SecureKeyManager,

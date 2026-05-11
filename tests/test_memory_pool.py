@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 """ObjectPool / GlobalPoolManager 单元测试 - 覆盖 P3-7/P1-6 增强功能"""
 
-import threading
-import time
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from src.core.memory_pool import (
     ObjectPool,
@@ -429,7 +427,6 @@ class TestGlobalPoolManagerShrinkAll(unittest.TestCase):
         mgr = GlobalPoolManager()
         mgr.initialize()
         # 先获取再归还以填充池
-        from src.core.secp256k1 import ECPoint
         pool = mgr.get_ecpoint_pool()
         for _ in range(10):
             pt = pool.acquire(x=1, y=2)

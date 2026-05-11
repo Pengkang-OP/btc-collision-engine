@@ -7,7 +7,7 @@
 """
 
 import unittest
-from unittest.mock import patch, PropertyMock
+from unittest.mock import patch
 
 from src.core.secp256k1 import Secp256k1, ECPoint, EllipticCurve
 

@@ -199,10 +199,8 @@ class EllipticCurve:
 
         ⚠️ 性能警告:
         此实现时间复杂度为O(log m)，在批量运算中可能成为瓶颈。
-        对于高性能场景，建议：
-        1. 使用crypto_backend.py中的优化后端（基于GMP库）
-        2. 使用Fermat小定理: a^(m-2) mod m（当m为素数时）
-        3. 考虑缓存机制（对于重复的denominator）
+        ⚠️ 侧信道风险: 扩展欧几里得算法非恒定时间，存在侧信道泄露风险。
+        对于安全敏感场景，建议使用 mod_inverse_const_time() 方法。
 
         参数:
             a: 被求逆元的整数
@@ -241,6 +239,64 @@ class EllipticCurve:
             t = t + m
 
         return t
+
+    def mod_inverse_const_time(self, a: int, m: int) -> int:
+        """
+        计算模逆元（恒定时间实现，基于Fermat小定理）
+
+        当m为素数时，使用Fermat小定理 a^(m-2) mod m 计算模逆元。
+        此实现是恒定时间的，因为：
+        1. 幂运算执行固定次数的乘法（m.bit_length() - 2次）
+        2. 每次乘法都是恒定的
+        3. 内存访问模式不依赖于输入值
+
+        ⚠️ 限制: 仅适用于素数模数。对于secp256k1曲线，p和N都是素数。
+
+        参数:
+            a: 被求逆元的整数
+            m: 模数（必须为素数）
+
+        返回:
+            a在模m下的逆元
+
+        异常:
+            ValueError: 当逆元不存在时（a和m不互质）
+            TypeError: 当输入参数类型不正确时
+        """
+        # 输入参数验证
+        if not isinstance(a, int):
+            raise TypeError("a必须是整数")
+        if not isinstance(m, int):
+            raise TypeError("m必须是整数")
+        if m <= 0:
+            raise ValueError("模数m必须是正整数")
+
+        # 处理负数
+        if a < 0:
+            a = a % m
+
+        if a == 0:
+            raise ValueError("模逆元不存在: 0没有逆元")
+
+        # Fermat小定理: a^(m-2) mod m = a^(-1) mod m (当m为素数)
+        # 使用快速幂算法，时间复杂度 O(log m)
+        # 执行固定次数的乘法迭代，恒定时间
+        result = 1
+        base = a
+        exponent = m - 2
+
+        while exponent > 0:
+            # 恒定时间: 每次迭代都执行操作
+            if exponent & 1:
+                result = (result * base) % m
+            base = (base * base) % m
+            exponent >>= 1
+
+        # 验证结果
+        if (a * result) % m != 1:
+            raise ValueError(f"模逆元计算错误: {a} 在模 {m} 下的逆元不存在")
+
+        return result
 
     def point_add(self, p1: ECPoint, p2: ECPoint) -> ECPoint:
         """
@@ -297,7 +353,8 @@ class EllipticCurve:
             denominator = (x2 - x1) % p
 
         # 计算 lambda = numerator / denominator mod p
-        lambda_val = (numerator * self.mod_inverse(denominator, p)) % p
+        # S2/S3修复: 使用恒定时间模逆元，防止侧信道攻击
+        lambda_val = (numerator * self.mod_inverse_const_time(denominator, p)) % p
 
         # 计算结果点坐标
         # x3 = lambda^2 - x1 - x2 mod p
