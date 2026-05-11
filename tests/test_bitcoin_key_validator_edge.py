@@ -9,14 +9,13 @@
 """
 
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
-from src.core.secp256k1 import Secp256k1, ECPoint
+from src.core.secp256k1 import Secp256k1
 from src.core.bitcoin_key_validator import (
     WIFEncoder,
     AddressType,
     BitcoinKeyValidator,
-    validate_bitcoin_key_chain,
 )
 
 

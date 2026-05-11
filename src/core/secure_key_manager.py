@@ -10,6 +10,7 @@ import os
 import sys
 import secrets
 import warnings
+import threading  # L3修复: 添加线程锁支持
 from typing import Any, Optional
 from contextlib import contextmanager
 
@@ -74,6 +75,8 @@ class SecureKeyManager:
     """
 
     # 类级别统计（用于监控清零成功率）
+    # L3修复: 添加类级别锁保护统计变量，确保多线程安全
+    _stats_lock: threading.Lock = threading.Lock()  # 线程安全锁
     _total_clears: int = 0  # 总清零次数
     _successful_clears: int = 0  # 成功清零次数
     _failed_clears: int = 0  # 失败清零次数
@@ -426,14 +429,17 @@ class SecureKeyManager:
 
             self._cleared = True
 
-            # 更新统计
-            SecureKeyManager._total_clears += 1
-            SecureKeyManager._successful_clears += 1
+            # L3修复: 使用锁保护统计变量，确保多线程安全
+            with SecureKeyManager._stats_lock:
+                SecureKeyManager._total_clears += 1
+                SecureKeyManager._successful_clears += 1
 
         except Exception as e:
             # 清零失败是严重错误
-            SecureKeyManager._total_clears += 1
-            SecureKeyManager._failed_clears += 1
+            # L3修复: 使用锁保护统计变量
+            with SecureKeyManager._stats_lock:
+                SecureKeyManager._total_clears += 1
+                SecureKeyManager._failed_clears += 1
             raise SecureMemoryError(f"安全清零失败: {e}") from e
 
     def _clear_with_cryptography(self):
@@ -525,9 +531,11 @@ class SecureKeyManager:
             >>> stats = SecureKeyManager.get_clear_stats()
             >>> print(f"清零成功率: {stats['success_rate']:.2f}%")
         """
-        total = SecureKeyManager._total_clears
-        successful = SecureKeyManager._successful_clears
-        failed = SecureKeyManager._failed_clears
+        # L3修复: 使用锁保护统计读取
+        with SecureKeyManager._stats_lock:
+            total = SecureKeyManager._total_clears
+            successful = SecureKeyManager._successful_clears
+            failed = SecureKeyManager._failed_clears
 
         success_rate = (successful / total * 100) if total > 0 else 100.0
 
@@ -541,9 +549,11 @@ class SecureKeyManager:
     @staticmethod
     def reset_clear_stats() -> None:
         """重置清零统计"""
-        SecureKeyManager._total_clears = 0
-        SecureKeyManager._successful_clears = 0
-        SecureKeyManager._failed_clears = 0
+        # L3修复: 使用锁保护统计重置
+        with SecureKeyManager._stats_lock:
+            SecureKeyManager._total_clears = 0
+            SecureKeyManager._successful_clears = 0
+            SecureKeyManager._failed_clears = 0
 
 
 @contextmanager

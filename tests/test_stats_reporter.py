@@ -275,6 +275,16 @@ class TestPrintFinalSummary(unittest.TestCase):
         self._call(engine, "gpu")
         self._pag_mock.assert_called_once()
 
+    def test_get_stats_exception_handled(self):
+        """get_stats 抛异常 → 异常被捕获并设置 fallback 状态。"""
+        engine = _make_engine("cpu")
+        engine.get_stats.side_effect = RuntimeError("stats unavailable")
+        with patch("builtins.print"):
+            self._call(engine, "cpu")
+        self.out.final_summary.assert_called_once()
+        stats_dict = self.out.final_summary.call_args[0][1]
+        self.assertIn("统计信息暂不可用", list(stats_dict.values()))
+
     def test_export_progress_called_when_flag_set(self):
         """args.export_progress 设置 → 调用 export_progress_data。"""
         engine = _make_engine("cpu")
@@ -352,6 +362,33 @@ class TestPrintFinalSummary(unittest.TestCase):
             with patch("builtins.print"):
                 self._call(engine, "cpu", args)
                 mock_exp.assert_called_once()
+
+
+class TestStatsReporterModuleCoverage(unittest.TestCase):
+    """stats_reporter.py 模块级代码覆盖测试 (L17)。"""
+
+    def test_sys_path_insert_when_root_not_in_path(self):
+        """模块首次加载时 _project_root 不在 sys.path → sys.path.insert (L17)。"""
+        import importlib
+        import sys
+
+        mod = sys.modules.get("src.cli.stats_reporter")
+        if mod is None:
+            mod = importlib.import_module("src.cli.stats_reporter")
+        project_root = mod._project_root
+
+        sys.modules.pop("src.cli.stats_reporter", None)
+        original_path = list(sys.path)
+        sys.path = [p for p in sys.path if p != project_root]
+        try:
+            new_mod = importlib.import_module("src.cli.stats_reporter")
+            assert new_mod is not None
+            assert hasattr(new_mod, "_project_root")
+            assert project_root in sys.path  # 验证 L17 insert 已执行
+        finally:
+            sys.path[:] = original_path
+            sys.modules.pop("src.cli.stats_reporter", None)
+            importlib.import_module("src.cli.stats_reporter")
 
 
 if __name__ == "__main__":

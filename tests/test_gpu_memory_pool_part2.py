@@ -9,8 +9,6 @@ import threading
 import time
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 # ---- 绕过 src.gpu.__init__ 导入链 ----
 _mock_kernel_impl = MagicMock()
 _mock_kernel_impl.compile_kernel_with_retry = MagicMock()
@@ -23,8 +21,6 @@ from src.gpu.memory_pool import (  # noqa: E402
     GPUMemoryPool,
     GPUBufferAllocator,
     GlobalGPUMemoryManager,
-    get_gpu_memory_pool,
-    gpu_memory_manager,
 )
 
 

@@ -136,29 +136,33 @@ class StatsPerformanceMonitor:
         self._check_alerts(sample)
 
     def _check_alerts(self, sample: PerformanceSample) -> None:
-        """检查告警条件"""
+        """检查告警条件
+
+        使用 .get() 安全访问阈值，避免 partial 自定义阈值时的 KeyError。
+        """
         if self._alert_callback is None:
             return
 
         alerts = []
+        th = self._thresholds
+        lat_th = th.get("latency_ms", 100.0)
+        lock_th = th.get("lock_contention", 0.5)
+        mem_th = th.get("memory_mb", 512.0)
+        cpu_th = th.get("cpu_usage", 80.0)
 
-        if sample.latency_ms > self._thresholds["latency_ms"]:
-            alerts.append(("latency_ms", sample.latency_ms, self._thresholds["latency_ms"]))
+        if sample.latency_ms > lat_th:
+            alerts.append(("latency_ms", sample.latency_ms, lat_th))
 
-        if sample.lock_contention > self._thresholds["lock_contention"] * 100:
+        if sample.lock_contention > lock_th * 100:
             alerts.append(
-                (
-                    "lock_contention",
-                    sample.lock_contention,
-                    self._thresholds["lock_contention"] * 100,
-                )
+                ("lock_contention", sample.lock_contention, lock_th * 100)
             )
 
-        if sample.memory_usage_mb > self._thresholds["memory_mb"]:
-            alerts.append(("memory_mb", sample.memory_usage_mb, self._thresholds["memory_mb"]))
+        if sample.memory_usage_mb > mem_th:
+            alerts.append(("memory_mb", sample.memory_usage_mb, mem_th))
 
-        if sample.cpu_usage > self._thresholds["cpu_usage"]:
-            alerts.append(("cpu_usage", sample.cpu_usage, self._thresholds["cpu_usage"]))
+        if sample.cpu_usage > cpu_th:
+            alerts.append(("cpu_usage", sample.cpu_usage, cpu_th))
 
         for metric, value, threshold in alerts:
             try:
@@ -209,14 +213,18 @@ class StatsPerformanceMonitor:
         }
 
     def _get_health_status(self, recent: Dict[str, Any]) -> str:
-        """根据最近性能判断健康状态"""
-        if recent["average_latency_ms"] > self._thresholds["latency_ms"]:
+        """根据最近性能判断健康状态
+
+        使用 .get() 安全访问阈值，避免 partial 自定义阈值时的 KeyError。
+        """
+        th = self._thresholds
+        if recent["average_latency_ms"] > th.get("latency_ms", 100.0):
             return "warning"
-        if recent["average_lock_contention"] > self._thresholds["lock_contention"] * 100:
+        if recent["average_lock_contention"] > th.get("lock_contention", 0.5) * 100:
             return "warning"
-        if recent["average_memory_mb"] > self._thresholds["memory_mb"]:
+        if recent["average_memory_mb"] > th.get("memory_mb", 512.0):
             return "critical"
-        if recent["average_cpu_usage"] > self._thresholds["cpu_usage"]:
+        if recent["average_cpu_usage"] > th.get("cpu_usage", 80.0):
             return "warning"
         return "healthy"
 

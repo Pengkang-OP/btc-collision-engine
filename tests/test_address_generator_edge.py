@@ -5,14 +5,12 @@
 """
 
 import unittest
-import ctypes
 from unittest.mock import patch, MagicMock, PropertyMock
 
 from src.core.address_generator import (
     secure_clear_bytearray,
     P2PKHAddressGenerator,
     PerformanceWarning,
-    BaseAddressGenerator,
 )
 
 

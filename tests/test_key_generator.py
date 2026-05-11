@@ -2,7 +2,7 @@
 """SecureKeyGenerator 全面单元测试 - 覆盖构造/生成/验证/统计/熵池路径"""
 
 import unittest
-from unittest.mock import patch, mock_open
+from unittest.mock import patch
 import sys
 import os
 
@@ -120,15 +120,16 @@ class TestGenerateBatch(unittest.TestCase):
                 self.assertIn("无法生成任何有效私钥", str(ctx.exception))
 
     def test_generate_batch_with_rate_limit(self):
-        """P1-2: 速率限制生效"""
+        """P1-2: 速率限制生效 - 10 keys at 100/s 至少耗时约 0.1s"""
         import time
         gen = SecureKeyGenerator(config={"rate_limit": 100, "batch_size": 10})
         start = time.perf_counter()
         keys = gen.generate_batch(10)
         elapsed = time.perf_counter() - start
-        # 10 keys at 100/s = minimum 0.1s, but might be faster if no wait needed
-        # Just verify keys were generated
-        self.assertGreater(len(keys), 0)
+        # 10 keys at 100/s = minimum 0.1s; allow small epsilon for timer precision
+        self.assertGreaterEqual(elapsed, 0.05,
+                                f"速率限制未生效, 耗时仅 {elapsed:.4f}s")
+        self.assertEqual(len(keys), 10)
         for key in keys:
             self.assertEqual(len(key), 32)
 

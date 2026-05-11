@@ -240,7 +240,9 @@ class TestConfigManagerAdvanced(unittest.TestCase):
         self.assertIn("performance_monitoring.enabled", errors)
 
     def test_validate_perf_track_slow_bool(self):
-        errors = self.cm._validate_manual({"performance_monitoring": {"track_slow_operations": False}})
+        errors = self.cm._validate_manual(
+            {"performance_monitoring": {"track_slow_operations": False}}
+        )
         self.assertNotIn("performance_monitoring.track_slow_operations", errors)
 
     def test_validate_perf_threshold_valid(self):
@@ -335,6 +337,7 @@ class TestConfigManagerLifecycle(unittest.TestCase):
 
     def test_on_config_changed(self):
         called = []
+
         def callback():
             called.append(1)
         self.cm.on_config_changed(callback)
@@ -343,8 +346,10 @@ class TestConfigManagerLifecycle(unittest.TestCase):
 
     def test_on_config_changed_multiple(self):
         results = []
+
         def cb1():
             results.append(1)
+
         def cb2():
             results.append(2)
         self.cm.on_config_changed(cb1)
@@ -354,8 +359,10 @@ class TestConfigManagerLifecycle(unittest.TestCase):
 
     def test_on_config_changed_exception_doesnt_block(self):
         results = []
+
         def bad_cb():
             raise RuntimeError("test error")
+
         def good_cb():
             results.append(1)
         self.cm.on_config_changed(bad_cb)

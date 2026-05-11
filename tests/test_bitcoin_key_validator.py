@@ -449,7 +449,8 @@ class TestBitcoinKeyValidatorMatch(unittest.TestCase):
         self.assertFalse(result.details["match"])
 
     def test_verify_address_match_invalid_address(self):
-        result = self.validator.verify_address_match("invalid", {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"})
+        target = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
+        result = self.validator.verify_address_match("invalid", target)
         self.assertFalse(result.success)
 
     def test_verify_address_match_invalid_target(self):

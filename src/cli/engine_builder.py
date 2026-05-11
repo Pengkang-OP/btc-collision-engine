@@ -12,7 +12,7 @@ import argparse
 import hashlib
 import logging
 import sys
-from typing import Any, Optional, Set, Tuple, cast
+from typing import Any, Dict, Optional, Set, Tuple, cast
 
 # P3-3: 统一回调类型别名
 from src.collision.types import ProgressCallback, MatchCallback
@@ -68,6 +68,7 @@ def build_engine(
     on_progress: Optional[ProgressCallback] = None,
     on_match: Optional[MatchCallback] = None,
     sensitive_mode: str = "full",
+    config: Optional[Dict] = None,
 ) -> Tuple[Any, str]:
     """引擎工厂：根据 CLI 参数分路 CPU / 单GPU / 多GPU 三种引擎
 
@@ -120,19 +121,32 @@ def build_engine(
                 use_gpu_memory_pool=True,
                 use_async_logging=True,
             )
+            # v4.2: 将完整 config.json 注入引擎，供 search_mode_coordinator 等使用
+            if config:
+                engine.config = config
             return engine, "gpu"
         except RuntimeError as e:
             error_msg = str(e)
-            print("\n[ERROR] GPU initialization failed", file=sys.stderr)
-            print(f"  {error_msg}", file=sys.stderr)
-            print("\nSuggestions:", file=sys.stderr)
-            print("  1. Check GPU driver installation", file=sys.stderr)
-            print("  2. Verify PyOpenCL environment", file=sys.stderr)
-            print(
-                "  3. Try CPU mode: python key_collision_cli.py -t <address> -m random",
-                file=sys.stderr,
+            logger.warning(f"GPU initialization failed, fallback to CPU: {error_msg}")
+            print("\n[WARN] GPU initialization failed, fallback to CPU mode", file=sys.stderr)
+            print(f"  GPU Error: {error_msg[:200]}...", file=sys.stderr)
+            # S1修复: GPU初始化失败时自动fallback到CPU引擎
+            match_cb_cpu = on_match if on_match else on_match_callback(sensitive_mode=sensitive_mode)
+            engine = KeyCollisionEngine(
+                targets=targets,
+                on_progress=on_progress if on_progress else lambda s: None,
+                on_match=match_cb_cpu,
+                checkpoint_enabled=args.checkpoint,
+                checkpoint_interval=args.checkpoint_interval,
+                dedup_enabled=args.dedup,
+                dedup_max_size=args.dedup_max_size,
+                max_workers=args.workers,
+                use_performance_optimization=not args.no_optimize,
+                precomputed_window_size=args.window_size,
+                use_simd_hash=not args.no_simd,
+                use_memory_pool=not args.no_memory_pool,
             )
-            sys.exit(1)
+            return engine, "cpu"
         except Exception as e:
             logger.error(f"GPU initialization error: {e}")
             print(f"\n[ERROR] GPU initialization error: {e}", file=sys.stderr)

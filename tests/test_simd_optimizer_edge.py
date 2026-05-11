@@ -4,7 +4,7 @@ NumpyOptimizedAddressGenerator 及工厂函数"""
 
 import hashlib
 import unittest
-from unittest.mock import patch, MagicMock, PropertyMock
+from unittest.mock import patch, MagicMock
 
 from src.core.simd_optimizer import (
     BatchOptimizer,

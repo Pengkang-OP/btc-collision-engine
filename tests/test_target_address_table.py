@@ -5,7 +5,7 @@ import json
 import os
 import tempfile
 import unittest
-from unittest.mock import patch, MagicMock, PropertyMock
+from unittest.mock import patch, MagicMock
 
 from src.core.target_address_table import BitcoinTargetTable
 

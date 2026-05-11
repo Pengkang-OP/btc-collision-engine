@@ -157,8 +157,8 @@ class GPUKernel(GPUKernelProtocol):
     EXPECTED_2G_Y = 0x1AE168FEA63DC339A3C58419466CEAEEF7F632653266D0E1236431A950CFE52A
 
     # v3.3.0新增: 缓冲区大小因子常量
-    # KEYS_BUFFER_SIZE_FACTOR: PRNG改造后私钥缓冲区已弃用，保留常量以兼容内存池预分配历史代码
-    KEYS_BUFFER_SIZE_FACTOR = 32  # Deprecated: PRNG模式下私钥缓冲区已不再需要
+    # KEYS_BUFFER_SIZE_FACTOR: PRNG改造后私钥缓冲区已弃用，保留以兼容日志中的历史大小引用
+    KEYS_BUFFER_SIZE_FACTOR = 32  # 历史: PRNG模式下私钥缓冲区已不再需要，仅用于日志大小参考
     MATCH_BUFFER_SIZE_FACTOR = 4  # 每个匹配标志4字节（int32）
 
     def __init__(

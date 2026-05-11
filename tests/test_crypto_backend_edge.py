@@ -11,7 +11,6 @@ from unittest.mock import patch
 
 from src.core.crypto_backend import (
     BackendType,
-    CryptoBackend,
     PurePythonBackend,
     OpenSSLBackend,
     CoincurveBackend,

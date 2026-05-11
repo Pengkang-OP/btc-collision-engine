@@ -115,10 +115,12 @@ class TestPerformanceOptimizer:
         """测试GPU厂商检测"""
         optimizer = GPUPerformanceOptimizer()
         # NVIDIA
-        assert optimizer.detect_vendor("NVIDIA GeForce RTX 3080", "NVIDIA Corporation") == GPUVendor.NVIDIA
+        nv = optimizer.detect_vendor("NVIDIA GeForce RTX 3080", "NVIDIA Corporation")
+        assert nv == GPUVendor.NVIDIA
         assert optimizer.detect_vendor("RTX 4090", "") == GPUVendor.NVIDIA
         # AMD
-        assert optimizer.detect_vendor("AMD Radeon RX 6800 XT", "Advanced Micro Devices") == GPUVendor.AMD
+        amd = optimizer.detect_vendor("AMD Radeon RX 6800 XT", "Advanced Micro Devices")
+        assert amd == GPUVendor.AMD
         # Intel
         assert optimizer.detect_vendor("Intel Arc A770", "Intel Corporation") == GPUVendor.INTEL
         # Unknown
@@ -176,7 +178,9 @@ class TestPerformanceOptimizer:
         )
         for _ in range(5):
             optimizer.record_performance(
-                PerformanceMetrics(batch_execution_time_ms=50, keys_per_second=100000, error_count=0)
+                PerformanceMetrics(
+                    batch_execution_time_ms=50, keys_per_second=100000, error_count=0
+                )
             )
         report = optimizer.get_optimization_report()
         assert report["status"] == "active"

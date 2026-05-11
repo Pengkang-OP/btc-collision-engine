@@ -7,6 +7,7 @@ import concurrent.futures
 import hashlib
 import psutil
 import signal
+from collections import deque
 from typing import Set, Optional, Tuple, List, Dict, Any, cast
 from ..core.optimized_address_generator import OptimizedP2PKHAddressGenerator
 
@@ -779,8 +780,13 @@ class KeyCollisionEngine(BaseCollisionEngine):
         batch_start_time = time.time()
 
         # BL-4修复: 添加短期去重缓存，减少DeduplicationFilter的压力
-        recent_keys: set = set()  # 最近生成的私钥指纹
+        # M1优化: 使用list+set组合，避免频繁的list<->set转换
+        # list保持添加顺序，set用于O(1)查找
+        # 当容量超过阈值时，丢弃前半部分并重建set
+        recent_keys_list: list = []  # 记录添加顺序
+        recent_keys_set: set = set()  # 用于O(1)查找
         max_recent_size = 10000  # 缓存大小
+        _half_size = max_recent_size // 2  # 预计算阈值
 
         logger.debug(f"工作线程 {worker_id} 启动，批量大小={self._batch_size}")
 
@@ -803,16 +809,23 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     ):
                         continue
 
-                    # 短期缓存 + 去重检查
+                    # 短期缓存 + 去重检查（M1优化: 使用list+set组合）
                     key_fp = hashlib.sha256(private_key).digest()[:8]
-                    if key_fp in recent_keys:
+                    if key_fp in recent_keys_set:
                         continue
                     if not self.dedup_filter.check_and_add(bytes(private_key)):
                         continue
 
-                    recent_keys.add(key_fp)
-                    if len(recent_keys) > max_recent_size:
-                        recent_keys = set(list(recent_keys)[max_recent_size // 2 :])
+                    # M1优化: 高效缓存管理
+                    # 当缓存超过max_recent_size时，丢弃前半部分并重建set
+                    # 这种方式比每次都转换更高效
+                    recent_keys_list.append(key_fp)
+                    recent_keys_set.add(key_fp)
+                    if len(recent_keys_list) > max_recent_size:
+                        # 丢弃前半部分，保留后半部分
+                        recent_keys_list = recent_keys_list[_half_size:]
+                        # 重建set以反映新的列表内容
+                        recent_keys_set = set(recent_keys_list)
 
                     # 生成地址（P1-1: 错误日志通过 _log_throttled_error 统一处理）
                     try:
@@ -1183,10 +1196,12 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
                 local_count += 1
 
-                # 实时更新共享计数器（每 500 次更新一次，减少锁争用）
-                if local_count % 500 == 0:
+                # M2修复: 统一提交阈值为32，与random_search保持一致
+                # 原来范围扫描使用500，随机搜索使用32，现在统一为32
+                # 更频繁的更新可以减少异常时丢失的计数
+                if local_count % 32 == 0:
                     with self._state_lock:
-                        self._live_range_count += 500
+                        self._live_range_count += 32
 
                 # 检查匹配：先检查压缩格式，再检查非压缩格式（如果启用）
                 matched_address = None
@@ -1238,8 +1253,9 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
             # with块退出时私钥自动清零
 
-        # P1-5修复: worker退出时提交500步余数，修复精度丢失（最多499个计数）
-        remainder = local_count % 500
+        # P1-5修复: worker退出时提交余数，修复精度丢失（最多31个计数）
+        # M2修复: 阈值从500改为32，与random_search保持一致
+        remainder = local_count % 32
         if remainder > 0:
             with self._state_lock:
                 self._live_range_count += remainder
@@ -1292,12 +1308,21 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 if i == num_workers - 1:
                     worker_end = end  # 最后一个线程处理剩余部分
 
-                # BL-5修复: 添加边界检查日志，确保无重叠或遭漏
-                if i > 0 and worker_start <= (start + (i - 1) * chunk_size):
-                    logger.warning(
-                        f"RangeScan worker {i}: 边界重叠 detected! "
-                        f"start={worker_start}, prev_end={start + (i - 1) * chunk_size}"
-                    )
+                # M3修复: 添加边界检查，确保无重叠
+                # 计算前一个worker的结束位置
+                if i > 0:
+                    prev_worker_end = start + i * chunk_size - 1
+                    if worker_start <= prev_worker_end:
+                        # 发现重叠，调整当前worker的开始位置为前一个worker结束+1
+                        logger.warning(
+                            f"RangeScan worker {i}: 检测到边界重叠，修正范围 "
+                            f"[{worker_start}, {worker_end}] -> [{prev_worker_end + 1}, {worker_end}]"
+                        )
+                        worker_start = prev_worker_end + 1
+                        if worker_start > worker_end:
+                            # 如果修正后范围无效，跳过此worker
+                            logger.warning(f"RangeScan worker {i}: 范围无效，跳过")
+                            continue
 
                 logger.debug(
                     f"RangeScan worker {i}: 分配范围 [{worker_start}, {worker_end}] "

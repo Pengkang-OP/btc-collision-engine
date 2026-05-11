@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 """memory_pool 边缘覆盖测试 — 补全剩余 7 行缺失"""
 
-import threading
-import time
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from src.core.memory_pool import (
     ObjectPool,

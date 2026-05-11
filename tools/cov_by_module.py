@@ -1,7 +1,6 @@
 """按模块分批运行 pytest --cov 并汇总覆盖率，从低到高排序。"""
 import subprocess
 import sys
-import re
 from pathlib import Path
 
 PROJECT = Path(__file__).parent.parent

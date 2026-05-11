@@ -11,7 +11,7 @@ import os
 import sys
 import tempfile
 from datetime import datetime
-from unittest.mock import MagicMock, PropertyMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -73,7 +73,12 @@ def _make_mock_autotuner(
     return tuner
 
 
-def _make_mock_history_record(timestamp=1234567890.0, batch_size=65536, throughput=500000.0, execution_time_ms=120.0):
+def _make_mock_history_record(
+    timestamp=1234567890.0,
+    batch_size=65536,
+    throughput=500000.0,
+    execution_time_ms=120.0,
+):
     """创建模拟历史性能记录"""
     record = MagicMock()
     record.timestamp = timestamp
@@ -416,7 +421,12 @@ class TestHistorySection:
     def test_with_multiple_records_shows_last_20(self):
         """多条记录时仅显示最近 20 条"""
         engine = _make_mock_engine()
-        records = [_make_mock_history_record(timestamp=float(i), batch_size=100000 + i * 10000) for i in range(30)]
+        records = [
+            _make_mock_history_record(
+                timestamp=float(i), batch_size=100000 + i * 10000
+            )
+            for i in range(30)
+        ]
         tuner = _make_mock_autotuner(performance_history=records)
         gen = PerformanceReportGenerator(engine, auto_tuner=tuner)
         section = gen._generate_history_section()
@@ -452,7 +462,9 @@ class TestRecommendationsSection:
 
     def test_with_recommendations(self):
         """有建议时列出"""
-        engine = _make_mock_engine({"name": "Intel GPU", "vendor": "Intel", "global_mem_size": 8 * 1024**3})
+        engine = _make_mock_engine(
+            {"name": "Intel GPU", "vendor": "Intel", "global_mem_size": 8 * 1024**3}
+        )
         gen = PerformanceReportGenerator(engine)
         section = gen._generate_recommendations_section()
         assert "优化建议" in section
@@ -521,7 +533,9 @@ class TestJSONReport:
     """测试 JSON 格式报告"""
 
     def setup_method(self):
-        self.engine = _make_mock_engine({"name": "Test GPU", "vendor": "NVIDIA", "global_mem_size": 8 * 1024**3})
+        self.engine = _make_mock_engine(
+            {"name": "Test GPU", "vendor": "NVIDIA", "global_mem_size": 8 * 1024**3}
+        )
         self.gen = PerformanceReportGenerator(self.engine)
 
     def test_basic_json_structure(self):

@@ -3,7 +3,6 @@
 
 import pytest
 import time
-import threading
 from src.core.thread_pool import (
     DEFAULT_MAX_WORKERS,
     DEFAULT_MIN_WORKERS,

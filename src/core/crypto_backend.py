@@ -222,14 +222,22 @@ class OpenSSLBackend(CryptoBackend):
         return cast(Tuple[int, int], (result.x, result.y))
 
     def is_constant_time(self) -> bool:
-        # P1-6 fix: generate_public_key() IS constant-time (uses OpenSSL ec.derive_private_key),
-        # but scalar_multiply() falls back to PurePython EllipticCurve.scalar_multiply()
-        # which is NOT constant-time (non-Montgomery Ladder, variable-time mod_inverse).
-        # Since is_constant_time() should reflect the ENTIRE backend, return False.
+        # M4修复: 添加详细文档说明恒定时间状态的复杂性
         #
-        # For this project's main use case (collision detection via generate_public_key),
-        # the actual execution path IS constant-time. This flag is conservatively False
-        # because scalar_multiply() is not constant-time.
+        # ⚠️ 重要说明:
+        # - generate_public_key() IS constant-time (使用 OpenSSL ec.derive_private_key)
+        # - scalar_multiply() falls back to PurePython EllipticCurve.scalar_multiply()
+        #   which is NOT constant-time (非Montgomery Ladder, 变量时间mod_inverse)
+        #
+        # 由于 is_constant_time() 应反映整个后端的能力，返回 False。
+        #
+        # 对于本项目的主要用例（通过 generate_public_key 进行碰撞检测），
+        # 实际执行路径是恒定时间的。本标志保守地返回 False，
+        # 因为 scalar_multiply() 不是恒定时间的。
+        #
+        # 建议:
+        # 1. 对于安全敏感场景，使用 CoincurveBackend（libsecp256k1，完全恒定时间）
+        # 2. 对于性能优先场景，可使用 OpenSSLBackend（generate_public_key 是恒定的）
         return False
 
 

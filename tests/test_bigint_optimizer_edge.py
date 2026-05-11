@@ -3,7 +3,7 @@
 
 import sys
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from src.core.bigint_optimizer import BigIntOptimizer, get_bigint_optimizer
 

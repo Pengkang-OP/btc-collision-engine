@@ -7,7 +7,7 @@ import os
 import sys
 import tempfile
 import json
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import pytest
 
@@ -1224,7 +1224,9 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
     def test_resume_from_checkpoint_range(self):
         """从 range 模式断点恢复"""
         from src.collision.checkpoint_manager import CheckpointManager
-        self._create_checkpoint(mode="range", current_position=100, total_checked=500, range_end=1000)
+        self._create_checkpoint(
+            mode="range", current_position=100, total_checked=500, range_end=1000
+        )
         mgr = CheckpointManager(filepath=self._ckpt_path)
         engine = KeyCollisionEngine(
             targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False
@@ -1239,7 +1241,10 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
     def test_resume_from_checkpoint_brute_force(self):
         """从 brute_force 模式断点恢复"""
         from src.collision.checkpoint_manager import CheckpointManager
-        self._create_checkpoint(mode="brute_force", current_position=200, total_checked=300, range_end=None)
+        self._create_checkpoint(
+            mode="brute_force", current_position=200, total_checked=300,
+            range_end=None
+        )
         mgr = CheckpointManager(filepath=self._ckpt_path)
         engine = KeyCollisionEngine(
             targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False
@@ -1303,7 +1308,10 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
     def test_start_resume_from_brute_force_checkpoint(self):
         """start(resume=True) 从 brute_force 断点恢复"""
         from src.collision.checkpoint_manager import CheckpointManager
-        self._create_checkpoint(mode="brute_force", current_position=1, total_checked=0, range_end=None)
+        self._create_checkpoint(
+            mode="brute_force", current_position=1, total_checked=0,
+            range_end=None
+        )
         mgr = CheckpointManager(filepath=self._ckpt_path)
         engine = KeyCollisionEngine(
             targets={"1NoMatchAddrXYZ"},
@@ -1320,7 +1328,9 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
     def test_start_resume_from_random_checkpoint(self):
         """start(resume=True) 从 random 断点恢复"""
         from src.collision.checkpoint_manager import CheckpointManager
-        self._create_checkpoint(mode="random", current_position=0, total_checked=100, range_end=None)
+        self._create_checkpoint(
+            mode="random", current_position=0, total_checked=100, range_end=None
+        )
         mgr = CheckpointManager(filepath=self._ckpt_path)
         engine = KeyCollisionEngine(
             targets={"1TestAddr"},

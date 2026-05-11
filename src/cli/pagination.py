@@ -206,9 +206,7 @@ def display_paginated_performance(data: List[dict], title: str = "性能数据")
 
         time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
 
-        return f"时间: {time_str} | 速度: {
-            speed:,                                       }/s | 总尝试: {
-            total_checked:,                                                                                                 } | GPU: {gpu_usage}% | 内存: {memory_used}MB"  # noqa: E501
+        return f"时间: {time_str} | 速度: {speed:,}/s | 总尝试: {total_checked:,} | GPU: {gpu_usage}% | 内存: {memory_used}MB"  # noqa: E501
 
     paginator = PaginationManager(data, page_size=8)
 

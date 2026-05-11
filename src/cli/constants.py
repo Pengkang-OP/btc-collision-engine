@@ -31,8 +31,7 @@ DEFAULT_WINDOW_SIZE: int = 8
 DEFAULT_GPU_DEVICE: int = -1
 DEFAULT_GPU_COUNT: int = -1
 
-# 分界线常量
-# DEPRECATED: 以下常量已被 CLIOutput.rule() / CLIOutput.header() 替代，保留以避免外部引用报错
+# 分界线常量（仍在使用中，cli/commands.py 和 engine_builder.py 引用）
 SEPARATOR_EQUAL: str = "=" * 70
 SEPARATOR_DASHED: str = "-" * 70
 SEPARATOR_DASHED_SHORT: str = "-" * 60
