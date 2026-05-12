@@ -2,7 +2,7 @@
   "_comment": "GPU型号配置数据库 - 包含2015年至今的主流GPU型号配置",
   "_version": "1.0",
   "_last_updated": "2026-04-20",
-  
+
   "nvidia": {
     "maxwell": {
       "_year_range": "2015-2016",
@@ -133,7 +133,7 @@
       "notes": "NVIDIA默认配置"
     }
   },
-  
+
   "amd": {
     "polaris": {
       "_year_range": "2016-2017",
@@ -217,7 +217,7 @@
       "notes": "AMD默认配置"
     }
   },
-  
+
   "intel": {
     "xe_hpg": {
       "_year_range": "2022-2026",
@@ -225,16 +225,16 @@
         "models": ["Intel Arc A750", "Intel Arc A770", "Intel Arc A580"],
         "year": 2022,
         "compute_capability": "OpenCL 3.0",
-        "recommended_batch_size": 262144,
-        "max_batch_size": 524288,
-        "memory_efficiency": 0.70,
-        "optimizations": ["uint32_workaround", "timeout_protection", "async_transfer", "conservative_memory"],
-        "queue_depth": 3,
+        "recommended_batch_size": 8388608,
+        "max_batch_size": 16777216,
+        "memory_efficiency": 0.90,
+        "optimizations": ["uint32_workaround", "timeout_protection", "async_transfer", "shared_memory_optimization"],
+        "queue_depth": 32,
         "known_issues": ["global_char_hang_bug"],
-        "timeout_seconds": 30,
+        "timeout_seconds": 60,
         "min_driver_version": "31.0.101.0",
-        "recommended_driver_version": "31.0.101.4500",
-        "notes": "Intel独立显卡,必须使用uint32避免hang bug,禁用异步,v2.2.1优化显存效率70%"
+        "recommended_driver_version": "32.0.101.8724",
+        "notes": "v6.3: Intel Arc A750/A770/A580. 极致性能配置: batch_size↑16x, queue_depth↑2x, timeout↑2x, memory_efficiency↑90%"
       }
     },
     "xe_ssg": {

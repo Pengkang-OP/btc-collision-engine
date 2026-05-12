@@ -65,10 +65,13 @@ review_diff_*.txt
 
 # 根目录临时报告
 report.txt
+cov_report.txt
 diagnostic.bat
 dual_launcher.py
 pr_page_top.png
 start_dual.bat
+_batch_cov.py
+_run_cov.py
 
 # data_logs 运行时报告（按日期生成的 JSON）
 data_logs/report_daily_*.json
@@ -104,6 +107,7 @@ build/
 # ========================================
 # 根目录临时报告防污染规则
 # ========================================
+automation_test.log
 
 # AI/工具自动生成的报告文件
 *_REPORT*.md

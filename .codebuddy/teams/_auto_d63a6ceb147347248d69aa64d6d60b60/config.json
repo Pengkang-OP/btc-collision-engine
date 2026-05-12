@@ -1,0 +1,18 @@
+{
+  "name": "_auto_d63a6ceb147347248d69aa64d6d60b60",
+  "leadAgentId": "d63a6ceb147347248d69aa64d6d60b60",
+  "workspacePath": "f:\\Qoder\\btc-collision-engine",
+  "createdAt": "2026-05-11T19:20:38.535Z",
+  "options": {
+    "workspacePath": "f:\\Qoder\\btc-collision-engine",
+    "isAutoTeam": true
+  },
+  "members": [
+    {
+      "memberId": "team-lead@_auto_d63a6ceb147347248d69aa64d6d60b60",
+      "name": "team-lead",
+      "role": "Team Lead - coordinates the team and interacts with the user"
+    }
+  ],
+  "isAutoTeam": true
+}

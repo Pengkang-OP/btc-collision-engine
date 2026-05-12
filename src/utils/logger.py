@@ -220,6 +220,8 @@ class SampledLogger:
         self.logger = logger
         self.sample_rate = sample_rate
         self.max_per_second = max_per_second
+        # Q2修复: 将 max_per_second 转换为整数，避免浮点数与整数比较
+        self._max_per_second_int = max(1, int(max_per_second)) if max_per_second > 0 else 0
         self._counter = 0
         self._lock = threading.Lock()
         # 时间限频相关：记录当前秒窗口的起始时间和已记录条数
@@ -232,7 +234,8 @@ class SampledLogger:
         返回 True 表示允许记录，同时更新时间窗口计数器。
         若 max_per_second <= 0 则始终返回 True（不限频）。
         """
-        if self.max_per_second <= 0:
+        # Q2修复: 使用整数 _max_per_second_int 进行比较，避免浮点数与整数比较的逻辑错误
+        if self._max_per_second_int <= 0:
             return True
 
         current_time = time.monotonic()
@@ -243,8 +246,8 @@ class SampledLogger:
             self._time_window_count = 1
             return True
         else:
-            # 在同一秒窗口内
-            if self._time_window_count < self.max_per_second:
+            # 在同一秒窗口内，使用整数比较
+            if self._time_window_count < self._max_per_second_int:
                 self._time_window_count += 1
                 return True
             return False
@@ -434,6 +437,9 @@ class AsyncLogger:
         >>> async_handler.close()
     """
 
+    # Q6修复: 添加丢弃计数上限常量，防止整数溢出
+    _DROPPED_COUNT_MAX = 10**12
+
     def __init__(self, max_queue_size: int = 10000) -> None:
         """
         参数:
@@ -449,6 +455,14 @@ class AsyncLogger:
         self._stop_event = threading.Event()
         self._writer_thread.start()
         self._dropped_count = 0
+
+    def set_handler(self, handler: logging.Handler) -> None:
+        """Q1修复: 设置底层日志处理器（替代直接访问私有属性）
+
+        Args:
+            handler: 底层日志处理器
+        """
+        self._handler = handler
 
     def _write_loop(self):
         """后台写入循环"""
@@ -487,11 +501,18 @@ class AsyncLogger:
         try:
             self._queue.put_nowait(record)
         except queue.Full:
-            # 队列满时丢弃最旧日志（非阻塞）
+            # Q6修复: 添加丢弃计数上限，防止整数溢出
             self._dropped_count += 1
-            # 每1000次丢弃记录一次警告
-            if self._dropped_count % 1000 == 0:
-                sys.stderr.write(f"⚠️ 异步日志队列已满，已丢弃 {self._dropped_count} 条记录\n")
+            if self._dropped_count >= self._DROPPED_COUNT_MAX:
+                self._dropped_count = self._DROPPED_COUNT_MAX
+            # G5修复 & M-7修复: 简化警告条件，使用更清晰的逻辑
+            dropped = self._dropped_count
+            # 在关键阈值点警告：1K, 5K, 10K, 50K, 100K, 500K, 1M, 之后每5M警告一次
+            warning_thresholds = [1000, 5000, 10000, 50000, 100000, 500000, 1000000]
+            is_threshold = dropped in warning_thresholds
+            is_periodic = dropped > 1000000 and (dropped - 1000000) % 5000000 == 0
+            if is_threshold or is_periodic:
+                sys.stderr.write(f"⚠️ 异步日志队列已满，已丢弃 {dropped:,} 条记录\n")
 
     def close(self) -> None:
         """关闭异步日志器，等待队列清空"""
@@ -550,9 +571,9 @@ class AsyncFileHandler(logging.Handler):
         else:
             self._handler = logging.FileHandler(filename, encoding="utf-8")
 
-        # 创建异步包装器
+        # Q1修复: 使用 set_handler 方法设置处理器，避免直接访问私有属性
         self._async_logger = AsyncLogger()
-        self._async_logger._handler = self._handler
+        self._async_logger.set_handler(self._handler)
 
     def emit(self, record: logging.LogRecord) -> None:
         """异步发出日志记录"""

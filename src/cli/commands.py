@@ -136,52 +136,52 @@ def _cmd_examples() -> None:
         {
             "title": "1. 快速模式 (推荐新手)",
             "desc": "使用默认配置直接启动（需要targets.txt文件）",
-            "cmd": "start.bat --quick-run",
+            "cmd": "python key_collision_cli.py --quick-run",
         },
         {
             "title": "2. 基础随机碰撞",
             "desc": "最简单的使用方式，持续运行直到 Ctrl+C",
-            "cmd": "start.bat -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random",
+            "cmd": "python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random",
         },
         {
             "title": "3. 断点续传（推荐）",
             "desc": "启用断点续传和去重，运行1小时后自动停止",
-            "cmd": "start.bat -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random --checkpoint --dedup --duration 3600",  # noqa: E501
+            "cmd": "python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random --checkpoint --dedup --duration 3600",  # noqa: E501
         },
         {
             "title": "4. 从文件加载目标",
             "desc": "从文件读取多个目标地址",
-            "cmd": "start.bat -f targets.txt -m random --checkpoint",
+            "cmd": "python key_collision_cli.py -f targets.txt -m random --checkpoint",
         },
         {
             "title": "5. GPU加速模式",
             "desc": "启用单GPU加速（速度提升数千倍）",
-            "cmd": "start.bat -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random --use-gpu",
+            "cmd": "python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random --use-gpu",
         },
         {
             "title": "6. 多GPU模式",
             "desc": "使用所有可用GPU设备",
-            "cmd": "start.bat -f targets.txt -m random --multi-gpu",
+            "cmd": "python key_collision_cli.py -f targets.txt -m random --multi-gpu",
         },
         {
             "title": "7. 范围扫描",
             "desc": "在指定私钥范围内搜索",
-            "cmd": "start.bat -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m range --start 1 --end FFFFFFFF",  # noqa: E501
+            "cmd": "python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m range --start 1 --end FFFFFFFF",  # noqa: E501
         },
         {
             "title": "8. 交互式向导",
             "desc": "逐步引导配置，适合新手",
-            "cmd": "start.bat --quick-start",
+            "cmd": "python key_collision_cli.py --quick-start",
         },
         {
             "title": "9. 系统健康检查",
             "desc": "检查系统依赖和配置状态",
-            "cmd": "start.bat --health-check",
+            "cmd": "python key_collision_cli.py --health-check",
         },
         {
             "title": "10. 验证地址文件",
             "desc": "批量验证文件中的地址格式",
-            "cmd": "start.bat --validate-addresses targets.txt",
+            "cmd": "python key_collision_cli.py --validate-addresses targets.txt",
         },
     ]
 
@@ -205,7 +205,8 @@ def _cmd_examples() -> None:
     print("   ex      = --examples     (显示示例)")
     print("   rec     = --recommend    (参数推荐)")
     print(SEPARATOR_DASHED)
-    print("提示: Windows用户可直接使用 start.bat 替代 python key_collision_cli.py")
+    print("提示: Windows 用户也可双击 start.bat 启动菜单式快速入口")
+    print("      start_engine.bat 提供一键交互式向导")
     print(SEPARATOR_EQUAL)
 
 
@@ -304,34 +305,67 @@ def _save_address_to_targets_file(address: str, output) -> None:
     """将单个地址去重合并写入 targets.txt。
     - 读取现有地址，若地址已存在则跳过；否则追加到文件末尾。
     - 若文件不存在则自动创建。
+    - 使用文件锁实现跨进程安全。
     """
     targets_path = Path(DEFAULT_TARGETS_FILE)
+    lock_path = targets_path.with_suffix('.lock')
     existing: set = set()
 
-    # 读取已有地址
-    if targets_path.exists():
-        try:
-            with open(targets_path, "r", encoding="utf-8-sig", errors="ignore") as f:
-                for line in f:
-                    stripped = line.strip()
-                    if stripped and not stripped.startswith("#"):
-                        existing.add(stripped)
-        except OSError:
-            pass
-
-    if address in existing:
-        output.print("   [INFO] 地址已存在于 targets.txt，无需重复添加")
-        return
-
-    # 将新地址追加到文件
+    # 使用文件锁实现跨进程安全
+    lock_file = None
     try:
+        import sys
+        import os
+
+        # 根据平台选择文件锁实现
+        if sys.platform == 'win32':
+            import msvcrt
+            # Windows: 使用独占锁
+            lock_file = open(lock_path, 'w')
+            msvcrt.locking(lock_file.fileno(), msvcrt.LK_LOCK, 1)
+        else:
+            import fcntl
+            # Unix/Linux: 使用 flock
+            lock_file = open(lock_path, 'w')
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+
+        # 读取已有地址
+        if targets_path.exists():
+            try:
+                with open(targets_path, "r", encoding="utf-8-sig", errors="ignore") as f:
+                    for line in f:
+                        stripped = line.strip()
+                        if stripped and not stripped.startswith("#"):
+                            existing.add(stripped)
+            except OSError:
+                pass
+
+        if address in existing:
+            output.print("   [INFO] 地址已存在于 targets.txt，无需重复添加")
+            return
+
+        # 将新地址追加到文件
         if not targets_path.exists():
             with open(targets_path, "w", encoding="utf-8") as f:
                 f.write("# BTC 目标地址列表\n")
                 f.write("# 每行一个地址，支持 # 注释行\n")
                 f.write("# 支持 P2PKH (1开头)、P2SH (3开头)、Bech32 (bc1开头) 格式\n#\n")
-        with open(targets_path, "a", encoding="utf-8") as f:
-            f.write(address + "\n")
+
+        # 读取最新内容并追加新地址
+        with open(targets_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        # 追加新地址
+        content += address + "\n"
+
+        # 写入临时文件
+        temp_path = targets_path.with_suffix('.tmp')
+        with open(temp_path, "w", encoding="utf-8") as f:
+            f.write(content)
+
+        # 原子替换
+        os.replace(temp_path, targets_path)
+
         output.print(
             "   [green][OK] 地址已保存到 targets.txt（共 "
             + str(len(existing) + 1)
@@ -339,6 +373,19 @@ def _save_address_to_targets_file(address: str, output) -> None:
         )
     except OSError as e:
         output.warning("无法写入 targets.txt: " + str(e))
+    finally:
+        # 释放文件锁
+        if lock_file:
+            try:
+                if sys.platform == 'win32':
+                    import msvcrt
+                    msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
+                else:
+                    import fcntl
+                    fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+                lock_file.close()
+            except Exception:
+                pass
 
 
 def _quick_start_select_target(compact: bool = False) -> Tuple[List[str], Optional[str]]:
@@ -821,7 +868,7 @@ def _cmd_quick_run(executor: Optional[Callable[[], None]] = None) -> None:
             if address_count == 0:
                 output.warning(f"{target_file} 中没有有效的目标地址")
                 output.print("\n[TIP] 请先在文件中添加目标地址，或使用以下命令:")
-                output.print("  start.bat -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random\n")
+                output.print("  python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random\n")
                 return
 
             output.success(f"发现目标文件: {target_file} ({address_count} 个地址)")
@@ -843,8 +890,8 @@ def _cmd_quick_run(executor: Optional[Callable[[], None]] = None) -> None:
         else:
             output.warning(f"未找到 {target_file}，请使用 -t 或 -f 指定目标")
             output.print("\n[TIP] 快速模式示例:")
-            output.print("  start.bat -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random")
-            output.print("  start.bat -f targets.txt --use-gpu\n")
+            output.print("  python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random")
+            output.print("  python key_collision_cli.py -f targets.txt --use-gpu\n")
             return
 
         # 默认配置：使用常量配置
@@ -893,8 +940,13 @@ def _cmd_quick_run(executor: Optional[Callable[[], None]] = None) -> None:
             argv = list(cmd_parts)
             if argv and argv[0].lower() in ("python", "python3", "python.exe", "python3.exe"):
                 argv = argv[1:]
-            sys.argv = argv
-            executor()
+            # 备份原始argv，确保执行后恢复
+            original_argv = sys.argv
+            try:
+                sys.argv = argv
+                executor()
+            finally:
+                sys.argv = original_argv  # 确保恢复原始argv
         else:
             output.print("\n请手动运行: " + " ".join(cmd_parts))
 
@@ -940,8 +992,13 @@ def _quick_start_build_and_run(
             argv = list(cmd_parts)
             if argv and argv[0].lower() in ("python", "python3", "python.exe", "python3.exe"):
                 argv = argv[1:]
-            sys.argv = argv
-            executor()
+            # 备份原始argv，确保执行后恢复
+            original_argv = sys.argv
+            try:
+                sys.argv = argv
+                executor()
+            finally:
+                sys.argv = original_argv  # 确保恢复原始argv
         else:
             output.print("\n" + _t("cli.commands.copy_and_run"))
     else:

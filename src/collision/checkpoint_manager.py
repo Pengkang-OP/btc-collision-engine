@@ -4,10 +4,12 @@ import os
 import json
 import time
 import threading
+import traceback
 from datetime import datetime
 from typing import Dict, List, Optional, Set, Any, cast
 
 # 导入日志配置
+from .. import __version__ as PROJECT_VERSION
 from ..utils import init_logging, get_configured_logger
 from ..utils.platform_utils import PlatformUtils
 
@@ -108,7 +110,8 @@ class CheckpointManager:
 
             # 构建断点数据
             self._buffer = {
-                "version": 1,
+                "version": 1,  # 格式版本
+                "project_version": PROJECT_VERSION,  # 项目版本 (C-02: 版本兼容性修复)
                 "timestamp": datetime.now().isoformat(),
                 "mode": mode,
                 "targets": list(targets),
@@ -150,7 +153,8 @@ class CheckpointManager:
                 json.dump(self._buffer, f, ensure_ascii=False, indent=2)
             logger.debug("临时文件写入成功")
 
-            # O-1: 临时文件也设置安全权限，防止 rename 前被其他进程读取
+            # Q3修复: 临时文件安全权限 - 虽然原子重命名后临时文件不再存在，
+            # 但在写入期间提供权限保护是安全最佳实践（防止写入被中断时的短暂暴露窗口）
             if not PlatformUtils.is_windows():
                 try:
                     os.chmod(temp_filepath, 0o600)
@@ -275,22 +279,16 @@ class CheckpointManager:
         except PermissionError as e:
             logger.error(f"保存断点失败（权限不足）: {e}")
             logger.error(f"文件路径: {self.filepath}")
-            import traceback
-
+            # Q9修复: traceback 已在文件顶部导入
             logger.error(f"堆栈跟踪: {traceback.format_exc()}")
-            # 清理临时文件
-            temp_filepath = f"{self.filepath}.tmp"
-            self._cleanup_temp_file(temp_filepath)
         except OSError as e:
             logger.error(f"保存断点失败（I/O错误）: {e}", exc_info=True)
-            # 清理临时文件
-            temp_filepath = f"{self.filepath}.tmp"
-            self._cleanup_temp_file(temp_filepath)
         except Exception as e:
             logger.error(f"保存断点失败（未知错误）: {e}", exc_info=True)
-            # 清理临时文件
-            temp_filepath = f"{self.filepath}.tmp"
-            self._cleanup_temp_file(temp_filepath)
+        finally:
+            # 清理临时文件（无论成功还是失败都需要清理）
+            if "temp_filepath" in locals() and temp_filepath:
+                self._cleanup_temp_file(temp_filepath)
 
     def _cleanup_temp_file(self, temp_filepath: str) -> None:
         """清理临时文件"""
@@ -309,7 +307,8 @@ class CheckpointManager:
                 if os.path.exists(temp_filepath) and not os.path.exists(self.filepath):
                     # 尝试恢复临时文件
                     try:
-                        os.rename(temp_filepath, self.filepath)
+                        # S7修复: 使用 os.replace 实现跨平台原子操作（Windows/Linux兼容）
+                        os.replace(temp_filepath, self.filepath)
                         # 设置文件权限
                         if not PlatformUtils.is_windows():
                             try:
@@ -332,8 +331,17 @@ class CheckpointManager:
                     data = json.load(f)
 
                 if data.get("version") != 1:
-                    logger.warning(f"断点文件版本不兼容: {data.get('version')}")
+                    logger.warning(f"断点文件格式版本不兼容: {data.get('version')}")
                     return None
+
+                # C-02: 检查项目版本兼容性
+                checkpoint_project_version = data.get("project_version")
+                if checkpoint_project_version and checkpoint_project_version != PROJECT_VERSION:
+                    logger.warning(
+                        f"断点文件项目版本不匹配: checkpoint={checkpoint_project_version}, "
+                        f"current={PROJECT_VERSION}。可能会出现兼容性问题。"
+                    )
+                    # 不返回 None，允许用户决定是否继续
 
                 logger.info(
                     f"断点已加载: {self.filepath}, 模式={data.get('mode')}, "

@@ -186,9 +186,15 @@ def get_performance_tracker() -> PerformanceTracker:
     global _global_tracker
 
     if _global_tracker is None:
+        # 先在锁外获取配置，避免在持有锁时执行可能失败的操作
+        try:
+            config = _get_tracker_config()
+        except Exception:
+            # 配置获取失败时使用默认值
+            config = {"max_records": 10000}
+
         with _tracker_lock:
-            if _global_tracker is None:
-                config = _get_tracker_config()
+            if _global_tracker is None:  # 双重检查
                 _global_tracker = PerformanceTracker(max_records=config["max_records"])
 
     return _global_tracker

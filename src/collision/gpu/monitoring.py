@@ -223,7 +223,12 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
             from ....monitoring.gpu_performance_monitor import get_gpu_performance_monitor
 
             return get_gpu_performance_monitor(engine=self.engine)
+        except ImportError as e:
+            # Q11修复: 区分导入错误和其他异常，导入错误记录为警告
+            logger.warning(f"GPU性能监控模块不可用: {e}")
+            return None
         except Exception as e:
+            # 其他未知异常也记录为警告而非静默忽略
             logger.warning(f"创建GPU性能监控器失败: {e}")
             return None
 

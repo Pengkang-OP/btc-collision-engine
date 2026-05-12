@@ -4,6 +4,7 @@
 """
 
 import logging
+import threading
 from typing import Dict, Any
 
 from .config_manager import ConfigManager
@@ -29,6 +30,9 @@ class ConfigCoordinator:
         参数:
             config_file: 配置文件路径
         """
+        # W13修复: 添加实例级锁，避免多线程访问时的竞态条件
+        self._sync_lock = threading.Lock()
+
         # 初始化ConfigManager(主配置管理器)
         self.config_manager = ConfigManager(config_file)
 
@@ -48,17 +52,19 @@ class ConfigCoordinator:
         logger.info("配置协调器初始化完成")
 
     def _sync_configs(self) -> None:
-        """同步各配置管理器的配置"""
-        try:
-            # 从ConfigManager同步到GPUConfig
-            self._sync_gpu_config()
+        """同步各配置管理器的配置（线程安全）"""
+        # W13修复: 使用锁保护配置同步操作，避免多线程竞态条件
+        with self._sync_lock:
+            try:
+                # 从ConfigManager同步到GPUConfig
+                self._sync_gpu_config()
 
-            # 从ConfigManager同步到CryptoConfig
-            self._sync_crypto_config()
+                # 从ConfigManager同步到CryptoConfig
+                self._sync_crypto_config()
 
-            logger.debug("配置同步完成")
-        except Exception as e:
-            logger.warning(f"配置同步失败: {e}")
+                logger.debug("配置同步完成")
+            except Exception as e:
+                logger.warning(f"配置同步失败: {e}")
 
     def _sync_gpu_config(self) -> None:
         """同步GPU配置到GPUConfig"""
@@ -102,21 +108,23 @@ class ConfigCoordinator:
 
     def get_unified_config(self) -> Dict[str, Any]:
         """
-        获取统一的配置视图
+        获取统一的配置视图（线程安全）
 
         返回:
             包含所有配置的统一字典
         """
-        return {
-            "collision": self.config_manager.get("collision", {}),
-            "gpu": self.config_manager.get("gpu", {}),
-            "crypto": self.crypto_config.to_dict(),
-            "logging": self.config_manager.get("logging", {}),
-        }
+        # S1修复: 使用锁保护读取操作，防止多线程并发访问导致的数据不一致
+        with self._sync_lock:
+            return {
+                "collision": self.config_manager.get("collision", {}),
+                "gpu": self.config_manager.get("gpu", {}),
+                "crypto": self.crypto_config.to_dict(),
+                "logging": self.config_manager.get("logging", {}),
+            }
 
     def get(self, key: str, default: Any = None) -> Any:
         """
-        获取配置值(统一接口)
+        获取配置值(统一接口，线程安全)
 
         参数:
             key: 配置键,支持点号分隔的路径,如 "gpu.batch_size"
@@ -125,20 +133,22 @@ class ConfigCoordinator:
         返回:
             配置值
         """
-        # 优先从ConfigManager获取
-        value = self.config_manager.get(key, None)
-        if value is not None:
-            return value
+        # S1修复: 使用锁保护读取操作
+        with self._sync_lock:
+            # 优先从ConfigManager获取
+            value = self.config_manager.get(key, None)
+            if value is not None:
+                return value
 
-        # 特殊处理crypto配置
-        if key.startswith("crypto."):
-            return self.crypto_config.get(key.split(".", 1)[1], default)
+            # 特殊处理crypto配置
+            if key.startswith("crypto."):
+                return self.crypto_config.get(key.split(".", 1)[1], default)
 
-        return default
+            return default
 
     def set(self, key: str, value: Any) -> bool:
         """
-        设置配置值(统一接口)
+        设置配置值(统一接口，线程安全)
 
         参数:
             key: 配置键,支持点号分隔的路径
@@ -147,11 +157,13 @@ class ConfigCoordinator:
         返回:
             设置成功返回True
         """
-        # 路由到对应的配置管理器
-        if key.startswith("crypto."):
-            return self.crypto_config.set(key.split(".", 1)[1], value)
-        else:
-            return self.config_manager.set(key, value)
+        # S1修复: 使用锁保护写入操作
+        with self._sync_lock:
+            # 路由到对应的配置管理器
+            if key.startswith("crypto."):
+                return self.crypto_config.set(key.split(".", 1)[1], value)
+            else:
+                return self.config_manager.set(key, value)
 
     def validate_all(self) -> Dict[str, Any]:
         """

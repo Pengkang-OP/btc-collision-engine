@@ -11,7 +11,6 @@
 from __future__ import annotations
 
 from ..utils import get_configured_logger
-from ..collision.constants import INTEL_SAFE_MEMORY_RATIO
 from typing import Optional, Any, Dict, TYPE_CHECKING
 
 logger = get_configured_logger("IntelOptimizer")
@@ -215,12 +214,17 @@ class IntelGPUOptimizer:
                             "   显存监控功能将被禁用"
                         )
                     else:
+                        # v2.2.2 修复: 使用设备的 memory_efficiency 而非硬编码常量
+                        # 确保监控器的 safe_usage_ratio 与厂商优化器设置的 memory_efficiency 一致
+                        effective_ratio = getattr(self._device, "memory_efficiency", 0.70)
                         self._memory_monitor = _memory_cls(
                             total_memory_bytes=total_memory,
-                            safe_usage_ratio=INTEL_SAFE_MEMORY_RATIO,  # Intel 保守策略
+                            safe_usage_ratio=effective_ratio,
                         )
                         self._logger.info(
-                            "✅ 显存监控器已初始化 " f"(总显存: {total_memory / 1024 ** 3:.1f}GB)"
+                            "✅ 显存监控器已初始化 "
+                            f"(总显存: {total_memory / 1024 ** 3:.1f}GB, "
+                            f"安全比例: {effective_ratio * 100:.0f}%)"
                         )
             except (RuntimeError, ValueError, TypeError, AttributeError) as e:
                 self._logger.warning(

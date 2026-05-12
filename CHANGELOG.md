@@ -7,6 +7,34 @@
 
 ---
 
+## [4.2.1] - 2026-05-12
+
+### 兼容性增强 (核心修复)
+
+- **版本号统一**: 将主项目版本从 3.5.1 统一到 4.2.1，与 OpenCL 内核版本保持一致
+- **Checkpoint 版本追踪**: 在断点文件中添加 `project_version` 字段，防止跨版本恢复失败
+- **依赖版本放宽**:
+  - `cryptography>=43.0.0,<46.0.0` (原: <44.0.0)
+  - `gmpy2>=2.1.0,<4.0.0` (原: <3.0.0)
+- **配置文件默认值同步**: 修正 `batch_size=1048576`, `memory_usage_ratio=0.7`
+
+### 文档与平台
+
+- **Intel Arc 平台说明**: 添加 Linux/macOS 不支持说明
+- **BAT 脚本整理**: `start.bat` 重构使用 common.bat，消除代码重复
+- **CLI 文档归档**: 移除冗余的 CLI_AUDIT_SUMMARY.md, CLI_QUICK_REFERENCE.md
+
+### 代码清理
+
+- **临时文件清理**: 删除 `temp_scan.py`, `temp_file_list.json`, `pollution_report.json`
+- **数据污染清理**: 修复 `data_logs/error_log.json` 和 `history_data.json` 结构
+
+### 自动化系统
+
+- **端到端自动化**: 新增完整闭环系统 (数据分析/自动测试/审核/循环控制)
+
+---
+
 ## [3.5.2] - 2026-05-04
 
 ### CLI 测试覆盖增强

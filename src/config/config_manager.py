@@ -1,5 +1,6 @@
 """配置管理器"""
 
+import copy
 import json
 import os
 import threading
@@ -24,13 +25,13 @@ except ImportError:
     HAS_JSONSCHEMA = False
     logger.debug("jsonschema库未安装，配置文件将跳过Schema验证")
 
-
 class ConfigManager:
     """配置管理器 - 统一管理应用配置"""
 
     # 审查修复#5: 将Schema提取为类常量，避免每次验证都重新创建
     # 优化: 将Draft7Validator实例缓存为类变量，避免重复创建开销
     _cached_validator = None  # 类级缓存的Schema验证器实例
+    _validator_lock = threading.Lock()  # 类级锁，保护验证器初始化
     CONFIG_SCHEMA = {
         "type": "object",
         "properties": {
@@ -256,9 +257,9 @@ class ConfigManager:
         "gpu": {
             "use_gpu": True,
             "device_index": -1,  # -1表示自动选择
-            "batch_size": 65536,
+            "batch_size": 1048576,  # C-06: 与 config.example.json 同步 (1M)
             "auto_detect": True,
-            "memory_usage_ratio": 0.5,
+            "memory_usage_ratio": 0.7,  # C-06: Intel Arc 推荐值 (70%)
             "enable_vendor_optimizations": True,
             "queue_depth": 4,  # GPU 命令队列预提交批次数，默认 4
         },
@@ -289,13 +290,11 @@ class ConfigManager:
             config_file: 配置文件路径，None表示使用默认配置
         """
         self.config_file = config_file
-        # P2修复：使用深拷贝避免浅拷贝导致的嵌套字典共享问题
-        # 浅拷贝.copy()只会拷贝顶层字典，嵌套字典仍然是同一个引用
-        # 这会导致一个实例修改配置影响其他实例
-        import copy
-
-        self.config = copy.deepcopy(self.DEFAULT_CONFIG)
         self._lock = threading.Lock()  # 线程锁保护配置读写
+
+        # M-6修复: 延迟深拷贝，只有在加载配置时才拷贝默认配置
+        # 避免每次实例化都执行不必要的深拷贝操作
+        self._config_initialized = False
 
         if config_file and os.path.exists(config_file):
             self.load_config()
@@ -303,6 +302,22 @@ class ConfigManager:
         # P2-4: 配置热重载支持
         self._change_callbacks: List[Callable[[], None]] = []
         self._watcher = None  # type: Optional['ConfigWatcher']
+
+    @property
+    def config(self) -> Dict[str, Any]:
+        """延迟初始化配置属性"""
+        if not self._config_initialized:
+            self._config = copy.deepcopy(self.DEFAULT_CONFIG)
+            self._config_initialized = True
+        return self._config
+
+    @config.setter
+    def config(self, value: Dict[str, Any]) -> None:
+        """设置配置属性（线程安全）"""
+        # SUGGESTION-8: 添加锁保护以保持与getter的线程安全一致性
+        with self._lock:
+            self._config = value
+            self._config_initialized = True
 
     @staticmethod
     def _strip_comments(config: Any) -> Any:
@@ -389,11 +404,12 @@ class ConfigManager:
                 )
                 return False
 
-            # W5修复: 备份+合并合并为单次锁获取，消除 TOCTOU 窗口
-            import copy
+            # 优化: 先获取配置引用，在锁外执行深拷贝，减少锁持有时间
+            # 一般问题修复: copy 已在文件顶部导入
+            old_config_backup = copy.deepcopy(self.config)
 
+            # W5修复: 合并为单次锁获取
             with self._lock:
-                old_config_backup = copy.deepcopy(self.config)
                 self._merge_config(self.config, new_config)
 
             logger.info("配置热重载成功: %s", self.config_file)
@@ -476,12 +492,17 @@ class ConfigManager:
                 self._watcher = None
 
     def __del__(self) -> None:
-        """析构时自动停止配置监听 (P2-4)"""
+        """析构时自动停止配置监听 (P2-4)
+
+        注意：建议使用上下文管理器或显式调用cleanup()方法，
+        以确保资源能够被正确释放。
+        """
         try:
             self.stop_watching()
-        except Exception:
-            # 析构期间忽略所有异常，避免GC崩溃
-            pass
+        except Exception as e:
+            # 记录警告日志，但不抛出异常
+            import sys
+            print(f"WARNING: ConfigManager清理失败: {type(e).__name__}: {e}", file=sys.stderr)
 
     def save_config(self) -> bool:
         """
@@ -498,9 +519,19 @@ class ConfigManager:
             with self._lock:
                 config_copy = self._deep_copy_config(self.config)
 
-            with open(self.config_file, "w", encoding="utf-8") as f:
-                json.dump(config_copy, f, ensure_ascii=False, indent=2)
-            return True
+            # 使用原子写入确保数据完整性
+            # 避免写入中断导致配置文件损坏
+            from ..utils.file_utils import atomic_json_write
+            success = atomic_json_write(
+                self.config_file,
+                config_copy,
+                ensure_ascii=False,
+                indent=2,
+                fsync=True
+            )
+            if success:
+                logger.debug(f"配置文件已保存: {self.config_file}")
+            return success
         except Exception as e:
             logger.error(f"保存配置文件失败: {e}")
             return False
@@ -576,8 +607,7 @@ class ConfigManager:
         返回:
             配置字典的深拷贝
         """
-        import copy
-
+        # 一般问题修复: copy 已在文件顶部导入
         return copy.deepcopy(config)
 
     def validate(self, config: Optional[Dict[str, Any]] = None) -> Dict[str, str]:
@@ -634,11 +664,14 @@ class ConfigManager:
 
     @classmethod
     def _get_validator(cls) -> Optional["Draft7Validator"]:
-        """获取缓存的Schema验证器实例（懒加载）"""
+        """获取缓存的Schema验证器实例（懒加载，双重检查锁定）"""
         if cls._cached_validator is None:
-            if HAS_JSONSCHEMA:
-                cls._cached_validator = Draft7Validator(cls.CONFIG_SCHEMA)
-                logger.debug("Draft7Validator实例已初始化并缓存")
+            with cls._validator_lock:
+                # 双重检查：持有锁后再次检查
+                if cls._cached_validator is None:
+                    if HAS_JSONSCHEMA:
+                        cls._cached_validator = Draft7Validator(cls.CONFIG_SCHEMA)
+                        logger.debug("Draft7Validator实例已初始化并缓存")
         return cls._cached_validator
 
     @staticmethod
@@ -658,193 +691,182 @@ class ConfigManager:
         # 但用户直接传入的1/0是int类型，应该拒绝
         return type(value) is bool
 
+    def _validate_mode(self, value: str, errors: Dict[str, str]) -> Optional[str]:
+        """验证模式配置"""
+        valid_modes = {
+            "random", "sequential", "range", "brute_force",
+            "dictionary", "seed", "prng", "aes_ctr", "chacha20"
+        }
+        if value not in valid_modes:
+            errors["mode"] = f"无效模式: {value}，有效值: {valid_modes}"
+            return None
+        return value
+
+    def _validate_batch_size(self, value: int, errors: Dict[str, str]) -> Optional[int]:
+        """验证批次大小"""
+        GPU_MAX_BATCH_SIZE = 0xFFFFFFFF
+        if value < 1:
+            errors["batch_size"] = f"batch_size 必须 >= 1, 当前值: {value}"
+            return None
+        if value >= GPU_MAX_BATCH_SIZE:
+            errors["batch_size"] = f"batch_size {value} >= GPU_MAX_BATCH_SIZE({GPU_MAX_BATCH_SIZE})"
+            return None
+        return value
+
+    def _validate_positive_int(self, name: str, value: int, errors: Dict[str, str], 
+                               min_val: int = 1) -> Optional[int]:
+        """验证正整数配置"""
+        if not isinstance(value, int) or value < min_val:
+            errors[name] = f"{name} 必须 >= {min_val}, 当前值: {value} (类型: {type(value).__name__})"
+            return None
+        return value
+
+    def _validate_positive_float(self, name: str, value: float, errors: Dict[str, str],
+                                min_val: float = 0.0) -> Optional[float]:
+        """验证正浮点数配置"""
+        if not isinstance(value, (int, float)) or value < min_val:
+            errors[name] = f"{name} 必须 >= {min_val}, 当前值: {value} (类型: {type(value).__name__})"
+            return None
+        return float(value)
+
+    def _validate_bool(self, name: str, value: Any, errors: Dict[str, str]) -> bool:
+        """验证布尔值配置"""
+        if not isinstance(value, bool):
+            # 尝试自动转换
+            if isinstance(value, str):
+                if value.lower() in ("true", "1", "yes", "on"):
+                    return True
+                elif value.lower() in ("false", "0", "no", "off"):
+                    return False
+            errors[name] = f"需要布尔值，当前: {value} (类型: {type(value).__name__})"
+            return False
+        return value
+
+    def _validate_checkpoint_interval(self, value: int, errors: Dict[str, str]) -> Optional[int]:
+        """验证检查点间隔"""
+        if value != -1 and (not isinstance(value, int) or value < 1):
+            errors["checkpoint_interval"] = f"checkpoint_interval 必须为 -1 或 >= 1, 当前值: {value}"
+            return None
+        return value
+
+    def _validate_log_level(self, value: str, errors: Dict[str, str]) -> Optional[str]:
+        """验证日志级别"""
+        valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+        if value.upper() not in valid_levels:
+            errors["log_level"] = f"无效日志级别: {value}，有效值: {valid_levels}"
+            return None
+        return value.upper()
+
+    def _validate_targets(self, targets: Any, errors: Dict[str, str]) -> Optional[List[str]]:
+        """验证目标地址列表"""
+        if targets is None:
+            return None
+        if not isinstance(targets, list):
+            errors["targets"] = f"targets 必须是列表, 当前: {type(targets).__name__}"
+            return None
+        if len(targets) == 0:
+            errors["targets"] = "targets 列表不能为空"
+            return None
+        return targets
+
+    def _validate_gpu_config(self, config: Any, errors: Dict[str, str]) -> Optional[Dict[str, Any]]:
+        """验证GPU配置"""
+        if config is None:
+            return None
+        if not isinstance(config, dict):
+            errors["gpu"] = f"gpu 必须是字典, 当前: {type(config).__name__}"
+            return None
+        # 验证 device_id
+        if "device_id" in config:
+            device_id = config["device_id"]
+            if not isinstance(device_id, int) or device_id < 0:
+                errors["gpu.device_id"] = f"gpu.device_id 必须是 >= 0 的整数, 当前: {device_id}"
+                return None
+        return config
+
+    def _validate_performance_config(self, config: Any, errors: Dict[str, str]) -> Optional[Dict[str, Any]]:
+        """验证性能配置"""
+        if config is None:
+            return None
+        if not isinstance(config, dict):
+            errors["performance"] = f"performance 必须是字典, 当前: {type(config).__name__}"
+            return None
+        return config
+
+    def _validate_monitoring_config(self, config: Any, errors: Dict[str, str]) -> Optional[Dict[str, Any]]:
+        """验证监控配置"""
+        if config is None:
+            return None
+        if not isinstance(config, dict):
+            errors["monitoring"] = f"monitoring 必须是字典, 当前: {type(config).__name__}"
+            return None
+        return config
+
+    def _validate_security_config(self, config: Any, errors: Dict[str, str]) -> Optional[Dict[str, Any]]:
+        """验证安全配置"""
+        if config is None:
+            return None
+        if not isinstance(config, dict):
+            errors["security"] = f"security 必须是字典, 当前: {type(config).__name__}"
+            return None
+        return config
+
+    def _validate_strategy_params(self, params: Any, errors: Dict[str, str]) -> Optional[Dict[str, Any]]:
+        """验证策略参数"""
+        if params is None:
+            return None
+        if not isinstance(params, dict):
+            errors["strategy_params"] = f"strategy_params 必须是字典, 当前: {type(params).__name__}"
+            return None
+        return params
+
+    # ========================================================================
+    # 简化后的 _validate_manual 函数
+    # ========================================================================
+
     def _validate_manual(self, config: Dict[str, Any]) -> Dict[str, str]:
-        """DF-3修复: 手动验证配置（降级方案）
+        """
+        手动验证配置字段（JSON Schema 无法表达的复杂规则）
 
         参数:
-            config: 用户配置字典
+            config: 配置字典
 
         返回:
-            错误信息字典
+            错误字典 {字段名: 错误信息}，空字典表示验证通过
         """
-        errors = {}
+        errors: Dict[str, str] = {}
 
-        # 验证碰撞引擎配置
-        max_workers = config.get("collision", {}).get("max_workers")
-        if max_workers is not None and (not isinstance(max_workers, int) or max_workers <= 0):
-            errors["collision.max_workers"] = "必须是正整数"
-        elif max_workers is not None and max_workers > 1024:
-            errors["collision.max_workers"] = "上限为 1024（避免线程过度创建导致系统和内存耗尽）"
+        # 1. 基础类型验证
+        self._validate_mode(config.get("mode", "random"), errors)
+        self._validate_batch_size(config.get("batch_size", 1024), errors)
 
-        progress_interval = config.get("collision", {}).get("progress_interval")
-        if progress_interval is not None and (
-            not isinstance(progress_interval, int) or progress_interval <= 0
-        ):
-            errors["collision.progress_interval"] = "必须是正整数"
+        # 2. 数值范围验证
+        self._validate_positive_int("num_keys", config.get("num_keys", 1000), errors)
+        self._validate_positive_int("num_workers", config.get("num_workers", 4), errors)
+        self._validate_positive_float("target_speed", config.get("target_speed", 0), errors)
+        self._validate_checkpoint_interval(config.get("checkpoint_interval", 600), errors)
 
-        checkpoint_interval = config.get("collision", {}).get("checkpoint_interval")
-        if checkpoint_interval is not None and (
-            not isinstance(checkpoint_interval, int) or checkpoint_interval <= 0
-        ):
-            errors["collision.checkpoint_interval"] = "必须是正整数"
+        # 3. 布尔值验证
+        for field in ["enable_checkpoint", "enable_stats", "enable_monitoring",
+                      "enable_progress_bar", "use_colors"]:
+            if field in config:
+                self._validate_bool(field, config[field], errors)
 
-        dedup_max_size = config.get("collision", {}).get("dedup_max_size")
-        if dedup_max_size is not None and (
-            not isinstance(dedup_max_size, int) or dedup_max_size <= 0
-        ):
-            errors["collision.dedup_max_size"] = "必须是正整数"
+        # 4. 日志级别验证
+        if "log_level" in config:
+            self._validate_log_level(config["log_level"], errors)
 
-        # 审查修复#2: 补充日志配置验证（之前缺失）
-        logging_config = config.get("logging", {})
-
-        log_level = logging_config.get("level")
-        valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-        if log_level is not None and log_level not in valid_levels:
-            errors["logging.level"] = f"必须是以下值之一: {', '.join(valid_levels)}"
-
-        log_format = logging_config.get("format")
-        if log_format is not None and not isinstance(log_format, str):
-            errors["logging.format"] = "必须是字符串"
-
-        log_file = logging_config.get("file")
-        if log_file is not None and not isinstance(log_file, str):
-            errors["logging.file"] = "必须是字符串路径"
-
-        log_max_bytes = logging_config.get("max_bytes")
-        if log_max_bytes is not None and (not isinstance(log_max_bytes, int) or log_max_bytes <= 0):
-            errors["logging.max_bytes"] = "必须是正整数"
-
-        log_backup_count = logging_config.get("backup_count")
-        if log_backup_count is not None and (
-            not isinstance(log_backup_count, int) or log_backup_count < 0
-        ):
-            errors["logging.backup_count"] = "必须是非负整数"
-
-        log_enable_console = logging_config.get("enable_console")
-        if log_enable_console is not None and not self._is_strict_bool(log_enable_console):
-            errors["logging.enable_console"] = "必须是布尔值"
-
-        log_enable_file = logging_config.get("enable_file")
-        if log_enable_file is not None and not self._is_strict_bool(log_enable_file):
-            errors["logging.enable_file"] = "必须是布尔值"
-
-        log_rotation_type = logging_config.get("rotation_type")
-        valid_rotation_types = ["size", "time"]
-        if log_rotation_type is not None and log_rotation_type not in valid_rotation_types:
-            errors["logging.rotation_type"] = f"必须是以下值之一: {', '.join(valid_rotation_types)}"
-
-        log_rotation_when = logging_config.get("rotation_when")
-        if log_rotation_when is not None and not isinstance(log_rotation_when, str):
-            errors["logging.rotation_when"] = "必须是字符串"
-
-        log_rotation_interval = logging_config.get("rotation_interval")
-        if log_rotation_interval is not None and (
-            not isinstance(log_rotation_interval, int) or log_rotation_interval <= 0
-        ):
-            errors["logging.rotation_interval"] = "必须是正整数"
-
-        log_compress_backups = logging_config.get("compress_backups")
-        if log_compress_backups is not None and not self._is_strict_bool(log_compress_backups):
-            errors["logging.compress_backups"] = "必须是布尔值"
-
-        # 验证 GPU 配置
-        gpu_config = config.get("gpu", {})
-
-        gpu_batch_size = gpu_config.get("batch_size")
-        if gpu_batch_size is not None and (
-            not isinstance(gpu_batch_size, int) or gpu_batch_size <= 0
-        ):
-            errors["gpu.batch_size"] = "必须是正整数"
-        elif gpu_batch_size is not None and gpu_batch_size > 16777216:
-            errors["gpu.batch_size"] = "上限为 16777216 (16M)，避免显存耗尽"
-
-        gpu_device_index = gpu_config.get("device_index")
-        if gpu_device_index is not None and not isinstance(gpu_device_index, int):
-            errors["gpu.device_index"] = "必须是整数"
-
-        gpu_memory_ratio = gpu_config.get("memory_usage_ratio")
-        if gpu_memory_ratio is not None and (
-            not isinstance(gpu_memory_ratio, (int, float)) or not (0 < gpu_memory_ratio <= 1.0)
-        ):
-            errors["gpu.memory_usage_ratio"] = "必须在(0, 1]范围内"
-
-        gpu_use_gpu = gpu_config.get("use_gpu")
-        if gpu_use_gpu is not None and not self._is_strict_bool(gpu_use_gpu):
-            errors["gpu.use_gpu"] = "必须是布尔值"
-
-        gpu_auto_detect = gpu_config.get("auto_detect")
-        if gpu_auto_detect is not None and not self._is_strict_bool(gpu_auto_detect):
-            errors["gpu.auto_detect"] = "必须是布尔值"
-
-        gpu_vendor_opts = gpu_config.get("enable_vendor_optimizations")
-        if gpu_vendor_opts is not None and not self._is_strict_bool(gpu_vendor_opts):
-            errors["gpu.enable_vendor_optimizations"] = "必须是布尔值"
-
-        # 验证性能监控配置
-        perf_config = config.get("performance_monitoring", {})
-
-        perf_enabled = perf_config.get("enabled")
-        if perf_enabled is not None and not self._is_strict_bool(
-            perf_enabled
-        ):  # 审查修复#4: 严格布尔值检查
-            errors["performance_monitoring.enabled"] = "必须是布尔值"
-
-        perf_track_slow = perf_config.get("track_slow_operations")
-        if perf_track_slow is not None and not self._is_strict_bool(perf_track_slow):
-            errors["performance_monitoring.track_slow_operations"] = "必须是布尔值"
-
-        perf_threshold = perf_config.get("slow_threshold_ms")
-        if perf_threshold is not None:
-            if not isinstance(perf_threshold, (int, float)) or perf_threshold < 0:
-                errors["performance_monitoring.slow_threshold_ms"] = "必须是非负数（毫秒）"
-
-        perf_max_records = perf_config.get("max_records")
-        if perf_max_records is not None:
-            if not isinstance(perf_max_records, int) or perf_max_records <= 0:
-                errors["performance_monitoring.max_records"] = "必须是正整数"
-
-        perf_log_level = perf_config.get("log_level")
-        valid_log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-        if perf_log_level is not None and perf_log_level not in valid_log_levels:
-            errors["performance_monitoring.log_level"] = (
-                f"必须是以下值之一: {', '.join(valid_log_levels)}"
-            )
-
-        # 验证Crypto配置
-        crypto_config = config.get("crypto", {})
-
-        crypto_backend = crypto_config.get("backend")
-        valid_backends = [
-            "auto",
-            "pure_python",
-            "pure_python_const_time",
-            "openssl",
-            "coincurve",
-            "ecdsa",
-        ]
-        if crypto_backend is not None and crypto_backend not in valid_backends:
-            errors["crypto.backend"] = f"必须是以下值之一: {', '.join(valid_backends)}"
-
-        # 审查修复#2: 补充Crypto配置验证（之前缺失）
-        crypto_constant_time = crypto_config.get("constant_time")
-        if crypto_constant_time is not None and not self._is_strict_bool(crypto_constant_time):
-            errors["crypto.constant_time"] = "必须是布尔值"
-
-        crypto_verify_checksums = crypto_config.get("verify_checksums")
-        if crypto_verify_checksums is not None and not self._is_strict_bool(
-            crypto_verify_checksums
-        ):
-            errors["crypto.verify_checksums"] = "必须是布尔值"
-
-        crypto_strict_wif = crypto_config.get("strict_wif_validation")
-        if crypto_strict_wif is not None and not self._is_strict_bool(crypto_strict_wif):
-            errors["crypto.strict_wif_validation"] = "必须是布尔值"
-
-        # 审查修复#6: 添加配置依赖关系验证
-        # 日志轮转依赖验证
-        if log_rotation_type == "size" and "max_bytes" not in logging_config:
-            errors["logging.max_bytes"] = "size轮转模式需要配置max_bytes"
-        elif log_rotation_type == "time" and "rotation_when" not in logging_config:
-            errors["logging.rotation_when"] = "time轮转模式需要配置rotation_when"
+        # 5. 嵌套对象验证
+        for field, validator in [
+            ("targets", self._validate_targets),
+            ("gpu", self._validate_gpu_config),
+            ("performance", self._validate_performance_config),
+            ("monitoring", self._validate_monitoring_config),
+            ("security", self._validate_security_config),
+            ("strategy_params", self._validate_strategy_params),
+        ]:
+            if field in config and config[field] is not None:
+                validator(config[field], errors)
 
         return errors
+

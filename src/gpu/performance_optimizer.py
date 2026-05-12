@@ -22,13 +22,15 @@ logger = get_configured_logger("GPUPerformanceOptimizer")
 
 
 # ===== 厂商特定调整策略 =====
-# 根据GPU厂商选择不同的增长/减少因子，Intel采用更保守的策略
+# v6.1 修复: 统一使用乘法增长/减少，对称调整
+# 减少: batch_size * reduction_ratio (如 0.75)
+# 增长: batch_size * growth_ratio (如 1.25)
 VENDOR_ADJUST_STRATEGY: Dict[str, Dict[str, float]] = {
-    "nvidia": {"growth_factor": 1.5, "reduction_factor": 0.5},
-    "amd": {"growth_factor": 1.3, "reduction_factor": 0.5},
-    "intel": {"growth_factor": 1.1, "reduction_factor": 0.7},  # Intel更保守
+    "nvidia": {"growth_ratio": 1.25, "reduction_ratio": 0.75},  # 对称: 增长25%, 减少25%
+    "amd": {"growth_ratio": 1.20, "reduction_ratio": 0.80},    # 对称: 增长20%, 减少20%
+    "intel": {"growth_ratio": 1.20, "reduction_ratio": 0.80},  # 对称: 增长20%, 减少20%
 }
-DEFAULT_ADJUST_STRATEGY: Dict[str, float] = {"growth_factor": 1.2, "reduction_factor": 0.5}
+DEFAULT_ADJUST_STRATEGY: Dict[str, float] = {"growth_ratio": 1.15, "reduction_ratio": 0.85}
 
 
 class GPUVendor(Enum):
@@ -78,6 +80,10 @@ class GPUProfile:
     slow_execution_threshold_ms: float = 1000.0
     error_rate_threshold: float = 0.01  # 1%错误率
 
+    # v6.1: GPU 利用率目标（Intel Arc A770 实际预期 30-50%）
+    min_gpu_utilization_target: float = 0.30  # 最低目标: 30%
+    max_gpu_utilization_target: float = 0.50  # 期望目标: 50%（Intel Arc 难以达到更高）
+
     # 调整策略
     batch_size_step: int = 8192  # 批次调整步长
     min_batch_size: int = 1024
@@ -99,6 +105,7 @@ class GPUPerformanceOptimizer:
         self._adjustment_count = 0
         self._last_adjustment_time = 0.0
         self._adjustment_cooldown_sec = 10  # 调整冷却期10秒
+        self._initial_batch_size: int = 0  # v6.1 修复: 保存真正的初始值
 
         logger.info("GPU性能优化器初始化完成")
 
@@ -218,6 +225,7 @@ class GPUPerformanceOptimizer:
 
         # 记录配置
         self._current_profile = profile
+        self._initial_batch_size = profile.max_batch_size  # v6.1 修复: 保存真正的初始值
         logger.info(
             f"GPU配置已优化: {device_name}, "
             f"batch_size={profile.max_batch_size}, "
@@ -323,84 +331,109 @@ class GPUPerformanceOptimizer:
             new_batch_size = current_batch_size
             profile = self._current_profile
 
-            # 1. 错误率过高 - 减小batch_size
-            if error_rate > profile.error_rate_threshold:
-                reduction_factor = strategy["reduction_factor"]
-                reduction = max(profile.batch_size_step, int(current_batch_size * reduction_factor))
-                new_batch_size = max(profile.min_batch_size, current_batch_size - reduction)
-                adjustments["error_rate_too_high"] = {
-                    "current": error_rate,
-                    "threshold": profile.error_rate_threshold,
-                    "action": "reduce_batch",
-                    "old_batch": current_batch_size,
-                    "new_batch": new_batch_size,
-                }
-                logger.warning(
-                    f"错误率过高({error_rate:.2%})，减小batch: {current_batch_size} -> {new_batch_size}"
-                )
+            # v6.1 新增: 获取 GPU 利用率
+            gpu_utilization = 0.0
+            if engine is not None:
+                try:
+                    monitor = getattr(engine, "_engine_monitor", None)
+                    if monitor is not None:
+                        stats = monitor.get_stats()
+                        gpu_utilization = stats.get("avg_gpu_utilization", 0.0)
+                except Exception:
+                    pass
 
-            # 2. 执行时间过长 - 减小batch_size
-            elif avg_execution_time > profile.slow_execution_threshold_ms:
-                reduction_factor = strategy["reduction_factor"]
-                reduction = max(profile.batch_size_step, int(current_batch_size * reduction_factor))
-                new_batch_size = max(profile.min_batch_size, current_batch_size - reduction)
-                adjustments["execution_too_slow"] = {
+            # v6.1 修复: 使用对称的乘法公式，但更激进的增长策略
+            # 减少: batch_size * reduction_ratio
+            # 增长: batch_size * growth_ratio
+            # 如果 GPU 利用率低于目标，使用更激进的增长
+            min_target = profile.min_gpu_utilization_target
+            if gpu_utilization > 0 and gpu_utilization < min_target:
+                # GPU 利用率不足，需要更激进增长
+                deficit_ratio = min_target / max(gpu_utilization, 0.1)
+                growth_ratio = min(1.5, 1.2 * deficit_ratio)  # 最多1.5倍增长
+                logger.info(
+                    f"GPU利用率不足({gpu_utilization:.1%} < {min_target:.1%})，"
+                    f"使用激进增长: *{growth_ratio:.2f}"
+                )
+            else:
+                growth_ratio = strategy.get("growth_ratio", 1.20)
+            reduction_ratio = strategy.get("reduction_ratio", 0.80)
+
+            # v6.2 修复: 减少触发条件改为 AND 逻辑（更严格）
+            # 只有错误率过高 AND 执行时间过长两个条件都满足才减少
+            if error_rate > profile.error_rate_threshold and avg_execution_time > profile.slow_execution_threshold_ms:
+                new_batch_size = max(
+                    profile.min_batch_size,
+                    int(current_batch_size * reduction_ratio)
+                )
+                adjustments["performance_degraded"] = {
+                    "error_rate": error_rate,
+                    "error_threshold": profile.error_rate_threshold,
                     "avg_time_ms": avg_execution_time,
-                    "threshold_ms": profile.slow_execution_threshold_ms,
+                    "time_threshold_ms": profile.slow_execution_threshold_ms,
                     "action": "reduce_batch",
                     "old_batch": current_batch_size,
                     "new_batch": new_batch_size,
+                    "reduction_ratio": reduction_ratio,
                 }
                 logger.warning(
-                    f"执行时间过长({avg_execution_time:.0f}ms)，减小batch: {current_batch_size} -> {new_batch_size}"  # noqa: E501
+                    f"性能下降(错误率{error_rate:.2%}, 时间{avg_execution_time:.0f}ms)，"
+                    f"减小batch: {current_batch_size} -> {new_batch_size} (*{reduction_ratio})"
                 )
 
-            # 3. 性能良好且有余量 - 增大batch_size（优化v2.2.1: 更激进的策略）
+            # 3. 性能良好 或 GPU利用率不足 - 使用乘法增长
             elif (
-                avg_execution_time < profile.slow_execution_threshold_ms * 0.5
-                and error_rate < profile.error_rate_threshold * 0.5
-            ):
-                # 根据性能余量和厂商策略计算增长量
-                time_ratio = profile.slow_execution_threshold_ms * 0.5 / max(avg_execution_time, 1)
-                growth_factor = strategy["growth_factor"]
-
-                if time_ratio > 3.0:
-                    # 性能非常优秀，大幅增加（受厂商策略影响）
-                    increase = int(profile.batch_size_step * 4 * growth_factor)
-                elif time_ratio > 2.0:
-                    # 性能良好，适度增加
-                    increase = int(profile.batch_size_step * 2 * growth_factor)
-                else:
-                    # 性能尚可，小幅增加
-                    increase = int(profile.batch_size_step * growth_factor)
-
-                new_batch_size = min(profile.max_batch_size_limit, current_batch_size + increase)
+                avg_execution_time < profile.slow_execution_threshold_ms * 1.0
+                and error_rate < profile.error_rate_threshold * 2.0
+            ) or (gpu_utilization > 0 and gpu_utilization < min_target):
+                new_batch_size = min(
+                    profile.max_batch_size_limit,
+                    int(current_batch_size * growth_ratio)
+                )
                 adjustments["performance_good"] = {
                     "avg_time_ms": avg_execution_time,
                     "avg_speed": avg_speed,
-                    "time_ratio": time_ratio,
-                    "growth_factor": growth_factor,
+                    "growth_ratio": growth_ratio,
                     "action": "increase_batch",
                     "old_batch": current_batch_size,
                     "new_batch": new_batch_size,
                 }
                 logger.info(
-                    f"性能良好(time_ratio={time_ratio:.1f}x, growth={growth_factor})，"
-                    f"增大batch: {current_batch_size} -> {new_batch_size}"
+                    f"性能良好，"
+                    f"增大batch: {current_batch_size} -> {new_batch_size} (*{growth_ratio})"
                 )
 
-            # ---- 幅度上限：单次调整不超过当前值的50% ----
+            # ---- v6.1 修复: 应用范围限制 ----
             if new_batch_size != current_batch_size:
-                max_change = current_batch_size * 0.5
-                if abs(new_batch_size - current_batch_size) > max_change:
-                    if new_batch_size > current_batch_size:
-                        new_batch_size = int(current_batch_size + max_change)
-                    else:
-                        new_batch_size = int(current_batch_size - max_change)
-                    logger.info(f"调整幅度受限，限制为当前值的50%: {new_batch_size}")
-
-                # 应用常量范围限制
                 new_batch_size = clamp_batch_size(new_batch_size)
+
+            # v6.1 修复: batch_size 恢复机制
+            # 当连续稳定且 batch_size 偏低时，尝试恢复到更高水平
+            if self._current_profile and self._initial_batch_size > 0:
+                initial_batch = self._initial_batch_size
+                stable_count = 0
+
+                # 检查是否连续稳定（错误率低）
+                for m in recent_metrics:
+                    if m.error_count == 0:
+                        stable_count += 1
+
+                # 如果连续10次以上稳定，尝试恢复
+                if stable_count >= 10 and len(recent_metrics) >= 10:
+                    # 恢复到初始值的 90%
+                    recovery_batch = int(initial_batch * 0.9)
+                    if recovery_batch > new_batch_size:
+                        adjustments["batch_recovery"] = {
+                            "reason": "stable_recovery",
+                            "old_batch": new_batch_size,
+                            "new_batch": recovery_batch,
+                            "initial_batch": initial_batch,
+                        }
+                        new_batch_size = recovery_batch
+                        logger.info(
+                            f"batch_size 恢复: {new_batch_size} -> {recovery_batch} "
+                            f"(初始值: {initial_batch})"
+                        )
 
             # 4. 记录调整
             if new_batch_size != current_batch_size:

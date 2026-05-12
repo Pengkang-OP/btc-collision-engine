@@ -27,15 +27,17 @@ from ..monitoring.gpu_performance_monitor import get_gpu_performance_monitor
 logger = get_configured_logger("GPUKernel")
 
 # DEF-2修复: 内核编译重试配置
-GPU_KERNEL_COMPILE_MAX_RETRIES = 3
+GPU_KERNEL_COMPILE_MAX_RETRIES = 4  # v4.2.0: 4 策略（含 Intel Arc 优化）
 GPU_KERNEL_COMPILE_RETRY_DELAY_BASE = (
     2.0  # 基础延迟(秒), 指数退避: 2s(第1次失败后), 4s(第2次失败后)
 )
 
 # DEF-2修复: 渐进编译策略 — 每次重试尝试不同的编译选项
+# v4.2.0: 新增 Intel Arc 优化策略（无符号零+乘加融合，安全于加密运算）
 COMPILE_STRATEGIES = [
     ("标准编译", []),
     ("CL2.0标准编译", ["-cl-std=CL2.0"]),
+    ("Intel Arc CL2.0 优化编译", ["-cl-std=CL2.0", "-cl-no-signed-zeros", "-cl-mad-enable"]),
     ("降级CL1.2编译", ["-cl-std=CL1.2", "-cl-mad-enable", "-cl-no-signed-zeros"]),
 ]
 
@@ -274,10 +276,11 @@ class GPUKernel(GPUKernelProtocol):
         """编译 OpenCL 内核（带性能监控、缓存和重试机制）
 
         P2-6修复: 添加内核编译缓存机制，避免每次启动都重新编译
-        DEF-2修复: 编译失败时自动重试（最多3次，渐进策略+指数退避）
+        DEF-2修复: 编译失败时自动重试（最多4次，渐进策略+指数退避）
             第1次: 标准编译
             第2次: CL2.0标准编译 (延迟2s)
-            第3次: 降级CL1.2编译 (延迟4s, -cl-std=CL1.2 -cl-mad-enable -cl-no-signed-zeros)
+            第3次: Intel Arc CL2.0 优化编译 (延迟4s, -cl-no-signed-zeros -cl-mad-enable)
+            第4次: 降级CL1.2编译 (延迟8s, -cl-std=CL1.2 -cl-mad-enable -cl-no-signed-zeros)
         """
         import time
 
@@ -714,6 +717,179 @@ class GPUKernel(GPUKernelProtocol):
 
         logger.info(f"GPU 目标地址设置完成: {num_targets} 个目标")
 
+
+    # ========================================================================
+    # 辅助函数 - 拆分自 run_batch
+    # ========================================================================
+
+    def _validate_batch_params(self, num_keys: int, seed: bytes) -> None:
+        """验证批次参数"""
+        if num_keys <= 0 or num_keys > self.max_batch_size:
+            raise ValueError(f"num_keys 必须在 1..{self.max_batch_size} 之间，当前为 {num_keys}")
+        if len(seed) != 32:
+            raise ValueError(f"seed 长度必须为 32 字节（PRNG模式），当前为 {len(seed)} 字节")
+
+    def _check_memory_limit(self, num_keys: int) -> None:
+        """检查GPU显存限制"""
+        target_buffer_size = len(self._target_hash160s) if self._target_hash160s else 0
+        required_memory = 32 + (num_keys * 4) + target_buffer_size
+        required_memory_with_overhead = int(required_memory * 1.2)
+        device_info = self.device.get_device_info() if hasattr(self.device, "get_device_info") else {}
+        max_memory = device_info.get("global_mem_size", 0)
+        safe_memory_limit = int(max_memory * 0.8) if max_memory > 0 else float("inf")
+        if required_memory_with_overhead > safe_memory_limit:
+            raise MemoryError(
+                f"所需显存 {required_memory_with_overhead / 1024**2:.0f}MB "
+                f"超过安全限制 {safe_memory_limit / 1024**2:.0f}MB"
+            )
+
+    def _write_seed_buffer(self, seed: bytes) -> None:
+        """写入种子缓冲区"""
+        if self._seed_buf is None:
+            logger.error("_seed_buf 已释放，无法执行批处理")
+            raise RuntimeError("_seed_buf 已释放")
+        seed_array = _seed_bytes_to_u32_be_array(seed)
+        try:
+            cl.enqueue_copy(self.device.queue, self._seed_buf, seed_array)
+        except Exception as e:
+            # SUGGESTION-7: 添加exc_info保留完整堆栈信息
+            logger.error(f"写入 seed_buf 失败: {e}", exc_info=True)
+            raise
+
+    def _clear_match_buffer(self, num_keys: int) -> None:
+        """清空匹配结果缓冲区"""
+        import numpy as np
+        if self._match_buf is None:
+            logger.error("_match_buf 已释放，无法执行批处理")
+            raise RuntimeError("_match_buf 已释放")
+        try:
+            cl.enqueue_fill_buffer(self.device.queue, self._match_buf, np.int32(0), 0, num_keys * 4)
+        except Exception as e:
+            logger.error(f"清空 match_buf 失败: {e}")
+            raise
+
+    def _execute_kernel(self, num_keys: int, local_work_size: int) -> tuple:
+        """执行GPU内核"""
+        global_work_size = ((num_keys + local_work_size - 1) // local_work_size) * local_work_size
+        target_bytes = self._num_targets_cached * 20
+        local_mem_size = getattr(self, "_local_mem_size", 16384)
+        use_local_mem = (
+            self._batch_kernel_local is not None
+            and target_bytes > 0
+            and target_bytes <= local_mem_size
+            and (target_bytes <= int(local_mem_size * 0.8) or self._num_targets_cached <= 250)
+        )
+        if use_local_mem:
+            logger.debug(f"使用local memory版内核: 目标数据{target_bytes}B")
+            self._batch_kernel_local(
+                self.device.queue, (global_work_size,), (local_work_size,),
+                self._seed_buf, np.uint32(num_keys), self._targets_buf,
+                np.uint32(self._num_targets_cached), self._match_buf,
+                np.uint32(self._check_uncompressed), cl.LocalMemory(target_bytes),
+                self._precomp_buf,
+            )
+        else:
+            self._batch_kernel(
+                self.device.queue, (global_work_size,), (local_work_size,),
+                self._seed_buf, np.uint32(num_keys), self._targets_buf,
+                np.uint32(self._num_targets_cached), self._match_buf,
+                np.uint32(self._check_uncompressed), self._precomp_buf,
+            )
+        return cl.enqueue_copy(self.device.queue, self._match_flags[:num_keys], self._match_buf)
+
+    def _wait_for_completion(self, read_event, timeout_seconds: float = 30) -> bool:
+        """等待GPU执行完成"""
+        import time
+        timeout_event = threading.Event()
+        execution_completed = [False]
+
+        def timeout_monitor():
+            try:
+                if not timeout_event.wait(timeout_seconds):
+                    logger.error(f"GPU执行超时({timeout_seconds}秒)")
+                    execution_completed[0] = False
+            except Exception as e:
+                logger.error(f"超时监控线程异常: {e}")
+                execution_completed[0] = False
+
+        monitor_thread = threading.Thread(target=timeout_monitor, daemon=True)
+        monitor_thread.start()
+        try:
+            max_iterations = int(timeout_seconds / 0.1) + 10
+            for _ in range(max_iterations):
+                try:
+                    status = read_event.command_execution_status
+                    if status == cl.command_execution_status.COMPLETE:
+                        execution_completed[0] = True
+                        break
+                except cl.Error:
+                    execution_completed[0] = False
+                    break
+                time.sleep(0.1)
+        finally:
+            timeout_event.set()
+            monitor_thread.join(timeout=2.0)
+        return execution_completed[0]
+
+    def _release_buffers_on_error(self) -> None:
+        """错误时释放缓冲区"""
+        for buf_attr in ("_seed_buf", "_match_buf", "_targets_buf", "_precomp_buf"):
+            buf = getattr(self, buf_attr, None)
+            if buf is None:
+                continue
+            released = False
+            try:
+                if hasattr(self, "_buffer_tracker") and self._buffer_tracker:
+                    self._buffer_tracker.release_buffer(buf_attr)
+                    released = True
+            except Exception:
+                pass
+            if not released:
+                try:
+                    buf.release()
+                except Exception:
+                    pass
+            setattr(self, buf_attr, None)
+
+    def _collect_matches(self, match_view, num_keys: int) -> list:
+        """收集匹配结果"""
+        matches = []
+        for i in range(num_keys):
+            if match_view[i] > 0:
+                matches.append({"key_index": i, "target_index": int(match_view[i] - 1)})
+        return matches
+
+    def _record_performance(self, num_keys: int, batch_start_time: float, match_count: int) -> None:
+        """记录性能指标"""
+        import time
+        try:
+            execution_time_ms = (time.time() - batch_start_time) * 1000
+            keys_per_second = (num_keys / execution_time_ms * 1000) if execution_time_ms > 0 else 0
+            metrics = PerformanceMetrics(
+                batch_execution_time_ms=execution_time_ms,
+                keys_per_second=keys_per_second,
+                error_count=0,
+            )
+            if self.gpu_optimizer:
+                self.gpu_optimizer.record_performance(metrics)
+            if hasattr(self, "stats") and self.stats:
+                try:
+                    gpu_monitor = get_gpu_performance_monitor()
+                    memory_mb = (32 + 1984 + num_keys * 4) / (1024 * 1024)
+                    gpu_monitor.record_kernel_metrics(
+                        batch_size=num_keys, execution_time_ms=execution_time_ms,
+                        memory_allocated_mb=memory_mb, error_count=0, match_count=match_count,
+                    )
+                except Exception:
+                    pass
+            if hasattr(self, "timeout_manager") and self.timeout_manager:
+                self.timeout_manager.record_execution_time(execution_time_ms)
+            if hasattr(self, "memory_monitor") and self.memory_monitor:
+                self.memory_monitor.track_allocation(num_keys * 36)
+        except Exception:
+            pass
+
+
     def run_batch(
         self,
         seed: bytes,
@@ -722,357 +898,50 @@ class GPUKernel(GPUKernelProtocol):
         num_targets: int = 0,
         stop_event: Optional[Any] = None,
     ) -> List[Dict]:
-        """PRNG模式批量执行私钥碰撞检测
-
-        v4.0 PRNG改造: CPU仅传入 32 字节种子，GPU内核自行计算 key = seed + gid。
-        节省 ~32MB GPU 显存（max_batch_size * 32 字节 keys 缓冲区）。
-        v3.2.2优化: 持久化缓冲区设计 - 零运行时分配开销，性能最优
-        v3.3.1修复: 添加stop_event参数,支持优雅停止
-
-        Args:
-            seed: 32字节随机种子
-            num_keys: 批次大小
-            target_hash160s: 目标地址Hash160
-            num_targets: 目标数量
-            stop_event: 停止事件(可选),用于优雅退出
-        """
-        import numpy as np
+        """PRNG模式批量执行私钥碰撞检测"""
         import time
 
         batch_start_time = time.time()
 
-        # 参数校验
-        if num_keys <= 0 or num_keys > self.max_batch_size:
-            raise ValueError(f"num_keys 必须在 1..{self.max_batch_size} 之间，当前为 {num_keys}")
+        # 1. 参数校验
+        self._validate_batch_params(num_keys, seed)
 
-        if len(seed) != 32:
-            raise ValueError(f"seed 长度必须为 32 字节（PRNG模式），当前为 {len(seed)} 字节")
+        # 1.5. 显存限制检查
+        self._check_memory_limit(num_keys)
 
-        # P0修复: 显存溢出检查（PRNG模式，无需考虑 keys 缓冲区）
-        target_buffer_size = len(self._target_hash160s) if self._target_hash160s else 0
-        required_memory = 32 + (num_keys * 4) + target_buffer_size  # seed(32) + match + targets
-        required_memory_with_overhead = int(required_memory * 1.2)
-
-        # 获取GPU最大可用显存(80%为安全阈值)
-        device_info = (
-            self.device.get_device_info() if hasattr(self.device, "get_device_info") else {}
-        )
-        max_memory = device_info.get("global_mem_size", 0)
-        safe_memory_limit = int(max_memory * 0.8) if max_memory > 0 else float("inf")
-
-        if required_memory_with_overhead > safe_memory_limit:
-            raise MemoryError(
-                f"所需显存 {required_memory_with_overhead /  # noqa: W504
-                                      1024**2:.0f}MB 超过安全限制 {safe_memory_limit /  # noqa: W504, E127
-                                                             1024**2:.0f}MB\n"
-                f"建议: 减小 batch_size 从 {num_keys} 到 {int(num_keys *  # noqa: E501, W504
-                                                                                                                       safe_memory_limit /  # noqa: E501, W504, E127
-                                                                                                                       required_memory_with_overhead)}"  # noqa: E127, E501
-            )  # noqa: E501
-
-        # 设置目标（仅在第一次或目标变化时）
+        # 2. 设置目标
         if target_hash160s is not None:
             self.set_targets(target_hash160s, num_targets)
 
-        # PRNG模式: 将 32 字节种子写入 _seed_buf
-        if self._seed_buf is None:
-            logger.error("_seed_buf 已释放，无法执行批处理")
-            return []
+        # 3. 写入种子缓冲区
+        self._write_seed_buffer(seed)
 
-        seed_array = _seed_bytes_to_u32_be_array(seed)
-        try:
-            cl.enqueue_copy(self.device.queue, self._seed_buf, seed_array)
-        except Exception as e:
-            logger.error(f"写入 seed_buf 失败: {e}")
-            return []
+        # 4. 清空匹配结果缓冲区
+        self._clear_match_buffer(num_keys)
 
-        # 清空匹配结果缓冲区
-        if self._match_buf is None:
-            logger.error("_match_buf 已释放，无法执行批处理")
-            return []
-
-        try:
-            cl.enqueue_fill_buffer(self.device.queue, self._match_buf, np.int32(0), 0, num_keys * 4)
-        except Exception as e:
-            logger.error(f"清空 match_buf 失败: {e}")
-            return []
-
-        # 执行内核（异步）
+        # 5. 执行内核
         if self._batch_kernel is None:
             self._batch_kernel = self.program.batch_check
-
-        # v2.3.0优化: 显式设置local_work_size提升性能
-        # 从配置中获取work_group_size，避免OpenCL自动选择次优值
         local_work_size = getattr(self, "_work_group_size", 256)
-
-        # 确保global_work_size是local_work_size的整数倍
-        global_work_size = ((num_keys + local_work_size - 1) // local_work_size) * local_work_size
-
-        # 判断是否使用local memory版内核
-        # 条件: 1. 存在local memory版内核引用; 2. 目标数据能装入设备local mem（80%安全阈值）
-        # 优化: 当目标地址数量较少（<=250，约5KB）时，更积极使用local memory版内核
-        target_bytes = self._num_targets_cached * 20
-        local_mem_size = getattr(self, "_local_mem_size", 16384)
-        use_local_mem = (
-            self._batch_kernel_local is not None
-            and target_bytes > 0
-            and target_bytes <= local_mem_size  # 确保实际能装入设备local mem（确保安全）
-            and (
-                target_bytes <= int(local_mem_size * 0.8)  # 原有条件: 80%安全阈值
-                or self._num_targets_cached <= 250  # 新增: 少量目标时更积极使用local memory
-            )
-        )
-
-        if use_local_mem:
-            logger.debug(
-                f"使用local memory版内核: 目标数据{target_bytes}B 设备local_mem={local_mem_size}B"
-            )
-            self._batch_kernel_local(
-                self.device.queue,
-                (global_work_size,),
-                (local_work_size,),
-                self._seed_buf,
-                np.uint32(num_keys),
-                self._targets_buf,
-                np.uint32(self._num_targets_cached),
-                self._match_buf,
-                np.uint32(self._check_uncompressed),
-                cl.LocalMemory(target_bytes),  # 分配 local memory
-                self._precomp_buf,
-            )
-        else:
-            self._batch_kernel(
-                self.device.queue,
-                (global_work_size,),
-                (local_work_size,),
-                self._seed_buf,
-                np.uint32(num_keys),
-                self._targets_buf,
-                np.uint32(self._num_targets_cached),
-                self._match_buf,
-                np.uint32(self._check_uncompressed),
-                self._precomp_buf,
-            )
-
-        # 异步读取结果
-        match_view = self._match_flags[:num_keys]
-        read_event = cl.enqueue_copy(self.device.queue, match_view, self._match_buf)
-
-        # 方案B: 添加超时保护机制(防止Intel Arc A770等GPU永久卡死)
-        # v3.3.1修复: 使用轮询检查替代无限期等待,支持优雅停止
-        # 性能分析: 每批次约0.5秒,轮询5次(间隔0.1秒),开销<0.001%
-        timeout_seconds = 30  # Intel Arc建议的超时时间
-        poll_interval = 0.1  # 轮询间隔(秒)
-
-        # 创建超时事件
-        timeout_event = threading.Event()
-        execution_completed = [False]  # 使用列表存储结果(闭包)
-
-        def timeout_monitor() -> None:
-            """后台线程监控GPU执行超时"""
-            try:
-                if not timeout_event.wait(timeout_seconds):
-                    # 超时未收到完成信号
-                    logger.error(f"GPU执行超时({timeout_seconds}秒),可能存在内核hang问题")
-
-                    # v3.3.1改进: 不尝试queue.finish(),因为它也可能阻塞
-                    # 直接标记超时,让主线程的轮询循环检测并处理
-                    logger.warning("标记GPU执行超时,等待主线程轮询检测并处理")
-                    execution_completed[0] = False
-
-                    # 可选: 如果未来PyOpenCL支持上下文中断,可以启用
-                    # if hasattr(self.device.context, 'abort'):
-                    #     try:
-                    #         self.device.context.abort()
-                    #         logger.info("已尝试中断GPU上下文")
-                    #     except Exception as e:
-                    #         logger.error(f"中断GPU上下文失败: {e}")
-                # else: 正常完成,不做任何操作
-            except Exception as e:
-                logger.error(f"超时监控线程异常: {e}")
-                execution_completed[0] = False
-
-        # 启动超时监控线程
-        monitor_thread = threading.Thread(target=timeout_monitor, daemon=True)
-        monitor_thread.start()
-
         try:
-            # v3.3.1修复: 使用轮询等待替代无限期阻塞
-            # PyOpenCL的Event.wait()不支持timeout参数,改用command_execution_status查询
+            read_event = self._execute_kernel(num_keys, local_work_size)
+        except Exception as e:
+            logger.error(f"内核执行失败: {e}")
+            return []
 
-            # 添加最大迭代次数保护(防止无限循环)
-            max_iterations = int(timeout_seconds / poll_interval) + 10  # 300 + 10次容错
-            iteration_count = 0
+        # 6. 等待完成
+        if not self._wait_for_completion(read_event):
+            self._release_buffers_on_error()
+            raise RuntimeError("GPU执行超时，内核可能已hang")
 
-            while True:
-                iteration_count += 1
+        # 7. 收集结果
+        matches = self._collect_matches(self._match_flags[:num_keys], num_keys)
 
-                # 防止无限循环(安全网)
-                if iteration_count > max_iterations:
-                    logger.warning(
-                        f"轮询次数超过最大值({max_iterations}),强制退出 " "(可能GPU状态查询异常)"
-                    )
-                    execution_completed[0] = False
-                    break
-
-                try:
-                    # 非阻塞查询GPU执行状态
-                    status = read_event.command_execution_status
-                    if status == cl.command_execution_status.COMPLETE:
-                        execution_completed[0] = True
-                        break
-                except cl.Error as e:
-                    # GPU驱动错误或设备断开
-                    logger.error(f"GPU状态查询失败(第{iteration_count}次轮询): {e}")
-                    execution_completed[0] = False
-                    break
-                except Exception as e:
-                    # 其他未知错误(不应该发生,但作为安全网)
-                    logger.error(
-                        f"GPU状态查询异常(第{iteration_count}次轮询): {type(e).__name__}: {e}"
-                    )
-                    execution_completed[0] = False
-                    break
-
-                # GPU未完成时才检查停止信号(避免竞态条件)
-                if stop_event is not None and stop_event.is_set():
-                    logger.info(
-                        "检测到停止信号,中断GPU等待 "
-                        f"(已轮询{iteration_count}次, 耗时{iteration_count * poll_interval:.1f}秒)"
-                    )
-                    execution_completed[0] = False
-                    break
-
-                # 短暂休眠,避免CPU空转
-                time.sleep(poll_interval)
-        finally:
-            # 通知监控线程已完成
-            timeout_event.set()
-            # 等待监控线程退出(最多2秒)
-            if monitor_thread.is_alive():
-                monitor_thread.join(timeout=2.0)
-                if monitor_thread.is_alive():
-                    logger.warning("超时监控线程未能及时退出")
-
-        # 检查是否超时或停止信号中断
-        if not execution_completed[0]:
-            # v3.3.1改进: GPU超时/停止后不尝试queue.finish(),避免二次阻塞
-            # 直接记录日志并释放缓冲区资源,防止显存泄漏
-            logger.warning("GPU执行未完成(超时或停止信号),跳过队列清理以避免阻塞")
-
-            # 释放缓冲区资源,防止显存泄漏（统一通过buffer_tracker释放,避免double-unref）
-            for buf_attr in ("_seed_buf", "_match_buf", "_targets_buf", "_precomp_buf"):
-                buf = getattr(self, buf_attr, None)
-                if buf is not None:
-                    try:
-                        if hasattr(self, "_buffer_tracker") and self._buffer_tracker:
-                            self._buffer_tracker.release_buffer(buf_attr)
-                        else:
-                            buf.release()
-                        logger.debug(f"GPU超时清理：已释放 {buf_attr}")
-                    except cl.Error as e:
-                        # OpenCL错误(缓冲区已释放或设备断开)
-                        logger.warning(f"GPU超时清理：释放 {buf_attr} 失败(OpenCL错误): {e}")
-                    except Exception as buf_err:
-                        # 其他未知异常
-                        logger.warning(
-                            f"GPU超时清理：释放 {buf_attr} 失败: "
-                            f"{type(buf_err).__name__}: {buf_err}"
-                        )
-                    setattr(self, buf_attr, None)
-
-            raise RuntimeError(f"GPU执行超时{timeout_seconds}秒，内核可能已hang")
-
-        # 收集匹配结果
-        matches = []
-        for i in range(num_keys):
-            if match_view[i] > 0:
-                matches.append({"key_index": i, "target_index": int(match_view[i] - 1)})
-
-        # 记录性能指标（用于自适应优化）
-        try:
-            execution_time_ms = (time.time() - batch_start_time) * 1000
-            keys_per_second = (num_keys / execution_time_ms * 1000) if execution_time_ms > 0 else 0
-
-            metrics = PerformanceMetrics(
-                batch_execution_time_ms=execution_time_ms,
-                keys_per_second=keys_per_second,
-                error_count=0,  # 本批次无错误
-            )
-            if self.gpu_optimizer:
-                self.gpu_optimizer.record_performance(metrics)
-
-            # v2.2.1: 记录到GPU性能监控器
-            if hasattr(self, "stats") and self.stats:
-                try:
-                    # 使用预导入的监控器,避免重复import
-                    gpu_monitor = get_gpu_performance_monitor()
-                    # v2.2.1: 使用精确的显存估算
-                    if hasattr(self, "_calculate_gpu_memory_usage"):
-                        memory_mb = self._calculate_gpu_memory_usage(num_keys)
-                    else:
-                        # PRNG模式: seed_buf(32B) + precomp_table(1984B) + match_flags(num_keys*4B)
-                        memory_mb = (32 + 1984 + num_keys * 4) / (1024 * 1024)
-                    gpu_monitor.record_kernel_metrics(
-                        batch_size=num_keys,
-                        execution_time_ms=execution_time_ms,
-                        memory_allocated_mb=memory_mb,
-                        error_count=0,
-                        match_count=len(matches),
-                    )
-                except Exception as monitor_error:
-                    logger.debug(f"GPU性能监控记录失败: {monitor_error}")
-
-            # P1: 记录到自适应超时管理器（每个批次都记录）
-            if hasattr(self, "timeout_manager") and self.timeout_manager:
-                self.timeout_manager.record_execution_time(execution_time_ms)
-
-                # 降低日志频率：每 100 个批次检查一次警告
-                if hasattr(self, "stats") and self.stats and hasattr(self, "MONITOR_INTERVAL"):
-                    if (
-                        self.stats.total_batches > 0
-                        and self.stats.total_batches % self.MONITOR_INTERVAL == 0
-                    ):
-                        if self.timeout_manager.should_warn(execution_time_ms):
-                            timeout = self.timeout_manager.get_timeout()
-                            logger.warning(
-                                "⚠️ 执行时间接近超时阈值: "
-                                f"{execution_time_ms:.0f}ms / {timeout * 1000:.0f}ms"
-                            )
-
-            # P1: 显存监控（每个批次都跟踪，但降低检查频率）
-            if hasattr(self, "memory_monitor") and self.memory_monitor:
-                # 跟踪显存使用（估算）- 每个批次都记录
-                estimated_memory = num_keys * 36  # 每个私钥约 36 字节
-                self.memory_monitor.track_allocation(
-                    estimated_memory,
-                    batch_count=self.stats.total_batches,
-                )
-
-                # 降低显存检查频率：每 100 个批次检查一次
-                if hasattr(self, "stats") and self.stats and hasattr(self, "MONITOR_INTERVAL"):
-                    if (
-                        self.stats.total_batches > 0
-                        and self.stats.total_batches % self.MONITOR_INTERVAL == 0
-                    ):
-                        # 检查显存警告
-                        warnings = self.memory_monitor.check_warnings()
-                        if warnings:
-                            for warning in warnings:
-                                logger.warning(warning)
-
-                        # 如果显存压力大，建议减小 batch_size
-                        reduction = self.memory_monitor.get_recommended_batch_reduction()
-                        if reduction > 0:
-                            new_batch_size = int(num_keys * (1 - reduction))
-                            logger.info(
-                                "💡 显存压力，建议减小 batch_size: "
-                                f"{num_keys} -> {new_batch_size}"
-                            )
-        except Exception as perf_error:
-            logger.debug(f"性能指标记录失败: {perf_error}")
+        # 8. 记录性能
+        self._record_performance(num_keys, batch_start_time, len(matches))
 
         return matches
+
 
     def cleanup(self) -> None:
         """清理GPU资源
@@ -1205,5 +1074,3 @@ class GPUKernel(GPUKernelProtocol):
         except Exception as e:
             logger.warning(f"异步日志启用失败: {e}，使用同步日志")
             self._async_log_handler = None
-
-        logger.debug("GPU Kernel资源已清理")

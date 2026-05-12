@@ -59,11 +59,8 @@ def atomic_json_write(
                 f.flush()
                 os.fsync(f.fileno())  # 确保数据写入磁盘
 
-        # 原子替换（同一文件系统内的rename是原子操作）
-        if os.path.exists(filepath):
-            os.replace(temp_file, filepath)
-        else:
-            os.rename(temp_file, filepath)
+        # 原子替换（os.replace在所有平台都是原子操作）
+        os.replace(temp_file, filepath)
 
         logger.debug(f"原子写入成功: {filepath}")
         return True

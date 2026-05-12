@@ -34,14 +34,15 @@ import threading
 import time
 from typing import Any, Dict, List, Optional, Union, cast
 
-# 导入日志配置
-from ..utils import init_logging, get_configured_logger
 
-# 初始化日志系统
-init_logging()
+# 导入日志配置
+from ..utils import get_configured_logger
 
 # 获取模块日志记录器
+# 注意: init_logging() 应由应用入口统一调用，避免重复初始化
 logger = get_configured_logger("GPUMemoryPool")
+
+
 
 
 class GPUMemoryPool:
@@ -779,7 +780,7 @@ class GPUBufferAllocator:
 
 # 全局GPU内存池管理器
 class GlobalGPUMemoryManager:
-    """全局GPU内存管理器
+    """全局GPU内存管理器（单例模式）
 
     管理所有GPU设备的内存池。
 
@@ -789,30 +790,27 @@ class GlobalGPUMemoryManager:
     - 自动清理线程定期淘汰LRU缓冲区 + 按需缩容
     """
 
+    # 类级别：用于保护单例创建的锁
+    _creation_lock = threading.Lock()
     _instance = None
-    _lock = threading.Lock()
-    _pools: Dict[int, "GPUMemoryPool"] = {}
 
-    # P1-6: 自动清理线程 — 类级别类型声明供 mypy 检查
-    _cleanup_thread: Optional[threading.Thread] = None
-    _cleanup_stop_event: threading.Event = threading.Event()
+    def __new__(cls) -> "GlobalGPUMemoryManager":
+        if cls._instance is None:
+            with cls._creation_lock:
+                if cls._instance is None:
+                    cls._instance = super().__new__(cls)
+                    # 实例级别：每个实例有独立的锁和状态
+                    cls._instance._lock = threading.Lock()
+                    cls._instance._pools: Dict[int, "GPUMemoryPool"] = {}
+                    cls._instance._cleanup_thread: Optional[threading.Thread] = None
+                    cls._instance._cleanup_stop_event = threading.Event()
+        return cls._instance
 
     # P1-6: 默认自动清理间隔(秒)
     DEFAULT_AUTO_CLEANUP_INTERVAL = 300  # 5分钟
 
     # P1-6: LRU空闲超时(秒) — 空闲超过此时间的缓冲区被淘汰
     DEFAULT_LRU_IDLE_TIMEOUT = 600  # 10分钟
-
-    def __new__(cls) -> "GlobalGPUMemoryManager":
-        if cls._instance is None:
-            with cls._lock:
-                if cls._instance is None:
-                    cls._instance = super().__new__(cls)
-                    cls._instance._pools = {}
-                    # P1-6: 自动清理线程 — 类级别已声明类型，此处仅初始化
-                    cls._instance._cleanup_thread = None
-                    cls._instance._cleanup_stop_event = threading.Event()
-        return cls._instance
 
     def get_pool(self, context: Any, max_buffers: int = 100) -> GPUMemoryPool:
         """

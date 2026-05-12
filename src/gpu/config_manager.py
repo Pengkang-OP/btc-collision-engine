@@ -237,9 +237,9 @@ class GPUConfigManager:
         return {
             "batch_size": 1_000_000,
             "async_execution": True,
-            "queue_depth": 4,
-            "seed_prefetch_size": 5,
-            "memory_ratio": 0.6,
+            "queue_depth": 8,
+            "seed_prefetch_size": 10,
+            "memory_ratio": 0.70,
             "use_memory_pool": True,
             "pool_max_buffers": 100,
             "pool_max_memory_mb": 512,

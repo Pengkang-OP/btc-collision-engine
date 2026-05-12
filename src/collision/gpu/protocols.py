@@ -266,6 +266,9 @@ class GPUExecutionContext:
     """GPU执行上下文
 
     包含GPU执行所需的所有资源和配置。
+
+    v2.2.2 新增: engine 字段，用于传递 GPU 引擎实例给厂商优化器，
+    使 benchmark_suite / auto_tuner / performance_reporter 等 P2 组件能够初始化。
     """
 
     device: Optional[GPUDevice] = None
@@ -275,6 +278,7 @@ class GPUExecutionContext:
     vendor: str = "unknown"
     config: Optional[Dict[str, Any]] = None
     initialized_at: float = 0.0  # 初始化时间戳
+    engine: Optional[Any] = None  # v2.2.2: GPU 引擎实例引用（用于 P2 组件初始化）
 
 
 @dataclass
