@@ -1,15 +1,15 @@
 """示例碰撞插件"""
 
-import time
-import threading
 import secrets
-from typing import Set, Optional
+import threading
+import time
+
+from src.collision.collision_stats import CollisionStats
+from src.collision.plugins.base_plugin import CollisionPlugin
+from src.core.address_generator import P2PKHAddressGenerator
 
 # P3-3: 统一回调类型别名
-from ..types import ProgressCallback, MatchCallback, CompleteCallback
-from src.collision.plugins.base_plugin import CollisionPlugin
-from src.collision.collision_stats import CollisionStats
-from src.core.address_generator import P2PKHAddressGenerator
+from ..types import CompleteCallback, MatchCallback, ProgressCallback
 
 # v2.2.1迁移: 使用crypto_backend替代secp256k1.py
 # Secp256k1.N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
@@ -29,7 +29,7 @@ class ExamplePlugin(CollisionPlugin):
         """插件描述"""
         return "示例碰撞插件，实现随机碰撞策略"
 
-    def initialize(self, targets: Set[str], **kwargs) -> None:
+    def initialize(self, targets: set[str], **kwargs) -> None:
         """
         初始化插件
 
@@ -42,14 +42,14 @@ class ExamplePlugin(CollisionPlugin):
         self.stats = CollisionStats()
         self._stop_event = threading.Event()
         self._running = False
-        self._thread: Optional[threading.Thread] = None
+        self._thread: threading.Thread | None = None
         self.progress_interval = kwargs.get("progress_interval", 1000)
 
     def start(
         self,
-        on_progress: Optional[ProgressCallback] = None,
-        on_match: Optional[MatchCallback] = None,
-        on_complete: Optional[CompleteCallback] = None,
+        on_progress: ProgressCallback | None = None,
+        on_match: MatchCallback | None = None,
+        on_complete: CompleteCallback | None = None,
     ) -> None:
         """
         开始碰撞

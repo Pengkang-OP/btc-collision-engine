@@ -13,7 +13,7 @@ import os
 import queue
 import threading
 import time
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING
 
 # P3-5: 统一日志获取 + 修复缺失导入
 from ...utils import get_configured_logger
@@ -71,23 +71,23 @@ class RandomSearchMode(BaseSearchMode):
         # 种子预生成队列与线程
         self._seed_queue: queue.Queue = queue.Queue(maxsize=seed_prefetch_size)
         self._seed_stop_event: threading.Event = threading.Event()
-        self._seed_thread: Optional[threading.Thread] = None
-        
+        self._seed_thread: threading.Thread | None = None
+
         # 种子统计信息
         self._seed_generated_count = 0
         self._seed_used_count = 0
         self._seed_generation_errors = 0
-        
+
         # 启动时预填充队列
         if SEED_PREFILL_ON_START:
             self._prefill_seed_queue()
-        
+
         self._start_seed_prefetch_thread()
-        
+
         # 异步结果处理队列与线程
         self._result_queue: queue.Queue = queue.Queue(maxsize=RESULT_QUEUE_SIZE)
         self._result_stop_event: threading.Event = threading.Event()
-        self._result_threads: List[threading.Thread] = []
+        self._result_threads: list[threading.Thread] = []
         self._start_result_processor_threads()
 
     def _start_seed_prefetch_thread(self) -> None:
@@ -106,10 +106,10 @@ class RandomSearchMode(BaseSearchMode):
         prefill_count = min(base_count, self._seed_prefetch_size)
         if prefill_count <= 0:
             return
-        
+
         logger.info(f"预填充种子队列: {prefill_count} 个种子")
         prefilled = 0
-        
+
         try:
             # 批量生成种子
             while prefilled < prefill_count and not self._seed_stop_event.is_set():
@@ -124,19 +124,19 @@ class RandomSearchMode(BaseSearchMode):
                         break
                     prefilled += 1
                     self._seed_generated_count += 1
-            
+
             logger.info(f"预填充完成: {prefilled}/{prefill_count}")
         except Exception as e:
             logger.warning(f"种子预填充失败: {e}")
 
-    def _generate_seed_batch(self, count: int) -> List[bytes]:
+    def _generate_seed_batch(self, count: int) -> list[bytes]:
         """批量生成种子（高效）"""
         seeds = []
         try:
             # 一次性读取大块随机数据，然后分割
             total_bytes = count * 32
             random_data = os.urandom(total_bytes)
-            
+
             for i in range(count):
                 start = i * 32
                 end = start + 32
@@ -149,7 +149,7 @@ class RandomSearchMode(BaseSearchMode):
                     seeds.append(os.urandom(32))
                 except OSError:
                     break
-        
+
         return seeds
 
     def _seed_prefetch_worker(self) -> None:
@@ -158,17 +158,17 @@ class RandomSearchMode(BaseSearchMode):
             try:
                 # v6.4优化：减少检查间隔，更快速响应
                 current_size = self._seed_queue.qsize()
-                
+
                 if current_size < SEED_MIN_QUEUE_SIZE:
                     # v6.4优化：批量生成更多种子
                     needed = min(
                         SEED_BATCH_GENERATE_SIZE * 2,  # v6.4: 增加批量大小
-                        self._seed_prefetch_size - current_size
+                        self._seed_prefetch_size - current_size,
                     )
-                    
+
                     # 批量生成种子（高效）
                     seeds = self._generate_seed_batch(needed)
-                    
+
                     # 快速放入队列
                     for seed in seeds:
                         if self._seed_queue.full():
@@ -177,7 +177,9 @@ class RandomSearchMode(BaseSearchMode):
                         self._seed_generated_count += 1
                 else:
                     # 队列充足，批量补充
-                    batch_size = min(SEED_BATCH_GENERATE_SIZE, self._seed_prefetch_size - current_size)
+                    batch_size = min(
+                        SEED_BATCH_GENERATE_SIZE, self._seed_prefetch_size - current_size
+                    )
                     if batch_size > 0:
                         seeds = self._generate_seed_batch(batch_size)
                         for seed in seeds:
@@ -187,7 +189,7 @@ class RandomSearchMode(BaseSearchMode):
                             self._seed_generated_count += 1
                     else:
                         time.sleep(0.001)  # v6.4: 减少等待时间
-                        
+
             except OSError as e:
                 self._seed_generation_errors += 1
                 logger.warning(f"种子预生成失败: {e}")
@@ -208,10 +210,10 @@ class RandomSearchMode(BaseSearchMode):
             except queue.Empty:
                 logger.debug("种子队列为空，等待补充...")
                 continue
-        
+
         raise RuntimeError("种子生成被中断")
 
-    def get_seed_stats(self) -> Dict[str, int]:
+    def get_seed_stats(self) -> dict[str, int]:
         """获取种子生成统计信息"""
         return {
             "generated": self._seed_generated_count,
@@ -228,7 +230,7 @@ class RandomSearchMode(BaseSearchMode):
                 target=self._result_processor_worker,
                 name=f"ResultProcessor-{i}",
                 daemon=True,
-                args=(i,)
+                args=(i,),
             )
             thread.start()
             self._result_threads.append(thread)
@@ -244,12 +246,12 @@ class RandomSearchMode(BaseSearchMode):
                     result = self._result_queue.get(timeout=0.1)
                 except queue.Empty:
                     continue
-                
+
                 seed = result["seed"]
                 matches = result["matches"]
                 batch_count = result["batch_count"]
                 # current_batch_size = result["batch_size"]  # 暂未使用
-                
+
                 # 处理匹配结果
                 engine._process_gpu_matches_prng(seed, matches)
 
@@ -257,7 +259,7 @@ class RandomSearchMode(BaseSearchMode):
                 # 直接使用结果队列锁保护 stats 更新
                 with self._result_queue.mutex:
                     engine.stats.update(batch_count)
-                
+
                 # 标记任务完成
                 self._result_queue.task_done()
             except Exception as e:
@@ -275,7 +277,7 @@ class RandomSearchMode(BaseSearchMode):
                 logger.warning("种子预生成线程未在 2s 内退出")
         self._seed_thread = None
         logger.info("种子预生成线程已停止")
-        
+
         # 停止结果处理线程
         self._result_stop_event.set()
         for i, thread in enumerate(self._result_threads):
@@ -382,8 +384,7 @@ class RandomSearchMode(BaseSearchMode):
                     cpu_pct = psutil.cpu_percent(interval=None)
                     if cpu_pct > CPU_OVERLOAD_THRESHOLD:
                         logger.debug(
-                            f"CPU使用率 {cpu_pct:.1f}% 超过阈值 "
-                            f"{CPU_OVERLOAD_THRESHOLD}%, 节流 {CPU_THROTTLE_SLEEP}s"
+                            f"CPU使用率 {cpu_pct:.1f}% 超过阈值 {CPU_OVERLOAD_THRESHOLD}%, 节流 {CPU_THROTTLE_SLEEP}s"
                         )
                         time.sleep(CPU_THROTTLE_SLEEP)
                 except OSError:
@@ -397,8 +398,7 @@ class RandomSearchMode(BaseSearchMode):
                     EXP_BACKOFF_BASE * (2 ** min(consecutive_errors - 1, 8)), EXP_BACKOFF_MAX
                 )
                 logger.warning(
-                    f"GPU batch {batch_num}: 异常 (连续第{consecutive_errors}次), "
-                    f"退避 {backoff:.2f}s"
+                    f"GPU batch {batch_num}: 异常 (连续第{consecutive_errors}次), 退避 {backoff:.2f}s"
                 )
                 time.sleep(backoff)
                 continue
@@ -413,7 +413,6 @@ class RandomSearchMode(BaseSearchMode):
     # 异步双缓冲执行模式
     # ------------------------------------------------------------------
 
-
     # ========================================================================
     # 辅助函数 - 拆分自 _execute_async
     # ========================================================================
@@ -425,14 +424,22 @@ class RandomSearchMode(BaseSearchMode):
             device_info = engine._gpu_device.get_device_info()
             if device_info and "name" in device_info:
                 device_name = device_info["name"].lower()
-                if "1660" in device_name: gpu_model = "1660"
-                elif "rtx 40" in device_name or "rtx40" in device_name: gpu_model = "rtx40"
-                elif "rtx 30" in device_name or "rtx30" in device_name: gpu_model = "rtx30"
-                elif "rtx" in device_name: gpu_model = "rtx"
-                elif "arc" in device_name or "intel" in device_name: gpu_model = "intel"
-                elif "rx 7" in device_name or "rx7" in device_name: gpu_model = "amd7000"
-                elif "rx 6" in device_name or "rx6" in device_name: gpu_model = "amd6000"
-                elif "amd" in device_name or "radeon" in device_name: gpu_model = "amd"
+                if "1660" in device_name:
+                    gpu_model = "1660"
+                elif "rtx 40" in device_name or "rtx40" in device_name:
+                    gpu_model = "rtx40"
+                elif "rtx 30" in device_name or "rtx30" in device_name:
+                    gpu_model = "rtx30"
+                elif "rtx" in device_name:
+                    gpu_model = "rtx"
+                elif "arc" in device_name or "intel" in device_name:
+                    gpu_model = "intel"
+                elif "rx 7" in device_name or "rx7" in device_name:
+                    gpu_model = "amd7000"
+                elif "rx 6" in device_name or "rx6" in device_name:
+                    gpu_model = "amd6000"
+                elif "amd" in device_name or "radeon" in device_name:
+                    gpu_model = "amd"
         return gpu_model
 
     def _check_engine_availability(self, engine) -> bool:
@@ -443,20 +450,30 @@ class RandomSearchMode(BaseSearchMode):
         if not hasattr(engine, "_gpu_kernel") or engine._gpu_kernel is None:
             logger.warning("GPU内核不可用")
             return False
-        if not hasattr(engine._gpu_kernel, "_targets_buf") or engine._gpu_kernel._targets_buf is None:
+        if (
+            not hasattr(engine._gpu_kernel, "_targets_buf")
+            or engine._gpu_kernel._targets_buf is None
+        ):
             logger.warning("目标缓冲区不可用")
             return False
         return True
 
-    def _handle_batch_execution(self, engine, seed, batch_size, batch_optimizer, batch_num) -> tuple:
+    def _handle_batch_execution(
+        self, engine, seed, batch_size, batch_optimizer, batch_num
+    ) -> tuple:
         """执行单个批次并返回结果"""
         matches, execution_time_ms = engine._async_executor.run_batch_async(
-            seed, batch_size, engine._gpu_kernel.program,
-            engine._gpu_kernel._targets_buf, len(engine.targets),
+            seed,
+            batch_size,
+            engine._gpu_kernel.program,
+            engine._gpu_kernel._targets_buf,
+            len(engine.targets),
         )
         return matches, execution_time_ms
 
-    def _record_performance_data(self, engine, batch_optimizer, batch_size, execution_time_ms, speed) -> None:
+    def _record_performance_data(
+        self, engine, batch_optimizer, batch_size, execution_time_ms, speed
+    ) -> None:
         """记录性能数据"""
         # 内存使用
         if hasattr(engine, "_gpu_device") and engine._gpu_device:
@@ -467,6 +484,7 @@ class RandomSearchMode(BaseSearchMode):
         # 系统负载
         try:
             import psutil
+
             cpu_load = psutil.cpu_percent(interval=None) / 100.0
             gpu_load = min(speed / 1000000, 1.0)
             batch_optimizer.record_system_load(cpu_load, gpu_load)
@@ -483,10 +501,11 @@ class RandomSearchMode(BaseSearchMode):
         ExceptionHandler.handle_gpu_error("随机碰撞(异步)", e, engine.stats)
         consecutive_errors += 1
         backoff = min(EXP_BACKOFF_BASE * (2 ** min(consecutive_errors - 1, 8)), EXP_BACKOFF_MAX)
-        logger.warning(f"GPU batch {batch_num}: 异常 (连续第{consecutive_errors}次), 退避 {backoff:.2f}s")
+        logger.warning(
+            f"GPU batch {batch_num}: 异常 (连续第{consecutive_errors}次), 退避 {backoff:.2f}s"
+        )
         time.sleep(backoff)
         return consecutive_errors
-
 
     def _execute_async(self) -> None:
         """异步执行版本（双缓冲 + PRNG + CPU过载保护）"""
@@ -504,7 +523,10 @@ class RandomSearchMode(BaseSearchMode):
         # 检测GPU型号并初始化优化器
         gpu_model = self._detect_gpu_model(engine)
         from ..batch_size_optimizer import get_batch_size_optimizer
-        batch_optimizer = get_batch_size_optimizer(engine.batch_size or 1048576, gpu_model=gpu_model)
+
+        batch_optimizer = get_batch_size_optimizer(
+            engine.batch_size or 1048576, gpu_model=gpu_model
+        )
 
         # 初始化状态
         consecutive_errors = 0
@@ -519,12 +541,15 @@ class RandomSearchMode(BaseSearchMode):
                 current_batch_size = actual_batch_size
 
         # 双缓冲机制
-        buffer_data = {"A": {"seed": self._generate_seed(), "batch_size": current_batch_size},
-                       "B": {"seed": None, "batch_size": current_batch_size}}
+        buffer_data = {
+            "A": {"seed": self._generate_seed(), "batch_size": current_batch_size},
+            "B": {"seed": None, "batch_size": current_batch_size},
+        }
         current_buffer = "A"
 
         try:
             import psutil
+
             while not engine._stop_event.is_set():
                 # CPU过载检查
                 try:
@@ -556,7 +581,8 @@ class RandomSearchMode(BaseSearchMode):
                     seed = buffer_data[current_buffer]["seed"]
                     batch_size = buffer_data[current_buffer]["batch_size"]
                     matches, execution_time_ms = self._handle_batch_execution(
-                        engine, seed, batch_size, batch_optimizer, engine.stats.total_batches)
+                        engine, seed, batch_size, batch_optimizer, engine.stats.total_batches
+                    )
 
                     if engine._stop_event.is_set():
                         break
@@ -575,15 +601,21 @@ class RandomSearchMode(BaseSearchMode):
                     effective_time_ms = max(execution_time_ms, 0.001)
                     speed = batch_size / (effective_time_ms / 1000)
                     if engine.stats.total_batches <= 5 or engine.stats.total_batches % 10 == 0:
-                        logger.debug(f"GPU batch {engine.stats.total_batches}: {batch_size:,} keys, "
-                                    f"{execution_time_ms:.2f}ms, {speed:.0f} keys/s")
+                        logger.debug(
+                            f"GPU batch {engine.stats.total_batches}: {batch_size:,} keys, "
+                            f"{execution_time_ms:.2f}ms, {speed:.0f} keys/s"
+                        )
 
-                    self._record_performance_data(engine, batch_optimizer, batch_size, execution_time_ms, speed)
+                    self._record_performance_data(
+                        engine, batch_optimizer, batch_size, execution_time_ms, speed
+                    )
                     consecutive_errors = 0
                     current_buffer = next_buffer
 
                 except Exception as e:
-                    result = self._handle_batch_error(e, engine, engine.stats.total_batches, consecutive_errors)
+                    result = self._handle_batch_error(
+                        e, engine, engine.stats.total_batches, consecutive_errors
+                    )
                     if result == -1:  # 用户中断
                         break
                     consecutive_errors = result
@@ -603,7 +635,6 @@ class RandomSearchMode(BaseSearchMode):
         engine.stats.update(batch_count)
         if engine.on_complete:
             engine.on_complete(engine.stats.snapshot())
-
 
     def _process_matches(self, matches, seed, batch_size) -> None:
         """处理匹配结果"""

@@ -24,18 +24,18 @@ __version__ = "6.0.0"
 __author__ = "BTC Project"
 
 # 直接导入（非延迟），避免循环依赖
-from .facade import GPUEngineFacade
-from .monitoring import PerformanceMonitoringPipeline
-from .core import CollisionCore
-from .vendor_strategy import VendorOptimizationFactory
-
-# Phase 2 新增适配器
-from .device_manager_adapter import DeviceManagerAdapter
-from .kernel_adapter import GPUKernelAdapter
 from .async_pipeline_adapter import AsyncPipelineAdapter
+from .core import CollisionCore
 
 # Phase 3 新增适配器
 from .data_logger_adapter import DataLoggerAdapter
+
+# Phase 2 新增适配器
+from .device_manager_adapter import DeviceManagerAdapter
+from .facade import GPUEngineFacade
+from .kernel_adapter import GPUKernelAdapter
+from .monitoring import PerformanceMonitoringPipeline
+from .vendor_strategy import VendorOptimizationFactory
 
 
 # 工厂函数（向后兼容：支持延迟导入/依赖注入场景）

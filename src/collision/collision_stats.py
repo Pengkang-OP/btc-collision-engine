@@ -1,9 +1,8 @@
 """对撞统计数据管理"""
 
-import time
-import threading
 import hashlib
-from typing import List, Dict
+import threading
+import time
 
 
 class CollisionStats:
@@ -20,7 +19,7 @@ class CollisionStats:
         self.speed: float = 0.0  # 每秒检测速率
         self.elapsed: float = 0.0  # 已运行时间(秒)
         self.start_time: float = 0.0  # 开始时间戳
-        self.matches: List[Dict] = []  # 匹配结果列表（仅包含地址，不包含私钥）
+        self.matches: list[dict] = []  # 匹配结果列表（仅包含地址，不包含私钥）
         self._lock = threading.Lock()  # 线程锁
         self._match_count: int = 0  # 匹配计数（用于统计，不存储私钥）
         # ETA 相关
@@ -231,7 +230,7 @@ class CollisionStats:
         with self._lock:
             self.wif_encode_errors += 1
 
-    def get_error_rates(self) -> Dict[str, float]:
+    def get_error_rates(self) -> dict[str, float]:
         """获取各类错误率（错误数/总检查数）
 
         Returns:

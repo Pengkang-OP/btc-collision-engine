@@ -5,9 +5,9 @@
 """
 
 # P3-5: 统一日志获取
-from ...utils import get_configured_logger
-from typing import TYPE_CHECKING, Tuple, Any
+from typing import TYPE_CHECKING, Any
 
+from ...utils import get_configured_logger
 from .base_search import BaseSearchMode
 
 if TYPE_CHECKING:
@@ -36,7 +36,7 @@ class BruteForceSearchMode(BaseSearchMode):
 
         current = start
 
-        def gen_keys() -> Tuple[bytes, int]:
+        def gen_keys() -> tuple[bytes, int]:
             nonlocal current
             batch_end = current + engine.batch_size
             private_keys = self._generate_sequential_keys(current, engine.batch_size)

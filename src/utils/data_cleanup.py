@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """数据清理模块
 
 自动清理过期的临时文件、日志和监控数据，防止磁盘空间耗尽。
@@ -10,7 +9,7 @@ import shutil
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +24,7 @@ class DataCleaner:
     - 监控数据自动归档
     """
 
-    def __init__(self, project_root: Optional[str] = None) -> None:
+    def __init__(self, project_root: str | None = None) -> None:
         """初始化数据清理器
 
         参数:
@@ -36,7 +35,7 @@ class DataCleaner:
         )
         self.stats = {"files_removed": 0, "space_freed_bytes": 0, "dirs_cleaned": 0, "errors": 0}
 
-    def clean_temp_files(self, max_age_days: int = 7, dry_run: bool = False) -> Tuple[int, int]:
+    def clean_temp_files(self, max_age_days: int = 7, dry_run: bool = False) -> tuple[int, int]:
         """清理临时文件
 
         参数:
@@ -83,7 +82,7 @@ class DataCleaner:
         )
         return files_removed, space_freed
 
-    def clean_old_data(self, max_age_days: int = 30, dry_run: bool = False) -> Tuple[int, int]:
+    def clean_old_data(self, max_age_days: int = 30, dry_run: bool = False) -> tuple[int, int]:
         """清理过期历史数据
 
         参数:
@@ -173,7 +172,7 @@ class DataCleaner:
 
     def clean_monitoring_data(
         self, max_age_days: int = 30, dry_run: bool = False
-    ) -> Tuple[int, int]:
+    ) -> tuple[int, int]:
         """清理监控数据
 
         参数:
@@ -220,7 +219,7 @@ class DataCleaner:
 
     def clean_old_reports(
         self, max_age_days: int = 7, archive_dir: str = "archive"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """清理过期的报告文件，将超过指定天数的报告归档
 
         Args:
@@ -444,10 +443,10 @@ def main() -> None:
     # 显示磁盘使用情况
     disk_usage = cleaner.get_disk_usage()
     if disk_usage:
-        print(f"磁盘使用: {
-            disk_usage['used_gb']:.2f}GB / {
-            disk_usage['total_gb']:.2f}GB ({
-            disk_usage['usage_percent']:.1f}%)")
+        print(
+            f"磁盘使用: {disk_usage['used_gb']:.2f}GB / {disk_usage['total_gb']:.2f}GB ({
+                disk_usage['usage_percent']:.1f}%)"
+        )
         print(f"可用空间: {disk_usage['free_gb']:.2f}GB")
         print()
 

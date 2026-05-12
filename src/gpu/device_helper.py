@@ -6,8 +6,9 @@
 迁移日期: 2026-04-22
 """
 
+from typing import Any
+
 from ..utils import get_configured_logger
-from typing import Optional, Any
 
 logger = get_configured_logger("GPUDeviceHelper")
 
@@ -37,7 +38,7 @@ class GPUDeviceHelper:
     """GPU资源不足错误关键词列表"""
 
     @staticmethod
-    def handle_gpu_batch_error(mode: str, e: Exception, stats: Optional[Any] = None) -> bool:
+    def handle_gpu_batch_error(mode: str, e: Exception, stats: Any | None = None) -> bool:
         """统一处理GPU计算批次异常
 
         Args:

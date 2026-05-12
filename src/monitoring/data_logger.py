@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 比特币密钥碰撞检测数据日志系统
 
@@ -7,23 +6,24 @@
 支持数据存储、轮转机制和报告生成。
 """
 
-import shutil
-import os
-import sys
-import time
-import json
-from src.utils.fast_json import fast_dump, fast_load, fast_loads
-import statistics
-import threading
 import copy
+import json
+import os
+import shutil
+import statistics
+import sys
 import tempfile
-from datetime import datetime
-from typing import Dict, List, Optional, Any
+import threading
+import time
 from collections import deque
+from datetime import datetime
+from typing import Any
+
+from src.monitoring.storage_config import DataStorageConfig
 
 # 导入现有日志系统
 from src.utils import get_configured_logger
-from src.monitoring.storage_config import DataStorageConfig
+from src.utils.fast_json import fast_dump, fast_load, fast_loads
 
 
 class DataLogger:
@@ -34,13 +34,13 @@ class DataLogger:
     """
 
     # 文件原子替换重试的指数退避延迟序列（秒）
-    _REPLACE_BACKOFF_DELAYS: List[float] = [1.0, 2.0, 4.0]
+    _REPLACE_BACKOFF_DELAYS: list[float] = [1.0, 2.0, 4.0]
     # performance.log 轮转阈值（字节），超过此大小自动轮转
     _PERF_LOG_MAX_SIZE: int = 50 * 1024 * 1024  # 50 MB
     # performance.log 最大保留的轮转副本数
     _PERF_LOG_MAX_ROTATIONS: int = 3
 
-    def __init__(self, storage_dir: Optional[str] = None) -> None:
+    def __init__(self, storage_dir: str | None = None) -> None:
         """
         初始化数据日志记录器
 
@@ -67,7 +67,7 @@ class DataLogger:
         self._cleanup_stale_temp_files(max_age_seconds=3600)
 
         # 数据缓存
-        self._current_data: Dict[str, Any] = {}
+        self._current_data: dict[str, Any] = {}
         self._history_buffer: deque = deque(maxlen=1000)  # 限制历史数据数量
         self._error_buffer: deque = deque(maxlen=500)  # 限制错误日志数量
 
@@ -78,7 +78,7 @@ class DataLogger:
         self._start_time = time.time()
         self._total_checks = 0
         self._matches_found = 0
-        self._speed_samples: List[float] = []
+        self._speed_samples: list[float] = []
 
         self.logger.info("数据日志系统初始化完成")
 
@@ -279,7 +279,7 @@ class DataLogger:
         target_count: int = 0,
         is_running: bool = False,
         current_position: int = 0,
-        additional_info: Optional[Dict[str, Any]] = None,
+        additional_info: dict[str, Any] | None = None,
     ) -> None:
         """
         记录引擎状态数据
@@ -326,8 +326,8 @@ class DataLogger:
         self,
         error_type: str,
         message: str,
-        exception: Optional[Exception] = None,
-        context: Optional[Dict[str, Any]] = None,
+        exception: Exception | None = None,
+        context: dict[str, Any] | None = None,
     ) -> None:
         """
         记录错误信息
@@ -359,7 +359,7 @@ class DataLogger:
             # 读取现有错误日志
             errors = []
             if os.path.exists(self.error_log_file):
-                with open(self.error_log_file, "r", encoding="utf-8") as f:
+                with open(self.error_log_file, encoding="utf-8") as f:
                     errors = fast_load(f)
 
             # 添加新错误
@@ -504,9 +504,7 @@ class DataLogger:
                         "# 格式: timestamp,speed,total_checked,matches,cpu_usage,memory_usage,threads\n"  # noqa: E501
                     )
 
-                self.logger.info(
-                    f"performance.log 达到 {size / 1024 / 1024:.1f} MB，已轮转"
-                )
+                self.logger.info(f"performance.log 达到 {size / 1024 / 1024:.1f} MB，已轮转")
         except Exception as e:
             self.logger.warning(f"performance.log 轮转失败（非致命）: {e}")
 
@@ -536,31 +534,27 @@ class DataLogger:
                 if attempt < max_retries - 1:
                     delay = delays[min(attempt, len(delays) - 1)]
                     self.logger.warning(
-                        f"文件替换被拒绝 (尝试 {attempt + 1}/{max_retries})，"
-                        f"{delay:.0f}s 后重试: {dst}"
+                        f"文件替换被拒绝 (尝试 {attempt + 1}/{max_retries})，{delay:.0f}s 后重试: {dst}"
                     )
                     time.sleep(delay)
                     continue
                 # 最后一次尝试失败，使用回退方案
                 self.logger.warning(
-                    f"原子替换全部失败 ({max_retries}/{max_retries})，"
-                    f"回退到直接写入: {dst}"
+                    f"原子替换全部失败 ({max_retries}/{max_retries})，回退到直接写入: {dst}"
                 )
                 return self._fallback_direct_write(src, dst)
             except OSError as e:
                 if attempt < max_retries - 1:
                     delay = delays[min(attempt, len(delays) - 1)]
                     self.logger.warning(
-                        f"文件替换失败 (尝试 {attempt + 1}/{max_retries})，"
-                        f"{delay:.0f}s 后重试: {e} - {dst}"
+                        f"文件替换失败 (尝试 {attempt + 1}/{max_retries})，{delay:.0f}s 后重试: {e} - {dst}"
                     )
                     time.sleep(delay)
                     continue
                 # 最后一次尝试失败，也尝试回退方案
                 # （某些杀毒软件返回非标准 OSError 而非 PermissionError）
                 self.logger.warning(
-                    f"原子替换全部失败 ({max_retries}/{max_retries})，"
-                    f"回退到直接写入: {e} - {dst}"
+                    f"原子替换全部失败 ({max_retries}/{max_retries})，回退到直接写入: {e} - {dst}"
                 )
                 return self._fallback_direct_write(src, dst)
 
@@ -581,7 +575,7 @@ class DataLogger:
         """
         try:
             # 读取临时文件内容
-            with open(src, "r", encoding="utf-8") as f:
+            with open(src, encoding="utf-8") as f:
                 content = f.read()
 
             # 使用唯一临时文件名，避免并发竞争
@@ -704,7 +698,7 @@ class DataLogger:
             return []
 
         try:
-            with open(self.history_data_file, "r", encoding="utf-8") as f:
+            with open(self.history_data_file, encoding="utf-8") as f:
                 data = fast_load(f)
                 if isinstance(data, list):
                     return data
@@ -728,16 +722,12 @@ class DataLogger:
             file_size = os.path.getsize(self.history_data_file)
             max_size = 10 * 1024 * 1024  # 10MB限制
             if file_size > max_size:
-                self.logger.error(f"历史文件过大({
-                    file_size
-                    / 1024
-                    / 1024:.2f}MB)，超过限制({
-                    max_size
-                    / 1024
-                    / 1024:.0f}MB)，跳过恢复")
+                self.logger.error(
+                    f"历史文件过大({file_size / 1024 / 1024:.2f}MB)，超过限制({max_size / 1024 / 1024:.0f}MB)，跳过恢复"
+                )
                 return []
 
-            with open(self.history_data_file, "r", encoding="utf-8") as f:
+            with open(self.history_data_file, encoding="utf-8") as f:
                 content = f.read()
 
             # 使用括号匹配算法找到完整的JSON对象
@@ -802,12 +792,12 @@ class DataLogger:
             self.logger.error(f"恢复历史数据失败: {e}")
             return []
 
-    def get_current_data(self) -> Dict[str, Any]:
+    def get_current_data(self) -> dict[str, Any]:
         """获取当前数据"""
         with self._lock:
             return self._current_data.copy()
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """获取统计信息"""
         with self._lock:
             if not self._speed_samples:
@@ -832,7 +822,7 @@ class DataLogger:
                 ),
             }
 
-    def generate_report(self, report_type: str = "daily") -> Dict[str, Any]:
+    def generate_report(self, report_type: str = "daily") -> dict[str, Any]:
         """
         生成报告
 
@@ -851,7 +841,7 @@ class DataLogger:
             # 读取历史数据
             history = []
             if os.path.exists(self.history_data_file):
-                with open(self.history_data_file, "r", encoding="utf-8") as f:
+                with open(self.history_data_file, encoding="utf-8") as f:
                     history = fast_load(f)
 
             if not history:
@@ -919,7 +909,7 @@ class DataLogger:
             self.logger.error(f"生成报告失败: {e}")
             return {"error": str(e)}
 
-    def _analyze_trends(self, data: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _analyze_trends(self, data: list[dict[str, Any]]) -> dict[str, Any]:
         """分析数据趋势"""
         if len(data) < 2:
             return {"message": "数据点不足，无法分析趋势"}
@@ -929,7 +919,7 @@ class DataLogger:
         cpu_usages = [d.get("cpu_usage", 0) for d in data]
         memory_usages = [d.get("memory_usage", 0) for d in data]
 
-        def calculate_trend(values: List[float]) -> str:
+        def calculate_trend(values: list[float]) -> str:
             if len(values) < 2:
                 return "stable"
             first_half_avg = statistics.mean(values[: len(values) // 2])
@@ -961,8 +951,8 @@ class DataLogger:
         }
 
     def _generate_recommendations(
-        self, speeds: List[float], cpu_usages: List[float], memory_usages: List[float]
-    ) -> List[str]:
+        self, speeds: list[float], cpu_usages: list[float], memory_usages: list[float]
+    ) -> list[str]:
         """生成优化建议"""
         recommendations = []
 
@@ -1002,10 +992,10 @@ class DataLogger:
         default_enabled = True
         default_max_age_days = 7
         try:
-            from src.config.config_manager import ConfigManager
-
             # 尝试定位配置文件路径（相对于当前工作目录或脚本目录）
             import pathlib
+
+            from src.config.config_manager import ConfigManager
 
             candidates = [
                 pathlib.Path("config.json"),
@@ -1095,7 +1085,7 @@ class DataLogger:
         try:
             # 清理历史数据
             if os.path.exists(self.history_data_file):
-                with open(self.history_data_file, "r", encoding="utf-8") as f:
+                with open(self.history_data_file, encoding="utf-8") as f:
                     history = fast_load(f)
 
                 cleaned_history = [d for d in history if d.get("timestamp", 0) >= cutoff_time]
@@ -1107,7 +1097,7 @@ class DataLogger:
 
             # 清理错误日志
             if os.path.exists(self.error_log_file):
-                with open(self.error_log_file, "r", encoding="utf-8") as f:
+                with open(self.error_log_file, encoding="utf-8") as f:
                     errors = fast_load(f)
 
                 cleaned_errors = [e for e in errors if e.get("timestamp", 0) >= cutoff_time]
@@ -1172,7 +1162,7 @@ class DataLogger:
                 errors = []
                 if os.path.exists(self.error_log_file):
                     try:
-                        with open(self.error_log_file, "r", encoding="utf-8") as f:
+                        with open(self.error_log_file, encoding="utf-8") as f:
                             errors = fast_load(f)
                     except (json.JSONDecodeError, OSError) as e:
                         self.logger.warning(f"读取错误日志文件失败，将覆盖: {e}")

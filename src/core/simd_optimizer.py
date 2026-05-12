@@ -27,11 +27,10 @@
 - 不支持GPU的环境
 """
 
-from typing import List, Tuple
 import hashlib
 
 # 导入日志配置
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger, init_logging
 
 # 初始化日志系统（如果尚未初始化）
 init_logging()
@@ -78,7 +77,7 @@ class BatchOptimizer:
         self.p = self.curve.P
         self.n = self.curve.N
 
-    def batch_private_key_to_int(self, private_keys: List[bytes]) -> List[int]:
+    def batch_private_key_to_int(self, private_keys: list[bytes]) -> list[int]:
         """批量将私钥字节转换为整数
 
         注意：私钥是256位（32字节），必须使用Python原生int（支持任意精度）。
@@ -92,7 +91,7 @@ class BatchOptimizer:
         """
         return [int.from_bytes(pk, "big") for pk in private_keys]
 
-    def batch_ripemd160(self, data_list: List[bytes]) -> List[bytes]:
+    def batch_ripemd160(self, data_list: list[bytes]) -> list[bytes]:
         """批量RIPEMD160哈希（使用NumPy优化内存布局）
 
         注意：RIPEMD160本身无法向量化，但可以优化内存访问模式
@@ -112,7 +111,7 @@ class BatchOptimizer:
 
         return results
 
-    def batch_sha256(self, data_list: List[bytes]) -> List[bytes]:
+    def batch_sha256(self, data_list: list[bytes]) -> list[bytes]:
         """批量SHA256哈希（优化版本）
 
         Args:
@@ -128,7 +127,7 @@ class BatchOptimizer:
 
         return results
 
-    def batch_base58_encode(self, numbers: List[int]) -> List[str]:
+    def batch_base58_encode(self, numbers: list[int]) -> list[str]:
         """批量Base58编码（优化版本）
 
         Args:
@@ -155,7 +154,7 @@ class BatchOptimizer:
 
         return results
 
-    def batch_hash160(self, public_keys: List[bytes]) -> List[bytes]:
+    def batch_hash160(self, public_keys: list[bytes]) -> list[bytes]:
         """批量Hash160（SHA256 + RIPEMD160）
 
         Args:
@@ -173,8 +172,8 @@ class BatchOptimizer:
         return hash160_results
 
     def batch_address_from_hash160(
-        self, hash160_list: List[bytes], version_byte: bytes = b"\x00"
-    ) -> List[str]:
+        self, hash160_list: list[bytes], version_byte: bytes = b"\x00"
+    ) -> list[str]:
         """批量从Hash160生成比特币地址
 
         Args:
@@ -226,7 +225,7 @@ class BatchCollisionProcessor:
 
         logger.info(f"BatchCollisionProcessor初始化: batch_size={batch_size:,}")
 
-    def set_targets(self, addresses: List[str]):
+    def set_targets(self, addresses: list[str]):
         """设置目标地址
 
         Args:
@@ -236,8 +235,8 @@ class BatchCollisionProcessor:
         logger.info(f"设置目标地址: {len(addresses)}个")
 
     def process_batch(
-        self, private_keys: List[bytes], address_generator
-    ) -> List[Tuple[bytes, str]]:
+        self, private_keys: list[bytes], address_generator
+    ) -> list[tuple[bytes, str]]:
         """批量处理私钥，检测碰撞
 
         Args:
@@ -263,7 +262,7 @@ class BatchCollisionProcessor:
 
         return matches
 
-    def _batch_generate_addresses(self, private_keys: List[bytes], address_generator) -> List[str]:
+    def _batch_generate_addresses(self, private_keys: list[bytes], address_generator) -> list[str]:
         """批量生成比特币地址
 
         Args:
@@ -299,7 +298,7 @@ class NumpyOptimizedAddressGenerator:
 
         self.base_generator = AddressGenerator()
 
-    def batch_generate(self, private_keys: List[bytes], compressed: bool = True) -> List[str]:
+    def batch_generate(self, private_keys: list[bytes], compressed: bool = True) -> list[str]:
         """批量生成地址
 
         Args:

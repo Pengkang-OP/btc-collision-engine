@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 分页管理模块
 
 提供分页功能，用于显示大量数据，如匹配结果、性能数据和错误日志。
 """
 
-from typing import List, Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 
 class PaginationManager:
@@ -19,7 +19,7 @@ class PaginationManager:
     - 自定义数据分页显示
     """
 
-    def __init__(self, items: List[Any], page_size: int = 10) -> None:
+    def __init__(self, items: list[Any], page_size: int = 10) -> None:
         """初始化分页管理器
 
         Args:
@@ -31,7 +31,7 @@ class PaginationManager:
         self.current_page = 1
         self.total_pages = (len(items) + page_size - 1) // page_size
 
-    def get_current_page_items(self) -> List[Any]:
+    def get_current_page_items(self) -> list[Any]:
         """获取当前页的数据
 
         Returns:
@@ -134,7 +134,7 @@ class PaginationManager:
             output.print(" ".join(nav_options))
 
 
-def display_paginated_results(results: List[dict], title: str = "匹配结果") -> None:
+def display_paginated_results(results: list[dict], title: str = "匹配结果") -> None:
     """分页显示匹配结果
 
     Args:
@@ -180,7 +180,7 @@ def display_paginated_results(results: List[dict], title: str = "匹配结果") 
             paginator.go_to_page(page)
 
 
-def display_paginated_performance(data: List[dict], title: str = "性能数据") -> None:
+def display_paginated_performance(data: list[dict], title: str = "性能数据") -> None:
     """分页显示性能数据
 
     Args:
@@ -227,7 +227,7 @@ def display_paginated_performance(data: List[dict], title: str = "性能数据")
             paginator.go_to_page(page)
 
 
-def display_paginated_errors(errors: List[dict], title: str = "错误日志") -> None:
+def display_paginated_errors(errors: list[dict], title: str = "错误日志") -> None:
     """分页显示错误日志
 
     Args:

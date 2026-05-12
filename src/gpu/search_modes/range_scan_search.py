@@ -5,9 +5,9 @@
 """
 
 # P3-5: 统一日志获取
-from ...utils import get_configured_logger
-from typing import TYPE_CHECKING, Tuple, Any
+from typing import TYPE_CHECKING, Any
 
+from ...utils import get_configured_logger
 from .base_search import BaseSearchMode
 
 if TYPE_CHECKING:
@@ -40,7 +40,7 @@ class RangeScanSearchMode(BaseSearchMode):
         next_batch_size = batch_end - current
         next_private_keys = self._generate_sequential_keys(current, next_batch_size)
 
-        def gen_keys() -> Tuple[bytes, int]:
+        def gen_keys() -> tuple[bytes, int]:
             nonlocal current, next_private_keys, next_batch_size
             # 使用预生成的私钥
             keys = next_private_keys

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """系统健康检查模块
 
 提供系统环境和依赖的健康状态检查，帮助快速诊断问题。
@@ -24,7 +23,6 @@ import os
 import shutil
 import socket
 import sys
-from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +44,7 @@ class HealthChecker:
     - 配置文件权限
     """
 
-    def __init__(self, project_root: Optional[str] = None) -> None:
+    def __init__(self, project_root: str | None = None) -> None:
         """初始化健康检查器
 
         参数:
@@ -55,16 +53,16 @@ class HealthChecker:
         self.project_root = project_root or os.path.dirname(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         )
-        self.results: Dict[str, Tuple[bool, str]] = {}
+        self.results: dict[str, tuple[bool, str]] = {}
         self.required_configs = ["config.json", "config.production.json"]
 
-    def check_python_version(self) -> Tuple[bool, str]:
+    def check_python_version(self) -> tuple[bool, str]:
         """检查Python版本兼容性"""
         if sys.version_info < (3, 9):
             return False, f"Python版本过低: {sys.version} (需要3.9+)"
         return True, f"Python版本: {sys.version}"
 
-    def check_dependencies(self) -> Tuple[bool, str]:
+    def check_dependencies(self) -> tuple[bool, str]:
         """检查关键依赖是否安装"""
         required_deps = {
             "coincurve": "椭圆曲线运算",
@@ -89,7 +87,7 @@ class HealthChecker:
             return False, f"缺少依赖: {', '.join(missing)}"
         return True, f"所有依赖已安装: {', '.join(available)}"
 
-    def check_config_file(self) -> Tuple[bool, str]:
+    def check_config_file(self) -> tuple[bool, str]:
         """检查配置文件"""
         config_path = os.path.join(self.project_root, "config.json")
 
@@ -97,7 +95,7 @@ class HealthChecker:
             return False, f"配置文件不存在: {config_path}"
 
         try:
-            with open(config_path, "r", encoding="utf-8") as f:
+            with open(config_path, encoding="utf-8") as f:
                 config = json.load(f)
 
             if not isinstance(config, dict):
@@ -109,7 +107,7 @@ class HealthChecker:
         except Exception as e:
             return False, f"配置文件检查失败: {e}"
 
-    def check_disk_space(self, min_mb: int = 100) -> Tuple[bool, str]:
+    def check_disk_space(self, min_mb: int = 100) -> tuple[bool, str]:
         """检查磁盘空间
 
         参数:
@@ -126,7 +124,7 @@ class HealthChecker:
         except Exception as e:
             return False, f"磁盘空间检查失败: {e}"
 
-    def check_directories(self) -> Tuple[bool, str]:
+    def check_directories(self) -> tuple[bool, str]:
         """检查必要目录是否存在且有权限"""
         required_dirs = ["logs", "data_logs", "monitoring_data"]
         missing = []
@@ -160,7 +158,7 @@ class HealthChecker:
             return False, "; ".join(issues)
         return True, f"所有必要目录正常: {', '.join(required_dirs)}"
 
-    def check_gpu_availability(self) -> Tuple[bool, str]:
+    def check_gpu_availability(self) -> tuple[bool, str]:
         """检查GPU设备可用性"""
         try:
             import pyopencl as cl
@@ -184,7 +182,7 @@ class HealthChecker:
         except Exception as e:
             return False, f"GPU检查失败: {e}"
 
-    def check_monitoring_system(self) -> Tuple[bool, str]:
+    def check_monitoring_system(self) -> tuple[bool, str]:
         """检查监控系统状态"""
         try:
             from src.monitoring.monitoring_system import DataStorage
@@ -213,7 +211,7 @@ class HealthChecker:
         except Exception as e:
             return False, f"监控系统检查失败: {e}"
 
-    def check_config_files(self) -> Tuple[bool, str]:
+    def check_config_files(self) -> tuple[bool, str]:
         """检查所有必需的配置文件"""
         missing = []
         invalid = []
@@ -226,7 +224,7 @@ class HealthChecker:
                 continue
 
             try:
-                with open(config_path, "r", encoding="utf-8") as f:
+                with open(config_path, encoding="utf-8") as f:
                     config = json.load(f)
 
                 if not isinstance(config, dict):
@@ -244,7 +242,7 @@ class HealthChecker:
             return False, "; ".join(issues)
         return True, f"所有配置文件正常: {', '.join(self.required_configs)}"
 
-    def check_config_permissions(self) -> Tuple[bool, str]:
+    def check_config_permissions(self) -> tuple[bool, str]:
         """检查配置文件权限"""
         insecure_files = []
 
@@ -267,7 +265,7 @@ class HealthChecker:
             return False, f"配置文件权限不安全: {', '.join(insecure_files)} (建议设置为 600)"
         return True, "配置文件权限安全"
 
-    def check_network_connectivity(self) -> Tuple[bool, str]:
+    def check_network_connectivity(self) -> tuple[bool, str]:
         """检查网络连通性"""
         test_hosts = [
             ("www.google.com", 443),
@@ -295,7 +293,7 @@ class HealthChecker:
             return False, f"网络连接失败: {', '.join(failed)}"
         return True, f"网络连接正常: {', '.join(succeeded)}"
 
-    def check_port_availability(self, ports: Optional[List[int]] = None) -> Tuple[bool, str]:
+    def check_port_availability(self, ports: list[int] | None = None) -> tuple[bool, str]:
         """检查端口占用情况"""
         ports = ports or [9090, 3000, 9100]
         used_ports = []
@@ -310,7 +308,7 @@ class HealthChecker:
             return False, f"端口已被占用: {', '.join(used_ports)}"
         return True, f"所有端口可用: {', '.join(map(str, ports))}"
 
-    def check_process_status(self) -> Tuple[bool, str]:
+    def check_process_status(self) -> tuple[bool, str]:
         """检查进程状态"""
         try:
             import psutil
@@ -334,7 +332,7 @@ class HealthChecker:
         except Exception as e:
             return False, f"进程检查失败: {e}"
 
-    def check_dependency_versions(self) -> Tuple[bool, str]:
+    def check_dependency_versions(self) -> tuple[bool, str]:
         """检查依赖版本兼容性"""
         version_requirements = {
             "coincurve": (18, 0, 0),
@@ -371,7 +369,7 @@ class HealthChecker:
 
     def run_all_checks(
         self, include_gpu: bool = False, include_network: bool = False
-    ) -> Dict[str, Tuple[bool, str]]:
+    ) -> dict[str, tuple[bool, str]]:
         """运行所有健康检查
 
         参数:

@@ -14,10 +14,10 @@
 - 详细性能报告 → performance_reporter.py (PerformanceReportGenerator)
 """
 
-import time
 import threading
+import time
 from collections import deque
-from typing import Dict, Any, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional
 
 # P3-5: 统一日志获取 + 修复缺失导入
 from ..utils import get_configured_logger
@@ -60,7 +60,7 @@ class GPUEngineMonitor:
         self._engine = engine
 
         # 调整历史存储
-        self._adjustment_history: List[Dict[str, Any]] = []
+        self._adjustment_history: list[dict[str, Any]] = []
         self._adjustment_history_lock = threading.Lock()
 
         # 性能窗口（最近100批的性能数据）
@@ -96,7 +96,7 @@ class GPUEngineMonitor:
         """
         change_percent = ((new_size - old_size) / old_size * 100) if old_size > 0 else 0.0
 
-        record: Dict[str, Any] = {
+        record: dict[str, Any] = {
             "timestamp": time.time(),
             "old_batch_size": old_size,
             "new_batch_size": new_size,
@@ -120,7 +120,7 @@ class GPUEngineMonitor:
             reason,
         )
 
-    def get_adjustment_history(self, limit: int = 10) -> List[Dict[str, Any]]:
+    def get_adjustment_history(self, limit: int = 10) -> list[dict[str, Any]]:
         """获取 batch_size 调整历史（按时间倒序）
 
         Args:
@@ -135,7 +135,7 @@ class GPUEngineMonitor:
         history.sort(key=lambda x: x["timestamp"], reverse=True)
         return history[:limit]
 
-    def get_adjustment_stats(self) -> Dict[str, Any]:
+    def get_adjustment_stats(self) -> dict[str, Any]:
         """统计调整历史摘要
 
         Returns:
@@ -189,7 +189,7 @@ class GPUEngineMonitor:
     # 引擎状态快照
     # ------------------------------------------------------------------
 
-    def get_engine_status(self) -> Dict[str, Any]:
+    def get_engine_status(self) -> dict[str, Any]:
         """获取引擎运行状态快照
 
         整合引擎基本信息、当前配置和监控统计，供外部组件或 GUI 轮询。
@@ -368,8 +368,7 @@ class GPUEngineMonitor:
                 self.record_adjustment(old_size, new_size, reason, details)
 
                 logger.info(
-                    f"batch_size调整: {old_size:,} -> {new_size:,} "
-                    f"(原因: {reason}, 详情: {details})"
+                    f"batch_size调整: {old_size:,} -> {new_size:,} (原因: {reason}, 详情: {details})"
                 )
 
                 return True
@@ -379,7 +378,7 @@ class GPUEngineMonitor:
 
         return False
 
-    def get_performance_stats(self) -> Dict[str, Any]:
+    def get_performance_stats(self) -> dict[str, Any]:
         """获取性能统计信息
 
         Returns:

@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 UI工具函数模块
 
 提供GUI界面常用的工具函数，包括时间格式化、文本处理、数字格式化等。
 """
 
-from datetime import datetime
-from typing import Optional, Union
-import re
 import math
+import re
+from datetime import datetime
 
 
-def format_timestamp(timestamp: str, format_str: str = "%m-%d %H:%M") -> Optional[str]:
+def format_timestamp(timestamp: str, format_str: str = "%m-%d %H:%M") -> str | None:
     """
     格式化时间戳字符串
 
@@ -47,7 +45,7 @@ def format_mode_name(mode: str) -> str:
     return mode_map.get(mode, mode)
 
 
-def format_number_with_commas(number: Union[int, float]) -> str:
+def format_number_with_commas(number: int | float) -> str:
     """
     格式化数字，添加千位分隔符
 

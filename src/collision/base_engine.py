@@ -4,7 +4,8 @@
 """
 
 from abc import ABC, abstractmethod
-from typing import Set, Optional, Dict, Any
+from typing import Any
+
 from .collision_stats import CollisionStats
 
 
@@ -15,7 +16,7 @@ class BaseCollisionEngine(ABC):
     """
 
     @abstractmethod
-    def __init__(self, targets: Set[str], **kwargs) -> None:
+    def __init__(self, targets: set[str], **kwargs) -> None:
         """
         初始化碰撞引擎
 
@@ -38,7 +39,7 @@ class BaseCollisionEngine(ABC):
         """
 
     @abstractmethod
-    def stop(self, timeout: Optional[float] = None) -> None:
+    def stop(self, timeout: float | None = None) -> None:
         """
         停止碰撞引擎
 
@@ -64,7 +65,7 @@ class BaseCollisionEngine(ABC):
             CollisionStats对象
         """
 
-    def get_device_info(self) -> Dict[str, Any]:
+    def get_device_info(self) -> dict[str, Any]:
         """
         获取设备信息
 

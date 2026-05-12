@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """线程池优化模块
 
 实现支持工作窃取(Work Stealing)的线程池,提升多线程并行效率。
@@ -37,12 +36,13 @@ P3-8增强：
 import os
 import threading
 import time
-from typing import Callable, Any, Optional, List, Dict, cast
 from collections import deque
+from collections.abc import Callable
 from concurrent.futures import Future
+from typing import Any, Optional, cast
 
 # 导入日志配置
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger, init_logging
 
 # 初始化日志系统
 init_logging()
@@ -94,9 +94,7 @@ class WorkStealingThreadPool:
         >>> pool.stop()
     """
 
-    def __init__(
-        self, num_threads: Optional[int] = None, enable_work_stealing: bool = True
-    ) -> None:
+    def __init__(self, num_threads: int | None = None, enable_work_stealing: bool = True) -> None:
         """
         初始化线程池
 
@@ -108,11 +106,11 @@ class WorkStealingThreadPool:
         self.enable_work_stealing = enable_work_stealing
 
         # 每线程任务队列
-        self._queues: List[deque] = [deque() for _ in range(self.num_threads)]
+        self._queues: list[deque] = [deque() for _ in range(self.num_threads)]
         self._queue_locks = [threading.Lock() for _ in range(self.num_threads)]
 
         # 线程管理
-        self._threads: List[threading.Thread] = []
+        self._threads: list[threading.Thread] = []
         self._stop_event = threading.Event()
 
         # 统计信息
@@ -123,12 +121,12 @@ class WorkStealingThreadPool:
         self._tasks_failed = 0  # P3-8: 失败任务计数
 
         # P3-8: 线程级统计
-        self._thread_tasks: List[int] = [0] * self.num_threads
-        self._thread_idle_cycles: List[int] = [0] * self.num_threads
+        self._thread_tasks: list[int] = [0] * self.num_threads
+        self._thread_idle_cycles: list[int] = [0] * self.num_threads
         self._last_health_check = time.time()
 
         # P3-8: 启动时间戳
-        self._start_time: Optional[float] = None
+        self._start_time: float | None = None
 
         logger.info(
             f"线程池初始化: threads={self.num_threads}, work_stealing={enable_work_stealing}"
@@ -187,7 +185,7 @@ class WorkStealingThreadPool:
         返回:
             Future对象,用于获取任务结果
         """
-        future: "Future" = Future()
+        future: Future = Future()
 
         # 包装任务
         task = (fn, args, kwargs, future)
@@ -226,7 +224,7 @@ class WorkStealingThreadPool:
                     self._tasks_failed += 1  # P3-8: 失败计数
                 logger.error(f"任务执行失败 (线程{thread_id}): {type(e).__name__}: {e}")
 
-    def _get_task(self, thread_id: int) -> Optional[tuple]:
+    def _get_task(self, thread_id: int) -> tuple | None:
         """
         获取任务(优先从本地队列,其次窃取)
 
@@ -239,7 +237,7 @@ class WorkStealingThreadPool:
         # 1. 尝试从本地队列获取
         with self._queue_locks[thread_id]:
             if self._queues[thread_id]:
-                return cast(Optional[tuple], self._queues[thread_id].popleft())
+                return cast(tuple | None, self._queues[thread_id].popleft())
 
         # 2. 工作窃取: 从其他队列获取
         if self.enable_work_stealing:
@@ -247,7 +245,7 @@ class WorkStealingThreadPool:
 
         return None
 
-    def _steal_work(self, thief_id: int) -> Optional[tuple]:
+    def _steal_work(self, thief_id: int) -> tuple | None:
         """
         工作窃取算法
 
@@ -269,11 +267,11 @@ class WorkStealingThreadPool:
                     # 从队列尾部窃取(减少竞争)
                     task = self._queues[victim_id].pop()
                     self._tasks_stolen += 1
-                    return cast(Optional[tuple], task)
+                    return cast(tuple | None, task)
 
         return None
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         """
         P3-8增强: 获取线程池详细统计信息
 
@@ -301,7 +299,7 @@ class WorkStealingThreadPool:
                 "uptime_seconds": time.time() - self._start_time if self._start_time else 0,
             }
 
-    def health_check(self) -> Dict:
+    def health_check(self) -> dict:
         """
         P3-8新增: 线程池健康检查
 
@@ -364,14 +362,14 @@ class TaskBatch:
             pool: 线程池实例
         """
         self._pool = pool
-        self._futures: List[Future] = []
+        self._futures: list[Future] = []
 
     def submit(self, fn: Callable, *args, **kwargs) -> None:
         """提交任务到批次"""
         future = self._pool.submit(fn, *args, **kwargs)
         self._futures.append(future)
 
-    def execute_all(self) -> List[Any]:
+    def execute_all(self) -> list[Any]:
         """
         执行所有任务并等待结果
 
@@ -400,7 +398,7 @@ class GlobalThreadPoolManager:
 
     _instance: Optional["GlobalThreadPoolManager"] = None
     _lock = threading.Lock()
-    _pool: Optional[WorkStealingThreadPool] = None
+    _pool: WorkStealingThreadPool | None = None
     _initialized: bool = False
     _shutdown_complete: bool = False
 
@@ -414,7 +412,7 @@ class GlobalThreadPoolManager:
                     cls._instance._shutdown_complete = False
         return cls._instance
 
-    def initialize(self, num_threads: Optional[int] = None) -> None:
+    def initialize(self, num_threads: int | None = None) -> None:
         """
         P3-8增强: 初始化全局线程池（支持配置传入）
 
@@ -432,7 +430,7 @@ class GlobalThreadPoolManager:
                 self._shutdown_complete = False
                 logger.info(f"全局线程池已初始化: {self._pool.num_threads}线程")
 
-    def get_pool(self) -> Optional[WorkStealingThreadPool]:
+    def get_pool(self) -> WorkStealingThreadPool | None:
         """获取全局线程池"""
         if not self._initialized:
             self.initialize()
@@ -476,13 +474,13 @@ class GlobalThreadPoolManager:
             return False
 
         logger.info(
-            f"线程池缩容: {self._pool.num_threads} -> {new_num_threads} " "(将在下次启动时生效)"
+            f"线程池缩容: {self._pool.num_threads} -> {new_num_threads} (将在下次启动时生效)"
         )
         # 保存意图（实际缩容在下次 start 时生效）
         self._resize_pending = new_num_threads
         return True
 
-    def get_health(self) -> Optional[Dict]:
+    def get_health(self) -> dict | None:
         """
         P3-8新增: 获取线程池健康状态
 

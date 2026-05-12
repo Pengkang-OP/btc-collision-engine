@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 加密后端抽象层
 
@@ -17,12 +16,12 @@
 - 加密操作本身在锁外执行，避免性能瓶颈
 """
 
+import logging
 import threading
 import time
-import logging
 from abc import ABC, abstractmethod
-from typing import Tuple, Dict, Any, cast
 from enum import Enum, auto
+from typing import Any, cast
 
 # 导入日志配置
 from ..utils import get_configured_logger
@@ -74,7 +73,7 @@ class CryptoBackend(ABC):
         """
 
     @abstractmethod
-    def scalar_multiply(self, k: int, point_x: int, point_y: int) -> Tuple[int, int]:
+    def scalar_multiply(self, k: int, point_x: int, point_y: int) -> tuple[int, int]:
         """
         椭圆曲线标量乘法
 
@@ -101,7 +100,7 @@ class PurePythonBackend(CryptoBackend):
     """纯Python后端 - 使用现有的secp256k1.py实现"""
 
     def __init__(self, use_const_time: bool = False) -> None:
-        from .secp256k1 import EllipticCurve, Secp256k1, ECPoint
+        from .secp256k1 import ECPoint, EllipticCurve, Secp256k1
 
         self.ec = EllipticCurve()
         self.G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
@@ -121,7 +120,7 @@ class PurePythonBackend(CryptoBackend):
         else:
             return self.ec.generate_public_key(private_key, compressed)
 
-    def scalar_multiply(self, k: int, point_x: int, point_y: int) -> Tuple[int, int]:
+    def scalar_multiply(self, k: int, point_x: int, point_y: int) -> tuple[int, int]:
         from .secp256k1 import ECPoint
 
         point = ECPoint(point_x, point_y)
@@ -131,7 +130,7 @@ class PurePythonBackend(CryptoBackend):
         else:
             result = self.ec.scalar_multiply(k, point)
 
-        return cast(Tuple[int, int], (result.x, result.y))
+        return cast(tuple[int, int], (result.x, result.y))
 
     def is_constant_time(self) -> bool:
         return self._use_const_time
@@ -143,8 +142,8 @@ class OpenSSLBackend(CryptoBackend):
     def __init__(self) -> None:
         self._available = self._check_availability()
         if self._available:
-            from cryptography.hazmat.primitives.asymmetric import ec
             from cryptography.hazmat.backends import default_backend
+            from cryptography.hazmat.primitives.asymmetric import ec
 
             self._ec = ec
             self._backend = default_backend()
@@ -195,7 +194,7 @@ class OpenSSLBackend(CryptoBackend):
             y_bytes = y.to_bytes(32, "big")
             return b"\x04" + x_bytes + y_bytes
 
-    def scalar_multiply(self, k: int, point_x: int, point_y: int) -> Tuple[int, int]:
+    def scalar_multiply(self, k: int, point_x: int, point_y: int) -> tuple[int, int]:
         """
         注意: cryptography库不直接暴露点乘运算，
         我们通过创建临时私钥来实现。
@@ -214,12 +213,12 @@ class OpenSSLBackend(CryptoBackend):
         # 这里我们需要使用底层操作
         # 由于cryptography库的限制，我们使用纯Python实现作为回退
         # 在实际应用中，可以考虑使用更低级的OpenSSL绑定
-        from .secp256k1 import EllipticCurve, ECPoint
+        from .secp256k1 import ECPoint, EllipticCurve
 
         ec_impl = EllipticCurve()
         result = ec_impl.scalar_multiply(k, ECPoint(point_x, point_y))
 
-        return cast(Tuple[int, int], (result.x, result.y))
+        return cast(tuple[int, int], (result.x, result.y))
 
     def is_constant_time(self) -> bool:
         # M4修复: 添加详细文档说明恒定时间状态的复杂性
@@ -273,7 +272,7 @@ class CoincurveBackend(CryptoBackend):
         private_key_obj = coincurve.PrivateKey(private_key)
         return private_key_obj.public_key.format(compressed=compressed)
 
-    def scalar_multiply(self, k: int, point_x: int, point_y: int) -> Tuple[int, int]:
+    def scalar_multiply(self, k: int, point_x: int, point_y: int) -> tuple[int, int]:
         """
         coincurve标量乘法
 
@@ -295,7 +294,9 @@ class CoincurveBackend(CryptoBackend):
             result = pubkey.multiply(k.to_bytes(32, "big"))
 
             # 将结果格式化为非压缩公钥字节串 (0x04 + x + y)
-            result_bytes = result.format(compressed=False) if hasattr(result, 'format') else bytes(result)
+            result_bytes = (
+                result.format(compressed=False) if hasattr(result, "format") else bytes(result)
+            )
             if result_bytes[0] == 0x04 and len(result_bytes) >= 65:
                 rx = int.from_bytes(result_bytes[1:33], "big")
                 ry = int.from_bytes(result_bytes[33:65], "big")
@@ -304,16 +305,15 @@ class CoincurveBackend(CryptoBackend):
             # 如果multiply不可用或返回类型不匹配，使用纯Python回退
             # 注意: 回退到非恒定时间实现可能有侧信道风险，但在GPU批量处理中风险较低
             logger.warning(
-                f"coincurve标量乘法失败({type(e).__name__})，回退到纯Python实现。"
-                "注意: 回退实现可能不具备恒定时间特性。"
+                f"coincurve标量乘法失败({type(e).__name__})，回退到纯Python实现。注意: 回退实现可能不具备恒定时间特性。"
             )
 
         # 回退到纯Python实现
-        from .secp256k1 import EllipticCurve, ECPoint
+        from .secp256k1 import ECPoint, EllipticCurve
 
         ec_impl = EllipticCurve()
         ec_result = ec_impl.scalar_multiply(k, ECPoint(point_x, point_y))
-        return cast(Tuple[int, int], (ec_result.x, ec_result.y))
+        return cast(tuple[int, int], (ec_result.x, ec_result.y))
 
     def is_constant_time(self) -> bool:
         # libsecp256k1使用恒定时间算法
@@ -326,7 +326,7 @@ class ECDSABackend(CryptoBackend):
     def __init__(self) -> None:
         self._available = self._check_availability()
         if self._available:
-            from ecdsa import SigningKey, SECP256k1, VerifyingKey
+            from ecdsa import SECP256k1, SigningKey, VerifyingKey
 
             self._SigningKey = SigningKey
             self._SECP256k1 = SECP256k1
@@ -361,17 +361,17 @@ class ECDSABackend(CryptoBackend):
         else:
             return cast(bytes, b"\x04" + verifying_key.to_string())
 
-    def scalar_multiply(self, k: int, point_x: int, point_y: int) -> Tuple[int, int]:
+    def scalar_multiply(self, k: int, point_x: int, point_y: int) -> tuple[int, int]:
         """
         ecdsa标量乘法
 
         ecdsa库不直接暴露点乘运算，使用纯Python回退。
         """
-        from .secp256k1 import EllipticCurve, ECPoint
+        from .secp256k1 import ECPoint, EllipticCurve
 
         ec_impl = EllipticCurve()
         result = ec_impl.scalar_multiply(k, ECPoint(point_x, point_y))
-        return cast(Tuple[int, int], (result.x, result.y))
+        return cast(tuple[int, int], (result.x, result.y))
 
     def is_constant_time(self) -> bool:
         # ecdsa库可能不使用恒定时间算法
@@ -393,7 +393,7 @@ class CryptoBackendManager:
 
     _instance = None
     _lock = threading.RLock()  # 类级锁，保护单例创建
-    _backends: Dict[Any, Any] = {}
+    _backends: dict[Any, Any] = {}
     _current_backend = None
     _default_backend_type = BackendType.PURE_PYTHON
 

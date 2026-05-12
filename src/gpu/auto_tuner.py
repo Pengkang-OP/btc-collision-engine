@@ -12,12 +12,13 @@
 - 持续监控：检测性能变化并重新调优
 """
 
+import statistics
 import time
-from ..utils import get_configured_logger
-from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
 from enum import Enum
-import statistics
+from typing import Any
+
+from ..utils import get_configured_logger
 
 logger = get_configured_logger("GPUAutoTuner")
 
@@ -40,7 +41,7 @@ class TuningConfig:
 
     # 探索策略
     exploration_iterations: int = 5  # 每个参数测试次数
-    exploration_batch_sizes: List[int] = field(
+    exploration_batch_sizes: list[int] = field(
         default_factory=lambda: [10000, 25000, 50000, 100000, 250000, 500000, 1000000]
     )
 
@@ -76,7 +77,7 @@ class GPUAutoTuner:
         >>> print(f"最优 batch_size: {optimal['batch_size']}")
     """
 
-    def __init__(self, gpu_engine: Any, config: Optional[TuningConfig] = None) -> None:
+    def __init__(self, gpu_engine: Any, config: TuningConfig | None = None) -> None:
         """初始化自动调优器
 
         Args:
@@ -91,8 +92,8 @@ class GPUAutoTuner:
         self.is_tuning = False
 
         # 性能记录
-        self.performance_history: List[PerformanceRecord] = []
-        self.best_config: Optional[Dict] = None
+        self.performance_history: list[PerformanceRecord] = []
+        self.best_config: dict | None = None
         self.best_throughput: float = 0.0
 
         # 时间跟踪
@@ -105,7 +106,7 @@ class GPUAutoTuner:
 
         logger.info("GPU 自动调优器已初始化")
 
-    def start_tuning(self) -> Dict:
+    def start_tuning(self) -> dict:
         """开始自动调优
 
         Returns:
@@ -132,7 +133,7 @@ class GPUAutoTuner:
 
         return optimal
 
-    def _explore_optimal_batch_size(self) -> Dict:
+    def _explore_optimal_batch_size(self) -> dict:
         """探索最优 batch_size
 
         Returns:
@@ -178,8 +179,7 @@ class GPUAutoTuner:
             self.best_throughput = best["throughput"]
 
             logger.info(
-                f"\n🏆 最优配置: batch_size={best['batch_size']:,}, "
-                f"吞吐量={best['throughput']:,.0f} keys/sec"
+                f"\n🏆 最优配置: batch_size={best['batch_size']:,}, 吞吐量={best['throughput']:,.0f} keys/sec"
             )
 
             return self.best_config
@@ -187,7 +187,7 @@ class GPUAutoTuner:
             logger.warning("未找到有效配置，使用默认值")
             return {"batch_size": 100000, "throughput": 0}
 
-    def _test_batch_size(self, batch_size: int) -> Optional[Dict]:
+    def _test_batch_size(self, batch_size: int) -> dict | None:
         """测试特定 batch_size 的性能
 
         Args:
@@ -246,7 +246,7 @@ class GPUAutoTuner:
             "max_ms": max(exec_times),
         }
 
-    def get_optimal_config(self) -> Dict:
+    def get_optimal_config(self) -> dict:
         """获取最优配置
 
         Returns:
@@ -277,7 +277,7 @@ class GPUAutoTuner:
 
         return False
 
-    def monitor_performance(self) -> Dict:
+    def monitor_performance(self) -> dict:
         """监控当前性能
 
         Returns:

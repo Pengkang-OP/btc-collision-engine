@@ -10,8 +10,9 @@ P3-6增强：
 """
 
 # P3-5: 统一日志获取
-from .logging_config import get_configured_logger
 from typing import Any
+
+from .logging_config import get_configured_logger
 
 logger = get_configured_logger("ExceptionHandler")
 

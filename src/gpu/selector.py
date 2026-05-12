@@ -1,14 +1,13 @@
-# -*- coding: utf-8 -*-
 """GPU设备选择器
 
 提供GPU设备评分、自动选择和手动指定功能。
 支持多厂商GPU(NVIDIA/AMD/Intel)的智能评估。
 """
 
-from ..utils import get_configured_logger
 import threading
-from typing import List, Dict, Optional, Any
+from typing import Any
 
+from ..utils import get_configured_logger
 from .device import GPUDeviceDetector, identify_vendor
 from .scorer import GPUDeviceScorer, get_gpu_scorer
 
@@ -33,17 +32,17 @@ class GPUDeviceSelector:
         device = selector.get_device_info(0)
     """
 
-    def __init__(self, scorer: Optional[GPUDeviceScorer] = None) -> None:
+    def __init__(self, scorer: GPUDeviceScorer | None = None) -> None:
         """初始化GPU设备选择器
 
         Args:
             scorer: GPU设备评分器，为None时使用全局单例
         """
         self._scorer = scorer or get_gpu_scorer()
-        self._devices_cache: Optional[List[Dict[str, Any]]] = None
-        self._scores_cache: Dict[int, float] = {}
+        self._devices_cache: list[dict[str, Any]] | None = None
+        self._scores_cache: dict[int, float] = {}
 
-    def detect_all_devices(self, force_refresh: bool = False) -> List[Dict]:
+    def detect_all_devices(self, force_refresh: bool = False) -> list[dict]:
         """检测所有GPU设备
 
         Args:
@@ -88,7 +87,7 @@ class GPUDeviceSelector:
             self._devices_cache = []
             return []
 
-    def score_device(self, device: Dict) -> float:
+    def score_device(self, device: dict) -> float:
         """计算GPU设备评分
 
         委托给统一的 GPUDeviceScorer 进行评分。
@@ -102,8 +101,8 @@ class GPUDeviceSelector:
         return self._scorer.score(device)
 
     def select_best_device(
-        self, devices: Optional[List[Dict[str, Any]]] = None
-    ) -> Optional[Dict[str, Any]]:
+        self, devices: list[dict[str, Any]] | None = None
+    ) -> dict[str, Any] | None:
         """自动选择评分最高的GPU设备
 
         Args:
@@ -122,13 +121,11 @@ class GPUDeviceSelector:
         # 按评分排序
         best_device = max(devices, key=lambda d: d.get("score", 0))
 
-        logger.info(
-            f"自动选择最佳GPU: {best_device['name']} " f"(评分: {best_device['score']:.1f})"
-        )
+        logger.info(f"自动选择最佳GPU: {best_device['name']} (评分: {best_device['score']:.1f})")
 
         return best_device
 
-    def get_device_info(self, device_idx: int) -> Optional[Dict]:
+    def get_device_info(self, device_idx: int) -> dict | None:
         """获取指定索引的设备信息
 
         Args:
@@ -146,7 +143,7 @@ class GPUDeviceSelector:
         logger.warning(f"设备索引 {device_idx} 不存在")
         return None
 
-    def format_device_info(self, device: Dict, detailed: bool = False) -> str:
+    def format_device_info(self, device: dict, detailed: bool = False) -> str:
         """格式化设备信息用于展示
 
         Args:
@@ -192,7 +189,7 @@ class GPUDeviceSelector:
 
         return "\n".join(lines)
 
-    def format_all_devices(self, devices: Optional[List[Dict[str, Any]]] = None) -> str:
+    def format_all_devices(self, devices: list[dict[str, Any]] | None = None) -> str:
         """格式化所有设备信息
 
         Args:
@@ -221,7 +218,7 @@ class GPUDeviceSelector:
 
         return "\n".join(lines)
 
-    def select_devices_by_indices(self, indices: List[int]) -> List[Dict]:
+    def select_devices_by_indices(self, indices: list[int]) -> list[dict]:
         """根据索引列表选择设备
 
         Args:
@@ -253,13 +250,11 @@ class GPUDeviceSelector:
                 invalid_indices.append(idx)
 
         if invalid_indices:
-            raise ValueError(
-                f"无效的设备索引: {invalid_indices}\n" f"可用索引: {available_indices}"
-            )
+            raise ValueError(f"无效的设备索引: {invalid_indices}\n可用索引: {available_indices}")
 
         return selected
 
-    def recommend_batch_size(self, device: Dict) -> int:
+    def recommend_batch_size(self, device: dict) -> int:
         """推荐批次大小
 
         基于显存大小计算合适的批次大小。
@@ -293,7 +288,7 @@ class GPUDeviceSelector:
 
         return base_batch
 
-    def recommend_work_group_size(self, device: Dict) -> int:
+    def recommend_work_group_size(self, device: dict) -> int:
         """推荐工作组大小
 
         Args:
@@ -314,7 +309,7 @@ class GPUDeviceSelector:
         else:
             return int(min(256, max_work_group))
 
-    def _enrich_device_info(self, raw_device: Dict, global_idx: int) -> Dict:
+    def _enrich_device_info(self, raw_device: dict, global_idx: int) -> dict:
         """增强设备信息,添加评分所需的字段
 
         Args:

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """P2PKH比特币地址生成器
 
 提供地址生成的共享基类和标准实现。
@@ -7,16 +6,15 @@
 - OptimizedP2PKHAddressGenerator: 优化实现（预计算表+SIMD+内存池，在 optimized_address_generator.py）
 """
 
-import secrets
 import ctypes
-from typing import Tuple, Optional
+import secrets
 from abc import ABC, abstractmethod
-from .secp256k1 import EllipticCurve, Secp256k1
-from .hash_utils import HashUtils
-from .base58 import Base58
 
 # 导入日志配置
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger, init_logging
+from .base58 import Base58
+from .hash_utils import HashUtils
+from .secp256k1 import EllipticCurve, Secp256k1
 
 # 初始化日志系统（如果尚未初始化）
 init_logging()
@@ -59,8 +57,7 @@ def secure_clear_bytearray(buffer: bytearray) -> None:
     """
     if not isinstance(buffer, bytearray):
         raise TypeError(
-            f"必须传入bytearray类型，当前为{type(buffer).__name__}。"
-            "bytes对象不可变，无法清零。请先转换为bytearray。"
+            f"必须传入bytearray类型，当前为{type(buffer).__name__}。bytes对象不可变，无法清零。请先转换为bytearray。"
         )
 
     try:
@@ -122,7 +119,7 @@ class BaseAddressGenerator(ABC):
 
     def generate_address(
         self, private_key: bytes, compressed: bool = True
-    ) -> Tuple[str, bytes, bytes]:
+    ) -> tuple[str, bytes, bytes]:
         """从私钥生成完整地址
 
         Args:
@@ -241,7 +238,7 @@ class P2PKHAddressGenerator(BaseAddressGenerator):
                     stacklevel=2,
                 )
                 logger.info(
-                    "提示: 安装 coincurve 库可提升3-5倍性能 " "(pip install coincurve>=18.0.0)"
+                    "提示: 安装 coincurve 库可提升3-5倍性能 (pip install coincurve>=18.0.0)"
                 )
         except ImportError as e:
             # 静默失败，不影响功能
@@ -278,9 +275,9 @@ class P2PKHAddressGenerator(BaseAddressGenerator):
 
     def generate_address(
         self,
-        private_key: Optional[bytes] = None,
+        private_key: bytes | None = None,
         compressed: bool = True,
-    ) -> Tuple[str, bytes, bytes]:
+    ) -> tuple[str, bytes, bytes]:
         """
         生成完整的比特币地址
 
@@ -309,7 +306,7 @@ class P2PKHAddressGenerator(BaseAddressGenerator):
             if key_int == 0:
                 raise ValueError("私钥不能为零，必须在范围 [1, N) 内")
             elif key_int >= Secp256k1.N:
-                raise ValueError(f"私钥超出曲线阶 N = {Secp256k1.N}。" "私钥必须在范围 [1, N) 内")
+                raise ValueError(f"私钥超出曲线阶 N = {Secp256k1.N}。私钥必须在范围 [1, N) 内")
 
         # 生成压缩公钥
         compressed_pk = self.private_key_to_public_key(private_key, compressed=True)

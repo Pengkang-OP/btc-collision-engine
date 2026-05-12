@@ -4,22 +4,22 @@
 """
 
 # P3-5: 统一日志获取
-from ..utils import get_configured_logger
 from pathlib import Path
-from typing import Dict, Optional, Set, Any, cast
+from typing import Any, cast
 
+from ..utils import get_configured_logger
 from ..utils.exception_handler import ExceptionHandler
 from ..utils.performance_monitor import EnhancedPerformanceMonitor
-from .device import GPUDevice, GPUDeviceDetector
-from .context import GPUContext
-from .kernel_impl import GPUKernel
-from .profiles.loader import GPUProfileLoader
-from .async_executor import AsyncGPUExecutor
-from .memory_pool import get_gpu_memory_pool
 from .amd_optimizer import AmdGPUOptimizer
-from .nvidia_optimizer import NvidiaGPUOptimizer
+from .async_executor import AsyncGPUExecutor
+from .context import GPUContext
+from .device import GPUDevice, GPUDeviceDetector
 from .intel_optimizer import IntelGPUOptimizer
 from .kernel import OPENCL_KERNEL_SOURCE
+from .kernel_impl import GPUKernel
+from .memory_pool import get_gpu_memory_pool
+from .nvidia_optimizer import NvidiaGPUOptimizer
+from .profiles.loader import GPUProfileLoader
 
 _logger = get_configured_logger("GPUDeviceManager")
 
@@ -33,8 +33,8 @@ class GPUDeviceManager:
     def __init__(
         self,
         device_index: int = -1,
-        config: Optional[Dict[str, Any]] = None,
-        logger: Optional[Any] = None,
+        config: dict[str, Any] | None = None,
+        logger: Any | None = None,
     ) -> None:
         """
         Args:
@@ -46,16 +46,16 @@ class GPUDeviceManager:
         self.config = config or {}
         self.logger = logger or _logger
 
-        self._gpu_device: Optional[GPUDevice] = None
-        self._gpu_context: Optional[GPUContext] = None
-        self._gpu_kernel: Optional[GPUKernel] = None
-        self._async_executor: Optional[AsyncGPUExecutor] = None
-        self._gpu_memory_pool: Optional[Any] = None
+        self._gpu_device: GPUDevice | None = None
+        self._gpu_context: GPUContext | None = None
+        self._gpu_kernel: GPUKernel | None = None
+        self._async_executor: AsyncGPUExecutor | None = None
+        self._gpu_memory_pool: Any | None = None
 
         self._profile_loader = GPUProfileLoader()
-        self._intel_optimizer: Optional[Any] = None
-        self._nvidia_optimizer: Optional[Any] = None
-        self._amd_optimizer: Optional[Any] = None
+        self._intel_optimizer: Any | None = None
+        self._nvidia_optimizer: Any | None = None
+        self._amd_optimizer: Any | None = None
 
     def _require_device(self) -> GPUDevice:
         """返回已初始化的 GPU 设备，未初始化则抛出 RuntimeError。
@@ -79,7 +79,7 @@ class GPUDeviceManager:
         return self._async_executor
 
     def initialize(
-        self, targets: Set[str], batch_size: Optional[int] = None, check_uncompressed: int = 0
+        self, targets: set[str], batch_size: int | None = None, check_uncompressed: int = 0
     ) -> "GPUDeviceManager":
         """初始化GPU设备
 
@@ -141,8 +141,7 @@ class GPUDeviceManager:
                 self.logger.info(
                     f"GPU 设备初始化成功: {device_info.get('name', 'Unknown')} "
                     f"(厂商: {device_info.get('vendor', 'Unknown')}, batch_size: {batch_size}, "
-                    f"work_group_size: {
-                        self._gpu_kernel._work_group_size if self._gpu_kernel else 'N/A'})"
+                    f"work_group_size: {self._gpu_kernel._work_group_size if self._gpu_kernel else 'N/A'})"
                 )
 
                 pm.add_metadata("device_name", device_info.get("name", "Unknown"))
@@ -162,7 +161,7 @@ class GPUDeviceManager:
                     "  4. 查看日志获取详细错误信息"
                 )
                 raise RuntimeError(
-                    f"GPU初始化失败: {e}。" "请检查GPU驱动和OpenCL环境,或使用CPU引擎作为备选方案。"
+                    f"GPU初始化失败: {e}。请检查GPU驱动和OpenCL环境,或使用CPU引擎作为备选方案。"
                 ) from e
 
         return self
@@ -180,8 +179,7 @@ class GPUDeviceManager:
 
             device_info = self._gpu_device.get_device_info()
             self.logger.info(
-                f"检测到GPU设备: {device_info.get('name', 'Unknown')} "
-                f"({device_info.get('vendor', 'Unknown')})"
+                f"检测到GPU设备: {device_info.get('name', 'Unknown')} ({device_info.get('vendor', 'Unknown')})"
             )
             self.logger.info(
                 f"  - 显存: {device_info.get('global_mem_size', 0) / (1024**3):.1f} GB\n"
@@ -215,7 +213,7 @@ class GPUDeviceManager:
                     try:
                         import json
 
-                        with open(cfg_file, "r", encoding="utf-8") as f:
+                        with open(cfg_file, encoding="utf-8") as f:
                             cfg = json.load(f)
                             gpu_cfg = cfg.get("gpu", {})
                             if "async_execution" in gpu_cfg:
@@ -242,7 +240,7 @@ class GPUDeviceManager:
 
         return enable_async
 
-    def _prepare_targets(self, targets: Set[str]):
+    def _prepare_targets(self, targets: set[str]):
         """准备目标地址"""
         from ..core.base58 import Base58
 
@@ -274,7 +272,7 @@ class GPUDeviceManager:
         """计算最优batch_size"""
         self._require_device()
         assert self._gpu_device is not None  # _require_device ensures non-None
-        device_info: Dict[str, Any] = self._gpu_device.get_device_info()
+        device_info: dict[str, Any] = self._gpu_device.get_device_info()
         device_name = device_info.get("name", "")
         vendor = device_info.get("vendor_identifier", "unknown")
 
@@ -343,12 +341,8 @@ class GPUDeviceManager:
             preallocate_sizes = self._compute_prealloc_sizes(batch_size)
             if preallocate_sizes:
                 try:
-                    self._gpu_memory_pool.preallocate_buffers(
-                        preallocate_sizes, count_per_size=2
-                    )
-                    self.logger.debug(
-                        f"GPU内存池预分配: {len(preallocate_sizes)} 种大小 × 2"
-                    )
+                    self._gpu_memory_pool.preallocate_buffers(preallocate_sizes, count_per_size=2)
+                    self.logger.debug(f"GPU内存池预分配: {len(preallocate_sizes)} 种大小 × 2")
                 except Exception:
                     self.logger.debug("GPU内存池预分配跳过（非致命）", exc_info=True)
             self.logger.info(f"GPU内存池初始化完成: {self._gpu_memory_pool.get_stats()}")

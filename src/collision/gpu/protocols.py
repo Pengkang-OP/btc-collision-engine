@@ -7,8 +7,8 @@
 创建日期: 2026-04-29
 """
 
-from typing import Protocol, Optional, Dict, Any, List, Tuple, TypedDict
 from dataclasses import dataclass, field
+from typing import Any, Protocol, TypedDict
 
 # ========== GPU类型定义 ==========
 
@@ -55,7 +55,7 @@ class GPUDevice:
 class GPUContext:
     """GPU上下文封装"""
 
-    def __init__(self, context_obj: Any = None, device: Optional[GPUDevice] = None) -> None:
+    def __init__(self, context_obj: Any = None, device: GPUDevice | None = None) -> None:
         self.context_obj = context_obj  # 底层上下文对象（cl.Context等）
         self.device = device
 
@@ -64,7 +64,7 @@ class GPUKernel:
     """GPU内核封装"""
 
     def __init__(
-        self, kernel_obj: Any = None, name: str = "", context: Optional[GPUContext] = None
+        self, kernel_obj: Any = None, name: str = "", context: GPUContext | None = None
     ) -> None:
         self.kernel_obj = kernel_obj  # 底层内核对象（cl.Kernel等）
         self.name = name
@@ -85,7 +85,7 @@ class MatchResult(TypedDict, total=False):
 class IGPUDeviceManager(Protocol):
     """GPU设备管理器接口"""
 
-    def list_devices(self) -> List[GPUDevice]:
+    def list_devices(self) -> list[GPUDevice]:
         """列出所有可用GPU设备
 
         Returns:
@@ -137,7 +137,7 @@ class IKernelExecutor(Protocol):
 
     def execute_batch(
         self, kernel: GPUKernel, seed: bytes, batch_size: int, stop_event: Any = None
-    ) -> Tuple[List[MatchResult], float]:
+    ) -> tuple[list[MatchResult], float]:
         """执行单个批次
 
         Args:
@@ -172,7 +172,7 @@ class IAsyncExecutionPipeline(Protocol):
         """
         ...
 
-    def run_batch(self, seed: bytes, batch_size: int) -> Tuple[List[MatchResult], float]:
+    def run_batch(self, seed: bytes, batch_size: int) -> tuple[list[MatchResult], float]:
         """运行单个批次
 
         Args:
@@ -243,7 +243,7 @@ class ICollisionCore(Protocol):
         """重置统计"""
         ...
 
-    def on_batch_complete(self, matches: List[MatchResult], batch_size: int) -> None:
+    def on_batch_complete(self, matches: list[MatchResult], batch_size: int) -> None:
         """批次完成回调
 
         Args:
@@ -252,7 +252,7 @@ class ICollisionCore(Protocol):
         """
         ...
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取碰撞统计
 
         Returns:
@@ -271,14 +271,14 @@ class GPUExecutionContext:
     使 benchmark_suite / auto_tuner / performance_reporter 等 P2 组件能够初始化。
     """
 
-    device: Optional[GPUDevice] = None
-    context: Optional[GPUContext] = None
-    kernel: Optional[GPUKernel] = None
+    device: GPUDevice | None = None
+    context: GPUContext | None = None
+    kernel: GPUKernel | None = None
     batch_size: int = 1_000_000
     vendor: str = "unknown"
-    config: Optional[Dict[str, Any]] = None
+    config: dict[str, Any] | None = None
     initialized_at: float = 0.0  # 初始化时间戳
-    engine: Optional[Any] = None  # v2.2.2: GPU 引擎实例引用（用于 P2 组件初始化）
+    engine: Any | None = None  # v2.2.2: GPU 引擎实例引用（用于 P2 组件初始化）
 
 
 @dataclass
@@ -288,7 +288,7 @@ class CollisionResult:
     单次批次执行的完整结果。
     """
 
-    matches: List[MatchResult] = field(default_factory=list)
+    matches: list[MatchResult] = field(default_factory=list)
     execution_time_ms: float = 0.0
     batch_size: int = 0
     total_checked: int = 0
@@ -296,7 +296,7 @@ class CollisionResult:
     keys_per_second: float = 0.0  # 性能指标
     device_id: int = -1  # 多GPU追踪
     timestamp: float = 0.0  # 时间戳
-    seed: Optional[bytes] = None  # 可追溯性
+    seed: bytes | None = None  # 可追溯性
 
     def __post_init__(self) -> None:
         """计算派生字段"""
@@ -311,7 +311,7 @@ class CollisionResult:
 class VendorOptimizationStrategy(Protocol):
     """厂商优化策略接口"""
 
-    def apply_optimizations(self, context: GPUExecutionContext) -> Dict[str, Any]:
+    def apply_optimizations(self, context: GPUExecutionContext) -> dict[str, Any]:
         """应用厂商特定优化
 
         Args:
@@ -322,7 +322,7 @@ class VendorOptimizationStrategy(Protocol):
         """
         ...
 
-    def get_monitoring_components(self) -> Dict[str, Any]:
+    def get_monitoring_components(self) -> dict[str, Any]:
         """获取厂商特定监控组件
 
         Returns:

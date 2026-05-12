@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 统计信息格式化与输出模块
 
@@ -16,9 +15,9 @@ _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
-from src.i18n import _t  # noqa: E402
-from src.cli.advanced_features import export_progress_data, export_matches  # noqa: E402
+from src.cli.advanced_features import export_matches, export_progress_data  # noqa: E402
 from src.cli.output import CLIOutput  # noqa: E402
+from src.i18n import _t  # noqa: E402
 
 
 def _print_detailed_stats(stats: Any) -> None:
@@ -67,7 +66,9 @@ def _print_final_summary(engine: Any, engine_type: str, args: argparse.Namespace
         speed_fmt = (
             f"{throughput / 1_000_000:.2f}M/s"
             if throughput >= 1_000_000
-            else f"{throughput / 1_000:.1f}K/s" if throughput >= 1_000 else f"{throughput:.0f}/s"
+            else f"{throughput / 1_000:.1f}K/s"
+            if throughput >= 1_000
+            else f"{throughput:.0f}/s"
         )
         stats_dict[_t("cli.main.accel_mode")] = f"多GPU ({device_count} 个设备)"
         stats_dict[_t("cli.main.total_checked")] = f"{total_checked:,}"
@@ -83,7 +84,9 @@ def _print_final_summary(engine: Any, engine_type: str, args: argparse.Namespace
                 dev_speed_fmt = (
                     f"{dev_tp / 1_000_000:.2f}M/s"
                     if dev_tp >= 1_000_000
-                    else f"{dev_tp / 1_000:.1f}K/s" if dev_tp >= 1_000 else f"{dev_tp:.0f}/s"
+                    else f"{dev_tp / 1_000:.1f}K/s"
+                    if dev_tp >= 1_000
+                    else f"{dev_tp:.0f}/s"
                 )
                 stats_dict[f"GPU {dev_idx}"] = (
                     _t("cli.main.gpu_checked", count=dev_keys)
@@ -95,8 +98,7 @@ def _print_final_summary(engine: Any, engine_type: str, args: argparse.Namespace
         try:
             stats = engine.get_stats()
             mode_label = (
-                _t("collision.mode.gpu") if engine_type == "gpu"
-                else _t("collision.mode.cpu")
+                _t("collision.mode.gpu") if engine_type == "gpu" else _t("collision.mode.cpu")
             )
             stats_dict[_t("cli.main.accel_mode")] = mode_label
             stats_dict[_t("cli.main.total_checked")] = f"{stats.total_checked:,}"

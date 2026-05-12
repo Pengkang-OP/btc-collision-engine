@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 加密配置管理
 
@@ -7,10 +6,10 @@
 支持从配置文件加载和保存加密设置。
 """
 
-import os
 import json
-from typing import Dict, Any, Optional
+import os
 from enum import Enum
+from typing import Any
 
 
 class CryptoBackendType(str, Enum):
@@ -38,7 +37,7 @@ class CryptoConfig:
         "strict_wif_validation": True,  # 严格WIF格式验证
     }
 
-    def __init__(self, config_file: Optional[str] = None, config_manager=None) -> None:
+    def __init__(self, config_file: str | None = None, config_manager=None) -> None:
         """
         初始化加密配置
 
@@ -63,7 +62,7 @@ class CryptoConfig:
         try:
             if self.config_file is None:
                 return False
-            with open(self.config_file, "r", encoding="utf-8") as f:
+            with open(self.config_file, encoding="utf-8") as f:
                 user_config = json.load(f)
             self.config.update(user_config)
             return True
@@ -236,7 +235,7 @@ class CryptoConfig:
             device_index=gpu_config["device_index"],
         )
 
-    def get_gpu_config(self) -> Dict[str, Any]:
+    def get_gpu_config(self) -> dict[str, Any]:
         """
         获取GPU配置
 
@@ -267,9 +266,9 @@ class CryptoConfig:
 
     def set_gpu_config(
         self,
-        use_gpu: Optional[bool] = None,
-        device_index: Optional[int] = None,
-        batch_size: Optional[int] = None,
+        use_gpu: bool | None = None,
+        device_index: int | None = None,
+        batch_size: int | None = None,
     ) -> bool:
         """
         设置GPU配置
@@ -325,7 +324,7 @@ class CryptoConfig:
 
         return errors
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         导出配置为字典
 
@@ -340,7 +339,7 @@ class CryptoConfig:
 
 
 # 全局配置实例
-def get_crypto_config(config_file: Optional[str] = None) -> CryptoConfig:
+def get_crypto_config(config_file: str | None = None) -> CryptoConfig:
     """
     获取加密配置实例
 
@@ -359,7 +358,7 @@ def get_crypto_config(config_file: Optional[str] = None) -> CryptoConfig:
 
 
 # 便捷函数
-def init_crypto_from_config(config_file: Optional[str] = None) -> CryptoConfig:
+def init_crypto_from_config(config_file: str | None = None) -> CryptoConfig:
     """
     从配置文件初始化加密系统
 

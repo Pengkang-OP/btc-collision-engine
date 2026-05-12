@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Base58编解码工具"""
 
 from .hash_utils import HashUtils

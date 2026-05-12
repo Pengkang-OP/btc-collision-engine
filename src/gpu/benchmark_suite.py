@@ -13,13 +13,14 @@
 - 不同 batch_size 的性能影响
 """
 
-import time
-from ..utils import get_configured_logger
 import statistics
-from typing import Any, Dict, List, Optional
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+from typing import Any
+
+from ..utils import get_configured_logger
 
 logger = get_configured_logger("GPUBenchmarkSuite")
 
@@ -47,7 +48,7 @@ class BenchmarkResult:
     throughput: float = 0.0  # 吞吐量（如 keys/sec）
 
     # 测试参数
-    parameters: Dict = field(default_factory=dict)
+    parameters: dict = field(default_factory=dict)
 
     # 统计信息
     min_ms: float = 0.0
@@ -82,12 +83,12 @@ class GPUBenchmarkSuite:
             gpu_engine: GPU 碰撞引擎实例
         """
         self.gpu_engine = gpu_engine
-        self.results: List[BenchmarkResult] = []
-        self._test_devices: List[Any] = []
+        self.results: list[BenchmarkResult] = []
+        self._test_devices: list[Any] = []
 
         logger.info("GPU 性能基准测试套件已初始化")
 
-    def run_all_benchmarks(self, iterations: int = 5) -> List[BenchmarkResult]:
+    def run_all_benchmarks(self, iterations: int = 5) -> list[BenchmarkResult]:
         """运行所有基准测试
 
         Args:
@@ -130,7 +131,7 @@ class GPUBenchmarkSuite:
 
         return all_results
 
-    def benchmark_kernel_compile(self, iterations: int = 5) -> List[BenchmarkResult]:
+    def benchmark_kernel_compile(self, iterations: int = 5) -> list[BenchmarkResult]:
         """基准测试：内核编译性能
 
         Args:
@@ -182,7 +183,7 @@ class GPUBenchmarkSuite:
 
         return results
 
-    def benchmark_batch_execution(self, iterations: int = 5) -> List[BenchmarkResult]:
+    def benchmark_batch_execution(self, iterations: int = 5) -> list[BenchmarkResult]:
         """基准测试：批次执行性能
 
         Args:
@@ -220,9 +221,7 @@ class GPUBenchmarkSuite:
                     keys_per_sec = (batch_size / duration_ms * 1000) if duration_ms > 0 else 0
 
                     logger.info(
-                        f"  batch_size={batch_size:>6}, "
-                        f"#{i + 1}: {duration_ms:.0f}ms "
-                        f"({keys_per_sec:.0f} keys/sec)"
+                        f"  batch_size={batch_size:>6}, #{i + 1}: {duration_ms:.0f}ms ({keys_per_sec:.0f} keys/sec)"
                     )
 
                 except Exception as e:
@@ -255,7 +254,7 @@ class GPUBenchmarkSuite:
 
         return results
 
-    def benchmark_memory_bandwidth(self, iterations: int = 5) -> List[BenchmarkResult]:
+    def benchmark_memory_bandwidth(self, iterations: int = 5) -> list[BenchmarkResult]:
         """基准测试：显存带宽利用率
 
         Args:
@@ -296,7 +295,7 @@ class GPUBenchmarkSuite:
 
         return results
 
-    def benchmark_scalability(self, iterations: int = 3) -> List[BenchmarkResult]:
+    def benchmark_scalability(self, iterations: int = 3) -> list[BenchmarkResult]:
         """基准测试：batch_size 扩展性
 
         Args:
@@ -333,9 +332,7 @@ class GPUBenchmarkSuite:
                     keys_per_sec = (batch_size / duration_ms * 1000) if duration_ms > 0 else 0
 
                     logger.info(
-                        f"    batch_size={batch_size:>7}, "
-                        f"#{i + 1}: {duration_ms:.0f}ms "
-                        f"({keys_per_sec:,.0f} keys/sec)"
+                        f"    batch_size={batch_size:>7}, #{i + 1}: {duration_ms:.0f}ms ({keys_per_sec:,.0f} keys/sec)"
                     )
 
                 except Exception as e:
@@ -362,7 +359,7 @@ class GPUBenchmarkSuite:
 
         return results
 
-    def generate_report(self, results: Optional[List[BenchmarkResult]] = None) -> str:
+    def generate_report(self, results: list[BenchmarkResult] | None = None) -> str:
         """生成基准测试报告
 
         Args:
@@ -389,7 +386,7 @@ class GPUBenchmarkSuite:
         ]
 
         # 按测试类型分组
-        by_type: Dict[str, List[BenchmarkResult]] = {}
+        by_type: dict[str, list[BenchmarkResult]] = {}
         for result in results:
             test_type = result.test_type.value
             if test_type not in by_type:
@@ -420,12 +417,14 @@ class GPUBenchmarkSuite:
 
             for result in by_type[BenchmarkType.BATCH_EXECUTION.value]:
                 batch_size = result.parameters.get("batch_size", 0)
-                report_lines.append(f"  {
-                        batch_size:>12,} | {  # noqa: E126
-                        result.mean_ms:>8.0f}ms | " f"{  # noqa: E126
+                report_lines.append(
+                    f"  {batch_size:>12,} | {  # noqa: E126
+                        result.mean_ms:>8.0f}ms | "
+                    f"{  # noqa: E126
                         result.throughput:>10,.0f}/s | {  # noqa: E126
                         result.min_ms:>8.0f}ms | {  # noqa: E126
-                        result.max_ms:>8.0f}ms")  # noqa: E126
+                        result.max_ms:>8.0f}ms"
+                )  # noqa: E126
             report_lines.append("")
 
         # 显存带宽测试
@@ -477,7 +476,7 @@ class GPUBenchmarkSuite:
 
         return "\n".join(report_lines)
 
-    def save_results(self, filepath: str, results: Optional[List[BenchmarkResult]] = None) -> None:
+    def save_results(self, filepath: str, results: list[BenchmarkResult] | None = None) -> None:
         """保存测试结果到 JSON 文件
 
         Args:

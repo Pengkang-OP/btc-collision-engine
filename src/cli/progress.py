@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 CLI进度格式化模块
 
@@ -8,20 +7,19 @@ CLI进度格式化模块
 """
 
 import time
-from typing import Optional
 
-from src.collision import CollisionStats
 from src.cli.constants import (
-    PROGRESS_BAR_LENGTH,
-    PROGRESS_BAR_FILLED,
+    ETA_HOUR_THRESHOLD,
+    ETA_MINUTE_THRESHOLD,
+    INIT_CHECK_THRESHOLD,
     PROGRESS_BAR_EMPTY,
+    PROGRESS_BAR_FILLED,
+    PROGRESS_BAR_LENGTH,
     UNIT_BILLION,
     UNIT_MILLION,
     UNIT_THOUSAND,
-    INIT_CHECK_THRESHOLD,
-    ETA_MINUTE_THRESHOLD,
-    ETA_HOUR_THRESHOLD,
 )
+from src.collision import CollisionStats
 
 
 def _format_checked_count(checked: int) -> str:
@@ -46,7 +44,7 @@ def _format_total_count(total: int) -> str:
         return f"{total:,}"
 
 
-def _compute_eta(elapsed_sec: float, checked: int, total_range: Optional[int]) -> str:
+def _compute_eta(elapsed_sec: float, checked: int, total_range: int | None) -> str:
     """计算预计剩余时间"""
     if total_range is None or total_range <= 0 or checked <= 0:
         return "--"
@@ -78,7 +76,7 @@ VALID_ENGINE_TYPES = {"cpu", "gpu", "multi-gpu"}
 
 
 def format_progress(
-    stats: CollisionStats, mode: str, total_range: Optional[int] = None, engine_type: str = "cpu"
+    stats: CollisionStats, mode: str, total_range: int | None = None, engine_type: str = "cpu"
 ) -> str:
     """格式化进度信息（带可视化进度条）
 
@@ -129,9 +127,4 @@ def format_progress(
     # 引擎类型标签
     engine_tag = f"[{engine_type.upper()}]"
 
-    return (
-        f"[{elapsed}] {engine_tag}{pct_str}{range_info}"
-        f" | 速度: {speed_str}"
-        f" | ETA: {eta_str}"
-        f" | 匹配: {matches}"
-    )
+    return f"[{elapsed}] {engine_tag}{pct_str}{range_info} | 速度: {speed_str} | ETA: {eta_str} | 匹配: {matches}"

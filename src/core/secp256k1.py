@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """secp256k1椭圆曲线参数和运算
 
 ⚠️ 重要安全警告 ⚠️
@@ -17,7 +16,7 @@
 """
 
 import warnings
-from typing import Any, Optional, Union, cast
+from typing import Any, cast
 
 
 class Secp256k1:
@@ -114,7 +113,7 @@ class ECPoint:
         >>> infinity = ECPoint(None, None)
     """
 
-    def __init__(self, x: Optional[int], y: Optional[int], curve: Any = Secp256k1) -> None:
+    def __init__(self, x: int | None, y: int | None, curve: Any = Secp256k1) -> None:
         """
         初始化椭圆曲线点
 
@@ -597,7 +596,7 @@ class EllipticCurve:
 
         return r0
 
-    def generate_public_key(self, private_key: Union[bytes, int], compressed: bool = True) -> bytes:
+    def generate_public_key(self, private_key: bytes | int, compressed: bool = True) -> bytes:
         """
         从私钥生成公钥
 
@@ -654,7 +653,7 @@ class EllipticCurve:
             return b"\x04" + x_bytes + y_bytes
 
     def generate_public_key_const_time(
-        self, private_key: Union[bytes, int], compressed: bool = True
+        self, private_key: bytes | int, compressed: bool = True
     ) -> bytes:
         """恒定时间公钥生成 (generate_public_key 的显式别名)
 

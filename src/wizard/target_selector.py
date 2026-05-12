@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 目标选择器
 
 负责目标地址的输入和验证。
 """
 
-import sys
 import os
-from typing import Tuple, List, Optional, Dict, cast
+import sys
+from typing import cast
 
 from .selector_protocol import SelectorProtocol
 
@@ -29,7 +28,7 @@ class TargetSelector(SelectorProtocol):
     def __init__(self):
         self.resolver = TargetResolver()
 
-    def select(self, compact: bool = False) -> Tuple[List[str], Optional[str]]:
+    def select(self, compact: bool = False) -> tuple[list[str], str | None]:
         """选择目标地址
 
         Args:
@@ -63,7 +62,7 @@ class TargetSelector(SelectorProtocol):
             else:
                 print("    [ERROR] 无效选项，请重新选择")
 
-    def _select_single(self) -> Tuple[List[str], None]:
+    def _select_single(self) -> tuple[list[str], None]:
         """选择单个地址"""
         print()
         print("    请输入比特币地址:", end=" ")
@@ -74,7 +73,7 @@ class TargetSelector(SelectorProtocol):
             print("    [ERROR] 地址不能为空")
             return self._select_single()
 
-        targets = cast(Dict[str, Optional[str]], self.resolver.resolve_multiple([address]))
+        targets = cast(dict[str, str | None], self.resolver.resolve_multiple([address]))
 
         if not targets:
             print(f"    [ERROR] 无效的地址格式: {address}")
@@ -83,7 +82,7 @@ class TargetSelector(SelectorProtocol):
         print("    [OK] 已加载 1 个地址")
         return list(targets), None
 
-    def _select_from_file(self) -> Tuple[List[str], str]:
+    def _select_from_file(self) -> tuple[list[str], str]:
         """从文件加载地址"""
         print()
         default_file = "targets.txt"
@@ -105,7 +104,7 @@ class TargetSelector(SelectorProtocol):
         print(f"    [OK] 已从文件加载 {len(targets)} 个地址")
         return list(targets), file_path
 
-    def _select_compact(self) -> Tuple[List[str], Optional[str]]:
+    def _select_compact(self) -> tuple[list[str], str | None]:
         """紧凑模式选择"""
         default_file = "targets.txt"
 
@@ -122,7 +121,7 @@ class TargetSelector(SelectorProtocol):
             print("[ERROR] 地址不能为空")
             return self._select_compact()
 
-        targets = cast(Dict[str, Optional[str]], self.resolver.resolve_multiple([address]))
+        targets = cast(dict[str, str | None], self.resolver.resolve_multiple([address]))
 
         if not targets:
             print(f"[ERROR] 无效的地址格式: {address}")

@@ -8,17 +8,17 @@
 import os
 import threading
 import time
-from typing import Callable, Optional
+from collections.abc import Callable
 
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger, init_logging
 
 init_logging()
 logger = get_configured_logger("ConfigWatcher")
 
 # ── watchdog 可用性检测 ──────────────────────────────────────────────
 try:
-    from watchdog.observers import Observer
     from watchdog.events import FileSystemEventHandler
+    from watchdog.observers import Observer
 
     class _WatchdogHandler(FileSystemEventHandler):
         """watchdog 文件变更处理器"""
@@ -84,9 +84,9 @@ class ConfigWatcher:
         self._stop_event = threading.Event()
         self._stop_event.set()
         self._lock = threading.Lock()
-        self._observer: Optional["Observer"] = None
-        self._poll_thread: Optional[threading.Thread] = None
-        self._last_mtime: Optional[float] = None  # None表示文件不存在
+        self._observer: Observer | None = None
+        self._poll_thread: threading.Thread | None = None
+        self._last_mtime: float | None = None  # None表示文件不存在
         self._last_reload_time: float = 0.0
 
         # 记录初始 mtime，避免启动时误触发

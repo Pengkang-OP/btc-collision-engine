@@ -2,11 +2,11 @@
 
 import hashlib
 import threading
-from typing import Dict, Any
 from collections import deque
+from typing import Any
 
 # 导入日志配置
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger, init_logging
 
 # 初始化日志系统（如果尚未初始化）
 init_logging()
@@ -101,7 +101,7 @@ class DeduplicationFilter:
 
             return True
 
-    def _get_stats_unlocked(self) -> Dict[str, Any]:
+    def _get_stats_unlocked(self) -> dict[str, Any]:
         """返回去重统计（不加锁版本，调用方须已持有 self._lock）"""
         tracked_total = len(self._current) + len(self._pending)
         stats = {
@@ -128,7 +128,7 @@ class DeduplicationFilter:
 
         return stats
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """返回去重统计"""
         with self._lock:
             return self._get_stats_unlocked()

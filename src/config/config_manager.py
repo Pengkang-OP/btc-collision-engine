@@ -4,10 +4,11 @@ import copy
 import json
 import os
 import threading
-from typing import Dict, Any, List, Callable, Optional
+from collections.abc import Callable
+from typing import Any, Optional
 
 # 导入日志配置
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger, init_logging
 from .config_watcher import ConfigWatcher  # noqa: F401 — type annotation reference
 
 # 初始化日志系统（如果尚未初始化）
@@ -24,6 +25,7 @@ try:
 except ImportError:
     HAS_JSONSCHEMA = False
     logger.debug("jsonschema库未安装，配置文件将跳过Schema验证")
+
 
 class ConfigManager:
     """配置管理器 - 统一管理应用配置"""
@@ -282,7 +284,7 @@ class ConfigManager:
         },
     }
 
-    def __init__(self, config_file: Optional[str] = None) -> None:
+    def __init__(self, config_file: str | None = None) -> None:
         """
         初始化配置管理器
 
@@ -300,11 +302,11 @@ class ConfigManager:
             self.load_config()
 
         # P2-4: 配置热重载支持
-        self._change_callbacks: List[Callable[[], None]] = []
+        self._change_callbacks: list[Callable[[], None]] = []
         self._watcher = None  # type: Optional['ConfigWatcher']
 
     @property
-    def config(self) -> Dict[str, Any]:
+    def config(self) -> dict[str, Any]:
         """延迟初始化配置属性"""
         if not self._config_initialized:
             self._config = copy.deepcopy(self.DEFAULT_CONFIG)
@@ -312,7 +314,7 @@ class ConfigManager:
         return self._config
 
     @config.setter
-    def config(self, value: Dict[str, Any]) -> None:
+    def config(self, value: dict[str, Any]) -> None:
         """设置配置属性（线程安全）"""
         # SUGGESTION-8: 添加锁保护以保持与getter的线程安全一致性
         with self._lock:
@@ -349,7 +351,7 @@ class ConfigManager:
             if not self.config_file:
                 logger.warning("配置文件路径未设置，跳过加载")
                 return False
-            with open(self.config_file, "r", encoding="utf-8") as f:
+            with open(self.config_file, encoding="utf-8") as f:
                 raw_config = json.load(f)
 
             # D-2修复: 过滤 _comment 注释键，兼容 config.example.json 直接使用
@@ -389,7 +391,7 @@ class ConfigManager:
 
         old_config_backup = None
         try:
-            with open(self.config_file, "r", encoding="utf-8") as f:
+            with open(self.config_file, encoding="utf-8") as f:
                 raw_config = json.load(f)
 
             new_config = self._strip_comments(raw_config)
@@ -502,6 +504,7 @@ class ConfigManager:
         except Exception as e:
             # 记录警告日志，但不抛出异常
             import sys
+
             print(f"WARNING: ConfigManager清理失败: {type(e).__name__}: {e}", file=sys.stderr)
 
     def save_config(self) -> bool:
@@ -522,12 +525,9 @@ class ConfigManager:
             # 使用原子写入确保数据完整性
             # 避免写入中断导致配置文件损坏
             from ..utils.file_utils import atomic_json_write
+
             success = atomic_json_write(
-                self.config_file,
-                config_copy,
-                ensure_ascii=False,
-                indent=2,
-                fsync=True
+                self.config_file, config_copy, ensure_ascii=False, indent=2, fsync=True
             )
             if success:
                 logger.debug(f"配置文件已保存: {self.config_file}")
@@ -573,7 +573,7 @@ class ConfigManager:
         keys = key.split(".")
         # 线程安全：在锁内修改配置
         with self._lock:
-            config: Dict[str, Any] = self.config
+            config: dict[str, Any] = self.config
 
             for i, k in enumerate(keys[:-1]):
                 if k not in config or not isinstance(config[k], dict):
@@ -583,7 +583,7 @@ class ConfigManager:
             config[keys[-1]] = value
         return True
 
-    def _merge_config(self, base: Dict, update: Dict) -> None:
+    def _merge_config(self, base: dict, update: dict) -> None:
         """
         递归合并配置（必须在锁内调用）
 
@@ -597,7 +597,7 @@ class ConfigManager:
             else:
                 base[key] = value
 
-    def _deep_copy_config(self, config: Dict) -> Dict:
+    def _deep_copy_config(self, config: dict) -> dict:
         """
         深拷贝配置字典（避免在写文件时持有锁）
 
@@ -610,7 +610,7 @@ class ConfigManager:
         # 一般问题修复: copy 已在文件顶部导入
         return copy.deepcopy(config)
 
-    def validate(self, config: Optional[Dict[str, Any]] = None) -> Dict[str, str]:
+    def validate(self, config: dict[str, Any] | None = None) -> dict[str, str]:
         """
         DF-3修复: 统一配置验证逻辑
 
@@ -633,7 +633,7 @@ class ConfigManager:
             # 降级为手动验证
             return self._validate_manual(config)
 
-    def _validate_with_schema(self, config: Dict[str, Any]) -> Dict[str, str]:
+    def _validate_with_schema(self, config: dict[str, Any]) -> dict[str, str]:
         """DF-3修复: 使用JSON Schema验证配置
 
         参数:
@@ -691,18 +691,25 @@ class ConfigManager:
         # 但用户直接传入的1/0是int类型，应该拒绝
         return type(value) is bool
 
-    def _validate_mode(self, value: str, errors: Dict[str, str]) -> Optional[str]:
+    def _validate_mode(self, value: str, errors: dict[str, str]) -> str | None:
         """验证模式配置"""
         valid_modes = {
-            "random", "sequential", "range", "brute_force",
-            "dictionary", "seed", "prng", "aes_ctr", "chacha20"
+            "random",
+            "sequential",
+            "range",
+            "brute_force",
+            "dictionary",
+            "seed",
+            "prng",
+            "aes_ctr",
+            "chacha20",
         }
         if value not in valid_modes:
             errors["mode"] = f"无效模式: {value}，有效值: {valid_modes}"
             return None
         return value
 
-    def _validate_batch_size(self, value: int, errors: Dict[str, str]) -> Optional[int]:
+    def _validate_batch_size(self, value: int, errors: dict[str, str]) -> int | None:
         """验证批次大小"""
         GPU_MAX_BATCH_SIZE = 0xFFFFFFFF
         if value < 1:
@@ -713,23 +720,29 @@ class ConfigManager:
             return None
         return value
 
-    def _validate_positive_int(self, name: str, value: int, errors: Dict[str, str], 
-                               min_val: int = 1) -> Optional[int]:
+    def _validate_positive_int(
+        self, name: str, value: int, errors: dict[str, str], min_val: int = 1
+    ) -> int | None:
         """验证正整数配置"""
         if not isinstance(value, int) or value < min_val:
-            errors[name] = f"{name} 必须 >= {min_val}, 当前值: {value} (类型: {type(value).__name__})"
+            errors[name] = (
+                f"{name} 必须 >= {min_val}, 当前值: {value} (类型: {type(value).__name__})"
+            )
             return None
         return value
 
-    def _validate_positive_float(self, name: str, value: float, errors: Dict[str, str],
-                                min_val: float = 0.0) -> Optional[float]:
+    def _validate_positive_float(
+        self, name: str, value: float, errors: dict[str, str], min_val: float = 0.0
+    ) -> float | None:
         """验证正浮点数配置"""
         if not isinstance(value, (int, float)) or value < min_val:
-            errors[name] = f"{name} 必须 >= {min_val}, 当前值: {value} (类型: {type(value).__name__})"
+            errors[name] = (
+                f"{name} 必须 >= {min_val}, 当前值: {value} (类型: {type(value).__name__})"
+            )
             return None
         return float(value)
 
-    def _validate_bool(self, name: str, value: Any, errors: Dict[str, str]) -> bool:
+    def _validate_bool(self, name: str, value: Any, errors: dict[str, str]) -> bool:
         """验证布尔值配置"""
         if not isinstance(value, bool):
             # 尝试自动转换
@@ -742,14 +755,16 @@ class ConfigManager:
             return False
         return value
 
-    def _validate_checkpoint_interval(self, value: int, errors: Dict[str, str]) -> Optional[int]:
+    def _validate_checkpoint_interval(self, value: int, errors: dict[str, str]) -> int | None:
         """验证检查点间隔"""
         if value != -1 and (not isinstance(value, int) or value < 1):
-            errors["checkpoint_interval"] = f"checkpoint_interval 必须为 -1 或 >= 1, 当前值: {value}"
+            errors["checkpoint_interval"] = (
+                f"checkpoint_interval 必须为 -1 或 >= 1, 当前值: {value}"
+            )
             return None
         return value
 
-    def _validate_log_level(self, value: str, errors: Dict[str, str]) -> Optional[str]:
+    def _validate_log_level(self, value: str, errors: dict[str, str]) -> str | None:
         """验证日志级别"""
         valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
         if value.upper() not in valid_levels:
@@ -757,7 +772,7 @@ class ConfigManager:
             return None
         return value.upper()
 
-    def _validate_targets(self, targets: Any, errors: Dict[str, str]) -> Optional[List[str]]:
+    def _validate_targets(self, targets: Any, errors: dict[str, str]) -> list[str] | None:
         """验证目标地址列表"""
         if targets is None:
             return None
@@ -769,7 +784,7 @@ class ConfigManager:
             return None
         return targets
 
-    def _validate_gpu_config(self, config: Any, errors: Dict[str, str]) -> Optional[Dict[str, Any]]:
+    def _validate_gpu_config(self, config: Any, errors: dict[str, str]) -> dict[str, Any] | None:
         """验证GPU配置"""
         if config is None:
             return None
@@ -784,7 +799,9 @@ class ConfigManager:
                 return None
         return config
 
-    def _validate_performance_config(self, config: Any, errors: Dict[str, str]) -> Optional[Dict[str, Any]]:
+    def _validate_performance_config(
+        self, config: Any, errors: dict[str, str]
+    ) -> dict[str, Any] | None:
         """验证性能配置"""
         if config is None:
             return None
@@ -793,7 +810,9 @@ class ConfigManager:
             return None
         return config
 
-    def _validate_monitoring_config(self, config: Any, errors: Dict[str, str]) -> Optional[Dict[str, Any]]:
+    def _validate_monitoring_config(
+        self, config: Any, errors: dict[str, str]
+    ) -> dict[str, Any] | None:
         """验证监控配置"""
         if config is None:
             return None
@@ -802,7 +821,9 @@ class ConfigManager:
             return None
         return config
 
-    def _validate_security_config(self, config: Any, errors: Dict[str, str]) -> Optional[Dict[str, Any]]:
+    def _validate_security_config(
+        self, config: Any, errors: dict[str, str]
+    ) -> dict[str, Any] | None:
         """验证安全配置"""
         if config is None:
             return None
@@ -811,7 +832,9 @@ class ConfigManager:
             return None
         return config
 
-    def _validate_strategy_params(self, params: Any, errors: Dict[str, str]) -> Optional[Dict[str, Any]]:
+    def _validate_strategy_params(
+        self, params: Any, errors: dict[str, str]
+    ) -> dict[str, Any] | None:
         """验证策略参数"""
         if params is None:
             return None
@@ -824,7 +847,7 @@ class ConfigManager:
     # 简化后的 _validate_manual 函数
     # ========================================================================
 
-    def _validate_manual(self, config: Dict[str, Any]) -> Dict[str, str]:
+    def _validate_manual(self, config: dict[str, Any]) -> dict[str, str]:
         """
         手动验证配置字段（JSON Schema 无法表达的复杂规则）
 
@@ -834,7 +857,7 @@ class ConfigManager:
         返回:
             错误字典 {字段名: 错误信息}，空字典表示验证通过
         """
-        errors: Dict[str, str] = {}
+        errors: dict[str, str] = {}
 
         # 1. 基础类型验证
         self._validate_mode(config.get("mode", "random"), errors)
@@ -847,8 +870,13 @@ class ConfigManager:
         self._validate_checkpoint_interval(config.get("checkpoint_interval", 600), errors)
 
         # 3. 布尔值验证
-        for field in ["enable_checkpoint", "enable_stats", "enable_monitoring",
-                      "enable_progress_bar", "use_colors"]:
+        for field in [
+            "enable_checkpoint",
+            "enable_stats",
+            "enable_monitoring",
+            "enable_progress_bar",
+            "use_colors",
+        ]:
             if field in config:
                 self._validate_bool(field, config[field], errors)
 
@@ -869,4 +897,3 @@ class ConfigManager:
                 validator(config[field], errors)
 
         return errors
-

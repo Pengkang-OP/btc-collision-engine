@@ -7,10 +7,10 @@ IGPUDeviceManager 协议接口，使外观层能够通过统一协议管理设�
 创建日期: 2026-04-30
 """
 
-from typing import Any, Dict, List, Optional
 import logging
+from typing import Any
 
-from .protocols import GPUDevice, GPUContext
+from .protocols import GPUContext, GPUDevice
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ class DeviceManagerAdapter:
 
     def __init__(
         self,
-        config: Optional[Dict[str, Any]] = None,
+        config: dict[str, Any] | None = None,
         device_index: int = -1,
     ) -> None:
         """初始化设备管理器适配器
@@ -52,10 +52,10 @@ class DeviceManagerAdapter:
         # 内部状态：持有底层 GPUDevice 和 GPUContext 实例
         self._gpu_device: Any = None  # src.gpu.device.GPUDevice
         self._gpu_context: Any = None  # src.gpu.context.GPUContext
-        self._selected_device: Optional[GPUDevice] = None
-        self._selected_context: Optional[GPUContext] = None
+        self._selected_device: GPUDevice | None = None
+        self._selected_context: GPUContext | None = None
 
-    def list_devices(self) -> List[GPUDevice]:
+    def list_devices(self) -> list[GPUDevice]:
         """列出所有可用 GPU 设备
 
         通过 GPUDeviceDetector.detect_devices() 发现设备，
@@ -69,7 +69,7 @@ class DeviceManagerAdapter:
 
             raw_devices = GPUDeviceDetector.detect_devices()
 
-            devices: List[GPUDevice] = []
+            devices: list[GPUDevice] = []
             for idx, dev_info in enumerate(raw_devices):
                 name = dev_info.get("name", "Unknown")
                 vendor_str = dev_info.get("vendor", "")
@@ -107,7 +107,8 @@ class DeviceManagerAdapter:
         idx = device_index if device_index >= 0 else self._default_device_index
 
         try:
-            from ...gpu.device import GPUDevice as GPUDeviceImpl, GPUDeviceDetector, identify_vendor
+            from ...gpu.device import GPUDevice as GPUDeviceImpl
+            from ...gpu.device import GPUDeviceDetector, identify_vendor
 
             # 检查 GPU 可用性
             if not GPUDeviceDetector.is_gpu_available():
@@ -140,8 +141,7 @@ class DeviceManagerAdapter:
             )
 
             logger.info(
-                f"GPU 设备已选择: {name} "
-                f"(vendor={vendor_identifier}, memory={memory_total / (1024**3):.1f}GB)"
+                f"GPU 设备已选择: {name} (vendor={vendor_identifier}, memory={memory_total / (1024**3):.1f}GB)"
             )
 
             return self._selected_device

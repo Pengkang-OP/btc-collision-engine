@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """单GPU工作器
 
 封装单个GPU的碰撞引擎,在线程中独立运行私钥搜索任务。
@@ -11,16 +10,16 @@
 
 import threading
 import time
-from typing import Set, Dict, Optional, Tuple, Callable, Union, Any, TYPE_CHECKING, cast
-from queue import Queue, Empty
+from collections.abc import Callable
+from queue import Empty, Queue
+from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
     from ..collision.gpu_collision_engine import GPUCollisionEngine
 
 # P3-5: 统一日志获取
-from ..utils import get_configured_logger
-
 from ..config.optimization_config import is_feature_enabled
+from ..utils import get_configured_logger
 
 # 根据配置条件导入优化模块
 _delta_stats_available = is_feature_enabled("delta_stats")
@@ -61,14 +60,14 @@ class SingleGPUWorker(threading.Thread):
     def __init__(
         self,
         device_idx: int,
-        key_range: Tuple[int, int],
-        targets: Set[str],
-        config: Union[Dict, WorkerConfig],
-        result_callback: Optional[Callable] = None,
-        data_monitor: Optional[Any] = None,  # 添加数据监控器引用
+        key_range: tuple[int, int],
+        targets: set[str],
+        config: dict | WorkerConfig,
+        result_callback: Callable | None = None,
+        data_monitor: Any | None = None,  # 添加数据监控器引用
         mode: str = "random",  # 碰撞模式: random / range / brute_force
-        range_start: Optional[int] = None,  # range/brute_force 起始私钥
-        range_end: Optional[int] = None,  # range 结束私钥
+        range_start: int | None = None,  # range/brute_force 起始私钥
+        range_end: int | None = None,  # range 结束私钥
     ):
         """初始化GPU工作器
 
@@ -108,10 +107,10 @@ class SingleGPUWorker(threading.Thread):
         self._lock = threading.Lock()
 
         # 结果队列
-        self._result_queue: Queue[Dict[str, Any]] = Queue()
+        self._result_queue: Queue[dict[str, Any]] = Queue()
 
         # 统计信息
-        self._stats: Dict[str, Any] = {
+        self._stats: dict[str, Any] = {
             "device_idx": device_idx,
             "status": "initialized",  # initialized, running, paused, stopped, error
             "keys_checked": 0,
@@ -124,17 +123,15 @@ class SingleGPUWorker(threading.Thread):
         }
 
         # 增量统计器（线程本地，减少锁竞争）- 根据配置启用
-        self._delta_stats: Optional[Any] = None
+        self._delta_stats: Any | None = None
         if _delta_stats_available:
             self._delta_stats = ThreadLocalDeltaStats()
             logger.debug(f"GPU {device_idx}: 增量统计器已启用")
 
         # GPU引擎实例
-        self._gpu_engine: Optional["GPUCollisionEngine"] = None
+        self._gpu_engine: GPUCollisionEngine | None = None
 
-        logger.info(
-            f"GPU工作器已创建: 设备={device_idx}, " f"范围={key_range[0]:,}-{key_range[1]:,}"
-        )
+        logger.info(f"GPU工作器已创建: 设备={device_idx}, 范围={key_range[0]:,}-{key_range[1]:,}")
 
     def run(self) -> None:
         """线程主循环"""
@@ -194,17 +191,17 @@ class SingleGPUWorker(threading.Thread):
             from ..collision.gpu_collision_engine import GPUCollisionEngine
 
             # 配置引擎
-            batch_size: Optional[int] = self.config.batch_size  # None=自动计算
+            batch_size: int | None = self.config.batch_size  # None=自动计算
 
             # 创建引擎实例（targets 是必填参数，其余通过 __init__ 完成初始化）
             self._gpu_engine = GPUCollisionEngine(
                 targets=self.targets,
                 device_index=self.device_idx,
-                batch_size=cast(Optional[int], batch_size),
+                batch_size=cast(int | None, batch_size),
                 use_gpu_memory_pool=True,
             )
 
-            logger.info(f"GPU {self.device_idx} 引擎初始化完成: " f"批次={batch_size or '自动'}")
+            logger.info(f"GPU {self.device_idx} 引擎初始化完成: 批次={batch_size or '自动'}")
 
         except ImportError as e:
             logger.error(f"GPU {self.device_idx} GPU引擎模块导入失败: {e}")
@@ -229,7 +226,7 @@ class SingleGPUWorker(threading.Thread):
 
         try:
             # 根据模式组装 start() 关键字参数
-            engine_kwargs: Dict = {}
+            engine_kwargs: dict = {}
             if self.mode in ("range", "brute_force"):
                 if self.range_start is not None:
                     engine_kwargs["start"] = self.range_start
@@ -278,8 +275,7 @@ class SingleGPUWorker(threading.Thread):
             # 启动GPU引擎（阻塞调用，直到完成或停止）
             self._gpu_engine.start(mode=self.mode, **engine_kwargs)
             logger.info(
-                f"GPU {self.device_idx} 引擎已启动: "
-                f"mode={self.mode}, kwargs={engine_kwargs or '无'}"
+                f"GPU {self.device_idx} 引擎已启动: mode={self.mode}, kwargs={engine_kwargs or '无'}"
             )
 
             # 等待监控线程结束
@@ -294,8 +290,7 @@ class SingleGPUWorker(threading.Thread):
             current_batch = self.config.batch_size or 65536
             new_batch = max(current_batch // 2, 1024)
             logger.warning(
-                f"GPU {self.device_idx} 内存不足（MemoryError），"
-                f"自动减小 batch_size: {current_batch:,} → {new_batch:,}"
+                f"GPU {self.device_idx} 内存不足（MemoryError），自动减小 batch_size: {current_batch:,} → {new_batch:,}"
             )
             self.config.batch_size = new_batch
             with self._lock:
@@ -456,7 +451,7 @@ class SingleGPUWorker(threading.Thread):
         with self._lock:
             self._stats["status"] = "running"
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         """获取统计信息(线程安全)
 
         Returns:
@@ -509,7 +504,7 @@ class SingleGPUWorker(threading.Thread):
         """
         return self.device_idx
 
-    def get_key_range(self) -> Tuple[int, int]:
+    def get_key_range(self) -> tuple[int, int]:
         """获取私钥搜索范围
 
         Returns:

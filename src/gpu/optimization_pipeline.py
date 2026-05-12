@@ -5,10 +5,11 @@
 """
 
 import logging
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, Optional
 
 # P3-5: 统一日志获取
 from ..utils import get_configured_logger
-from typing import Any, Callable, Dict, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..gpu.auto_tuner import GPUAutoTuner
@@ -35,7 +36,7 @@ class PerformanceOptimizationPipeline:
         auto_tuner: Optional["GPUAutoTuner"] = None,
         benchmark_suite: Optional["GPUBenchmarkSuite"] = None,
         reporter: Optional["PerformanceReportGenerator"] = None,
-        logger_instance: Optional[logging.Logger] = None,
+        logger_instance: logging.Logger | None = None,
     ) -> None:
         """初始化性能优化管道
 
@@ -45,31 +46,30 @@ class PerformanceOptimizationPipeline:
             reporter:         PerformanceReportGenerator 实例（可选）
             logger_instance:  日志记录器（默认使用模块级 logger）
         """
-        self.auto_tuner: Optional[GPUAutoTuner] = auto_tuner
-        self.benchmark_suite: Optional[GPUBenchmarkSuite] = benchmark_suite
-        self.performance_reporter: Optional[PerformanceReportGenerator] = reporter
+        self.auto_tuner: GPUAutoTuner | None = auto_tuner
+        self.benchmark_suite: GPUBenchmarkSuite | None = benchmark_suite
+        self.performance_reporter: PerformanceReportGenerator | None = reporter
         self._logger = logger_instance or logger
 
     # ------------------------------------------------------------------
     # 初始化
     # ------------------------------------------------------------------
 
-    def initialize(self, device_info: Dict[str, Any]) -> None:
+    def initialize(self, device_info: dict[str, Any]) -> None:
         """根据设备信息进行管道级初始化（留作扩展点）
 
         Args:
             device_info: GPU 设备信息字典
         """
         self._logger.debug(
-            "PerformanceOptimizationPipeline.initialize called: "
-            f"device={device_info.get('name', 'unknown')}"
+            f"PerformanceOptimizationPipeline.initialize called: device={device_info.get('name', 'unknown')}"
         )
 
     # ------------------------------------------------------------------
     # 批处理大小优化
     # ------------------------------------------------------------------
 
-    def optimize_batch_size(self, current_size: int, metrics: Dict[str, Any]) -> int:
+    def optimize_batch_size(self, current_size: int, metrics: dict[str, Any]) -> int:
         """根据性能指标推荐最优 batch_size
 
         委托给 auto_tuner（若存在），否则返回当前大小。
@@ -96,7 +96,7 @@ class PerformanceOptimizationPipeline:
     # 基准测试
     # ------------------------------------------------------------------
 
-    def run_benchmark(self, iterations: int = 5) -> Dict[str, Any]:
+    def run_benchmark(self, iterations: int = 5) -> dict[str, Any]:
         """运行 GPU 性能基准测试
 
         Args:
@@ -126,8 +126,8 @@ class PerformanceOptimizationPipeline:
     def start_auto_tuning(
         self,
         max_iterations: int = 30,
-        on_new_batch_size: Optional[Callable] = None,
-    ) -> Dict[str, Any]:
+        on_new_batch_size: Callable | None = None,
+    ) -> dict[str, Any]:
         """启动自动调优
 
         Args:
@@ -169,7 +169,7 @@ class PerformanceOptimizationPipeline:
         include_history: bool = True,
         include_recommendations: bool = True,
         include_comparison: bool = False,
-        output_dir: Optional[str] = None,
+        output_dir: str | None = None,
     ) -> str:
         """生成性能报告
 

@@ -23,11 +23,12 @@
     >>> bus.unsubscribe(EventType.ENGINE_PROGRESS, handle_progress)
 """
 
-import threading
-import queue
-from typing import Any, Callable, Dict, List, Optional
-from collections import defaultdict
 import logging
+import queue
+import threading
+from collections import defaultdict
+from collections.abc import Callable
+from typing import Any
 
 from .events import CollisionEvent, EventType
 
@@ -69,9 +70,9 @@ class EventBus:
             async_mode: 是否异步处理事件 (默认False)
             max_queue_size: 事件队列最大大小 (异步模式)
         """
-        self._subscribers: Dict[EventType, List[Callable]] = defaultdict(list)
+        self._subscribers: dict[EventType, list[Callable]] = defaultdict(list)
         self._lock = threading.RLock()
-        self._error_handler: Optional[Callable] = None
+        self._error_handler: Callable | None = None
         self._async_mode = async_mode
         self._max_queue_size = max_queue_size
 
@@ -81,8 +82,8 @@ class EventBus:
         self._dropped_count = 0  # 跟踪丢弃的事件数量
 
         # 异步队列（同步模式下为 None）
-        self._event_queue: Optional[Any] = None
-        self._worker_thread: Optional[threading.Thread] = None
+        self._event_queue: Any | None = None
+        self._worker_thread: threading.Thread | None = None
         self._running: bool = False
 
         if async_mode:
@@ -177,7 +178,9 @@ class EventBus:
             except queue.Full:
                 # SEVERE-4修复: 事件队列满时记录警告，重要事件可以考虑降级处理
                 self._dropped_count += 1
-                logger.warning(f"事件队列已满，丢弃事件: {event.event_type.value} (已丢弃{self._dropped_count}个)")
+                logger.warning(
+                    f"事件队列已满，丢弃事件: {event.event_type.value} (已丢弃{self._dropped_count}个)"
+                )
         else:
             # 同步模式: 直接处理
             self._dispatch_event(event)
@@ -296,7 +299,7 @@ class EventBus:
         """获取错误总数"""
         return self._error_count
 
-    def get_stats(self) -> Dict[str, int]:
+    def get_stats(self) -> dict[str, int]:
         """
         获取事件总线统计信息
 
@@ -316,14 +319,14 @@ class EventBus:
         return self
 
     def __exit__(
-        self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]
+        self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None
     ) -> None:
         """上下文管理器出口"""
         self.shutdown()
 
 
 # 全局事件总线实例 (单例模式)
-_global_event_bus: Optional[EventBus] = None
+_global_event_bus: EventBus | None = None
 _global_event_bus_lock = threading.Lock()
 
 

@@ -15,8 +15,8 @@
     msg_with_args = _t("errors.file_not_found", path="/tmp/file.txt")
 """
 
-from .translator import Translator
 from .language_detector import detect_system_language
+from .translator import Translator
 
 # ------------------------------------------------------------------
 # 全局翻译器实例（使用系统语言自动初始化）

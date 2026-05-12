@@ -8,8 +8,8 @@ DataLogger 的实际 API (`record_performance_data()` 等)。
 创建日期: 2026-04-30
 """
 
-from typing import Any, Dict, Optional
 import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ class DataLoggerAdapter:
     def __init__(
         self,
         engine: Any = None,
-        config: Optional[Dict[str, Any]] = None,
+        config: dict[str, Any] | None = None,
     ) -> None:
         """初始化数据日志适配器
 
@@ -63,7 +63,7 @@ class DataLoggerAdapter:
             except Exception as e:
                 logger.warning(f"创建 DataLogger 失败: {e}")
 
-    def log_performance(self, data: Dict[str, Any]) -> None:
+    def log_performance(self, data: dict[str, Any]) -> None:
         """记录性能数据（桥接方法）
 
         将 dict 形式的性能数据映射到 DataLogger.record_performance_data()
@@ -102,8 +102,7 @@ class DataLoggerAdapter:
             )
 
             logger.debug(
-                f"性能数据已记录: speed={speed:.0f}/s, "
-                f"checked={total_checked}, matches={matches_found}"
+                f"性能数据已记录: speed={speed:.0f}/s, checked={total_checked}, matches={matches_found}"
             )
 
         except Exception as e:
@@ -118,7 +117,7 @@ class DataLoggerAdapter:
             except Exception as e:
                 logger.error(f"刷写数据日志失败: {e}")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取数据日志统计
 
         Returns:

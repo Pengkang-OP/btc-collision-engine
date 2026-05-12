@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """大整数运算优化模块
 
 使用gmpy2库优化secp256k1椭圆曲线中的大整数运算,包括:
@@ -26,10 +25,10 @@
 - Comba Multiplication: "Exponentiation Cryptosystems on the IBM PC" - Comba, 1990
 """
 
-from typing import Optional, Any
+from typing import Any
 
 # 导入日志配置
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger, init_logging
 
 # 初始化日志系统
 init_logging()
@@ -57,9 +56,9 @@ class BigIntOptimizer:
 
     def __init__(self) -> None:
         """初始化大整数优化器,检测gmpy2可用性"""
-        self.gmpy2: Optional[Any] = None
+        self.gmpy2: Any | None = None
         self.use_gmpy2: bool = False
-        self.mpz: Optional[Any] = None
+        self.mpz: Any | None = None
 
         try:
             import gmpy2

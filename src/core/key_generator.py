@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
 """安全私钥生成器 - 符合Bitcoin Core规范"""
 
 import os
 import secrets
-import time
 import threading
-from typing import List, Dict, Optional
+import time
 from datetime import datetime
 
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger, init_logging
 from .secp256k1 import Secp256k1
 from .secure_key_manager import SecureKeyManager
 
@@ -36,7 +34,7 @@ class SecureKeyGenerator:
         >>> keys = generator.generate_batch(1000)
     """
 
-    def __init__(self, config: Optional[Dict] = None) -> None:
+    def __init__(self, config: dict | None = None) -> None:
         """
         初始化私钥生成器
 
@@ -62,7 +60,7 @@ class SecureKeyGenerator:
         # 统计信息
         self._total_generated = 0
         self._start_time = datetime.utcnow()
-        self.stats: Dict = {"low_entropy_count": 0, "entropy_checks": 0, "warnings_issued": 0}
+        self.stats: dict = {"low_entropy_count": 0, "entropy_checks": 0, "warnings_issued": 0}
 
         logger.info(
             "SecureKeyGenerator初始化: batch_size=%d, rate_limit=%d, entropy_check=%s",
@@ -86,15 +84,14 @@ class SecureKeyGenerator:
             # Linux系统检查熵池
             entropy_file = "/proc/sys/kernel/random/entropy_avail"
             if os.path.exists(entropy_file):
-                with open(entropy_file, "r") as f:
+                with open(entropy_file) as f:
                     entropy = int(f.read().strip())
 
                 self.stats["entropy_checks"] = self.stats.get("entropy_checks", 0) + 1
 
                 if entropy < self.min_entropy_bits:
                     logger.warning(
-                        f"系统熵池较低: {entropy} bits (< {self.min_entropy_bits}), "
-                        "建议安装haveged或rng-tools"
+                        f"系统熵池较低: {entropy} bits (< {self.min_entropy_bits}), 建议安装haveged或rng-tools"
                     )
                     self.stats["low_entropy_count"] = self.stats.get("low_entropy_count", 0) + 1
 
@@ -138,7 +135,7 @@ class SecureKeyGenerator:
             logger.debug(f"无法检查熵池状态: {e}")
             return True  # 无法检查时假设健康
 
-    def generate_batch(self, count: int) -> List[bytes]:
+    def generate_batch(self, count: int) -> list[bytes]:
         """
         批量生成私钥 - 符合加密货币安全标准
 
@@ -197,7 +194,7 @@ class SecureKeyGenerator:
         # BL-2修复: 检查是否生成了任何有效私钥
         if len(private_keys) == 0 and count > 0:
             raise RuntimeError(
-                f"无法生成任何有效私钥 (请求{count}个)。" "这可能是系统熵池严重不足或CSPRNG故障。"
+                f"无法生成任何有效私钥 (请求{count}个)。这可能是系统熵池严重不足或CSPRNG故障。"
             )
 
         return private_keys
@@ -240,7 +237,7 @@ class SecureKeyGenerator:
         # 验证范围: 1 <= k < n
         return 1 <= key_int < Secp256k1.N
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """
         获取生成统计信息
 

@@ -7,47 +7,43 @@
 """
 
 # ========== 从新位置导入核心类 ==========
-from .gpu.engine import GPUCollisionEngine
-
-# ========== 重导出常量 ==========
-from .gpu.engine import (
-    UINT32_MAX,
-    GPU_MAX_BATCH_SIZE,
-    INITIAL_BATCH_SIZE,
-    PYOPENCL_AVAILABLE,
-    ASYNC_LOG_AVAILABLE,
-    GPU_CONFIG_MANAGER_AVAILABLE,
-)
-
-# ========== 重导出工具函数 ==========
-
-# ========== 向后兼容: 保留原模块级导入 ==========
-# 以下导入保证 Monkey-patch (如 patch('src.collision.gpu_collision_engine.GPUDevice')) 继续工作
-
-# 回调类型
-
-# GPU设备与上下文
-from ..gpu.device import GPUDevice, GPUDeviceDetector
-from ..gpu.context import GPUContext
-
-# GPU内核与协议
-from ..gpu.profiles.loader import GPUProfileLoader
-from ..gpu.kernel_impl import GPUKernel
-
 # GPU性能优化
 from ..gpu.async_executor import AsyncGPUExecutor
+from ..gpu.config_manager import GPUConfigManager
+from ..gpu.context import GPUContext
+
+# ========== 重导出工具函数 ==========
+# ========== 向后兼容: 保留原模块级导入 ==========
+# 以下导入保证 Monkey-patch (如 patch('src.collision.gpu_collision_engine.GPUDevice')) 继续工作
+# 回调类型
+# GPU设备与上下文
+from ..gpu.device import GPUDevice, GPUDeviceDetector
 
 # 提取的独立模块
 from ..gpu.device_manager import GPUDeviceManager
-from ..gpu.config_manager import GPUConfigManager
+from ..gpu.engine_monitor import GPUEngineMonitor
+from ..gpu.kernel_impl import GPUKernel
+
+# GPU内核与协议
+from ..gpu.profiles.loader import GPUProfileLoader
 from ..gpu.search_mode_coordinator import SearchModeCoordinator
 
 # 缓冲区追踪器与搜索模式
-from ..gpu.search_modes import RandomSearchMode, BruteForceSearchMode, RangeScanSearchMode
-from ..gpu.engine_monitor import GPUEngineMonitor
+from ..gpu.search_modes import BruteForceSearchMode, RandomSearchMode, RangeScanSearchMode
 
 # 日志
 from ..utils import get_configured_logger
+
+# ========== 重导出常量 ==========
+from .gpu.engine import (
+    ASYNC_LOG_AVAILABLE,
+    GPU_CONFIG_MANAGER_AVAILABLE,
+    GPU_MAX_BATCH_SIZE,
+    INITIAL_BATCH_SIZE,
+    PYOPENCL_AVAILABLE,
+    UINT32_MAX,
+    GPUCollisionEngine,
+)
 
 logger = get_configured_logger(__name__)
 

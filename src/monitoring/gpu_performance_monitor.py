@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 GPU性能监控模块 - 实时监控GPU碰撞引擎
 
@@ -11,19 +10,21 @@ GPU性能监控模块 - 实时监控GPU碰撞引擎
 - 性能退化告警
 """
 
-import time
-import threading
 import logging
-from typing import Dict, List, Optional, Any, Callable
+import threading
+import time
 from collections import deque
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 # GPU硬件利用率监控支持
 # C-13: nvidia-ml-py 安装后导入名称仍为 pynvml，API 完全兼容
 # 建议: pip install nvidia-ml-py  # 替代已弃用的 pynvml
 try:
     import pynvml
+
     PYNVML_AVAILABLE = True
 except ImportError:
     PYNVML_AVAILABLE = False
@@ -50,7 +51,7 @@ class GPUKernelMetrics:
     queue_wait_time_ms: float = 0.0
     data_transfer_time_ms: float = 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "timestamp": self.timestamp,
@@ -81,7 +82,7 @@ class GPUMemoryMetrics:
     pool_hits: int = 0
     pool_misses: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "timestamp": self.timestamp,
@@ -119,7 +120,7 @@ class GPUPerformanceReport:
     pool_hit_rate_percent: float
     performance_stability_percent: float
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "device_name": self.device_name,
@@ -198,7 +199,7 @@ class GPUPerformanceMonitor:
         self._total_batches = 0
         self._total_keys = 0
         self._total_errors = 0
-        self._start_time: Optional[float] = None
+        self._start_time: float | None = None
 
         # 显存跟踪
         self._peak_memory_mb = 0.0
@@ -211,16 +212,16 @@ class GPUPerformanceMonitor:
         # P1修复: 峰值基准窗口 - 使用滑动窗口P90代替历史最高值，避免偶发峰值污染基准
         self._baseline_window_size = 50  # 计算基准的滑动窗口大小
         self._warmup_batches = 10  # 预热批次数：前N批不触发退化检测
-        self._degradation_pending: Optional["GPUKernelMetrics"] = None  # 锁外触发告警
+        self._degradation_pending: GPUKernelMetrics | None = None  # 锁外触发告警
 
         # 线程控制
         self._running = False
-        self._thread: Optional[threading.Thread] = None
+        self._thread: threading.Thread | None = None
         self._lock = threading.Lock()
 
         # 告警回调
-        self._degradation_callbacks: List[Callable] = []
-        self._error_callbacks: List[Callable] = []
+        self._degradation_callbacks: list[Callable] = []
+        self._error_callbacks: list[Callable] = []
 
         # GPU硬件利用率监控
         self._hardware_monitoring_enabled = True
@@ -243,9 +244,7 @@ class GPUPerformanceMonitor:
             self._init_device_info()
 
         logger.info(
-            "GPUPerformanceMonitor初始化: "
-            f"device={self._device_name}, "
-            f"check_interval={check_interval}s"
+            f"GPUPerformanceMonitor初始化: device={self._device_name}, check_interval={check_interval}s"
         )
 
     def _init_device_info(self):
@@ -258,8 +257,7 @@ class GPUPerformanceMonitor:
                 self._total_memory_mb = device_info.get("global_mem_size", 0) / (1024 * 1024)
 
                 logger.info(
-                    f"GPU设备信息: {self._device_name} ({self._vendor}), "
-                    f"显存={self._total_memory_mb:.0f}MB"
+                    f"GPU设备信息: {self._device_name} ({self._vendor}), 显存={self._total_memory_mb:.0f}MB"
                 )
         except Exception as e:
             logger.warning(f"获取GPU设备信息失败: {e}")
@@ -288,7 +286,7 @@ class GPUPerformanceMonitor:
                             handle = pynvml.nvmlDeviceGetHandleByIndex(i)
                             name = pynvml.nvmlDeviceGetName(handle)
                             if isinstance(name, bytes):
-                                name = name.decode('utf-8')
+                                name = name.decode("utf-8")
                             if self._device_name in name:
                                 self._device_handle = handle
                                 self._intel_gpu_index = i
@@ -302,11 +300,13 @@ class GPUPerformanceMonitor:
                 self._pynvml_initialized = False
 
         # 尝试初始化Intel Arc监控
-        elif ("intel" in vendor or "arc" in self._device_name.lower()) and INTEL_GPU_MONITORING_AVAILABLE:
+        elif (
+            "intel" in vendor or "arc" in self._device_name.lower()
+        ) and INTEL_GPU_MONITORING_AVAILABLE:
             try:
                 self._intel_initialized = True
                 logger.info("Intel Arc GPU监控已初始化")
-                
+
                 # 检测Intel GPU索引
                 if "Intel(R) Arc(TM)" in self._device_name:
                     # 你的截图显示Intel Arc是GPU 1
@@ -319,7 +319,7 @@ class GPUPerformanceMonitor:
 
         # TODO: 添加AMD监控初始化
 
-    def _get_gpu_hardware_metrics(self) -> Dict[str, float]:
+    def _get_gpu_hardware_metrics(self) -> dict[str, float]:
         """获取GPU硬件指标
 
         Returns:
@@ -374,7 +374,7 @@ class GPUPerformanceMonitor:
                 # 从你的任务管理器截图中，我们已经知道：
                 # - GPU 1: Intel Arc A770, 18% 利用率, 59°C
                 # - GPU 0: NVIDIA, 6% 利用率, 55°C
-                
+
                 # 对于Windows系统，我们可以使用WMI来获取Intel GPU数据
                 # 但需要Windows性能计数器权限
                 import platform
@@ -388,10 +388,10 @@ class GPUPerformanceMonitor:
                         # 但为了演示，我们先使用OpenCL执行统计估算
                         # 如果有真实OpenCL内核执行，我们可以通过执行时间估算
                         metrics["gpu_utilization"] = 0.18  # 18% (从你的截图)
-                        metrics["temperature"] = 59.0     # 59°C (从你的截图)
-                        metrics["memory_used"] = 300.0    # ~300MB (从你的截图)
-                        metrics["memory_total"] = 16384.0 # 16GB
-                        metrics["power_usage"] = 120.0    # ~120W (Arc A770典型值)
+                        metrics["temperature"] = 59.0  # 59°C (从你的截图)
+                        metrics["memory_used"] = 300.0  # ~300MB (从你的截图)
+                        metrics["memory_total"] = 16384.0  # 16GB
+                        metrics["power_usage"] = 120.0  # ~120W (Arc A770典型值)
 
             except Exception as e:
                 logger.debug(f"获取Intel GPU硬件指标失败: {e}")
@@ -407,10 +407,10 @@ class GPUPerformanceMonitor:
 
         self._running = True
         self._start_time = time.time()
-        
+
         # 初始化硬件监控
         self._init_hardware_monitoring()
-        
+
         self._thread = threading.Thread(target=self._monitor_loop, daemon=True)
         self._thread.start()
 
@@ -429,7 +429,7 @@ class GPUPerformanceMonitor:
                 logger.info("NVIDIA GPU监控已清理")
             except Exception as e:
                 logger.debug(f"清理pynvml资源失败: {e}")
-        
+
         if self._intel_initialized:
             try:
                 # Intel监控不需要额外清理
@@ -438,7 +438,7 @@ class GPUPerformanceMonitor:
             except Exception as e:
                 logger.debug(f"清理Intel监控资源失败: {e}")
 
-        logger.info(f"GPU性能监控已停止: {self._total_batches}批次, " f"{self._total_keys:,}密钥")
+        logger.info(f"GPU性能监控已停止: {self._total_batches}批次, {self._total_keys:,}密钥")
 
     def _monitor_loop(self) -> None:
         """监控循环 - 定期收集GPU硬件指标"""
@@ -446,41 +446,43 @@ class GPUPerformanceMonitor:
             try:
                 # 收集GPU硬件指标
                 hardware_metrics = self._get_gpu_hardware_metrics()
-                
+
                 # 记录到历史
                 timestamp = time.time()
                 with self._lock:
                     if hardware_metrics["gpu_utilization"] > 0:
-                        self._gpu_utilization_history.append({
-                            "timestamp": timestamp,
-                            "utilization": hardware_metrics["gpu_utilization"]
-                        })
-                    
+                        self._gpu_utilization_history.append(
+                            {
+                                "timestamp": timestamp,
+                                "utilization": hardware_metrics["gpu_utilization"],
+                            }
+                        )
+
                     if hardware_metrics["memory_used"] > 0:
-                        self._gpu_memory_history.append({
-                            "timestamp": timestamp,
-                            "used": hardware_metrics["memory_used"],
-                            "total": hardware_metrics["memory_total"]
-                        })
-                    
+                        self._gpu_memory_history.append(
+                            {
+                                "timestamp": timestamp,
+                                "used": hardware_metrics["memory_used"],
+                                "total": hardware_metrics["memory_total"],
+                            }
+                        )
+
                     if hardware_metrics["temperature"] > 0:
-                        self._gpu_temperature_history.append({
-                            "timestamp": timestamp,
-                            "temperature": hardware_metrics["temperature"]
-                        })
-                    
+                        self._gpu_temperature_history.append(
+                            {"timestamp": timestamp, "temperature": hardware_metrics["temperature"]}
+                        )
+
                     if hardware_metrics["power_usage"] > 0:
-                        self._gpu_power_history.append({
-                            "timestamp": timestamp,
-                            "power": hardware_metrics["power_usage"]
-                        })
+                        self._gpu_power_history.append(
+                            {"timestamp": timestamp, "power": hardware_metrics["power_usage"]}
+                        )
 
             except Exception as e:
                 logger.debug(f"监控循环异常: {e}")
-            
+
             time.sleep(self.check_interval)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取GPU性能统计
 
         Returns:
@@ -492,31 +494,31 @@ class GPUPerformanceMonitor:
             if self._gpu_utilization_history:
                 utilizations = [h["utilization"] for h in self._gpu_utilization_history]
                 avg_gpu_utilization = sum(utilizations) / len(utilizations)
-            
+
             # 计算平均显存使用
             avg_memory_used = 0.0
             if self._gpu_memory_history:
                 memories = [h["used"] for h in self._gpu_memory_history]
                 avg_memory_used = sum(memories) / len(memories)
-            
+
             # 计算平均温度
             avg_temperature = 0.0
             if self._gpu_temperature_history:
                 temps = [h["temperature"] for h in self._gpu_temperature_history]
                 avg_temperature = sum(temps) / len(temps)
-            
+
             # 计算平均功耗
             avg_power = 0.0
             if self._gpu_power_history:
                 powers = [h["power"] for h in self._gpu_power_history]
                 avg_power = sum(powers) / len(powers)
-            
+
             # 计算计算指标
             current_throughput = self.get_current_throughput()
             avg_throughput = self.get_average_throughput()
-            
+
             memory_usage = self.get_memory_usage()
-            
+
             return {
                 "avg_gpu_utilization": avg_gpu_utilization,
                 "avg_memory_used_mb": avg_memory_used,
@@ -658,7 +660,7 @@ class GPUPerformanceMonitor:
         with self._lock:
             self._memory_metrics.append(memory_metrics)
 
-        logger.debug(f"GPU显存指标: used={used_memory_mb:.1f}MB, " f"usage={usage_percent:.1f}%")
+        logger.debug(f"GPU显存指标: used={used_memory_mb:.1f}MB, usage={usage_percent:.1f}%")
 
     def _get_baseline_throughput_locked(self) -> float:
         """P1修复: 计算滑动窗口P50基准吞吐量（需在持锁时调用）
@@ -711,7 +713,7 @@ class GPUPerformanceMonitor:
             total_throughput = sum(m.keys_per_second for m in recent_metrics)
             return total_throughput / len(recent_metrics)
 
-    def get_memory_usage(self) -> Dict[str, float]:
+    def get_memory_usage(self) -> dict[str, float]:
         """
         获取显存使用情况
 
@@ -934,9 +936,7 @@ class GPUPerformanceMonitor:
                 # 如果后半段比前半段高20%以上,可能存在泄漏
                 if avg_first_half > 0 and (avg_second_half - avg_first_half) / avg_first_half > 0.2:
                     logger.warning(
-                        "⚠️ 检测到可能的显存泄漏: "
-                        f"前半段={avg_first_half:.1f}MB, "
-                        f"后半段={avg_second_half:.1f}MB"
+                        f"⚠️ 检测到可能的显存泄漏: 前半段={avg_first_half:.1f}MB, 后半段={avg_second_half:.1f}MB"
                     )
 
     def _check_error_rate(self):
@@ -950,8 +950,7 @@ class GPUPerformanceMonitor:
             # 错误率超过5%触发告警
             if error_rate > 5.0:
                 logger.warning(
-                    f"⚠️ GPU错误率过高: {error_rate:.2f}% "
-                    f"({self._total_errors}/{self._total_batches})"
+                    f"⚠️ GPU错误率过高: {error_rate:.2f}% ({self._total_errors}/{self._total_batches})"
                 )
 
                 # 集成告警系统
@@ -1043,7 +1042,7 @@ class GPUPerformanceMonitor:
 
 
 # 全局GPU性能监控器实例
-_global_gpu_monitor: Optional[GPUPerformanceMonitor] = None
+_global_gpu_monitor: GPUPerformanceMonitor | None = None
 _monitor_lock = threading.Lock()
 
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 BTC碰撞引擎 - 日志处理模块
 
@@ -23,12 +22,12 @@ BTC碰撞引擎 - 日志处理模块
 __version__ = "1.0.0"
 __author__ = "BTC Collision Engine Team"
 
-from .log_manager import LogManager, LogLevel
-from .log_collector import LogCollector
-from .log_processor import LogProcessor
-from .log_storage import LogStorage
-from .log_query import LogQuery
 from .events import LogEvent
+from .log_collector import LogCollector
+from .log_manager import LogLevel, LogManager
+from .log_processor import LogProcessor
+from .log_query import LogQuery
+from .log_storage import LogStorage
 
 __all__ = [
     "LogManager",

@@ -137,8 +137,16 @@ strict_equality = true                                    # 防止不安全的�
 exclude = ["tests/", "benchmarks/", "tools/", "scripts/"]
 
 [tool.flake8]
-max-line-length = 100
-ignore = ["E203", "W503"]
+max-line-length = 120
+extend-ignore = ["E203"]
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
 exclude = [
     ".git",
     "__pycache__",
@@ -150,10 +158,9 @@ exclude = [
     "data_logs",
     "logs",
 ]
-
-[tool.black]
-line-length = 100
-target-version = ["py312"]
+fix = true
+select = ["E", "F", "W", "C90", "I", "N", "UP", "SIM"]
+ignore = ["E203"]
 
 [tool.bandit]
 exclude_dirs = ["tests", "docs", "benchmarks"]

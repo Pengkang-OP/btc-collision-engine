@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 配置版本迁移工具
 
@@ -11,7 +10,7 @@ import json
 import shutil
 import time
 from pathlib import Path
-from typing import Dict, Any, Tuple, List
+from typing import Any
 
 from src.i18n import _t
 
@@ -30,7 +29,7 @@ V3_0_REQUIRED_SECTIONS = {"crypto", "collision", "logging", "gpu", "monitoring"}
 V2_SECTIONS = {"crypto", "collision", "logging"}
 
 # 迁移规则
-MIGRATION_RULES: Dict[str, Dict[str, Any]] = {
+MIGRATION_RULES: dict[str, dict[str, Any]] = {
     "2.x_to_3.0": {
         "add_sections": {
             "gpu": {
@@ -117,7 +116,7 @@ def detect_config_version(config: dict) -> str:
 def migrate_config(
     config: dict,
     target_version: str = CONFIG_VERSION,
-) -> Tuple[dict, List[str]]:
+) -> tuple[dict, list[str]]:
     """
     逐步将配置从当前版本迁移到目标版本。
 
@@ -133,13 +132,13 @@ def migrate_config(
     import copy
 
     result = copy.deepcopy(config)
-    changelog: List[str] = []
+    changelog: list[str] = []
 
     current_version = detect_config_version(result)
     changelog.append(f"检测到当前配置版本: {current_version}")
 
     # 构建迁移路径
-    migration_path: List[str] = []
+    migration_path: list[str] = []
     if current_version == "2.x":
         migration_path = ["2.x_to_3.0", "3.0_to_3.1"]
     elif current_version == "3.0.0":
@@ -159,7 +158,7 @@ def migrate_config(
         changelog.append(f"应用迁移规则: {rule_key}")
 
         # 1. 添加整段（仅当该段不存在时）
-        add_sections: Dict[str, Any] = rule.get("add_sections", {})
+        add_sections: dict[str, Any] = rule.get("add_sections", {})
         for section_name, section_defaults in add_sections.items():
             if section_name not in result:
                 result[section_name] = section_defaults
@@ -168,7 +167,7 @@ def migrate_config(
                 changelog.append(f"  ~ 配置段已存在，跳过: {section_name}")
 
         # 2. 在已有段内添加缺失字段（仅当字段不存在时）
-        add_fields: Dict[str, Dict[str, Any]] = rule.get("add_fields", {})
+        add_fields: dict[str, dict[str, Any]] = rule.get("add_fields", {})
         for section_name, fields in add_fields.items():
             if section_name not in result:
                 # 段不存在则整体添加
@@ -183,7 +182,7 @@ def migrate_config(
                         changelog.append(f"  ~ 字段已存在，保留用户值: {section_name}.{field_name}")
 
         # 3. 字段重命名
-        rename_fields: Dict[str, Dict[str, str]] = rule.get("rename_fields", {})
+        rename_fields: dict[str, dict[str, str]] = rule.get("rename_fields", {})
         for section_name, renames in rename_fields.items():
             if section_name not in result:
                 continue
@@ -220,7 +219,7 @@ def backup_config(config_path: str) -> str:
     return str(backup_path)
 
 
-def validate_migrated_config(config: dict) -> Tuple[bool, List[str]]:
+def validate_migrated_config(config: dict) -> tuple[bool, list[str]]:
     """
     验证迁移后的配置是否满足 v3.1 要求。
 
@@ -230,7 +229,7 @@ def validate_migrated_config(config: dict) -> Tuple[bool, List[str]]:
     返回:
         (是否有效, 问题列表)；问题列表为空表示验证通过
     """
-    issues: List[str] = []
+    issues: list[str] = []
 
     if not isinstance(config, dict):
         return False, ["配置根节点不是有效的 JSON 对象"]
@@ -321,7 +320,7 @@ def migrate_config_file(config_path: str = "config.json") -> bool:
     返回:
         True 表示迁移成功（或已是最新版本），False 表示迁移失败
     """
-    from src.cli.constants import TAG_OK, TAG_ERROR, TAG_TIP
+    from src.cli.constants import TAG_ERROR, TAG_OK, TAG_TIP
 
     print(f"\n{'=' * 60}")
     print("  " + _t("cli.migration.title") + f"  (目标版本: {CONFIG_VERSION})")
@@ -335,7 +334,7 @@ def migrate_config_file(config_path: str = "config.json") -> bool:
         return False
 
     try:
-        with open(str(config_file), "r", encoding="utf-8") as f:
+        with open(str(config_file), encoding="utf-8") as f:
             config = json.load(f)
     except json.JSONDecodeError as e:
         print(f"{TAG_ERROR} " + _t("config.invalid", error=str(e)))

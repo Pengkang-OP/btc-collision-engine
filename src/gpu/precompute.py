@@ -5,8 +5,9 @@
 小端序存储：d[0]=LSB, d[7]=MSB，与内核 uint256_t 的 uint d[8] 一致。
 """
 
+from typing import cast
+
 import numpy as np
-from typing import Optional, Tuple, cast
 
 # secp256k1 曲线参数
 _P = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
@@ -18,9 +19,7 @@ _EXPECTED_2G_X = 0xC6047F9441ED7D6D3045406E95C07CD85C778E4B8CEF3CA7ABAC09B95C709
 _EXPECTED_2G_Y = 0x1AE168FEA63DC339A3C58419466CEAEEF7F632653266D0E1236431A950CFE52A
 
 
-def _point_add(
-    p1: Optional[Tuple[int, int]], p2: Optional[Tuple[int, int]]
-) -> Optional[Tuple[int, int]]:
+def _point_add(p1: tuple[int, int] | None, p2: tuple[int, int] | None) -> tuple[int, int] | None:
     """仿射坐标下的椭圆曲线点加法 (secp256k1)
 
     Args:
@@ -102,7 +101,7 @@ def generate_secp256k1_precomp_table() -> np.ndarray:
         table[offset + 8 : offset + 16] = _int_to_uint32_le(y)  # y 坐标
 
         # 下一个点
-        current = cast(Tuple[int, int], _point_add(current, G))
+        current = cast(tuple[int, int], _point_add(current, G))
 
     # === 验证 ===
     # 验证 1G
@@ -132,7 +131,7 @@ def generate_secp256k1_precomp_table() -> np.ndarray:
 
 
 # 模块级缓存（避免重复计算）
-_cached_table: Optional[np.ndarray] = None
+_cached_table: np.ndarray | None = None
 
 
 def get_precomp_table() -> np.ndarray:

@@ -4,12 +4,12 @@
 """
 
 # P3-5: 统一日志获取
-from ..utils import get_configured_logger
-from typing import Dict, Optional, Any
+from typing import Any
 
-from .profiles.loader import GPUProfileLoader
+from ..utils import get_configured_logger
 from .auto_config import get_gpu_configurator
 from .device import identify_vendor
+from .profiles.loader import GPUProfileLoader
 
 _logger = get_configured_logger("GPUConfigManager")
 
@@ -27,20 +27,20 @@ class GPUConfigManager:
     PRIORITY_DEFAULT = 4  # 默认值
 
     def __init__(
-        self, user_config: Optional[Dict[str, Any]] = None, logger: Optional[Any] = None
+        self, user_config: dict[str, Any] | None = None, logger: Any | None = None
     ) -> None:  # noqa: E501
         """
         Args:
             user_config: 用户提供的配置
             logger: 日志记录器
         """
-        self.user_config: Dict[str, Any] = user_config or {}
+        self.user_config: dict[str, Any] = user_config or {}
         self.logger = logger or _logger
 
         self._auto_configurator = get_gpu_configurator()
         self._profile_loader = GPUProfileLoader()
 
-    def prepare_config(self, device: Any, user_batch_size: Optional[int] = None) -> Dict:
+    def prepare_config(self, device: Any, user_batch_size: int | None = None) -> dict:
         """准备完整的GPU配置
 
         Args:
@@ -70,16 +70,15 @@ class GPUConfigManager:
 
         return merged_config
 
-    def _generate_auto_config(self, device_info: Dict) -> Dict:
+    def _generate_auto_config(self, device_info: dict) -> dict:
         """生成自动配置"""
         config = self._auto_configurator.configure_for_device(device_info)
         self.logger.info(
-            f"自动配置生成: batch_size={config['batch_size']:,}, "
-            f"vendor={config.get('use_uint32_workaround', False)}"
+            f"自动配置生成: batch_size={config['batch_size']:,}, vendor={config.get('use_uint32_workaround', False)}"
         )
         return config
 
-    def _load_profile_config(self, device_info: Dict) -> Optional[Dict]:
+    def _load_profile_config(self, device_info: dict) -> dict | None:
         """加载型号配置"""
         device_name = device_info.get("name", "")
         vendor = device_info.get("vendor", "")
@@ -98,7 +97,7 @@ class GPUConfigManager:
 
         return None
 
-    def _merge_configs(self, *configs: Dict) -> Dict:
+    def _merge_configs(self, *configs: dict) -> dict:
         """合并多个配置源
 
         优先级: 后面的配置覆盖前面的配置
@@ -113,7 +112,7 @@ class GPUConfigManager:
 
         return merged
 
-    def _validate_config(self, config: Dict):
+    def _validate_config(self, config: dict):
         """验证配置"""
         # 验证batch_size
         batch_size = config.get("batch_size")
@@ -180,7 +179,7 @@ class GPUConfigManager:
         """
         return self.user_config.get(key, default)
 
-    def get_gpu_config(self) -> Dict:
+    def get_gpu_config(self) -> dict:
         """获取GPU相关配置
 
         Returns:
@@ -188,7 +187,7 @@ class GPUConfigManager:
         """
         return self.user_config.get("gpu", {})
 
-    def update_config(self, updates: Dict) -> None:
+    def update_config(self, updates: dict) -> None:
         """更新配置
 
         Args:
@@ -201,7 +200,7 @@ class GPUConfigManager:
             else:
                 self.user_config[key] = value
 
-    def validate_and_apply(self, config: Dict, device: Any) -> Dict:
+    def validate_and_apply(self, config: dict, device: Any) -> dict:
         """验证并应用配置
 
         Args:
@@ -228,7 +227,7 @@ class GPUConfigManager:
 
         return config
 
-    def get_default_config(self) -> Dict:
+    def get_default_config(self) -> dict:
         """获取默认配置
 
         Returns:

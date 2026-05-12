@@ -14,12 +14,12 @@
 
 import logging
 import threading
-from typing import Optional, Dict, Any, List, cast
+from typing import Any, cast
 
+from .async_pipeline_adapter import AsyncPipelineAdapter
 from .device_manager_adapter import DeviceManagerAdapter
 from .kernel_adapter import GPUKernelAdapter
-from .async_pipeline_adapter import AsyncPipelineAdapter
-from .protocols import GPUDevice, GPUContext, GPUKernel
+from .protocols import GPUContext, GPUDevice, GPUKernel
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ class GPUEngineFacade:
         facade.cleanup()
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
         """初始化 GPU 引擎外观
 
         Args:
@@ -53,9 +53,9 @@ class GPUEngineFacade:
         self._async_pipeline = AsyncPipelineAdapter(config=self.config)
 
         # 暴露属性（向后兼容）
-        self.device: Optional[GPUDevice] = None
-        self.context: Optional[GPUContext] = None
-        self.kernel: Optional[GPUKernel] = None
+        self.device: GPUDevice | None = None
+        self.context: GPUContext | None = None
+        self.kernel: GPUKernel | None = None
         self.async_executor = self._async_pipeline
 
     def __enter__(self) -> "GPUEngineFacade":
@@ -70,7 +70,7 @@ class GPUEngineFacade:
     def initialize(
         self,
         device_index: int = 0,
-        batch_size: Optional[int] = None,
+        batch_size: int | None = None,
         targets: Any = None,
         check_uncompressed: int = 0,
     ) -> None:
@@ -113,7 +113,7 @@ class GPUEngineFacade:
         self._initialized = True
         logger.info(f"GPUEngineFacade 初始化完成: device={device}")
 
-    def get_device_info(self) -> Dict[str, Any]:
+    def get_device_info(self) -> dict[str, Any]:
         """获取 GPU 设备信息
 
         Returns:
@@ -127,7 +127,7 @@ class GPUEngineFacade:
         """检查是否已初始化"""
         return self._initialized
 
-    def list_devices(self) -> List[GPUDevice]:
+    def list_devices(self) -> list[GPUDevice]:
         """列出所有可用 GPU 设备
 
         Returns:

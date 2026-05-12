@@ -5,10 +5,10 @@
 
 import json
 import os
+from typing import Any
 
 # P3-5: 统一日志获取
 from ...utils import get_configured_logger
-from typing import Dict, Optional, List, Any
 
 logger = get_configured_logger("GPUProfileLoader")
 
@@ -16,7 +16,7 @@ logger = get_configured_logger("GPUProfileLoader")
 class GPUProfileLoader:
     """GPU型号配置加载器"""
 
-    def __init__(self, profile_file: Optional[str] = None) -> None:
+    def __init__(self, profile_file: str | None = None) -> None:
         """
         初始化加载器
 
@@ -28,7 +28,7 @@ class GPUProfileLoader:
             profile_file = os.path.join(os.path.dirname(__file__), "gpu_profiles.json")
 
         self.profile_file = profile_file
-        self.profiles: Dict[str, Any] = {}
+        self.profiles: dict[str, Any] = {}
         self._load_profiles()
 
     def _load_profiles(self):
@@ -39,14 +39,14 @@ class GPUProfileLoader:
                 self.profiles = {}
                 return
 
-            with open(self.profile_file, "r", encoding="utf-8") as f:
+            with open(self.profile_file, encoding="utf-8") as f:
                 data = json.load(f)
 
             # 版本检查
             version = data.get("_version", "1.0")
             if version != "1.0":
                 logger.warning(
-                    f"不支持的配置文件版本: {version}, " "当前支持1.0。可能导致配置加载错误"
+                    f"不支持的配置文件版本: {version}, 当前支持1.0。可能导致配置加载错误"
                 )
 
             self.profiles = data
@@ -61,7 +61,7 @@ class GPUProfileLoader:
             logger.error(f"加载GPU配置文件失败: {e}")
             self.profiles = {}
 
-    def get_profile(self, vendor: str, model_name: str) -> Optional[Dict[str, Any]]:
+    def get_profile(self, vendor: str, model_name: str) -> dict[str, Any] | None:
         """
         根据厂商和型号获取配置
 
@@ -102,7 +102,8 @@ class GPUProfileLoader:
                 if not isinstance(series_data, dict):
                     logger.warning(
                         f"跳过无效的系列配置 {vendor}/{arch_name}/{series_name}: 期望dict, 得到{
-                            type(series_data).__name__}"
+                            type(series_data).__name__
+                        }"
                     )
                     continue
 
@@ -121,7 +122,7 @@ class GPUProfileLoader:
         logger.warning(f"未找到型号 {model_name} 的配置,使用厂商默认配置")
         return self.get_default_profile(vendor)
 
-    def _match_model(self, model_name: str, model_list: List[str]) -> bool:
+    def _match_model(self, model_name: str, model_list: list[str]) -> bool:
         """
         模糊匹配型号名称
 
@@ -155,7 +156,7 @@ class GPUProfileLoader:
 
         return False
 
-    def _validate_profile(self, profile: Dict[str, Any], profile_path: str) -> bool:
+    def _validate_profile(self, profile: dict[str, Any], profile_path: str) -> bool:
         """
         验证GPU配置文件的合法性
 
@@ -214,9 +215,11 @@ class GPUProfileLoader:
             profile.get("max_batch_size"), (int, float)
         ):
             if profile["max_batch_size"] < profile["recommended_batch_size"]:
-                errors.append(f"max_batch_size ({
-                    profile['max_batch_size']}) < recommended_batch_size ({
-                    profile['recommended_batch_size']})")
+                errors.append(
+                    f"max_batch_size ({profile['max_batch_size']}) < recommended_batch_size ({
+                        profile['recommended_batch_size']
+                    })"
+                )
 
         # 验证optimizations字段（如果存在）
         if "optimizations" in profile:
@@ -294,7 +297,7 @@ class GPUProfileLoader:
 
         return name.strip()
 
-    def get_default_profile(self, vendor: str) -> Optional[Dict[str, Any]]:
+    def get_default_profile(self, vendor: str) -> dict[str, Any] | None:
         """
         获取厂商的默认配置
 
@@ -317,11 +320,11 @@ class GPUProfileLoader:
 
         return None
 
-    def get_all_vendors(self) -> List[str]:
+    def get_all_vendors(self) -> list[str]:
         """获取所有支持的厂商列表"""
         return [k for k in self.profiles.keys() if not k.startswith("_")]
 
-    def get_vendor_architectures(self, vendor: str) -> List[str]:
+    def get_vendor_architectures(self, vendor: str) -> list[str]:
         """
         获取厂商的所有架构世代
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """GPU数据生成监控器
 
 实时监控和验证GPU生成的碰撞数据,确保数据完整性、准确性和一致性。
@@ -13,14 +12,15 @@
 - 自动响应: 检测到异常时可暂停GPU工作器
 """
 
+import hashlib
+import logging
 import threading
 import time
-import logging
-from ..utils import get_configured_logger
-import hashlib
-from typing import Any, Dict, List, Optional, Tuple, cast
 from collections import defaultdict, deque
 from datetime import datetime
+from typing import Any, cast
+
+from ..utils import get_configured_logger
 
 logger = get_configured_logger("GPUDataMonitor")
 
@@ -44,7 +44,7 @@ class DataQualityIssue:
         severity: str,
         message: str,
         device_idx: int,
-        details: Optional[Dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         """初始化质量问题
 
@@ -63,7 +63,7 @@ class DataQualityIssue:
         self.timestamp = time.time()
         self.datetime = datetime.now().isoformat()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "issue_type": self.issue_type,
@@ -95,7 +95,7 @@ class DataMonitor:
         monitor.stop()
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
         """初始化数据监控器
 
         Args:
@@ -116,14 +116,14 @@ class DataMonitor:
 
         # 线程控制
         self._running = False
-        self._monitor_thread: Optional[threading.Thread] = None
+        self._monitor_thread: threading.Thread | None = None
         self._stop_event = threading.Event()
 
         # 线程安全锁
         self._lock = threading.RLock()  # 使用可重入锁保护所有共享状态
 
         # 设备数据跟踪
-        self._device_stats: Dict[int, Dict[str, Any]] = defaultdict(
+        self._device_stats: dict[int, dict[str, Any]] = defaultdict(
             lambda: {
                 "total_keys": 0,
                 "total_matches": 0,
@@ -137,13 +137,13 @@ class DataMonitor:
         )
 
         # 问题记录
-        self._issues: deque[Dict[str, Any]] = deque(maxlen=10000)  # 保留最近10000个问题
-        self._issues_by_type: Dict[str, int] = defaultdict(int)
-        self._issues_by_device: Dict[int, int] = defaultdict(int)
+        self._issues: deque[dict[str, Any]] = deque(maxlen=10000)  # 保留最近10000个问题
+        self._issues_by_type: dict[str, int] = defaultdict(int)
+        self._issues_by_device: dict[int, int] = defaultdict(int)
         self._issues_last_minute: deque[float] = deque(maxlen=1000)
 
         # 统计信息
-        self._stats: Dict[str, Any] = {
+        self._stats: dict[str, Any] = {
             "total_keys_monitored": 0,
             "total_matches_verified": 0,
             "total_issues_detected": 0,
@@ -154,11 +154,11 @@ class DataMonitor:
         }
 
         # 回调函数
-        self._anomaly_callback: Optional[Any] = None
+        self._anomaly_callback: Any | None = None
 
         logger.info("数据监控器已创建")
 
-    def start(self, anomaly_callback: Optional[Any] = None) -> None:
+    def start(self, anomaly_callback: Any | None = None) -> None:
         """启动监控
 
         Args:
@@ -196,7 +196,7 @@ class DataMonitor:
         logger.info("数据监控器已停止")
 
     def report_keys_generated(
-        self, device_idx: int, count: int, key_range: Optional[Tuple[int, int]] = None
+        self, device_idx: int, count: int, key_range: tuple[int, int] | None = None
     ) -> None:
         """报告生成的私钥数据
 
@@ -228,7 +228,7 @@ class DataMonitor:
         except Exception as e:
             logger.error(f"报告私钥生成失败 [GPU {device_idx}]: {e}")
 
-    def report_match(self, device_idx: int, match_data: Dict) -> None:
+    def report_match(self, device_idx: int, match_data: dict) -> None:
         """报告匹配结果
 
         Args:
@@ -258,9 +258,7 @@ class DataMonitor:
         except Exception as e:
             logger.error(f"报告匹配结果失败 [GPU {device_idx}]: {e}")
 
-    def report_error(
-        self, device_idx: int, error_msg: str, error_type: Optional[str] = None
-    ) -> None:
+    def report_error(self, device_idx: int, error_msg: str, error_type: str | None = None) -> None:
         """报告错误
 
         Args:
@@ -289,7 +287,7 @@ class DataMonitor:
             logger.error(f"报告错误失败 [GPU {device_idx}]: {e}")
 
     def report_validation_result(
-        self, device_idx: int, passed: bool, validation_type: Optional[str] = None
+        self, device_idx: int, passed: bool, validation_type: str | None = None
     ) -> None:
         """报告验证结果
 
@@ -313,7 +311,7 @@ class DataMonitor:
         except Exception as e:
             logger.error(f"报告验证结果失败 [GPU {device_idx}]: {e}")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取监控统计
 
         Returns:
@@ -343,8 +341,8 @@ class DataMonitor:
             return stats
 
     def get_issues(
-        self, severity: Optional[str] = None, device_idx: Optional[int] = None, limit: int = 100
-    ) -> List[Dict[str, Any]]:
+        self, severity: str | None = None, device_idx: int | None = None, limit: int = 100
+    ) -> list[dict[str, Any]]:
         """获取检测到的问题
 
         Args:
@@ -400,7 +398,7 @@ class DataMonitor:
             # 检查错误率
             self._check_error_rate(device_idx)
 
-    def _validate_key_range(self, device_idx: int, key_range: Tuple[int, int]) -> None:
+    def _validate_key_range(self, device_idx: int, key_range: tuple[int, int]) -> None:
         """验证私钥范围
 
         Args:
@@ -430,7 +428,7 @@ class DataMonitor:
             )
             self._record_issue(issue)
 
-    def _validate_match(self, device_idx: int, match_data: Dict) -> None:
+    def _validate_match(self, device_idx: int, match_data: dict) -> None:
         """验证匹配数据
 
         Args:
@@ -667,8 +665,7 @@ class DataMonitor:
 
                 if len(recent_issues) > self.max_issues_per_minute:
                     logger.warning(
-                        f"问题频率过高: {len(recent_issues)}个/分钟, "
-                        f"超过阈值{self.max_issues_per_minute}"
+                        f"问题频率过高: {len(recent_issues)}个/分钟, 超过阈值{self.max_issues_per_minute}"
                     )
 
             # 在锁外记录日志和调用回调
@@ -681,8 +678,7 @@ class DataMonitor:
             log_level = severity_map.get(issue.severity, logging.INFO)
             logger.log(
                 log_level,
-                f"数据质量问题 [{issue.severity.upper()}]: "
-                f"GPU {issue.device_idx} - {issue.message}",
+                f"数据质量问题 [{issue.severity.upper()}]: GPU {issue.device_idx} - {issue.message}",
             )
 
             # 调用异常回调

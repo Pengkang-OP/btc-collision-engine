@@ -4,11 +4,11 @@
 """
 
 # P3-5: 统一日志获取
-from ..utils import get_configured_logger
-from typing import Dict, Optional, List, Any, TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
-from ..gpu.search_modes import RandomSearchMode, BruteForceSearchMode, RangeScanSearchMode
 from ..collision.collision_stats import CollisionStats
+from ..gpu.search_modes import BruteForceSearchMode, RandomSearchMode, RangeScanSearchMode
+from ..utils import get_configured_logger
 
 if TYPE_CHECKING:
     # 避免循环导入：仅在类型检查时引用引擎
@@ -28,7 +28,7 @@ class SearchModeCoordinator:
     MODE_BRUTE_FORCE = "brute_force"
     MODE_RANGE_SCAN = "range_scan"
 
-    def __init__(self, engine: "GPUCollisionEngine", logger: Optional[Any] = None) -> None:
+    def __init__(self, engine: "GPUCollisionEngine", logger: Any | None = None) -> None:
         """
         Args:
             engine: GPUCollisionEngine实例
@@ -37,8 +37,8 @@ class SearchModeCoordinator:
         self.engine = engine
         self.logger = logger or _logger
 
-        self._current_mode: Optional[str] = None
-        self._modes: Dict[str, Any] = {}
+        self._current_mode: str | None = None
+        self._modes: dict[str, Any] = {}
 
         # 初始化搜索模式
         self._init_modes()
@@ -61,7 +61,7 @@ class SearchModeCoordinator:
 
         self.logger.info(f"已初始化搜索模式: {list(self._modes.keys())}")
 
-    def get_available_modes(self) -> List[str]:
+    def get_available_modes(self) -> list[str]:
         """获取可用的搜索模式列表"""
         return list(self._modes.keys())
 
@@ -161,11 +161,11 @@ class SearchModeCoordinator:
             # 清除当前模式
             self._current_mode = None
 
-    def get_current_mode(self) -> Optional[str]:
+    def get_current_mode(self) -> str | None:
         """获取当前搜索模式"""
         return self._current_mode
 
-    def get_mode_instance(self, mode: str) -> Optional[Any]:
+    def get_mode_instance(self, mode: str) -> Any | None:
         """获取指定搜索模式的实例
 
         Args:
@@ -176,7 +176,7 @@ class SearchModeCoordinator:
         """
         return self._modes.get(mode)
 
-    def get_mode_status(self, mode: str) -> Dict[str, Any]:
+    def get_mode_status(self, mode: str) -> dict[str, Any]:
         """获取指定搜索模式的状态
 
         Args:
@@ -192,7 +192,7 @@ class SearchModeCoordinator:
         try:
             # 检查搜索模式是否有status方法
             if hasattr(search_mode, "get_status"):
-                return cast(Dict[str, Any], search_mode.get_status())
+                return cast(dict[str, Any], search_mode.get_status())
             else:
                 return {
                     "mode": mode,
@@ -205,7 +205,7 @@ class SearchModeCoordinator:
             self.logger.error(f"获取搜索模式状态失败: {e}")
             return {"error": str(e)}
 
-    def get_all_modes_status(self) -> Dict[str, Dict[str, Any]]:
+    def get_all_modes_status(self) -> dict[str, dict[str, Any]]:
         """获取所有搜索模式的状态
 
         Returns:

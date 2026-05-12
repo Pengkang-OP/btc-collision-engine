@@ -11,10 +11,11 @@
 - 设置上下限防止极端值
 """
 
-from ..utils import get_configured_logger
 import statistics
-from typing import Dict, Any
 from collections import deque
+from typing import Any
+
+from ..utils import get_configured_logger
 
 logger = get_configured_logger("IntelTimeoutManager")
 
@@ -86,7 +87,7 @@ class AdaptiveTimeoutManager:
         self._execution_times.append(time_ms)
         self._total_records += 1
 
-        logger.debug(f"记录执行时间: {time_ms:.0f}ms " f"(历史记录: {len(self._execution_times)})")
+        logger.debug(f"记录执行时间: {time_ms:.0f}ms (历史记录: {len(self._execution_times)})")
 
     def get_timeout(self) -> float:
         """获取动态超时阈值
@@ -101,8 +102,7 @@ class AdaptiveTimeoutManager:
         """
         if len(self._execution_times) < 3:
             logger.debug(
-                f"历史数据不足 ({len(self._execution_times)} < 3)，"
-                f"使用基础超时: {self.base_timeout}s"
+                f"历史数据不足 ({len(self._execution_times)} < 3)，使用基础超时: {self.base_timeout}s"
             )
             return self.base_timeout
 
@@ -135,7 +135,7 @@ class AdaptiveTimeoutManager:
 
         return final_timeout
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """获取统计信息
 
         Returns:

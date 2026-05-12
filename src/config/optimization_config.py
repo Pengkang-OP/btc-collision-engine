@@ -3,9 +3,9 @@
 管理各项优化功能的启用/禁用设置。
 """
 
-import os
 import logging
-from typing import Dict, Any
+import os
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +80,7 @@ class OptimizationConfig:
         """设置配置值"""
         self._config[key] = value
 
-    def get_all(self) -> Dict[str, Any]:
+    def get_all(self) -> dict[str, Any]:
         """获取所有配置"""
         return dict(self._config)
 

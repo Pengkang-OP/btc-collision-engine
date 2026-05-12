@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """GPU内存池优化模块
 
 实现GPU缓冲区复用机制,减少OpenCL内存分配开销。
@@ -32,8 +31,7 @@
 
 import threading
 import time
-from typing import Any, Dict, List, Optional, Union, cast
-
+from typing import Any, cast
 
 # 导入日志配置
 from ..utils import get_configured_logger
@@ -41,8 +39,6 @@ from ..utils import get_configured_logger
 # 获取模块日志记录器
 # 注意: init_logging() 应由应用入口统一调用，避免重复初始化
 logger = get_configured_logger("GPUMemoryPool")
-
-
 
 
 class GPUMemoryPool:
@@ -93,9 +89,9 @@ class GPUMemoryPool:
         self._enable_dynamic_adjustment = enable_dynamic_adjustment
 
         # 缓冲区池: 按大小分组
-        self._pool: Dict[Union[int, str], List[Any]] = {}
+        self._pool: dict[int | str, list[Any]] = {}
         # 按类型分组的缓冲区池
-        self._type_pools: Dict[str, Dict[int, List]] = {
+        self._type_pools: dict[str, dict[int, list]] = {
             "input": {},  # 输入缓冲区
             "output": {},  # 输出缓冲区
             "temp": {},  # 临时缓冲区
@@ -113,18 +109,18 @@ class GPUMemoryPool:
 
         # LRU淘汰策略v4.0: 追踪每个缓冲区的最后访问时间戳
         # key = id(buf), value = time.monotonic() 时间戳
-        self._access_times: Dict[int, float] = {}
+        self._access_times: dict[int, float] = {}
         # 缓冲区ID到缓冲区对象的反向映射（用于LRU淘汰时找到并移除缓冲区）
-        self._buf_by_id: Dict[int, object] = {}
+        self._buf_by_id: dict[int, object] = {}
         # 缓冲区ID到其对齐大小的映射（用于LRU淘汰时确定归属的池分组）
-        self._buf_size_by_id: Dict[int, int] = {}
+        self._buf_size_by_id: dict[int, int] = {}
         # 缓冲区ID到类型的映射
-        self._buf_type_by_id: Dict[int, str] = {}
+        self._buf_type_by_id: dict[int, str] = {}
 
         # 内存使用历史
-        self._memory_usage_history: List[Dict] = []
+        self._memory_usage_history: list[dict] = []
         # 分配模式历史
-        self._allocation_patterns: Dict[int, int] = {}  # 大小 -> 使用次数
+        self._allocation_patterns: dict[int, int] = {}  # 大小 -> 使用次数
 
         # 动态调整参数
         self._last_adjustment_time = time.monotonic()
@@ -134,7 +130,7 @@ class GPUMemoryPool:
             f"GPU内存池初始化: max_buffers={max_buffers}, max_memory={max_memory_mb}MB, dynamic_adjustment={enable_dynamic_adjustment}"  # noqa: E501
         )
 
-    def allocate(self, size: int, flags: Optional[Any] = None, buffer_type: str = "generic") -> Any:
+    def allocate(self, size: int, flags: Any | None = None, buffer_type: str = "generic") -> Any:
         """
         分配GPU内存(优先复用)
 
@@ -174,8 +170,7 @@ class GPUMemoryPool:
                     self._buf_size_by_id.pop(buf_id, None)
                     self._buf_type_by_id.pop(buf_id, None)
                     logger.debug(
-                        f"复用{buffer_type}类型GPU缓冲区: {size}字节(对齐{aligned_size}) (总复用: {
-                            self._total_reused})"
+                        f"复用{buffer_type}类型GPU缓冲区: {size}字节(对齐{aligned_size}) (总复用: {self._total_reused})"
                     )
                     return buf
 
@@ -214,7 +209,7 @@ class GPUMemoryPool:
 
             return buf
 
-    def release(self, buf: Any, size: Optional[int] = None, buffer_type: str = "generic") -> None:
+    def release(self, buf: Any, size: int | None = None, buffer_type: str = "generic") -> None:
         """
         归还GPU缓冲区到池中
 
@@ -294,9 +289,9 @@ class GPUMemoryPool:
 
     def preallocate_buffers(
         self,
-        sizes: List[int],
+        sizes: list[int],
         count_per_size: int = 2,
-        flags: Optional[Any] = None,
+        flags: Any | None = None,
         buffer_type: str = "generic",
     ) -> None:
         """预分配常用大小的缓冲区（性能优化v2.2.1，v3.3.0增强）
@@ -513,7 +508,7 @@ class GPUMemoryPool:
         if len(self._memory_usage_history) > 100:
             self._memory_usage_history = self._memory_usage_history[-100:]
 
-    def adapt_capacity(self, context: Optional[Any] = None) -> None:
+    def adapt_capacity(self, context: Any | None = None) -> None:
         """根据GPU显存压力动态调整池容量
 
         通过尝试分配100MB测试缓冲区来检测当前显存是否充足：
@@ -539,14 +534,14 @@ class GPUMemoryPool:
             # 显存充足：尝试扩展池容量
             new_max = min(self._max_buffers * 2, 500)
             if new_max != self._max_buffers:
-                logger.info("显存充足，扩展内存池容量: " f"{self._max_buffers} -> {new_max}")
+                logger.info(f"显存充足，扩展内存池容量: {self._max_buffers} -> {new_max}")
                 self._max_buffers = new_max
         except Exception:
             logger.debug("内存池容量适配失败，显存可能紧张", exc_info=True)
             # 显存紧张：缩减池容量并主动淘汰
             new_max = max(self._max_buffers // 2, 20)
             if new_max != self._max_buffers:
-                logger.warning("显存紧张，缩减内存池容量: " f"{self._max_buffers} -> {new_max}")
+                logger.warning(f"显存紧张，缩减内存池容量: {self._max_buffers} -> {new_max}")
                 self._max_buffers = new_max
             # 主动淘汰LRU缓冲区释放压力
             self._evict_lru()
@@ -635,8 +630,7 @@ class GPUMemoryPool:
                             logger.debug(f"释放{buffer_type}类型缓冲区失败 (size={size}): {e}")
                         except Exception as e:
                             logger.debug(
-                                f"释放{buffer_type}类型缓冲区时发生未预期异常 (size={size}): {
-                                    type(e).__name__}: {e}"
+                                f"释放{buffer_type}类型缓冲区时发生未预期异常 (size={size}): {type(e).__name__}: {e}"
                             )
 
             # 清空所有池
@@ -657,8 +651,8 @@ class GPUMemoryPool:
 
     @classmethod
     def create_proportional_pools(
-        cls, devices: List[dict], contexts: Optional[List] = None, total_pool_mb: int = 512
-    ) -> Dict[int, "GPUMemoryPool"]:
+        cls, devices: list[dict], contexts: list | None = None, total_pool_mb: int = 512
+    ) -> dict[int, "GPUMemoryPool"]:
         """根据GPU显存按比例创建内存池
 
         根据各GPU的显存大小按比例分配内存池大小。
@@ -757,15 +751,15 @@ class GPUBufferAllocator:
         """分配临时缓冲区(内核内部使用)"""
         return self._temp_pool.allocate(size, buffer_type="temp")
 
-    def release_input(self, buf: Any, size: Optional[int] = None) -> None:
+    def release_input(self, buf: Any, size: int | None = None) -> None:
         """归还输入缓冲区"""
         self._input_pool.release(buf, size, buffer_type="input")
 
-    def release_output(self, buf: Any, size: Optional[int] = None) -> None:
+    def release_output(self, buf: Any, size: int | None = None) -> None:
         """归还输出缓冲区"""
         self._output_pool.release(buf, size, buffer_type="output")
 
-    def release_temp(self, buf: Any, size: Optional[int] = None) -> None:
+    def release_temp(self, buf: Any, size: int | None = None) -> None:
         """归还临时缓冲区"""
         self._temp_pool.release(buf, size, buffer_type="temp")
 
@@ -801,8 +795,8 @@ class GlobalGPUMemoryManager:
                     cls._instance = super().__new__(cls)
                     # 实例级别：每个实例有独立的锁和状态
                     cls._instance._lock = threading.Lock()
-                    cls._instance._pools: Dict[int, "GPUMemoryPool"] = {}
-                    cls._instance._cleanup_thread: Optional[threading.Thread] = None
+                    cls._instance._pools: dict[int, GPUMemoryPool] = {}
+                    cls._instance._cleanup_thread: threading.Thread | None = None
                     cls._instance._cleanup_stop_event = threading.Event()
         return cls._instance
 
@@ -872,8 +866,8 @@ class GlobalGPUMemoryManager:
 
     def start_auto_cleanup(
         self,
-        interval_seconds: Optional[float] = None,
-        lru_idle_timeout: Optional[float] = None,
+        interval_seconds: float | None = None,
+        lru_idle_timeout: float | None = None,
     ) -> None:
         """
         P1-6新增: 启动GPU后台自动清理线程
@@ -909,7 +903,7 @@ class GlobalGPUMemoryManager:
         )
         self._cleanup_thread.start()
 
-    def stop_auto_cleanup(self, timeout: Optional[float] = 5.0) -> None:
+    def stop_auto_cleanup(self, timeout: float | None = 5.0) -> None:
         """
         P1-6新增: 停止自动清理线程
 

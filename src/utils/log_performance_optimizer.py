@@ -7,14 +7,15 @@
 - 平台特定优化
 """
 
-import os
-import time
-import threading
-import queue
 import logging
+import os
 import platform
-from typing import Optional, Dict, Any, List, Callable, cast
+import queue
+import threading
+import time
+from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any, cast
 
 
 @dataclass
@@ -48,7 +49,7 @@ class AsyncLogBuffer:
             target=self._flush_loop, daemon=True, name="AsyncLogBuffer-Flush"
         )
         self._flush_thread.start()
-        self._handlers: List[logging.Handler] = []
+        self._handlers: list[logging.Handler] = []
         self._dropped_count = 0
 
     def add_handler(self, handler: logging.Handler) -> None:
@@ -75,7 +76,7 @@ class AsyncLogBuffer:
         while not self._stop_event.is_set():
             try:
                 # 批量获取日志记录
-                records: List[logging.LogRecord] = []
+                records: list[logging.LogRecord] = []
                 while len(records) < self.config.batch_size:
                     try:
                         record = self.queue.get(timeout=self.config.flush_interval)
@@ -90,7 +91,7 @@ class AsyncLogBuffer:
             except Exception as e:
                 print(f"日志刷新循环错误: {e}")
 
-    def _batch_write(self, records: List[logging.LogRecord]) -> None:
+    def _batch_write(self, records: list[logging.LogRecord]) -> None:
         """批量写入日志记录"""
         for handler in self._handlers:
             try:
@@ -119,7 +120,7 @@ class AsyncLogBuffer:
         self._flush_thread.join(timeout=5)
         self.flush()
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         return {
             "queue_size": self.queue.qsize(),
@@ -131,7 +132,7 @@ class AsyncLogBuffer:
 class LogPerformanceOptimizer:
     """日志性能优化器"""
 
-    def __init__(self, config: Optional[LogPerformanceConfig] = None) -> None:
+    def __init__(self, config: LogPerformanceConfig | None = None) -> None:
         """
         初始化性能优化器
 
@@ -139,7 +140,7 @@ class LogPerformanceOptimizer:
             config: 性能配置
         """
         self.config = config or LogPerformanceConfig()
-        self.async_buffer: Optional[AsyncLogBuffer] = None
+        self.async_buffer: AsyncLogBuffer | None = None
         self._initialized = False
 
     def initialize(self) -> None:
@@ -205,7 +206,7 @@ class LogPerformanceOptimizer:
         logger.handlers = optimized_handlers
         return logger
 
-    def get_platform_optimizations(self) -> Dict[str, Any]:
+    def get_platform_optimizations(self) -> dict[str, Any]:
         """
         获取平台特定的优化策略
 
@@ -213,7 +214,7 @@ class LogPerformanceOptimizer:
             平台优化策略
         """
         platform_name = platform.system()
-        optimizations: Dict[str, Any] = {"platform": platform_name, "recommendations": []}
+        optimizations: dict[str, Any] = {"platform": platform_name, "recommendations": []}
 
         if platform_name == "Windows":
             optimizations["recommendations"].append("使用 SafeRotatingFileHandler 避免文件锁问题")
@@ -257,7 +258,7 @@ class LogPerformanceOptimizer:
         if self.async_buffer:
             self.async_buffer.close()
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         获取优化器统计信息
 
@@ -290,7 +291,7 @@ class LogThrottler:
         """
         self.max_logs_per_second = max_logs_per_second
         self._window_size = 1.0  # 时间窗口大小（秒）
-        self._log_times: List[float] = []
+        self._log_times: list[float] = []
         self._lock = threading.Lock()
 
     def should_log(self) -> bool:
@@ -351,11 +352,11 @@ def log_performance_decorator(
 
 
 # 全局性能优化器实例
-_performance_optimizer: Optional[LogPerformanceOptimizer] = None
+_performance_optimizer: LogPerformanceOptimizer | None = None
 
 
 def get_performance_optimizer(
-    config: Optional[LogPerformanceConfig] = None,
+    config: LogPerformanceConfig | None = None,
 ) -> LogPerformanceOptimizer:
     """
     获取性能优化器实例
@@ -400,7 +401,7 @@ def optimize_handler(handler: logging.Handler) -> logging.Handler:
     return optimizer.optimize_handler(handler)
 
 
-def get_log_stats() -> Dict[str, Any]:
+def get_log_stats() -> dict[str, Any]:
     """
     获取日志系统统计信息
 

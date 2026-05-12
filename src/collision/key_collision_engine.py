@@ -1,38 +1,39 @@
 """比特币私钥对撞引擎"""
 
-import os
-import time
-import threading
 import concurrent.futures
 import hashlib
-import psutil
+import os
 import signal
-from typing import Set, Optional, Tuple, List, Dict, Any, cast
-from ..core.optimized_address_generator import OptimizedP2PKHAddressGenerator
+import threading
+import time
+from typing import Any, cast
+
+import psutil
 
 # v2.2.1迁移: 使用crypto_backend替代secp256k1.py（性能提升1000倍）
-from ..core.crypto_backend import crypto_manager, BackendType
+from ..core.crypto_backend import BackendType, crypto_manager
+from ..core.optimized_address_generator import OptimizedP2PKHAddressGenerator
 from ..core.secure_key_manager import SecureKeyManager
-from .collision_stats import CollisionStats
-from .checkpoint_manager import CheckpointManager
-from .deduplication_filter import DeduplicationFilter
-from .base_engine import BaseCollisionEngine
-from ..utils import init_logging, get_configured_logger
-from ..utils.logger import get_sampled_logger
-from ..utils.exception_handler import ExceptionHandler
-from ..monitoring.data_logger import DataLogger
-from ..monitoring.enhanced_monitoring import EnhancedMonitoringSystem
-from ..logging.log_processor import SensitiveDataFilter
 
 # P3-8: 线程池配置校验
 from ..core.thread_pool import _validate_worker_count
 
-# v3.2.0: 事件系统支持
-from .event_bus import EventBus
-from .types import ProgressCallback, MatchCallback, CompleteCallback
-
 # WIF 编码（匹配结果导出）
 from ..core.wif import WIF
+from ..logging.log_processor import SensitiveDataFilter
+from ..monitoring.data_logger import DataLogger
+from ..monitoring.enhanced_monitoring import EnhancedMonitoringSystem
+from ..utils import get_configured_logger, init_logging
+from ..utils.exception_handler import ExceptionHandler
+from ..utils.logger import get_sampled_logger
+from .base_engine import BaseCollisionEngine
+from .checkpoint_manager import CheckpointManager
+from .collision_stats import CollisionStats
+from .deduplication_filter import DeduplicationFilter
+
+# v3.2.0: 事件系统支持
+from .event_bus import EventBus
+from .types import CompleteCallback, MatchCallback, ProgressCallback
 
 # 初始化日志系统（如果尚未初始化）
 init_logging()
@@ -60,18 +61,18 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
     def __init__(
         self,
-        targets: Set[str],
+        targets: set[str],
         # v3.2.0: 统一类型提示
-        on_progress: Optional[ProgressCallback] = None,
-        on_match: Optional[MatchCallback] = None,
-        on_complete: Optional[CompleteCallback] = None,
+        on_progress: ProgressCallback | None = None,
+        on_match: MatchCallback | None = None,
+        on_complete: CompleteCallback | None = None,
         checkpoint_enabled: bool = False,
         dedup_enabled: bool = False,
         dedup_max_size: int = 1_000_000,
         checkpoint_interval: int = 30,
-        max_workers: Optional[int] = None,
+        max_workers: int | None = None,
         # v3.2.0: 事件总线支持
-        event_bus: Optional[EventBus] = None,
+        event_bus: EventBus | None = None,
         data_logging_enabled: bool = True,
         data_logging_interval: int = 5,
         verbose_logging: bool = False,
@@ -82,9 +83,9 @@ class KeyCollisionEngine(BaseCollisionEngine):
         use_simd_hash: bool = True,
         use_memory_pool: bool = True,
         # v2.2.1: crypto_backend支持
-        crypto_backend_type: Optional[str] = None,  # 'coincurve', 'openssl', 'ecdsa', 'pure_python'
+        crypto_backend_type: str | None = None,  # 'coincurve', 'openssl', 'ecdsa', 'pure_python'
         # 地址格式支持 (v3.2.1新增)
-        check_uncompressed: Optional[bool] = None,
+        check_uncompressed: bool | None = None,
     ) -> None:  # 是否同时检查非压缩格式地址, None表示自动检测
         """
         Args:
@@ -174,7 +175,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self.stats = CollisionStats()
         self._stop_event = threading.Event()
         self._running = False
-        self._thread: Optional[threading.Thread] = None
+        self._thread: threading.Thread | None = None
         self.progress_interval = PROGRESS_INTERVAL_COUNT  # 每N次检测触发一次进度回调
 
         # 日志记录
@@ -197,15 +198,14 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self.max_workers = _validate_worker_count(max_workers) if max_workers is not None else None
         if self.max_workers is not None:
             logger.info(
-                f"KeyCollisionEngine 使用自定义线程数: max_workers={self.max_workers}, "
-                f"CPU核心数={self._cpu_count}"
+                f"KeyCollisionEngine 使用自定义线程数: max_workers={self.max_workers}, CPU核心数={self._cpu_count}"
             )
-        self._executor: Optional[concurrent.futures.ThreadPoolExecutor] = None
+        self._executor: concurrent.futures.ThreadPoolExecutor | None = None
         # 当前位置（用于断点保存）
         self._current_position = 0
         self._current_mode = ""
-        self._range_start: Optional[int] = None
-        self._range_end: Optional[int] = None
+        self._range_start: int | None = None
+        self._range_end: int | None = None
 
         # v2.2.1: 初始化crypto_backend
         self._init_crypto_backend(crypto_backend_type)
@@ -243,8 +243,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self.data_logging_enabled = data_logging_enabled
         self.data_logging_interval = data_logging_interval
         self._last_data_log_time = 0.0
-        self.data_logger: Optional[Any] = None
-        self.enhanced_monitoring: Optional[Any] = None
+        self.data_logger: Any | None = None
+        self.enhanced_monitoring: Any | None = None
         self._process = psutil.Process(os.getpid())
 
         # v3.2.0: 初始化数据日志系统（使用事件适配器）
@@ -329,8 +329,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
         try:
             # Windows不支持SIGALRM，使用线程超时
             if os.name == "nt":
-                result: List[Optional[Any]] = [None]
-                exception: List[Optional[Exception]] = [None]
+                result: list[Any | None] = [None]
+                exception: list[Exception | None] = [None]
 
                 def target() -> None:
                     try:
@@ -382,7 +382,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             logger.error(f"匹配回调调用失败: {e}")
             return False
 
-    def _generate_and_check_secure(self) -> Optional[Tuple[bytes, str]]:
+    def _generate_and_check_secure(self) -> tuple[bytes, str] | None:
         """使用安全密钥管理器生成私钥并检查匹配。
 
         使用SecureKeyManager确保私钥在使用后立即清零，
@@ -601,8 +601,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
         if old_batch_size != optimal_batch_size:
             logger.info(
-                f"P3-9 Batch size自动调整: {old_batch_size} -> {optimal_batch_size} "
-                f"(CPU: {cpu_count}核)"
+                f"P3-9 Batch size自动调整: {old_batch_size} -> {optimal_batch_size} (CPU: {cpu_count}核)"
             )
 
     def _auto_detect_compression_needed(self) -> bool:
@@ -625,7 +624,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             logger.debug(f"目标地址数={target_count} >= 1000，仅检查压缩格式（性能优先）")
             return False
 
-    def _init_crypto_backend(self, backend_type: Optional[str] = None) -> None:
+    def _init_crypto_backend(self, backend_type: str | None = None) -> None:
         """初始化加密后端（v2.2.1新增）
 
         Args:
@@ -655,7 +654,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             # 获取当前后端信息
             backend = crypto_manager.current_backend
             logger.info(
-                f"加密后端初始化完成: {backend.name}, " f"恒定时间={backend.is_constant_time()}"
+                f"加密后端初始化完成: {backend.name}, 恒定时间={backend.is_constant_time()}"
             )
 
         except Exception as e:
@@ -1243,8 +1242,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         # MEDIUM-9修复: 拆分多行f-string提高可读性
                         err_type = type(e).__name__
                         logger.error(
-                            f"Worker {worker_id}: 匹配处理参数错误 addr={matched_address}: "
-                            f"{err_type}: {e}"
+                            f"Worker {worker_id}: 匹配处理参数错误 addr={matched_address}: {err_type}: {e}"
                         )
                     except Exception:
                         # 未知错误：记录完整堆栈
@@ -1395,8 +1393,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         with self._state_lock:
             final_count = total_count + self._live_range_count
             logger.debug(
-                f"P1-4: range_scan final: total={total_count}, "
-                f"live={self._live_range_count}, final={final_count}"
+                f"P1-4: range_scan final: total={total_count}, live={self._live_range_count}, final={final_count}"
             )
             self._live_range_count = 0
 
@@ -1428,7 +1425,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             self.on_complete(self.stats)
 
     def _brute_force_worker(
-        self, worker_id: int, batch_size: int = 5000, max_keys: Optional[int] = None
+        self, worker_id: int, batch_size: int = 5000, max_keys: int | None = None
     ) -> int:
         """
         暴力穷举模式的工作线程函数
@@ -1531,8 +1528,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                             # MEDIUM-9修复: 拆分多行f-string提高可读性
                             err_type = type(e).__name__
                             logger.error(
-                                f"BruteForce worker {worker_id}: 匹配处理参数错误 addr={address}: "
-                                f"{err_type}"
+                                f"BruteForce worker {worker_id}: 匹配处理参数错误 addr={address}: {err_type}"
                             )
                         except Exception:
                             # 未知错误：记录完整堆栈
@@ -1544,7 +1540,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
         return local_count
 
-    def brute_force(self, start: int = 1, max_keys: Optional[int] = None) -> None:
+    def brute_force(self, start: int = 1, max_keys: int | None = None) -> None:
         """暴力穷举模式 - 使用线程池并行从指定起点开始顺序递增
 
         参数:
@@ -1676,7 +1672,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         if self.on_complete:
             self.on_complete(self.stats)
 
-    def resume_from_checkpoint(self) -> Optional[Dict]:
+    def resume_from_checkpoint(self) -> dict | None:
         """从断点恢复，返回断点数据（包含mode等信息），无断点返回 None"""
         if not self.checkpoint_mgr or not self.checkpoint_mgr.exists():
             return None
@@ -1694,7 +1690,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
         return data
 
-    def start_from_checkpoint(self, data: Dict) -> None:
+    def start_from_checkpoint(self, data: dict) -> None:
         """根据断点数据启动对撞"""
         mode = data.get("mode", "random")
         if mode == "range":
@@ -1757,8 +1753,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     checkpoint = self.checkpoint_mgr.load()
                     if checkpoint:
                         logger.info(
-                            f"从断点恢复: 模式={checkpoint.get('mode')}, "
-                            f"已检查={checkpoint.get('total_checked', 0)}"
+                            f"从断点恢复: 模式={checkpoint.get('mode')}, 已检查={checkpoint.get('total_checked', 0)}"
                         )
                         # 恢复目标地址
                         if checkpoint.get("targets"):
@@ -1803,7 +1798,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             elif mode == "brute_force":
 
                 def target_fn():
-                    return self.brute_force(kwargs.get("start", 1), kwargs.get("max_keys", None))
+                    return self.brute_force(kwargs.get("start", 1), kwargs.get("max_keys"))
 
             logger.info(
                 f"启动工作线程: {target_fn.__name__ if hasattr(target_fn, '__name__') else 'lambda'}"
@@ -1825,7 +1820,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     logger.debug(f"清理线程池失败（启动失败时）: {cleanup_error}")
             raise
 
-    def stop(self, timeout: Optional[float] = None) -> None:
+    def stop(self, timeout: float | None = None) -> None:
         """停止对撞
 
         参数:
@@ -1931,7 +1926,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         return self
 
     def __exit__(
-        self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]
+        self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None
     ) -> None:
         self.stop()
         return

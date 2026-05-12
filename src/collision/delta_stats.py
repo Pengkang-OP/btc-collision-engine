@@ -5,7 +5,7 @@
 
 import threading
 import time
-from typing import Dict, Any, List, cast, cast  # noqa: F811
+from typing import Any, cast  # noqa: F811
 
 
 class DeltaStats:
@@ -43,7 +43,7 @@ class DeltaStats:
         }
 
         # 增量更新队列
-        self._delta_queue: List[Dict[str, Any]] = []
+        self._delta_queue: list[dict[str, Any]] = []
         self._delta_lock = threading.Lock()
 
         # 刷新线程
@@ -51,7 +51,7 @@ class DeltaStats:
         self._flush_thread = threading.Thread(target=self._flush_loop, daemon=True)
         self._flush_thread.start()
 
-    def queue_update(self, delta: Dict[str, Any]) -> None:
+    def queue_update(self, delta: dict[str, Any]) -> None:
         """将增量更新加入队列（非阻塞）"""
         with self._delta_lock:
             self._delta_queue.append(delta)
@@ -71,7 +71,7 @@ class DeltaStats:
         if not updates:
             return
 
-        merged_delta: Dict[str, int] = {}
+        merged_delta: dict[str, int] = {}
         for update in updates:
             for key, value in update.items():
                 merged_delta[key] = merged_delta.get(key, 0) + value
@@ -91,7 +91,7 @@ class DeltaStats:
         if elapsed > 0 and self._stats["total_checked"] > 0:
             self._stats["throughput"] = self._stats["total_checked"] / elapsed
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取当前统计数据"""
         with self._delta_lock:
             return dict(self._stats)
@@ -129,7 +129,7 @@ class ThreadLocalDeltaStats:
         self._local = threading.local()
         self._global_stats = DeltaStats()
 
-    def _get_thread_buffer(self) -> Dict[str, int]:
+    def _get_thread_buffer(self) -> dict[str, int]:
         """获取当前线程的增量缓冲区"""
         if not hasattr(self._local, "buffer"):
             self._local.buffer = {
@@ -138,7 +138,7 @@ class ThreadLocalDeltaStats:
                 "gpu_errors": 0,
                 "worker_errors": 0,
             }
-        return cast(Dict[str, int], self._local.buffer)
+        return cast(dict[str, int], self._local.buffer)
 
     def add_check(self, count: int = 1) -> None:
         """记录检查数量（无锁操作）"""
@@ -164,7 +164,7 @@ class ThreadLocalDeltaStats:
             for key in buffer:
                 buffer[key] = 0
 
-    def get_global_stats(self) -> Dict[str, Any]:
+    def get_global_stats(self) -> dict[str, Any]:
         """获取全局统计"""
         return self._global_stats.get_stats()
 

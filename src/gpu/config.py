@@ -4,10 +4,11 @@
 """
 
 import os
-from src.utils.fast_json import fast_load, fast_dump
-from ..utils import get_configured_logger
-from typing import Dict, Any, Optional
+from typing import Any
 
+from src.utils.fast_json import fast_dump, fast_load
+
+from ..utils import get_configured_logger
 from .device import GPUDevice, GPUDeviceDetector
 from .profiles.loader import GPUProfileLoader
 
@@ -33,7 +34,7 @@ class GPUConfig:
         "enable_vendor_optimizations": True,
     }
 
-    def __init__(self, config_file: Optional[str] = None) -> None:
+    def __init__(self, config_file: str | None = None) -> None:
         """
         初始化GPU配置
 
@@ -52,7 +53,7 @@ class GPUConfig:
         if self.config_file is None:
             return
         try:
-            with open(self.config_file, "r", encoding="utf-8") as f:
+            with open(self.config_file, encoding="utf-8") as f:
                 user_config = fast_load(f)
 
             # 只加载gpu相关配置
@@ -69,7 +70,7 @@ class GPUConfig:
         except Exception as e:
             logger.warning(f"加载GPU配置失败: {e}")
 
-    def get_gpu_config(self) -> Dict[str, Any]:
+    def get_gpu_config(self) -> dict[str, Any]:
         """
         获取GPU配置
 
@@ -87,9 +88,9 @@ class GPUConfig:
 
     def set_gpu_config(
         self,
-        use_gpu: Optional[bool] = None,
-        device_index: Optional[int] = None,
-        batch_size: Optional[int] = None,
+        use_gpu: bool | None = None,
+        device_index: int | None = None,
+        batch_size: int | None = None,
         **kwargs: Any,
     ) -> bool:
         """
@@ -155,7 +156,7 @@ class GPUConfig:
         """
         return GPUDeviceDetector.is_gpu_available()
 
-    def create_gpu_device(self, device_index: Optional[int] = None) -> GPUDevice:
+    def create_gpu_device(self, device_index: int | None = None) -> GPUDevice:
         """
         创建并初始化GPU设备
 
@@ -215,7 +216,7 @@ class GPUConfig:
             # 读取现有配置
             existing_config = {}
             if os.path.exists(self.config_file):
-                with open(self.config_file, "r", encoding="utf-8") as f:
+                with open(self.config_file, encoding="utf-8") as f:
                     existing_config = fast_load(f)
 
             # 更新GPU配置

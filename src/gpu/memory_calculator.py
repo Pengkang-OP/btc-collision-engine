@@ -9,7 +9,6 @@
 """
 
 from ..utils import get_configured_logger
-from typing import Dict
 
 logger = get_configured_logger("GPUMemoryCalculator")
 
@@ -146,7 +145,7 @@ class GPUMemoryCalculator:
         return max_batch
 
     @staticmethod
-    def get_memory_breakdown(batch_size: int, num_targets: int) -> Dict[str, float]:
+    def get_memory_breakdown(batch_size: int, num_targets: int) -> dict[str, float]:
         """获取显存使用明细（MB）
 
         Args:

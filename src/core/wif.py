@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
 """WIF (Wallet Import Format) 编解码工具"""
 
-from typing import Tuple
+from ..utils import get_configured_logger, init_logging
 from .base58 import Base58
-from ..utils import init_logging, get_configured_logger
 
 # 初始化日志系统（如果尚未初始化）
 init_logging()
@@ -63,7 +61,7 @@ class WIF:
             raise ValueError("WIF编码失败")
 
     @staticmethod
-    def decode(wif: str) -> Tuple[bytes, bool]:
+    def decode(wif: str) -> tuple[bytes, bool]:
         """
         解码WIF格式私钥
 

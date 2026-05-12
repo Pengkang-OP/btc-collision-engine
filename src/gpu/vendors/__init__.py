@@ -1,8 +1,8 @@
 """GPU vendors subpackage"""
 
-from .base import GPUVendorBase
-from .nvidia import NVIDIAGPUVendor
 from .amd import AMDGPUVendor
+from .base import GPUVendorBase
 from .intel import IntelGPUVendor
+from .nvidia import NVIDIAGPUVendor
 
 __all__ = ["GPUVendorBase", "NVIDIAGPUVendor", "AMDGPUVendor", "IntelGPUVendor"]

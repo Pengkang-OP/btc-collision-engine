@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 CLI引擎构建模块
 
@@ -12,15 +11,15 @@ import argparse
 import hashlib
 import logging
 import sys
-from typing import Any, Dict, Optional, Set, Tuple, cast
+from typing import Any, cast
 
 # P3-3: 统一回调类型别名
-from src.collision.types import ProgressCallback, MatchCallback
+from src.collision.types import MatchCallback, ProgressCallback
 
 logger = logging.getLogger(__name__)
 
-from src.collision import KeyCollisionEngine  # noqa: E402
 from src.cli.constants import SEPARATOR_EQUAL  # noqa: E402
+from src.collision import KeyCollisionEngine  # noqa: E402
 from src.i18n import _t  # noqa: E402
 
 # GPU 引擎延迟导入（pyopencl 可选依赖）
@@ -64,12 +63,12 @@ def on_match_callback(sensitive_mode: str = "full") -> MatchCallback:
 
 def build_engine(
     args: argparse.Namespace,
-    targets: Set[str],
-    on_progress: Optional[ProgressCallback] = None,
-    on_match: Optional[MatchCallback] = None,
+    targets: set[str],
+    on_progress: ProgressCallback | None = None,
+    on_match: MatchCallback | None = None,
     sensitive_mode: str = "full",
-    config: Optional[Dict] = None,
-) -> Tuple[Any, str]:
+    config: dict | None = None,
+) -> tuple[Any, str]:
     """引擎工厂：根据 CLI 参数分路 CPU / 单GPU / 多GPU 三种引擎
 
     Returns:
@@ -131,7 +130,9 @@ def build_engine(
             print("\n[WARN] GPU initialization failed, fallback to CPU mode", file=sys.stderr)
             print(f"  GPU Error: {error_msg[:200]}...", file=sys.stderr)
             # S1修复: GPU初始化失败时自动fallback到CPU引擎
-            match_cb_cpu = on_match if on_match else on_match_callback(sensitive_mode=sensitive_mode)
+            match_cb_cpu = (
+                on_match if on_match else on_match_callback(sensitive_mode=sensitive_mode)
+            )
             engine = KeyCollisionEngine(
                 targets=targets,
                 on_progress=on_progress if on_progress else lambda s: None,

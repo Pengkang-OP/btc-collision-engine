@@ -4,13 +4,14 @@
 确保数据完整性和一致性。
 """
 
-import os
 import json
-from src.utils.fast_json import fast_dump, fast_load
-import tempfile
 import logging
-from typing import Any, Callable, Optional
+import os
+import tempfile
+from collections.abc import Callable
+from typing import Any
 
+from src.utils.fast_json import fast_dump, fast_load
 from src.utils.platform_utils import PlatformUtils
 
 logger = logging.getLogger(__name__)
@@ -65,7 +66,7 @@ def atomic_json_write(
         logger.debug(f"原子写入成功: {filepath}")
         return True
 
-    except (OSError, IOError) as e:
+    except OSError as e:
         logger.error(f"原子写入失败（I/O错误）: {filepath} - {e}")
         return False
     except TypeError as e:
@@ -85,7 +86,7 @@ def atomic_json_write(
 
 
 def atomic_json_read(
-    filepath: str, default: Any = None, validate_func: Optional[Callable] = None
+    filepath: str, default: Any = None, validate_func: Callable | None = None
 ) -> Any:
     """安全读取JSON文件（带恢复机制）
 
@@ -108,7 +109,7 @@ def atomic_json_read(
             logger.debug(f"文件不存在，返回默认值: {filepath}")
             return default
 
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             data = fast_load(f)
 
         # 验证数据
@@ -122,7 +123,7 @@ def atomic_json_read(
     except json.JSONDecodeError as e:
         logger.error(f"JSON解析失败（文件可能损坏）: {filepath} - {e}")
         return _recover_from_backup(filepath, default)
-    except (OSError, IOError) as e:
+    except OSError as e:
         logger.error(f"读取文件失败（I/O错误）: {filepath} - {e}")
         return default
     except Exception as e:
@@ -150,7 +151,7 @@ def _recover_from_backup(filepath: str, default: Any) -> Any:
     if os.path.exists(temp_file):
         try:
             logger.info(f"尝试从临时文件恢复: {temp_file}")
-            with open(temp_file, "r", encoding="utf-8") as f:
+            with open(temp_file, encoding="utf-8") as f:
                 data = fast_load(f)
 
             # 恢复成功，替换原文件
@@ -170,7 +171,7 @@ def _recover_from_backup(filepath: str, default: Any) -> Any:
     if os.path.exists(backup_file):
         try:
             logger.info(f"尝试从备份文件恢复: {backup_file}")
-            with open(backup_file, "r", encoding="utf-8") as f:
+            with open(backup_file, encoding="utf-8") as f:
                 data = fast_load(f)
             logger.info(f"从备份文件恢复成功: {filepath}")
             return data

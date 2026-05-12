@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 日志安全过滤器
 
@@ -7,9 +6,9 @@
 自动检测和屏蔽比特币私钥模式。
 """
 
+import hashlib
 import logging
 import re
-import hashlib
 
 
 class SecurityLogFilter(logging.Filter):

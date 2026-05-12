@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 日志处理器
 
 处理和格式化日志数据。
 """
 
-import re
 import json
-from typing import Dict, Any, Optional, List
+import re
+from typing import Any
+
 from .events import LogEvent
 
 
@@ -23,7 +23,7 @@ class LogProcessor:
         self._redactors = []  # 脱敏器：修改事件数据，不丢弃事件
         self._formatters = {}
 
-    def process(self, event: LogEvent) -> Optional[Dict[str, Any]]:
+    def process(self, event: LogEvent) -> dict[str, Any] | None:
         """处理日志事件
 
         Args:
@@ -51,7 +51,7 @@ class LogProcessor:
 
         return formatted
 
-    def format(self, event: LogEvent) -> Dict[str, Any]:
+    def format(self, event: LogEvent) -> dict[str, Any]:
         """格式化事件
 
         Args:
@@ -137,7 +137,7 @@ class LogProcessor:
         formatted = self.format(event)
         return f"{formatted['formatted_time']} {formatted['message']}"
 
-    def process_batch(self, events: List[LogEvent]) -> List[Dict[str, Any]]:
+    def process_batch(self, events: list[LogEvent]) -> list[dict[str, Any]]:
         """批量处理事件
 
         Args:

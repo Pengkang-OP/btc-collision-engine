@@ -6,8 +6,8 @@
 创建日期: 2026-04-22
 """
 
-from dataclasses import dataclass, asdict
-from typing import Dict, Any
+from dataclasses import asdict, dataclass
+from typing import Any
 
 
 @dataclass
@@ -114,7 +114,7 @@ class MonitorConfig:
             logging.getLogger(__name__).warning(f"配置验证警告: {e}")
 
     @classmethod
-    def from_dict(cls, config: Dict[str, Any]) -> "MonitorConfig":
+    def from_dict(cls, config: dict[str, Any]) -> "MonitorConfig":
         """从字典创建配置
 
         Args:
@@ -135,7 +135,7 @@ class MonitorConfig:
 
         return cls(**filtered_config)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典
 
         Returns:

@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 日志事件定义
 
 定义日志处理模块的事件类型。
 """
 
-from enum import Enum
-from dataclasses import dataclass, field
-from typing import Dict, Any
 import time
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
 
 
 class LogEventType(Enum):
@@ -34,11 +33,11 @@ class LogEvent:
     """日志事件数据结构"""
 
     event_type: LogEventType
-    data: Dict[str, Any] = field(default_factory=dict)
+    data: dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=time.time)
     source: str = "logging"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "event_type": self.event_type.value,

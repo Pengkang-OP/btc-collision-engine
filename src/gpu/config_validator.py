@@ -1,11 +1,11 @@
-# -*- coding: utf-8 -*-
 """GPU配置验证器
 
 验证GPU配置参数的合法性,提供配置建议和错误提示。
 """
 
+from typing import Any, cast
+
 from ..utils import get_configured_logger
-from typing import Dict, List, Optional, Tuple, Any, cast
 
 logger = get_configured_logger("GPUConfigValidator")
 
@@ -41,7 +41,7 @@ class GPUConfigValidator:
     def __init__(self) -> None:
         """初始化配置验证器"""
 
-    def validate_config(self, config: Dict) -> Tuple[bool, List[str]]:
+    def validate_config(self, config: dict) -> tuple[bool, list[str]]:
         """验证GPU配置
 
         Args:
@@ -55,7 +55,7 @@ class GPUConfigValidator:
         # 验证模式
         mode = config.get("mode", "auto")
         if mode not in self.VALID_MODES:
-            errors.append(f"无效的GPU模式: '{mode}', " f"必须是 {self.VALID_MODES}")
+            errors.append(f"无效的GPU模式: '{mode}', 必须是 {self.VALID_MODES}")
 
         # 验证设备索引
         device_indices = config.get("device_indices", [-1])
@@ -73,7 +73,7 @@ class GPUConfigValidator:
         # 验证负载均衡策略
         balancing = config.get("load_balancing", "performance")
         if balancing not in self.VALID_BALANCING:
-            errors.append(f"无效的负载均衡策略: '{balancing}', " f"必须是 {self.VALID_BALANCING}")
+            errors.append(f"无效的负载均衡策略: '{balancing}', 必须是 {self.VALID_BALANCING}")
 
         # 验证自动调优
         auto_tuning = config.get("auto_tuning", True)
@@ -96,7 +96,7 @@ class GPUConfigValidator:
 
         return is_valid, errors
 
-    def _validate_device_config(self, device_idx_str: str, device_config: Dict) -> List[str]:
+    def _validate_device_config(self, device_idx_str: str, device_config: dict) -> list[str]:
         """验证单个设备的配置
 
         Args:
@@ -126,8 +126,7 @@ class GPUConfigValidator:
                 min_val, max_val = self.PARAM_RANGES["batch_size"]
                 if batch_size < min_val or batch_size > max_val:
                     errors.append(
-                        f"设备{device_idx}: batch_size({batch_size}) "
-                        f"超出范围[{min_val}, {max_val}]"
+                        f"设备{device_idx}: batch_size({batch_size}) 超出范围[{min_val}, {max_val}]"
                     )
 
         # 验证工作组大小
@@ -139,13 +138,12 @@ class GPUConfigValidator:
                 min_val, max_val = self.PARAM_RANGES["work_group_size"]
                 if work_group < min_val or work_group > max_val:
                     errors.append(
-                        f"设备{device_idx}: work_group_size({work_group}) "
-                        f"超出范围[{min_val}, {max_val}]"
+                        f"设备{device_idx}: work_group_size({work_group}) 超出范围[{min_val}, {max_val}]"
                     )
 
         return errors
 
-    def suggest_config(self, devices: List[Dict], mode: str = "auto") -> Dict:
+    def suggest_config(self, devices: list[dict], mode: str = "auto") -> dict:
         """根据检测设备推荐配置
 
         Args:
@@ -188,14 +186,14 @@ class GPUConfigValidator:
 
             for device in devices:
                 device_config = configurator.configure_for_device(device)
-                cast(Dict[str, Any], config["per_device_config"])[str(device["global_index"])] = {
+                cast(dict[str, Any], config["per_device_config"])[str(device["global_index"])] = {
                     "batch_size": device_config["batch_size"],
                     "work_group_size": device_config["work_group_size"],
                 }
 
         return config
 
-    def _get_default_config(self) -> Dict:
+    def _get_default_config(self) -> dict:
         """获取默认配置
 
         Returns:
@@ -209,7 +207,7 @@ class GPUConfigValidator:
             "per_device_config": {},
         }
 
-    def validate_device_compatibility(self, devices: List[Dict]) -> Tuple[bool, List[str]]:
+    def validate_device_compatibility(self, devices: list[dict]) -> tuple[bool, list[str]]:
         """验证设备兼容性
 
         Args:
@@ -227,7 +225,7 @@ class GPUConfigValidator:
         vendors = set(d.get("vendor", "unknown") for d in devices)
         if len(vendors) > 1:
             warnings.append(
-                f"检测到混合厂商GPU: {vendors}\n" "可能导致性能不均衡,建议手动配置负载分配"
+                f"检测到混合厂商GPU: {vendors}\n可能导致性能不均衡,建议手动配置负载分配"
             )
 
         # 检查显存差异
@@ -237,18 +235,14 @@ class GPUConfigValidator:
             min_mem = min(memories)
             if max_mem > 0 and (max_mem / min_mem) > 3:
                 warnings.append(
-                    f"GPU显存差异较大: {min_mem:.1f}GB - {max_mem:.1f}GB\n"
-                    "建议使用'performance'负载均衡策略"
+                    f"GPU显存差异较大: {min_mem:.1f}GB - {max_mem:.1f}GB\n建议使用'performance'负载均衡策略"
                 )
 
         # 检查Intel Arc(需要特殊配置)
         for device in devices:
             if device.get("vendor") == "intel":
                 warnings.append(
-                    "Intel Arc GPU需要特殊配置:\n"
-                    "- 启用uint32 workaround\n"
-                    "- 禁用快速数学运算\n"
-                    "- 使用较小批次大小"
+                    "Intel Arc GPU需要特殊配置:\n- 启用uint32 workaround\n- 禁用快速数学运算\n- 使用较小批次大小"
                 )
                 break
 
@@ -256,7 +250,7 @@ class GPUConfigValidator:
 
         return is_compatible, warnings
 
-    def format_validation_report(self, config: Dict, devices: Optional[List[Dict]] = None) -> str:
+    def format_validation_report(self, config: dict, devices: list[dict] | None = None) -> str:
         """格式化验证报告
 
         Args:

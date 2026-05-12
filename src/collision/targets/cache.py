@@ -8,11 +8,12 @@
 """
 
 import threading
-from typing import Optional, Dict, Any
+from typing import Any
+
 from cachetools import LRUCache, TTLCache  # type: ignore[import-untyped]
 
 # 导入日志配置
-from ...utils import init_logging, get_configured_logger
+from ...utils import get_configured_logger, init_logging
 
 # 初始化日志系统
 init_logging()
@@ -69,7 +70,7 @@ class AddressCache:
 
         logger.info(f"AddressCache 初始化: LRU大小={lru_size}, TTL={ttl_seconds}秒")
 
-    def get(self, key: str, use_ttl: bool = False) -> Optional[str]:
+    def get(self, key: str, use_ttl: bool = False) -> str | None:
         """
         获取缓存的地址解析结果
 
@@ -161,7 +162,7 @@ class AddressCache:
             except Exception as e:
                 logger.error(f"缓存清空异常: {e}")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         获取缓存统计信息
 
@@ -192,7 +193,7 @@ class AddressCache:
                 logger.error(f"缓存统计未知异常: {e}")
                 raise
 
-    def _default_stats(self) -> Dict[str, Any]:
+    def _default_stats(self) -> dict[str, Any]:
         """返回默认统计信息"""
         return {
             "lru_size": 0,

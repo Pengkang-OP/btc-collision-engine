@@ -1,7 +1,7 @@
 """依赖注入容器 — 集中管理引擎核心依赖的生命周期"""
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -20,9 +20,9 @@ class DependencyContainer:
     """
 
     def __init__(self) -> None:
-        self._stats: Optional[Any] = None
-        self._event_bus: Optional[Any] = None
-        self._data_logger: Optional[Any] = None
+        self._stats: Any | None = None
+        self._event_bus: Any | None = None
+        self._data_logger: Any | None = None
         self._initialized = False
 
     @property

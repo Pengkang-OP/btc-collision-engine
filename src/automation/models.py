@@ -2,15 +2,16 @@
 数据模型定义
 """
 
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import List, Dict, Any, Optional
-from datetime import datetime
 import json
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any
 
 
 class SystemStatus(Enum):
     """系统运行状态"""
+
     IDLE = "idle"
     ANALYZING = "analyzing"
     TESTING = "testing"
@@ -23,6 +24,7 @@ class SystemStatus(Enum):
 
 class Severity(Enum):
     """问题严重级别"""
+
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
@@ -33,17 +35,18 @@ class Severity(Enum):
 @dataclass
 class Issue:
     """问题描述"""
+
     id: str
     severity: Severity
     category: str
     title: str
     description: str
-    location: Optional[str] = None
-    suggestions: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    location: str | None = None
+    suggestions: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.now)
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "severity": self.severity.value,
@@ -60,23 +63,24 @@ class Issue:
 @dataclass
 class AnalysisReport:
     """数据分析报告"""
+
     report_id: str
     timestamp: datetime
-    data_summary: Dict[str, Any]
-    statistics: Dict[str, Any]
-    issues: List[Issue] = field(default_factory=list)
-    recommendations: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    
+    data_summary: dict[str, Any]
+    statistics: dict[str, Any]
+    issues: list[Issue] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
+
     @property
     def has_critical_issues(self) -> bool:
         return any(i.severity == Severity.CRITICAL for i in self.issues)
-    
+
     @property
     def issue_count(self) -> int:
         return len(self.issues)
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "report_id": self.report_id,
             "timestamp": self.timestamp.isoformat(),
@@ -86,21 +90,22 @@ class AnalysisReport:
             "recommendations": self.recommendations,
             "metadata": self.metadata,
         }
-    
+
     def save(self, filepath: str):
-        with open(filepath, 'w', encoding='utf-8') as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, ensure_ascii=False, indent=2)
 
 
 @dataclass
 class TestCase:
     """测试用例"""
+
     id: str
     name: str
     category: str
     priority: int  # 1-5, 1 highest
     test_func: str  # 函数名
-    params: Dict[str, Any] = field(default_factory=dict)
+    params: dict[str, Any] = field(default_factory=dict)
     expected: Any = None
     timeout: int = 300
 
@@ -108,20 +113,21 @@ class TestCase:
 @dataclass
 class TestResult:
     """测试结果"""
+
     test_id: str
     test_name: str
     status: str  # passed, failed, skipped, error
     duration: float
     message: str = ""
-    error_details: Optional[str] = None
-    metrics: Dict[str, Any] = field(default_factory=dict)
+    error_details: str | None = None
+    metrics: dict[str, Any] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.now)
-    
+
     @property
     def is_passed(self) -> bool:
         return self.status == "passed"
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "test_id": self.test_id,
             "test_name": self.test_name,
@@ -137,21 +143,22 @@ class TestResult:
 @dataclass
 class TestSuiteResult:
     """测试套件结果"""
+
     suite_id: str
     total: int
     passed: int
     failed: int
     skipped: int
     errors: int
-    results: List[TestResult] = field(default_factory=list)
+    results: list[TestResult] = field(default_factory=list)
     start_time: datetime = field(default_factory=datetime.now)
-    end_time: Optional[datetime] = None
+    end_time: datetime | None = None
     duration: float = 0.0
-    
+
     @property
     def pass_rate(self) -> float:
         return (self.passed / self.total * 100) if self.total > 0 else 0.0
-    
+
     @property
     def is_acceptable(self) -> bool:
         return self.pass_rate >= 80.0 and self.errors == 0
@@ -160,6 +167,7 @@ class TestSuiteResult:
 @dataclass
 class AuditRule:
     """审核规则"""
+
     id: str
     name: str
     description: str
@@ -171,29 +179,33 @@ class AuditRule:
 @dataclass
 class AuditResult:
     """审核结果"""
+
     audit_id: str
     timestamp: datetime
     status: SystemStatus
-    violations: List[Issue] = field(default_factory=list)
-    warnings: List[Issue] = field(default_factory=list)
+    violations: list[Issue] = field(default_factory=list)
+    warnings: list[Issue] = field(default_factory=list)
     passed_checks: int = 0
     total_checks: int = 0
-    test_results: Optional[TestSuiteResult] = None
-    analysis_report: Optional[AnalysisReport] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    
+    test_results: TestSuiteResult | None = None
+    analysis_report: AnalysisReport | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+
     @property
     def is_approved(self) -> bool:
         return (
-            self.status == SystemStatus.PASSED and 
-            len([v for v in self.violations if v.severity in (Severity.CRITICAL, Severity.HIGH)]) == 0
+            self.status == SystemStatus.PASSED
+            and len(
+                [v for v in self.violations if v.severity in (Severity.CRITICAL, Severity.HIGH)]
+            )
+            == 0
         )
-    
+
     @property
     def block_count(self) -> int:
         return len([v for v in self.violations if v.severity in (Severity.CRITICAL, Severity.HIGH)])
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "audit_id": self.audit_id,
             "timestamp": self.timestamp.isoformat(),
@@ -206,29 +218,30 @@ class AuditResult:
             "is_approved": self.is_approved,
             "metadata": self.metadata,
         }
-    
+
     def save(self, filepath: str):
-        with open(filepath, 'w', encoding='utf-8') as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, ensure_ascii=False, indent=2)
 
 
 @dataclass
 class LoopState:
     """闭环状态"""
+
     iteration: int
     current_phase: SystemStatus
-    previous_phase: Optional[SystemStatus] = None
-    analysis_report: Optional[AnalysisReport] = None
-    test_results: Optional[TestSuiteResult] = None
-    audit_results: List[AuditResult] = field(default_factory=list)
-    issues_found: List[Issue] = field(default_factory=list)
+    previous_phase: SystemStatus | None = None
+    analysis_report: AnalysisReport | None = None
+    test_results: TestSuiteResult | None = None
+    audit_results: list[AuditResult] = field(default_factory=list)
+    issues_found: list[Issue] = field(default_factory=list)
     retry_count: int = 0
     max_retries: int = 3
     started_at: datetime = field(default_factory=datetime.now)
-    completed_at: Optional[datetime] = None
-    
+    completed_at: datetime | None = None
+
     def can_retry(self) -> bool:
         return self.retry_count < self.max_retries
-    
+
     def increment_retry(self):
         self.retry_count += 1

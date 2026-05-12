@@ -14,13 +14,13 @@
 更新日期: 2026-04-30
 """
 
-from typing import Set, Optional, Dict, Any, List, Callable, TYPE_CHECKING
 import logging
 import time
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, Optional
 
 # P3-3: 统一回调类型别名
-from ..types import ProgressCallback, MatchCallback
-
+from ..types import MatchCallback, ProgressCallback
 from .protocols import ICollisionCore, MatchResult
 
 if TYPE_CHECKING:
@@ -50,15 +50,15 @@ class CollisionCore(ICollisionCore):
 
     def __init__(
         self,
-        targets: Set[str],
-        config: Optional[Dict[str, Any]] = None,
-        on_progress: Optional[ProgressCallback] = None,
-        on_match: Optional[MatchCallback] = None,
+        targets: set[str],
+        config: dict[str, Any] | None = None,
+        on_progress: ProgressCallback | None = None,
+        on_match: MatchCallback | None = None,
         # 依赖注入（可选）
         engine: Optional["GPUCollisionEngine"] = None,
-        stats_factory: Optional[Callable] = None,
-        checkpoint_factory: Optional[Callable] = None,
-        dedup_factory: Optional[Callable] = None,
+        stats_factory: Callable | None = None,
+        checkpoint_factory: Callable | None = None,
+        dedup_factory: Callable | None = None,
     ) -> None:
         """初始化碰撞核心
 
@@ -205,7 +205,7 @@ class CollisionCore(ICollisionCore):
             self.stats.reset()
             logger.info("碰撞统计已重置")
 
-    def on_batch_complete(self, matches: List[MatchResult], batch_size: int) -> None:
+    def on_batch_complete(self, matches: list[MatchResult], batch_size: int) -> None:
         """[DEPRECATED] 批次完成回调 — scheduled removal
 
         GPUCollisionEngine 在 _check_and_report_progress() 中直接处理批次回调。
@@ -260,7 +260,7 @@ class CollisionCore(ICollisionCore):
         if self.checkpoint_enabled:
             self._maybe_save_checkpoint()
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取碰撞统计
 
         Returns:

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 引擎启动与主循环模块
 
@@ -12,18 +11,18 @@ import signal
 import sys
 import threading
 import time
-from typing import Any, Optional, Set, Tuple
+from typing import Any
 
 # 将项目根目录加入路径
 _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
-from src.i18n import _t  # noqa: E402
 from src.cli.engine_builder import build_engine  # noqa: E402
-from src.cli.progress import format_progress  # noqa: E402
 from src.cli.output import CLIOutput  # noqa: E402
+from src.cli.progress import format_progress  # noqa: E402
 from src.cli.stats_reporter import _print_detailed_stats  # noqa: E402
+from src.i18n import _t  # noqa: E402
 
 # ── 运行时日志抑制 ───────────────────────────────────────────────────
 _suppressed_handlers: list = []  # 保存被抑制的 (handler, original_level) 对
@@ -49,11 +48,11 @@ def _restore_console_logging() -> None:
 
 def _setup_and_start_engine(
     args: argparse.Namespace,
-    targets: Set[str],
-    config: Optional[dict],
-    start_val: Optional[int],
-    end_val: Optional[int],
-) -> Tuple[Any, str, Any, threading.Event]:
+    targets: set[str],
+    config: dict | None,
+    start_val: int | None,
+    end_val: int | None,
+) -> tuple[Any, str, Any, threading.Event]:
     """
     构建引擎、初始化告警系统、注册信号处理器并启动引擎。
 
@@ -138,7 +137,7 @@ def _run_collision_loop(
     engine: Any,
     engine_type: str,
     args: argparse.Namespace,
-    total_range: Optional[int],
+    total_range: int | None,
     alert_system: Any,
     stop_event: threading.Event,
 ) -> None:
@@ -148,7 +147,7 @@ def _run_collision_loop(
     output = CLIOutput.get_instance()
     start_time = time.time()
     paused = False
-    pause_start: Optional[float] = None
+    pause_start: float | None = None
     total_pause_time = 0.0
 
     def on_key(key: str) -> None:
@@ -292,11 +291,11 @@ def _run_collision_loop(
 
 def _compute_range(
     args: argparse.Namespace,
-) -> "Tuple[Optional[int], Optional[int], Optional[int]]":
+) -> "tuple[int | None, int | None, int | None]":
     """计算范围参数，返回 (start_val, end_val, total_range) 三元组。"""
-    start_val: Optional[int] = None
-    end_val: Optional[int] = None
-    total_range: Optional[int] = None
+    start_val: int | None = None
+    end_val: int | None = None
+    total_range: int | None = None
     if args.mode in ("range", "brute_force") and args.start:
         start_val = int(args.start, 16)
     if args.mode == "range" and args.end:
@@ -308,10 +307,10 @@ def _compute_range(
 
 def _print_config_info(
     args: argparse.Namespace,
-    targets: Set[str],
-    start_val: Optional[int],
-    end_val: Optional[int],
-    total_range: Optional[int],
+    targets: set[str],
+    start_val: int | None,
+    end_val: int | None,
+    total_range: int | None,
 ) -> None:
     """打印碰撞配置信息（使用 Rich Panel + Table 展示参数摘要）。"""
     output = CLIOutput.get_instance()

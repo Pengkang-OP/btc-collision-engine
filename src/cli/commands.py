@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 CLI工具命令模块
 
@@ -15,27 +14,28 @@ import concurrent.futures
 import json
 import logging
 import sys
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, List, Optional, Tuple, Dict, Any
+from typing import Any
 
-from src.i18n import _t
-from src.utils.platform_utils import PlatformUtils
-from src.cli.output import CLIOutput
 from src.cli.constants import (
+    CONFIG_EXAMPLE_FILE,
+    CONFIG_FILE_NAME,
     REQUIRED_CONFIG_SECTIONS,
-    SEPARATOR_EQUAL,
     SEPARATOR_DASHED,
     SEPARATOR_DASHED_SHORT,
-    CONFIG_FILE_NAME,
-    CONFIG_EXAMPLE_FILE,
+    SEPARATOR_EQUAL,
     WIZARD_MARKER_PATH,
 )
+from src.cli.output import CLIOutput
 from src.cli.validation import validate_file_path
+from src.i18n import _t
+from src.utils.platform_utils import PlatformUtils
 
 logger = logging.getLogger(__name__)
 
 # 快速模式默认配置常量
-QUICK_RUN_DEFAULTS: Dict[str, Any] = {
+QUICK_RUN_DEFAULTS: dict[str, Any] = {
     "target_file": "targets.txt",
     "mode": "random",
     "checkpoint": True,
@@ -73,7 +73,7 @@ def _cmd_validate_addresses(file_path: str) -> None:
     # 读取文件
     lines = []
     try:
-        with open(target_path, "r", encoding="utf-8", errors="replace") as f:
+        with open(target_path, encoding="utf-8", errors="replace") as f:
             lines = f.readlines()
     except Exception as exc:
         logger.error(_t("errors.io_error", detail=str(exc)))
@@ -228,7 +228,7 @@ def _cmd_config_check() -> None:
 
         # 验证JSON格式
         try:
-            with open(config_path, "r", encoding="utf-8") as f:
+            with open(config_path, encoding="utf-8") as f:
                 config = json.load(f)
             print("[OK] " + _t("cli.commands.json_valid"))
 
@@ -308,31 +308,33 @@ def _save_address_to_targets_file(address: str, output) -> None:
     - 使用文件锁实现跨进程安全。
     """
     targets_path = Path(DEFAULT_TARGETS_FILE)
-    lock_path = targets_path.with_suffix('.lock')
+    lock_path = targets_path.with_suffix(".lock")
     existing: set = set()
 
     # 使用文件锁实现跨进程安全
     lock_file = None
     try:
-        import sys
         import os
+        import sys
 
         # 根据平台选择文件锁实现
-        if sys.platform == 'win32':
+        if sys.platform == "win32":
             import msvcrt
+
             # Windows: 使用独占锁
-            lock_file = open(lock_path, 'w')
+            lock_file = open(lock_path, "w")
             msvcrt.locking(lock_file.fileno(), msvcrt.LK_LOCK, 1)
         else:
             import fcntl
+
             # Unix/Linux: 使用 flock
-            lock_file = open(lock_path, 'w')
+            lock_file = open(lock_path, "w")
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
 
         # 读取已有地址
         if targets_path.exists():
             try:
-                with open(targets_path, "r", encoding="utf-8-sig", errors="ignore") as f:
+                with open(targets_path, encoding="utf-8-sig", errors="ignore") as f:
                     for line in f:
                         stripped = line.strip()
                         if stripped and not stripped.startswith("#"):
@@ -352,14 +354,14 @@ def _save_address_to_targets_file(address: str, output) -> None:
                 f.write("# 支持 P2PKH (1开头)、P2SH (3开头)、Bech32 (bc1开头) 格式\n#\n")
 
         # 读取最新内容并追加新地址
-        with open(targets_path, "r", encoding="utf-8") as f:
+        with open(targets_path, encoding="utf-8") as f:
             content = f.read()
 
         # 追加新地址
         content += address + "\n"
 
         # 写入临时文件
-        temp_path = targets_path.with_suffix('.tmp')
+        temp_path = targets_path.with_suffix(".tmp")
         with open(temp_path, "w", encoding="utf-8") as f:
             f.write(content)
 
@@ -377,18 +379,20 @@ def _save_address_to_targets_file(address: str, output) -> None:
         # 释放文件锁
         if lock_file:
             try:
-                if sys.platform == 'win32':
+                if sys.platform == "win32":
                     import msvcrt
+
                     msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
                 else:
                     import fcntl
+
                     fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
                 lock_file.close()
             except Exception:
                 pass
 
 
-def _quick_start_select_target(compact: bool = False) -> Tuple[List[str], Optional[str]]:
+def _quick_start_select_target(compact: bool = False) -> tuple[list[str], str | None]:
     """步骤1: 选择目标地址来源。返回 (targets_list, target_file)
 
     Args:
@@ -413,8 +417,8 @@ def _quick_start_select_target(compact: bool = False) -> Tuple[List[str], Option
             break
         output.error("请输入 1 或 2")
 
-    targets: List[str] = []
-    target_file: Optional[str] = None
+    targets: list[str] = []
+    target_file: str | None = None
 
     if target_type == "1":
         address = input("   " + _t("cli.commands.input_address") + ": ").strip()
@@ -480,7 +484,7 @@ def _quick_start_select_target(compact: bool = False) -> Tuple[List[str], Option
             try:
                 for enc in ("utf-8", "gbk", "latin-1"):
                     try:
-                        with open(target_file, "r", encoding=enc, errors="ignore") as f:
+                        with open(target_file, encoding=enc, errors="ignore") as f:
                             for i, line in enumerate(f):
                                 if i >= MAX_SCAN_LINES:
                                     truncated = True
@@ -511,7 +515,7 @@ def _quick_start_select_target(compact: bool = False) -> Tuple[List[str], Option
     return targets, target_file
 
 
-def _quick_start_select_mode(compact: bool = False) -> Tuple[str, Optional[str], Optional[str]]:
+def _quick_start_select_mode(compact: bool = False) -> tuple[str, str | None, str | None]:
     """步骤2: 选择碰撞模式。返回 (mode, start_key, end_key)
 
     Args:
@@ -543,8 +547,8 @@ def _quick_start_select_mode(compact: bool = False) -> Tuple[str, Optional[str],
     mode_map = {"1": "random", "2": "range", "3": "brute_force"}
     mode = mode_map.get(mode_choice, "random")
 
-    start_key: Optional[str] = None
-    end_key: Optional[str] = None
+    start_key: str | None = None
+    end_key: str | None = None
 
     if mode in ["range", "brute_force"]:
         while True:
@@ -567,7 +571,7 @@ def _quick_start_select_mode(compact: bool = False) -> Tuple[str, Optional[str],
     return mode, start_key, end_key
 
 
-def _quick_start_select_options(compact: bool = False) -> Tuple[bool, bool, int]:
+def _quick_start_select_options(compact: bool = False) -> tuple[bool, bool, int]:
     """步骤3: 选择功能选项。返回 (checkpoint, dedup, duration)
 
     Args:
@@ -652,7 +656,7 @@ def _quick_start_select_options(compact: bool = False) -> Tuple[bool, bool, int]
     return checkpoint, dedup, duration
 
 
-def _detect_gpu_devices() -> List[dict]:
+def _detect_gpu_devices() -> list[dict]:
     """检测可用的GPU设备，失败时返回空列表"""
     try:
         from src.gpu.device import GPUDeviceDetector
@@ -679,7 +683,7 @@ def _format_device_label(device: dict, index: int) -> str:
     return name
 
 
-def _detect_gpu_devices_with_timeout(timeout: float = 5.0) -> List[dict]:
+def _detect_gpu_devices_with_timeout(timeout: float = 5.0) -> list[dict]:
     """带超时的 GPU 检测，超时返回空列表"""
     output = CLIOutput.get_instance()
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
@@ -691,7 +695,7 @@ def _detect_gpu_devices_with_timeout(timeout: float = 5.0) -> List[dict]:
             return []
 
 
-def _quick_start_select_gpu() -> List[str]:
+def _quick_start_select_gpu() -> list[str]:
     """步骤4: 选择GPU加速模式。返回额外的命令行参数列表"""
     output = CLIOutput.get_instance()
 
@@ -724,7 +728,7 @@ def _quick_start_select_gpu() -> List[str]:
             break
         output.error("请输入 1、2 或 3")
 
-    gpu_args: List[str] = []
+    gpu_args: list[str] = []
 
     if gpu_choice == "2":
         # 单GPU模式：使用已检测到的设备
@@ -800,7 +804,7 @@ def _quick_start_select_gpu() -> List[str]:
                 input("   请选择要使用的 GPU 设备编号（空格分隔，如 1 2，直接回车=全部）: ").strip()
                 or default_indices
             )
-            selected_indices: List[int] = []
+            selected_indices: list[int] = []
             valid = True
             for part in raw.split():
                 try:
@@ -830,7 +834,7 @@ def _quick_start_select_gpu() -> List[str]:
     return gpu_args
 
 
-def _cmd_quick_run(executor: Optional[Callable[[], None]] = None) -> None:
+def _cmd_quick_run(executor: Callable[[], None] | None = None) -> None:
     """--quick-run 命令实现：快速模式，跳过向导直接使用默认配置运行"""
     # 确保UTF-8输出
     PlatformUtils.ensure_utf8_output()
@@ -844,17 +848,17 @@ def _cmd_quick_run(executor: Optional[Callable[[], None]] = None) -> None:
 
         # 默认目标：检查targets.txt是否存在
         target_file = str(QUICK_RUN_DEFAULTS["target_file"])
-        targets: List[str] = []  # noqa: F841
+        targets: list[str] = []  # noqa: F841
         target_file_exists = Path(target_file).exists()
 
         if target_file_exists:
             # 统计文件中的地址数量并预览
             address_count = 0
-            preview_addresses: List[str] = []
+            preview_addresses: list[str] = []
             max_preview = PREVIEW_CONFIG["max_preview_addresses"]
             max_display_len = PREVIEW_CONFIG["max_address_display_length"]
             try:
-                with open(target_file, "r", encoding="utf-8") as f:
+                with open(target_file, encoding="utf-8") as f:
                     for line_num, line in enumerate(f, 1):
                         stripped = line.strip()
                         if stripped and not stripped.startswith("#"):
@@ -868,7 +872,9 @@ def _cmd_quick_run(executor: Optional[Callable[[], None]] = None) -> None:
             if address_count == 0:
                 output.warning(f"{target_file} 中没有有效的目标地址")
                 output.print("\n[TIP] 请先在文件中添加目标地址，或使用以下命令:")
-                output.print("  python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random\n")
+                output.print(
+                    "  python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random\n"
+                )
                 return
 
             output.success(f"发现目标文件: {target_file} ({address_count} 个地址)")
@@ -890,7 +896,9 @@ def _cmd_quick_run(executor: Optional[Callable[[], None]] = None) -> None:
         else:
             output.warning(f"未找到 {target_file}，请使用 -t 或 -f 指定目标")
             output.print("\n[TIP] 快速模式示例:")
-            output.print("  python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random")
+            output.print(
+                "  python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random"
+            )
             output.print("  python key_collision_cli.py -f targets.txt --use-gpu\n")
             return
 
@@ -957,9 +965,9 @@ def _cmd_quick_run(executor: Optional[Callable[[], None]] = None) -> None:
 
 
 def _quick_start_build_and_run(
-    cmd_parts: List[str],
-    executor: Optional[Callable[[], None]],
-    config_summary: Optional[dict] = None,
+    cmd_parts: list[str],
+    executor: Callable[[], None] | None,
+    config_summary: dict | None = None,
 ) -> None:
     """构建并（可选）执行生成的命令"""
     output = CLIOutput.get_instance()
@@ -1006,7 +1014,7 @@ def _quick_start_build_and_run(
         output.print("   " + _t("cli.commands.tip_help_cmd"))
 
 
-def _cmd_quick_start(executor: Optional[Callable[[], None]] = None, compact: bool = False) -> None:
+def _cmd_quick_start(executor: Callable[[], None] | None = None, compact: bool = False) -> None:
     """--quick-start 命令实现：交互式快速引导
 
     Args:

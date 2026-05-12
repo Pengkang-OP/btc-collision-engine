@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 引导事件定义
 
 定义引导界面模块的事件类型。
 """
 
-from enum import Enum
-from typing import Dict, Any
-from dataclasses import dataclass, field
-import time
 import logging
+import time
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -36,11 +35,11 @@ class WizardEvent:
     """引导事件数据结构"""
 
     event_type: WizardEventType
-    data: Dict[str, Any] = field(default_factory=dict)
+    data: dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=time.time)
     source: str = "wizard"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "event_type": self.event_type.value,
@@ -54,7 +53,7 @@ class EventDispatcher:
     """事件分发器"""
 
     def __init__(self):
-        self._listeners: Dict[WizardEventType, list] = {}
+        self._listeners: dict[WizardEventType, list] = {}
 
     def register(self, event_type: WizardEventType, callback):
         """注册事件监听器"""

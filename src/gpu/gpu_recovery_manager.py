@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 GPU异常恢复管理器
 
@@ -7,13 +6,15 @@ GPU异常恢复管理器
 """
 
 # P3-5: 统一日志获取
-from ..utils import get_configured_logger
-import time
-import threading
 import concurrent.futures  # M3修复: 移到文件顶部
-from typing import Dict, Set, Optional, Callable, Any
-from enum import Enum
+import threading
+import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
+
+from ..utils import get_configured_logger
 
 logger = get_configured_logger("GPURecoveryManager")
 
@@ -79,7 +80,7 @@ class GPURecoveryManager:
         retry_delay_seconds: float = 5.0,
         batch_size_reduction_factor: float = 0.5,
         auto_redistribute: bool = True,
-        max_failed_gpus_before_fallback: Optional[int] = None,  # 新增：降级阈值
+        max_failed_gpus_before_fallback: int | None = None,  # 新增：降级阈值
     ) -> None:
         """初始化恢复管理器
 
@@ -100,21 +101,21 @@ class GPURecoveryManager:
         self._max_failure_history_per_gpu = 100
 
         # 失败GPU集合
-        self._failed_gpus: Set[int] = set()
+        self._failed_gpus: set[int] = set()
         self._failed_gpus_lock = threading.Lock()
 
         # 降级状态（审查修复#1: 添加线程锁保护）
         self._fallback_lock = threading.Lock()
         self._fallback_to_cpu = False
-        self._fallback_callback: Optional[Callable] = None
-        self._recovery_callback: Optional[Callable] = None  # 恢复回调
+        self._fallback_callback: Callable | None = None
+        self._recovery_callback: Callable | None = None  # 恢复回调
 
         # 失败历史记录
-        self._failure_history: Dict[int, list] = {}
+        self._failure_history: dict[int, list] = {}
         self._history_lock = threading.Lock()
 
         # 恢复回调
-        self._recovery_callbacks: Dict[int, Callable] = {}
+        self._recovery_callbacks: dict[int, Callable] = {}
 
         # H2修复: 统计信息（添加线程保护）
         self._total_failures = 0
@@ -131,8 +132,8 @@ class GPURecoveryManager:
         self,
         gpu_id: int,
         error: Exception,
-        redistribute_callback: Optional[Callable] = None,
-        alert_callback: Optional[Callable] = None,
+        redistribute_callback: Callable | None = None,
+        alert_callback: Callable | None = None,
     ) -> bool:
         """处理GPU失败
 
@@ -463,17 +464,17 @@ class GPURecoveryManager:
             if len(history) > self._max_failure_history_per_gpu:
                 trimmed = history[: -self._max_failure_history_per_gpu]
                 del history[: len(history) - self._max_failure_history_per_gpu]
-                logger.debug(f"GPU {gpu_id} 失败历史超过上限, " f"已清理 {len(trimmed)} 条最旧记录")
+                logger.debug(f"GPU {gpu_id} 失败历史超过上限, 已清理 {len(trimmed)} 条最旧记录")
 
         # H2修复: 添加线程保护
         with self._stats_lock:
             self._total_failures += 1
 
         logger.warning(
-            f"GPU {gpu_id} 失败记录: {record.failure_type.value} " f"(总计: {self._total_failures})"
+            f"GPU {gpu_id} 失败记录: {record.failure_type.value} (总计: {self._total_failures})"
         )
 
-    def _verify_gpu_health(self, gpu_id: int, timeout: Optional[float] = None) -> bool:
+    def _verify_gpu_health(self, gpu_id: int, timeout: float | None = None) -> bool:
         """H1/H3/H4修复: 验证GPU是否健康（带超时控制和取消机制）
 
         通过回调函数执行GPU健康检查，验证GPU是否真正恢复。
@@ -504,12 +505,11 @@ class GPURecoveryManager:
                         cancelled = future.cancel()
                         if cancelled:
                             logger.warning(
-                                f"GPU {gpu_id} 健康检查超时（{timeout}秒），" "已取消未执行的任务"
+                                f"GPU {gpu_id} 健康检查超时（{timeout}秒），已取消未执行的任务"
                             )
                         else:
                             logger.warning(
-                                f"GPU {gpu_id} 健康检查超时（{timeout}秒），"
-                                "任务已在运行，无法取消"
+                                f"GPU {gpu_id} 健康检查超时（{timeout}秒），任务已在运行，无法取消"
                             )
                         return False
 
@@ -563,7 +563,7 @@ class GPURecoveryManager:
         with self._failed_gpus_lock:
             return gpu_id in self._failed_gpus
 
-    def get_failed_gpus(self) -> Set[int]:
+    def get_failed_gpus(self) -> set[int]:
         """获取所有失败的GPU ID
 
         Returns:
@@ -572,7 +572,7 @@ class GPURecoveryManager:
         with self._failed_gpus_lock:
             return self._failed_gpus.copy()
 
-    def get_recovery_stats(self) -> Dict:
+    def get_recovery_stats(self) -> dict:
         """M2修复: 获取恢复统计（一致性快照）
 
         使用锁保护读取操作，确保统计数据的一致性。
@@ -597,7 +597,7 @@ class GPURecoveryManager:
             "success_rate": (successful / total * 100 if total > 0 else 100.0),
         }
 
-    def reset_failure_history(self, gpu_id: Optional[int] = None) -> None:
+    def reset_failure_history(self, gpu_id: int | None = None) -> None:
         """重置失败历史
 
         Args:

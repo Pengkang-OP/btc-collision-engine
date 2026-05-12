@@ -7,9 +7,8 @@
 - 支持依赖注入
 """
 
-from typing import Dict, List, Optional, Set
-from dataclasses import dataclass, field
 import importlib
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -19,8 +18,8 @@ class Dependency:
     name: str  # 依赖名称
     module: str  # 模块路径
     optional: bool = False  # 是否可选
-    version: Optional[str] = None  # 版本要求
-    init_func: Optional[str] = None  # 初始化函数
+    version: str | None = None  # 版本要求
+    init_func: str | None = None  # 初始化函数
 
 
 @dataclass
@@ -29,7 +28,7 @@ class LogComponent:
 
     name: str  # 组件名称
     module: str  # 模块路径
-    dependencies: List[Dependency] = field(default_factory=list)  # 依赖项
+    dependencies: list[Dependency] = field(default_factory=list)  # 依赖项
     init_order: int = 0  # 初始化顺序
     initialized: bool = False  # 是否已初始化
 
@@ -39,10 +38,10 @@ class LogDependencyManager:
 
     def __init__(self) -> None:
         """初始化依赖管理器"""
-        self.components: Dict[str, LogComponent] = {}
-        self.dependencies: Dict[str, Dependency] = {}
-        self.initialization_order: List[str] = []
-        self.initialized_components: Set[str] = set()
+        self.components: dict[str, LogComponent] = {}
+        self.dependencies: dict[str, Dependency] = {}
+        self.initialization_order: list[str] = []
+        self.initialized_components: set[str] = set()
 
     def register_component(self, component: LogComponent) -> None:
         """注册日志组件"""
@@ -52,20 +51,20 @@ class LogDependencyManager:
         """注册依赖项"""
         self.dependencies[dependency.name] = dependency
 
-    def get_component(self, name: str) -> Optional[LogComponent]:
+    def get_component(self, name: str) -> LogComponent | None:
         """获取组件"""
         return self.components.get(name)
 
-    def get_dependency(self, name: str) -> Optional[Dependency]:
+    def get_dependency(self, name: str) -> Dependency | None:
         """获取依赖项"""
         return self.dependencies.get(name)
 
-    def resolve_dependencies(self) -> List[str]:
+    def resolve_dependencies(self) -> list[str]:
         """解析依赖关系，生成初始化顺序"""
         # 拓扑排序
-        visited: Set[str] = set()
-        temp: Set[str] = set()
-        order: List[str] = []
+        visited: set[str] = set()
+        temp: set[str] = set()
+        order: list[str] = []
 
         def visit(component_name: str) -> None:
             if component_name in temp:
@@ -179,7 +178,7 @@ class LogDependencyManager:
             print(f"初始化过程中发生错误: {e}")
             return False
 
-    def get_initialization_order(self) -> List[str]:
+    def get_initialization_order(self) -> list[str]:
         """获取初始化顺序"""
         if not self.initialization_order:
             self.resolve_dependencies()
@@ -189,13 +188,13 @@ class LogDependencyManager:
         """检查组件是否已初始化"""
         return component_name in self.initialized_components
 
-    def get_initialized_components(self) -> Set[str]:
+    def get_initialized_components(self) -> set[str]:
         """获取已初始化的组件"""
         return self.initialized_components.copy()
 
-    def get_dependency_graph(self) -> Dict[str, List[str]]:
+    def get_dependency_graph(self) -> dict[str, list[str]]:
         """获取依赖图"""
-        graph: Dict[str, List[str]] = {}
+        graph: dict[str, list[str]] = {}
 
         for component_name, component in self.components.items():
             dependencies = []
@@ -207,7 +206,7 @@ class LogDependencyManager:
 
 
 # 全局依赖管理器实例
-_dependency_manager: Optional[LogDependencyManager] = None
+_dependency_manager: LogDependencyManager | None = None
 
 
 def get_dependency_manager() -> LogDependencyManager:
@@ -302,7 +301,7 @@ def init_log_dependencies() -> None:
     manager.initialize_all()
 
 
-def get_dependency_graph() -> Dict[str, List[str]]:
+def get_dependency_graph() -> dict[str, list[str]]:
     """
     获取依赖图
 
@@ -313,7 +312,7 @@ def get_dependency_graph() -> Dict[str, List[str]]:
     return manager.get_dependency_graph()
 
 
-def check_dependencies() -> Dict[str, bool]:
+def check_dependencies() -> dict[str, bool]:
     """
     检查依赖状态
 
@@ -321,7 +320,7 @@ def check_dependencies() -> Dict[str, bool]:
         依赖状态字典
     """
     manager = get_dependency_manager()
-    status: Dict[str, bool] = {}
+    status: dict[str, bool] = {}
 
     for dep_name, dep in manager.dependencies.items():
         try:

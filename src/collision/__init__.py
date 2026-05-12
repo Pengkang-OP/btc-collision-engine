@@ -1,38 +1,39 @@
 """碰撞引擎模块包"""
 
-from typing import Set, Optional, Dict, Any
-from .targets.resolver import TargetResolver
-from .collision_stats import CollisionStats
-from .checkpoint_manager import CheckpointManager
-from .deduplication_filter import DeduplicationFilter
-from .bloom_deduplication_filter import BloomDeduplicationFilter
+from typing import Any, Dict, Optional, Set
+
 from .base_engine import BaseCollisionEngine
-from .key_collision_engine import KeyCollisionEngine
-from .observers import CollisionObserver, BaseCollisionObserver, ObserverManager
-from .multiprocess_engine import MultiprocessCollisionEngine, HybridCollisionEngine
-from .continuous_matcher import ContinuousMatcher
-from .match_storage import MatchDataStorage
+from .bloom_deduplication_filter import BloomDeduplicationFilter
+from .checkpoint_manager import CheckpointManager
 from .collision_helpers import encode_private_key_to_wif, format_match_result, safe_wif_encode
+from .collision_stats import CollisionStats
+from .continuous_matcher import ContinuousMatcher
+from .deduplication_filter import DeduplicationFilter
+from .event_bus import EventBus, get_event_bus, reset_event_bus
 
 # 事件系统 (v3.2.0新增)
 from .events import (
-    EventType,
     CollisionEvent,
-    EngineProgressEvent,
-    EngineMatchEvent,
-    EngineErrorEvent,
     EngineCompleteEvent,
+    EngineErrorEvent,
+    EngineMatchEvent,
+    EngineProgressEvent,
     EngineStartEvent,
     EngineStopEvent,
+    EventType,
 )
-from .event_bus import EventBus, get_event_bus, reset_event_bus
+from .key_collision_engine import KeyCollisionEngine
+from .match_storage import MatchDataStorage
+from .multiprocess_engine import HybridCollisionEngine, MultiprocessCollisionEngine
+from .observers import BaseCollisionObserver, CollisionObserver, ObserverManager
+from .targets.resolver import TargetResolver
 from .types import (
-    ProgressCallback,
-    MatchCallback,
     CompleteCallback,
     ErrorCallback,
-    EventHandler,
     ErrorHandler,
+    EventHandler,
+    MatchCallback,
+    ProgressCallback,
 )
 
 # 条件导出 GPUCollisionEngine（pyopencl 可能不可用）
@@ -96,7 +97,7 @@ __all__ = [
 
 
 def create_collision_engine(
-    targets: Set[str], mode: str = "auto", config: Optional[Dict[str, Any]] = None, **kwargs
+    targets: set[str], mode: str = "auto", config: dict[str, Any] | None = None, **kwargs
 ) -> BaseCollisionEngine:
     """
     创建碰撞引擎实例
@@ -165,8 +166,7 @@ def create_collision_engine(
                 import logging as _log
 
                 _log.getLogger(__name__).info(
-                    "[GPU提示] pyopencl 未安装，已自动切换到 CPU 模式。\n"
-                    "  如需 GPU 加速： pip install pyopencl"
+                    "[GPU提示] pyopencl 未安装，已自动切换到 CPU 模式。\n  如需 GPU 加速： pip install pyopencl"
                 )
             elif not GPUCollisionEngine.is_gpu_available():
                 import logging as _log
@@ -199,7 +199,7 @@ def create_collision_engine(
     return KeyCollisionEngine(targets=targets, **merged_kwargs)
 
 
-def _merge_config_with_kwargs(config: Dict[str, Any], kwargs: Dict[str, Any]) -> Dict[str, Any]:
+def _merge_config_with_kwargs(config: dict[str, Any], kwargs: dict[str, Any]) -> dict[str, Any]:
     """
     合并配置字典和kwargs
 

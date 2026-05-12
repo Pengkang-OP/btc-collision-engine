@@ -1,16 +1,16 @@
 """断点管理器"""
 
-import os
 import json
-import time
+import os
 import threading
+import time
 import traceback
 from datetime import datetime
-from typing import Dict, List, Optional, Set, Any, cast
+from typing import Any, cast
 
 # 导入日志配置
 from .. import __version__ as PROJECT_VERSION
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger, init_logging
 from ..utils.platform_utils import PlatformUtils
 
 # 初始化日志系统（如果尚未初始化）
@@ -33,15 +33,15 @@ class CheckpointManager:
         """检查pywin32是否可用（类级别的一次性检查）"""
         if cls._has_win32_security is None:
             try:
-                import win32security  # noqa: F401
                 import ntsecuritycon  # noqa: F401
+                import win32security  # noqa: F401
 
                 cls._has_win32_security = True
             except ImportError:
                 cls._has_win32_security = False
         return cls._has_win32_security
 
-    def __init__(self, filepath: Optional[str] = None, auto_save_interval: int = 30) -> None:
+    def __init__(self, filepath: str | None = None, auto_save_interval: int = 30) -> None:
         # 确保pywin32可用性检查已执行
         self._has_win32_security = self._check_win32_security()
 
@@ -61,20 +61,22 @@ class CheckpointManager:
         self._last_save_time = 0.0
         self._lock = threading.Lock()  # 线程锁保护文件操作
         self._dirty = False  # 脏标志，标记是否有未保存的更改
-        self._buffer: Optional[Dict[str, Any]] = None  # 缓冲区，用于批量保存
-        logger.debug(f"CheckpointManager 初始化: 文件={
-            self.filepath}, 自动保存间隔={auto_save_interval}秒, pywin32可用={
-            self._has_win32_security}")
+        self._buffer: dict[str, Any] | None = None  # 缓冲区，用于批量保存
+        logger.debug(
+            f"CheckpointManager 初始化: 文件={self.filepath}, 自动保存间隔={
+                auto_save_interval
+            }秒, pywin32可用={self._has_win32_security}"
+        )
 
     def save(
         self,
         mode: str,
-        targets: Set[str],
+        targets: set[str],
         current_position: int,
         total_checked: int,
-        matches: List[Dict],
-        range_start: Optional[int] = None,
-        range_end: Optional[int] = None,
+        matches: list[dict],
+        range_start: int | None = None,
+        range_end: int | None = None,
         force: bool = False,
     ) -> None:
         """保存断点到 JSON 文件（线程安全）
@@ -177,9 +179,10 @@ class CheckpointManager:
                     # Windows: 尝试设置ACL（仅所有者可访问）
                     if self._has_win32_security:
                         try:
-                            import win32security
-                            import ntsecuritycon as con
                             import getpass
+
+                            import ntsecuritycon as con
+                            import win32security
 
                             # 获取文件句柄
                             handle = win32security.GetFileSecurity(
@@ -223,9 +226,7 @@ class CheckpointManager:
                                     "/Q",  # 静默执行
                                 ]
 
-                                result = subprocess.run(
-                                    cmd, capture_output=True, text=True
-                                )  # nosec B603
+                                result = subprocess.run(cmd, capture_output=True, text=True)  # nosec B603
                                 if result.returncode == 0:
                                     logger.debug(
                                         "已使用icacls设置Windows文件权限（仅当前用户可访问）"
@@ -253,9 +254,7 @@ class CheckpointManager:
                                 "/Q",  # 静默执行
                             ]
 
-                            result = subprocess.run(
-                                cmd, capture_output=True, text=True
-                            )  # nosec B603
+                            result = subprocess.run(cmd, capture_output=True, text=True)  # nosec B603
                             if result.returncode == 0:
                                 logger.debug("已使用icacls设置Windows文件权限（仅当前用户可访问）")
                             else:
@@ -272,10 +271,11 @@ class CheckpointManager:
 
             self._last_save_time = time.time()
             self._dirty = False
-            logger.debug(f"断点已保存: {
-                self.filepath}, 位置={
-                self._buffer.get('current_position')}, 已检查={
-                self._buffer.get('total_checked')}")
+            logger.debug(
+                f"断点已保存: {self.filepath}, 位置={self._buffer.get('current_position')}, 已检查={
+                    self._buffer.get('total_checked')
+                }"
+            )
         except PermissionError as e:
             logger.error(f"保存断点失败（权限不足）: {e}")
             logger.error(f"文件路径: {self.filepath}")
@@ -298,7 +298,7 @@ class CheckpointManager:
         except OSError:
             pass
 
-    def load(self) -> Optional[Dict]:
+    def load(self) -> dict | None:
         """从文件加载断点，文件不存在或格式错误返回 None（线程安全）"""
         with self._lock:
             try:
@@ -316,7 +316,7 @@ class CheckpointManager:
                             except OSError:
                                 pass
                         logger.warning(f"从临时文件恢复断点: {temp_filepath}")
-                    except (OSError, IOError) as e:
+                    except OSError as e:
                         # 文件系统错误：记录日志并清理临时文件
                         logger.error(f"断点恢复失败: {e}，将重新开始")
                         try:
@@ -327,7 +327,7 @@ class CheckpointManager:
                         # 未知错误：记录完整信息
                         logger.error(f"断点恢复未知错误: {type(e).__name__}: {e}")
 
-                with open(self.filepath, "r", encoding="utf-8") as f:
+                with open(self.filepath, encoding="utf-8") as f:
                     data = json.load(f)
 
                 if data.get("version") != 1:
@@ -347,7 +347,7 @@ class CheckpointManager:
                     f"断点已加载: {self.filepath}, 模式={data.get('mode')}, "
                     f"已检查={data.get('total_checked', 0)}, 匹配数={len(data.get('matches', []))}"
                 )
-                return cast(Dict[str, Any], data)
+                return cast(dict[str, Any], data)
             except FileNotFoundError:
                 logger.debug(f"断点文件不存在: {self.filepath}")
                 return None
