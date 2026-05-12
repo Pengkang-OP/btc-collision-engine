@@ -55,7 +55,7 @@ class PerformanceBaseline:
             try:
                 with open(self.BASELINE_FILE, 'r', encoding='utf-8') as f:
                     return json.load(f)
-            except:
+            except (IOError, json.JSONDecodeError):
                 pass
         return {}
     

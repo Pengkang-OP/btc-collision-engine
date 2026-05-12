@@ -96,7 +96,7 @@ def read_log_recent_errors():
         recent_lines = lines[-50:]
         errors = [line.strip() for line in recent_lines if 'ERROR' in line or 'CRITICAL' in line]
         return errors[-5:]  # 最多返回5个错误
-    except:
+    except (IOError, UnicodeDecodeError):
         return []
 
 

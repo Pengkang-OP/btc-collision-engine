@@ -369,7 +369,8 @@ class DataStorage:
 
         import random
 
-        random.seed(42)  # 固定种子确保可重现
+        # 使用实例化Random对象而非全局随机，避免影响其他模块
+        rng = random.Random()
 
         # 计算采样数量
         sample_count = max(1, int(len(data) * sample_rate))
