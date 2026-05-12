@@ -38,25 +38,25 @@ rem ── 检查 Python 是否在 PATH 中 ────────────
 :check_python
 where python >nul 2>&1
 if errorlevel 1 (
-    echo [ERROR] Python not found in PATH
-    echo         Please install Python 3.9+ and add it to PATH
-    echo         Download: https://www.python.org/downloads/
+    echo [错误] 未找到 Python
+    echo         请安装 Python 3.9+ 并添加到 PATH
+    echo         下载地址: https://www.python.org/downloads/
     pause
     exit /b 1
 )
-echo [OK] Python found in PATH
+echo [OK] 已找到 Python
 goto :eof
 
 rem ── 检查 Python 版本 >= 3.9 ─────────────────────────────────────
 :check_python_version
 python -c "import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)" >nul 2>&1
 if errorlevel 1 (
-    echo [ERROR] Python version is too old
-    echo         Python 3.9 or higher is required
+    echo [错误] Python 版本过低
+    echo         需要 Python 3.9 或更高版本
     pause
     exit /b 1
 )
-echo [OK] Python version meets requirements (>= 3.9)
+echo [OK] Python 版本符合要求 (>= 3.9)
 goto :eof
 
 rem ── 创建必要的运行时目录 ────────────────────────────────────────
@@ -64,7 +64,7 @@ rem ── 创建必要的运行时目录 ────────────�
 for %%D in (logs data_logs monitoring_data) do (
     if not exist "%%D" mkdir "%%D" >nul 2>&1
 )
-echo [OK] Required directories created/verified
+echo [OK] 运行时目录已创建/验证
 goto :eof
 
 rem ── 从模板创建 config.json (如果不存在) ─────────────────────────
@@ -72,12 +72,12 @@ rem ── 从模板创建 config.json (如果不存在) ───────�
 if not exist "config.json" (
     if exist "config.example.json" (
         copy "config.example.json" "config.json" >nul 2>&1
-        echo [OK] config.json created from template
+        echo [OK] 已从模板创建 config.json
     ) else (
-        echo [WARN] Neither config.json nor config.example.json found
+        echo [警告] 未找到 config.example.json 模板文件
     )
 ) else (
-    echo [INFO] config.json already exists
+    echo [INFO] config.json 已存在
 )
 goto :eof
 
@@ -86,21 +86,21 @@ rem ── 激活虚拟环境 ────────────────�
 if exist "venv\Scripts\activate.bat" (
     call venv\Scripts\activate.bat >nul 2>&1
     if not errorlevel 1 (
-        echo [OK] Virtual environment activated
+        echo [OK] 虚拟环境已激活
         goto :eof
     )
 )
-echo [WARN] Virtual environment not found or activation failed
-echo        Run install.bat to set up the environment
-goto :eof
+echo [警告] 虚拟环境未找到或激活失败
+echo        请先运行 install.bat 安装环境
+exit /b 1
 
 rem ── 检查指定文件是否存在 (参数1 = 文件路径) ───────────────────
 :check_file_exists
 if exist "%~1" (
-    echo [OK] File found: %~1
+    echo [OK] 文件已找到: %~1
 ) else (
-    echo [ERROR] File not found: %~1
-    echo         Please verify the path or run install.bat first
+    echo [错误] 文件未找到: %~1
+    echo         请检查路径是否正确，或先运行 install.bat
     pause
     exit /b 1
 )
