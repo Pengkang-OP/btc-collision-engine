@@ -34,7 +34,7 @@ def read_error_log():
     try:
         with open(error_file, 'r', encoding='utf-8') as f:
             return json.load(f)
-    except:
+    except (IOError, json.JSONDecodeError):
         return []
 
 

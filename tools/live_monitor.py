@@ -36,7 +36,7 @@ def get_current_program_info():
                 'cpu_seconds': proc.get('CPU', 0),
                 'start_time': proc.get('StartTime', 'Unknown')
             }
-    except:
+    except (subprocess.TimeoutExpired, json.JSONDecodeError, ValueError):
         pass
     
     return None
@@ -58,11 +58,11 @@ def check_recent_errors(log_file, since_time):
                     
                     if line_time >= since_time:
                         errors_after.append(line.strip())
-                except:
+                except (ValueError, AttributeError):
                     pass
         
         return errors_after
-    except:
+    except (IOError, OSError):
         return []
 
 
@@ -86,7 +86,7 @@ def check_gpu_status():
         
         if result.returncode == 0:
             return int(result.stdout.strip())
-    except:
+    except (subprocess.TimeoutExpired, ValueError):
         pass
     
     return None
@@ -125,7 +125,7 @@ def main():
             now = datetime.now()
             runtime = (now - start_time).total_seconds()
             print(f"  运行时长: {runtime:.0f} 秒 ({runtime/60:.1f} 分钟)")
-        except:
+        except (ValueError, AttributeError):
             start_time = None
             print(f"  启动时间: {proc_info['start_time']}")
     else:

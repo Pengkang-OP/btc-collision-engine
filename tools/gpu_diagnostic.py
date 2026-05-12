@@ -120,7 +120,7 @@ def check_gpu_driver():
                     timeout=10
                 )
                 print("  [INFO] DirectX诊断信息已生成")
-            except:
+            except (subprocess.TimeoutExpired, FileNotFoundError):
                 pass
 
         # Linux检查

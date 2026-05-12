@@ -46,7 +46,7 @@ def analyze_current_run():
                         'time': start_time,
                         'timestamp': timestamp
                     }
-                except:
+                except ValueError:
                     pass
             
             # 查找GPU信息
@@ -63,7 +63,7 @@ def analyze_current_run():
                     match = re.search(r'batch_size:\s*(\d+)', line)
                     if match:
                         batch_info = int(match.group(1))
-                except:
+                except (re.error, ValueError):
                     pass
             
             # 统计错误和警告(最近1000行)
@@ -88,7 +88,7 @@ def analyze_current_run():
                     'matches': checkpoint.get('match_count', 0),
                     'last_update': checkpoint.get('last_update', '')
                 }
-            except:
+            except (json.JSONDecodeError, IOError):
                 pass
         
         return {

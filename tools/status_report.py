@@ -52,7 +52,7 @@ def generate_report():
                 now = dt.now()
                 runtime = (now - st).total_seconds()
                 print(f"  运行时长: {runtime:.0f} 秒 ({runtime/60:.1f} 分钟)")
-            except:
+            except (ValueError, AttributeError):
                 pass
         else:
             print("  [WARN] 未检测到最近启动的Python进程")
