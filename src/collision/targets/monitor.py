@@ -4,12 +4,13 @@
 替代基于日志级别的脆弱监控方式。
 """
 
-from typing import Dict, Any, Optional, Callable, List
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 # 导入日志配置
-from ...utils import init_logging, get_configured_logger
+from ...utils import get_configured_logger, init_logging
 
 # 初始化日志系统
 init_logging()
@@ -51,7 +52,7 @@ class ValidationMetrics:
     invalid: int
     success_rate: float
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "timestamp": self.timestamp.isoformat(),
             "total": self.total,
@@ -88,8 +89,8 @@ class ValidationMonitor:
     def __init__(
         self,
         validator: Any = None,
-        thresholds: Optional[ValidationThresholds] = None,
-        alert_callback: Optional[Callable] = None,
+        thresholds: ValidationThresholds | None = None,
+        alert_callback: Callable | None = None,
     ) -> None:
         """
         初始化验证质量监控器
@@ -106,7 +107,7 @@ class ValidationMonitor:
         # 统计信息
         self.total_checks = 0
         self.total_alerts = 0
-        self.alert_history: List[Dict[str, Any]] = []
+        self.alert_history: list[dict[str, Any]] = []
 
         logger.info(
             "ValidationMonitor 初始化: "
@@ -116,7 +117,7 @@ class ValidationMonitor:
         )
 
     def check_and_report(
-        self, results: Dict, batch_id: Optional[str] = None, data_source: Optional[str] = None
+        self, results: dict, batch_id: str | None = None, data_source: str | None = None
     ) -> ValidationMetrics:
         """
         检查验证质量并生成报告
@@ -170,7 +171,7 @@ class ValidationMonitor:
             # 自动清理: 超过最大大小时保留最近HISTORY_TRIM_SIZE条
             if len(self.alert_history) > self.MAX_HISTORY_SIZE:
                 self.alert_history = self.alert_history[-self.HISTORY_TRIM_SIZE :]
-                logger.debug("告警历史记录已清理: " f"保留最近{self.HISTORY_TRIM_SIZE}条记录")
+                logger.debug(f"告警历史记录已清理: 保留最近{self.HISTORY_TRIM_SIZE}条记录")
 
             self.alert_callback(
                 alert_level, self._format_alert_message(alert_level, metrics, batch_id), metrics
@@ -178,7 +179,7 @@ class ValidationMonitor:
 
         return metrics
 
-    def _calculate_metrics(self, results: Dict) -> ValidationMetrics:
+    def _calculate_metrics(self, results: dict) -> ValidationMetrics:
         """计算验证质量指标"""
         if not self.validator:
             # 如果没有validator实例,手动计算
@@ -211,7 +212,7 @@ class ValidationMonitor:
             success_rate=success_rate,
         )
 
-    def _check_alerts(self, metrics: ValidationMetrics) -> Optional[str]:
+    def _check_alerts(self, metrics: ValidationMetrics) -> str | None:
         """
         检查是否需要告警
 
@@ -243,9 +244,9 @@ class ValidationMonitor:
     def _log_metrics(
         self,
         metrics: ValidationMetrics,
-        alert_level: Optional[str],
-        batch_id: Optional[str],
-        data_source: Optional[str],
+        alert_level: str | None,
+        batch_id: str | None,
+        data_source: str | None,
     ):
         """记录验证指标日志"""
         context = []
@@ -263,7 +264,7 @@ class ValidationMonitor:
                 f"未验证={metrics.unvalidated}/{metrics.total} "
                 f"({metrics.unvalidated / metrics.total:.0%}"
                 if metrics.total > 0
-                else "(0%)" "), " f"成功率={metrics.success_rate:.1f}%"
+                else f"(0%)), 成功率={metrics.success_rate:.1f}%"
             )
         elif alert_level == "warning":
             logger.warning(
@@ -272,7 +273,7 @@ class ValidationMonitor:
                 f"未验证={metrics.unvalidated}/{metrics.total} "
                 f"({metrics.unvalidated / metrics.total:.0%}"
                 if metrics.total > 0
-                else "(0%)" "), " f"成功率={metrics.success_rate:.1f}%"
+                else f"(0%)), 成功率={metrics.success_rate:.1f}%"
             )
         else:
             logger.debug(
@@ -283,7 +284,7 @@ class ValidationMonitor:
             )
 
     def _format_alert_message(
-        self, level: str, metrics: ValidationMetrics, batch_id: Optional[str]
+        self, level: str, metrics: ValidationMetrics, batch_id: str | None
     ) -> str:
         """格式化告警消息"""
         severity = "严重" if level == "critical" else "警告"
@@ -313,7 +314,7 @@ class ValidationMonitor:
 
         logger.info(f"告警触发 [{level}]: {message}")
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """获取监控统计信息"""
         return {
             "total_checks": self.total_checks,
@@ -337,7 +338,7 @@ def create_monitor(
     validator: Any = None,
     coverage_warning: float = 90.0,
     unvalidated_warning: float = 0.1,
-    alert_callback: Optional[Callable] = None,
+    alert_callback: Callable | None = None,
 ) -> ValidationMonitor:
     """
     快速创建验证质量监控器

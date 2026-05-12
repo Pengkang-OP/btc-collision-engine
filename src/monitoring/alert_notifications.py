@@ -31,17 +31,17 @@
 """
 
 import logging
-import smtplib
 import os
 import re
-import requests  # type: ignore[import-untyped]
+import smtplib
 from abc import ABC, abstractmethod
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from typing import List, Optional
 from datetime import datetime
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
-from .alert_system import AlertRecord, AlertLevel
+import requests  # type: ignore[import-untyped]
+
+from .alert_system import AlertLevel, AlertRecord
 
 logger = logging.getLogger(__name__)
 
@@ -103,8 +103,8 @@ class EmailNotifier(BaseNotifier):
         smtp_server: str,
         smtp_port: int = 587,
         username: str = "",
-        password: Optional[str] = None,
-        recipients: Optional[List[str]] = None,
+        password: str | None = None,
+        recipients: list[str] | None = None,
         use_tls: bool = True,
         enabled: bool = True,
     ) -> None:
@@ -285,7 +285,7 @@ class WeComWebhookNotifier(BaseNotifier):
     def __init__(
         self,
         webhook_url: str,
-        mentioned_list: Optional[List[str]] = None,
+        mentioned_list: list[str] | None = None,
         timeout: int = DEFAULT_WEBHOOK_TIMEOUT,
         enabled: bool = True,
     ) -> None:
@@ -368,7 +368,7 @@ class DingTalkWebhookNotifier(BaseNotifier):
     def __init__(
         self,
         webhook_url: str,
-        at_mobiles: Optional[List[str]] = None,
+        at_mobiles: list[str] | None = None,
         at_all: bool = False,
         timeout: int = DEFAULT_WEBHOOK_TIMEOUT,
         enabled: bool = True,

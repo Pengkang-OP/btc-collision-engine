@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 安全密钥管理器
 
@@ -7,12 +6,12 @@
 """
 
 import os
-import sys
 import secrets
-import warnings
+import sys
 import threading  # L3修复: 添加线程锁支持
-from typing import Any, Optional
+import warnings
 from contextlib import contextmanager
+from typing import Any
 
 # 尝试导入密码学库
 try:
@@ -93,7 +92,7 @@ class SecureKeyManager:
             - Windows: 使用VirtualLock()锁定内存
             - 锁定内存需要足够的权限
         """
-        self._key: Optional[bytearray] = None
+        self._key: bytearray | None = None
         self._locked = False
         self._cleared = False
         self._memory_locked = False
@@ -107,8 +106,7 @@ class SecureKeyManager:
         else:
             self._backend = "ctypes"
             warnings.warn(
-                "未安装cryptography或PyNaCl，使用ctypes回退方案。"
-                "安装 cryptography: pip install cryptography",
+                "未安装cryptography或PyNaCl，使用ctypes回退方案。安装 cryptography: pip install cryptography",
                 UserWarning,
                 stacklevel=2,
             )
@@ -348,7 +346,7 @@ class SecureKeyManager:
             logger.warning(f"解锁密钥内存失败: {e}")
             return False
 
-    def generate_key(self, key_bytes: Optional[bytes] = None) -> None:
+    def generate_key(self, key_bytes: bytes | None = None) -> None:
         """
         生成或设置私钥
 
@@ -482,7 +480,7 @@ class SecureKeyManager:
         return self
 
     def __exit__(
-        self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]
+        self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None
     ) -> None:
         """上下文管理器出口 - 自动清零"""
         self.clear()
@@ -557,7 +555,7 @@ class SecureKeyManager:
 
 
 @contextmanager
-def secure_key_context(key_bytes: Optional[bytes] = None) -> Any:
+def secure_key_context(key_bytes: bytes | None = None) -> Any:
     """
     安全密钥上下文管理器（便捷函数）
 

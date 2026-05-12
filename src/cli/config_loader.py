@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 配置加载与验证模块
 
@@ -16,14 +15,14 @@ _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
-from src.utils import get_configured_logger  # noqa: E402
+
 from src.i18n import _t  # noqa: E402
-from typing import Optional  # noqa: E402
+from src.utils import get_configured_logger  # noqa: E402
 
 logger = get_configured_logger("CLI")
 
 
-def load_config_with_validation(config_file: Optional[str] = None) -> Optional[dict]:
+def load_config_with_validation(config_file: str | None = None) -> dict | None:
     """
     加载并验证配置文件
 
@@ -60,7 +59,7 @@ def load_config_with_validation(config_file: Optional[str] = None) -> Optional[d
 
     # 尝试加载JSON
     try:
-        with open(config_path, "r", encoding="utf-8") as f:
+        with open(config_path, encoding="utf-8") as f:
             config = json.load(f)
         logger.info(_t("config.loaded", path=config_path))
 

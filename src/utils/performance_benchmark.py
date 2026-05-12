@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """性能基准测试工具
 
 测试各种优化策略的性能提升，包括：
@@ -12,18 +11,18 @@
     python -m src.utils.performance_benchmark
 """
 
+import argparse
+import json
 import os
 import sys
 import time
-import json
-import argparse
-from typing import Dict, Any, List, Optional, cast
 from datetime import datetime
+from typing import Any, cast
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from src.utils import init_logging, get_configured_logger  # noqa: E402
+from src.utils import get_configured_logger, init_logging  # noqa: E402
 
 # 初始化日志
 init_logging()
@@ -33,11 +32,11 @@ logger = get_configured_logger("PerformanceBenchmark")
 class BenchmarkResult:
     """基准测试结果"""
 
-    def __init__(self, name: str, config: Dict[str, Any]) -> None:
+    def __init__(self, name: str, config: dict[str, Any]) -> None:
         self.name = name
         self.config = config
-        self.start_time: Optional[float] = None
-        self.end_time: Optional[float] = None
+        self.start_time: float | None = None
+        self.end_time: float | None = None
         self.total_processed = 0
         self.matches_found = 0
         self.avg_speed = 0.0
@@ -58,7 +57,7 @@ class BenchmarkResult:
             elapsed = 0.0
         self.avg_speed = self.total_processed / elapsed if elapsed > 0 else 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "name": self.name,
@@ -81,9 +80,9 @@ class PerformanceBenchmark:
 
     def __init__(self) -> None:
         """初始化基准测试器"""
-        self.results: List[BenchmarkResult] = []
+        self.results: list[BenchmarkResult] = []
 
-    def benchmark_simd_optimization(self, batch_sizes: Optional[List[int]] = None) -> None:
+    def benchmark_simd_optimization(self, batch_sizes: list[int] | None = None) -> None:
         """测试SIMD优化性能
 
         Args:
@@ -139,7 +138,7 @@ class PerformanceBenchmark:
             )
             self.results.append(result)
 
-    def benchmark_multiprocess(self, worker_counts: Optional[List[int]] = None) -> None:
+    def benchmark_multiprocess(self, worker_counts: list[int] | None = None) -> None:
         """测试多进程性能
 
         Args:
@@ -171,7 +170,7 @@ class PerformanceBenchmark:
             )
 
             # 定义私钥生成函数
-            def generate_keys(batch_size: int) -> List[bytes]:
+            def generate_keys(batch_size: int) -> list[bytes]:
                 return [os.urandom(32) for _ in range(batch_size)]
 
             # 简化的地址生成器
@@ -204,14 +203,14 @@ class PerformanceBenchmark:
             result.total_processed = stats.get("total_checked", 0)
             result.stop()
 
-            print(f"  速度: {result.avg_speed:,.0f} keys/s, " f"总检测: {result.total_processed:,}")
+            print(f"  速度: {result.avg_speed:,.0f} keys/s, 总检测: {result.total_processed:,}")
             self.results.append(result)
 
             # 清理
             engine.stop()
             engine.cleanup()
 
-    def benchmark_bloom_filter(self, sizes: Optional[List[int]] = None) -> None:
+    def benchmark_bloom_filter(self, sizes: list[int] | None = None) -> None:
         """测试Bloom Filter性能
 
         Args:
@@ -347,9 +346,10 @@ class PerformanceBenchmark:
 
         print(f"\n测试结果已保存到: {filepath}")
 
-    def _get_system_info(self) -> Dict[str, Any]:
+    def _get_system_info(self) -> dict[str, Any]:
         """获取系统信息"""
         import multiprocessing as mp
+
         import psutil
 
         return {

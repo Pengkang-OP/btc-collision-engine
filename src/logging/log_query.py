@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 日志查询器
 
@@ -8,9 +7,10 @@
 
 import json
 import os
-from typing import Dict, Any, Optional, List, Callable
-from datetime import datetime, timedelta
 from collections import defaultdict
+from collections.abc import Callable
+from datetime import datetime, timedelta
+from typing import Any
 
 
 class LogQuery:
@@ -25,13 +25,13 @@ class LogQuery:
 
     def query(
         self,
-        event_type: Optional[str] = None,
-        source: Optional[str] = None,
-        start_time: Optional[float] = None,
-        end_time: Optional[float] = None,
-        keyword: Optional[str] = None,
+        event_type: str | None = None,
+        source: str | None = None,
+        start_time: float | None = None,
+        end_time: float | None = None,
+        keyword: str | None = None,
         limit: int = 100,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """查询日志
 
         Args:
@@ -50,7 +50,7 @@ class LogQuery:
         if not os.path.exists(self.log_file):
             return results
 
-        with open(self.log_file, "r", encoding="utf-8") as f:
+        with open(self.log_file, encoding="utf-8") as f:
             for line in f:
                 try:
                     event_data = json.loads(line.strip())
@@ -83,7 +83,7 @@ class LogQuery:
 
         return results
 
-    def get_recent(self, count: int = 50) -> List[Dict[str, Any]]:
+    def get_recent(self, count: int = 50) -> list[dict[str, Any]]:
         """获取最近的日志
 
         Args:
@@ -94,7 +94,7 @@ class LogQuery:
         """
         return self.query(limit=count)
 
-    def get_by_type(self, event_type: str, limit: int = 100) -> List[Dict[str, Any]]:
+    def get_by_type(self, event_type: str, limit: int = 100) -> list[dict[str, Any]]:
         """按类型获取日志
 
         Args:
@@ -106,7 +106,7 @@ class LogQuery:
         """
         return self.query(event_type=event_type, limit=limit)
 
-    def get_by_timerange(self, start: datetime, end: datetime) -> List[Dict[str, Any]]:
+    def get_by_timerange(self, start: datetime, end: datetime) -> list[dict[str, Any]]:
         """按时间范围获取
 
         Args:
@@ -118,13 +118,13 @@ class LogQuery:
         """
         return self.query(start_time=start.timestamp(), end_time=end.timestamp())
 
-    def get_last_hour(self) -> List[Dict[str, Any]]:
+    def get_last_hour(self) -> list[dict[str, Any]]:
         """获取最近一小时的日志"""
         end = datetime.now()
         start = end - timedelta(hours=1)
         return self.get_by_timerange(start, end)
 
-    def get_last_day(self) -> List[Dict[str, Any]]:
+    def get_last_day(self) -> list[dict[str, Any]]:
         """获取最近一天的日志"""
         end = datetime.now()
         start = end - timedelta(days=1)
@@ -132,7 +132,7 @@ class LogQuery:
 
     def search(
         self, keyword: str, case_sensitive: bool = False, limit: int = 100
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """搜索日志
 
         Args:
@@ -145,7 +145,7 @@ class LogQuery:
         """
         return self.query(keyword=keyword, limit=limit)
 
-    def count_by_type(self) -> Dict[str, int]:
+    def count_by_type(self) -> dict[str, int]:
         """按类型统计数量
 
         Returns:
@@ -156,7 +156,7 @@ class LogQuery:
         if not os.path.exists(self.log_file):
             return dict(counts)
 
-        with open(self.log_file, "r", encoding="utf-8") as f:
+        with open(self.log_file, encoding="utf-8") as f:
             for line in f:
                 try:
                     event_data = json.loads(line.strip())
@@ -167,7 +167,7 @@ class LogQuery:
 
         return dict(counts)
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """获取统计信息
 
         Returns:
@@ -180,7 +180,7 @@ class LogQuery:
         last_time = None
 
         if os.path.exists(self.log_file):
-            with open(self.log_file, "r", encoding="utf-8") as f:
+            with open(self.log_file, encoding="utf-8") as f:
                 for line in f:
                     try:
                         event_data = json.loads(line.strip())
@@ -201,7 +201,7 @@ class LogQuery:
             "log_file_exists": os.path.exists(self.log_file),
         }
 
-    def tail(self, count: int = 10) -> List[Dict[str, Any]]:
+    def tail(self, count: int = 10) -> list[dict[str, Any]]:
         """获取最后的日志（类似Unix tail）
 
         Args:
@@ -213,8 +213,8 @@ class LogQuery:
         return self.get_recent(count)
 
     def filter(
-        self, predicate: Callable[[Dict[str, Any]], bool], limit: int = 100
-    ) -> List[Dict[str, Any]]:
+        self, predicate: Callable[[dict[str, Any]], bool], limit: int = 100
+    ) -> list[dict[str, Any]]:
         """使用自定义函数过滤
 
         Args:

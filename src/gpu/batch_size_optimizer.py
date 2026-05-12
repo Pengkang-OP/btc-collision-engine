@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """智能批次大小优化器
 
 根据GPU性能、内存使用和系统负载动态调整批次大小，提高性能和稳定性。
@@ -11,9 +10,8 @@
 - 自适应学习机制
 """
 
-import time
 import threading
-from typing import Dict, List
+import time
 
 # P3-5: 统一日志获取
 from ..utils import get_configured_logger
@@ -55,11 +53,11 @@ class SmartBatchSizeOptimizer:
         self._max_batch_size: int = gpu_config.get("max_batch_size", max_batch_size)
 
         # 性能历史数据
-        self._performance_history: List[Dict] = []
+        self._performance_history: list[dict] = []
         # 内存使用历史
-        self._memory_history: List[Dict] = []
+        self._memory_history: list[dict] = []
         # 系统负载历史
-        self._load_history: List[Dict] = []
+        self._load_history: list[dict] = []
 
         # 调整参数
         self._adjustment_interval = 20  # 20批次调整一次，减少调整频率
@@ -73,12 +71,13 @@ class SmartBatchSizeOptimizer:
         # 当前批次大小
         self._current_batch_size: int = self._initial_batch_size
 
-        logger.info(f"智能批次大小优化器初始化: GPU型号={gpu_model}, 初始批次={
-            self._initial_batch_size}, 范围={
-            self._min_batch_size}-{
-            self._max_batch_size}")
+        logger.info(
+            f"智能批次大小优化器初始化: GPU型号={gpu_model}, 初始批次={
+                self._initial_batch_size
+            }, 范围={self._min_batch_size}-{self._max_batch_size}"
+        )
 
-    def _get_gpu_config(self, gpu_model: str) -> Dict:
+    def _get_gpu_config(self, gpu_model: str) -> dict:
         """
         获取GPU特定配置
 
@@ -277,7 +276,7 @@ class SmartBatchSizeOptimizer:
             推荐的批次大小
         """
         # 计算不同批次大小的平均吞吐量
-        batch_performance: Dict[int, List[float]] = {}
+        batch_performance: dict[int, list[float]] = {}
         for record in self._performance_history:
             batch_size = record["batch_size"]
             if batch_size not in batch_performance:
@@ -376,10 +375,7 @@ class SmartBatchSizeOptimizer:
         avg_gpu_load = sum(r["gpu_load"] for r in recent_load) / len(recent_load)
 
         # 如果CPU负载超过85%，减小批次大小
-        if avg_cpu_load > 0.85:
-            return batch_size // 2
-        # 如果GPU负载超过95%，考虑减小批次大小
-        elif avg_gpu_load > 0.95:
+        if avg_cpu_load > 0.85 or avg_gpu_load > 0.95:
             return batch_size // 2
         # 如果GPU负载低于40%，可以考虑增加批次大小
         elif avg_gpu_load < 0.4:
@@ -410,7 +406,7 @@ class SmartBatchSizeOptimizer:
         else:
             return upper
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         """
         获取优化器统计信息
 

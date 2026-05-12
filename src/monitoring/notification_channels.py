@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """告警通知渠道体系
 
 P2-7 实现：将告警系统从单一日志通知扩展为多渠道通知架构。
@@ -19,9 +18,8 @@ import sys
 from abc import ABC, abstractmethod
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
 
-from .alert_system import AlertRecord, AlertLevel
+from .alert_system import AlertLevel, AlertRecord
 
 logger = logging.getLogger(__name__)
 
@@ -97,8 +95,7 @@ class ConsoleNotification(NotificationChannel):
             timestamp = alert.timestamp or "--:--:--"
 
         line = (
-            f"{prefix}{color}[{alert.level.value.upper():>8}] "
-            f"{timestamp}  {alert.message}{_RESET}"
+            f"{prefix}{color}[{alert.level.value.upper():>8}] {timestamp}  {alert.message}{_RESET}"
         )
         print(line, file=sys.stderr, flush=True)
 
@@ -135,12 +132,7 @@ class LogFileNotification(NotificationChannel):
         except Exception:
             timestamp = alert.timestamp or "????-??-?? ??:??:??"
 
-        line = (
-            f"[{alert.level.value.upper():>8}] "
-            f"{timestamp} | "
-            f"{alert.alert_type.value:>25} | "
-            f"{alert.message}\n"
-        )
+        line = f"[{alert.level.value.upper():>8}] {timestamp} | {alert.alert_type.value:>25} | {alert.message}\n"
 
         try:
             with open(self.file_path, "a", encoding="utf-8") as f:
@@ -165,12 +157,12 @@ class CompositeNotification(NotificationChannel):
         alert_system.add_notification_channel(composite)
     """
 
-    def __init__(self, channels: Optional[List[NotificationChannel]] = None) -> None:
+    def __init__(self, channels: list[NotificationChannel] | None = None) -> None:
         """
         Args:
             channels: 初始渠道列表
         """
-        self.channels: List[NotificationChannel] = list(channels) if channels else []
+        self.channels: list[NotificationChannel] = list(channels) if channels else []
 
     @property
     def name(self) -> str:

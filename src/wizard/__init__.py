@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 BTC碰撞引擎 - 引导界面模块
 
@@ -24,10 +23,10 @@ BTC碰撞引擎 - 引导界面模块
 __version__ = "1.0.0"
 __author__ = "BTC Collision Engine Team"
 
-from .wizard_engine import WizardEngine
-from .interfaces import WizardResult, WizardConfig, WizardMode
 from .events import WizardEvent
+from .interfaces import WizardConfig, WizardMode, WizardResult
 from .selector_protocol import SelectorProtocol
+from .wizard_engine import WizardEngine
 
 __all__ = [
     "WizardEngine",

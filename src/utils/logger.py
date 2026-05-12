@@ -15,14 +15,15 @@
 
 import logging
 import os
+import platform
+import queue
 import sys
 import threading
 import time
-import queue
-import platform
-from typing import Any, Callable, Optional, Union
-from logging.handlers import RotatingFileHandler
+from collections.abc import Callable
 from functools import wraps
+from logging.handlers import RotatingFileHandler
+from typing import Any, Union
 
 
 def _make_rotating_handler(filename: str, max_bytes: int, backup_count: int) -> RotatingFileHandler:
@@ -160,15 +161,15 @@ class PerformanceMonitor:
         self.logger = logger
         self.operation = operation
         self.level = getattr(logging, level.upper())
-        self.start_time: Optional[float] = None
-        self.end_time: Optional[float] = None
+        self.start_time: float | None = None
+        self.end_time: float | None = None
 
     def __enter__(self) -> "PerformanceMonitor":
         self.start_time = time.perf_counter()
         return self
 
     def __exit__(
-        self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]
+        self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None
     ) -> None:
         self.end_time = time.perf_counter()
         assert self.start_time is not None
@@ -292,7 +293,7 @@ class SampledLogger:
 def setup_logger(
     name: str,
     level: str = "INFO",
-    log_file: Optional[str] = None,
+    log_file: str | None = None,
     format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     max_bytes: int = 10 * 1024 * 1024,  # 10MB
     backup_count: int = 5,
@@ -446,7 +447,7 @@ class AsyncLogger:
             max_queue_size: 队列最大长度，超出时丢弃最旧日志
         """
         self._queue: queue.Queue = queue.Queue(maxsize=max_queue_size)
-        self._handler: Optional[logging.Handler] = None
+        self._handler: logging.Handler | None = None
         self._writer_thread = threading.Thread(
             target=self._write_loop,
             daemon=False,  # 非守护线程，确保程序退出时日志完整写入

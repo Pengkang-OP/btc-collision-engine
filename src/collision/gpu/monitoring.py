@@ -14,12 +14,12 @@
 更新日期: 2026-04-30
 """
 
-from typing import Optional, Dict, Any, List
 import logging
 import time
+from typing import Any
 
-from .protocols import IMonitoringPipeline
 from .data_logger_adapter import DataLoggerAdapter
+from .protocols import IMonitoringPipeline
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
         >>> monitoring.stop()
     """
 
-    def __init__(self, engine: Any = None, config: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(self, engine: Any = None, config: dict[str, Any] | None = None) -> None:
         """初始化监控管道
 
         Args:
@@ -57,7 +57,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
         self._perf_monitor = None
         self._engine_monitor = None
         self._data_logger = None
-        self._vendor_monitors: List[Any] = []
+        self._vendor_monitors: list[Any] = []
 
         logger.debug("PerformanceMonitoringPipeline 初始化完成")
 
@@ -171,7 +171,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
             except Exception as e:
                 logger.error(f"刷写数据日志失败: {e}")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取监控统计
 
         整合所有监控器的统计数据。
@@ -179,7 +179,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
         Returns:
             监控统计字典，包含 performance、engine、data_logger 三个子字典
         """
-        stats: Dict[str, Any] = {
+        stats: dict[str, Any] = {
             "running": self._running,
         }
 
@@ -266,13 +266,13 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
             logger.warning(f"创建数据日志适配器失败: {e}")
             return None
 
-    def _create_vendor_monitors(self) -> List[Any]:
+    def _create_vendor_monitors(self) -> list[Any]:
         """创建厂商特定监控器
 
         Returns:
             厂商监控器列表
         """
-        monitors: List[Any] = []
+        monitors: list[Any] = []
 
         # 检测GPU厂商
         vendor = self._detect_vendor()
@@ -292,7 +292,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
         return monitors
 
     def _detect_anomalies(
-        self, batch_size: int, execution_time_ms: float, metrics: Dict[str, Any]
+        self, batch_size: int, execution_time_ms: float, metrics: dict[str, Any]
     ) -> None:
         """异常检测
 
@@ -305,8 +305,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
         threshold_ms = self.config.get("slow_threshold_ms", 5000)
         if execution_time_ms > threshold_ms:
             logger.warning(
-                f"慢操作检测: execution_time={execution_time_ms:.0f}ms "
-                f"> threshold={threshold_ms}ms"
+                f"慢操作检测: execution_time={execution_time_ms:.0f}ms > threshold={threshold_ms}ms"
             )
 
         # 2. 错误率检测
@@ -316,8 +315,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
             error_rate = gpu_errors / max(batch_size, 1)
             if error_rate > error_rate_threshold:
                 logger.error(
-                    f"高错误率检测: error_rate={error_rate:.2%} "
-                    f"> threshold={error_rate_threshold:.2%}"
+                    f"高错误率检测: error_rate={error_rate:.2%} > threshold={error_rate_threshold:.2%}"
                 )
 
     def _detect_vendor(self) -> str:

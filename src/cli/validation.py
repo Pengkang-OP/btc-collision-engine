@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 CLI参数验证模块
 
@@ -12,11 +11,11 @@ import argparse
 import logging
 import os
 
-from src.i18n import _t
 from src.cli.constants import (
-    DEFAULT_DEDUP_MAX_SIZE,
     DEFAULT_CHECKPOINT_INTERVAL,
+    DEFAULT_DEDUP_MAX_SIZE,
 )
+from src.i18n import _t
 
 # 运行时长上限阈值（7天，超过给出警告）
 _DURATION_WARN_THRESHOLD = 604800

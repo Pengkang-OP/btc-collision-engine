@@ -5,8 +5,8 @@
 """
 
 import multiprocessing as mp
-from typing import Dict, Any, Optional
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
@@ -63,7 +63,7 @@ class PerformanceOptimizationConfig:
         if self.bloom_false_positive_rate <= 0 or self.bloom_false_positive_rate >= 1:
             self.bloom_false_positive_rate = 0.001
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "enable_simd": self.enable_simd,
@@ -86,11 +86,11 @@ class PerformanceOptimizationConfig:
         }
 
     @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> "PerformanceOptimizationConfig":
+    def from_dict(cls, config_dict: dict[str, Any]) -> "PerformanceOptimizationConfig":
         """从字典创建配置"""
         return cls(**{k: v for k, v in config_dict.items() if k in cls.__dataclass_fields__})
 
-    def optimize_for_cpu(self, num_cores: Optional[int] = None) -> "PerformanceOptimizationConfig":
+    def optimize_for_cpu(self, num_cores: int | None = None) -> "PerformanceOptimizationConfig":
         """针对CPU优化"""
         cores = num_cores or mp.cpu_count()
 
@@ -121,9 +121,7 @@ class PerformanceOptimizationConfig:
 
         return self
 
-    def optimize_for_speed(
-        self, num_cores: Optional[int] = None
-    ) -> "PerformanceOptimizationConfig":
+    def optimize_for_speed(self, num_cores: int | None = None) -> "PerformanceOptimizationConfig":
         """针对速度优化（高内存使用）"""
         cores = num_cores or mp.cpu_count()
 
@@ -145,7 +143,7 @@ class PerformanceTuner:
     """
 
     @staticmethod
-    def detect_system_resources() -> Dict[str, Any]:
+    def detect_system_resources() -> dict[str, Any]:
         """检测系统资源
 
         Returns:
@@ -233,7 +231,7 @@ class PerformanceTuner:
 
 
 def create_optimized_config(
-    scenario: str = "balanced", num_cores: Optional[int] = None, max_memory_mb: Optional[int] = None
+    scenario: str = "balanced", num_cores: int | None = None, max_memory_mb: int | None = None
 ) -> PerformanceOptimizationConfig:
     """创建优化配置的便捷函数
 

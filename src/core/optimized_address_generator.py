@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """优化版P2PKH地址生成器 - 集成性能优化模块
 
 继承自 BaseAddressGenerator，添加预计算表/SIMD/内存池优化。
@@ -6,23 +5,23 @@
 
 from __future__ import annotations
 
-from typing import List, Optional, TYPE_CHECKING
-from .secp256k1 import Secp256k1, ECPoint
-from .hash_utils import HashUtils
+from typing import TYPE_CHECKING
+
 from .base58 import Base58
-from .precomputed_table import get_precomputed_table
-from .simd_hash import get_simd_hash_optimizer
+from .hash_utils import HashUtils
 from .memory_pool import get_pool_manager
+from .precomputed_table import get_precomputed_table
+from .secp256k1 import ECPoint, Secp256k1
+from .simd_hash import get_simd_hash_optimizer
 
 if TYPE_CHECKING:
+    from .memory_pool import ECPointPool
     from .precomputed_table import PrecomputedPointTable
     from .simd_hash import SIMDHashOptimizer
-    from .memory_pool import ECPointPool
-
-from .address_generator import BaseAddressGenerator
 
 # 导入日志配置
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger, init_logging
+from .address_generator import BaseAddressGenerator
 
 # 初始化日志系统（如果尚未初始化）
 init_logging()
@@ -73,7 +72,7 @@ class OptimizedP2PKHAddressGenerator(BaseAddressGenerator):
         self.use_memory_pool = use_memory_pool
 
         # 初始化预计算表
-        self.precomputed_table: Optional[PrecomputedPointTable] = None
+        self.precomputed_table: PrecomputedPointTable | None = None
         if use_precomputed_table:
             self.precomputed_table = get_precomputed_table(window_size=window_size)
             logger.info(f"预计算点表已启用: window_size={window_size}")
@@ -81,7 +80,7 @@ class OptimizedP2PKHAddressGenerator(BaseAddressGenerator):
             logger.info("预计算点表未启用,使用标准标量乘法")
 
         # 初始化SIMD哈希优化器
-        self.simd_optimizer: Optional[SIMDHashOptimizer] = None
+        self.simd_optimizer: SIMDHashOptimizer | None = None
         if use_simd_hash:
             self.simd_optimizer = get_simd_hash_optimizer()
             logger.info(f"SIMD哈希优化已启用: {self.simd_optimizer.get_backend_name()}")
@@ -89,7 +88,7 @@ class OptimizedP2PKHAddressGenerator(BaseAddressGenerator):
             pass
 
         # 初始化内存池
-        self.ecpoint_pool: Optional[ECPointPool] = None
+        self.ecpoint_pool: ECPointPool | None = None
         if use_memory_pool:
             self.pool_manager = get_pool_manager()
             self.pool_manager.initialize()
@@ -163,7 +162,7 @@ class OptimizedP2PKHAddressGenerator(BaseAddressGenerator):
         """
         return super().generate_address(private_key, compressed)[0]
 
-    def batch_generate(self, private_keys: List[bytes], compressed: bool = True) -> List[str]:
+    def batch_generate(self, private_keys: list[bytes], compressed: bool = True) -> list[str]:
         """
         批量生成地址(高性能)
 

@@ -5,10 +5,12 @@
 
 import threading
 import time
-import psutil
-from typing import Any, Callable, Dict, Optional
-from dataclasses import dataclass
 from collections import deque
+from collections.abc import Callable
+from dataclasses import dataclass
+from typing import Any
+
+import psutil
 
 
 @dataclass
@@ -39,7 +41,7 @@ class StatsPerformanceMonitor:
     - 内存使用过高时告警
     """
 
-    def __init__(self, alert_thresholds: Optional[Dict[str, float]] = None) -> None:
+    def __init__(self, alert_thresholds: dict[str, float] | None = None) -> None:
         """
         Args:
             alert_thresholds: 告警阈值配置
@@ -71,12 +73,12 @@ class StatsPerformanceMonitor:
         self._monitor_thread.start()
 
         # 告警回调
-        self._alert_callback: Optional[Callable[..., Any]] = None
+        self._alert_callback: Callable[..., Any] | None = None
 
         # 进程信息
         self._process = psutil.Process()
 
-    def set_alert_callback(self, callback: Optional[Callable]) -> None:
+    def set_alert_callback(self, callback: Callable | None) -> None:
         """设置告警回调函数"""
         self._alert_callback = callback
 
@@ -154,9 +156,7 @@ class StatsPerformanceMonitor:
             alerts.append(("latency_ms", sample.latency_ms, lat_th))
 
         if sample.lock_contention > lock_th * 100:
-            alerts.append(
-                ("lock_contention", sample.lock_contention, lock_th * 100)
-            )
+            alerts.append(("lock_contention", sample.lock_contention, lock_th * 100))
 
         if sample.memory_usage_mb > mem_th:
             alerts.append(("memory_mb", sample.memory_usage_mb, mem_th))
@@ -170,7 +170,7 @@ class StatsPerformanceMonitor:
             except Exception:
                 pass
 
-    def get_recent_performance(self, window_seconds: float = 10.0) -> Dict[str, Any]:
+    def get_recent_performance(self, window_seconds: float = 10.0) -> dict[str, Any]:
         """获取最近一段时间的性能统计"""
         now = time.time()
         recent_samples = []
@@ -201,7 +201,7 @@ class StatsPerformanceMonitor:
             "sample_count": len(recent_samples),
         }
 
-    def get_performance_report(self) -> Dict[str, Any]:
+    def get_performance_report(self) -> dict[str, Any]:
         """获取完整的性能报告"""
         recent = self.get_recent_performance()
 
@@ -212,7 +212,7 @@ class StatsPerformanceMonitor:
             "status": self._get_health_status(recent),
         }
 
-    def _get_health_status(self, recent: Dict[str, Any]) -> str:
+    def _get_health_status(self, recent: dict[str, Any]) -> str:
         """根据最近性能判断健康状态
 
         使用 .get() 安全访问阈值，避免 partial 自定义阈值时的 KeyError。

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """真正的SIMD哈希向量化优化模块
 
 使用pycryptodome库实现硬件加速的批量哈希运算。
@@ -28,11 +27,10 @@
 - SIMD: Single Instruction Multiple Data
 """
 
-from typing import List
 import hashlib
 
 # 导入日志配置
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger, init_logging
 
 # 初始化日志系统
 init_logging()
@@ -66,8 +64,8 @@ class SIMDHashOptimizer:
 
         try:
             from Crypto.Hash import (
-                SHA256,
                 RIPEMD160,
+                SHA256,
             )  # nosec B413 - pycryptodome是pyCrypto的安全分支
 
             self.SHA256 = SHA256
@@ -77,7 +75,7 @@ class SIMDHashOptimizer:
         except ImportError:
             logger.info("pycryptodome未安装,使用hashlib (pip install pycryptodome)")
 
-    def batch_sha256(self, data_list: List[bytes]) -> List[bytes]:
+    def batch_sha256(self, data_list: list[bytes]) -> list[bytes]:
         """
         批量SHA256哈希
 
@@ -96,7 +94,7 @@ class SIMDHashOptimizer:
             # 回退到hashlib
             return [hashlib.sha256(data).digest() for data in data_list]
 
-    def batch_ripemd160(self, data_list: List[bytes]) -> List[bytes]:
+    def batch_ripemd160(self, data_list: list[bytes]) -> list[bytes]:
         """
         批量RIPEMD160哈希
 
@@ -113,7 +111,7 @@ class SIMDHashOptimizer:
         else:
             return [hashlib.new("ripemd160", data).digest() for data in data_list]
 
-    def batch_hash160(self, data_list: List[bytes]) -> List[bytes]:
+    def batch_hash160(self, data_list: list[bytes]) -> list[bytes]:
         """
         批量Hash160 (SHA256 + RIPEMD160)
 

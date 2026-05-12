@@ -17,17 +17,17 @@
 """
 
 import logging
-from typing import Optional, Any, cast
+from typing import Any, cast
 
+from src.collision.event_bus import EventBus
 from src.collision.events import (
     CollisionEvent,
-    EngineProgressEvent,
-    EngineMatchEvent,
-    EngineErrorEvent,
     EngineCompleteEvent,
+    EngineErrorEvent,
+    EngineMatchEvent,
+    EngineProgressEvent,
     EventType,
 )
-from src.collision.event_bus import EventBus
 from src.monitoring.data_logger import DataLogger
 from src.monitoring.enhanced_monitoring import (
     EnhancedMonitoringSystem,
@@ -56,7 +56,7 @@ class DataLoggerAdapter:
         >>> adapter = setup_data_logging(bus)
     """
 
-    def __init__(self, data_logger: Optional[DataLogger] = None) -> None:
+    def __init__(self, data_logger: DataLogger | None = None) -> None:
         """
         初始化适配器
 
@@ -65,7 +65,7 @@ class DataLoggerAdapter:
         """
         self.data_logger = data_logger or DataLogger()
         self._subscribed = False
-        self._event_bus: Optional[EventBus] = None
+        self._event_bus: EventBus | None = None
 
         logger.debug("DataLoggerAdapter已初始化")
 
@@ -143,7 +143,7 @@ class DataLoggerAdapter:
         if self.data_logger:
             try:
                 # 只记录地址，不记录私钥 (安全考虑)
-                logger.info(f"发现匹配! 地址: {event.address}, " f"目标: {event.target_address}")
+                logger.info(f"发现匹配! 地址: {event.address}, 目标: {event.target_address}")
 
                 # 可以在这里保存匹配结果到文件
                 # self.data_logger.save_match_result(event.address, event.wif)
@@ -217,7 +217,7 @@ class EnhancedMonitoringAdapter:
         """
         self.monitoring_system = monitoring_system
         self._subscribed = False
-        self._event_bus: Optional[EventBus] = None
+        self._event_bus: EventBus | None = None
 
         logger.debug("EnhancedMonitoringAdapter已初始化")
 
@@ -259,7 +259,7 @@ class EnhancedMonitoringAdapter:
 
 
 def setup_data_logging(
-    event_bus: EventBus, data_logger: Optional[DataLogger] = None
+    event_bus: EventBus, data_logger: DataLogger | None = None
 ) -> DataLoggerAdapter:
     """
     便捷函数: 设置数据日志事件监听

@@ -1,10 +1,10 @@
 """插件管理器"""
 
-import os
 import importlib.util
-import sys
 import logging
-from typing import Dict, List, Optional
+import os
+import sys
+
 from .base_plugin import CollisionPlugin
 
 
@@ -13,8 +13,8 @@ class PluginManager:
 
     def __init__(self) -> None:
         """初始化插件管理器"""
-        self.plugins: Dict[str, CollisionPlugin] = {}
-        self.plugin_dirs: List[str] = []
+        self.plugins: dict[str, CollisionPlugin] = {}
+        self.plugin_dirs: list[str] = []
 
     def add_plugin_directory(self, directory: str) -> None:
         """
@@ -26,7 +26,7 @@ class PluginManager:
         if directory not in self.plugin_dirs:
             self.plugin_dirs.append(directory)
 
-    def load_plugins(self) -> List[str]:
+    def load_plugins(self) -> list[str]:
         """
         加载所有插件
 
@@ -86,7 +86,7 @@ class PluginManager:
 
         return loaded_plugins
 
-    def get_plugin(self, name: str) -> Optional[CollisionPlugin]:
+    def get_plugin(self, name: str) -> CollisionPlugin | None:
         """
         获取插件
 
@@ -98,7 +98,7 @@ class PluginManager:
         """
         return self.plugins.get(name)
 
-    def get_all_plugins(self) -> Dict[str, CollisionPlugin]:
+    def get_all_plugins(self) -> dict[str, CollisionPlugin]:
         """
         获取所有插件
 
@@ -107,7 +107,7 @@ class PluginManager:
         """
         return self.plugins
 
-    def get_plugin_names(self) -> List[str]:
+    def get_plugin_names(self) -> list[str]:
         """
         获取所有插件名称
 

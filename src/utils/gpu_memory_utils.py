@@ -15,8 +15,8 @@
 """
 
 import logging
-from typing import Protocol, Dict, Any, Optional
 from dataclasses import dataclass
+from typing import Any, Protocol
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +81,7 @@ class GPUDeviceProtocol(Protocol):
         global_mem_size: int
 
     device: DeviceObject
-    device_info: Dict[str, Any]
+    device_info: dict[str, Any]
 
 
 # 模块级常量
@@ -92,7 +92,7 @@ DEFAULT_BATCH_SIZE = 65536
 def calculate_optimal_batch_size(
     device: GPUDeviceProtocol,
     target_buffer_size: int = 0,
-    config: Optional[BatchSizeConfig] = None,
+    config: BatchSizeConfig | None = None,
     verbose: bool = True,
 ) -> int:
     """根据GPU显存大小计算最优batch_size
@@ -168,8 +168,7 @@ def calculate_optimal_batch_size(
         if available_mem <= 0:
             if verbose:
                 logger.warning(
-                    "GPU显存不足以分配缓冲区: 总显存=%.2fGB, 目标缓冲区=%.2fMB, "
-                    "使用最小batch_size: %d",
+                    "GPU显存不足以分配缓冲区: 总显存=%.2fGB, 目标缓冲区=%.2fMB, 使用最小batch_size: %d",
                     global_mem / (1024**3),
                     target_buffer_size / (1024**2),
                     config.min_batch_size,
@@ -187,9 +186,9 @@ def calculate_optimal_batch_size(
 
         # 验证对齐正确性（仅在调试模式）
         if __debug__:
-            assert (
-                optimal_batch % config.memory_alignment == 0
-            ), f"batch_size未对齐: {optimal_batch} % {config.memory_alignment} != 0"
+            assert optimal_batch % config.memory_alignment == 0, (
+                f"batch_size未对齐: {optimal_batch} % {config.memory_alignment} != 0"
+            )
 
         # 计算实际内存占用和比例
         total_buffer = optimal_batch * config.per_key_memory + target_buffer_size

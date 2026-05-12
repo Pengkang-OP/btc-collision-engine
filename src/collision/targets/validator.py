@@ -8,13 +8,13 @@
 """
 
 import threading
-from decimal import Decimal
-from typing import List, Dict, Optional, Union, Any
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
+from decimal import Decimal
+from typing import Any
 
 # 导入日志配置
-from ...utils import init_logging, get_configured_logger
+from ...utils import get_configured_logger, init_logging
 
 # 初始化日志系统
 init_logging()
@@ -56,7 +56,7 @@ class ValidationResult:
     valid: bool
     validated: bool = True  # 是否实际进行了验证（用于区分"验证失败"和"未验证"）
     format_type: str = "unknown"
-    error: Optional[str] = None
+    error: str | None = None
 
     def __repr__(self) -> str:
         if self.valid:
@@ -98,10 +98,10 @@ class AddressBatchValidator:
 
     def validate_batch(
         self,
-        addresses: List[Union[str, Any]],
+        addresses: list[str | Any],
         strict_mode: bool = False,
         on_type_error: str = "abort",
-    ) -> Dict[str, ValidationResult]:
+    ) -> dict[str, ValidationResult]:
         """
         批量验证地址
 
@@ -197,7 +197,7 @@ class AddressBatchValidator:
                                 skipped_count += 1
                         except Exception as e:
                             logger.error(
-                                f"地址类型转换失败: {type(addr).__name__} -> str, " f"错误={e}"
+                                f"地址类型转换失败: {type(addr).__name__} -> str, 错误={e}"
                             )
                             skipped_count += 1
                     else:
@@ -214,7 +214,7 @@ class AddressBatchValidator:
                         logger.debug("地址转换为空字符串，跳过 [宽松模式]")
                         skipped_count += 1
                 except Exception as e:
-                    logger.error(f"地址类型转换失败: {type(addr).__name__}, " f"错误={e}")
+                    logger.error(f"地址类型转换失败: {type(addr).__name__}, 错误={e}")
                     skipped_count += 1
 
         if skipped_count > 0:
@@ -332,7 +332,7 @@ class AddressBatchValidator:
             logger.error(f"地址验证异常: {address[:15]}..., 错误={e}")
             return ValidationResult(address=address, valid=False, error=str(e))
 
-    def filter_valid(self, addresses: List[Union[str, Any]]) -> List[str]:
+    def filter_valid(self, addresses: list[str | Any]) -> list[str]:
         """
         过滤出有效地址
 
@@ -351,7 +351,7 @@ class AddressBatchValidator:
 
         return valid_addresses
 
-    def get_summary(self) -> Dict[str, Union[float, int]]:
+    def get_summary(self) -> dict[str, float | int]:
         """
         获取验证统计摘要
 
@@ -371,7 +371,7 @@ class AddressBatchValidator:
             logger.debug(f"验证统计摘要: {summary}")
             return summary
 
-    def get_validation_summary(self, results: Dict[str, ValidationResult]) -> Dict[str, Any]:
+    def get_validation_summary(self, results: dict[str, ValidationResult]) -> dict[str, Any]:
         """
         获取验证结果摘要(别名方法,保持向后兼容)
 
@@ -394,7 +394,7 @@ class AddressBatchValidator:
         logger.debug(f"验证结果摘要: {summary}")
         return summary
 
-    def get_validation_coverage(self, results: Dict[str, ValidationResult]) -> Dict[str, Any]:
+    def get_validation_coverage(self, results: dict[str, ValidationResult]) -> dict[str, Any]:
         """获取验证覆盖率统计
 
         用于分析批量验证的执行情况,特别是在严格模式下区分

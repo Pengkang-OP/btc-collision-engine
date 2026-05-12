@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 日志存储器
 
 负责日志的持久化存储。
 """
 
-import os
 import json
+import os
 import threading
-from typing import Dict, Any, List
 from collections import deque
+from typing import Any
 
 
 class LogStorage:
@@ -47,7 +46,7 @@ class LogStorage:
         if not os.path.exists(self.storage_dir):
             os.makedirs(self.storage_dir, exist_ok=True)
 
-    def save(self, event_data: Dict[str, Any]) -> bool:
+    def save(self, event_data: dict[str, Any]) -> bool:
         """保存日志
 
         Args:
@@ -67,7 +66,7 @@ class LogStorage:
         except Exception:
             return False
 
-    def _save_to_file(self, event_data: Dict[str, Any]):
+    def _save_to_file(self, event_data: dict[str, Any]):
         """保存到文件"""
         log_file = os.path.join(self.storage_dir, "wizard.log")
 
@@ -78,10 +77,9 @@ class LogStorage:
                 self._rotate_file(log_file)
 
         # 写入文件
-        with self._lock:
-            with open(log_file, "a", encoding="utf-8") as f:
-                json.dump(event_data, f, ensure_ascii=False)
-                f.write("\n")
+        with self._lock, open(log_file, "a", encoding="utf-8") as f:
+            json.dump(event_data, f, ensure_ascii=False)
+            f.write("\n")
 
     def _rotate_file(self, filepath: str):
         """轮转文件"""
@@ -100,7 +98,7 @@ class LogStorage:
         # 重命名当前文件
         os.rename(filepath, f"{filepath}.1")
 
-    def save_batch(self, events_data: List[Dict[str, Any]]) -> int:
+    def save_batch(self, events_data: list[dict[str, Any]]) -> int:
         """批量保存
 
         Args:
@@ -115,7 +113,7 @@ class LogStorage:
                 success_count += 1
         return success_count
 
-    def get_recent(self, count: int = 100) -> List[Dict[str, Any]]:
+    def get_recent(self, count: int = 100) -> list[dict[str, Any]]:
         """获取最近的日志
 
         Args:
@@ -128,7 +126,7 @@ class LogStorage:
             buffer_list = list(self._memory_buffer)
             return buffer_list[-count:]
 
-    def get_by_type(self, event_type: str, limit: int = 100) -> List[Dict[str, Any]]:
+    def get_by_type(self, event_type: str, limit: int = 100) -> list[dict[str, Any]]:
         """按类型获取日志
 
         Args:
@@ -146,7 +144,7 @@ class LogStorage:
                     break
         return results
 
-    def get_by_timerange(self, start_time: float, end_time: float) -> List[Dict[str, Any]]:
+    def get_by_timerange(self, start_time: float, end_time: float) -> list[dict[str, Any]]:
         """按时间范围获取日志
 
         Args:
@@ -163,7 +161,7 @@ class LogStorage:
                 results.append(event_data)
         return results
 
-    def search(self, keyword: str, case_sensitive: bool = False) -> List[Dict[str, Any]]:
+    def search(self, keyword: str, case_sensitive: bool = False) -> list[dict[str, Any]]:
         """搜索日志
 
         Args:
@@ -190,7 +188,7 @@ class LogStorage:
         with self._lock:
             self._memory_buffer.clear()
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取存储统计
 
         Returns:

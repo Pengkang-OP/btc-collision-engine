@@ -4,7 +4,6 @@
 """
 
 import os
-from typing import Optional
 
 
 class DataStorageConfig:
@@ -27,7 +26,7 @@ class DataStorageConfig:
     PERFORMANCE_LOG_FILE = "performance.log"
 
     @classmethod
-    def get_storage_path(cls, storage_dir: Optional[str] = None) -> str:
+    def get_storage_path(cls, storage_dir: str | None = None) -> str:
         """获取存储路径
 
         Args:
@@ -44,7 +43,7 @@ class DataStorageConfig:
         return os.path.join(project_root, cls.DEFAULT_STORAGE_DIR)
 
     @classmethod
-    def ensure_storage_dir(cls, storage_dir: Optional[str] = None) -> str:
+    def ensure_storage_dir(cls, storage_dir: str | None = None) -> str:
         """确保存储目录存在
 
         Args:

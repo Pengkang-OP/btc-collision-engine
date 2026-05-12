@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """文件编码检测和处理工具
 
 提供跨平台的文件编码自动检测和适配功能：
@@ -9,11 +8,12 @@
 """
 
 import os
-from typing import Any, List, Optional
+from typing import Any
+
 import chardet
 
 # 直接从具体模块导入，避免循环导入
-from .logging_config import init_logging, get_configured_logger
+from .logging_config import get_configured_logger, init_logging
 from .platform_utils import PlatformUtils
 
 # 初始化日志系统
@@ -46,7 +46,7 @@ class EncodingUtils:
 
     @staticmethod
     def detect_file_encoding(
-        filepath: str, max_sample_size: Optional[int] = None, use_dynamic_sampling: bool = True
+        filepath: str, max_sample_size: int | None = None, use_dynamic_sampling: bool = True
     ) -> str:
         """
         检测文件编码
@@ -98,8 +98,7 @@ class EncodingUtils:
                     strategy = "10%采样"
 
                 logger.debug(
-                    f"编码检测采样: 文件={file_size}B, 策略={strategy}, "
-                    f"采样={actual_size}B, 上限={actual_max_size}B"
+                    f"编码检测采样: 文件={file_size}B, 策略={strategy}, 采样={actual_size}B, 上限={actual_max_size}B"
                 )
             else:
                 # 固定采样大小
@@ -157,7 +156,7 @@ class EncodingUtils:
             return EncodingUtils.DEFAULT_ENCODING
 
     @staticmethod
-    def read_file(filepath: str, encoding: Optional[str] = None, try_multiple: bool = True) -> str:
+    def read_file(filepath: str, encoding: str | None = None, try_multiple: bool = True) -> str:
         """
         读取文件内容，自动处理编码问题
 
@@ -194,7 +193,7 @@ class EncodingUtils:
 
         for enc in encodings_to_try:
             try:
-                with open(filepath, "r", encoding=enc) as f:
+                with open(filepath, encoding=enc) as f:
                     content = f.read()
                 elapsed_ms = (time.perf_counter() - start_time) * 1000
                 logger.debug(f"文件读取成功: {filepath}, 编码={enc}, 耗时={elapsed_ms:.2f}ms")
@@ -216,8 +215,8 @@ class EncodingUtils:
 
     @staticmethod
     def read_file_lines(
-        filepath: str, encoding: Optional[str] = None, try_multiple: bool = True
-    ) -> List[str]:
+        filepath: str, encoding: str | None = None, try_multiple: bool = True
+    ) -> list[str]:
         """
         读取文件行列表
 
@@ -258,7 +257,7 @@ class EncodingUtils:
     @staticmethod
     def write_file_lines(
         filepath: str,
-        lines: List[str],
+        lines: list[str],
         encoding: str = "utf-8",
         ensure_dir: bool = True,
         newline: str = "\n",
@@ -280,7 +279,7 @@ class EncodingUtils:
     def convert_file_encoding(
         src_path: str,
         dst_path: str,
-        src_encoding: Optional[str] = None,
+        src_encoding: str | None = None,
         dst_encoding: str = "utf-8",
     ) -> bool:
         """
@@ -308,7 +307,7 @@ class EncodingUtils:
 
     @staticmethod
     def safe_open(
-        filepath: str, mode: str = "r", encoding: Optional[str] = None, try_multiple: bool = True
+        filepath: str, mode: str = "r", encoding: str | None = None, try_multiple: bool = True
     ) -> Any:
         """
         安全地打开文件（上下文管理器）

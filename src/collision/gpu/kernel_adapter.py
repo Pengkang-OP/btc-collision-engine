@@ -9,11 +9,11 @@
 更新日期: 2026-04-30
 """
 
-from typing import Any, Dict, List, Tuple, Optional
 import logging
 import time
+from typing import Any
 
-from .protocols import IKernelExecutor, GPUDevice, GPUContext, GPUKernel, MatchResult
+from .protocols import GPUContext, GPUDevice, GPUKernel, IKernelExecutor, MatchResult
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ class GPUKernelAdapter(IKernelExecutor):
     进行内核编译和批次执行。
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
         """初始化适配器
 
         Args:
@@ -51,8 +51,8 @@ class GPUKernelAdapter(IKernelExecutor):
             RuntimeError: 内核编译失败
         """
         try:
-            from ...gpu.kernel_impl import GPUKernel as GPUKernelImpl
             from ...gpu.kernel import OPENCL_KERNEL_SOURCE
+            from ...gpu.kernel_impl import GPUKernel as GPUKernelImpl
 
             logger.debug(f"开始编译GPU内核: device={device.name}, vendor={device.vendor}")
 
@@ -97,7 +97,7 @@ class GPUKernelAdapter(IKernelExecutor):
 
     def execute_batch(
         self, kernel: GPUKernel, seed: bytes, batch_size: int, stop_event: Any = None
-    ) -> Tuple[List[MatchResult], float]:
+    ) -> tuple[list[MatchResult], float]:
         """执行单个批次
 
         Args:
@@ -132,10 +132,7 @@ class GPUKernelAdapter(IKernelExecutor):
             matches = self._convert_matches(raw_matches)
 
             logger.debug(
-                "批次执行完成: "
-                f"batch_size={batch_size:,}, "
-                f"matches={len(matches)}, "
-                f"time={execution_time_ms:.0f}ms"
+                f"批次执行完成: batch_size={batch_size:,}, matches={len(matches)}, time={execution_time_ms:.0f}ms"
             )
 
             return matches, execution_time_ms
@@ -145,7 +142,7 @@ class GPUKernelAdapter(IKernelExecutor):
             logger.error(f"GPU批次执行失败: {e}")
             raise RuntimeError(f"GPU批次执行失败: {e}") from e
 
-    def _convert_matches(self, raw_matches: List[Dict]) -> List[MatchResult]:
+    def _convert_matches(self, raw_matches: list[dict]) -> list[MatchResult]:
         """转换匹配结果格式
 
         Args:

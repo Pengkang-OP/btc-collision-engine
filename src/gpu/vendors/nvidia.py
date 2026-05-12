@@ -7,12 +7,12 @@
 - 大页内存支持
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 # P3-5: 统一日志获取
 from ...utils import get_configured_logger
-from .base import GPUVendorBase
 from ..constants import PER_KEY_MEMORY_BYTES, align_batch_size
+from .base import GPUVendorBase
 
 logger = get_configured_logger("NvidiaVendor")
 
@@ -23,7 +23,7 @@ class NVIDIAGPUVendor(GPUVendorBase):
     def get_vendor_name(self) -> str:
         return "NVIDIA"
 
-    def apply_optimizations(self, device: Any, profile: Dict[str, Any]) -> None:
+    def apply_optimizations(self, device: Any, profile: dict[str, Any]) -> None:
         """
         应用NVIDIA特定优化
 
@@ -76,7 +76,7 @@ class NVIDIAGPUVendor(GPUVendorBase):
         memory_efficiency = profile.get("memory_efficiency", 0.5)
         logger.debug(f"NVIDIA GPU内存效率: {memory_efficiency * 100:.0f}%")
 
-    def calculate_batch_size(self, device: Any, profile: Dict[str, Any]) -> int:
+    def calculate_batch_size(self, device: Any, profile: dict[str, Any]) -> int:
         """
         计算NVIDIA GPU的最优batch_size
 
@@ -101,13 +101,12 @@ class NVIDIAGPUVendor(GPUVendorBase):
         optimal = align_batch_size(optimal)
 
         logger.info(
-            f"NVIDIA batch_size计算: recommended={recommended}, "
-            f"mem_based={mem_based_max}, optimal={optimal}"
+            f"NVIDIA batch_size计算: recommended={recommended}, mem_based={mem_based_max}, optimal={optimal}"
         )
 
         return optimal
 
-    def handle_errors(self, error: Exception, stats: Optional[Any] = None) -> bool:
+    def handle_errors(self, error: Exception, stats: Any | None = None) -> bool:
         """
         处理NVIDIA GPU特定错误
 

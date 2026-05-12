@@ -1,11 +1,11 @@
 """核心翻译器模块，提供多语言翻译功能。"""
 
 import json
+import logging
 import os
 import threading
-import logging
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 _FALLBACK_LANGUAGE = "en_US"
 
 # 硬编码的最小默认值（当所有语言文件均无法加载时使用）
-_HARDCODED_DEFAULTS: Dict[str, str] = {
+_HARDCODED_DEFAULTS: dict[str, str] = {
     "common.error": "Error",
     "common.success": "Success",
     "common.warning": "Warning",
@@ -36,7 +36,7 @@ class Translator:
     - 缓存已加载的语言文件
     """
 
-    def __init__(self, language: Optional[str] = None) -> None:
+    def __init__(self, language: str | None = None) -> None:
         """
         初始化翻译器。
 
@@ -47,7 +47,7 @@ class Translator:
         """
         self._lock = threading.Lock()
         # 语言文件缓存：{语言代码: 翻译字典}
-        self._cache: Dict[str, Dict[str, Any]] = {}
+        self._cache: dict[str, dict[str, Any]] = {}
         # locales 目录路径
         self._locales_dir = Path(__file__).parent / "locales"
 
@@ -133,7 +133,7 @@ class Translator:
     # 内部方法
     # ------------------------------------------------------------------
 
-    def _get_value(self, lang: str, key: str) -> Optional[str]:
+    def _get_value(self, lang: str, key: str) -> str | None:
         """
         从指定语言的翻译字典中获取键值。
 
@@ -159,7 +159,7 @@ class Translator:
 
         return node if isinstance(node, str) else None
 
-    def _load_language(self, lang: str) -> Optional[Dict[str, Any]]:
+    def _load_language(self, lang: str) -> dict[str, Any] | None:
         """
         加载并缓存指定语言的翻译文件。
 
@@ -180,7 +180,7 @@ class Translator:
 
         try:
             with open(lang_file, encoding="utf-8") as fh:
-                data: Dict[str, Any] = json.load(fh)
+                data: dict[str, Any] = json.load(fh)
             self._cache[lang] = data
             logger.debug("已加载语言文件: %s", lang_file)
             return data

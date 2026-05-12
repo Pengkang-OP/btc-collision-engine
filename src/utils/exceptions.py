@@ -3,7 +3,7 @@
 提供统一的异常基类和错误码体系，支持错误上下文信息。
 """
 
-from typing import Optional, Dict, Any
+from typing import Any
 
 
 class CollisionError(Exception):
@@ -33,9 +33,9 @@ class CollisionError(Exception):
     def __init__(
         self,
         message: str,
-        error_code: Optional[int] = None,
-        context: Optional[Dict[str, Any]] = None,
-        original_error: Optional[Exception] = None,
+        error_code: int | None = None,
+        context: dict[str, Any] | None = None,
+        original_error: Exception | None = None,
     ) -> None:
         """
         初始化异常
@@ -63,7 +63,7 @@ class CollisionError(Exception):
         """返回格式化的错误消息"""
         return self.args[0] if self.args else f"[{self.error_code}] {self.message}"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         将异常转换为字典格式，便于序列化
 
@@ -87,9 +87,9 @@ class ConfigError(CollisionError):
     def __init__(
         self,
         message: str,
-        error_code: Optional[int] = None,
-        context: Optional[Dict[str, Any]] = None,
-        original_error: Optional[Exception] = None,
+        error_code: int | None = None,
+        context: dict[str, Any] | None = None,
+        original_error: Exception | None = None,
     ) -> None:
         super().__init__(message, error_code or self.CONFIG_ERROR, context, original_error)
 
@@ -100,9 +100,9 @@ class ValidationError(CollisionError):
     def __init__(
         self,
         message: str,
-        error_code: Optional[int] = None,
-        context: Optional[Dict[str, Any]] = None,
-        original_error: Optional[Exception] = None,
+        error_code: int | None = None,
+        context: dict[str, Any] | None = None,
+        original_error: Exception | None = None,
     ) -> None:
         super().__init__(message, error_code or self.VALIDATION_ERROR, context, original_error)
 
@@ -113,9 +113,9 @@ class KeyGenerationError(CollisionError):
     def __init__(
         self,
         message: str,
-        error_code: Optional[int] = None,
-        context: Optional[Dict[str, Any]] = None,
-        original_error: Optional[Exception] = None,
+        error_code: int | None = None,
+        context: dict[str, Any] | None = None,
+        original_error: Exception | None = None,
     ) -> None:
         super().__init__(message, error_code or self.KEY_GENERATION_ERROR, context, original_error)
 
@@ -126,9 +126,9 @@ class AddressGenerationError(CollisionError):
     def __init__(
         self,
         message: str,
-        error_code: Optional[int] = None,
-        context: Optional[Dict[str, Any]] = None,
-        original_error: Optional[Exception] = None,
+        error_code: int | None = None,
+        context: dict[str, Any] | None = None,
+        original_error: Exception | None = None,
     ) -> None:
         super().__init__(
             message, error_code or self.ADDRESS_GENERATION_ERROR, context, original_error
@@ -141,9 +141,9 @@ class CheckpointError(CollisionError):
     def __init__(
         self,
         message: str,
-        error_code: Optional[int] = None,
-        context: Optional[Dict[str, Any]] = None,
-        original_error: Optional[Exception] = None,
+        error_code: int | None = None,
+        context: dict[str, Any] | None = None,
+        original_error: Exception | None = None,
     ) -> None:
         super().__init__(message, error_code or self.CHECKPOINT_ERROR, context, original_error)
 
@@ -154,9 +154,9 @@ class DeduplicationError(CollisionError):
     def __init__(
         self,
         message: str,
-        error_code: Optional[int] = None,
-        context: Optional[Dict[str, Any]] = None,
-        original_error: Optional[Exception] = None,
+        error_code: int | None = None,
+        context: dict[str, Any] | None = None,
+        original_error: Exception | None = None,
     ) -> None:
         super().__init__(message, error_code or self.DEDUPLICATION_ERROR, context, original_error)
 
@@ -167,9 +167,9 @@ class TargetResolutionError(CollisionError):
     def __init__(
         self,
         message: str,
-        error_code: Optional[int] = None,
-        context: Optional[Dict[str, Any]] = None,
-        original_error: Optional[Exception] = None,
+        error_code: int | None = None,
+        context: dict[str, Any] | None = None,
+        original_error: Exception | None = None,
     ) -> None:
         super().__init__(
             message, error_code or self.TARGET_RESOLUTION_ERROR, context, original_error
@@ -182,8 +182,8 @@ class CryptoBackendError(CollisionError):
     def __init__(
         self,
         message: str,
-        error_code: Optional[int] = None,
-        context: Optional[Dict[str, Any]] = None,
-        original_error: Optional[Exception] = None,
+        error_code: int | None = None,
+        context: dict[str, Any] | None = None,
+        original_error: Exception | None = None,
     ) -> None:
         super().__init__(message, error_code or self.CRYPTO_BACKEND_ERROR, context, original_error)

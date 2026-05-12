@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 """UI辅助工具 - 工具提示和用户引导"""
 
 import tkinter as tk
 from tkinter import messagebox
-from typing import Any, Optional
+from typing import Any
 
 from ..config.gui_config import FONT_CONFIG
 from .platform_utils import PlatformUtils
@@ -30,7 +29,7 @@ class Tooltip:
         self.widget = widget
         self.text = text
         self.delay = delay
-        self.tooltip_window: Optional[Any] = None
+        self.tooltip_window: Any | None = None
         self.after_id = None
 
         self._bind_events()
@@ -183,18 +182,10 @@ class UserGuide:
                 "• 系统会自动去重\n"
             ),
             "range": (
-                "范围扫描模式\n\n"
-                "• 扫描指定的私钥范围\n"
-                "• 需要设置起始值和结束值\n"
-                "• 不会重复\n"
-                "• 适合已知范围的地址\n"
+                "范围扫描模式\n\n• 扫描指定的私钥范围\n• 需要设置起始值和结束值\n• 不会重复\n• 适合已知范围的地址\n"
             ),
             "brute_force": (
-                "暴力穷举模式\n\n"
-                "• 从1开始顺序穷举\n"
-                "• 保证不重复\n"
-                "• 适合小范围搜索\n"
-                "• 支持断点续传\n"
+                "暴力穷举模式\n\n• 从1开始顺序穷举\n• 保证不重复\n• 适合小范围搜索\n• 支持断点续传\n"
             ),
         }
 
@@ -212,9 +203,7 @@ def setup_tutorials(gui_app: Any) -> None:
         if hasattr(gui_app, "target_frame"):
             add_tooltip(
                 gui_app.target_frame,
-                "输入比特币地址、WIF私钥或公钥\n"
-                "每行一个，支持多种格式\n"
-                "点击'导入文件'可批量导入",
+                "输入比特币地址、WIF私钥或公钥\n每行一个，支持多种格式\n点击'导入文件'可批量导入",
             )
 
         # 模式选择提示
@@ -223,10 +212,7 @@ def setup_tutorials(gui_app: Any) -> None:
             if hasattr(panel, "mode_var"):
                 add_tooltip(
                     panel,
-                    "选择碰撞模式：\n"
-                    "• 随机搜索 - 适合未知范围\n"
-                    "• 范围扫描 - 适合已知范围\n"
-                    "• 暴力穷举 - 保证不重复",
+                    "选择碰撞模式：\n• 随机搜索 - 适合未知范围\n• 范围扫描 - 适合已知范围\n• 暴力穷举 - 保证不重复",
                 )
 
         # 开始按钮提示

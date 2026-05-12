@@ -7,12 +7,12 @@
 - 性能告警
 """
 
-import time
 import logging
 import threading
-from typing import Any, Dict, List, Optional
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +25,8 @@ class PerformanceMetrics:
     elapsed_ms: float
     timestamp: datetime = field(default_factory=datetime.now)
     success: bool = True
-    error: Optional[str] = None
-    metadata: Dict = field(default_factory=dict)
+    error: str | None = None
+    metadata: dict = field(default_factory=dict)
 
 
 class PerformanceTracker:
@@ -41,7 +41,7 @@ class PerformanceTracker:
             max_records: 最大记录数（超过后自动清理旧记录）
         """
         self.max_records = max_records
-        self._records: List[PerformanceMetrics] = []
+        self._records: list[PerformanceMetrics] = []
         self._lock = threading.Lock()
 
     def record(
@@ -49,8 +49,8 @@ class PerformanceTracker:
         operation: str,
         elapsed_ms: float,
         success: bool = True,
-        error: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        error: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """
         记录性能指标
@@ -79,7 +79,7 @@ class PerformanceTracker:
                 excess = len(self._records) - self.max_records
                 del self._records[:excess]
 
-    def get_statistics(self, operation: Optional[str] = None) -> Dict:
+    def get_statistics(self, operation: str | None = None) -> dict:
         """
         获取性能统计
 
@@ -124,7 +124,7 @@ class PerformanceTracker:
 
     def get_slow_operations(
         self, threshold_ms: float = 1000, limit: int = 10
-    ) -> List[PerformanceMetrics]:
+    ) -> list[PerformanceMetrics]:
         """
         获取慢操作记录
 
@@ -252,8 +252,8 @@ class EnhancedPerformanceMonitor:
         self.level = getattr(logging, level.upper())
         self.log_result = log_result
         self.track = track
-        self.start_time: Optional[float] = None
-        self.end_time: Optional[float] = None
+        self.start_time: float | None = None
+        self.end_time: float | None = None
         self.metadata: dict[str, Any] = {}
 
     def __enter__(self) -> "EnhancedPerformanceMonitor":
@@ -261,7 +261,7 @@ class EnhancedPerformanceMonitor:
         return self
 
     def __exit__(
-        self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]
+        self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None
     ) -> None:
         """
         退出上下文时的处理
@@ -287,9 +287,9 @@ class EnhancedPerformanceMonitor:
                             self.level, f"[Performance] {self.operation}: {elapsed_ms:.2f}ms"
                         )
                     else:
-                        self.logger.error(f"[Performance] {
-                            self.operation}: FAILED after {
-                            elapsed_ms:.2f}ms - {exc_val}")
+                        self.logger.error(
+                            f"[Performance] {self.operation}: FAILED after {elapsed_ms:.2f}ms - {exc_val}"
+                        )
                 except Exception as log_error:  # noqa: F841
                     # 日志失败不应影响业务，静默失败
                     pass
@@ -335,7 +335,7 @@ class EnhancedPerformanceMonitor:
 
 
 def log_performance_summary(
-    logger: logging.Logger, tracker: Optional[PerformanceTracker] = None
+    logger: logging.Logger, tracker: PerformanceTracker | None = None
 ) -> None:
     """
     记录性能统计摘要

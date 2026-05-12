@@ -18,9 +18,10 @@
 SHA256/RIPEMD160/secp256k1 等加密/哈希运算的精度。
 """
 
-from ..utils import get_configured_logger
 import re
-from typing import Any, Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
+
+from ..utils import get_configured_logger
 
 logger = get_configured_logger("NvidiaOptimizer")
 
@@ -89,7 +90,7 @@ class NvidiaDriverDetector:
         "Blackwell": 545,
     }
 
-    def __init__(self, device_info: dict, engine_logger: Optional[Any] = None) -> None:
+    def __init__(self, device_info: dict, engine_logger: Any | None = None) -> None:
         self._device_info = device_info
         self._logger = engine_logger or logger
 
@@ -105,7 +106,7 @@ class NvidiaDriverDetector:
                 'recommendation': str | None,
             }
         """
-        result: Dict[str, Any] = {
+        result: dict[str, Any] = {
             "version_str": None,
             "major": None,
             "opencl_12_ok": False,
@@ -146,14 +147,13 @@ class NvidiaDriverDetector:
                 )
             elif major < self.RECOMMENDED_DRIVER:
                 result["recommendation"] = (
-                    f"NVIDIA 驱动版本 {major} 可正常工作，"
-                    f"建议升级至推荐版本 {self.RECOMMENDED_DRIVER}+ 以获得最佳性能"
+                    f"NVIDIA 驱动版本 {major} 可正常工作，建议升级至推荐版本 {self.RECOMMENDED_DRIVER}+ 以获得最佳性能"
                 )
 
         return result
 
     @staticmethod
-    def _parse_major_version(version_str: str) -> Optional[int]:
+    def _parse_major_version(version_str: str) -> int | None:
         """从版本字符串中解析主版本号"""
         # 匹配形如 "530.41" 或 "390" 的 NVIDIA 驱动版本号
         match = re.search(r"\b(\d{3,4})\b", version_str)
@@ -381,7 +381,7 @@ class NvidiaArchDetector:
         ),
     ]
 
-    def __init__(self, device_info: dict, engine_logger: Optional[Any] = None) -> None:
+    def __init__(self, device_info: dict, engine_logger: Any | None = None) -> None:
         self._device_info = device_info
         self._logger = engine_logger or logger
 
@@ -437,7 +437,7 @@ class NvidiaMemoryOptimizer:
     ]
 
     def __init__(
-        self, device_info: dict, arch_features: dict, engine_logger: Optional[Any] = None
+        self, device_info: dict, arch_features: dict, engine_logger: Any | None = None
     ) -> None:
         self._device_info = device_info
         self._arch_features = arch_features
@@ -512,7 +512,7 @@ class NvidiaGPUOptimizer:
     """
 
     def __init__(
-        self, device_info: dict, config: Optional[dict] = None, engine_logger: Optional[Any] = None
+        self, device_info: dict, config: dict | None = None, engine_logger: Any | None = None
     ) -> None:
         self._device_info = device_info if isinstance(device_info, dict) else {}
         self._config = config or {}
@@ -520,9 +520,9 @@ class NvidiaGPUOptimizer:
         self._rate_logger = _RateLimitedLogger(self._logger)
 
         # 内部组件（防御性初始化，默认为 None）
-        self._driver_info: Optional[dict] = None
-        self._arch_info: Optional[dict] = None
-        self._memory_config: Optional[dict] = None
+        self._driver_info: dict | None = None
+        self._arch_info: dict | None = None
+        self._memory_config: dict | None = None
 
     # ------------------------------------------------------------------
     # 公共接口
@@ -540,7 +540,7 @@ class NvidiaGPUOptimizer:
         self._logger.info("🔧 开始应用 NVIDIA GPU 特殊优化")
         self._logger.info("=" * 60)
 
-        result: Dict[str, Any] = {}
+        result: dict[str, Any] = {}
 
         # 1. 驱动版本检测
         try:
@@ -565,8 +565,7 @@ class NvidiaGPUOptimizer:
 
         except Exception as e:
             self._logger.warning(
-                f"⚠️ NVIDIA 驱动检测失败（非致命）: {type(e).__name__}: {e}\n"
-                "   驱动版本信息将不可用"
+                f"⚠️ NVIDIA 驱动检测失败（非致命）: {type(e).__name__}: {e}\n   驱动版本信息将不可用"
             )
             self._driver_info = {}
             result["driver"] = {}
@@ -590,8 +589,7 @@ class NvidiaGPUOptimizer:
 
         except Exception as e:
             self._logger.warning(
-                f"⚠️ NVIDIA 架构识别失败（非致命）: {type(e).__name__}: {e}\n"
-                "   架构特性将使用保守默认值"
+                f"⚠️ NVIDIA 架构识别失败（非致命）: {type(e).__name__}: {e}\n   架构特性将使用保守默认值"
             )
             self._arch_info = {"arch": "Unknown", "async_copy": False, "fp64_native": False}
             result["arch"] = self._arch_info
@@ -615,8 +613,7 @@ class NvidiaGPUOptimizer:
 
         except Exception as e:
             self._logger.warning(
-                f"⚠️ NVIDIA 显存优化配置失败（非致命）: {type(e).__name__}: {e}\n"
-                "   显存配置将使用保守默认值"
+                f"⚠️ NVIDIA 显存优化配置失败（非致命）: {type(e).__name__}: {e}\n   显存配置将使用保守默认值"
             )
             self._memory_config = {
                 "memory_ratio": 0.60,

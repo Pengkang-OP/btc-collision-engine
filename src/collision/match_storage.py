@@ -1,14 +1,13 @@
-# -*- coding: utf-8 -*-
 """匹配数据存储 - 安全可靠"""
 
 import json
 import os
 import threading
-from typing import Any, Dict, List, Optional
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger, init_logging
 
 # 初始化日志系统
 init_logging()
@@ -54,7 +53,7 @@ class MatchDataStorage:
 
         logger.info("MatchDataStorage初始化完成: %s", self.storage_path)
 
-    def save_match(self, match_data: Dict) -> str:
+    def save_match(self, match_data: dict) -> str:
         """
         保存匹配地址的完整数据
 
@@ -121,7 +120,7 @@ class MatchDataStorage:
 
             raise
 
-    def _build_complete_data(self, match_data: Dict) -> Dict:
+    def _build_complete_data(self, match_data: dict) -> dict:
         """
         构建完整数据结构
 
@@ -171,7 +170,7 @@ class MatchDataStorage:
 
         return complete_data
 
-    def _create_backup(self, filepath: Path, data: Dict) -> None:
+    def _create_backup(self, filepath: Path, data: dict) -> None:
         """
         创建备份文件
 
@@ -195,7 +194,7 @@ class MatchDataStorage:
         except Exception as e:
             logger.warning("创建备份失败: %s", str(e))
 
-    def list_matches(self) -> List[str]:
+    def list_matches(self) -> list[str]:
         """
         列出所有匹配文件
 
@@ -210,7 +209,7 @@ class MatchDataStorage:
 
         return sorted(matches)
 
-    def load_match(self, filepath: str) -> Optional[Dict]:
+    def load_match(self, filepath: str) -> dict | None:
         """
         加载匹配数据
 
@@ -221,13 +220,13 @@ class MatchDataStorage:
             匹配数据字典，如果加载失败返回None
         """
         try:
-            with open(filepath, "r", encoding="utf-8") as f:
+            with open(filepath, encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
             logger.error("加载匹配数据失败 %s: %s", filepath, str(e))
             return None
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """
         获取存储统计
 
@@ -247,4 +246,3 @@ class MatchDataStorage:
 
 
 # 导入List类型
-from typing import List  # noqa: E402

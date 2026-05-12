@@ -6,11 +6,13 @@
 
 import logging
 import time
-from enum import Enum
-from typing import Dict, List, Optional, Callable, Any, cast
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
+from typing import Any, cast
+
 from src.utils.fast_json import fast_dump, fast_load
 
 logger = logging.getLogger(__name__)
@@ -58,9 +60,9 @@ class AlertRule:
     name: str  # 规则名称
     alert_type: AlertType  # 告警类型
     level: AlertLevel  # 告警级别
-    condition: Callable[[Dict], bool]  # 条件函数
+    condition: Callable[[dict], bool]  # 条件函数
     message: str  # 告警消息
-    cooldown: Optional[int] = None  # 冷却时间(秒),None表示使用默认值
+    cooldown: int | None = None  # 冷却时间(秒),None表示使用默认值
     enabled: bool = True  # 是否启用
 
     def get_cooldown(self) -> int:
@@ -82,9 +84,9 @@ class AlertRecord:
     alert_type: AlertType  # 告警类型
     level: AlertLevel  # 告警级别
     message: str  # 告警消息
-    metrics: Dict[str, Any]  # 触发时的指标数据
+    metrics: dict[str, Any]  # 触发时的指标数据
     resolved: bool = False  # 是否已解决
-    resolved_at: Optional[str] = None  # 解决时间
+    resolved_at: str | None = None  # 解决时间
 
 
 class AlertSystem:
@@ -110,22 +112,22 @@ class AlertSystem:
         })
     """
 
-    def __init__(self, alert_log_file: Optional[str] = None) -> None:
+    def __init__(self, alert_log_file: str | None = None) -> None:
         """初始化告警系统
 
         Args:
             alert_log_file: 告警日志文件路径
         """
-        self.rules: List[AlertRule] = []
-        self.alert_history: List[AlertRecord] = []
-        self.last_alert_time: Dict[str, float] = {}  # 规则名称 -> 最后告警时间
-        self.alert_callbacks: List[Callable] = []  # 告警回调函数
-        self.notification_channels: List[Any] = []  # P2-7: 通知渠道列表
+        self.rules: list[AlertRule] = []
+        self.alert_history: list[AlertRecord] = []
+        self.last_alert_time: dict[str, float] = {}  # 规则名称 -> 最后告警时间
+        self.alert_callbacks: list[Callable] = []  # 告警回调函数
+        self.notification_channels: list[Any] = []  # P2-7: 通知渠道列表
 
         # #11修复: 增强的速率限制
         self._global_rate_limit_max = 10  # 每分钟最多10条告警
         self._global_rate_limit_window = 60  # 时间窗口60秒
-        self._recent_alerts: List[float] = []  # 最近的告警时间戳列表
+        self._recent_alerts: list[float] = []  # 最近的告警时间戳列表
         self._rate_limit_exceeded_count = 0  # 速率限制触发次数
 
         # 告警日志文件
@@ -209,7 +211,7 @@ class AlertSystem:
         """设置默认告警规则"""
 
         # 规则1: 性能退化>20%
-        def check_performance_degradation(metrics: Dict) -> bool:
+        def check_performance_degradation(metrics: dict) -> bool:
             if "degradation_rate" not in metrics:
                 return False
             return cast(bool, metrics["degradation_rate"] > 20.0)
@@ -226,7 +228,7 @@ class AlertSystem:
         )
 
         # 规则2: 内存使用>80%
-        def check_memory_usage(metrics: Dict) -> bool:
+        def check_memory_usage(metrics: dict) -> bool:
             if "memory_usage_percent" not in metrics:
                 return False
             return cast(bool, metrics["memory_usage_percent"] > 80.0)
@@ -243,7 +245,7 @@ class AlertSystem:
         )
 
         # 规则3: GPU温度>85°C
-        def check_gpu_temperature(metrics: Dict) -> bool:
+        def check_gpu_temperature(metrics: dict) -> bool:
             if "gpu_temperature" not in metrics:
                 return False
             return cast(bool, metrics["gpu_temperature"] > 85.0)
@@ -260,7 +262,7 @@ class AlertSystem:
         )
 
         # 规则4: 错误率>5%
-        def check_error_rate(metrics: Dict) -> bool:
+        def check_error_rate(metrics: dict) -> bool:
             if "error_rate" not in metrics:
                 return False
             return cast(bool, metrics["error_rate"] > 0.05)
@@ -277,7 +279,7 @@ class AlertSystem:
         )
 
         # 规则5: 吞吐量下降>50%
-        def check_throughput_drop(metrics: Dict) -> bool:
+        def check_throughput_drop(metrics: dict) -> bool:
             if "throughput" not in metrics or "baseline_throughput" not in metrics:
                 return False
             if metrics["baseline_throughput"] == 0:
@@ -300,7 +302,7 @@ class AlertSystem:
 
         logger.info(f"默认告警规则设置完成: {len(self.rules)} 条规则")
 
-    def check_metrics(self, metrics: Dict[str, Any]) -> List[AlertRecord]:
+    def check_metrics(self, metrics: dict[str, Any]) -> list[AlertRecord]:
         """检查性能指标并触发告警
 
         Args:
@@ -316,7 +318,7 @@ class AlertSystem:
         Returns:
             触发的告警记录列表
         """
-        triggered_alerts: List[AlertRecord] = []
+        triggered_alerts: list[AlertRecord] = []
         current_time = time.time()
 
         # #11修复: 检查全局速率限制
@@ -466,7 +468,7 @@ class AlertSystem:
             logger.info(f"告警已解决: {alert.message}")
             self._save_alert_history()
 
-    def get_active_alerts(self) -> List[AlertRecord]:
+    def get_active_alerts(self) -> list[AlertRecord]:
         """获取未解决的告警
 
         Returns:
@@ -474,13 +476,13 @@ class AlertSystem:
         """
         return [a for a in self.alert_history if not a.resolved]
 
-    def get_alert_statistics(self) -> Dict[str, Any]:
+    def get_alert_statistics(self) -> dict[str, Any]:
         """获取告警统计信息
 
         Returns:
             统计信息字典
         """
-        stats: Dict[str, Any] = {
+        stats: dict[str, Any] = {
             "total_alerts": len(self.alert_history),
             "active_alerts": len(self.get_active_alerts()),
             "resolved_alerts": sum(1 for a in self.alert_history if a.resolved),
@@ -547,7 +549,7 @@ class AlertSystem:
             return
 
         try:
-            with open(self.alert_log_file, "r", encoding="utf-8") as f:
+            with open(self.alert_log_file, encoding="utf-8") as f:
                 data = fast_load(f)
 
             for item in data:
@@ -576,7 +578,7 @@ class AlertSystem:
 
 
 # 全局告警系统实例
-_alert_system: Optional[AlertSystem] = None
+_alert_system: AlertSystem | None = None
 
 
 def get_alert_system() -> AlertSystem:

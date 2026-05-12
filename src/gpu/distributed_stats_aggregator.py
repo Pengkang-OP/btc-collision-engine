@@ -5,8 +5,8 @@
 
 import threading
 import time
-from typing import Dict, Any, Optional
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -65,7 +65,7 @@ class DistributedStatsAggregator:
                 del self._workers[device_idx]
                 self._cache_valid = False
 
-    def update_worker_stats(self, device_idx: int, stats: Dict[str, Any]) -> None:
+    def update_worker_stats(self, device_idx: int, stats: dict[str, Any]) -> None:
         """更新工作器统计数据"""
         with self._workers_lock:
             if device_idx in self._workers:
@@ -137,7 +137,7 @@ class DistributedStatsAggregator:
             }
             self._cache_valid = True
 
-    def get_combined_stats(self) -> Dict[str, Any]:
+    def get_combined_stats(self) -> dict[str, Any]:
         """获取聚合统计数据"""
         if not self._cache_valid:
             self._aggregate_stats()
@@ -145,7 +145,7 @@ class DistributedStatsAggregator:
         with self._cache_lock:
             return dict(self._aggregated_stats)
 
-    def get_device_stats(self, device_idx: int) -> Optional[Dict[str, Any]]:
+    def get_device_stats(self, device_idx: int) -> dict[str, Any] | None:
         """获取指定设备的统计数据"""
         with self._workers_lock:
             worker = self._workers.get(device_idx)
@@ -160,7 +160,7 @@ class DistributedStatsAggregator:
                 }
             return None
 
-    def get_load_balance_info(self) -> Dict[str, Any]:
+    def get_load_balance_info(self) -> dict[str, Any]:
         """获取负载均衡信息"""
         combined = self.get_combined_stats()
         per_device = combined.get("per_device", {})

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 CLI 统一输出管理器 - 基于 Rich 库
 
@@ -15,8 +14,8 @@ import threading
 from typing import Optional
 
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
+from rich.table import Table
 
 
 def _get_utf8_console(stderr: bool = False, no_color: bool = False) -> Console:
@@ -116,7 +115,7 @@ class CLIOutput:
         """蓝色 [HINT] 提示信息，始终显示。"""
         self.console.print(f"[blue][HINT][/blue] {msg}")
 
-    def warning(self, msg: str, details: Optional[str] = None) -> None:
+    def warning(self, msg: str, details: str | None = None) -> None:
         """黄色 [WARN] 警告，输出到 stderr。
 
         Args:
@@ -127,7 +126,7 @@ class CLIOutput:
         if details:
             self.err_console.print(f"[yellow]└─ 详细:[/yellow] {details}")
 
-    def error(self, msg: str, details: Optional[str] = None) -> None:
+    def error(self, msg: str, details: str | None = None) -> None:
         """红色 [ERROR] 错误，输出到 stderr。
 
         Args:

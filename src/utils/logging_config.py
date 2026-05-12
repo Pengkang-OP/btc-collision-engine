@@ -4,15 +4,16 @@
 提供统一的日志记录器初始化接口。
 """
 
-import os
-import sys
-import time
 import logging
-import shutil
+import os
 import platform
+import shutil
+import sys
 import threading
-from typing import Optional, Dict, Any
+import time
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
+from typing import Any
+
 from .logger import ColoredFormatter, SafeStreamHandler  # ThreadSafeLogger已弃用
 
 # 模块级可重入锁，序列化所有 SafeRotatingFileHandler 实例的 rollover 操作，
@@ -52,8 +53,7 @@ class SafeRotatingFileHandler(RotatingFileHandler):
                 time.sleep(self._retry_delay * (attempt + 1))
         # 所有重试均失败：输出警告并继续写入当前文件，不中断主程序
         print(
-            f"[日志警告] 日志轮转失败（已重试{self._retry_count}次），"
-            f"文件可能被其他进程占用: {self.baseFilename}",
+            f"[日志警告] 日志轮转失败（已重试{self._retry_count}次），文件可能被其他进程占用: {self.baseFilename}",
             file=sys.stderr,
         )
 
@@ -92,7 +92,7 @@ class LoggingConfig:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def init(self, config: Optional[Dict[str, Any]] = None) -> None:
+    def init(self, config: dict[str, Any] | None = None) -> None:
         """
         初始化日志配置
 
@@ -118,7 +118,7 @@ class LoggingConfig:
         # 配置根日志记录器
         self._setup_root_logger()
 
-    def _load_from_config_file(self) -> Optional[Dict[str, Any]]:
+    def _load_from_config_file(self) -> dict[str, Any] | None:
         """从配置文件加载日志设置"""
         try:
             from ..config.config_manager import ConfigManager
@@ -227,7 +227,7 @@ class LoggingConfig:
                 if file_handler:
                     root_logger.addHandler(file_handler)
 
-    def _create_file_handler(self, log_file: str, format_str: str) -> Optional[logging.Handler]:
+    def _create_file_handler(self, log_file: str, format_str: str) -> logging.Handler | None:
         """创建文件处理器"""
         assert self._config is not None
         rotation_type = self._config.get("rotation_type", "size")
@@ -296,7 +296,7 @@ class LoggingConfig:
             print(f"创建日志文件处理器失败: {e}", file=sys.stderr)
             return None
 
-    def get_config(self) -> Dict[str, Any]:
+    def get_config(self) -> dict[str, Any]:
         """获取当前配置"""
         if not self._initialized:
             self.init()
@@ -338,7 +338,7 @@ class LoggingConfig:
 logging_config = LoggingConfig()
 
 
-def init_logging(config: Optional[Dict[str, Any]] = None) -> None:
+def init_logging(config: dict[str, Any] | None = None) -> None:
     """
     初始化日志系统
 

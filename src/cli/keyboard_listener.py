@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 运行时键盘交互监听器
 
@@ -14,14 +13,14 @@ import os
 import sys
 import threading
 import time
-from typing import Callable, Optional
+from collections.abc import Callable
 
 
 class KeyboardListener:
     """运行时键盘交互监听器，支持单字符按键回调（不需要按 Enter）。"""
 
     # 类级别可用性缓存：None 表示尚未检测
-    _platform_available: Optional[bool] = None
+    _platform_available: bool | None = None
     _platform_unavailable_reason: str = ""
 
     @classmethod
@@ -82,7 +81,7 @@ class KeyboardListener:
         """
         self._callback = on_key_callback
         self._stop = threading.Event()
-        self._thread: Optional[threading.Thread] = None
+        self._thread: threading.Thread | None = None
         # 实例可用性与类级别检测保持一致
         self._available: bool = KeyboardListener.is_available()
 

@@ -1,13 +1,11 @@
-# -*- coding: utf-8 -*-
 """地址转换工具 - 私钥到地址和WIF的完整转换"""
 
 import hashlib
-from typing import Dict, Tuple, Optional
 
-from ..utils import init_logging, get_configured_logger
-from .secp256k1 import EllipticCurve
-from .hash_utils import HashUtils
+from ..utils import get_configured_logger, init_logging
 from .base58 import Base58
+from .hash_utils import HashUtils
+from .secp256k1 import EllipticCurve
 from .wif import WIF
 
 # 初始化日志系统
@@ -32,7 +30,7 @@ class AddressConverter:
         self.ec = EllipticCurve()
         logger.info("AddressConverter初始化完成")
 
-    def private_key_to_address(self, private_key: bytes, compressed: bool = True) -> Dict:
+    def private_key_to_address(self, private_key: bytes, compressed: bool = True) -> dict:
         """
         私钥 → 比特币地址 (严格遵循Bitcoin Core规范)
 
@@ -90,7 +88,7 @@ class AddressConverter:
         """
         return WIF.encode(private_key, compressed)
 
-    def private_key_to_all(self, private_key: bytes) -> Dict:
+    def private_key_to_all(self, private_key: bytes) -> dict:
         """
         私钥 → 所有格式的完整转换
 
@@ -127,7 +125,7 @@ class AddressConverter:
             "wif_uncompressed": wif_uncompressed,
         }
 
-    def wif_to_address(self, wif: str) -> Dict:
+    def wif_to_address(self, wif: str) -> dict:
         """
         WIF → 私钥 → 地址
 
@@ -144,8 +142,8 @@ class AddressConverter:
         return self.private_key_to_address(private_key, compressed)
 
     def validate_conversion(
-        self, private_key: bytes, expected_address: Optional[str] = None
-    ) -> Tuple[bool, str]:
+        self, private_key: bytes, expected_address: str | None = None
+    ) -> tuple[bool, str]:
         """
         验证转换正确性
 

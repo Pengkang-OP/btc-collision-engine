@@ -5,20 +5,18 @@
 """
 
 import sys
-from pathlib import Path
-from typing import Dict, Any, Optional, Callable
-from datetime import datetime
 import threading
+from collections.abc import Callable
+from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-from .models import (
-    SystemStatus, LoopState, AnalysisReport, 
-    TestSuiteResult, AuditResult, Severity
-)
-from .data_analysis import DataAnalysisModule
-from .auto_test import AutoTestModule
 from .audit import AuditModule
+from .auto_test import AutoTestModule
+from .data_analysis import DataAnalysisModule
+from .models import AnalysisReport, AuditResult, LoopState, Severity, SystemStatus, TestSuiteResult
 
 
 class LoopController:
@@ -27,37 +25,37 @@ class LoopController:
     协调分析->测试->审核的完整流程
     异常自动触发反馈回路
     """
-    
+
     def __init__(
-        self, 
-        project_root: Optional[Path] = None,
+        self,
+        project_root: Path | None = None,
         max_iterations: int = 3,
         auto_fix: bool = False,
     ):
         self.project_root = project_root or Path(__file__).parent.parent.parent.parent
-        
+
         self.analysis_module = DataAnalysisModule(self.project_root)
         self.test_module = AutoTestModule(self.project_root)
         self.audit_module = AuditModule()
-        
+
         self.max_iterations = max_iterations
         self.auto_fix = auto_fix
-        
+
         self.state = LoopState(
             iteration=0,
             current_phase=SystemStatus.IDLE,
         )
-        
-        self.on_phase_change: Optional[Callable] = None
-        self.on_issue_found: Optional[Callable] = None
-        self.on_audit_complete: Optional[Callable] = None
-        
+
+        self.on_phase_change: Callable | None = None
+        self.on_issue_found: Callable | None = None
+        self.on_audit_complete: Callable | None = None
+
         self._lock = threading.Lock()
-        
+
         self.total_iterations = 0
         self.start_time = None
         self.end_time = None
-    
+
     def run(self) -> AuditResult:
         """
         执行完整的闭环流程
@@ -68,93 +66,93 @@ class LoopController:
             iteration=0,
             current_phase=SystemStatus.ANALYZING,
         )
-        
+
         final_audit_result = None
-        
+
         while self.state.iteration < self.max_iterations:
             self.state.iteration += 1
             self.total_iterations += 1
-            
-            print(f"\n{'='*60}")
+
+            print(f"\n{'=' * 60}")
             print(f">> Loop Iteration #{self.state.iteration}/{self.max_iterations}")
-            print(f"{'='*60}")
-            
+            print(f"{'=' * 60}")
+
             try:
                 # 阶段1: 数据分析
                 self._set_phase(SystemStatus.ANALYZING)
                 analysis_report = self._run_analysis_phase()
-                
+
                 if analysis_report is None:
                     print("[FAIL] Analysis phase failed")
                     break
-                
+
                 self.state.analysis_report = analysis_report
                 self.state.issues_found.extend(analysis_report.issues)
-                
+
                 # 阶段2: 自动化测试
                 self._set_phase(SystemStatus.TESTING)
                 test_results = self._run_test_phase(analysis_report)
-                
+
                 if test_results is None:
                     print("[FAIL] Test phase failed")
                     break
-                
+
                 self.state.test_results = test_results
-                
+
                 # 阶段3: 智能审核
                 self._set_phase(SystemStatus.AUDITING)
                 audit_result = self._run_audit_phase(test_results, analysis_report)
-                
+
                 if audit_result is None:
                     print("[FAIL] Audit phase failed")
                     break
-                
+
                 self.state.audit_results.append(audit_result)
                 final_audit_result = audit_result
-                
+
                 # 检查审核结果
                 if audit_result.is_approved:
-                    print(f"\n[PASS] Audit passed!")
+                    print("\n[PASS] Audit passed!")
                     self._set_phase(SystemStatus.PASSED)
                     break
                 else:
                     block_count = audit_result.block_count
                     print(f"\n[WARN] Audit rejected ({block_count} blocking issues)")
-                    
+
                     if self.on_audit_complete:
                         self.on_audit_complete(audit_result)
-                    
+
                     if not self.state.can_retry():
                         print(f"[FAIL] Max retries reached ({self.max_iterations})")
                         self._set_phase(SystemStatus.FAILED)
                         break
-                    
+
                     self.state.increment_retry()
                     self._set_phase(SystemStatus.RETRYING)
                     self._execute_feedback_loop(audit_result)
-                    
+
             except Exception as e:
                 print(f"[ERROR] Loop execution error: {str(e)}")
                 self.state.current_phase = SystemStatus.FAILED
                 break
-        
+
         self.end_time = datetime.now()
         self._set_phase(SystemStatus.COMPLETED)
-        
+
         return final_audit_result or self._create_failed_result()
-    
-    def _run_analysis_phase(self) -> Optional[AnalysisReport]:
+
+    def _run_analysis_phase(self) -> AnalysisReport | None:
         """执行分析阶段"""
         print("\n[Phase 1] Data Analysis Module")
         print("-" * 40)
-        
+
         try:
             report = self.analysis_module.analyze()
-            
+
             print(f"   Report ID: {report.report_id}")
             print(f"   Issues found: {report.issue_count}")
             print(f"   Quality score: {report.statistics.get('quality_score', 'N/A')}")
-            
+
             if report.issues:
                 print("\n   Issue summary:")
                 for issue in report.issues[:5]:
@@ -166,110 +164,110 @@ class LoopController:
                         Severity.INFO: "[INFO]",
                     }.get(issue.severity, "[INFO]")
                     print(f"      {sev_icon} {issue.title}")
-            
+
             if self.on_issue_found:
                 for issue in report.issues:
                     self.on_issue_found(issue)
-            
+
             return report
-            
+
         except Exception as e:
             print(f"   [ERROR] Analysis failed: {str(e)}")
             return None
-    
-    def _run_test_phase(self, analysis_report: AnalysisReport) -> Optional[TestSuiteResult]:
+
+    def _run_test_phase(self, analysis_report: AnalysisReport) -> TestSuiteResult | None:
         """执行测试阶段"""
         print("\n[Phase 2] Auto Test Module")
         print("-" * 40)
-        
+
         try:
             results = self.test_module.run_all_tests(analysis_report)
-            
+
             print(f"   Test suite: {results.suite_id}")
             print(f"   Total: {results.total}")
-            print(f"   Passed: {results.passed} | Failed: {results.failed} | Skipped: {results.skipped} | Errors: {results.errors}")
+            print(
+                f"   Passed: {results.passed} | Failed: {results.failed} | Skipped: {results.skipped} | Errors: {results.errors}"
+            )
             print(f"   Pass rate: {results.pass_rate:.1f}%")
             print(f"   Duration: {results.duration:.2f}s")
-            
+
             if results.failed > 0 or results.errors > 0:
                 print("\n   Failed/Error tests:")
                 for result in results.results:
                     if result.status in ("failed", "error"):
                         status_mark = "[X]" if result.status == "failed" else "[!]"
                         print(f"      {status_mark} {result.test_name}: {result.message[:50]}")
-            
+
             return results
-            
+
         except Exception as e:
             print(f"   [ERROR] Test failed: {str(e)}")
             return None
-    
+
     def _run_audit_phase(
-        self, 
-        test_results: TestSuiteResult,
-        analysis_report: AnalysisReport
-    ) -> Optional[AuditResult]:
+        self, test_results: TestSuiteResult, analysis_report: AnalysisReport
+    ) -> AuditResult | None:
         """执行审核阶段"""
         print("\n[Phase 3] Audit Module")
         print("-" * 40)
-        
+
         try:
             result = self.audit_module.audit(test_results, analysis_report)
-            
+
             print(f"   Audit ID: {result.audit_id}")
             print(f"   Status: {result.status.value}")
             print(f"   Checks: {result.passed_checks}/{result.total_checks}")
-            
+
             if result.violations:
                 print(f"\n   Blocking violations ({len(result.violations)}):")
                 for v in result.violations:
                     print(f"      - {v.title}")
-            
+
             if result.warnings:
                 print(f"\n   Warnings ({len(result.warnings)}):")
                 for w in result.warnings[:3]:
                     print(f"      - {w.title}")
-            
+
             verdict = "PASS" if result.is_approved else "REJECT"
             print(f"\n   Verdict: {verdict}")
-            
+
             return result
-            
+
         except Exception as e:
             print(f"   [ERROR] Audit failed: {str(e)}")
             return None
-    
+
     def _execute_feedback_loop(self, audit_result: AuditResult):
         """执行反馈回路"""
         print("\n[Feedback Loop] Preparing re-analysis...")
-        
+
         all_issues = list(self.state.issues_found)
         all_issues.extend(audit_result.violations)
         all_issues.extend(audit_result.warnings)
-        
+
         seen_ids = set()
         unique_issues = []
         for issue in all_issues:
             if issue.id not in seen_ids:
                 seen_ids.add(issue.id)
                 unique_issues.append(issue)
-        
+
         self.state.issues_found = unique_issues
         print(f"   Total issues: {len(unique_issues)}")
-        
+
         if self.on_issue_found:
             for violation in audit_result.violations:
                 self.on_issue_found(violation)
-    
+
     def _set_phase(self, phase: SystemStatus):
         """设置当前阶段"""
         with self._lock:
             self.state.previous_phase = self.state.current_phase
             self.state.current_phase = phase
-        
+
         if self.on_phase_change:
             self.on_phase_change(phase)
-    
+
     def _create_failed_result(self) -> AuditResult:
         """创建失败结果"""
         return AuditResult(
@@ -281,13 +279,13 @@ class LoopController:
             passed_checks=0,
             total_checks=0,
         )
-    
-    def get_summary(self) -> Dict[str, Any]:
+
+    def get_summary(self) -> dict[str, Any]:
         """获取执行摘要"""
         duration = None
         if self.start_time and self.end_time:
             duration = (self.end_time - self.start_time).total_seconds()
-        
+
         return {
             "total_iterations": self.total_iterations,
             "final_status": self.state.current_phase.value,
@@ -297,25 +295,28 @@ class LoopController:
             "start_time": self.start_time.isoformat() if self.start_time else None,
             "end_time": self.end_time.isoformat() if self.end_time else None,
         }
-    
+
     def save_report(self, filepath: str):
         """保存完整报告"""
         summary = self.get_summary()
-        
+
         report = {
             "summary": summary,
-            "final_audit": self.state.audit_results[-1].to_dict() if self.state.audit_results else None,
+            "final_audit": self.state.audit_results[-1].to_dict()
+            if self.state.audit_results
+            else None,
             "all_issues": [i.to_dict() for i in self.state.issues_found],
             "iterations": self.total_iterations,
         }
-        
+
         import json
-        with open(filepath, 'w', encoding='utf-8') as f:
+
+        with open(filepath, "w", encoding="utf-8") as f:
             json.dump(report, f, ensure_ascii=False, indent=2)
 
 
 def run_automation_loop(
-    project_root: Optional[Path] = None,
+    project_root: Path | None = None,
     max_iterations: int = 3,
 ) -> AuditResult:
     """便捷函数: 运行自动化闭环"""

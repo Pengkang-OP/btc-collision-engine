@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 增强版监控系统
 
@@ -9,23 +8,24 @@
 """
 
 import os
-import time
 import threading
-from typing import Dict, Optional, Any
+import time
+from typing import Any
+
 import psutil
 
-# 导入现有模块
-from src.utils import get_configured_logger
+from src.monitoring.data_logger import DataLogger
+from src.monitoring.monitor_config import MonitorConfig
 from src.monitoring.monitoring_system import (
+    AnomalyDetector,
     DataCollector,
     DataStorage,
-    AnomalyDetector,
     MonitoringAlertAdapter,
     ReportGenerator,
 )
-from src.monitoring.data_logger import DataLogger
 
-from src.monitoring.monitor_config import MonitorConfig
+# 导入现有模块
+from src.utils import get_configured_logger
 
 
 class EnhancedMonitoringSystem:
@@ -48,14 +48,14 @@ class EnhancedMonitoringSystem:
 
     # 类属性类型提示
     config: MonitorConfig
-    data_logger: Optional[Any]
+    data_logger: Any | None
 
     def __init__(
         self,
-        engine: Optional[Any] = None,
-        config: Optional[MonitorConfig] = None,
-        collection_interval: Optional[float] = None,  # 已弃用，使用config
-        enable_monitoring_data: Optional[bool] = None,  # 已弃用，使用config
+        engine: Any | None = None,
+        config: MonitorConfig | None = None,
+        collection_interval: float | None = None,  # 已弃用，使用config
+        enable_monitoring_data: bool | None = None,  # 已弃用，使用config
     ) -> None:
         """
         初始化增强版监控系统
@@ -118,11 +118,11 @@ class EnhancedMonitoringSystem:
             self.data_logger = None
 
         # 可选：原始监控系统组件（用于实时监控和告警）
-        self.storage: Optional[DataStorage] = None
-        self.detector: Optional[AnomalyDetector] = None
-        self.alert_system: Optional[MonitoringAlertAdapter] = None
-        self.report_generator: Optional[ReportGenerator] = None
-        self._collector: Optional[DataCollector] = None
+        self.storage: DataStorage | None = None
+        self.detector: AnomalyDetector | None = None
+        self.alert_system: MonitoringAlertAdapter | None = None
+        self.report_generator: ReportGenerator | None = None
+        self._collector: DataCollector | None = None
         if self.config.enable_monitoring_data:
             self.storage = DataStorage()
             self.detector = AnomalyDetector(self.storage)
@@ -132,7 +132,7 @@ class EnhancedMonitoringSystem:
             self._collector = DataCollector(self.engine)
 
         self._running = False
-        self._thread: Optional[threading.Thread] = None
+        self._thread: threading.Thread | None = None
         self._stop_event = threading.Event()
 
         # 报告生成控制（从配置读取）
@@ -197,11 +197,27 @@ class EnhancedMonitoringSystem:
                 if self.data_logger and self.engine:
                     # 安全获取引擎属性：手动类型强制转换，防止 Mock/非标准对象污染数据
                     _raw_mode = getattr(self.engine, "_current_mode", "")
-                    _mode = _raw_mode if isinstance(_raw_mode, str) else str(_raw_mode) if _raw_mode else ""
+                    _mode = (
+                        _raw_mode
+                        if isinstance(_raw_mode, str)
+                        else str(_raw_mode)
+                        if _raw_mode
+                        else ""
+                    )
                     _raw_pos = getattr(self.engine, "_current_position", 0)
-                    _pos = _raw_pos if isinstance(_raw_pos, int) else int(_raw_pos) if isinstance(_raw_pos, float) else 0
-                    _raw_running = self.engine.is_running() if hasattr(self.engine, "is_running") else False
-                    _running = bool(_raw_running) if isinstance(_raw_running, bool) else bool(_raw_running)
+                    _pos = (
+                        _raw_pos
+                        if isinstance(_raw_pos, int)
+                        else int(_raw_pos)
+                        if isinstance(_raw_pos, float)
+                        else 0
+                    )
+                    _raw_running = (
+                        self.engine.is_running() if hasattr(self.engine, "is_running") else False
+                    )
+                    _running = (
+                        bool(_raw_running) if isinstance(_raw_running, bool) else bool(_raw_running)
+                    )
                     self.data_logger.record_engine_data(
                         mode=_mode,
                         target_count=len(getattr(self.engine, "targets", [])),
@@ -310,7 +326,7 @@ class EnhancedMonitoringSystem:
         """检查监控系统是否运行"""
         return self._running
 
-    def get_current_status(self) -> Dict[str, Any]:
+    def get_current_status(self) -> dict[str, Any]:
         """获取当前状态"""
         if self.storage is None:
             return {"message": "监控数据未启用 (enable_monitoring_data=False)"}
@@ -336,7 +352,7 @@ class EnhancedMonitoringSystem:
             "data_stats": data_stats,
         }
 
-    def generate_report(self) -> Dict[str, Any]:
+    def generate_report(self) -> dict[str, Any]:
         """生成报告"""
         # 生成原始报告
         original_report = (
@@ -350,6 +366,6 @@ class EnhancedMonitoringSystem:
 
         return {"original_report": original_report, "data_report": data_report}
 
-    def get_data_logger(self) -> Optional[DataLogger]:
+    def get_data_logger(self) -> DataLogger | None:
         """获取数据日志记录器"""
         return self.data_logger

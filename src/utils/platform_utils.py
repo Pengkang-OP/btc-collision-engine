@@ -1,17 +1,15 @@
-# -*- coding: utf-8 -*-
 """跨平台兼容工具类
 
 提供跨平台字体选择、DPI检测、窗口尺寸计算等功能，
 确保UI在Windows/Linux/macOS上都有良好的显示效果。
 """
 
-import platform
 import os
+import platform
 import sys
 import tkinter as tk
-from typing import Tuple, Optional
 
-from . import init_logging, get_configured_logger
+from . import get_configured_logger, init_logging
 
 # 初始化日志
 init_logging()
@@ -137,7 +135,7 @@ class PlatformUtils:
         return config_dir
 
     @classmethod
-    def get_dpi_scale(cls, root: Optional[tk.Tk] = None) -> float:
+    def get_dpi_scale(cls, root: tk.Tk | None = None) -> float:
         """获取DPI缩放比例
 
         参数:
@@ -181,7 +179,7 @@ class PlatformUtils:
             return cls._dpi_scale
 
     @classmethod
-    def get_screen_size(cls, root: Optional[tk.Tk] = None) -> Tuple[int, int]:
+    def get_screen_size(cls, root: tk.Tk | None = None) -> tuple[int, int]:
         """获取屏幕尺寸
 
         参数:
@@ -210,8 +208,8 @@ class PlatformUtils:
 
     @classmethod
     def get_optimal_window_size(
-        cls, root: Optional[tk.Tk] = None, width_ratio: float = 0.75, height_ratio: float = 0.80
-    ) -> Tuple[int, int]:
+        cls, root: tk.Tk | None = None, width_ratio: float = 0.75, height_ratio: float = 0.80
+    ) -> tuple[int, int]:
         """根据屏幕分辨率计算最佳窗口尺寸
 
         参数:
@@ -245,7 +243,7 @@ class PlatformUtils:
         return width, height
 
     @classmethod
-    def scale_font_size(cls, size: int, root: Optional[tk.Tk] = None) -> int:
+    def scale_font_size(cls, size: int, root: tk.Tk | None = None) -> int:
         """根据DPI缩放字体大小
 
         参数:
@@ -266,7 +264,7 @@ class PlatformUtils:
         return size
 
     @classmethod
-    def get_font_config(cls, root: Optional[tk.Tk] = None) -> dict:
+    def get_font_config(cls, root: tk.Tk | None = None) -> dict:
         """获取完整的字体配置（跨平台+DPI适配）
 
         参数:

@@ -22,19 +22,19 @@ API 端点:
     GET  /                 - 仪表板 HTML 页面
 """
 
-import json
-import os
-import sys
-import secrets
 import argparse
+import json
 import logging
+import os
+import secrets
+import sys
 import time
 from functools import wraps
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 try:
-    from flask import Flask, jsonify, render_template_string, request, abort
+    from flask import Flask, abort, jsonify, render_template_string, request
 
     FLASK_AVAILABLE = True
 except ImportError:
@@ -53,11 +53,11 @@ logger = logging.getLogger(__name__)
 
 UNPROTECTED_ROUTES = {"health"}
 
-_api_key: Optional[str] = None
+_api_key: str | None = None
 _api_key_required: bool = False
 
 
-def set_api_key(key: Optional[str]) -> None:
+def set_api_key(key: str | None) -> None:
     global _api_key, _api_key_required
     _api_key = key
     _api_key_required = key is not None and len(key) > 0
@@ -80,7 +80,9 @@ def require_auth(f):
         if not _validate_api_key():
             abort(401)
         return f(*args, **kwargs)
+
     return decorated
+
 
 # ──────────────────────────────────────────────────────────────────
 # HTML 模板 (内嵌，无需外部文件)
@@ -256,14 +258,14 @@ def _safe_read_json(path: Path) -> Any:
     if not path.exists():
         return None
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             return json.load(f)
     except (json.JSONDecodeError, OSError) as e:
         logger.warning(f"读取 JSON 失败 {path}: {e}")
         return None
 
 
-def get_current_stats(data_dir: Path) -> Dict[str, Any]:
+def get_current_stats(data_dir: Path) -> dict[str, Any]:
     """获取当前统计信息"""
     data = _safe_read_json(data_dir / "current_data.json") or {}
     perf = data.get("performance", {})
@@ -297,7 +299,7 @@ def get_current_stats(data_dir: Path) -> Dict[str, Any]:
     }
 
 
-def get_history(data_dir: Path, limit: int = 20) -> List[Dict[str, Any]]:
+def get_history(data_dir: Path, limit: int = 20) -> list[dict[str, Any]]:
     """获取历史数据"""
     data = _safe_read_json(data_dir / "history_data.json") or []
     if isinstance(data, list):
@@ -305,7 +307,7 @@ def get_history(data_dir: Path, limit: int = 20) -> List[Dict[str, Any]]:
     return []
 
 
-def get_errors(data_dir: Path, limit: int = 20) -> List[Dict[str, Any]]:
+def get_errors(data_dir: Path, limit: int = 20) -> list[dict[str, Any]]:
     """获取错误日志"""
     data = _safe_read_json(data_dir / "error_log.json") or []
     if isinstance(data, list):
@@ -330,7 +332,7 @@ def format_uptime(seconds: float) -> str:
 # ──────────────────────────────────────────────────────────────────
 
 
-def create_app(data_dir: Optional[Path] = None) -> "Flask":
+def create_app(data_dir: Path | None = None) -> "Flask":
     """创建 Flask 应用
 
     Args:
@@ -349,8 +351,7 @@ def create_app(data_dir: Optional[Path] = None) -> "Flask":
         logger.info("Web 仪表板 API Key 认证已启用")
     else:
         logger.warning(
-            "Web 仪表板未设置 API Key，所有端点可公开访问。"
-            "请通过 --api-key 参数或 DASHBOARD_API_KEY 环境变量设置密钥。"
+            "Web 仪表板未设置 API Key，所有端点可公开访问。请通过 --api-key 参数或 DASHBOARD_API_KEY 环境变量设置密钥。"
         )
 
     # 从 web 包元数据获取版本号（避免硬编码和触发 OpenCL 初始化）
@@ -462,10 +463,10 @@ def create_app(data_dir: Optional[Path] = None) -> "Flask":
 def run_dashboard(
     host: str = "0.0.0.0",  # nosec B104: Web仪表板默认绑定所有接口，用户可通过--host覆盖
     port: int = 8080,
-    data_dir: Optional[str] = None,
+    data_dir: str | None = None,
     debug: bool = False,
     use_reloader: bool = False,
-    api_key: Optional[str] = None,
+    api_key: str | None = None,
 ) -> None:
     """启动 Web 监控仪表板
 

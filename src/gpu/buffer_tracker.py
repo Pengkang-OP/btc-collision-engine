@@ -3,9 +3,9 @@
 提供 GPUBufferTracker 类，用于检测和管理 GPU 内存缓冲区泄漏。
 """
 
-import time
 import threading
-from typing import Any, Dict, List, Optional
+import time
+from typing import Any
 
 # P3-5: 统一日志获取
 from ..utils import get_configured_logger
@@ -34,16 +34,14 @@ class GPUBufferTracker:
     MAX_TRACKED_BUFFERS = 1000  # 最大追踪缓冲区数量
     MEMORY_USAGE_THRESHOLD = 1024 * 1024 * 1024  # 1GB内存使用阈值
 
-    def __init__(
-        self, timeout: Optional[int] = None, memory_threshold: Optional[int] = None
-    ) -> None:
-        self._allocated_buffers: Dict[str, Dict[str, Any]] = {}
+    def __init__(self, timeout: int | None = None, memory_threshold: int | None = None) -> None:
+        self._allocated_buffers: dict[str, dict[str, Any]] = {}
         self._lock = threading.Lock()
         self._timeout = timeout or self.DEFAULT_TIMEOUT
         self._memory_threshold = memory_threshold or self.MEMORY_USAGE_THRESHOLD
         self._cleanup_count = 0
         self._leak_detection_count = 0
-        self._memory_usage_history: List[Dict] = []  # 内存使用历史
+        self._memory_usage_history: list[dict] = []  # 内存使用历史
         self._last_check_time = time.time()
 
     def track_buffer(
@@ -74,13 +72,10 @@ class GPUBufferTracker:
             # 检查内存使用是否超过阈值
             total_size = sum(info["size"] for info in self._allocated_buffers.values())
             if total_size > self._memory_threshold:
-                logger.warning(f"GPU内存使用超过阈值: {
-                    total_size
-                    / 1024
-                    / 1024:.1f}MB > {
-                    self._memory_threshold
-                    / 1024
-                    / 1024:.1f}MB")
+                logger.warning(
+                    f"GPU内存使用超过阈值: {total_size / 1024 / 1024:.1f}MB > {
+                        self._memory_threshold / 1024 / 1024:.1f}MB"
+                )
                 # 触发自动清理
                 self.cleanup_timed_out_buffers()
 
@@ -107,7 +102,7 @@ class GPUBufferTracker:
                     # 记录内存使用历史
                     self._record_memory_usage()
 
-    def get_leaked_buffers(self, timeout: int = 300) -> List[str]:
+    def get_leaked_buffers(self, timeout: int = 300) -> list[str]:
         """检测超过timeout未释放的缓冲区
 
         Args:
@@ -129,7 +124,7 @@ class GPUBufferTracker:
 
         return leaked
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取缓冲区统计信息
 
         Returns:
@@ -160,7 +155,7 @@ class GPUBufferTracker:
                 "last_check_time": self._last_check_time,
             }
 
-    def cleanup_timed_out_buffers(self) -> List[str]:
+    def cleanup_timed_out_buffers(self) -> list[str]:
         """自动清理超时的缓冲区
 
         审查修复#2: 实际释放GPU资源，而不仅删除追踪记录。
@@ -211,7 +206,7 @@ class GPUBufferTracker:
 
         return cleaned
 
-    def cleanup_by_type(self, buffer_type: str) -> List[str]:
+    def cleanup_by_type(self, buffer_type: str) -> list[str]:
         """按类型清理缓冲区
 
         Args:
@@ -289,8 +284,7 @@ class GPUBufferTracker:
                 if leaked:
                     stats = self.get_stats()
                     logger.warning(
-                        f"GPU缓冲区泄漏检测: 泄漏缓冲区数={len(leaked)}, "
-                        f"总已追踪={stats['count']}, 已泄漏={leaked}"
+                        f"GPU缓冲区泄漏检测: 泄漏缓冲区数={len(leaked)}, 总已追踪={stats['count']}, 已泄漏={leaked}"
                     )
                     # 自动清理泄漏的缓冲区
                     self.cleanup_timed_out_buffers()
@@ -330,15 +324,16 @@ class GPUBufferTracker:
         final_size = recent[-1]["total_size_bytes"]
 
         if final_size > initial_size * 1.5:  # 内存使用增长超过50%
-            logger.warning(f"GPU内存使用持续增长: {initial_size
-                                           / 1024
-                                           / 1024:.1f}MB -> {final_size /  # noqa: W504
-                                                             1024
-                                                             / 1024:.1f}MB")
+            logger.warning(
+                f"GPU内存使用持续增长: {initial_size / 1024 / 1024:.1f}MB -> {
+                    final_size  # noqa: W504
+                    / 1024
+                    / 1024:.1f}MB"
+            )
             # 尝试清理所有超时缓冲区
             self.cleanup_timed_out_buffers()
 
-    def force_check_on_shutdown(self) -> Dict[str, Any]:
+    def force_check_on_shutdown(self) -> dict[str, Any]:
         """引擎关闭时强制检查内存泄漏
 
         Returns:
@@ -397,13 +392,11 @@ class GPUBufferTracker:
         # v2.2.1修复: 只在释放失败时输出CRITICAL警告
         if len(failed) > 0:
             logger.critical(
-                f"GPU引擎关闭时{len(failed)}个缓冲区释放失败 "
-                f"(可能内存泄漏): {', '.join([f['name'] for f in failed])}"
+                f"GPU引擎关闭时{len(failed)}个缓冲区释放失败 (可能内存泄漏): {', '.join([f['name'] for f in failed])}"
             )
         elif remaining > 0:
             logger.info(
-                f"GPU引擎关闭时释放了{remaining}个缓冲区 "
-                f"(总大小: {total_size / 1024:.1f}KB): {', '.join(buffer_names)}"
+                f"GPU引擎关闭时释放了{remaining}个缓冲区 (总大小: {total_size / 1024:.1f}KB): {', '.join(buffer_names)}"
             )
         else:
             logger.info("GPU引擎关闭时所有缓冲区已正确释放")

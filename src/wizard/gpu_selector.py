@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 GPU选择器
 
 负责GPU设备的选择和配置。
 """
 
-import sys
 import os
-from typing import Tuple, List
+import sys
 
 from .selector_protocol import SelectorProtocol
 
@@ -21,7 +19,7 @@ if _project_root not in sys.path:
 class GPUSelector(SelectorProtocol):
     """GPU设备选择器"""
 
-    def select(self, compact: bool = False) -> Tuple[List[int], bool]:
+    def select(self, compact: bool = False) -> tuple[list[int], bool]:
         """选择GPU设备
 
         Args:
@@ -66,7 +64,7 @@ class GPUSelector(SelectorProtocol):
             else:
                 print("    [ERROR] 无效选项，请重新选择")
 
-    def _detect_gpus(self) -> List[dict]:
+    def _detect_gpus(self) -> list[dict]:
         """检测可用GPU设备"""
         try:
             from src.gpu.device import GPUDeviceDetector
@@ -77,7 +75,7 @@ class GPUSelector(SelectorProtocol):
             print(f"    [WARN] GPU检测失败: {e}")
             return []
 
-    def _select_single_gpu(self, gpu_info: List[dict]) -> Tuple[List[int], bool]:
+    def _select_single_gpu(self, gpu_info: list[dict]) -> tuple[list[int], bool]:
         """选择单个GPU"""
         print()
         print("    检测到以下 GPU 设备:")
@@ -101,7 +99,7 @@ class GPUSelector(SelectorProtocol):
             except ValueError:
                 print("    [ERROR] 请输入有效的数字")
 
-    def _select_multi_gpu(self, gpu_info: List[dict]) -> Tuple[List[int], bool]:
+    def _select_multi_gpu(self, gpu_info: list[dict]) -> tuple[list[int], bool]:
         """选择多个GPU"""
         print()
         print("    检测到以下 GPU 设备:")
@@ -130,7 +128,7 @@ class GPUSelector(SelectorProtocol):
 
         return self._select_multi_gpu(gpu_info)
 
-    def _select_compact(self) -> Tuple[List[int], bool]:
+    def _select_compact(self) -> tuple[list[int], bool]:
         """紧凑模式选择"""
         gpu_info = self._detect_gpus()
 

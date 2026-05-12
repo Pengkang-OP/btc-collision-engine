@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 性能监控模块 - 实时监控优化效果
 
@@ -10,13 +9,14 @@
 - 性能趋势分析
 """
 
-import time
-import threading
 import logging
-from typing import Dict, List, Optional, Any, Callable
+import threading
+import time
 from collections import deque
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 logger = logging.getLogger("PerformanceMonitor")
 
@@ -44,7 +44,7 @@ class PerformanceMetrics:
     # 错误统计
     error_count: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "timestamp": self.timestamp,
@@ -112,11 +112,11 @@ class OptimizationPerformanceMonitor:
         self._peak_speed = 0.0
         self._total_addresses = 0
         self._total_errors = 0
-        self._start_time: Optional[float] = None
+        self._start_time: float | None = None
 
         # 线程控制
         self._running = False
-        self._thread: Optional[threading.Thread] = None
+        self._thread: threading.Thread | None = None
         self._lock = threading.Lock()
 
         # 告警回调
@@ -158,7 +158,7 @@ class OptimizationPerformanceMonitor:
         memory_pool: bool = True,
         gpu_memory_pool: bool = False,
         memory_usage_mb: float = 0.0,
-        generation_times: Optional[List[float]] = None,
+        generation_times: list[float] | None = None,
         error_count: int = 0,
     ) -> None:
         """
@@ -218,11 +218,9 @@ class OptimizationPerformanceMonitor:
             if self._peak_speed > 0 and speed < self._peak_speed * self.degradation_threshold:
                 self._on_performance_degradation(metrics)
 
-        logger.debug(
-            f"记录性能指标: speed={speed:.0f} addr/s, " f"optimization={optimization_enabled}"
-        )
+        logger.debug(f"记录性能指标: speed={speed:.0f} addr/s, optimization={optimization_enabled}")
 
-    def get_current_metrics(self) -> Optional[PerformanceMetrics]:
+    def get_current_metrics(self) -> PerformanceMetrics | None:
         """获取当前指标"""
         with self._lock:
             if self._metrics_history:
@@ -252,7 +250,7 @@ class OptimizationPerformanceMonitor:
             total_speed = sum(m.speed for m in recent_metrics)
             return total_speed / len(recent_metrics)
 
-    def get_performance_report(self) -> Dict[str, Any]:
+    def get_performance_report(self) -> dict[str, Any]:
         """
         获取性能报告
 
@@ -389,8 +387,7 @@ class OptimizationPerformanceMonitor:
                 current = self.get_current_metrics()
                 if current:
                     logger.debug(
-                        f"当前性能: {current.speed:.0f} addr/s, "
-                        f"峰值: {self._peak_speed:.0f} addr/s"
+                        f"当前性能: {current.speed:.0f} addr/s, 峰值: {self._peak_speed:.0f} addr/s"
                     )
 
                 time.sleep(self.check_interval)
@@ -418,7 +415,7 @@ class OptimizationPerformanceMonitor:
 
 
 # 全局性能监控器实例
-_global_monitor: Optional[OptimizationPerformanceMonitor] = None
+_global_monitor: OptimizationPerformanceMonitor | None = None
 _monitor_lock = threading.Lock()
 
 

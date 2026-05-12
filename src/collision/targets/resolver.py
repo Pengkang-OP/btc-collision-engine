@@ -21,14 +21,14 @@
 """
 
 import os
-from typing import List, Set, Optional, Tuple, Dict
+
 from ...core.address_generator import P2PKHAddressGenerator
 from ...core.base58 import Base58
-from .cache import AddressCache
 
 # 导入日志配置
-from ...utils import init_logging, get_configured_logger
+from ...utils import get_configured_logger, init_logging
 from ...utils.encoding_utils import EncodingUtils
+from .cache import AddressCache
 
 # 初始化日志系统
 init_logging()
@@ -65,7 +65,7 @@ def _bech32_hrp_expand(hrp: str) -> list:
     return [ord(c) >> 5 for c in hrp] + [0] + [ord(c) & 31 for c in hrp]
 
 
-def _bech32_verify_checksum(hrp: str, data: list) -> Optional[int]:
+def _bech32_verify_checksum(hrp: str, data: list) -> int | None:
     """验证 Bech32/Bech32m 校验和，返回编码常量 (1=bech32, 0x2bc830a3=bech32m) 或 None"""
     const = _bech32_polymod(_bech32_hrp_expand(hrp) + data)
     if const == _BECH32_CONST:
@@ -75,7 +75,7 @@ def _bech32_verify_checksum(hrp: str, data: list) -> Optional[int]:
     return None
 
 
-def _convertbits(data, from_bits: int, to_bits: int, pad: bool = True) -> Optional[list]:
+def _convertbits(data, from_bits: int, to_bits: int, pad: bool = True) -> list | None:
     """5-bit <-> 8-bit 位转换（BIP-173 convertbits）"""
     acc = 0
     bits = 0
@@ -98,7 +98,7 @@ def _convertbits(data, from_bits: int, to_bits: int, pad: bool = True) -> Option
     return result
 
 
-def bech32_decode(bech: str) -> Tuple[Optional[str], Optional[list], Optional[int]]:
+def bech32_decode(bech: str) -> tuple[str | None, list | None, int | None]:
     """解码 Bech32/Bech32m 字符串
 
     Args:
@@ -137,7 +137,7 @@ def bech32_decode(bech: str) -> Tuple[Optional[str], Optional[list], Optional[in
     return hrp, decoded[:-6], enc
 
 
-def decode_segwit_address(hrp: str, addr: str) -> Tuple[Optional[int], Optional[bytes]]:
+def decode_segwit_address(hrp: str, addr: str) -> tuple[int | None, bytes | None]:
     """解码 SegWit 地址，提取 witness version 和 witness program
 
     支持:
@@ -311,7 +311,7 @@ class TargetResolver:
 
         return "unknown"
 
-    def resolve_multiple(self, inputs: List[str]) -> Dict[str, Optional[str]]:
+    def resolve_multiple(self, inputs: list[str]) -> dict[str, str | None]:
         """resolve_batch的别名方法,保持向后兼容
 
         注意: 此方法只返回有效结果(过滤掉None)
@@ -320,12 +320,11 @@ class TargetResolver:
         # 过滤掉None结果,只返回有效解析的地址
         return {k: v for k, v in all_results.items() if v is not None}
 
-
     # ========================================================================
     # 辅助函数 - 拆分自 resolve
     # ========================================================================
 
-    def _resolve_p2pkh_address(self, input_str: str) -> Optional[str]:
+    def _resolve_p2pkh_address(self, input_str: str) -> str | None:
         """解析P2PKH地址"""
         try:
             version, payload = Base58.check_decode(input_str)
@@ -339,7 +338,7 @@ class TargetResolver:
         except Exception:
             return None
 
-    def _resolve_p2sh_address(self, input_str: str) -> Optional[str]:
+    def _resolve_p2sh_address(self, input_str: str) -> str | None:
         """解析P2SH地址"""
         try:
             version, payload = Base58.check_decode(input_str)
@@ -358,7 +357,7 @@ class TargetResolver:
             logger.error(f"P2SH地址转换异常: {input_str} - {type(e).__name__}: {e}")
             return None
 
-    def _resolve_bech32_address(self, input_str: str) -> Optional[str]:
+    def _resolve_bech32_address(self, input_str: str) -> str | None:
         """解析Bech32地址"""
         try:
             hrp = "bc" if input_str.lower().startswith("bc1") else "tb"
@@ -383,7 +382,7 @@ class TargetResolver:
             logger.error(f"Bech32地址转换异常: {input_str} - {type(e).__name__}: {e}")
             return None
 
-    def _resolve_taproot_address(self, input_str: str) -> Optional[str]:
+    def _resolve_taproot_address(self, input_str: str) -> str | None:
         """解析Taproot地址"""
         try:
             hrp = "bc" if input_str.lower().startswith("bc1") else "tb"
@@ -395,7 +394,7 @@ class TargetResolver:
                 logger.warning(f"Taproot期望witness version 1, 当前={witness_version}")
                 return None
             if len(witness_program) != 32:
-                logger.warning(f"Taproot witness program应为32字节")
+                logger.warning("Taproot witness program应为32字节")
                 return None
             address = Base58.check_encode(0x00, witness_program)
             if self.cache:
@@ -406,12 +405,15 @@ class TargetResolver:
             logger.error(f"Taproot地址转换异常: {input_str} - {type(e).__name__}: {e}")
             return None
 
-    def _resolve_wif(self, input_str: str) -> Optional[str]:
+    def _resolve_wif(self, input_str: str) -> str | None:
         """解析WIF私钥"""
         try:
             from ...core.wif import WIF
+
             private_key, compressed = WIF.decode(input_str)
-            public_key = self.generator.private_key_to_public_key(private_key, compressed=compressed)
+            public_key = self.generator.private_key_to_public_key(
+                private_key, compressed=compressed
+            )
             address = self.generator.public_key_to_address(public_key)
             if self.cache:
                 self.cache.put(input_str, address)
@@ -421,7 +423,7 @@ class TargetResolver:
             logger.error(f"WIF解析异常: {input_str} - {type(e).__name__}: {e}")
             return None
 
-    def _resolve_pubkey(self, input_str: str) -> Optional[str]:
+    def _resolve_pubkey(self, input_str: str) -> str | None:
         """解析公钥"""
         try:
             public_key = bytes.fromhex(input_str)
@@ -434,10 +436,11 @@ class TargetResolver:
             logger.error(f"公钥解析异常: {input_str} - {type(e).__name__}: {e}")
             return None
 
-    def _resolve_hash160(self, input_str: str) -> Optional[str]:
+    def _resolve_hash160(self, input_str: str) -> str | None:
         """解析Hash160"""
         try:
             from ...core.hash_utils import HashUtils
+
             hash160 = bytes.fromhex(input_str)
             address = HashUtils.hash160_to_address(hash160)
             if self.cache:
@@ -448,8 +451,7 @@ class TargetResolver:
             logger.error(f"Hash160解析异常: {input_str} - {type(e).__name__}: {e}")
             return None
 
-
-    def resolve(self, input_str: str) -> Optional[str]:
+    def resolve(self, input_str: str) -> str | None:
         """
         将任意格式输入解析为 P2PKH 地址,解析失败返回 None
         """
@@ -484,7 +486,7 @@ class TargetResolver:
         logger.warning(f"未知输入格式: {input_str[:20]}...")
         return None
 
-    def resolve_batch(self, inputs: List[str]) -> Dict[str, Optional[str]]:
+    def resolve_batch(self, inputs: list[str]) -> dict[str, str | None]:
         """
         批量解析多个输入字符串
 
@@ -496,8 +498,8 @@ class TargetResolver:
         """
         logger.info(f"开始批量解析: 总数={len(inputs)}")
 
-        results: Dict[str, Optional[str]] = {}
-        to_resolve: List[str] = []
+        results: dict[str, str | None] = {}
+        to_resolve: list[str] = []
 
         # 第一遍:检查缓存
         for inp in inputs:
@@ -543,7 +545,7 @@ class TargetResolver:
 
         return results
 
-    def load_from_file(self, filepath: str) -> Set[str]:
+    def load_from_file(self, filepath: str) -> set[str]:
         """
         从文件加载目标地址集合
 
@@ -553,7 +555,7 @@ class TargetResolver:
         返回:
             有效P2PKH地址集合
         """
-        addresses: Set[str] = set()
+        addresses: set[str] = set()
 
         # 获取真实路径
         real_path = os.path.realpath(filepath)
@@ -649,7 +651,7 @@ class TargetResolver:
 
         return addresses
 
-    def get_cache_stats(self) -> Optional[Dict]:
+    def get_cache_stats(self) -> dict | None:
         """
         获取缓存统计信息
 

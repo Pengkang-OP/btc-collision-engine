@@ -18,9 +18,10 @@
 SHA256/RIPEMD160/secp256k1 等加密/哈希运算的精度。
 """
 
-from ..utils import get_configured_logger
 import re
-from typing import Any, Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
+
+from ..utils import get_configured_logger
 
 logger = get_configured_logger("AMDOptimizer")
 
@@ -79,7 +80,7 @@ class AmdDriverDetector:
     MIN_ADRENALIN_MINOR = 10
     RECOMMENDED_ADRENALIN_YEAR = 25  # Adrenalin 25.x (最新推荐)
 
-    def __init__(self, device_info: dict, engine_logger: Optional[Any] = None) -> None:
+    def __init__(self, device_info: dict, engine_logger: Any | None = None) -> None:
         self._device_info = device_info
         self._logger = engine_logger or logger
 
@@ -170,7 +171,7 @@ class AmdDriverDetector:
         return None, None
 
     @staticmethod
-    def _parse_rocm_major(version_str: str) -> Optional[int]:
+    def _parse_rocm_major(version_str: str) -> int | None:
         """从 ROCm 版本字符串中解析主版本号（常规调用）"""
         match = re.search(r"(\d+)\.\d+", version_str)
         if match:
@@ -475,7 +476,7 @@ class AmdArchDetector:
         ),
     ]
 
-    def __init__(self, device_info: dict, engine_logger: Optional[Any] = None) -> None:
+    def __init__(self, device_info: dict, engine_logger: Any | None = None) -> None:
         self._device_info = device_info
         self._logger = engine_logger or logger
 
@@ -530,7 +531,7 @@ class AmdWavefrontValidator:
     不对齐时记录 warning 并建议调整，不抛出异常。
     """
 
-    def __init__(self, arch_info: dict, engine_logger: Optional[Any] = None) -> None:
+    def __init__(self, arch_info: dict, engine_logger: Any | None = None) -> None:
         self._arch_info = arch_info
         self._logger = engine_logger or logger
         self._wavefront_size = arch_info.get("wavefront_size", 64)
@@ -618,7 +619,7 @@ class AmdMemoryOptimizer:
     _GDDR5_ARCHS = {"GCN1.0", "GCN3.0"}
 
     def __init__(
-        self, device_info: dict, arch_info: dict, engine_logger: Optional[Any] = None
+        self, device_info: dict, arch_info: dict, engine_logger: Any | None = None
     ) -> None:
         self._device_info = device_info
         self._arch_info = arch_info
@@ -715,7 +716,7 @@ class AmdGPUOptimizer:
     """
 
     def __init__(
-        self, device_info: dict, config: Optional[dict] = None, engine_logger: Optional[Any] = None
+        self, device_info: dict, config: dict | None = None, engine_logger: Any | None = None
     ) -> None:
         self._device_info = device_info if isinstance(device_info, dict) else {}
         self._config = config or {}
@@ -723,10 +724,10 @@ class AmdGPUOptimizer:
         self._rate_logger = _RateLimitedLogger(self._logger)
 
         # 内部组件（防御性初始化，默认为 None）
-        self._driver_info: Optional[dict] = None
-        self._arch_info: Optional[dict] = None
-        self._wavefront_result: Optional[dict] = None
-        self._memory_config: Optional[dict] = None
+        self._driver_info: dict | None = None
+        self._arch_info: dict | None = None
+        self._wavefront_result: dict | None = None
+        self._memory_config: dict | None = None
 
     # ------------------------------------------------------------------
     # 公共接口
@@ -744,7 +745,7 @@ class AmdGPUOptimizer:
         self._logger.info("🔧 开始应用 AMD GPU 特殊优化")
         self._logger.info("=" * 60)
 
-        result: Dict[str, Any] = {}
+        result: dict[str, Any] = {}
 
         # 1. 驱动版本检测
         try:
@@ -761,8 +762,7 @@ class AmdGPUOptimizer:
             if version_str:
                 sufficient = self._driver_info.get("is_sufficient", False)
                 self._logger.info(
-                    f"✅ AMD 驱动版本: {version_str}（类型: {driver_type}，"
-                    f"版本{'充足' if sufficient else '较旧'}）"
+                    f"✅ AMD 驱动版本: {version_str}（类型: {driver_type}，版本{'充足' if sufficient else '较旧'}）"
                 )
             else:
                 self._logger.warning(f"⚠️ 无法检测 AMD 驱动版本（类型: {driver_type}）")
@@ -772,15 +772,13 @@ class AmdGPUOptimizer:
 
         except (OSError, FileNotFoundError) as e:
             self._logger.warning(
-                f"⚠️ AMD 驱动检测系统错误（非致命）: {type(e).__name__}: {e}\n"
-                "   驱动版本信息将不可用"
+                f"⚠️ AMD 驱动检测系统错误（非致命）: {type(e).__name__}: {e}\n   驱动版本信息将不可用"
             )
             self._driver_info = {}
             result["driver"] = {}
         except Exception as e:
             self._logger.warning(
-                f"⚠️ AMD 驱动检测失败（非致命）: {type(e).__name__}: {e}\n"
-                "   驱动版本信息将不可用"
+                f"⚠️ AMD 驱动检测失败（非致命）: {type(e).__name__}: {e}\n   驱动版本信息将不可用"
             )
             self._driver_info = {}
             result["driver"] = {}
@@ -853,15 +851,13 @@ class AmdGPUOptimizer:
 
         except (ValueError, TypeError) as e:
             self._logger.warning(
-                f"⚠️ AMD Wavefront 验证参数异常（非致命）: {type(e).__name__}: {e}\n"
-                "   Wavefront 对齐将跳过"
+                f"⚠️ AMD Wavefront 验证参数异常（非致命）: {type(e).__name__}: {e}\n   Wavefront 对齐将跳过"
             )
             self._wavefront_result = {}
             result["wavefront"] = {}
         except Exception as e:
             self._logger.warning(
-                f"⚠️ AMD Wavefront 验证失败（非致命）: {type(e).__name__}: {e}\n"
-                "   Wavefront 对齐将跳过"
+                f"⚠️ AMD Wavefront 验证失败（非致命）: {type(e).__name__}: {e}\n   Wavefront 对齐将跳过"
             )
             self._wavefront_result = {}
             result["wavefront"] = {}
@@ -892,8 +888,7 @@ class AmdGPUOptimizer:
 
         except (ValueError, KeyError, TypeError) as e:
             self._logger.warning(
-                f"⚠️ AMD 显存优化配置数据异常（非致命）: {type(e).__name__}: {e}\n"
-                "   显存配置将使用保守默认值"
+                f"⚠️ AMD 显存优化配置数据异常（非致命）: {type(e).__name__}: {e}\n   显存配置将使用保守默认值"
             )
             self._memory_config = {
                 "memory_ratio": 0.60,
@@ -905,8 +900,7 @@ class AmdGPUOptimizer:
             result["memory"] = self._memory_config
         except Exception as e:
             self._logger.warning(
-                f"⚠️ AMD 显存优化配置失败（非致命）: {type(e).__name__}: {e}\n"
-                "   显存配置将使用保守默认值"
+                f"⚠️ AMD 显存优化配置失败（非致命）: {type(e).__name__}: {e}\n   显存配置将使用保守默认值"
             )
             self._memory_config = {
                 "memory_ratio": 0.60,

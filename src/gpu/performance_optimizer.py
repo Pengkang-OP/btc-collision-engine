@@ -7,15 +7,14 @@
 4. 防止内存溢出和资源竞争
 """
 
+import threading
 import time
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, cast
 
 # P3-5: 统一日志获取
 from ..utils import get_configured_logger
-import threading
-from typing import Dict, Any, Optional, List, Tuple, cast
-from dataclasses import dataclass, field
-from enum import Enum
-
 from .constants import clamp_batch_size
 
 logger = get_configured_logger("GPUPerformanceOptimizer")
@@ -25,12 +24,12 @@ logger = get_configured_logger("GPUPerformanceOptimizer")
 # v6.1 修复: 统一使用乘法增长/减少，对称调整
 # 减少: batch_size * reduction_ratio (如 0.75)
 # 增长: batch_size * growth_ratio (如 1.25)
-VENDOR_ADJUST_STRATEGY: Dict[str, Dict[str, float]] = {
+VENDOR_ADJUST_STRATEGY: dict[str, dict[str, float]] = {
     "nvidia": {"growth_ratio": 1.25, "reduction_ratio": 0.75},  # 对称: 增长25%, 减少25%
-    "amd": {"growth_ratio": 1.20, "reduction_ratio": 0.80},    # 对称: 增长20%, 减少20%
+    "amd": {"growth_ratio": 1.20, "reduction_ratio": 0.80},  # 对称: 增长20%, 减少20%
     "intel": {"growth_ratio": 1.20, "reduction_ratio": 0.80},  # 对称: 增长20%, 减少20%
 }
-DEFAULT_ADJUST_STRATEGY: Dict[str, float] = {"growth_ratio": 1.15, "reduction_ratio": 0.85}
+DEFAULT_ADJUST_STRATEGY: dict[str, float] = {"growth_ratio": 1.15, "reduction_ratio": 0.85}
 
 
 class GPUVendor(Enum):
@@ -98,8 +97,8 @@ class GPUPerformanceOptimizer:
 
     def __init__(self) -> None:
         self._lock = threading.Lock()
-        self._metrics_history: List[PerformanceMetrics] = []
-        self._current_profile: Optional[GPUProfile] = None
+        self._metrics_history: list[PerformanceMetrics] = []
+        self._current_profile: GPUProfile | None = None
         self._vendor_profiles = self._init_vendor_profiles()
         self._performance_degraded = False
         self._adjustment_count = 0
@@ -109,7 +108,7 @@ class GPUPerformanceOptimizer:
 
         logger.info("GPU性能优化器初始化完成")
 
-    def _init_vendor_profiles(self) -> Dict[GPUVendor, GPUProfile]:
+    def _init_vendor_profiles(self) -> dict[GPUVendor, GPUProfile]:
         """初始化各厂商默认配置"""
         return {
             GPUVendor.NVIDIA: GPUProfile(
@@ -266,7 +265,7 @@ class GPUPerformanceOptimizer:
         current_batch_size: int,
         error_rate: float = 0.0,
         engine: Any = None,
-    ) -> Tuple[int, Dict[str, Any]]:
+    ) -> tuple[int, dict[str, Any]]:
         """分析性能数据并调整参数
 
         Args:
@@ -352,8 +351,7 @@ class GPUPerformanceOptimizer:
                 deficit_ratio = min_target / max(gpu_utilization, 0.1)
                 growth_ratio = min(1.5, 1.2 * deficit_ratio)  # 最多1.5倍增长
                 logger.info(
-                    f"GPU利用率不足({gpu_utilization:.1%} < {min_target:.1%})，"
-                    f"使用激进增长: *{growth_ratio:.2f}"
+                    f"GPU利用率不足({gpu_utilization:.1%} < {min_target:.1%})，使用激进增长: *{growth_ratio:.2f}"
                 )
             else:
                 growth_ratio = strategy.get("growth_ratio", 1.20)
@@ -361,10 +359,12 @@ class GPUPerformanceOptimizer:
 
             # v6.2 修复: 减少触发条件改为 AND 逻辑（更严格）
             # 只有错误率过高 AND 执行时间过长两个条件都满足才减少
-            if error_rate > profile.error_rate_threshold and avg_execution_time > profile.slow_execution_threshold_ms:
+            if (
+                error_rate > profile.error_rate_threshold
+                and avg_execution_time > profile.slow_execution_threshold_ms
+            ):
                 new_batch_size = max(
-                    profile.min_batch_size,
-                    int(current_batch_size * reduction_ratio)
+                    profile.min_batch_size, int(current_batch_size * reduction_ratio)
                 )
                 adjustments["performance_degraded"] = {
                     "error_rate": error_rate,
@@ -387,8 +387,7 @@ class GPUPerformanceOptimizer:
                 and error_rate < profile.error_rate_threshold * 2.0
             ) or (gpu_utilization > 0 and gpu_utilization < min_target):
                 new_batch_size = min(
-                    profile.max_batch_size_limit,
-                    int(current_batch_size * growth_ratio)
+                    profile.max_batch_size_limit, int(current_batch_size * growth_ratio)
                 )
                 adjustments["performance_good"] = {
                     "avg_time_ms": avg_execution_time,
@@ -399,8 +398,7 @@ class GPUPerformanceOptimizer:
                     "new_batch": new_batch_size,
                 }
                 logger.info(
-                    f"性能良好，"
-                    f"增大batch: {current_batch_size} -> {new_batch_size} (*{growth_ratio})"
+                    f"性能良好，增大batch: {current_batch_size} -> {new_batch_size} (*{growth_ratio})"
                 )
 
             # ---- v6.1 修复: 应用范围限制 ----
@@ -431,19 +429,18 @@ class GPUPerformanceOptimizer:
                         }
                         new_batch_size = recovery_batch
                         logger.info(
-                            f"batch_size 恢复: {new_batch_size} -> {recovery_batch} "
-                            f"(初始值: {initial_batch})"
+                            f"batch_size 恢复: {new_batch_size} -> {recovery_batch} (初始值: {initial_batch})"
                         )
 
             # 4. 记录调整
             if new_batch_size != current_batch_size:
                 self._adjustment_count += 1
                 self._last_adjustment_time = now
-                cast(Dict[str, Any], adjustments)["adjustment_count"] = self._adjustment_count
+                cast(dict[str, Any], adjustments)["adjustment_count"] = self._adjustment_count
 
             return new_batch_size, adjustments
 
-    def get_optimization_report(self) -> Dict[str, Any]:
+    def get_optimization_report(self) -> dict[str, Any]:
         """获取优化报告"""
         if not self._current_profile:
             return {"status": "no_profile"}
@@ -492,9 +489,9 @@ class GPUPerformanceOptimizer:
                 "recommendations": self._generate_recommendations(),
             }
 
-    def _generate_recommendations(self) -> List[str]:
+    def _generate_recommendations(self) -> list[str]:
         """生成优化建议"""
-        recommendations: List[str] = []
+        recommendations: list[str] = []
 
         if not self._current_profile or not self._metrics_history:
             return recommendations

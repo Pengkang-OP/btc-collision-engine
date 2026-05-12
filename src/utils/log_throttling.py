@@ -1,13 +1,13 @@
-# -*- coding: utf-8 -*-
 """日志频率控制工具
 
 提供统一的错误日志频率控制策略，避免日志泛滥。
 """
 
-import time
 import logging
-from typing import Any, Callable, Dict, Optional
+import time
+from collections.abc import Callable
 from functools import wraps
+from typing import Any
 
 
 class RateLimitedLogger:
@@ -30,10 +30,10 @@ class RateLimitedLogger:
         """
         self.logger = logging.getLogger(name)
         self.default_cooldown = default_cooldown
-        self._last_log_time: Dict[str, float] = {}
+        self._last_log_time: dict[str, float] = {}
 
     def error_limited(
-        self, message: str, cooldown: Optional[int] = None, *args: Any, **kwargs: Any
+        self, message: str, cooldown: int | None = None, *args: Any, **kwargs: Any
     ) -> None:
         """频率限制的error日志
 
@@ -53,7 +53,7 @@ class RateLimitedLogger:
             self._last_log_time[message] = current_time
 
     def warning_limited(
-        self, message: str, cooldown: Optional[int] = None, *args: Any, **kwargs: Any
+        self, message: str, cooldown: int | None = None, *args: Any, **kwargs: Any
     ) -> None:
         """频率限制的warning日志
 
@@ -94,7 +94,7 @@ def rate_limited_log(cooldown: int = 60, level: str = "error") -> Callable:
     """
 
     def decorator(func: Callable) -> Callable:
-        last_log_time: Dict[str, float] = {}
+        last_log_time: dict[str, float] = {}
 
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:

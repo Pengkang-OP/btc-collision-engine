@@ -6,17 +6,16 @@ DEF-2修复: 使用 kernel_impl.compile_kernel_with_retry() 共享重试逻辑
 """
 
 import hashlib
-from typing import Dict, Any, List, Optional, cast  # noqa: F401
+from typing import Any, Dict, List, Optional, cast  # noqa: F401
 
 # P3-5: 统一日志获取
 from ..utils import get_configured_logger
-
 from .device import GPUDevice, identify_vendor
-from .vendors.base import GPUVendorBase
-from .vendors.nvidia import NVIDIAGPUVendor
-from .vendors.amd import AMDGPUVendor
-from .vendors.intel import IntelGPUVendor
 from .kernel_impl import compile_kernel_with_retry  # DEF-2修复: 共享重试函数
+from .vendors.amd import AMDGPUVendor
+from .vendors.base import GPUVendorBase
+from .vendors.intel import IntelGPUVendor
+from .vendors.nvidia import NVIDIAGPUVendor
 
 logger = get_configured_logger("GPUContext")
 
@@ -24,7 +23,7 @@ logger = get_configured_logger("GPUContext")
 # 厂商编译选项配置
 # 注意: 加密/哈希运算（椭圆曲线、SHA256、RIPEMD160）不使用 -cl-fast-relaxed-math，
 # 快速数学优化会破坏加密精度，仅 NVIDIA 在验证稳定的情况下保留。
-VENDOR_BUILD_OPTIONS: Dict[str, Dict[str, Any]] = {
+VENDOR_BUILD_OPTIONS: dict[str, dict[str, Any]] = {
     "nvidia": {
         "options": ["-cl-fast-relaxed-math"],  # NVIDIA: 快速数学经测试可接受
         "cl_version": None,  # NVIDIA默认CL1.2即可
@@ -69,11 +68,10 @@ class GPUContext:
         # 内核编译缓存: source_hash -> compiled_program
         # OpenCL Program 不能跨 context 共享，每个 context 独立编译。
         # 但对于同厂商同源码的多次编译请求，使用源码哈希避免重复编译。
-        self._kernel_cache: Dict[str, Any] = {}
+        self._kernel_cache: dict[str, Any] = {}
 
         logger.info(
-            f"GPU上下文已创建: {device.device_info.get('name', 'Unknown')} "
-            f"({self.vendor_handler.get_vendor_name()})"
+            f"GPU上下文已创建: {device.device_info.get('name', 'Unknown')} ({self.vendor_handler.get_vendor_name()})"
         )
 
     def _create_vendor_handler(self) -> GPUVendorBase:
@@ -174,8 +172,7 @@ class GPUContext:
         # 检查缓存
         if cache_key in self._kernel_cache:
             logger.info(
-                f"复用已编译内核 [厂商={self.vendor_handler.get_vendor_name()}, "
-                f"source_hash={source_hash}]"
+                f"复用已编译内核 [厂商={self.vendor_handler.get_vendor_name()}, source_hash={source_hash}]"
             )
             self.program = self._kernel_cache[cache_key]
             return self.program
@@ -233,10 +230,9 @@ class GPUContext:
         # 从配置表获取编译选项
         vendor_cfg = VENDOR_BUILD_OPTIONS.get(vendor_name)
         if vendor_cfg is not None:
-            options: List[str] = vendor_cfg["options"][:]
+            options: list[str] = vendor_cfg["options"][:]
             logger.debug(
-                f"使用厂商编译配置 [{vendor_name}]: {' '.join(options)} "
-                f"— {vendor_cfg['description']}"
+                f"使用厂商编译配置 [{vendor_name}]: {' '.join(options)} — {vendor_cfg['description']}"
             )
             return " ".join(options)
 

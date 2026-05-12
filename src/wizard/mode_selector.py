@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 模式选择器
 
 负责碰撞模式的选择和配置。
 """
 
-import sys
 import os
-from typing import Tuple, Optional
+import sys
 
 from .selector_protocol import SelectorProtocol
 
@@ -27,7 +25,7 @@ class ModeSelector(SelectorProtocol):
         "3": {"name": "brute_force", "desc": "暴力穷举（研究用途）"},
     }
 
-    def select(self, compact: bool = False) -> Tuple[str, Optional[str], Optional[str]]:
+    def select(self, compact: bool = False) -> tuple[str, str | None, str | None]:
         """选择碰撞模式
 
         Args:
@@ -75,7 +73,7 @@ class ModeSelector(SelectorProtocol):
 
         return mode_name, None, None
 
-    def _select_range(self) -> Tuple[str, str, str]:
+    def _select_range(self) -> tuple[str, str, str]:
         """选择范围模式参数"""
         print()
         start_key = input("    请输入起始私钥 (十六进制): ").strip()
@@ -98,7 +96,7 @@ class ModeSelector(SelectorProtocol):
 
         return "range", start_key, end_key
 
-    def _select_brute_force(self) -> Tuple[str, str, None]:
+    def _select_brute_force(self) -> tuple[str, str, None]:
         """选择暴力穷举模式参数"""
         print()
         start_key = input("    请输入起始私钥 (十六进制): ").strip()
@@ -115,6 +113,6 @@ class ModeSelector(SelectorProtocol):
 
         return "brute_force", start_key, None
 
-    def _select_compact(self) -> Tuple[str, Optional[str], Optional[str]]:
+    def _select_compact(self) -> tuple[str, str | None, str | None]:
         """紧凑模式选择"""
         return "random", None, None

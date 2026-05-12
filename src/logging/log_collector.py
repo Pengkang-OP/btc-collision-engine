@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 日志收集器
 
@@ -7,10 +6,12 @@
 """
 
 import logging
-import threading
 import queue
+import threading
 import time
-from typing import Dict, Any, Optional, Callable
+from collections.abc import Callable
+from typing import Any
+
 from .events import LogEvent, LogEventType
 
 
@@ -26,10 +27,10 @@ class LogCollector:
 
     def __init__(self, max_queue_size: int = 1000):
         self._queue: queue.Queue = queue.Queue(maxsize=max_queue_size)
-        self._handlers: Dict[str, Callable] = {}
+        self._handlers: dict[str, Callable] = {}
         self._running = False
-        self._collector_thread: Optional[threading.Thread] = None
-        self._log_handler: Optional[_CollectorLogHandler] = None
+        self._collector_thread: threading.Thread | None = None
+        self._log_handler: _CollectorLogHandler | None = None
         self._setup_logging_handler()
 
     def _setup_logging_handler(self):
@@ -66,7 +67,7 @@ class LogCollector:
             except Exception:
                 pass
 
-    def _process_item(self, item: Dict[str, Any]):
+    def _process_item(self, item: dict[str, Any]):
         """处理收集到的项目"""
         event_type = item.get("event_type", LogEventType.STATUS_UPDATE)
         data = item.get("data", {})
@@ -88,7 +89,7 @@ class LogCollector:
                 pass
 
     def collect_from_queue(
-        self, event_type: LogEventType, data: Dict[str, Any], source: str = "external"
+        self, event_type: LogEventType, data: dict[str, Any], source: str = "external"
     ):
         """从消息队列收集
 
@@ -126,7 +127,7 @@ class LogCollector:
         """取消注册事件处理器"""
         self._handlers.pop(event_type, None)
 
-    def attach_to_logger(self, logger_name: Optional[str] = None):
+    def attach_to_logger(self, logger_name: str | None = None):
         """附加到Python logger
 
         Args:
@@ -137,7 +138,7 @@ class LogCollector:
             logger.addHandler(self._log_handler)
         logger.setLevel(logging.DEBUG)
 
-    def detach_from_logger(self, logger_name: Optional[str] = None):
+    def detach_from_logger(self, logger_name: str | None = None):
         """从Python logger分离
 
         Args:

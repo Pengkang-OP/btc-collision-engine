@@ -10,7 +10,6 @@ import locale
 import logging
 import os
 import sys
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +62,7 @@ def detect_system_language() -> str:
             return normalized
 
     # 2. 系统平台检测
-    detected: Optional[str] = None
+    detected: str | None = None
 
     if sys.platform == "win32":
         detected = _detect_windows_language()
@@ -95,7 +94,7 @@ def detect_system_language() -> str:
 # ------------------------------------------------------------------
 
 
-def _detect_windows_language() -> Optional[str]:
+def _detect_windows_language() -> str | None:
     """
     通过 Windows API 检测用户界面语言。
 
@@ -136,7 +135,7 @@ def _detect_windows_language() -> Optional[str]:
 # ------------------------------------------------------------------
 
 
-def _detect_unix_language() -> Optional[str]:
+def _detect_unix_language() -> str | None:
     """
     通过 LANG / LC_ALL / LC_MESSAGES 环境变量检测语言。
 
@@ -155,7 +154,7 @@ def _detect_unix_language() -> Optional[str]:
     return None
 
 
-def _detect_env_language() -> Optional[str]:
+def _detect_env_language() -> str | None:
     """
     通用环境变量语言检测（跨平台备用）。
     """
@@ -174,7 +173,7 @@ def _detect_env_language() -> Optional[str]:
 # ------------------------------------------------------------------
 
 
-def _normalize_language_code(code: str) -> Optional[str]:
+def _normalize_language_code(code: str) -> str | None:
     """
     将各种格式的语言代码标准化为已知的语言代码。
 

@@ -5,8 +5,8 @@
 """
 
 from .base_search import BaseSearchMode
-from .random_search import RandomSearchMode
 from .brute_force_search import BruteForceSearchMode
+from .random_search import RandomSearchMode
 from .range_scan_search import RangeScanSearchMode
 
 __all__ = [

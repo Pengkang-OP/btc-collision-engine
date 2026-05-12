@@ -9,16 +9,17 @@
 跨平台编码兼容。
 """
 
-import os
-import json
 import csv
-import sqlite3
+import json
+import os
 import re
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+import sqlite3
+from collections.abc import Callable
 from datetime import datetime
+from typing import Any
 
 # 导入日志配置
-from ...utils import init_logging, get_configured_logger
+from ...utils import get_configured_logger, init_logging
 from ...utils.encoding_utils import EncodingUtils
 
 # 初始化日志系统
@@ -84,14 +85,12 @@ class AddressStorage:
         self.path = path
 
         # 确保目录存在
-        if storage_type in ("json", "csv"):
-            os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
-        elif storage_type == "sqlite":
+        if storage_type in ("json", "csv") or storage_type == "sqlite":
             os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
 
         logger.info(f"AddressStorage 初始化: 类型={storage_type}, 路径={path}")
 
-    def save_targets(self, targets: Set[str], metadata: Optional[Dict] = None) -> bool:
+    def save_targets(self, targets: set[str], metadata: dict | None = None) -> bool:
         """
         保存目标地址集合
 
@@ -116,7 +115,7 @@ class AddressStorage:
             logger.error(f"保存目标地址失败: {e}")
             return False
 
-    def load_targets(self) -> Tuple[Set[str], Optional[Dict]]:
+    def load_targets(self) -> tuple[set[str], dict | None]:
         """
         加载目标地址集合和元数据
 
@@ -137,7 +136,7 @@ class AddressStorage:
             logger.error(f"加载目标地址失败: {e}")
             return set(), None
 
-    def _save_json(self, targets: Set[str], metadata: Optional[Dict] = None) -> bool:
+    def _save_json(self, targets: set[str], metadata: dict | None = None) -> bool:
         """保存为JSON格式"""
         data = {
             "version": "1.0",
@@ -157,7 +156,7 @@ class AddressStorage:
             logger.error(f"JSON保存失败: {e}")
             return False
 
-    def _load_json(self) -> Tuple[Set[str], Optional[Dict]]:
+    def _load_json(self) -> tuple[set[str], dict | None]:
         """从JSON加载"""
         if not os.path.exists(self.path):
             logger.warning(f"文件不存在: {self.path}")
@@ -177,7 +176,7 @@ class AddressStorage:
             logger.error(f"JSON加载失败: {e}")
             return set(), None
 
-    def _save_sqlite(self, targets: Set[str], metadata: Optional[Dict] = None) -> bool:
+    def _save_sqlite(self, targets: set[str], metadata: dict | None = None) -> bool:
         """保存到SQLite数据库（带输入验证）"""
         # 输入验证
         validated_targets = set()
@@ -258,7 +257,7 @@ class AddressStorage:
         finally:
             conn.close()
 
-    def _load_sqlite(self) -> Tuple[Set[str], Optional[Dict]]:
+    def _load_sqlite(self) -> tuple[set[str], dict | None]:
         """从SQLite加载"""
         if not os.path.exists(self.path):
             logger.warning(f"数据库不存在: {self.path}")
@@ -292,7 +291,7 @@ class AddressStorage:
         finally:
             conn.close()
 
-    def _save_csv(self, targets: Set[str], metadata: Optional[Dict] = None) -> bool:
+    def _save_csv(self, targets: set[str], metadata: dict | None = None) -> bool:
         """保存为CSV格式"""
         try:
             # 使用统一的编码工具
@@ -323,7 +322,7 @@ class AddressStorage:
             logger.error(f"CSV保存失败: {e}")
             return False
 
-    def _load_csv(self) -> Tuple[Set[str], Optional[Dict]]:
+    def _load_csv(self) -> tuple[set[str], dict | None]:
         """从CSV加载"""
         if not os.path.exists(self.path):
             logger.warning(f"文件不存在: {self.path}")
@@ -357,7 +356,7 @@ class AddressStorage:
             logger.error(f"CSV加载失败: {e}")
             return set(), None
 
-    def export_csv(self, targets: Set[str], output_path: str) -> bool:
+    def export_csv(self, targets: set[str], output_path: str) -> bool:
         """
         导出为CSV文件(临时导出,不改变存储类型)
 
@@ -388,7 +387,7 @@ class AddressStorage:
             logger.error(f"CSV导出失败: {e}")
             return False
 
-    def get_storage_info(self) -> Dict[str, Any]:
+    def get_storage_info(self) -> dict[str, Any]:
         """
         获取存储信息
 
@@ -409,11 +408,11 @@ class AddressStorage:
     def import_addresses(
         self,
         source_path: str,
-        storage_dir: Optional[str] = None,
+        storage_dir: str | None = None,
         validate: bool = True,
         storage_type: str = "json",
-        progress_callback: Optional[Callable] = None,
-    ) -> Dict[str, Any]:
+        progress_callback: Callable | None = None,
+    ) -> dict[str, Any]:
         """
         从外部源导入地址并自动保存到持久化存储
 
@@ -598,7 +597,7 @@ class AddressStorage:
             logger.error(f"地址导入失败: {e}", exc_info=True)
             return result
 
-    def _read_json_source(self, file_path: str) -> List[str]:
+    def _read_json_source(self, file_path: str) -> list[str]:
         """从JSON文件读取地址"""
         try:
             content = EncodingUtils.read_file(file_path, encoding="utf-8", try_multiple=True)
@@ -626,7 +625,7 @@ class AddressStorage:
             logger.error(f"读取JSON源文件失败: {e}")
             return []
 
-    def _read_csv_source(self, file_path: str) -> List[str]:
+    def _read_csv_source(self, file_path: str) -> list[str]:
         """从CSV文件读取地址"""
         try:
             content = EncodingUtils.read_file(file_path, encoding="utf-8", try_multiple=True)
@@ -665,7 +664,7 @@ class AddressStorage:
             logger.error(f"读取CSV源文件失败: {e}")
             return []
 
-    def _read_text_source(self, file_path: str) -> List[str]:
+    def _read_text_source(self, file_path: str) -> list[str]:
         """从文本文件读取地址(每行一个地址)"""
         try:
             lines = EncodingUtils.read_file_lines(file_path, try_multiple=True)

@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 独立日志显示窗口
 
 创建一个独立的窗口来显示引擎执行的日志，与主交互界面分离。
 """
 
-import threading
+import logging
 import queue
+import threading
 import time
 import tkinter as tk
 from tkinter import scrolledtext, ttk
-import logging
-from typing import Optional, Any
+from typing import Any
 
 
 class LogWindow:
@@ -37,13 +36,13 @@ class LogWindow:
         self.title = title
         self.width = width
         self.height = height
-        self.log_queue: "queue.Queue[Any]" = queue.Queue()
-        self.root: Optional[Any] = None
-        self.text_area: Optional[Any] = None
-        self.filter_var: Optional[Any] = None
-        self.auto_scroll_var: Optional[Any] = None
+        self.log_queue: queue.Queue[Any] = queue.Queue()
+        self.root: Any | None = None
+        self.text_area: Any | None = None
+        self.filter_var: Any | None = None
+        self.auto_scroll_var: Any | None = None
         self.running: bool = False
-        self.update_thread: Optional[threading.Thread] = None
+        self.update_thread: threading.Thread | None = None
 
     def start(self) -> None:
         """启动日志窗口

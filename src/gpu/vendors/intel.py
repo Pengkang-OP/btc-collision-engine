@@ -13,14 +13,14 @@
 - hashcat #4356: Intel ARC A770 OpenCL Issues
 """
 
-from typing import Any, Dict, Optional
 import os
+import time
+from typing import Any
 
 # P3-5: 统一日志获取
 from ...utils import get_configured_logger
-import time
-from .base import GPUVendorBase
 from ..constants import PER_KEY_MEMORY_BYTES, align_batch_size
+from .base import GPUVendorBase
 
 logger = get_configured_logger("IntelVendor")
 
@@ -36,7 +36,7 @@ class _RateLimitedLogger:
         """
         self._logger = base_logger
         self._min_interval = min_interval
-        self._last_logged: Dict[str, float] = {}
+        self._last_logged: dict[str, float] = {}
 
     def _should_log(self, key: str) -> bool:
         now = time.time()
@@ -46,17 +46,17 @@ class _RateLimitedLogger:
             return True
         return False
 
-    def warning(self, msg: str, key: Optional[str] = None) -> None:
+    def warning(self, msg: str, key: str | None = None) -> None:
         k = key or msg[:80]
         if self._should_log(k):
             self._logger.warning(msg)
 
-    def info(self, msg: str, key: Optional[str] = None) -> None:
+    def info(self, msg: str, key: str | None = None) -> None:
         k = key or msg[:80]
         if self._should_log(k):
             self._logger.info(msg)
 
-    def error(self, msg: str, key: Optional[str] = None) -> None:
+    def error(self, msg: str, key: str | None = None) -> None:
         """error 级别不限流，始终输出"""
         self._logger.error(msg)
 
@@ -74,7 +74,7 @@ class IntelGPUVendor(GPUVendorBase):
     def get_vendor_name(self) -> str:
         return "Intel"
 
-    def apply_optimizations(self, device: Any, profile: Dict[str, Any]) -> None:
+    def apply_optimizations(self, device: Any, profile: dict[str, Any]) -> None:
         """
         应用Intel特定优化
 
@@ -146,7 +146,7 @@ class IntelGPUVendor(GPUVendorBase):
         # 6. 驱动特定优化
         if device.driver_optimization_flags.get("conservative_mode", False):
             _rate_logger.warning(
-                "Intel驱动保守模式: " "使用更小的batch_size和更严格的超时",
+                "Intel驱动保守模式: 使用更小的batch_size和更严格的超时",
                 key="intel_conservative_mode",
             )
 
@@ -158,7 +158,7 @@ class IntelGPUVendor(GPUVendorBase):
         # 最新 Arc 驱动 (v32.x+) 已部分修复，但仍建议保守启用 workaround。
         if "global_char_hang_bug" in known_issues:
             _rate_logger.warning(
-                "⚠️ Intel Arc存在global char* hang bug, " "已启用uint32 workaround",
+                "⚠️ Intel Arc存在global char* hang bug, 已启用uint32 workaround",
                 key="intel_known_hang_bug",
             )
 
@@ -170,7 +170,7 @@ class IntelGPUVendor(GPUVendorBase):
             key="intel_memory_efficiency",
         )
 
-    def calculate_batch_size(self, device: Any, profile: Dict[str, Any]) -> int:
+    def calculate_batch_size(self, device: Any, profile: dict[str, Any]) -> int:
         """
         计算Intel GPU的最优batch_size
 
@@ -195,9 +195,7 @@ class IntelGPUVendor(GPUVendorBase):
         optimal = align_batch_size(optimal)
 
         logger.info(
-            f"Intel batch_size计算: recommended={recommended}, "
-            f"mem_based={mem_based_max}, optimal={optimal} "
-            "(保守策略)"
+            f"Intel batch_size计算: recommended={recommended}, mem_based={mem_based_max}, optimal={optimal} (保守策略)"
         )
 
         return optimal
@@ -223,8 +221,7 @@ class IntelGPUVendor(GPUVendorBase):
                 # 检查是否为推荐版本
                 if (major, minor, build, revision) < (31, 0, 101, 4500):
                     _rate_logger.warning(
-                        f"⚠️ Intel驱动版本 {driver_version} 较旧，"
-                        "建议更新到 31.0.101.4500+ 以获得更好的稳定性",
+                        f"⚠️ Intel驱动版本 {driver_version} 较旧，建议更新到 31.0.101.4500+ 以获得更好的稳定性",
                         key=f"intel_driver_old_{driver_version}",
                     )
                 else:
@@ -237,7 +234,7 @@ class IntelGPUVendor(GPUVendorBase):
         except (ValueError, IndexError) as e:
             logger.debug(f"无法解析Intel驱动版本: {driver_version}, 错误: {e}")
 
-    def handle_errors(self, error: Exception, stats: Optional[Any] = None) -> bool:
+    def handle_errors(self, error: Exception, stats: Any | None = None) -> bool:
         """
         处理Intel GPU特定错误
 
@@ -271,20 +268,20 @@ class IntelGPUVendor(GPUVendorBase):
 
         return super().handle_errors(error, stats)
 
-    def apply_environment_optimizations(self) -> Dict[str, str]:
+    def apply_environment_optimizations(self) -> dict[str, str]:
         """
         应用环境变量优化 (v6.0 新增)
-        
+
         基于互联网研究的应用层优化:
         1. SYCL_DEVICE_FILTER: 强制使用OpenCL而非Level-Zero
         2. INTEL_XESS_MEMORY_COMPRESSION: 启用内存压缩
         3. OCL_CACHE_DIR: 设置编译缓存目录
-        
+
         Returns:
             Dict[str, str]: 应用的环境变量字典
         """
         applied = {}
-        
+
         # 1. 强制使用 OpenCL (非 Level-Zero)
         # 效果: 减少 12% 内核启动延迟
         # 来源: CSDN Intel Arc A770 驱动调优手记 (2026-05)
@@ -293,10 +290,9 @@ class IntelGPUVendor(GPUVendorBase):
             os.environ["SYCL_DEVICE_FILTER"] = "opencl:gpu"
             applied["SYCL_DEVICE_FILTER"] = "opencl:gpu"
             _rate_logger.info(
-                "✅ SYCL_DEVICE_FILTER=opencl:gpu (减少12%启动延迟)",
-                key="intel_sycl_filter"
+                "✅ SYCL_DEVICE_FILTER=opencl:gpu (减少12%启动延迟)", key="intel_sycl_filter"
             )
-        
+
         # 2. 启用 XeSS 内存压缩
         # 效果: 显存带宽节省 18%, 高分辨率下 +8% 性能
         # 来源: CSDN Intel Arc A770 驱动调优手记 (2026-05)
@@ -305,19 +301,19 @@ class IntelGPUVendor(GPUVendorBase):
             applied["INTEL_XESS_MEMORY_COMPRESSION"] = "1"
             _rate_logger.info(
                 "✅ 设置 INTEL_XESS_MEMORY_COMPRESSION=1 (启用内存压缩)",
-                key="intel_xess_compression"
+                key="intel_xess_compression",
             )
-        
+
         # 3. 禁用线程追踪 (提升性能)
         if "OCL_QUEUE_THREAD_TRACE" not in os.environ:
             os.environ["OCL_QUEUE_THREAD_TRACE"] = "0"
             applied["OCL_QUEUE_THREAD_TRACE"] = "0"
-        
+
         # 4. 禁用驱动调试输出
         if "IGDRCL_DEBUG_LEVEL" not in os.environ:
             os.environ["IGDRCL_DEBUG_LEVEL"] = "0"
             applied["IGDRCL_DEBUG_LEVEL"] = "0"
-        
+
         # 5. 设置 OpenCL 缓存目录
         if "OCL_CACHE_DIR" not in os.environ:
             if os.name == "nt":  # Windows
@@ -328,16 +324,15 @@ class IntelGPUVendor(GPUVendorBase):
             os.environ["OCL_CACHE_DIR"] = cache_dir
             applied["OCL_CACHE_DIR"] = cache_dir
             _rate_logger.info(
-                f"✅ 设置 OCL_CACHE_DIR={cache_dir} (编译缓存)",
-                key="intel_ocl_cache"
+                f"✅ 设置 OCL_CACHE_DIR={cache_dir} (编译缓存)", key="intel_ocl_cache"
             )
-        
+
         return applied
 
     def get_optimization_report(self) -> str:
         """
         生成 Intel Arc 优化报告
-        
+
         Returns:
             str: 格式化的优化报告
         """

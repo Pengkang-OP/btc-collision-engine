@@ -5,7 +5,7 @@
 
 import logging
 import threading
-from typing import Dict, Any
+from typing import Any
 
 from .config_manager import ConfigManager
 from .crypto_config import CryptoConfig
@@ -38,7 +38,8 @@ class ConfigCoordinator:
 
         # 初始化CryptoConfig,并传入ConfigManager引用
         self.crypto_config = CryptoConfig(
-            config_file=None, config_manager=self.config_manager  # 不再使用独立的配置文件
+            config_file=None,
+            config_manager=self.config_manager,  # 不再使用独立的配置文件
         )
 
         # 初始化GPUConfig(从ConfigManager读取配置)
@@ -106,7 +107,7 @@ class ConfigCoordinator:
         except Exception as e:
             logger.warning(f"Crypto配置同步失败: {e}")
 
-    def get_unified_config(self) -> Dict[str, Any]:
+    def get_unified_config(self) -> dict[str, Any]:
         """
         获取统一的配置视图（线程安全）
 
@@ -165,14 +166,14 @@ class ConfigCoordinator:
             else:
                 return self.config_manager.set(key, value)
 
-    def validate_all(self) -> Dict[str, Any]:
+    def validate_all(self) -> dict[str, Any]:
         """
         验证所有配置
 
         返回:
             验证错误字典,key为配置管理器名称,value为错误列表
         """
-        errors: Dict[str, Any] = {}
+        errors: dict[str, Any] = {}
 
         # 验证ConfigManager
         config_errors = self.config_manager.validate()
@@ -207,11 +208,11 @@ class ConfigCoordinator:
 
         return success
 
-    def get_gpu_config(self) -> Dict[str, Any]:
+    def get_gpu_config(self) -> dict[str, Any]:
         """获取GPU配置"""
         return self.gpu_config.get_gpu_config()
 
-    def get_crypto_config(self) -> Dict[str, Any]:
+    def get_crypto_config(self) -> dict[str, Any]:
         """获取Crypto配置"""
         return self.crypto_config.to_dict()
 

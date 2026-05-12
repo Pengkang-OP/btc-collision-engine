@@ -1,16 +1,14 @@
-# -*- coding: utf-8 -*-
 """比特币目标地址表 - 支持高效查询与比对"""
 
 import json
 import threading
-from typing import Dict, Set, Tuple, Optional, List
 from datetime import datetime
 from pathlib import Path
 
-from ..utils import init_logging, get_configured_logger
-from .wif import WIF
-from .optimized_address_generator import OptimizedP2PKHAddressGenerator
+from ..utils import get_configured_logger, init_logging
 from .hash_utils import HashUtils
+from .optimized_address_generator import OptimizedP2PKHAddressGenerator
+from .wif import WIF
 
 # 初始化日志系统
 init_logging()
@@ -42,8 +40,8 @@ class BitcoinTargetTable:
         参数:
             max_size: 最大目标地址数量，默认1000万
         """
-        self._hash160_set: Set[bytes] = set()
-        self._target_map: Dict[bytes, Dict] = {}
+        self._hash160_set: set[bytes] = set()
+        self._target_map: dict[bytes, dict] = {}
         self._lock = threading.RLock()
         self._max_size = max_size
 
@@ -83,7 +81,7 @@ class BitcoinTargetTable:
             if len(self._hash160_set) % 10000 == 0:
                 logger.info("已加载 %d 个目标地址", len(self._hash160_set))
 
-    def check_match(self, hash160: bytes) -> Tuple[bool, Optional[Dict]]:
+    def check_match(self, hash160: bytes) -> tuple[bool, dict | None]:
         """
         检查是否匹配目标地址 - O(1)时间复杂度
 
@@ -100,7 +98,7 @@ class BitcoinTargetTable:
                 return True, self._target_map.get(hash160)
             return False, None
 
-    def load_from_wif_list(self, wif_list: List[str]) -> int:
+    def load_from_wif_list(self, wif_list: list[str]) -> int:
         """
         从WIF列表批量加载目标地址
 
@@ -172,7 +170,7 @@ class BitcoinTargetTable:
 
     def _load_from_json(self, filepath: Path) -> int:
         """从JSON文件加载"""
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             data = json.load(f)
 
         if isinstance(data, list):
@@ -189,7 +187,7 @@ class BitcoinTargetTable:
         import csv
 
         wif_list = []
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 if "wif" in row:
@@ -199,12 +197,12 @@ class BitcoinTargetTable:
 
     def _load_from_txt(self, filepath: Path) -> int:
         """从TXT文件加载（每行一个WIF）"""
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             wif_list = [line.strip() for line in f if line.strip()]
 
         return self.load_from_wif_list(wif_list)
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """
         获取目标地址表统计信息
 

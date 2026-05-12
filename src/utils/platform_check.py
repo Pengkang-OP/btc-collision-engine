@@ -18,16 +18,16 @@
     ok, issues = checker.run_all_checks()
 """
 
-import sys
-import platform
 import locale
+import platform
 import shutil
+import sys
 import tempfile
 from pathlib import Path
-from typing import List, Tuple, Dict, Any, Optional
+from typing import Any
 
-from ..utils import init_logging, get_configured_logger
 from ..i18n import _t
+from ..utils import get_configured_logger, init_logging
 
 init_logging()
 logger = get_configured_logger("PlatformChecker")
@@ -63,7 +63,7 @@ class PlatformChecker:
     # Windows MAX_PATH 限制
     WINDOWS_MAX_PATH = 260
 
-    def __init__(self, project_root: Optional[str] = None) -> None:
+    def __init__(self, project_root: str | None = None) -> None:
         """初始化检查器
 
         Args:
@@ -72,7 +72,7 @@ class PlatformChecker:
         if project_root is None:
             project_root = str(Path(__file__).resolve().parent.parent.parent)
         self.project_root = Path(project_root)
-        self.results: List[CheckResult] = []
+        self.results: list[CheckResult] = []
 
     # -------------------------------------------------------------------------
     # 内部工具
@@ -318,7 +318,7 @@ class PlatformChecker:
     # 汇总入口
     # -------------------------------------------------------------------------
 
-    def run_all_checks(self) -> Tuple[bool, List[str]]:
+    def run_all_checks(self) -> tuple[bool, list[str]]:
         """运行所有检查，返回 (全部通过, 问题列表)"""
         self.results.clear()
 
@@ -335,17 +335,14 @@ class PlatformChecker:
         all_passed = len(issues) == 0
         return all_passed, issues
 
-    def get_platform_info(self) -> Dict[str, Any]:
+    def get_platform_info(self) -> dict[str, Any]:
         """返回平台信息摘要字典"""
         return {
             "os": platform.system(),
             "os_release": platform.release(),
             "os_version": platform.version(),
             "machine": platform.machine(),
-            "python_version": f"{
-                sys.version_info.major}.{
-                sys.version_info.minor}.{
-                sys.version_info.micro}",
+            "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
             "python_executable": sys.executable,
             "encoding_fs": sys.getfilesystemencoding(),
             "encoding_stdout": getattr(sys.stdout, "encoding", "unknown"),

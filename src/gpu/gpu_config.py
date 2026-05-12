@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """GPU 模块配置数据结构
 
 定义类型安全的配置 dataclass，替代嵌套 dict 配置传递模式。
@@ -13,7 +12,7 @@
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, Optional, Any
+from typing import Any
 
 
 @dataclass
@@ -29,7 +28,7 @@ class GPURecoveryConfig:
     auto_redistribute: bool = True
 
     @classmethod
-    def from_dict(cls, d: Optional[Dict[str, Any]] = None) -> "GPURecoveryConfig":
+    def from_dict(cls, d: dict[str, Any] | None = None) -> "GPURecoveryConfig":
         """从 dict 构造（兼容旧接口）"""
         if not d:
             return cls()
@@ -63,7 +62,7 @@ class DataMonitorConfig:
         return getattr(self, key, default)
 
     @classmethod
-    def from_dict(cls, d: Optional[Dict[str, Any]] = None) -> "DataMonitorConfig":
+    def from_dict(cls, d: dict[str, Any] | None = None) -> "DataMonitorConfig":
         """从 dict 构造"""
         if not d:
             return cls()
@@ -107,10 +106,10 @@ class MultiGPUConfig:
     workload_monitor_interval: int = 5
     auto_rebalance: bool = True
     auto_pause_on_critical: bool = False
-    per_device_config: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    per_device_config: dict[str, dict[str, Any]] = field(default_factory=dict)
 
     @classmethod
-    def from_dict(cls, d: Optional[Dict[str, Any]] = None) -> "MultiGPUConfig":
+    def from_dict(cls, d: dict[str, Any] | None = None) -> "MultiGPUConfig":
         """从 dict 构造（兼容旧接口，渐进式迁移用）
 
         Args:
@@ -144,12 +143,12 @@ class WorkerConfig:
         max_memory_mb: 最大内存使用 (MB)
     """
 
-    batch_size: Optional[int] = None
+    batch_size: int | None = None
     work_group_size: int = 256
-    max_memory_mb: Optional[int] = None
+    max_memory_mb: int | None = None
 
     @classmethod
-    def from_dict(cls, d: Optional[Dict[str, Any]] = None) -> "WorkerConfig":
+    def from_dict(cls, d: dict[str, Any] | None = None) -> "WorkerConfig":
         """从 dict 构造（兼容旧接口）"""
         if not d:
             return cls()
@@ -159,9 +158,9 @@ class WorkerConfig:
             max_memory_mb=d.get("max_memory_mb"),
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换回 dict（兼容需要 dict 的旧接口）"""
-        result: Dict[str, Any] = {
+        result: dict[str, Any] = {
             "batch_size": self.batch_size,
             "work_group_size": self.work_group_size,
         }

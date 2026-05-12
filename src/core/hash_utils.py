@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """哈希工具类"""
 
 import hashlib

@@ -1,28 +1,27 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 日志管理器
 
 日志处理模块的对外统一接口。
 """
 
-import sys
 import os
+import sys
 import threading
 import time
 from enum import Enum
-from typing import Optional, Dict, Any
+from typing import Any
 
 # 添加项目根目录到路径
 _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
+from .events import LogEvent, LogEventType  # noqa: E402
 from .log_collector import LogCollector  # noqa: E402
 from .log_processor import LogProcessor, SensitiveDataFilter  # noqa: E402
-from .log_storage import LogStorage  # noqa: E402
 from .log_query import LogQuery  # noqa: E402
-from .events import LogEvent, LogEventType  # noqa: E402
+from .log_storage import LogStorage  # noqa: E402
 
 
 class LogLevel(Enum):
@@ -126,7 +125,7 @@ class LogManager:
         self.collector.register_handler("gpu_selected", handle_all)
         self.collector.register_handler("config_built", handle_all)
 
-    def _print_to_console(self, formatted_event: Dict[str, Any]):
+    def _print_to_console(self, formatted_event: dict[str, Any]):
         """打印到控制台"""
         timestamp = formatted_event.get("formatted_time", "")
         message = formatted_event.get("message", "")
@@ -208,13 +207,13 @@ class LogManager:
 
     # 专用日志方法
 
-    def log_wizard_start(self, config: Dict[str, Any]):
+    def log_wizard_start(self, config: dict[str, Any]):
         """记录向导开始"""
         self.collector.collect_from_queue(
             LogEventType.ENGINE_START, {"config": config}, source="wizard"
         )
 
-    def log_wizard_complete(self, result: Dict[str, Any]):
+    def log_wizard_complete(self, result: dict[str, Any]):
         """记录向导完成"""
         self.collector.collect_from_queue(
             LogEventType.ENGINE_STOP, {"result": result}, source="wizard"
@@ -226,7 +225,7 @@ class LogManager:
             LogEventType.ENGINE_ERROR, {"error": error}, source="wizard"
         )
 
-    def log_target_selected(self, targets: list, target_file: Optional[str] = None):
+    def log_target_selected(self, targets: list, target_file: str | None = None):
         """记录目标选择"""
         self.collector.collect_from_queue(
             LogEventType.CONFIG_LOADED,
@@ -256,7 +255,7 @@ class LogManager:
             return self.storage.get_recent(count)
         return []
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         if self.storage:
             return self.storage.get_stats()

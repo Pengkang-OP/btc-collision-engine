@@ -15,11 +15,13 @@
 """
 
 import os
-from src.utils.fast_json import fast_dumps
-from ..utils import get_configured_logger
-from typing import Any, Dict, List, Optional, cast
-from datetime import datetime
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, cast
+
+from src.utils.fast_json import fast_dumps
+
+from ..utils import get_configured_logger
 
 logger = get_configured_logger("GPUPerformanceReporter")
 
@@ -56,8 +58,8 @@ class PerformanceReportGenerator:
     def __init__(
         self,
         gpu_engine: Any,
-        benchmark_suite: Optional[Any] = None,
-        auto_tuner: Optional[Any] = None,
+        benchmark_suite: Any | None = None,
+        auto_tuner: Any | None = None,
     ) -> None:
         """初始化报告生成器
 
@@ -72,7 +74,7 @@ class PerformanceReportGenerator:
 
         logger.info("性能报告生成器已初始化")
 
-    def generate_report(self, config: Optional[ReportConfig] = None) -> str:
+    def generate_report(self, config: ReportConfig | None = None) -> str:
         """生成性能报告
 
         Args:
@@ -262,8 +264,7 @@ class PerformanceReportGenerator:
 
             marker = " ← 当前" if gpu_name == current_device else ""
             lines.append(
-                f"| {gpu_name}{marker} | {perf['throughput']:,}/s | "
-                f"{perf['batch_size']:,} | {relative:.1f}% |"
+                f"| {gpu_name}{marker} | {perf['throughput']:,}/s | {perf['batch_size']:,} | {relative:.1f}% |"
             )
 
         lines.append("")
@@ -278,7 +279,7 @@ class PerformanceReportGenerator:
         Returns:
             JSON 字符串
         """
-        report_data: Dict[str, Any] = {
+        report_data: dict[str, Any] = {
             "metadata": {
                 "generated_at": datetime.now().isoformat(),
                 "generator": "BTC Collision Engine Performance Reporter",
@@ -344,7 +345,7 @@ class PerformanceReportGenerator:
 
         logger.info(f"性能报告已保存到: {filepath}")
 
-    def _get_device_info(self) -> Dict:
+    def _get_device_info(self) -> dict:
         """获取设备信息"""
         if hasattr(self.gpu_engine, "_gpu_device") and self.gpu_engine._gpu_device:
             device = self.gpu_engine._gpu_device
@@ -361,7 +362,7 @@ class PerformanceReportGenerator:
             }
         return {}
 
-    def _get_current_performance(self) -> Dict:
+    def _get_current_performance(self) -> dict:
         """获取当前性能数据"""
         if self.auto_tuner and self.auto_tuner.best_config:
             return {
@@ -370,7 +371,7 @@ class PerformanceReportGenerator:
             }
         return {"throughput": 0, "batch_size": 0}
 
-    def _generate_recommendations(self) -> List[str]:
+    def _generate_recommendations(self) -> list[str]:
         """生成优化建议"""
         recommendations = []
 

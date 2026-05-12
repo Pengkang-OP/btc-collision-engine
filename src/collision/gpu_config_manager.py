@@ -1,14 +1,13 @@
-# -*- coding: utf-8 -*-
 """GPU碰撞引擎配置管理器
 
 CODE-1修复: 从gpu_collision_engine.py提取配置管理逻辑，降低主类复杂度。
 负责GPU配置读取、合并、验证和应用。
 """
 
-import logging
 import json
+import logging
 from pathlib import Path
-from typing import Dict, Any, Optional, List, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -27,14 +26,14 @@ class GPUConfigManager:
 
     def __init__(self) -> None:
         """初始化配置管理器"""
-        self._config_cache: Dict[str, Any] = {}
+        self._config_cache: dict[str, Any] = {}
         logger.debug("GPUConfigManager已初始化")
 
     def read_async_config(
         self,
-        constructor_config: Optional[Dict[str, Any]] = None,
-        config_files: Optional[List[Path]] = None,
-    ) -> Tuple[bool, str]:
+        constructor_config: dict[str, Any] | None = None,
+        config_files: list[Path] | None = None,
+    ) -> tuple[bool, str]:
         """读取异步执行配置（按优先级）
 
         CODE-3修复: 添加完整类型注解
@@ -73,7 +72,7 @@ class GPUConfigManager:
         for cfg_file in config_files:
             if cfg_file.exists():
                 try:
-                    with open(cfg_file, "r", encoding="utf-8") as f:
+                    with open(cfg_file, encoding="utf-8") as f:
                         cfg = json.load(f)
                         if cfg.get("gpu", {}).get("async_execution", False):
                             enable_async = True
@@ -92,8 +91,8 @@ class GPUConfigManager:
         return enable_async, config_source
 
     def merge_gpu_configs(
-        self, auto_config: Dict[str, Any], profile_config: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        self, auto_config: dict[str, Any], profile_config: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """合并AutoConfig和ProfileLoader的配置
 
         CODE-3修复: 添加完整类型注解
@@ -161,7 +160,7 @@ class GPUConfigManager:
             return isinstance(value, bool)
         return True
 
-    def _validate_merged_config(self, config: Dict[str, Any]) -> None:
+    def _validate_merged_config(self, config: dict[str, Any]) -> None:
         """验证合并后的配置
 
         CODE-3修复: 添加完整类型注解（返回None）
@@ -186,7 +185,7 @@ class GPUConfigManager:
                 elif ratio < 0.3:
                     logger.warning(f"显存使用率过低({ratio:.0%})，性能可能不佳")
 
-    def get_config_summary(self, config: Dict[str, Any]) -> str:
+    def get_config_summary(self, config: dict[str, Any]) -> str:
         """获取配置摘要信息
 
         CODE-3修复: 添加完整类型注解

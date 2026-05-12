@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """锁性能监控器
 
 监控多GPU引擎中锁的等待时间、竞争频率等指标。
@@ -7,8 +6,8 @@
 
 import threading
 import time
-from typing import Dict, Any, Optional
 from collections import defaultdict
+from typing import Any
 
 
 class LockMonitor:
@@ -31,7 +30,7 @@ class LockMonitor:
         self._lock = threading.RLock()
 
         # 统计数据
-        self._lock_stats: Dict[str, Dict[str, Any]] = defaultdict(
+        self._lock_stats: dict[str, dict[str, Any]] = defaultdict(
             lambda: {
                 "acquisitions": 0,  # 获取次数
                 "total_wait_ms": 0.0,  # 总等待时间
@@ -87,7 +86,7 @@ class LockMonitor:
             stats["total_hold_ms"] += hold_time_ms
             stats["max_hold_ms"] = max(stats["max_hold_ms"], hold_time_ms)
 
-    def get_stats(self, lock_name: str) -> Dict:
+    def get_stats(self, lock_name: str) -> dict:
         """获取锁统计信息
 
         Args:
@@ -112,7 +111,7 @@ class LockMonitor:
 
             return stats
 
-    def get_all_stats(self) -> Dict[str, Dict]:
+    def get_all_stats(self) -> dict[str, dict]:
         """获取所有锁统计信息
 
         Returns:
@@ -176,7 +175,7 @@ class MonitoredLock:
         self._lock = threading.Lock()
         self._monitor = monitor
         self._name = name
-        self._acquire_time: Optional[float] = None
+        self._acquire_time: float | None = None
 
     def acquire(self, blocking: bool = True, timeout: float = -1) -> bool:
         """获取锁"""

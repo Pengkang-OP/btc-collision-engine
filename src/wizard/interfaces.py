@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 引导模块接口定义
 
 定义引导界面模块的数据结构、配置和事件类型。
 """
 
-from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional
-from enum import Enum
 import logging
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -39,21 +38,21 @@ class WizardResult:
     """引导结果数据结构"""
 
     success: bool = False
-    targets: List[str] = field(default_factory=list)
-    target_file: Optional[str] = None
+    targets: list[str] = field(default_factory=list)
+    target_file: str | None = None
     mode: str = "random"
-    start_key: Optional[str] = None
-    end_key: Optional[str] = None
+    start_key: str | None = None
+    end_key: str | None = None
     checkpoint: bool = True
     dedup: bool = True
     duration: int = 0
-    gpu_indices: List[int] = field(default_factory=list)
+    gpu_indices: list[int] = field(default_factory=list)
     use_multi_gpu: bool = False
-    config: Dict[str, Any] = field(default_factory=dict)
-    command: List[str] = field(default_factory=list)
-    error_message: Optional[str] = None
+    config: dict[str, Any] = field(default_factory=dict)
+    command: list[str] = field(default_factory=list)
+    error_message: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "success": self.success,
@@ -72,7 +71,7 @@ class WizardResult:
             "error_message": self.error_message,
         }
 
-    def build_command(self) -> List[str]:
+    def build_command(self) -> list[str]:
         """构建命令行
 
         委托 ConfigBuilder 统一构建逻辑，避免与 config_builder.py 重复实现。
@@ -89,7 +88,7 @@ class WizardResult:
             with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(self.to_dict(), f, indent=2, ensure_ascii=False)
             return True
-        except (IOError, OSError, TypeError, ValueError) as e:
+        except (OSError, TypeError, ValueError) as e:
             logger.error(f"Failed to save wizard result to {filepath}: {e}")
             return False
 
@@ -99,9 +98,9 @@ class WizardResult:
         import json
 
         try:
-            with open(filepath, "r", encoding="utf-8") as f:
+            with open(filepath, encoding="utf-8") as f:
                 data = json.load(f)
             return cls(**data)
-        except (IOError, OSError, json.JSONDecodeError, TypeError, KeyError) as e:
+        except (OSError, json.JSONDecodeError, TypeError, KeyError) as e:
             logger.error(f"Failed to load wizard result from {filepath}: {e}")
             return None

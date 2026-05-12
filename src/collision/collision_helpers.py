@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
 """碰撞引擎辅助工具函数
 
 提供碰撞引擎中常用的辅助函数，避免代码重复。
 """
 
-from typing import Tuple, Optional
 from ..core import WIF
 
 
@@ -34,7 +32,7 @@ def encode_private_key_to_wif(private_key: bytes, compressed: bool = True) -> st
 
 def format_match_result(
     private_key: bytes, address: str, compressed: bool = True
-) -> Tuple[bytes, str, str]:
+) -> tuple[bytes, str, str]:
     """格式化匹配结果，返回私钥、地址和WIF
 
     统一处理碰撞匹配结果的格式化，避免在各处重复编码WIF。
@@ -56,7 +54,7 @@ def format_match_result(
     return (private_key, address, wif)
 
 
-def safe_wif_encode(private_key: bytes, compressed: bool = True) -> Optional[str]:
+def safe_wif_encode(private_key: bytes, compressed: bool = True) -> str | None:
     """安全地编码私钥为WIF，失败时返回None而不是抛出异常
 
     用于回调函数等场景，避免异常中断流程。

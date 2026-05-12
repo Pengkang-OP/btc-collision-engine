@@ -1,9 +1,6 @@
-# -*- coding: utf-8 -*-
 """Bitcoin Core规范合规性验证"""
 
-from typing import Dict, Tuple, List
-
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger, init_logging
 
 # 初始化日志系统
 init_logging()
@@ -26,7 +23,7 @@ class BitcoinComplianceValidator:
         """初始化验证器"""
         logger.info("BitcoinComplianceValidator初始化完成")
 
-    def validate(self, data: Dict) -> Tuple[bool, List[str]]:
+    def validate(self, data: dict) -> tuple[bool, list[str]]:
         """
         验证比特币规范合规性
 
@@ -69,7 +66,7 @@ class BitcoinComplianceValidator:
 
         return is_valid, issues
 
-    def _validate_private_key(self, data: Dict) -> List[str]:
+    def _validate_private_key(self, data: dict) -> list[str]:
         """验证私钥格式"""
         issues = []
 
@@ -98,7 +95,7 @@ class BitcoinComplianceValidator:
 
         return issues
 
-    def _validate_public_key(self, data: Dict) -> List[str]:
+    def _validate_public_key(self, data: dict) -> list[str]:
         """验证公钥格式"""
         issues = []
 
@@ -130,7 +127,7 @@ class BitcoinComplianceValidator:
 
         return issues
 
-    def _validate_address(self, data: Dict) -> List[str]:
+    def _validate_address(self, data: dict) -> list[str]:
         """验证地址格式"""
         issues = []
 
@@ -159,7 +156,7 @@ class BitcoinComplianceValidator:
 
         return issues
 
-    def _validate_wif(self, data: Dict) -> List[str]:
+    def _validate_wif(self, data: dict) -> list[str]:
         """验证WIF格式"""
         issues = []
 
@@ -193,7 +190,7 @@ class BitcoinComplianceValidator:
 
         return issues
 
-    def _validate_hash160(self, data: Dict) -> List[str]:
+    def _validate_hash160(self, data: dict) -> list[str]:
         """验证Hash160"""
         issues = []
 
@@ -214,7 +211,7 @@ class BitcoinComplianceValidator:
 
         return issues
 
-    def validate_batch(self, data_list: List[Dict]) -> List[Tuple[bool, List[str]]]:
+    def validate_batch(self, data_list: list[dict]) -> list[tuple[bool, list[str]]]:
         """
         批量验证
 

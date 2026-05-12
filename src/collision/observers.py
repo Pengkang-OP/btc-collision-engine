@@ -3,9 +3,9 @@
 定义观察者接口，用于解耦碰撞引擎与监控系统、日志系统等。
 """
 
-from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
 import logging
+from abc import ABC, abstractmethod
+from typing import Any
 
 from .collision_stats import CollisionStats
 
@@ -45,7 +45,7 @@ class CollisionObserver(ABC):
             stats: 最终碰撞统计信息
         """
 
-    def on_error(self, error: Exception, context: Optional[Dict[str, Any]] = None) -> None:
+    def on_error(self, error: Exception, context: dict[str, Any] | None = None) -> None:
         """错误事件（可选实现）
 
         Args:
@@ -69,7 +69,7 @@ class BaseCollisionObserver(CollisionObserver):
     def on_complete(self, stats: CollisionStats) -> None:
         """默认不处理完成事件"""
 
-    def on_error(self, error: Exception, context: Optional[Dict[str, Any]] = None) -> None:
+    def on_error(self, error: Exception, context: dict[str, Any] | None = None) -> None:
         """默认不处理错误事件"""
 
 
@@ -102,7 +102,7 @@ class MonitoringObserver(BaseCollisionObserver):
                 context={"address": address, "has_wif": bool(wif)},
             )
 
-    def on_error(self, error: Exception, context: Optional[Dict[str, Any]] = None) -> None:
+    def on_error(self, error: Exception, context: dict[str, Any] | None = None) -> None:
         """记录错误事件"""
         if hasattr(self.monitoring_system, "data_logger"):
             self.monitoring_system.data_logger.record_error(
@@ -128,21 +128,17 @@ class LoggingObserver(BaseCollisionObserver):
         # 每10000次记录一次，避免日志洪水
         if stats.total_checked % 10000 == 0:
             self.logger.info(
-                f"碰撞进度: 已检测={stats.total_checked:,}, "
-                f"速度={stats.speed:.2f}/s, "
-                f"匹配={len(stats.matches)}"
+                f"碰撞进度: 已检测={stats.total_checked:,}, 速度={stats.speed:.2f}/s, 匹配={len(stats.matches)}"
             )
 
     def on_match(self, private_key: bytes, address: str, wif: str) -> None:
         """记录匹配日志"""
-        self.logger.warning(f"🎉 找到匹配! 地址={address}, " f"私钥(WIF)={wif[:10]}...")
+        self.logger.warning(f"🎉 找到匹配! 地址={address}, 私钥(WIF)={wif[:10]}...")
 
     def on_complete(self, stats: CollisionStats) -> None:
         """记录完成日志"""
         self.logger.info(
-            f"碰撞完成: 总检测={stats.total_checked:,}, "
-            f"总匹配={len(stats.matches)}, "
-            f"运行时间={stats.format_elapsed()}"
+            f"碰撞完成: 总检测={stats.total_checked:,}, 总匹配={len(stats.matches)}, 运行时间={stats.format_elapsed()}"
         )
 
 
@@ -227,7 +223,7 @@ class ObserverManager:
 
                 logging.getLogger(__name__).error(f"观察者on_complete回调失败: {e}")
 
-    def notify_error(self, error: Exception, context: Optional[Dict[str, Any]] = None) -> None:
+    def notify_error(self, error: Exception, context: dict[str, Any] | None = None) -> None:
         """通知所有观察者错误事件
 
         Args:

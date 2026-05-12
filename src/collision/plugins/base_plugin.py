@@ -1,7 +1,7 @@
 """碰撞插件基础类"""
 
 from abc import ABC, abstractmethod
-from typing import Set, Optional, Callable
+from collections.abc import Callable
 
 # 使用相对导入而非绝对导入，避免包外部导入失败
 from ..collision_stats import CollisionStats
@@ -21,7 +21,7 @@ class CollisionPlugin(ABC):
         """插件描述"""
 
     @abstractmethod
-    def initialize(self, targets: Set[str], **kwargs) -> None:
+    def initialize(self, targets: set[str], **kwargs) -> None:
         """
         初始化插件
 
@@ -33,9 +33,9 @@ class CollisionPlugin(ABC):
     @abstractmethod
     def start(
         self,
-        on_progress: Optional[Callable[["CollisionStats"], None]] = None,
-        on_match: Optional[Callable[[bytes, str, str], None]] = None,
-        on_complete: Optional[Callable[["CollisionStats"], None]] = None,
+        on_progress: Callable[["CollisionStats"], None] | None = None,
+        on_match: Callable[[bytes, str, str], None] | None = None,
+        on_complete: Callable[["CollisionStats"], None] | None = None,
     ) -> None:
         """
         开始碰撞

@@ -13,7 +13,9 @@
     >>> callback: ProgressCallback = my_progress_handler
 """
 
-from typing import Callable, Optional, Any, Dict, Set
+from collections.abc import Callable
+from typing import Any
+
 from .collision_stats import CollisionStats
 
 # ============================================================================
@@ -92,7 +94,7 @@ CompleteCallback = Callable[[CollisionStats], None]
     ... )
 """
 
-ErrorCallback = Callable[[str, str, Optional[Exception]], None]
+ErrorCallback = Callable[[str, str, Exception | None], None]
 """
 错误回调函数类型
 
@@ -164,11 +166,11 @@ ErrorHandler = Callable[[CollisionEvent, Exception], None]
 # 引擎配置类型
 # ============================================================================
 
-TargetAddresses = Set[str]
+TargetAddresses = set[str]
 """目标地址集合类型"""
 
-EngineConfig = Dict[str, Any]
+EngineConfig = dict[str, Any]
 """引擎配置字典类型"""
 
-MatchResult = Dict[str, str]
+MatchResult = dict[str, str]
 """匹配结果字典类型"""

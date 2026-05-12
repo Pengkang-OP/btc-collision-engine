@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """快速JSON序列化模块 (P3-10)
 
 提供高性能JSON序列化/反序列化，优先使用 orjson（3-5x faster），
@@ -33,7 +32,7 @@ orjson 优势:
 """
 
 import json as _json
-from typing import Any, Optional, Union, IO
+from typing import IO, Any
 
 from . import get_configured_logger
 
@@ -63,8 +62,8 @@ except ImportError:
 def fast_dumps(
     obj: Any,
     *,
-    default: Optional[Any] = None,
-    indent: Optional[int] = None,
+    default: Any | None = None,
+    indent: int | None = None,
     ensure_ascii: bool = False,
     sort_keys: bool = False,
     **kwargs,
@@ -124,8 +123,8 @@ def fast_dump(
     obj: Any,
     fp: IO[str],
     *,
-    default: Optional[Any] = None,
-    indent: Optional[int] = None,
+    default: Any | None = None,
+    indent: int | None = None,
     ensure_ascii: bool = False,
     sort_keys: bool = False,
     **kwargs,
@@ -153,7 +152,7 @@ def fast_dump(
     fp.write(json_str)
 
 
-def fast_loads(s: Union[str, bytes]) -> Any:
+def fast_loads(s: str | bytes) -> Any:
     """高性能 JSON 反序列化（从字符串）
 
     与 json.loads 签名兼容。

@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 引导模块消息队列
 
 用于引导模块与日志模块之间的异步消息传递。
 """
 
+import logging
 import queue
 import threading
-import logging
-from typing import Optional, Dict, Any
+from typing import Any
+
 from .events import WizardEvent, WizardEventType
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ class WizardMessageQueue:
         self._enabled = True
         self._subscribers: list = []
 
-    def send(self, event_type: WizardEventType, data: Dict[str, Any], priority: int = 5) -> bool:
+    def send(self, event_type: WizardEventType, data: dict[str, Any], priority: int = 5) -> bool:
         """发送事件到队列
 
         Args:
@@ -45,23 +45,22 @@ class WizardMessageQueue:
             return True
         except queue.Full:
             logger.warning(
-                f"Message queue full (size={self._queue.maxsize}), "
-                f"dropping event: {event_type.value}"
+                f"Message queue full (size={self._queue.maxsize}), dropping event: {event_type.value}"
             )
             return False
 
-    def send_wizard_start(self, config: Dict[str, Any]) -> bool:
+    def send_wizard_start(self, config: dict[str, Any]) -> bool:
         """发送向导开始事件"""
         return self.send(WizardEventType.WIZARD_START, {"config": config})
 
-    def send_target_selected(self, targets: list, target_file: Optional[str] = None) -> bool:
+    def send_target_selected(self, targets: list, target_file: str | None = None) -> bool:
         """发送目标选择事件"""
         return self.send(
             WizardEventType.TARGET_SELECTED, {"targets": targets, "target_file": target_file}
         )
 
     def send_mode_selected(
-        self, mode: str, start_key: Optional[str] = None, end_key: Optional[str] = None
+        self, mode: str, start_key: str | None = None, end_key: str | None = None
     ) -> bool:
         """发送模式选择事件"""
         return self.send(
@@ -83,7 +82,7 @@ class WizardMessageQueue:
             {"gpu_indices": gpu_indices, "use_multi_gpu": use_multi_gpu},
         )
 
-    def send_wizard_complete(self, result: Dict[str, Any]) -> bool:
+    def send_wizard_complete(self, result: dict[str, Any]) -> bool:
         """发送向导完成事件"""
         return self.send(WizardEventType.WIZARD_COMPLETE, {"result": result})
 
@@ -95,7 +94,7 @@ class WizardMessageQueue:
         """发送向导错误事件"""
         return self.send(WizardEventType.WIZARD_ERROR, {"error": error_message}, priority=1)
 
-    def receive(self, timeout: Optional[float] = None) -> Optional[WizardEvent]:
+    def receive(self, timeout: float | None = None) -> WizardEvent | None:
         """从队列接收事件
 
         Args:
@@ -176,7 +175,7 @@ class WizardMessageQueue:
 
 
 # 全局消息队列实例
-_global_message_queue: Optional[WizardMessageQueue] = None
+_global_message_queue: WizardMessageQueue | None = None
 
 
 def get_message_queue(maxsize: int = 1000) -> WizardMessageQueue:
@@ -214,7 +213,7 @@ def set_message_queue(queue: WizardMessageQueue):
     _global_message_queue = queue
 
 
-def reset_message_queue(new_queue: Optional[WizardMessageQueue] = None):
+def reset_message_queue(new_queue: WizardMessageQueue | None = None):
     """重置全局消息队列
 
     Args:

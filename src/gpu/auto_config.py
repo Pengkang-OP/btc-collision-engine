@@ -1,13 +1,13 @@
-# -*- coding: utf-8 -*-
 """GPU参数自动调优器
 
 根据不同厂商和型号的GPU自动配置最优参数。
 支持NVIDIA、AMD、Intel Arc的特定优化。
 """
 
-from ..utils import get_configured_logger
 import threading
-from typing import Any, Dict
+from typing import Any
+
+from ..utils import get_configured_logger
 
 logger = get_configured_logger("GPUAutoConfig")
 
@@ -32,7 +32,7 @@ def _align_work_group_size(recommended: int, max_wgs: int, alignment: int) -> in
     return min(wgs, max_wgs)
 
 
-def _get_memory_gb(device: Dict) -> float:
+def _get_memory_gb(device: dict) -> float:
     """获取GPU显存大小(GB)
 
     v2.2.1修复: 兼容global_mem_size(字节)和global_mem_gb两种格式
@@ -133,11 +133,11 @@ class GPUAutoConfigurator:
 
     def __init__(self) -> None:
         """初始化自动调优器"""
-        self._config_cache: Dict[str, Dict[str, Any]] = {}
+        self._config_cache: dict[str, dict[str, Any]] = {}
 
         logger.info("GPUAutoConfigurator已初始化")
 
-    def configure_for_device(self, device: Dict) -> Dict:
+    def configure_for_device(self, device: dict) -> dict:
         """为指定设备生成优化配置
 
         Args:
@@ -172,13 +172,12 @@ class GPUAutoConfigurator:
         self._config_cache[device_key] = config.copy()
 
         logger.info(
-            f"设备配置已生成: {device.get('name')} "
-            f"(厂商={vendor}, 批次={config['batch_size']:,})"
+            f"设备配置已生成: {device.get('name')} (厂商={vendor}, 批次={config['batch_size']:,})"
         )
 
         return config
 
-    def get_nvidia_config(self, device: Dict) -> Dict:
+    def get_nvidia_config(self, device: dict) -> dict:
         """生成NVIDIA GPU配置
 
         NVIDIA特点:
@@ -214,14 +213,13 @@ class GPUAutoConfigurator:
         adjusted_wgs = _align_work_group_size(recommended_wgs, max_wgs, 32)
         if adjusted_wgs != recommended_wgs:
             logger.info(
-                f"[NVIDIA] work_group_size从{recommended_wgs}调整为{adjusted_wgs} "
-                f"(设备限制: {max_wgs}, 对齐: 32)"
+                f"[NVIDIA] work_group_size从{recommended_wgs}调整为{adjusted_wgs} (设备限制: {max_wgs}, 对齐: 32)"
             )
         config["work_group_size"] = adjusted_wgs
 
         return config
 
-    def get_amd_config(self, device: Dict) -> Dict:
+    def get_amd_config(self, device: dict) -> dict:
         """生成AMD GPU配置
 
         AMD特点:
@@ -248,14 +246,13 @@ class GPUAutoConfigurator:
         adjusted_wgs = _align_work_group_size(recommended_wgs, max_wgs, 64)
         if adjusted_wgs != recommended_wgs:
             logger.info(
-                f"[AMD] work_group_size从{recommended_wgs}调整为{adjusted_wgs} "
-                f"(设备限制: {max_wgs}, 对齐: 64)"
+                f"[AMD] work_group_size从{recommended_wgs}调整为{adjusted_wgs} (设备限制: {max_wgs}, 对齐: 64)"
             )
         config["work_group_size"] = adjusted_wgs
 
         return config
 
-    def get_intel_config(self, device: Dict) -> Dict:
+    def get_intel_config(self, device: dict) -> dict:
         """生成Intel Arc GPU配置
 
         Intel Arc特点:
@@ -289,14 +286,13 @@ class GPUAutoConfigurator:
         adjusted_wgs = _align_work_group_size(recommended_wgs, max_wgs, 32)
         if adjusted_wgs != recommended_wgs:
             logger.info(
-                f"[Intel Arc] work_group_size从{recommended_wgs}调整为{adjusted_wgs} "
-                f"(设备限制: {max_wgs}, 对齐: 32)"
+                f"[Intel Arc] work_group_size从{recommended_wgs}调整为{adjusted_wgs} (设备限制: {max_wgs}, 对齐: 32)"
             )
         config["work_group_size"] = adjusted_wgs
 
         return config
 
-    def get_unknown_config(self, device: Dict) -> Dict:
+    def get_unknown_config(self, device: dict) -> dict:
         """生成未知GPU的保守配置
 
         对于未知厂商,使用最保守的配置以确保稳定性。
@@ -318,14 +314,13 @@ class GPUAutoConfigurator:
         adjusted_wgs = _align_work_group_size(recommended_wgs, max_wgs, 32)
         if adjusted_wgs != recommended_wgs:
             logger.info(
-                f"[Unknown GPU] work_group_size从{recommended_wgs}调整为{adjusted_wgs} "
-                f"(设备限制: {max_wgs}, 对齐: 32)"
+                f"[Unknown GPU] work_group_size从{recommended_wgs}调整为{adjusted_wgs} (设备限制: {max_wgs}, 对齐: 32)"
             )
         config["work_group_size"] = adjusted_wgs
 
         return config
 
-    def _adjust_for_memory(self, device: Dict, config: Dict) -> Dict:
+    def _adjust_for_memory(self, device: dict, config: dict) -> dict:
         """根据实际显存调整配置
 
         Args:
@@ -373,7 +368,7 @@ class GPUAutoConfigurator:
 
         return config
 
-    def validate_config(self, config: Dict, device: Dict) -> tuple:
+    def validate_config(self, config: dict, device: dict) -> tuple:
         """验证配置是否合理
 
         Args:
@@ -409,7 +404,7 @@ class GPUAutoConfigurator:
 
         return is_valid, warnings
 
-    def get_config_summary(self, config: Dict) -> str:
+    def get_config_summary(self, config: dict) -> str:
         """获取配置摘要
 
         Args:

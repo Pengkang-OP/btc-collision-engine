@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """预计算点表优化模块
 
 使用窗口法(Window Method)预计算G的倍数,加速标量乘法运算。
@@ -18,10 +17,10 @@
 - "Speeding up Elliptic Curve Cryptography" - Brown et al.
 """
 
-from typing import Any, Dict, List
+from typing import Any
 
 # 导入日志配置
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger, init_logging
 
 # 初始化日志系统
 init_logging()
@@ -80,7 +79,7 @@ class PrecomputedPointTable:
 
         # 初始化椭圆曲线运算器
         if ec is None:
-            from .secp256k1 import EllipticCurve, Secp256k1, ECPoint
+            from .secp256k1 import ECPoint, EllipticCurve, Secp256k1
 
             self.ec = EllipticCurve()
             self.G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
@@ -89,7 +88,7 @@ class PrecomputedPointTable:
             if hasattr(ec.curve, "G"):
                 self.G = ec.curve.G  # type: ignore[assignment]
             else:
-                from .secp256k1 import Secp256k1, ECPoint
+                from .secp256k1 import ECPoint, Secp256k1
 
                 self.G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
 
@@ -100,7 +99,7 @@ class PrecomputedPointTable:
         memory_kb = (self.num_points * 64 * 2) / 1024  # 估算内存占用
         logger.info(f"预计算点表构建完成,预计内存占用: {memory_kb:.1f}KB")
 
-    def _build_table(self) -> List:
+    def _build_table(self) -> list:
         """
         构建预计算表: [G, 2G, 3G, ..., (2^w-1)G]
 
@@ -227,7 +226,7 @@ class PrecomputedTableManager:
     """
 
     _instance = None
-    _tables: Dict[int, "PrecomputedPointTable"] = {}
+    _tables: dict[int, "PrecomputedPointTable"] = {}
 
     def __new__(cls) -> "PrecomputedTableManager":
         if cls._instance is None:

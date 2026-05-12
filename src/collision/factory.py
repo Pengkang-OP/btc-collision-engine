@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import logging
 import warnings
-from typing import Any, Optional, Set, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from .dependency_container import DependencyContainer
-    from .key_collision_engine import KeyCollisionEngine
     from .gpu_collision_engine import GPUCollisionEngine
+    from .key_collision_engine import KeyCollisionEngine
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +36,8 @@ class EngineFactory:
 
     @staticmethod
     def create_cpu_engine(
-        targets: Set[str],
-        container: Optional[DependencyContainer] = None,
+        targets: set[str],
+        container: DependencyContainer | None = None,
         stats: Any = None,
         event_bus: Any = None,
         data_logger: Any = None,
@@ -84,8 +84,8 @@ class EngineFactory:
 
     @staticmethod
     def create_gpu_engine(
-        targets: Set[str],
-        container: Optional[DependencyContainer] = None,
+        targets: set[str],
+        container: DependencyContainer | None = None,
         stats: Any = None,
         event_bus: Any = None,
         data_logger: Any = None,

@@ -6,8 +6,8 @@
 创建日期: 2026-04-22
 """
 
-from typing import Protocol, List, Dict, Any, Optional, Type, runtime_checkable, cast
 from abc import abstractmethod
+from typing import Any, Protocol, cast, runtime_checkable
 
 
 @runtime_checkable
@@ -33,7 +33,7 @@ class GPUKernelProtocol(Protocol):
     """
 
     @abstractmethod
-    def run_batch(self, seed: bytes, num_keys: int) -> List[Dict[str, int]]:
+    def run_batch(self, seed: bytes, num_keys: int) -> list[dict[str, int]]:
         """执行一批密钥碰撞计算（PRNG模式）
 
         v4.0 PRNG改造：CPU仅传递32字节随机种子，GPU内核自行生成
@@ -139,10 +139,10 @@ class GPUKernelFactory:
     """
 
     # P3优化：添加类型提示
-    _kernel_class: Optional[Type[GPUKernelProtocol]] = None
+    _kernel_class: type[GPUKernelProtocol] | None = None
 
     @classmethod
-    def register(cls, kernel_class: Type[GPUKernelProtocol]) -> None:
+    def register(cls, kernel_class: type[GPUKernelProtocol]) -> None:
         """注册内核类
 
         Args:
@@ -156,7 +156,7 @@ class GPUKernelFactory:
 
     @classmethod
     def create(
-        cls, device: Any, max_batch_size: Optional[int] = None, program: Any = None
+        cls, device: Any, max_batch_size: int | None = None, program: Any = None
     ) -> GPUKernelProtocol:
         """创建GPU内核实例
 
@@ -175,11 +175,9 @@ class GPUKernelFactory:
             raise ValueError("未注册GPU内核类，请先调用 GPUKernelFactory.register()")
 
         assert cls._kernel_class is not None  # 已通过上方 None 检查保证
-        return cls._kernel_class(
-            device, max_batch_size=max_batch_size, program=program
-        )  # type: ignore[call-arg]
+        return cls._kernel_class(device, max_batch_size=max_batch_size, program=program)  # type: ignore[call-arg]
 
     @classmethod
     def reset(cls) -> None:
         """重置工厂（用于测试）"""
-        cls._kernel_class = cast(Optional[Type[GPUKernelProtocol]], None)
+        cls._kernel_class = cast(type[GPUKernelProtocol] | None, None)

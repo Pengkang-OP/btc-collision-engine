@@ -4,7 +4,7 @@
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any
 
 # P3-5: 统一日志获取
 from ...utils import get_configured_logger
@@ -25,7 +25,7 @@ class GPUVendorBase(ABC):
         """
 
     @abstractmethod
-    def apply_optimizations(self, device: Any, profile: Dict[str, Any]) -> None:
+    def apply_optimizations(self, device: Any, profile: dict[str, Any]) -> None:
         """
         应用厂商特定的优化策略
 
@@ -35,7 +35,7 @@ class GPUVendorBase(ABC):
         """
 
     @abstractmethod
-    def calculate_batch_size(self, device: Any, profile: Dict[str, Any]) -> int:
+    def calculate_batch_size(self, device: Any, profile: dict[str, Any]) -> int:
         """
         计算最优batch_size
 
@@ -47,7 +47,7 @@ class GPUVendorBase(ABC):
             推荐的batch_size值
         """
 
-    def handle_errors(self, error: Exception, stats: Optional[Any] = None) -> bool:
+    def handle_errors(self, error: Exception, stats: Any | None = None) -> bool:
         """
         处理厂商特定的错误
 
@@ -62,7 +62,7 @@ class GPUVendorBase(ABC):
         logger.error(f"GPU错误: {type(error).__name__}: {error}")
         return True
 
-    def get_optimization_flags(self, profile: Dict[str, Any]) -> Dict[str, bool]:
+    def get_optimization_flags(self, profile: dict[str, Any]) -> dict[str, bool]:
         """
         获取优化标志
 

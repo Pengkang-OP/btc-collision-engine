@@ -4,13 +4,14 @@
 相比哈希集合可节省90%内存，支持更大容量。
 """
 
-import math
 import hashlib
+import math
 import threading
+
 from bitarray import bitarray
 
 # 导入日志配置
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger, init_logging
 
 # 初始化日志系统（如果尚未初始化）
 init_logging()
@@ -106,9 +107,7 @@ class BloomFilter:
             哈希值列表（位数组索引）
         """
         # 计算两个基础哈希(仅用于Bloom过滤器,不用于加密安全)
-        h1 = int(
-            hashlib.md5(item, usedforsecurity=False).hexdigest(), 16
-        )  # nosec B324 - 仅用于Bloom过滤器性能优化
+        h1 = int(hashlib.md5(item, usedforsecurity=False).hexdigest(), 16)  # nosec B324 - 仅用于Bloom过滤器性能优化
         h2 = int(hashlib.sha1(item).hexdigest(), 16)  # nosec B324 - 仅用于Bloom过滤器性能优化
 
         # 生成k个哈希值
@@ -236,9 +235,7 @@ class BloomDeduplicationFilter:
         self._lock = threading.Lock()
 
         logger.info(
-            "BloomDeduplicationFilter初始化: "
-            f"max_size={max_size}, "
-            f"false_positive_rate={false_positive_rate * 100:.3f}%"
+            f"BloomDeduplicationFilter初始化: max_size={max_size}, false_positive_rate={false_positive_rate * 100:.3f}%"
         )
 
     def _fingerprint(self, private_key: bytes) -> bytes:

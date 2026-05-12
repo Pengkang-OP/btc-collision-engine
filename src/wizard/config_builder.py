@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 配置构建器
 
 负责将用户选择构建为可执行的命令。
 """
 
-import sys
-import os
 import logging
-from typing import List
+import os
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +24,7 @@ class ConfigBuilder:
 
     VALID_MODES = frozenset({"random", "range", "brute_force"})
 
-    def build(self, result: WizardResult) -> List[str]:
+    def build(self, result: WizardResult) -> list[str]:
         """构建命令行
 
         Args:
@@ -128,6 +126,6 @@ class ConfigBuilder:
                 f.write(" ".join(self.build(result)))
                 f.write("\n")
             return True
-        except (IOError, OSError) as e:
+        except OSError as e:
             logger.error(f"Failed to save command to {filepath}: {e}")
             return False

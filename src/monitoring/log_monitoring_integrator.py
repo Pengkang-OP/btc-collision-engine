@@ -3,26 +3,26 @@
 将新开发的日志监控系统与现有监控框架集成，实现数据共享和统一管理。
 """
 
-import time
 import logging
 import threading
-from typing import Dict, List, Optional, Any
+import time
+from typing import Any
 
 # 导入现有监控系统
 from src.monitoring.data_logger import DataLogger
 from src.monitoring.monitoring_system import MonitoringSystem
 
 # 导入新开发的日志监控系统
-from src.utils.log_collection_rules import get_rule_manager, get_matching_rules
+from src.utils.log_collection_rules import get_matching_rules, get_rule_manager
 from src.utils.log_dependency_manager import check_dependencies
-from src.utils.log_performance_optimizer import get_performance_optimizer, get_log_stats
+from src.utils.log_performance_optimizer import get_log_stats, get_performance_optimizer
 from src.utils.log_platform_adapter import get_platform_info
 
 
 class LogMonitoringIntegrator:
     """日志监控集成器"""
 
-    def __init__(self, storage_dir: Optional[str] = None) -> None:
+    def __init__(self, storage_dir: str | None = None) -> None:
         """
         初始化日志监控集成器
 
@@ -40,7 +40,7 @@ class LogMonitoringIntegrator:
         self.logger = logging.getLogger("LogMonitoringIntegrator")
 
         # 数据共享缓冲区
-        self._log_buffer: List[Dict[str, Any]] = []
+        self._log_buffer: list[dict[str, Any]] = []
         self._lock = threading.Lock()
 
         # 集成状态
@@ -145,7 +145,7 @@ class LogMonitoringIntegrator:
             if len(self._log_buffer) > 1000:
                 self._log_buffer = self._log_buffer[-1000:]
 
-    def get_log_stats(self) -> Dict[str, Any]:
+    def get_log_stats(self) -> dict[str, Any]:
         """
         获取日志统计信息
 
@@ -167,7 +167,7 @@ class LogMonitoringIntegrator:
 
         return {"optimizer": optimizer_stats, "rules": rule_stats, "buffer": buffer_stats}
 
-    def get_recent_logs(self, count: int = 50) -> List[Dict[str, Any]]:
+    def get_recent_logs(self, count: int = 50) -> list[dict[str, Any]]:
         """
         获取最近的日志
 
@@ -249,10 +249,10 @@ class LogMonitoringIntegrator:
 
 
 # 全局集成器实例
-_integrator: Optional[LogMonitoringIntegrator] = None
+_integrator: LogMonitoringIntegrator | None = None
 
 
-def get_log_monitoring_integrator(storage_dir: Optional[str] = None) -> LogMonitoringIntegrator:
+def get_log_monitoring_integrator(storage_dir: str | None = None) -> LogMonitoringIntegrator:
     """
     获取日志监控集成器实例
 
@@ -269,7 +269,7 @@ def get_log_monitoring_integrator(storage_dir: Optional[str] = None) -> LogMonit
     return _integrator
 
 
-def init_log_monitoring_integration(storage_dir: Optional[str] = None) -> None:
+def init_log_monitoring_integration(storage_dir: str | None = None) -> None:
     """
     初始化日志监控集成
 
@@ -294,7 +294,7 @@ def log(module: str, level: str, message: str, **kwargs) -> None:
     integrator.log(module, level, message, **kwargs)
 
 
-def get_integration_stats() -> Dict[str, Any]:
+def get_integration_stats() -> dict[str, Any]:
     """
     获取集成统计信息
 

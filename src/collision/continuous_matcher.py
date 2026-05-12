@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 """持续比对系统 - 大规模地址库快速比对"""
 
 import threading
-from typing import Any, Dict, List, Optional, Tuple
 from datetime import datetime
+from typing import Any
 
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger, init_logging
 
 # 初始化日志系统
 init_logging()
@@ -46,7 +45,7 @@ class ContinuousMatcher:
 
         logger.info("ContinuousMatcher初始化完成")
 
-    def check_address_batch(self, addresses: List[Dict]) -> List[Dict]:
+    def check_address_batch(self, addresses: list[dict]) -> list[dict]:
         """
         批量检查地址匹配 - 高效准确
 
@@ -105,7 +104,7 @@ class ContinuousMatcher:
 
         return matches
 
-    def check_single_address(self, addr_info: Dict) -> Tuple[bool, Optional[Dict]]:
+    def check_single_address(self, addr_info: dict) -> tuple[bool, dict | None]:
         """
         检查单个地址匹配
 
@@ -138,7 +137,7 @@ class ContinuousMatcher:
 
         return False, None
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """
         获取比对统计
 

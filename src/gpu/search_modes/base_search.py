@@ -6,7 +6,8 @@
 
 import struct
 import time
-from typing import TYPE_CHECKING, Callable, Optional, Tuple
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 # P3-5: 统一日志获取 + 修复缺失导入
 from ...utils import get_configured_logger
@@ -38,9 +39,9 @@ class BaseSearchMode:
 
     def _execute_batch_loop(
         self,
-        key_generator_fn: Callable[[], Optional[Tuple[bytes, int]]],
+        key_generator_fn: Callable[[], tuple[bytes, int] | None],
         mode_name: str,
-        stop_condition_fn: Optional[Callable[[], bool]] = None,
+        stop_condition_fn: Callable[[], bool] | None = None,
     ) -> int:
         """通用批处理执行循环
 
@@ -153,8 +154,7 @@ class BaseSearchMode:
                     engine._consecutive_gpu_errors += 1
                     if engine._consecutive_gpu_errors >= engine._max_gpu_error_retries:
                         logger.critical(
-                            f"GPU连续错误次数达到上限({engine._max_gpu_error_retries}), "
-                            "强制停止引擎以防止无限循环"
+                            f"GPU连续错误次数达到上限({engine._max_gpu_error_retries}), 强制停止引擎以防止无限循环"
                         )
                         engine._running = False
                         return batch_count

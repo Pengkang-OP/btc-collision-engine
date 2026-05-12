@@ -4,7 +4,7 @@
 复用现有gpu_engine.py的逻辑并保持API兼容。
 """
 
-from typing import Any, List, Dict, Optional, Tuple, cast
+from typing import Any, cast
 
 # P3-5: 统一日志获取
 from ..utils import get_configured_logger
@@ -17,8 +17,8 @@ try:
 except ImportError:
     PYOPENCL_AVAILABLE = False
 
-from .profiles.loader import GPUProfileLoader
 from .driver_manager import DriverManager
+from .profiles.loader import GPUProfileLoader
 from .scorer import get_gpu_scorer
 
 logger = get_configured_logger("GPUDevice")
@@ -216,7 +216,7 @@ class GPUDeviceDetector:
             return False
 
     @staticmethod
-    def get_gpu_health_status() -> Dict:
+    def get_gpu_health_status() -> dict:
         """
         获取GPU健康状态信息
 
@@ -292,7 +292,7 @@ class GPUDeviceDetector:
         logger.debug("GPU可用性缓存和设备信息缓存已清除")
 
     @staticmethod
-    def detect_devices() -> List[Dict]:
+    def detect_devices() -> list[dict]:
         """
         检测所有可用的GPU设备
 
@@ -366,7 +366,7 @@ class GPUDeviceDetector:
         return devices
 
     @staticmethod
-    def _select_best_device(devices: List[Dict]) -> Dict:
+    def _select_best_device(devices: list[dict]) -> dict:
         """选择最佳GPU设备
 
         使用统一的 GPUDeviceScorer 进行评分和选择。
@@ -429,15 +429,15 @@ class GPUDevice:
         self.compute_queue = None  # 计算队列(异步优化)
         self.transfer_queue = None  # 传输队列(异步优化)
         self.device = None
-        self.device_info: Dict[str, Any] = {}
+        self.device_info: dict[str, Any] = {}
         self.vendor = None
-        self.profile: Optional[Dict[str, Any]] = None
+        self.profile: dict[str, Any] | None = None
         self.profile_loader = GPUProfileLoader()
 
         # 驱动相关
         self.driver_version = None
         self.driver_health = None
-        self.driver_optimization_flags: Dict[str, Any] = {}
+        self.driver_optimization_flags: dict[str, Any] = {}
 
         # 异步优化配置
         # PERF-2修复: 默认启用异步执行，提高GPU利用率
@@ -478,8 +478,8 @@ class GPUDevice:
                     for i, d in enumerate(devices)
                 ]
                 raise ValueError(
-                    f"设备索引 {device_index} 超出范围 (0-{len(devices) - 1})\n"
-                    "可用设备:\n" + "\n".join(available)
+                    f"设备索引 {device_index} 超出范围 (0-{len(devices) - 1})\n可用设备:\n"
+                    + "\n".join(available)
                 )
             else:
                 device_info = devices[device_index]
@@ -488,8 +488,7 @@ class GPUDevice:
         else:
             # 其他负数索引,视为无效
             raise ValueError(
-                f"无效的设备索引 {device_index}\n"
-                f"有效值: -1(自动选择) 或 0-{len(devices) - 1}(指定设备)"
+                f"无效的设备索引 {device_index}\n有效值: -1(自动选择) 或 0-{len(devices) - 1}(指定设备)"
             )
 
         # 保存设备对象
@@ -594,7 +593,8 @@ class GPUDevice:
         else:
             # 传统模式: 单一队列
             self.queue = cl.CommandQueue(
-                self.context, self.device  # type: ignore[arg-type]
+                self.context,
+                self.device,  # type: ignore[arg-type]
             )  # type: ignore[assignment]  # noqa: E501
             logger.info("使用传统单队列模式(同步执行)")
 
@@ -609,7 +609,7 @@ class GPUDevice:
             f"  - 异步执行: {'已启用' if self.enable_async_execution else '未启用'}"
         )
 
-    def _validate_device_capabilities(self, device_info: Dict):
+    def _validate_device_capabilities(self, device_info: dict):
         """
         验证设备能力是否满足最低要求
 
@@ -625,7 +625,7 @@ class GPUDevice:
         # 检查计算单元
         if compute_units < min_compute_units:
             logger.warning(
-                f"设备计算单元过少: {compute_units} (建议 >= {min_compute_units}), " "性能可能受限"
+                f"设备计算单元过少: {compute_units} (建议 >= {min_compute_units}), 性能可能受限"
             )
 
         # 检查显存
@@ -636,9 +636,7 @@ class GPUDevice:
                 "可能需要减小batch_size"
             )
 
-        logger.debug(
-            f"设备能力: 计算单元={compute_units}, " f"显存={global_mem / (1024**3):.2f} GB"
-        )
+        logger.debug(f"设备能力: 计算单元={compute_units}, 显存={global_mem / (1024**3):.2f} GB")
 
     def _load_vendor_profile(self, device_name: str):
         """
@@ -696,7 +694,7 @@ class GPUDevice:
 
         logger.debug(f"驱动优化标志: {self.driver_optimization_flags}")
 
-    def get_driver_info(self) -> Dict:
+    def get_driver_info(self) -> dict:
         """
         获取驱动信息
 
@@ -709,7 +707,7 @@ class GPUDevice:
             "optimization_flags": self.driver_optimization_flags,
         }
 
-    def get_device_info(self) -> Dict:
+    def get_device_info(self) -> dict:
         """
         获取设备信息
 
@@ -723,7 +721,7 @@ class GPUDevice:
         import time
 
         # 清理命令队列
-        queues_to_cleanup: List[Tuple[str, Any]] = []
+        queues_to_cleanup: list[tuple[str, Any]] = []
 
         if self.compute_queue:
             queues_to_cleanup.append(("计算队列", self.compute_queue))

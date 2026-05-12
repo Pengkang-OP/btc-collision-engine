@@ -6,14 +6,14 @@
 3. 安全保护(超时+回退)
 """
 
-import time
 import threading
-from typing import Any, List, Dict, Optional, Tuple
+import time
+from typing import Any
+
+import numpy as np
 
 # P3-5: 统一日志获取 + 修复缺失导入
 from ..utils import get_configured_logger
-
-import numpy as np
 
 logger = get_configured_logger("AsyncGPUExecutor")
 
@@ -154,22 +154,22 @@ class AsyncGPUExecutor:
         self.initial_batch_size = gpu_config.get("initial_batch_size", 65536)
 
         # 预计算表缓冲区（常量，生命周期与 executor 一致）
-        self.precomp_buffer: Optional[Any] = None
+        self.precomp_buffer: Any | None = None
 
         # 种子缓冲区（32字节 = 8 uint32，替代大型 keys 缓冲区）
-        self.seed_buffer: Optional[Any] = None
+        self.seed_buffer: Any | None = None
 
         # 双缓冲（匹配结果，不再需要 keys 缓冲区）
-        self.buffer_a: Dict[str, Any] = {"matches": None, "match_flags": None}
-        self.buffer_b: Dict[str, Any] = {"matches": None, "match_flags": None}
+        self.buffer_a: dict[str, Any] = {"matches": None, "match_flags": None}
+        self.buffer_b: dict[str, Any] = {"matches": None, "match_flags": None}
 
         # 异步状态
         self.current_buffer = "A"
-        self.pending_event: Optional[Any] = None
+        self.pending_event: Any | None = None
         self.is_async_ready = False
 
         # 异步流水线状态 延迟结果等待
-        self._pending_buffer: Optional[Any] = None  # 待处理的缓冲区引用
+        self._pending_buffer: Any | None = None  # 待处理的缓冲区引用
         self._pending_num_keys = 0  # 待处理的批次大小
         self.check_uncompressed = 0  # v4.0: 由 GPUDeviceManager.initialize() 覆写
 
@@ -181,12 +181,12 @@ class AsyncGPUExecutor:
         # 预取队列优化v2.2.1
         self._prefetch_enabled = True
         self._next_batch_ready = threading.Event()
-        self._next_batch_data: Optional[bytes] = None
+        self._next_batch_data: bytes | None = None
         self._next_batch_size = 0
 
         # 队列深度优化 v2.3.2：预提交批次 FIFO 队列
         # 每个元素是 _PendingBatch，记录已提交但尚未取回结果的批次
-        self._prefetch_events: List[_PendingBatch] = []
+        self._prefetch_events: list[_PendingBatch] = []
 
         # S2修复: 添加缓冲区池操作锁，保护 _pool_index 等状态的线程安全
         self._pool_lock = threading.Lock()
@@ -247,7 +247,7 @@ class AsyncGPUExecutor:
                 return "intel"
         return "default"
 
-    def _get_gpu_config(self, gpu_model: str) -> Dict:
+    def _get_gpu_config(self, gpu_model: str) -> dict:
         """
         获取GPU特定配置
 
@@ -259,7 +259,7 @@ class AsyncGPUExecutor:
         """
         return GPU_SPECIFIC_CONFIG.get(gpu_model, GPU_SPECIFIC_CONFIG.get("default", {}))
 
-    def _detect_optimal_work_group_size(self, gpu_config: Dict) -> int:
+    def _detect_optimal_work_group_size(self, gpu_config: dict) -> int:
         """检测最优 work_group_size
 
         v4.2.0: 从 GPU 设备信息和型号配置推断最优 work_group_size。
@@ -285,14 +285,14 @@ class AsyncGPUExecutor:
 
         # 从 GPU 型号配置获取默认值
         model_ws_map = {
-            "1660": 256,     # GTX 1660: 256 最优
-            "rtx30": 256,    # RTX 30: 256 最优
-            "rtx40": 512,    # RTX 40: 512 更大工作组提升吞吐
-            "10": 256,       # GTX 10: 256
-            "9": 256,        # GTX 9: 256
+            "1660": 256,  # GTX 1660: 256 最优
+            "rtx30": 256,  # RTX 30: 256 最优
+            "rtx40": 512,  # RTX 40: 512 更大工作组提升吞吐
+            "10": 256,  # GTX 10: 256
+            "9": 256,  # GTX 9: 256
             "amd6000": 256,  # RX 6000: 256
             "amd7000": 256,  # RX 7000: 256
-            "intel": 256,    # Intel Arc: 256 (A770 验证最优)
+            "intel": 256,  # Intel Arc: 256 (A770 验证最优)
             "default": 256,
         }
 
@@ -312,8 +312,8 @@ class AsyncGPUExecutor:
             context: OpenCL上下文
             num_keys: 每个缓冲的密鑰数量
         """
-        import pyopencl as cl
         import numpy as np
+        import pyopencl as cl
 
         # 确保缓冲区大小不超过max_batch_size
         if num_keys > self.max_batch_size:
@@ -343,16 +343,16 @@ class AsyncGPUExecutor:
         # 种子缓冲区（固定32字节，替代原 num_keys*32 字节的 keys 缓冲区）
         if self.seed_buffer is None:
             self.seed_buffer = cl.Buffer(
-                context, cl.mem_flags.READ_ONLY, size=32  # 固兵2字节 = 8 uint32
+                context,
+                cl.mem_flags.READ_ONLY,
+                size=32,  # 固兵2字节 = 8 uint32
             )
             logger.info(
-                "种子缓冲区已创建: 32字节（PRNG模式，节省约{}MB)".format(
-                    num_keys * 32 / 1024 / 1024
-                )
+                f"种子缓冲区已创建: 32字节（PRNG模式，节省约{num_keys * 32 / 1024 / 1024}MB)"
             )
 
         # 创建 queue_depth 个缓冲区构成缓冲区池
-        self._buffer_pool: List[Dict] = []
+        self._buffer_pool: list[dict] = []
         for i in range(self.queue_depth):
             buf = {
                 "matches": cl.Buffer(context, cl.mem_flags.READ_WRITE, size=num_keys * 4),
@@ -402,7 +402,7 @@ class AsyncGPUExecutor:
 
     def run_batch_async(
         self, seed: bytes, num_keys: int, program: Any, targets_buf: Any, num_targets: int
-    ) -> Tuple[List[Dict], float]:
+    ) -> tuple[list[dict], float]:
         """
         异步执行批次（PRNG模式：seed替代private_keys）
 
@@ -439,7 +439,7 @@ class AsyncGPUExecutor:
             # 这样可以保证 round-robin 分配到的缓冲区已被 GPU 安全释放。
 
             # 步骤 0（关键修复）：队列已满时，先回收最老批次，确保缓冲区安全可用
-            prev_matches: List[Dict] = []
+            prev_matches: list[dict] = []
             if len(self._prefetch_events) >= self.queue_depth:
                 prev_matches = self._collect_oldest_batch_results()
 
@@ -454,7 +454,9 @@ class AsyncGPUExecutor:
                 return [], 0.0
 
             # 步骤 3. 清空当前缓冲的匹配结果（计算队列）
-            if not self._clear_matches_buffer(current_buf, num_keys, seed, program, targets_buf, num_targets):
+            if not self._clear_matches_buffer(
+                current_buf, num_keys, seed, program, targets_buf, num_targets
+            ):
                 return [], 0.0
 
             # 步骤 4-6. 执行内核并注册结果
@@ -476,7 +478,7 @@ class AsyncGPUExecutor:
             self.sync_fallbacks += 1
             return self._run_batch_sync(seed, num_keys, program, targets_buf, num_targets)
 
-    def flush_pending(self) -> List[Tuple[bytes, List[Dict]]]:
+    def flush_pending(self) -> list[tuple[bytes, list[dict]]]:
         """收集所有尚未取回的异步执行结果
 
         在主循环结束后调用，确保 _prefetch_events 队列中所有已提交的 GPU 批次结果不丢失。
@@ -486,7 +488,7 @@ class AsyncGPUExecutor:
             其中 seed 是该批次对应的 32 字节种子，matches_for_that_batch 是该批次的匹配列表。
             调用方必须使用每批次自己的 seed 重建私钥，而不能用同一个 seed 处理所有匹配。
         """
-        batch_results: List[Tuple[bytes, List[Dict]]] = []
+        batch_results: list[tuple[bytes, list[dict]]] = []
 
         # 处理所有预提交队列中的待处理批次
         while self._prefetch_events:
@@ -504,7 +506,7 @@ class AsyncGPUExecutor:
                 continue
 
             if oldest.buf is not None:
-                batch_matches: List[Dict] = []
+                batch_matches: list[dict] = []
                 for i in range(oldest.num_keys):
                     if oldest.buf["match_flags"][i] > 0:
                         batch_matches.append(
@@ -537,9 +539,9 @@ class AsyncGPUExecutor:
 
         return True
 
-    def _collect_oldest_batch_results(self) -> List[Dict]:
+    def _collect_oldest_batch_results(self) -> list[dict]:
         """等待并收集最老批次的结果"""
-        prev_matches: List[Dict] = []
+        prev_matches: list[dict] = []
         oldest = self._prefetch_events.pop(0)
         timeout_seconds = 30
         try:
@@ -564,10 +566,12 @@ class AsyncGPUExecutor:
         try:
             for i in range(oldest.num_keys):
                 if oldest.buf["match_flags"][i] > 0:
-                    prev_matches.append({
-                        "key_index": i,
-                        "target_index": int(oldest.buf["match_flags"][i] - 1),
-                    })
+                    prev_matches.append(
+                        {
+                            "key_index": i,
+                            "target_index": int(oldest.buf["match_flags"][i] - 1),
+                        }
+                    )
         except (IndexError, ValueError, AttributeError) as e:
             logger.warning(f"收集批次结果数据异常: {type(e).__name__}: {e}")
         except Exception as e:
@@ -587,10 +591,14 @@ class AsyncGPUExecutor:
                     return current_buf
                 except (IndexError, ValueError) as e:
                     logger.warning(f"缓冲区池索引异常: {type(e).__name__}: {e}，回退到同步模式")
-                    return self._run_batch_sync_fallback(seed, num_keys, program, targets_buf, num_targets)
+                    return self._run_batch_sync_fallback(
+                        seed, num_keys, program, targets_buf, num_targets
+                    )
                 except Exception as e:
                     logger.warning(f"分配缓冲区失败: {type(e).__name__}: {e}，回退到同步模式")
-                    return self._run_batch_sync_fallback(seed, num_keys, program, targets_buf, num_targets)
+                    return self._run_batch_sync_fallback(
+                        seed, num_keys, program, targets_buf, num_targets
+                    )
         else:
             try:
                 current_buf = self.buffer_a if self.current_buffer == "A" else self.buffer_b
@@ -598,10 +606,14 @@ class AsyncGPUExecutor:
                 return current_buf
             except (AttributeError, KeyError) as e:
                 logger.warning(f"获取双缓冲区属性异常: {type(e).__name__}: {e}，回退到同步模式")
-                return self._run_batch_sync_fallback(seed, num_keys, program, targets_buf, num_targets)
+                return self._run_batch_sync_fallback(
+                    seed, num_keys, program, targets_buf, num_targets
+                )
             except Exception as e:
                 logger.warning(f"获取双缓冲区失败: {type(e).__name__}: {e}，回退到同步模式")
-                return self._run_batch_sync_fallback(seed, num_keys, program, targets_buf, num_targets)
+                return self._run_batch_sync_fallback(
+                    seed, num_keys, program, targets_buf, num_targets
+                )
 
     def _run_batch_sync_fallback(self, seed, num_keys, program, targets_buf, num_targets):
         """回退到同步执行的辅助方法"""
@@ -613,16 +625,23 @@ class AsyncGPUExecutor:
             seed_array = _seed_bytes_to_u32_be_array(seed[:32])
         except (ValueError, TypeError) as e:
             logger.warning(f"准备种子数据格式错误: {type(e).__name__}: {e}，回退到同步模式")
-            return self._run_batch_sync_fallback_and_return(seed, num_keys, program, targets_buf, num_targets)
+            return self._run_batch_sync_fallback_and_return(
+                seed, num_keys, program, targets_buf, num_targets
+            )
         except Exception as e:
             logger.warning(f"准备种子数据失败: {type(e).__name__}: {e}，回退到同步模式")
-            return self._run_batch_sync_fallback_and_return(seed, num_keys, program, targets_buf, num_targets)
+            return self._run_batch_sync_fallback_and_return(
+                seed, num_keys, program, targets_buf, num_targets
+            )
 
         if not self._is_buffer_valid():
-            return self._run_batch_sync_fallback_and_return(seed, num_keys, program, targets_buf, num_targets)
+            return self._run_batch_sync_fallback_and_return(
+                seed, num_keys, program, targets_buf, num_targets
+            )
 
         try:
             import pyopencl as cl
+
             return cl.enqueue_copy(
                 self.device.transfer_queue,
                 self.seed_buffer,
@@ -632,16 +651,24 @@ class AsyncGPUExecutor:
         except TypeError as e:
             if "host-to-host transfers" in str(e):
                 logger.warning("主机到主机传输错误，回退到同步模式")
-                return self._run_batch_sync_fallback_and_return(seed, num_keys, program, targets_buf, num_targets)
+                return self._run_batch_sync_fallback_and_return(
+                    seed, num_keys, program, targets_buf, num_targets
+                )
             raise
         except (RuntimeError, MemoryError) as e:
             logger.warning(f"写入种子缓冲区OpenCL错误: {type(e).__name__}: {e}，回退到同步模式")
-            return self._run_batch_sync_fallback_and_return(seed, num_keys, program, targets_buf, num_targets)
+            return self._run_batch_sync_fallback_and_return(
+                seed, num_keys, program, targets_buf, num_targets
+            )
         except Exception as e:
             logger.warning(f"写入种子缓冲区失败: {type(e).__name__}: {e}，回退到同步模式")
-            return self._run_batch_sync_fallback_and_return(seed, num_keys, program, targets_buf, num_targets)
+            return self._run_batch_sync_fallback_and_return(
+                seed, num_keys, program, targets_buf, num_targets
+            )
 
-    def _run_batch_sync_fallback_and_return(self, seed, num_keys, program, targets_buf, num_targets):
+    def _run_batch_sync_fallback_and_return(
+        self, seed, num_keys, program, targets_buf, num_targets
+    ):
         """回退并返回None"""
         self._run_batch_sync(seed, num_keys, program, targets_buf, num_targets)
         return None
@@ -653,6 +680,7 @@ class AsyncGPUExecutor:
             if buffer_size < num_keys:
                 logger.warning(f"缓冲区大小不足: 需要{num_keys}个元素, 实际{buffer_size}个元素")
                 import pyopencl as cl
+
                 if current_buf["matches"] is not None:
                     try:
                         current_buf["matches"].release()
@@ -665,7 +693,9 @@ class AsyncGPUExecutor:
                     current_buf["match_flags"] = np.zeros(num_keys, dtype=np.int32)
                     logger.info(f"已动态调整缓冲区大小为: {num_keys}个元素")
                 except (RuntimeError, MemoryError) as e:
-                    logger.warning(f"创建新缓冲区OpenCL错误: {type(e).__name__}: {e}，回退到同步模式")
+                    logger.warning(
+                        f"创建新缓冲区OpenCL错误: {type(e).__name__}: {e}，回退到同步模式"
+                    )
                     self._run_batch_sync(seed, num_keys, program, targets_buf, num_targets)
                     return False
                 except Exception as e:
@@ -674,6 +704,7 @@ class AsyncGPUExecutor:
                     return False
 
             import pyopencl as cl
+
             cl.enqueue_fill_buffer(
                 self.device.compute_queue,
                 current_buf["matches"],
@@ -691,7 +722,9 @@ class AsyncGPUExecutor:
             self._run_batch_sync(seed, num_keys, program, targets_buf, num_targets)
             return False
 
-    def _execute_and_register(self, current_buf, num_keys, seed, program, targets_buf, num_targets, transfer_event):
+    def _execute_and_register(
+        self, current_buf, num_keys, seed, program, targets_buf, num_targets, transfer_event
+    ):
         """步骤4-6: 执行内核、注册批次结果"""
         import pyopencl as cl
 
@@ -713,19 +746,38 @@ class AsyncGPUExecutor:
         global_ws = ((num_keys + local_ws - 1) // local_ws) * local_ws
 
         kernel_event = self._execute_kernel(
-            batch_kernel, local_ws, global_ws, current_buf, num_keys, targets_buf, num_targets, transfer_event
+            batch_kernel,
+            local_ws,
+            global_ws,
+            current_buf,
+            num_keys,
+            targets_buf,
+            num_targets,
+            transfer_event,
         )
         if kernel_event is None:
             return None, None
 
-        read_event = self._enqueue_result_read(current_buf, num_keys, seed, program, targets_buf, num_targets)
+        read_event = self._enqueue_result_read(
+            current_buf, num_keys, seed, program, targets_buf, num_targets
+        )
         if read_event is None:
             return None, None
 
         self._update_compat_fields(read_event, current_buf, num_keys)
         return kernel_event, read_event
 
-    def _execute_kernel(self, batch_kernel, local_ws, global_ws, current_buf, num_keys, targets_buf, num_targets, transfer_event):
+    def _execute_kernel(
+        self,
+        batch_kernel,
+        local_ws,
+        global_ws,
+        current_buf,
+        num_keys,
+        targets_buf,
+        num_targets,
+        transfer_event,
+    ):
         """执行GPU内核"""
         try:
             return batch_kernel(
@@ -772,6 +824,7 @@ class AsyncGPUExecutor:
     def _enqueue_result_read(self, current_buf, num_keys, seed, program, targets_buf, num_targets):
         """步骤5: 非阻塞回读结果"""
         import pyopencl as cl
+
         try:
             return cl.enqueue_copy(
                 self.device.compute_queue,
@@ -801,14 +854,14 @@ class AsyncGPUExecutor:
 
     def _run_batch_sync(
         self, seed: bytes, num_keys: int, program, targets_buf, num_targets
-    ) -> Tuple[List[Dict], float]:
+    ) -> tuple[list[dict], float]:
         """
         同步执行(回退模式，PRNG模式)
 
         当异步执行失败时使用。seed替代private_keys。
         """
-        import pyopencl as cl
         import numpy as np
+        import pyopencl as cl
 
         start_time = time.time()
 
@@ -921,8 +974,14 @@ class AsyncGPUExecutor:
         self._finish_all_queues()
         self._prefetch_events.clear()
         self._wait_pending_event()
-        self._release_buffer_safe("seed_buffer", lambda: self.seed_buffer, lambda v: setattr(self, "seed_buffer", v))
-        self._release_buffer_safe("precomp_buffer", lambda: self.precomp_buffer, lambda v: setattr(self, "precomp_buffer", v))
+        self._release_buffer_safe(
+            "seed_buffer", lambda: self.seed_buffer, lambda v: setattr(self, "seed_buffer", v)
+        )
+        self._release_buffer_safe(
+            "precomp_buffer",
+            lambda: self.precomp_buffer,
+            lambda v: setattr(self, "precomp_buffer", v),
+        )
         self._release_buffer_pool()
         self._pending_buffer = None
         self._pending_num_keys = 0
@@ -956,9 +1015,7 @@ class AsyncGPUExecutor:
                 logger.warning(f"等待待处理事件完成失败: {type(e).__name__}: {e}")
             self.pending_event = None
 
-    def _release_buffer_safe(
-        self, name: str, getter: callable, setter: callable
-    ) -> None:
+    def _release_buffer_safe(self, name: str, getter: callable, setter: callable) -> None:
         """安全地释放缓冲区资源"""
         buf = getter()
         if buf is not None:
@@ -992,7 +1049,7 @@ class AsyncGPUExecutor:
                 )
                 buf_dict["match_flags"] = None
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         """获取执行统计"""
         total = self.async_executions + self.sync_fallbacks
         async_rate = (self.async_executions / total * 100) if total > 0 else 0

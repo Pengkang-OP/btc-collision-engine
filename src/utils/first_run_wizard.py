@@ -14,15 +14,15 @@
         wizard.run()
 """
 
-import sys
+import json
 import os
 import re
-import json
 import shutil
+import sys
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any
 
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger, init_logging
 
 init_logging()
 logger = get_configured_logger("FirstRunWizard")
@@ -42,7 +42,7 @@ class FirstRunWizard:
     WIZARD_MARKER = "data_logs/.wizard_completed"  # 标记文件，防止重复弹出
 
     # 默认配置模板
-    DEFAULT_CONFIG: Dict[str, Any] = {
+    DEFAULT_CONFIG: dict[str, Any] = {
         "collision": {
             "mode": "random",
             "batch_size": 10000,
@@ -60,7 +60,7 @@ class FirstRunWizard:
         "monitoring": {"enabled": True, "report_interval": 30},
     }
 
-    def __init__(self, project_root: Optional[str] = None) -> None:
+    def __init__(self, project_root: str | None = None) -> None:
         if project_root is None:
             project_root = str(Path(__file__).resolve().parent.parent.parent)
         self.project_root = Path(project_root)
@@ -160,7 +160,7 @@ class FirstRunWizard:
 """)
         input("  按 Enter 继续...")
 
-    def _step_mode(self, config: Dict) -> None:
+    def _step_mode(self, config: dict) -> None:
         """步骤1：选择碰撞模式"""
         print("\n[步骤 1/4] 选择碰撞模式")
         mode_options = [
@@ -173,7 +173,7 @@ class FirstRunWizard:
         config["collision"]["mode"] = mode
         print(f"  已设置模式: {mode}")
 
-    def _step_target(self, config: Dict) -> Optional[str]:
+    def _step_target(self, config: dict) -> str | None:
         """步骤2：设置目标地址"""
         print("\n[步骤 2/4] 设置目标地址")
 
@@ -233,7 +233,7 @@ class FirstRunWizard:
         return user_input
 
     @staticmethod
-    def _try_resolve_path(path: str) -> Optional[str]:
+    def _try_resolve_path(path: str) -> str | None:
         """尝试自动修正常见路径问题，返回修正后的路径或 None
 
         处理场景：
@@ -253,7 +253,7 @@ class FirstRunWizard:
                 return candidate
         return None
 
-    def _step_gpu(self, config: Dict) -> None:
+    def _step_gpu(self, config: dict) -> None:
         """步骤3：GPU 设置"""
         print("\n[步骤 3/4] GPU 加速设置")
 
@@ -278,7 +278,7 @@ class FirstRunWizard:
         else:
             print("  已选择 CPU 模式")
 
-    def _step_workers(self, config: Dict, use_gpu: bool = False) -> None:
+    def _step_workers(self, config: dict, use_gpu: bool = False) -> None:
         """步骤4：CPU 工作线程数"""
         print("\n[步骤 4/4] 性能设置")
         cpu_count = os.cpu_count() or 4
@@ -304,14 +304,14 @@ class FirstRunWizard:
     # 生成配置文件
     # -------------------------------------------------------------------------
 
-    def _write_config(self, config: Dict) -> bool:
+    def _write_config(self, config: dict) -> bool:
         """写入配置文件"""
         try:
             # 如果有 example 配置，先复制
             if self.example_path.exists():
                 shutil.copy2(self.example_path, self.config_path)
                 # 合并向导配置
-                with open(self.config_path, "r", encoding="utf-8") as f:
+                with open(self.config_path, encoding="utf-8") as f:
                     base = json.load(f)
                 # 深度合并
                 self._deep_merge(base, config)
@@ -346,7 +346,7 @@ class FirstRunWizard:
     # 主入口
     # -------------------------------------------------------------------------
 
-    def run(self) -> Dict:
+    def run(self) -> dict:
         """运行完整向导，返回最终配置"""
         import copy
 

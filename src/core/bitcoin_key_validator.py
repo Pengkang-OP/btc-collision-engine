@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 比特币密钥生成和地址匹配完整验证系统
 
@@ -14,15 +13,15 @@
 import hashlib
 import hmac
 import time
-from typing import Tuple, Dict, Any, List
 from enum import Enum
+from typing import Any
 
 import bech32
 
-from .secp256k1 import Secp256k1, ECPoint, EllipticCurve
 from .base58 import Base58
-from .wif import WIF
 from .hash_utils import HashUtils
+from .secp256k1 import ECPoint, EllipticCurve, Secp256k1
+from .wif import WIF
 
 
 class WIFEncoder:
@@ -68,7 +67,7 @@ class WIFEncoder:
         return Base58.encode(data + checksum)
 
     @staticmethod
-    def decode(wif: str) -> Tuple[bytes, bool, bool]:
+    def decode(wif: str) -> tuple[bytes, bool, bool]:
         """从WIF解码为私钥
 
         Args:
@@ -137,9 +136,9 @@ class KeyValidationResult:
 
     def __init__(self) -> None:
         self.success = True
-        self.errors: List[str] = []
-        self.warnings: List[str] = []
-        self.details: Dict[str, Any] = {}
+        self.errors: list[str] = []
+        self.warnings: list[str] = []
+        self.details: dict[str, Any] = {}
 
     def add_error(self, error: str) -> "KeyValidationResult":
         self.success = False
@@ -152,7 +151,7 @@ class KeyValidationResult:
     def add_detail(self, key: str, value: Any) -> None:
         self.details[key] = value
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "success": self.success,
             "errors": self.errors,
@@ -370,7 +369,7 @@ class BitcoinKeyValidator:
 
     def generate_public_key(
         self, private_key: bytes, compressed: bool = True
-    ) -> Tuple[KeyValidationResult, bytes]:
+    ) -> tuple[KeyValidationResult, bytes]:
         """
         使用secp256k1椭圆曲线算法从私钥生成公钥
 
@@ -513,7 +512,7 @@ class BitcoinKeyValidator:
 
     def generate_address(
         self, public_key: bytes, address_type: AddressType = AddressType.P2PKH
-    ) -> Tuple[KeyValidationResult, str]:
+    ) -> tuple[KeyValidationResult, str]:
         """
         从公钥生成比特币地址
 
@@ -621,10 +620,11 @@ class BitcoinKeyValidator:
                 len(address) < KeyValidationConstants.P2PKH_ADDRESS_MIN_LENGTH
                 or len(address) > KeyValidationConstants.P2PKH_ADDRESS_MAX_LENGTH
             ):
-                result.add_error(f"地址长度错误: {
-                    len(address)}，应为{
-                    KeyValidationConstants.P2PKH_ADDRESS_MIN_LENGTH}-{
-                    KeyValidationConstants.P2PKH_ADDRESS_MAX_LENGTH}字符")
+                result.add_error(
+                    f"地址长度错误: {len(address)}，应为{
+                        KeyValidationConstants.P2PKH_ADDRESS_MIN_LENGTH
+                    }-{KeyValidationConstants.P2PKH_ADDRESS_MAX_LENGTH}字符"
+                )
 
             # 验证Base58字符集
             valid_chars = set(Base58.ALPHABET)
@@ -641,16 +641,16 @@ class BitcoinKeyValidator:
                     addr_type == AddressType.P2PKH
                     and version != KeyValidationConstants.P2PKH_VERSION_BYTE
                 ):
-                    result.add_warning(f"P2PKH地址版本字节应为0x{
-                        KeyValidationConstants.P2PKH_VERSION_BYTE:02x}，当前: 0x{
-                        version:02x}")
+                    result.add_warning(
+                        f"P2PKH地址版本字节应为0x{KeyValidationConstants.P2PKH_VERSION_BYTE:02x}，当前: 0x{version:02x}"
+                    )
                 elif (
                     addr_type == AddressType.P2SH
                     and version != KeyValidationConstants.P2SH_VERSION_BYTE
                 ):
-                    result.add_warning(f"P2SH地址版本字节应为0x{
-                        KeyValidationConstants.P2SH_VERSION_BYTE:02x}，当前: 0x{
-                        version:02x}")
+                    result.add_warning(
+                        f"P2SH地址版本字节应为0x{KeyValidationConstants.P2SH_VERSION_BYTE:02x}，当前: 0x{version:02x}"
+                    )
 
                 result.add_detail("checksum_valid", True)
 
@@ -716,7 +716,7 @@ class BitcoinKeyValidator:
 
     def private_key_to_wif(
         self, private_key: bytes, compressed: bool = True
-    ) -> Tuple[KeyValidationResult, str]:
+    ) -> tuple[KeyValidationResult, str]:
         """
         将私钥转换为WIF格式
 
@@ -756,9 +756,9 @@ class BitcoinKeyValidator:
                     result.add_warning(f"压缩WIF应以'K'或'L'开头，当前: {wif[0]}")
             else:
                 if len(wif) != KeyValidationConstants.UNCOMPRESSED_WIF_LENGTH:
-                    result.add_warning(f"非压缩WIF长度应为{
-                        KeyValidationConstants.UNCOMPRESSED_WIF_LENGTH}字符，当前: {
-                        len(wif)}")
+                    result.add_warning(
+                        f"非压缩WIF长度应为{KeyValidationConstants.UNCOMPRESSED_WIF_LENGTH}字符，当前: {len(wif)}"
+                    )
                 if not wif.startswith("5"):
                     result.add_warning(f"非压缩WIF应以'5'开头，当前: {wif[0]}")
 
@@ -777,7 +777,7 @@ class BitcoinKeyValidator:
             result.add_error(f"WIF编码失败: {str(e)}")
             return result, ""
 
-    def wif_to_private_key(self, wif: str) -> Tuple[KeyValidationResult, bytes, bool]:
+    def wif_to_private_key(self, wif: str) -> tuple[KeyValidationResult, bytes, bool]:
         """
         从WIF格式解码私钥
 
@@ -874,13 +874,13 @@ class BitcoinKeyValidator:
 
         return result
 
-    def full_validation_chain(self, private_key: bytes, target_addresses: set) -> Dict[str, Any]:
+    def full_validation_chain(self, private_key: bytes, target_addresses: set) -> dict[str, Any]:
         """
         完整验证链：私钥 -> 公钥 -> 地址 -> WIF -> 匹配验证
 
         返回完整的验证报告
         """
-        report: Dict[str, Any] = {
+        report: dict[str, Any] = {
             "timestamp": time.time(),
             "steps": {},
             "overall_success": True,
@@ -995,7 +995,7 @@ class BitcoinKeyValidator:
 
 
 # 便捷函数
-def validate_bitcoin_key_chain(private_key: bytes, target_addresses: set) -> Dict[str, Any]:
+def validate_bitcoin_key_chain(private_key: bytes, target_addresses: set) -> dict[str, Any]:
     """
     便捷函数：验证完整的比特币密钥链
 

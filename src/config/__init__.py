@@ -1,19 +1,19 @@
 """配置管理模块"""
 
+from .config_coordinator import ConfigCoordinator
 from .config_manager import ConfigManager
+from .config_watcher import ConfigWatcher  # P2-4
 from .crypto_config import (
-    CryptoConfig,
     CryptoBackendType,
+    CryptoConfig,
     get_crypto_config,
     init_crypto_from_config,
 )
-from .config_coordinator import ConfigCoordinator
 from .performance_config import (
     PerformanceOptimizationConfig,
     PerformanceTuner,
     create_optimized_config,
 )
-from .config_watcher import ConfigWatcher  # P2-4
 
 __all__ = [
     "ConfigManager",

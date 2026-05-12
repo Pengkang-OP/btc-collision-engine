@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 GPU监控模块
 
 提供GPU使用率、显存使用等监控指标
 """
 
-import time
 import logging
-from typing import Dict, Any
+import time
+from typing import Any
 
 logger = logging.getLogger("GPUMonitor")
 
@@ -19,9 +18,9 @@ class GPUMonitor:
     def __init__(self) -> None:
         """初始化GPU监控器"""
         self.gpu_available = False
-        self.gpu_info: Dict[str, Any] = {}
+        self.gpu_info: dict[str, Any] = {}
         self._last_check = 0.0
-        self._cached_metrics: Dict[str, Any] = {}
+        self._cached_metrics: dict[str, Any] = {}
         self._check_interval = 5.0  # 5秒检查一次
 
         # 尝试导入GPU相关库
@@ -35,7 +34,7 @@ class GPUMonitor:
             logger.warning("PyOpenCL不可用，GPU监控已禁用")
             self.gpu_available = False
 
-    def get_gpu_info(self) -> Dict[str, Any]:
+    def get_gpu_info(self) -> dict[str, Any]:
         """
         获取GPU基本信息
 
@@ -67,7 +66,7 @@ class GPUMonitor:
             logger.error(f"获取GPU信息失败: {e}")
             return {"available": False, "error": str(e)}
 
-    def get_gpu_metrics(self) -> Dict[str, Any]:
+    def get_gpu_metrics(self) -> dict[str, Any]:
         """
         获取GPU性能指标（使用缓存）
 
@@ -156,7 +155,7 @@ def get_gpu_monitor() -> GPUMonitor:
     return _gpu_monitor
 
 
-def collect_gpu_metrics() -> Dict[str, Any]:
+def collect_gpu_metrics() -> dict[str, Any]:
     """
     收集GPU监控指标（便捷函数）
 

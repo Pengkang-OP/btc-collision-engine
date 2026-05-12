@@ -10,10 +10,10 @@
 """
 
 import threading
-from typing import Set, Optional, Dict, Any
+from typing import Any
 
 # 导入日志配置
-from ...utils import init_logging, get_configured_logger
+from ...utils import get_configured_logger, init_logging
 
 # 初始化日志系统
 init_logging()
@@ -41,7 +41,7 @@ class AddressMatcher:
     def __init__(
         self,
         strategy: str = "hash_set",
-        targets: Optional[Set[str]] = None,
+        targets: set[str] | None = None,
         bloom_capacity: int = 100000,
         bloom_error_rate: float = 0.001,
     ) -> None:
@@ -194,7 +194,7 @@ class AddressMatcher:
             except Exception as e:
                 logger.error(f"添加目标地址失败: {address}, 错误={e}")
 
-    def add_targets(self, addresses: Set[str]) -> None:
+    def add_targets(self, addresses: set[str]) -> None:
         """
         批量添加目标地址
 
@@ -262,7 +262,7 @@ class AddressMatcher:
 
             return True
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         获取匹配引擎统计信息
 

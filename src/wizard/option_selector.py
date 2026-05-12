@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 选项选择器
 
 负责功能选项的配置。
 """
-
-from typing import Tuple
 
 from .selector_protocol import SelectorProtocol
 
@@ -14,7 +11,7 @@ from .selector_protocol import SelectorProtocol
 class OptionSelector(SelectorProtocol):
     """功能选项选择器"""
 
-    def select(self, compact: bool = False) -> Tuple[bool, bool, int]:
+    def select(self, compact: bool = False) -> tuple[bool, bool, int]:
         """选择功能选项
 
         Args:
@@ -127,6 +124,6 @@ class OptionSelector(SelectorProtocol):
             except ValueError:
                 print("    [ERROR] 请输入有效的数字")
 
-    def _select_compact(self) -> Tuple[bool, bool, int]:
+    def _select_compact(self) -> tuple[bool, bool, int]:
         """紧凑模式选择（使用默认值）"""
         return True, True, 0

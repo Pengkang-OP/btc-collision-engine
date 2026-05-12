@@ -18,9 +18,9 @@
 """
 
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Any
-from enum import Enum
 from datetime import datetime
+from enum import Enum
+from typing import Any
 
 
 class EventType(Enum):
@@ -49,12 +49,12 @@ class CollisionEvent:
         metadata: 附加元数据
     """
 
-    event_type: Optional[EventType] = field(default=None)
+    event_type: EventType | None = field(default=None)
     timestamp: datetime = field(default_factory=datetime.now)
     source: str = "collision_engine"
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "event_type": self.event_type.value if self.event_type else None,
@@ -168,8 +168,8 @@ class EngineErrorEvent(CollisionEvent):
 
     error_type: str = ""
     error_message: str = ""
-    exception: Optional[Exception] = None
-    context: Dict[str, Any] = field(default_factory=dict)
+    exception: Exception | None = None
+    context: dict[str, Any] = field(default_factory=dict)
     recoverable: bool = False
 
     def __post_init__(self) -> None:

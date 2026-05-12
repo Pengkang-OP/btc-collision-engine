@@ -45,7 +45,6 @@ For complete technical specs, API docs and usage guide, see:
 
 # flake8: noqa: W605, E501
 
-from typing import Optional, List, Dict, Tuple
 
 # P1-2 fix: implement interface
 
@@ -60,7 +59,7 @@ KERNEL_VERSION = "4.2.1"
 KERNEL_VERSION_TUPLE = (4, 2, 1)
 
 # Maps versions to changelog entries for auditing
-KERNEL_VERSION_HISTORY: List[Dict[str, str]] = [
+KERNEL_VERSION_HISTORY: list[dict[str, str]] = [
     {
         "version": "4.2.1",
         "date": "2026-05",
@@ -104,7 +103,7 @@ def get_kernel_version() -> str:
     return KERNEL_VERSION
 
 
-def get_kernel_version_tuple() -> Tuple[int, int, int]:
+def get_kernel_version_tuple() -> tuple[int, int, int]:
     """获取当前内核版本号元组 (major, minor, patch)"""
     return KERNEL_VERSION_TUPLE
 
@@ -135,10 +134,10 @@ def validate_kernel_version(min_version: str) -> bool:
     except (ValueError, TypeError) as e:
         raise ValueError(f"Invalid version format: {min_version}") from e
 
-    return KERNEL_VERSION_TUPLE >= min_tuple
+    return min_tuple <= KERNEL_VERSION_TUPLE
 
 
-def get_version_changelog(version: Optional[str] = None) -> List[Dict[str, str]]:
+def get_version_changelog(version: str | None = None) -> list[dict[str, str]]:
     """获取内核版本变更日志
 
     Args:
@@ -153,8 +152,8 @@ def get_version_changelog(version: Optional[str] = None) -> List[Dict[str, str]]
 
 
 def get_latest_compatible_version(
-    current_version: str, available_versions: List[str]
-) -> Optional[str]:
+    current_version: str, available_versions: list[str]
+) -> str | None:
     """查找最新兼容版本（用于回滚场景）
 
     给定当前版本和可用版本列表，返回可回退到的最高版本。

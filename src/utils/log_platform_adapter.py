@@ -7,12 +7,13 @@
 - 跨平台兼容性处理
 """
 
-import os
-import sys
-import platform
-import logging
 import ctypes
-from typing import Optional, Dict, Any, Callable, cast
+import logging
+import os
+import platform
+import sys
+from collections.abc import Callable
+from typing import Any, cast
 
 
 class PlatformAdapter:
@@ -24,7 +25,7 @@ class PlatformAdapter:
         self.platform_version = platform.version()
         self.platform_architecture = platform.architecture()
 
-    def get_platform_info(self) -> Dict[str, Any]:
+    def get_platform_info(self) -> dict[str, Any]:
         """
         获取平台信息
 
@@ -204,14 +205,14 @@ class PlatformAdapter:
             except Exception:
                 return False
 
-    def get_platform_specific_handlers(self) -> Dict[str, Callable[..., Any]]:
+    def get_platform_specific_handlers(self) -> dict[str, Callable[..., Any]]:
         """
         获取平台特定的处理器
 
         Returns:
             平台特定的处理器字典
         """
-        handlers: Dict[str, Callable[..., Any]] = {}
+        handlers: dict[str, Callable[..., Any]] = {}
 
         if self.platform_name == "Windows":
             # Windows 特定处理器
@@ -296,14 +297,14 @@ class PlatformAdapter:
 
         return cast(logging.Handler, SafeStreamHandler(sys.stdout))
 
-    def get_platform_optimizations(self) -> Dict[str, Any]:
+    def get_platform_optimizations(self) -> dict[str, Any]:
         """
         获取平台特定的优化策略
 
         Returns:
             优化策略
         """
-        optimizations: Dict[str, Any] = {
+        optimizations: dict[str, Any] = {
             "platform": self.platform_name,
             "optimizations": [],
         }
@@ -347,7 +348,7 @@ class PlatformAdapter:
 
 
 # 全局平台适配器实例
-_platform_adapter: Optional[PlatformAdapter] = None
+_platform_adapter: PlatformAdapter | None = None
 
 
 def get_platform_adapter() -> PlatformAdapter:
@@ -363,7 +364,7 @@ def get_platform_adapter() -> PlatformAdapter:
     return _platform_adapter
 
 
-def get_platform_info() -> Dict[str, Any]:
+def get_platform_info() -> dict[str, Any]:
     """
     获取平台信息
 
@@ -397,7 +398,7 @@ def ensure_log_directory() -> bool:
     return adapter.ensure_directory(log_dir)
 
 
-def get_platform_specific_handlers() -> Dict[str, Callable[..., Any]]:
+def get_platform_specific_handlers() -> dict[str, Callable[..., Any]]:
     """
     获取平台特定的处理器
 
@@ -408,7 +409,7 @@ def get_platform_specific_handlers() -> Dict[str, Callable[..., Any]]:
     return adapter.get_platform_specific_handlers()
 
 
-def get_platform_optimizations() -> Dict[str, Any]:
+def get_platform_optimizations() -> dict[str, Any]:
     """
     获取平台特定的优化策略
 

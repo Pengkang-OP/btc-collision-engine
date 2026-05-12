@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 比特币私钥对撞工具 - 命令行界面入口
 
@@ -21,7 +20,7 @@
 import os
 import sys
 import time
-from typing import Any, Set, cast
+from typing import Any, cast
 
 # 将项目根目录加入路径
 _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -29,17 +28,17 @@ if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
 # ── 仅导入轻量级模块（--help/--version 等命令不触发重量级导入） ─────────────
-from src.utils import init_logging, get_configured_logger  # noqa: E402
 from src.cli.arg_parser import parse_args  # noqa: E402
-from src.cli.validation import validate_args, validate_file_path  # noqa: E402
 from src.cli.commands import _dispatch_utility_commands  # noqa: E402
-from src.i18n import _t, set_language  # noqa: E402
+from src.cli.config_loader import load_config_with_validation  # noqa: E402
+from src.cli.output import CLIOutput  # noqa: E402
 from src.cli.progress import (  # noqa: E402, F401
     format_progress,
 )  # re-export for backward compat
-from src.cli.config_loader import load_config_with_validation  # noqa: E402
-from src.cli.output import CLIOutput  # noqa: E402
 from src.cli.stats_reporter import _print_final_summary  # noqa: E402
+from src.cli.validation import validate_args, validate_file_path  # noqa: E402
+from src.i18n import _t, set_language  # noqa: E402
+from src.utils import get_configured_logger, init_logging  # noqa: E402
 
 # 初始化日志
 init_logging()
@@ -84,7 +83,7 @@ def _apply_output_flags(args) -> None:
         logger.debug("详细级别 -v：启用调试输出")
 
 
-def load_targets(args: Any) -> Set[str]:
+def load_targets(args: Any) -> set[str]:
     """加载目标地址集合"""
     # 延迟导入 TargetResolver（属于重量级依赖链）
     from src.collision import TargetResolver
@@ -105,7 +104,7 @@ def load_targets(args: Any) -> Set[str]:
         if not quiet:
             print(_t("address.loaded", count=len(targets)))
     else:
-        targets = cast(Set[str], resolver.resolve_multiple(args.targets))
+        targets = cast(set[str], resolver.resolve_multiple(args.targets))
         if not targets:
             print(_t("address.load_failed", error="未能解析任何有效的目标地址"), file=sys.stderr)
             sys.exit(1)
@@ -148,10 +147,10 @@ def _run_main() -> None:
 
     # ── 以下阶段才延迟导入重量级模块 ────────────────────────────────────────
     from src.cli.engine_runner import (
-        _setup_and_start_engine,
-        _run_collision_loop,
         _compute_range,
         _print_config_info,
+        _run_collision_loop,
+        _setup_and_start_engine,
     )
 
     # 阶段4: 计算范围参数

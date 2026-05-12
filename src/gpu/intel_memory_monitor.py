@@ -14,10 +14,10 @@ v2.2.2 修复:
 """
 
 import time
-from ..utils import get_configured_logger
-from typing import Dict, List
 from dataclasses import dataclass
 from enum import Enum
+
+from ..utils import get_configured_logger
 
 logger = get_configured_logger("IntelMemoryMonitor")
 
@@ -102,11 +102,11 @@ class IntelMemoryMonitor:
         self.total_deallocations = 0
 
         # 历史记录
-        self._history: List[MemorySnapshot] = []
+        self._history: list[MemorySnapshot] = []
         self._max_history = 100
 
         # 泄漏检测
-        self._allocation_sizes: List[int] = []
+        self._allocation_sizes: list[int] = []
         self._leak_detection_window = 50  # 检测窗口大小
 
         logger.info(
@@ -134,8 +134,7 @@ class IntelMemoryMonitor:
         # 检查是否超出安全限制
         if new_usage > self.safe_limit:
             logger.warning(
-                "显存分配将超出安全限制: "
-                f"{new_usage / 1024**2:.0f}MB > {self.safe_limit / 1024**2:.0f}MB"
+                f"显存分配将超出安全限制: {new_usage / 1024**2:.0f}MB > {self.safe_limit / 1024**2:.0f}MB"
             )
             return False
 
@@ -152,8 +151,7 @@ class IntelMemoryMonitor:
         self._record_snapshot(batch_count)
 
         logger.debug(
-            f"显存分配: +{size_bytes / 1024**2:.1f}MB, "
-            f"总计: {self.current_usage / 1024**2:.1f}MB"
+            f"显存分配: +{size_bytes / 1024**2:.1f}MB, 总计: {self.current_usage / 1024**2:.1f}MB"
         )
 
         return True
@@ -175,11 +173,10 @@ class IntelMemoryMonitor:
         self._record_snapshot(batch_count)
 
         logger.debug(
-            f"显存释放: -{size_bytes / 1024**2:.1f}MB, "
-            f"总计: {self.current_usage / 1024**2:.1f}MB"
+            f"显存释放: -{size_bytes / 1024**2:.1f}MB, 总计: {self.current_usage / 1024**2:.1f}MB"
         )
 
-    def get_status(self) -> Dict:
+    def get_status(self) -> dict:
         """获取当前显存状态
 
         Returns:
@@ -195,13 +192,15 @@ class IntelMemoryMonitor:
             "peak_mb": self.peak_usage / 1024**2,
             "safe_limit_bytes": self.safe_limit,
             "safe_limit_mb": self.safe_limit / 1024**2,
-            "usage_percent": (self.current_usage / self.safe_limit * 100) if self.safe_limit > 0 else 0,
+            "usage_percent": (self.current_usage / self.safe_limit * 100)
+            if self.safe_limit > 0
+            else 0,
             "total_memory_gb": self.total_memory / 1024**3,
             "total_allocations": self.total_allocations,
             "total_deallocations": self.total_deallocations,
         }
 
-    def check_warnings(self) -> List[str]:
+    def check_warnings(self) -> list[str]:
         """检查并发出警告
 
         Returns:
@@ -332,7 +331,7 @@ class IntelMemoryMonitor:
         if len(self._history) > self._max_history:
             self._history = self._history[-self._max_history :]
 
-    def get_history(self, last_n: int = 10) -> List[MemorySnapshot]:
+    def get_history(self, last_n: int = 10) -> list[MemorySnapshot]:
         """获取历史记录
 
         Args:

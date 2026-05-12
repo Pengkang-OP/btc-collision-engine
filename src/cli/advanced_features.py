@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 CLI高级功能扩展模块
 
@@ -14,7 +13,7 @@ CLI高级功能扩展模块
 import json
 import os
 from pathlib import Path
-from typing import Optional, Dict, Any, cast
+from typing import Any, cast
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 配置模板系统
@@ -144,14 +143,14 @@ def apply_template(template_name: str, config_path: str = "config.json") -> bool
     if config_file.exists():
         print(f"\n[Info] 加载现有配置: {config_path}")
         try:
-            with open(config_file, "r", encoding="utf-8") as f:
+            with open(config_file, encoding="utf-8") as f:
                 config = json.load(f)
         except Exception as e:
             print(f"[WARN] 加载失败: {e}，将创建新配置")
             config = {}
 
     # 应用模板更新
-    updates: Dict[str, Any] = cast(Dict[str, Any], template["updates"])
+    updates: dict[str, Any] = cast(dict[str, Any], template["updates"])
     deep_merge(config, updates)
 
     # 保存配置
@@ -198,7 +197,7 @@ def recommend_parameters(args: Any) -> dict:
         target_count = len(args.targets)
     elif args.file:
         try:
-            with open(args.file, "r", encoding="utf-8") as f:
+            with open(args.file, encoding="utf-8") as f:
                 lines = [l.strip() for l in f if l.strip() and not l.startswith("#")]  # noqa: E741
                 target_count = len(lines)
         except (OSError, ValueError, UnicodeDecodeError):
@@ -257,7 +256,7 @@ def recommend_parameters(args: Any) -> dict:
 
 
 def export_progress_data(
-    stats: Any, mode: str, engine_type: str, output_file: str, total_range: Optional[int] = None
+    stats: Any, mode: str, engine_type: str, output_file: str, total_range: int | None = None
 ) -> bool:
     """
     导出进度数据到JSON文件

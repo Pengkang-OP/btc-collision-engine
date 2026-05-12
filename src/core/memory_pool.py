@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """内存池优化模块
 
 实现对象池复用机制,减少频繁创建/销毁对象的开销,降低GC压力。
@@ -40,10 +39,11 @@ P3-7增强:
 
 import threading
 import time
-from typing import Any, Optional, List, Callable, Dict
+from collections.abc import Callable
+from typing import Any, Optional
 
 # 导入日志配置
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger, init_logging
 
 # 初始化日志系统
 init_logging()
@@ -115,7 +115,7 @@ class ObjectPool:
         self._factory = factory
         self._initial_size = initial_size
         self._max_size = max_size
-        self._pool: List[Any] = []
+        self._pool: list[Any] = []
         self._lock = threading.Lock()
 
         # 统计信息
@@ -134,8 +134,7 @@ class ObjectPool:
         self._obj_size_estimate = max(object_size_estimate, 1)
 
         logger.info(
-            f"对象池初始化: initial={initial_size}, max={max_size}, "
-            f"prewarm={self._prewarm_elapsed * 1000:.1f}ms"
+            f"对象池初始化: initial={initial_size}, max={max_size}, prewarm={self._prewarm_elapsed * 1000:.1f}ms"
         )
 
     def _preallocate(self, count: int):
@@ -185,7 +184,7 @@ class ObjectPool:
                 self._release_count += 1
             # 否则丢弃对象,避免池无限增长
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         """
         P3-7增强: 获取池详细统计信息
 
@@ -222,7 +221,7 @@ class ObjectPool:
             total = max(self._acquire_count, 1)
             return (total - self._miss_count) / total
 
-    def shrink(self, target_size: Optional[int] = None) -> int:
+    def shrink(self, target_size: int | None = None) -> int:
         """
         P3-7新增: 缩容池（释放多余对象）
 
@@ -290,8 +289,7 @@ class ObjectPool:
                     old_max = self._max_size
                     self._max_size = new_max
                     logger.info(
-                        f"对象池自动扩展: max {old_max} -> {new_max} "
-                        f"(miss_rate={miss_rate:.1%})"
+                        f"对象池自动扩展: max {old_max} -> {new_max} (miss_rate={miss_rate:.1%})"
                     )
                     adjusted = True
 
@@ -421,10 +419,10 @@ class GlobalPoolManager:
     _lock = threading.Lock()
 
     _initialized: bool = False
-    _pools_registry: List[Any] = []
+    _pools_registry: list[Any] = []
 
     # P1-6: 自动清理线程 — 类级别类型声明供 mypy 检查
-    _cleanup_thread: Optional[threading.Thread] = None
+    _cleanup_thread: threading.Thread | None = None
     _cleanup_stop_event: threading.Event = threading.Event()
 
     # P3-7: 默认内存限制(MB)
@@ -490,7 +488,7 @@ class GlobalPoolManager:
             # 动态创建临时池
             return ByteArrayPool(buffer_size=size, initial_size=100, max_size=1000)
 
-    def get_all_stats(self) -> Dict:
+    def get_all_stats(self) -> dict:
         """
         P3-7新增: 获取所有池的聚合统计
 
@@ -519,7 +517,7 @@ class GlobalPoolManager:
 
         return sum(p.estimate_memory() for p in self._pools_registry)
 
-    def auto_tune_all(self, max_memory_mb: Optional[float] = None) -> bool:
+    def auto_tune_all(self, max_memory_mb: float | None = None) -> bool:
         """
         P3-7新增: 自适应调优所有池
 
@@ -608,7 +606,7 @@ class GlobalPoolManager:
                 logger.error("CPU内存池自动清理异常", exc_info=True)
         logger.info("CPU内存池自动清理已停止")
 
-    def start_auto_cleanup(self, interval_seconds: Optional[float] = None) -> None:
+    def start_auto_cleanup(self, interval_seconds: float | None = None) -> None:
         """
         P1-6新增: 启动后台自动清理线程
 
@@ -630,7 +628,7 @@ class GlobalPoolManager:
             interval_seconds if interval_seconds is not None else self.DEFAULT_AUTO_CLEANUP_INTERVAL
         )
         self._cleanup_stop_event.clear()
-        self._cleanup_thread: Optional[threading.Thread] = threading.Thread(
+        self._cleanup_thread: threading.Thread | None = threading.Thread(
             target=self._auto_cleanup_loop,
             args=(interval,),
             daemon=True,
@@ -638,7 +636,7 @@ class GlobalPoolManager:
         )
         self._cleanup_thread.start()
 
-    def stop_auto_cleanup(self, timeout: Optional[float] = 5.0) -> None:
+    def stop_auto_cleanup(self, timeout: float | None = 5.0) -> None:
         """
         P1-6新增: 停止自动清理线程
 

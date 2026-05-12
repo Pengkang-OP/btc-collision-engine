@@ -4,11 +4,12 @@
 支持Windows和Linux平台。
 """
 
-from ..utils import get_configured_logger
+import platform
 import re
 import subprocess
-import platform
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
+
+from ..utils import get_configured_logger
 
 logger = get_configured_logger("GPUDriverManager")
 
@@ -17,7 +18,7 @@ class DriverVersionParser:
     """驱动版本解析和比较工具"""
 
     @staticmethod
-    def parse_version(version_str: str) -> Tuple[int, ...]:
+    def parse_version(version_str: str) -> tuple[int, ...]:
         """
         解析驱动版本字符串为元组
 
@@ -92,7 +93,7 @@ class DriverManager:
     DETECTION_TIMEOUT = 5
 
     # 驱动版本缓存(TTL: 3600秒)
-    _driver_version_cache: Dict[str, Tuple[Optional[str], float]] = {}
+    _driver_version_cache: dict[str, tuple[str | None, float]] = {}
     _cache_ttl: float = 3600  # 缓存有效期1小时
 
     # 已知的不稳定驱动版本黑名单
@@ -118,7 +119,7 @@ class DriverManager:
     }
 
     @staticmethod
-    def detect_nvidia_driver_version() -> Optional[str]:
+    def detect_nvidia_driver_version() -> str | None:
         """
         检测NVIDIA驱动版本(支持Windows和Linux)
 
@@ -223,7 +224,7 @@ class DriverManager:
             return None
 
     @staticmethod
-    def _parse_nvidia_output(output: str, parser_type: str) -> Optional[str]:
+    def _parse_nvidia_output(output: str, parser_type: str) -> str | None:
         """
         解析NVIDIA驱动版本输出
 
@@ -252,7 +253,7 @@ class DriverManager:
             return None
 
     @staticmethod
-    def detect_amd_driver_version() -> Optional[str]:
+    def detect_amd_driver_version() -> str | None:
         """
         检测AMD驱动版本(支持Windows和Linux)
 
@@ -291,7 +292,7 @@ class DriverManager:
             return None
 
     @staticmethod
-    def _detect_amd_windows() -> Optional[str]:
+    def _detect_amd_windows() -> str | None:
         """Windows平台检测AMD驱动"""
         try:
             ps_command = (
@@ -320,7 +321,7 @@ class DriverManager:
             return None
 
     @staticmethod
-    def _detect_amd_linux() -> Optional[str]:
+    def _detect_amd_linux() -> str | None:
         """Linux平台检测AMD驱动"""
         try:
             # 尝试多种方式
@@ -358,7 +359,7 @@ class DriverManager:
             return None
 
     @staticmethod
-    def detect_intel_driver_version() -> Optional[str]:
+    def detect_intel_driver_version() -> str | None:
         """
         检测Intel驱动版本(支持Windows和Linux)
 
@@ -397,7 +398,7 @@ class DriverManager:
             return None
 
     @staticmethod
-    def _detect_intel_windows() -> Optional[str]:
+    def _detect_intel_windows() -> str | None:
         """Windows平台检测Intel驱动"""
         try:
             ps_command = (
@@ -426,7 +427,7 @@ class DriverManager:
             return None
 
     @staticmethod
-    def _detect_intel_linux() -> Optional[str]:
+    def _detect_intel_linux() -> str | None:
         """Linux平台检测Intel驱动"""
         try:
             # 尝试多种方式
@@ -475,7 +476,7 @@ class DriverManager:
         logger.info("驱动版本缓存已清除")
 
     @staticmethod
-    def get_unstable_driver_report() -> Dict:
+    def get_unstable_driver_report() -> dict:
         """
         获取不稳定驱动报告
 
@@ -517,7 +518,7 @@ class DriverManager:
         logger.warning(f"已添加不稳定驱动: {vendor} {min_version}-{max_version} ({issue})")
 
     @staticmethod
-    def detect_driver_version(vendor: str) -> Optional[str]:
+    def detect_driver_version(vendor: str) -> str | None:
         """
         根据厂商检测驱动版本(带缓存)
 
@@ -561,9 +562,7 @@ class DriverManager:
         return version
 
     @staticmethod
-    def check_driver_health(
-        vendor: str, driver_version: str, profile: Optional[Dict] = None
-    ) -> Dict:
+    def check_driver_health(vendor: str, driver_version: str, profile: dict | None = None) -> dict:
         """
         检查驱动健康状态
 
@@ -580,7 +579,7 @@ class DriverManager:
                 'recommendations': ['建议列表']
             }
         """
-        result: Dict[str, Any] = {
+        result: dict[str, Any] = {
             "status": "good",
             "message": "驱动版本正常",
             "recommendations": [],
@@ -614,9 +613,7 @@ class DriverManager:
             if min_driver:
                 if not DriverVersionParser.is_version_compatible(driver_version, min_driver):
                     result["status"] = "critical"
-                    result["message"] = (
-                        f"驱动版本过低: {driver_version}, " f"最低要求: {min_driver}"
-                    )
+                    result["message"] = f"驱动版本过低: {driver_version}, 最低要求: {min_driver}"
                     result["recommendations"].append(f"请立即更新驱动到 {min_driver} 或更高版本")
                     return result
 
@@ -627,7 +624,7 @@ class DriverManager:
                     if result["status"] == "good":
                         result["status"] = "warning"
                     result["message"] = (
-                        f"驱动版本较旧: {driver_version}, " f"推荐版本: {recommended_driver}"
+                        f"驱动版本较旧: {driver_version}, 推荐版本: {recommended_driver}"
                     )
                     result["recommendations"].append(
                         f"建议更新驱动到 {recommended_driver} 以获得最佳性能"
@@ -642,8 +639,8 @@ class DriverManager:
 
     @staticmethod
     def get_driver_optimization_flags(
-        vendor: str, driver_version: str, profile: Optional[Dict] = None
-    ) -> Dict[str, bool]:
+        vendor: str, driver_version: str, profile: dict | None = None
+    ) -> dict[str, bool]:
         """
         根据驱动版本获取优化标志
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """GPU 可观测性模块
 
 提供结构化 metrics 收集和 Prometheus 格式导出。
@@ -22,9 +21,8 @@ Key Metrics:
     >>> print(metrics.export_prometheus())
 """
 
-import time
 import threading
-from typing import Dict, List, Optional
+import time
 from collections import defaultdict
 
 
@@ -59,27 +57,27 @@ class GPUMetricsCollector:
         self._created_at = time.time()
 
         # --- Counters (单调递增) ---
-        self._keys_checked_total: Dict[int, int] = defaultdict(int)
-        self._matches_found_total: Dict[int, int] = defaultdict(int)
-        self._errors_total: Dict[int, int] = defaultdict(int)
-        self._recovery_events_total: Dict[int, int] = defaultdict(int)
+        self._keys_checked_total: dict[int, int] = defaultdict(int)
+        self._matches_found_total: dict[int, int] = defaultdict(int)
+        self._errors_total: dict[int, int] = defaultdict(int)
+        self._recovery_events_total: dict[int, int] = defaultdict(int)
 
         # --- Gauges (瞬时值) ---
-        self._throughput: Dict[int, float] = {}
-        self._memory_usage_bytes: Dict[int, int] = {}
-        self._device_active: Dict[int, bool] = {}
+        self._throughput: dict[int, float] = {}
+        self._memory_usage_bytes: dict[int, int] = {}
+        self._device_active: dict[int, bool] = {}
 
         # --- Histograms ---
         # kernel latency: device_idx -> List[bucket_counts]
-        self._kernel_latency_buckets: Dict[int, List[int]] = defaultdict(
+        self._kernel_latency_buckets: dict[int, list[int]] = defaultdict(
             lambda: [0] * len(self.KERNEL_LATENCY_BUCKETS)
         )
-        self._kernel_latency_sum: Dict[int, float] = defaultdict(float)
-        self._kernel_latency_count: Dict[int, int] = defaultdict(int)
+        self._kernel_latency_sum: dict[int, float] = defaultdict(float)
+        self._kernel_latency_count: dict[int, int] = defaultdict(int)
 
         # --- 内存池统计 ---
-        self._pool_hits: Dict[int, int] = defaultdict(int)
-        self._pool_misses: Dict[int, int] = defaultdict(int)
+        self._pool_hits: dict[int, int] = defaultdict(int)
+        self._pool_misses: dict[int, int] = defaultdict(int)
 
     # ========================================================================
     # Recording API
@@ -169,7 +167,7 @@ class GPUMetricsCollector:
         with self._lock:
             return sum(self._throughput.values())
 
-    def get_pool_hit_ratio(self, device_idx: int) -> Optional[float]:
+    def get_pool_hit_ratio(self, device_idx: int) -> float | None:
         """获取内存池命中率"""
         with self._lock:
             total = self._pool_hits[device_idx] + self._pool_misses[device_idx]
@@ -177,7 +175,7 @@ class GPUMetricsCollector:
                 return None
             return self._pool_hits[device_idx] / total
 
-    def get_kernel_latency_stats(self, device_idx: int) -> Dict:
+    def get_kernel_latency_stats(self, device_idx: int) -> dict:
         """获取内核延迟统计"""
         with self._lock:
             count = self._kernel_latency_count[device_idx]
@@ -286,7 +284,7 @@ class GPUMetricsCollector:
             lines.append("")  # 末尾换行
             return "\n".join(lines)
 
-    def export_json(self) -> Dict:
+    def export_json(self) -> dict:
         """导出 JSON 格式指标摘要
 
         Returns:
@@ -334,7 +332,7 @@ class GPUMetricsCollector:
 
 
 # 全局单例
-_global_metrics_collector: Optional[GPUMetricsCollector] = None
+_global_metrics_collector: GPUMetricsCollector | None = None
 
 
 def get_metrics_collector() -> GPUMetricsCollector:

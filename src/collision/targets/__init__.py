@@ -14,11 +14,11 @@
     >>> matcher = AddressMatcher(strategy='hash_set', targets={address})
 """
 
-from .resolver import TargetResolver
 from .cache import AddressCache
-from .validator import AddressBatchValidator, ValidationResult
 from .matcher import AddressMatcher
+from .resolver import TargetResolver
 from .storage import AddressStorage
+from .validator import AddressBatchValidator, ValidationResult
 
 __all__ = [
     "TargetResolver",
