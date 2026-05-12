@@ -77,7 +77,7 @@ if "!CHOICE!"=="0" (
     exit /b 0
 )
 
-echo [ERROR] Invalid option: !CHOICE!
+echo [错误] 无效选项: !CHOICE!
 pause
 goto :menu
 
@@ -116,17 +116,20 @@ if "!CLEAN_CHOICE!"=="2" (
 )
 
 if "!CLEAN_CHOICE!"=="3" (
+    echo.
+    echo [警告] 将删除所有日志、检查点和缓存文件！
+    echo.
     set "CONFIRM="
-    set /p "CONFIRM=Are you sure? (Y/N): "
+    set /p "CONFIRM=   确认删除? 请输入 Y 确认: "
     if /i not "!CONFIRM!"=="Y" (
-        echo [INFO] Cancelled
+        echo [INFO] 已取消操作
         pause
         goto :cleanup_menu
     )
     for /r . %%f in (*.log) do del "%%f" >nul 2>&1
     for /r . %%f in (*.ckpt) do del "%%f" >nul 2>&1
     for /d /r . %%d in (__pycache__) do rmdir /s /q "%%d" >nul 2>&1
-    echo [OK] All temporary files cleared
+    echo [OK] 所有临时文件已清理
     pause
     goto :cleanup_menu
 )
@@ -135,7 +138,7 @@ if "!CLEAN_CHOICE!"=="0" (
     goto :eof
 )
 
-echo [ERROR] Invalid option
+echo [错误] 无效选项
 pause
 goto :cleanup_menu
 
