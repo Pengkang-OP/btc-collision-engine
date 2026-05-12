@@ -80,9 +80,14 @@ class ConfigBuilder:
         if result.gpu_indices:
             if result.use_multi_gpu:
                 cmd.append("--multi-gpu")
-            # Always use separate args for each index (better CLI compatibility)
-            for idx in result.gpu_indices:
-                cmd.extend(["--gpu-indices", str(idx)])
+                # 多GPU模式使用 --gpu-indices
+                for idx in result.gpu_indices:
+                    cmd.extend(["--gpu-indices", str(idx)])
+            else:
+                # 单GPU模式使用 --use-gpu 和 --gpu-device
+                cmd.append("--use-gpu")
+                if len(result.gpu_indices) > 0:
+                    cmd.extend(["--gpu-device", str(result.gpu_indices[0])])
 
         return cmd
 

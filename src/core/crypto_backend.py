@@ -300,9 +300,13 @@ class CoincurveBackend(CryptoBackend):
                 rx = int.from_bytes(result_bytes[1:33], "big")
                 ry = int.from_bytes(result_bytes[33:65], "big")
                 return rx, ry
-        except (AttributeError, TypeError, AssertionError):
+        except (AttributeError, TypeError, AssertionError) as e:
             # 如果multiply不可用或返回类型不匹配，使用纯Python回退
-            pass
+            # 注意: 回退到非恒定时间实现可能有侧信道风险，但在GPU批量处理中风险较低
+            logger.warning(
+                f"coincurve标量乘法失败({type(e).__name__})，回退到纯Python实现。"
+                "注意: 回退实现可能不具备恒定时间特性。"
+            )
 
         # 回退到纯Python实现
         from .secp256k1 import EllipticCurve, ECPoint

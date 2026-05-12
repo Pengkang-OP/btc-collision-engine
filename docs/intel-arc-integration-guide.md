@@ -1,8 +1,25 @@
 # GPU 引擎 P0/P1/P2 功能集成使用指南
 
 > **创建时间**: 2026-04-21  
-> **版本**: 1.0  
-> **状态**: ✅ 已完成集成
+> **版本**: 1.1 (C-05: 添加 Linux 兼容性说明)  
+> **状态**: ✅ 已完成集成  
+> **兼容性**: Intel Arc GPU **仅支持 Windows** | Linux/macOS 需使用 NVIDIA/AMD
+
+---
+
+## 平台兼容性说明
+
+| 平台 | Intel Arc GPU | 说明 |
+|------|---------------|------|
+| **Windows 10/11** | ✅ 完全支持 | 推荐平台，性能最佳 |
+| **Linux** | ❌ 不支持 | Intel Arc Linux 驱动 OpenCL 支持有限 |
+| **macOS** | ❌ 不支持 | 无 Intel Arc 支持 |
+
+**替代方案 (Linux)**:
+- NVIDIA GPU: 推荐，CUDA 生态完善
+- AMD GPU: ROCm 平台支持 Intel Arc 实验性
+
+---
 
 
 ## 目录

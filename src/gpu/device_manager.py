@@ -408,7 +408,12 @@ class GPUDeviceManager:
             self.logger.info("GPU异步执行器未初始化(使用同步模式)")
 
     def _apply_vendor_optimizations(self):
-        """应用厂商特定优化"""
+        """应用厂商特定优化
+
+        v2.2.2 修复: Intel 优化路径现在传递 self 引用作为 engine，
+        使 benchmark_suite / auto_tuner / performance_reporter 三个
+        P2 组件能够正常初始化（之前因缺少 engine 引用而始终为 None）。
+        """
         dev = self._require_device()
         device_info = dev.get_device_info()
         device_info.get("name", "")
@@ -425,6 +430,7 @@ class GPUDeviceManager:
             self._intel_optimizer.apply_optimizations(
                 {
                     "kernel_source": OPENCL_KERNEL_SOURCE,
+                    "engine": self,  # v2.2.2: 传递 engine 引用，启用 P2 组件
                 }
             )
         elif "nvidia" in vendor_lower:

@@ -1,8 +1,9 @@
 @echo off
-chcp 65001 >nul 2>&1
 setlocal enabledelayedexpansion
 
-cd /d "%~dp0"
+call "%~dp0common.bat"
+call :init_encoding
+call :set_script_dir
 
 set "VENV_EXISTS=0"
 if exist "venv\Scripts\activate.bat" set "VENV_EXISTS=1"
@@ -29,7 +30,7 @@ echo.
 echo Please select an option:
 echo.
 echo   1. Interactive Wizard (Recommended)
-echo   2. Quick Run (using targets.txt)
+echo   2. GPU Async Mode (for experienced users)
 echo   3. Start Monitor
 echo   4. Maintenance and Cleanup
 echo   5. Show Help
@@ -50,14 +51,8 @@ if "!CHOICE!"=="1" (
 )
 
 if "!CHOICE!"=="2" (
-    if not exist "targets.txt" (
-        echo [ERROR] targets.txt not found
-        pause
-        goto :menu
-    )
-    if !VENV_EXISTS! equ 1 call venv\Scripts\activate.bat >nul 2>&1
-    python key_collision_cli.py --quick-run
-    goto :end_action
+    start "" cmd /c "start_async_optimized.bat"
+    goto :menu
 )
 
 if "!CHOICE!"=="3" (
@@ -106,7 +101,7 @@ set /p "CLEAN_CHOICE=Enter option (0-3): "
 
 if "!CLEAN_CHOICE!"=="1" (
     echo [INFO] Clearing log files...
-    for /r %%f in (*.log) do del "%%f" >nul 2>&1
+    for /r . %%f in (*.log) do del "%%f" >nul 2>&1
     echo [OK] Done
     pause
     goto :cleanup_menu
@@ -114,7 +109,7 @@ if "!CLEAN_CHOICE!"=="1" (
 
 if "!CLEAN_CHOICE!"=="2" (
     echo [INFO] Clearing checkpoint files...
-    for /r %%f in (*.ckpt) do del "%%f" >nul 2>&1
+    for /r . %%f in (*.ckpt) do del "%%f" >nul 2>&1
     echo [OK] Done
     pause
     goto :cleanup_menu
@@ -128,9 +123,9 @@ if "!CLEAN_CHOICE!"=="3" (
         pause
         goto :cleanup_menu
     )
-    for /r %%f in (*.log) do del "%%f" >nul 2>&1
-    for /r %%f in (*.ckpt) do del "%%f" >nul 2>&1
-    for /d /r %%d in (__pycache__) do rmdir /s /q "%%d" >nul 2>&1
+    for /r . %%f in (*.log) do del "%%f" >nul 2>&1
+    for /r . %%f in (*.ckpt) do del "%%f" >nul 2>&1
+    for /d /r . %%d in (__pycache__) do rmdir /s /q "%%d" >nul 2>&1
     echo [OK] All temporary files cleared
     pause
     goto :cleanup_menu

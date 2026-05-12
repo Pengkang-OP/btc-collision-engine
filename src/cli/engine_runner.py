@@ -66,7 +66,7 @@ def _setup_and_start_engine(
 
     # 构建引擎
     sensitive_mode = getattr(args, "sensitive_mode", "full")
-    engine, engine_type = build_engine(args, targets, sensitive_mode=sensitive_mode)
+    engine, engine_type = build_engine(args, targets, sensitive_mode=sensitive_mode, config=config)
 
     # ── 将告警系统集成到引擎主流程 ──────────────────────────────────
     alert_system = None
@@ -147,7 +147,6 @@ def _run_collision_loop(
 
     output = CLIOutput.get_instance()
     start_time = time.time()
-    last_hint_time = start_time  # 定期重复快捷键提示计时  # noqa: F841
     paused = False
     pause_start: Optional[float] = None
     total_pause_time = 0.0

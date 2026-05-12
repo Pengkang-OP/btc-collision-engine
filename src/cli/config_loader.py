@@ -9,6 +9,7 @@
 import json
 import os
 import sys
+from pathlib import Path
 
 # 将项目根目录加入路径
 _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -34,9 +35,16 @@ def load_config_with_validation(config_file: Optional[str] = None) -> Optional[d
     if config_file:
         config_path = os.path.abspath(config_file)
         # 安全: 检测路径遍历，防止读取项目目录外的敏感文件
-        _real_path = os.path.realpath(config_path)
-        _project_real = os.path.realpath(_project_root)
-        if not _real_path.startswith(_project_real + os.sep) and _real_path != _project_real:
+        # 使用pathlib进行严格的路径验证
+        try:
+            # W12修复: 使用 follow_symlinks=True 解析符号链接
+            # 默认 resolve() 在 Windows 上不解析符号链接，存在路径遍历漏洞
+            config_path_obj = Path(config_path).resolve(follow_symlinks=True)
+            project_root_obj = Path(_project_root).resolve(follow_symlinks=True)
+            # 使用relative_to检查路径是否在项目目录内
+            config_path_obj.relative_to(project_root_obj)
+        except ValueError:
+            # ValueError表示路径不在项目目录内
             logger.error(f"配置文件路径超出项目目录范围，拒绝加载: {config_file}")
             return None
     else:

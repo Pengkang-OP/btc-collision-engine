@@ -52,7 +52,7 @@ class TestConstants:
     def test_seed_prefetch_size(self):
         from src.gpu.search_modes.random_search import SEED_PREFETCH_SIZE
 
-        assert SEED_PREFETCH_SIZE == 5
+        assert SEED_PREFETCH_SIZE == 10
 
     def test_exception_recovery_delay(self):
         from src.gpu.search_modes.random_search import EXCEPTION_RECOVERY_DELAY
@@ -111,7 +111,7 @@ class TestRandomSearchModeInit:
         engine = _make_engine_stub()
         mode = RandomSearchMode(engine)
         assert mode._seed_queue is not None
-        assert mode._seed_queue.maxsize == 5  # SEED_PREFETCH_SIZE
+        assert mode._seed_queue.maxsize == 10  # SEED_PREFETCH_SIZE (v4.2: 5→10)
 
     @patch("src.gpu.search_modes.random_search.threading.Thread")
     def test_init_starts_prefetch_thread(self, mock_thread):

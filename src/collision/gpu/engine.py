@@ -96,7 +96,7 @@ from ..events import (  # noqa: E402
     EngineStartEvent,
     EngineProgressEvent,
     EngineMatchEvent,
-    EngineErrorEvent,
+    # EngineErrorEvent,  # 暂未使用
     EngineCompleteEvent,
     EngineStopEvent,
     EventType,
@@ -110,7 +110,6 @@ from ...monitoring.event_adapters import (  # noqa: E402
 from .key_generator import (  # noqa: E402
     KeyGenerator,
     KeyGenerationStrategy,
-    generate_private_key,
 )
 
 logger = logging.getLogger(__name__)
@@ -446,10 +445,14 @@ class GPUCollisionEngine(BaseCollisionEngine):
         # 保存最终断点
         if self.checkpoint_mgr:
             try:
-                matches_list = [
-                    {"private_key_hash": m["private_key_hash"], "address": m["address"]}
-                    for m in self.stats.matches
-                ]
+                # MEDIUM-3修复: 添加类型检查确保 matches 数据格式正确
+                matches_list = []
+                for m in self.stats.matches:
+                    if isinstance(m, dict) and "private_key_hash" in m and "address" in m:
+                        matches_list.append({
+                            "private_key_hash": m["private_key_hash"],
+                            "address": m["address"]
+                        })
                 self.checkpoint_mgr.save(
                     mode=self._current_mode,
                     targets=self.targets,
@@ -565,11 +568,39 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self.stop()
 
     def __del__(self) -> None:
+        """Q5修复: 析构函数只做最小化清理，避免死锁和竞态条件
+
+        不调用完整的 stop() 方法，因为：
+        1. stop() 会尝试获取锁，在多线程环境中可能导致死锁
+        2. 析构期间可能存在部分初始化的对象
+        3. 守护线程会在进程退出时自动清理资源
+        """
         try:
-            if self._running:
-                self.stop()
+            # 检查对象是否已完全初始化
+            if not hasattr(self, "_stop_event"):
+                return
+
+            # 只设置停止事件，不调用完整的 stop() 方法
+            if not self._stop_event.is_set():
+                self._stop_event.set()
+
+            # 清理异步执行器（如果存在且已初始化）
+            if hasattr(self, "_async_executor") and self._async_executor is not None:
+                try:
+                    self._async_executor.cleanup()
+                except Exception:
+                    pass
+                self._async_executor = None
+
+            # 清理设备管理器
+            if hasattr(self, "_device_manager") and self._device_manager is not None:
+                try:
+                    self._device_manager.cleanup()
+                except Exception:
+                    pass
+                self._device_manager = None
         except Exception:
-            pass  # 析构函数中资源清理失败静默处理，避免GC崩溃
+            pass  # 析构函数中资源清理失败静默处理
 
     # ========== 厂商检测 ==========
 
@@ -738,11 +769,22 @@ class GPUCollisionEngine(BaseCollisionEngine):
                     logger.error(f"匹配回调异常: {exception[0]}")
                     return False
             else:
+                # Q7修复: 添加信号 API 可用性检查，兼容 WSL 和其他 Unix-like 环境
+                try:
+                    _sigalrm = signal.SIGALRM  # Unix-only API
+                except AttributeError:
+                    # 信号 API 不可用，回退到无超时模式
+                    logger.warning("SIGALRM 不可用，匹配回调将无超时保护")
+                    try:
+                        on_match(private_key, address, wif)
+                    except Exception as e:
+                        logger.error(f"匹配回调异常: {e}", exc_info=True)
+                        return False
+                    return True
 
                 def timeout_handler(signum: int, frame: Any) -> None:
                     raise TimeoutError(f"匹配回调执行超时 ({self._match_callback_timeout}秒)")
 
-                _sigalrm = signal.SIGALRM  # type: ignore[attr-defined]  # noqa: E501  # Unix-only API
                 old_handler = signal.signal(_sigalrm, timeout_handler)  # noqa: E501
                 _alarm = signal.alarm  # type: ignore[attr-defined]  # Unix-only API
                 _alarm(int(self._match_callback_timeout))
@@ -768,6 +810,10 @@ class GPUCollisionEngine(BaseCollisionEngine):
         """处理 GPU 匹配结果"""
         for match in matches:
             key_idx = match["key_index"]
+            # S-2修复: 添加边界检查，防止越界访问
+            if key_idx * 32 + 32 > len(private_keys):
+                logger.warning(f"私钥索引越界: key_idx={key_idx}, private_keys长度={len(private_keys)}")
+                continue
             private_key = private_keys[key_idx * 32 : (key_idx + 1) * 32]
             if self.dedup_filter is not None and not self.dedup_filter.check_and_add(private_key):
                 continue
@@ -792,7 +838,10 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 logger.warning(f"GPU匹配回调处理失败，跳过地址: {address[:6]}...{address[-4:]}")
 
     def _process_gpu_matches_prng(self, seed: bytes, matches: List[Dict[str, int]]) -> None:
-        """处理 GPU 匹配结果 (PRNG 模式)"""
+        """处理 GPU 匹配结果 (PRNG 模式)
+        
+        G1修复: 添加索引越界检查，防止IndexError崩溃
+        """
         seed_int = int.from_bytes(seed, "big")
         for match in matches:
             key_idx = match["key_index"]
@@ -801,6 +850,10 @@ class GPUCollisionEngine(BaseCollisionEngine):
             if self.dedup_filter is not None and not self.dedup_filter.check_and_add(private_key):
                 continue
             target_idx = match["target_index"]
+            # G1修复: 检查目标索引是否越界
+            if target_idx >= len(self._target_list):
+                logger.warning(f"目标索引越界: {target_idx} >= {len(self._target_list)}，跳过匹配")
+                continue
             address = self._target_list[target_idx]
             wif = WIF.encode(private_key, compressed=True)
             if self.stats is not None:

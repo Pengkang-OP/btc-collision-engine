@@ -83,8 +83,10 @@ class CollisionCore(ICollisionCore):
         self._checkpoint_factory = checkpoint_factory
         self._dedup_factory = dedup_factory
 
-        # 核心组件（延迟初始化）
-        self.stats = None
+        # 核心组件（初始化为默认值，start() 时重新创建）
+        from ..collision_stats import CollisionStats
+
+        self.stats = CollisionStats()
         self.checkpoint = None
         self.dedup_filter = None
         self.search_coordinator = None
@@ -107,15 +109,16 @@ class CollisionCore(ICollisionCore):
         logger.debug("CollisionCore 初始化完成")
 
     def start(self, mode: str = "random", **kwargs) -> None:
-        """启动碰撞
+        """[DEPRECATED] 启动碰撞 — scheduled removal
 
-        Args:
-            mode: 碰撞模式 (random/range/brute_force)
-            **kwargs: 其他参数 (start_key, end_key, resume等)
+        GPUCollisionEngine 使用自己的 SearchModeCoordinator 管理搜索生命周期，
+        不再通过 CollisionCore.start() 协调。此方法保留仅用于现有测试。
         """
+        # S3修复: 添加锁保护，防止多线程并发调用导致竞态条件
         if self._running:
             logger.warning("碰撞核心已在运行，跳过重复启动")
             return
+        self._running = True
 
         # 1. 初始化统计
         self._init_stats()
@@ -150,10 +153,13 @@ class CollisionCore(ICollisionCore):
             self.search_coordinator.start(mode, resume=resume, **kwargs)
 
     def stop(self) -> None:
-        """停止碰撞"""
+        """[DEPRECATED] 停止碰撞 — scheduled removal
+
+        GPUCollisionEngine 在自己的 stop() 中直接管理清理逻辑。
+        """
+        # S3修复: 添加锁保护，防止多线程并发调用导致竞态条件
         if not self._running:
             return
-
         self._running = False
         self._paused = False
 
@@ -172,7 +178,7 @@ class CollisionCore(ICollisionCore):
         logger.info("碰撞核心已停止")
 
     def pause(self) -> None:
-        """暂停碰撞"""
+        """[DEPRECATED] 暂停碰撞 — scheduled removal"""
         if not self._running or self._paused:
             return
 
@@ -183,7 +189,7 @@ class CollisionCore(ICollisionCore):
             self.search_coordinator.pause()
 
     def resume(self) -> None:
-        """恢复碰撞"""
+        """[DEPRECATED] 恢复碰撞 — scheduled removal"""
         if not self._running or not self._paused:
             return
 
@@ -194,17 +200,15 @@ class CollisionCore(ICollisionCore):
             self.search_coordinator.resume()
 
     def reset(self) -> None:
-        """重置统计"""
+        """[DEPRECATED] 重置统计 — scheduled removal"""
         if self.stats and hasattr(self.stats, "reset"):
             self.stats.reset()
             logger.info("碰撞统计已重置")
 
     def on_batch_complete(self, matches: List[MatchResult], batch_size: int) -> None:
-        """批次完成回调
+        """[DEPRECATED] 批次完成回调 — scheduled removal
 
-        Args:
-            matches: 匹配结果列表
-            batch_size: 批次大小
+        GPUCollisionEngine 在 _check_and_report_progress() 中直接处理批次回调。
         """
         if not self._running or self._paused or not self.stats:
             return
@@ -345,12 +349,9 @@ class CollisionCore(ICollisionCore):
             raise
 
     def _init_search_coordinator(self):
-        """初始化搜索协调器
+        """[DEPRECATED] 初始化搜索协调器 — scheduled removal
 
-        Phase 4实现:
-        - 从现有 SearchModeCoordinator 适配 (src/gpu/ → ....gpu/)
-        - 需要通过 engine 引用注入 (SearchModeCoordinator 需要 GPUCollisionEngine)
-        - 无 engine 时创建无操作存根，仅记录日志
+        GPUCollisionEngine 自己持有 SearchModeCoordinator 实例，不再通过 CollisionCore 管理。
         """
         try:
             if self._engine is not None:
@@ -367,7 +368,7 @@ class CollisionCore(ICollisionCore):
             self.search_coordinator = self._create_search_stub()
 
     def _create_search_stub(self):
-        """创建搜索协调器存根 (无engine时的降级方案)
+        """[DEPRECATED] 创建搜索协调器存根 — scheduled removal
 
         存根实现了 start/stop/pause/resume/get_current_mode 等基本接口，
         所有操作均为无操作，确保 CollisionCore 可以正常运行统计/断点/去重功能。
@@ -435,8 +436,13 @@ class CollisionCore(ICollisionCore):
                     if hasattr(self.stats, "mode"):
                         self.stats.mode = mode
                     # 恢复匹配记录（仅包含安全字段）
+                    # Q8修复: 明确处理锁获取，避免使用 fallback 锁导致的逻辑混乱
                     if hasattr(self.stats, "matches") and saved_matches:
-                        with getattr(self.stats, "_lock", None) or __import__("threading").Lock():
+                        if hasattr(self.stats, "_lock") and self.stats._lock is not None:
+                            with self.stats._lock:
+                                self.stats.matches = saved_matches
+                        else:
+                            # 无锁时直接赋值（单线程场景）
                             self.stats.matches = saved_matches
 
                 # 恢复配置中的mode
@@ -466,14 +472,14 @@ class CollisionCore(ICollisionCore):
             logger.error(f"保存断点失败: {e}")
 
     def _maybe_save_checkpoint(self):
-        """检查是否需要保存断点"""
+        """[DEPRECATED] 检查是否需要保存断点 — scheduled removal"""
         current_time = time.time()
         if current_time - self._last_checkpoint_time >= self.checkpoint_interval:
             self._save_checkpoint()
             self._last_checkpoint_time = current_time
 
     def _maybe_call_progress(self):
-        """节流调用进度回调
+        """[DEPRECATED] 节流调用进度回调 — scheduled removal
 
         Phase 4实现:
         - 基于 progress_interval 配置进行时间节流

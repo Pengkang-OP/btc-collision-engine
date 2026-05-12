@@ -6,12 +6,15 @@
 3. 显存泄漏检测
 4. 自动清理建议
 
-针对 Intel Arc GPU 的保守显存策略（45% 使用率限制）。
+v2.2.2 修复:
+- 统一 get_status() 与 _record_snapshot() 的状态判断逻辑，消除不一致
+- safe_usage_ratio 默认值从硬编码 INTEL_SAFE_MEMORY_RATIO(0.45) 改为 0.70，
+  与 IntelGPUVendor.apply_optimizations() 设置的 memory_efficiency=0.70 保持一致
+- 将阈值常量提取为类属性，避免魔法数字
 """
 
 import time
 from ..utils import get_configured_logger
-from ..collision.constants import INTEL_SAFE_MEMORY_RATIO
 from typing import Dict, List
 from dataclasses import dataclass
 from enum import Enum
@@ -43,7 +46,11 @@ class MemorySnapshot:
 class IntelMemoryMonitor:
     """Intel GPU 显存监控器
 
-    针对 Intel Arc GPU 的保守显存管理策略。
+    针对 Intel Arc GPU 的显存管理策略。
+
+    v2.2.2 修复: safe_usage_ratio 默认值从 0.45 改为 0.70，与
+    IntelGPUVendor.apply_optimizations() 设置的 memory_efficiency 一致。
+    旧值 0.45 导致监控器在正常工作时频繁误报警。
 
     使用示例:
         >>> monitor = IntelMemoryMonitor(total_memory_bytes=8 * 1024**3)  # 8GB
@@ -55,28 +62,38 @@ class IntelMemoryMonitor:
         ...     print("显存使用率过高！")
     """
 
+    # 阈值常量：基于 safe_limit 的使用比例
+    WARNING_THRESHOLD = 0.70
+    CRITICAL_THRESHOLD = 0.85
+    EMERGENCY_THRESHOLD = 0.95
+
     def __init__(
         self,
         total_memory_bytes: int,
-        safe_usage_ratio: float = INTEL_SAFE_MEMORY_RATIO,
-        warning_threshold: float = 0.70,
-        critical_threshold: float = 0.85,
-        emergency_threshold: float = 0.95,
+        safe_usage_ratio: float = 0.70,
+        warning_threshold: float = WARNING_THRESHOLD,
+        critical_threshold: float = CRITICAL_THRESHOLD,
+        emergency_threshold: float = EMERGENCY_THRESHOLD,
     ) -> None:
         """初始化显存监控器
 
         Args:
             total_memory_bytes: GPU 总显存（字节）
-            safe_usage_ratio: 安全使用率（Intel 推荐 0.45）
-            warning_threshold: 警告阈值（相对于安全限制）
-            critical_threshold: 严重阈值
-            emergency_threshold: 紧急阈值
+            safe_usage_ratio: 安全使用率上限，默认 0.70（与 memory_efficiency 一致）
+            warning_threshold: 警告阈值（相对于 safe_limit，默认 70%）
+            critical_threshold: 严重阈值（相对于 safe_limit，默认 85%）
+            emergency_threshold: 紧急阈值（相对于 safe_limit，默认 95%）
         """
         self.total_memory = total_memory_bytes
+        self.safe_usage_ratio = safe_usage_ratio
         self.safe_limit = int(total_memory_bytes * safe_usage_ratio)
         self.warning_limit = int(self.safe_limit * warning_threshold)
         self.critical_limit = int(self.safe_limit * critical_threshold)
         self.emergency_limit = int(self.safe_limit * emergency_threshold)
+        # 保存阈值比例用于统一状态判断
+        self._warning_ratio = warning_threshold
+        self._critical_ratio = critical_threshold
+        self._emergency_ratio = emergency_threshold
 
         # 跟踪信息
         self.current_usage = 0
@@ -168,17 +185,7 @@ class IntelMemoryMonitor:
         Returns:
             包含显存状态的字典
         """
-        usage_ratio = self.current_usage / self.safe_limit if self.safe_limit > 0 else 0
-
-        # 确定状态
-        if usage_ratio >= self.emergency_limit / self.safe_limit if self.safe_limit > 0 else 0.95:
-            status = MemoryStatus.EMERGENCY
-        elif usage_ratio >= self.critical_limit / self.safe_limit if self.safe_limit > 0 else 0.85:
-            status = MemoryStatus.CRITICAL
-        elif usage_ratio >= self.warning_limit / self.safe_limit if self.safe_limit > 0 else 0.70:
-            status = MemoryStatus.WARNING
-        else:
-            status = MemoryStatus.NORMAL
+        status = self._determine_status()
 
         return {
             "status": status,
@@ -188,7 +195,7 @@ class IntelMemoryMonitor:
             "peak_mb": self.peak_usage / 1024**2,
             "safe_limit_bytes": self.safe_limit,
             "safe_limit_mb": self.safe_limit / 1024**2,
-            "usage_percent": usage_ratio * 100,
+            "usage_percent": (self.current_usage / self.safe_limit * 100) if self.safe_limit > 0 else 0,
             "total_memory_gb": self.total_memory / 1024**3,
             "total_allocations": self.total_allocations,
             "total_deallocations": self.total_deallocations,
@@ -278,6 +285,29 @@ class IntelMemoryMonitor:
         # 如果分配是释放的 3 倍以上，可能存在泄漏
         return ratio > 3.0
 
+    def _determine_status(self) -> MemoryStatus:
+        """统一的状态判断逻辑
+
+        基于 safe_limit 的使用比例判断，确保 get_status() 和
+        _record_snapshot() 使用完全相同的判断标准。
+
+        Returns:
+            当前显存状态
+        """
+        if self.safe_limit <= 0:
+            return MemoryStatus.EMERGENCY
+
+        usage_ratio = self.current_usage / self.safe_limit
+
+        if usage_ratio >= self._emergency_ratio:
+            return MemoryStatus.EMERGENCY
+        elif usage_ratio >= self._critical_ratio:
+            return MemoryStatus.CRITICAL
+        elif usage_ratio >= self._warning_ratio:
+            return MemoryStatus.WARNING
+        else:
+            return MemoryStatus.NORMAL
+
     def _record_snapshot(self, batch_count: int = 0) -> None:
         """记录显存快照
 
@@ -285,16 +315,7 @@ class IntelMemoryMonitor:
             batch_count: 当前批次计数
         """
         usage_ratio = self.current_usage / self.safe_limit if self.safe_limit > 0 else 0
-
-        # 确定状态
-        if usage_ratio >= 0.95:
-            status = MemoryStatus.EMERGENCY
-        elif usage_ratio >= 0.85:
-            status = MemoryStatus.CRITICAL
-        elif usage_ratio >= 0.70:
-            status = MemoryStatus.WARNING
-        else:
-            status = MemoryStatus.NORMAL
+        status = self._determine_status()
 
         snapshot = MemorySnapshot(
             timestamp=time.time(),
@@ -345,7 +366,7 @@ class IntelMemoryMonitor:
             "📊 Intel GPU 显存使用报告",
             "=" * 60,
             f"总显存: {status['total_memory_gb']:.1f} GB",
-            f"安全限制: {status['safe_limit_mb']:.0f} MB (45%)",
+            f"安全限制: {status['safe_limit_mb']:.0f} MB ({self.safe_usage_ratio * 100:.0f}%)",
             f"当前使用: {status['current_mb']:.1f} MB ({status['usage_percent']:.1f}%)",
             f"峰值使用: {status['peak_mb']:.1f} MB",
             f"状态: {status['status'].value.upper()}",

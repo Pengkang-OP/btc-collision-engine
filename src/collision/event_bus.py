@@ -24,6 +24,7 @@
 """
 
 import threading
+import queue
 from typing import Any, Callable, Dict, List, Optional
 from collections import defaultdict
 import logging
@@ -77,6 +78,7 @@ class EventBus:
         # 统计信息
         self._published_count = 0
         self._error_count = 0
+        self._dropped_count = 0  # 跟踪丢弃的事件数量
 
         # 异步队列（同步模式下为 None）
         self._event_queue: Optional[Any] = None
@@ -172,8 +174,10 @@ class EventBus:
             assert self._event_queue is not None
             try:
                 self._event_queue.put_nowait(event)
-            except Exception as e:  # noqa: F841
-                logger.warning(f"事件队列已满，丢弃事件: {event.event_type.value}")
+            except queue.Full:
+                # SEVERE-4修复: 事件队列满时记录警告，重要事件可以考虑降级处理
+                self._dropped_count += 1
+                logger.warning(f"事件队列已满，丢弃事件: {event.event_type.value} (已丢弃{self._dropped_count}个)")
         else:
             # 同步模式: 直接处理
             self._dispatch_event(event)
@@ -196,9 +200,12 @@ class EventBus:
         for handler in handlers:
             try:
                 handler(event)
+            except (KeyboardInterrupt, SystemExit):
+                # 不吞没退出信号，让其传播
+                raise
             except Exception as e:
                 self._error_count += 1
-                logger.error(f"事件处理器异常 [{handler.__name__}]: {e}")
+                logger.error(f"事件处理器异常 [{handler.__name__}]: {type(e).__name__}: {e}")
 
                 if self._error_handler:
                     try:

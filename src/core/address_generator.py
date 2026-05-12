@@ -8,7 +8,6 @@
 """
 
 import secrets
-import hashlib
 import ctypes
 from typing import Tuple, Optional
 from abc import ABC, abstractmethod
@@ -178,13 +177,12 @@ class BaseAddressGenerator(ABC):
                         type(e).__name__,
                     )
                 else:
-                    msg_hash = hashlib.sha256(str(e).encode()).hexdigest()[:8]
+                    # MEDIUM-8修复: 完全移除可能的敏感信息哈希
                     logger.error(
-                        "生成私钥时出错 (尝试 %d/%d): %s [hash:%s]",
+                        "生成私钥时出错 (尝试 %d/%d): %s",
                         attempt + 1,
                         max_retries,
                         type(e).__name__,
-                        msg_hash,
                     )
 
         logger.error(f"私钥生成失败: 超过最大重试次数 {max_retries}")

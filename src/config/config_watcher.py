@@ -86,14 +86,15 @@ class ConfigWatcher:
         self._lock = threading.Lock()
         self._observer: Optional["Observer"] = None
         self._poll_thread: Optional[threading.Thread] = None
-        self._last_mtime: float = 0.0
+        self._last_mtime: Optional[float] = None  # None表示文件不存在
         self._last_reload_time: float = 0.0
 
         # 记录初始 mtime，避免启动时误触发
         try:
             self._last_mtime = os.path.getmtime(self._config_path)
         except OSError:
-            self._last_mtime = 0.0
+            # 文件不存在，设置为None
+            self._last_mtime = None
 
     # ── 公共接口 ─────────────────────────────────────────────────
 
@@ -191,12 +192,17 @@ class ConfigWatcher:
         while not self._stop_event.is_set():
             try:
                 current_mtime = os.path.getmtime(self._config_path)
-                if current_mtime > self._last_mtime:
+                # 只有当_last_mtime不为None且文件变更时才触发回调
+                # None表示启动时文件不存在，新创建时不触发
+                if self._last_mtime is not None and current_mtime > self._last_mtime:
                     self._last_mtime = current_mtime
                     self._on_file_changed()
+                elif self._last_mtime is None:
+                    # 文件从不存在变为存在，记录mtime但不触发回调
+                    self._last_mtime = current_mtime
             except OSError:
-                # 文件可能被临时删除
-                pass
+                # 文件可能被临时删除，设置为None
+                self._last_mtime = None
 
             # 分段 sleep，以便快速响应 stop()
             for _ in range(int(self._poll_interval / 0.2)):
@@ -221,9 +227,33 @@ class ConfigWatcher:
             logger.error("配置重载回调执行失败: %s", e)
 
     def __del__(self) -> None:
-        """析构时自动停止监听"""
+        """析构时自动停止监听
+
+        W14修复: 改进析构逻辑，避免在析构期间因锁状态不一致导致的死锁或异常
+        - 只清理核心资源，不调用可能产生竞态的 stop() 方法
+        - 使用超时避免在析构期间永久阻塞
+        """
         try:
-            self.stop()
+            # 检查对象是否已完全初始化
+            if not hasattr(self, "_stop_event") or not hasattr(self, "_lock"):
+                return
+
+            # 设置停止事件（不获取锁，因为锁可能已被其他线程持有）
+            # 使用 is_set() 检查当前状态，避免重复操作
+            if not self._stop_event.is_set():
+                self._stop_event.set()
+
+            # 尝试停止 observer（如果存在）
+            if hasattr(self, "_observer") and self._observer is not None:
+                try:
+                    self._observer.stop()
+                    # 使用小超时，避免析构期间永久阻塞
+                    self._observer.join(timeout=1.0)
+                except Exception:
+                    pass
+                self._observer = None
+
+            # 注意：不处理 _poll_thread，因为 daemon 线程会在进程退出时自动终止
         except Exception:
             # 析构期间忽略所有异常，避免GC崩溃
             pass

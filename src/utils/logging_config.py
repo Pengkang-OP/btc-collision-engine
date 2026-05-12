@@ -100,10 +100,10 @@ class LoggingConfig:
             config: 自定义配置字典，None则使用默认配置
         """
         if self._initialized:
-            # 修复: 添加调试日志，避免静默失败
+            # 添加警告日志，提示调用者日志系统已初始化
             import logging
 
-            logging.getLogger(__name__).debug("日志系统已初始化，跳过重复调用")
+            logging.getLogger(__name__).warning("日志系统已被初始化，重复调用被忽略")
             return
 
         if config is None:

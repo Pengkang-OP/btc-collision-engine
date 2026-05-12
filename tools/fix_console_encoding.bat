@@ -1,6 +1,11 @@
 @echo off
 setlocal enabledelayedexpansion
 
+rem ============================================
+rem  BTC Collision Engine - Console UTF-8 Setup
+rem  Sets Windows console to UTF-8 encoding
+rem ============================================
+
 call "%~dp0..\common.bat"
 call :init_encoding
 
@@ -35,6 +40,9 @@ echo ============================================
 echo.
 echo You can now run Python scripts without UTF-8 issues:
 echo   python your_script.py
+echo.
+echo Or use run_utf8.bat to run commands with UTF-8:
+echo   run_utf8.bat python your_script.py
 echo.
 
 pause

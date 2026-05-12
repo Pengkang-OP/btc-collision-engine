@@ -1055,10 +1055,18 @@ class MultiGPUCollisionEngine:
         return stats
 
     def __del__(self) -> None:
-        """析构函数"""
+        """析构函数
+
+        注意：建议使用上下文管理器或显式调用cleanup()方法，
+        以确保资源能够被正确释放。
+
+        示例:
+            with MultiGPUEngine(...) as engine:
+                engine.run()
+        """
         try:
             self.cleanup()
-        except Exception as cleanup_error:  # noqa: F841
-            # A类修复: 析构函数中资源清理失败静默处理
-            # 因为此时对象正在销毁，无法做更多处理
-            pass
+        except Exception as e:
+            # 记录警告，但不抛出异常（对象正在销毁）
+            import sys
+            print(f"WARNING: MultiGPUEngine清理失败: {type(e).__name__}: {e}", file=sys.stderr)

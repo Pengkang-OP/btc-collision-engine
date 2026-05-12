@@ -199,6 +199,8 @@ class TargetResolver:
     MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024  # 最大文件大小: 100MB
     MAX_LINES = 1_000_000  # 最大行数: 100万行
     BATCH_SIZE = 100  # 批量解析大小
+    # SUGGESTION-6: 类级别常量避免重复创建
+    _BASE58_VALID_CHARS = frozenset(Base58.ALPHABET)
 
     def __init__(
         self,
@@ -254,15 +256,16 @@ class TargetResolver:
         if not input_str:
             return "unknown"
 
+        # SUGGESTION-6: 使用类级别常量优化性能
+        valid_chars = TargetResolver._BASE58_VALID_CHARS
+
         # P2PKH地址: 以'1'开头, 25-34字符, Base58字符集
         if input_str.startswith("1") and 25 <= len(input_str) <= 34:
-            valid_chars = set(Base58.ALPHABET)
             if all(c in valid_chars for c in input_str):
                 return "address"
 
         # P2SH地址: 以'3'开头, 25-34字符
         if input_str.startswith("3") and 25 <= len(input_str) <= 34:
-            valid_chars = set(Base58.ALPHABET)
             if all(c in valid_chars for c in input_str):
                 return "p2sh_address"
 
@@ -275,12 +278,10 @@ class TargetResolver:
 
         # WIF: 以'5'开头(非压缩,51字符) 或 'K'/'L'开头(压缩,52字符)
         if input_str.startswith("5") and len(input_str) == 51:
-            valid_chars = set(Base58.ALPHABET)
             if all(c in valid_chars for c in input_str):
                 return "wif"
 
         if input_str.startswith(("K", "L")) and len(input_str) == 52:
-            valid_chars = set(Base58.ALPHABET)
             if all(c in valid_chars for c in input_str):
                 return "wif"
 
@@ -319,19 +320,142 @@ class TargetResolver:
         # 过滤掉None结果,只返回有效解析的地址
         return {k: v for k, v in all_results.items() if v is not None}
 
+
+    # ========================================================================
+    # 辅助函数 - 拆分自 resolve
+    # ========================================================================
+
+    def _resolve_p2pkh_address(self, input_str: str) -> Optional[str]:
+        """解析P2PKH地址"""
+        try:
+            version, payload = Base58.check_decode(input_str)
+            if version == 0x00:
+                if self.cache:
+                    self.cache.put(input_str, input_str)
+                logger.debug(f"P2PKH地址验证成功: {input_str[:15]}...")
+                return input_str
+            logger.debug(f"P2PKH地址版本不匹配: version=0x{version:02x}")
+            return None
+        except Exception:
+            return None
+
+    def _resolve_p2sh_address(self, input_str: str) -> Optional[str]:
+        """解析P2SH地址"""
+        try:
+            version, payload = Base58.check_decode(input_str)
+            if version == 0x05:
+                address = Base58.check_encode(0x00, payload)
+                if self.cache:
+                    self.cache.put(input_str, address)
+                logger.debug(f"P2SH地址转换: {input_str} -> {address}")
+                return address
+            logger.warning(f"P2SH地址版本不匹配: version=0x{version:02x}")
+            return None
+        except ValueError:
+            logger.warning(f"P2SH地址校验失败: {input_str}")
+            return None
+        except Exception as e:
+            logger.error(f"P2SH地址转换异常: {input_str} - {type(e).__name__}: {e}")
+            return None
+
+    def _resolve_bech32_address(self, input_str: str) -> Optional[str]:
+        """解析Bech32地址"""
+        try:
+            hrp = "bc" if input_str.lower().startswith("bc1") else "tb"
+            witness_version, witness_program = decode_segwit_address(hrp, input_str)
+            if witness_version is None or witness_program is None:
+                logger.warning(f"Bech32地址解码失败: {input_str}")
+                return None
+            if witness_version != 0:
+                logger.warning(f"仅支持witness version 0, 当前={witness_version}")
+                return None
+            prog_len = len(witness_program)
+            addr_type = "P2WPKH" if prog_len == 20 else "P2WSH" if prog_len == 32 else None
+            if not addr_type:
+                logger.warning(f"Bech32 witness长度无效: {prog_len}字节")
+                return None
+            address = Base58.check_encode(0x00, witness_program)
+            if self.cache:
+                self.cache.put(input_str, address)
+            logger.debug(f"Bech32地址转换: {input_str} -> {address}")
+            return address
+        except Exception as e:
+            logger.error(f"Bech32地址转换异常: {input_str} - {type(e).__name__}: {e}")
+            return None
+
+    def _resolve_taproot_address(self, input_str: str) -> Optional[str]:
+        """解析Taproot地址"""
+        try:
+            hrp = "bc" if input_str.lower().startswith("bc1") else "tb"
+            witness_version, witness_program = decode_segwit_address(hrp, input_str)
+            if witness_version is None or witness_program is None:
+                logger.warning(f"Taproot地址解码失败: {input_str}")
+                return None
+            if witness_version != 1:
+                logger.warning(f"Taproot期望witness version 1, 当前={witness_version}")
+                return None
+            if len(witness_program) != 32:
+                logger.warning(f"Taproot witness program应为32字节")
+                return None
+            address = Base58.check_encode(0x00, witness_program)
+            if self.cache:
+                self.cache.put(input_str, address)
+            logger.debug(f"Taproot地址转换: {input_str} -> {address}")
+            return address
+        except Exception as e:
+            logger.error(f"Taproot地址转换异常: {input_str} - {type(e).__name__}: {e}")
+            return None
+
+    def _resolve_wif(self, input_str: str) -> Optional[str]:
+        """解析WIF私钥"""
+        try:
+            from ...core.wif import WIF
+            private_key, compressed = WIF.decode(input_str)
+            public_key = self.generator.private_key_to_public_key(private_key, compressed=compressed)
+            address = self.generator.public_key_to_address(public_key)
+            if self.cache:
+                self.cache.put(input_str, address)
+            logger.debug(f"WIF解析成功: {input_str[:10]}... -> {address[:15]}...")
+            return address
+        except Exception as e:
+            logger.error(f"WIF解析异常: {input_str} - {type(e).__name__}: {e}")
+            return None
+
+    def _resolve_pubkey(self, input_str: str) -> Optional[str]:
+        """解析公钥"""
+        try:
+            public_key = bytes.fromhex(input_str)
+            address = self.generator.public_key_to_address(public_key)
+            if self.cache:
+                self.cache.put(input_str, address)
+            logger.debug(f"公钥解析成功: {input_str[:10]}... -> {address[:15]}...")
+            return address
+        except Exception as e:
+            logger.error(f"公钥解析异常: {input_str} - {type(e).__name__}: {e}")
+            return None
+
+    def _resolve_hash160(self, input_str: str) -> Optional[str]:
+        """解析Hash160"""
+        try:
+            from ...core.hash_utils import HashUtils
+            hash160 = bytes.fromhex(input_str)
+            address = HashUtils.hash160_to_address(hash160)
+            if self.cache:
+                self.cache.put(input_str, address)
+            logger.debug(f"Hash160解析成功: {input_str[:10]}... -> {address[:15]}...")
+            return address
+        except Exception as e:
+            logger.error(f"Hash160解析异常: {input_str} - {type(e).__name__}: {e}")
+            return None
+
+
     def resolve(self, input_str: str) -> Optional[str]:
         """
         将任意格式输入解析为 P2PKH 地址,解析失败返回 None
-
-        参数:
-            input_str: 输入字符串(地址、WIF、公钥等)
-
-        返回:
-            P2PKH地址,解析失败返回None
         """
         input_str = input_str.strip()
 
-        # 检查缓存(使用get方法以统计命中率)
+        # 检查缓存
         if self.cache:
             cached_result = self.cache.get(input_str)
             if cached_result:
@@ -341,192 +465,24 @@ class TargetResolver:
         fmt = self.detect_format(input_str)
         logger.debug(f"格式检测: {fmt}, 输入={input_str[:20]}...")
 
-        try:
-            if fmt == "address":
-                # 验证Base58Check校验和
-                version, payload = Base58.check_decode(input_str)
-                if version == 0x00:
-                    result = input_str
-                    # 存入缓存
-                    if self.cache:
-                        self.cache.put(input_str, result)
-                    logger.debug(f"P2PKH地址验证成功: {result[:15]}...")
-                    return result
-                logger.debug(f"P2PKH地址版本不匹配: version=0x{version:02x}")
-                return None
+        # 根据格式选择解析方法
+        resolvers = {
+            "address": self._resolve_p2pkh_address,
+            "p2sh_address": self._resolve_p2sh_address,
+            "bech32_address": self._resolve_bech32_address,
+            "taproot_address": self._resolve_taproot_address,
+            "wif": self._resolve_wif,
+            "pubkey_compressed": self._resolve_pubkey,
+            "pubkey_uncompressed": self._resolve_pubkey,
+            "hash160": self._resolve_hash160,
+        }
 
-            elif fmt == "p2sh_address":
-                # P2SH地址转换为等效的P2PKH表示（仅用于碰撞检测）
-                # 注意：P2SH和P2PKH是不同的脚本类型，这里只提取Hash160进行匹配
-                try:
-                    version, payload = Base58.check_decode(input_str)
-                    if version == 0x05:  # P2SH版本字节
-                        # 将P2SH的Hash160转换为P2PKH地址格式（仅用于匹配）
-                        # 这在碰撞检测中是合理的，因为我们只关心Hash160匹配
-                        address = Base58.check_encode(0x00, payload)
-                        if self.cache:
-                            self.cache.put(input_str, address)
-                        logger.debug(f"P2SH地址转换: {input_str} -> {address}")
-                        return address
-                    logger.warning(f"P2SH地址版本不匹配: version=0x{version:02x}, 地址={input_str}")
-                    return None
-                except ValueError as e:
-                    # 校验和验证失败或格式错误
-                    logger.warning(f"P2SH地址校验失败: {input_str} - {e}")
-                    return None
-                except Exception as e:
-                    # 未知异常
-                    logger.error(f"P2SH地址转换异常: {input_str} - {type(e).__name__}: {e}")
-                    return None
+        resolver = resolvers.get(fmt)
+        if resolver:
+            return resolver(input_str)
 
-            elif fmt == "bech32_address":
-                # Bech32地址转换 (BIP-173, 内置编解码，无需外部库)
-                try:
-                    # 提取 HRP（bc=主网, tb=测试网）并解码 witness program
-                    hrp = "bc" if input_str.lower().startswith("bc1") else "tb"
-                    witness_version, witness_program = decode_segwit_address(hrp, input_str)
-
-                    if witness_version is None or witness_program is None:
-                        logger.warning(f"Bech32地址解码失败: {input_str}")
-                        return None
-
-                    # 仅支持 witness version 0 (P2WPKH/P2WSH)
-                    if witness_version != 0:
-                        logger.warning(
-                            f"bech32_address格式仅支持witness version 0, 当前={witness_version}: {input_str}"  # noqa: E501
-                        )  # noqa: E501
-                        return None
-
-                    prog_len = len(witness_program)
-                    if prog_len == 20:
-                        addr_type = "P2WPKH"
-                    elif prog_len == 32:
-                        addr_type = "P2WSH"
-                    else:
-                        logger.warning(
-                            f"Bech32 witness长度无效: {prog_len}字节 "
-                            f"(期望20=P2WPKH或32=P2WSH), 地址={input_str}"
-                        )
-                        return None
-
-                    logger.debug(
-                        f"检测到{addr_type}地址 ({prog_len}字节witness): {input_str[:30]}..."
-                    )
-
-                    # 将 witness hash 转换为 P2PKH 地址（用于碰撞匹配）
-                    address = Base58.check_encode(0x00, witness_program)
-
-                    if self.cache:
-                        self.cache.put(input_str, address)
-
-                    logger.debug(f"Bech32地址转换: {input_str} -> {address}")
-                    return address
-
-                except Exception as e:
-                    logger.error(f"Bech32地址转换异常: {input_str} - {type(e).__name__}: {e}")
-                    return None
-
-            elif fmt == "taproot_address":
-                # Taproot地址 (bc1p开头, BIP-350, Bech32m, witness version 1)
-                try:
-                    hrp = "bc" if input_str.lower().startswith("bc1") else "tb"
-                    witness_version, witness_program = decode_segwit_address(hrp, input_str)
-
-                    if witness_version is None or witness_program is None:
-                        logger.warning(f"Taproot地址解码失败: {input_str}")
-                        return None
-
-                    if witness_version != 1:
-                        logger.warning(
-                            f"taproot_address格式期望witness version 1, 当前={witness_version}: {input_str}"  # noqa: E501
-                        )  # noqa: E501
-                        return None
-
-                    if len(witness_program) != 32:
-                        logger.warning(
-                            f"Taproot witness program应为32字节, 实际={len(witness_program)}字节"
-                        )
-                        return None
-
-                    # 将32字节 x-only 公钥作为 witness hash 转换为匹配地址
-                    address = Base58.check_encode(0x00, witness_program)
-
-                    if self.cache:
-                        self.cache.put(input_str, address)
-
-                    logger.debug(f"Taproot(P2TR)地址转换: {input_str} -> {address}")
-                    return address
-
-                except Exception as e:
-                    logger.error(f"Taproot地址转换异常: {input_str} - {type(e).__name__}: {e}")
-                    return None
-
-            elif fmt == "wif":
-                # WIF解码 -> 推导公钥 -> 推导地址
-                from ...core.wif import WIF
-
-                private_key, compressed = WIF.decode(input_str)
-                public_key = self.generator.private_key_to_public_key(
-                    private_key, compressed=compressed
-                )
-                address = self.generator.public_key_to_address(public_key)
-
-                # 存入缓存
-                if self.cache:
-                    self.cache.put(input_str, address)
-
-                logger.debug(
-                    f"WIF解析成功: {input_str[:10]}... -> {address[:15]}... (compressed={compressed})"
-                )
-                return address
-
-            elif fmt == "pubkey_compressed":
-                # 压缩公钥 -> hash160 -> Base58Check(0x00, hash160) -> 地址
-                public_key = bytes.fromhex(input_str)
-                address = self.generator.public_key_to_address(public_key)
-
-                # 存入缓存
-                if self.cache:
-                    self.cache.put(input_str, address)
-
-                logger.debug(f"压缩公钥解析成功: {input_str[:10]}... -> {address[:15]}...")
-                return address
-
-            elif fmt == "pubkey_uncompressed":
-                # 非压缩公钥 -> hash160 -> Base58Check(0x00, hash160) -> 地址
-                public_key = bytes.fromhex(input_str)
-                address = self.generator.public_key_to_address(public_key)
-
-                # 存入缓存
-                if self.cache:
-                    self.cache.put(input_str, address)
-
-                logger.debug(f"非压缩公钥解析成功: {input_str[:10]}... -> {address[:15]}...")
-                return address
-
-            elif fmt == "hash160":
-                # Hash160 -> Base58Check(0x00, hash160) -> 地址
-                from ...core.hash_utils import HashUtils
-
-                hash160 = bytes.fromhex(input_str)
-                address = HashUtils.hash160_to_address(hash160)
-
-                # 存入缓存
-                if self.cache:
-                    self.cache.put(input_str, address)
-
-                logger.debug(f"Hash160解析成功: {input_str[:10]}... -> {address[:15]}...")
-                return address
-
-            else:
-                logger.warning(f"未知输入格式: {input_str[:20]}...")
-                return None
-
-        except Exception as e:
-            logger.error(
-                f"地址解析失败: 输入={input_str[:20]}..., 格式={fmt}, 错误={e}", exc_info=True
-            )
-            return None
+        logger.warning(f"未知输入格式: {input_str[:20]}...")
+        return None
 
     def resolve_batch(self, inputs: List[str]) -> Dict[str, Optional[str]]:
         """
@@ -543,7 +499,7 @@ class TargetResolver:
         results: Dict[str, Optional[str]] = {}
         to_resolve: List[str] = []
 
-        # 第一遍:检查缓存（统一使用cache.get()方法，确保统计一致性）
+        # 第一遍:检查缓存
         for inp in inputs:
             cached_result = self.cache.get(inp) if self.cache else None
             if cached_result is not None:
@@ -552,14 +508,31 @@ class TargetResolver:
                 to_resolve.append(inp)
 
         logger.debug(
-            f"批量解析缓存命中: {len(results)}/{len(inputs)} ({(len(results) / len(inputs) * 100) if len(inputs) > 0 else 0:.1f}%)"  # noqa: E501
+            f"批量解析缓存命中: {len(results)}/{len(inputs)} ({(len(results) / len(inputs) * 100) if len(inputs) > 0 else 0:.1f}%)"
         )
 
-        # 第二遍:解析未缓存的
+        # 第二遍:直接解析未缓存的（跳过 resolve() 中的缓存检查，提升性能）
         if to_resolve:
             logger.debug(f"需要解析的地址数: {len(to_resolve)}")
+            # 预构建解析器映射
+            resolvers = {
+                "address": self._resolve_p2pkh_address,
+                "p2sh_address": self._resolve_p2sh_address,
+                "bech32_address": self._resolve_bech32_address,
+                "taproot_address": self._resolve_taproot_address,
+                "wif": self._resolve_wif,
+                "pubkey_compressed": self._resolve_pubkey,
+                "pubkey_uncompressed": self._resolve_pubkey,
+                "hash160": self._resolve_hash160,
+            }
             for inp in to_resolve:
-                results[inp] = self.resolve(inp)
+                inp = inp.strip()
+                fmt = self.detect_format(inp)
+                resolver = resolvers.get(fmt)
+                if resolver:
+                    results[inp] = resolver(inp)
+                else:
+                    results[inp] = None
 
         success_count = sum(1 for v in results.values() if v is not None)
         cache_hits = len(results) - len(to_resolve)

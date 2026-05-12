@@ -7,7 +7,6 @@ import concurrent.futures
 import hashlib
 import psutil
 import signal
-from collections import deque
 from typing import Set, Optional, Tuple, List, Dict, Any, cast
 from ..core.optimized_address_generator import OptimizedP2PKHAddressGenerator
 
@@ -1241,9 +1240,11 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         logger.info(f"🎯 发现匹配! 地址={matched_address} (格式: {format_type})")
                     except (ValueError, TypeError, OverflowError) as e:
                         # WIF编码或回调参数错误
+                        # MEDIUM-9修复: 拆分多行f-string提高可读性
+                        err_type = type(e).__name__
                         logger.error(
-                            f"Worker {worker_id}: 匹配处理参数错误 addr={matched_address}: {
-                                type(e).__name__}: {e}"
+                            f"Worker {worker_id}: 匹配处理参数错误 addr={matched_address}: "
+                            f"{err_type}: {e}"
                         )
                     except Exception:
                         # 未知错误：记录完整堆栈
@@ -1527,9 +1528,11 @@ class KeyCollisionEngine(BaseCollisionEngine):
                                 self._stop_event.set()
                         except (ValueError, TypeError, OverflowError) as e:
                             # WIF编码或回调参数错误
+                            # MEDIUM-9修复: 拆分多行f-string提高可读性
+                            err_type = type(e).__name__
                             logger.error(
-                                f"BruteForce worker {worker_id}: 匹配处理参数错误 addr={address}: {
-                                    type(e).__name__}"
+                                f"BruteForce worker {worker_id}: 匹配处理参数错误 addr={address}: "
+                                f"{err_type}"
                             )
                         except Exception:
                             # 未知错误：记录完整堆栈

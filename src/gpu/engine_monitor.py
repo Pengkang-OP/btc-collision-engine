@@ -108,8 +108,9 @@ class GPUEngineMonitor:
         with self._adjustment_history_lock:
             self._adjustment_history.append(record)
             # 保留最近100条记录，防止内存无限增长
+            # 使用切片删除而非赋值，避免潜在引用问题
             if len(self._adjustment_history) > 100:
-                self._adjustment_history = self._adjustment_history[-100:]
+                del self._adjustment_history[:-100]
 
         logger.debug(
             "batch_size 调整记录: %s -> %s (%+.1f%%) - %s",

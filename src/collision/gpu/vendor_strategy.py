@@ -33,26 +33,54 @@ class IntelOptimizationStrategy:
     """
 
     def apply_optimizations(self, context: GPUExecutionContext) -> Dict[str, Any]:
-        """应用Intel特定优化"""
+        """应用Intel特定优化
+
+        v2.2.2 修复:
+        - AdaptiveTimeoutManager 构造参数从 config= 改为 base_timeout= 等正确签名
+        - IntelMemoryMonitor 构造参数从 device= 改为 total_memory_bytes= 等正确签名
+        - IntelGPUOptimizer.apply_optimizations() 现在传递 engine 引用以启用 P2 组件
+        """
         components: Dict[str, Any] = {}
 
         try:
             # 1. 超时管理器
             from ...gpu.intel_timeout_manager import AdaptiveTimeoutManager
 
-            components["timeout_manager"] = cast(Any, AdaptiveTimeoutManager)(config=context.config)
+            components["timeout_manager"] = AdaptiveTimeoutManager(
+                base_timeout=30.0,
+                history_size=50,
+                safety_factor=3.0,
+                min_timeout=10.0,
+                max_timeout=120.0,
+            )
 
             # 2. 内存监控器
             from ...gpu.intel_memory_monitor import IntelMemoryMonitor
 
             if context.device:
-                components["memory_monitor"] = cast(Any, IntelMemoryMonitor)(context.device)
+                device_info = getattr(context.device, "device_info", None)
+                if isinstance(device_info, dict) and device_info.get("global_mem_size", 0) > 0:
+                    components["memory_monitor"] = IntelMemoryMonitor(
+                        total_memory_bytes=device_info["global_mem_size"],
+                        safe_usage_ratio=0.70,
+                    )
 
             # 3. Intel优化器
             from ...gpu.intel_optimizer import IntelGPUOptimizer
 
-            components["intel_optimizer"] = IntelGPUOptimizer(
+            intel_optimizer = IntelGPUOptimizer(
                 device=context.device, config=context.config or {}
+            )
+            components["intel_optimizer"] = intel_optimizer
+
+            # 4. 应用优化并传递 engine 引用（启用 P2 组件）
+            from ...gpu.kernel import OPENCL_KERNEL_SOURCE
+
+            intel_optimizer.apply_optimizations(
+                {
+                    "kernel_source": OPENCL_KERNEL_SOURCE,
+                    "engine": context.engine,  # v2.2.2: 传递 engine 引用
+                }
             )
 
             logger.info("Intel GPU优化策略已应用")

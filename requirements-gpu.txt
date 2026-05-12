@@ -4,7 +4,7 @@
 # 前置条件：
 #   NVIDIA: 安装 CUDA Toolkit >= 11.0
 #   AMD:    安装 AMD 显卡驱动 >= 21.x
-#   Intel:  安装 Intel Arc 客户端驱动 >= 31.0.101.4146
+#   Intel:  安装 Intel Arc 客户端驱动 >= 31.0.101.4146 (仅支持 Windows)
 #
 # 验证 OpenCL 是否可用:
 #   python -c "import pyopencl; print([d.name for p in pyopencl.get_platforms() for d in p.get_devices()])"
@@ -14,3 +14,13 @@ pyopencl>=2021.1            # OpenCL GPU 计算支持（必需）
 
 # GPU 数值计算加速
 numpy>=1.24.0               # GPU 内核数据传输与数组操作
+
+# GPU 大整数运算加速
+gmpy2>=2.1.0,<4.0.0         # C-07: 与基础依赖保持一致
+
+# GPU SIMD哈希优化
+pycryptodome>=3.19.0,<4.0.0 # C-08: 与基础依赖保持一致
+
+# GPU 监控 (C-13: 替代已弃用的 pynvml)
+# nvidia-ml-py 安装后导入名称仍为 pynvml，与原 API 完全兼容
+nvidia-ml-py>=12.0.0         # NVIDIA GPU 监控（推荐）或 pip install nvidia-ml-py

@@ -1,0 +1,23 @@
+{
+  "name": "_auto_4064478411b840d5ae2326c363fef45e",
+  "leadAgentId": "4064478411b840d5ae2326c363fef45e",
+  "workspacePath": "f:\\Qoder\\btc-collision-engine",
+  "createdAt": "2026-05-11T16:19:56.728Z",
+  "options": {
+    "workspacePath": "f:\\Qoder\\btc-collision-engine",
+    "isAutoTeam": true
+  },
+  "members": [
+    {
+      "memberId": "team-lead@_auto_4064478411b840d5ae2326c363fef45e",
+      "name": "team-lead",
+      "role": "Team Lead - coordinates the team and interacts with the user"
+    },
+    {
+      "memberId": "code-explorer@_auto_4064478411b840d5ae2326c363fef45e",
+      "name": "code-explorer",
+      "role": "扫描项目污染问题"
+    }
+  ],
+  "isAutoTeam": true
+}

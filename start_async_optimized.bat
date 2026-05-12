@@ -5,7 +5,9 @@ call "%~dp0common.bat"
 call :init_encoding
 call :set_script_dir
 
-set "CONFIG_FILE=config.intel_arc.json"
+set "CONFIG_FILE=config.json"
+rem 可通过第一个参数指定配置文件, 例如: start_async_optimized.bat config.intel_arc.json
+if not "%~1"=="" set "CONFIG_FILE=%~1"
 set "PYTHON_SCRIPT=key_collision_cli.py"
 
 call :check_python
@@ -19,7 +21,7 @@ call :create_required_dirs
 call :print_header "BTC 碰撞引擎 - GPU 异步优化模式"
 
 echo   配置文件: !CONFIG_FILE!
-echo   GPU: Intel Arc A770 (双缓冲异步)
+echo   模式: GPU 双缓冲异步 (自动检测可用设备)
 echo   批处理: 1,000,000 密钥/批次
 echo.
 

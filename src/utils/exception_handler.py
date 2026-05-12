@@ -45,32 +45,38 @@ class ExceptionHandler:
         if isinstance(error, (RuntimeError, ValueError)):
             # 可恢复的运行时错误
             logger.error(f"{engine_type}引擎{context}失败({error_type}): {error_msg}")
-            if stats and hasattr(stats, "record_worker_error"):
-                stats.record_worker_error()
+            # 使用getattr替代hasattr避免竞态条件
+            record_func = getattr(stats, "record_worker_error", None)
+            if record_func and callable(record_func):
+                record_func()
         elif isinstance(error, KeyboardInterrupt):
-            # 用户中断
+            # 用户中断 - 使用 raise error from None 避免 RuntimeError
             logger.info(f"{engine_type}引擎被用户中断")
-            raise  # 重新抛出,让上层处理
+            raise error from None  # 重新抛出,让上层处理
         elif isinstance(error, MemoryError):
             # 内存错误(严重)
             logger.critical(f"{engine_type}引擎内存不足: {error_msg}")
-            if stats and hasattr(stats, "record_error"):
-                stats.record_error("memory_error", error_msg)
+            record_func = getattr(stats, "record_error", None)
+            if record_func and callable(record_func):
+                record_func("memory_error", error_msg)
         elif isinstance(error, ImportError):
             # 模块导入错误（P3-6: 新增分类）
             logger.error(f"{engine_type}引擎{context}模块导入失败: {error_msg}")
-            if stats and hasattr(stats, "record_worker_error"):
-                stats.record_worker_error()
+            record_func = getattr(stats, "record_worker_error", None)
+            if record_func and callable(record_func):
+                record_func()
         elif isinstance(error, OSError):
             # 系统I/O错误（P3-6: 新增分类）
             logger.error(f"{engine_type}引擎{context}系统I/O错误: {error_type}: {error_msg}")
-            if stats and hasattr(stats, "record_worker_error"):
-                stats.record_worker_error()
+            record_func = getattr(stats, "record_worker_error", None)
+            if record_func and callable(record_func):
+                record_func()
         else:
             # 未知错误
             logger.exception(f"{engine_type}引擎{context}未知错误")
-            if stats and hasattr(stats, "record_worker_error"):
-                stats.record_worker_error()
+            record_func = getattr(stats, "record_worker_error", None)
+            if record_func and callable(record_func):
+                record_func()
 
     @staticmethod
     def handle_gpu_error(mode: str, error: Exception, stats: Any = None) -> bool:
@@ -104,30 +110,34 @@ class ExceptionHandler:
 
             if is_resource_error:
                 logger.error(f"GPU {mode}失败(资源不足): {type(error).__name__}: {error}")
-                if stats and hasattr(stats, "record_gpu_error"):
-                    stats.record_gpu_error(is_resource_error=True)
             else:
                 logger.error(f"GPU {mode}失败(运行时错误): {type(error).__name__}: {error}")
-                if stats and hasattr(stats, "record_gpu_error"):
-                    stats.record_gpu_error(is_resource_error=False)
+            # 使用getattr替代hasattr避免竞态条件
+            record_func = getattr(stats, "record_gpu_error", None)
+            if record_func and callable(record_func):
+                record_func(is_resource_error=is_resource_error)
         elif isinstance(error, MemoryError):
             # P3-6: 内存不足(独立分类，便于监控告警)
             logger.critical(f"GPU {mode}内存不足(MemoryError): {error}")
-            if stats and hasattr(stats, "record_gpu_error"):
-                stats.record_gpu_error(is_resource_error=True)
+            record_func = getattr(stats, "record_gpu_error", None)
+            if record_func and callable(record_func):
+                record_func(is_resource_error=True)
         elif isinstance(error, (TypeError, OverflowError)):
             # 数据编码错误
             logger.error(f"GPU {mode}失败(数据错误): {type(error).__name__}: {error}")
-            if stats:
-                if hasattr(stats, "record_gpu_error"):
-                    stats.record_gpu_error(is_resource_error=False)
-                if hasattr(stats, "record_wif_encode_error"):
-                    stats.record_wif_encode_error()
+            # 使用getattr替代hasattr避免竞态条件
+            gpu_err_func = getattr(stats, "record_gpu_error", None)
+            if gpu_err_func and callable(gpu_err_func):
+                gpu_err_func(is_resource_error=False)
+            wif_err_func = getattr(stats, "record_wif_encode_error", None)
+            if wif_err_func and callable(wif_err_func):
+                wif_err_func()
         else:
             # 未知错误
             logger.exception(f"GPU {mode}失败(未知错误)")
-            if stats and hasattr(stats, "record_gpu_error"):
-                stats.record_gpu_error(is_resource_error=False)
+            record_func = getattr(stats, "record_gpu_error", None)
+            if record_func and callable(record_func):
+                record_func(is_resource_error=False)
 
         return True  # 总是继续执行
 
@@ -160,10 +170,22 @@ class ExceptionHandler:
             # 对象状态异常 → 可回退
             logger.warning(f"GPU异步{context}对象状态异常({error_type}): {error}")
             return True
+        elif isinstance(error, (SystemExit, KeyboardInterrupt)):
+            # 系统级异常 → 不回退，让其向上传播
+            logger.info(f"GPU异步{context}系统级异常({error_type}): {error}")
+            return False
         else:
-            # 未知错误 → 记录并回退（保守策略）
-            logger.exception(f"GPU异步{context}未知异常({error_type}): {error}")
-            return True
+            # 未知错误 → 根据错误消息判断是否可回退
+            error_msg = str(error).lower()
+            critical_keywords = ["fatal", "corruption", "segmentation", "access violation"]
+            if any(kw in error_msg for kw in critical_keywords):
+                # 严重错误 → 不回退，记录后向上传播
+                logger.error(f"GPU异步{context}严重未知异常({error_type}): {error}")
+                return False
+            else:
+                # 其他未知错误 → 回退到同步模式
+                logger.warning(f"GPU异步{context}未知异常({error_type}): {error}")
+                return True
 
     @staticmethod
     def handle_cl_resource_error(error: Exception, resource_type: str = "") -> bool:

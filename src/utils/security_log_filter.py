@@ -24,7 +24,8 @@ class SecurityLogFilter(logging.Filter):
 
     # 私钥模式匹配
     # 64位十六进制（32字节私钥），支持0x前缀
-    PRIVATE_KEY_HEX_PATTERN = re.compile(r"\b(?:0x)?[0-9a-fA-F]{64}\b")
+    # 增强：使用负向前瞻确保不在其他十六进制字符串中间匹配
+    PRIVATE_KEY_HEX_PATTERN = re.compile(r"(?<![0-9a-fA-F])(?:0x)?[0-9a-fA-F]{64}(?![0-9a-fA-F])")
 
     # WIF格式 - 与 SensitiveDataFilter 保持精确一致
     # 非压缩WIF: 以5开头，总长51字符 (5 + 50后续字符)

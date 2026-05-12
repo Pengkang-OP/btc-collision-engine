@@ -94,15 +94,20 @@ def _worker_process(
                 else:
                     logger.debug(f"工作进程 {worker_id} 内存锁定失败: errno={errno.errno}")
         # macOS和Windows不支持mlockall，静默跳过
-    except Exception as e:
-        logger.debug(f"工作进程 {worker_id} 内存锁定失败: {e}")
+    except (OSError, AttributeError, ImportError) as e:
+        # OSError: mlockall系统调用失败
+        # AttributeError: ctypes找不到mlockall函数
+        # ImportError: 库导入失败
+        logger.debug(f"工作进程 {worker_id} 内存锁定失败: {type(e).__name__}: {e}")
 
     # 在子进程中本地初始化生成器（避免pickle问题）
     # 使用bytearray以支持私钥清零
     if generator_func_name == "random":
+        # SEVERE-3修复: 使用secrets模块替代os.urandom以获得更好的安全性
+        import secrets
 
         def generator_func(n: int) -> List[bytearray]:
-            return [bytearray(os.urandom(32)) for _ in range(n)]
+            return [bytearray(secrets.token_bytes(32)) for _ in range(n)]
 
     elif generator_func_name == "sequential":
         start_key = 1

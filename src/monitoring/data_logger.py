@@ -683,16 +683,14 @@ class DataLogger:
 
             if not self._safe_file_replace(temp_file, self.history_data_file):
                 self.logger.error("保存历史数据失败: 文件替换所有方案均失败")
-                # 写入失败将数据放回缓冲区
+                # 写入失败将数据放回缓冲区（使用 extendleft 保持顺序）
                 with self._lock:
-                    for item in reversed(new_data):
-                        self._history_buffer.appendleft(item)
+                    self._history_buffer.extendleft(reversed(new_data))
         except Exception as e:
             self.logger.error(f"保存历史数据失败: {e}")
             # 异常时也将数据放回缓冲区
             with self._lock:
-                for item in reversed(new_data):
-                    self._history_buffer.appendleft(item)
+                self._history_buffer.extendleft(reversed(new_data))
         finally:
             if temp_file and os.path.exists(temp_file):
                 try:
@@ -1167,8 +1165,7 @@ class DataLogger:
                 self.logger.error(f"flush 写入历史数据失败: {e}")
                 # 写入失败则将数据放回缓冲区
                 with self._lock:
-                    for item in reversed(pending_history):
-                        self._history_buffer.appendleft(item)
+                    self._history_buffer.extendleft(reversed(pending_history))
 
         if pending_errors:
             try:
@@ -1189,8 +1186,7 @@ class DataLogger:
                 self.logger.error(f"flush 写入错误数据失败: {e}")
                 # 写入失败则将数据放回缓冲区
                 with self._lock:
-                    for item in reversed(pending_errors):
-                        self._error_buffer.appendleft(item)
+                    self._error_buffer.extendleft(reversed(pending_errors))
 
     def stop(self) -> None:
         """停止数据记录器，确保所有数据已写入"""

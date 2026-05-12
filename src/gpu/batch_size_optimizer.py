@@ -135,9 +135,9 @@ class SmartBatchSizeOptimizer:
                 "max_batch_size": 1048576,
             },
             "intel": {
-                "initial_batch_size": 65536,
-                "min_batch_size": 8192,
-                "max_batch_size": 262144,
+                "initial_batch_size": 4194304,  # 提高初始批次大小到400万
+                "min_batch_size": 262144,  # 提高最小批次大小到256K
+                "max_batch_size": 16777216,  # 匹配gpu_profiles.json的配置（1600万）
             },
             "default": {
                 "initial_batch_size": 65536,

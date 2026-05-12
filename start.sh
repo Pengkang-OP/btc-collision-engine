@@ -29,7 +29,7 @@ else
     exit 1
 fi
 
-PYTHON_VERSION=$($PYTHON --version | awk '{print $2}')
+PYTHON_VERSION=$($PYTHON -c "import sys; print(sys.version.split()[0])")
 echo -e "${GREEN}[成功]${NC} Python版本: $PYTHON_VERSION"
 
 # 2. 检查虚拟环境
