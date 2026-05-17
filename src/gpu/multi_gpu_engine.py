@@ -133,8 +133,9 @@ class MultiGPUCollisionEngine:
         self._monitor_interval = self.config.workload_monitor_interval
         self._auto_rebalance = self.config.auto_rebalance
 
-        # 性能历史数据
+        # 性能历史数据（添加锁防止竞态条件）
         self._performance_history: list[dict[str, Any]] = []
+        self._performance_history_lock = threading.Lock()  # 修复: 防止并发访问导致数据竞争
         self._max_history_size = 100  # 最大历史记录数
 
         # 分布式统计聚合器（减少锁竞争，支持大规模GPU集群）- 根据配置启用
@@ -964,9 +965,10 @@ class MultiGPUCollisionEngine:
                 if throughput > 0:
                     self._metrics.record_throughput(device_idx, throughput)
 
-            # 保持历史数据大小
-            if len(self._performance_history) > self._max_history_size:
-                self._performance_history = self._performance_history[-self._max_history_size :]
+            # 保持历史数据大小（添加锁保护）
+            with self._performance_history_lock:
+                if len(self._performance_history) > self._max_history_size:
+                    self._performance_history = self._performance_history[-self._max_history_size :]
 
             # 记录负载均衡器状态
             if self.load_balancer:
@@ -1034,7 +1036,8 @@ class MultiGPUCollisionEngine:
         Returns:
             性能历史数据列表
         """
-        return self._performance_history.copy()
+        with self._performance_history_lock:
+            return self._performance_history.copy()
 
     def get_workload_stats(self) -> dict:
         """获取工作负载统计信息
@@ -1042,10 +1045,12 @@ class MultiGPUCollisionEngine:
         Returns:
             工作负载统计字典
         """
+        with self._performance_history_lock:
+            history_count = len(self._performance_history)
         stats = {
             "monitor_enabled": self._auto_rebalance,
             "monitor_interval": self._monitor_interval,
-            "performance_history_count": len(self._performance_history),
+            "performance_history_count": history_count,
             "load_balancer_stats": {},
         }
 

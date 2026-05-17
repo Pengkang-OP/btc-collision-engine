@@ -9,7 +9,7 @@ import platform
 import sys
 import tkinter as tk
 
-from . import get_configured_logger, init_logging
+from .logging_config import get_configured_logger, init_logging
 
 # 初始化日志
 init_logging()

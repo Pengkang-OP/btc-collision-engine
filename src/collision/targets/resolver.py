@@ -10,14 +10,18 @@
 - 非压缩公钥(130字符hex, 04前缀)
 - Hash160(40字符hex)
 
-所有格式在解析后统一转换为P2PKH地址用于碰撞检测。
+地址格式(P2PKH/P2SH/Bech32/Taproot)仅做小写标准化，保持原格式；
+密钥格式(WIF/公钥/Hash160)推导为对应的P2PKH地址。
+
+注意: 当前引擎仅生成P2PKH地址进行碰撞检测，
+P2SH/Bech32(P2WSH)/Taproot等非P2PKH目标必然无法匹配。
 
 优化特性:
 - LRU缓存加速重复地址解析
 - 批量解析减少函数调用开销
 - 增强的格式检测支持更多地址类型
 - 跨平台文件编码兼容
-- 内置Bech32/Bech32m编解码，无需外部bech32库
+- 内置Bech32/Bech32m编解码，由统一模块 src.utils.bech32_codec 提供
 """
 
 import os
@@ -26,169 +30,28 @@ from ...core.address_generator import P2PKHAddressGenerator
 from ...core.base58 import Base58
 
 # 导入日志配置
-from ...utils import get_configured_logger, init_logging
+from ...utils import get_configured_logger
 from ...utils.encoding_utils import EncodingUtils
 from .cache import AddressCache
 
-# 初始化日志系统
-init_logging()
-# v2.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
+# 日志系统由CLI/main.py入口统一初始化
 logger = get_configured_logger("TargetResolver", thread_safe=False)
 
 
-# ---------------------------------------------------------------------------
-# 内置 Bech32 / Bech32m 编解码  (BIP-173 / BIP-350)
-# 不依赖外部 bech32 库，完整实现多项RFC验证
-# ---------------------------------------------------------------------------
-
-_BECH32_CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
-_BECH32_CHARSET_MAP = {c: i for i, c in enumerate(_BECH32_CHARSET)}
-
-_BECH32_CONST = 1  # bech32  校验常量 (BIP-173)
-_BECH32M_CONST = 0x2BC830A3  # bech32m 校验常量 (BIP-350)
-
-
-def _bech32_polymod(values: list) -> int:
-    """Bech32/Bech32m 多项式校验模运算"""
-    generator = [0x3B6A57B2, 0x26508E6D, 0x1EA119FA, 0x3D4233DD, 0x2A1462B3]
-    chk = 1
-    for value in values:
-        top = chk >> 25
-        chk = (chk & 0x1FFFFFF) << 5 ^ value
-        for i in range(5):
-            chk ^= generator[i] if ((top >> i) & 1) else 0
-    return chk
-
-
-def _bech32_hrp_expand(hrp: str) -> list:
-    """扩展 HRP 为校验运算所需格式"""
-    return [ord(c) >> 5 for c in hrp] + [0] + [ord(c) & 31 for c in hrp]
-
-
-def _bech32_verify_checksum(hrp: str, data: list) -> int | None:
-    """验证 Bech32/Bech32m 校验和，返回编码常量 (1=bech32, 0x2bc830a3=bech32m) 或 None"""
-    const = _bech32_polymod(_bech32_hrp_expand(hrp) + data)
-    if const == _BECH32_CONST:
-        return _BECH32_CONST
-    if const == _BECH32M_CONST:
-        return _BECH32M_CONST
-    return None
-
-
-def _convertbits(data, from_bits: int, to_bits: int, pad: bool = True) -> list | None:
-    """5-bit <-> 8-bit 位转换（BIP-173 convertbits）"""
-    acc = 0
-    bits = 0
-    result = []
-    maxv = (1 << to_bits) - 1
-    max_acc = (1 << (from_bits + to_bits - 1)) - 1
-    for value in data:
-        if value < 0 or (value >> from_bits):
-            return None
-        acc = ((acc << from_bits) | value) & max_acc
-        bits += from_bits
-        while bits >= to_bits:
-            bits -= to_bits
-            result.append((acc >> bits) & maxv)
-    if pad:
-        if bits:
-            result.append((acc << (to_bits - bits)) & maxv)
-    elif bits >= from_bits or ((acc << (to_bits - bits)) & maxv):
-        return None
-    return result
-
-
-def bech32_decode(bech: str) -> tuple[str | None, list | None, int | None]:
-    """解码 Bech32/Bech32m 字符串
-
-    Args:
-        bech: 要解码的字符串
-
-    Returns:
-        (hrp, data_5bit, encoding_const) 三元组，失败时返回 (None, None, None)
-        encoding_const: 1=bech32, 0x2bc830a3=bech32m
-    """
-    # BIP-173: 禁止大小写混合
-    if bech.lower() != bech and bech.upper() != bech:
-        return None, None, None
-    bech = bech.lower()
-
-    # 最大长度限制
-    if len(bech) > 90:
-        return None, None, None
-
-    # 找分隔符 '1'
-    pos = bech.rfind("1")
-    if pos < 1 or pos + 7 > len(bech):
-        return None, None, None
-
-    hrp = bech[:pos]
-    data_part = bech[pos + 1 :]
-
-    # 验证字符集
-    if not all(c in _BECH32_CHARSET_MAP for c in data_part):
-        return None, None, None
-
-    decoded = [_BECH32_CHARSET_MAP[c] for c in data_part]
-    enc = _bech32_verify_checksum(hrp, decoded)
-    if enc is None:
-        return None, None, None
-
-    return hrp, decoded[:-6], enc
-
-
-def decode_segwit_address(hrp: str, addr: str) -> tuple[int | None, bytes | None]:
-    """解码 SegWit 地址，提取 witness version 和 witness program
-
-    支持:
-    - P2WPKH: witness version=0, 20字节 witness program (bc1q)
-    - P2WSH:  witness version=0, 32字节 witness program (bc1q)
-    - P2TR:   witness version=1, 32字节 witness program (bc1p, Taproot)
-
-    Args:
-        hrp: 人类可读部分 ('bc'=主网, 'tb'=测试网)
-        addr: 完整 bech32/bech32m 地址字符串
-
-    Returns:
-        (witness_version, witness_program_bytes), 失败返回 (None, None)
-    """
-    hrp_got, data, enc = bech32_decode(addr)
-    if hrp_got is None or hrp_got != hrp.lower():
-        return None, None
-    if not data or len(data) < 1:
-        return None, None
-
-    witness_version = data[0]
-    if witness_version > 16:
-        return None, None
-
-    # witness_version=0 必须使用 bech32，version>=1 必须使用 bech32m
-    if witness_version == 0 and enc != _BECH32_CONST:
-        return None, None
-    if witness_version != 0 and enc != _BECH32M_CONST:
-        return None, None
-
-    witness_program = _convertbits(data[1:], 5, 8, False)
-    if witness_program is None:
-        return None, None
-
-    prog_len = len(witness_program)
-    # P2WPKH=20, P2WSH=32, P2TR=32
-    if witness_version == 0 and prog_len not in (20, 32):
-        return None, None
-    if witness_version == 1 and prog_len != 32:
-        return None, None
-    if prog_len < 2 or prog_len > 40:
-        return None, None
-
-    return witness_version, bytes(witness_program)
+from ...utils.bech32_codec import decode_segwit_address  # re-export for external consumers
 
 
 class TargetResolver:
     """增强版目标地址解析器
 
-    解析多种格式的目标,统一转换为 P2PKH 地址集合。
+    解析多种格式的目标:
+    - 地址格式(P2PKH/P2SH): 保持原始大小写（Base58 校验和大小写敏感，小写化会破坏校验和）
+    - Bech32/Taproot: 小写标准化
+    - 密钥格式(WIF/公钥/Hash160): 推导为对应P2PKH地址
     内置缓存机制优化重复解析性能。
+
+    注意: 当前引擎仅生成P2PKH地址进行碰撞检测,
+    P2SH/Bech32(P2WSH)/Taproot等非P2PKH目标必然无法匹配。
 
     示例:
         >>> resolver = TargetResolver(enable_cache=True)
@@ -248,7 +111,7 @@ class TargetResolver:
             input_str: 输入字符串
 
         返回:
-            格式类型: 'address', 'p2sh_address', 'bech32_address', 'wif',
+            格式类型: 'address', 'p2sh_address', 'bech32_address', 'taproot_address', 'wif',
                      'pubkey_compressed', 'pubkey_uncompressed', 'hash160', 'unknown'
         """
         input_str = input_str.strip()
@@ -325,40 +188,47 @@ class TargetResolver:
     # ========================================================================
 
     def _resolve_p2pkh_address(self, input_str: str) -> str | None:
-        """解析P2PKH地址"""
+        """解析P2PKH地址 — 仅格式验证,保留原始大小写"""
         try:
             version, payload = Base58.check_decode(input_str)
             if version == 0x00:
+                # Base58 编码大小写敏感,不可小写化,否则校验和失效
                 if self.cache:
                     self.cache.put(input_str, input_str)
                 logger.debug(f"P2PKH地址验证成功: {input_str[:15]}...")
                 return input_str
             logger.debug(f"P2PKH地址版本不匹配: version=0x{version:02x}")
             return None
-        except Exception:
+        except ValueError:
+            masked = (f"{input_str[:6]}...{input_str[-4:]}" if len(input_str) >= 10
+                      else "***")
+            logger.debug(f"P2PKH地址校验失败 [{masked}]")
             return None
 
     def _resolve_p2sh_address(self, input_str: str) -> str | None:
-        """解析P2SH地址"""
+        """解析P2SH地址 — 仅格式验证,保留原始大小写"""
         try:
             version, payload = Base58.check_decode(input_str)
             if version == 0x05:
-                address = Base58.check_encode(0x00, payload)
+                # Base58 编码大小写敏感,不可小写化,否则校验和失效
                 if self.cache:
-                    self.cache.put(input_str, address)
-                logger.debug(f"P2SH地址转换: {input_str} -> {address}")
-                return address
+                    self.cache.put(input_str, input_str)
+                logger.debug(f"P2SH地址验证成功(保持原格式): {input_str[:15]}...")
+                logger.warning(
+                    "P2SH目标地址将保持原格式,当前引擎仅生成P2PKH地址,"
+                    "P2SH目标必然无法匹配。"
+                )
+                return input_str
             logger.warning(f"P2SH地址版本不匹配: version=0x{version:02x}")
             return None
         except ValueError:
-            logger.warning(f"P2SH地址校验失败: {input_str}")
-            return None
-        except Exception as e:
-            logger.error(f"P2SH地址转换异常: {input_str} - {type(e).__name__}: {e}")
+            masked = (f"{input_str[:6]}...{input_str[-4:]}" if len(input_str) >= 10
+                      else "***")
+            logger.warning(f"P2SH地址校验失败 [{masked}]")
             return None
 
     def _resolve_bech32_address(self, input_str: str) -> str | None:
-        """解析Bech32地址"""
+        """解析Bech32地址 — 仅格式验证和小写标准化,不转换为P2PKH"""
         try:
             hrp = "bc" if input_str.lower().startswith("bc1") else "tb"
             witness_version, witness_program = decode_segwit_address(hrp, input_str)
@@ -369,21 +239,26 @@ class TargetResolver:
                 logger.warning(f"仅支持witness version 0, 当前={witness_version}")
                 return None
             prog_len = len(witness_program)
-            addr_type = "P2WPKH" if prog_len == 20 else "P2WSH" if prog_len == 32 else None
-            if not addr_type:
+            if prog_len == 32:
+                logger.warning(
+                    "检测到P2WSH地址(32字节witness program),"
+                    "当前引擎仅生成P2PKH地址,此目标必然无法匹配。"
+                )
+            elif prog_len != 20:
                 logger.warning(f"Bech32 witness长度无效: {prog_len}字节")
                 return None
-            address = Base58.check_encode(0x00, witness_program)
+            normalized = input_str.lower()
             if self.cache:
-                self.cache.put(input_str, address)
-            logger.debug(f"Bech32地址转换: {input_str} -> {address}")
-            return address
-        except Exception as e:
+                # Bech32 编码大小写不敏感,统一用小写作为缓存 key
+                self.cache.put(normalized, normalized)
+            logger.debug(f"Bech32地址验证成功(保持原格式): {normalized[:15]}...")
+            return normalized
+        except ValueError as e:
             logger.error(f"Bech32地址转换异常: {input_str} - {type(e).__name__}: {e}")
             return None
 
     def _resolve_taproot_address(self, input_str: str) -> str | None:
-        """解析Taproot地址"""
+        """解析Taproot地址 — 仅格式验证和小写标准化,不转换为P2PKH"""
         try:
             hrp = "bc" if input_str.lower().startswith("bc1") else "tb"
             witness_version, witness_program = decode_segwit_address(hrp, input_str)
@@ -396,12 +271,17 @@ class TargetResolver:
             if len(witness_program) != 32:
                 logger.warning("Taproot witness program应为32字节")
                 return None
-            address = Base58.check_encode(0x00, witness_program)
+            normalized = input_str.lower()
             if self.cache:
-                self.cache.put(input_str, address)
-            logger.debug(f"Taproot地址转换: {input_str} -> {address}")
-            return address
-        except Exception as e:
+                # Bech32m 编码大小写不敏感,统一用小写作为缓存 key
+                self.cache.put(normalized, normalized)
+            logger.debug(f"Taproot地址验证成功(保持原格式): {normalized[:15]}...")
+            logger.warning(
+                "Taproot目标地址将保持原格式,当前引擎仅生成P2PKH地址,"
+                "Taproot目标必然无法匹配。"
+            )
+            return normalized
+        except ValueError as e:
             logger.error(f"Taproot地址转换异常: {input_str} - {type(e).__name__}: {e}")
             return None
 
@@ -419,7 +299,7 @@ class TargetResolver:
                 self.cache.put(input_str, address)
             logger.debug(f"WIF解析成功: {input_str[:10]}... -> {address[:15]}...")
             return address
-        except Exception as e:
+        except ValueError as e:
             logger.error(f"WIF解析异常: {input_str} - {type(e).__name__}: {e}")
             return None
 
@@ -432,7 +312,7 @@ class TargetResolver:
                 self.cache.put(input_str, address)
             logger.debug(f"公钥解析成功: {input_str[:10]}... -> {address[:15]}...")
             return address
-        except Exception as e:
+        except ValueError as e:
             logger.error(f"公钥解析异常: {input_str} - {type(e).__name__}: {e}")
             return None
 
@@ -447,13 +327,20 @@ class TargetResolver:
                 self.cache.put(input_str, address)
             logger.debug(f"Hash160解析成功: {input_str[:10]}... -> {address[:15]}...")
             return address
-        except Exception as e:
+        except ValueError as e:
             logger.error(f"Hash160解析异常: {input_str} - {type(e).__name__}: {e}")
             return None
 
     def resolve(self, input_str: str) -> str | None:
         """
-        将任意格式输入解析为 P2PKH 地址,解析失败返回 None
+        将任意格式输入解析为地址字符串,解析失败返回 None
+
+        - 地址格式(P2PKH/P2SH): 保持原始大小写,Base58校验和大小写敏感
+        - Bech32/Taproot: 小写标准化
+        - 密钥格式(WIF/公钥/Hash160): 推导为对应的P2PKH地址
+
+        注意: 当前引擎仅生成P2PKH地址进行碰撞检测,
+        P2SH/Bech32(P2WSH)/Taproot等非P2PKH目标必然无法匹配。
         """
         input_str = input_str.strip()
 
@@ -553,7 +440,7 @@ class TargetResolver:
             filepath: 文件路径
 
         返回:
-            有效P2PKH地址集合
+            有效地址字符串集合(小写标准化)
         """
         addresses: set[str] = set()
 
@@ -587,7 +474,7 @@ class TargetResolver:
             # 使用统一的编码检测工具读取文件
             try:
                 lines = EncodingUtils.read_file_lines(real_path, try_multiple=True)
-            except Exception as e:
+            except (OSError, UnicodeDecodeError) as e:
                 logger.error(f"文件读取失败: {real_path}, 错误={e}")
                 return addresses
 
@@ -646,10 +533,52 @@ class TargetResolver:
 
         except PermissionError:
             logger.error(f"文件权限错误,无法读取: {real_path}")
-        except Exception as e:
+        except (OSError, ValueError, TypeError) as e:
             logger.error(f"文件读取异常: {real_path}, 错误={e}", exc_info=True)
 
         return addresses
+
+    @staticmethod
+    def analyze_target_formats(targets: set[str]) -> dict[str, int]:
+        """分析目标地址集的格式分布
+
+        按地址前缀识别格式并统计数量,用于启动时向用户展示
+        目标格式兼容性信息。
+
+        注意:
+            此方法假设输入已通过 TargetResolver 解析验证,
+            仅做前缀快速分类,不做深度格式校验(如 Base58 字符集、
+            checksum 验证等)。
+            unknown 类别包含 testnet 地址(2/tb1 前缀)等非主网
+            标准格式,这些地址不会被引擎匹配。
+
+        参数:
+            targets: 已解析的目标地址集合(Base58 地址保留原始大小写,Bech32 小写)
+
+        返回:
+            格式→数量映射,如 {'p2pkh': 100, 'p2sh': 5, 'bech32': 3}
+        """
+        counts: dict[str, int] = {
+            "p2pkh": 0,
+            "p2sh": 0,
+            "bech32": 0,
+            "taproot": 0,
+            "unknown": 0,
+        }
+        for addr in list(targets):
+            if not addr:
+                continue
+            if addr.startswith("bc1p"):
+                counts["taproot"] += 1
+            elif addr.startswith("bc1"):
+                counts["bech32"] += 1
+            elif addr.startswith("3"):
+                counts["p2sh"] += 1
+            elif addr.startswith("1"):
+                counts["p2pkh"] += 1
+            else:
+                counts["unknown"] += 1
+        return counts
 
     def get_cache_stats(self) -> dict | None:
         """

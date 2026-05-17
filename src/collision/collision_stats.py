@@ -16,6 +16,7 @@ class CollisionStats:
 
     def __init__(self) -> None:
         self.total_checked: int = 0  # 已检测总数
+        self.total_batches: int = 0  # 已处理批次数（v6.x: 异步引擎批次计数）
         self.speed: float = 0.0  # 每秒检测速率
         self.elapsed: float = 0.0  # 已运行时间(秒)
         self.start_time: float = 0.0  # 开始时间戳
@@ -124,6 +125,7 @@ class CollisionStats:
 
             # 基础统计
             snap.total_checked = self.total_checked
+            snap.total_batches = self.total_batches
             snap.speed = self.speed
             snap.elapsed = self.elapsed
             snap.start_time = self.start_time
@@ -155,6 +157,7 @@ class CollisionStats:
         """
         with self._lock:
             self.total_checked = 0
+            self.total_batches = 0
             self.speed = 0.0
             self.elapsed = 0.0
             self.start_time = time.time()  # 重置开始时间为当前时间
@@ -208,6 +211,33 @@ class CollisionStats:
         """
         with self._lock:
             return self.speed
+
+    def set_total_batches(self, value: int) -> None:
+        """线程安全地设置批次计数。
+
+        用于异步引擎主循环同步批次号到统计对象，与 snapshot() 锁内
+        读取形成一致的线程安全契约。
+        """
+        with self._lock:
+            self.total_batches = value
+
+    @property
+    def avg_speed(self) -> float:
+        """平均速度（keys/s），等同于当前 speed（累计平均）。
+
+        用于 EngineProgressEvent 和监控系统。
+        """
+        with self._lock:
+            return self.speed
+
+    @property
+    def matches_found(self) -> int:
+        """已发现匹配数。
+
+        用于 EngineProgressEvent 和监控系统。
+        """
+        with self._lock:
+            return len(self.matches)
 
     def record_gpu_error(self, is_resource_error: bool = False) -> None:
         """记录GPU错误

@@ -34,7 +34,7 @@ orjson 优势:
 import json as _json
 from typing import IO, Any
 
-from . import get_configured_logger
+from .logging_config import get_configured_logger
 
 logger = get_configured_logger("FastJSON")
 

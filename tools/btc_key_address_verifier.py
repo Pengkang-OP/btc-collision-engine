@@ -16,18 +16,18 @@
 
 用法:
     from tools.btc_key_address_verifier import BTCKeyAddressVerifier
-    
+
     verifier = BTCKeyAddressVerifier()
-    
+
     # 方式1: 使用测试向量验证
     verifier.verify_with_test_vectors()
-    
+
     # 方式2: 使用已知目标地址验证
     verifier.verify_private_key(
         private_key_hex="0000000000000000000000000000000000000000000000000000000000000001",
         target_addresses=["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"]
     )
-    
+
     # 方式3: 批量验证多个地址
     verifier.batch_verify_addresses(
         private_key_hex="...",
@@ -51,6 +51,7 @@ except ImportError:
     print("警告: bech32 库未安装，Bech32/Bech32m 地址验证将使用内置实现")
 
 from src.core.secp256k1 import Secp256k1, ECPoint, EllipticCurve
+from src.core.hash_utils import HashUtils
 
 
 # ============================================================================
@@ -74,7 +75,7 @@ class VerificationStep:
     expected: Optional[str] = None
     is_correct: bool = False
     error_message: Optional[str] = None
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "name": self.name,
@@ -98,7 +99,7 @@ class AddressVerificationResult:
     steps: List[VerificationStep] = field(default_factory=list)
     is_valid_format: bool = True
     validation_errors: List[str] = field(default_factory=list)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "format": self.format_type.value,
@@ -112,7 +113,7 @@ class AddressVerificationResult:
         }
 
 
-@dataclass 
+@dataclass
 class FullVerificationReport:
     """完整验证报告"""
     private_key_hex: str
@@ -126,7 +127,7 @@ class FullVerificationReport:
     address_results: Dict[AddressFormat, AddressVerificationResult]
     overall_match: bool
     timestamp: float = field(default_factory=time.time)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "private_key": {
@@ -148,122 +149,10 @@ class FullVerificationReport:
 
 
 # ============================================================================
-# Bech32/Bech32m 编码实现
+# Bech32/Bech32m 编解码 (统一模块)
 # ============================================================================
 
-class Bech32Codec:
-    """Bech32/Bech32m 编解码器 (BIP-173 / BIP-350)
-    
-    实现参考:
-    - BIP-173: Bech32 地址格式
-    - BIP-350: Bech32m 地址格式 (用于 Taproot)
-    """
-    
-    CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
-    BECH32M_CONST = 0x2bc830a3
-    
-    @classmethod
-    def convert_bits(cls, data: bytes, from_bits: int, to_bits: int, pad: bool = True) -> List[int]:
-        """将数据从 from_bits 位转换到 to_bits 位"""
-        acc = 0
-        bits = 0
-        result = []
-        maxv = (1 << to_bits) - 1
-        
-        for value in data:
-            if value < 0 or (value >> from_bits):
-                raise ValueError(f"Invalid value: {value}")
-            acc = (acc << from_bits) | value
-            bits += from_bits
-            while bits >= to_bits:
-                bits -= to_bits
-                result.append((acc >> bits) & maxv)
-        
-        if pad:
-            if bits:
-                result.append((acc << (to_bits - bits)) & maxv)
-        elif bits >= from_bits or ((acc << (to_bits - bits)) & maxv):
-            raise ValueError("Could not convert bits")
-        
-        return result
-    
-    @classmethod
-    def polymod(cls, values: List[int]) -> int:
-        """Bech32 多项式模运算"""
-        generator = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3]
-        chk = 1
-        for value in values:
-            top = chk >> 25
-            chk = (chk & 0x1ffffff) << 5 ^ value
-            for i in range(5):
-                chk ^= generator[i] if ((top >> i) & 1) else 0
-        return chk
-    
-    @classmethod
-    def hrp_expand(cls, hrp: str) -> List[int]:
-        """扩展 HRP 为 Bech32 格式"""
-        return [ord(c) >> 5 for c in hrp] + [0] + [ord(c) & 31 for c in hrp]
-    
-    @classmethod
-    def create_checksum(cls, hrp: str, data: List[int], spec: str = "bech32") -> List[int]:
-        """创建 Bech32/Bech32m 校验和"""
-        values = cls.hrp_expand(hrp) + data + [0, 0, 0, 0, 0, 0]
-        polymod = cls.polymod(values) ^ 1
-        
-        if spec == "bech32m":
-            polymod ^= cls.BECH32M_CONST
-        
-        return [(polymod >> 5 * (5 - i)) & 31 for i in range(6)]
-    
-    @classmethod
-    def encode(cls, hrp: str, witver: int, witprog: bytes, spec: str = "bech32") -> str:
-        """编码 Bech32/Bech32m 地址"""
-        if witver < 0 or witver > 16:
-            raise ValueError("Witness version must be 0-16")
-        if len(witprog) < 2 or len(witprog) > 40:
-            raise ValueError("Witness program must be 2-40 bytes")
-        if witver == 0 and len(witprog) not in [20, 32]:
-            raise ValueError("Witness version 0 requires 20 or 32 byte witness program")
-        
-        data = cls.convert_bits(witprog, 8, 5)
-        combined = [witver] + data
-        checksum = cls.create_checksum(hrp, combined, spec)
-        
-        return hrp.lower() + "1" + "".join(cls.CHARSET[d] for d in combined + checksum)
-    
-    @classmethod
-    def decode(cls, addr: str, spec: str = "bech32") -> Tuple[str, int, bytes]:
-        """解码 Bech32/Bech32m 地址"""
-        if addr.lower() != addr and addr.upper() != addr:
-            raise ValueError("Mixed case not allowed")
-        addr = addr.lower()
-        
-        if "1" not in addr:
-            raise ValueError("Missing separator")
-        
-        pos = addr.rfind("1")
-        if pos < 1 or pos + 7 > len(addr):
-            raise ValueError("Invalid position")
-        
-        hrp = addr[:pos]
-        data_str = addr[pos + 1:]
-        
-        if any(c not in cls.CHARSET for c in data_str):
-            raise ValueError("Invalid character in data")
-        
-        data = [cls.CHARSET.find(c) for c in data_str]
-        if cls.polymod(cls.hrp_expand(hrp) + data) != 1:
-            raise ValueError("Invalid checksum")
-        
-        # 验证校验和类型
-        if spec == "bech32m":
-            if data[-6:] != cls.create_checksum(hrp, data[:-6], "bech32m"):
-                raise ValueError("Invalid Bech32m checksum")
-        elif spec == "bech32":
-            if data[-6:] == cls.create_checksum(hrp, data[:-6], "bech32m"):
-                raise ValueError("Should use Bech32m")
-        
-        return hrp, data[0], bytes(cls.convert_bits(bytes(data[1:-6]), 5, 8, pad=False))
+from src.utils.bech32_codec import bech32_encode as _bech32_encode
 
 
 # ============================================================================
@@ -273,13 +162,13 @@ class Bech32Codec:
 class BTCKeyAddressVerifier:
     """
     比特币密钥派生及地址生成验证器
-    
+
     提供完整的验证流程：
     1. 验证私钥到公钥的椭圆曲线数学关系
     2. 验证公钥到各类地址格式的转换
     3. 对比生成地址与目标地址的匹配情况
     """
-    
+
     # 已知的比特币测试向量 (用于验证)
     # 来源: Bitcoin Wiki & Bitcoin Core test vectors
     KNOWN_TEST_VECTORS = [
@@ -306,45 +195,45 @@ class BTCKeyAddressVerifier:
             "address_bech32": "bc1qkm8l53flq4pspy32fxyw9pl00d2uq0l4d7qn3c",  # 验证后填充
         }
     ]
-    
+
     def __init__(self, verbose: bool = True):
         """初始化验证器
-        
+
         Args:
             verbose: 是否输出详细验证过程
         """
         self.ec = EllipticCurve()
         self.base_point = ECPoint(Secp256k1.Gx, Secp256k1.Gy, Secp256k1)
         self.verbose = verbose
-    
+
     def _log(self, message: str, level: str = "INFO") -> None:
         """输出日志"""
         if self.verbose:
             # 使用 ASCII 兼容字符避免 Windows 编码问题
             safe_message = message.replace("✓", "[OK]").replace("✗", "[FAIL]").replace("─", "-").replace("═", "=").replace("│", "|")
             print(f"[{level}] {safe_message}")
-    
+
     # =========================================================================
     # 第一部分: 私钥到公钥的数学验证
     # =========================================================================
-    
+
     def verify_private_key_to_public_key(
-        self, 
+        self,
         private_key_hex: str
     ) -> Tuple[bool, Dict[str, Any]]:
         """
         验证从私钥生成公钥的数学关系
-        
+
         验证步骤:
         1. 私钥格式验证 (32字节十六进制)
         2. 私钥范围验证 (1 <= k < N)
         3. 椭圆曲线标量乘法 Q = k * G
         4. 公钥点在曲线上验证
         5. 压缩/非压缩格式生成
-        
+
         Args:
             private_key_hex: 私钥的十六进制字符串 (64字符)
-            
+
         Returns:
             (验证是否成功, 详细结果字典)
         """
@@ -358,23 +247,23 @@ class BTCKeyAddressVerifier:
             "public_key_y": None,
             "is_on_curve": False,
         }
-        
+
         # Step 1: 解析私钥
         try:
             private_key_bytes = bytes.fromhex(private_key_hex)
             if len(private_key_bytes) != 32:
                 raise ValueError(f"私钥长度错误: {len(private_key_bytes)} 字节，应为 32 字节")
-        except Exception as e:
+        except (ValueError, TypeError) as e:
             result["errors"].append(f"私钥解析失败: {e}")
             return False, result
-        
+
         result["steps"].append(VerificationStep(
             name="私钥解析",
             input_data=private_key_hex,
             output_data=private_key_bytes.hex(),
             is_correct=True
         ))
-        
+
         # Step 2: 转换为整数并验证范围
         k = int.from_bytes(private_key_bytes, "big")
         result["steps"].append(VerificationStep(
@@ -383,7 +272,7 @@ class BTCKeyAddressVerifier:
             output_data=f"{k}",
             is_correct=True
         ))
-        
+
         # 验证范围
         if k < 1:
             result["errors"].append("私钥为 0，无效")
@@ -391,7 +280,7 @@ class BTCKeyAddressVerifier:
         if k >= Secp256k1.N:
             result["errors"].append(f"私钥 >= N ({Secp256k1.N})，超出范围")
             return False, result
-        
+
         result["steps"].append(VerificationStep(
             name="私钥范围验证",
             input_data=f"1 <= {k} < N",
@@ -399,31 +288,31 @@ class BTCKeyAddressVerifier:
             expected="1 <= k < N",
             is_correct=True
         ))
-        
+
         # Step 3: 椭圆曲线标量乘法 Q = k * G
         self._log(f"执行标量乘法: Q = {k} * G")
         public_point = self.ec.scalar_multiply_const_time(k, self.base_point)
-        
+
         if public_point.is_infinity:
             result["errors"].append("生成的公钥为无穷远点")
             return False, result
-        
+
         result["steps"].append(VerificationStep(
             name="椭圆曲线标量乘法 Q = k*G",
             input_data=f"k={k}, G=({Secp256k1.Gx:#x}, {Secp256k1.Gy:#x})",
             output_data=f"Q=({public_point.x:#x}, {public_point.y:#x})",
             is_correct=True
         ))
-        
+
         # Step 4: 验证公钥点在曲线上
         is_on_curve = self.ec.is_on_curve(public_point)
         result["is_on_curve"] = is_on_curve
-        
+
         # 验证 y² = x³ + 7 (mod p)
         x, y = public_point.x, public_point.y
         lhs = pow(y, 2, Secp256k1.P)
         rhs = (pow(x, 3, Secp256k1.P) + Secp256k1.B) % Secp256k1.P
-        
+
         curve_verified = lhs == rhs
         result["steps"].append(VerificationStep(
             name="公钥点在曲线上验证 (y² = x³ + 7 mod p)",
@@ -432,20 +321,20 @@ class BTCKeyAddressVerifier:
             expected="y² == x³ + 7",
             is_correct=curve_verified
         ))
-        
+
         if not curve_verified:
             result["errors"].append("公钥不在 secp256k1 曲线上")
             return False, result
-        
+
         # Step 5: 生成压缩公钥
         is_even = y % 2 == 0
         prefix = 0x02 if is_even else 0x03
         pub_compressed = bytes([prefix]) + x.to_bytes(32, "big")
-        
+
         result["public_key_compressed"] = pub_compressed.hex()
         result["public_key_x"] = f"{x:064x}"
         result["public_key_y"] = f"{y:064x}"
-        
+
         result["steps"].append(VerificationStep(
             name="压缩公钥生成 (33 bytes)",
             input_data=f"x={x:064x}, y={'偶数' if is_even else '奇数'}",
@@ -453,11 +342,11 @@ class BTCKeyAddressVerifier:
             expected=f"0x{prefix:02x}{x:064x}",
             is_correct=True
         ))
-        
+
         # Step 6: 生成非压缩公钥
         pub_uncompressed = b"\x04" + x.to_bytes(32, "big") + y.to_bytes(32, "big")
         result["public_key_uncompressed"] = pub_uncompressed.hex()
-        
+
         result["steps"].append(VerificationStep(
             name="非压缩公钥生成 (65 bytes)",
             input_data=f"x={x:064x}, y={y:064x}",
@@ -465,25 +354,20 @@ class BTCKeyAddressVerifier:
             expected=f"04{x:064x}{y:064x}",
             is_correct=True
         ))
-        
+
         result["success"] = True
         return True, result
-    
+
     # =========================================================================
     # 第二部分: 公钥到地址格式转换
     # =========================================================================
-    
-    def _generate_hash160(self, data: bytes) -> bytes:
-        """计算 Hash160: SHA256 -> RIPEMD160"""
-        sha256_hash = hashlib.sha256(data).digest()
-        ripemd160_hash = hashlib.new("ripemd160", sha256_hash).digest()
-        return ripemd160_hash
-    
+
+
     def _base58check_encode(self, version: int, payload: bytes) -> str:
         """Base58Check 编码"""
         from src.core.base58 import Base58
         return Base58.check_encode(version, payload)
-    
+
     def verify_public_key_to_p2pkh(
         self,
         public_key: bytes,
@@ -491,17 +375,17 @@ class BTCKeyAddressVerifier:
     ) -> AddressVerificationResult:
         """
         验证公钥到 P2PKH (Legacy) 地址的转换
-        
+
         转换流程:
         1. SHA256(public_key)
         2. RIPEMD160(SHA256_result) -> Hash160
         3. version_byte = 0x00 + Hash160
         4. Base58Check(versioned_payload)
-        
+
         Args:
             public_key: 公钥字节
             target_address: 目标地址 (可选)
-            
+
         Returns:
             AddressVerificationResult
         """
@@ -509,7 +393,7 @@ class BTCKeyAddressVerifier:
             format_type=AddressFormat.P2PKH,
             generated_address=""
         )
-        
+
         # Step 1: SHA256 哈希
         sha256_result = hashlib.sha256(public_key).digest()
         result.steps.append(VerificationStep(
@@ -518,7 +402,7 @@ class BTCKeyAddressVerifier:
             output_data=sha256_result.hex(),
             is_correct=True
         ))
-        
+
         # Step 2: RIPEMD160 哈希 (Hash160)
         hash160_result = hashlib.new("ripemd160", sha256_result).digest()
         result.steps.append(VerificationStep(
@@ -527,7 +411,7 @@ class BTCKeyAddressVerifier:
             output_data=hash160_result.hex(),
             is_correct=True
         ))
-        
+
         # Step 3: 添加版本字节
         versioned_payload = bytes([0x00]) + hash160_result
         result.steps.append(VerificationStep(
@@ -536,11 +420,11 @@ class BTCKeyAddressVerifier:
             output_data=versioned_payload.hex(),
             is_correct=True
         ))
-        
+
         # Step 4: Base58Check 编码
         address = self._base58check_encode(0x00, hash160_result)
         result.generated_address = address
-        
+
         # 计算校验和验证
         checksum = hashlib.sha256(hashlib.sha256(versioned_payload).digest()).digest()[:4]
         result.steps.append(VerificationStep(
@@ -549,32 +433,32 @@ class BTCKeyAddressVerifier:
             output_data=address,
             is_correct=True
         ))
-        
+
         result.steps.append(VerificationStep(
             name="校验和计算",
             input_data="double_sha256(versioned_payload)",
             output_data=checksum.hex(),
             is_correct=True
         ))
-        
+
         # 格式验证
         if address.startswith("1"):
             result.is_valid_format = True
         else:
             result.is_valid_format = False
             result.validation_errors.append(f"P2PKH地址应以'1'开头，实际: {address[0] if address else 'N/A'}")
-        
-        # 匹配验证
+
+        # 匹配验证 (大小写不敏感，与生产碰撞引擎一致)
         if target_address:
             result.target_address = target_address
-            result.is_match = (address == target_address)
+            result.is_match = (address.lower() == target_address.lower())
             result.match_status = "MATCH" if result.is_match else "MISMATCH"
-            
+
             if not result.is_match:
                 result.mismatch_step = "地址最终值不匹配"
-        
+
         return result
-    
+
     def verify_public_key_to_p2sh(
         self,
         public_key: bytes,
@@ -582,18 +466,18 @@ class BTCKeyAddressVerifier:
     ) -> AddressVerificationResult:
         """
         验证公钥到 P2SH (Nested SegWit) 地址的转换
-        
+
         转换流程 (P2WPKH nested in P2SH):
         1. HASH160(public_key) -> pub_key_hash
         2. 创建 redeem_script: OP_DUP OP_HASH160 <pub_key_hash> OP_EQUALVERIFY OP_CHECKSIG
         3. HASH160(redeem_script) -> script_hash
         4. version_byte = 0x05 + script_hash
         5. Base58Check(versioned_payload)
-        
+
         Args:
             public_key: 公钥字节 (应使用压缩公钥)
             target_address: 目标地址 (可选)
-            
+
         Returns:
             AddressVerificationResult
         """
@@ -601,16 +485,16 @@ class BTCKeyAddressVerifier:
             format_type=AddressFormat.P2SH,
             generated_address=""
         )
-        
+
         # Step 1: HASH160(公钥)
-        pub_key_hash = self._generate_hash160(public_key)
+        pub_key_hash = HashUtils.hash160(public_key)
         result.steps.append(VerificationStep(
             name="Step 1: Hash160(公钥)",
             input_data=public_key.hex(),
             output_data=pub_key_hash.hex(),
             is_correct=True
         ))
-        
+
         # Step 2: 创建 redeem script
         # OP_DUP OP_HASH160 <20 bytes> OP_EQUALVERIFY OP_CHECKSIG
         redeem_script = bytes([0x76, 0xA9, 0x14]) + pub_key_hash + bytes([0x88, 0xAC])
@@ -620,16 +504,16 @@ class BTCKeyAddressVerifier:
             output_data=redeem_script.hex(),
             is_correct=True
         ))
-        
+
         # Step 3: HASH160(redeem_script)
-        script_hash = self._generate_hash160(redeem_script)
+        script_hash = HashUtils.hash160(redeem_script)
         result.steps.append(VerificationStep(
             name="Step 3: Hash160(RedeemScript)",
             input_data=redeem_script.hex(),
             output_data=script_hash.hex(),
             is_correct=True
         ))
-        
+
         # Step 4: 添加版本字节 (P2SH = 0x05)
         versioned_payload = bytes([0x05]) + script_hash
         result.steps.append(VerificationStep(
@@ -638,11 +522,11 @@ class BTCKeyAddressVerifier:
             output_data=versioned_payload.hex(),
             is_correct=True
         ))
-        
+
         # Step 5: Base58Check 编码
         address = self._base58check_encode(0x05, script_hash)
         result.generated_address = address
-        
+
         checksum = hashlib.sha256(hashlib.sha256(versioned_payload).digest()).digest()[:4]
         result.steps.append(VerificationStep(
             name="Step 5: Base58Check编码",
@@ -650,32 +534,32 @@ class BTCKeyAddressVerifier:
             output_data=address,
             is_correct=True
         ))
-        
+
         result.steps.append(VerificationStep(
             name="校验和计算",
             input_data="double_sha256(versioned_payload)",
             output_data=checksum.hex(),
             is_correct=True
         ))
-        
+
         # 格式验证
         if address.startswith("3"):
             result.is_valid_format = True
         else:
             result.is_valid_format = False
             result.validation_errors.append(f"P2SH地址应以'3'开头，实际: {address[0] if address else 'N/A'}")
-        
-        # 匹配验证
+
+        # 匹配验证 (大小写不敏感，与生产碰撞引擎一致)
         if target_address:
             result.target_address = target_address
-            result.is_match = (address == target_address)
+            result.is_match = (address.lower() == target_address.lower())
             result.match_status = "MATCH" if result.is_match else "MISMATCH"
-            
+
             if not result.is_match:
                 result.mismatch_step = "地址最终值不匹配"
-        
+
         return result
-    
+
     def verify_public_key_to_bech32(
         self,
         public_key: bytes,
@@ -684,23 +568,23 @@ class BTCKeyAddressVerifier:
     ) -> AddressVerificationResult:
         """
         验证公钥到 Bech32/Bech32m (Native SegWit/Taproot) 地址的转换
-        
+
         转换流程 (P2WPKH for Bech32, P2TR for Bech32m):
         Bech32 (P2WPKH):
         1. HASH160(public_key) -> pub_key_hash (20 bytes)
         2. witness_program = 0x00 || 0x14 || pub_key_hash
         3. Bech32(hrp="bc", witness_program)
-        
+
         Bech32m (P2TR/Taproot):
         1. x_only_public_key = public_key[1:] (仅x坐标，32 bytes)
         2. witness_program = 0x01 || 0x20 || x_only_pubkey
         3. Bech32m(hrp="bc", witness_program)
-        
+
         Args:
             public_key: 压缩公钥字节 (33 bytes)
             target_address: 目标地址 (可选)
             is_taproot: 是否为 Taproot (Bech32m)
-            
+
         Returns:
             AddressVerificationResult
         """
@@ -709,7 +593,7 @@ class BTCKeyAddressVerifier:
             format_type=format_type,
             generated_address=""
         )
-        
+
         if is_taproot:
             # Taproot (Bech32m) - BIP-350
             # x-only public key: 移除压缩前缀，只保留x坐标
@@ -720,7 +604,7 @@ class BTCKeyAddressVerifier:
             else:
                 result.validation_errors.append(f"Taproot需要x-only公钥(32 bytes)，实际: {len(public_key)}")
                 return result
-            
+
             witness_program = bytes([0x01, 0x20]) + x_only_pubkey
             result.steps.append(VerificationStep(
                 name="Step 1: 提取x-only公钥 (Taproot)",
@@ -728,59 +612,59 @@ class BTCKeyAddressVerifier:
                 output_data=x_only_pubkey.hex(),
                 is_correct=True
             ))
-            
+
             result.steps.append(VerificationStep(
                 name="Step 2: 创建witness_program (0x01 || 0x20 || x)",
                 input_data=x_only_pubkey.hex(),
                 output_data=witness_program.hex(),
                 is_correct=True
             ))
-            
+
             # Bech32m 编码
             try:
-                address = Bech32Codec.encode("bc", 1, x_only_pubkey, "bech32m")
-            except Exception as e:
+                address = _bech32_encode("bc", 1, x_only_pubkey, "bech32m")
+            except ValueError as e:
                 result.validation_errors.append(f"Bech32m编码失败: {e}")
                 return result
-                
+
         else:
             # Native SegWit v0 (Bech32) - BIP-173
             # P2WPKH: HASH160 of compressed public key
-            pub_key_hash = self._generate_hash160(public_key)
-            
+            pub_key_hash = HashUtils.hash160(public_key)
+
             result.steps.append(VerificationStep(
                 name="Step 1: Hash160(压缩公钥)",
                 input_data=public_key.hex(),
                 output_data=pub_key_hash.hex(),
                 is_correct=True
             ))
-            
+
             # Witness program: version 0 + push opcode (0x14 = 20 bytes) + hash
             witness_program = bytes([0x00, 0x14]) + pub_key_hash
-            
+
             result.steps.append(VerificationStep(
                 name="Step 2: 创建witness_program (0x00 || 0x14 || hash160)",
                 input_data=pub_key_hash.hex(),
                 output_data=witness_program.hex(),
                 is_correct=True
             ))
-            
+
             # Bech32 编码
             try:
-                address = Bech32Codec.encode("bc", 0, pub_key_hash, "bech32")
-            except Exception as e:
+                address = _bech32_encode("bc", 0, pub_key_hash, "bech32")
+            except ValueError as e:
                 result.validation_errors.append(f"Bech32编码失败: {e}")
                 return result
-        
+
         result.generated_address = address
-        
+
         result.steps.append(VerificationStep(
             name=f"Step 3: {format_type.value}编码",
             input_data=f"hrp=bc, witness_program={witness_program.hex()}",
             output_data=address,
             is_correct=True
         ))
-        
+
         # 格式验证
         if is_taproot:
             if address.startswith("bc1p"):
@@ -794,22 +678,22 @@ class BTCKeyAddressVerifier:
             else:
                 result.is_valid_format = False
                 result.validation_errors.append(f"Bech32地址应以'bc1'开头，实际: {address[:4] if address else 'N/A'}")
-        
-        # 匹配验证
+
+        # 匹配验证 (大小写不敏感，与生产碰撞引擎一致)
         if target_address:
             result.target_address = target_address
-            result.is_match = (address == target_address)
+            result.is_match = (address.lower() == target_address.lower())
             result.match_status = "MATCH" if result.is_match else "MISMATCH"
-            
+
             if not result.is_match:
                 result.mismatch_step = "地址最终值不匹配"
-        
+
         return result
-    
+
     # =========================================================================
     # 第三部分: 完整验证流程
     # =========================================================================
-    
+
     def verify_private_key(
         self,
         private_key_hex: str,
@@ -817,54 +701,54 @@ class BTCKeyAddressVerifier:
     ) -> FullVerificationReport:
         """
         完整验证私钥派生的所有地址格式
-        
+
         Args:
             private_key_hex: 私钥的十六进制字符串 (64字符)
             target_addresses: 目标地址字典，键为地址格式 (p2pkh, p2sh, bech32, bech32m)
-            
+
         Returns:
             FullVerificationReport
         """
         self._log("=" * 70)
         self._log("比特币密钥派生及地址生成验证")
         self._log("=" * 70)
-        
+
         # Step 1: 验证私钥到公钥
         self._log("\n[阶段1] 私钥 → 公钥 验证")
         self._log("-" * 40)
-        
+
         success, pk_result = self.verify_private_key_to_public_key(private_key_hex)
-        
+
         if not success:
             raise ValueError(f"私钥验证失败: {pk_result['errors']}")
-        
+
         # 提取公钥
         pub_compressed = bytes.fromhex(pk_result["public_key_compressed"])
         _pub_uncompressed = bytes.fromhex(pk_result["public_key_uncompressed"])  # 保留用于参考
-        
+
         # Step 2: 生成所有地址格式
         self._log("\n[阶段2] 公钥 → 各格式地址 验证")
         self._log("-" * 40)
-        
+
         address_results: Dict[AddressFormat, AddressVerificationResult] = {}
-        
+
         # 获取目标地址
         targets = target_addresses or {}
-        
+
         # P2PKH
         self._log("生成 P2PKH (Legacy) 地址...")
         address_results[AddressFormat.P2PKH] = self.verify_public_key_to_p2pkh(
             pub_compressed,
             targets.get("p2pkh")
         )
-        
+
         # P2SH
         self._log("生成 P2SH (Nested SegWit) 地址...")
         address_results[AddressFormat.P2SH] = self.verify_public_key_to_p2sh(
             pub_compressed,
             targets.get("p2sh")
         )
-        
+
         # Bech32 (Native SegWit v0)
         self._log("生成 Bech32 (Native SegWit) 地址...")
         address_results[AddressFormat.BECH32] = self.verify_public_key_to_bech32(
@@ -872,7 +756,7 @@ class BTCKeyAddressVerifier:
             targets.get("bech32"),
             is_taproot=False
         )
-        
+
         # Bech32m (Taproot)
         self._log("生成 Bech32m (Taproot) 地址...")
         address_results[AddressFormat.BECH32M] = self.verify_public_key_to_bech32(
@@ -880,15 +764,15 @@ class BTCKeyAddressVerifier:
             targets.get("bech32m"),
             is_taproot=True
         )
-        
+
         # Step 3: 汇总结果
         self._log("\n[阶段3] 验证结果汇总")
         self._log("-" * 40)
-        
+
         # 确定是否有目标地址需要匹配
         has_targets = bool(target_addresses)
         all_match = True
-        
+
         for fmt, addr_result in address_results.items():
             match_str = ""
             if fmt.value.lower() in targets:
@@ -900,9 +784,9 @@ class BTCKeyAddressVerifier:
                     addr_result.mismatch_step = "地址值不匹配"
             elif addr_result.is_valid_format:
                 match_str = "(format valid)"
-            
+
             self._log(f"{fmt.value}: {addr_result.generated_address} {match_str}")
-        
+
         # 创建报告
         report = FullVerificationReport(
             private_key_hex=private_key_hex,
@@ -925,27 +809,27 @@ class BTCKeyAddressVerifier:
             address_results=address_results,
             overall_match=all_match if has_targets else True
         )
-        
+
         return report
-    
+
     def verify_with_test_vectors(self) -> bool:
         """
         使用已知测试向量验证实现正确性
-        
+
         Returns:
             所有测试是否通过
         """
         self._log("\n" + "=" * 70)
         self._log("使用测试向量验证")
         self._log("=" * 70)
-        
+
         # 第一个测试向量 (Bitcoin wiki 标准测试)
         test_vector = self.KNOWN_TEST_VECTORS[0]
-        
+
         self._log(f"\n测试向量私钥: {test_vector['private_key']}")
         self._log(f"期望压缩公钥: {test_vector['public_key_compressed']}")
         self._log(f"期望P2PKH地址: {test_vector['address_p2pkh']}")
-        
+
         # 执行验证
         report = self.verify_private_key(
             test_vector["private_key"],
@@ -955,14 +839,14 @@ class BTCKeyAddressVerifier:
                 "bech32": test_vector["address_bech32"]
             }
         )
-        
+
         # 输出详细结果
         self._log("\n" + "-" * 40)
         self._log("Generation result comparison:")
         self._log("-" * 40)
-        
+
         all_passed = True
-        
+
         # Verify compressed public key (case-insensitive)
         pub_match = report.public_key_compressed.lower() == test_vector["public_key_compressed"].lower()
         status = "[OK] PASS" if pub_match else "[FAIL] FAIL"
@@ -971,7 +855,7 @@ class BTCKeyAddressVerifier:
             self._log(f"  Expected: {test_vector['public_key_compressed']}")
             self._log(f"  Actual: {report.public_key_compressed}")
             all_passed = False
-        
+
         # Verify P2PKH address (case-sensitive for Base58)
         p2pkh_result = report.address_results[AddressFormat.P2PKH]
         p2pkh_match = p2pkh_result.is_match
@@ -984,7 +868,7 @@ class BTCKeyAddressVerifier:
             if p2pkh_result.generated_address.lower() == test_vector["address_p2pkh"].lower():
                 self._log("  Note: Address matches case-insensitively (Base58 encoding variant)")
             all_passed = False
-        
+
         # Verify P2SH address
         p2sh_result = report.address_results[AddressFormat.P2SH]
         p2sh_match = p2sh_result.is_match
@@ -996,7 +880,7 @@ class BTCKeyAddressVerifier:
             if p2sh_result.generated_address.lower() == test_vector["address_p2sh"].lower():
                 self._log("  Note: Address matches case-insensitively (Base58 encoding variant)")
             all_passed = False
-        
+
         # Verify Bech32 address (case-insensitive for bech32)
         bech32_result = report.address_results[AddressFormat.BECH32]
         bech32_match = bech32_result.is_match
@@ -1008,16 +892,16 @@ class BTCKeyAddressVerifier:
             if bech32_result.generated_address.lower() == test_vector["address_bech32"].lower():
                 self._log("  Note: Address matches case-insensitively (Bech32 encoding variant)")
             all_passed = False
-        
+
         self._log("\n" + "=" * 70)
         if all_passed:
             self._log("All test vector verifications passed [OK]")
         else:
             self._log("Some test verifications failed [FAIL]")
         self._log("=" * 70)
-        
+
         return all_passed
-    
+
     def batch_verify_addresses(
         self,
         private_key_hex: str,
@@ -1025,7 +909,7 @@ class BTCKeyAddressVerifier:
     ) -> Dict[str, Any]:
         """
         批量验证多个地址格式
-        
+
         Args:
             private_key_hex: 私钥十六进制
             target_addresses: 目标地址字典
@@ -1035,12 +919,12 @@ class BTCKeyAddressVerifier:
                     "bech32": "bc1xxx...",
                     "bech32m": "bc1p..."
                 }
-                
+
         Returns:
             详细验证结果字典
         """
         report = self.verify_private_key(private_key_hex, target_addresses)
-        
+
         results = {
             "private_key_hash": hashlib.sha256(bytes.fromhex(private_key_hex)).hexdigest()[:16] + "...",
             "generated_addresses": {},
@@ -1048,7 +932,7 @@ class BTCKeyAddressVerifier:
             "verification_results": {},
             "overall_match": True
         }
-        
+
         for fmt in AddressFormat:
             addr_result = report.address_results.get(fmt)
             if addr_result:
@@ -1063,25 +947,25 @@ class BTCKeyAddressVerifier:
                     "mismatch_step": addr_result.mismatch_step if addr_result.target_address and not addr_result.is_match else None,
                     "validation_errors": addr_result.validation_errors
                 }
-                
+
                 if addr_result.target_address and not addr_result.is_match:
                     results["overall_match"] = False
-        
+
         return results
-    
+
     def generate_random_verification(self) -> FullVerificationReport:
         """
         生成随机私钥并完整验证所有地址格式
-        
+
         Returns:
             完整验证报告
         """
         # 生成随机32字节私钥
         private_key_bytes = secrets.token_bytes(32)
         private_key_hex = private_key_bytes.hex()
-        
+
         self._log(f"随机生成私钥: {private_key_hex[:32]}...")
-        
+
         # 执行完整验证
         return self.verify_private_key(private_key_hex)
 
@@ -1093,7 +977,7 @@ class BTCKeyAddressVerifier:
 def main():
     """命令行入口"""
     import argparse
-    
+
     parser = argparse.ArgumentParser(
         description="比特币密钥派生及地址生成验证工具"
     )
@@ -1126,23 +1010,23 @@ def main():
         action="store_true",
         help="JSON格式输出"
     )
-    
+
     args = parser.parse_args()
-    
+
     verifier = BTCKeyAddressVerifier(verbose=not args.quiet)
-    
+
     if args.test_vector:
         # 测试向量验证
         verifier.verify_with_test_vectors()
-        
+
     elif args.random:
         # 随机私钥验证
         report = verifier.generate_random_verification()
-        
+
         if args.json:
             import json
             print(json.dumps(report.to_dict(), indent=2))
-            
+
     elif args.private_key:
         # 自定义私钥验证
         targets = {}
@@ -1156,9 +1040,9 @@ def main():
                     targets["bech32m"] = addr
                 elif addr.startswith("bc1"):
                     targets["bech32"] = addr
-        
+
         report = verifier.verify_private_key(args.private_key, targets)
-        
+
         if args.json:
             import json
             print(json.dumps(report.to_dict(), indent=2))
@@ -1175,7 +1059,7 @@ def main():
                         match_str = f" <- Target {'[OK]' if addr_result.is_match else '[FAIL]'}"
                     print(f"  {fmt.value:8s}: {addr_result.generated_address}{match_str}")
             print("=" * 70)
-            
+
     else:
         parser.print_help()
 

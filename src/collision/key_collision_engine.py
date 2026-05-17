@@ -33,6 +33,14 @@ from .deduplication_filter import DeduplicationFilter
 
 # v3.2.0: 事件系统支持
 from .event_bus import EventBus
+from .events import (
+    EngineCompleteEvent,
+    EngineErrorEvent,
+    EngineMatchEvent,
+    EngineProgressEvent,
+    EngineStartEvent,
+    EngineStopEvent,
+)
 from .types import CompleteCallback, MatchCallback, ProgressCallback
 
 # 初始化日志系统（如果尚未初始化）
@@ -175,6 +183,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self.stats = CollisionStats()
         self._stop_event = threading.Event()
         self._running = False
+        self._engine_stop_reason: str = "normal"  # v3.5.2: 跟踪停止原因
         self._thread: threading.Thread | None = None
         self.progress_interval = PROGRESS_INTERVAL_COUNT  # 每N次检测触发一次进度回调
 
@@ -510,7 +519,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 self.data_logger.record_performance_data(
                     speed=speed,
                     total_checked=count,
-                    matches_found=len(getattr(self.stats, "matches", [])),
+                    matches_found=self.stats.matches_found,
                     cpu_usage=self._cached_cpu_percent,
                     memory_usage=memory_mb,
                 )
@@ -732,6 +741,17 @@ class KeyCollisionEngine(BaseCollisionEngine):
             logger.error(
                 f"Random worker {worker_id}: WIF编码参数错误 addr={matched_address}: {type(e).__name__}"
             )
+            # v3.5.2: 发布 ENGINE_ERROR 事件
+            try:
+                self.event_bus.publish(EngineErrorEvent(
+                    error_type="wif_encode_error",
+                    error_message=str(e),
+                    exception=e,
+                    context={"worker_id": worker_id, "address": matched_address},
+                    recoverable=True,
+                ))
+            except Exception:
+                pass
             return True  # 继续运行
         except Exception:
             logger.exception(f"Random worker {worker_id}: WIF编码未知错误 addr={matched_address}")
@@ -748,6 +768,17 @@ class KeyCollisionEngine(BaseCollisionEngine):
             if self.on_match:
                 for pk, addr, wif_str in local_matches:
                     self._safe_invoke_match_callback(pk, addr, wif_str)
+            # v3.5.2: 发布 ENGINE_MATCH 事件（stats.add_match 之后，确保统计已更新）
+            for _pk, addr, _wif in local_matches:
+                try:
+                    self.event_bus.publish(EngineMatchEvent(
+                        private_key=b'',  # 安全: 事件不暴露原始私钥
+                        address=addr,
+                        wif=_wif,
+                        target_address=addr,
+                    ))
+                except Exception as e:
+                    logger.debug(f"发布 ENGINE_MATCH 事件失败（非致命）: {e}")
             local_matches.clear()
 
         # 如果没有on_match回调，找到匹配后停止
@@ -911,6 +942,17 @@ class KeyCollisionEngine(BaseCollisionEngine):
             if self.on_match:
                 for pk, addr, wif_str in local_matches:
                     self._safe_invoke_match_callback(pk, addr, wif_str)
+            # v3.5.2: 发布剩余匹配的 ENGINE_MATCH 事件
+            for _pk, addr, _wif in local_matches:
+                try:
+                    self.event_bus.publish(EngineMatchEvent(
+                        private_key=b'',  # 安全: 事件不暴露原始私钥
+                        address=addr,
+                        wif=_wif,
+                        target_address=addr,
+                    ))
+                except Exception as e:
+                    logger.debug(f"发布 ENGINE_MATCH 事件失败（非致命）: {e}")
             logger.debug(f"工作线程 {worker_id} 提交了 {len(local_matches)} 个匹配结果")
 
         # P1-5修复: worker退出时提交32步余数，修复精度丢失（最多31个计数）
@@ -944,6 +986,16 @@ class KeyCollisionEngine(BaseCollisionEngine):
         total_count = 0
         self._running = True
         self._last_data_log_time = 0.0  # 重置数据日志时间
+
+        # v3.5.2: 发布 ENGINE_START 事件
+        try:
+            self.event_bus.publish(EngineStartEvent(
+                mode=self._current_mode,
+                target_count=len(self.targets),
+                batch_size=self._batch_size,
+            ))
+        except Exception as e:
+            logger.debug(f"发布 ENGINE_START 事件失败（非致命）: {e}")
 
         # P3-7: 启动时自适应调优内存池
         if self.use_memory_pool:
@@ -1078,6 +1130,17 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     except (AttributeError, OSError, RuntimeError) as e:
                         logger.debug(f"内存监控失败（不影响主逻辑）: {type(e).__name__}: {e}")
 
+                    # v3.5.2: 发布 ENGINE_PROGRESS 事件
+                    try:
+                        self.event_bus.publish(EngineProgressEvent(
+                            total_checked=safe_count,
+                            speed=speed,
+                            matches_found=self.stats.matches_found,
+                            elapsed_time=elapsed,
+                        ))
+                    except Exception as e:
+                        logger.debug(f"发布 ENGINE_PROGRESS 事件失败（非致命）: {e}")
+
                     self._last_progress_time = current_time
 
                     # 采样日志记录进度
@@ -1106,8 +1169,22 @@ class KeyCollisionEngine(BaseCollisionEngine):
         logger.info(f"总检查数: {final_count:,}")
         logger.info(f"运行时间: {elapsed:.2f}秒")
         logger.info(f"平均速度: {speed:,.0f} 次/秒")
-        logger.info(f"发现匹配: {len(self.stats.matches)} 个")
+        logger.info(f"发现匹配: {self.stats.matches_found} 个")
         logger.info("=" * 60)
+
+        # v3.5.2: 发布 ENGINE_COMPLETE 事件
+        try:
+            stop_reason = self._engine_stop_reason
+            self._engine_stop_reason = "normal"  # 重置为默认值
+            self.event_bus.publish(EngineCompleteEvent(
+                total_checked=final_count,
+                matches_found=self.stats.matches_found,
+                elapsed_time=elapsed,
+                avg_speed=speed,
+                stop_reason=stop_reason,
+            ))
+        except Exception as e:
+            logger.debug(f"发布 ENGINE_COMPLETE 事件失败（非致命）: {e}")
 
         # 记录引擎停止数据
         if self.data_logging_enabled and self.data_logger:
@@ -1237,6 +1314,18 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         # 记录匹配发现
                         format_type = "压缩" if matched_compressed else "非压缩"
                         logger.info(f"🎯 发现匹配! 地址={matched_address} (格式: {format_type})")
+
+                        # v3.5.2: 发布 ENGINE_MATCH 事件
+                        try:
+                            self.event_bus.publish(EngineMatchEvent(
+                                private_key=b'',  # 安全: 事件不暴露原始私钥
+                                address=matched_address,
+                                wif=wif,
+                                target_address=matched_address,
+                            ))
+                        except Exception as e:
+                            logger.debug(f"发布 ENGINE_MATCH 事件失败（非致命）: {e}")
+
                     except (ValueError, TypeError, OverflowError) as e:
                         # WIF编码或回调参数错误
                         # MEDIUM-9修复: 拆分多行f-string提高可读性
@@ -1244,6 +1333,17 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         logger.error(
                             f"Worker {worker_id}: 匹配处理参数错误 addr={matched_address}: {err_type}: {e}"
                         )
+                        # v3.5.2: 发布 ENGINE_ERROR 事件
+                        try:
+                            self.event_bus.publish(EngineErrorEvent(
+                                error_type="wif_encode_error",
+                                error_message=str(e),
+                                exception=e,
+                                context={"worker_id": worker_id, "address": matched_address},
+                                recoverable=True,
+                            ))
+                        except Exception:
+                            pass
                     except Exception:
                         # 未知错误：记录完整堆栈
                         logger.exception(
@@ -1273,6 +1373,16 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self._live_range_count = 0  # 重置实时计数器
         self._running = True
         self._last_data_log_time = 0.0  # 重置数据日志时间
+
+        # v3.5.2: 发布 ENGINE_START 事件
+        try:
+            self.event_bus.publish(EngineStartEvent(
+                mode=self._current_mode,
+                target_count=len(self.targets),
+                batch_size=self._batch_size,
+            ))
+        except Exception as e:
+            logger.debug(f"发布 ENGINE_START 事件失败（非致命）: {e}")
 
         # 记录引擎启动数据
         if self.data_logging_enabled and self.data_logger:
@@ -1386,6 +1496,17 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 speed = display_count / elapsed if elapsed > 0 else 0
                 self._log_data_metrics(display_count, speed)
 
+                # v3.5.2: 发布 ENGINE_PROGRESS 事件
+                try:
+                    self.event_bus.publish(EngineProgressEvent(
+                        total_checked=display_count,
+                        speed=speed,
+                        matches_found=self.stats.matches_found,
+                        elapsed_time=elapsed,
+                    ))
+                except Exception as e:
+                    logger.debug(f"发布 ENGINE_PROGRESS 事件失败（非致命）: {e}")
+
         # P1-4修复: 停止时合并 _live_range_count，防止pending worker贡献丢失
         # 当stop()被调用时，while循环退出但pending workers可能已完成
         # 它们的贡献仍在 _live_range_count 中，需要合并到最终计数
@@ -1405,6 +1526,23 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self._stats_updated.set()
 
         self._running = False
+
+        elapsed = time.time() - self.stats.start_time
+        speed = final_count / elapsed if elapsed > 0 else 0
+
+        # v3.5.2: 发布 ENGINE_COMPLETE 事件
+        try:
+            stop_reason = self._engine_stop_reason
+            self._engine_stop_reason = "normal"  # 重置为默认值
+            self.event_bus.publish(EngineCompleteEvent(
+                total_checked=final_count,
+                matches_found=self.stats.matches_found,
+                elapsed_time=elapsed,
+                avg_speed=speed,
+                stop_reason=stop_reason,
+            ))
+        except Exception as e:
+            logger.debug(f"发布 ENGINE_COMPLETE 事件失败（非致命）: {e}")
 
         # 记录引擎停止数据
         if self.data_logging_enabled and self.data_logger:
@@ -1523,6 +1661,18 @@ class KeyCollisionEngine(BaseCollisionEngine):
                             # 如果没有on_match回调，找到匹配后停止
                             else:
                                 self._stop_event.set()
+
+                            # v3.5.2: 发布 ENGINE_MATCH 事件
+                            try:
+                                self.event_bus.publish(EngineMatchEvent(
+                                    private_key=b'',  # 安全: 事件不暴露原始私钥
+                                    address=address,
+                                    wif=wif,
+                                    target_address=address,
+                                ))
+                            except Exception as e:
+                                logger.debug(f"发布 ENGINE_MATCH 事件失败（非致命）: {e}")
+
                         except (ValueError, TypeError, OverflowError) as e:
                             # WIF编码或回调参数错误
                             # MEDIUM-9修复: 拆分多行f-string提高可读性
@@ -1530,6 +1680,17 @@ class KeyCollisionEngine(BaseCollisionEngine):
                             logger.error(
                                 f"BruteForce worker {worker_id}: 匹配处理参数错误 addr={address}: {err_type}"
                             )
+                            # v3.5.2: 发布 ENGINE_ERROR 事件
+                            try:
+                                self.event_bus.publish(EngineErrorEvent(
+                                    error_type="wif_encode_error",
+                                    error_message=str(e),
+                                    exception=e,
+                                    context={"worker_id": worker_id, "address": address},
+                                    recoverable=True,
+                                ))
+                            except Exception:
+                                pass
                         except Exception:
                             # 未知错误：记录完整堆栈
                             logger.exception(
@@ -1560,6 +1721,16 @@ class KeyCollisionEngine(BaseCollisionEngine):
         total_count = 0
         self._running = True
         self._last_data_log_time = 0.0  # 重置数据日志时间
+
+        # v3.5.2: 发布 ENGINE_START 事件
+        try:
+            self.event_bus.publish(EngineStartEvent(
+                mode=self._current_mode,
+                target_count=len(self.targets),
+                batch_size=self._batch_size,
+            ))
+        except Exception as e:
+            logger.debug(f"发布 ENGINE_START 事件失败（非致命）: {e}")
 
         # 警告：如果未设置max_keys
         if max_keys is None:
@@ -1626,6 +1797,17 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     speed = total_count / elapsed if elapsed > 0 else 0
                     self._log_data_metrics(total_count, speed)
 
+                    # v3.5.2: 发布 ENGINE_PROGRESS 事件
+                    try:
+                        self.event_bus.publish(EngineProgressEvent(
+                            total_checked=total_count,
+                            speed=speed,
+                            matches_found=self.stats.matches_found,
+                            elapsed_time=elapsed,
+                        ))
+                    except Exception as e:
+                        logger.debug(f"发布 ENGINE_PROGRESS 事件失败（非致命）: {e}")
+
         self._executor = None
 
         # 更新最终统计并设置事件
@@ -1634,6 +1816,23 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self._stats_updated.set()
 
         self._running = False
+
+        elapsed = time.time() - self.stats.start_time
+        speed = total_count / elapsed if elapsed > 0 else 0
+
+        # v3.5.2: 发布 ENGINE_COMPLETE 事件
+        try:
+            stop_reason = self._engine_stop_reason
+            self._engine_stop_reason = "normal"  # 重置为默认值
+            self.event_bus.publish(EngineCompleteEvent(
+                total_checked=total_count,
+                matches_found=self.stats.matches_found,
+                elapsed_time=elapsed,
+                avg_speed=speed,
+                stop_reason=stop_reason,
+            ))
+        except Exception as e:
+            logger.debug(f"发布 ENGINE_COMPLETE 事件失败（非致命）: {e}")
 
         # 记录引擎停止数据
         if self.data_logging_enabled and self.data_logger:
@@ -1829,6 +2028,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         """
         logger.info("正在停止对撞引擎...")
 
+        self._engine_stop_reason = "user_stopped"  # v3.5.2: 必须在下述信号前设置
         self._stop_event.set()
         self._running = False
 
@@ -1906,9 +2106,22 @@ class KeyCollisionEngine(BaseCollisionEngine):
             self._executor = None
 
         # 重置引擎状态（支持重启）
+        was_thread_alive = self._thread is not None and self._thread.is_alive()
+        self._engine_stop_reason = "user_stopped"  # v3.5.2: 标记用户主动停止
         self._stop_event.clear()
         self._running = False
         self._thread = None
+
+        # v3.5.2: 发布 ENGINE_STOP 事件（仅当线程曾被中断时）
+        if was_thread_alive:
+            try:
+                snap = self.stats.snapshot()
+                self.event_bus.publish(EngineStopEvent(
+                    reason="user_stopped",
+                    total_checked=snap.total_checked,
+                ))
+            except Exception as e:
+                logger.debug(f"发布 ENGINE_STOP 事件失败（非致命）: {e}")
 
         logger.info("对撞引擎已停止")
 

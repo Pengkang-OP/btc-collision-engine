@@ -36,10 +36,10 @@ def load_config_with_validation(config_file: str | None = None) -> dict | None:
         # 安全: 检测路径遍历，防止读取项目目录外的敏感文件
         # 使用pathlib进行严格的路径验证
         try:
-            # W12修复: 使用 follow_symlinks=True 解析符号链接
-            # 默认 resolve() 在 Windows 上不解析符号链接，存在路径遍历漏洞
-            config_path_obj = Path(config_path).resolve(follow_symlinks=True)
-            project_root_obj = Path(_project_root).resolve(follow_symlinks=True)
+            # W12修复: 使用 os.path.realpath 解析符号链接（兼容 Python 3.12/3.13）
+            # Python 3.13+ 的 Path.resolve(follow_symlinks=True) 等效于 os.path.realpath
+            config_path_obj = Path(os.path.realpath(config_path))
+            project_root_obj = Path(os.path.realpath(_project_root))
             # 使用relative_to检查路径是否在项目目录内
             config_path_obj.relative_to(project_root_obj)
         except ValueError:

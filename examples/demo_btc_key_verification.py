@@ -24,28 +24,28 @@ def example_basic_verification():
     print("=" * 70)
     print("示例1: 基本验证 - 使用已知私钥")
     print("=" * 70)
-    
+
     verifier = BTCKeyAddressVerifier(verbose=True)
-    
+
     # 已知私钥 (Bitcoin wiki 标准测试向量)
     private_key = "0000000000000000000000000000000000000000000000000000000000000001"
-    
+
     # 已知目标地址
     targets = {
         "p2pkh": "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH",
         "p2sh": "3LRW7jeCvQCRdPF8S3yUCfRAx4eqXFmdcr",
         "bech32": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
     }
-    
+
     report = verifier.verify_private_key(private_key, targets)
-    
+
     print("\n验证摘要:")
     print("-" * 40)
     print(f"压缩公钥: {report.public_key_compressed}")
     print(f"公钥X坐标: {report.public_key_x}")
     print(f"公钥Y坐标: {report.public_key_y}")
     print(f"在曲线上: {'是' if report.is_public_key_on_curve else '否'}")
-    
+
     for fmt in AddressFormat:
         result = report.address_results.get(fmt)
         if result:
@@ -58,18 +58,18 @@ def example_address_mismatch():
     print("\n" + "=" * 70)
     print("示例2: 地址不匹配检测")
     print("=" * 70)
-    
+
     verifier = BTCKeyAddressVerifier(verbose=True)
-    
+
     private_key = "0000000000000000000000000000000000000000000000000000000000000001"
-    
+
     # 故意提供错误的地址
     wrong_targets = {
         "p2pkh": "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMX",  # 最后一个字符错误
     }
-    
+
     report = verifier.verify_private_key(private_key, wrong_targets)
-    
+
     p2pkh_result = report.address_results[AddressFormat.P2PKH]
     print("\n不匹配详情:")
     print(f"  生成地址: {p2pkh_result.generated_address}")
@@ -83,10 +83,10 @@ def example_random_key_verification():
     print("\n" + "=" * 70)
     print("示例3: 随机私钥验证")
     print("=" * 70)
-    
+
     verifier = BTCKeyAddressVerifier(verbose=False)
     report = verifier.generate_random_verification()
-    
+
     print(f"压缩公钥: {report.public_key_compressed}")
     print(f"P2PKH地址: {report.address_results[AddressFormat.P2PKH].generated_address}")
     print(f"P2SH地址: {report.address_results[AddressFormat.P2SH].generated_address}")
@@ -99,9 +99,9 @@ def example_batch_verification():
     print("\n" + "=" * 70)
     print("示例4: 批量验证多个地址")
     print("=" * 70)
-    
+
     verifier = BTCKeyAddressVerifier(verbose=False)
-    
+
     # 测试用例数据
     test_cases = [
         {
@@ -113,14 +113,14 @@ def example_batch_verification():
             }
         },
     ]
-    
+
     for i, case in enumerate(test_cases, 1):
         print(f"\n测试用例 #{i}:")
         results = verifier.batch_verify_addresses(
             case["private_key"],
             case["targets"]
         )
-        
+
         print(f"  私钥哈希: {results['private_key_hash']}")
         for fmt, result in results["verification_results"].items():
             if result["match"] is True:
@@ -137,22 +137,22 @@ def example_json_output():
     print("\n" + "=" * 70)
     print("示例5: JSON格式输出")
     print("=" * 70)
-    
+
     import json
-    
+
     verifier = BTCKeyAddressVerifier(verbose=False)
     report = verifier.generate_random_verification()
-    
+
     # 转换为字典格式
     report_dict = report.to_dict()
-    
+
     print("\nJSON输出摘要:")
     print("-" * 40)
     print(f"私钥 (哈希): {report_dict['private_key']['hex'][:16]}...")
     print(f"压缩公钥: {report_dict['public_key']['compressed'][:40]}...")
     print(f"公钥坐标: ({report_dict['public_key']['x'][:16]}..., {report_dict['public_key']['y'][:16]}...)")
     print(f"在曲线上: {report_dict['public_key']['on_curve']}")
-    
+
     print("\n生成地址:")
     for fmt, addr_data in report_dict["addresses"].items():
         print(f"  {fmt}: {addr_data['generated']}")
@@ -166,17 +166,17 @@ def example_taproot_verification():
     print("\n" + "=" * 70)
     print("示例6: Taproot (Bech32m) 地址验证")
     print("=" * 70)
-    
+
     verifier = BTCKeyAddressVerifier(verbose=True)
-    
+
     private_key = "0000000000000000000000000000000000000000000000000000000000000001"
     report = verifier.verify_private_key(private_key)
-    
+
     taproot_result = report.address_results[AddressFormat.BECH32M]
     print(f"\nTaproot地址: {taproot_result.generated_address}")
     print(f"地址格式有效: {taproot_result.is_valid_format}")
     print(f"起始字符验证: {'bc1p' if taproot_result.generated_address.startswith('bc1p') else 'INVALID'}")
-    
+
     # 显示转换步骤
     print("\n转换步骤:")
     for step in taproot_result.steps:
@@ -190,7 +190,7 @@ def main():
     print("\n" + "#" * 70)
     print("# 比特币密钥派生及地址生成验证 - 示例")
     print("#" * 70)
-    
+
     try:
         example_basic_verification()
         example_address_mismatch()
@@ -198,12 +198,13 @@ def main():
         example_batch_verification()
         example_json_output()
         example_taproot_verification()
-        
+
         print("\n" + "#" * 70)
         print("# 所有示例运行完成!")
         print("#" * 70)
-        
-    except Exception as e:
+
+    except (ValueError, TypeError, RuntimeError, ImportError) as e:
+        # 演示脚本顶层兜底: 捕获常见异常类型, 打印完整堆栈便于诊断
         print(f"\n错误: {e}")
         import traceback
         traceback.print_exc()
