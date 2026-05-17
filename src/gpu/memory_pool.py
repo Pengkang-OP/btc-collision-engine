@@ -818,10 +818,12 @@ class GlobalGPUMemoryManager:
             GPUMemoryPool实例
         """
         context_id = id(context)
-        if context_id not in self._pools:
-            self._pools[context_id] = GPUMemoryPool(context, max_buffers)
-            logger.info(f"为上下文 {context_id} 创建GPU内存池")
-        return self._pools[context_id]
+        # 修复: 添加锁保护，防止多线程并发创建/访问内存池导致的数据竞争
+        with self._lock:
+            if context_id not in self._pools:
+                self._pools[context_id] = GPUMemoryPool(context, max_buffers)
+                logger.info(f"为上下文 {context_id} 创建GPU内存池")
+            return self._pools[context_id]
 
     def clear_all(self) -> None:
         """清空所有内存池"""

@@ -226,13 +226,15 @@ class EnhancedMonitoringAdapter:
         if self._subscribed:
             return
 
-        # 主要订阅错误事件
+        # 订阅错误事件
         event_bus.subscribe(EventType.ENGINE_ERROR, self.handle_error)
+        # v3.5.2: 订阅匹配事件（引擎匹配发现时立即触发告警）
+        event_bus.subscribe(EventType.ENGINE_MATCH, self.handle_match)
 
         self._subscribed = True
         self._event_bus = event_bus
 
-        logger.info("EnhancedMonitoringAdapter已订阅事件总线")
+        logger.info("EnhancedMonitoringAdapter已订阅事件总线 (error, match)")
 
     def unsubscribe(self) -> None:
         """取消订阅"""
@@ -240,6 +242,7 @@ class EnhancedMonitoringAdapter:
             return
 
         self._event_bus.unsubscribe(EventType.ENGINE_ERROR, self.handle_error)
+        self._event_bus.unsubscribe(EventType.ENGINE_MATCH, self.handle_match)
         self._subscribed = False
 
     def handle_error(self, event: EngineErrorEvent) -> None:
@@ -251,6 +254,23 @@ class EnhancedMonitoringAdapter:
                 )
             except Exception as e:
                 logger.error(f"增强监控错误处理失败: {e}")
+
+    def handle_match(self, event: EngineMatchEvent) -> None:
+        """v3.5.2: 处理匹配事件"""
+        if self.monitoring_system:
+            try:
+                logger.info(
+                    f"增强监控 — 匹配发现: address={event.address}, "
+                    f"target={event.target_address}"
+                )
+                # 触发监控系统记录匹配事件
+                if hasattr(self.monitoring_system, "record_match"):
+                    cast(Any, self.monitoring_system).record_match(
+                        address=event.address,
+                        target_address=event.target_address,
+                    )
+            except Exception as e:
+                logger.error(f"增强监控匹配处理失败: {e}")
 
 
 # ============================================================================

@@ -340,6 +340,7 @@ class RandomSearchMode(BaseSearchMode):
 
             try:
                 batch_num += 1
+                engine.stats.set_total_batches(batch_num)
 
                 # 检查停止信号，避免在资源已释放后执行批处理
                 if engine._stop_event.is_set():
@@ -531,6 +532,7 @@ class RandomSearchMode(BaseSearchMode):
         # 初始化状态
         consecutive_errors = 0
         batch_count = 0
+        batch_num = 0  # 本地批次计数器，更新到 engine.stats.total_batches
         current_batch_size = engine.batch_size or 1000000
 
         # 获取异步执行器的实际缓冲区大小
@@ -573,15 +575,18 @@ class RandomSearchMode(BaseSearchMode):
                     buffer_data[next_buffer]["seed"] = self._generate_seed()
                     buffer_data[next_buffer]["batch_size"] = current_batch_size
 
+                    batch_num += 1
+                    engine.stats.set_total_batches(batch_num)
+
                     # 智能批次大小调整
-                    if engine.stats.total_batches % 10 == 0:
+                    if batch_num % 10 == 0:
                         current_batch_size = batch_optimizer.get_optimal_batch_size()
 
                     # 执行批处理
                     seed = buffer_data[current_buffer]["seed"]
                     batch_size = buffer_data[current_buffer]["batch_size"]
                     matches, execution_time_ms = self._handle_batch_execution(
-                        engine, seed, batch_size, batch_optimizer, engine.stats.total_batches
+                        engine, seed, batch_size, batch_optimizer, batch_num
                     )
 
                     if engine._stop_event.is_set():
@@ -600,9 +605,9 @@ class RandomSearchMode(BaseSearchMode):
                     # 性能记录
                     effective_time_ms = max(execution_time_ms, 0.001)
                     speed = batch_size / (effective_time_ms / 1000)
-                    if engine.stats.total_batches <= 5 or engine.stats.total_batches % 10 == 0:
+                    if batch_num <= 5 or batch_num % 10 == 0:
                         logger.debug(
-                            f"GPU batch {engine.stats.total_batches}: {batch_size:,} keys, "
+                            f"GPU batch {batch_num}: {batch_size:,} keys, "
                             f"{execution_time_ms:.2f}ms, {speed:.0f} keys/s"
                         )
 
@@ -614,7 +619,7 @@ class RandomSearchMode(BaseSearchMode):
 
                 except Exception as e:
                     result = self._handle_batch_error(
-                        e, engine, engine.stats.total_batches, consecutive_errors
+                        e, engine, batch_num, consecutive_errors
                     )
                     if result == -1:  # 用户中断
                         break

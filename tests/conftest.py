@@ -28,6 +28,7 @@
 """
 
 import pytest
+import time
 from unittest.mock import Mock, patch
 from contextlib import ExitStack, contextmanager
 
@@ -524,7 +525,7 @@ def pytest_configure(config):
     # 标记为预期失败的测试
     config.addinivalue_line("markers", "expected_failure: 已知问题,预期失败")
 
-    # P2-7: 注册 timeout marker (由 pytest-timeout 插件提供)
+    # 注册 timeout marker (由 pytest-timeout 插件提供)
     config.addinivalue_line("markers", "timeout: 测试超时时间(秒)")
 
 
@@ -562,7 +563,7 @@ def pytest_collection_modifyitems(config, items):
                     item.add_marker(pytest.mark.skip(reason="[GPU-HW] 未检测到可用 GPU 设备"))
             elif skip_gpu_hw:
                 item.add_marker(pytest.mark.skip(reason="[GPU-HW] 未检测到可用 GPU 设备"))
-        # P2-7: GPU测试超时保护
+        # GPU测试超时保护
         if any(m in item.keywords for m in ("gpu", "gpu_hardware", "gpu_unit", "gpu_integration")):
             item.add_marker(gpu_timeout_marker)
 
@@ -661,14 +662,14 @@ def pytest_sessionfinish(session, exitstatus):
             except Exception:
                 pass
 
-    # 5. os._exit(0) 强制退出，绕过 Python 关闭阶段可能阻塞的 psutil/文件 I/O
-    #    注意：始终 exit(0) 因为实际测试结果由 Pytest 输出决定，
-    #    CI 门禁检查会单独验证。exit(1) 会导致 CI 误报 FAILED。
-    #    设置 PYTEST_NO_FORCE_EXIT=1 可在本地调试时跳过强制退出。
+    # 5. 优雅退出：先尝试等待非daemon线程完成，超时后强制退出
+    # 注意：始终 exit(0) 因为实际测试结果由 Pytest 输出决定，
+    # CI 门禁检查会单独验证。exit(1) 会导致 CI 误报 FAILED。
+    # 设置 PYTEST_NO_FORCE_EXIT=1 可在本地调试时跳过强制退出。
     #
-    #    自动检测覆盖率插件：如果 pytest-cov 激活，跳过强制退出，
-    #    否则 os._exit(0) 会在 pytest-cov 写入覆盖率报告之前终止进程，
-    #    导致覆盖率输出为空。
+    # 自动检测覆盖率插件：如果 pytest-cov 激活，跳过强制退出，
+    # 否则 os._exit(0) 会在 pytest-cov 写入覆盖率报告之前终止进程，
+    # 导致覆盖率输出为空。
     import os
 
     if os.environ.get("PYTEST_NO_FORCE_EXIT"):
@@ -681,6 +682,23 @@ def pytest_sessionfinish(session, exitstatus):
     if cov_active:
         print("\n[conftest] 检测到 pytest-cov 激活，跳过强制退出以保留覆盖率输出", flush=True)
         return
+
+    # 优雅退出阶段：给非daemon线程最多 5 秒完成清理
+    graceful_timeout = 5.0
+    deadline = time.time() + graceful_timeout
+    import threading
+    for thread in threading.enumerate():
+        if thread is threading.main_thread():
+            continue
+        if thread.daemon:
+            continue
+        remaining = deadline - time.time()
+        if remaining <= 0:
+            break
+        try:
+            thread.join(timeout=remaining)
+        except RuntimeError:
+            pass  # 无法 join 当前线程
 
     print("\n[conftest] 测试会话清理完成，强制退出进程", flush=True)
     os._exit(0)

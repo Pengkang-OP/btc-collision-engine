@@ -212,7 +212,7 @@ class BitcoinKeyValidator:
         Bech32地址生成流程 (P2WPKH):
         1. HASH160(public_key)
         2. 转换为 witness program
-        3. Bech32编码
+        3. Bech32编码 (使用统一模块 src.utils.bech32_codec)
 
         参数:
             public_key: 压缩公钥 (仅支持压缩格式)
@@ -221,6 +221,8 @@ class BitcoinKeyValidator:
         返回:
             Bech32地址 (以'bc1'开头)
         """
+        from ..utils.bech32_codec import bech32_encode
+
         # 仅支持压缩公钥
         if len(public_key) != 33:
             raise ValueError("Bech32地址仅支持压缩公钥")
@@ -228,104 +230,8 @@ class BitcoinKeyValidator:
         # HASH160 of public key
         pub_key_hash = hashlib.new("ripemd160", hashlib.sha256(public_key).digest()).digest()
 
-        # Witness program: version (0) + hash
-        witness_program = bytes([0x00, 0x14]) + pub_key_hash  # 0x00 = version 0, 0x14 = 20 bytes
-
-        # Bech32编码
-        return BitcoinKeyValidator._bech32_encode(hrp, witness_program)
-
-    @staticmethod
-    def _bech32_encode(hrp: str, witness_program: bytes) -> str:
-        """Bech32编码实现
-
-        参数:
-            hrp: 人类可读部分
-            witness_program: witness program bytes
-
-        返回:
-            Bech32编码字符串
-        """
-        # 将8-bit字节转换为5-bit groups
-        data = BitcoinKeyValidator._convert_bits(witness_program, 8, 5)
-
-        # 添加校验
-        checksum = BitcoinKeyValidator._bech32_create_checksum(hrp, data)
-        data.extend(checksum)
-
-        # 编码
-        charset = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
-        hrp_part = hrp.lower() + "1"
-        data_part = "".join([charset[d] for d in data])
-
-        return hrp_part + data_part
-
-    @staticmethod
-    def _convert_bits(data: bytes, from_bits: int, to_bits: int, pad: bool = True) -> list:
-        """将数据从from_bits转换到to_bits
-
-        参数:
-            data: 输入字节
-            from_bits: 源位数
-            to_bits: 目标位数
-            pad: 是否填充
-
-        返回:
-            转换后的5-bit整数列表
-        """
-        acc = 0
-        bits = 0
-        result = []
-        maxv = (1 << to_bits) - 1
-
-        for value in data:
-            if value < 0 or (value >> from_bits):
-                raise ValueError(f"无效的值: {value}")
-            acc = (acc << from_bits) | value
-            bits += from_bits
-            while bits >= to_bits:
-                bits -= to_bits
-                result.append((acc >> bits) & maxv)
-
-        if pad:
-            if bits:
-                result.append((acc << (to_bits - bits)) & maxv)
-        elif bits >= from_bits or ((acc << (to_bits - bits)) & maxv):
-            raise ValueError("无法转换位")
-
-        return result
-
-    @staticmethod
-    def _bech32_create_checksum(hrp: str, data: list) -> list:
-        """创建Bech32校验和
-
-        参数:
-            hrp: 人类可读部分
-            data: 5-bit数据
-
-        返回:
-            6个5-bit校验和
-        """
-        values = BitcoinKeyValidator._hrp_expand(hrp) + data + [0, 0, 0, 0, 0, 0]
-        polymod = BitcoinKeyValidator._bech32_polymod(values) ^ 1
-
-        return [(polymod >> 5 * (5 - i)) & 31 for i in range(6)]
-
-    @staticmethod
-    def _hrp_expand(hrp: str) -> list:
-        """扩展HRP为Bech32格式"""
-        return [ord(c) >> 5 for c in hrp] + [0] + [ord(c) & 31 for c in hrp]
-
-    @staticmethod
-    def _bech32_polymod(values: list) -> int:
-        """Bech32多项式模运算"""
-        generator = [0x3B6A57B2, 0x26508E6D, 0x1EA119FA, 0x3D4233DD, 0x2A1462B3]
-        chk = 1
-        for value in values:
-            top = chk >> 25
-            chk = (chk & 0x1FFFFFF) << 5 ^ value
-            for i in range(5):
-                chk ^= generator[i] if ((top >> i) & 1) else 0
-        return chk
+        # Witness program + Bech32编码
+        return bech32_encode(hrp, 0, pub_key_hash, "bech32")
 
     def validate_private_key(self, private_key: bytes) -> KeyValidationResult:
         """

@@ -599,6 +599,26 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 except Exception:
                     pass
                 self._device_manager = None
+
+            # 清理GPU内存池（修复: 资源泄漏）
+            if hasattr(self, "_gpu_memory_pool") and self._gpu_memory_pool is not None:
+                try:
+                    if hasattr(self._gpu_memory_pool, "cleanup"):
+                        self._gpu_memory_pool.cleanup()
+                except Exception:
+                    pass
+                self._gpu_memory_pool = None
+
+            # 清理性能监控管道（修复: 资源泄漏）
+            if hasattr(self, "_perf_pipeline") and self._perf_pipeline is not None:
+                try:
+                    if hasattr(self._perf_pipeline, "stop"):
+                        self._perf_pipeline.stop()
+                    elif hasattr(self._perf_pipeline, "cleanup"):
+                        self._perf_pipeline.cleanup()
+                except Exception:
+                    pass
+                self._perf_pipeline = None
         except Exception:
             pass  # 析构函数中资源清理失败静默处理
 

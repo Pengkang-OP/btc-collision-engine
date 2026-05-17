@@ -347,7 +347,7 @@ class TestCLI:
         captured = capsys.readouterr()
         assert "开始对撞" in captured.out
         assert "对撞结束" in captured.out
-        # Rich Panel 输出格式：「总检查数」后面是空格填充而非「  : 」
+        # Rich Panel 输出格式：「总检查数」后面是空格填充而非「 : 」
         assert "总检查数" in captured.out and "1,000" in captured.out
 
     def test_main_range_mode(self, capsys, monkeypatch):
@@ -402,7 +402,7 @@ class TestCLI:
         captured = capsys.readouterr()
         assert "开始对撞" in captured.out
         assert "对撞结束" in captured.out
-        # Rich Panel 输出格式：「总检查数」后面是空格填充而非「  : 」
+        # Rich Panel 输出格式：「总检查数」后面是空格填充而非「 : 」
         assert "总检查数" in captured.out and "500" in captured.out
 
     def test_main_brute_force_mode(self, capsys, monkeypatch):
@@ -455,7 +455,7 @@ class TestCLI:
         captured = capsys.readouterr()
         assert "开始对撞" in captured.out
         assert "对撞结束" in captured.out
-        # Rich Panel 输出格式：「总检查数」后面是空格填充而非「  : 」
+        # Rich Panel 输出格式：「总检查数」后面是空格填充而非「 : 」
         assert "总检查数" in captured.out and "2,000" in captured.out
 
     def test_validate_args_gpu_mutual_exclusion(self):
@@ -536,11 +536,15 @@ class TestCLI:
         """测试 quick-start 生成正确的命令"""
         from src.cli.commands import _cmd_quick_start
         from io import StringIO
+        from unittest.mock import MagicMock
 
         # 屏蔽 Windows 平台下 sys.stdout 被替换（避免 capsys 捕获失效）
         monkeypatch.setattr("sys.platform", "linux")
         # 同时 mock 掉 src.cli.commands 模块内的 sys.platform
         monkeypatch.setattr("src.cli.commands.sys.platform", "linux")
+        # Windows 上 mock fcntl（Unix 文件锁），避免 No module named 'fcntl'
+        mock_fcntl = MagicMock()
+        monkeypatch.setitem(sys.modules, "fcntl", mock_fcntl)
 
         # 模拟用户输入：选择单个地址、输入地址、选random模式、启用checkpoint(Y)、启用dedup(Y)、时长选无限(1)、GPU选CPU模式(1)、不执行(n)
         inputs = iter(["1", "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", "1", "Y", "Y", "1", "1", "n"])

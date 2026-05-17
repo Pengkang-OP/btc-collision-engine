@@ -16,17 +16,17 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.core.bitcoin_key_validator import WIFEncoder  # noqa: E402
-from src.collision.targets.resolver import (  # noqa: E402
+from src.utils.bech32_codec import (  # noqa: E402
     bech32_decode,
+    convertbits,
     decode_segwit_address,
-    _convertbits,
-    _BECH32_CONST,
-    _BECH32M_CONST,
-    TargetResolver,
+    BECH32_CONST,
+    BECH32M_CONST,
 )
+from src.collision.targets.resolver import TargetResolver  # noqa: E402
 
 # ---------------------------------------------------------------------------
-# WIF 测试向量  (来自 Bitcoin Core / BIP-0032 官方文档)
+# WIF 测试向量 (来自 Bitcoin Core / BIP-0032 官方文档)
 # ---------------------------------------------------------------------------
 
 # 私钥 (hex): 0C28FCA386C7A227600B2FE50B7CAE11EC86D3BF1FBE471BE89827E19D72AA1D
@@ -192,7 +192,7 @@ class TestBech32Decode(unittest.TestCase):
         hrp, data, enc = bech32_decode(addr)
         self.assertEqual(hrp, "bc")
         self.assertIsNotNone(data)
-        self.assertEqual(enc, _BECH32_CONST)
+        self.assertEqual(enc, BECH32_CONST)
         # 第一个元素是 witness version
         self.assertEqual(data[0], 0)
 
@@ -232,7 +232,7 @@ class TestBech32Decode(unittest.TestCase):
         hrp, data, enc = bech32_decode(addr)
         self.assertIsNotNone(hrp)
         self.assertEqual(hrp, "bc")
-        self.assertEqual(enc, _BECH32M_CONST)
+        self.assertEqual(enc, BECH32M_CONST)
 
     def test_decode_segwit_taproot(self):
         """decode_segwit_address: Taproot 应返回 version=1, 32字节 program"""
@@ -253,9 +253,9 @@ class TestBech32Decode(unittest.TestCase):
         original = list(
             b"\x75\x1e\x76\xe8\x19\x91\x96\xd4\x54\x94\x1c\x45\xd1\xb3\xa3\x23\xf1\x43\x3b\xd6"
         )
-        encoded = _convertbits(original, 8, 5)
+        encoded = convertbits(original, 8, 5)
         self.assertIsNotNone(encoded)
-        decoded = _convertbits(encoded, 5, 8, False)
+        decoded = convertbits(encoded, 5, 8, False)
         self.assertIsNotNone(decoded)
         self.assertEqual(decoded, original)
 
@@ -267,19 +267,22 @@ class TestResolverBech32Integration(unittest.TestCase):
         self.resolver = TargetResolver(enable_cache=False)
 
     def test_resolve_bech32_p2wpkh(self):
-        """TargetResolver 应能解析 bc1q P2WPKH 地址"""
+        """TargetResolver 应能解析 bc1q P2WPKH 地址(保持原格式)"""
         addr = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
         result = self.resolver.resolve(addr)
         self.assertIsNotNone(result, f"Failed to resolve: {addr}")
-        # 结果应是有效的 P2PKH 地址
-        self.assertTrue(result.startswith("1"), f"Expected P2PKH, got: {result}")
+        # 应返回小写原地址,不转换为P2PKH
+        self.assertEqual(result, addr.lower(),
+                         f"Expected lowercase original, got: {result}")
 
     def test_resolve_taproot(self):
-        """TargetResolver 应能解析 bc1p Taproot 地址"""
+        """TargetResolver 应能解析 bc1p Taproot 地址(保持原格式)"""
         addr = "bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0"
         result = self.resolver.resolve(addr)
         self.assertIsNotNone(result, f"Failed to resolve Taproot: {addr}")
-        self.assertTrue(result.startswith("1"), f"Expected P2PKH, got: {result}")
+        # 应返回小写原地址,不转换为P2PKH
+        self.assertEqual(result, addr.lower(),
+                         f"Expected lowercase original, got: {result}")
 
     def test_resolve_mixed_case_invalid(self):
         """大小写混合 Bech32 地址应解析失败"""
@@ -298,7 +301,7 @@ class TestResolverBech32Integration(unittest.TestCase):
         self.assertEqual(result_lower, result_upper)
 
     def test_resolve_p2pkh_unchanged(self):
-        """P2PKH 地址解析不受 Bech32 改动影响"""
+        """P2PKH 地址解析保持原始大小写（Base58 校验和大小写敏感）"""
         addr = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
         result = self.resolver.resolve(addr)
         self.assertEqual(result, addr)

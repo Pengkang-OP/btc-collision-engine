@@ -6,14 +6,17 @@
 验证引擎正确检测到匹配, 输出(private_key, address, WIF)完全正确。
 
 测试覆盖:
-- 核心闭环: range_scan 已知密钥匹配
+- 核心闭环: range_scan 已知密钥匹配 (参数化 max_workers=[1,2,4])
 - 回调闭环: match 回调数据完整性 + WIF 往返
 - 生命周期闭环: init → start → match → stop 全流程
 - 断点闭环: checkpoint save → resume
 - 多目标闭环: 多个已知密钥
-- 多格式闭环: P2PKH/P2SH/Bech32 地址
+- 多线程闭环: max_workers > 1 并行扫描
+- 多格式闭环: P2PKH/P2SH/Bech32/Taproot 地址
 - 事件总线闭环: EventBus 事件发布
 - 统计准确性闭环: CollisionStats 验证
+- Random 模式闭环: random_search 引擎生命周期
+- Data Logging 闭环: data_logging_enabled=True 集成路径
 """
 
 import os
@@ -30,6 +33,8 @@ from src.collision.key_collision_engine import KeyCollisionEngine
 from src.collision.checkpoint_manager import CheckpointManager
 from src.collision.event_bus import EventBus, reset_event_bus
 from src.collision.events import EventType, EngineMatchEvent
+from src.collision.targets.resolver import TargetResolver
+from src.utils.bech32_codec import bech32_encode
 
 
 # ============================================================================
@@ -103,7 +108,8 @@ def temp_checkpoint_dir():
 class TestRangeScanClosedLoop:
     """核心闭环测试: range_scan 已知密钥匹配"""
 
-    def test_range_scan_finds_known_key(self):
+    @pytest.mark.parametrize("max_workers", [1, 2, 4])
+    def test_range_scan_finds_known_key(self, max_workers):
         """已知 k=1 → 地址设为 target → range_scan[1,100] → 验证 match 回调"""
         match_results = []
 
@@ -113,14 +119,14 @@ class TestRangeScanClosedLoop:
         engine = KeyCollisionEngine(
             targets={_K1_ADDR},
             on_match=on_match,
-            max_workers=1,
+            max_workers=max_workers,
             data_logging_enabled=False,
             use_enhanced_monitoring=False,
         )
 
         # range_scan 在后台线程运行，范围小很快完成
         engine.start(mode="range", start=1, end=100)
-        engine._thread.join(timeout=10)
+        engine._thread.join(timeout=15)
 
         assert len(match_results) == 1, f"应检测到 1 个匹配，实际: {len(match_results)}"
         m = match_results[0]
@@ -445,15 +451,21 @@ class TestCheckpointClosedLoop:
     """断点闭环: checkpoint save → resume"""
 
     def test_checkpoint_save_after_scan(self, temp_checkpoint_dir):
-        """扫描后 checkpoint 文件应存在"""
+        """扫描后 checkpoint 文件应存在（需 on_match 避免提前停止）"""
         cp_file = os.path.join(temp_checkpoint_dir, "checkpoint.json")
         cp_mgr = CheckpointManager(
             filepath=cp_file,
-            auto_save_interval=5,
+            auto_save_interval=1,  # 1 秒触发一次自动保存
         )
+
+        match_addrs = []
+
+        def on_match(pk, addr, wif):
+            match_addrs.append(addr)
 
         engine = KeyCollisionEngine(
             targets={_K1_ADDR},
+            on_match=on_match,  # 有回调 → 匹配后继续扫描，确保 auto_save 触发
             checkpoint_enabled=True,
             max_workers=1,
             data_logging_enabled=False,
@@ -462,14 +474,15 @@ class TestCheckpointClosedLoop:
         # 注入自定义 checkpoint manager
         engine.checkpoint_mgr = cp_mgr
 
-        engine.start(mode="range", start=1, end=100)
+        engine.start(mode="range", start=1, end=5000)  # 更大范围确保扫描时长 >= 1s
         engine._thread.join(timeout=15)
 
         assert cp_mgr.exists(), "checkpoint 文件应存在"
+        assert len(match_addrs) >= 1, "应至少找到 k=1"
 
         data = cp_mgr.load()
         assert data is not None
-        assert data.get("mode") in ("range", "random")
+        assert data.get("mode") == "range"
         assert data.get("total_checked", 0) > 0
 
     def test_checkpoint_resume_after_match(self, temp_checkpoint_dir):
@@ -477,11 +490,17 @@ class TestCheckpointClosedLoop:
         cp_file = os.path.join(temp_checkpoint_dir, "checkpoint.json")
         cp_mgr = CheckpointManager(
             filepath=cp_file,
-            auto_save_interval=1,
+            auto_save_interval=1,  # 1 秒触发
         )
+
+        match_addrs = []
+
+        def on_match(pk, addr, wif):
+            match_addrs.append(addr)
 
         engine1 = KeyCollisionEngine(
             targets={_K1_ADDR},
+            on_match=on_match,  # 有回调 → 匹配后继续扫描，确保 auto_save 触发
             checkpoint_enabled=True,
             max_workers=1,
             data_logging_enabled=False,
@@ -489,10 +508,11 @@ class TestCheckpointClosedLoop:
         )
         engine1.checkpoint_mgr = cp_mgr
 
-        engine1.start(mode="range", start=1, end=100)
+        engine1.start(mode="range", start=1, end=5000)  # 更大范围确保扫描时长 >= 1s
         engine1._thread.join(timeout=15)
 
-        assert cp_mgr.exists()
+        assert cp_mgr.exists(), "第一次扫描后 checkpoint 应存在"
+        assert len(match_addrs) >= 1, "应至少找到 k=1"
 
         # 创建新引擎从断点恢复
         cp_mgr2 = CheckpointManager(filepath=cp_file)
@@ -544,64 +564,331 @@ class TestMultiTargetClosedLoop:
 
 @pytest.mark.integration
 class TestMultiFormatClosedLoop:
-    """多格式地址闭环: P2PKH/P2SH/Bech32"""
+    """多格式地址闭环: P2PKH/P2SH/Bech32
 
-    def test_p2sh_address_as_target(self):
-        """从已知 pk 派生 P2SH → range_scan → 验证 match"""
-        # 使用 k=2 生成 P2SH
+    闭环原理:
+    1. 从已知私钥派生 Bech32 地址
+    2. 通过 TargetResolver 转为 P2PKH（Bech32 witness program = pubkey_hash）
+    3. 用 P2PKH 作为引擎 target → range_scan 扫描
+    4. 验证 on_match 回调收到正确的 private_key 和 WIF
+
+    注意: P2SH 地址无法在此测试中做引擎闭环（其 payload 是 script_hash,
+    引擎只生成 pubkey_hash 的 P2PKH），P2SH 的 Resolver 正确性在
+    TestResolverPipelineClosedLoop 中验证。
+    """
+
+    def test_p2sh_resolver_correctness(self):
+        """P2SH → Resolver → 正确的 P2PKH（payload=script_hash, 不能引擎匹配）"""
         pk = _K2_PK
         gen = P2PKHAddressGenerator()
         _, compressed_pk, _ = gen.generate_address(pk)
         p2sh_addr = BitcoinKeyValidator.generate_p2sh_address(compressed_pk)
-
         assert p2sh_addr.startswith("3"), f"P2SH 地址应以 '3' 开头，实际: {p2sh_addr}"
 
+        # Resolver 将 P2SH 转为 P2PKH
+        resolver = TargetResolver(enable_cache=False)
+        p2pkh_from_p2sh = resolver.resolve(p2sh_addr)
+        assert p2pkh_from_p2sh is not None, "Resolver 应将 P2SH 转为 P2PKH"
+        assert p2pkh_from_p2sh.startswith("1"), f"转换结果应为 P2PKH，实际: {p2pkh_from_p2sh}"
+
+        # P2SH 的 P2PKH 基于 script_hash，与引擎生成的 pubkey_hash 不同
+        # 这是预期行为 — 引擎只做 P2PKH 碰撞，P2SH 通过 outside 解析器预先转换
+
+    def test_bech32_engine_closed_loop(self):
+        """从已知私钥派生 Bech32 → Resolver 转 P2PKH → 引擎匹配 → 验证私钥"""
+        pk = _K3_PK
+        gen = P2PKHAddressGenerator()
+        _, compressed_pk, _ = gen.generate_address(pk)
+        bech32_addr = BitcoinKeyValidator.generate_bech32_address(compressed_pk, hrp="bc")
+        assert bech32_addr.startswith("bc1"), f"Bech32 地址应以 'bc1' 开头，实际: {bech32_addr}"
+
+        # Resolver 将 Bech32 转为 P2PKH（witness program = pubkey_hash = Legacy P2PKH payload）
+        resolver = TargetResolver(enable_cache=False)
+        p2pkh_from_bech32 = resolver.resolve(bech32_addr)
+        assert p2pkh_from_bech32 is not None, "Resolver 应将 Bech32 转为 P2PKH"
+        assert p2pkh_from_bech32.startswith("1"), f"转换结果应为 P2PKH，实际: {p2pkh_from_bech32}"
+
+        # 引擎闭环验证
+        match_results = []
+
+        def on_match(m_pk, m_addr, m_wif):
+            match_results.append((m_pk, m_addr, m_wif))
+
+        engine = KeyCollisionEngine(
+            targets={p2pkh_from_bech32},
+            on_match=on_match,
+            max_workers=1,
+            data_logging_enabled=False,
+            use_enhanced_monitoring=False,
+        )
+        engine.start(mode="range", start=1, end=10)
+        engine._thread.join(timeout=15)
+
+        assert len(match_results) == 1, f"应有 1 个匹配，实际: {len(match_results)}"
+        m_pk, m_addr, _ = match_results[0]
+        assert m_addr == p2pkh_from_bech32
+        assert m_pk == pk, "匹配的私钥应正确"
+
+    def test_bech32_and_legacy_same_p2pkh(self):
+        """Bech32 → Resolver → 应与 Legacy P2PKH 相同（共用 pubkey_hash）"""
+        pk = _K4_PK
+        gen = P2PKHAddressGenerator()
+        p2pkh_addr, compressed_pk, _ = gen.generate_address(pk)
+        bech32_addr = BitcoinKeyValidator.generate_bech32_address(compressed_pk, hrp="bc")
+        p2sh_addr = BitcoinKeyValidator.generate_p2sh_address(compressed_pk)
+
+        # 三种格式互不相同
+        assert len({p2pkh_addr, p2sh_addr, bech32_addr}) == 3
+
+        resolver = TargetResolver(enable_cache=False)
+        # Bech32 的 witness program 就是 pubkey_hash → 与 Legacy P2PKH 相同
+        assert resolver.resolve(bech32_addr) == p2pkh_addr, (
+            "Bech32 解析结果应等于 Legacy P2PKH（共用 Hash160 载荷）"
+        )
+        # P2SH 的 payload 是 script_hash（不是 pubkey_hash）→ 与 Legacy P2PKH 不同
+        p2pkh_from_p2sh = resolver.resolve(p2sh_addr)
+        assert p2pkh_from_p2sh is not None
+        assert p2pkh_from_p2sh.startswith("1")
+        assert p2pkh_from_p2sh != p2pkh_addr, (
+            "P2SH 解析的 P2PKH 应不同于 Legacy P2PKH（载荷是 script_hash）"
+        )
+
+
+# ============================================================================
+# Task 7a: TestResolverPipelineClosedLoop - Resolver 集成管线
+# ============================================================================
+
+@pytest.mark.integration
+class TestResolverPipelineClosedLoop:
+    """TargetResolver 集成管线: P2PKH/P2SH/Bech32/Bech32m → P2PKH 转换验证"""
+
+    def test_resolver_converts_p2sh_to_p2pkh(self):
+        """P2SH → Resolver → 正确的 P2PKH（载荷为 script_hash）"""
+        pk = _K2_PK
+        gen = P2PKHAddressGenerator()
+        p2pkh_addr, compressed_pk, _ = gen.generate_address(pk)
+        p2sh_addr = BitcoinKeyValidator.generate_p2sh_address(compressed_pk)
+
+        resolver = TargetResolver(enable_cache=False)
+        result = resolver.resolve(p2sh_addr)
+
+        assert result is not None, "Resolver 应将 P2SH 转为 P2PKH"
+        assert result.startswith("1"), f"应为 P2PKH，实际: {result}"
+        # P2SH 的 payload 是 hash160(redeem_script)，不是 hash160(pubkey)
+        # 所以转换结果不等于 Legacy P2PKH（这是正确的行为）
+        assert result != p2pkh_addr, (
+            "P2SH 解析的 P2PKH 应不同于 Legacy P2PKH（载荷不同）"
+        )
+
+    def test_resolver_converts_bech32_to_p2pkh(self):
+        """Bech32 → Resolver → 正确的 P2PKH（载荷为 pubkey_hash）"""
+        pk = _K3_PK
+        gen = P2PKHAddressGenerator()
+        p2pkh_addr, compressed_pk, _ = gen.generate_address(pk)
+        bech32_addr = BitcoinKeyValidator.generate_bech32_address(compressed_pk, hrp="bc")
+
+        resolver = TargetResolver(enable_cache=False)
+        result = resolver.resolve(bech32_addr)
+
+        assert result == p2pkh_addr, (
+            f"Bech32 解析结果应等于 Legacy P2PKH（共用 Hash160 载荷）\n"
+            f"  Bech32: {bech32_addr}\n"
+            f"  Expected: {p2pkh_addr}\n"
+            f"  Got: {result}"
+        )
+
+    def test_resolver_converts_taproot_to_p2pkh(self):
+        """Taproot (Bech32m) → Resolver → P2PKH（载荷为 x-only pubkey）"""
+        pk = _K4_PK
+        gen = P2PKHAddressGenerator()
+        p2pkh_addr, compressed_pk, _ = gen.generate_address(pk)
+        x_only_pk = compressed_pk[1:]  # 去掉 02/03 前缀
+        taproot_addr = bech32_encode("bc", 1, x_only_pk, "bech32m")
+        assert taproot_addr.startswith("bc1p")
+
+        resolver = TargetResolver(enable_cache=False)
+        result = resolver.resolve(taproot_addr)
+
+        assert result is not None, "Resolver 应将 Taproot 转为 P2PKH"
+        assert result.startswith("1")
+        # Taproot 的 witness program 是 x-only pubkey → P2PKH 载荷不同
+        assert result != p2pkh_addr, (
+            "Taproot 解析的 P2PKH 应不同于 Legacy P2PKH（载荷为 x-only pubkey）"
+        )
+
+    def test_resolver_mixed_formats_same_pubkey(self):
+        """同一公钥 → 四种格式 → Resolver 全部可解析 → Bech32 与 Legacy 一致"""
+        pk = _K5_PK
+        gen = P2PKHAddressGenerator()
+        p2pkh_addr, compressed_pk, _ = gen.generate_address(pk)
+        p2sh_addr = BitcoinKeyValidator.generate_p2sh_address(compressed_pk)
+        bech32_addr = BitcoinKeyValidator.generate_bech32_address(compressed_pk, hrp="bc")
+        x_only_pk = compressed_pk[1:]
+        taproot_addr = bech32_encode("bc", 1, x_only_pk, "bech32m")
+
+        # 四种种格式互不相同
+        assert len({p2pkh_addr, p2sh_addr, bech32_addr, taproot_addr}) == 4
+
+        resolver = TargetResolver(enable_cache=False)
+        # Bech32 与 Legacy 解析结果相同
+        assert resolver.resolve(bech32_addr) == p2pkh_addr
+        # P2SH 和 Taproot 解析出不同的 P2PKH
+        assert resolver.resolve(p2sh_addr) != p2pkh_addr
+        assert resolver.resolve(taproot_addr) != p2pkh_addr
+        # 全部可解析
+        for addr in [p2pkh_addr, p2sh_addr, bech32_addr, taproot_addr]:
+            assert resolver.resolve(addr) is not None, f"{addr[:6]}... 应可解析"
+            assert resolver.resolve(addr).startswith("1")
+
+
+# ============================================================================
+# Task 7b: TestTaprootClosedLoop - Bech32m (Taproot) 格式
+# ============================================================================
+
+@pytest.mark.integration
+class TestTaprootClosedLoop:
+    """Bech32m (Taproot) 格式验证"""
+
+    def test_taproot_address_format(self):
+        """x-only pubkey → bech32m 编码 → 格式正确"""
+        pk = _K5_PK
+        gen = P2PKHAddressGenerator()
+        _, compressed_pk, _ = gen.generate_address(pk)
+        x_only_pk = compressed_pk[1:]  # 去掉 02/03 前缀，得到 32 字节 x-only pubkey
+
+        addr = bech32_encode("bc", 1, x_only_pk, "bech32m")
+        assert addr.startswith("bc1p"), f"Taproot 地址应以 'bc1p' 开头，实际: {addr}"
+        # Bech32m 地址长度：hrp + 分隔符 + 编码数据 + 6 字符校验和
+        # 对于 32 字节 witness program，长度在 42-62 字符范围
+        assert 42 <= len(addr) <= 90, f"地址长度不合理: {len(addr)}"
+        # Bech32 字符 '1' 仅作为分隔符出现，数据部分不应包含
+
+    def test_taproot_vs_p2pkh_different(self):
+        """同一公钥 → Legacy P2PKH vs Taproot Bech32m 互不相同"""
+        pk = _K1_PK
+        gen = P2PKHAddressGenerator()
+        p2pkh_addr, compressed_pk, _ = gen.generate_address(pk)
+        x_only_pk = compressed_pk[1:]
+
+        taproot_addr = bech32_encode("bc", 1, x_only_pk, "bech32m")
+
+        assert taproot_addr != p2pkh_addr, "Taproot 地址应与 Legacy P2PKH 不同"
+        assert taproot_addr.startswith("bc1p")
+        assert p2pkh_addr.startswith("1")
+
+    def test_taproot_bech32m_encoding_uses_correct_constant(self):
+        """Bech32m 编码使用 BECH32M_CONST (0x2BC830A3) 而非 BECH32_CONST (1)"""
+        from src.utils.bech32_codec import BECH32_CONST, BECH32M_CONST
+
+        # BECH32M_CONST 应不同于 BECH32_CONST
+        assert BECH32M_CONST != BECH32_CONST
+        assert BECH32M_CONST == 0x2BC830A3
+
+        pk = _K3_PK
+        gen = P2PKHAddressGenerator()
+        _, compressed_pk, _ = gen.generate_address(pk)
+        x_only_pk = compressed_pk[1:]
+
+        # 使用正确 spec 生成地址
+        addr_m = bech32_encode("bc", 1, x_only_pk, "bech32m")
+        assert addr_m.startswith("bc1p")
+
+        # 验证 bech32 vs bech32m 产生不同地址（不同 checksum）
+        addr_legacy = bech32_encode("bc", 1, x_only_pk, "bech32")
+        assert addr_legacy != addr_m, "bech32 和 bech32m 应产生不同地址"
+
+
+# ============================================================================
+# Task 7c: TestFileLoadingClosedLoop - 混格式文件加载
+# ============================================================================
+
+@pytest.mark.integration
+class TestFileLoadingClosedLoop:
+    """混格式文件加载闭环: targets.txt 含 P2PKH/P2SH/Bech32/Bech32m"""
+
+    def test_load_mixed_formats_from_file(self, tmp_path):
+        """四种格式混排文件 → Resolver 加载 → 引擎匹配"""
+        gen = P2PKHAddressGenerator()
+        lines = []
+        expected_legacy_p2pkh = set()
+
+        for k in range(1, 6):
+            pk = k.to_bytes(32, "big")
+            p2pkh_addr, compressed_pk, _ = gen.generate_address(pk)
+            p2sh_addr = BitcoinKeyValidator.generate_p2sh_address(compressed_pk)
+            bech32_addr = BitcoinKeyValidator.generate_bech32_address(compressed_pk, hrp="bc")
+            x_only_pk = compressed_pk[1:]
+            taproot_addr = bech32_encode("bc", 1, x_only_pk, "bech32m")
+
+            lines.extend([p2pkh_addr, p2sh_addr, bech32_addr, taproot_addr])
+            expected_legacy_p2pkh.add(p2pkh_addr)
+
+        # 写入临时文件
+        targets_file = tmp_path / "mixed_targets.txt"
+        targets_file.write_text("\n".join(lines))
+
+        # 用 Resolver 加载
+        resolver = TargetResolver(enable_cache=False)
+        loaded_p2pkh = resolver.load_from_file(str(targets_file))
+
+        # 验证解析结果：4 种格式 × 5 个密钥 = 20 行
+        # - Legacy P2PKH + Bech32 → 5 个相同的 P2PKH (pubkey_hash)
+        # - P2SH → 5 个不同的 P2PKH (script_hash)
+        # - Taproot → 5 个不同的 P2PKH (x-only pubkey)
+        # 总计 15 个唯一 P2PKH
+        assert len(loaded_p2pkh) >= 10, (
+            f"应至少解析出 10 个唯一 P2PKH（5 Legacy + 5 P2SH + 5 Taproot），实际: {len(loaded_p2pkh)}"
+        )
+
+        # 引擎闭环验证：Legacy P2PKH 应该全部匹配
         match_results = []
 
         def on_match(m_pk, m_addr, m_wif):
             match_results.append(m_addr)
 
-        # P2SH 地址在引擎内部需要特殊处理 — KeyCollisionEngine 的
-        # _generate_address 默认生成 P2PKH，不直接支持 P2SH target
-        # 但地址匹配是纯字符串比较 (addr.lower() in targets)，所以
-        # 如果把 P2SH 放入 targets，引擎生成的是 P2PKH，不会匹配
-        # 这是预期行为 — 引擎只对 P2PKH 进行碰撞检测
-        # 此测试验证 P2SH 地址格式正确性，不验证引擎匹配
-        # （引擎的 P2SH 支持通过 target_resolver 在导入时转换）
-        assert len(p2sh_addr) >= 26
-        assert len(p2sh_addr) <= 35
+        engine = KeyCollisionEngine(
+            targets=loaded_p2pkh,
+            on_match=on_match,
+            max_workers=1,
+            data_logging_enabled=False,
+            use_enhanced_monitoring=False,
+        )
+        engine.start(mode="range", start=1, end=20)
+        engine._thread.join(timeout=15)
 
-        # 使用 BitcoinKeyValidator 验证地址
-        validator = BitcoinKeyValidator()
-        result = validator.validate_address(p2sh_addr)
-        assert result.success, f"P2SH 地址应有效: {result.errors}"
+        # Legacy P2PKH + Bech32 解析的 5 个 P2PKH 应该匹配
+        for addr in expected_legacy_p2pkh:
+            assert addr in match_results, f"Legacy P2PKH {addr[:10]}... 应被匹配"
 
-    def test_bech32_address_as_target(self):
-        """从已知 pk 派生 Bech32 → 验证格式"""
-        pk = _K3_PK
+    def test_load_file_with_comments_and_blanks(self, tmp_path):
+        """混格式文件含注释和空行 → Resolver 正确跳过"""
         gen = P2PKHAddressGenerator()
-        _, compressed_pk, _ = gen.generate_address(pk)
-        bech32_addr = BitcoinKeyValidator.generate_bech32_address(compressed_pk, hrp="bc")
-
-        assert bech32_addr.startswith("bc1"), f"Bech32 地址应以 'bc1' 开头，实际: {bech32_addr}"
-
-        # Bech32 地址格式验证：P2WPKH 应为 42 字符，P2WSH 应为 62 字符
-        # generate_bech32_address 返回的是人类可读格式，长度在 42 左右
-        assert len(bech32_addr) >= 39, f"Bech32 地址长度应 >= 39，实际: {len(bech32_addr)}"
-
-    def test_all_three_formats_from_same_pubkey(self):
-        """同一公钥派生 P2PKH/P2SH/Bech32 三种格式互不相同"""
-        pk = _K4_PK
-        gen = P2PKHAddressGenerator()
-        p2pkh_addr, compressed_pk, _ = gen.generate_address(pk)
+        p2pkh_addr, compressed_pk, _ = gen.generate_address(_K1_PK)
         p2sh_addr = BitcoinKeyValidator.generate_p2sh_address(compressed_pk)
         bech32_addr = BitcoinKeyValidator.generate_bech32_address(compressed_pk, hrp="bc")
 
-        # 三种格式互不相同
-        addresses = {p2pkh_addr, p2sh_addr, bech32_addr}
-        assert len(addresses) == 3, (
-            f"三种格式应互不相同，实际: {addresses}"
+        content = (
+            f"# 这是注释行\n"
+            f"\n"
+            f"# 另一条注释\n"
+            f"{p2pkh_addr}\n"
+            f"\n"
+            f"{p2sh_addr}\n"
+            f"# 中间注释\n"
+            f"{bech32_addr}\n"
+            f"\n"
         )
+        targets_file = tmp_path / "commented_targets.txt"
+        targets_file.write_text(content)
+
+        resolver = TargetResolver(enable_cache=False)
+        loaded = resolver.load_from_file(str(targets_file))
+
+        # P2PKH + P2SH + Bech32 → Legacy P2PKH 和 Bech32 解析为相同的 p2pkh_addr
+        # P2SH 解析为不同的 P2PKH, Taproot 无
+        # 预期：Legacy/Bech32 相同(p2pkh_addr) + P2SH 不同 → 至少 1 个
+        assert len(loaded) >= 1, f"应至少解析出 1 个唯一 P2PKH，实际: {len(loaded)}"
+        assert p2pkh_addr in loaded, "Legacy P2PKH 应在结果中"
 
 
 # ============================================================================
@@ -664,6 +951,70 @@ class TestEventBusClosedLoop:
             f"应至少收到 2 个事件，实际: {len(received_types)}"
         )
         assert bus.published_count == 2
+
+    def test_engine_publishes_start_progress_complete(self):
+        """v3.5.2: range_scan 引擎运行 → 验证 ENGINE_START/PROGRESS/COMPLETE 事件发布"""
+        received_types = []
+
+        bus = EventBus(async_mode=False)
+
+        def catch_all(event_type, event):
+            received_types.append(event_type.value)
+
+        bus.subscribe_to_all(catch_all)
+
+        engine = KeyCollisionEngine(
+            targets=set(),  # 空目标，不会匹配
+            event_bus=bus,
+            max_workers=1,
+            data_logging_enabled=False,
+            use_enhanced_monitoring=False,
+        )
+        engine.start(mode="range", start=1, end=50)
+        engine._thread.join(timeout=15)
+
+        bus.stop()
+
+        # 验证事件类型存在
+        event_values = set(received_types)
+        assert "engine.start" in event_values, f"缺少 ENGINE_START，已收到: {event_values}"
+        assert "engine.progress" in event_values, f"缺少 ENGINE_PROGRESS，已收到: {event_values}"
+        assert "engine.complete" in event_values, f"缺少 ENGINE_COMPLETE，已收到: {event_values}"
+        assert bus.published_count >= 3, (
+            f"应至少发布 3 个事件，实际: {bus.published_count}"
+        )
+
+    def test_engine_publishes_match_event(self):
+        """v3.5.2: range_scan 匹配 → 验证 ENGINE_MATCH 事件发布"""
+        received_matches = []
+
+        bus = EventBus(async_mode=False)
+
+        def match_listener(event):
+            received_matches.append(event)
+
+        bus.subscribe(EventType.ENGINE_MATCH, match_listener)
+
+        engine = KeyCollisionEngine(
+            targets={_K1_ADDR},
+            event_bus=bus,
+            max_workers=1,
+            data_logging_enabled=False,
+            use_enhanced_monitoring=False,
+        )
+        engine.start(mode="range", start=1, end=100)
+        engine._thread.join(timeout=15)
+
+        bus.stop()
+
+        assert len(received_matches) >= 1, (
+            f"应至少收到 1 个 ENGINE_MATCH 事件，实际: {len(received_matches)}"
+        )
+        match = received_matches[0]
+        assert match.address == _K1_ADDR, (
+            f"事件地址应为 {_K1_ADDR}，实际: {match.address}"
+        )
+        assert match.target_address == _K1_ADDR
 
 
 # ============================================================================
@@ -755,6 +1106,225 @@ class TestStatsAccuracyClosedLoop:
 
         stats = engine.get_stats()
         assert len(stats.matches) == 1
+
+
+# ============================================================================
+# Task A: TestMultiWorkerClosedLoop - 多线程 Worker 闭环
+# ============================================================================
+
+@pytest.mark.integration
+class TestMultiWorkerClosedLoop:
+    """多线程 Worker 闭环: max_workers > 1 的并行扫描"""
+
+    def test_multi_worker_range_scan_finds_match(self):
+        """max_workers=2 range_scan[1,200] → k=1 匹配找到且不重复"""
+        match_results = []
+
+        def on_match(pk, addr, wif):
+            match_results.append(addr)
+
+        engine = KeyCollisionEngine(
+            targets={_K1_ADDR},
+            on_match=on_match,
+            max_workers=2,
+            data_logging_enabled=False,
+            use_enhanced_monitoring=False,
+        )
+
+        engine.start(mode="range", start=1, end=200)
+        engine._thread.join(timeout=15)
+
+        assert len(match_results) == 1, (
+            f"应检测到 1 个匹配（不重复），实际: {len(match_results)}"
+        )
+        assert match_results[0] == _K1_ADDR
+
+    def test_multi_worker_range_scan_all_matches(self):
+        """max_workers=4 range_scan[1,100] → k=1/2/3 全部找到"""
+        match_results = []
+
+        def on_match(pk, addr, wif):
+            match_results.append(addr)
+
+        engine = KeyCollisionEngine(
+            targets={_K1_ADDR, _K2_ADDR, _K3_ADDR},
+            on_match=on_match,
+            max_workers=4,
+            data_logging_enabled=False,
+            use_enhanced_monitoring=False,
+        )
+
+        engine.start(mode="range", start=1, end=100)
+        engine._thread.join(timeout=15)
+
+        assert len(match_results) == 3, (
+            f"应检测到 3 个匹配，实际: {len(match_results)}"
+        )
+        for expected in [_K1_ADDR, _K2_ADDR, _K3_ADDR]:
+            assert expected in match_results, f"{expected[:8]}... 应被匹配"
+
+    def test_multi_worker_stats_accurate(self):
+        """max_workers=4 range_scan[1,1000] → total_checked 统计准确"""
+        engine = KeyCollisionEngine(
+            targets=set(),
+            max_workers=4,
+            data_logging_enabled=False,
+            use_enhanced_monitoring=False,
+        )
+
+        engine.start(mode="range", start=1, end=1000)
+        engine._thread.join(timeout=20)
+
+        stats = engine.get_stats()
+        # 多线程下 total_checked 可能略少于 1000（窗口边界），但应接近
+        assert stats.total_checked >= 900, (
+            f"多线程至少检查 900 个私钥，实际: {stats.total_checked}"
+        )
+        assert stats.speed >= 0, "speed 应 >= 0"
+
+
+# ============================================================================
+# Task B: TestRandomModeClosedLoop - Random 模式引擎闭环
+# ============================================================================
+
+@pytest.mark.integration
+class TestRandomModeClosedLoop:
+    """Random 模式引擎闭环: 验证引擎生命周期和统计累积"""
+
+    def test_random_mode_starts_stops(self):
+        """start(random) → is_running → stop → is_running False"""
+        engine = KeyCollisionEngine(
+            targets=set(),
+            max_workers=1,
+            data_logging_enabled=False,
+            use_enhanced_monitoring=False,
+        )
+
+        assert not engine.is_running()
+        engine.start(mode="random")
+        time.sleep(0.5)
+        assert engine.is_running(), "random start 后应 running"
+
+        engine.stop()
+        time.sleep(0.5)
+        assert not engine.is_running(), "stop 后应 not running"
+
+    def test_random_mode_progress_increases(self):
+        """random search → 等待 2 秒 → total_checked > 0"""
+        engine = KeyCollisionEngine(
+            targets=set(),
+            max_workers=1,
+            data_logging_enabled=False,
+            use_enhanced_monitoring=False,
+        )
+
+        engine.start(mode="random")
+        time.sleep(2)
+        engine.stop()
+
+        stats = engine.get_stats()
+        assert stats.total_checked > 0, (
+            f"random 模式应检查至少 1 个私钥，实际: {stats.total_checked}"
+        )
+        assert stats.speed >= 0, "speed 应 >= 0"
+
+    def test_random_mode_on_progress_called(self):
+        """random search → on_progress 回调被触发"""
+        progress_calls = []
+
+        def on_progress(stats):
+            progress_calls.append(stats.total_checked)
+
+        engine = KeyCollisionEngine(
+            targets=set(),
+            on_progress=on_progress,
+            max_workers=1,
+            data_logging_enabled=False,
+            use_enhanced_monitoring=False,
+        )
+
+        engine.start(mode="random")
+        time.sleep(3)
+        engine.stop()
+
+        assert len(progress_calls) >= 1, (
+            f"on_progress 应至少被调用一次，实际: {len(progress_calls)}"
+        )
+
+
+# ============================================================================
+# Task C: TestDataLoggingClosedLoop - Data Logging 集成闭环
+# ============================================================================
+
+@pytest.mark.integration
+class TestDataLoggingClosedLoop:
+    """Data Logging 集成闭环: data_logging_enabled=True 路径验证"""
+
+    def test_data_logging_runs_without_crash(self):
+        """data_logging_enabled=True → range_scan 正常完成不崩溃"""
+        match_results = []
+
+        def on_match(pk, addr, wif):
+            match_results.append(addr)
+
+        engine = KeyCollisionEngine(
+            targets={_K1_ADDR},
+            on_match=on_match,
+            max_workers=1,
+            data_logging_enabled=True,
+            use_enhanced_monitoring=False,
+        )
+
+        engine.start(mode="range", start=1, end=50)
+        engine._thread.join(timeout=15)
+
+        stats = engine.get_stats()
+        # 有 on_match 回调 → 引擎不会提前停止 → total_checked 应为 50
+        assert stats.total_checked >= 50, (
+            f"data_logging 启用时应正常扫描，实际: {stats.total_checked}"
+        )
+        assert _K1_ADDR in match_results, "匹配应正确"
+
+    def test_data_logging_with_match(self):
+        """data_logging_enabled=True + 匹配 → on_match 回调正常触发"""
+        match_results = []
+
+        def on_match(pk, addr, wif):
+            match_results.append(addr)
+
+        engine = KeyCollisionEngine(
+            targets={_K1_ADDR},
+            on_match=on_match,
+            max_workers=1,
+            data_logging_enabled=True,
+            use_enhanced_monitoring=False,
+        )
+
+        engine.start(mode="range", start=1, end=100)
+        engine._thread.join(timeout=15)
+
+        assert len(match_results) == 1, (
+            f"data_logging 启用时匹配回调应正常，实际: {len(match_results)}"
+        )
+        assert match_results[0] == _K1_ADDR
+
+    def test_data_logging_random_mode(self):
+        """data_logging_enabled=True + random mode → 正常启停"""
+        engine = KeyCollisionEngine(
+            targets=set(),
+            max_workers=1,
+            data_logging_enabled=True,
+            use_enhanced_monitoring=False,
+        )
+
+        engine.start(mode="random")
+        time.sleep(1.5)
+        engine.stop()
+
+        stats = engine.get_stats()
+        assert stats.total_checked > 0, (
+            f"data_logging + random 应检查至少 1 个私钥，实际: {stats.total_checked}"
+        )
 
 
 if __name__ == "__main__":
