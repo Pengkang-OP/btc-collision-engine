@@ -598,8 +598,15 @@
             "p2pkh": "P2PKH (Legacy)",
             "p2sh": "P2SH (Script Hash)",
             "bech32": "Bech32 (SegWit)",
+            "taproot": "Taproot (Bech32m)",
             "unknown": "Unknown format"
         }
+    },
+    "targets": {
+        "format_breakdown": "Target address format distribution: {breakdown}",
+        "incompatible_warning": "⚠ Detected {count} non-P2PKH format target addresses",
+        "incompatible_detail": "The engine currently only generates P2PKH (1-prefix) address format. P2SH, Bech32, and Taproot format target addresses cannot be matched in the current version.",
+        "incompatible_suggestion": "Suggestion: Remove incompatible format addresses, or use key Hash160 matching mode."
     },
     "crypto": {
         "key_generated": "Key generated",
@@ -683,6 +690,44 @@
             "debug_mode": "Warning: Debug mode may leak sensitive information",
             "log_sensitive": "Warning: Logs may contain sensitive information"
         }
+    },
+    "menu": {
+        "title": "BTC Collision Engine - Startup Menu",
+        "system_status": "System Status:",
+        "venv_found": "  Virtual Environment: [OK] Found",
+        "venv_not_found": "  Virtual Environment: [WARN] Not Found",
+        "targets_found": "  Targets File: [OK] Found",
+        "targets_not_found": "  Targets File: [WARN] Not Found",
+        "prompt": "Please select an option:",
+        "option_1": "  1. Interactive Wizard (Recommended)",
+        "option_2": "  2. GPU Mode (Single GPU)",
+        "option_3": "  3. Start Monitor",
+        "option_4": "  4. Maintenance and Cleanup",
+        "option_5": "  5. Show Help",
+        "option_6": "  6. Multi-GPU Mode (Multiple GPUs)",
+        "option_exit": "  0. Exit",
+        "enter_option": "Enter option (0-6): ",
+        "goodbye": "[INFO] Goodbye!",
+        "invalid_option": "[Error] Invalid option: {choice}",
+        "press_any_key": "Press any key to return to menu...",
+        "cleanup_title": "Maintenance and Cleanup Menu",
+        "cleanup_option_1": "  1. Clear log files",
+        "cleanup_option_2": "  2. Clear checkpoint files",
+        "cleanup_option_3": "  3. Clear all temporary files",
+        "cleanup_back": "  0. Back",
+        "cleanup_enter_option": "Enter option (0-3): ",
+        "cleanup_clearing_logs": "[INFO] Clearing log files...",
+        "cleanup_clearing_checkpoints": "[INFO] Clearing checkpoint files...",
+        "cleanup_done": "[OK] Done",
+        "cleanup_deleted": "[OK] Deleted {count} file(s)",
+        "cleanup_warning": "[WARNING] This will delete all logs, checkpoints, and cache files!",
+        "cleanup_confirm": "Confirm deletion? Enter Y to confirm: ",
+        "cleanup_cancelled": "[INFO] Operation cancelled",
+        "cleanup_all_done": "[OK] All temporary files cleaned",
+        "monitor_not_found": "[WARN] monitor.ps1 not found, monitoring unavailable",
+        "monitor_windows_only": "[INFO] Monitor requires Windows PowerShell",
+        "gpu_starting": "[INFO] Starting GPU mode...",
+        "multi_gpu_starting": "[INFO] Starting Multi-GPU mode..."
     },
     "errors": {
         "file_not_found": "File not found: {path}",

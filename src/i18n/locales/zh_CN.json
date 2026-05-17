@@ -598,8 +598,15 @@
             "p2pkh": "P2PKH (传统地址)",
             "p2sh": "P2SH (脚本哈希)",
             "bech32": "Bech32 (隔离见证)",
+            "taproot": "Taproot (Bech32m)",
             "unknown": "未知格式"
         }
+    },
+    "targets": {
+        "format_breakdown": "目标地址格式分布: {breakdown}",
+        "incompatible_warning": "⚠ 检测到 {count} 个非 P2PKH 格式的目标地址",
+        "incompatible_detail": "引擎目前仅生成 P2PKH (1开头) 地址格式。P2SH、Bech32、Taproot 格式的目标地址在当前版本中无法被匹配到。",
+        "incompatible_suggestion": "建议: 移除不兼容格式的地址，或使用密钥 Hash160 匹配模式。"
     },
     "crypto": {
         "key_generated": "密钥已生成",
@@ -683,6 +690,44 @@
             "debug_mode": "警告：调试模式可能泄露敏感信息",
             "log_sensitive": "警告：日志中包含敏感信息"
         }
+    },
+    "menu": {
+        "title": "BTC 碰撞引擎 - 启动菜单",
+        "system_status": "系统状态:",
+        "venv_found": "  虚拟环境: [OK] 已找到",
+        "venv_not_found": "  虚拟环境: [WARN] 未找到",
+        "targets_found": "  目标文件: [OK] 已找到",
+        "targets_not_found": "  目标文件: [WARN] 未找到",
+        "prompt": "请选择选项:",
+        "option_1": "  1. 交互式向导 (推荐)",
+        "option_2": "  2. GPU 模式 (单 GPU)",
+        "option_3": "  3. 启动监控",
+        "option_4": "  4. 维护和清理",
+        "option_5": "  5. 显示帮助",
+        "option_6": "  6. 多 GPU 模式 (多显卡并行)",
+        "option_exit": "  0. 退出",
+        "enter_option": "输入选项 (0-6): ",
+        "goodbye": "[INFO] 再见!",
+        "invalid_option": "[错误] 无效选项: {choice}",
+        "press_any_key": "按任意键返回菜单...",
+        "cleanup_title": "维护和清理菜单",
+        "cleanup_option_1": "  1. 清理日志文件",
+        "cleanup_option_2": "  2. 清理检查点文件",
+        "cleanup_option_3": "  3. 清理全部临时文件",
+        "cleanup_back": "  0. 返回",
+        "cleanup_enter_option": "输入选项 (0-3): ",
+        "cleanup_clearing_logs": "[INFO] 正在清理日志文件...",
+        "cleanup_clearing_checkpoints": "[INFO] 正在清理检查点文件...",
+        "cleanup_done": "[OK] 完成",
+        "cleanup_deleted": "[OK] 已删除 {count} 个文件",
+        "cleanup_warning": "[警告] 将删除所有日志、检查点和缓存文件！",
+        "cleanup_confirm": "确认删除? 请输入 Y 确认: ",
+        "cleanup_cancelled": "[INFO] 已取消操作",
+        "cleanup_all_done": "[OK] 所有临时文件已清理",
+        "monitor_not_found": "[WARN] 未找到 monitor.ps1，监控功能不可用",
+        "monitor_windows_only": "[INFO] 监控功能仅支持 Windows PowerShell",
+        "gpu_starting": "[INFO] 正在启动 GPU 模式...",
+        "multi_gpu_starting": "[INFO] 正在启动多 GPU 模式..."
     },
     "errors": {
         "file_not_found": "文件未找到: {path}",

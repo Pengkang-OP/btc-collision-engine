@@ -36,13 +36,15 @@ from .types import (
     ProgressCallback,
 )
 
-# 条件导出 GPUCollisionEngine（pyopencl 可能不可用）
+# 条件导出 GPUCollisionEngine / MultiGPUCollisionEngine（pyopencl 可能不可用）
 try:
     from .gpu_collision_engine import GPUCollisionEngine
+    from ..gpu.multi_gpu_engine import MultiGPUCollisionEngine
 
     _GPU_AVAILABLE = True
 except ImportError as _gpu_import_err:  # noqa: F841
-    GPUCollisionEngine: Any = None  # type: ignore[no-redef]  # 条件导入回退
+    GPUCollisionEngine: Any = None  # type: ignore[no-redef] # 条件导入回退
+    MultiGPUCollisionEngine: Any = None  # type: ignore[no-redef]
     _GPU_AVAILABLE = False
     import logging as _logging
 
@@ -61,6 +63,7 @@ __all__ = [
     "BloomDeduplicationFilter",
     "KeyCollisionEngine",
     "GPUCollisionEngine",
+    "MultiGPUCollisionEngine",
     "CollisionObserver",
     "BaseCollisionObserver",
     "ObserverManager",
@@ -98,16 +101,17 @@ __all__ = [
 
 def create_collision_engine(
     targets: set[str], mode: str = "auto", config: dict[str, Any] | None = None, **kwargs
-) -> BaseCollisionEngine:
+) -> Any:
     """
     创建碰撞引擎实例
 
     参数:
         targets: 目标地址集合
-        mode: 'auto'|'gpu'|'cpu'
+        mode: 'auto'|'gpu'|'cpu'|'multi_gpu'
             auto: 检测GPU可用性自动选择
             gpu: 强制使用GPU（不可用时抛异常）
             cpu: 强制使用CPU
+            multi_gpu: 强制使用多GPU（不可用时抛异常）
         config: 配置字典（可选）
             如果提供，将从中读取引擎配置
             优先级: kwargs > config > 默认值
@@ -115,12 +119,13 @@ def create_collision_engine(
             - 对于GPU引擎: batch_size, device_index, dedup_filter, checkpoint_mgr
             - 对于CPU引擎: on_progress, on_match, on_complete, checkpoint_enabled,
                          dedup_enabled, dedup_max_size, checkpoint_interval, max_workers
+            - 对于多GPU引擎: device_indices, device_count, strategy
 
     返回:
-        碰撞引擎实例 (GPUCollisionEngine 或 KeyCollisionEngine)
+        碰撞引擎实例 (GPUCollisionEngine / MultiGPUCollisionEngine / KeyCollisionEngine)
 
     异常:
-        RuntimeError: 当mode='gpu'但GPU不可用时
+        RuntimeError: 当mode='gpu'/'multi_gpu'但GPU不可用时
         ValueError: 当mode参数无效时
 
     示例:
@@ -139,10 +144,13 @@ def create_collision_engine(
 
         >>> # 强制CPU
         >>> engine = create_collision_engine(targets, mode='cpu', max_workers=4)
+
+        >>> # 强制多GPU
+        >>> engine = create_collision_engine(targets, mode='multi_gpu', device_count=2)
     """
     # 参数验证
-    if mode not in ("auto", "gpu", "cpu"):
-        raise ValueError(f"无效的mode参数: {mode}，必须是 'auto', 'gpu' 或 'cpu'")
+    if mode not in ("auto", "gpu", "cpu", "multi_gpu"):
+        raise ValueError(f"无效的mode参数: {mode}，必须是 'auto', 'gpu', 'cpu' 或 'multi_gpu'")
 
     # 如果没有targets，发出警告
     if not targets:
@@ -194,6 +202,33 @@ def create_collision_engine(
                 "    3. 运行 `python scripts/diagnose.py` 获取详细说明"
             )
         return GPUCollisionEngine(targets=targets, **merged_kwargs)
+
+    # multi_gpu模式: 强制使用多GPU
+    if mode == "multi_gpu":
+        if not _GPU_AVAILABLE:
+            raise RuntimeError(
+                "多GPU不可用: pyopencl 未安装。\n"
+                "  请安装 OpenCL 运行时并执行: pip install pyopencl\n"
+                "  安装指南请参阅 docs/FAQ.md#GPU"
+            )
+        device_indices = merged_kwargs.pop("device_indices", None)
+        device_count = merged_kwargs.pop("device_count", -1)
+        strategy = merged_kwargs.pop("strategy", "performance")
+        engine = MultiGPUCollisionEngine(config=config)
+        ok = engine.initialize(
+            device_indices=device_indices,
+            device_count=device_count,
+            strategy=strategy,
+        )
+        if not ok:
+            raise RuntimeError(
+                "多GPU引擎初始化失败。\n"
+                "  请确认：\n"
+                "    1. 至少有一块 GPU（Intel/NVIDIA/AMD）已正确安装驱动\n"
+                "    2. OpenCL 运行时已安装\n"
+                "    3. 运行 `python scripts/diagnose.py` 获取详细诊断"
+            )
+        return engine
 
     # cpu模式: 强制使用CPU
     return KeyCollisionEngine(targets=targets, **merged_kwargs)

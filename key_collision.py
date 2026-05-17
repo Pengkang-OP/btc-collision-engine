@@ -9,7 +9,7 @@
 可选依赖coincurve库以提升性能。
 
 作者: BTC Project
-版本: v1.0
+版本: v4.2.1
 """
 
 import os
@@ -66,117 +66,174 @@ except ImportError:
     GPU_ENGINE_AVAILABLE = False
     _GPUCollisionEngine = None
 
+# 条件导入多GPU引擎
+try:
+    from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine as _MultiGPUCollisionEngine
+    MULTI_GPU_ENGINE_AVAILABLE = True
+except ImportError:
+    MULTI_GPU_ENGINE_AVAILABLE = False
+    _MultiGPUCollisionEngine = None
+
 
 # =============================================================================
 # TargetResolver 类 - 目标地址解析器
 # =============================================================================
+# v4.3.1: 优先使用 src/ 统一实现，回退到本地兼容实现
+# 解决两套代码独立演进导致的功能不一致问题
+_TARGET_RESOLVER_SRC = None
+
+try:
+    from src.collision import TargetResolver as _SrcTargetResolver
+    _TARGET_RESOLVER_SRC = _SrcTargetResolver
+except ImportError:
+    # src/ 模块不可用时回退到本地实现
+    pass
+
+
 class TargetResolver:
-    """解析多种格式的目标，统一转换为 P2PKH 地址集合"""
+    """解析多种格式的目标，统一转换为 P2PKH 地址集合
+
+    v4.3.1: 内部委托给 src.collision.TargetResolver 统一实现。
+    当 src/ 模块不可用时，使用本地兼容实现。
+    """
 
     def __init__(self):
-        self.generator = P2PKHAddressGenerator()
+        if _TARGET_RESOLVER_SRC is not None:
+            self._impl = _TARGET_RESOLVER_SRC()
+        else:
+            self._impl = None
+            self.generator = P2PKHAddressGenerator()
 
     @staticmethod
     def detect_format(input_str: str) -> str:
         """自动检测输入格式，返回: 'address', 'wif', 'pubkey_compressed', 'pubkey_uncompressed', 'unknown'"""
-        input_str = input_str.strip()
+        # 优先使用统一实现
+        if _TARGET_RESOLVER_SRC is not None:
+            return _TARGET_RESOLVER_SRC.detect_format(input_str)
+        return _LegacyTargetResolver._detect_format(input_str)
 
+    @staticmethod
+    def analyze_target_formats(targets: set[str]) -> dict[str, int]:
+        """v4.3.1: 分析目标地址格式分布"""
+        if _TARGET_RESOLVER_SRC is not None:
+            return _TARGET_RESOLVER_SRC.analyze_target_formats(targets)
+        return _LegacyTargetResolver._analyze_formats(targets)
+
+    def resolve(self, input_str: str) -> Optional[str]:
+        """将任意格式输入解析为 P2PKH 地址，解析失败返回 None"""
+        if self._impl is not None:
+            return self._impl.resolve(input_str)
+        return _LegacyTargetResolver._resolve(input_str, self.generator)
+
+    def resolve_multiple(self, inputs: List[str]) -> Set[str]:
+        """解析多个输入，返回地址集合"""
+        if self._impl is not None:
+            return self._impl.resolve_multiple(inputs)
+        return _LegacyTargetResolver._resolve_multiple(inputs, self.generator)
+
+    def load_from_file(self, filepath: str) -> Set[str]:
+        """从文件逐行加载并解析，跳过空行和#注释"""
+        if self._impl is not None:
+            return self._impl.load_from_file(filepath)
+        return _LegacyTargetResolver._load_from_file(filepath, self.generator)
+
+
+class _LegacyTargetResolver:
+    """v4.3.1: 旧版 TargetResolver 逻辑保留作为 src/ 模块不可用时的回退"""
+
+    @staticmethod
+    def _detect_format(input_str: str) -> str:
+        input_str = input_str.strip()
         if not input_str:
             return 'unknown'
-
         # P2PKH地址: 以'1'开头, 25-34字符, Base58字符集
         if input_str.startswith('1') and 25 <= len(input_str) <= 34:
             valid_chars = set(Base58.ALPHABET)
             if all(c in valid_chars for c in input_str):
                 return 'address'
-
-        # WIF: 以'5'开头(非压缩,51字符) 或 'K'/'L'开头(压缩,52字符)
+        # WIF
         if input_str.startswith('5') and len(input_str) == 51:
             valid_chars = set(Base58.ALPHABET)
             if all(c in valid_chars for c in input_str):
                 return 'wif'
-
         if input_str.startswith(('K', 'L')) and len(input_str) == 52:
             valid_chars = set(Base58.ALPHABET)
             if all(c in valid_chars for c in input_str):
                 return 'wif'
-
-        # 压缩公钥: 66字符hex, 以02或03开头
+        # 压缩公钥
         if len(input_str) == 66 and input_str.startswith(('02', '03')):
             try:
                 bytes.fromhex(input_str)
                 return 'pubkey_compressed'
             except ValueError:
                 pass
-
-        # 非压缩公钥: 130字符hex, 以04开头
+        # 非压缩公钥
         if len(input_str) == 130 and input_str.startswith('04'):
             try:
                 bytes.fromhex(input_str)
                 return 'pubkey_uncompressed'
             except ValueError:
                 pass
-
         return 'unknown'
 
-    def resolve(self, input_str: str) -> Optional[str]:
-        """将任意格式输入解析为 P2PKH 地址，解析失败返回 None"""
+    @staticmethod
+    def _resolve(input_str: str, generator) -> Optional[str]:
         input_str = input_str.strip()
-        fmt = self.detect_format(input_str)
-
+        fmt = _LegacyTargetResolver._detect_format(input_str)
         try:
             if fmt == 'address':
-                # 验证Base58Check校验和
                 version, payload = Base58.check_decode(input_str)
                 if version == 0x00:
                     return input_str
                 return None
-
             elif fmt == 'wif':
-                # WIF.decode -> 推导公钥 -> 推导地址
                 private_key, compressed = WIF.decode(input_str)
-                public_key = self.generator.private_key_to_public_key(private_key, compressed=compressed)
-                address = self.generator.public_key_to_address(public_key)
+                public_key = generator.private_key_to_public_key(private_key, compressed=compressed)
+                address = generator.public_key_to_address(public_key)
                 return address
-
-            elif fmt == 'pubkey_compressed':
-                # 压缩公钥 -> hash160 -> Base58Check(0x00, hash160) -> 地址
+            elif fmt in ('pubkey_compressed', 'pubkey_uncompressed'):
                 public_key = bytes.fromhex(input_str)
-                address = self.generator.public_key_to_address(public_key)
+                address = generator.public_key_to_address(public_key)
                 return address
-
-            elif fmt == 'pubkey_uncompressed':
-                # 非压缩公钥 -> hash160 -> Base58Check(0x00, hash160) -> 地址
-                public_key = bytes.fromhex(input_str)
-                address = self.generator.public_key_to_address(public_key)
-                return address
-
             else:
                 return None
-
         except Exception:
             return None
 
-    def resolve_multiple(self, inputs: List[str]) -> Set[str]:
-        """解析多个输入，返回地址集合"""
+    @staticmethod
+    def _resolve_multiple(inputs: List[str], generator) -> Set[str]:
         addresses = set()
         for inp in inputs:
-            addr = self.resolve(inp)
+            addr = _LegacyTargetResolver._resolve(inp, generator)
             if addr:
                 addresses.add(addr)
         return addresses
 
-    def load_from_file(self, filepath: str) -> Set[str]:
-        """从文件逐行加载并解析，跳过空行和#注释"""
+    @staticmethod
+    def _analyze_formats(targets: set[str]) -> dict[str, int]:
+        """简单格式统计"""
+        counts: dict[str, int] = {}
+        for addr in targets:
+            if addr.startswith('1'):
+                counts['p2pkh'] = counts.get('p2pkh', 0) + 1
+            elif addr.startswith('3'):
+                counts['p2sh'] = counts.get('p2sh', 0) + 1
+            elif addr.startswith('bc1'):
+                counts['bech32'] = counts.get('bech32', 0) + 1
+            else:
+                counts['unknown'] = counts.get('unknown', 0) + 1
+        return counts
+
+    @staticmethod
+    def _load_from_file(filepath: str, generator) -> Set[str]:
         addresses = set()
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
                 for line in f:
                     line = line.strip()
-                    # 跳过空行和注释
                     if not line or line.startswith('#'):
                         continue
-                    addr = self.resolve(line)
+                    addr = _LegacyTargetResolver._resolve(line, generator)
                     if addr:
                         addresses.add(addr)
         except FileNotFoundError:
@@ -793,6 +850,20 @@ else:
         def get_device_info() -> dict:
             """返回 GPU 设备信息"""
             return {}
+
+# 多GPU引擎导出
+if MULTI_GPU_ENGINE_AVAILABLE:
+    MultiGPUCollisionEngine = _MultiGPUCollisionEngine
+else:
+    # GPU 不可用时的占位类
+    class MultiGPUCollisionEngine:
+        """多 GPU 碰撞引擎（占位类 - GPU不可用）"""
+
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError(
+                "多GPU 加速不可用。请确保已安装 pyopencl 并有可用的 OpenCL 设备。\n"
+                "安装命令: pip install pyopencl"
+            )
 
 
 # =============================================================================
