@@ -50,6 +50,7 @@ tests/data_logs/report_daily_*.json
 
 # 基准测试结果（临时数据）
 benchmarks/results/benchmark_*.json
+benchmarks/benchmark_*.json
 benchmarks/btc_addresses_sorted.txt
 
 # 临时文件
@@ -59,6 +60,13 @@ benchmarks/btc_addresses_sorted.txt
 *.pid
 *.exe  # 可执行安装程序
 dxdiag.txt
+
+# scripts 目录下禁止跟踪的子目录（运行时/环境残留）
+scripts/venv/
+scripts/data_logs/
+scripts/kernels/
+scripts/logs/
+scripts/monitoring_data/
 
 # 代码审查 diff 文件
 review_diff_*.txt
@@ -123,7 +131,7 @@ AI_AUTO_SORT_*.json
 !README.md
 !CHANGELOG.md
 !CONTRIBUTING.md
-!STARTUP_GUIDE.md
+!docs/DOCUMENT_INDEX.md
 
 # 根目录临时数据文件
 dxdiag.txt
