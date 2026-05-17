@@ -156,15 +156,15 @@ class TestGPUAutoConfigurator(unittest.TestCase):
         self.assertIn(config["batch_size"], [32768, 65536, 131072])
 
     def test_intel_config(self):
-        """测试Intel配置（v3.1.0: Arc A770 16GB优化为1048576）"""
+        """测试Intel配置（v4.2.3: Arc A770 16GB优化为2097152 (2M)）"""
         device = {"vendor": "intel", "global_mem_gb": 16.0}
 
         config = self.configurator.get_intel_config(device)
 
         self.assertEqual(config["use_uint32_workaround"], True)
         self.assertEqual(config["use_fast_math"], False)
-        # v3.1.0优化: Arc A770(16GB)使用1048576批次; 低显存设备使用更小批次
-        self.assertIn(config["batch_size"], [65536, 131072, 262144, 1048576])
+        # v4.2.3优化: Arc A770(16GB)使用2097152批次; 低显存设备使用更小批次
+        self.assertIn(config["batch_size"], [65536, 131072, 262144, 1048576, 2097152])
 
     def test_configure_for_device_intel_full_vendor_name(self):
         """测试完整厂商名称路由 - Intel(R) Corporation 应走 INTEL_ARC_CONFIG"""
@@ -178,7 +178,7 @@ class TestGPUAutoConfigurator(unittest.TestCase):
         self.assertTrue(config["use_uint32_workaround"], "Intel Arc 应启用uint32 workaround")
         self.assertFalse(config["use_fast_math"], "Intel Arc 应禁用快速数学")
         self.assertEqual(
-            config["batch_size"], 1048576, "Intel Arc A770(≥15GB) 应使用1048576批次(v3.1.0优化)"
+            config["batch_size"], 2097152, "Intel Arc A770(≥15GB) 应使用2097152批次(v4.2.3优化: 2M)"
         )
 
     def test_configure_for_device_amd_full_vendor_name(self):
