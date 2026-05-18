@@ -4,7 +4,7 @@
 
 > **版本**: v4.4.0 | **最后更新**: 2026-05-18
 
-> 本次更新：启动时目标格式分析与不兼容格式警告；全文"可能"→"必然"措辞修正；GPU路径一致性注释；冗余文件清理。
+> 本次更新：安全修复增强(安全清零/侧信道防护/敏感数据脱敏/线程安全)；全项目版本统一到4.4.0；文档拓扑图更新；冗余文档清理。
 
 ---
 
@@ -12,8 +12,13 @@
 
 | 目录 | 文档数量 | 说明 |
 |------|----------|------|
-| docs/*.md | 40+ | 活跃文档 |
-| docs/archive/ | 30+ | 历史归档 |
+| docs/*.md | 30+ | 核心活跃文档 |
+| docs/standards/ | 5 | 开发规范文档 |
+| docs/technical-docs/ | 4 | 技术深度文档 |
+| docs/security/ | 1 | 安全专项文档 |
+| docs/user-docs/ | 1 | 用户手册 |
+| docs/audit-reports/ | 6 | 审计报告 |
+| docs/archive/ | 38+ | 历史归档 |
 | 根目录 | 3 | 核心文档 (README/CHANGELOG/CONTRIBUTING) |
 
 ---
@@ -97,6 +102,42 @@
 - troubleshooting.md - 故障排除
 - FAQ.md - 常见问题
 
+### 8. 开发规范 (docs/standards/)
+
+- development_code_standards.md - 代码编写规范
+- development_test_standards.md - 测试编写规范
+- git_commit_standards.md - Git提交规范
+- log_level_guidelines.md - 日志级别指南
+- config_change_process.md - 配置变更流程
+
+### 9. 技术专题 (docs/technical-docs/)
+
+- cross-platform-compatibility.md - 跨平台兼容性
+- gpu_best_practices.md - GPU最佳实践
+- i18n-guide.md - 国际化指南
+- logging-monitoring-system.md - 日志监控系统
+
+### 10. 安全 (docs/security/)
+
+- windows_memory_lock.md - Windows内存锁定
+
+### 11. 用户文档 (docs/user-docs/)
+
+- cli_export_guide.md - CLI导出指南
+
+---
+
+## 审计报告 (docs/audit-reports/)
+
+| 文档 | 说明 |
+|------|------|
+| BAT_CLI_AUDIT_REPORT.md | BAT/CLI审计报告 |
+| CLEANUP_REPORT.md | 清理报告 |
+| COMPATIBILITY_AUDIT_REPORT.md | 兼容性审计报告 |
+| OPENCL_KERNEL_AUDIT_REPORT.md | OpenCL内核审计报告 |
+| comprehensive_audit_10dimensions_20260424.md | 十维度综合审计 |
+| E2E_AUDIT_REPORT_v4.3.0.md | v4.3.0端到端审计报告 |
+
 ---
 
 ## 历史归档 (docs/archive/history/)
@@ -126,9 +167,8 @@
 
 ## 更新记录
 
-- v4.4.0 (2026-05-18): 安全修复增强（安全清零、侧信道防护、敏感数据脱敏、线程安全）；文档一致性整理（根目录重复文档清理，统一版本号到4.4.0）
-- v4.3.1 (2026-05-16): 启动时目标格式分析与不兼容格式Rich Panel警告；全文"可能"→"必然"措辞修正(resolver.py 6处)；GPU路径一致性注释(kernel_impl.py)；i18n新增targets键；冗余文件清理
-- v4.3.0 (2026-05-16): 文档深度清理 — 根目录去重 6文件，归档过时 11文件，合并冗余 4组，精简 archive/startbat/ 9文件
+- v4.4.0 (2026-05-18): 安全修复增强(安全清零/侧信道防护/敏感数据脱敏/线程安全); 全项目版本统一到4.4.0; 文档拓扑图更新; 冗余文档清理
+- v4.3.0 (2026-05-16): 启动时目标格式分析与不兼容格式Rich Panel警告; 全文措辞修正; GPU路径一致性注释; i18n新增targets键; 冗余文件清理; 文档深度清理
 - v4.2.3 (2026-05-15): Bech32 编解码统一重构，WIF 防泄露，竞态条件修复，BIP-173 回归测试，注释规范化
 - v4.2.2 (2026-05-15): mod_inverse Binary GCD 2^256溢出修复，生产验收测试全通过
 - v4.2.1 (2026-05-12): 全项目版本统一，OpenCL内核审核修复，端到端自动化系统上线，CLI/bat文件整理
