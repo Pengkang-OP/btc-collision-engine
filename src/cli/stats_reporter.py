@@ -44,7 +44,7 @@ def _print_detailed_stats(stats: Any) -> None:
             rows.append(("GPU设备", str(gpu_info)))
     except Exception as e:
         rows.append(("状态", "统计信息暂不可用"))
-        sys.stderr.write(f"详细统计获取失败: {e}\n")
+        output.error(f"详细统计获取失败: {e}")
     output.stats_panel("详细统计", rows)
 
 
