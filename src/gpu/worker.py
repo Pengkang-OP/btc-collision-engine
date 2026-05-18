@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Any, cast
 if TYPE_CHECKING:
     from ..collision.gpu_collision_engine import GPUCollisionEngine
 
-# P3-5: 统一日志获取
+# 统一日志获取
 from ..config.optimization_config import is_feature_enabled
 from ..utils import get_configured_logger
 
@@ -130,6 +130,9 @@ class SingleGPUWorker(threading.Thread):
 
         # GPU引擎实例
         self._gpu_engine: GPUCollisionEngine | None = None
+
+        # 已上报匹配数追踪 (防止 _update_stats 重复上报)
+        self._last_reported_match_count: int = 0
 
         logger.info(f"GPU工作器已创建: 设备={device_idx}, 范围={key_range[0]:,}-{key_range[1]:,}")
 
@@ -364,32 +367,37 @@ class SingleGPUWorker(threading.Thread):
                         key_range=self.key_range,
                     )
 
-                # 检查新匹配（matches 是 Match 对象列表）
-                for match in engine_stats.matches:
-                    match_dict = {
-                        "address": (
-                            match.get("address", "")
-                            if isinstance(match, dict)
-                            else getattr(match, "address", "")
-                        ),
-                        "private_key": (
-                            match.get("private_key_hex", "")
-                            if isinstance(match, dict)
-                            else getattr(match, "private_key_hex", "")
-                        ),
-                    }
-                    self._result_queue.put(match_dict)
+                # 仅上报新增匹配 (使用 match_index 追踪，防止重复上报)
+                current_match_count = len(engine_stats.matches)
+                if current_match_count > self._last_reported_match_count:
+                    for i in range(self._last_reported_match_count, current_match_count):
+                        match = engine_stats.matches[i]
+                        match_dict = {
+                            "address": (
+                                match.get("address", "")
+                                if isinstance(match, dict)
+                                else getattr(match, "address", "")
+                            ),
+                            "private_key_hash": (
+                                match.get("private_key_hash", "")
+                                if isinstance(match, dict)
+                                else getattr(match, "private_key_hash", "")
+                            ),
+                        }
+                        self._result_queue.put(match_dict)
 
-                    # 记录匹配到增量统计器
-                    if self._delta_stats:
-                        self._delta_stats.add_match()
+                        # 记录匹配到增量统计器
+                        if self._delta_stats:
+                            self._delta_stats.add_match()
 
-                    # 调用回调
-                    if self.result_callback:
-                        try:
-                            self.result_callback(self.device_idx, match_dict)
-                        except Exception as e:
-                            logger.error(f"结果回调异常: {e}")
+                        # 调用回调
+                        if self.result_callback:
+                            try:
+                                self.result_callback(self.device_idx, match_dict)
+                            except Exception as e:
+                                logger.error(f"结果回调异常: {e}")
+
+                    self._last_reported_match_count = current_match_count
 
         except AttributeError as e:
             logger.debug(f"统计信息属性访问失败: {e}")

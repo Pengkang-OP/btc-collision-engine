@@ -9,6 +9,7 @@
 更新日期: 2026-04-30
 """
 
+import hashlib
 import logging
 import time
 from typing import Any
@@ -157,6 +158,9 @@ class GPUKernelAdapter(IKernelExecutor):
             match_result: MatchResult = {
                 "address": match.get("address", ""),
                 "private_key": match.get("private_key", ""),
+                "private_key_hash": hashlib.sha256(
+                    str(match.get("private_key", "")).encode()
+                ).hexdigest(),
                 "public_key": match.get("public_key", ""),
                 "hash160": match.get("hash160", ""),
                 "index": match.get("index", 0),

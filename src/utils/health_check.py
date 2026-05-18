@@ -126,7 +126,7 @@ class HealthChecker:
 
     def check_directories(self) -> tuple[bool, str]:
         """检查必要目录是否存在且有权限"""
-        required_dirs = ["logs", "data_logs", "monitoring_data"]
+        required_dirs = ["logs", "data_logs"]  # monitoring_data 已废弃 (v4.2.3)
         missing = []
         no_permission = []
 
@@ -258,7 +258,8 @@ class HealthChecker:
                     # 检查是否过松（组或其他用户有读写权限）
                     if permissions & 0o077:  # 组或其他有任何权限
                         insecure_files.append(f"{config_name} ({oct(permissions)[2:]})")
-                except Exception:
+                except OSError:
+                    # P1修复: 窄化异常 — os.stat() 失败(权限/不存在)时跳过
                     pass
 
         if insecure_files:
@@ -286,7 +287,8 @@ class HealthChecker:
                     succeeded.append(host)
                 else:
                     failed.append(host)
-            except Exception:
+            except OSError:
+                # P1修复: 窄化异常 — socket连接失败时记录
                 failed.append(host)
 
         if failed:

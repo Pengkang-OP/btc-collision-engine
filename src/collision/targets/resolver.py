@@ -228,7 +228,7 @@ class TargetResolver:
             return None
 
     def _resolve_bech32_address(self, input_str: str) -> str | None:
-        """解析Bech32地址 — 仅格式验证和小写标准化,不转换为P2PKH"""
+        """解析Bech32地址 — P2WPKH(v0/20字节)转换为P2PKH, P2WSH(v0/32字节)保持原格式"""
         try:
             hrp = "bc" if input_str.lower().startswith("bc1") else "tb"
             witness_version, witness_program = decode_segwit_address(hrp, input_str)
@@ -244,15 +244,25 @@ class TargetResolver:
                     "检测到P2WSH地址(32字节witness program),"
                     "当前引擎仅生成P2PKH地址,此目标必然无法匹配。"
                 )
+                normalized = input_str.lower()
+                if self.cache:
+                    self.cache.put(normalized, normalized)
+                return normalized
             elif prog_len != 20:
                 logger.warning(f"Bech32 witness长度无效: {prog_len}字节")
                 return None
-            normalized = input_str.lower()
+            # P2WPKH (v0, 20字节): witness program = pubkey_hash (Hash160)
+            # 转换为 Legacy P2PKH 地址以便引擎进行碰撞匹配
+            from ...core.hash_utils import HashUtils
+            p2pkh_addr = HashUtils.hash160_to_address(witness_program)
             if self.cache:
-                # Bech32 编码大小写不敏感,统一用小写作为缓存 key
-                self.cache.put(normalized, normalized)
-            logger.debug(f"Bech32地址验证成功(保持原格式): {normalized[:15]}...")
-            return normalized
+                # 同时缓存原始 Bech32 和转换后的 P2PKH
+                normalized = input_str.lower()
+                self.cache.put(normalized, p2pkh_addr)
+            logger.debug(
+                f"Bech32 P2WPKH 转换成功: {input_str[:15]}... → {p2pkh_addr[:15]}..."
+            )
+            return p2pkh_addr
         except ValueError as e:
             logger.error(f"Bech32地址转换异常: {input_str} - {type(e).__name__}: {e}")
             return None

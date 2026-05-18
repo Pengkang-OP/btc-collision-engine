@@ -42,15 +42,12 @@ from concurrent.futures import Future
 from typing import Any, Optional, cast
 
 # 导入日志配置
-from ..utils import get_configured_logger, init_logging
+from ..utils import get_configured_logger
 
-# 初始化日志系统
-init_logging()
-
-# 获取模块日志记录器
+# 日志系统由CLI/main.py入口统一初始化
 logger = get_configured_logger("ThreadPool")
 
-# P3-8: 线程池配置常量
+# 线程池配置常量
 DEFAULT_MIN_WORKERS = 1
 DEFAULT_MAX_WORKERS = 1024  # 防止线程过度创建导致系统资源耗尽
 
@@ -118,14 +115,14 @@ class WorkStealingThreadPool:
         self._tasks_submitted = 0
         self._tasks_completed = 0
         self._tasks_stolen = 0
-        self._tasks_failed = 0  # P3-8: 失败任务计数
+        self._tasks_failed = 0  # 失败任务计数
 
-        # P3-8: 线程级统计
+        # 线程级统计
         self._thread_tasks: list[int] = [0] * self.num_threads
         self._thread_idle_cycles: list[int] = [0] * self.num_threads
         self._last_health_check = time.time()
 
-        # P3-8: 启动时间戳
+        # 启动时间戳
         self._start_time: float | None = None
 
         logger.info(
@@ -135,7 +132,7 @@ class WorkStealingThreadPool:
     def start(self) -> None:
         """启动线程池"""
         self._stop_event.clear()
-        self._start_time = time.time()  # P3-8: 记录启动时间
+        self._start_time = time.time()  # 记录启动时间
 
         for i in range(self.num_threads):
             thread = threading.Thread(
@@ -164,7 +161,7 @@ class WorkStealingThreadPool:
 
         self._threads.clear()
 
-        # P3-8: 输出关闭统计
+        # 输出关闭统计
         stats = self.get_stats()
         logger.info(
             f"线程池已停止: 提交={stats['tasks_submitted']}, "
@@ -206,7 +203,7 @@ class WorkStealingThreadPool:
 
             if task is None:
                 # 无任务,短暂休眠
-                self._thread_idle_cycles[thread_id] += 1  # P3-8: 闲置计数
+                self._thread_idle_cycles[thread_id] += 1  # 闲置计数
                 time.sleep(0.001)
                 continue
 
@@ -217,11 +214,11 @@ class WorkStealingThreadPool:
                 future.set_result(result)
                 with self._stats_lock:
                     self._tasks_completed += 1
-                    self._thread_tasks[thread_id] += 1  # P3-8: 线程级计数
+                    self._thread_tasks[thread_id] += 1  # 线程级计数
             except Exception as e:
                 future.set_exception(e)
                 with self._stats_lock:
-                    self._tasks_failed += 1  # P3-8: 失败计数
+                    self._tasks_failed += 1  # 失败计数
                 logger.error(f"任务执行失败 (线程{thread_id}): {type(e).__name__}: {e}")
 
     def _get_task(self, thread_id: int) -> tuple | None:
@@ -445,7 +442,7 @@ class GlobalThreadPoolManager:
             self._initialized = False
             self._shutdown_complete = True
 
-            # P3-8: 关闭时健康检查
+            # 关闭时健康检查
             health = self._pool.health_check()
             if health["issues"]:
                 logger.warning(f"线程池关闭时检测到问题: {', '.join(health['issues'])}")

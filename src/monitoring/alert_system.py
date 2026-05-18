@@ -122,7 +122,7 @@ class AlertSystem:
         self.alert_history: list[AlertRecord] = []
         self.last_alert_time: dict[str, float] = {}  # 规则名称 -> 最后告警时间
         self.alert_callbacks: list[Callable] = []  # 告警回调函数
-        self.notification_channels: list[Any] = []  # P2-7: 通知渠道列表
+        self.notification_channels: list[Any] = []  # 通知渠道列表
 
         # #11修复: 增强的速率限制
         self._global_rate_limit_max = 10  # 每分钟最多10条告警
@@ -177,7 +177,7 @@ class AlertSystem:
         self.alert_callbacks.append(callback)
         logger.info("添加告警回调函数")
 
-    # ── P2-7: 多渠道通知支持 ──
+    # ── 多渠道通知支持 ──
     def add_notification_channel(self, channel) -> None:
         """添加告警通知渠道
 
@@ -302,6 +302,42 @@ class AlertSystem:
 
         logger.info(f"默认告警规则设置完成: {len(self.rules)} 条规则")
 
+    # 告警爆发去重：同一规则在此窗口内只允许触发一次（秒）
+    BURST_DEDUP_WINDOW = 2.0
+
+    def _sanitize_metrics(self, metrics: dict[str, Any]) -> dict[str, Any]:
+        """对输入指标进行数据清洗和范围检查
+
+        确保内存使用百分比、温度等指标在合理范围内，
+        防止异常值导致误报。
+
+        Args:
+            metrics: 原始指标字典
+
+        Returns:
+            清洗后的指标字典（不修改原字典）
+        """
+        sanitized = dict(metrics)
+
+        # 修复: memory_usage_percent 范围验证 (0-100)
+        if "memory_usage_percent" in sanitized:
+            raw = sanitized["memory_usage_percent"]
+            if raw > 100.0:
+                logger.warning(
+                    f"指标异常: memory_usage_percent={raw:.1f} 超出0-100范围, 已钳制到100 (很可能传入了绝对MB值而非百分比)"
+                )
+                sanitized["memory_usage_percent"] = 100.0
+            elif raw < 0.0:
+                sanitized["memory_usage_percent"] = 0.0
+
+        # gpu_temperature 范围验证 (0-120)
+        if "gpu_temperature" in sanitized:
+            raw = sanitized["gpu_temperature"]
+            if raw > 120.0 or raw < 0.0:
+                sanitized["gpu_temperature"] = 0.0
+
+        return sanitized
+
     def check_metrics(self, metrics: dict[str, Any]) -> list[AlertRecord]:
         """检查性能指标并触发告警
 
@@ -321,6 +357,9 @@ class AlertSystem:
         triggered_alerts: list[AlertRecord] = []
         current_time = time.time()
 
+        # 数据清洗: 防止异常输入值导致误报
+        metrics = self._sanitize_metrics(metrics)
+
         # #11修复: 检查全局速率限制
         if not self._check_global_rate_limit(current_time):
             logger.warning(
@@ -334,8 +373,12 @@ class AlertSystem:
             if not rule.enabled:
                 continue
 
-            # 检查冷却时间
+            # 告警爆发去重: 同一规则在短时间窗口内只触发一次
             last_time = self.last_alert_time.get(rule.name, 0)
+            if current_time - last_time < self.BURST_DEDUP_WINDOW:
+                continue
+
+            # 检查冷却时间
             cooldown = rule.get_cooldown()
             if current_time - last_time < cooldown:
                 continue
@@ -444,7 +487,7 @@ class AlertSystem:
             except Exception as e:
                 logger.error(f"告警回调函数执行失败: {e}")
 
-        # 2. P2-7: 通过通知渠道发送 (C3修复: 遍历快照避免并发修改)
+        # 2. 通过通知渠道发送 (C3修复: 遍历快照避免并发修改)
         for channel in list(self.notification_channels):
             try:
                 channel.send(alert)

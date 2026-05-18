@@ -12,11 +12,11 @@ import time
 import tempfile
 import pytest
 
-from src.logging.log_collector import LogCollector
-from src.logging.log_processor import LogProcessor, SensitiveDataFilter
-from src.logging.log_storage import LogStorage
-from src.logging.events import LogEventType
-from src.logging.log_manager import LogManager
+from src.log_engine.log_collector import LogCollector
+from src.log_engine.log_processor import LogProcessor, SensitiveDataFilter
+from src.log_engine.log_storage import LogStorage
+from src.log_engine.events import LogEventType
+from src.log_engine.log_manager import LogManager
 
 from src.collision.event_bus import EventBus, reset_event_bus
 from src.collision.events import (

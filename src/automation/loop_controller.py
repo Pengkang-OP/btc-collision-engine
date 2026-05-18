@@ -24,6 +24,8 @@ class LoopController:
     闭环控制器
     协调分析->测试->审核的完整流程
     异常自动触发反馈回路
+
+    v4.3.1: 阶段失败不再硬中断整个循环，而是继续下一轮迭代。
     """
 
     def __init__(
@@ -56,10 +58,15 @@ class LoopController:
         self.start_time = None
         self.end_time = None
 
+        # v4.3.1: 阶段失败计数
+        self._phase_failures: dict[str, int] = {"analysis": 0, "test": 0, "audit": 0}
+
     def run(self) -> AuditResult:
         """
         执行完整的闭环流程
         分析 -> 测试 -> 审核 -> (异常则反馈回路)
+
+        v4.3.1: 阶段失败不再硬中断，而是重试下一轮迭代。
         """
         self.start_time = datetime.now()
         self.state = LoopState(
@@ -83,8 +90,10 @@ class LoopController:
                 analysis_report = self._run_analysis_phase()
 
                 if analysis_report is None:
-                    print("[FAIL] Analysis phase failed")
-                    break
+                    print("[FAIL] Analysis phase failed, retrying...")
+                    self._phase_failures["analysis"] += 1
+                    self.state.increment_retry()
+                    continue
 
                 self.state.analysis_report = analysis_report
                 self.state.issues_found.extend(analysis_report.issues)
@@ -94,8 +103,10 @@ class LoopController:
                 test_results = self._run_test_phase(analysis_report)
 
                 if test_results is None:
-                    print("[FAIL] Test phase failed")
-                    break
+                    print("[FAIL] Test phase failed, retrying...")
+                    self._phase_failures["test"] += 1
+                    self.state.increment_retry()
+                    continue
 
                 self.state.test_results = test_results
 
@@ -104,8 +115,10 @@ class LoopController:
                 audit_result = self._run_audit_phase(test_results, analysis_report)
 
                 if audit_result is None:
-                    print("[FAIL] Audit phase failed")
-                    break
+                    print("[FAIL] Audit phase failed, retrying...")
+                    self._phase_failures["audit"] += 1
+                    self.state.increment_retry()
+                    continue
 
                 self.state.audit_results.append(audit_result)
                 final_audit_result = audit_result
@@ -294,6 +307,7 @@ class LoopController:
             "duration_seconds": duration,
             "start_time": self.start_time.isoformat() if self.start_time else None,
             "end_time": self.end_time.isoformat() if self.end_time else None,
+            "phase_failures": dict(self._phase_failures),
         }
 
     def save_report(self, filepath: str):
@@ -309,10 +323,10 @@ class LoopController:
             "iterations": self.total_iterations,
         }
 
-        import json
+        from src.utils.fast_json import fast_dump
 
         with open(filepath, "w", encoding="utf-8") as f:
-            json.dump(report, f, ensure_ascii=False, indent=2)
+            fast_dump(report, f, ensure_ascii=False, indent=2)
 
 
 def run_automation_loop(

@@ -1,8 +1,7 @@
 # 日志系统使用指南
 
-> **版本**: v3.3.1 | **最后更新**: 2026-04-28  
+> **版本**: v4.2.2 | **最后更新**: 2026-05-15
 > **面向**: 开发者
-
 
 本文档提供BTC碰撞引擎项目日志系统的完整使用指南，包括配置、使用和最佳实践。
 
@@ -266,7 +265,7 @@ from src.utils import get_sampled_logger
 
 # GPU碰撞引擎中的采样日志
 sampled_logger = get_sampled_logger(
-    "KeyCollisionEngine.sampled", 
+    "KeyCollisionEngine.sampled",
     sample_rate=1000
 )
 
@@ -318,7 +317,7 @@ handler.setFormatter(formatter)
 
 ```python
 from src.utils import (
-    EnhancedPerformanceMonitor, 
+    EnhancedPerformanceMonitor,
     get_performance_tracker,
     log_performance_summary
 )
@@ -464,7 +463,7 @@ with EnhancedPerformanceMonitor(logger, "资源清理"):
 import sys
 import logging
 from src.utils import (
-    init_logging, 
+    init_logging,
     get_configured_logger,
     EnhancedPerformanceMonitor,
     get_performance_tracker,
@@ -479,11 +478,11 @@ def main():
     # 1. 初始化日志
     init_logging()
     logger.info("BTC碰撞引擎启动")
-    
+
     # 2. 加载配置
     with EnhancedPerformanceMonitor(logger, "配置加载", level="INFO"):
         config = load_config()
-    
+
     # 3. 创建引擎
     with EnhancedPerformanceMonitor(logger, "引擎创建", level="INFO") as pm:
         engine = create_collision_engine(
@@ -492,14 +491,14 @@ def main():
             config=config
         )
         pm.add_metadata('mode', config['mode'])
-    
+
     # 4. 启动引擎
     logger.info("开始碰撞...")
     engine.start()
-    
+
     # 5. 输出性能统计
     log_performance_summary(logger)
-    
+
     logger.info("程序退出")
 
 if __name__ == '__main__':
@@ -526,7 +525,7 @@ class GPUCollisionEngine:
         with EnhancedPerformanceMonitor(logger, "GPU引擎初始化") as pm:
             self._init_gpu()
             pm.add_metadata('targets', len(targets))
-    
+
     def process_batch(self, batch):
         with EnhancedPerformanceMonitor(logger, "批次处理", level="DEBUG"):
             try:
@@ -568,7 +567,7 @@ init_logging({"enable_file": False})
 
 ### Q3: 如何动态修改日志级别？
 
-**A**: 
+**A**:
 
 ```python
 import logging
@@ -602,6 +601,6 @@ def func():
 
 ---
 
-**文档版本**: v1.0  
-**最后更新**: 2026-04-20  
+**文档版本**: v4.2.2
+**最后更新**: 2026-04-20
 **维护者**: BTC碰撞引擎开发团队

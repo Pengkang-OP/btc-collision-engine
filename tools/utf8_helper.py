@@ -1,109 +1,108 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-UTF-8编码支持工具模块
+Windows 控制台 UTF-8 编码修复工具
 
-提供Windows控制台UTF-8编码设置的统一接口，避免在多个脚本中重复相同的代码。
+在 Windows 平台上，默认控制台编码通常是 GBK/CP936，
+导致中文输出显示为乱码。此模块通过调用 Windows API
+设置控制台编码为 UTF-8 (代码页 65001)，解决中文显示问题。
 
-使用示例:
-    >>> from tools.utf8_helper import setup_windows_utf8
-    >>> setup_windows_utf8()
-    >>> print("✅ 中文和emoji现在可以正常显示")
-
-功能:
-    - 自动检测Windows平台
-    - 设置控制台代码页为UTF-8 (65001)
-    - 重新包装stdout/stderr使用UTF-8编码
-    - 跨平台安全（不影响Linux/Mac）
-
-版本: 1.0.0
-日期: 2026-04-21
-作者: BTC Collision Engine Team
+非 Windows 平台下，所有函数为空操作，保证跨平台兼容性。
 """
-
-from __future__ import annotations
-
 import sys
 import io
 import ctypes
 import logging
-from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 __version__ = "1.0.0"
 __author__ = "BTC Collision Engine Team"
-__date__ = "2026-04-21"
-
-
-def setup_windows_utf8() -> None:
-    """设置Windows控制台UTF-8编码。
-    
-    在Windows系统上设置控制台代码页为UTF-8 (65001)，
-    并重新包装stdout/stderr使用UTF-8编码。
-    
-    在非Windows平台调用此函数不会有任何副作用。
-    
-    Raises:
-        OSError: Windows API调用失败（会被捕获，不会抛出）
-        AttributeError: ctypes.windll不存在（会被捕获，不会抛出）
-    
-    Example:
-        >>> from tools.utf8_helper import setup_windows_utf8
-        >>> setup_windows_utf8()
-        >>> print("✅ 中文正常显示")
-    """
-    if sys.platform == 'win32':
-        try:
-            # 设置控制台代码页为UTF-8
-            ctypes.windll.kernel32.SetConsoleOutputCP(65001)
-            ctypes.windll.kernel32.SetConsoleCP(65001)
-        except (OSError, AttributeError) as e:
-            # 记录debug级别日志，不影响程序运行
-            logging.debug(f"Failed to set console code page: {e}")
-        
-        # 重新包装stdout/stderr以确保UTF-8输出
-        # errors='replace' 确保无法编码的字符不会导致崩溃
-        try:
-            sys.stdout = io.TextIOWrapper(
-                sys.stdout.buffer, 
-                encoding='utf-8', 
-                errors='replace'
-            )
-            sys.stderr = io.TextIOWrapper(
-                sys.stderr.buffer, 
-                encoding='utf-8', 
-                errors='replace'
-            )
-        except (AttributeError, OSError) as e:
-            # stdout.buffer不存在（重定向到文件时）
-            logging.debug(f"Failed to wrap stdout/stderr: {e}")
+__date__ = "2025-05-17"
 
 
 def is_utf8_setup_needed() -> bool:
-    """检查是否需要设置UTF-8编码。
-    
+    """检查是否需要设置 UTF-8 编码。
+
     Returns:
-        bool: 如果在Windows平台且当前编码不是UTF-8，返回True。
-    
-    Example:
-        >>> if is_utf8_setup_needed():
-        ...     setup_windows_utf8()
+        True 如果在 Windows 平台且控制台编码不是 UTF-8
     """
-    if sys.platform != 'win32':
+    if sys.platform != "win32":
         return False
-    
-    # 检查当前stdout编码
-    current_encoding = getattr(sys.stdout, 'encoding', None)
-    return current_encoding is not None and current_encoding.lower() != 'utf-8'
+    try:
+        encoding = get_console_encoding()
+        return encoding.lower() not in ("utf-8", "utf8", "cp65001")
+    except Exception:
+        return True
 
 
-def get_console_encoding() -> Optional[str]:
+def get_console_encoding() -> str:
     """获取当前控制台编码。
-    
+
     Returns:
-        Optional[str]: 当前编码名称，如果无法确定则返回None。
-    
-    Example:
-        >>> encoding = get_console_encoding()
-        >>> print(f"当前编码: {encoding}")
+        当前控制台编码字符串，如 'cp936'、'utf-8'
     """
-    return getattr(sys.stdout, 'encoding', None)
+    if sys.platform != "win32":
+        try:
+            return sys.stdout.encoding or "utf-8"
+        except Exception:
+            return "utf-8"
+    try:
+        cp = ctypes.windll.kernel32.GetConsoleOutputCP()
+        return f"cp{cp}"
+    except Exception:
+        try:
+            return sys.stdout.encoding or "unknown"
+        except Exception:
+            return "unknown"
+
+
+def setup_windows_utf8() -> bool:
+    """在 Windows 平台上设置控制台为 UTF-8 编码。
+
+    通过调用 Windows API SetConsoleOutputCP(65001) 和
+    SetConsoleCP(65001) 将控制台编码切换为 UTF-8。
+    同时重新包装 sys.stdout 以使用 UTF-8 编码。
+
+    Returns:
+        True 如果设置成功或无需设置，False 如果设置失败
+    """
+    if sys.platform != "win32":
+        return True
+
+    if not is_utf8_setup_needed():
+        return True
+
+    try:
+        # 设置控制台代码页为 UTF-8 (65001)
+        ctypes.windll.kernel32.SetConsoleOutputCP(65001)
+        ctypes.windll.kernel32.SetConsoleCP(65001)
+
+        # 重新包装 stdout 以使用 UTF-8 编码
+        if hasattr(sys.stdout, "buffer"):
+            try:
+                sys.stdout = io.TextIOWrapper(
+                    sys.stdout.buffer,
+                    encoding="utf-8",
+                    errors="replace",
+                    line_buffering=True,
+                )
+            except Exception as wrapper_err:
+                logger.debug(f"Failed to wrap stdout: {wrapper_err}")
+
+        if hasattr(sys.stderr, "buffer"):
+            try:
+                sys.stderr = io.TextIOWrapper(
+                    sys.stderr.buffer,
+                    encoding="utf-8",
+                    errors="replace",
+                    line_buffering=True,
+                )
+            except Exception as wrapper_err:
+                logger.debug(f"Failed to wrap stderr: {wrapper_err}")
+
+        logger.debug("Windows console code page set to UTF-8 (65001)")
+        return True
+    except Exception as e:
+        logger.debug(f"Failed to set UTF-8 code page: {e}")
+        return False

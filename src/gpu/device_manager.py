@@ -3,7 +3,7 @@
 负责GPU设备的初始化、配置和管理。
 """
 
-# P3-5: 统一日志获取
+# 统一日志获取
 from pathlib import Path
 from typing import Any, cast
 
@@ -22,6 +22,11 @@ from .nvidia_optimizer import NvidiaGPUOptimizer
 from .profiles.loader import GPUProfileLoader
 
 _logger = get_configured_logger("GPUDeviceManager")
+
+
+class NoValidTargetsError(ValueError):
+    """没有有效的目标地址 (仅 P2PKH 格式可用, 其他格式已被跳过)"""
+    pass
 
 
 class GPUDeviceManager:
@@ -102,6 +107,8 @@ class GPUDeviceManager:
 
                 # 2. 准备目标地址
                 target_hash160s, target_list = self._prepare_targets(targets)
+                self.target_hash160s = target_hash160s
+                self.target_list = target_list
 
                 # 3. 计算最优batch_size
                 if batch_size is None:
@@ -148,10 +155,38 @@ class GPUDeviceManager:
                 pm.add_metadata("vendor", device_info.get("vendor", "Unknown"))
                 pm.add_metadata("batch_size", batch_size)
 
+            except NoValidTargetsError as e:
+                # 使用ExceptionHandler记录详细错误
+                ExceptionHandler.handle_engine_error("GPU", e, context="设备初始化")
+                # 目标地址格式不兼容 (仅支持 P2PKH)
+                self.logger.error(
+                    f"GPU初始化失败: {e}\n"
+                    "原因: 目标地址格式不兼容\n"
+                    "  GPU 引擎当前仅支持 P2PKH 地址 (1... 开头, Base58 编码)。\n"
+                    "  如果你的目标包含 P2SH (3...) 或 Bech32/Taproot (bc1...) 地址,\n"
+                    "  请使用 CPU 模式或仅使用 P2PKH 地址。"
+                )
+                raise RuntimeError(
+                    f"GPU初始化失败: {e}"
+                    " (GPU 引擎仅支持 P2PKH 地址格式, 其他格式请使用 CPU 模式)"
+                ) from e
+            except ValueError as e:
+                # 使用ExceptionHandler记录详细错误
+                ExceptionHandler.handle_engine_error("GPU", e, context="设备初始化")
+                self.logger.error(
+                    f"GPU初始化失败: {e}\n"
+                    "建议操作:\n"
+                    "  1. 检查GPU驱动是否正常\n"
+                    "  2. 验证OpenCL环境配置\n"
+                    "  3. 使用CPU引擎作为备选方案\n"
+                    "  4. 查看日志获取详细错误信息"
+                )
+                raise RuntimeError(
+                    f"GPU初始化失败: {e}。请检查GPU驱动和OpenCL环境,或使用CPU引擎作为备选方案。"
+                ) from e
             except Exception as e:
                 # 使用ExceptionHandler记录详细错误
                 ExceptionHandler.handle_engine_error("GPU", e, context="设备初始化")
-                # 提供回退机制提示
                 self.logger.error(
                     f"GPU初始化失败: {e}\n"
                     "建议操作:\n"
@@ -241,11 +276,12 @@ class GPUDeviceManager:
         return enable_async
 
     def _prepare_targets(self, targets: set[str]):
-        """准备目标地址"""
+        """准备目标地址 (仅 P2PKH 格式通过 Base58 校验)"""
         from ..core.base58 import Base58
 
         target_list = []
         hash160_list = []
+        skipped_non_p2pkh = 0
 
         for address in sorted(targets):
             try:
@@ -253,17 +289,30 @@ class GPUDeviceManager:
                 if version == 0x00 and len(payload) == 20:
                     target_list.append(address)
                     hash160_list.append(payload)
+                else:
+                    skipped_non_p2pkh += 1
             except (ValueError, TypeError) as e:
-                # 地址格式错误，跳过
-                self.logger.debug(f"目标地址格式无效 [{address}]: {type(e).__name__}")
+                # 非 Base58 编码地址 (如 Bech32 bc1...), 跳过
+                skipped_non_p2pkh += 1
+                masked = (f"{address[:6]}...{address[-4:]}" if len(address) >= 10
+                          else "***")
+                self.logger.debug(f"目标地址格式无效 [{masked}]: {type(e).__name__}")
                 continue
             except Exception as e:
                 # 未知错误：记录日志
-                self.logger.warning(f"目标地址解析失败 [{address}]: {type(e).__name__}")
+                masked = (f"{address[:6]}...{address[-4:]}" if len(address) >= 10
+                          else "***")
+                self.logger.warning(f"目标地址解析失败 [{masked}]: {type(e).__name__}")
                 continue
 
+        if skipped_non_p2pkh:
+            self.logger.warning(
+                f"已跳过 {skipped_non_p2pkh} 个非 P2PKH 格式目标地址"
+                " (GPU 引擎仅支持 P2PKH)"
+            )
+
         if not hash160_list:
-            raise ValueError("没有有效的目标地址")
+            raise NoValidTargetsError("没有有效的目标地址")
 
         target_hash160s = b"".join(hash160_list)
         return target_hash160s, target_list
@@ -321,7 +370,7 @@ class GPUDeviceManager:
     def _init_memory_pool(self, batch_size: int = 0):
         """初始化GPU内存池（含常用缓冲区预分配）
 
-        P1-2修复: 在池创建后立即预分配常用大小的缓冲区，
+        在池创建后立即预分配常用大小的缓冲区，
         消除运行时首次分配的延迟开销（通常节省 5-15ms）。
 
         Args:
@@ -337,13 +386,13 @@ class GPUDeviceManager:
                 self._require_device().context,
                 max_buffers=gpu_pool_max_buffers,
             )
-            # P1-2: 预分配常用缓冲区，减少运行时首次分配延迟
+            # 预分配常用缓冲区，减少运行时首次分配延迟
             preallocate_sizes = self._compute_prealloc_sizes(batch_size)
             if preallocate_sizes:
                 try:
                     self._gpu_memory_pool.preallocate_buffers(preallocate_sizes, count_per_size=2)
                     self.logger.debug(f"GPU内存池预分配: {len(preallocate_sizes)} 种大小 × 2")
-                except Exception:
+                except (RuntimeError, MemoryError, ValueError):
                     self.logger.debug("GPU内存池预分配跳过（非致命）", exc_info=True)
             self.logger.info(f"GPU内存池初始化完成: {self._gpu_memory_pool.get_stats()}")
         else:
@@ -351,7 +400,7 @@ class GPUDeviceManager:
 
     @staticmethod
     def _compute_prealloc_sizes(batch_size: int) -> list:
-        """P1-2: 计算引擎常用缓冲区的预分配大小列表
+        """计算引擎常用缓冲区的预分配大小列表
 
         基于引擎批大小推导关键缓冲区尺寸:
         - 匹配结果缓冲区: batch_size × 4 字节
@@ -483,6 +532,7 @@ class GPUDeviceManager:
             if self._gpu_memory_pool:
                 start_time = time.time()
                 self._gpu_memory_pool.clear()
+                self._gpu_memory_pool = None
                 elapsed = time.time() - start_time
                 self.logger.info(f"设备管理器：内存池已清理 (耗时: {elapsed:.2f}秒)")
 

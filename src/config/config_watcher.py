@@ -10,9 +10,9 @@ import threading
 import time
 from collections.abc import Callable
 
-from ..utils import get_configured_logger, init_logging
+from ..utils import get_configured_logger
 
-init_logging()
+# 日志系统由CLI/main.py入口统一初始化
 logger = get_configured_logger("ConfigWatcher")
 
 # ── watchdog 可用性检测 ──────────────────────────────────────────────

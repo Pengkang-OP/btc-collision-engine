@@ -5,8 +5,9 @@
 
 $TaskName = "BTC监控数据清理"
 $TaskDescription = "每周清理30天前的BTC监控数据，防止磁盘空间占用过多"
-$ScriptPath = "f:\BTC\tools\cleanup_monitoring_data.py"
-$WorkingDirectory = "f:\BTC"
+# 自动检测脚本所在目录作为工作目录
+$WorkingDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ScriptPath = Join-Path $WorkingDirectory "cleanup_monitoring_data.py"
 $PythonPath = "python"
 
 Write-Host "============================================" -ForegroundColor Cyan
@@ -50,19 +51,19 @@ if ($confirm -ne 'Y' -and $confirm -ne 'y') {
 try {
     # 创建触发器：每周日凌晨2点
     $Trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At 2:00AM
-    
+
     # 创建操作：运行Python清理脚本
     $Action = New-ScheduledTaskAction -Execute $PythonPath `
         -Argument "$ScriptPath --max-age 30" `
         -WorkingDirectory $WorkingDirectory
-    
+
     # 创建设置
     $Settings = New-ScheduledTaskSettingsSet `
         -AllowStartIfOnBatteries `
         -DontStopIfGoingOnBatteries `
         -StartWhenAvailable `
         -RunOnlyIfNetworkAvailable:$false
-    
+
     # 注册任务
     Register-ScheduledTask -TaskName $TaskName `
         -Trigger $Trigger `
@@ -71,7 +72,7 @@ try {
         -Description $TaskDescription `
         -RunLevel Highest `
         -Force | Out-Null
-    
+
     Write-Host ""
     Write-Host "============================================" -ForegroundColor Green
     Write-Host "✓ 任务计划创建成功！" -ForegroundColor Green
@@ -88,7 +89,7 @@ try {
     Write-Host "  删除任务: schtasks /delete /tn '$TaskName' /f" -ForegroundColor Gray
     Write-Host "  打开任务计划程序: taskschd.msc" -ForegroundColor Gray
     Write-Host ""
-    
+
 } catch {
     Write-Host ""
     Write-Host "✗ 创建任务计划失败: $_" -ForegroundColor Red

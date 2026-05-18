@@ -115,7 +115,7 @@ class TestLogStorageConcurrency:
 
     def test_concurrent_saves(self):
         """大量并发保存不应丢失数据"""
-        from src.logging.log_storage import LogStorage
+        from src.log_engine.log_storage import LogStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
             s = LogStorage(storage_dir=tmpdir)
@@ -142,7 +142,7 @@ class TestLogStorageConcurrency:
 
     def test_concurrent_read_write(self):
         """并发读写不应导致数据损坏"""
-        from src.logging.log_storage import LogStorage
+        from src.log_engine.log_storage import LogStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
             s = LogStorage(storage_dir=tmpdir)
@@ -193,8 +193,8 @@ class TestLogCollectorConcurrency:
 
     def test_concurrent_collection(self):
         """并发收集不应丢失事件"""
-        from src.logging.log_collector import LogCollector
-        from src.logging.events import LogEventType
+        from src.log_engine.log_collector import LogCollector
+        from src.log_engine.events import LogEventType
 
         collector = LogCollector(max_queue_size=5000)
         received = Counter()
@@ -306,7 +306,7 @@ class TestStressTests:
 
     def test_large_log_storage(self):
         """大量日志存储压力测试"""
-        from src.logging.log_storage import LogStorage
+        from src.log_engine.log_storage import LogStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
             s = LogStorage(storage_dir=tmpdir, max_file_size=10 * 1024 * 1024)

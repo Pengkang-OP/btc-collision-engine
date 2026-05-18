@@ -3,7 +3,7 @@
 负责管理所有搜索模式的创建、切换和执行。
 """
 
-# P3-5: 统一日志获取
+# 统一日志获取
 from typing import TYPE_CHECKING, Any, cast
 
 from ..collision.collision_stats import CollisionStats

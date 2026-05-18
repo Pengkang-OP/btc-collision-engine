@@ -1,9 +1,7 @@
 # BTC项目故障排除文档
 
-> **版本**: v3.3.1 | **最后更新**: 2026-04-28  
+> **版本**: v4.2.2 | **最后更新**: 2026-05-15
 > **面向**: 用户
-
-
 
 ## 目录
 
@@ -51,6 +49,7 @@
   - [13.1 收集诊断信息](#131-收集诊断信息)
   - [13.2 提交Issue](#132-提交issue)
 - [14. 总结](#14-总结)
+
 ## 1. 概述
 
 本文档列出BTC项目常见问题及其解决方案，帮助用户快速诊断和解决问题。
@@ -60,6 +59,7 @@
 ### 2.1 Python版本不兼容
 
 **问题现象**:
+
 ```yaml
 SyntaxError: invalid syntax
 # 或
@@ -69,6 +69,7 @@ ModuleNotFoundError: No module named 'secrets'
 **原因**: Python版本低于3.8
 
 **解决方案**:
+
 ```bash
 # 检查Python版本
 python --version
@@ -83,9 +84,13 @@ python --version
 
 **问题现象**:
 ```
+
 ModuleNotFoundError: No module named 'tkinter'
+
 # 或
+
 ImportError: No module named '_tkinter'
+
 ```python
 
 **解决方案**:
@@ -118,9 +123,13 @@ brew install python-tk@3.11
 
 **问题现象**:
 ```
+
 PermissionError: [Errno 13] Permission denied: 'config.json'
+
 # 或
+
 OSError: [Errno 13] Permission denied: './logs'
+
 ```python
 
 **解决方案**:
@@ -154,9 +163,13 @@ chmod 755 logs checkpoints
 
 **问题现象**:
 ```
+
 ValueError: 私钥长度必须为32字节，当前为31字节
+
 # 或
+
 ValueError: 无法解析私钥，请检查输入格式
+
 ```python
 
 **解决方案**:
@@ -176,9 +189,13 @@ if len(private_key_hex) != 64:
 
 **问题现象**:
 ```
+
 ValueError: WIF版本字节无效
+
 # 或
+
 ValueError: WIF校验和不匹配
+
 ```python
 
 **解决方案**:
@@ -193,7 +210,7 @@ try:
     print(f"解码成功，压缩格式: {is_compressed}")
 except ValueError as e:
     print(f"解码失败: {e}")
-    
+
 # 常见错误:
 # 1. 字符输入错误（如0和O混淆）
 # 2. 缺少字符
@@ -204,7 +221,9 @@ except ValueError as e:
 
 **问题现象**:
 ```
+
 ValueError: Base58Check校验和验证失败
+
 ```python
 
 **解决方案**:
@@ -218,7 +237,7 @@ try:
     print(f"地址有效，版本: 0x{version:02x}")
 except ValueError as e:
     print(f"地址无效: {e}")
-    
+
 # 检查:
 # 1. 地址是否完整复制
 # 2. 是否包含无效字符（0, O, I, l）
@@ -229,9 +248,13 @@ except ValueError as e:
 
 **问题现象**:
 ```
+
 ValueError: 模逆元不存在
+
 # 或
+
 ValueError: 生成的公钥为无穷远点，私钥无效
+
 ```python
 
 **解决方案**:
@@ -289,9 +312,13 @@ free -h  # Linux
 
 **问题现象**:
 ```
+
 MemoryError
+
 # 或
+
 系统明显变慢，交换空间使用增加
+
 ```python
 
 **解决方案**:
@@ -338,7 +365,9 @@ sudo swapon /swapfile
 
 **问题现象**:
 ```
+
 OSError: [Errno 28] No space left on device
+
 ```python
 
 **解决方案**:
@@ -403,11 +432,11 @@ class ThreadSafeCounter:
     def __init__(self):
         self._value = 0
         self._lock = threading.Lock()
-    
+
     def increment(self):
         with self._lock:
             self._value += 1
-    
+
     def get(self):
         with self._lock:
             return self._value
@@ -483,7 +512,9 @@ ssh -X user@host
 
 **问题现象**:
 ```
+
 json.decoder.JSONDecodeError: Expecting ',' delimiter
+
 ```python
 
 **解决方案**:
@@ -504,7 +535,9 @@ except json.JSONDecodeError as e:
 
 **问题现象**:
 ```
+
 KeyError: 'collision'
+
 ```python
 
 **解决方案**:
@@ -542,7 +575,9 @@ thread.start()
 
 **问题现象**:
 ```
+
 OSError: [Errno 13] Permission denied: 'checkpoints/'
+
 ```python
 
 **解决方案**:
@@ -585,7 +620,9 @@ engine = KeyCollisionEngine(
 
 **问题现象**:
 ```
+
 FileNotFoundError: [Errno 2] No such file or directory: 'logs/btc.log'
+
 ```python
 
 **解决方案**:
@@ -625,9 +662,11 @@ logger.setLevel(logging.DEBUG)
 
 **问题现象**:
 ```
+
 测试失败！
 压缩公钥不匹配
 地址不匹配
+
 ```python
 
 **诊断步骤**:
@@ -660,7 +699,9 @@ print(f"期望公钥: 0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b
 
 **问题现象**:
 ```
+
 ModuleNotFoundError: No module named 'src'
+
 ```python
 
 **解决方案**:
@@ -789,18 +830,18 @@ def collect_diagnostics():
         'processor': platform.processor(),
         'machine': platform.machine(),
     }
-    
+
     # 检查依赖
     try:
         import tkinter
         info['tkinter'] = tkinter.Tcl().eval('info patchlevel')
     except ImportError:
         info['tkinter'] = 'Not installed'
-    
+
     # 检查项目文件
     import os
     info['project_files'] = os.listdir('.')
-    
+
     return info
 
 if __name__ == "__main__":
@@ -812,6 +853,7 @@ if __name__ == "__main__":
 ### 13.2 提交Issue
 
 提交问题时请包含：
+
 1. 操作系统和版本
 2. Python版本
 3. 完整的错误信息

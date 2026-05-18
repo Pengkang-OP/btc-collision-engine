@@ -1,9 +1,7 @@
 # 地址导入和自动保存功能
 
-> **版本**: v3.3.1 | **最后更新**: 2026-04-28  
+> **版本**: v4.2.2 | **最后更新**: 2026-05-15
 > **面向**: 用户
-
-
 
 ## 目录
 
@@ -23,6 +21,7 @@
 - [测试](#测试)
 - [示例](#示例)
 - [注意事项](#注意事项)
+
 ## 功能概述
 
 `AddressStorage` 类新增了 `import_addresses` 方法，支持从外部源导入比特币地址数据，并在导入过程中进行数据验证，验证通过后自动将有效地址保存到持久化存储中。
@@ -119,11 +118,16 @@ result = storage.import_addresses(
 ### TXT格式
 每行一个地址，支持注释（以#开头）：
 ```
+
 # 目标地址文件
+
 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
 1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2
+
 # 这是注释
+
 12c6DSiU4Rq3P4ZxziKxzrL5LmMBrzjrJX
+
 ```markdown
 
 ## JSON格式

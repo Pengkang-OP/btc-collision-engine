@@ -8,7 +8,7 @@ DEF-2修复: 使用 kernel_impl.compile_kernel_with_retry() 共享重试逻辑
 import hashlib
 from typing import Any, Dict, List, Optional, cast  # noqa: F401
 
-# P3-5: 统一日志获取
+# 统一日志获取
 from ..utils import get_configured_logger
 from .device import GPUDevice, identify_vendor
 from .kernel_impl import compile_kernel_with_retry  # DEF-2修复: 共享重试函数
@@ -21,24 +21,25 @@ logger = get_configured_logger("GPUContext")
 
 
 # 厂商编译选项配置
-# 注意: 加密/哈希运算（椭圆曲线、SHA256、RIPEMD160）不使用 -cl-fast-relaxed-math，
-# 快速数学优化会破坏加密精度，仅 NVIDIA 在验证稳定的情况下保留。
+# ⚠️  关键安全约束: 加密/哈希运算（secp256k1、SHA256、RIPEMD160）严格禁用
+# -cl-fast-relaxed-math。快速数学优化会破坏确定性运算精度，导致同一私钥
+# 在不同GPU厂商设备上产生不一致的Hash160结果。所有厂商统一使用CL2.0标准。
 VENDOR_BUILD_OPTIONS: dict[str, dict[str, Any]] = {
     "nvidia": {
-        "options": ["-cl-fast-relaxed-math"],  # NVIDIA: 快速数学经测试可接受
-        "cl_version": None,  # NVIDIA默认CL1.2即可
-        "description": "NVIDIA优化：启用快速数学加速（需确认精度可接受）",
+        "options": ["-cl-std=CL2.0"],  # 禁用fast-math (精度安全约束)
+        "cl_version": "CL2.0",
+        "description": "NVIDIA优化：CL2.0标准，精度优先（fast-math已禁用——secp256k1/SHA256/RIPEMD160精度要求）",
     },
     "amd": {
-        "options": ["-cl-std=CL2.0"],  # AMD: 不用fast-math（精度风险）
+        "options": ["-cl-std=CL2.0"],  # AMD: 不用fast-math（精度要求）
         "cl_version": "CL2.0",
         "description": "AMD优化：CL2.0标准，精度优先",
     },
     "intel": {
-        "options": ["-cl-std=CL2.0"],  # Intel: 不用fast-math（已知精度问题）
+        "options": ["-cl-std=CL2.0"],  # Intel: 不用fast-math（精度要求）
         "cl_version": "CL2.0",
         "intel_workarounds": True,
-        "description": "Intel优化：CL2.0标准，启用workarounds，移除快速数学",
+        "description": "Intel优化：CL2.0标准，启用workarounds，精度优先",
     },
 }
 
@@ -178,8 +179,6 @@ class GPUContext:
             return self.program
 
         try:
-            pass
-
             logger.info(
                 f"编译新内核 [厂商={self.vendor_handler.get_vendor_name()}, "
                 f"options='{vendor_options}', source_hash={source_hash}]"
@@ -218,9 +217,9 @@ class GPUContext:
 
         使用 VENDOR_BUILD_OPTIONS 配置表，按厂商返回精细化编译选项。
 
-        AMD/Intel 不使用 -cl-fast-relaxed-math：
-          加密哈希运算（椭圆曲线、SHA256/RIPEMD160）需要严格数学精度，
-          快速数学优化会导致运算结果错误。
+        所有厂商 (NVIDIA/AMD/Intel) 统一不使用 -cl-fast-relaxed-math：
+          加密哈希运算（secp256k1椭圆曲线、SHA256/RIPEMD160）需要严格数学精度，
+          快速数学优化会导致异构GPU间运算结果不一致。
 
         Returns:
             编译选项字符串

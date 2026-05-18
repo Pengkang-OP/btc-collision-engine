@@ -203,4 +203,4 @@ python key_collision_cli.py --config-check
 ---
 
 **更新日期**: 2026-04-24  
-**版本**: v3.0+
+**版本**: v4.2.1+

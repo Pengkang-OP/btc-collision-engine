@@ -8,7 +8,7 @@ from src.collision.collision_stats import CollisionStats
 from src.collision.plugins.base_plugin import CollisionPlugin
 from src.core.address_generator import P2PKHAddressGenerator
 
-# P3-3: 统一回调类型别名
+# 统一回调类型别名
 from ..types import CompleteCallback, MatchCallback, ProgressCallback
 
 # v2.2.1迁移: 使用crypto_backend替代secp256k1.py

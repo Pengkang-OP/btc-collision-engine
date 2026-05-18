@@ -44,7 +44,7 @@ def build_report(raw, daily):
     return {
         "report_meta": {
             "title": "GPU vs CPU 性能对比测试报告",
-            "version": "v1.0",
+            "version": "v4.2.2",
             "generated_at": datetime.now().isoformat(),
             "test_date": "2026-04-23",
             "test_duration_per_mode_sec": 15,

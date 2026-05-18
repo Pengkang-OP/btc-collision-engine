@@ -186,8 +186,8 @@ REPLACEMENTS = [
     ("椭圆曲线运算 (secp256k1)", "Elliptic curve operations (secp256k1)"),
     ("雅可比坐标系（Jacobian Coordinates）点运算", "Jacobian Coordinates point operations"),
     (
-        "v3.0.0优化: 消除中间模逆，大幅减少计算量",
-        "v3.0.0 opt: eliminate intermediate mod_inverse, greatly reduce computation",
+        "v4.2.1优化: 消除中间模逆，大幅减少计算量",
+        "v4.2.1 opt: eliminate intermediate mod_inverse, greatly reduce computation",
     ),
     (
         "雅可比坐标 (X:Y:Z) 对应仿射坐标 (X/Z\u00b2, Y/Z\u00b3)",
@@ -271,7 +271,7 @@ REPLACEMENTS = [
         "标量乘法: R = k * G (雅可比坐标系 MSB-first 窗口优化算法)",
         "Scalar multiplication: R = k * G (Jacobian MSB-first windowed algorithm)",
     ),
-    ("v3.0.0重大优化:", "v3.0.0 major optimizations:"),
+    ("v4.2.1重大优化:", "v4.2.1 major optimizations:"),
     (
         "1. 使用雅可比坐标系消除中间模逆（理论大幅加速）",
         "1. Use Jacobian coords to eliminate intermediate mod_inverse (major speedup)",
@@ -280,7 +280,7 @@ REPLACEMENTS = [
         "2. 修复算法错误：从 LSB-first 改为正确的 MSB-first 实现",
         "2. Fix algorithm: changed from LSB-first to correct MSB-first",
     ),
-    ("v4.0.0优化:", "v4.0.0 optimizations:"),
+    ("v4.2.1优化:", "v4.2.1 optimizations:"),
     (
         "3. 预计算表由 host 传入，避免每个工作线程重复计算",
         "3. Precomputed table passed from host, avoids redundant computation per thread",

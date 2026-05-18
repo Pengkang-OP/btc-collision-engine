@@ -11,12 +11,9 @@ import threading
 from bitarray import bitarray
 
 # 导入日志配置
-from ..utils import get_configured_logger, init_logging
+from ..utils import get_configured_logger
 
-# 初始化日志系统（如果尚未初始化）
-init_logging()
-
-# 获取模块日志记录器
+# 日志系统由CLI/main.py入口统一初始化
 logger = get_configured_logger("BloomDeduplicationFilter")
 
 

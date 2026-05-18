@@ -43,15 +43,12 @@ from collections.abc import Callable
 from typing import Any, Optional
 
 # 导入日志配置
-from ..utils import get_configured_logger, init_logging
+from ..utils import get_configured_logger
 
-# 初始化日志系统
-init_logging()
-
-# 获取模块日志记录器
+# 日志系统由CLI/main.py入口统一初始化
 logger = get_configured_logger("MemoryPool")
 
-# P3-7: 常量提取
+# 常量提取
 POOL_SHRINK_THRESHOLD_RATIO = 3.0  # 空闲对象超此倍数 → 触发缩容
 POOL_DEFAULT_OBJECT_SIZE_ESTIMATE = 256  # 默认单个对象内存估算(bytes)
 
@@ -122,15 +119,15 @@ class ObjectPool:
         self._created_count = 0
         self._acquire_count = 0
         self._release_count = 0
-        self._miss_count = 0  # P3-7: 池耗尽（未命中）次数
+        self._miss_count = 0  # 池耗尽（未命中）次数
 
-        # P3-7: 预分配耗时和启动时间
+        # 预分配耗时和启动时间
         _prewarm_start = time.perf_counter()
         self._preallocate(initial_size)
         self._prewarm_elapsed = time.perf_counter() - _prewarm_start
         self._start_time = time.time()
 
-        # P3-7: 对象内存估算 (用于 auto_tune)
+        # 对象内存估算 (用于 auto_tune)
         self._obj_size_estimate = max(object_size_estimate, 1)
 
         logger.info(
@@ -159,7 +156,7 @@ class ObjectPool:
                 # 池耗尽,创建新对象
                 obj = self._factory()
                 self._created_count += 1
-                self._miss_count += 1  # P3-7: 未命中计数
+                self._miss_count += 1  # 未命中计数
                 logger.debug(f"对象池耗尽,创建新对象 (总创建数: {self._created_count})")
 
         return obj
@@ -421,15 +418,15 @@ class GlobalPoolManager:
     _initialized: bool = False
     _pools_registry: list[Any] = []
 
-    # P1-6: 自动清理线程 — 类级别类型声明供 mypy 检查
+    # 自动清理线程 — 类级别类型声明供 mypy 检查
     _cleanup_thread: threading.Thread | None = None
     _cleanup_stop_event: threading.Event = threading.Event()
 
-    # P3-7: 默认内存限制(MB)
+    # 默认内存限制(MB)
     DEFAULT_ECPOINT_MEMORY_MB = 64
     DEFAULT_BYTEARRAY_MEMORY_MB = 32
 
-    # P1-6: 默认自动清理间隔(秒)
+    # 默认自动清理间隔(秒)
     DEFAULT_AUTO_CLEANUP_INTERVAL = 300  # 5分钟
 
     def __new__(cls) -> "GlobalPoolManager":
@@ -439,7 +436,7 @@ class GlobalPoolManager:
                     cls._instance = super().__new__(cls)
                     cls._instance._initialized = False
                     cls._instance._pools_registry = []
-                    # P1-6: 自动清理线程 — 类级别已声明类型，此处仅初始化
+                    # 自动清理线程 — 类级别已声明类型，此处仅初始化
                     cls._instance._cleanup_thread = None
                     cls._instance._cleanup_stop_event = threading.Event()
         return cls._instance
@@ -459,7 +456,7 @@ class GlobalPoolManager:
                     buffer_size=64, initial_size=200, max_size=2000
                 )
 
-                # P3-7: 注册到 pool registry
+                # 注册到 pool registry
                 self._pools_registry = [
                     self.ecpoint_pool._pool,
                     self.bytearray_pool_32._pool,
@@ -579,7 +576,7 @@ class GlobalPoolManager:
 
         return total
 
-    # ──────────────────────────── P1-6: 自动清理 ────────────────────────────
+    # ──────────────────────────── 自动清理 ────────────────────────────
 
     def _auto_cleanup_loop(self, interval: float) -> None:
         """自动清理后台循环（daemon 线程入口）

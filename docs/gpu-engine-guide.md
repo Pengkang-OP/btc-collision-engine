@@ -1,11 +1,9 @@
 # GPU引擎使用指南
 
-> **版本**: v3.3.1 | **最后更新**: 2026-04-28  
+> **版本**: v4.2.2 | **最后更新**: 2026-05-15
 > **面向**: 开发者
 
-
 > 本文档详细介绍如何使用BTC碰撞引擎的GPU加速功能，包括安装、配置、性能调优和故障排除。
-
 
 ## 目录
 
@@ -52,6 +50,7 @@
   - [A. GPU设备检测脚本](#a-gpu设备检测脚本)
   - [B. 性能基准测试](#b-性能基准测试)
 - [参考资源](#参考资源)
+
 ## 📋 目录
 
 1. [GPU加速概述](#gpu加速概述)
@@ -74,6 +73,7 @@
 - **Intel**: Arc系列独立显卡
 
 **注意**：项目自动过滤以下设备：
+
 - CPU设备（不使用CPU模拟OpenCL）
 - Intel集成显卡（HD Graphics、UHD Graphics、Iris）
 
@@ -93,6 +93,7 @@
 ### 1. 安装OpenCL驱动
 
 #### NVIDIA GPU
+
 ```bash
 # 安装CUDA Toolkit (包含OpenCL)
 # 下载地址: https://developer.nvidia.com/cuda-toolkit
@@ -142,7 +143,7 @@ GPUCollisionEngine.list_devices()
 
 ## 快速开始
 
-> **重构说明**: v4.0重构后，GPU引擎采用组件化架构，代码更加模块化，同时保持完全向后兼容。
+> **重构说明**: v4.2.2重构后，GPU引擎采用组件化架构，代码更加模块化，同时保持完全向后兼容。
 
 ### 方法1: GUI界面
 
@@ -460,6 +461,7 @@ engine = GPUCollisionEngine(
 ### GPU计算流程
 
 ```
+
 1. 初始化阶段
    ├─ 检测GPU设备
    ├─ 选择最佳设备
@@ -481,6 +483,7 @@ engine = GPUCollisionEngine(
 4. 异步优化
    ├─ GPU计算批次N
    └─ CPU生成批次N+1（并行）
+
 ```markdown
 
 ### OpenCL内核优化
@@ -496,9 +499,10 @@ engine = GPUCollisionEngine(
 
 ### 组件化架构
 
-v4.0重构后，GPU引擎采用分层组件化架构：
+v4.2.2重构后，GPU引擎采用分层组件化架构：
 
 ```
+
 ┌────────────────────────────────────────────────────────────────┐
 │                      应用层 (Application)                      │
 │        GPUCollisionEngine - 对外接口、组件协调                  │
@@ -522,6 +526,7 @@ v4.0重构后，GPU引擎采用分层组件化架构：
 │   GPUMemoryPool   - GPU内存池                                │
 │   AsyncGPUExecutor - 异步执行器                               │
 └────────────────────────────────────────────────────────────────┘
+
 ```
 
 ### 新增组件说明
@@ -572,13 +577,13 @@ print("=" * 60)
 for platform in cl.get_platforms():
     print(f"\n平台: {platform.get_info(cl.platform_info.NAME)}")
     print("-" * 60)
-    
+
     for device in platform.get_devices():
         device_type = device.get_info(cl.device_info.TYPE)
-        
+
         if device_type != cl.device_type.GPU:
             continue
-        
+
         print(f"\n设备名称: {device.get_info(cl.device_info.NAME)}")
         print(f"厂商: {device.get_info(cl.device_info.VENDOR)}")
         print(f"显存: {device.global_mem_size / (1024**3):.2f} GB")
@@ -629,6 +634,6 @@ print(f"\n加速比: {gpu_stats.speed / cpu_stats.speed:.1f}x")
 
 ---
 
-**文档版本**: v1.0  
-**最后更新**: 2026-04-20  
+**文档版本**: v4.2.2
+**最后更新**: 2026-04-20
 **维护者**: AI Assistant

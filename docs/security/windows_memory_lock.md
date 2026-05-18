@@ -1,8 +1,8 @@
 # Windows平台内存锁定说明
 
-**文档版本**: v1.0  
-**日期**: 2026-04-24  
-**状态**: ✅ 已实施  
+**文档版本**: v4.2.2
+**日期**: 2026-04-24
+**状态**: ✅ 已实施
 
 ---
 
@@ -44,43 +44,43 @@ VirtualUnlock.restype = ctypes.wintypes.BOOL
 ```python
 def lock_memory(buffer: bytes) -> bool:
     """锁定内存，防止被交换到磁盘
-    
+
     Args:
         buffer: 要锁定的字节缓冲区
-        
+
     Returns:
         是否成功锁定
     """
     address = ctypes.addressof(ctypes.create_string_buffer(buffer))
     size = len(buffer)
-    
+
     result = VirtualLock(address, size)
     if not result:
         error_code = ctypes.get_last_error()
         logger.warning(f"内存锁定失败: 错误码 {error_code}")
         return False
-    
+
     logger.debug(f"内存锁定成功: {size} 字节")
     return True
 
 def unlock_memory(buffer: bytes) -> bool:
     """解锁内存
-    
+
     Args:
         buffer: 要解锁的字节缓冲区
-        
+
     Returns:
         是否成功解锁
     """
     address = ctypes.addressof(ctypes.create_string_buffer(buffer))
     size = len(buffer)
-    
+
     result = VirtualUnlock(address, size)
     if not result:
         error_code = ctypes.get_last_error()
         logger.warning(f"内存解锁失败: 错误码 {error_code}")
         return False
-    
+
     return True
 ```
 
@@ -168,12 +168,12 @@ def lock_memory_linux(buffer: bytes) -> bool:
     """Linux内存锁定"""
     address = ctypes.addressof(ctypes.create_string_buffer(buffer))
     size = len(buffer)
-    
+
     result = libc.mlock(address, size)
     if result != 0:
         logger.error(f"mlock失败: errno {result}")
         return False
-    
+
     return True
 ```
 
@@ -364,7 +364,7 @@ A: 两种方法:
    方法1: 修改组策略
    - gpedit.msc -> 计算机配置 -> Windows设置 -> 安全设置
    - 本地策略 -> 用户权限分配 -> 锁定内存中的页
-   
+
    方法2: 修改注册表
    - HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management
    - 修改DisablePagingExecutive = 1
@@ -389,5 +389,5 @@ A: 影响很小:
 
 ---
 
-**维护者**: AI审计系统  
+**维护者**: AI审计系统
 **下次审查**: 2026-07-24

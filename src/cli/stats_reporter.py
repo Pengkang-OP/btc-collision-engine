@@ -112,7 +112,7 @@ def _print_final_summary(engine: Any, engine_type: str, args: argparse.Namespace
                 display_paginated_results(stats.matches, "匹配结果")
         except Exception as e:
             stats_dict["状态"] = "统计信息暂不可用"
-            print(f"统计信息获取失败: {e}")
+            sys.stderr.write(f"统计信息获取失败: {e}\n")
 
     output.final_summary(_t("cli.main.final_summary"), stats_dict)
 

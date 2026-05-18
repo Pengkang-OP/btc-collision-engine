@@ -634,12 +634,16 @@ class TestKernelCompilationCache:
         kernel_src = "__kernel void test(){}"
 
         cfg_nvidia = engine._get_or_cache_compile_config(
-            nvidia_dev, kernel_src, "-cl-fast-relaxed-math"
+            nvidia_dev, kernel_src, "-cl-std=CL2.0"
         )
         cfg_amd = engine._get_or_cache_compile_config(amd_dev, kernel_src, "-cl-std=CL2.0")
 
         assert cfg_nvidia is not cfg_amd, "不同厂商应为独立配置"
-        assert cfg_nvidia["build_options"] != cfg_amd["build_options"]
+        # 厂商间配置使用 vendor_key 区分（build_options 可能相同，但缓存键不同）
+        assert cfg_nvidia["vendor_key"] != cfg_amd["vendor_key"], (
+            f"不同厂商应有不同 vendor_key, "
+            f"实际: nvidia={cfg_nvidia['vendor_key']}, amd={cfg_amd['vendor_key']}"
+        )
 
     def test_context_kernel_cache_initially_empty(self):
         """GPUContext._kernel_cache 初始化为空"""
@@ -819,14 +823,14 @@ class TestVendorBuildOptions:
         assert "amd" in VENDOR_BUILD_OPTIONS
         assert "intel" in VENDOR_BUILD_OPTIONS
 
-    def test_nvidia_has_fast_relaxed_math(self):
-        """NVIDIA 编译选项包含 -cl-fast-relaxed-math"""
+    def test_nvidia_no_fast_relaxed_math(self):
+        """NVIDIA 编译选项不包含 -cl-fast-relaxed-math（精度安全约束）"""
         from src.gpu.context import VENDOR_BUILD_OPTIONS
 
         nvidia_opts = VENDOR_BUILD_OPTIONS["nvidia"]["options"]
         assert (
-            "-cl-fast-relaxed-math" in nvidia_opts
-        ), f"NVIDIA 应包含 -cl-fast-relaxed-math，实际: {nvidia_opts}"
+            "-cl-fast-relaxed-math" not in nvidia_opts
+        ), f"NVIDIA 不应包含 -cl-fast-relaxed-math（精度安全约束），实际: {nvidia_opts}"
 
     def test_amd_no_fast_relaxed_math(self):
         """AMD 编译选项不包含 -cl-fast-relaxed-math（精度风险）"""
@@ -889,10 +893,10 @@ class TestVendorBuildOptions:
         ctx.vendor_handler = mock_vendor
         return ctx._get_build_options()
 
-    def test_get_build_options_nvidia_returns_fast_math(self):
-        """_get_build_options 对 NVIDIA 返回包含 fast-relaxed-math 的选项"""
+    def test_get_build_options_nvidia_no_fast_math(self):
+        """_get_build_options 对 NVIDIA 不包含 fast-relaxed-math（精度安全约束）"""
         opts = self._get_build_options_for_vendor("nvidia")
-        assert "-cl-fast-relaxed-math" in opts
+        assert "-cl-fast-relaxed-math" not in opts
 
     def test_get_build_options_amd_no_fast_math(self):
         """_get_build_options 对 AMD 不包含 fast-relaxed-math"""

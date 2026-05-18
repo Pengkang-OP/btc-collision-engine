@@ -13,7 +13,7 @@
 import threading
 import time
 
-# P3-5: 统一日志获取
+# 统一日志获取
 from ..utils import get_configured_logger
 
 logger = get_configured_logger("BatchSizeOptimizer")

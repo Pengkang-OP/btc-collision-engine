@@ -5,18 +5,17 @@ import os
 import threading
 import time
 import traceback
+import zlib
 from datetime import datetime
 from typing import Any, cast
 
 # 导入日志配置
 from .. import __version__ as PROJECT_VERSION
-from ..utils import get_configured_logger, init_logging
+from ..utils import get_configured_logger
+from ..utils.fast_json import fast_dumps, fast_loads
 from ..utils.platform_utils import PlatformUtils
 
-# 初始化日志系统（如果尚未初始化）
-init_logging()
-
-# 获取模块日志记录器
+# 日志系统由CLI/main.py入口统一初始化
 logger = get_configured_logger("CheckpointManager")
 
 
@@ -24,6 +23,13 @@ class CheckpointManager:
     """断点管理器 - 保存和恢复对撞进度"""
 
     DEFAULT_FILE = "collision_checkpoint.json"
+    # v4.3.1: zlib 压缩阈值 (字节)，超过此大小自动压缩；0 表示禁用
+    COMPRESSION_THRESHOLD_BYTES: int = 1024 * 1024  # 1 MB
+    # 压缩级别 (1-9, 默认 6 平衡速度和压缩比)
+    COMPRESSION_LEVEL: int = 6
+    # 压缩魔数 (3 bytes) + 版本号 (1 byte)
+    COMPRESSION_MAGIC: bytes = b"CMP"
+    COMPRESSION_VERSION: int = 1
 
     # 类级别的pywin32可用性检查
     _has_win32_security = None
@@ -150,9 +156,27 @@ class CheckpointManager:
             temp_filepath = f"{self.filepath}.tmp"
             logger.debug(f"写入临时文件: {temp_filepath}")
 
-            # 写入临时文件
-            with open(temp_filepath, "w", encoding="utf-8") as f:
-                json.dump(self._buffer, f, ensure_ascii=False, indent=2)
+            # 写入临时文件 — v4.3.1: 支持大文件 zlib 压缩
+            serialized = fast_dumps(self._buffer, ensure_ascii=False, indent=2)
+            if isinstance(serialized, bytes):
+                serialized = serialized.decode("utf-8")
+            use_compression = (
+                self.COMPRESSION_THRESHOLD_BYTES > 0
+                and len(serialized.encode("utf-8")) > self.COMPRESSION_THRESHOLD_BYTES
+            )
+            if use_compression:
+                compressed = zlib.compress(serialized.encode("utf-8"), self.COMPRESSION_LEVEL)
+                header = self.COMPRESSION_MAGIC + bytes([self.COMPRESSION_VERSION])
+                with open(temp_filepath, "wb") as f:
+                    f.write(header)
+                    f.write(compressed)
+                logger.debug(
+                    f"断点压缩保存: {len(serialized):,}B -> {len(compressed):,}B "
+                    f"({len(compressed) / max(len(serialized), 1) * 100:.1f}%)"
+                )
+            else:
+                with open(temp_filepath, "w", encoding="utf-8") as f:
+                    f.write(serialized)
             logger.debug("临时文件写入成功")
 
             # Q3修复: 临时文件安全权限 - 虽然原子重命名后临时文件不再存在，
@@ -327,8 +351,23 @@ class CheckpointManager:
                         # 未知错误：记录完整信息
                         logger.error(f"断点恢复未知错误: {type(e).__name__}: {e}")
 
-                with open(self.filepath, encoding="utf-8") as f:
-                    data = json.load(f)
+                with open(self.filepath, "rb") as f:
+                    raw = f.read()
+                # v4.3.1: 检测压缩魔数（magic 3B + version 1B）并自动解压
+                if raw[:3] == self.COMPRESSION_MAGIC:
+                    version = raw[3] if len(raw) > 3 else 0
+                    if version != self.COMPRESSION_VERSION:
+                        logger.warning(
+                            f"压缩格式版本不兼容: checkpoint={version}, "
+                            f"current={self.COMPRESSION_VERSION}，尝试解压"
+                        )
+                    decompressed = zlib.decompress(raw[4:])
+                    data = fast_loads(decompressed.decode("utf-8"))
+                    logger.debug(
+                        f"断点已解压加载: {len(raw):,}B -> {len(decompressed):,}B"
+                    )
+                else:
+                    data = fast_loads(raw.decode("utf-8"))
 
                 if data.get("version") != 1:
                     logger.warning(f"断点文件格式版本不兼容: {data.get('version')}")

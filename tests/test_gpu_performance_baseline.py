@@ -115,7 +115,7 @@ class TestGPUPerformanceBaseline:
         for _ in range(10):
             start = time.time()
             # 模拟内存分配
-            buffer = bytearray(1024 * 1024)  # 1MB  # noqa: F841
+            buffer = bytearray(1024 * 1024)  # 1MB # noqa: F841
             elapsed = (time.time() - start) * 1000
             allocations.append(elapsed)
 
@@ -169,7 +169,7 @@ class TestPerformanceRegression:
 
         # 检查回归
         has_regression = baseline.check_regression(
-            "test_metric", 105.0, "value", threshold=0.1  # 5%增长，在阈值内  # 10%阈值
+            "test_metric", 105.0, "value", threshold=0.1  # 5%增长，在阈值内 # 10%阈值
         )
 
         assert has_regression is False
@@ -181,7 +181,7 @@ class TestPerformanceRegression:
 
         # 检查回归（15%增长，超过阈值）
         has_regression = baseline.check_regression(
-            "regression_test", 115.0, "value", threshold=0.1  # 15%增长  # 10%阈值
+            "regression_test", 115.0, "value", threshold=0.1  # 15%增长 # 10%阈值
         )
 
         assert has_regression is True

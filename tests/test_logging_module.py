@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """日志模块全面单元测试
 
-覆盖 src/logging/ 下全部7个模块：
+覆盖 src/log_engine/ 下全部7个模块：
 - events.py (LogEvent, LogEventType)
 - log_processor.py (LogProcessor, SensitiveDataFilter)
 - log_storage.py (LogStorage)
@@ -16,12 +16,12 @@ import json
 import time
 from unittest.mock import Mock
 
-from src.logging.events import LogEvent, LogEventType
-from src.logging.log_processor import LogProcessor, SensitiveDataFilter
-from src.logging.log_storage import LogStorage
-from src.logging.log_query import LogQuery
-from src.logging.log_collector import LogCollector
-from src.logging.log_manager import LogManager, LogLevel
+from src.log_engine.events import LogEvent, LogEventType
+from src.log_engine.log_processor import LogProcessor, SensitiveDataFilter
+from src.log_engine.log_storage import LogStorage
+from src.log_engine.log_query import LogQuery
+from src.log_engine.log_collector import LogCollector
+from src.log_engine.log_manager import LogManager, LogLevel
 
 # ============================================================================
 # 1. LogEvent & LogEventType 测试

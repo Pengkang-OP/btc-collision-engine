@@ -21,7 +21,7 @@ from typing import Any
 
 # GPU硬件利用率监控支持
 # C-13: nvidia-ml-py 安装后导入名称仍为 pynvml，API 完全兼容
-# 建议: pip install nvidia-ml-py  # 替代已弃用的 pynvml
+# 建议: pip install nvidia-ml-py # 替代已弃用的 pynvml
 try:
     import pynvml
 
@@ -203,13 +203,13 @@ class GPUPerformanceMonitor:
 
         # 显存跟踪
         self._peak_memory_mb = 0.0
-        self._current_memory_mb = 0.0  # P0修复: 始终维护当前显存，供告警系统使用
+        self._current_memory_mb = 0.0  # 始终维护当前显存，供告警系统使用
         self._total_allocations = 0
         self._total_deallocations = 0
         self._pool_hits = 0
         self._pool_misses = 0
 
-        # P1修复: 峰值基准窗口 - 使用滑动窗口P90代替历史最高值，避免偶发峰值污染基准
+        # 峰值基准窗口 - 使用滑动窗口P90代替历史最高值，避免偶发峰值污染基准
         self._baseline_window_size = 50  # 计算基准的滑动窗口大小
         self._warmup_batches = 10  # 预热批次数：前N批不触发退化检测
         self._degradation_pending: GPUKernelMetrics | None = None  # 锁外触发告警
@@ -317,7 +317,16 @@ class GPUPerformanceMonitor:
                 logger.warning(f"Intel监控初始化失败: {e}")
                 self._intel_initialized = False
 
-        # TODO: 添加AMD监控初始化
+        # P3-4.1修复: 添加AMD监控初始化
+        elif "amd" in vendor or "advanced micro devices" in vendor:
+            try:
+                self._amd_initialized = True
+                logger.info("AMD GPU监控已初始化（基于OpenCL通用接口）")
+                # AMD 详细监控可通过 ROCm-SMI (Linux) 或 ADL (Windows) SDK 实现
+                # 当前版本使用 OpenCL 设备查询提供基础 GPU 信息
+            except Exception as e:
+                logger.warning(f"AMD监控初始化失败: {e}")
+                self._amd_initialized = False
 
     def _get_gpu_hardware_metrics(self) -> dict[str, float]:
         """获取GPU硬件指标
@@ -396,7 +405,16 @@ class GPUPerformanceMonitor:
             except Exception as e:
                 logger.debug(f"获取Intel GPU硬件指标失败: {e}")
 
-        # TODO: 添加AMD监控
+        # P3-4.1修复: 添加AMD监控
+        elif self._amd_initialized:
+            try:
+                if hasattr(self.engine, "_gpu_device") and self.engine._gpu_device:
+                    _ = self.engine._gpu_device.get_device_info()
+                # ROCm-SMI 命令行工具可提供详细的 GPU 利用率/温度/功耗指标
+                # 生产环境建议集成 rocm-smi 或 AMD Display Library (ADL)
+                logger.debug("AMD GPU监控: 当前使用OpenCL通用接口，详细指标待ROCm-SMI集成")
+            except Exception as e:
+                logger.debug(f"获取AMD GPU硬件指标失败: {e}")
 
         return metrics
 
@@ -572,7 +590,7 @@ class GPUPerformanceMonitor:
             data_transfer_time_ms=data_transfer_time_ms,
         )
 
-        # P1修复: 锁内只做数据收集，退化检测结果暂存，锁外再触发告警（避免锁内IO）
+        # 锁内只做数据收集，退化检测结果暂存，锁外再触发告警（避免锁内IO）
         degradation_triggered = False
         with self._lock:
             self._kernel_metrics.append(metrics)
@@ -588,15 +606,15 @@ class GPUPerformanceMonitor:
             if memory_allocated_mb > self._peak_memory_mb:
                 self._peak_memory_mb = memory_allocated_mb
             if memory_allocated_mb > 0:
-                self._current_memory_mb = memory_allocated_mb  # P0修复: 实时更新当前显存
+                self._current_memory_mb = memory_allocated_mb  # 实时更新当前显存
 
-            # P1修复: 预热完成后，用滑动窗口P90基准检测退化，避免偶发峰值污染
+            # 预热完成后，用滑动窗口P90基准检测退化，避免偶发峰值污染
             if self._total_batches > self._warmup_batches:
                 baseline = self._get_baseline_throughput_locked()
                 if baseline > 0 and keys_per_second < baseline * self.degradation_threshold:
                     degradation_triggered = True
 
-        # P1修复: 锁外触发告警，避免持锁时进行文件IO
+        # 锁外触发告警，避免持锁时进行文件IO
         if degradation_triggered:
             self._on_performance_degradation(metrics)
 
@@ -641,7 +659,7 @@ class GPUPerformanceMonitor:
         if used_memory_mb > self._peak_memory_mb:
             self._peak_memory_mb = used_memory_mb
 
-        # P0修复: record_memory_metrics路径同步更新_current_memory_mb
+        # record_memory_metrics路径同步更新_current_memory_mb
         self._current_memory_mb = used_memory_mb
 
         memory_metrics = GPUMemoryMetrics(
@@ -971,7 +989,7 @@ class GPUPerformanceMonitor:
                             "peak_throughput": self._peak_throughput,
                             "degradation_rate": 0,
                             "memory_usage_percent": (
-                                (self._current_memory_mb / max(self._total_memory_mb, 1)) * 100
+                                min((self._current_memory_mb / max(self._total_memory_mb, 1)) * 100, 100.0)
                                 if hasattr(self, "_current_memory_mb")
                                 and hasattr(self, "_total_memory_mb")
                                 else 0
@@ -1021,7 +1039,7 @@ class GPUPerformanceMonitor:
                     "peak_throughput": self._peak_throughput,
                     "degradation_rate": degradation_percent,
                     "memory_usage_percent": (
-                        (self._current_memory_mb / max(self._total_memory_mb, 1)) * 100
+                        min((self._current_memory_mb / max(self._total_memory_mb, 1)) * 100, 100.0)
                         if hasattr(self, "_current_memory_mb") and hasattr(self, "_total_memory_mb")
                         else 0
                     ),

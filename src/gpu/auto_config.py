@@ -91,9 +91,9 @@ class GPUAutoConfigurator:
         "work_group_size": 512,  # 大工作组
         "memory_usage_ratio": 0.7,  # 较高显存使用率
         "enable_async": True,  # 异步执行
-        "use_fast_math": True,  # 快速数学运算
+        "use_fast_math": False,  # 禁用快速数学(加密运算需要精度)
         "use_uint32_workaround": False,
-        "compiler_flags": "-cl-fast-relaxed-math",
+        "compiler_flags": "",  # 不使用快速数学标志
     }
 
     # AMD GPU配置模板
@@ -266,7 +266,7 @@ class GPUAutoConfigurator:
         # v2.2.1修复: 使用统一的显存获取方法
         memory_gb = _get_memory_gb(device)
         if memory_gb >= 15:  # v2.2.1修改: 15.56GB的A770也能匹配
-            # Arc A770 16GB - v4.2.0优化: 提升到 2M（原1M），kernel优化后单线程显存降低
+            # Arc A770 16GB - v4.2.3优化: 提升到 2M（原1M），kernel优化后单线程显存降低
             config["batch_size"] = 2097152  # 2M，~84MB显存占用（A770 16GB有充足余量）
             config["memory_usage_ratio"] = 0.70
             recommended_wgs = 512  # v2.3.0优化: 匹配512个EU
@@ -339,10 +339,10 @@ class GPUAutoConfigurator:
         # 实际测试: 262K批次使用约9MB显存，而非536MB
         #
         # 显存组成 (每密钥):
-        #   - 私钥缓冲区 (_keys_buf):    32 字节
-        #   - 匹配缓冲区 (_match_buf):    4 字节
-        #   - 安全边际:                   15% (6 字节)
-        #   总计:                        42 字节
+        # - 私钥缓冲区 (_keys_buf): 32 字节
+        # - 匹配缓冲区 (_match_buf): 4 字节
+        # - 安全边际: 15% (6 字节)
+        # 总计: 42 字节
         estimated_memory_gb = (batch_size * 42) / (1024**3)
 
         # 如果估算显存超过可用显存的安全比例,减小批次

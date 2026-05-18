@@ -1,8 +1,8 @@
 # GPU 引擎 P0/P1/P2 功能集成使用指南
 
-> **创建时间**: 2026-04-21  
-> **版本**: 1.1 (C-05: 添加 Linux 兼容性说明)  
-> **状态**: ✅ 已完成集成  
+> **创建时间**: 2026-04-21
+> **版本**: v4.2.2
+> **状态**: ✅ 已完成集成
 > **兼容性**: Intel Arc GPU **仅支持 Windows** | Linux/macOS 需使用 NVIDIA/AMD
 
 ---
@@ -16,11 +16,11 @@
 | **macOS** | ❌ 不支持 | 无 Intel Arc 支持 |
 
 **替代方案 (Linux)**:
+
 - NVIDIA GPU: 推荐，CUDA 生态完善
 - AMD GPU: ROCm 平台支持 Intel Arc 实验性
 
 ---
-
 
 ## 目录
 
@@ -69,6 +69,7 @@
   - [运行所有测试](#运行所有测试)
 - [预期结果](#预期结果)
 - [总结](#总结)
+
 ---
 
 ## 📋 目录
@@ -248,7 +249,9 @@ if reduction > 0:
 **状态转换**:
 
 ```
+
 Normal (0-70%) → Warning (70-85%) → Critical (85-95%) → Emergency (>95%)
+
 ```python
 
 ---
@@ -284,8 +287,10 @@ print(summary)
 **输出示例**:
 
 ```
+
 📊 基准测试摘要
 ============================================================
+
 内核编译:
   平均时间: 1234.56ms (±12.34ms)
   通过率: 100.0%
@@ -302,6 +307,7 @@ print(summary)
   最优并发: 8
   峰值吞吐: 123456.78 keys/s
 ============================================================
+
 ```markdown
 
 ## 2. 自动调优机制
@@ -340,6 +346,7 @@ print(f"预期吞吐量: {results['expected_throughput']:,.0f} keys/s")
 **调优阶段**:
 
 ```
+
 1. Exploration (探索)
    - 测试不同 batch_size
    - 找出性能趋势
@@ -351,6 +358,7 @@ print(f"预期吞吐量: {results['expected_throughput']:,.0f} keys/s")
 3. Monitoring (监控)
    - 持续监控性能
    - 检测退化并重新调优
+
 ```markdown
 
 ## 3. 性能报告生成
@@ -526,6 +534,7 @@ engine.generate_performance_report(
 ### 1. 首次使用流程
 
 ```
+
 1. 初始化引擎
    ↓
 2. 运行基准测试（了解性能基线）
@@ -535,19 +544,24 @@ engine.generate_performance_report(
 4. 生成报告（记录配置）
    ↓
 5. 开始正常运行
+
 ```markdown
 
 ### 2. 定期维护
 
 ```
+
 每周：
-  - 运行基准测试检查性能
-  - 生成报告对比历史
+
+- 运行基准测试检查性能
+- 生成报告对比历史
 
 每月：
-  - 检查驱动版本
-  - 重新调优（如果需要）
-  - 更新配置文件
+
+- 检查驱动版本
+- 重新调优（如果需要）
+- 更新配置文件
+
 ```markdown
 
 ### 3. 性能优化建议
@@ -582,8 +596,10 @@ if engine.auto_tuner.should_re_tune():
 
 **症状**:
 ```
+
 ❌ Intel uint32 workaround 验证失败
 RuntimeError: Intel GPU workaround 未正确应用
+
 ```python
 
 **解决**:
@@ -595,8 +611,10 @@ RuntimeError: Intel GPU workaround 未正确应用
 
 **症状**:
 ```
+
 ⚠️ 显存使用率过高: 78.5%
 💡 显存压力，建议减小 batch_size
+
 ```python
 
 **解决**:
@@ -608,7 +626,9 @@ RuntimeError: Intel GPU workaround 未正确应用
 
 **症状**:
 ```
+
 ⚠️ 执行时间接近超时阈值: 28000ms / 30000ms
+
 ```python
 
 **解决**:
@@ -620,7 +640,9 @@ RuntimeError: Intel GPU workaround 未正确应用
 
 **症状**:
 ```
+
 📉 检测到性能退化，建议重新调优
+
 ```python
 
 **解决**:
@@ -652,9 +674,11 @@ pytest tests/test_gpu_integration.py -v
 ## 预期结果
 
 ```
+
 ✅ 所有测试通过
 ✅ 无错误和警告
 ✅ 性能指标符合预期
+
 ```
 
 ---

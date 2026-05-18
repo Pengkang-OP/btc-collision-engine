@@ -268,7 +268,12 @@ class TestCLIEndToEnd:
 
     def test_quick_start_to_execution(self, monkeypatch):
         """quick-start 生成命令可被 parse_args 正常解析"""
+        from unittest.mock import MagicMock
         from src.cli.commands import _cmd_quick_start
+
+        # Windows 上 mock fcntl（Unix 文件锁），避免 No module named 'fcntl'
+        mock_fcntl = MagicMock()
+        monkeypatch.setitem(sys.modules, "fcntl", mock_fcntl)
 
         monkeypatch.setattr("sys.platform", "linux")
         import src.cli.commands as cmd_mod

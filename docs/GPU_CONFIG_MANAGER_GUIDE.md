@@ -1,6 +1,6 @@
 # GPU配置管理器使用指南
 
-> **版本**: v4.0.0 (重构后) | **更新日期**: 2026-04-28  
+> **版本**: v4.2.2 | **更新日期**: 2026-05-15
 > **面向**: 开发者/运维人员
 
 ## 概述
@@ -107,7 +107,7 @@ profile_config = {
 
 # 合并配置（Profile优先）
 merged_config = config_manager.merge_gpu_configs(
-    auto_config, 
+    auto_config,
     profile_config
 )
 
@@ -152,10 +152,10 @@ device.initialize(config)
 
 ### batch_size（批次大小）
 
-**描述**: 每批处理的私钥数量  
-**类型**: int  
-**范围**: 1024 - 16,777,216  
-**默认值**: 1,048,576 (1M)  
+**描述**: 每批处理的私钥数量
+**类型**: int
+**范围**: 1024 - 16,777,216
+**默认值**: 1,048,576 (1M)
 **推荐值**:
 
 - Intel Arc A770: 1,048,576 - 2,097,152
@@ -177,10 +177,10 @@ device.initialize(config)
 
 ### work_group_size（工作组大小）
 
-**描述**: OpenCL工作组的线程数  
-**类型**: int  
-**范围**: 64 - 1024  
-**默认值**: 256  
+**描述**: OpenCL工作组的线程数
+**类型**: int
+**范围**: 64 - 1024
+**默认值**: 256
 **推荐值**:
 
 - Intel GPU: 256
@@ -203,10 +203,10 @@ device.initialize(config)
 
 ### memory_usage_ratio（显存使用比例）
 
-**描述**: GPU显存使用比例  
-**类型**: float  
-**范围**: 0.1 - 0.9  
-**默认值**: 0.70  
+**描述**: GPU显存使用比例
+**类型**: float
+**范围**: 0.1 - 0.9
+**默认值**: 0.70
 **推荐值**:
 
 - 专用GPU: 0.70 - 0.80
@@ -228,9 +228,9 @@ device.initialize(config)
 
 ### async_execution（异步执行）
 
-**描述**: 启用异步双缓冲优化（v3.3.0新增）  
-**类型**: bool  
-**默认值**: true  
+**描述**: 启用异步双缓冲优化（v4.2.1新增）
+**类型**: bool
+**默认值**: true
 **推荐值**: true
 
 **性能提升**:
@@ -249,9 +249,9 @@ device.initialize(config)
 
 ### use_uint32_workaround（uint32变通方案）
 
-**描述**: Intel Arc GPU必需的bug修复  
-**类型**: bool  
-**默认值**: true  
+**描述**: Intel Arc GPU必需的bug修复
+**类型**: bool
+**默认值**: true
 **推荐值**: true（Intel Arc必须启用）
 
 **说明**:
@@ -507,7 +507,7 @@ print(f"推荐batch_size: {results['optimal_batch_size']:,}")
   "performance_monitoring": {
     "enabled": true,
     "max_records": 10000,
-    "slow_threshold_ms": 5000,
+    "slow_threshold_ms": 30000,
     "track_slow_operations": true
   }
 }
@@ -517,7 +517,7 @@ print(f"推荐batch_size: {results['optimal_batch_size']:,}")
 
 ### ✅ 推荐做法
 
-1. **始终启用异步执行**（v3.3.0+）
+1. **始终启用异步执行**（v4.2.1+）
 
    ```json
    {"gpu": {"async_execution": true}}
@@ -560,26 +560,29 @@ print(f"推荐batch_size: {results['optimal_batch_size']:,}")
 
 ## 相关文档
 
-- [v3.3.0性能验证报告](../test_results/v330_benchmark_report_*.json)
+- [v4.2.1性能验证报告](../test_results/v330_benchmark_report_*.json)
 - [GPU碰撞引擎API参考](./API_REFERENCE.md)
 - [性能优化指南](./PERFORMANCE_OPTIMIZATION.md)
 - [故障排查指南](./TROUBLESHOOTING.md)
 
 ## 更新日志
 
-### v3.3.0 (2026-04-26)
+### v4.2.2 (2026-05-15)
+
+- ✅ P1修复: mod_inverse Binary GCD 2^256溢出
+- ✅ 版本号全局统一 v4.2.2
+- ✅ 生产验收测试全通过
+
+### v4.2.1 (2026-05-12)
 
 - ✅ 新增异步双缓冲优化
 - ✅ 性能提升30-50%
 - ✅ 完善配置验证机制
-
-### v3.2.0 (2026-04-24)
-
 - ✅ 引入GPUConfigManager
 - ✅ CODE-1修复完成
 - ✅ 配置合并优先级策略
 
 ---
 
-**维护者**: BTC Collision Engine Team  
+**维护者**: BTC Collision Engine Team
 **反馈**: 提交Issue或Pull Request

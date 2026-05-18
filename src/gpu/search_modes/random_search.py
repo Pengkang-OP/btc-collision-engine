@@ -9,13 +9,14 @@ PRNG改造 (v4.0): CPU仅生成 32 字节种子，GPU内核自行计算 key = se
 CPU过载保护: 主循环内添加节流机制，防止 CPU 飞升。
 """
 
+import hashlib
 import os
 import queue
 import threading
 import time
 from typing import TYPE_CHECKING
 
-# P3-5: 统一日志获取 + 修复缺失导入
+# 统一日志获取 + 修复缺失导入
 from ...utils import get_configured_logger
 from ...utils.exception_handler import ExceptionHandler
 from .base_search import BaseSearchMode
@@ -42,9 +43,7 @@ SEED_BATCH_GENERATE_SIZE = 25  # 增加每次批量生成的种子数量
 SEED_PREFILL_ON_START = True  # 启动时预填充队列
 SEED_MIN_QUEUE_SIZE = 5  # 降低阈值，更早触发批量生成
 
-# 结果处理线程参数
-RESULT_QUEUE_SIZE = 5  # 结果队列大小
-RESULT_PROCESSOR_COUNT = 2  # 结果处理线程数
+# CPU过载保护参数
 
 # 已弃用常量（历史兼容保留，PRNG模式下不再需要）
 ASYNC_KEY_GEN_BASE_TIMEOUT = 5.0
@@ -84,11 +83,7 @@ class RandomSearchMode(BaseSearchMode):
 
         self._start_seed_prefetch_thread()
 
-        # 异步结果处理队列与线程
-        self._result_queue: queue.Queue = queue.Queue(maxsize=RESULT_QUEUE_SIZE)
-        self._result_stop_event: threading.Event = threading.Event()
-        self._result_threads: list[threading.Thread] = []
-        self._start_result_processor_threads()
+        logger.info(f"随机搜索模式已初始化 (种子缓存深度={seed_prefetch_size})")
 
     def _start_seed_prefetch_thread(self) -> None:
         """启动后台种子预生成 daemon 线程"""
@@ -222,51 +217,6 @@ class RandomSearchMode(BaseSearchMode):
             "queue_size": self._seed_queue.qsize(),
         }
 
-    def _start_result_processor_threads(self) -> None:
-        """启动结果处理线程"""
-        self._result_stop_event.clear()
-        for i in range(RESULT_PROCESSOR_COUNT):
-            thread = threading.Thread(
-                target=self._result_processor_worker,
-                name=f"ResultProcessor-{i}",
-                daemon=True,
-                args=(i,),
-            )
-            thread.start()
-            self._result_threads.append(thread)
-        logger.info(f"结果处理线程已启动 (线程数={RESULT_PROCESSOR_COUNT})")
-
-    def _result_processor_worker(self, worker_id: int) -> None:
-        """后台线程：处理GPU计算结果"""
-        engine = self.engine
-        while not self._result_stop_event.is_set():
-            try:
-                # 获取结果（最多等待0.1s，超时后检查stop_event）
-                try:
-                    result = self._result_queue.get(timeout=0.1)
-                except queue.Empty:
-                    continue
-
-                seed = result["seed"]
-                matches = result["matches"]
-                batch_count = result["batch_count"]
-                # current_batch_size = result["batch_size"]  # 暂未使用
-
-                # 处理匹配结果
-                engine._process_gpu_matches_prng(seed, matches)
-
-                # 更新统计数据（线程安全）
-                # 直接使用结果队列锁保护 stats 更新
-                with self._result_queue.mutex:
-                    engine.stats.update(batch_count)
-
-                # 标记任务完成
-                self._result_queue.task_done()
-            except Exception as e:
-                logger.warning(f"结果处理线程 {worker_id} 异常: {e}")
-                time.sleep(0.01)
-        logger.debug(f"结果处理线程 {worker_id} 已退出")
-
     def stop(self) -> None:
         """停止种子预生成线程和执行循环（cleanup 入口）"""
         # 停止种子预生成线程
@@ -277,16 +227,6 @@ class RandomSearchMode(BaseSearchMode):
                 logger.warning("种子预生成线程未在 2s 内退出")
         self._seed_thread = None
         logger.info("种子预生成线程已停止")
-
-        # 停止结果处理线程
-        self._result_stop_event.set()
-        for i, thread in enumerate(self._result_threads):
-            if thread.is_alive():
-                thread.join(timeout=2.0)
-                if thread.is_alive():
-                    logger.warning(f"结果处理线程 {i} 未在 2s 内退出")
-        self._result_threads = []
-        logger.info("结果处理线程已停止")
 
         # 确保引擎的停止事件被设置，停止执行循环
         if hasattr(self.engine, "_stop_event"):
@@ -419,7 +359,10 @@ class RandomSearchMode(BaseSearchMode):
     # ========================================================================
 
     def _detect_gpu_model(self, engine) -> str:
-        """检测GPU型号"""
+        """检测GPU型号
+
+        与 async_executor.py:AsyncGPUExecutor._detect_gpu_model() 保持统一。
+        """
         gpu_model = "default"
         if hasattr(engine, "_gpu_device") and engine._gpu_device:
             device_info = engine._gpu_device.get_device_info()
@@ -432,15 +375,29 @@ class RandomSearchMode(BaseSearchMode):
                 elif "rtx 30" in device_name or "rtx30" in device_name:
                     gpu_model = "rtx30"
                 elif "rtx" in device_name:
-                    gpu_model = "rtx"
-                elif "arc" in device_name or "intel" in device_name:
-                    gpu_model = "intel"
+                    gpu_model = "rtx30"  # 默认RTX系列使用rtx30配置
+                elif (
+                    "gtx 10" in device_name
+                    or "1060" in device_name
+                    or "1070" in device_name
+                    or "1080" in device_name
+                ):
+                    gpu_model = "10"
+                elif (
+                    "gtx 9" in device_name
+                    or "960" in device_name
+                    or "970" in device_name
+                    or "980" in device_name
+                ):
+                    gpu_model = "9"
                 elif "rx 7" in device_name or "rx7" in device_name:
                     gpu_model = "amd7000"
                 elif "rx 6" in device_name or "rx6" in device_name:
                     gpu_model = "amd6000"
                 elif "amd" in device_name or "radeon" in device_name:
-                    gpu_model = "amd"
+                    gpu_model = "amd6000"  # 默认AMD系列使用amd6000配置
+                elif "intel" in device_name or "iris" in device_name or "arc" in device_name:
+                    gpu_model = "intel"
         return gpu_model
 
     def _check_engine_availability(self, engine) -> bool:
@@ -642,7 +599,11 @@ class RandomSearchMode(BaseSearchMode):
             engine.on_complete(engine.stats.snapshot())
 
     def _process_matches(self, matches, seed, batch_size) -> None:
-        """处理匹配结果"""
+        """处理匹配结果
+
+        注意: 此方法当前为死代码，无任何调用者。
+        保留用于未来重构。
+        """
         engine = self.engine
         assert engine.stats is not None
         for match in matches:
@@ -653,6 +614,9 @@ class RandomSearchMode(BaseSearchMode):
                 # 构造匹配结果
                 result = {
                     "private_key": private_key,
+                    "private_key_hash": hashlib.sha256(
+                        str(private_key).encode()
+                    ).hexdigest(),
                     "address": address,
                     "seed": seed,
                     "batch_size": batch_size,

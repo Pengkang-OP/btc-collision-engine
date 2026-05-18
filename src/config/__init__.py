@@ -26,6 +26,6 @@ __all__ = [
     "PerformanceOptimizationConfig",
     "PerformanceTuner",
     "create_optimized_config",
-    # P2-4: 配置热重载
+    # 配置热重载
     "ConfigWatcher",
 ]

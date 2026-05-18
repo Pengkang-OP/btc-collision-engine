@@ -4,7 +4,7 @@
 通过 self.engine 访问所有引擎状态，不复制状态。
 """
 
-# P3-5: 统一日志获取
+# 统一日志获取
 from typing import TYPE_CHECKING, Any
 
 from ...utils import get_configured_logger

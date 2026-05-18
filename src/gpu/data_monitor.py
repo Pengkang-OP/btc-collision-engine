@@ -435,18 +435,18 @@ class DataMonitor:
             device_idx: GPU设备索引
             match_data: 匹配数据
         """
-        private_key = match_data.get("private_key", "")
+        private_key_hash = match_data.get("private_key_hash", "")
         address = match_data.get("address", "")
         match_data.get("target_address", "")
 
-        # 验证私钥格式
-        if not private_key or len(private_key) != 64:
+        # 验证私钥哈希格式 (SHA256 hexdigest: 64 chars)
+        if not private_key_hash or len(private_key_hash) != 64:
             issue = DataQualityIssue(
                 issue_type=DataQualityIssue.INVALID_KEY,
                 severity="high",
-                message=f"无效的私钥格式: 长度={len(private_key)}",
+                message=f"无效的私钥哈希格式: 长度={len(private_key_hash)}",
                 device_idx=device_idx,
-                details={"private_key_length": len(private_key)},
+                details={"private_key_hash_length": len(private_key_hash)},
             )
             self._record_issue(issue)
 
@@ -461,14 +461,8 @@ class DataMonitor:
             )
             self._record_issue(issue)
 
-        # 检查重复的私钥
+        # 检查重复的私钥（使用哈希值直接去重，无需二次哈希）
         stats = self._device_stats[device_idx]
-
-        # P1-2安全修复: 使用SHA256哈希代替明文私钥（性能优化: 减少类型检查）
-        if isinstance(private_key, str):
-            private_key_hash = hashlib.sha256(private_key.encode()).hexdigest()
-        else:
-            private_key_hash = hashlib.sha256(private_key).hexdigest()
 
         if private_key_hash in stats["seen_keys"]:
             issue = DataQualityIssue(

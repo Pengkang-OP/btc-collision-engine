@@ -3,7 +3,7 @@
 负责GPU配置的加载、合并、验证和应用。
 """
 
-# P3-5: 统一日志获取
+# 统一日志获取
 from typing import Any
 
 from ..utils import get_configured_logger

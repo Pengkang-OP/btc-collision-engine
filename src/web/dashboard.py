@@ -109,14 +109,14 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
             background: #161b22; border: 1px solid #30363d;
             border-radius: 8px; padding: 20px;
         }
-        .card h3 { color: #58a6ff; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }  # noqa: E501
+        .card h3 { color: #58a6ff; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; } # noqa: E501
         .card .value { font-size: 2.2em; font-weight: 700; color: #f0f6fc; }
         .card .label { color: #8b949e; font-size: 0.8em; margin-top: 4px; }
         .status-ok { color: #3fb950; }
         .status-warn { color: #d29922; }
         .status-error { color: #f85149; }
         .section { margin-bottom: 24px; }
-        .section h2 { color: #58a6ff; font-size: 1.2em; margin-bottom: 12px; border-bottom: 1px solid #30363d; padding-bottom: 8px; }  # noqa: E501
+        .section h2 { color: #58a6ff; font-size: 1.2em; margin-bottom: 12px; border-bottom: 1px solid #30363d; padding-bottom: 8px; } # noqa: E501
         table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
         th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid #21262d; }
         th { color: #8b949e; font-weight: 600; background: #161b22; }

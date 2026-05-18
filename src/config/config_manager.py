@@ -8,13 +8,10 @@ from collections.abc import Callable
 from typing import Any, Optional
 
 # 导入日志配置
-from ..utils import get_configured_logger, init_logging
+from ..utils import get_configured_logger
 from .config_watcher import ConfigWatcher  # noqa: F401 — type annotation reference
 
-# 初始化日志系统（如果尚未初始化）
-init_logging()
-
-# 获取模块日志记录器
+# 日志系统由CLI/main.py入口统一初始化
 logger = get_configured_logger("ConfigManager")
 
 # DF-3修复: 添加JSON Schema验证
@@ -42,7 +39,7 @@ class ConfigManager:
                 "properties": {
                     "max_workers": {"type": ["integer", "null"], "minimum": 1, "maximum": 1024},
                     "progress_interval": {"type": "integer", "minimum": 1},
-                    "checkpoint_interval": {"type": "integer", "minimum": 1},
+                    "checkpoint_interval": {"type": "integer", "minimum": -1},
                     "dedup_max_size": {"type": "integer", "minimum": 1},
                     # D-2修复: 补充 config.example.json 中存在的性能优化字段
                     "use_performance_optimization": {"type": "boolean"},
@@ -53,7 +50,7 @@ class ConfigManager:
                     "gpu_pool_max_buffers": {"type": "integer", "minimum": 1},
                     "gpu_pool_max_memory_mb": {"type": "integer", "minimum": 1},
                 },
-                "additionalProperties": False,  # 审查修复#3: 禁止额外属性
+                "additionalProperties": False,
             },
             "logging": {
                 "type": "object",
@@ -70,7 +67,7 @@ class ConfigManager:
                     "rotation_interval": {"type": "integer", "minimum": 1},
                     "compress_backups": {"type": "boolean"},
                 },
-                "additionalProperties": False,  # 审查修复#3: 禁止额外属性
+                "additionalProperties": False,
             },
             "gpu": {
                 "type": "object",
@@ -110,7 +107,7 @@ class ConfigManager:
                     # 每设备独立配置
                     "per_device_config": {"type": "object"},
                 },
-                "additionalProperties": False,  # 审查修复#3: 禁止额外属性
+                "additionalProperties": False,
             },
             "performance_monitoring": {
                 "type": "object",
@@ -121,7 +118,7 @@ class ConfigManager:
                     "max_records": {"type": "integer", "minimum": 1},
                     "log_level": {"enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]},
                 },
-                "additionalProperties": False,  # 审查修复#3: 禁止额外属性
+                "additionalProperties": False,
             },
             "crypto": {
                 "type": "object",
@@ -144,7 +141,7 @@ class ConfigManager:
                     "gpu_device_index": {"type": "integer"},
                     "gpu_batch_size": {"type": "integer", "minimum": 1, "maximum": 16777216},
                 },
-                "additionalProperties": False,  # 审查修复#3: 禁止额外属性
+                "additionalProperties": False,
             },
             # D-2修复: 补充 config.example.json 中的 monitoring 顶层区块
             "monitoring": {
@@ -206,6 +203,7 @@ class ConfigManager:
                     "mode": {"enum": ["random", "sequential", "range", "brute_force"]},
                     "batch_size": {"type": "integer", "minimum": 1, "maximum": 16777216},
                     "max_threads": {"type": "integer", "minimum": 1, "maximum": 1024},
+                    "checkpoint_interval": {"type": "integer", "minimum": -1},
                 },
                 "additionalProperties": False,
             },
@@ -234,14 +232,32 @@ class ConfigManager:
             },
         },
         "additionalProperties": False,  # 审查修复#3: 顶层也禁止额外属性
+        "patternProperties": {
+            "^_comment": {"type": "string"}  # 允许 _comment / _comment_xxx 文档注解字段
+        },
     }
 
     DEFAULT_CONFIG = {
+        "engine": {
+            "mode": "random",  # 碰撞模式: random, sequential, range, brute_force
+            "batch_size": 1048576,  # 批次大小 (1M, Intel Arc A770 最优)
+            "max_threads": 8,  # 最大线程数
+            "checkpoint_interval": 300,  # 断点保存间隔(秒)
+        },
         "collision": {
             "max_workers": None,  # 线程池最大工作线程数，None表示使用默认值
             "progress_interval": 1000,  # 进度回调间隔
             "checkpoint_interval": 30,  # 断点自动保存间隔（秒）
             "dedup_max_size": 1_000_000,  # 去重过滤器最大容量
+            # v4.3.1: 补充 config.example.json 中的性能优化字段
+            "use_performance_optimization": True,
+            "precomputed_window_size": 8,
+            "use_simd_hash": True,
+            "use_memory_pool": True,
+            # v5 修复: 补充 Schema 声明但 DEFAULT_CONFIG 缺失的 GPU 内存池字段
+            "use_gpu_memory_pool": True,
+            "gpu_pool_max_buffers": 100,
+            "gpu_pool_max_memory_mb": 512,
         },
         "logging": {
             "level": "INFO",
@@ -264,11 +280,47 @@ class ConfigManager:
             "memory_usage_ratio": 0.7,  # C-06: Intel Arc 推荐值 (70%)
             "enable_vendor_optimizations": True,
             "queue_depth": 4,  # GPU 命令队列预提交批次数，默认 4
+            # v4.3.1: 补充 config.example.json 中的 GPU 高级配置字段
+            "use_new_module": True,
+            "async_execution": True,
+            "seed_prefetch_size": 64,
+            "timeout_protection": True,
+            "base_timeout_seconds": 30,
+            "max_error_retries": 100,
+            "gpu_memory_pool": True,
+            "max_buffers": 100,
+            "max_memory_mb": 512,
+            "mode": "auto",
+            "device_indices": [-1],
+            "load_balancing": "performance",
+            "auto_tuning": False,
+        },
+        "monitoring": {
+            "enabled": True,
+            "collection_interval": 5,
+            "storage_dir": "data_logs",
+            "history_max_size": 1000,
+            "error_max_size": 500,
+            "anomaly_thresholds": {
+                "speed": {"min": 100, "max": 1000000},
+                "cpu_usage": {"max": 90},
+                "memory_usage": {"max": 1024},
+            },
+            "auto_cleanup": {
+                "enabled": True,
+                "max_age_days": 30,
+            },
+        },
+        "optimization": {
+            "uint32_workaround": True,
+            "disable_async_transfer": False,
+            "conservative_memory_policy": False,
+            "adaptive_timeout": True,
         },
         "performance_monitoring": {
             "enabled": True,  # 是否启用性能监控
             "track_slow_operations": True,  # 是否追踪慢操作
-            "slow_threshold_ms": 1000,  # 慢操作阈值（毫秒）
+            "slow_threshold_ms": 30000,  # 慢操作阈值（毫秒），GPU内核编译通常10-30秒
             "max_records": 10000,  # 最大记录数
             "log_level": "INFO",  # 性能日志级别（INFO/DEBUG/WARNING）
         },
@@ -277,6 +329,10 @@ class ConfigManager:
             "constant_time": False,
             "verify_checksums": True,
             "strict_wif_validation": True,
+            # v4.3.1: 补充 config.example.json 中的 crypto 高级字段
+            "use_gpu": True,
+            "gpu_device_index": -1,
+            "gpu_batch_size": 65536,  # GPU 批次大小 (crypto_config.py 回退默认值)
         },
         "i18n": {
             "language": "auto",
@@ -301,7 +357,7 @@ class ConfigManager:
         if config_file and os.path.exists(config_file):
             self.load_config()
 
-        # P2-4: 配置热重载支持
+        # 配置热重载支持
         self._change_callbacks: list[Callable[[], None]] = []
         self._watcher = None  # type: Optional['ConfigWatcher']
 
@@ -372,7 +428,7 @@ class ConfigManager:
             logger.error(f"加载配置文件失败: {e}")
             return False
 
-    # ── P2-4: 配置热重载 ──────────────────────────────────────────
+    # ── 配置热重载 ──────────────────────────────────────────
 
     def reload_config(self) -> bool:
         """安全重载配置 (P2-4): 验证新配置后才应用，失败则回滚到原配置
@@ -416,7 +472,7 @@ class ConfigManager:
 
             logger.info("配置热重载成功: %s", self.config_file)
 
-            # P2-4: 通知所有变更回调
+            # 通知所有变更回调
             self._notify_change_callbacks()
 
             return True
@@ -691,8 +747,11 @@ class ConfigManager:
         # 但用户直接传入的1/0是int类型，应该拒绝
         return type(value) is bool
 
-    def _validate_mode(self, value: str, errors: dict[str, str]) -> str | None:
-        """验证模式配置"""
+    def _validate_mode(self, value: str, errors: dict[str, str], prefix: str = "") -> str | None:
+        """验证模式配置
+
+        自 v4.3.1: 添加 prefix 参数支持嵌套路径错误键。
+        """
         valid_modes = {
             "random",
             "sequential",
@@ -704,29 +763,57 @@ class ConfigManager:
             "aes_ctr",
             "chacha20",
         }
+        key = prefix + "mode"
         if value not in valid_modes:
-            errors["mode"] = f"无效模式: {value}，有效值: {valid_modes}"
+            errors[key] = f"无效模式: {value}，有效值: {valid_modes}"
             return None
         return value
 
-    def _validate_batch_size(self, value: int, errors: dict[str, str]) -> int | None:
-        """验证批次大小"""
-        GPU_MAX_BATCH_SIZE = 0xFFFFFFFF
+    def _validate_batch_size(self, value: int, errors: dict[str, str], prefix: str = "") -> int | None:
+        """验证批次大小
+
+        自 v4.3.1: 添加 prefix 参数支持嵌套路径错误键。
+        """
+        GPU_MAX_BATCH_SIZE = 0xFFFFFFFF  # GPU 硬件地址空间上限 (32-bit)
+        SCHEMA_MAX_BATCH_SIZE = 16777216  # Schema maximum (16M, 与 CONFIG_SCHEMA 保持一致)
+        key = prefix + "batch_size"
         if value < 1:
-            errors["batch_size"] = f"batch_size 必须 >= 1, 当前值: {value}"
+            errors[key] = f"batch_size 必须 >= 1, 当前值: {value}"
             return None
         if value >= GPU_MAX_BATCH_SIZE:
-            errors["batch_size"] = f"batch_size {value} >= GPU_MAX_BATCH_SIZE({GPU_MAX_BATCH_SIZE})"
+            errors[key] = f"batch_size {value} >= GPU_MAX_BATCH_SIZE({GPU_MAX_BATCH_SIZE})"
+            return None
+        if value > SCHEMA_MAX_BATCH_SIZE:
+            errors[key] = (
+                f"batch_size {value} 超过 Schema 上限 {SCHEMA_MAX_BATCH_SIZE}"
+            )
             return None
         return value
 
     def _validate_positive_int(
-        self, name: str, value: int, errors: dict[str, str], min_val: int = 1
+        self, name: str, value: int, errors: dict[str, str], min_val: int = 1,
+        nullable: bool = False, max_val: int | None = None
     ) -> int | None:
-        """验证正整数配置"""
+        """验证正整数配置
+
+        参数:
+            name: 字段名（用于错误消息）
+            value: 要验证的值
+            errors: 错误字典
+            min_val: 最小值（含）
+            nullable: 是否允许 None 值
+            max_val: 最大值（含），None 表示不限制
+        """
+        if nullable and value is None:
+            return None
         if not isinstance(value, int) or value < min_val:
             errors[name] = (
                 f"{name} 必须 >= {min_val}, 当前值: {value} (类型: {type(value).__name__})"
+            )
+            return None
+        if max_val is not None and value > max_val:
+            errors[name] = (
+                f"{name} 必须 <= {max_val}, 当前值: {value}"
             )
             return None
         return value
@@ -755,145 +842,211 @@ class ConfigManager:
             return False
         return value
 
-    def _validate_checkpoint_interval(self, value: int, errors: dict[str, str]) -> int | None:
-        """验证检查点间隔"""
+    def _validate_checkpoint_interval(self, value: int, errors: dict[str, str], prefix: str = "") -> int | None:
+        """验证检查点间隔
+
+        自 v4.3.1: 添加 prefix 参数支持嵌套路径错误键。
+        """
+        key = prefix + "checkpoint_interval"
         if value != -1 and (not isinstance(value, int) or value < 1):
-            errors["checkpoint_interval"] = (
+            errors[key] = (
                 f"checkpoint_interval 必须为 -1 或 >= 1, 当前值: {value}"
             )
             return None
         return value
 
-    def _validate_log_level(self, value: str, errors: dict[str, str]) -> str | None:
-        """验证日志级别"""
+    def _validate_log_level(self, value: str, errors: dict[str, str], prefix: str = "") -> str | None:
+        """验证日志级别
+
+        参数:
+            value: 日志级别字符串
+            errors: 错误字典
+            prefix: 错误键前缀（如 "logging."）
+        """
         valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+        key = prefix + "level"
         if value.upper() not in valid_levels:
-            errors["log_level"] = f"无效日志级别: {value}，有效值: {valid_levels}"
+            errors[key] = f"无效日志级别: {value}，有效值: {valid_levels}"
             return None
         return value.upper()
 
-    def _validate_targets(self, targets: Any, errors: dict[str, str]) -> list[str] | None:
-        """验证目标地址列表"""
-        if targets is None:
-            return None
-        if not isinstance(targets, list):
-            errors["targets"] = f"targets 必须是列表, 当前: {type(targets).__name__}"
-            return None
-        if len(targets) == 0:
-            errors["targets"] = "targets 列表不能为空"
-            return None
-        return targets
-
-    def _validate_gpu_config(self, config: Any, errors: dict[str, str]) -> dict[str, Any] | None:
-        """验证GPU配置"""
-        if config is None:
-            return None
-        if not isinstance(config, dict):
-            errors["gpu"] = f"gpu 必须是字典, 当前: {type(config).__name__}"
-            return None
-        # 验证 device_id
-        if "device_id" in config:
-            device_id = config["device_id"]
-            if not isinstance(device_id, int) or device_id < 0:
-                errors["gpu.device_id"] = f"gpu.device_id 必须是 >= 0 的整数, 当前: {device_id}"
-                return None
-        return config
-
-    def _validate_performance_config(
-        self, config: Any, errors: dict[str, str]
-    ) -> dict[str, Any] | None:
-        """验证性能配置"""
-        if config is None:
-            return None
-        if not isinstance(config, dict):
-            errors["performance"] = f"performance 必须是字典, 当前: {type(config).__name__}"
-            return None
-        return config
-
-    def _validate_monitoring_config(
-        self, config: Any, errors: dict[str, str]
-    ) -> dict[str, Any] | None:
-        """验证监控配置"""
-        if config is None:
-            return None
-        if not isinstance(config, dict):
-            errors["monitoring"] = f"monitoring 必须是字典, 当前: {type(config).__name__}"
-            return None
-        return config
-
-    def _validate_security_config(
-        self, config: Any, errors: dict[str, str]
-    ) -> dict[str, Any] | None:
-        """验证安全配置"""
-        if config is None:
-            return None
-        if not isinstance(config, dict):
-            errors["security"] = f"security 必须是字典, 当前: {type(config).__name__}"
-            return None
-        return config
-
-    def _validate_strategy_params(
-        self, params: Any, errors: dict[str, str]
-    ) -> dict[str, Any] | None:
-        """验证策略参数"""
-        if params is None:
-            return None
-        if not isinstance(params, dict):
-            errors["strategy_params"] = f"strategy_params 必须是字典, 当前: {type(params).__name__}"
-            return None
-        return params
-
     # ========================================================================
-    # 简化后的 _validate_manual 函数
+    # _validate_manual 函数
     # ========================================================================
 
     def _validate_manual(self, config: dict[str, Any]) -> dict[str, str]:
         """
-        手动验证配置字段（JSON Schema 无法表达的复杂规则）
+        手动验证配置字段（JSON Schema 不可用时的降级方案）
+
+        v4.3.1: 清理 8 个死代码引用 (num_keys/num_workers/target_speed/
+        enable_checkpoint/enable_stats/enable_monitoring/enable_progress_bar/
+        use_colors)，所有校验路径对齐实际 CONFIG_SCHEMA 结构。
+        保留所有 Schema 中有约束的字段校验，确保 JSON Schema 降级时
+        覆盖度一致。
 
         参数:
-            config: 配置字典
+            config: 配置字典（嵌套结构，与 CONFIG_SCHEMA 一致）
 
         返回:
             错误字典 {字段名: 错误信息}，空字典表示验证通过
         """
         errors: dict[str, str] = {}
 
-        # 1. 基础类型验证
-        self._validate_mode(config.get("mode", "random"), errors)
-        self._validate_batch_size(config.get("batch_size", 1024), errors)
+        # 安全获取嵌套节（防御非 dict 类型输入）
+        collision = config.get("collision", {}) if isinstance(config.get("collision"), dict) else {}
+        gpu_cfg = config.get("gpu", {}) if isinstance(config.get("gpu"), dict) else {}
+        logging_cfg = config.get("logging", {}) if isinstance(config.get("logging"), dict) else {}
+        engine_cfg = config.get("engine", {}) if isinstance(config.get("engine"), dict) else {}
+        crypto = config.get("crypto", {}) if isinstance(config.get("crypto"), dict) else {}
+        perf_cfg = config.get("performance_monitoring", {}) if isinstance(config.get("performance_monitoring"), dict) else {}
 
-        # 2. 数值范围验证
-        self._validate_positive_int("num_keys", config.get("num_keys", 1000), errors)
-        self._validate_positive_int("num_workers", config.get("num_workers", 4), errors)
-        self._validate_positive_float("target_speed", config.get("target_speed", 0), errors)
-        self._validate_checkpoint_interval(config.get("checkpoint_interval", 600), errors)
+        # === collision 节 ===
+        if "max_workers" in collision:
+            self._validate_positive_int(
+                "collision.max_workers", collision["max_workers"], errors, min_val=1,
+                nullable=True, max_val=1024
+            )
+        if "progress_interval" in collision:
+            self._validate_positive_int(
+                "collision.progress_interval", collision["progress_interval"], errors
+            )
+        if "checkpoint_interval" in collision:
+            self._validate_checkpoint_interval(
+                collision["checkpoint_interval"], errors, prefix="collision."
+            )
+        if "dedup_max_size" in collision:
+            self._validate_positive_int(
+                "collision.dedup_max_size", collision["dedup_max_size"], errors
+            )
+        if "precomputed_window_size" in collision:
+            self._validate_positive_int(
+                "collision.precomputed_window_size",
+                collision["precomputed_window_size"], errors, min_val=1, max_val=16
+            )
+        bool_fields = [
+            ("collision.use_performance_optimization", collision),
+            ("collision.use_simd_hash", collision),
+            ("collision.use_memory_pool", collision),
+            ("collision.use_gpu_memory_pool", collision),
+        ]
+        for field_name, source in bool_fields:
+            key = field_name.split(".", 1)[1] if "." in field_name else field_name
+            if key in source:
+                self._validate_bool(field_name, source[key], errors)
 
-        # 3. 布尔值验证
-        for field in [
-            "enable_checkpoint",
-            "enable_stats",
-            "enable_monitoring",
-            "enable_progress_bar",
-            "use_colors",
-        ]:
-            if field in config:
-                self._validate_bool(field, config[field], errors)
+        # === logging 节 ===
+        if "level" in logging_cfg:
+            self._validate_log_level(logging_cfg["level"], errors, prefix="logging.")
+        for key in ("format", "file", "rotation_when"):
+            if key in logging_cfg and not isinstance(logging_cfg[key], str):
+                errors[f"logging.{key}"] = (
+                    f"logging.{key} 必须是字符串, "
+                    f"当前: {type(logging_cfg[key]).__name__}"
+                )
+        for key in ("max_bytes", "backup_count", "rotation_interval"):
+            if key in logging_cfg:
+                self._validate_positive_int(
+                    f"logging.{key}", logging_cfg[key], errors, min_val=1
+                    if key != "backup_count" else 0
+                )
+        for key in ("enable_console", "enable_file", "compress_backups"):
+            if key in logging_cfg:
+                self._validate_bool(f"logging.{key}", logging_cfg[key], errors)
+        if "rotation_type" in logging_cfg:
+            if logging_cfg["rotation_type"] not in ("size", "time"):
+                errors["logging.rotation_type"] = (
+                    f"无效 rotation_type: {logging_cfg['rotation_type']}，"
+                    f"有效值: size, time"
+                )
+            elif logging_cfg["rotation_type"] == "size" and "max_bytes" not in logging_cfg:
+                errors["logging.max_bytes"] = (
+                    "rotation_type=size 需要设置 max_bytes"
+                )
+            elif logging_cfg["rotation_type"] == "time" and "rotation_when" not in logging_cfg:
+                errors["logging.rotation_when"] = (
+                    "rotation_type=time 需要设置 rotation_when"
+                )
 
-        # 4. 日志级别验证
-        if "log_level" in config:
-            self._validate_log_level(config["log_level"], errors)
+        # === engine 节 ===
+        if "mode" in engine_cfg:
+            self._validate_mode(engine_cfg["mode"], errors, prefix="engine.")
+        if "batch_size" in engine_cfg:
+            self._validate_batch_size(engine_cfg["batch_size"], errors, prefix="engine.")
+        if "max_threads" in engine_cfg:
+            self._validate_positive_int(
+                "engine.max_threads", engine_cfg["max_threads"], errors
+            )
+        if "checkpoint_interval" in engine_cfg:
+            self._validate_checkpoint_interval(
+                engine_cfg["checkpoint_interval"], errors, prefix="engine."
+            )
 
-        # 5. 嵌套对象验证
-        for field, validator in [
-            ("targets", self._validate_targets),
-            ("gpu", self._validate_gpu_config),
-            ("performance", self._validate_performance_config),
-            ("monitoring", self._validate_monitoring_config),
-            ("security", self._validate_security_config),
-            ("strategy_params", self._validate_strategy_params),
-        ]:
-            if field in config and config[field] is not None:
-                validator(config[field], errors)
+        # === gpu 节 (类型 + 关键字段) ===
+        gpu_top = config.get("gpu")
+        if gpu_top is not None and not isinstance(gpu_top, dict):
+            errors["gpu"] = f"gpu 必须是字典, 当前: {type(gpu_top).__name__}"
+        else:
+            if "batch_size" in gpu_cfg:
+                self._validate_batch_size(gpu_cfg["batch_size"], errors, prefix="gpu.")
+            if "memory_usage_ratio" in gpu_cfg:
+                ratio = gpu_cfg["memory_usage_ratio"]
+                if not isinstance(ratio, (int, float)) or not (0 < ratio <= 1):
+                    errors["gpu.memory_usage_ratio"] = (
+                        f"memory_usage_ratio 必须在(0, 1]范围内, 当前: {ratio}"
+                    )
+            if "mode" in gpu_cfg and gpu_cfg["mode"] not in ("auto", "single", "multi"):
+                errors["gpu.mode"] = (
+                    f"无效 gpu.mode: {gpu_cfg['mode']}，有效值: auto, single, multi"
+                )
+            if "load_balancing" in gpu_cfg and gpu_cfg["load_balancing"] not in ("performance", "equal"):
+                errors["gpu.load_balancing"] = (
+                    f"无效 load_balancing: {gpu_cfg['load_balancing']}，"
+                    f"有效值: performance, equal"
+                )
+            for key in ("use_gpu", "auto_detect", "enable_vendor_optimizations"):
+                if key in gpu_cfg:
+                    self._validate_bool(f"gpu.{key}", gpu_cfg[key], errors)
+            if "device_index" in gpu_cfg:
+                if not isinstance(gpu_cfg["device_index"], int):
+                    errors["gpu.device_index"] = (
+                        f"gpu.device_index 必须是整数, "
+                        f"当前: {type(gpu_cfg['device_index']).__name__}"
+                    )
+
+        # === crypto 节 ===
+        if "backend" in crypto:
+            valid_backends = (
+                "auto", "pure_python", "pure_python_const_time",
+                "openssl", "coincurve", "ecdsa"
+            )
+            if crypto["backend"] not in valid_backends:
+                errors["crypto.backend"] = (
+                    f"无效 crypto.backend: {crypto['backend']}，有效值: {valid_backends}"
+                )
+        for key in ("constant_time", "verify_checksums", "strict_wif_validation", "use_gpu"):
+            if key in crypto:
+                self._validate_bool(f"crypto.{key}", crypto[key], errors)
+        if "gpu_device_index" in crypto:
+            if not isinstance(crypto["gpu_device_index"], int):
+                errors["crypto.gpu_device_index"] = (
+                    f"gpu_device_index 必须是整数, "
+                    f"当前: {type(crypto['gpu_device_index']).__name__}"
+                )
+
+        # === performance_monitoring 节 ===
+        for key in ("enabled", "track_slow_operations"):
+            if key in perf_cfg:
+                self._validate_bool(f"performance_monitoring.{key}", perf_cfg[key], errors)
+        if "slow_threshold_ms" in perf_cfg:
+            self._validate_positive_float(
+                "performance_monitoring.slow_threshold_ms",
+                perf_cfg["slow_threshold_ms"], errors, min_val=0
+            )
+        if "max_records" in perf_cfg:
+            self._validate_positive_int(
+                "performance_monitoring.max_records", perf_cfg["max_records"], errors
+            )
+        if "log_level" in perf_cfg:
+            self._validate_log_level(perf_cfg["log_level"], errors, prefix="performance_monitoring.log_")
 
         return errors

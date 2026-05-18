@@ -6,13 +6,26 @@ from collections import deque
 from typing import Any
 
 # 导入日志配置
-from ..utils import get_configured_logger, init_logging
+from ..utils import get_configured_logger
 
-# 初始化日志系统（如果尚未初始化）
-init_logging()
-
-# 获取模块日志记录器
+# 日志系统由CLI/main.py入口统一初始化
 logger = get_configured_logger("DeduplicationFilter")
+
+# v4.3.1: 快速哈希模式开关
+# 当启用时，使用 Python 内置 hash() 替代 SHA256 计算指纹
+# hash() 比 SHA256 快 10-100x，适合内存级去重场景
+# 注意: hash() 值在进程间不可复现，但会话内去重不需要跨进程一致性
+_USE_FAST_HASH: bool = True
+
+
+def _fast_fingerprint(private_key: bytes) -> int:
+    """快速指纹计算 (Python 内置 hash)"""
+    return hash(private_key)
+
+
+def _crypto_fingerprint(private_key: bytes) -> int:
+    """密码学指纹计算 (SHA256 截断)"""
+    return int.from_bytes(hashlib.sha256(private_key).digest()[:8], "big")
 
 
 class DeduplicationFilter:
@@ -20,9 +33,10 @@ class DeduplicationFilter:
 
     设计说明：
     比特币私钥空间为 2^256，内存无法存储所有已检测的键。
-    本实现采用滑动窗口 + Bloom Filter 混合策略：
-    - 使用双缓冲队列实现滑动窗口，避免频繁清空
-    - 8字节SHA256截断作为指纹，误判率极低
+    本实现采用滑动窗口 + 快速哈希策略：
+    - v4.3.1: 使用 Python 内置 hash() 替代 SHA256，速度提升 10-100x
+    - 双缓冲队列实现滑动窗口，避免频繁清空
+    - 64-bit 整数指纹，set 操作 O(1) 且哈希极快
     - 仅对 random_search 模式有意义（range/brute_force 天然无重复）
     """
 
@@ -34,34 +48,39 @@ class DeduplicationFilter:
         参数:
             max_size: 最大容量
             enabled: 是否启用
-            false_positive_rate: 期望的误判率（BL-6修复：可配置）
-                默认0.001 (0.1%)，越低越准确但需要更多内存
+            false_positive_rate: 期望的误判率（保留参数，v4.3.1 快速哈希模式下不适用）
         """
         self.max_size = max_size
         self.enabled = enabled
-        self.false_positive_rate = false_positive_rate  # BL-6修复：添加配置
+        self.false_positive_rate = false_positive_rate
         self.duplicates_found: int = 0
         self.checks_total: int = 0
 
-        # 双缓冲设计：当前集合和待淘汰集合
-        self._current: set = set()
-        self._pending: set = set()
+        # v4.3.1: 根据 _USE_FAST_HASH 选择指纹函数
+        if _USE_FAST_HASH:
+            self._fingerprint_fn = _fast_fingerprint
+            logger.debug("DeduplicationFilter: 启用快速哈希模式 (Python hash)")
+        else:
+            self._fingerprint_fn = _crypto_fingerprint
+            logger.debug("DeduplicationFilter: 使用密码学哈希模式 (SHA256)")
+
+        # 双缓冲设计：当前集合和待淘汰集合 (v4.3.1: int 指纹)
+        self._current: set[int] = set()
+        self._pending: set[int] = set()
         self._lock = threading.Lock()
 
         # 使用 deque 作为 FIFO 队列跟踪插入顺序
-        self._queue: deque = deque(maxlen=max_size // 2)
+        self._queue: deque[int] = deque(maxlen=max_size // 2)
         self._current_size = 0
         self._half_size = max_size // 2
 
         logger.debug(
-            f"DeduplicationFilter 初始化: max_size={max_size}, enabled={enabled}, "
-            f"false_positive_rate={false_positive_rate * 100:.2f}%"
+            f"DeduplicationFilter 初始化: max_size={max_size}, enabled={enabled}"
         )
 
-    def _fingerprint(self, private_key: bytes) -> bytes:
-        """计算私钥的8字节指纹"""
-        # 使用 SHA256 截断（兼容性更好）
-        return hashlib.sha256(private_key).digest()[:8]
+    def _fingerprint(self, private_key: bytes) -> int:
+        """v4.3.1: 计算私钥的 64-bit 整数指纹"""
+        return self._fingerprint_fn(private_key)
 
     def check_and_add(self, private_key: bytes) -> bool:
         """检查是否重复。不重复返回True，重复返回False。禁用时始终返回True。

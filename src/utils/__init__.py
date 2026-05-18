@@ -1,5 +1,17 @@
 """工具模块"""
 
+from .bech32_codec import (
+    BECH32_CHARSET,
+    BECH32_CONST,
+    BECH32M_CONST,
+    bech32_create_checksum,
+    bech32_decode,
+    bech32_encode,
+    bech32_polymod,
+    bech32_verify_checksum,
+    convertbits,
+    decode_segwit_address,
+)
 from .encoding_utils import EncodingUtils
 from .exception_handler import ExceptionHandler
 from .exceptions import (
@@ -27,7 +39,6 @@ from .logger import (
     PerformanceMonitor,
     SafeStreamHandler,  # SafeStreamHandler: Windows GBK编码兼容
     SampledLogger,
-    ThreadSafeLogger,
     get_logger,
     log_performance,
     setup_logger,
@@ -59,7 +70,6 @@ __all__ = [
     "get_logger",
     "PerformanceMonitor",
     "SampledLogger",
-    "ThreadSafeLogger",
     "ColoredFormatter",
     "log_performance",
     "AsyncLogger",
@@ -87,4 +97,15 @@ __all__ = [
     "safe_file_delete",
     "get_file_size_safe",
     "ensure_directory",
+    # Bech32 编解码 (BIP-173/BIP-350)
+    "bech32_decode",
+    "bech32_encode",
+    "convertbits",
+    "decode_segwit_address",
+    "bech32_polymod",
+    "bech32_verify_checksum",
+    "bech32_create_checksum",
+    "BECH32_CHARSET",
+    "BECH32_CONST",
+    "BECH32M_CONST",
 ]

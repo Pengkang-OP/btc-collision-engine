@@ -6,6 +6,7 @@
 
 import hashlib
 import json
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -110,23 +111,39 @@ class AuditModule:
         """
         audit_id = self._generate_audit_id()
 
-        # 计算审核指标
-        metrics = self._compute_audit_metrics(test_results, analysis_report)
+        try:
+            # 计算审核指标
+            metrics = self._compute_audit_metrics(test_results, analysis_report)
 
-        # 执行规则检查
-        violations, warnings, passed_checks = self._check_rules(
-            metrics, test_results, analysis_report
-        )
+            # 执行规则检查
+            violations, warnings_list, passed_checks = self._check_rules(
+                metrics, test_results, analysis_report
+            )
 
-        # 确定审核状态
-        status = self._determine_status(violations, warnings, passed_checks)
+            # 确定审核状态
+            status = self._determine_status(violations, warnings_list, passed_checks)
+        except Exception as e:
+            # v4.3.1: 审计流程容错 — 内部异常不中断审计，返回失败状态
+            metrics = {}
+            violations = [
+                Issue(
+                    id="AUDIT_INTERNAL_ERROR",
+                    severity=Severity.CRITICAL,
+                    category="Audit",
+                    title="审计流程内部异常",
+                    description=f"审计计算过程发生异常: {e}",
+                )
+            ]
+            warnings_list = []
+            passed_checks = 0
+            status = SystemStatus.FAILED
 
         result = AuditResult(
             audit_id=audit_id,
             timestamp=datetime.now(),
             status=status,
             violations=violations,
-            warnings=warnings,
+            warnings=warnings_list,
             passed_checks=passed_checks,
             total_checks=len(self.rules),
             test_results=test_results,
@@ -149,14 +166,17 @@ class AuditModule:
     def _compute_audit_metrics(
         self, test_results: TestSuiteResult, analysis_report: AnalysisReport | None
     ) -> dict[str, Any]:
-        """计算审核指标"""
-        metrics = {
-            "test_pass_rate": test_results.pass_rate,
-            "test_total": test_results.total,
-            "test_passed": test_results.passed,
-            "test_failed": test_results.failed,
-            "test_errors": test_results.errors,
-            "test_skipped": test_results.skipped,
+        """计算审核指标
+
+        v4.3.1: 添加错误容错 — 单个指标计算失败不影响整体审计。
+        """
+        metrics: dict[str, Any] = {
+            "test_pass_rate": 0.0,
+            "test_total": 0,
+            "test_passed": 0,
+            "test_failed": 0,
+            "test_errors": 0,
+            "test_skipped": 0,
             "critical_issues": 0,
             "high_priority_issues": 0,
             "medium_priority_issues": 0,
@@ -166,46 +186,86 @@ class AuditModule:
             "performance_tests_passed": True,
         }
 
-        # 从分析报告获取问题统计
-        if analysis_report:
-            for issue in analysis_report.issues:
-                if issue.severity == Severity.CRITICAL:
-                    metrics["critical_issues"] += 1
-                elif issue.severity == Severity.HIGH:
-                    metrics["high_priority_issues"] += 1
-                elif issue.severity == Severity.MEDIUM:
-                    metrics["medium_priority_issues"] += 1
-                elif issue.severity == Severity.LOW:
-                    metrics["low_priority_issues"] += 1
+        # 安全获取测试结果指标
+        try:
+            metrics["test_pass_rate"] = test_results.pass_rate
+            metrics["test_total"] = test_results.total
+            metrics["test_passed"] = test_results.passed
+            metrics["test_failed"] = test_results.failed
+            metrics["test_errors"] = test_results.errors
+            metrics["test_skipped"] = test_results.skipped
+        except Exception:
+            pass  # 使用默认值
 
-            # 配置状态
-            config_info = analysis_report.data_summary.get("configuration", {})
-            metrics["config_valid"] = config_info.get("config_valid", True)
+        # 从分析报告获取问题统计（安全访问）
+        if analysis_report:
+            try:
+                issues = getattr(analysis_report, "issues", None) or []
+                for issue in issues:
+                    sev = getattr(issue, "severity", None)
+                    if sev == Severity.CRITICAL:
+                        metrics["critical_issues"] += 1
+                    elif sev == Severity.HIGH:
+                        metrics["high_priority_issues"] += 1
+                    elif sev == Severity.MEDIUM:
+                        metrics["medium_priority_issues"] += 1
+                    elif sev == Severity.LOW:
+                        metrics["low_priority_issues"] += 1
+            except Exception:
+                pass
+
+            # 配置状态（安全访问嵌套属性）
+            try:
+                data_summary = getattr(analysis_report, "data_summary", None) or {}
+                config_info = data_summary.get("configuration", {}) if isinstance(data_summary, dict) else {}
+                metrics["config_valid"] = config_info.get("config_valid", True)
+            except Exception:
+                pass
 
             # 质量分数
-            metrics["quality_score"] = analysis_report.statistics.get("quality_score", 100)
+            try:
+                stats = getattr(analysis_report, "statistics", None) or {}
+                metrics["quality_score"] = stats.get("quality_score", 100) if isinstance(stats, dict) else 100
+            except Exception:
+                pass
 
         # 检查性能测试
-        perf_tests = [
-            r
-            for r in test_results.results
-            if r.test_name.startswith("测试大整数") or r.test_name.startswith("测试哈希")
-        ]
-        if perf_tests:
-            metrics["performance_tests_passed"] = all(r.is_passed for r in perf_tests)
+        try:
+            perf_tests = [
+                r
+                for r in getattr(test_results, "results", []) or []
+                if getattr(r, "test_name", "").startswith("测试大整数")
+                or getattr(r, "test_name", "").startswith("测试哈希")
+            ]
+            if perf_tests:
+                metrics["performance_tests_passed"] = all(
+                    getattr(r, "is_passed", True) for r in perf_tests
+                )
+        except Exception:
+            pass
 
         # 检查关键测试通过率
-        priority_1_tests = [
-            r
-            for r in test_results.results
-            if any(tc in r.test_name for tc in ["配置", "CLI", "加密", "端到端"])
-        ]
-        if priority_1_tests:
-            metrics["critical_tests_passed"] = all(r.is_passed for r in priority_1_tests)
-            metrics["critical_test_pass_rate"] = (
-                sum(1 for r in priority_1_tests if r.is_passed) / len(priority_1_tests) * 100
-            )
-        else:
+        try:
+            priority_1_tests = [
+                r
+                for r in getattr(test_results, "results", []) or []
+                if any(
+                    tc in getattr(r, "test_name", "")
+                    for tc in ["配置", "CLI", "加密", "端到端"]
+                )
+            ]
+            if priority_1_tests:
+                metrics["critical_tests_passed"] = all(
+                    getattr(r, "is_passed", True) for r in priority_1_tests
+                )
+                metrics["critical_test_pass_rate"] = (
+                    sum(1 for r in priority_1_tests if getattr(r, "is_passed", True))
+                    / len(priority_1_tests) * 100
+                )
+            else:
+                metrics["critical_tests_passed"] = True
+                metrics["critical_test_pass_rate"] = 100
+        except Exception:
             metrics["critical_tests_passed"] = True
             metrics["critical_test_pass_rate"] = 100
 
@@ -267,39 +327,53 @@ class AuditModule:
         return violations, warnings, passed_checks
 
     def _evaluate_rule(self, rule: AuditRule, metrics: dict[str, Any]) -> dict[str, Any]:
-        """评估单条规则"""
-        condition = rule.condition
+        """评估单条规则
 
-        # 简单的条件解析
+        自 v4.3.1: 使用正则表达式匹配条件，防止子字符串误匹配。
+        例如 "test_pass_rate >= 90" 不会错误匹配 "test_pass_rate >= 900"。
+        """
+        condition = rule.condition
         passed = True
 
-        if "test_pass_rate >= 90" in condition:
-            passed = passed and metrics.get("test_pass_rate", 0) >= 90
+        # --- 含数值比较的条件：使用正则确保数字精确匹配，防止 >=90 误匹配 >=900 ---
+        # 模式: <metric> <op> <number>，数字后跟单词边界或字符串末尾
+        _num = r'(\d+(?:\.\d+)?)\b'
 
-        if "critical_tests_passed" in condition:
-            passed = passed and metrics.get("critical_tests_passed", True)
+        if re.search(rf'test_pass_rate\s*>=\s*{_num}', condition):
+            m = re.search(rf'test_pass_rate\s*>=\s*{_num}', condition)
+            threshold = float(m.group(1)) if m else 90
+            passed = passed and metrics.get("test_pass_rate", 0) >= threshold
 
-        if "critical_issues == 0" in condition:
+        if re.search(rf'critical_issues\s*==\s*{_num}', condition):
             passed = passed and metrics.get("critical_issues", 0) == 0
 
-        if "high_priority_issues <= 3" in condition:
-            passed = passed and metrics.get("high_priority_issues", 0) <= 3
+        if re.search(rf'high_priority_issues\s*<=\s*{_num}', condition):
+            m = re.search(rf'high_priority_issues\s*<=\s*{_num}', condition)
+            threshold = int(m.group(1)) if m else 3
+            passed = passed and metrics.get("high_priority_issues", 0) <= threshold
 
-        if "test_coverage >= 80" in condition:
-            # 简化处理
-            passed = passed and metrics.get("test_pass_rate", 0) >= 80
+        if re.search(rf'test_coverage\s*>=\s*{_num}', condition):
+            m = re.search(rf'test_coverage\s*>=\s*{_num}', condition)
+            threshold = float(m.group(1)) if m else 80
+            passed = passed and metrics.get("test_pass_rate", 0) >= threshold
+
+        if re.search(rf'test_errors\s*==\s*{_num}', condition):
+            passed = passed and metrics.get("test_errors", 0) == 0
+
+        if re.search(rf'quality_score\s*>=\s*{_num}', condition):
+            m = re.search(rf'quality_score\s*>=\s*{_num}', condition)
+            threshold = float(m.group(1)) if m else 70
+            passed = passed and metrics.get("quality_score", 100) >= threshold
+
+        # --- 纯布尔条件：无数字，简单子串匹配足够安全 ---
+        if "critical_tests_passed" in condition:
+            passed = passed and metrics.get("critical_tests_passed", True)
 
         if "performance_tests_passed" in condition:
             passed = passed and metrics.get("performance_tests_passed", True)
 
-        if "test_errors == 0" in condition:
-            passed = passed and metrics.get("test_errors", 0) == 0
-
         if "config_valid" in condition:
             passed = passed and metrics.get("config_valid", True)
-
-        if "quality_score >= 70" in condition:
-            passed = passed and metrics.get("quality_score", 100) >= 70
 
         return {"passed": passed, "rule_id": rule.id}
 

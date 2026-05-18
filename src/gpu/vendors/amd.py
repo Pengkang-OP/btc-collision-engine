@@ -9,7 +9,7 @@
 
 from typing import Any
 
-# P3-5: 统一日志获取
+# 统一日志获取
 from ...utils import get_configured_logger
 from ..constants import PER_KEY_MEMORY_BYTES, align_batch_size
 from .base import GPUVendorBase

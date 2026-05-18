@@ -72,7 +72,7 @@ MIGRATION_RULES: dict[str, dict[str, Any]] = {
             "performance_monitoring": {
                 "enabled": True,
                 "track_slow_operations": True,
-                "slow_threshold_ms": 5000,
+                "slow_threshold_ms": 30000,
                 "max_records": 10000,
             }
         },

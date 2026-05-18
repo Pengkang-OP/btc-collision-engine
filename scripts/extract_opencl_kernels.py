@@ -31,7 +31,7 @@ def create_kernel_files():
 //
 // 文件: btc_collision.cl
 // 描述: BTC碰撞引擎的核心OpenCL内核，实现批量私钥到地址的碰撞检测
-// 版本: v2.2.0
+// 版本: v4.2.2
 //
 // 核心功能:
 // - 批量私钥处理（支持uint32优化，避免Intel Arc hang bug）

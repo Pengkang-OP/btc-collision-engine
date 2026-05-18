@@ -198,7 +198,7 @@ class TestIsOnCurveEdge(unittest.TestCase):
 
 # ===========================================================================
 # Group 4: _validate_scalar_multiply / scalar_multiply / _const_time_select
-#          / scalar_multiply_const_time (lines 350-506)
+# / scalar_multiply_const_time (lines 350-506)
 # ===========================================================================
 
 
@@ -316,7 +316,7 @@ class TestScalarMultiplyConstTimeEdge(unittest.TestCase):
 
 # ===========================================================================
 # Group 5: generate_public_key / generate_public_key_const_time
-#          (lines 569, 579, 607)
+# (lines 569, 579, 607)
 # ===========================================================================
 
 

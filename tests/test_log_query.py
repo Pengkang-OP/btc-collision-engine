@@ -15,7 +15,7 @@ import tempfile
 import pytest
 from datetime import datetime, timezone
 
-from src.logging.log_query import LogQuery
+from src.log_engine.log_query import LogQuery
 
 # ============================================================================
 # Fixtures

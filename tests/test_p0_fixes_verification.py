@@ -12,7 +12,7 @@ import os
 import json
 
 # ============================================================================
-# P0-2: crypto_backend.py generate_public_key_const_time 不存在
+# crypto_backend.py generate_public_key_const_time 不存在
 # ============================================================================
 
 
@@ -44,7 +44,7 @@ class TestCryptoBackendConstTime:
 
 
 # ============================================================================
-# P0-3: bitcoin_key_validator.py 安全模式私钥泄漏
+# bitcoin_key_validator.py 安全模式私钥泄漏
 # ============================================================================
 
 
@@ -104,7 +104,7 @@ class TestBitcoinKeyValidatorSecureMode:
 
 
 # ============================================================================
-# P0-4: bitcoin_key_validator.py 绝对导入修复
+# bitcoin_key_validator.py 绝对导入修复
 # ============================================================================
 
 
@@ -120,7 +120,7 @@ class TestBitcoinKeyValidatorImport:
 
 
 # ============================================================================
-# P0-10: SensitiveDataFilter 脱敏 vs 丢弃
+# SensitiveDataFilter 脱敏 vs 丢弃
 # ============================================================================
 
 
@@ -129,7 +129,7 @@ class TestSensitiveDataFilterRedact:
 
     def test_redact_replaces_private_key(self):
         """64位hex私钥应被替换"""
-        from src.logging.log_processor import SensitiveDataFilter
+        from src.log_engine.log_processor import SensitiveDataFilter
 
         fake_pk = "a" * 64
         result = SensitiveDataFilter.redact(f"key: {fake_pk}")
@@ -138,7 +138,7 @@ class TestSensitiveDataFilterRedact:
 
     def test_redact_replaces_wif_uncompressed(self):
         """未压缩WIF私钥应被替换"""
-        from src.logging.log_processor import SensitiveDataFilter
+        from src.log_engine.log_processor import SensitiveDataFilter
 
         fake_wif = "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ"
         result = SensitiveDataFilter.redact(f"WIF: {fake_wif}")
@@ -147,7 +147,7 @@ class TestSensitiveDataFilterRedact:
 
     def test_redact_replaces_wif_compressed(self):
         """压缩WIF私钥应被替换"""
-        from src.logging.log_processor import SensitiveDataFilter
+        from src.log_engine.log_processor import SensitiveDataFilter
 
         fake_wif = "KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qYjgd9M7rFU73sVHnoWn"
         result = SensitiveDataFilter.redact(f"WIF: {fake_wif}")
@@ -156,7 +156,7 @@ class TestSensitiveDataFilterRedact:
 
     def test_redact_replaces_bip32_key(self):
         """BIP32扩展密钥应被替换"""
-        from src.logging.log_processor import SensitiveDataFilter
+        from src.log_engine.log_processor import SensitiveDataFilter
 
         fake_xprv = "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbN6mRyPHQpQ4QnZt7nEk2RgvXVcqvNNt5ThEZQUQoFwSsXPyDyoB6F5TsPgpXfXaM"  # noqa: E501
         result = SensitiveDataFilter.redact(f"key: {fake_xprv}")
@@ -165,7 +165,7 @@ class TestSensitiveDataFilterRedact:
 
     def test_redact_replaces_addresses(self):
         """比特币地址应被替换为类型标签"""
-        from src.logging.log_processor import SensitiveDataFilter
+        from src.log_engine.log_processor import SensitiveDataFilter
 
         # P2PKH地址
         result = SensitiveDataFilter.redact("addr: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
@@ -177,7 +177,7 @@ class TestSensitiveDataFilterRedact:
 
     def test_redact_preserves_non_sensitive_data(self):
         """非敏感数据不应被修改"""
-        from src.logging.log_processor import SensitiveDataFilter
+        from src.log_engine.log_processor import SensitiveDataFilter
 
         text = "engine started, batch_size=1048576, speed=5000 keys/sec"
         result = SensitiveDataFilter.redact(text)
@@ -186,7 +186,7 @@ class TestSensitiveDataFilterRedact:
 
     def test_redact_data_handles_dict(self):
         """redact_data 应递归处理字典"""
-        from src.logging.log_processor import SensitiveDataFilter
+        from src.log_engine.log_processor import SensitiveDataFilter
 
         data = {"message": "ok", "key": "a" * 64}
         result = SensitiveDataFilter.redact_data(data)
@@ -195,7 +195,7 @@ class TestSensitiveDataFilterRedact:
 
     def test_redact_data_handles_list(self):
         """redact_data 应递归处理列表"""
-        from src.logging.log_processor import SensitiveDataFilter
+        from src.log_engine.log_processor import SensitiveDataFilter
 
         data = ["normal", "a" * 64, "ok"]
         result = SensitiveDataFilter.redact_data(data)
@@ -205,7 +205,7 @@ class TestSensitiveDataFilterRedact:
 
 
 # ============================================================================
-# P0-6: ContinuousMatcher 计数器竞态修复
+# ContinuousMatcher 计数器竞态修复
 # ============================================================================
 
 
@@ -242,7 +242,7 @@ class TestContinuousMatcherThreadSafety:
 
 
 # ============================================================================
-# P0-5: 检查点保存 KeyError 验证
+# 检查点保存 KeyError 验证
 # ============================================================================
 
 
@@ -266,7 +266,7 @@ class TestCheckpointFieldName:
 
 
 # ============================================================================
-# P0-7: zh_CN.json 翻译乱码修复
+# zh_CN.json 翻译乱码修复
 # ============================================================================
 
 
@@ -308,7 +308,7 @@ class TestI18NFix:
 
 
 # ============================================================================
-# P0-16: docker-compose.yml Grafana 弱密码修复
+# docker-compose.yml Grafana 弱密码修复
 # ============================================================================
 
 

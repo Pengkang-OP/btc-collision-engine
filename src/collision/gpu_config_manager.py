@@ -148,7 +148,7 @@ class GPUConfigManager:
             是否有效
         """
         if key == "batch_size":
-            # P1-2: batch_size must be < UINT32_MAX to prevent GPU gid overflow
+            # batch_size must be < UINT32_MAX to prevent GPU gid overflow
             from .gpu_collision_engine import GPU_MAX_BATCH_SIZE
 
             return isinstance(value, int) and 1024 <= value < GPU_MAX_BATCH_SIZE
@@ -174,7 +174,7 @@ class GPUConfigManager:
                 if batch_size < 1024:
                     logger.warning(f"batch_size过小({batch_size})，可能导致性能差")
                 elif batch_size >= 33554432:
-                    # P1-2: 超过33M可能显存不足（上限为UINT32_MAX）
+                    # 超过33M可能显存不足（上限为UINT32_MAX）
                     logger.warning(f"batch_size过大({batch_size})，可能导致显存不足")
 
         if "memory_usage_ratio" in config:

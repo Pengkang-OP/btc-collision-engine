@@ -578,21 +578,22 @@ class TestMultiFormatClosedLoop:
     """
 
     def test_p2sh_resolver_correctness(self):
-        """P2SH → Resolver → 正确的 P2PKH（payload=script_hash, 不能引擎匹配）"""
+        """P2SH → Resolver → 保持原格式 (payload=script_hash, 无法转为 P2PKH)"""
         pk = _K2_PK
         gen = P2PKHAddressGenerator()
         _, compressed_pk, _ = gen.generate_address(pk)
         p2sh_addr = BitcoinKeyValidator.generate_p2sh_address(compressed_pk)
         assert p2sh_addr.startswith("3"), f"P2SH 地址应以 '3' 开头，实际: {p2sh_addr}"
 
-        # Resolver 将 P2SH 转为 P2PKH
+        # Resolver 保留 P2SH 原格式 (payload=script_hash ≠ pubkey_hash, 无法转为 P2PKH)
         resolver = TargetResolver(enable_cache=False)
-        p2pkh_from_p2sh = resolver.resolve(p2sh_addr)
-        assert p2pkh_from_p2sh is not None, "Resolver 应将 P2SH 转为 P2PKH"
-        assert p2pkh_from_p2sh.startswith("1"), f"转换结果应为 P2PKH，实际: {p2pkh_from_p2sh}"
+        resolved = resolver.resolve(p2sh_addr)
+        assert resolved is not None, "Resolver 应验证 P2SH 地址"
+        assert resolved.startswith("3"), f"P2SH 应保持原格式，实际: {resolved}"
 
-        # P2SH 的 P2PKH 基于 script_hash，与引擎生成的 pubkey_hash 不同
-        # 这是预期行为 — 引擎只做 P2PKH 碰撞，P2SH 通过 outside 解析器预先转换
+        # P2SH 的 payload 是 script_hash，不是 pubkey_hash
+        # 引擎只做 P2PKH 碰撞 (基于 pubkey_hash)，P2SH 目标必然无法匹配
+        # 这是预期行为 — 非 P2PKH 目标需在外部预先转换
 
     def test_bech32_engine_closed_loop(self):
         """从已知私钥派生 Bech32 → Resolver 转 P2PKH → 引擎匹配 → 验证私钥"""
@@ -645,12 +646,14 @@ class TestMultiFormatClosedLoop:
         assert resolver.resolve(bech32_addr) == p2pkh_addr, (
             "Bech32 解析结果应等于 Legacy P2PKH（共用 Hash160 载荷）"
         )
-        # P2SH 的 payload 是 script_hash（不是 pubkey_hash）→ 与 Legacy P2PKH 不同
-        p2pkh_from_p2sh = resolver.resolve(p2sh_addr)
-        assert p2pkh_from_p2sh is not None
-        assert p2pkh_from_p2sh.startswith("1")
-        assert p2pkh_from_p2sh != p2pkh_addr, (
-            "P2SH 解析的 P2PKH 应不同于 Legacy P2PKH（载荷是 script_hash）"
+        # P2SH 的 payload 是 script_hash（不是 pubkey_hash）→ 保持原格式
+        resolved_p2sh = resolver.resolve(p2sh_addr)
+        assert resolved_p2sh is not None
+        assert resolved_p2sh.startswith("3"), (
+            f"P2SH 应保持原格式 '3' 开头，实际: {resolved_p2sh}"
+        )
+        assert resolved_p2sh != p2pkh_addr, (
+            "P2SH 地址应不同于 Legacy P2PKH（载荷是 script_hash）"
         )
 
 
@@ -663,7 +666,7 @@ class TestResolverPipelineClosedLoop:
     """TargetResolver 集成管线: P2PKH/P2SH/Bech32/Bech32m → P2PKH 转换验证"""
 
     def test_resolver_converts_p2sh_to_p2pkh(self):
-        """P2SH → Resolver → 正确的 P2PKH（载荷为 script_hash）"""
+        """P2SH → Resolver → 保持原格式（载荷为 script_hash，无法转 P2PKH）"""
         pk = _K2_PK
         gen = P2PKHAddressGenerator()
         p2pkh_addr, compressed_pk, _ = gen.generate_address(pk)
@@ -672,12 +675,12 @@ class TestResolverPipelineClosedLoop:
         resolver = TargetResolver(enable_cache=False)
         result = resolver.resolve(p2sh_addr)
 
-        assert result is not None, "Resolver 应将 P2SH 转为 P2PKH"
-        assert result.startswith("1"), f"应为 P2PKH，实际: {result}"
+        assert result is not None, "Resolver 应返回 P2SH 原地址"
+        assert result == p2sh_addr, "P2SH 应保持原格式（载荷为 script_hash，无法转换为 P2PKH）"
         # P2SH 的 payload 是 hash160(redeem_script)，不是 hash160(pubkey)
-        # 所以转换结果不等于 Legacy P2PKH（这是正确的行为）
+        # 所以解析器保持原格式不变
         assert result != p2pkh_addr, (
-            "P2SH 解析的 P2PKH 应不同于 Legacy P2PKH（载荷不同）"
+            "P2SH 保持原格式，应不同于 Legacy P2PKH（载荷不同）"
         )
 
     def test_resolver_converts_bech32_to_p2pkh(self):
@@ -698,7 +701,7 @@ class TestResolverPipelineClosedLoop:
         )
 
     def test_resolver_converts_taproot_to_p2pkh(self):
-        """Taproot (Bech32m) → Resolver → P2PKH（载荷为 x-only pubkey）"""
+        """Taproot (Bech32m) → Resolver → 保持原格式（载荷为 x-only pubkey）"""
         pk = _K4_PK
         gen = P2PKHAddressGenerator()
         p2pkh_addr, compressed_pk, _ = gen.generate_address(pk)
@@ -709,11 +712,11 @@ class TestResolverPipelineClosedLoop:
         resolver = TargetResolver(enable_cache=False)
         result = resolver.resolve(taproot_addr)
 
-        assert result is not None, "Resolver 应将 Taproot 转为 P2PKH"
-        assert result.startswith("1")
+        assert result is not None, "Resolver 应返回 Taproot 原地址"
+        assert result == taproot_addr, "Taproot 应保持原格式（payload 为 x-only pubkey，无法转换为 P2PKH）"
         # Taproot 的 witness program 是 x-only pubkey → P2PKH 载荷不同
         assert result != p2pkh_addr, (
-            "Taproot 解析的 P2PKH 应不同于 Legacy P2PKH（载荷为 x-only pubkey）"
+            "Taproot 保持原格式，应不同于 Legacy P2PKH（载荷为 x-only pubkey）"
         )
 
     def test_resolver_mixed_formats_same_pubkey(self):
@@ -730,15 +733,17 @@ class TestResolverPipelineClosedLoop:
         assert len({p2pkh_addr, p2sh_addr, bech32_addr, taproot_addr}) == 4
 
         resolver = TargetResolver(enable_cache=False)
-        # Bech32 与 Legacy 解析结果相同
+        # Bech32 与 Legacy 解析结果相同（都是 P2PKH 以 '1' 开头）
         assert resolver.resolve(bech32_addr) == p2pkh_addr
-        # P2SH 和 Taproot 解析出不同的 P2PKH
+        assert resolver.resolve(bech32_addr).startswith("1")
+        # P2SH 和 Taproot 保持原格式
         assert resolver.resolve(p2sh_addr) != p2pkh_addr
+        assert resolver.resolve(p2sh_addr).startswith("3")
         assert resolver.resolve(taproot_addr) != p2pkh_addr
+        assert resolver.resolve(taproot_addr).startswith("bc1p")
         # 全部可解析
         for addr in [p2pkh_addr, p2sh_addr, bech32_addr, taproot_addr]:
             assert resolver.resolve(addr) is not None, f"{addr[:6]}... 应可解析"
-            assert resolver.resolve(addr).startswith("1")
 
 
 # ============================================================================

@@ -1,8 +1,8 @@
 # 配置变更管理流程
 
-**版本**: v1.0  
-**日期**: 2026-04-24  
-**状态**: ✅ 已实施  
+**版本**: v4.2.2
+**日期**: 2026-04-24
+**状态**: ✅ 已实施
 
 ---
 
@@ -122,17 +122,17 @@ def migrate_config(config):
 **弃用流程**:
 
 ```python
-# 版本 v3.3.0: 标记弃用
+# 版本 v4.2.1: 标记弃用
 if 'old_option' in config:
     logger.warning(
-        "配置项 'old_option' 已弃用，将在v4.0.0中删除\n"
+        "配置项 'old_option' 已弃用，将在v4.2.1中删除\n"
         "  请使用 'new_option' 替代\n"
         "  自动迁移: old_option=True -> new_option='enabled'"
     )
     # 自动迁移
     config['new_option'] = 'enabled' if config['old_option'] else 'disabled'
 
-# 版本 v4.0.0: 删除
+# 版本 v4.2.1: 删除
 # 移除所有相关代码
 ```
 
@@ -175,8 +175,8 @@ if 'old_option' in config:
 
 ### 删除配置项
 - **配置项名称**: old_option
-- **弃用版本**: v3.3.0
-- **计划删除版本**: v4.0.0
+- **弃用版本**: v4.2.1
+- **计划删除版本**: v4.2.1
 - **替代方案**: 使用new_option
 - **迁移指南**: [链接到文档]
 
@@ -286,7 +286,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      
+
       - name: 验证JSON Schema
         run: |
           python -c "
@@ -299,7 +299,7 @@ jobs:
                   print(f'  {k}: {v}')
               exit(1)
           "
-      
+
       - name: 检查Schema同步
         run: |
           python scripts/check_schema_sync.py
@@ -321,17 +321,17 @@ def check_schema_sync():
     config_file = Path('config.json')
     with open(config_file) as f:
         config = json.load(f)
-    
+
     # 验证
     cm = ConfigManager()
     errors = cm._validate_with_schema(config)
-    
+
     if errors:
         print("❌ 配置验证失败:")
         for key, error in errors.items():
             print(f"  {key}: {error}")
         return False
-    
+
     print("✅ 配置和Schema同步")
     return True
 
@@ -356,27 +356,27 @@ if __name__ == '__main__':
 
 **示例**:
 
-- v3.3.0: 添加async_execution（兼容）
-- v3.3.1: 修复work_group_size验证
-- v4.0.0: 删除deprecated_option（不兼容）
+- v4.2.1: 添加async_execution（兼容）
+- v4.2.1: 修复work_group_size验证
+- v4.2.1: 删除deprecated_option（不兼容）
 
 ### 6.2 配置迁移历史
 
 ```markdown
 # 配置迁移历史
 
-## v3.3.0 (2026-04-24)
+## v4.2.1 (2026-04-24)
 - ✅ 新增: async_execution (boolean, default: true)
 - ✅ 新增: work_group_size (integer, 64-2048)
 - ✅ 新增: use_fast_math (boolean)
 - ✅ 新增: use_uint32_workaround (boolean)
 - ✅ 新增: compiler_flags (string)
 
-## v3.2.0 (2026-03-15)
+## v4.2.1 (2026-03-15)
 - ⚠️ 修改: memory_usage_ratio范围从0.1-0.9改为0.1-1.0
 - ✅ 新增: enable_vendor_optimizations
 
-## v3.0.0 (2026-01-01)
+## v4.2.1 (2026-01-01)
 - ❌ 删除: legacy_mode (使用gpu.vendor_optimizations替代)
 - ✅ 新增: gpu.use_gpu
 ```
@@ -451,7 +451,7 @@ print(json.dumps(cm.config, indent=2))
 ```
 A: 使用默认配置:
    python main.py --use-default-config
-   
+
    或从备份恢复:
    cp config.json.backup config.json
 ```
@@ -466,5 +466,5 @@ A: 使用默认配置:
 
 ---
 
-**维护者**: AI审计系统  
+**维护者**: AI审计系统
 **下次审查**: 2026-07-24

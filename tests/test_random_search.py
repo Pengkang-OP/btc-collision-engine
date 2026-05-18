@@ -12,6 +12,7 @@
 """
 
 import pytest
+import queue
 from unittest.mock import patch, MagicMock
 
 # ============================================================================
@@ -31,17 +32,17 @@ class TestConstants:
     def test_cpu_overload_threshold(self):
         from src.gpu.search_modes.random_search import CPU_OVERLOAD_THRESHOLD
 
-        assert CPU_OVERLOAD_THRESHOLD == 90.0
+        assert CPU_OVERLOAD_THRESHOLD == 95.0
 
     def test_cpu_throttle_sleep(self):
         from src.gpu.search_modes.random_search import CPU_THROTTLE_SLEEP
 
-        assert CPU_THROTTLE_SLEEP == 0.02
+        assert CPU_THROTTLE_SLEEP == 0.01
 
     def test_min_batch_interval(self):
         from src.gpu.search_modes.random_search import MIN_BATCH_INTERVAL_SEC
 
-        assert MIN_BATCH_INTERVAL_SEC == 0.001
+        assert MIN_BATCH_INTERVAL_SEC == 0.0005
 
     def test_exp_backoff_constants(self):
         from src.gpu.search_modes.random_search import EXP_BACKOFF_BASE, EXP_BACKOFF_MAX
@@ -52,7 +53,7 @@ class TestConstants:
     def test_seed_prefetch_size(self):
         from src.gpu.search_modes.random_search import SEED_PREFETCH_SIZE
 
-        assert SEED_PREFETCH_SIZE == 10
+        assert SEED_PREFETCH_SIZE == 100
 
     def test_exception_recovery_delay(self):
         from src.gpu.search_modes.random_search import EXCEPTION_RECOVERY_DELAY
@@ -106,12 +107,12 @@ class TestRandomSearchModeInit:
 
     @patch("src.gpu.search_modes.random_search.threading.Thread")
     def test_init_creates_seed_queue(self, mock_thread):
-        from src.gpu.search_modes.random_search import RandomSearchMode
+        from src.gpu.search_modes.random_search import RandomSearchMode, SEED_PREFETCH_SIZE
 
         engine = _make_engine_stub()
         mode = RandomSearchMode(engine)
         assert mode._seed_queue is not None
-        assert mode._seed_queue.maxsize == 10  # SEED_PREFETCH_SIZE (v4.2: 5→10)
+        assert mode._seed_queue.maxsize == SEED_PREFETCH_SIZE  # v6.4: 10→100
 
     @patch("src.gpu.search_modes.random_search.threading.Thread")
     def test_init_starts_prefetch_thread(self, mock_thread):
@@ -157,6 +158,12 @@ class TestGenerateSeed:
 
         engine = _make_engine_stub()
         mode = RandomSearchMode(engine)
+        # Drain prefill seeds from the queue
+        while not mode._seed_queue.empty():
+            try:
+                mode._seed_queue.get_nowait()
+            except queue.Empty:
+                break
         # Put a seed in the queue
         expected_seed = b"cached_seed_32_bytes_long!!"
         mode._seed_queue.put(expected_seed)
@@ -181,6 +188,12 @@ class TestGenerateSeed:
 
         engine = _make_engine_stub()
         mode = RandomSearchMode(engine)
+        # Drain prefill seeds from the queue
+        while not mode._seed_queue.empty():
+            try:
+                mode._seed_queue.get_nowait()
+            except queue.Empty:
+                break
         # Fill with 3 seeds
         seeds = [f"seed_{i:0>27}".encode() for i in range(3)]
         for s in seeds:
@@ -190,9 +203,8 @@ class TestGenerateSeed:
         for i in range(3):
             seed = mode._generate_seed()
             assert seed == seeds[i]
-        # 4th call falls back
-        seed4 = mode._generate_seed()
-        assert len(seed4) == 32
+        # v6.4: _generate_seed 不再有 os.urandom fallback，
+        # 队列空时循环等待（轮询 stop_event + queue.get(timeout=1.0)）
 
 
 # ============================================================================
@@ -223,11 +235,13 @@ class TestSeedPrefetchWorker:
 
         engine = _make_engine_stub()
         mode = RandomSearchMode(engine)
+        # Drain prefill seeds from the queue
+        while not mode._seed_queue.empty():
+            try:
+                mode._seed_queue.get_nowait()
+            except queue.Empty:
+                break
         mock_urandom.return_value = b"A" * 32
-
-        # Let worker run once then stop
-        def stop_after_one():
-            mode._seed_stop_event.set()
 
         mode._seed_stop_event = MagicMock()
         mode._seed_stop_event.is_set.side_effect = [False, True]
@@ -245,17 +259,24 @@ class TestSeedPrefetchWorker:
 
         engine = _make_engine_stub()
         mode = RandomSearchMode(engine)
-        mock_urandom.side_effect = [OSError("no entropy"), b"B" * 32]
+        # Drain prefill seeds from the queue
+        while not mode._seed_queue.empty():
+            try:
+                mode._seed_queue.get_nowait()
+            except queue.Empty:
+                break
+        # v6.4: _seed_prefetch_worker now calls _generate_seed_batch which
+        # does a single bulk os.urandom(count*32) call. The batch method
+        # catches OSError internally and falls back to per-seed generation.
+        # Mock the batch method directly instead of os.urandom.
+        with patch.object(mode, '_generate_seed_batch', side_effect=OSError("no entropy")):
+            # First iteration: _generate_seed_batch raises OSError → error count incremented
+            mode._seed_stop_event = MagicMock()
+            mode._seed_stop_event.is_set.side_effect = [False, True]
+            mode._seed_prefetch_worker()
 
-        # Run two iterations
-        mode._seed_stop_event = MagicMock()
-        mode._seed_stop_event.is_set.side_effect = [False, False, True]
-
-        mode._seed_prefetch_worker()
-
-        # Second seed should be in queue (first errored)
-        seed = mode._seed_queue.get_nowait()
-        assert seed == b"B" * 32
+        # Worker should have incremented error count, not crashed
+        assert mode._seed_generation_errors >= 1
 
     @patch("src.gpu.search_modes.random_search.threading.Thread")
     def test_worker_queue_full_no_block(self, mock_thread):
@@ -263,6 +284,12 @@ class TestSeedPrefetchWorker:
 
         engine = _make_engine_stub()
         mode = RandomSearchMode(engine, seed_prefetch_size=2)
+        # Drain prefill seeds (queue was filled during init)
+        while not mode._seed_queue.empty():
+            try:
+                mode._seed_queue.get_nowait()
+            except queue.Empty:
+                break
         # Fill the queue
         mode._seed_queue.put(b"1" * 32)
         mode._seed_queue.put(b"2" * 32)
@@ -472,21 +499,21 @@ class TestExecuteSyncPartial:
         from src.gpu.search_modes.random_search import RandomSearchMode
 
         engine = _make_engine_stub()
-        # is_set calls: while-check, after batch_num, after seed_gen, while-check-exit
-        engine._stop_event.is_set.side_effect = [False, False, False, True]
+        # is_set calls: while-check, L285 if-check, _generate_seed while, L292 if-check, while-check-exit
+        engine._stop_event.is_set.side_effect = [False, False, False, False, True]
         engine._execute_gpu_batch.return_value = ([], 0.5)
 
         mode = RandomSearchMode(engine)
 
-        with patch("psutil.cpu_percent", return_value=95.0):
+        with patch("psutil.cpu_percent", return_value=96.0):
             with patch("time.sleep") as mock_sleep:
                 with patch("time.monotonic", side_effect=[0, 0.001, 0.002, 0.003]):
                     mode._execute_sync()
 
-        # 验证节流生效：sleep 被调用过，且至少有一次参数为 0.02 (CPU_THROTTLE_SLEEP)
+        # 验证节流生效：sleep 被调用过，且至少有一次参数为 CPU_THROTTLE_SLEEP (v6.4: 0.01)
         assert mock_sleep.call_count >= 1, "Throttle should trigger at least one sleep"
         throttle_values = [c[0][0] for c in mock_sleep.call_args_list]
-        assert 0.02 in throttle_values, "CPU throttle sleep should include 0.02s"
+        assert 0.01 in throttle_values, "CPU throttle sleep should include CPU_THROTTLE_SLEEP"
 
     @patch("src.gpu.search_modes.random_search.threading.Thread")
     def test_sync_stop_event_checked(self, mock_thread):

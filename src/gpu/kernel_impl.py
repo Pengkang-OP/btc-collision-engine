@@ -1,6 +1,9 @@
 """GPU内核实现
 
 包含 GPUKernel 类的实现，解决循环导入问题。
+
+注意: GPU路径同样仅生成P2PKH地址进行碰撞检测，与CPU路径保持一致。
+非P2PKH格式(P2SH/Bech32/Taproot)的目标地址在当前版本中必然无法匹配。
 """
 
 import logging
@@ -16,7 +19,7 @@ from ..core.address_generator import P2PKHAddressGenerator
 from ..core.hash_utils import HashUtils
 from ..monitoring.gpu_performance_monitor import get_gpu_performance_monitor
 
-# P3-5: 统一日志获取
+# 统一日志获取
 from ..utils import get_configured_logger
 from .buffer_tracker import GPUBufferTracker
 from .device import GPUDevice
@@ -27,13 +30,13 @@ from .performance_optimizer import PerformanceMetrics
 logger = get_configured_logger("GPUKernel")
 
 # DEF-2修复: 内核编译重试配置
-GPU_KERNEL_COMPILE_MAX_RETRIES = 4  # v4.2.0: 4 策略（含 Intel Arc 优化）
+GPU_KERNEL_COMPILE_MAX_RETRIES = 4  # v4.2.3: 4 策略（含 Intel Arc 优化）
 GPU_KERNEL_COMPILE_RETRY_DELAY_BASE = (
     2.0  # 基础延迟(秒), 指数退避: 2s(第1次失败后), 4s(第2次失败后)
 )
 
 # DEF-2修复: 渐进编译策略 — 每次重试尝试不同的编译选项
-# v4.2.0: 新增 Intel Arc 优化策略（无符号零+乘加融合，安全于加密运算）
+# v4.2.3: 新增 Intel Arc 优化策略（无符号零+乘加融合，安全于加密运算）
 COMPILE_STRATEGIES = [
     ("标准编译", []),
     ("CL2.0标准编译", ["-cl-std=CL2.0"]),
@@ -133,17 +136,7 @@ def get_gpu_optimizer() -> Any | None:
         return None
 
 
-def _seed_bytes_to_u32_be_array(seed: bytes):
-    """把 32 字节 seed 按 big-endian 拆成 8×uint32，再转成本机端序。
-
-    GPU 内核 generate_private_key 假设 seed 按 big-endian uint32 排列，
-    而 x86 上 np.frombuffer(dtype=np.uint32) 默认按 little-endian 解析。
-    需要先按 big-endian 解析再转为本机端序传给 OpenCL。
-    """
-    if len(seed) != 32:
-        raise ValueError(f"seed must be 32 bytes, got {len(seed)}")
-    be_u32 = np.frombuffer(seed, dtype=">u4")  # big-endian uint32
-    return be_u32.astype(np.uint32)  # 转为本机端序（little-endian on x86）
+from .seed_utils import _seed_bytes_to_u32_be_array  # noqa: E402, F811  # 权威实现（含 itemsize/len 运行时校验）
 
 
 class GPUKernel(GPUKernelProtocol):
@@ -152,6 +145,8 @@ class GPUKernel(GPUKernelProtocol):
     实现GPUKernelProtocol接口（P1-2修复）。
     使用持久化 Buffer 和异步执行来保持 GPU 持续高负载，
     避免频繁的内存分配和同步等待造成的 GPU 空闲。
+
+    地址格式: GPU路径使用 P2PKHAddressGenerator，仅生成P2PKH地址（与CPU路径一致）。
     """
 
     # 2*G 的期望坐标值（用于验证）
@@ -198,8 +193,8 @@ class GPUKernel(GPUKernelProtocol):
         self._batch_kernel_local = None  # local memory版本内核引用
         # 查询设备local memory大小（OpenCL标准属性），回退默认值16KB
         try:
-            self._local_mem_size = device.device.local_mem_size  # type: ignore[attr-defined]  # noqa: E501
-        except Exception:
+            self._local_mem_size = device.device.local_mem_size  # type: ignore[attr-defined] # noqa: E501
+        except (AttributeError, RuntimeError, TypeError):
             self._local_mem_size = 16384  # 默认16KB
 
         # P2-2修复: 初始化缓冲区追踪器
@@ -210,7 +205,7 @@ class GPUKernel(GPUKernelProtocol):
         # self._keys_buf 已于 v4.0 PRNG 改造时移除，不再使用
         self._match_buf = None
         self._targets_buf = None
-        self._target_hash160s: bytes | None = None  # P3修复: 添加目标地址缓存
+        self._target_hash160s: bytes | None = None  # 添加目标地址缓存
         self._targets_cached: bytes | None = None
         self._num_targets_cached = 0
         self._check_uncompressed = 0  # v4.0: 0=仅压缩, 1=也检查非压缩
@@ -413,7 +408,7 @@ class GPUKernel(GPUKernelProtocol):
             # 私钥1对应的字节串（大端，与 seed=1 一致）
             test_key_bytes = b"\x00" * 31 + b"\x01"
 
-            # 生成私钥1的地址和Hash160
+            # 生成私钥1的地址和Hash160 (P2PKH-only，与CPU路径一致)
             generator = P2PKHAddressGenerator()
             test_address, compressed_pk, _ = generator.generate_address(test_key_bytes)
             test_hash160 = HashUtils.hash160(compressed_pk)
@@ -700,7 +695,7 @@ class GPUKernel(GPUKernelProtocol):
 
         # 创建新的目标缓冲区
         targets_array = np.frombuffer(target_hash160s, dtype=np.uint8)
-        self._targets_buf = cl.Buffer(  # type: ignore[assignment]  # PyOpenCL C扩展无stubs
+        self._targets_buf = cl.Buffer(  # type: ignore[assignment] # PyOpenCL C扩展无stubs
             self.device.context,
             cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR,
             hostbuf=targets_array,
@@ -964,7 +959,7 @@ class GPUKernel(GPUKernelProtocol):
         """清理GPU资源
 
         P1修复: 显式释放OpenCL Buffer,防止显存泄漏
-        P3改进: 删除未使用的pyopencl导入(Buffer对象自带release方法)
+        改进: 删除未使用的pyopencl导入(Buffer对象自带release方法)
         P5增强: 引擎关闭时强制检查内存泄漏
         v2.2.1: 关闭异步日志处理器
         v2.2.1修复: 避免双重释放缓冲区
@@ -974,7 +969,7 @@ class GPUKernel(GPUKernelProtocol):
         # 注意: 不需要导入pyopencl, OpenCL Buffer对象自带release()方法
 
         # v3.3.0优化: 纯持久化设计 - 不需要内存池引用（缓冲区直接释放）
-        # memory_pool = getattr(self, '_gpu_memory_pool', None)  # 不再需要
+        # memory_pool = getattr(self, '_gpu_memory_pool', None) # 不再需要
 
         # v2.2.1修复: 跟踪已释放的缓冲区，避免双重释放
         released_buffers = set()
@@ -1014,7 +1009,7 @@ class GPUKernel(GPUKernelProtocol):
 
         # v3.3.0优化: 纯持久化设计 - 直接释放，不需要计算大小
 
-        # P1修复: 显式释放OpenCL Buffer（跳过已释放的）
+        # 显式释放OpenCL Buffer（跳过已释放的）
         buffers_to_release = [
             ("_seed_buf", self._seed_buf),
             ("_match_buf", self._match_buf),

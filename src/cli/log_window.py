@@ -295,8 +295,8 @@ def create_log_window() -> LogWindow:
     root_logger = logging.getLogger()
 
     # 修复: 不要移除现有处理器，只添加新的LogWindowHandler
-    # for handler in list(root_logger.handlers):  # ← 已删除，避免破坏日志配置
-    #     root_logger.removeHandler(handler)
+    # for handler in list(root_logger.handlers): # ← 已删除，避免破坏日志配置
+    # root_logger.removeHandler(handler)
 
     # 添加LogWindowHandler
     log_handler = LogWindowHandler(log_window)
@@ -305,7 +305,7 @@ def create_log_window() -> LogWindow:
     )
     root_logger.addHandler(log_handler)
     # 修复: 不修改根日志级别，保持配置文件设置
-    # root_logger.setLevel(logging.DEBUG)  # ← 已删除，避免覆盖配置
+    # root_logger.setLevel(logging.DEBUG) # ← 已删除，避免覆盖配置
 
     # 保存单例实例
     _log_window_instance = log_window

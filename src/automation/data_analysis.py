@@ -6,6 +6,8 @@
 
 import ast
 import hashlib
+import json
+import logging
 import os
 import re
 import sys
@@ -13,6 +15,8 @@ from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 # 添加项目路径
 project_root = Path(__file__).parent.parent.parent.parent
@@ -65,10 +69,17 @@ class DataAnalysisModule:
         return f"analysis_{hashlib.md5(timestamp.encode()).hexdigest()[:12]}"
 
     def _collect_data_summary(self, target_path: str | None = None) -> dict[str, Any]:
-        """收集数据摘要"""
+        """收集数据摘要
+
+        自 v4.3.1: 合并 _analyze_project_structure 和 _analyze_code_metrics
+        为单次 src/ 遍历，减少约 50% 的 os.walk + ast.parse 调用。
+        """
+        # 合并后的结构+代码指标分析
+        combined = self._analyze_source_code()
+
         summary = {
-            "project_structure": self._analyze_project_structure(),
-            "code_metrics": self._analyze_code_metrics(),
+            "project_structure": combined["structure"],
+            "code_metrics": combined["metrics"],
             "dependencies": self._analyze_dependencies(),
             "test_coverage": self._analyze_test_coverage(),
             "configuration": self._analyze_configuration(),
@@ -79,8 +90,15 @@ class DataAnalysisModule:
 
         return summary
 
-    def _analyze_project_structure(self) -> dict[str, Any]:
-        """分析项目结构"""
+    def _analyze_source_code(self) -> dict[str, Any]:
+        """合并分析项目结构和代码指标（单次遍历 src/ 目录）
+
+        自 v4.3.1: 将 _analyze_project_structure 和 _analyze_code_metrics
+        合并为一次 os.walk，对每个 .py 文件一次性提取所有指标。
+
+        Returns:
+            {"structure": {...}, "metrics": {...}}
+        """
         structure = {
             "total_files": 0,
             "python_files": 0,
@@ -89,10 +107,19 @@ class DataAnalysisModule:
             "total_functions": 0,
             "module_depth": 0,
         }
+        metrics_data = {
+            "avg_file_length": 0,
+            "max_file_length": 0,
+            "total_lines": 0,
+            "code_complexity": {},
+            "import_counts": defaultdict(int),
+        }
 
         src_dir = self.project_root / "src"
         if not src_dir.exists():
-            return structure
+            return {"structure": structure, "metrics": metrics_data}
+
+        file_lengths: list[int] = []
 
         for root, dirs, files in os.walk(src_dir):
             structure["total_files"] += len(files)
@@ -104,63 +131,42 @@ class DataAnalysisModule:
                 try:
                     with open(filepath, encoding="utf-8") as f:
                         content = f.read()
-                    tree = ast.parse(content)
 
+                    # 结构指标: AST 解析
+                    tree = ast.parse(content)
                     structure["total_classes"] += sum(
                         1 for n in ast.walk(tree) if isinstance(n, ast.ClassDef)
                     )
                     structure["total_functions"] += sum(
                         1 for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)
                     )
-                except (SyntaxError, ValueError):
-                    pass  # 忽略无法解析的文件
 
-        # 计算模块深度
+                    # 代码指标: 行数和导入
+                    lines = content.splitlines()
+                    file_length = len(lines)
+                    file_lengths.append(file_length)
+                    metrics_data["total_lines"] += file_length
+
+                    # 分析导入（扩展至前50行以捕获延迟导入）
+                    for line in lines[:50]:
+                        match = re.match(r"^\s*import\s+(\w+)", line)
+                        if match:
+                            metrics_data["import_counts"][match.group(1)] += 1
+
+                except (SyntaxError, ValueError) as e:
+                    logger.debug(f"AST解析失败: {filepath} - {e}")
+                except (OSError, UnicodeDecodeError):
+                    pass  # 忽略无法读取的文件
+
         structure["module_depth"] = len(list(src_dir.rglob("__init__.py")))
 
-        return structure
-
-    def _analyze_code_metrics(self) -> dict[str, Any]:
-        """分析代码指标"""
-        metrics = {
-            "avg_file_length": 0,
-            "max_file_length": 0,
-            "total_lines": 0,
-            "code_complexity": {},
-            "import_counts": defaultdict(int),
-        }
-
-        src_dir = self.project_root / "src"
-        if not src_dir.exists():
-            return metrics
-
-        file_lengths = []
-
-        for filepath in src_dir.rglob("*.py"):
-            if "__pycache__" in str(filepath):
-                continue
-            try:
-                with open(filepath, encoding="utf-8") as f:
-                    lines = f.readlines()
-
-                file_length = len(lines)
-                file_lengths.append(file_length)
-                metrics["total_lines"] += file_length
-
-                # 分析导入
-                for line in lines[:20]:  # 只检查前20行
-                    match = re.match(r"^\s*import\s+(\w+)", line)
-                    if match:
-                        metrics["import_counts"][match.group(1)] += 1
-
-            except (OSError, UnicodeDecodeError):
-                pass  # 忽略无法读取的文件
-
         if file_lengths:
-            metrics["avg_file_length"] = sum(file_lengths) / len(file_lengths)
-            metrics["max_file_length"] = max(file_lengths)
+            metrics_data["avg_file_length"] = sum(file_lengths) / len(file_lengths)
+            metrics_data["max_file_length"] = max(file_lengths)
 
-        return dict(metrics)
+        metrics_data["import_counts"] = dict(metrics_data["import_counts"])
+
+        return {"structure": structure, "metrics": metrics_data}
 
     def _analyze_dependencies(self) -> dict[str, Any]:
         """分析依赖关系"""
@@ -208,8 +214,8 @@ class DataAnalysisModule:
                             if isinstance(n, ast.FunctionDef) and n.name.startswith("test_")
                         ]
                         coverage["test_cases"] += len(test_funcs)
-                    except (SyntaxError, ValueError):
-                        pass  # 忽略无法解析的测试文件
+                    except (SyntaxError, ValueError) as e:
+                        logger.debug(f"AST解析测试文件失败: {filepath} - {e}")
 
         return coverage
 
@@ -225,10 +231,10 @@ class DataAnalysisModule:
         if config_file.exists():
             config["config_exists"] = True
             try:
-                import json
+                from src.utils.fast_json import fast_load
 
                 with open(config_file) as f:
-                    data = json.load(f)
+                    data = fast_load(f)
                 config["config_valid"] = True
                 config["keys"] = list(data.keys())
             except (OSError, json.JSONDecodeError, KeyError):

@@ -123,7 +123,7 @@ class PlatformAdapter:
                 kernel32 = ctypes.windll.kernel32
                 cp = kernel32.GetConsoleOutputCP()
                 return f"cp{cp}"
-            except Exception:
+            except (OSError, AttributeError):
                 return "utf-8"
         else:
             # Unix-like 系统默认使用 UTF-8
@@ -139,12 +139,12 @@ class PlatformAdapter:
         if self.platform_name == "Windows":
             try:
                 return cast(bool, ctypes.windll.shell32.IsUserAnAdmin() != 0)  # Windows ctypes API
-            except Exception:
+            except (OSError, AttributeError):
                 return False
         else:
             try:
                 return getattr(os, "geteuid", lambda: -1)() == 0  # Unix-only，mypy无类型信息
-            except Exception:
+            except (OSError, AttributeError):
                 return False
 
     def get_process_priority(self) -> int:
@@ -163,7 +163,7 @@ class PlatformAdapter:
                 return cast(
                     int, kernel32.GetPriorityClass(kernel32.GetCurrentProcess())
                 )  # Windows ctypes API
-            except Exception:
+            except (OSError, AttributeError):
                 return 0
         else:
             # Unix-like 系统进程优先级
@@ -171,7 +171,7 @@ class PlatformAdapter:
                 import psutil
 
                 return cast(int, psutil.Process(os.getpid()).nice())  # 可选依赖psutil
-            except Exception:
+            except (OSError, AttributeError):
                 return 0
 
     def set_process_priority(self, priority: int) -> bool:
@@ -193,7 +193,7 @@ class PlatformAdapter:
                 return cast(
                     bool, kernel32.SetPriorityClass(kernel32.GetCurrentProcess(), priority) != 0
                 )  # Windows ctypes API
-            except Exception:
+            except (OSError, AttributeError):
                 return False
         else:
             # Unix-like 系统进程优先级
@@ -202,7 +202,7 @@ class PlatformAdapter:
 
                 psutil.Process(os.getpid()).nice(priority)
                 return True
-            except Exception:
+            except (OSError, AttributeError):
                 return False
 
     def get_platform_specific_handlers(self) -> dict[str, Callable[..., Any]]:

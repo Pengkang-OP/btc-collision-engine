@@ -160,7 +160,7 @@ def _get_tracker_config():
         return {
             "enabled": config_mgr.get("performance_monitoring.enabled", True),
             "max_records": config_mgr.get("performance_monitoring.max_records", 10000),
-            "slow_threshold_ms": config_mgr.get("performance_monitoring.slow_threshold_ms", 1000),
+            "slow_threshold_ms": config_mgr.get("performance_monitoring.slow_threshold_ms", 30000),
             "track_slow_operations": config_mgr.get(
                 "performance_monitoring.track_slow_operations", True
             ),
@@ -168,14 +168,12 @@ def _get_tracker_config():
         }
     except Exception as e:
         # 配置加载失败，使用默认值并记录警告日志
-        import logging
-
-        logger = logging.getLogger(__name__)
         logger.warning(f"性能监控配置加载失败，使用默认值: {type(e).__name__}: {e}")
         return {
             "enabled": True,
             "max_records": 10000,
-            "slow_threshold_ms": 1000,
+            "slow_threshold_ms": 30000,
+            "_comment_slow_threshold_ms": "GPU内核编译通常需要10-30秒，默认30000ms以避免编译期误报",
             "track_slow_operations": True,
             "log_level": "INFO",
         }

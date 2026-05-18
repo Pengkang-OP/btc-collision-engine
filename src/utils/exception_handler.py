@@ -9,7 +9,7 @@ P3-6增强：
 - 细化 handle_gpu_error(): 增加 MemoryError/ImportError 分类
 """
 
-# P3-5: 统一日志获取
+# 统一日志获取
 from typing import Any
 
 from .logging_config import get_configured_logger
@@ -61,13 +61,13 @@ class ExceptionHandler:
             if record_func and callable(record_func):
                 record_func("memory_error", error_msg)
         elif isinstance(error, ImportError):
-            # 模块导入错误（P3-6: 新增分类）
+            # 模块导入错误（新增分类）
             logger.error(f"{engine_type}引擎{context}模块导入失败: {error_msg}")
             record_func = getattr(stats, "record_worker_error", None)
             if record_func and callable(record_func):
                 record_func()
         elif isinstance(error, OSError):
-            # 系统I/O错误（P3-6: 新增分类）
+            # 系统I/O错误（新增分类）
             logger.error(f"{engine_type}引擎{context}系统I/O错误: {error_type}: {error_msg}")
             record_func = getattr(stats, "record_worker_error", None)
             if record_func and callable(record_func):
@@ -118,7 +118,7 @@ class ExceptionHandler:
             if record_func and callable(record_func):
                 record_func(is_resource_error=is_resource_error)
         elif isinstance(error, MemoryError):
-            # P3-6: 内存不足(独立分类，便于监控告警)
+            # 内存不足(独立分类，便于监控告警)
             logger.critical(f"GPU {mode}内存不足(MemoryError): {error}")
             record_func = getattr(stats, "record_gpu_error", None)
             if record_func and callable(record_func):

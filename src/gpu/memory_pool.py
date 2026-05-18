@@ -387,7 +387,7 @@ class GPUMemoryPool:
                 for buf in pool_list:
                     buf_id = id(buf)
                     ts = self._access_times.get(buf_id, 0)  # 无记录视为最旧
-                    # P1-6: min_idle_seconds 过滤 — 跳过空闲时间未达标的缓冲区
+                    # min_idle_seconds 过滤 — 跳过空闲时间未达标的缓冲区
                     if min_idle_seconds > 0 and ts > 0 and (now - ts) < min_idle_seconds:
                         continue
                     if candidate is None or ts < candidate[0]:
@@ -800,10 +800,10 @@ class GlobalGPUMemoryManager:
                     cls._instance._cleanup_stop_event = threading.Event()
         return cls._instance
 
-    # P1-6: 默认自动清理间隔(秒)
+    # 默认自动清理间隔(秒)
     DEFAULT_AUTO_CLEANUP_INTERVAL = 300  # 5分钟
 
-    # P1-6: LRU空闲超时(秒) — 空闲超过此时间的缓冲区被淘汰
+    # LRU空闲超时(秒) — 空闲超过此时间的缓冲区被淘汰
     DEFAULT_LRU_IDLE_TIMEOUT = 600  # 10分钟
 
     def get_pool(self, context: Any, max_buffers: int = 100) -> GPUMemoryPool:
@@ -833,7 +833,7 @@ class GlobalGPUMemoryManager:
             self._pools.clear()
             logger.info("所有GPU内存池已清空")
 
-    # ──────────────────────────── P1-6: 自动清理 ────────────────────────────
+    # ──────────────────────────── 自动清理 ────────────────────────────
 
     def _auto_cleanup_loop(self, interval: float, lru_timeout: float) -> None:
         """GPU自动清理后台循环（daemon 线程入口）

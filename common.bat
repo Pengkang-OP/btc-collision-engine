@@ -52,6 +52,7 @@ rem ── 检查 Python 版本 >= 3.9 ─────────────�
 python -c "import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)" >nul 2>&1
 if errorlevel 1 (
     echo [错误] Python 版本过低
+    for /f "tokens=*" %%v in ('python --version 2^>^&1') do echo         当前版本: %%v
     echo         需要 Python 3.9 或更高版本
     pause
     exit /b 1

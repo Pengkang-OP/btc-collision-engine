@@ -150,7 +150,7 @@ def print_report(issues: list) -> None:
         print(f"  ✅ {imp}")
 
     print("\n请替换所有使用旧路径的代码。")
-    print("旧路径将在 v2.0 (2026-Q3) 中移除。\n")
+    print("旧路径将在 v4.2.1 (2026-Q3) 中移除。\n")
 
 
 def main():

@@ -23,7 +23,7 @@ import time
 from collections.abc import Callable
 from functools import wraps
 from logging.handlers import RotatingFileHandler
-from typing import Any, Union
+from typing import Any
 
 
 def _make_rotating_handler(filename: str, max_bytes: int, backup_count: int) -> RotatingFileHandler:
@@ -351,24 +351,20 @@ def setup_logger(
     return logger
 
 
-def get_logger(name: str, thread_safe: bool = False) -> Union[logging.Logger, "ThreadSafeLogger"]:
-    """
-    获取已配置的日志记录器，如果不存在则创建默认记录器
+def get_logger(name: str) -> logging.Logger:
+    """获取已配置的日志记录器，如果不存在则创建默认记录器。
 
-    参数:
+    Args:
         name: 日志记录器名称
-        thread_safe: 是否返回线程安全包装器
 
-    返回:
-        日志记录器
+    Returns:
+        日志记录器 (Python 原生 Logger，本身已是线程安全)
     """
     logger = logging.getLogger(name)
     if not logger.handlers:
         # 未配置，创建默认记录器
         logger = setup_logger(name)
 
-    if thread_safe:
-        return ThreadSafeLogger(logger)
     return logger
 
 
@@ -456,6 +452,10 @@ class AsyncLogger:
         self._stop_event = threading.Event()
         self._writer_thread.start()
         self._dropped_count = 0
+        self._started_at = time.time()
+
+        _logger = logging.getLogger(__name__)
+        _logger.info(f"AsyncLogger 已初始化: max_queue_size={max_queue_size}")
 
     def set_handler(self, handler: logging.Handler) -> None:
         """Q1修复: 设置底层日志处理器（替代直接访问私有属性）
@@ -517,6 +517,12 @@ class AsyncLogger:
 
     def close(self) -> None:
         """关闭异步日志器，等待队列清空"""
+        _logger = logging.getLogger(__name__)
+        _logger.info(
+            f"AsyncLogger 正在关闭: queue_size={self._queue.qsize()}, "
+            f"dropped_count={self._dropped_count}, "
+            f"uptime={time.time() - self._started_at:.1f}s"
+        )
         self._stop_event.set()
 
         # 等待队列清空（最多5秒）
@@ -535,6 +541,8 @@ class AsyncLogger:
         # 关闭底层handler
         if hasattr(self, "_handler") and self._handler:
             self._handler.close()
+
+        _logger.info("AsyncLogger 已关闭")
 
     def get_stats(self) -> dict:
         """获取异步日志统计信息"""

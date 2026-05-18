@@ -51,6 +51,13 @@ class AsyncLogBuffer:
         self._flush_thread.start()
         self._handlers: list[logging.Handler] = []
         self._dropped_count = 0
+        self._started_at = time.time()
+        
+        _logger = logging.getLogger(__name__)
+        _logger.info(
+            f"AsyncLogBuffer 已初始化: buffer_size={config.buffer_size}, "
+            f"batch_size={config.batch_size}, flush_interval={config.flush_interval}s"
+        )
 
     def add_handler(self, handler: logging.Handler) -> None:
         """添加日志处理器"""
@@ -116,9 +123,16 @@ class AsyncLogBuffer:
 
     def close(self) -> None:
         """关闭缓冲区"""
+        _logger = logging.getLogger(__name__)
+        _logger.info(
+            f"AsyncLogBuffer 正在关闭: queue_size={self.queue.qsize()}, "
+            f"dropped_count={self._dropped_count}, "
+            f"uptime={time.time() - self._started_at:.1f}s"
+        )
         self._stop_event.set()
         self._flush_thread.join(timeout=5)
         self.flush()
+        _logger.info("AsyncLogBuffer 已关闭")
 
     def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""

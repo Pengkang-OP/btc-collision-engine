@@ -692,7 +692,7 @@ class TestModuleImports:
         """测试模块版本号"""
         from src.collision import gpu
 
-        assert gpu.__version__ == "6.0.0"
+        assert gpu.__version__ == "4.4.0"
 
     def test_all_exports_include_phase3(self):
         """测试 __all__ 包含 Phase 3 导出"""

@@ -19,11 +19,10 @@ from datetime import datetime
 from typing import Any
 
 # 导入日志配置
-from ...utils import get_configured_logger, init_logging
+from ...utils import get_configured_logger
 from ...utils.encoding_utils import EncodingUtils
 
-# 初始化日志系统
-init_logging()
+# 日志系统由CLI/main.py入口统一初始化
 logger = get_configured_logger("AddressStorage")
 
 # 比特币地址验证正则表达式

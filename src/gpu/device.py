@@ -6,7 +6,7 @@
 
 from typing import Any, cast
 
-# P3-5: 统一日志获取
+# 统一日志获取
 from ..utils import get_configured_logger
 
 # 尝试导入pyopencl
@@ -569,20 +569,20 @@ class GPUDevice:
         self._detect_and_validate_driver()
 
         # 创建OpenCL上下文和命令队列
-        self.context = cl.Context([self.device])  # type: ignore[assignment,list-item]  # noqa: E501
+        self.context = cl.Context([self.device])  # type: ignore[assignment,list-item] # noqa: E501
 
         # 异步优化: 创建双队列(计算+传输)
         if self.enable_async_execution:
             logger.info("启用GPU异步执行: 创建双队列(计算+传输)")
             # 计算队列 - 用于内核执行
-            self.compute_queue = cl.CommandQueue(  # type: ignore[assignment]  # PyOpenCL C扩展
-                self.context,  # type: ignore[arg-type]  # PyOpenCL C扩展
+            self.compute_queue = cl.CommandQueue(  # type: ignore[assignment] # PyOpenCL C扩展
+                self.context,  # type: ignore[arg-type] # PyOpenCL C扩展
                 self.device,
                 properties=cl.command_queue_properties.PROFILING_ENABLE,
             )
             # 传输队列 - 用于数据传输
-            self.transfer_queue = cl.CommandQueue(  # type: ignore[assignment]  # PyOpenCL C扩展
-                self.context,  # type: ignore[arg-type]  # PyOpenCL C扩展
+            self.transfer_queue = cl.CommandQueue(  # type: ignore[assignment] # PyOpenCL C扩展
+                self.context,  # type: ignore[arg-type] # PyOpenCL C扩展
                 self.device,
                 properties=cl.command_queue_properties.PROFILING_ENABLE,
             )
@@ -595,7 +595,7 @@ class GPUDevice:
             self.queue = cl.CommandQueue(
                 self.context,
                 self.device,  # type: ignore[arg-type]
-            )  # type: ignore[assignment]  # noqa: E501
+            )  # type: ignore[assignment] # noqa: E501
             logger.info("使用传统单队列模式(同步执行)")
 
         logger.info(
