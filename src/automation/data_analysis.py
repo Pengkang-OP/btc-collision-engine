@@ -396,7 +396,6 @@ class DataAnalysisModule:
             issue_id += 1
 
         # 检查文件大小
-        avg_length = metrics.get("avg_file_length", 0)
         max_length = metrics.get("max_file_length", 0)
         if max_length > 2000:
             issues.append(
