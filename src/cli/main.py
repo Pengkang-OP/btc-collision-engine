@@ -37,6 +37,7 @@ from src.cli.progress import (  # noqa: E402, F401
 )  # re-export for backward compat
 from src.cli.stats_reporter import _print_final_summary  # noqa: E402
 from src.cli.validation import validate_args, validate_file_path  # noqa: E402
+from src.core.crypto_backend import verify_production_ready  # noqa: E402
 from src.i18n import _t, set_language  # noqa: E402
 from src.utils import get_configured_logger, init_logging  # noqa: E402
 
@@ -194,6 +195,15 @@ def _run_main() -> None:
     # 阶段1: 工具命令分发（提前处理，不需要 -t/-f，不触发重量级导入）
     if _dispatch_utility_commands(args, _run_main):
         return  # 工具命令已处理，不再进行后续流程
+
+    # 安全检查: 在生产模式下验证加密后端安全性
+    if getattr(args, "production", False) or getattr(args, "secure", False):
+        is_ready, message = verify_production_ready()
+        if not is_ready:
+            print(f"\n{message}", file=sys.stderr)
+            print("\n💡 使用 --skip-security-check 跳过此检查（不推荐）", file=sys.stderr)
+            if not getattr(args, "skip_security_check", False):
+                sys.exit(1)
 
     # 阶段2: 参数验证
     if not validate_args(args):

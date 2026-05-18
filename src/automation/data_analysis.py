@@ -5,12 +5,12 @@
 """
 
 import ast
-import hashlib
 import json
 import logging
 import os
 import re
 import sys
+import uuid
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
@@ -65,8 +65,7 @@ class DataAnalysisModule:
 
     def _generate_report_id(self) -> str:
         """生成唯一报告ID"""
-        timestamp = datetime.now().isoformat()
-        return f"analysis_{hashlib.md5(timestamp.encode()).hexdigest()[:12]}"
+        return f"analysis_{uuid.uuid4().hex[:12]}"
 
     def _collect_data_summary(self, target_path: str | None = None) -> dict[str, Any]:
         """收集数据摘要

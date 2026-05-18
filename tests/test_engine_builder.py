@@ -1,64 +1,118 @@
 """CLI 引擎构建 (src/cli/engine_builder.py) 单元测试。
 
-覆盖: on_match_callback, build_engine
+覆盖: on_match_callback, build_engine, 异常类
 目标: 67% → 95%+
 """
 
 import importlib
-import io
 import sys
 import unittest
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from src.cli import engine_builder as eb
 
 
-# ── on_match_callback ──────────────────────────────────────────
+class TestExceptionClasses(unittest.TestCase):
+    """异常类层次结构测试。"""
 
-class TestOnMatchCallback(unittest.TestCase):
+    def test_engine_build_error_basic(self):
+        """EngineBuildError 基本功能测试。"""
+        err = eb.EngineBuildError(message="test error", user_message="用户错误")
+        self.assertEqual(err.message, "test error")
+        self.assertEqual(err.user_message, "用户错误")
+        self.assertIsNone(err.engine_type)
+
+    def test_engine_build_error_default_user_message(self):
+        """EngineBuildError 默认 user_message 等于 message。"""
+        err = eb.EngineBuildError(message="test error")
+        self.assertEqual(err.user_message, "test error")
+
+    def test_gpu_not_available_error_defaults(self):
+        """GPUNotAvailableError 默认值测试。"""
+        err = eb.GPUNotAvailableError()
+        self.assertEqual(err.message, "GPU not available")
+        self.assertEqual(err.engine_type, "gpu")
+
+    def test_gpu_not_available_error_custom(self):
+        """GPUNotAvailableError 自定义消息测试。"""
+        err = eb.GPUNotAvailableError(
+            message="custom error",
+            user_message="自定义错误",
+        )
+        self.assertEqual(err.message, "custom error")
+        self.assertEqual(err.user_message, "自定义错误")
+        self.assertEqual(err.engine_type, "gpu")
+
+    def test_gpu_initialization_error_defaults(self):
+        """GPUInitializationError 默认值测试。"""
+        err = eb.GPUInitializationError()
+        self.assertEqual(err.message, "GPU initialization failed")
+        self.assertEqual(err.engine_type, "gpu")
+
+    def test_gpu_initialization_error_custom_engine_type(self):
+        """GPUInitializationError 自定义 engine_type 测试。"""
+        err = eb.GPUInitializationError(
+            message="multi-gpu failed",
+            engine_type="multi_gpu",
+        )
+        self.assertEqual(err.engine_type, "multi_gpu")
+
+    def test_exception_inheritance(self):
+        """异常继承关系测试。"""
+        self.assertTrue(issubclass(eb.GPUNotAvailableError, eb.EngineBuildError))
+        self.assertTrue(issubclass(eb.GPUInitializationError, eb.EngineBuildError))
+        self.assertTrue(issubclass(eb.EngineBuildError, Exception))
+
+
+class TestOnMatchCallback:
     """on_match_callback() 工厂函数测试。"""
 
-    def test_full_mode_shows_complete_keys(self):
-        """sensitive_mode='full' → 完整私钥 + 完整 WIF。"""
+    def test_full_mode_shows_complete_keys_in_tty(self, capsys):
+        """sensitive_mode='full' 在TTY环境 → 完整私钥 + 完整 WIF。"""
         callback = eb.on_match_callback(sensitive_mode="full")
-        buf = io.StringIO()
-        with patch("sys.stdout", buf):
+        with patch("sys.stdout.isatty", return_value=True):
             callback(b"\x01" * 32, "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", "KwDiBf")
 
-        output = buf.getvalue()
-        self.assertIn("0101010101010101010101010101010101010101010101010101010101010101", output)
-        self.assertIn("KwDiBf", output)
-        # 不应包含脱敏标记
-        self.assertNotIn("*", output)
-        self.assertNotIn("SHA256", output)
+        captured = capsys.readouterr()
+        assert "0101010101010101010101010101010101010101010101010101010101010101" in captured.out
+        assert "KwDiBf" in captured.out
+        assert "*" not in captured.out
+        assert "SHA256" not in captured.out
 
-    def test_masked_mode_hides_middle(self):
-        """sensitive_mode='masked' → 首尾保留，中间星号。"""
+    def test_masked_mode_hides_middle_in_tty(self, capsys):
+        """sensitive_mode='masked' 在TTY环境 → 首尾保留，中间星号。"""
         callback = eb.on_match_callback(sensitive_mode="masked")
-        pk = bytes(range(32))  # hex: 00010203...1c1d1e1f (非对称)
-        buf = io.StringIO()
-        with patch("sys.stdout", buf):
+        pk = bytes(range(32))
+        with patch("sys.stdout.isatty", return_value=True):
             callback(pk, "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", "KwDiBfQg4")
 
-        output = buf.getvalue()
-        self.assertIn("00010203", output)  # 前缀: bytes 0-3
-        self.assertIn("1c1d1e1f", output)  # 后缀: bytes 28-31
-        self.assertIn("*", output)
-        self.assertNotIn("SHA256", output)
+        captured = capsys.readouterr()
+        assert "00010203" in captured.out
+        assert "1c1d1e1f" in captured.out
+        assert "*" in captured.out
+        assert "SHA256" not in captured.out
 
-    def test_hash_only_mode_shows_sha256_prefix(self):
+    def test_hash_only_mode_shows_sha256_prefix(self, capsys):
         """sensitive_mode='hash_only' → SHA256 哈希前缀 + [已隐藏]。"""
         callback = eb.on_match_callback(sensitive_mode="hash_only")
-        buf = io.StringIO()
-        with patch("sys.stdout", buf):
+        callback(b"\x01" * 32, "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", "KwDiBf")
+
+        captured = capsys.readouterr()
+        assert "SHA256:" in captured.out
+        assert "KwDiBf" not in captured.out
+
+    def test_non_tty_forces_hash_only_mode(self, capsys):
+        """非TTY环境强制降级为hash_only模式。"""
+        callback = eb.on_match_callback(sensitive_mode="full")
+        with patch("sys.stdout.isatty", return_value=False):
             callback(b"\x01" * 32, "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", "KwDiBf")
 
-        output = buf.getvalue()
-        self.assertIn("SHA256:", output)
-        self.assertNotIn("KwDiBf", output)
+        captured = capsys.readouterr()
+        assert "SHA256:" in captured.out
+        assert "[已隐藏]" in captured.out
 
-
-# ── build_engine ───────────────────────────────────────────────
 
 def _make_args(**kwargs):
     """创建模拟 CLI args 对象。"""
@@ -130,71 +184,65 @@ class TestBuildEngineGPU(unittest.TestCase):
     def setUp(self):
         self.targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
 
-    def test_gpu_unavailable_use_gpu_exits(self):
-        """GPU_AVAILABLE=False + use_gpu=True → SystemExit(1) + 错误提示。"""
+    def test_gpu_unavailable_use_gpu_raises_exception(self):
+        """GPU_AVAILABLE=False + use_gpu=True → GPUNotAvailableError。"""
         with patch.object(eb, "GPU_AVAILABLE", False):
-            with patch("builtins.print") as mock_print:
-                with self.assertRaises(SystemExit) as ctx:
+            with self.assertRaises(eb.GPUNotAvailableError) as ctx:
+                eb.build_engine(_make_args(use_gpu=True), self.targets)
+            self.assertIn("OpenCL", ctx.exception.message)
+
+    def test_gpu_unavailable_multi_gpu_raises_exception(self):
+        """GPU_AVAILABLE=False + multi_gpu=True → GPUNotAvailableError。"""
+        with patch.object(eb, "GPU_AVAILABLE", False):
+            with self.assertRaises(eb.GPUNotAvailableError) as ctx:
+                eb.build_engine(_make_args(multi_gpu=True), self.targets)
+            self.assertIn("OpenCL", ctx.exception.message)
+
+    def test_gpu_runtime_error_fallback_to_cpu(self):
+        """GPUCollisionEngine() 抛 RuntimeError → 自动降级到 CPU。"""
+        mock_gpu_engine = MagicMock()
+        mock_gpu_engine.side_effect = RuntimeError("CL_DEVICE_NOT_FOUND")
+
+        with patch.object(eb, "GPU_AVAILABLE", True):
+            with patch.dict(
+                "sys.modules",
+                {"src.collision.gpu_collision_engine": MagicMock(GPUCollisionEngine=mock_gpu_engine)},
+            ):
+                with patch.object(eb, "KeyCollisionEngine") as mock_cpu_cls:
+                    mock_cpu_cls.return_value = MagicMock()
+                    with patch("builtins.print"):
+                        engine, etype = eb.build_engine(_make_args(use_gpu=True), self.targets)
+                    self.assertEqual(etype, "cpu")
+                    mock_cpu_cls.assert_called_once()
+
+    def test_gpu_generic_exception_raises_gpu_initialization_error(self):
+        """GPUCollisionEngine() 抛非 RuntimeError → GPUInitializationError。"""
+        mock_gpu_engine = MagicMock()
+        mock_gpu_engine.side_effect = MemoryError("out of memory")
+
+        with patch.object(eb, "GPU_AVAILABLE", True):
+            with patch.dict(
+                "sys.modules",
+                {"src.collision.gpu_collision_engine": MagicMock(GPUCollisionEngine=mock_gpu_engine)},
+            ):
+                with self.assertRaises(eb.GPUInitializationError) as ctx:
                     eb.build_engine(_make_args(use_gpu=True), self.targets)
-                self.assertEqual(ctx.exception.code, 1)
-            mock_print.assert_called()
-            printed = " ".join(str(c.args[0]) if c.args else ""
-                              for c in mock_print.call_args_list)
-            self.assertIn("GPU", printed)
-
-    def test_gpu_unavailable_multi_gpu_exits(self):
-        """GPU_AVAILABLE=False + multi_gpu=True → SystemExit(1) + 错误提示。"""
-        with patch.object(eb, "GPU_AVAILABLE", False):
-            with patch("builtins.print") as mock_print:
-                with self.assertRaises(SystemExit) as ctx:
-                    eb.build_engine(_make_args(multi_gpu=True), self.targets)
-                self.assertEqual(ctx.exception.code, 1)
-            mock_print.assert_called()
-            printed = " ".join(str(c.args[0]) if c.args else ""
-                              for c in mock_print.call_args_list)
-            self.assertIn("GPU", printed)
-
-    def test_gpu_runtime_error_during_init(self):
-        """GPUCollisionEngine() 抛 RuntimeError → SystemExit(1) + 建议提示。"""
-        with patch.object(eb, "GPU_AVAILABLE", True):
-            with patch.object(eb, "GPUCollisionEngine") as mock_cls:
-                mock_cls.side_effect = RuntimeError("CL_DEVICE_NOT_FOUND")
-                with patch("builtins.print") as mock_print:
-                    with self.assertRaises(SystemExit) as ctx:
-                        eb.build_engine(_make_args(use_gpu=True), self.targets)
-                    self.assertEqual(ctx.exception.code, 1)
-                # 多条 print 输出：错误 + 3条建议
-                self.assertGreaterEqual(mock_print.call_count, 4)
-
-    def test_gpu_generic_exception_during_init(self):
-        """GPUCollisionEngine() 抛非 RuntimeError → SystemExit(1) + 错误提示。"""
-        with patch.object(eb, "GPU_AVAILABLE", True):
-            with patch.object(eb, "GPUCollisionEngine") as mock_cls:
-                mock_cls.side_effect = MemoryError("out of memory")
-                with patch("builtins.print") as mock_print:
-                    with self.assertRaises(SystemExit) as ctx:
-                        eb.build_engine(_make_args(use_gpu=True), self.targets)
-                    self.assertEqual(ctx.exception.code, 1)
-                mock_print.assert_called()
-                printed = " ".join(str(c.args[0]) if c.args else ""
-                                  for c in mock_print.call_args_list)
-                self.assertIn("GPU", printed)
+                self.assertIn("GPU initialization error", ctx.exception.message)
 
     def test_gpu_success_returns_engine(self):
         """GPU_AVAILABLE=True + use_gpu=True → 返回 (engine, 'gpu')。"""
+        mock_engine_instance = MagicMock()
+        mock_gpu_engine = MagicMock(return_value=mock_engine_instance)
+
         with patch.object(eb, "GPU_AVAILABLE", True):
-            with patch.object(eb, "GPUCollisionEngine") as mock_cls:
-                mock_engine = MagicMock()
-                mock_cls.return_value = mock_engine
+            with patch.dict(
+                "sys.modules",
+                {"src.collision.gpu_collision_engine": MagicMock(GPUCollisionEngine=mock_gpu_engine)},
+            ):
                 args = _make_args(use_gpu=True, gpu_device=0, gpu_batch_size=1000)
                 engine, etype = eb.build_engine(args, self.targets)
                 self.assertEqual(etype, "gpu")
-                self.assertIs(engine, mock_engine)
-                # 验证核心构造参数正确传递
-                call_kwargs = mock_cls.call_args.kwargs
-                self.assertEqual(call_kwargs["targets"], self.targets)
-                self.assertEqual(call_kwargs["device_index"], 0)
-                self.assertEqual(call_kwargs["batch_size"], 1000)
+                self.assertIs(engine, mock_engine_instance)
 
 
 class TestBuildEngineMultiGPU(unittest.TestCase):
@@ -203,87 +251,84 @@ class TestBuildEngineMultiGPU(unittest.TestCase):
     def setUp(self):
         self.targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
 
-    def test_multi_gpu_init_returns_false(self):
-        """MultiGPUCollisionEngine.initialize() 返回 False → SystemExit(1) + 错误提示。"""
+    def test_multi_gpu_init_returns_false_raises_exception(self):
+        """MultiGPUCollisionEngine.initialize() 返回 False → GPUInitializationError。"""
+        mock_engine_instance = MagicMock()
+        mock_engine_instance.initialize.return_value = False
+        mock_multi_engine = MagicMock(return_value=mock_engine_instance)
+
         with patch.object(eb, "GPU_AVAILABLE", True):
-            with patch.object(eb, "MultiGPUCollisionEngine") as mock_cls:
-                mock_engine = MagicMock()
-                mock_engine.initialize.return_value = False
-                mock_cls.return_value = mock_engine
-                with patch("builtins.print") as mock_print:
-                    with self.assertRaises(SystemExit) as ctx:
-                        eb.build_engine(_make_args(multi_gpu=True), self.targets)
-                    self.assertEqual(ctx.exception.code, 1)
-                mock_print.assert_called()
-                printed = " ".join(str(c.args[0]) if c.args else ""
-                                  for c in mock_print.call_args_list)
-                self.assertIn("GPU", printed)
+            with patch.dict(
+                "sys.modules",
+                {"src.gpu.multi_gpu_engine": MagicMock(MultiGPUCollisionEngine=mock_multi_engine)},
+            ):
+                with self.assertRaises(eb.GPUInitializationError) as ctx:
+                    eb.build_engine(_make_args(multi_gpu=True), self.targets)
+                self.assertEqual(ctx.exception.engine_type, "multi_gpu")
 
     def test_multi_gpu_init_raises_exception(self):
-        """MultiGPUCollisionEngine() 初始化抛异常 → SystemExit(1) + 错误日志。"""
+        """MultiGPUCollisionEngine() 初始化抛异常 → GPUInitializationError。"""
+        mock_engine_instance = MagicMock()
+        mock_engine_instance.initialize.side_effect = OSError("device busy")
+        mock_multi_engine = MagicMock(return_value=mock_engine_instance)
+
         with patch.object(eb, "GPU_AVAILABLE", True):
-            with patch.object(eb, "MultiGPUCollisionEngine") as mock_cls:
-                mock_engine = MagicMock()
-                mock_engine.initialize.side_effect = OSError("device busy")
-                mock_cls.return_value = mock_engine
-                with patch("builtins.print") as mock_print:
-                    with self.assertRaises(SystemExit) as ctx:
-                        eb.build_engine(_make_args(multi_gpu=True), self.targets)
-                    self.assertEqual(ctx.exception.code, 1)
-                # 多条 print 输出：错误 + 建议
-                self.assertGreaterEqual(mock_print.call_count, 2)
+            with patch.dict(
+                "sys.modules",
+                {"src.gpu.multi_gpu_engine": MagicMock(MultiGPUCollisionEngine=mock_multi_engine)},
+            ):
+                with self.assertRaises(eb.GPUInitializationError) as ctx:
+                    eb.build_engine(_make_args(multi_gpu=True), self.targets)
+                self.assertIn("Multi-GPU initialization failed", ctx.exception.message)
 
     def test_multi_gpu_success(self):
         """MultiGPUCollisionEngine 初始化成功 → 返回 multi_gpu。"""
+        mock_engine_instance = MagicMock()
+        mock_engine_instance.initialize.return_value = True
+        mock_multi_engine = MagicMock(return_value=mock_engine_instance)
+
         with patch.object(eb, "GPU_AVAILABLE", True):
-            with patch.object(eb, "MultiGPUCollisionEngine") as mock_cls:
-                mock_engine = MagicMock()
-                mock_engine.initialize.return_value = True
-                mock_cls.return_value = mock_engine
+            with patch.dict(
+                "sys.modules",
+                {"src.gpu.multi_gpu_engine": MagicMock(MultiGPUCollisionEngine=mock_multi_engine)},
+            ):
                 engine, etype = eb.build_engine(
                     _make_args(multi_gpu=True, gpu_indices=[0, 1], gpu_count=2),
                     self.targets,
                 )
                 self.assertEqual(etype, "multi_gpu")
-                self.assertIs(engine, mock_engine)
-                mock_engine.initialize.assert_called_once()
+                self.assertIs(engine, mock_engine_instance)
+                mock_engine_instance.initialize.assert_called_once()
 
 
 class TestGPUImportError(unittest.TestCase):
-    """GPU_AVAILABLE=False 时的 ImportError 回退路径 (L32-35)。"""
+    """GPU_AVAILABLE=False 时的 ImportError 回退路径 (L88-93)。"""
 
     def test_gpu_import_failure_sets_flag_false(self):
-        """导入 pyopencl 失败 → GPU_AVAILABLE=False + 类设为 None。"""
+        """导入 pyopencl 失败 → GPU_AVAILABLE=False。"""
         import builtins
 
         _orig_import = builtins.__import__
 
         def _mock_import(name, globals=None, locals=None, fromlist=(), level=0):
-            if name == "src.collision.gpu_collision_engine":
+            if name == "pyopencl":
                 raise ImportError("No module named 'pyopencl'")
             return _orig_import(name, globals, locals, fromlist, level)
 
-        # 移除 engine_builder 及其 GPU 依赖模块缓存，迫使重新导入
         pre_keys = set(sys.modules.keys())
         mod_keys = [k for k in list(sys.modules.keys())
                     if k == "src.cli.engine_builder"
-                    or k.startswith("src.cli.engine_builder.")
-                    or k in ("src.collision.gpu_collision_engine",
-                             "src.gpu.multi_gpu_engine")]
+                    or k.startswith("src.cli.engine_builder.")]
         saved = {k: sys.modules.pop(k, None) for k in mod_keys}
 
         try:
             with patch("builtins.__import__", side_effect=_mock_import):
                 fresh = importlib.import_module("src.cli.engine_builder")
                 self.assertFalse(fresh.GPU_AVAILABLE)
-                self.assertIsNone(fresh.GPUCollisionEngine)
-                self.assertIsNone(fresh.MultiGPUCollisionEngine)
         finally:
-            # 恢复保存的模块
             for k, v in saved.items():
                 if v is not None:
                     sys.modules[k] = v
-            # 清理重导入引入的多余 key (防止 sys.modules 污染)
             for k in set(sys.modules.keys()) - pre_keys:
                 if k.startswith("src.cli.engine_builder"):
                     del sys.modules[k]

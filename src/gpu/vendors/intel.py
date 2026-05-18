@@ -14,6 +14,7 @@
 """
 
 import os
+import tempfile
 import time
 from typing import Any
 
@@ -319,7 +320,7 @@ class IntelGPUVendor(GPUVendorBase):
             if os.name == "nt":  # Windows
                 cache_dir = os.path.join(os.environ.get("TEMP", ""), "intel_ocl_cache")
             else:  # Linux/macOS
-                cache_dir = "/tmp/intel_ocl_cache"
+                cache_dir = os.path.join(tempfile.gettempdir(), "intel_ocl_cache")
             os.makedirs(cache_dir, exist_ok=True)
             os.environ["OCL_CACHE_DIR"] = cache_dir
             applied["OCL_CACHE_DIR"] = cache_dir

@@ -18,7 +18,12 @@ _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
-from src.cli.engine_builder import build_engine  # noqa: E402
+from src.cli.engine_builder import (
+    EngineBuildError,
+    GPUNotAvailableError,
+    GPUInitializationError,
+    build_engine,
+)  # noqa: E402
 from src.cli.output import CLIOutput  # noqa: E402
 from src.cli.progress import format_progress  # noqa: E402
 from src.cli.stats_reporter import _print_detailed_stats  # noqa: E402
@@ -63,9 +68,22 @@ def _setup_and_start_engine(
 
     logger = _logging.getLogger("CLI")
 
-    # 构建引擎
-    sensitive_mode = getattr(args, "sensitive_mode", "full")
-    engine, engine_type = build_engine(args, targets, sensitive_mode=sensitive_mode, config=config)
+    sensitive_mode = getattr(args, "sensitive_mode", "masked")
+
+    try:
+        engine, engine_type = build_engine(args, targets, sensitive_mode=sensitive_mode, config=config)
+    except GPUNotAvailableError as e:
+        logger.error(f"GPU不可用: {e.message}")
+        print(f"{e.user_message}", file=sys.stderr)
+        sys.exit(1)
+    except GPUInitializationError as e:
+        logger.error(f"GPU初始化失败: {e.message}")
+        print(f"{e.user_message}", file=sys.stderr)
+        sys.exit(1)
+    except EngineBuildError as e:
+        logger.error(f"引擎构建失败: {e.message}")
+        print(f"{e.user_message}", file=sys.stderr)
+        sys.exit(1)
 
     # ── 将告警系统集成到引擎主流程 ──────────────────────────────────
     alert_system = None
