@@ -1,6 +1,6 @@
 # 跨平台兼容性指南
 
-> **版本**: v3.3.1 | **最后更新**: 2026-04-28
+> **版本**: v4.2.2 | **最后更新**: 2026-05-15
 
 ## 概述
 
@@ -158,7 +158,7 @@ normalized = PlatformUtils.normalize_path(path)
 config_dir = PlatformUtils.get_config_dir("btc-collision-engine")
 ```
 
-**断点文件存储**  
+**断点文件存储**
 断点文件存储于 `data_logs/collision_checkpoint.json`（已验证 Windows 具备写入权限），而非 `src/collision/` 下。
 
 ### 4.3 GUI 字体适配

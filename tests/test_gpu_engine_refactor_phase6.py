@@ -480,7 +480,7 @@ class TestModuleImports:
         """测试包版本号为 6.0.0"""
         from src.collision import gpu
 
-        assert gpu.__version__ == "6.0.0"
+        assert gpu.__version__ == "4.4.0"
 
     def test_package_all_exports(self):
         """测试 __all__ 包含新组件"""

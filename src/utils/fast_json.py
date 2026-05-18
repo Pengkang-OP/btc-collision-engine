@@ -11,6 +11,7 @@ orjson 优势:
 降级策略:
 - orjson 不可用时使用标准 json，功能完全兼容
 - 自动转换 orjson bytes 输出为 str（保持 API 一致性）
+- 标准 json 降级时使用 FastEncoder 扩展支持 datetime/bytes/Path
 
 使用示例:
     from src.utils.fast_json import fast_dumps, fast_loads, fast_dump, fast_load
@@ -32,13 +33,37 @@ orjson 优势:
 """
 
 import json as _json
+from datetime import datetime
+from pathlib import Path
 from typing import IO, Any
 
 from .logging_config import get_configured_logger
 
 logger = get_configured_logger("FastJSON")
 
-# P3-10: 检测 orjson 可用性
+
+class FastEncoder(_json.JSONEncoder):
+    """扩展 JSON 编码器 (标准 json 降级时使用)
+
+    支持 orjson 原生处理的类型在标准 json 下的等效序列化：
+    - datetime → ISO 8601 字符串
+    - bytes → hex 字符串 (为安全起见不输出原始 bytes)
+    - Path → 字符串
+    - set → list
+    """
+
+    def default(self, o: Any) -> Any:
+        if isinstance(o, datetime):
+            return o.isoformat()
+        if isinstance(o, bytes):
+            return o.hex()
+        if isinstance(o, Path):
+            return str(o)
+        if isinstance(o, set):
+            return sorted(o)
+        return super().default(o)
+
+# 检测 orjson 可用性
 _ORJSON_AVAILABLE = False
 _orjson_module: Any = None
 
@@ -111,7 +136,7 @@ def fast_dumps(
     # 标准 json 降级路径
     return _json.dumps(
         obj,
-        default=default,
+        default=default if default is not None else lambda o: FastEncoder().default(o),
         indent=indent,
         ensure_ascii=ensure_ascii,
         sort_keys=sort_keys,

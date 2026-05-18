@@ -242,7 +242,7 @@ class DriverManager:
 
             elif parser_type == "proc_driver":
                 # /proc/driver/nvidia/version格式:
-                # "NVRM version: NVIDIA UNIX x86_64 Kernel Module  520.67.03 ..."
+                # "NVRM version: NVIDIA UNIX x86_64 Kernel Module 520.67.03 ..."
                 match = re.search(r"Kernel Module\s+([\d.]+)", output)
                 if match:
                     return match.group(1)
@@ -655,7 +655,7 @@ class DriverManager:
         # 默认使用保守模式(更安全)
         flags = {
             "enable_async_compute": False,  # 默认禁用,需要显式启用
-            "enable_fast_math": True,  # 这个相对安全
+            "enable_fast_math": False,  # 加密/哈希运算需要严格精度
             "enable_shader_cache": False,  # 默认禁用,需要显式启用
             "enable_shader_reordering": False,  # 明确标志,语义清晰
             "conservative_mode": True,  # 默认保守模式(更安全)

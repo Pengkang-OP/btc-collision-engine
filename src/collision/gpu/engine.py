@@ -24,6 +24,7 @@ import signal
 import threading
 import time
 from collections.abc import Callable
+from dataclasses import dataclass, field
 from typing import Any, cast
 
 # 回调类型
@@ -32,7 +33,7 @@ from .core import CollisionCore
 
 # Phase 1-5 组件
 from .monitoring import PerformanceMonitoringPipeline
-from .vendor_strategy import VendorOptimizationFactory  # noqa: F401  # 保留供测试 patch 目标
+from .vendor_strategy import VendorOptimizationFactory  # noqa: F401 # 保留供测试 patch 目标
 
 # GPU 常量
 UINT32_MAX = 0xFFFFFFFF
@@ -44,6 +45,10 @@ INITIAL_BATCHES_LOG = 3
 THREAD_JOIN_TIMEOUT = 5.0
 MONITOR_THREAD_JOIN_TIMEOUT = 1.0
 EXCEPTION_RECOVERY_DELAY = 0.1
+# P2-3.2修复: GPU批次执行瞬态错误重试常量
+GPU_BATCH_MAX_RETRIES = 3
+GPU_BATCH_RETRY_BASE_DELAY = 0.05  # 基础退避延迟(秒)
+GPU_BATCH_RETRY_MAX_DELAY = 2.0
 ASYNC_KEY_GEN_BASE_TIMEOUT = 5.0
 ASYNC_KEY_GEN_PER_KEY_TIME = 0.00001
 ASYNC_KEY_GEN_SAFETY_FACTOR = 2.0
@@ -97,7 +102,7 @@ from ..collision_stats import CollisionStats  # noqa: E402
 # v3.2.0: 事件系统支持
 from ..event_bus import EventBus  # noqa: E402
 from ..events import (  # noqa: E402
-    # EngineErrorEvent,  # 暂未使用
+    # EngineErrorEvent, # 暂未使用
     EngineCompleteEvent,
     EngineMatchEvent,
     EngineProgressEvent,
@@ -126,12 +131,60 @@ def _get_gpu_monitor() -> "GPUPerformanceMonitor":
     return _gpu_performance_monitor
 
 
-def _seed_bytes_to_u32_be_array(seed: bytes) -> "np.ndarray":
-    """把 32 字节 seed 按 big-endian 拆成 8*uint32, 再转成本机端序。"""
-    if len(seed) != 32:
-        raise ValueError(f"seed must be 32 bytes, got {len(seed)}")
-    be_u32 = np.frombuffer(seed, dtype=">u4")
-    return be_u32.astype(np.uint32)
+from ...gpu.seed_utils import _seed_bytes_to_u32_be_array  # noqa: E402, F811  # 权威实现（含 itemsize/len 运行时校验）
+
+
+@dataclass
+class GPUEngineConfig:
+    """GPU 碰撞引擎配置 (v4.3.1)
+
+    将所有配置参数封装为 dataclass，便于外部构造、序列化和验证。
+    可通过 GPUCollisionEngine(targets, config=cfg) 传入。
+    """
+
+    device_index: int = 1
+    batch_size: int | None = None
+    checkpoint_enabled: bool = False
+    dedup_enabled: bool = False
+    dedup_max_size: int = 1_000_000
+    checkpoint_interval: int = 30
+    data_logging_enabled: bool = True
+    data_logging_interval: int = 5
+    use_enhanced_monitoring: bool = True
+    use_gpu_memory_pool: bool = True
+    gpu_pool_max_buffers: int = 100
+    gpu_pool_max_memory_mb: int = 512
+    use_async_logging: bool = False
+    async_log_file: str = "logs/gpu_async.log"
+    async_log_max_bytes: int = 10 * 1024 * 1024
+    async_log_backup_count: int = 5
+    check_uncompressed: bool | None = None
+    key_generation_strategy: KeyGenerationStrategy = field(
+        default=KeyGenerationStrategy.PRNG_SEED
+    )
+
+    def to_dict(self) -> dict[str, Any]:
+        """转换为字典"""
+        return {
+            "device_index": self.device_index,
+            "batch_size": self.batch_size,
+            "checkpoint_enabled": self.checkpoint_enabled,
+            "dedup_enabled": self.dedup_enabled,
+            "dedup_max_size": self.dedup_max_size,
+            "checkpoint_interval": self.checkpoint_interval,
+            "data_logging_enabled": self.data_logging_enabled,
+            "data_logging_interval": self.data_logging_interval,
+            "use_enhanced_monitoring": self.use_enhanced_monitoring,
+            "use_gpu_memory_pool": self.use_gpu_memory_pool,
+            "gpu_pool_max_buffers": self.gpu_pool_max_buffers,
+            "gpu_pool_max_memory_mb": self.gpu_pool_max_memory_mb,
+            "use_async_logging": self.use_async_logging,
+            "async_log_file": self.async_log_file,
+            "async_log_max_bytes": self.async_log_max_bytes,
+            "async_log_backup_count": self.async_log_backup_count,
+            "check_uncompressed": self.check_uncompressed,
+            "key_generation_strategy": self.key_generation_strategy.value,
+        }
 
 
 class GPUCollisionEngine(BaseCollisionEngine):
@@ -142,6 +195,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
     实现统一的引擎协调器。
 
     继承 BaseCollisionEngine，保持完整向后兼容。
+
+    自 v4.3.1: 支持通过 GPUEngineConfig 配置对象简化参数传递。
     """
 
     MONITOR_INTERVAL = 100
@@ -171,11 +226,45 @@ class GPUCollisionEngine(BaseCollisionEngine):
         async_log_backup_count: int = 5,
         check_uncompressed: bool | None = None,
         key_generation_strategy: KeyGenerationStrategy = KeyGenerationStrategy.PRNG_SEED,  # v3.2.1: 私钥生成策略
+        config: "GPUEngineConfig | None" = None,  # v4.3.1: 配置对象优先
     ) -> None:
         """初始化 GPU 碰撞引擎 (Phase 6 重构版)
 
-        保持全部 17 个参数与原始 GPUCollisionEngine 完全兼容。
+        支持两种初始化方式:
+        1. (推荐) 通过 GPUEngineConfig 对象: GPUCollisionEngine(targets, config=cfg)
+        2. (兼容) 直接传参: GPUCollisionEngine(targets, device_index=1, ...)
+
+        当 config 参数提供时，config 中的值覆盖对应的显式参数默认值。
+        显式非默认参数值优先于 config 中的值。
         """
+        # v4.3.1: 合并配置 - config 提供默认值，显式参数可覆盖
+        if config is not None:
+            cfg = config
+            # 对于可以为 None 的参数，仅在参数为 None（默认）时使用 cfg 的值
+            if batch_size is None:
+                batch_size = cfg.batch_size
+            if check_uncompressed is None:
+                check_uncompressed = cfg.check_uncompressed
+            # 对于无法区分"显式传入默认值"的参数（bool/int/str），
+            # 使用 cfg 值覆盖函数默认值（符合 docstring 约定）
+            device_index = cfg.device_index
+            checkpoint_enabled = cfg.checkpoint_enabled
+            dedup_enabled = cfg.dedup_enabled
+            dedup_max_size = cfg.dedup_max_size
+            checkpoint_interval = cfg.checkpoint_interval
+            data_logging_enabled = cfg.data_logging_enabled
+            data_logging_interval = cfg.data_logging_interval
+            use_enhanced_monitoring = cfg.use_enhanced_monitoring
+            use_gpu_memory_pool = cfg.use_gpu_memory_pool
+            gpu_pool_max_buffers = cfg.gpu_pool_max_buffers
+            gpu_pool_max_memory_mb = cfg.gpu_pool_max_memory_mb
+            use_async_logging = cfg.use_async_logging
+            async_log_file = cfg.async_log_file
+            async_log_max_bytes = cfg.async_log_max_bytes
+            async_log_backup_count = cfg.async_log_backup_count
+            key_generation_strategy = cfg.key_generation_strategy
+        else:
+            cfg = GPUEngineConfig()
         if not PYOPENCL_AVAILABLE:
             # L2修复: 提供详细诊断信息
             diagnostic_msg = (
@@ -370,10 +459,10 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
     @batch_size.setter
     def batch_size(self, value: int) -> None:
-        """线程安全的 batch_size 写入 (P1-2: UINT32_MAX 检查)"""
+        """线程安全的 batch_size 写入 (UINT32_MAX 溢出检查)"""
         if value >= GPU_MAX_BATCH_SIZE:
             raise ValueError(
-                f"P1-2: batch_size ({value:,}) >= UINT32_MAX ({GPU_MAX_BATCH_SIZE:,}) 会导致 GPU 内核 gid 溢出"
+                f"batch_size ({value:,}) >= UINT32_MAX ({GPU_MAX_BATCH_SIZE:,}) 会导致 GPU 内核 gid 溢出"
             )
         with self._batch_size_lock:
             self._batch_size = value
@@ -599,15 +688,9 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 except Exception:
                     pass
                 self._device_manager = None
-
-            # 清理GPU内存池（修复: 资源泄漏）
-            if hasattr(self, "_gpu_memory_pool") and self._gpu_memory_pool is not None:
-                try:
-                    if hasattr(self._gpu_memory_pool, "cleanup"):
-                        self._gpu_memory_pool.cleanup()
-                except Exception:
-                    pass
                 self._gpu_memory_pool = None
+
+            # GPU 内存池由 device_manager.cleanup() 统一清理，无需重复操作
 
             # 清理性能监控管道（修复: 资源泄漏）
             if hasattr(self, "_perf_pipeline") and self._perf_pipeline is not None:
@@ -645,29 +728,13 @@ class GPUCollisionEngine(BaseCollisionEngine):
             return 1
         return 0
 
-    # ========== 目标地址处理 ==========
-
-    def _prepare_targets(self) -> None:
-        """将目标地址转换为 Hash160"""
-        self._target_list = []
-        hash160_list = []
-        for address in sorted(self.targets):
-            try:
-                version, payload = Base58.check_decode(address)
-                if version == 0x00 and len(payload) == 20:
-                    self._target_list.append(address)
-                    hash160_list.append(payload)
-            except (ValueError, TypeError):
-                continue
-        if not hash160_list:
-            raise ValueError("没有有效的目标地址")
-        self._target_hash160s = b"".join(hash160_list)
+    # ========== GPU 显存用量计算 ==========
 
     def _calculate_gpu_memory_usage(self, num_keys: int) -> float:
         """计算 GPU 显存使用(MB)"""
         return GPUMemoryCalculator.calculate_from_hash160_bytes(
             num_keys=num_keys,
-            hash160_bytes=self._target_hash160s,
+            hash160_bytes=self._device_manager.target_hash160s,
         )
 
     # ========== 性能基准 ==========
@@ -705,10 +772,71 @@ class GPUCollisionEngine(BaseCollisionEngine):
     def _execute_gpu_batch(
         self, seed: bytes, batch_size: int, batch_num: int
     ) -> tuple[list[dict[str, int]], float]:
-        """执行 GPU batch 计算"""
+        """执行 GPU batch 计算
+
+        P2-3.2修复: 对瞬态 OpenCL 错误（资源不足、超时）进行本地指数退避重试，
+        避免瞬态错误传递到搜索模式层的高开销退避逻辑。
+        """
         if batch_num <= INITIAL_BATCHES_LOG or batch_num % BATCH_LOG_FREQUENCY == 0:
             logger.debug(f"GPU batch {batch_num}: 运行 run_batch (size={batch_size})...")
 
+        # P2-3.2修复: 瞬态错误重试循环
+        last_error: Exception | None = None
+        for retry in range(GPU_BATCH_MAX_RETRIES):
+            try:
+                return self._execute_gpu_batch_once(seed, batch_size, batch_num)
+            except (RuntimeError, MemoryError) as e:
+                last_error = e
+                error_msg = str(e).lower()
+                # 仅对瞬态/可恢复错误重试
+                is_transient = any(
+                    kw in error_msg for kw in (
+                        "out of resources", "out of memory", "timeout",
+                        "device removed", "cl_out_of_resources",
+                        "cl_mem_object_allocation_failure",
+                        "resource exhausted", "insufficient",
+                    )
+                )
+                if not is_transient or retry >= GPU_BATCH_MAX_RETRIES - 1:
+                    raise
+                backoff = min(
+                    GPU_BATCH_RETRY_BASE_DELAY * (2 ** retry), GPU_BATCH_RETRY_MAX_DELAY
+                )
+                logger.warning(
+                    f"GPU batch {batch_num}: 瞬态错误重试 {retry + 1}/{GPU_BATCH_MAX_RETRIES}, "
+                    f"退避 {backoff:.3f}s: {type(e).__name__}: {e}"
+                )
+                time.sleep(backoff)
+            except Exception as e:
+                # pyopencl.MemoryError 等非内置异常也尝试重试
+                last_error = e
+                error_msg = str(e).lower()
+                is_transient = any(
+                    kw in error_msg for kw in (
+                        "out of resources", "out of memory", "memoryerror",
+                        "timeout", "device removed",
+                        "resource exhausted", "insufficient",
+                    )
+                )
+                if not is_transient or retry >= GPU_BATCH_MAX_RETRIES - 1:
+                    raise
+                backoff = min(
+                    GPU_BATCH_RETRY_BASE_DELAY * (2 ** retry), GPU_BATCH_RETRY_MAX_DELAY
+                )
+                logger.warning(
+                    f"GPU batch {batch_num}: 瞬态错误重试 {retry + 1}/{GPU_BATCH_MAX_RETRIES}, "
+                    f"退避 {backoff:.3f}s: {type(e).__name__}: {e}"
+                )
+                time.sleep(backoff)
+
+        # 理论上不可达（for 循环总会 raise 或 return）
+        assert last_error is not None
+        raise last_error
+
+    def _execute_gpu_batch_once(
+        self, seed: bytes, batch_size: int, batch_num: int
+    ) -> tuple[list[dict[str, int]], float]:
+        """单次 GPU batch 执行（由 _execute_gpu_batch 调用）"""
         batch_start_time = time.time()
 
         if self._async_executor is not None:
@@ -805,7 +933,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
                     raise TimeoutError(f"匹配回调执行超时 ({self._match_callback_timeout}秒)")
 
                 old_handler = signal.signal(_sigalrm, timeout_handler)  # noqa: E501
-                _alarm = signal.alarm  # type: ignore[attr-defined]  # Unix-only API
+                _alarm = signal.alarm  # type: ignore[attr-defined] # Unix-only API
                 _alarm(int(self._match_callback_timeout))
                 try:
                     on_match(private_key, address, wif)
@@ -839,7 +967,11 @@ class GPUCollisionEngine(BaseCollisionEngine):
             if self.dedup_filter is not None and not self.dedup_filter.check_and_add(private_key):
                 continue
             target_idx = match["target_index"]
-            address = self._target_list[target_idx]
+            # G1修复: 检查目标索引是否越界
+            if target_idx >= len(self._device_manager.target_list):
+                logger.warning(f"目标索引越界: {target_idx} >= {len(self._device_manager.target_list)}，跳过匹配")
+                continue
+            address = self._device_manager.target_list[target_idx]
             wif = WIF.encode(private_key, compressed=True)
             if self.stats is not None:
                 self.stats.add_match(private_key, address)
@@ -861,21 +993,26 @@ class GPUCollisionEngine(BaseCollisionEngine):
     def _process_gpu_matches_prng(self, seed: bytes, matches: list[dict[str, int]]) -> None:
         """处理 GPU 匹配结果 (PRNG 模式)
 
-        G1修复: 添加索引越界检查，防止IndexError崩溃
+        C-4修复: 添加索引越界检查，防止IndexError崩溃和潜在的越界访问。
         """
         seed_int = int.from_bytes(seed, "big")
         for match in matches:
             key_idx = match["key_index"]
-            key_int = (seed_int + key_idx) % (2**256)
+            # C-4修复: 检查key_idx是否可能导致整数溢出或越界
+            try:
+                key_int = (seed_int + key_idx) % (2**256)
+            except (OverflowError, ValueError) as e:
+                logger.warning(f"PRNG模式key_idx计算失败: key_idx={key_idx}, 跳过匹配")
+                continue
             private_key = key_int.to_bytes(32, "big")
             if self.dedup_filter is not None and not self.dedup_filter.check_and_add(private_key):
                 continue
             target_idx = match["target_index"]
             # G1修复: 检查目标索引是否越界
-            if target_idx >= len(self._target_list):
-                logger.warning(f"目标索引越界: {target_idx} >= {len(self._target_list)}，跳过匹配")
+            if target_idx >= len(self._device_manager.target_list):
+                logger.warning(f"目标索引越界: {target_idx} >= {len(self._device_manager.target_list)}，跳过匹配")
                 continue
-            address = self._target_list[target_idx]
+            address = self._device_manager.target_list[target_idx]
             wif = WIF.encode(private_key, compressed=True)
             if self.stats is not None:
                 self.stats.add_match(private_key, address)
@@ -1150,8 +1287,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
                             try:
                                 buf.release()
                                 setattr(self._gpu_kernel, attr, None)
-                            except Exception:
-                                pass  # 缓冲区释放失败不影响主流程
+                            except Exception as e:
+                                logger.warning(f"释放GPU缓冲区失败 [{attr}]: {type(e).__name__}: {e}")
                 self._gpu_kernel._max_batch_size = new_batch_size
                 if hasattr(self._gpu_kernel, "_allocate_buffers"):
                     self._gpu_kernel._allocate_buffers()

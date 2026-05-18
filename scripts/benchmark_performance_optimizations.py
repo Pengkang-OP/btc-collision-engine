@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """GPU性能优化基准测试
 
-测试v2.2.1性能优化效果：
+测试v4.2.1性能优化效果：
 1. 异步执行预取机制
 2. 内存池预分配和大小对齐
 3. 动态batch_size调整策略
@@ -210,7 +210,7 @@ class PerformanceBenchmark:
     def run_all_tests(self):
         """运行所有基准测试"""
         print("=" * 80)
-        print("GPU性能优化基准测试 v2.2.1")
+        print("GPU性能优化基准测试 v4.2.1")
         print("=" * 80)
         print(f"开始时间: {time.strftime('%Y-%m-%d %H:%M:%S')}")
 

@@ -48,7 +48,7 @@ class TestConfigValidationConsistency(unittest.TestCase):
             "performance_monitoring": {
                 "enabled": True,
                 "track_slow_operations": True,
-                "slow_threshold_ms": 1000,
+                "slow_threshold_ms": 30000,
                 "max_records": 10000,
                 "log_level": "INFO",
             },

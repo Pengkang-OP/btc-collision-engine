@@ -443,7 +443,7 @@ def main():
 
     # 运行GPU测试
     gpu_result = run_gpu_collision_test(
-        targets=targets, duration=60, batch_size=1048576  # 60秒测试  # 1M batch size
+        targets=targets, duration=60, batch_size=1048576  # 60秒测试 # 1M batch size
     )
 
     # 可选：运行CPU基线测试（取消注释以启用）

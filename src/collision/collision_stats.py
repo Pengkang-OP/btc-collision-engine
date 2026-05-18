@@ -99,7 +99,7 @@ class CollisionStats:
         """
         with self._lock:
             # 计算私钥哈希用于验证（不存储实际私钥）
-            private_key_hash = hashlib.sha256(private_key).hexdigest()[:16]
+            private_key_hash = hashlib.sha256(private_key).hexdigest()
 
             self._match_count += 1
             match_info = {

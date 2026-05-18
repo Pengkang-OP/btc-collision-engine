@@ -24,7 +24,7 @@ from src.monitoring.storage_config import DataStorageConfig
 # 配置日志
 from src.utils import get_configured_logger
 
-# P3-10: 高性能JSON序列化
+# 高性能JSON序列化
 from src.utils.fast_json import fast_dump, fast_dumps, fast_load, fast_loads
 
 logger = get_configured_logger("MonitoringSystem")
@@ -183,27 +183,76 @@ class DataStorage:
 
     注意：已统一使用data_logs作为唯一数据源，
     monitoring_data目录已废弃。
+
+    自 v4.3.1 起，支持委托给 DataLogger 实例以消除双写竞争。
+    当 data_logger 参数提供时，所有持久化操作委托给 DataLogger，
+    本类仅作为兼容性适配层存在。
     """
 
-    def __init__(self, storage_dir: str | None = None) -> None:
+    def __init__(self, storage_dir: str | None = None, data_logger: Any = None) -> None:
         # 使用统一配置，默认使用data_logs
         self.storage_dir = DataStorageConfig.ensure_storage_dir(storage_dir)
         self.current_data_file = os.path.join(self.storage_dir, "current_data.json")
         self.history_data_file = os.path.join(self.storage_dir, "history_data.json")
         self.error_log_file = os.path.join(self.storage_dir, "error_log.json")
 
-        # 初始化历史数据文件
-        if not os.path.exists(self.history_data_file):
-            with open(self.history_data_file, "w", encoding="utf-8") as f:
-                fast_dump([], f)
+        # v4.3.1: 可选的 DataLogger 委托，消除双写竞争
+        self._data_logger = data_logger
 
-        # 初始化错误日志文件
-        if not os.path.exists(self.error_log_file):
-            with open(self.error_log_file, "w", encoding="utf-8") as f:
-                fast_dump([], f)
+        # 仅当未委托 DataLogger 时才自行初始化文件
+        if self._data_logger is None:
+            # 初始化历史数据文件 (JSONL 格式，空文件即为有效)
+            if not os.path.exists(self.history_data_file):
+                with open(self.history_data_file, "w", encoding="utf-8") as f:
+                    f.write("")
+
+            # 初始化错误日志文件
+            if not os.path.exists(self.error_log_file):
+                with open(self.error_log_file, "w", encoding="utf-8") as f:
+                    fast_dump([], f)
+
+    @property
+    def _use_logger(self) -> bool:
+        """检查是否委托给 DataLogger"""
+        return self._data_logger is not None
 
     def save_current_data(self, data: MonitoringData) -> None:
-        """保存当前数据（优化：原子写入 + 安全权限）"""
+        """保存当前数据（优化：原子写入 + 安全权限）
+
+        自 v4.3.1: 若委托给 DataLogger，则通过其 record 系列方法更新内部状态后
+        调用其 save_current_data() 输出。
+        """
+        # v4.3.1: 委托给 DataLogger 以消除双写竞争
+        if self._data_logger is not None:
+            try:
+                perf = data.performance
+                sys_info = data.system
+                eng = data.engine
+                self._data_logger.record_performance_data(
+                    speed=perf.get("speed", 0),
+                    total_checked=perf.get("total_checked", 0),
+                    matches_found=perf.get("matches_found", 0),
+                    cpu_usage=perf.get("cpu_usage", 0),
+                    memory_usage=perf.get("memory_usage", 0),
+                    thread_count=perf.get("thread_count", 0),
+                )
+                self._data_logger.record_system_data(
+                    os_name=sys_info.get("os", ""),
+                    python_version=sys_info.get("python_version", ""),
+                    pid=sys_info.get("pid", 0),
+                    uptime=sys_info.get("uptime", 0),
+                )
+                self._data_logger.record_engine_data(
+                    mode=eng.get("mode", ""),
+                    target_count=eng.get("target_count", 0),
+                    is_running=eng.get("is_running", False),
+                    current_position=eng.get("current_position", 0),
+                )
+                self._data_logger.save_current_data()
+                return
+            except Exception as e:
+                logger.error(f"DataLogger委托写入当前数据失败: {e}")
+                # 降级到直接写入
         try:
             # 使用原子写入：先写临时文件，再重命名
             temp_file = self.current_data_file + ".tmp"
@@ -232,22 +281,39 @@ class DataStorage:
                 logger.debug(f"清理临时文件失败（可忽略）: {cleanup_error}")
 
     def save_history_data(self, data: MonitoringData) -> None:
-        """保存历史数据（优化：原子写入 + 数据恢复）"""
+        """保存历史数据（优化：原子写入 + 数据恢复）
+
+        自 v4.3.1: 统一持久化层，DataLogger 为唯一写入路径。
+        当 DataLogger 可用时，数据直接推入其缓冲区后由其统一写入。
+        降级路径仅在 DataLogger 完全不可用时使用。
+        """
+        record = data.to_dict()
+        # v4.3.1: 统一持久化层 — DataLogger 为唯一写入路径
+        if self._data_logger is not None:
+            try:
+                with self._data_logger._lock:
+                    self._data_logger._history_buffer.append(record)
+                self._data_logger.save_history_data()
+                return
+            except Exception as e:
+                logger.error(f"DataLogger委托写入历史数据失败: {e}")
+                # 降级到直接写入
         try:
             # 读取现有历史数据（带恢复机制）
             history = self._load_history_with_recovery()
 
             # 添加新数据
-            history.append(data.to_dict())
+            history.append(record)
 
             # 限制历史数据长度（保留最近1000条）
             if len(history) > 1000:
                 history = history[-1000:]
 
-            # 原子写入
+            # JSONL 写入，与 DataLogger 保持一致 (v4.3.1)
             temp_file = self.history_data_file + ".tmp"
             with open(temp_file, "w", encoding="utf-8") as f:
-                fast_dump(history, f, ensure_ascii=False, indent=2)
+                for record_item in history:
+                    f.write(fast_dumps(record_item) + "\n")
                 f.flush()
                 os.fsync(f.fileno())
 
@@ -277,6 +343,8 @@ class DataStorage:
         参数:
             days_threshold: 超过多少天的数据需要压缩（默认7天）
             sample_rate: 采样率，0.1表示保留10%的数据（默认0.1）
+
+        自 v4.3.1: 压缩文件同样使用 JSONL 格式，与主历史数据文件保持一致。
         """
         try:
             from datetime import datetime, timedelta
@@ -310,12 +378,13 @@ class DataStorage:
             # 采样压缩旧数据
             compressed_data = self._sample_data(old_data, sample_rate)
 
-            # 保存压缩数据到单独文件
+            # 保存压缩数据到单独文件 (v4.3.1: JSONL 格式)
             compressed_file = self.history_data_file.replace(".json", "_compressed.json")
             temp_file = compressed_file + ".tmp"
 
             with open(temp_file, "w", encoding="utf-8") as f:
-                fast_dump(compressed_data, f, ensure_ascii=False, indent=2)
+                for record in compressed_data:
+                    f.write(fast_dumps(record) + "\n")
                 f.flush()
                 os.fsync(f.fileno())
 
@@ -324,10 +393,11 @@ class DataStorage:
             else:
                 os.rename(temp_file, compressed_file)
 
-            # 保留新数据
+            # 保留新数据 (v4.3.1: JSONL 格式)
             temp_file = self.history_data_file + ".tmp"
             with open(temp_file, "w", encoding="utf-8") as f:
-                fast_dump(new_data, f, ensure_ascii=False, indent=2)
+                for record in new_data:
+                    f.write(fast_dumps(record) + "\n")
                 f.flush()
                 os.fsync(f.fileno())
 
@@ -389,7 +459,24 @@ class DataStorage:
         return sampled
 
     def save_error(self, error: dict[str, Any]) -> None:
-        """保存错误记录（优化：原子写入）"""
+        """保存错误记录（优化：原子写入）
+
+        自 v4.3.1: 若委托给 DataLogger，通过其 record_error() 方法保存。
+        """
+        # v4.3.1: 委托给 DataLogger 以消除双写竞争
+        if self._data_logger is not None:
+            try:
+                error_type = error.get("type", error.get("level", "unknown"))
+                message = error.get("message", "")
+                self._data_logger.record_error(
+                    error_type=str(error_type),
+                    message=str(message),
+                    context=error,
+                )
+                return
+            except Exception as e:
+                logger.error(f"DataLogger委托写入错误记录失败: {e}")
+                # 降级到直接写入
         try:
             # 读取现有错误日志
             errors = []
@@ -433,7 +520,15 @@ class DataStorage:
                 logger.debug(f"清理临时文件失败（可忽略）: {cleanup_error}")
 
     def get_current_data(self) -> dict[str, Any] | None:
-        """获取当前数据"""
+        """获取当前数据
+
+        自 v4.3.1: 若委托给 DataLogger，从其获取数据。
+        """
+        if self._data_logger is not None:
+            try:
+                return self._data_logger.get_current_data()
+            except Exception as e:
+                logger.error(f"DataLogger读取当前数据失败: {e}")
         try:
             if os.path.exists(self.current_data_file):
                 with open(self.current_data_file, encoding="utf-8") as f:
@@ -443,18 +538,50 @@ class DataStorage:
         return None
 
     def _load_history_with_recovery(self) -> list:
-        """加载历史数据，带损坏恢复机制"""
+        """加载历史数据，带损坏恢复机制
+
+        自 v4.3.1: 若委托给 DataLogger，从其获取数据。
+        默认使用 JSONL 逐行解析，兼容传统 JSON array 格式。
+        """
+        # v4.3.1: 委托给 DataLogger
+        if self._data_logger is not None:
+            try:
+                return self._data_logger._load_history_with_recovery()
+            except Exception as e:
+                logger.error(f"DataLogger读取历史数据失败: {e}")
+
         if not os.path.exists(self.history_data_file):
             return []
 
         try:
             with open(self.history_data_file, encoding="utf-8") as f:
-                data = fast_load(f)
-                if isinstance(data, list):
-                    return data
-                else:
-                    logger.warning("历史数据格式错误，重置为空列表")
-                    return []
+                raw = f.read()
+            if not raw.strip():
+                return []
+
+            # 尝试 JSON array 格式（向后兼容旧数据）
+            if raw.strip().startswith('['):
+                try:
+                    data = fast_loads(raw)
+                    if isinstance(data, list):
+                        return data
+                except json.JSONDecodeError:
+                    pass
+
+            # JSONL 格式：逐行解析
+            records = []
+            for line in raw.splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    record = fast_loads(line)
+                    if isinstance(record, dict):
+                        records.append(record)
+                except json.JSONDecodeError:
+                    continue
+            return records
+
         except json.JSONDecodeError as e:
             # JSON文件损坏，尝试恢复
             logger.error(f"历史数据JSON损坏，尝试恢复: {e}")
@@ -492,16 +619,28 @@ class DataStorage:
             return []
 
     def get_history_data(self) -> list[dict[str, Any]]:
-        """获取历史数据"""
-        try:
-            with open(self.history_data_file, encoding="utf-8") as f:
-                return fast_load(f)
-        except Exception as e:
-            logger.error(f"读取历史数据失败: {e}")
-            return []
+        """获取历史数据
+
+        自 v4.3.1: 若委托给 DataLogger，从其获取数据。
+        默认使用 JSONL 逐行解析，兼容传统 JSON array 格式。
+        """
+        if self._data_logger is not None:
+            try:
+                return self._data_logger.get_history_data()
+            except Exception as e:
+                logger.error(f"DataLogger读取历史数据失败: {e}")
+        return self._load_history_with_recovery()
 
     def get_error_logs(self) -> list[dict[str, Any]]:
-        """获取错误日志"""
+        """获取错误日志
+
+        自 v4.3.1: 若委托给 DataLogger，从其获取数据。
+        """
+        if self._data_logger is not None:
+            try:
+                return self._data_logger.get_error_logs()
+            except Exception as e:
+                logger.error(f"DataLogger读取错误日志失败: {e}")
         try:
             with open(self.error_log_file, encoding="utf-8") as f:
                 return fast_load(f)
@@ -533,7 +672,7 @@ class AnomalyDetector:
         self.storage = storage
         # 性能指标正常范围阈值
         self.thresholds = {
-            "speed": {"min": 100, "max": 1000000},  # 最低检测速率  # 最高检测速率
+            "speed": {"min": 100, "max": 1000000},  # 最低检测速率 # 最高检测速率
             "cpu_usage": {"max": 90},  # CPU使用率上限
             "memory_usage": {"max": 1024},  # 内存使用上限（MB）
         }
@@ -616,28 +755,14 @@ class AnomalyDetector:
             )
 
         # 如果storage可用，保存异常记录（优化：批量保存）
-        # 注意：此优化将所有异常合并为一条记录，减少I/O操作（性能提升67-80%）
-        # 数据结构变化：从多条记录变为一条记录，anomalies数组包含所有异常详情
-        # 如果下游系统需要逐条处理异常，请适配新的数据格式
-        if self.storage is not None and anomalies:
-            try:
-                # 优化：将所有异常合并为一条记录，减少I/O操作
-                error_record = {
-                    "type": "anomaly_detection",
-                    "level": "warning",
-                    "message": f"检测到 {len(anomalies)} 个异常",
-                    "anomaly_count": len(anomalies),
-                    "anomalies": anomalies,  # 保存所有异常详情
-                    "timestamp": time.time(),  # 添加时间戳
-                }
-                self.storage.save_error(error_record)
-            except Exception as e:
-                logger.error(f"保存异常记录失败: {e}")
-
+        # 注意：错误保存已统一由 MonitoringAlertAdapter.generate_alert() 处理，
+        # 此处不再重复调用 self.storage.save_error()，避免双重写入。
         return anomalies
 
     def analyze_trends(self, history_data: list[dict[str, Any]]) -> dict[str, Any]:
         """分析趋势
+
+        自 v4.3.1: 优化为单次遍历，减少不必要的列表推导开销。
 
         Args:
             history_data: 历史数据列表
@@ -651,20 +776,24 @@ class AnomalyDetector:
         # 提取最近的100条数据
         recent_data = history_data[-100:]
 
-        # 分析速度趋势（使用安全访问）
-        # 注：这里使用三次列表推导式而非一次遍历，虽然多遍历了2次，
-        # 但代码更Pythonic、更清晰，且性能差异极小（~10μs）
-        speeds = [d.get("performance", {}).get("speed", 0) for d in recent_data]
+        # v4.3.1: 单次遍历收集所有指标，避免三次独立的列表推导
+        speeds: list[float] = []
+        cpu_usages: list[float] = []
+        memory_usages: list[float] = []
+
+        for d in recent_data:
+            perf = d.get("performance", {})
+            if isinstance(perf, dict):
+                speeds.append(perf.get("speed", 0))
+                cpu_usages.append(perf.get("cpu_usage", 0))
+                memory_usages.append(perf.get("memory_usage", 0))
+
         speed_avg = statistics.mean(speeds) if speeds else 0
         speed_std = statistics.stdev(speeds) if len(speeds) > 1 else 0
 
-        # 分析CPU使用率趋势（使用安全访问）
-        cpu_usages = [d.get("performance", {}).get("cpu_usage", 0) for d in recent_data]
         cpu_avg = statistics.mean(cpu_usages) if cpu_usages else 0
         cpu_std = statistics.stdev(cpu_usages) if len(cpu_usages) > 1 else 0
 
-        # 分析内存使用趋势（使用安全访问）
-        memory_usages = [d.get("performance", {}).get("memory_usage", 0) for d in recent_data]
         memory_avg = statistics.mean(memory_usages) if memory_usages else 0
         memory_std = statistics.stdev(memory_usages) if len(memory_usages) > 1 else 0
 
@@ -674,9 +803,9 @@ class AnomalyDetector:
                 "std_dev": speed_std,
                 "trend": (
                     "increasing"
-                    if speeds[-1] > speeds[0]
+                    if speeds and speeds[-1] > speeds[0]
                     else "decreasing"
-                    if speeds[-1] < speeds[0]
+                    if speeds and speeds[-1] < speeds[0]
                     else "stable"
                 ),
             },
@@ -685,9 +814,9 @@ class AnomalyDetector:
                 "std_dev": cpu_std,
                 "trend": (
                     "increasing"
-                    if cpu_usages[-1] > cpu_usages[0]
+                    if cpu_usages and cpu_usages[-1] > cpu_usages[0]
                     else "decreasing"
-                    if cpu_usages[-1] < cpu_usages[0]
+                    if cpu_usages and cpu_usages[-1] < cpu_usages[0]
                     else "stable"
                 ),
             },
@@ -696,9 +825,9 @@ class AnomalyDetector:
                 "std_dev": memory_std,
                 "trend": (
                     "increasing"
-                    if memory_usages[-1] > memory_usages[0]
+                    if memory_usages and memory_usages[-1] > memory_usages[0]
                     else "decreasing"
-                    if memory_usages[-1] < memory_usages[0]
+                    if memory_usages and memory_usages[-1] < memory_usages[0]
                     else "stable"
                 ),
             },
@@ -865,9 +994,9 @@ class ReportGenerator:
         # 过滤今天的数据（优化：使用时间戳比较）
         # 注意：使用本地时区，确保所有timestamp都使用同一时区
         # 如果系统跨时区部署，建议使用UTC时区：
-        #   from datetime import timezone
-        #   today = datetime.now(timezone.utc).date()
-        #   today_start_ts = datetime.combine(today, datetime.min.time(), tzinfo=timezone.utc).timestamp()  # noqa: E501
+        # from datetime import timezone
+        # today = datetime.now(timezone.utc).date()
+        # today_start_ts = datetime.combine(today, datetime.min.time(), tzinfo=timezone.utc).timestamp() # noqa: E501
         today = datetime.now().date()
         # 计算今天的开始时间戳（避免每次都调用datetime.fromtimestamp）
         today_start_ts = datetime.combine(today, datetime.min.time()).timestamp()
@@ -876,12 +1005,12 @@ class ReportGenerator:
         if not today_data:
             return {"message": "今天暂无数据"}
 
-        # 计算统计数据
-        speeds = [d["performance"].get("speed", 0) for d in today_data]
-        total_checked = sum(d["performance"].get("total_checked", 0) for d in today_data)
-        matches_found = sum(d["performance"].get("matches_found", 0) for d in today_data)
-        cpu_usages = [d["performance"].get("cpu_usage", 0) for d in today_data]
-        memory_usages = [d["performance"].get("memory_usage", 0) for d in today_data]
+        # 计算统计数据（兼容扁平字典和嵌套 performance 两种历史数据格式）
+        speeds = [d.get("performance", {}).get("speed", d.get("speed", 0)) for d in today_data]
+        total_checked = sum(d.get("performance", {}).get("total_checked", d.get("total_checked", 0)) for d in today_data)
+        matches_found = sum(d.get("performance", {}).get("matches_found", d.get("matches_found", 0)) for d in today_data)
+        cpu_usages = [d.get("performance", {}).get("cpu_usage", d.get("cpu_usage", 0)) for d in today_data]
+        memory_usages = [d.get("performance", {}).get("memory_usage", d.get("memory_usage", 0)) for d in today_data]
 
         # 计算平均值
         speed_avg = statistics.mean(speeds) if speeds else 0
@@ -969,7 +1098,7 @@ class ReportGenerator:
         if len(values) < 3:
             return "stable"
 
-        # P1修复: 使用线性回归计算趋势
+        # 使用线性回归计算趋势
         try:
             # 简单线性回归: y = mx + b
             n = len(values)
@@ -993,7 +1122,7 @@ class ReportGenerator:
             # 归一化斜率（相对变化率）
             normalized_slope = slope / abs(avg)
 
-            # P1修复: 阈值调整为2%,提高趋势检测灵敏度
+            # 阈值调整为2%,提高趋势检测灵敏度
             # 原5%阈值过于严格,导致明显趋势被误判为stable
             threshold = 0.02
             if normalized_slope > threshold:
@@ -1022,6 +1151,8 @@ class ReportGenerator:
     def _simple_trend_analysis(self, data: list[dict[str, Any]]) -> dict[str, Any]:
         """简单的趋势分析（detector未初始化时的降级方案）
 
+        自 v4.3.1: 优化为单次遍历。
+
         Args:
             data: 历史数据列表
 
@@ -1034,16 +1165,20 @@ class ReportGenerator:
         # 提取最近的100条数据
         recent_data = data[-100:]
 
-        # 分析速度趋势
-        speeds = [d.get("performance", {}).get("speed", 0) for d in recent_data]
+        # v4.3.1: 单次遍历
+        speeds: list[float] = []
+        cpu_usages: list[float] = []
+        memory_usages: list[float] = []
+
+        for d in recent_data:
+            perf = d.get("performance", {})
+            if isinstance(perf, dict):
+                speeds.append(perf.get("speed", 0))
+                cpu_usages.append(perf.get("cpu_usage", 0))
+                memory_usages.append(perf.get("memory_usage", 0))
+
         speed_avg = statistics.mean(speeds) if speeds else 0
-
-        # 分析CPU使用率趋势
-        cpu_usages = [d.get("performance", {}).get("cpu_usage", 0) for d in recent_data]
         cpu_avg = statistics.mean(cpu_usages) if cpu_usages else 0
-
-        # 分析内存使用趋势
-        memory_usages = [d.get("performance", {}).get("memory_usage", 0) for d in recent_data]
         memory_avg = statistics.mean(memory_usages) if memory_usages else 0
 
         return {
@@ -1075,14 +1210,19 @@ class MonitoringSystem:
         """
         self.engine = engine
         self.collection_interval = collection_interval
-        self.storage = DataStorage()
+
+        # v4.3.1: 创建统一的 DataLogger 实例，消除与 DataStorage 的双写竞争
+        from src.monitoring.data_logger import DataLogger
+
+        self._data_logger = DataLogger()
+        self.storage = DataStorage(data_logger=self._data_logger)
         self.collector = DataCollector(engine)
         self.detector = AnomalyDetector(self.storage)
         self.alert_system = MonitoringAlertAdapter(self.storage)
         self.report_generator = ReportGenerator(self.storage, self.detector)
 
         # 集成日志监控系统
-        self.log_integrator: LogMonitoringIntegrator | None = None  # type: ignore[name-defined]  # noqa: F821, E501
+        self.log_integrator: LogMonitoringIntegrator | None = None  # type: ignore[name-defined] # noqa: F821, E501
         try:
             from .log_monitoring_integrator import get_log_monitoring_integrator
 
@@ -1148,6 +1288,9 @@ class MonitoringSystem:
 
         # 写入剩余缓冲数据
         self._flush_buffer()
+        # 确保 DataLogger 完整刷写（含性能日志缓冲和错误缓冲）
+        if hasattr(self, '_data_logger') and self._data_logger is not None:
+            self._data_logger.stop()
         logger.info("监控系统已停止")
 
     def _buffer_data_point(self, data: MonitoringData):
@@ -1163,12 +1306,29 @@ class MonitoringSystem:
             self._flush_buffer_unlocked()
 
     def _flush_buffer_unlocked(self):
-        """批量写入缓冲数据（内部方法，调用方必须已持有 _buffer_lock）"""
+        """批量写入缓冲数据（内部方法，调用方必须已持有 _buffer_lock）
+
+        自 v4.3.1: 当 DataLogger 可用时，委托给它处理持久化，消除双写竞争。
+        """
         if not self._data_buffer:
             return
         buffer_copy = self._data_buffer.copy()
         self._data_buffer.clear()
-        # 一次性批量写入: 读取现有历史数据，添加所有缓冲项，再写入
+        # v4.3.1: 委托给 DataLogger 以消除双写竞争
+        if self._data_logger is not None:
+            try:
+                # 将缓冲数据追加到 DataLogger 内部缓冲区后保存
+                with self._data_logger._lock:
+                    self._data_logger._history_buffer.extend(buffer_copy)
+                    if len(self._data_logger._history_buffer) > 1000:
+                        while len(self._data_logger._history_buffer) > 1000:
+                            self._data_logger._history_buffer.popleft()
+                self._data_logger.save_history_data()
+                logger.debug(f"缓冲区已刷新(DataLogger): 批量写入{len(buffer_copy)}条历史数据")
+                return
+            except Exception as e:
+                logger.warning(f"DataLogger委托批量写入失败，降级到直接写入: {e}")
+        # 一次性批量写入: JSONL 追加写入，与 DataLogger 保持一致 (v4.3.1)
         try:
             history = self.storage._load_history_with_recovery()
             history.extend(buffer_copy)
@@ -1176,9 +1336,8 @@ class MonitoringSystem:
                 history = history[-1000:]
             temp_file = self.storage.history_data_file + ".tmp"
             with open(temp_file, "w", encoding="utf-8") as f:
-                import json as _json
-
-                _json.dump(history, f, ensure_ascii=False, indent=2)
+                for record in history:
+                    f.write(fast_dumps(record) + "\n")
                 f.flush()
                 os.fsync(f.fileno())
             if os.path.exists(self.storage.history_data_file):
@@ -1213,7 +1372,7 @@ class MonitoringSystem:
                 # 保存当前数据（每次都保存）
                 self.storage.save_current_data(data)
 
-                # P2修复: 降低历史数据保存频率,减少I/O开销
+                # 降低历史数据保存频率,减少I/O开销
                 # 优化: 利用缓冲机制将数据点缓冲，达到阈值时批量写入
                 history_save_counter += 1
                 if history_save_counter >= history_save_interval:

@@ -8,7 +8,7 @@ import logging
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Optional
 
-# P3-5: 统一日志获取
+# 统一日志获取
 from ..utils import get_configured_logger
 
 if TYPE_CHECKING:

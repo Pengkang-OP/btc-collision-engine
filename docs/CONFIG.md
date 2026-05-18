@@ -32,7 +32,7 @@
 | `progress_interval` | int | `1000` | `>= 1` | 进度回调触发间隔（检测次数），越小刷新越频繁但开销越大 |
 | `checkpoint_interval` | int | `30` | `>= 1` | 断点自动保存间隔（秒） |
 | `dedup_max_size` | int | `1000000` | `>= 1` | Bloom 过滤器最大容量（仅 `random` 模式有效）。**注意**：Bloom 过滤器存在约 0.1% 的误报率（即极少数未检测过的私钥被误判为重复），这是概率型数据结构的固有特性，不影响碰撞准确性。`random` 模式下重复的概率本身极低，启用去重主要是防止极端巧合的重复计算。内存占用约为 `max_size × 1.44 bit`，100 万条约 180 KB。**不适用场景**：range/brute_force 模式（顺序遍历不会重复，无需去重） |
-| `use_performance_optimization` | bool | `true` | `true` / `false` | 是否启用 v2.2.0 性能优化套件 |
+| `use_performance_optimization` | bool | `true` | `true` / `false` | 是否启用 v4.2.1 性能优化套件 |
 | `precomputed_window_size` | int | `8` | `4` ~ `8` | 椭圆曲线预计算表窗口大小。越大越快，内存占用越多（window=8 约 50KB） |
 | `use_simd_hash` | bool | `true` | `true` / `false` | 启用 SIMD 哈希优化（需安装 `pycryptodome`） |
 | `use_memory_pool` | bool | `true` | `true` / `false` | 启用 ECPoint 内存池，减少 GC 压力 |
@@ -126,9 +126,9 @@
 |--------|------|--------|--------------|------|
 | `enabled` | bool | `true` | `true` / `false` | 是否启用性能监控系统 |
 | `track_slow_operations` | bool | `true` | `true` / `false` | 记录慢操作（超过阈值的调用） |
-| `slow_threshold_ms` | float | `100` | `>= 0` | 慢操作阈值（毫秒） |
-| `max_records` | int | `1000` | `>= 1` | 性能记录最大保存条数 |
-| `log_level` | string | `"DEBUG"` | `DEBUG` / `INFO` / `WARNING` / `ERROR` / `CRITICAL` | 性能日志输出级别 |
+| `slow_threshold_ms` | float | `30000` | `>= 0` | 慢操作阈值（毫秒），GPU编译通常需10-30秒 |
+| `max_records` | int | `10000` | `>= 1` | 性能记录最大保存条数 |
+| `log_level` | string | `"INFO"` | `DEBUG` / `INFO` / `WARNING` / `ERROR` / `CRITICAL` | 性能日志输出级别 |
 
 ---
 
@@ -197,13 +197,13 @@
 
 ```json
 {
-  "logging": { 
-    "level": "INFO", 
+  "logging": {
+    "level": "INFO",
     "enable_console": true,
     "enable_file": true,
     "compress_backups": true
   },
-  "collision": { 
+  "collision": {
     "max_workers": null,
     "checkpoint_interval": 60
   },

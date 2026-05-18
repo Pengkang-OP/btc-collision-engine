@@ -950,7 +950,7 @@ class TestModuleImports:
         """测试模块版本号 v4.0.0"""
         from src.collision import gpu
 
-        assert gpu.__version__ == "6.0.0"
+        assert gpu.__version__ == "4.4.0"
 
     def test_collision_core_in_all(self):
         """验证 CollisionCore 在 __all__ 中"""

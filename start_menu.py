@@ -225,6 +225,13 @@ def _show_banner() -> None:
 
 def main() -> None:
     """主入口：循环显示菜单直到退出。"""
+    # 初始化日志安全过滤器（防止私钥泄露到日志文件）
+    try:
+        from src.utils.logging_config import _setup_security_filter
+        _setup_security_filter()
+    except Exception:
+        pass  # 安全过滤器初始化失败不阻止菜单运行
+
     python_exe = _venv_python()
     script_dir = _SCRIPT_DIR
 
@@ -266,7 +273,10 @@ def main() -> None:
                 _wait_key()
                 continue
             if os.name == "nt":
-                os.system(f'start "" powershell -Command "& \"{ps1_path}\""')
+                subprocess.Popen(
+                    ["powershell", "-File", ps1_path],
+                    creationflags=subprocess.CREATE_NEW_CONSOLE,
+                )
             else:
                 print(_t("menu.monitor_windows_only"))
                 _wait_key()

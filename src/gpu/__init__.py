@@ -65,6 +65,10 @@ from .lock_monitor import (  # noqa: E402
 from .memory_calculator import GPUMemoryCalculator  # noqa: E402
 from .metrics import GPUMetricsCollector, get_metrics_collector  # noqa: E402
 from .multi_gpu_engine import MultiGPUCollisionEngine  # noqa: E402
+from .multi_format_multi_gpu_engine import (  # noqa: E402
+    create_engine,
+    create_multi_format_multi_gpu_engine,
+)
 from .nvidia_optimizer import NvidiaGPUOptimizer  # noqa: E402
 from .optimization_pipeline import PerformanceOptimizationPipeline  # noqa: E402
 from .scorer import GPUDeviceScorer, get_gpu_scorer, reset_gpu_scorer  # noqa: E402
@@ -74,7 +78,7 @@ from .selector import GPUDeviceSelector, get_gpu_selector, reset_gpu_selector  #
 from .worker import SingleGPUWorker  # noqa: E402
 
 __version__ = (
-    "3.5.1"  # 与主项目版本同步 (v3.5.1: 数据日志系统修复 + 导入路径优化 + pre-commit/贡献指南)
+    "4.4.0"  # v4.4.0: 安全修复增强(安全清零/侧信道防护/敏感数据脱敏/线程安全), 文档一致性整理
 )
 
 __all__ = [
@@ -99,12 +103,15 @@ __all__ = [
     "get_gpu_selector",
     "reset_gpu_selector",
     "GPULoadBalancer",
-    # P3-11: 统一GPU评分
+    # 统一GPU评分
     "GPUDeviceScorer",
     "get_gpu_scorer",
     "reset_gpu_scorer",
     "SingleGPUWorker",
     "MultiGPUCollisionEngine",
+    # v4.3.0 新增: 多格式多GPU支持
+    "create_engine",
+    "create_multi_format_multi_gpu_engine",
     "GPUAutoConfigurator",
     "get_gpu_configurator",
     "reset_gpu_configurator",

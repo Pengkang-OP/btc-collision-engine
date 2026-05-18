@@ -32,7 +32,7 @@ from typing import List, Optional, Tuple
 BECH32_CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
 _BECH32_CHARSET_MAP = {c: i for i, c in enumerate(BECH32_CHARSET)}
 
-BECH32_CONST = 1           # bech32  校验常量 (BIP-173)
+BECH32_CONST = 1           # bech32 校验常量 (BIP-173)
 BECH32M_CONST = 0x2BC830A3  # bech32m 校验常量 (BIP-350)
 
 # polymod 生成元 (BIP-173 规范)

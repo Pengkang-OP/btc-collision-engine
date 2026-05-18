@@ -1,12 +1,11 @@
 # Python私钥安全管理完整指南
 
-> **版本**: v3.3.1 | **最后更新**: 2026-04-28  
+> **版本**: v4.2.2 | **最后更新**: 2026-05-15
 > **面向**: 用户/开发者
 
-
-**创建日期**: 2026-04-20  
-**适用范围**: BTC密钥碰撞项目  
-**安全等级**: 生产级  
+**创建日期**: 2026-04-20
+**适用范围**: BTC密钥碰撞项目
+**安全等级**: 生产级
 
 ---
 
@@ -192,6 +191,7 @@ import nacl.secret
 ## 5. 硬件安全模块HSM (最高安全)
 
 ```
+
 私钥永远不离开HSM设备
 ┌─────────────┐
 │   HSM设备    │
@@ -201,6 +201,7 @@ import nacl.secret
 │             │
 │  签名操作   │ ← 只暴露签名结果
 └─────────────┘
+
 ```bash
 
 **优点**:
@@ -233,11 +234,11 @@ with SecureKeyManager() as key_mgr:
     # 生成密钥
     key_mgr.generate_key()
     private_key = key_mgr.get_key()
-    
+
     # 使用密钥
     generator = P2PKHAddressGenerator()
     address, _, _ = generator.generate_address(private_key)
-    
+
     print(f"地址: {address}")
 
 # 退出上下文，私钥已自动清零 ✅
@@ -251,9 +252,9 @@ key_mgr = SecureKeyManager()
 try:
     key_mgr.generate_key()
     private_key = key_mgr.get_key()
-    
+
     # 使用私钥...
-    
+
 finally:
     # 确保清零
     key_mgr.clear()
@@ -281,10 +282,10 @@ for i in range(100):
     with SecureKeyManager() as key_mgr:
         key_mgr.generate_key()
         private_key = key_mgr.get_key()
-        
+
         address, _, _ = generator.generate_address(private_key)
         # 处理地址...
-    
+
     # 每次循环结束自动清零
 ```python
 
@@ -398,7 +399,7 @@ pip install cryptography pynacl
    ```python
    # 好：可变，可清零
    key = bytearray(secrets.token_bytes(32))
-   
+
    # 差：不可变，无法清零
    key = secrets.token_bytes(32)
 ```python
@@ -411,7 +412,7 @@ pip install cryptography pynacl
    ```python
    # ❌ 绝对不要
    logger.info(f"私钥: {private_key.hex()}")
-   
+
    # ✅ 可以记录地址
    logger.info(f"地址: {address}")
 ```python
@@ -420,7 +421,7 @@ pip install cryptography pynacl
    ```python
    # ❌ 危险：创建副本
    temp_key = private_key[:]
-   
+
    # ✅ 直接使用引用
    use_key(private_key)
 ```python
@@ -429,7 +430,7 @@ pip install cryptography pynacl
    ```python
    # ❌ 危险：函数可能保存副本
    untrusted_function(private_key)
-   
+
    # ✅ 只传递地址
    use_address(address)
 ```python
@@ -441,7 +442,7 @@ pip install cryptography pynacl
    key_mgr.generate_key()
    use_key(key_mgr.get_key())
    # 忘记key_mgr.clear()
-   
+
    # ✅ 使用上下文管理器
    with SecureKeyManager() as key_mgr:
        key_mgr.generate_key()
@@ -491,7 +492,7 @@ def test_key_cleared():
     with SecureKeyManager() as key_mgr:
         key_mgr.generate_key()
         key_bytes = bytes(key_mgr.get_key())
-    
+
     # 退出上下文后，原始key_mgr._key应被清零
     assert all(b == 0 for b in key_mgr._key)
 ```python
@@ -532,7 +533,7 @@ def test_key_cleared():
 
 ### Q2: cryptography比ctypes好多少？
 
-**A**: 
+**A**:
 - 使用OpenSSL的OPENSSL_cleanse，不会被编译器优化
 - 经过广泛安全审计
 - 提供更多安全特性（如内存锁定）

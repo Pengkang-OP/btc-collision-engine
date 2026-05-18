@@ -11,15 +11,12 @@ import secrets
 from abc import ABC, abstractmethod
 
 # 导入日志配置
-from ..utils import get_configured_logger, init_logging
+from ..utils import get_configured_logger
 from .base58 import Base58
 from .hash_utils import HashUtils
 from .secp256k1 import EllipticCurve, Secp256k1
 
-# 初始化日志系统（如果尚未初始化）
-init_logging()
-
-# 获取模块日志记录器
+# 日志系统由CLI/main.py入口统一初始化
 logger = get_configured_logger("AddressGenerator")
 
 
@@ -50,7 +47,7 @@ def secure_clear_bytearray(buffer: bytearray) -> None:
 
         >>> # 错误用法：bytes不可变
         >>> private_key = secrets.token_bytes(32)  # bytes类型
-        >>> # secure_clear_bytearray(private_key)  # 会失败！
+        >>> # secure_clear_bytearray(private_key) # 会失败！
 
     Raises:
         TypeError: 如果传入的不是bytearray类型
@@ -66,9 +63,6 @@ def secure_clear_bytearray(buffer: bytearray) -> None:
     except (TypeError, ValueError, OSError) as e:
         # 如果buffer已被释放或无法访问，静默失败
         # 记录调试信息（不泄露敏感数据）
-        import logging
-
-        logger = logging.getLogger(__name__)
         logger.debug(f"清零buffer失败: {type(e).__name__}")
 
 

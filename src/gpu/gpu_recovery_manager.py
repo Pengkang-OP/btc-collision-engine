@@ -5,7 +5,7 @@ GPU异常恢复管理器
 解决P1-2问题：GPU碰撞引擎异常恢复机制不完善。
 """
 
-# P3-5: 统一日志获取
+# 统一日志获取
 import concurrent.futures  # M3修复: 移到文件顶部
 import threading
 import time
@@ -125,6 +125,11 @@ class GPURecoveryManager:
 
         # H3修复: 健康检查超时配置
         self.health_check_timeout = 5.0  # 默认5秒超时
+
+        # 健康检查线程池复用：避免每次 _verify_gpu_health 都创建/销毁线程
+        self._health_check_executor = concurrent.futures.ThreadPoolExecutor(
+            max_workers=1, thread_name_prefix="gpu_health_check"
+        )
 
         logger.info("GPURecoveryManager已初始化")
 
@@ -327,20 +332,23 @@ class GPURecoveryManager:
 
         当GPU恢复正常后调用。
         """
+        # 先读取失败GPU数量（_failed_gpus_lock），再检查降级状态（_fallback_lock）
+        # 避免与 _check_fallback_threshold 中的锁顺序冲突导致死锁
+        with self._failed_gpus_lock:
+            should_recover = len(self._failed_gpus) < self.max_failed_gpus_before_fallback
+
+        if not should_recover:
+            return
+
         # 审查修复#1: 使用锁保护状态检查
         with self._fallback_lock:
             if not self._fallback_to_cpu:
                 return
 
-            # 检查是否满足恢复条件
-            with self._failed_gpus_lock:
-                should_recover = len(self._failed_gpus) < self.max_failed_gpus_before_fallback
-
-            if should_recover:
-                self._fallback_to_cpu = False
-                logger.info("✅ GPU引擎恢复到GPU模式")
-                # 保存回调引用
-                callback = self._recovery_callback
+            self._fallback_to_cpu = False
+            logger.info("✅ GPU引擎恢复到GPU模式")
+            # 保存回调引用
+            callback = self._recovery_callback
 
         # 调用恢复回调（在锁外）
         if should_recover and callback:
@@ -495,23 +503,22 @@ class GPURecoveryManager:
             try:
                 callback = self._recovery_callbacks[gpu_id]
 
-                # H3/H4修复: 使用线程池执行超时控制（M3: import已移到顶部）
-                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-                    future = executor.submit(callback, "health_check")
-                    try:
-                        result = future.result(timeout=timeout)
-                    except concurrent.futures.TimeoutError:
-                        # H4修复: 超时时尝试取消future
-                        cancelled = future.cancel()
-                        if cancelled:
-                            logger.warning(
-                                f"GPU {gpu_id} 健康检查超时（{timeout}秒），已取消未执行的任务"
-                            )
-                        else:
-                            logger.warning(
-                                f"GPU {gpu_id} 健康检查超时（{timeout}秒），任务已在运行，无法取消"
-                            )
-                        return False
+                # H3/H4修复: 使用实例级线程池复用，避免每次创建/销毁开销
+                future = self._health_check_executor.submit(callback, "health_check")
+                try:
+                    result = future.result(timeout=timeout)
+                except concurrent.futures.TimeoutError:
+                    # H4修复: 超时时尝试取消future
+                    cancelled = future.cancel()
+                    if cancelled:
+                        logger.warning(
+                            f"GPU {gpu_id} 健康检查超时（{timeout}秒），已取消未执行的任务"
+                        )
+                    else:
+                        logger.warning(
+                            f"GPU {gpu_id} 健康检查超时（{timeout}秒），任务已在运行，无法取消"
+                        )
+                    return False
 
                 # 检查结果
                 if result is None:
@@ -632,3 +639,16 @@ class GPURecoveryManager:
             logger.info(f"GPU {gpu_id} batch_size已重置为: {initial_batch_size}")
         else:
             logger.warning(f"GPU {gpu_id} 未注册回调，无法重置batch_size")
+
+    def cleanup(self) -> None:
+        """清理资源：关闭健康检查线程池
+
+        在 GPURecoveryManager 生命周期结束时调用，确保线程资源正确释放。
+        """
+        if hasattr(self, "_health_check_executor") and self._health_check_executor is not None:
+            try:
+                self._health_check_executor.shutdown(wait=True)
+                logger.debug("健康检查线程池已关闭")
+            except Exception as e:
+                logger.warning(f"关闭健康检查线程池时异常: {e}")
+            self._health_check_executor = None

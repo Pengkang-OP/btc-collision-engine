@@ -16,12 +16,11 @@ import time
 from enum import Enum
 from typing import Any
 
-import bech32
-
 from .base58 import Base58
 from .hash_utils import HashUtils
 from .secp256k1 import ECPoint, EllipticCurve, Secp256k1
 from .wif import WIF
+from ..utils.bech32_codec import bech32_decode  # 统一 bech32 验证
 
 
 class WIFEncoder:
@@ -297,7 +296,8 @@ class BitcoinKeyValidator:
 
         # 2. 计算公钥：P = k * G
         try:
-            public_key_point = self.curve.scalar_multiply(k, ECPoint(Secp256k1.Gx, Secp256k1.Gy))
+            # P0修复: 使用恒定时间标量乘法防御侧信道攻击
+            public_key_point = self.curve.scalar_multiply_const_time(k, ECPoint(Secp256k1.Gx, Secp256k1.Gy))
 
             # 3. 验证公钥不是无穷远点
             if public_key_point.is_infinity:
@@ -577,21 +577,19 @@ class BitcoinKeyValidator:
                     result.add_error(f"Bech32地址包含无效字符: '{c}'")
                     return result
 
-            # 使用bech32库进行完整验证
+            # 使用统一 bech32_codec 模块进行完整验证
             try:
-                decoded = bech32.bech32_decode(address)
-                if decoded is None or decoded[0] is None:
+                hrp, data, _ = bech32_decode(address)
+                if hrp is None:
                     result.add_error("Bech32地址解码失败（校验和无效或格式错误）")
                     return result
-
-                hrp, data = decoded
 
                 # 验证HRP
                 if hrp != "bc" and hrp != "tb":
                     result.add_error(f"Bech32地址HRP错误: 期望'bc'或'tb'，实际'{hrp}'")
 
                 # 验证数据长度
-                # P2WPKH: witness version 0 (5 bits) + 20-byte witness program (160 bits) = 33 bytes in 5-bit groups  # noqa: E501
+                # P2WPKH: witness version 0 (5 bits) + 20-byte witness program (160 bits) = 33 bytes in 5-bit groups # noqa: E501
                 # P2WSH: witness version 0 (5 bits) + 32-byte witness program (256 bits) =
                 # 53 bytes in 5-bit groups
                 data_length = len(data)

@@ -320,7 +320,7 @@ class DocumentQualityChecker:
                     Severity.WARNING,
                     str(file_path),
                     1,
-                    "建议添加版本信息 (例如: **版本**: v1.2.0)"
+                    "建议添加版本信息 (例如: **版本**: v4.2.2)"
                 ))
 
     def check_links(self, file_path: Path, content: str, lines: List[str]):

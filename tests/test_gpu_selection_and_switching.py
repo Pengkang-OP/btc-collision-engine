@@ -463,7 +463,7 @@ class TestGPUDeviceScoring(unittest.TestCase):
         best = self.selector.select_best_device(devices)
 
         self.assertIsNotNone(best)
-        # P3-11: Intel Arc A770仍然分数最高 (171.54 > 163.02 > 113.4)
+        # Intel Arc A770仍然分数最高 (171.54 > 163.02 > 113.4)
         self.assertIn("Arc A770", best["name"])
 
         print(f"  ✅ 最佳GPU选择: {best['name']} (评分: {best['score']:.1f})")

@@ -120,7 +120,7 @@ def calculate_optimal_batch_size(
 
     示例:
         >>> from src.utils.gpu_memory_utils import calculate_optimal_batch_size
-        >>> # device = GPUDevice()  # 已初始化的GPU设备
+        >>> # device = GPUDevice() # 已初始化的GPU设备
         >>> # device.initialize(0)
         >>> # batch_size = calculate_optimal_batch_size(device)
         >>> # print(batch_size)

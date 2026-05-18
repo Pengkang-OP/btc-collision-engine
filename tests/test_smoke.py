@@ -159,7 +159,7 @@ class TestLoggingSmoke:
     """日志系统冒烟测试"""
 
     def test_log_storage_save_query(self):
-        from src.logging.log_storage import LogStorage
+        from src.log_engine.log_storage import LogStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
             s = LogStorage(storage_dir=tmpdir)
@@ -169,8 +169,8 @@ class TestLoggingSmoke:
             assert recent[0]["message"] == "smoke_test_message"
 
     def test_log_processor_format(self):
-        from src.logging.log_processor import LogProcessor
-        from src.logging.events import LogEvent, LogEventType
+        from src.log_engine.log_processor import LogProcessor
+        from src.log_engine.events import LogEvent, LogEventType
 
         processor = LogProcessor()
         event = LogEvent(LogEventType.STATUS_UPDATE, {"message": "smoke test"})
@@ -306,7 +306,7 @@ class TestArgParserModuleCoverage:
             importlib.import_module("src.cli.arg_parser")
 
     def test_version_import_fallback(self):
-        """from src import __version__ 失败时回退到 '3.1.2' (L22-23)。"""
+        """from src import __version__ 失败时回退到 '4.4.0' (L22-23)。"""
         import builtins
         import importlib
         import sys
@@ -326,7 +326,7 @@ class TestArgParserModuleCoverage:
         try:
             with patch("builtins.__import__", side_effect=mock_import):
                 mod = importlib.import_module("src.cli.arg_parser")
-                assert mod._VERSION == "3.1.2"
+                assert mod._VERSION == "4.4.0"
         finally:
             sys.modules.pop("src.cli.arg_parser", None)
             importlib.import_module("src.cli.arg_parser")
@@ -340,7 +340,7 @@ def test_smoke_all_modules_importable():
         "src.collision",
         "src.config",
         "src.cli",
-        "src.logging",
+        "src.log_engine",
         "src.monitoring",
         "src.utils",
         "src.i18n",

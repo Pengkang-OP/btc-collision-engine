@@ -1,16 +1,15 @@
 """匹配数据存储 - 安全可靠"""
 
-import json
 import os
 import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from ..utils import get_configured_logger, init_logging
+from ..utils import get_configured_logger
+from ..utils.fast_json import fast_dump, fast_loads
 
-# 初始化日志系统
-init_logging()
+# 日志系统由CLI/main.py入口统一初始化
 logger = get_configured_logger("MatchDataStorage")
 
 
@@ -93,7 +92,7 @@ class MatchDataStorage:
         try:
             # 写入临时文件
             with open(temp_file, "w", encoding="utf-8") as f:
-                json.dump(complete_data, f, indent=2, ensure_ascii=False)
+                fast_dump(complete_data, f, indent=2, ensure_ascii=False)
 
             # 设置文件权限（仅所有者可读写）
             os.chmod(temp_file, 0o600)
@@ -185,7 +184,7 @@ class MatchDataStorage:
 
         try:
             with open(backup_path, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
+                fast_dump(data, f, indent=2, ensure_ascii=False)
 
             os.chmod(backup_path, 0o600)
 
@@ -221,7 +220,7 @@ class MatchDataStorage:
         """
         try:
             with open(filepath, encoding="utf-8") as f:
-                return json.load(f)
+                return fast_loads(f.read())
         except Exception as e:
             logger.error("加载匹配数据失败 %s: %s", filepath, str(e))
             return None

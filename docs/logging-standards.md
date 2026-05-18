@@ -1,8 +1,7 @@
 # 日志记录标准规范
 
-> **版本**: v3.3.1 | **最后更新**: 2026-04-28  
+> **版本**: v4.2.2 | **最后更新**: 2026-05-15
 > **面向**: 开发者
-
 
 本文档定义BTC碰撞引擎项目的统一日志记录标准，包括日志格式、级别使用规范、性能监控和采样策略。
 
@@ -27,6 +26,7 @@
 ```
 
 **示例输出**:
+
 ```python
 2026-04-20 23:10:15,234 - src.collision.key_collision_engine - INFO - GPU引擎初始化成功: RTX 3080
 ```
@@ -67,12 +67,14 @@
 **用途**: 详细的调试信息，仅在开发时启用
 
 **使用场景**:
+
 - ✅ 函数入口/出口追踪
 - ✅ 变量值和状态变化
 - ✅ 算法中间结果
 - ✅ 配置加载细节
 
 **示例**:
+
 ```python
 logger.debug(f"加载配置文件: {config_file}")
 logger.debug(f"batch_size={batch_size}, device_index={device_index}")
@@ -213,7 +215,9 @@ with PerformanceMonitor(logger, "GPU内核编译", level="INFO"):
 
 **输出示例**:
 ```
+
 2026-04-20 23:10:15,234 - src.collision.gpu_collision_engine - INFO - [Performance] GPU内核编译: 215.34ms
+
 ```markdown
 
 ### 3.2 性能监控场景
@@ -251,8 +255,10 @@ finally:
 ## 3.4 性能日志格式
 
 ```
+
 [Performance] {operation_name}: {elapsed_ms:.2f}ms
 [Performance] {operation_name}: FAILED after {elapsed_ms:.2f}ms - {error}
+
 ```python
 
 ---
@@ -278,7 +284,9 @@ for i in range(1000000):
 
 **输出示例**:
 ```
+
 2026-04-20 23:10:15,234 - KeyCollisionEngine.sampled - INFO - [Sampled 1/1000] 进度: 1,000,000 已检查, 1,200,000 次/秒
+
 ```markdown
 
 ## 4.2 采样率推荐
@@ -295,13 +303,13 @@ for i in range(1000000):
 ```python
 class SampledLogger:
     """采样日志记录器（用于高频操作）"""
-    
+
     def __init__(self, logger: logging.Logger, sample_rate: int = 100):
         self.logger = logger
         self.sample_rate = sample_rate
         self._counter = 0
         self._lock = threading.Lock()
-    
+
     def info(self, msg: str, *args, **kwargs):
         with self._lock:
             self._counter += 1
@@ -598,6 +606,7 @@ except Exception as e:
 ## 附录B: 日志级别选择流程图
 
 ```
+
 开始
   ↓
 需要记录堆栈跟踪？
@@ -618,10 +627,11 @@ except Exception as e:
 是否是调试信息？
   ├─ 是 → logger.debug()
   └─ 否 → 不需要记录
+
 ```
 
 ---
 
-**文档版本**: v1.0  
-**最后更新**: 2026-04-20  
+**文档版本**: v4.2.2
+**最后更新**: 2026-04-20
 **维护者**: BTC碰撞引擎开发团队

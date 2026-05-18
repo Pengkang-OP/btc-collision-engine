@@ -437,7 +437,7 @@ class AmdArchDetector:
                 "recommended_driver": "Adrenalin 22.x",
             },
         ),
-        # GCN 1.0/2.0 (2012-2014) - HD 7xxx / R9 2xx/3xx
+        # GCN 1.0/2.0 (2012-2014) - HD 7xxx / 2xx/3xx
         # 来源：amd.com GCN1 建筑师介绍
         (
             [
@@ -632,7 +632,7 @@ class AmdMemoryOptimizer:
             {
                 'memory_ratio': float,          # 显存使用比例
                 'global_mem_gb': float,         # 显存大小（GB）
-                'memory_type': str,             # 'HBM' / 'HBM2' / 'HBM2e' / 'HBM3' / 'GDDR6' / 'GDDR5' / 'Unknown'  # noqa: E501
+                'memory_type': str,             # 'HBM' / 'HBM2' / 'HBM2e' / 'HBM3' / 'GDDR6' / 'GDDR5' / 'Unknown' # noqa: E501
                 'infinity_cache_hint': bool,    # 是否建议利用 Infinity Cache
                 'infinity_cache_bonus': float,  # Infinity Cache 提升的 ratio 附加值
             }

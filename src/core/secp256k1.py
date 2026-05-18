@@ -15,6 +15,8 @@
 ✅ 生产环境请使用 crypto_backend.py 中的优化后端
 """
 
+import os
+import threading
 import warnings
 from typing import Any, cast
 
@@ -661,3 +663,98 @@ class EllipticCurve:
         本方法作为显式 API 供 crypto_backend 调用。
         """
         return self.generate_public_key(private_key, compressed)
+
+
+_PRODUCTION_WARNING_ISSUED = False
+_production_warning_lock = threading.Lock()
+
+
+def _issue_production_warning() -> None:
+    """
+    发出生产环境使用警告
+
+    在首次导入或首次使用时发出警告，提醒用户此模块不应用于生产环境。
+    警告仅发出一次，避免日志污染。
+
+    环境变量抑制:
+        设置 BTC_COLLISION_RAW_SECP256K1_OK=1 可抑制此警告。
+        适用于 PurePython 是唯一可用后端的场景（用户知情选择）。
+    """
+    global _PRODUCTION_WARNING_ISSUED
+    with _production_warning_lock:
+        if _PRODUCTION_WARNING_ISSUED:
+            return
+        _PRODUCTION_WARNING_ISSUED = True
+
+    # 检查用户是否通过环境变量明确抑制警告
+    if os.environ.get("BTC_COLLISION_RAW_SECP256K1_OK") == "1":
+        return
+
+    warnings.warn(
+        "\n"
+        "=" * 70 + "\n"
+        "⚠️  secp256k1.py 生产环境警告 ⚠️\n"
+        "=" * 70 + "\n"
+        "本模块是教学参考实现，不应用于生产环境：\n"
+        "  • 性能比 coincurve/OpenSSL 慢 100-1000 倍\n"
+        "  • Python 层面无法保证真正的恒定时间执行\n"
+        "  • 缺乏针对侧信道攻击的完整防护\n\n"
+        "✅ 生产环境请使用 crypto_backend.py 中的优化后端:\n"
+        "   from src.core.crypto_backend import CryptoBackend\n"
+        "   backend = CryptoBackend.get_backend()  # 自动选择最优后端\n"
+        "\n"
+        "💡 如已安装优化后端但未生效，检查 pip list | grep coincurve\n"
+        "   如确实需要使用纯Python实现，可设置环境变量:\n"
+        "   BTC_COLLISION_RAW_SECP256K1_OK=1\n"
+        "=" * 70,
+        UserWarning,
+        stacklevel=3,
+    )
+
+
+def check_production_environment() -> bool:
+    """
+    检测是否在生产环境使用此模块
+
+    通过检查调用栈判断是否从生产代码路径调用。
+    如果检测到生产环境使用，发出警告。
+
+    Returns:
+        True 如果检测到可能的生产环境使用
+    """
+    import inspect
+
+    frame = inspect.currentframe()
+    try:
+        caller_frames = []
+        current = frame
+        while current:
+            caller_frames.append(current)
+            current = current.f_back
+
+        production_indicators = [
+            "engine_runner",
+            "gpu_collision_engine",
+            "cpu_collision_engine",
+            "collision_engine",
+        ]
+
+        for f in caller_frames:
+            frame_name = f.f_code.co_filename.lower()
+            frame_func = f.f_code.co_name
+            # 检查文件名子串匹配
+            for indicator in production_indicators:
+                if indicator in frame_name:
+                    _issue_production_warning()
+                    return True
+            # __main__ 精确匹配（仅模块名恰好为 __main__，即直接运行的脚本）
+            if frame_func == "__main__":
+                _issue_production_warning()
+                return True
+        return False
+    finally:
+        del frame
+
+
+# H2修复: 模块加载时执行一次性生产环境检查（原实现每次EllipticCurve.__init__都遍历调用栈）
+check_production_environment()

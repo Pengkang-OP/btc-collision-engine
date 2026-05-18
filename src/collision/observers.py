@@ -3,6 +3,7 @@
 定义观察者接口，用于解耦碰撞引擎与监控系统、日志系统等。
 """
 
+import hashlib
 import logging
 from abc import ABC, abstractmethod
 from typing import Any
@@ -132,8 +133,12 @@ class LoggingObserver(BaseCollisionObserver):
             )
 
     def on_match(self, private_key: bytes, address: str, wif: str) -> None:
-        """记录匹配日志"""
-        self.logger.warning(f"🎉 找到匹配! 地址={address}, 私钥(WIF)={wif[:10]}...")
+        """记录匹配日志（安全：仅输出地址和密钥哈希，不泄露私钥）"""
+        key_hash = hashlib.sha256(private_key).hexdigest()[:16]
+        self.logger.info(
+            "匹配发现: address=%s, key_hash=KEY_HASH:%s",
+            address, key_hash
+        )
 
     def on_complete(self, stats: CollisionStats) -> None:
         """记录完成日志"""

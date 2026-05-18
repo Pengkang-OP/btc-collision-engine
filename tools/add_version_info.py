@@ -6,7 +6,7 @@
 为缺少版本信息的文档添加标准版本标识
 
 使用方法:
-    python tools/add_version_info.py [--dry-run] [--version v1.2.0]
+    python tools/add_version_info.py [--dry-run] [--version v4.2.2]
 """
 
 import re
@@ -98,8 +98,8 @@ def main():
     )
     parser.add_argument(
         '--version',
-        default='v1.2.0',
-        help='版本号 (默认: v1.2.0)'
+        default='v4.2.3',
+        help='版本号 (默认: v4.2.3)'
     )
     parser.add_argument(
         '--docs-dir',

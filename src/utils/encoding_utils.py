@@ -13,11 +13,10 @@ from typing import Any
 import chardet
 
 # 直接从具体模块导入，避免循环导入
-from .logging_config import get_configured_logger, init_logging
+from .logging_config import get_configured_logger
 from .platform_utils import PlatformUtils
 
-# 初始化日志系统
-init_logging()
+# 日志系统由CLI/main.py入口统一初始化
 logger = get_configured_logger("EncodingUtils")
 
 

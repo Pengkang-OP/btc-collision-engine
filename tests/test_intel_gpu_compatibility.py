@@ -421,7 +421,7 @@ class TestIntelIntegration:
         }
 
         # 应用优化
-        # vendor.apply_optimizations(device, profile)  # 需要真实设备对象
+        # vendor.apply_optimizations(device, profile) # 需要真实设备对象
 
         # 计算 batch_size
         batch_size = vendor.calculate_batch_size(device, profile)

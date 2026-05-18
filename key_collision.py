@@ -9,7 +9,7 @@
 可选依赖coincurve库以提升性能。
 
 作者: BTC Project
-版本: v4.2.1
+版本: v4.2.3
 """
 
 import os
@@ -78,7 +78,7 @@ except ImportError:
 # =============================================================================
 # TargetResolver 类 - 目标地址解析器
 # =============================================================================
-# v4.3.1: 优先使用 src/ 统一实现，回退到本地兼容实现
+# v4.2.3: 优先使用 src/ 统一实现，回退到本地兼容实现
 # 解决两套代码独立演进导致的功能不一致问题
 _TARGET_RESOLVER_SRC = None
 
@@ -93,7 +93,7 @@ except ImportError:
 class TargetResolver:
     """解析多种格式的目标，统一转换为 P2PKH 地址集合
 
-    v4.3.1: 内部委托给 src.collision.TargetResolver 统一实现。
+    v4.2.3: 内部委托给 src.collision.TargetResolver 统一实现。
     当 src/ 模块不可用时，使用本地兼容实现。
     """
 
@@ -114,7 +114,7 @@ class TargetResolver:
 
     @staticmethod
     def analyze_target_formats(targets: set[str]) -> dict[str, int]:
-        """v4.3.1: 分析目标地址格式分布"""
+        """v4.2.3: 分析目标地址格式分布"""
         if _TARGET_RESOLVER_SRC is not None:
             return _TARGET_RESOLVER_SRC.analyze_target_formats(targets)
         return _LegacyTargetResolver._analyze_formats(targets)
@@ -139,7 +139,7 @@ class TargetResolver:
 
 
 class _LegacyTargetResolver:
-    """v4.3.1: 旧版 TargetResolver 逻辑保留作为 src/ 模块不可用时的回退"""
+    """v4.2.3: 旧版 TargetResolver 逻辑保留作为 src/ 模块不可用时的回退"""
 
     @staticmethod
     def _detect_format(input_str: str) -> str:
@@ -256,7 +256,7 @@ class CollisionStats:
         self.start_time: float = 0.0      # 开始时间戳
         self.matches: List[Dict] = []     # 匹配结果列表
         self._progress_percent: float = 0.0  # 进度百分比(范围扫描模式)
-        # 每个match: {"private_key_hex": str, "private_key_wif": str, "address": str, "timestamp": float}
+        # 每个match: {"private_key_hash": str, "address": str, "timestamp": float}
 
     def update(self, checked_count: int):
         """更新统计数据"""
@@ -265,11 +265,10 @@ class CollisionStats:
         self.speed = self.total_checked / self.elapsed if self.elapsed > 0 else 0
 
     def add_match(self, private_key: bytes, address: str):
-        """记录一个匹配结果"""
-        wif = WIF.encode(private_key, compressed=True)
+        """记录一个匹配结果（安全：仅存储私钥哈希，不存储明文私钥）"""
+        private_key_hash = hashlib.sha256(private_key).hexdigest()
         match_info = {
-            "private_key_hex": private_key.hex(),
-            "private_key_wif": wif,
+            "private_key_hash": private_key_hash,
             "address": address,
             "timestamp": time.time()
         }
@@ -870,9 +869,22 @@ else:
 # CollisionCLI 类 - CLI 交互界面
 # =============================================================================
 class CollisionCLI:
-    """对撞工具命令行界面"""
+    """对撞工具命令行界面
+
+    .. deprecated:: v4.2.3
+        此 CLI 已被 src/cli/main.py (key_collision_cli.py) + start_menu.py 完全替代。
+        请使用 `python key_collision_cli.py --help` 或 `python start_menu.py` 启动。
+        直接运行 `python key_collision.py` 仍可使用,但不会获得新功能和修复。
+    """
 
     def __init__(self):
+        import warnings
+
+        warnings.warn(
+            "CollisionCLI 已弃用，请使用 key_collision_cli.py 或 start_menu.py",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self.printer = ColorPrinter()
         self.resolver = TargetResolver()
         self.engine: Optional[KeyCollisionEngine] = None
@@ -968,22 +980,43 @@ class CollisionCLI:
         print(progress_line, end='', flush=True)
 
     def on_match(self, private_key: bytes, address: str, wif: str):
-        """匹配回调 - 高亮显示匹配结果"""
+        """匹配回调 - 高亮显示匹配结果
+
+        安全说明:
+        - 仅交互式终端 (TTY) 显示完整私钥
+        - 非交互环境通过 logging 输出脱敏版本
+        - 始终记录脱敏审计日志
+        """
         p = self.printer
-        print(f"\n\n{p.BG_GREEN}{p.BLACK}{'='*70}{p.RESET}")
-        p.print_success("🎉 找到匹配！")
-        print(f"{p.BG_GREEN}{p.BLACK}{'='*70}{p.RESET}\n")
+        logger = logging.getLogger(__name__)
+        key_hash = hashlib.sha256(private_key).hexdigest()[:16]
 
-        p.print_label("匹配地址")
-        p.print_address(f"  {address}")
+        # 始终记录脱敏审计日志
+        logger.info(
+            "匹配发现: address=%s private_key_hash=%s",
+            address, f"KEY_HASH:{key_hash}"
+        )
 
-        p.print_label("私钥 (Hex)")
-        p.print_private_key(f"  {private_key.hex()}")
+        # 交互式终端：显示完整私钥（带安全警告）
+        if sys.stdout.isatty():
+            print(f"\n\n{p.BG_GREEN}{p.BLACK}{'='*70}{p.RESET}")
+            p.print_success("🎉 找到匹配！")
+            print(f"{p.BG_GREEN}{p.BLACK}{'='*70}{p.RESET}\n")
 
-        p.print_label("私钥 (WIF)")
-        p.print_private_key(f"  {wif}")
+            p.print_label("匹配地址")
+            p.print_address(f"  {address}")
 
-        print(f"\n{p.BG_GREEN}{p.BLACK}{'='*70}{p.RESET}\n")
+            p.print_label("私钥 (Hex)")
+            p.print_private_key(f"  {private_key.hex()}")
+
+            p.print_label("私钥 (WIF)")
+            p.print_private_key(f"  {wif}")
+
+            print(f"\n{p.BRIGHT_RED}⚠ 安全警告: 请勿分享、截图或在网络上传输以上私钥信息！{p.RESET}")
+            print(f"{p.BG_GREEN}{p.BLACK}{'='*70}{p.RESET}\n")
+        else:
+            # 非交互环境：仅输出脱敏信息
+            print(f"\n[MATCH] address={address} private_key_hash=KEY_HASH:{key_hash}\n")
 
     def run_random_mode(self):
         """运行随机碰撞模式"""
@@ -1249,6 +1282,19 @@ logging.basicConfig(
     datefmt='%H:%M:%S'
 )
 
+# 安装日志安全过滤器（防止私钥泄露到日志文件）
+try:
+    from src.utils.logging_config import _setup_security_filter
+    _setup_security_filter()
+except Exception:
+    pass  # 安全过滤器初始化失败不阻止运行
+
 if __name__ == "__main__":
+    import warnings
+
+    warnings.warn(
+        "直接运行 key_collision.py 已弃用，请使用 key_collision_cli.py 或 start_menu.py",
+        DeprecationWarning,
+    )
     cli = CollisionCLI()
     cli.run()

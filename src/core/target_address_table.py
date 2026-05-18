@@ -5,13 +5,12 @@ import threading
 from datetime import datetime
 from pathlib import Path
 
-from ..utils import get_configured_logger, init_logging
+from ..utils import get_configured_logger
 from .hash_utils import HashUtils
 from .optimized_address_generator import OptimizedP2PKHAddressGenerator
 from .wif import WIF
 
-# 初始化日志系统
-init_logging()
+# 日志系统由CLI/main.py入口统一初始化
 logger = get_configured_logger("BitcoinTargetTable")
 
 

@@ -58,7 +58,7 @@ class SafeRotatingFileHandler(RotatingFileHandler):
         )
 
 
-# 导入安全过滤器（P0-2修复）
+# 导入安全过滤器（敏感信息遮蔽）
 from .security_log_filter import SecurityLogFilter  # noqa: E402
 
 # 幂等守卫：防止多次 import 重复执行安全过滤器初始化
@@ -347,12 +347,12 @@ def init_logging(config: dict[str, Any] | None = None) -> None:
     """
     logging_config.init(config)
 
-    # 启用日志安全过滤器（P0-2修复）
+    # 启用日志安全过滤器（敏感信息遮蔽）
     _setup_security_filter()
 
 
 def _setup_security_filter() -> None:
-    """设置日志安全过滤器（P0-2修复）
+    """设置日志安全过滤器（敏感信息遮蔽）
 
     自动检测并屏蔽日志中的敏感信息：
     - 比特币私钥（64位十六进制）
@@ -374,8 +374,8 @@ def _setup_security_filter() -> None:
         root_logger = logging.getLogger()
         root_logger.addFilter(security_filter)
 
-        # 添加到主要模块日志记录器（处理私钥/敏感数据的模块）
-        module_loggers = [
+        # 显式覆盖关键模块 logger（确保即使配置了 propagate=False 也能被保护）
+        critical_module_loggers = [
             # 碰撞引擎（核心私钥处理）
             "KeyCollisionEngine",
             "MultiGPUEngine",
@@ -399,12 +399,33 @@ def _setup_security_filter() -> None:
             "GPUEngineMonitor",
         ]
 
-        for logger_name in module_loggers:
+        # 追踪已添加过滤器的 logger，避免重复
+        _processed_loggers = set()
+        _processed_loggers.add(None)  # root logger 已处理
+
+        # 为显式列表中的模块添加过滤器
+        for logger_name in critical_module_loggers:
             logger = logging.getLogger(logger_name)
-            logger.addFilter(security_filter)
+            if id(logger) not in _processed_loggers:
+                logger.addFilter(security_filter)
+                _processed_loggers.add(id(logger))
+
+        # 自动发现并保护所有已注册的 logger（覆盖显式列表之外的新模块）
+        auto_discovered = 0
+        for _logger_name, logger_ref in logging.Logger.manager.loggerDict.items():
+            if isinstance(logger_ref, logging.Logger):
+                if id(logger_ref) not in _processed_loggers:
+                    logger_ref.addFilter(security_filter)
+                    _processed_loggers.add(id(logger_ref))
+                    auto_discovered += 1
 
         # 注意：这里不使用logging.info，因为日志系统可能还未完全初始化
-        print("[INFO] 日志安全过滤器已启用（防止私钥泄露）")
+        print(
+            f"[INFO] 日志安全过滤器已启用 "
+            f"(显式: {len(critical_module_loggers)}, "
+            f"自动发现: {auto_discovered}, "
+            f"总计: {len(_processed_loggers) - 1})"
+        )
         _security_filter_initialized = True
 
     except Exception as e:

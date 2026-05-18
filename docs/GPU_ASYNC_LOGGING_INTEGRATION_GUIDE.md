@@ -1,7 +1,7 @@
 # GPU引擎异步日志集成指南
 
-**创建日期**: 2026-04-23  
-**版本**: v2.2.1  
+**创建日期**: 2026-04-23
+**版本**: v4.2.2
 
 ---
 
@@ -48,12 +48,12 @@ from ..utils.logger import AsyncFileHandler
 class GPUCollisionEngine:
     def __init__(self, ...):
         # ... 现有代码 ...
-        
-        # v2.2.1: 添加异步日志支持
+
+        # v4.2.1: 添加异步日志支持
         self._async_log_handler = None
         if self.config.get('use_async_logging', False):
             self._setup_async_logging()
-    
+
     def _setup_async_logging(self):
         """设置异步日志处理器"""
         try:
@@ -64,18 +64,18 @@ class GPUCollisionEngine:
                 backup_count=5
             )
             self._async_log_handler.setLevel(logging.DEBUG)
-            
+
             # 添加到GPU引擎logger
             logger.addHandler(self._async_log_handler)
-            
+
             logger.info("GPU异步日志已启用")
         except Exception as e:
             logger.warning(f"异步日志启用失败: {e}，使用同步日志")
-    
+
     def cleanup(self):
         """清理GPU资源"""
         # ... 现有清理代码 ...
-        
+
         # 关闭异步日志
         if self._async_log_handler:
             self._async_log_handler.close()
@@ -143,7 +143,7 @@ class GPUCollisionEngine:
         )
         logger.addHandler(async_handler)
         self._async_handler = async_handler
-    
+
     def cleanup(self):
         # 关闭异步处理器
         if hasattr(self, '_async_handler'):
@@ -190,7 +190,7 @@ def check_async_log_health(engine):
         print(f"  队列大小: {stats['queue_size']}")
         print(f"  丢弃数量: {stats['dropped_count']}")
         print(f"  运行状态: {'正常' if stats['is_running'] else '已停止'}")
-        
+
         # 告警阈值
         if stats['queue_size'] > 5000:
             logger.warning("异步日志队列积压严重")
@@ -206,7 +206,7 @@ def _check_async_log_fallback(self):
     """检查是否需要降级到同步日志"""
     if self._async_log_handler:
         stats = self._async_log_handler.get_stats()
-        
+
         # 如果丢弃率超过10%，降级
         if stats['dropped_count'] > 1000:
             logger.warning("异步日志丢弃过多，降级到同步日志")
@@ -270,41 +270,41 @@ class TestGPUAsyncLogging(unittest.TestCase):
             targets={"test_address"},
             use_async_logging=True
         )
-        
+
         # 验证异步处理器已添加
         self.assertIsNotNone(engine._async_log_handler)
-        
+
         # 记录日志
         logger.info("测试异步日志")
-        
+
         # 检查统计
         stats = engine._async_log_handler.get_stats()
         self.assertTrue(stats['is_running'])
-        
+
         # 清理
         engine.cleanup()
-        
+
     def test_async_log_performance(self):
         """测试异步日志性能"""
         import time
-        
+
         # 同步日志基准
         start = time.time()
         for i in range(1000):
             logger.info(f"Sync log {i}")
         sync_time = time.time() - start
-        
+
         # 异步日志测试
         async_handler = AsyncFileHandler('logs/test_async.log')
         logger.addHandler(async_handler)
-        
+
         start = time.time()
         for i in range(1000):
             logger.info(f"Async log {i}")
         async_time = time.time() - start
-        
+
         async_handler.close()
-        
+
         # 异步应该更快
         self.assertLess(async_time, sync_time)
 ```
@@ -397,6 +397,12 @@ finally:
 
 ---
 
-**文档版本**: 1.0  
-**最后更新**: 2026-04-23  
+**文档版本**: 1.0
+**最后更新**: 2026-04-23
 **维护人员**: BTC Collision Team
+
+---
+
+## 相关文档
+
+- 详细使用示例已归档至 `docs/archive/history/GPU_ASYNC_LOGGING_USAGE_EXAMPLES.md`

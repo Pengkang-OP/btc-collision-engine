@@ -3,7 +3,7 @@
 比特币私钥碰撞引擎，支持CPU和GPU加速，用于学习和研究比特币地址碰撞。
 
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
-[![Version](https://img.shields.io/badge/Version-3.5.1--Phase6-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-4.4.0-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Contributions](https://img.shields.io/badge/Contributions-Welcome-orange.svg)](CONTRIBUTING.md)
 
@@ -25,10 +25,16 @@
   - 批量并行计算
   - 异步流水线优化
   - 自动内存优化
+- ✅ **多格式地址智能匹配** (v4.3.0 新增)
+  - 自动检测目标地址格式
+  - 按需生成对应格式地址
+  - P2PKH只匹配P2PKH目标，Bech32只匹配Bech32目标
+  - 支持完整检查所有格式
 - ✅ 多地址类型支持
   - P2PKH地址（1开头）
   - P2SH地址（3开头）
-  - Bech32地址（bc1开头，SegWit）
+  - Bech32地址（bc1q开头，SegWit v0）
+  - Taproot地址（bc1p开头，SegWit v1）
   - WIF私钥、公钥、Hash160
 - ✅ 断点续传
   - 自动保存进度
@@ -53,8 +59,37 @@
   - Shim 层 100% 向后兼容，29 个专项测试全部通过
   - 新增 search_mode_coordinator / data_logger_adapter 等 5 个子模块
 
+> 📢 **v4.4.0 安全修复**: 新增多项安全修复（C-1/C-2/H-4/C-3/H-2/H-5/M-3），包括安全清零实现、OpenSSL后端安全要求、敏感数据脱敏、线程安全统计、析构函数异常处理、批量回调超时控制、配置值边界验证。详见 [SECURITY_IMPROVEMENTS](docs/SECURITY_IMPROVEMENTS.md)。
+> 📢 **v4.3.0 多格式地址支持**: 新增格式感知目标管理器，支持P2PKH/P2SH/Bech32/Taproot格式智能匹配，按需生成地址提升性能。
 > 📢 **v3.5.1 Phase 6**: GPU 引擎架构重构完成（引擎行数 -73%, 导入模块 -70%）, 29 项专项测试全通过, 测试交叉污染修复, data_logs 归档清理。详见 [CHANGELOG](CHANGELOG.md)。
 > 📢 **v3.5.0 类型系统工程化**: 全模块类型提示补全 (104 文件)、配置热重载、多渠道告警系统、地址生成器架构去重、GPU 评分统一、内存池自适应调优、序列化优化。详见 [v3.5.0 发布说明](docs/RELEASE_NOTES_v3.5.0.md)。
+
+### 安全特性 (v4.4.0)
+
+- ✅ **安全清零实现** (C-1)
+  - 使用 `ctypes.memset` 直接清零内存，防止编译器优化导致清零被跳过
+  - 添加清零验证步骤，确保内存被正确清零
+  - 失败时抛出 `SecureMemoryError` 异常
+
+- ✅ **侧信道安全** (C-2)
+  - OpenSSL 后端不可用时拒绝回退到非恒定时间实现
+  - `scalar_multiply()` 抛出异常而不是静默回退
+  - 确保密码学操作符合安全要求
+
+- ✅ **敏感数据脱敏** (H-4)
+  - 使用 `SensitiveDataFilter` 对错误消息进行敏感数据过滤
+  - 保留异常类型用于诊断，隐藏私钥等敏感信息
+  - 避免敏感数据泄露到日志文件
+
+- ✅ **线程安全统计** (C-3)
+  - 使用 `threading.Lock` 保护类级别统计变量
+  - 确保清零统计的原子更新
+  - 解决多线程并发访问时的竞态条件
+
+- ✅ **配置值边界验证** (M-3)
+  - 验证 `worker_join_timeout`、`workload_monitor_interval`、`total_pool_mb` 等参数
+  - 超出范围时自动使用默认值并记录警告
+  - 避免无效配置导致的问题
 
 ## 快速开始
 
@@ -289,6 +324,54 @@ python -m src.utils.data_cleanup --temp-days 14 --data-days 60
 ```
 
 ## 使用方法
+
+### 多格式地址匹配 (v4.3.0 新增)
+
+```python
+from src.collision.targets.format_aware_manager import FormatAwareTargetManager
+from src.core.multi_format_generator import MultiFormatAddressGenerator, AddressFormat
+
+# 初始化格式感知管理器
+manager = FormatAwareTargetManager()
+
+# 添加多种格式的目标地址（自动检测格式）
+manager.add_target("1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH")  # P2PKH
+manager.add_target("3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy")  # P2SH
+manager.add_target("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4")  # Bech32
+manager.add_target("bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0")  # Taproot
+
+# 查看格式统计
+print(manager.get_format_stats())
+# 输出: {'p2pkh': 1, 'p2sh': 1, 'bech32': 1, 'taproot': 1}
+
+# 方式1: 快速匹配（找到第一个匹配就返回）
+is_match, matched_addr, matched_fmt = manager.check_match(private_key)
+if is_match:
+    print(f"找到匹配! {matched_fmt}: {matched_addr}")
+
+# 方式2: 完整检查所有格式（推荐）
+is_match_all, matches = manager.check_match_all(private_key)
+if is_match_all:
+    for addr, fmt in matches:
+        print(f"找到匹配! {fmt}: {addr}")
+```
+
+### 多格式地址生成
+
+```python
+from src.core.multi_format_generator import MultiFormatAddressGenerator, AddressFormat
+
+generator = MultiFormatAddressGenerator()
+
+# 生成特定格式地址
+p2pkh_addr = generator.generate_address(private_key, AddressFormat.P2PKH)
+bech32_addr = generator.generate_address(private_key, AddressFormat.BECH32)
+
+# 生成所有格式地址
+addresses = generator.generate_all_formats(private_key)
+print(f"P2PKH: {addresses['p2pkh']}")
+print(f"Bech32: {addresses['bech32']}")
+```
 
 ### 命令行使用
 
@@ -642,6 +725,8 @@ python test_checkpoint_resume.py
 - 不要用于非法用途
 - 碰撞真实地址的概率极低（2^-256）
 - 发现的私钥应立即安全处理
+
+> 📚 **v4.4.0 安全改进**: 本版本包含多项安全修复，详见 [安全改进文档](docs/SECURITY_IMPROVEMENTS.md)。
 
 ## 技术架构
 

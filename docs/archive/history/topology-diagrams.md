@@ -1,7 +1,7 @@
 # BTC碰撞引擎拓扑图文档
 
-> **版本**: v3.3.2 | **最后更新**: 2026-04-29  
-> **面向**: 开发者/架构师  
+> **版本**: v4.2.1 | **最后更新**: 2026-05-12
+> **面向**: 开发者/架构师
 > **更新说明**: 根据实际代码验证结果，修正目标地址数据流描述（存储P2PKH地址字符串而非Hash160）
 
 ## 目录
@@ -30,13 +30,13 @@ graph TB
         CLI["命令行界面<br/>key_collision_cli.py"]
         GUI["图形界面<br/>key_collision_gui.py"]
     end
-    
+
     subgraph Engine_Layer["碰撞引擎层"]
         CPUEngine["CPU碰撞引擎<br/>KeyCollisionEngine"]
         GPUEngine["GPU碰撞引擎<br/>GPUCollisionEngine"]
         ThreadPool["线程池<br/>ThreadPoolExecutor"]
     end
-    
+
     subgraph Crypto_Layer["加密算法层"]
         CryptoMgr["加密后端管理器<br/>CryptoBackendManager"]
         PurePython["纯Python后端"]
@@ -45,7 +45,7 @@ graph TB
         ECDSA["ECDSA后端"]
         SecureKey["安全密钥管理器<br/>SecureKeyManager"]
     end
-    
+
     subgraph Core_Layer["核心密码学层"]
         Secp256k1["椭圆曲线<br/>secp256k1.py"]
         HashUtils["哈希工具<br/>hash_utils.py"]
@@ -53,14 +53,14 @@ graph TB
         WIF["WIF格式<br/>wif.py"]
         AddrGen["地址生成器<br/>address_generator.py"]
     end
-    
+
     subgraph Monitor_Layer["监控与日志层"]
         MonSys["监控系统<br/>MonitoringSystem"]
         DataLogger["数据日志<br/>DataLogger"]
         GPUMonitor["GPU监控<br/>GPUMonitor"]
         Anomaly["异常检测<br/>AnomalyDetector"]
     end
-    
+
     subgraph Data_Layer["数据存储层"]
         Checkpoint["断点管理器<br/>CheckpointManager"]
         Dedup["去重过滤器<br/>DeduplicationFilter"]
@@ -68,39 +68,39 @@ graph TB
         JSONFiles["JSON数据文件"]
         LogFiles["日志文件"]
     end
-    
+
     subgraph GPU_Layer["GPU加速层"]
         PyOpenCL["PyOpenCL"]
         OpenCLRuntime["OpenCL运行时"]
         GPUKernel["GPU内核<br/>OpenCL Kernel"]
         GPUDevice["GPU设备管理<br/>GPUDevice"]
     end
-    
+
     subgraph Config_Layer["配置层"]
         ConfigMgr["配置管理器<br/>ConfigManager"]
         CryptoConfig["加密配置<br/>CryptoConfig"]
         GPUConfig["GPU配置<br/>GPUConfig"]
     end
-    
+
     %% 用户界面到引擎层
     CLI --> CPUEngine
     GUI --> CPUEngine
     CLI -.可选.-> GPUEngine
     GUI -.可选.-> GPUEngine
-    
+
     %% 引擎层内部
     CPUEngine --> ThreadPool
     GPUEngine --> GPUDevice
     GPUDevice --> PyOpenCL
     PyOpenCL --> OpenCLRuntime
     GPUDevice --> GPUKernel
-    
+
     %% 引擎到加密层
     CPUEngine --> CryptoMgr
     GPUEngine --> CryptoMgr
     CPUEngine --> SecureKey
     GPUEngine --> SecureKey
-    
+
     %% 加密层到核心层
     CryptoMgr --> Coincurve
     CryptoMgr --> OpenSSL
@@ -111,14 +111,14 @@ graph TB
     AddrGen --> HashUtils
     AddrGen --> Base58
     Base58 --> WIF
-    
+
     %% 引擎到监控层
     CPUEngine --> MonSys
     GPUEngine --> MonSys
     MonSys --> DataLogger
     MonSys --> GPUMonitor
     MonSys --> Anomaly
-    
+
     %% 引擎到数据层
     CPUEngine --> Checkpoint
     CPUEngine --> Dedup
@@ -128,7 +128,7 @@ graph TB
     GPUMonitor --> JSONFiles
     MonSys --> LogFiles
     CPUEngine --> LogFiles
-    
+
     %% 配置层
     CPUEngine --> ConfigMgr
     GPUEngine --> ConfigMgr
@@ -136,7 +136,7 @@ graph TB
     CryptoConfig --> ConfigMgr
     GPUDevice --> GPUConfig
     GPUConfig --> ConfigMgr
-    
+
     %% 样式
     classDef UI fill:#e1f5ff,stroke:#2196f3,stroke-width:2px;
     classDef Engine fill:#fff3e0,stroke:#ff9800,stroke-width:2px;
@@ -146,7 +146,7 @@ graph TB
     classDef Data fill:#e8f5e9,stroke:#4caf50,stroke-width:2px;
     classDef GPU fill:#ffebee,stroke:#f44336,stroke-width:2px;
     classDef Config fill:#e3f2fd,stroke:#2196f3,stroke-width:2px;
-    
+
     class CLI,GUI UI;
     class CPUEngine,GPUEngine,ThreadPool Engine;
     class CryptoMgr,PurePython,OpenSSL,Coincurve,ECDSA,SecureKey Crypto;
@@ -175,7 +175,7 @@ graph TD
     H --> J["OpenSSLBackend<br/>cryptography库"]
     H --> K["CoincurveBackend<br/>libsecp256k1"]
     H --> L["ECDSABackend<br/>ecdsa库"]
-    
+
     style A fill:#e1f5ff,stroke:#2196f3,stroke-width:2px;
     style B,C,D fill:#fff3e0,stroke:#ff9800,stroke-width:2px;
     style E,F,G fill:#e8f5e9,stroke:#4caf50,stroke-width:2px;
@@ -194,14 +194,14 @@ graph TD
     A --> G["SecureKeyManager<br/>安全密钥管理"]
     A --> H["DataLogger<br/>数据日志"]
     A --> I["MonitoringSystem<br/>监控系统"]
-    
+
     J["GPUCollisionEngine<br/>GPU碰撞引擎"] --> K["GPUDevice<br/>GPU设备管理"]
     J --> L["GPUKernel<br/>OpenCL内核"]
     J --> M["GPUMonitor<br/>GPU监控"]
     J --> F
     J --> G
     J --> I
-    
+
     style A,J fill:#e1f5ff,stroke:#2196f3,stroke-width:2px;
     style B,C,D,E fill:#fff3e0,stroke:#ff9800,stroke-width:2px;
     style F,G fill:#e8f5e9,stroke:#4caf50,stroke-width:2px;
@@ -222,7 +222,7 @@ flowchart TD
     E --> F["RIPEMD-160<br/>Hash160 20字节"]
     F --> G["添加版本字节0x00<br/>+ 校验和4字节"]
     G --> H["Base58Check编码<br/>以'1'开头的地址"]
-    
+
     style A fill:#e1f5ff,stroke:#2196f3,stroke-width:2px;
     style B fill:#fff3e0,stroke:#ff9800,stroke-width:2px;
     style C fill:#e8f5e9,stroke:#4caf50,stroke-width:2px;
@@ -242,14 +242,14 @@ flowchart TD
         A3 --> A4["引擎初始化<br/>self.targets = Set[str]"]
         A4 --> A5["小写化存储<br/>addr.lower()<br/>Set[str] O(1)查找"]
     end
-    
+
     subgraph CollisionEngine["碰撞引擎运行阶段"]
         B1["私钥生成<br/>SecureKeyManager"] --> B2["地址生成<br/>P2PKHAddressGenerator"]
         B2 --> B3["椭圆曲线乘法<br/>Q = k * G → 公钥"]
         B3 --> B4["Hash160计算<br/>SHA256 + RIPEMD160<br/>20字节中间结果"]
         B4 --> B5["Base58Check编码<br/>→ P2PKH地址字符串"]
     end
-    
+
     subgraph MatchProcess["碰撞匹配阶段"]
         B5 --> C1["生成地址小写化<br/>addr.lower()"]
         A5 --> C2{"字符串集合查找<br/>addr.lower() in targets?<br/>O(1)时间复杂度"}
@@ -259,13 +259,13 @@ flowchart TD
         D1 --> D3["更新统计<br/>CollisionStats"]
         D2 --> D3
     end
-    
+
     subgraph SystemOps["系统操作"]
         B1 --> E1["断点保存<br/>CheckpointManager"]
         B1 --> E2["去重过滤<br/>DeduplicationFilter"]
         D3 --> E3["性能监控<br/>DataLogger"]
     end
-    
+
     style TargetImport fill:#e3f2fd,stroke:#2196f3,stroke-width:2px
     style CollisionEngine fill:#fff3e0,stroke:#ff9800,stroke-width:2px
     style MatchProcess fill:#f3e5f5,stroke:#9c27b0,stroke-width:2px
@@ -284,7 +284,7 @@ flowchart TD
     E --> F["匹配检查<br/>与目标地址比较"]
     F -->|匹配| G["触发回调<br/>on_match"]
     F -->|不匹配| H["私钥清零<br/>安全销毁"]
-    
+
     style A fill:#e1f5ff,stroke:#2196f3,stroke-width:2px;
     style B fill:#fff3e0,stroke:#ff9800,stroke-width:2px;
     style C,D,E fill:#ffebee,stroke:#f44336,stroke-width:2px;
@@ -308,53 +308,53 @@ flowchart LR
         I5["压缩公钥<br/>02/03 hex"]
         I6["Hash160<br/>40 hex"]
     end
-    
+
     subgraph Resolve["解析层"]
         R1["TargetResolver<br/>detect_format()"]
         R2["统一转换为<br/>P2PKH地址字符串"]
     end
-    
+
     subgraph Store["存储层"]
         S1["self.targets<br/>Set[str]"]
         S2["小写化处理<br/>addr.lower()"]
     end
-    
+
     subgraph Generate["生成层"]
         G1["私钥32字节"]
         G2["公钥33字节"]
         G3["Hash160 20字节<br/>(中间结果)"]
         G4["P2PKH地址字符串<br/>33-34字符"]
     end
-    
+
     subgraph Match["匹配层"]
         M1["生成地址.lower()"]
         M2{"in targets?<br/>字符串比较"}
         M3["✅ 匹配成功"]
         M4["❌ 继续下一个"]
     end
-    
+
     I1 --> R1
     I2 --> R1
     I3 --> R1
     I4 --> R1
     I5 --> R1
     I6 --> R1
-    
+
     R1 --> R2
     R2 --> S1
     S1 --> S2
-    
+
     G1 --> G2
     G2 --> G3
     G3 --> G4
-    
+
     G4 --> M1
     S2 --> M2
     M1 --> M2
-    
+
     M2 --> M3
     M2 --> M4
-    
+
     style Input fill:#e3f2fd,stroke:#2196f3,stroke-width:2px
     style Resolve fill:#fff3e0,stroke:#ff9800,stroke-width:2px
     style Store fill:#fff9c4,stroke:#fbc02d,stroke-width:2px
@@ -395,11 +395,11 @@ flowchart LR
 
 ### 验证结论
 
-✅ 所有输入格式统一转换为P2PKH地址字符串  
-✅ 地址字符串转换为小写后存储到Set[str]  
-✅ 碰撞匹配时使用小写地址字符串进行比较  
-✅ **Hash160仅作为中间计算结果，不用于最终匹配**  
-✅ 使用Python Set实现O(1)时间复杂度的地址查找  
+✅ 所有输入格式统一转换为P2PKH地址字符串
+✅ 地址字符串转换为小写后存储到Set[str]
+✅ 碰撞匹配时使用小写地址字符串进行比较
+✅ **Hash160仅作为中间计算结果，不用于最终匹配**
+✅ 使用Python Set实现O(1)时间复杂度的地址查找
 
 ---
 
@@ -416,7 +416,7 @@ graph LR
         crypto_backend["crypto_backend.py"] --> address_generator
         secure_key_manager["secure_key_manager.py"] --> crypto_backend
     end
-    
+
     subgraph 碰撞引擎依赖
         key_collision_engine["key_collision_engine.py"] --> address_generator
         key_collision_engine --> secure_key_manager
@@ -426,24 +426,24 @@ graph LR
         gpu_collision_engine["gpu_collision_engine.py"] --> key_collision_engine
         gpu_collision_engine --> pyopencl["PyOpenCL"]
     end
-    
+
     subgraph 监控系统依赖
         monitoring_system["monitoring_system.py"] --> data_logger["data_logger.py"]
         data_logger --> json["JSON模块"]
         gpu_monitor["gpu_monitor.py"] --> monitoring_system
     end
-    
+
     subgraph 配置系统依赖
         config_manager["config_manager.py"] --> json
         crypto_config["crypto_config.py"] --> config_manager
         gpu_config["gpu_config.py"] --> config_manager
     end
-    
+
     subgraph 用户界面依赖
         key_collision_cli["key_collision_cli.py"] --> key_collision_engine
         key_collision_gui["key_collision_gui.py"] --> key_collision_engine
     end
-    
+
     style 核心依赖 fill:#e1f5ff,stroke:#2196f3,stroke-width:2px;
     style 碰撞引擎依赖 fill:#fff3e0,stroke:#ff9800,stroke-width:2px;
     style 监控系统依赖 fill:#e8f5e9,stroke:#4caf50,stroke-width:2px;
@@ -496,7 +496,7 @@ graph TD
         StandardLib --> JSON["json模块"]
         StandardLib --> Logging["logging模块"]
     end
-    
+
     subgraph 第三方依赖
         Cryptography["cryptography>=3.4.0"]
         Coincurve["coincurve>=18.0.0"]
@@ -505,12 +505,12 @@ graph TD
         PSUtil["psutil>=5.9.0"]
         PyOpenCL["PyOpenCL>=2023.1.2"]
     end
-    
+
     subgraph 系统依赖
         OpenCLRuntime["OpenCL Runtime"]
         GPUDriver["GPU驱动"]
     end
-    
+
     subgraph 项目模块
         CoreModules["核心密码学模块"] --> StandardLib
         CollisionEngine["碰撞引擎模块"] --> CoreModules
@@ -520,7 +520,7 @@ graph TD
         GUI["图形界面模块"] --> StandardLib
         CLI["命令行界面模块"] --> StandardLib
     end
-    
+
     ThirdParty --> Cryptography
     ThirdParty --> Coincurve
     ThirdParty --> ECDSA
@@ -528,7 +528,7 @@ graph TD
     ThirdParty --> PyOpenCL
     PyOpenCL --> OpenCLRuntime
     OpenCLRuntime --> GPUDriver
-    
+
     style 核心技术栈 fill:#e1f5ff,stroke:#2196f3,stroke-width:2px;
     style 第三方依赖 fill:#fff3e0,stroke:#ff9800,stroke-width:2px;
     style 系统依赖 fill:#e8f5e9,stroke:#4caf50,stroke-width:2px;

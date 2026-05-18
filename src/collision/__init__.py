@@ -185,7 +185,7 @@ def create_collision_engine(
                 )
             return KeyCollisionEngine(targets=targets, **merged_kwargs)
 
-    # gpu模式: 强制使用GPU
+    # gpu模式: 强制使用GPU，初始化失败自动降级到CPU
     if mode == "gpu":
         if not _GPU_AVAILABLE:
             raise RuntimeError(
@@ -193,15 +193,24 @@ def create_collision_engine(
                 "  请安装 OpenCL 运行时并执行: pip install pyopencl\n"
                 "  安装指南请参阅 docs/FAQ.md#GPU"
             )
-        if not GPUCollisionEngine.is_gpu_available():
-            raise RuntimeError(
-                "GPU不可用: 未检测到可用的 OpenCL 设备。\n"
-                "  请确认：\n"
-                "    1. GPU 驱动已正确安装（Intel: https://www.intel.com/opencl, NVIDIA: CUDA驱动包）\n"
-                "    2. OpenCL 运行时已安装\n"
-                "    3. 运行 `python scripts/diagnose.py` 获取详细说明"
+        try:
+            if not GPUCollisionEngine.is_gpu_available():
+                raise RuntimeError(
+                    "GPU不可用: 未检测到可用的 OpenCL 设备。\n"
+                    "  请确认：\n"
+                    "    1. GPU 驱动已正确安装（Intel: https://www.intel.com/opencl, NVIDIA: CUDA驱动包）\n"
+                    "    2. OpenCL 运行时已安装\n"
+                    "    3. 运行 `python scripts/diagnose.py` 获取详细说明"
+                )
+            return GPUCollisionEngine(targets=targets, **merged_kwargs)
+        except RuntimeError as e:
+            # S1修复: GPU初始化失败时自动fallback到CPU引擎
+            import logging as _gpu_fallback_log
+
+            _gpu_fallback_log.getLogger(__name__).warning(
+                "GPU初始化失败，自动降级到CPU模式: %s", e
             )
-        return GPUCollisionEngine(targets=targets, **merged_kwargs)
+            return KeyCollisionEngine(targets=targets, **merged_kwargs)
 
     # multi_gpu模式: 强制使用多GPU
     if mode == "multi_gpu":

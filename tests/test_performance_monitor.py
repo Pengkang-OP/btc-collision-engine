@@ -258,7 +258,7 @@ class TestConfiguration:
         # 验证默认值
         assert config["enabled"] is True
         assert config["max_records"] == 10000
-        assert config["slow_threshold_ms"] == 1000
+        assert config["slow_threshold_ms"] == 30000
 
     def test_singleton_tracker(self):
         """测试追踪器单例"""

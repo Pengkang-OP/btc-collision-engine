@@ -108,7 +108,7 @@ class TestTargetResolverAddressConversion:
 
         result = resolver.resolve(address)
 
-        # P2PKH地址应该原样返回（验证通过后）
+        # P2PKH地址应返回原始大小写(保留Base58校验和)
         assert result == address
 
     def test_resolve_p2pkh_invalid_checksum(self):
@@ -622,7 +622,7 @@ class TestEndToEndMatchingFlow:
             # 从文件加载
             addresses = resolver.load_from_file(temp_file)
 
-            # 应该加载2个有效地址
+            # 应该加载2个有效地址(保留原始大小写)
             assert len(addresses) == 2
             assert "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa" in addresses
             assert "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2" in addresses

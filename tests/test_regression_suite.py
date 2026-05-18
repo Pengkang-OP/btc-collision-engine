@@ -27,7 +27,7 @@ class TestP0SecurityRegression:
 
     def test_sensitive_data_not_leaked_in_logs(self):
         """确保私钥不会泄露到日志中"""
-        from src.logging.log_processor import SensitiveDataFilter
+        from src.log_engine.log_processor import SensitiveDataFilter
 
         sf = SensitiveDataFilter()
 
@@ -42,7 +42,7 @@ class TestP0SecurityRegression:
 
     def test_address_not_exposed_in_unfiltered_logs(self):
         """确保地址在过滤时不会被日志泄露"""
-        from src.logging.log_processor import SensitiveDataFilter
+        from src.log_engine.log_processor import SensitiveDataFilter
 
         sf = SensitiveDataFilter()  # noqa: F841
 
@@ -141,8 +141,8 @@ class TestP1DataIntegrityRegression:
 
     def test_log_collector_queue_full_no_crash(self):
         """队列满时不应崩溃"""
-        from src.logging.log_collector import LogCollector
-        from src.logging.events import LogEventType
+        from src.log_engine.log_collector import LogCollector
+        from src.log_engine.events import LogEventType
 
         collector = LogCollector(max_queue_size=2)
         for i in range(20):
@@ -161,8 +161,8 @@ class TestP2BoundaryRegression:
 
     def test_empty_data_handling(self):
         """空数据处理"""
-        from src.logging.log_processor import LogProcessor, SensitiveDataFilter
-        from src.logging.events import LogEvent, LogEventType
+        from src.log_engine.log_processor import LogProcessor, SensitiveDataFilter
+        from src.log_engine.events import LogEvent, LogEventType
 
         processor = LogProcessor()
         event = LogEvent(LogEventType.STATUS_UPDATE, data={})
@@ -183,7 +183,7 @@ class TestP2BoundaryRegression:
 
     def test_log_storage_empty_queries(self):
         """空存储查询返回空"""
-        from src.logging.log_storage import LogStorage
+        from src.log_engine.log_storage import LogStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
             s = LogStorage(storage_dir=tmpdir)
@@ -288,7 +288,7 @@ class TestSecurityRegression:
 
     def test_sensitive_filter_covers_all_address_types(self):
         """敏感数据过滤器覆盖所有地址类型"""
-        from src.logging.log_processor import SensitiveDataFilter
+        from src.log_engine.log_processor import SensitiveDataFilter
 
         patterns = SensitiveDataFilter.SENSITIVE_PATTERNS
         assert len(patterns) >= 6  # 私钥 + PrivateKey + 4种地址类型

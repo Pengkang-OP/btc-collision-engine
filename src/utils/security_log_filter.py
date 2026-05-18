@@ -35,7 +35,7 @@ class SecurityLogFilter(logging.Filter):
     # 原始字节模式（32字节）
     RAW_KEY_PATTERN = re.compile(r"b'\\x[0-9a-fA-F]{2}(?:\\x[0-9a-fA-F]{2}){31}'")
 
-    # P0-1: 比特币地址模式匹配
+    # 比特币地址模式匹配
     # P2PKH: 以 1 开头，25-34 字符 Base58
     P2PKH_ADDRESS_PATTERN = re.compile(r"\b1[1-9A-HJ-NP-Za-km-z]{24,33}\b")
     # P2SH: 以 3 开头，25-34 字符 Base58
@@ -48,6 +48,22 @@ class SecurityLogFilter(logging.Filter):
     # BIP32 扩展密钥 (xprv/xpub/等)
     BIP32_EXTENDED_KEY_PATTERN = re.compile(r"\b[xXtT]prv[1-9A-HJ-NP-Za-km-z]{107,108}\b")
     BIP32_EXTENDED_PUBKEY_PATTERN = re.compile(r"\b[xXtT]pub[1-9A-HJ-NP-Za-km-z]{107,108}\b")
+
+    # BIP39 种子短语上下文关键词 — 仅当消息包含这些上下文时才应用BIP39检测
+    # 避免纯技术日志被误匹配（如 "the system encountered an unexpected error"）
+    BIP39_CONTEXT_KEYWORDS = re.compile(
+        r'\b(seed|mnemonic|recovery|phrase|bip39|助记词|种子短语|恢复短语)\b',
+        re.IGNORECASE
+    )
+    # BIP39 种子短语 (12或24个英语助记词)
+    # 词列表包含常见的 BIP39 英语助记词
+    # 检测包含12或24个助记词的文本，每个词3-8个字母
+    BIP39_PHRASE_12_PATTERN = re.compile(
+        r"\b(?:[a-z]{3,8}\s+){11}[a-z]{3,8}\b", re.IGNORECASE
+    )
+    BIP39_PHRASE_24_PATTERN = re.compile(
+        r"\b(?:[a-z]{3,8}\s+){23}[a-z]{3,8}\b", re.IGNORECASE
+    )
 
     def __init__(
         self,
@@ -119,7 +135,7 @@ class SecurityLogFilter(logging.Filter):
         # 屏蔽原始字节模式
         message = self.RAW_KEY_PATTERN.sub("[RAW_PRIVATE_KEY]", message)
 
-        # P0-1: 屏蔽比特币地址
+        # 屏蔽比特币地址
         if self.mask_addresses:
             message = self.P2PKH_ADDRESS_PATTERN.sub("[P2PKH_ADDRESS]", message)
             message = self.P2SH_ADDRESS_PATTERN.sub("[P2SH_ADDRESS]", message)
@@ -129,6 +145,12 @@ class SecurityLogFilter(logging.Filter):
         # 屏蔽 BIP32 扩展密钥 (与 log_processor.SensitiveDataFilter 保持一致)
         message = self.BIP32_EXTENDED_KEY_PATTERN.sub("[BIP32_EXTENDED_KEY]", message)
         message = self.BIP32_EXTENDED_PUBKEY_PATTERN.sub("[BIP32_EXTENDED_PUBKEY]", message)
+
+        # 屏蔽 BIP39 种子短语（仅在包含相关上下文时应用，避免技术日志误报）
+        if self.mask_private_keys and self.BIP39_CONTEXT_KEYWORDS.search(message):
+            # 注意: 24词模式必须在12词之前，否则24词短语的前12词会被误匹配为12词
+            message = self.BIP39_PHRASE_24_PATTERN.sub("[BIP39_PHRASE_24_WORDS]", message)
+            message = self.BIP39_PHRASE_12_PATTERN.sub("[BIP39_PHRASE_12_WORDS]", message)
 
         return message
 
@@ -173,12 +195,12 @@ def setup_security_logging() -> None:
         name="security_filter", mask_private_keys=True, mask_wif=True, mask_addresses=True
     )
 
-    # 添加到根日志记录器
+    # 添加到根日志记录器（子 logger 会继承根 logger 的过滤器）
     root_logger = logging.getLogger()
     root_logger.addFilter(security_filter)
 
-    # 添加到主要模块日志记录器（处理私钥/敏感数据的模块）
-    module_loggers = [
+    # 显式覆盖关键模块 logger（确保即使配置了 propagate=False 也能被保护）
+    critical_module_loggers = [
         # 碰撞引擎（核心私钥处理）
         "KeyCollisionEngine",
         "MultiGPUEngine",
@@ -202,11 +224,30 @@ def setup_security_logging() -> None:
         "GPUEngineMonitor",
     ]
 
-    for logger_name in module_loggers:
-        logger = logging.getLogger(logger_name)
-        logger.addFilter(security_filter)
+    # 追踪已添加过滤器的 logger，避免重复
+    _processed_loggers = set()
+    _processed_loggers.add(None)  # root logger 已处理
 
-    logging.info("✅ 日志安全过滤器已启用")
+    # 为显式列表中的模块添加过滤器
+    for logger_name in critical_module_loggers:
+        logger = logging.getLogger(logger_name)
+        if id(logger) not in _processed_loggers:
+            logger.addFilter(security_filter)
+            _processed_loggers.add(id(logger))
+
+    # 自动发现并保护所有已注册的 logger（覆盖显式列表之外的新模块）
+    for logger_name, logger_ref in logging.Logger.manager.loggerDict.items():
+        if isinstance(logger_ref, logging.Logger):
+            if id(logger_ref) not in _processed_loggers:
+                logger_ref.addFilter(security_filter)
+                _processed_loggers.add(id(logger_ref))
+
+    logging.info(
+        "✅ 日志安全过滤器已启用 (显式模块: %d, 自动发现: %d, 总计: %d)",
+        len(critical_module_loggers),
+        len(_processed_loggers) - len(critical_module_loggers) - 1,
+        len(_processed_loggers) - 1,
+    )
 
 
 def sanitize_private_key_for_log(private_key: bytes) -> str:
@@ -249,3 +290,27 @@ def log_safe_debug(logger: logging.Logger, message: str, **kwargs) -> None:
         **kwargs: 额外参数
     """
     logger.debug(message, **kwargs)
+
+
+def log_safe_exception(
+    logger: logging.Logger,
+    message: str,
+    exc: BaseException | None = None,
+    **kwargs
+) -> None:
+    """安全记录异常（不泄露敏感堆栈信息）
+
+    Args:
+        logger: 日志记录器
+        message: 错误消息
+        exc: 异常对象（可选）
+        **kwargs: 额外参数
+    """
+    if exc is None:
+        logger.error(message, **kwargs)
+    else:
+        # 记录异常类型，不记录完整堆栈
+        safe_error_msg = f"{message}: {type(exc).__name__}"
+        logger.error(safe_error_msg, **kwargs)
+        # 对于非严重错误，可以记录脱敏的异常信息到 debug
+        logger.debug(f"[FULL_ERROR] {safe_error_msg}: {sanitize_private_key_for_log(str(exc).encode())}", **kwargs)

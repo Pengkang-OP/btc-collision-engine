@@ -483,7 +483,7 @@ class TestDataLoggerCleanup:
             shutil.rmtree(self.test_dir)
 
     def test_cleanup_old_history(self):
-        """测试清理旧历史数据"""
+        """测试清理旧历史数据 (v4.3.1: 适配 JSONL 格式)"""
         # 创建一些历史数据
         for i in range(10):
             self.logger.record_performance_data(
@@ -496,14 +496,11 @@ class TestDataLoggerCleanup:
             )
             self.logger.save_history_data()
 
-        # 清理应该在保存时自动进行
-        history_data_path = os.path.join(self.test_dir, "history_data.json")
-        if os.path.exists(history_data_path):
-            with open(history_data_path, "r") as f:
-                history = json.load(f)
+        # 通过 DataLogger 的方法读取（支持 JSONL 格式）
+        history = self.logger.get_history_data()
 
-            # 验证历史数据有长度限制
-            assert isinstance(history, list)
+        # 验证历史数据有长度限制
+        assert isinstance(history, list)
 
 
 class TestDataLoggerThreadSafety:

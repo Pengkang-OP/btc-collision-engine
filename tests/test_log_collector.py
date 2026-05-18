@@ -16,8 +16,8 @@ import logging
 import time
 from unittest.mock import Mock
 
-from src.logging.log_collector import LogCollector, _CollectorLogHandler
-from src.logging.events import LogEvent, LogEventType
+from src.log_engine.log_collector import LogCollector, _CollectorLogHandler
+from src.log_engine.events import LogEvent, LogEventType
 
 # ============================================================================
 # 初始化测试

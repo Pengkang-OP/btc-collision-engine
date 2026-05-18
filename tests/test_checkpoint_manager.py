@@ -491,19 +491,19 @@ class TestCheckpointLoadTempRecoveryErrors(unittest.TestCase):
             if os.path.exists(p):
                 os.unlink(p)
 
-    @patch("os.rename", side_effect=OSError("rename failed"))
+    @patch("os.replace", side_effect=OSError("rename failed"))
     def test_temp_recovery_rename_os_error(self, mock_rename):
-        """rename 失败时记录日志并清理"""
+        """replace 失败时记录日志并清理"""
         temp_file = self.tmp_path + ".tmp"
         with open(temp_file, "w") as f:
             json.dump({"version": 1, "mode": "test"}, f)
-        # rename 会失败，但不应崩溃
+        # replace 会失败，但不应崩溃
         result = self.mgr.load()
         self.assertIsNone(result)
 
-    @patch("os.rename", side_effect=Exception("unexpected"))
+    @patch("os.replace", side_effect=Exception("unexpected"))
     def test_temp_recovery_rename_unexpected_error(self, mock_rename):
-        """rename 未知异常被记录"""
+        """replace 未知异常被记录"""
         temp_file = self.tmp_path + ".tmp"
         with open(temp_file, "w") as f:
             json.dump({"version": 1, "mode": "test"}, f)

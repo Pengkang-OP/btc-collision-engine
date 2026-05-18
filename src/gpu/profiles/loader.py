@@ -7,7 +7,7 @@ import json
 import os
 from typing import Any
 
-# P3-5: 统一日志获取
+# 统一日志获取
 from ...utils import get_configured_logger
 
 logger = get_configured_logger("GPUProfileLoader")

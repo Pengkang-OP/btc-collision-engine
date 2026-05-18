@@ -19,7 +19,7 @@ from typing import Any, cast
 
 from ..config.optimization_config import is_feature_enabled
 
-# P3-5: 统一日志获取
+# 统一日志获取
 from ..utils import get_configured_logger
 
 # 根据配置条件导入优化模块
@@ -67,6 +67,12 @@ class MultiGPUCollisionEngine:
         Args:
             config: 配置字典（兼容旧接口）或 MultiGPUConfig 实例
         """
+        # M-3修复: 添加配置验证（dict 和 MultiGPUConfig 均需验证）
+        if isinstance(config, dict):
+            config = self._validate_config_values(config)
+        elif isinstance(config, MultiGPUConfig):
+            self._validate_config_object(config)
+
         # 统一转换为 MultiGPUConfig（兼容 Dict 旧接口）
         if config is None:
             self.config = MultiGPUConfig()
@@ -81,6 +87,10 @@ class MultiGPUCollisionEngine:
         self.workers: dict[int, Any] = {}
 
         # 状态管理 (使用锁保护)
+        #
+        # 🔒 锁顺序约定 (MUST follow to avoid deadlock):
+        #    _state_lock → _workers_lock → _matches_lock
+        #    即: 如果同一方法需要获取多把锁,必须按此顺序获取。
         self._state_lock = threading.Lock()
         self._running = False
         self._initialized = False
@@ -221,6 +231,89 @@ class MultiGPUCollisionEngine:
         except Exception as e:
             logger.error(f"多GPU引擎初始化失败: {e}")
             return False
+
+
+    def _validate_config_values(self, config: dict) -> dict:
+        """M-3修复: 验证配置值边界
+
+        配置值边界验证说明:
+        1. 检查数值类型配置参数是否在合理范围内
+        2. 防止无效配置导致运行时错误或异常行为
+        3. 超出范围时自动使用默认值，保证程序稳定运行
+        4. 记录警告日志，帮助用户发现配置问题
+
+        验证的参数:
+        - worker_join_timeout: 工作线程Join超时（1-300秒）
+        - workload_monitor_interval: 工作负载监控间隔（1-3600秒）
+        - total_pool_mb: GPU内存池总大小（64-65536MB）
+
+        Args:
+            config: 配置字典
+
+        Returns:
+            验证后的配置字典
+        """
+        validated = config.copy()
+
+        int_configs = [
+            ('worker_join_timeout', 1, 300, 30),
+            ('workload_monitor_interval', 1, 3600, 60),
+            ('total_pool_mb', 64, 65536, 512),
+        ]
+
+        for key, min_val, max_val, default in int_configs:
+            if key in validated:
+                val = validated[key]
+                if not isinstance(val, (int, float)):
+                    logger.warning(f'配置 {key} 应为数值，使用默认值 {default}')
+                    validated[key] = default
+                elif val < min_val or val > max_val:
+                    logger.warning(f'配置 {key}={val} 超出范围 [{min_val}, {max_val}]，使用默认值 {default}')
+                    validated[key] = default
+
+        return validated
+
+    @staticmethod
+    def _validate_config_object(config: "MultiGPUConfig") -> None:
+        """M-3修复: 验证 MultiGPUConfig 对象参数边界
+
+        检查配置对象中数值类型字段的合理性，超出范围时重置为默认值。
+        此方法直接修改 config 对象属性。
+
+        验证的参数:
+        - worker_join_timeout: 工作线程Join超时（1-300秒）
+        - workload_monitor_interval: 工作负载监控间隔（1-3600秒）
+        - total_pool_mb: GPU内存池总大小（64-65536MB）
+        - max_retry_count: 最大重试次数（0-100）
+        - retry_delay_seconds: 重试延迟秒数（1-300）
+        - batch_size_reduction_factor: 批次缩减因子（0.1-1.0）
+        """
+        checks = [
+            ("worker_join_timeout", 1, 300, 30),
+            ("workload_monitor_interval", 1, 3600, 60),
+            ("total_pool_mb", 64, 65536, 512),
+        ]
+        for attr, min_val, max_val, default in checks:
+            val = getattr(config, attr, default)
+            if not isinstance(val, (int, float)) or val < min_val or val > max_val:
+                logger.warning(
+                    f"配置 {attr}={val} 超出范围 [{min_val}, {max_val}]，使用默认值 {default}"
+                )
+                setattr(config, attr, default)
+
+        # GPU恢复管理器参数
+        rc = config.gpu_recovery
+        if rc.max_retry_count < 0 or rc.max_retry_count > 100:
+            logger.warning(f"max_retry_count={rc.max_retry_count} 超出范围，使用默认值 3")
+            rc.max_retry_count = 3
+        if rc.retry_delay_seconds < 1 or rc.retry_delay_seconds > 300:
+            logger.warning(f"retry_delay_seconds={rc.retry_delay_seconds} 超出范围，使用默认值 5")
+            rc.retry_delay_seconds = 5
+        if rc.batch_size_reduction_factor < 0.1 or rc.batch_size_reduction_factor > 1.0:
+            logger.warning(
+                f"batch_size_reduction_factor={rc.batch_size_reduction_factor} 超出范围，使用默认值 0.5"
+            )
+            rc.batch_size_reduction_factor = 0.5
 
     def start(
         self,
@@ -568,7 +661,11 @@ class MultiGPUCollisionEngine:
         if self._monitor_enabled:
             self.data_monitor.report_match(device_idx, match)
 
-        logger.info(f"GPU {device_idx} 发现匹配: {match.get('address', 'Unknown')}")
+        # 安全脱敏: 仅显示地址前6和后4字符
+        masked = match.get('address', 'Unknown')
+        if len(masked) > 10:
+            masked = f"{masked[:6]}...{masked[-4:]}"
+        logger.info(f"GPU {device_idx} 发现匹配: {masked}")
 
         # 调用外部回调
         if self._match_callback:
@@ -832,7 +929,7 @@ class MultiGPUCollisionEngine:
         # 这里可以集成告警系统（邮件、Webhook等）
         # 例如：
         # if self.alert_system:
-        #     self.alert_system.send_alert(alert_message)
+        # self.alert_system.send_alert(alert_message)
 
     def _update_combined_stats(self):
         """更新汇总统计"""
@@ -870,6 +967,13 @@ class MultiGPUCollisionEngine:
             self.workers.clear()
 
         self._devices.clear()
+
+        # 清理恢复管理器（含其ThreadPoolExecutor）
+        if hasattr(self, 'recovery_manager') and self.recovery_manager is not None:
+            try:
+                self.recovery_manager.cleanup()
+            except Exception as e:
+                logger.warning(f"GPURecoveryManager清理异常: {e}")
 
         with self._matches_lock:
             self._all_matches.clear()

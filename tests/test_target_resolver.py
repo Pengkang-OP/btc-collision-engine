@@ -22,7 +22,7 @@ class TestBech32Decode:
     """Bech32 解码测试"""
 
     def test_valid_bech32_mainnet(self):
-        from src.collision.targets.resolver import bech32_decode
+        from src.utils.bech32_codec import bech32_decode
 
         hrp, data, enc = bech32_decode("bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq")
         assert hrp == "bc"
@@ -31,7 +31,7 @@ class TestBech32Decode:
 
     def test_valid_bech32_testnet(self):
         """测试网Bech32地址（使用 BIP-173 测试向量）"""
-        from src.collision.targets.resolver import bech32_decode
+        from src.utils.bech32_codec import bech32_decode
 
         # BIP-173 有效测试向量
         hrp, data, enc = bech32_decode("tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx")
@@ -39,31 +39,31 @@ class TestBech32Decode:
         assert data is not None
 
     def test_invalid_mixed_case(self):
-        from src.collision.targets.resolver import bech32_decode
+        from src.utils.bech32_codec import bech32_decode
 
         hrp, data, enc = bech32_decode("Bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq")
         assert hrp is None
 
     def test_invalid_empty(self):
-        from src.collision.targets.resolver import bech32_decode
+        from src.utils.bech32_codec import bech32_decode
 
         hrp, data, enc = bech32_decode("")
         assert hrp is None
 
     def test_invalid_no_separator(self):
-        from src.collision.targets.resolver import bech32_decode
+        from src.utils.bech32_codec import bech32_decode
 
         hrp, data, enc = bech32_decode("bcqar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq")
         assert hrp is None
 
     def test_invalid_too_long(self):
-        from src.collision.targets.resolver import bech32_decode
+        from src.utils.bech32_codec import bech32_decode
 
         hrp, data, enc = bech32_decode("bc1" + "q" * 100)
         assert hrp is None
 
-    def test_valid_taproot(self):
-        """Taproot地址应使用 bech32m 编码"""
+    def test_taproot_format_detection(self):
+        """仅验证前缀检测 (不验证 Taproot 校验和)"""
 
         # 使用格式检测验证，不依赖具体地址校验
         from src.collision.targets.resolver import TargetResolver
@@ -83,7 +83,7 @@ class TestDecodeSegwitAddress:
     """SegWit 地址解码测试"""
 
     def test_valid_bech32_p2wpkh(self):
-        from src.collision.targets.resolver import decode_segwit_address
+        from src.utils.bech32_codec import decode_segwit_address
 
         version, program = decode_segwit_address("bc", "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq")
         assert version == 0
@@ -99,14 +99,14 @@ class TestDecodeSegwitAddress:
         assert fmt == "taproot_address"
 
     def test_invalid_hrp_mismatch(self):
-        from src.collision.targets.resolver import decode_segwit_address
+        from src.utils.bech32_codec import decode_segwit_address
 
         version, program = decode_segwit_address("tb", "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq")
         assert version is None
         assert program is None
 
     def test_invalid_address(self):
-        from src.collision.targets.resolver import decode_segwit_address
+        from src.utils.bech32_codec import decode_segwit_address
 
         version, program = decode_segwit_address("bc", "invalid")
         assert version is None
@@ -252,3 +252,58 @@ class TestResolveBatch:
         assert len(results) == 2
         assert results["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"] is not None
         assert results["not_valid"] is None
+
+
+# ============================================================================
+# analyze_target_formats 测试
+# ============================================================================
+
+
+@pytest.mark.unit
+class TestAnalyzeTargetFormats:
+    """目标格式分布分析测试"""
+
+    def test_pure_p2pkh(self):
+        from src.collision.targets.resolver import TargetResolver
+
+        targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", "12cbQLTFMXRnSzktFkuoG3eHoMeFtpTu3S"}
+        result = TargetResolver.analyze_target_formats(targets)
+        assert result["p2pkh"] == 2
+        assert result["p2sh"] == 0
+        assert result["bech32"] == 0
+        assert result["taproot"] == 0
+        assert result["unknown"] == 0
+
+    def test_mixed_formats(self):
+        from src.collision.targets.resolver import TargetResolver
+
+        targets = {
+            "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",  # P2PKH
+            "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",  # P2SH
+            "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",  # Bech32
+            "bc1p5d7rjq7g6rdk2yhzks9smlaqtedr4dekq08ge8qt",  # Taproot
+        }
+        result = TargetResolver.analyze_target_formats(targets)
+        assert result["p2pkh"] == 1
+        assert result["p2sh"] == 1
+        assert result["bech32"] == 1
+        assert result["taproot"] == 1
+        assert result["unknown"] == 0
+
+    def test_empty_set(self):
+        from src.collision.targets.resolver import TargetResolver
+
+        result = TargetResolver.analyze_target_formats(set())
+        assert result["p2pkh"] == 0
+        assert result["p2sh"] == 0
+        assert result["bech32"] == 0
+        assert result["taproot"] == 0
+        assert result["unknown"] == 0
+
+    def test_unknown_prefix(self):
+        from src.collision.targets.resolver import TargetResolver
+
+        targets = {"2NFf16kDmUQ5RqhsVHtZoF1rsYqkYJvRgPg", "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx"}
+        result = TargetResolver.analyze_target_formats(targets)
+        assert result["p2pkh"] == 0
+        assert result["unknown"] == 2

@@ -9,10 +9,9 @@ import platform
 import sys
 import tkinter as tk
 
-from .logging_config import get_configured_logger, init_logging
+from .logging_config import get_configured_logger
 
-# 初始化日志
-init_logging()
+# 日志系统由CLI/main.py入口统一初始化
 logger = get_configured_logger("PlatformUtils")
 
 

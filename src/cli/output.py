@@ -214,10 +214,25 @@ class CLIOutput:
         """单行状态更新（\r 覆盖式）— 用于运行时进度显示。
 
         quiet 模式下不显示。保持与 engine_runner 原有实现兼容。
+        
+        修复光标乱跳问题：
+        - 使用 ANSI 转义序列隐藏光标
+        - 正确处理终端刷新
         """
         if self.quiet:
             return
-        sys.stdout.write(f"\r{text}\033[K")
+        
+        # ANSI转义序列：
+        # \033[?25l - 隐藏光标
+        # \r - 回到行首
+        # {text} - 显示文本
+        # \033[K - 清除到行尾
+        # \033[?25h - 显示光标（恢复）
+        cursor_hide = "\033[?25l"
+        cursor_show = "\033[?25h"
+        clear_eol = "\033[K"
+        
+        sys.stdout.write(f"{cursor_hide}\r{text}{clear_eol}{cursor_show}")
         sys.stdout.flush()
 
     def performance_status(self, stats: dict) -> None:

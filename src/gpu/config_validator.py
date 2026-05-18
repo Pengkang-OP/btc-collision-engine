@@ -33,7 +33,7 @@ class GPUConfigValidator:
 
     # 参数范围限制
     PARAM_RANGES = {
-        "batch_size": (1024, 1048576),  # 1K - 1M
+        "batch_size": (1024, 16777216),  # 1K - 16M (Intel Arc A770 极致性能)
         "work_group_size": (64, 2048),  # 64 - 2K
         "memory_usage_ratio": (0.1, 0.95),  # 10% - 95%
     }

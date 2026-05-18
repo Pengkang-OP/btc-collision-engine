@@ -16,10 +16,11 @@
 
 import logging
 import time
+import warnings
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Optional
 
-# P3-3: 统一回调类型别名
+# 统一回调类型别名
 from ..types import MatchCallback, ProgressCallback
 from .protocols import ICollisionCore, MatchResult
 
@@ -40,12 +41,16 @@ class CollisionCore(ICollisionCore):
 
     实现接口: ICollisionCore
 
-    使用示例:
-        >>> core = CollisionCore(targets, config)
-        >>> core.start(mode='random')
-        >>> core.on_batch_complete(matches, batch_size)
-        >>> stats = core.get_stats()
-        >>> core.stop()
+    当前状态 (Phase 6):
+    - GPUCollisionEngine 通过属性访问核心功能: .stats, .checkpoint, .dedup_filter
+    - 仅使用内部初始化方法: _init_stats(), _init_checkpoint(), _init_dedup_filter()
+    - 以下方法标记为 [DEPRECATED] 仅保留用于测试向后兼容:
+      start(), stop(), pause(), resume(), reset(), on_batch_complete()
+    - 非测试代码请使用 GPUCollisionEngine API
+
+    测试示例:
+        >>> core = CollisionCore(targets, config)  # 仅用于测试
+        >>> core._init_stats()  # 内部初始化
     """
 
     def __init__(
@@ -114,6 +119,11 @@ class CollisionCore(ICollisionCore):
         GPUCollisionEngine 使用自己的 SearchModeCoordinator 管理搜索生命周期，
         不再通过 CollisionCore.start() 协调。此方法保留仅用于现有测试。
         """
+        warnings.warn(
+            "CollisionCore.start() is deprecated, use GPUCollisionEngine API",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         # S3修复: 添加锁保护，防止多线程并发调用导致竞态条件
         if self._running:
             logger.warning("碰撞核心已在运行，跳过重复启动")
@@ -157,6 +167,11 @@ class CollisionCore(ICollisionCore):
 
         GPUCollisionEngine 在自己的 stop() 中直接管理清理逻辑。
         """
+        warnings.warn(
+            "CollisionCore.stop() is deprecated, use GPUCollisionEngine API",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         # S3修复: 添加锁保护，防止多线程并发调用导致竞态条件
         if not self._running:
             return
@@ -179,6 +194,11 @@ class CollisionCore(ICollisionCore):
 
     def pause(self) -> None:
         """[DEPRECATED] 暂停碰撞 — scheduled removal"""
+        warnings.warn(
+            "CollisionCore.pause() is deprecated, use GPUCollisionEngine API",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if not self._running or self._paused:
             return
 
@@ -190,6 +210,11 @@ class CollisionCore(ICollisionCore):
 
     def resume(self) -> None:
         """[DEPRECATED] 恢复碰撞 — scheduled removal"""
+        warnings.warn(
+            "CollisionCore.resume() is deprecated, use GPUCollisionEngine API",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if not self._running or not self._paused:
             return
 
@@ -201,6 +226,11 @@ class CollisionCore(ICollisionCore):
 
     def reset(self) -> None:
         """[DEPRECATED] 重置统计 — scheduled removal"""
+        warnings.warn(
+            "CollisionCore.reset() is deprecated, use CollisionStats.reset()",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if self.stats and hasattr(self.stats, "reset"):
             self.stats.reset()
             logger.info("碰撞统计已重置")
@@ -210,6 +240,11 @@ class CollisionCore(ICollisionCore):
 
         GPUCollisionEngine 在 _check_and_report_progress() 中直接处理批次回调。
         """
+        warnings.warn(
+            "CollisionCore.on_batch_complete() is deprecated, use GPUCollisionEngine._check_and_report_progress()",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if not self._running or self._paused or not self.stats:
             return
 

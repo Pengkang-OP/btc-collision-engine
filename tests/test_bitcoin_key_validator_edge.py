@@ -17,6 +17,13 @@ from src.core.bitcoin_key_validator import (
     AddressType,
     BitcoinKeyValidator,
 )
+from src.utils.bech32_codec import convertbits
+
+# BIP-173 已知测试向量 (G点公钥 → P2WPKH bech32地址)
+_BIP173_G_PUBKEY = bytes.fromhex(
+    "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
+)
+_BIP173_EXPECTED_ADDRESS = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
 
 
 # ===========================================================================
@@ -80,32 +87,26 @@ class TestWIFEncoderDecodeEdge(unittest.TestCase):
 
 
 # ===========================================================================
-# Group 2: _convert_bits 错误路径
+# Group 2: convertbits 错误路径 (bech32_codec)
 # ===========================================================================
 
 
 class TestConvertBitsEdge(unittest.TestCase):
-    """_convert_bits 静态方法边界路径"""
+    """convertbits 函数边界路径 (返回 None 表示错误)"""
 
-    def test_invalid_value_raises(self):
-        """无效值（超出 from_bits 范围）→ line 283"""
+    def test_invalid_value_returns_none(self):
+        """无效值（超出 from_bits 范围）返回 None"""
         # from_bits=4 时, 值 >= 16 会触发 value >> from_bits 检查
-        with self.assertRaises(ValueError) as ctx:
-            BitcoinKeyValidator._convert_bits(
-                b"\x10", 4, 5, pad=True
-            )  # 0x10 >> 4 = 1, nonzero → raise
-        self.assertIn("无效", str(ctx.exception))
+        result = convertbits(b"\x10", 4, 5, pad=True)
+        self.assertIsNone(result, "超范围值应返回 None")
 
     def test_no_pad_conversion_fails(self):
-        """pad=False 且无法转换 → lines 293-294"""
+        """pad=False 且无法转换 返回 None"""
         # 输入 1 个字节 (8 bits) 转为 5-bit 且不填充
         # 8 bits 转为 5-bit: 剩余 bits=3, 3 >= 8? No. (acc << (5-3)) & 31
-        # acc=0x55, 剩余 bits=3, (0x55 << 2) & 31 = (0x154) & 31 = 8, non-zero → 触发错误
-        with self.assertRaises(ValueError) as ctx:
-            BitcoinKeyValidator._convert_bits(
-                b"\x55", 8, 5, pad=False
-            )
-        self.assertIn("无法转换", str(ctx.exception))
+        # acc=0x55, 剩余 bits=3, (0x55 << 2) & 31 = (0x154) & 31 = 8, non-zero
+        result = convertbits(b"\x55", 8, 5, pad=False)
+        self.assertIsNone(result, "无法转换应返回 None")
 
 
 # ===========================================================================
@@ -123,7 +124,7 @@ class TestGenerateKeyExceptionHandlers(unittest.TestCase):
     def test_generate_pubkey_exception_handler(self):
         """generate_public_key 抛出异常时捕获 (lines 439-441)"""
         with patch.object(
-            self.validator.curve, "scalar_multiply",
+            self.validator.curve, "scalar_multiply_const_time",
             side_effect=RuntimeError("模拟标量乘法错误")
         ):
             result, pub_key = self.validator.generate_public_key(self.pk)
@@ -154,7 +155,7 @@ class TestGenerateKeyExceptionHandlers(unittest.TestCase):
         from src.core.secp256k1 import ECPoint
         inf_point = ECPoint(None, None)  # is_infinity = True
         with patch.object(
-            self.validator.curve, "scalar_multiply", return_value=inf_point
+            self.validator.curve, "scalar_multiply_const_time", return_value=inf_point
         ):
             result, pub_key = self.validator.generate_public_key(self.pk)
             self.assertFalse(result.success)
@@ -166,7 +167,7 @@ class TestGenerateKeyExceptionHandlers(unittest.TestCase):
         from src.core.secp256k1 import ECPoint
         off_curve = ECPoint(1, 1)  # (1,1) 不在 secp256k1 上
         with patch.object(
-            self.validator.curve, "scalar_multiply", return_value=off_curve
+            self.validator.curve, "scalar_multiply_const_time", return_value=off_curve
         ):
             result, pub_key = self.validator.generate_public_key(self.pk)
             self.assertFalse(result.success)
@@ -300,57 +301,57 @@ class TestAddressWarnings(unittest.TestCase):
         result = self.validator.validate_address("bc1qw$08d6qejxtdg4")  # $ 是无效的
         self.assertFalse(result.success)
 
-    @patch("bech32.bech32_decode")
+    @patch("src.core.bitcoin_key_validator.bech32_decode")
     def test_validate_address_bech32_decode_fail(self, mock_b32):
         """Bech32 解码失败 → lines 678-679"""
-        mock_b32.return_value = None
+        mock_b32.return_value = (None, None, None)
         result = self.validator.validate_address(
             "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
         )
         self.assertFalse(result.success)
         self.assertTrue(any("解码失败" in e for e in result.errors))
 
-    @patch("bech32.bech32_decode")
+    @patch("src.core.bitcoin_key_validator.bech32_decode")
     def test_validate_address_bech32_hrp_error(self, mock_b32):
         """Bech32 HRP 错误 → line 685"""
         # 地址必须以 "bc1" 开头才能进入 Bech32 验证分支
         # mock 返回 HRP="xx" (不是 bc/tb), data 长度 33 以通过长度检查
-        mock_b32.return_value = ("xx", [0] * 33)
+        mock_b32.return_value = ("xx", [0] * 33, 1)
         result = self.validator.validate_address(
             "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
         )
         self.assertTrue(any("HRP" in e for e in result.errors))
 
-    @patch("bech32.bech32_decode")
+    @patch("src.core.bitcoin_key_validator.bech32_decode")
     def test_validate_address_bech32_bad_data_length(self, mock_b32):
         """Bech32 数据长度错误 → line 693"""
-        mock_b32.return_value = ("bc", [0] * 10)  # 10 elements, not 33/53
+        mock_b32.return_value = ("bc", [0] * 10, 1)  # 10 elements, not 33/53
         result = self.validator.validate_address(
             "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
         )
         self.assertTrue(any("数据长度" in e for e in result.errors))
 
-    @patch("bech32.bech32_decode")
+    @patch("src.core.bitcoin_key_validator.bech32_decode")
     def test_validate_address_bech32_bad_witness_version(self, mock_b32):
         """Bech32 不支持的 witness 版本 → line 700"""
         data = [1] + [0] * 32  # version=1, not 0
-        mock_b32.return_value = ("bc", data)
+        mock_b32.return_value = ("bc", data, 1)
         result = self.validator.validate_address(
             "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
         )
         self.assertTrue(any("witness" in e.lower() for e in result.errors))
 
-    @patch("bech32.bech32_decode")
+    @patch("src.core.bitcoin_key_validator.bech32_decode")
     def test_validate_address_bech32_p2wsh(self, mock_b32):
         """Bech32 P2WSH 子类型 → line 705-706"""
         data = [0] + [0] * 52  # 53 elements → P2WSH
-        mock_b32.return_value = ("bc", data)
+        mock_b32.return_value = ("bc", data, 1)
         result = self.validator.validate_address(
             "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
         )
         self.assertEqual(result.details.get("bech32_address_subtype"), "P2WSH")
 
-    @patch("bech32.bech32_decode")
+    @patch("src.core.bitcoin_key_validator.bech32_decode")
     def test_validate_address_bech32_exception(self, mock_b32):
         """Bech32 验证异常 → lines 712-713"""
         mock_b32.side_effect = RuntimeError("bech32 internal error")
@@ -600,6 +601,56 @@ def _make_pubkey_result():
     """创建公钥生成结果"""
     r = _make_success_result()
     return r, b"\x02" + b"\x01" * 32
+
+
+# ===========================================================================
+# Group 10: BIP-173 回归测试 (v4.2.3: 旧实现bug修复验证)
+# ===========================================================================
+
+
+class TestBIP173Regression(unittest.TestCase):
+    """BIP-173 P2WPKH Bech32地址生成回归测试
+
+    旧实现 (bitcoin_key_validator ~v4.2.2) 存在 BIP-173 协议bug:
+    在 8→5 bit 转换时错误地将 version+length 字节混入, 导致生成
+    45-char 无效地址而非正确的 42-char。v4.2.3 迁移到统一 bech32_codec 后已修复。
+    """
+
+    def test_bech32_address_length(self):
+        """Bech32 P2WPKH地址长度 = 42 (非45) — 回归测试"""
+        from src.core.bitcoin_key_validator import BitcoinKeyValidator
+
+        address = BitcoinKeyValidator.generate_bech32_address(_BIP173_G_PUBKEY, hrp="bc")
+        self.assertEqual(
+            len(address), 42,
+            f"Bech32 P2WPKH地址应为42字符, 实际{len(address)} (旧bug会生成45)"
+        )
+        self.assertTrue(
+            address.startswith("bc1q"),
+            f"P2WPKH地址应以bc1q开头: {address}"
+        )
+
+    def test_bech32_address_matches_bip173_vector(self):
+        """Bech32地址与 BIP-173 已知向量匹配"""
+        from src.core.bitcoin_key_validator import BitcoinKeyValidator
+
+        address = BitcoinKeyValidator.generate_bech32_address(_BIP173_G_PUBKEY, hrp="bc")
+        self.assertEqual(
+            address, _BIP173_EXPECTED_ADDRESS,
+            f"Bech32地址应与BIP-173测试向量一致\n  实际: {address}\n  期望: {_BIP173_EXPECTED_ADDRESS}"
+        )
+
+    def test_bech32_address_validates_roundtrip(self):
+        """生成的Bech32地址可通过 bech32_decode 往返验证"""
+        from src.core.bitcoin_key_validator import BitcoinKeyValidator
+        from src.utils.bech32_codec import bech32_decode
+
+        address = BitcoinKeyValidator.generate_bech32_address(_BIP173_G_PUBKEY, hrp="bc")
+        hrp, data, enc = bech32_decode(address)
+        self.assertEqual(hrp, "bc")
+        self.assertIsNotNone(data, "Bech32数据不应为空")
+        self.assertEqual(enc, 1)  # BECH32_CONST
+        self.assertEqual(data[0], 0)  # witness version 0
 
 
 if __name__ == "__main__":

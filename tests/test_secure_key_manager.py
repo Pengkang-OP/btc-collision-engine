@@ -38,8 +38,12 @@ class TestSecureKeyManagerGenerateKey(unittest.TestCase):
         """随机生成密钥"""
         self.mgr.generate_key()
         key = self.mgr.get_key()
-        self.assertIsInstance(key, bytearray)
+        # 现在返回只读视图，但也可以验证是可读写的内存对象
+        self.assertIsInstance(key, memoryview)
         self.assertEqual(len(key), 32)
+        # 验证只读
+        with self.assertRaises((TypeError, ValueError)):
+            key[0] = 0  # 尝试写入应该失败
         self.assertFalse(self.mgr.is_cleared)
 
     def test_generate_from_bytes(self):
@@ -101,7 +105,7 @@ class TestSecureKeyManagerClear(unittest.TestCase):
         self.mgr.clear()  # no-op
         self.assertTrue(self.mgr.is_cleared)
 
-    @patch.object(SecureKeyManager, "_clear_with_cryptography")
+    @patch.object(SecureKeyManager, "_clear_secure")
     def test_clear_counts_stats(self, mock_clear):
         """清零统计更新"""
         self.mgr.generate_key()
@@ -110,7 +114,7 @@ class TestSecureKeyManagerClear(unittest.TestCase):
         self.assertGreaterEqual(stats["total"], 1)
         self.assertGreaterEqual(stats["successful"], 1)
 
-    @patch.object(SecureKeyManager, "_clear_with_cryptography", side_effect=RuntimeError("fail"))
+    @patch.object(SecureKeyManager, "_clear_secure", side_effect=RuntimeError("fail"))
     def test_clear_failure_updates_stats(self, mock_clear):
         """清零失败更新失败统计"""
         self.mgr.generate_key()
@@ -224,8 +228,11 @@ class TestConvenienceFunctions(unittest.TestCase):
     def test_secure_key_context_random(self):
         """secure_key_context 随机生成"""
         with secure_key_context() as key:
-            self.assertIsInstance(key, bytearray)
+            self.assertIsInstance(key, memoryview)
             self.assertEqual(len(key), 32)
+            # 验证只读
+            with self.assertRaises((TypeError, ValueError)):
+                key[0] = 0
 
     def test_secure_key_context_from_bytes(self):
         """secure_key_context 从字节串生成"""
@@ -284,8 +291,8 @@ class TestSecureKeyManagerClearBackends(unittest.TestCase):
         # 验证密钥已清零
         self.assertTrue(all(b == 0 for b in mgr._key))
 
-    def test_clear_with_pynacl_fallback(self):
-        """pynacl 后端清零"""
+    def test_clear_with_retry_fallback(self):
+        """pynacl 后端清零（带回退路径）"""
         mgr = SecureKeyManager(lock_memory=False)
         mgr._backend = "pynacl"
         mgr.generate_key(b"\x02" * 32)

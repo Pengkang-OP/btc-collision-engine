@@ -110,7 +110,68 @@ def load_targets(args: Any) -> set[str]:
             sys.exit(1)
         if not quiet:
             print(_t("address.loaded", count=len(targets)))
+
+    # v4.3.1: 分析目标格式并给出兼容性警告（始终执行分析，输出模式由 quiet 控制）
+    fmt_counts = TargetResolver.analyze_target_formats(targets)
+    if not quiet:
+        _print_format_summary(fmt_counts)
+    else:
+        incompatible = (
+            fmt_counts.get("p2sh", 0)
+            + fmt_counts.get("bech32", 0)
+            + fmt_counts.get("taproot", 0)
+        )
+        if incompatible > 0:
+            logger.warning(_t("targets.incompatible_warning", count=incompatible))
+
     return targets
+
+
+def _print_format_summary(fmt_counts: dict[str, int]) -> None:
+    """打印目标格式统计及不兼容格式警告"""
+    total = sum(fmt_counts.values())
+    if total == 0:
+        return
+
+    # 格式统计
+    parts = []
+    if fmt_counts.get("p2pkh", 0) > 0:
+        parts.append(f"P2PKH: {fmt_counts['p2pkh']}")
+    if fmt_counts.get("p2sh", 0) > 0:
+        parts.append(f"P2SH: {fmt_counts['p2sh']}")
+    if fmt_counts.get("bech32", 0) > 0:
+        parts.append(f"Bech32: {fmt_counts['bech32']}")
+    if fmt_counts.get("taproot", 0) > 0:
+        parts.append(f"Taproot: {fmt_counts['taproot']}")
+    if fmt_counts.get("unknown", 0) > 0:
+        parts.append(f"Unknown: {fmt_counts['unknown']}")
+    print(_t("targets.format_breakdown", breakdown=", ".join(parts)))
+
+    # 不兼容格式警告
+    incompatible = fmt_counts.get("p2sh", 0) + fmt_counts.get("bech32", 0) + fmt_counts.get("taproot", 0)
+    if incompatible > 0:
+        # 使用 Rich Panel 输出醒目警告
+        try:
+            from rich.console import Console
+            from rich.panel import Panel
+            from rich.text import Text
+
+            console = Console()
+            warning_text = Text()
+            warning_text.append(
+                _t("targets.incompatible_warning", count=incompatible),
+                style="bold yellow",
+            )
+            warning_text.append("\n\n")
+            warning_text.append(_t("targets.incompatible_detail"))
+            warning_text.append("\n")
+            warning_text.append(_t("targets.incompatible_suggestion"))
+            console.print(Panel(warning_text, title=_t("common.warning"), border_style="yellow"))
+        except Exception:
+            logger.debug("Rich Panel 渲染失败，降级纯文本警告", exc_info=True)
+            print(_t("targets.incompatible_warning", count=incompatible))
+            print(_t("targets.incompatible_detail"))
+            print(_t("targets.incompatible_suggestion"))
 
 
 def _run_main() -> None:

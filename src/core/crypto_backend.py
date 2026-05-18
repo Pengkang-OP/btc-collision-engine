@@ -27,7 +27,7 @@ from typing import Any, cast
 from ..utils import get_configured_logger
 
 # 注意：不在模块级别调用init_logging()，由CLI入口统一初始化
-# init_logging()  # ← 已移除，避免重复初始化
+# init_logging() # ← 已移除，避免重复初始化
 
 # 获取模块日志记录器
 logger = get_configured_logger("CryptoBackend")
@@ -198,25 +198,30 @@ class OpenSSLBackend(CryptoBackend):
         """
         注意: cryptography库不直接暴露点乘运算，
         我们通过创建临时私钥来实现。
+
+        C-2修复: 当OpenSSL不可用时拒绝回退到非恒定时间实现。
+        抛出异常而不是回退到不安全的实现。
+
+        侧信道安全说明:
+        1. 非恒定时间算法可能泄露私钥信息
+        2. 攻击者可通过分析执行时间推断私钥位
+        3. 恒定时间实现确保执行时间与输入无关
+        4. 对于安全敏感场景，强制要求恒定时间实现
+
+        推荐的后端选择:
+        - CoincurveBackend: libsecp256k1，完全恒定时间（推荐）
+        - OpenSSLBackend: generate_public_key 是恒定的，但 scalar_multiply 不是
+        - PurePythonBackend: 可选恒定时间模式，但性能较低
         """
         if not self._available:
-            raise RuntimeError("OpenSSL backend not available")
+            logger.critical("OpenSSL后端不可用，无法执行标量乘法")
+            raise RuntimeError("OpenSSL后端不可用，无法执行标量乘法")
 
-        from cryptography.hazmat.primitives.asymmetric import ec
-
-        # 创建一个基于目标点的公钥
-        # 然后使用标量乘法
-        point = ec.EllipticCurvePublicNumbers(  # noqa: F841
-            x=point_x, y=point_y, curve=self._SECP256K1
-        )  # noqa: F841, E501
-
-        # 这里我们需要使用底层操作
-        # 由于cryptography库的限制，我们使用纯Python实现作为回退
-        # 在实际应用中，可以考虑使用更低级的OpenSSL绑定
+        # OpenSSL后端不支持标量乘法，回退到纯Python恒定时间实现
         from .secp256k1 import ECPoint, EllipticCurve
 
         ec_impl = EllipticCurve()
-        result = ec_impl.scalar_multiply(k, ECPoint(point_x, point_y))
+        result = ec_impl.scalar_multiply_const_time(k, ECPoint(point_x, point_y))
 
         return cast(tuple[int, int], (result.x, result.y))
 
@@ -225,14 +230,15 @@ class OpenSSLBackend(CryptoBackend):
         #
         # ⚠️ 重要说明:
         # - generate_public_key() IS constant-time (使用 OpenSSL ec.derive_private_key)
-        # - scalar_multiply() falls back to PurePython EllipticCurve.scalar_multiply()
-        #   which is NOT constant-time (非Montgomery Ladder, 变量时间mod_inverse)
+        # - scalar_multiply() 现在调用 scalar_multiply_const_time (Montgomery Ladder),
+        #   算法层面是恒定时间的，但 Python 解释器层面的分支预测和缓存效应
+        #   可能导致实际执行时间的微小变化
         #
-        # 由于 is_constant_time() 应反映整个后端的能力，返回 False。
+        # 由于 is_constant_time() 应反映整个后端的能力，保守地返回 False。
         #
         # 对于本项目的主要用例（通过 generate_public_key 进行碰撞检测），
         # 实际执行路径是恒定时间的。本标志保守地返回 False，
-        # 因为 scalar_multiply() 不是恒定时间的。
+        # 因为 Python 解释器层面难以保证绝对恒定时间。
         #
         # 建议:
         # 1. 对于安全敏感场景，使用 CoincurveBackend（libsecp256k1，完全恒定时间）
@@ -301,18 +307,23 @@ class CoincurveBackend(CryptoBackend):
                 rx = int.from_bytes(result_bytes[1:33], "big")
                 ry = int.from_bytes(result_bytes[33:65], "big")
                 return rx, ry
+            else:
+                # coincurve 返回了意外格式，回退到纯Python实现
+                logger.warning(
+                    f"coincurve返回意外格式: prefix=0x{result_bytes[0]:02x}, len={len(result_bytes)}，"
+                    f"回退到纯Python恒定时间实现"
+                )
         except (AttributeError, TypeError, AssertionError) as e:
             # 如果multiply不可用或返回类型不匹配，使用纯Python回退
-            # 注意: 回退到非恒定时间实现可能有侧信道风险，但在GPU批量处理中风险较低
             logger.warning(
-                f"coincurve标量乘法失败({type(e).__name__})，回退到纯Python实现。注意: 回退实现可能不具备恒定时间特性。"
+                f"coincurve标量乘法失败({type(e).__name__})，回退到纯Python恒定时间实现"
             )
 
-        # 回退到纯Python实现
+        # 回退到纯Python恒定时间实现
         from .secp256k1 import ECPoint, EllipticCurve
 
         ec_impl = EllipticCurve()
-        ec_result = ec_impl.scalar_multiply(k, ECPoint(point_x, point_y))
+        ec_result = ec_impl.scalar_multiply_const_time(k, ECPoint(point_x, point_y))
         return cast(tuple[int, int], (ec_result.x, ec_result.y))
 
     def is_constant_time(self) -> bool:

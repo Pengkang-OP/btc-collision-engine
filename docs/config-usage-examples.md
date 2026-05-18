@@ -1,8 +1,7 @@
 # 配置系统使用示例
 
-> **版本**: v3.3.1 | **最后更新**: 2026-04-28  
+> **版本**: v4.2.2 | **最后更新**: 2026-05-15
 > **面向**: 开发者/运维
-
 
 本文档提供BTC碰撞引擎配置系统的完整使用示例，包括ConfigCoordinator、ConfigManager、CryptoConfig和GPUConfig的使用方法。
 
@@ -420,7 +419,7 @@ if errors:
     print("=" * 60)
     print("配置验证失败")
     print("=" * 60)
-    
+
     for manager, error_list in errors.items():
         print(f"\n{manager}:")
         for error in error_list:
@@ -511,10 +510,10 @@ try:
     # 临时修改配置
     coordinator.set('gpu.batch_size', 262144)
     print(f"临时batch_size: {coordinator.get('gpu.batch_size')}")
-    
+
     # 使用新配置执行任务
     # ... 执行任务 ...
-    
+
 finally:
     # 恢复原始配置
     coordinator.set('gpu.batch_size', original_gpu_batch)
@@ -553,34 +552,34 @@ class ConfigWatcher:
     def __init__(self, coordinator):
         self.coordinator = coordinator
         self._last_config = coordinator.get_unified_config()
-    
+
     def check_changes(self):
         """检查配置是否发生变化"""
         current_config = self.coordinator.get_unified_config()
-        
+
         if current_config != self._last_config:
             print("⚠️ 配置已更改")
-            
+
             # 找出变更的配置项
             self._find_changes(self._last_config, current_config)
-            
+
             self._last_config = current_config
             return True
-        
+
         return False
-    
+
     def _find_changes(self, old, new, path=""):
         """递归查找变更"""
         for key in new:
             current_path = f"{path}.{key}" if path else key
-            
+
             if key not in old:
                 print(f"  + 新增: {current_path} = {new[key]}")
             elif isinstance(new[key], dict) and isinstance(old.get(key), dict):
                 self._find_changes(old[key], new[key], current_path)
             elif old[key] != new[key]:
                 print(f"  ~ 修改: {current_path}: {old[key]} -> {new[key]}")
-        
+
         for key in old:
             if key not in new:
                 current_path = f"{path}.{key}" if path else key
@@ -605,22 +604,22 @@ from src.config import ConfigCoordinator
 
 class MultiEnvConfig:
     """多环境配置管理器"""
-    
+
     def __init__(self, base_config_file):
         self.base_coordinator = ConfigCoordinator(base_config_file)
         self.env_coordinators = {}
-    
+
     def load_env(self, env_name, env_config_file):
         """加载环境配置"""
         self.env_coordinators[env_name] = ConfigCoordinator(env_config_file)
         print(f"✅ 加载{env_name}环境配置: {env_config_file}")
-    
+
     def get_coordinator(self, env_name='default'):
         """获取指定环境的配置协调器"""
         if env_name == 'default':
             return self.base_coordinator
         return self.env_coordinators.get(env_name, self.base_coordinator)
-    
+
     def switch_env(self, env_name):
         """切换到指定环境"""
         coordinator = self.get_coordinator(env_name)
@@ -735,13 +734,13 @@ class LazyConfig:
     def __init__(self, config_file):
         self._config_file = config_file
         self._coordinator = None
-    
+
     @property
     def coordinator(self):
         if self._coordinator is None:
             self._coordinator = ConfigCoordinator(self._config_file)
         return self._coordinator
-    
+
     def get(self, key, default=None):
         return self.coordinator.get(key, default)
 
@@ -749,14 +748,14 @@ class LazyConfig:
 def update_gpu_config(batch_size=None, device_index=None, memory_ratio=None):
     """批量更新GPU配置"""
     coordinator = ConfigCoordinator('config.json')
-    
+
     if batch_size is not None:
         coordinator.set('gpu.batch_size', batch_size)
     if device_index is not None:
         coordinator.set('gpu.device_index', device_index)
     if memory_ratio is not None:
         coordinator.set('gpu.memory_usage_ratio', memory_ratio)
-    
+
     coordinator.save_all()
 ```python
 
@@ -861,7 +860,6 @@ cm.save_config()
 
 ---
 
-**文档版本**: v1.0  
-**最后更新**: 2026-04-20  
+**文档版本**: v4.2.2
+**最后更新**: 2026-04-20
 **维护者**: BTC碰撞引擎开发团队
-

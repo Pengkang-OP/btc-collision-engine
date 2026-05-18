@@ -37,7 +37,7 @@ def _build_module(name, **attrs):
 
 _MOCK_SPECS = [
     # (模块名, 属性字典) — None 值自动替换为 MagicMock(name=key)
-    ("src.collision.gpu", {"__version__": "6.0.0"}),
+    ("src.collision.gpu", {"__version__": "4.4.0"}),
     ("src.collision.gpu.engine", {
         "GPUCollisionEngine": None,
         "UINT32_MAX": 0xFFFFFFFF,
@@ -47,7 +47,7 @@ _MOCK_SPECS = [
         "ASYNC_LOG_AVAILABLE": True,
         "GPU_CONFIG_MANAGER_AVAILABLE": True,
     }),
-    ("src.gpu", {"__version__": "3.5.1"}),
+    ("src.gpu", {"__version__": "4.4.0"}),
     ("src.gpu.profiles", {}),
     ("src.gpu.device", {"GPUDevice": None, "GPUDeviceDetector": None, "identify_vendor": None}),
     ("src.gpu.context", {"GPUContext": None}),

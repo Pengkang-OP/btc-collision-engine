@@ -14,8 +14,8 @@ import pytest
 import json
 from unittest.mock import Mock
 
-from src.logging.log_processor import LogProcessor, SensitiveDataFilter
-from src.logging.events import LogEvent, LogEventType
+from src.log_engine.log_processor import LogProcessor, SensitiveDataFilter
+from src.log_engine.events import LogEvent, LogEventType
 
 # ============================================================================
 # LogProcessor 测试

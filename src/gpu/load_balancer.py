@@ -15,10 +15,10 @@ import statistics
 import time
 from typing import Any, cast
 
-# P3-5: 统一日志获取
+# 统一日志获取
 from ..utils import get_configured_logger
 
-# P3-11: 统一GPU评分
+# 统一GPU评分
 from .scorer import GPUDeviceScorer, get_gpu_scorer
 
 logger = get_configured_logger("GPULoadBalancer")

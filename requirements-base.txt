@@ -1,6 +1,18 @@
 # BTC 碰撞引擎 - 基础必选依赖
 # 安装: pip install -r requirements-base.txt
 
+# Python 版本要求 (COMP-1修复)
+# 需要 Python 3.9+ 以支持:
+# - 类型注解语法 (int | None)
+# - 内置泛型 (list[dict], dict[str, Any])
+# - zoneinfo 时区支持
+# - 性能改进 (字典合并运算符等)
+# 
+# 在 pyproject.toml 或 setup.py 中设置:
+#   requires-python = ">=3.9"
+# 或使用 pip 安装时检查:
+#   pip install --python-version 3.9 .
+
 # 加密核心
 cffi>=1.15.0                 # 移除上限约束，兼容 Python 3.14 下 cffi 2.0.0 预编译 wheel
 coincurve>=18.0.0           # libsecp256k1 绑定（强烈推荐，性能最佳）
@@ -16,7 +28,7 @@ numpy>=1.24.0               # 数值计算，SIMD 优化支持
 # 地址解析
 cachetools>=5.3.0            # LRU/TTL 缓存，加速地址解析
 pybloom-live>=2.2.0          # Bloom 过滤器，大规模地址去重
-bech32>=1.2.0                # Bech32 地址解析（P2WPKH 支持）
+bech32>=1.2.0                # Bech32 地址解析（工具脚本备用；核心引擎使用内置 bech32_codec）
 bitarray>=2.6.0              # Bloom 过滤器底层位数组
 chardet>=5.0.0,<6.0.0       # 文件编码自动检测
 

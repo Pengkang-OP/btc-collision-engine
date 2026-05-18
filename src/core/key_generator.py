@@ -6,12 +6,11 @@ import threading
 import time
 from datetime import datetime
 
-from ..utils import get_configured_logger, init_logging
+from ..utils import get_configured_logger
 from .secp256k1 import Secp256k1
 from .secure_key_manager import SecureKeyManager
 
-# 初始化日志系统
-init_logging()
+# 日志系统由CLI/main.py入口统一初始化
 logger = get_configured_logger("SecureKeyGenerator")
 
 

@@ -17,7 +17,7 @@ import tempfile
 import pytest
 from unittest.mock import patch
 
-from src.logging.log_storage import LogStorage
+from src.log_engine.log_storage import LogStorage
 
 # ============================================================================
 # Fixtures

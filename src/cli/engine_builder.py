@@ -13,7 +13,7 @@ import logging
 import sys
 from typing import Any, cast
 
-# P3-3: 统一回调类型别名
+# 统一回调类型别名
 from src.collision.types import MatchCallback, ProgressCallback
 
 logger = logging.getLogger(__name__)
@@ -34,20 +34,29 @@ except ImportError:
     MultiGPUCollisionEngine: Any = None  # type: ignore[no-redef]
 
 
-def on_match_callback(sensitive_mode: str = "full") -> MatchCallback:
-    """匹配回调工厂函数（高亮显示，支持脱敏模式）"""
+def on_match_callback(sensitive_mode: str = "masked") -> MatchCallback:
+    """匹配回调工厂函数（高亮显示，支持脱敏模式）
+
+    安全说明: 非交互式终端 (non-TTY) 环境下自动降级为 hash_only 模式，
+    防止 stdout 重定向导致的私钥泄露。
+    """
 
     def _callback(private_key: bytes, address: str, wif: str) -> None:
         pk_hex = private_key.hex()
 
+        # 非TTY环境强制降级为hash_only（防止stdout重定向泄露私钥）
+        effective_mode = sensitive_mode
+        if not sys.stdout.isatty():
+            effective_mode = "hash_only"
+
         # 根据安全模式决定私钥显示方式
-        if sensitive_mode == "masked":
+        if effective_mode == "masked":
             pk_display = pk_hex[:8] + "*" * (len(pk_hex) - 16) + pk_hex[-8:]
             wif_display = wif[:4] + "*" * (len(wif) - 8) + wif[-4:]
-        elif sensitive_mode == "hash_only":
+        elif effective_mode == "hash_only":
             pk_display = "[SHA256:" + hashlib.sha256(private_key).hexdigest()[:16] + "...]"
             wif_display = "[已隐藏]"
-        else:  # "full" - 默认，向后兼容
+        else:  # "full" - 仅TTY环境可达
             pk_display = pk_hex
             wif_display = wif
 
@@ -66,7 +75,7 @@ def build_engine(
     targets: set[str],
     on_progress: ProgressCallback | None = None,
     on_match: MatchCallback | None = None,
-    sensitive_mode: str = "full",
+    sensitive_mode: str = "masked",
     config: dict | None = None,
 ) -> tuple[Any, str]:
     """引擎工厂：根据 CLI 参数分路 CPU / 单GPU / 多GPU 三种引擎

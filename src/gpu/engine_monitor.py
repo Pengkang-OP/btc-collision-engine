@@ -19,7 +19,7 @@ import time
 from collections import deque
 from typing import TYPE_CHECKING, Any, Optional
 
-# P3-5: 统一日志获取 + 修复缺失导入
+# 统一日志获取 + 修复缺失导入
 from ..utils import get_configured_logger
 
 if TYPE_CHECKING:

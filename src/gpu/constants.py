@@ -10,7 +10,7 @@ BYTES_PER_MB = 1024 * 1024  # 1 MiB
 # ===== 批次大小相关常量 =====
 BATCH_SIZE_ALIGNMENT = 1024  # 批次大小对齐值
 MIN_BATCH_SIZE = 1024  # 最小批次大小
-MAX_BATCH_SIZE = 4194304  # 最大批次大小 (4M)
+MAX_BATCH_SIZE = 16777216  # 最大批次大小 (16M，与配置层保持一致)
 DEFAULT_BATCH_SIZE = 262144  # 默认批次大小 (256K)
 
 # ===== 显存效率相关常量 =====

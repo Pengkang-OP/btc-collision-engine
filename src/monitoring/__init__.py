@@ -15,7 +15,7 @@ from .monitoring_system import (
     ReportGenerator,
 )
 
-# P2-7: 多渠道通知
+# 多渠道通知
 from .notification_channels import (
     CompositeNotification,
     ConsoleNotification,
@@ -37,7 +37,7 @@ __all__ = [
     "MonitoringData",
     "DataLogger",
     "EnhancedMonitoringSystem",
-    # P2-7: 通知渠道
+    # 通知渠道
     "NotificationChannel",
     "ConsoleNotification",
     "LogFileNotification",

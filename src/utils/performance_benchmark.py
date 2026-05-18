@@ -22,10 +22,9 @@ from typing import Any, cast
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from src.utils import get_configured_logger, init_logging  # noqa: E402
+from src.utils import get_configured_logger  # noqa: E402
 
-# 初始化日志
-init_logging()
+# 日志系统由CLI/main.py入口统一初始化
 logger = get_configured_logger("PerformanceBenchmark")
 
 

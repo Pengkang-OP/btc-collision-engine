@@ -18,13 +18,19 @@ call :check_python_version
 call :print_section "Step 2: 设置虚拟环境"
 
 if exist "venv\Scripts\activate.bat" (
-    echo [INFO] 检测到现有虚拟环境
-    echo.
-    echo   1. 保留现有虚拟环境 (修复问题时推荐)
-    echo   2. 删除并重新创建 (环境损坏时使用)
-    echo.
+    goto :handle_existing_venv
+) else (
+    goto :create_venv
+)
 
-::ask_venv
+:handle_existing_venv
+echo [INFO] 检测到现有虚拟环境
+echo.
+echo   1. 保留现有虚拟环境 (修复问题时推荐)
+echo   2. 删除并重新创建 (环境损坏时使用)
+echo.
+
+:ask_venv
 set "VENV_CHOICE="
 set /p "VENV_CHOICE=   请选择 [1/2]: "
 if "!VENV_CHOICE!"=="1" goto :activate_venv
@@ -35,9 +41,6 @@ if "!VENV_CHOICE!"=="2" (
 )
 echo [错误] 请输入 1 或 2
 goto :ask_venv
-) else (
-    goto :create_venv
-)
 
 :create_venv
 echo [INFO] 正在创建虚拟环境...
@@ -62,7 +65,12 @@ echo [OK] 虚拟环境已激活
 
 call :print_section "Step 3: 升级 pip"
 python -m pip install --upgrade pip --quiet
-echo [OK] pip 升级成功
+if errorlevel 1 (
+    echo [WARN] pip 升级失败，将使用当前版本继续
+    echo [TIP] 如果后续依赖安装失败，请手动执行: python -m pip install --upgrade pip
+) else (
+    echo [OK] pip 升级成功
+)
 
 call :print_section "Step 4: 安装基础依赖"
 echo [INFO] 这可能需要几分钟...
@@ -100,7 +108,7 @@ echo   AMD 显卡   : 安装 AMD 驱动 ^>= 21.x
 echo   Intel Arc  : 安装 Intel Arc 驱动 ^>= 31.0.101.4146
 echo.
 
-::ask_gpu
+:ask_gpu
 set "GPU_CHOICE="
 set /p "GPU_CHOICE=   是否安装 GPU 依赖? [y/n]: "
 if /i "!GPU_CHOICE!"=="y" (
@@ -130,13 +138,21 @@ call :create_config
 call :print_section "验证已安装的包"
 echo.
 
-python -c "import rich"         >nul 2>&1 && echo   [OK] rich              || echo   [缺失] rich
-python -c "import coincurve"    >nul 2>&1 && echo   [OK] coincurve         || echo   [警告] coincurve (ecdsa 备用)
-python -c "import ecdsa"        >nul 2>&1 && echo   [OK] ecdsa             || echo   [缺失] ecdsa
-python -c "import psutil"       >nul 2>&1 && echo   [OK] psutil            || echo   [缺失] psutil
-python -c "import gmpy2"        >nul 2>&1 && echo   [OK] gmpy2             || echo   [INFO] gmpy2 (可选)
-python -c "import pyopencl"     >nul 2>&1 && echo   [OK] pyopencl (GPU)   || echo   [INFO] pyopencl (GPU 模式不可用)
-python -c "import jsonschema"   >nul 2>&1 && echo   [OK] jsonschema        || echo   [缺失] jsonschema
+rem v4.2.2 R3: 使用 if errorlevel 检测退出码，比 && / || 链更健壮
+python -c "import rich"         >nul 2>&1
+if errorlevel 1 (echo   [缺失] rich)              else (echo   [OK] rich)
+python -c "import coincurve"    >nul 2>&1
+if errorlevel 1 (echo   [警告] coincurve (ecdsa 备用)) else (echo   [OK] coincurve)
+python -c "import ecdsa"        >nul 2>&1
+if errorlevel 1 (echo   [缺失] ecdsa)             else (echo   [OK] ecdsa)
+python -c "import psutil"       >nul 2>&1
+if errorlevel 1 (echo   [缺失] psutil)            else (echo   [OK] psutil)
+python -c "import gmpy2"        >nul 2>&1
+if errorlevel 1 (echo   [INFO] gmpy2 (可选))      else (echo   [OK] gmpy2)
+python -c "import pyopencl"     >nul 2>&1
+if errorlevel 1 (echo   [INFO] pyopencl (GPU 模式不可用)) else (echo   [OK] pyopencl (GPU))
+python -c "import jsonschema"   >nul 2>&1
+if errorlevel 1 (echo   [缺失] jsonschema)        else (echo   [OK] jsonschema)
 
 call :print_header "安装完成!"
 echo.

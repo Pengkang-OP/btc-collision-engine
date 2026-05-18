@@ -17,7 +17,7 @@ import os
 import time
 from typing import Any
 
-# P3-5: 统一日志获取
+# 统一日志获取
 from ...utils import get_configured_logger
 from ..constants import PER_KEY_MEMORY_BYTES, align_batch_size
 from .base import GPUVendorBase
@@ -180,7 +180,7 @@ class IntelGPUVendor(GPUVendorBase):
         3. 动态检测显存大小自动调整上限
         """
         recommended = profile.get("recommended_batch_size", 1048576)
-        maximum = profile.get("max_batch_size", 2097152)  # v4.2.0: A770 16GB 可安全承载 2M
+        maximum = profile.get("max_batch_size", 2097152)  # v4.2.3: A770 16GB 可安全承载 2M
         memory_efficiency = profile.get("memory_efficiency", 0.70)  # v2.2.1优化: 45% -> 70%
 
         # 根据显存计算理论最大值(使用更保守的memory_efficiency)

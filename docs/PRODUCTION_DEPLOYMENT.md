@@ -132,7 +132,7 @@ docker-compose --profile gpu --profile nvidia --profile monitoring up -d
 
 ### 生产验收测试状态
 
-**测试版本**: v3.3.1
+**测试版本**: v4.2.1
 **测试时间**: 2026-04-28
 **测试结果**: ✅ PASSED (18/18, 100%)
 
@@ -542,6 +542,6 @@ systemd服务已配置以下资源限制：
 
 ---
 
-**文档版本**: 1.0
+**文档版本**: v4.2.2
 **创建日期**: 2026-04-24
 **维护者**: BTC Project Team

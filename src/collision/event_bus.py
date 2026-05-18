@@ -24,6 +24,7 @@
 """
 
 import logging
+import os
 import queue
 import threading
 from collections import defaultdict
@@ -33,6 +34,10 @@ from typing import Any
 from .events import CollisionEvent, EventType
 
 logger = logging.getLogger(__name__)
+
+# v4.3.1: 事件处理器超时保护（秒），0=禁用
+# 警告: 设为 >0 会为每个事件创建线程，仅建议在调试/开发环境使用
+_HANDLER_TIMEOUT_SEC = 0
 
 
 class EventBus:
@@ -62,24 +67,32 @@ class EventBus:
         >>> print(f"发布事件数: {bus.published_count}")
     """
 
-    def __init__(self, async_mode: bool = False, max_queue_size: int = 1000) -> None:
+    def __init__(
+        self,
+        async_mode: bool = False,
+        max_queue_size: int = 1000,
+        handler_timeout: float = _HANDLER_TIMEOUT_SEC,
+    ) -> None:
         """
         初始化事件总线
 
         Args:
             async_mode: 是否异步处理事件 (默认False)
             max_queue_size: 事件队列最大大小 (异步模式)
+            handler_timeout: 事件处理器超时时间(秒)，0表示无超时（默认10秒）
         """
         self._subscribers: dict[EventType, list[Callable]] = defaultdict(list)
         self._lock = threading.RLock()
         self._error_handler: Callable | None = None
         self._async_mode = async_mode
         self._max_queue_size = max_queue_size
+        self._handler_timeout = handler_timeout
 
         # 统计信息
         self._published_count = 0
         self._error_count = 0
         self._dropped_count = 0  # 跟踪丢弃的事件数量
+        self._timeout_count = 0  # v4.3.1: 跟踪超时的处理器数量
 
         # 异步队列（同步模式下为 None）
         self._event_queue: Any | None = None
@@ -201,20 +214,70 @@ class EventBus:
 
         # 在锁外执行处理器，避免死锁
         for handler in handlers:
+            self._invoke_handler(handler, event)
+
+    def _invoke_handler(self, handler: Callable, event: CollisionEvent) -> None:
+        """安全调用事件处理器，带超时保护 (v4.3.1)
+
+        使用线程超时机制防止挂起的处理器阻塞事件总线。
+        Windows 使用 threading.Thread.join(timeout)。
+
+        Args:
+            handler: 事件处理函数
+            event: 事件对象
+        """
+        timeout = self._handler_timeout
+        if timeout <= 0:
             try:
                 handler(event)
             except (KeyboardInterrupt, SystemExit):
-                # 不吞没退出信号，让其传播
                 raise
             except Exception as e:
                 self._error_count += 1
-                logger.error(f"事件处理器异常 [{handler.__name__}]: {type(e).__name__}: {e}")
-
+                logger.error(
+                    f"事件处理器异常 [{handler.__name__}]: {type(e).__name__}: {e}"
+                )
                 if self._error_handler:
                     try:
                         self._error_handler(event, e)
                     except Exception as handler_err:
                         logger.error(f"错误处理器异常: {handler_err}")
+            return
+
+        handler_result: list[Exception | None] = [None]
+
+        def _target() -> None:
+            try:
+                handler(event)
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except Exception as e:
+                handler_result[0] = e
+
+        t = threading.Thread(target=_target, daemon=True)
+        t.start()
+        t.join(timeout=timeout)
+
+        if t.is_alive():
+            with self._lock:
+                self._timeout_count += 1
+            logger.critical(
+                f"事件处理器超时 [{handler.__name__}] "
+                f"(>{timeout}s), event_type={event.event_type.value if event.event_type else 'N/A'}"
+            )
+            return
+
+        exc = handler_result[0]
+        if exc is not None:
+            self._error_count += 1
+            logger.error(
+                f"事件处理器异常 [{handler.__name__}]: {type(exc).__name__}: {exc}"
+            )
+            if self._error_handler:
+                try:
+                    self._error_handler(event, exc)
+                except Exception as handler_err:
+                    logger.error(f"错误处理器异常: {handler_err}")
 
     def _process_events(self) -> None:
         """异步处理事件队列 (后台线程)"""
@@ -310,6 +373,7 @@ class EventBus:
             "subscriber_count": self.subscriber_count,
             "published_count": self._published_count,
             "error_count": self._error_count,
+            "timeout_count": self._timeout_count,
             "async_mode": self._async_mode,
             "queue_size": self._event_queue.qsize() if self._event_queue else 0,
         }

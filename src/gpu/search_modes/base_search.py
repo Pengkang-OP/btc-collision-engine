@@ -9,7 +9,7 @@ import time
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-# P3-5: 统一日志获取 + 修复缺失导入
+# 统一日志获取 + 修复缺失导入
 from ...utils import get_configured_logger
 from ...utils.exception_handler import ExceptionHandler
 
