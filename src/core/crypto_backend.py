@@ -599,3 +599,112 @@ def set_crypto_backend(backend_type: BackendType, **kwargs) -> bool:
 def get_available_backends() -> list:
     """获取所有可用后端"""
     return crypto_manager.get_available_backends()
+
+
+def is_secure_backend_available() -> bool:
+    """
+    检查是否有安全的加密后端可用（生产环境必需）
+
+    安全后端定义:
+    - CoincurveBackend (推荐): libsecp256k1，完全恒定时间
+    - OpenSSLBackend: generate_public_key 恒定时间
+
+    不安全后端:
+    - PurePythonBackend: 可选恒定时间模式，但性能较低
+    - ECDSABackend: 可能不使用恒定时间算法
+
+    Returns:
+        True 表示有安全后端可用
+    """
+    backend = crypto_manager.current_backend
+    if backend is None:
+        return False
+
+    backend_name = backend.name.lower()
+
+    # Coincurve 最安全
+    if "coincurve" in backend_name or "libsecp256k1" in backend_name:
+        return True
+
+    # OpenSSL 的 generate_public_key 是恒定时间的
+    if "openssl" in backend_name:
+        return True
+
+    # PurePython 需要检查是否启用恒定时间模式
+    if "pure python" in backend_name or "purepython" in backend_name:
+        return backend.is_constant_time()
+
+    # 其他后端保守返回 False
+    return False
+
+
+def get_backend_security_info() -> dict:
+    """
+    获取当前后端的安全信息
+
+    Returns:
+        包含后端安全信息的字典
+    """
+    backend = crypto_manager.current_backend
+    if backend is None:
+        return {
+            "available": False,
+            "backend": None,
+            "security_level": "unknown",
+        }
+
+    backend_name = backend.name.lower()
+    is_constant_time = backend.is_constant_time()
+
+    # 判断安全级别
+    if "coincurve" in backend_name or "libsecp256k1" in backend_name:
+        security_level = "secure"  # 完全安全
+    elif "openssl" in backend_name:
+        security_level = "secure" if is_constant_time else "partial"
+    elif is_constant_time:
+        security_level = "partial"  # 部分安全
+    else:
+        security_level = "insecure"  # 不安全
+
+    return {
+        "available": True,
+        "backend": backend.name,
+        "security_level": security_level,
+        "is_constant_time": is_constant_time,
+        "recommendation": _get_security_recommendation(security_level),
+    }
+
+
+def _get_security_recommendation(security_level: str) -> str:
+    """获取安全建议"""
+    recommendations = {
+        "secure": "当前后端安全，适合生产环境使用",
+        "partial": "当前后端部分安全，建议安装 coincurve 库以获得更好的安全性",
+        "insecure": "当前后端不安全，不建议在生产环境中使用",
+    }
+    return recommendations.get(security_level, "未知安全级别")
+
+
+def verify_production_ready() -> tuple[bool, str]:
+    """
+    验证系统是否满足生产环境安全要求
+
+    Returns:
+        (is_ready, message) 元组
+        is_ready: True 表示满足生产环境要求
+        message: 状态消息
+    """
+    if is_secure_backend_available():
+        return True, "✅ 生产环境安全检查通过"
+
+    backend_info = get_backend_security_info()
+    return False, (
+        f"⚠️  生产环境安全检查未通过\n"
+        f"   当前后端: {backend_info.get('backend', 'unknown')}\n"
+        f"   安全级别: {backend_info.get('security_level', 'unknown')}\n"
+        f"   {backend_info.get('recommendation', '')}\n\n"
+        f"💡 建议:\n"
+        f"   pip install coincurve  # 推荐，最安全\n"
+        f"   pip install cryptography  # 备选，generate_public_key 恒定时间\n"
+    )
+

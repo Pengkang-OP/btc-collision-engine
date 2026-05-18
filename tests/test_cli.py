@@ -792,7 +792,7 @@ class TestBuildEngine:
         assert engine is mock_engine
 
     def test_build_gpu_when_unavailable(self, monkeypatch):
-        """GPU不可用时请求GPU引擎应报错退出"""
+        """GPU不可用时请求GPU引擎应抛出GPUNotAvailableError"""
         import src.cli.engine_builder as eb
 
         monkeypatch.setattr(eb, "GPU_AVAILABLE", False)
@@ -801,11 +801,11 @@ class TestBuildEngine:
             use_gpu = True
             multi_gpu = False
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(eb.GPUNotAvailableError):
             eb.build_engine(MockArgs(), {"addr1"})
 
     def test_build_multi_gpu_when_unavailable(self, monkeypatch):
-        """GPU不可用时请求多GPU引擎应报错退出"""
+        """GPU不可用时请求多GPU引擎应抛出GPUNotAvailableError"""
         import src.cli.engine_builder as eb
 
         monkeypatch.setattr(eb, "GPU_AVAILABLE", False)
@@ -814,7 +814,7 @@ class TestBuildEngine:
             use_gpu = False
             multi_gpu = True
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(eb.GPUNotAvailableError):
             eb.build_engine(MockArgs(), {"addr1"})
 
 

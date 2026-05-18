@@ -294,6 +294,13 @@ class ConfigManager:
             "device_indices": [-1],
             "load_balancing": "performance",
             "auto_tuning": False,
+            # 审计修复: 补充 Schema 中声明但 DEFAULT_CONFIG 缺失的字段
+            "work_group_size": 256,  # OpenCL work group size
+            "use_fast_math": True,  # 启用 fast math 优化
+            "use_uint32_workaround": False,  # Intel GPU uint32 兼容处理
+            "compiler_flags": "",  # 自定义编译选项
+            "driver_check": {},  # 驱动检查配置
+            "per_device_config": {},  # 每设备独立配置
         },
         "monitoring": {
             "enabled": True,
@@ -337,6 +344,14 @@ class ConfigManager:
         "i18n": {
             "language": "auto",
             "fallback_language": "en_US",
+        },
+        # 审计修复: 补充 Schema 中声明但 DEFAULT_CONFIG 缺失的 gui 配置
+        "gui": {
+            "theme": "dark",
+            "font": "Consolas",
+            "font_size": 12,
+            "window_width": 1200,
+            "window_height": 800,
         },
     }
 

@@ -4,10 +4,10 @@
 校验测试结果与业务规则，拦截异常并记录
 """
 
-import hashlib
 import json
 import re
 import sys
+import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -160,8 +160,7 @@ class AuditModule:
 
     def _generate_audit_id(self) -> str:
         """生成审核ID"""
-        timestamp = datetime.now().isoformat()
-        return f"audit_{hashlib.md5(timestamp.encode()).hexdigest()[:12]}"
+        return f"audit_{uuid.uuid4().hex[:12]}"
 
     def _compute_audit_metrics(
         self, test_results: TestSuiteResult, analysis_report: AnalysisReport | None

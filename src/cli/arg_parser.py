@@ -140,6 +140,27 @@ def parse_args() -> argparse.Namespace:  # noqa: D401
         help="去重过滤器最大容量（默认: 1,000,000）",
     )
 
+    # ── 2.5. 安全选项 ──────────────────────────────────────────────────────────
+    security_group = parser.add_argument_group("安全选项", "生产环境安全检查和敏感信息保护")
+    security_group.add_argument(
+        "--production",
+        action="store_true",
+        default=False,
+        help="生产模式：启用严格的安全检查，确保使用安全的加密后端",
+    )
+    security_group.add_argument(
+        "--secure",
+        action="store_true",
+        default=False,
+        help="与 --production 相同，启用安全检查模式",
+    )
+    security_group.add_argument(
+        "--skip-security-check",
+        action="store_true",
+        default=False,
+        help="跳过生产模式的安全检查（不推荐用于生产环境）",
+    )
+
     # ── 3. GPU 加速 ──────────────────────────────────────────────────────────
     gpu_group = parser.add_argument_group(
         "GPU 加速",

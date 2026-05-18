@@ -334,20 +334,22 @@ class TestGPUIntegration:
         mock_gpu_engine.stop = Mock()
 
         monkeypatch.setattr(eb, "GPU_AVAILABLE", True)
-        monkeypatch.setattr(eb, "GPUCollisionEngine", lambda **kw: mock_gpu_engine)
+        with patch.dict(
+            "sys.modules",
+            {"src.collision.gpu_collision_engine": Mock(GPUCollisionEngine=lambda **kw: mock_gpu_engine)},
+        ):
+            args = _make_full_args(
+                use_gpu=True,
+                checkpoint=False,
+                checkpoint_interval=30,
+                dedup=False,
+                dedup_max_size=1_000_000,
+            )
+            targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
+            engine, engine_type = eb.build_engine(args, targets)
 
-        args = _make_full_args(
-            use_gpu=True,
-            checkpoint=False,
-            checkpoint_interval=30,
-            dedup=False,
-            dedup_max_size=1_000_000,
-        )
-        targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
-        engine, engine_type = eb.build_engine(args, targets)
-
-        assert engine_type == "gpu"
-        assert engine is mock_gpu_engine
+            assert engine_type == "gpu"
+            assert engine is mock_gpu_engine
 
     def test_multi_gpu_engine_lifecycle(self, monkeypatch):
         """多 GPU 引擎构建 -> 初始化成功"""
@@ -357,38 +359,39 @@ class TestGPUIntegration:
         mock_multi.initialize.return_value = True
 
         monkeypatch.setattr(eb, "GPU_AVAILABLE", True)
-        monkeypatch.setattr(eb, "MultiGPUCollisionEngine", lambda: mock_multi)
+        with patch.dict(
+            "sys.modules",
+            {"src.gpu.multi_gpu_engine": Mock(MultiGPUCollisionEngine=lambda: mock_multi)},
+        ):
+            args = _make_full_args(multi_gpu=True)
+            engine, engine_type = eb.build_engine(args, {"addr1"})
 
-        args = _make_full_args(multi_gpu=True)
-        engine, engine_type = eb.build_engine(args, {"addr1"})
-
-        assert engine_type == "multi_gpu"
-        assert engine is mock_multi
-        mock_multi.initialize.assert_called_once()
+            assert engine_type == "multi_gpu"
+            assert engine is mock_multi
+            mock_multi.initialize.assert_called_once()
 
     def test_gpu_fallback_to_cpu(self, monkeypatch, capsys):
-        """GPU 不可用时请求 GPU 应报错退出（SystemExit）"""
+        """GPU 不可用时请求 GPU 应抛出 GPUNotAvailableError"""
         import src.cli.engine_builder as eb
 
         monkeypatch.setattr(eb, "GPU_AVAILABLE", False)
 
         args = _make_full_args(use_gpu=True)
-        with pytest.raises(SystemExit):
+        with pytest.raises(eb.GPUNotAvailableError):
             eb.build_engine(args, {"addr1"})
 
     def test_sensitive_mode_in_gpu_flow(self, monkeypatch, capsys):
-        """GPU 流程中的脱敏模式集成 - masked 模式隐藏私钥中段"""
+        """GPU 流程中的脱敏模式集成 - masked 模式在非TTY环境下降级为hash_only"""
         import src.cli.engine_builder as eb
 
         callback = eb.on_match_callback(sensitive_mode="masked")
         test_key = bytes.fromhex("0123456789abcdef" * 4)
-        callback(test_key, "1TestAddress", "5JTestWIF12345678")
+        with patch("sys.stdout.isatty", return_value=True):
+            callback(test_key, "1TestAddress", "5JTestWIF12345678")
 
         captured = capsys.readouterr()
         full_hex = test_key.hex()
-        # 完整私钥不应出现
         assert full_hex not in captured.out
-        # 前8位应出现
         assert full_hex[:8] in captured.out
 
     def test_gpu_error_handler_integration(self, capsys):
