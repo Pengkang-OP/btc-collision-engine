@@ -12,6 +12,7 @@
 
 import hashlib
 import os
+import secrets
 import threading
 from collections.abc import Callable
 from enum import Enum
@@ -174,7 +175,7 @@ class KeyGenerator:
 
         # S1修复: 生成安全的密钥和初始IV
         key = hashlib.sha256(seed).digest()
-        base_iv = os.urandom(8)  # 8字节随机基础IV
+        base_iv = secrets.token_bytes(8)  # 8字节随机基础IV
 
         # S1修复: 将索引纳入IV的高8字节，确保每个索引使用唯一IV
         # CTR模式: IV(8字节) + counter(8字节) = 16字节完整nonce
@@ -206,7 +207,7 @@ class KeyGenerator:
 
             # G4修复: 将索引纳入nonce的高位，确保每个索引唯一
             # ChaCha20使用8字节nonce，将索引作为nonce的前8字节
-            nonce = index.to_bytes(8, "big") + os.urandom(4)  # 8字节索引 + 4字节随机
+            nonce = index.to_bytes(8, "big") + secrets.token_bytes(4)  # 8字节索引 + 4字节随机
 
             # ChaCha20需要32字节密钥
             key = hashlib.sha256(seed).digest()
@@ -232,7 +233,7 @@ class KeyGenerator:
         使用操作系统提供的安全随机数生成器
         """
         while True:
-            key = os.urandom(32)
+            key = secrets.token_bytes(32)
             if self._is_valid_private_key(key):
                 return key
 

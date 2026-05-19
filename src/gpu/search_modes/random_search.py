@@ -12,6 +12,7 @@ CPU过载保护: 主循环内添加节流机制，防止 CPU 飞升。
 import hashlib
 import os
 import queue
+import secrets
 import threading
 import time
 from typing import TYPE_CHECKING
@@ -130,7 +131,7 @@ class RandomSearchMode(BaseSearchMode):
         try:
             # 一次性读取大块随机数据，然后分割
             total_bytes = count * 32
-            random_data = os.urandom(total_bytes)
+            random_data = secrets.token_bytes(total_bytes)
 
             for i in range(count):
                 start = i * 32
@@ -141,7 +142,7 @@ class RandomSearchMode(BaseSearchMode):
             # 降级到逐个生成
             for _ in range(count):
                 try:
-                    seeds.append(os.urandom(32))
+                    seeds.append(secrets.token_bytes(32))
                 except OSError:
                     break
 
