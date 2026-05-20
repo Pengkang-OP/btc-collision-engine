@@ -104,7 +104,21 @@ def on_match_callback(sensitive_mode: str = "masked") -> MatchCallback:
     防止 stdout 重定向导致的私钥泄露。
 
     审计功能: 所有密钥显示操作都会被记录到审计日志。
+
+    full 模式二次确认: 显式选择 full 模式时发出安全警告。
     """
+    # 二次确认: full 模式显式选择时发出安全警告
+    if sensitive_mode == "full":
+        logger.warning(
+            "⚠️ 已启用 full 敏感模式 — 完整私钥将显示在终端输出中。"
+            "请确保当前环境安全，避免屏幕录制或日志泄露。"
+        )
+        if sys.stdout.isatty():
+            print(
+                "\n⚠️  安全警告: 已启用完整私钥输出模式 (--sensitive-mode full)。"
+                "请确认终端环境安全。\n",
+                file=sys.stderr,
+            )
 
     def _callback(private_key: bytes, address: str, wif: str) -> None:
         pk_hex = private_key.hex()

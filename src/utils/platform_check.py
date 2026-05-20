@@ -23,6 +23,7 @@ import platform
 import shutil
 import sys
 import tempfile
+from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
@@ -298,10 +299,8 @@ class PlatformChecker:
         except (OSError, NotImplementedError):
             # 清理残留
             for p in (test_link, test_target):
-                try:
+                with suppress(OSError):
                     p.unlink()
-                except OSError:
-                    pass
             if platform.system() == "Windows":
                 msg = _t("platform.check.symlink_unavailable_win")
             else:

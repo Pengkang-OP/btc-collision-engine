@@ -75,10 +75,8 @@ class LogWindow:
         """
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
         log_entry = f"[{timestamp}] [{level}] {message}"
-        try:
+        with contextlib.suppress(queue.Full):
             self.log_queue.put_nowait(log_entry)
-        except queue.Full:
-            pass  # 队列满时丢弃日志
 
     def _run_window(self):
         """在新线程中运行Tkinter窗口
@@ -136,10 +134,8 @@ class LogWindow:
         self._update_logs()
 
         # 运行主循环
-        try:
+        with contextlib.suppress(Exception):
             self.root.mainloop()
-        except Exception:
-            pass  # 忽略窗口关闭时的异常
 
     def _update_logs(self):
         """更新日志显示
@@ -261,10 +257,8 @@ def reset_log_window_instance() -> None:
     global _log_window_instance
 
     if _log_window_instance is not None:
-        try:
+        with contextlib.suppress(Exception):
             _log_window_instance.stop()
-        except Exception:
-            pass
 
     # 从根日志器移除 LogWindowHandler
     root_logger = logging.getLogger()

@@ -46,9 +46,8 @@ def validate_args(args: argparse.Namespace) -> bool:
         return False
 
     # -f 文件路径验证
-    if args.file:
-        if not validate_file_path(args.file):
-            return False
+    if args.file and not validate_file_path(args.file):
+        return False
 
     if args.mode in ("range", "brute_force"):
         if args.start is None:

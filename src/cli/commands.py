@@ -859,7 +859,7 @@ def _cmd_quick_run(executor: Callable[[], None] | None = None) -> None:
             max_display_len = PREVIEW_CONFIG["max_address_display_length"]
             try:
                 with open(target_file, encoding="utf-8") as f:
-                    for line_num, line in enumerate(f, 1):
+                    for _line_num, line in enumerate(f, 1):
                         stripped = line.strip()
                         if stripped and not stripped.startswith("#"):
                             address_count += 1

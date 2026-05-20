@@ -330,8 +330,8 @@ def parse_args() -> argparse.Namespace:  # noqa: D401
     util_group.add_argument(
         "--sensitive-mode",
         choices=["full", "masked", "hash_only"],
-        default="full",
-        help="私钥输出模式: full 完整, masked 部分脱敏, hash_only 仅哈希 (默认: full)",
+        default="masked",
+        help="私钥输出模式: full 完整(⚠️二次确认), masked 部分脱敏(默认), hash_only 仅哈希",
     )
     util_group.add_argument(
         "--migrate-config",

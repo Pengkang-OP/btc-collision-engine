@@ -75,10 +75,7 @@ class Secp256k1:
 
         # 验证基点阶为N: N * G = O (无穷远点)
         # 这里简化检查，只验证N < P
-        if cls.N >= cls.P:
-            return False
-
-        return True
+        return cls.N < cls.P
 
     @classmethod
     def get_security_info(cls) -> dict:
@@ -444,7 +441,7 @@ class EllipticCurve:
             "scalar_multiply() 不是恒定时间实现，存在侧信道攻击风险。"
             "请使用 scalar_multiply_const_time() 替代。"
             "注意: 本模块是教学参考实现，生产环境请使用crypto_backend.py",
-            DeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
 
