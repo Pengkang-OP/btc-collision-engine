@@ -64,8 +64,7 @@ def _test_environment():
             results.append(True)
         except ImportError:
             print_result("PyOpenCL", False, "未安装")
-            results.append(False)
-            return results
+            return None  # 无 PyOpenCL 无法继续后续测试
         # NumPy
         try:
             import numpy as np  # noqa: F811
@@ -381,19 +380,19 @@ def main():
     print_header("BTC碰撞引擎 - GPU内核完整验证报告")
     print(f"  测试时间: {time.strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"  项目路径: {project_root}")
-    all_results = _test_environment()
-    if not all_results or all_results[-1] is False:
-        # PyOpenCL 未安装时提前返回
-        pass
-    else:
-        all_results.extend(_test_kernel_source())
-        all_results.extend(_test_math_functions())
-        all_results.extend(_test_ec_operations())
-        all_results.extend(_test_hash_algorithms())
-        all_results.extend(_test_kernel_compilation())
-        all_results.extend(_test_verify_arithmetic())
-        all_results.extend(_test_hash_verification())
-        all_results.extend(_test_intel_arc_optimization())
+    env_results = _test_environment()
+    if env_results is None:
+        # PyOpenCL 未安装，直接退出 (原行为)
+        return 1
+    all_results = list(env_results)
+    all_results.extend(_test_kernel_source())
+    all_results.extend(_test_math_functions())
+    all_results.extend(_test_ec_operations())
+    all_results.extend(_test_hash_algorithms())
+    all_results.extend(_test_kernel_compilation())
+    all_results.extend(_test_verify_arithmetic())
+    all_results.extend(_test_hash_verification())
+    all_results.extend(_test_intel_arc_optimization())
     _print_summary_report(all_results)
     failed = sum(1 for r in all_results if not r)
     return 0 if failed == 0 else 1
