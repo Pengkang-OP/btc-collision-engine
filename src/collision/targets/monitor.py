@@ -12,7 +12,11 @@ from typing import Any
 # 导入日志配置
 from ...utils import get_configured_logger
 
+<<<<<<< Updated upstream
 # 日志系统由CLI/main.py入口统一初始化
+=======
+# v4.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
+>>>>>>> Stashed changes
 logger = get_configured_logger("ValidationMonitor", thread_safe=False)
 
 

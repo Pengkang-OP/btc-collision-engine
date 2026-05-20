@@ -1,15 +1,21 @@
 """地址转换工具 - 私钥到地址和WIF的完整转换"""
 
+<<<<<<< Updated upstream
 import hashlib
 from typing import Any
 
+=======
+>>>>>>> Stashed changes
 from ..utils import get_configured_logger
 from .base58 import Base58
 from .hash_utils import HashUtils
 from .secp256k1 import EllipticCurve
 from .wif import WIF
+<<<<<<< Updated upstream
 
 # 日志系统由CLI/main.py入口统一初始化
+=======
+>>>>>>> Stashed changes
 logger = get_configured_logger("AddressConverter")
 
 
@@ -55,11 +61,8 @@ class AddressConverter:
         # Step 1: 椭圆曲线标量乘法 (私钥 → 公钥)
         public_key = self.ec.generate_public_key(private_key, compressed)
 
-        # Step 2: SHA-256哈希
-        sha256_hash = hashlib.sha256(public_key).digest()
-
-        # Step 3: RIPEMD-160哈希 (得到Hash160)
-        hash160 = HashUtils.ripemd160(sha256_hash)
+        # Step 2-3: Hash160 = RIPEMD160(SHA256(public_key))
+        hash160 = HashUtils.hash160(public_key)
 
         # Step 4-6: Base58Check编码生成地址
         address = Base58.check_encode(0x00, hash160)
@@ -173,5 +176,5 @@ class AddressConverter:
 
             return True, "验证通过"
 
-        except Exception as e:
+        except (ValueError, KeyError, TypeError) as e:
             return False, str(e)

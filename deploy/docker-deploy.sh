@@ -42,13 +42,13 @@ check_dependencies() {
     fi
 
     # 检查Docker Compose（拆分为嵌套条件，避免一行多个 &> 导致解析混淆）
-    DOCKER_COMPOSE_FOUND=false
+    DOCKER_COMPOSE_CMD=""
     if command -v docker-compose >/dev/null 2>&1; then
-        DOCKER_COMPOSE_FOUND=true
+        DOCKER_COMPOSE_CMD="docker-compose"
     elif docker compose version >/dev/null 2>&1; then
-        DOCKER_COMPOSE_FOUND=true
+        DOCKER_COMPOSE_CMD="docker compose"
     fi
-    if [[ "$DOCKER_COMPOSE_FOUND" == "false" ]]; then
+    if [[ -z "$DOCKER_COMPOSE_CMD" ]]; then
         log_error "Docker Compose未安装，请先安装Docker Compose 2.0+"
         exit 1
     fi
@@ -93,12 +93,12 @@ build_images() {
     log_info "构建Docker镜像..."
 
     if [[ "$MODE" == "cpu" ]]; then
-        docker-compose --profile cpu build
+        ${DOCKER_COMPOSE_CMD} --profile cpu build
     elif [[ "$MODE" == "gpu" ]]; then
         if [[ "$GPU_VENDOR" == "nvidia" ]]; then
-            docker-compose --profile gpu --profile nvidia build
+            ${DOCKER_COMPOSE_CMD} --profile gpu --profile nvidia build
         elif [[ "$GPU_VENDOR" == "amd" ]]; then
-            docker-compose --profile gpu --profile amd build
+            ${DOCKER_COMPOSE_CMD} --profile gpu --profile amd build
         fi
     fi
 
@@ -110,18 +110,18 @@ start_services() {
     log_info "启动服务..."
 
     if [[ "$MODE" == "cpu" ]]; then
-        docker-compose --profile cpu up -d
+        ${DOCKER_COMPOSE_CMD} --profile cpu up -d
     elif [[ "$MODE" == "gpu" ]]; then
         if [[ "$GPU_VENDOR" == "nvidia" ]]; then
-            docker-compose --profile gpu --profile nvidia up -d
+            ${DOCKER_COMPOSE_CMD} --profile gpu --profile nvidia up -d
         elif [[ "$GPU_VENDOR" == "amd" ]]; then
-            docker-compose --profile gpu --profile amd up -d
+            ${DOCKER_COMPOSE_CMD} --profile gpu --profile amd up -d
         fi
     fi
 
     if [[ "${MONITORING:-}" == "true" ]]; then
         log_info "启动监控服务..."
-        docker-compose --profile monitoring up -d
+        ${DOCKER_COMPOSE_CMD} --profile monitoring up -d
     fi
 
     log_success "服务启动完成"
@@ -166,14 +166,14 @@ health_check() {
 show_status() {
     echo ""
     log_info "服务状态:"
-    docker-compose ps
+    ${DOCKER_COMPOSE_CMD} ps
 
     echo ""
     log_info "查看日志:"
     if [[ "$MODE" == "cpu" ]]; then
-        echo "  docker-compose logs -f btc-engine-cpu"
+        echo "  ${DOCKER_COMPOSE_CMD} logs -f btc-engine-cpu"
     elif [[ "$MODE" == "gpu" ]]; then
-        echo "  docker-compose logs -f btc-engine-gpu-${GPU_VENDOR}"
+        echo "  ${DOCKER_COMPOSE_CMD} logs -f btc-engine-gpu-${GPU_VENDOR}"
     fi
 
     if [[ "${MONITORING:-}" == "true" ]]; then
@@ -191,8 +191,8 @@ show_status() {
 cleanup() {
     log_warning "清理所有资源..."
 
-    docker-compose down -v
-    docker-compose rm -f
+    ${DOCKER_COMPOSE_CMD} down -v
+    ${DOCKER_COMPOSE_CMD} rm -f
 
     log_success "清理完成"
 }

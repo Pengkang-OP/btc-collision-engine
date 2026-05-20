@@ -3,7 +3,7 @@
 将现有 GPUDevice / GPUDeviceDetector / GPUContext 适配为
 IGPUDeviceManager 协议接口，使外观层能够通过统一协议管理设备。
 
-版本: v2.0 (Phase 2)
+版本: v4.2.2 (Phase 2)
 创建日期: 2026-04-30
 """
 

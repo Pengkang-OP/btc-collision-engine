@@ -46,12 +46,12 @@ class GPUMemoryPool:
 
     管理GPU缓冲区的分配和释放,优先复用已有缓冲区。
 
-    优化v2.2.1:
+    优化v4.2.1:
     - 添加预分配机制，减少首次分配延迟
     - 实现批量预分配，提升初始化性能
     - 智能大小对齐，提高复用率
 
-    优化v4.0:
+    优化v4.2.1:
     - 动态内存池大小调整
     - 缓冲区类型分类管理
     - 内存使用预测
@@ -104,10 +104,10 @@ class GPUMemoryPool:
         self._current_memory = 0
         self._allocation_count = 0
 
-        # 预分配优化v2.2.1
+        # 预分配优化v4.2.1
         self._preallocated_sizes: set[int] = set()  # 记录已预分配的大小
 
-        # LRU淘汰策略v4.0: 追踪每个缓冲区的最后访问时间戳
+        # LRU淘汰策略v4.2.1: 追踪每个缓冲区的最后访问时间戳
         # key = id(buf), value = time.monotonic() 时间戳
         self._access_times: dict[int, float] = {}
         # 缓冲区ID到缓冲区对象的反向映射（用于LRU淘汰时找到并移除缓冲区）
@@ -147,7 +147,7 @@ class GPUMemoryPool:
         if flags is None:
             flags = cl.mem_flags.READ_WRITE
 
-        # 性能优化v2.2.1: 智能大小对齐，提高复用率
+        # 性能优化v4.2.1: 智能大小对齐，提高复用率
         # 将大小对齐到256字节的倍数，增加缓冲池命中率
         aligned_size = ((size + 255) // 256) * 256
 
@@ -220,7 +220,7 @@ class GPUMemoryPool:
             size: 缓冲区大小(字节),如果为None则尝试从池中查找
             buffer_type: 缓冲区类型 (generic, input, output, temp)
         """
-        # 性能优化v2.2.1: 使用对齐后的大小
+        # 性能优化v4.2.1: 使用对齐后的大小
         if size is not None:
             size = ((size + 255) // 256) * 256
 
@@ -296,7 +296,7 @@ class GPUMemoryPool:
         flags: Any | None = None,
         buffer_type: str = "generic",
     ) -> None:
-        """预分配常用大小的缓冲区（性能优化v2.2.1，v3.3.0增强）
+        """预分配常用大小的缓冲区（性能优化v4.2.1）
 
         在初始化阶段预分配常用缓冲区，避免运行时频繁分配。
 
@@ -306,7 +306,7 @@ class GPUMemoryPool:
             flags: OpenCL内存标志，默认READ_WRITE（通用）
             buffer_type: 缓冲区类型 (generic, input, output, temp)
 
-        v3.3.0增强:
+        v4.2.1增强:
         - 支持自定义内存标志
         - 为不同用途分配不同标志的缓冲区
         """

@@ -413,8 +413,8 @@ class TestKeyCollisionEngineSecureGeneration(unittest.TestCase):
             max_workers=1,
             data_logging_enabled=False,
         )
-        # 填充到 MATCH_BATCH_FLUSH_THRESHOLD - 1 个条目
-        local_matches = [(b"dummy_pk", "dummy_addr", "dummy_wif")] * 9
+        # 填充到 MATCH_BATCH_FLUSH_THRESHOLD - 1 个条目 (M3: 4元组格式)
+        local_matches = [(b"dummy_pk", "dummy_addr", "dummy_wif", None)] * 9
         should_continue = engine._process_key_match(
             private_key=pk,
             matched_address=known_addr,
@@ -629,9 +629,21 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
 
     # ── _auto_detect_compression_needed ──
 
+    def _generate_test_addresses(self, count: int) -> set[str]:
+        """生成有效的测试地址用于测试"""
+        from src.core.base58 import Base58
+        addresses = set()
+        i = 0
+        while len(addresses) < count:
+            # 使用递增的32位整数作为基础，确保唯一性
+            hash160 = (i).to_bytes(4, 'big') + bytes([0] * 16)
+            addresses.add(Base58.check_encode(0x00, hash160))
+            i += 1
+        return addresses
+
     def test_auto_detect_compression_many_targets(self):
-        """目标地址>=1000时仅检查压缩格式"""
-        many_targets = {f"1TestAddr{i:04d}" for i in range(1000)}
+        """目标地址>=10000时仅检查压缩格式（阈值从50000降至10000以减少漏匹配风险）"""
+        many_targets = self._generate_test_addresses(15000)
         engine = KeyCollisionEngine(
             targets=many_targets, max_workers=1, data_logging_enabled=False
         )
@@ -642,8 +654,10 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
 
     def test_init_crypto_backend_unknown_type(self):
         """未知 crypto_backend_type 时使用默认后端"""
+        from src.core.base58 import Base58
+        test_addr = Base58.check_encode(0x00, bytes([i % 256 for i in range(20)]))
         engine = KeyCollisionEngine(
-            targets={"1TestAddr"},
+            targets={test_addr},
             crypto_backend_type="nonexistent_backend",
             max_workers=1,
             data_logging_enabled=False,

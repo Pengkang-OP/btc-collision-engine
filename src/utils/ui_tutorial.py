@@ -118,7 +118,11 @@ class UserGuide:
             return
 
         message = (
+<<<<<<< Updated upstream
             "欢迎使用 BTC 碰撞引擎 v4.2.3！\n\n"
+=======
+            "欢迎使用 BTC 碰撞引擎 v4.2.2！\n\n"
+>>>>>>> Stashed changes
             "快速开始：\n"
             "━━━━━━━━━━━━━━━━━━━━━━━\n"
             "1. 在'目标地址区'输入比特币地址\n"

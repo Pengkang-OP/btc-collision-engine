@@ -3,7 +3,7 @@
 将 GPUCollisionEngine 中的随机搜索相关方法迁移至此独立模块，
 包括同步模式（_random_search_sync）和异步双缓冲模式（_random_search_async）。
 
-PRNG改造 (v4.0): CPU仅生成 32 字节种子，GPU内核自行计算 key = seed + gid。
+PRNG改造 (v4.2.1): CPU仅生成 32 字节种子，GPU内核自行计算 key = seed + gid。
 消除大型私钥数组的内存分配和 CPU-GPU 传输开销。
 
 CPU过载保护: 主循环内添加节流机制，防止 CPU 飞升。
@@ -38,7 +38,7 @@ MIN_BATCH_INTERVAL_SEC = 0.0005  # 减少批次间隔
 EXP_BACKOFF_BASE = 0.1  # 指数退避基础延迟(s)
 EXP_BACKOFF_MAX = 30.0  # 指数退避最大延迟(s)
 
-# 种子预生成参数 - v6.4优化：解决CPU-GPU同步瓶颈
+# 种子预生成参数 - v4.2.1优化：解决CPU-GPU同步瓶颈
 SEED_PREFETCH_SIZE = 100  # 大幅增加缓存深度，匹配GPU队列深度32
 SEED_BATCH_GENERATE_SIZE = 25  # 增加每次批量生成的种子数量
 SEED_PREFILL_ON_START = True  # 启动时预填充队列
@@ -58,7 +58,7 @@ class RandomSearchMode(BaseSearchMode):
     对应原 GPUCollisionEngine 中的 _random_search_sync / _random_search_async 方法。
     通过 self.engine 访问所有引擎状态，不复制状态。
 
-    v4.1 新增：后台种子预生成线程，维护 maxsize=5 的种子缓存队列，
+    v4.2.1 新增：后台种子预生成线程，维护 maxsize=5 的种子缓存队列，
     消除主循环中 os.urandom() 的阻塞等待，进一步平滑 GPU 利用率。
     """
 
@@ -148,16 +148,16 @@ class RandomSearchMode(BaseSearchMode):
         return seeds
 
     def _seed_prefetch_worker(self) -> None:
-        """后台线程：持续调用 os.urandom(32) 填充种子队列 - v6.4优化版"""
+        """后台线程：持续调用 os.urandom(32) 填充种子队列 - v4.2.1优化版"""
         while not self._seed_stop_event.is_set():
             try:
-                # v6.4优化：减少检查间隔，更快速响应
+                # v4.2.1优化：减少检查间隔，更快速响应
                 current_size = self._seed_queue.qsize()
 
                 if current_size < SEED_MIN_QUEUE_SIZE:
-                    # v6.4优化：批量生成更多种子
+                    # v4.2.1优化：批量生成更多种子
                     needed = min(
-                        SEED_BATCH_GENERATE_SIZE * 2,  # v6.4: 增加批量大小
+                        SEED_BATCH_GENERATE_SIZE * 2,  # v4.2.1: 增加批量大小
                         self._seed_prefetch_size - current_size,
                     )
 
@@ -181,7 +181,7 @@ class RandomSearchMode(BaseSearchMode):
                             self._seed_queue.put_nowait(seed)
                             self._seed_generated_count += 1
                     else:
-                        time.sleep(0.001)  # v6.4: 减少等待时间
+                        time.sleep(0.001)  # v4.2.1: 减少等待时间
 
             except OSError as e:
                 self._seed_generation_errors += 1
@@ -257,7 +257,8 @@ class RandomSearchMode(BaseSearchMode):
         import psutil
 
         engine = self.engine
-        assert engine.stats is not None
+        if engine.stats is None:
+            raise RuntimeError("RandomSearchMode._random_search(): engine.stats is None, 引擎未正确初始化")
         logger.info("GPU _random_search 启动 (PRNG + CPU过载保护模式)")
 
         batch_count = 0
@@ -460,7 +461,8 @@ class RandomSearchMode(BaseSearchMode):
     def _execute_async(self) -> None:
         """异步执行版本（双缓冲 + PRNG + CPU过载保护）"""
         engine = self.engine
-        assert engine.stats is not None
+        if engine.stats is None:
+            raise RuntimeError("RandomSearchMode._execute_async(): engine.stats is None, 引擎未正确初始化")
 
         # 检查异步执行器是否可用
         if not self._check_engine_availability(engine):
@@ -563,7 +565,13 @@ class RandomSearchMode(BaseSearchMode):
                     current_buffer = next_buffer
 
                 except Exception as e:
+<<<<<<< Updated upstream
                     result = self._handle_batch_error(e, engine, batch_num, consecutive_errors)
+=======
+                    result = self._handle_batch_error(
+                        e, engine, batch_num, consecutive_errors
+                    )
+>>>>>>> Stashed changes
                     if result == -1:  # 用户中断
                         break
                     consecutive_errors = result
@@ -591,7 +599,8 @@ class RandomSearchMode(BaseSearchMode):
         保留用于未来重构。
         """
         engine = self.engine
-        assert engine.stats is not None
+        if engine.stats is None:
+            raise RuntimeError("RandomSearchMode._process_matches(): engine.stats is None, 引擎未正确初始化")
         for match in matches:
             private_key = match.get("private_key")
             address = match.get("address")

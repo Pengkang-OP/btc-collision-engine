@@ -1,6 +1,10 @@
 """比特币私钥对撞工具包"""
 
+<<<<<<< Updated upstream
 __version__ = "4.4.0"  # v4.4.0: 安全修复增强(安全清零/侧信道防护/敏感数据脱敏/线程安全), 文档一致性整理
+=======
+__version__ = "4.2.2"  # v4.2.2: Phase 6 GPU碰撞引擎重构，安全性增强，mod_inverse溢出修复
+>>>>>>> Stashed changes
 __author__ = "BTC Collision Team"
 
 # 多格式地址支持模块（v4.3.0 新增）

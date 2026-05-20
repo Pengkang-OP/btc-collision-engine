@@ -21,7 +21,7 @@ logger = get_configured_logger("GPUPerformanceOptimizer")
 
 
 # ===== 厂商特定调整策略 =====
-# v6.1 修复: 统一使用乘法增长/减少，对称调整
+# v4.2.1 修复: 统一使用乘法增长/减少，对称调整
 # 减少: batch_size * reduction_ratio (如 0.75)
 # 增长: batch_size * growth_ratio (如 1.25)
 VENDOR_ADJUST_STRATEGY: dict[str, dict[str, float]] = {
@@ -79,7 +79,7 @@ class GPUProfile:
     slow_execution_threshold_ms: float = 1000.0
     error_rate_threshold: float = 0.01  # 1%错误率
 
-    # v6.1: GPU 利用率目标（Intel Arc A770 实际预期 30-50%）
+    # v4.2.1: GPU 利用率目标（Intel Arc A770 实际预期 30-50%）
     min_gpu_utilization_target: float = 0.30  # 最低目标: 30%
     max_gpu_utilization_target: float = 0.50  # 期望目标: 50%（Intel Arc 难以达到更高）
 
@@ -156,8 +156,13 @@ class GPUPerformanceOptimizer:
         self._performance_degraded = False
         self._adjustment_count = 0
         self._last_adjustment_time = 0.0
+<<<<<<< Updated upstream
         self._adjustment_cooldown_sec = self.ADJUSTMENT_COOLDOWN_SEC
         self._initial_batch_size: int = 0  # v6.1 修复: 保存真正的初始值
+=======
+        self._adjustment_cooldown_sec = 10  # 调整冷却期10秒
+        self._initial_batch_size: int = 0  # v4.2.1 修复: 保存真正的初始值
+>>>>>>> Stashed changes
 
         logger.info("GPU性能优化器初始化完成")
 
@@ -188,8 +193,13 @@ class GPUPerformanceOptimizer:
                 vendor=GPUVendor.INTEL,
                 device_name="Intel GPU",
                 max_batch_size=262144,  # 256K
+<<<<<<< Updated upstream
                 work_group_size=512,  # 同步v2.3.0优化，匹配Arc A770的512个EU（原128）
                 memory_usage_ratio=0.7,  # 同步v2.2.1优化的显存率（原0.5）
+=======
+                work_group_size=512,  # P3修复: 同步v4.2.1优化，匹配Arc A770的512个EU（原128）
+                memory_usage_ratio=0.7,  # P3修复: 同步v4.2.1优化的显存率（原0.5）
+>>>>>>> Stashed changes
                 preferred_mode="range_scan",
                 use_uint32_workaround=True,  # Intel Arc需要workaround
                 enable_async_execution=True,  # 启用异步（Intel Arc必须）（原False）
@@ -277,7 +287,7 @@ class GPUPerformanceOptimizer:
 
         # 记录配置
         self._current_profile = profile
-        self._initial_batch_size = profile.max_batch_size  # v6.1 修复: 保存真正的初始值
+        self._initial_batch_size = profile.max_batch_size  # v4.2.1 修复: 保存真正的初始值
         logger.info(
             f"GPU配置已优化: {device_name}, "
             f"batch_size={profile.max_batch_size}, "
@@ -547,6 +557,124 @@ class GPUPerformanceOptimizer:
             return self._analyze_perform_adjustments(
                 current_batch_size, error_rate, engine, strategy, now
             )
+<<<<<<< Updated upstream
+=======
+            avg_speed = sum(m.keys_per_second for m in recent_metrics) / len(recent_metrics)
+
+            adjustments = {}
+            new_batch_size = current_batch_size
+            profile = self._current_profile
+
+            # v4.2.1 新增: 获取 GPU 利用率
+            gpu_utilization = 0.0
+            if engine is not None:
+                try:
+                    monitor = getattr(engine, "_engine_monitor", None)
+                    if monitor is not None:
+                        stats = monitor.get_stats()
+                        gpu_utilization = stats.get("avg_gpu_utilization", 0.0)
+                except Exception:
+                    pass
+
+            # v4.2.1 修复: 使用对称的乘法公式，但更激进的增长策略
+            # 减少: batch_size * reduction_ratio
+            # 增长: batch_size * growth_ratio
+            # 如果 GPU 利用率低于目标，使用更激进的增长
+            min_target = profile.min_gpu_utilization_target
+            if gpu_utilization > 0 and gpu_utilization < min_target:
+                # GPU 利用率不足，需要更激进增长
+                deficit_ratio = min_target / max(gpu_utilization, 0.1)
+                growth_ratio = min(1.5, 1.2 * deficit_ratio)  # 最多1.5倍增长
+                logger.info(
+                    f"GPU利用率不足({gpu_utilization:.1%} < {min_target:.1%})，使用激进增长: *{growth_ratio:.2f}"
+                )
+            else:
+                growth_ratio = strategy.get("growth_ratio", 1.20)
+            reduction_ratio = strategy.get("reduction_ratio", 0.80)
+
+            # v4.2.1 修复: 减少触发条件改为 AND 逻辑（更严格）
+            # 只有错误率过高 AND 执行时间过长两个条件都满足才减少
+            if (
+                error_rate > profile.error_rate_threshold
+                and avg_execution_time > profile.slow_execution_threshold_ms
+            ):
+                new_batch_size = max(
+                    profile.min_batch_size, int(current_batch_size * reduction_ratio)
+                )
+                adjustments["performance_degraded"] = {
+                    "error_rate": error_rate,
+                    "error_threshold": profile.error_rate_threshold,
+                    "avg_time_ms": avg_execution_time,
+                    "time_threshold_ms": profile.slow_execution_threshold_ms,
+                    "action": "reduce_batch",
+                    "old_batch": current_batch_size,
+                    "new_batch": new_batch_size,
+                    "reduction_ratio": reduction_ratio,
+                }
+                logger.warning(
+                    f"性能下降(错误率{error_rate:.2%}, 时间{avg_execution_time:.0f}ms)，"
+                    f"减小batch: {current_batch_size} -> {new_batch_size} (*{reduction_ratio})"
+                )
+
+            # 3. 性能良好 或 GPU利用率不足 - 使用乘法增长
+            elif (
+                avg_execution_time < profile.slow_execution_threshold_ms * 1.0
+                and error_rate < profile.error_rate_threshold * 2.0
+            ) or (gpu_utilization > 0 and gpu_utilization < min_target):
+                new_batch_size = min(
+                    profile.max_batch_size_limit, int(current_batch_size * growth_ratio)
+                )
+                adjustments["performance_good"] = {
+                    "avg_time_ms": avg_execution_time,
+                    "avg_speed": avg_speed,
+                    "growth_ratio": growth_ratio,
+                    "action": "increase_batch",
+                    "old_batch": current_batch_size,
+                    "new_batch": new_batch_size,
+                }
+                logger.info(
+                    f"性能良好，增大batch: {current_batch_size} -> {new_batch_size} (*{growth_ratio})"
+                )
+
+            # ---- v4.2.1 修复: 应用范围限制 ----
+            if new_batch_size != current_batch_size:
+                new_batch_size = clamp_batch_size(new_batch_size)
+
+            # v4.2.1 修复: batch_size 恢复机制
+            # 当连续稳定且 batch_size 偏低时，尝试恢复到更高水平
+            if self._current_profile and self._initial_batch_size > 0:
+                initial_batch = self._initial_batch_size
+                stable_count = 0
+
+                # 检查是否连续稳定（错误率低）
+                for m in recent_metrics:
+                    if m.error_count == 0:
+                        stable_count += 1
+
+                # 如果连续10次以上稳定，尝试恢复
+                if stable_count >= 10 and len(recent_metrics) >= 10:
+                    # 恢复到初始值的 90%
+                    recovery_batch = int(initial_batch * 0.9)
+                    if recovery_batch > new_batch_size:
+                        adjustments["batch_recovery"] = {
+                            "reason": "stable_recovery",
+                            "old_batch": new_batch_size,
+                            "new_batch": recovery_batch,
+                            "initial_batch": initial_batch,
+                        }
+                        new_batch_size = recovery_batch
+                        logger.info(
+                            f"batch_size 恢复: {new_batch_size} -> {recovery_batch} (初始值: {initial_batch})"
+                        )
+
+            # 4. 记录调整
+            if new_batch_size != current_batch_size:
+                self._adjustment_count += 1
+                self._last_adjustment_time = now
+                cast(dict[str, Any], adjustments)["adjustment_count"] = self._adjustment_count
+
+            return new_batch_size, adjustments
+>>>>>>> Stashed changes
 
     def get_optimization_report(self) -> dict[str, Any]:
         """获取优化报告"""

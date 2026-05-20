@@ -16,7 +16,11 @@ from typing import Any
 # 导入日志配置
 from ...utils import get_configured_logger
 
+<<<<<<< Updated upstream
 # 日志系统由CLI/main.py入口统一初始化
+=======
+# v4.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
+>>>>>>> Stashed changes
 logger = get_configured_logger("AddressValidator", thread_safe=False)
 
 
@@ -298,10 +302,22 @@ class AddressBatchValidator:
                         error=f"Invalid version: 0x{version:02x}",
                     )
 
+            elif address.lower().startswith("bc1p"):
+                format_type = "Bech32m"
+                if 62 <= len(address) <= 74:
+                    logger.debug(f"Bech32m地址基本验证通过: {address[:15]}...")
+                    return ValidationResult(address=address, valid=True, format_type=format_type)
+                else:
+                    return ValidationResult(
+                        address=address,
+                        valid=False,
+                        format_type=format_type,
+                        error="Invalid length (Bech32m: 62-74)",
+                    )
+
             elif address.lower().startswith("bc1"):
                 format_type = "Bech32"
-                # Bech32验证需要专门的库,这里只做基本检查
-                if 14 <= len(address) <= 74:
+                if 42 <= len(address) <= 62:
                     logger.debug(f"Bech32地址基本验证通过: {address[:15]}...")
                     return ValidationResult(address=address, valid=True, format_type=format_type)
                 else:
@@ -309,7 +325,7 @@ class AddressBatchValidator:
                         address=address,
                         valid=False,
                         format_type=format_type,
-                        error="Invalid length",
+                        error="Invalid length (Bech32: 42-62)",
                     )
 
             else:

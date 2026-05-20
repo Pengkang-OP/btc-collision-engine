@@ -54,8 +54,9 @@ PREVIEW_CONFIG = {
 def _cmd_validate_addresses(file_path: str) -> None:
     """--validate-addresses 命令实现：批量验证文件中所有比特币地址"""
     # 路径安全验证：防止路径遍历攻击
+    # v4.2.2 P2修复: 路径验证失败应返回非零退出码
     if not validate_file_path(file_path):
-        return
+        sys.exit(1)
     target_path = Path(file_path)
     if not target_path.exists():
         print(_t("errors.file_not_found", path=file_path), file=sys.stderr)

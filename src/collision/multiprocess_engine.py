@@ -29,7 +29,11 @@ from typing import Any
 # 导入日志配置
 from ..utils import get_configured_logger
 
+<<<<<<< Updated upstream
 # 日志系统由CLI/main.py入口统一初始化
+=======
+# 获取模块日志记录器
+>>>>>>> Stashed changes
 logger = get_configured_logger("MultiprocessEngine")
 
 
@@ -180,11 +184,22 @@ def _worker_process(
         stop_event: 停止事件
         generator_func_name: 私钥生成函数名称（'random'或'sequential'）
         batch_size: 批次大小
+        encryption_key: Fernet加密密钥（bytearray），用于Queue传输加密
+        enable_encryption: 是否启用Queue传输加密（默认False）
 
     注意：
     - 使用函数名称而非函数对象，避免pickle序列化问题
     - 在子进程中本地初始化address_generator
+    - 启用加密会增加约5-10%的性能开销
     """
+    # v4.2.2: Windows spawn 模式下子进程不继承父进程日志配置，显式初始化
+    try:
+        from ..utils import init_logging
+
+        init_logging()
+    except Exception:
+        pass  # 日志初始化失败不应阻止工作进程启动
+
     # 设置进程名称
     with suppress(ImportError):
         from setproctitle import setproctitle

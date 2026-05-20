@@ -115,25 +115,23 @@ class PurePythonBackend(CryptoBackend):
         return True
 
     def generate_public_key(self, private_key: bytes, compressed: bool = True) -> bytes:
-        if self._use_const_time:
-            return cast(Any, self.ec).generate_public_key_const_time(private_key, compressed)
-        else:
-            return self.ec.generate_public_key(private_key, compressed)
+        # v4.2.2 R4: generate_public_key 内部已使用 scalar_multiply_const_time,
+        # 两分支等效，简化为单路径
+        return self.ec.generate_public_key(private_key, compressed)
 
     def scalar_multiply(self, k: int, point_x: int, point_y: int) -> tuple[int, int]:
         from .secp256k1 import ECPoint
 
         point = ECPoint(point_x, point_y)
 
-        if self._use_const_time:
-            result = self.ec.scalar_multiply_const_time(k, point)
-        else:
-            result = self.ec.scalar_multiply(k, point)
+        # v4.2.2 C1-regression修复: 始终使用恒定时间实现
+        result = self.ec.scalar_multiply_const_time(k, point)
 
         return cast(tuple[int, int], (result.x, result.y))
 
     def is_constant_time(self) -> bool:
-        return self._use_const_time
+        # v4.2.2 R5: 所有标量乘法已统一使用恒定时间实现
+        return True
 
 
 class OpenSSLBackend(CryptoBackend):
@@ -221,13 +219,18 @@ class OpenSSLBackend(CryptoBackend):
         from .secp256k1 import ECPoint, EllipticCurve
 
         ec_impl = EllipticCurve()
+<<<<<<< Updated upstream
+=======
+        # v4.2.2 C1-regression修复: 使用恒定时间实现
+>>>>>>> Stashed changes
         result = ec_impl.scalar_multiply_const_time(k, ECPoint(point_x, point_y))
 
         return cast(tuple[int, int], (result.x, result.y))
 
     def is_constant_time(self) -> bool:
-        # M4修复: 添加详细文档说明恒定时间状态的复杂性
+        # v4.2.2 R9: 所有代码路径均为恒定时间实现
         #
+<<<<<<< Updated upstream
         # ⚠️ 重要说明:
         # - generate_public_key() IS constant-time (使用 OpenSSL ec.derive_private_key)
         # - scalar_multiply() 现在调用 scalar_multiply_const_time (Montgomery Ladder),
@@ -244,6 +247,12 @@ class OpenSSLBackend(CryptoBackend):
         # 1. 对于安全敏感场景，使用 CoincurveBackend（libsecp256k1，完全恒定时间）
         # 2. 对于性能优先场景，可使用 OpenSSLBackend（generate_public_key 是恒定的）
         return False
+=======
+        # - generate_public_key() 使用 OpenSSL ec.derive_private_key (恒定时间)
+        # - scalar_multiply() 已迁移至 scalar_multiply_const_time() (v4.2.2 C1, R2)
+        #   Montgomery Ladder 实现，完全恒定时间
+        return True
+>>>>>>> Stashed changes
 
 
 class CoincurveBackend(CryptoBackend):
@@ -321,6 +330,10 @@ class CoincurveBackend(CryptoBackend):
         from .secp256k1 import ECPoint, EllipticCurve
 
         ec_impl = EllipticCurve()
+<<<<<<< Updated upstream
+=======
+        # v4.2.2 C1-regression修复: 使用恒定时间实现
+>>>>>>> Stashed changes
         ec_result = ec_impl.scalar_multiply_const_time(k, ECPoint(point_x, point_y))
         return cast(tuple[int, int], (ec_result.x, ec_result.y))
 
@@ -379,6 +392,10 @@ class ECDSABackend(CryptoBackend):
         from .secp256k1 import ECPoint, EllipticCurve
 
         ec_impl = EllipticCurve()
+<<<<<<< Updated upstream
+=======
+        # v4.2.2 C1-regression修复: 使用恒定时间实现
+>>>>>>> Stashed changes
         result = ec_impl.scalar_multiply_const_time(k, ECPoint(point_x, point_y))
         return cast(tuple[int, int], (result.x, result.y))
 

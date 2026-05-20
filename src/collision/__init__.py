@@ -11,7 +11,7 @@ from .continuous_matcher import ContinuousMatcher
 from .deduplication_filter import DeduplicationFilter
 from .event_bus import EventBus, get_event_bus, reset_event_bus
 
-# 事件系统 (v3.2.0新增)
+# 事件系统 (v4.2.1新增)
 from .events import (
     CollisionEvent,
     EngineCompleteEvent,
@@ -77,7 +77,7 @@ __all__ = [
     "encode_private_key_to_wif",
     "format_match_result",
     "safe_wif_encode",
-    # 事件系统 (v3.2.0新增)
+    # 事件系统 (v4.2.1新增)
     "EventType",
     "CollisionEvent",
     "EngineProgressEvent",
@@ -89,7 +89,7 @@ __all__ = [
     "EventBus",
     "get_event_bus",
     "reset_event_bus",
-    # 类型定义 (v3.2.0新增)
+    # 类型定义 (v4.2.1新增)
     "ProgressCallback",
     "MatchCallback",
     "CompleteCallback",

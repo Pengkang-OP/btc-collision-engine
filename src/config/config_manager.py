@@ -11,7 +11,13 @@ from typing import Any, Optional
 from ..utils import get_configured_logger
 from .config_watcher import ConfigWatcher  # noqa: F401 — type annotation reference
 
+<<<<<<< Updated upstream
 # 日志系统由CLI/main.py入口统一初始化
+=======
+# v4.2.2 M3: 日志初始化统一由 CLI 入口 (main.py) 和 utils/__init__.py 处理
+
+# 获取模块日志记录器
+>>>>>>> Stashed changes
 logger = get_configured_logger("ConfigManager")
 
 # DF-3修复: 添加JSON Schema验证
@@ -90,7 +96,7 @@ class ConfigManager:
                     "device_indices": {"type": "array", "items": {"type": "integer"}},
                     "load_balancing": {"enum": ["performance", "equal"]},
                     "auto_tuning": {"type": "boolean"},
-                    # 队列深度优化 v2.3.2: GPU 命令队列预提交批次数
+                    # 队列深度优化 v4.2.1: GPU 命令队列预提交批次数
                     "queue_depth": {"type": "integer", "minimum": 1, "maximum": 16},
                     # 内存池相关配置
                     "gpu_memory_pool": {"type": "boolean"},

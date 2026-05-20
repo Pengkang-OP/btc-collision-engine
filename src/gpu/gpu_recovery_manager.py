@@ -37,12 +37,19 @@ class RecoveryStrategy(Enum):
     REDUCE_BATCH_SIZE = "reduce_batch_size"  # 减小批次
     REINITIALIZE = "reinitialize"  # 重新初始化
     DISABLE_GPU = "disable_gpu"  # 禁用GPU
-    RESET_BATCH_SIZE = "reset_batch_size"  # v6.0: 重置批次大小
+    RESET_BATCH_SIZE = "reset_batch_size"  # v4.2.1: 重置批次大小
 
 
 @dataclass
 class GPUFailureRecord:
-    """GPU失败记录"""
+    """GPU失败记录
+
+    Attributes:
+        gpu_id: 发生故障的GPU设备ID
+        failure_type: 故障类型枚举（CRASH/TIMEOUT/MEMORY/PERFORMANCE_DEGRADATION等）
+        error_message: 故障详细描述或异常消息
+        timestamp: 故障发生时间戳（Unix时间，默认field(default_factory=time.time)）
+    """
 
     gpu_id: int
     failure_type: GPUFailureType
@@ -620,7 +627,7 @@ class GPURecoveryManager:
         logger.info(f"GPU {gpu_id or '所有'} 失败历史已重置")
 
     def reset_batch_size(self, gpu_id: int, initial_batch_size: int) -> None:
-        """v6.0: 重置GPU的batch_size到初始值
+        """v4.2.1: 重置GPU的batch_size到初始值
 
         当性能持续下降时，调用此方法恢复初始batch_size。
 

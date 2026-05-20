@@ -2,6 +2,9 @@
 
 定义所有搜索模式的基类，包含通用的 _execute_batch_loop 批处理循环。
 搜索模式通过引擎引用（engine reference）访问引擎状态，不复制状态。
+
+v4.2.2: H5修复 - 设备丢失恢复失败时发布 ENGINE_ERROR 事件。
+         S4改进 - WIF 导入提升到模块级别，避免循环内重复导入。
 """
 
 import struct
@@ -13,6 +16,9 @@ from typing import TYPE_CHECKING
 from ...utils import get_configured_logger
 from ...utils.exception_handler import ExceptionHandler
 from ...utils.timeout import invoke_with_timeout
+
+# v4.2.2 S4: 将循环内 WIF 导入提升到模块级别
+from ...core.wif import WIF
 
 if TYPE_CHECKING:
     from ...collision.gpu_collision_engine import GPUCollisionEngine
@@ -66,7 +72,8 @@ class BaseSearchMode:
             本次循环共处理的私钥总数 (batch_count)
         """
         engine = self.engine
-        assert engine.stats is not None
+        if engine.stats is None:
+            raise RuntimeError("BaseSearchMode._execute_sync(): engine.stats is None, 引擎未正确初始化")
         batch_count = 0
 
         while not engine._stop_event.is_set():
@@ -104,8 +111,6 @@ class BaseSearchMode:
                         private_key = batch_data[key_idx * 32 : (key_idx + 1) * 32]
                     target_idx = match["target_index"]
                     address = engine._target_list[target_idx]
-                    from ...core.wif import WIF
-
                     wif = WIF.encode(private_key, compressed=True)
                     engine.stats.add_match(private_key, address)
                     if engine.on_match:
@@ -175,6 +180,19 @@ class BaseSearchMode:
                         except Exception as recovery_err:
                             logger.error(f"GPU恢复失败: {recovery_err}")
                     # 恢复失败，停止引擎
+                    # v4.2.2 H5修复: 发布 ENGINE_ERROR 事件
+                    try:
+                        if hasattr(engine, 'event_bus') and engine.event_bus:
+                            from ...collision.events import EngineErrorEvent
+                            engine.event_bus.publish(EngineErrorEvent(
+                                error_type="gpu_device_lost_unrecoverable",
+                                error_message=f"GPU设备丢失且恢复失败: {e}",
+                                exception=e,
+                                context={"gpu_id": getattr(engine, "device_index", 0)},
+                                recoverable=False,
+                            ))
+                    except Exception:
+                        logger.debug("发布 ENGINE_ERROR 事件失败（非致命）", exc_info=True)
                     engine._running = False
                     return batch_count
 

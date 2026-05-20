@@ -8,7 +8,11 @@ from typing import Any
 # 导入日志配置
 from ..utils import get_configured_logger
 
+<<<<<<< Updated upstream
 # 日志系统由CLI/main.py入口统一初始化
+=======
+# 获取模块日志记录器
+>>>>>>> Stashed changes
 logger = get_configured_logger("DeduplicationFilter")
 
 # v4.3.1: 快速哈希模式开关
@@ -29,14 +33,29 @@ def _crypto_fingerprint(private_key: bytes) -> int:
 
 
 class DeduplicationFilter:
-    """私钥去重过滤器 - 防止重复检测相同私钥（优化版）
+    """私钥去重过滤器 - 防止重复检测相同私钥（滑动窗口 + 哈希指纹）
+
+    **使用场景（M7）**: 适用于 random_search 模式的高频去重，
+    与 [BloomDeduplicationFilter](file:///f:/Qoder/btc-collision-engine/src/collision/bloom_deduplication_filter.py)
+    选择分界：
+    - DeduplicationFilter: 滑动窗口精确去重，适合 <100万 元素、
+      需要零误判的场景（range/sequential/brute_force 模式可用此）
+    - BloomDeduplicationFilter: 概率去重，适合 >100万 元素、
+      可容忍 0.1% 误判率的 random_search 海量去重
 
     设计说明：
     比特币私钥空间为 2^256，内存无法存储所有已检测的键。
+<<<<<<< Updated upstream
     本实现采用滑动窗口 + 快速哈希策略：
     - v4.3.1: 使用 Python 内置 hash() 替代 SHA256，速度提升 10-100x
     - 双缓冲队列实现滑动窗口，避免频繁清空
     - 64-bit 整数指纹，set 操作 O(1) 且哈希极快
+=======
+    本实现采用滑动窗口 + 双缓冲集合策略：
+    - 使用双缓冲集合实现滑动窗口，避免频繁清空
+    - 8字节SHA256截断作为指纹，误判率极低
+    - 需要零误判的场景请使用本类；海量去重请使用 BloomDeduplicationFilter
+>>>>>>> Stashed changes
     - 仅对 random_search 模式有意义（range/brute_force 天然无重复）
     """
 

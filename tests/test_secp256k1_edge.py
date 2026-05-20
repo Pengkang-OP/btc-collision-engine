@@ -5,6 +5,7 @@
             501, 506, 569, 579, 607
 """
 
+import os
 import unittest
 from unittest.mock import patch
 
@@ -221,34 +222,43 @@ class TestValidateScalarMultiply(unittest.TestCase):
 
 
 class TestScalarMultiplyEdge(unittest.TestCase):
-    """scalar_multiply (deprecated) 边界"""
+    """scalar_multiply 已锁定 — 验证 RuntimeError 行为 (v4.2.2 BLOCK #9)"""
 
     def setUp(self):
         self.ec = EllipticCurve()
         self.G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
+        # 确保环境变量未设置，以测试锁定行为
+        self._saved_env = os.environ.pop("BTC_ALLOW_NON_CONST_TIME", None)
+
+    def tearDown(self):
+        if self._saved_env is not None:
+            os.environ["BTC_ALLOW_NON_CONST_TIME"] = self._saved_env
 
     def test_k_zero(self):
-        """k==0 → 无穷远点 → line 397"""
-        result = self.ec.scalar_multiply(0, self.G)
-        self.assertTrue(result.is_infinity)
+        """k==0 → RuntimeError (已锁定)"""
+        with self.assertRaises(RuntimeError) as ctx:
+            self.ec.scalar_multiply(0, self.G)
+        self.assertIn("已被锁定", str(ctx.exception))
 
     def test_point_infinity(self):
-        """point 是无穷远点 → 无穷远点 → line 397"""
+        """point 无穷远点 → RuntimeError (已锁定)"""
         inf = ECPoint(None, None)
-        result = self.ec.scalar_multiply(5, inf)
-        self.assertTrue(result.is_infinity)
+        with self.assertRaises(RuntimeError) as ctx:
+            self.ec.scalar_multiply(5, inf)
+        self.assertIn("已被锁定", str(ctx.exception))
 
     def test_k_mod_N_zero(self):
-        """k % N == 0 → 无穷远点 → line 402"""
-        k = Secp256k1.N * 2  # k % N == 0
-        result = self.ec.scalar_multiply(k, self.G)
-        self.assertTrue(result.is_infinity)
+        """k % N == 0 → RuntimeError (已锁定)"""
+        k = Secp256k1.N * 2
+        with self.assertRaises(RuntimeError) as ctx:
+            self.ec.scalar_multiply(k, self.G)
+        self.assertIn("已被锁定", str(ctx.exception))
 
     def test_normal_scalar_multiply(self):
-        """正常标量乘法"""
-        result = self.ec.scalar_multiply(5, self.G)
-        self.assertFalse(result.is_infinity)
-        self.assertTrue(self.ec.is_on_curve(result))
+        """正常标量乘法 → RuntimeError (已锁定)"""
+        with self.assertRaises(RuntimeError) as ctx:
+            self.ec.scalar_multiply(5, self.G)
+        self.assertIn("已被锁定", str(ctx.exception))
 
 
 class TestConstTimeSelectEdge(unittest.TestCase):

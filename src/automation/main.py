@@ -24,7 +24,7 @@ from src.automation import (  # noqa: E402 — 需 sys.path 前置
 def print_banner():
     banner = """
 =================================================================
-       End-to-End Automation Loop Control System v1.0
+       End-to-End Automation Loop Control System v4.2.2
 =================================================================
   Modules:
   1. Data Analysis Module

@@ -3,7 +3,14 @@
 from ..utils import get_configured_logger
 from .base58 import Base58
 
+<<<<<<< Updated upstream
 # 日志系统由CLI/main.py入口统一初始化
+=======
+# v4.2.2 M3: 日志初始化统一由 CLI 入口 (main.py) 和 utils/__init__.py 处理
+# 移除模块级别的 init_logging() 调用，避免重复初始化
+
+# 获取模块日志记录器
+>>>>>>> Stashed changes
 logger = get_configured_logger("WIF")
 
 

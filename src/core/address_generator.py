@@ -14,9 +14,22 @@ from abc import ABC, abstractmethod
 from ..utils import get_configured_logger
 from .base58 import Base58
 from .hash_utils import HashUtils
+# v4.2.2 M3: 日志初始化统一由 CLI 入口 (main.py) 和 utils/__init__.py 处理
+
+# 获取模块日志记录器
+>>>>>>> Stashed changes
+logger = get_configured_logger("AddressGenerator")
 from .secp256k1 import EllipticCurve, Secp256k1
 
-# 日志系统由CLI/main.py入口统一初始化
+# v4.2.2 M3: 日志初始化统一由 CLI 入口 (main.py) 和 utils/__init__.py 处理
+
+# 获取模块日志记录器
+logger = get_configured_logger("AddressGenerator")
+=======
+# v4.2.2 M3: 日志初始化统一由 CLI 入口 (main.py) 和 utils/__init__.py 处理
+
+# 获取模块日志记录器
+>>>>>>> Stashed changes
 logger = get_configured_logger("AddressGenerator")
 
 
@@ -96,6 +109,20 @@ class BaseAddressGenerator(ABC):
         """
         ...
 
+    def public_key_to_hash160(self, public_key: bytes) -> bytes:
+        """从公钥计算 Hash160（不生成完整地址）
+
+        仅执行 Hash160 计算，跳过 Base58Check 编码。
+        用于碰撞引擎热路径上的快速匹配检测。
+
+        Args:
+            public_key: 公钥字节串（压缩或非压缩）
+
+        Returns:
+            20字节 Hash160 值
+        """
+        return HashUtils.hash160(public_key)
+
     def public_key_to_address(self, public_key: bytes) -> str:
         """从公钥生成比特币地址
 
@@ -107,7 +134,7 @@ class BaseAddressGenerator(ABC):
         Returns:
             以'1'开头的比特币地址
         """
-        hash160 = HashUtils.hash160(public_key)
+        hash160 = self.public_key_to_hash160(public_key)
         address = Base58.check_encode(0x00, hash160)
         return address
 
@@ -151,14 +178,7 @@ class BaseAddressGenerator(ABC):
                     logger.debug(f"私钥生成成功 (尝试 {attempt + 1}/{max_retries})")
                     return private_key
             except Exception as e:
-                if isinstance(e, KeyGenerationError):
-                    logger.error(
-                        "生成私钥时出错 (尝试 %d/%d): 错误码=%d",
-                        attempt + 1,
-                        max_retries,
-                        e.error_code,
-                    )
-                elif isinstance(e, (ValueError, TypeError, OverflowError)):
+                if isinstance(e, (ValueError, TypeError, OverflowError)):
                     logger.error(
                         "生成私钥时出错 (尝试 %d/%d): %s",
                         attempt + 1,

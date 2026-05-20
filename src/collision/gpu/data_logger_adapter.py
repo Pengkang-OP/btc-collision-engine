@@ -4,7 +4,7 @@
 桥接 `log_performance()` / `flush()` / `get_stats()` 到
 DataLogger 的实际 API (`record_performance_data()` 等)。
 
-版本: v3.0 (Phase 3)
+版本: v4.2.2 (Phase 3)
 创建日期: 2026-04-30
 """
 

@@ -9,7 +9,7 @@
 - 默认策略回退
 - 设备信息提取与适配
 
-版本: v2.0 (Phase 5)
+版本: v4.2.2 (Phase 5)
 创建日期: 2026-04-29
 更新日期: 2026-04-30
 """
@@ -35,7 +35,7 @@ class IntelOptimizationStrategy:
     def apply_optimizations(self, context: GPUExecutionContext) -> dict[str, Any]:
         """应用Intel特定优化
 
-        v2.2.2 修复:
+        v4.2.1 修复:
         - AdaptiveTimeoutManager 构造参数从 config= 改为 base_timeout= 等正确签名
         - IntelMemoryMonitor 构造参数从 device= 改为 total_memory_bytes= 等正确签名
         - IntelGPUOptimizer.apply_optimizations() 现在传递 engine 引用以启用 P2 组件
@@ -77,7 +77,7 @@ class IntelOptimizationStrategy:
             intel_optimizer.apply_optimizations(
                 {
                     "kernel_source": OPENCL_KERNEL_SOURCE,
-                    "engine": context.engine,  # v2.2.2: 传递 engine 引用
+                    "engine": context.engine,  # v4.2.1: 传递 engine 引用
                 }
             )
 

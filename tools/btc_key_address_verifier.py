@@ -50,7 +50,12 @@ except ImportError:
     _HAS_BECH32 = False
     import logging
 
+<<<<<<< Updated upstream
     logging.getLogger(__name__).warning("bech32 库未安装，Bech32/Bech32m 地址验证将使用内置实现")
+=======
+from src.core.secp256k1 import Secp256k1, ECPoint, EllipticCurve
+from src.core.hash_utils import HashUtils
+>>>>>>> Stashed changes
 
 from src.core.hash_utils import HashUtils
 from src.core.secp256k1 import ECPoint, EllipticCurve, Secp256k1
@@ -76,9 +81,15 @@ class VerificationStep:
     output_data: str
     expected: str | None = None
     is_correct: bool = False
+<<<<<<< Updated upstream
     error_message: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
+=======
+    error_message: Optional[str] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+>>>>>>> Stashed changes
         return {
             "name": self.name,
             "input": self.input_data[:64] + "..." if len(self.input_data) > 64 else self.input_data,
@@ -100,9 +111,15 @@ class AddressVerificationResult:
     mismatch_step: str | None = None
     steps: list[VerificationStep] = field(default_factory=list)
     is_valid_format: bool = True
+<<<<<<< Updated upstream
     validation_errors: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
+=======
+    validation_errors: List[str] = field(default_factory=list)
+
+    def to_dict(self) -> Dict[str, Any]:
+>>>>>>> Stashed changes
         return {
             "format": self.format_type.value,
             "generated": self.generated_address,
@@ -130,7 +147,11 @@ class FullVerificationReport:
     overall_match: bool
     timestamp: float = field(default_factory=time.time)
 
+<<<<<<< Updated upstream
     def to_dict(self) -> dict[str, Any]:
+=======
+    def to_dict(self) -> Dict[str, Any]:
+>>>>>>> Stashed changes
         return {
             "private_key": {
                 "hex": self.private_key_hex,
@@ -154,6 +175,12 @@ class FullVerificationReport:
 # Bech32/Bech32m 编解码 (统一模块)
 # ============================================================================
 
+<<<<<<< Updated upstream
+=======
+from src.utils.bech32_codec import bech32_encode as _bech32_encode
+
+
+>>>>>>> Stashed changes
 # ============================================================================
 # 主验证类
 # ============================================================================
@@ -729,7 +756,11 @@ class BTCKeyAddressVerifier:
         self._log("\n[阶段2] 公钥 → 各格式地址 验证")
         self._log("-" * 40)
 
+<<<<<<< Updated upstream
         address_results: dict[AddressFormat, AddressVerificationResult] = {}
+=======
+        address_results: Dict[AddressFormat, AddressVerificationResult] = {}
+>>>>>>> Stashed changes
 
         # 获取目标地址
         targets = target_addresses or {}

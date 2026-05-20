@@ -316,7 +316,7 @@ class LoggingConfig:
 
         logger = logging.getLogger(name)
 
-        # v2.2.1修复: Python的logging.Logger本身是线程安全的（内部使用RLock）
+        # v4.2.1修复: Python的logging.Logger本身是线程安全的（内部使用RLock）
         # thread_safe参数已弃用，直接返回原生logger
         if thread_safe:
             import warnings

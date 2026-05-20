@@ -86,14 +86,24 @@ def _setup_and_start_engine(
         sys.exit(1)
 
     # ── 将告警系统集成到引擎主流程 ──────────────────────────────────
+    # v4.2.2 M6: 统一使用 src-prefix 导入路径，移除重复 fallback
     alert_system = None
     try:
         from src.monitoring.alert_system import AlertSystem as _alert_class  # noqa: N813
     except ImportError:
+        AlertSystem = None  # type: ignore[assignment]
+>>>>>>> Stashed changes
+
+    if _alert_class is not None:
         try:
             from ..monitoring.alert_system import AlertSystem as _alert_class  # noqa: N813
         except ImportError:
             _alert_class: Any = None  # type: ignore[no-redef]
+
+    if _alert_class is not None:
+=======
+        AlertSystem = None  # type: ignore[assignment]
+>>>>>>> Stashed changes
 
     if _alert_class is not None:
         try:
@@ -127,6 +137,7 @@ def _setup_and_start_engine(
     print(_t("cli.main.collision_start") + "\n")
 
     if engine_type == "multi_gpu":
+        # v4.2.2 L1修复: 多GPU引擎start返回值为统一格式
         ok = engine.start(
             targets=targets,
             mode=args.mode,
@@ -155,6 +166,128 @@ def _setup_and_start_engine(
     return engine, engine_type, alert_system, stop_event
 
 
+def _make_key_handler(
+    engine: Any,
+    engine_type: str,
+    output: Any,
+    stop_event: threading.Event,
+    paused: list[bool],
+    pause_start: list[float | None],
+    total_pause_time: list[float],
+) -> Any:
+    """创建键盘回调函数，返回 on_key callable。"""
+
+    def on_key(key: str) -> None:
+        if key == "P" and not paused[0]:
+            _handle_pause(engine, output, paused, pause_start)
+        elif key == "R" and paused[0]:
+            _handle_resume(engine, output, paused, pause_start, total_pause_time)
+        elif key == "Q":
+            output.print("[red]■ 正在停止..[/red]")
+            stop_event.set()
+            engine.stop()
+        elif key == "S":
+            _handle_stats_key(engine, engine_type)
+
+    return on_key
+
+
+def _handle_pause(
+    engine: Any, output: Any, paused: list[bool], pause_start: list[float | None]
+) -> None:
+    paused[0] = True
+    pause_start[0] = time.time()
+    output.print("[yellow]⏸ 已暂停 — 按 [R] 恢复 | [Q] 退出 | [S] 统计[/yellow]")
+    if hasattr(engine, "pause"):
+        engine.pause()
+
+
+def _handle_resume(
+    engine: Any,
+    output: Any,
+    paused: list[bool],
+    pause_start: list[float | None],
+    total_pause_time: list[float],
+) -> None:
+    if pause_start[0] is not None:
+        total_pause_time[0] += time.time() - pause_start[0]
+    paused[0] = False
+    pause_start[0] = None
+    output.print("[green]▶ 已恢复运行[/green]")
+    if hasattr(engine, "resume"):
+        engine.resume()
+
+
+def _handle_stats_key(engine: Any, engine_type: str) -> None:
+    """S键：打印详细统计信息。"""
+    try:
+        if engine_type == "multi_gpu":
+            combined = engine.get_combined_stats()
+            print("\n" + "=" * 52)
+            print("  详细统计信息")
+            print("-" * 52)
+            print(f"  已检查:     {combined.get('total_keys_checked', 0):,}")
+            print(f"  GPU数量:    {combined.get('device_count', 0)}")
+            print(f"  发现匹配:   {combined.get('total_matches', 0)}")
+            print("=" * 52 + "\n")
+        else:
+            _print_detailed_stats(engine.get_stats())
+    except Exception:
+        pass
+
+
+def _format_multi_gpu_status_line(engine: Any) -> str:
+    """格式化 multi_gpu 引擎状态行。"""
+    combined = engine.get_combined_stats()
+    elapsed_sec = combined.get("elapsed_time", 0)
+    total_checked = combined.get("total_keys_checked", 0)
+    throughput = combined.get("combined_throughput", 0)
+    matches = combined.get("total_matches", 0)
+    device_count = combined.get("device_count", 0)
+    h, rem = divmod(int(elapsed_sec), 3600)
+    m_t, s = divmod(rem, 60)
+    elapsed_fmt = f"{h:02d}:{m_t:02d}:{s:02d}"
+    if throughput >= 1_000_000:
+        speed_fmt = f"{throughput / 1_000_000:.2f}M/s"
+    elif throughput >= 1_000:
+        speed_fmt = f"{throughput / 1_000:.1f}K/s"
+    else:
+        speed_fmt = f"{throughput:.0f}/s"
+    return (
+        f"[{elapsed_fmt}] GPU x{device_count} | "
+        + _t("cli.main.progress_checked", count=total_checked)
+        + f" | {speed_fmt} | "
+        + _t("cli.main.progress_matches", count=matches)
+    )
+
+
+def _check_alerts_in_loop(alert_system: Any, stats: Any) -> None:
+    """检查告警系统指标（非多GPU模式）。"""
+    if alert_system is None:
+        return
+    try:
+        elapsed_sec = stats.elapsed if stats.elapsed > 0 else 1
+        throughput = stats.total_checked / elapsed_sec if elapsed_sec > 0 else 0
+        metrics = {
+            "throughput": throughput,
+            "baseline_throughput": getattr(stats, "peak_speed", throughput * 1.2),
+            "error_rate": 0.0,
+        }
+        alert_system.check_metrics(metrics)
+    except Exception:
+        pass
+
+
+def _display_progress(hotkey_visible: bool, status_line: str, hotkey_bar: str) -> None:
+    """显示进度行和快捷键栏。"""
+    if hotkey_visible:
+        print(f"\r{status_line}\033[K", end="", flush=True)
+        print(f"\n{hotkey_bar}\033[K", end="", flush=True)
+        print("\033[1A", end="", flush=True)
+    else:
+        print(f"\r{status_line}\033[K", end="", flush=True)
+
+
 def _run_collision_loop(
     engine: Any,
     engine_type: str,
@@ -168,145 +301,69 @@ def _run_collision_loop(
 
     output = CLIOutput.get_instance()
     start_time = time.time()
-    paused = False
-    pause_start: float | None = None
-    total_pause_time = 0.0
+    paused: list[bool] = [False]
+    pause_start: list[float | None] = [None]
+    total_pause_time: list[float] = [0.0]
 
-    def on_key(key: str) -> None:
-        nonlocal paused, pause_start, total_pause_time
-        if key == "P" and not paused:
-            paused = True
-            pause_start = time.time()
-            output.print("[yellow]⏸ 已暂停 — 按 [R] 恢复 | [Q] 退出 | [S] 统计[/yellow]")
-            if hasattr(engine, "pause"):
-                engine.pause()
-        elif key == "R" and paused:
-            if pause_start is not None:
-                total_pause_time += time.time() - pause_start
-            paused = False
-            pause_start = None
-            output.print("[green]▶ 已恢复运行[/green]")
-            if hasattr(engine, "resume"):
-                engine.resume()
-        elif key == "Q":
-            output.print("[red]■ 正在停止..[/red]")
-            stop_event.set()
-            engine.stop()
-        elif key == "S":
-            try:
-                if engine_type == "multi_gpu":
-                    combined = engine.get_combined_stats()
-                    print("\n" + "=" * 52)
-                    print("  详细统计信息")
-                    print("-" * 52)
-                    print(f"  已检查:     {combined.get('total_keys_checked', 0):,}")
-                    print(f"  GPU数量:    {combined.get('device_count', 0)}")
-                    print(f"  发现匹配:   {combined.get('total_matches', 0)}")
-                    print("=" * 52 + "\n")
-                else:
-                    _print_detailed_stats(engine.get_stats())
-            except Exception:
-                pass
-
-    listener = KeyboardListener(on_key)
+    listener = KeyboardListener(
+        _make_key_handler(engine, engine_type, output, stop_event, paused, pause_start, total_pause_time)
+    )
     listener.start()
     _suppress_console_logging()
 
-    # 快捷键提示（固定在底部）
-    _hotkey_bar = "\033[36m快捷键: [P]暂停  [R]恢复  [Q]退出  [S]统计\033[0m"
-    _hotkey_visible = False
-    _status_line = ""
+    hotkey_bar = "\033[36m快捷键: [P]暂停  [R]恢复  [Q]退出  [S]统计\033[0m"
+    hotkey_visible = _init_hotkey_display(listener, output)
 
     try:
-        # 显示控制提示栏
-        if listener._available:
-            _hotkey_visible = True
-        else:
-            reason = KeyboardListener.unavailable_reason()
-            output.warning(f"键盘快捷键不可用（{reason}）")
-
         while engine.is_running() and not stop_event.is_set():
-            if paused:
+            if paused[0]:
                 time.sleep(0.2)
                 continue
 
-            # 每次最多等待 1 秒，让键盘响应更及时
             sleep_interval = min(float(args.progress_interval), 1.0)
             time.sleep(sleep_interval)
-
             if stop_event.is_set():
                 break
 
             if engine_type == "multi_gpu":
-                combined = engine.get_combined_stats()
-                elapsed_sec = combined.get("elapsed_time", 0)
-                total_checked = combined.get("total_keys_checked", 0)
-                throughput = combined.get("combined_throughput", 0)
-                matches = combined.get("total_matches", 0)
-                device_count = combined.get("device_count", 0)
-                h, rem = divmod(int(elapsed_sec), 3600)
-                m_t, s = divmod(rem, 60)
-                elapsed_fmt = f"{h:02d}:{m_t:02d}:{s:02d}"
-                speed_fmt = (
-                    f"{throughput / 1_000_000:.2f}M/s"
-                    if throughput >= 1_000_000
-                    else (
-                        f"{throughput / 1_000:.1f}K/s" if throughput >= 1_000 else f"{throughput:.0f}/s"
-                    )
-                )
-                _status_line = (
-                    f"[{elapsed_fmt}] GPU x{device_count} | "
-                    + _t("cli.main.progress_checked", count=total_checked)
-                    + f" | {speed_fmt} | "
-                    + _t("cli.main.progress_matches", count=matches)
-                )
+                status_line = _format_multi_gpu_status_line(engine)
             else:
                 stats = engine.get_stats()
-                _status_line = format_progress(stats, args.mode, total_range)
-                # 确保状态行不含换行，适合 \r 覆盖模式
-                _status_line = _status_line.replace("\n", " ")
+                status_line = format_progress(stats, args.mode, total_range).replace("\n", " ")
 
-            # 显示状态行和快捷键栏（固定在底部）
-            if _hotkey_visible:
-                # 清除当前行，打印状态行，然后换行打印快捷键栏
-                print(f"\r{_status_line}\033[K", end="", flush=True)
-                print(f"\n{_hotkey_bar}\033[K", end="", flush=True)
-                # 上移一行回到状态行位置，准备下次更新
-                print("\033[1A", end="", flush=True)
-            else:
-                print(f"\r{_status_line}\033[K", end="", flush=True)
+            _display_progress(hotkey_visible, status_line, hotkey_bar)
 
-                # 告警系统检查（每次刷新进度后执行）
-                if alert_system is not None:
-                    try:
-                        elapsed_sec = stats.elapsed if stats.elapsed > 0 else 1
-                        throughput = stats.total_checked / elapsed_sec if elapsed_sec > 0 else 0
-                        metrics = {
-                            "throughput": throughput,
-                            "baseline_throughput": getattr(stats, "peak_speed", throughput * 1.2),
-                            "error_rate": 0.0,
-                        }
-                        alert_system.check_metrics(metrics)
-                    except Exception:
-                        pass  # 告警异常不影响主流程
+            if not hotkey_visible:
+                if engine_type != "multi_gpu":
+                    _check_alerts_in_loop(alert_system, stats)  # type: ignore[possibly-unbound]
+                elif alert_system is not None:
+                    _check_alerts_in_loop(alert_system, engine.get_stats())
 
-            # 检查运行时长限制（排除暂停时间）
-            effective_elapsed = time.time() - start_time - total_pause_time
+            effective_elapsed = time.time() - start_time - total_pause_time[0]
             if args.duration > 0 and effective_elapsed >= args.duration:
-                print()  # 换行
+                print()
                 print(_t("cli.main.duration_reached", seconds=args.duration))
                 engine.stop()
                 stop_event.set()
                 break
-
-            # 快捷键已固定在底部，无需定期重复显示
     except KeyboardInterrupt:
         engine.stop()
-        raise  # 向上抹出由 main() 统一处理 exit code 130
+        raise
     finally:
         listener.stop()
         _restore_console_logging()
-        print()  # 确保换行，避免后续输出覆盖状态行
+        print()
+
+
+def _init_hotkey_display(listener: Any, output: Any) -> bool:
+    """初始化热键显示状态，返回是否可见。"""
+    if listener._available:
+        return True
+    from src.cli.keyboard_listener import KeyboardListener
+
+    reason = KeyboardListener.unavailable_reason()
+    output.warning(f"键盘快捷键不可用（{reason}）")
+    return False
 
 
 def _compute_range(
@@ -378,7 +435,7 @@ def _print_config_info(
 
     if use_cpu:
         optimize_status = _t("common.disabled") if args.no_optimize else _t("common.enabled")
-        config_items["性能优化"] = f"{optimize_status} (v2.2.0)"
+        config_items["性能优化"] = f"{optimize_status} (v4.2.2)"
         if not args.no_optimize:
             config_items["预计算表"] = f"window_size={args.window_size}"
             config_items["SIMD哈希"] = _t("common.disabled") if args.no_simd else _t("common.enabled")

@@ -25,7 +25,10 @@ from typing import Any
 
 from ..utils import get_configured_logger
 
+<<<<<<< Updated upstream
 # 日志系统由CLI/main.py入口统一初始化
+=======
+>>>>>>> Stashed changes
 logger = get_configured_logger("FirstRunWizard")
 
 
@@ -139,7 +142,11 @@ class FirstRunWizard:
     def _welcome(self):
         """显示欢迎页面"""
         print("\n" + "=" * 65)
+<<<<<<< Updated upstream
         print("  欢迎使用 BTC 碰撞引擎 v4.2.3")
+=======
+        print("  欢迎使用 BTC 碰撞引擎 v4.2.2")
+>>>>>>> Stashed changes
         print("=" * 65)
         print("""
   首次检测到您没有配置文件，本向导将帮助您快速完成初始配置。

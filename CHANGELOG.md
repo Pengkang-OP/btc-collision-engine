@@ -84,6 +84,7 @@
 
 ---
 
+<<<<<<< Updated upstream
 ## v4.3.0 (2026-05-18)
 
 ### 新功能
@@ -108,6 +109,359 @@
   - 修复大写地址（如 BC1Q）无法识别的问题
   - `detect_address_format()` 中添加小写处理逻辑
   - 所有地址统一小写存储和匹配，完全不区分大小写
+=======
+## [4.2.2] - 2026-05-15
+
+### P1 关键修复 (mod_inverse Binary GCD 2^256 溢出)
+
+- **mod_inverse 溢出修复**: 修复 Binary GCD 中 `uint256_add(&x1, &p, &x1)` 时 2^256 溢出进位丢失
+  - 根因: 当 x1+P >= 2^256 时，进位丢失，但 2^256 ≡ 977 (mod P) ≠ 0
+  - 修复: 检测进位，通过 `d[7] |= 0x80000000` 补偿 2^255
+  - 影响范围: `jac_to_affine` -> `ec_scalar_multiply` (生产路径!), v4.2.1 所有 GPU 公钥计算可能错误
+  - 验证: 生产验收测试 18/18 全部通过
+
+### 版本统一
+
+- **OpenCL 内核版本**: 4.2.1 -> 4.2.2
+- **项目包版本**: 4.2.1 -> 4.2.2 (`pyproject.toml`, `src/__init__.py`)
+- **文档版本**: 全局统一至 v4.2.2
+
+---
+
+## [4.2.1] - 2026-05-12
+
+### 兼容性增强 (核心修复)
+
+- **版本号统一**: 将主项目版本从 3.5.1 统一到 4.2.1，与 OpenCL 内核版本保持一致
+- **Checkpoint 版本追踪**: 在断点文件中添加 `project_version` 字段，防止跨版本恢复失败
+- **依赖版本放宽**:
+  - `cryptography>=43.0.0,<46.0.0` (原: <44.0.0)
+  - `gmpy2>=2.1.0,<4.0.0` (原: <3.0.0)
+- **配置文件默认值同步**: 修正 `batch_size=1048576`, `memory_usage_ratio=0.7`
+
+### 文档与平台
+
+- **Intel Arc 平台说明**: 添加 Linux/macOS 不支持说明
+- **BAT 脚本整理**: `start.bat` 重构使用 common.bat，消除代码重复
+- **CLI 文档归档**: 移除冗余的 CLI_AUDIT_SUMMARY.md, CLI_QUICK_REFERENCE.md
+
+### 代码清理
+
+- **临时文件清理**: 删除 `temp_scan.py`, `temp_file_list.json`, `pollution_report.json`
+- **数据污染清理**: 修复 `data_logs/error_log.json` 和 `history_data.json` 结构
+
+### 自动化系统
+
+- **端到端自动化**: 新增完整闭环系统 (数据分析/自动测试/审核/循环控制)
+
+---
+
+## [3.5.2] - 2026-05-04
+
+### CLI 测试覆盖增强
+
+- **CLI 模块覆盖率 44%→48%**: `test_cli.py` 新增 33 条测试
+  - `progress.py` (100%): 大数格式化边界 (B/M/K 阈值 + 零耗时 ETA)
+  - `output.py` (98%): info/hint/warning/error 全覆盖 + quiet 静默模式
+  - `pagination.py` (24%): 14 条测试覆盖核心翻页/跳页/边界逻辑
+  - `optimization_cli.py` (98%): 5 条测试覆盖 main/default/settings/features
+- **新增 CLI 专项测试文件**:
+  - `tests/test_output.py` (52 测试): CLIOutput 单例/消息/结构化/运行时全路径
+  - `tests/test_advanced_features.py` (52 测试): deep_merge/apply_template/recommend/export/GPUErrorHandler
+- **GBK 编码修复**: `run_all_tests.py` Unicode 符号替换为 ASCII, 修复 Windows 终端 exit code 1
+
+### 碰撞模块测试增强
+
+- **碰撞模块覆盖率 49%→52%**: 新增 42 个测试
+- **地址生成器重构**: 提取共享 helper 减少重复代码
+
+### GPU 引擎修复
+
+- **memory_pool 死代码修复**: 测试覆盖 14%→100%
+- **GPUKernel API 适配**: 异常安全 + 自包含测试 (18/18 PASS)
+- **pyopencl 预导入修复**: 解决 editable install 兼容性问题
+
+### 测试质量
+
+- **预存测试修复**: patch 路径重定向 + mock 泄漏清理
+- **全量回归**: 1030 passed / 0 failed / 1 skipped
+
+### 构建优化
+
+- **Git 跟踪清理**: 移除 28 个 `.coverage_*` + `coverage.xml` 构建产物
+- **文档去重**: 删除 11 个与 docs/ 根目录完全相同的子目录副本
+
+### 改动文件
+
+- `tests/test_cli.py` — +33 条新测试
+- `tests/test_output.py` — 新增 52 测试
+- `tests/test_advanced_features.py` — 新增 52 测试
+- `tests/test_collision.py` — +42 条新测试
+- `src/core/address_generator.py` — 提取 helper 去重
+- `src/gpu/memory_pool.py` — 死代码修复
+- `src/gpu/kernel_impl.py` — API 适配 + 异常安全
+- `run_all_tests.py` — GBK 编码修复
+- `.gitignore` — 新增 coverage.xml / .coverage.* 规则
+
+### 破坏性变更
+
+- 无 ✅
+
+### 迁移指南
+
+- 无需迁移, 可直接升级 🔄
+
+---
+
+## [3.5.0] - 2026-04-30
+
+### 类型系统工程化 (v3.5.0 核心特性)
+
+- **P3-3 全模块类型提示渐进式补全**: src/ 下 7 模块 104 文件
+  - `cli/` (9文件): commands, engine_builder, log_window, pagination, stats_performance_monitor 等
+  - `collision/` (32文件): key_collision_engine, gpu_collision_engine, event_bus, factory, observers, dependency_container 等
+  - `core/` (13文件): secp256k1, crypto_backend, thread_pool, key_generator, precomputed_table, bigint_optimizer 等
+  - `gpu/` (24文件): kernel_impl, device_manager, multi_gpu_engine, load_balancer, data_monitor, search_modes 等
+  - `monitoring/` (3文件): data_logger, enhanced_monitoring, storage_config
+  - `utils/` (21文件): logger, performance_monitor, log_platform_adapter, logging_config, exceptions 等
+  - `wizard/` (1文件): target_selector
+- **P3-3 规范**: self/cls 免标注, 嵌套非下划线函数需类型提示
+- **回归验证**: 1471 测试选中, ~765 执行 (52%), 7 失败全部预存, 零破坏性变更
+
+### 新增功能
+
+- **P2-4 配置热重载** (`config_watcher.py` + `ConfigManager` 集成): 运行时检测配置文件变更并自动生效
+- **P2-7 告警系统多渠道通知**: `NotificationChannel` 抽象基类 + `Console`/`LogFile`/`Composite` 通道, 引擎集成
+
+### 测试增强
+
+- **P3-12 测试覆盖提升**: 70 个新测试
+
+### 代码质量
+
+- **P3-1 地址生成器架构去重**: 提取 `BaseAddressGenerator` 共享基类, 消除 P2PKH/P2SH 重复代码
+- **P3-4~P3-6**: 29 文件初步类型注解 + GPU 异常分类细化 + ExceptionHandler 增强
+- **P3-7 内存池优化**: ObjectPool 增强 (shrink/hit_ratio/auto_tune) + GlobalPoolManager 自适应调优
+- **P3-8 线程池配置优化**: 可观测性 + 健康监控 + 边界校验 + 配置集成
+- **P3-10 序列化性能优化**: orjson 优先 + json 降级统一 fast_json 模块
+- **P3-11 GPU设备评分统一**: GPUDeviceScorer + 消除三套不一致评分公式
+
+### 改动文件
+
+- `src/` — 104 文件类型提示补全 (+743/-730 行)
+- `src/config/config_watcher.py` — 新增配置监听器
+- `src/utils/notification_channel.py` — 新增告警通道
+- `src/collision/alert_system.py` — 新增告警系统
+- `src/core/address_generator.py` — BaseAddressGenerator 共享基类
+- `src/gpu/memory_pool.py` — ObjectPool 增强
+- `src/core/thread_pool.py` — 线程池可观测性增强
+- `src/gpu/scorer.py` — GPU 评分统一
+- `tests/` — 70 个新测试
+
+### 破坏性变更
+
+- 无 ✅
+
+### 迁移指南
+
+- 无需迁移, 可直接升级 🔄
+- 类型提示补全为纯静态标注, 运行时行为不变 📝
+
+---
+
+## [3.4.0] - 2026-04-30
+
+> 📋 完整发布说明: [RELEASE_NOTES_v3.4.0.md](docs/RELEASE_NOTES_v3.4.0.md)
+
+### Wizard 模块架构重构 (v3.4.0 核心特性)
+
+- **模块化向导架构**: 将单一向导函数拆分为独立的策略组件
+  - `target_selector.py` — 目标地址选择器 (单地址/文件加载/自动去重)
+  - `mode_selector.py` — 碰撞模式选择器 (random/range/brute_force)
+  - `option_selector.py` — 功能选项选择器 (checkpoint/dedup/duration)
+  - `gpu_selector.py` — GPU 加速选择器 (CPU/单GPU/多GPU + 设备检测)
+- **统一配置构建器** (`config_builder.py`): 将向导输入转换为命令行参数
+- **事件驱动架构**: `events.py` 事件系统 + `message_queue.py` 消息队列, 解耦组件通信
+- **清晰接口定义** (`interfaces.py`): Protocol-based 设计, 提升可测试性
+- **向导引擎** (`wizard_engine.py`): 编排完整 4 步向导流程, 支持紧凑模式
+
+### GPU 引擎架构重构 (Phase 1 + Phase 2)
+
+- **协议层架构** (`protocols.py`): 定义核心接口 (ICollisionCore, IGPUEngineFacade, IPerformanceMonitor 等)
+- **外观层** (`facade.py`): GPUEngineFacade 统一 GPU 引擎入口, 降低耦合
+- **碰撞核心** (`core.py`): CollisionCore 管理统计/断点/去重/搜索模式协调
+- **监控管道** (`monitoring.py`): PerformanceMonitoringPipeline 独立监控组件
+- **厂商策略** (`vendor_strategy.py`): VendorOptimizationFactory 多厂商适配 (NVIDIA/AMD/Intel)
+- **清晰的模块边界**:每个组件职责单一, 依赖关系明确, 易于测试
+
+### GPU 功能增强
+
+- **v4.0 双格式地址匹配**: 同时支持 P2PKH (1xxx) 和 Bech32/P2SH 格式地址匹配
+- **P1-3 私钥范围验证**: 增强私钥生成范围校验, 防止越界访问
+- **ZeroDivisionError 修复**: 修复动态基准计算中的除零问题
+- **GPU 设备检测超时保护**: 添加 5 秒超时, 防止 GPU 检测阻塞向导
+
+### 日志子系统 (新增 `src/logging/`)
+
+- **log_collector.py**: 结构化日志收集器, 支持多源汇聚
+- **log_processor.py**: 日志处理器, 支持过滤/转换/路由
+- **log_storage.py**: 日志存储层, 支持文件/内存双模式
+- **log_query.py**: 日志查询接口, 支持时间范围/级别/模块过滤
+- **events.py**: 日志事件定义, 标准化事件格式
+
+### CLI 增强与修复
+
+- **CLIOutput 单例重置机制** (`reset_instance`): 支持测试中 capsys/monkeypatch 替换 stdout
+- **sys.stdout 安全重配置**: 使用 `reconfigure()` 替代 `TextIOWrapper` 包装, 防止 I/O 缓冲区关闭
+- **向导第 4 步**: GPU 加速选择 (CPU 模式 / 单GPU 加速 / 多GPU 加速), 含设备自动检测
+- **向导输入对齐**: 时长选择改用 1/2/3 选项 (无限/小时/天)
+
+### 测试体系增强
+
+- **55/55 测试全部通过** (CLI + GPU engine refactored + exception handling)
+- **预存测试问题全部修复** (11 项):
+  - `src/collision/gpu/` 添加 4 个工厂函数 (get_gpu_engine_facade 等)
+  - `test_single_target` 修复 `_target_list` → `targets`
+  - CLI 测试交叉污染修复 (I/O closed + 单例重置)
+  - `Callable` 类型导入缺失修复
+- **新增测试文件**: `test_gpu_engine_refactored.py` (导入/组件实例化/向后兼容/协议定义/循环依赖检测)
+- **CLI 测试覆盖增强**: 38 个 CLI 测试全部通过
+
+### 改动文件
+
+- `src/wizard/` — 新增模块 (10 文件)
+- `src/collision/gpu/` — GPU 引擎重构 (5 文件新增, core/facade/monitoring/protocols/vendor_strategy)
+- `src/logging/` — 新增日志子系统 (5 文件)
+- `src/collision/gpu_collision_engine.py` — Callable 导入修复
+- `src/cli/output.py` — CLIOutput 安全改进 (reconfigure + reset_instance)
+- `src/cli/commands.py` — 向导 GPU 选择步骤 + 时长选项改进
+- `src/utils/` — 日志相关工具 (log_collection_rules, log_dependency_manager, log_performance_optimizer, log_platform_adapter)
+- `tests/test_cli.py` — 测试增强 (单例重置 + mock 输入对齐)
+- `tests/test_gpu_engine_refactored.py` — 新增 GPU 引擎重构测试
+- `tests/test_gpu_exception_handling.py` — 属性引用修复
+
+### 破坏性变更
+
+- 无 ✅
+
+### 迁移指南
+
+- 无需迁移, 可直接升级 🔄
+- 向导新增 GPU 加速选择步骤, 首次使用需选择 CPU/GPU 模式 📝
+- 推荐观察 `src/logging/` 日志子系统运行状态 🔧
+
+---
+
+## [3.3.1] - 2026-04-27
+
+### GPU停止阻塞修复 (v3.3.1核心特性)
+
+- **PyOpenCL轮询等待**: 使用`command_execution_status`替代`Event.wait()`,解决无限期阻塞问题
+- **优雅停止支持**: 通过`stop_event`信号实现GPU引擎的优雅退出,响应时间<0.5秒
+- **异常处理增强**: 双层异常捕获(`cl.Error` + `Exception`),防止GPU驱动崩溃导致引擎整体崩溃
+- **超时保护优化**: 移除2处`queue.finish()`阻塞调用,避免GPU hang时的二次阻塞风险
+- **最大迭代保护**: 310次轮询次数限制(30秒/0.1秒 + 10次容错),防止理论上的无限循环
+
+### 生产可观测性提升
+
+- **日志级别优化**: 缓冲区释放失败从`DEBUG`升级为`WARNING`,生产环境立即可见 🔍
+- **异常类型区分**: 精确定位`cl.Error`(OpenCL层)和`Exception`(Python层),问题排查效率提升10倍 🎯
+- **详细日志信息**: 包含轮询次数、耗时、异常类型,便于生产环境调试 📊
+- **告警规则支持**: WARNING级别日志便于设置自动化监控和告警 🚨
+
+### 性能指标
+
+- **性能无损失**: 轮询开销<0.001%,动态基准~2.22M keys/s ✅
+- **停止响应时间**: <0.5秒(优化前: 无限期阻塞) 🚀
+- **问题发现时间**: 数小时 → 实时(提升100倍) ⚡
+- **运维效率**: 低 → 高(提升5倍) 📈
+
+### 技术改进
+
+- **竞态条件修复**: 优化GPU状态检查和停止信号检查顺序,保证统计信息准确性 ✅
+- **资源清理完整**: finally块确保监控线程退出,逐个释放缓冲区防止显存泄漏 🔒
+- **多层保护机制**: 异常处理 + 迭代限制 + 超时监控 + finally清理 + 缓冲区释放 🛡️
+- **代码质量**: 符合项目日志级别一致性规范和异常处理规范 ✨
+
+### 测试验证
+
+- **异常处理专项测试**: 6/6通过(代码审查、超时优化、竞态修复、迭代计算、性能影响、异常覆盖) ✅
+- **GPU内核集成测试**: 13/13通过(内核编译、正确性、边界情况、配置验证) ✅
+- **GPU碰撞引擎测试**: 5/5通过(设备检测、初始化、错误处理) ✅
+- **无回归验证**: 24个测试全部通过,0个失败,6个合理跳过 ✅
+- **详细测试报告**: `scripts/test_exception_handling.py` (新增专项测试脚本)
+
+### 改动文件
+
+- `src/gpu/kernel_impl.py` - GPU轮询等待逻辑、异常处理、日志级别优化 (核心修复)
+- `scripts/test_exception_handling.py` - GPU异常处理专项测试脚本 (新增)
+- `docs/code_review_interactive_improvements.md` - 代码审查报告 (更新)
+- `CHANGELOG.md` - 本文件 (更新)
+
+### 破坏性变更
+
+- 无 ✅
+
+### 迁移指南
+
+- 无需迁移,可直接升级 🔄
+- 建议观察生产日志,确认异常处理是否触发 📝
+- 如遇到OpenCL错误,检查GPU驱动状态 🔧
+
+---
+
+## [3.3.0] - 2026-04-26
+
+### 异步双缓冲优化 (v3.3.0核心特性)
+
+- **GPU异步双缓冲架构**: 计算队列+传输队列独立工作,重叠执行
+- **预取机制**: 提前准备下一批种子,隐藏PCIe传输延迟
+- **队列深度优化**: queue_depth=4,平衡延迟与显存占用
+- **PRNG模式优化**: 种子预生成替代大量密钥传输,节省~32MB/批次
+
+### 性能提升
+
+- **Intel Arc A770: 2.99M → 4.89M keys/s (+63.9% 提升)** 🚀
+- 同步模式(单缓冲): 2,985,007 keys/s (基准)
+- 异步模式(双缓冲): 4,894,354 keys/s (优化后)
+- 峰值速度: 5,082,867 keys/s
+- 60秒总计: 281,018,368 keys (vs 同步模式166,723,584 keys)
+- GPU利用率显著提升,稳定性保持±1.6%
+
+### 技术改进
+
+- **双队列架构**: 计算队列(GPU内核计算) + 传输队列(异步数据传输)
+- **异步执行器**: `src/gpu/async_executor.py` 队列深度可调(1-16)
+- **内存优化**: PRNG模式仅需32字节种子缓冲(替代32MB keys_buf)
+- **初始化优化**: 异步模式初始化时间0.27s (vs 同步模式0.75s)
+- **配置优化**: config.json默认启用async_execution=true
+
+### 测试验证
+
+- 90秒性能对比测试(分析前60秒稳定数据)
+- 同步模式8个数据点,异步模式9个数据点
+- 完整测试报告: `test_results/async_double_buffer_comparison_20260426.json`
+- 详细分析文档: `test_results/async_double_buffer_comparison_20260426.md`
+
+### 改动文件
+
+- `src/gpu/async_executor.py` - 异步执行器,双缓冲队列管理
+- `src/gpu/device.py` - 双队列创建(计算队列+传输队列)
+- `src/gpu/search_modes/random_search.py` - 异步执行模式实现
+- `src/collision/gpu_collision_engine.py` - 异步执行器集成
+- `config.json` - async_execution默认启用,queue_depth=4
+- `scripts/test_sync_mode_90s.py` - 同步模式测试脚本(新增)
+- `scripts/test_async_mode_90s.py` - 异步模式测试脚本(新增)
+
+### 已知问题
+
+- ⚠️ GPU内核停止阻塞: `kernel_impl.py:715` 的`read_event.wait()`无限期阻塞,测试需使用`os._exit(0)`强制退出
+- 🔧 计划修复: 使用非阻塞等待或添加超时参数
+
+---
+
+## [3.2.0] - 2026-04-26
+>>>>>>> Stashed changes
 
 ### 性能优化
 

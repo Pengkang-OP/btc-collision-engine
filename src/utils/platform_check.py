@@ -30,7 +30,10 @@ from typing import Any
 from ..i18n import _t
 from ..utils import get_configured_logger
 
+<<<<<<< Updated upstream
 # 日志系统由CLI/main.py入口统一初始化
+=======
+>>>>>>> Stashed changes
 logger = get_configured_logger("PlatformChecker")
 
 

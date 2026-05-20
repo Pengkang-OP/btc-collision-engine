@@ -36,7 +36,7 @@ class GPUKernelProtocol(Protocol):
     def run_batch(self, seed: bytes, num_keys: int) -> list[dict[str, int]]:
         """执行一批密钥碰撞计算（PRNG模式）
 
-        v4.0 PRNG改造：CPU仅传递32字节随机种子，GPU内核自行生成
+        v4.2.1 PRNG改造：CPU仅传递32字节随机种子，GPU内核自行生成
         每个工作单元的私钥（key = seed XOR gid），大幅减少PCIe传输量。
 
         Args:

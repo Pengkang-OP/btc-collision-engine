@@ -23,7 +23,11 @@ if TYPE_CHECKING:
 from ..utils import get_configured_logger
 from .address_generator import BaseAddressGenerator
 
+<<<<<<< Updated upstream
 # 日志系统由CLI/main.py入口统一初始化
+=======
+# 获取模块日志记录器
+>>>>>>> Stashed changes
 logger = get_configured_logger("OptimizedAddressGenerator")
 
 
@@ -113,6 +117,10 @@ class OptimizedP2PKHAddressGenerator(BaseAddressGenerator):
         if self.use_precomputed_table and self.precomputed_table:
             point = self.precomputed_table.scalar_multiply_with_table(k, self.ec)
         else:
+<<<<<<< Updated upstream
+=======
+            # v4.2.2 C1-regression修复: 使用恒定时间实现
+>>>>>>> Stashed changes
             point = self.ec.scalar_multiply_const_time(k, self.G)
 
         # 压缩或未压缩格式
@@ -123,6 +131,25 @@ class OptimizedP2PKHAddressGenerator(BaseAddressGenerator):
         else:
             # 未压缩公钥: 0x04 + X坐标 + Y坐标
             return b"\x04" + point.x.to_bytes(32, "big") + point.y.to_bytes(32, "big")
+
+    def public_key_to_hash160(self, public_key: bytes) -> bytes:
+        """
+        公钥计算 Hash160 (SIMD优化路径，跳过 Base58Check 编码)
+
+        用于碰撞引擎热路径上的快速匹配检测，仅返回 20 字节 Hash160。
+
+        Args:
+            public_key: 公钥字节
+
+        Returns:
+            20字节 Hash160 值
+        """
+        if self.use_simd_hash and self.simd_optimizer:
+            sha256_result = self.simd_optimizer.batch_sha256([public_key])[0]
+            ripemd160_result = self.simd_optimizer.batch_ripemd160([sha256_result])[0]
+            return ripemd160_result
+        else:
+            return super().public_key_to_hash160(public_key)
 
     def public_key_to_address(self, public_key: bytes) -> str:
         """
@@ -140,7 +167,7 @@ class OptimizedP2PKHAddressGenerator(BaseAddressGenerator):
             ripemd160_result = self.simd_optimizer.batch_ripemd160([sha256_result])[0]
             # 添加版本字节 + 校验和 + Base58编码
             extended = b"\x00" + ripemd160_result
-            checksum = HashUtils.sha256(HashUtils.sha256(extended))[:4]
+            checksum = HashUtils.double_sha256(extended)[:4]
             return Base58.encode(extended + checksum)
         else:
             # 回退到基类标准实现
@@ -182,6 +209,10 @@ class OptimizedP2PKHAddressGenerator(BaseAddressGenerator):
             if self.use_precomputed_table and self.precomputed_table:
                 point = self.precomputed_table.scalar_multiply_with_table(pk_int, self.ec)
             else:
+<<<<<<< Updated upstream
+=======
+                # v4.2.2 C1-regression修复: 使用恒定时间实现
+>>>>>>> Stashed changes
                 point = self.ec.scalar_multiply_const_time(pk_int, self.G)
 
             # 压缩格式
@@ -204,7 +235,7 @@ class OptimizedP2PKHAddressGenerator(BaseAddressGenerator):
         addresses = []
         for ripemd160 in ripemd160_results:
             extended = b"\x00" + ripemd160
-            checksum = HashUtils.sha256(HashUtils.sha256(extended))[:4]
+            checksum = HashUtils.double_sha256(extended)[:4]
             address = Base58.encode(extended + checksum)
             addresses.append(address)
 

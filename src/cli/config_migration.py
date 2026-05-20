@@ -14,7 +14,7 @@ from typing import Any, Callable
 
 from src.i18n import _t
 
-CONFIG_VERSION = "3.1.0"
+CONFIG_VERSION = "4.2.2"
 
 # 必需的配置段（用于版本检测）
 V3_1_REQUIRED_SECTIONS = {
@@ -90,7 +90,7 @@ def detect_config_version(config: dict) -> str:
         config: 配置字典
 
     返回:
-        版本字符串: "3.1.0", "3.0.0", "2.x" 或 "unknown"
+        版本字符串: CONFIG_VERSION (v4.x), "3.1.0", "3.0.0", "2.x" 或 "unknown"
     """
     if not isinstance(config, dict):
         return "unknown"
@@ -99,6 +99,10 @@ def detect_config_version(config: dict) -> str:
 
     # 过滤掉注释键（以 _comment 开头）
     actual_keys = {k for k in keys if not k.startswith("_comment")}
+
+    # v4.2+: i18n 段是 v4.x 引入的新特性，用于区分 v3.1.0
+    if "i18n" in actual_keys:
+        return CONFIG_VERSION
 
     if "performance_monitoring" in actual_keys:
         return "3.1.0"
@@ -234,12 +238,18 @@ def backup_config(config_path: str) -> str:
     return str(backup_path)
 
 
+<<<<<<< Updated upstream
 def _check_section_is_dict(section_name: str, value: Any, issues: list[str]) -> dict | None:
     """验证配置段是否为 dict 类型，返回 dict 或 None。"""
     if not isinstance(value, dict):
         issues.append(f"{section_name} 段必须是 JSON 对象")
         return None
     return value
+=======
+def validate_migrated_config(config: dict) -> tuple[bool, list[str]]:
+    """
+    验证迁移后的配置是否满足 v4.2.2 要求。
+>>>>>>> Stashed changes
 
 
 def _check_field_type(

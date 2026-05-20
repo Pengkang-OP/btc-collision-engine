@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """
+<<<<<<< Updated upstream
 v3.3.0性能优化测试 (历史版本，仅供参考)
+=======
+v4.2.1性能优化测试
+>>>>>>> Stashed changes
 
 测试内容:
 1. 内存标志优化效果
@@ -9,7 +13,11 @@ v3.3.0性能优化测试 (历史版本，仅供参考)
 
 作者: AI Assistant
 日期: 2026-04-24
+<<<<<<< Updated upstream
 版本: v3.3.0 (历史版本)
+=======
+版本: v4.2.1
+>>>>>>> Stashed changes
 """
 
 import os
@@ -133,7 +141,11 @@ def main():
     """主测试流程"""
 
     print("=" * 80)
+<<<<<<< Updated upstream
     print("GPU性能优化测试 - v3.3.0 (历史版本，仅供参考)")
+=======
+    print("GPU性能优化测试 - v4.2.1")
+>>>>>>> Stashed changes
     print("目标: 突破600K keys/s")
     print("=" * 80)
 

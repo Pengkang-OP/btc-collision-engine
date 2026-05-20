@@ -19,9 +19,15 @@ from ..utils import get_configured_logger
 logger = get_configured_logger("AsyncGPUExecutor")
 
 
+<<<<<<< Updated upstream
 from .seed_utils import (  # noqa: E402, F811
     _seed_bytes_to_u32_be_array,
 )
+=======
+# v4.2.2 M5: 统一端序转换 → 从 gpu/seed_utils.py 导入单一权威实现
+from .seed_utils import _seed_bytes_to_u32_be_array  # noqa: E402
+
+>>>>>>> Stashed changes
 
 # 队列深度管理常量
 DEFAULT_QUEUE_DEPTH = 4  # GPU 队列中保持的预提交批次数量
@@ -77,7 +83,7 @@ GPU_SPECIFIC_CONFIG = {
         "max_batch_size": 2097152,
         "memory_factor": 0.85,
     },
-    # Intel Arc系列 - v6.3 极致性能配置
+    # Intel Arc系列 - v4.2.1 极致性能配置
     "intel": {
         "queue_depth": 32,  # Arc A770最大队列深度，消除GPU等待
         "initial_batch_size": 4194304,  # 提高初始批次大小到400万
@@ -131,15 +137,14 @@ class AsyncGPUExecutor:
 
     使用双缓冲和双队列实现异步执行,提升GPU利用率到90%+
 
-    优化v2.2.1:
-    - 添加预取队列机制，消除CPU-GPU等待
-    - 实现智能缓冲切换，减少空闲时间
+    优化v4.2.1:
+    - 预取队列机制，消除CPU-GPU等待
+    - 智能缓冲切换，减少空闲时间
     - 增强错误恢复，提升稳定性
+    - queue_depth=4 预提交批次队列（_prefetch_events FIFO），消除批次间空闲间隙
+    - 非阻塞 enqueue，按 FIFO 顺序处理最老批次结果
 
-    优化v2.3.2 (队列深度优化):
-    - 维护 queue_depth=4 的预提交批次队列（_prefetch_events FIFO）
-    - GPU 队列中始终保持多个待执行批次，消除批次间空闲间隙
-    - 使用非阻塞 enqueue，按 FIFO 顺序处理最老批次结果
+    v4.2.2 M5: _seed_bytes_to_u32_be_array 统一至 gpu/seed_utils.py 导入。
     """
 
     def __init__(
@@ -183,20 +188,24 @@ class AsyncGPUExecutor:
         # 异步流水线状态 延迟结果等待
         self._pending_buffer: Any | None = None  # 待处理的缓冲区引用
         self._pending_num_keys = 0  # 待处理的批次大小
-        self.check_uncompressed = 0  # v4.0: 由 GPUDeviceManager.initialize() 覆写
+        self.check_uncompressed = 0  # v4.2.1: 由 GPUDeviceManager.initialize() 覆写
 
+<<<<<<< Updated upstream
         # v4.2.3: 显式 work_group_size（内核启动必须指定，避免 OpenCL 自动选择次优值）
+=======
+        # v4.2.1: 显式 work_group_size（内核启动必须指定，避免 OpenCL 自动选择次优值）
+>>>>>>> Stashed changes
         # 从设备信息获取最优 work_group_size，Intel Arc 建议 256，NVIDIA/AMD 建议 256-512
         self._work_group_size = self._detect_optimal_work_group_size(gpu_config)
         self._align_global_size = True  # 是否对齐 global_work_size 到 local_work_size 的整数倍
 
-        # 预取队列优化v2.2.1
+        # 预取队列优化v4.2.1
         self._prefetch_enabled = True
         self._next_batch_ready = threading.Event()
         self._next_batch_data: bytes | None = None
         self._next_batch_size = 0
 
-        # 队列深度优化 v2.3.2：预提交批次 FIFO 队列
+        # 队列深度优化 v4.2.1：预提交批次 FIFO 队列
         # 每个元素是 _PendingBatch，记录已提交但尚未取回结果的批次
         self._prefetch_events: list[_PendingBatch] = []
         self._prefetch_lock = threading.Lock()  # 保护 _prefetch_events 的线程安全
@@ -280,7 +289,7 @@ class AsyncGPUExecutor:
     def _detect_optimal_work_group_size(self, gpu_config: dict) -> int:
         """检测最优 work_group_size
 
-        v4.2.0: 从 GPU 设备信息和型号配置推断最优 work_group_size。
+        v4.2.1: 从 GPU 设备信息和型号配置推断最优 work_group_size。
         显式设置 work_group_size 可避免 OpenCL 运行时自动选择次优值，
         在 Intel Arc GPU 上提升尤为显著（从自动 ~64 到显式 256）。
 
@@ -320,7 +329,7 @@ class AsyncGPUExecutor:
         """
         初始化缓冲区池（PRNG模式：seed缓冲区替代keys缓冲区）
 
-        队列深度优化 v2.3.2：
+        队列深度优化 v4.2.1：
         - 分配 queue_depth 个匹配结果缓冲区，支持多批次同时在 GPU 中执行
         - buffer_a / buffer_b 作为历史兼容引用，指向缓冲区池的头两个
 
@@ -389,7 +398,7 @@ class AsyncGPUExecutor:
         return getattr(self, "_actual_batch_size", self.max_batch_size)
 
     def prefetch_next_batch(self, seed: bytes, num_keys: int) -> None:
-        """预存下一批种子（PRNG模式：仅缓存32字节种子，v2.2.1）
+        """预存下一批种子（PRNG模式：仅缓存32字节种子，v4.2.1）
 
         Args:
             seed: 32字节随机种子
@@ -418,7 +427,7 @@ class AsyncGPUExecutor:
         """
         异步执行批次（PRNG模式：seed替代private_keys）
 
-        v2.3.2 队列深度优化：
+        v4.2.1 队列深度优化：
         - GPU 队列中始终保持多个待执行批次（最多 queue_depth 个）
         - 当队列没满时，直接提交新批次并立即返回（GPU 不等待 CPU）
         - 当队列已满时，取回最老的一个批次结果，再提交新批次
@@ -483,9 +492,21 @@ class AsyncGPUExecutor:
             if kernel_event is None or read_event is None:
                 return [], 0.0
 
+<<<<<<< Updated upstream
             # 将成功提交的批次注册到预取队列，以便后续回收结果
             with self._prefetch_lock:
                 self._prefetch_events.append(_PendingBatch(read_event, current_buf, num_keys, seed))
+=======
+            # v4.2.2 P0修复: 将批次注册到预提交队列，确保异步结果可被收集
+            self._prefetch_events.append(
+                _PendingBatch(
+                    read_event=read_event,
+                    buf=current_buf,
+                    num_keys=num_keys,
+                    seed=seed,
+                )
+            )
+>>>>>>> Stashed changes
 
             execution_time_ms = (time.time() - start_time) * 1000
 
@@ -1007,7 +1028,11 @@ class AsyncGPUExecutor:
         if batch_kernel is None:
             batch_kernel = cl.Kernel(program, "batch_check")
             self._cached_sync_kernel = batch_kernel
+<<<<<<< Updated upstream
         # v4.2.3: 显式设置 local_work_size，对齐异步路径
+=======
+        # v4.2.1: 显式设置 local_work_size，对齐异步路径
+>>>>>>> Stashed changes
         sync_local_ws = getattr(self, "_work_group_size", 256)
         sync_global_ws = ((num_keys + sync_local_ws - 1) // sync_local_ws) * sync_local_ws
         batch_kernel(
@@ -1046,7 +1071,7 @@ class AsyncGPUExecutor:
         5. 释放缓冲区池中的所有匹配结果缓冲区
 
         注意：不再引用 buffer_a['keys'] / buffer_b['keys']，
-        v4.0 PRNG改造后已移除大型私鑰缓冲区。
+        v4.2.1 PRNG改造后已移除大型私鑰缓冲区。
         """
         self._finish_all_queues()
         with self._prefetch_lock:

@@ -6,7 +6,7 @@
 3. 显存泄漏检测
 4. 自动清理建议
 
-v2.2.2 修复:
+v4.2.1 修复:
 - 统一 get_status() 与 _record_snapshot() 的状态判断逻辑，消除不一致
 - safe_usage_ratio 默认值从硬编码 INTEL_SAFE_MEMORY_RATIO(0.45) 改为 0.70，
   与 IntelGPUVendor.apply_optimizations() 设置的 memory_efficiency=0.70 保持一致
@@ -48,7 +48,7 @@ class IntelMemoryMonitor:
 
     针对 Intel Arc GPU 的显存管理策略。
 
-    v2.2.2 修复: safe_usage_ratio 默认值从 0.45 改为 0.70，与
+    v4.2.1 修复: safe_usage_ratio 默认值从 0.45 改为 0.70，与
     IntelGPUVendor.apply_optimizations() 设置的 memory_efficiency 一致。
     旧值 0.45 导致监控器在正常工作时频繁误报警。
 
