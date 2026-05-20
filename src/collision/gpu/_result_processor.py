@@ -1,0 +1,258 @@
+"""GPU 碰撞结果处理器
+
+从 GPUCollisionEngine 中提取匹配结果处理逻辑，
+负责将 GPU 计算出的匹配结果安全地分发给用户回调。
+
+职责:
+- 安全调用匹配回调（超时控制、异常隔离）
+- 处理 GPU 匹配结果（常规模式：完整私钥数组）
+- 处理 GPU 匹配结果（PRNG 模式：种子+索引推导私钥）
+
+版本: v1.0.0 (Phase 6 - 拆分)
+创建日期: 2026-05-20
+"""
+
+import logging
+import os
+import signal
+import threading
+import time
+from typing import TYPE_CHECKING, Any
+
+# 回调类型
+from ..types import CompleteCallback, MatchCallback, ProgressCallback
+from ..events import EngineMatchEvent
+
+if TYPE_CHECKING:
+    from .engine import GPUCollisionEngine
+
+logger = logging.getLogger(__name__)
+
+
+class GPUResultProcessor:
+    """GPU 碰撞结果处理器
+
+    封装匹配结果的验证、去重和回调分发逻辑。
+    通过 engine 引用访问所有引擎状态，不复制状态。
+    """
+
+    def __init__(self, engine: "GPUCollisionEngine") -> None:
+        """初始化结果处理器
+
+        Args:
+            engine: GPUCollisionEngine 实例引用
+        """
+        self._engine = engine
+
+    # ========== 匹配回调安全调用 ==========
+
+    def safe_invoke_match_callback(
+        self, private_key: bytes, address: str, wif: str
+    ) -> bool:
+        """安全调用匹配回调函数，提供超时控制与异常隔离
+
+        从 GPUCollisionEngine._safe_invoke_match_callback 提取。
+
+        Args:
+            private_key: 私钥字节串
+            address: 匹配的比特币地址
+            wif: WIF 格式私钥
+
+        Returns:
+            True 表示回调执行成功，False 表示超时或异常
+        """
+        engine = self._engine
+        on_match = engine.on_match
+        if not on_match:
+            return True
+        try:
+            if os.name == "nt":
+                result: list[Any | None] = [None]
+                exception: list[BaseException | None] = [None]
+
+                def target() -> None:
+                    try:
+                        result[0] = on_match(private_key, address, wif)
+                    except Exception as e:
+                        exception[0] = e
+
+                callback_thread = threading.Thread(target=target, daemon=True)
+                callback_thread.start()
+                callback_thread.join(timeout=engine._match_callback_timeout)
+                if callback_thread.is_alive():
+                    logger.critical(
+                        f"匹配回调执行超时 ({engine._match_callback_timeout}秒)"
+                    )
+                    return False
+                if exception[0]:
+                    logger.error(f"匹配回调异常: {exception[0]}")
+                    return False
+            else:
+                # Q7修复: 添加信号 API 可用性检查，兼容 WSL 和其他 Unix-like 环境
+                try:
+                    _sigalrm = signal.SIGALRM  # Unix-only API
+                except AttributeError:
+                    # 信号 API 不可用，回退到无超时模式
+                    logger.warning("SIGALRM 不可用，匹配回调将无超时保护")
+                    try:
+                        on_match(private_key, address, wif)
+                    except Exception as e:
+                        logger.error(f"匹配回调异常: {e}", exc_info=True)
+                        return False
+                    return True
+
+                def timeout_handler(signum: int, frame: Any) -> None:
+                    raise TimeoutError(
+                        f"匹配回调执行超时 ({engine._match_callback_timeout}秒)"
+                    )
+
+                old_handler = signal.signal(_sigalrm, timeout_handler)  # noqa: E501
+                _alarm = signal.alarm  # type: ignore[attr-defined] # Unix-only API
+                _alarm(int(engine._match_callback_timeout))
+                try:
+                    on_match(private_key, address, wif)
+                except TimeoutError as e:
+                    logger.critical(str(e))
+                    return False
+                except Exception as e:
+                    logger.error(f"匹配回调异常: {e}", exc_info=True)
+                    return False
+                finally:
+                    _alarm(0)
+                    signal.signal(_sigalrm, old_handler)
+            return True
+        except Exception as e:
+            logger.error(f"匹配回调调用失败: {e}", exc_info=True)
+            return False
+
+    # ========== 匹配结果处理 ==========
+
+    def process_matches(
+        self, private_keys: bytes, matches: list[dict[str, int]]
+    ) -> None:
+        """处理 GPU 匹配结果（常规模式：完整私钥数组）
+
+        从 GPUCollisionEngine._process_gpu_matches 提取。
+
+        对每个匹配执行：
+        1. 从私钥数组中提取对应私钥
+        2. 去重过滤
+        3. 编码 WIF 并记录统计
+        4. 发布事件总线事件
+        5. 调用用户匹配回调
+
+        Args:
+            private_keys: 私钥字节数组（完整 batch 的私钥数据）
+            matches: GPU 返回的匹配列表 [{key_index, target_index}, ...]
+        """
+        engine = self._engine
+        from ...core.wif import WIF
+
+        for match in matches:
+            key_idx = match["key_index"]
+            # S-2修复: 添加边界检查，防止越界访问
+            if key_idx * 32 + 32 > len(private_keys):
+                logger.warning(
+                    f"私钥索引越界: key_idx={key_idx}, "
+                    f"private_keys长度={len(private_keys)}"
+                )
+                continue
+            private_key = private_keys[key_idx * 32 : (key_idx + 1) * 32]
+            if (
+                engine.dedup_filter is not None
+                and not engine.dedup_filter.check_and_add(private_key)
+            ):
+                continue
+            target_idx = match["target_index"]
+            # G1修复: 检查目标索引是否越界
+            if target_idx >= len(engine._device_manager.target_list):
+                logger.warning(
+                    f"目标索引越界: {target_idx} >= "
+                    f"{len(engine._device_manager.target_list)}，跳过匹配"
+                )
+                continue
+            address = engine._device_manager.target_list[target_idx]
+            wif = WIF.encode(private_key, compressed=True)
+            if engine.stats is not None:
+                engine.stats.add_match(private_key, address)
+
+            # v3.2.0: 发布匹配事件
+            match_event = EngineMatchEvent(
+                private_key=private_key,
+                address=address,
+                wif=wif,
+                target_address=address,
+            )
+            match_event.source = "gpu_collision_engine"
+            engine.event_bus.publish(match_event)
+
+            # 向后兼容: 调用传统回调
+            if not self.safe_invoke_match_callback(private_key, address, wif):
+                logger.warning(
+                    f"GPU匹配回调处理失败，跳过地址: {address[:6]}...{address[-4:]}"
+                )
+
+    def process_matches_prng(
+        self, seed: bytes, matches: list[dict[str, int]]
+    ) -> None:
+        """处理 GPU 匹配结果（PRNG 模式：种子+索引推导私钥）
+
+        从 GPUCollisionEngine._process_gpu_matches_prng 提取。
+
+        PRNG 模式下，GPU 内核使用 seed + key_index 计算私钥，
+        因此 CPU 侧从 seed 和 key_index 即可重建私钥。
+
+        C-4修复: 添加索引越界检查，防止 IndexError 崩溃和潜在的越界访问。
+
+        Args:
+            seed: 32 字节随机种子
+            matches: GPU 返回的匹配列表 [{key_index, target_index}, ...]
+        """
+        engine = self._engine
+        from ...core.wif import WIF
+
+        seed_int = int.from_bytes(seed, "big")
+        for match in matches:
+            key_idx = match["key_index"]
+            # C-4修复: 检查 key_idx 是否可能导致整数溢出或越界
+            try:
+                key_int = (seed_int + key_idx) % (2**256)
+            except (OverflowError, ValueError):
+                logger.warning(
+                    f"PRNG模式key_idx计算失败: key_idx={key_idx}, 跳过匹配"
+                )
+                continue
+            private_key = key_int.to_bytes(32, "big")
+            if (
+                engine.dedup_filter is not None
+                and not engine.dedup_filter.check_and_add(private_key)
+            ):
+                continue
+            target_idx = match["target_index"]
+            # G1修复: 检查目标索引是否越界
+            if target_idx >= len(engine._device_manager.target_list):
+                logger.warning(
+                    f"目标索引越界: {target_idx} >= "
+                    f"{len(engine._device_manager.target_list)}，跳过匹配"
+                )
+                continue
+            address = engine._device_manager.target_list[target_idx]
+            wif = WIF.encode(private_key, compressed=True)
+            if engine.stats is not None:
+                engine.stats.add_match(private_key, address)
+
+            # v3.2.0: 发布匹配事件
+            match_event = EngineMatchEvent(
+                private_key=private_key,
+                address=address,
+                wif=wif,
+                target_address=address,
+            )
+            match_event.source = "gpu_collision_engine"
+            engine.event_bus.publish(match_event)
+
+            # 向后兼容: 调用传统回调
+            if not self.safe_invoke_match_callback(private_key, address, wif):
+                logger.warning(
+                    f"GPU匹配回调处理失败，跳过地址: {address[:6]}...{address[-4:]}"
+                )

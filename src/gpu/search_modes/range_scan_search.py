@@ -35,8 +35,7 @@ class RangeScanSearchMode(BaseSearchMode):
 
         current = start
 
-        # ALG-2修复: 使用end而非end+1，避免边界重复
-        batch_end = min(current + engine.batch_size, end)
+        batch_end = min(current + engine.batch_size, end + 1)
         next_batch_size = batch_end - current
         next_private_keys = self._generate_sequential_keys(current, next_batch_size)
 

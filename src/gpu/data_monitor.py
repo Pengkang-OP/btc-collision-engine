@@ -12,7 +12,6 @@
 - 自动响应: 检测到异常时可暂停GPU工作器
 """
 
-import hashlib
 import logging
 import threading
 import time

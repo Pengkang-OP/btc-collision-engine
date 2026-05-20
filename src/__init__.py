@@ -4,12 +4,9 @@ __version__ = "4.4.0"  # v4.4.0: 安全修复增强(安全清零/侧信道防护
 __author__ = "BTC Collision Team"
 
 # 多格式地址支持模块（v4.3.0 新增）
-from .core.multi_format_generator import MultiFormatAddressGenerator, AddressFormat
 from .collision.targets.format_aware_manager import FormatAwareTargetManager
-from .gpu.multi_format_multi_gpu_engine import (
-    create_engine,
-    create_multi_format_multi_gpu_engine
-)
+from .core.multi_format_generator import AddressFormat, MultiFormatAddressGenerator
+from .gpu.multi_format_multi_gpu_engine import create_engine, create_multi_format_multi_gpu_engine
 
 __all__ = [
     "MultiFormatAddressGenerator",

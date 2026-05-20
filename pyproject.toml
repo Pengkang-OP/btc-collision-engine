@@ -136,10 +136,6 @@ no_implicit_optional = true                               # 防止隐式Optional
 strict_equality = true                                    # 防止不安全的类型比较
 exclude = ["tests/", "benchmarks/", "tools/", "scripts/"]
 
-[tool.flake8]
-max-line-length = 120
-extend-ignore = ["E203"]
-
 [tool.black]
 line-length = 100
 target-version = ["py312"]
@@ -157,10 +153,17 @@ exclude = [
     ".history",
     "data_logs",
     "logs",
+    "build",
+    "dist",
+    "*.egg-info",
+    ".eggs",
 ]
 fix = true
-select = ["E", "F", "W", "C90", "I", "N", "UP", "SIM"]
+select = ["E", "F", "W", "C90", "I", "N", "UP", "SIM", "B"]
 ignore = ["E203"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
 
 [tool.bandit]
 exclude_dirs = ["tests", "docs", "benchmarks"]

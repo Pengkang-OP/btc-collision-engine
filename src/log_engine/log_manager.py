@@ -276,7 +276,6 @@ class LogManager:
 
 
 # 导入logging模块（避免循环导入）
-import logging  # noqa: E402
 
 
 def main():

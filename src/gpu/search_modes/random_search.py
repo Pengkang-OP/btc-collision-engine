@@ -10,12 +10,11 @@ CPU过载保护: 主循环内添加节流机制，防止 CPU 飞升。
 """
 
 import hashlib
-import os
 import queue
 import secrets
 import threading
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 # 统一日志获取 + 修复缺失导入
 from ...utils import get_configured_logger
@@ -66,7 +65,6 @@ class RandomSearchMode(BaseSearchMode):
         self, engine: "GPUCollisionEngine", seed_prefetch_size: int = SEED_PREFETCH_SIZE
     ) -> None:
         super().__init__(engine)
-        # BUG-6: 支持从外部传入 seed_prefetch_size，不再硬编码 SEED_PREFETCH_SIZE
         self._seed_prefetch_size = seed_prefetch_size
         # 种子预生成队列与线程
         self._seed_queue: queue.Queue = queue.Queue(maxsize=seed_prefetch_size)
@@ -359,7 +357,7 @@ class RandomSearchMode(BaseSearchMode):
     # 辅助函数 - 拆分自 _execute_async
     # ========================================================================
 
-    def _detect_gpu_model(self, engine) -> str:
+    def _detect_gpu_model(self, engine: Any) -> str:
         """检测GPU型号
 
         与 async_executor.py:AsyncGPUExecutor._detect_gpu_model() 保持统一。
@@ -401,7 +399,7 @@ class RandomSearchMode(BaseSearchMode):
                     gpu_model = "intel"
         return gpu_model
 
-    def _check_engine_availability(self, engine) -> bool:
+    def _check_engine_availability(self, engine: Any) -> bool:
         """检查引擎组件是否可用"""
         if not hasattr(engine, "_async_executor") or engine._async_executor is None:
             logger.warning("异步执行器不可用")
@@ -418,8 +416,8 @@ class RandomSearchMode(BaseSearchMode):
         return True
 
     def _handle_batch_execution(
-        self, engine, seed, batch_size, batch_optimizer, batch_num
-    ) -> tuple:
+        self, engine: Any, seed: bytes, batch_size: int, batch_optimizer: Any, batch_num: int
+    ) -> tuple[list, float]:
         """执行单个批次并返回结果"""
         matches, execution_time_ms = engine._async_executor.run_batch_async(
             seed,

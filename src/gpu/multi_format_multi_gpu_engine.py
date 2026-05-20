@@ -22,12 +22,12 @@
 - 性能影响最小化
 """
 
-from typing import Optional, Tuple
-from ..utils import get_configured_logger
-from src.core.multi_format_generator import MultiFormatAddressGenerator, AddressFormat
+
 from src.collision.targets.format_aware_manager import FormatAwareTargetManager
-from src.gpu.worker import SingleGPUWorker
+from src.core.multi_format_generator import AddressFormat, MultiFormatAddressGenerator
 from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
+
+from ..utils import get_configured_logger
 
 logger = get_configured_logger("MultiFormatMultiGPUEngine")
 
@@ -196,7 +196,7 @@ def create_multi_format_multi_gpu_engine():
 
             return extra_matches
 
-        def check_match(self, private_key: bytes) -> Tuple[bool, Optional[str], Optional[str]]:
+        def check_match(self, private_key: bytes) -> tuple[bool, str | None, str | None]:
             """CPU路径: 检查私钥是否匹配任何目标（全格式检查）
 
             Args:
@@ -207,7 +207,7 @@ def create_multi_format_multi_gpu_engine():
             """
             return self._format_manager.check_match(private_key)
 
-        def check_match_all(self, private_key: bytes) -> Tuple[bool, list[tuple[str, str]]]:
+        def check_match_all(self, private_key: bytes) -> tuple[bool, list[tuple[str, str]]]:
             """CPU路径: 检查私钥是否匹配所有格式目标
 
             Args:

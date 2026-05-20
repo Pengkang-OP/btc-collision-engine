@@ -19,7 +19,7 @@ import time
 from pathlib import Path
 
 
-PROJECT_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 TESTS_DIR = PROJECT_ROOT / "tests"
 
 # 测试套件分类

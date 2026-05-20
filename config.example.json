@@ -13,7 +13,13 @@
     "verify_checksums": true,
     "_comment_verify_checksums": "验证所有Base58Check校验和",
     "strict_wif_validation": true,
-    "_comment_strict_wif_validation": "严格WIF格式验证"
+    "_comment_strict_wif_validation": "严格WIF格式验证",
+    "use_gpu": true,
+    "_comment_use_gpu": "是否启用GPU加速",
+    "gpu_device_index": -1,
+    "_comment_gpu_device_index": "GPU设备索引, -1表示自动选择",
+    "gpu_batch_size": 65536,
+    "_comment_gpu_batch_size": "GPU批次大小(回退默认值, 实际由gpu区块覆盖)"
   },
   "engine": {
     "_comment": "碰撞引擎配置",
@@ -44,7 +50,13 @@
     "use_simd_hash": true,
     "_comment_use_simd_hash": "是否使用SIMD哈希优化(需要pycryptodome)",
     "use_memory_pool": true,
-    "_comment_use_memory_pool": "是否使用内存池(减少对象分配开销)"
+    "_comment_use_memory_pool": "是否使用内存池(减少对象分配开销)",
+    "use_gpu_memory_pool": true,
+    "_comment_use_gpu_memory_pool": "是否启用GPU内存池(减少GPU频繁分配/释放)",
+    "gpu_pool_max_buffers": 100,
+    "_comment_gpu_pool_max_buffers": "GPU内存池最大缓冲区数量",
+    "gpu_pool_max_memory_mb": 512,
+    "_comment_gpu_pool_max_memory_mb": "GPU内存池最大内存(MB)"
   },
   "logging": {
     "_comment": "日志配置",
@@ -119,6 +131,20 @@
   },
   "gpu": {
     "_comment": "GPU高级配置",
+    "use_gpu": true,
+    "_comment_use_gpu": "顶层GPU启用开关, 覆盖crypto.use_gpu",
+    "device_index": -1,
+    "_comment_device_index": "GPU设备索引, -1表示自动选择",
+    "batch_size": 1048576,
+    "_comment_batch_size": "GPU全局批次大小(1M, 回退默认值)",
+    "work_group_size": 256,
+    "_comment_work_group_size": "OpenCL工作组大小(64-2048)",
+    "use_fast_math": true,
+    "_comment_use_fast_math": "启用快速数学优化(-cl-fast-relaxed-math)",
+    "use_uint32_workaround": false,
+    "_comment_use_uint32_workaround": "Intel GPU uint32兼容处理(与optimization.uint32_workaround不同)",
+    "compiler_flags": "",
+    "_comment_compiler_flags": "自定义OpenCL编译选项(空字符串=使用默认)",
     "use_new_module": true,
     "_comment_use_new_module": "是否使用新的GPU模块(false=使用旧gpu_engine.py)",
     "auto_detect": true,

@@ -12,11 +12,10 @@
     >>> print(f"P2PKH: {len(targets_by_format['p2pkh'])}")
 """
 
-from typing import Optional, Dict, Set
 import threading
 
+from ...core.multi_format_generator import AddressFormat, MultiFormatAddressGenerator
 from ...utils import get_configured_logger
-from ...core.multi_format_generator import MultiFormatAddressGenerator, AddressFormat
 
 logger = get_configured_logger("FormatAwareTargetManager")
 
@@ -117,7 +116,7 @@ class FormatAwareTargetManager:
         """
         with self._lock:
             try:
-                with open(filepath, "r", encoding="utf-8") as f:
+                with open(filepath, encoding="utf-8") as f:
                     addresses = [
                         line.strip() for line in f
                         if line.strip() and not line.startswith("#")
@@ -161,7 +160,7 @@ class FormatAwareTargetManager:
         with self._lock:
             return {fmt.value: len(targets) for fmt, targets in self._targets_by_format.items()}
 
-    def has_targets(self, format_type: Optional[AddressFormat] = None) -> bool:
+    def has_targets(self, format_type: AddressFormat | None = None) -> bool:
         """
         检查是否存在目标地址
 
@@ -176,7 +175,7 @@ class FormatAwareTargetManager:
                 return len(self._all_targets) > 0
             return len(self._targets_by_format.get(format_type, set())) > 0
 
-    def get_target_count(self, format_type: Optional[AddressFormat] = None) -> int:
+    def get_target_count(self, format_type: AddressFormat | None = None) -> int:
         """
         获取目标地址数量
 
@@ -193,7 +192,7 @@ class FormatAwareTargetManager:
 
     def check_match(
         self, private_key: bytes
-    ) -> tuple[bool, Optional[str], Optional[str]]:
+    ) -> tuple[bool, str | None, str | None]:
         """
         检查私钥是否匹配任何目标
         【说明】返回第一个匹配，如需所有匹配请用 check_match_all

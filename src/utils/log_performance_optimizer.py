@@ -52,7 +52,7 @@ class AsyncLogBuffer:
         self._handlers: list[logging.Handler] = []
         self._dropped_count = 0
         self._started_at = time.time()
-        
+
         _logger = logging.getLogger(__name__)
         _logger.info(
             f"AsyncLogBuffer 已初始化: buffer_size={config.buffer_size}, "

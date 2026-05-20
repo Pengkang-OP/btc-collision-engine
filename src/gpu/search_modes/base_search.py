@@ -42,6 +42,7 @@ class BaseSearchMode:
         key_generator_fn: Callable[[], tuple[bytes, int] | None],
         mode_name: str,
         stop_condition_fn: Callable[[], bool] | None = None,
+        key_extractor_fn: Callable[[bytes, int], bytes] | None = None,
     ) -> int:
         """通用批处理执行循环
 
@@ -53,9 +54,12 @@ class BaseSearchMode:
                                  - PRNG模式（random_search）：返回 32 字节种子（seed）和批次大小。
                                  - 序列模式（brute_force/range_scan）：返回完整私钥字节串和数量。
                                  返回 None 或空字节串时终止循环。
-            mode_name:           搜索模式名称，用于异常日志（如“暴力穷举”、“范围扫描”）。
+            mode_name:           搜索模式名称，用于异常日志（如"暴力穷举"、"范围扫描"）。
             stop_condition_fn:   可选的额外停止条件检查，返回 True 表示停止。
                                  若为 None，则仅依赖 _stop_event。
+            key_extractor_fn:    可选的私钥提取函数，签名为 (batch_data, key_index) -> private_key_bytes。
+                                 用于 PRNG 模式下从种子+索引重建私钥。
+                                 若为 None，则假设 batch_data 包含完整私钥数组。
 
         Returns:
             本次循环共处理的私钥总数 (batch_count)
@@ -84,7 +88,17 @@ class BaseSearchMode:
                 # 处理匹配结果
                 for match in matches:
                     key_idx = match["key_index"]
-                    private_key = batch_data[key_idx * 32 : (key_idx + 1) * 32]
+                    if key_extractor_fn is not None:
+                        private_key = key_extractor_fn(batch_data, key_idx)
+                    else:
+                        if (key_idx + 1) * 32 > len(batch_data):
+                            logger.warning(
+                                "key_index %d 超出 batch_data 范围 (data_len=%d, mode=%s) — "
+                                "可能是PRNG种子模式，请传入 key_extractor_fn 参数",
+                                key_idx, len(batch_data), mode_name
+                            )
+                            continue
+                        private_key = batch_data[key_idx * 32 : (key_idx + 1) * 32]
                     target_idx = match["target_index"]
                     address = engine._target_list[target_idx]
                     from ...core.wif import WIF

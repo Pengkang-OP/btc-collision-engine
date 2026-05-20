@@ -27,6 +27,7 @@ from .log_collector import LogCollector
 from .log_manager import LogLevel, LogManager
 from .log_processor import LogProcessor, SensitiveDataFilter
 from .log_query import LogQuery
+from .log_rotator import LogRotator
 from .log_storage import LogStorage
 
 __all__ = [
@@ -35,6 +36,7 @@ __all__ = [
     "LogCollector",
     "LogProcessor",
     "SensitiveDataFilter",
+    "LogRotator",
     "LogStorage",
     "LogQuery",
     "LogEvent",

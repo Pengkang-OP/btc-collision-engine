@@ -32,6 +32,8 @@ from ..types import CompleteCallback, MatchCallback, ProgressCallback
 from .core import CollisionCore
 
 # Phase 1-5 组件
+from ._result_processor import GPUResultProcessor
+from ._scheduler import GPUBatchScheduler
 from .monitoring import PerformanceMonitoringPipeline
 from .vendor_strategy import VendorOptimizationFactory  # noqa: F401 # 保留供测试 patch 目标
 
@@ -75,7 +77,6 @@ GPU_CONFIG_MANAGER_AVAILABLE = False  # 保留供外部导入兼容
 
 # 基础依赖
 # 加密
-from ...core.base58 import Base58  # noqa: E402
 from ...core.wif import WIF  # noqa: E402
 from ...gpu.device import GPUDeviceDetector  # noqa: E402
 from ...gpu.device_manager import GPUDeviceManager  # noqa: E402
@@ -131,7 +132,6 @@ def _get_gpu_monitor() -> "GPUPerformanceMonitor":
     return _gpu_performance_monitor
 
 
-from ...gpu.seed_utils import _seed_bytes_to_u32_be_array  # noqa: E402, F811  # 权威实现（含 itemsize/len 运行时校验）
 
 
 @dataclass
@@ -447,7 +447,9 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self._error_rate_threshold = 0.05
 
         # 性能基准
-        self._calculate_dynamic_benchmark()
+        self._result_processor = GPUResultProcessor(engine=self)
+        self._scheduler = GPUBatchScheduler(engine=self)
+        self._scheduler.calculate_dynamic_benchmark()
 
     # ========== 属性 ==========
 
@@ -731,446 +733,76 @@ class GPUCollisionEngine(BaseCollisionEngine):
     # ========== GPU 显存用量计算 ==========
 
     def _calculate_gpu_memory_usage(self, num_keys: int) -> float:
-        """计算 GPU 显存使用(MB)"""
-        return GPUMemoryCalculator.calculate_from_hash160_bytes(
-            num_keys=num_keys,
-            hash160_bytes=self._device_manager.target_hash160s,
-        )
+        """计算 GPU 显存使用(MB) [委托给 _scheduler]"""
+        return self._scheduler.calculate_gpu_memory_usage(num_keys)
 
     # ========== 性能基准 ==========
 
     def _calculate_dynamic_benchmark(self) -> None:
-        """计算动态性能基准值"""
-        try:
-            test_batch_size = 100000
-            seed = os.urandom(32)
-            start_time = time.time()
-            self._gpu_kernel.run_batch(seed, test_batch_size)
-            execution_time = time.time() - start_time
-            actual_speed = test_batch_size / execution_time
-            self._dynamic_speed_benchmark = actual_speed * 0.8
-            logger.info(f"动态性能基准计算完成: {self._dynamic_speed_benchmark:.0f} keys/s")
-        except Exception as e:
-            logger.warning(f"动态性能基准计算失败，使用默认值: {e}")
+        """计算动态性能基准值 [委托给 _scheduler]"""
+        self._scheduler.calculate_dynamic_benchmark()
 
     def _check_memory_leaks(self) -> None:
-        """定期检查内存泄漏"""
-        current_time = time.time()
-        if current_time - self._last_memory_check_time >= self._memory_check_interval:
-            self._last_memory_check_time = current_time
-            if hasattr(self._gpu_kernel, "_buffer_tracker") and self._gpu_kernel._buffer_tracker:
-                try:
-                    stats = self._gpu_kernel._buffer_tracker.get_stats()
-                    logger.debug(
-                        f"内存检查: {stats['count']}个缓冲区, {stats['total_size_mb']:.2f} MB"
-                    )
-                except Exception as e:
-                    logger.error(f"内存泄漏检查失败: {e}", exc_info=True)
+        """定期检查内存泄漏 [委托给 _scheduler]"""
+        self._scheduler.check_memory_leaks()
 
     # ========== GPU 批次执行 ==========
 
     def _execute_gpu_batch(
         self, seed: bytes, batch_size: int, batch_num: int
     ) -> tuple[list[dict[str, int]], float]:
-        """执行 GPU batch 计算
-
-        P2-3.2修复: 对瞬态 OpenCL 错误（资源不足、超时）进行本地指数退避重试，
-        避免瞬态错误传递到搜索模式层的高开销退避逻辑。
-        """
-        if batch_num <= INITIAL_BATCHES_LOG or batch_num % BATCH_LOG_FREQUENCY == 0:
-            logger.debug(f"GPU batch {batch_num}: 运行 run_batch (size={batch_size})...")
-
-        # P2-3.2修复: 瞬态错误重试循环
-        last_error: Exception | None = None
-        for retry in range(GPU_BATCH_MAX_RETRIES):
-            try:
-                return self._execute_gpu_batch_once(seed, batch_size, batch_num)
-            except (RuntimeError, MemoryError) as e:
-                last_error = e
-                error_msg = str(e).lower()
-                # 仅对瞬态/可恢复错误重试
-                is_transient = any(
-                    kw in error_msg for kw in (
-                        "out of resources", "out of memory", "timeout",
-                        "device removed", "cl_out_of_resources",
-                        "cl_mem_object_allocation_failure",
-                        "resource exhausted", "insufficient",
-                    )
-                )
-                if not is_transient or retry >= GPU_BATCH_MAX_RETRIES - 1:
-                    raise
-                backoff = min(
-                    GPU_BATCH_RETRY_BASE_DELAY * (2 ** retry), GPU_BATCH_RETRY_MAX_DELAY
-                )
-                logger.warning(
-                    f"GPU batch {batch_num}: 瞬态错误重试 {retry + 1}/{GPU_BATCH_MAX_RETRIES}, "
-                    f"退避 {backoff:.3f}s: {type(e).__name__}: {e}"
-                )
-                time.sleep(backoff)
-            except Exception as e:
-                # pyopencl.MemoryError 等非内置异常也尝试重试
-                last_error = e
-                error_msg = str(e).lower()
-                is_transient = any(
-                    kw in error_msg for kw in (
-                        "out of resources", "out of memory", "memoryerror",
-                        "timeout", "device removed",
-                        "resource exhausted", "insufficient",
-                    )
-                )
-                if not is_transient or retry >= GPU_BATCH_MAX_RETRIES - 1:
-                    raise
-                backoff = min(
-                    GPU_BATCH_RETRY_BASE_DELAY * (2 ** retry), GPU_BATCH_RETRY_MAX_DELAY
-                )
-                logger.warning(
-                    f"GPU batch {batch_num}: 瞬态错误重试 {retry + 1}/{GPU_BATCH_MAX_RETRIES}, "
-                    f"退避 {backoff:.3f}s: {type(e).__name__}: {e}"
-                )
-                time.sleep(backoff)
-
-        # 理论上不可达（for 循环总会 raise 或 return）
-        assert last_error is not None
-        raise last_error
+        """执行 GPU batch 计算 [委托给 _scheduler]"""
+        return self._scheduler.execute_batch(seed, batch_size, batch_num)
 
     def _execute_gpu_batch_once(
         self, seed: bytes, batch_size: int, batch_num: int
     ) -> tuple[list[dict[str, int]], float]:
-        """单次 GPU batch 执行（由 _execute_gpu_batch 调用）"""
-        batch_start_time = time.time()
-
-        if self._async_executor is not None:
-            matches: list[dict[str, int]] = []
-            if self._gpu_kernel is not None:
-                if hasattr(self._gpu_kernel, "program") and hasattr(
-                    self._gpu_kernel, "_targets_buf"
-                ):
-                    try:
-                        matches, execution_time_ms = self._async_executor.run_batch_async(
-                            seed,
-                            batch_size,
-                            self._gpu_kernel.program,
-                            self._gpu_kernel._targets_buf,
-                            len(self.targets),
-                        )
-                    except Exception as e:
-                        logger.warning(f"异步执行失败，回退到同步模式: {e}")
-                        matches = self._gpu_kernel.run_batch(
-                            seed, batch_size, stop_event=self._stop_event
-                        )
-                        execution_time_ms = (time.time() - batch_start_time) * 1000
-                else:
-                    matches = self._gpu_kernel.run_batch(
-                        seed, batch_size, stop_event=self._stop_event
-                    )
-                    execution_time_ms = (time.time() - batch_start_time) * 1000
-            else:
-                raise RuntimeError("GPU内核不可用，无法执行批次")
-        elif self._gpu_kernel is not None:
-            matches = self._gpu_kernel.run_batch(seed, batch_size, stop_event=self._stop_event)
-            execution_time_ms = (time.time() - batch_start_time) * 1000
-        else:
-            raise RuntimeError("GPU内核不可用，无法执行批次")
-
-        # PERF-1: 检测 CPU-GPU 同步瓶颈
-        expected_speed = getattr(self, "_dynamic_speed_benchmark", 500000)
-        expected_time_ms = (batch_size / expected_speed) * 1000
-        threshold_ms = expected_time_ms * 1.5
-        if execution_time_ms > threshold_ms:
-            logger.warning(
-                f"PERF-1警告: GPU batch {batch_num} 执行时间过长 ({execution_time_ms:.0f}ms > {threshold_ms:.0f}ms)"
-            )
-
-        self._check_memory_leaks()
-
-        if batch_num <= INITIAL_BATCHES_LOG or batch_num % BATCH_LOG_FREQUENCY == 0:
-            logger.debug(f"GPU batch {batch_num}: 发现 {len(matches)} 个匹配")
-
-        return matches, execution_time_ms
+        """单次 GPU batch 执行 [委托给 _scheduler]"""
+        return self._scheduler.execute_batch_once(seed, batch_size, batch_num)
 
     # ========== 匹配回调 ==========
 
     def _safe_invoke_match_callback(self, private_key: bytes, address: str, wif: str) -> bool:
-        """安全调用匹配回调函数，提供超时控制与异常隔离"""
-        on_match = self.on_match
-        if not on_match:
-            return True
-        try:
-            if os.name == "nt":
-                result: list[Any | None] = [None]
-                exception: list[BaseException | None] = [None]
-
-                def target() -> None:
-                    try:
-                        result[0] = on_match(private_key, address, wif)
-                    except Exception as e:
-                        exception[0] = e
-
-                callback_thread = threading.Thread(target=target, daemon=True)
-                callback_thread.start()
-                callback_thread.join(timeout=self._match_callback_timeout)
-                if callback_thread.is_alive():
-                    logger.critical(f"匹配回调执行超时 ({self._match_callback_timeout}秒)")
-                    return False
-                if exception[0]:
-                    logger.error(f"匹配回调异常: {exception[0]}")
-                    return False
-            else:
-                # Q7修复: 添加信号 API 可用性检查，兼容 WSL 和其他 Unix-like 环境
-                try:
-                    _sigalrm = signal.SIGALRM  # Unix-only API
-                except AttributeError:
-                    # 信号 API 不可用，回退到无超时模式
-                    logger.warning("SIGALRM 不可用，匹配回调将无超时保护")
-                    try:
-                        on_match(private_key, address, wif)
-                    except Exception as e:
-                        logger.error(f"匹配回调异常: {e}", exc_info=True)
-                        return False
-                    return True
-
-                def timeout_handler(signum: int, frame: Any) -> None:
-                    raise TimeoutError(f"匹配回调执行超时 ({self._match_callback_timeout}秒)")
-
-                old_handler = signal.signal(_sigalrm, timeout_handler)  # noqa: E501
-                _alarm = signal.alarm  # type: ignore[attr-defined] # Unix-only API
-                _alarm(int(self._match_callback_timeout))
-                try:
-                    on_match(private_key, address, wif)
-                except TimeoutError as e:
-                    logger.critical(str(e))
-                    return False
-                except Exception as e:
-                    logger.error(f"匹配回调异常: {e}", exc_info=True)
-                    return False
-                finally:
-                    _alarm(0)
-                    signal.signal(_sigalrm, old_handler)
-            return True
-        except Exception as e:
-            logger.error(f"匹配回调调用失败: {e}", exc_info=True)
-            return False
+        """安全调用匹配回调函数 [委托给 _result_processor]"""
+        return self._result_processor.safe_invoke_match_callback(private_key, address, wif)
 
     # ========== 匹配处理 ==========
 
     def _process_gpu_matches(self, private_keys: bytes, matches: list[dict[str, int]]) -> None:
-        """处理 GPU 匹配结果"""
-        for match in matches:
-            key_idx = match["key_index"]
-            # S-2修复: 添加边界检查，防止越界访问
-            if key_idx * 32 + 32 > len(private_keys):
-                logger.warning(
-                    f"私钥索引越界: key_idx={key_idx}, private_keys长度={len(private_keys)}"
-                )
-                continue
-            private_key = private_keys[key_idx * 32 : (key_idx + 1) * 32]
-            if self.dedup_filter is not None and not self.dedup_filter.check_and_add(private_key):
-                continue
-            target_idx = match["target_index"]
-            # G1修复: 检查目标索引是否越界
-            if target_idx >= len(self._device_manager.target_list):
-                logger.warning(f"目标索引越界: {target_idx} >= {len(self._device_manager.target_list)}，跳过匹配")
-                continue
-            address = self._device_manager.target_list[target_idx]
-            wif = WIF.encode(private_key, compressed=True)
-            if self.stats is not None:
-                self.stats.add_match(private_key, address)
-
-            # v3.2.0: 发布匹配事件
-            match_event = EngineMatchEvent(
-                private_key=private_key,
-                address=address,
-                wif=wif,
-                target_address=address,
-            )
-            match_event.source = "gpu_collision_engine"
-            self.event_bus.publish(match_event)
-
-            # 向后兼容: 调用传统回调
-            if not self._safe_invoke_match_callback(private_key, address, wif):
-                logger.warning(f"GPU匹配回调处理失败，跳过地址: {address[:6]}...{address[-4:]}")
+        """处理 GPU 匹配结果 [委托给 _result_processor]"""
+        self._result_processor.process_matches(private_keys, matches)
 
     def _process_gpu_matches_prng(self, seed: bytes, matches: list[dict[str, int]]) -> None:
-        """处理 GPU 匹配结果 (PRNG 模式)
-
-        C-4修复: 添加索引越界检查，防止IndexError崩溃和潜在的越界访问。
-        """
-        seed_int = int.from_bytes(seed, "big")
-        for match in matches:
-            key_idx = match["key_index"]
-            # C-4修复: 检查key_idx是否可能导致整数溢出或越界
-            try:
-                key_int = (seed_int + key_idx) % (2**256)
-            except (OverflowError, ValueError) as e:
-                logger.warning(f"PRNG模式key_idx计算失败: key_idx={key_idx}, 跳过匹配")
-                continue
-            private_key = key_int.to_bytes(32, "big")
-            if self.dedup_filter is not None and not self.dedup_filter.check_and_add(private_key):
-                continue
-            target_idx = match["target_index"]
-            # G1修复: 检查目标索引是否越界
-            if target_idx >= len(self._device_manager.target_list):
-                logger.warning(f"目标索引越界: {target_idx} >= {len(self._device_manager.target_list)}，跳过匹配")
-                continue
-            address = self._device_manager.target_list[target_idx]
-            wif = WIF.encode(private_key, compressed=True)
-            if self.stats is not None:
-                self.stats.add_match(private_key, address)
-
-            # v3.2.0: 发布匹配事件
-            match_event = EngineMatchEvent(
-                private_key=private_key,
-                address=address,
-                wif=wif,
-                target_address=address,
-            )
-            match_event.source = "gpu_collision_engine"
-            self.event_bus.publish(match_event)
-
-            # 向后兼容: 调用传统回调
-            if not self._safe_invoke_match_callback(private_key, address, wif):
-                logger.warning(f"GPU匹配回调处理失败，跳过地址: {address[:6]}...{address[-4:]}")
+        """处理 GPU 匹配结果 (PRNG 模式) [委托给 _result_processor]"""
+        self._result_processor.process_matches_prng(seed, matches)
 
     # ========== 性能指标 ==========
 
     def _update_performance_metrics(self, batch_size: int, execution_time_ms: float) -> None:
-        """记录 GPU 性能指标"""
-        if not self.gpu_performance_monitor:
-            return
-        try:
-            memory_mb = self._calculate_gpu_memory_usage(batch_size)
-            self.gpu_performance_monitor.record_kernel_metrics(
-                batch_size=batch_size,
-                execution_time_ms=execution_time_ms,
-                memory_allocated_mb=memory_mb,
-            )
-        except Exception as e:
-            logger.debug(f"记录GPU性能指标失败: {e}")
+        """记录 GPU 性能指标 [委托给 _scheduler]"""
+        self._scheduler.update_performance_metrics(batch_size, execution_time_ms)
 
     def _record_adjustment(
         self, old_size: int, new_size: int, reason: str, details: str = ""
     ) -> None:
-        """记录调整历史"""
-        self._engine_monitor.record_adjustment(
-            old_size=old_size, new_size=new_size, reason=reason, details=details
-        )
+        """记录调整历史 [委托给 _scheduler]"""
+        self._scheduler.record_adjustment(old_size, new_size, reason, details)
 
     # ========== 自适应批大小 ==========
 
     def _maybe_adjust_batch_size(self) -> None:
-        """根据运行时状态自适应调整 batch_size"""
-        if not self._adaptive_batch_enabled:
-            return
-        current_time = time.monotonic()
-        if current_time - self._last_batch_adjust_time < self._batch_adjust_interval:
-            return
-        self._last_batch_adjust_time = current_time
-
-        stats = self.get_stats()
-        total_checked = getattr(stats, "total_checked", 0)
-        gpu_errors = getattr(stats, "gpu_errors", 0)
-        error_rate = gpu_errors / max(total_checked, 1)
-        old_batch_size = self.batch_size
-
-        if error_rate > self._error_rate_threshold:
-            new_size = max(self._min_batch_size, old_batch_size // 2)
-            if new_size != old_batch_size:
-                self.batch_size = new_size
-                self._adaptive_error_count = 0
-                logger.warning(
-                    f"自适应调整: 错误率过高({error_rate:.2%})，降低batch_size: {old_batch_size:,} -> {new_size:,}"
-                )
-        else:
-            gpu_utilization = None
-            if self.gpu_performance_monitor:
-                try:
-                    perf_stats = self.gpu_performance_monitor.get_stats()
-                    gpu_utilization = perf_stats.get("avg_gpu_utilization")
-                except Exception:
-                    pass  # 无法获取GPU性能统计，跳过利用率自适应调整
-            if gpu_utilization is not None and gpu_utilization < 0.5:
-                new_size = min(self._max_batch_size, int(old_batch_size * 1.5))
-                if new_size != old_batch_size:
-                    self.batch_size = new_size
-                    logger.info(
-                        f"自适应调整: GPU利用率低({gpu_utilization:.0%})，"
-                        f"增大batch_size: {old_batch_size:,} -> {new_size:,}"
-                    )
+        """根据运行时状态自适应调整 batch_size [委托给 _scheduler]"""
+        self._scheduler.maybe_adjust_batch_size()
 
     # ========== 进度与断点 ==========
 
     def _check_and_report_progress(self, batch_count: int, current_batch_size: int) -> None:
-        """检查并报告进度"""
-        current_time = time.time()
-        if current_time - self._last_progress_time < self._progress_interval_sec:
-            return
-        logger.debug(f"GPU 进度回调: batch_count={batch_count}")
-
-        assert self.stats is not None
-        stats_snapshot = self.stats.snapshot()
-
-        # v3.2.0: 发布进度事件
-        progress_event = EngineProgressEvent(
-            total_checked=stats_snapshot.total_checked,
-            speed=stats_snapshot.speed,
-            avg_speed=stats_snapshot.avg_speed,
-            matches_found=stats_snapshot.matches_found,
-            cpu_usage=0.0,  # GPU引擎暂不报告CPU使用
-            memory_usage=0.0,
-            thread_count=0,
-            elapsed_time=time.time() - self.stats.start_time,
-        )
-        progress_event.source = "gpu_collision_engine"
-        self.event_bus.publish(progress_event)
-
-        # 向后兼容: 调用传统回调（从事件触发）
-        if self.on_progress:
-            self.on_progress(stats_snapshot)
-
-        self._save_checkpoint(batch_count)
-        self._last_progress_time = current_time
-
-        with self._batch_size_lock:
-            self._consecutive_gpu_errors = 0
-
-        if not self._gpu_kernel:
-            return
-
-        try:
-            error_rate = getattr(self.stats, "gpu_errors", 0) / max(batch_count, 1)
-            if self._gpu_kernel and self._gpu_kernel.gpu_optimizer:
-                new_batch_size, adjustments = self._gpu_kernel.gpu_optimizer.analyze_and_adjust(
-                    current_batch_size=current_batch_size,
-                    error_rate=error_rate,
-                    engine=self,
-                )
-                if new_batch_size != current_batch_size and adjustments:
-                    reason = list(adjustments.keys())[0]
-                    logger.info(
-                        f"自适应优化: batch_size {current_batch_size} -> {new_batch_size} ({reason})"
-                    )
-                    self.batch_size = new_batch_size
-        except Exception as adjust_error:
-            logger.debug(f"自适应调整失败: {adjust_error}")
-
-        self._maybe_adjust_batch_size()
+        """检查并报告进度 [委托给 _scheduler]"""
+        self._scheduler.check_and_report_progress(batch_count, current_batch_size)
 
     def _save_checkpoint(self, count: int):
-        """保存断点"""
-        if self.checkpoint_mgr and self.checkpoint_mgr.should_auto_save():
-            matches_list = [
-                {"private_key_hash": m["private_key_hash"], "address": m["address"]}
-                for m in self.stats.matches
-            ]
-            self.checkpoint_mgr.save(
-                mode=self._current_mode,
-                targets=self.targets,
-                current_position=self._current_position,
-                total_checked=count,
-                matches=matches_list,
-                range_start=self._range_start,
-                range_end=self._range_end,
-            )
+        """保存断点 [委托给 _scheduler]"""
+        self._scheduler.save_checkpoint(count)
 
     # ========== 搜索模式委托 ==========
 
@@ -1273,31 +905,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
     # ========== GPU 缓冲区调整 ==========
 
     def _resize_gpu_buffers(self, new_batch_size: int) -> None:
-        """动态调整 GPU 缓冲区大小"""
-        try:
-            old_batch_size = self.batch_size
-            logger.info(f"正在调整GPU缓冲区大小: {old_batch_size:,} -> {new_batch_size:,}")
-            if self._gpu_kernel:
-                if hasattr(self._gpu_kernel, "release_buffers"):
-                    self._gpu_kernel.release_buffers()
-                else:
-                    for attr in ["_match_buf", "_targets_buf"]:
-                        buf = getattr(self._gpu_kernel, attr, None)
-                        if buf is not None and hasattr(buf, "release"):
-                            try:
-                                buf.release()
-                                setattr(self._gpu_kernel, attr, None)
-                            except Exception as e:
-                                logger.warning(f"释放GPU缓冲区失败 [{attr}]: {type(e).__name__}: {e}")
-                self._gpu_kernel._max_batch_size = new_batch_size
-                if hasattr(self._gpu_kernel, "_allocate_buffers"):
-                    self._gpu_kernel._allocate_buffers()
-            logger.info(f"GPU缓冲区调整完成: {new_batch_size:,}")
-            self._record_adjustment(old_batch_size, new_batch_size, "buffer_resize")
-        except Exception as e:
-            logger.error(f"GPU缓冲区调整失败: {e}", exc_info=True)
-            if self._gpu_kernel:
-                self.batch_size = self._gpu_kernel._max_batch_size
+        """动态调整 GPU 缓冲区大小 [委托给 _scheduler]"""
+        self._scheduler.resize_gpu_buffers(new_batch_size)
 
     # ========== 配置合并 (scheduled removal: _merge_gpu_configs 无调用者) ==========
 

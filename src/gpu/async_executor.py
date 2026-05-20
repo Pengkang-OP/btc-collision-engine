@@ -18,8 +18,9 @@ from ..utils import get_configured_logger
 logger = get_configured_logger("AsyncGPUExecutor")
 
 
-from .seed_utils import _seed_bytes_to_u32_be_array  # noqa: E402, F811  # 权威实现（含 itemsize/len 运行时校验）
-
+from .seed_utils import (
+    _seed_bytes_to_u32_be_array,  # noqa: E402, F811  # 权威实现（含 itemsize/len 运行时校验）
+)
 
 # 队列深度管理常量
 DEFAULT_QUEUE_DEPTH = 4  # GPU 队列中保持的预提交批次数量
@@ -590,7 +591,7 @@ class AsyncGPUExecutor:
         try:
             completed = oldest.read_event.wait(timeout=timeout_seconds)  # PyOpenCL使用秒作为浮点数
             if not completed:
-                logger.error(f"异步执行超时({timeout_seconds}秒)")
+                logger.warning(f"异步执行超时({timeout_seconds}秒)")
                 raise RuntimeError(f"异步执行超时({timeout_seconds}秒)")
         except TypeError as te:
             error_msg = str(te).lower()
@@ -997,11 +998,11 @@ class AsyncGPUExecutor:
                 num_keys * 4,  # type: ignore[arg-type]
             )
         except (RuntimeError, MemoryError) as e:
-            logger.error(f"同步模式下清空缓冲区OpenCL错误: {type(e).__name__}: {e}")
+            logger.warning(f"同步模式下清空缓冲区OpenCL错误: {type(e).__name__}: {e}")
             if not self._try_create_fallback_buffer(temp_buf, num_keys, start_time):
                 return [], (time.time() - start_time) * 1000
         except Exception as e:
-            logger.error(f"同步模式下清空缓冲区失败: {type(e).__name__}: {e}")
+            logger.warning(f"同步模式下清空缓冲区失败: {type(e).__name__}: {e}")
             if not self._try_create_fallback_buffer(temp_buf, num_keys, start_time):
                 return [], (time.time() - start_time) * 1000
 
@@ -1141,10 +1142,10 @@ class AsyncGPUExecutor:
             )
             return True
         except (RuntimeError, MemoryError) as create_err:
-            logger.error(f"创建临时缓冲区OpenCL错误: {create_err}")
+            logger.warning(f"创建临时缓冲区OpenCL错误: {create_err}")
             return False
         except Exception as create_err:
-            logger.error(f"创建临时缓冲区失败: {type(create_err).__name__}: {create_err}")
+            logger.warning(f"创建临时缓冲区失败: {type(create_err).__name__}: {create_err}")
             return False
 
     def _release_buffer_pool(self) -> None:

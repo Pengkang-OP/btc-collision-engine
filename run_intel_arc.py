@@ -145,13 +145,15 @@ def main():
                 # 非交互环境：仅输出脱敏信息
                 print(f"\n[MATCH] address={address}, key_hash=KEY_HASH:{key_hash}\n")
 
-            # 保存到文件
+            # 保存到文件（设置严格权限防止私钥泄漏）
+            key_file = "found_keys.txt"
             try:
-                with open("found_keys.txt", "a") as f:
+                with open(key_file, "a") as f:
                     f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')}\n")
                     f.write(f"  Address: {address}\n")
                     f.write(f"  WIF: {wif}\n")
                     f.write(f"  Private Key: {private_key.hex()}\n\n")
+                os.chmod(key_file, 0o600)
             except Exception as e:
                 logger.error(f"保存匹配失败: {e}")
 

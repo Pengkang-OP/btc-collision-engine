@@ -14,12 +14,13 @@ BTC 碰撞引擎的 Web 监控仪表板，提供:
     python -m src.web.dashboard --host 0.0.0.0 --port 8080 --api-key YOUR_SECRET_KEY
 
 API 端点:
-    GET  /api/status       - 当前运行状态
-    GET  /api/history      - 历史数据 (支持 ?limit=N)
-    GET  /api/errors       - 错误日志 (支持 ?limit=N)
-    GET  /api/report       - 日报告摘要
-    GET  /health           - 健康检查 (无需认证)
-    GET  /                 - 仪表板 HTML 页面
+    GET  /api/status        - 当前运行状态
+    GET  /api/history       - 历史数据 (支持 ?limit=N)
+    GET  /api/errors        - 错误日志 (支持 ?limit=N)
+    GET  /api/report        - 日报告摘要
+    GET  /api/security-audit - 安全审计状态 (已脱敏)
+    GET  /health            - 健康检查 (无需认证)
+    GET  /                  - 仪表板 HTML 页面
 """
 
 import argparse
@@ -188,6 +189,124 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         </div>
     </div></div>
 
+    <!-- 安全审计 -->
+    <div class="section"><h2>🔒 安全审计状态</h2>
+    <div class="grid">
+        <div class="card">
+            <h3>日志安全过滤器</h3>
+            <div class="value" style="font-size:1.2em">
+                {% if security_audit.security_filter_enabled %}
+                <span class="status-ok">✅ 已启用</span>
+                {% else %}
+                <span class="status-error">❌ 未启用</span>
+                {% endif %}
+            </div>
+            <div class="label">自动屏蔽私钥/WIF/地址等敏感信息</div>
+        </div>
+        <div class="card">
+            <h3>密钥操作审计</h3>
+            <div class="value" style="font-size:1.2em">
+                {% if security_audit.key_audit_active %}
+                <span class="status-ok">{{ security_audit.total_key_operations }}</span>
+                {% else %}
+                <span style="color:#8b949e">暂无操作</span>
+                {% endif %}
+            </div>
+            <div class="label">已审计的密钥操作总数</div>
+        </div>
+        <div class="card">
+            <h3>审计日志文件</h3>
+            <div class="value" style="font-size:1.2em">
+                {% if security_audit.audit_log_exists %}
+                <span class="status-ok">📄 存在</span>
+                {% else %}
+                <span style="color:#8b949e">暂无</span>
+                {% endif %}
+            </div>
+            <div class="label">key_audit.log 审计日志</div>
+        </div>
+        <div class="card">
+            <h3>整体安全状态</h3>
+            <div class="value" style="font-size:1.2em">
+                {% if security_audit.has_critical_alert %}
+                <span class="status-error">⚠ 有告警</span>
+                {% elif security_audit.has_warning_alert %}
+                <span class="status-warn">⚡ 需关注</span>
+                {% else %}
+                <span class="status-ok">✅ 正常</span>
+                {% endif %}
+            </div>
+            <div class="label">{% set alert_count = (security_audit.audit_alerts or [])|length %}{% if alert_count > 0 %}{{ alert_count }} 条告警{% else %}无安全告警{% endif %}</div>
+        </div>
+    </div>
+
+    {% set alerts = security_audit.audit_alerts or [] %}
+    {% if alerts|length > 0 %}
+    <div style="margin-top:12px">
+    {% for alert in alerts %}
+    <div style="background:#161b22;border:1px solid {% if alert.level == 'critical' %}#f85149{% else %}#d29922{% endif %};border-radius:6px;padding:8px 14px;margin-bottom:6px;font-size:0.85em">
+        <span style="font-weight:600;color:{% if alert.level == 'critical' %}#f85149{% else %}#d29922{% endif %}">
+            {{ "🔴" if alert.level == 'critical' else "🟡" }} {{ alert.level|upper }}
+        </span>: {{ alert.message }}
+    </div>
+    {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if security_audit.operations_by_type %}
+    <div style="margin-top:12px">
+    <table>
+        <thead><tr><th>操作类型</th><th>次数</th><th>风险提示</th></tr></thead>
+        <tbody>
+        {% for op_type, count in security_audit.operations_by_type.items() %}
+        <tr>
+            <td>{{ op_type }}</td>
+            <td>{{ count }}</td>
+            <td>
+                {% if op_type == 'display' %}
+                <span class="badge badge-warn">密钥显示</span>
+                {% elif op_type == 'hash' %}
+                <span class="badge badge-info">哈希生成</span>
+                {% elif op_type == 'export' %}
+                <span class="badge badge-warn">密钥导出</span>
+                {% else %}
+                <span class="badge badge-info">{{ op_type }}</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% endif %}
+
+    {% if security_audit.recent_audit_events %}
+    <div style="margin-top:12px">
+    <details>
+    <summary style="color:#8b949e;cursor:pointer;font-size:0.9em;margin-bottom:8px">📋 最近审计事件 ({{ security_audit.recent_audit_events|length }})</summary>
+    <table style="font-size:0.85em">
+        <thead><tr><th>时间</th><th>操作</th><th>级别</th><th>详情</th></tr></thead>
+        <tbody>
+        {% for e in security_audit.recent_audit_events %}
+        <tr>
+            <td>{{ e.timestamp or "N/A" }}</td>
+            <td><span class="badge badge-info">{{ e.operation or "N/A" }}</span></td>
+            <td>
+                {% if e.level == 'critical' %}<span class="badge" style="background:#f8514933;color:#f85149">严重</span>
+                {% elif e.level == 'warning' %}<span class="badge badge-warn">警告</span>
+                {% else %}<span class="badge badge-info">信息</span>
+                {% endif %}
+            </td>
+            <td>{{ e.details or e.display_mode or "-" }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </details>
+    </div>
+    {% endif %}
+    </div>
+
     <!-- 错误日志 -->
     <div class="section"><h2>⚠️ 最近错误 ({{ errors|length }})</h2>
     {% if errors %}
@@ -327,6 +446,134 @@ def format_uptime(seconds: float) -> str:
         return f"{h}小时{m}分"
 
 
+def get_security_audit_data(data_dir: Path) -> dict[str, Any]:
+    """获取安全审计状态数据（已脱敏，不暴露私钥等敏感信息）
+
+    聚合多来源审计信息：
+    1. KeyAuditLogger 运行内存统计（密钥操作次数）
+    2. key_audit.log 最近审计事件（可选）
+    3. SecurityLogFilter 启用状态
+
+    Returns:
+        脱敏后的安全审计状态字典
+    """
+    audit_info: dict[str, Any] = {
+        "security_filter_enabled": True,  # 默认已启用
+        "key_audit_active": False,
+        "total_key_operations": 0,
+        "operations_by_type": {},
+        "recent_audit_events": [],
+        "audit_log_exists": False,
+        "audit_alerts": [],
+        "has_critical_alert": False,
+        "has_warning_alert": False,
+    }
+
+    # 1. 尝试从 KeyAuditLogger 获取运行内存统计
+    try:
+        from src.utils.key_audit import get_audit_logger
+
+        audit_logger = get_audit_logger()
+        stats = audit_logger.get_statistics()
+        audit_info["key_audit_active"] = stats.get("total_operations", 0) > 0
+        audit_info["total_key_operations"] = stats.get("total_operations", 0)
+        audit_info["operations_by_type"] = stats.get("operations_by_type", {})
+    except Exception as e:
+        logger.debug(f"无法获取 KeyAuditLogger 统计: {e}")
+        audit_info["key_audit_active"] = False
+
+    # 2. 读取 key_audit.log（如果有的话）获取最近审计事件
+    audit_log_path = data_dir / "key_audit.log"
+    if audit_log_path.exists():
+        audit_info["audit_log_exists"] = True
+        try:
+            recent_events = _parse_audit_log_entries(audit_log_path, limit=20)
+            audit_info["recent_audit_events"] = recent_events
+
+            # 统计最近事件中的告警
+            critical_count = sum(1 for e in recent_events if e.get("level") == "critical")
+            warning_count = sum(1 for e in recent_events if e.get("level") == "warning")
+
+            if critical_count > 0:
+                audit_info["audit_alerts"].append(
+                    {
+                        "level": "critical",
+                        "message": f"检测到 {critical_count} 次严重级别密钥操作（最近记录）",
+                    }
+                )
+            if warning_count > 0:
+                audit_info["audit_alerts"].append(
+                    {
+                        "level": "warning",
+                        "message": f"检测到 {warning_count} 次警告级别密钥操作（最近记录）",
+                    }
+                )
+
+            audit_info["has_critical_alert"] = critical_count > 0
+            audit_info["has_warning_alert"] = warning_count > 0
+        except Exception as e:
+            logger.warning(f"解析审计日志失败: {e}")
+
+    # 3. 检查 SecurityLogFilter 是否已初始化
+    try:
+        from src.utils.logging_config import _security_filter_initialized as _sfi
+
+        audit_info["security_filter_enabled"] = _sfi
+    except ImportError:
+        audit_info["security_filter_enabled"] = True  # 默认假设已启用
+
+    return audit_info
+
+
+def _parse_audit_log_entries(log_path: Path, limit: int = 20) -> list[dict[str, Any]]:
+    """解析 key_audit.log 文件，提取最近 N 条审计条目（已脱敏）
+
+    日志格式示例:
+    2026-05-20 12:00:00,000 - src.utils.key_audit - INFO - [KEY_AUDIT] 2026-05-20T12:00:00 | Operation: display | Level: info | Address: 1A1zP1...eP5Q | KeyHash: a1b2c3d4e5f6... | DisplayMode: masked | Details: 私钥已脱敏显示
+
+    注意：所有敏感信息已在日志写入时被 SecurityLogFilter 脱敏处理。
+    此处仅解析和聚合，不暴露私钥相关敏感内容。
+    """
+    entries: list[dict[str, Any]] = []
+    try:
+        with open(log_path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+    except OSError:
+        return entries
+
+    # 从后往前读，取最近 N 条 [KEY_AUDIT] 行
+    for line in reversed(lines):
+        if "[KEY_AUDIT]" not in line:
+            continue
+        if len(entries) >= limit:
+            break
+
+        entry: dict[str, Any] = {}
+        parts = line.strip().split(" | ")
+
+        for part in parts:
+            part = part.strip()
+            if part.startswith("Operation:"):
+                entry["operation"] = part.split(":", 1)[1].strip()
+            elif part.startswith("Level:"):
+                entry["level"] = part.split(":", 1)[1].strip()
+            elif part.startswith("DisplayMode:"):
+                entry["display_mode"] = part.split(":", 1)[1].strip()
+            elif part.startswith("Details:"):
+                entry["details"] = part.split(":", 1)[1].strip()
+            elif part.startswith("[KEY_AUDIT]"):
+                # 提取时间戳
+                timestamp_str = part.replace("[KEY_AUDIT]", "").strip()
+                entry["timestamp"] = timestamp_str
+
+        if entry:
+            entries.append(entry)
+
+    # 恢复正序
+    entries.reverse()
+    return entries
+
+
 # ──────────────────────────────────────────────────────────────────
 # Flask 应用工厂
 # ──────────────────────────────────────────────────────────────────
@@ -369,6 +616,7 @@ def create_app(data_dir: Path | None = None) -> "Flask":
         stats = get_current_stats(data_logs_dir)
         history = get_history(data_logs_dir, limit=20)
         errors = get_errors(data_logs_dir, limit=15)
+        security_audit = get_security_audit_data(data_logs_dir)
 
         uptime_display = format_uptime(stats.get("uptime", 0))
 
@@ -378,6 +626,7 @@ def create_app(data_dir: Path | None = None) -> "Flask":
             history=history,
             errors=errors,
             uptime_display=uptime_display,
+            security_audit=security_audit,
             engine={
                 "mode": stats.get("mode", ""),
                 "target_count": stats.get("target_count", 0),
@@ -452,6 +701,17 @@ def create_app(data_dir: Path | None = None) -> "Flask":
             }
         )
 
+    @app.route("/api/security-audit")
+    @require_auth
+    def api_security_audit():
+        """API: 安全审计状态（已脱敏，不暴露私钥等敏感信息）
+
+        Returns:
+            密钥操作统计、审计日志概述、安全过滤器状态、审计告警
+        """
+        audit_data = get_security_audit_data(data_logs_dir)
+        return jsonify(audit_data)
+
     @app.route("/health")
     def health():
         """健康检查端点"""
@@ -495,11 +755,12 @@ def run_dashboard(
 ║  本地访问: http://127.0.0.1:{port:<5}                  ║
 ║  API Key:  {auth_status:<38}║
 ║  API 端点:                                           ║
-║    GET /api/status  - 当前运行状态                   ║
-║    GET /api/history - 历史数据 (?limit=N)            ║
-║    GET /api/errors  - 错误日志 (?limit=N)            ║
-║    GET /api/report  - 日报告摘要                     ║
-║    GET /health      - 健康检查                       ║
+║    GET /api/status         - 当前运行状态            ║
+║    GET /api/history        - 历史数据 (?limit=N)     ║
+║    GET /api/errors         - 错误日志 (?limit=N)     ║
+║    GET /api/report         - 日报告摘要              ║
+║    GET /api/security-audit - 安全审计状态            ║
+║    GET /health             - 健康检查                ║
 ╚══════════════════════════════════════════════════════╝
 """)
 

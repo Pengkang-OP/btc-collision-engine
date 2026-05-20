@@ -21,6 +21,8 @@ from typing import Any
 
 from src.monitoring.storage_config import DataStorageConfig
 
+from src.log_engine.log_rotator import LogRotator
+
 # 导入现有日志系统
 from src.utils import get_configured_logger
 from src.utils.fast_json import fast_dump, fast_dumps, fast_load, fast_loads
@@ -77,6 +79,9 @@ class DataLogger:
 
         # 线程锁
         self._lock = threading.Lock()
+
+        # 错误日志轮转器：保留最近7天、最多1000条
+        self._error_rotator = LogRotator(max_age_days=7, max_count=1000)
 
         # 性能统计
         self._start_time = time.time()
@@ -437,9 +442,8 @@ class DataLogger:
                 # 添加新错误
                 errors.append(error_record)
 
-                # 限制错误日志数量
-                if len(errors) > 500:
-                    errors = errors[-500:]
+                # 应用轮转：保留最近7天、最多1000条记录
+                errors = self._error_rotator.rotate(errors)
 
                 # 写回文件
                 with open(self.error_log_file, "w", encoding="utf-8") as f:
@@ -835,10 +839,10 @@ class DataLogger:
             self.logger.warning("历史数据格式错误，重置为空列表")
             return []
         except json.JSONDecodeError as e:
-            self.logger.error(f"历史数据JSON损坏，尝试恢复: {e}")
+            self.logger.warning(f"历史数据JSON损坏，尝试恢复: {e}")
             return self._recover_history_data()
         except Exception as e:
-            self.logger.error(f"读取历史数据失败: {e}")
+            self.logger.warning(f"读取历史数据失败: {e}")
             return []
 
     def _recover_history_data(self) -> list:
@@ -850,7 +854,7 @@ class DataLogger:
             file_size = os.path.getsize(self.history_data_file)
             max_size = 10 * 1024 * 1024  # 10MB限制
             if file_size > max_size:
-                self.logger.error(
+                self.logger.warning(
                     f"历史文件过大({file_size / 1024 / 1024:.2f}MB)，超过限制({max_size / 1024 / 1024:.0f}MB)，跳过恢复"
                 )
                 return []
@@ -1433,8 +1437,7 @@ class DataLogger:
                         self.logger.warning(f"读取错误日志文件失败，将覆盖: {e}")
                         errors = []
                 errors.extend(pending_errors)
-                if len(errors) > 500:
-                    errors = errors[-500:]
+                errors = self._error_rotator.rotate(errors)
                 self._atomic_write_json(self.error_log_file, errors)
                 self.logger.debug(f"flush: 写入 {len(pending_errors)} 条错误数据")
             except Exception as e:

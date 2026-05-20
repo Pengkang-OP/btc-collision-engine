@@ -45,7 +45,7 @@ class ExceptionHandler:
         # 分类处理
         if isinstance(error, (RuntimeError, ValueError)):
             # 可恢复的运行时错误
-            logger.error(f"{engine_type}引擎{context}失败({error_type}): {error_msg}")
+            logger.warning(f"{engine_type}引擎{context}失败({error_type}): {error_msg}")
             # 使用getattr替代hasattr避免竞态条件
             record_func = getattr(stats, "record_worker_error", None)
             if record_func and callable(record_func):
@@ -67,9 +67,8 @@ class ExceptionHandler:
             if record_func and callable(record_func):
                 record_func()
         elif isinstance(error, OSError):
-            # 系统I/O错误（新增分类）
-            logger.error(f"{engine_type}引擎{context}系统I/O错误: {error_type}: {error_msg}")
-            record_func = getattr(stats, "record_worker_error", None)
+            # 系统I/O错误
+            logger.error("%s引擎%s系统I/O错误: %s: %s", engine_type, context, type(error).__name__, str(error))
             if record_func and callable(record_func):
                 record_func()
         else:
@@ -110,9 +109,9 @@ class ExceptionHandler:
             is_resource_error = any(keyword in error_msg for keyword in resource_keywords)
 
             if is_resource_error:
-                logger.error(f"GPU {mode}失败(资源不足): {type(error).__name__}: {error}")
+                logger.warning(f"GPU {mode}失败(资源不足): {type(error).__name__}: {error}")
             else:
-                logger.error(f"GPU {mode}失败(运行时错误): {type(error).__name__}: {error}")
+                logger.warning(f"GPU {mode}失败(运行时错误): {type(error).__name__}: {error}")
             # 使用getattr替代hasattr避免竞态条件
             record_func = getattr(stats, "record_gpu_error", None)
             if record_func and callable(record_func):
@@ -125,7 +124,7 @@ class ExceptionHandler:
                 record_func(is_resource_error=True)
         elif isinstance(error, (TypeError, OverflowError)):
             # 数据编码错误
-            logger.error(f"GPU {mode}失败(数据错误): {type(error).__name__}: {error}")
+            logger.warning(f"GPU {mode}失败(数据错误): {type(error).__name__}: {error}")
             # 使用getattr替代hasattr避免竞态条件
             gpu_err_func = getattr(stats, "record_gpu_error", None)
             if gpu_err_func and callable(gpu_err_func):
@@ -254,7 +253,7 @@ class ExceptionHandler:
             error: 捕获的异常
             config_type: 配置类型("ConfigManager"/"CryptoConfig"/"GPUConfig")
         """
-        if isinstance(error, (FileNotFoundError, IOError)):
+        if isinstance(error, (FileNotFoundError, OSError)):
             logger.warning(f"{config_type}配置文件不存在或无法读取: {error}")
         elif isinstance(error, (ValueError, TypeError)):
             logger.error(f"{config_type}配置值无效: {error}")
@@ -277,7 +276,7 @@ class ExceptionHandler:
             logger.error(f"文件不存在({operation}): {filepath}")
         elif isinstance(error, PermissionError):
             logger.error(f"文件权限不足({operation}): {filepath}")
-        elif isinstance(error, IOError):
-            logger.error(f"文件I/O错误({operation}): {filepath} - {error}")
+        elif isinstance(error, OSError):
+            logger.error("文件I/O错误(%s): %s - %s", operation, filepath, error)
         else:
             logger.exception(f"文件操作未知错误({operation}): {filepath}")

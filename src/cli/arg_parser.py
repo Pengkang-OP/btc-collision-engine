@@ -141,24 +141,24 @@ def parse_args() -> argparse.Namespace:  # noqa: D401
     )
 
     # ── 2.5. 安全选项 ──────────────────────────────────────────────────────────
-    security_group = parser.add_argument_group("安全选项", "生产环境安全检查和敏感信息保护")
+    security_group = parser.add_argument_group("安全选项", "自动安全检查和敏感信息保护")
     security_group.add_argument(
         "--production",
         action="store_true",
         default=False,
-        help="生产模式：启用严格的安全检查，确保使用安全的加密后端",
+        help="已废弃：安全检查现已自动执行。使用 --skip-security-check 可跳过",
     )
     security_group.add_argument(
         "--secure",
         action="store_true",
         default=False,
-        help="与 --production 相同，启用安全检查模式",
+        help="已废弃：安全检查现已自动执行。使用 --skip-security-check 可跳过",
     )
     security_group.add_argument(
         "--skip-security-check",
         action="store_true",
         default=False,
-        help="跳过生产模式的安全检查（不推荐用于生产环境）",
+        help="跳过启动时的自动安全加密后端检查（不推荐）",
     )
 
     # ── 3. GPU 加速 ──────────────────────────────────────────────────────────

@@ -79,7 +79,6 @@ class DeduplicationFilter:
         )
 
     def _fingerprint(self, private_key: bytes) -> int:
-        """v4.3.1: 计算私钥的 64-bit 整数指纹"""
         return self._fingerprint_fn(private_key)
 
     def check_and_add(self, private_key: bytes) -> bool:

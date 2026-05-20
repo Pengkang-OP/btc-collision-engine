@@ -35,7 +35,7 @@ class CheckpointManager:
     _has_win32_security = None
 
     @classmethod
-    def _check_win32_security(cls):
+    def _check_win32_security(cls) -> bool:
         """检查pywin32是否可用（类级别的一次性检查）"""
         if cls._has_win32_security is None:
             try:

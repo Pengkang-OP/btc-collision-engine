@@ -30,7 +30,6 @@ PRODUCTION_INCLUDE = [
     "key_collision_cli.py",
     # M-NEW3修复: key_collision_gui.py 已移除，项目转为纯 CLI 架构
     "start.bat",
-    
     # 配置文件
     "config.json",
     "config.example.json",
@@ -39,20 +38,16 @@ PRODUCTION_INCLUDE = [
     "requirements.txt",
     "requirements.lock",
     "valid_addresses.txt",
-    
     # 源代码
     "src/",
-    
     # 文档
     "README.md",
     "CHANGELOG.md",
     "CONTRIBUTING.md",
     "docs/",
-    
     # 工具
     "tools/utf8_helper.py",
     "tools/retry_helper.py",
-    
     # 脚本
     "scripts/",
 ]
@@ -62,14 +57,12 @@ PRODUCTION_EXCLUDE = [
     # 版本控制
     ".git/",
     ".github/",
-    
     # Python缓存
     "__pycache__/",
     "*.pyc",
     "*.pyo",
     ".pytest_cache/",
     ".benchmarks/",
-    
     # 测试相关
     "tests/",
     "test_*.py",
@@ -77,7 +70,6 @@ PRODUCTION_EXCLUDE = [
     "test_*.log",
     "test_data/",
     "test_results/",
-    
     # 开发工具文档
     "docs/archive/",
     "tools/test_*.py",
@@ -102,13 +94,11 @@ PRODUCTION_EXCLUDE = [
     "tools/CODE_REVIEW_*.md",
     "tools/UTF8_*.md",
     "tools/README.md",
-    
     # 日志和数据
     "logs/",
     "data_logs/",
     "monitoring_data/",
     "*.log",
-    
     # IDE配置
     ".vscode/",
     ".qoder/",
@@ -116,7 +106,6 @@ PRODUCTION_EXCLUDE = [
     ".trae/",
     "*.swp",
     "*.swo",
-    
     # 其他
     "build/",
     "dist/",
@@ -130,38 +119,51 @@ def get_git_info():
     """获取Git版本信息"""
     try:
         # 获取当前commit hash
-        commit_hash = subprocess.check_output(
-            ["git", "rev-parse", "HEAD"],
-            stderr=subprocess.DEVNULL
-        ).decode().strip()
-        
+        commit_hash = (
+            subprocess.check_output(["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL)
+            .decode()
+            .strip()
+        )
+
         # 获取简短hash
-        short_hash = subprocess.check_output(
-            ["git", "rev-parse", "--short", "HEAD"],
-            stderr=subprocess.DEVNULL
-        ).decode().strip()
-        
+        short_hash = (
+            subprocess.check_output(
+                ["git", "rev-parse", "--short", "HEAD"], stderr=subprocess.DEVNULL
+            )
+            .decode()
+            .strip()
+        )
+
         # 获取最近标签
         try:
-            tag = subprocess.check_output(
-                ["git", "describe", "--tags", "--abbrev=0"],
-                stderr=subprocess.DEVNULL
-            ).decode().strip()
+            tag = (
+                subprocess.check_output(
+                    ["git", "describe", "--tags", "--abbrev=0"], stderr=subprocess.DEVNULL
+                )
+                .decode()
+                .strip()
+            )
         except (subprocess.CalledProcessError, FileNotFoundError):
             tag = "v2.2.0"
-        
+
         # 获取提交数量
-        commit_count = subprocess.check_output(
-            ["git", "rev-list", "--count", "HEAD"],
-            stderr=subprocess.DEVNULL
-        ).decode().strip()
-        
+        commit_count = (
+            subprocess.check_output(
+                ["git", "rev-list", "--count", "HEAD"], stderr=subprocess.DEVNULL
+            )
+            .decode()
+            .strip()
+        )
+
         # 获取分支名
-        branch = subprocess.check_output(
-            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-            stderr=subprocess.DEVNULL
-        ).decode().strip()
-        
+        branch = (
+            subprocess.check_output(
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"], stderr=subprocess.DEVNULL
+            )
+            .decode()
+            .strip()
+        )
+
         return {
             "commit_hash": commit_hash,
             "short_hash": short_hash,
@@ -183,25 +185,63 @@ def get_git_info():
 def should_exclude(filepath: Path, base_dir: Path) -> bool:
     """判断文件是否应该排除"""
     rel_path = filepath.relative_to(base_dir)
-    rel_str = str(rel_path).replace('\\', '/')
-    
+    rel_str = str(rel_path).replace("\\", "/")
+
     for pattern in PRODUCTION_EXCLUDE:
         # 目录匹配
-        if pattern.endswith('/'):
-            dir_name = pattern.rstrip('/')
-            if rel_str == dir_name or rel_str.startswith(dir_name + '/'):
+        if pattern.endswith("/"):
+            dir_name = pattern.rstrip("/")
+            if rel_str == dir_name or rel_str.startswith(dir_name + "/"):
                 return True
         # 通配符匹配
-        elif '*' in pattern:
+        elif "*" in pattern:
             import fnmatch
+
             if fnmatch.fnmatch(rel_str, pattern) or fnmatch.fnmatch(filepath.name, pattern):
                 return True
         # 精确匹配
         else:
             if rel_str == pattern:
                 return True
-    
+
     return False
+
+
+def build_production_ignore_patterns():
+    """构建用于 copytree 的 ignore 模式函数"""
+
+    def _ignore_patterns(directory, contents):
+        ignored = set()
+        for item in contents:
+            full_path = Path(directory) / item
+            rel_str = str(full_path.relative_to(Path(directory).parent)).replace("\\", "/")
+
+            # 检查是否匹配排除模式
+            for pattern in PRODUCTION_EXCLUDE:
+                if pattern.endswith("/"):
+                    dir_name = pattern.rstrip("/")
+                    if item == dir_name or rel_str.startswith(dir_name + "/"):
+                        ignored.add(item)
+                        break
+                elif "*" in pattern:
+                    import fnmatch
+
+                    if fnmatch.fnmatch(rel_str, pattern) or fnmatch.fnmatch(item, pattern):
+                        ignored.add(item)
+                        break
+                else:
+                    if (
+                        rel_str == pattern or item == pattern.rsplit("/", 1)[-1]
+                        if "/" in pattern
+                        else item == pattern
+                    ):
+                        pass  # 精确匹配在 should_exclude 处理
+
+        # 始终忽略 Python 缓存和版本控制
+        ignored.update({"__pycache__", ".git", ".pytest_cache", ".benchmarks"})
+        return ignored
+
+    return _ignore_patterns
 
 
 def copy_production_files(source_dir: Path, target_dir: Path):
@@ -209,24 +249,25 @@ def copy_production_files(source_dir: Path, target_dir: Path):
     copied_count = 0
     skipped_count = 0
     total_size = 0
-    
+    ignore_fn = build_production_ignore_patterns()
+
     print(f"\n📦 开始复制生产环境文件...")
     print(f"   源目录: {source_dir}")
     print(f"   目标目录: {target_dir}")
     print()
-    
+
     for item in source_dir.iterdir():
         if should_exclude(item, source_dir):
             skipped_count += 1
             continue
-        
+
         target_item = target_dir / item.relative_to(source_dir)
-        
+
         try:
             if item.is_dir():
                 if target_item.exists():
                     shutil.rmtree(target_item)
-                shutil.copytree(item, target_item)
+                shutil.copytree(item, target_item, ignore=ignore_fn)
                 copied_count += 1
             else:
                 target_item.parent.mkdir(parents=True, exist_ok=True)
@@ -235,7 +276,7 @@ def copy_production_files(source_dir: Path, target_dir: Path):
                 total_size += item.stat().st_size
         except Exception as e:
             print(f"  ⚠️  复制失败 {item.name}: {e}")
-    
+
     return copied_count, skipped_count, total_size
 
 
@@ -248,11 +289,11 @@ def generate_version_info(target_dir: Path, git_info: dict):
         "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
         "platform": sys.platform,
     }
-    
+
     version_file = target_dir / "VERSION.json"
     with open(version_file, "w", encoding="utf-8") as f:
         json.dump(version_info, f, indent=2, ensure_ascii=False)
-    
+
     print(f"\n✅ 版本信息已生成: {version_file}")
     return version_info
 
@@ -338,49 +379,37 @@ btc-collision-engine/
 **构建时间**: {version_info['build_time']}
 **版本**: {version_info['version']}
 """
-    
+
     notes_file = target_dir / "RELEASE_NOTES.md"
     with open(notes_file, "w", encoding="utf-8") as f:
         f.write(release_notes)
-    
+
     print(f"✅ 发布说明已生成: {notes_file}")
 
 
 def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="BTC碰撞引擎生产环境打包工具")
-    parser.add_argument(
-        "--output",
-        required=True,
-        help="输出目录路径"
-    )
-    parser.add_argument(
-        "--clean",
-        action="store_true",
-        help="清理已存在的输出目录"
-    )
-    parser.add_argument(
-        "--yes",
-        action="store_true",
-        help="自动确认所有提示"
-    )
-    
+    parser.add_argument("--output", required=True, help="输出目录路径")
+    parser.add_argument("--clean", action="store_true", help="清理已存在的输出目录")
+    parser.add_argument("--yes", action="store_true", help="自动确认所有提示")
+
     args = parser.parse_args()
-    
+
     source_dir = Path(__file__).parent.absolute()
     target_dir = Path(args.output)
-    
+
     print("=" * 80)
     print("🚀 BTC碰撞引擎 - 生产环境打包工具")
     print("=" * 80)
-    
+
     # 获取Git信息
     print("\n📋 获取版本信息...")
     git_info = get_git_info()
     print(f"   版本: {git_info['tag']}")
     print(f"   Commit: {git_info['short_hash']}")
     print(f"   分支: {git_info['branch']}")
-    
+
     # 清理目标目录
     if target_dir.exists():
         if args.clean or args.yes:
@@ -390,8 +419,10 @@ def main():
             except PermissionError:
                 # Windows .git目录权限问题,使用命令行删除
                 import subprocess
-                subprocess.run(["cmd", "/c", "rmdir", "/s", "/q", str(target_dir)], 
-                             capture_output=True)
+
+                subprocess.run(
+                    ["cmd", "/c", "rmdir", "/s", "/q", str(target_dir)], capture_output=True
+                )
         else:
             print(f"\n⚠️  目标目录已存在: {target_dir}")
             response = input("   是否继续? (y/n): ")
@@ -399,20 +430,20 @@ def main():
                 print("❌ 取消打包")
                 return
             shutil.rmtree(target_dir)
-    
+
     # 创建目标目录
     target_dir.mkdir(parents=True, exist_ok=True)
     print(f"\n✅ 创建目标目录: {target_dir}")
-    
+
     # 复制文件
     copied, skipped, size = copy_production_files(source_dir, target_dir)
-    
+
     # 生成版本信息
     version_info = generate_version_info(target_dir, git_info)
-    
+
     # 生成发布说明
     generate_release_notes(target_dir, version_info)
-    
+
     # 打印总结
     print("\n" + "=" * 80)
     print("✅ 打包完成!")

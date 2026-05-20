@@ -47,7 +47,7 @@ class CollisionError(Exception):
             original_error: 导致此异常的原始异常
         """
         self.message = message
-        self.error_code = error_code or self.UNKNOWN_ERROR
+        self.error_code = error_code if error_code is not None else self.UNKNOWN_ERROR
         self.context = context or {}
         self.original_error = original_error
 
