@@ -567,16 +567,53 @@ def _quick_start_select_mode(compact: bool = False) -> tuple[str, str | None, st
     return mode, start_key, end_key
 
 
-def _quick_start_select_options(compact: bool = False) -> tuple[bool, bool, int]:
-    """步骤3: 选择功能选项。返回 (checkpoint, dedup, duration)
+def _yn_prompt(output: CLIOutput, prompt: str, default: str = "y") -> bool:
+    """提示 yes/no，默认 Y。"""
+    while True:
+        val = input(f"   {prompt} (推荐: Y): ").strip().lower()
+        if val == "":
+            return True
+        if val in ("y", "n"):
+            return val == "y"
+        output.error("请输入 y 或 n")
 
-    Args:
-        compact: 紧凑模式，跳过详细帮助信息
-    """
+
+def _duration_prompt(output: CLIOutput) -> int:
+    """提示运行时长（天/小时/无限），返回秒数（0=无限）。"""
+    output.print("   运行时长选项:")
+    output.print("   1. 无限（默认）")
+    output.print("   2. 指定小时")
+    output.print("   3. 指定天")
+    while True:
+        choice = input("   请选择 [1/2/3] (推荐: 1): ").strip()
+        if choice in ("", "1"):
+            return 0
+        if choice == "2":
+            while True:
+                try:
+                    hours = int(input("   请输入小时数: ").strip())
+                    if hours > 0:
+                        return hours * 3600
+                    output.error("小时数必须大于0")
+                except ValueError:
+                    output.error("请输入整数")
+        elif choice == "3":
+            while True:
+                try:
+                    days = int(input("   请输入天数: ").strip())
+                    if days > 0:
+                        return days * 86400
+                    output.error("天数必须大于0")
+                except ValueError:
+                    output.error("请输入整数")
+        else:
+            output.error("请输入 1、2 或 3")
+
+
+def _quick_start_select_options(compact: bool = False) -> tuple[bool, bool, int]:
+    """步骤3: 选择功能选项。返回 (checkpoint, dedup, duration)"""
     output = CLIOutput.get_instance()
     output.print("\n[bold cyan]【步骤 3/4】[/bold cyan] " + _t("cli.commands.step3_title"))
-
-    # 紧凑模式下跳过详细帮助信息
     if not compact:
         output.print("\n   [?] " + _t("cli.commands.help_feature_description"))
         output.print("      - checkpoint: " + _t("cli.commands.help_checkpoint"))
@@ -584,71 +621,9 @@ def _quick_start_select_options(compact: bool = False) -> tuple[bool, bool, int]
         output.print("      - duration: " + _t("cli.commands.help_duration") + "\n")
     else:
         output.print("")
-
-    # 启用断点续传（默认Y）
-    while True:
-        cp = input("   " + _t("cli.commands.enable_checkpoint") + " (推荐: Y): ").strip().lower()
-        if cp == "":
-            checkpoint = True
-            break
-        if cp in ("y", "n"):
-            checkpoint = cp == "y"
-            break
-        output.error("请输入 y 或 n")
-
-    # 启用去重过滤（默认Y）
-    while True:
-        dd = input("   " + _t("cli.commands.enable_dedup") + " (推荐: Y): ").strip().lower()
-        if dd == "":
-            dedup = True
-            break
-        if dd in ("y", "n"):
-            dedup = dd == "y"
-            break
-        output.error("请输入 y 或 n")
-
-    # 运行时长选项（天、小时、无限）
-    output.print("   运行时长选项:")
-    output.print("   1. 无限（默认）")
-    output.print("   2. 指定小时")
-    output.print("   3. 指定天")
-    while True:
-        time_choice = input("   请选择 [1/2/3] (推荐: 1): ").strip()
-        if time_choice == "":
-            duration = 0
-            break
-        if time_choice == "1":
-            duration = 0
-            break
-        elif time_choice == "2":
-            while True:
-                hours_str = input("   请输入小时数: ").strip()
-                try:
-                    hours = int(hours_str)
-                    if hours <= 0:
-                        output.error("小时数必须大于0")
-                        continue
-                    duration = hours * 3600
-                    break
-                except ValueError:
-                    output.error("请输入整数")
-            break
-        elif time_choice == "3":
-            while True:
-                days_str = input("   请输入天数: ").strip()
-                try:
-                    days = int(days_str)
-                    if days <= 0:
-                        output.error("天数必须大于0")
-                        continue
-                    duration = days * 24 * 3600
-                    break
-                except ValueError:
-                    output.error("请输入整数")
-            break
-        else:
-            output.error("请输入 1、2 或 3")
-
+    checkpoint = _yn_prompt(output, _t("cli.commands.enable_checkpoint"))
+    dedup = _yn_prompt(output, _t("cli.commands.enable_dedup"))
+    duration = _duration_prompt(output)
     return checkpoint, dedup, duration
 
 
@@ -813,127 +788,128 @@ def _quick_start_select_gpu() -> list[str]:
     return gpu_args
 
 
+def _quick_run_scan_target(
+    target_file: str, output: CLIOutput,
+) -> tuple[int, list[str]] | None:
+    """扫描目标文件获取地址预览。返回 (count, preview_list) 或 None (失败/无数据)"""
+    address_count = 0
+    preview_addresses: list[str] = []
+    max_preview = PREVIEW_CONFIG["max_preview_addresses"]
+    try:
+        with open(target_file, encoding="utf-8") as f:
+            for line in f:
+                stripped = line.strip()
+                if stripped and not stripped.startswith("#"):
+                    address_count += 1
+                    if len(preview_addresses) < max_preview:
+                        preview_addresses.append(stripped)
+    except Exception as e:
+        output.error(f"读取文件失败: {str(e)}")
+        return None
+    if address_count == 0:
+        output.warning(f"{target_file} 中没有有效的目标地址")
+        output.print("\n[TIP] 请先在文件中添加目标地址，或使用以下命令:")
+        output.print(
+            "  python key_collision_cli.py "
+            "-t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random\n"
+        )
+        return None
+    return address_count, preview_addresses
+
+
+def _quick_run_config_summary(target_file: str) -> dict:
+    """构建默认配置摘要。"""
+    return {
+        "目标文件": target_file,
+        "碰撞模式": (
+            "随机模式"
+            if QUICK_RUN_DEFAULTS["mode"] == "random"
+            else QUICK_RUN_DEFAULTS["mode"]
+        ),
+        "断点续传": "启用" if QUICK_RUN_DEFAULTS["checkpoint"] else "禁用",
+        "去重过滤": "启用" if QUICK_RUN_DEFAULTS["dedup"] else "禁用",
+        "运行时长": (
+            "不限制"
+            if QUICK_RUN_DEFAULTS["duration"] == 0
+            else f"{QUICK_RUN_DEFAULTS['duration']}分钟"
+        ),
+        "加速模式": "CPU 模式",
+    }
+
+
 def _cmd_quick_run(executor: Callable[[], None] | None = None) -> None:
     """--quick-run 命令实现：快速模式，跳过向导直接使用默认配置运行"""
-    # 确保UTF-8输出
     PlatformUtils.ensure_utf8_output()
-
     output = CLIOutput.get_instance()
     output.header("BTC碰撞引擎 - 快速模式")
-
     try:
-        # 使用默认配置快速启动
         output.print("\n[bold cyan]使用默认配置快速启动...[/bold cyan]\n")
-
-        # 默认目标：检查targets.txt是否存在
         target_file = str(QUICK_RUN_DEFAULTS["target_file"])
         target_file_exists = Path(target_file).exists()
-
         if target_file_exists:
-            # 统计文件中的地址数量并预览
-            address_count = 0
-            preview_addresses: list[str] = []
-            max_preview = PREVIEW_CONFIG["max_preview_addresses"]
-            max_display_len = PREVIEW_CONFIG["max_address_display_length"]
-            try:
-                with open(target_file, encoding="utf-8") as f:
-                    for _line_num, line in enumerate(f, 1):
-                        stripped = line.strip()
-                        if stripped and not stripped.startswith("#"):
-                            address_count += 1
-                            if len(preview_addresses) < max_preview:
-                                preview_addresses.append(stripped)
-            except Exception as e:
-                output.error(f"读取文件失败: {str(e)}")
+            scan_result = _quick_run_scan_target(target_file, output)
+            if scan_result is None:
                 return
-
-            if address_count == 0:
-                output.warning(f"{target_file} 中没有有效的目标地址")
-                output.print("\n[TIP] 请先在文件中添加目标地址，或使用以下命令:")
-                output.print(
-                    "  python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random\n"
-                )
-                return
-
+            address_count, preview_addresses = scan_result
             output.success(f"发现目标文件: {target_file} ({address_count} 个地址)")
-
-            # 显示地址预览
             if preview_addresses:
                 output.print("\n[bold yellow]地址预览:[/bold yellow]")
+                max_display_len = PREVIEW_CONFIG["max_address_display_length"]
                 for i, addr in enumerate(preview_addresses, 1):
-                    # 截断长地址显示
                     display_addr = (
-                        addr[:max_display_len] + "..." if len(addr) > max_display_len else addr
+                        addr[:max_display_len] + "..."
+                        if len(addr) > max_display_len
+                        else addr
                     )
                     output.print(f"  {i}. {display_addr}")
-                if address_count > max_preview:
-                    output.print(f"  ... 及其他 {address_count - max_preview} 个地址")
+                if address_count > PREVIEW_CONFIG["max_preview_addresses"]:
+                    output.print(
+                        f"  ... 及其他 "
+                        f"{address_count - PREVIEW_CONFIG['max_preview_addresses']} 个地址"
+                    )
                 output.print("")
-
             cmd_parts: list[str] = ["python", "key_collision_cli.py", "-f", target_file]
         else:
             output.warning(f"未找到 {target_file}，请使用 -t 或 -f 指定目标")
             output.print("\n[TIP] 快速模式示例:")
-            output.print("  python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random")
+            output.print(
+                "  python key_collision_cli.py "
+                "-t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random"
+            )
             output.print("  python key_collision_cli.py -f targets.txt --use-gpu\n")
             return
-
-        # 默认配置：使用常量配置
         cmd_parts.extend(["-m", str(QUICK_RUN_DEFAULTS["mode"])])
         if QUICK_RUN_DEFAULTS["checkpoint"]:
             cmd_parts.append("--checkpoint")
         if QUICK_RUN_DEFAULTS["dedup"]:
             cmd_parts.append("--dedup")
-
-        # 构建配置摘要
-        config_summary = {
-            "目标文件": target_file,
-            "碰撞模式": (
-                "随机模式" if QUICK_RUN_DEFAULTS["mode"] == "random" else QUICK_RUN_DEFAULTS["mode"]
-            ),
-            "断点续传": "启用" if QUICK_RUN_DEFAULTS["checkpoint"] else "禁用",
-            "去重过滤": "启用" if QUICK_RUN_DEFAULTS["dedup"] else "禁用",
-            "运行时长": (
-                "不限制"
-                if QUICK_RUN_DEFAULTS["duration"] == 0
-                else f"{QUICK_RUN_DEFAULTS['duration']}分钟"
-            ),
-            "加速模式": "CPU 模式",
-        }
-
+        config_summary = _quick_run_config_summary(target_file)
         output.print("\n[bold yellow]默认配置:[/bold yellow]")
         for key, value in config_summary.items():
             output.print(f"  {key}: {value}")
-
-        # 询问是否执行（使用可配置的倒计时）
-        countdown: int = QUICK_RUN_DEFAULTS["countdown_seconds"]
+        # 倒计时
+        countdown = QUICK_RUN_DEFAULTS["countdown_seconds"]
         output.print(f"\n[bold green]{countdown}秒后自动开始... (按Ctrl+C取消)[/bold green]")
         try:
-            import time
-
             for i in range(countdown, 0, -1):
                 output.print(f"  {i}...")
                 time.sleep(1)
         except KeyboardInterrupt:
             output.warning("已取消")
             return
-
-        # 执行命令
         output.header(_t("cli.messages.starting"))
         if executor is not None:
             argv = list(cmd_parts)
             if argv and argv[0].lower() in ("python", "python3", "python.exe", "python3.exe"):
                 argv = argv[1:]
-            # 备份原始argv，确保执行后恢复
             original_argv = sys.argv
             try:
                 sys.argv = argv
                 executor()
             finally:
-                sys.argv = original_argv  # 确保恢复原始argv
+                sys.argv = original_argv
         else:
             output.print("\n请手动运行: " + " ".join(cmd_parts))
-
     except KeyboardInterrupt:
         output.warning(_t("errors.keyboard_interrupt"))
     except Exception as e:
