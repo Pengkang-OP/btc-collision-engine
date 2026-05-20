@@ -1,7 +1,10 @@
 #!/bin/bash
 # BTC 碰撞引擎 - Linux/macOS 安装脚本
 
-set -e
+set -euo pipefail
+
+# 切换到脚本所在目录，确保相对路径正确
+cd "$(dirname "$0")/.." || exit 1
 
 echo "========================================"
 echo "BTC 碰撞引擎 - 安装脚本"
@@ -16,7 +19,7 @@ NC='\033[0m' # No Color
 
 # 1. 检查Python版本
 echo "[1/7] 检查Python版本..."
-if ! command -v python3 &> /dev/null; then
+if ! command -v python3 >/dev/null 2>&1; then
     echo -e "${RED}[错误] 未找到Python3，请先安装Python 3.9+${NC}"
     echo "Ubuntu/Debian: sudo apt install python3 python3-venv python3-pip"
     echo "Fedora: sudo dnf install python3"
@@ -28,8 +31,7 @@ PYTHON_VERSION=$(python3 --version | awk '{print $2}')
 echo -e "${GREEN}[成功]${NC} Python版本: $PYTHON_VERSION"
 
 # 检查Python版本是否 >= 3.9
-python3 -c "import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)" 2>/dev/null
-if [ $? -ne 0 ]; then
+if ! python3 -c "import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)" 2>/dev/null; then
     echo -e "${RED}[错误] Python版本过低，需要3.9或更高版本${NC}"
     echo "当前版本: $PYTHON_VERSION"
     exit 1
@@ -40,7 +42,7 @@ echo ""
 echo "[2/7] 检查虚拟环境..."
 if [ -d "venv" ]; then
     echo -e "${YELLOW}[信息]${NC} 检测到现有虚拟环境"
-    read -p "是否使用现有虚拟环境? (y/N): " USE_EXISTING
+    read -r -p "是否使用现有虚拟环境? (y/N): " USE_EXISTING
     if [ "$USE_EXISTING" = "y" ] || [ "$USE_EXISTING" = "Y" ]; then
         source venv/bin/activate
         echo -e "${GREEN}[成功]${NC} 虚拟环境已激活"
@@ -53,8 +55,7 @@ fi
 if [ ! -d "venv" ]; then
     # 创建虚拟环境
     echo -e "${YELLOW}[信息]${NC} 创建虚拟环境..."
-    python3 -m venv venv
-    if [ $? -ne 0 ]; then
+    if ! python3 -m venv venv; then
         echo -e "${RED}[错误] 创建虚拟环境失败${NC}"
         exit 1
     fi
@@ -63,8 +64,7 @@ if [ ! -d "venv" ]; then
     # 3. 激活虚拟环境
     echo ""
     echo "[3/7] 激活虚拟环境..."
-    source venv/bin/activate
-    if [ $? -ne 0 ]; then
+    if ! source venv/bin/activate; then
         echo -e "${RED}[错误] 激活虚拟环境失败${NC}"
         exit 1
     fi
@@ -92,9 +92,12 @@ if [ $? -ne 0 ]; then
 fi
 set -e
 
-# 安装其余基础依赖
+# 安装其余基础依赖（允许失败后继续）
+set +e
 pip install -r requirements-base.txt
-if [ $? -ne 0 ]; then
+PIP_EXIT=$?
+set -e
+if [ $PIP_EXIT -ne 0 ]; then
     echo -e "${YELLOW}[警告]${NC} 基础依赖安装失败，尝试继续..."
 else
     echo -e "${GREEN}[成功]${NC} 基础依赖安装完成"
@@ -103,11 +106,14 @@ fi
 # 5. 提示安装GPU依赖
 echo ""
 echo "[5/7] GPU加速支持（可选）..."
-read -p "是否安装GPU加速依赖? (y/N): " INSTALL_GPU
+read -r -p "是否安装GPU加速依赖? (y/N): " INSTALL_GPU
 if [ "$INSTALL_GPU" = "y" ] || [ "$INSTALL_GPU" = "Y" ]; then
     echo -e "${YELLOW}[信息]${NC} 安装GPU依赖..."
+    set +e
     pip install -r requirements-gpu.txt
-    if [ $? -ne 0 ]; then
+    GPU_EXIT=$?
+    set -e
+    if [ $GPU_EXIT -ne 0 ]; then
         echo -e "${YELLOW}[警告]${NC} GPU依赖安装失败，可以稍后手动安装"
     else
         echo -e "${GREEN}[成功]${NC} GPU依赖安装完成"

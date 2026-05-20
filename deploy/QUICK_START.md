@@ -320,10 +320,8 @@ nvidia-smi --query-gpu=utilization.gpu --format=csv -l 5
 
 ## 📚 完整文档
 
-- [生产部署总结](./PRODUCTION_DEPLOYMENT.md)
-- [systemd部署指南](./SYSTEMD_DEPLOYMENT.md)
-- [Docker部署指南](./DOCKER_DEPLOYMENT.md)
-- [配置说明](./CONFIG.md)
+- [部署详细说明](./README.md)
+- [项目文档](../docs/)
 - [README](../README.md)
 
 ---
@@ -343,5 +341,5 @@ nvidia-smi --query-gpu=utilization.gpu --format=csv -l 5
 
 ---
 
-**快速指南版本**: 1.0  
+**快速指南版本**: 1.0
 **最后更新**: 2026-04-24

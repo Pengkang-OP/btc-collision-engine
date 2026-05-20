@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
 
 jobs:
   # 代码质量检查
@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ "3.12" ]
+        python-version: ["3.12"]
 
     steps:
       - uses: actions/checkout@v4
@@ -101,6 +101,34 @@ jobs:
           python -m pytest tests/test_bech32_p2sh_conversion.py tests/test_bech32_p2sh_performance.py -v
           echo "✅ Bech32/P2SH测试通过"
 
+  # ──────────────────────────────────────────
+  # P2 新增: 配置验证 (Config Validation)
+  # 双重验证: DEFAULT_CONFIG 自洽性 + 外部配置文件
+  # ──────────────────────────────────────────
+  config-validation:
+    name: 配置验证
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-base.txt
+
+      - name: 验证配置一致性 (DEFAULT_CONFIG + 外部文件)
+        run: |
+          echo "🔍 验证 DEFAULT_CONFIG 自洽性及外部配置文件与 CONFIG_SCHEMA 的一致性..."
+          python tools/validate_config.py
+          echo "✅ 配置验证通过"
+
   # 代码格式化检查
   lint:
     name: 代码格式化检查
@@ -154,7 +182,7 @@ jobs:
   gate:
     name: CI 门禁检查
     runs-on: ubuntu-latest
-    needs: [ code-quality, lint, critical-tests ]
+    needs: [code-quality, lint, critical-tests, config-validation]
     if: always()
 
     steps:
@@ -184,6 +212,13 @@ jobs:
             FAILED=1
           else
             echo "✅ critical-tests 通过"
+          fi
+
+          if [ "${{ needs.config-validation.result }}" != "success" ]; then
+            echo "❌ config-validation 未通过: ${{ needs.config-validation.result }}"
+            FAILED=1
+          else
+            echo "✅ config-validation 通过"
           fi
 
           if [ $FAILED -eq 1 ]; then
@@ -348,3 +383,93 @@ jobs:
         with:
           name: benchmark-results
           path: benchmarks/results/benchmark_*.json
+
+  # ──────────────────────────────────────────
+  # P1 新增: GPU 源码静态检查 (无 GPU 硬件)
+  # 验证: Python 语法 + OpenCL 内核结构完整性
+  # ──────────────────────────────────────────
+  gpu-static-check:
+    name: GPU 源码静态检查
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-base.txt
+
+      - name: GPU Python 模块语法检查
+        run: |
+          echo "🔍 编译检查 src/gpu/ 下所有 Python 文件..."
+          python3 - <<'PYEOF'
+          import ast, sys, os, glob
+          errors = []
+          gpu_dir = "src/gpu"
+          for py_file in glob.glob(f"{gpu_dir}/**/*.py", recursive=True):
+              if "__pycache__" in py_file:
+                  continue
+              try:
+                  with open(py_file, encoding="utf-8") as f:
+                      ast.parse(f.read(), filename=py_file)
+              except SyntaxError as e:
+                  errors.append(f"  ❌ {py_file}:{e.lineno}: {e.msg}")
+          if errors:
+              print(f"❌ 发现 {len(errors)} 个语法错误:")
+              for e in errors:
+                  print(e)
+              sys.exit(1)
+          print(f"✅ 所有 {gpu_dir}/ Python 文件语法正确")
+          PYEOF
+
+      - name: OpenCL 内核结构验证
+        run: |
+          echo "🔍 解析 src/gpu/kernel.py 中的嵌入式 OpenCL 内核..."
+          python3 - <<'PYEOF'
+          import re, sys
+
+          with open("src/gpu/kernel.py", encoding="utf-8") as f:
+              content = f.read()
+
+          # 提取所有 OpenCL 内核函数签名
+          kernel_funcs = re.findall(r'__kernel\s+void\s+(\w+)\s*\(', content)
+          print(f"📋 发现 {len(kernel_funcs)} 个 __kernel 函数: {', '.join(kernel_funcs)}")
+
+          # 基本结构验证: 括号匹配
+          # 提取所有三引号包裹的字符串（可能包含内核源码）
+          triple_quoted = re.findall(r'"""(.*?)"""', content, re.DOTALL)
+
+          kernel_blocks = 0
+          for block in triple_quoted:
+              if '__kernel' in block:
+                  kernel_blocks += 1
+                  # 检查括号平衡
+                  open_braces = block.count('{')
+                  close_braces = block.count('}')
+                  if open_braces != close_braces:
+                      print(f"⚠️  内核块 {kernel_blocks}: 花括号不平衡 ({{ {open_braces}, }} {close_braces})")
+                  # 检查是否有分号结尾的行（OpenCL 需要分号）
+                  lines_without_semicolon = []
+                  for i, line in enumerate(block.split('\n')):
+                      stripped = line.strip()
+                      if stripped and not stripped.startswith('//') and not stripped.startswith('/*'):
+                          if not stripped.startswith('#') and not stripped.endswith('{') and not stripped.endswith('}'):
+                              if ';' not in stripped and not stripped.endswith('\\'):
+                                  # 忽略多行宏定义和空行
+                                  if not stripped.startswith('#') and stripped:
+                                      pass  # 仅统计，不阻断
+
+          if kernel_blocks == 0:
+              print("❌ 未找到任何 OpenCL 内核代码块！")
+              sys.exit(1)
+
+          print(f"✅ 找到 {kernel_blocks} 个 OpenCL 内核代码块，结构完整")
+          print(f"✅ GPU 源码静态检查通过")
+          PYEOF

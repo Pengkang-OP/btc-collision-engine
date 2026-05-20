@@ -2,7 +2,10 @@
 # BTC碰撞引擎 - 部署脚本
 # 自动化部署、配置和启动
 
-set -e
+set -euo pipefail
+
+# 切换到项目根目录（脚本在 deploy/ 子目录中）
+cd "$(dirname "$0")/.." || exit 1
 
 # 颜色定义
 RED='\033[0;31m'
@@ -31,34 +34,43 @@ log_error() {
 # 检查依赖
 check_dependencies() {
     log_info "检查依赖..."
-    
+
     # 检查Docker
-    if ! command -v docker &> /dev/null; then
+    if ! command -v docker >/dev/null 2>&1; then
         log_error "Docker未安装，请先安装Docker 20.10+"
         exit 1
     fi
-    
-    # 检查Docker Compose
-    if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
+
+    # 检查Docker Compose（拆分为嵌套条件，避免一行多个 &> 导致解析混淆）
+    DOCKER_COMPOSE_FOUND=false
+    if command -v docker-compose >/dev/null 2>&1; then
+        DOCKER_COMPOSE_FOUND=true
+    elif docker compose version >/dev/null 2>&1; then
+        DOCKER_COMPOSE_FOUND=true
+    fi
+    if [[ "$DOCKER_COMPOSE_FOUND" == "false" ]]; then
         log_error "Docker Compose未安装，请先安装Docker Compose 2.0+"
         exit 1
     fi
-    
-    # 检查NVIDIA驱动（GPU模式）
-    if [[ "$MODE" == "gpu" ]] && ! command -v nvidia-smi &> /dev/null; then
-        log_warning "NVIDIA驱动未检测到，将使用CPU模式"
-        MODE="cpu"
+
+    # 检查NVIDIA驱动（GPU模式，拆分为嵌套if避免 [[ ]] 与 && command &> 混用）
+    if [[ "$MODE" == "gpu" ]]; then
+        if ! command -v nvidia-smi >/dev/null 2>&1; then
+            log_warning "NVIDIA驱动未检测到，将使用CPU模式"
+            MODE="cpu"
+        fi
     fi
-    
+
     log_success "依赖检查通过"
 }
 
 # 创建必要目录
 create_directories() {
     log_info "创建必要目录..."
-    
-    mkdir -p data logs monitoring_data
-    
+
+    # 创建运行时目录（与 docker-compose.yml volumes 的 bind mount 路径一致）
+    mkdir -p data logs monitoring monitoring_data
+
     log_success "目录创建完成"
 }
 
@@ -66,9 +78,9 @@ create_directories() {
 generate_config() {
     if [[ ! -f "config.production.json" ]]; then
         log_info "生成生产配置文件..."
-        
+
         cp config.example.json config.production.json
-        
+
         log_success "配置文件已生成: config.production.json"
         log_warning "请编辑配置文件以调整参数"
     else
@@ -79,7 +91,7 @@ generate_config() {
 # 构建Docker镜像
 build_images() {
     log_info "构建Docker镜像..."
-    
+
     if [[ "$MODE" == "cpu" ]]; then
         docker-compose --profile cpu build
     elif [[ "$MODE" == "gpu" ]]; then
@@ -89,14 +101,14 @@ build_images() {
             docker-compose --profile gpu --profile amd build
         fi
     fi
-    
+
     log_success "镜像构建完成"
 }
 
 # 启动服务
 start_services() {
     log_info "启动服务..."
-    
+
     if [[ "$MODE" == "cpu" ]]; then
         docker-compose --profile cpu up -d
     elif [[ "$MODE" == "gpu" ]]; then
@@ -106,12 +118,12 @@ start_services() {
             docker-compose --profile gpu --profile amd up -d
         fi
     fi
-    
-    if [[ "$MONITORING" == "true" ]]; then
+
+    if [[ "${MONITORING:-}" == "true" ]]; then
         log_info "启动监控服务..."
         docker-compose --profile monitoring up -d
     fi
-    
+
     log_success "服务启动完成"
 }
 
@@ -119,7 +131,7 @@ start_services() {
 health_check() {
     log_info "等待服务启动..."
     sleep 10
-    
+
     if [[ "$MODE" == "cpu" ]]; then
         CONTAINER="btc-collision-cpu"
     elif [[ "$MODE" == "gpu" ]]; then
@@ -127,16 +139,26 @@ health_check() {
             CONTAINER="btc-collision-gpu"
         elif [[ "$GPU_VENDOR" == "amd" ]]; then
             CONTAINER="btc-collision-gpu-amd"
+        else
+            log_error "不支持的GPU厂商: $GPU_VENDOR（支持: nvidia, amd）"
+            exit 1
         fi
+    else
+        log_error "不支持的运行模式: $MODE（支持: cpu, gpu）"
+        exit 1
     fi
-    
+
     log_info "运行健康检查..."
-    docker exec $CONTAINER python -m src.utils.health_check --gpu || {
+    HEALTH_ARGS=""
+    if [[ "$MODE" == "gpu" ]]; then
+        HEALTH_ARGS="--gpu"
+    fi
+    docker exec "$CONTAINER" python -m src.utils.health_check --quiet $HEALTH_ARGS || {
         log_error "健康检查失败"
-        docker logs $CONTAINER
+        docker logs "$CONTAINER"
         exit 1
     }
-    
+
     log_success "健康检查通过"
 }
 
@@ -145,7 +167,7 @@ show_status() {
     echo ""
     log_info "服务状态:"
     docker-compose ps
-    
+
     echo ""
     log_info "查看日志:"
     if [[ "$MODE" == "cpu" ]]; then
@@ -153,14 +175,14 @@ show_status() {
     elif [[ "$MODE" == "gpu" ]]; then
         echo "  docker-compose logs -f btc-engine-gpu-${GPU_VENDOR}"
     fi
-    
-    if [[ "$MONITORING" == "true" ]]; then
+
+    if [[ "${MONITORING:-}" == "true" ]]; then
         echo ""
         log_info "监控服务:"
         echo "  Grafana: http://localhost:3000 (admin/btc-monitor-2024)"
         echo "  Prometheus: http://localhost:9090"
     fi
-    
+
     echo ""
     log_success "部署完成！"
 }
@@ -168,10 +190,10 @@ show_status() {
 # 清理资源
 cleanup() {
     log_warning "清理所有资源..."
-    
+
     docker-compose down -v
     docker-compose rm -f
-    
+
     log_success "清理完成"
 }
 

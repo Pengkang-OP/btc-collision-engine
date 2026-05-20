@@ -1,7 +1,7 @@
 #!/bin/bash
 # BTC碰撞引擎 - systemd服务安装脚本
 
-set -e
+set -euo pipefail
 
 # 颜色定义
 RED='\033[0;31m'
@@ -40,7 +40,7 @@ echo ""
 
 # 1. 创建用户和组
 log_info "创建btc-engine用户和组..."
-if id "btc-engine" &>/dev/null; then
+if id "btc-engine" >/dev/null 2>&1; then
     log_warning "用户btc-engine已存在"
 else
     useradd -r -m -d /opt/btc-collision-engine -s /bin/bash btc-engine
@@ -141,7 +141,7 @@ log_success "安装完成！"
 echo ""
 log_info "后续步骤:"
 echo "  1. 编辑配置文件: nano /opt/btc-collision-engine/config.production.json"
-echo "  2. 添加目标地址: echo '1A1z...' >> /opt/btc-collision-engine/targets.txt"
+echo "  2. 添加目标地址: echo '\''1A1z...'\'' >> /opt/btc-collision-engine/targets.txt"
 echo "  3. 启动服务: systemctl start btc-collision-engine"
 echo "  4. 查看日志: journalctl -u btc-collision-engine -f"
 echo ""
