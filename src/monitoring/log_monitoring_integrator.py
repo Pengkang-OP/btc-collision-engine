@@ -205,6 +205,9 @@ class LogMonitoringIntegrator:
         # 停止数据日志系统
         self.data_logger.stop()
 
+        # 发送停止信号给后台同步线程
+        self._stop_event.set()
+
         self.logger.info("日志监控集成器已停止")
 
     def integrate_with_monitoring_system(self, monitoring_system: MonitoringSystem) -> None:

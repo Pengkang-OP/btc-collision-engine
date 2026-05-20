@@ -43,7 +43,7 @@ def benchmark_secp256k1_scalar_multiply(iterations=100):
         for i in range(iterations):
             k = 123456789 + i
             start = time.perf_counter()
-            result = ec.scalar_multiply(k, G)
+            _ = ec.scalar_multiply(k, G)  # 仅计时，忽略返回值
             elapsed = (time.perf_counter() - start) * 1000
             times.append(elapsed)
 
@@ -60,7 +60,7 @@ def benchmark_secp256k1_scalar_multiply(iterations=100):
     for i in range(iterations):
         k = 123456789 + i
         start = time.perf_counter()
-        result = ec.scalar_multiply_const_time(k, G)
+        _ = ec.scalar_multiply_const_time(k, G)  # 仅计时，忽略返回值
         elapsed = (time.perf_counter() - start) * 1000
         times.append(elapsed)
 

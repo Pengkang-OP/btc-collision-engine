@@ -15,7 +15,6 @@ def main():
     print()
 
     # Check if virtual environment exists
-    venv_activate = os.path.join(script_dir, "venv", "Scripts", "activate.bat")
     venv_python = os.path.join(script_dir, "venv", "Scripts", "python.exe")
 
     if os.path.exists(venv_python):

@@ -2085,71 +2085,64 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     logger.debug(f"清理线程池失败（启动失败时）: {cleanup_error}")
             raise
 
-    def stop(self, timeout: float | None = None) -> None:
-        """停止对撞
-
-        参数:
-            timeout: 等待工作线程结束的超时时间（秒）
-                    None时使用默认值（根据目标数动态计算，最少10秒）
-        """
-        logger.info("正在停止对撞引擎...")
-
+    def _stop_send_signals(self) -> None:
+        """发送停止信号"""
         if hasattr(self, "_stop_reason_lock") and hasattr(self, "_engine_stop_reason"):
             with self._stop_reason_lock:
-                self._engine_stop_reason = "user_stopped"  # v3.5.2: 必须在下述信号前设置
+                self._engine_stop_reason = "user_stopped"
         if hasattr(self, "_stop_event"):
             self._stop_event.set()
         if hasattr(self, "_running"):
             self._running = False
 
-        if hasattr(self, "_thread") and self._thread:
-            # 动态计算超时时间：最少10秒，每1000个目标增加1秒
-            if timeout is None and hasattr(self, "targets"):
-                timeout = max(10.0, len(self.targets) * 0.001)
-
-            logger.debug(f"等待工作线程结束 (超时{timeout:.1f}秒)...")
-            self._thread.join(timeout=timeout)
-            if self._thread.is_alive():
-                logger.warning(f"工作线程未在{timeout:.1f}秒内结束，可能存在未提交的匹配数据")
-            else:
-                logger.debug("工作线程已结束")
-
-        # 等待统计信息更新完成（使用事件机制，最多等待5秒）
-        # 优化：从2秒增加到5秒，降低竞态条件失败率（目标：从0.9%降到<0.5%）
-        if hasattr(self, "_stats_updated"):
-            if not self._stats_updated.wait(timeout=5.0):
-                logger.warning("统计信息更新超时，可能存在竞态条件")
-            else:
-                logger.debug("统计信息更新完成")
-
-        # 保存最终断点
-        if hasattr(self, "checkpoint_mgr") and self.checkpoint_mgr and hasattr(self, "stats"):
-            logger.info(f"保存最终断点: 已检查={self.stats.total_checked}")
-            matches_list = (
-                [
-                    {"private_key_hash": m["private_key_hash"], "address": m["address"]}
-                    for m in self.stats.matches
-                ]
-                if hasattr(self.stats, "matches")
-                else []
+    def _stop_join_workers(self, timeout: float | None) -> None:
+        """等待工作线程结束"""
+        if not (hasattr(self, "_thread") and self._thread):
+            return
+        if timeout is None and hasattr(self, "targets"):
+            timeout = max(10.0, len(self.targets) * 0.001)
+        logger.debug(f"等待工作线程结束 (超时{timeout:.1f}秒)...")
+        self._thread.join(timeout=timeout)
+        if self._thread.is_alive():
+            logger.warning(
+                f"工作线程未在{timeout:.1f}秒内结束，可能存在未提交的匹配数据"
             )
-            try:
-                self.checkpoint_mgr.save(
-                    mode=self._current_mode if hasattr(self, "_current_mode") else "",
-                    targets=self.targets if hasattr(self, "targets") else set(),
-                    current_position=(
-                        self._current_position if hasattr(self, "_current_position") else 0
-                    ),
-                    total_checked=self.stats.total_checked,
-                    matches=matches_list,
-                    range_start=self._range_start if hasattr(self, "_range_start") else None,
-                    range_end=self._range_end if hasattr(self, "_range_end") else None,
-                )
-                logger.info("断点保存成功")
-            except (RuntimeError, OSError, ValueError) as e:
-                logger.error(f"断点保存失败: {e}")
+        else:
+            logger.debug("工作线程已结束")
 
-        # 停止增强监控系统
+    def _stop_save_checkpoint(self) -> None:
+        """保存最终断点"""
+        if not (
+            hasattr(self, "checkpoint_mgr")
+            and self.checkpoint_mgr
+            and hasattr(self, "stats")
+        ):
+            return
+        logger.info(f"保存最终断点: 已检查={self.stats.total_checked}")
+        matches_list: list[dict[str, str]] = []
+        if hasattr(self.stats, "matches"):
+            matches_list = [
+                {"private_key_hash": m["private_key_hash"], "address": m["address"]}
+                for m in self.stats.matches
+            ]
+        try:
+            self.checkpoint_mgr.save(
+                mode=self._current_mode if hasattr(self, "_current_mode") else "",
+                targets=self.targets if hasattr(self, "targets") else set(),
+                current_position=(
+                    self._current_position if hasattr(self, "_current_position") else 0
+                ),
+                total_checked=self.stats.total_checked,
+                matches=matches_list,
+                range_start=self._range_start if hasattr(self, "_range_start") else None,
+                range_end=self._range_end if hasattr(self, "_range_end") else None,
+            )
+            logger.info("断点保存成功")
+        except (RuntimeError, OSError, ValueError) as e:
+            logger.error(f"断点保存失败: {e}")
+
+    def _stop_cleanup_resources(self) -> None:
+        """清理增强监控、去重过滤器、线程池"""
         if (
             hasattr(self, "enhanced_monitoring")
             and self.enhanced_monitoring
@@ -2157,7 +2150,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
         ):
             logger.info("正在停止增强监控系统...")
             self.enhanced_monitoring.stop()
-            # 保存最终数据
             if hasattr(self, "data_logger") and self.data_logger:
                 try:
                     self.data_logger.save_current_data()
@@ -2166,7 +2158,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 except (RuntimeError, OSError, ValueError) as e:
                     logger.error(f"保存最终数据失败: {e}")
 
-        # 清理去重过滤器（释放内存）
         if hasattr(self, "dedup_filter") and self.dedup_filter and self.dedup_filter.enabled:
             stats = self.dedup_filter.get_stats()
             logger.info(
@@ -2176,19 +2167,21 @@ class KeyCollisionEngine(BaseCollisionEngine):
             self.dedup_filter.reset()
             logger.info("去重过滤器已清理")
 
-        # 显式关闭线程池（如果还在运行）
         if hasattr(self, "_executor") and self._executor:
             logger.info("关闭线程池...")
-            self._executor.shutdown(wait=False)  # 不等待，立即关闭
+            self._executor.shutdown(wait=False)
             self._executor = None
 
-        # 重置引擎状态（支持重启）
+    def _stop_reset_and_publish(self) -> None:
+        """重置引擎状态并发布 ENGINE_STOP 事件"""
         was_thread_alive = (
-            hasattr(self, "_thread") and self._thread is not None and self._thread.is_alive()
+            hasattr(self, "_thread")
+            and self._thread is not None
+            and self._thread.is_alive()
         )
         if hasattr(self, "_stop_reason_lock") and hasattr(self, "_engine_stop_reason"):
             with self._stop_reason_lock:
-                self._engine_stop_reason = "user_stopped"  # v3.5.2: 标记用户主动停止
+                self._engine_stop_reason = "user_stopped"
         if hasattr(self, "_stop_event"):
             self._stop_event.clear()
         if hasattr(self, "_running"):
@@ -2196,7 +2189,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
         if hasattr(self, "_thread"):
             self._thread = None
 
-        # v3.5.2: 发布 ENGINE_STOP 事件（仅当线程曾被中断时）
         if was_thread_alive:
             try:
                 if hasattr(self, "stats") and hasattr(self, "event_bus"):
@@ -2210,6 +2202,26 @@ class KeyCollisionEngine(BaseCollisionEngine):
             except (RuntimeError, OSError, ValueError) as e:
                 logger.debug(f"发布 ENGINE_STOP 事件失败（非致命）: {e}")
 
+    def stop(self, timeout: float | None = None) -> None:
+        """停止对撞
+
+        参数:
+            timeout: 等待工作线程结束的超时时间（秒）
+                    None时使用默认值（根据目标数动态计算，最少10秒）
+        """
+        logger.info("正在停止对撞引擎...")
+        self._stop_send_signals()
+        self._stop_join_workers(timeout)
+
+        if hasattr(self, "_stats_updated"):
+            if not self._stats_updated.wait(timeout=5.0):
+                logger.warning("统计信息更新超时，可能存在竞态条件")
+            else:
+                logger.debug("统计信息更新完成")
+
+        self._stop_save_checkpoint()
+        self._stop_cleanup_resources()
+        self._stop_reset_and_publish()
         logger.info("对撞引擎已停止")
 
     def is_running(self) -> bool:

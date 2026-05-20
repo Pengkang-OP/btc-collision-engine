@@ -168,8 +168,8 @@ def bench_dedup_filter() -> BenchmarkResult:
     """去重过滤器吞吐量基准测试"""
     from src.collision.deduplication_filter import DeduplicationFilter
 
-    # 预先建好过滤器和数据，避免构造开销计入测量
-    dedup = DeduplicationFilter(max_size=50_000, enabled=True)
+    # 预先触发类导入与JIT编译，避免构造开销计入测量
+    _ = DeduplicationFilter(max_size=50_000, enabled=True)
     keys = [i.to_bytes(32, "big") for i in range(500)]
 
     def _check():
@@ -207,7 +207,7 @@ def bench_base58check_encode() -> BenchmarkResult:
     """Base58Check 编码吞吐量基准测试"""
     from src.core.base58 import Base58
 
-    payload = bytes([0x00]) + bytes(range(20))  # 版本 + 20字节 hash160
+    # 版本 + 20字节 hash160 负载（实际基准中由 _encode 闭包实时构造）
 
     def _encode():
         Base58.check_encode(0x00, bytes(range(20)))
@@ -342,8 +342,9 @@ class BenchmarkRunner:
             return result
         except Exception as exc:
             import traceback
+
             err = traceback.format_exc()
-            print(f"  [FAILED] {exc}")
+            print(f"  [FAILED] {exc}\n{err}")
             return BenchmarkResult(
                 name=name,
                 ops_per_sec=0,

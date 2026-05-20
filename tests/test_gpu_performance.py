@@ -69,7 +69,7 @@ class TestPerformanceOptimizer:
         assert intel_profile.enable_async_execution is True
 
     def test_gpu_optimizer_adaptive_adjustment(self):
-        """测试自适应调整"""
+        """测试自适应调整 — 性能下降触发减少batch"""
         optimizer = GPUPerformanceOptimizer()
 
         # 先创建配置文件(必需)
@@ -77,24 +77,28 @@ class TestPerformanceOptimizer:
             device_name="Test GPU", vendor_str="NVIDIA Corporation", global_mem_size=8 * 1024**3
         )
 
-        # 记录足够的性能数据(至少3个)
+        # 记录足够的性能数据(至少3个)，执行时间需超过 slow_execution_threshold_ms (1000ms)
         for _ in range(5):
             metrics = PerformanceMetrics(
-                batch_execution_time_ms=100.0, keys_per_second=1000000.0, error_count=0
+                batch_execution_time_ms=1500.0,  # > 1000ms 触发慢执行
+                keys_per_second=500000.0,
+                error_count=0,
             )
             optimizer.record_performance(metrics)
 
         # 初始batch_size
         initial_batch_size = 65536
 
-        # 模拟性能下降（高错误率10%）
+        # 模拟性能下降：错误率超过1% AND 执行时间超过1000ms
         new_batch_size, adjustments = optimizer.analyze_and_adjust(
-            current_batch_size=initial_batch_size, error_rate=0.10  # 10%错误率,触发调整
+            current_batch_size=initial_batch_size,
+            error_rate=0.10,  # 10%错误率，同时满足两个条件
         )
 
-        # 验证调整信息返回
-        # adjustments可能包含嵌套的adjustment信息
-        assert "action" in adjustments or "error_rate_too_high" in adjustments
+        # 验证触发了减少batch的调整
+        assert "performance_degraded" in adjustments
+        assert adjustments["performance_degraded"]["action"] == "reduce_batch"
+        assert new_batch_size < initial_batch_size
 
     def test_gpu_optimizer_performance_recording(self):
         """测试性能指标记录"""

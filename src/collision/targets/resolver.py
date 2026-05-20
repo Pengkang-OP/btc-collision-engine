@@ -440,6 +440,23 @@ class TargetResolver:
 
         return results
 
+    def _process_batch(
+        self,
+        batch_inputs: list[str],
+        addresses: set[str],
+        valid_count: int,
+        invalid_count: int,
+    ) -> tuple[int, int]:
+        """处理一批目标输入，返回 (valid_count, invalid_count)"""
+        batch_results = self.resolve_batch(batch_inputs)
+        for _inp, addr in batch_results.items():
+            if addr:
+                addresses.add(addr)
+                valid_count += 1
+            else:
+                invalid_count += 1
+        return valid_count, invalid_count
+
     def load_from_file(self, filepath: str) -> set[str]:
         """
         从文件加载目标地址集合
@@ -451,16 +468,12 @@ class TargetResolver:
             有效地址字符串集合(小写标准化)
         """
         addresses: set[str] = set()
-
-        # 获取真实路径
         real_path = os.path.realpath(filepath)
 
-        # 检查文件是否存在
         if not os.path.exists(real_path):
             logger.error(f"文件不存在: {real_path}")
             return addresses
 
-        # 检查文件大小（使用配置参数）
         file_size = os.path.getsize(real_path)
         if file_size > self._max_file_size_bytes:
             max_size_mb = self._max_file_size_bytes // (1024 * 1024)
@@ -471,7 +484,6 @@ class TargetResolver:
 
         logger.info(f"开始从文件加载目标地址: {real_path}, 大小={file_size / 1024:.1f}KB")
 
-        # 安全读取文件
         try:
             line_count: int = 0
             valid_count = 0
@@ -479,26 +491,21 @@ class TargetResolver:
             comment_count = 0
             empty_count = 0
 
-            # 使用统一的编码检测工具读取文件
             try:
                 lines = EncodingUtils.read_file_lines(real_path, try_multiple=True)
             except (OSError, UnicodeDecodeError) as e:
                 logger.error(f"文件读取失败: {real_path}, 错误={e}")
                 return addresses
 
-            batch_inputs = []
+            batch_inputs: list[str] = []
 
             for line in lines:
                 line_count += 1
-
-                # 使用配置的最大行数限制
                 if line_count > self._max_lines:
                     logger.warning(f"超过最大行数限制({self._max_lines}),停止读取")
                     break
 
                 line = line.strip()
-
-                # 跳过空行和注释
                 if not line:
                     empty_count += 1
                     continue
@@ -507,31 +514,18 @@ class TargetResolver:
                     continue
 
                 batch_inputs.append(line)
-
-                # 批量解析（使用配置的批量大小）
                 if len(batch_inputs) >= self._batch_size:
-                    batch_results = self.resolve_batch(batch_inputs)
-                    for _inp, addr in batch_results.items():
-                        if addr:
-                            addresses.add(addr)
-                            valid_count += 1
-                        else:
-                            invalid_count += 1
+                    valid_count, invalid_count = self._process_batch(
+                        batch_inputs, addresses, valid_count, invalid_count
+                    )
                     batch_inputs.clear()
-
-                    # 进度日志
                     if len(addresses) > 0 and len(addresses) % 10000 == 0:
                         logger.info(f"加载进度: 已处理{line_count}行, 有效地址={len(addresses)}")
 
-            # 处理剩余的行
             if batch_inputs:
-                batch_results = self.resolve_batch(batch_inputs)
-                for _inp, addr in batch_results.items():
-                    if addr:
-                        addresses.add(addr)
-                        valid_count += 1
-                    else:
-                        invalid_count += 1
+                valid_count, invalid_count = self._process_batch(
+                    batch_inputs, addresses, valid_count, invalid_count
+                )
 
             logger.info(
                 f"文件加载完成: 文件={real_path}, 总行数={line_count}, "

@@ -24,6 +24,22 @@ class ConfigBuilder:
 
     VALID_MODES = frozenset({"random", "range", "brute_force"})
 
+    @staticmethod
+    def _validate_input(result: WizardResult) -> None:
+        """验证向导输入参数合法性"""
+        if not result.targets and not result.target_file:
+            raise ValueError(
+                "No targets specified: both targets and target_file are empty"
+            )
+        if result.mode not in ConfigBuilder.VALID_MODES:
+            raise ValueError(
+                f"Invalid mode '{result.mode}'. Valid modes: {', '.join(sorted(ConfigBuilder.VALID_MODES))}"
+            )
+        if result.mode in ("range", "brute_force") and not result.start_key:
+            raise ValueError(f"Mode '{result.mode}' requires a start_key")
+        if result.mode == "range" and not result.end_key:
+            raise ValueError("Mode 'range' requires an end_key")
+
     def build(self, result: WizardResult) -> list[str]:
         """构建命令行
 
@@ -36,20 +52,7 @@ class ConfigBuilder:
         Raises:
             ValueError: 输入参数不合法时抛出
         """
-        # 输入校验
-        if not result.targets and not result.target_file:
-            raise ValueError("No targets specified: both targets and target_file are empty")
-
-        if result.mode not in self.VALID_MODES:
-            raise ValueError(
-                f"Invalid mode '{result.mode}'. Valid modes: {', '.join(sorted(self.VALID_MODES))}"
-            )
-
-        if result.mode in ("range", "brute_force") and not result.start_key:
-            raise ValueError(f"Mode '{result.mode}' requires a start_key")
-
-        if result.mode == "range" and not result.end_key:
-            raise ValueError("Mode 'range' requires an end_key")
+        self._validate_input(result)
 
         cmd = ["python", "key_collision_cli.py"]
 
@@ -78,11 +81,9 @@ class ConfigBuilder:
         if result.gpu_indices:
             if result.use_multi_gpu:
                 cmd.append("--multi-gpu")
-                # 多GPU模式使用 --gpu-indices
                 for idx in result.gpu_indices:
                     cmd.extend(["--gpu-indices", str(idx)])
             else:
-                # 单GPU模式使用 --use-gpu 和 --gpu-device
                 cmd.append("--use-gpu")
                 if len(result.gpu_indices) > 0:
                     cmd.extend(["--gpu-device", str(result.gpu_indices[0])])

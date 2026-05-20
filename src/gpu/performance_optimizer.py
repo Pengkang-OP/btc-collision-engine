@@ -11,7 +11,7 @@ import threading
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, cast
+from typing import Any
 
 # 统一日志获取
 from ..utils import get_configured_logger
@@ -313,6 +313,213 @@ class GPUPerformanceOptimizer:
             if len(self._metrics_history) > self.MAX_METRICS_HISTORY:
                 self._metrics_history = self._metrics_history[-self.MAX_METRICS_HISTORY:]
 
+    def _analyze_check_readiness(
+        self,
+        current_batch_size: int,
+        engine: Any = None,
+    ) -> tuple[int, dict[str, Any]] | None:
+        """检查是否可以进行调整（profile存在、冷却期、频率限流）
+
+        Returns:
+            None 表示可以继续调整；否则返回 (batch_size, info) 用于提前返回
+        """
+        if not self._current_profile:
+            return current_batch_size, {
+                "action": "no_profile", "reason": "未创建配置文件"
+            }
+
+        now = time.time()
+        with self._lock:
+            cooldown_elapsed = now - self._last_adjustment_time
+            if cooldown_elapsed < self._adjustment_cooldown_sec:
+                remaining = self._adjustment_cooldown_sec - cooldown_elapsed
+                return current_batch_size, {
+                    "action": "cooldown",
+                    "reason": f"调整冷却期，剩余{remaining:.1f}秒",
+                }
+
+        if engine is not None:
+            monitor = getattr(engine, "_engine_monitor", None)
+            if monitor is not None:
+                recent_count = monitor.get_recent_adjustments(seconds=60)
+                if recent_count >= self.MAX_ADJUSTMENTS_PER_MINUTE:
+                    logger.warning(
+                        f"batch_size调整过于频繁 ({recent_count}次/60秒)，暂停自动调整"
+                    )
+                    return current_batch_size, {
+                        "action": "rate_limited",
+                        "reason": f"调整频率超限({recent_count}次/60秒)",
+                    }
+
+        return None
+
+    def _analyze_get_vendor_strategy(
+        self, engine: Any = None
+    ) -> tuple[str, dict[str, Any]]:
+        """获取厂商标识和调整策略"""
+        vendor_key = "unknown"
+        if engine is not None:
+            vendor_key = getattr(engine, "_vendor", "unknown")
+            if not isinstance(vendor_key, str):
+                vendor_key = "unknown"
+            vendor_key = vendor_key.lower()
+            if vendor_key == "unknown" and hasattr(engine, "gpu_device"):
+                vendor_key = str(
+                    getattr(engine.gpu_device, "vendor", "unknown")
+                ).lower()
+        if vendor_key == "unknown" and self._current_profile:
+            vendor_key = self._current_profile.vendor.value.lower()
+        strategy = VENDOR_ADJUST_STRATEGY.get(vendor_key, DEFAULT_ADJUST_STRATEGY)
+        return vendor_key, strategy
+
+    def _analyze_perform_adjustments(
+        self,
+        current_batch_size: int,
+        error_rate: float,
+        engine: Any,
+        strategy: dict[str, Any],
+        now: float,
+    ) -> tuple[int, dict[str, Any]]:
+        """在持有锁的情况下执行性能分析和batch调整（锁由调用方持有）"""
+        if len(self._metrics_history) < self.MIN_DATA_POINTS:
+            return current_batch_size, {
+                "action": "insufficient_data", "reason": "数据不足"
+            }
+
+        recent_metrics = self._metrics_history[-self.RECENT_METRICS_WINDOW:]
+        n = len(recent_metrics)
+        avg_execution_time = sum(m.batch_execution_time_ms for m in recent_metrics) / n
+        avg_speed = sum(m.keys_per_second for m in recent_metrics) / n
+
+        adjustments: dict[str, Any] = {}
+        new_batch_size = current_batch_size
+        profile = self._current_profile
+
+        gpu_utilization = 0.0
+        if engine is not None:
+            try:
+                monitor = getattr(engine, "_engine_monitor", None)
+                if monitor is not None:
+                    stats = monitor.get_stats()
+                    gpu_utilization = stats.get("avg_gpu_utilization", 0.0)
+            except Exception:
+                pass
+
+        min_target = profile.min_gpu_utilization_target
+        growth_ratio = self._analyze_compute_growth_ratio(
+            gpu_utilization, min_target, strategy
+        )
+        reduction_ratio = strategy.get("reduction_ratio", 0.80)
+
+        # 减少batch：错误率高 AND 执行时间长
+        if (
+            error_rate > profile.error_rate_threshold
+            and avg_execution_time > profile.slow_execution_threshold_ms
+        ):
+            new_batch_size = max(
+                profile.min_batch_size,
+                int(current_batch_size * reduction_ratio),
+            )
+            adjustments["performance_degraded"] = {
+                "error_rate": error_rate,
+                "error_threshold": profile.error_rate_threshold,
+                "avg_time_ms": avg_execution_time,
+                "time_threshold_ms": profile.slow_execution_threshold_ms,
+                "action": "reduce_batch",
+                "old_batch": current_batch_size,
+                "new_batch": new_batch_size,
+                "reduction_ratio": reduction_ratio,
+            }
+            logger.warning(
+                f"性能下降(错误率{error_rate:.2%}, 时间{avg_execution_time:.0f}ms)，"
+                f"减小batch: {current_batch_size} -> {new_batch_size} (*{reduction_ratio})"
+            )
+
+        # 增长batch：性能良好 或 GPU利用率不足
+        elif (
+            avg_execution_time < profile.slow_execution_threshold_ms * 1.0
+            and error_rate < profile.error_rate_threshold * self.ERROR_RATE_GOOD_MULTIPLIER
+        ) or (gpu_utilization > 0 and gpu_utilization < min_target):
+            new_batch_size = min(
+                profile.max_batch_size_limit,
+                int(current_batch_size * growth_ratio),
+            )
+            adjustments["performance_good"] = {
+                "avg_time_ms": avg_execution_time,
+                "avg_speed": avg_speed,
+                "growth_ratio": growth_ratio,
+                "action": "increase_batch",
+                "old_batch": current_batch_size,
+                "new_batch": new_batch_size,
+            }
+            logger.info(
+                f"性能良好，增大batch: {current_batch_size} -> {new_batch_size} (*{growth_ratio})"
+            )
+
+        if new_batch_size != current_batch_size:
+            new_batch_size = clamp_batch_size(new_batch_size)
+
+        new_batch_size = self._analyze_try_recover(
+            new_batch_size, recent_metrics, adjustments
+        )
+
+        if new_batch_size != current_batch_size:
+            self._adjustment_count += 1
+            self._last_adjustment_time = now
+            adjustments["adjustment_count"] = self._adjustment_count
+
+        return new_batch_size, adjustments
+
+    def _analyze_compute_growth_ratio(
+        self,
+        gpu_utilization: float,
+        min_target: float,
+        strategy: dict[str, Any],
+    ) -> float:
+        """计算增长比率：GPU利用率低时更激进"""
+        if gpu_utilization > 0 and gpu_utilization < min_target:
+            deficit_ratio = min_target / max(gpu_utilization, 0.1)
+            growth_ratio = min(
+                self.AGGRESSIVE_GROWTH_CAP,
+                self.AGGRESSIVE_GROWTH_BASE * deficit_ratio,
+            )
+            logger.info(
+                f"GPU利用率不足({gpu_utilization*100:.1f}% < {min_target*100:.1f}%), "
+                f"激进增长: *{growth_ratio:.2f}"
+            )
+            return growth_ratio
+        return strategy.get("growth_ratio", 1.20)
+
+    def _analyze_try_recover(
+        self,
+        new_batch_size: int,
+        recent_metrics: list[Any],
+        adjustments: dict[str, Any],
+    ) -> int:
+        """尝试恢复batch_size：连续稳定时恢复到初始水平"""
+        if not self._current_profile or self._initial_batch_size <= 0:
+            return new_batch_size
+
+        stable_count = sum(1 for m in recent_metrics if m.error_count == 0)
+        enough_samples = len(recent_metrics) >= self.STABLE_RECOVERY_THRESHOLD
+
+        if stable_count >= self.STABLE_RECOVERY_THRESHOLD and enough_samples:
+            recovery_batch = int(self._initial_batch_size * self.RECOVERY_RATIO)
+            if recovery_batch > new_batch_size:
+                adjustments["batch_recovery"] = {
+                    "reason": "stable_recovery",
+                    "old_batch": new_batch_size,
+                    "new_batch": recovery_batch,
+                    "initial_batch": self._initial_batch_size,
+                }
+                logger.info(
+                    f"batch_size 恢复: {new_batch_size}->{recovery_batch} "
+                    f"(初始:{self._initial_batch_size})"
+                )
+                return recovery_batch
+
+        return new_batch_size
+
     def analyze_and_adjust(
         self,
         current_batch_size: int,
@@ -329,174 +536,17 @@ class GPUPerformanceOptimizer:
         Returns:
             (new_batch_size, adjustment_info)
         """
-        if not self._current_profile:
-            return current_batch_size, {"action": "no_profile", "reason": "未创建配置文件"}
+        result = self._analyze_check_readiness(current_batch_size, engine)
+        if result is not None:
+            return result
 
-        # 检查冷却期
         now = time.time()
-        with self._lock:
-            if now - self._last_adjustment_time < self._adjustment_cooldown_sec:
-                remaining = self._adjustment_cooldown_sec - (now - self._last_adjustment_time)
-                return current_batch_size, {
-                    "action": "cooldown",
-                    "reason": f"调整冷却期，剩余{remaining:.1f}秒",
-                }
-
-        # ---- 频率限流：60秒内调整不超过5次 ----
-        if engine is not None:
-            monitor = getattr(engine, "_engine_monitor", None)
-            if monitor is not None:
-                recent_count = monitor.get_recent_adjustments(seconds=60)
-                if recent_count >= self.MAX_ADJUSTMENTS_PER_MINUTE:
-                    logger.warning(f"batch_size调整过于频繁 ({recent_count}次/60秒)，暂停自动调整")
-                    return current_batch_size, {
-                        "action": "rate_limited",
-                        "reason": f"调整频率超限({recent_count}次/60秒)",
-                    }
-
-        # ---- 获取厂商策略 ----
-        vendor_key = "unknown"
-        if engine is not None:
-            vendor_key = getattr(engine, "_vendor", "unknown")
-            if not isinstance(vendor_key, str):
-                vendor_key = "unknown"
-            vendor_key = vendor_key.lower()
-            if vendor_key == "unknown" and hasattr(engine, "gpu_device"):
-                vendor_key = str(getattr(engine.gpu_device, "vendor", "unknown")).lower()
-        # 也可从当前profile推断
-        if vendor_key == "unknown" and self._current_profile:
-            vendor_key = self._current_profile.vendor.value.lower()
-        strategy = VENDOR_ADJUST_STRATEGY.get(vendor_key, DEFAULT_ADJUST_STRATEGY)
+        _vendor_key, strategy = self._analyze_get_vendor_strategy(engine)
 
         with self._lock:
-            if len(self._metrics_history) < self.MIN_DATA_POINTS:
-                return current_batch_size, {"action": "insufficient_data", "reason": "数据不足"}
-
-            # 获取最近的性能指标
-            recent_metrics = self._metrics_history[-self.RECENT_METRICS_WINDOW:]
-            avg_execution_time = sum(m.batch_execution_time_ms for m in recent_metrics) / len(
-                recent_metrics
+            return self._analyze_perform_adjustments(
+                current_batch_size, error_rate, engine, strategy, now
             )
-            avg_speed = sum(m.keys_per_second for m in recent_metrics) / len(recent_metrics)
-
-            adjustments = {}
-            new_batch_size = current_batch_size
-            profile = self._current_profile
-
-            # v6.1 新增: 获取 GPU 利用率
-            gpu_utilization = 0.0
-            if engine is not None:
-                try:
-                    monitor = getattr(engine, "_engine_monitor", None)
-                    if monitor is not None:
-                        stats = monitor.get_stats()
-                        gpu_utilization = stats.get("avg_gpu_utilization", 0.0)
-                except Exception:
-                    pass
-
-            # v6.1 修复: 使用对称的乘法公式，但更激进的增长策略
-            # 减少: batch_size * reduction_ratio
-            # 增长: batch_size * growth_ratio
-            # 如果 GPU 利用率低于目标，使用更激进的增长
-            min_target = profile.min_gpu_utilization_target
-            if gpu_utilization > 0 and gpu_utilization < min_target:
-                # GPU 利用率不足，需要更激进增长
-                deficit_ratio = min_target / max(gpu_utilization, 0.1)
-                # 最多1.5倍增长
-                growth_ratio = min(
-                    self.AGGRESSIVE_GROWTH_CAP,
-                    self.AGGRESSIVE_GROWTH_BASE * deficit_ratio
-                )
-                gpu_pct = gpu_utilization * 100
-                min_pct = min_target * 100
-                logger.info(
-                    f"GPU利用率不足({gpu_pct:.1f}% < {min_pct:.1f}%), 激进增长: *{growth_ratio:.2f}"
-                )
-            else:
-                growth_ratio = strategy.get("growth_ratio", 1.20)
-            reduction_ratio = strategy.get("reduction_ratio", 0.80)
-
-            # v6.2 修复: 减少触发条件改为 AND 逻辑（更严格）
-            # 只有错误率过高 AND 执行时间过长两个条件都满足才减少
-            if (
-                error_rate > profile.error_rate_threshold
-                and avg_execution_time > profile.slow_execution_threshold_ms
-            ):
-                new_batch_size = max(profile.min_batch_size, int(current_batch_size * reduction_ratio))
-                adjustments["performance_degraded"] = {
-                    "error_rate": error_rate,
-                    "error_threshold": profile.error_rate_threshold,
-                    "avg_time_ms": avg_execution_time,
-                    "time_threshold_ms": profile.slow_execution_threshold_ms,
-                    "action": "reduce_batch",
-                    "old_batch": current_batch_size,
-                    "new_batch": new_batch_size,
-                    "reduction_ratio": reduction_ratio,
-                }
-                logger.warning(
-                    f"性能下降(错误率{error_rate:.2%}, 时间{avg_execution_time:.0f}ms)，"
-                    f"减小batch: {current_batch_size} -> {new_batch_size} (*{reduction_ratio})"
-                )
-
-            # 3. 性能良好 或 GPU利用率不足 - 使用乘法增长
-            elif (
-                avg_execution_time < profile.slow_execution_threshold_ms * 1.0
-                and error_rate < profile.error_rate_threshold * self.ERROR_RATE_GOOD_MULTIPLIER
-            ) or (gpu_utilization > 0 and gpu_utilization < min_target):
-                new_batch_size = min(
-                    profile.max_batch_size_limit, int(current_batch_size * growth_ratio)
-                )
-                adjustments["performance_good"] = {
-                    "avg_time_ms": avg_execution_time,
-                    "avg_speed": avg_speed,
-                    "growth_ratio": growth_ratio,
-                    "action": "increase_batch",
-                    "old_batch": current_batch_size,
-                    "new_batch": new_batch_size,
-                }
-                logger.info(
-                    f"性能良好，增大batch: {current_batch_size} -> {new_batch_size} (*{growth_ratio})"
-                )
-
-            # ---- v6.1 修复: 应用范围限制 ----
-            if new_batch_size != current_batch_size:
-                new_batch_size = clamp_batch_size(new_batch_size)
-
-            # v6.1 修复: batch_size 恢复机制
-            # 当连续稳定且 batch_size 偏低时，尝试恢复到更高水平
-            if self._current_profile and self._initial_batch_size > 0:
-                initial_batch = self._initial_batch_size
-                stable_count = 0
-
-                # 检查是否连续稳定（错误率低）
-                for m in recent_metrics:
-                    if m.error_count == 0:
-                        stable_count += 1
-
-                # 如果连续稳定，尝试恢复
-                enough_samples = len(recent_metrics) >= self.STABLE_RECOVERY_THRESHOLD
-                if stable_count >= self.STABLE_RECOVERY_THRESHOLD and enough_samples:
-                    # 恢复到初始值的指定比例
-                    recovery_batch = int(initial_batch * self.RECOVERY_RATIO)
-                    if recovery_batch > new_batch_size:
-                        adjustments["batch_recovery"] = {
-                            "reason": "stable_recovery",
-                            "old_batch": new_batch_size,
-                            "new_batch": recovery_batch,
-                            "initial_batch": initial_batch,
-                        }
-                        new_batch_size = recovery_batch
-                        logger.info(
-                            f"batch_size 恢复: {new_batch_size}->{recovery_batch} (初始:{initial_batch})"
-                        )
-
-            # 4. 记录调整
-            if new_batch_size != current_batch_size:
-                self._adjustment_count += 1
-                self._last_adjustment_time = now
-                cast(dict[str, Any], adjustments)["adjustment_count"] = self._adjustment_count
-
-            return new_batch_size, adjustments
 
     def get_optimization_report(self) -> dict[str, Any]:
         """获取优化报告"""
