@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """security_log_filter.py 模块单元测试
 
 测试 SecurityLogFilter 安全日志过滤器：
@@ -8,16 +7,16 @@
 - setup_security_logging / sanitize_private_key_for_log 函数
 """
 
-import logging
 import hashlib
+import logging
 from unittest.mock import MagicMock
 
 from src.utils.security_log_filter import (
     SecurityLogFilter,
-    setup_security_logging,
-    sanitize_private_key_for_log,
-    log_safe_error,
     log_safe_debug,
+    log_safe_error,
+    sanitize_private_key_for_log,
+    setup_security_logging,
 )
 
 

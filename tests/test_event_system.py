@@ -10,18 +10,18 @@
 - 向后兼容性
 """
 
-import unittest
 import threading
 import time
+import unittest
 from unittest.mock import Mock
 
-from src.collision.events import (
-    EventType,
-    EngineProgressEvent,
-    EngineMatchEvent,
-    EngineErrorEvent,
-)
 from src.collision.event_bus import EventBus, get_event_bus, reset_event_bus
+from src.collision.events import (
+    EngineErrorEvent,
+    EngineMatchEvent,
+    EngineProgressEvent,
+    EventType,
+)
 from src.monitoring.event_adapters import (
     setup_data_logging,
 )

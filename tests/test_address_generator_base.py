@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """BaseAddressGenerator 基类与继承体系测试
 
 覆盖 P3-1 架构去重后新增的抽象基类体系:
@@ -13,9 +12,9 @@ import unittest
 from abc import ABC
 
 from src.core.address_generator import (
+    AddressGenerator,
     BaseAddressGenerator,
     P2PKHAddressGenerator,
-    AddressGenerator,
 )
 from src.core.optimized_address_generator import OptimizedP2PKHAddressGenerator
 from src.core.secp256k1 import Secp256k1

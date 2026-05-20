@@ -110,10 +110,7 @@ class ConfigWatcher:
                 return False
             self._stop_event.clear()
 
-        if HAS_WATCHDOG:
-            started = self._start_watchdog()
-        else:
-            started = self._start_polling()
+        started = self._start_watchdog() if HAS_WATCHDOG else self._start_polling()
 
         if started and self._stop_event.is_set():
             logger.warning("ConfigWatcher 在启动期间收到停止信号，回退")

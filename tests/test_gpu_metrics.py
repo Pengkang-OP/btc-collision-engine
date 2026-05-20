@@ -11,9 +11,11 @@
 - 单例生命周期: get/reset
 """
 
-import pytest
 import threading
 import time
+
+import pytest
+
 from src.gpu.metrics import (
     GPUMetricsCollector,
     get_metrics_collector,

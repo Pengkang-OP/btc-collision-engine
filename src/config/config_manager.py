@@ -788,25 +788,28 @@ class ConfigManager:
 
         自 v4.3.1: 添加 prefix 参数支持嵌套路径错误键。
         """
-        GPU_MAX_BATCH_SIZE = 0xFFFFFFFF  # GPU 硬件地址空间上限 (32-bit)
-        SCHEMA_MAX_BATCH_SIZE = 16777216  # Schema maximum (16M, 与 CONFIG_SCHEMA 保持一致)
+        _gpu_max_batch_size = 0xFFFFFFFF  # GPU 硬件地址空间上限 (32-bit)
+        _schema_max_batch_size = 16777216  # Schema maximum (16M, 与 CONFIG_SCHEMA 保持一致)
         key = prefix + "batch_size"
         if value < 1:
             errors[key] = f"batch_size 必须 >= 1, 当前值: {value}"
             return None
-        if value >= GPU_MAX_BATCH_SIZE:
-            errors[key] = f"batch_size {value} >= GPU_MAX_BATCH_SIZE({GPU_MAX_BATCH_SIZE})"
+        if value >= _gpu_max_batch_size:
+            errors[key] = f"batch_size {value} >= _gpu_max_batch_size({_gpu_max_batch_size})"
             return None
-        if value > SCHEMA_MAX_BATCH_SIZE:
-            errors[key] = (
-                f"batch_size {value} 超过 Schema 上限 {SCHEMA_MAX_BATCH_SIZE}"
-            )
+        if value > _schema_max_batch_size:
+            errors[key] = f"batch_size {value} 超过 Schema 上限 {_schema_max_batch_size}"
             return None
         return value
 
     def _validate_positive_int(
-        self, name: str, value: int, errors: dict[str, str], min_val: int = 1,
-        nullable: bool = False, max_val: int | None = None
+        self,
+        name: str,
+        value: int,
+        errors: dict[str, str],
+        min_val: int = 1,
+        nullable: bool = False,
+        max_val: int | None = None,
     ) -> int | None:
         """验证正整数配置
 
@@ -821,14 +824,10 @@ class ConfigManager:
         if nullable and value is None:
             return None
         if not isinstance(value, int) or value < min_val:
-            errors[name] = (
-                f"{name} 必须 >= {min_val}, 当前值: {value} (类型: {type(value).__name__})"
-            )
+            errors[name] = f"{name} 必须 >= {min_val}, 当前值: {value} (类型: {type(value).__name__})"
             return None
         if max_val is not None and value > max_val:
-            errors[name] = (
-                f"{name} 必须 <= {max_val}, 当前值: {value}"
-            )
+            errors[name] = f"{name} 必须 <= {max_val}, 当前值: {value}"
             return None
         return value
 
@@ -837,9 +836,7 @@ class ConfigManager:
     ) -> float | None:
         """验证正浮点数配置"""
         if not isinstance(value, (int, float)) or value < min_val:
-            errors[name] = (
-                f"{name} 必须 >= {min_val}, 当前值: {value} (类型: {type(value).__name__})"
-            )
+            errors[name] = f"{name} 必须 >= {min_val}, 当前值: {value} (类型: {type(value).__name__})"
             return None
         return float(value)
 
@@ -856,16 +853,16 @@ class ConfigManager:
             return False
         return value
 
-    def _validate_checkpoint_interval(self, value: int, errors: dict[str, str], prefix: str = "") -> int | None:
+    def _validate_checkpoint_interval(
+        self, value: int, errors: dict[str, str], prefix: str = ""
+    ) -> int | None:
         """验证检查点间隔
 
         自 v4.3.1: 添加 prefix 参数支持嵌套路径错误键。
         """
         key = prefix + "checkpoint_interval"
         if value != -1 and (not isinstance(value, int) or value < 1):
-            errors[key] = (
-                f"checkpoint_interval 必须为 -1 或 >= 1, 当前值: {value}"
-            )
+            errors[key] = f"checkpoint_interval 必须为 -1 或 >= 1, 当前值: {value}"
             return None
         return value
 
@@ -918,8 +915,12 @@ class ConfigManager:
         # === collision 节 ===
         if "max_workers" in collision:
             self._validate_positive_int(
-                "collision.max_workers", collision["max_workers"], errors, min_val=1,
-                nullable=True, max_val=1024
+                "collision.max_workers",
+                collision["max_workers"],
+                errors,
+                min_val=1,
+                nullable=True,
+                max_val=1024,
             )
         if "progress_interval" in collision:
             self._validate_positive_int(
@@ -930,13 +931,14 @@ class ConfigManager:
                 collision["checkpoint_interval"], errors, prefix="collision."
             )
         if "dedup_max_size" in collision:
-            self._validate_positive_int(
-                "collision.dedup_max_size", collision["dedup_max_size"], errors
-            )
+            self._validate_positive_int("collision.dedup_max_size", collision["dedup_max_size"], errors)
         if "precomputed_window_size" in collision:
             self._validate_positive_int(
                 "collision.precomputed_window_size",
-                collision["precomputed_window_size"], errors, min_val=1, max_val=16
+                collision["precomputed_window_size"],
+                errors,
+                min_val=1,
+                max_val=16,
             )
         bool_fields = [
             ("collision.use_performance_optimization", collision),
@@ -955,14 +957,15 @@ class ConfigManager:
         for key in ("format", "file", "rotation_when"):
             if key in logging_cfg and not isinstance(logging_cfg[key], str):
                 errors[f"logging.{key}"] = (
-                    f"logging.{key} 必须是字符串, "
-                    f"当前: {type(logging_cfg[key]).__name__}"
+                    f"logging.{key} 必须是字符串, 当前: {type(logging_cfg[key]).__name__}"
                 )
         for key in ("max_bytes", "backup_count", "rotation_interval"):
             if key in logging_cfg:
                 self._validate_positive_int(
-                    f"logging.{key}", logging_cfg[key], errors, min_val=1
-                    if key != "backup_count" else 0
+                    f"logging.{key}",
+                    logging_cfg[key],
+                    errors,
+                    min_val=1 if key != "backup_count" else 0,
                 )
         for key in ("enable_console", "enable_file", "compress_backups"):
             if key in logging_cfg:
@@ -970,17 +973,12 @@ class ConfigManager:
         if "rotation_type" in logging_cfg:
             if logging_cfg["rotation_type"] not in ("size", "time"):
                 errors["logging.rotation_type"] = (
-                    f"无效 rotation_type: {logging_cfg['rotation_type']}，"
-                    f"有效值: size, time"
+                    f"无效 rotation_type: {logging_cfg['rotation_type']}，有效值: size, time"
                 )
             elif logging_cfg["rotation_type"] == "size" and "max_bytes" not in logging_cfg:
-                errors["logging.max_bytes"] = (
-                    "rotation_type=size 需要设置 max_bytes"
-                )
+                errors["logging.max_bytes"] = "rotation_type=size 需要设置 max_bytes"
             elif logging_cfg["rotation_type"] == "time" and "rotation_when" not in logging_cfg:
-                errors["logging.rotation_when"] = (
-                    "rotation_type=time 需要设置 rotation_when"
-                )
+                errors["logging.rotation_when"] = "rotation_type=time 需要设置 rotation_when"
 
         # === engine 节 ===
         if "mode" in engine_cfg:
@@ -988,9 +986,7 @@ class ConfigManager:
         if "batch_size" in engine_cfg:
             self._validate_batch_size(engine_cfg["batch_size"], errors, prefix="engine.")
         if "max_threads" in engine_cfg:
-            self._validate_positive_int(
-                "engine.max_threads", engine_cfg["max_threads"], errors
-            )
+            self._validate_positive_int("engine.max_threads", engine_cfg["max_threads"], errors)
         if "checkpoint_interval" in engine_cfg:
             self._validate_checkpoint_interval(
                 engine_cfg["checkpoint_interval"], errors, prefix="engine."
@@ -1010,28 +1006,31 @@ class ConfigManager:
                         f"memory_usage_ratio 必须在(0, 1]范围内, 当前: {ratio}"
                     )
             if "mode" in gpu_cfg and gpu_cfg["mode"] not in ("auto", "single", "multi"):
-                errors["gpu.mode"] = (
-                    f"无效 gpu.mode: {gpu_cfg['mode']}，有效值: auto, single, multi"
-                )
-            if "load_balancing" in gpu_cfg and gpu_cfg["load_balancing"] not in ("performance", "equal"):
+                errors["gpu.mode"] = f"无效 gpu.mode: {gpu_cfg['mode']}，有效值: auto, single, multi"
+            if "load_balancing" in gpu_cfg and gpu_cfg["load_balancing"] not in (
+                "performance",
+                "equal",
+            ):
                 errors["gpu.load_balancing"] = (
-                    f"无效 load_balancing: {gpu_cfg['load_balancing']}，"
-                    f"有效值: performance, equal"
+                    f"无效 load_balancing: {gpu_cfg['load_balancing']}，有效值: performance, equal"
                 )
             for key in ("use_gpu", "auto_detect", "enable_vendor_optimizations"):
                 if key in gpu_cfg:
                     self._validate_bool(f"gpu.{key}", gpu_cfg[key], errors)
             if "device_index" in gpu_cfg and not isinstance(gpu_cfg["device_index"], int):
                 errors["gpu.device_index"] = (
-                    f"gpu.device_index 必须是整数, "
-                    f"当前: {type(gpu_cfg['device_index']).__name__}"
+                    f"gpu.device_index 必须是整数, 当前: {type(gpu_cfg['device_index']).__name__}"
                 )
 
         # === crypto 节 ===
         if "backend" in crypto:
             valid_backends = (
-                "auto", "pure_python", "pure_python_const_time",
-                "openssl", "coincurve", "ecdsa"
+                "auto",
+                "pure_python",
+                "pure_python_const_time",
+                "openssl",
+                "coincurve",
+                "ecdsa",
             )
             if crypto["backend"] not in valid_backends:
                 errors["crypto.backend"] = (
@@ -1042,8 +1041,7 @@ class ConfigManager:
                 self._validate_bool(f"crypto.{key}", crypto[key], errors)
         if "gpu_device_index" in crypto and not isinstance(crypto["gpu_device_index"], int):
             errors["crypto.gpu_device_index"] = (
-                f"gpu_device_index 必须是整数, "
-                f"当前: {type(crypto['gpu_device_index']).__name__}"
+                f"gpu_device_index 必须是整数, 当前: {type(crypto['gpu_device_index']).__name__}"
             )
 
         # === performance_monitoring 节 ===
@@ -1053,7 +1051,9 @@ class ConfigManager:
         if "slow_threshold_ms" in perf_cfg:
             self._validate_positive_float(
                 "performance_monitoring.slow_threshold_ms",
-                perf_cfg["slow_threshold_ms"], errors, min_val=0
+                perf_cfg["slow_threshold_ms"],
+                errors,
+                min_val=0,
             )
         if "max_records" in perf_cfg:
             self._validate_positive_int(

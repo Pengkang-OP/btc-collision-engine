@@ -7,17 +7,19 @@
 - 内存使用测试
 """
 
-import pytest
 import os
 import time
+
 import psutil
+import pytest
+
+from src.collision.collision_stats import CollisionStats
 from src.gpu.performance_optimizer import (
     GPUPerformanceOptimizer,
-    PerformanceMetrics,
     GPUVendor,
+    PerformanceMetrics,
     get_gpu_optimizer,
 )
-from src.collision.collision_stats import CollisionStats
 
 pytestmark = pytest.mark.gpu
 
@@ -290,8 +292,8 @@ class TestSecurityValidation:
 
     def test_checkpoint_no_private_key(self):
         """测试断点文件不包含私钥"""
-        import tempfile
         import json
+        import tempfile
 
         with tempfile.TemporaryDirectory() as tmpdir:
             filepath = os.path.join(tmpdir, "test_security_checkpoint.json")
@@ -320,7 +322,7 @@ class TestSecurityValidation:
             )
 
             # 读取文件验证
-            with open(filepath, "r", encoding="utf-8") as f:
+            with open(filepath, encoding="utf-8") as f:
                 data = json.load(f)
 
             # 验证不包含私钥

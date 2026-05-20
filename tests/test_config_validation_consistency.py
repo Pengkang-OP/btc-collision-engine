@@ -1,12 +1,12 @@
 """ConfigManager配置验证一致性测试 - 确保JSON Schema和手动验证逻辑一致"""
 
-import unittest
-import sys
 import os
+import sys
+import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.config.config_manager import ConfigManager, HAS_JSONSCHEMA  # noqa: E402
+from src.config.config_manager import HAS_JSONSCHEMA, ConfigManager  # noqa: E402
 
 
 class TestConfigValidationConsistency(unittest.TestCase):

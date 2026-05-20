@@ -1,9 +1,9 @@
 """测试环境变量控制ACL设置"""
 
-import unittest
 import os
 import sys
 import tempfile
+import unittest
 
 # 添加项目根目录到路径
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -39,15 +39,15 @@ class TestACLEnvironmentVariable(unittest.TestCase):
                         ["icacls", self.test_file, "/reset"], capture_output=True, timeout=2
                     )
                 os.remove(self.test_file)
-            except BaseException:
-                pass
+            except (OSError, PermissionError):
+                pass  # Windows文件清理权限问题，不影响测试
 
         temp_file = self.test_file + ".tmp"
         if os.path.exists(temp_file):
             try:
                 os.remove(temp_file)
-            except BaseException:
-                pass
+            except (OSError, PermissionError):
+                pass  # Windows文件清理权限问题，不影响测试
 
     def test_skip_acl_true(self):
         """测试BTC_ENGINE_SKIP_ACL=true时跳过ACL设置"""
@@ -152,8 +152,8 @@ class TestACLEnvironmentVariable(unittest.TestCase):
                                 ["icacls", test_file, "/reset"], capture_output=True, timeout=2
                             )
                         os.remove(test_file)
-                    except BaseException:
-                        pass
+                    except (OSError, PermissionError):
+                        pass  # Windows文件清理权限问题
 
     def test_skip_acl_with_engine_integration(self):
         """测试与KeyCollisionEngine集成"""

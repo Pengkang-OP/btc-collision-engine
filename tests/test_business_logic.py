@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 """简单测试业务逻辑模块"""
 
-import sys
 import os
+import sys
 
 # 切换到项目根目录
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

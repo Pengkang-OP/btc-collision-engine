@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """生成GPU vs CPU性能对比报告"""
 
 import json
@@ -14,7 +13,7 @@ sys.path.insert(0, ROOT)
 
 def load_raw_results():
     path = os.path.join(ROOT, "test_results", "gpu_vs_cpu_comparison.json")
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -30,7 +29,7 @@ def load_daily_summary():
     )
     if not reports:
         return {}
-    with open(os.path.join(log_dir, reports[-1]), "r", encoding="utf-8") as f:
+    with open(os.path.join(log_dir, reports[-1]), encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -122,7 +121,7 @@ def build_report(raw, daily):
             "peak_throughput_keys_per_sec": 2235270,
             "stable_throughput_keys_per_sec": 510000,
             "degradation_from_peak_pct": round((1 - 510000 / 2235270) * 100, 2),
-            "degradation_note": "相对历史峰值退化属于正常运行状态（散热/功耗限制），当前稳定速度仍远超CPU",
+            "degradation_note": "历史峰值退化属于正常运行状态（散热/功耗限制），当前稳定速度仍远超CPU",
             "memory_leak_detected": False,
             "buffers_auto_released": 2,
             "monitoring_components_ok": 5,
@@ -131,8 +130,8 @@ def build_report(raw, daily):
         "daily_summary_today": {
             "data_points": ds.get("data_points", daily.get("data_points", 0)),
             "total_checked": ds.get("total_checked", 0),
-            "avg_speed_keys_per_sec": round(ds.get("avg_speed", 0), 2),
-            "max_speed_keys_per_sec": round(ds.get("max_speed", 0), 2),
+            "avg_keys_per_second": round(ds.get("avg_speed", 0), 2),
+            "max_keys_per_second": round(ds.get("max_speed", 0), 2),
             "avg_cpu_usage_pct": round(ds.get("avg_cpu_usage", 0), 2),
             "avg_memory_mb": round(ds.get("avg_memory_usage", 0), 2),
             "error_count": ds.get("error_count", 0),

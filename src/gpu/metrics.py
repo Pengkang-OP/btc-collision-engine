@@ -277,9 +277,7 @@ class GPUMetricsCollector:
             # Collector uptime
             lines.append("# HELP gpu_metrics_collector_uptime_seconds Collector uptime.")
             lines.append("# TYPE gpu_metrics_collector_uptime_seconds gauge")
-            lines.append(
-                f"gpu_metrics_collector_uptime_seconds {time.time() - self._created_at:.1f}"
-            )
+            lines.append(f"gpu_metrics_collector_uptime_seconds {time.time() - self._created_at:.1f}")
 
             lines.append("")  # 末尾换行
             return "\n".join(lines)
@@ -307,9 +305,7 @@ class GPUMetricsCollector:
                         "kernel_latency": self.get_kernel_latency_stats(dev),
                         "pool_hit_ratio": self.get_pool_hit_ratio(dev),
                     }
-                    for dev in sorted(
-                        set(self._keys_checked_total) | set(self._throughput)
-                    )
+                    for dev in sorted(set(self._keys_checked_total) | set(self._throughput))
                 },
             }
 
@@ -333,13 +329,16 @@ class GPUMetricsCollector:
 
 # 全局单例
 _global_metrics_collector: GPUMetricsCollector | None = None
+_global_metrics_lock = threading.Lock()
 
 
 def get_metrics_collector() -> GPUMetricsCollector:
-    """获取全局指标收集器实例"""
+    """获取全局指标收集器实例（线程安全）"""
     global _global_metrics_collector
     if _global_metrics_collector is None:
-        _global_metrics_collector = GPUMetricsCollector()
+        with _global_metrics_lock:
+            if _global_metrics_collector is None:
+                _global_metrics_collector = GPUMetricsCollector()
     return _global_metrics_collector
 
 

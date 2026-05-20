@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 CLI 集成测试
 
@@ -16,27 +15,27 @@ import os
 import sys
 import threading
 import time
-import pytest
-
 from io import StringIO
 from unittest.mock import Mock, patch
+
+import pytest
 
 # 确保项目根目录在 sys.path
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
-from src.cli.main import parse_args, validate_args, load_targets, format_progress  # noqa: E402
 from src.cli.advanced_features import (  # noqa: E402
+    GPUErrorHandler,
     apply_template,
     export_progress_data,
-    GPUErrorHandler,
 )
 from src.cli.config_migration import (  # noqa: E402
+    backup_config,
     detect_config_version,
     migrate_config,
-    backup_config,
 )
+from src.cli.main import format_progress, load_targets, parse_args, validate_args  # noqa: E402
 from src.collision.collision_stats import CollisionStats  # noqa: E402
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -52,16 +51,16 @@ def _make_full_args(**kwargs):
 
     a = Args()
     a.targets = kwargs.get("targets", ["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"])
-    a.file = kwargs.get("file", None)
+    a.file = kwargs.get("file")
     a.mode = kwargs.get("mode", "random")
-    a.start = kwargs.get("start", None)
-    a.end = kwargs.get("end", None)
+    a.start = kwargs.get("start")
+    a.end = kwargs.get("end")
     a.workers = kwargs.get("workers", 4)
     a.duration = kwargs.get("duration", 60)
     a.health_check = kwargs.get("health_check", False)
     a.platform_check = kwargs.get("platform_check", False)
     a.cleanup = kwargs.get("cleanup", False)
-    a.validate_addresses = kwargs.get("validate_addresses", None)
+    a.validate_addresses = kwargs.get("validate_addresses")
     a.examples = kwargs.get("examples", False)
     a.config_check = kwargs.get("config_check", False)
     a.quick_start = kwargs.get("quick_start", False)
@@ -76,8 +75,8 @@ def _make_full_args(**kwargs):
     a.no_simd = kwargs.get("no_simd", False)
     a.no_memory_pool = kwargs.get("no_memory_pool", False)
     a.sensitive_mode = kwargs.get("sensitive_mode", "full")
-    a.export_progress = kwargs.get("export_progress", None)
-    a.export_matches = kwargs.get("export_matches", None)
+    a.export_progress = kwargs.get("export_progress")
+    a.export_matches = kwargs.get("export_matches")
     return a
 
 
@@ -121,7 +120,7 @@ class TestCLIEndToEnd:
         reset_log_window_instance()
 
         # 固定 i18n 语言为 zh_CN，确保中文断言在任意 locale 环境下一致
-        from src.i18n import set_language, get_language
+        from src.i18n import get_language, set_language
 
         self._saved_language = get_language()
         set_language("zh_CN")
@@ -253,7 +252,7 @@ class TestCLIEndToEnd:
         assert result is True
 
         # 验证写入的配置包含 collision 段
-        with open(config_file, "r", encoding="utf-8") as f:
+        with open(config_file, encoding="utf-8") as f:
             config = json.load(f)
         assert "collision" in config
 
@@ -269,6 +268,7 @@ class TestCLIEndToEnd:
     def test_quick_start_to_execution(self, monkeypatch):
         """quick-start 生成命令可被 parse_args 正常解析"""
         from unittest.mock import MagicMock
+
         from src.cli.commands import _cmd_quick_start
 
         # Windows 上 mock fcntl（Unix 文件锁），避免 No module named 'fcntl'
@@ -584,6 +584,7 @@ class TestEdgeCases:
     def test_signal_handler_cleanup(self, monkeypatch):
         """信号处理配置可正常注册（不依赖真实 GPU）"""
         import signal as _signal
+
         from src.cli.main import main
 
         registered_signals = {}
@@ -701,7 +702,7 @@ class TestConfigMigration:
         assert ".bak." in backup_path
 
         # 备份内容与原文件一致
-        with open(backup_path, "r", encoding="utf-8") as f:
+        with open(backup_path, encoding="utf-8") as f:
             backup_data = json.load(f)
         assert backup_data == {"crypto": {}}
 

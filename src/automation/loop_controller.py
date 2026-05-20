@@ -317,9 +317,7 @@ class LoopController:
 
         report = {
             "summary": summary,
-            "final_audit": self.state.audit_results[-1].to_dict()
-            if self.state.audit_results
-            else None,
+            "final_audit": self.state.audit_results[-1].to_dict() if self.state.audit_results else None,
             "all_issues": [i.to_dict() for i in self.state.issues_found],
             "iterations": self.total_iterations,
         }

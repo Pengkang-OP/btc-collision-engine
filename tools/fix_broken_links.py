@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 断裂链接修复工具
 
@@ -15,11 +14,11 @@
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
 from urllib.parse import urlparse
 
 # 修复Windows控制台编码问题 - 使用共享模块
 from tools.utf8_helper import setup_windows_utf8
+
 setup_windows_utf8()
 
 
@@ -60,7 +59,7 @@ def auto_detect_archive_path(filename: str, docs_dir: Path) -> str | None:
     return None
 
 
-def find_markdown_links(content: str) -> List[Tuple[int, str, str, str]]:
+def find_markdown_links(content: str) -> list[tuple[int, str, str, str]]:
     """查找所有Markdown链接
 
     Returns:
@@ -167,7 +166,7 @@ def fix_relative_path(link_url: str, current_file: Path, docs_dir: Path) -> str:
     return link_url
 
 
-def fix_links_in_file(file_path: Path, docs_dir: Path, dry_run: bool = False) -> Dict:
+def fix_links_in_file(file_path: Path, docs_dir: Path, dry_run: bool = False) -> dict:
     """修复单个文件中的链接
 
     Returns:
@@ -281,7 +280,7 @@ def main():
                     print(f"   ... 还有 {len(result['fixes']) - 3} 个修复")
 
     print(f"\n{'=' * 60}")
-    print(f"📊 断裂链接修复报告")
+    print("📊 断裂链接修复报告")
     print(f"{'=' * 60}")
 
     print(f"\n📁 扫描文件: {len(md_files)}")
@@ -290,14 +289,14 @@ def main():
     print(f"✅ 已修复: {total_fixed}")
 
     if file_results:
-        print(f"\n修复详情:")
+        print("\n修复详情:")
         for result in sorted(file_results, key=lambda x: -x['broken_links']):
             print(f"  📄 {result['file']}: {result['broken_links']} 个")
 
     print(f"\n{'=' * 60}")
 
     if args.dry_run:
-        print(f"\n💡 这是模拟运行。移除 --dry-run 参数以实际修复。")
+        print("\n💡 这是模拟运行。移除 --dry-run 参数以实际修复。")
     else:
         print(f"\n✅ 修复完成！共修复 {total_fixed} 个断裂链接。")
 

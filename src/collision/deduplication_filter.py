@@ -74,9 +74,7 @@ class DeduplicationFilter:
         self._current_size = 0
         self._half_size = max_size // 2
 
-        logger.debug(
-            f"DeduplicationFilter 初始化: max_size={max_size}, enabled={enabled}"
-        )
+        logger.debug(f"DeduplicationFilter 初始化: max_size={max_size}, enabled={enabled}")
 
     def _fingerprint(self, private_key: bytes) -> int:
         return self._fingerprint_fn(private_key)
@@ -162,6 +160,8 @@ class DeduplicationFilter:
             self._current_size = 0
             self.duplicates_found = 0
             self.checks_total = 0
+            _old_checks = old_stats['checks_total']
+            _old_dups = old_stats['duplicates_found']
             logger.info(
-                f"去重过滤器已重置 (之前: 检查={old_stats['checks_total']}, 重复={old_stats['duplicates_found']})"
+                f"去重过滤器已重置 (之前: 检查={_old_checks}, 重复={_old_dups})"
             )

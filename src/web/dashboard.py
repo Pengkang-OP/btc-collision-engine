@@ -425,9 +425,7 @@ def get_current_stats(data_dir: Path) -> dict[str, Any]:
         "memory_usage": perf.get("memory_usage", 0) if isinstance(perf, dict) else 0,
         "thread_count": perf.get("thread_count", 0) if isinstance(perf, dict) else 0,
         "uptime": data.get("uptime", 0),
-        "is_running": (
-            engine_info.get("is_running", False) if isinstance(engine_info, dict) else False
-        ),
+        "is_running": (engine_info.get("is_running", False) if isinstance(engine_info, dict) else False),
         "mode": engine_info.get("mode", "") if isinstance(engine_info, dict) else "",
         "target_count": engine_info.get("target_count", 0) if isinstance(engine_info, dict) else 0,
         "current_position": (
@@ -620,8 +618,8 @@ def _parse_audit_log_entries(log_path: Path, limit: int = 20) -> list[dict[str, 
         return entries
 
     # 匹配 [KEY_AUDIT] <timestamp> | Key: value | Key: value ...
-    _KEY_AUDIT_RE = re.compile(r'\[KEY_AUDIT\]\s*(\S+)')
-    _KV_RE = re.compile(r'(\w+):\s*((?:[^|]|\|(?!\s))+?)\s*(?=\|\s+\w+:|$)')
+    _key_audit_re = re.compile(r"\[KEY_AUDIT\]\s*(\S+)")
+    _kv_re = re.compile(r"(\w+):\s*((?:[^|]|\|(?!\s))+?)\s*(?=\|\s+\w+:|$)")
 
     # 从后往前读，取最近 N 条 [KEY_AUDIT] 行
     for line in reversed(lines):
@@ -634,17 +632,17 @@ def _parse_audit_log_entries(log_path: Path, limit: int = 20) -> list[dict[str, 
         line_stripped = line.strip()
 
         # 提取 [KEY_AUDIT] 后的时间戳
-        ts_match = _KEY_AUDIT_RE.search(line_stripped)
+        ts_match = _key_audit_re.search(line_stripped)
         if ts_match:
             entry["timestamp"] = ts_match.group(1)
             # 截取时间戳之后的部分（键值对区域）
-            kv_region = line_stripped[ts_match.end():]
+            kv_region = line_stripped[ts_match.end() :]
         else:
             kv_region = line_stripped
 
         # 正则提取所有 Key: value 对
         known_keys = {"Operation", "Level", "DisplayMode", "Details"}
-        for m in _KV_RE.finditer(kv_region):
+        for m in _kv_re.finditer(kv_region):
             key = m.group(1)
             value = m.group(2).strip()
             if key in known_keys:

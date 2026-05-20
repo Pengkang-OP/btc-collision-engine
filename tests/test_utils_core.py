@@ -7,18 +7,18 @@ from unittest.mock import Mock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from src.utils.exception_handler import ExceptionHandler  # noqa: E402
 from src.utils.exceptions import (  # noqa: E402
-    CollisionError,
-    ConfigError,
-    ValidationError,
-    KeyGenerationError,
     AddressGenerationError,
     CheckpointError,
-    DeduplicationError,
-    TargetResolutionError,
+    CollisionError,
+    ConfigError,
     CryptoBackendError,
+    DeduplicationError,
+    KeyGenerationError,
+    TargetResolutionError,
+    ValidationError,
 )
-from src.utils.exception_handler import ExceptionHandler  # noqa: E402
 
 
 class TestCollisionError(unittest.TestCase):

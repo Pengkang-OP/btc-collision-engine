@@ -1,14 +1,15 @@
 """测试告警系统集成到GPU性能监控"""
 
-import pytest
-import time
 import sys
+import time
 from pathlib import Path
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from src.monitoring.alert_system import AlertLevel, AlertType  # noqa: E402
 from src.monitoring.gpu_performance_monitor import GPUPerformanceMonitor  # noqa: E402
-from src.monitoring.alert_system import AlertType, AlertLevel  # noqa: E402
 
 
 class TestAlertSystemIntegration:

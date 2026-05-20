@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """SecureKeyManager 单元测试 - 覆盖密钥管理、清零、统计、上下文等可测试路径"""
 
 import unittest
@@ -7,8 +6,8 @@ from unittest.mock import patch
 from src.core.secure_key_manager import (
     SecureKeyManager,
     SecureMemoryError,
-    secure_key_context,
     generate_secure_key,
+    secure_key_context,
 )
 
 
@@ -194,7 +193,7 @@ class TestSecureKeyManagerDel(unittest.TestCase):
         """析构函数触发清零"""
         mgr = SecureKeyManager(lock_memory=False)
         mgr.generate_key()
-        key_ref = mgr.get_key()
+        mgr.get_key()
         # 模拟 __del__ 行为
         if not mgr.is_cleared:
             mgr.clear()

@@ -142,8 +142,12 @@ class DataLoggerAdapter:
         """
         if self.data_logger:
             try:
-                # 只记录地址，不记录私钥 (安全考虑)
-                logger.info(f"发现匹配! 地址: {event.address}, 目标: {event.target_address}")
+                # 地址脱敏: 仅保留前6后4字符, 防止私钥泄露到日志
+                _addr = (event.address[:6] + "..." + event.address[-4:]
+                         if len(event.address) > 10 else "***")
+                _tgt = (event.target_address[:6] + "..." + event.target_address[-4:]
+                        if len(event.target_address) > 10 else "***")
+                logger.info(f"发现匹配! 地址: {_addr}, 目标: {_tgt}")
 
                 # 可以在这里保存匹配结果到文件
                 # self.data_logger.save_match_result(event.address, event.wif)
@@ -259,9 +263,12 @@ class EnhancedMonitoringAdapter:
         """v3.5.2: 处理匹配事件"""
         if self.monitoring_system:
             try:
+                _addr = (event.address[:6] + "..." + event.address[-4:]
+                         if len(event.address) > 10 else "***")
+                _tgt = (event.target_address[:6] + "..." + event.target_address[-4:]
+                        if len(event.target_address) > 10 else "***")
                 logger.info(
-                    f"增强监控 — 匹配发现: address={event.address}, "
-                    f"target={event.target_address}"
+                    f"增强监控 — 匹配发现: address={_addr}, target={_tgt}"
                 )
                 # 触发监控系统记录匹配事件
                 if hasattr(self.monitoring_system, "record_match"):
@@ -278,9 +285,7 @@ class EnhancedMonitoringAdapter:
 # ============================================================================
 
 
-def setup_data_logging(
-    event_bus: EventBus, data_logger: DataLogger | None = None
-) -> DataLoggerAdapter:
+def setup_data_logging(event_bus: EventBus, data_logger: DataLogger | None = None) -> DataLoggerAdapter:
     """
     便捷函数: 设置数据日志事件监听
 

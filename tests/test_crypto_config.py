@@ -7,12 +7,12 @@
 - reset_to_defaults() / to_dict()
 """
 
-import os
 import json
+import os
 import tempfile
 import unittest
 
-from src.config.crypto_config import CryptoConfig, CryptoBackendType
+from src.config.crypto_config import CryptoBackendType, CryptoConfig
 
 
 class TestCryptoConfig(unittest.TestCase):
@@ -32,7 +32,7 @@ class TestCryptoConfig(unittest.TestCase):
             cfg.set("backend", "coincurve")
             result = cfg.save()
             self.assertTrue(result)
-            with open(tmpfile, "r", encoding="utf-8") as f:
+            with open(tmpfile, encoding="utf-8") as f:
                 saved = json.load(f)
             self.assertEqual(saved["backend"], "coincurve")
         finally:

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """深度全面测试脚本
 
 执行系统的深度全面测试，包括：
@@ -11,11 +10,10 @@
 测试结果将生成详细的测试报告。
 """
 
-import sys  # noqa: E402
-import os  # noqa: E402
-import time  # noqa: E402
 import logging  # noqa: E402
-from typing import Set  # noqa: E402
+import os  # noqa: E402
+import sys  # noqa: E402
+import time  # noqa: E402
 
 # 添加项目根目录到Python模块路径
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
@@ -38,7 +36,7 @@ class ComprehensiveTest:
         self.start_time = None
         self.end_time = None
 
-    def generate_test_targets(self, count: int = 100) -> Set[str]:
+    def generate_test_targets(self, count: int = 100) -> set[str]:
         """生成测试目标地址
 
         Args:
@@ -109,16 +107,16 @@ class ComprehensiveTest:
         if not engine.initialize(device_count=1):
             try:
                 engine.cleanup()
-            except Exception:
-                pass
+            except (OSError, RuntimeError) as e:
+                logger.debug(f"GPU清理失败（非致命）: {e}")
             raise Exception("引擎初始化失败")
 
         # 启动碰撞
         if not engine.start(targets=targets, mode="random", total_keys=100000):
             try:
                 engine.cleanup()
-            except Exception:
-                pass
+            except (OSError, RuntimeError) as e:
+                logger.debug(f"GPU清理失败（非致命）: {e}")
             raise Exception("引擎启动失败")
 
         # 运行一小段时间
@@ -145,16 +143,16 @@ class ComprehensiveTest:
         if not engine.initialize(device_count=-1):
             try:
                 engine.cleanup()
-            except Exception:
-                pass
+            except (OSError, RuntimeError) as e:
+                logger.debug(f"GPU清理失败（非致命）: {e}")
             raise Exception("引擎初始化失败")
 
         # 启动碰撞
         if not engine.start(targets=targets, mode="random", total_keys=500000):
             try:
                 engine.cleanup()
-            except Exception:
-                pass
+            except (OSError, RuntimeError) as e:
+                logger.debug(f"GPU清理失败（非致命）: {e}")
             raise Exception("引擎启动失败")
 
         # 运行一小段时间
@@ -190,15 +188,15 @@ class ComprehensiveTest:
             if not engine.initialize(device_count=1):
                 try:
                     engine.cleanup()
-                except Exception:
-                    pass
+                except (OSError, RuntimeError) as e:
+                    logger.debug(f"GPU清理失败（非致命）: {e}")
                 raise Exception(f"引擎初始化失败(批次大小: {batch_size})")
 
             if not engine.start(targets=targets, mode="random", total_keys=200000):
                 try:
                     engine.cleanup()
-                except Exception:
-                    pass
+                except (OSError, RuntimeError) as e:
+                    logger.debug(f"GPU清理失败（非致命）: {e}")
                 raise Exception(f"引擎启动失败 (批次大小: {batch_size})")
 
             # 运行一小段时间
@@ -229,15 +227,15 @@ class ComprehensiveTest:
         if not engine.initialize(device_count=1):
             try:
                 engine.cleanup()
-            except Exception:
-                pass
+            except (OSError, RuntimeError) as e:
+                logger.debug(f"GPU清理失败（非致命）: {e}")
             raise Exception("引擎初始化失败")
 
         if not engine.start(targets=targets, mode="random", total_keys=1000000):
             try:
                 engine.cleanup()
-            except Exception:
-                pass
+            except (OSError, RuntimeError) as e:
+                logger.debug(f"GPU清理失败（非致命）: {e}")
             raise Exception("引擎启动失败")
 
         # 运行较长时间
@@ -264,15 +262,15 @@ class ComprehensiveTest:
         if not engine.initialize(device_count=1):
             try:
                 engine.cleanup()
-            except Exception:
-                pass
+            except (OSError, RuntimeError) as e:
+                logger.debug(f"GPU清理失败（非致命）: {e}")
             raise Exception("引擎初始化失败")
 
         if not engine.start(targets=min_targets, mode="random", total_keys=50000):
             try:
                 engine.cleanup()
-            except Exception:
-                pass
+            except (OSError, RuntimeError) as e:
+                logger.debug(f"GPU清理失败（非致命）: {e}")
             raise Exception("引擎启动失败")
 
         # 运行一小段时间
@@ -296,8 +294,8 @@ class ComprehensiveTest:
         if not engine.initialize(device_count=1):
             try:
                 engine.cleanup()
-            except Exception:
-                pass
+            except (OSError, RuntimeError) as e:
+                logger.debug(f"GPU清理失败（非致命）: {e}")
             raise Exception("引擎初始化失败")
 
         # 启动应该失败，但系统应该能正常处理
@@ -322,15 +320,15 @@ class ComprehensiveTest:
         if not engine.initialize(device_count=1):
             try:
                 engine.cleanup()
-            except Exception:
-                pass
+            except (OSError, RuntimeError) as e:
+                logger.debug(f"GPU清理失败（非致命）: {e}")
             raise Exception("引擎初始化失败")
 
         if not engine.start(targets=targets, mode="random", total_keys=300000):
             try:
                 engine.cleanup()
-            except Exception:
-                pass
+            except (OSError, RuntimeError) as e:
+                logger.debug(f"GPU清理失败（非致命）: {e}")
             raise Exception("引擎启动失败")
 
         # 运行一小段时间
@@ -359,15 +357,15 @@ class ComprehensiveTest:
         if not engine.initialize(device_count=-1):
             try:
                 engine.cleanup()
-            except Exception:
-                pass
+            except (OSError, RuntimeError) as e:
+                logger.debug(f"GPU清理失败（非致命）: {e}")
             raise Exception("引擎初始化失败")
 
         if not engine.start(targets=targets, mode="random", total_keys=1000000):
             try:
                 engine.cleanup()
-            except Exception:
-                pass
+            except (OSError, RuntimeError) as e:
+                logger.debug(f"GPU清理失败（非致命）: {e}")
             raise Exception("引擎启动失败")
 
         # 运行一段时间，让负载均衡器工作

@@ -5,6 +5,7 @@
 创建一个独立的窗口来显示引擎执行的日志，与主交互界面分离。
 """
 
+import contextlib
 import logging
 import queue
 import threading
@@ -294,9 +295,7 @@ def create_log_window() -> LogWindow:
 
     # 添加LogWindowHandler
     log_handler = LogWindowHandler(log_window)
-    log_handler.setFormatter(
-        logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-    )
+    log_handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
     root_logger.addHandler(log_handler)
     # 修复: 不修改根日志级别，保持配置文件设置
     # root_logger.setLevel(logging.DEBUG) # ← 已删除，避免覆盖配置

@@ -12,8 +12,9 @@
 创建日期: 2026-04-30
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 from src.collision.gpu.protocols import GPUDevice
 
@@ -145,7 +146,7 @@ class TestEngineIntegration:
             active_patches.append(p)
 
         try:
-            from src.collision.gpu.engine import GPUCollisionEngine, CollisionCore
+            from src.collision.gpu.engine import CollisionCore, GPUCollisionEngine
 
             engine = GPUCollisionEngine(  # noqa: F841
                 targets=mock_targets, data_logging_enabled=False
@@ -218,23 +219,23 @@ class TestBackwardCompatibility:
 
     def test_shim_and_new_are_same_class(self):
         """测试 shim 和新引擎导出的是同一个类"""
-        from src.collision.gpu_collision_engine import GPUCollisionEngine as ShimEngine
         from src.collision.gpu.engine import GPUCollisionEngine as NewEngine
+        from src.collision.gpu_collision_engine import GPUCollisionEngine as ShimEngine
 
         assert ShimEngine is NewEngine
 
     def test_shim_re_exports_constants(self):
         """测试 shim 重导出所有常量"""
         from src.collision.gpu_collision_engine import (
-            GPU_MAX_BATCH_SIZE,
-            UINT32_MAX,
-            INITIAL_BATCH_SIZE,
             ASYNC_KEY_GEN_TIMEOUT,
             BATCH_LOG_FREQUENCY,
-            INITIAL_BATCHES_LOG,
-            THREAD_JOIN_TIMEOUT,
-            MONITOR_THREAD_JOIN_TIMEOUT,
             EXCEPTION_RECOVERY_DELAY,
+            GPU_MAX_BATCH_SIZE,
+            INITIAL_BATCH_SIZE,
+            INITIAL_BATCHES_LOG,
+            MONITOR_THREAD_JOIN_TIMEOUT,
+            THREAD_JOIN_TIMEOUT,
+            UINT32_MAX,
         )
 
         assert GPU_MAX_BATCH_SIZE == 0xFFFFFFFF
@@ -250,8 +251,8 @@ class TestBackwardCompatibility:
     def test_shim_re_exports_functions(self):
         """测试 shim 重导出工具函数"""
         from src.collision.gpu_collision_engine import (
-            _seed_bytes_to_u32_be_array,
             _get_gpu_monitor,
+            _seed_bytes_to_u32_be_array,
         )
 
         assert callable(_seed_bytes_to_u32_be_array)
@@ -275,7 +276,7 @@ class TestBackwardCompatibility:
         original = gpu_collision_engine.PYOPENCL_AVAILABLE
         try:
             gpu_collision_engine.PYOPENCL_AVAILABLE = not original
-            assert gpu_collision_engine.PYOPENCL_AVAILABLE == (not original)
+            assert (not original) == gpu_collision_engine.PYOPENCL_AVAILABLE
         finally:
             gpu_collision_engine.PYOPENCL_AVAILABLE = original
 
@@ -502,21 +503,21 @@ class TestModuleImports:
 
     def test_factory_function_returns_class(self):
         """测试工厂函数返回正确的类"""
-        from src.collision.gpu import get_gpu_engine_facade, GPUEngineFacade
+        from src.collision.gpu import GPUEngineFacade, get_gpu_engine_facade
 
         assert get_gpu_engine_facade() is GPUEngineFacade
 
     def test_constants_consistency(self):
         """测试 engine.py 和 shim 中的常量一致性"""
-        from src.collision.gpu_collision_engine import GPU_MAX_BATCH_SIZE as shim_const
         from src.collision.gpu.engine import GPU_MAX_BATCH_SIZE as new_const
+        from src.collision.gpu_collision_engine import GPU_MAX_BATCH_SIZE as shim_const
 
         assert shim_const == new_const
 
     def test_utility_functions_consistency(self):
         """测试 engine.py 和 shim 中的工具函数一致性"""
-        from src.collision.gpu_collision_engine import _seed_bytes_to_u32_be_array as shim_fn
         from src.collision.gpu.engine import _seed_bytes_to_u32_be_array as new_fn
+        from src.collision.gpu_collision_engine import _seed_bytes_to_u32_be_array as shim_fn
 
         assert shim_fn is new_fn
 
@@ -565,8 +566,8 @@ class TestLifecycle:
             active_patches.append(p)
 
         try:
-            from src.collision.gpu.engine import GPUCollisionEngine
             import src.collision.gpu.engine as engine_module
+            from src.collision.gpu.engine import GPUCollisionEngine
 
             # Mock SearchModeCoordinator to not actually start threads
             with patch.object(engine_module, "SearchModeCoordinator") as mock_coord:

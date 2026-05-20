@@ -87,8 +87,8 @@ def generate_secp256k1_precomp_table() -> np.ndarray:
     """
     table = np.zeros(496, dtype=np.uint32)  # 31 * 2 * 8 = 496
 
-    G = (_GX, _GY)
-    current = G  # 从 1G 开始
+    _g_point = (_GX, _GY)
+    current = _g_point  # 从 1G 开始
 
     for i in range(31):
         if current is None:
@@ -101,7 +101,7 @@ def generate_secp256k1_precomp_table() -> np.ndarray:
         table[offset + 8 : offset + 16] = _int_to_uint32_le(y)  # y 坐标
 
         # 下一个点
-        current = cast(tuple[int, int], _point_add(current, G))
+        current = cast(tuple[int, int], _point_add(current, _g_point))
 
     # === 验证 ===
     # 验证 1G

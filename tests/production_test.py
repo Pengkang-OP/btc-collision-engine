@@ -5,9 +5,9 @@
 此脚本用于测试系统在生产环境下的性能和稳定性，包括更大的任务量、更长的运行时间、更复杂的目标地址集合等。
 """
 
-import time
-import sys
 import os
+import sys
+import time
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -18,7 +18,7 @@ pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
 
 from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
 from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine  # noqa: E402
-from src.utils import init_logging, get_configured_logger  # noqa: E402
+from src.utils import get_configured_logger, init_logging  # noqa: E402
 
 # 配置日志
 init_logging()

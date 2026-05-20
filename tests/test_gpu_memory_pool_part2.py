@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """GPU 内存池 (src/gpu/memory_pool.py) 全覆盖测试 — Part 2
 
 覆盖: GPUBufferAllocator, GlobalGPUMemoryManager (+ P1-6 自动清理), get_gpu_memory_pool
@@ -18,9 +17,10 @@ _mock_context_mod.GPUContext = MagicMock()
 sys.modules["src.gpu.context"] = _mock_context_mod
 
 from src.gpu.memory_pool import (  # noqa: E402
-    GPUMemoryPool,
-    GPUBufferAllocator,
     GlobalGPUMemoryManager,
+    GPUBufferAllocator,
+    GPUMemoryPool,
+    get_gpu_memory_pool,
 )
 
 

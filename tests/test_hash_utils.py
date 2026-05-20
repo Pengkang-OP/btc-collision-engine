@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """HashUtils 全面测试"""
 
 import hashlib

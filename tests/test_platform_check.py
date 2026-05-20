@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """跨平台兼容性检查模块测试
 
 测试 PlatformChecker 类的各项功能:
@@ -11,16 +10,16 @@
 """
 
 import os
-import sys
-import unittest
-import tempfile
 import shutil
+import sys
+import tempfile
+import unittest
 from unittest import TestCase
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.utils.platform_check import PlatformChecker, CheckResult  # noqa: E402
+from src.utils.platform_check import CheckResult, PlatformChecker  # noqa: E402
 
 
 class TestCheckResult(TestCase):
@@ -107,7 +106,7 @@ class TestPlatformCheckerChecks(TestCase):
         self.test_dir = tempfile.mkdtemp()
         self.checker = PlatformChecker(project_root=self.test_dir)
         # 固定语言为 zh_CN，确保中文断言在任意 locale 一致
-        from src.i18n import set_language, get_language
+        from src.i18n import get_language, set_language
         self._saved_language = get_language()
         set_language("zh_CN")
 
@@ -494,7 +493,7 @@ class TestMacOSPlatform(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
         # 固定语言为 zh_CN，确保中文断言在任意 locale 一致
-        from src.i18n import set_language, get_language
+        from src.i18n import get_language, set_language
         self._saved_language = get_language()
         set_language("zh_CN")
 

@@ -187,8 +187,8 @@ class GPUDeviceScorer:
         """
         # 负载均衡专用权重：memory:compute ≈ 6.0 : 0.1 = 60:1
         # 与旧版 load_balancer._calculate_performance_weights 保持一致
-        BALANCE_MEMORY = 6.0
-        BALANCE_COMPUTE = 0.1
+        _balance_memory = 6.0
+        _balance_compute = 0.1
 
         memory_gb = device.get("global_mem_gb", 0.0)
         compute_units = device.get("max_compute_units", 0)
@@ -198,8 +198,8 @@ class GPUDeviceScorer:
         cache_kb = device.get("global_mem_cache_kb", 0.0)
         local_mem_kb = device.get("local_mem_kb", 0.0)
 
-        memory_score = memory_gb * BALANCE_MEMORY
-        cu_score = float(compute_units) * BALANCE_COMPUTE
+        memory_score = memory_gb * _balance_memory
+        cu_score = float(compute_units) * _balance_compute
         # cache/local_mem/generation_bonus 保持与 score() 一致
         cache_bonus = float(cache_kb) * self.WEIGHT_CACHE
         local_mem_bonus = float(local_mem_kb) * self.WEIGHT_LOCAL_MEM

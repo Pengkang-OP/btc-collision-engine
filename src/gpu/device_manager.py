@@ -26,6 +26,7 @@ _logger = get_configured_logger("GPUDeviceManager")
 
 class NoValidTargetsError(ValueError):
     """没有有效的目标地址 (仅 P2PKH 格式可用, 其他格式已被跳过)"""
+
     pass
 
 
@@ -145,10 +146,12 @@ class GPUDeviceManager:
 
                 # 10. 记录初始化完成
                 device_info = self._gpu_device.get_device_info()
+                _name = device_info.get('name', 'Unknown')
+                _vendor = device_info.get('vendor', 'Unknown')
+                _wgs = self._gpu_kernel._work_group_size if self._gpu_kernel else 'N/A'
                 self.logger.info(
-                    f"GPU 设备初始化成功: {device_info.get('name', 'Unknown')} "
-                    f"(厂商: {device_info.get('vendor', 'Unknown')}, batch_size: {batch_size}, "
-                    f"work_group_size: {self._gpu_kernel._work_group_size if self._gpu_kernel else 'N/A'})"
+                    f"GPU 设备初始化成功: {_name} "
+                    f"(厂商: {_vendor}, batch_size: {batch_size}, work_group_size: {_wgs})"
                 )
 
                 pm.add_metadata("device_name", device_info.get("name", "Unknown"))
@@ -167,8 +170,7 @@ class GPUDeviceManager:
                     "  请使用 CPU 模式或仅使用 P2PKH 地址。"
                 )
                 raise RuntimeError(
-                    f"GPU初始化失败: {e}"
-                    " (GPU 引擎仅支持 P2PKH 地址格式, 其他格式请使用 CPU 模式)"
+                    f"GPU初始化失败: {e} (GPU 引擎仅支持 P2PKH 地址格式, 其他格式请使用 CPU 模式)"
                 ) from e
             except ValueError as e:
                 # 使用ExceptionHandler记录详细错误
@@ -213,8 +215,10 @@ class GPUDeviceManager:
             self._gpu_device.initialize(self.device_index, enable_async=enable_async)
 
             device_info = self._gpu_device.get_device_info()
+            _name = device_info.get('name', 'Unknown')
+            _vendor = device_info.get('vendor', 'Unknown')
             self.logger.info(
-                f"检测到GPU设备: {device_info.get('name', 'Unknown')} ({device_info.get('vendor', 'Unknown')})"
+                f"检测到GPU设备: {_name} ({_vendor})"
             )
             self.logger.info(
                 f"  - 显存: {device_info.get('global_mem_size', 0) / (1024**3):.1f} GB\n"
@@ -294,21 +298,18 @@ class GPUDeviceManager:
             except (ValueError, TypeError) as e:
                 # 非 Base58 编码地址 (如 Bech32 bc1...), 跳过
                 skipped_non_p2pkh += 1
-                masked = (f"{address[:6]}...{address[-4:]}" if len(address) >= 10
-                          else "***")
+                masked = f"{address[:6]}...{address[-4:]}" if len(address) >= 10 else "***"
                 self.logger.debug(f"目标地址格式无效 [{masked}]: {type(e).__name__}")
                 continue
             except Exception as e:
                 # 未知错误：记录日志
-                masked = (f"{address[:6]}...{address[-4:]}" if len(address) >= 10
-                          else "***")
+                masked = f"{address[:6]}...{address[-4:]}" if len(address) >= 10 else "***"
                 self.logger.warning(f"目标地址解析失败 [{masked}]: {type(e).__name__}")
                 continue
 
         if skipped_non_p2pkh:
             self.logger.warning(
-                f"已跳过 {skipped_non_p2pkh} 个非 P2PKH 格式目标地址"
-                " (GPU 引擎仅支持 P2PKH)"
+                f"已跳过 {skipped_non_p2pkh} 个非 P2PKH 格式目标地址 (GPU 引擎仅支持 P2PKH)"
             )
 
         if not hash160_list:
@@ -560,21 +561,29 @@ class GPUDeviceManager:
     @property
     def device(self) -> GPUDevice:
         """获取GPU设备实例"""
+        if self._gpu_device is None:
+            raise RuntimeError("GPUDevice 尚未初始化，请先调用 initialize()")
         return cast(GPUDevice, self._gpu_device)
 
     @property
     def context(self) -> GPUContext:
         """获取GPU上下文实例"""
+        if self._gpu_context is None:
+            raise RuntimeError("GPUContext 尚未初始化，请先调用 initialize()")
         return cast(GPUContext, self._gpu_context)
 
     @property
     def kernel(self) -> GPUKernel:
         """获取GPU内核实例"""
+        if self._gpu_kernel is None:
+            raise RuntimeError("GPUKernel 尚未初始化，请先调用 initialize()")
         return cast(GPUKernel, self._gpu_kernel)
 
     @property
     def async_executor(self) -> AsyncGPUExecutor:
         """获取异步执行器实例"""
+        if self._async_executor is None:
+            raise RuntimeError("AsyncGPUExecutor 尚未初始化，请先调用 initialize()")
         return cast(AsyncGPUExecutor, self._async_executor)
 
     @property

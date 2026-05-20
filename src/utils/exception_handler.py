@@ -68,12 +68,21 @@ class ExceptionHandler:
                 record_func()
         elif isinstance(error, OSError):
             # 系统I/O错误
-            logger.error("%s引擎%s系统I/O错误: %s: %s", engine_type, context, type(error).__name__, str(error))
+            logger.error(
+                "%s引擎%s系统I/O错误: %s: %s",
+                engine_type,
+                context,
+                type(error).__name__,
+                str(error),
+            )
+            record_func = getattr(stats, "record_worker_error", None)
             if record_func and callable(record_func):
                 record_func()
         else:
-            # 未知错误
-            logger.exception(f"{engine_type}引擎{context}未知错误")
+            # 未知错误 — 使用 error 级别而非 exception 以避免堆栈泄露私钥上下文
+            logger.error(
+                "%s引擎%s未知错误: %s: %s", engine_type, context, type(error).__name__, str(error)
+            )
             record_func = getattr(stats, "record_worker_error", None)
             if record_func and callable(record_func):
                 record_func()

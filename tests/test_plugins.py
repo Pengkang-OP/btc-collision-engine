@@ -12,11 +12,9 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 # ── 被测模块 ─────────────────────────────────────────────────
-
-from src.collision.plugins import PluginManager, CollisionPlugin
+from src.collision.plugins import CollisionPlugin, PluginManager
 from src.collision.plugins.base_plugin import CollisionPlugin as _BasePlugin
 from src.collision.plugins.example_plugin import ExamplePlugin
-
 
 # ═══════════════════════════════════════════════════════════════
 # 1. CollisionPlugin ABC 测试
@@ -231,9 +229,8 @@ class TestPlugin(CollisionPlugin):
         def fake_join(d, f):
             return "/etc/evil.py"  # 目录外路径
 
-        with patch("os.path.join", side_effect=fake_join):
-            with patch("logging.warning") as mock_warn:
-                loaded = self.manager.load_plugins()
+        with patch("os.path.join", side_effect=fake_join), patch("logging.warning") as mock_warn:
+            loaded = self.manager.load_plugins()
         self.assertEqual(loaded, [])
         mock_warn.assert_called_with("插件路径安全检查失败，跳过: evil.py")
 

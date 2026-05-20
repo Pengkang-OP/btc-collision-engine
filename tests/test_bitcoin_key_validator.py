@@ -1,20 +1,20 @@
 """比特币密钥验证器完整测试 — bitcoin_key_validator.py (487行零覆盖)"""
 
-import unittest
 import os
 import sys
+import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.core.secp256k1 import Secp256k1  # noqa: E402
 from src.core.bitcoin_key_validator import (  # noqa: E402
-    WIFEncoder,
-    KeyValidationConstants,
     AddressType,
-    KeyValidationResult,
     BitcoinKeyValidator,
+    KeyValidationConstants,
+    KeyValidationResult,
+    WIFEncoder,
     validate_bitcoin_key_chain,
 )
+from src.core.secp256k1 import Secp256k1  # noqa: E402
 
 
 class TestWIFEncoder(unittest.TestCase):

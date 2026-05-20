@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """GPU 性能报告生成器 (performance_reporter.py) 全覆盖测试
 
 覆盖: ReportConfig, PerformanceReportGenerator 全部方法
@@ -30,7 +29,6 @@ from src.gpu.performance_reporter import (  # noqa: E402
     PerformanceReportGenerator,
     ReportConfig,
 )
-
 
 # ===========================================================================
 # Mock 工具函数
@@ -640,7 +638,7 @@ class TestSaveReport:
             filepath = os.path.join(tmpdir, "report.md")
             gen.save_report("# Test Report", filepath)
             assert os.path.exists(filepath)
-            with open(filepath, "r", encoding="utf-8") as f:
+            with open(filepath, encoding="utf-8") as f:
                 assert f.read() == "# Test Report"
 
     def test_save_creates_parent_dir(self):

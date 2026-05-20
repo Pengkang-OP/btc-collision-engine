@@ -1,5 +1,4 @@
 ﻿#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 批量添加版本信息到文档
 
@@ -11,11 +10,13 @@
 
 import re
 import sys
-from pathlib import Path
-from typing import Tuple
 from datetime import datetime
+from pathlib import Path
 
-# 修复Windows控制台编码问题 - 使用共享模块`nfrom tools.utf8_helper import setup_windows_utf8`nsetup_windows_utf8()
+# 修复Windows控制台编码问题 - 使用共享模块
+from tools.utf8_helper import setup_windows_utf8
+
+setup_windows_utf8()
 
 
 def check_has_version(content: str) -> bool:
@@ -25,7 +26,7 @@ def check_has_version(content: str) -> bool:
     return bool(re.search(r'[*]*[*]版本[*]*[*]:\s*v?\d+\.\d+', first_20_lines))
 
 
-def add_version_info(content: str, version: str, target_audience: str = "用户/开发者") -> Tuple[str, bool]:
+def add_version_info(content: str, version: str, target_audience: str = "用户/开发者") -> tuple[str, bool]:
     """添加版本信息到文档
 
     Returns:
@@ -117,7 +118,7 @@ def main():
     print("🔧 开始添加版本信息...\n")
 
     if args.dry_run:
-        print(f"⚠️  模拟运行模式 - 不会修改文件\n")
+        print("⚠️  模拟运行模式 - 不会修改文件\n")
 
     md_files = list(docs_dir.glob("*.md"))
     # 排除archive目录
@@ -154,7 +155,7 @@ def main():
     print(f"✨ 添加版本信息: {total_added}")
 
     if file_stats:
-        print(f"\n添加详情:")
+        print("\n添加详情:")
         for file_name, audience in sorted(file_stats):
             print(f"  📄 {file_name}")
             print(f"     面向: {audience}")
@@ -163,7 +164,7 @@ def main():
 
     if args.dry_run:
         print(f"\n💡 这是模拟运行。发现 {total_added} 个文档需要添加版本信息。")
-        print(f"   移除 --dry-run 参数以实际添加。")
+        print("   移除 --dry-run 参数以实际添加。")
     else:
         print(f"\n✅ 添加完成！共为 {total_added} 个文档添加版本信息。")
         print(f"   版本号: {args.version}")

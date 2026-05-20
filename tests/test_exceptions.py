@@ -1,21 +1,21 @@
 """异常处理类单元测试 - CollisionError及其子类"""
 
-import unittest
-import sys
 import os
+import sys
+import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.utils.exceptions import (  # noqa: E402
-    CollisionError,
-    ConfigError,
-    ValidationError,
-    KeyGenerationError,
     AddressGenerationError,
     CheckpointError,
-    DeduplicationError,
-    TargetResolutionError,
+    CollisionError,
+    ConfigError,
     CryptoBackendError,
+    DeduplicationError,
+    KeyGenerationError,
+    TargetResolutionError,
+    ValidationError,
 )
 
 
@@ -326,7 +326,7 @@ class TestExceptionIntegration(unittest.TestCase):
             except ValueError as e:
                 raise ConfigError(
                     "Configuration failed", original_error=e, context={"config_key": "test"}
-                )
+                ) from e
         except ConfigError as e:
             self.assertEqual(e.error_code, 1003)
             self.assertIsInstance(e.original_error, ValueError)

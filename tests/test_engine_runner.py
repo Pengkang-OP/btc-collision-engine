@@ -7,11 +7,11 @@
 - _print_config_info 配置信息打印
 """
 
-import sys
 import logging
-import pytest
-from unittest.mock import Mock, patch, MagicMock
+import sys
+from unittest.mock import MagicMock, Mock, patch
 
+import pytest
 
 # ── 模块级测试辅助 ───────────────────────────────────────────────
 
@@ -48,8 +48,8 @@ class TestConsoleLogSuppression:
 
     def test_suppress_raises_stream_handler_level(self):
         """抑制应将 StreamHandler 级别提升到 CRITICAL"""
-        from src.cli.engine_runner import _suppress_console_logging, _restore_console_logging
         import src.cli.engine_runner as er
+        from src.cli.engine_runner import _restore_console_logging, _suppress_console_logging
 
         # 创建一个 StreamHandler 添加到 root logger
         root = logging.getLogger()
@@ -73,7 +73,7 @@ class TestConsoleLogSuppression:
 
     def test_restore_recovers_original_level(self):
         """恢复应还原原始日志级别"""
-        from src.cli.engine_runner import _suppress_console_logging, _restore_console_logging
+        from src.cli.engine_runner import _restore_console_logging, _suppress_console_logging
 
         root = logging.getLogger()
         original_handlers = list(root.handlers)
@@ -98,8 +98,9 @@ class TestConsoleLogSuppression:
 
     def test_suppress_skips_file_handlers(self):
         """抑制应跳过 FileHandler"""
-        from src.cli.engine_runner import _suppress_console_logging, _restore_console_logging
         from logging import FileHandler
+
+        from src.cli.engine_runner import _restore_console_logging, _suppress_console_logging
 
         root = logging.getLogger()
         original_handlers = list(root.handlers)
@@ -123,7 +124,7 @@ class TestConsoleLogSuppression:
 
     def test_double_suppress_is_safe(self):
         """重复抑制应安全"""
-        from src.cli.engine_runner import _suppress_console_logging, _restore_console_logging
+        from src.cli.engine_runner import _restore_console_logging, _suppress_console_logging
 
         root = logging.getLogger()
         original_handlers = list(root.handlers)
@@ -328,6 +329,7 @@ class TestSetupAndStartEngine:
     def test_alert_system_import_fallback_relative(self):
         """AlertSystem 从 src.monitoring 导入失败后尝试相对导入 (L75-79)。"""
         import builtins
+
         from src.cli.engine_runner import _setup_and_start_engine
 
         args = Mock()
@@ -383,19 +385,18 @@ class TestSetupAndStartEngine:
         mock_as_cls = MagicMock(side_effect=RuntimeError("setup failed"))
 
         with patch("src.cli.engine_runner.build_engine",
-                   return_value=(MagicMock(), "cpu")):
-            with patch("signal.signal"):
-                with patch("builtins.print"):
-                    with patch("src.monitoring.alert_system.AlertSystem",
-                               mock_as_cls):
-                        engine, etype, alert, stop = _setup_and_start_engine(
-                            args, {"addr1"}, {}, None, None)
-                        assert alert is None
+                   return_value=(MagicMock(), "cpu")), patch("signal.signal"), patch("builtins.print"):
+            with patch("src.monitoring.alert_system.AlertSystem",
+                       mock_as_cls):
+                engine, etype, alert, stop = _setup_and_start_engine(
+                    args, {"addr1"}, {}, None, None)
+                assert alert is None
 
     def test_sigterm_handler_registered(self):
         """SIGTERM 信号处理器注册 (L106-107)。"""
-        from src.cli.engine_runner import _setup_and_start_engine
         import signal as _signal
+
+        from src.cli.engine_runner import _setup_and_start_engine
 
         args = Mock()
         args.use_gpu = False
@@ -418,13 +419,12 @@ class TestSetupAndStartEngine:
             sig_calls.append(sig)
 
         with patch("src.cli.engine_runner.build_engine",
-                   return_value=(MagicMock(), "cpu")):
-            with patch("signal.signal", fake_signal):
-                with patch("builtins.print"):
-                    _setup_and_start_engine(args, {"addr1"}, {}, None, None)
-                    assert _signal.SIGINT in sig_calls
-                    if hasattr(_signal, "SIGTERM"):
-                        assert _signal.SIGTERM in sig_calls
+                   return_value=(MagicMock(), "cpu")), patch("signal.signal", fake_signal):
+            with patch("builtins.print"):
+                _setup_and_start_engine(args, {"addr1"}, {}, None, None)
+                assert _signal.SIGINT in sig_calls
+                if hasattr(_signal, "SIGTERM"):
+                    assert _signal.SIGTERM in sig_calls
 
     def test_multi_gpu_start_failure_exits(self):
         """多GPU 引擎 start() 返回 False → SystemExit(1) (L122-124)。"""
@@ -449,13 +449,12 @@ class TestSetupAndStartEngine:
         mock_engine.start.return_value = False
 
         with patch("src.cli.engine_runner.build_engine",
-                   return_value=(mock_engine, "multi_gpu")):
-            with patch("signal.signal"):
-                with patch("builtins.print"):
-                    with pytest.raises(SystemExit) as ctx:
-                        _setup_and_start_engine(
-                            args, {"addr1"}, {}, 1, 255)
-                    assert ctx.value.code == 1
+                   return_value=(mock_engine, "multi_gpu")), patch("signal.signal"):
+            with patch("builtins.print"):
+                with pytest.raises(SystemExit) as ctx:
+                    _setup_and_start_engine(
+                        args, {"addr1"}, {}, 1, 255)
+                assert ctx.value.code == 1
 
     def test_single_gpu_engine_start_with_range(self):
         """单GPU引擎 range 模式启动 (L127-132)。"""
@@ -480,13 +479,11 @@ class TestSetupAndStartEngine:
         mock_engine.start = MagicMock()
 
         with patch("src.cli.engine_runner.build_engine",
-                   return_value=(mock_engine, "gpu")):
-            with patch("signal.signal"):
-                with patch("builtins.print"):
-                    engine, etype, alert, stop = _setup_and_start_engine(
-                        args, {"addr1"}, {}, 10, 100)
-                    mock_engine.start.assert_called_once_with(
-                        mode="range", start=10, end=100)
+                   return_value=(mock_engine, "gpu")), patch("signal.signal"), patch("builtins.print"):
+            engine, etype, alert, stop = _setup_and_start_engine(
+                args, {"addr1"}, {}, 10, 100)
+            mock_engine.start.assert_called_once_with(
+                mode="range", start=10, end=100)
 
 
 # ============================================================================
@@ -501,6 +498,7 @@ class TestOnKeyCallbacks:
     def _capture_on_key_callback(self, engine_type="cpu"):
         """调用 _run_collision_loop 并捕获注册的 on_key 回调。"""
         import threading
+
         from src.cli.engine_runner import _run_collision_loop
 
         engine = _make_mock_engine()
@@ -547,6 +545,7 @@ class TestOnKeyCallbacks:
     def test_on_key_s_shows_detailed_stats(self):
         """按 S 键显示详细统计 → _print_detailed_stats 被调用。"""
         import threading
+
         from src.cli.engine_runner import _run_collision_loop
 
         engine = _make_mock_engine()
@@ -577,6 +576,7 @@ class TestOnKeyCallbacks:
     def test_on_key_s_multi_gpu_shows_stats(self):
         """多GPU模式下按 S 显示统计 → 调用 get_combined_stats。"""
         import threading
+
         from src.cli.engine_runner import _run_collision_loop
 
         engine = _make_mock_engine()
@@ -771,16 +771,14 @@ class TestAlertSystemSuccess:
         mock_as.rules = [1, 2, 3]
 
         with patch("src.cli.engine_runner.build_engine",
-                   return_value=(MagicMock(), "cpu")):
-            with patch("signal.signal"):
-                with patch("builtins.print"):
-                    with patch("src.monitoring.alert_system.AlertSystem",
-                               return_value=mock_as):
-                        engine, etype, alert, stop = _setup_and_start_engine(
-                            args, {"addr1"}, {}, None, None)
-                        assert alert is mock_as
-                        mock_as.setup_default_rules.assert_called_once()
-                        mock_as.add_alert_callback.assert_called_once()
+                   return_value=(MagicMock(), "cpu")), patch("signal.signal"), patch("builtins.print"):
+            with patch("src.monitoring.alert_system.AlertSystem",
+                       return_value=mock_as):
+                engine, etype, alert, stop = _setup_and_start_engine(
+                    args, {"addr1"}, {}, None, None)
+                assert alert is mock_as
+                mock_as.setup_default_rules.assert_called_once()
+                mock_as.add_alert_callback.assert_called_once()
 
     def test_on_alert_callback_body(self):
         """_on_alert 回调 → print 警告信息 (L87-89)。"""
@@ -805,22 +803,21 @@ class TestAlertSystemSuccess:
         mock_as.rules = [1]
 
         with patch("src.cli.engine_runner.build_engine",
-                   return_value=(MagicMock(), "cpu")):
-            with patch("signal.signal"):
-                with patch("builtins.print") as mock_print:
-                    with patch("src.monitoring.alert_system.AlertSystem",
-                               return_value=mock_as):
-                        _setup_and_start_engine(
-                            args, {"addr1"}, {}, None, None)
-                        # 提取注册的 _on_alert 回调
-                        callback = mock_as.add_alert_callback.call_args[0][0]
-                        mock_record = MagicMock()
-                        mock_record.level.value = "WARNING"
-                        mock_record.message = "alert message"
-                        callback(mock_record)
-                        mock_print.assert_called()
-                        printed = mock_print.call_args[0][0]
-                        assert "alert message" in str(printed)
+                   return_value=(MagicMock(), "cpu")), patch("signal.signal"):
+            with patch("builtins.print") as mock_print:
+                with patch("src.monitoring.alert_system.AlertSystem",
+                           return_value=mock_as):
+                    _setup_and_start_engine(
+                        args, {"addr1"}, {}, None, None)
+                    # 提取注册的 _on_alert 回调
+                    callback = mock_as.add_alert_callback.call_args[0][0]
+                    mock_record = MagicMock()
+                    mock_record.level.value = "WARNING"
+                    mock_record.message = "alert message"
+                    callback(mock_record)
+                    mock_print.assert_called()
+                    printed = mock_print.call_args[0][0]
+                    assert "alert message" in str(printed)
 
     def test_on_alert_no_level_value_fallback(self):
         """_on_alert 回调 — level 无 .value 属性时使用 str() 回退 (L87)。"""
@@ -845,21 +842,20 @@ class TestAlertSystemSuccess:
         mock_as.rules = [1]
 
         with patch("src.cli.engine_runner.build_engine",
-                   return_value=(MagicMock(), "cpu")):
-            with patch("signal.signal"):
-                with patch("builtins.print") as mock_print:
-                    with patch("src.monitoring.alert_system.AlertSystem",
-                               return_value=mock_as):
-                        _setup_and_start_engine(
-                            args, {"addr1"}, {}, None, None)
-                        callback = mock_as.add_alert_callback.call_args[0][0]
-                        mock_record = MagicMock()
-                        del mock_record.level.value
-                        mock_record.message = "fallback alert"
-                        callback(mock_record)
-                        mock_print.assert_called()
-                        printed = mock_print.call_args[0][0]
-                        assert "[WARN]" in str(printed)
+                   return_value=(MagicMock(), "cpu")), patch("signal.signal"):
+            with patch("builtins.print") as mock_print:
+                with patch("src.monitoring.alert_system.AlertSystem",
+                           return_value=mock_as):
+                    _setup_and_start_engine(
+                        args, {"addr1"}, {}, None, None)
+                    callback = mock_as.add_alert_callback.call_args[0][0]
+                    mock_record = MagicMock()
+                    del mock_record.level.value
+                    mock_record.message = "fallback alert"
+                    callback(mock_record)
+                    mock_print.assert_called()
+                    printed = mock_print.call_args[0][0]
+                    assert "[WARN]" in str(printed)
 
 
 @pytest.mark.unit
@@ -885,8 +881,9 @@ class TestHandleSignalExecution:
 
     def test_signal_handler_stops_engine_and_event(self):
         """handle_signal → print + stop_event.set() + engine.stop() (L101-103)。"""
-        from src.cli.engine_runner import _setup_and_start_engine
         import signal as _signal
+
+        from src.cli.engine_runner import _setup_and_start_engine
 
         args = self._make_args()
         mock_engine = MagicMock()
@@ -896,21 +893,21 @@ class TestHandleSignalExecution:
             sig_handlers[sig] = handler
 
         with patch("src.cli.engine_runner.build_engine",
-                   return_value=(mock_engine, "cpu")):
-            with patch("signal.signal", fake_signal):
-                with patch("builtins.print") as mock_print:
-                    engine, etype, alert, stop = _setup_and_start_engine(
-                        args, {"addr1"}, {}, None, None)
-                    handler = sig_handlers[_signal.SIGINT]
-                    handler(_signal.SIGINT, None)
-                    assert stop.is_set()
-                    mock_engine.stop.assert_called()
-                    mock_print.assert_called()
+                   return_value=(mock_engine, "cpu")), patch("signal.signal", fake_signal):
+            with patch("builtins.print") as mock_print:
+                engine, etype, alert, stop = _setup_and_start_engine(
+                    args, {"addr1"}, {}, None, None)
+                handler = sig_handlers[_signal.SIGINT]
+                handler(_signal.SIGINT, None)
+                assert stop.is_set()
+                mock_engine.stop.assert_called()
+                mock_print.assert_called()
 
     def test_sigterm_handler_also_registered_and_works(self):
         """SIGTERM handler 也注册并可调用 (L106-107)。"""
-        from src.cli.engine_runner import _setup_and_start_engine
         import signal as _signal
+
+        from src.cli.engine_runner import _setup_and_start_engine
 
         args = self._make_args()
         mock_engine = MagicMock()
@@ -920,15 +917,14 @@ class TestHandleSignalExecution:
             sig_handlers[sig] = handler
 
         with patch("src.cli.engine_runner.build_engine",
-                   return_value=(mock_engine, "cpu")):
-            with patch("signal.signal", fake_signal):
-                with patch("builtins.print"):
-                    engine, etype, alert, stop = _setup_and_start_engine(
-                        args, {"addr1"}, {}, None, None)
-                    if hasattr(_signal, "SIGTERM"):
-                        assert _signal.SIGTERM in sig_handlers
-                        sig_handlers[_signal.SIGTERM](_signal.SIGTERM, None)
-                        assert stop.is_set()
+                   return_value=(mock_engine, "cpu")), patch("signal.signal", fake_signal):
+            with patch("builtins.print"):
+                engine, etype, alert, stop = _setup_and_start_engine(
+                    args, {"addr1"}, {}, None, None)
+                if hasattr(_signal, "SIGTERM"):
+                    assert _signal.SIGTERM in sig_handlers
+                    sig_handlers[_signal.SIGTERM](_signal.SIGTERM, None)
+                    assert stop.is_set()
 
 
 # ============================================================================
@@ -943,6 +939,7 @@ class TestOnKeySException:
     def test_on_key_s_cpu_stats_exception(self):
         """按 S 键时 get_stats 抛异常 → except Exception: pass (L188-189)。"""
         import threading
+
         from src.cli.engine_runner import _run_collision_loop
 
         engine = _make_mock_engine()
@@ -973,6 +970,7 @@ class TestOnKeySException:
     def test_on_key_s_multi_gpu_stats_exception(self):
         """按 S 键时 get_combined_stats 抛异常 → except Exception: pass。"""
         import threading
+
         from src.cli.engine_runner import _run_collision_loop
 
         engine = _make_mock_engine()
@@ -1009,6 +1007,7 @@ class TestHotkeyVisible:
     def test_hotkey_visible_set_when_available(self):
         """_available=True → _hotkey_visible=True, 不输出 warning (L202-203)。"""
         import threading
+
         from src.cli.engine_runner import _run_collision_loop
 
         engine = _make_mock_engine()
@@ -1049,6 +1048,7 @@ class TestMainLoopBody:
                                    _available=False):
         """运行 _run_collision_loop 并返回 on_key 回调。"""
         import threading
+
         from src.cli.engine_runner import _run_collision_loop
 
         if stop_event is None:
@@ -1184,6 +1184,7 @@ class TestMainLoopBody:
     def test_paused_state_sleeps_and_continues(self):
         """暂停时 → time.sleep(0.2) + continue (L209-211)。"""
         import threading
+
         from src.cli.engine_runner import _run_collision_loop
 
         engine = _make_mock_engine([True, True, True, False])
@@ -1287,10 +1288,9 @@ class TestMainLoopBody:
         args.progress_interval = 5.0
 
         with patch("src.cli.engine_runner.format_progress",
-                   return_value="line"):
-            with patch("time.time", side_effect=[0, 99999]):
-                cb, mock_out = self._run_loop_and_get_callback(
-                    engine, "cpu", args, None, stop_event, _available=False)
+                   return_value="line"), patch("time.time", side_effect=[0, 99999]):
+            cb, mock_out = self._run_loop_and_get_callback(
+                engine, "cpu", args, None, stop_event, _available=False)
 
         # duration limit reached → engine stopped
         engine.stop.assert_called()
@@ -1301,6 +1301,7 @@ class TestMainLoopBody:
     def test_keyboard_interrupt_stops_engine_and_raises(self):
         """KeyboardInterrupt → engine.stop() + raise (L285-287)。"""
         import threading
+
         from src.cli.engine_runner import _run_collision_loop
 
         engine = _make_mock_engine([True, False])
@@ -1347,9 +1348,8 @@ class TestMainLoopBody:
             stop_event.set()
 
         with patch("src.cli.engine_runner.format_progress",
-                   return_value="line"):
-            with patch("time.sleep", side_effect=set_stop_during_sleep):
-                cb, mock_out = self._run_loop_and_get_callback(
-                    engine, "cpu", args, None, stop_event, _available=False)
+                   return_value="line"), patch("time.sleep", side_effect=set_stop_during_sleep):
+            cb, mock_out = self._run_loop_and_get_callback(
+                engine, "cpu", args, None, stop_event, _available=False)
 
         assert stop_event.is_set()

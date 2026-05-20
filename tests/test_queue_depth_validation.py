@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 queue_depth 队列深度优化完整验证测试
 
@@ -12,8 +11,8 @@ queue_depth 队列深度优化完整验证测试
 6. 不同 queue_depth 值 (1/4/8) 均可正常构建缓冲区池
 """
 
-import sys
 import json
+import sys
 import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -76,7 +75,7 @@ class TestConfigFilesQueueDepth(unittest.TestCase):
     def _load_and_strip(self, path: Path) -> dict:
         from src.config.config_manager import ConfigManager
 
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             raw = json.load(f)
         return ConfigManager._strip_comments(raw)
 
@@ -145,7 +144,7 @@ class TestAsyncGPUExecutorQueueDepth(unittest.TestCase):
         return dev
 
     def test_default_queue_depth_is_4(self):
-        from src.gpu.async_executor import AsyncGPUExecutor, DEFAULT_QUEUE_DEPTH
+        from src.gpu.async_executor import DEFAULT_QUEUE_DEPTH, AsyncGPUExecutor
 
         self.assertEqual(DEFAULT_QUEUE_DEPTH, 4)
         dev = self._make_mock_device()
@@ -189,6 +188,7 @@ class TestAsyncGPUExecutorQueueDepth(unittest.TestCase):
     def test_initialize_buffers_creates_pool_matching_queue_depth(self):
         """initialize_buffers 应创建 queue_depth 个缓冲区（通过 mock pyopencl）"""
         import numpy as np
+
         from src.gpu.async_executor import AsyncGPUExecutor
 
         dev = self._make_mock_device()

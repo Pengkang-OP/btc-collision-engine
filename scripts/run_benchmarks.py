@@ -9,13 +9,13 @@
     python scripts/run_benchmarks.py --duration 30 # 每项测试 30 秒
 """
 
+import argparse
+import json
 import sys
 import time
-import json
-import argparse
-from pathlib import Path
 from datetime import datetime
-from typing import Dict, Any, Optional
+from pathlib import Path
+from typing import Any
 
 # 确保项目根目录在路径中
 _root = Path(__file__).resolve().parent.parent
@@ -27,7 +27,7 @@ sys.path.insert(0, str(_root))
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-def bench_key_generation(duration: float = 10.0) -> Dict[str, Any]:
+def bench_key_generation(duration: float = 10.0) -> dict[str, Any]:
     """基准测试: 私钥生成速度"""
     from src.core.key_generator import SecureKeyGenerator
 
@@ -48,10 +48,10 @@ def bench_key_generation(duration: float = 10.0) -> Dict[str, Any]:
     }
 
 
-def bench_address_conversion(duration: float = 10.0) -> Dict[str, Any]:
+def bench_address_conversion(duration: float = 10.0) -> dict[str, Any]:
     """基准测试: 私钥 → 地址转换速度"""
-    from src.core.key_generator import SecureKeyGenerator
     from src.core.address_converter import AddressConverter
+    from src.core.key_generator import SecureKeyGenerator
 
     gen = SecureKeyGenerator()
     conv = AddressConverter()
@@ -72,11 +72,11 @@ def bench_address_conversion(duration: float = 10.0) -> Dict[str, Any]:
     }
 
 
-def bench_address_lookup(duration: float = 10.0, target_count: int = 1000) -> Dict[str, Any]:
+def bench_address_lookup(duration: float = 10.0, target_count: int = 1000) -> dict[str, Any]:
     """基准测试: 地址哈希表查找速度"""
-    from src.core.target_address_table import BitcoinTargetTable
-    from src.core.key_generator import SecureKeyGenerator
     from src.core.address_converter import AddressConverter
+    from src.core.key_generator import SecureKeyGenerator
+    from src.core.target_address_table import BitcoinTargetTable
 
     gen = SecureKeyGenerator()
     conv = AddressConverter()
@@ -106,7 +106,7 @@ def bench_address_lookup(duration: float = 10.0, target_count: int = 1000) -> Di
     }
 
 
-def bench_cpu_engine(duration: float = 15.0) -> Dict[str, Any]:
+def bench_cpu_engine(duration: float = 15.0) -> dict[str, Any]:
     """基准测试: CPU 碰撞引擎吞吐量"""
     from src.collision.key_collision_engine import KeyCollisionEngine
 
@@ -139,7 +139,7 @@ def bench_cpu_engine(duration: float = 15.0) -> Dict[str, Any]:
     }
 
 
-def bench_gpu_engine(duration: float = 15.0) -> Optional[Dict[str, Any]]:
+def bench_gpu_engine(duration: float = 15.0) -> dict[str, Any] | None:
     """基准测试: GPU 碰撞引擎吞吐量（需要 PyOpenCL）"""
     try:
         pass
@@ -188,9 +188,9 @@ def _fmt_speed(speed: float) -> str:
     return f"{speed:.0f} /s"
 
 
-def run_all(duration: float = 10.0, quick: bool = False) -> Dict[str, Any]:
+def run_all(duration: float = 10.0, quick: bool = False) -> dict[str, Any]:
     """运行所有基准测试并汇总结果"""
-    report: Dict[str, Any] = {
+    report: dict[str, Any] = {
         "timestamp": datetime.now().isoformat(),
         "platform": _get_platform_info(),
         "benchmarks": [],
@@ -227,7 +227,7 @@ def run_all(duration: float = 10.0, quick: bool = False) -> Dict[str, Any]:
     return report
 
 
-def _get_platform_info() -> Dict[str, str]:
+def _get_platform_info() -> dict[str, str]:
     import platform
 
     return {
@@ -237,7 +237,7 @@ def _get_platform_info() -> Dict[str, str]:
     }
 
 
-def print_report(report: Dict[str, Any]):
+def print_report(report: dict[str, Any]):
     """打印人类可读的基准测试报告"""
     ts = report.get("timestamp", "N/A")
     plat = report.get("platform", {})

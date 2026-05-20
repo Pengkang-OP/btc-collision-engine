@@ -150,8 +150,8 @@ class TestConfigBuilder(unittest.TestCase):
     def test_save_command_basic(self):
         """save_command() 保存命令到文件"""
         import os
-        import tempfile
         import shutil
+        import tempfile
         result = WizardResult(
             targets=[self.TARGET], mode="random",
         )
@@ -160,7 +160,7 @@ class TestConfigBuilder(unittest.TestCase):
             filepath = os.path.join(tmpdir, "run.sh")
             success = self.builder.save_command(result, filepath)
             self.assertTrue(success)
-            with open(filepath, "r", encoding="utf-8") as f:
+            with open(filepath, encoding="utf-8") as f:
                 content = f.read()
             self.assertIn("#!/bin/bash", content)
             self.assertIn("random", content)

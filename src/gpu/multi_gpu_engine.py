@@ -146,7 +146,8 @@ class MultiGPUCollisionEngine:
         # 性能历史数据（添加锁防止竞态条件）
         self._performance_history: list[dict[str, Any]] = []
         self._performance_history_lock = threading.Lock()  # 修复: 防止并发访问导致数据竞争
-        self._max_history_size = 100  # 最大历史记录数
+        # P2修复: 配置化历史长度上限（原硬编码100）
+        self._max_history_size = self.config.performance_history_max_size
 
         # 分布式统计聚合器（减少锁竞争，支持大规模GPU集群）- 根据配置启用
         self._stats_aggregator = None
@@ -198,9 +199,7 @@ class MultiGPUCollisionEngine:
                 logger.error("无可用GPU设备")
                 return False
 
-            logger.info(
-                f"初始化 {len(self._devices)} 个GPU设备: {[d['name'] for d in self._devices]}"
-            )
+            logger.info(f"初始化 {len(self._devices)} 个GPU设备: {[d['name'] for d in self._devices]}")
 
             # 按显存比例计算 Per-GPU 内存池分配配置
             total_pool_mb = self.config.total_pool_mb
@@ -211,13 +210,22 @@ class MultiGPUCollisionEngine:
             )
             # 保存各设备的内存池大小配置，以全局索引为键
             self._device_memory_pool_config = {}
+            total_allocated_mb = 0
             for local_i, device in enumerate(self._devices):
                 global_idx = device["global_index"]
                 pool = proportional_pools.get(local_i)
                 if pool is not None:
                     mb = pool.get_stats()["max_memory_mb"]
                     self._device_memory_pool_config[global_idx] = int(mb)
+                    total_allocated_mb += int(mb)
                     logger.info(f"GPU {global_idx} 内存池分配: {int(mb)}MB")
+
+            # P2修复: 检查系统总内存限制，防止多GPU内存池分配超出系统可用RAM
+            # GPU内存池虽然没有立即分配显存，但OpenCL驱动需要系统RAM作为后备
+            self._check_system_memory_limit(
+                total_allocated_mb=total_allocated_mb,
+                device_count=len(self._devices),
+            )
 
             # 创建负载均衡器
             self.load_balancer = GPULoadBalancer(devices=self._devices, strategy=strategy)
@@ -231,7 +239,6 @@ class MultiGPUCollisionEngine:
         except Exception as e:
             logger.error(f"多GPU引擎初始化失败: {e}")
             return False
-
 
     def _validate_config_values(self, config: dict) -> dict:
         """M-3修复: 验证配置值边界
@@ -256,19 +263,21 @@ class MultiGPUCollisionEngine:
         validated = config.copy()
 
         int_configs = [
-            ('worker_join_timeout', 1, 300, 30),
-            ('workload_monitor_interval', 1, 3600, 60),
-            ('total_pool_mb', 64, 65536, 512),
+            ("worker_join_timeout", 1, 300, 30),
+            ("workload_monitor_interval", 1, 3600, 60),
+            ("total_pool_mb", 64, 65536, 512),
         ]
 
         for key, min_val, max_val, default in int_configs:
             if key in validated:
                 val = validated[key]
                 if not isinstance(val, (int, float)):
-                    logger.warning(f'配置 {key} 应为数值，使用默认值 {default}')
+                    logger.warning(f"配置 {key} 应为数值，使用默认值 {default}")
                     validated[key] = default
                 elif val < min_val or val > max_val:
-                    logger.warning(f'配置 {key}={val} 超出范围 [{min_val}, {max_val}]，使用默认值 {default}')
+                    logger.warning(
+                        f"配置 {key}={val} 超出范围 [{min_val}, {max_val}]，使用默认值 {default}"
+                    )
                     validated[key] = default
 
         return validated
@@ -314,6 +323,103 @@ class MultiGPUCollisionEngine:
                 f"batch_size_reduction_factor={rc.batch_size_reduction_factor} 超出范围，使用默认值 0.5"
             )
             rc.batch_size_reduction_factor = 0.5
+
+    def _check_system_memory_limit(
+        self, total_allocated_mb: int, device_count: int
+    ) -> None:
+        """P2修复: 检查系统内存限制
+
+        多GPU场景下，内存池总分配量需在系统可用RAM范围内。
+        OpenCL 驱动需要使用系统RAM作为GPU显存的后备缓冲区，
+        如果内存池总和超出系统容量会导致性能下降甚至OOM。
+
+        检查逻辑:
+        1. 尝试获取系统总内存（跨平台）
+        2. 计算安全上限（系统总内存的70%）
+        3. 如果总分配超出安全上限，记录警告
+        4. 如果总分配超出系统总内存，记录严重警告
+
+        Args:
+            total_allocated_mb: 所有GPU内存池分配总量 (MB)
+            device_count: GPU数量
+        """
+        total_system_ram_mb = self._get_system_total_memory_mb()
+        if total_system_ram_mb <= 0:
+            # 无法获取系统内存信息，跳过检查
+            logger.debug("无法获取系统内存信息，跳过多GPU内存池系统限制检查")
+            return
+
+        safe_limit_mb = int(total_system_ram_mb * 0.70)
+        total_system_gb = total_system_ram_mb / 1024
+        allocated_gb = total_allocated_mb / 1024
+        safe_gb = safe_limit_mb / 1024
+
+        if total_allocated_mb > total_system_ram_mb:
+            logger.critical(
+                f"⚠️ 多GPU内存池总量 ({allocated_gb:.1f}GB, {device_count}个GPU) "
+                f"超出系统总RAM ({total_system_gb:.1f}GB)! "
+                f"建议降低 total_pool_mb 配置或减少GPU数量"
+            )
+        elif total_allocated_mb > safe_limit_mb:
+            logger.warning(
+                f"⚠️ 多GPU内存池总量 ({allocated_gb:.1f}GB, {device_count}个GPU) "
+                f"超出系统RAM安全上限 ({safe_gb:.1f}GB, 70% of {total_system_gb:.1f}GB). "
+                f"可能导致系统内存压力"
+            )
+        else:
+            logger.info(
+                f"✅ 多GPU内存池总量 ({allocated_gb:.1f}GB) 在系统RAM安全范围内 "
+                f"({total_system_gb:.1f}GB 总RAM, {safe_gb:.1f}GB 安全上限)"
+            )
+
+    @staticmethod
+    def _get_system_total_memory_mb() -> int:
+        """获取系统总内存 (MB)，跨平台实现
+
+        Returns:
+            系统总内存 (MB)，获取失败返回 -1
+        """
+        try:
+            import ctypes
+
+            # Windows
+            if hasattr(ctypes, "windll"):
+                kernel32 = ctypes.windll.kernel32
+
+                class MEMORYSTATUSEX(ctypes.Structure):
+                    _fields_ = [
+                        ("dwLength", ctypes.c_ulong),
+                        ("dwMemoryLoad", ctypes.c_ulong),
+                        ("ullTotalPhys", ctypes.c_ulonglong),
+                        ("ullAvailPhys", ctypes.c_ulonglong),
+                        ("ullTotalPageFile", ctypes.c_ulonglong),
+                        ("ullAvailPageFile", ctypes.c_ulonglong),
+                        ("ullTotalVirtual", ctypes.c_ulonglong),
+                        ("ullAvailVirtual", ctypes.c_ulonglong),
+                    ]
+
+                mem_status = MEMORYSTATUSEX()
+                mem_status.dwLength = ctypes.sizeof(MEMORYSTATUSEX)
+                if kernel32.GlobalMemoryStatusEx(ctypes.byref(mem_status)):
+                    return int(mem_status.ullTotalPhys // (1024 * 1024))
+
+            # Linux
+            try:
+                with open("/proc/meminfo", "r") as f:
+                    for line in f:
+                        if line.startswith("MemTotal:"):
+                            # 格式: "MemTotal:       16384000 kB"
+                            parts = line.split()
+                            if len(parts) >= 2:
+                                kb = int(parts[1])
+                                return kb // 1024  # kB -> MB
+            except (OSError, ValueError, IndexError):
+                pass
+
+        except Exception:
+            pass
+
+        return -1
 
     def start(
         self,
@@ -662,7 +768,7 @@ class MultiGPUCollisionEngine:
             self.data_monitor.report_match(device_idx, match)
 
         # 安全脱敏: 仅显示地址前6和后4字符
-        masked = match.get('address', 'Unknown')
+        masked = match.get("address", "Unknown")
         if len(masked) > 10:
             masked = f"{masked[:6]}...{masked[-4:]}"
         logger.info(f"GPU {device_idx} 发现匹配: {masked}")
@@ -798,9 +904,7 @@ class MultiGPUCollisionEngine:
         platform = "".join(c if c.isalnum() else "_" for c in platform)
         return f"{vendor}_{platform}"
 
-    def _get_or_cache_compile_config(
-        self, device: dict, kernel_source: str, build_options: str
-    ) -> dict:
+    def _get_or_cache_compile_config(self, device: dict, kernel_source: str, build_options: str) -> dict:
         """获取或缓存内核编译配置（同厂商GPU共享编译配置）
 
         OpenCL Program 不能跨 context 共享，但同厂商 GPU 可共享相同的
@@ -859,7 +963,7 @@ class MultiGPUCollisionEngine:
 
         # 获取健康GPU列表
         failed_gpus = self.recovery_manager.get_failed_gpus()
-        healthy_gpus = [idx for idx in self.workers.keys() if idx not in failed_gpus]
+        healthy_gpus = [idx for idx in self.workers if idx not in failed_gpus]
 
         if not healthy_gpus:
             logger.critical("所有GPU都已失败，无法继续运行")
@@ -868,7 +972,7 @@ class MultiGPUCollisionEngine:
 
         logger.info(f"健康GPU列表: {healthy_gpus}")
 
-        # 获取失败GPU的工作范围
+        # 获取失败GPU的剩余工作量
         with self._workers_lock:
             if failed_gpu_id not in self.workers:
                 logger.warning(f"GPU {failed_gpu_id} 不在工作器列表中")
@@ -876,10 +980,15 @@ class MultiGPUCollisionEngine:
 
             failed_worker = self.workers[failed_gpu_id]
             failed_stats = failed_worker.get_stats()
-            failed_keys = failed_stats.get("keys_checked", 0)
-
-        # 重新分配剩余工作
-        remaining_keys = max(0, failed_keys)
+            key_range = failed_worker.get_key_range()
+            # P1修复: 剩余工作量 = 总分配范围 - 已完成量（而非错误使用已完成量作为剩余量）
+            total_work = key_range[1] - key_range[0]
+            keys_done = failed_stats.get("keys_checked", 0)
+            remaining_keys = max(0, total_work - keys_done)
+            logger.info(
+                f"GPU {failed_gpu_id} 工作范围: {key_range[0]:,}-{key_range[1]:,} "
+                f"(总计={total_work:,}, 已完成={keys_done:,}, 剩余={remaining_keys:,})"
+            )
         if remaining_keys > 0:
             keys_per_gpu = remaining_keys // len(healthy_gpus)
             logger.info(f"将 {remaining_keys:,} 个密钥重新分配到 {len(healthy_gpus)} 个GPU")
@@ -969,7 +1078,7 @@ class MultiGPUCollisionEngine:
         self._devices.clear()
 
         # 清理恢复管理器（含其ThreadPoolExecutor）
-        if hasattr(self, 'recovery_manager') and self.recovery_manager is not None:
+        if hasattr(self, "recovery_manager") and self.recovery_manager is not None:
             try:
                 self.recovery_manager.cleanup()
             except Exception as e:
@@ -988,9 +1097,7 @@ class MultiGPUCollisionEngine:
         """上下文管理器入口"""
         return self
 
-    def __exit__(
-        self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None
-    ) -> None:
+    def __exit__(self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None) -> None:
         """上下文管理器出口"""
         self.cleanup()
 
@@ -1094,9 +1201,7 @@ class MultiGPUCollisionEngine:
                                 break
                         if total_memory > 0:
                             used_memory = total_memory * memory_usage
-                            self.load_balancer.record_memory_usage(
-                                device_idx, used_memory, total_memory
-                            )
+                            self.load_balancer.record_memory_usage(device_idx, used_memory, total_memory)
 
         except Exception as e:
             logger.error(f"收集性能数据失败: {e}")

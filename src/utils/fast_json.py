@@ -63,6 +63,7 @@ class FastEncoder(_json.JSONEncoder):
             return sorted(o)
         return super().default(o)
 
+
 # 检测 orjson 可用性
 _ORJSON_AVAILABLE = False
 _orjson_module: Any = None

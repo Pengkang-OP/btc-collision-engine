@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """通知渠道体系单元测试 (P2-7)
 
 覆盖:
@@ -17,17 +16,17 @@ import tempfile
 import unittest
 from datetime import datetime
 
+from src.monitoring.alert_system import (
+    AlertLevel,
+    AlertRecord,
+    AlertSystem,
+    AlertType,
+)
 from src.monitoring.notification_channels import (
-    NotificationChannel,
+    CompositeNotification,
     ConsoleNotification,
     LogFileNotification,
-    CompositeNotification,
-)
-from src.monitoring.alert_system import (
-    AlertSystem,
-    AlertRecord,
-    AlertLevel,
-    AlertType,
+    NotificationChannel,
 )
 
 
@@ -190,7 +189,7 @@ class TestLogFileNotification(unittest.TestCase):
         )
         ch.send(alert)
 
-        with open(self.log_path, "r", encoding="utf-8") as f:
+        with open(self.log_path, encoding="utf-8") as f:
             content = f.read()
         self.assertIn("CRITICAL", content)
         self.assertIn("吞吐量严重下降", content)
@@ -215,7 +214,7 @@ class TestLogFileNotification(unittest.TestCase):
         ch.send(a1)
         ch.send(a2)
 
-        with open(self.log_path, "r", encoding="utf-8") as f:
+        with open(self.log_path, encoding="utf-8") as f:
             lines = f.readlines()
         self.assertEqual(len(lines), 2)
         self.assertIn("告警A", lines[0])

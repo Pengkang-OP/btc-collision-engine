@@ -231,9 +231,7 @@ class BatchCollisionProcessor:
         self.target_addresses = set(addresses)
         logger.info(f"设置目标地址: {len(addresses)}个")
 
-    def process_batch(
-        self, private_keys: list[bytes], address_generator
-    ) -> list[tuple[bytes, str]]:
+    def process_batch(self, private_keys: list[bytes], address_generator) -> list[tuple[bytes, str]]:
         """批量处理私钥，检测碰撞
 
         Args:
@@ -253,7 +251,7 @@ class BatchCollisionProcessor:
             addresses = self._batch_generate_addresses(batch, address_generator)
 
             # 检测碰撞
-            for pk, addr in zip(batch, addresses):
+            for pk, addr in zip(batch, addresses, strict=False):
                 if addr in self.target_addresses:
                     matches.append((pk, addr))
 

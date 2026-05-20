@@ -11,13 +11,14 @@
 - 异常容错
 """
 
-import pytest
 import logging
 import time
 from unittest.mock import Mock
 
-from src.log_engine.log_collector import LogCollector, _CollectorLogHandler
+import pytest
+
 from src.log_engine.events import LogEvent, LogEventType
+from src.log_engine.log_collector import LogCollector, _CollectorLogHandler
 
 # ============================================================================
 # 初始化测试

@@ -221,7 +221,7 @@ class GPUBenchmarkSuite:
                     keys_per_sec = (batch_size / duration_ms * 1000) if duration_ms > 0 else 0
 
                     logger.info(
-                        f"  batch_size={batch_size:>6}, #{i + 1}: {duration_ms:.0f}ms ({keys_per_sec:.0f} keys/sec)"
+                        f"  bs={batch_size:>6}, #{i + 1}: {duration_ms:.0f}ms ({keys_per_sec:.0f}/s)"
                     )
 
                 except Exception as e:
@@ -332,7 +332,7 @@ class GPUBenchmarkSuite:
                     keys_per_sec = (batch_size / duration_ms * 1000) if duration_ms > 0 else 0
 
                     logger.info(
-                        f"    batch_size={batch_size:>7}, #{i + 1}: {duration_ms:.0f}ms ({keys_per_sec:,.0f} keys/sec)"
+                        f"    bs={batch_size:>7}, #{i + 1}: {duration_ms:.0f}ms ({keys_per_sec:,.0f}/s)"
                     )
 
                 except Exception as e:
@@ -411,15 +411,19 @@ class GPUBenchmarkSuite:
             report_lines.append("⚡ 批次执行性能")
             report_lines.append("-" * 80)
             report_lines.append(
-                f"  {'Batch Size':>12} | {'平均时间':>10} | {'吞吐量':>12} | {'最小':>10} | {'最大':>10}"
+                f"  {'Batch Size':>12} | {'Avg Time':>9} | {'吞吐量':>12} | {'最小':>10} | {'最大':>10}"
             )
             report_lines.append(f"  {'-' * 12}-+-{'-' * 10}-+-{'-' * 12}-+-{'-' * 10}-+-{'-' * 10}")
 
             for result in by_type[BenchmarkType.BATCH_EXECUTION.value]:
                 batch_size = result.parameters.get("batch_size", 0)
+                _ms = result.mean_ms
+                _tp = result.throughput
+                _min = result.min_ms
+                _max = result.max_ms
                 report_lines.append(
-                    f"  {batch_size:>12,} | {result.mean_ms:>8.0f}ms | "
-                    f"{result.throughput:>10,.0f}/s | {result.min_ms:>8.0f}ms | {result.max_ms:>8.0f}ms"
+                    f"  {batch_size:>12,} | {_ms:>8.0f}ms | "
+                    f"{_tp:>10,.0f}/s | {_min:>8.0f}ms | {_max:>8.0f}ms"
                 )
             report_lines.append("")
 

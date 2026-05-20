@@ -68,8 +68,8 @@ class BenchmarkResult:
             ),
             "total_processed": self.total_processed,
             "matches_found": self.matches_found,
-            "avg_speed_keys_per_sec": self.avg_speed,
-            "peak_speed_keys_per_sec": self.peak_speed,
+            "avg_keys_per_second": self.avg_speed,
+            "peak_keys_per_second": self.peak_speed,
             "memory_usage_mb": self.memory_usage_mb,
         }
 
@@ -231,9 +231,7 @@ class PerformanceBenchmark:
             bloom = BloomDeduplicationFilter(max_size=size, false_positive_rate=0.001)
 
             # 测试添加性能
-            result = BenchmarkResult(
-                f"BloomFilter_Add_{size}", {"max_size": size, "operation": "add"}
-            )
+            result = BenchmarkResult(f"BloomFilter_Add_{size}", {"max_size": size, "operation": "add"})
             result.start()
 
             for _i in range(size):
@@ -324,7 +322,7 @@ class PerformanceBenchmark:
         for result in self.results:
             d = result.to_dict()
             print(f"\n{d['name']}:")
-            print(f"  速度: {d['avg_speed_keys_per_sec']:,.0f} keys/s")
+            print(f"  速度: {d['avg_keys_per_second']:,.0f} keys/s")
             print(f"  耗时: {d['elapsed_seconds']:.3f}s")
             print(f"  处理量: {d['total_processed']:,}")
 
@@ -370,9 +368,7 @@ def main() -> None:
         default="all",
         help="选择要运行的测试",
     )
-    parser.add_argument(
-        "--output", type=str, default="benchmark_results.json", help="结果输出文件路径"
-    )
+    parser.add_argument("--output", type=str, default="benchmark_results.json", help="结果输出文件路径")
 
     args = parser.parse_args()
 

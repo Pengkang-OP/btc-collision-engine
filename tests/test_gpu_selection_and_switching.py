@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 GPU设备选择和切换功能全面测试
 验证多GPU环境下不同厂商GPU的检测、评分、选择和切换功能
@@ -9,7 +8,8 @@ import sys
 import time
 import unittest
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
 
 pytestmark = pytest.mark.gpu
@@ -26,8 +26,8 @@ if sys.platform == "win32":
 # 添加项目根目录
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from src.gpu.device import GPUDevice, GPUDeviceDetector, identify_vendor  # noqa: E402
 from src.gpu.selector import GPUDeviceSelector, get_gpu_selector, reset_gpu_selector  # noqa: E402
-from src.gpu.device import GPUDeviceDetector, identify_vendor, GPUDevice  # noqa: E402
 
 
 # Mock pyopencl常量
@@ -100,7 +100,7 @@ def make_mock_gpu_device(
     def _get_info(key):
         # 兼容枚举值或整数值
         k = int(key) if hasattr(key, "__int__") else key
-        return _info_map.get(k, None)
+        return _info_map.get(k)
 
     device.get_info.side_effect = _get_info
     # 保留 .name .vendor .type 属性以兼容部分直接访问

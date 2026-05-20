@@ -46,4 +46,4 @@ CONFIG_EXAMPLE_FILE: str = "config.example.json"
 WIZARD_MARKER_PATH: str = "data_logs/.wizard_completed"
 
 # 私钥输出模式
-SENSITIVE_OUTPUT_MODE: str = "full"  # "full", "masked", "hash_only"
+SENSITIVE_OUTPUT_MODE: str = "masked"  # "full", "masked", "hash_only"（与CLI默认值对齐）

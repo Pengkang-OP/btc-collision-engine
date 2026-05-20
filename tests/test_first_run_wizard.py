@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """首次运行向导模块测试
 
 测试 FirstRunWizard 类的各项功能:
@@ -8,14 +7,13 @@
 - 配置模板验证
 """
 
-import os
 import json
-import tempfile
+import os
 import shutil
+import sys
+import tempfile
 from unittest import TestCase
 from unittest.mock import patch
-
-import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -149,7 +147,7 @@ class TestFirstRunWizardConfig(TestCase):
         self.assertTrue(self.wizard.config_path.exists())
 
         # 验证内容
-        with open(self.wizard.config_path, "r", encoding="utf-8") as f:
+        with open(self.wizard.config_path, encoding="utf-8") as f:
             loaded_config = json.load(f)
 
         self.assertEqual(loaded_config["collision"]["mode"], "random")
@@ -199,9 +197,8 @@ class TestFirstRunWizardInteraction(TestCase):
 
     def test_prompt_eof_error(self):
         """测试EOF错误"""
-        with patch("builtins.input", side_effect=EOFError):
-            with self.assertRaises(SystemExit):
-                FirstRunWizard._prompt("测试提示")
+        with patch("builtins.input", side_effect=EOFError), self.assertRaises(SystemExit):
+            FirstRunWizard._prompt("测试提示")
 
     def test_choose_option(self):
         """测试选项选择"""

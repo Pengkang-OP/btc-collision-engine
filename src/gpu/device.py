@@ -5,6 +5,7 @@
 """
 
 import re
+import threading
 from typing import Any, cast
 
 # 统一日志获取
@@ -98,12 +99,7 @@ def identify_vendor(device_name: str, vendor_str: str = "") -> str:
         return "amd"
 
     # Intel
-    elif (
-        "intel" in vendor_lower
-        or "intel" in name_lower
-        or "iris" in name_lower
-        or "arc" in name_lower
-    ):
+    elif "intel" in vendor_lower or "intel" in name_lower or "iris" in name_lower or "arc" in name_lower:
         return "intel"
 
     # 未知
@@ -183,6 +179,9 @@ def identify_gpu_model(device_name: str, vendor: str) -> str:
 class GPUDeviceDetector:
     """GPU设备检测器"""
 
+    # 线程安全锁，保护类级缓存
+    _cache_lock = threading.Lock()
+
     # 可用性检测缓存
     _availability_cache = None
     _cache_timestamp = 0.0
@@ -207,17 +206,19 @@ class GPUDeviceDetector:
 
         # 检查缓存是否有效
         now = time.time()
-        if (
-            GPUDeviceDetector._availability_cache is not None
-            and now - GPUDeviceDetector._cache_timestamp < GPUDeviceDetector._cache_ttl
-        ):
-            logger.debug(f"使用GPU可用性缓存: {GPUDeviceDetector._availability_cache}")
-            return GPUDeviceDetector._availability_cache
+        with GPUDeviceDetector._cache_lock:
+            if (
+                GPUDeviceDetector._availability_cache is not None
+                and now - GPUDeviceDetector._cache_timestamp < GPUDeviceDetector._cache_ttl
+            ):
+                logger.debug(f"使用GPU可用性缓存: {GPUDeviceDetector._availability_cache}")
+                return GPUDeviceDetector._availability_cache
 
         if not PYOPENCL_AVAILABLE:
             logger.debug("pyopencl不可用，GPU检测跳过")
-            GPUDeviceDetector._availability_cache = False
-            GPUDeviceDetector._cache_timestamp = now
+            with GPUDeviceDetector._cache_lock:
+                GPUDeviceDetector._availability_cache = False
+                GPUDeviceDetector._cache_timestamp = now
             return False
 
         try:
@@ -226,27 +227,31 @@ class GPUDeviceDetector:
             if available:
                 logger.debug(f"GPU可用，检测到 {len(devices)} 个设备")
                 # 缓存设备信息供get_gpu_health_status()使用
-                GPUDeviceDetector._devices_cache = devices
-                GPUDeviceDetector._devices_cache_timestamp = time.time()
+                with GPUDeviceDetector._cache_lock:
+                    GPUDeviceDetector._devices_cache = devices
+                    GPUDeviceDetector._devices_cache_timestamp = time.time()
             else:
                 logger.debug("GPU不可用，未检测到设备")
 
             # 更新缓存
-            GPUDeviceDetector._availability_cache = available
-            GPUDeviceDetector._cache_timestamp = now
+            with GPUDeviceDetector._cache_lock:
+                GPUDeviceDetector._availability_cache = available
+                GPUDeviceDetector._cache_timestamp = now
 
             return available
         except (ImportError, RuntimeError, OSError) as e:
             # 预期的设备检测异常
             logger.debug(f"GPU检测失败: {type(e).__name__}: {e}")
-            GPUDeviceDetector._availability_cache = False
-            GPUDeviceDetector._cache_timestamp = now
+            with GPUDeviceDetector._cache_lock:
+                GPUDeviceDetector._availability_cache = False
+                GPUDeviceDetector._cache_timestamp = now
             return False
         except Exception as e:
             # 未知错误：记录警告日志
             logger.warning(f"GPU检测未知错误: {type(e).__name__}: {e}")
-            GPUDeviceDetector._availability_cache = False
-            GPUDeviceDetector._cache_timestamp = now
+            with GPUDeviceDetector._cache_lock:
+                GPUDeviceDetector._availability_cache = False
+                GPUDeviceDetector._cache_timestamp = now
             return False
 
     @staticmethod
@@ -275,8 +280,7 @@ class GPUDeviceDetector:
                 now = time.time()
                 if (
                     GPUDeviceDetector._devices_cache is not None
-                    and now - GPUDeviceDetector._devices_cache_timestamp
-                    < GPUDeviceDetector._cache_ttl
+                    and now - GPUDeviceDetector._devices_cache_timestamp < GPUDeviceDetector._cache_ttl
                 ):
                     # 使用缓存的设备信息
                     devices = GPUDeviceDetector._devices_cache
@@ -552,7 +556,9 @@ class GPUDevice:
         self._opencl_version_str = opencl_version_str
 
         # 优先使用 OPENCL_C_VERSION (设备级), 回退到 VERSION (平台级)
-        version_source = opencl_c_version_str if opencl_c_version_str != "Unknown" else opencl_version_str
+        version_source = (
+            opencl_c_version_str if opencl_c_version_str != "Unknown" else opencl_version_str
+        )
         self._opencl_version = _parse_opencl_version(version_source)
 
         logger.info(
@@ -563,9 +569,7 @@ class GPUDevice:
         # 按版本分级处理
         if self._opencl_version < OPENCL_MIN_REQUIRED_VERSION:
             # OpenCL < 1.2: 不兼容，给出明确提示但不崩溃
-            vendor_for_advice = identify_vendor(
-                device_info.get("name", ""), cast(str, self.vendor)
-            )
+            vendor_for_advice = identify_vendor(device_info.get("name", ""), cast(str, self.vendor))
             upgrade_info = OPENCL_UPGRADE_ADVICE.get(vendor_for_advice, OPENCL_UPGRADE_ADVICE["unknown"])
             logger.warning(
                 f"COMP-2: OpenCL 版本不兼容 (当前: {self._opencl_version:.1f}, "
@@ -598,8 +602,7 @@ class GPUDevice:
         else:
             # OpenCL 2.0 - 2.x: 支持 SVM
             logger.info(
-                f"COMP-2: OpenCL {self._opencl_version:.1f} — 完全兼容\n"
-                f"  SVM 共享虚拟内存: ✅ 可用"
+                f"COMP-2: OpenCL {self._opencl_version:.1f} — 完全兼容\n  SVM 共享虚拟内存: ✅ 可用"
             )
             self._supports_svm = True
 

@@ -10,13 +10,14 @@
 - _handle_info_commands / _handle_system_commands 命令分发
 """
 
+import json
 import os
 import sys
-import json
 import tempfile
-import pytest
-from unittest.mock import Mock, patch, MagicMock
 from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 # ============================================================================
 # Fixtures
@@ -187,8 +188,8 @@ class TestCmdConfigCheck:
 
     def test_config_valid(self, temp_dir):
         """有效配置文件"""
-        from src.cli.commands import _cmd_config_check
         import src.cli.commands as commands_module
+        from src.cli.commands import _cmd_config_check
 
         config_path = os.path.join(temp_dir, "config_test.json")
         config = {
@@ -211,8 +212,8 @@ class TestCmdConfigCheck:
 
     def test_config_invalid_json(self, temp_dir):
         """无效 JSON 配置"""
-        from src.cli.commands import _cmd_config_check
         import src.cli.commands as commands_module
+        from src.cli.commands import _cmd_config_check
 
         config_path = os.path.join(temp_dir, "invalid.json")
         with open(config_path, "w") as f:
@@ -236,8 +237,8 @@ class TestSaveAddressToTargetsFile:
     """地址保存测试"""
 
     def test_creates_new_file(self, temp_dir):
-        from src.cli.commands import _save_address_to_targets_file
         import src.cli.commands as commands_module
+        from src.cli.commands import _save_address_to_targets_file
 
         targets_path = os.path.join(temp_dir, "targets_test.txt")
         mock_output = MagicMock()
@@ -250,13 +251,13 @@ class TestSaveAddressToTargetsFile:
             _save_address_to_targets_file("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", mock_output)
 
         assert os.path.exists(targets_path)
-        with open(targets_path, "r", encoding="utf-8") as f:
+        with open(targets_path, encoding="utf-8") as f:
             content = f.read()
         assert "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa" in content
 
     def test_skips_duplicate(self, temp_dir):
-        from src.cli.commands import _save_address_to_targets_file
         import src.cli.commands as commands_module
+        from src.cli.commands import _save_address_to_targets_file
 
         targets_path = os.path.join(temp_dir, "dup_targets.txt")
         addr = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
@@ -268,7 +269,7 @@ class TestSaveAddressToTargetsFile:
             _save_address_to_targets_file(addr, mock_output)
 
         # 不应重复添加
-        with open(targets_path, "r") as f:
+        with open(targets_path) as f:
             lines = f.readlines()
         addr_lines = [
             l.strip() for l in lines if l.strip() and not l.strip().startswith("#")  # noqa: E741

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Phase 1验证脚本
 
 验证GPU重构模块:
@@ -12,8 +11,8 @@
 创建日期: 2026-04-29
 """
 
-import sys
 import os
+import sys
 
 # 添加项目根目录到路径
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -80,8 +79,8 @@ def test_protocol_definitions():
 
     try:
         from src.collision.gpu.protocols import (
-            GPUExecutionContext,
             CollisionResult,
+            GPUExecutionContext,
         )
 
         # 测试数据类实例化
@@ -106,8 +105,8 @@ def test_component_instantiation():
     print("=" * 70)
 
     try:
-        from src.collision.gpu.monitoring import PerformanceMonitoringPipeline
         from src.collision.gpu.core import CollisionCore
+        from src.collision.gpu.monitoring import PerformanceMonitoringPipeline
         from src.collision.gpu.vendor_strategy import VendorOptimizationFactory
 
         # 测试实例化
@@ -144,8 +143,8 @@ def test_vendor_factory():
 
     try:
         from src.collision.gpu.vendor_strategy import (
-            VendorOptimizationFactory,
             DefaultOptimizationStrategy,
+            VendorOptimizationFactory,
         )
 
         # 测试已知厂商

@@ -94,6 +94,9 @@ mypy_*.txt
 Thumbs.db
 desktop.ini
 
+# 运行时配置（禁止提交，避免私钥等敏感信息泄露）
+config.json
+
 # 编译产物
 *.so
 *.egg
@@ -188,3 +191,13 @@ view_monitor_data.py
 业务*.md
 拓扑*.md
 目标*.md
+
+# P3-08修复: 根目录临时分析/验证输出文件
+_e501_*.txt
+_verify_*.txt
+_vfy_*.txt
+_fmt_*.txt
+_e501_*.py
+_verify_*.py
+_vfy_*.py
+_fmt_*.py

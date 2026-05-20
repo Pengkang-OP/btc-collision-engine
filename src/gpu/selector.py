@@ -100,9 +100,7 @@ class GPUDeviceSelector:
         """
         return self._scorer.score(device)
 
-    def select_best_device(
-        self, devices: list[dict[str, Any]] | None = None
-    ) -> dict[str, Any] | None:
+    def select_best_device(self, devices: list[dict[str, Any]] | None = None) -> dict[str, Any] | None:
         """自动选择评分最高的GPU设备
 
         Args:

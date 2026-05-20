@@ -1,15 +1,15 @@
-# -*- coding: utf-8 -*-
 """
 优化模块集成测试
 测试优化模块在实际碰撞引擎中的表现
 """
 
-import time
 import secrets
 import threading
+import time
+
 from src.collision.key_collision_engine import KeyCollisionEngine
-from src.core.optimized_address_generator import OptimizedP2PKHAddressGenerator
 from src.core.address_generator import P2PKHAddressGenerator
+from src.core.optimized_address_generator import OptimizedP2PKHAddressGenerator
 from src.monitoring.optimization_monitor import OptimizationPerformanceMonitor
 
 

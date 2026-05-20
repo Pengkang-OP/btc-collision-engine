@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 文档质量检查工具
 
@@ -16,22 +15,20 @@
 """
 
 import re
+import subprocess
 import sys
-from pathlib import Path
-from typing import List, Dict, Optional
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, Any
-import subprocess
+from pathlib import Path
+from typing import Any
 
 # 修复Windows控制台编码问题 - 使用共享模块
-import sys
-from pathlib import Path
 # 添加工具目录到路径
 _tools_dir = Path(__file__).parent
 if str(_tools_dir) not in sys.path:
     sys.path.insert(0, str(_tools_dir))
 from utf8_helper import setup_windows_utf8
+
 setup_windows_utf8()
 
 
@@ -104,7 +101,7 @@ class ScoringConfig:
             raise ValueError(f"Total bonus ({total_bonus}) should not exceed 1.0")
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'ScoringConfig':
+    def from_dict(cls, data: dict[str, Any]) -> 'ScoringConfig':
         """从字典创建配置"""
         config = cls(**{k: v for k, v in data.items() if k in cls.__annotations__})
         config.validate()  # 验证配置
@@ -114,11 +111,11 @@ class ScoringConfig:
     def from_file(cls, path: str) -> 'ScoringConfig':
         """从 JSON文件加载配置"""
         import json
-        with open(path, 'r', encoding='utf-8') as f:
+        with open(path, encoding='utf-8') as f:
             data = json.load(f)
         return cls.from_dict(data)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             'error_weight': self.error_weight,
@@ -153,20 +150,20 @@ class DocumentScore:
     """文档评分"""
     file: str
     score: float
-    issues: List[Issue]
+    issues: list[Issue]
 
 
 class DocumentQualityChecker:
     """文档质量检查器"""
 
-    def __init__(self, docs_dir: str = "docs", config: Optional[ScoringConfig] = None):
+    def __init__(self, docs_dir: str = "docs", config: ScoringConfig | None = None):
         self.docs_dir = Path(docs_dir)
-        self.issues: List[Issue] = []
-        self.scores: List[DocumentScore] = []
+        self.issues: list[Issue] = []
+        self.scores: list[DocumentScore] = []
         self.config = config or ScoringConfig()
 
     @staticmethod
-    def get_changed_docs(docs_dir: Path) -> List[Path]:
+    def get_changed_docs(docs_dir: Path) -> list[Path]:
         """获取Git变更的文档列表
 
         Returns:
@@ -197,7 +194,7 @@ class DocumentQualityChecker:
             print(f"⚠️  无法获取Git变更: {e}")
             return []
 
-    def check_all(self, changed_only: bool = False) -> List[DocumentScore]:
+    def check_all(self, changed_only: bool = False) -> list[DocumentScore]:
         """检查所有文档
 
         Args:
@@ -288,7 +285,7 @@ class DocumentQualityChecker:
                 "文件末尾缺少换行符"
             ))
 
-    def check_document_structure(self, file_path: Path, content: str, lines: List[str]):
+    def check_document_structure(self, file_path: Path, content: str, lines: list[str]):
         """检查文档结构"""
         # 检查是否有标题
         if not re.search(r'^#\s+.+', content, re.MULTILINE):
@@ -309,7 +306,7 @@ class DocumentQualityChecker:
                     "长文档建议添加目录"
                 ))
 
-    def check_version_info(self, file_path: Path, content: str, lines: List[str]):
+    def check_version_info(self, file_path: Path, content: str, lines: list[str]):
         """检查版本信息"""
         # 检查是否包含版本信息（在前20行）
         first_20_lines = '\n'.join(lines[:20])
@@ -323,13 +320,12 @@ class DocumentQualityChecker:
                     "建议添加版本信息 (例如: **版本**: v4.2.2)"
                 ))
 
-    def check_links(self, file_path: Path, content: str, lines: List[str]):
+    def check_links(self, file_path: Path, content: str, lines: list[str]):
         """检查链接"""
         # 查找Markdown链接
         link_pattern = r'\[([^\]]+)\]\(([^)]+)\)'
         links = re.finditer(link_pattern, content)
 
-        docs_dir = file_path.parent
 
         for match in links:
             link_text = match.group(1)
@@ -361,16 +357,14 @@ class DocumentQualityChecker:
                             f"链接可能断裂: [{link_text}]({link_url})"
                         ))
 
-    def check_code_blocks(self, file_path: Path, content: str, lines: List[str]):
+    def check_code_blocks(self, file_path: Path, content: str, lines: list[str]):
         """检查代码块格式"""
         in_code_block = False
-        code_block_start = 0
 
         for i, line in enumerate(lines, 1):
             if line.strip().startswith('```'):
                 if not in_code_block:
                     in_code_block = True
-                    code_block_start = i
                     # 检查是否指定了语言
                     if line.strip() == '```':
                         self.issues.append(Issue(
@@ -382,7 +376,7 @@ class DocumentQualityChecker:
                 else:
                     in_code_block = False
 
-    def check_headings(self, file_path: Path, content: str, lines: List[str]):
+    def check_headings(self, file_path: Path, content: str, lines: list[str]):
         """检查标题层级"""
         headings = []
         for i, line in enumerate(lines, 1):
@@ -404,16 +398,14 @@ class DocumentQualityChecker:
                     f"标题层级跳跃: 从 {'#'*prev_level} 到 {'#'*curr_level}"
                 ))
 
-    def check_tables(self, file_path: Path, content: str, lines: List[str]):
+    def check_tables(self, file_path: Path, content: str, lines: list[str]):
         """检查表格格式"""
         in_table = False
-        table_start = 0
 
         for i, line in enumerate(lines, 1):
             if '|' in line and line.strip():
                 if not in_table:
                     in_table = True
-                    table_start = i
 
                 # 检查表格对齐（简单检查）
                 columns = [col.strip() for col in line.split('|') if col.strip()]
@@ -437,8 +429,8 @@ class DocumentQualityChecker:
         # 分类统计 - 使用常量避免字符串匹配错误
         code_block_issues = sum(1 for i in self.issues if IssueType.CODE_BLOCK in i.message)
         link_issues = sum(1 for i in self.issues if IssueType.LINK in i.message)
-        toc_issues = sum(1 for i in self.issues if IssueType.TOC in i.message)
-        version_issues = sum(1 for i in self.issues if IssueType.VERSION in i.message)
+        sum(1 for i in self.issues if IssueType.TOC in i.message)
+        sum(1 for i in self.issues if IssueType.VERSION in i.message)
         heading_issues = sum(1 for i in self.issues if IssueType.HEADING in i.message)
 
         # 使用配置的计算机制
@@ -481,17 +473,17 @@ class DocumentQualityChecker:
             bonus += version_bonus
 
         # 详细日志输出
-        print(f"\n📊 评分详情:")
+        print("\n📊 评分详情:")
         print(f"  问题统计: ERROR={error_count}, WARNING={warning_count}, INFO={info_count}")
         print(f"  分类统计: 代码块={code_block_issues}, 链接={link_issues}, 标题={heading_issues}")
-        print(f"  扣分详情:")
+        print("  扣分详情:")
         print(f"    ERROR: {error_count} × {self.config.error_weight} = {error_deduction:.1f}")
         print(f"    代码块: {code_block_issues} × {self.config.code_block_weight} = {code_block_deduction:.1f} (上限{self.config.code_block_max})")
         print(f"    链接: {link_issues} × {self.config.link_weight} = {link_deduction:.1f} (上限{self.config.link_max})")
         print(f"    其他WARNING: {other_warnings} × {self.config.other_warning_weight} = {other_warning_deduction:.1f}")
         print(f"    INFO: {info_count} × {self.config.info_weight} = {info_deduction:.1f}")
         print(f"  总扣分: {deduction:.1f}")
-        print(f"  奖励详情:")
+        print("  奖励详情:")
         print(f"    目录: +{toc_bonus:.1f}")
         print(f"    版本: +{version_bonus:.1f}")
         print(f"  总奖励: {bonus:.1f}")
@@ -508,7 +500,6 @@ class DocumentQualityChecker:
 
         if self.issues:
             for issue in self.issues:
-                line_info = f":{issue.line}" if issue.line > 0 else ""
                 print(f"   {issue.severity.value} {issue.message}")
 
         print()
@@ -532,7 +523,7 @@ class DocumentQualityChecker:
 
         print(f"\n核心文档总数: {total_docs}")
         print(f"平均质量评分: {avg_score:.1f}/10")
-        print(f"\n质量分布:")
+        print("\n质量分布:")
         print(f"  ✅ 优秀 (≥8.5): {excellent} 个")
         print(f"  ⚠️  良好 (7.0-8.4): {good} 个")
         print(f"  ❌ 需改进 (<7.0): {poor} 个")
@@ -540,12 +531,12 @@ class DocumentQualityChecker:
         # 列出需要改进的文档
         poor_docs = [s for s in self.scores if s.score < 7.0]
         if poor_docs:
-            print(f"\n⚠️  需要改进的文档:")
+            print("\n⚠️  需要改进的文档:")
             for doc in poor_docs:
                 print(f"  - {Path(doc.file).name}: {doc.score}/10")
 
         # 总体评价
-        print(f"\n总体评价: ", end="")
+        print("\n总体评价: ", end="")
         if avg_score >= 9.0:
             print("✅ 优秀")
         elif avg_score >= 8.0:

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """ExceptionHandler 扩展单元测试 (P1-5)
 
 测试 src.utils.exception_handler 中 P3-6 新增的 GPU 异步错误、
@@ -16,12 +15,12 @@ OpenCL 资源错误、GPU 清理错误、配置错误和文件错误处理方法
 
 import os
 import sys
+
 import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.utils.exception_handler import ExceptionHandler # noqa: E402
-
+from src.utils.exception_handler import ExceptionHandler  # noqa: E402
 
 # ============================================================================
 # handle_gpu_async_error 回退决策测试
@@ -299,7 +298,7 @@ class TestFileError:
  def test_io_error(self):
      """IOError"""
      ExceptionHandler.handle_file_error(
-     IOError("disk full"), "写入", "large_file.bin"
+     OSError("disk full"), "写入", "large_file.bin"
      )
 
  def test_unknown_error(self):
@@ -325,7 +324,7 @@ class TestFileError:
  def test_empty_both(self):
      """操作和路径均为空"""
      ExceptionHandler.handle_file_error(
-     IOError("error"), "", ""
+     OSError("error"), "", ""
      )
 
 
@@ -347,7 +346,7 @@ class TestConfigError:
  def test_io_error(self):
      """配置文件 IO 错误"""
      ExceptionHandler.handle_config_error(
-     IOError("read error"), "CryptoConfig"
+     OSError("read error"), "CryptoConfig"
      )
 
  def test_value_error(self):

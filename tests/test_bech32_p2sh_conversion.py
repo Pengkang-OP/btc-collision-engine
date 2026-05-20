@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Bech32/P2SH地址转换单元测试
 
 测试范围:
@@ -12,6 +11,7 @@
 """
 
 import pytest
+
 from src.collision.targets.resolver import TargetResolver
 
 

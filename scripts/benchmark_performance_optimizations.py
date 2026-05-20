@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """GPU性能优化基准测试
 
 测试v4.2.1性能优化效果：
@@ -8,10 +7,9 @@
 3. 动态batch_size调整策略
 """
 
-import time
-import sys
 import logging
-from typing import Dict, List
+import sys
+import time
 
 # 配置日志
 logging.basicConfig(
@@ -24,7 +22,7 @@ class PerformanceBenchmark:
     """性能基准测试器"""
 
     def __init__(self):
-        self.results: List[Dict] = []
+        self.results: list[dict] = []
 
     def test_async_executor_prefetch(self):
         """测试异步执行器预取机制"""
@@ -33,8 +31,9 @@ class PerformanceBenchmark:
         print("=" * 80)
 
         try:
-            from src.gpu.async_executor import AsyncGPUExecutor
             from unittest.mock import Mock
+
+            from src.gpu.async_executor import AsyncGPUExecutor
 
             # 创建模拟GPU设备
             mock_device = Mock()
@@ -174,8 +173,9 @@ class PerformanceBenchmark:
         print("=" * 80)
 
         try:
-            from src.gpu.memory_pool import GPUMemoryPool
             from unittest.mock import Mock
+
+            from src.gpu.memory_pool import GPUMemoryPool
 
             # 创建模拟上下文
             mock_context = Mock()

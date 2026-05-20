@@ -60,10 +60,7 @@ OPENCL_UPGRADE_ADVICE: dict[str, dict[str, str]] = {
     },
     "unknown": {
         "description": "未知厂商 GPU",
-        "advice": (
-            "请访问 GPU 制造商官网下载最新驱动。\n"
-            "确保驱动包含 OpenCL 运行时支持。"
-        ),
+        "advice": ("请访问 GPU 制造商官网下载最新驱动。\n确保驱动包含 OpenCL 运行时支持。"),
     },
 }
 

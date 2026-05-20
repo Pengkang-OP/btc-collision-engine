@@ -258,13 +258,13 @@ class PerformanceReportGenerator:
         current_device = self._get_device_info().get("设备名称", "Current")
 
         for gpu_name, perf in reference_gpus.items():
-            relative = (
-                (current_throughput / perf["throughput"] * 100) if perf["throughput"] > 0 else 0
-            )
+            relative = (current_throughput / perf["throughput"] * 100) if perf["throughput"] > 0 else 0
 
             marker = " ← 当前" if gpu_name == current_device else ""
+            _tp = perf['throughput']
+            _bs = perf['batch_size']
             lines.append(
-                f"| {gpu_name}{marker} | {perf['throughput']:,}/s | {perf['batch_size']:,} | {relative:.1f}% |"
+                f"| {gpu_name}{marker} | {_tp:,}/s | {_bs:,} | {relative:.1f}% |"
             )
 
         lines.append("")
@@ -295,17 +295,21 @@ class PerformanceReportGenerator:
         }
 
         # 添加基准测试结果
-        if config.include_benchmark_results and self.benchmark_suite and hasattr(self.benchmark_suite, "results"):
+        if (
+            config.include_benchmark_results
+            and self.benchmark_suite
+            and hasattr(self.benchmark_suite, "results")
+        ):
             report_data["benchmark_results"] = [
-                    {
-                        "test_name": r.test_name,
-                        "test_type": r.test_type.value,
-                        "throughput": r.throughput,
-                        "duration_ms": r.duration_ms,
-                        "parameters": r.parameters,
-                    }
-                    for r in cast(Any, self.benchmark_suite).results
-                ]
+                {
+                    "test_name": r.test_name,
+                    "test_type": r.test_type.value,
+                    "throughput": r.throughput,
+                    "duration_ms": r.duration_ms,
+                    "parameters": r.parameters,
+                }
+                for r in cast(Any, self.benchmark_suite).results
+            ]
 
         # 添加调优结果
         if config.include_tuning_results and self.auto_tuner:
@@ -384,9 +388,7 @@ class PerformanceReportGenerator:
             recommendations.append(
                 "Intel Arc GPU: 确保已启用 uint32 workaround 避免 global char* hang bug"
             )
-            recommendations.append(
-                "Intel Arc GPU: 建议使用保守的 batch_size (≤524,288) 以确保稳定性"
-            )
+            recommendations.append("Intel Arc GPU: 建议使用保守的 batch_size (≤524,288) 以确保稳定性")
             recommendations.append("Intel Arc GPU: 保持驱动版本 ≥ 31.0.101.4500")
 
         # 性能建议
@@ -401,9 +403,7 @@ class PerformanceReportGenerator:
                 if mem_gb >= 16:
                     recommendations.append("显存充足 (≥16GB)，可以尝试更大的 batch_size 提升吞吐量")
                 elif mem_gb < 4:
-                    recommendations.append(
-                        "显存较小 (<4GB)，建议使用较小的 batch_size 避免显存不足"
-                    )
+                    recommendations.append("显存较小 (<4GB)，建议使用较小的 batch_size 避免显存不足")
             except (KeyError, TypeError, ValueError) as e:
                 logger.debug(f"获取GPU显存信息失败: {e}")
 

@@ -74,11 +74,12 @@ class HashUtils:
         返回:
             Base58Check编码的P2PKH地址
 
+        # 使用 Bitcoin Wiki 标准测试向量（hash160 → 创世地址，私钥=1，公开已知）
         示例:
-            >>> hash160 = bytes.fromhex('751e76e8199196d454941c45d1b3a323f1433bd6')
+            >>> hash160 = bytes.fromhex('0000000000000000000000000000000000000000')
             >>> address = HashUtils.hash160_to_address(hash160)
             >>> print(address)
-            1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH
+            1111111111111111111114oLvT2  # 全零 hash160 地址（仅格式验证用）
         """
         if len(hash160) != 20:
             raise ValueError(f"Hash160必须为20字节，当前为{len(hash160)}字节")

@@ -58,9 +58,9 @@ class BaseSearchMode:
             mode_name:           搜索模式名称，用于异常日志（如"暴力穷举"、"范围扫描"）。
             stop_condition_fn:   可选的额外停止条件检查，返回 True 表示停止。
                                  若为 None，则仅依赖 _stop_event。
-            key_extractor_fn:    可选的私钥提取函数，签名为 (batch_data, key_index) -> private_key_bytes。
+            key_extractor_fn:    可选的私钥提取函数，签名 (batch_data, key_index) -> private_key_bytes。
                                  用于 PRNG 模式下从种子+索引重建私钥。
-                                 若为 None，则假设 batch_data 包含完整私钥数组。
+                                 若为 None，假设 batch_data 包含完整私钥数组。
 
         Returns:
             本次循环共处理的私钥总数 (batch_count)
@@ -96,7 +96,9 @@ class BaseSearchMode:
                             logger.warning(
                                 "key_index %d 超出 batch_data 范围 (data_len=%d, mode=%s) — "
                                 "可能是PRNG种子模式，请传入 key_extractor_fn 参数",
-                                key_idx, len(batch_data), mode_name
+                                key_idx,
+                                len(batch_data),
+                                mode_name,
                             )
                             continue
                         private_key = batch_data[key_idx * 32 : (key_idx + 1) * 32]
@@ -180,8 +182,9 @@ class BaseSearchMode:
                 with engine._batch_size_lock:
                     engine._consecutive_gpu_errors += 1
                     if engine._consecutive_gpu_errors >= engine._max_gpu_error_retries:
+                        _max_retry = engine._max_gpu_error_retries
                         logger.critical(
-                            f"GPU连续错误次数达到上限({engine._max_gpu_error_retries}), 强制停止引擎以防止无限循环"
+                            f"GPU连续错误达上限({_max_retry}), 强制停止引擎防止无限循环"
                         )
                         engine._running = False
                         return batch_count
@@ -209,7 +212,7 @@ class BaseSearchMode:
         keys_data = bytearray(count * 32)
         offset = 0
         key_int = start
-        _MASK64 = 0xFFFFFFFFFFFFFFFF
+        _mask64 = 0xFFFFFFFFFFFFFFFF
         for _ in range(count):
             high = key_int >> 128
             low = key_int & ((1 << 128) - 1)
@@ -218,9 +221,9 @@ class BaseSearchMode:
                 keys_data,
                 offset,
                 high >> 64,
-                high & _MASK64,
+                high & _mask64,
                 low >> 64,
-                low & _MASK64,
+                low & _mask64,
             )
             offset += 32
             key_int += 1

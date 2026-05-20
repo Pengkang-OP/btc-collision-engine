@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """边界值单元测试
 
 针对关键模块的边界条件进行测试，确保：
@@ -9,6 +8,7 @@
 """
 
 import pytest
+
 from src.collision.gpu_config_manager import GPUConfigManager
 
 

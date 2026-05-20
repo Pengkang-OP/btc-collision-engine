@@ -9,7 +9,6 @@ from unittest.mock import MagicMock, patch
 from src.cli.output import CLIOutput
 from src.cli.stats_reporter import _print_detailed_stats, _print_final_summary
 
-
 # ── 辅助工具 ────────────────────────────────────────────────────
 
 def _mock_cli_output():
@@ -302,10 +301,9 @@ class TestPrintFinalSummary(unittest.TestCase):
         engine.get_stats.return_value.matches = []
         args = self._make_args(export_matches="matches.json")
 
-        with patch("src.cli.stats_reporter.export_matches") as mock_exp:
-            with patch("builtins.print"):
-                self._call(engine, "cpu", args)
-                mock_exp.assert_called_once()
+        with patch("src.cli.stats_reporter.export_matches") as mock_exp, patch("builtins.print"):
+            self._call(engine, "cpu", args)
+            mock_exp.assert_called_once()
 
     def test_export_progress_exception_prints_error(self):
         """export_progress 抛异常 → 打印错误信息并继续输出 final_summary。"""
@@ -313,11 +311,10 @@ class TestPrintFinalSummary(unittest.TestCase):
         args = self._make_args(export_progress="out.json")
 
         with patch("src.cli.stats_reporter.export_progress_data",
-                   side_effect=RuntimeError("disk full")):
-            with patch("builtins.print") as mock_print:
-                self._call(engine, "cpu", args)
-                mock_print.assert_called_once()
-                self.out.final_summary.assert_called_once()
+                   side_effect=RuntimeError("disk full")), patch("builtins.print") as mock_print:
+            self._call(engine, "cpu", args)
+            mock_print.assert_called_once()
+            self.out.final_summary.assert_called_once()
 
     def test_export_matches_exception_prints_error(self):
         """export_matches 抛异常 → 错误被 except 捕获，final_summary 仍输出。"""
@@ -325,11 +322,10 @@ class TestPrintFinalSummary(unittest.TestCase):
         args = self._make_args(export_matches="matches.json")
 
         with patch("src.cli.stats_reporter.export_matches",
-                   side_effect=OSError("permission denied")):
-            with patch("builtins.print") as mock_print:
-                self._call(engine, "cpu", args)
-                mock_print.assert_called_once()
-                self.out.final_summary.assert_called_once()
+                   side_effect=OSError("permission denied")), patch("builtins.print") as mock_print:
+            self._call(engine, "cpu", args)
+            mock_print.assert_called_once()
+            self.out.final_summary.assert_called_once()
 
     def test_export_matches_dict_stats(self):
         """engine.get_stats 返回 dict 含 matches → export_matches 提取列表。"""
@@ -342,10 +338,9 @@ class TestPrintFinalSummary(unittest.TestCase):
         ]
         args = self._make_args(export_matches="matches.json")
 
-        with patch("src.cli.stats_reporter.export_matches") as mock_exp:
-            with patch("builtins.print"):
-                self._call(engine, "cpu", args)
-                mock_exp.assert_called_once_with([{"a": 1}], "matches.json")
+        with patch("src.cli.stats_reporter.export_matches") as mock_exp, patch("builtins.print"):
+            self._call(engine, "cpu", args)
+            mock_exp.assert_called_once_with([{"a": 1}], "matches.json")
 
     def test_export_progress_dict_stats(self):
         """engine.get_stats 返回 dict → export 仍正常工作。"""

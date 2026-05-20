@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 GPU资源清理测试脚本
 
 专门测试GPU碰撞引擎的资源清理功能，确保stop()方法正确释放所有资源。
 """
 
-import sys
-import os
-import time
 import logging
-from typing import Set
+import os
+import sys
+import time
 
 # 添加项目根目录到Python模块路径
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
@@ -28,7 +26,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def generate_test_targets(count: int = 5) -> Set[str]:
+def generate_test_targets(count: int = 5) -> set[str]:
     """生成测试目标地址
 
     Args:

@@ -1,20 +1,21 @@
 """测试告警通知回调模块"""
 
-import pytest
 import sys
 from pathlib import Path
 from unittest.mock import Mock, patch
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.monitoring.alert_notifications import (  # noqa: E402
     BaseNotifier,
-    EmailNotifier,
-    WeComWebhookNotifier,
     DingTalkWebhookNotifier,
+    EmailNotifier,
     SlackWebhookNotifier,
+    WeComWebhookNotifier,
 )
-from src.monitoring.alert_system import AlertRecord, AlertLevel, AlertType  # noqa: E402
+from src.monitoring.alert_system import AlertLevel, AlertRecord, AlertType  # noqa: E402
 
 
 class TestBaseNotifier:
@@ -185,7 +186,7 @@ class TestWeComWebhookNotifier:
         )
 
         # 应捕获异常
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             notifier._send_notification(alert)
 
 

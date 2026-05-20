@@ -40,7 +40,7 @@ echo ""
 echo "[2/4] 检查虚拟环境..."
 if [ -z "${VIRTUAL_ENV:-}" ]; then
     echo -e "${YELLOW}[警告]${NC} 虚拟环境未激活"
-    if [ -f "venv/bin/activate" ]; then
+    if [ -f "venv/bin/activate" ] && [ -r "venv/bin/activate" ]; then
         read -r -p "是否激活虚拟环境? (y/N): " ACTIVATE
         if [ "$ACTIVATE" = "y" ] || [ "$ACTIVATE" = "Y" ]; then
             source venv/bin/activate

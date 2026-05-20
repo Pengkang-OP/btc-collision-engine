@@ -57,7 +57,7 @@ class LogRotator:
         if self.max_count <= 0 or len(records) <= self.max_count:
             return records
 
-        return records[-self.max_count:]
+        return records[-self.max_count :]
 
     @staticmethod
     def _get_timestamp(record: dict[str, Any]) -> float:
@@ -78,7 +78,9 @@ class LogRotator:
                 return 0.0
         return 0.0
 
-    def get_rotation_stats(self, before: list[dict[str, Any]], after: list[dict[str, Any]]) -> dict[str, Any]:
+    def get_rotation_stats(
+        self, before: list[dict[str, Any]], after: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """获取轮转统计信息
 
         Args:

@@ -59,6 +59,7 @@ from .lock_monitor import (  # noqa: E402
 from .memory_calculator import GPUMemoryCalculator  # noqa: E402
 from .metrics import GPUMetricsCollector, get_metrics_collector  # noqa: E402
 from .multi_format_multi_gpu_engine import (  # noqa: E402
+    MultiFormatMultiGPUEngine,
     create_engine,
     create_multi_format_multi_gpu_engine,
 )
@@ -71,9 +72,7 @@ from .scorer import GPUDeviceScorer, get_gpu_scorer, reset_gpu_scorer  # noqa: E
 from .selector import GPUDeviceSelector, get_gpu_selector, reset_gpu_selector  # noqa: E402
 from .worker import SingleGPUWorker  # noqa: E402
 
-__version__ = (
-    "4.4.0"  # v4.4.0: 安全修复增强(安全清零/侧信道防护/敏感数据脱敏/线程安全), 文档一致性整理
-)
+__version__ = "4.4.0"  # v4.4.0: 安全修复增强(安全清零/侧信道防护/敏感数据脱敏/线程安全), 文档一致性整理
 
 __all__ = [
     "GPUDeviceDetector",
@@ -84,6 +83,7 @@ __all__ = [
     "DriverManager",
     "DriverVersionParser",
     "OPENCL_KERNEL_SOURCE",
+    "MultiFormatMultiGPUEngine",
     # GPU配置数据结构
     "MultiGPUConfig",
     "GPURecoveryConfig",

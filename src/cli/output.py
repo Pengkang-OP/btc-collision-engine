@@ -39,10 +39,14 @@ def _get_utf8_console(stderr: bool = False, no_color: bool = False) -> Console:
         except (AttributeError, io.UnsupportedOperation, OSError):
             pass
     # 非 Windows 或 reconfigure 失败：使用默认 Console
+    # 管道/重定向场景下强制终端模式以保留颜色输出
+    target_stream = sys.stderr if stderr else sys.stdout
+    is_tty = target_stream.isatty() if hasattr(target_stream, "isatty") else True
     return Console(
         highlight=False,
         no_color=no_color,
         stderr=stderr,
+        force_terminal=not is_tty,
     )
 
 
@@ -80,9 +84,7 @@ class CLIOutput:
         return cls._instance
 
     @classmethod
-    def init(
-        cls, no_color: bool = False, quiet: bool = False, compact: bool = False
-    ) -> "CLIOutput":
+    def init(cls, no_color: bool = False, quiet: bool = False, compact: bool = False) -> "CLIOutput":
         """初始化单例（应在程序入口处调用一次）。
 
         线程安全：持锁替换实例，调用方应确保在单线程初始化阶段调用。
@@ -214,7 +216,7 @@ class CLIOutput:
         """单行状态更新（\r 覆盖式）— 用于运行时进度显示。
 
         quiet 模式下不显示。保持与 engine_runner 原有实现兼容。
-        
+
         修复光标乱跳问题：
         - 使用 ANSI 转义序列隐藏光标
         - 正确处理终端刷新

@@ -1,14 +1,15 @@
-# -*- coding: utf-8 -*-
 """
 GPU性能监控模块单元测试
 """
 
-import pytest
 import time
+
+import pytest
+
 from src.monitoring.gpu_performance_monitor import (
-    GPUPerformanceMonitor,
     GPUKernelMetrics,
     GPUMemoryMetrics,
+    GPUPerformanceMonitor,
     GPUPerformanceReport,
     get_gpu_performance_monitor,
     reset_gpu_performance_monitor,

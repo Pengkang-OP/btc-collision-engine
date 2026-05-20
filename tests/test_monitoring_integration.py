@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """监控系统集成单元测试
 
 测试监控系统与碰撞引擎的集成功能。
@@ -13,12 +12,13 @@
 - 生命周期管理
 """
 
-import pytest
 import os
+import shutil
 import sys
 import tempfile
-import shutil
 from unittest.mock import Mock
+
+import pytest
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -257,7 +257,7 @@ class TestMonitoringErrorScenarios:
         )
 
         # 模拟数据记录器错误
-        engine.data_logger.record_performance_data
+        _ = engine.data_logger.record_performance_data  # 触发属性访问以预初始化
         engine.data_logger.record_performance_data = Mock(side_effect=RuntimeError("Record failed"))
 
         engine.start(mode="random")

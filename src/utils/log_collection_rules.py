@@ -71,11 +71,7 @@ class LogCollectionRule:
                 return False
 
         # 如果有排除模式，不能匹配任何一个
-        for regex in self._exclude_regexes:
-            if regex.search(message):
-                return False
-
-        return True
+        return all(not regex.search(message) for regex in self._exclude_regexes)
 
     def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
@@ -230,9 +226,7 @@ class LogCollectionRuleManager:
                 self.save_rules()
                 break
 
-    def get_matching_rules(
-        self, module_name: str, level: str, message: str
-    ) -> list[LogCollectionRule]:
+    def get_matching_rules(self, module_name: str, level: str, message: str) -> list[LogCollectionRule]:
         """获取匹配的规则"""
         matching_rules = []
         for rule in self.rules:
@@ -257,9 +251,7 @@ class LogCollectionRuleManager:
 
         return matching_rules
 
-    def get_effective_rule(
-        self, module_name: str, level: str, message: str
-    ) -> LogCollectionRule | None:
+    def get_effective_rule(self, module_name: str, level: str, message: str) -> LogCollectionRule | None:
         """获取最有效的规则（优先级最高）"""
         matching_rules = self.get_matching_rules(module_name, level, message)
         if not matching_rules:

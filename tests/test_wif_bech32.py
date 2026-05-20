@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """WIF编码和Bech32地址支持的测试 - 使用Bitcoin Core官方测试向量
 
 覆盖范围:
@@ -9,21 +8,21 @@
 - TargetResolver: bc1q / bc1p 地址解析端到端
 """
 
-import unittest
-import sys
 import os
+import sys
+import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from src.collision.targets.resolver import TargetResolver  # noqa: E402
 from src.core.bitcoin_key_validator import WIFEncoder  # noqa: E402
 from src.utils.bech32_codec import (  # noqa: E402
+    BECH32_CONST,
+    BECH32M_CONST,
     bech32_decode,
     convertbits,
     decode_segwit_address,
-    BECH32_CONST,
-    BECH32M_CONST,
 )
-from src.collision.targets.resolver import TargetResolver  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # WIF 测试向量 (来自 Bitcoin Core / BIP-0032 官方文档)

@@ -197,7 +197,7 @@ class GPUConfig:
 
         except ImportError as e:
             logger.error(f"创建GPU引擎失败: {e}")
-            raise RuntimeError("GPUCollisionEngine不可用")
+            raise RuntimeError("GPUCollisionEngine不可用") from e
 
     def save_config(self) -> bool:
         """

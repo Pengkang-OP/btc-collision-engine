@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """file_utils 模块单元测试
 
 测试原子写入、安全读取、备份恢复、安全删除等功能。
@@ -6,18 +5,18 @@
 
 import json
 import os
-import tempfile
 import shutil
+import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
 from src.utils.file_utils import (
-    atomic_json_write,
-    atomic_json_read,
     _recover_from_backup,
-    safe_file_delete,
-    get_file_size_safe,
+    atomic_json_read,
+    atomic_json_write,
     ensure_directory,
+    get_file_size_safe,
+    safe_file_delete,
 )
 
 
@@ -40,7 +39,7 @@ class TestAtomicJsonWrite:
         result = atomic_json_write(self.test_file, data)
         assert result is True
         assert os.path.exists(self.test_file)
-        with open(self.test_file, "r", encoding="utf-8") as f:
+        with open(self.test_file, encoding="utf-8") as f:
             loaded = json.load(f)
         assert loaded == data
 
@@ -74,7 +73,7 @@ class TestAtomicJsonWrite:
         atomic_json_write(self.test_file, data1)
         result = atomic_json_write(self.test_file, data2)
         assert result is True
-        with open(self.test_file, "r", encoding="utf-8") as f:
+        with open(self.test_file, encoding="utf-8") as f:
             loaded = json.load(f)
         assert loaded == data2
 

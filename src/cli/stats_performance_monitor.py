@@ -3,6 +3,7 @@
 实时监控统计系统本身的性能指标。
 """
 
+import contextlib
 import threading
 import time
 from collections import deque
@@ -193,8 +194,7 @@ class StatsPerformanceMonitor:
             "average_lock_contention": sum(s.lock_contention for s in recent_samples)
             / len(recent_samples),
             "average_throughput": sum(s.throughput for s in recent_samples) / len(recent_samples),
-            "average_memory_mb": sum(s.memory_usage_mb for s in recent_samples)
-            / len(recent_samples),
+            "average_memory_mb": sum(s.memory_usage_mb for s in recent_samples) / len(recent_samples),
             "average_cpu_usage": sum(s.cpu_usage for s in recent_samples) / len(recent_samples),
             "sample_count": len(recent_samples),
         }

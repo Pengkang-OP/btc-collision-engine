@@ -272,19 +272,14 @@ class OptimizationPerformanceMonitor:
             opt_percentage = (opt_enabled / len(self._metrics_history)) * 100
 
             # 内存使用
-            memory_usages = [
-                m.memory_usage_mb for m in self._metrics_history if m.memory_usage_mb > 0
-            ]
+            memory_usages = [m.memory_usage_mb for m in self._metrics_history if m.memory_usage_mb > 0]
             avg_memory = sum(memory_usages) / len(memory_usages) if memory_usages else 0
 
             # 错误率
             error_rate = (self._total_errors / max(self._total_addresses, 1)) * 100
 
             # 性能稳定性
-            if avg_speed > 0:
-                stability = (min_speed / avg_speed) * 100
-            else:
-                stability = 0
+            stability = min_speed / avg_speed * 100 if avg_speed > 0 else 0
 
             report = {
                 "status": "running" if self._running else "stopped",
@@ -305,9 +300,7 @@ class OptimizationPerformanceMonitor:
                     ),
                     "simd_hash_usage": sum(1 for m in self._metrics_history if m.simd_hash),
                     "memory_pool_usage": sum(1 for m in self._metrics_history if m.memory_pool),
-                    "gpu_memory_pool_usage": sum(
-                        1 for m in self._metrics_history if m.gpu_memory_pool
-                    ),
+                    "gpu_memory_pool_usage": sum(1 for m in self._metrics_history if m.gpu_memory_pool),
                 },
                 "memory": {
                     "current_mb": (
@@ -317,19 +310,13 @@ class OptimizationPerformanceMonitor:
                 },
                 "latency": {
                     "avg_ms": (
-                        self._metrics_history[-1].avg_generation_time_ms
-                        if self._metrics_history
-                        else 0
+                        self._metrics_history[-1].avg_generation_time_ms if self._metrics_history else 0
                     ),
                     "min_ms": (
-                        self._metrics_history[-1].min_generation_time_ms
-                        if self._metrics_history
-                        else 0
+                        self._metrics_history[-1].min_generation_time_ms if self._metrics_history else 0
                     ),
                     "max_ms": (
-                        self._metrics_history[-1].max_generation_time_ms
-                        if self._metrics_history
-                        else 0
+                        self._metrics_history[-1].max_generation_time_ms if self._metrics_history else 0
                     ),
                 },
                 "history_size": len(self._metrics_history),

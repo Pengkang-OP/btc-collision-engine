@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 测试 Windows 权限错误重试机制
 """
 
+import json
 import os
 import sys
-import json
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -65,7 +64,7 @@ class TestWindowsPermissionRetry(unittest.TestCase):
         self.assertTrue(os.path.exists(history_file))
 
         # 验证数据已保存
-        with open(history_file, "r", encoding="utf-8") as f:
+        with open(history_file, encoding="utf-8") as f:
             history = json.load(f)
         self.assertEqual(len(history), 1)
         self.assertEqual(history[0]["speed"], 100.0)
@@ -102,7 +101,7 @@ class TestWindowsPermissionRetry(unittest.TestCase):
         self.assertTrue(os.path.exists(current_file))
 
         # 验证数据已保存
-        with open(current_file, "r", encoding="utf-8") as f:
+        with open(current_file, encoding="utf-8") as f:
             data = json.load(f)
         self.assertIn("performance", data)
         self.assertEqual(data["performance"]["speed"], 200.0)
@@ -135,7 +134,7 @@ class TestWindowsPermissionRetry(unittest.TestCase):
         history_file = os.path.join(self.test_dir, "history_data.json")
         self.assertTrue(os.path.exists(history_file))
 
-        with open(history_file, "r", encoding="utf-8") as f:
+        with open(history_file, encoding="utf-8") as f:
             history = json.load(f)
         self.assertEqual(len(history), 1)
         self.assertEqual(history[0]["speed"], 300.0)

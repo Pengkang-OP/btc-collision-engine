@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 GPU实际性能测试 - 验证crypto_backend迁移效果
 
@@ -9,9 +8,10 @@ GPU实际性能测试 - 验证crypto_backend迁移效果
 3. 检查GPU引擎初始化是否正确使用crypto_backend
 """
 
-import time
 import sys
+import time
 from pathlib import Path
+
 import pytest
 
 pytestmark = pytest.mark.gpu
@@ -29,7 +29,7 @@ def test_crypto_backend_in_gpu():
     # 1. 测试crypto_backend可用性
     print("\n[1/4] 测试crypto_backend可用性...")
     try:
-        from src.core.crypto_backend import crypto_manager, BackendType
+        from src.core.crypto_backend import BackendType, crypto_manager
 
         backend = crypto_manager.current_backend
         print(f"  ✅ 当前后端: {backend.name}")
@@ -187,7 +187,7 @@ def generate_performance_report():
     from src.core.crypto_backend import crypto_manager
 
     # 获取当前后端
-    crypto_manager.current_backend
+    _ = crypto_manager.current_backend
 
     print("""
 🎯 crypto_backend迁移成果:

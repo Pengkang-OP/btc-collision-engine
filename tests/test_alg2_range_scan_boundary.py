@@ -8,13 +8,14 @@
 5. 范围切分不重叠验证
 """
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
 
@@ -368,8 +369,9 @@ class TestCLIValidationBoundary:
 
     def test_range_start_greater_equal_end_rejected(self):
         """start >= end 被拒绝"""
-        from src.cli.validation import validate_args
         from unittest.mock import Mock
+
+        from src.cli.validation import validate_args
 
         mock_args = Mock()
         mock_args.mode = "range"
@@ -402,8 +404,9 @@ class TestCLIValidationBoundary:
 
     def test_range_start_less_than_one_rejected(self):
         """start < 1 被拒绝"""
-        from src.cli.validation import validate_args
         from unittest.mock import Mock
+
+        from src.cli.validation import validate_args
 
         mock_args = Mock()
         mock_args.mode = "range"
@@ -436,8 +439,9 @@ class TestCLIValidationBoundary:
 
     def test_range_valid_boundary_accepted(self):
         """start=1 end=2 合法范围被接受"""
-        from src.cli.validation import validate_args
         from unittest.mock import Mock
+
+        from src.cli.validation import validate_args
 
         mock_args = Mock()
         mock_args.mode = "range"

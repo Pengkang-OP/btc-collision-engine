@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 v3.3.0性能优化测试 (历史版本，仅供参考)
 
@@ -13,9 +12,9 @@ v3.3.0性能优化测试 (历史版本，仅供参考)
 版本: v3.3.0 (历史版本)
 """
 
+import os
 import sys
 import time
-import os
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

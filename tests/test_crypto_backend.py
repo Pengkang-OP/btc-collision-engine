@@ -1,19 +1,26 @@
 """crypto_backend加密后端管理器测试"""
 
-import unittest
 import os
 import sys
+import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.core.crypto_backend import (
-    crypto_manager, BackendType,
-    PurePythonBackend, OpenSSLBackend, CoincurveBackend, ECDSABackend,
-    CryptoBackendManager,
-    get_crypto_backend, generate_public_key, set_crypto_backend, get_available_backends,
-)  # noqa: E402
+from unittest.mock import MagicMock, PropertyMock, patch  # noqa: E402
 
-from unittest.mock import patch, PropertyMock, MagicMock  # noqa: E402
+from src.core.crypto_backend import (
+    BackendType,
+    CoincurveBackend,
+    CryptoBackendManager,
+    ECDSABackend,
+    OpenSSLBackend,
+    PurePythonBackend,
+    crypto_manager,
+    generate_public_key,
+    get_available_backends,
+    get_crypto_backend,
+    set_crypto_backend,
+)  # noqa: E402
 
 
 class TestPurePythonBackendDirect(unittest.TestCase):
@@ -467,6 +474,7 @@ class TestCoincurveFallbackToPurePython(unittest.TestCase):
     def test_scalar_multiply_fallback_when_publickey_fails(self):
         """P2-4: coincurve.PublicKey 构造失败时回退到 PurePython"""
         import coincurve
+
         from src.core.secp256k1 import Secp256k1
         backend = CoincurveBackend()
         self.assertTrue(backend._available)
@@ -480,6 +488,7 @@ class TestCoincurveFallbackToPurePython(unittest.TestCase):
     def test_scalar_multiply_fallback_consistency(self):
         """P2-5: Coincurve 回退结果与 PurePython 一致"""
         import coincurve
+
         from src.core.secp256k1 import Secp256k1
         k = 999888777
         # PurePython 直接计算

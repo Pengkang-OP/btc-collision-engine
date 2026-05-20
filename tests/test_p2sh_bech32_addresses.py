@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 P2SH和Bech32地址生成专项测试
 
 测试BL-3/BR-1修复：添加P2SH和Bech32地址格式支持
 """
 
-import pytest
 import hashlib
-from src.core.bitcoin_key_validator import BitcoinKeyValidator, AddressType, KeyValidationConstants
+
+import pytest
+
 from src.core.base58 import Base58
+from src.core.bitcoin_key_validator import AddressType, BitcoinKeyValidator, KeyValidationConstants
 
 
 class TestP2SHAddressGeneration:

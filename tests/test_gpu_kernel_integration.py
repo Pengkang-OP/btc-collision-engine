@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """GPU内核集成测试
 
 测试GPU OpenCL内核的正确性和性能：
@@ -8,9 +7,10 @@
 4. 内核参数验证测试
 """
 
-import pytest
 import logging
 from unittest.mock import patch
+
+import pytest
 
 logger = logging.getLogger(__name__)
 

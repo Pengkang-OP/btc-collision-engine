@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """MonitorConfig配置对象单元测试
 
 测试src.monitoring.monitor_config模块的所有功能。
@@ -13,14 +12,16 @@
 - update/to_dict/from_dict方法
 """
 
-import pytest
 import logging
+
+import pytest
+
 from src.monitoring.monitor_config import (
-    MonitorConfig,
     DEFAULT_CONFIG,
-    PRODUCTION_CONFIG,
     DEVELOPMENT_CONFIG,
+    PRODUCTION_CONFIG,
     TESTING_CONFIG,
+    MonitorConfig,
 )
 
 

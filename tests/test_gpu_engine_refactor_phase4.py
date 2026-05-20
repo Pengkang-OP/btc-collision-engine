@@ -13,11 +13,12 @@
 创建日期: 2026-04-30
 """
 
-import pytest
-import time
 import threading
+import time
+from typing import Any
 from unittest.mock import MagicMock
-from typing import Set, Dict, Any
+
+import pytest
 
 pytestmark = pytest.mark.gpu
 
@@ -25,12 +26,12 @@ pytestmark = pytest.mark.gpu
 
 
 @pytest.fixture
-def sample_targets() -> Set[str]:
+def sample_targets() -> set[str]:
     return {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", "1HLoD9E4SDFFPDiYfNYnkBLQ85Y51J3Zb1"}
 
 
 @pytest.fixture
-def sample_config() -> Dict[str, Any]:
+def sample_config() -> dict[str, Any]:
     return {
         "checkpoint_interval": 5,
         "dedup_enabled": False,
@@ -40,7 +41,7 @@ def sample_config() -> Dict[str, Any]:
 
 
 @pytest.fixture
-def sample_config_full() -> Dict[str, Any]:
+def sample_config_full() -> dict[str, Any]:
     return {
         "checkpoint_interval": 5,
         "dedup_enabled": True,
@@ -978,7 +979,7 @@ class TestModuleImports:
             "core.py",
         )
         core_path = os.path.abspath(core_path)
-        with open(core_path, "r", encoding="utf-8") as f:
+        with open(core_path, encoding="utf-8") as f:
             content = f.read()
         # Phase 4 TODO 应该已经全部移除
         assert "# TODO: Phase 4" not in content, "core.py 中还有未处理的 Phase 4 TODO"

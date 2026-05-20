@@ -1,6 +1,6 @@
 """碰撞引擎模块包"""
 
-from typing import Any, Dict, Optional, Set
+from typing import Any
 
 from .base_engine import BaseCollisionEngine
 from .bloom_deduplication_filter import BloomDeduplicationFilter
@@ -160,10 +160,7 @@ def create_collision_engine(
         logger.warning("目标地址集合为空，碰撞将无意义")
 
     # 合并配置: kwargs优先级最高，config次之
-    if config:
-        merged_kwargs = _merge_config_with_kwargs(config, kwargs)
-    else:
-        merged_kwargs = kwargs.copy()
+    merged_kwargs = _merge_config_with_kwargs(config, kwargs) if config else kwargs.copy()
 
     # auto模式: 检查GPU可用性自动选择
     if mode == "auto":
@@ -174,7 +171,8 @@ def create_collision_engine(
                 import logging as _log
 
                 _log.getLogger(__name__).info(
-                    "[GPU提示] pyopencl 未安装，已自动切换到 CPU 模式。\n  如需 GPU 加速： pip install pyopencl"
+                    "[GPU提示] pyopencl 未安装，已自动切换到 CPU 模式。\n"
+                    "  如需 GPU 加速： pip install pyopencl"
                 )
             elif not GPUCollisionEngine.is_gpu_available():
                 import logging as _log
@@ -198,7 +196,7 @@ def create_collision_engine(
                 raise RuntimeError(
                     "GPU不可用: 未检测到可用的 OpenCL 设备。\n"
                     "  请确认：\n"
-                    "    1. GPU 驱动已正确安装（Intel: https://www.intel.com/opencl, NVIDIA: CUDA驱动包）\n"
+                    "  1. GPU驱动已安装（Intel: intel.com/opencl, NVIDIA: CUDA驱动包）\n"
                     "    2. OpenCL 运行时已安装\n"
                     "    3. 运行 `python scripts/diagnose.py` 获取详细说明"
                 )
@@ -207,9 +205,7 @@ def create_collision_engine(
             # S1修复: GPU初始化失败时自动fallback到CPU引擎
             import logging as _gpu_fallback_log
 
-            _gpu_fallback_log.getLogger(__name__).warning(
-                "GPU初始化失败，自动降级到CPU模式: %s", e
-            )
+            _gpu_fallback_log.getLogger(__name__).warning("GPU初始化失败，自动降级到CPU模式: %s", e)
             return KeyCollisionEngine(targets=targets, **merged_kwargs)
 
     # multi_gpu模式: 强制使用多GPU

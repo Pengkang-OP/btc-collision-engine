@@ -43,9 +43,7 @@ class GPUResultProcessor:
 
     # ========== 匹配回调安全调用 ==========
 
-    def safe_invoke_match_callback(
-        self, private_key: bytes, address: str, wif: str
-    ) -> bool:
+    def safe_invoke_match_callback(self, private_key: bytes, address: str, wif: str) -> bool:
         """安全调用匹配回调函数，提供超时控制与异常隔离
 
         使用统一的 invoke_with_timeout 工具实现跨平台超时保护。
@@ -76,9 +74,7 @@ class GPUResultProcessor:
 
     # ========== 匹配结果处理 ==========
 
-    def process_matches(
-        self, private_keys: bytes, matches: list[dict[str, int]]
-    ) -> None:
+    def process_matches(self, private_keys: bytes, matches: list[dict[str, int]]) -> None:
         """处理 GPU 匹配结果（常规模式：完整私钥数组）
 
         从 GPUCollisionEngine._process_gpu_matches 提取。
@@ -101,23 +97,16 @@ class GPUResultProcessor:
             key_idx = match["key_index"]
             # S-2修复: 添加边界检查，防止越界访问
             if key_idx * 32 + 32 > len(private_keys):
-                logger.warning(
-                    f"私钥索引越界: key_idx={key_idx}, "
-                    f"private_keys长度={len(private_keys)}"
-                )
+                logger.warning(f"私钥索引越界: key_idx={key_idx}, private_keys长度={len(private_keys)}")
                 continue
             private_key = private_keys[key_idx * 32 : (key_idx + 1) * 32]
-            if (
-                engine.dedup_filter is not None
-                and not engine.dedup_filter.check_and_add(private_key)
-            ):
+            if engine.dedup_filter is not None and not engine.dedup_filter.check_and_add(private_key):
                 continue
             target_idx = match["target_index"]
             # G1修复: 检查目标索引是否越界
             if target_idx >= len(engine._device_manager.target_list):
                 logger.warning(
-                    f"目标索引越界: {target_idx} >= "
-                    f"{len(engine._device_manager.target_list)}，跳过匹配"
+                    f"目标索引越界: {target_idx} >= {len(engine._device_manager.target_list)}，跳过匹配"
                 )
                 continue
             address = engine._device_manager.target_list[target_idx]
@@ -137,13 +126,9 @@ class GPUResultProcessor:
 
             # 向后兼容: 调用传统回调
             if not self.safe_invoke_match_callback(private_key, address, wif):
-                logger.warning(
-                    "GPU匹配回调处理失败，跳过地址: [MASKED_ADDRESS]"
-                )
+                logger.warning("GPU匹配回调处理失败，跳过地址: [MASKED_ADDRESS]")
 
-    def process_matches_prng(
-        self, seed: bytes, matches: list[dict[str, int]]
-    ) -> None:
+    def process_matches_prng(self, seed: bytes, matches: list[dict[str, int]]) -> None:
         """处理 GPU 匹配结果（PRNG 模式：种子+索引推导私钥）
 
         从 GPUCollisionEngine._process_gpu_matches_prng 提取。
@@ -167,22 +152,16 @@ class GPUResultProcessor:
             try:
                 key_int = (seed_int + key_idx) % (2**256)
             except (OverflowError, ValueError):
-                logger.warning(
-                    f"PRNG模式key_idx计算失败: key_idx={key_idx}, 跳过匹配"
-                )
+                logger.warning(f"PRNG模式key_idx计算失败: key_idx={key_idx}, 跳过匹配")
                 continue
             private_key = key_int.to_bytes(32, "big")
-            if (
-                engine.dedup_filter is not None
-                and not engine.dedup_filter.check_and_add(private_key)
-            ):
+            if engine.dedup_filter is not None and not engine.dedup_filter.check_and_add(private_key):
                 continue
             target_idx = match["target_index"]
             # G1修复: 检查目标索引是否越界
             if target_idx >= len(engine._device_manager.target_list):
                 logger.warning(
-                    f"目标索引越界: {target_idx} >= "
-                    f"{len(engine._device_manager.target_list)}，跳过匹配"
+                    f"目标索引越界: {target_idx} >= {len(engine._device_manager.target_list)}，跳过匹配"
                 )
                 continue
             address = engine._device_manager.target_list[target_idx]
@@ -202,6 +181,4 @@ class GPUResultProcessor:
 
             # 向后兼容: 调用传统回调
             if not self.safe_invoke_match_callback(private_key, address, wif):
-                logger.warning(
-                    "GPU匹配回调处理失败，跳过地址: [MASKED_ADDRESS]"
-                )
+                logger.warning("GPU匹配回调处理失败，跳过地址: [MASKED_ADDRESS]")

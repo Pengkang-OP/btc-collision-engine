@@ -1,13 +1,12 @@
-# -*- coding: utf-8 -*-
 """
 SecureKeyManager内存锁定功能测试
 
 验证P1-1修复：内存锁定功能完整实现
 """
 
-import unittest
-import sys
 import os
+import sys
+import unittest
 from unittest.mock import Mock, patch
 
 # 添加项目根目录到路径

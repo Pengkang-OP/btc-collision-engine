@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """GPU碰撞引擎实时监控工具"""
 
-import sys
 import json
+import sys
 from pathlib import Path
 
 # 添加项目根目录
@@ -17,7 +17,7 @@ def read_monitoring_data():
         return None
 
     try:
-        with open(monitoring_file, 'r', encoding='utf-8') as f:
+        with open(monitoring_file, encoding='utf-8') as f:
             return json.load(f)
     except Exception as e:
         print(f"[ERROR] 读取监控数据失败: {e}")
@@ -32,9 +32,9 @@ def read_error_log():
         return []
 
     try:
-        with open(error_file, 'r', encoding='utf-8') as f:
+        with open(error_file, encoding='utf-8') as f:
             return json.load(f)
-    except (IOError, json.JSONDecodeError):
+    except (OSError, json.JSONDecodeError):
         return []
 
 
@@ -46,7 +46,7 @@ def analyze_logs():
         return {"status": "日志文件不存在"}
 
     try:
-        with open(log_file, 'r', encoding='utf-8', errors='ignore') as f:
+        with open(log_file, encoding='utf-8', errors='ignore') as f:
             lines = f.readlines()
 
         # 获取最后50行
@@ -221,7 +221,7 @@ def main():
     print("="*80)
     print()
 
-    pass_count = sum(1 for _, status, _ in health_checks if status is True)
+    sum(1 for _, status, _ in health_checks if status is True)
     fail_count = sum(1 for _, status, _ in health_checks if status is False)
 
     if fail_count == 0:

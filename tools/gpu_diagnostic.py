@@ -10,9 +10,9 @@ Intel Arc A770 GPU诊断工具
 5. 提供修复建议
 """
 
+import platform
 import sys
 import time
-import platform
 from pathlib import Path
 
 # 添加项目根目录到路径
@@ -68,12 +68,12 @@ def check_gpu_hardware():
 
             # 检查是否为Intel Arc A770
             if 'Arc A770' in device.get('name', ''):
-                print(f"  [INFO] 检测到Intel Arc A770")
-                print(f"  [INFO] 推荐配置:")
-                print(f"    - 批次大小: 262,144")
-                print(f"    - 内存池: 启用")
-                print(f"    - 最大显存: 512MB")
-                print(f"    - uint32 workaround: 已启用")
+                print("  [INFO] 检测到Intel Arc A770")
+                print("  [INFO] 推荐配置:")
+                print("    - 批次大小: 262,144")
+                print("    - 内存池: 启用")
+                print("    - 最大显存: 512MB")
+                print("    - uint32 workaround: 已启用")
 
         return True
 

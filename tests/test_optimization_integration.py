@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 集成测试: 验证优化模块在主引擎中的效果
 测试KeyCollisionEngine使用优化版地址生成器的性能
 """
 
-import sys
 import io
+import sys
 
 # 修复Windows编码（Python 3.7+: reconfigure 安全无副作用）
 if sys.platform == "win32":
@@ -14,8 +13,8 @@ if sys.platform == "win32":
     else:
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
-import time
 import secrets
+import time
 from pathlib import Path
 
 # 添加项目根目录

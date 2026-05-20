@@ -1,11 +1,11 @@
 """CollisionStats 单元测试 - 线程安全、snapshot、add_match 不存私钥"""
 
 import hashlib
+import os
+import sys
 import threading
 import time
 import unittest
-import os
-import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

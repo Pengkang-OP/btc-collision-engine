@@ -7,23 +7,23 @@
 - gpu_config.py (GPU配置 dataclass)
 """
 
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 # ============================================================================
 # 1. GPU Constants 测试
 # ============================================================================
-
 from src.gpu.constants import (
-    PER_KEY_MEMORY_BYTES,
-    BYTES_PER_MB,
     BATCH_SIZE_ALIGNMENT,
-    MIN_BATCH_SIZE,
-    MAX_BATCH_SIZE,
+    BYTES_PER_MB,
     DEFAULT_BATCH_SIZE,
-    MEMORY_EFFICIENCY_MIN,
-    MEMORY_EFFICIENCY_MAX,
     DEFAULT_MEMORY_EFFICIENCY,
+    MAX_BATCH_SIZE,
+    MEMORY_EFFICIENCY_MAX,
+    MEMORY_EFFICIENCY_MIN,
+    MIN_BATCH_SIZE,
+    PER_KEY_MEMORY_BYTES,
     align_batch_size,
     clamp_batch_size,
 )
@@ -111,7 +111,7 @@ class TestClampBatchSize:
 # 2. GPUKernelProtocol 测试
 # ============================================================================
 
-from src.gpu.kernel_protocol import GPUKernelProtocol, GPUKernelFactory  # noqa: E402
+from src.gpu.kernel_protocol import GPUKernelFactory, GPUKernelProtocol  # noqa: E402
 
 
 class TestGPUKernelProtocol:
@@ -227,8 +227,8 @@ class TestGPUKernelFactory:
 # ============================================================================
 
 from src.gpu.gpu_config import (  # noqa: E402
-    GPURecoveryConfig,
     DataMonitorConfig,
+    GPURecoveryConfig,
     MultiGPUConfig,
     WorkerConfig,
 )

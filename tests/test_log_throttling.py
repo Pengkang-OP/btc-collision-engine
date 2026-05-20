@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """log_throttling.py 模块单元测试
 
 测试 RateLimitedLogger 频率限制日志记录器 和 rate_limited_log 装饰器。
@@ -9,10 +8,10 @@ from unittest.mock import patch
 
 from src.utils.log_throttling import (
     RateLimitedLogger,
-    rate_limited_log,
     collision_logger,
-    gpu_logger,
     data_logger,
+    gpu_logger,
+    rate_limited_log,
 )
 
 

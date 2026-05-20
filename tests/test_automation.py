@@ -2,20 +2,19 @@
 src/automation 模块测试
 """
 
-import pytest
 from datetime import datetime
 
 from src.automation.models import (
-    SystemStatus,
-    Severity,
-    Issue,
     AnalysisReport,
+    AuditResult,
+    AuditRule,
+    Issue,
+    LoopState,
+    Severity,
+    SystemStatus,
     TestCase,
     TestResult,
     TestSuiteResult,
-    AuditRule,
-    AuditResult,
-    LoopState,
 )
 
 

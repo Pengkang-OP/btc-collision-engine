@@ -7,7 +7,7 @@
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # 添加项目根目录到路径
 project_root = Path(__file__).parent.parent
@@ -22,9 +22,9 @@ class ConfigFixer:
     def __init__(self):
         self.schema = ConfigManager.CONFIG_SCHEMA
         self.defaults = ConfigManager.DEFAULT_CONFIG
-        self.fixes_applied: List[str] = []
+        self.fixes_applied: list[str] = []
 
-    def find_missing_fields(self) -> List[Dict[str, str]]:
+    def find_missing_fields(self) -> list[dict[str, str]]:
         """查找缺失的配置字段"""
         missing_fields = []
 

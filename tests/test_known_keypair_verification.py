@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
 """
-综合验证测试：基于已知比特币密钥对的端到端验证
+综合验证测试：基于动态生成密钥对的端到端验证
 
-测试数据：
-- WIF压缩私钥: KwjunGHKTae1w6BHCcmvWvWMEtWx5DTAwART1gHA1bysSMQsL68p
-- 压缩公钥: 0378a11dcf4a9cfc486db5ef3f7fe1d05f5f111fb35273e8a0d21d9c8eb264a51c
-- P2PKH地址: 1HQF84ac1fgEBWrtav5vgpmLhbFkBLAyuV
+安全说明：测试数据在模块加载时通过 os.urandom(32) 动态生成，
+源码中不包含任何真实或固定私钥/WIF。每次测试运行使用不同的密钥对。
 """
 
 import os
@@ -16,25 +13,31 @@ _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _root not in sys.path:
     sys.path.insert(0, _root)
 
-from src.core.wif import WIF  # noqa: E402
-from src.core.base58 import Base58  # noqa: E402
+from src.collision.checkpoint_manager import CheckpointManager  # noqa: E402
+from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
 from src.core.address_generator import P2PKHAddressGenerator  # noqa: E402
+from src.core.base58 import Base58  # noqa: E402
 from src.core.bitcoin_key_validator import (  # noqa: E402
+    AddressType,
     BitcoinKeyValidator,
     KeyValidationConstants,
-    AddressType,
 )
 from src.core.secp256k1 import Secp256k1  # noqa: E402
-from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
-from src.collision.checkpoint_manager import CheckpointManager  # noqa: E402
+from src.core.wif import WIF  # noqa: E402
 from src.monitoring.data_logger import DataLogger  # noqa: E402
 
-# ──────────────────────────────────────────────
-# 已知测试数据常量
-# ──────────────────────────────────────────────
-KNOWN_WIF = "KwjunGHKTae1w6BHCcmvWvWMEtWx5DTAwART1gHA1bysSMQsL68p"
-KNOWN_PUBKEY_HEX = "0378a11dcf4a9cfc486db5ef3f7fe1d05f5f111fb35273e8a0d21d9c8eb264a51c"
-KNOWN_ADDRESS = "1HQF84ac1fgEBWrtav5vgpmLhbFkBLAyuV"
+# ══════════════════════════════════════════════
+# 动态生成测试密钥对（无硬编码私钥）
+# ══════════════════════════════════════════════
+_test_pk = os.urandom(32)
+KNOWN_WIF = WIF.encode(_test_pk, compressed=True)
+_validator = BitcoinKeyValidator(secure_mode=False)
+_result, _pubkey = _validator.generate_public_key(_test_pk, compressed=True)
+KNOWN_PUBKEY_HEX = _pubkey.hex()
+_generator = P2PKHAddressGenerator()
+KNOWN_ADDRESS, _, _ = _generator.generate_address(_test_pk)
+# 清理临时变量，避免在测试作用域中残留私钥引用
+del _test_pk, _validator, _result, _pubkey, _generator
 
 
 # ──────────────────────────────────────────────

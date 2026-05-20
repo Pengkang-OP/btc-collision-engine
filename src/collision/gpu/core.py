@@ -109,9 +109,7 @@ class CollisionCore(ICollisionCore):
         self.checkpoint_interval = self.config.get("checkpoint_interval", 30)
         self.dedup_enabled = self.config.get("dedup_enabled", False)
         self.checkpoint_enabled = self.config.get("checkpoint_enabled", False)
-        self.progress_interval = self.config.get(
-            "progress_interval", 1.0
-        )  # Phase 4: 进度回调间隔(秒)
+        self.progress_interval = self.config.get("progress_interval", 1.0)  # Phase 4: 进度回调间隔(秒)
 
         logger.debug("CollisionCore 初始化完成")
 
@@ -536,10 +534,7 @@ class CollisionCore(ICollisionCore):
         if current_time - self._last_progress_time >= self.progress_interval:
             self._last_progress_time = current_time
             try:
-                if hasattr(self.stats, "snapshot"):
-                    stats_snapshot = self.stats.snapshot()
-                else:
-                    stats_snapshot = self.stats
+                stats_snapshot = self.stats.snapshot() if hasattr(self.stats, "snapshot") else self.stats
                 invoke_with_timeout(
                     self.on_progress,
                     args=(stats_snapshot,),

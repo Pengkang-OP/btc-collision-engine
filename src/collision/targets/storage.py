@@ -54,11 +54,7 @@ def validate_bitcoin_address(address: str) -> bool:
         return False
 
     # 匹配地址模式
-    for _pattern_name, pattern in ADDRESS_PATTERNS.items():
-        if pattern.match(address):
-            return True
-
-    return False
+    return any(pattern.match(address) for _pattern_name, pattern in ADDRESS_PATTERNS.items())
 
 
 class AddressStorage:
@@ -541,9 +537,7 @@ class AddressStorage:
                         if validation_result.valid:
                             valid_addresses.add(addr)
                         else:
-                            invalid_addresses.append(
-                                {"address": addr, "error": validation_result.error}
-                            )
+                            invalid_addresses.append({"address": addr, "error": validation_result.error})
 
                         # 调用进度回调
                         if progress_callback:
@@ -608,9 +602,7 @@ class AddressStorage:
                 addresses = [str(addr).strip() for addr in data if str(addr).strip()]
             elif isinstance(data, dict):
                 if "addresses" in data:
-                    addresses = [
-                        str(addr).strip() for addr in data["addresses"] if str(addr).strip()
-                    ]
+                    addresses = [str(addr).strip() for addr in data["addresses"] if str(addr).strip()]
                 elif "targets" in data:
                     addresses = [str(addr).strip() for addr in data["targets"] if str(addr).strip()]
                 else:

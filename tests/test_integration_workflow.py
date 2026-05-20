@@ -8,30 +8,30 @@
 4. 模拟完整碰撞引擎运行周期
 """
 
-import time
 import tempfile
+import time
+
 import pytest
 
-from src.log_engine.log_collector import LogCollector
-from src.log_engine.log_processor import LogProcessor, SensitiveDataFilter
-from src.log_engine.log_storage import LogStorage
-from src.log_engine.events import LogEventType
-from src.log_engine.log_manager import LogManager
-
+from src.collision.collision_stats import CollisionStats
 from src.collision.event_bus import EventBus, reset_event_bus
 from src.collision.events import (
-    EngineStartEvent,
-    EngineProgressEvent,
-    EngineMatchEvent,
-    EngineErrorEvent,
     EngineCompleteEvent,
+    EngineErrorEvent,
+    EngineMatchEvent,
+    EngineProgressEvent,
+    EngineStartEvent,
     EventType,
 )
 from src.collision.observers import (
     BaseCollisionObserver,
     ObserverManager,
 )
-from src.collision.collision_stats import CollisionStats
+from src.log_engine.events import LogEventType
+from src.log_engine.log_collector import LogCollector
+from src.log_engine.log_manager import LogManager
+from src.log_engine.log_processor import LogProcessor, SensitiveDataFilter
+from src.log_engine.log_storage import LogStorage
 
 # ============================================================================
 # Fixtures

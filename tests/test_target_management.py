@@ -1,15 +1,17 @@
 """目标地址管理模块单元测试"""
 
-import pytest
 import os
-import tempfile
 import sys
+import tempfile
 from unittest.mock import patch
-from src.collision.targets.resolver import TargetResolver
+
+import pytest
+
 from src.collision.targets.cache import AddressCache
-from src.collision.targets.validator import AddressBatchValidator
 from src.collision.targets.matcher import AddressMatcher
+from src.collision.targets.resolver import TargetResolver
 from src.collision.targets.storage import AddressStorage
+from src.collision.targets.validator import AddressBatchValidator
 from src.utils.encoding_utils import EncodingUtils
 
 
@@ -446,7 +448,7 @@ class TestEncodingCompatibility:
     def test_detect_encoding(self):
         """测试编码检测"""
         with tempfile.NamedTemporaryFile(mode="wb", suffix=".txt", delete=False) as f:
-            content = "测试内容".encode("utf-8")
+            content = "测试内容".encode()
             f.write(content)
             temp_path = f.name
 
@@ -551,7 +553,7 @@ class TestEncodingCompatibility:
     def test_none_max_sample_size(self):
         """测试max_sample_size为None时使用默认值"""
         with tempfile.NamedTemporaryFile(mode="wb", suffix=".txt", delete=False) as f:
-            content = "测试内容".encode("utf-8")
+            content = "测试内容".encode()
             f.write(content)
             temp_path = f.name
 

@@ -11,11 +11,11 @@
 - 大范围和大值处理
 """
 
-import pytest
 from unittest.mock import MagicMock, patch
 
-from src.gpu.search_modes.range_scan_search import RangeScanSearchMode
+import pytest
 
+from src.gpu.search_modes.range_scan_search import RangeScanSearchMode
 
 # ============================================================================
 # 辅助函数
@@ -35,8 +35,8 @@ def _make_engine_stub(**kwargs):
     engine.stats.add_match = MagicMock()
     engine.stats.snapshot = MagicMock(return_value={})
     engine.on_match = kwargs.get("on_match", MagicMock())
-    engine.on_progress = kwargs.get("on_progress", None)
-    engine.on_complete = kwargs.get("on_complete", None)
+    engine.on_progress = kwargs.get("on_progress")
+    engine.on_complete = kwargs.get("on_complete")
     engine._target_list = kwargs.get("_target_list", ["target_addr"])
     engine.batch_size = kwargs.get("batch_size", 1000)
     engine._batch_size = kwargs.get("_batch_size", 1000)

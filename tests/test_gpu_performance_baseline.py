@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """GPU性能回归测试基线
 
 建立GPU性能的基准线，用于：
@@ -7,13 +6,13 @@
 3. 监控性能趋势
 """
 
-import pytest
-import time
 import json
 import logging
-from pathlib import Path
-from typing import Dict
+import time
 from datetime import datetime
+from pathlib import Path
+
+import pytest
 
 logger = logging.getLogger(__name__)
 
@@ -28,10 +27,10 @@ class PerformanceBaseline:
         self.baseline_file = Path(baseline_file)
         self.baseline_data = self._load_baseline()
 
-    def _load_baseline(self) -> Dict:
+    def _load_baseline(self) -> dict:
         """加载基线数据"""
         if self.baseline_file.exists():
-            with open(self.baseline_file, "r") as f:
+            with open(self.baseline_file) as f:
                 return json.load(f)
         return {}
 
@@ -42,7 +41,7 @@ class PerformanceBaseline:
             json.dump(self.baseline_data, f, indent=2, ensure_ascii=False)
         logger.info(f"性能基线已保存: {self.baseline_file}")
 
-    def record(self, test_name: str, metrics: Dict):
+    def record(self, test_name: str, metrics: dict):
         """记录性能数据"""
         if test_name not in self.baseline_data:
             self.baseline_data[test_name] = []
@@ -233,7 +232,7 @@ class TestPerformanceReporting:
         # 加载数据
         assert baseline_file.exists()
 
-        with open(baseline_file, "r") as f:
+        with open(baseline_file) as f:
             data = json.load(f)
 
         assert "test" in data
@@ -251,7 +250,7 @@ class TestPerformanceReporting:
         test_baseline.save_baseline()
 
         # 加载检查
-        with open(baseline_file, "r") as f:
+        with open(baseline_file) as f:
             data = json.load(f)
 
         # 应该只保留最近20次

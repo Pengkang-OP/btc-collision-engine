@@ -72,9 +72,7 @@ class GPUMemoryCalculator:
         # 5. 内核执行临时开销（20%，仅对可变大小缓冲区计算）
         overhead_bytes = int(match_flags_bytes * GPUMemoryCalculator.KERNEL_OVERHEAD_RATIO)
 
-        total_bytes = (
-            seed_buf_bytes + precomp_bytes + match_flags_bytes + targets_bytes + overhead_bytes
-        )
+        total_bytes = seed_buf_bytes + precomp_bytes + match_flags_bytes + targets_bytes + overhead_bytes
         return total_bytes
 
     @staticmethod
@@ -162,7 +160,7 @@ class GPUMemoryCalculator:
                 'total_mb':         总计,
             }
         """
-        bpMB = GPUMemoryCalculator.BYTES_PER_MB
+        bp_mb = GPUMemoryCalculator.BYTES_PER_MB
 
         # PRNG 模式：固定缓冲区（seed_buf + precomp_table）
         seed_buf_bytes = GPUMemoryCalculator.SEED_BUF_SIZE
@@ -170,17 +168,15 @@ class GPUMemoryCalculator:
         match_flags_bytes = batch_size * GPUMemoryCalculator.MATCH_FLAG_SIZE
         targets_bytes = num_targets * GPUMemoryCalculator.HASH160_SIZE
         overhead_bytes = int(match_flags_bytes * GPUMemoryCalculator.KERNEL_OVERHEAD_RATIO)
-        total_bytes = (
-            seed_buf_bytes + precomp_bytes + match_flags_bytes + targets_bytes + overhead_bytes
-        )
+        total_bytes = seed_buf_bytes + precomp_bytes + match_flags_bytes + targets_bytes + overhead_bytes
 
         breakdown = {
-            "seed_buf_mb": seed_buf_bytes / bpMB,
-            "precomp_table_mb": precomp_bytes / bpMB,
-            "match_flags_mb": match_flags_bytes / bpMB,
-            "targets_mb": targets_bytes / bpMB,
-            "overhead_mb": overhead_bytes / bpMB,
-            "total_mb": total_bytes / bpMB,
+            "seed_buf_mb": seed_buf_bytes / bp_mb,
+            "precomp_table_mb": precomp_bytes / bp_mb,
+            "match_flags_mb": match_flags_bytes / bp_mb,
+            "targets_mb": targets_bytes / bp_mb,
+            "overhead_mb": overhead_bytes / bp_mb,
+            "total_mb": total_bytes / bp_mb,
         }
 
         logger.debug(
@@ -208,13 +204,13 @@ class GPUMemoryCalculator:
         Returns:
             显存需求（MB，浮点数）
         """
-        bpMB = GPUMemoryCalculator.BYTES_PER_MB
+        bp_mb = GPUMemoryCalculator.BYTES_PER_MB
 
         # PRNG 模式：seed_buf（固定32字节）+ precomp_table（固定1984字节）+ match_flags（可变）
-        seed_buf_mb = GPUMemoryCalculator.SEED_BUF_SIZE / bpMB
-        precomp_mb = GPUMemoryCalculator.PRECOMP_TABLE_SIZE / bpMB
-        match_flags_mb = (num_keys * GPUMemoryCalculator.MATCH_FLAG_SIZE) / bpMB
-        targets_mb = len(hash160_bytes) / bpMB if hash160_bytes else 0.0
+        seed_buf_mb = GPUMemoryCalculator.SEED_BUF_SIZE / bp_mb
+        precomp_mb = GPUMemoryCalculator.PRECOMP_TABLE_SIZE / bp_mb
+        match_flags_mb = (num_keys * GPUMemoryCalculator.MATCH_FLAG_SIZE) / bp_mb
+        targets_mb = len(hash160_bytes) / bp_mb if hash160_bytes else 0.0
         overhead_mb = match_flags_mb * GPUMemoryCalculator.KERNEL_OVERHEAD_RATIO
 
         total_mb = seed_buf_mb + precomp_mb + match_flags_mb + targets_mb + overhead_mb

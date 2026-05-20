@@ -12,11 +12,11 @@
 - 边界值：重复切换、空检查点、无 checkpoint_mgr
 """
 
+from unittest.mock import MagicMock
+
 import pytest
-from unittest.mock import MagicMock, patch
 
 from src.gpu.search_mode_coordinator import SearchModeCoordinator
-
 
 # ============================================================================
 # 辅助函数
@@ -26,7 +26,7 @@ def _make_engine_stub(**kwargs):
     """创建 GPUCollisionEngine stub"""
     engine = MagicMock()
     engine.config = kwargs.get("config", {})
-    engine.checkpoint_mgr = kwargs.get("checkpoint_mgr", None)
+    engine.checkpoint_mgr = kwargs.get("checkpoint_mgr")
     engine._current_position = kwargs.get("_current_position", 0)
     engine.stats = MagicMock()
     engine.stats.total_keys = kwargs.get("total_keys", 0)

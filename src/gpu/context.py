@@ -6,7 +6,7 @@ DEF-2修复: 使用 kernel_impl.compile_kernel_with_retry() 共享重试逻辑
 """
 
 import hashlib
-from typing import Any, Dict, List, Optional, cast  # noqa: F401
+from typing import Any, Optional, cast  # noqa: F401
 
 # 统一日志获取
 from ..utils import get_configured_logger
@@ -29,7 +29,10 @@ VENDOR_BUILD_OPTIONS: dict[str, dict[str, Any]] = {
     "nvidia": {
         "options": ["-cl-std=CL2.0"],  # 禁用fast-math (精度安全约束)
         "cl_version": "CL2.0",
-        "description": "NVIDIA优化：CL2.0标准，精度优先（fast-math已禁用——secp256k1/SHA256/RIPEMD160精度要求）",
+        "description": (
+            "NVIDIA优化：CL2.0标准，精度优先"
+            "（fast-math已禁用——secp256k1/SHA256/RIPEMD160精度要求）"
+        ),
     },
     "amd": {
         "options": ["-cl-std=CL2.0"],  # AMD: 不用fast-math（精度要求）
@@ -167,15 +170,14 @@ class GPUContext:
         vendor_options = self._get_build_options()
 
         # 计算缓存键: 源码哈希 + 编译选项
-        source_hash = hashlib.md5(kernel_source.encode("utf-8"), usedforsecurity=False).hexdigest()[
-            :16
-        ]
+        source_hash = hashlib.md5(kernel_source.encode("utf-8"), usedforsecurity=False).hexdigest()[:16]
         cache_key = f"{source_hash}_{vendor_options.replace(' ', '_')}"
 
         # 检查缓存
         if cache_key in self._kernel_cache:
+            _vendor = self.vendor_handler.get_vendor_name()
             logger.info(
-                f"复用已编译内核 [厂商={self.vendor_handler.get_vendor_name()}, source_hash={source_hash}]"
+                f"复用已编译内核 [厂商={_vendor}, source_hash={source_hash}]"
             )
             self.program = self._kernel_cache[cache_key]
             return self.program
@@ -192,7 +194,7 @@ class GPUContext:
             # OpenCL < 1.2: 警告 + 厂商优选 → CL1.2 (不兼容但仍尝试)
             vendor_options_list = vendor_options.split() if vendor_options else []
 
-            device_ocl_version = getattr(self.device, 'opencl_version', OPENCL_MIN_REQUIRED_VERSION)
+            device_ocl_version = getattr(self.device, "opencl_version", OPENCL_MIN_REQUIRED_VERSION)
             if not isinstance(device_ocl_version, (int, float)):
                 device_ocl_version = OPENCL_MIN_REQUIRED_VERSION
 

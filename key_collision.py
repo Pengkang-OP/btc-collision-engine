@@ -28,10 +28,10 @@ from typing import Set, List, Dict, Optional, Callable, Tuple
 try:
     import coincurve
     COINCURVE_AVAILABLE = True
-    logging.info("coincurve库已加载，将使用高性能加密后端")
+    logging.debug("coincurve库已加载，将使用高性能加密后端")
 except ImportError:
     COINCURVE_AVAILABLE = False
-    logging.info("coincurve库未安装，将使用纯Python实现")
+    logging.debug("coincurve库未安装，将使用纯Python实现")
 
 # 尝试导入 p2pkh_simulator（旧版第一方模拟器，可选）
 try:

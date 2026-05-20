@@ -91,11 +91,29 @@ class DistributedStatsAggregator:
             time.sleep(self._aggregation_interval)
 
     def _aggregate_stats(self) -> None:
-        """执行统计聚合"""
-        with self._workers_lock:
-            workers = dict(self._workers)
+        """执行统计聚合
 
-        if not workers:
+        P1修复: 在锁保护下同时快照 worker 字典和值，防止聚合过程中
+        update_worker_stats() 修改 worker 属性导致数据不一致。
+        """
+        with self._workers_lock:
+            # 原子快照：同时复制字典和所有 worker 的值
+            workers_snapshot: list[tuple[int, dict[str, Any]]] = [
+                (
+                    idx,
+                    {
+                        "keys_checked": w.keys_checked,
+                        "matches_found": w.matches_found,
+                        "throughput": w.throughput,
+                        "elapsed_time": w.elapsed_time,
+                        "error_count": w.error_count,
+                        "status": w.status,
+                    },
+                )
+                for idx, w in self._workers.items()
+            ]
+
+        if not workers_snapshot:
             return
 
         total_keys = 0
@@ -104,19 +122,20 @@ class DistributedStatsAggregator:
         total_errors = 0
         active_workers = 0
 
-        for _device_idx, worker in workers.items():
-            total_keys += worker.keys_checked
-            total_matches += worker.matches_found
-            total_throughput += worker.throughput
-            total_errors += worker.error_count
-            if worker.status == "running":
+        for _device_idx, stats in workers_snapshot:
+            total_keys += stats["keys_checked"]
+            total_matches += stats["matches_found"]
+            total_throughput += stats["throughput"]
+            total_errors += stats["error_count"]
+            if stats["status"] == "running":
                 active_workers += 1
 
-        avg_throughput = total_throughput / len(workers) if workers else 0.0
+        worker_count = len(workers_snapshot)
+        avg_throughput = total_throughput / worker_count if worker_count else 0.0
 
         with self._cache_lock:
             self._aggregated_stats = {
-                "device_count": len(workers),
+                "device_count": worker_count,
                 "active_device_count": active_workers,
                 "total_keys_checked": total_keys,
                 "total_matches": total_matches,
@@ -124,15 +143,7 @@ class DistributedStatsAggregator:
                 "average_throughput": avg_throughput,
                 "total_errors": total_errors,
                 "per_device": {
-                    idx: {
-                        "keys_checked": w.keys_checked,
-                        "matches_found": w.matches_found,
-                        "throughput": w.throughput,
-                        "elapsed_time": w.elapsed_time,
-                        "error_count": w.error_count,
-                        "status": w.status,
-                    }
-                    for idx, w in workers.items()
+                    idx: stats for idx, stats in workers_snapshot
                 },
             }
             self._cache_valid = True
@@ -169,9 +180,7 @@ class DistributedStatsAggregator:
             return {"balanced": True, "devices": []}
 
         avg_keys = (
-            combined["total_keys_checked"] / len(per_device)
-            if combined["total_keys_checked"] > 0
-            else 0
+            combined["total_keys_checked"] / len(per_device) if combined["total_keys_checked"] > 0 else 0
         )
         max_deviation = 0
 

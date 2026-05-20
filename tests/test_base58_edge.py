@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Base58 单元测试 - 覆盖剩余边界路径"""
 
 import unittest

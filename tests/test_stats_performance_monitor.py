@@ -19,7 +19,6 @@ from src.cli.stats_performance_monitor import (
     profile_stats_update,
 )
 
-
 # ── PerformanceSample ──────────────────────────────────────────
 
 class TestPerformanceSample(unittest.TestCase):

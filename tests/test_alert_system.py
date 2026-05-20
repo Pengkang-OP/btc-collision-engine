@@ -1,17 +1,18 @@
 """测试性能监控告警系统"""
 
-import pytest
+import sys
 import time
 from pathlib import Path
-import sys
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.monitoring.alert_system import (  # noqa: E402
-    AlertSystem,
     AlertLevel,
-    AlertType,
     AlertRule,
+    AlertSystem,
+    AlertType,
     get_alert_system,
 )
 

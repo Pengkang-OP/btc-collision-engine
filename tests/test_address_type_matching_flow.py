@@ -15,19 +15,16 @@
 与 BitcoinKeyValidator.hmac.compare_digest 安全比较逻辑保持一致。
 """
 
-import hashlib
 import os
 
 import pytest
-from unittest.mock import Mock
 
-from src.collision.targets.resolver import TargetResolver
-from src.collision.targets.matcher import AddressMatcher
 from src.collision.continuous_matcher import ContinuousMatcher
-from src.core.bitcoin_key_validator import BitcoinKeyValidator, AddressType
-from src.core.target_address_table import BitcoinTargetTable
+from src.collision.targets.matcher import AddressMatcher
+from src.collision.targets.resolver import TargetResolver
+from src.core.bitcoin_key_validator import AddressType, BitcoinKeyValidator
 from src.core.hash_utils import HashUtils
-
+from src.core.target_address_table import BitcoinTargetTable
 
 # ============================================================
 # 测试用固定私钥和已知地址

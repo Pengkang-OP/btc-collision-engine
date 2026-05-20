@@ -1,18 +1,16 @@
-# -*- coding: utf-8 -*-
 """address_generator.py 边界与错误路径覆盖测试
 
 覆盖缺失行: 61-76, 165-191, 236-250, 272-275
 """
 
 import unittest
-from unittest.mock import patch, MagicMock, PropertyMock
+from unittest.mock import MagicMock, PropertyMock, patch
 
 from src.core.address_generator import (
-    secure_clear_bytearray,
     P2PKHAddressGenerator,
     PerformanceWarning,
+    secure_clear_bytearray,
 )
-
 
 # ===========================================================================
 # Group A: secure_clear_bytearray (lines 61-76)
@@ -72,7 +70,7 @@ class TestGeneratePrivateKeyEdge(unittest.TestCase):
     def test_generate_private_key_valueerror_handler(self):
         """secrets.token_bytes 抛 ValueError → lines 173-179"""
         with patch("secrets.token_bytes", side_effect=ValueError("模拟")):
-            with self.assertRaises(Exception):
+            with self.assertRaises(Exception):  # noqa: B017
                 self.gen.generate_private_key(max_retries=2)
 
     def test_generate_private_key_keygenerror_handler(self):
@@ -81,14 +79,13 @@ class TestGeneratePrivateKeyEdge(unittest.TestCase):
         with patch(
             "secrets.token_bytes",
             side_effect=KeyGenerationError("模拟", error_code=999),
-        ):
-            with self.assertRaises(Exception):
-                self.gen.generate_private_key(max_retries=2)
+        ), self.assertRaises(Exception):  # noqa: B017
+            self.gen.generate_private_key(max_retries=2)
 
     def test_generate_private_key_other_exception_handler(self):
         """secrets.token_bytes 抛其他异常 → lines 180-188"""
         with patch("secrets.token_bytes", side_effect=RuntimeError("未知错误")):
-            with self.assertRaises(Exception):
+            with self.assertRaises(Exception):  # noqa: B017
                 self.gen.generate_private_key(max_retries=2)
 
 

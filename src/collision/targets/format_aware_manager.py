@@ -117,10 +117,7 @@ class FormatAwareTargetManager:
         with self._lock:
             try:
                 with open(filepath, encoding="utf-8") as f:
-                    addresses = [
-                        line.strip() for line in f
-                        if line.strip() and not line.startswith("#")
-                    ]
+                    addresses = [line.strip() for line in f if line.strip() and not line.startswith("#")]
 
                 count = self.add_targets(addresses)
                 logger.info(f"从文件加载目标: {filepath}, {count}/{len(addresses)} 成功")
@@ -190,9 +187,7 @@ class FormatAwareTargetManager:
                 return len(self._all_targets)
             return len(self._targets_by_format.get(format_type, set()))
 
-    def check_match(
-        self, private_key: bytes
-    ) -> tuple[bool, str | None, str | None]:
+    def check_match(self, private_key: bytes) -> tuple[bool, str | None, str | None]:
         """
         检查私钥是否匹配任何目标
         【说明】返回第一个匹配，如需所有匹配请用 check_match_all
@@ -205,9 +200,7 @@ class FormatAwareTargetManager:
         """
         return self._generator.match_address(private_key, self._targets_by_format)
 
-    def check_match_all(
-        self, private_key: bytes
-    ) -> tuple[bool, list[tuple[str, str]]]:
+    def check_match_all(self, private_key: bytes) -> tuple[bool, list[tuple[str, str]]]:
         """
         检查私钥是否匹配所有目标格式的地址
         【完整检查】遍历所有目标格式，返回所有匹配的地址
@@ -238,11 +231,7 @@ class FormatAwareTargetManager:
             包含目标的格式列表
         """
         with self._lock:
-            return [
-                fmt.value
-                for fmt, targets in self._targets_by_format.items()
-                if len(targets) > 0
-            ]
+            return [fmt.value for fmt, targets in self._targets_by_format.items() if len(targets) > 0]
 
     def get_max_batch_size(self) -> int:
         """

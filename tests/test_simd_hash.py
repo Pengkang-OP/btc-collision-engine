@@ -1,8 +1,9 @@
-# -*- coding: utf-8 -*-
 """SIMD哈希优化模块单元测试"""
 
-import pytest
 import time
+
+import pytest
+
 from src.core.simd_hash import SIMDHashOptimizer, get_simd_hash_optimizer, simd_hash_optimizer
 
 
@@ -29,7 +30,7 @@ class TestSIMDHashOptimizer:
         results_ref = [hashlib.sha256(data).digest() for data in data_list]
 
         assert len(results_opt) == len(results_ref)
-        for opt, ref in zip(results_opt, results_ref):
+        for opt, ref in zip(results_opt, results_ref, strict=False):
             assert opt == ref
 
     def test_batch_ripemd160_correctness(self):
@@ -43,7 +44,7 @@ class TestSIMDHashOptimizer:
         results_ref = [hashlib.new("ripemd160", data).digest() for data in data_list]
 
         assert len(results_opt) == len(results_ref)
-        for opt, ref in zip(results_opt, results_ref):
+        for opt, ref in zip(results_opt, results_ref, strict=False):
             assert opt == ref
 
     def test_batch_hash160_correctness(self):

@@ -224,9 +224,7 @@ class GPUConfigValidator:
         # 检查厂商混合
         vendors = set(d.get("vendor", "unknown") for d in devices)
         if len(vendors) > 1:
-            warnings.append(
-                f"检测到混合厂商GPU: {vendors}\n可能导致性能不均衡,建议手动配置负载分配"
-            )
+            warnings.append(f"检测到混合厂商GPU: {vendors}\n可能导致性能不均衡,建议手动配置负载分配")
 
         # 检查显存差异
         memories = [d.get("global_mem_gb", 0) for d in devices]
@@ -235,14 +233,16 @@ class GPUConfigValidator:
             min_mem = min(memories)
             if max_mem > 0 and (max_mem / min_mem) > 3:
                 warnings.append(
-                    f"GPU显存差异较大: {min_mem:.1f}GB - {max_mem:.1f}GB\n建议使用'performance'负载均衡策略"
+                    f"GPU显存差异较大: {min_mem:.1f}GB - {max_mem:.1f}GB\n"
+                    "建议使用'performance'负载均衡策略"
                 )
 
         # 检查Intel Arc(需要特殊配置)
         for device in devices:
             if device.get("vendor") == "intel":
                 warnings.append(
-                    "Intel Arc GPU需要特殊配置:\n- 启用uint32 workaround\n- 禁用快速数学运算\n- 使用较小批次大小"
+                    "Intel Arc GPU需要特殊配置:\n"
+                    "- 启用uint32 workaround\n- 禁用快速数学运算\n- 使用较小批次大小"
                 )
                 break
 

@@ -9,11 +9,12 @@
 - MIGRATION_RULES 结构完整性
 """
 
-import os
 import json
+import os
 import tempfile
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 # ============================================================================
 # Fixtures
@@ -134,7 +135,7 @@ class TestMigrateConfig:
     """配置迁移测试"""
 
     def test_migrate_v2_to_v31(self, v2_config):
-        from src.cli.config_migration import migrate_config, CONFIG_VERSION
+        from src.cli.config_migration import CONFIG_VERSION, migrate_config
 
         result, changelog = migrate_config(v2_config, target_version=CONFIG_VERSION)
         assert isinstance(result, dict)
@@ -149,7 +150,7 @@ class TestMigrateConfig:
         assert len(changelog) > 1
 
     def test_migrate_v30_to_v31(self, v30_config):
-        from src.cli.config_migration import migrate_config, CONFIG_VERSION
+        from src.cli.config_migration import CONFIG_VERSION, migrate_config
 
         result, changelog = migrate_config(v30_config, target_version=CONFIG_VERSION)
         # 应新增 performance_monitoring
@@ -160,14 +161,14 @@ class TestMigrateConfig:
         assert any("3.0_to_3.1" in entry for entry in changelog)
 
     def test_migrate_already_v31(self, v31_config):
-        from src.cli.config_migration import migrate_config, CONFIG_VERSION
+        from src.cli.config_migration import CONFIG_VERSION, migrate_config
 
         result, changelog = migrate_config(v31_config, target_version=CONFIG_VERSION)
         assert "配置已是最新版本" in changelog[-2] or any("无需迁移" in e for e in changelog)
 
     def test_migrate_preserves_user_values(self):
         """迁移不应覆盖用户自定义值"""
-        from src.cli.config_migration import migrate_config, CONFIG_VERSION
+        from src.cli.config_migration import CONFIG_VERSION, migrate_config
 
         config = {
             "crypto": {"backend": "custom_backend", "use_gpu": False},
@@ -184,7 +185,7 @@ class TestMigrateConfig:
 
     def test_migrate_unknown_version(self):
         """unknown 版本应尝试全部迁移规则"""
-        from src.cli.config_migration import migrate_config, CONFIG_VERSION
+        from src.cli.config_migration import CONFIG_VERSION, migrate_config
 
         config = {"unknown_section": {}}
         result, changelog = migrate_config(config, target_version=CONFIG_VERSION)
@@ -194,8 +195,9 @@ class TestMigrateConfig:
         assert "performance_monitoring" in result
 
     def test_migrate_does_not_modify_original(self, v2_config):
-        from src.cli.config_migration import migrate_config, CONFIG_VERSION
         import copy
+
+        from src.cli.config_migration import CONFIG_VERSION, migrate_config
 
         original = copy.deepcopy(v2_config)
         result, _ = migrate_config(v2_config, target_version=CONFIG_VERSION)
@@ -206,7 +208,7 @@ class TestMigrateConfig:
 
     def test_migrate_section_already_exists(self):
         """已有段不应被覆盖"""
-        from src.cli.config_migration import migrate_config, CONFIG_VERSION
+        from src.cli.config_migration import CONFIG_VERSION, migrate_config
 
         config = {
             "crypto": {},
@@ -255,7 +257,7 @@ class TestBackupConfig:
             json.dump(original, f)
 
         backup_path = backup_config(config_path)
-        with open(backup_path, "r") as f:
+        with open(backup_path) as f:
             restored = json.load(f)
         assert restored == original
 
@@ -454,7 +456,7 @@ class TestMigrateConfigEdges:
 
     def test_rule_key_not_in_migration_rules(self):
         """migration_path 含不存在的规则 -> continue 跳过"""
-        from src.cli.config_migration import migrate_config, MIGRATION_RULES
+        from src.cli.config_migration import MIGRATION_RULES, migrate_config
 
         config = {}
         saved = MIGRATION_RULES.copy()
@@ -468,7 +470,7 @@ class TestMigrateConfigEdges:
 
     def test_rename_fields_in_migration(self):
         """rename_fields 规则 -> 字段重命名"""
-        from src.cli.config_migration import migrate_config, MIGRATION_RULES
+        from src.cli.config_migration import MIGRATION_RULES, migrate_config
 
         config = {
             "crypto": {"old_field": "keep_me"},
@@ -492,7 +494,7 @@ class TestMigrateConfigEdges:
 
     def test_rename_fields_section_not_in_result(self):
         """rename 目标段不存在 -> continue 跳过"""
-        from src.cli.config_migration import migrate_config, MIGRATION_RULES
+        from src.cli.config_migration import MIGRATION_RULES, migrate_config
 
         config = {
             "crypto": {},
@@ -514,7 +516,7 @@ class TestMigrateConfigEdges:
 
     def test_rename_fields_no_conflict_with_existing(self):
         """rename 目标字段已存在 -> 不覆盖"""
-        from src.cli.config_migration import migrate_config, MIGRATION_RULES
+        from src.cli.config_migration import MIGRATION_RULES, migrate_config
 
         config = {
             "crypto": {"old_field": "old_val", "new_field": "existing_val"},
@@ -548,18 +550,19 @@ class TestMigrateConfigFile:
 
     def test_file_not_found(self):
         """配置文件不存在 -> 返回 False"""
-        from src.cli.config_migration import migrate_config_file
         from pathlib import Path
 
-        with patch.object(Path, "exists", return_value=False):
-            with patch("builtins.print"):
-                result = migrate_config_file("nonexistent.json")
-                assert result is False
+        from src.cli.config_migration import migrate_config_file
+
+        with patch.object(Path, "exists", return_value=False), patch("builtins.print"):
+            result = migrate_config_file("nonexistent.json")
+            assert result is False
 
     def test_json_decode_error(self):
         """JSON 格式错误 -> 返回 False"""
-        from src.cli.config_migration import migrate_config_file
         from pathlib import Path
+
+        from src.cli.config_migration import migrate_config_file
 
         with patch.object(Path, "exists", return_value=True):
             with patch("builtins.open", side_effect=json.JSONDecodeError("bad", "{", 0)):
@@ -569,8 +572,9 @@ class TestMigrateConfigFile:
 
     def test_unicode_decode_error(self):
         """文件编码错误 -> 返回 False"""
-        from src.cli.config_migration import migrate_config_file
         from pathlib import Path
+
+        from src.cli.config_migration import migrate_config_file
 
         with patch.object(Path, "exists", return_value=True):
             with patch("builtins.open", side_effect=UnicodeDecodeError("utf-8", b"", 0, 1, "bad")):
@@ -580,8 +584,9 @@ class TestMigrateConfigFile:
 
     def test_os_error_on_read(self):
         """读取文件 OS 错误 -> 返回 False"""
-        from src.cli.config_migration import migrate_config_file
         from pathlib import Path
+
+        from src.cli.config_migration import migrate_config_file
 
         with patch.object(Path, "exists", return_value=True):
             with patch("builtins.open", side_effect=OSError("permission denied")):
@@ -591,8 +596,9 @@ class TestMigrateConfigFile:
 
     def test_already_latest_version(self, v31_config):
         """v3.1 配置 -> 返回 True，无需迁移"""
-        from src.cli.config_migration import migrate_config_file
         from pathlib import Path
+
+        from src.cli.config_migration import migrate_config_file
 
         with patch.object(Path, "exists", return_value=True):
             with patch("json.load", return_value=v31_config):
@@ -603,56 +609,57 @@ class TestMigrateConfigFile:
 
     def test_backup_fails_os_error(self, v2_config):
         """备份失败 -> 返回 False"""
-        from src.cli.config_migration import migrate_config_file
         from pathlib import Path
 
-        with patch.object(Path, "exists", return_value=True):
-            with patch("builtins.open"):
-                with patch("json.load", return_value=v2_config):
-                    with patch("src.cli.config_migration.backup_config",
-                               side_effect=OSError("disk full")):
+        from src.cli.config_migration import migrate_config_file
+
+        with patch.object(Path, "exists", return_value=True), patch("builtins.open"):
+            with patch("json.load", return_value=v2_config):
+                with patch("src.cli.config_migration.backup_config",
+                           side_effect=OSError("disk full")):
+                    with patch("builtins.print"):
+                        result = migrate_config_file("config.json")
+                        assert result is False
+
+    def test_migrate_raises_exception(self, v2_config):
+        """migrate_config 抛异常 -> 返回 False"""
+        from pathlib import Path
+
+        from src.cli.config_migration import migrate_config_file
+
+        with patch.object(Path, "exists", return_value=True), patch("builtins.open"):
+            with patch("json.load", return_value=v2_config):
+                with patch("src.cli.config_migration.backup_config",
+                           return_value="/tmp/backup.json"):
+                    with patch("src.cli.config_migration.migrate_config",
+                               side_effect=RuntimeError("migrate crash")):
                         with patch("builtins.print"):
                             result = migrate_config_file("config.json")
                             assert result is False
 
-    def test_migrate_raises_exception(self, v2_config):
-        """migrate_config 抛异常 -> 返回 False"""
-        from src.cli.config_migration import migrate_config_file
+    def test_validation_fails(self, v2_config):
+        """迁移后验证不通过 -> 返回 False"""
         from pathlib import Path
 
-        with patch.object(Path, "exists", return_value=True):
-            with patch("builtins.open"):
-                with patch("json.load", return_value=v2_config):
-                    with patch("src.cli.config_migration.backup_config",
-                               return_value="/tmp/backup.json"):
-                        with patch("src.cli.config_migration.migrate_config",
-                                   side_effect=RuntimeError("migrate crash")):
+        from src.cli.config_migration import migrate_config_file
+
+        with patch.object(Path, "exists", return_value=True), patch("builtins.open"):
+            with patch("json.load", return_value=v2_config):
+                with patch("src.cli.config_migration.backup_config",
+                           return_value="/tmp/backup.json"):
+                    with patch("src.cli.config_migration.migrate_config",
+                               return_value=({}, ["changelog"])):
+                        with patch("src.cli.config_migration.validate_migrated_config",
+                                   return_value=(False, ["缺少字段"])):
                             with patch("builtins.print"):
                                 result = migrate_config_file("config.json")
                                 assert result is False
 
-    def test_validation_fails(self, v2_config):
-        """迁移后验证不通过 -> 返回 False"""
-        from src.cli.config_migration import migrate_config_file
-        from pathlib import Path
-
-        with patch.object(Path, "exists", return_value=True):
-            with patch("builtins.open"):
-                with patch("json.load", return_value=v2_config):
-                    with patch("src.cli.config_migration.backup_config",
-                               return_value="/tmp/backup.json"):
-                        with patch("src.cli.config_migration.migrate_config",
-                                   return_value=({}, ["changelog"])):
-                            with patch("src.cli.config_migration.validate_migrated_config",
-                                       return_value=(False, ["缺少字段"])):
-                                with patch("builtins.print"):
-                                    result = migrate_config_file("config.json")
-                                    assert result is False
-
     def test_write_fails_os_error(self, v2_config):
         """写入迁移结果失败 -> 返回 False"""
-        from src.cli.config_migration import migrate_config_file
         from pathlib import Path
+
+        from src.cli.config_migration import migrate_config_file
 
         mock_read = MagicMock()
         with patch.object(Path, "exists", return_value=True):
@@ -671,8 +678,9 @@ class TestMigrateConfigFile:
 
     def test_successful_migration(self, v2_config):
         """完整成功迁移流程 -> 返回 True"""
-        from src.cli.config_migration import migrate_config_file
         from pathlib import Path
+
+        from src.cli.config_migration import migrate_config_file
 
         migrated = dict(v2_config)
         migrated["gpu"] = {}
@@ -696,8 +704,9 @@ class TestMigrateConfigFile:
 
     def test_unknown_version_warns(self):
         """unknown 版本 -> 打印警告但继续迁移"""
-        from src.cli.config_migration import migrate_config_file
         from pathlib import Path
+
+        from src.cli.config_migration import migrate_config_file
 
         config = {"unknown_section": {}}
         migrated = dict(config)

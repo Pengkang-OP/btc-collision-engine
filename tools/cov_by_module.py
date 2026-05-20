@@ -117,7 +117,7 @@ def module_coverage(module_files: list[str], mod_name: str = "") -> dict:
         combined = result.stdout + "\n" + result.stderr
         return parse_coverage_table(combined)
     except subprocess.TimeoutExpired:
-        print(f"  ⚠️ 超时")
+        print("  ⚠️ 超时")
         return {}
     except Exception as e:
         print(f"  ⚠️ 错误: {e}")

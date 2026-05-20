@@ -11,13 +11,11 @@
     python run_all_tests.py --list             # 列出所有测试文件
 """
 
-import os
-import sys
-import subprocess
 import argparse
+import subprocess
+import sys
 import time
 from pathlib import Path
-
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 TESTS_DIR = PROJECT_ROOT / "tests"

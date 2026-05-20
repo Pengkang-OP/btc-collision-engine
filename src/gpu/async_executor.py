@@ -106,7 +106,7 @@ class _PendingBatch:
         self.seed = seed  # 供上层用 seed+gid 还原私钥
 
 
-class _SyncFallbackException(Exception):
+class _SyncFallbackError(Exception):
     """异步执行回退信号：已通过同步路径完成执行，携带结果。
 
     用于在 _allocate_buffer / _transfer_seed / _clear_matches_buffer 中
@@ -292,7 +292,7 @@ class AsyncGPUExecutor:
         """
         # 优先从 GPU 设备信息获取（如果设备已初始化）
         device_ws = None
-        with suppress(Exception):
+        with suppress(AttributeError):
             if hasattr(self.device, "device_info") and self.device.device_info:
                 device_ws = self.device.device_info.get("work_group_size")
 
@@ -342,13 +342,11 @@ class AsyncGPUExecutor:
         # 更新内部max_batch_size以匹配实际分配的缓冲区大小
         self._actual_batch_size = num_keys
 
-        logger.info(
-            f"创建缓冲区池（PRNG模式）: num_keys={num_keys}, queue_depth={self.queue_depth}"
-        )
+        logger.info(f"创建缓冲区池（PRNG模式）: num_keys={num_keys}, queue_depth={self.queue_depth}")
 
         # 预计算表 GPU 常量缓冲区（如果尚未初始化）
         if self.precomp_buffer is None:
-            from src.gpu.precompute import get_precomp_table
+            from .precompute import get_precomp_table
 
             precomp_data = get_precomp_table()
             self.precomp_buffer = cl.Buffer(
@@ -363,9 +361,7 @@ class AsyncGPUExecutor:
                 cl.mem_flags.READ_ONLY,
                 size=32,  # 固兵2字节 = 8 uint32
             )
-            logger.info(
-                f"种子缓冲区已创建: 32字节（PRNG模式，节省约{num_keys * 32 / 1024 / 1024}MB)"
-            )
+            logger.info(f"种子缓冲区已创建: 32字节（PRNG模式，节省约{num_keys * 32 / 1024 / 1024}MB)")
 
         # 创建 queue_depth 个缓冲区构成缓冲区池
         self._buffer_pool: list[dict] = []
@@ -442,9 +438,11 @@ class AsyncGPUExecutor:
 
         # 检查是否支持异步（含异步模式恢复检查）
         self._check_async_recovery()
-        if (not self.device.enable_async_execution
+        if (
+            not self.device.enable_async_execution
             or not self.device.compute_queue
-            or self._async_mode_disabled):
+            or self._async_mode_disabled
+        ):
             return self._run_batch_sync(seed, num_keys, program, targets_buf, num_targets)
 
         try:
@@ -487,9 +485,7 @@ class AsyncGPUExecutor:
 
             # 将成功提交的批次注册到预取队列，以便后续回收结果
             with self._prefetch_lock:
-                self._prefetch_events.append(
-                    _PendingBatch(read_event, current_buf, num_keys, seed)
-                )
+                self._prefetch_events.append(_PendingBatch(read_event, current_buf, num_keys, seed))
 
             execution_time_ms = (time.time() - start_time) * 1000
 
@@ -498,10 +494,12 @@ class AsyncGPUExecutor:
 
             return prev_matches, execution_time_ms
 
-        except _SyncFallbackException as sf:
+        except _SyncFallbackError as sf:
             # 异步预处理（缓冲区分配/传输/清理）失败，已通过同步路径完成执行
             # 直接返回同步路径的结果，避免二次执行
-            logger.debug(f"异步预处理回退到同步模式: {len(sf.matches)} matches, {sf.execution_time_ms:.1f}ms")
+            logger.debug(
+                f"异步预处理回退到同步模式: {len(sf.matches)} matches, {sf.execution_time_ms:.1f}ms"
+            )
             return sf.matches, sf.execution_time_ms
         except (RuntimeError, MemoryError) as e:
             logger.warning(f"异步执行OpenCL错误,回退到同步模式: {type(e).__name__}: {e}")
@@ -534,7 +532,7 @@ class AsyncGPUExecutor:
                 oldest = self._prefetch_events.pop(0)
             try:
                 try:
-                    oldest.read_event.wait(timeout=30000)
+                    oldest.read_event.wait(timeout=30)
                 except TypeError:
                     oldest.read_event.wait()
             except RuntimeError as e:
@@ -649,26 +647,25 @@ class AsyncGPUExecutor:
                 return current_buf
             except (AttributeError, KeyError) as e:
                 logger.warning(f"获取双缓冲区属性异常: {type(e).__name__}: {e}，回退到同步模式")
-                return self._run_batch_sync_fallback(
-                    seed, num_keys, program, targets_buf, num_targets
-                )
+                return self._run_batch_sync_fallback(seed, num_keys, program, targets_buf, num_targets)
             except Exception as e:
                 logger.warning(f"获取双缓冲区失败: {type(e).__name__}: {e}，回退到同步模式")
-                return self._run_batch_sync_fallback(
-                    seed, num_keys, program, targets_buf, num_targets
-                )
+                return self._run_batch_sync_fallback(seed, num_keys, program, targets_buf, num_targets)
 
     def _run_batch_sync_fallback(self, seed, num_keys, program, targets_buf, num_targets):
         """回退到同步执行并抛出结果异常（供 _allocate_buffer 使用）"""
         matches, exec_time = self._run_batch_sync(seed, num_keys, program, targets_buf, num_targets)
         self.sync_fallbacks += 1
         self._track_sync_fallback()
-        raise _SyncFallbackException(matches, exec_time)
+        raise _SyncFallbackError(matches, exec_time)
 
     def _track_sync_fallback(self) -> None:
         """追踪连续同步回退，管理异步模式恢复"""
         self._consecutive_sync_fallbacks += 1
-        if self._consecutive_sync_fallbacks >= MAX_CONSECUTIVE_SYNC_FALLBACKS and not self._async_mode_disabled:
+        if (
+            self._consecutive_sync_fallbacks >= MAX_CONSECUTIVE_SYNC_FALLBACKS
+            and not self._async_mode_disabled
+        ):
             self._async_mode_disabled = True
             logger.warning(
                 f"连续同步回退({self._consecutive_sync_fallbacks}次)超过阈值"
@@ -692,9 +689,7 @@ class AsyncGPUExecutor:
         ):
             self._async_mode_disabled = False
             self._last_async_attempt_time = current_time
-            logger.info(
-                    f"尝试恢复异步模式 (连续同步次数: {self._consecutive_sync_fallbacks})"
-                )
+            logger.info(f"尝试恢复异步模式 (连续同步次数: {self._consecutive_sync_fallbacks})")
 
     def _on_async_success(self) -> None:
         """异步执行成功后重置回退计数"""
@@ -750,14 +745,12 @@ class AsyncGPUExecutor:
                 seed, num_keys, program, targets_buf, num_targets
             )
 
-    def _run_batch_sync_fallback_and_return(
-        self, seed, num_keys, program, targets_buf, num_targets
-    ):
+    def _run_batch_sync_fallback_and_return(self, seed, num_keys, program, targets_buf, num_targets):
         """回退到同步执行并抛出结果异常（供 _transfer_seed / _clear_matches_buffer 使用）"""
         matches, exec_time = self._run_batch_sync(seed, num_keys, program, targets_buf, num_targets)
         self.sync_fallbacks += 1
         self._track_sync_fallback()
-        raise _SyncFallbackException(matches, exec_time)
+        raise _SyncFallbackError(matches, exec_time)
 
     def _clear_matches_buffer(self, current_buf, num_keys, seed, program, targets_buf, num_targets):
         """步骤3: 清空匹配结果缓冲区"""
@@ -779,16 +772,14 @@ class AsyncGPUExecutor:
                     current_buf["match_flags"] = np.zeros(num_keys, dtype=np.int32)
                     logger.info(f"已动态调整缓冲区大小为: {num_keys}个元素")
                 except (RuntimeError, MemoryError) as e:
-                    logger.warning(
-                        f"创建新缓冲区OpenCL错误: {type(e).__name__}: {e}，回退到同步模式"
-                    )
+                    logger.warning(f"创建新缓冲区OpenCL错误: {type(e).__name__}: {e}，回退到同步模式")
                     try:
                         sync_matches, sync_time = self._run_batch_sync(
                             seed, num_keys, program, targets_buf, num_targets
                         )
                     except Exception:
                         sync_matches, sync_time = [], 0.0
-                    raise _SyncFallbackException(sync_matches, sync_time) from e
+                    raise _SyncFallbackError(sync_matches, sync_time) from e
                 except Exception as e:
                     logger.warning(f"创建新缓冲区失败: {type(e).__name__}: {e}，回退到同步模式")
                     try:
@@ -797,7 +788,7 @@ class AsyncGPUExecutor:
                         )
                     except Exception:
                         sync_matches, sync_time = [], 0.0
-                    raise _SyncFallbackException(sync_matches, sync_time) from e
+                    raise _SyncFallbackError(sync_matches, sync_time) from e
 
             import pyopencl as cl
 
@@ -817,7 +808,7 @@ class AsyncGPUExecutor:
                 )
             except Exception:
                 sync_matches, sync_time = [], 0.0
-            raise _SyncFallbackException(sync_matches, sync_time) from e
+            raise _SyncFallbackError(sync_matches, sync_time) from e
         except Exception as e:
             logger.warning(f"清空缓冲区失败: {type(e).__name__}: {e}，回退到同步模式")
             try:
@@ -826,7 +817,7 @@ class AsyncGPUExecutor:
                 )
             except Exception:
                 sync_matches, sync_time = [], 0.0
-            raise _SyncFallbackException(sync_matches, sync_time) from e
+            raise _SyncFallbackError(sync_matches, sync_time) from e
 
     def _execute_and_register(
         self, current_buf, num_keys, seed, program, targets_buf, num_targets, transfer_event
@@ -841,16 +832,20 @@ class AsyncGPUExecutor:
                 self._cached_kernel = batch_kernel
             except (RuntimeError, ValueError) as e:
                 logger.warning(f"创建内核OpenCL错误: {type(e).__name__}: {e}，回退到同步模式")
-                sync_matches, sync_time = self._run_batch_sync(seed, num_keys, program, targets_buf, num_targets)
+                sync_matches, sync_time = self._run_batch_sync(
+                    seed, num_keys, program, targets_buf, num_targets
+                )
                 self.sync_fallbacks += 1
                 self._track_sync_fallback()
-                raise _SyncFallbackException(sync_matches, sync_time) from e
+                raise _SyncFallbackError(sync_matches, sync_time) from e
             except Exception as e:
                 logger.warning(f"创建内核失败: {type(e).__name__}: {e}，回退到同步模式")
-                sync_matches, sync_time = self._run_batch_sync(seed, num_keys, program, targets_buf, num_targets)
+                sync_matches, sync_time = self._run_batch_sync(
+                    seed, num_keys, program, targets_buf, num_targets
+                )
                 self.sync_fallbacks += 1
                 self._track_sync_fallback()
-                raise _SyncFallbackException(sync_matches, sync_time) from e
+                raise _SyncFallbackError(sync_matches, sync_time) from e
 
         local_ws = getattr(self, "_work_group_size", 256)
         global_ws = ((num_keys + local_ws - 1) // local_ws) * local_ws
@@ -944,16 +939,20 @@ class AsyncGPUExecutor:
             )
         except (RuntimeError, MemoryError) as e:
             logger.warning(f"设置回读操作OpenCL错误: {type(e).__name__}: {e}，回退到同步模式")
-            sync_matches, sync_time = self._run_batch_sync(seed, num_keys, program, targets_buf, num_targets)
+            sync_matches, sync_time = self._run_batch_sync(
+                seed, num_keys, program, targets_buf, num_targets
+            )
             self.sync_fallbacks += 1
             self._track_sync_fallback()
-            raise _SyncFallbackException(sync_matches, sync_time) from e
+            raise _SyncFallbackError(sync_matches, sync_time) from e
         except Exception as e:
             logger.warning(f"设置回读操作失败: {type(e).__name__}: {e}，回退到同步模式")
-            sync_matches, sync_time = self._run_batch_sync(seed, num_keys, program, targets_buf, num_targets)
+            sync_matches, sync_time = self._run_batch_sync(
+                seed, num_keys, program, targets_buf, num_targets
+            )
             self.sync_fallbacks += 1
             self._track_sync_fallback()
-            raise _SyncFallbackException(sync_matches, sync_time) from e
+            raise _SyncFallbackError(sync_matches, sync_time) from e
 
     def _update_compat_fields(self, read_event, current_buf, num_keys):
         """步骤7: 更新历史兼容字段"""

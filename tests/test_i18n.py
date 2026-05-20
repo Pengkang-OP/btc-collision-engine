@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """i18n 国际化模块测试。
 
 覆盖范围:
@@ -182,8 +181,8 @@ class TestTranslator(unittest.TestCase):
 
     def test_corrupt_json_falls_back_to_hardcoded(self):
         """JSON 文件损坏时回退到硬编码默认值。"""
-        import tempfile
         import shutil
+        import tempfile
         tmpdir = tempfile.mkdtemp()
         try:
             # 创建损坏的 en_US.json

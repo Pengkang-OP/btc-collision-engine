@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 CLI高级功能集成测试
 
@@ -12,24 +11,25 @@ CLI高级功能集成测试
 6. 端到端功能测试
 """
 
-import pytest
-import sys
-import os
 import json
+import os
+import sys
 import tempfile
 from unittest.mock import Mock, patch
+
+import pytest
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from src.cli.advanced_features import (  # noqa: E402
     CONFIG_TEMPLATES,
-    deep_merge,
-    apply_template,
-    recommend_parameters,
-    export_progress_data,
-    export_matches,
     GPUErrorHandler,
+    apply_template,
+    deep_merge,
+    export_matches,
+    export_progress_data,
+    recommend_parameters,
 )
 
 # ============================================================================
@@ -159,7 +159,7 @@ class TestConfigTemplateSystem:
             assert os.path.exists(temp_config_file)
 
             # 验证配置内容
-            with open(temp_config_file, "r", encoding="utf-8") as f:
+            with open(temp_config_file, encoding="utf-8") as f:
                 config = json.load(f)
 
             assert config["collision"]["use_performance_optimization"] is False
@@ -191,7 +191,7 @@ class TestConfigTemplateSystem:
             assert success is True
 
             # 验证配置合并
-            with open(temp_config_file, "r", encoding="utf-8") as f:
+            with open(temp_config_file, encoding="utf-8") as f:
                 config = json.load(f)
 
             # 保留原有配置
@@ -328,7 +328,7 @@ class TestProgressExport:
         assert os.path.exists(temp_output_file)
 
         # 验证JSON内容
-        with open(temp_output_file, "r", encoding="utf-8") as f:
+        with open(temp_output_file, encoding="utf-8") as f:
             data = json.load(f)
 
         assert data["mode"] == "random"
@@ -349,7 +349,7 @@ class TestProgressExport:
 
         assert success is True
 
-        with open(temp_output_file, "r", encoding="utf-8") as f:
+        with open(temp_output_file, encoding="utf-8") as f:
             data = json.load(f)
 
         assert data["total_range"] == 10000000
@@ -373,7 +373,7 @@ class TestProgressExport:
             mock_stats, mode="random", engine_type="cpu", output_file=temp_output_file
         )
 
-        with open(temp_output_file, "r", encoding="utf-8") as f:
+        with open(temp_output_file, encoding="utf-8") as f:
             data = json.load(f)
 
         # 验证必需字段
@@ -416,7 +416,7 @@ class TestMatchesExport:
         assert success is True
         assert os.path.exists(temp_output_file)
 
-        with open(temp_output_file, "r", encoding="utf-8") as f:
+        with open(temp_output_file, encoding="utf-8") as f:
             data = json.load(f)
 
         assert data["total_matches"] == 1
@@ -429,7 +429,7 @@ class TestMatchesExport:
 
         assert success is True
 
-        with open(temp_output_file, "r", encoding="utf-8") as f:
+        with open(temp_output_file, encoding="utf-8") as f:
             data = json.load(f)
 
         assert data["total_matches"] == 0
@@ -450,7 +450,7 @@ class TestMatchesExport:
 
         assert success is True
 
-        with open(temp_output_file, "r", encoding="utf-8") as f:
+        with open(temp_output_file, encoding="utf-8") as f:
             data = json.load(f)
 
         assert data["total_matches"] == 5
@@ -549,7 +549,7 @@ class TestEndToEndIntegration:
         assert os.path.exists(temp_config_file)
 
         # 3. 加载配置并验证
-        with open(temp_config_file, "r", encoding="utf-8") as f:
+        with open(temp_config_file, encoding="utf-8") as f:
             config = json.load(f)
 
         assert "gpu" in config
@@ -567,7 +567,7 @@ class TestEndToEndIntegration:
         assert success is True
 
         # 3. 验证导出文件
-        with open(temp_output_file, "r", encoding="utf-8") as f:
+        with open(temp_output_file, encoding="utf-8") as f:
             data = json.load(f)
 
         assert data["total_checked"] > 0
@@ -588,7 +588,7 @@ class TestEndToEndIntegration:
             sys.stdout = old_stdout
 
         # 步骤2: 验证配置
-        with open(temp_config_file, "r", encoding="utf-8") as f:
+        with open(temp_config_file, encoding="utf-8") as f:
             config = json.load(f)
         assert config["collision"]["max_workers"] == 2
 
@@ -598,7 +598,7 @@ class TestEndToEndIntegration:
         )
 
         # 步骤4: 验证导出
-        with open(temp_output_file, "r", encoding="utf-8") as f:
+        with open(temp_output_file, encoding="utf-8") as f:
             data = json.load(f)
         assert "total_checked" in data
 

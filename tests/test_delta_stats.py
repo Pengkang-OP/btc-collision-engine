@@ -9,11 +9,12 @@
 - 边界值：空更新、大增量、并发安全、stop 后操作
 """
 
-import time
 import threading
-import pytest
-from src.collision.delta_stats import DeltaStats, ThreadLocalDeltaStats
+import time
 
+import pytest
+
+from src.collision.delta_stats import DeltaStats, ThreadLocalDeltaStats
 
 # ============================================================================
 # DeltaStats 测试

@@ -11,11 +11,12 @@
 - 长时间运行稳定性
 """
 
-import pytest
-import time
-import threading
 import tempfile
+import threading
+import time
 from collections import Counter
+
+import pytest
 
 # ============================================================================
 # EventBus 并发测试
@@ -193,8 +194,8 @@ class TestLogCollectorConcurrency:
 
     def test_concurrent_collection(self):
         """并发收集不应丢失事件"""
-        from src.log_engine.log_collector import LogCollector
         from src.log_engine.events import LogEventType
+        from src.log_engine.log_collector import LogCollector
 
         collector = LogCollector(max_queue_size=5000)
         received = Counter()
@@ -239,8 +240,8 @@ class TestObserverManagerConcurrency:
 
     def test_concurrent_notify(self):
         """并发通知不应导致异常"""
-        from src.collision.observers import BaseCollisionObserver, ObserverManager
         from src.collision.collision_stats import CollisionStats
+        from src.collision.observers import BaseCollisionObserver, ObserverManager
 
         manager = ObserverManager()
         for _ in range(20):

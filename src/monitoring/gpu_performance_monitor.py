@@ -257,8 +257,9 @@ class GPUPerformanceMonitor:
                 self._vendor = device_info.get("vendor", "Unknown")
                 self._total_memory_mb = device_info.get("global_mem_size", 0) / (1024 * 1024)
 
+                _mem = self._total_memory_mb
                 logger.info(
-                    f"GPU设备信息: {self._device_name} ({self._vendor}), 显存={self._total_memory_mb:.0f}MB"
+                    f"GPU设备信息: {self._device_name} ({self._vendor}), 显存={_mem:.0f}MB"
                 )
         except Exception as e:
             logger.warning(f"获取GPU设备信息失败: {e}")
@@ -364,9 +365,7 @@ class GPUPerformanceMonitor:
                     # 温度
                     with suppress(pynvml.NVMLError, AttributeError):
                         # GPU不支持温度监控时忽略
-                        metrics["temperature"] = pynvml.nvmlDeviceGetTemperature(
-                            handle, 0
-                        )
+                        metrics["temperature"] = pynvml.nvmlDeviceGetTemperature(handle, 0)
 
                     # 功耗
                     with suppress(pynvml.NVMLError, AttributeError):
@@ -388,15 +387,13 @@ class GPUPerformanceMonitor:
                 import platform
 
                 if platform.system() == "Windows" and self._intel_gpu_index == 1:
-                        # 这是你的Intel Arc A770
-                        # 返回一个模拟值，实际使用时应该从WMI获取
-                        # 但为了演示，我们先使用OpenCL执行统计估算
-                        # 如果有真实OpenCL内核执行，我们可以通过执行时间估算
-                        metrics["gpu_utilization"] = 0.18  # 18% (从你的截图)
-                        metrics["temperature"] = 59.0  # 59°C (从你的截图)
-                        metrics["memory_used"] = 300.0  # ~300MB (从你的截图)
-                        metrics["memory_total"] = 16384.0  # 16GB
-                        metrics["power_usage"] = 120.0  # ~120W (Arc A770典型值)
+                    # Intel Arc GPU: 无硬件监控接口可用时返回 -1 表示"不支持"
+                    # 生产环境建议通过 WMI 或 Intel GPA 获取真实指标
+                    metrics["gpu_utilization"] = -1.0  # 不支持
+                    metrics["temperature"] = -1.0  # 不支持
+                    metrics["memory_used"] = -1.0  # 不支持
+                    metrics["memory_total"] = 16384.0  # Arc A770 显存容量（固定硬件参数）
+                    metrics["power_usage"] = -1.0  # 不支持
 
             except Exception as e:
                 logger.debug(f"获取Intel GPU硬件指标失败: {e}")
@@ -949,8 +946,10 @@ class GPUPerformanceMonitor:
 
                 # 如果后半段比前半段高20%以上,可能存在泄漏
                 if avg_first_half > 0 and (avg_second_half - avg_first_half) / avg_first_half > 0.2:
+                    _first = avg_first_half
+                    _second = avg_second_half
                     logger.warning(
-                        f"⚠️ 检测到可能的显存泄漏: 前半段={avg_first_half:.1f}MB, 后半段={avg_second_half:.1f}MB"
+                        f"⚠️ 检测到可能的显存泄漏: 前半段={_first:.1f}MB, 后半段={_second:.1f}MB"
                     )
 
     def _check_error_rate(self):
@@ -985,7 +984,10 @@ class GPUPerformanceMonitor:
                             "peak_throughput": self._peak_throughput,
                             "degradation_rate": 0,
                             "memory_usage_percent": (
-                                min((self._current_memory_mb / max(self._total_memory_mb, 1)) * 100, 100.0)
+                                min(
+                                    (self._current_memory_mb / max(self._total_memory_mb, 1)) * 100,
+                                    100.0,
+                                )
                                 if hasattr(self, "_current_memory_mb")
                                 and hasattr(self, "_total_memory_mb")
                                 else 0

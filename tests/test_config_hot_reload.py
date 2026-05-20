@@ -9,8 +9,8 @@ import json
 import os
 import sys
 import tempfile
-import time
 import threading
+import time
 import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -580,7 +580,7 @@ class TestNotificationChannelConcurrency(unittest.TestCase):
     """S10: 通知渠道并发安全测试"""
 
     def setUp(self):
-        from src.monitoring.alert_system import AlertSystem, AlertLevel, AlertType
+        from src.monitoring.alert_system import AlertLevel, AlertSystem, AlertType
 
         self.AlertSystem = AlertSystem
         self.AlertLevel = AlertLevel

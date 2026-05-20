@@ -1,9 +1,9 @@
 """DeduplicationFilter 单元测试 - 双缓冲轮换、内存上限、并发安全"""
 
-import threading
-import unittest
 import os
 import sys
+import threading
+import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

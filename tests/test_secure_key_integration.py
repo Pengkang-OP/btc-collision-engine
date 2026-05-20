@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 SecureKeyManager集成到碰撞引擎的验证测试
 """
@@ -97,8 +96,9 @@ def test_performance_impact():
 
     # 不使用SecureKeyManager的基准测试
     print("\n基准测试（原始方法）:")
-    from src.core.address_generator import P2PKHAddressGenerator
     import secrets
+
+    from src.core.address_generator import P2PKHAddressGenerator
 
     generator = P2PKHAddressGenerator()
     start = time.time()

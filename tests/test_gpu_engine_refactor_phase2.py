@@ -10,8 +10,9 @@
 所有测试使用 Mock，无需真实 GPU 硬件。
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 
 pytestmark = pytest.mark.gpu
 
@@ -351,9 +352,9 @@ class TestModuleImports:
     def test_import_phase2_adapters(self):
         """测试 Phase 2 适配器导入"""
         from src.collision.gpu import (
+            AsyncPipelineAdapter,
             DeviceManagerAdapter,
             GPUKernelAdapter,
-            AsyncPipelineAdapter,
         )
 
         assert DeviceManagerAdapter is not None
@@ -363,10 +364,10 @@ class TestModuleImports:
     def test_import_factory_functions(self):
         """测试工厂函数导入"""
         from src.collision.gpu import (
-            get_gpu_engine_facade,
-            get_device_manager_adapter,
-            get_kernel_adapter,
             get_async_pipeline_adapter,
+            get_device_manager_adapter,
+            get_gpu_engine_facade,
+            get_kernel_adapter,
         )
 
         assert callable(get_gpu_engine_facade)

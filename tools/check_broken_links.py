@@ -1,5 +1,4 @@
-﻿﻿﻿﻿#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
 """
 断裂链接检查工具
 
@@ -14,12 +13,15 @@
 
 import re
 import sys
-import requests
-from pathlib import Path
-from typing import List, Dict
 from dataclasses import dataclass
+from pathlib import Path
 
-# 修复Windows控制台编码问题 - 使用共享模块`nfrom tools.utf8_helper import setup_windows_utf8`nsetup_windows_utf8()
+import requests
+
+# 修复Windows控制台编码问题 - 使用共享模块
+from tools.utf8_helper import setup_windows_utf8
+
+setup_windows_utf8()
 
 
 @dataclass
@@ -45,7 +47,7 @@ class BrokenLinkChecker:
     def __init__(self, docs_dir: str = "docs", check_external: bool = False):
         self.docs_dir = Path(docs_dir)
         self.check_external = check_external
-        self.broken_links: List[BrokenLink] = []
+        self.broken_links: list[BrokenLink] = []
         self.total_links = 0
         self.checked_files = 0
 
@@ -72,7 +74,7 @@ class BrokenLinkChecker:
         """检查单个文件"""
         try:
             content = file_path.read_text(encoding='utf-8')
-            lines = content.split('\n')
+            content.split('\n')
             self.checked_files += 1
 
             # 查找所有Markdown链接
@@ -86,7 +88,7 @@ class BrokenLinkChecker:
         except Exception as e:
             print(f"❌ 读取文件失败 {file_path}: {e}")
 
-    def extract_links(self, content: str, file_path: str) -> List[LinkInfo]:
+    def extract_links(self, content: str, file_path: str) -> list[LinkInfo]:
         """提取文档中的所有链接"""
         links = []
         lines = content.split('\n')
@@ -239,10 +241,10 @@ class BrokenLinkChecker:
         print(f"❌ 断裂链接: {len(self.broken_links)}")
 
         if self.broken_links:
-            print(f"\n⚠️  断裂链接详情:\n")
+            print("\n⚠️  断裂链接详情:\n")
 
             # 按文件分组
-            by_file: Dict[str, List[BrokenLink]] = {}
+            by_file: dict[str, list[BrokenLink]] = {}
             for broken in self.broken_links:
                 file_name = Path(broken.link.file).name
                 if file_name not in by_file:
@@ -256,7 +258,7 @@ class BrokenLinkChecker:
                     print(f"      原因: {broken.reason}")
                 print()
         else:
-            print(f"\n✅ 所有链接都有效！")
+            print("\n✅ 所有链接都有效！")
 
         print("=" * 60)
 

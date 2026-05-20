@@ -156,9 +156,7 @@ def get_version_changelog(version: str | None = None) -> list[dict[str, str]]:
     return [e for e in KERNEL_VERSION_HISTORY if e["version"] == version]
 
 
-def get_latest_compatible_version(
-    current_version: str, available_versions: list[str]
-) -> str | None:
+def get_latest_compatible_version(current_version: str, available_versions: list[str]) -> str | None:
     """查找最新兼容版本（用于回滚场景）
 
     给定当前版本和可用版本列表，返回可回退到的最高版本。
@@ -568,8 +566,10 @@ void mod_inverse(const uint256_t *a, uint256_t *result) {
     uint256_set_zero(&x2);     // x2 = 1
     x2.d[0] = 1;
 
-    // Binary GCD with Bezout coefficient tracking
-    while (!uint256_is_zero(&u) && !uint256_is_zero(&v)) {
+    // Binary GCD with Bezout coefficient tracking (max 512 iterations to prevent TDR)
+    uint _gcd_iters = 0;
+    while (!uint256_is_zero(&u) && !uint256_is_zero(&v) && _gcd_iters < 512) {
+        _gcd_iters++;
         // Strip factor 2 from u
         while (uint256_is_even(&u)) {
             uint256_shr1(&u, &u);
@@ -953,6 +953,7 @@ void ec_scalar_multiply(const uint256_t *k,
         } else {
             // Spans two limbs
             uint lo = k->d[d_idx] >> d_shift;
+            // d_idx+1<8 边界保证：d_idx max=7(bit_start=245,d_shift=21)，安全
             uint hi = (d_idx + 1 < 8) ? (k->d[d_idx + 1] << (32 - d_shift)) : 0;
             window = (int)((lo | hi) & 0x1F);
         }
@@ -1109,7 +1110,7 @@ void sha256(const uchar *data, uint len, uchar *hash) {
 
     uchar buffer[64];
     uint buffer_len = 0;
-    uint total_len = 0;
+    ulong total_len = 0;
 
     // Process input data
     for (uint i = 0; i < len; i++) {
@@ -1389,8 +1390,10 @@ void hash160(const uchar *data, uint len, uchar *result) {
 //   match     - int variable (will be set to target_index+1 on match, 0 otherwise)
 #define HASH160_TARGET_SCAN(src_base, h0, h1, h2, h3, h4, n_targets, match) \
 do { \
+    /* v4.5: 溢出守卫 — num_targets 超过 ~214M 时地址计算溢出，拒绝扫描 */ \
+    if ((n_targets) > 214748364u) { (match) = 0; break; } \
     for (uint _t = 0; _t < (n_targets) && (match) == 0; _t++) { \
-        const uchar *_src = (src_base) + _t * 20u; \
+        const uchar *_src = (src_base) + (ulong)_t * 20u; \
         uint _t0 = (uint)_src[0]  | ((uint)_src[1]  << 8) | ((uint)_src[2]  << 16) | ((uint)_src[3]  << 24); \
         if (_t0 != (h0)) continue; \
         uint _t1 = (uint)_src[4]  | ((uint)_src[5]  << 8) | ((uint)_src[6]  << 16) | ((uint)_src[7]  << 24); \
@@ -1706,3 +1709,36 @@ __kernel void verify_arithmetic(
     }
 }
 """
+
+
+# P2修复: 内核代码外部化 — 运行时从独立 .cl 文件加载，回退到嵌入源码
+import os as _os
+
+
+def _load_kernel_source() -> str:
+    """加载 OpenCL 内核源码
+
+    优先从 src/gpu/kernels/batch_check.cl 加载，文件不存在时回退到嵌入源码。
+    外部化 .cl 文件便于版本管理、语法高亮和独立测试。
+
+    Returns:
+        OpenCL 内核源码字符串
+    """
+    _kernel_dir = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "kernels")
+    _kernel_file = _os.path.join(_kernel_dir, "batch_check.cl")
+    try:
+        if _os.path.exists(_kernel_file):
+            with open(_kernel_file, encoding="utf-8") as f:
+                source = f.read()
+            return source
+    except OSError:
+        pass
+    # 回退到嵌入源码（使用 _EMBEDDED_KERNEL_SOURCE 避免自引用）
+    return _EMBEDDED_KERNEL_SOURCE
+
+
+# 保存原始嵌入源码（供 _load_kernel_source 回退使用）
+_EMBEDDED_KERNEL_SOURCE = OPENCL_KERNEL_SOURCE
+
+# 运行时加载: 优先从外部 .cl 文件加载内核源码
+OPENCL_KERNEL_SOURCE = _load_kernel_source()

@@ -1,12 +1,12 @@
 """统一测试工具模块 - 提供通用的Mock工厂和测试辅助函数"""
 
-import unittest
-from unittest.mock import Mock, patch
-from contextlib import contextmanager
-from typing import Any, Dict, List, Tuple
-import tempfile
-import os
 import json
+import os
+import tempfile
+import unittest
+from contextlib import contextmanager
+from typing import Any
+from unittest.mock import Mock, patch
 
 
 class TestUtils:
@@ -34,7 +34,7 @@ class TestUtils:
 
     @staticmethod
     @contextmanager
-    def temp_json_file(data: Dict):
+    def temp_json_file(data: dict):
         """创建临时JSON文件上下文管理器"""
         with tempfile.NamedTemporaryFile(
             mode="w", suffix=".json", delete=False, encoding="utf-8"
@@ -66,7 +66,7 @@ class TestUtils:
     # -------------------------------------------------------------------------
 
     @staticmethod
-    def create_mock_with_attrs(attrs: Dict[str, Any]) -> Mock:
+    def create_mock_with_attrs(attrs: dict[str, Any]) -> Mock:
         """创建带有指定属性的Mock对象"""
         mock = Mock()
         for key, value in attrs.items():
@@ -74,7 +74,7 @@ class TestUtils:
         return mock
 
     @staticmethod
-    def create_mock_with_methods(methods: Dict[str, Any]) -> Mock:
+    def create_mock_with_methods(methods: dict[str, Any]) -> Mock:
         """创建带有指定方法的Mock对象"""
         mock = Mock()
         for method_name, return_value in methods.items():
@@ -86,7 +86,7 @@ class TestUtils:
 
     @staticmethod
     @contextmanager
-    def patch_multiple(patches: List[Tuple[str, Any]]):
+    def patch_multiple(patches: list[tuple[str, Any]]):
         """同时patch多个对象"""
         patch_objects = []
         try:
@@ -104,13 +104,13 @@ class TestUtils:
     # -------------------------------------------------------------------------
 
     @staticmethod
-    def assert_dict_contains_keys(d: Dict, expected_keys: List[str]):
+    def assert_dict_contains_keys(d: dict, expected_keys: list[str]):
         """断言字典包含所有期望的键"""
         for key in expected_keys:
             assert key in d, f"字典缺少预期键: {key}"
 
     @staticmethod
-    def assert_dict_equals_ignoring_keys(d1: Dict, d2: Dict, ignore_keys: List[str] = None):
+    def assert_dict_equals_ignoring_keys(d1: dict, d2: dict, ignore_keys: list[str] = None):
         """比较两个字典，忽略指定的键"""
         if ignore_keys is None:
             ignore_keys = []
@@ -185,7 +185,7 @@ class TestUtils:
     # -------------------------------------------------------------------------
 
     @staticmethod
-    def measure_time(func, *args, **kwargs) -> Tuple[float, Any]:
+    def measure_time(func, *args, **kwargs) -> tuple[float, Any]:
         """测量函数执行时间并返回结果"""
         import time
 
@@ -221,7 +221,7 @@ class MockFactory:
         return mock
 
     @staticmethod
-    def create_list_mock(items: List) -> Mock:
+    def create_list_mock(items: list) -> Mock:
         """创建模拟列表的Mock对象"""
         mock = Mock()
         mock.__iter__.return_value = iter(items)
@@ -230,7 +230,7 @@ class MockFactory:
         return mock
 
     @staticmethod
-    def create_dict_mock(data: Dict) -> Mock:
+    def create_dict_mock(data: dict) -> Mock:
         """创建模拟字典的Mock对象"""
         mock = Mock()
         mock.__getitem__ = lambda key: data[key]
@@ -385,8 +385,8 @@ def skip_if_no_gpu(func):
 
 def timeout(seconds: int):
     """测试超时装饰器"""
-    import signal
     import functools
+    import signal
 
     def decorator(func):
         @functools.wraps(func)

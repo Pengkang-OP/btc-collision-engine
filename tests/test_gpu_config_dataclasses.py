@@ -10,13 +10,13 @@
 """
 
 import pytest
+
 from src.gpu.gpu_config import (
+    DataMonitorConfig,
+    GPURecoveryConfig,
     MultiGPUConfig,
     WorkerConfig,
-    GPURecoveryConfig,
-    DataMonitorConfig,
 )
-
 
 # ============================================================================
 # MultiGPUConfig 测试

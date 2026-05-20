@@ -6,11 +6,11 @@ Covers all wizard modules:
 - message_queue.py, target_selector.py, gpu_selector.py, wizard_engine.py
 """
 
-import sys
 import json
+import sys
 from unittest.mock import MagicMock
-import pytest
 
+import pytest
 
 # ============================================================================
 # __init__ tests
@@ -716,8 +716,8 @@ class TestWizardMessageQueue:
         assert mq.size() == 0
 
     def test_send_and_receive(self):
-        from src.wizard.message_queue import WizardMessageQueue
         from src.wizard.events import WizardEventType
+        from src.wizard.message_queue import WizardMessageQueue
         mq = WizardMessageQueue()
         assert mq.send(WizardEventType.WIZARD_START, {"key": "val"})
         event = mq.receive()
@@ -726,15 +726,15 @@ class TestWizardMessageQueue:
         assert event.data == {"key": "val"}
 
     def test_send_disabled_queue(self):
-        from src.wizard.message_queue import WizardMessageQueue
         from src.wizard.events import WizardEventType
+        from src.wizard.message_queue import WizardMessageQueue
         mq = WizardMessageQueue()
         mq.disable()
         assert mq.send(WizardEventType.WIZARD_START, {}) is False
 
     def test_send_queue_full(self):
-        from src.wizard.message_queue import WizardMessageQueue
         from src.wizard.events import WizardEventType
+        from src.wizard.message_queue import WizardMessageQueue
         mq = WizardMessageQueue(maxsize=1)
         assert mq.send(WizardEventType.WIZARD_START, {})
         assert mq.send(WizardEventType.WIZARD_START, {}) is False
@@ -746,8 +746,8 @@ class TestWizardMessageQueue:
         assert event is None
 
     def test_receive_all(self):
-        from src.wizard.message_queue import WizardMessageQueue
         from src.wizard.events import WizardEventType
+        from src.wizard.message_queue import WizardMessageQueue
         mq = WizardMessageQueue()
         mq.send(WizardEventType.WIZARD_START, {})
         mq.send(WizardEventType.TARGET_SELECTED, {"targets": ["a"]})
@@ -755,8 +755,8 @@ class TestWizardMessageQueue:
         assert len(events) == 2
 
     def test_subscribe_and_notify(self):
-        from src.wizard.message_queue import WizardMessageQueue
         from src.wizard.events import WizardEventType
+        from src.wizard.message_queue import WizardMessageQueue
         mq = WizardMessageQueue()
         callback = MagicMock()
         mq.subscribe(callback)
@@ -764,8 +764,8 @@ class TestWizardMessageQueue:
         callback.assert_called_once()
 
     def test_unsubscribe(self):
-        from src.wizard.message_queue import WizardMessageQueue
         from src.wizard.events import WizardEventType
+        from src.wizard.message_queue import WizardMessageQueue
         mq = WizardMessageQueue()
         callback = MagicMock()
         mq.subscribe(callback)
@@ -774,8 +774,8 @@ class TestWizardMessageQueue:
         callback.assert_not_called()
 
     def test_subscriber_exception_handled(self, caplog):
-        from src.wizard.message_queue import WizardMessageQueue
         from src.wizard.events import WizardEventType
+        from src.wizard.message_queue import WizardMessageQueue
         mq = WizardMessageQueue()
 
         def failing_cb(event):
@@ -786,8 +786,8 @@ class TestWizardMessageQueue:
         assert "sub error" in caplog.text
 
     def test_enable_disable(self):
-        from src.wizard.message_queue import WizardMessageQueue
         from src.wizard.events import WizardEventType
+        from src.wizard.message_queue import WizardMessageQueue
         mq = WizardMessageQueue()
         mq.disable()
         assert mq.send(WizardEventType.WIZARD_START, {}) is False
@@ -795,8 +795,8 @@ class TestWizardMessageQueue:
         assert mq.send(WizardEventType.WIZARD_START, {}) is True
 
     def test_clear(self):
-        from src.wizard.message_queue import WizardMessageQueue
         from src.wizard.events import WizardEventType
+        from src.wizard.message_queue import WizardMessageQueue
         mq = WizardMessageQueue()
         mq.send(WizardEventType.WIZARD_START, {})
         mq.send(WizardEventType.WIZARD_START, {})
@@ -853,8 +853,8 @@ class TestWizardMessageQueue:
 
     def test_clear_race_condition(self):
         """Test clear() handles queue.Empty during drain."""
-        from src.wizard.message_queue import WizardMessageQueue
         from src.wizard.events import WizardEventType
+        from src.wizard.message_queue import WizardMessageQueue
         mq = WizardMessageQueue()
         mq.send(WizardEventType.WIZARD_START, {})
         # Simulate race: empty() returns False, but get_nowait raises Empty
@@ -891,7 +891,10 @@ class TestMessageQueueGlobal:
 
     def test_set_message_queue(self):
         from src.wizard.message_queue import (
-            get_message_queue, set_message_queue, reset_message_queue, WizardMessageQueue,
+            WizardMessageQueue,
+            get_message_queue,
+            reset_message_queue,
+            set_message_queue,
         )
         reset_message_queue(None)
         custom_q = WizardMessageQueue(maxsize=100)
@@ -901,7 +904,9 @@ class TestMessageQueueGlobal:
 
     def test_set_message_queue_clears_old(self):
         from src.wizard.message_queue import (
-            WizardMessageQueue, set_message_queue, reset_message_queue,
+            WizardMessageQueue,
+            reset_message_queue,
+            set_message_queue,
         )
         old_q = WizardMessageQueue()
         old_q.send_wizard_start({})
@@ -914,7 +919,9 @@ class TestMessageQueueGlobal:
 
     def test_reset_message_queue(self):
         from src.wizard.message_queue import (
-            get_message_queue, reset_message_queue, WizardMessageQueue,
+            WizardMessageQueue,
+            get_message_queue,
+            reset_message_queue,
         )
         reset_message_queue(None)
         q = WizardMessageQueue()
@@ -929,7 +936,9 @@ class TestMessageQueueGlobal:
 
     def test_reset_message_queue_with_new(self):
         from src.wizard.message_queue import (
-            get_message_queue, reset_message_queue, WizardMessageQueue,
+            WizardMessageQueue,
+            get_message_queue,
+            reset_message_queue,
         )
         reset_message_queue(None)
         new_q = WizardMessageQueue()
@@ -1387,8 +1396,8 @@ class TestWizardEngine:
     """Test WizardEngine orchestration."""
 
     def test_init_defaults(self):
-        from src.wizard.wizard_engine import WizardEngine
         from src.wizard.interfaces import WizardMode
+        from src.wizard.wizard_engine import WizardEngine
         engine = WizardEngine()
         assert engine.config.mode == WizardMode.INTERACTIVE
         assert engine.result.success is False
@@ -1400,8 +1409,8 @@ class TestWizardEngine:
         assert "build" in engine._step_handlers
 
     def test_init_custom_config(self):
-        from src.wizard.wizard_engine import WizardEngine
         from src.wizard.interfaces import WizardConfig, WizardMode
+        from src.wizard.wizard_engine import WizardEngine
         config = WizardConfig(mode=WizardMode.COMPACT, show_intro=False)
         engine = WizardEngine(config=config)
         assert engine.config.mode == WizardMode.COMPACT
@@ -1623,9 +1632,9 @@ class TestWizardEngine:
         assert "没有可执行的命令" in captured.out
 
     def test_complete_user_declines(self, monkeypatch):
-        from src.wizard.wizard_engine import WizardEngine
         from src.wizard.interfaces import WizardConfig, WizardMode
         from src.wizard.message_queue import WizardMessageQueue
+        from src.wizard.wizard_engine import WizardEngine
 
         mock_mq = MagicMock(spec=WizardMessageQueue)
         config = WizardConfig(mode=WizardMode.INTERACTIVE, show_summary=False,
@@ -1641,9 +1650,9 @@ class TestWizardEngine:
         assert "取消执行" in (engine.result.error_message or "")
 
     def test_complete_user_accepts(self, monkeypatch):
-        from src.wizard.wizard_engine import WizardEngine
         from src.wizard.interfaces import WizardConfig, WizardMode
         from src.wizard.message_queue import WizardMessageQueue
+        from src.wizard.wizard_engine import WizardEngine
 
         mock_mq = MagicMock(spec=WizardMessageQueue)
         config = WizardConfig(mode=WizardMode.INTERACTIVE, show_summary=False,
@@ -1695,9 +1704,9 @@ class TestWizardEngine:
 
     def test_complete_with_summary(self, monkeypatch):
         """Test _complete with show_summary=True."""
-        from src.wizard.wizard_engine import WizardEngine
         from src.wizard.interfaces import WizardConfig, WizardMode
         from src.wizard.message_queue import WizardMessageQueue
+        from src.wizard.wizard_engine import WizardEngine
         mock_mq = MagicMock(spec=WizardMessageQueue)
         config = WizardConfig(mode=WizardMode.COMPACT, show_intro=False,
                               show_summary=True, auto_continue=True)

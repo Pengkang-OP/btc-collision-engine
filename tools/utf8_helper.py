@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Windows 控制台 UTF-8 编码修复工具
 
@@ -9,10 +8,10 @@ Windows 控制台 UTF-8 编码修复工具
 
 非 Windows 平台下，所有函数为空操作，保证跨平台兼容性。
 """
-import sys
-import io
 import ctypes
+import io
 import logging
+import sys
 
 logger = logging.getLogger(__name__)
 

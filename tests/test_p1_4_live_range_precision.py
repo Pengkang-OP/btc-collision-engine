@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """P1-4 定向验证测试: range_scan 停止时 _live_range_count 精度丢失修复
 
 修复内容: range_scan 最终计数合并 _live_range_count + data_logging 同步
@@ -11,14 +10,15 @@
   D - _range_scan_worker 有 500步余数提交
 """
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 import inspect  # noqa: E402
 import threading  # noqa: E402
 import time  # noqa: E402
+
 from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
 
 

@@ -1,14 +1,14 @@
-# -*- coding: utf-8 -*-
 """
 P1-3修复: 熵池健康检查单元测试
 
 测试SecureKeyGenerator的熵池检测功能,验证在不同熵池状态下的行为。
 """
 
-import unittest
-from unittest.mock import patch, mock_open
-import sys
 import os
+import sys
+import unittest
+from unittest.mock import mock_open, patch
+
 import pytest
 
 # 添加项目根目录到路径
@@ -77,7 +77,7 @@ class TestEntropyHealthCheck(unittest.TestCase):
     def test_entropy_file_read_error(self):
         """测试熵池文件读取错误"""
         with patch("os.path.exists", return_value=True):
-            with patch("builtins.open", side_effect=IOError("Permission denied")):
+            with patch("builtins.open", side_effect=OSError("Permission denied")):
                 result = self.key_gen._check_entropy_health()
 
                 # 错误时应假设健康

@@ -1,9 +1,10 @@
-# -*- coding: utf-8 -*-
 """大整数优化模块单元测试"""
 
-import pytest
 import time
-from src.core.bigint_optimizer import BigIntOptimizer, get_bigint_optimizer, bigint_optimizer
+
+import pytest
+
+from src.core.bigint_optimizer import BigIntOptimizer, bigint_optimizer, get_bigint_optimizer
 
 
 class TestBigIntOptimizer:

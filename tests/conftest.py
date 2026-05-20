@@ -27,10 +27,11 @@
     A4: 已全局修复,使用mock_gpu_chain或mock_pyopencl_buffer fixture即可
 """
 
-import pytest
 import time
-from unittest.mock import Mock, patch
 from contextlib import ExitStack, contextmanager
+from unittest.mock import Mock, patch
+
+import pytest
 
 # 导入GPU Mock修复补丁
 
@@ -412,6 +413,7 @@ def clear_gpu_detector_cache():
             mock_is_available.return_value = True
     """
     import warnings
+
     from src.gpu.device import GPUDeviceDetector
 
     # 发出并发安全警告
@@ -659,8 +661,8 @@ def pytest_sessionfinish(session, exitstatus):
             try:
                 thread.join(timeout=2.0)
                 logger.debug(f"已加入线程: {thread.name}")
-            except Exception:
-                pass
+            except (RuntimeError, OSError):
+                pass  # 线程不可join（如守护线程已退出）
 
     # 5. 优雅退出：先尝试等待非daemon线程完成，超时后强制退出
     # 注意：始终 exit(0) 因为实际测试结果由 Pytest 输出决定，

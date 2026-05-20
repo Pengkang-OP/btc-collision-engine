@@ -519,18 +519,17 @@ class TestModuleStartup(unittest.TestCase):
 
     def test_stdout_reconfigure_exception_handled(self):
         """sys.stdout.reconfigure 抛异常 → 静默忽略 (L227-228)。"""
-        with patch.object(main_mod, "_run_main"):
-            with patch.object(
-                sys.stdout, "reconfigure", side_effect=OSError("bad fd")
-            ) as mock_rec:
-                # 不应抛出异常
-                try:
-                    main_mod.main()
-                except Exception as e:
-                    self.fail(
-                        f"main() should not raise on reconfigure error: {e}"
-                    )
-                mock_rec.assert_called()  # 确认 except 路径被执行
+        with patch.object(main_mod, "_run_main"), patch.object(
+            sys.stdout, "reconfigure", side_effect=OSError("bad fd")
+        ) as mock_rec:
+            # 不应抛出异常
+            try:
+                main_mod.main()
+            except Exception as e:
+                self.fail(
+                    f"main() should not raise on reconfigure error: {e}"
+                )
+            mock_rec.assert_called()  # 确认 except 路径被执行
 
 
 if __name__ == "__main__":

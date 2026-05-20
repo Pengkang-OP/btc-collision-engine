@@ -13,14 +13,14 @@
 - 并发安全：多线程 add/check
 """
 
-import hashlib
 import threading
-import pytest
-from src.collision.bloom_deduplication_filter import (
-    BloomFilter,
-    BloomDeduplicationFilter,
-)
 
+import pytest
+
+from src.collision.bloom_deduplication_filter import (
+    BloomDeduplicationFilter,
+    BloomFilter,
+)
 
 # ============================================================================
 # BloomFilter 测试

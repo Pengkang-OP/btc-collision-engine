@@ -25,8 +25,7 @@ except ImportError:
     HAS_CRYPTOGRAPHY = False
 
 try:
-    import nacl.secret
-    import nacl.utils
+    import nacl.secret  # noqa: F401 — 导入可用性检测
 
     HAS_PYNACL = True
 except ImportError:
@@ -109,7 +108,7 @@ class SecureKeyManager:
         else:
             self._backend = "ctypes"
             warnings.warn(
-                "未安装cryptography或PyNaCl，使用ctypes回退方案。安装 cryptography: pip install cryptography",
+                "未安装cryptography或PyNaCl，使用ctypes回退。安装: pip install cryptography",
                 UserWarning,
                 stacklevel=2,
             )
@@ -470,11 +469,7 @@ class SecureKeyManager:
 
             # 使用 ctypes.memset 进行安全清零
             try:
-                ctypes.memset(
-                    ctypes.addressof(ctypes.c_char.from_buffer(self._key)),
-                    0,
-                    len(self._key)
-                )
+                ctypes.memset(ctypes.addressof(ctypes.c_char.from_buffer(self._key)), 0, len(self._key))
             except (TypeError, ValueError, OSError):
                 # 回退到安全的多次覆盖
                 for _ in range(3):
@@ -487,9 +482,7 @@ class SecureKeyManager:
         """使用ctypes memset清零（回退方案）"""
         if self._key:
             try:
-                ctypes.memset(
-                    ctypes.addressof(ctypes.c_char.from_buffer(self._key)), 0, len(self._key)
-                )
+                ctypes.memset(ctypes.addressof(ctypes.c_char.from_buffer(self._key)), 0, len(self._key))
             except (TypeError, ValueError, OSError):
                 # 如果无法清零，至少覆盖为0
                 for i in range(len(self._key)):
@@ -499,9 +492,7 @@ class SecureKeyManager:
         """上下文管理器入口"""
         return self
 
-    def __exit__(
-        self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None
-    ) -> None:
+    def __exit__(self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None) -> None:
         """上下文管理器出口 - 自动清零"""
         self.clear()
         return None
@@ -509,14 +500,11 @@ class SecureKeyManager:
     def __del__(self) -> None:
         """析构函数 - 确保清零"""
         if self._key is not None and not self._cleared:
-            # 尝试清零，但忽略异常（对象正在销毁）
-            # 使用 Exception 而非裸except，避免捕获 KeyboardInterrupt/SystemExit
-            try:
+            # 析构函数中静默失败是可接受的
+            # AttributeError: ctypes 可能在 __del__ 前被卸载 (解释器关闭阶段)
+            # NameError: 同上
+            with suppress(OSError, ValueError, AttributeError, NameError, RuntimeError):
                 self.clear()
-            except (OSError, ValueError):
-                # 析构函数中静默失败是可接受的
-                # 因为此时对象正在销毁，无法做更多处理
-                pass
 
     @property
     def is_cleared(self) -> bool:

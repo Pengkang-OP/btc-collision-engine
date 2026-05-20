@@ -91,10 +91,7 @@ class Base58:
             num = num * Base58.BASE + Base58._DECODE_TABLE[c]
 
         # 将整数转换为字节串
-        if num == 0:
-            result = b""
-        else:
-            result = num.to_bytes((num.bit_length() + 7) // 8, "big")
+        result = b"" if num == 0 else num.to_bytes((num.bit_length() + 7) // 8, "big")
 
         # 添加前导零
         return b"\x00" * leading_ones + result
@@ -127,7 +124,7 @@ class Base58:
         return Base58.encode(data + checksum)
 
     @staticmethod
-    def check_decode(s: str) -> tuple:
+    def check_decode(s: str) -> tuple[int, bytes]:
         """
         Base58Check解码
 
@@ -154,9 +151,7 @@ class Base58:
 
         # 最小长度检查
         if len(data) < 5:
-            raise ValueError(
-                "Base58Check数据过短（至少需要5字节: 1字节版本 + 0+载荷 + 4字节校验和）"
-            )
+            raise ValueError("Base58Check数据过短（至少需要5字节: 1字节版本 + 0+载荷 + 4字节校验和）")
 
         # 分离版本、载荷和校验和
         version = data[0]

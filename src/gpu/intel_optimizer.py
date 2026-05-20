@@ -204,14 +204,15 @@ class IntelGPUOptimizer:
                 device_info = self._device.device_info
                 if not isinstance(device_info, dict):
                     self._logger.warning(
-                        f"⚠️ device_info 类型异常: {type(device_info).__name__}，跳过显存监控器初始化\n"
+                        f"⚠️ device_info 类型异常: {type(device_info).__name__}, 跳过显存监控器初始化\n"
                         "   显存监控功能将被禁用"
                     )
                 else:
                     total_memory = device_info.get("global_mem_size", 0)
                     if total_memory <= 0:
                         self._logger.warning(
-                            "⚠️ 无法获取显存大小（global_mem_size=0），跳过显存监控器初始化\n   显存监控功能将被禁用"
+                            "⚠️ 无法获取显存大小（global_mem_size=0），跳过显存监控器初始化\n"
+                            "   显存监控功能将被禁用"
                         )
                     else:
                         # v2.2.2 修复: 使用设备的 memory_efficiency 而非硬编码常量
@@ -228,7 +229,7 @@ class IntelGPUOptimizer:
                         )
             except (RuntimeError, ValueError, TypeError, AttributeError) as e:
                 self._logger.warning(
-                    f"⚠️ 显存监控器初始化失败（非致命）: {type(e).__name__}: {e}\n   显存监控功能将被禁用",
+                    f"⚠️ 显存监控器初始化失败（非致命）: {type(e).__name__}\n   显存监控功能将被禁用",
                     exc_info=True,
                 )
 
@@ -240,7 +241,7 @@ class IntelGPUOptimizer:
                 self._logger.info("✅ 基准测试套件已初始化")
             except (RuntimeError, ValueError, TypeError, AttributeError) as e:
                 self._logger.warning(
-                    f"⚠️ 基准测试套件初始化失败（非致命）: {type(e).__name__}: {e}\n   基准测试功能将被禁用",
+                    f"⚠️ 基准测试套件初始化失败（非致命）: {type(e).__name__}\n   基准测试功能将被禁用",
                     exc_info=True,
                 )
 
@@ -252,7 +253,7 @@ class IntelGPUOptimizer:
                 self._logger.info("✅ 自动调优器已初始化")
             except (RuntimeError, ValueError, TypeError, AttributeError) as e:
                 self._logger.warning(
-                    f"⚠️ 自动调优器初始化失败（非致命）: {type(e).__name__}: {e}\n   自动调优功能将被禁用",
+                    f"⚠️ 自动调优器初始化失败（非致命）: {type(e).__name__}\n   自动调优功能将被禁用",
                     exc_info=True,
                 )
 
@@ -268,7 +269,7 @@ class IntelGPUOptimizer:
                 self._logger.info("✅ 性能报告生成器已初始化")
             except (RuntimeError, ValueError, TypeError, AttributeError) as e:
                 self._logger.warning(
-                    f"⚠️ 性能报告生成器初始化失败（非致命）: {type(e).__name__}: {e}\n   性能报告功能将被禁用",
+                    f"⚠️ 性能报告生成器初始化失败（非致命）: {type(e).__name__}\n   性能报告功能将被禁用",
                     exc_info=True,
                 )
 

@@ -94,9 +94,7 @@ class ConsoleNotification(NotificationChannel):
         except (ValueError, AttributeError):
             timestamp = alert.timestamp or "--:--:--"
 
-        line = (
-            f"{prefix}{color}[{alert.level.value.upper():>8}] {timestamp}  {alert.message}{_RESET}"
-        )
+        line = f"{prefix}{color}[{alert.level.value.upper():>8}] {timestamp}  {alert.message}{_RESET}"
         print(line, file=sys.stderr, flush=True)
 
 
@@ -129,10 +127,12 @@ class LogFileNotification(NotificationChannel):
     def send(self, alert: AlertRecord) -> None:
         try:
             timestamp = self._format_timestamp(alert.timestamp)
-        except Exception:
+        except (ValueError, AttributeError, TypeError):
             timestamp = alert.timestamp or "????-??-?? ??:??:??"
 
-        line = f"[{alert.level.value.upper():>8}] {timestamp} | {alert.alert_type.value:>25} | {alert.message}\n"
+        _level = alert.level.value.upper()
+        _type = alert.alert_type.value
+        line = f"[{_level:>8}] {timestamp} | {_type:>25} | {alert.message}\n"
 
         try:
             with open(self.file_path, "a", encoding="utf-8") as f:

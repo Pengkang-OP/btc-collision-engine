@@ -118,9 +118,7 @@ def load_targets(args: Any) -> set[str]:
         _print_format_summary(fmt_counts)
     else:
         incompatible = (
-            fmt_counts.get("p2sh", 0)
-            + fmt_counts.get("bech32", 0)
-            + fmt_counts.get("taproot", 0)
+            fmt_counts.get("p2sh", 0) + fmt_counts.get("bech32", 0) + fmt_counts.get("taproot", 0)
         )
         if incompatible > 0:
             logger.warning(_t("targets.incompatible_warning", count=incompatible))

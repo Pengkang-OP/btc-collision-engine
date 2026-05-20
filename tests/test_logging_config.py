@@ -9,13 +9,14 @@
 - init_logging / get_configured_logger
 """
 
-import os
-import sys
 import logging
+import os
 import shutil
+import sys
 import tempfile
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 
 # ============================================================================
 # Fixtures
@@ -40,8 +41,8 @@ def reset_logging_config():
     for handler in list(root_logger.handlers):
         try:
             handler.close()
-        except Exception:
-            pass
+        except (OSError, RuntimeError):
+            pass  # handler关闭失败不阻塞清理
     root_logger.handlers.clear()
     # 恢复原始 handlers
     for handler in original_handlers:
@@ -63,8 +64,8 @@ def temp_log_dir():
     for handler in list(root.handlers):
         try:
             handler.close()
-        except Exception:
-            pass
+        except (OSError, RuntimeError):
+            pass  # handler关闭失败不阻塞清理
     root.handlers.clear()
     # 清理临时目录
     try:

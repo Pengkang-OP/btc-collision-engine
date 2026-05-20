@@ -10,7 +10,7 @@ import sys
 import unittest
 from unittest.mock import patch
 
-from src.cli.optimization_cli import print_settings, main
+from src.cli.optimization_cli import main, print_settings
 from src.config.optimization_config import optimization_config
 
 _ENV_KEYS = (

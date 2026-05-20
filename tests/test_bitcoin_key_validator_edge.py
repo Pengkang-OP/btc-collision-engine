@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """BitcoinKeyValidator 边界与错误路径覆盖测试
 
 覆盖缺失行: 88, 98, 108, 283, 293-294, 399-400, 404-405, 439-441,
@@ -11,12 +10,12 @@
 import unittest
 from unittest.mock import patch
 
-from src.core.secp256k1 import Secp256k1
 from src.core.bitcoin_key_validator import (
-    WIFEncoder,
     AddressType,
     BitcoinKeyValidator,
+    WIFEncoder,
 )
+from src.core.secp256k1 import Secp256k1
 from src.utils.bech32_codec import convertbits
 
 # BIP-173 已知测试向量 (G点公钥 → P2WPKH bech32地址)
@@ -52,6 +51,7 @@ class TestWIFEncoderDecodeEdge(unittest.TestCase):
         # 然后修改 WIF 中版本对应的部分... 需要巧妙的构造
         # 直接使用一个 Base58 字符串，其解码后的首字节不是 0x80 或 0xEF
         import hashlib
+
         from src.core.base58 import Base58
 
         # 构造：版本0x55 + 32字节数据 + 4字节校验和
@@ -65,6 +65,7 @@ class TestWIFEncoderDecodeEdge(unittest.TestCase):
     def test_decode_invalid_payload_length(self):
         """载荷长度不是 32 或 33 字节 (line 108)"""
         import hashlib
+
         from src.core.base58 import Base58
 
         # 构造：版本0x80 + 34字节数据 + 4字节校验和（不是32/33）

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """GPU 内存池 (src/gpu/memory_pool.py) 全覆盖测试 — Part 1: GPUMemoryPool 核心
 
 覆盖: __init__, allocate, release, preallocate_buffers, _evict_lru_locked,
@@ -200,7 +199,7 @@ class TestAllocate:
         pool._pool[256] = []  # key exists, list empty
         mc = _make_mock_cl()
         with patch.dict(sys.modules, {"pyopencl": mc}):
-            buf = pool.allocate(250)  # aligned=256
+            pool.allocate(250)  # aligned=256
         assert pool._total_allocated == 1
         assert pool._total_reused == 0
 
@@ -210,7 +209,7 @@ class TestAllocate:
         pool._type_pools["input"][256] = []  # key exists, list empty
         mc = _make_mock_cl()
         with patch.dict(sys.modules, {"pyopencl": mc}):
-            buf = pool.allocate(250, buffer_type="input")
+            pool.allocate(250, buffer_type="input")
         # 类型池空 → 查通用池空 → 新建
         assert pool._total_allocated == 1
         assert pool._total_reused == 0
@@ -728,10 +727,9 @@ class TestAdaptCapacity:
         pool = self._pool(max_buffers=50)
         mc = _make_mock_cl()
         mc.Buffer.side_effect = MemoryError("OOM")
-        with patch.dict(sys.modules, {"pyopencl": mc}):
-            with patch.object(pool, "_evict_lru") as mev:
-                pool.adapt_capacity(context=object())
-                mev.assert_called_once()
+        with patch.dict(sys.modules, {"pyopencl": mc}), patch.object(pool, "_evict_lru") as mev:
+            pool.adapt_capacity(context=object())
+            mev.assert_called_once()
 
     def test_expand_noop_at_max_500(self):
         """S5: 已在 max_buffers=500 时扩展为无操作"""

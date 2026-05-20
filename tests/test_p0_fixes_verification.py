@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 P0修复验证测试
 
@@ -7,9 +6,9 @@ P0修复验证测试
 """
 
 import hashlib
-import threading
-import os
 import json
+import os
+import threading
 
 # ============================================================================
 # crypto_backend.py generate_public_key_const_time 不存在
@@ -214,8 +213,9 @@ class TestContinuousMatcherThreadSafety:
 
     def test_concurrent_increment_no_race(self):
         """多线程并发增加计数器不应丢数据"""
-        from src.collision.continuous_matcher import ContinuousMatcher
         from unittest.mock import MagicMock
+
+        from src.collision.continuous_matcher import ContinuousMatcher
 
         # Mock target_table 以避免依赖
         mock_table = MagicMock()
@@ -281,7 +281,7 @@ class TestI18NFix:
         zh_file = os.path.join(i18n_dir, "zh_CN.json")
 
         if os.path.exists(zh_file):
-            with open(zh_file, "r", encoding="utf-8") as f:
+            with open(zh_file, encoding="utf-8") as f:
                 data = json.load(f)
 
             # 查找所有包含 stop_failed 键的值
@@ -322,7 +322,7 @@ class TestDockerComposeSecurity:
         )
 
         if os.path.exists(compose_file):
-            with open(compose_file, "r", encoding="utf-8") as f:
+            with open(compose_file, encoding="utf-8") as f:
                 content = f.read()
 
             assert "changeme" not in content, "不应包含弱密码 changeme"

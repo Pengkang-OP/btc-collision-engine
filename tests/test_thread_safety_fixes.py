@@ -2,9 +2,11 @@
 
 import threading
 import time
+
 import pytest
-from src.collision.key_collision_engine import KeyCollisionEngine
+
 from src.collision.collision_stats import CollisionStats
+from src.collision.key_collision_engine import KeyCollisionEngine
 from src.config.config_manager import ConfigManager
 
 
@@ -50,8 +52,8 @@ class TestThreadSafetyFixes:
 
     def test_config_manager_concurrent_save_load(self):
         """测试配置管理器的并发保存和加载"""
-        import tempfile
         import os
+        import tempfile
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             config_file = f.name
@@ -216,6 +218,7 @@ class TestThreadSafetyFixes:
     def test_error_log_rate_limit_accuracy(self):
         """测试错误日志限频准确性（M2修复验证）"""
         from unittest.mock import MagicMock
+
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 创建引擎实例

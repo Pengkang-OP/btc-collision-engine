@@ -6,15 +6,15 @@
 import copy
 import os
 import unittest
+
 from src.config.optimization_config import (
     OptimizationConfig,
-    optimization_config,
-    get_optimization_config,
-    enable_feature,
     disable_feature,
+    enable_feature,
+    get_optimization_config,
     is_feature_enabled,
+    optimization_config,
 )
-
 
 _ENV_KEYS = (
     "OPTIMIZE_DELTA_STATS",

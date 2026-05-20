@@ -11,17 +11,19 @@
 """
 
 import os
-import time
 import threading
+import time
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+
 from src.collision.gpu.engine import (
-    GPUCollisionEngine,
-    INITIAL_BATCH_SIZE,
     ASYNC_KEY_GEN_TIMEOUT,
     BATCH_LOG_FREQUENCY,
-    INITIAL_BATCHES_LOG,
     EXCEPTION_RECOVERY_DELAY,
+    INITIAL_BATCH_SIZE,
+    INITIAL_BATCHES_LOG,
+    GPUCollisionEngine,
 )
 
 pytestmark = pytest.mark.gpu

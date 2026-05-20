@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import Any, cast
 
 # 导入日志配置
-from .. import __version__ as PROJECT_VERSION
+from .. import __version__ as _project_version
 from ..utils import get_configured_logger
 from ..utils.fast_json import fast_dumps, fast_loads
 from ..utils.platform_utils import PlatformUtils
@@ -55,9 +55,7 @@ class CheckpointManager:
         # 修复: 默认断点路径使用data_logs目录（有写入权限）
         if filepath is None:
             # 获取项目根目录（src的父目录）
-            project_root = os.path.dirname(
-                os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            )
+            project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             data_logs_dir = os.path.join(project_root, "data_logs")
             # 确保data_logs目录存在
             os.makedirs(data_logs_dir, exist_ok=True)
@@ -72,7 +70,7 @@ class CheckpointManager:
         _interval = auto_save_interval
         _win32 = self._has_win32_security
         logger.debug(
-            f"CheckpointManager 初始化: 文件={self.filepath}, 自动保存间隔={_interval}秒, pywin32可用={_win32}"
+            f"CheckpointManager 初始化: 文件={self.filepath}, 自动保存={_interval}s, pywin32={_win32}"
         )
 
     def save(
@@ -253,9 +251,7 @@ class CheckpointManager:
 
                                 result = subprocess.run(cmd, capture_output=True, text=True)  # nosec B603
                                 if result.returncode == 0:
-                                    logger.debug(
-                                        "已使用icacls设置Windows文件权限（仅当前用户可访问）"
-                                    )
+                                    logger.debug("已使用icacls设置Windows文件权限（仅当前用户可访问）")
                                 else:
                                     logger.warning(f"icacls权限设置失败: {result.stderr}")
                             except Exception:
@@ -296,11 +292,9 @@ class CheckpointManager:
 
             self._last_save_time = time.time()
             self._dirty = False
-            _pos = self._buffer.get('current_position')
-            _checked = self._buffer.get('total_checked')
-            logger.debug(
-                f"断点已保存: {self.filepath}, 位置={_pos}, 已检查={_checked}"
-            )
+            _pos = self._buffer.get("current_position")
+            _checked = self._buffer.get("total_checked")
+            logger.debug(f"断点已保存: {self.filepath}, 位置={_pos}, 已检查={_checked}")
         except PermissionError as e:
             logger.error(f"保存断点失败（权限不足）: {e}")
             logger.error(f"文件路径: {self.filepath}")
@@ -358,9 +352,7 @@ class CheckpointManager:
                         )
                     decompressed = zlib.decompress(raw[4:])
                     data = fast_loads(decompressed.decode("utf-8"))
-                    logger.debug(
-                        f"断点已解压加载: {len(raw):,}B -> {len(decompressed):,}B"
-                    )
+                    logger.debug(f"断点已解压加载: {len(raw):,}B -> {len(decompressed):,}B")
                 else:
                     data = fast_loads(raw.decode("utf-8"))
 

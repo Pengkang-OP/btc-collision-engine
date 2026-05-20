@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 智能配置推荐系统
 
@@ -9,13 +8,13 @@
     python tools/recommend_config.py
 """
 
-import sys
 import json
+import sys
 from pathlib import Path
-from typing import Dict, Tuple
 
 # 修复Windows控制台编码问题
 from utf8_helper import setup_windows_utf8
+
 setup_windows_utf8()
 
 # 添加项目根目录到路径
@@ -26,7 +25,7 @@ sys.path.insert(0, str(project_root))
 from retry_helper import read_with_retry
 
 
-def analyze_project(docs_dir: str) -> Dict:
+def analyze_project(docs_dir: str) -> dict:
     """分析项目特征
 
     Returns:
@@ -89,7 +88,7 @@ def analyze_project(docs_dir: str) -> Dict:
     }
 
 
-def recommend_config(features: Dict) -> Tuple[str, Dict]:
+def recommend_config(features: dict) -> tuple[str, dict]:
     """根据项目特征推荐配置
 
     Args:
@@ -168,13 +167,13 @@ def recommend_config(features: Dict) -> Tuple[str, Dict]:
         }
 
 
-def print_recommendation(features: Dict, config_name: str, config: Dict):
+def print_recommendation(features: dict, config_name: str, config: dict):
     """打印推荐结果"""
     print(f"\n{'=' * 60}")
-    print(f"🤖 智能配置推荐系统")
+    print("🤖 智能配置推荐系统")
     print(f"{'=' * 60}")
 
-    print(f"\n📊 项目特征分析:")
+    print("\n📊 项目特征分析:")
     print(f"  文档数量: {features.get('doc_count', 0)} 个")
     print(f"  平均大小: {features.get('avg_size_kb', 0):.1f} KB")
     print(f"  目录覆盖率: {features.get('toc_ratio', 0)*100:.1f}%")
@@ -184,11 +183,11 @@ def print_recommendation(features: Dict, config_name: str, config: Dict):
     print(f"\n🎯 推荐配置: {config_name}")
 
     if config:
-        print(f"\n📝 配置详情:")
+        print("\n📝 配置详情:")
         for key, value in config.items():
             print(f"  {key}: {value}")
 
-        print(f"\n💡 使用方式:")
+        print("\n💡 使用方式:")
         print(f"  python tools/check_document_quality.py --config tools/scoring_{config_name[:4].lower()}.json")
 
     print(f"\n{'=' * 60}")
@@ -213,7 +212,7 @@ def main():
     args = parser.parse_args()
 
     # 分析项目
-    print(f"🔍 分析项目特征...")
+    print("🔍 分析项目特征...")
     features = analyze_project(args.docs_dir)
 
     # 推荐配置
@@ -225,7 +224,7 @@ def main():
     # 保存配置
     if args.save and config:
         try:
-            config_file = Path(f"tools/scoring_recommended.json")
+            config_file = Path("tools/scoring_recommended.json")
             with open(config_file, 'w', encoding='utf-8') as f:
                 json.dump(config, f, indent=2, ensure_ascii=False)
             print(f"\n✅ 配置已保存到: {config_file}")

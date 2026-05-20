@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """多进程引擎安全修复验证测试
 
 验证以下安全修复：
@@ -11,13 +10,13 @@
 6. 线程安全统计
 """
 
+import hashlib
+import json
+import logging
 import os
 import sys
 import time
 import unittest
-import hashlib
-import logging
-import json
 from io import StringIO
 
 # 添加项目根目录到路径
@@ -129,7 +128,7 @@ class TestMemoryCleanup(unittest.TestCase):
             self.assertEqual(pk, b"\x00" * 32)
 
         # 验证与原始值不同
-        for pk, original in zip(private_keys, originals):
+        for pk, original in zip(private_keys, originals, strict=False):
             self.assertNotEqual(pk, original)
 
     def test_reference_deletion(self):
@@ -331,7 +330,7 @@ class TestExceptionHandling(unittest.TestCase):
         try:
             # 模拟异常
             raise RuntimeError("测试异常")
-        except BaseException:
+        except RuntimeError:
             pass
         finally:
             # 清理

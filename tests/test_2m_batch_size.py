@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Intel Arc GPU 2M批次大小性能测试
 
@@ -10,11 +9,11 @@ Intel Arc GPU 2M批次大小性能测试
 4. 评估性能提升幅度
 """
 
+import json
 import sys
 import time
-import json
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 # 添加项目根目录
 sys.path.insert(0, str(Path(__file__).parent))
@@ -23,8 +22,8 @@ import pytest  # noqa: E402
 
 pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
 from src.collision.collision_stats import CollisionStats  # noqa: E402
+from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
 
 
 def run_2m_batch_size(duration=60):
@@ -42,7 +41,7 @@ def run_2m_batch_size(duration=60):
     targets = set()
     address_file = Path(__file__).parent / "valid_addresses.txt"
     try:
-        with open(str(address_file), "r", encoding="utf-8") as f:
+        with open(str(address_file), encoding="utf-8") as f:
             for line in f:
                 addr = line.strip()
                 if addr and len(addr) >= 26:

@@ -100,10 +100,7 @@ def validate_args(args: argparse.Namespace) -> bool:
 
     # --checkpoint-interval 范围检查
     checkpoint_interval = getattr(args, "checkpoint_interval", DEFAULT_CHECKPOINT_INTERVAL)
-    if (
-        checkpoint_interval < _CHECKPOINT_INTERVAL_MIN
-        or checkpoint_interval > _CHECKPOINT_INTERVAL_MAX
-    ):
+    if checkpoint_interval < _CHECKPOINT_INTERVAL_MIN or checkpoint_interval > _CHECKPOINT_INTERVAL_MAX:
         output.error(f"--checkpoint-interval {checkpoint_interval} 超出合法范围")
         output.print(f"  提示: 有效范围为 {_CHECKPOINT_INTERVAL_MIN}-{_CHECKPOINT_INTERVAL_MAX} 秒")
         return False
@@ -130,16 +127,14 @@ def validate_args(args: argparse.Namespace) -> bool:
             )
 
     # checkpoint-interval 依赖性检查（自动启用 --checkpoint）
-    if checkpoint_interval != DEFAULT_CHECKPOINT_INTERVAL and not getattr(
-        args, "checkpoint", False
-    ):
+    if checkpoint_interval != DEFAULT_CHECKPOINT_INTERVAL and not getattr(args, "checkpoint", False):
         output.print("  提示: 已自动启用 --checkpoint（因为指定了 --checkpoint-interval）")
         args.checkpoint = True
 
     # dedup-max-size 依赖性检查（自动启用 --dedup）
-    if getattr(
-        args, "dedup_max_size", DEFAULT_DEDUP_MAX_SIZE
-    ) != DEFAULT_DEDUP_MAX_SIZE and not getattr(args, "dedup", False):
+    if getattr(args, "dedup_max_size", DEFAULT_DEDUP_MAX_SIZE) != DEFAULT_DEDUP_MAX_SIZE and not getattr(
+        args, "dedup", False
+    ):
         output.print("  提示: 已自动启用 --dedup（因为指定了 --dedup-max-size）")
         args.dedup = True
 

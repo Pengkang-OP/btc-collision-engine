@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 P0-2: GPU 内核已知向量正确性回归测试
 
@@ -10,8 +9,8 @@ P0-2: GPU 内核已知向量正确性回归测试
 测试需 GPU 可用时运行，无 GPU 或 pyopencl 未安装时自动跳过。
 """
 
-import sys
 import os
+import sys
 import unittest
 
 import numpy as np
@@ -61,8 +60,12 @@ def _has_opencl_gpu() -> bool:
             for device in platform.get_devices():
                 if device.type & cl.device_type.GPU:
                     return True
-    except Exception:
-        pass
+    except ImportError:
+        pass  # pyopencl 未安装
+    except Exception as e:
+        # 驱动/平台错误 — 记录原因
+        import logging
+        logging.getLogger(__name__).debug(f"GPU检测失败: {type(e).__name__}: {e}")
     return False
 
 
@@ -95,8 +98,9 @@ class TestGPUKernelArithmetic(unittest.TestCase):
             raise unittest.SkipTest("No GPU device available")
         cls.ctx, cls.queue, cls.device = _get_gpu_context()
 
-        from src.gpu.kernel import OPENCL_KERNEL_SOURCE
         import pyopencl as cl
+
+        from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
         cls.program = cl.Program(cls.ctx, OPENCL_KERNEL_SOURCE).build()
         cls.verify_arithmetic = cls.program.verify_arithmetic

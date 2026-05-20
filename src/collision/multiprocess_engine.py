@@ -77,9 +77,9 @@ def _worker_process(
         if sys.platform.startswith("linux"):
             libc = ctypes.CDLL("libc.so.6")
             # 使用正确的mlockall标志
-            MCL_CURRENT = 1  # 锁定当前所有内存
-            MCL_FUTURE = 2  # 锁定未来分配的内存
-            ret = libc.mlockall(MCL_CURRENT | MCL_FUTURE)
+            _mcl_current = 1  # 锁定当前所有内存
+            _mcl_future = 2  # 锁定未来分配的内存
+            ret = libc.mlockall(_mcl_current | _mcl_future)
             if ret == 0:
                 logger.debug(f"工作进程 {worker_id} 内存已锁定")
             else:
@@ -250,6 +250,13 @@ def _worker_process(
                 del private_keys
         except (NameError, TypeError, ValueError) as e:
             logger.debug(f"清理私钥内存失败: {e}")
+
+        # 防御性清理: 删除加密密钥引用（bytes不可变，依赖OS进程退出回收内存）
+        # 子进程有独立地址空间，退出后OS回收全部内存，此操作为纵深防御
+        nonlocal_key = locals().get("encryption_key")
+        if nonlocal_key is not None:
+            with suppress(NameError, TypeError):
+                del encryption_key
 
         logger.info(f"工作进程 {worker_id} 退出: 检测={total_checked:,}, 匹配={matches_found}")
 
@@ -621,9 +628,7 @@ class MultiprocessCollisionEngine:
         """上下文管理器入口"""
         return self
 
-    def __exit__(
-        self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None
-    ) -> None:
+    def __exit__(self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None) -> None:
         """上下文管理器出口
 
         始终返回 None，表示不抑制异常（让异常传播给调用者）。

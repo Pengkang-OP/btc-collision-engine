@@ -150,21 +150,26 @@ class EngineMatchEvent(CollisionEvent):
     def __post_init__(self) -> None:
         self.event_type = EventType.ENGINE_MATCH
         # 安全脱敏: metadata中的地址仅保留前6和后4字符
-        masked_addr = self.address if len(self.address) <= 10 else (
-            f"{self.address[:6]}...{self.address[-4:]}"
+        masked_addr = (
+            self.address if len(self.address) <= 10 else (f"{self.address[:6]}...{self.address[-4:]}")
         )
-        masked_target = self.target_address if len(self.target_address) <= 10 else (
-            f"{self.target_address[:6]}...{self.target_address[-4:]}"
+        masked_target = (
+            self.target_address
+            if len(self.target_address) <= 10
+            else (f"{self.target_address[:6]}...{self.target_address[-4:]}")
         )
         self.metadata.update({"address": masked_addr, "target_address": masked_target})
+        # WIF 私钥脱敏：字段自身遮蔽，防止事件总线订阅者直接读取
+        if self.wif and len(self.wif) > 8:
+            self.wif = f"{self.wif[:3]}...{self.wif[-2:]}"
 
     def __repr__(self) -> str:
-        """安全repr: 遮蔽 wif 和 private_key 防止日志泄露。"""
+        """安全repr: wif和private_key已在__post_init__中脱敏。"""
         return (
             f"EngineMatchEvent("
             f"address={self.address!r}, "
             f"target_address={self.target_address!r}, "
-            f"wif=<REDACTED>, private_key=<REDACTED>)"
+            f"wif={self.wif!r}, private_key=<REDACTED>)"
         )
 
 
@@ -245,7 +250,9 @@ class EngineStopEvent(CollisionEvent):
 
     def __post_init__(self) -> None:
         self.event_type = EventType.ENGINE_STOP
-        self.metadata.update({
-            "reason": self.reason,
-            "total_checked": self.total_checked,
-        })
+        self.metadata.update(
+            {
+                "reason": self.reason,
+                "total_checked": self.total_checked,
+            }
+        )

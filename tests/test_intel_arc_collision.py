@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Intel Arc GPU实际碰撞测试脚本
 
@@ -13,20 +12,19 @@ Intel Arc GPU实际碰撞测试脚本
 目标设备: Intel Arc A770 16GB
 """
 
-import sys
-import time
 import json
 import logging
-from pathlib import Path
+import sys
+import time
 from datetime import datetime
-from typing import Dict, Set
+from pathlib import Path
 
 # 添加项目根目录
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_PROJECT_ROOT))
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
 from src.collision.collision_stats import CollisionStats  # noqa: E402
+from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
 from src.gpu.intel_memory_monitor import IntelMemoryMonitor  # noqa: E402
 from src.gpu.intel_timeout_manager import AdaptiveTimeoutManager  # noqa: E402
 
@@ -45,7 +43,7 @@ logging.basicConfig(
 logger = logging.getLogger("IntelArcCollisionTest")
 
 
-def load_valid_addresses(filepath: str = "") -> Set[str]:
+def load_valid_addresses(filepath: str = "") -> set[str]:
     """加载有效地址文件"""
     addresses = set()
     # 默认路径: 项目根目录下的 targets.txt 或 benchmarks/btc_addresses_sorted.txt
@@ -62,7 +60,7 @@ def load_valid_addresses(filepath: str = "") -> Set[str]:
         logger.warning("未找到有效地址文件，将使用默认测试地址")
         return addresses
     try:
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             for line in f:
                 addr = line.strip()
                 if addr and len(addr) >= 26:
@@ -115,7 +113,7 @@ class IntelArcTestMonitor:
         self.memory_monitor.track_allocation(estimated_bytes, batch_count=self.batch_count)
         self.memory_monitor.track_deallocation(estimated_bytes, batch_count=self.batch_count)
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """获取统计信息"""
         elapsed = time.time() - self.start_time if self.start_time else 0
         avg_throughput = (
@@ -185,8 +183,8 @@ class IntelArcTestMonitor:
 
 
 def run_gpu_collision_test(
-    targets: Set[str], duration: int = 60, batch_size: int = 1048576
-) -> Dict:
+    targets: set[str], duration: int = 60, batch_size: int = 1048576
+) -> dict:
     """运行GPU碰撞测试"""
 
     print("\n" + "=" * 80)
@@ -348,7 +346,7 @@ def run_gpu_collision_test(
         return None
 
 
-def run_cpu_baseline_test(targets: Set[str], duration: int = 10) -> Dict:
+def run_cpu_baseline_test(targets: set[str], duration: int = 10) -> dict:
     """运行CPU基线测试（用于对比）"""
     print("\n" + "=" * 80)
     print("💻 CPU 基线测试（对比用）")
