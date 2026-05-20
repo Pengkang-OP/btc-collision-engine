@@ -16,12 +16,14 @@ import tempfile
 import threading
 import time
 from collections import deque
+from contextlib import suppress
 from datetime import datetime
 from typing import Any
 
+from src.log_engine.log_rotator import LogRotator
 from src.monitoring.storage_config import DataStorageConfig
 
-from src.log_engine.log_rotator import LogRotator
+from ..utils.trend_utils import calculate_trend, extract_metrics
 
 # 导入现有日志系统
 from src.utils import get_configured_logger
@@ -498,10 +500,8 @@ class DataLogger:
             self._record_pipeline_metric("save_current_data", success=False, error=str(e)[:200])
         finally:
             if temp_file and os.path.exists(temp_file):
-                try:
+                with suppress(OSError):
                     os.remove(temp_file)
-                except OSError:
-                    pass
 
     def _cleanup_stale_temp_files(self, max_age_seconds: int = 3600) -> None:
         """清理上次会话遗留的过期 .tmp 临时文件
@@ -701,23 +701,17 @@ class DataLogger:
                 finally:
                     # 清理第二级临时文件（无论成功或失败）
                     if os.path.exists(dst_tmp2):
-                        try:
+                        with suppress(OSError):
                             os.remove(dst_tmp2)
-                        except OSError:
-                            pass
                 # 清理第一级回退临时文件
                 if os.path.exists(dst_tmp):
-                    try:
+                    with suppress(OSError):
                         os.remove(dst_tmp)
-                    except OSError:
-                        pass
 
             # 清理源临时文件（回退路径下 src 不会被 os.replace 移动）
             if os.path.exists(src):
-                try:
+                with suppress(OSError):
                     os.remove(src)
-                except OSError:
-                    pass
 
             return True
         except Exception as e:
@@ -855,7 +849,8 @@ class DataLogger:
             max_size = 10 * 1024 * 1024  # 10MB限制
             if file_size > max_size:
                 self.logger.warning(
-                    f"历史文件过大({file_size / 1024 / 1024:.2f}MB)，超过限制({max_size / 1024 / 1024:.0f}MB)，跳过恢复"
+                    f"历史文件过大({file_size / 1024 / 1024:.2f}MB)，"
+                    f"超过限制({max_size / 1024 / 1024:.0f}MB)，跳过恢复"
                 )
                 return []
 
@@ -1072,56 +1067,8 @@ class DataLogger:
         if len(data) < 2:
             return {"message": "数据点不足，无法分析趋势"}
 
-        # 分析速度趋势（单次遍历提取所有字段）
-        speeds: list[float] = []
-        cpu_usages: list[float] = []
-        memory_usages: list[float] = []
-        for d in data:
-            speeds.append(d.get("speed", 0))
-            cpu_usages.append(d.get("cpu_usage", 0))
-            memory_usages.append(d.get("memory_usage", 0))
-
-        def calculate_trend(values: list[float]) -> str:
-            """计算趋势（线性回归，与 monitoring_system._calculate_trend 一致）
-
-            使用线性回归计算趋势方向，归一化斜率与 2% 阈值比较。
-            需要至少 3 个数据点才能进行有效的线性回归。
-            """
-            if len(values) < 3:
-                return "stable"
-
-            try:
-                # 简单线性回归: y = mx + b
-                n = len(values)
-                x_sum = sum(range(n))
-                y_sum = sum(values)
-                xy_sum = sum(i * v for i, v in enumerate(values))
-                x2_sum = sum(i * i for i in range(n))
-
-                # 计算斜率
-                denominator = n * x2_sum - x_sum * x_sum
-                if denominator == 0:
-                    return "stable"
-
-                slope = (n * xy_sum - x_sum * y_sum) / denominator
-                avg = y_sum / n
-
-                # 避免除零
-                if avg == 0:
-                    return "stable"
-
-                # 归一化斜率（相对变化率），阈值 2%
-                normalized_slope = slope / abs(avg)
-                threshold = 0.02
-                if normalized_slope > threshold:
-                    return "increasing"
-                elif normalized_slope < -threshold:
-                    return "decreasing"
-                else:
-                    return "stable"
-
-            except Exception:
-                return "stable"
+        # 单次遍历提取所有字段（使用共享工具）
+        speeds, cpu_usages, memory_usages = extract_metrics(data)
 
         return {
             "speed": {

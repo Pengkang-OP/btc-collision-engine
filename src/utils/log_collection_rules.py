@@ -11,6 +11,7 @@ import json
 import logging
 import os
 import re
+from contextlib import suppress
 from dataclasses import dataclass, field
 from re import Pattern
 from typing import Any
@@ -45,17 +46,13 @@ class LogCollectionRule:
 
         # 编译包含模式
         for pattern in self.include_patterns:
-            try:
+            with suppress(re.error):
                 self._include_regexes.append(re.compile(pattern))
-            except re.error:
-                pass
 
         # 编译排除模式
         for pattern in self.exclude_patterns:
-            try:
+            with suppress(re.error):
                 self._exclude_regexes.append(re.compile(pattern))
-            except re.error:
-                pass
 
     def matches_module(self, module_name: str) -> bool:
         """检查模块是否匹配规则"""

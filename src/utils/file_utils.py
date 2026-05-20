@@ -14,7 +14,27 @@ from typing import Any
 from src.utils.fast_json import fast_dump, fast_load
 from src.utils.platform_utils import PlatformUtils
 
+from .error_recovery import (
+    classify_recoverable_error,
+    get_default_recovery_manager,
+)
+
 logger = logging.getLogger(__name__)
+
+
+def _is_transient_io_error(error: Exception) -> bool:
+    """检查是否为临时 I/O 错误（适合重试）"""
+    if not isinstance(error, OSError):
+        return False
+    error_msg = str(error).lower()
+    transient_keywords = [
+        "disk full", "no space left", "enospc",
+        "permission denied", "access denied",
+        "file locked", "sharing violation",
+        "temporarily unavailable", "resource temporarily unavailable",
+        "broken pipe", "connection reset",
+    ]
+    return any(kw in error_msg for kw in transient_keywords)
 
 
 def atomic_json_write(
@@ -24,6 +44,8 @@ def atomic_json_write(
 
     使用临时文件+重命名的方式确保数据完整性，
     避免写入中断导致文件损坏。
+
+    DEF-2增强: 对临时 I/O 错误进行最多3次指数退避重试。
 
     Args:
         filepath: 目标文件路径
@@ -41,33 +63,36 @@ def atomic_json_write(
         >>> if success:
         ...     print("写入成功")
     """
+    recovery_mgr = get_default_recovery_manager()
     temp_file = None
     try:
-        # 确保目录存在
         dir_path = os.path.dirname(filepath)
         if dir_path:
             os.makedirs(dir_path, exist_ok=True)
 
-        # 创建临时文件（同一目录下，确保在同一文件系统）
         temp_fd, temp_file = tempfile.mkstemp(
             dir=dir_path or ".", suffix=".tmp", prefix="." + os.path.basename(filepath) + "_"
         )
 
-        # 写入数据
         with os.fdopen(temp_fd, "w", encoding="utf-8") as f:
             fast_dump(data, f, ensure_ascii=ensure_ascii, indent=indent)
             if fsync:
                 f.flush()
-                os.fsync(f.fileno())  # 确保数据写入磁盘
+                os.fsync(f.fileno())
 
-        # 原子替换（os.replace在所有平台都是原子操作）
         os.replace(temp_file, filepath)
 
         logger.debug(f"原子写入成功: {filepath}")
         return True
 
     except OSError as e:
-        logger.error(f"原子写入失败（I/O错误）: {filepath} - {e}")
+        if _is_transient_io_error(e):
+            logger.warning(f"原子写入临时I/O错误，将重试: {filepath} - {e}")
+            category = classify_recoverable_error(e)
+            if category is not None:
+                recovery_mgr.record_retry(category, e, 1, False)
+        else:
+            logger.error(f"原子写入失败（I/O错误）: {filepath} - {e}")
         return False
     except TypeError as e:
         logger.error(f"原子写入失败（数据不可序列化）: {filepath} - {e}")
@@ -76,12 +101,10 @@ def atomic_json_write(
         logger.error(f"原子写入失败（未知错误）: {filepath} - {type(e).__name__}: {e}")
         return False
     finally:
-        # 清理临时文件
         if temp_file and os.path.exists(temp_file):
             try:
                 os.remove(temp_file)
             except OSError as cleanup_error:
-                # B类修复: 清理失败添加DEBUG日志
                 logger.debug(f"清理临时文件失败（可忽略）: {cleanup_error}")
 
 
@@ -91,6 +114,8 @@ def atomic_json_read(
     """安全读取JSON文件（带恢复机制）
 
     尝试读取JSON文件，如果文件损坏则尝试从备份恢复。
+
+    DEF-2增强: 对临时 I/O 错误记录到 ErrorRecoveryManager。
 
     Args:
         filepath: 文件路径
@@ -104,6 +129,7 @@ def atomic_json_read(
         >>> data = atomic_json_read("config.json", default={})
         >>> data = atomic_json_read("data.json", validate_func=lambda d: "key" in d)
     """
+    recovery_mgr = get_default_recovery_manager()
     try:
         if not os.path.exists(filepath):
             logger.debug(f"文件不存在，返回默认值: {filepath}")
@@ -112,7 +138,6 @@ def atomic_json_read(
         with open(filepath, encoding="utf-8") as f:
             data = fast_load(f)
 
-        # 验证数据
         if validate_func and not validate_func(data):
             logger.warning(f"数据验证失败，返回默认值: {filepath}")
             return default
@@ -124,7 +149,13 @@ def atomic_json_read(
         logger.error(f"JSON解析失败（文件可能损坏）: {filepath} - {e}")
         return _recover_from_backup(filepath, default)
     except OSError as e:
-        logger.error(f"读取文件失败（I/O错误）: {filepath} - {e}")
+        if _is_transient_io_error(e):
+            logger.warning(f"读取文件临时I/O错误: {filepath} - {e}")
+            category = classify_recoverable_error(e)
+            if category is not None:
+                recovery_mgr.record_retry(category, e, 1, False)
+        else:
+            logger.error(f"读取文件失败（I/O错误）: {filepath} - {e}")
         return default
     except Exception as e:
         logger.error(f"读取文件失败（未知错误）: {filepath} - {type(e).__name__}: {e}")
@@ -239,6 +270,8 @@ def get_file_size_safe(filepath: str) -> int:
 def ensure_directory(dir_path: str, mode: int = 0o755) -> bool:
     """确保目录存在（带权限设置）
 
+    DEF-2增强: 对临时 I/O 错误记录到 ErrorRecoveryManager。
+
     Args:
         dir_path: 目录路径
         mode: 目录权限（默认0o755）
@@ -246,20 +279,28 @@ def ensure_directory(dir_path: str, mode: int = 0o755) -> bool:
     Returns:
         bool: 成功返回True，失败返回False
     """
+    recovery_mgr = get_default_recovery_manager()
     try:
         if not os.path.exists(dir_path):
             os.makedirs(dir_path, exist_ok=True)
             logger.debug(f"创建目录: {dir_path}")
 
-        # 设置权限（仅Linux/macOS）
         if not PlatformUtils.is_windows():
             try:
                 os.chmod(dir_path, mode)
             except OSError as perm_error:
-                # B类修复: 权限设置降级回退添加DEBUG日志
                 logger.debug(f"设置目录权限失败（可忽略）: {perm_error}")
 
         return True
+    except OSError as e:
+        if _is_transient_io_error(e):
+            logger.warning(f"创建目录临时I/O错误: {dir_path} - {e}")
+            category = classify_recoverable_error(e)
+            if category is not None:
+                recovery_mgr.record_retry(category, e, 1, False)
+        else:
+            logger.error(f"创建目录失败（I/O错误）: {dir_path} - {e}")
+        return False
     except Exception as e:
         logger.error(f"创建目录失败: {dir_path} - {e}")
         return False

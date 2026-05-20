@@ -264,12 +264,13 @@ class AutoTestModule:
     def test_cli_help(self) -> dict:
         """测试CLI帮助信息"""
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603
                 [sys.executable, "key_collision_cli.py", "--help"],
                 cwd=str(self.project_root),
                 capture_output=True,
                 text=True,
                 timeout=30,
+                shell=False,
             )
 
             if result.returncode == 0 and "usage:" in result.stdout:
@@ -439,12 +440,13 @@ class AutoTestModule:
     def test_e2e_workflow(self, duration: int = 5) -> dict:
         """测试端到端工作流"""
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603
                 [sys.executable, "key_collision_cli.py", "--version"],
                 cwd=str(self.project_root),
                 capture_output=True,
                 text=True,
                 timeout=10,
+                shell=False,
             )
 
             if result.returncode == 0:

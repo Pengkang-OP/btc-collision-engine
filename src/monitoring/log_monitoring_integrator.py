@@ -78,10 +78,10 @@ class LogMonitoringIntegrator:
         for rule in rules:
             # 检查采样率
             if hasattr(rule, "sample_rate") and rule.sample_rate > 1:
-                # 简单的采样逻辑
+                # 简单的采样逻辑（统计采样，非加密用途）
                 import random
 
-                if random.randint(1, rule.sample_rate) != 1:
+                if random.randint(1, rule.sample_rate) != 1:  # nosec B311
                     continue
 
             # 记录日志
@@ -109,24 +109,25 @@ class LogMonitoringIntegrator:
                 message=message,
                 context={"module": module, "rule": rule.name, **kwargs},
             )
-        elif level.upper() in ["INFO", "DEBUG"]:
+        elif level.upper() in ["INFO", "DEBUG"] and (
+            "speed" in kwargs or "performance" in message.lower()
+        ):
             # 记录性能数据（如果包含性能信息）
-            if "speed" in kwargs or "performance" in message.lower():
-                speed = kwargs.get("speed", 0.0)
-                total_checked = kwargs.get("total_checked", 0)
-                matches_found = kwargs.get("matches_found", 0)
-                cpu_usage = kwargs.get("cpu_usage", 0.0)
-                memory_usage = kwargs.get("memory_usage", 0.0)
-                thread_count = kwargs.get("thread_count", 0)
+            speed = kwargs.get("speed", 0.0)
+            total_checked = kwargs.get("total_checked", 0)
+            matches_found = kwargs.get("matches_found", 0)
+            cpu_usage = kwargs.get("cpu_usage", 0.0)
+            memory_usage = kwargs.get("memory_usage", 0.0)
+            thread_count = kwargs.get("thread_count", 0)
 
-                self.data_logger.record_performance_data(
-                    speed=speed,
-                    total_checked=total_checked,
-                    matches_found=matches_found,
-                    cpu_usage=cpu_usage,
-                    memory_usage=memory_usage,
-                    thread_count=thread_count,
-                )
+            self.data_logger.record_performance_data(
+                speed=speed,
+                total_checked=total_checked,
+                matches_found=matches_found,
+                cpu_usage=cpu_usage,
+                memory_usage=memory_usage,
+                thread_count=thread_count,
+            )
 
         # 记录到共享缓冲区
         with self._lock:

@@ -194,10 +194,7 @@ def validate_address_format(address: str) -> bool:
         return True
 
     # 非压缩公钥 (65 字节 = 130 字符，04 开头)
-    if re.match(r"^04[0-9a-fA-F]{128}$", address):
-        return True
-
-    return False
+    return bool(re.match(r"^04[0-9a-fA-F]{128}$", address))
 
 
 def validate_hex_string(hex_str: str, allow_prefix: bool = True) -> bool:

@@ -23,6 +23,7 @@ import os
 import shutil
 import socket
 import sys
+from contextlib import suppress
 
 logger = logging.getLogger(__name__)
 
@@ -126,7 +127,7 @@ class HealthChecker:
 
     def check_directories(self) -> tuple[bool, str]:
         """检查必要目录是否存在且有权限"""
-        required_dirs = ["logs", "data_logs"]  # monitoring_data 已废弃 (v4.2.3)
+        required_dirs = ["logs", "data_logs", "monitoring_data"]
         missing = []
         no_permission = []
 
@@ -351,7 +352,7 @@ class HealthChecker:
                 version_str = getattr(module, "__version__", "unknown")
 
                 # 解析版本号
-                try:
+                with suppress(ValueError):
                     version_parts = version_str.split(".")
                     version = tuple(map(int, version_parts[:3]))
 
@@ -359,8 +360,6 @@ class HealthChecker:
                         issues.append(
                             f"{dep}版本过低: {version_str} (需要 {'.'.join(map(str, min_version))}+)"
                         )
-                except ValueError:
-                    pass  # 无法解析版本，跳过
 
             except ImportError:
                 pass  # 依赖未安装，由其他检查处理
@@ -451,18 +450,32 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="BTC碰撞引擎系统健康检查")
     parser.add_argument("--gpu", action="store_true", help="包含GPU设备检查")
     parser.add_argument("--network", action="store_true", help="包含网络连通性检查")
+    parser.add_argument("--quiet", "-q", action="store_true", help="安静模式，仅返回退出码")
     parser.add_argument("--report", metavar="FILE", help="生成报告文件")
 
     args = parser.parse_args()
 
     checker = HealthChecker()
-    results = checker.run_all_checks(include_gpu=args.gpu, include_network=args.network)
+
+    if args.quiet:
+        # 安静模式：抑制所有输出，静默运行检查
+        import contextlib
+        import io
+        with contextlib.redirect_stdout(io.StringIO()):
+            results = checker.run_all_checks(
+                include_gpu=args.gpu, include_network=args.network
+            )
+    else:
+        results = checker.run_all_checks(
+            include_gpu=args.gpu, include_network=args.network
+        )
 
     if args.report:
         report = checker.generate_report()
         with open(args.report, "w", encoding="utf-8") as f:
             f.write(report)
-        print(f"\n报告已保存: {args.report}")
+        if not args.quiet:
+            print(f"\n报告已保存: {args.report}")
 
     # 返回退出码
     all_passed = all(passed for passed, _ in results.values())

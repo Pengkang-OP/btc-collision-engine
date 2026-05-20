@@ -11,6 +11,7 @@ import shutil
 import sys
 import threading
 import time
+from contextlib import suppress
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 from typing import Any
 
@@ -43,12 +44,9 @@ class SafeRotatingFileHandler(RotatingFileHandler):
             super().doRollover()
             return
         for attempt in range(self._retry_count):
-            with _rollover_lock:
-                try:
-                    super().doRollover()
-                    return
-                except PermissionError:
-                    pass  # 锁内只做尝试，不等待
+            with _rollover_lock, suppress(PermissionError):
+                super().doRollover()
+                return  # 锁内只做尝试，不等待
             if attempt < self._retry_count - 1:
                 time.sleep(self._retry_delay * (attempt + 1))
         # 所有重试均失败：输出警告并继续写入当前文件，不中断主程序
@@ -286,10 +284,8 @@ class LoggingConfig:
                     super().close()
 
             # 设置日志文件权限为仅所有者可读写
-            try:
-                os.chmod(log_file, 0o600)
-            except OSError:
-                pass  # Windows 系统可能不支持 chmod
+            with suppress(OSError):
+                os.chmod(log_file, 0o600)  # Windows 系统可能不支持 chmod
 
             return _DiskSafeHandler(handler)
         except Exception as e:
@@ -327,7 +323,7 @@ class LoggingConfig:
             warnings.warn(
                 "get_logger(thread_safe=True)已弃用。Python的logging.Logger本身是线程安全的，"
                 f"请直接使用 get_logger('{name}', thread_safe=False) 或省略该参数。",
-                DeprecationWarning,
+                FutureWarning,
                 stacklevel=2,
             )
 
@@ -413,11 +409,10 @@ def _setup_security_filter() -> None:
         # 自动发现并保护所有已注册的 logger（覆盖显式列表之外的新模块）
         auto_discovered = 0
         for _logger_name, logger_ref in logging.Logger.manager.loggerDict.items():
-            if isinstance(logger_ref, logging.Logger):
-                if id(logger_ref) not in _processed_loggers:
-                    logger_ref.addFilter(security_filter)
-                    _processed_loggers.add(id(logger_ref))
-                    auto_discovered += 1
+            if isinstance(logger_ref, logging.Logger) and id(logger_ref) not in _processed_loggers:
+                logger_ref.addFilter(security_filter)
+                _processed_loggers.add(id(logger_ref))
+                auto_discovered += 1
 
         # 注意：这里不使用logging.info，因为日志系统可能还未完全初始化
         print(

@@ -10,6 +10,7 @@ import queue
 import threading
 import time
 from collections.abc import Callable
+from contextlib import suppress
 from typing import Any
 
 from .events import LogEvent, LogEventType
@@ -98,12 +99,10 @@ class LogCollector:
             data: 事件数据
             source: 事件来源
         """
-        try:
+        with suppress(queue.Full):
             self._queue.put_nowait(
                 {"event_type": event_type, "data": data, "timestamp": time.time(), "source": source}
             )
-        except queue.Full:
-            pass
 
     def collect_log(self, logger_name: str, level: int, message: str):
         """收集logging模块的日志"""

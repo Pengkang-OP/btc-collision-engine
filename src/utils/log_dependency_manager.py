@@ -78,10 +78,8 @@ class LogDependencyManager:
                     for dep in component.dependencies:
                         if dep.name in self.components:
                             visit(dep.name)
-                        elif dep.name not in self.dependencies:
-                            # 依赖项未注册，检查是否可选
-                            if not dep.optional:
-                                raise ValueError(f"缺少必需的依赖项: {dep.name}")
+                        elif dep.name not in self.dependencies and not dep.optional:
+                            raise ValueError(f"缺少必需的依赖项: {dep.name}")
 
                 temp.remove(component_name)
                 visited.add(component_name)
@@ -110,14 +108,12 @@ class LogDependencyManager:
         for dep in component.dependencies:
             if dep.name in self.components:
                 # 初始化依赖的组件
-                if not self.initialize_component(dep.name):
-                    if not dep.optional:
-                        return False
+                if not self.initialize_component(dep.name) and not dep.optional:
+                    return False
             else:
                 # 初始化外部依赖
-                if not self._initialize_external_dependency(dep):
-                    if not dep.optional:
-                        return False
+                if not self._initialize_external_dependency(dep) and not dep.optional:
+                    return False
 
         # 初始化组件
         try:

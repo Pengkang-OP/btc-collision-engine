@@ -258,7 +258,7 @@ class EmailNotifier(BaseNotifier):
         <h3 style="margin-top: 20px;">性能指标</h3>
         <table style="width: 100%; border-collapse: collapse; background-color: #f9f9f9;">
 """
-        for key, value in alert.metrics.items():
+        for _key, _value in alert.metrics.items():
             html += """
             <tr>
                 <td style="padding: 8px; font-weight: bold; width: 200px;">{key}:</td>
