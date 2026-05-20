@@ -196,7 +196,8 @@ class IntelGPUVendor(GPUVendorBase):
         optimal = align_batch_size(optimal)
 
         logger.info(
-            f"Intel batch_size计算: recommended={recommended}, mem_based={mem_based_max}, optimal={optimal} (保守策略)"
+            f"Intel batch_size计算: recommended={recommended}, "
+            f"mem_based={mem_based_max}, optimal={optimal} (保守策略)"
         )
 
         return optimal

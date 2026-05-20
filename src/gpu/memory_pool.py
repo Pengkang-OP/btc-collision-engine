@@ -156,23 +156,25 @@ class GPUMemoryPool:
             self._record_allocation_pattern(aligned_size)
             # 尝试复用现有缓冲区
             # 优先从类型专用池查找
-            if buffer_type != "generic" and buffer_type in self._type_pools:
-                if (
-                    aligned_size in self._type_pools[buffer_type]
-                    and self._type_pools[buffer_type][aligned_size]
-                ):
-                    buf = self._type_pools[buffer_type][aligned_size].pop()
-                    self._total_reused += 1
-                    # 安全修复: 缓冲区借出后不再是空闲的，从 LRU 追踪中移除。
-                    buf_id = id(buf)
-                    self._access_times.pop(buf_id, None)
-                    self._buf_by_id.pop(buf_id, None)
-                    self._buf_size_by_id.pop(buf_id, None)
-                    self._buf_type_by_id.pop(buf_id, None)
-                    logger.debug(
-                        f"复用{buffer_type}类型GPU缓冲区: {size}字节(对齐{aligned_size}) (总复用: {self._total_reused})"
-                    )
-                    return buf
+            if (
+                buffer_type != "generic"
+                and buffer_type in self._type_pools
+                and aligned_size in self._type_pools[buffer_type]
+                and self._type_pools[buffer_type][aligned_size]
+            ):
+                buf = self._type_pools[buffer_type][aligned_size].pop()
+                self._total_reused += 1
+                # 安全修复: 缓冲区借出后不再是空闲的，从 LRU 追踪中移除。
+                buf_id = id(buf)
+                self._access_times.pop(buf_id, None)
+                self._buf_by_id.pop(buf_id, None)
+                self._buf_size_by_id.pop(buf_id, None)
+                self._buf_type_by_id.pop(buf_id, None)
+                logger.debug(
+                    f"复用{buffer_type}类型GPU缓冲区: {size}字节"
+                    f"(对齐{aligned_size}) (总复用: {self._total_reused})"
+                )
+                return buf
 
             # 从通用池查找
             if aligned_size in self._pool and self._pool[aligned_size]:

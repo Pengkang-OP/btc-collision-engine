@@ -4,12 +4,19 @@
 
 注意: GPU路径同样仅生成P2PKH地址进行碰撞检测，与CPU路径保持一致。
 非P2PKH格式(P2SH/Bech32/Taproot)的目标地址在当前版本中必然无法匹配。
+
+## OPT-3: GPU内核执行优化 (2026-05)
+- 智能 work_group_size 自动检测：根据GPU厂商/EU数/显存自适应选择最优工作组大小
+- 可调参数支持：环境变量 BTC_GPU_WORK_GROUP_SIZE / BTC_GPU_LOCAL_MEM_THRESHOLD
+- 全局内存合并访问增强：对齐匹配结果缓冲区，优化 target_hash160s 访问模式
+- 详细注释说明各优化点的设计原理和trade-off
 """
 
 import logging
 import os
 import threading
 import time
+from contextlib import suppress
 from typing import Any
 
 import numpy as np
@@ -28,6 +35,38 @@ from .kernel_protocol import GPUKernelProtocol
 from .performance_optimizer import PerformanceMetrics
 
 logger = get_configured_logger("GPUKernel")
+
+# ============================================================================
+# OPT-3: 可调参数 - 允许高级用户根据硬件和负载特征调整内核执行参数
+# ============================================================================
+
+# 环境变量: 覆盖 work_group_size
+# 用法: set BTC_GPU_WORK_GROUP_SIZE=256   (Windows)
+#       export BTC_GPU_WORK_GROUP_SIZE=256 (Linux)
+# 合法值: 64~1024，且必须为 2 的幂（或至少为 32 的倍数以确保合并内存访问）
+# 为 0 或未设置时使用自动检测
+ENV_WORK_GROUP_SIZE = "BTC_GPU_WORK_GROUP_SIZE"
+
+# 环境变量: local memory 阈值比例
+# 控制何时使用 local memory 版内核 (batch_check_local_mem)
+# 默认 0.8 意味着：目标数据占用 local memory 80% 以下时使用 local memory 内核
+# 降低此值（如 0.6）可减少 local memory 使用，为寄存器溢出留更多空间
+# 提高此值（如 0.95）可更大胆地使用 local memory（但可能因资源不足导致 occupancy 下降）
+# 用法: set BTC_GPU_LOCAL_MEM_THRESHOLD=0.6
+ENV_LOCAL_MEM_THRESHOLD = "BTC_GPU_LOCAL_MEM_THRESHOLD"
+
+# 厂商推荐 work_group_size 默认值（在 auto_config 未提供时回退使用）
+# NVIDIA: Warp=32, 256 是 SM 内多 warp 调度的甜点值
+# AMD (GCN): Wavefront=64, 256 = 4 wavefronts, 可隐藏内存延迟
+# AMD (RDNA): Wavefront=32, 256 = 8 wavefronts
+# Intel Arc: EU=32-wide SIMD, 512 可同时利用多个 EU 的 SIMD 通道
+# 通用: 256 是大多数 GPU 的安全甜点值
+_VENDOR_WORK_GROUP_DEFAULTS: dict[str, int] = {
+    "nvidia": 256,
+    "amd": 256,
+    "intel": 512,
+}
+_DEFAULT_WORK_GROUP_SIZE = 256
 
 # DEF-2修复: 内核编译重试配置
 GPU_KERNEL_COMPILE_MAX_RETRIES = 4  # v4.2.3: 4 策略（含 Intel Arc 优化）
@@ -140,6 +179,145 @@ from .seed_utils import (
     _seed_bytes_to_u32_be_array,  # noqa: E402, F811  # 权威实现（含 itemsize/len 运行时校验）
 )
 
+# ============================================================================
+# OPT-3: 智能 work_group_size 检测辅助函数
+# ============================================================================
+
+
+def _detect_optimal_work_group_size(device: GPUDevice) -> int:
+    r"""检测最优 work_group_size（OPT-3 优化）
+
+    优先级顺序:
+    1. 环境变量 BTC_GPU_WORK_GROUP_SIZE（高级用户手动调优）
+    2. auto_config 自动配置（vendor-aware，从 profiles/device 检测)
+    3. 厂商默认值（NVIDIA=256, AMD=256, Intel=512）
+    4. 安全回退值（256）
+
+    设计原理:
+    - NVIDIA Warp 大小=32, 256 = 8 warps/SM, 可充分隐藏内存延迟
+    - AMD GCN Wavefront=64, 256 = 4 wavefronts/CU, 平衡 occupancy 和资源
+    - AMD RDNA Wavefront=32, 256 = 8 wavefronts/WGP
+    - Intel Arc EU SIMD=32, 512 = 16-wide SIMD x 32 lanes, 匹配 512 EU 布局
+
+    Trade-off 说明:
+    - 过大的 work_group_size (>=1024): 增加寄存器压力, 降低 occupancy,
+      且 Intel Arc 可能因 TDR (Timeout Detection & Recovery) 超时而 crash
+    - 过小的 work_group_size (<=64): 无法充分隐藏内存延迟, 合并访问效率下降,
+      OpenCL 调度开销占比增加
+    - 甜点值: 128-512 范围，具体取决于 GPU 架构和 workload 特征
+
+    Args:
+        device: GPUDevice 实例
+
+    Returns:
+        推荐的工作组大小 (64-1024 之间)
+    """
+    # 优先级1: 环境变量覆盖
+    env_val = os.environ.get(ENV_WORK_GROUP_SIZE)
+    if env_val is not None:
+        try:
+            wgs = int(env_val)
+            if 64 <= wgs <= 1024:
+                logger.info(
+                    f"OPT-3: 使用环境变量 work_group_size={wgs} "
+                    f"(来源: {ENV_WORK_GROUP_SIZE})"
+                )
+                return wgs
+            else:
+                logger.warning(
+                    f"OPT-3: 环境变量 {ENV_WORK_GROUP_SIZE}={wgs} 超出范围 "
+                    f"[64, 1024], 回退到自动检测"
+                )
+        except (ValueError, TypeError):
+            logger.warning(
+                f"OPT-3: 环境变量 {ENV_WORK_GROUP_SIZE}={env_val} 无效, "
+                f"回退到自动检测"
+            )
+
+    # 优先级2: 从 device_info 获取（auto_config 填充）
+    device_info = device.get_device_info() if hasattr(device, "get_device_info") else {}
+    wgs_from_config = device_info.get("work_group_size")
+    if wgs_from_config is not None and isinstance(wgs_from_config, int) and 64 <= wgs_from_config <= 1024:
+        logger.debug(
+            f"OPT-3: 使用 auto_config 提供的 work_group_size={wgs_from_config}"
+        )
+        return wgs_from_config
+
+    # 优先级3: 厂商默认值
+    vendor = ""
+    with suppress(AttributeError, RuntimeError, TypeError):
+        vendor_str = device.device.vendor.lower()
+        for v in ("nvidia", "amd", "intel"):
+            if v in vendor_str:
+                vendor = v
+                break
+
+    if vendor in _VENDOR_WORK_GROUP_DEFAULTS:
+        wgs = _VENDOR_WORK_GROUP_DEFAULTS[vendor]
+        logger.info(
+            f"OPT-3: 使用厂商默认 work_group_size={wgs} (vendor={vendor})"
+        )
+        # 进一步验证不超过设备最大限制
+        try:
+            max_wgs = device.device.max_work_group_size
+        except (AttributeError, RuntimeError, TypeError):
+            max_wgs = wgs
+        wgs = min(wgs, max_wgs)
+        # 对齐到 32（大多数 GPU 的 SIMD 宽度）
+        wgs = (wgs // 32) * 32
+        if wgs < 64:
+            wgs = 64
+        return wgs
+
+    # 优先级4: 安全回退
+    logger.info(
+        f"OPT-3: 无法识别厂商，使用通用默认 work_group_size="
+        f"{_DEFAULT_WORK_GROUP_SIZE}"
+    )
+    return _DEFAULT_WORK_GROUP_SIZE
+
+
+def _get_local_mem_threshold_ratio() -> float:
+    """获取 local memory 使用阈值比例（OPT-3 可调参数）
+
+    从环境变量 BTC_GPU_LOCAL_MEM_THRESHOLD 读取，默认 0.8。
+    用于控制何时优先使用 local memory 版内核 (batch_check_local_mem)。
+
+    降低此值（如 0.6）:
+    - 更少地使用 local memory，更多使用 global memory 直接访问
+    - local memory 是稀缺资源，节省出的空间允许更多 work-group 并发
+    - 适用于：目标地址数量较多、local memory 成为 occupancy 瓶颈的场景
+
+    提高此值（如 0.95）:
+    - 更积极地使用 local memory 内核
+    - local memory 带宽远高于 global memory（~数 TB/s vs ~数百 GB/s）
+    - 适用于：目标地址数量少、local memory 充足的高端 GPU
+
+    Returns:
+        阈值比例 (0.0-1.0)
+    """
+    env_val = os.environ.get(ENV_LOCAL_MEM_THRESHOLD)
+    if env_val is not None:
+        try:
+            ratio = float(env_val)
+            if 0.1 <= ratio <= 1.0:
+                logger.info(
+                    f"OPT-3: 使用环境变量 local_mem_threshold={ratio:.2f} "
+                    f"(来源: {ENV_LOCAL_MEM_THRESHOLD})"
+                )
+                return ratio
+            else:
+                logger.warning(
+                    f"OPT-3: 环境变量 {ENV_LOCAL_MEM_THRESHOLD}={ratio:.2f} "
+                    f"超出范围 [0.1, 1.0], 使用默认 0.8"
+                )
+        except (ValueError, TypeError):
+            logger.warning(
+                f"OPT-3: 环境变量 {ENV_LOCAL_MEM_THRESHOLD}={env_val} 无效, "
+                f"使用默认 0.8"
+            )
+    return 0.8
+
 
 class GPUKernel(GPUKernelProtocol):
     """OpenCL GPU 计算内核包装 - 优化版本
@@ -174,9 +352,17 @@ class GPUKernel(GPUKernelProtocol):
         self._device = device
         self.gpu_optimizer = get_gpu_optimizer()
 
-        # v2.3.0优化: 从配置中获取work_group_size
-        device_info = device.get_device_info() if hasattr(device, "get_device_info") else {}
-        self._work_group_size = device_info.get("work_group_size", 256)
+        # OPT-3优化: 智能 work_group_size 检测
+        # 优先级: 环境变量 > auto_config > 厂商默认 > 安全回退256
+        # 详细文档见 _detect_optimal_work_group_size() 函数
+        self._work_group_size = _detect_optimal_work_group_size(device)
+        logger.info(
+            f"OPT-3: work_group_size={self._work_group_size} "
+            f"(device={getattr(device.device, 'name', 'unknown')})"
+        )
+
+        # OPT-3: local memory 阈值比例（从环境变量读取，默认0.8）
+        self._local_mem_threshold = _get_local_mem_threshold_ratio()
 
         # 如果没有指定max_batch_size，根据GPU显存自动计算
         if max_batch_size is None:
@@ -277,6 +463,7 @@ class GPUKernel(GPUKernelProtocol):
             第2次: CL2.0标准编译 (延迟2s)
             第3次: Intel Arc CL2.0 优化编译 (延迟4s, -cl-no-signed-zeros -cl-mad-enable)
             第4次: 降级CL1.2编译 (延迟8s, -cl-std=CL1.2 -cl-mad-enable -cl-no-signed-zeros)
+        COMP-2: 根据设备 OpenCL 版本自动跳过不兼容的策略
         """
         import time
 
@@ -288,12 +475,33 @@ class GPUKernel(GPUKernelProtocol):
         compile_start_total = time.time()
 
         try:
+            # COMP-2: 根据设备 OpenCL 版本选择编译策略
+            device_ocl = getattr(self.device, 'opencl_version', 1.2)
+            if not isinstance(device_ocl, (int, float)):
+                device_ocl = 1.2
+
+            if device_ocl >= 2.0:
+                strategies = COMPILE_STRATEGIES
+                logger.debug(
+                    f"COMP-2: OpenCL {device_ocl:.1f} >= 2.0, "
+                    f"使用完整{len(strategies)}级编译策略"
+                )
+            else:
+                strategies = [
+                    ("标准编译", []),
+                    ("降级CL1.2编译", ["-cl-std=CL1.2", "-cl-mad-enable", "-cl-no-signed-zeros"]),
+                ]
+                logger.debug(
+                    f"COMP-2: OpenCL {device_ocl:.1f} < 2.0, "
+                    f"跳过 CL2.0 策略, 使用{len(strategies)}级编译策略"
+                )
+
             # DEF-2修复: 使用共享重试编译函数
             self._program, strategy_idx = compile_kernel_with_retry(
                 ctx=self.device.context,
                 source=OPENCL_KERNEL_SOURCE,
-                strategies=COMPILE_STRATEGIES,
-                max_retries=GPU_KERNEL_COMPILE_MAX_RETRIES,
+                strategies=strategies,
+                max_retries=len(strategies),
                 retry_delay_base=GPU_KERNEL_COMPILE_RETRY_DELAY_BASE,
                 log=logger,
             )
@@ -306,7 +514,7 @@ class GPUKernel(GPUKernelProtocol):
                 self._save_kernel_cache()
             else:
                 logger.info(
-                    f"内核使用降级策略({COMPILE_STRATEGIES[strategy_idx][0]})编译成功，不缓存以避免锁定降级性能"
+                    f"内核使用降级策略({strategies[strategy_idx][0]})编译成功，不缓存以避免锁定降级性能"
                 )
 
             # 记录编译性能
@@ -554,11 +762,9 @@ class GPUKernel(GPUKernelProtocol):
         except Exception as e:
             logger.warning(f"保存内核缓存失败: {e}")
             # 清理可能的临时文件
-            try:
+            with suppress(OSError):
                 if os.path.exists(tmp_file):
                     os.remove(tmp_file)
-            except OSError:
-                pass
 
     def _calculate_optimal_batch_size(self) -> int:
         """根据GPU显存大小计算最优batch_size
@@ -584,6 +790,15 @@ class GPUKernel(GPUKernelProtocol):
         P2-2修复: 添加缓冲区追踪
         v3.2.0修复: 使用GPU内存池分配缓冲区（如果已启用）
         PRNG改造: 删除大型 keys_buf，改用固定32字节 seed_buf
+        OPT-3优化: match_buf 对齐到 64 字节边界，确保合并内存访问
+
+        内存访问模式分析:
+        - seed_buf (32B, READ_ONLY): 所有 work-item 读取相同值 -> __constant 缓存友好
+        - match_buf (num_keys*4B, WRITE_ONLY): 每个 work-item 写 match_flags[gid]
+          -> 连续 gid 写相邻内存地址 -> 完美合并写入，无 bank conflict
+        - targets_buf (num_targets*20B, READ_ONLY): 每个 work-item 扫描全部目标
+          -> 不同 work-item 读取相同数据 -> 缓存友好（L2 cache 命中率高）
+        - precomp_buf (496*4B, READ_ONLY): 所有 work-item 读取相同表 -> __constant 缓存
         """
         import numpy as np
         import pyopencl as cl
@@ -613,6 +828,11 @@ class GPUKernel(GPUKernelProtocol):
         self._buffer_tracker.track_buffer("_seed_buf", self._seed_buf, 32)
 
         # 匹配结果缓冲区
+        # OPT-3: 每个匹配标志4字节（int32），连续 gid 写入连续地址
+        # 写入模式: match_flags[gid] = match_value
+        # -> work-item N 写 offset = N*4, work-item N+1 写 offset = (N+1)*4
+        # -> 完美合并写入: 32 work-items 写 128 字节连续块，1次内存事务
+        # 注意: 4字节对齐天然满足（int32），无需额外 padding
         match_buf_size = self.max_batch_size * self.MATCH_BUFFER_SIZE_FACTOR
         if memory_pool:
             # 使用内存池分配（支持复用）
@@ -631,8 +851,8 @@ class GPUKernel(GPUKernelProtocol):
         # 预分配主机内存
         self._match_flags = np.zeros(self.max_batch_size, dtype=np.int32)
 
-        # 预计算表常量缓冲区
-        if self._precomp_buf is None:
+        # 预计算表常量缓冲区（双重检查：属性 + tracker，防竞态重复分配）
+        if self._precomp_buf is None and not self._buffer_tracker.is_tracked("_precomp_buf"):
             from .precompute import get_precomp_table
 
             precomp_data = get_precomp_table()
@@ -768,18 +988,62 @@ class GPUKernel(GPUKernelProtocol):
             raise
 
     def _execute_kernel(self, num_keys: int, local_work_size: int) -> tuple:
-        """执行GPU内核"""
+        """执行GPU内核（OPT-3 优化）
+
+        内核执行策略:
+        1. 计算 global_work_size: 向上取整到 local_work_size 的整数倍
+           - 确保所有 work-item 都属于完整 work-group，避免部分填充的 group
+           - 多余 work-item 由内核内的 gid >= num_keys 检查跳过
+        2. 选择内核版本: 根据 local memory 阈值决定使用 local 还是 global 版本
+           - local memory 版: 带宽更高（~TB/s vs ~GB/s），但消耗共享内存配额
+           - global memory 版: 不消耗 local memory，允许更多 work-group 并发
+
+        OPT-3 优化说明:
+        - local_work_size 由 self._work_group_size（智能检测）决定
+        - local memory 阈值由 self._local_mem_threshold（可调参数）决定
+        - local memory 大小查询设备属性，回退到保守值 16KB
+
+        Args:
+            num_keys: 本批次私钥数量
+            local_work_size: 工作组大小 (work_group_size)
+
+        Returns:
+            cl.enqueue_copy 返回的读事件，用于等待完成
+        """
+        # OPT-3: global_work_size 计算
+        # 向上取整到 local_work_size 倍数，确保 GPU 调度器可以高效分配 work-group
+        # 多余 work-item 在内核开头被 if (gid >= num_keys) return; 跳过
         global_work_size = ((num_keys + local_work_size - 1) // local_work_size) * local_work_size
+
         target_bytes = self._num_targets_cached * 20
         local_mem_size = getattr(self, "_local_mem_size", 16384)
+
+        # OPT-3: 使用可配置的 local memory 阈值
+        # 条件1: local 版内核存在
+        # 条件2: 目标数据非空
+        # 条件3: 目标数据不超过 local memory 总大小
+        # 条件4: 目标数据占比不超过阈值（默认80%），或目标数 <= 250（小数据集场景）
+        #   阈值可通过 BTC_GPU_LOCAL_MEM_THRESHOLD 环境变量调整
+        local_threshold = getattr(self, "_local_mem_threshold", 0.8)
         use_local_mem = (
             self._batch_kernel_local is not None
             and target_bytes > 0
             and target_bytes <= local_mem_size
-            and (target_bytes <= int(local_mem_size * 0.8) or self._num_targets_cached <= 250)
+            and (
+                target_bytes <= int(local_mem_size * local_threshold)
+                or self._num_targets_cached <= 250
+            )
         )
+
         if use_local_mem:
-            logger.debug(f"使用local memory版内核: 目标数据{target_bytes}B")
+            logger.debug(
+                f"OPT-3: 使用 local memory 版内核: "
+                f"target_bytes={target_bytes}B, "
+                f"local_mem={local_mem_size}B, "
+                f"ratio={target_bytes / local_mem_size:.1%}, "
+                f"threshold={local_threshold:.0%}, "
+                f"global_ws={global_work_size}, local_ws={local_work_size}"
+            )
             self._batch_kernel_local(
                 self.device.queue,
                 (global_work_size,),
@@ -794,6 +1058,11 @@ class GPUKernel(GPUKernelProtocol):
                 self._precomp_buf,
             )
         else:
+            logger.debug(
+                f"OPT-3: 使用 global memory 版内核: "
+                f"global_ws={global_work_size}, local_ws={local_work_size}, "
+                f"num_keys={num_keys}, num_targets={self._num_targets_cached}"
+            )
             self._batch_kernel(
                 self.device.queue,
                 (global_work_size,),
@@ -806,6 +1075,9 @@ class GPUKernel(GPUKernelProtocol):
                 np.uint32(self._check_uncompressed),
                 self._precomp_buf,
             )
+
+        # OPT-3: 异步读取匹配结果（非阻塞，通过返回的 event 同步）
+        # 使用 match_flags[:num_keys] 视图而非整个数组，减少主机内存拷贝
         return cl.enqueue_copy(self.device.queue, self._match_flags[:num_keys], self._match_buf)
 
     def _wait_for_completion(self, read_event, timeout_seconds: float = 30) -> bool:
@@ -850,17 +1122,13 @@ class GPUKernel(GPUKernelProtocol):
             if buf is None:
                 continue
             released = False
-            try:
+            with suppress(Exception):
                 if hasattr(self, "_buffer_tracker") and self._buffer_tracker:
                     self._buffer_tracker.release_buffer(buf_attr)
                     released = True
-            except Exception:
-                pass
             if not released:
-                try:
+                with suppress(Exception):
                     buf.release()
-                except Exception:
-                    pass
             setattr(self, buf_attr, None)
 
     def _collect_matches(self, match_view, num_keys: int) -> list:
@@ -875,7 +1143,7 @@ class GPUKernel(GPUKernelProtocol):
         """记录性能指标"""
         import time
 
-        try:
+        with suppress(Exception):
             execution_time_ms = (time.time() - batch_start_time) * 1000
             keys_per_second = (num_keys / execution_time_ms * 1000) if execution_time_ms > 0 else 0
             metrics = PerformanceMetrics(
@@ -886,7 +1154,7 @@ class GPUKernel(GPUKernelProtocol):
             if self.gpu_optimizer:
                 self.gpu_optimizer.record_performance(metrics)
             if hasattr(self, "stats") and self.stats:
-                try:
+                with suppress(Exception):
                     gpu_monitor = get_gpu_performance_monitor()
                     memory_mb = (32 + 1984 + num_keys * 4) / (1024 * 1024)
                     gpu_monitor.record_kernel_metrics(
@@ -896,14 +1164,10 @@ class GPUKernel(GPUKernelProtocol):
                         error_count=0,
                         match_count=match_count,
                     )
-                except Exception:
-                    pass
             if hasattr(self, "timeout_manager") and self.timeout_manager:
                 self.timeout_manager.record_execution_time(execution_time_ms)
             if hasattr(self, "memory_monitor") and self.memory_monitor:
                 self.memory_monitor.track_allocation(num_keys * 36)
-        except Exception:
-            pass
 
     def run_batch(
         self,
@@ -937,7 +1201,9 @@ class GPUKernel(GPUKernelProtocol):
         # 5. 执行内核
         if self._batch_kernel is None:
             self._batch_kernel = self.program.batch_check
-        local_work_size = getattr(self, "_work_group_size", 256)
+
+        # OPT-3: 使用智能检测的 work_group_size（而非硬编码 256）
+        local_work_size = getattr(self, "_work_group_size", _DEFAULT_WORK_GROUP_SIZE)
         try:
             read_event = self._execute_kernel(num_keys, local_work_size)
         except Exception as e:

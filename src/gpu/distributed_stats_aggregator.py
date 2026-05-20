@@ -104,7 +104,7 @@ class DistributedStatsAggregator:
         total_errors = 0
         active_workers = 0
 
-        for device_idx, worker in workers.items():
+        for _device_idx, worker in workers.items():
             total_keys += worker.keys_checked
             total_matches += worker.matches_found
             total_throughput += worker.throughput

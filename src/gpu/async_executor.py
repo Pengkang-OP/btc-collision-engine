@@ -8,6 +8,7 @@
 
 import threading
 import time
+from contextlib import suppress
 from typing import Any
 
 import numpy as np
@@ -291,11 +292,9 @@ class AsyncGPUExecutor:
         """
         # 优先从 GPU 设备信息获取（如果设备已初始化）
         device_ws = None
-        try:
+        with suppress(Exception):
             if hasattr(self.device, "device_info") and self.device.device_info:
                 device_ws = self.device.device_info.get("work_group_size")
-        except Exception:
-            pass
 
         if device_ws and isinstance(device_ws, int) and 64 <= device_ws <= 1024:
             return device_ws
@@ -370,7 +369,7 @@ class AsyncGPUExecutor:
 
         # 创建 queue_depth 个缓冲区构成缓冲区池
         self._buffer_pool: list[dict] = []
-        for i in range(self.queue_depth):
+        for _i in range(self.queue_depth):
             buf = {
                 "matches": cl.Buffer(context, cl.mem_flags.READ_WRITE, size=num_keys * 4),
                 "match_flags": np.zeros(num_keys, dtype=np.int32),
@@ -669,13 +668,12 @@ class AsyncGPUExecutor:
     def _track_sync_fallback(self) -> None:
         """追踪连续同步回退，管理异步模式恢复"""
         self._consecutive_sync_fallbacks += 1
-        if self._consecutive_sync_fallbacks >= MAX_CONSECUTIVE_SYNC_FALLBACKS:
-            if not self._async_mode_disabled:
-                self._async_mode_disabled = True
-                logger.warning(
-                    f"连续同步回退({self._consecutive_sync_fallbacks}次)超过阈值"
-                    f"({MAX_CONSECUTIVE_SYNC_FALLBACKS})，已禁用异步模式"
-                )
+        if self._consecutive_sync_fallbacks >= MAX_CONSECUTIVE_SYNC_FALLBACKS and not self._async_mode_disabled:
+            self._async_mode_disabled = True
+            logger.warning(
+                f"连续同步回退({self._consecutive_sync_fallbacks}次)超过阈值"
+                f"({MAX_CONSECUTIVE_SYNC_FALLBACKS})，已禁用异步模式"
+            )
 
     def _check_async_recovery(self) -> None:
         """检查是否可以恢复异步模式
@@ -1114,10 +1112,8 @@ class AsyncGPUExecutor:
         """安全释放缓冲区字典中的单个 OpenCL buffer（防止孤儿泄漏）"""
         buf = buf_dict.get(key)
         if buf is not None:
-            try:
+            with suppress(Exception):
                 buf.release()
-            except (RuntimeError, Exception):
-                pass
 
     def _try_create_fallback_buffer(self, buf_dict: dict, num_keys: int, start_time: float) -> bool:
         """尝试创建临时回退缓冲区并清空

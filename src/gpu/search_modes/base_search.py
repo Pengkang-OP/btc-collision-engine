@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 # 统一日志获取 + 修复缺失导入
 from ...utils import get_configured_logger
 from ...utils.exception_handler import ExceptionHandler
+from ...utils.timeout import invoke_with_timeout
 
 if TYPE_CHECKING:
     from ...collision.gpu_collision_engine import GPUCollisionEngine
@@ -106,7 +107,14 @@ class BaseSearchMode:
                     wif = WIF.encode(private_key, compressed=True)
                     engine.stats.add_match(private_key, address)
                     if engine.on_match:
-                        engine.on_match(private_key, address, wif)
+                        invoke_with_timeout(
+                            engine.on_match,
+                            args=(private_key, address, wif),
+                            timeout=engine._match_callback_timeout
+                            if hasattr(engine, "_match_callback_timeout")
+                            else 5.0,
+                            callback_name="on_match",
+                        )
 
                 # 更新统计
                 batch_count += actual_batch_size
@@ -120,7 +128,12 @@ class BaseSearchMode:
                 current_time = time.time()
                 if current_time - engine._last_progress_time >= engine._progress_interval_sec:
                     if engine.on_progress:
-                        engine.on_progress(engine.stats.snapshot())
+                        invoke_with_timeout(
+                            engine.on_progress,
+                            args=(engine.stats.snapshot(),),
+                            timeout=5.0,
+                            callback_name="on_progress",
+                        )
                     engine._save_checkpoint(batch_count)
                     engine._last_progress_time = current_time
 

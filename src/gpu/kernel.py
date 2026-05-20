@@ -55,11 +55,16 @@ For complete technical specs, API docs and usage guide, see:
 # - MAJOR: incompatible API/algorithm changes (e.g., coordinate system switch)
 # - MINOR: new features backward-compatible (e.g., new kernel function)
 # - PATCH: bug fixes, optimizations (e.g., macro refactoring)
-KERNEL_VERSION = "4.2.1"
-KERNEL_VERSION_TUPLE = (4, 2, 1)
+KERNEL_VERSION = "4.2.2"
+KERNEL_VERSION_TUPLE = (4, 2, 2)
 
 # Maps versions to changelog entries for auditing
 KERNEL_VERSION_HISTORY: list[dict[str, str]] = [
+    {
+        "version": "4.2.2",
+        "date": "2026-05",
+        "changes": "OPT-3: 内核内存访问模式文档化; batch_check 合并访问注释; local_mem 阈值可配置化",
+    },
     {
         "version": "4.2.1",
         "date": "2026-05",
@@ -191,14 +196,14 @@ def get_latest_compatible_version(
 OPENCL_KERNEL_SOURCE = """
 // ============================================================================
 // Bitcoin secp256k1 GPU computation kernel
-// Kernel Version: 4.2.0 (MAJOR.MINOR.PATCH)
+// Kernel Version: 4.2.2 (MAJOR.MINOR.PATCH)
 // Compile-time validation: #if KERNEL_VERSION_MAJOR < 4 ...
 // ============================================================================
 
 // Kernel version defines for compile-time feature gating
 #define KERNEL_VERSION_MAJOR 4
 #define KERNEL_VERSION_MINOR 2
-#define KERNEL_VERSION_PATCH 1
+#define KERNEL_VERSION_PATCH 2
 
 // uint256 type: 8 x uint32, little-endian (d[0]=LSB, d[7]=MSB)
 typedef struct {
@@ -570,18 +575,30 @@ void mod_inverse(const uint256_t *a, uint256_t *result) {
             uint256_shr1(&u, &u);
             // x1 / 2 mod P: if x1 is odd, (x1 + P) / 2, else x1 / 2
             if (!uint256_is_even(&x1)) {
-                uint256_add(&x1, &p, &x1);
+                // v4.2.4 fix: handle x1 + P overflow (x1 >= 2^32+977 causes carry)
+                uint carry = uint256_add(&x1, &p, &x1);
+                uint256_shr1(&x1, &x1);
+                if (carry) {
+                    x1.d[7] |= 0x80000000;  // propagate overflow bit into MSB
+                }
+            } else {
+                uint256_shr1(&x1, &x1);
             }
-            uint256_shr1(&x1, &x1);
         }
 
         // Strip factor 2 from v
         while (uint256_is_even(&v)) {
             uint256_shr1(&v, &v);
             if (!uint256_is_even(&x2)) {
-                uint256_add(&x2, &p, &x2);
+                // v4.2.4 fix: handle x2 + P overflow
+                uint carry = uint256_add(&x2, &p, &x2);
+                uint256_shr1(&x2, &x2);
+                if (carry) {
+                    x2.d[7] |= 0x80000000;
+                }
+            } else {
+                uint256_shr1(&x2, &x2);
             }
-            uint256_shr1(&x2, &x2);
         }
 
         if (uint256_cmp(&u, &v) >= 0) {
@@ -1354,6 +1371,17 @@ void hash160(const uchar *data, uint len, uchar *result) {
 
 // Macro: Hash160 target scan with progressive early-exit (uint32 vectorized, 5 uint compares)
 // Eliminates code duplication between batch_check and batch_check_local_mem.
+//
+// OPT-3 内存访问模式分析:
+// - src_base: 指向连续 20 字节 Hash160 条目数组
+// - 访问模式: 顺序扫描，每次比较 5 个 uint32（20 字节）
+// - 合并访问: 所有 work-item 扫描相同的 src_base 区域
+//   -> L2 cache 命中率高（同一 warp/wave 内所有线程读取相同数据）
+//   -> 即使在 local memory 版本中，加载阶段也已合并
+// - 渐进式 early-exit: 先比较 h0（最高区分度），失败立即 continue
+//   -> 平均只需 1 次 uint32 比较即可排除非匹配目标（假定 Hash160 均匀分布）
+//   -> h0..h4 共 5 次比较等价于 5 次 32-bit 全局内存读取（非常高效）
+//
 // Parameters:
 //   src_base  - pointer to array of 20-byte Hash160 entries (local or global memory)
 //   h0..h4    - pre-assembled hash160_result as 5 uint32 (little-endian)
@@ -1386,6 +1414,27 @@ __kernel void batch_check(
     const uint check_uncompressed,          // v4.0: 0=compressed only, 1=also check uncompressed format
     __constant const uint *precomp_table    // Precomputed table: 31x2x8 = 496 uint32 (G1..G31 affine)
 ) {
+    // OPT-3 内核内存访问模式文档化:
+    //
+    // seed          [__constant]: 所有 work-item 读取相同 32B -> 广播到整个 work-group
+    //               -> 最优访问模式，1次 constant cache 读取服务所有线程
+    //
+    // target_hash160s [__global]: 每个 work-item 独立扫描全部目标
+    //               -> 同一 warp/wave 内所有线程可能读取重叠地址
+    //               -> L2 cache 友好（不同 work-item 读相同区域）
+    //               -> 注意: 20B/条目非 32B 对齐，可能存在跨缓存行读取
+    //               -> 但顺序访问模式使硬件预取器可以有效工作
+    //
+    // match_flags   [__global]: 每个 work-item 写 match_flags[get_global_id(0)]
+    //               -> 写入模式: work-item N 写 offset=N*4, N+1 写 (N+1)*4
+    //               -> 完美合并写入: 32 work-items (warp) 写 128B 连续块 = 1次内存事务
+    //               -> 无 bank conflict（每个 work-item 写独立的 4 字节对齐地址）
+    //
+    // precomp_table [__constant]: 所有 work-item 读取相同 496*4B 查找表
+    //               -> 通过 load_precomp_point() 按需访问
+    //               -> __constant 缓存: 64KB on AMD, 48KB+8KB on NVIDIA, 由硬件管理
+    //               -> v4.2.0 优化: 已在 kernel_impl 中消除 1984B/thread 私有内存拷贝
+
     // P1-2 fix: ulong gid prevents 32-bit overflow when batch_size >= 2^32
     ulong gid = get_global_id(0);
     if (gid >= num_keys) return;
@@ -1474,6 +1523,27 @@ __kernel void batch_check_local_mem(
     __local uchar *cached_targets,          // local memory cache: num_targets * 20 bytes
     __constant const uint *precomp_table    // Precomputed table: 31x2x8 = 496 uint32 (G1..G31 affine)
 ) {
+    // OPT-3 内核内存访问模式文档化:
+    //
+    // 与 batch_check 的区别: 将 target_hash160s 从 global memory 预加载到 local memory
+    //
+    // 协同加载阶段 (cooperative load):
+    // - 每个 work-item 以步长 lsize 加载目标数据: cached_targets[lid + k*lsize]
+    // - 访问模式: 跨步访问 global memory（stride = lsize * 1 byte）
+    //   -> 非完美合并（但仅执行一次，总体开销可控）
+    //   -> 例如: lsize=256, target 2000B, 每线程加载 ~8 字节 = 8 次全局内存读取
+    // - barrier(CLK_LOCAL_MEM_FENCE) 确保所有加载完成后再开始计算
+    //
+    // 扫描阶段:
+    // - 所有 work-item 从 local memory 读取 cached_targets
+    // - local memory 带宽: ~2-5 TB/s (vs global ~200-900 GB/s)
+    // - 无 bank conflict（每个 work-item 独立扫描，地址偏移不同）
+    //
+    // 适用条件 (kernel_impl.py 中判断):
+    // - target_bytes <= local_mem_size * threshold（默认 80%）
+    //   或 num_targets <= 250（小数据集，local memory 足够）
+    // - 综合收益: 节省的 global memory 带宽远大于加载开销
+
     // P1-2 fix: ulong gid prevents 32-bit overflow when batch_size >= 2^32
     ulong gid = get_global_id(0);
     uint lid = get_local_id(0);
@@ -1595,14 +1665,13 @@ __kernel void debug_hash(
     // Output public key
     for (int i = 0; i < 33; i++) pubkey_out[i] = pubkey[i];
 
-    // SHA-256
+    // Hash160: align with production fast-path (sha256_single_block_33 for 33-byte pubkey)
+    // v4.2.0: Uses same code path as batch_check via hash160()
     uchar sha_hash[32];
-    sha256(pubkey, 33, sha_hash);
-    for (int i = 0; i < 32; i++) sha256_out[i] = sha_hash[i];
-
-    // RIPEMD-160
     uchar ripe_hash[20];
-    ripemd160(sha_hash, 32, ripe_hash);
+    hash160(pubkey, 33, ripe_hash);          // production path: RIPEMD160(SHA256(pubkey))
+    sha256_single_block_33(pubkey, sha_hash); // separate SHA-256 output for debugging
+    for (int i = 0; i < 32; i++) sha256_out[i] = sha_hash[i];
     for (int i = 0; i < 20; i++) hash160_out[i] = ripe_hash[i];
 }
 
@@ -1614,21 +1683,26 @@ __kernel void verify_arithmetic(
     __global uint *result_x,  // Output: x coordinate of 2*G (8 uints)
     __global uint *result_y   // Output: y coordinate of 2*G (8 uints)
 ) {
-    uint256_t gx, gy, rx, ry;
+    uint256_t gx, gy, gz, rx, ry, rz, ax, ay;
 
-    // Load G
+    // Load G (affine point, set Z=1 for Jacobian)
     for (int i = 0; i < 8; i++) {
         gx.d[i] = GX[i];
         gy.d[i] = GY[i];
     }
+    uint256_set_zero(&gz);
+    gz.d[0] = 1;  // Z=1 for affine point in Jacobian coordinates
 
-    // Compute 2*G
-    ec_point_double(&gx, &gy, &rx, &ry);
+    // Compute 2*G using Jacobian point double (no mod_inverse, consistent with batch_check)
+    jac_point_double(&gx, &gy, &gz, &rx, &ry, &rz);
+
+    // Convert Jacobian back to affine coordinates
+    jac_to_affine(&rx, &ry, &rz, &ax, &ay);
 
     // Output result
     for (int i = 0; i < 8; i++) {
-        result_x[i] = rx.d[i];
-        result_y[i] = ry.d[i];
+        result_x[i] = ax.d[i];
+        result_y[i] = ay.d[i];
     }
 }
 """

@@ -144,13 +144,12 @@ class GPUConfigManager:
 
         # 验证memory_ratio
         memory_ratio = config.get("memory_ratio")
-        if memory_ratio is not None:
-            if (
-                not isinstance(memory_ratio, (int, float))
-                or memory_ratio <= 0
-                or memory_ratio > 1.0
-            ):
-                raise ValueError(f"memory_ratio必须是0-1之间的数，当前值: {memory_ratio}")
+        if memory_ratio is not None and (
+            not isinstance(memory_ratio, (int, float))
+            or memory_ratio <= 0
+            or memory_ratio > 1.0
+        ):
+            raise ValueError(f"memory_ratio必须是0-1之间的数，当前值: {memory_ratio}")
 
         # 验证use_memory_pool
         use_memory_pool = config.get("use_memory_pool")

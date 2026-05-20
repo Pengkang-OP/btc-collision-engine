@@ -72,14 +72,27 @@ class GPUBufferTracker:
             # 检查内存使用是否超过阈值
             total_size = sum(info["size"] for info in self._allocated_buffers.values())
             if total_size > self._memory_threshold:
+                _used_mb = total_size / 1024 / 1024
+                _threshold_mb = self._memory_threshold / 1024 / 1024
                 logger.warning(
-                    f"GPU内存使用超过阈值: {total_size / 1024 / 1024:.1f}MB > {
-                        self._memory_threshold / 1024 / 1024:.1f}MB"
+                    f"GPU内存使用超过阈值: {_used_mb:.1f}MB > {_threshold_mb:.1f}MB"
                 )
                 # 触发自动清理
                 self.cleanup_timed_out_buffers()
 
         logger.debug(f"GPU Buffer追踪: 分配 {name} ({size / 1024:.1f} KB, 类型: {buffer_type})")
+
+    def is_tracked(self, name: str) -> bool:
+        """检查缓冲区是否已被追踪
+
+        Args:
+            name: 缓冲区名称
+
+        Returns:
+            True 如果缓冲区已在追踪列表中
+        """
+        with self._lock:
+            return name in self._allocated_buffers
 
     def release_buffer(self, name: str) -> None:
         """注销缓冲区
@@ -392,11 +405,13 @@ class GPUBufferTracker:
         # v2.2.1修复: 只在释放失败时输出CRITICAL警告
         if len(failed) > 0:
             logger.critical(
-                f"GPU引擎关闭时{len(failed)}个缓冲区释放失败 (可能内存泄漏): {', '.join([f['name'] for f in failed])}"
+                f"GPU引擎关闭时{len(failed)}个缓冲区释放失败 (可能内存泄漏): "
+                f"{', '.join([f['name'] for f in failed])}"
             )
         elif remaining > 0:
             logger.info(
-                f"GPU引擎关闭时释放了{remaining}个缓冲区 (总大小: {total_size / 1024:.1f}KB): {', '.join(buffer_names)}"
+                f"GPU引擎关闭时释放了{remaining}个缓冲区 "
+                f"(总大小: {total_size / 1024:.1f}KB): {', '.join(buffer_names)}"
             )
         else:
             logger.info("GPU引擎关闭时所有缓冲区已正确释放")

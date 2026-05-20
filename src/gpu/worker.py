@@ -11,6 +11,7 @@
 import threading
 import time
 from collections.abc import Callable
+from contextlib import suppress
 from queue import Empty, Queue
 from typing import TYPE_CHECKING, Any, cast
 
@@ -230,12 +231,10 @@ class SingleGPUWorker(threading.Thread):
         try:
             # 根据模式组装 start() 关键字参数
             engine_kwargs: dict = {}
-            if self.mode in ("range", "brute_force"):
-                if self.range_start is not None:
-                    engine_kwargs["start"] = self.range_start
-            if self.mode == "range":
-                if self.range_end is not None:
-                    engine_kwargs["end"] = self.range_end
+            if self.mode in ("range", "brute_force") and self.range_start is not None:
+                engine_kwargs["start"] = self.range_start
+            if self.mode == "range" and self.range_end is not None:
+                engine_kwargs["end"] = self.range_end
 
             # 启动监控线程（并行更新统计）
             def monitor_loop() -> None:
@@ -293,7 +292,8 @@ class SingleGPUWorker(threading.Thread):
             current_batch = self.config.batch_size or 65536
             new_batch = max(current_batch // 2, 1024)
             logger.warning(
-                f"GPU {self.device_idx} 内存不足（MemoryError），自动减小 batch_size: {current_batch:,} → {new_batch:,}"
+                f"GPU {self.device_idx} 内存不足（MemoryError），"
+                f"自动减小 batch_size: {current_batch:,} → {new_batch:,}"
             )
             self.config.batch_size = new_batch
             with self._lock:
@@ -478,12 +478,10 @@ class SingleGPUWorker(threading.Thread):
             匹配结果列表
         """
         results = []
-        try:
+        with suppress(Empty):
             for _ in range(min(max_results, self._result_queue.qsize())):
                 result = self._result_queue.get_nowait()
                 results.append(result)
-        except Empty:
-            pass
 
         return results
 

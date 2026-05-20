@@ -34,6 +34,7 @@ from .constants import (  # noqa: E402
 from .context import GPUContext  # noqa: E402
 from .data_monitor import DataMonitor, DataQualityIssue  # noqa: E402
 from .device import GPUDevice, GPUDeviceDetector, identify_vendor  # noqa: E402
+from .double_buffer import ENV_DOUBLE_BUFFER, DoubleBuffer  # noqa: E402
 from .driver_manager import DriverManager, DriverVersionParser  # noqa: E402
 from .engine_monitor import GPUEngineMonitor  # noqa: E402
 from .gpu_config import (  # noqa: E402
@@ -124,6 +125,9 @@ __all__ = [
     "PerformanceOptimizationPipeline",
     # Task#3: 引擎监控模块
     "GPUEngineMonitor",
+    # Task#10: CPU-GPU 双缓冲优化 (PERF-1)
+    "DoubleBuffer",
+    "ENV_DOUBLE_BUFFER",
     # Task#7: GPU全局常量模块
     "PER_KEY_MEMORY_BYTES",
     "BYTES_PER_MB",

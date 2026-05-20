@@ -100,10 +100,9 @@ class GPUProfileLoader:
 
                 # 确保series_data是字典
                 if not isinstance(series_data, dict):
+                    _type_name = type(series_data).__name__
                     logger.warning(
-                        f"跳过无效的系列配置 {vendor}/{arch_name}/{series_name}: 期望dict, 得到{
-                            type(series_data).__name__
-                        }"
+                        f"跳过无效的系列配置 {vendor}/{arch_name}/{series_name}: 期望dict, 得到{_type_name}"
                     )
                     continue
 
@@ -211,15 +210,16 @@ class GPUProfileLoader:
                 errors.append(f"{key}必须为正数")
 
         # 验证batch_size关系（只在类型正确时比较）
-        if isinstance(profile.get("recommended_batch_size"), (int, float)) and isinstance(
-            profile.get("max_batch_size"), (int, float)
+        rec_batch = profile.get("recommended_batch_size")
+        max_batch = profile.get("max_batch_size")
+        if (
+            isinstance(rec_batch, (int, float))
+            and isinstance(max_batch, (int, float))
+            and max_batch < rec_batch
         ):
-            if profile["max_batch_size"] < profile["recommended_batch_size"]:
-                errors.append(
-                    f"max_batch_size ({profile['max_batch_size']}) < recommended_batch_size ({
-                        profile['recommended_batch_size']
-                    })"
-                )
+            errors.append(
+                f"max_batch_size ({max_batch}) < recommended_batch_size ({rec_batch})"
+            )
 
         # 验证optimizations字段（如果存在）
         if "optimizations" in profile:
