@@ -381,6 +381,26 @@ def _save_address_to_targets_file(address: str, output) -> None:
                 pass
 
 
+def _scan_target_file_lines(target_file: str, max_scan: int = 50000) -> tuple[int, bool]:
+    """用多编码扫描目标文件中的有效地址行数。返回 (valid_count, truncated)。"""
+    valid_count = 0
+    truncated = False
+    for enc in ("utf-8", "gbk", "latin-1"):
+        try:
+            with open(target_file, encoding=enc, errors="ignore") as f:
+                for i, line in enumerate(f):
+                    if i >= max_scan:
+                        truncated = True
+                        break
+                    stripped = line.strip()
+                    if stripped and not stripped.startswith("#"):
+                        valid_count += 1
+            break
+        except (UnicodeDecodeError, LookupError):
+            continue
+    return valid_count, truncated
+
+
 def _quick_start_select_target(compact: bool = False) -> tuple[list[str], str | None]:
     """步骤1: 选择目标地址来源。返回 (targets_list, target_file)
 
@@ -423,67 +443,14 @@ def _quick_start_select_target(compact: bool = False) -> tuple[list[str], str | 
             target_file = "targets.txt"
             output.print("   [INFO] 使用默认文件: targets.txt")
         if not Path(target_file).exists():
-            output.warning(_t("errors.file_not_found", path=target_file))
-            output.print("   1. " + _t("cli.commands.create_example_file"))
-            output.print("   2. 手动输入地址")
-            output.print("   3. 返回重新选择")
-            while True:
-                choice = input("   请选择 [1/2/3]: ").strip()
-                if choice in ("1", "2", "3"):
-                    break
-                output.error("请输入 1、2 或 3")
-            if choice == "1":
-                try:
-                    with open(target_file, "w", encoding="utf-8") as f:
-                        f.write("# 目标地址文件\n")
-                        f.write("# 每行一个地址，支持 # 注释\n")
-                        f.write("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n")
-                    output.success(_t("cli.commands.example_file_created", path=target_file))
-                    output.print("   [TIP] " + _t("cli.commands.example_file_tip"))
-                    # 继续使用创建的文件
-                    valid_count = 1
-                    output.success(
-                        _t(
-                            "cli.commands.addresses_loaded",
-                            count=str(valid_count),
-                            path=Path(target_file).name,
-                        )
-                    )
-                    return [], target_file
-                except Exception as e:
-                    output.error(f"创建文件失败: {str(e)}")
-                    output.print("   [TIP] 请检查文件路径是否正确，以及是否有写入权限")
-                    return [], None
-            elif choice == "2":
-                address = input("   请输入目标地址: ").strip()
-                if not address:
-                    output.error(_t("cli.commands.address_empty"))
-                    return [], None
-                targets = [address]
-                target_file = None
-            else:
-                # 选3或其他：返回重新选择
-                return _quick_start_select_target()
+            result = _handle_missing_target_file(output, target_file)
+            if result is not None:
+                return result
         else:
             # 文件存在：统计有效地址行数并给予反馈
-            valid_count = 0
-            truncated = False
-            _max_scan_lines = 50000
             file_basename = Path(target_file).name
             try:
-                for enc in ("utf-8", "gbk", "latin-1"):
-                    try:
-                        with open(target_file, encoding=enc, errors="ignore") as f:
-                            for i, line in enumerate(f):
-                                if i >= _max_scan_lines:
-                                    truncated = True
-                                    break
-                                stripped = line.strip()
-                                if stripped and not stripped.startswith("#"):
-                                    valid_count += 1
-                        break
-                    except (UnicodeDecodeError, LookupError):
-                        continue
+                valid_count, truncated = _scan_target_file_lines(target_file)
             except Exception as e:
                 output.error(f"读取文件失败: {str(e)}")
                 output.print("   [TIP] 请检查文件路径是否正确，以及是否有读取权限")
