@@ -15,6 +15,7 @@ import threading
 import time
 from collections import deque
 from collections.abc import Callable
+from contextlib import suppress
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
@@ -346,10 +347,9 @@ class GPUPerformanceMonitor:
         if self._pynvml_initialized:
             try:
                 handle = self._device_handle
-                if handle is None:
+                if handle is None and pynvml.nvmlDeviceGetCount() > 0:
                     # 默认使用第一个GPU
-                    if pynvml.nvmlDeviceGetCount() > 0:
-                        handle = pynvml.nvmlDeviceGetHandleByIndex(0)
+                    handle = pynvml.nvmlDeviceGetHandleByIndex(0)
 
                 if handle:
                     # GPU利用率
@@ -362,17 +362,16 @@ class GPUPerformanceMonitor:
                     metrics["memory_total"] = memory_info.total / (1024 * 1024)
 
                     # 温度
-                    try:
-                        metrics["temperature"] = pynvml.nvmlDeviceGetTemperature(handle, 0)
-                    except (pynvml.NVMLError, AttributeError):
-                        pass  # GPU不支持温度监控时忽略
+                    with suppress(pynvml.NVMLError, AttributeError):
+                        # GPU不支持温度监控时忽略
+                        metrics["temperature"] = pynvml.nvmlDeviceGetTemperature(
+                            handle, 0
+                        )
 
                     # 功耗
-                    try:
+                    with suppress(pynvml.NVMLError, AttributeError):
                         power = pynvml.nvmlDeviceGetPowerUsage(handle)
-                        metrics["power_usage"] = power / 1000.0
-                    except (pynvml.NVMLError, AttributeError):
-                        pass  # GPU不支持功耗监控时忽略
+                        metrics["power_usage"] = power / 1000.0  # GPU不支持功耗监控时忽略
 
             except Exception as e:
                 logger.debug(f"获取NVIDIA GPU硬件指标失败: {e}")
@@ -388,10 +387,7 @@ class GPUPerformanceMonitor:
                 # 但需要Windows性能计数器权限
                 import platform
 
-                if platform.system() == "Windows":
-                    # 这里我们从已知的配置估算（基于你的截图）
-                    # 实际生产环境可以使用pywin32或WMI
-                    if self._intel_gpu_index == 1:
+                if platform.system() == "Windows" and self._intel_gpu_index == 1:
                         # 这是你的Intel Arc A770
                         # 返回一个模拟值，实际使用时应该从WMI获取
                         # 但为了演示，我们先使用OpenCL执行统计估算

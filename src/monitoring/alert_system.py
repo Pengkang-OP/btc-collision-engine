@@ -324,7 +324,8 @@ class AlertSystem:
             raw = sanitized["memory_usage_percent"]
             if raw > 100.0:
                 logger.warning(
-                    f"指标异常: memory_usage_percent={raw:.1f} 超出0-100范围, 已钳制到100 (很可能传入了绝对MB值而非百分比)"
+                    f"指标异常: memory_usage_percent={raw:.1f} 超出0-100范围, "
+                    f"已钳制到100 (很可能传入了绝对MB值而非百分比)"
                 )
                 sanitized["memory_usage_percent"] = 100.0
             elif raw < 0.0:

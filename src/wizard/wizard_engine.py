@@ -238,7 +238,7 @@ class WizardEngine:
         import subprocess
 
         try:
-            subprocess.run(self.result.command)
+            subprocess.run(self.result.command, shell=False)  # nosec B603
         except (subprocess.SubprocessError, FileNotFoundError, OSError) as e:
             logger.error(f"Command execution failed: {e}")
             print(f"[ERROR] 执行失败: {e}")

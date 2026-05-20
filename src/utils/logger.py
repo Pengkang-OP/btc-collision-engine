@@ -21,6 +21,7 @@ import sys
 import threading
 import time
 from collections.abc import Callable
+from contextlib import suppress
 from functools import wraps
 from logging.handlers import RotatingFileHandler
 from typing import Any
@@ -30,14 +31,12 @@ def _make_rotating_handler(filename: str, max_bytes: int, backup_count: int) -> 
     """工厂函数：Windows 返回 SafeRotatingFileHandler，其他平台返回原生 RotatingFileHandler"""
     if platform.system() == "Windows":
         # 延迟导入避免循环依赖（logging_config 也导入 logger）
-        try:
+        with suppress(ImportError):
             from .logging_config import SafeRotatingFileHandler
 
             return SafeRotatingFileHandler(
                 filename, maxBytes=max_bytes, backupCount=backup_count, encoding="utf-8"
             )
-        except ImportError:
-            pass
     return RotatingFileHandler(
         filename, maxBytes=max_bytes, backupCount=backup_count, encoding="utf-8"
     )
@@ -123,7 +122,7 @@ class ThreadSafeLogger:
         warnings.warn(
             "ThreadSafeLogger已弃用。Python的logging.Logger本身是线程安全的，"
             "使用此包装器会造成双重锁导致性能损失。请直接使用原生logger。",
-            DeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
         self._logger = logger
@@ -526,10 +525,8 @@ class AsyncLogger:
         self._stop_event.set()
 
         # 等待队列清空（最多5秒）
-        try:
+        with suppress(OSError, ValueError):
             self._queue.join()
-        except (OSError, ValueError):
-            pass
 
         # 等待线程退出
         self._writer_thread.join(timeout=5)

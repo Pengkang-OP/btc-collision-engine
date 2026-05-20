@@ -226,6 +226,30 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
             <div class="label">key_audit.log 审计日志</div>
         </div>
         <div class="card">
+            <h3>加密后端安全</h3>
+            <div class="value" style="font-size:1.1em">
+                {% if security_audit.crypto_backend_ready %}
+                <span class="status-ok">✅ 通过</span>
+                {% else %}
+                <span class="status-error">❌ 未通过</span>
+                {% endif %}
+            </div>
+            <div class="label">
+                后端: {{ security_audit.crypto_backend_name }}<br>
+                安全级别:
+                {% if security_audit.crypto_backend_security_level == 'secure' %}
+                <span class="status-ok">安全</span>
+                {% elif security_audit.crypto_backend_security_level == 'partial' %}
+                <span class="status-warn">部分安全</span>
+                {% elif security_audit.crypto_backend_security_level == 'insecure' %}
+                <span class="status-error">不安全</span>
+                {% else %}
+                {{ security_audit.crypto_backend_security_level }}
+                {% endif %}
+                {% if security_audit.crypto_backend_constant_time %}<br><span class="status-ok">恒定时间: 是</span>{% endif %}
+            </div>
+        </div>
+        <div class="card">
             <h3>整体安全状态</h3>
             <div class="value" style="font-size:1.2em">
                 {% if security_audit.has_critical_alert %}
@@ -450,9 +474,10 @@ def get_security_audit_data(data_dir: Path) -> dict[str, Any]:
     """获取安全审计状态数据（已脱敏，不暴露私钥等敏感信息）
 
     聚合多来源审计信息：
-    1. KeyAuditLogger 运行内存统计（密钥操作次数）
-    2. key_audit.log 最近审计事件（可选）
-    3. SecurityLogFilter 启用状态
+    1. CryptoBackend 安全性验证（verify_production_ready）
+    2. KeyAuditLogger 运行内存统计（密钥操作次数）
+    3. key_audit.log 最近审计事件（可选）
+    4. SecurityLogFilter 启用状态
 
     Returns:
         脱敏后的安全审计状态字典
@@ -467,6 +492,12 @@ def get_security_audit_data(data_dir: Path) -> dict[str, Any]:
         "audit_alerts": [],
         "has_critical_alert": False,
         "has_warning_alert": False,
+        # Crypto backend security
+        "crypto_backend_ready": True,
+        "crypto_backend_name": "unknown",
+        "crypto_backend_security_level": "unknown",
+        "crypto_backend_constant_time": False,
+        "crypto_backend_message": "",
     }
 
     # 1. 尝试从 KeyAuditLogger 获取运行内存统计
@@ -522,6 +553,48 @@ def get_security_audit_data(data_dir: Path) -> dict[str, Any]:
     except ImportError:
         audit_info["security_filter_enabled"] = True  # 默认假设已启用
 
+    # 4. CryptoBackend 安全性验证
+    #    仅暴露后端名称、安全级别、恒定时间状态，不暴露私钥或密码学材料
+    try:
+        from src.core.crypto_backend import get_backend_security_info, verify_production_ready
+
+        is_ready, message = verify_production_ready()
+        backend_info = get_backend_security_info()
+
+        audit_info["crypto_backend_ready"] = is_ready
+        audit_info["crypto_backend_name"] = backend_info.get("backend", "unknown") or "unknown"
+        audit_info["crypto_backend_security_level"] = backend_info.get("security_level", "unknown")
+        audit_info["crypto_backend_constant_time"] = backend_info.get("is_constant_time", False)
+        audit_info["crypto_backend_message"] = message
+
+        if not is_ready:
+            security_level = backend_info.get("security_level", "unknown")
+            if security_level == "insecure":
+                audit_info["audit_alerts"].append(
+                    {
+                        "level": "critical",
+                        "message": (
+                            f"加密后端不安全 (当前: {audit_info['crypto_backend_name']})，"
+                            f"建议立即安装 coincurve 或 cryptography"
+                        ),
+                    }
+                )
+                audit_info["has_critical_alert"] = True
+            elif security_level == "partial":
+                audit_info["audit_alerts"].append(
+                    {
+                        "level": "warning",
+                        "message": (
+                            f"加密后端部分安全 (当前: {audit_info['crypto_backend_name']})，"
+                            f"建议安装 coincurve 以获得完全恒定时间保护"
+                        ),
+                    }
+                )
+                audit_info["has_warning_alert"] = True
+    except Exception as e:
+        logger.warning(f"无法获取加密后端安全信息: {e}")
+        # 获取失败时保持默认值，不影响 Dashboard 其他功能
+
     return audit_info
 
 
@@ -533,13 +606,22 @@ def _parse_audit_log_entries(log_path: Path, limit: int = 20) -> list[dict[str, 
 
     注意：所有敏感信息已在日志写入时被 SecurityLogFilter 脱敏处理。
     此处仅解析和聚合，不暴露私钥相关敏感内容。
+
+    W3修复: 使用正则解析替代脆弱的 split(' | ') 分割，
+    对日志格式变更和值中包含空格/特殊字符更具容忍性。
     """
+    import re
+
     entries: list[dict[str, Any]] = []
     try:
-        with open(log_path, "r", encoding="utf-8") as f:
+        with open(log_path, encoding="utf-8") as f:
             lines = f.readlines()
     except OSError:
         return entries
+
+    # 匹配 [KEY_AUDIT] <timestamp> | Key: value | Key: value ...
+    _KEY_AUDIT_RE = re.compile(r'\[KEY_AUDIT\]\s*(\S+)')
+    _KV_RE = re.compile(r'(\w+):\s*((?:[^|]|\|(?!\s))+?)\s*(?=\|\s+\w+:|$)')
 
     # 从后往前读，取最近 N 条 [KEY_AUDIT] 行
     for line in reversed(lines):
@@ -549,22 +631,24 @@ def _parse_audit_log_entries(log_path: Path, limit: int = 20) -> list[dict[str, 
             break
 
         entry: dict[str, Any] = {}
-        parts = line.strip().split(" | ")
+        line_stripped = line.strip()
 
-        for part in parts:
-            part = part.strip()
-            if part.startswith("Operation:"):
-                entry["operation"] = part.split(":", 1)[1].strip()
-            elif part.startswith("Level:"):
-                entry["level"] = part.split(":", 1)[1].strip()
-            elif part.startswith("DisplayMode:"):
-                entry["display_mode"] = part.split(":", 1)[1].strip()
-            elif part.startswith("Details:"):
-                entry["details"] = part.split(":", 1)[1].strip()
-            elif part.startswith("[KEY_AUDIT]"):
-                # 提取时间戳
-                timestamp_str = part.replace("[KEY_AUDIT]", "").strip()
-                entry["timestamp"] = timestamp_str
+        # 提取 [KEY_AUDIT] 后的时间戳
+        ts_match = _KEY_AUDIT_RE.search(line_stripped)
+        if ts_match:
+            entry["timestamp"] = ts_match.group(1)
+            # 截取时间戳之后的部分（键值对区域）
+            kv_region = line_stripped[ts_match.end():]
+        else:
+            kv_region = line_stripped
+
+        # 正则提取所有 Key: value 对
+        known_keys = {"Operation", "Level", "DisplayMode", "Details"}
+        for m in _KV_RE.finditer(kv_region):
+            key = m.group(1)
+            value = m.group(2).strip()
+            if key in known_keys:
+                entry[key.lower()] = value
 
         if entry:
             entries.append(entry)
@@ -707,7 +791,8 @@ def create_app(data_dir: Path | None = None) -> "Flask":
         """API: 安全审计状态（已脱敏，不暴露私钥等敏感信息）
 
         Returns:
-            密钥操作统计、审计日志概述、安全过滤器状态、审计告警
+            密钥操作统计、审计日志概述、安全过滤器状态、
+            加密后端安全性验证、审计告警
         """
         audit_data = get_security_audit_data(data_logs_dir)
         return jsonify(audit_data)

@@ -120,7 +120,7 @@ class DataAnalysisModule:
 
         file_lengths: list[int] = []
 
-        for root, dirs, files in os.walk(src_dir):
+        for root, _dirs, files in os.walk(src_dir):
             structure["total_files"] += len(files)
             py_files = [f for f in files if f.endswith(".py") and not f.startswith("__")]
             structure["python_files"] += len(py_files)

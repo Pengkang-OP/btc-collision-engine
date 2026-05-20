@@ -236,7 +236,7 @@ class PerformanceBenchmark:
             )
             result.start()
 
-            for i in range(size):
+            for _i in range(size):
                 bloom.check_and_add(os.urandom(32))
 
             result.total_processed = size

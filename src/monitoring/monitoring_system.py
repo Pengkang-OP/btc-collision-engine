@@ -21,6 +21,8 @@ import psutil
 
 from src.monitoring.storage_config import DataStorageConfig
 
+from ..utils.trend_utils import calculate_trend
+
 # 配置日志
 from src.utils import get_configured_logger
 
@@ -437,8 +439,8 @@ class DataStorage:
 
         import random
 
-        # 使用实例化Random对象而非全局随机，避免影响其他模块
-        rng = random.Random()
+        # 使用实例化Random对象而非全局随机，避免影响其他模块（统计采样，非加密用途）
+        rng = random.Random()  # nosec B311
 
         # 计算采样数量
         sample_count = max(1, int(len(data) * sample_rate))
@@ -884,10 +886,9 @@ class MonitoringAlertAdapter:
         # 打印告警
         level_color = "\033[91m" if alert["level"] == "critical" else "\033[93m"
         reset_color = "\033[0m"
+        _timestamp = datetime.fromtimestamp(alert['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
         print(
-            f"{level_color}[ALERT] {
-                datetime.fromtimestamp(alert['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
-            } - {alert['message']}{reset_color}"
+            f"{level_color}[ALERT] {_timestamp} - {alert['message']}{reset_color}"
         )
 
         # 记录到日志
@@ -1096,9 +1097,7 @@ class ReportGenerator:
 
     @staticmethod
     def _calculate_trend(values: list[float]) -> str:
-        """计算趋势（静态方法，避免重复定义）
-
-        P1修复: 使用线性回归代替简单的首尾比较，提高趋势判断准确性
+        """计算趋势（委托给共享工具 trend_utils.calculate_trend）
 
         Args:
             values: 数值列表
@@ -1106,58 +1105,7 @@ class ReportGenerator:
         Returns:
             趋势字符串："increasing", "decreasing", 或 "stable"
         """
-        if len(values) < 3:
-            return "stable"
-
-        # 使用线性回归计算趋势
-        try:
-            # 简单线性回归: y = mx + b
-            n = len(values)
-            x_sum = sum(range(n))
-            y_sum = sum(values)
-            xy_sum = sum(i * v for i, v in enumerate(values))
-            x2_sum = sum(i * i for i in range(n))
-
-            # 计算斜率
-            denominator = n * x2_sum - x_sum * x_sum
-            if denominator == 0:
-                return "stable"
-
-            slope = (n * xy_sum - x_sum * y_sum) / denominator
-            avg = y_sum / n
-
-            # 避免除零
-            if avg == 0:
-                return "stable"
-
-            # 归一化斜率（相对变化率）
-            normalized_slope = slope / abs(avg)
-
-            # 阈值调整为2%,提高趋势检测灵敏度
-            # 原5%阈值过于严格,导致明显趋势被误判为stable
-            threshold = 0.02
-            if normalized_slope > threshold:
-                return "increasing"
-            elif normalized_slope < -threshold:
-                return "decreasing"
-            else:
-                return "stable"
-
-        except Exception as e:
-            # 如果计算失败，降级为简单比较
-            logger.debug(f"线性回归计算失败，使用简单比较: {e}")
-            if len(values) < 2:
-                return "stable"
-
-            first_half_avg = statistics.mean(values[: len(values) // 2])
-            second_half_avg = statistics.mean(values[len(values) // 2 :])
-
-            if second_half_avg > first_half_avg * 1.05:
-                return "increasing"
-            elif second_half_avg < first_half_avg * 0.95:
-                return "decreasing"
-            else:
-                return "stable"
+        return calculate_trend(values)
 
     def _simple_trend_analysis(self, data: list[dict[str, Any]]) -> dict[str, Any]:
         """简单的趋势分析（detector未初始化时的降级方案）

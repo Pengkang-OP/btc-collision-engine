@@ -199,7 +199,8 @@ class LoopController:
             print(f"   Test suite: {results.suite_id}")
             print(f"   Total: {results.total}")
             print(
-                f"   Passed: {results.passed} | Failed: {results.failed} | Skipped: {results.skipped} | Errors: {results.errors}"
+                f"   Passed: {results.passed} | Failed: {results.failed} "
+                f"| Skipped: {results.skipped} | Errors: {results.errors}"
             )
             print(f"   Pass rate: {results.pass_rate:.1f}%")
             print(f"   Duration: {results.duration:.2f}s")

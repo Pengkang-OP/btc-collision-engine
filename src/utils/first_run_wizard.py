@@ -19,6 +19,7 @@ import os
 import re
 import shutil
 import sys
+from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
@@ -84,12 +85,10 @@ class FirstRunWizard:
         if not self.config_path.exists():
             return True
         # 如果 config.json 很小（可能是空文件），也运行向导
-        try:
+        with suppress(OSError):
             size = self.config_path.stat().st_size
             if size < 50:
                 return True
-        except OSError:
-            pass
         return False
 
     # -------------------------------------------------------------------------
@@ -119,12 +118,10 @@ class FirstRunWizard:
             print(f"  {i}. {opt}{marker}")
         while True:
             raw = FirstRunWizard._prompt(f"请输入选项 [1-{len(options)}]", str(default_idx + 1))
-            try:
+            with suppress(ValueError):
                 idx = int(raw) - 1
                 if 0 <= idx < len(options):
                     return options[idx]
-            except ValueError:
-                pass
             print(f"  无效输入，请输入 1 到 {len(options)} 之间的数字")
 
     @staticmethod
@@ -336,11 +333,9 @@ class FirstRunWizard:
 
     def _mark_completed(self):
         """写入向导完成标记"""
-        try:
+        with suppress(OSError):
             self.marker_path.parent.mkdir(parents=True, exist_ok=True)
             self.marker_path.write_text("wizard_completed\n")
-        except OSError:
-            pass
 
     # -------------------------------------------------------------------------
     # 主入口

@@ -13,6 +13,17 @@ from .bech32_codec import (
     decode_segwit_address,
 )
 from .encoding_utils import EncodingUtils
+from .error_recovery import (
+    ErrorRecoveryManager,
+    FallbackStrategy,
+    RecoverableErrorCategory,
+    RecoveryAction,
+    RecoveryStats,
+    RetryRecord,
+    classify_recoverable_error,
+    get_default_recovery_manager,
+    retry_on_error,
+)
 from .exception_handler import ExceptionHandler
 from .exceptions import (
     AddressGenerationError,
@@ -53,8 +64,17 @@ from .performance_monitor import (
     is_performance_monitoring_enabled,
     log_performance_summary,
 )
+from .timeout import (
+    TimeoutContext,
+    invoke_with_timeout,
+    with_timeout,
+)
 
 __all__ = [
+    # 超时保护工具
+    "with_timeout",
+    "invoke_with_timeout",
+    "TimeoutContext",
     # 异常类
     "CollisionError",
     "ConfigError",
@@ -89,6 +109,16 @@ __all__ = [
     "is_performance_monitoring_enabled",
     # 编码工具
     "EncodingUtils",
+    # 错误恢复
+    "ErrorRecoveryManager",
+    "FallbackStrategy",
+    "RecoverableErrorCategory",
+    "RecoveryAction",
+    "RecoveryStats",
+    "RetryRecord",
+    "classify_recoverable_error",
+    "get_default_recovery_manager",
+    "retry_on_error",
     # 异常处理
     "ExceptionHandler",
     # 文件工具
