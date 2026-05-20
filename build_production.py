@@ -18,6 +18,7 @@ import sys
 import shutil
 import argparse
 import json
+import fnmatch
 import subprocess
 from pathlib import Path
 from datetime import datetime
@@ -195,8 +196,6 @@ def should_exclude(filepath: Path, base_dir: Path) -> bool:
                 return True
         # 通配符匹配
         elif "*" in pattern:
-            import fnmatch
-
             if fnmatch.fnmatch(rel_str, pattern) or fnmatch.fnmatch(filepath.name, pattern):
                 return True
         # 精确匹配
@@ -224,8 +223,6 @@ def build_production_ignore_patterns():
                         ignored.add(item)
                         break
                 elif "*" in pattern:
-                    import fnmatch
-
                     if fnmatch.fnmatch(rel_str, pattern) or fnmatch.fnmatch(item, pattern):
                         ignored.add(item)
                         break
@@ -269,6 +266,10 @@ def copy_production_files(source_dir: Path, target_dir: Path):
                     shutil.rmtree(target_item)
                 shutil.copytree(item, target_item, ignore=ignore_fn)
                 copied_count += 1
+                # 递归统计目录内文件大小（copytree 不返回大小）
+                for f in target_item.rglob("*"):
+                    if f.is_file():
+                        total_size += f.stat().st_size
             else:
                 target_item.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(item, target_item)
@@ -418,8 +419,6 @@ def main():
                 shutil.rmtree(target_dir)
             except PermissionError:
                 # Windows .git目录权限问题,使用命令行删除
-                import subprocess
-
                 subprocess.run(
                     ["cmd", "/c", "rmdir", "/s", "/q", str(target_dir)], capture_output=True
                 )

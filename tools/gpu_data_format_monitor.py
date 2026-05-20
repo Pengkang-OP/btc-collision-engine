@@ -261,9 +261,10 @@ class GPUDataFormatMonitor:
                     if len(self.format_errors) < 20:
                         self.format_errors.append(error)
 
-            except Exception:
-                # 静默处理异常，避免影响监控
-                pass
+            except Exception as e:
+                # 记录异常但避免影响监控循环
+                if len(self.format_errors) < 20:
+                    self.format_errors.append(f"样本生成异常: {type(e).__name__}: {e}")
 
     def _display_monitoring_report(self, new_checked: int):
         """显示监控报告"""

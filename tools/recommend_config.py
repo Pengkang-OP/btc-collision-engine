@@ -52,7 +52,7 @@ def analyze_project(docs_dir: str) -> dict:
         if content is None:
             print(f"⚠️  无法读取文件 {f.name} (重试3次后失败)")
             continue
-        if '## 目录' in content or '## TOC' in content or '## 目录' in content:
+        if '## 目录' in content or '## TOC' in content or '## Table of Contents' in content:
             has_toc_count += 1
 
     toc_ratio = has_toc_count / doc_count if doc_count > 0 else 0

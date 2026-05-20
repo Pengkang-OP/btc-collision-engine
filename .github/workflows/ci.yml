@@ -255,7 +255,7 @@ jobs:
         id: bandit-scan
         run: |
           echo "🔒 运行 Bandit 安全扫描..."
-          bandit -r src/ -ll -f json -o bandit-report.json
+          bandit -r src/ key_collision.py key_collision_cli.py run_intel_arc.py optimize_intel_arc.py build_production.py start.py start_menu.py start_dashboard.py -ll -f json -o bandit-report.json
           BANDIT_EXIT=$?
           echo "$BANDIT_EXIT" > bandit-exit-code.txt
           echo "--- 扫描摘要 ---"

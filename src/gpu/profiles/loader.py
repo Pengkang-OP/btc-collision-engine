@@ -153,6 +153,102 @@ class GPUProfileLoader:
 
         return False
 
+    # ---- 合法优化项枚举 ----
+    _VALID_OPTIMIZATIONS: set[str] = {
+        "async_transfer",
+        "persistent_buffers",
+        "shared_memory_optimization",
+        "uint32_workaround",
+        "timeout_protection",
+        "conservative_memory",
+        "memory_coalescing",
+        "hbm_optimization",
+        "compute_unit_optimization",
+        "infinity_cache",
+        "chiplet_architecture",
+        "large_page_support",
+        "shader_execution_reordering",
+        "pro_driver_optimization",
+        "tensor_core_ready",
+    }
+
+    @staticmethod
+    def _validate_profile_models(
+        profile: dict[str, Any], errors: list[str]
+    ) -> None:
+        """验证 models 字段"""
+        if not isinstance(profile["models"], list):
+            errors.append("models必须为列表")
+        elif len(profile["models"]) == 0:
+            errors.append("models列表不能为空")
+        elif not all(isinstance(m, str) for m in profile["models"]):
+            errors.append("models列表中的元素必须为字符串")
+
+    @staticmethod
+    def _validate_profile_batch_sizes(
+        profile: dict[str, Any], errors: list[str]
+    ) -> None:
+        """验证 batch_size 字段"""
+        for key in ["recommended_batch_size", "max_batch_size"]:
+            value = profile[key]
+            if not isinstance(value, (int, float)):
+                errors.append(
+                    f"{key}类型错误: 期望int/float, 得到{type(value).__name__}"
+                )
+            elif value <= 0:
+                errors.append(f"{key}必须为正数")
+
+        rec_batch = profile.get("recommended_batch_size")
+        max_batch = profile.get("max_batch_size")
+        if (
+            isinstance(rec_batch, (int, float))
+            and isinstance(max_batch, (int, float))
+            and max_batch < rec_batch
+        ):
+            errors.append(
+                f"max_batch_size ({max_batch}) < recommended_batch_size ({rec_batch})"
+            )
+
+    def _validate_profile_optimizations(
+        self, profile: dict[str, Any], errors: list[str], warnings: list[str]
+    ) -> None:
+        """验证 optimizations 字段（如果存在）"""
+        if "optimizations" not in profile:
+            return
+        if not isinstance(profile["optimizations"], list):
+            errors.append("optimizations必须为列表")
+            return
+        if not all(isinstance(opt, str) for opt in profile["optimizations"]):
+            errors.append("optimizations列表中的元素必须为字符串")
+            return
+
+        invalid_opts = set(profile["optimizations"]) - self._VALID_OPTIMIZATIONS
+        if invalid_opts:
+            warnings.append(f"未知的优化项: {invalid_opts}")
+
+    @staticmethod
+    def _validate_profile_optional_fields(
+        profile: dict[str, Any], errors: list[str], warnings: list[str]
+    ) -> None:
+        """验证可选字段：compute_capability, memory_efficiency"""
+        if "compute_capability" in profile:
+            cc = profile["compute_capability"]
+            if not isinstance(cc, (str, int, float)):
+                errors.append(
+                    f"compute_capability类型错误: 期望str/int/float, 得到{type(cc).__name__}"
+                )
+
+        if "memory_efficiency" in profile:
+            eff = profile["memory_efficiency"]
+            if not isinstance(eff, (int, float)):
+                errors.append(
+                    f"memory_efficiency类型错误: 期望int/float, 得到{type(eff).__name__}"
+                )
+            elif not (0.0 < eff <= 1.0):
+                warnings.append(
+                    f"memory_efficiency ({eff}) 不在合理范围 (0.0, 1.0]"
+                )
+
     def _validate_profile(self, profile: dict[str, Any], profile_path: str) -> bool:
         """
         验证GPU配置文件的合法性
@@ -176,94 +272,23 @@ class GPUProfileLoader:
             - 发现问题时会记录WARNING级别日志
             - 该方法会收集所有错误后统一报告，而非快速失败
         """
-        errors = []
-        warnings = []
+        errors: list[str] = []
+        warnings: list[str] = []
 
-        # 检查必需字段
-        required_keys = ["models", "recommended_batch_size", "max_batch_size"]
-        for key in required_keys:
+        for key in ["models", "recommended_batch_size", "max_batch_size"]:
             if key not in profile:
                 errors.append(f"缺少必需字段: {key}")
 
-        # 如果有必需字段缺失，直接返回
         if errors:
             for error in errors:
                 logger.error(f"配置 {profile_path}: {error}")
             return False
 
-        # 验证models为列表且内容有效
-        if not isinstance(profile["models"], list):
-            errors.append("models必须为列表")
-        elif len(profile["models"]) == 0:
-            errors.append("models列表不能为空")
-        elif not all(isinstance(m, str) for m in profile["models"]):
-            errors.append("models列表中的元素必须为字符串")
+        self._validate_profile_models(profile, errors)
+        self._validate_profile_batch_sizes(profile, errors)
+        self._validate_profile_optimizations(profile, errors, warnings)
+        self._validate_profile_optional_fields(profile, errors, warnings)
 
-        # 验证batch_size类型和数值
-        for key in ["recommended_batch_size", "max_batch_size"]:
-            value = profile[key]
-            if not isinstance(value, (int, float)):
-                errors.append(f"{key}类型错误: 期望int/float, 得到{type(value).__name__}")
-            elif value <= 0:
-                errors.append(f"{key}必须为正数")
-
-        # 验证batch_size关系（只在类型正确时比较）
-        rec_batch = profile.get("recommended_batch_size")
-        max_batch = profile.get("max_batch_size")
-        if (
-            isinstance(rec_batch, (int, float))
-            and isinstance(max_batch, (int, float))
-            and max_batch < rec_batch
-        ):
-            errors.append(f"max_batch_size ({max_batch}) < recommended_batch_size ({rec_batch})")
-
-        # 验证optimizations字段（如果存在）
-        if "optimizations" in profile:
-            if not isinstance(profile["optimizations"], list):
-                errors.append("optimizations必须为列表")
-            else:
-                # 验证优化项列表中的元素类型
-                if not all(isinstance(opt, str) for opt in profile["optimizations"]):
-                    errors.append("optimizations列表中的元素必须为字符串")
-                else:
-                    # 验证优化项的有效性
-                    valid_optimizations = {
-                        "async_transfer",
-                        "persistent_buffers",
-                        "shared_memory_optimization",
-                        "uint32_workaround",
-                        "timeout_protection",
-                        "conservative_memory",
-                        "memory_coalescing",
-                        "hbm_optimization",
-                        "compute_unit_optimization",
-                        "infinity_cache",
-                        "chiplet_architecture",
-                        "large_page_support",
-                        "shader_execution_reordering",
-                        "pro_driver_optimization",
-                        "tensor_core_ready",  # NVIDIA Volta及以上架构
-                    }
-
-                    invalid_opts = set(profile["optimizations"]) - valid_optimizations
-                    if invalid_opts:
-                        warnings.append(f"未知的优化项: {invalid_opts}")
-
-        # 验证compute_capability（如果存在）
-        if "compute_capability" in profile:
-            cc = profile["compute_capability"]
-            if not isinstance(cc, (str, int, float)):
-                errors.append(f"compute_capability类型错误: 期望str/int/float, 得到{type(cc).__name__}")
-
-        # 验证memory_efficiency范围（如果存在）
-        if "memory_efficiency" in profile:
-            eff = profile["memory_efficiency"]
-            if not isinstance(eff, (int, float)):
-                errors.append(f"memory_efficiency类型错误: 期望int/float, 得到{type(eff).__name__}")
-            elif not (0.0 < eff <= 1.0):
-                warnings.append(f"memory_efficiency ({eff}) 不在合理范围 (0.0, 1.0]")
-
-        # 输出验证结果
         if errors:
             for error in errors:
                 logger.error(f"配置 {profile_path}: {error}")

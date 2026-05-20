@@ -244,8 +244,10 @@ def test_gpu_stability():
 
         # 停止引擎
         print("\n  停止引擎...")
-        engine.stop()
-        thread.join(timeout=10)
+        try:
+            engine.stop()
+        finally:
+            thread.join(timeout=10)
 
         if thread.is_alive():
             print("  [WARN] 引擎线程未正常停止")

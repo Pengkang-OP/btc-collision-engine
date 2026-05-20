@@ -137,8 +137,10 @@ class IntelArcOptimizer:
                 print(f"    错误率: {error_rate:>6.2f}%")
                 print(f"    显存: {memory_mb:>8.2f} MB")
 
-                engine.stop()
-                thread.join(timeout=5)
+                try:
+                    engine.stop()
+                finally:
+                    thread.join(timeout=5)
 
                 # 短暂休息
                 time.sleep(2)

@@ -8,12 +8,16 @@
 
 import json
 import os
-from enum import StrEnum
+from enum import Enum
 from typing import Any
 
 
-class CryptoBackendType(StrEnum):
-    """加密后端类型（字符串版本，用于配置）"""
+class CryptoBackendType(str, Enum):
+    """加密后端类型（字符串版本，用于配置）
+
+    使用 (str, Enum) 而非 StrEnum 以保证 Python 3.9+ 兼容性。
+    StrEnum 在 Python 3.11 才引入。
+    """
 
     PURE_PYTHON = "pure_python"
     PURE_PYTHON_CONST_TIME = "pure_python_const_time"
@@ -89,7 +93,7 @@ class CryptoConfig:
             with open(self.config_file, "w", encoding="utf-8") as f:
                 json.dump(self.config, f, indent=2, ensure_ascii=False)
             return True
-        except (OSError, json.JSONDecodeError, ValueError, TypeError) as e:
+        except (OSError, ValueError, TypeError) as e:
             import logging
 
             logging.error(f"保存加密配置失败: {e}")

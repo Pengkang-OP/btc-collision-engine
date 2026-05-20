@@ -56,8 +56,8 @@ def main():
             _, payload = Base58.check_decode(addr)
             h160 = payload  # payload 即 Hash160
             target_hash160_set.add(bytes(h160))
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"  [WARN] 无法解码目标地址 {addr}: {e}")
     print(f"  已加载 {len(target_hash160_set)} 个目标 Hash160")
 
     # 开始碰撞

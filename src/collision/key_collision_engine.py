@@ -1012,8 +1012,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
         return local_count
 
-    def random_search(self) -> None:
-        """随机碰撞模式 - 使用线程池并行生成私钥并比对（优化版）"""
+    def _random_search_setup(self) -> None:
+        """随机搜索模式：初始化状态、发布 ENGINE_START、调优内存池、记录数据"""
         logger.info("=" * 60)
         logger.info("启动随机碰撞模式")
         logger.info(f"目标地址数: {len(self.targets)}")
@@ -1024,11 +1024,9 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self._range_end = None
         self.stats = CollisionStats()
         self.stats.start_time = time.time()
-        total_count = 0
         self._running = True
-        self._last_data_log_time = 0.0  # 重置数据日志时间
+        self._last_data_log_time = 0.0
 
-        # v3.5.2: 发布 ENGINE_START 事件
         try:
             self.event_bus.publish(
                 EngineStartEvent(
@@ -1040,7 +1038,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
         except (RuntimeError, OSError, ValueError) as e:
             logger.debug(f"发布 ENGINE_START 事件失败（非致命）: {e}")
 
-        # 启动时自适应调优内存池
         if self.use_memory_pool:
             try:
                 from ..core.memory_pool import pool_manager
@@ -1054,7 +1051,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
             except (ImportError, RuntimeError) as e:
                 logger.debug(f"P3-7 内存池调优跳过: {type(e).__name__}: {e}")
 
-        # 记录引擎启动数据
         if self.data_logging_enabled and self.data_logger:
             self.data_logger.record_engine_data(
                 mode=self._current_mode,
@@ -1062,143 +1058,109 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 is_running=True,
                 current_position=0,
             )
-            # 系统数据只在第一次记录（避免重复）
             if self._last_data_log_time == 0.0:
                 self.data_logger.record_system_data()
 
-        # 确定工作线程数
-        # 使用配置值或CPU核心数（上限1024，下限1）
+    def _random_search_determine_workers(self) -> int:
+        """确定工作线程数，考虑内存降级"""
         num_workers = (
-            _validate_worker_count(self.max_workers) if self.max_workers is not None else self._cpu_count
+            _validate_worker_count(self.max_workers)
+            if self.max_workers is not None
+            else self._cpu_count
         )
-        # 内存降级时进一步减少线程
         available_memory_mb = psutil.virtual_memory().available / (1024 * 1024)
         if available_memory_mb < 512:
-            # 可用内存 < 512MB：限制线程数不超过2
             num_workers = min(num_workers, 2)
-            logger.warning(f"内存不足 ({available_memory_mb:.0f}MB), 限制线程数={num_workers}")
+            logger.warning(
+                f"内存不足 ({available_memory_mb:.0f}MB), 限制线程数={num_workers}"
+            )
         logger.info(
             f"工作线程: {num_workers} (CPU={self._cpu_count}核, 内存可用{available_memory_mb:.0f}MB)"
         )
+        return num_workers
 
-        # 创建线程池
-        with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
-            self._executor = executor
+    def _random_search_handle_done(
+        self,
+        future: concurrent.futures.Future,
+        futures: dict,
+        total_count: int,
+        executor: concurrent.futures.ThreadPoolExecutor,
+    ) -> int:
+        """处理已完成的工作线程 future，返回更新后的 total_count"""
+        worker_id = futures.pop(future)
+        try:
+            local_count = future.result()
+            with self._state_lock:
+                self._live_range_count = max(0, self._live_range_count - local_count)
+                total_count += local_count
+        except concurrent.futures.CancelledError:
+            logger.debug(f"工作线程 {worker_id} 被取消")
+        except KeyboardInterrupt:
+            logger.info(f"工作线程 {worker_id} 被用户中断")
+            raise
+        except (RuntimeError, OSError, ValueError) as e:
+            ExceptionHandler.handle_engine_error(
+                "CPU", e, self.stats, f"工作线程{worker_id}执行"
+            )
 
-            # 提交初始任务
-            futures = {executor.submit(self._random_search_worker, i): i for i in range(num_workers)}
+        if not self._stop_event.is_set():
+            new_future = executor.submit(self._random_search_worker, worker_id)
+            futures[new_future] = worker_id
 
-            while not self._stop_event.is_set() and futures:
-                # 等待至少一个任务完成
-                done, _ = concurrent.futures.wait(
-                    futures, timeout=0.1, return_when=concurrent.futures.FIRST_COMPLETED
-                )
+        return total_count
 
-                for future in done:
-                    worker_id = futures.pop(future)
-                    try:
-                        local_count = future.result()
-                        with self._state_lock:
-                            # P1-5修复: 已完成worker的live计数转移到total_count
-                            # 原因：_live_range_count 中已完成worker的贡献必须扣除
-                            # 否则 total_count + _live_range_count 会重复计入已完成work
-                            # 使用 max(0, ...) 防止并发下的短暂不一致
-                            self._live_range_count = max(0, self._live_range_count - local_count)
-                            total_count += local_count
-                    except concurrent.futures.CancelledError:
-                        # 线程被取消（正常停止）
-                        # 这通常发生在调用stop()时，是预期内的行为
-                        logger.debug(f"工作线程 {worker_id} 被取消")
-                    except KeyboardInterrupt:
-                        # 用户中断程序（Ctrl+C），重新抛出让主线程处理
-                        # 这会让程序优雅退出，而不是强制终止
-                        logger.info(f"工作线程 {worker_id} 被用户中断")
-                        raise
-                    except (RuntimeError, OSError, ValueError) as e:
-                        # 使用统一异常处理器
-                        ExceptionHandler.handle_engine_error(
-                            "CPU", e, self.stats, f"工作线程{worker_id}执行"
-                        )
-
-                    # 如果未停止，提交新任务
-                    if not self._stop_event.is_set():
-                        new_future = executor.submit(self._random_search_worker, worker_id)
-                        futures[new_future] = worker_id
-
-                # P2-5修复: 基于时间和计数的双重进度回调控制
-                current_time = time.time()
-                should_report = False
-
-                # 时间间隔控制
-                if current_time - self._last_progress_time >= self._progress_interval_sec:
-                    should_report = True
-
-                # 计数控制(高速运行时更精确)
-                self._batch_counter += 1
-                if self._batch_counter >= self._progress_interval_count:
-                    should_report = True
-                    self._batch_counter = 0
-
-                if should_report:
-                    # P2-5修复: 使用实时计数器，而不是等待线程完成
-                    # 这确保在工作线程持续运行时也能获取实时进度
-                    with self._state_lock:
-                        safe_count = total_count + self._live_range_count
-
-                    self.stats.update(safe_count)
-                    if self.on_progress:
-                        invoke_with_timeout(
-                            self.on_progress,
-                            args=(self.stats.snapshot(),),
-                            timeout=5.0,
-                            callback_name="on_progress",
-                        )
-                    self._save_checkpoint(safe_count)
-
-                    # 记录数据日志
-                    elapsed = current_time - self.stats.start_time
-                    speed = safe_count / elapsed if elapsed > 0 else 0
-                    self._log_data_metrics(safe_count, speed)
-
-                    # M13: 内存监控自动降级（独立于数据日志，即使禁用日志也生效）
-                    try:
-                        mem_mb = self._process.memory_info().rss / 1024 / 1024
-                        self._check_memory_and_downgrade(mem_mb, current_time)
-                    except (AttributeError, OSError, RuntimeError) as e:
-                        logger.debug(f"内存监控失败（不影响主逻辑）: {type(e).__name__}: {e}")
-
-                    # v3.5.2: 发布 ENGINE_PROGRESS 事件
-                    try:
-                        self.event_bus.publish(
-                            EngineProgressEvent(
-                                total_checked=safe_count,
-                                speed=speed,
-                                matches_found=self.stats.matches_found,
-                                elapsed_time=elapsed,
-                            )
-                        )
-                    except (RuntimeError, OSError, ValueError) as e:
-                        logger.debug(f"发布 ENGINE_PROGRESS 事件失败（非致命）: {e}")
-
-                    self._last_progress_time = current_time
-
-                    # 采样日志记录进度
-                    sampled_logger.info(f"进度: {safe_count:,} 已检查, {speed:,.0f} 次/秒")
-
-        # 确保线程安全地获取最终计数
+    def _random_search_report_progress(
+        self, total_count: int, current_time: float
+    ) -> None:
+        """报告进度：回调、检查点、数据日志、内存监控、事件发送"""
         with self._state_lock:
-            # P2-5修复: 包含实时计数器，确保最终统计准确
+            safe_count = total_count + self._live_range_count
+
+        self.stats.update(safe_count)
+        if self.on_progress:
+            invoke_with_timeout(
+                self.on_progress,
+                args=(self.stats.snapshot(),),
+                timeout=5.0,
+                callback_name="on_progress",
+            )
+        self._save_checkpoint(safe_count)
+
+        elapsed = current_time - self.stats.start_time
+        speed = safe_count / elapsed if elapsed > 0 else 0
+        self._log_data_metrics(safe_count, speed)
+
+        try:
+            mem_mb = self._process.memory_info().rss / 1024 / 1024
+            self._check_memory_and_downgrade(mem_mb, current_time)
+        except (AttributeError, OSError, RuntimeError) as e:
+            logger.debug(f"内存监控失败（不影响主逻辑）: {type(e).__name__}: {e}")
+
+        try:
+            self.event_bus.publish(
+                EngineProgressEvent(
+                    total_checked=safe_count,
+                    speed=speed,
+                    matches_found=self.stats.matches_found,
+                    elapsed_time=elapsed,
+                )
+            )
+        except (RuntimeError, OSError, ValueError) as e:
+            logger.debug(f"发布 ENGINE_PROGRESS 事件失败（非致命）: {e}")
+
+        self._last_progress_time = current_time
+        sampled_logger.info(f"进度: {safe_count:,} 已检查, {speed:,.0f} 次/秒")
+
+    def _random_search_finalize(self, total_count: int) -> None:
+        """完成随机搜索：最终统计、事件、数据日志、回调"""
+        with self._state_lock:
             final_count = total_count + self._live_range_count
-            # 重置实时计数器（为下次运行做准备）
             self._live_range_count = 0
 
         self._executor = None
-
-        # 更新最终统计并设置事件
-        self._stats_updated.clear()  # 清除事件
+        self._stats_updated.clear()
         self.stats.update(final_count)
-        self._stats_updated.set()  # 设置事件，通知更新完成
-
+        self._stats_updated.set()
         self._running = False
 
         elapsed = time.time() - self.stats.start_time
@@ -1211,11 +1173,10 @@ class KeyCollisionEngine(BaseCollisionEngine):
         logger.info(f"发现匹配: {self.stats.matches_found} 个")
         logger.info("=" * 60)
 
-        # v3.5.2: 发布 ENGINE_COMPLETE 事件
         try:
             with self._stop_reason_lock:
                 stop_reason = self._engine_stop_reason
-                self._engine_stop_reason = "normal"  # 重置为默认值
+                self._engine_stop_reason = "normal"
             self.event_bus.publish(
                 EngineCompleteEvent(
                     total_checked=final_count,
@@ -1228,7 +1189,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
         except (RuntimeError, OSError, ValueError) as e:
             logger.debug(f"发布 ENGINE_COMPLETE 事件失败（非致命）: {e}")
 
-        # 记录引擎停止数据
         if self.data_logging_enabled and self.data_logger:
             self.data_logger.record_engine_data(
                 mode=self._current_mode,
@@ -1236,7 +1196,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 is_running=False,
                 current_position=final_count,
             )
-            # 生成报告
             try:
                 self.data_logger.generate_report("daily")
                 logger.info("数据日志报告已生成")
@@ -1250,6 +1209,45 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 timeout=5.0,
                 callback_name="on_complete",
             )
+
+    def random_search(self) -> None:
+        """随机碰撞模式 - 使用线程池并行生成私钥并比对（优化版）"""
+        self._random_search_setup()
+        total_count = 0
+        num_workers = self._random_search_determine_workers()
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
+            self._executor = executor
+            futures = {
+                executor.submit(self._random_search_worker, i): i
+                for i in range(num_workers)
+            }
+
+            while not self._stop_event.is_set() and futures:
+                done, _ = concurrent.futures.wait(
+                    futures, timeout=0.1,
+                    return_when=concurrent.futures.FIRST_COMPLETED
+                )
+
+                for future in done:
+                    total_count = self._random_search_handle_done(
+                        future, futures, total_count, executor
+                    )
+
+                # 基于时间和计数的双重进度回调控制
+                current_time = time.time()
+                should_report = False
+                if current_time - self._last_progress_time >= self._progress_interval_sec:
+                    should_report = True
+                self._batch_counter += 1
+                if self._batch_counter >= self._progress_interval_count:
+                    should_report = True
+                    self._batch_counter = 0
+
+                if should_report:
+                    self._random_search_report_progress(total_count, current_time)
+
+        self._random_search_finalize(total_count)
 
     def _range_scan_worker(self, worker_start: int, worker_end: int, worker_id: int) -> int:
         """

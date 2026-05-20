@@ -47,7 +47,8 @@ try:
     HAS_BECH32 = True
 except ImportError:
     HAS_BECH32 = False
-    print("警告: bech32 库未安装，Bech32/Bech32m 地址验证将使用内置实现")
+    import logging
+    logging.getLogger(__name__).warning("bech32 库未安装，Bech32/Bech32m 地址验证将使用内置实现")
 
 from src.core.hash_utils import HashUtils
 from src.core.secp256k1 import ECPoint, EllipticCurve, Secp256k1

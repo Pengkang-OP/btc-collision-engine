@@ -20,53 +20,54 @@ logger = logging.getLogger(__name__)
 def setup_arc_environment() -> dict:
     """
     设置 Intel Arc A770 GPU 优化的环境变量
-    
+
     Returns:
         dict: 设置的环境变量字典
     """
     env_vars = {}
-    
+
     # 1. 强制使用 OpenCL (非 Level-Zero)
     # 效果: 减少 12% 内核启动延迟
     if platform.system() == "Windows":
         os.environ["SYCL_DEVICE_FILTER"] = "opencl:gpu"
         env_vars["SYCL_DEVICE_FILTER"] = "opencl:gpu"
         logger.info("SYCL_DEVICE_FILTER=opencl:gpu (减少内核启动延迟)")
-    
+
     # 2. 启用 XeSS 内存压缩
     # 效果: 显存带宽节省 18%, 高分辨率下 +8% 性能
     os.environ["INTEL_XESS_MEMORY_COMPRESSION"] = "1"
     env_vars["INTEL_XESS_MEMORY_COMPRESSION"] = "1"
     logger.info("INTEL_XESS_MEMORY_COMPRESSION=1 (启用内存压缩)")
-    
+
     # 3. 禁用线程追踪 (提升性能)
     os.environ["OCL_QUEUE_THREAD_TRACE"] = "0"
     env_vars["OCL_QUEUE_THREAD_TRACE"] = "0"
     logger.info("OCL_QUEUE_THREAD_TRACE=0 (禁用调试追踪)")
-    
+
     # 4. 设置 OpenCL 缓存目录
     if platform.system() == "Windows":
-        cache_dir = os.path.join(os.environ.get("TEMP", ""), "intel_ocl_cache")
+        temp_base = os.environ.get("TEMP") or os.environ.get("TMP") or os.path.expanduser("~")
+        cache_dir = os.path.join(temp_base, "intel_ocl_cache")
     else:
         cache_dir = os.path.join("/tmp", "intel_ocl_cache")
-    
+
     os.makedirs(cache_dir, exist_ok=True)
     os.environ["OCL_CACHE_DIR"] = cache_dir
     env_vars["OCL_CACHE_DIR"] = cache_dir
     logger.info(f"OCL_CACHE_DIR={cache_dir} (编译缓存)")
-    
+
     # 5. 可选: 禁用调试输出
     os.environ["IGDRCL_DEBUG_LEVEL"] = "0"
     env_vars["IGDRCL_DEBUG_LEVEL"] = "0"
     logger.info("IGDRCL_DEBUG_LEVEL=0 (禁用驱动调试输出)")
-    
+
     return env_vars
 
 
 def get_arc_optimization_report() -> str:
     """
     生成 Intel Arc 优化报告
-    
+
     Returns:
         str: 格式化的优化报告
     """
