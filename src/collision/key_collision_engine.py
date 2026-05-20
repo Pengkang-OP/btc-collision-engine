@@ -3,9 +3,9 @@
 import concurrent.futures
 import hashlib
 import os
-import signal
 import threading
 import time
+from contextlib import suppress
 from typing import Any, cast
 
 import psutil
@@ -26,6 +26,7 @@ from ..monitoring.enhanced_monitoring import EnhancedMonitoringSystem
 from ..utils import get_configured_logger
 from ..utils.exception_handler import ExceptionHandler
 from ..utils.logger import get_sampled_logger
+from ..utils.timeout import invoke_with_timeout
 from .base_engine import BaseCollisionEngine
 from .checkpoint_manager import CheckpointManager
 from .collision_stats import CollisionStats
@@ -355,52 +356,15 @@ class KeyCollisionEngine(BaseCollisionEngine):
             logger.debug(f"调用匹配回调: address={address}, key_hash={key_hash}")
 
         try:
-            # Windows不支持SIGALRM，使用线程超时
-            if os.name == "nt":
-                result: list[Any | None] = [None]
-                exception: list[Exception | None] = [None]
+            ok = invoke_with_timeout(
+                on_match,
+                args=(private_key, address, wif),
+                timeout=self._match_callback_timeout,
+                callback_name="on_match",
+            )
 
-                def target() -> None:
-                    try:
-                        result[0] = on_match(private_key, address, wif)
-                    except (RuntimeError, OSError, ValueError) as e:
-                        exception[0] = e
-
-                callback_thread = threading.Thread(target=target, daemon=True)
-                callback_thread.start()
-                callback_thread.join(timeout=self._match_callback_timeout)
-
-                if callback_thread.is_alive():
-                    logger.critical(
-                        f"匹配回调执行超时 ({self._match_callback_timeout}秒)，强制跳过: "
-                        f"address={address}, key_hash={key_hash}"
-                    )
-                    return False
-
-                if exception[0]:
-                    logger.error(f"匹配回调异常: {exception[0]}")
-                    return False
-            else:
-                # Unix系统使用SIGALRM超时
-                def timeout_handler(signum: int, frame: Any) -> None:
-                    raise TimeoutError(f"匹配回调执行超时 ({self._match_callback_timeout}秒)")
-
-                _sigalrm = signal.SIGALRM  # type: ignore[attr-defined] # noqa: E501 # signal.SIGALRM 仅 Unix 可用
-                old_handler = signal.signal(_sigalrm, timeout_handler)  # noqa: E501
-                _alarm = signal.alarm  # type: ignore[attr-defined] # signal.alarm 仅 Unix 可用
-                _alarm(self._match_callback_timeout)
-
-                try:
-                    on_match(private_key, address, wif)
-                except TimeoutError as e:
-                    logger.critical(str(e))
-                    return False
-                except (RuntimeError, OSError, ValueError) as e:
-                    logger.error(f"匹配回调异常: {e}")
-                    return False
-                finally:
-                    _alarm(0)  # noqa: E501
-                    signal.signal(_sigalrm, old_handler)
+            if not ok:
+                return False
 
             if self._match_callback_audit_enabled:
                 logger.debug(f"匹配回调执行成功: address={address}")
@@ -778,7 +742,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 f"Random worker {worker_id}: WIF编码参数错误 addr={matched_address}: {type(e).__name__}"
             )
             # v3.5.2: 发布 ENGINE_ERROR 事件
-            try:
+            with suppress(RuntimeError, OSError):
                 self.event_bus.publish(
                     EngineErrorEvent(
                         error_type="wif_encode_error",
@@ -788,8 +752,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         recoverable=True,
                     )
                 )
-            except (RuntimeError, OSError):
-                pass
             return True  # 继续运行
         except (RuntimeError, OSError):
             logger.exception(f"Random worker {worker_id}: WIF编码未知错误 addr={matched_address}")
@@ -815,7 +777,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         # 先处理匹配项
         for i in range(0, len(local_matches), CALLBACK_BATCH_SIZE):
             batch = local_matches[i : i + CALLBACK_BATCH_SIZE]
-            for pk, addr, wif_str in batch:
+            for pk, addr, _wif_str in batch:
                 self.stats.add_match(pk, addr)
             if self.on_match:
                 for pk, addr, wif_str in batch:
@@ -961,15 +923,14 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         matched_address = uncompressed_addr
                         matched_compressed = False
 
-                    if matched_address:
-                        if not self._process_key_match(
-                            private_key,
-                            matched_address,
-                            matched_compressed,
-                            local_matches,
-                            worker_id,
-                        ):
-                            break
+                    if matched_address and not self._process_key_match(
+                        private_key,
+                        matched_address,
+                        matched_compressed,
+                        local_matches,
+                        worker_id,
+                    ):
+                        break
 
             # 批次结束：key_mgr实例退出with块，最后一次私钥清零
 
@@ -1178,7 +1139,12 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
                     self.stats.update(safe_count)
                     if self.on_progress:
-                        self.on_progress(self.stats.snapshot())
+                        invoke_with_timeout(
+                            self.on_progress,
+                            args=(self.stats.snapshot(),),
+                            timeout=5.0,
+                            callback_name="on_progress",
+                        )
                     self._save_checkpoint(safe_count)
 
                     # 记录数据日志
@@ -1270,7 +1236,12 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 logger.error(f"生成数据日志报告失败: {e}")
 
         if self.on_complete:
-            self.on_complete(self.stats)
+            invoke_with_timeout(
+                self.on_complete,
+                args=(self.stats,),
+                timeout=5.0,
+                callback_name="on_complete",
+            )
 
     def _range_scan_worker(self, worker_start: int, worker_end: int, worker_id: int) -> int:
         """
@@ -1404,7 +1375,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                             f"Worker {worker_id}: 匹配处理参数错误 addr={matched_address}: {err_type}: {e}"
                         )
                         # v3.5.2: 发布 ENGINE_ERROR 事件
-                        try:
+                        with suppress(RuntimeError, OSError):
                             self.event_bus.publish(
                                 EngineErrorEvent(
                                     error_type="wif_encode_error",
@@ -1414,8 +1385,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                                     recoverable=True,
                                 )
                             )
-                        except (RuntimeError, OSError):
-                            pass
                     except (RuntimeError, OSError):
                         # 未知错误：记录完整堆栈
                         logger.exception(
@@ -1562,7 +1531,12 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 self.stats.update(display_count, total_range=total_range)
                 if self.on_progress:
                     self.stats._progress_percent = display_count / total_range * 100
-                    self.on_progress(self.stats.snapshot())
+                    invoke_with_timeout(
+                        self.on_progress,
+                        args=(self.stats.snapshot(),),
+                        timeout=5.0,
+                        callback_name="on_progress",
+                    )
                 self._save_checkpoint(display_count)
 
                 # 记录数据日志
@@ -1639,7 +1613,12 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 logger.error(f"生成数据日志报告失败: {e}")
 
         if self.on_complete:
-            self.on_complete(self.stats)
+            invoke_with_timeout(
+                self.on_complete,
+                args=(self.stats,),
+                timeout=5.0,
+                callback_name="on_complete",
+            )
 
     def _brute_force_worker(
         self, worker_id: int, batch_size: int = 5000, max_keys: int | None = None
@@ -1762,7 +1741,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                                 f"BruteForce worker {worker_id}: 匹配处理参数错误 addr={address}: {err_type}"
                             )
                             # v3.5.2: 发布 ENGINE_ERROR 事件
-                            try:
+                            with suppress(RuntimeError, OSError):
                                 self.event_bus.publish(
                                     EngineErrorEvent(
                                         error_type="wif_encode_error",
@@ -1772,8 +1751,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                                         recoverable=True,
                                     )
                                 )
-                            except (RuntimeError, OSError):
-                                pass
                         except (RuntimeError, OSError):
                             # 未知错误：记录完整堆栈
                             logger.exception(
@@ -1873,7 +1850,12 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 if total_count % self.progress_interval == 0:
                     self.stats.update(total_count)
                     if self.on_progress:
-                        self.on_progress(self.stats.snapshot())
+                        invoke_with_timeout(
+                            self.on_progress,
+                            args=(self.stats.snapshot(),),
+                            timeout=5.0,
+                            callback_name="on_progress",
+                        )
                     # 断点自动保存
                     self._save_checkpoint(total_count)
 
@@ -1958,7 +1940,12 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 range_end=self._range_end,
             )
         if self.on_complete:
-            self.on_complete(self.stats)
+            invoke_with_timeout(
+                self.on_complete,
+                args=(self.stats,),
+                timeout=5.0,
+                callback_name="on_complete",
+            )
 
     def resume_from_checkpoint(self) -> dict | None:
         """从断点恢复，返回断点数据（包含mode等信息），无断点返回 None"""

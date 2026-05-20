@@ -21,6 +21,7 @@ import os
 import signal
 import threading
 import time
+from contextlib import suppress
 from multiprocessing import Process, Queue
 from queue import Empty, Full
 from typing import Any
@@ -61,12 +62,10 @@ def _worker_process(
     - 在子进程中本地初始化address_generator
     """
     # 设置进程名称
-    try:
+    with suppress(ImportError):
         from setproctitle import setproctitle
 
-        setproctitle(f"btc-collision-worker-{worker_id}")
-    except ImportError:
-        pass  # setproctitle可选
+        setproctitle(f"btc-collision-worker-{worker_id}")  # setproctitle可选
 
     logger.info(f"工作进程 {worker_id} 启动")
 
@@ -193,10 +192,8 @@ def _worker_process(
                             logger.debug(f"私钥清零失败: {e}")
 
                         # 删除引用，加速GC
-                        try:
-                            del pk_bytes
-                        except NameError:
-                            pass  # 变量已不存在
+                        with suppress(NameError):
+                            del pk_bytes  # 变量已不存在
 
                 # 发送匹配结果
                 if batch_matches:
@@ -442,33 +439,31 @@ class MultiprocessCollisionEngine:
             self._queue_overflow_warnings += 1
 
         try:
-            while True:
-                assert self.result_queue is not None
-                batch = self.result_queue.get(timeout=timeout)
+            with suppress(Empty):
+                while True:
+                    assert self.result_queue is not None
+                    batch = self.result_queue.get(timeout=timeout)
 
-                # 如果启用加密，则解密
-                if self._enable_encryption and isinstance(batch, bytes):
-                    try:
-                        from cryptography.fernet import Fernet, InvalidToken
+                    # 如果启用加密，则解密
+                    if self._enable_encryption and isinstance(batch, bytes):
+                        try:
+                            from cryptography.fernet import Fernet, InvalidToken
 
-                        assert self._encryption_key is not None
-                        fernet = Fernet(bytes(self._encryption_key))
-                        decrypted_data = fernet.decrypt(batch)
-                        batch = json.loads(decrypted_data)
-                    except InvalidToken:
-                        logger.critical("解密失败：密钥不匹配或数据损坏，丢弃数据")
-                        continue
-                    except json.JSONDecodeError:
-                        logger.error("解密后数据格式错误，丢弃数据")
-                        continue
-                    except Exception as e:
-                        logger.error(f"解密异常: {type(e).__name__}, 丢弃数据")
-                        continue
+                            assert self._encryption_key is not None
+                            fernet = Fernet(bytes(self._encryption_key))
+                            decrypted_data = fernet.decrypt(batch)
+                            batch = json.loads(decrypted_data)
+                        except InvalidToken:
+                            logger.critical("解密失败：密钥不匹配或数据损坏，丢弃数据")
+                            continue
+                        except json.JSONDecodeError:
+                            logger.error("解密后数据格式错误，丢弃数据")
+                            continue
+                        except Exception as e:
+                            logger.error(f"解密异常: {type(e).__name__}, 丢弃数据")
+                            continue
 
-                results.extend(batch)
-        except Empty:
-            # 队列为空
-            pass
+                    results.extend(batch)
         except Exception as e:
             logger.warning(f"收集结果时异常: {e}")
 
@@ -488,13 +483,11 @@ class MultiprocessCollisionEngine:
         with self._stats_lock:
             # 收集所有工作进程的统计
             try:
-                while True:
-                    assert self.stats_queue is not None
-                    stats = self.stats_queue.get_nowait()
-                    self.worker_stats[stats["worker_id"]] = stats
-            except Empty:
-                # 队列为空，收集完毕
-                pass
+                with suppress(Empty):
+                    while True:
+                        assert self.stats_queue is not None
+                        stats = self.stats_queue.get_nowait()
+                        self.worker_stats[stats["worker_id"]] = stats
             except (KeyError, TypeError) as e:
                 logger.warning(f"统计数据处理异常: {e}")
 
@@ -557,7 +550,7 @@ class MultiprocessCollisionEngine:
         if zombie_processes:
             logger.critical(
                 f"发现{len(zombie_processes)}个僵尸进程: "
-                f"{', '.join([f'Worker-{z['id']}(PID={z['pid']})' for z in zombie_processes])}"
+                f"{', '.join([f'Worker-{z["id"]}(PID={z["pid"]})' for z in zombie_processes])}"
             )
             # 尝试发送SIGKILL（Unix）
             if os.name != "nt":

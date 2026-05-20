@@ -20,20 +20,21 @@
 
 import logging
 import os
-import signal
 import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, cast
 
+from ...utils.timeout import invoke_with_timeout
+
 # 回调类型
 from ..types import CompleteCallback, MatchCallback, ProgressCallback
-from .core import CollisionCore
 
 # Phase 1-5 组件
 from ._result_processor import GPUResultProcessor
 from ._scheduler import GPUBatchScheduler
+from .core import CollisionCore
 from .monitoring import PerformanceMonitoringPipeline
 from .vendor_strategy import VendorOptimizationFactory  # noqa: F401 # 保留供测试 patch 目标
 
@@ -77,11 +78,9 @@ GPU_CONFIG_MANAGER_AVAILABLE = False  # 保留供外部导入兼容
 
 # 基础依赖
 # 加密
-from ...core.wif import WIF  # noqa: E402
 from ...gpu.device import GPUDeviceDetector  # noqa: E402
 from ...gpu.device_manager import GPUDeviceManager  # noqa: E402
 from ...gpu.engine_monitor import GPUEngineMonitor  # noqa: E402
-from ...gpu.memory_calculator import GPUMemoryCalculator  # noqa: E402
 from ...gpu.search_mode_coordinator import SearchModeCoordinator  # noqa: E402
 
 # 监控
@@ -1002,14 +1001,29 @@ class GPUCollisionEngine(BaseCollisionEngine):
     def _on_progress_callback(self, event: EngineProgressEvent) -> None:
         """处理进度事件 - 向后兼容包装器"""
         if self.on_progress:
-            self.on_progress(event)
+            invoke_with_timeout(
+                self.on_progress,
+                args=(event,),
+                timeout=5.0,
+                callback_name="on_progress",
+            )
 
     def _on_match_callback(self, event: EngineMatchEvent) -> None:
         """处理匹配事件 - 向后兼容包装器"""
         if self.on_match:
-            self.on_match(event.private_key, event.address, event.wif)
+            invoke_with_timeout(
+                self.on_match,
+                args=(event.private_key, event.address, event.wif),
+                timeout=getattr(self, "_match_callback_timeout", 5),
+                callback_name="on_match",
+            )
 
     def _on_complete_callback(self, event: EngineCompleteEvent) -> None:
         """处理完成事件 - 向后兼容包装器"""
         if self.on_complete:
-            self.on_complete(event)
+            invoke_with_timeout(
+                self.on_complete,
+                args=(event,),
+                timeout=5.0,
+                callback_name="on_complete",
+            )

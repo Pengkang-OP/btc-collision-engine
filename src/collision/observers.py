@@ -141,7 +141,8 @@ class LoggingObserver(BaseCollisionObserver):
     def on_complete(self, stats: CollisionStats) -> None:
         """记录完成日志"""
         self.logger.info(
-            f"碰撞完成: 总检测={stats.total_checked:,}, 总匹配={len(stats.matches)}, 运行时间={stats.format_elapsed()}"
+            f"碰撞完成: 总检测={stats.total_checked:,}, "
+            f"总匹配={len(stats.matches)}, 运行时间={stats.format_elapsed()}"
         )
 
 

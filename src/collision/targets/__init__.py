@@ -10,7 +10,7 @@
 示例:
     >>> from src.collision.targets import TargetResolver, AddressMatcher
     >>> resolver = TargetResolver(enable_cache=True)
-    >>> address = resolver.resolve('5KJvsngHeMpm884wtkJNzQGaCErckhHJBGFsvd3VyK5qMZXj3hS')
+    >>> address = resolver.resolve('1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa')
     >>> matcher = AddressMatcher(strategy='hash_set', targets={address})
 """
 

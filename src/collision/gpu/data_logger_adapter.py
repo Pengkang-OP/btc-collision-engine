@@ -9,6 +9,7 @@ DataLogger 的实际 API (`record_performance_data()` 等)。
 """
 
 import logging
+from contextlib import suppress
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -156,10 +157,8 @@ class DataLoggerAdapter:
         仅当适配器自己创建了 DataLogger 时才清理。
         """
         if self._owns_logger and self._logger:
-            try:
+            with suppress(Exception):
                 self._logger.flush()
-            except Exception:
-                pass
             self._logger = None
             self._owns_logger = False
             logger.debug("DataLoggerAdapter: 独立 DataLogger 已清理")

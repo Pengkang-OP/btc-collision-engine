@@ -65,14 +65,14 @@ class EngineFactory:
             warnings.warn(
                 "'stats' parameter is deprecated and ignored. "
                 "KeyCollisionEngine now creates its own CollisionStats internally.",
-                DeprecationWarning,
+                FutureWarning,
                 stacklevel=2,
             )
         if data_logger is not None:
             warnings.warn(
                 "'data_logger' parameter is deprecated and ignored. "
                 "KeyCollisionEngine now creates its own DataLogger internally.",
-                DeprecationWarning,
+                FutureWarning,
                 stacklevel=2,
             )
 
@@ -114,21 +114,21 @@ class EngineFactory:
             warnings.warn(
                 "'stats' parameter is deprecated and ignored. "
                 "GPUCollisionEngine now creates its own CollisionStats internally.",
-                DeprecationWarning,
+                FutureWarning,
                 stacklevel=2,
             )
         if event_bus is not None:
             warnings.warn(
                 "'event_bus' parameter is deprecated and ignored. "
                 "GPUCollisionEngine now creates its own EventBus internally.",
-                DeprecationWarning,
+                FutureWarning,
                 stacklevel=2,
             )
         if data_logger is not None:
             warnings.warn(
                 "'data_logger' parameter is deprecated and ignored. "
                 "GPUCollisionEngine now creates its own DataLogger internally.",
-                DeprecationWarning,
+                FutureWarning,
                 stacklevel=2,
             )
 

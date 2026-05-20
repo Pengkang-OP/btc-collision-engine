@@ -6,6 +6,7 @@ import threading
 import time
 import traceback
 import zlib
+from contextlib import suppress
 from datetime import datetime
 from typing import Any, cast
 
@@ -68,10 +69,10 @@ class CheckpointManager:
         self._lock = threading.Lock()  # 线程锁保护文件操作
         self._dirty = False  # 脏标志，标记是否有未保存的更改
         self._buffer: dict[str, Any] | None = None  # 缓冲区，用于批量保存
+        _interval = auto_save_interval
+        _win32 = self._has_win32_security
         logger.debug(
-            f"CheckpointManager 初始化: 文件={self.filepath}, 自动保存间隔={
-                auto_save_interval
-            }秒, pywin32可用={self._has_win32_security}"
+            f"CheckpointManager 初始化: 文件={self.filepath}, 自动保存间隔={_interval}秒, pywin32可用={_win32}"
         )
 
     def save(
@@ -295,10 +296,10 @@ class CheckpointManager:
 
             self._last_save_time = time.time()
             self._dirty = False
+            _pos = self._buffer.get('current_position')
+            _checked = self._buffer.get('total_checked')
             logger.debug(
-                f"断点已保存: {self.filepath}, 位置={self._buffer.get('current_position')}, 已检查={
-                    self._buffer.get('total_checked')
-                }"
+                f"断点已保存: {self.filepath}, 位置={_pos}, 已检查={_checked}"
             )
         except PermissionError as e:
             logger.error(f"保存断点失败（权限不足）: {e}")
@@ -316,11 +317,9 @@ class CheckpointManager:
 
     def _cleanup_temp_file(self, temp_filepath: str) -> None:
         """清理临时文件"""
-        try:
+        with suppress(OSError):
             if os.path.exists(temp_filepath):
                 os.remove(temp_filepath)
-        except OSError:
-            pass
 
     def load(self) -> dict | None:
         """从文件加载断点，文件不存在或格式错误返回 None（线程安全）"""
@@ -335,18 +334,14 @@ class CheckpointManager:
                         os.replace(temp_filepath, self.filepath)
                         # 设置文件权限
                         if not PlatformUtils.is_windows():
-                            try:
+                            with suppress(OSError):
                                 os.chmod(self.filepath, 0o600)
-                            except OSError:
-                                pass
                         logger.warning(f"从临时文件恢复断点: {temp_filepath}")
                     except OSError as e:
                         # 文件系统错误：记录日志并清理临时文件
                         logger.error(f"断点恢复失败: {e}，将重新开始")
-                        try:
-                            os.remove(temp_filepath)
-                        except OSError:
-                            pass  # 清理失败不影响主流程
+                        with suppress(OSError):
+                            os.remove(temp_filepath)  # 清理失败不影响主流程
                     except Exception as e:
                         # 未知错误：记录完整信息
                         logger.error(f"断点恢复未知错误: {type(e).__name__}: {e}")

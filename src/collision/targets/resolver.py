@@ -123,14 +123,12 @@ class TargetResolver:
         valid_chars = TargetResolver._BASE58_VALID_CHARS
 
         # P2PKH地址: 以'1'开头, 25-34字符, Base58字符集
-        if input_str.startswith("1") and 25 <= len(input_str) <= 34:
-            if all(c in valid_chars for c in input_str):
-                return "address"
+        if input_str.startswith("1") and 25 <= len(input_str) <= 34 and all(c in valid_chars for c in input_str):
+            return "address"
 
         # P2SH地址: 以'3'开头, 25-34字符
-        if input_str.startswith("3") and 25 <= len(input_str) <= 34:
-            if all(c in valid_chars for c in input_str):
-                return "p2sh_address"
+        if input_str.startswith("3") and 25 <= len(input_str) <= 34 and all(c in valid_chars for c in input_str):
+            return "p2sh_address"
 
         # Bech32地址: 以'bc1'开头
         if input_str.lower().startswith("bc1"):
@@ -140,13 +138,11 @@ class TargetResolver:
             return "bech32_address"  # SegWit v0 (P2WPKH/P2WSH)
 
         # WIF: 以'5'开头(非压缩,51字符) 或 'K'/'L'开头(压缩,52字符)
-        if input_str.startswith("5") and len(input_str) == 51:
-            if all(c in valid_chars for c in input_str):
-                return "wif"
+        if input_str.startswith("5") and len(input_str) == 51 and all(c in valid_chars for c in input_str):
+            return "wif"
 
-        if input_str.startswith(("K", "L")) and len(input_str) == 52:
-            if all(c in valid_chars for c in input_str):
-                return "wif"
+        if input_str.startswith(("K", "L")) and len(input_str) == 52 and all(c in valid_chars for c in input_str):
+            return "wif"
 
         # 压缩公钥: 66字符hex, 以02/03开头
         if len(input_str) == 66 and input_str.startswith(("02", "03")):
@@ -406,8 +402,9 @@ class TargetResolver:
             else:
                 to_resolve.append(inp)
 
+        hit_rate = (len(results) / len(inputs) * 100) if len(inputs) > 0 else 0
         logger.debug(
-            f"批量解析缓存命中: {len(results)}/{len(inputs)} ({(len(results) / len(inputs) * 100) if len(inputs) > 0 else 0:.1f}%)"
+            f"批量解析缓存命中: {len(results)}/{len(inputs)} ({hit_rate:.1f}%)"
         )
 
         # 第二遍:直接解析未缓存的（跳过 resolve() 中的缓存检查，提升性能）
@@ -513,7 +510,7 @@ class TargetResolver:
                 # 批量解析（使用配置的批量大小）
                 if len(batch_inputs) >= self._batch_size:
                     batch_results = self.resolve_batch(batch_inputs)
-                    for inp, addr in batch_results.items():
+                    for _inp, addr in batch_results.items():
                         if addr:
                             addresses.add(addr)
                             valid_count += 1

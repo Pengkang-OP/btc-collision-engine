@@ -232,7 +232,8 @@ class BloomDeduplicationFilter:
         self._lock = threading.Lock()
 
         logger.info(
-            f"BloomDeduplicationFilter初始化: max_size={max_size}, false_positive_rate={false_positive_rate * 100:.3f}%"
+            f"BloomDeduplicationFilter初始化: max_size={max_size}, "
+            f"false_positive_rate={false_positive_rate * 100:.3f}%"
         )
 
     def _fingerprint(self, private_key: bytes) -> bytes:

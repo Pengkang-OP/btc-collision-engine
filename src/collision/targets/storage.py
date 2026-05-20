@@ -54,7 +54,7 @@ def validate_bitcoin_address(address: str) -> bool:
         return False
 
     # 匹配地址模式
-    for pattern_name, pattern in ADDRESS_PATTERNS.items():
+    for _pattern_name, pattern in ADDRESS_PATTERNS.items():
         if pattern.match(address):
             return True
 
@@ -141,7 +141,7 @@ class AddressStorage:
             "version": "1.0",
             "created_at": datetime.now().isoformat(),
             "target_count": len(targets),
-            "targets": sorted(list(targets)),
+            "targets": sorted(targets),
             "metadata": metadata or {},
         }
 

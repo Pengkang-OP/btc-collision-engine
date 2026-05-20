@@ -70,7 +70,7 @@ class PluginManager:
                             sys.modules[plugin_name] = module
 
                             # 查找插件类
-                            for name, obj in module.__dict__.items():
+                            for _name, obj in module.__dict__.items():
                                 if (
                                     isinstance(obj, type)
                                     and issubclass(obj, CollisionPlugin)
