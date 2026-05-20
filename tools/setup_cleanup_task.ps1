@@ -7,7 +7,7 @@ $TaskName = "BTC监控数据清理"
 $TaskDescription = "每周清理30天前的BTC监控数据，防止磁盘空间占用过多"
 # 自动检测脚本所在目录作为工作目录
 $WorkingDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
-$ScriptPath = Join-Path $WorkingDirectory "cleanup_monitoring_data.py"
+$ScriptPath = Join-Path (Split-Path -Parent $WorkingDirectory) "scripts\cleanup_cache.py"
 $PythonPath = "python"
 
 Write-Output "============================================"

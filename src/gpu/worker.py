@@ -331,6 +331,44 @@ class SingleGPUWorker(threading.Thread):
                 self._stats["error_count"] += 1
                 self._stats["last_error"] = f"{type(e).__name__}: {e}"
 
+    def _compute_throughput(self) -> None:
+        """计算并更新吞吐量统计（需在锁内调用）。"""
+        if self._stats["elapsed_time"] > 0:
+            self._stats["throughput"] = (
+                self._stats["keys_checked"] / self._stats["elapsed_time"]
+            )
+
+    def _report_new_matches(self, matches: list, current_count: int) -> None:
+        """上报新增匹配结果（需在锁内调用）。"""
+        if current_count <= self._last_reported_match_count:
+            return
+        for i in range(self._last_reported_match_count, current_count):
+            match = matches[i]
+            match_dict: dict[str, str] = {
+                "address": (
+                    match.get("address", "")
+                    if isinstance(match, dict)
+                    else getattr(match, "address", "")
+                ),
+                "private_key_hash": (
+                    match.get("private_key_hash", "")
+                    if isinstance(match, dict)
+                    else getattr(match, "private_key_hash", "")
+                ),
+            }
+            self._result_queue.put(match_dict)
+
+            if self._delta_stats:
+                self._delta_stats.add_match()
+
+            if self.result_callback:
+                try:
+                    self.result_callback(self.device_idx, match_dict)
+                except Exception as e:
+                    logger.error(f"结果回调异常: {e}")
+
+        self._last_reported_match_count = current_count
+
     def _update_stats(self):
         """更新统计信息"""
         if not self._gpu_engine:
@@ -349,15 +387,11 @@ class SingleGPUWorker(threading.Thread):
                 self._stats["keys_checked"] = engine_stats.total_checked
                 self._stats["matches_found"] = len(engine_stats.matches)
 
-                # 计算运行时间
                 if self._stats["start_time"]:
                     self._stats["elapsed_time"] = time.time() - self._stats["start_time"]
 
-                # 计算吞吐量
-                if self._stats["elapsed_time"] > 0:
-                    self._stats["throughput"] = self._stats["keys_checked"] / self._stats["elapsed_time"]
+                self._compute_throughput()
 
-                # 报告给数据监控器
                 if self.data_monitor:
                     self.data_monitor.report_keys_generated(
                         device_idx=self.device_idx,
@@ -365,37 +399,7 @@ class SingleGPUWorker(threading.Thread):
                         key_range=self.key_range,
                     )
 
-                # 仅上报新增匹配 (使用 match_index 追踪，防止重复上报)
-                current_match_count = len(engine_stats.matches)
-                if current_match_count > self._last_reported_match_count:
-                    for i in range(self._last_reported_match_count, current_match_count):
-                        match = engine_stats.matches[i]
-                        match_dict = {
-                            "address": (
-                                match.get("address", "")
-                                if isinstance(match, dict)
-                                else getattr(match, "address", "")
-                            ),
-                            "private_key_hash": (
-                                match.get("private_key_hash", "")
-                                if isinstance(match, dict)
-                                else getattr(match, "private_key_hash", "")
-                            ),
-                        }
-                        self._result_queue.put(match_dict)
-
-                        # 记录匹配到增量统计器
-                        if self._delta_stats:
-                            self._delta_stats.add_match()
-
-                        # 调用回调
-                        if self.result_callback:
-                            try:
-                                self.result_callback(self.device_idx, match_dict)
-                            except Exception as e:
-                                logger.error(f"结果回调异常: {e}")
-
-                    self._last_reported_match_count = current_match_count
+                self._report_new_matches(engine_stats.matches, len(engine_stats.matches))
 
         except AttributeError as e:
             logger.debug(f"统计信息属性访问失败: {e}")

@@ -15,10 +15,11 @@ from typing import Any
 from rich.console import Console
 from rich.style import Style
 
-# 添加项目根目录到路径
+# 添加项目根目录到路径（仅在未通过包安装时作为回退）
+# 使用 append 而非 insert(0) 避免遮蔽标准库/第三方包
 _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if _project_root not in sys.path:
-    sys.path.insert(0, _project_root)
+    sys.path.append(_project_root)
 
 from .events import LogEvent, LogEventType  # noqa: E402
 from .log_collector import LogCollector  # noqa: E402

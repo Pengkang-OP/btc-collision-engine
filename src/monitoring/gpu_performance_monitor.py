@@ -639,36 +639,43 @@ class GPUPerformanceMonitor:
         free_memory_mb = total_memory_mb - used_memory_mb
         usage_percent = (used_memory_mb / total_memory_mb * 100) if total_memory_mb > 0 else 0
 
-        if allocation:
-            self._total_allocations += 1
-        else:
-            self._total_deallocations += 1
-
-        if pool_hit:
-            self._pool_hits += 1
-        else:
-            self._pool_misses += 1
-
-        if used_memory_mb > self._peak_memory_mb:
-            self._peak_memory_mb = used_memory_mb
-
-        # record_memory_metrics路径同步更新_current_memory_mb
-        self._current_memory_mb = used_memory_mb
-
         memory_metrics = GPUMemoryMetrics(
             timestamp=time.time(),
             total_memory_mb=total_memory_mb,
             used_memory_mb=used_memory_mb,
             free_memory_mb=free_memory_mb,
             usage_percent=usage_percent,
-            peak_usage_mb=self._peak_memory_mb,
-            allocation_count=self._total_allocations,
-            deallocation_count=self._total_deallocations,
-            pool_hits=self._pool_hits,
-            pool_misses=self._pool_misses,
+            peak_usage_mb=0,  # 稍后在锁内更新
+            allocation_count=0,
+            deallocation_count=0,
+            pool_hits=0,
+            pool_misses=0,
         )
 
         with self._lock:
+            if allocation:
+                self._total_allocations += 1
+            else:
+                self._total_deallocations += 1
+
+            if pool_hit:
+                self._pool_hits += 1
+            else:
+                self._pool_misses += 1
+
+            if used_memory_mb > self._peak_memory_mb:
+                self._peak_memory_mb = used_memory_mb
+
+            # record_memory_metrics路径同步更新_current_memory_mb
+            self._current_memory_mb = used_memory_mb
+
+            # 更新 metrics 对象中的计数器快照
+            memory_metrics.peak_usage_mb = self._peak_memory_mb
+            memory_metrics.allocation_count = self._total_allocations
+            memory_metrics.deallocation_count = self._total_deallocations
+            memory_metrics.pool_hits = self._pool_hits
+            memory_metrics.pool_misses = self._pool_misses
+
             self._memory_metrics.append(memory_metrics)
 
         logger.debug(f"GPU显存指标: used={used_memory_mb:.1f}MB, usage={usage_percent:.1f}%")

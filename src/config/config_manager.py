@@ -595,7 +595,13 @@ class ConfigManager:
 
             # 使用原子写入确保数据完整性
             # 避免写入中断导致配置文件损坏
-            from ..utils.file_utils import atomic_json_write
+            try:
+                from ..utils.file_utils import atomic_json_write
+            except ImportError:
+                logger.warning("atomic_json_write 不可用，使用标准 json.dump 写入")
+                with open(self.config_file, "w", encoding="utf-8") as f:
+                    json.dump(config_copy, f, ensure_ascii=False, indent=2)
+                return True
 
             success = atomic_json_write(
                 self.config_file, config_copy, ensure_ascii=False, indent=2, fsync=True
@@ -886,14 +892,9 @@ class ConfigManager:
     # ========================================================================
 
     def _validate_manual(self, config: dict[str, Any]) -> dict[str, str]:
-        """
-        手动验证配置字段（JSON Schema 不可用时的降级方案）
+        """手动验证配置字段（JSON Schema 不可用时的降级方案）
 
-        v4.3.1: 清理 8 个死代码引用 (num_keys/num_workers/target_speed/
-        enable_checkpoint/enable_stats/enable_monitoring/enable_progress_bar/
-        use_colors)，所有校验路径对齐实际 CONFIG_SCHEMA 结构。
-        保留所有 Schema 中有约束的字段校验，确保 JSON Schema 降级时
-        覆盖度一致。
+        v4.3.1: 清理 8 个死代码引用，所有校验路径对齐实际 CONFIG_SCHEMA 结构。
 
         参数:
             config: 配置字典（嵌套结构，与 CONFIG_SCHEMA 一致）
@@ -912,15 +913,29 @@ class ConfigManager:
         perf_raw = config.get("performance_monitoring", {})
         perf_cfg = perf_raw if isinstance(perf_raw, dict) else {}
 
-        # === collision 节 ===
+        self._validate_collision_section(collision, errors)
+        self._validate_logging_section(logging_cfg, errors)
+        self._validate_engine_section(engine_cfg, errors)
+        self._validate_gpu_section(config.get("gpu"), gpu_cfg, errors)
+        self._validate_crypto_section(crypto, errors)
+        self._validate_perf_section(perf_cfg, errors)
+
+        # 手动验证是 JSON Schema 验证的降级子集
+        if errors:
+            logger.warning(
+                "手动配置验证发现 %d 个问题（降级模式，部分字段未覆盖）。"
+                "建议安装 jsonschema 以获得完整验证能力。",
+                len(errors),
+            )
+
+        return errors
+
+    def _validate_collision_section(self, collision: dict, errors: dict[str, str]) -> None:
+        """验证 collision 配置节"""
         if "max_workers" in collision:
             self._validate_positive_int(
-                "collision.max_workers",
-                collision["max_workers"],
-                errors,
-                min_val=1,
-                nullable=True,
-                max_val=1024,
+                "collision.max_workers", collision["max_workers"], errors,
+                min_val=1, nullable=True, max_val=1024,
             )
         if "progress_interval" in collision:
             self._validate_positive_int(
@@ -931,14 +946,13 @@ class ConfigManager:
                 collision["checkpoint_interval"], errors, prefix="collision."
             )
         if "dedup_max_size" in collision:
-            self._validate_positive_int("collision.dedup_max_size", collision["dedup_max_size"], errors)
+            self._validate_positive_int(
+                "collision.dedup_max_size", collision["dedup_max_size"], errors
+            )
         if "precomputed_window_size" in collision:
             self._validate_positive_int(
-                "collision.precomputed_window_size",
-                collision["precomputed_window_size"],
-                errors,
-                min_val=1,
-                max_val=16,
+                "collision.precomputed_window_size", collision["precomputed_window_size"],
+                errors, min_val=1, max_val=16,
             )
         bool_fields = [
             ("collision.use_performance_optimization", collision),
@@ -947,11 +961,12 @@ class ConfigManager:
             ("collision.use_gpu_memory_pool", collision),
         ]
         for field_name, source in bool_fields:
-            key = field_name.split(".", 1)[1] if "." in field_name else field_name
+            key = field_name.split(".", 1)[1]
             if key in source:
                 self._validate_bool(field_name, source[key], errors)
 
-        # === logging 节 ===
+    def _validate_logging_section(self, logging_cfg: dict, errors: dict[str, str]) -> None:
+        """验证 logging 配置节"""
         if "level" in logging_cfg:
             self._validate_log_level(logging_cfg["level"], errors, prefix="logging.")
         for key in ("format", "file", "rotation_when"):
@@ -962,25 +977,25 @@ class ConfigManager:
         for key in ("max_bytes", "backup_count", "rotation_interval"):
             if key in logging_cfg:
                 self._validate_positive_int(
-                    f"logging.{key}",
-                    logging_cfg[key],
-                    errors,
+                    f"logging.{key}", logging_cfg[key], errors,
                     min_val=1 if key != "backup_count" else 0,
                 )
         for key in ("enable_console", "enable_file", "compress_backups"):
             if key in logging_cfg:
                 self._validate_bool(f"logging.{key}", logging_cfg[key], errors)
         if "rotation_type" in logging_cfg:
-            if logging_cfg["rotation_type"] not in ("size", "time"):
+            rt = logging_cfg["rotation_type"]
+            if rt not in ("size", "time"):
                 errors["logging.rotation_type"] = (
-                    f"无效 rotation_type: {logging_cfg['rotation_type']}，有效值: size, time"
+                    f"无效 rotation_type: {rt}，有效值: size, time"
                 )
-            elif logging_cfg["rotation_type"] == "size" and "max_bytes" not in logging_cfg:
+            elif rt == "size" and "max_bytes" not in logging_cfg:
                 errors["logging.max_bytes"] = "rotation_type=size 需要设置 max_bytes"
-            elif logging_cfg["rotation_type"] == "time" and "rotation_when" not in logging_cfg:
+            elif rt == "time" and "rotation_when" not in logging_cfg:
                 errors["logging.rotation_when"] = "rotation_type=time 需要设置 rotation_when"
 
-        # === engine 节 ===
+    def _validate_engine_section(self, engine_cfg: dict, errors: dict[str, str]) -> None:
+        """验证 engine 配置节"""
         if "mode" in engine_cfg:
             self._validate_mode(engine_cfg["mode"], errors, prefix="engine.")
         if "batch_size" in engine_cfg:
@@ -992,45 +1007,45 @@ class ConfigManager:
                 engine_cfg["checkpoint_interval"], errors, prefix="engine."
             )
 
-        # === gpu 节 (类型 + 关键字段) ===
-        gpu_top = config.get("gpu")
+    def _validate_gpu_section(
+        self, gpu_top: Any, gpu_cfg: dict, errors: dict[str, str]
+    ) -> None:
+        """验证 gpu 配置节"""
         if gpu_top is not None and not isinstance(gpu_top, dict):
             errors["gpu"] = f"gpu 必须是字典, 当前: {type(gpu_top).__name__}"
-        else:
-            if "batch_size" in gpu_cfg:
-                self._validate_batch_size(gpu_cfg["batch_size"], errors, prefix="gpu.")
-            if "memory_usage_ratio" in gpu_cfg:
-                ratio = gpu_cfg["memory_usage_ratio"]
-                if not isinstance(ratio, (int, float)) or not (0 < ratio <= 1):
-                    errors["gpu.memory_usage_ratio"] = (
-                        f"memory_usage_ratio 必须在(0, 1]范围内, 当前: {ratio}"
-                    )
-            if "mode" in gpu_cfg and gpu_cfg["mode"] not in ("auto", "single", "multi"):
-                errors["gpu.mode"] = f"无效 gpu.mode: {gpu_cfg['mode']}，有效值: auto, single, multi"
-            if "load_balancing" in gpu_cfg and gpu_cfg["load_balancing"] not in (
-                "performance",
-                "equal",
-            ):
-                errors["gpu.load_balancing"] = (
-                    f"无效 load_balancing: {gpu_cfg['load_balancing']}，有效值: performance, equal"
+            return
+        if "batch_size" in gpu_cfg:
+            self._validate_batch_size(gpu_cfg["batch_size"], errors, prefix="gpu.")
+        if "memory_usage_ratio" in gpu_cfg:
+            ratio = gpu_cfg["memory_usage_ratio"]
+            if not isinstance(ratio, (int, float)) or not (0 < ratio <= 1):
+                errors["gpu.memory_usage_ratio"] = (
+                    f"memory_usage_ratio 必须在(0, 1]范围内, 当前: {ratio}"
                 )
-            for key in ("use_gpu", "auto_detect", "enable_vendor_optimizations"):
-                if key in gpu_cfg:
-                    self._validate_bool(f"gpu.{key}", gpu_cfg[key], errors)
-            if "device_index" in gpu_cfg and not isinstance(gpu_cfg["device_index"], int):
-                errors["gpu.device_index"] = (
-                    f"gpu.device_index 必须是整数, 当前: {type(gpu_cfg['device_index']).__name__}"
-                )
+        if "mode" in gpu_cfg and gpu_cfg["mode"] not in ("auto", "single", "multi"):
+            errors["gpu.mode"] = (
+                f"无效 gpu.mode: {gpu_cfg['mode']}，有效值: auto, single, multi"
+            )
+        if "load_balancing" in gpu_cfg and gpu_cfg["load_balancing"] not in (
+            "performance", "equal"
+        ):
+            errors["gpu.load_balancing"] = (
+                f"无效 load_balancing: {gpu_cfg['load_balancing']}，有效值: performance, equal"
+            )
+        for key in ("use_gpu", "auto_detect", "enable_vendor_optimizations"):
+            if key in gpu_cfg:
+                self._validate_bool(f"gpu.{key}", gpu_cfg[key], errors)
+        if "device_index" in gpu_cfg and not isinstance(gpu_cfg["device_index"], int):
+            errors["gpu.device_index"] = (
+                f"gpu.device_index 必须是整数, 当前: {type(gpu_cfg['device_index']).__name__}"
+            )
 
-        # === crypto 节 ===
+    def _validate_crypto_section(self, crypto: dict, errors: dict[str, str]) -> None:
+        """验证 crypto 配置节"""
         if "backend" in crypto:
             valid_backends = (
-                "auto",
-                "pure_python",
-                "pure_python_const_time",
-                "openssl",
-                "coincurve",
-                "ecdsa",
+                "auto", "pure_python", "pure_python_const_time",
+                "openssl", "coincurve", "ecdsa",
             )
             if crypto["backend"] not in valid_backends:
                 errors["crypto.backend"] = (
@@ -1044,22 +1059,21 @@ class ConfigManager:
                 f"gpu_device_index 必须是整数, 当前: {type(crypto['gpu_device_index']).__name__}"
             )
 
-        # === performance_monitoring 节 ===
+    def _validate_perf_section(self, perf_cfg: dict, errors: dict[str, str]) -> None:
+        """验证 performance_monitoring 配置节"""
         for key in ("enabled", "track_slow_operations"):
             if key in perf_cfg:
                 self._validate_bool(f"performance_monitoring.{key}", perf_cfg[key], errors)
         if "slow_threshold_ms" in perf_cfg:
             self._validate_positive_float(
                 "performance_monitoring.slow_threshold_ms",
-                perf_cfg["slow_threshold_ms"],
-                errors,
-                min_val=0,
+                perf_cfg["slow_threshold_ms"], errors, min_val=0,
             )
         if "max_records" in perf_cfg:
             self._validate_positive_int(
                 "performance_monitoring.max_records", perf_cfg["max_records"], errors
             )
         if "log_level" in perf_cfg:
-            self._validate_log_level(perf_cfg["log_level"], errors, prefix="performance_monitoring.log_")
-
-        return errors
+            self._validate_log_level(
+                perf_cfg["log_level"], errors, prefix="performance_monitoring.log_"
+            )

@@ -75,7 +75,7 @@ class Secp256k1:
             return False
 
         # 验证N
-        if cls.N != _n_expected:
+        if _n_expected != cls.N:
             return False
         if not cls._miller_rabin_probabilistic(cls.N, rounds=5):
             return False

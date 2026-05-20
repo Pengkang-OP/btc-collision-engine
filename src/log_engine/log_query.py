@@ -213,19 +213,20 @@ class LogQuery:
         return self.get_recent(count)
 
     def filter(
-        self, predicate: Callable[[dict[str, Any]], bool], limit: int = 100
+        self, predicate: Callable[[dict[str, Any]], bool], limit: int = 100, search_limit: int = 10000
     ) -> list[dict[str, Any]]:
         """使用自定义函数过滤
 
         Args:
             predicate: 过滤函数
-            limit: 限制数量
+            limit: 返回条数限制
+            search_limit: 搜索范围（从最近多少条中搜索），默认 10000
 
         Returns:
             符合条件的日志列表
         """
         results = []
-        all_logs = self.get_recent(1000)
+        all_logs = self.get_recent(search_limit)
 
         for log in all_logs:
             if predicate(log):

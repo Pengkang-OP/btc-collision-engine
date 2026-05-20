@@ -149,7 +149,16 @@ class PerformanceTuner:
         Returns:
             系统资源信息字典
         """
-        import psutil
+        try:
+            import psutil
+        except ImportError:
+            return {
+                "cpu_count": mp.cpu_count(),
+                "cpu_frequency_mhz": 0,
+                "total_memory_gb": 0,
+                "available_memory_gb": 0,
+                "memory_usage_percent": 0,
+            }
 
         # CPU信息
         cpu_count = mp.cpu_count()

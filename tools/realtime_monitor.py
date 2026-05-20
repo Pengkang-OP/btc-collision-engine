@@ -221,7 +221,7 @@ def main():
     print("="*80)
     print()
 
-    sum(1 for _, status, _ in health_checks if status is True)
+    pass_count = sum(1 for _, status, _ in health_checks if status is True)
     fail_count = sum(1 for _, status, _ in health_checks if status is False)
 
     if fail_count == 0:

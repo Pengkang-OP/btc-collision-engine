@@ -26,6 +26,65 @@ _CHECKPOINT_INTERVAL_MAX = 3600
 _FILE_SIZE_WARN_BYTES = 100 * 1024 * 1024
 
 
+def _check_hex_int(value: str, name: str, output) -> int | None:
+    """验证十六进制字符串可转为整数，返回整数值或 None。"""
+    try:
+        return int(value, 16)
+    except ValueError:
+        output.error(_t(f"cli.validation.{name}_invalid", value=value))
+        output.print(f"  提示: --{name} 必须为十六进制数字")
+        return None
+
+
+def _validate_range_mode(args, output) -> bool:
+    """验证 range 模式的专属参数。"""
+    if args.end is None:
+        output.error(_t("cli.validation.end_required"))
+        output.print("  提示: 添加 --end <十六进制私钥>，例如 --end FFFFFFFF")
+        return False
+
+    end_val = _check_hex_int(args.end, "end", output)
+    if end_val is None:
+        return False
+
+    start_val = int(args.start, 16)  # start already validated
+    if start_val >= end_val:
+        output.error(_t("cli.validation.range_order", start=args.start, end=args.end))
+        output.print("  提示: --start 值必须小于 --end 值")
+        return False
+    if start_val < 1:
+        output.error(_t("cli.validation.start_min"))
+        output.print("  提示: --start 最小值为 1 (0x1)")
+        return False
+
+    if end_val > (2**64) + start_val:
+        total_range = end_val - start_val + 1
+        hours = total_range / 1e9 / 3600
+        output.warning(_t("cli.validation.range_too_large", total=f"{total_range:,}"))
+        output.warning(f"  预计耗时约 {hours:,.0f} 小时，建议缩小扫描范围")
+    return True
+
+
+def _warn_cpu_params_in_gpu_mode(args) -> None:
+    """GPU 模式下警告仅 CPU 有效的参数。"""
+    cpu_only_warnings = []
+    if getattr(args, "no_optimize", False):
+        cpu_only_warnings.append("--no-optimize")
+    if getattr(args, "window_size", 8) != 8:
+        cpu_only_warnings.append(f"--window-size {args.window_size}")
+    if getattr(args, "no_simd", False):
+        cpu_only_warnings.append("--no-simd")
+    if getattr(args, "no_memory_pool", False):
+        cpu_only_warnings.append("--no-memory-pool")
+
+    if cpu_only_warnings:
+        logger = logging.getLogger(__name__)
+        params_str = ", ".join(cpu_only_warnings)
+        logger.warning(
+            f"GPU mode active: the following CPU-only parameters will be ignored: {params_str}"
+        )
+
+
 def validate_args(args: argparse.Namespace) -> bool:
     """验证参数合法性，返回 True 表示合法"""
     output = _get_output()
@@ -54,45 +113,13 @@ def validate_args(args: argparse.Namespace) -> bool:
             output.error(_t("cli.validation.start_required", mode=args.mode))
             output.print("  提示: 添加 --start <十六进制私钥>，例如 --start 1")
             return False
-        try:
-            int(args.start, 16)
-        except ValueError:
-            output.error(_t("cli.validation.start_invalid", value=args.start))
-            output.print("  提示: --start 必须为十六进制数字，例如 --start 1A2B3C")
+        if _check_hex_int(args.start, "start", output) is None:
             return False
 
-    if args.mode == "range":
-        if args.end is None:
-            output.error(_t("cli.validation.end_required"))
-            output.print("  提示: 添加 --end <十六进制私钥>，例如 --end FFFFFFFF")
-            return False
-        try:
-            int(args.end, 16)
-        except ValueError:
-            output.error(_t("cli.validation.end_invalid", value=args.end))
-            output.print("  提示: --end 必须为十六进制数字，例如 --end FFFFFFFF")
-            return False
+    if args.mode == "range" and not _validate_range_mode(args, output):
+        return False
 
-        start_val = int(args.start, 16)
-        end_val = int(args.end, 16)
-        if start_val >= end_val:
-            output.error(_t("cli.validation.range_order", start=args.start, end=args.end))
-            output.print("  提示: --start 值必须小于 --end 值")
-            return False
-        if start_val < 1:
-            output.error(_t("cli.validation.start_min"))
-            output.print("  提示: --start 最小值为 1 (0x1)")
-            return False
-
-        # 范围过大警告（2^64约需数百年才能穷举）
-        # 使用安全计算避免溢出
-        if end_val > (2**64) + start_val:
-            total_range = end_val - start_val + 1
-            hours = total_range / 1e9 / 3600  # 假设 1B keys/sec
-            output.warning(_t("cli.validation.range_too_large", total=f"{total_range:,}"))
-            output.warning(f"  预计耗时约 {hours:,.0f} 小时，建议缩小扫描范围")
-
-    # --duration 超过 7 天给出警告（不阻止运行）
+    # --duration 超过 7 天给出警告
     duration = getattr(args, "duration", 0)
     if duration > _DURATION_WARN_THRESHOLD:
         days = duration / 86400
@@ -106,32 +133,16 @@ def validate_args(args: argparse.Namespace) -> bool:
         return False
 
     # GPU模式下CPU专用参数警告
-    # 注意: --use-gpu 与 --multi-gpu 互斥性已由 argparse 的 mutually_exclusive_group 自动处理
     is_gpu_mode = getattr(args, "use_gpu", False) or getattr(args, "multi_gpu", False)
     if is_gpu_mode:
-        cpu_only_warnings = []
-        if getattr(args, "no_optimize", False):
-            cpu_only_warnings.append("--no-optimize")
-        if getattr(args, "window_size", 8) != 8:
-            cpu_only_warnings.append(f"--window-size {args.window_size}")
-        if getattr(args, "no_simd", False):
-            cpu_only_warnings.append("--no-simd")
-        if getattr(args, "no_memory_pool", False):
-            cpu_only_warnings.append("--no-memory-pool")
+        _warn_cpu_params_in_gpu_mode(args)
 
-        if cpu_only_warnings:
-            logger = logging.getLogger(__name__)
-            params_str = ", ".join(cpu_only_warnings)
-            logger.warning(
-                f"GPU mode active: the following CPU-only parameters will be ignored: {params_str}"
-            )
-
-    # checkpoint-interval 依赖性检查（自动启用 --checkpoint）
+    # checkpoint-interval 依赖性检查
     if checkpoint_interval != DEFAULT_CHECKPOINT_INTERVAL and not getattr(args, "checkpoint", False):
         output.print("  提示: 已自动启用 --checkpoint（因为指定了 --checkpoint-interval）")
         args.checkpoint = True
 
-    # dedup-max-size 依赖性检查（自动启用 --dedup）
+    # dedup-max-size 依赖性检查
     if getattr(args, "dedup_max_size", DEFAULT_DEDUP_MAX_SIZE) != DEFAULT_DEDUP_MAX_SIZE and not getattr(
         args, "dedup", False
     ):

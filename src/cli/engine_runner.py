@@ -88,10 +88,10 @@ def _setup_and_start_engine(
     # ── 将告警系统集成到引擎主流程 ──────────────────────────────────
     alert_system = None
     try:
-        from src.monitoring.alert_system import AlertSystem
+        from src.monitoring.alert_system import AlertSystem as _alert_class  # noqa: N813
     except ImportError:
         try:
-            from ..monitoring.alert_system import AlertSystem
+            from ..monitoring.alert_system import AlertSystem as _alert_class  # noqa: N813
         except ImportError:
             _alert_class: Any = None  # type: ignore[no-redef]
 

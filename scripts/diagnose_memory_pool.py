@@ -14,7 +14,7 @@ import time
 from pathlib import Path
 
 # 添加项目根目录
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
 
@@ -103,7 +103,6 @@ def diagnose_memory_pool_usage():
 
     engine.on_progress = on_progress
 
-    time.time()
     engine.start(mode="random")
 
     reuse_rates = []

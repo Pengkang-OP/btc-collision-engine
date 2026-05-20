@@ -67,9 +67,8 @@ def set_api_key(key: str | None) -> None:
 def _validate_api_key() -> bool:
     if not _api_key_required:
         return True
+    # 仅从 Authorization 头读取，避免 URL 查询参数泄露 API Key 到日志/浏览器历史
     provided = request.headers.get("Authorization", "").removeprefix("Bearer ").strip()
-    if not provided:
-        provided = request.args.get("api_key", "")
     return secrets.compare_digest(provided, _api_key or "")
 
 
