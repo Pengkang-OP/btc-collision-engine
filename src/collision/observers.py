@@ -5,6 +5,7 @@
 
 import hashlib
 import logging
+import threading
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -135,10 +136,7 @@ class LoggingObserver(BaseCollisionObserver):
     def on_match(self, private_key: bytes, address: str, wif: str) -> None:
         """记录匹配日志（安全：仅输出地址和密钥哈希，不泄露私钥）"""
         key_hash = hashlib.sha256(private_key).hexdigest()[:16]
-        self.logger.info(
-            "匹配发现: address=%s, key_hash=KEY_HASH:%s",
-            address, key_hash
-        )
+        self.logger.info("匹配发现: address=%s, key_hash=KEY_HASH:%s", address, key_hash)
 
     def on_complete(self, stats: CollisionStats) -> None:
         """记录完成日志"""
@@ -151,11 +149,12 @@ class ObserverManager:
     """观察者管理器
 
     管理多个观察者，提供批量通知功能。
+    线程安全：所有公开方法均受锁保护。
     """
 
     def __init__(self) -> None:
         self._observers: list[CollisionObserver] = []
-        self._lock = None  # 延迟初始化，避免循环导入
+        self._lock = threading.Lock()
 
     def add_observer(self, observer: CollisionObserver) -> None:
         """添加观察者
@@ -166,7 +165,8 @@ class ObserverManager:
         if not isinstance(observer, CollisionObserver):
             raise TypeError("observer必须是CollisionObserver实例")
 
-        self._observers.append(observer)
+        with self._lock:
+            self._observers.append(observer)
 
     def remove_observer(self, observer: CollisionObserver) -> bool:
         """移除观察者
@@ -177,11 +177,26 @@ class ObserverManager:
         Returns:
             bool: 移除成功返回True
         """
-        try:
-            self._observers.remove(observer)
-            return True
-        except ValueError:
-            return False
+        with self._lock:
+            try:
+                self._observers.remove(observer)
+                return True
+            except ValueError:
+                return False
+
+    def _notify_safe(
+        self,
+        observers_snapshot: list[CollisionObserver],
+        callback_name: str,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """在锁外安全地遍历观察者快照并调用回调"""
+        for observer in observers_snapshot:
+            try:
+                getattr(observer, callback_name)(*args, **kwargs)
+            except Exception as e:
+                logging.getLogger(__name__).error("观察者%s回调失败: %s", callback_name, e)
 
     def notify_progress(self, stats: CollisionStats) -> None:
         """通知所有观察者进度更新
@@ -189,14 +204,9 @@ class ObserverManager:
         Args:
             stats: 碰撞统计信息
         """
-        for observer in self._observers:
-            try:
-                observer.on_progress(stats)
-            except Exception as e:
-                # 观察者异常不应影响主流程
-                import logging
-
-                logging.getLogger(__name__).error(f"观察者on_progress回调失败: {e}")
+        with self._lock:
+            snapshot = list(self._observers)
+        self._notify_safe(snapshot, "on_progress", stats)
 
     def notify_match(self, private_key: bytes, address: str, wif: str) -> None:
         """通知所有观察者匹配成功
@@ -206,13 +216,9 @@ class ObserverManager:
             address: 匹配的地址
             wif: WIF格式私钥
         """
-        for observer in self._observers:
-            try:
-                observer.on_match(private_key, address, wif)
-            except Exception as e:
-                import logging
-
-                logging.getLogger(__name__).error(f"观察者on_match回调失败: {e}")
+        with self._lock:
+            snapshot = list(self._observers)
+        self._notify_safe(snapshot, "on_match", private_key, address, wif)
 
     def notify_complete(self, stats: CollisionStats) -> None:
         """通知所有观察者碰撞完成
@@ -220,13 +226,9 @@ class ObserverManager:
         Args:
             stats: 最终统计信息
         """
-        for observer in self._observers:
-            try:
-                observer.on_complete(stats)
-            except Exception as e:
-                import logging
-
-                logging.getLogger(__name__).error(f"观察者on_complete回调失败: {e}")
+        with self._lock:
+            snapshot = list(self._observers)
+        self._notify_safe(snapshot, "on_complete", stats)
 
     def notify_error(self, error: Exception, context: dict[str, Any] | None = None) -> None:
         """通知所有观察者错误事件
@@ -235,19 +237,17 @@ class ObserverManager:
             error: 异常对象
             context: 错误上下文
         """
-        for observer in self._observers:
-            try:
-                observer.on_error(error, context)
-            except Exception as e:
-                import logging
-
-                logging.getLogger(__name__).error(f"观察者on_error回调失败: {e}")
+        with self._lock:
+            snapshot = list(self._observers)
+        self._notify_safe(snapshot, "on_error", error, context)
 
     def clear(self) -> None:
         """清空所有观察者"""
-        self._observers.clear()
+        with self._lock:
+            self._observers.clear()
 
     @property
     def observer_count(self) -> int:
         """获取观察者数量"""
-        return len(self._observers)
+        with self._lock:
+            return len(self._observers)

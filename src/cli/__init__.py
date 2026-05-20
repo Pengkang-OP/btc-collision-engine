@@ -16,9 +16,9 @@ from src.cli.config_migration import migrate_config_file
 # 引擎构建
 from src.cli.engine_builder import (
     GPU_AVAILABLE,
-    GPUNotAvailableError,
-    GPUInitializationError,
     EngineBuildError,
+    GPUInitializationError,
+    GPUNotAvailableError,
     build_engine,
     on_match_callback,
 )

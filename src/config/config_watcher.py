@@ -111,9 +111,16 @@ class ConfigWatcher:
             self._stop_event.clear()
 
         if HAS_WATCHDOG:
-            return self._start_watchdog()
+            started = self._start_watchdog()
         else:
-            return self._start_polling()
+            started = self._start_polling()
+
+        if started and self._stop_event.is_set():
+            logger.warning("ConfigWatcher 在启动期间收到停止信号，回退")
+            self.stop()
+            return False
+
+        return started
 
     def stop(self) -> None:
         """停止文件监听"""

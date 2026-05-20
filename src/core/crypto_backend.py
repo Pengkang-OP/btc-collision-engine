@@ -417,7 +417,7 @@ class CryptoBackendManager:
                     cls._instance._init_backends()
         return cls._instance
 
-    def _init_backends(self):
+    def _init_backends(self) -> None:
         """初始化所有后端"""
         # 实例级锁，保护运行时状态
         self._instance_lock = threading.RLock()
@@ -437,7 +437,7 @@ class CryptoBackendManager:
         assert self._current_backend is not None
         logger.info(f"加密后端初始化完成: 可用={available}, 当前={self._current_backend.name}")
 
-    def _select_best_backend(self):
+    def _select_best_backend(self) -> None:
         """选择最佳可用后端（内部方法，调用者需持有锁）"""
         # 优先级: coincurve > OpenSSL > ecdsa > Pure Python
         priority_order = [
@@ -516,7 +516,7 @@ class CryptoBackendManager:
         logger.info(f"加密后端已切换: {old_backend} -> {backend.name}")
         return True
 
-    def get_available_backends(self) -> list:
+    def get_available_backends(self) -> list[tuple[BackendType, str]]:
         """获取所有可用后端列表（线程安全）"""
         with self._instance_lock:
             backends_copy = dict(self._backends)
@@ -596,7 +596,7 @@ def set_crypto_backend(backend_type: BackendType, **kwargs) -> bool:
     return crypto_manager.set_backend(backend_type, **kwargs)
 
 
-def get_available_backends() -> list:
+def get_available_backends() -> list[tuple[BackendType, str]]:
     """获取所有可用后端"""
     return crypto_manager.get_available_backends()
 

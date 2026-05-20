@@ -150,6 +150,11 @@ quick_verify_*.py
 test_*.py  # 临时测试脚本（非tests目录）
 verify_*.py  # 临时验证脚本
 
+# Shell集成错误产生的垃圾文件（Trae CN IDE）
+utput*
+s -File*
+criptsshell*
+
 # 根目录临时工具脚本
 analysis.py
 calc_cost.py

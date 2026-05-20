@@ -221,7 +221,7 @@ class CLIOutput:
         """
         if self.quiet:
             return
-        
+
         # ANSI转义序列：
         # \033[?25l - 隐藏光标
         # \r - 回到行首
@@ -231,7 +231,7 @@ class CLIOutput:
         cursor_hide = "\033[?25l"
         cursor_show = "\033[?25h"
         clear_eol = "\033[K"
-        
+
         sys.stdout.write(f"{cursor_hide}\r{text}{clear_eol}{cursor_show}")
         sys.stdout.flush()
 

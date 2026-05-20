@@ -312,5 +312,4 @@ def log_safe_exception(
         # 记录异常类型，不记录完整堆栈
         safe_error_msg = f"{message}: {type(exc).__name__}"
         logger.error(safe_error_msg, **kwargs)
-        # 对于非严重错误，可以记录脱敏的异常信息到 debug
-        logger.debug(f"[FULL_ERROR] {safe_error_msg}: {sanitize_private_key_for_log(str(exc).encode())}", **kwargs)
+        logger.debug("[FULL_ERROR] %s: %s", safe_error_msg, str(exc), **kwargs)

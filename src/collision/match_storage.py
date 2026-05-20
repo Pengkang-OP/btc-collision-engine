@@ -90,15 +90,16 @@ class MatchDataStorage:
         temp_file = filepath.with_suffix(".tmp")
 
         try:
-            # 写入临时文件
-            with open(temp_file, "w", encoding="utf-8") as f:
-                fast_dump(complete_data, f, indent=2, ensure_ascii=False)
+            with self._lock:
+                # 写入临时文件
+                with open(temp_file, "w", encoding="utf-8") as f:
+                    fast_dump(complete_data, f, indent=2, ensure_ascii=False)
 
-            # 设置文件权限（仅所有者可读写）
-            os.chmod(temp_file, 0o600)
+                # 设置文件权限（仅所有者可读写）
+                os.chmod(temp_file, 0o600)
 
-            # 原子替换
-            os.replace(temp_file, filepath)
+                # 原子替换
+                os.replace(temp_file, filepath)
 
             logger.critical("🎯 匹配数据已保存: %s", filepath)
 

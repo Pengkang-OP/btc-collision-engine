@@ -20,8 +20,8 @@ if _project_root not in sys.path:
 
 from src.cli.engine_builder import (
     EngineBuildError,
-    GPUNotAvailableError,
     GPUInitializationError,
+    GPUNotAvailableError,
     build_engine,
 )  # noqa: E402
 from src.cli.output import CLIOutput  # noqa: E402

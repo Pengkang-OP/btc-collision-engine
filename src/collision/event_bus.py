@@ -24,7 +24,6 @@
 """
 
 import logging
-import os
 import queue
 import threading
 from collections import defaultdict
@@ -111,8 +110,7 @@ class EventBus:
             logger.debug("事件总线已初始化 (同步模式)")
 
     def subscribe(self, event_type: EventType, handler: Callable) -> None:
-        """
-        订阅事件
+        """订阅事件
 
         Args:
             event_type: 事件类型
@@ -127,11 +125,11 @@ class EventBus:
         with self._lock:
             if handler not in self._subscribers[event_type]:
                 self._subscribers[event_type].append(handler)
-                logger.debug(f"订阅事件: {event_type.value}, 处理器: {handler.__name__}")
+                handler_name = getattr(handler, '__name__', str(handler))
+                logger.debug("订阅事件: %s, 处理器: %s", event_type.value, handler_name)
 
     def unsubscribe(self, event_type: EventType, handler: Callable) -> None:
-        """
-        取消订阅
+        """取消订阅
 
         Args:
             event_type: 事件类型
@@ -140,7 +138,8 @@ class EventBus:
         with self._lock:
             if handler in self._subscribers[event_type]:
                 self._subscribers[event_type].remove(handler)
-                logger.debug(f"取消订阅: {event_type.value}, 处理器: {handler.__name__}")
+                handler_name = getattr(handler, '__name__', str(handler))
+                logger.debug("取消订阅: %s, 处理器: %s", event_type.value, handler_name)
 
     def subscribe_to_all(self, handler: Callable) -> None:
         """
@@ -181,7 +180,8 @@ class EventBus:
             logger.warning("publish() 收到 event_type 为 None 的事件，已忽略")
             return
 
-        self._published_count += 1
+        with self._lock:
+            self._published_count += 1
 
         if self._async_mode:
             # 异步模式: 加入队列
@@ -226,6 +226,7 @@ class EventBus:
             handler: 事件处理函数
             event: 事件对象
         """
+        handler_name = getattr(handler, '__name__', str(handler))
         timeout = self._handler_timeout
         if timeout <= 0:
             try:
@@ -233,15 +234,17 @@ class EventBus:
             except (KeyboardInterrupt, SystemExit):
                 raise
             except Exception as e:
-                self._error_count += 1
-                logger.error(
-                    f"事件处理器异常 [{handler.__name__}]: {type(e).__name__}: {e}"
+                with self._lock:
+                    self._error_count += 1
+                logger.warning(
+                    "事件处理器异常 [%s]: %s: %s",
+                    handler_name, type(e).__name__, e
                 )
                 if self._error_handler:
                     try:
                         self._error_handler(event, e)
                     except Exception as handler_err:
-                        logger.error(f"错误处理器异常: {handler_err}")
+                        logger.warning("错误处理器异常: %s", handler_err)
             return
 
         handler_result: list[Exception | None] = [None]
@@ -269,15 +272,17 @@ class EventBus:
 
         exc = handler_result[0]
         if exc is not None:
-            self._error_count += 1
-            logger.error(
-                f"事件处理器异常 [{handler.__name__}]: {type(exc).__name__}: {exc}"
+            with self._lock:
+                self._error_count += 1
+            logger.warning(
+                "事件处理器异常 [%s]: %s: %s",
+                handler_name, type(exc).__name__, exc
             )
             if self._error_handler:
                 try:
                     self._error_handler(event, exc)
                 except Exception as handler_err:
-                    logger.error(f"错误处理器异常: {handler_err}")
+                    logger.warning("错误处理器异常: %s", handler_err)
 
     def _process_events(self) -> None:
         """异步处理事件队列 (后台线程)"""
@@ -294,7 +299,7 @@ class EventBus:
             except queue.Empty:
                 continue
             except Exception as e:
-                logger.error(f"事件处理异常: {e}")
+                logger.warning(f"事件处理异常: {e}")
 
         logger.info("事件处理线程已停止")
 

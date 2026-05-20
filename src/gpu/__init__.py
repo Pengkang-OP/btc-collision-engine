@@ -57,11 +57,11 @@ from .lock_monitor import (  # noqa: E402
 )  # noqa: E402
 from .memory_calculator import GPUMemoryCalculator  # noqa: E402
 from .metrics import GPUMetricsCollector, get_metrics_collector  # noqa: E402
-from .multi_gpu_engine import MultiGPUCollisionEngine  # noqa: E402
 from .multi_format_multi_gpu_engine import (  # noqa: E402
     create_engine,
     create_multi_format_multi_gpu_engine,
 )
+from .multi_gpu_engine import MultiGPUCollisionEngine  # noqa: E402
 from .nvidia_optimizer import NvidiaGPUOptimizer  # noqa: E402
 from .optimization_pipeline import PerformanceOptimizationPipeline  # noqa: E402
 from .scorer import GPUDeviceScorer, get_gpu_scorer, reset_gpu_scorer  # noqa: E402

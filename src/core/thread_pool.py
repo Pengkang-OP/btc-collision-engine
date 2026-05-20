@@ -196,7 +196,7 @@ class WorkStealingThreadPool:
         self._tasks_submitted += 1
         return future
 
-    def _worker(self, thread_id: int):
+    def _worker(self, thread_id: int) -> None:
         """工作线程主循环"""
         while not self._stop_event.is_set():
             task = self._get_task(thread_id)

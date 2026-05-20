@@ -16,11 +16,11 @@ import time
 from enum import Enum
 from typing import Any
 
+from ..utils.bech32_codec import bech32_decode  # 统一 bech32 验证
 from .base58 import Base58
 from .hash_utils import HashUtils
 from .secp256k1 import ECPoint, EllipticCurve, Secp256k1
 from .wif import WIF
-from ..utils.bech32_codec import bech32_decode  # 统一 bech32 验证
 
 
 class WIFEncoder:

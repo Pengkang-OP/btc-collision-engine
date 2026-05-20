@@ -488,9 +488,11 @@ class DataStorage:
             error["timestamp"] = time.time()
             errors.append(error)
 
-            # 限制错误日志长度（保留最近500条）
-            if len(errors) > 500:
-                errors = errors[-500:]
+            # 应用轮转：保留最近7天、最多1000条记录
+            from src.log_engine.log_rotator import LogRotator
+
+            rotator = LogRotator(max_age_days=7, max_count=1000)
+            errors = rotator.rotate(errors)
 
             # 原子写入
             temp_file = self.error_log_file + ".tmp"
@@ -560,7 +562,7 @@ class DataStorage:
                 return []
 
             # 尝试 JSON array 格式（向后兼容旧数据）
-            if raw.strip().startswith('['):
+            if raw.strip().startswith("["):
                 try:
                     data = fast_loads(raw)
                     if isinstance(data, list):
@@ -804,9 +806,7 @@ class AnomalyDetector:
                 "trend": (
                     "increasing"
                     if speeds and speeds[-1] > speeds[0]
-                    else "decreasing"
-                    if speeds and speeds[-1] < speeds[0]
-                    else "stable"
+                    else "decreasing" if speeds and speeds[-1] < speeds[0] else "stable"
                 ),
             },
             "cpu_usage": {
@@ -815,9 +815,7 @@ class AnomalyDetector:
                 "trend": (
                     "increasing"
                     if cpu_usages and cpu_usages[-1] > cpu_usages[0]
-                    else "decreasing"
-                    if cpu_usages and cpu_usages[-1] < cpu_usages[0]
-                    else "stable"
+                    else "decreasing" if cpu_usages and cpu_usages[-1] < cpu_usages[0] else "stable"
                 ),
             },
             "memory_usage": {
@@ -826,9 +824,11 @@ class AnomalyDetector:
                 "trend": (
                     "increasing"
                     if memory_usages and memory_usages[-1] > memory_usages[0]
-                    else "decreasing"
-                    if memory_usages and memory_usages[-1] < memory_usages[0]
-                    else "stable"
+                    else (
+                        "decreasing"
+                        if memory_usages and memory_usages[-1] < memory_usages[0]
+                        else "stable"
+                    )
                 ),
             },
         }
@@ -1007,10 +1007,21 @@ class ReportGenerator:
 
         # 计算统计数据（兼容扁平字典和嵌套 performance 两种历史数据格式）
         speeds = [d.get("performance", {}).get("speed", d.get("speed", 0)) for d in today_data]
-        total_checked = sum(d.get("performance", {}).get("total_checked", d.get("total_checked", 0)) for d in today_data)
-        matches_found = sum(d.get("performance", {}).get("matches_found", d.get("matches_found", 0)) for d in today_data)
-        cpu_usages = [d.get("performance", {}).get("cpu_usage", d.get("cpu_usage", 0)) for d in today_data]
-        memory_usages = [d.get("performance", {}).get("memory_usage", d.get("memory_usage", 0)) for d in today_data]
+        total_checked = sum(
+            d.get("performance", {}).get("total_checked", d.get("total_checked", 0))
+            for d in today_data
+        )
+        matches_found = sum(
+            d.get("performance", {}).get("matches_found", d.get("matches_found", 0))
+            for d in today_data
+        )
+        cpu_usages = [
+            d.get("performance", {}).get("cpu_usage", d.get("cpu_usage", 0)) for d in today_data
+        ]
+        memory_usages = [
+            d.get("performance", {}).get("memory_usage", d.get("memory_usage", 0))
+            for d in today_data
+        ]
 
         # 计算平均值
         speed_avg = statistics.mean(speeds) if speeds else 0
@@ -1289,7 +1300,7 @@ class MonitoringSystem:
         # 写入剩余缓冲数据
         self._flush_buffer()
         # 确保 DataLogger 完整刷写（含性能日志缓冲和错误缓冲）
-        if hasattr(self, '_data_logger') and self._data_logger is not None:
+        if hasattr(self, "_data_logger") and self._data_logger is not None:
             self._data_logger.stop()
         logger.info("监控系统已停止")
 

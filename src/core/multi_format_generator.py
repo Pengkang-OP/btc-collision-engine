@@ -13,16 +13,12 @@
     >>> print(addresses['p2pkh'], addresses['p2sh'], addresses['bech32'])
 """
 
-import hashlib
 import secrets
 from enum import Enum
-from typing import Optional
 
 from ..utils import get_configured_logger
-from .base58 import Base58
-from .bitcoin_key_validator import BitcoinKeyValidator, AddressType
-from .hash_utils import HashUtils
 from ..utils.bech32_codec import bech32_encode
+from .bitcoin_key_validator import BitcoinKeyValidator
 
 logger = get_configured_logger("MultiFormatAddressGenerator")
 
@@ -63,7 +59,7 @@ class MultiFormatAddressGenerator:
         """
         self.auto_detect = auto_detect
         self.prefer_compressed = prefer_compressed
-        self._public_key_cache: Optional[bytes] = None
+        self._public_key_cache: bytes | None = None
         logger.info(
             f"MultiFormatAddressGenerator初始化: auto_detect={auto_detect}, "
             f"prefer_compressed={prefer_compressed}"
@@ -298,7 +294,7 @@ class MultiFormatAddressGenerator:
 
     def match_address(
         self, private_key: bytes, targets: dict[AddressFormat, set[str]]
-    ) -> tuple[bool, Optional[str], Optional[str]]:
+    ) -> tuple[bool, str | None, str | None]:
         """
         检查私钥生成的地址是否匹配任何格式的目标
         【优化】只生成目标格式对应的地址，提升性能

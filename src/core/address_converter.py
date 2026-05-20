@@ -1,6 +1,7 @@
 """地址转换工具 - 私钥到地址和WIF的完整转换"""
 
 import hashlib
+from typing import Any
 
 from ..utils import get_configured_logger
 from .base58 import Base58
@@ -29,7 +30,7 @@ class AddressConverter:
         self.ec = EllipticCurve()
         logger.info("AddressConverter初始化完成")
 
-    def private_key_to_address(self, private_key: bytes, compressed: bool = True) -> dict:
+    def private_key_to_address(self, private_key: bytes, compressed: bool = True) -> dict[str, Any]:
         """
         私钥 → 比特币地址 (严格遵循Bitcoin Core规范)
 
@@ -87,7 +88,7 @@ class AddressConverter:
         """
         return WIF.encode(private_key, compressed)
 
-    def private_key_to_all(self, private_key: bytes) -> dict:
+    def private_key_to_all(self, private_key: bytes) -> dict[str, Any]:
         """
         私钥 → 所有格式的完整转换
 
@@ -124,7 +125,7 @@ class AddressConverter:
             "wif_uncompressed": wif_uncompressed,
         }
 
-    def wif_to_address(self, wif: str) -> dict:
+    def wif_to_address(self, wif: str) -> dict[str, Any]:
         """
         WIF → 私钥 → 地址
 

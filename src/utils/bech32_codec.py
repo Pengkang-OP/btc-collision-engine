@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Bech32 / Bech32m 统一编解码模块
 
 基于 BIP-173 (Bech32) 和 BIP-350 (Bech32m) 规范实现。
@@ -22,8 +21,6 @@
 """
 
 from __future__ import annotations
-
-from typing import List, Optional, Tuple
 
 # ============================================================================
 # 常量定义
@@ -50,7 +47,7 @@ WP_MAX_LENGTH = 40
 # 核心算法
 # ============================================================================
 
-def bech32_polymod(values: List[int]) -> int:
+def bech32_polymod(values: list[int]) -> int:
     """Bech32/Bech32m 多项式校验模运算
 
     Args:
@@ -68,7 +65,7 @@ def bech32_polymod(values: List[int]) -> int:
     return chk
 
 
-def bech32_hrp_expand(hrp: str) -> List[int]:
+def bech32_hrp_expand(hrp: str) -> list[int]:
     """扩展 HRP 为校验运算所需格式
 
     Args:
@@ -81,11 +78,11 @@ def bech32_hrp_expand(hrp: str) -> List[int]:
 
 
 def convertbits(
-    data: bytes | List[int],
+    data: bytes | list[int],
     from_bits: int,
     to_bits: int,
     pad: bool = True
-) -> Optional[List[int]]:
+) -> list[int] | None:
     """5-bit <-> 8-bit 位转换 (BIP-173 convertbits)
 
     含 max_acc 溢出保护，防止长时间序列导致的累加器无界增长。
@@ -101,7 +98,7 @@ def convertbits(
     """
     acc = 0
     bits = 0
-    result: List[int] = []
+    result: list[int] = []
     maxv = (1 << to_bits) - 1
     max_acc = (1 << (from_bits + to_bits - 1)) - 1
 
@@ -127,7 +124,7 @@ def convertbits(
 # 校验和
 # ============================================================================
 
-def bech32_verify_checksum(hrp: str, data: List[int]) -> Optional[int]:
+def bech32_verify_checksum(hrp: str, data: list[int]) -> int | None:
     """验证 Bech32/Bech32m 校验和
 
     Args:
@@ -147,7 +144,7 @@ def bech32_verify_checksum(hrp: str, data: List[int]) -> Optional[int]:
     return None
 
 
-def bech32_create_checksum(hrp: str, data: List[int], spec: str = "bech32") -> List[int]:
+def bech32_create_checksum(hrp: str, data: list[int], spec: str = "bech32") -> list[int]:
     """创建 Bech32/Bech32m 校验和
 
     Args:
@@ -211,7 +208,7 @@ def bech32_encode(
     return hrp.lower() + "1" + "".join(BECH32_CHARSET[d] for d in combined + checksum)
 
 
-def bech32_decode(bech: str) -> Tuple[Optional[str], Optional[List[int]], Optional[int]]:
+def bech32_decode(bech: str) -> tuple[str | None, list[int] | None, int | None]:
     """解码 Bech32/Bech32m 字符串
 
     Args:
@@ -254,7 +251,7 @@ def bech32_decode(bech: str) -> Tuple[Optional[str], Optional[List[int]], Option
 # SegWit 地址解析
 # ============================================================================
 
-def decode_segwit_address(hrp: str, addr: str) -> Tuple[Optional[int], Optional[bytes]]:
+def decode_segwit_address(hrp: str, addr: str) -> tuple[int | None, bytes | None]:
     """解码 SegWit 地址，提取 witness version 和 witness program
 
     支持:

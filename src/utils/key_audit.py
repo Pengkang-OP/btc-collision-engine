@@ -55,14 +55,14 @@ class KeyAuditLogger:
             try:
                 import os
                 os.makedirs(os.path.dirname(log_file), exist_ok=True)
-                
+
                 # 检查是否已存在相同文件的处理器
                 existing_handler = None
                 for handler in logger.handlers:
                     if isinstance(handler, logging.FileHandler) and handler.baseFilename == os.path.abspath(log_file):
                         existing_handler = handler
                         break
-                
+
                 if not existing_handler:
                     handler = logging.FileHandler(log_file, encoding="utf-8")
                     handler.setFormatter(
