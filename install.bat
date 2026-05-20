@@ -1,15 +1,15 @@
 @echo off
-call "%~dp0common.bat"
-call :init_encoding
-call :set_script_dir
-call :print_header "BTC Collision Engine - Installer"
+setlocal enabledelayedexpansion
+call "%~dp0common.bat" :init_encoding
+call "%~dp0common.bat" :set_script_dir
+call "%~dp0common.bat" :print_header "BTC Collision Engine - Installer"
 
-call :check_python
-call :check_python_version
-<<<<<<< Updated upstream
-=======
+call "%~dp0common.bat" :check_python
+if errorlevel 1 exit /b 1
+call "%~dp0common.bat" :check_python_version
+if errorlevel 1 exit /b 1
 
-call :print_section "Step 2: 设置虚拟环境"
+call "%~dp0common.bat" :print_section "Step 2: 设置虚拟环境"
 
 if exist "venv\Scripts\activate.bat" (
     echo [INFO] 检测到现有虚拟环境
@@ -18,7 +18,7 @@ if exist "venv\Scripts\activate.bat" (
     echo   2. 删除并重新创建 (环境损坏时使用)
     echo.
 
-rem ask_venv (v4.2.2: :: 在 () 块内会导致解析错误, 改用 rem)
+:ask_venv
 set "VENV_CHOICE="
 set /p "VENV_CHOICE=   请选择 [1/2]: "
 if "!VENV_CHOICE!"=="1" goto :activate_venv
@@ -54,11 +54,15 @@ if errorlevel 1 (
 )
 echo [OK] 虚拟环境已激活
 
-call :print_section "Step 3: 升级 pip"
+call "%~dp0common.bat" :print_section "Step 3: 升级 pip"
 python -m pip install --upgrade pip --quiet
-echo [OK] pip 升级成功
+if errorlevel 1 (
+    echo [警告] pip 升级失败，继续安装...
+) else (
+    echo [OK] pip 升级成功
+)
 
-call :print_section "Step 4: 安装基础依赖"
+call "%~dp0common.bat" :print_section "Step 4: 安装基础依赖"
 echo [INFO] 这可能需要几分钟...
 
 echo   正在安装 coincurve (预编译)...
@@ -80,11 +84,16 @@ pip install -r requirements-base.txt --quiet >nul 2>&1
 if errorlevel 1 (
     echo [警告] 部分基础依赖安装失败，正在尝试详细安装...
     pip install -r requirements-base.txt
+    if errorlevel 1 (
+        echo [错误] 基础依赖安装失败
+        pause
+        exit /b 1
+    )
 ) else (
     echo [OK] 基础依赖已安装
 )
 
-call :print_section "Step 5: GPU 加速支持 (可选)"
+call "%~dp0common.bat" :print_section "Step 5: GPU 加速支持 (可选)"
 echo.
 echo   GPU 加速可将性能提升 100-1000 倍
 echo   需要: pyopencl + 对应显卡的 OpenCL 驱动
@@ -94,7 +103,7 @@ echo   AMD 显卡   : 安装 AMD 驱动 ^>= 21.x
 echo   Intel Arc  : 安装 Intel Arc 驱动 ^>= 31.0.101.4146
 echo.
 
-rem ask_gpu (v4.2.2: :: 在 () 块内会导致解析错误, 改用 rem)
+:ask_gpu
 set "GPU_CHOICE="
 set /p "GPU_CHOICE=   是否安装 GPU 依赖? [y/n]: "
 if /i "!GPU_CHOICE!"=="y" (
@@ -116,26 +125,15 @@ echo [错误] 请输入 y 或 n
 goto :ask_gpu
 
 :after_gpu
-call :print_section "Step 6: 完成设置"
+call "%~dp0common.bat" :print_section "Step 6: 完成设置"
 
->>>>>>> Stashed changes
-call :create_required_dirs
-call :create_config
+call "%~dp0common.bat" :create_required_dirs
+if errorlevel 1 exit /b 1
 
-rem -- Create virtual environment --
-if not exist "venv" (
-    echo Creating virtual environment...
-    python -m venv venv
-)
+call "%~dp0common.bat" :create_config
+if errorlevel 1 exit /b 1
 
-<<<<<<< Updated upstream
-call :activate_venv
-
-rem -- Install dependencies --
-echo Installing dependencies...
-pip install -r requirements.txt
-=======
-rem v4.2.2: && / || 在 PowerShell 中不可用, 改用 if errorlevel
+call "%~dp0common.bat" :print_section "Step 7: 验证依赖"
 python -c "import rich"         >nul 2>&1
 if errorlevel 1 (echo   [缺失] rich)              else (echo   [OK] rich)
 python -c "import coincurve"    >nul 2>&1
@@ -150,7 +148,6 @@ python -c "import pyopencl"     >nul 2>&1
 if errorlevel 1 (echo   [INFO] pyopencl (GPU 模式不可用)) else (echo   [OK] pyopencl (GPU))
 python -c "import jsonschema"   >nul 2>&1
 if errorlevel 1 (echo   [缺失] jsonschema)        else (echo   [OK] jsonschema)
->>>>>>> Stashed changes
 
 echo.
 echo ================================================================
@@ -158,4 +155,4 @@ echo   Installation complete!
 echo   Run start.bat to launch the engine
 echo ================================================================
 echo.
-pause
+if not defined CI if not defined AUTOMATION pause
