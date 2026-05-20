@@ -11,7 +11,7 @@ import secrets
 import sys
 import threading  # L3修复: 添加线程锁支持
 import warnings
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from logging import getLogger
 from typing import Any
 
