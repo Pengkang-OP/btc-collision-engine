@@ -47,7 +47,8 @@ LABEL maintainer="BTC Project" \
     org.label-schema.vcs-url="https://github.com/your-repo/btc-collision-engine"
 
 # 运行时参数
-ARG RUN_MODE="cpu"  # cpu 或 gpu
+# cpu 或 gpu（注意：此 ARG 在 production stage 中未被引用，保留供后续扩展）
+ARG RUN_MODE="cpu"
 
 # 环境变量
 ENV PYTHONUNBUFFERED=1 \

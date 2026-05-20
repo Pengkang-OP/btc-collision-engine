@@ -31,9 +31,9 @@ services:
     volumes:
       - ./config.production.json:/opt/btc-collision-engine/config.production.json:ro  # ⚠️ 必须先 cp config.example.json config.production.json
       - ./targets.txt:/opt/btc-collision-engine/targets.txt:ro
-      - btc-data:/opt/btc-collision-engine/data_logs
-      - btc-logs:/opt/btc-collision-engine/logs
-      - btc-monitor:/opt/btc-collision-engine/monitoring_data
+      - ./data:/opt/btc-collision-engine/data_logs
+      - ./logs:/opt/btc-collision-engine/logs
+      - ./monitoring:/opt/btc-collision-engine/monitoring_data
 
     # 资源限制
     deploy:
@@ -99,9 +99,9 @@ services:
     volumes:
       - ./config.production.json:/opt/btc-collision-engine/config.production.json:ro  # ⚠️ 必须先 cp config.example.json config.production.json
       - ./targets.txt:/opt/btc-collision-engine/targets.txt:ro
-      - btc-data:/opt/btc-collision-engine/data_logs
-      - btc-logs:/opt/btc-collision-engine/logs
-      - btc-monitor:/opt/btc-collision-engine/monitoring_data
+      - ./data:/opt/btc-collision-engine/data_logs
+      - ./logs:/opt/btc-collision-engine/logs
+      - ./monitoring:/opt/btc-collision-engine/monitoring_data
 
     # 资源限制
     deploy:
@@ -170,9 +170,9 @@ services:
     volumes:
       - ./config.production.json:/opt/btc-collision-engine/config.production.json:ro  # ⚠️ 必须先 cp config.example.json config.production.json
       - ./targets.txt:/opt/btc-collision-engine/targets.txt:ro
-      - btc-data:/opt/btc-collision-engine/data_logs
-      - btc-logs:/opt/btc-collision-engine/logs
-      - btc-monitor:/opt/btc-collision-engine/monitoring_data
+      - ./data:/opt/btc-collision-engine/data_logs
+      - ./logs:/opt/btc-collision-engine/logs
+      - ./monitoring:/opt/btc-collision-engine/monitoring_data
 
     # 资源限制
     deploy:
@@ -257,29 +257,8 @@ services:
     profiles:
       - monitoring
 
-# 数据卷
+# 数据卷（应用数据改用 native bind mount，见各服务 volumes 节）
 volumes:
-  btc-data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./data
-
-  btc-logs:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./logs
-
-  btc-monitor:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./monitoring
-
   grafana-data:
     driver: local
 
