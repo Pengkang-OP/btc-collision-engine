@@ -38,7 +38,7 @@ from .cache import AddressCache
 logger = get_configured_logger("TargetResolver", thread_safe=False)
 
 
-from ...utils.bech32_codec import decode_segwit_address  # re-export for external consumers
+from ...utils.bech32_codec import decode_segwit_address  # noqa: E402 — 故意在 logger 后导入
 
 
 class TargetResolver:

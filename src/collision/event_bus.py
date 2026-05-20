@@ -321,8 +321,8 @@ class EventBus:
             try:
                 while not self._event_queue.empty():
                     self._event_queue.get_nowait()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"清空事件队列时异常（非致命）: {type(e).__name__}: {e}")
 
             # 等待工作线程结束
             if self._worker_thread and self._worker_thread.is_alive():

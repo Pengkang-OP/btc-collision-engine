@@ -5,6 +5,7 @@
 支持多种安全后端：cryptography、PyNaCl、ctypes回退。
 """
 
+import ctypes
 import os
 import secrets
 import sys
@@ -30,8 +31,6 @@ try:
     HAS_PYNACL = True
 except ImportError:
     HAS_PYNACL = False
-
-import ctypes
 
 
 class SecureMemoryError(Exception):

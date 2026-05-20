@@ -11,7 +11,6 @@ from datetime import datetime
 from typing import Any, cast
 
 # 导入日志配置
-from .. import __version__ as _project_version
 from ..utils import get_configured_logger
 from ..utils.fast_json import fast_dumps, fast_loads
 from ..utils.platform_utils import PlatformUtils
@@ -118,7 +117,7 @@ class CheckpointManager:
             # 构建断点数据
             self._buffer = {
                 "version": 1,  # 格式版本
-                "project_version": PROJECT_VERSION,  # 项目版本 (C-02: 版本兼容性修复)
+                "project_version": _project_version,  # 项目版本 (C-02: 版本兼容性修复)
                 "timestamp": datetime.now().isoformat(),
                 "mode": mode,
                 "targets": list(targets),
@@ -249,11 +248,11 @@ class CheckpointManager:
                                     "/Q",  # 静默执行
                                 ]
 
-                                result = subprocess.run(cmd, capture_output=True, text=True)  # nosec B603
-                                if result.returncode == 0:
-                                    logger.debug("已使用icacls设置Windows文件权限（仅当前用户可访问）")
-                                else:
-                                    logger.warning(f"icacls权限设置失败: {result.stderr}")
+                                result = subprocess.run(cmd, capture_output=True)  # nosec B603
+                                # Windows 中文系统 icacls 输出可能为 GBK 编码
+                                if result.returncode != 0:
+                                    stderr_str = result.stderr.decode("gbk", errors="replace")
+                                    logger.warning(f"icacls权限设置失败: {stderr_str}")
                             except Exception:
                                 # icacls命令也失败，跳过Windows权限设置
                                 logger.debug("icacls命令执行失败，跳过Windows权限设置")
@@ -362,10 +361,10 @@ class CheckpointManager:
 
                 # C-02: 检查项目版本兼容性
                 checkpoint_project_version = data.get("project_version")
-                if checkpoint_project_version and checkpoint_project_version != PROJECT_VERSION:
+                if checkpoint_project_version and checkpoint_project_version != _project_version:
                     logger.warning(
                         f"断点文件项目版本不匹配: checkpoint={checkpoint_project_version}, "
-                        f"current={PROJECT_VERSION}。可能会出现兼容性问题。"
+                        f"current={_project_version}。可能会出现兼容性问题。"
                     )
                     # 不返回 None，允许用户决定是否继续
 

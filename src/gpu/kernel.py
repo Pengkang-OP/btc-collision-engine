@@ -1,3 +1,5 @@
+import os as _os
+
 """OpenCL kernel source code
 
 Contains OpenCL kernel code for Bitcoin secp256k1 GPU computation.
@@ -1712,8 +1714,6 @@ __kernel void verify_arithmetic(
 
 
 # P2修复: 内核代码外部化 — 运行时从独立 .cl 文件加载，回退到嵌入源码
-import os as _os
-
 
 def _load_kernel_source() -> str:
     """加载 OpenCL 内核源码

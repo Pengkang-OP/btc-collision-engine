@@ -18,7 +18,7 @@ _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
-from src.cli.engine_builder import (
+from src.cli.engine_builder import (  # noqa: E402 — 需 sys.path 前置
     EngineBuildError,
     GPUInitializationError,
     GPUNotAvailableError,

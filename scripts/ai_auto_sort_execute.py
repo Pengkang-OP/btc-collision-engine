@@ -252,21 +252,11 @@ class AISortExecutor:
                 traceback.print_exc()
 
     def _task_push_code(self, task: Task):
-        """执行: 推送代码到远程仓库"""
-        print("\n📦 推送代码到远程仓库...")
-
-        # 添加所有变更文件
-        subprocess.run(["git", "add", "-A"], cwd=self.project_root, check=True)
-        print("✅ 已添加所有变更文件")
-
-        # 提交
-        commit_msg = "feat(v4.2.1): GPU内存管理系统优化 - 修复内存池使用+启用预分配+完善文档"
-        subprocess.run(["git", "commit", "-m", commit_msg], cwd=self.project_root, check=True)
-        print("✅ 已提交变更")
-
-        # 推送到远程
-        subprocess.run(["git", "push", "origin", "main"], cwd=self.project_root, check=True)
-        print("✅ 已推送到远程仓库")
+        """执行: 推送代码到远程仓库（已废弃，安全禁用）"""
+        raise NotImplementedError(
+            "此脚本已废弃。自动 git add -A / commit / push origin main 存在安全风险，"
+            "请手动执行 git 操作或使用 CI/CD 流水线。"
+        )
 
     def _task_fix_memory_pool(self, task: Task):
         """执行: 修复GPU内存池未真正生效问题"""

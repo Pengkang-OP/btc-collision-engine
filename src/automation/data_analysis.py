@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from .models import AnalysisReport, Issue, Severity
+from .models import AnalysisReport, Issue, Severity  # noqa: E402 — 需 sys.path 前置
 
 
 class DataAnalysisModule:

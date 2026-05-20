@@ -8,7 +8,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.core.crypto_backend import (
+from src.core.crypto_backend import (  # noqa: E402 — 需 sys.path 前置
     get_backend_security_info,
     is_secure_backend_available,
     verify_production_ready,
