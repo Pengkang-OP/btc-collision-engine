@@ -2,7 +2,10 @@
 # BTC 碰撞引擎 - Linux/macOS 启动脚本
 # 用法: ./start.sh [参数]  (参数将透传给 key_collision_cli.py)
 
-set -e
+set -euo pipefail
+
+# 切换到脚本所在目录（项目根目录）
+cd "$(dirname "$0")" || exit 1
 
 # 颜色定义
 RED='\033[0;31m'
@@ -17,9 +20,9 @@ echo ""
 
 # 1. 检查Python
 echo "[1/4] 检查Python..."
-if command -v python3 &>/dev/null; then
+if command -v python3 >/dev/null 2>&1; then
     PYTHON=python3
-elif command -v python &>/dev/null; then
+elif command -v python >/dev/null 2>&1; then
     PYTHON=python
 else
     echo -e "${RED}[错误] 未找到Python，请先安装Python 3.9+${NC}"
@@ -29,22 +32,22 @@ else
     exit 1
 fi
 
-PYTHON_VERSION=$($PYTHON -c "import sys; print(sys.version.split()[0])")
+PYTHON_VERSION=$("$PYTHON" -c "import sys; print(sys.version.split()[0])")
 echo -e "${GREEN}[成功]${NC} Python版本: $PYTHON_VERSION"
 
 # 2. 检查虚拟环境
 echo ""
 echo "[2/4] 检查虚拟环境..."
-if [ -z "$VIRTUAL_ENV" ]; then
+if [ -z "${VIRTUAL_ENV:-}" ]; then
     echo -e "${YELLOW}[警告]${NC} 虚拟环境未激活"
     if [ -f "venv/bin/activate" ]; then
-        read -p "是否激活虚拟环境? (y/N): " ACTIVATE
+        read -r -p "是否激活虚拟环境? (y/N): " ACTIVATE
         if [ "$ACTIVATE" = "y" ] || [ "$ACTIVATE" = "Y" ]; then
             source venv/bin/activate
             echo -e "${GREEN}[成功]${NC} 虚拟环境已激活: venv/"
         fi
     elif [ -f ".venv/bin/activate" ]; then
-        read -p "是否激活虚拟环境? (y/N): " ACTIVATE
+        read -r -p "是否激活虚拟环境? (y/N): " ACTIVATE
         if [ "$ACTIVATE" = "y" ] || [ "$ACTIVATE" = "Y" ]; then
             source .venv/bin/activate
             echo -e "${GREEN}[成功]${NC} 虚拟环境已激活: .venv/"
@@ -91,4 +94,4 @@ echo "  查看全部选项:"
 echo "    python key_collision_cli.py --help"
 echo ""
 
-exec $PYTHON key_collision_cli.py "$@"
+exec "$PYTHON" key_collision_cli.py "$@"
