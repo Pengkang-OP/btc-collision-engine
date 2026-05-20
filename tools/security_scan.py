@@ -7,13 +7,13 @@
 使用方法:
     # 扫描所有源代码
     python tools/security_scan.py
-    
+
     # 生成HTML报告
     python tools/security_scan.py --format html --output security_report.html
-    
+
     # 仅扫描高严重性问题
     python tools/security_scan.py --severity high
-    
+
     # CI/CD模式(失败时退出码非0)
     python tools/security_scan.py --ci-mode
 """
@@ -131,7 +131,7 @@ def generate_html_report(report, output_file="security_report.html"):
     if not report:
         return
 
-    issues = report.get("issues", [])
+    issues = report.get("results", [])  # bandit 使用 results 而非 issues
     metrics = report.get("metrics", {})
 
     html_content = f"""<!DOCTYPE html>
@@ -163,7 +163,7 @@ def generate_html_report(report, output_file="security_report.html"):
     <div class="container">
         <h1>🔒 安全扫描报告</h1>
         <p><strong>生成时间:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
-        
+
         <div class="summary">
             <h2>📊 扫描统计</h2>
             <table>
@@ -173,7 +173,7 @@ def generate_html_report(report, output_file="security_report.html"):
                 <tr><td>低危问题</td><td>{metrics.get('_issue_severity', {}).get('LOW', 0)}</td></tr>
             </table>
         </div>
-        
+
         <h2>🚨 问题详情</h2>
 """
 

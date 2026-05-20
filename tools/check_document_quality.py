@@ -255,6 +255,8 @@ class DocumentQualityChecker:
                 issues=self.issues.copy()
             )
 
+        except KeyboardInterrupt:
+            raise
         except Exception as e:
             print(f"❌ {file_path.name}: 检查失败 - {e}")
             return DocumentScore(
@@ -429,8 +431,8 @@ class DocumentQualityChecker:
         # 分类统计 - 使用常量避免字符串匹配错误
         code_block_issues = sum(1 for i in self.issues if IssueType.CODE_BLOCK in i.message)
         link_issues = sum(1 for i in self.issues if IssueType.LINK in i.message)
-        sum(1 for i in self.issues if IssueType.TOC in i.message)
-        sum(1 for i in self.issues if IssueType.VERSION in i.message)
+        toc_issues = sum(1 for i in self.issues if IssueType.TOC in i.message)
+        version_issues = sum(1 for i in self.issues if IssueType.VERSION in i.message)
         heading_issues = sum(1 for i in self.issues if IssueType.HEADING in i.message)
 
         # 使用配置的计算机制

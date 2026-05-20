@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """深度性能分析 - 验证46k keys/s是否为真正的最佳性能"""
 
+import os
 import sys
 
-sys.path.insert(0, "f:/Qoder/btc-collision-engine")
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 print("=" * 80)
 print("GPU性能深度诊断工具")

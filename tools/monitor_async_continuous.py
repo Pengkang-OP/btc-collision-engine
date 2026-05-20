@@ -44,9 +44,8 @@ def monitor_performance(duration_seconds=60):
             with open(log_file, encoding='utf-8') as f:
                 lines = f.readlines()
 
-            # 获取最后20行
+            # 获取最后20行（预留用于后续日志摘要输出）
             recent_lines = lines[-20:] if len(lines) > 20 else lines
-            ''.join(recent_lines)
 
             # 提取性能数据
             current_throughput = "N/A"

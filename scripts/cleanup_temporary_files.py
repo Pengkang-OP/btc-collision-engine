@@ -21,8 +21,12 @@ logger = get_configured_logger("TemporaryFileCleanup")
 
 
 def clean_log_files():
-    """清理日志文件"""
+    """清理日志文件（仅删除 7 天前的旧文件，保护活跃日志）"""
     logger.info("开始清理日志文件...")
+
+    max_age_days = 7
+    age_threshold = max_age_days * 86400
+    now = time.time()
 
     # 清理日志文件
     log_patterns = [
@@ -36,8 +40,9 @@ def clean_log_files():
     for pattern in log_patterns:
         for file_path in glob.glob(pattern):
             try:
-                os.remove(file_path)
-                logger.info(f"清理日志文件: {file_path}")
+                if now - os.path.getmtime(file_path) > age_threshold:
+                    os.remove(file_path)
+                    logger.info(f"清理日志文件: {file_path}")
             except Exception as e:
                 logger.warning(f"清理日志文件失败: {e}")
 

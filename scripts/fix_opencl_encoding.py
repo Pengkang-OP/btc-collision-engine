@@ -518,9 +518,12 @@ def fix_file(filepath: str) -> int:
             print(f"    pos {i}: {ord(c):#x} '{c}' context: {content[start:end]!r}")
 
     if content != original:
+        import shutil
+
+        shutil.copy2(filepath, filepath + ".bak")
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(content)
-        print(f"  -> File updated, {count} patterns replaced.")
+        print(f"  -> File updated, {count} patterns replaced (backup: {filepath}.bak).")
     else:
         print("  -> No changes made.")
 
@@ -528,7 +531,7 @@ def fix_file(filepath: str) -> int:
 
 
 def main():
-    base = r"f:\Qoder\btc-collision-engine"
+    base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     files = [
         os.path.join(base, "src", "gpu", "kernel.py"),
     ]

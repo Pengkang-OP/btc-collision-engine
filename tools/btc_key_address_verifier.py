@@ -41,17 +41,20 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-# 尝试导入 bech32 库
+# bech32 可用性标记（保留供未来条件导入使用）
 try:
-    import bech32
-    HAS_BECH32 = True
+    import bech32  # noqa: F811
+
+    _HAS_BECH32 = True
 except ImportError:
-    HAS_BECH32 = False
+    _HAS_BECH32 = False
     import logging
+
     logging.getLogger(__name__).warning("bech32 库未安装，Bech32/Bech32m 地址验证将使用内置实现")
 
 from src.core.hash_utils import HashUtils
 from src.core.secp256k1 import ECPoint, EllipticCurve, Secp256k1
+from src.utils.bech32_codec import bech32_encode as _bech32_encode
 
 # ============================================================================
 # 常量定义
@@ -150,8 +153,6 @@ class FullVerificationReport:
 # ============================================================================
 # Bech32/Bech32m 编解码 (统一模块)
 # ============================================================================
-
-from src.utils.bech32_codec import bech32_encode as _bech32_encode
 
 # ============================================================================
 # 主验证类

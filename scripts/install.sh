@@ -42,7 +42,7 @@ echo ""
 echo "[2/7] 检查虚拟环境..."
 if [ -d "venv" ]; then
     echo -e "${YELLOW}[信息]${NC} 检测到现有虚拟环境"
-    read -r -p "是否使用现有虚拟环境? (y/N): " USE_EXISTING
+    read -r -p "是否使用现有虚拟环境? (y/N): " USE_EXISTING || USE_EXISTING="n"
     if [ "$USE_EXISTING" = "y" ] || [ "$USE_EXISTING" = "Y" ]; then
         source venv/bin/activate
         echo -e "${GREEN}[成功]${NC} 虚拟环境已激活"
@@ -106,7 +106,7 @@ fi
 # 5. 提示安装GPU依赖
 echo ""
 echo "[5/7] GPU加速支持（可选）..."
-read -r -p "是否安装GPU加速依赖? (y/N): " INSTALL_GPU
+read -r -p "是否安装GPU加速依赖? (y/N): " INSTALL_GPU || INSTALL_GPU="n"
 if [ "$INSTALL_GPU" = "y" ] || [ "$INSTALL_GPU" = "Y" ]; then
     echo -e "${YELLOW}[信息]${NC} 安装GPU依赖..."
     set +e

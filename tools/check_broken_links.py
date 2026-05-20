@@ -74,7 +74,6 @@ class BrokenLinkChecker:
         """检查单个文件"""
         try:
             content = file_path.read_text(encoding='utf-8')
-            content.split('\n')
             self.checked_files += 1
 
             # 查找所有Markdown链接

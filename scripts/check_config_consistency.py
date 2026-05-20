@@ -4,6 +4,7 @@
 检查 CONFIG_SCHEMA 和 DEFAULT_CONFIG 之间的一致性，并支持自动修复缺失字段。
 """
 
+import copy
 import json
 import sys
 from pathlib import Path
@@ -103,7 +104,7 @@ class ConfigFixer:
         """应用单个字段修复"""
         try:
             path_parts = path.split(".")
-            current = ConfigManager.DEFAULT_CONFIG
+            current = copy.deepcopy(ConfigManager.DEFAULT_CONFIG)
 
             for part in path_parts[:-1]:
                 if part not in current:
