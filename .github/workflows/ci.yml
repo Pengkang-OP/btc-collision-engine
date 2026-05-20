@@ -37,7 +37,7 @@ jobs:
       - name: 运行测试
         timeout-minutes: 70
         run: |
-          python -m pytest tests/ -v --tb=short --cov=src --cov-report=xml --cov-fail-under=40 -m "not (gpu or gpu_kernel)" --timeout=600 --timeout-method=thread -p no:cacheprovider
+          python -m pytest tests/ -v --tb=short --cov=src --cov-report=xml --cov-fail-under=40 -m "not (gpu or gpu_kernel)" --timeout=600 --timeout-method=signal -p no:cacheprovider
 
       - name: 上传覆盖率报告
         uses: codecov/codecov-action@v4
@@ -50,6 +50,7 @@ jobs:
   import-check:
     name: 导入路径检查
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - uses: actions/checkout@v4
@@ -74,6 +75,7 @@ jobs:
   critical-tests:
     name: 关键测试
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
@@ -108,6 +110,7 @@ jobs:
   config-validation:
     name: 配置验证
     runs-on: ubuntu-latest
+    timeout-minutes: 5
 
     steps:
       - uses: actions/checkout@v4
@@ -133,6 +136,7 @@ jobs:
   lint:
     name: 代码格式化检查
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - uses: actions/checkout@v4
@@ -159,6 +163,7 @@ jobs:
   docs-check:
     name: 文档检查
     runs-on: ubuntu-latest
+    timeout-minutes: 5
 
     steps:
       - uses: actions/checkout@v4
@@ -182,6 +187,7 @@ jobs:
   gate:
     name: CI 门禁检查
     runs-on: ubuntu-latest
+    timeout-minutes: 2
     needs: [code-quality, lint, critical-tests, config-validation]
     if: always()
 
@@ -235,6 +241,7 @@ jobs:
   security-scan:
     name: 安全扫描 (Bandit)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - uses: actions/checkout@v4
@@ -311,6 +318,7 @@ jobs:
   type-check:
     name: 类型检查 (mypy)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - uses: actions/checkout@v4
@@ -391,6 +399,7 @@ jobs:
   gpu-static-check:
     name: GPU 源码静态检查
     runs-on: ubuntu-latest
+    timeout-minutes: 5
 
     steps:
       - uses: actions/checkout@v4

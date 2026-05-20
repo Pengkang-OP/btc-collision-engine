@@ -58,6 +58,12 @@
   - 添加 metrics 收集器用于结构化指标导出
   - 支持 Prometheus 格式导出
 
+### 部署与运维
+
+- **docker-compose.yml 数据卷简化**
+  - 持久化数据卷从 Docker named volume 改为 native bind mount（`./data`、`./logs`、`./monitoring`）
+  - 功能等价，配置更清晰，移除顶层 `volumes:` 中冗余的 named volume 定义
+
 ### 测试
 
 - 新增多项安全相关测试用例
@@ -65,6 +71,14 @@
 - 测试通过率保持 100%
 
 ### BREAKING CHANGES
+
+- **docker-compose.yml 数据卷迁移**: 若服务器上已有通过 named volume（`btc-data`、`btc-logs`、`btc-monitor`）存储的历史数据，升级后数据不可见。升级前请将 named volume 中的数据迁移至对应的主机目录：
+
+  ```bash
+  docker run --rm -v btc-data:/src -v ./data:/dst alpine cp -a /src/. /dst/
+  docker run --rm -v btc-logs:/src -v ./logs:/dst alpine cp -a /src/. /dst/
+  docker run --rm -v btc-monitor:/src -v ./monitoring:/dst alpine cp -a /src/. /dst/
+  ```
 
 - **secure_key_context() 返回类型变更**: `secure_key_context()` 和 `SecureKeyManager.get_key()` 现在返回 `memoryview`（只读视图）而非 `bytearray`（可写引用）。这是一项安全增强，防止密钥数据被意外修改。使用 `with secure_key_context() as key:` 的代码需确认 key 类型为 `memoryview`。如需可写副本，请使用新增的 `get_key_copy()` 方法。
 

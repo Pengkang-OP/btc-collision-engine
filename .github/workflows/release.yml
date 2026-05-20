@@ -44,6 +44,7 @@ jobs:
     name: 创建 GitHub Release
     needs: test
     runs-on: ubuntu-latest
+    environment: release
 
     # 需要写权限以创建 Release
     permissions:
@@ -76,11 +77,11 @@ jobs:
           TAG="${{ steps.version.outputs.tag }}"
 
           # 尝试多种常见的 CHANGELOG 版本标题格式
-          NOTES=$(python3 - <<'PYEOF'
-          import re, sys
+          NOTES=$(python3 - <<PYEOF
+          import re, sys, os
 
-          version = "$VERSION"
-          tag = "$TAG"
+          version = os.environ.get("VERSION", "")
+          tag = os.environ.get("TAG", "")
 
           try:
               with open("CHANGELOG.md", "r", encoding="utf-8") as f:
@@ -216,5 +217,5 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository }}:${{ steps.version.outputs.version }},ghcr.io/${{ github.repository }}:latest
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
