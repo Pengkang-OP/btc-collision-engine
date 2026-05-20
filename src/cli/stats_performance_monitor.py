@@ -165,10 +165,8 @@ class StatsPerformanceMonitor:
             alerts.append(("cpu_usage", sample.cpu_usage, cpu_th))
 
         for metric, value, threshold in alerts:
-            try:
+            with contextlib.suppress(Exception):
                 self._alert_callback(metric, value, threshold)
-            except Exception:
-                pass
 
     def get_recent_performance(self, window_seconds: float = 10.0) -> dict[str, Any]:
         """获取最近一段时间的性能统计"""

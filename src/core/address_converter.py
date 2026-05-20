@@ -168,9 +168,8 @@ class AddressConverter:
                 return False, "地址格式无效"
 
             # 验证期望地址
-            if expected_address:
-                if result["address_compressed"] != expected_address:
-                    return False, "地址不匹配"
+            if expected_address and result["address_compressed"] != expected_address:
+                return False, "地址不匹配"
 
             return True, "验证通过"
 

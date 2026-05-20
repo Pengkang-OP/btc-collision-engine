@@ -222,7 +222,7 @@ class BitcoinComplianceValidator:
         """
         results = []
 
-        for i, data in enumerate(data_list):
+        for _i, data in enumerate(data_list):
             is_valid, issues = self.validate(data)
             results.append((is_valid, issues))
 

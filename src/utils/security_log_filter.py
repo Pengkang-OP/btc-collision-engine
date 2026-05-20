@@ -236,11 +236,10 @@ def setup_security_logging() -> None:
             _processed_loggers.add(id(logger))
 
     # 自动发现并保护所有已注册的 logger（覆盖显式列表之外的新模块）
-    for logger_name, logger_ref in logging.Logger.manager.loggerDict.items():
-        if isinstance(logger_ref, logging.Logger):
-            if id(logger_ref) not in _processed_loggers:
-                logger_ref.addFilter(security_filter)
-                _processed_loggers.add(id(logger_ref))
+    for _logger_name, logger_ref in logging.Logger.manager.loggerDict.items():
+        if isinstance(logger_ref, logging.Logger) and id(logger_ref) not in _processed_loggers:
+            logger_ref.addFilter(security_filter)
+            _processed_loggers.add(id(logger_ref))
 
     logging.info(
         "✅ 日志安全过滤器已启用 (显式模块: %d, 自动发现: %d, 总计: %d)",

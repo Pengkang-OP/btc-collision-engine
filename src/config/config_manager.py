@@ -646,7 +646,7 @@ class ConfigManager:
         with self._lock:
             config: dict[str, Any] = self.config
 
-            for i, k in enumerate(keys[:-1]):
+            for _i, k in enumerate(keys[:-1]):
                 if k not in config or not isinstance(config[k], dict):
                     config[k] = {}
                 config = config[k]
@@ -739,10 +739,9 @@ class ConfigManager:
         if cls._cached_validator is None:
             with cls._validator_lock:
                 # 双重检查：持有锁后再次检查
-                if cls._cached_validator is None:
-                    if HAS_JSONSCHEMA:
-                        cls._cached_validator = Draft7Validator(cls.CONFIG_SCHEMA)
-                        logger.debug("Draft7Validator实例已初始化并缓存")
+                if cls._cached_validator is None and HAS_JSONSCHEMA:
+                    cls._cached_validator = Draft7Validator(cls.CONFIG_SCHEMA)
+                    logger.debug("Draft7Validator实例已初始化并缓存")
         return cls._cached_validator
 
     @staticmethod
@@ -913,7 +912,8 @@ class ConfigManager:
         logging_cfg = config.get("logging", {}) if isinstance(config.get("logging"), dict) else {}
         engine_cfg = config.get("engine", {}) if isinstance(config.get("engine"), dict) else {}
         crypto = config.get("crypto", {}) if isinstance(config.get("crypto"), dict) else {}
-        perf_cfg = config.get("performance_monitoring", {}) if isinstance(config.get("performance_monitoring"), dict) else {}
+        perf_raw = config.get("performance_monitoring", {})
+        perf_cfg = perf_raw if isinstance(perf_raw, dict) else {}
 
         # === collision 节 ===
         if "max_workers" in collision:
@@ -1021,12 +1021,11 @@ class ConfigManager:
             for key in ("use_gpu", "auto_detect", "enable_vendor_optimizations"):
                 if key in gpu_cfg:
                     self._validate_bool(f"gpu.{key}", gpu_cfg[key], errors)
-            if "device_index" in gpu_cfg:
-                if not isinstance(gpu_cfg["device_index"], int):
-                    errors["gpu.device_index"] = (
-                        f"gpu.device_index 必须是整数, "
-                        f"当前: {type(gpu_cfg['device_index']).__name__}"
-                    )
+            if "device_index" in gpu_cfg and not isinstance(gpu_cfg["device_index"], int):
+                errors["gpu.device_index"] = (
+                    f"gpu.device_index 必须是整数, "
+                    f"当前: {type(gpu_cfg['device_index']).__name__}"
+                )
 
         # === crypto 节 ===
         if "backend" in crypto:
@@ -1041,12 +1040,11 @@ class ConfigManager:
         for key in ("constant_time", "verify_checksums", "strict_wif_validation", "use_gpu"):
             if key in crypto:
                 self._validate_bool(f"crypto.{key}", crypto[key], errors)
-        if "gpu_device_index" in crypto:
-            if not isinstance(crypto["gpu_device_index"], int):
-                errors["crypto.gpu_device_index"] = (
-                    f"gpu_device_index 必须是整数, "
-                    f"当前: {type(crypto['gpu_device_index']).__name__}"
-                )
+        if "gpu_device_index" in crypto and not isinstance(crypto["gpu_device_index"], int):
+            errors["crypto.gpu_device_index"] = (
+                f"gpu_device_index 必须是整数, "
+                f"当前: {type(crypto['gpu_device_index']).__name__}"
+            )
 
         # === performance_monitoring 节 ===
         for key in ("enabled", "track_slow_operations"):

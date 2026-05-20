@@ -8,6 +8,7 @@ import os
 import platform
 import sys
 import tkinter as tk
+from contextlib import suppress
 
 from .logging_config import get_configured_logger
 
@@ -151,10 +152,8 @@ class PlatformUtils:
         # 支持环境变量覆盖
         env_scale = os.environ.get("BTC_DPI_SCALE")
         if env_scale:
-            try:
+            with suppress(ValueError):
                 return float(env_scale)
-            except ValueError:
-                pass
 
         if cls._dpi_scale is not None:
             return cls._dpi_scale

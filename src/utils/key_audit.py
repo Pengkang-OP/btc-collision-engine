@@ -59,7 +59,9 @@ class KeyAuditLogger:
                 # 检查是否已存在相同文件的处理器
                 existing_handler = None
                 for handler in logger.handlers:
-                    if isinstance(handler, logging.FileHandler) and handler.baseFilename == os.path.abspath(log_file):
+                    if isinstance(handler, logging.FileHandler) and (
+                        handler.baseFilename == os.path.abspath(log_file)
+                    ):
                         existing_handler = handler
                         break
 

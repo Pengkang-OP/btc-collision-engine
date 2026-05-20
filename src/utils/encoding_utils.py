@@ -97,7 +97,8 @@ class EncodingUtils:
                     strategy = "10%采样"
 
                 logger.debug(
-                    f"编码检测采样: 文件={file_size}B, 策略={strategy}, 采样={actual_size}B, 上限={actual_max_size}B"
+                    f"编码检测采样: 文件={file_size}B, 策略={strategy}, "
+                    f"采样={actual_size}B, 上限={actual_max_size}B"
                 )
             else:
                 # 固定采样大小
