@@ -131,10 +131,9 @@ class TargetResolver:
             return "p2sh_address"
 
         # Bech32地址: 以'bc1'开头
+        if input_str.lower().startswith("bc1p"):
+            return "taproot_address"  # Taproot (P2TR, BIP-0341)
         if input_str.lower().startswith("bc1"):
-            # 区分SegWit v0和Taproot
-            if input_str.lower().startswith("bc1p"):
-                return "taproot_address"  # Taproot (P2TR, BIP-0341)
             return "bech32_address"  # SegWit v0 (P2WPKH/P2WSH)
 
         # WIF: 以'5'开头(非压缩,51字符) 或 'K'/'L'开头(压缩,52字符)
@@ -525,7 +524,7 @@ class TargetResolver:
             # 处理剩余的行
             if batch_inputs:
                 batch_results = self.resolve_batch(batch_inputs)
-                for inp, addr in batch_results.items():
+                for _inp, addr in batch_results.items():
                     if addr:
                         addresses.add(addr)
                         valid_count += 1
