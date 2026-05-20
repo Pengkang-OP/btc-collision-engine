@@ -8,6 +8,8 @@ Intel Arc A770 快速启动脚本
 import hashlib
 import logging
 import os
+import platform
+import subprocess
 import sys
 import time
 
@@ -153,7 +155,15 @@ def main():
                     f.write(f"  Address: {address}\n")
                     f.write(f"  WIF: {wif}\n")
                     f.write(f"  Private Key: {private_key.hex()}\n\n")
-                os.chmod(key_file, 0o600)
+                # 跨平台权限保护（Windows os.chmod 仅影响只读标志位，需用 icacls）
+                if platform.system() == "Windows":
+                    subprocess.run(
+                        ["icacls", key_file, "/inheritance:r", "/grant:r",
+                         f"{os.environ.get('USERNAME', 'SYSTEM')}:(R,W)"],
+                        capture_output=True, check=False
+                    )  # nosec B603
+                else:
+                    os.chmod(key_file, 0o600)
             except Exception as e:
                 logger.error(f"保存匹配失败: {e}")
 

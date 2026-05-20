@@ -464,6 +464,14 @@ class KeyCollisionEngine:
         self.on_progress = on_progress
         self.on_match = on_match
         self.on_complete = on_complete
+
+        # 检查关键依赖是否可用（避免后续 None 调用崩溃）
+        if not P2PKH_SIMULATOR_AVAILABLE or P2PKHAddressGenerator is None:
+            raise RuntimeError(
+                "p2pkh_simulator 模块不可用，KeyCollisionEngine 无法运行。"
+                "请使用 key_collision_cli.py 启动命令行模式。"
+            )
+
         self.generator = P2PKHAddressGenerator()
         self.stats = CollisionStats()
         self._stop_event = threading.Event()

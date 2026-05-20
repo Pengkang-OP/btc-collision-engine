@@ -125,9 +125,23 @@ print("\n" + "=" * 80)
 print("性能测试总结")
 print("=" * 80)
 
-print(f"\n✓ pycryptodome 已安装并启用")
-print(f"✓ SIMD哈希优化已启用 (AES-NI加速)")
-print(f"✓ 当前性能: {rate:.1f} sets/s ({performance})")
+# 根据实际检测结果输出（而非无条件打印成功）
+pycryptodome_ok = False
+simd_ok = False
+try:
+    __import__("pycryptodome")
+    pycryptodome_ok = True
+except ImportError:
+    pass
+try:
+    from src.utils.sha256_simd import is_simd_available
+    simd_ok = is_simd_available()
+except Exception:
+    pass
+
+print(f"\n{'✓' if pycryptodome_ok else '✗'} pycryptodome {'已安装并启用' if pycryptodome_ok else '未安装'}")
+print(f"{'✓' if simd_ok else '✗'} SIMD哈希优化{'已启用 (AES-NI加速)' if simd_ok else '未启用'}")
+print(f"{'✓' if pycryptodome_ok or simd_ok else '✗'} 当前性能: {rate:.1f} sets/s ({performance})")
 
 print("\n优化建议:")
 print("  • 如果性能不足，可考虑:")
