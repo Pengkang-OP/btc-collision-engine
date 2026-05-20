@@ -154,12 +154,22 @@ def benchmark_logger_performance(iterations=1000):
         # 等待队列清空
         async_handler.close()
 
-        stats = async_handler._async_logger.get_stats()
-        print(f"  队列状态: {stats}")
+        async_logger = getattr(async_handler, '_async_logger', None)
+        if async_logger:
+            stats = async_logger.get_stats()
+            print(f"  队列状态: {stats}")
 
     finally:
+        # 先确保 handler 已关闭再删除临时文件（Windows 下打开的文件无法删除）
+        try:
+            async_handler.close()
+        except Exception:
+            pass
         if os.path.exists(log_file):
-            os.remove(log_file)
+            try:
+                os.remove(log_file)
+            except OSError:
+                pass
 
 
 def benchmark_sampled_logger(iterations=10000):

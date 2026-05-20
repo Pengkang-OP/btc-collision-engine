@@ -59,7 +59,7 @@ log_info "复制应用文件..."
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" || { log_error "无法确定应用目录"; exit 1; }
 
 # 排除虚拟环境和不必要的文件
-rsync -avz --exclude='venv' \
+rsync -av --exclude='venv' \
            --exclude='.git' \
            --exclude='__pycache__' \
            --exclude='*.pyc' \
@@ -116,9 +116,9 @@ echo ""
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     log_info "启动服务..."
     systemctl start btc-collision-engine
-    
+
     sleep 5
-    
+
     # 检查服务状态
     if systemctl is-active --quiet btc-collision-engine; then
         log_success "服务启动成功！"

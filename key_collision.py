@@ -1303,6 +1303,7 @@ if __name__ == "__main__":
     warnings.warn(
         "直接运行 key_collision.py 已弃用，请使用 key_collision_cli.py 或 start_menu.py",
         DeprecationWarning,
+        stacklevel=2,
     )
     cli = CollisionCLI()
     cli.run()

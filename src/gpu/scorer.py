@@ -394,6 +394,63 @@ class GPUDeviceScorer:
         """
         return self._identify_model(device_name, vendor)
 
+    @staticmethod
+    def _identify_nvidia_model(name_lower: str) -> str:
+        """从设备名称识别 NVIDIA GPU 型号"""
+        if "rtx 50" in name_lower:
+            return "rtx50"
+        if "rtx 40" in name_lower:
+            return "rtx40"
+        if "rtx 30" in name_lower:
+            return "rtx30"
+        if "rtx 20" in name_lower:
+            return "rtx20"
+        if "gtx 16" in name_lower:
+            return "gtx16"
+        if "gtx 10" in name_lower:
+            return "gtx10"
+        if "titan" in name_lower:
+            return "titan"
+        if "tesla" in name_lower:
+            return "tesla"
+        if "quadro" in name_lower:
+            return "quadro"
+        return "nvidia_other"
+
+    @staticmethod
+    def _identify_amd_model(name_lower: str) -> str:
+        """从设备名称识别 AMD GPU 型号"""
+        if "rx 90" in name_lower:
+            return "rx9000"
+        if "rx 7" in name_lower:
+            return "rx7000"
+        if "rx 6" in name_lower:
+            return "rx6000"
+        if "rx 5700" in name_lower or "rx 5600" in name_lower or "rx 5500" in name_lower:
+            return "rx5000"
+        _rx500_patterns = [
+            "rx 590", "rx 580", "rx 570", "rx 560", "rx 550",
+            "rx 480", "rx 470", "rx 460", "rx 540", "rx 530",
+        ]
+        if any(x in name_lower for x in _rx500_patterns):
+            return "rx500"
+        if "vega" in name_lower:
+            return "vega"
+        if "instinct" in name_lower:
+            return "instinct"
+        return "amd_other"
+
+    @staticmethod
+    def _identify_intel_model(name_lower: str) -> str:
+        """从设备名称识别 Intel GPU 型号"""
+        if "arc b" in name_lower or "battlemage" in name_lower:
+            return "arc_bmg"
+        if "arc" in name_lower:
+            return "arc"
+        if "iris" in name_lower:
+            return "iris"
+        return "intel_other"
+
     def _identify_model(self, device_name: str, vendor: str) -> str | None:
         """从设备名称自动识别GPU型号
 
@@ -410,71 +467,14 @@ class GPUDeviceScorer:
 
         name_lower = device_name.lower()
         vendor_lower = vendor.lower()
-        model = None
 
-        if vendor_lower == "nvidia":
-            if "rtx 50" in name_lower:
-                model = "rtx50"
-            elif "rtx 40" in name_lower:
-                model = "rtx40"
-            elif "rtx 30" in name_lower:
-                model = "rtx30"
-            elif "rtx 20" in name_lower:
-                model = "rtx20"
-            elif "gtx 16" in name_lower:
-                model = "gtx16"
-            elif "gtx 10" in name_lower:
-                model = "gtx10"
-            elif "titan" in name_lower:
-                model = "titan"
-            elif "tesla" in name_lower:
-                model = "tesla"
-            elif "quadro" in name_lower:
-                model = "quadro"
-            else:
-                model = "nvidia_other"
-
-        elif vendor_lower == "amd":
-            if "rx 90" in name_lower:
-                model = "rx9000"
-            elif "rx 7" in name_lower:
-                model = "rx7000"
-            elif "rx 6" in name_lower:
-                model = "rx6000"
-            elif "rx 5700" in name_lower or "rx 5600" in name_lower or "rx 5500" in name_lower:
-                model = "rx5000"
-            elif any(
-                x in name_lower
-                for x in [
-                    "rx 590",
-                    "rx 580",
-                    "rx 570",
-                    "rx 560",
-                    "rx 550",
-                    "rx 480",
-                    "rx 470",
-                    "rx 460",
-                    "rx 540",
-                    "rx 530",
-                ]
-            ):
-                model = "rx500"
-            elif "vega" in name_lower:
-                model = "vega"
-            elif "instinct" in name_lower:
-                model = "instinct"
-            else:
-                model = "amd_other"
-
-        elif vendor_lower == "intel":
-            if "arc b" in name_lower or "battlemage" in name_lower:
-                model = "arc_bmg"
-            elif "arc" in name_lower:
-                model = "arc"
-            elif "iris" in name_lower:
-                model = "iris"
-            else:
-                model = "intel_other"
+        _identifiers = {
+            "nvidia": self._identify_nvidia_model,
+            "amd": self._identify_amd_model,
+            "intel": self._identify_intel_model,
+        }
+        identifier = _identifiers.get(vendor_lower)
+        model = identifier(name_lower) if identifier else None
 
         if model:
             self._model_cache[cache_key] = model

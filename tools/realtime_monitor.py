@@ -225,7 +225,7 @@ def main():
     fail_count = sum(1 for _, status, _ in health_checks if status is False)
 
     if fail_count == 0:
-        print("[HEALTHY] 程序运行正常!")
+        print(f"[HEALTHY] 程序运行正常! (通过 {pass_count}/{pass_count + fail_count} 项检查)")
         print()
         if monitoring_data:
             print(f"  已检查: {monitoring_data.get('total_checked', 0):,} 个密钥")

@@ -10,9 +10,12 @@
 6. 规范合规性验证
 """
 import os
+import sys
 
-# 确保在项目根目录运行
-os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# 确保在项目根目录运行（使用 sys.path 而非 os.chdir 避免全局副作用）
+_project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
 
 # H-NEW2修复: 使用正确的包路径导入模块（扁平导入已失效）
 from src.collision.continuous_matcher import ContinuousMatcher
@@ -37,10 +40,9 @@ def example_1_target_table():
     import secrets as _secrets
     _demo_key = _secrets.token_bytes(32)
     from src.core.wif import WIF
-    [
-        WIF.encode(_demo_key, compressed=True),  # 动态生成演示WIF
-        # 可以添加更多WIF地址
-    ]
+    _demo_wif = WIF.encode(_demo_key, compressed=True)  # 动态生成演示WIF
+    # wif_list = [_demo_wif]  # 可添加更多WIF地址
+    # loaded_count = table.load_from_wif_list(wif_list)
 
     # 注意：这里的WIF是示例，实际使用时应替换为真实的目标地址
     # loaded_count = table.load_from_wif_list(wif_list)
@@ -154,7 +156,7 @@ def example_5_match_storage():
     _demo_pk = _secrets.token_bytes(32)
     _demo_wif_c = WIF.encode(_demo_pk, compressed=True)
     _demo_wif_u = WIF.encode(_demo_pk, compressed=False)
-    {
+    _ = {
         'found_at': '2026-04-22T10:30:45.123456',
         'hash160': _secrets.token_bytes(20).hex(),
         'generated': {

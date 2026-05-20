@@ -477,8 +477,8 @@ class BenchmarkRunner:
                 with out_path.open("r", encoding="utf-8") as f:
                     data = json.load(f)
                 self.print_comparison(data.get("comparison", {}))
-            except Exception:
-                pass
+            except (json.JSONDecodeError, OSError):
+                print("[WARN] 无法读取结果文件进行对比", file=sys.stderr)
 
         # 若存在回归，以非零退出码退出（便于 CI 捕获）
         try:
@@ -486,7 +486,7 @@ class BenchmarkRunner:
                 data = json.load(f)
             if data.get("comparison", {}).get("regressions"):
                 return 1
-        except Exception:
+        except (json.JSONDecodeError, OSError):
             pass
 
         return 0
@@ -568,15 +568,15 @@ def _run_subset(runner: BenchmarkRunner, suite: Dict[str, Callable]) -> int:
             with out_path.open("r", encoding="utf-8") as f:
                 data = json.load(f)
             runner.print_comparison(data.get("comparison", {}))
-        except Exception:
-            pass
+        except (json.JSONDecodeError, OSError):
+            print("[WARN] 无法读取结果文件进行对比", file=sys.stderr)
     # 若存在回归，返回非零退出码（与 run() 行为一致）
     try:
         with out_path.open("r", encoding="utf-8") as f:
             data = json.load(f)
         if data.get("comparison", {}).get("regressions"):
             return 1
-    except Exception:
+    except (json.JSONDecodeError, OSError):
         pass
     return 0
 
