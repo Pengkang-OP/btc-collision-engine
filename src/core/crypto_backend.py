@@ -222,7 +222,6 @@ class OpenSSLBackend(CryptoBackend):
 <<<<<<< Updated upstream
 =======
         # v4.2.2 C1-regression修复: 使用恒定时间实现
->>>>>>> Stashed changes
         result = ec_impl.scalar_multiply_const_time(k, ECPoint(point_x, point_y))
 
         return cast(tuple[int, int], (result.x, result.y))
@@ -252,7 +251,6 @@ class OpenSSLBackend(CryptoBackend):
         # - scalar_multiply() 已迁移至 scalar_multiply_const_time() (v4.2.2 C1, R2)
         #   Montgomery Ladder 实现，完全恒定时间
         return True
->>>>>>> Stashed changes
 
 
 class CoincurveBackend(CryptoBackend):
@@ -333,7 +331,6 @@ class CoincurveBackend(CryptoBackend):
 <<<<<<< Updated upstream
 =======
         # v4.2.2 C1-regression修复: 使用恒定时间实现
->>>>>>> Stashed changes
         ec_result = ec_impl.scalar_multiply_const_time(k, ECPoint(point_x, point_y))
         return cast(tuple[int, int], (ec_result.x, ec_result.y))
 
@@ -395,7 +392,6 @@ class ECDSABackend(CryptoBackend):
 <<<<<<< Updated upstream
 =======
         # v4.2.2 C1-regression修复: 使用恒定时间实现
->>>>>>> Stashed changes
         result = ec_impl.scalar_multiply_const_time(k, ECPoint(point_x, point_y))
         return cast(tuple[int, int], (result.x, result.y))
 

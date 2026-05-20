@@ -6,7 +6,6 @@ from .secp256k1 import Secp256k1
 
 # 日志系统由CLI/main.py入口统一初始化
 =======
->>>>>>> Stashed changes
 logger = get_configured_logger("BitcoinComplianceValidator")
 
 
@@ -98,7 +97,6 @@ class BitcoinComplianceValidator:
             issues.append("私钥必须大于0")
 
         if key_int >= SECP256K1_ORDER:
->>>>>>> Stashed changes
             issues.append("私钥必须小于secp256k1曲线阶")
 
         return issues

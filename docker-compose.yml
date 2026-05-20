@@ -35,7 +35,7 @@ services:
       - ./logs:/opt/btc-collision-engine/logs
       - ./monitoring:/opt/btc-collision-engine/monitoring_data
 
-    # 资源限制
+    # 资源限制 (仅 Swarm 模式生效，docker-compose up 下被静默忽略)
     deploy:
       resources:
         limits:

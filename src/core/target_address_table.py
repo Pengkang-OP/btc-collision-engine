@@ -13,7 +13,6 @@ from .wif import WIF
 
 # 日志系统由CLI/main.py入口统一初始化
 =======
->>>>>>> Stashed changes
 logger = get_configured_logger("BitcoinTargetTable")
 
 

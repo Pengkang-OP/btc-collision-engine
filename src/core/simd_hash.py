@@ -36,7 +36,6 @@ from ..utils import get_configured_logger
 # 日志系统由CLI/main.py入口统一初始化
 =======
 # 获取模块日志记录器
->>>>>>> Stashed changes
 logger = get_configured_logger("SIMDHash")
 
 

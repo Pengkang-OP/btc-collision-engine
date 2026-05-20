@@ -40,16 +40,21 @@ P3-7增强:
 import threading
 import time
 from collections.abc import Callable
+# 获取模块日志记录器
+logger = get_configured_logger("MemoryPool")
+
+# 常量提取
 from typing import Any, Optional
 
 # 导入日志配置
 from ..utils import get_configured_logger
 
-<<<<<<< Updated upstream
-# 日志系统由CLI/main.py入口统一初始化
+# 获取模块日志记录器
+logger = get_configured_logger("MemoryPool")
+
+# 常量提取
 =======
 # 获取模块日志记录器
->>>>>>> Stashed changes
 logger = get_configured_logger("MemoryPool")
 
 # 常量提取

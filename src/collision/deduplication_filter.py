@@ -6,10 +6,13 @@ from collections import deque
 from typing import Any
 
 # 导入日志配置
+# 获取模块日志记录器
+>>>>>>> Stashed changes
+logger = get_configured_logger("DeduplicationFilter")
 from ..utils import get_configured_logger
 
-<<<<<<< Updated upstream
-# 日志系统由CLI/main.py入口统一初始化
+# 获取模块日志记录器
+logger = get_configured_logger("DeduplicationFilter")
 =======
 # 获取模块日志记录器
 >>>>>>> Stashed changes
@@ -74,6 +77,9 @@ class DeduplicationFilter:
         self.false_positive_rate = false_positive_rate
         self.duplicates_found: int = 0
         self.checks_total: int = 0
+        # _queue 为滑动窗口队列，用于快速哈希模式下的指纹去重
+        # 写入后由 _fast_dedup_check 通过 __contains__ 检查成员
+        # noqa: W0612 (deque 通过 runtime patching 访问，静态分析不可见)
 
         # v4.3.1: 根据 _USE_FAST_HASH 选择指纹函数
         if _USE_FAST_HASH:

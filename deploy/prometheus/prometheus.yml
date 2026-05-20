@@ -14,8 +14,8 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
 
-  # BTC碰撞引擎指标（需要引擎暴露 /metrics 端点后启用）
-  # 当前引擎未内置 Prometheus exporter，需配合独立 exporter 使用
+  # BTC碰撞引擎指标（需引擎暴露 /metrics 端点后启用）
+  # 当前引擎未内置 Prometheus exporter，请先启动 metrics-exporter 再取消注释
   # - job_name: 'btc-collision-engine'
   #   scrape_interval: 10s
   #   static_configs:

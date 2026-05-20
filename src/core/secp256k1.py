@@ -19,7 +19,6 @@ import os
 <<<<<<< Updated upstream
 import threading
 =======
->>>>>>> Stashed changes
 import warnings
 from typing import Any, cast
 
@@ -140,7 +139,6 @@ class Secp256k1:
             return False
 
         if cls.N >= cls.P:
->>>>>>> Stashed changes
             return False
         if n == 2 or n == 3:
             return True

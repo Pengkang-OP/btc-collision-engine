@@ -298,16 +298,18 @@ class BitcoinKeyValidator:
         k = int.from_bytes(private_key, "big")
 
         # 2. 计算公钥：P = k * G
+            # v4.2.2 R1修复: 使用恒定时间实现，避免 RuntimeError
+            public_key_point = self.curve.scalar_multiply_const_time(k, ECPoint(Secp256k1.Gx, Secp256k1.Gy))
+
+            # 3. 验证公钥不是无穷远点
         try:
             # v4.2.2 R1修复: 使用恒定时间实现，避免 RuntimeError
             public_key_point = self.curve.scalar_multiply_const_time(k, ECPoint(Secp256k1.Gx, Secp256k1.Gy))
->>>>>>> Stashed changes
-            # v4.2.2 R1修复: 使用恒定时间实现，避免 RuntimeError
-            public_key_point = self.curve.scalar_multiply_const_time(k, ECPoint(Secp256k1.Gx, Secp256k1.Gy))
+
+            # 3. 验证公钥不是无穷远点
 =======
             # v4.2.2 R1修复: 使用恒定时间实现，避免 RuntimeError
             public_key_point = self.curve.scalar_multiply_const_time(k, ECPoint(Secp256k1.Gx, Secp256k1.Gy))
->>>>>>> Stashed changes
 
             # 3. 验证公钥不是无穷远点
             if public_key_point.is_infinity:
@@ -515,125 +517,105 @@ class BitcoinKeyValidator:
             result.add_detail("traceback", traceback.format_exc())
             return result, ""
 
-    def validate_address(self, address: str) -> KeyValidationResult:
-        """
-        验证比特币地址格式
+    # ── validate_address 辅助方法（降低 C901） ───────────────────
 
-        验证项：
-        - 版本字节
-        - 长度
-        - 校验和
-        """
+    @staticmethod
+    def _detect_address_type(address: str) -> tuple[AddressType, str]:
+        """检测比特币地址类型，返回 (addr_type, type_label)。"""
+        if address.startswith("1"):
+            return AddressType.P2PKH, "P2PKH"
+        elif address.startswith("3"):
+            return AddressType.P2SH, "P2SH"
+        elif address.startswith("bc1"):
+            return AddressType.BECH32, "Bech32"
+        return AddressType.UNKNOWN, "unknown"
+
+    @staticmethod
+    def _validate_legacy_address(address: str, addr_type: AddressType, result: KeyValidationResult) -> None:
+        """验证 P2PKH / P2SH 传统地址格式。"""
+        if (
+            len(address) < KeyValidationConstants.P2PKH_ADDRESS_MIN_LENGTH
+            or len(address) > KeyValidationConstants.P2PKH_ADDRESS_MAX_LENGTH
+        ):
+            _min = KeyValidationConstants.P2PKH_ADDRESS_MIN_LENGTH
+            _max = KeyValidationConstants.P2PKH_ADDRESS_MAX_LENGTH
+            result.add_error(f"地址长度错误: {len(address)}，应为{_min}-{_max}字符")
+
+        valid_chars = set(Base58.ALPHABET)
+        if not all(c in valid_chars for c in address):
+            result.add_error("地址包含无效的Base58字符")
+
+        try:
+            version, payload = Base58.check_decode(address)
+            result.add_detail("version_byte", f"0x{version:02x}")
+            result.add_detail("payload_length", len(payload))
+            expected = (
+                KeyValidationConstants.P2PKH_VERSION_BYTE
+                if addr_type == AddressType.P2PKH
+                else KeyValidationConstants.P2SH_VERSION_BYTE
+            )
+            if version != expected:
+                result.add_warning(
+                    f"地址版本应为0x{expected:02x}, 当前: 0x{version:02x}"
+                )
+            result.add_detail("checksum_valid", True)
+        except (ValueError, TypeError) as e:
+            result.add_error(f"Base58Check校验和验证失败: {str(e)}")
+
+    @staticmethod
+    def _validate_bech32_address(address: str, result: KeyValidationResult) -> None:
+        """验证 Bech32 / Bech32m 地址格式。"""
+        if len(address) < 10:
+            result.add_error(f"Bech32地址长度过短: {len(address)}字符")
+            return
+
+        charset = set("qpzry9x8gf2tvdw0s3jn54khce6mua7l")
+        for c in address[3:]:
+            if c not in charset:
+                result.add_error(f"Bech32地址包含无效字符: '{c}'")
+                return
+
+        try:
+            hrp, data, _ = bech32_decode(address)
+            if hrp is None:
+                result.add_error("Bech32地址解码失败（校验和无效或格式错误）")
+                return
+            if hrp not in ("bc", "tb"):
+                result.add_error(f"Bech32地址HRP错误: 期望'bc'或'tb'，实际'{hrp}'")
+
+            data_length = len(data)
+            if data_length not in (33, 53):
+                result.add_error(
+                    f"Bech32地址数据长度错误: {data_length}，应为33 (P2WPKH) 或 53 (P2WSH)"
+                )
+
+            witness_version = data[0]
+            if witness_version != 0:
+                result.add_error(f"不支持的witness版本: {witness_version}")
+
+            subtype = "P2WPKH" if data_length == 33 else "P2WSH"
+            result.add_detail("bech32_address_subtype", subtype)
+            result.add_detail("bech32_hrp", hrp)
+            result.add_detail("bech32_data_length", data_length)
+            result.add_detail("bech32_valid", True)
+        except Exception as e:
+            result.add_error(f"Bech32地址验证失败: {str(e)}")
+
+    def validate_address(self, address: str) -> KeyValidationResult:
+        """验证比特币地址格式（版本字节、长度、校验和）。"""
         result = KeyValidationResult()
         result.add_detail("address", address)
 
-        # 1. 检测地址类型
-        if address.startswith("1"):
-            addr_type = AddressType.P2PKH
-            result.add_detail("address_type", "P2PKH")
-        elif address.startswith("3"):
-            addr_type = AddressType.P2SH
-            result.add_detail("address_type", "P2SH")
-        elif address.startswith("bc1"):
-            addr_type = AddressType.BECH32
-            result.add_detail("address_type", "Bech32")
-        else:
+        addr_type, type_label = self._detect_address_type(address)
+        if addr_type == AddressType.UNKNOWN:
             result.add_error("未知地址类型")
             return result
+        result.add_detail("address_type", type_label)
 
-        # 2. 验证P2PKH/P2SH地址
-        if addr_type in [AddressType.P2PKH, AddressType.P2SH]:
-            # 验证长度
-            if (
-                len(address) < KeyValidationConstants.P2PKH_ADDRESS_MIN_LENGTH
-                or len(address) > KeyValidationConstants.P2PKH_ADDRESS_MAX_LENGTH
-            ):
-                _min_len = KeyValidationConstants.P2PKH_ADDRESS_MIN_LENGTH
-                _max_len = KeyValidationConstants.P2PKH_ADDRESS_MAX_LENGTH
-                result.add_error(f"地址长度错误: {len(address)}，应为{_min_len}-{_max_len}字符")
-
-            # 验证Base58字符集
-            valid_chars = set(Base58.ALPHABET)
-            if not all(c in valid_chars for c in address):
-                result.add_error("地址包含无效的Base58字符")
-
-            # 验证Base58Check校验和
-            try:
-                version, payload = Base58.check_decode(address)
-                result.add_detail("version_byte", f"0x{version:02x}")
-                result.add_detail("payload_length", len(payload))
-
-                if (
-                    addr_type == AddressType.P2PKH
-                    and version != KeyValidationConstants.P2PKH_VERSION_BYTE
-                ):
-                    _expected_p2pkh = KeyValidationConstants.P2PKH_VERSION_BYTE
-                    result.add_warning(
-                        f"P2PKH地址版本应为0x{_expected_p2pkh:02x}, 当前: 0x{version:02x}"
-                    )
-                elif (
-                    addr_type == AddressType.P2SH and version != KeyValidationConstants.P2SH_VERSION_BYTE
-                ):
-                    _expected_p2sh = KeyValidationConstants.P2SH_VERSION_BYTE
-                    result.add_warning(f"P2SH地址版本应为0x{_expected_p2sh:02x}, 当前: 0x{version:02x}")
-
-                result.add_detail("checksum_valid", True)
-
-            except (ValueError, TypeError) as e:
-                result.add_error(f"Base58Check校验和验证失败: {str(e)}")
-
-        # 3. Bech32地址验证
+        if addr_type in (AddressType.P2PKH, AddressType.P2SH):
+            self._validate_legacy_address(address, addr_type, result)
         elif addr_type == AddressType.BECH32:
-            # 验证最小长度
-            if len(address) < 10:
-                result.add_error(f"Bech32地址长度过短: {len(address)}字符")
-                return result
-
-            # 验证字符集（只允许bech32字符）
-            charset = set("qpzry9x8gf2tvdw0s3jn54khce6mua7l")
-            for c in address[3:]:  # 跳过 "bc1" 前缀
-                if c not in charset:
-                    result.add_error(f"Bech32地址包含无效字符: '{c}'")
-                    return result
-
-            # 使用统一 bech32_codec 模块进行完整验证
-            try:
-                hrp, data, _ = bech32_decode(address)
-                if hrp is None:
-                    result.add_error("Bech32地址解码失败（校验和无效或格式错误）")
-                    return result
-
-                # 验证HRP
-                if hrp != "bc" and hrp != "tb":
-                    result.add_error(f"Bech32地址HRP错误: 期望'bc'或'tb'，实际'{hrp}'")
-
-                # 验证数据长度
-                # P2WPKH: witness version 0 (5 bits) + 20-byte witness program (160 bits) = 33 bytes in 5-bit groups # noqa: E501
-                # P2WSH: witness version 0 (5 bits) + 32-byte witness program (256 bits) =
-                # 53 bytes in 5-bit groups
-                data_length = len(data)
-                if data_length not in [33, 53]:
-                    result.add_error(
-                        f"Bech32地址数据长度错误: {data_length}，应为33 (P2WPKH) 或 53 (P2WSH)"
-                    )
-
-                # 验证witness版本
-                witness_version = data[0]
-                if witness_version != 0:
-                    result.add_error(f"不支持的witness版本: {witness_version}")
-
-                # 确定地址类型
-                if data_length == 33:
-                    result.add_detail("bech32_address_subtype", "P2WPKH")
-                elif data_length == 53:
-                    result.add_detail("bech32_address_subtype", "P2WSH")
-
-                result.add_detail("bech32_hrp", hrp)
-                result.add_detail("bech32_data_length", data_length)
-                result.add_detail("bech32_valid", True)
-
-            except Exception as e:
-                result.add_error(f"Bech32地址验证失败: {str(e)}")
+            self._validate_bech32_address(address, result)
 
         return result
 
