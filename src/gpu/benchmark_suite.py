@@ -418,13 +418,9 @@ class GPUBenchmarkSuite:
             for result in by_type[BenchmarkType.BATCH_EXECUTION.value]:
                 batch_size = result.parameters.get("batch_size", 0)
                 report_lines.append(
-                    f"  {batch_size:>12,} | {  # noqa: E126
-                        result.mean_ms:>8.0f}ms | "
-                    f"{  # noqa: E126
-                        result.throughput:>10,.0f}/s | {  # noqa: E126
-                        result.min_ms:>8.0f}ms | {  # noqa: E126
-                        result.max_ms:>8.0f}ms"
-                )  # noqa: E126
+                    f"  {batch_size:>12,} | {result.mean_ms:>8.0f}ms | "
+                    f"{result.throughput:>10,.0f}/s | {result.min_ms:>8.0f}ms | {result.max_ms:>8.0f}ms"
+                )
             report_lines.append("")
 
         # 显存带宽测试

@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 # BTC碰撞引擎 - systemd服务安装脚本
 
 set -euo pipefail
@@ -56,7 +56,7 @@ log_success "目录创建完成"
 
 # 3. 复制应用文件
 log_info "复制应用文件..."
-APP_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" || { log_error "无法确定应用目录"; exit 1; }
 
 # 排除虚拟环境和不必要的文件
 rsync -avz --exclude='venv' \
