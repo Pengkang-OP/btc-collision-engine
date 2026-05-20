@@ -10,7 +10,6 @@ from .base58 import Base58
 # 移除模块级别的 init_logging() 调用，避免重复初始化
 
 # 获取模块日志记录器
->>>>>>> Stashed changes
 logger = get_configured_logger("WIF")
 
 

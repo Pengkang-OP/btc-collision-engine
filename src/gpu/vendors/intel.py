@@ -195,7 +195,6 @@ class IntelGPUVendor(GPUVendorBase):
 =======
         maximum = profile.get("max_batch_size", 2097152)  # v4.2.1: A770 16GB 可安全承载 2M
         memory_efficiency = profile.get("memory_efficiency", 0.70)  # v4.2.1优化: 45% -> 70%
->>>>>>> Stashed changes
 
         # 根据显存计算理论最大值(使用更保守的memory_efficiency)
         global_mem = device.device_info.get("global_mem_size", 0)

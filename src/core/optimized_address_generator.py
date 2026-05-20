@@ -27,7 +27,6 @@ from .address_generator import BaseAddressGenerator
 # 日志系统由CLI/main.py入口统一初始化
 =======
 # 获取模块日志记录器
->>>>>>> Stashed changes
 logger = get_configured_logger("OptimizedAddressGenerator")
 
 
@@ -120,7 +119,6 @@ class OptimizedP2PKHAddressGenerator(BaseAddressGenerator):
 <<<<<<< Updated upstream
 =======
             # v4.2.2 C1-regression修复: 使用恒定时间实现
->>>>>>> Stashed changes
             point = self.ec.scalar_multiply_const_time(k, self.G)
 
         # 压缩或未压缩格式
@@ -212,7 +210,6 @@ class OptimizedP2PKHAddressGenerator(BaseAddressGenerator):
 <<<<<<< Updated upstream
 =======
                 # v4.2.2 C1-regression修复: 使用恒定时间实现
->>>>>>> Stashed changes
                 point = self.ec.scalar_multiply_const_time(pk_int, self.G)
 
             # 压缩格式
