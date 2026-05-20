@@ -91,19 +91,10 @@ def _setup_and_start_engine(
     try:
         from src.monitoring.alert_system import AlertSystem as _alert_class  # noqa: N813
     except ImportError:
-        AlertSystem = None  # type: ignore[assignment]
->>>>>>> Stashed changes
-
-    if _alert_class is not None:
         try:
             from ..monitoring.alert_system import AlertSystem as _alert_class  # noqa: N813
         except ImportError:
             _alert_class: Any = None  # type: ignore[no-redef]
-
-    if _alert_class is not None:
-=======
-        AlertSystem = None  # type: ignore[assignment]
->>>>>>> Stashed changes
 
     if _alert_class is not None:
         try:
@@ -166,30 +157,7 @@ def _setup_and_start_engine(
     return engine, engine_type, alert_system, stop_event
 
 
-def _make_key_handler(
-    engine: Any,
-    engine_type: str,
-    output: Any,
-    stop_event: threading.Event,
-    paused: list[bool],
-    pause_start: list[float | None],
-    total_pause_time: list[float],
-) -> Any:
-    """创建键盘回调函数，返回 on_key callable。"""
-
-    def on_key(key: str) -> None:
-        if key == "P" and not paused[0]:
-            _handle_pause(engine, output, paused, pause_start)
-        elif key == "R" and paused[0]:
-            _handle_resume(engine, output, paused, pause_start, total_pause_time)
-        elif key == "Q":
-            output.print("[red]■ 正在停止..[/red]")
-            stop_event.set()
-            engine.stop()
-        elif key == "S":
-            _handle_stats_key(engine, engine_type)
-
-    return on_key
+# ── 键盘回调（拆分为模块级函数以降低 C901 圈复杂度）───────────────
 
 
 def _handle_pause(
@@ -236,6 +204,35 @@ def _handle_stats_key(engine: Any, engine_type: str) -> None:
         pass
 
 
+def _make_key_handler(
+    engine: Any,
+    engine_type: str,
+    output: Any,
+    stop_event: threading.Event,
+    paused: list[bool],
+    pause_start: list[float | None],
+    total_pause_time: list[float],
+) -> Any:
+    """创建键盘回调函数，返回 on_key callable。"""
+
+    def on_key(key: str) -> None:
+        if key == "P" and not paused[0]:
+            _handle_pause(engine, output, paused, pause_start)
+        elif key == "R" and paused[0]:
+            _handle_resume(engine, output, paused, pause_start, total_pause_time)
+        elif key == "Q":
+            output.print("[red]■ 正在停止..[/red]")
+            stop_event.set()
+            engine.stop()
+        elif key == "S":
+            _handle_stats_key(engine, engine_type)
+
+    return on_key
+
+
+# ── 进度/告警辅助函数 ───────────────────────────────────────────────
+
+
 def _format_multi_gpu_status_line(engine: Any) -> str:
     """格式化 multi_gpu 引擎状态行。"""
     combined = engine.get_combined_stats()
@@ -262,7 +259,7 @@ def _format_multi_gpu_status_line(engine: Any) -> str:
 
 
 def _check_alerts_in_loop(alert_system: Any, stats: Any) -> None:
-    """检查告警系统指标（非多GPU模式）。"""
+    """检查告警系统指标。"""
     if alert_system is None:
         return
     try:
@@ -286,6 +283,20 @@ def _display_progress(hotkey_visible: bool, status_line: str, hotkey_bar: str) -
         print("\033[1A", end="", flush=True)
     else:
         print(f"\r{status_line}\033[K", end="", flush=True)
+
+
+def _init_hotkey_display(listener: Any, output: Any) -> bool:
+    """初始化热键显示状态，返回是否可见。"""
+    if listener._available:
+        return True
+    from src.cli.keyboard_listener import KeyboardListener
+
+    reason = KeyboardListener.unavailable_reason()
+    output.warning(f"键盘快捷键不可用（{reason}）")
+    return False
+
+
+# ── 主循环 ───────────────────────────────────────────────────────────
 
 
 def _run_collision_loop(
@@ -355,15 +366,7 @@ def _run_collision_loop(
         print()
 
 
-def _init_hotkey_display(listener: Any, output: Any) -> bool:
-    """初始化热键显示状态，返回是否可见。"""
-    if listener._available:
-        return True
-    from src.cli.keyboard_listener import KeyboardListener
-
-    reason = KeyboardListener.unavailable_reason()
-    output.warning(f"键盘快捷键不可用（{reason}）")
-    return False
+# ── 现有辅助函数（保持不变）──────────────────────────────────────────
 
 
 def _compute_range(

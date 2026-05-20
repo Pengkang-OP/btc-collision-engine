@@ -14,22 +14,10 @@ from abc import ABC, abstractmethod
 from ..utils import get_configured_logger
 from .base58 import Base58
 from .hash_utils import HashUtils
-# v4.2.2 M3: 日志初始化统一由 CLI 入口 (main.py) 和 utils/__init__.py 处理
-
-# 获取模块日志记录器
->>>>>>> Stashed changes
-logger = get_configured_logger("AddressGenerator")
 from .secp256k1 import EllipticCurve, Secp256k1
-
 # v4.2.2 M3: 日志初始化统一由 CLI 入口 (main.py) 和 utils/__init__.py 处理
 
 # 获取模块日志记录器
-logger = get_configured_logger("AddressGenerator")
-=======
-# v4.2.2 M3: 日志初始化统一由 CLI 入口 (main.py) 和 utils/__init__.py 处理
-
-# 获取模块日志记录器
->>>>>>> Stashed changes
 logger = get_configured_logger("AddressGenerator")
 
 
@@ -178,21 +166,14 @@ class BaseAddressGenerator(ABC):
                     logger.debug(f"私钥生成成功 (尝试 {attempt + 1}/{max_retries})")
                     return private_key
             except Exception as e:
-                if isinstance(e, (ValueError, TypeError, OverflowError)):
-                    logger.error(
-                        "生成私钥时出错 (尝试 %d/%d): %s",
-                        attempt + 1,
-                        max_retries,
-                        type(e).__name__,
-                    )
-                else:
-                    # MEDIUM-8修复: 完全移除可能的敏感信息哈希
-                    logger.error(
-                        "生成私钥时出错 (尝试 %d/%d): %s",
-                        attempt + 1,
-                        max_retries,
-                        type(e).__name__,
-                    )
+                # secrets.token_bytes 可能因系统熵不足抛 ValueError/TypeError/OverflowError
+                # 其他异常（如 OSError）也应记录并重试
+                logger.error(
+                    "生成私钥时出错 (尝试 %d/%d): %s",
+                    attempt + 1,
+                    max_retries,
+                    type(e).__name__,
+                )
 
         logger.error(f"私钥生成失败: 超过最大重试次数 {max_retries}")
         raise KeyGenerationError(

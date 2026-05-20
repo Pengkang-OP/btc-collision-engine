@@ -11,20 +11,12 @@ from datetime import datetime
 from typing import Any, cast
 
 # 导入日志配置
-<<<<<<< Updated upstream
 from .. import __version__ as _project_version
 from ..utils import get_configured_logger
 from ..utils.fast_json import fast_dumps, fast_loads
 from ..utils.platform_utils import PlatformUtils
 
-# 日志系统由CLI/main.py入口统一初始化
-=======
-from .. import __version__ as PROJECT_VERSION
-from ..utils import get_configured_logger
-from ..utils.platform_utils import PlatformUtils
-
 # 获取模块日志记录器
->>>>>>> Stashed changes
 logger = get_configured_logger("CheckpointManager")
 
 
@@ -145,6 +137,99 @@ class CheckpointManager:
             if force or self.should_auto_save():
                 self._flush_buffer()
 
+    # ── _flush_buffer 辅助方法（提取以降低 C901） ─────────────────
+
+    def _write_checkpoint_to_temp(self, temp_filepath: str, serialized: str) -> None:
+        """将序列化数据写入临时文件（支持压缩）。"""
+        use_compression = (
+            self.COMPRESSION_THRESHOLD_BYTES > 0
+            and len(serialized.encode("utf-8")) > self.COMPRESSION_THRESHOLD_BYTES
+        )
+        if use_compression:
+            compressed = zlib.compress(serialized.encode("utf-8"), self.COMPRESSION_LEVEL)
+            header = self.COMPRESSION_MAGIC + bytes([self.COMPRESSION_VERSION])
+            with open(temp_filepath, "wb") as f:
+                f.write(header)
+                f.write(compressed)
+            logger.debug(
+                f"断点压缩保存: {len(serialized):,}B -> {len(compressed):,}B "
+                f"({len(compressed) / max(len(serialized), 1) * 100:.1f}%)"
+            )
+        else:
+            with open(temp_filepath, "w", encoding="utf-8") as f:
+                f.write(serialized)
+
+    def _set_posix_file_permissions(self, filepath: str) -> None:
+        """在 POSIX 系统上设置文件权限为 0o600。"""
+        if PlatformUtils.is_windows():
+            return
+        try:
+            os.chmod(filepath, 0o600)
+            logger.debug("已设置文件权限: 0o600")
+        except OSError as e:
+            logger.debug(f"文件权限设置失败（非致命）: {e}")
+
+    def _set_windows_file_permissions(self) -> None:
+        """在 Windows 上设置文件 ACL（pywin32 优先，fallback icacls）。"""
+        if self._has_win32_security:
+            self._set_windows_acl_via_pywin32()
+        else:
+            self._set_windows_acl_via_icacls()
+
+    def _set_windows_acl_via_pywin32(self) -> None:
+        """通过 pywin32 设置 Windows 文件 DACL。"""
+        try:
+            import getpass
+
+            import ntsecuritycon as con
+            import win32security
+
+            handle = win32security.GetFileSecurity(
+                self.filepath, win32security.DACL_SECURITY_INFORMATION
+            )
+            dacl = win32security.ACL()
+            username = getpass.getuser()
+            sid, _, _ = win32security.LookupAccountName(None, username)
+            dacl.AddAccessAllowedAce(win32security.ACL_REVISION, con.FILE_ALL_ACCESS, sid)
+            handle.SetSecurityDescriptorDacl(1, dacl, 0)
+            win32security.SetFileSecurity(
+                self.filepath, win32security.DACL_SECURITY_INFORMATION, handle
+            )
+            logger.debug("已设置Windows文件权限（仅当前用户可访问）")
+        except Exception as e:
+            logger.debug(f"pywin32权限设置失败: {e}，尝试使用icacls")
+            self._set_windows_acl_via_icacls()
+
+    def _set_windows_acl_via_icacls(self) -> None:
+        """通过 icacls 命令设置 Windows 文件权限。"""
+        try:
+            import getpass
+            import subprocess  # nosec B404
+
+            username = getpass.getuser()
+            cmd = [
+                "icacls", self.filepath,
+                "/inheritance:r", "/grant:r", f"{username}:F", "/Q",
+            ]
+            result = subprocess.run(cmd, capture_output=True, text=True)  # nosec B603
+            if result.returncode == 0:
+                logger.debug("已使用icacls设置Windows文件权限（仅当前用户可访问）")
+            else:
+                logger.warning(f"icacls权限设置失败: {result.stderr}")
+        except Exception:
+            logger.debug("icacls命令执行失败，跳过Windows权限设置")
+
+    def _set_file_permissions(self) -> None:
+        """跨平台设置目标文件权限（不影响主流程）。"""
+        try:
+            self._set_posix_file_permissions(self.filepath)
+            if PlatformUtils.is_windows():
+                self._set_windows_file_permissions()
+        except Exception as e:
+            logger.warning(f"文件权限设置失败: {e}")
+
+    # ── _flush_buffer 主方法（C901 已清零） ────────────────────────
+
     def _flush_buffer(self) -> None:
         """将缓冲区数据写入文件（内部方法）"""
         if not self._dirty or self._buffer is None:
@@ -163,37 +248,15 @@ class CheckpointManager:
             temp_filepath = f"{self.filepath}.tmp"
             logger.debug(f"写入临时文件: {temp_filepath}")
 
-            # 写入临时文件 — v4.3.1: 支持大文件 zlib 压缩
+            # 序列化并写入临时文件
             serialized = fast_dumps(self._buffer, ensure_ascii=False, indent=2)
             if isinstance(serialized, bytes):
                 serialized = serialized.decode("utf-8")
-            use_compression = (
-                self.COMPRESSION_THRESHOLD_BYTES > 0
-                and len(serialized.encode("utf-8")) > self.COMPRESSION_THRESHOLD_BYTES
-            )
-            if use_compression:
-                compressed = zlib.compress(serialized.encode("utf-8"), self.COMPRESSION_LEVEL)
-                header = self.COMPRESSION_MAGIC + bytes([self.COMPRESSION_VERSION])
-                with open(temp_filepath, "wb") as f:
-                    f.write(header)
-                    f.write(compressed)
-                logger.debug(
-                    f"断点压缩保存: {len(serialized):,}B -> {len(compressed):,}B "
-                    f"({len(compressed) / max(len(serialized), 1) * 100:.1f}%)"
-                )
-            else:
-                with open(temp_filepath, "w", encoding="utf-8") as f:
-                    f.write(serialized)
+            self._write_checkpoint_to_temp(temp_filepath, serialized)
             logger.debug("临时文件写入成功")
 
-            # Q3修复: 临时文件安全权限 - 虽然原子重命名后临时文件不再存在，
-            # 但在写入期间提供权限保护是安全最佳实践（防止写入被中断时的短暂暴露窗口）
-            if not PlatformUtils.is_windows():
-                try:
-                    os.chmod(temp_filepath, 0o600)
-                    logger.debug("已设置临时文件权限: 0o600")
-                except OSError as e:
-                    logger.debug(f"临时文件权限设置失败（非致命）: {e}")
+            # Q3修复: 临时文件安全权限
+            self._set_posix_file_permissions(temp_filepath)
 
             # 原子重命名（跨平台兼容）
             logger.debug(f"原子重命名: {temp_filepath} -> {self.filepath}")
@@ -201,104 +264,12 @@ class CheckpointManager:
             logger.debug("原子重命名成功")
 
             # 设置文件权限（跨平台兼容）
-            try:
-                if not PlatformUtils.is_windows():
-                    # Linux/macOS: 设置为仅所有者可读写
-                    os.chmod(self.filepath, 0o600)
-                    logger.debug("已设置文件权限: 0o600 (仅所有者可读写)")
-                else:
-                    # Windows: 尝试设置ACL（仅所有者可访问）
-                    if self._has_win32_security:
-                        try:
-                            import getpass
-
-                            import ntsecuritycon as con
-                            import win32security
-
-                            # 获取文件句柄
-                            handle = win32security.GetFileSecurity(
-                                self.filepath, win32security.DACL_SECURITY_INFORMATION
-                            )
-
-                            # 创建新的DACL
-                            dacl = win32security.ACL()
-
-                            # 获取当前用户SID
-                            username = getpass.getuser()
-                            sid, _, _ = win32security.LookupAccountName(None, username)
-
-                            # 添加访问控制项（仅当前用户可完全控制）
-                            dacl.AddAccessAllowedAce(
-                                win32security.ACL_REVISION, con.FILE_ALL_ACCESS, sid
-                            )
-
-                            # 设置新的DACL
-                            handle.SetSecurityDescriptorDacl(1, dacl, 0)
-                            win32security.SetFileSecurity(
-                                self.filepath, win32security.DACL_SECURITY_INFORMATION, handle
-                            )
-                            logger.debug("已设置Windows文件权限（仅当前用户可访问）")
-                        except Exception as e:
-                            # pywin32权限设置失败，尝试icacls
-                            logger.debug(f"pywin32权限设置失败: {e}，尝试使用icacls")
-                            try:
-                                import getpass
-
-                                username = getpass.getuser()
-                                import subprocess  # nosec B404: icacls is hardcoded, safe
-
-                                # 使用icacls命令设置权限：移除所有继承的权限，只允许当前用户访问
-                                cmd = [
-                                    "icacls",
-                                    self.filepath,
-                                    "/inheritance:r",  # 移除继承
-                                    "/grant:r",
-                                    f"{username}:F",  # 授予当前用户完全控制权限
-                                    "/Q",  # 静默执行
-                                ]
-
-                                result = subprocess.run(cmd, capture_output=True)  # nosec B603
-                                # Windows 中文系统 icacls 输出可能为 GBK 编码
-                                if result.returncode != 0:
-                                    stderr_str = result.stderr.decode("gbk", errors="replace")
-                                    logger.warning(f"icacls权限设置失败: {stderr_str}")
-                            except Exception:
-                                # icacls命令也失败，跳过Windows权限设置
-                                logger.debug("icacls命令执行失败，跳过Windows权限设置")
-                    else:
-                        # pywin32未安装，尝试使用icacls命令
-                        try:
-                            import getpass
-
-                            username = getpass.getuser()
-                            import subprocess  # nosec B404: icacls is hardcoded, safe
-
-                            # 使用icacls命令设置权限：移除所有继承的权限，只允许当前用户访问
-                            cmd = [
-                                "icacls",
-                                self.filepath,
-                                "/inheritance:r",  # 移除继承
-                                "/grant:r",
-                                f"{username}:F",  # 授予当前用户完全控制权限
-                                "/Q",  # 静默执行
-                            ]
-
-                            result = subprocess.run(cmd, capture_output=True, text=True)  # nosec B603
-                            if result.returncode == 0:
-                                logger.debug("已使用icacls设置Windows文件权限（仅当前用户可访问）")
-                            else:
-                                logger.warning(f"icacls权限设置失败: {result.stderr}")
-                        except Exception:
-                            # icacls命令也失败，跳过Windows权限设置
-                            logger.debug("pywin32未安装且icacls命令执行失败，跳过Windows权限设置")
-            except Exception as e:
-                # 权限设置失败不影响主流程，只记录警告
-                logger.warning(f"文件权限设置失败: {e}")
+            self._set_file_permissions()
 
             # 清理可能的旧临时文件
             self._cleanup_temp_file(temp_filepath)
 
-            # v4.2.2 M10: 使用 monotonic 时间，避免系统时间调整影响断点间隔
+            # v4.2.2 M10: 使用 monotonic 时间
             self._last_save_time = time.monotonic()
             self._dirty = False
             _pos = self._buffer.get("current_position")
@@ -307,14 +278,12 @@ class CheckpointManager:
         except PermissionError as e:
             logger.error(f"保存断点失败（权限不足）: {e}")
             logger.error(f"文件路径: {self.filepath}")
-            # Q9修复: traceback 已在文件顶部导入
             logger.error(f"堆栈跟踪: {traceback.format_exc()}")
         except OSError as e:
             logger.error(f"保存断点失败（I/O错误）: {e}", exc_info=True)
         except Exception as e:
             logger.error(f"保存断点失败（未知错误）: {e}", exc_info=True)
         finally:
-            # 清理临时文件（无论成功还是失败都需要清理）
             if "temp_filepath" in locals() and temp_filepath:
                 self._cleanup_temp_file(temp_filepath)
 
@@ -331,22 +300,17 @@ class CheckpointManager:
                 # 检查临时文件是否存在（可能上次写入中断）
                 temp_filepath = self.filepath + ".tmp"
                 if os.path.exists(temp_filepath) and not os.path.exists(self.filepath):
-                    # 尝试恢复临时文件
                     try:
-                        # S7修复: 使用 os.replace 实现跨平台原子操作（Windows/Linux兼容）
                         os.replace(temp_filepath, self.filepath)
-                        # 设置文件权限
                         if not PlatformUtils.is_windows():
                             with suppress(OSError):
                                 os.chmod(self.filepath, 0o600)
                         logger.warning(f"从临时文件恢复断点: {temp_filepath}")
                     except OSError as e:
-                        # 文件系统错误：记录日志并清理临时文件
                         logger.error(f"断点恢复失败: {e}，将重新开始")
                         with suppress(OSError):
-                            os.remove(temp_filepath)  # 清理失败不影响主流程
+                            os.remove(temp_filepath)
                     except Exception as e:
-                        # 未知错误：记录完整信息
                         logger.error(f"断点恢复未知错误: {type(e).__name__}: {e}")
 
                 with open(self.filepath, "rb") as f:
@@ -376,7 +340,6 @@ class CheckpointManager:
                         f"断点文件项目版本不匹配: checkpoint={checkpoint_project_version}, "
                         f"current={_project_version}。可能会出现兼容性问题。"
                     )
-                    # 不返回 None，允许用户决定是否继续
 
                 logger.info(
                     f"断点已加载: {self.filepath}, 模式={data.get('mode')}, "
@@ -416,6 +379,6 @@ class CheckpointManager:
         return os.path.exists(self.filepath)
 
     def should_auto_save(self) -> bool:
-        """检查是否该自动保存（基于时间间隔）"""
-        # v4.2.2 M10: monotonic 时间不受系统时间调整影响
-        return (time.monotonic() - self._last_save_time) >= self.auto_save_interval
+        """检查是否达到自动保存间隔"""
+        return time.monotonic() - self._last_save_time >= self.auto_save_interval
+
