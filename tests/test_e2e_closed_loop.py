@@ -386,8 +386,13 @@ class TestEngineLifecycleClosedLoop:
             use_enhanced_monitoring=False,
         )
 
-        # 足够大的范围确保触发多次 progress 回调（progress_interval=1000）
-        engine.start(mode="range", start=1, end=2000)
+        # monkeypatch: 降低进度回调阈值，确保测试中触发
+        # 注意: 不能设为 0.0，否则 wait(timeout=0) 造成 busy-wait 饿死 worker 线程
+        engine._progress_interval_sec = 0.001  # 1ms 高频轮询
+        engine._progress_interval_count = 1
+
+        # 足够大的范围确保触发多次 progress 回调
+        engine.start(mode="range", start=1, end=20000)
         engine._thread.join(timeout=30)
 
         assert len(progress_events) >= 1, (
