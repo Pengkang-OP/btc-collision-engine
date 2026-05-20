@@ -795,8 +795,11 @@ class KeyCollisionEngine:
         else:
             raise ValueError(f"未知模式: {mode}")
 
-        self._thread = threading.Thread(target=target_fn, daemon=True)
+        self._thread = threading.Thread(target=target_fn, daemon=True, name="engine-worker")
         self._thread.start()
+        # 注意: daemon 线程在主进程退出时会强制终止，
+        # 可能丢失最多 30 秒（checkpoint 间隔）的未保存数据。
+        # 生产环境应使用 SIGTERM handler 触发 save_checkpoint() 后再退出。
 
     def stop(self):
         """停止对撞"""

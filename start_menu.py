@@ -251,6 +251,7 @@ def main() -> None:
             subprocess.run(
                 [python_exe, "key_collision_cli.py", "--quick-start"],
                 cwd=script_dir,
+                check=False,
             )
             print()
             print(_t("menu.press_any_key"))
@@ -261,6 +262,7 @@ def main() -> None:
             subprocess.run(
                 [python_exe, "key_collision_cli.py", "--use-gpu"],
                 cwd=script_dir,
+                check=False,
             )
             print()
             print(_t("menu.press_any_key"))
@@ -273,6 +275,7 @@ def main() -> None:
                 _wait_key()
                 continue
             if os.name == "nt":
+                # 监控进程独立运行，不保存引用（允许菜单退出后持续运行）
                 subprocess.Popen(
                     ["powershell", "-File", ps1_path],
                     creationflags=subprocess.CREATE_NEW_CONSOLE,
@@ -287,6 +290,7 @@ def main() -> None:
             subprocess.run(
                 [python_exe, "key_collision_cli.py", "--help"],
                 cwd=script_dir,
+                check=False,
             )
             _wait_key()
         elif choice == "6":
@@ -295,6 +299,7 @@ def main() -> None:
             subprocess.run(
                 [python_exe, "key_collision_cli.py", "--multi-gpu"],
                 cwd=script_dir,
+                check=False,
             )
             print()
             print(_t("menu.press_any_key"))

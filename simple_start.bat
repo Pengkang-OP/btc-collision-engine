@@ -18,4 +18,4 @@ if exist "venv\Scripts\activate.bat" (
 rem Start the engine
 python key_collision_cli.py
 
-pause
+if not defined CI if not defined AUTOMATION pause
