@@ -430,7 +430,7 @@ class TestBackendImportErrors(unittest.TestCase):
             from src.core.secp256k1 import Secp256k1
             with self.assertRaises(RuntimeError) as ctx:
                 backend.scalar_multiply(1, Secp256k1.Gx, Secp256k1.Gy)
-            self.assertIn("not available", str(ctx.exception))
+            self.assertIn("不可用", str(ctx.exception))
 
     def test_coincurve_unavailable_generate_public_key(self):
         """P2-1: coincurve 不可用时 generate_public_key 抛出 RuntimeError"""

@@ -454,12 +454,12 @@ class TestHandleEngineError:
     """测试 handle_engine_error — 7条分支"""
 
     def test_runtime_error(self):
-        """RuntimeError 分支: 记录 error + record_worker_error"""
+        """RuntimeError 分支: 记录 warning + record_worker_error"""
         stats = MagicMock()
         stats.record_worker_error = MagicMock()
         with patch("src.utils.exception_handler.logger") as mock_logger:
             ExceptionHandler.handle_engine_error("CPU", RuntimeError("test"), stats, "处理")
-        mock_logger.error.assert_called_once()
+        mock_logger.warning.assert_called_once()
         stats.record_worker_error.assert_called_once()
 
     def test_value_error(self):
@@ -468,7 +468,7 @@ class TestHandleEngineError:
         stats.record_worker_error = MagicMock()
         with patch("src.utils.exception_handler.logger") as mock_logger:
             ExceptionHandler.handle_engine_error("GPU", ValueError("bad"), stats)
-        mock_logger.error.assert_called_once()
+        mock_logger.warning.assert_called_once()
         stats.record_worker_error.assert_called_once()
 
     def test_keyboard_interrupt(self):
