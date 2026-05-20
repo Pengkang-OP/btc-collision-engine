@@ -1,0 +1,14 @@
+# Grafana 仪表盘供应配置
+apiVersion: 1
+
+providers:
+  - name: 'BTC Collision Engine'
+    orgId: 1
+    folder: 'BTC'
+    type: file
+    disableDeletion: true
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards
+      foldersFromFilesStructure: true

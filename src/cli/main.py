@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-比特币私钥对撞工具 - 命令行界面
+比特币私钥对撞工具 - 命令行界面入口
 
 用法:
     python -m src.cli.main [选项]
@@ -18,356 +17,335 @@
     python key_collision_cli.py -t 1A1z... -m random --checkpoint --dedup --duration 60
 """
 
-import argparse
 import os
-import signal
 import sys
 import time
-import threading
-from typing import Optional, Set
+from typing import Any, cast
 
 # 将项目根目录加入路径
 _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
-from src.collision import KeyCollisionEngine, TargetResolver, CollisionStats
-from src.utils import init_logging, get_configured_logger
+# ── 仅导入轻量级模块（--help/--version 等命令不触发重量级导入） ─────────────
+from src.cli.arg_parser import parse_args  # noqa: E402
+from src.cli.commands import _dispatch_utility_commands  # noqa: E402
+from src.cli.config_loader import load_config_with_validation  # noqa: E402
+from src.cli.output import CLIOutput  # noqa: E402
+from src.cli.progress import (  # noqa: E402, F401
+    format_progress,
+)  # re-export for backward compat
+from src.cli.stats_reporter import _print_final_summary  # noqa: E402
+from src.cli.validation import validate_args, validate_file_path  # noqa: E402
+from src.core.crypto_backend import verify_production_ready  # noqa: E402
+from src.i18n import _t, set_language  # noqa: E402
+from src.utils import get_configured_logger, init_logging  # noqa: E402
 
+# 初始化日志
 init_logging()
 logger = get_configured_logger("CLI")
 
 
-def parse_args() -> argparse.Namespace:
-    """解析命令行参数"""
-    parser = argparse.ArgumentParser(
-        prog="key_collision_cli",
-        description="比特币私钥对撞工具 - 命令行界面",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-示例:
-  随机碰撞（持续运行直到 Ctrl+C）:
-    python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random
+def _apply_output_flags(args) -> None:
+    """根据 --verbose / --quiet / --no-color 调整日志级别和输出行为"""
+    import logging
 
-  从文件加载目标地址，范围扫描:
-    python key_collision_cli.py -f targets.txt -m range --start 1 --end FFFFFFFF
+    verbose = getattr(args, "verbose", 0)
+    quiet = getattr(args, "quiet", False)
+    no_color = getattr(args, "no_color", False)
 
-  启用断点续传，运行120秒后自动停止:
-    python key_collision_cli.py -t 1A1z... -m random --checkpoint --duration 120
+    # --no-color: 设置环境变量供 Rich 等库感知
+    if no_color:
+        os.environ["NO_COLOR"] = "1"
 
-  多线程暴力穷举，自定义进度显示间隔:
-    python key_collision_cli.py -t 1A1z... -m brute_force --start 1 --workers 8 --progress-interval 10
-        """
-    )
-
-    # 目标地址
-    target_group = parser.add_argument_group("目标地址")
-    target_ex = target_group.add_mutually_exclusive_group(required=True)
-    target_ex.add_argument(
-        "-t", "--targets",
-        metavar="ADDRESS",
-        nargs="+",
-        help="目标比特币地址（可指定多个，空格分隔）"
-    )
-    target_ex.add_argument(
-        "-f", "--file",
-        metavar="FILE",
-        help="从文件加载目标地址（每行一个，支持 # 注释）"
-    )
-
-    # 运行模式
-    mode_group = parser.add_argument_group("碰撞模式")
-    mode_group.add_argument(
-        "-m", "--mode",
-        choices=["random", "range", "brute_force"],
-        default="random",
-        help="碰撞模式: random=随机, range=范围扫描, brute_force=暴力穷举 (默认: random)"
-    )
-    mode_group.add_argument(
-        "--start",
-        metavar="HEX",
-        help="范围起始私钥（十六进制，range/brute_force 模式必填）"
-    )
-    mode_group.add_argument(
-        "--end",
-        metavar="HEX",
-        help="范围结束私钥（十六进制，range 模式必填）"
-    )
-
-    # 功能选项
-    feature_group = parser.add_argument_group("功能选项")
-    feature_group.add_argument(
-        "--checkpoint",
-        action="store_true",
-        default=False,
-        help="启用断点续传（程序中断后可从断点继续）"
-    )
-    feature_group.add_argument(
-        "--checkpoint-interval",
-        metavar="SECS",
-        type=int,
-        default=30,
-        help="断点自动保存间隔（秒，默认: 30）"
-    )
-    feature_group.add_argument(
-        "--dedup",
-        action="store_true",
-        default=False,
-        help="启用去重过滤（避免重复检测相同私钥，仅 random 模式有效）"
-    )
-    feature_group.add_argument(
-        "--dedup-max-size",
-        metavar="N",
-        type=int,
-        default=1_000_000,
-        help="去重过滤器最大容量（默认: 1000000）"
-    )
-
-    # 性能选项
-    perf_group = parser.add_argument_group("性能选项")
-    perf_group.add_argument(
-        "--workers",
-        metavar="N",
-        type=int,
-        default=None,
-        help="工作线程数（默认: CPU 核数）"
-    )
-    perf_group.add_argument(
-        "--duration",
-        metavar="SECS",
-        type=int,
-        default=0,
-        help="运行时长（秒），0 表示无限运行直到 Ctrl+C（默认: 0）"
-    )
-    perf_group.add_argument(
-        "--progress-interval",
-        metavar="SECS",
-        type=float,
-        default=5.0,
-        help="进度显示间隔（秒，默认: 5）"
-    )
-
-    return parser.parse_args()
+    # --quiet 与 --verbose 互斥：quiet 优先
+    if quiet:
+        # 仅显示 WARNING 及以上，屏蔽 INFO/DEBUG
+        logging.getLogger().setLevel(logging.WARNING)
+        for h in logging.getLogger().handlers:
+            h.setLevel(logging.WARNING)
+    elif verbose >= 3:
+        # -vvv: 全部调试信息（DEBUG）
+        logging.getLogger().setLevel(logging.DEBUG)
+        for h in logging.getLogger().handlers:
+            h.setLevel(logging.DEBUG)
+        logger.debug("详细级别 -vvv：启用所有调试输出")
+    elif verbose >= 2:
+        # -vv: DEBUG + 稍后在配置信息阶段额外打印
+        logging.getLogger().setLevel(logging.DEBUG)
+        for h in logging.getLogger().handlers:
+            h.setLevel(logging.DEBUG)
+        logger.debug("详细级别 -vv：启用调试输出（含配置详情）")
+    elif verbose >= 1:
+        # -v: DEBUG
+        logging.getLogger().setLevel(logging.DEBUG)
+        for h in logging.getLogger().handlers:
+            h.setLevel(logging.DEBUG)
+        logger.debug("详细级别 -v：启用调试输出")
 
 
-def validate_args(args: argparse.Namespace) -> bool:
-    """验证参数合法性，返回 True 表示合法"""
-    if args.mode in ("range", "brute_force"):
-        if args.start is None:
-            print(f"错误: {args.mode} 模式需要 --start 参数", file=sys.stderr)
-            return False
-        try:
-            int(args.start, 16)
-        except ValueError:
-            print(f"错误: --start 必须是有效的十六进制数 (当前: {args.start})", file=sys.stderr)
-            return False
-
-    if args.mode == "range":
-        if args.end is None:
-            print("错误: range 模式需要 --end 参数", file=sys.stderr)
-            return False
-        try:
-            int(args.end, 16)
-        except ValueError:
-            print(f"错误: --end 必须是有效的十六进制数 (当前: {args.end})", file=sys.stderr)
-            return False
-
-        start_val = int(args.start, 16)
-        end_val = int(args.end, 16)
-        if start_val >= end_val:
-            print(f"错误: --start ({args.start}) 必须小于 --end ({args.end})", file=sys.stderr)
-            return False
-        if start_val < 1:
-            print("错误: --start 必须 >= 1", file=sys.stderr)
-            return False
-
-    if args.workers is not None and args.workers < 1:
-        print(f"错误: --workers 必须 >= 1 (当前: {args.workers})", file=sys.stderr)
-        return False
-
-    if args.duration < 0:
-        print(f"错误: --duration 必须 >= 0 (当前: {args.duration})", file=sys.stderr)
-        return False
-
-    return True
-
-
-def load_targets(args: argparse.Namespace) -> Set[str]:
+def load_targets(args: Any) -> set[str]:
     """加载目标地址集合"""
+    # 延迟导入 TargetResolver（属于重量级依赖链）
+    from src.collision import TargetResolver
+
     resolver = TargetResolver()
+    quiet = getattr(args, "quiet", False)
     if args.file:
+        if not validate_file_path(args.file):
+            print("[Error] 文件路径验证失败", file=sys.stderr)
+            sys.exit(1)
         targets = resolver.load_from_file(args.file)
         if not targets:
-            print(f"错误: 从文件 '{args.file}' 未加载到任何有效地址", file=sys.stderr)
+            print(
+                _t("address.load_failed", error=f"从文件 '{args.file}' 未加载到任何有效地址"),
+                file=sys.stderr,
+            )
             sys.exit(1)
-        print(f"从文件加载了 {len(targets)} 个目标地址")
+        if not quiet:
+            print(_t("address.loaded", count=len(targets)))
     else:
-        targets = resolver.resolve_multiple(args.targets)
+        targets = cast(set[str], resolver.resolve_multiple(args.targets))
         if not targets:
-            print("错误: 未能解析任何有效的目标地址", file=sys.stderr)
+            print(_t("address.load_failed", error="未能解析任何有效的目标地址"), file=sys.stderr)
             sys.exit(1)
-        print(f"加载了 {len(targets)} 个目标地址")
+        if not quiet:
+            print(_t("address.loaded", count=len(targets)))
+
+    # v4.3.1: 分析目标格式并给出兼容性警告（始终执行分析，输出模式由 quiet 控制）
+    fmt_counts = TargetResolver.analyze_target_formats(targets)
+    if not quiet:
+        _print_format_summary(fmt_counts)
+    else:
+        incompatible = (
+            fmt_counts.get("p2sh", 0) + fmt_counts.get("bech32", 0) + fmt_counts.get("taproot", 0)
+        )
+        if incompatible > 0:
+            logger.warning(_t("targets.incompatible_warning", count=incompatible))
+
     return targets
 
 
-def format_progress(stats: CollisionStats, mode: str, total_range: Optional[int] = None) -> str:
-    """格式化进度信息"""
-    elapsed = stats.format_elapsed()
-    checked = stats.total_checked
-    speed_str = stats.format_speed()
-    matches = len(stats.matches)
+def _print_format_summary(fmt_counts: dict[str, int]) -> None:
+    """打印目标格式统计及不兼容格式警告"""
+    total = sum(fmt_counts.values())
+    if total == 0:
+        return
 
-    # ETA 估算（仅 range 模式有意义）
-    eta_str = "--"
-    if total_range and total_range > 0 and checked > 0:
-        elapsed_sec = time.time() - stats.start_time if stats.start_time else 0
-        if elapsed_sec > 0:
-            speed = checked / elapsed_sec
-            remaining = total_range - checked
-            if speed > 0 and remaining > 0:
-                eta_sec = remaining / speed
-                if eta_sec < 60:
-                    eta_str = f"{eta_sec:.0f}s"
-                elif eta_sec < 3600:
-                    eta_str = f"{eta_sec / 60:.1f}m"
-                else:
-                    eta_str = f"{eta_sec / 3600:.1f}h"
-            elif remaining <= 0:
-                eta_str = "完成"
+    # 格式统计
+    parts = []
+    if fmt_counts.get("p2pkh", 0) > 0:
+        parts.append(f"P2PKH: {fmt_counts['p2pkh']}")
+    if fmt_counts.get("p2sh", 0) > 0:
+        parts.append(f"P2SH: {fmt_counts['p2sh']}")
+    if fmt_counts.get("bech32", 0) > 0:
+        parts.append(f"Bech32: {fmt_counts['bech32']}")
+    if fmt_counts.get("taproot", 0) > 0:
+        parts.append(f"Taproot: {fmt_counts['taproot']}")
+    if fmt_counts.get("unknown", 0) > 0:
+        parts.append(f"Unknown: {fmt_counts['unknown']}")
+    print(_t("targets.format_breakdown", breakdown=", ".join(parts)))
 
-    # 进度百分比
-    pct_str = ""
-    if total_range and total_range > 0:
-        pct = min(100.0, checked / total_range * 100)
-        pct_str = f" | 进度: {pct:.1f}%"
+    # 不兼容格式警告
+    incompatible = fmt_counts.get("p2sh", 0) + fmt_counts.get("bech32", 0) + fmt_counts.get("taproot", 0)
+    if incompatible > 0:
+        # 使用 Rich Panel 输出醒目警告
+        try:
+            from rich.console import Console
+            from rich.panel import Panel
+            from rich.text import Text
 
-    return (
-        f"[{elapsed}] 已检查: {checked:,} | 速度: {speed_str}"
-        f"{pct_str} | 匹配: {matches} | ETA: {eta_str}"
-    )
+            console = Console()
+            warning_text = Text()
+            warning_text.append(
+                _t("targets.incompatible_warning", count=incompatible),
+                style="bold yellow",
+            )
+            warning_text.append("\n\n")
+            warning_text.append(_t("targets.incompatible_detail"))
+            warning_text.append("\n")
+            warning_text.append(_t("targets.incompatible_suggestion"))
+            console.print(Panel(warning_text, title=_t("common.warning"), border_style="yellow"))
+        except Exception:
+            logger.debug("Rich Panel 渲染失败，降级纯文本警告", exc_info=True)
+            print(_t("targets.incompatible_warning", count=incompatible))
+            print(_t("targets.incompatible_detail"))
+            print(_t("targets.incompatible_suggestion"))
 
 
-def on_match_callback(private_key: bytes, address: str, wif: str) -> None:
-    """匹配回调（高亮显示）"""
-    pk_hex = private_key.hex()
-    print("\n" + "=" * 70)
-    print("🎯 发现匹配!")
-    print(f"  地址     : {address}")
-    print(f"  私钥 Hex : {pk_hex}")
-    print(f"  WIF      : {wif}")
-    print("=" * 70 + "\n")
+def _run_security_check(args) -> None:
+    """在引擎启动前自动验证加密后端安全性（非阻塞模式）。
+
+    默认自动执行；使用 --skip-security-check 可跳过。
+    通过时显示绿色成功信息；不通过时显示黄色警告但允许继续运行。
+    """
+    if getattr(args, "skip_security_check", False):
+        logger.info("跳过安全加密后端检查（--skip-security-check）")
+        return
+
+    is_ready, message = verify_production_ready()
+    output = CLIOutput.get_instance()
+
+    if is_ready:
+        output.success("生产环境安全检查通过 — 加密后端安全可用")
+        logger.info("安全检查通过")
+    else:
+        # 非阻塞模式：使用 Rich Panel 显示醒目警告，但允许继续运行
+        try:
+            from rich.console import Console
+            from rich.panel import Panel
+            from rich.text import Text
+
+            console = Console(stderr=True)
+            warning_text = Text()
+            warning_text.append("生产环境安全检查未通过\n\n", style="bold yellow")
+            warning_text.append(
+                "当前加密后端安全级别不足，建议安装更安全的加密库后再运行。\n\n",
+                style="yellow",
+            )
+            warning_text.append("  pip install coincurve     # 推荐，最安全\n", style="white")
+            warning_text.append("  pip install cryptography  # 备选\n\n", style="white")
+            warning_text.append("使用 --skip-security-check 跳过此检查", style="dim")
+            console.print(
+                Panel(warning_text, title="[bold yellow]安全检查[/bold yellow]", border_style="yellow")
+            )
+        except Exception:
+            # Rich Panel 渲染失败时降级为纯文本警告
+            output.warning(
+                "生产环境安全检查未通过 — 当前加密后端安全级别不足",
+                details="建议: pip install coincurve  # 推荐，最安全",
+            )
+            output.print_always("[dim]使用 --skip-security-check 跳过此检查[/dim]")
+
+        logger.warning("安全检查未通过，但允许继续运行")
 
 
-def main() -> None:
-    """CLI 主入口"""
+def _run_main() -> None:
+    """CLI 主逻辑（由 main() 包装异常处理）"""
     args = parse_args()
 
+    # 语言设置（优先级：命令行 > 环境变量 > 系统语言）
+    if getattr(args, "language", None):
+        set_language(args.language)
+
+    # 初始化统一输出管理器（单例，后续模块通过 CLIOutput.get_instance() 获取）
+    CLIOutput.init(
+        no_color=getattr(args, "no_color", False),
+        quiet=getattr(args, "quiet", False),
+    )
+
+    # 应用输出标志（--verbose/--quiet/--no-color）
+    _apply_output_flags(args)
+
+    # 阶段1: 工具命令分发（提前处理，不需要 -t/-f，不触发重量级导入）
+    if _dispatch_utility_commands(args, _run_main):
+        return  # 工具命令已处理，不再进行后续流程
+
+    # 安全检查: 在碰撞引擎启动前自动验证加密后端安全性（非阻塞）
+    _run_security_check(args)
+
+    # 阶段2: 参数验证
     if not validate_args(args):
         sys.exit(1)
 
-    # 加载目标
+    # 阶段3: 配置和目标加载
+    config = load_config_with_validation(config_file=args.config)
+    if config is None:
+        logger.warning(_t("config.using_default"))
+        config = {}
     targets = load_targets(args)
 
-    # 计算范围参数
-    start_val: Optional[int] = None
-    end_val: Optional[int] = None
-    total_range: Optional[int] = None
-    if args.mode in ("range", "brute_force") and args.start:
-        start_val = int(args.start, 16)
-    if args.mode == "range" and args.end:
-        end_val = int(args.end, 16)
-        total_range = end_val - start_val + 1
-
-    # 打印配置信息
-    print("-" * 70)
-    print(f"碰撞模式     : {args.mode}")
-    print(f"目标地址数   : {len(targets)}")
-    if start_val is not None:
-        print(f"起始私钥     : 0x{start_val:x}")
-    if end_val is not None:
-        print(f"结束私钥     : 0x{end_val:x}")
-        print(f"搜索范围     : {total_range:,} 个私钥")
-    workers = args.workers or os.cpu_count() or 4
-    print(f"工作线程数   : {workers}")
-    print(f"断点续传     : {'启用' if args.checkpoint else '禁用'}")
-    print(f"去重过滤     : {'启用' if args.dedup else '禁用'}")
-    duration_str = f"{args.duration}秒" if args.duration > 0 else "无限制（Ctrl+C 停止）"
-    print(f"运行时长     : {duration_str}")
-    print("-" * 70)
-
-    # 构建引擎
-    engine = KeyCollisionEngine(
-        targets=targets,
-        on_progress=lambda s: None,  # 启动进度回调，确保 stats 实时更新
-        on_match=on_match_callback,
-        checkpoint_enabled=args.checkpoint,
-        checkpoint_interval=args.checkpoint_interval,
-        dedup_enabled=args.dedup,
-        dedup_max_size=args.dedup_max_size,
-        max_workers=args.workers,
+    # ── 以下阶段才延迟导入重量级模块 ────────────────────────────────────────
+    from src.cli.engine_runner import (
+        _compute_range,
+        _print_config_info,
+        _run_collision_loop,
+        _setup_and_start_engine,
     )
 
-    # 信号处理（Ctrl+C 优雅停止）
-    stop_event = threading.Event()
+    # 阶段4: 计算范围参数
+    start_val, end_val, total_range = _compute_range(args)
 
-    def handle_signal(sig, frame):
-        print("\n收到停止信号，正在停止...")
-        stop_event.set()
-        engine.stop()
+    # 阶段5: 显示配置信息（--quiet 时跳过）
+    quiet = getattr(args, "quiet", False)
+    verbose = getattr(args, "verbose", 0)
+    if not quiet:
+        _print_config_info(args, targets, start_val, end_val, total_range)
+        # -vv 额外打印配置详情
+        if verbose >= 2 and config:
+            import json
 
-    signal.signal(signal.SIGINT, handle_signal)
-    if hasattr(signal, "SIGTERM"):
-        signal.signal(signal.SIGTERM, handle_signal)
+            print("\n[详细] 当前 config.json 配置:")
+            print(json.dumps(config, ensure_ascii=False, indent=2))
 
-    # 启动引擎
-    print("开始对撞，按 Ctrl+C 停止...\n")
-    engine_kwargs = {}
-    if args.mode in ("range", "brute_force"):
-        engine_kwargs["start"] = start_val
-    if args.mode == "range":
-        engine_kwargs["end"] = end_val
+    # 阶段6: 构建引擎、初始化告警、注册信号、启动
+    engine, engine_type, alert_system, stop_event = _setup_and_start_engine(
+        args, targets, config, start_val, end_val
+    )
 
-    engine.start(mode=args.mode, **engine_kwargs)
-    start_time = time.time()
+    # 阶段7: 主循环
+    _run_collision_loop(engine, engine_type, args, total_range, alert_system, stop_event)
 
-    # 主循环：打印进度
-    try:
-        while engine.is_running() and not stop_event.is_set():
-            time.sleep(args.progress_interval)
-            if stop_event.is_set():
-                break
-            stats = engine.get_stats()
-            print(format_progress(stats, args.mode, total_range))
-
-            # 检查运行时长限制
-            if args.duration > 0 and (time.time() - start_time) >= args.duration:
-                print(f"\n已达到运行时长限制 ({args.duration}s)，停止对撞...")
-                engine.stop()
-                stop_event.set()
-                break
-    except KeyboardInterrupt:
-        print("\n用户中断，正在停止...")
-        engine.stop()
-
-    # 等待引擎完全停止
+    # 阶段8: 等待引擎完全停止
     if engine.is_running():
         engine.stop()
     time.sleep(0.5)
 
-    # 打印最终统计
-    stats = engine.get_stats()
-    print("\n" + "=" * 70)
-    print("对撞结束 - 最终统计")
-    print("-" * 70)
-    print(f"  总检查数 : {stats.total_checked:,}")
-    print(f"  运行时间 : {stats.format_elapsed()}")
-    print(f"  平均速度 : {stats.format_speed()}")
-    print(f"  发现匹配 : {len(stats.matches)} 个")
-    if stats.matches:
-        print("\n  匹配详情:")
-        for m in stats.matches:
-            print(f"    地址: {m.get('address', 'N/A')}")
-    print("=" * 70)
+    # 阶段9: 最终统计
+    _print_final_summary(engine, engine_type, args)
+
+
+def _handle_error(e: Exception) -> None:
+    """统一错误处理 — 向用户显示友好消息并将完整堆栈写入日志"""
+    output = CLIOutput.get_instance()
+    error_type = type(e).__name__
+
+    if isinstance(e, FileNotFoundError):
+        output.error(f"文件未找到: {e}")
+        output.print("  提示: 检查文件路径是否正确")
+    elif isinstance(e, PermissionError):
+        output.error(f"权限不足: {e}")
+        output.print("  提示: 检查文件/目录的读写权限")
+    elif isinstance(e, MemoryError):
+        output.error("内存不足")
+        output.print("  提示: 减小 --gpu-batch-size 或关闭其他程序")
+    elif isinstance(e, ImportError):
+        output.error(f"缺少依赖: {e}")
+        output.print("  提示: 运行 pip install -r requirements.txt 安装依赖")
+    elif isinstance(e, (ValueError, TypeError)):
+        output.error(f"参数错误: {e}")
+        output.print("  提示: 运行 --help 查看参数说明")
+    elif isinstance(e, OSError):
+        output.error(f"系统错误: {e}")
+        output.print("  提示: 检查文件/目录权限或磁盘空间")
+    else:
+        output.error(f"运行时错误 ({error_type}): {e}")
+        output.print("  详细日志: logs/collision.log")
+
+    # 记录完整堆栈到日志（不显示给用户）
+    logger.exception(f"CLI 运行错误: {error_type}")
+
+
+def main() -> None:
+    """CLI 主入口"""
+    # 确保 stdout/stderr 在非 UTF-8 环境下不会因无法编码字符而崩溃
+    try:
+        if hasattr(sys.stdout, "reconfigure"):
+            cast(Any, sys.stdout).reconfigure(errors="replace")
+            cast(Any, sys.stderr).reconfigure(errors="replace")
+    except Exception:
+        pass
+    try:
+        _run_main()
+    except KeyboardInterrupt:
+        print()  # 换行，避免 ^C 粘连
+        sys.exit(130)
+    except SystemExit:
+        # argparse 的 --help/--version 以及主动调用 sys.exit() 均透传
+        raise
+    except Exception as e:
+        _handle_error(e)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

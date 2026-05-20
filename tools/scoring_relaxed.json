@@ -1,0 +1,14 @@
+{
+  "_comment": "宽松模式配置 - 适用于初期项目或文档较少时",
+  "_description": "较低的扣分，较高的上限，更容易获得高分",
+  
+  "error_weight": 1.0,
+  "code_block_weight": 0.1,
+  "code_block_max": 3.0,
+  "link_weight": 0.5,
+  "link_max": 4.0,
+  "other_warning_weight": 0.2,
+  "info_weight": 0.05,
+  "toc_bonus": 0.4,
+  "version_bonus": 0.3
+}

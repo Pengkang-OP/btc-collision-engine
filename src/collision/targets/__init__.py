@@ -10,21 +10,21 @@
 示例:
     >>> from src.collision.targets import TargetResolver, AddressMatcher
     >>> resolver = TargetResolver(enable_cache=True)
-    >>> address = resolver.resolve('5KJvsngHeMpm884wtkJNzQGaCErckhHJBGFsvd3VyK5qMZXj3hS')
+    >>> address = resolver.resolve('1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa')
     >>> matcher = AddressMatcher(strategy='hash_set', targets={address})
 """
 
-from .resolver import TargetResolver
 from .cache import AddressCache
-from .validator import AddressBatchValidator, ValidationResult
 from .matcher import AddressMatcher
+from .resolver import TargetResolver
 from .storage import AddressStorage
+from .validator import AddressBatchValidator, ValidationResult
 
 __all__ = [
-    'TargetResolver',
-    'AddressCache',
-    'AddressBatchValidator',
-    'ValidationResult',
-    'AddressMatcher',
-    'AddressStorage',
+    "TargetResolver",
+    "AddressCache",
+    "AddressBatchValidator",
+    "ValidationResult",
+    "AddressMatcher",
+    "AddressStorage",
 ]

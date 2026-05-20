@@ -1,29 +1,28 @@
 """ConfigManager 单元测试 - 配置加载/保存/合并/验证"""
+
 import json
 import os
-import tempfile
-import unittest
 import shutil
 import sys
+import tempfile
+import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.config.config_manager import ConfigManager
+from src.config.config_manager import ConfigManager  # noqa: E402
 
 
 class TestConfigManagerBasic(unittest.TestCase):
-    """基础功能测试"""
+    """基础配置测试"""
 
     def setUp(self):
-        """创建临时目录和配置文件"""
         self.test_dir = tempfile.mkdtemp()
         self.config_file = os.path.join(self.test_dir, "test_config.json")
-        # 为每个测试创建新的ConfigManager实例，避免状态污染
         from src.config.config_manager import ConfigManager as CM
+
         self.cm_class = CM
 
     def tearDown(self):
-        """清理临时文件"""
         shutil.rmtree(self.test_dir, ignore_errors=True)
 
     def test_default_config_initialization(self):
@@ -32,46 +31,42 @@ class TestConfigManagerBasic(unittest.TestCase):
         self.assertIsNotNone(mgr.config)
         self.assertIn("collision", mgr.config)
         self.assertIn("logging", mgr.config)
-        self.assertIn("gui", mgr.config)
+        # GUI已移除，不再测试
+        self.assertIn("gpu", mgr.config)
 
     def test_default_config_values(self):
         """默认配置值正确"""
         mgr = ConfigManager()
         self.assertEqual(mgr.get("logging.level"), "INFO")
-        self.assertEqual(mgr.get("gui.theme"), "dark")
+        # GUI已移除，测试其他默认值
         self.assertEqual(mgr.get("collision.progress_interval"), 1000)
+        self.assertTrue(mgr.get("gpu.use_gpu"))
 
     def test_load_config_from_file(self):
         """从文件加载配置"""
-        # 创建测试配置文件
-        test_config = {
-            "logging": {
-                "level": "DEBUG"
-            },
-            "gui": {
-                "window_width": 1200
-            }
-        }
-        with open(self.config_file, 'w', encoding='utf-8') as f:
+        # 创建测试配置文件（不包含GUI）
+        test_config = {"logging": {"level": "DEBUG"}}
+        with open(self.config_file, "w", encoding="utf-8") as f:
             json.dump(test_config, f)
 
         mgr = ConfigManager(config_file=self.config_file)
         self.assertEqual(mgr.get("logging.level"), "DEBUG")
-        self.assertEqual(mgr.get("gui.window_width"), 1200)
         # 默认值应该保留
-        self.assertEqual(mgr.get("gui.theme"), "dark")
+        self.assertEqual(
+            mgr.get("logging.format"), "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
 
     def test_save_config_to_file(self):
         """保存配置到文件"""
         mgr = ConfigManager(config_file=self.config_file)
         mgr.set("logging.level", "WARNING")
-        
+
         result = mgr.save_config()
         self.assertTrue(result)
         self.assertTrue(os.path.exists(self.config_file))
 
         # 验证文件内容
-        with open(self.config_file, 'r', encoding='utf-8') as f:
+        with open(self.config_file, encoding="utf-8") as f:
             saved_config = json.load(f)
         self.assertEqual(saved_config["logging"]["level"], "WARNING")
 
@@ -147,6 +142,7 @@ class TestConfigManagerMerge(unittest.TestCase):
         self.test_dir = tempfile.mkdtemp()
         self.config_file = os.path.join(self.test_dir, "test_config.json")
         from src.config.config_manager import ConfigManager as CM
+
         self.cm_class = CM
 
     def tearDown(self):
@@ -154,13 +150,8 @@ class TestConfigManagerMerge(unittest.TestCase):
 
     def test_merge_partial_config(self):
         """部分配置合并"""
-        test_config = {
-            "logging": {
-                "level": "DEBUG",
-                "format": "%(message)s"
-            }
-        }
-        with open(self.config_file, 'w', encoding='utf-8') as f:
+        test_config = {"logging": {"level": "DEBUG", "format": "%(message)s"}}
+        with open(self.config_file, "w", encoding="utf-8") as f:
             json.dump(test_config, f)
 
         mgr = self.cm_class(config_file=self.config_file)
@@ -173,40 +164,37 @@ class TestConfigManagerMerge(unittest.TestCase):
     def test_merge_complete_override(self):
         """完全覆盖配置"""
         test_config = {
-            "collision": {
-                "max_workers": 16,
-                "progress_interval": 500
-            },
-            "logging": {
-                "level": "CRITICAL"
-            },
-            "gui": {
-                "theme": "light",
-                "window_width": 1920,
-                "window_height": 1080
-            }
+            "collision": {"max_workers": 16, "progress_interval": 500},
+            "logging": {"level": "CRITICAL"},
         }
-        with open(self.config_file, 'w', encoding='utf-8') as f:
+        with open(self.config_file, "w", encoding="utf-8") as f:
             json.dump(test_config, f)
 
         mgr = ConfigManager(config_file=self.config_file)
         self.assertEqual(mgr.get("collision.max_workers"), 16)
         self.assertEqual(mgr.get("logging.level"), "CRITICAL")
-        self.assertEqual(mgr.get("gui.theme"), "light")
 
     def test_merge_preserves_structure(self):
         """合并保持配置结构"""
-        test_config = {"custom_key": "custom_value"}
-        with open(self.config_file, 'w', encoding='utf-8') as f:
+        # 使用Schema中已定义的字段来测试合并功能
+        test_config = {
+            "collision": {"max_workers": 8, "progress_interval": 2000},
+            "logging": {"level": "DEBUG"},
+        }
+        with open(self.config_file, "w", encoding="utf-8") as f:
             json.dump(test_config, f)
 
         mgr = ConfigManager(config_file=self.config_file)
-        # 自定义键被添加
-        self.assertEqual(mgr.config.get("custom_key"), "custom_value")
-        # 默认结构保留
+        # 自定义值被合并
+        self.assertEqual(mgr.get("collision.max_workers"), 8)
+        self.assertEqual(mgr.get("collision.progress_interval"), 2000)
+        self.assertEqual(mgr.get("logging.level"), "DEBUG")
+        # 默认结构和其他值保留（GUI已移除）
         self.assertIn("collision", mgr.config)
         self.assertIn("logging", mgr.config)
-        self.assertIn("gui", mgr.config)
+        self.assertIn("gpu", mgr.config)
+        # 未指定的字段保持默认值
+        self.assertEqual(mgr.get("collision.checkpoint_interval"), 30)
 
 
 class TestConfigManagerValidation(unittest.TestCase):
@@ -214,6 +202,7 @@ class TestConfigManagerValidation(unittest.TestCase):
 
     def setUp(self):
         from src.config.config_manager import ConfigManager as CM
+
         self.cm_class = CM
 
     def test_validate_default_config(self):
@@ -274,37 +263,27 @@ class TestConfigManagerValidation(unittest.TestCase):
             self.assertNotIn("logging.level", errors, f"{level} 应该有效")
 
     def test_validate_invalid_window_width(self):
-        """验证无效的窗口宽度"""
-        mgr = ConfigManager()
-        mgr.set("gui.window_width", -100)
-        errors = mgr.validate()
-        self.assertIn("gui.window_width", errors)
+        """验证无效窗口宽度 - GUI已移除，测试跳过"""
+        # 此测试已过时，跳过
 
     def test_validate_invalid_window_height(self):
-        """验证无效的窗口高度"""
-        mgr = ConfigManager()
-        mgr.set("gui.window_height", 0)
-        errors = mgr.validate()
-        self.assertIn("gui.window_height", errors)
+        """验证无效窗口高度 - GUI已移除，测试跳过"""
+        # 此测试已过时，跳过
 
     def test_validate_invalid_font_size(self):
-        """验证无效的字体大小"""
-        mgr = ConfigManager()
-        mgr.set("gui.font_size", -1)
-        errors = mgr.validate()
-        self.assertIn("gui.font_size", errors)
+        """验证无效字体大小 - GUI已移除，测试跳过"""
+        # 此测试已过时，跳过
 
     def test_validate_multiple_errors(self):
-        """验证多个错误同时存在"""
+        """验证多个错误"""
         mgr = ConfigManager()
         mgr.set("collision.max_workers", -1)
         mgr.set("logging.level", "INVALID")
-        mgr.set("gui.window_width", 0)
         errors = mgr.validate()
-        self.assertGreaterEqual(len(errors), 3)
+        # 应该捕获多个错误（不包含GUI）
+        self.assertGreater(len(errors), 0)
         self.assertIn("collision.max_workers", errors)
         self.assertIn("logging.level", errors)
-        self.assertIn("gui.window_width", errors)
 
 
 class TestConfigManagerEdgeCases(unittest.TestCase):
@@ -314,6 +293,7 @@ class TestConfigManagerEdgeCases(unittest.TestCase):
         self.test_dir = tempfile.mkdtemp()
         self.config_file = os.path.join(self.test_dir, "test_config.json")
         from src.config.config_manager import ConfigManager as CM
+
         self.cm_class = CM
 
     def tearDown(self):
@@ -321,7 +301,7 @@ class TestConfigManagerEdgeCases(unittest.TestCase):
 
     def test_load_corrupted_json(self):
         """加载损坏的JSON文件"""
-        with open(self.config_file, 'w', encoding='utf-8') as f:
+        with open(self.config_file, "w", encoding="utf-8") as f:
             f.write("{invalid json")
 
         mgr = self.cm_class(config_file=self.config_file)
@@ -332,7 +312,7 @@ class TestConfigManagerEdgeCases(unittest.TestCase):
 
     def test_load_empty_file(self):
         """加载空文件"""
-        with open(self.config_file, 'w', encoding='utf-8') as f:
+        with open(self.config_file, "w", encoding="utf-8") as f:
             f.write("")
 
         mgr = ConfigManager(config_file=self.config_file)
@@ -352,12 +332,13 @@ class TestConfigManagerEdgeCases(unittest.TestCase):
 
     def test_unicode_in_config(self):
         """配置中包含Unicode字符"""
-        mgr = ConfigManager(config_file=self.config_file)
-        mgr.set("gui.font", "微软雅黑")
-        mgr.save_config()
+        test_config = {"logging": {"file": "日志/collision.log"}}
+        config_file = os.path.join(self.test_dir, "unicode_config.json")
+        with open(config_file, "w", encoding="utf-8") as f:
+            json.dump(test_config, f)
 
-        mgr2 = ConfigManager(config_file=self.config_file)
-        self.assertEqual(mgr2.get("gui.font"), "微软雅黑")
+        mgr2 = ConfigManager(config_file=config_file)
+        self.assertEqual(mgr2.get("logging.file"), "日志/collision.log")
 
     def test_large_config_values(self):
         """配置大数值"""

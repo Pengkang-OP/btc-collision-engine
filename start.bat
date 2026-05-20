@@ -1,29 +1,12 @@
 @echo off
-chcp 65001 > nul
-echo ========================================
-echo BTC 碰撞引擎
-echo ========================================
-echo.
-echo 请选择启动模式:
-echo.
-echo 1. 图形界面 (GUI)
-echo 2. 命令行模式
-echo.
-set /p choice=请输入选项 (1 或 2): 
+setlocal enabledelayedexpansion
 
-if "%choice%"=="1" (
-    echo.
-    echo 正在启动图形界面...
-    python key_collision_gui.py
-) else if "%choice%"=="2" (
-    echo.
-    echo 正在启动命令行模式...
-    python key_collision_cli.py
-) else (
-    echo.
-    echo 无效的选项！
-    pause
-    exit /b 1
-)
+call "%~dp0common.bat"
+call :init_encoding
+call :set_script_dir
 
-pause
+rem -- Start Python menu --
+python start_menu.py
+set "MENU_EXIT=%errorlevel%"
+if not defined CI if not defined AUTOMATION pause
+exit /b %MENU_EXIT%

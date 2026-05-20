@@ -1,20 +1,21 @@
 """异常处理类单元测试 - CollisionError及其子类"""
-import unittest
-import sys
+
 import os
+import sys
+import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.utils.exceptions import (
-    CollisionError,
-    ConfigError,
-    ValidationError,
-    KeyGenerationError,
+from src.utils.exceptions import (  # noqa: E402
     AddressGenerationError,
     CheckpointError,
+    CollisionError,
+    ConfigError,
+    CryptoBackendError,
     DeduplicationError,
+    KeyGenerationError,
     TargetResolutionError,
-    CryptoBackendError
+    ValidationError,
 )
 
 
@@ -45,10 +46,7 @@ class TestCollisionErrorBase(unittest.TestCase):
     def test_exception_with_original_error(self):
         """带原始异常的异常"""
         original = ValueError("Original error")
-        error = CollisionError(
-            "Wrapped error",
-            original_error=original
-        )
+        error = CollisionError("Wrapped error", original_error=original)
         self.assertEqual(error.original_error, original)
         self.assertIsInstance(error.original_error, ValueError)
 
@@ -70,7 +68,7 @@ class TestCollisionErrorBase(unittest.TestCase):
         """异常转换为字典"""
         error = CollisionError("Dict test", error_code=1234)
         error_dict = error.to_dict()
-        
+
         self.assertEqual(error_dict["error_code"], 1234)
         self.assertEqual(error_dict["message"], "Dict test")
         self.assertEqual(error_dict["error_type"], "CollisionError")
@@ -81,7 +79,7 @@ class TestCollisionErrorBase(unittest.TestCase):
         context = {"info": "details"}
         error = CollisionError("Dict context", context=context)
         error_dict = error.to_dict()
-        
+
         self.assertEqual(error_dict["context"], context)
         self.assertEqual(error_dict["context"]["info"], "details")
 
@@ -90,7 +88,7 @@ class TestCollisionErrorBase(unittest.TestCase):
         original = RuntimeError("Original")
         error = CollisionError("Wrapped", original_error=original)
         error_dict = error.to_dict()
-        
+
         self.assertIn("original_error", error_dict)
         self.assertEqual(error_dict["original_error"], "Original")
 
@@ -103,7 +101,7 @@ class TestCollisionErrorBase(unittest.TestCase):
         """异常可以被抛出和捕获"""
         with self.assertRaises(CollisionError) as context:
             raise CollisionError("Raised error")
-        
+
         self.assertEqual(context.exception.message, "Raised error")
         self.assertEqual(context.exception.error_code, 1000)
 
@@ -271,10 +269,7 @@ class TestCryptoBackendError(unittest.TestCase):
     def test_crypto_backend_error_with_original(self):
         """CryptoBackendError 带原始异常"""
         original = ImportError("No module named coincurve")
-        error = CryptoBackendError(
-            "Backend import failed",
-            original_error=original
-        )
+        error = CryptoBackendError("Backend import failed", original_error=original)
         self.assertEqual(error.original_error, original)
 
     def test_crypto_backend_error_inheritance(self):
@@ -297,7 +292,7 @@ class TestExceptionErrorCodes(unittest.TestCase):
             CollisionError.CHECKPOINT_ERROR,
             CollisionError.DEDUPLICATION_ERROR,
             CollisionError.TARGET_RESOLUTION_ERROR,
-            CollisionError.CRYPTO_BACKEND_ERROR
+            CollisionError.CRYPTO_BACKEND_ERROR,
         ]
         # 检查是否有重复
         self.assertEqual(len(error_codes), len(set(error_codes)))
@@ -313,7 +308,7 @@ class TestExceptionErrorCodes(unittest.TestCase):
             CollisionError.CHECKPOINT_ERROR,
             CollisionError.DEDUPLICATION_ERROR,
             CollisionError.TARGET_RESOLUTION_ERROR,
-            CollisionError.CRYPTO_BACKEND_ERROR
+            CollisionError.CRYPTO_BACKEND_ERROR,
         ]
         for code in error_codes:
             self.assertGreaterEqual(code, 1000)
@@ -330,10 +325,8 @@ class TestExceptionIntegration(unittest.TestCase):
                 raise ValueError("Root cause")
             except ValueError as e:
                 raise ConfigError(
-                    "Configuration failed",
-                    original_error=e,
-                    context={"config_key": "test"}
-                )
+                    "Configuration failed", original_error=e, context={"config_key": "test"}
+                ) from e
         except ConfigError as e:
             self.assertEqual(e.error_code, 1003)
             self.assertIsInstance(e.original_error, ValueError)
@@ -350,7 +343,7 @@ class TestExceptionIntegration(unittest.TestCase):
             CheckpointError("Checkpoint error"),
             DeduplicationError("Dedup error"),
             TargetResolutionError("Target error"),
-            CryptoBackendError("Crypto error")
+            CryptoBackendError("Crypto error"),
         ]
 
         error_codes = set()
@@ -368,7 +361,7 @@ class TestExceptionIntegration(unittest.TestCase):
             "Crypto operation failed",
             error_code=1008,
             context={"operation": "sign", "backend": "coincurve"},
-            original_error=original_exc
+            original_error=original_exc,
         )
 
         # 转换为字典

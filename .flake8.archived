@@ -1,0 +1,28 @@
+[flake8]
+# 与 pyproject.toml 保持一致
+max-line-length = 100
+
+# 忽略的规则
+# E203: whitespace before ':' (与 black 冲突)
+# W503: line break before binary operator (与 PEP8 更新冲突)
+# E501: line too long (已通过 max-line-length 调整)
+ignore = E203, W503, E501
+
+# 排除的目录
+exclude =
+    .git,
+    __pycache__,
+    .mypy_cache,
+    .pytest_cache,
+    venv,
+    scripts/venv,
+    .history,
+    data_logs,
+    logs,
+    build,
+    dist,
+    *.egg-info,
+    .eggs
+
+# 每文件最大复杂度
+max-complexity = 15

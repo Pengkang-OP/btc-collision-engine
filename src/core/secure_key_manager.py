@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 安全密钥管理器
 
@@ -6,57 +5,59 @@
 支持多种安全后端：cryptography、PyNaCl、ctypes回退。
 """
 
+import ctypes
 import os
 import secrets
+import sys
+import threading  # L3修复: 添加线程锁支持
 import warnings
-from typing import Optional, Callable
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
+from logging import getLogger
+from typing import Any
+
+logger = getLogger(__name__)
 
 # 尝试导入密码学库
 try:
-    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-    from cryptography.hazmat.backends import default_backend
-    from cryptography.hazmat.primitives import constant_time
+    import cryptography  # noqa: F401
+
     HAS_CRYPTOGRAPHY = True
 except ImportError:
     HAS_CRYPTOGRAPHY = False
 
 try:
-    import nacl.secret
-    import nacl.utils
+    import nacl.secret  # noqa: F401 — 导入可用性检测
+
     HAS_PYNACL = True
 except ImportError:
     HAS_PYNACL = False
 
-import ctypes
-
 
 class SecureMemoryError(Exception):
     """安全内存操作异常"""
-    pass
 
 
 class SecureKeyManager:
     """
     安全密钥管理器
-    
+
     提供安全的私钥存储、使用和清零功能，解决Python内存管理的以下限制：
     - 垃圾回收可能复制对象
     - 交换文件可能包含敏感数据
     - CPU缓存可能残留数据
-    
+
     安全特性:
     - 使用mlock()锁定内存（Linux/macOS），防止交换到磁盘
     - 使用密码学库的安全清零函数
     - 最小化私钥在内存中的时间
     - 支持上下文管理器自动清零
     - 清零统计监控（类级别）
-    
+
     后端优先级:
     1. cryptography.io (推荐)
     2. PyNaCl
     3. ctypes (回退)
-    
+
     示例:
         >>> # 基础用法
         >>> with SecureKeyManager() as key_mgr:
@@ -65,34 +66,39 @@ class SecureKeyManager:
         ...     # 使用私钥...
         ...     address = generate_address(private_key)
         >>> # 退出上下文时自动安全清零
-    
+
         >>> # 手动管理
         >>> key_mgr = SecureKeyManager()
         >>> key_mgr.generate_key()
         >>> # 使用...
         >>> key_mgr.clear()  # 手动清零
     """
-    
+
     # 类级别统计（用于监控清零成功率）
+    # L3修复: 添加类级别锁保护统计变量，确保多线程安全
+    _stats_lock: threading.Lock = threading.Lock()  # 线程安全锁
     _total_clears: int = 0  # 总清零次数
     _successful_clears: int = 0  # 成功清零次数
     _failed_clears: int = 0  # 失败清零次数
-    
-    def __init__(self, lock_memory: bool = True):
+
+    def __init__(self, lock_memory: bool = True) -> None:
         """
         初始化安全密钥管理器
-        
+
         参数:
-            lock_memory: 是否锁定内存防止交换（仅Linux/macOS）
-        
+            lock_memory: 是否锁定内存防止交换
+
         注意:
-            - Windows不支持mlock()，会自动跳过
+            - Linux/macOS: 使用mlock()锁定内存
+            - Windows: 使用VirtualLock()锁定内存
             - 锁定内存需要足够的权限
         """
-        self._key: Optional[bytearray] = None
+        self._key: bytearray | None = None
         self._locked = False
         self._cleared = False
-        
+        self._memory_locked = False
+        self._lock_memory_enabled = lock_memory
+
         # 选择后端
         if HAS_CRYPTOGRAPHY:
             self._backend = "cryptography"
@@ -101,49 +107,226 @@ class SecureKeyManager:
         else:
             self._backend = "ctypes"
             warnings.warn(
-                "未安装cryptography或PyNaCl，使用ctypes回退方案。"
-                "安装 cryptography: pip install cryptography",
+                "未安装cryptography或PyNaCl，使用ctypes回退。安装: pip install cryptography",
                 UserWarning,
-                stacklevel=2
+                stacklevel=2,
             )
-        
-        # 尝试锁定内存（仅Linux/macOS）
-        if lock_memory and os.name != 'nt':
-            self._try_lock_memory()
-    
-    def _try_lock_memory(self):
+
+    def _try_lock_memory(self) -> bool:
         """
-        尝试锁定内存，防止交换到磁盘
-        
-        Linux: 使用 mlock()
-        macOS: 使用 mlock()
-        Windows: 不支持，跳过
+        尝试锁定内存，防止敏感数据被交换到磁盘
+
+        Linux/macOS: 使用 mlock() 系统调用
+        Windows: 使用 VirtualLock() API
+
+        返回:
+            bool: 内存锁定是否成功
+
+        注意:
+            - Linux: 需要root权限或CAP_IPC_LOCK能力，或调整memlock限制
+            - macOS: 需要root权限
+            - Windows: 锁定内存会减少工作集可用空间
+            - 失败不会抛出异常，但会记录警告
+        """
+        if not self._lock_memory_enabled:
+            return False
+
+        try:
+            if os.name == "nt":
+                # Windows平台
+                return self._lock_memory_windows()
+            elif os.name == "posix":
+                # Linux/macOS平台
+                return self._lock_memory_posix()
+            else:
+                logger.warning(f"不支持的操作系统: {os.name}，无法锁定内存")
+                return False
+        except Exception as e:
+            logger.warning(f"内存锁定失败: {e}，将继续运行但不保护内存")
+            return False
+
+    def _lock_memory_posix(self) -> bool:
+        """
+        POSIX系统 (Linux/macOS) 的内存锁定实现
+
+        使用 mlock() 系统调用锁定内存页，防止被交换到磁盘
         """
         try:
-            if os.name == 'posix':
+            # 加载C库
+            if sys.platform == "darwin":
+                # macOS
+                libc = ctypes.CDLL("/usr/lib/libSystem.B.dylib")
+            else:
+                # Linux
                 libc = ctypes.CDLL("libc.so.6")
-                # mlock需要root权限或CAP_IPC_LOCK能力
-                # 这里我们只是尝试，失败不影响功能
-                pass  # 实际应用中需要正确实现
-        except (OSError, AttributeError):
-            # 无法锁定内存，继续使用但不锁定
-            pass
-    
-    def generate_key(self, key_bytes: Optional[bytes] = None) -> None:
+
+            # 配置mlock函数签名
+            # int mlock(const void *addr, size_t len);
+            libc.mlock.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
+            libc.mlock.restype = ctypes.c_int
+
+            # 配置munlock函数签名
+            # int munlock(const void *addr, size_t len);
+            libc.munlock.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
+            libc.munlock.restype = ctypes.c_int
+
+            # 保存libc引用供后续使用
+            self._libc = libc
+
+            logger.info("POSIX内存锁定支持已初始化 (mlock/munlock)")
+            return True
+
+        except (OSError, AttributeError) as e:
+            logger.warning(f"无法初始化POSIX内存锁定: {e}")
+            return False
+
+    def _lock_memory_windows(self) -> bool:
+        """
+        Windows平台的内存锁定实现
+
+        使用 VirtualLock() API锁定内存页，防止被交换到页面文件
+        """
+        try:
+            # 加载kernel32.dll
+            kernel32 = ctypes.WinDLL("kernel32.dll")
+
+            # 配置VirtualLock函数签名
+            # BOOL VirtualLock(LPVOID lpAddress, SIZE_T dwSize);
+            kernel32.VirtualLock.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
+            kernel32.VirtualLock.restype = ctypes.c_bool
+
+            # 配置VirtualUnlock函数签名
+            # BOOL VirtualUnlock(LPVOID lpAddress, SIZE_T dwSize);
+            kernel32.VirtualUnlock.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
+            kernel32.VirtualUnlock.restype = ctypes.c_bool
+
+            # 保存kernel32引用供后续使用
+            self._kernel32 = kernel32
+
+            logger.info("Windows内存锁定支持已初始化 (VirtualLock/VirtualUnlock)")
+            return True
+
+        except (OSError, AttributeError) as e:
+            logger.warning(f"无法初始化Windows内存锁定: {e}")
+            return False
+
+    def _lock_key_memory(self) -> bool:
+        """
+        锁定当前密钥的内存页
+
+        必须在生成密钥后调用
+
+        返回:
+            bool: 锁定是否成功
+        """
+        if self._key is None or self._cleared:
+            return False
+
+        if not self._lock_memory_enabled:
+            return False
+
+        try:
+            if os.name == "nt" and hasattr(self, "_kernel32"):
+                # Windows: VirtualLock
+                addr = ctypes.addressof(ctypes.c_char.from_buffer(self._key))
+                size = len(self._key)
+                result = self._kernel32.VirtualLock(addr, size)
+
+                if result:
+                    self._memory_locked = True
+                    return True
+                else:
+                    error_code = ctypes.get_last_error()
+                    logger.warning(f"Windows VirtualLock失败，错误码: {error_code}")
+                    return False
+
+            elif os.name == "posix" and hasattr(self, "_libc"):
+                # Linux/macOS: mlock
+                addr = ctypes.addressof(ctypes.c_char.from_buffer(self._key))
+                size = len(self._key)
+                result = self._libc.mlock(addr, size)
+
+                if result == 0:  # mlock返回0表示成功
+                    self._memory_locked = True
+                    return True
+                else:
+                    import errno
+
+                    logger.warning(
+                        f"POSIX mlock失败，错误码: {errno.errorcode.get(ctypes.get_errno(), 'Unknown')}"
+                    )
+                    return False
+            else:
+                return False
+
+        except Exception as e:
+            logger.warning(f"锁定密钥内存失败: {e}")
+            return False
+
+    def _unlock_key_memory(self) -> bool:
+        """
+        解锁当前密钥的内存页
+
+        在清零密钥后调用
+
+        返回:
+            bool: 解锁是否成功
+        """
+        if not self._memory_locked:
+            return False
+
+        if self._key is None:
+            return False
+
+        try:
+            if os.name == "nt" and hasattr(self, "_kernel32"):
+                # Windows: VirtualUnlock
+                addr = ctypes.addressof(ctypes.c_char.from_buffer(self._key))
+                size = len(self._key)
+                result = self._kernel32.VirtualUnlock(addr, size)
+
+                if result:
+                    self._memory_locked = False
+                    return True
+                else:
+                    logger.warning("Windows VirtualUnlock失败")
+                    return False
+
+            elif os.name == "posix" and hasattr(self, "_libc"):
+                # Linux/macOS: munlock
+                addr = ctypes.addressof(ctypes.c_char.from_buffer(self._key))
+                size = len(self._key)
+                result = self._libc.munlock(addr, size)
+
+                if result == 0:  # munlock返回0表示成功
+                    self._memory_locked = False
+                    return True
+                else:
+                    logger.warning("POSIX munlock失败")
+                    return False
+            else:
+                return False
+
+        except Exception as e:
+            logger.warning(f"解锁密钥内存失败: {e}")
+            return False
+
+    def generate_key(self, key_bytes: bytes | None = None) -> None:
         """
         生成或设置私钥
-        
+
         参数:
             key_bytes: 可选的私钥字节串，如果不提供则随机生成
-        
+
         注意:
             - 密钥以bytearray存储，可安全清零
             - 生成前会检查是否已有密钥，如有则先清零
+            - 生成后会自动尝试锁定内存（如果启用）
         """
         # 如果已有密钥，先安全清零
         if self._key is not None and not self._cleared:
             self.clear()
-        
+
         # 生成或设置密钥
         if key_bytes is None:
             self._key = bytearray(secrets.token_bytes(32))
@@ -151,177 +334,244 @@ class SecureKeyManager:
             if len(key_bytes) != 32:
                 raise ValueError("私钥必须是32字节")
             self._key = bytearray(key_bytes)
-        
+
         self._cleared = False
-    
-    def get_key(self) -> bytearray:
+        self._memory_locked = False
+
+        # 尝试锁定内存
+        if self._lock_memory_enabled:
+            self._lock_key_memory()
+
+    def get_key(self) -> memoryview:
         """
-        获取私钥引用
-        
+        获取私钥只读视图
+
         返回:
-            bytearray类型的私钥
-        
+            memoryview只读视图，提供安全的密钥访问
+
         警告:
-            - 返回的是引用，不是副本
+            - 返回的是只读内存视图，不可修改
             - 使用后必须调用clear()清零
             - 不要将此引用存储到其他地方
+            - 如需可写副本，使用 get_key_copy()
         """
         if self._key is None:
             raise SecureMemoryError("密钥未生成，请先调用generate_key()")
-        
+
         if self._cleared:
             raise SecureMemoryError("密钥已被清零，无法再次使用")
-        
-        return self._key
-    
+
+        return memoryview(self._key).toreadonly()
+
+    def get_key_copy(self) -> bytearray:
+        """
+        获取私钥副本（临时使用）
+
+        返回:
+            bytearray私钥副本，使用后必须调用 secure_clear_bytearray() 清零
+
+        警告:
+            - 副本不会自动清零，必须手动处理
+            - 建议使用 get_key() 配合 clear() 更安全
+        """
+        if self._key is None:
+            raise SecureMemoryError("密钥未生成，请先调用generate_key()")
+
+        if self._cleared:
+            raise SecureMemoryError("密钥已被清零，无法再次使用")
+
+        return bytearray(self._key)
+
     def clear(self) -> None:
         """
         安全清零私钥内存
-        
-        根据后端使用不同的清零方法：
-        - cryptography: 使用 OpenSSL 的安全清零
-        - PyNaCl: 使用 libsodium 的安全清零
-        - ctypes: 直接memset清零
+
+        根据后端选择不同的清零策略（均基于 ctypes.memset 实现）：
+        - cryptography 后端: 随机覆盖 + memset + 验证 → 最安全路径
+        - pynacl 后端: 随机覆盖 + memset + Python 重试回退
+        - ctypes 后端: memset + 简单回退
+
+        注意:
+            - 清零前会先解锁内存
+            - 清零后内存被标记为可交换
         """
         if self._key is None or self._cleared:
             return
-        
+
         try:
+            # 先解锁内存（清零前解锁）
+            if self._memory_locked:
+                self._unlock_key_memory()
+
             if self._backend == "cryptography":
-                self._clear_with_cryptography()
+                self._clear_secure()
             elif self._backend == "pynacl":
-                self._clear_with_pynacl()
+                self._clear_with_retry()
             else:
                 self._clear_with_ctypes()
-            
+
             self._cleared = True
-            
-            # 更新统计
-            SecureKeyManager._total_clears += 1
-            SecureKeyManager._successful_clears += 1
-            
+
+            # L3修复: 使用锁保护统计变量，确保多线程安全
+            with SecureKeyManager._stats_lock:
+                SecureKeyManager._total_clears += 1
+                SecureKeyManager._successful_clears += 1
+
         except Exception as e:
             # 清零失败是严重错误
-            SecureKeyManager._total_clears += 1
-            SecureKeyManager._failed_clears += 1
+            # L3修复: 使用锁保护统计变量
+            with SecureKeyManager._stats_lock:
+                SecureKeyManager._total_clears += 1
+                SecureKeyManager._failed_clears += 1
             raise SecureMemoryError(f"安全清零失败: {e}") from e
-    
-    def _clear_with_cryptography(self):
-        """使用cryptography库清零（推荐）"""
-        # cryptography使用OpenSSL的OPENSSL_cleanse
-        # 这是一个安全清零函数，不会被编译器优化掉
+
+    def _clear_secure(self) -> None:
+        """安全清零（验证路径，用于 cryptography 后端）
+
+        实现策略（防御深度）:
+        1. 先用随机数据覆盖密钥内存，防止编译器优化残留
+        2. 再用 ctypes.memset 执行最终清零
+        3. 清零后验证全部字节，失败时抛出 SecureMemoryError
+
+        为什么不用 Python 循环清零:
+        - Python 循环可能被编译器优化为 no-op
+        - 解释器可能保留对象的副本
+        - ctypes.memset 是底层操作，绕过 Python 对象系统
+        """
         if self._key:
-            # 覆盖为随机数据后再清零（更安全）
+            # 先用随机数据覆盖，增加防御深度（与 _clear_with_retry 保持一致）
             random_data = secrets.token_bytes(len(self._key))
             for i in range(len(self._key)):
                 self._key[i] = random_data[i]
-            
-            # 然后清零
-            for i in range(len(self._key)):
-                self._key[i] = 0
-    
-    def _clear_with_pynacl(self):
-        """使用PyNaCl/libsodium清零"""
-        # libsodium的sodium_memzero是安全清零函数
+            # 再使用 ctypes.memset 进行最终清零
+            addr = ctypes.addressof(ctypes.c_char.from_buffer(self._key))
+            size = len(self._key)
+            ctypes.memset(addr, 0, size)
+            if any(self._key):
+                logger.error("安全清零失败，内存未被正确清零")
+                raise SecureMemoryError("清零失败：内存未被正确清零")
+
+    def _clear_with_retry(self) -> None:
+        """安全清零（带回退路径，用于 pynacl 后端）
+
+        实现策略:
+        1. 先用随机数据覆盖密钥内存
+        2. 用 ctypes.memset 执行清零
+        3. memset 失败时回退到 Python 循环多次覆盖
+        """
+        # 使用 ctypes.memset 进行清零，带回退策略
         if self._key:
-            nacl.secret.SecretBox(bytes(len(self._key)))  # 触发libsodium初始化
-            # 手动清零
+            # 先覆盖为随机数据
+            random_data = secrets.token_bytes(len(self._key))
             for i in range(len(self._key)):
-                self._key[i] = 0
-    
-    def _clear_with_ctypes(self):
+                self._key[i] = random_data[i]
+
+            # 使用 ctypes.memset 进行安全清零
+            try:
+                ctypes.memset(ctypes.addressof(ctypes.c_char.from_buffer(self._key)), 0, len(self._key))
+            except (TypeError, ValueError, OSError):
+                # 回退到安全的多次覆盖
+                for _ in range(3):
+                    for i in range(len(self._key)):
+                        self._key[i] = 0xFF
+                for i in range(len(self._key)):
+                    self._key[i] = 0x00
+
+    def _clear_with_ctypes(self) -> None:
         """使用ctypes memset清零（回退方案）"""
         if self._key:
             try:
-                ctypes.memset(
-                    ctypes.addressof(ctypes.c_char.from_buffer(self._key)),
-                    0,
-                    len(self._key)
-                )
-            except (TypeError, ValueError, OSError) as e:
+                ctypes.memset(ctypes.addressof(ctypes.c_char.from_buffer(self._key)), 0, len(self._key))
+            except (TypeError, ValueError, OSError):
                 # 如果无法清零，至少覆盖为0
                 for i in range(len(self._key)):
                     self._key[i] = 0
-    
-    def __enter__(self):
+
+    def __enter__(self) -> "SecureKeyManager":
         """上下文管理器入口"""
         return self
-    
-    def __exit__(self, exc_type, exc_val, exc_tb):
+
+    def __exit__(self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None) -> None:
         """上下文管理器出口 - 自动清零"""
         self.clear()
-        return False
-    
-    def __del__(self):
+        return None
+
+    def __del__(self) -> None:
         """析构函数 - 确保清零"""
         if self._key is not None and not self._cleared:
-            # 尝试清零，但忽略异常（对象正在销毁）
-            # 使用 Exception 而非裸except，避免捕获 KeyboardInterrupt/SystemExit
-            try:
+            # 析构函数中静默失败是可接受的
+            # AttributeError: ctypes 可能在 __del__ 前被卸载 (解释器关闭阶段)
+            # NameError: 同上
+            with suppress(OSError, ValueError, AttributeError, NameError, RuntimeError):
                 self.clear()
-            except Exception:
-                # 析构函数中静默失败是可接受的
-                # 因为此时对象正在销毁，无法做更多处理
-                pass
-    
+
     @property
     def is_cleared(self) -> bool:
         """密钥是否已被清零"""
         return self._cleared
-    
+
     @property
     def backend(self) -> str:
         """当前使用的安全后端"""
         return self._backend
-    
+
+    @property
+    def is_memory_locked(self) -> bool:
+        """内存是否已锁定"""
+        return self._memory_locked
+
     @staticmethod
     def get_clear_stats() -> dict:
         """
         获取清零统计信息
-        
+
         返回:
             dict: 包含清零统计的字典
             - total: 总清零次数
             - successful: 成功次数
             - failed: 失败次数
             - success_rate: 成功率（百分比）
-        
+
         示例:
             >>> stats = SecureKeyManager.get_clear_stats()
             >>> print(f"清零成功率: {stats['success_rate']:.2f}%")
         """
-        total = SecureKeyManager._total_clears
-        successful = SecureKeyManager._successful_clears
-        failed = SecureKeyManager._failed_clears
-        
+        # L3修复: 使用锁保护统计读取
+        with SecureKeyManager._stats_lock:
+            total = SecureKeyManager._total_clears
+            successful = SecureKeyManager._successful_clears
+            failed = SecureKeyManager._failed_clears
+
         success_rate = (successful / total * 100) if total > 0 else 100.0
-        
+
         return {
-            'total': total,
-            'successful': successful,
-            'failed': failed,
-            'success_rate': success_rate
+            "total": total,
+            "successful": successful,
+            "failed": failed,
+            "success_rate": success_rate,
         }
-    
+
     @staticmethod
-    def reset_clear_stats():
+    def reset_clear_stats() -> None:
         """重置清零统计"""
-        SecureKeyManager._total_clears = 0
-        SecureKeyManager._successful_clears = 0
-        SecureKeyManager._failed_clears = 0
+        # L3修复: 使用锁保护统计重置
+        with SecureKeyManager._stats_lock:
+            SecureKeyManager._total_clears = 0
+            SecureKeyManager._successful_clears = 0
+            SecureKeyManager._failed_clears = 0
 
 
 @contextmanager
-def secure_key_context(key_bytes: Optional[bytes] = None):
+def secure_key_context(key_bytes: bytes | None = None) -> Any:
     """
     安全密钥上下文管理器（便捷函数）
-    
+
     参数:
         key_bytes: 可选的私钥字节串
-    
+
     生成:
-        bytearray: 可安全清零的私钥
-    
+        memoryview: 可安全清零的私钥只读视图
+
     示例:
         >>> with secure_key_context() as private_key:
         ...     address = generate_address(private_key)
@@ -338,10 +588,10 @@ def secure_key_context(key_bytes: Optional[bytes] = None):
 def generate_secure_key() -> bytearray:
     """
     生成安全私钥（单次使用）
-    
+
     返回:
         bytearray: 新生成的私钥
-    
+
     警告:
         - 此函数不清零返回的密钥
         - 调用者负责在使用后调用secure_clear_bytearray()

@@ -1,5 +1,36 @@
 # 监控系统使用指南
 
+> **版本**: v4.2.2 | **最后更新**: 2026-05-15
+> **面向**: 运维/开发者
+
+## 目录
+
+- [监控系统使用指南](#监控系统使用指南)
+  - [目录](#目录)
+  - [1. 系统概述](#1-系统概述)
+  - [2. 系统架构](#2-系统架构)
+    - [2.1 数据采集器 (DataCollector)](#21-数据采集器-datacollector)
+    - [2.2 数据存储 (DataStorage)](#22-数据存储-datastorage)
+    - [2.3 异常检测 (AnomalyDetector)](#23-异常检测-anomalydetector)
+    - [2.4 告警系统 (AlertSystem)](#24-告警系统-alertsystem)
+    - [2.5 报告生成器 (ReportGenerator)](#25-报告生成器-reportgenerator)
+  - [3. 数据采集指标](#3-数据采集指标)
+    - [3.1 性能指标](#31-性能指标)
+    - [3.2 系统指标](#32-系统指标)
+    - [3.3 引擎指标](#33-引擎指标)
+  - [4. 异常检测与告警](#4-异常检测与告警)
+    - [4.1 异常检测规则](#41-异常检测规则)
+    - [4.2 告警级别](#42-告警级别)
+    - [4.3 告警通知方式](#43-告警通知方式)
+  - [5. 报告生成](#5-报告生成)
+    - [5.1 每日报告](#51-每日报告)
+    - [5.2 报告存储位置](#52-报告存储位置)
+  - [6. 配置选项](#6-配置选项)
+    - [6.1 监控系统配置](#61-监控系统配置)
+    - [6.2 异常检测阈值配置](#62-异常检测阈值配置)
+  - [13. 总结](#13-总结)
+  - [相关文档](#相关文档)
+
 ## 1. 系统概述
 
 监控系统是比特币私钥对撞引擎的实时监控和数据分析工具，旨在帮助用户评估引擎的运行状态、性能表现和潜在问题。该系统提供全面的数据采集、分析和告警功能，确保引擎持续稳定运行。
@@ -9,28 +40,33 @@
 监控系统由以下核心组件组成：
 
 ### 2.1 数据采集器 (DataCollector)
+
 - 收集引擎性能指标（检测速率、已检测数量、匹配数量）
 - 收集系统资源使用情况（CPU、内存、线程数）
 - 收集引擎运行状态（模式、目标数量、运行状态）
 
 ### 2.2 数据存储 (DataStorage)
+
 - 保存当前运行数据
 - 存储历史数据（最多1000条）
 - 记录错误日志（最多500条）
 - 生成每日报告
 
 ### 2.3 异常检测 (AnomalyDetector)
+
 - 检测性能异常（速率过低/过高）
 - 检测系统资源异常（CPU/内存使用过高）
 - 检测引擎状态异常
 - 分析数据趋势
 
 ### 2.4 告警系统 (AlertSystem)
+
 - 生成实时告警
 - 记录告警历史
 - 分级告警（警告/严重）
 
 ### 2.5 报告生成器 (ReportGenerator)
+
 - 生成每日运行报告
 - 分析性能趋势
 - 提供优化建议
@@ -40,6 +76,7 @@
 监控系统采集的关键指标包括：
 
 ### 3.1 性能指标
+
 - **检测速率**：每秒检测的私钥数量
 - **已检测总数**：累计检测的私钥数量
 - **匹配数量**：找到的匹配私钥数量
@@ -48,12 +85,14 @@
 - **线程数**：当前运行的线程数量
 
 ### 3.2 系统指标
+
 - **操作系统**：运行环境
 - **Python版本**：使用的Python版本
 - **进程ID**：引擎进程ID
 - **运行时间**：系统运行时间（秒）
 
 ### 3.3 引擎指标
+
 - **运行模式**：当前使用的对撞模式（随机/范围/暴力）
 - **目标数量**：设置的目标地址数量
 - **运行状态**：引擎是否正在运行
@@ -71,10 +110,12 @@
 | 引擎状态 | 运行中 | 运行中但速率为0 |
 
 ### 4.2 告警级别
+
 - **警告**：性能异常，可能影响系统效率
 - **严重**：引擎状态异常，可能导致系统故障
 
 ### 4.3 告警通知方式
+
 - 控制台实时显示
 - 日志文件记录
 - 告警历史存储
@@ -82,6 +123,7 @@
 ## 5. 报告生成
 
 ### 5.1 每日报告
+
 - 生成时间：每天00:00
 - 内容包括：
   - 当日统计数据（检测数量、匹配数量）
@@ -91,7 +133,8 @@
   - 优化建议
 
 ### 5.2 报告存储位置
-```
+
+```python
 monitoring_data/report_YYYY-MM-DD.json
 ```
 
@@ -123,7 +166,7 @@ self.thresholds = {
         "max": 1024  # 内存使用上限（MB）
     }
 }
-```
+```markdown
 
 ## 7. 使用方法
 
@@ -147,15 +190,15 @@ engine = KeyCollisionEngine(
     on_match=on_match,
     monitoring_enabled=False
 )
-```
+```markdown
 
-### 7.2 查看监控状态
+## 7.2 查看监控状态
 
 ```python
 if engine.monitoring_system:
     status = engine.monitoring_system.get_current_status()
     print(f"当前状态: {status}")
-```
+```markdown
 
 ### 7.3 生成报告
 
@@ -163,18 +206,20 @@ if engine.monitoring_system:
 if engine.monitoring_system:
     report = engine.monitoring_system.generate_report()
     print(f"报告: {report}")
-```
+```markdown
 
 ## 8. 数据存储结构
 
 ### 8.1 监控数据目录
 ```
+
 monitoring_data/
 ├── current_data.json     # 当前运行数据
 ├── history_data.json     # 历史数据
 ├── error_log.json        # 错误日志
 └── report_YYYY-MM-DD.json # 每日报告
-```
+
+```markdown
 
 ### 8.2 数据格式
 
@@ -204,7 +249,7 @@ monitoring_data/
   },
   "errors": []
 }
-```
+```markdown
 
 ## 9. 最佳实践
 
@@ -241,7 +286,7 @@ monitoring_data/
 ```bash
 # 查看最近的监控日志
 grep "MonitoringSystem" logs/collision.log
-```
+```markdown
 
 ## 11. GPU监控（新增）
 
@@ -269,14 +314,14 @@ print(f"显存: {gpu_info['gpus'][0]['global_memory_mb']} MB")
 gpu_metrics = monitor.get_gpu_metrics()
 print(f"显存使用: {gpu_metrics['memory_used_mb']} MB")
 print(f"显存使用率: {gpu_metrics['memory_usage_percent']}%")
-```
+```markdown
 
-### 11.3 依赖要求
+## 11.3 依赖要求
 
 GPU监控需要安装PyOpenCL：
 ```bash
 pip install pyopencl
-```
+```python
 
 如果PyOpenCL不可用，GPU监控会自动禁用，不影响其他功能。
 
@@ -295,9 +340,9 @@ python tools/cleanup_monitoring_data.py --max-age 30 --dry-run
 
 # 实际清理（删除30天前的文件）
 python tools/cleanup_monitoring_data.py --max-age 30
-```
+```markdown
 
-### 12.2 配置自动清理
+## 12.2 配置自动清理
 
 在`config.json`中启用自动清理：
 
@@ -322,3 +367,9 @@ python tools/cleanup_monitoring_data.py --max-age 30
 - 生成详细的运行报告，支持决策制定
 
 通过合理配置和使用监控系统，可以显著提高引擎的稳定性和效率，确保系统持续可靠运行。
+
+---
+
+## 相关文档
+
+- 详细使用指南和最佳实践已归档至 `docs/archive/history/monitoring-system-usage-guide.md`

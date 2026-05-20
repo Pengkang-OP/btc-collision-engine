@@ -1,23 +1,26 @@
 @echo off
-REM ============================================
-REM 监控数据自动清理 - Windows任务计划脚本
-REM 建议每周运行一次
-REM ============================================
+setlocal enabledelayedexpansion
 
-echo ============================================
-echo 开始清理监控数据
-echo ============================================
-echo.
-
-REM 切换到项目目录
+call "%~dp0..\common.bat"
+call :init_encoding
 cd /d "%~dp0.."
 
-REM 运行清理工具（清理30天前的数据）
-echo 正在清理30天前的监控数据...
-python tools\cleanup_monitoring_data.py --max-age 30
+echo ============================================
+echo   Cleaning Up Monitoring Data
+echo ============================================
+echo.
+
+call :check_python
+call :check_python_version
+call :activate_venv
+
+call :check_file_exists "scripts\cleanup_cache.py"
+
+echo [INFO] Cleaning temporary files and cache...
+python scripts\cleanup_cache.py --max-age 30
 
 echo.
 echo ============================================
-echo 清理完成！
+echo   Cleanup completed!
 echo ============================================
 pause

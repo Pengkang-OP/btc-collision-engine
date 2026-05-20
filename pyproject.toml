@@ -1,0 +1,183 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "btc-collision-engine"
+version = "4.4.0"
+description = "比特币私钥碰撞引擎，支持CPU和GPU加速，多格式地址支持，用于学习和研究比特币地址碰撞"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "BTC Project" }]
+keywords = ["bitcoin", "collision", "gpu", "opencl", "cryptography"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security :: Cryptography",
+]
+
+# 核心必须依赖
+dependencies = [
+    "coincurve>=18.0.0",
+    "gmpy2>=2.1.0,<4.0.0",          # C-07: 放宽上限，支持 3.x 版本
+    "pycryptodome>=3.19.0,<5.0.0",  # C-08: 放宽上限，预留 4.x 兼容性
+    "cachetools>=5.3.0",
+    "pybloom-live>=2.2.0",
+    "bech32>=1.2.0",
+    "bitarray>=2.6.0",
+    "chardet>=5.0.0,<6.0.0",
+    "requests>=2.28.0,<3.0.0",      # C-12: 接近 3.0，注意破坏性变更
+    "ecdsa>=0.18.0",
+    "setproctitle>=1.3.0",
+    "psutil>=5.9.0",
+    "jsonschema>=4.0.0",            # H-NEW1修复: 配置验证必需依赖
+    "cryptography>=43.0.0,<46.0.0", # C-03: 放宽上限，支持 44.x, 45.x
+    "PyNaCl>=1.5.0,<2.0.0",
+    "rich>=13.0",                   # CLI 富文本输出
+    "cffi>=1.15.0",                 # coincurve/cryptography 的 C FFI 依赖
+]
+
+[project.optional-dependencies]
+# GPU 加速支持
+gpu = [
+    "pyopencl>=2022.1",
+    "numpy>=1.24.0",
+    "gmpy2>=2.1.0,<4.0.0",         # C-07: 与主依赖一致
+    "pycryptodome>=3.19.0,<5.0.0", # C-08: 与主依赖一致
+    "nvidia-ml-py>=12.0.0",        # C-13: NVIDIA GPU 监控（替代已弃用的 pynvml）
+]
+# 开发与测试工具
+dev = [
+    "pytest>=9.0.0,<10.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-benchmark>=4.0",
+    "pytest-rerunfailures>=3.0",
+    "pytest-timeout>=2.0",
+    "memory-profiler>=0.61",
+    "bandit>=1.7.0",
+    "mypy>=1.0.0",
+    "black>=24.0.0",
+    "flake8>=6.0.0",
+    "sphinx>=7.0.0",
+    "sphinx-rtd-theme>=1.3.0",
+]
+# 一次性安装所有可选依赖
+all = ["btc-collision-engine[gpu,dev]"]
+
+[project.scripts]
+btc-collision = "src.cli.main:main"
+
+[project.urls]
+Homepage = "https://github.com/btc-project/btc-collision-engine"
+"Bug Tracker" = "https://github.com/btc-project/btc-collision-engine/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*", "*Test"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short --strict-markers --strict-config"
+log_cli = true
+log_cli_level = "WARNING"
+log_cli_format = "%(asctime)s [%(levelname)8s] %(name)s: %(message)s"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+markers = [
+    # 测试类型标记
+    "unit: Unit tests (单元测试)",
+    "integration: Integration tests (集成测试)",
+    "smoke: Smoke tests - quick core verification (冒烟测试)",
+    "regression: Regression tests for known bugs (回归测试)",
+    # 功能域标记
+    "entropy: Entropy pool health check tests (熵池健康检查测试)",
+    "deprecation: Deprecation warning tests (弃用警告测试)",
+    "gpu: GPU-related tests (GPU相关测试)",
+    "gpu_kernel: GPU kernel correctness regression tests (GPU内核正确性回归测试)",
+    "thread_safety: Thread safety tests (线程安全测试)",
+    "progress: Progress callback tests (进度回调测试)",
+    "security: Security tests (安全测试)",
+    "cross_platform: Cross-platform tests (跨平台测试)",
+    "edge_cases: Edge case tests (边界条件测试)",
+    # 优先级标记
+    "p1_high: P1 high priority fixes (P1高优先级修复)",
+    "p2_medium: P2 medium priority fixes (P2中优先级修复)",
+    "p3_low: P3 low priority fixes (P3低优先级修复)",
+    # 其他标记
+    "flaky: Flaky tests that may need reruns (不稳定的测试，允许重试)",
+]
+
+[tool.mypy]
+python_version = "3.11"                                   # 与 CI type-check job 使用的 Python 版本一致
+ignore_missing_imports = true
+warn_return_any = false                                   # 大量底层C库返回Any，暂不强制
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = false
+check_untyped_defs = false
+disallow_untyped_defs = false                             # 渐进式类型化，暂不强制函数签名
+disallow_incomplete_defs = false                          # 允许部分类型注解
+disallow_untyped_calls = false                            # 允许调用未类型化函数
+no_implicit_optional = true                               # 防止隐式Optional
+strict_equality = true                                    # 防止不安全的类型比较
+exclude = ["tests/", "benchmarks/", "tools/", "scripts/"]
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+
+[tool.ruff]
+line-length = 105 # 略高于标准100以容纳中文日志/长变量名
+target-version = "py312"
+fix = true
+exclude = [
+    ".git",
+    "__pycache__",
+    ".mypy_cache",
+    ".pytest_cache",
+    "venv",
+    "scripts/venv",
+    ".history",
+    "data_logs",
+    "logs",
+    "build",
+    "dist",
+    "*.egg-info",
+    ".eggs",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "C90", "I", "N", "UP", "SIM", "B"]
+ignore = ["E203"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/web/dashboard.py" = ["E501"]                  # HTML/Jinja2 模板字符串无法有意义地拆分
+"src/monitoring/alert_notifications.py" = ["E501"] # HTML 邮件模板字符串
+"src/utils/ui_tutorial.py" = ["E501"]              # 长行 UI 字符串/格式化提示文本
+"src/collision/targets/validator.py" = ["E501"]    # doctest 示例 + 中文注释
+"scripts/_batch_p1.py" = ["E501"]                  # 嵌入式源码字符串补丁脚本
+"scripts/extract_opencl_kernels.py" = ["E501"]     # 文档字符串含 markdown 代码示例
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
+
+[tool.ruff.format]
+line-ending = "lf"
+
+[tool.bandit]
+exclude_dirs = ["tests", "docs", "benchmarks"]
+skips = ["B101"]

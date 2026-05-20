@@ -9,8 +9,11 @@ __pycache__/
 # 测试覆盖率
 .coverage
 .coverage.*
+coverage.xml
 htmlcov/
 *.cover
+_cov*.txt
+cov_*.txt
 
 # 虚拟环境
 .venv/
@@ -21,6 +24,8 @@ env/
 # IDE配置
 .qoder/
 .qodo/
+.history/
+.trae/
 .vscode/
 .idea/
 *.swp
@@ -30,20 +35,67 @@ env/
 # 日志文件
 logs/*.log
 logs/*.log.*
-data_logs/  # 运行时数据目录（完整忽略）
-monitoring_data/  # 监控数据目录（完整忽略）
+data_logs/
+src/data_logs/
+monitoring_data/
 test_results.log
+
+# 测试数据和结果
+test_data/
+test_results/
+test_*.txt
+test_*.log
+tests/data_logs/report_daily_*.json
+*.log
+
+# 基准测试结果（临时数据）
+benchmarks/results/benchmark_*.json
+benchmarks/benchmark_*.json
+benchmarks/btc_addresses_sorted.txt
 
 # 临时文件
 *.tmp
 *.bak
 *.cache
 *.pid
+*.exe  # 可执行安装程序
+dxdiag.txt
+
+# scripts 目录下禁止跟踪的子目录（运行时/环境残留）
+scripts/venv/
+scripts/data_logs/
+scripts/kernels/
+scripts/logs/
+scripts/monitoring_data/
+
+# 代码审查 diff 文件
+review_diff_*.txt
+
+# 根目录临时报告
+report.txt
+cov_report.txt
+diagnostic.bat
+dual_launcher.py
+pr_page_top.png
+start_dual.bat
+_batch_cov.py
+_run_cov.py
+
+# data_logs 运行时报告（按日期生成的 JSON）
+data_logs/report_daily_*.json
+data_logs/current_data.json
+data_logs/history_data.json
+data_logs/performance.log
+test_matches/
+mypy_*.txt
 
 # 操作系统
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# 运行时配置（禁止提交，避免私钥等敏感信息泄露）
+config.json
 
 # 编译产物
 *.so
@@ -62,3 +114,90 @@ build/
 # 环境配置
 .env
 .env.local
+
+# 用户配置（config.example.json 作为模板被跟踪）
+config.json
+
+# ========================================
+# 根目录临时报告防污染规则
+# ========================================
+automation_test.log
+
+# AI/工具自动生成的报告文件
+*_REPORT*.md
+*_ANALYSIS*.md
+*_REVIEW*.md
+*_SUMMARY*.md
+*_PLAN*.md
+*_INDEX*.md
+AI_AUTO_SORT_*.md
+AI_AUTO_SORT_*.json
+
+# 保留标准项目文件
+!README.md
+!CHANGELOG.md
+!CONTRIBUTING.md
+!docs/DOCUMENT_INDEX.md
+
+# 根目录临时数据文件
+dxdiag.txt
+tmp_*.txt
+gpu_*.txt
+*.html
+!docs/**/*.html
+
+# 根目录临时JSON
+intel_arc_*.json
+test_env_use.json
+
+# 临时测试和验证脚本（非核心功能）
+/comprehensive_test.py
+quick_verify_*.py
+test_*.py  # 临时测试脚本（非tests目录）
+verify_*.py  # 临时验证脚本
+
+# Shell集成错误产生的垃圾文件（Trae CN IDE）
+utput*
+s -File*
+criptsshell*
+
+# 根目录临时工具脚本
+analysis.py
+calc_cost.py
+check_i18n.py
+check_package_stats.py
+diagnose_shell_environment.ps1
+generate_report.py
+generate_report.bat
+log_monitor.py
+log_monitor.bat
+monitor.ps1
+monitor_cli_status.py
+optimize_gpu_performance.py
+production_acceptance_test.py
+run_engine_no_log.py
+run_engine_with_log.py
+run_with_log.py
+start_collision_full.py
+start_comprehensive_monitoring.py
+start_monitoring.py
+start_monitoring.bat
+test_address_case_impact.py
+test_checkpoint.py
+verify_package.py
+view_monitor_data.py
+
+# 根目录中文报告
+业务*.md
+拓扑*.md
+目标*.md
+
+# P3-08修复: 根目录临时分析/验证输出文件
+_e501_*.txt
+_verify_*.txt
+_vfy_*.txt
+_fmt_*.txt
+_e501_*.py
+_verify_*.py
+_vfy_*.py
+_fmt_*.py

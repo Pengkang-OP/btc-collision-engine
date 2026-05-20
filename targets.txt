@@ -1,0 +1,6 @@
+# BTC 目标地址列表
+# 每行一个地址，支持 # 注释行
+# 支持 P2PKH (1开头)、P2SH (3开头)、Bech32 (bc1开头) 格式
+#
+1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
+C:\Users\pengk\Desktop\btc_addresses_only.txt
