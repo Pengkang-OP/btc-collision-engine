@@ -12,11 +12,11 @@
 - 测试完成后恢复 sys.modules，不影响其他测试文件
 """
 
-import sys
 import importlib
+import sys
 from unittest.mock import MagicMock
-import pytest
 
+import pytest
 
 # ═══════════════════════════════════════════════════════════════
 # Mock 模块定义

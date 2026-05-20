@@ -1,12 +1,13 @@
-# -*- coding: utf-8 -*-
 """GPU内存池优化模块单元测试"""
 
-import pytest
 from unittest.mock import Mock
+
+import pytest
+
 from src.gpu.memory_pool import (
-    GPUMemoryPool,
-    GPUBufferAllocator,
     GlobalGPUMemoryManager,
+    GPUBufferAllocator,
+    GPUMemoryPool,
 )
 
 pytestmark = pytest.mark.gpu

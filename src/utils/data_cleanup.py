@@ -170,9 +170,7 @@ class DataCleaner:
         logger.info(f"日志轮转完成: 删除{files_removed}个文件")
         return files_removed
 
-    def clean_monitoring_data(
-        self, max_age_days: int = 30, dry_run: bool = False
-    ) -> tuple[int, int]:
+    def clean_monitoring_data(self, max_age_days: int = 30, dry_run: bool = False) -> tuple[int, int]:
         """清理监控数据
 
         参数:
@@ -217,9 +215,7 @@ class DataCleaner:
         )
         return files_removed, space_freed
 
-    def clean_old_reports(
-        self, max_age_days: int = 7, archive_dir: str = "archive"
-    ) -> dict[str, Any]:
+    def clean_old_reports(self, max_age_days: int = 7, archive_dir: str = "archive") -> dict[str, Any]:
         """清理过期的报告文件，将超过指定天数的报告归档
 
         Args:
@@ -334,9 +330,7 @@ class DataCleaner:
                 self.stats["space_freed_bytes"] += file_size_bytes
                 self.stats["files_removed"] += 1
             else:
-                logger.info(
-                    f"[试运行] 将归档 performance.log ({file_size_mb:.2f}MB) -> {archive_path}"
-                )
+                logger.info(f"[试运行] 将归档 performance.log ({file_size_mb:.2f}MB) -> {archive_path}")
 
             return True
         except OSError as e:
@@ -431,9 +425,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="BTC碰撞引擎数据清理工具")
     parser.add_argument("--dry-run", action="store_true", help="试运行模式，不实际删除文件")
     parser.add_argument("--temp-days", type=int, default=7, help="临时文件最大保留天数（默认: 7）")
-    parser.add_argument(
-        "--data-days", type=int, default=30, help="历史数据最大保留天数（默认: 30）"
-    )
+    parser.add_argument("--data-days", type=int, default=30, help="历史数据最大保留天数（默认: 30）")
     parser.add_argument("--log-files", type=int, default=5, help="保留的日志文件数（默认: 5）")
 
     args = parser.parse_args()
@@ -443,12 +435,10 @@ def main() -> None:
     # 显示磁盘使用情况
     disk_usage = cleaner.get_disk_usage()
     if disk_usage:
-        _used = disk_usage['used_gb']
-        _total = disk_usage['total_gb']
-        _pct = disk_usage['usage_percent']
-        print(
-            f"磁盘使用: {_used:.2f}GB / {_total:.2f}GB ({_pct:.1f}%)"
-        )
+        _used = disk_usage["used_gb"]
+        _total = disk_usage["total_gb"]
+        _pct = disk_usage["usage_percent"]
+        print(f"磁盘使用: {_used:.2f}GB / {_total:.2f}GB ({_pct:.1f}%)")
         print(f"可用空间: {disk_usage['free_gb']:.2f}GB")
         print()
 

@@ -12,17 +12,16 @@
     - 运行 10 秒后自动停止
 """
 
-import sys
 import os
+import sys
 import time
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.core.key_generator import SecureKeyGenerator
 from src.core.address_converter import AddressConverter
-from src.core.hash_utils import hash160 as compute_hash160
 from src.core.base58 import Base58
+from src.core.key_generator import SecureKeyGenerator
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 目标地址（示例：比特币创世区块地址，余额 > 50 BTC）
@@ -42,7 +41,7 @@ def main():
     print("=" * 60)
     print(f"  目标地址数: {len(TARGET_ADDRESSES)}")
     print(f"  运行时长  : {RUN_DURATION} 秒")
-    print(f"  碰撞模式  : 随机（CPU）")
+    print("  碰撞模式  : 随机（CPU）")
     print("-" * 60)
 
     # 初始化组件

@@ -8,7 +8,9 @@ CI/本地分级策略:
 import os
 import time
 import warnings
+
 import pytest
+
 from src.collision.key_collision_engine import KeyCollisionEngine
 from src.core.secure_key_manager import SecureKeyManager
 
@@ -240,7 +242,8 @@ class TestM3OptimizationComparison:
             if results[5000] > results[10] * 1.5:
                 warnings.warn(
                     f"CI批量性能波动: 5000/10={results[5000]/results[10]:.1f}x > 1.5x, "
-                    f"可能因CI虚拟化/资源争抢"
+                    f"可能因CI虚拟化/资源争抢",
+                    stacklevel=2,
                 )
         else:
             assert results[5000] <= results[10] * 1.5, (

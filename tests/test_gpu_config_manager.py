@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """GPUConfigManager单元测试
 
 测试GPU配置管理器的所有功能：
@@ -8,10 +7,12 @@
 4. 配置摘要生成
 """
 
-import pytest
 import json
 import logging
 from unittest.mock import patch
+
+import pytest
+
 from src.collision.gpu_config_manager import GPUConfigManager
 
 pytestmark = pytest.mark.gpu

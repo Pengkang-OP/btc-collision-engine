@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """P1-2模块解耦核心功能验证脚本"""
 
 import logging
@@ -33,7 +32,7 @@ def test_all():
     # 测试2: GPUKernelProtocol接口
     print("测试2: GPUKernelProtocol接口")
     try:
-        from src.gpu.kernel_protocol import GPUKernelProtocol, GPUKernelFactory
+        from src.gpu.kernel_protocol import GPUKernelFactory, GPUKernelProtocol
 
         print("  ✅ 导入成功")
         print(f"  ✅ 接口定义: {GPUKernelProtocol}")
@@ -54,7 +53,7 @@ def test_all():
     # 测试3: MonitorConfig配置对象
     print("测试3: MonitorConfig配置对象")
     try:
-        from src.monitoring.monitor_config import MonitorConfig, PRODUCTION_CONFIG, TESTING_CONFIG
+        from src.monitoring.monitor_config import PRODUCTION_CONFIG, TESTING_CONFIG, MonitorConfig
 
         config = MonitorConfig(data_logging_enabled=True)
         print("  ✅ 配置创建成功")
@@ -130,8 +129,8 @@ def test_all():
         # 尝试导入所有模块，如果有循环依赖会失败
         from src.gpu.device_helper import GPUDeviceHelper
         from src.gpu.kernel_protocol import GPUKernelProtocol
-        from src.monitoring.monitor_config import MonitorConfig
         from src.monitoring.enhanced_monitoring import EnhancedMonitoringSystem
+        from src.monitoring.monitor_config import MonitorConfig
 
         print("  ✅ 所有模块导入成功")
         print("  ✅ 无循环依赖")

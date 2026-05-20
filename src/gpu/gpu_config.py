@@ -107,6 +107,8 @@ class MultiGPUConfig:
     auto_rebalance: bool = True
     auto_pause_on_critical: bool = False
     per_device_config: dict[str, dict[str, Any]] = field(default_factory=dict)
+    # P2修复: 性能历史记录最大条数（可配置化，默认100）
+    performance_history_max_size: int = 100
 
     @classmethod
     def from_dict(cls, d: dict[str, Any] | None = None) -> "MultiGPUConfig":
@@ -130,6 +132,7 @@ class MultiGPUConfig:
             auto_rebalance=d.get("auto_rebalance", True),
             auto_pause_on_critical=d.get("auto_pause_on_critical", False),
             per_device_config=d.get("per_device_config", {}),
+            performance_history_max_size=d.get("performance_history_max_size", 100),
         )
 
 

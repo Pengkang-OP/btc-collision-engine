@@ -8,8 +8,8 @@ import time
 # 禁用日志以避免文件锁定问题
 logging.basicConfig(level=logging.CRITICAL)
 
-from src.collision.targets.storage import AddressStorage  # noqa: E402
 from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
+from src.collision.targets.storage import AddressStorage  # noqa: E402
 
 
 def test_end_to_end_address_import():
@@ -44,7 +44,7 @@ def test_end_to_end_address_import():
     # 2. 验证导入的地址
     print("\n2. 验证导入的地址...")
 
-    with open(result["storage_path"], "r", encoding="utf-8") as f:
+    with open(result["storage_path"], encoding="utf-8") as f:
         data = json.load(f)
         print(f"   存储文件版本: {data.get('version', 'unknown')}")
         print(f"   目标地址数: {len(data.get('targets', []))}")

@@ -6,18 +6,17 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
-from src.cli.validation import (
-    validate_args,
-    validate_file_path,
-    _get_output,
-    _DURATION_WARN_THRESHOLD,
-)
 from src.cli.constants import (
     DEFAULT_CHECKPOINT_INTERVAL,
     DEFAULT_DEDUP_MAX_SIZE,
     DEFAULT_WINDOW_SIZE,
 )
-
+from src.cli.validation import (
+    _DURATION_WARN_THRESHOLD,
+    _get_output,
+    validate_args,
+    validate_file_path,
+)
 
 # ── helpers ────────────────────────────────────────────────────
 

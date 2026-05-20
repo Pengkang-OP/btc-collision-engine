@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """快速验证 ThreadSafeLogger 替换
 
 验证内容:
@@ -8,14 +7,14 @@
 3. 原生logger线程安全
 """
 
-import sys
 import os
+import sys
 import warnings
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.utils import init_logging, get_configured_logger  # noqa: E402
+from src.utils import get_configured_logger, init_logging  # noqa: E402
 
 # 初始化日志
 init_logging()

@@ -1,26 +1,25 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 日志系统兼容性测试
 
 验证日志系统在不同版本的平台环境和浏览器中的表现，确保日志功能在各种场景下均能正常工作。
 """
 
+import logging
 import os
 import sys
-import unittest
-import logging
 import tempfile
+import unittest
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.utils.logger import setup_logger, get_logger, get_sampled_logger  # noqa: E402
-from src.utils.logging_config import init_logging, get_configured_logger  # noqa: E402
 from src.utils.log_collection_rules import init_log_collection_rules  # noqa: E402
-from src.utils.log_dependency_manager import init_log_dependencies, check_dependencies  # noqa: E402
+from src.utils.log_dependency_manager import check_dependencies, init_log_dependencies  # noqa: E402
 from src.utils.log_performance_optimizer import get_performance_optimizer  # noqa: E402
 from src.utils.log_platform_adapter import get_platform_adapter, get_platform_info  # noqa: E402
+from src.utils.logger import get_logger, get_sampled_logger, setup_logger  # noqa: E402
+from src.utils.logging_config import get_configured_logger, init_logging  # noqa: E402
 
 
 class TestLogCompatibility(unittest.TestCase):
@@ -60,8 +59,8 @@ class TestLogCompatibility(unittest.TestCase):
         for handler in root_logger.handlers:
             try:
                 handler.close()
-            except Exception:
-                pass
+            except (OSError, RuntimeError):
+                pass  # handler关闭失败不影响测试
 
         # 清理临时文件
         import time
@@ -140,7 +139,7 @@ class TestLogCompatibility(unittest.TestCase):
     def test_log_collection_rules(self):
         """测试日志收集规则"""
         # 直接创建一个新的规则管理器实例，确保使用正确的配置文件路径
-        from src.utils.log_collection_rules import LogCollectionRuleManager, LogCollectionRule
+        from src.utils.log_collection_rules import LogCollectionRule, LogCollectionRuleManager
 
         rule_manager = LogCollectionRuleManager(self.rule_config)
         self.assertIsNotNone(rule_manager)
@@ -194,7 +193,7 @@ class TestLogCompatibility(unittest.TestCase):
 
         # 验证日志文件内容
         self.assertTrue(os.path.exists(self.log_file))
-        with open(self.log_file, "r", encoding="utf-8") as f:
+        with open(self.log_file, encoding="utf-8") as f:
             content = f.read()
             self.assertIn(test_message, content)
 
@@ -281,7 +280,7 @@ class TestLogCompatibility(unittest.TestCase):
 
         # 验证日志文件内容
         self.assertTrue(os.path.exists(self.log_file + ".format"))
-        with open(self.log_file + ".format", "r", encoding="utf-8") as f:
+        with open(self.log_file + ".format", encoding="utf-8") as f:
             content = f.read()
             self.assertIn("INFO: " + test_message, content)
 

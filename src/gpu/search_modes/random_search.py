@@ -172,9 +172,7 @@ class RandomSearchMode(BaseSearchMode):
                         self._seed_generated_count += 1
                 else:
                     # 队列充足，批量补充
-                    batch_size = min(
-                        SEED_BATCH_GENERATE_SIZE, self._seed_prefetch_size - current_size
-                    )
+                    batch_size = min(SEED_BATCH_GENERATE_SIZE, self._seed_prefetch_size - current_size)
                     if batch_size > 0:
                         seeds = self._generate_seed_batch(batch_size)
                         for seed in seeds:
@@ -336,9 +334,7 @@ class RandomSearchMode(BaseSearchMode):
                 ExceptionHandler.handle_gpu_error("随机碰撞", e, engine.stats)
 
                 consecutive_errors += 1
-                backoff = min(
-                    EXP_BACKOFF_BASE * (2 ** min(consecutive_errors - 1, 8)), EXP_BACKOFF_MAX
-                )
+                backoff = min(EXP_BACKOFF_BASE * (2 ** min(consecutive_errors - 1, 8)), EXP_BACKOFF_MAX)
                 logger.warning(
                     f"GPU batch {batch_num}: 异常 (连续第{consecutive_errors}次), 退避 {backoff:.2f}s"
                 )
@@ -409,10 +405,7 @@ class RandomSearchMode(BaseSearchMode):
         if not hasattr(engine, "_gpu_kernel") or engine._gpu_kernel is None:
             logger.warning("GPU内核不可用")
             return False
-        if (
-            not hasattr(engine._gpu_kernel, "_targets_buf")
-            or engine._gpu_kernel._targets_buf is None
-        ):
+        if not hasattr(engine._gpu_kernel, "_targets_buf") or engine._gpu_kernel._targets_buf is None:
             logger.warning("目标缓冲区不可用")
             return False
         return True
@@ -481,9 +474,7 @@ class RandomSearchMode(BaseSearchMode):
         gpu_model = self._detect_gpu_model(engine)
         from ..batch_size_optimizer import get_batch_size_optimizer
 
-        batch_optimizer = get_batch_size_optimizer(
-            engine.batch_size or 1048576, gpu_model=gpu_model
-        )
+        batch_optimizer = get_batch_size_optimizer(engine.batch_size or 1048576, gpu_model=gpu_model)
 
         # 初始化状态
         consecutive_errors = 0
@@ -572,9 +563,7 @@ class RandomSearchMode(BaseSearchMode):
                     current_buffer = next_buffer
 
                 except Exception as e:
-                    result = self._handle_batch_error(
-                        e, engine, batch_num, consecutive_errors
-                    )
+                    result = self._handle_batch_error(e, engine, batch_num, consecutive_errors)
                     if result == -1:  # 用户中断
                         break
                     consecutive_errors = result
@@ -611,9 +600,7 @@ class RandomSearchMode(BaseSearchMode):
                 # 构造匹配结果
                 result = {
                     "private_key": private_key,
-                    "private_key_hash": hashlib.sha256(
-                        str(private_key).encode()
-                    ).hexdigest(),
+                    "private_key_hash": hashlib.sha256(str(private_key).encode()).hexdigest(),
                     "address": address,
                     "seed": seed,
                     "batch_size": batch_size,

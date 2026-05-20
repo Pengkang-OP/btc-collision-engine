@@ -9,8 +9,8 @@ Intel Arc A770 GPU自动选择和配置工具
 4. 验证配置
 """
 
-import sys
 import json
+import sys
 from pathlib import Path
 
 # 添加项目根目录到路径
@@ -145,7 +145,7 @@ def verify_config(config: dict):
     return all_passed
 
 
-def print_usage(config_path: Path):
+def print_usage(config_path: Path, config: dict) -> None:
     """打印使用说明"""
     print_header("使用说明")
 
@@ -156,12 +156,12 @@ def print_usage(config_path: Path):
     print(f"    python key_collision_cli.py --config {config_path.name}")
     print()
     print("  方法3: 在代码中使用")
-    print(f"    engine = GPUCollisionEngine(")
-    print(f"        targets=target_addresses,")
-    print(f"        batch_size=131072,")
-    print(f"        use_gpu_memory_pool=True,")
+    print("    engine = GPUCollisionEngine(")
+    print("        targets=target_addresses,")
+    print("        batch_size=131072,")
+    print("        use_gpu_memory_pool=True,")
     print(f"        device_index={config['gpu']['device_index']}")
-    print(f"    )")
+    print("    )")
     print()
 
 
@@ -178,14 +178,13 @@ def main():
 
     # 2. 生成配置
     print_header("生成优化配置")
-    global config
     config = generate_config(device_index)
 
     print(f"  批次大小: {config['collision']['batch_size']:,}")
     print(f"  GPU设备索引: {config['gpu']['device_index']}")
     print(f"  内存池: {config['gpu']['max_buffers']}缓冲区 / {config['gpu']['max_memory_mb']}MB")
     print(f"  异步执行: {'禁用' if not config['gpu']['async_execution'] else '启用'}")
-    print(f"  uint32 workaround: 已启用")
+    print("  uint32 workaround: 已启用")
     print()
 
     # 3. 保存配置
@@ -195,7 +194,7 @@ def main():
     verify_config(config)
 
     # 5. 打印使用说明
-    print_usage(config_path)
+    print_usage(config_path, config)
 
     # 总结
     print_header("配置完成")

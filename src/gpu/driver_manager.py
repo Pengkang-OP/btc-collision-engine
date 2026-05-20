@@ -200,9 +200,7 @@ class DriverManager:
 
                     if result.returncode == 0 and result.stdout.strip():
                         parser_type: str = str(method["parser"])
-                        version = DriverManager._parse_nvidia_output(
-                            result.stdout.strip(), parser_type
-                        )
+                        version = DriverManager._parse_nvidia_output(result.stdout.strip(), parser_type)
                         if version:
                             logger.info(f"检测到NVIDIA驱动版本({method['name']}): {version}")
                             return version
@@ -336,7 +334,10 @@ class DriverManager:
             for cmd in methods:
                 try:
                     result = subprocess.run(  # nosec B603
-                        cmd, capture_output=True, text=True, timeout=DriverManager.DETECTION_TIMEOUT,
+                        cmd,
+                        capture_output=True,
+                        text=True,
+                        timeout=DriverManager.DETECTION_TIMEOUT,
                         shell=False,
                     )
 
@@ -445,7 +446,10 @@ class DriverManager:
             for cmd in methods:
                 try:
                     result = subprocess.run(  # nosec B603
-                        cmd, capture_output=True, text=True, timeout=DriverManager.DETECTION_TIMEOUT,
+                        cmd,
+                        capture_output=True,
+                        text=True,
+                        timeout=DriverManager.DETECTION_TIMEOUT,
                         shell=False,
                     )
 
@@ -617,9 +621,7 @@ class DriverManager:
             min_driver = profile.get("min_driver_version")
             recommended_driver = profile.get("recommended_driver_version")
 
-            if min_driver and not DriverVersionParser.is_version_compatible(
-                driver_version, min_driver
-            ):
+            if min_driver and not DriverVersionParser.is_version_compatible(driver_version, min_driver):
                 result["status"] = "critical"
                 result["message"] = f"驱动版本过低: {driver_version}, 最低要求: {min_driver}"
                 result["recommendations"].append(f"请立即更新驱动到 {min_driver} 或更高版本")
@@ -630,12 +632,8 @@ class DriverManager:
             ):
                 if result["status"] == "good":
                     result["status"] = "warning"
-                result["message"] = (
-                    f"驱动版本较旧: {driver_version}, 推荐版本: {recommended_driver}"
-                )
-                result["recommendations"].append(
-                    f"建议更新驱动到 {recommended_driver} 以获得最佳性能"
-                )
+                result["message"] = f"驱动版本较旧: {driver_version}, 推荐版本: {recommended_driver}"
+                result["recommendations"].append(f"建议更新驱动到 {recommended_driver} 以获得最佳性能")
 
         # 3. 根据厂商给出特定建议
         if vendor_lower == "intel":

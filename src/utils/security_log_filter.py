@@ -33,7 +33,11 @@ class SecurityLogFilter(logging.Filter):
     WIF_COMPRESSED_PATTERN = re.compile(r"\b[KL][1-9A-HJ-NP-Za-km-z]{50,51}\b")
 
     # 原始字节模式（32字节）
-    RAW_KEY_PATTERN = re.compile(r"b'\\x[0-9a-fA-F]{2}(?:\\x[0-9a-fA-F]{2}){31}'")
+    # P2-07修复: 添加路径分隔符负向前瞻，避免误匹配 Windows 路径中的反斜杠序列
+    # 例如: C:\x00\x11... 不应该被误判为原始私钥字节
+    RAW_KEY_PATTERN = re.compile(
+        r"(?<![\\/:a-zA-Z0-9])b'\\x[0-9a-fA-F]{2}(?:\\x[0-9a-fA-F]{2}){31}'(?![\\/])"
+    )
 
     # 比特币地址模式匹配
     # P2PKH: 以 1 开头，25-34 字符 Base58
@@ -52,18 +56,13 @@ class SecurityLogFilter(logging.Filter):
     # BIP39 种子短语上下文关键词 — 仅当消息包含这些上下文时才应用BIP39检测
     # 避免纯技术日志被误匹配（如 "the system encountered an unexpected error"）
     BIP39_CONTEXT_KEYWORDS = re.compile(
-        r'\b(seed|mnemonic|recovery|phrase|bip39|助记词|种子短语|恢复短语)\b',
-        re.IGNORECASE
+        r"\b(seed|mnemonic|recovery|phrase|bip39|助记词|种子短语|恢复短语)\b", re.IGNORECASE
     )
     # BIP39 种子短语 (12或24个英语助记词)
     # 词列表包含常见的 BIP39 英语助记词
     # 检测包含12或24个助记词的文本，每个词3-8个字母
-    BIP39_PHRASE_12_PATTERN = re.compile(
-        r"\b(?:[a-z]{3,8}\s+){11}[a-z]{3,8}\b", re.IGNORECASE
-    )
-    BIP39_PHRASE_24_PATTERN = re.compile(
-        r"\b(?:[a-z]{3,8}\s+){23}[a-z]{3,8}\b", re.IGNORECASE
-    )
+    BIP39_PHRASE_12_PATTERN = re.compile(r"\b(?:[a-z]{3,8}\s+){11}[a-z]{3,8}\b", re.IGNORECASE)
+    BIP39_PHRASE_24_PATTERN = re.compile(r"\b(?:[a-z]{3,8}\s+){23}[a-z]{3,8}\b", re.IGNORECASE)
 
     def __init__(
         self,
@@ -292,10 +291,7 @@ def log_safe_debug(logger: logging.Logger, message: str, **kwargs) -> None:
 
 
 def log_safe_exception(
-    logger: logging.Logger,
-    message: str,
-    exc: BaseException | None = None,
-    **kwargs
+    logger: logging.Logger, message: str, exc: BaseException | None = None, **kwargs
 ) -> None:
     """安全记录异常（不泄露敏感堆栈信息）
 

@@ -17,9 +17,9 @@ from src.i18n import _t  # noqa: E402
 
 # 从包版本读取版本号
 try:
-    from src import __version__ as _VERSION
+    from src import __version__ as _version
 except ImportError:
-    _VERSION = "4.4.0"
+    _version = "4.4.0"
 
 
 def parse_args() -> argparse.Namespace:  # noqa: D401
@@ -48,7 +48,7 @@ def parse_args() -> argparse.Namespace:  # noqa: D401
     )
 
     # ── 全局选项（最先处理） ─────────────────────────────────────────────────
-    parser.add_argument("--version", action="version", version=f"%(prog)s {_VERSION}")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {_version}")
     parser.add_argument(
         "--config",
         metavar="FILE",
@@ -208,9 +208,7 @@ def parse_args() -> argparse.Namespace:  # noqa: D401
     )
 
     # ── 4. 性能调优 ──────────────────────────────────────────────────────────
-    perf_group = parser.add_argument_group(
-        "性能调优", "工作线程、进度刷新频率及 v2.2.0+ 引擎优化开关"
-    )
+    perf_group = parser.add_argument_group("性能调优", "工作线程、进度刷新频率及 v2.2.0+ 引擎优化开关")
     perf_group.add_argument(
         "--workers",
         metavar="N",

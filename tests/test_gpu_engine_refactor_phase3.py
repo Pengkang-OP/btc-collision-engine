@@ -10,8 +10,9 @@
 所有测试使用 Mock，无需真实 GPU 硬件。
 """
 
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 
 pytestmark = pytest.mark.gpu
 
@@ -724,7 +725,7 @@ class TestModuleImports:
         for filepath in phase3_files:
             full_path = os.path.join(os.path.dirname(__file__), "..", filepath)
             if os.path.exists(full_path):
-                with open(full_path, "r", encoding="utf-8") as f:
+                with open(full_path, encoding="utf-8") as f:
                     content = f.read()
                 assert "TODO: Phase 3" not in content, f"{filepath} 仍有 Phase 3 TODO"
 

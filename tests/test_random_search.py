@@ -11,9 +11,10 @@
 - 常量验证
 """
 
-import pytest
 import queue
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 # ============================================================================
 # 常量验证测试
@@ -73,9 +74,9 @@ def _make_engine_stub(**kwargs):
     engine.batch_size = kwargs.get("batch_size", 1000000)
     engine._stop_event = threading_mock() if kwargs.get("has_stop_event", True) else None
     engine._running = kwargs.get("_running", True)
-    engine._async_executor = kwargs.get("_async_executor", None)
-    engine._gpu_kernel = kwargs.get("_gpu_kernel", None)
-    engine._gpu_device = kwargs.get("_gpu_device", None)
+    engine._async_executor = kwargs.get("_async_executor")
+    engine._gpu_kernel = kwargs.get("_gpu_kernel")
+    engine._gpu_device = kwargs.get("_gpu_device")
     engine.stats = MagicMock()
     engine.stats.update = MagicMock()
     engine.stats.snapshot = MagicMock(return_value={})
@@ -83,9 +84,9 @@ def _make_engine_stub(**kwargs):
     engine._process_gpu_matches_prng = MagicMock()
     engine._update_performance_metrics = MagicMock()
     engine._check_and_report_progress = MagicMock()
-    engine.on_complete = kwargs.get("on_complete", None)
-    engine.on_match = kwargs.get("on_match", None)
-    engine._on_match_found = kwargs.get("_on_match_found", None)
+    engine.on_complete = kwargs.get("on_complete")
+    engine.on_match = kwargs.get("on_match")
+    engine._on_match_found = kwargs.get("_on_match_found")
     return engine
 
 
@@ -107,7 +108,7 @@ class TestRandomSearchModeInit:
 
     @patch("src.gpu.search_modes.random_search.threading.Thread")
     def test_init_creates_seed_queue(self, mock_thread):
-        from src.gpu.search_modes.random_search import RandomSearchMode, SEED_PREFETCH_SIZE
+        from src.gpu.search_modes.random_search import SEED_PREFETCH_SIZE, RandomSearchMode
 
         engine = _make_engine_stub()
         mode = RandomSearchMode(engine)
@@ -506,10 +507,9 @@ class TestExecuteSyncPartial:
 
         mode = RandomSearchMode(engine)
 
-        with patch("psutil.cpu_percent", return_value=96.0):
-            with patch("time.sleep") as mock_sleep:
-                with patch("time.monotonic", side_effect=[0, 0.001, 0.002, 0.003]):
-                    mode._execute_sync()
+        with patch("psutil.cpu_percent", return_value=96.0), patch("time.sleep") as mock_sleep:
+            with patch("time.monotonic", side_effect=[0, 0.001, 0.002, 0.003]):
+                mode._execute_sync()
 
         # 验证节流生效：sleep 被调用过，且至少有一次参数为 CPU_THROTTLE_SLEEP (v6.4: 0.01)
         assert mock_sleep.call_count >= 1, "Throttle should trigger at least one sleep"

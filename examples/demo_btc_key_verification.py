@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 比特币密钥派生及地址生成验证示例
 ===================================
@@ -10,13 +9,13 @@
     python examples/demo_btc_key_verification.py
 """
 
-import sys
 import os
+import sys
 
 # 添加项目根目录到 Python 路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from tools.btc_key_address_verifier import BTCKeyAddressVerifier, AddressFormat
+from tools.btc_key_address_verifier import AddressFormat, BTCKeyAddressVerifier
 
 
 def example_basic_verification():
@@ -138,7 +137,6 @@ def example_json_output():
     print("示例5: JSON格式输出")
     print("=" * 70)
 
-    import json
 
     verifier = BTCKeyAddressVerifier(verbose=False)
     report = verifier.generate_random_verification()

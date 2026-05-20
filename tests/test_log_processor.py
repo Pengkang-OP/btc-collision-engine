@@ -10,12 +10,13 @@
 - SensitiveDataFilter 私钥/地址脱敏
 """
 
-import pytest
 import json
 from unittest.mock import Mock
 
-from src.log_engine.log_processor import LogProcessor, SensitiveDataFilter
+import pytest
+
 from src.log_engine.events import LogEvent, LogEventType
+from src.log_engine.log_processor import LogProcessor, SensitiveDataFilter
 
 # ============================================================================
 # LogProcessor 测试

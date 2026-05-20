@@ -8,12 +8,14 @@
 5. 保守策略验证
 """
 
-import pytest
 from unittest.mock import Mock
+
+import pytest
+
+from src.gpu.intel_memory_monitor import IntelMemoryMonitor, MemoryStatus
 
 # 导入被测试模块
 from src.gpu.intel_timeout_manager import AdaptiveTimeoutManager
-from src.gpu.intel_memory_monitor import IntelMemoryMonitor, MemoryStatus
 from src.gpu.vendors.intel import IntelGPUVendor
 
 pytestmark = pytest.mark.gpu

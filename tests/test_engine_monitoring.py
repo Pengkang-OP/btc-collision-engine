@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 碰撞引擎与监控系统集成测试
 
@@ -11,18 +10,18 @@
 - 报告生成
 """
 
-import sys
-import os
-import time
 import logging
+import os
+import sys
+import time
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.monitoring.monitor_config import MonitorConfig  # noqa: E402
-from src.monitoring.enhanced_monitoring import EnhancedMonitoringSystem  # noqa: E402
-from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
 from src.collision.collision_stats import CollisionStats  # noqa: E402
+from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
+from src.monitoring.enhanced_monitoring import EnhancedMonitoringSystem  # noqa: E402
+from src.monitoring.monitor_config import MonitorConfig  # noqa: E402
 
 # 配置日志
 logging.basicConfig(

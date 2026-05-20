@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 文档质量并行检查工具
 
@@ -11,13 +10,12 @@
 
 import sys
 import time
+from multiprocessing import BrokenProcessPool, Pool, cpu_count
 from pathlib import Path
-from multiprocessing import Pool, cpu_count
-from multiprocessing import BrokenProcessPool
-from typing import List, Dict
 
 # 修复Windows控制台编码问题
 from utf8_helper import setup_windows_utf8
+
 setup_windows_utf8()
 
 # 添加项目根目录到路径
@@ -48,7 +46,7 @@ def check_single_doc(args) -> DocumentScore:
     return checker.check_document(Path(file_path))
 
 
-def parallel_check(docs_dir: str, workers: int = None, config_dict: Dict = None) -> List[DocumentScore]:
+def parallel_check(docs_dir: str, workers: int = None, config_dict: dict = None) -> list[DocumentScore]:
     """并行检查所有文档
 
     Args:
@@ -75,7 +73,7 @@ def parallel_check(docs_dir: str, workers: int = None, config_dict: Dict = None)
         print("❌ 没有找到文档文件")
         sys.exit(1)
 
-    print(f"🔍 开始并行检查文档质量...")
+    print("🔍 开始并行检查文档质量...")
     print(f"📁 文档目录: {docs_dir}")
     print(f"📝 文档总数: {len(md_files)}")
     print(f"⚡ 工作进程: {workers}")
@@ -97,15 +95,15 @@ def parallel_check(docs_dir: str, workers: int = None, config_dict: Dict = None)
             scores = pool.map(check_single_doc, tasks, chunksize=1)
     except BrokenProcessPool as e:
         print(f"\n❌ 进程池损坏: {e}")
-        print(f"💡 建议: 尝试减少工作进程数 (--workers 4)")
+        print("💡 建议: 尝试减少工作进程数 (--workers 4)")
         sys.exit(1)
     except KeyboardInterrupt:
-        print(f"\n⚠️  用户中断并行检查")
+        print("\n⚠️  用户中断并行检查")
         sys.exit(130)
     except RuntimeError as e:
         # 捕获其他运行时错误（如资源不足）
         print(f"\n❌ 并行检查运行时错误: {e}")
-        print(f"💡 建议: 检查系统资源或减少工作进程数")
+        print("💡 建议: 检查系统资源或减少工作进程数")
         sys.exit(1)
 
     elapsed = time.time() - start_time
@@ -115,12 +113,12 @@ def parallel_check(docs_dir: str, workers: int = None, config_dict: Dict = None)
         print(f"\n✅ 检查完成! 耗时: {elapsed:.2f}秒")
         print(f"⚡ 平均速度: {len(md_files)/elapsed:.1f} 文档/秒")
     else:
-        print(f"\n✅ 检查完成! 耗时: <0.01秒")
+        print("\n✅ 检查完成! 耗时: <0.01秒")
 
     return scores
 
 
-def print_summary(scores: List[DocumentScore]):
+def print_summary(scores: list[DocumentScore]):
     """打印评分摘要"""
     if not scores:
         return
@@ -128,7 +126,7 @@ def print_summary(scores: List[DocumentScore]):
     avg_score = sum(s.score for s in scores) / len(scores)
 
     print(f"\n{'=' * 60}")
-    print(f"📊 文档质量检查报告")
+    print("📊 文档质量检查报告")
     print(f"{'=' * 60}")
 
     print(f"\n核心文档总数: {len(scores)}")
@@ -139,25 +137,25 @@ def print_summary(scores: List[DocumentScore]):
     good = sum(1 for s in scores if 7.0 <= s.score < 8.5)
     needs_improvement = sum(1 for s in scores if s.score < 7.0)
 
-    print(f"\n质量分布:")
+    print("\n质量分布:")
     print(f"  ✅ 优秀 (≥8.5): {excellent} 个 ({excellent/len(scores)*100:.1f}%)")
     print(f"  ⚠️  良好 (7.0-8.4): {good} 个 ({good/len(scores)*100:.1f}%)")
     print(f"  ❌ 需改进 (<7.0): {needs_improvement} 个 ({needs_improvement/len(scores)*100:.1f}%)")
 
     # 需改进的文档
     if needs_improvement > 0:
-        print(f"\n⚠️  需要改进的文档:")
+        print("\n⚠️  需要改进的文档:")
         for score in sorted(scores, key=lambda s: s.score):
             if score.score < 7.0:
                 print(f"  - {Path(score.file).name}: {score.score}/10")
 
     # 总体评价
     if avg_score >= 8.5:
-        print(f"\n总体评价: ✅ 优秀")
+        print("\n总体评价: ✅ 优秀")
     elif avg_score >= 7.0:
-        print(f"\n总体评价: ⚠️  良好")
+        print("\n总体评价: ⚠️  良好")
     else:
-        print(f"\n总体评价: ❌ 需要改进")
+        print("\n总体评价: ❌ 需要改进")
 
     print(f"{'=' * 60}")
 
@@ -192,7 +190,7 @@ def main():
         import json
         config_path = Path(args.config)
         if config_path.exists():
-            with open(config_path, 'r', encoding='utf-8') as f:
+            with open(config_path, encoding='utf-8') as f:
                 config_dict = json.load(f)
             print(f"📝 使用配置文件: {config_path}")
         else:

@@ -113,7 +113,7 @@ class OptimizedP2PKHAddressGenerator(BaseAddressGenerator):
         if self.use_precomputed_table and self.precomputed_table:
             point = self.precomputed_table.scalar_multiply_with_table(k, self.ec)
         else:
-            point = self.ec.scalar_multiply(k, self.G)
+            point = self.ec.scalar_multiply_const_time(k, self.G)
 
         # 压缩或未压缩格式
         if compressed:
@@ -182,7 +182,7 @@ class OptimizedP2PKHAddressGenerator(BaseAddressGenerator):
             if self.use_precomputed_table and self.precomputed_table:
                 point = self.precomputed_table.scalar_multiply_with_table(pk_int, self.ec)
             else:
-                point = self.ec.scalar_multiply(pk_int, self.G)
+                point = self.ec.scalar_multiply_const_time(pk_int, self.G)
 
             # 压缩格式
             prefix = b"\x02" if point.y % 2 == 0 else b"\x03"
@@ -215,13 +215,9 @@ class OptimizedP2PKHAddressGenerator(BaseAddressGenerator):
         info = {
             "precomputed_table": {
                 "enabled": self.use_precomputed_table,
-                "window_size": (
-                    self.precomputed_table.window_size if self.precomputed_table else None
-                ),
+                "window_size": (self.precomputed_table.window_size if self.precomputed_table else None),
                 "memory_usage_kb": (
-                    self.precomputed_table.get_memory_usage() / 1024
-                    if self.precomputed_table
-                    else 0
+                    self.precomputed_table.get_memory_usage() / 1024 if self.precomputed_table else 0
                 ),
             },
             "simd_hash": {

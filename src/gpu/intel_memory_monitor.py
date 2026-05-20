@@ -133,8 +133,10 @@ class IntelMemoryMonitor:
 
         # 检查是否超出安全限制
         if new_usage > self.safe_limit:
+            _new_mb = new_usage / 1024**2
+            _limit_mb = self.safe_limit / 1024**2
             logger.warning(
-                f"显存分配将超出安全限制: {new_usage / 1024**2:.0f}MB > {self.safe_limit / 1024**2:.0f}MB"
+                f"显存分配超出安全限制: {_new_mb:.0f}MB > {_limit_mb:.0f}MB"
             )
             return False
 
@@ -192,9 +194,7 @@ class IntelMemoryMonitor:
             "peak_mb": self.peak_usage / 1024**2,
             "safe_limit_bytes": self.safe_limit,
             "safe_limit_mb": self.safe_limit / 1024**2,
-            "usage_percent": (self.current_usage / self.safe_limit * 100)
-            if self.safe_limit > 0
-            else 0,
+            "usage_percent": (self.current_usage / self.safe_limit * 100) if self.safe_limit > 0 else 0,
             "total_memory_gb": self.total_memory / 1024**3,
             "total_allocations": self.total_allocations,
             "total_deallocations": self.total_deallocations,

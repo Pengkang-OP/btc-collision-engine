@@ -8,9 +8,9 @@ from unittest.mock import MagicMock, patch
 
 from src.cli.pagination import (
     PaginationManager,
-    display_paginated_results,
-    display_paginated_performance,
     display_paginated_errors,
+    display_paginated_performance,
+    display_paginated_results,
 )
 
 

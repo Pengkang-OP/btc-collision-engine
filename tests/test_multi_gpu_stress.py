@@ -1,12 +1,12 @@
-# -*- coding: utf-8 -*-
 """多GPU锁机制压力测试
 
 验证高并发场景下锁机制的性能和正确性。
 """
 
-import unittest
 import threading
 import time
+import unittest
+
 import pytest
 
 pytestmark = pytest.mark.gpu
@@ -136,8 +136,9 @@ class TestLockContention(unittest.TestCase):
 
     def test_high_contention_scenario(self):
         """测试高竞争场景"""
-        from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
         from unittest.mock import Mock
+
+        from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
 
         engine = MultiGPUCollisionEngine()
         engine._initialized = True
@@ -193,16 +194,16 @@ class TestScalability(unittest.TestCase):
             operations = [0]
             lock = threading.Lock()
 
-            def stress_test():
+            def stress_test(eng=engine, lk=lock, ops=operations):
                 """压力测试"""
                 local_count = 0
                 for _ in range(500):
-                    with engine._state_lock:
-                        engine._running = not engine._running
+                    with eng._state_lock:
+                        eng._running = not eng._running
                         local_count += 1
 
-                with lock:
-                    operations[0] += local_count
+                with lk:
+                    ops[0] += local_count
 
             threads = [threading.Thread(target=stress_test) for _ in range(num_threads)]
 

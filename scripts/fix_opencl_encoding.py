@@ -466,7 +466,8 @@ REPLACEMENTS = [
     ),
     ("检查私钥是否为 0", "Check if private key is zero"),
     (
-        "与所有目标 Hash160 比对（local memory版，uint32向量化：5次uint比对替代20次uchar比对，带渐进式early-exit）",
+        "与所有目标 Hash160 比对（local memory版，uint32向量化："
+        "5次uint比对替代20次uchar比对，带渐进式early-exit）",
         "Compare against all target Hash160 (local memory version, uint32 vectorized, 5 uint compares, progressive early-exit)",  # noqa: E501
     ),
     # debug_hash kernel
@@ -494,7 +495,7 @@ REPLACEMENTS = [
 
 def fix_file(filepath: str) -> int:
     """Apply all replacements to a file. Returns number of replacements made."""
-    with open(filepath, "r", encoding="utf-8") as f:
+    with open(filepath, encoding="utf-8") as f:
         content = f.read()
 
     original = content

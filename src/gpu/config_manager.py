@@ -26,9 +26,7 @@ class GPUConfigManager:
     PRIORITY_AUTO = 3  # 自动生成配置
     PRIORITY_DEFAULT = 4  # 默认值
 
-    def __init__(
-        self, user_config: dict[str, Any] | None = None, logger: Any | None = None
-    ) -> None:  # noqa: E501
+    def __init__(self, user_config: dict[str, Any] | None = None, logger: Any | None = None) -> None:  # noqa: E501
         """
         Args:
             user_config: 用户提供的配置
@@ -73,8 +71,10 @@ class GPUConfigManager:
     def _generate_auto_config(self, device_info: dict) -> dict:
         """生成自动配置"""
         config = self._auto_configurator.configure_for_device(device_info)
+        _bs = config['batch_size']
+        _wa = config.get('use_uint32_workaround', False)
         self.logger.info(
-            f"自动配置生成: batch_size={config['batch_size']:,}, vendor={config.get('use_uint32_workaround', False)}"
+            f"自动配置: batch={_bs:,}, vendor_workaround={_wa}"
         )
         return config
 
@@ -120,9 +120,9 @@ class GPUConfigManager:
             if not isinstance(batch_size, int) or batch_size <= 0:
                 raise ValueError(f"batch_size必须是正整数，当前值: {batch_size}")
 
-            MAX_BATCH_SIZE_LIMIT = 16777216  # 16M
-            if batch_size > MAX_BATCH_SIZE_LIMIT:
-                raise ValueError(f"batch_size {batch_size} 超出最大限制 {MAX_BATCH_SIZE_LIMIT}")
+            _max_batch_size_limit = 16777216  # 16M
+            if batch_size > _max_batch_size_limit:
+                raise ValueError(f"batch_size {batch_size} 超出最大限制 {_max_batch_size_limit}")
 
         # 验证queue_depth
         queue_depth = config.get("queue_depth")
@@ -145,9 +145,7 @@ class GPUConfigManager:
         # 验证memory_ratio
         memory_ratio = config.get("memory_ratio")
         if memory_ratio is not None and (
-            not isinstance(memory_ratio, (int, float))
-            or memory_ratio <= 0
-            or memory_ratio > 1.0
+            not isinstance(memory_ratio, (int, float)) or memory_ratio <= 0 or memory_ratio > 1.0
         ):
             raise ValueError(f"memory_ratio必须是0-1之间的数，当前值: {memory_ratio}")
 
@@ -220,9 +218,7 @@ class GPUConfigManager:
         if "use_uint32_workaround" in config:
             # uint32_workaround 在 kernel 层由 intel_optimizer 自动应用，
             # 此处仅记录配置状态（设备层无直接属性设置）
-            self.logger.info(
-                f"✅ 应用配置: use_uint32_workaround={config['use_uint32_workaround']}"
-            )
+            self.logger.info(f"✅ 应用配置: use_uint32_workaround={config['use_uint32_workaround']}")
 
         return config
 

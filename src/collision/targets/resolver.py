@@ -86,9 +86,7 @@ class TargetResolver:
         self.generator = P2PKHAddressGenerator()
 
         # 解析缓存
-        self.cache = (
-            AddressCache(lru_size=cache_max_size, enable_stats=True) if enable_cache else None
-        )
+        self.cache = AddressCache(lru_size=cache_max_size, enable_stats=True) if enable_cache else None
 
         # 文件加载配置
         self._max_file_size_bytes = max_file_size_bytes
@@ -123,11 +121,19 @@ class TargetResolver:
         valid_chars = TargetResolver._BASE58_VALID_CHARS
 
         # P2PKH地址: 以'1'开头, 25-34字符, Base58字符集
-        if input_str.startswith("1") and 25 <= len(input_str) <= 34 and all(c in valid_chars for c in input_str):
+        if (
+            input_str.startswith("1")
+            and 25 <= len(input_str) <= 34
+            and all(c in valid_chars for c in input_str)
+        ):
             return "address"
 
         # P2SH地址: 以'3'开头, 25-34字符
-        if input_str.startswith("3") and 25 <= len(input_str) <= 34 and all(c in valid_chars for c in input_str):
+        if (
+            input_str.startswith("3")
+            and 25 <= len(input_str) <= 34
+            and all(c in valid_chars for c in input_str)
+        ):
             return "p2sh_address"
 
         # Bech32地址: 以'bc1'开头
@@ -137,10 +143,18 @@ class TargetResolver:
             return "bech32_address"  # SegWit v0 (P2WPKH/P2WSH)
 
         # WIF: 以'5'开头(非压缩,51字符) 或 'K'/'L'开头(压缩,52字符)
-        if input_str.startswith("5") and len(input_str) == 51 and all(c in valid_chars for c in input_str):
+        if (
+            input_str.startswith("5")
+            and len(input_str) == 51
+            and all(c in valid_chars for c in input_str)
+        ):
             return "wif"
 
-        if input_str.startswith(("K", "L")) and len(input_str) == 52 and all(c in valid_chars for c in input_str):
+        if (
+            input_str.startswith(("K", "L"))
+            and len(input_str) == 52
+            and all(c in valid_chars for c in input_str)
+        ):
             return "wif"
 
         # 压缩公钥: 66字符hex, 以02/03开头
@@ -195,8 +209,7 @@ class TargetResolver:
             logger.debug(f"P2PKH地址版本不匹配: version=0x{version:02x}")
             return None
         except ValueError:
-            masked = (f"{input_str[:6]}...{input_str[-4:]}" if len(input_str) >= 10
-                      else "***")
+            masked = f"{input_str[:6]}...{input_str[-4:]}" if len(input_str) >= 10 else "***"
             logger.debug(f"P2PKH地址校验失败 [{masked}]")
             return None
 
@@ -209,16 +222,12 @@ class TargetResolver:
                 if self.cache:
                     self.cache.put(input_str, input_str)
                 logger.debug(f"P2SH地址验证成功(保持原格式): {input_str[:15]}...")
-                logger.warning(
-                    "P2SH目标地址将保持原格式,当前引擎仅生成P2PKH地址,"
-                    "P2SH目标必然无法匹配。"
-                )
+                logger.warning("P2SH目标地址将保持原格式,当前引擎仅生成P2PKH地址,P2SH目标必然无法匹配。")
                 return input_str
             logger.warning(f"P2SH地址版本不匹配: version=0x{version:02x}")
             return None
         except ValueError:
-            masked = (f"{input_str[:6]}...{input_str[-4:]}" if len(input_str) >= 10
-                      else "***")
+            masked = f"{input_str[:6]}...{input_str[-4:]}" if len(input_str) >= 10 else "***"
             logger.warning(f"P2SH地址校验失败 [{masked}]")
             return None
 
@@ -236,8 +245,7 @@ class TargetResolver:
             prog_len = len(witness_program)
             if prog_len == 32:
                 logger.warning(
-                    "检测到P2WSH地址(32字节witness program),"
-                    "当前引擎仅生成P2PKH地址,此目标必然无法匹配。"
+                    "检测到P2WSH地址(32字节witness program),当前引擎仅生成P2PKH地址,此目标必然无法匹配。"
                 )
                 normalized = input_str.lower()
                 if self.cache:
@@ -249,14 +257,13 @@ class TargetResolver:
             # P2WPKH (v0, 20字节): witness program = pubkey_hash (Hash160)
             # 转换为 Legacy P2PKH 地址以便引擎进行碰撞匹配
             from ...core.hash_utils import HashUtils
+
             p2pkh_addr = HashUtils.hash160_to_address(witness_program)
             if self.cache:
                 # 同时缓存原始 Bech32 和转换后的 P2PKH
                 normalized = input_str.lower()
                 self.cache.put(normalized, p2pkh_addr)
-            logger.debug(
-                f"Bech32 P2WPKH 转换成功: {input_str[:15]}... → {p2pkh_addr[:15]}..."
-            )
+            logger.debug(f"Bech32 P2WPKH 转换成功: {input_str[:15]}... → {p2pkh_addr[:15]}...")
             return p2pkh_addr
         except ValueError as e:
             logger.error(f"Bech32地址转换异常: {input_str} - {type(e).__name__}: {e}")
@@ -282,8 +289,7 @@ class TargetResolver:
                 self.cache.put(normalized, normalized)
             logger.debug(f"Taproot地址验证成功(保持原格式): {normalized[:15]}...")
             logger.warning(
-                "Taproot目标地址将保持原格式,当前引擎仅生成P2PKH地址,"
-                "Taproot目标必然无法匹配。"
+                "Taproot目标地址将保持原格式,当前引擎仅生成P2PKH地址,Taproot目标必然无法匹配。"
             )
             return normalized
         except ValueError as e:
@@ -296,9 +302,7 @@ class TargetResolver:
             from ...core.wif import WIF
 
             private_key, compressed = WIF.decode(input_str)
-            public_key = self.generator.private_key_to_public_key(
-                private_key, compressed=compressed
-            )
+            public_key = self.generator.private_key_to_public_key(private_key, compressed=compressed)
             address = self.generator.public_key_to_address(public_key)
             if self.cache:
                 self.cache.put(input_str, address)
@@ -402,9 +406,7 @@ class TargetResolver:
                 to_resolve.append(inp)
 
         hit_rate = (len(results) / len(inputs) * 100) if len(inputs) > 0 else 0
-        logger.debug(
-            f"批量解析缓存命中: {len(results)}/{len(inputs)} ({hit_rate:.1f}%)"
-        )
+        logger.debug(f"批量解析缓存命中: {len(results)}/{len(inputs)} ({hit_rate:.1f}%)")
 
         # 第二遍:直接解析未缓存的（跳过 resolve() 中的缓存检查，提升性能）
         if to_resolve:

@@ -11,16 +11,16 @@
 - match_storage.py (匹配存储)
 """
 
-import pytest
-import os
 import json
+import os
 import threading
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 # ============================================================================
 # 1. BaseCollisionEngine 抽象基类测试
 # ============================================================================
-
 from src.collision.base_engine import BaseCollisionEngine
 
 
@@ -519,8 +519,8 @@ class TestCollisionHelpers:
 # 6. DeltaStats 测试
 # ============================================================================
 
-from src.collision.delta_stats import DeltaStats, ThreadLocalDeltaStats  # noqa: E402
 from conftest import poll_until  # noqa: E402
+from src.collision.delta_stats import DeltaStats, ThreadLocalDeltaStats  # noqa: E402
 
 
 class TestDeltaStats:
@@ -736,8 +736,8 @@ class TestMatchDataStorage:
             "hash160": "a" * 40,
             "generated": {
                 "private_key": b"\x01" * 32,
-                "wif_compressed": "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ",
-                "wif_uncompressed": "5KC2XtyH4HFbi6hZWfHd3zm5TXmZ2eWykSNJsknVgYkF4vTJm7q",
+                "wif_compressed": "5" + "H" + "0" * 49,  # 明显占位WIF
+                "wif_uncompressed": "5" + "J" + "0" * 49,  # 明显占位WIF
                 "public_key_compressed": b"\x02" * 33,
                 "public_key_uncompressed": b"\x04" * 65,
                 "address_compressed": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
@@ -751,7 +751,7 @@ class TestMatchDataStorage:
         assert os.path.exists(filepath)
 
         # 读取并验证保存的数据
-        with open(filepath, "r") as f:
+        with open(filepath) as f:
             saved_data = json.load(f)
         assert saved_data["match_info"]["hash160"] == "a" * 40
         assert saved_data["private_key"]["hex"] == "01" * 32
@@ -836,5 +836,5 @@ class TestMatchDataStorage:
         storage = MatchDataStorage(str(storage_path))
         # 尝试写入只读目录（通过 mock）
         with patch.object(storage, "_build_complete_data", side_effect=TypeError("Invalid data")):
-            with pytest.raises(Exception):
+            with pytest.raises(Exception):  # noqa: B017
                 storage.save_match({"hash160": "", "generated": None, "target": {}})

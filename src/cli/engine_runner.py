@@ -93,11 +93,11 @@ def _setup_and_start_engine(
         try:
             from ..monitoring.alert_system import AlertSystem
         except ImportError:
-            AlertSystem: Any = None  # type: ignore[no-redef]
+            _alert_class: Any = None  # type: ignore[no-redef]
 
-    if AlertSystem is not None:
+    if _alert_class is not None:
         try:
-            alert_system = AlertSystem()
+            alert_system = _alert_class()
             alert_system.setup_default_rules()
 
             def _on_alert(alert_record: Any) -> None:
@@ -133,7 +133,11 @@ def _setup_and_start_engine(
             range_start=start_val,
             range_end=end_val,
             match_callback=lambda dev_idx, m: print(
-                f"\n[GPU {dev_idx}] 发现匹配: 地址={m.get('address', 'N/A')}"
+                "\n[GPU {}] 发现匹配: 地址={}...{}".format(
+                    dev_idx,
+                    str(m.get("address", "N/A"))[:6],
+                    str(m.get("address", "N/A"))[-4:],
+                )
             ),
         )
         if not ok:
@@ -247,9 +251,7 @@ def _run_collision_loop(
                     f"{throughput / 1_000_000:.2f}M/s"
                     if throughput >= 1_000_000
                     else (
-                        f"{throughput / 1_000:.1f}K/s"
-                        if throughput >= 1_000
-                        else f"{throughput:.0f}/s"
+                        f"{throughput / 1_000:.1f}K/s" if throughput >= 1_000 else f"{throughput:.0f}/s"
                     )
                 )
                 _status_line = (
@@ -379,9 +381,7 @@ def _print_config_info(
         config_items["性能优化"] = f"{optimize_status} (v2.2.0)"
         if not args.no_optimize:
             config_items["预计算表"] = f"window_size={args.window_size}"
-            config_items["SIMD哈希"] = (
-                _t("common.disabled") if args.no_simd else _t("common.enabled")
-            )
+            config_items["SIMD哈希"] = _t("common.disabled") if args.no_simd else _t("common.enabled")
             config_items["内存池"] = (
                 _t("common.disabled") if args.no_memory_pool else _t("common.enabled")
             )

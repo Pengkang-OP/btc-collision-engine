@@ -107,9 +107,7 @@ class DataMonitor:
         self.throughput_threshold = self.config.get("throughput_threshold", 0.5)  # 吞吐量下降阈值
         self.error_rate_threshold = self.config.get("error_rate_threshold", 0.1)  # 错误率阈值
         self.stale_data_timeout = self.config.get("stale_data_timeout", 10.0)  # 数据过期时间
-        self.max_issues_per_minute = self.config.get(
-            "max_issues_per_minute", 100
-        )  # 每分钟最大问题数
+        self.max_issues_per_minute = self.config.get("max_issues_per_minute", 100)  # 每分钟最大问题数
         self.max_seen_keys = self.config.get("max_seen_keys", 100000)  # 最大记录私钥数
         self.max_seen_addresses = self.config.get("max_seen_addresses", 10000)  # 最大记录地址数
 
@@ -479,9 +477,7 @@ class DataMonitor:
                 keys_to_remove = list(stats["seen_keys"])[: len(stats["seen_keys"]) // 2]
                 for key in keys_to_remove:
                     stats["seen_keys"].discard(key)
-                logger.debug(
-                    f"GPU {device_idx} 清理旧的私钥哈希记录,保留{len(stats['seen_keys'])}个"
-                )
+                logger.debug(f"GPU {device_idx} 清理旧的私钥哈希记录,保留{len(stats['seen_keys'])}个")
 
             stats["seen_keys"].add(private_key_hash)
 
@@ -502,9 +498,7 @@ class DataMonitor:
                 addrs_to_remove = list(stats["seen_addresses"])[: len(stats["seen_addresses"]) // 2]
                 for addr in addrs_to_remove:
                     stats["seen_addresses"].discard(addr)
-                logger.debug(
-                    f"GPU {device_idx} 清理旧的地址记录,保留{len(stats['seen_addresses'])}个"
-                )
+                logger.debug(f"GPU {device_idx} 清理旧的地址记录,保留{len(stats['seen_addresses'])}个")
 
             stats["seen_addresses"].add(address)
 
@@ -657,8 +651,10 @@ class DataMonitor:
                 recent_issues = [t for t in self._issues_last_minute if current_time - t < 60]
 
                 if len(recent_issues) > self.max_issues_per_minute:
+                    _n = len(recent_issues)
+                    _max = self.max_issues_per_minute
                     logger.warning(
-                        f"问题频率过高: {len(recent_issues)}个/分钟, 超过阈值{self.max_issues_per_minute}"
+                        f"问题频率过高: {_n}个/分钟, 超过阈值{_max}"
                     )
 
             # 在锁外记录日志和调用回调

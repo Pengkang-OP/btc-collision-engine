@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """SIMDHash 无 pycryptodome 回退路径覆盖测试"""
 
 import sys
@@ -27,9 +26,8 @@ class TestSIMDHashNoPycryptodome(unittest.TestCase):
 
         try:
             with patch("builtins.__import__",
-                       side_effect=self._selective_import_fail):
-                with patch("src.core.simd_hash.logger"):
-                    optimizer = SIMDHashOptimizer()
+                       side_effect=self._selective_import_fail), patch("src.core.simd_hash.logger"):
+                optimizer = SIMDHashOptimizer()
         finally:
             sys.modules.update(saved_modules)
         return optimizer

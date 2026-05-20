@@ -2,10 +2,10 @@
 
 import json
 import os
-import tempfile
-import unittest
 import shutil
 import sys
+import tempfile
+import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -66,7 +66,7 @@ class TestConfigManagerBasic(unittest.TestCase):
         self.assertTrue(os.path.exists(self.config_file))
 
         # 验证文件内容
-        with open(self.config_file, "r", encoding="utf-8") as f:
+        with open(self.config_file, encoding="utf-8") as f:
             saved_config = json.load(f)
         self.assertEqual(saved_config["logging"]["level"], "WARNING")
 

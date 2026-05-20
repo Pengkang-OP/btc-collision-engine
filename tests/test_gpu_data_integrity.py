@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 GPU数据完整性验证测试 - 遵循Bitcoin Core规范
 
@@ -7,15 +6,17 @@ GPU数据完整性验证测试 - 遵循Bitcoin Core规范
 不会引入计算错误，所有结果与CPU纯Python实现一致。
 """
 
-import pytest
 import hashlib
 import os
 import secrets
 from unittest.mock import Mock
 
-# 项目内部导入
-from src.core.secp256k1 import Secp256k1, ECPoint, EllipticCurve
+import pytest
+
 from src.core.base58 import Base58
+
+# 项目内部导入
+from src.core.secp256k1 import ECPoint, EllipticCurve, Secp256k1
 from src.core.wif import WIF
 from tests.gpu_mock_factory import GPUMockFactory
 
@@ -319,7 +320,7 @@ class TestBatchConsistency:
         assert (
             len(gpu_results) == self.BATCH_SIZE
         ), f"批量结果数量应为 {self.BATCH_SIZE}，实际 {len(gpu_results)}"
-        for i, (cpu_h, gpu_h) in enumerate(zip(cpu_results, gpu_results)):
+        for i, (cpu_h, gpu_h) in enumerate(zip(cpu_results, gpu_results, strict=False)):
             assert cpu_h == gpu_h, (
                 f"第 {i} 个私钥 Hash160 不一致\n" f"CPU: {cpu_h.hex()}\nGPU: {gpu_h.hex()}"
             )

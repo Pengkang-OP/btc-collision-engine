@@ -1,17 +1,18 @@
-# -*- coding: utf-8 -*-
 """线程池优化模块单元测试"""
 
-import pytest
 import time
+
+import pytest
+
 from src.core.thread_pool import (
     DEFAULT_MAX_WORKERS,
     DEFAULT_MIN_WORKERS,
-    WorkStealingThreadPool,
-    TaskBatch,
     GlobalThreadPoolManager,
+    TaskBatch,
+    WorkStealingThreadPool,
     _validate_worker_count,
-    thread_pool_manager,
     get_thread_pool,
+    thread_pool_manager,
 )
 
 
@@ -111,7 +112,7 @@ class TestWorkStealingThreadPool:
         try:
             # 提交一些任务
             for i in range(10):
-                pool.submit(lambda: i)
+                pool.submit(lambda i=i: i)
 
             time.sleep(0.5)
 

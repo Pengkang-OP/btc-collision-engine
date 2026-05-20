@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """secp256k1 预计算表 (precompute.py) 全覆盖测试
 
 覆盖: _point_add, _int_to_uint32_le, generate_secp256k1_precomp_table, get_precomp_table
@@ -20,8 +19,8 @@ _mock_context.GPUContext = MagicMock()
 sys.modules["src.gpu.context"] = _mock_context
 
 from src.gpu.precompute import (  # noqa: E402
-    _point_add,
     _int_to_uint32_le,
+    _point_add,
     generate_secp256k1_precomp_table,
     get_precomp_table,
 )

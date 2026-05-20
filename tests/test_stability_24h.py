@@ -11,13 +11,13 @@ GPU碰撞引擎24小时稳定性测试
 运行时间: 24小时(可配置)
 """
 
-import sys
-import time
 import json
+import sys
 import threading
-from pathlib import Path
+import time
 from datetime import datetime, timedelta
-from typing import Dict, List, Any
+from pathlib import Path
+from typing import Any
 
 # 添加项目根目录到路径
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -42,7 +42,7 @@ class StabilityTestRunner:
         self.check_interval = check_interval
         self.duration_seconds = duration_hours * 3600
         self.engine = None
-        self.metrics_history: List[Dict[str, Any]] = []
+        self.metrics_history: list[dict[str, Any]] = []
         self.start_time = None
         self.test_data_dir = _PROJECT_ROOT / "test_data"
         self.test_data_dir.mkdir(exist_ok=True)
@@ -54,7 +54,7 @@ class StabilityTestRunner:
         print(f"  {title}")
         print(f"{'=' * 80}\n")
 
-    def log_metrics(self, metrics: Dict[str, Any]):
+    def log_metrics(self, metrics: dict[str, Any]):
         """记录性能指标"""
         timestamp = datetime.now().isoformat()
         record = {
@@ -150,7 +150,7 @@ class StabilityTestRunner:
 
         return is_ok
 
-    def generate_final_report(self) -> Dict[str, Any]:
+    def generate_final_report(self) -> dict[str, Any]:
         """生成最终报告"""
         if not self.metrics_history:
             return {}
@@ -297,8 +297,8 @@ class StabilityTestRunner:
             if self._monitor:
                 try:
                     self._monitor.stop()
-                except Exception:
-                    pass
+                except (RuntimeError, OSError):
+                    pass  # 监控器已停止或清理失败，不影响测试报告
 
             # 生成最终报告
             print("\n生成最终报告...")
@@ -366,8 +366,8 @@ class StabilityTestRunner:
             if self._monitor:
                 try:
                     self._monitor.stop()
-                except Exception:
-                    pass
+                except (RuntimeError, OSError):
+                    pass  # 中断路径下监控器清理
 
             # 保存已收集的数据
             self.save_intermediate_report()
@@ -384,8 +384,8 @@ class StabilityTestRunner:
             if self._monitor:
                 try:
                     self._monitor.stop()
-                except Exception:
-                    pass
+                except (RuntimeError, OSError):
+                    pass  # 异常路径下监控器清理
 
 
 def main():

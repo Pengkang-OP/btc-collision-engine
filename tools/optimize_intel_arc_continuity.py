@@ -32,19 +32,19 @@ def apply_intel_arc_continuity_optimizations(engine):
     Returns:
         dict: 应用的优化项
     """
-    
+
     optimizations = {
         'applied': [],
         'warnings': [],
         'recommendations': []
     }
-    
+
     if not hasattr(engine, '_gpu_device'):
         optimizations['warnings'].append("GPU设备未初始化")
         return optimizations
-    
+
     gpu_device = engine._gpu_device
-    
+
     # ========================================
     # 优化1: 命令队列深度优化
     # ========================================
@@ -57,7 +57,7 @@ def apply_intel_arc_continuity_optimizations(engine):
     问题: 单队列或浅队列导致GPU空闲等待
     解决: 使用双队列+预提交策略
     """
-    
+
     if hasattr(gpu_device, 'compute_queue') and hasattr(gpu_device, 'transfer_queue'):
         optimizations['applied'].append({
             'name': '双命令队列',
@@ -69,7 +69,7 @@ def apply_intel_arc_continuity_optimizations(engine):
         optimizations['recommendations'].append(
             "启用enable_async_execution以使用双队列"
         )
-    
+
     # ========================================
     # 优化2: Batch提交频率优化
     # ========================================
@@ -82,9 +82,9 @@ def apply_intel_arc_continuity_optimizations(engine):
     当前batch_size: engine.batch_size
     建议值: 1,000,000 - 2,000,000
     """
-    
+
     current_batch_size = getattr(engine, 'batch_size', None)
-    
+
     if current_batch_size is None:
         optimizations['warnings'].append("无法获取batch_size配置")
         optimizations['recommendations'].append(
@@ -103,7 +103,7 @@ def apply_intel_arc_continuity_optimizations(engine):
             'detail': f'batch_size={current_batch_size:,}, 符合Intel Arc最佳实践',
             'expected_improvement': '减少驱动层开销,提升GPU利用率20-40%'
         })
-    
+
     # ========================================
     # 优化3: 工作提交策略
     # ========================================
@@ -117,7 +117,7 @@ def apply_intel_arc_continuity_optimizations(engine):
     - Buffer A执行时,Buffer B准备数据
     - 消除CPU-GPU同步等待
     """
-    
+
     if hasattr(engine, '_async_executor') and engine._async_executor:
         optimizations['applied'].append({
             'name': '异步双缓冲',
@@ -129,7 +129,7 @@ def apply_intel_arc_continuity_optimizations(engine):
         optimizations['recommendations'].append(
             "启用async_execution以使用异步双缓冲"
         )
-    
+
     # ========================================
     # 优化4: 显存访问模式优化
     # ========================================
@@ -143,18 +143,18 @@ def apply_intel_arc_continuity_optimizations(engine):
     - uint32 workaround(避免Intel Arc hang bug)
     - 内存池复用(减少分配开销)
     """
-    
+
     if hasattr(gpu_device, 'enable_async_execution') and gpu_device.enable_async_execution:
         optimizations['applied'].append({
             'name': '显存访问优化',
             'detail': 'uint32 workaround + 内存池复用',
             'expected_improvement': '避免hang bug,减少显存分配开销'
         })
-    
+
     # ========================================
     # 优化5: 驱动层建议(需要用户手动设置)
     # ========================================
-    
+
     optimizations['recommendations'].extend([
         {
             'category': '驱动设置',
@@ -185,18 +185,18 @@ def apply_intel_arc_continuity_optimizations(engine):
             'expected_improvement': '稳定的GPU频率,减少性能波动'
         }
     ])
-    
+
     return optimizations
 
 
 def print_optimization_report(optimizations):
     """打印优化报告"""
-    
+
     print("=" * 80)
     print("  Intel Arc A770 GPU运算连续性优化报告")
     print("=" * 80)
     print()
-    
+
     # 已应用的优化
     print("【已应用的优化】")
     print("-" * 80)
@@ -211,7 +211,7 @@ def print_optimization_report(optimizations):
     else:
         print("  ⚠️  无已应用的优化")
         print()
-    
+
     # 警告
     print("【警告】")
     print("-" * 80)
@@ -222,7 +222,7 @@ def print_optimization_report(optimizations):
     else:
         print("  ✅ 无警告")
         print()
-    
+
     # 建议
     print("【建议的优化】")
     print("-" * 80)
@@ -242,22 +242,22 @@ def print_optimization_report(optimizations):
     else:
         print("  ✅ 无额外建议")
         print()
-    
+
     # 总结
     print("=" * 80)
     print("  优化总结")
     print("=" * 80)
     print()
-    
+
     applied_count = len(optimizations['applied'])
     warning_count = len(optimizations['warnings'])
     recommendation_count = len(optimizations['recommendations'])
-    
+
     print(f"  已应用优化: {applied_count} 项")
     print(f"  警告: {warning_count} 项")
     print(f"  建议: {recommendation_count} 项")
     print()
-    
+
     if applied_count >= 3:
         print("  ✅ GPU运算连续性优化良好!")
         print("     预期GPU利用率: 80-95%")
@@ -268,7 +268,7 @@ def print_optimization_report(optimizations):
     else:
         print("  ❌ 未应用关键优化")
         print("     GPU运算间隔问题可能持续存在")
-    
+
     print()
 
 

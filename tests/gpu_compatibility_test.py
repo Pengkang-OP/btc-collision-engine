@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 GPU兼容性测试脚本
 
 测试系统在不同厂商和型号的GPU上的兼容性和性能。
 """
 
-import sys
-import os
-import time
 import logging
-from typing import Set, List, Dict
+import os
+import sys
+import time
 
 # 添加项目根目录到Python模块路径
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
@@ -20,7 +18,7 @@ import pytest  # noqa: E402
 pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
 
 from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
-from src.gpu.device import GPUDeviceDetector, identify_vendor, identify_gpu_model  # noqa: E402
+from src.gpu.device import GPUDeviceDetector, identify_gpu_model, identify_vendor  # noqa: E402
 
 # 配置日志
 logging.basicConfig(
@@ -29,7 +27,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def generate_test_targets(count: int = 5) -> Set[str]:
+def generate_test_targets(count: int = 5) -> set[str]:
     """生成测试目标地址
 
     Args:
@@ -218,7 +216,7 @@ def test_all_gpus():
     return test_results
 
 
-def generate_compatibility_report(test_results: List[Dict]):
+def generate_compatibility_report(test_results: list[dict]):
     """生成兼容性测试报告
 
     Args:

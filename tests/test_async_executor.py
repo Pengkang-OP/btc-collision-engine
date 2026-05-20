@@ -14,9 +14,10 @@
 - cleanup 资源释放
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock
+from unittest.mock import MagicMock, Mock
+
 import numpy as np
+import pytest
 
 # ============================================================================
 # _seed_bytes_to_u32_be_array 测试
@@ -37,22 +38,25 @@ class TestSeedBytesToU32:
         assert len(result) == 8
 
     def test_invalid_length_raises(self):
-        from src.gpu.async_executor import _seed_bytes_to_u32_be_array
         import pytest as pt
+
+        from src.gpu.async_executor import _seed_bytes_to_u32_be_array
 
         with pt.raises(ValueError, match="32 bytes"):
             _seed_bytes_to_u32_be_array(b"short")
 
     def test_empty_seed_raises(self):
-        from src.gpu.async_executor import _seed_bytes_to_u32_be_array
         import pytest as pt
+
+        from src.gpu.async_executor import _seed_bytes_to_u32_be_array
 
         with pt.raises(ValueError, match="32 bytes"):
             _seed_bytes_to_u32_be_array(b"")
 
     def test_33_byte_seed_raises(self):
-        from src.gpu.async_executor import _seed_bytes_to_u32_be_array
         import pytest as pt
+
+        from src.gpu.async_executor import _seed_bytes_to_u32_be_array
 
         with pt.raises(ValueError, match="32 bytes"):
             _seed_bytes_to_u32_be_array(b"x" * 33)
@@ -311,7 +315,7 @@ class TestGetGpuConfig:
     """GPU配置获取测试"""
 
     def test_get_known_model_config(self):
-        from src.gpu.async_executor import AsyncGPUExecutor, GPU_SPECIFIC_CONFIG
+        from src.gpu.async_executor import GPU_SPECIFIC_CONFIG, AsyncGPUExecutor
 
         gpu_device = MagicMock()
         gpu_device.device_info = None
@@ -320,7 +324,7 @@ class TestGetGpuConfig:
         assert config == GPU_SPECIFIC_CONFIG["1660"]
 
     def test_get_unknown_model_returns_default(self):
-        from src.gpu.async_executor import AsyncGPUExecutor, GPU_SPECIFIC_CONFIG
+        from src.gpu.async_executor import GPU_SPECIFIC_CONFIG, AsyncGPUExecutor
 
         gpu_device = MagicMock()
         gpu_device.device_info = None

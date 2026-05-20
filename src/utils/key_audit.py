@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class KeyOperationType(Enum):
     """密钥操作类型"""
+
     DISPLAY = "display"  # 显示密钥
     HASH = "hash"  # 生成哈希
     VALIDATE = "validate"  # 验证密钥
@@ -27,6 +28,7 @@ class KeyOperationType(Enum):
 
 class KeyAuditLevel(Enum):
     """审计级别"""
+
     INFO = "info"  # 信息
     WARNING = "warning"  # 警告
     CRITICAL = "critical"  # 严重
@@ -54,6 +56,7 @@ class KeyAuditLogger:
         if log_file:
             try:
                 import os
+
                 os.makedirs(os.path.dirname(log_file), exist_ok=True)
 
                 # 检查是否已存在相同文件的处理器
@@ -68,9 +71,7 @@ class KeyAuditLogger:
                 if not existing_handler:
                     handler = logging.FileHandler(log_file, encoding="utf-8")
                     handler.setFormatter(
-                        logging.Formatter(
-                            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-                        )
+                        logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
                     )
                     logger.addHandler(handler)
             except Exception as e:

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """端到端闭环测试（CPU 引擎）
 
 闭环(Closed-Loop)概念: 使用已知密钥对(已知 private_key → 必定生成已知 address),
@@ -20,22 +19,22 @@
 """
 
 import os
-import time
 import tempfile
+import time
+
 import pytest
+
+from src.collision.checkpoint_manager import CheckpointManager
+from src.collision.event_bus import EventBus, reset_event_bus
+from src.collision.events import EngineMatchEvent, EventType
+from src.collision.key_collision_engine import KeyCollisionEngine
+from src.collision.targets.resolver import TargetResolver
 
 # 使用独立的地址生成器（与引擎内部解耦, 验证引擎的真实输出）
 from src.core.address_generator import P2PKHAddressGenerator
-from src.core.wif import WIF
 from src.core.bitcoin_key_validator import BitcoinKeyValidator
-
-from src.collision.key_collision_engine import KeyCollisionEngine
-from src.collision.checkpoint_manager import CheckpointManager
-from src.collision.event_bus import EventBus, reset_event_bus
-from src.collision.events import EventType, EngineMatchEvent
-from src.collision.targets.resolver import TargetResolver
+from src.core.wif import WIF
 from src.utils.bech32_codec import bech32_encode
-
 
 # ============================================================================
 # 已知密钥对常量（使用独立生成器推导，避免硬编码风险）
@@ -283,7 +282,7 @@ class TestMatchCallbackClosedLoop:
         assert len(results) >= 1
         r = results[0]
         assert r["pk_len"] == 32, "私钥应 32 字节"
-        assert r["pk_type"] == bytes, "私钥应为 bytes"
+        assert r["pk_type"] is bytes, "私钥应为 bytes"
         assert r["addr_start"] == "1", "P2PKH 地址以 '1' 开头"
         assert r["wif_start"] in ("K", "L"), "压缩 WIF 以 K 或 L 开头"
 
@@ -938,7 +937,7 @@ class TestEventBusClosedLoop:
 
     def test_event_bus_lifecycle_events(self):
         """验证引擎生命周期事件的 EventBus 通知"""
-        from src.collision.events import EngineStartEvent, EngineCompleteEvent
+        from src.collision.events import EngineCompleteEvent, EngineStartEvent
 
         received_types = []
 

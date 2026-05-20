@@ -11,21 +11,22 @@
 - 上下文管理器
 """
 
-import pytest
-import time
 import threading
+import time
 from unittest.mock import Mock
+
+import pytest
 
 from src.collision.event_bus import EventBus, get_event_bus, reset_event_bus
 from src.collision.events import (
     CollisionEvent,
-    EventType,
-    EngineStartEvent,
-    EngineProgressEvent,
-    EngineMatchEvent,
-    EngineErrorEvent,
     EngineCompleteEvent,
+    EngineErrorEvent,
+    EngineMatchEvent,
+    EngineProgressEvent,
+    EngineStartEvent,
     EngineStopEvent,
+    EventType,
 )
 
 # ============================================================================

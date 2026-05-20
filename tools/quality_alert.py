@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 文档质量智能告警系统
 
@@ -11,10 +10,10 @@
 
 import sys
 from pathlib import Path
-from typing import Dict, List
 
 # 修复Windows控制台编码问题
 from utf8_helper import setup_windows_utf8
+
 setup_windows_utf8()
 
 # 添加项目根目录到路径
@@ -31,7 +30,7 @@ class QualityAlertSystem:
     def __init__(self, history_file: str = "quality_history.json"):
         self.analyzer = QualityTrendAnalyzer(history_file)
 
-    def check_alerts(self, current_score: float, threshold: float = 8.0) -> List[Dict]:
+    def check_alerts(self, current_score: float, threshold: float = 8.0) -> list[dict]:
         """检查是否需要告警
 
         Args:
@@ -79,14 +78,14 @@ class QualityAlertSystem:
 
         return alerts
 
-    def print_alerts(self, alerts: List[Dict]):
+    def print_alerts(self, alerts: list[dict]):
         """打印告警信息"""
         if not alerts:
-            print(f"\n✅ 无告警 - 文档质量良好")
+            print("\n✅ 无告警 - 文档质量良好")
             return
 
         print(f"\n{'=' * 60}")
-        print(f"🚨 质量告警")
+        print("🚨 质量告警")
         print(f"{'=' * 60}")
 
         for i, alert in enumerate(alerts, 1):
@@ -100,20 +99,20 @@ class QualityAlertSystem:
             print(f"   {alert['message']}")
 
         print(f"\n{'=' * 60}")
-        print(f"💡 建议:")
+        print("💡 建议:")
 
         # 根据告警类型给出建议
         for alert in alerts:
             if alert['type'] == 'LOW_SCORE':
-                print(f"  - 检查需要改进的文档并修复问题")
+                print("  - 检查需要改进的文档并修复问题")
             elif alert['type'] == 'DECLINING_TREND':
-                print(f"  - 分析质量下降原因，制定改进计划")
+                print("  - 分析质量下降原因，制定改进计划")
             elif alert['type'] == 'NEW_LOW_QUALITY_DOCS':
-                print(f"  - 优先修复低分文档")
+                print("  - 优先修复低分文档")
 
         print(f"{'=' * 60}")
 
-    def should_fail_ci(self, alerts: List[Dict]) -> bool:
+    def should_fail_ci(self, alerts: list[dict]) -> bool:
         """CI是否应该失败
 
         Args:
@@ -156,7 +155,7 @@ def main():
     args = parser.parse_args()
 
     # 执行质量检查
-    print(f"🔍 执行质量检查...")
+    print("🔍 执行质量检查...")
     try:
         checker = DocumentQualityChecker(args.docs_dir)
         scores = checker.check_all()
@@ -200,10 +199,10 @@ def main():
     # CI模式
     if args.ci_mode:
         if alert_system.should_fail_ci(alerts):
-            print(f"\n❌ CI失败 - 存在ERROR级别告警")
+            print("\n❌ CI失败 - 存在ERROR级别告警")
             sys.exit(1)
         else:
-            print(f"\n✅ CI通过")
+            print("\n✅ CI通过")
             sys.exit(0)
 
 

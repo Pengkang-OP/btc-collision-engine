@@ -29,7 +29,7 @@ from __future__ import annotations
 BECH32_CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
 _BECH32_CHARSET_MAP = {c: i for i, c in enumerate(BECH32_CHARSET)}
 
-BECH32_CONST = 1           # bech32 校验常量 (BIP-173)
+BECH32_CONST = 1  # bech32 校验常量 (BIP-173)
 BECH32M_CONST = 0x2BC830A3  # bech32m 校验常量 (BIP-350)
 
 # polymod 生成元 (BIP-173 规范)
@@ -46,6 +46,7 @@ WP_MAX_LENGTH = 40
 # ============================================================================
 # 核心算法
 # ============================================================================
+
 
 def bech32_polymod(values: list[int]) -> int:
     """Bech32/Bech32m 多项式校验模运算
@@ -78,10 +79,7 @@ def bech32_hrp_expand(hrp: str) -> list[int]:
 
 
 def convertbits(
-    data: bytes | list[int],
-    from_bits: int,
-    to_bits: int,
-    pad: bool = True
+    data: bytes | list[int], from_bits: int, to_bits: int, pad: bool = True
 ) -> list[int] | None:
     """5-bit <-> 8-bit 位转换 (BIP-173 convertbits)
 
@@ -124,6 +122,7 @@ def convertbits(
 # 校验和
 # ============================================================================
 
+
 def bech32_verify_checksum(hrp: str, data: list[int]) -> int | None:
     """验证 Bech32/Bech32m 校验和
 
@@ -159,10 +158,7 @@ def bech32_create_checksum(hrp: str, data: list[int], spec: str = "bech32") -> l
 
     # BIP-173: bech32 校验和常数 = 1
     # BIP-350: bech32m 校验和常数 = 0x2BC830A3
-    if spec == "bech32m":
-        polymod = bech32_polymod(values) ^ BECH32M_CONST
-    else:
-        polymod = bech32_polymod(values) ^ 1
+    polymod = bech32_polymod(values) ^ BECH32M_CONST if spec == "bech32m" else bech32_polymod(values) ^ 1
 
     return [(polymod >> 5 * (5 - i)) & 31 for i in range(6)]
 
@@ -171,12 +167,8 @@ def bech32_create_checksum(hrp: str, data: list[int], spec: str = "bech32") -> l
 # 编解码
 # ============================================================================
 
-def bech32_encode(
-    hrp: str,
-    witver: int,
-    witprog: bytes,
-    spec: str = "bech32"
-) -> str:
+
+def bech32_encode(hrp: str, witver: int, witprog: bytes, spec: str = "bech32") -> str:
     """编码 Bech32/Bech32m 地址
 
     Args:
@@ -233,7 +225,7 @@ def bech32_decode(bech: str) -> tuple[str | None, list[int] | None, int | None]:
         return None, None, None
 
     hrp = bech[:pos]
-    data_part = bech[pos + 1:]
+    data_part = bech[pos + 1 :]
 
     # 验证字符集
     if not all(c in _BECH32_CHARSET_MAP for c in data_part):
@@ -250,6 +242,7 @@ def bech32_decode(bech: str) -> tuple[str | None, list[int] | None, int | None]:
 # ============================================================================
 # SegWit 地址解析
 # ============================================================================
+
 
 def decode_segwit_address(hrp: str, addr: str) -> tuple[int | None, bytes | None]:
     """解码 SegWit 地址，提取 witness version 和 witness program

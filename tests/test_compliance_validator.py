@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """BitcoinComplianceValidator 单元测试 - 覆盖所有验证失败分支"""
 
 import unittest

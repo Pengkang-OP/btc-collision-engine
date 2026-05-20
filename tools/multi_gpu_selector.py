@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 多GPU环境选择工具
 
@@ -13,8 +12,8 @@
     python tools/multi_gpu_selector.py
 """
 
-import sys
 import json
+import sys
 from pathlib import Path
 
 # 添加项目根目录
@@ -192,31 +191,31 @@ def print_summary(devices, recommended, recommendation_text):
     print(f"\n🔢 检测到GPU数量: {len(devices)}")
 
     if devices:
-        print(f"\n📋 所有GPU设备:")
+        print("\n📋 所有GPU设备:")
         for i, device in enumerate(devices):
             scores = device['scores']
             recommended_marker = "⭐" if device == recommended else "  "
             print(f"  {recommended_marker} GPU {i}: {device['name']}")
             print(f"      显存: {device['global_mem_gb']:.2f} GB | 分数: {scores['total_score']:.1f}")
 
-        print(f"\n🏆 推荐GPU:")
+        print("\n🏆 推荐GPU:")
         print(f"  {recommended['name']}")
         print(f"  全局索引: {recommended['global_index']}")
         print(f"  {recommendation_text}")
         print(f"  显存: {recommended['global_mem_gb']:.2f} GB")
-        print(f"  评分详情:")
+        print("  评分详情:")
         print(f"    - 显存得分: {recommended['scores']['memory_score']:.1f}")
         print(f"    - 计算单元得分: {recommended['scores']['cu_score']:.1f}")
         print(f"    - 厂商得分: {recommended['scores']['vendor_score']:.1f}")
 
-        print(f"\n💡 使用方式:")
-        print(f"  方式1: 修改config.json")
+        print("\n💡 使用方式:")
+        print("  方式1: 修改config.json")
         print(f"    \"gpu_device_index\": {recommended['global_index']}")
-        print(f"")
-        print(f"  方式2: 生成新配置文件")
-        print(f"    python tools/multi_gpu_selector.py --generate-config")
-        print(f"")
-        print(f"  方式3: 命令行参数")
+        print("")
+        print("  方式2: 生成新配置文件")
+        print("    python tools/multi_gpu_selector.py --generate-config")
+        print("")
+        print("  方式3: 命令行参数")
         print(f"    python key_collision.py --gpu-device {recommended['global_index']}")
 
 
@@ -262,7 +261,7 @@ def main():
 
     # 生成配置文件
     if args.generate_config:
-        print(f"\n📝 生成配置文件...")
+        print("\n📝 生成配置文件...")
         config_path = generate_config(recommended, devices, args.output)
         print(f"✅ 配置文件已生成: {config_path}")
         print(f"   使用方式: python key_collision.py --config {config_path}")

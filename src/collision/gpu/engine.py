@@ -58,7 +58,6 @@ ASYNC_KEY_GEN_SAFETY_FACTOR = 2.0
 
 # pyopencl 检测
 try:
-    import numpy as np
     import pyopencl as cl  # noqa: F401
 
     PYOPENCL_AVAILABLE = True
@@ -78,6 +77,8 @@ GPU_CONFIG_MANAGER_AVAILABLE = False  # 保留供外部导入兼容
 
 # 基础依赖
 # 加密
+import contextlib
+
 from ...gpu.device import GPUDeviceDetector  # noqa: E402
 from ...gpu.device_manager import GPUDeviceManager  # noqa: E402
 from ...gpu.engine_monitor import GPUEngineMonitor  # noqa: E402
@@ -131,8 +132,6 @@ def _get_gpu_monitor() -> "GPUPerformanceMonitor":
     return _gpu_performance_monitor
 
 
-
-
 @dataclass
 class GPUEngineConfig:
     """GPU 碰撞引擎配置 (v4.3.1)
@@ -158,9 +157,7 @@ class GPUEngineConfig:
     async_log_max_bytes: int = 10 * 1024 * 1024
     async_log_backup_count: int = 5
     check_uncompressed: bool | None = None
-    key_generation_strategy: KeyGenerationStrategy = field(
-        default=KeyGenerationStrategy.PRNG_SEED
-    )
+    key_generation_strategy: KeyGenerationStrategy = field(default=KeyGenerationStrategy.PRNG_SEED)
 
     def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
@@ -224,7 +221,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
         async_log_max_bytes: int = 10 * 1024 * 1024,
         async_log_backup_count: int = 5,
         check_uncompressed: bool | None = None,
-        key_generation_strategy: KeyGenerationStrategy = KeyGenerationStrategy.PRNG_SEED,  # v3.2.1: 私钥生成策略
+        key_generation_strategy: KeyGenerationStrategy = KeyGenerationStrategy.PRNG_SEED,
+        # v3.2.1: 私钥生成策略
         config: "GPUEngineConfig | None" = None,  # v4.3.1: 配置对象优先
     ) -> None:
         """初始化 GPU 碰撞引擎 (Phase 6 重构版)
@@ -365,9 +363,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             },
             "batch_size": batch_size,
         }
-        self._device_manager = GPUDeviceManager(
-            device_index=device_index, config=config, logger=logger
-        )
+        self._device_manager = GPUDeviceManager(device_index=device_index, config=config, logger=logger)
         self._device_manager.initialize(
             targets,
             batch_size,
@@ -676,18 +672,14 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
             # 清理异步执行器（如果存在且已初始化）
             if hasattr(self, "_async_executor") and self._async_executor is not None:
-                try:
+                with contextlib.suppress(Exception):
                     self._async_executor.cleanup()
-                except Exception:
-                    pass
                 self._async_executor = None
 
             # 清理设备管理器
             if hasattr(self, "_device_manager") and self._device_manager is not None:
-                try:
+                with contextlib.suppress(Exception):
                     self._device_manager.cleanup()
-                except Exception:
-                    pass
                 self._device_manager = None
                 self._gpu_memory_pool = None
 
@@ -781,9 +773,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         """记录 GPU 性能指标 [委托给 _scheduler]"""
         self._scheduler.update_performance_metrics(batch_size, execution_time_ms)
 
-    def _record_adjustment(
-        self, old_size: int, new_size: int, reason: str, details: str = ""
-    ) -> None:
+    def _record_adjustment(self, old_size: int, new_size: int, reason: str, details: str = "") -> None:
         """记录调整历史 [委托给 _scheduler]"""
         self._scheduler.record_adjustment(old_size, new_size, reason, details)
 
@@ -851,9 +841,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         assert self._random_search_mode is not None
         return cast(
             bytes,
-            self._random_search_mode._wait_for_async_key_generation(
-                gen_thread, gen_result, batch_num
-            ),
+            self._random_search_mode._wait_for_async_key_generation(gen_thread, gen_result, batch_num),
         )
 
     def _range_scan(self, start: int, end: int):

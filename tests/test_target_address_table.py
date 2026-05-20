@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 """BitcoinTargetTable 单元测试 - 覆盖文件加载、边界条件、清理等路径"""
 
 import json
 import os
 import tempfile
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from src.core.target_address_table import BitcoinTargetTable
 

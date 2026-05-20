@@ -1,13 +1,15 @@
 """Windows特定环境测试 - 原子操作和内存锁定"""
 
-import unittest
+import logging
 import os
 import sys
+import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # 检测是否为Windows环境
 IS_WINDOWS = sys.platform.startswith("win")
+logger = logging.getLogger(__name__)
 
 
 @unittest.skipUnless(IS_WINDOWS, "仅在Windows环境运行")
@@ -16,8 +18,8 @@ class TestWindowsAtomicOperations(unittest.TestCase):
 
     def test_file_atomic_write(self):
         """测试Windows文件原子写入操作"""
-        import tempfile
         import shutil
+        import tempfile
 
         test_dir = tempfile.mkdtemp()
         try:
@@ -38,7 +40,7 @@ class TestWindowsAtomicOperations(unittest.TestCase):
             self.assertFalse(os.path.exists(temp_path), "临时文件应该被清理")
 
             # 4. 验证目标文件内容正确
-            with open(target_path, "r", encoding="utf-8") as f:
+            with open(target_path, encoding="utf-8") as f:
                 read_content = f.read()
             self.assertEqual(read_content, content, "文件内容应该正确")
 
@@ -47,8 +49,8 @@ class TestWindowsAtomicOperations(unittest.TestCase):
 
     def test_file_atomic_write_with_concurrent_access(self):
         """测试并发访问下的原子写入"""
-        import tempfile
         import shutil
+        import tempfile
         import threading
 
         test_dir = tempfile.mkdtemp()
@@ -72,8 +74,8 @@ class TestWindowsAtomicOperations(unittest.TestCase):
                 except PermissionError:
                     # 忽略权限错误，这在并发场景下是预期的
                     pass
-            except Exception:
-                pass
+            except (OSError, UnicodeDecodeError) as e:
+                logger.debug(f"并发写入线程{thread_id}异常（预期内）: {e}")
 
         # 启动多个线程同时写入
         threads = []
@@ -92,7 +94,7 @@ class TestWindowsAtomicOperations(unittest.TestCase):
         self.assertTrue(os.path.exists(target_path), "目标文件应该存在")
 
         # 验证文件内容不为空
-        with open(target_path, "r", encoding="utf-8") as f:
+        with open(target_path, encoding="utf-8") as f:
             content = f.read()
         self.assertTrue(len(content) > 0, "文件内容不应为空")
 
@@ -100,9 +102,10 @@ class TestWindowsAtomicOperations(unittest.TestCase):
 
     def test_checkpoint_atomic_write(self):
         """测试断点文件的原子写入"""
-        from src.collision.checkpoint_manager import CheckpointManager
-        import tempfile
         import shutil
+        import tempfile
+
+        from src.collision.checkpoint_manager import CheckpointManager
 
         test_dir = tempfile.mkdtemp()
         checkpoint_file = os.path.join(test_dir, "test_checkpoint.json")
@@ -215,8 +218,8 @@ class TestWindowsACL(unittest.TestCase):
 
     def test_file_permissions(self):
         """测试文件权限设置"""
-        import tempfile
         import shutil
+        import tempfile
 
         test_dir = tempfile.mkdtemp()
         test_file = os.path.join(test_dir, "test_perm.txt")
@@ -230,14 +233,14 @@ class TestWindowsACL(unittest.TestCase):
             self.assertTrue(os.path.exists(test_file))
 
             # 测试文件可读
-            with open(test_file, "r", encoding="utf-8") as f:
+            with open(test_file, encoding="utf-8") as f:
                 content = f.read()
             self.assertEqual(content, "测试内容")
 
             # 测试文件可写
             with open(test_file, "a", encoding="utf-8") as f:
                 f.write("追加内容")
-            with open(test_file, "r", encoding="utf-8") as f:
+            with open(test_file, encoding="utf-8") as f:
                 content = f.read()
             self.assertIn("追加内容", content)
 
@@ -258,12 +261,13 @@ class TestPlatformDetection(unittest.TestCase):
 
     def test_checkpoint_manager_platform_handling(self):
         """测试CheckpointManager的平台特定处理"""
-        from src.collision.checkpoint_manager import CheckpointManager
+        import shutil
 
         # CheckpointManager应该能正确处理Windows环境
         # 这是一个基本的初始化测试
         import tempfile
-        import shutil
+
+        from src.collision.checkpoint_manager import CheckpointManager
 
         test_dir = tempfile.mkdtemp()
         checkpoint_file = os.path.join(test_dir, "test.json")

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """BigIntOptimizer 全覆盖测试 (gmpy2 可用 + 不可用路径)"""
 
 import sys

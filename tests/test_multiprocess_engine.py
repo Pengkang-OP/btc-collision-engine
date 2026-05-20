@@ -12,8 +12,9 @@
 - _worker_process 函数级测试
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 # ============================================================================
 # MultiprocessCollisionEngine 初始化测试
@@ -243,8 +244,9 @@ class TestGetResults:
     """结果收集测试"""
 
     def test_get_results_empty_queue(self):
-        from src.collision.multiprocess_engine import MultiprocessCollisionEngine
         from multiprocessing.queues import Empty
+
+        from src.collision.multiprocess_engine import MultiprocessCollisionEngine
 
         engine = MultiprocessCollisionEngine()
         engine._running = True
@@ -256,8 +258,9 @@ class TestGetResults:
         assert results == []
 
     def test_get_results_with_matches(self):
-        from src.collision.multiprocess_engine import MultiprocessCollisionEngine
         from multiprocessing.queues import Empty
+
+        from src.collision.multiprocess_engine import MultiprocessCollisionEngine
 
         engine = MultiprocessCollisionEngine()
         engine._running = True
@@ -273,8 +276,9 @@ class TestGetResults:
         assert len(engine.total_matches) == 1
 
     def test_get_results_encrypted_batch(self):
-        from src.collision.multiprocess_engine import MultiprocessCollisionEngine
         from multiprocessing.queues import Empty
+
+        from src.collision.multiprocess_engine import MultiprocessCollisionEngine
 
         engine = MultiprocessCollisionEngine()
         engine._running = True
@@ -291,8 +295,9 @@ class TestGetResults:
         assert results == []
 
     def test_get_results_queue_overflow_warning(self):
-        from src.collision.multiprocess_engine import MultiprocessCollisionEngine
         from multiprocessing.queues import Empty
+
+        from src.collision.multiprocess_engine import MultiprocessCollisionEngine
 
         engine = MultiprocessCollisionEngine()
         engine._running = True
@@ -315,8 +320,9 @@ class TestGetStats:
     """统计信息测试"""
 
     def test_get_stats_empty(self):
-        from src.collision.multiprocess_engine import MultiprocessCollisionEngine
         from multiprocessing.queues import Empty
+
+        from src.collision.multiprocess_engine import MultiprocessCollisionEngine
 
         engine = MultiprocessCollisionEngine(num_workers=2)
         engine.stats_queue = MagicMock()
@@ -331,8 +337,9 @@ class TestGetStats:
         assert isinstance(stats["matches"], list)
 
     def test_get_stats_with_worker_data(self):
-        from src.collision.multiprocess_engine import MultiprocessCollisionEngine
         from multiprocessing.queues import Empty
+
+        from src.collision.multiprocess_engine import MultiprocessCollisionEngine
 
         engine = MultiprocessCollisionEngine(num_workers=2)
         engine.stats_queue = MagicMock()
@@ -361,8 +368,9 @@ class TestGetStats:
         assert stats["total_speed"] == 19000
 
     def test_get_stats_matches_returned_as_copy(self):
-        from src.collision.multiprocess_engine import MultiprocessCollisionEngine
         from multiprocessing.queues import Empty
+
+        from src.collision.multiprocess_engine import MultiprocessCollisionEngine
 
         engine = MultiprocessCollisionEngine()
         engine.stats_queue = MagicMock()
@@ -561,8 +569,8 @@ class TestFactoryFunctions:
 
     def test_create_multiprocess_engine(self):
         from src.collision.multiprocess_engine import (
-            create_multiprocess_engine,
             MultiprocessCollisionEngine,
+            create_multiprocess_engine,
         )
 
         engine = create_multiprocess_engine(num_workers=4, batch_size=20000)
@@ -579,8 +587,8 @@ class TestFactoryFunctions:
 
     def test_create_hybrid_engine_defaults(self):
         from src.collision.multiprocess_engine import (
-            create_hybrid_engine,
             HybridCollisionEngine,
+            create_hybrid_engine,
         )
 
         engine = create_hybrid_engine()

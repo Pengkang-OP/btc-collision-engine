@@ -1,17 +1,16 @@
-# -*- coding: utf-8 -*-
 """
 GPU异常恢复管理器测试
 
 验证P1-2修复：GPU异常恢复机制完整实现
 """
 
-import unittest
-import time
+import os
+import sys
 import threading
+import time
+import unittest
 from unittest.mock import Mock, patch
 
-import sys
-import os
 import pytest
 
 pytestmark = pytest.mark.gpu
@@ -20,10 +19,10 @@ pytestmark = pytest.mark.gpu
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.gpu.gpu_recovery_manager import (  # noqa: E402
-    GPURecoveryManager,
-    GPUFailureType,
-    RecoveryStrategy,
     GPUFailureRecord,
+    GPUFailureType,
+    GPURecoveryManager,
+    RecoveryStrategy,
 )
 
 

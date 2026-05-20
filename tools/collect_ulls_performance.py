@@ -17,7 +17,7 @@ if not log_file.exists():
     print("❌ 日志文件不存在")
     sys.exit(1)
 
-with open(log_file, 'r', encoding='utf-8') as f:
+with open(log_file, encoding='utf-8') as f:
     lines = f.readlines()
 
 # 查找性能数据
@@ -79,7 +79,7 @@ if peaks:
     print()
 
     if 14 <= peak_improvement <= 31:
-        print(f"  ✅ 达到预期效果 (14-31%提升)")
+        print("  ✅ 达到预期效果 (14-31%提升)")
     elif peak_improvement > 31:
         print(f"  ⚠️  超出预期 ({peak_improvement:.2f}% > 31%)")
     elif peak_improvement > 0:

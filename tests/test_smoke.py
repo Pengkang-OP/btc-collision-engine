@@ -13,11 +13,12 @@
 - 关键类型导入
 """
 
-import pytest
-import time
-import os
 import json
+import os
 import tempfile
+import time
+
+import pytest
 
 # ============================================================================
 # 1. 核心加密模块冒烟检查
@@ -169,8 +170,8 @@ class TestLoggingSmoke:
             assert recent[0]["message"] == "smoke_test_message"
 
     def test_log_processor_format(self):
-        from src.log_engine.log_processor import LogProcessor
         from src.log_engine.events import LogEvent, LogEventType
+        from src.log_engine.log_processor import LogProcessor
 
         processor = LogProcessor()
         event = LogEvent(LogEventType.STATUS_UPDATE, {"message": "smoke test"})
@@ -224,8 +225,8 @@ class TestTypeDefinitionsSmoke:
 
     def test_collision_types_import(self):
         from src.collision.types import (
-            ProgressCallback,
             MatchCallback,
+            ProgressCallback,
         )
 
         assert ProgressCallback is not None
@@ -243,9 +244,9 @@ class TestImportSmoke:
 
     def test_core_imports(self):
         from src.core.base58 import Base58
-        from src.core.wif import WIF
         from src.core.hash_utils import HashUtils
         from src.core.secp256k1 import Secp256k1
+        from src.core.wif import WIF
 
         assert Base58 is not None
         assert WIF is not None

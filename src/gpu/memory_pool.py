@@ -470,21 +470,17 @@ class GPUMemoryPool:
 
             # 如果平均内存使用超过最大内存的70%，尝试扩展内存池
             if avg_memory > self._max_memory_bytes / (1024 * 1024) * 0.7:
-                new_max_memory = min(
-                    self._max_memory_bytes * 1.5, 2 * 1024 * 1024 * 1024
-                )  # 最多2GB
+                new_max_memory = min(self._max_memory_bytes * 1.5, 2 * 1024 * 1024 * 1024)  # 最多2GB
                 if new_max_memory > self._max_memory_bytes:
                     self._max_memory_bytes = int(new_max_memory)
-                    logger.info(
-                        f"内存使用较高，扩展内存池大小: {new_max_memory / (1024 * 1024):.1f}MB"
-                    )
+                    logger.info(f"内存使用较高，扩展内存池大小: {new_max_memory / (1024 * 1024):.1f}MB")
 
             # 分析分配模式
             if self._allocation_count > 100:
                 # 找出最常用的缓冲区大小
-                top_sizes = sorted(
-                    self._allocation_patterns.items(), key=lambda x: x[1], reverse=True
-                )[:5]
+                top_sizes = sorted(self._allocation_patterns.items(), key=lambda x: x[1], reverse=True)[
+                    :5
+                ]
                 if top_sizes:
                     logger.debug(f"最常用的缓冲区大小: {top_sizes}")
 
@@ -527,8 +523,8 @@ class GPUMemoryPool:
         try:
             import pyopencl as cl
 
-            # 尝试分配100MB测试块来探测可用显存
-            test_size = 100 * 1024 * 1024
+            # 尝试分配10MB测试块来探测可用显存（避免100MB过大开销）
+            test_size = 10 * 1024 * 1024
             test_buf = cl.Buffer(context, cl.mem_flags.WRITE_ONLY, test_size)
             test_buf.release()
             del test_buf
@@ -631,9 +627,8 @@ class GPUMemoryPool:
                         except (RuntimeError, OSError) as e:
                             logger.debug(f"释放{buffer_type}类型缓冲区失败 (size={size}): {e}")
                         except Exception as e:
-                            logger.debug(
-                                f"释放{buffer_type}类型缓冲区时发生未预期异常 (size={size}): {type(e).__name__}: {e}"
-                            )
+                            _err = type(e).__name__
+                            logger.debug(f"释放{buffer_type}缓冲区异常 (size={size}): {_err}: {e}")
 
             # 清空所有池
             self._pool.clear()
@@ -895,9 +890,7 @@ class GlobalGPUMemoryManager:
         interval = (
             interval_seconds if interval_seconds is not None else self.DEFAULT_AUTO_CLEANUP_INTERVAL
         )
-        lru_timeout = (
-            lru_idle_timeout if lru_idle_timeout is not None else self.DEFAULT_LRU_IDLE_TIMEOUT
-        )
+        lru_timeout = lru_idle_timeout if lru_idle_timeout is not None else self.DEFAULT_LRU_IDLE_TIMEOUT
         self._cleanup_stop_event.clear()
         self._cleanup_thread = threading.Thread(
             target=self._auto_cleanup_loop,

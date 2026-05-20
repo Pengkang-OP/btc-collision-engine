@@ -11,10 +11,11 @@
     使用正确的patch策略，确保cl.Buffer能够接受任意参数组合。
 """
 
-import pytest
-from unittest.mock import Mock, patch
-import sys
 import os
+import sys
+from unittest.mock import Mock, patch
+
+import pytest
 
 pytestmark = pytest.mark.gpu
 
@@ -79,13 +80,12 @@ def mock_pyopencl_full():
     """
     mock_cl = GPUMockFactory.create_mock_cl_module()
 
-    with patch.dict("sys.modules", {"pyopencl": mock_cl}):
-        with patch("pyopencl.Buffer", mock_cl.Buffer):
-            with patch("pyopencl.mem_flags", mock_cl.mem_flags):
-                with patch("pyopencl.Context", mock_cl.Context):
-                    with patch("pyopencl.CommandQueue", mock_cl.CommandQueue):
-                        with patch("pyopencl.Program", mock_cl.Program):
-                            yield mock_cl
+    with patch.dict("sys.modules", {"pyopencl": mock_cl}), patch("pyopencl.Buffer", mock_cl.Buffer):
+        with patch("pyopencl.mem_flags", mock_cl.mem_flags):
+            with patch("pyopencl.Context", mock_cl.Context):
+                with patch("pyopencl.CommandQueue", mock_cl.CommandQueue):
+                    with patch("pyopencl.Program", mock_cl.Program):
+                        yield mock_cl
 
 
 @pytest.fixture

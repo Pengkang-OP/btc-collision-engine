@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 文档质量检查器单元测试
 
@@ -15,10 +14,10 @@ sys.path.insert(0, str(project_root))
 
 from tools.check_document_quality import (  # noqa: E402
     DocumentQualityChecker,
-    ScoringConfig,
     Issue,
-    Severity,
     IssueType,
+    ScoringConfig,
+    Severity,
 )
 
 
@@ -185,7 +184,7 @@ def test_config_validation_negative_weight():
     try:
         config = ScoringConfig(error_weight=-1.0)
         config.validate()
-        assert False, "应该抛出ValueError"
+        raise AssertionError("应该抛出ValueError")
     except ValueError as e:
         assert "error_weight must be >= 0" in str(e)
         print("✅ 测试通过: 负权重验证")
@@ -196,7 +195,7 @@ def test_config_validation_excessive_bonus():
     try:
         config = ScoringConfig(toc_bonus=0.8, version_bonus=0.8)
         config.validate()
-        assert False, "应该抛出ValueError"
+        raise AssertionError("应该抛出ValueError")
     except ValueError as e:
         assert "Total bonus" in str(e)
         print("✅ 测试通过: 过高奖励验证")

@@ -1,20 +1,20 @@
 """KeyCollisionEngine 单元测试 - 启动/停止、进度回调、匹配回调"""
 
-import threading
-import time
-import unittest
+import json
 import os
 import sys
 import tempfile
-import json
+import threading
+import time
+import unittest
 from unittest.mock import patch
 
 import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
 from src.collision.collision_stats import CollisionStats  # noqa: E402
+from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
 from src.core.address_generator import P2PKHAddressGenerator  # noqa: E402
 
 

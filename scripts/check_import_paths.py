@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """导入路径检查脚本
 
 检查项目中是否使用了已弃用的导入路径。
@@ -13,8 +12,8 @@
 """
 
 import os
-import sys
 import re
+import sys
 from pathlib import Path
 
 # 已弃用的导入路径模式
@@ -70,7 +69,7 @@ def check_file_for_deprecated_imports(filepath: str) -> list:
         return []  # 跳过允许的文件
 
     try:
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             lines = f.readlines()
 
         for line_num, line in enumerate(lines, 1):

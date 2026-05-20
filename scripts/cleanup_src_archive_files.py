@@ -11,7 +11,7 @@ import sys
 # 添加项目根目录到Python路径
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.utils import init_logging, get_configured_logger  # noqa: E402
+from src.utils import get_configured_logger, init_logging  # noqa: E402
 
 # 配置日志
 init_logging()
@@ -28,9 +28,7 @@ def clean_src_archive_files():
     if os.path.exists(src_archive_dir):
         for file_name in os.listdir(src_archive_dir):
             file_path = os.path.join(src_archive_dir, file_name)
-            if os.path.isfile(file_path):
-                # 清理report_*.json文件
-                if file_name.startswith("report_") and file_name.endswith(".json"):
+            if os.path.isfile(file_path) and file_name.startswith("report_") and file_name.endswith(".json"):
                     try:
                         os.remove(file_path)
                         logger.info(f"清理src归档文件: {file_path}")

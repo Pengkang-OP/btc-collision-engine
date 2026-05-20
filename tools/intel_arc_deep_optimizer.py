@@ -12,11 +12,11 @@ Intel Arc A770 GPU深度优化工具
 6. 超时参数调优
 """
 
+import json
 import sys
 import time
-import json
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any
 
 # 添加项目根目录到路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -43,7 +43,7 @@ class IntelArcOptimizer:
         """打印小节"""
         print(f"\n--- {title} ---")
 
-    def check_pcie_bandwidth(self) -> Dict[str, Any]:
+    def check_pcie_bandwidth(self) -> dict[str, Any]:
         """检查PCIe带宽"""
         self.print_section("PCIe带宽检测")
 
@@ -74,7 +74,7 @@ class IntelArcOptimizer:
             )
 
             print(f"\n  推荐批次大小: {recommended_batch:,}")
-            print(f"  当前建议: 262,144 (256k)")
+            print("  当前建议: 262,144 (256k)")
 
             if recommended_batch < 262144:
                 print(f"  [WARN] 建议降低批次大小到 {recommended_batch:,}")
@@ -90,7 +90,7 @@ class IntelArcOptimizer:
             print(f"  [ERROR] PCIe带宽检测失败: {e}")
             return {"status": "fail", "message": str(e)}
 
-    def test_batch_sizes(self) -> Dict[str, Any]:
+    def test_batch_sizes(self) -> dict[str, Any]:
         """测试不同批次大小的性能"""
         self.print_section("批次大小性能测试")
 
@@ -110,8 +110,8 @@ class IntelArcOptimizer:
 
                 import threading
 
-                def run_engine():
-                    engine.start()
+                def run_engine(eng=engine):
+                    eng.start()
 
                 thread = threading.Thread(target=run_engine, daemon=True)
                 thread.start()
@@ -170,7 +170,7 @@ class IntelArcOptimizer:
             "best_batch_size": best_batch[0]
         }
 
-    def optimize_memory_pool(self) -> Dict[str, Any]:
+    def optimize_memory_pool(self) -> dict[str, Any]:
         """优化内存池配置"""
         self.print_section("内存池配置优化")
 
@@ -211,7 +211,7 @@ class IntelArcOptimizer:
             "recommendations": recommendations
         }
 
-    def optimize_timeout_settings(self) -> Dict[str, Any]:
+    def optimize_timeout_settings(self) -> dict[str, Any]:
         """优化超时设置"""
         self.print_section("超时参数优化")
 
@@ -254,7 +254,7 @@ class IntelArcOptimizer:
             "recommendations": timeout_configs
         }
 
-    def generate_optimized_config(self, batch_size: int = 131072) -> Dict[str, Any]:
+    def generate_optimized_config(self, batch_size: int = 131072) -> dict[str, Any]:
         """生成优化后的配置文件"""
         self.print_section("生成优化配置")
 
@@ -291,20 +291,20 @@ class IntelArcOptimizer:
             }
         }
 
-        print(f"  生成优化配置文件:")
+        print("  生成优化配置文件:")
         print(f"  批次大小: {batch_size:,}")
-        print(f"  内存池: 100缓冲区 / 512MB")
-        print(f"  超时保护: 30秒(自适应10-120秒)")
-        print(f"  uint32 workaround: 已启用")
-        print(f"  异步传输: 已禁用(稳定)")
-        print(f"  显存限制: 45%")
+        print("  内存池: 100缓冲区 / 512MB")
+        print("  超时保护: 30秒(自适应10-120秒)")
+        print("  uint32 workaround: 已启用")
+        print("  异步传输: 已禁用(稳定)")
+        print("  显存限制: 45%")
 
         # 保存到文件
         config_path = Path(__file__).parent.parent / "config.optimized.json"
         with open(config_path, 'w', encoding='utf-8') as f:
             json.dump(config, f, indent=4, ensure_ascii=False)
 
-        print(f"\n  [PASS] 配置已保存到: config.optimized.json")
+        print("\n  [PASS] 配置已保存到: config.optimized.json")
 
         return {
             "status": "pass",
@@ -324,7 +324,7 @@ class IntelArcOptimizer:
 
         # 1. PCIe带宽检测
         self.print_header("步骤1: PCIe带宽检测")
-        pcie_result = self.check_pcie_bandwidth()
+        self.check_pcie_bandwidth()
 
         # 2. 批次大小测试
         self.print_header("步骤2: 批次大小性能测试")
@@ -332,11 +332,11 @@ class IntelArcOptimizer:
 
         # 3. 内存池优化
         self.print_header("步骤3: 内存池配置优化")
-        memory_result = self.optimize_memory_pool()
+        self.optimize_memory_pool()
 
         # 4. 超时优化
         self.print_header("步骤4: 超时参数优化")
-        timeout_result = self.optimize_timeout_settings()
+        self.optimize_timeout_settings()
 
         # 5. 生成优化配置
         self.print_header("步骤5: 生成优化配置")
@@ -347,25 +347,25 @@ class IntelArcOptimizer:
         self.print_header("优化总结")
 
         print("  已完成的优化检查:")
-        print(f"    [PASS] PCIe带宽检测")
+        print("    [PASS] PCIe带宽检测")
         print(f"    [PASS] 批次大小测试 (最佳: {best_batch:,})")
-        print(f"    [PASS] 内存池优化")
-        print(f"    [PASS] 超时参数优化")
-        print(f"    [PASS] 优化配置生成")
+        print("    [PASS] 内存池优化")
+        print("    [PASS] 超时参数优化")
+        print("    [PASS] 优化配置生成")
         print()
 
         print("  关键优化建议:")
         print(f"    1. 使用批次大小: {best_batch:,}")
-        print(f"    2. 内存池: 100缓冲区 / 512MB")
-        print(f"    3. 超时保护: 30秒(自适应)")
-        print(f"    4. uint32 workaround: 已启用")
-        print(f"    5. 异步传输: 已禁用")
+        print("    2. 内存池: 100缓冲区 / 512MB")
+        print("    3. 超时保护: 30秒(自适应)")
+        print("    4. uint32 workaround: 已启用")
+        print("    5. 异步传输: 已禁用")
         print()
 
         print("  预期性能提升:")
-        print(f"    - 稳定性: +50% (禁用异步+uint32 workaround)")
-        print(f"    - 吞吐量: 根据批次大小优化")
-        print(f"    - 错误率: 0.00% (超时保护)")
+        print("    - 稳定性: +50% (禁用异步+uint32 workaround)")
+        print("    - 吞吐量: 根据批次大小优化")
+        print("    - 错误率: 0.00% (超时保护)")
         print()
 
         print(f"  优化配置已保存到: {config_result['config_path']}")

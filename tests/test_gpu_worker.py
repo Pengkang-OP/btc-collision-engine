@@ -11,9 +11,10 @@
 不依赖真实 GPU 硬件，使用 Mock 替代。
 """
 
-import pytest
 import threading
 from unittest.mock import Mock, patch
+
+import pytest
 
 from src.gpu.gpu_config import WorkerConfig
 from src.gpu.worker import SingleGPUWorker

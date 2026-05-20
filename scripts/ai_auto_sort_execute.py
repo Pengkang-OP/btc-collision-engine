@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 # DEPRECATED(v4.2.1): 本脚本中包含旧版 _keys_buf 缓冲区分配逻辑，
 # 该部分已在 v4.2.1 PRNG 改造中完整移除。
 # 本脚本不应再运行，仅作历史参考保留。
@@ -17,13 +16,12 @@ AI自动排序执行脚本
     优先级得分 = (影响程度 × 紧急程度) / 工时 × 100
 """
 
-import sys
 import json
 import subprocess
-from pathlib import Path
+import sys
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import List
-from dataclasses import dataclass, asdict
+from pathlib import Path
 
 # 添加项目根目录
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -57,8 +55,8 @@ class AISortExecutor:
 
     def __init__(self):
         self.project_root = Path(__file__).parent.parent
-        self.tasks: List[Task] = []
-        self.executed_tasks: List[Task] = []
+        self.tasks: list[Task] = []
+        self.executed_tasks: list[Task] = []
         self.start_time = datetime.now()
 
     def analyze_project_status(self):

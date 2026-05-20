@@ -7,11 +7,11 @@ P1-5 修复验证：_live_range_count 双重计数BUG
 3. total_count + _live_range_count 不重复计入已完成worker
 """
 
+import os
+import sys
 import threading
 import time
 import unittest
-import sys
-import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -46,7 +46,7 @@ class TestLiveRangeCountFix(unittest.TestCase):
 
         # 追踪 _live_range_count 的中间值
         live_counts = []
-        self.engine._live_range_count
+        _ = self.engine._live_range_count  # 触发属性初始化
 
         self.engine.start(mode="random")
         time.sleep(1.5)  # 等待一些批次完成

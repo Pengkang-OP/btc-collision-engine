@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """比特币多格式地址转换验证测试 - 简化版"""
 
-import pytest
-from src.core.address_generator import P2PKHAddressGenerator
-from src.core.bitcoin_key_validator import BitcoinKeyValidator, AddressType
-from src.utils.bech32_codec import bech32_encode, bech32_decode, decode_segwit_address
-from src.core.hash_utils import HashUtils
 import secrets
+
+import pytest
+
+from src.core.address_generator import P2PKHAddressGenerator
+from src.core.bitcoin_key_validator import AddressType, BitcoinKeyValidator
+from src.core.hash_utils import HashUtils
+from src.utils.bech32_codec import bech32_encode, decode_segwit_address
 
 
 class TestMultiFormatAddressGeneration:

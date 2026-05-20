@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """secp256k1.py 边界与错误路径全覆盖测试
 
 覆盖缺失行: 62-80, 85, 141-147, 156-158, 220, 222, 224, 227, 238,
@@ -9,8 +8,7 @@
 import unittest
 from unittest.mock import patch
 
-from src.core.secp256k1 import Secp256k1, ECPoint, EllipticCurve
-
+from src.core.secp256k1 import ECPoint, EllipticCurve, Secp256k1
 
 # ===========================================================================
 # Group 1: Secp256k1 classmethods (lines 62-80, 85)

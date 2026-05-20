@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 重试机制工具模块
 
@@ -8,7 +7,6 @@
 
 import time
 from pathlib import Path
-from typing import Optional
 
 
 def read_with_retry(
@@ -16,7 +14,7 @@ def read_with_retry(
     max_retries: int = 3,
     delay: float = 0.1,
     encoding: str = 'utf-8'
-) -> Optional[str]:
+) -> str | None:
     """带重试的文件读取
 
     Args:
@@ -31,7 +29,7 @@ def read_with_retry(
     for attempt in range(max_retries):
         try:
             return file_path.read_text(encoding=encoding, errors='ignore')
-        except (OSError, PermissionError) as e:
+        except (OSError, PermissionError):
             if attempt < max_retries - 1:
                 time.sleep(delay * (2 ** attempt))  # 指数退避
                 continue

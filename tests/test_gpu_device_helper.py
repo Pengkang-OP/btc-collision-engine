@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """GPUDeviceHelper单元测试
 
 测试src.gpu.device_helper模块的所有功能。
@@ -13,8 +12,10 @@
 
 import logging
 from unittest.mock import Mock
-from src.gpu.device_helper import GPUDeviceHelper
+
 import pytest
+
+from src.gpu.device_helper import GPUDeviceHelper
 
 pytestmark = pytest.mark.gpu
 

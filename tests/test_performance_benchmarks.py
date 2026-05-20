@@ -4,15 +4,16 @@
 运行方式: pytest tests/test_performance_benchmarks.py --benchmark-only
 """
 
-import pytest
-import time
 import os
 import sys
+import time
+
+import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
 from src.collision.deduplication_filter import DeduplicationFilter  # noqa: E402
+from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
 from src.core.address_generator import P2PKHAddressGenerator  # noqa: E402
 
 

@@ -40,10 +40,7 @@ class WIF:
 
             # 构建payload: 私钥 + [压缩标志]
             # 注意: check_encode 会自动添加版本字节和校验和
-            if compressed:
-                payload = private_key + b"\x01"
-            else:
-                payload = private_key
+            payload = private_key + b"\x01" if compressed else private_key
 
             # Base58Check编码: 版本字节(0x80) + payload + 4字节校验和
             return Base58.check_encode(0x80, payload)
@@ -55,7 +52,7 @@ class WIF:
             # 意外错误：仅记录异常类型，不记录任何用户输入
             # 私钥信息绝对不能记录到日志
             logger.error("编码WIF时发生未预期错误: %s", type(e).__name__)
-            raise ValueError("WIF编码失败")
+            raise ValueError("WIF编码失败") from e
 
     @staticmethod
     def decode(wif: str) -> tuple[bytes, bool]:
@@ -96,4 +93,4 @@ class WIF:
             # 意外错误：仅记录异常类型，不记录任何用户输入
             # WIF字符串本身包含私钥信息，绝对不能记录
             logger.error("解码WIF时发生未预期错误: %s", type(e).__name__)
-            raise ValueError("WIF格式无效")
+            raise ValueError("WIF格式无效") from e

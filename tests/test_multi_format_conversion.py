@@ -3,13 +3,15 @@
 比特币多格式地址转换验证测试
 """
 
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from src.core.address_generator import P2PKHAddressGenerator
-from src.core.bitcoin_key_validator import BitcoinKeyValidator, AddressType
 import secrets
+
+from src.core.address_generator import P2PKHAddressGenerator
+from src.core.bitcoin_key_validator import BitcoinKeyValidator
 
 print("=" * 80)
 print("Bitcoin Multi-Format Address Conversion Test")
@@ -49,6 +51,7 @@ print("[2] P2SH Address (Pay-to-Script-Hash)")
 print("-" * 80)
 
 from src.core.address_converter import AddressConverter
+
 try:
     converter = AddressConverter()
     p2sh_address = converter.pubkey_to_p2sh_address(compressed_pk)
@@ -106,13 +109,13 @@ try:
     # P2PKH to P2SH
     p2pkh_to_p2sh = converter.p2pkh_to_p2sh(p2pkh_address)
     print(f"P2PKH: {p2pkh_address}")
-    print(f"  ↓ Convert")
+    print("  ↓ Convert")
     print(f"P2SH: {p2pkh_to_p2sh}")
 
     # P2SH to P2PKH
     p2sh_to_p2pkh = converter.p2sh_to_p2pkh(p2pkh_to_p2sh)
     print(f"P2SH: {p2pkh_to_p2sh}")
-    print(f"  ↓ Convert")
+    print("  ↓ Convert")
     print(f"P2PKH: {p2sh_to_p2pkh}")
 
     print(f"\nRound-trip conversion: {'✓ PASS' if p2pkh_address == p2sh_to_p2pkh else '✗ FAIL'}")
@@ -128,13 +131,13 @@ try:
     # Bech32 to P2SH-P2WPKH (Wrapped SegWit)
     wrapped_segwit = converter.bech32_to_p2sh_p2wpkh(bech32_address)
     print(f"Bech32: {bech32_address}")
-    print(f"  ↓ Convert")
+    print("  ↓ Convert")
     print(f"P2SH-P2WPKH: {wrapped_segwit}")
 
     # P2SH-P2WPKH to Bech32
     wrapped_to_native = converter.p2sh_p2wpkh_to_bech32(wrapped_segwit)
     print(f"P2SH-P2WPKH: {wrapped_segwit}")
-    print(f"  ↓ Convert")
+    print("  ↓ Convert")
     print(f"Bech32: {wrapped_to_native}")
 
     print(f"\nRound-trip conversion: {'✓ PASS' if bech32_address == wrapped_to_native else '✗ FAIL'}")
@@ -184,7 +187,6 @@ for addr_type, addr in addresses.items():
         print(f"  Length: {len(addr)} chars")
 
         # 计算每个地址的Hash160
-        from src.core.hash_utils import HashUtils
         if addr_type in ["P2PKH", "P2SH"]:
             # 从地址解码
             from src.core.base58 import Base58
@@ -192,10 +194,10 @@ for addr_type, addr in addresses.items():
                 version, payload = Base58.check_decode(addr)
                 addr_hash160 = payload.hex()
                 print(f"  Hash160: {addr_hash160}")
-            except:
-                print(f"  Hash160: Unable to decode")
+            except Exception:
+                print("  Hash160: Unable to decode")
         else:
-            print(f"  Hash160: N/A (Bech32/Taproot uses different encoding)")
+            print("  Hash160: N/A (Bech32/Taproot uses different encoding)")
 
 print("\n" + "=" * 80)
 print("Summary")

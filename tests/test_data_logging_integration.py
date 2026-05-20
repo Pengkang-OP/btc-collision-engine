@@ -1,21 +1,23 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 数据日志集成竞态条件测试
 
 验证优化后的代码在并发场景下的正确性。
 """
 
+import logging
 import os
 import sys
-import time
 import threading
+import time
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
 from src.utils import init_logging  # noqa: E402
+
+logger = logging.getLogger(__name__)
 
 
 def test_stats_consistency():
@@ -135,7 +137,7 @@ def test_error_logging_rate_limit():
     if os.path.exists(error_log_file):
         import json
 
-        with open(error_log_file, "r", encoding="utf-8") as f:
+        with open(error_log_file, encoding="utf-8") as f:
             try:
                 existing_errors = json.load(f)
                 baseline_error_count = len(existing_errors)
@@ -159,7 +161,7 @@ def test_error_logging_rate_limit():
     if os.path.exists(error_log_file):
         import json
 
-        with open(error_log_file, "r", encoding="utf-8") as f:
+        with open(error_log_file, encoding="utf-8") as f:
             errors = json.load(f)
         new_error_count = len(errors) - baseline_error_count
         print(f"  本次测试新增错误数: {new_error_count}")
@@ -213,8 +215,8 @@ def test_cpu_cache_mechanism():
 
     try:
         engine.stop()
-    except Exception:
-        pass  # 忽略 stop 时的内部竞态错误（不影响测试验证逻辑）
+    except (RuntimeError, OSError) as e:
+        logger.debug(f"stop竞态（预期内）: {e}")  # 忽略 stop 时的内部竞态错误（不影响测试验证逻辑）
     thread.join(timeout=5)
 
     # 使用 stop 前的快照数据做验证
@@ -270,7 +272,7 @@ def test_data_save_frequency():
     if os.path.exists(history_file):
         import json
 
-        with open(history_file, "r", encoding="utf-8") as f:
+        with open(history_file, encoding="utf-8") as f:
             history = json.load(f)
         print("\n数据保存频率测试结果:")
         print(f"  总检查数: {stats.total_checked:,}")

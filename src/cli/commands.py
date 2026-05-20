@@ -156,7 +156,7 @@ def _cmd_examples() -> None:
         {
             "title": "5. GPU加速模式",
             "desc": "启用单GPU加速（速度提升数千倍）",
-            "cmd": "python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random --use-gpu",
+            "cmd": "python key_collision_cli.py -t 1A1zP1...DivfNa -m random --use-gpu",
         },
         {
             "title": "6. 多GPU模式",
@@ -237,10 +237,7 @@ def _cmd_config_check() -> None:
 
             if missing_sections:
                 print(
-                    "[WARN] "
-                    + _t("cli.commands.missing_sections")
-                    + ": "
-                    + ", ".join(missing_sections)
+                    "[WARN] " + _t("cli.commands.missing_sections") + ": " + ", ".join(missing_sections)
                 )
             else:
                 print("[OK] " + _t("cli.commands.sections_complete"))
@@ -253,15 +250,9 @@ def _cmd_config_check() -> None:
             print("   - workers        : " + str(workers))
             print(
                 "   - perf_optimize  : "
-                + (
-                    "enabled"
-                    if collision_cfg.get("use_performance_optimization", True)
-                    else "disabled"
-                )
+                + ("enabled" if collision_cfg.get("use_performance_optimization", True) else "disabled")
             )
-            chk = collision_cfg.get(
-                "checkpoint_interval", engine_cfg.get("checkpoint_interval", 30)
-            )
+            chk = collision_cfg.get("checkpoint_interval", engine_cfg.get("checkpoint_interval", 30))
             print("   - checkpoint_int : " + str(chk) + "s")
 
             gpu_cfg = config.get("gpu", {})
@@ -322,13 +313,13 @@ def _save_address_to_targets_file(address: str, output) -> None:
             import msvcrt
 
             # Windows: 使用独占锁
-            lock_file = open(lock_path, "w")
+            lock_file = open(lock_path, "w")  # noqa: SIM115 — 文件锁需保持打开
             msvcrt.locking(lock_file.fileno(), msvcrt.LK_LOCK, 1)
         else:
             import fcntl
 
             # Unix/Linux: 使用 flock
-            lock_file = open(lock_path, "w")
+            lock_file = open(lock_path, "w")  # noqa: SIM115 — 文件锁需保持打开
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
 
         # 读取已有地址
@@ -369,9 +360,7 @@ def _save_address_to_targets_file(address: str, output) -> None:
         os.replace(temp_path, targets_path)
 
         output.print(
-            "   [green][OK] 地址已保存到 targets.txt（共 "
-            + str(len(existing) + 1)
-            + " 条）[/green]"
+            "   [green][OK] 地址已保存到 targets.txt（共 " + str(len(existing) + 1) + " 条）[/green]"
         )
     except OSError as e:
         output.warning("无法写入 targets.txt: " + str(e))
@@ -479,14 +468,14 @@ def _quick_start_select_target(compact: bool = False) -> tuple[list[str], str | 
             # 文件存在：统计有效地址行数并给予反馈
             valid_count = 0
             truncated = False
-            MAX_SCAN_LINES = 50000
+            _max_scan_lines = 50000
             file_basename = Path(target_file).name
             try:
                 for enc in ("utf-8", "gbk", "latin-1"):
                     try:
                         with open(target_file, encoding=enc, errors="ignore") as f:
                             for i, line in enumerate(f):
-                                if i >= MAX_SCAN_LINES:
+                                if i >= _max_scan_lines:
                                     truncated = True
                                     break
                                 stripped = line.strip()
@@ -552,17 +541,14 @@ def _quick_start_select_mode(compact: bool = False) -> tuple[str, str | None, st
 
     if mode in ["range", "brute_force"]:
         while True:
-            start_key = (
-                input("   " + _t("cli.commands.input_start_key") + " (hex): ").strip() or "1"
-            )
+            start_key = input("   " + _t("cli.commands.input_start_key") + " (hex): ").strip() or "1"
             if all(c in "0123456789abcdefABCDEF" for c in start_key):
                 break
             output.error("请输入有效的十六进制字符串")
         if mode == "range":
             while True:
                 end_key = (
-                    input("   " + _t("cli.commands.input_end_key") + " (hex): ").strip()
-                    or "FFFFFFFF"
+                    input("   " + _t("cli.commands.input_end_key") + " (hex): ").strip() or "FFFFFFFF"
                 )
                 if all(c in "0123456789abcdefABCDEF" for c in end_key):
                     break
@@ -754,9 +740,9 @@ def _quick_start_select_gpu() -> list[str]:
                 label = _format_device_label(dev, i)
                 output.print(f"     {i + 1}. {label}")
             default_idx = 1  # 默认选择第一个设备
-            raw = input(
-                f"   请选择 GPU 设备 [1-{len(devices)}，直接回车=选择第一个]: "
-            ).strip() or str(default_idx)
+            raw = input(f"   请选择 GPU 设备 [1-{len(devices)}，直接回车=选择第一个]: ").strip() or str(
+                default_idx
+            )
             try:
                 idx = int(raw) - 1
                 if 0 <= idx < len(devices):
@@ -848,7 +834,6 @@ def _cmd_quick_run(executor: Callable[[], None] | None = None) -> None:
 
         # 默认目标：检查targets.txt是否存在
         target_file = str(QUICK_RUN_DEFAULTS["target_file"])
-        targets: list[str] = []  # noqa: F841
         target_file_exists = Path(target_file).exists()
 
         if target_file_exists:
@@ -896,9 +881,7 @@ def _cmd_quick_run(executor: Callable[[], None] | None = None) -> None:
         else:
             output.warning(f"未找到 {target_file}，请使用 -t 或 -f 指定目标")
             output.print("\n[TIP] 快速模式示例:")
-            output.print(
-                "  python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random"
-            )
+            output.print("  python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random")
             output.print("  python key_collision_cli.py -f targets.txt --use-gpu\n")
             return
 

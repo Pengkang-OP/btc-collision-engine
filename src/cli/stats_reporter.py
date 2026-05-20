@@ -26,9 +26,7 @@ def _print_detailed_stats(stats: Any) -> None:
     rows = []
     try:
         checked = getattr(stats, "total_checked", 0)
-        matches_val = (
-            len(stats.matches) if hasattr(stats, "matches") else getattr(stats, "matches", 0)
-        )
+        matches_val = len(stats.matches) if hasattr(stats, "matches") else getattr(stats, "matches", 0)
         elapsed_str = (
             stats.format_elapsed()
             if hasattr(stats, "format_elapsed")
@@ -97,9 +95,7 @@ def _print_final_summary(engine: Any, engine_type: str, args: argparse.Namespace
     else:
         try:
             stats = engine.get_stats()
-            mode_label = (
-                _t("collision.mode.gpu") if engine_type == "gpu" else _t("collision.mode.cpu")
-            )
+            mode_label = _t("collision.mode.gpu") if engine_type == "gpu" else _t("collision.mode.cpu")
             stats_dict[_t("cli.main.accel_mode")] = mode_label
             stats_dict[_t("cli.main.total_checked")] = f"{stats.total_checked:,}"
             stats_dict[_t("cli.main.elapsed_time")] = stats.format_elapsed()

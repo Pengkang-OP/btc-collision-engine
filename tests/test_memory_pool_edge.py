@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
 """memory_pool 边缘覆盖测试 — 补全剩余 7 行缺失"""
 
 import unittest
 from unittest.mock import patch
 
 from src.core.memory_pool import (
-    ObjectPool,
     GlobalPoolManager,
+    ObjectPool,
 )
 
 

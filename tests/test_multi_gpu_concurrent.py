@@ -1,14 +1,14 @@
-# -*- coding: utf-8 -*-
 """多GPU并发场景测试
 
 验证多线程环境下的线程安全性和锁机制正确性。
 """
 
-import unittest
 import threading
 import time
-import pytest
+import unittest
 from unittest.mock import Mock
+
+import pytest
 
 pytestmark = pytest.mark.gpu
 
@@ -280,8 +280,8 @@ class TestDeadlockPrevention(unittest.TestCase):
                     engine.resume()
                     engine.stop()
                     time.sleep(0.01)
-            except Exception:
-                pass
+            except (RuntimeError, ValueError):
+                pass  # 并发操作导致的预期内状态冲突
 
         # 并发执行
         threads = [threading.Thread(target=operation) for _ in range(5)]

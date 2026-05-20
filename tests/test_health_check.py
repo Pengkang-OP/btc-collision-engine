@@ -16,12 +16,13 @@
 - 报告生成
 """
 
-import os
 import json
+import os
 import sys
 import tempfile
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 
 from src.utils.health_check import HealthChecker, main
 

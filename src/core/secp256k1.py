@@ -52,19 +52,32 @@ class Secp256k1:
 
     @classmethod
     def verify_parameters(cls) -> bool:
-        """验证曲线参数的正确性（#13修复）
+        """验证曲线参数的正确性（#13修复 + P3-01增强）
 
-        检查所有常数是否符合secp256k1标准。
+        使用精确值比较 + Miller-Rabin 快速筛检二重验证。
+        P3-01增强: 添加Miller-Rabin概率素性测试作为辅助验证。
+
+        注意: 对 secp256k1 的已知常数 P/N，确定性验证采用精确值比较。
+        Miller-Rabin 在此用作二次确认，不构成独立的安全保证。
 
         Returns:
             True如果所有参数正确
         """
-        # 验证P是素数（使用Miller-Rabin素性测试简化版）
-        if cls.P <= 1:
+        # P/N 精确常量值（secp256k1 标准参数，经比特币社区充分审计）
+        _p_expected = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
+        _n_expected = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+
+        # 验证P
+        if cls.P != _p_expected:
+            return False
+        # 二次确认: 快速 Miller-Rabin 筛检
+        if not cls._miller_rabin_probabilistic(cls.P, rounds=5):
             return False
 
-        # 验证N是素数
-        if cls.N <= 1:
+        # 验证N
+        if cls.N != N_EXPECTED:
+            return False
+        if not cls._miller_rabin_probabilistic(cls.N, rounds=5):
             return False
 
         # 验证基点在曲线上: y² = x³ + 7 (mod p)
@@ -76,6 +89,55 @@ class Secp256k1:
         # 验证基点阶为N: N * G = O (无穷远点)
         # 这里简化检查，只验证N < P
         return cls.N < cls.P
+
+    @staticmethod
+    def _miller_rabin_probabilistic(n: int, rounds: int = 5) -> bool:
+        """P3-01: 概率性Miller-Rabin素性测试
+
+        ⚠️ 重要: 此为概率性算法，不是确定性验证。
+        对 256 位整数，5 轮测试提供约 2^-10 的错误率。
+        若需确定性验证，请使用精确值比较（见 verify_parameters()）。
+
+        对 secp256k1 的已知常量 P/N，此测试作为快速二次确认，
+        精确值比较是主要的完整性保证。
+
+        Args:
+            n: 待测试的整数
+            rounds: 测试轮数（默认5，更多轮次降低错误率）
+
+        Returns:
+            True 如果 n 很可能为素数
+        """
+        if n < 2:
+            return False
+        if n == 2 or n == 3:
+            return True
+        if n % 2 == 0:
+            return False
+
+        # 将 n-1 写为 2^s * d，其中 d 为奇数
+        s = 0
+        d = n - 1
+        while d % 2 == 0:
+            s += 1
+            d //= 2
+
+        # 使用随机基数的概率性测试
+        import random
+
+        for _ in range(rounds):
+            a = random.randint(2, n - 2)
+            x = pow(a, d, n)
+            if x == 1 or x == n - 1:
+                continue
+            for _ in range(s - 1):
+                x = pow(x, 2, n)
+                if x == n - 1:
+                    break
+            else:
+                return False
+
+        return True
 
     @classmethod
     def get_security_info(cls) -> dict:
@@ -618,17 +680,14 @@ class EllipticCurve:
             ValueError: 当生成的公钥为无穷远点时
         """
         # 将私钥转换为整数
-        if isinstance(private_key, bytes):
-            k = int.from_bytes(private_key, "big")
-        else:
-            k = int(private_key)
+        k = int.from_bytes(private_key, "big") if isinstance(private_key, bytes) else int(private_key)
 
         # 创建基点G
-        G = ECPoint(self.curve.Gx, self.curve.Gy, self.curve)
+        _g_point = ECPoint(self.curve.Gx, self.curve.Gy, self.curve)
 
         # 计算公钥点 Q = k * G
         # 使用恒定时间标量乘法，提高安全性
-        public_point = self.scalar_multiply_const_time(k, G)
+        public_point = self.scalar_multiply_const_time(k, _g_point)
 
         if public_point.is_infinity:
             raise ValueError("生成的公钥为无穷远点，私钥无效")
@@ -651,9 +710,7 @@ class EllipticCurve:
             y_bytes = public_point.y.to_bytes(32, "big")
             return b"\x04" + x_bytes + y_bytes
 
-    def generate_public_key_const_time(
-        self, private_key: bytes | int, compressed: bool = True
-    ) -> bytes:
+    def generate_public_key_const_time(self, private_key: bytes | int, compressed: bool = True) -> bytes:
         """恒定时间公钥生成 (generate_public_key 的显式别名)
 
         generate_public_key 内部已使用 scalar_multiply_const_time (Montgomery Ladder),

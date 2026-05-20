@@ -9,8 +9,9 @@
 """
 
 import logging
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 # ============================================================================
 # Fixtures
@@ -65,8 +66,9 @@ class TestLogWindowBasic:
 
     def test_log_queue_full_drops(self):
         """队列满时不应崩溃"""
-        from src.cli.log_window import LogWindow
         import queue
+
+        from src.cli.log_window import LogWindow
 
         window = LogWindow()
         # 使用一个很小的队列模拟满的情况
@@ -101,7 +103,7 @@ class TestLogWindowHandler:
     """日志窗口处理器测试"""
 
     def test_emit_delegates_to_log_window(self):
-        from src.cli.log_window import LogWindowHandler, LogWindow
+        from src.cli.log_window import LogWindow, LogWindowHandler
 
         window = LogWindow()
         handler = LogWindowHandler(window)
@@ -113,7 +115,7 @@ class TestLogWindowHandler:
         assert not window.log_queue.empty()
 
     def test_emit_preserves_level(self):
-        from src.cli.log_window import LogWindowHandler, LogWindow
+        from src.cli.log_window import LogWindow, LogWindowHandler
 
         window = LogWindow()
         handler = LogWindowHandler(window)
@@ -126,7 +128,7 @@ class TestLogWindowHandler:
 
     def test_emit_handles_format_error(self):
         """格式化错误时不应崩溃"""
-        from src.cli.log_window import LogWindowHandler, LogWindow
+        from src.cli.log_window import LogWindow, LogWindowHandler
 
         window = LogWindow()
         handler = LogWindowHandler(window)
@@ -148,8 +150,8 @@ class TestResetLogWindow:
     """单例重置测试"""
 
     def test_reset_cleans_global_instance(self):
-        from src.cli.log_window import reset_log_window_instance
         import src.cli.log_window as lw
+        from src.cli.log_window import reset_log_window_instance
 
         # 设置一个模拟的单例
         mock_window = MagicMock()
@@ -161,8 +163,8 @@ class TestResetLogWindow:
         mock_window.stop.assert_called_once()
 
     def test_reset_removes_handler_from_root(self):
-        from src.cli.log_window import reset_log_window_instance, LogWindowHandler, LogWindow
         import src.cli.log_window as lw
+        from src.cli.log_window import LogWindow, LogWindowHandler, reset_log_window_instance
 
         window = LogWindow()
         handler = LogWindowHandler(window)
@@ -196,8 +198,8 @@ class TestCreateLogWindow:
 
     def test_returns_same_instance(self):
         """单例模式：重复调用返回同一实例"""
-        from src.cli.log_window import create_log_window
         import src.cli.log_window as lw
+        from src.cli.log_window import create_log_window
 
         # 确保单例为空
         lw._log_window_instance = None
@@ -221,8 +223,8 @@ class TestCreateLogWindow:
 
     def test_adds_handler_to_root(self):
         """应添加 LogWindowHandler 到根日志器"""
-        from src.cli.log_window import create_log_window
         import src.cli.log_window as lw
+        from src.cli.log_window import create_log_window
 
         lw._log_window_instance = None
 
@@ -263,9 +265,8 @@ class TestLogWindowStart:
 
         window = LogWindow()
 
-        with patch("threading.Thread") as mock_thread_cls:
-            with patch("time.sleep"):  # 跳过等待
-                window.start()
+        with patch("threading.Thread") as mock_thread_cls, patch("time.sleep"):  # 跳过等待
+            window.start()
 
         assert window.running is True
         mock_thread_cls.return_value.start.assert_called_once()
@@ -279,9 +280,8 @@ class TestLogWindowStart:
 
         window = LogWindow()
 
-        with patch("threading.Thread") as mock_thread_cls:
-            with patch("time.sleep"):
-                window.start()
+        with patch("threading.Thread") as mock_thread_cls, patch("time.sleep"):
+            window.start()
 
         call_kwargs = mock_thread_cls.call_args
         assert call_kwargs[1]["target"] == window._run_window
@@ -358,8 +358,9 @@ class TestLogWindowRunWindow:
         mock_check, mock_button, mock_text,
     ):
         """_run_window 应创建所有 Tkinter 组件"""
-        from src.cli.log_window import LogWindow
         import tkinter as tk
+
+        from src.cli.log_window import LogWindow
 
         window = LogWindow()
         window.running = True
@@ -397,8 +398,9 @@ class TestLogWindowRunWindow:
         mock_check, mock_button, mock_text,
     ):
         """_run_window 应正确设置 filter_var 和 auto_scroll_var"""
-        from src.cli.log_window import LogWindow
         import tkinter as tk
+
+        from src.cli.log_window import LogWindow
 
         window = LogWindow()
         window.running = True
@@ -426,8 +428,9 @@ class TestLogWindowRunWindow:
         mock_check, mock_button, mock_text,
     ):
         """_run_window 应配置所有日志级别标签颜色"""
-        from src.cli.log_window import LogWindow
         import tkinter as tk
+
+        from src.cli.log_window import LogWindow
 
         window = LogWindow()
         window.running = True
@@ -455,8 +458,9 @@ class TestLogWindowRunWindow:
         mock_check, mock_button, mock_text,
     ):
         """mainloop 抛异常 → 被 except 吞掉不崩溃"""
-        from src.cli.log_window import LogWindow
         import tkinter as tk
+
+        from src.cli.log_window import LogWindow
 
         window = LogWindow()
         window.running = True
@@ -543,8 +547,9 @@ class TestLogWindowUpdateLogs:
 
     def test_update_logs_handles_queue_empty_race(self):
         """empty() 返回 False 但 get_nowait() 抛 Empty → break 不崩溃"""
-        from src.cli.log_window import LogWindow
         import queue
+
+        from src.cli.log_window import LogWindow
 
         window = LogWindow()
         window.running = True
@@ -706,8 +711,9 @@ class TestLogWindowClearLog:
 
     def test_clear_log_deletes_content(self):
         """清空日志区域内容"""
-        from src.cli.log_window import LogWindow
         import tkinter as tk
+
+        from src.cli.log_window import LogWindow
 
         window = LogWindow()
         window.text_area = MagicMock()
@@ -767,10 +773,9 @@ class TestLogWindowSaveLog:
 
         mock_file = MagicMock()
         with patch("tkinter.filedialog.asksaveasfilename",
-                   return_value="/tmp/test.log"):
-            with patch("builtins.open", return_value=mock_file):
-                window._save_log()
-                mock_file.__enter__().write.assert_called_once_with("log content here\n")
+                   return_value="/tmp/test.log"), patch("builtins.open", return_value=mock_file):
+            window._save_log()
+            mock_file.__enter__().write.assert_called_once_with("log content here\n")
 
     def test_save_log_handles_write_error(self):
         """写入失败 → 调用 self.log 记录错误"""
@@ -782,7 +787,7 @@ class TestLogWindowSaveLog:
 
         with patch("tkinter.filedialog.asksaveasfilename",
                    return_value="/tmp/test.log"):
-            with patch("builtins.open", side_effect=IOError("disk full")):
+            with patch("builtins.open", side_effect=OSError("disk full")):
                 with patch.object(window, "log") as mock_log:
                     window._save_log()
                     mock_log.assert_called_once()
@@ -835,8 +840,8 @@ class TestResetLogWindowStopException:
 
     def test_reset_handles_stop_exception(self):
         """stop() 抛异常 → 被 except 捕获，单例仍被清理"""
-        from src.cli.log_window import reset_log_window_instance
         import src.cli.log_window as lw
+        from src.cli.log_window import reset_log_window_instance
 
         mock_window = MagicMock()
         mock_window.stop.side_effect = RuntimeError("Tcl error during stop")
@@ -850,8 +855,8 @@ class TestResetLogWindowStopException:
 
     def test_reset_removes_multiple_handlers(self):
         """移除根日志器中所有 LogWindowHandler"""
-        from src.cli.log_window import reset_log_window_instance, LogWindowHandler, LogWindow
         import src.cli.log_window as lw
+        from src.cli.log_window import LogWindow, LogWindowHandler, reset_log_window_instance
 
         window = LogWindow()
         root = logging.getLogger()

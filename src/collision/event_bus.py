@@ -125,7 +125,7 @@ class EventBus:
         with self._lock:
             if handler not in self._subscribers[event_type]:
                 self._subscribers[event_type].append(handler)
-                handler_name = getattr(handler, '__name__', str(handler))
+                handler_name = getattr(handler, "__name__", str(handler))
                 logger.debug("订阅事件: %s, 处理器: %s", event_type.value, handler_name)
 
     def unsubscribe(self, event_type: EventType, handler: Callable) -> None:
@@ -138,7 +138,7 @@ class EventBus:
         with self._lock:
             if handler in self._subscribers[event_type]:
                 self._subscribers[event_type].remove(handler)
-                handler_name = getattr(handler, '__name__', str(handler))
+                handler_name = getattr(handler, "__name__", str(handler))
                 logger.debug("取消订阅: %s, 处理器: %s", event_type.value, handler_name)
 
     def subscribe_to_all(self, handler: Callable) -> None:
@@ -226,7 +226,7 @@ class EventBus:
             handler: 事件处理函数
             event: 事件对象
         """
-        handler_name = getattr(handler, '__name__', str(handler))
+        handler_name = getattr(handler, "__name__", str(handler))
         timeout = self._handler_timeout
         if timeout <= 0:
             try:
@@ -236,10 +236,7 @@ class EventBus:
             except Exception as e:
                 with self._lock:
                     self._error_count += 1
-                logger.warning(
-                    "事件处理器异常 [%s]: %s: %s",
-                    handler_name, type(e).__name__, e
-                )
+                logger.warning("事件处理器异常 [%s]: %s: %s", handler_name, type(e).__name__, e)
                 if self._error_handler:
                     try:
                         self._error_handler(event, e)
@@ -274,10 +271,7 @@ class EventBus:
         if exc is not None:
             with self._lock:
                 self._error_count += 1
-            logger.warning(
-                "事件处理器异常 [%s]: %s: %s",
-                handler_name, type(exc).__name__, exc
-            )
+            logger.warning("事件处理器异常 [%s]: %s: %s", handler_name, type(exc).__name__, exc)
             if self._error_handler:
                 try:
                     self._error_handler(event, exc)
@@ -387,9 +381,7 @@ class EventBus:
         """上下文管理器入口"""
         return self
 
-    def __exit__(
-        self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None
-    ) -> None:
+    def __exit__(self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None) -> None:
         """上下文管理器出口"""
         self.shutdown()
 

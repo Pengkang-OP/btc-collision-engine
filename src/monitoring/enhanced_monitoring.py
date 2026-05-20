@@ -198,11 +198,7 @@ class EnhancedMonitoringSystem:
                     # 安全获取引擎属性：手动类型强制转换，防止 Mock/非标准对象污染数据
                     _raw_mode = getattr(self.engine, "_current_mode", "")
                     _mode = (
-                        _raw_mode
-                        if isinstance(_raw_mode, str)
-                        else str(_raw_mode)
-                        if _raw_mode
-                        else ""
+                        _raw_mode if isinstance(_raw_mode, str) else str(_raw_mode) if _raw_mode else ""
                     )
                     _raw_pos = getattr(self.engine, "_current_position", 0)
                     _pos = (
@@ -356,9 +352,7 @@ class EnhancedMonitoringSystem:
         """生成报告"""
         # 生成原始报告
         original_report = (
-            self.report_generator.generate_daily_report()
-            if self.report_generator is not None
-            else {}
+            self.report_generator.generate_daily_report() if self.report_generator is not None else {}
         )
 
         # 生成数据日志报告

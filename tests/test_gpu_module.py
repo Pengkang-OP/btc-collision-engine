@@ -7,10 +7,11 @@
 - 向后兼容性
 """
 
-import unittest
 import os
 import sys
+import unittest
 from unittest.mock import Mock, patch
+
 import pytest
 
 pytestmark = pytest.mark.gpu
@@ -103,7 +104,7 @@ class TestGPUDeviceDetector(unittest.TestCase):
             mock_cl.device_info.NAME: "NVIDIA GeForce RTX 3080",
             mock_cl.device_info.TYPE: mock_cl.device_type.GPU,
             mock_cl.device_info.VENDOR: "NVIDIA Corporation",
-        }.get(x, None)
+        }.get(x)
         mock_device.global_mem_size = 10 * 1024**3  # 10GB
         mock_device.max_compute_units = 68
 
@@ -247,8 +248,8 @@ class TestGPUContext(unittest.TestCase):
             if mod_name in sys.modules and isinstance(sys.modules[mod_name], Mock):
                 del sys.modules[mod_name]
 
-        from src.gpu.device import GPUDevice
         from src.gpu.context import GPUContext
+        from src.gpu.device import GPUDevice
 
         # 模拟设备
         mock_device_obj = Mock()

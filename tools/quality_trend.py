@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 文档质量趋势分析工具
 
@@ -9,14 +8,14 @@
     python tools/quality_trend.py [--history-file quality_history.json]
 """
 
-import sys
 import json
-from pathlib import Path
+import sys
 from datetime import datetime
-from typing import List, Dict
+from pathlib import Path
 
 # 修复Windows控制台编码问题
 from utf8_helper import setup_windows_utf8
+
 setup_windows_utf8()
 
 # 添加项目根目录到路径
@@ -32,7 +31,7 @@ class QualityTrendAnalyzer:
     def __init__(self, history_file: str = "quality_history.json"):
         self.history_file = Path(history_file)
         self._cleanup_temp()  # 清理残留临时文件
-        self.history: List[Dict] = self.load_history()
+        self.history: list[dict] = self.load_history()
 
     def _cleanup_temp(self):
         """清理残留的临时文件"""
@@ -43,20 +42,20 @@ class QualityTrendAnalyzer:
             except OSError:
                 pass
 
-    def load_history(self) -> List[Dict]:
+    def load_history(self) -> list[dict]:
         """加载历史记录"""
         if self.history_file.exists():
             try:
-                with open(self.history_file, 'r', encoding='utf-8') as f:
+                with open(self.history_file, encoding='utf-8') as f:
                     data = json.load(f)
                     if isinstance(data, list):
                         return data
                     else:
-                        print(f"⚠️  历史记录格式错误，重置为空列表")
+                        print("⚠️  历史记录格式错误，重置为空列表")
                         return []
             except json.JSONDecodeError as e:
                 print(f"⚠️  历史记录JSON解析失败: {e}")
-                print(f"💡 重置为空列表")
+                print("💡 重置为空列表")
                 return []
             except (OSError, PermissionError) as e:
                 print(f"⚠️  无法读取历史记录: {e}")
@@ -75,7 +74,7 @@ class QualityTrendAnalyzer:
         except (OSError, PermissionError) as e:
             print(f"⚠️  无法保存历史记录: {e}")
 
-    def add_record(self, avg_score: float, doc_count: int, details: Dict):
+    def add_record(self, avg_score: float, doc_count: int, details: dict):
         """添加新记录
 
         Args:
@@ -93,7 +92,7 @@ class QualityTrendAnalyzer:
         self.history.append(record)
         self.save_history()
 
-    def get_trend(self, last_n: int = 10) -> Dict:
+    def get_trend(self, last_n: int = 10) -> dict:
         """获取趋势分析
 
         Args:
@@ -146,17 +145,17 @@ class QualityTrendAnalyzer:
         trend = self.get_trend()
 
         print(f"\n{'=' * 60}")
-        print(f"📊 文档质量趋势分析报告")
+        print("📊 文档质量趋势分析报告")
         print(f"{'=' * 60}")
 
         if trend['status'] == 'insufficient_data':
             print(f"\n⚠️  {trend['message']}")
             print(f"当前记录数: {len(self.history)}")
-            print(f"\n💡 建议: 运行多次质量检查以积累数据")
-            print(f"   python tools/check_document_quality.py")
+            print("\n💡 建议: 运行多次质量检查以积累数据")
+            print("   python tools/check_document_quality.py")
             return
 
-        print(f"\n📈 统计信息:")
+        print("\n📈 统计信息:")
         print(f"  记录次数: {trend['record_count']}")
         print(f"  平均评分: {trend['avg_score']}/10")
         print(f"  最低评分: {trend['min_score']}/10")
@@ -166,14 +165,14 @@ class QualityTrendAnalyzer:
         print(f"  最近变化: {trend['trend']:+.2f}")
 
         if trend['trend_status'] == 'improving':
-            print(f"  ✅ 文档质量正在提升!")
+            print("  ✅ 文档质量正在提升!")
         elif trend['trend_status'] == 'declining':
-            print(f"  ⚠️  文档质量下降，需要关注!")
+            print("  ⚠️  文档质量下降，需要关注!")
         else:
-            print(f"  ➡️  文档质量稳定")
+            print("  ➡️  文档质量稳定")
 
         # 评分历史
-        print(f"\n📝 最近评分历史:")
+        print("\n📝 最近评分历史:")
         for i, score in enumerate(trend['scores'][-10:], 1):
             print(f"  {i:2d}. {score}/10")
 
@@ -228,7 +227,7 @@ def main():
 
     # 执行质量检查
     if args.check:
-        print(f"🔍 执行质量检查...")
+        print("🔍 执行质量检查...")
         checker = DocumentQualityChecker(args.docs_dir)
         scores = checker.check_all()
 
@@ -248,7 +247,7 @@ def main():
 
             # 记录
             analyzer.add_record(avg_score, len(scores), details)
-            print(f"\n✅ 质量检查完成，已记录")
+            print("\n✅ 质量检查完成，已记录")
             print(f"   平均评分: {avg_score:.1f}/10")
             print(f"   文档数量: {len(scores)}")
 

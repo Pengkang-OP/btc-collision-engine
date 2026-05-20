@@ -9,11 +9,12 @@
 - 空文件/不存在文件处理
 """
 
-import os
 import json
+import os
 import tempfile
+from datetime import UTC, datetime
+
 import pytest
-from datetime import datetime, timezone
 
 from src.log_engine.log_query import LogQuery
 
@@ -191,8 +192,8 @@ class TestLogQueryFilterByTime:
         assert all(1200.0 <= r["timestamp"] <= 1600.0 for r in results)
 
     def test_get_by_timerange(self, log_query):
-        start = datetime.fromtimestamp(1000, tz=timezone.utc)
-        end = datetime.fromtimestamp(2000, tz=timezone.utc)
+        start = datetime.fromtimestamp(1000, tz=UTC)
+        end = datetime.fromtimestamp(2000, tz=UTC)
         results = log_query.get_by_timerange(start, end)
         assert len(results) == 10
 

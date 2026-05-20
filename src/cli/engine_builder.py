@@ -115,8 +115,7 @@ def on_match_callback(sensitive_mode: str = "masked") -> MatchCallback:
         )
         if sys.stdout.isatty():
             print(
-                "\n⚠️  安全警告: 已启用完整私钥输出模式 (--sensitive-mode full)。"
-                "请确认终端环境安全。\n",
+                "\n⚠️  安全警告: 已启用完整私钥输出模式 (--sensitive-mode full)。请确认终端环境安全。\n",
                 file=sys.stderr,
             )
 
@@ -225,7 +224,9 @@ def build_engine(
                 message="Multi-GPU mode requires OpenCL",
                 user_message=_t("cli.engine.multi_gpu_requires_opencl"),
             )
-        from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine as _MEngine
+        # P0修复: 使用 MultiFormatMultiGPUEngine 集成多格式目标管理
+        from src.gpu.multi_format_multi_gpu_engine import MultiFormatMultiGPUEngine as _MEngine
+
         try:
             engine = _MEngine()
             device_indices = getattr(args, "gpu_indices", None)
@@ -248,7 +249,10 @@ def build_engine(
             logger.error(f"Multi-GPU initialization failed: {e}")
             raise GPUInitializationError(
                 message=f"Multi-GPU initialization failed: {e}",
-                user_message=f"[ERROR] Multi-GPU initialization failed: {e}\n  Check GPU drivers and OpenCL environment.",
+                user_message=(
+                    f"[ERROR] Multi-GPU initialization failed: {e}\n"
+                    "  Try: --gpu (single GPU) or remove --multi-gpu for CPU mode."
+                ),
                 engine_type="multi_gpu",
             ) from e
 
@@ -259,6 +263,7 @@ def build_engine(
                 user_message=_t("cli.engine.gpu_requires_opencl"),
             )
         from src.collision.gpu_collision_engine import GPUCollisionEngine as _GEngine
+
         match_cb = on_match if on_match else on_match_callback(sensitive_mode=sensitive_mode)
         try:
             engine = _GEngine(

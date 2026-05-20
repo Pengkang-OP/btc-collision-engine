@@ -8,15 +8,17 @@
 5. 端到端比对流程集成测试
 """
 
-import pytest
 import os
 import tempfile
 from unittest.mock import Mock
 
+import pytest
+
+from src.collision.continuous_matcher import ContinuousMatcher
+from src.collision.targets.matcher import AddressMatcher
+
 # 导入被测模块
 from src.collision.targets.resolver import TargetResolver
-from src.collision.targets.matcher import AddressMatcher
-from src.collision.continuous_matcher import ContinuousMatcher
 from src.core.bitcoin_key_validator import BitcoinKeyValidator
 
 
@@ -509,6 +511,7 @@ class TestBitcoinKeyValidatorSecurity:
         """测试使用hmac.compare_digest防止时序攻击"""
         # 验证代码中确实使用了hmac.compare_digest
         import inspect
+
         from src.core.bitcoin_key_validator import BitcoinKeyValidator
 
         source = inspect.getsource(BitcoinKeyValidator.verify_address_match)
@@ -726,7 +729,7 @@ class TestEdgeCases:
         """测试重复地址处理"""
         targets = {
             "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
-            "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",  # 重复
+            "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",  # noqa: B033  # 有意重复以测试去重
             "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
         }
 
@@ -744,7 +747,7 @@ class TestEdgeCases:
         targets = set()
         for i in range(1000):
             # 使用hash生成唯一的33字符后缀
-            hash_suffix = hashlib.md5(f"test_address_{i}".encode()).hexdigest()[:33]
+            hash_suffix = hashlib.md5(f"test_address_{i}".encode(), usedforsecurity=False).hexdigest()[:33]
             fake_addr = "1" + hash_suffix
             targets.add(fake_addr)
 

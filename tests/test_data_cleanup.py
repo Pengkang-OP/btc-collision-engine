@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """数据清理模块测试
 
 测试 DataCleaner 类的各项功能:
@@ -10,14 +9,13 @@
 """
 
 import os
-import time
-import tempfile
 import shutil
+import sys
+import tempfile
+import time
 from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch
-
-import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 

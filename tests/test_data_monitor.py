@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """数据监控器测试
 
 测试DataMonitor类的功能:
@@ -8,8 +7,9 @@
 - 统计收集
 """
 
-import unittest
 import time
+import unittest
+
 from src.gpu.data_monitor import DataMonitor, DataQualityIssue
 
 

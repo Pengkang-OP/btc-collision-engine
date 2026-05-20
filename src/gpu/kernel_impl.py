@@ -70,9 +70,7 @@ _DEFAULT_WORK_GROUP_SIZE = 256
 
 # DEF-2修复: 内核编译重试配置
 GPU_KERNEL_COMPILE_MAX_RETRIES = 4  # v4.2.3: 4 策略（含 Intel Arc 优化）
-GPU_KERNEL_COMPILE_RETRY_DELAY_BASE = (
-    2.0  # 基础延迟(秒), 指数退避: 2s(第1次失败后), 4s(第2次失败后)
-)
+GPU_KERNEL_COMPILE_RETRY_DELAY_BASE = 2.0  # 基础延迟(秒), 指数退避: 2s(第1次失败后), 4s(第2次失败后)
 
 # DEF-2修复: 渐进编译策略 — 每次重试尝试不同的编译选项
 # v4.2.3: 新增 Intel Arc 优化策略（无符号零+乘加融合，安全于加密运算）
@@ -218,29 +216,24 @@ def _detect_optimal_work_group_size(device: GPUDevice) -> int:
         try:
             wgs = int(env_val)
             if 64 <= wgs <= 1024:
-                logger.info(
-                    f"OPT-3: 使用环境变量 work_group_size={wgs} "
-                    f"(来源: {ENV_WORK_GROUP_SIZE})"
-                )
+                logger.info(f"OPT-3: 使用环境变量 work_group_size={wgs} (来源: {ENV_WORK_GROUP_SIZE})")
                 return wgs
             else:
                 logger.warning(
-                    f"OPT-3: 环境变量 {ENV_WORK_GROUP_SIZE}={wgs} 超出范围 "
-                    f"[64, 1024], 回退到自动检测"
+                    f"OPT-3: 环境变量 {ENV_WORK_GROUP_SIZE}={wgs} 超出范围 [64, 1024], 回退到自动检测"
                 )
         except (ValueError, TypeError):
-            logger.warning(
-                f"OPT-3: 环境变量 {ENV_WORK_GROUP_SIZE}={env_val} 无效, "
-                f"回退到自动检测"
-            )
+            logger.warning(f"OPT-3: 环境变量 {ENV_WORK_GROUP_SIZE}={env_val} 无效, 回退到自动检测")
 
     # 优先级2: 从 device_info 获取（auto_config 填充）
     device_info = device.get_device_info() if hasattr(device, "get_device_info") else {}
     wgs_from_config = device_info.get("work_group_size")
-    if wgs_from_config is not None and isinstance(wgs_from_config, int) and 64 <= wgs_from_config <= 1024:
-        logger.debug(
-            f"OPT-3: 使用 auto_config 提供的 work_group_size={wgs_from_config}"
-        )
+    if (
+        wgs_from_config is not None
+        and isinstance(wgs_from_config, int)
+        and 64 <= wgs_from_config <= 1024
+    ):
+        logger.debug(f"OPT-3: 使用 auto_config 提供的 work_group_size={wgs_from_config}")
         return wgs_from_config
 
     # 优先级3: 厂商默认值
@@ -254,9 +247,7 @@ def _detect_optimal_work_group_size(device: GPUDevice) -> int:
 
     if vendor in _VENDOR_WORK_GROUP_DEFAULTS:
         wgs = _VENDOR_WORK_GROUP_DEFAULTS[vendor]
-        logger.info(
-            f"OPT-3: 使用厂商默认 work_group_size={wgs} (vendor={vendor})"
-        )
+        logger.info(f"OPT-3: 使用厂商默认 work_group_size={wgs} (vendor={vendor})")
         # 进一步验证不超过设备最大限制
         try:
             max_wgs = device.device.max_work_group_size
@@ -270,10 +261,7 @@ def _detect_optimal_work_group_size(device: GPUDevice) -> int:
         return wgs
 
     # 优先级4: 安全回退
-    logger.info(
-        f"OPT-3: 无法识别厂商，使用通用默认 work_group_size="
-        f"{_DEFAULT_WORK_GROUP_SIZE}"
-    )
+    logger.info(f"OPT-3: 无法识别厂商，使用通用默认 work_group_size={_DEFAULT_WORK_GROUP_SIZE}")
     return _DEFAULT_WORK_GROUP_SIZE
 
 
@@ -312,10 +300,7 @@ def _get_local_mem_threshold_ratio() -> float:
                     f"超出范围 [0.1, 1.0], 使用默认 0.8"
                 )
         except (ValueError, TypeError):
-            logger.warning(
-                f"OPT-3: 环境变量 {ENV_LOCAL_MEM_THRESHOLD}={env_val} 无效, "
-                f"使用默认 0.8"
-            )
+            logger.warning(f"OPT-3: 环境变量 {ENV_LOCAL_MEM_THRESHOLD}={env_val} 无效, 使用默认 0.8")
     return 0.8
 
 
@@ -369,10 +354,10 @@ class GPUKernel(GPUKernelProtocol):
             max_batch_size = self._calculate_optimal_batch_size()
 
         # L-NEW1修复: 与配置层保持一致的上限检查（16M）
-        MAX_BATCH_SIZE_LIMIT = 16777216  # 16M，与 config_manager.py Schema 一致
-        if max_batch_size > MAX_BATCH_SIZE_LIMIT:
+        _max_batch_size_limit = 16777216  # 16M，与 config_manager.py Schema 一致
+        if max_batch_size > _max_batch_size_limit:
             raise ValueError(
-                f"batch_size {max_batch_size} 超出最大限制 {MAX_BATCH_SIZE_LIMIT} (配置层与引擎层统一上限)"
+                f"batch_size {max_batch_size} 超限 {_max_batch_size_limit} (配置层与引擎层统一)"
             )
 
         self._max_batch_size = max_batch_size
@@ -404,9 +389,7 @@ class GPUKernel(GPUKernelProtocol):
 
         # 校验 GPUDevice 已正确初始化
         if not getattr(self.device, "context", None) or not getattr(self.device, "queue", None):
-            raise RuntimeError(
-                "GPUDevice 尚未初始化，请先调用 GPUDevice.initialize() 再创建 GPUKernel"
-            )
+            raise RuntimeError("GPUDevice 尚未初始化，请先调用 GPUDevice.initialize() 再创建 GPUKernel")
 
         # 如果未提供program，则自行编译
         if self.program is None:
@@ -476,15 +459,14 @@ class GPUKernel(GPUKernelProtocol):
 
         try:
             # COMP-2: 根据设备 OpenCL 版本选择编译策略
-            device_ocl = getattr(self.device, 'opencl_version', 1.2)
+            device_ocl = getattr(self.device, "opencl_version", 1.2)
             if not isinstance(device_ocl, (int, float)):
                 device_ocl = 1.2
 
             if device_ocl >= 2.0:
                 strategies = COMPILE_STRATEGIES
                 logger.debug(
-                    f"COMP-2: OpenCL {device_ocl:.1f} >= 2.0, "
-                    f"使用完整{len(strategies)}级编译策略"
+                    f"COMP-2: OpenCL {device_ocl:.1f} >= 2.0, 使用完整{len(strategies)}级编译策略"
                 )
             else:
                 strategies = [
@@ -532,8 +514,9 @@ class GPUKernel(GPUKernelProtocol):
                     )
 
                     if profile.max_batch_size != self.max_batch_size:
+                        _old = self.max_batch_size
                         logger.info(
-                            f"根据性能优化调整batch_size: {self.max_batch_size} -> {profile.max_batch_size}"
+                            f"根据性能优化调整batch_size: {_old} -> {profile.max_batch_size}"
                         )
                         self._max_batch_size = profile.max_batch_size
                 else:
@@ -605,9 +588,7 @@ class GPUKernel(GPUKernelProtocol):
 
         # 验证: 由于目标是全0,不应该匹配
         if match_flags[0] != 0:
-            raise RuntimeError(
-                f"GPU内核验证失败: 不应匹配虚拟目标,但match_flags[0]={match_flags[0]}"
-            )
+            raise RuntimeError(f"GPU内核验证失败: 不应匹配虚拟目标,但match_flags[0]={match_flags[0]}")
 
         logger.info("✅ GPU内核基础验证通过（虚拟目标不匹配）")
 
@@ -623,8 +604,8 @@ class GPUKernel(GPUKernelProtocol):
             test_address, compressed_pk, _ = generator.generate_address(test_key_bytes)
             test_hash160 = HashUtils.hash160(compressed_pk)
 
-            logger.info(f"ALG-3增强验证: 测试私钥1 -> 地址 {test_address}")
-            logger.info(f"  Hash160: {test_hash160.hex()}")
+            logger.info(f"ALG-3增强验证: 测试私钥1 -> 地址 {test_address[:6]}...{test_address[-4:]}")
+            logger.info(f"  Hash160: {test_hash160.hex()[:8]}...")
 
             # 将真实Hash160设置为目标
             self.set_targets(test_hash160, 1, check_uncompressed=0)
@@ -658,8 +639,9 @@ class GPUKernel(GPUKernelProtocol):
 
             # 验证: 私钥1应该匹配它的地址
             if match_flags[0] != 1:
+                _flag = match_flags[0]
                 raise RuntimeError(
-                    f"GPU内核增强验证失败: 私钥1应该匹配地址{test_address},但match_flags[0]={match_flags[0]}"
+                    f"GPU内核增强验证失败: 私钥1应匹配{test_address},但match_flags[0]={_flag}"
                 )
 
             logger.info(f"✅ GPU内核增强验证通过（私钥1匹配地址{test_address}）")
@@ -670,18 +652,25 @@ class GPUKernel(GPUKernelProtocol):
             logger.warning(f"ALG-3增强验证失败: {e}")
             # 不阻止初始化，仅警告
 
+    # P2-06修复: 内核缓存版本号。当内核算法或编译策略变更时递增此版本号，
+    # 确保旧缓存自动失效并重新编译。
+    KERNEL_CACHE_VERSION = 1
+
     def _generate_cache_key(self) -> str:
         """P2-6修复: 生成缓存键
 
-        基于设备信息和内核源码生成唯一的缓存键
+        基于设备信息、内核源码和缓存版本生成唯一的缓存键。
+        P2-06增强: 纳入缓存版本号，保证版本升级后自动失效。
         """
         import hashlib
 
-        # 使用设备信息和内核源码生成键
+        # 使用设备信息、缓存版本和内核源码生成键
         device_info = f"{self.device.device.name}_{self.device.device.vendor}"
-        source_hash = hashlib.md5(OPENCL_KERNEL_SOURCE.encode(), usedforsecurity=False).hexdigest()[
-            :8
-        ]
+        source_fingerprint = (
+            f"v{self.KERNEL_CACHE_VERSION}_"
+            f"{OPENCL_KERNEL_SOURCE[:100]}"  # 取前100字符加速哈希
+        )
+        source_hash = hashlib.md5(source_fingerprint.encode(), usedforsecurity=False).hexdigest()[:8]
 
         cache_key = f"{device_info}_{source_hash}"
         # 替换非法字符
@@ -727,20 +716,28 @@ class GPUKernel(GPUKernelProtocol):
             logger.info(f"成功加载内核缓存: {cache_file}")
             return True
 
-        except Exception as e:
+        except (OSError, EOFError, ValueError) as e:
             logger.warning(f"加载内核缓存失败: {e}")
             # 缓存损坏，删除它
             try:
                 os.remove(cache_file)
-            except Exception as cleanup_error:
+            except OSError as cleanup_error:
                 # A类修复: 资源清理失败添加DEBUG日志
                 logger.debug(f"清理损坏缓存文件失败（可忽略）: {cleanup_error}")
+            return False
+        except Exception as e:
+            logger.warning(f"加载内核缓存异常: {type(e).__name__}: {e}", exc_info=True)
+            # CR审查修复: 未知异常也删除缓存，防止 pyopencl 异常导致损坏缓存永久残留
+            with suppress(OSError):
+                if os.path.exists(cache_file):
+                    os.remove(cache_file)
             return False
 
     def _save_kernel_cache(self):
         """P2-6修复 + DEF-2审查: 原子写入内核二进制到缓存
 
         使用 tmp + os.replace 原子写入，防止并发写入导致缓存损坏。
+        P2-06增强: 保存后自动清理旧版本缓存文件。
         """
         cache_file = self._get_cache_file()
         tmp_file = cache_file + ".tmp"
@@ -759,12 +756,56 @@ class GPUKernel(GPUKernelProtocol):
 
                 logger.debug(f"内核缓存已保存: {cache_file} ({len(binary)} bytes)")
 
-        except Exception as e:
+                # P2-06增强: 清理同一设备但不同版本的旧缓存
+                self._cleanup_old_cache_versions()
+
+        except (OSError, RuntimeError) as e:
             logger.warning(f"保存内核缓存失败: {e}")
-            # 清理可能的临时文件
-            with suppress(OSError):
-                if os.path.exists(tmp_file):
-                    os.remove(tmp_file)
+        except Exception as e:
+            logger.warning(f"保存内核缓存异常: {type(e).__name__}: {e}", exc_info=True)
+        else:
+            return  # 成功时跳过清理
+        # CR审查修复: 统一临时文件清理（消除重复代码）
+        with suppress(OSError):
+            if os.path.exists(tmp_file):
+                os.remove(tmp_file)
+
+    def _cleanup_old_cache_versions(self):
+        """P2-06增强: 清理同一设备但不同版本的旧缓存文件
+
+        扫描缓存目录，删除与当前设备匹配但版本号不同的旧缓存。
+        防止多次升级后磁盘空间累积。
+        """
+        cache_file = self._get_cache_file()
+        cache_dir = os.path.dirname(cache_file)
+        current_base = os.path.basename(cache_file)
+
+        if not os.path.isdir(cache_dir):
+            return
+
+        try:
+            # 从当前缓存文件名提取设备标识前缀 (格式: kernel_{device}_{vendor}_{hash}.bin)
+            # 匹配同一设备但不同 hash 的旧缓存
+            prefix_parts = current_base.rsplit("_", 1)  # 分离 hash 部分
+            if len(prefix_parts) >= 2:
+                device_prefix = prefix_parts[0]  # 不含 hash 的公共前缀
+                # 提取更宽泛的标识: 设备名_厂商名
+                parts = device_prefix.split("_", 2)  # kernel_{device}_{vendor}
+                if len(parts) >= 3:
+                    broad_prefix = "_".join(parts[:3])  # kernel_{device}_{vendor}
+
+                    for entry in os.listdir(cache_dir):
+                        if entry == current_base:
+                            continue
+                        if entry.startswith(broad_prefix) and entry.endswith(".bin"):
+                            old_file = os.path.join(cache_dir, entry)
+                            try:
+                                os.remove(old_file)
+                                logger.debug(f"清理旧版本缓存: {entry}")
+                            except OSError:
+                                pass
+        except Exception:
+            pass  # 清理失败不影响主流程
 
     def _calculate_optimal_batch_size(self) -> int:
         """根据GPU显存大小计算最优batch_size
@@ -780,9 +821,7 @@ class GPUKernel(GPUKernelProtocol):
             target_buffer_size = len(self._target_hash160s)
 
         # 调用共享函数
-        return calculate_optimal_batch_size(
-            device=self.device, target_buffer_size=target_buffer_size
-        )
+        return calculate_optimal_batch_size(device=self.device, target_buffer_size=target_buffer_size)
 
     def _allocate_buffers(self):
         """预分配 GPU 内存缓冲区（PRNG模式）
@@ -881,9 +920,7 @@ class GPUKernel(GPUKernelProtocol):
                 "设计: 持久化缓冲区在引擎生命周期内重复使用，零运行时分配开销"
             )
 
-    def set_targets(
-        self, target_hash160s: bytes, num_targets: int, check_uncompressed: int = 0
-    ) -> None:
+    def set_targets(self, target_hash160s: bytes, num_targets: int, check_uncompressed: int = 0) -> None:
         """设置目标地址 Hash160 - 只需设置一次
 
         Args:
@@ -925,9 +962,7 @@ class GPUKernel(GPUKernelProtocol):
 
         # 注册到缓冲区追踪器
         if hasattr(self, "_buffer_tracker") and self._buffer_tracker:
-            self._buffer_tracker.track_buffer(
-                "_targets_buf", self._targets_buf, len(target_hash160s)
-            )
+            self._buffer_tracker.track_buffer("_targets_buf", self._targets_buf, len(target_hash160s))
 
         self._targets_cached = target_hash160s
         self._num_targets_cached = num_targets
@@ -950,9 +985,7 @@ class GPUKernel(GPUKernelProtocol):
         target_buffer_size = len(self._target_hash160s) if self._target_hash160s else 0
         required_memory = 32 + (num_keys * 4) + target_buffer_size
         required_memory_with_overhead = int(required_memory * 1.2)
-        device_info = (
-            self.device.get_device_info() if hasattr(self.device, "get_device_info") else {}
-        )
+        device_info = self.device.get_device_info() if hasattr(self.device, "get_device_info") else {}
         max_memory = device_info.get("global_mem_size", 0)
         safe_memory_limit = int(max_memory * 0.8) if max_memory > 0 else float("inf")
         if required_memory_with_overhead > safe_memory_limit:
@@ -1030,8 +1063,7 @@ class GPUKernel(GPUKernelProtocol):
             and target_bytes > 0
             and target_bytes <= local_mem_size
             and (
-                target_bytes <= int(local_mem_size * local_threshold)
-                or self._num_targets_cached <= 250
+                target_bytes <= int(local_mem_size * local_threshold) or self._num_targets_cached <= 250
             )
         )
 

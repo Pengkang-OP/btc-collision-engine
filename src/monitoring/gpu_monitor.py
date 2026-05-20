@@ -133,9 +133,7 @@ class GPUMonitor:
 
         if self._cached_metrics.get("total_memory_mb", 0) > 0:
             self._cached_metrics["memory_usage_percent"] = (
-                self._cached_metrics["memory_used_mb"]
-                / self._cached_metrics["total_memory_mb"]
-                * 100
+                self._cached_metrics["memory_used_mb"] / self._cached_metrics["total_memory_mb"] * 100
             )
 
     def is_available(self) -> bool:

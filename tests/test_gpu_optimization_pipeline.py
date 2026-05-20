@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 GPU 性能优化管道单元测试
 
@@ -13,12 +12,13 @@ GPU 性能优化管道单元测试
 所有 GPU 依赖通过 Mock 隔离，不依赖真实 GPU。
 """
 
-import sys
-import os
-import unittest
 import logging
-import pytest
+import os
+import sys
+import unittest
 from unittest.mock import Mock, patch
+
+import pytest
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))

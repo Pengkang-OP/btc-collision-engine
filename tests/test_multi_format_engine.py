@@ -5,13 +5,15 @@
 测试系统是否支持根据目标地址格式自动生成对应格式的地址。
 """
 
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import secrets
-from src.core.multi_format_generator import MultiFormatAddressGenerator, AddressFormat
+
 from src.collision.targets.format_aware_manager import FormatAwareTargetManager
+from src.core.multi_format_generator import AddressFormat, MultiFormatAddressGenerator
 
 print("=" * 80)
 print("Multi-Format Bitcoin Address Generation and Matching Test")
@@ -105,7 +107,7 @@ p2sh_addr = gen.generate_p2sh_address(private_key_1)
 bech32_addr = gen.generate_bech32_address(private_key_1)
 taproot_addr = gen.generate_taproot_address(private_key_1)
 
-print(f"\nKey=1 addresses:")
+print("\nKey=1 addresses:")
 print(f"  P2PKH: {p2pkh_addr}")
 print(f"  P2SH: {p2sh_addr}")
 print(f"  Bech32: {bech32_addr}")
@@ -136,7 +138,7 @@ print(f"Format distribution: {mixed_manager.get_format_stats()}")
 
 # 测试已知私钥
 is_match, matched_addr, matched_fmt = mixed_manager.check_match(private_key_1)
-print(f"\nKey=1 matching result:")
+print("\nKey=1 matching result:")
 print(f"  Matched: {'✓ YES' if is_match else '✗ NO'}")
 if is_match:
     print(f"  Address: {matched_addr}")

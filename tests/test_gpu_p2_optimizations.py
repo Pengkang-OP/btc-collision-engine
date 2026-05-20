@@ -6,14 +6,16 @@
 3. 详细性能报告生成
 """
 
-import pytest
-import time
 import json
+import time
 from unittest.mock import Mock
 
-# 导入被测试模块
-from src.gpu.benchmark_suite import GPUBenchmarkSuite, BenchmarkResult, BenchmarkType
+import pytest
+
 from src.gpu.auto_tuner import GPUAutoTuner, TuningConfig, TuningPhase
+
+# 导入被测试模块
+from src.gpu.benchmark_suite import BenchmarkResult, BenchmarkType, GPUBenchmarkSuite
 from src.gpu.performance_reporter import PerformanceReportGenerator, ReportConfig
 
 pytestmark = pytest.mark.gpu
@@ -325,7 +327,7 @@ class TestPerformanceReportGenerator:
         assert os.path.exists(filepath)
 
         # 验证内容
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             content = f.read()
             assert content == report
 

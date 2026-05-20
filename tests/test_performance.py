@@ -7,14 +7,16 @@ CI/本地分级策略:
 """
 
 import os
-import warnings
-import pytest
 import time
+import warnings
+
+import pytest
+
+from src.collision.collision_stats import CollisionStats
+from src.collision.deduplication_filter import DeduplicationFilter
+from src.collision.key_collision_engine import KeyCollisionEngine
 from src.core.address_generator import P2PKHAddressGenerator
 from src.core.base58 import Base58
-from src.collision.key_collision_engine import KeyCollisionEngine
-from src.collision.deduplication_filter import DeduplicationFilter
-from src.collision.collision_stats import CollisionStats
 
 # CI/本地分级策略常量
 _IS_CI = os.environ.get("CI", "").lower() in ("true", "1")
@@ -47,7 +49,8 @@ def _check_perf(speed: float, key: str, label: str) -> None:
         if speed < local_min:
             warnings.warn(
                 f"CI性能偏低: {label} {speed:.0f}/s < {local_min}/s (本地阈值), "
-                f"可能因CI虚拟化/资源争抢"
+                f"可能因CI虚拟化/资源争抢",
+                stacklevel=2,
             )
     else:
         if speed < local_min:

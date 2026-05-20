@@ -306,7 +306,7 @@ class SingleGPUWorker(threading.Thread):
                         self._gpu_engine.stop()
                     except RuntimeError as stop_err:
                         logger.warning(
-                            f"GPU {self.device_idx} 引擎停止时报RuntimeError（将强制释放资源）: {stop_err}"
+                            f"GPU {self.device_idx} 引擎停止错误（将强制释放）: {stop_err}"
                         )
                     except OSError as stop_err:
                         logger.warning(f"GPU {self.device_idx} 引擎停止时发生OSError: {stop_err}")
@@ -355,9 +355,7 @@ class SingleGPUWorker(threading.Thread):
 
                 # 计算吞吐量
                 if self._stats["elapsed_time"] > 0:
-                    self._stats["throughput"] = (
-                        self._stats["keys_checked"] / self._stats["elapsed_time"]
-                    )
+                    self._stats["throughput"] = self._stats["keys_checked"] / self._stats["elapsed_time"]
 
                 # 报告给数据监控器
                 if self.data_monitor:

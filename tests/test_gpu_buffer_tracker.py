@@ -1,16 +1,16 @@
-# -*- coding: utf-8 -*-
 """
 P2-2修复: GPU缓冲区追踪器单元测试
 
 测试GPUBufferTracker类的功能,包括缓冲区注册、释放、泄漏检测和统计。
 """
 
-import unittest
-import time
-import threading
-import sys
 import os
+import sys
+import threading
+import time
+import unittest
 from unittest.mock import MagicMock
+
 import pytest
 
 # 添加项目根目录到路径

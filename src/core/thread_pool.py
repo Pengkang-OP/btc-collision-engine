@@ -125,9 +125,7 @@ class WorkStealingThreadPool:
         # 启动时间戳
         self._start_time: float | None = None
 
-        logger.info(
-            f"线程池初始化: threads={self.num_threads}, work_stealing={enable_work_stealing}"
-        )
+        logger.info(f"线程池初始化: threads={self.num_threads}, work_stealing={enable_work_stealing}")
 
     def start(self) -> None:
         """启动线程池"""
@@ -135,9 +133,7 @@ class WorkStealingThreadPool:
         self._start_time = time.time()  # 记录启动时间
 
         for i in range(self.num_threads):
-            thread = threading.Thread(
-                target=self._worker, args=(i,), name=f"Worker-{i}", daemon=True
-            )
+            thread = threading.Thread(target=self._worker, args=(i,), name=f"Worker-{i}", daemon=True)
             thread.start()
             self._threads.append(thread)
 
@@ -286,10 +282,8 @@ class WorkStealingThreadPool:
                 "tasks_failed": self._tasks_failed,
                 "tasks_stolen": self._tasks_stolen,
                 "tasks_pending": self._tasks_submitted - self._tasks_completed,
-                "steal_rate": self._tasks_stolen
-                / max(self._tasks_completed + self._tasks_failed, 1),
-                "failure_rate": self._tasks_failed
-                / max(self._tasks_completed + self._tasks_failed, 1),
+                "steal_rate": self._tasks_stolen / max(self._tasks_completed + self._tasks_failed, 1),
+                "failure_rate": self._tasks_failed / max(self._tasks_completed + self._tasks_failed, 1),
                 "active_threads": sum(1 for t in self._threads if t.is_alive()),
                 "per_thread_tasks": self._thread_tasks.copy(),
                 "per_thread_idle": self._thread_idle_cycles.copy(),
@@ -470,9 +464,7 @@ class GlobalThreadPoolManager:
             logger.info(f"线程数无需调整: 当前={self._pool.num_threads}, 请求={new_num_threads}")
             return False
 
-        logger.info(
-            f"线程池缩容: {self._pool.num_threads} -> {new_num_threads} (将在下次启动时生效)"
-        )
+        logger.info(f"线程池缩容: {self._pool.num_threads} -> {new_num_threads} (将在下次启动时生效)")
         # 保存意图（实际缩容在下次 start 时生效）
         self._resize_pending = new_num_threads
         return True

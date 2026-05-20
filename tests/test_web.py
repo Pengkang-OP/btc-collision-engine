@@ -5,12 +5,12 @@ Covers:
 - dashboard.py: auth, data utilities, Flask routes, CLI
 """
 
-import sys
 import json
+import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
-import pytest
 
+import pytest
 
 # ============================================================================
 # __init__.py tests (no Flask needed)
@@ -495,6 +495,7 @@ class TestCreateAppFlaskAvailable:
     def _setup_app(self):
         """Helper: reload dash with Flask mock active and create app."""
         import importlib
+
         import src.web.dashboard as dash
         importlib.reload(dash)
         return dash
@@ -514,6 +515,7 @@ class TestCreateAppFlaskAvailable:
 
     def test_create_app_no_api_key_warns(self, flask_mock):
         import importlib
+
         import src.web.dashboard as dash
         importlib.reload(dash)
         dash.set_api_key(None)
@@ -522,6 +524,7 @@ class TestCreateAppFlaskAvailable:
 
     def test_create_app_with_api_key_logs(self, flask_mock):
         import importlib
+
         import src.web.dashboard as dash
         importlib.reload(dash)
         dash.set_api_key("secret")
@@ -531,6 +534,7 @@ class TestCreateAppFlaskAvailable:
     def test_create_app_flask_not_available(self, flask_mock, monkeypatch):
         """Test create_app raises ImportError when FLASK_AVAILABLE=False."""
         import importlib
+
         import src.web.dashboard as dash
         importlib.reload(dash)
         monkeypatch.setattr(dash, "FLASK_AVAILABLE", False)
@@ -746,6 +750,7 @@ class TestCreateAppFlaskAvailable:
     def test_version_fallback_on_import_error(self, flask_mock):
         """Test version fallback when from . import __version__ fails."""
         import importlib
+
         import src.web.dashboard as dash
         importlib.reload(dash)
 
@@ -782,6 +787,7 @@ class TestRunDashboard:
 
     def test_run_dashboard_with_flask_available(self, flask_mock):
         import importlib
+
         import src.web.dashboard as dash
         importlib.reload(dash)
         mock_app_run = MagicMock()
@@ -794,6 +800,7 @@ class TestRunDashboard:
 
     def test_run_dashboard_with_api_key(self, flask_mock):
         import importlib
+
         import src.web.dashboard as dash
         importlib.reload(dash)
         mock_app_run = MagicMock()
@@ -805,6 +812,7 @@ class TestRunDashboard:
 
     def test_debug_mode_redirects_host(self, flask_mock):
         import importlib
+
         import src.web.dashboard as dash
         importlib.reload(dash)
         mock_app_run = MagicMock()
@@ -817,6 +825,7 @@ class TestRunDashboard:
 
     def test_debug_mode_localhost_not_redirected(self, flask_mock):
         import importlib
+
         import src.web.dashboard as dash
         importlib.reload(dash)
         mock_app_run = MagicMock()
@@ -829,6 +838,7 @@ class TestRunDashboard:
 
     def test_run_dashboard_with_data_dir(self, flask_mock, tmp_path):
         import importlib
+
         import src.web.dashboard as dash
         importlib.reload(dash)
         mock_app_run = MagicMock()
@@ -844,6 +854,7 @@ class TestMainCLI:
     def _setup(self, flask_mock):
         """Helper: reload dash and set up mock app.run."""
         import importlib
+
         import src.web.dashboard as dash
         importlib.reload(dash)
         mock_app_run = MagicMock()
@@ -904,6 +915,7 @@ class TestMainCLI:
     def test_main_module_entry_point(self, flask_mock, monkeypatch):
         """Test if __name__ == '__main__' block calls main()."""
         import importlib
+
         import src.web.dashboard as dash
         importlib.reload(dash)
         mock_app_run = MagicMock()

@@ -98,10 +98,7 @@ class FirstRunWizard:
     @staticmethod
     def _prompt(message: str, default: str = "") -> str:
         """获取用户输入，支持默认值"""
-        if default:
-            full_msg = f"{message} [{default}]: "
-        else:
-            full_msg = f"{message}: "
+        full_msg = f"{message} [{default}]: " if default else f"{message}: "
         try:
             val = input(full_msg).strip()
             return val if val else default

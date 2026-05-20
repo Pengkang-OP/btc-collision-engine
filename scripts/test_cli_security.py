@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """CLI安全检查功能测试"""
 
+import contextlib
 import sys
-import os
 from pathlib import Path
 
 # 添加项目根目录到路径
@@ -20,7 +20,7 @@ def test_security_check_integration():
     print("\n[测试1] 导入验证:")
     print("-" * 70)
     try:
-        from src.cli.main import _run_main
+        from src.cli.main import _run_main  # noqa: F401 — 导入可用性检测
         from src.core.crypto_backend import verify_production_ready
         print("  ✅ 导入成功")
     except ImportError as e:
@@ -59,10 +59,8 @@ def test_security_check_integration():
     original_argv = sys.argv
     try:
         sys.argv = ["test", "--help"]
-        try:
+        with contextlib.suppress(SystemExit):
             parse_args()
-        except SystemExit:
-            pass  # --help 会触发 SystemExit，正常行为
         print("  ✅ 帮助信息可正常显示")
     finally:
         sys.argv = original_argv
@@ -76,10 +74,8 @@ def test_security_check_integration():
     sys.stdout = io.StringIO()
     try:
         sys.argv = ["test", "--help"]
-        try:
+        with contextlib.suppress(SystemExit):
             parse_args()
-        except SystemExit:
-            pass
         help_text = sys.stdout.getvalue()
         if "--production" in help_text:
             print("  ✅ --production 选项已添加")

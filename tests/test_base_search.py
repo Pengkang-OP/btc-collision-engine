@@ -13,12 +13,11 @@
 - 边界值：空数据、零批次大小、key_index 越界
 """
 
-import struct
+from unittest.mock import MagicMock
+
 import pytest
-from unittest.mock import MagicMock, patch, call, PropertyMock
 
 from src.gpu.search_modes.base_search import BaseSearchMode
-
 
 # ============================================================================
 # 辅助函数
@@ -36,7 +35,7 @@ def _make_engine_stub(**kwargs):
     engine.stats.add_match = MagicMock()
     engine.stats.snapshot = MagicMock(return_value={})
     engine.on_match = kwargs.get("on_match", MagicMock())
-    engine.on_progress = kwargs.get("on_progress", None)
+    engine.on_progress = kwargs.get("on_progress")
     engine._target_list = kwargs.get("_target_list", ["target_addr"])
     engine._batch_size = kwargs.get("_batch_size", 1000)
     engine._batch_size_lock = MagicMock()
@@ -404,7 +403,7 @@ class TestExecuteBatchLoopErrors:
         def key_gen():
             return (b"keys" * 8, engine._batch_size)
 
-        batch_count = mode._execute_batch_loop(
+        mode._execute_batch_loop(
             key_generator_fn=key_gen,
             mode_name="test",
         )
@@ -423,7 +422,7 @@ class TestExecuteBatchLoopErrors:
         def key_gen():
             return (b"keys" * 8, engine._batch_size)
 
-        batch_count = mode._execute_batch_loop(
+        mode._execute_batch_loop(
             key_generator_fn=key_gen,
             mode_name="test",
         )
@@ -492,7 +491,7 @@ class TestExecuteBatchLoopErrors:
         def key_gen():
             return (b"keys" * 8, 100)
 
-        batch_count = mode._execute_batch_loop(
+        mode._execute_batch_loop(
             key_generator_fn=key_gen,
             mode_name="test",
         )
@@ -512,7 +511,7 @@ class TestExecuteBatchLoopErrors:
         def key_gen():
             return (b"keys" * 8, 100)
 
-        batch_count = mode._execute_batch_loop(
+        mode._execute_batch_loop(
             key_generator_fn=key_gen,
             mode_name="test",
         )
@@ -603,7 +602,7 @@ class TestProgressCallback:
         def key_gen():
             return (b"keys" * 8, 100)
 
-        batch_count = mode._execute_batch_loop(
+        mode._execute_batch_loop(
             key_generator_fn=key_gen,
             mode_name="test",
         )
@@ -626,7 +625,7 @@ class TestProgressCallback:
         def key_gen():
             return (b"keys" * 8, 100)
 
-        batch_count = mode._execute_batch_loop(
+        mode._execute_batch_loop(
             key_generator_fn=key_gen,
             mode_name="test",
         )

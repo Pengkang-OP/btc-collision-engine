@@ -5,15 +5,15 @@
 此脚本用于测试监控系统和日志系统的功能，确保它们与修改后的资源释放逻辑兼容。
 """
 
-import time
-import sys
 import os
+import sys
+import time
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.monitoring.monitoring_system import MonitoringSystem  # noqa: E402
-from src.utils import init_logging, get_configured_logger  # noqa: E402
+from src.utils import get_configured_logger, init_logging  # noqa: E402
 
 # 配置日志
 init_logging()
@@ -33,7 +33,7 @@ def test_logging_system():
 
     # 测试异常日志
     try:
-        1 / 0
+        1 / 0  # noqa: B018  # 有意触发 ZeroDivisionError 测试异常日志
     except Exception as e:
         logger.exception(f"测试异常日志: {e}")
 

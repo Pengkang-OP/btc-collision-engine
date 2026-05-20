@@ -20,7 +20,6 @@ from src.cli.advanced_features import (
     recommend_parameters,
 )
 
-
 # ── deep_merge ───────────────────────────────────────────────────
 
 class TestDeepMerge(unittest.TestCase):
@@ -143,9 +142,8 @@ class TestApplyTemplate(unittest.TestCase):
                 raise PermissionError("mock write failure")
             return _real_open(file, mode, *a, **kw)
 
-        with patch("builtins.open", side_effect=_conditional_open):
-            with patch("builtins.print"):
-                result = apply_template("quick-test", str(config_path))
+        with patch("builtins.open", side_effect=_conditional_open), patch("builtins.print"):
+            result = apply_template("quick-test", str(config_path))
         self.assertFalse(result)
 
 
@@ -340,9 +338,8 @@ class TestExportProgressData(unittest.TestCase):
     def test_export_exception_returns_false(self):
         """写入异常 → 返回 False。"""
         stats = self._make_stats()
-        with patch("builtins.open", side_effect=OSError("mock")):
-            with patch("builtins.print"):
-                result = export_progress_data(stats, "r", "cpu", "/fake/path.json")
+        with patch("builtins.open", side_effect=OSError("mock")), patch("builtins.print"):
+            result = export_progress_data(stats, "r", "cpu", "/fake/path.json")
         self.assertFalse(result)
 
 
@@ -381,9 +378,8 @@ class TestExportMatches(unittest.TestCase):
 
     def test_export_exception_returns_false(self):
         """写入异常 → 返回 False。"""
-        with patch("builtins.open", side_effect=OSError("mock")):
-            with patch("builtins.print"):
-                result = export_matches([{"a": 1}], "/fake/path.json")
+        with patch("builtins.open", side_effect=OSError("mock")), patch("builtins.print"):
+            result = export_matches([{"a": 1}], "/fake/path.json")
         self.assertFalse(result)
 
 

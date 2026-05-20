@@ -9,10 +9,11 @@
 5. 断点续传同步验证
 """
 
+import logging
 import sys
 import time
-import logging
 from pathlib import Path
+
 import pytest
 
 # 模块级别 marker：本文件所有测试都属于 GPU 测试
@@ -22,8 +23,8 @@ pytestmark = pytest.mark.gpu
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
 from src.collision.collision_stats import CollisionStats  # noqa: E402
+from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
 
 # 配置日志
 logging.basicConfig(
@@ -273,7 +274,7 @@ def test_config_loading():
         for config_file in config_files:
             config_path = project_root / config_file
             if config_path.exists():
-                with open(config_path, "r", encoding="utf-8") as f:
+                with open(config_path, encoding="utf-8") as f:
                     config = json.load(f)
 
                 gpu_config = config.get("gpu", {})

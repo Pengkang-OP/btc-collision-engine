@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 比特币密钥派生及地址生成验证系统
 ===================================
@@ -40,7 +39,7 @@ import secrets
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any
 
 # 尝试导入 bech32 库
 try:
@@ -50,9 +49,8 @@ except ImportError:
     HAS_BECH32 = False
     print("警告: bech32 库未安装，Bech32/Bech32m 地址验证将使用内置实现")
 
-from src.core.secp256k1 import Secp256k1, ECPoint, EllipticCurve
 from src.core.hash_utils import HashUtils
-
+from src.core.secp256k1 import ECPoint, EllipticCurve, Secp256k1
 
 # ============================================================================
 # 常量定义
@@ -72,11 +70,11 @@ class VerificationStep:
     name: str
     input_data: str
     output_data: str
-    expected: Optional[str] = None
+    expected: str | None = None
     is_correct: bool = False
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "input": self.input_data[:64] + "..." if len(self.input_data) > 64 else self.input_data,
@@ -92,15 +90,15 @@ class AddressVerificationResult:
     """地址验证结果"""
     format_type: AddressFormat
     generated_address: str
-    target_address: Optional[str] = None
+    target_address: str | None = None
     is_match: bool = False
     match_status: str = ""  # "MATCH", "MISMATCH", "NO_TARGET"
-    mismatch_step: Optional[str] = None
-    steps: List[VerificationStep] = field(default_factory=list)
+    mismatch_step: str | None = None
+    steps: list[VerificationStep] = field(default_factory=list)
     is_valid_format: bool = True
-    validation_errors: List[str] = field(default_factory=list)
+    validation_errors: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "format": self.format_type.value,
             "generated": self.generated_address,
@@ -123,12 +121,12 @@ class FullVerificationReport:
     public_key_x: str
     public_key_y: str
     is_public_key_on_curve: bool
-    math_verification: Dict[str, Any]
-    address_results: Dict[AddressFormat, AddressVerificationResult]
+    math_verification: dict[str, Any]
+    address_results: dict[AddressFormat, AddressVerificationResult]
     overall_match: bool
     timestamp: float = field(default_factory=time.time)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "private_key": {
                 "hex": self.private_key_hex,
@@ -153,7 +151,6 @@ class FullVerificationReport:
 # ============================================================================
 
 from src.utils.bech32_codec import bech32_encode as _bech32_encode
-
 
 # ============================================================================
 # 主验证类
@@ -220,7 +217,7 @@ class BTCKeyAddressVerifier:
     def verify_private_key_to_public_key(
         self,
         private_key_hex: str
-    ) -> Tuple[bool, Dict[str, Any]]:
+    ) -> tuple[bool, dict[str, Any]]:
         """
         验证从私钥生成公钥的数学关系
 
@@ -371,7 +368,7 @@ class BTCKeyAddressVerifier:
     def verify_public_key_to_p2pkh(
         self,
         public_key: bytes,
-        target_address: Optional[str] = None
+        target_address: str | None = None
     ) -> AddressVerificationResult:
         """
         验证公钥到 P2PKH (Legacy) 地址的转换
@@ -462,7 +459,7 @@ class BTCKeyAddressVerifier:
     def verify_public_key_to_p2sh(
         self,
         public_key: bytes,
-        target_address: Optional[str] = None
+        target_address: str | None = None
     ) -> AddressVerificationResult:
         """
         验证公钥到 P2SH (Nested SegWit) 地址的转换
@@ -563,7 +560,7 @@ class BTCKeyAddressVerifier:
     def verify_public_key_to_bech32(
         self,
         public_key: bytes,
-        target_address: Optional[str] = None,
+        target_address: str | None = None,
         is_taproot: bool = False
     ) -> AddressVerificationResult:
         """
@@ -697,7 +694,7 @@ class BTCKeyAddressVerifier:
     def verify_private_key(
         self,
         private_key_hex: str,
-        target_addresses: Optional[Dict[str, str]] = None
+        target_addresses: dict[str, str] | None = None
     ) -> FullVerificationReport:
         """
         完整验证私钥派生的所有地址格式
@@ -730,7 +727,7 @@ class BTCKeyAddressVerifier:
         self._log("\n[阶段2] 公钥 → 各格式地址 验证")
         self._log("-" * 40)
 
-        address_results: Dict[AddressFormat, AddressVerificationResult] = {}
+        address_results: dict[AddressFormat, AddressVerificationResult] = {}
 
         # 获取目标地址
         targets = target_addresses or {}
@@ -905,8 +902,8 @@ class BTCKeyAddressVerifier:
     def batch_verify_addresses(
         self,
         private_key_hex: str,
-        target_addresses: Dict[str, str]
-    ) -> Dict[str, Any]:
+        target_addresses: dict[str, str]
+    ) -> dict[str, Any]:
         """
         批量验证多个地址格式
 

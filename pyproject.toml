@@ -141,7 +141,7 @@ line-length = 100
 target-version = ["py312"]
 
 [tool.ruff]
-line-length = 100
+line-length = 105 # 略高于标准100以容纳中文日志/长变量名
 target-version = "py312"
 fix = true
 exclude = [
@@ -163,6 +163,14 @@ exclude = [
 [tool.ruff.lint]
 select = ["E", "F", "W", "C90", "I", "N", "UP", "SIM", "B"]
 ignore = ["E203"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/web/dashboard.py" = ["E501"]                  # HTML/Jinja2 模板字符串无法有意义地拆分
+"src/monitoring/alert_notifications.py" = ["E501"] # HTML 邮件模板字符串
+"src/utils/ui_tutorial.py" = ["E501"]              # 长行 UI 字符串/格式化提示文本
+"src/collision/targets/validator.py" = ["E501"]    # doctest 示例 + 中文注释
+"scripts/_batch_p1.py" = ["E501"]                  # 嵌入式源码字符串补丁脚本
+"scripts/extract_opencl_kernels.py" = ["E501"]     # 文档字符串含 markdown 代码示例
 
 [tool.ruff.lint.mccabe]
 max-complexity = 15

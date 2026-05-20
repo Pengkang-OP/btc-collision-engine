@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 """安全合规测试 - 验证密码学安全性和数据保护"""
 
-import pytest
 import os
-import time
 import secrets
-from src.core.secp256k1 import Secp256k1
-from src.core.address_generator import P2PKHAddressGenerator
-from src.collision.key_collision_engine import KeyCollisionEngine
+import time
+
+import pytest
+
 from src.collision.deduplication_filter import DeduplicationFilter
+from src.collision.key_collision_engine import KeyCollisionEngine
 from src.collision.targets.resolver import TargetResolver
+from src.core.address_generator import P2PKHAddressGenerator
+from src.core.secp256k1 import Secp256k1
 
 
 class TestCryptographicSecurity:
@@ -160,8 +162,8 @@ class TestAddressSecurity:
             result = Base58.check_decode(invalid_checksum)
             # 如果解码成功，应该返回None或抛出异常
             assert result is None or len(result) != 2
-        except Exception:
-            pass  # 期望的行为
+        except (ValueError, RuntimeError, KeyError):
+            pass  # 期望的行为 — 校验和/格式不匹配应抛异常
 
     def test_no_address_collision(self):
         """测试地址不会意外碰撞"""
@@ -217,7 +219,7 @@ class TestDataProtection:
                 # 在Unix系统上检查权限
                 if os.name != "nt":  # 非Windows
                     stat = os.stat(filepath)
-                    stat.st_mode
+                    _ = stat.st_mode  # 预取权限用于后续检查
                     # 不应该 world-readable（可选检查）
                     # assert not (mode & 0o004), f"文件权限过宽: {config_file}"
 
@@ -317,8 +319,8 @@ class TestInputValidation:
         try:
             resolver.resolve(large_address)
             # 应该不会崩溃
-        except Exception:
-            pass  # 期望的行为
+        except (ValueError, RuntimeError, KeyError):
+            pass  # 期望的行为 — 校验和/格式不匹配应抛异常
 
 
 class TestEngineSecurity:
@@ -393,8 +395,8 @@ class TestComplianceChecklist:
             random_bytes = secrets.token_bytes(32)
             assert len(random_bytes) == 32
             checklist["使用安全随机数源"] = True
-        except BaseException:
-            pass
+        except Exception:
+            pass  # 安全清单单项失败不影响其他检查
 
         # 2. 检查私钥范围
         try:
@@ -402,8 +404,8 @@ class TestComplianceChecklist:
             pk_int = int.from_bytes(pk_bytes, "big")
             assert 0 < pk_int < Secp256k1.N
             checklist["私钥在有效范围内"] = True
-        except BaseException:
-            pass
+        except Exception:
+            pass  # 安全清单单项失败不影响其他检查
 
         # 3. 检查私钥不可预测性（放宽要求）
         try:
@@ -415,8 +417,8 @@ class TestComplianceChecklist:
             # 放宽阈值，从 N//10 改为 N//100
             assert diff > Secp256k1.N // 100
             checklist["私钥不可预测"] = True
-        except BaseException:
-            pass
+        except Exception:
+            pass  # 安全清单单项失败不影响其他检查
 
         # 4. 检查无硬编码私钥
         try:
@@ -425,8 +427,8 @@ class TestComplianceChecklist:
                 pk_int = int.from_bytes(pk_bytes, "big")
                 assert pk_int not in [1, 2, 3, 12345]
             checklist["无硬编码私钥"] = True
-        except BaseException:
-            pass
+        except Exception:
+            pass  # 安全清单单项失败不影响其他检查
 
         # 5. 检查地址校验和
         try:
@@ -435,8 +437,8 @@ class TestComplianceChecklist:
             version, payload = Base58.check_decode("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
             assert version == 0x00 and len(payload) == 20
             checklist["地址校验和验证"] = True
-        except BaseException:
-            pass
+        except Exception:
+            pass  # 安全清单单项失败不影响其他检查
 
         # 6-9. 其他检查通过前面的测试覆盖
         checklist["私钥不记录到日志"] = True

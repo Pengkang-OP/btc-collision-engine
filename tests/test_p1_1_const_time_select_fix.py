@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """P1-1 定向验证测试: _const_time_select 恒定时间破坏修复
 
 修复内容: 重写 _const_time_select 消除无穷远点的显式条件分支
@@ -12,13 +11,14 @@
   E - 已知测试向量 (私钥 1~10)
 """
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 import inspect  # noqa: E402
-from src.core.secp256k1 import EllipticCurve, ECPoint, Secp256k1  # noqa: E402
+
+from src.core.secp256k1 import ECPoint, EllipticCurve, Secp256k1  # noqa: E402
 
 
 class TestP1_1ConstTimeSelectFix:
@@ -158,13 +158,13 @@ class TestP1_1ConstTimeSelectFix:
         # 重复验证覆盖多种点状态
         points = [self.inf, self.G, self.inf, self.G]
         conditions = [0, 0, 1, 1]
-        pairs = list(zip(conditions, points[:2], points[2:]))
+        pairs = list(zip(conditions, points[:2], points[2:], strict=False))
 
         # 添加更多组合
         G2 = self.ec.point_add(self.G, self.G)
         more_points = [self.G, G2, self.inf, self.inf, G2, G2]
         more_conditions = [0, 0, 0, 1, 0, 1]
-        pairs += list(zip(more_conditions, more_points[:3], more_points[3:]))
+        pairs += list(zip(more_conditions, more_points[:3], more_points[3:], strict=False))
 
         for cond, a, b in pairs:
             result = self.ec._const_time_select(cond, a, b)

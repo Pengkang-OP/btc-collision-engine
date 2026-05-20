@@ -29,14 +29,25 @@ logger = get_configured_logger("IntelVendor")
 class _RateLimitedLogger:
     """日志频率限制器 - 防止相同日志在短时间内重复输出导致泵洪"""
 
-    def __init__(self, base_logger: Any, min_interval: float = 60.0) -> None:
+    # P3-04修复: 默认最小间隔可通过环境变量 INTEL_LOG_RATE_LIMIT_SEC 配置
+    @staticmethod
+    def _get_default_min_interval() -> float:
+        """从环境变量读取默认限流间隔，异常时安全回退"""
+        try:
+            return float(os.environ.get("INTEL_LOG_RATE_LIMIT_SEC", "60.0"))
+        except (ValueError, TypeError):
+            return 60.0
+
+    _DEFAULT_MIN_INTERVAL = _get_default_min_interval.__func__()  # type: ignore[attr-defined]
+
+    def __init__(self, base_logger: Any, min_interval: float | None = None) -> None:
         """
         Args:
             base_logger: 基础 logger
-            min_interval: 相同消息的最小输出间隔（秒），默认 60s
+            min_interval: 相同消息的最小输出间隔（秒），默认从环境变量读取，回退60s
         """
         self._logger = base_logger
-        self._min_interval = min_interval
+        self._min_interval = min_interval if min_interval is not None else self._DEFAULT_MIN_INTERVAL
         self._last_logged: dict[str, float] = {}
 
     def _should_log(self, key: str) -> bool:
@@ -65,8 +76,8 @@ class _RateLimitedLogger:
         self._logger.debug(msg)
 
 
-# 初始化限流 logger（1分钟内相同消息不重复输出）
-_rate_logger = _RateLimitedLogger(logger, min_interval=60.0)
+# 初始化限流 logger（默认间隔从环境变量读取，可自定义）
+_rate_logger = _RateLimitedLogger(logger)
 
 
 class IntelGPUVendor(GPUVendorBase):
@@ -122,13 +133,10 @@ class IntelGPUVendor(GPUVendorBase):
             device_name_clean = re.sub(r"\s+", " ", device_name_clean)  # 合并多余空格
             # Arc A770/A750/A580 及 Pro 系列支持异步执行，不禁用
             is_high_end = any(
-                x in device_name_clean
-                for x in ["arc a770", "arc a750", "arc a580", "arc pro", "arc a3"]
+                x in device_name_clean for x in ["arc a770", "arc a750", "arc a580", "arc pro", "arc a3"]
             )
             if not is_high_end:
-                _rate_logger.warning(
-                    "⚠️ Intel GPU: 禁用异步传输以确保稳定性", key="intel_async_disabled"
-                )
+                _rate_logger.warning("⚠️ Intel GPU: 禁用异步传输以确保稳定性", key="intel_async_disabled")
                 device.enable_async_execution = False
             else:
                 _rate_logger.info(
@@ -206,9 +214,7 @@ class IntelGPUVendor(GPUVendorBase):
         """检查驱动版本并给出建议"""
         driver_version = device.driver_version
         if not driver_version:
-            _rate_logger.warning(
-                "⚠️ 无法检测Intel驱动版本，使用保守模式", key="intel_no_driver_version"
-            )
+            _rate_logger.warning("⚠️ 无法检测Intel驱动版本，使用保守模式", key="intel_no_driver_version")
             return
 
         try:
@@ -223,7 +229,7 @@ class IntelGPUVendor(GPUVendorBase):
                 # 检查是否为推荐版本
                 if (major, minor, build, revision) < (31, 0, 101, 4500):
                     _rate_logger.warning(
-                        f"⚠️ Intel驱动版本 {driver_version} 较旧，建议更新到 31.0.101.4500+ 以获得更好的稳定性",
+                        f"⚠️ Intel驱动 {driver_version} 较旧, 建议更新到 31.0.101.4500+ 以提升稳定性",
                         key=f"intel_driver_old_{driver_version}",
                     )
                 else:
@@ -325,9 +331,7 @@ class IntelGPUVendor(GPUVendorBase):
             os.makedirs(cache_dir, exist_ok=True)
             os.environ["OCL_CACHE_DIR"] = cache_dir
             applied["OCL_CACHE_DIR"] = cache_dir
-            _rate_logger.info(
-                f"✅ 设置 OCL_CACHE_DIR={cache_dir} (编译缓存)", key="intel_ocl_cache"
-            )
+            _rate_logger.info(f"✅ 设置 OCL_CACHE_DIR={cache_dir} (编译缓存)", key="intel_ocl_cache")
 
         return applied
 

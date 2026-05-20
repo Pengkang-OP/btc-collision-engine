@@ -28,11 +28,17 @@ def _is_transient_io_error(error: Exception) -> bool:
         return False
     error_msg = str(error).lower()
     transient_keywords = [
-        "disk full", "no space left", "enospc",
-        "permission denied", "access denied",
-        "file locked", "sharing violation",
-        "temporarily unavailable", "resource temporarily unavailable",
-        "broken pipe", "connection reset",
+        "disk full",
+        "no space left",
+        "enospc",
+        "permission denied",
+        "access denied",
+        "file locked",
+        "sharing violation",
+        "temporarily unavailable",
+        "resource temporarily unavailable",
+        "broken pipe",
+        "connection reset",
     ]
     return any(kw in error_msg for kw in transient_keywords)
 
@@ -108,9 +114,7 @@ def atomic_json_write(
                 logger.debug(f"清理临时文件失败（可忽略）: {cleanup_error}")
 
 
-def atomic_json_read(
-    filepath: str, default: Any = None, validate_func: Callable | None = None
-) -> Any:
+def atomic_json_read(filepath: str, default: Any = None, validate_func: Callable | None = None) -> Any:
     """安全读取JSON文件（带恢复机制）
 
     尝试读取JSON文件，如果文件损坏则尝试从备份恢复。

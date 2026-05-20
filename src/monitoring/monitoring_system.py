@@ -15,19 +15,19 @@ import sys
 import threading
 import time
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, List, Optional  # noqa: F401
+from typing import TYPE_CHECKING, Any, Optional  # noqa: F401
 
 import psutil
 
 from src.monitoring.storage_config import DataStorageConfig
-
-from ..utils.trend_utils import calculate_trend
 
 # 配置日志
 from src.utils import get_configured_logger
 
 # 高性能JSON序列化
 from src.utils.fast_json import fast_dump, fast_dumps, fast_load, fast_loads
+
+from ..utils.trend_utils import calculate_trend
 
 logger = get_configured_logger("MonitoringSystem")
 
@@ -149,7 +149,9 @@ class DataCollector:
         uptime = time.time() - self.start_time
         return {
             "os": os.name,
-            "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+            "python_version": (
+                f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+            ),
             "pid": os.getpid(),
             "uptime": uptime,
         }
@@ -440,7 +442,7 @@ class DataStorage:
         import random
 
         # 使用实例化Random对象而非全局随机，避免影响其他模块（统计采样，非加密用途）
-        rng = random.Random()  # nosec B311
+        _rng = random.Random()  # nosec B311  # 预留: 实例化Random而非全局
 
         # 计算采样数量
         sample_count = max(1, int(len(data) * sample_rate))
@@ -808,7 +810,9 @@ class AnomalyDetector:
                 "trend": (
                     "increasing"
                     if speeds and speeds[-1] > speeds[0]
-                    else "decreasing" if speeds and speeds[-1] < speeds[0] else "stable"
+                    else "decreasing"
+                    if speeds and speeds[-1] < speeds[0]
+                    else "stable"
                 ),
             },
             "cpu_usage": {
@@ -817,7 +821,9 @@ class AnomalyDetector:
                 "trend": (
                     "increasing"
                     if cpu_usages and cpu_usages[-1] > cpu_usages[0]
-                    else "decreasing" if cpu_usages and cpu_usages[-1] < cpu_usages[0] else "stable"
+                    else "decreasing"
+                    if cpu_usages and cpu_usages[-1] < cpu_usages[0]
+                    else "stable"
                 ),
             },
             "memory_usage": {
@@ -883,13 +889,9 @@ class MonitoringAlertAdapter:
         if len(self.alert_history) > 100:
             self.alert_history = self.alert_history[-100:]
 
-        # 打印告警
-        level_color = "\033[91m" if alert["level"] == "critical" else "\033[93m"
-        reset_color = "\033[0m"
-        _timestamp = datetime.fromtimestamp(alert['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
-        print(
-            f"{level_color}[ALERT] {_timestamp} - {alert['message']}{reset_color}"
-        )
+        # 通过日志系统输出告警（替代裸 print，支持级别控制和脱敏）
+        _timestamp = datetime.fromtimestamp(alert["timestamp"]).strftime("%Y-%m-%d %H:%M:%S")
+        logger.warning(f"[ALERT] {_timestamp} - {alert['message']}")
 
         # 记录到日志
         logger.warning(f"ALERT: {alert['message']} - Details: {fast_dumps(anomaly)}")
@@ -1009,19 +1011,16 @@ class ReportGenerator:
         # 计算统计数据（兼容扁平字典和嵌套 performance 两种历史数据格式）
         speeds = [d.get("performance", {}).get("speed", d.get("speed", 0)) for d in today_data]
         total_checked = sum(
-            d.get("performance", {}).get("total_checked", d.get("total_checked", 0))
-            for d in today_data
+            d.get("performance", {}).get("total_checked", d.get("total_checked", 0)) for d in today_data
         )
         matches_found = sum(
-            d.get("performance", {}).get("matches_found", d.get("matches_found", 0))
-            for d in today_data
+            d.get("performance", {}).get("matches_found", d.get("matches_found", 0)) for d in today_data
         )
         cpu_usages = [
             d.get("performance", {}).get("cpu_usage", d.get("cpu_usage", 0)) for d in today_data
         ]
         memory_usages = [
-            d.get("performance", {}).get("memory_usage", d.get("memory_usage", 0))
-            for d in today_data
+            d.get("performance", {}).get("memory_usage", d.get("memory_usage", 0)) for d in today_data
         ]
 
         # 计算平均值
@@ -1046,7 +1045,7 @@ class ReportGenerator:
             "summary": {
                 "total_checked": total_checked,
                 "matches_found": matches_found,
-                "average_speed": speed_avg,
+                "avg_keys_per_second": speed_avg,
                 "average_cpu_usage": cpu_avg,
                 "average_memory_usage": memory_avg,
                 "error_count": len(error_logs),
@@ -1067,9 +1066,7 @@ class ReportGenerator:
 
         return report
 
-    def _generate_recommendations(
-        self, trends: dict[str, Any], data: list[dict[str, Any]]
-    ) -> list[str]:
+    def _generate_recommendations(self, trends: dict[str, Any], data: list[dict[str, Any]]) -> list[str]:
         """生成优化建议"""
         recommendations = []
 

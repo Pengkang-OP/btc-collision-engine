@@ -2,8 +2,8 @@
 """测试GPU异步优化效果"""
 
 import sys
-import time
 import threading
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))

@@ -66,7 +66,7 @@ def _load_json_file(filepath: str) -> dict:
         FileNotFoundError: 文件不存在
         json.JSONDecodeError: JSON 语法错误
     """
-    with open(filepath, "r", encoding="utf-8") as f:
+    with open(filepath, encoding="utf-8") as f:
         raw = json.load(f)
     return _strip_comments(raw)
 
@@ -310,9 +310,9 @@ def main(argv: list[str] | None = None) -> int:
         for filepath in args.files:
             # 文件不存在时优雅跳过，不视为错误
             if not os.path.exists(filepath):
-                print(f"")
+                print("")
                 print(f"  SKIP   文件不存在，跳过: {filepath}")
-                print(f"         (仅当文件存在时才进行验证)")
+                print("         (仅当文件存在时才进行验证)")
                 continue
 
             files_checked += 1

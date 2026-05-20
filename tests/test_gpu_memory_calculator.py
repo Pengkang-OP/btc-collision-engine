@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 GPU 显存计算器单元测试
 
@@ -10,9 +9,10 @@ GPU 显存计算器单元测试
 - calculate_from_hash160_bytes() 字节串输入场景
 """
 
-import sys
 import os
+import sys
 import unittest
+
 import pytest
 
 # 添加项目根目录到路径

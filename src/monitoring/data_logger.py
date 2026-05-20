@@ -23,11 +23,11 @@ from typing import Any
 from src.log_engine.log_rotator import LogRotator
 from src.monitoring.storage_config import DataStorageConfig
 
-from ..utils.trend_utils import calculate_trend, extract_metrics
-
 # 导入现有日志系统
 from src.utils import get_configured_logger
 from src.utils.fast_json import fast_dump, fast_dumps, fast_load, fast_loads
+
+from ..utils.trend_utils import calculate_trend, extract_metrics
 
 
 class DataLogger:
@@ -132,11 +132,12 @@ class DataLogger:
             if not self._safe_file_replace(temp_file, filepath):
                 raise OSError(f"原子替换失败: {filepath}")
 
-            # 设置文件权限（仅所有者可读写）
-            try:
-                os.chmod(filepath, 0o600)
-            except (OSError, PermissionError) as e:
-                self.logger.debug(f"设置文件权限失败: {e}")
+            # 设置文件权限（仅所有者可读写，Windows 跳过）
+            if os.name != "nt":
+                try:
+                    os.chmod(filepath, 0o600)
+                except (OSError, PermissionError) as e:
+                    self.logger.debug(f"设置文件权限失败: {e}")
         except Exception as e:
             self.logger.error(f"原子写入失败: {e}")
             # 清理临时文件
@@ -154,16 +155,22 @@ class DataLogger:
             if not os.path.exists(self.current_data_file):
                 with open(self.current_data_file, "w", encoding="utf-8") as f:
                     fast_dump({}, f)
+                if os.name != "nt":
+                    os.chmod(self.current_data_file, 0o600)
 
             # 初始化历史数据文件（v4.3.1: JSONL 格式，空文件即可）
             if not os.path.exists(self.history_data_file):
                 with open(self.history_data_file, "w", encoding="utf-8") as f:
                     pass  # JSONL 格式无需初始内容
+                if os.name != "nt":
+                    os.chmod(self.history_data_file, 0o600)
 
             # 初始化错误日志文件
             if not os.path.exists(self.error_log_file):
                 with open(self.error_log_file, "w", encoding="utf-8") as f:
                     fast_dump([], f)
+                if os.name != "nt":
+                    os.chmod(self.error_log_file, 0o600)
 
             # 初始化性能日志文件
             if not os.path.exists(self.performance_log_file):
@@ -173,6 +180,8 @@ class DataLogger:
                     f.write(
                         "# 格式: timestamp,speed,total_checked,matches,cpu_usage,memory_usage,threads\n"  # noqa: E501
                     )
+                if os.name != "nt":
+                    os.chmod(self.performance_log_file, 0o600)
         except Exception as e:
             self.logger.error(f"初始化数据文件失败: {e}")
 
@@ -264,9 +273,7 @@ class DataLogger:
             self.logger.error(f"写入性能日志失败: {e}")
 
         # 记录到标准日志
-        self.logger.debug(
-            f"性能数据: 速度={speed:.2f}/s, 总计={total_checked}, 匹配={matches_found}"
-        )
+        self.logger.debug(f"性能数据: 速度={speed:.2f}/s, 总计={total_checked}, 匹配={matches_found}")
 
     # ==== v4.3.1: 性能日志批量化写入 ====
 
@@ -308,14 +315,11 @@ class DataLogger:
             with open(self.performance_log_file, "a", encoding="utf-8") as f:
                 f.writelines(lines_to_write)
             self._record_pipeline_metric(
-                "performance_log", success=True,
-                extra={"batched_lines": len(lines_to_write)}
+                "performance_log", success=True, extra={"batched_lines": len(lines_to_write)}
             )
         except Exception as e:
             self.logger.error(f"批量写入性能日志失败: {e}")
-            self._record_pipeline_metric(
-                "performance_log", success=False, error=str(e)[:200]
-            )
+            self._record_pipeline_metric("performance_log", success=False, error=str(e)[:200])
 
     def record_system_data(
         self, os_name: str = "", python_version: str = "", pid: int = 0, uptime: float = 0.0
@@ -534,9 +538,7 @@ class DataLogger:
                 except OSError:
                     pass  # 文件可能已被其他进程删除或锁定
             if removed > 0:
-                self.logger.info(
-                    f"清理了 {removed} 个过期临时文件，释放 {freed / 1024 / 1024:.2f} MB"
-                )
+                self.logger.info(f"清理了 {removed} 个过期临时文件，释放 {freed / 1024 / 1024:.2f} MB")
         except Exception as e:
             self.logger.debug(f"清理过期临时文件时出错（非致命）: {e}")
 
@@ -568,9 +570,7 @@ class DataLogger:
                 # 执行级联轮转：.2 -> .3, .1 -> .2, current -> .1
                 for i in range(self._PERF_LOG_MAX_ROTATIONS, 0, -1):
                     old_name = (
-                        f"{self.performance_log_file}.{i - 1}"
-                        if i > 1
-                        else self.performance_log_file
+                        f"{self.performance_log_file}.{i - 1}" if i > 1 else self.performance_log_file
                     )
                     new_name = f"{self.performance_log_file}.{i}"
                     if os.path.exists(old_name):
@@ -628,8 +628,9 @@ class DataLogger:
             except OSError as e:
                 if attempt < max_retries - 1:
                     delay = delays[min(attempt, len(delays) - 1)]
+                    _attempt = attempt + 1
                     self.logger.warning(
-                        f"文件替换失败 (尝试 {attempt + 1}/{max_retries})，{delay:.0f}s 后重试: {e} - {dst}"
+                        f"文件替换失败 (尝试 {_attempt}/{max_retries}), {delay:.0f}s后重试: {e} - {dst}"
                     )
                     time.sleep(delay)
                     continue
@@ -1042,9 +1043,7 @@ class DataLogger:
                     "error_count": error_count,  # 使用之前获取的值
                 },
                 "trends": self._analyze_trends(filtered_data),
-                "recommendations": self._generate_recommendations(
-                    speeds, cpu_usages, memory_usages
-                ),
+                "recommendations": self._generate_recommendations(speeds, cpu_usages, memory_usages),
             }
 
             # 保存报告
@@ -1156,8 +1155,12 @@ class DataLogger:
                 max_age_days = default_max_age_days
 
             return enabled, max_age_days
-        except Exception:
+        except Exception as e:
             # 配置读取失败时静默回退到默认值
+            self.logger.debug(
+                f"auto_cleanup配置回退: enabled={default_enabled},"
+                f" max_age_days={default_max_age_days}, 原因: {e}"
+            )
             return default_enabled, default_max_age_days
 
     def _auto_cleanup_if_needed(self):
@@ -1201,9 +1204,7 @@ class DataLogger:
                         moved_count += 1
 
             if moved_count > 0:
-                self.logger.info(
-                    f"自动归档了 {moved_count} 个过期报告文件（保留期: {max_age_days} 天）"
-                )
+                self.logger.info(f"自动归档了 {moved_count} 个过期报告文件（保留期: {max_age_days} 天）")
 
             self._last_cleanup_time = current_time
         except Exception as e:

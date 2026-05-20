@@ -315,9 +315,7 @@ class CoincurveBackend(CryptoBackend):
                 )
         except (AttributeError, TypeError, AssertionError) as e:
             # 如果multiply不可用或返回类型不匹配，使用纯Python回退
-            logger.warning(
-                f"coincurve标量乘法失败({type(e).__name__})，回退到纯Python恒定时间实现"
-            )
+            logger.warning(f"coincurve标量乘法失败({type(e).__name__})，回退到纯Python恒定时间实现")
 
         # 回退到纯Python恒定时间实现
         from .secp256k1 import ECPoint, EllipticCurve
@@ -381,7 +379,7 @@ class ECDSABackend(CryptoBackend):
         from .secp256k1 import ECPoint, EllipticCurve
 
         ec_impl = EllipticCurve()
-        result = ec_impl.scalar_multiply(k, ECPoint(point_x, point_y))
+        result = ec_impl.scalar_multiply_const_time(k, ECPoint(point_x, point_y))
         return cast(tuple[int, int], (result.x, result.y))
 
     def is_constant_time(self) -> bool:
@@ -707,4 +705,3 @@ def verify_production_ready() -> tuple[bool, str]:
         f"   pip install coincurve  # 推荐，最安全\n"
         f"   pip install cryptography  # 备选，generate_public_key 恒定时间\n"
     )
-

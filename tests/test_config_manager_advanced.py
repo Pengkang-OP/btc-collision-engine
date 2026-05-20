@@ -1,8 +1,8 @@
 """配置管理器高级功能测试 — 覆盖 _validate_manual 等方法"""
 
+import json
 import os
 import sys
-import json
 import tempfile
 import unittest
 

@@ -1,13 +1,12 @@
-# -*- coding: utf-8 -*-
 """ObjectPool / GlobalPoolManager 单元测试 - 覆盖 P3-7/P1-6 增强功能"""
 
 import unittest
 from unittest.mock import patch
 
 from src.core.memory_pool import (
-    ObjectPool,
     ByteArrayPool,
     GlobalPoolManager,
+    ObjectPool,
     get_pool_manager,
 )
 

@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
 """CLI 基础功能测试"""
 
-import pytest
-import sys
 import os
+import sys
 from unittest.mock import Mock, patch
+
+import pytest
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.cli.main import (  # noqa: E402
+    format_progress,
+    load_targets,
+    main,
     parse_args,
     validate_args,
-    load_targets,
-    format_progress,
-    main,
 )  # noqa: E402
 from src.collision.collision_stats import CollisionStats  # noqa: E402
 
@@ -32,7 +33,7 @@ class TestCLI:
         reset_log_window_instance()
 
         # 固定 i18n 语言为 zh_CN，确保中文断言在任意 locale 环境下一致
-        from src.i18n import set_language, get_language
+        from src.i18n import get_language, set_language
 
         self._saved_language = get_language()
         set_language("zh_CN")
@@ -117,18 +118,18 @@ class TestCLI:
         class Args:
             def __init__(self, **kwargs):
                 # 添加所有必需的属性（包括新增的工具命令属性）
-                self.targets = kwargs.get("targets", None)
-                self.file = kwargs.get("file", None)
+                self.targets = kwargs.get("targets")
+                self.file = kwargs.get("file")
                 self.mode = kwargs.get("mode", "random")
-                self.start = kwargs.get("start", None)
-                self.end = kwargs.get("end", None)
+                self.start = kwargs.get("start")
+                self.end = kwargs.get("end")
                 self.workers = kwargs.get("workers", 4)
                 self.duration = kwargs.get("duration", 60)
                 # 新增工具命令属性
                 self.health_check = kwargs.get("health_check", False)
                 self.platform_check = kwargs.get("platform_check", False)
                 self.cleanup = kwargs.get("cleanup", False)
-                self.validate_addresses = kwargs.get("validate_addresses", None)
+                self.validate_addresses = kwargs.get("validate_addresses")
 
         # 测试有效参数
         args = Args(mode="random", targets=["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"])
@@ -534,9 +535,10 @@ class TestCLI:
 
     def test_quick_start_generates_command(self, monkeypatch, capsys):
         """测试 quick-start 生成正确的命令"""
-        from src.cli.commands import _cmd_quick_start
         from io import StringIO
         from unittest.mock import MagicMock
+
+        from src.cli.commands import _cmd_quick_start
 
         # 屏蔽 Windows 平台下 sys.stdout 被替换（避免 capsys 捕获失效）
         monkeypatch.setattr("sys.platform", "linux")
@@ -566,11 +568,11 @@ class TestCLI:
     def test_import_compatibility(self):
         """确保拆分后的导入路径兼容"""
         # 旧路径（向后兼容）
-        from src.cli.main import validate_args, format_progress
+        from src.cli.main import format_progress, validate_args
+        from src.cli.progress import format_progress as fp
 
         # 新路径
         from src.cli.validation import validate_args as va
-        from src.cli.progress import format_progress as fp
 
         # 验证是同一个函数对象
         assert validate_args is va
@@ -768,6 +770,7 @@ class TestBuildEngine:
     def test_build_cpu_engine(self, monkeypatch):
         """默认构建CPU引擎"""
         from unittest.mock import Mock
+
         import src.cli.engine_builder as eb
 
         mock_engine = Mock()
@@ -833,6 +836,7 @@ class TestUtilityCommands:
     def test_examples_output(self, monkeypatch):
         """--examples 输出包含示例命令"""
         from io import StringIO
+
         from src.cli.commands import _cmd_examples
 
         monkeypatch.setattr("sys.platform", "linux")
@@ -854,6 +858,7 @@ class TestUtilityCommands:
     def test_config_check_missing(self, monkeypatch, tmp_path):
         """config.json不存在时config-check报告缺失"""
         from io import StringIO
+
         from src.cli.commands import _cmd_config_check
 
         monkeypatch.chdir(tmp_path)
@@ -876,6 +881,7 @@ class TestUtilityCommands:
         """config.json有效时config-check通过"""
         import json
         from io import StringIO
+
         from src.cli.commands import _cmd_config_check
 
         config_file = tmp_path / "config.json"
@@ -927,13 +933,14 @@ class TestAdvancedFeatures:
     def test_apply_template_valid(self, tmp_path):
         """应用合法模板成功"""
         import json
+
         from src.cli.advanced_features import apply_template
 
         config_file = tmp_path / "config.json"
         config_file.write_text(json.dumps({"crypto": {}}), encoding="utf-8")
         result = apply_template("quick-test", str(config_file))
         assert result is True
-        with open(config_file, "r", encoding="utf-8") as f:
+        with open(config_file, encoding="utf-8") as f:
             config = json.load(f)
         assert isinstance(config, dict)
         # quick-test 模板应写入 collision 段
@@ -969,6 +976,7 @@ class TestAdvancedFeatures:
         """导出进度数据到JSON文件"""
         import json
         from unittest.mock import Mock
+
         from src.cli.advanced_features import export_progress_data
 
         mock_stats = Mock()
@@ -983,13 +991,14 @@ class TestAdvancedFeatures:
         result = export_progress_data(mock_stats, "random", "cpu", output_file)
         assert result is True
 
-        with open(output_file, "r", encoding="utf-8") as f:
+        with open(output_file, encoding="utf-8") as f:
             data = json.load(f)
         assert data["total_checked"] == 1000
 
     def test_export_matches(self, tmp_path):
         """导出匹配结果"""
         import json
+
         from src.cli.advanced_features import export_matches
 
         matches = [{"address": "1A1z...", "private_key": "abc123", "wif": "5J..."}]
@@ -997,7 +1006,7 @@ class TestAdvancedFeatures:
         result = export_matches(matches, output_file)
         assert result is True
 
-        with open(output_file, "r", encoding="utf-8") as f:
+        with open(output_file, encoding="utf-8") as f:
             data = json.load(f)
         assert len(data["matches"]) == 1
 
@@ -1054,8 +1063,8 @@ class TestModuleExports:
 
     def test_all_public_api_importable(self):
         """__all__ 中所有符号可导入"""
-        from src.cli import __all__
         import src.cli as cli_module
+        from src.cli import __all__
 
         for name in __all__:
             assert hasattr(cli_module, name), f"缺失导出: {name}"
@@ -1094,17 +1103,17 @@ class TestV3Improvements:
         a = Args()
         # 基本必填字段
         a.targets = kwargs.get("targets", ["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"])
-        a.file = kwargs.get("file", None)
+        a.file = kwargs.get("file")
         a.mode = kwargs.get("mode", "random")
-        a.start = kwargs.get("start", None)
-        a.end = kwargs.get("end", None)
+        a.start = kwargs.get("start")
+        a.end = kwargs.get("end")
         a.workers = kwargs.get("workers", 4)
         a.duration = kwargs.get("duration", 60)
         # 工具命令标志
         a.health_check = kwargs.get("health_check", False)
         a.platform_check = kwargs.get("platform_check", False)
         a.cleanup = kwargs.get("cleanup", False)
-        a.validate_addresses = kwargs.get("validate_addresses", None)
+        a.validate_addresses = kwargs.get("validate_addresses")
         a.examples = kwargs.get("examples", False)
         a.config_check = kwargs.get("config_check", False)
         a.quick_start = kwargs.get("quick_start", False)
@@ -1763,8 +1772,8 @@ class TestPrintFinalSummaryException:
 
     def test_stats_get_exception_graceful(self, monkeypatch):
         """engine.get_stats() 抛异常 → 显示 '统计信息暂不可用'。"""
-        from src.cli.stats_reporter import _print_final_summary
         from src.cli.output import CLIOutput
+        from src.cli.stats_reporter import _print_final_summary
 
         engine = Mock()
         engine.get_stats.side_effect = RuntimeError("stats unavailable")

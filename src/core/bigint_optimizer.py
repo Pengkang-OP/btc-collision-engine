@@ -86,9 +86,9 @@ class BigIntOptimizer:
             # 使用gmpy2.invert() - 基于扩展欧几里得的优化实现
             try:
                 return int(self.gmpy2.invert(self.mpz(a), self.mpz(m)))
-            except ZeroDivisionError:
+            except ZeroDivisionError as e:
                 # 模逆元不存在（a和m不互素）
-                raise ValueError(f"模逆元不存在: {a} 和 {m} 不互素（GCD ≠ 1）")
+                raise ValueError(f"模逆元不存在: {a} 和 {m} 不互素（GCD ≠ 1）") from e
         else:
             # 回退到纯Python扩展欧几里得算法
             return self._mod_inverse_python(a, m)

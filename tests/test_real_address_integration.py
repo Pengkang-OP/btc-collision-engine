@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """使用真实目标地址的集成测试"""
 
-import pytest
-import time
 import os
+import time
+
+import pytest
+
 from src.collision.key_collision_engine import KeyCollisionEngine
 
 # 标记不稳定的测试（竞态条件敏感）
@@ -24,7 +26,7 @@ class TestRealAddressIntegration:
     def _load_addresses(self):
         """从文件加载目标地址"""
         addresses = set()
-        with open(self.address_file, "r") as f:
+        with open(self.address_file) as f:
             for line in f:
                 line = line.strip()
                 if line and not line.startswith("#"):

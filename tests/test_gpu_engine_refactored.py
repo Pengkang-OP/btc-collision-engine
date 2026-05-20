@@ -10,8 +10,9 @@ Phase 1集成测试框架，验证:
 创建日期: 2026-04-29
 """
 
-import pytest
 import sys
+
+import pytest
 
 pytestmark = pytest.mark.gpu
 
@@ -22,9 +23,9 @@ class TestModuleImports:
     def test_import_protocols(self):
         """测试协议模块导入"""
         from src.collision.gpu.protocols import (
+            IAsyncExecutionPipeline,
             IGPUDeviceManager,
             IKernelExecutor,
-            IAsyncExecutionPipeline,
         )
 
         assert IGPUDeviceManager is not None
@@ -76,10 +77,12 @@ class TestNoCircularDependency:
             del sys.modules[mod]
 
         try:
-            # 尝试不同导入顺序
-            pass
-
-            assert True
+            # 清空模块缓存后按不同顺序重新导入，验证无循环依赖
+            import importlib
+            importlib.import_module("src.collision.gpu.facade")
+            importlib.import_module("src.collision.gpu.monitoring")
+            importlib.import_module("src.collision.gpu.precompute")
+            importlib.import_module("src.collision.gpu")
         except ImportError as e:
             pytest.fail(f"导入失败（可能存在循环依赖）: {e}")
         finally:
@@ -181,9 +184,9 @@ class TestBackwardCompatibility:
     def test_delayed_import_functions(self):
         """测试延迟导入函数"""
         from src.collision.gpu import (
+            get_collision_core,
             get_gpu_engine_facade,
             get_monitoring_pipeline,
-            get_collision_core,
             get_vendor_factory,
         )
 

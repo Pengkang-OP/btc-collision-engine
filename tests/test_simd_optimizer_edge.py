@@ -1,21 +1,19 @@
-# -*- coding: utf-8 -*-
 """simd_optimizer 全面测试 — 覆盖 BatchOptimizer, BatchCollisionProcessor,
 NumpyOptimizedAddressGenerator 及工厂函数"""
 
 import hashlib
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from src.core.simd_optimizer import (
-    BatchOptimizer,
     BatchCollisionProcessor,
+    BatchOptimizer,
     NumpyOptimizedAddressGenerator,
-    create_batch_optimizer,
-    create_simd_optimizer,
-    create_batch_processor,
     SIMDVectorizedOperations,
+    create_batch_optimizer,
+    create_batch_processor,
+    create_simd_optimizer,
 )
-
 
 # ──────────────────────────── BatchOptimizer 初始化 ────────────────────────────
 

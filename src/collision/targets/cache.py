@@ -89,10 +89,7 @@ class AddressCache:
 
         with self._lock:
             try:
-                if use_ttl:
-                    value = self.ttl_cache.get(key)
-                else:
-                    value = self.lru_cache.get(key)
+                value = self.ttl_cache.get(key) if use_ttl else self.lru_cache.get(key)
 
                 if value is not None:
                     if self.enable_stats:

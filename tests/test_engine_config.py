@@ -13,7 +13,6 @@ import pytest
 from src.collision.gpu.engine import GPUEngineConfig
 from src.collision.gpu.key_generator import KeyGenerationStrategy
 
-
 # ============================================================================
 # 辅助函数
 # ============================================================================
@@ -491,7 +490,7 @@ class TestGPUEngineConfigInvalid:
 
     def test_empty_dict_reconstruct(self):
         """空 dict 重建后应使用全部默认值"""
-        cfg = GPUEngineConfig()
+        GPUEngineConfig()
         d = {}
         # 空 dict 传给构造函数等同于全默认值
         cfg_default = GPUEngineConfig(**d)

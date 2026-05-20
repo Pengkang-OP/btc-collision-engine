@@ -1,15 +1,16 @@
-# -*- coding: utf-8 -*-
 """预计算点表优化模块单元测试"""
 
-import pytest
 import time
+
+import pytest
+
 from src.core.precomputed_table import (
     PrecomputedPointTable,
     PrecomputedTableManager,
     get_precomputed_table,
     precomputed_table_manager,
 )
-from src.core.secp256k1 import Secp256k1, ECPoint
+from src.core.secp256k1 import ECPoint, Secp256k1
 
 
 class TestPrecomputedPointTable:

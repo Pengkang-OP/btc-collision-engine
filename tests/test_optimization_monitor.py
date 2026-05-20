@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 性能监控模块单元测试
 """
 
-import time
 import threading
+import time
+
 from src.monitoring.optimization_monitor import (
     OptimizationPerformanceMonitor,
     PerformanceMetrics,

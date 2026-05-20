@@ -1,14 +1,16 @@
 """验证质量监控工具测试"""
 
-import pytest
 from datetime import datetime
-from src.collision.targets.validator import AddressBatchValidator, ValidationResult
+
+import pytest
+
 from src.collision.targets.monitor import (
+    ValidationMetrics,
     ValidationMonitor,
     ValidationThresholds,
-    ValidationMetrics,
     create_monitor,
 )
+from src.collision.targets.validator import AddressBatchValidator, ValidationResult
 
 
 class TestValidationMetrics:

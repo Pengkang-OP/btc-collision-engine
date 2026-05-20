@@ -140,8 +140,9 @@ class DeviceManagerAdapter:
                 device_obj=self._gpu_device,
             )
 
+            _mem_gb = memory_total / (1024 ** 3)
             logger.info(
-                f"GPU 设备已选择: {name} (vendor={vendor_identifier}, memory={memory_total / (1024**3):.1f}GB)"
+                f"GPU 设备已选择: {name} (vendor={vendor_identifier}, mem={_mem_gb:.1f}GB)"
             )
 
             return self._selected_device

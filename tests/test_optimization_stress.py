@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 压力测试 - 验证优化模块在高负载下的表现
 
@@ -9,10 +8,10 @@
 4. 内存稳定性
 """
 
-import sys
-import time
 import secrets
+import sys
 import threading
+import time
 import tracemalloc
 from pathlib import Path
 

@@ -11,14 +11,15 @@
 - setup_logger / get_logger / get_sampled_logger
 """
 
+import logging
 import os
 import sys
-import logging
 import tempfile
-import pytest
 import time
 import warnings
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 # ============================================================================
 # Fixtures
@@ -134,8 +135,9 @@ class TestSafeStreamHandler:
 
     def test_emit_handles_closed_stream(self):
         """关闭的流不会抛出异常"""
-        from src.utils.logger import SafeStreamHandler
         import io
+
+        from src.utils.logger import SafeStreamHandler
 
         closed_stream = io.StringIO()
         closed_stream.close()
@@ -225,8 +227,9 @@ class TestThreadSafeLogger:
         base.critical.assert_called_once()
 
     def test_all_methods_hold_lock(self):
-        from src.utils.logger import ThreadSafeLogger
         import threading
+
+        from src.utils.logger import ThreadSafeLogger
 
         base = MagicMock(spec=logging.Logger)
         ts = ThreadSafeLogger.__new__(ThreadSafeLogger)
@@ -389,8 +392,8 @@ class TestAsyncLogger:
             al.close()
 
     def test_emit_queues_record(self):
-        from src.utils.logger import AsyncLogger
         from conftest import poll_until
+        from src.utils.logger import AsyncLogger
 
         al = AsyncLogger(max_queue_size=100)
         try:
@@ -540,8 +543,7 @@ class TestGetLogger:
         assert isinstance(logger, logging.Logger)
 
     def test_thread_safe_returns_wrapper(self):
-        from src.utils.logger import get_logger
-        from src.utils.logger import ThreadSafeLogger
+        from src.utils.logger import ThreadSafeLogger, get_logger
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
@@ -554,7 +556,7 @@ class TestGetSampledLogger:
     """get_sampled_logger 函数测试"""
 
     def test_returns_sampled_logger(self):
-        from src.utils.logger import get_sampled_logger, SampledLogger
+        from src.utils.logger import SampledLogger, get_sampled_logger
 
         sampled = get_sampled_logger("test_sampled", sample_rate=10)
         assert isinstance(sampled, SampledLogger)

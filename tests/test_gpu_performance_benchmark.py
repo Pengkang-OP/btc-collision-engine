@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 GPU加速模式性能验证测试
 
@@ -11,11 +10,12 @@ GPU加速模式性能验证测试
 - 监控数据记录
 """
 
-import sys
-import os
-import time
 import logging
-from typing import Dict, Any
+import os
+import sys
+import time
+from typing import Any
+
 import pytest
 
 pytestmark = pytest.mark.gpu
@@ -23,9 +23,9 @@ pytestmark = pytest.mark.gpu
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
-from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
 from src.collision.collision_stats import CollisionStats  # noqa: E402
+from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
+from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
 
 # 配置日志
 logging.basicConfig(
@@ -45,7 +45,7 @@ class GPUPerformanceBenchmark:
         self.cpu_time = 0
         self.gpu_time = 0
 
-    def test_cpu_mode(self, targets: set, duration: int = 10) -> Dict[str, Any]:
+    def test_cpu_mode(self, targets: set, duration: int = 10) -> dict[str, Any]:
         """测试CPU模式性能
 
         Args:
@@ -120,7 +120,7 @@ class GPUPerformanceBenchmark:
             traceback.print_exc()
             return stats_data
 
-    def test_gpu_mode(self, targets: set, duration: int = 10) -> Dict[str, Any]:
+    def test_gpu_mode(self, targets: set, duration: int = 10) -> dict[str, Any]:
         """测试GPU模式性能
 
         Args:

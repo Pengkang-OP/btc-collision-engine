@@ -9,15 +9,17 @@
 """
 
 import os
-import time
-import threading
 import secrets
+import threading
+import time
 from unittest.mock import Mock
-from src.collision.collision_stats import CollisionStats
+
+import pytest
+
 from src.collision.checkpoint_manager import CheckpointManager
+from src.collision.collision_stats import CollisionStats
 from src.collision.deduplication_filter import DeduplicationFilter
 from src.collision.gpu_collision_engine import GPUCollisionEngine
-import pytest
 
 pytestmark = pytest.mark.gpu
 

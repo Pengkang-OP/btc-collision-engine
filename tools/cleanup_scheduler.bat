@@ -14,10 +14,10 @@ call :check_python
 call :check_python_version
 call :activate_venv
 
-call :check_file_exists "tools\cleanup_monitoring_data.py"
+call :check_file_exists "scripts\cleanup_cache.py"
 
-echo [INFO] Cleaning monitoring data older than 30 days...
-python tools\cleanup_monitoring_data.py --max-age 30
+echo [INFO] Cleaning temporary files and cache...
+python scripts\cleanup_cache.py --max-age 30
 
 echo.
 echo ============================================

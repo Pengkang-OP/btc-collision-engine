@@ -9,17 +9,18 @@
 - ObserverManager 管理器
 """
 
-import pytest
 from unittest.mock import Mock
 
+import pytest
+
+from src.collision.collision_stats import CollisionStats
 from src.collision.observers import (
-    CollisionObserver,
     BaseCollisionObserver,
-    MonitoringObserver,
+    CollisionObserver,
     LoggingObserver,
+    MonitoringObserver,
     ObserverManager,
 )
-from src.collision.collision_stats import CollisionStats
 
 # ============================================================================
 # Fixtures

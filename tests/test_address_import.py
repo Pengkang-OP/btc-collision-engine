@@ -1,9 +1,11 @@
 """地址导入和自动保存功能测试"""
 
-import pytest
+import json
 import os
 import tempfile
-import json
+
+import pytest
+
 from src.collision.targets.storage import AddressStorage
 
 
@@ -43,7 +45,7 @@ class TestAddressImport:
             assert os.path.exists(result["storage_path"])
 
             # 验证保存的文件内容
-            with open(result["storage_path"], "r", encoding="utf-8") as f:
+            with open(result["storage_path"], encoding="utf-8") as f:
                 data = json.load(f)
                 assert "targets" in data
                 assert len(data["targets"]) == result["imported_count"]

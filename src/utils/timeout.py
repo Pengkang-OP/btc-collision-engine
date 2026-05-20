@@ -42,6 +42,7 @@ class _TimeoutError(Exception):
 # 线程终止 API（Windows 专用，用于强制中断超时线程）
 # ============================================================================
 
+
 def _terminate_thread(thread_handle: int, exit_code: int = 0) -> bool:
     """Windows: 通过 kernel32.TerminateThread 终止线程（仅作最后手段）
 
@@ -51,9 +52,7 @@ def _terminate_thread(thread_handle: int, exit_code: int = 0) -> bool:
         return False
     try:
         kernel32 = ctypes.windll.kernel32
-        result = kernel32.TerminateThread(
-            ctypes.c_void_p(thread_handle), ctypes.c_ulong(exit_code)
-        )
+        result = kernel32.TerminateThread(ctypes.c_void_p(thread_handle), ctypes.c_ulong(exit_code))
         return bool(result)
     except Exception:
         return False
@@ -62,6 +61,7 @@ def _terminate_thread(thread_handle: int, exit_code: int = 0) -> bool:
 # ============================================================================
 # 线程超时执行器（跨平台通用）
 # ============================================================================
+
 
 def _execute_with_thread_timeout(
     func: Callable,
@@ -104,20 +104,13 @@ def _execute_with_thread_timeout(
     thread.join(timeout=timeout)
 
     if thread.is_alive():
-        thread_info = (
-            f"name={thread.name}, ident={thread.ident}, "
-            f"native_id={thread.native_id}"
-        )
-        logger.warning(
-            f"回调执行超时 ({timeout}秒) - 回调: {callback_name} - "
-            f"线程: {thread_info}"
-        )
+        thread_info = f"name={thread.name}, ident={thread.ident}, native_id={thread.native_id}"
+        logger.warning(f"回调执行超时 ({timeout}秒) - 回调: {callback_name} - 线程: {thread_info}")
         return False
 
     if exception[0]:
         logger.warning(
-            f"回调执行异常 - 回调: {callback_name} - "
-            f"异常: {type(exception[0]).__name__}: {exception[0]}"
+            f"回调执行异常 - 回调: {callback_name} - 异常: {type(exception[0]).__name__}: {exception[0]}"
         )
         return False
 
@@ -127,6 +120,7 @@ def _execute_with_thread_timeout(
 # ============================================================================
 # SIGALRM 超时执行器（Unix 专用）
 # ============================================================================
+
 
 def _execute_with_sigalrm_timeout(
     func: Callable,
@@ -153,9 +147,7 @@ def _execute_with_sigalrm_timeout(
         kwargs = {}
 
     def _timeout_handler(signum: int, frame: Any) -> None:
-        raise _TimeoutError(
-            f"回调执行超时 ({timeout}秒) - 回调: {callback_name}"
-        )
+        raise _TimeoutError(f"回调执行超时 ({timeout}秒) - 回调: {callback_name}")
 
     retry_count = 0
     max_retries = 3
@@ -163,9 +155,7 @@ def _execute_with_sigalrm_timeout(
     while retry_count < max_retries:
         try:
             old_handler = signal.signal(signal.SIGALRM, _timeout_handler)
-            old_itimer = signal.setitimer(
-                signal.ITIMER_REAL, timeout
-            )  # type: ignore[attr-defined]
+            _old_itimer = signal.setitimer(signal.ITIMER_REAL, timeout)  # type: ignore[attr-defined]
             try:
                 func(*args, **kwargs)
                 return True
@@ -176,10 +166,7 @@ def _execute_with_sigalrm_timeout(
                 )
                 return False
             except Exception as e:
-                logger.warning(
-                    f"回调执行异常 - 回调: {callback_name} - "
-                    f"异常: {type(e).__name__}: {e}"
-                )
+                logger.warning(f"回调执行异常 - 回调: {callback_name} - 异常: {type(e).__name__}: {e}")
                 return False
             finally:
                 signal.setitimer(signal.ITIMER_REAL, 0)
@@ -188,8 +175,7 @@ def _execute_with_sigalrm_timeout(
             retry_count += 1
             if retry_count >= max_retries:
                 logger.warning(
-                    f"SIGALRM 超时执行重试耗尽 ({max_retries}次) - "
-                    f"回调: {callback_name} - 错误: {e}"
+                    f"SIGALRM 超时执行重试耗尽 ({max_retries}次) - 回调: {callback_name} - 错误: {e}"
                 )
                 return False
             time.sleep(0.1)
@@ -200,6 +186,7 @@ def _execute_with_sigalrm_timeout(
 # ============================================================================
 # 统一超时执行入口
 # ============================================================================
+
 
 def invoke_with_timeout(
     func: Callable,
@@ -228,25 +215,20 @@ def invoke_with_timeout(
         return False
 
     if os.name == "nt":
-        return _execute_with_thread_timeout(
-            func, args, kwargs, timeout, callback_name
-        )
+        return _execute_with_thread_timeout(func, args, kwargs, timeout, callback_name)
     else:
         try:
             _ = signal.SIGALRM
             _ = signal.setitimer  # type: ignore[attr-defined]
-            return _execute_with_sigalrm_timeout(
-                func, args, kwargs, timeout, callback_name
-            )
+            return _execute_with_sigalrm_timeout(func, args, kwargs, timeout, callback_name)
         except AttributeError:
-            return _execute_with_thread_timeout(
-                func, args, kwargs, timeout, callback_name
-            )
+            return _execute_with_thread_timeout(func, args, kwargs, timeout, callback_name)
 
 
 # ============================================================================
 # 公共 API
 # ============================================================================
+
 
 def with_timeout(seconds: float):
     """超时装饰器工厂
@@ -275,9 +257,7 @@ def with_timeout(seconds: float):
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> None:
             callback_name = getattr(func, "__qualname__", func.__name__)
-            invoke_with_timeout(
-                func, args, kwargs, timeout=seconds, callback_name=callback_name
-            )
+            invoke_with_timeout(func, args, kwargs, timeout=seconds, callback_name=callback_name)
 
         return wrapper
 
@@ -324,9 +304,7 @@ class TimeoutContext:
 
         if exc_type is not None:
             logger.warning(
-                f"上下文执行异常 [{self._name}] "
-                f"{exc_type.__name__}: {exc_val} "
-                f"(耗时 {elapsed_ms:.1f}ms)"
+                f"上下文执行异常 [{self._name}] {exc_type.__name__}: {exc_val} (耗时 {elapsed_ms:.1f}ms)"
             )
             return True
 

@@ -130,8 +130,9 @@ class ObjectPool:
         # 对象内存估算 (用于 auto_tune)
         self._obj_size_estimate = max(object_size_estimate, 1)
 
+        _prewarm_ms = self._prewarm_elapsed * 1000
         logger.info(
-            f"对象池初始化: initial={initial_size}, max={max_size}, prewarm={self._prewarm_elapsed * 1000:.1f}ms"
+            f"对象池初始化: initial={initial_size}, max={max_size}, prewarm={_prewarm_ms:.1f}ms"
         )
 
     def _preallocate(self, count: int):
@@ -364,9 +365,7 @@ class ByteArrayPool:
     用于私钥、公钥、哈希值等敏感数据的临时存储。
     """
 
-    def __init__(
-        self, buffer_size: int = 32, initial_size: int = 500, max_size: int = 5000
-    ) -> None:
+    def __init__(self, buffer_size: int = 32, initial_size: int = 500, max_size: int = 5000) -> None:
         """
         初始化bytearray池
 
@@ -389,9 +388,9 @@ class ByteArrayPool:
 
         注意: 会自动清零buffer以确保安全
         """
-        # 安全清零
-        for i in range(len(buffer)):
-            buffer[i] = 0
+        # 安全清零 — 使用 ctypes.memset 防止编译器优化掉 Python 循环
+        from src.core.address_generator import secure_clear_bytearray
+        secure_clear_bytearray(buffer)
 
         self._pool.release(buffer)
 
@@ -449,12 +448,8 @@ class GlobalPoolManager:
         with self._lock:
             if not self._initialized:
                 self.ecpoint_pool = ECPointPool(initial_size=1000, max_size=10000)
-                self.bytearray_pool_32 = ByteArrayPool(
-                    buffer_size=32, initial_size=500, max_size=5000
-                )
-                self.bytearray_pool_64 = ByteArrayPool(
-                    buffer_size=64, initial_size=200, max_size=2000
-                )
+                self.bytearray_pool_32 = ByteArrayPool(buffer_size=32, initial_size=500, max_size=5000)
+                self.bytearray_pool_64 = ByteArrayPool(buffer_size=64, initial_size=200, max_size=2000)
 
                 # 注册到 pool registry
                 self._pools_registry = [

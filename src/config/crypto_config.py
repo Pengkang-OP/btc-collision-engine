@@ -8,11 +8,11 @@
 
 import json
 import os
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 
-class CryptoBackendType(str, Enum):
+class CryptoBackendType(StrEnum):
     """加密后端类型（字符串版本，用于配置）"""
 
     PURE_PYTHON = "pure_python"

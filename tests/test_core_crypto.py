@@ -1,16 +1,16 @@
 """核心加密模块单元测试 - Secp256k1、HashUtils、Base58、WIF、P2PKHAddressGenerator"""
 
-import unittest
 import os
 import sys
+import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.core.secp256k1 import Secp256k1  # noqa: E402
-from src.core.hash_utils import HashUtils  # noqa: E402
-from src.core.base58 import Base58  # noqa: E402
-from src.core.wif import WIF  # noqa: E402
 from src.core.address_generator import P2PKHAddressGenerator  # noqa: E402
+from src.core.base58 import Base58  # noqa: E402
+from src.core.hash_utils import HashUtils  # noqa: E402
+from src.core.secp256k1 import Secp256k1  # noqa: E402
+from src.core.wif import WIF  # noqa: E402
 
 
 class TestSecp256k1(unittest.TestCase):
@@ -142,7 +142,7 @@ class TestBase58(unittest.TestCase):
         encoded = Base58.check_encode(0x00, payload)
         # 破坏编码字符串
         corrupted = encoded[:-1] + ("A" if encoded[-1] != "A" else "B")
-        with self.assertRaises(Exception):
+        with self.assertRaises(Exception):  # noqa: B017
             Base58.check_decode(corrupted)
 
     def test_bitcoin_genesis_address(self):
@@ -254,7 +254,7 @@ class TestWIF(unittest.TestCase):
 
     def test_invalid_wif_raises(self):
         """无效 WIF 应抛出异常"""
-        with self.assertRaises(Exception):
+        with self.assertRaises(Exception):  # noqa: B017
             WIF.decode("invalid_wif_string")
 
     def test_wif_length(self):

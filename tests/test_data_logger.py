@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """数据日志系统单元测试
 
 测试src.monitoring.data_logger模块的所有功能。
@@ -16,13 +15,14 @@
 - 自动清理功能
 """
 
-import pytest
-import os
-import sys
-import time
-import shutil
-import tempfile
 import json
+import os
+import shutil
+import sys
+import tempfile
+import time
+
+import pytest
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -228,7 +228,7 @@ class TestDataLoggerErrorRecording:
         # 验证错误已记录（通过检查错误日志文件）
         error_log_path = os.path.join(self.test_dir, "error_log.json")
         if os.path.exists(error_log_path):
-            with open(error_log_path, "r") as f:
+            with open(error_log_path) as f:
                 error_log = json.load(f)
             assert len(error_log) > 0
 
@@ -246,7 +246,7 @@ class TestDataLoggerErrorRecording:
         # 验证错误已记录
         error_log_path = os.path.join(self.test_dir, "error_log.json")
         if os.path.exists(error_log_path):
-            with open(error_log_path, "r") as f:
+            with open(error_log_path) as f:
                 error_log = json.load(f)
             assert len(error_log) > 0
 
@@ -258,7 +258,7 @@ class TestDataLoggerErrorRecording:
         # 验证错误被记录
         error_log_path = os.path.join(self.test_dir, "error_log.json")
         if os.path.exists(error_log_path):
-            with open(error_log_path, "r") as f:
+            with open(error_log_path) as f:
                 error_log = json.load(f)
             assert len(error_log) > 0
 

@@ -1,12 +1,13 @@
-# -*- coding: utf-8 -*-
 """P3-10: fast_json 模块单元测试"""
 
 import json
-import tempfile
 import os
+import tempfile
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
-from src.utils.fast_json import fast_dumps, fast_loads, fast_dump, fast_load, is_orjson_available
+
+from src.utils.fast_json import fast_dump, fast_dumps, fast_load, fast_loads, is_orjson_available
 
 
 class TestFastDumps:
@@ -73,7 +74,7 @@ class TestFastDumpLoad:
             fast_dump(data, f, indent=2)
 
         try:
-            with open(temp_path, "r", encoding="utf-8") as f:
+            with open(temp_path, encoding="utf-8") as f:
                 loaded = fast_load(f)
             assert loaded == data
         finally:

@@ -3,8 +3,8 @@
 GPU碰撞引擎内核验证 - 综合测试报告
 """
 
-import sys
 import os
+import sys
 import time
 
 # 添加项目根目录到路径
@@ -218,6 +218,7 @@ def main():
 
     try:
         import pyopencl as cl
+
         from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
         platforms = cl.get_platforms()
@@ -253,8 +254,9 @@ def main():
     print_section("测试7: 算术验证 - 2*G计算")
 
     try:
-        import pyopencl as cl
         import numpy as np
+        import pyopencl as cl
+
         from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
         platforms = cl.get_platforms()
@@ -312,8 +314,9 @@ def main():
     print_section("测试8: 哈希验证 - k=1公钥计算")
 
     try:
-        import pyopencl as cl
         import numpy as np
+        import pyopencl as cl
+
         from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
         platforms = cl.get_platforms()

@@ -11,11 +11,12 @@
 - 统计与导出
 """
 
-import os
 import json
+import os
 import tempfile
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from src.log_engine.log_storage import LogStorage
 
@@ -226,7 +227,7 @@ class TestLogStorageStats:
         try:
             result = populated_storage.export_to_json(export_path)
             assert result is True
-            with open(export_path, "r", encoding="utf-8") as f:
+            with open(export_path, encoding="utf-8") as f:
                 data = json.load(f)
             assert len(data) == 5
         finally:
@@ -240,7 +241,7 @@ class TestLogStorageStats:
         try:
             result = populated_storage.export_to_json(export_path, recent_only=True)
             assert result is True
-            with open(export_path, "r", encoding="utf-8") as f:
+            with open(export_path, encoding="utf-8") as f:
                 data = json.load(f)
             assert len(data) <= 100  # get_recent 默认 100 条
         finally:

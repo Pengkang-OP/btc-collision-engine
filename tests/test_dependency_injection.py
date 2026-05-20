@@ -1,25 +1,27 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 测试依赖注入修复 - 验证空指针问题已解决
 """
 
-import pytest
 import os
 import sys
 import tempfile
 from unittest.mock import Mock
+
+import pytest
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.monitoring.monitoring_system import (  # noqa: E402
     AnomalyDetector,
-    MonitoringAlertAdapter as AlertSystem,
-    ReportGenerator,
     DataStorage,
     MonitoringData,
     MonitoringSystem,
+    ReportGenerator,
+)
+from src.monitoring.monitoring_system import (
+    MonitoringAlertAdapter as AlertSystem,
 )
 
 
@@ -180,8 +182,8 @@ class TestDependencyInjectionFix:
             generator = ReportGenerator(storage=storage, detector=detector)
 
             # 添加测试数据
-            from datetime import datetime, timedelta
             import json
+            from datetime import datetime, timedelta
 
             today = datetime.now()
             test_data = []

@@ -1,7 +1,7 @@
-# -*- coding: utf-8 -*-
 """多GPU功能单元测试"""
 
 import unittest
+
 import pytest
 
 pytestmark = pytest.mark.gpu
@@ -152,7 +152,8 @@ class TestGPUAutoConfigurator(unittest.TestCase):
         config = self.configurator.get_nvidia_config(device)
 
         self.assertEqual(config["use_uint32_workaround"], False)
-        self.assertEqual(config["use_fast_math"], True)
+        # 加密运算需要精度，快速数学必须禁用
+        self.assertEqual(config["use_fast_math"], False)
         self.assertIn(config["batch_size"], [32768, 65536, 131072])
 
     def test_intel_config(self):

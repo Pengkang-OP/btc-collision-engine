@@ -5,15 +5,16 @@
 此脚本用于清理系统中的缓存数据，包括编译后的内核、设备信息、临时文件等。
 """
 
+import glob
 import os
 import shutil
-import glob
 import sys
+import time
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.utils import init_logging, get_configured_logger  # noqa: E402
+from src.utils import get_configured_logger, init_logging  # noqa: E402
 
 # 配置日志
 init_logging()
@@ -64,10 +65,14 @@ def clean_temporary_files():
     """清理临时文件"""
     logger.info("开始清理临时文件...")
 
-    # 清理临时文件
+    # 清理临时文件（仅清理 .tmp/.temp，日志仅清理超过 max_age 天的）
+    max_age_days = 30  # 默认保留30天内的日志
+    now = time.time()
     temp_patterns = [
         os.path.join(os.path.dirname(__file__), "..", "*.tmp"),
         os.path.join(os.path.dirname(__file__), "..", "*.temp"),
+    ]
+    log_patterns = [
         os.path.join(os.path.dirname(__file__), "..", "*.log"),
         os.path.join(os.path.dirname(__file__), "..", "data_logs", "*.log"),
         os.path.join(os.path.dirname(__file__), "..", "data_logs", "*.json"),
@@ -87,13 +92,25 @@ def clean_temporary_files():
             except Exception as e:
                 logger.warning(f"清理临时文件失败: {e}")
 
+    # 日志/json 文件仅清理超过 max_age 天的，避免误删活跃数据
+    age_threshold = max_age_days * 86400
+    for pattern in log_patterns:
+        for file_path in glob.glob(pattern):
+            try:
+                file_age = now - os.path.getmtime(file_path)
+                if file_age > age_threshold:
+                    os.remove(file_path)
+                    logger.info(f"清理过期文件 ({file_age/86400:.0f}d): {file_path}")
+            except Exception as e:
+                logger.warning(f"清理日志文件失败: {e}")
+
 
 def clean_pycache():
     """清理pycache目录"""
     logger.info("开始清理pycache目录...")
 
     # 清理pycache目录
-    for root, dirs, files in os.walk(os.path.join(os.path.dirname(__file__), "..")):
+    for root, dirs, _files in os.walk(os.path.join(os.path.dirname(__file__), "..")):
         for dir_name in dirs:
             if dir_name == "__pycache__":
                 dir_path = os.path.join(root, dir_name)

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 GPU内存池修复验证测试
 
@@ -12,8 +11,9 @@ GPU内存池修复验证测试
 
 import sys
 import time
-import pytest
 from pathlib import Path
+
+import pytest
 
 # 添加项目根目录
 sys.path.insert(0, str(Path(__file__).parent))

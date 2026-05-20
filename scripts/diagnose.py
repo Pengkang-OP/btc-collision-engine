@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """BTC 碰撞引擎 - 自助诊断工具
 
 用法:
@@ -17,13 +16,13 @@
     7. CLI 入口可导入性
 """
 
-import sys
-import os
-import json
 import argparse
+import json
+import os
 import shutil
+import sys
 import time
-from typing import Dict, Any, List, Tuple
+from typing import Any
 
 # 确保可以导入项目模块
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -58,7 +57,7 @@ SEP = "─" * 60
 # ─────────────────────────────────────────────
 
 
-def check_python_version() -> Tuple[bool, str]:
+def check_python_version() -> tuple[bool, str]:
     """检查 Python 版本 >= 3.7"""
     v = sys.version_info
     ver_str = f"{v.major}.{v.minor}.{v.micro}"
@@ -67,7 +66,7 @@ def check_python_version() -> Tuple[bool, str]:
     return False, f"Python {ver_str}（要求 >= 3.7）"
 
 
-def check_core_deps() -> List[Dict[str, Any]]:
+def check_core_deps() -> list[dict[str, Any]]:
     """检查核心必选依赖"""
     deps = [
         ("hashlib", "内置", "哈希计算"),
@@ -94,7 +93,7 @@ def check_core_deps() -> List[Dict[str, Any]]:
     return results
 
 
-def check_perf_deps() -> List[Dict[str, Any]]:
+def check_perf_deps() -> list[dict[str, Any]]:
     """检查可选性能依赖"""
     deps = [
         ("coincurve", "coincurve", "libsecp256k1 绑定（3-5x 加速，强烈推荐）"),
@@ -132,13 +131,13 @@ def check_perf_deps() -> List[Dict[str, Any]]:
     return results
 
 
-def check_config() -> Tuple[bool, str, Dict]:
+def check_config() -> tuple[bool, str, dict]:
     """检查 config.json 是否存在且有效"""
     config_path = os.path.join(_PROJECT_ROOT, "config.json")
     if not os.path.exists(config_path):
         return False, "config.json 不存在（请执行: copy config.example.json config.json）", {}
     try:
-        with open(config_path, "r", encoding="utf-8") as f:
+        with open(config_path, encoding="utf-8") as f:
             cfg = json.load(f)
         keys = list(cfg.keys())
         return True, f"config.json 有效，顶层键: {keys}", cfg
@@ -148,7 +147,7 @@ def check_config() -> Tuple[bool, str, Dict]:
         return False, f"config.json 读取失败: {e}", {}
 
 
-def check_gpu(quick: bool = False) -> List[Dict[str, Any]]:
+def check_gpu(quick: bool = False) -> list[dict[str, Any]]:
     """检查 GPU / OpenCL 设备"""
     if quick:
         return [{"note": "快速模式已跳过 GPU 检查"}]
@@ -182,7 +181,7 @@ def check_gpu(quick: bool = False) -> List[Dict[str, Any]]:
     return devices
 
 
-def check_disk() -> Dict[str, Any]:
+def check_disk() -> dict[str, Any]:
     """检查磁盘空间"""
     logs_dir = os.path.join(_PROJECT_ROOT, "logs")
     check_path = logs_dir if os.path.exists(logs_dir) else _PROJECT_ROOT
@@ -203,7 +202,7 @@ def check_disk() -> Dict[str, Any]:
         return {"error": str(e), "ok": True}
 
 
-def check_cli_import() -> Tuple[bool, str]:
+def check_cli_import() -> tuple[bool, str]:
     """检查 CLI 入口能否正常导入"""
     try:
         from src.cli.main import main  # noqa: F401
@@ -215,7 +214,7 @@ def check_cli_import() -> Tuple[bool, str]:
         return False, f"src.cli.main 导入异常: {e}"
 
 
-def check_crypto_backend() -> Tuple[str, str]:
+def check_crypto_backend() -> tuple[str, str]:
     """检测当前使用的加密后端"""
     try:
         from src.crypto.backend import get_backend_name
@@ -245,7 +244,7 @@ def check_crypto_backend() -> Tuple[str, str]:
 # ─────────────────────────────────────────────
 
 
-def print_report(results: Dict[str, Any], as_json: bool = False):
+def print_report(results: dict[str, Any], as_json: bool = False):
     if as_json:
         print(json.dumps(results, ensure_ascii=False, indent=2))
         return

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """数据转换模块综合测试
 
 覆盖范围:
@@ -9,17 +8,17 @@
 - AddressConverter: 私钥到地址的完整转换
 """
 
-import unittest
-import sys
 import os
+import sys
 import tempfile
+import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.utils.encoding_utils import EncodingUtils  # noqa: E402
+from src.core.address_converter import AddressConverter  # noqa: E402
 from src.core.base58 import Base58  # noqa: E402
 from src.core.wif import WIF  # noqa: E402
-from src.core.address_converter import AddressConverter  # noqa: E402
+from src.utils.encoding_utils import EncodingUtils  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # 测试数据常量
@@ -96,7 +95,7 @@ class TestEncodingUtils(unittest.TestCase):
 
     def test_detect_encoding_from_bytes(self):
         """从字节数据检测编码"""
-        utf8_data = "Hello 世界".encode("utf-8")
+        utf8_data = "Hello 世界".encode()
         encoding = EncodingUtils.detect_encoding_from_bytes(utf8_data)
         self.assertEqual(encoding, "utf-8")
 

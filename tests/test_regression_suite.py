@@ -11,10 +11,11 @@
 - API 兼容性回归
 """
 
-import pytest
 import tempfile
 import time
 from unittest.mock import Mock
+
+import pytest
 
 # ============================================================================
 # P0 安全相关修复回归
@@ -84,6 +85,7 @@ class TestP1DataIntegrityRegression:
     def test_collision_stats_thread_safety(self):
         """CollisionStats 线程安全快照不被并发修改破坏"""
         import threading
+
         from src.collision.collision_stats import CollisionStats
 
         stats = CollisionStats()
@@ -141,8 +143,8 @@ class TestP1DataIntegrityRegression:
 
     def test_log_collector_queue_full_no_crash(self):
         """队列满时不应崩溃"""
-        from src.log_engine.log_collector import LogCollector
         from src.log_engine.events import LogEventType
+        from src.log_engine.log_collector import LogCollector
 
         collector = LogCollector(max_queue_size=2)
         for i in range(20):
@@ -161,8 +163,8 @@ class TestP2BoundaryRegression:
 
     def test_empty_data_handling(self):
         """空数据处理"""
-        from src.log_engine.log_processor import LogProcessor, SensitiveDataFilter
         from src.log_engine.events import LogEvent, LogEventType
+        from src.log_engine.log_processor import LogProcessor, SensitiveDataFilter
 
         processor = LogProcessor()
         event = LogEvent(LogEventType.STATUS_UPDATE, data={})

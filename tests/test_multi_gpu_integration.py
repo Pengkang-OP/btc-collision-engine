@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """多GPU设备管理集成测试
 
 测试多GPU设备的选择、切换和负载均衡：
@@ -9,10 +8,11 @@
 5. GPU故障恢复测试
 """
 
-import pytest
-import time
 import logging
+import time
 from unittest.mock import Mock, patch
+
+import pytest
 
 logger = logging.getLogger(__name__)
 

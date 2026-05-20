@@ -5,15 +5,15 @@
 此脚本用于清理系统中的临时文件，包括日志文件、测试文件、临时配置文件等。
 """
 
+import glob
 import os
 import shutil
-import glob
 import sys
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.utils import init_logging, get_configured_logger  # noqa: E402
+from src.utils import get_configured_logger, init_logging  # noqa: E402
 
 # 配置日志
 init_logging()

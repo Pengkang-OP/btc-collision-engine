@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 """SecureKeyGenerator 全面单元测试 - 覆盖构造/生成/验证/统计/熵池路径"""
 
+import os
+import sys
 import unittest
 from unittest.mock import patch
-import sys
-import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 

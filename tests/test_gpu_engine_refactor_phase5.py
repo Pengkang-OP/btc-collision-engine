@@ -13,10 +13,11 @@
 创建日期: 2026-04-30
 """
 
-import pytest
 from unittest.mock import MagicMock, patch
 
-from src.collision.gpu.protocols import GPUExecutionContext, GPUDevice
+import pytest
+
+from src.collision.gpu.protocols import GPUDevice, GPUExecutionContext
 
 pytestmark = pytest.mark.gpu
 
@@ -348,8 +349,8 @@ class TestVendorOptimizationFactory:
     def test_create_intel_strategy(self):
         """创建 Intel 策略"""
         from src.collision.gpu.vendor_strategy import (
-            VendorOptimizationFactory,
             IntelOptimizationStrategy,
+            VendorOptimizationFactory,
         )
 
         strategy = VendorOptimizationFactory.create("intel")
@@ -358,8 +359,8 @@ class TestVendorOptimizationFactory:
     def test_create_nvidia_strategy(self):
         """创建 NVIDIA 策略"""
         from src.collision.gpu.vendor_strategy import (
-            VendorOptimizationFactory,
             NvidiaOptimizationStrategy,
+            VendorOptimizationFactory,
         )
 
         strategy = VendorOptimizationFactory.create("nvidia")
@@ -368,8 +369,8 @@ class TestVendorOptimizationFactory:
     def test_create_amd_strategy(self):
         """创建 AMD 策略"""
         from src.collision.gpu.vendor_strategy import (
-            VendorOptimizationFactory,
             AMDOptimizationStrategy,
+            VendorOptimizationFactory,
         )
 
         strategy = VendorOptimizationFactory.create("amd")
@@ -378,8 +379,8 @@ class TestVendorOptimizationFactory:
     def test_create_case_insensitive(self):
         """厂商名大小写不敏感"""
         from src.collision.gpu.vendor_strategy import (
-            VendorOptimizationFactory,
             NvidiaOptimizationStrategy,
+            VendorOptimizationFactory,
         )
 
         strategy = VendorOptimizationFactory.create("NVIDIA")
@@ -388,8 +389,8 @@ class TestVendorOptimizationFactory:
     def test_create_unknown_vendor_returns_default(self):
         """未知厂商返回默认策略"""
         from src.collision.gpu.vendor_strategy import (
-            VendorOptimizationFactory,
             DefaultOptimizationStrategy,
+            VendorOptimizationFactory,
         )
 
         strategy = VendorOptimizationFactory.create("unknown_vendor")
@@ -398,8 +399,8 @@ class TestVendorOptimizationFactory:
     def test_create_empty_vendor_returns_default(self):
         """空厂商名返回默认策略"""
         from src.collision.gpu.vendor_strategy import (
-            VendorOptimizationFactory,
             DefaultOptimizationStrategy,
+            VendorOptimizationFactory,
         )
 
         strategy = VendorOptimizationFactory.create("")
@@ -461,10 +462,10 @@ class TestModuleImports:
     def test_import_all_strategies(self):
         """验证所有策略可导入"""
         from src.collision.gpu.vendor_strategy import (
-            IntelOptimizationStrategy,
-            NvidiaOptimizationStrategy,
             AMDOptimizationStrategy,
             DefaultOptimizationStrategy,
+            IntelOptimizationStrategy,
+            NvidiaOptimizationStrategy,
             VendorOptimizationFactory,
         )
 
@@ -505,7 +506,7 @@ class TestModuleImports:
             "vendor_strategy.py",
         )
         file_path = os.path.abspath(file_path)
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
         assert "# TODO: Phase 5" not in content, "vendor_strategy.py 中还有未处理的 Phase 5 TODO"
         assert (
@@ -586,8 +587,8 @@ class TestVendorStrategyIntegration:
     def test_default_fallback_for_all_vendors(self):
         """未知厂商回退到默认策略"""
         from src.collision.gpu.vendor_strategy import (
-            VendorOptimizationFactory,
             DefaultOptimizationStrategy,
+            VendorOptimizationFactory,
         )
 
         unknown_vendors = ["apple", "qualcomm", "arm", "huawei"]

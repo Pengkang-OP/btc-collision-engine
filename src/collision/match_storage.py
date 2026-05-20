@@ -145,6 +145,7 @@ class MatchDataStorage:
                 "collision_type": "exact_match",
             },
             "private_key": {
+                # ⚠️ SECURITY: WIF私钥以明文存储，文件权限应设为 0o600
                 "hex": to_hex(generated.get("private_key", b"")),
                 "wif_compressed": generated.get("wif_compressed", ""),
                 "wif_uncompressed": generated.get("wif_uncompressed", ""),

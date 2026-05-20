@@ -12,10 +12,11 @@
 """
 
 from unittest.mock import Mock, patch
-from src.wizard.interfaces import WizardConfig, WizardResult, WizardMode
-from src.wizard.wizard_engine import WizardEngine
-from src.wizard.message_queue import WizardMessageQueue
+
 from src.wizard.events import WizardEventType
+from src.wizard.interfaces import WizardConfig, WizardMode, WizardResult
+from src.wizard.message_queue import WizardMessageQueue
+from src.wizard.wizard_engine import WizardEngine
 
 # ============================================================================
 # 辅助函数

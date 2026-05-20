@@ -79,8 +79,14 @@ RECOVERABLE_ERROR_MAP: dict[type[Exception], RecoverableErrorCategory] = {
 # 错误消息关键字 → 类别映射
 ERROR_KEYWORD_CATEGORY: list[tuple[list[str], RecoverableErrorCategory]] = [
     (
-        ["out of resources", "cl_out_of_resources", "cl_mem_object_allocation_failure",
-         "allocation failed", "insufficient", "resource exhausted"],
+        [
+            "out of resources",
+            "cl_out_of_resources",
+            "cl_mem_object_allocation_failure",
+            "allocation failed",
+            "insufficient",
+            "resource exhausted",
+        ],
         RecoverableErrorCategory.GPU_RESOURCE,
     ),
     (
@@ -120,17 +126,17 @@ def _sanitize_error_message(message: str) -> str:
     """
     import re
 
-    MAX_MESSAGE_LENGTH = 500
+    _max_message_length = 500
 
-    if len(message) > MAX_MESSAGE_LENGTH:
-        message = message[:MAX_MESSAGE_LENGTH] + "...[truncated]"
+    if len(message) > _max_message_length:
+        message = message[:_max_message_length] + "...[truncated]"
 
     # 匹配 base58 WIF 私钥 (以 5/H/K/L 开头, 51-52 字符)
-    message = re.sub(r'\b[5HKL][1-9A-HJ-NP-Za-km-z]{50,51}\b', '[MASKED_WIF]', message)
+    message = re.sub(r"\b[5HKL][1-9A-HJ-NP-Za-km-z]{50,51}\b", "[MASKED_WIF]", message)
 
     # 匹配 64 字符十六进制私钥
     # 注意: SHA-256 哈希值也是 64 字符 hex，掩码标签需区分以利回溯
-    message = re.sub(r'\b[0-9a-fA-F]{64}\b', '[MASKED_64CHAR_HEX]', message)
+    message = re.sub(r"\b[0-9a-fA-F]{64}\b", "[MASKED_64CHAR_HEX]", message)
 
     return message
 
@@ -215,7 +221,7 @@ def retry_on_error(
                     if attempt >= max_retries:
                         break
 
-                    sleep_time = min(delay * (backoff ** attempt), max_delay)
+                    sleep_time = min(delay * (backoff**attempt), max_delay)
                     if jitter:
                         sleep_time *= 0.75 + random.SystemRandom().random() * 0.5  # nosec B311
 
@@ -300,7 +306,7 @@ class FallbackStrategy:
         for label, action in self._fallbacks:
             logger.info(f"执行降级策略 [{self.name}]: {label}")
             try:
-                result = action()
+                _result = action()
                 logger.info(f"降级策略 [{self.name}] {label} 成功")
                 return True, label
             except Exception as e:
@@ -351,9 +357,7 @@ class ErrorRecoveryManager:
         self._retry_history: dict[RecoverableErrorCategory, list[RetryRecord]] = {}
         self._disabled_categories: set[RecoverableErrorCategory] = set()
 
-    def register_fallback(
-        self, category: RecoverableErrorCategory, strategy: FallbackStrategy
-    ) -> None:
+    def register_fallback(self, category: RecoverableErrorCategory, strategy: FallbackStrategy) -> None:
         with self._lock:
             self._fallbacks[category] = strategy
             logger.debug(f"[{self.name}] 注册 {category.value} 降级策略: {strategy.name}")
@@ -397,9 +401,7 @@ class ErrorRecoveryManager:
             elif action == RecoveryAction.DEGRADE:
                 self._stats.degrades_triggered += 1
 
-    def execute_fallback(
-        self, category: RecoverableErrorCategory
-    ) -> tuple[bool, str | None]:
+    def execute_fallback(self, category: RecoverableErrorCategory) -> tuple[bool, str | None]:
         strategy = self.get_fallback(category)
         if strategy is None:
             logger.warning(f"[{self.name}] {category.value} 无已注册的降级策略")
@@ -545,7 +547,7 @@ class ErrorRecoveryManager:
                         if attempt >= max_retries:
                             break
 
-                        sleep_time = min(delay * (backoff ** attempt), max_delay)
+                        sleep_time = min(delay * (backoff**attempt), max_delay)
                         sleep_time *= 0.75 + random.SystemRandom().random() * 0.5  # nosec B311
 
                         logger.warning(
@@ -570,10 +572,7 @@ class ErrorRecoveryManager:
                             )
                             return result
                         except Exception as fb_err:
-                            logger.error(
-                                f"[{manager.name}] {func.__name__} "
-                                f"降级后重试也失败: {fb_err}"
-                            )
+                            logger.error(f"[{manager.name}] {func.__name__} 降级后重试也失败: {fb_err}")
                             raise fb_err
 
                 raise last_exception  # type: ignore[misc]

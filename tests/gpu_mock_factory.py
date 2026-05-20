@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 GPU Mock 测试基础设施 - 统一的 Mock 工厂
 
@@ -10,9 +9,10 @@ GPU Mock 测试基础设施 - 统一的 Mock 工厂
 - pyopencl 模块级 patch 辅助
 """
 
-from unittest.mock import Mock, patch
 from contextlib import contextmanager
-from typing import List, Optional, Dict, Any
+from typing import Any
+from unittest.mock import Mock, patch
+
 import pytest
 
 pytestmark = pytest.mark.gpu
@@ -126,7 +126,7 @@ class GPUMockFactory:
         device.max_compute_units = compute_units
 
         # get_info() 响应真实 cl.device_info 常量
-        _info_map: Dict[int, Any] = {
+        _info_map: dict[int, Any] = {
             _CL_DEVICE_TYPE: device_type,
             _CL_DEVICE_NAME: name,
             _CL_DEVICE_VENDOR: vendor,
@@ -141,7 +141,7 @@ class GPUMockFactory:
     @staticmethod
     def create_cl_platform(
         name: str = "Mock Platform",
-        devices: Optional[List[Mock]] = None,
+        devices: list[Mock] | None = None,
     ) -> Mock:
         """创建标准 Mock OpenCL 平台（cl.Platform 替代品）。
 
@@ -162,7 +162,7 @@ class GPUMockFactory:
         return platform
 
     @staticmethod
-    def create_cl_context(device: Optional[Mock] = None) -> Mock:
+    def create_cl_context(device: Mock | None = None) -> Mock:
         """创建标准 Mock OpenCL 上下文（cl.Context 替代品）。
 
         Args:
@@ -211,7 +211,7 @@ class GPUMockFactory:
         return buf
 
     @staticmethod
-    def create_cl_queue(context: Optional[Mock] = None) -> Mock:
+    def create_cl_queue(context: Mock | None = None) -> Mock:
         """创建标准 Mock OpenCL 命令队列（cl.CommandQueue 替代品）。"""
         queue = Mock()
         queue.context = context or GPUMockFactory.create_cl_context()
@@ -510,7 +510,7 @@ class GPUMockFactory:
         return cls.create_cl_device(**p, device_type=device_type)
 
     @classmethod
-    def multi_vendor_platforms(cls) -> List[Mock]:
+    def multi_vendor_platforms(cls) -> list[Mock]:
         """返回包含 NVIDIA / AMD / Intel Arc 三种设备的多平台列表。"""
         platform1 = cls.create_cl_platform("Platform NVIDIA", [cls.nvidia_device()])
         platform2 = cls.create_cl_platform(

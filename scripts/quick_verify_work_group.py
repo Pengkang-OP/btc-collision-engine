@@ -2,8 +2,9 @@
 """快速验证work_group_size优化是否生效"""
 
 import sys
+from pathlib import Path
 
-sys.path.insert(0, "f:/Qoder/btc-collision-engine")
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.gpu.auto_config import GPUAutoConfigurator  # noqa: E402
 

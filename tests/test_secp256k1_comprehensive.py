@@ -1,12 +1,12 @@
 """secp256k1 深度覆盖率提升测试 — 覆盖之前未测试的路径"""
 
-import unittest
 import os
 import sys
+import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.core.secp256k1 import Secp256k1, ECPoint, EllipticCurve  # noqa: E402
+from src.core.secp256k1 import ECPoint, EllipticCurve, Secp256k1  # noqa: E402
 
 
 class TestSecp256k1Parameters(unittest.TestCase):

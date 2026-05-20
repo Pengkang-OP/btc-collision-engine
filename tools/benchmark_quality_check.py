@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 文档质量检查性能基准测试
 
@@ -10,14 +9,14 @@
     python tools/benchmark_quality_check.py [--docs-dir docs] [--iterations 10]
 """
 
+import statistics
 import sys
 import time
-import statistics
 from pathlib import Path
-from typing import Dict
 
 # 修复Windows控制台编码问题
 from utf8_helper import setup_windows_utf8
+
 setup_windows_utf8()
 
 # 添加项目根目录到路径
@@ -27,7 +26,7 @@ sys.path.insert(0, str(project_root))
 from tools.check_document_quality import DocumentQualityChecker
 
 
-def benchmark_check(docs_dir: str, iterations: int = 10) -> Dict:
+def benchmark_check(docs_dir: str, iterations: int = 10) -> dict:
     """性能基准测试
 
     Args:
@@ -41,7 +40,7 @@ def benchmark_check(docs_dir: str, iterations: int = 10) -> Dict:
     doc_counts = []
     scores = []
 
-    print(f"🔧 开始性能基准测试...")
+    print("🔧 开始性能基准测试...")
     print(f"📁 文档目录: {docs_dir}")
     print(f"🔄 迭代次数: {iterations}\n")
 
@@ -97,29 +96,29 @@ def benchmark_check(docs_dir: str, iterations: int = 10) -> Dict:
     return stats
 
 
-def print_report(stats: Dict):
+def print_report(stats: dict):
     """打印性能报告"""
     print(f"\n{'=' * 60}")
-    print(f"📊 性能基准测试报告")
+    print("📊 性能基准测试报告")
     print(f"{'=' * 60}")
 
-    print(f"\n📁 测试配置:")
+    print("\n📁 测试配置:")
     print(f"  迭代次数: {stats['iterations']}")
     print(f"  文档数量: {stats['doc_count']:.0f}个")
 
-    print(f"\n⏱️  时间统计:")
+    print("\n⏱️  时间统计:")
     print(f"  平均: {stats['time']['avg']:.2f}秒")
     print(f"  中位数: {stats['time']['median']:.2f}秒")
     print(f"  最小: {stats['time']['min']:.2f}秒")
     print(f"  最大: {stats['time']['max']:.2f}秒")
     print(f"  标准差: {stats['time']['stdev']:.2f}秒")
 
-    print(f"\n📈 评分统计:")
+    print("\n📈 评分统计:")
     print(f"  平均: {stats['score']['avg']:.1f}/10")
     print(f"  最小: {stats['score']['min']:.1f}/10")
     print(f"  最大: {stats['score']['max']:.1f}/10")
 
-    print(f"\n⚡ 吞吐量:")
+    print("\n⚡ 吞吐量:")
     print(f"  {stats['throughput']:.1f} 文档/秒")
     print(f"  {stats['throughput'] * 60:.1f} 文档/分钟")
 
@@ -157,19 +156,19 @@ def main():
     print_report(stats)
 
     # 性能建议
-    print(f"\n💡 性能建议:")
+    print("\n💡 性能建议:")
     avg_time = stats['time']['avg']
     if avg_time < 1.0:
         print(f"  ✅ 性能优秀！平均{avg_time:.2f}秒")
     elif avg_time < 5.0:
         print(f"  ✅ 性能良好，平均{avg_time:.2f}秒")
     elif avg_time < 10.0:
-        print(f"  ⚠️  性能可接受，但可以考虑优化")
+        print("  ⚠️  性能可接受，但可以考虑优化")
     else:
-        print(f"  ❌ 性能较慢，建议优化")
-        print(f"     - 检查文档数量是否过多")
-        print(f"     - 考虑增量检查模式")
-        print(f"     - 优化链接检查逻辑")
+        print("  ❌ 性能较慢，建议优化")
+        print("     - 检查文档数量是否过多")
+        print("     - 考虑增量检查模式")
+        print("     - 优化链接检查逻辑")
 
     print()
 

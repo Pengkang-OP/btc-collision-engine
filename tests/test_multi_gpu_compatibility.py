@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 多 GPU兼容性测试
 
@@ -11,11 +10,12 @@
 - 动态负载重平衡
 """
 
-import pytest
-from unittest.mock import MagicMock, patch, Mock
+from unittest.mock import MagicMock, Mock, patch
 
+import pytest
+
+from src.gpu.gpu_recovery_manager import GPUFailureType, GPURecoveryManager
 from src.gpu.load_balancer import GPULoadBalancer
-from src.gpu.gpu_recovery_manager import GPURecoveryManager, GPUFailureType
 
 # ---------------------------------------------------------------------------
 # 辅助函数：构建标准设备字典
@@ -662,7 +662,7 @@ class TestKernelCompilationCache:
 
         kernel_src = "__kernel void test(){}"
         build_opts = "-cl-std=CL2.0"
-        source_hash = hashlib.md5(kernel_src.encode()).hexdigest()[:16]
+        source_hash = hashlib.md5(kernel_src.encode(), usedforsecurity=False).hexdigest()[:16]
         cache_key = f"{source_hash}_{build_opts.replace(' ', '_')}"
 
         # 验证键格式包含哈希和选项

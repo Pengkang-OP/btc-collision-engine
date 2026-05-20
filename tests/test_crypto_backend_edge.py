@@ -1,26 +1,25 @@
-# -*- coding: utf-8 -*-
 """crypto_backend.py 全覆盖测试
 
 覆盖: PurePythonBackend(const_time), OpenSSLBackend, CoincurveBackend,
       ECDSABackend, CryptoBackendManager 边界, 便捷函数
 """
 
-import unittest
 import logging
+import unittest
 from unittest.mock import patch
 
 from src.core.crypto_backend import (
     BackendType,
-    PurePythonBackend,
-    OpenSSLBackend,
     CoincurveBackend,
-    ECDSABackend,
     CryptoBackendManager,
+    ECDSABackend,
+    OpenSSLBackend,
+    PurePythonBackend,
     crypto_manager,
-    get_crypto_backend,
     generate_public_key,
-    set_crypto_backend,
     get_available_backends,
+    get_crypto_backend,
+    set_crypto_backend,
 )
 
 PK = b"\x01" * 32  # 测试用私钥
@@ -230,6 +229,7 @@ class TestCoincurveBackend(unittest.TestCase):
     def test_scalar_multiply_fallback(self):
         """multiply 抛异常时的回退 → lines 295-304"""
         from unittest.mock import MagicMock
+
         from src.core.secp256k1 import Secp256k1
         # 创建一个 coincurve.PublicKey mock 使 multiply 抛异常
         with patch('coincurve.PublicKey') as mock_pk:

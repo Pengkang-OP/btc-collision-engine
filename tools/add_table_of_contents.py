@@ -1,5 +1,4 @@
 ﻿#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 为长文档自动添加目录
 
@@ -12,12 +11,14 @@
 import re
 import sys
 from pathlib import Path
-from typing import List, Tuple
 
-# 修复Windows控制台编码问题 - 使用共享模块`nfrom tools.utf8_helper import setup_windows_utf8`nsetup_windows_utf8()
+# 修复Windows控制台编码问题 - 使用共享模块
+from tools.utf8_helper import setup_windows_utf8
+
+setup_windows_utf8()
 
 
-def extract_headings(content: str) -> List[Tuple[int, int, str]]:
+def extract_headings(content: str) -> list[tuple[int, int, str]]:
     """提取文档标题
 
     Returns:
@@ -36,7 +37,7 @@ def extract_headings(content: str) -> List[Tuple[int, int, str]]:
     return headings
 
 
-def generate_toc(headings: List[Tuple[int, int, str]]) -> str:
+def generate_toc(headings: list[tuple[int, int, str]]) -> str:
     """生成目录Markdown文本"""
     if not headings:
         return ""
@@ -67,7 +68,7 @@ def has_toc(content: str) -> bool:
     return bool(re.search(r'^##\s+目录\s*$', content, re.MULTILINE))
 
 
-def add_toc_to_file(content: str, min_headings: int = 3) -> Tuple[str, bool]:
+def add_toc_to_file(content: str, min_headings: int = 3) -> tuple[str, bool]:
     """为文档添加目录
 
     Returns:
@@ -192,7 +193,7 @@ def main():
                 print(f"📄 {md_file.name}: 将添加目录 ({line_count}行, {headings_count}个标题)")
 
     print(f"\n{'=' * 60}")
-    print(f"📊 目录添加报告")
+    print("📊 目录添加报告")
     print(f"{'=' * 60}")
 
     print(f"\n📁 扫描文件: {len(md_files)}")
@@ -200,14 +201,14 @@ def main():
     print(f"✨ 添加目录: {total_added}")
 
     if file_stats:
-        print(f"\n添加详情:")
+        print("\n添加详情:")
         for file_name, lines, headings in sorted(file_stats, key=lambda x: -x[1]):
             print(f"  📄 {file_name}: {lines}行, {headings}个标题")
 
     print(f"\n{'=' * 60}")
 
     if args.dry_run:
-        print(f"\n💡 这是模拟运行。移除 --dry-run 参数以实际添加。")
+        print("\n💡 这是模拟运行。移除 --dry-run 参数以实际添加。")
     else:
         print(f"\n✅ 添加完成！共为 {total_added} 个文档添加目录。")
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Bech32/P2SH地址转换性能基准测试
 
 测试目标:
@@ -8,6 +7,7 @@
 """
 
 import pytest
+
 from src.collision.targets.resolver import TargetResolver
 
 

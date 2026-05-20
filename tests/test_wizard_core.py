@@ -7,8 +7,8 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.wizard.events import WizardEventType, WizardEvent, EventDispatcher  # noqa: E402
-from src.wizard.interfaces import WizardMode, WizardConfig, WizardResult  # noqa: E402
+from src.wizard.events import EventDispatcher, WizardEvent, WizardEventType  # noqa: E402
+from src.wizard.interfaces import WizardConfig, WizardMode, WizardResult  # noqa: E402
 
 
 class TestWizardEventType(unittest.TestCase):

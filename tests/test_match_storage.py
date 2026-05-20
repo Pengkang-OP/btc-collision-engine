@@ -9,12 +9,13 @@
 - 列表/加载/统计
 """
 
-import os
 import json
+import os
 import tempfile
-import pytest
 from pathlib import Path
 from unittest.mock import patch
+
+import pytest
 
 from src.collision.match_storage import MatchDataStorage
 
@@ -38,13 +39,12 @@ def match_data():
         "found_at": "2026-05-01T08:00:00",
         "hash160": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
         "generated": {
-            "private_key": bytes.fromhex(
-                "0c28fca386c7a227600b2fe50b7cae11ec86d3bf1fbe471be89827e19d72aa1d"
-            ),
-            "wif_compressed": "KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qYjgd9M7rFU72sVhvfoj",
-            "wif_uncompressed": "5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAvUcVfH",
+            # 使用占位数据 — 私钥为全零占位符，WIF为明显假值
+            "private_key": b"\x00" * 32,
+            "wif_compressed": "5" + "H" + "0" * 49,
+            "wif_uncompressed": "5" + "J" + "0" * 49,
             "public_key_compressed": bytes.fromhex(
-                "02b4632d08485ff1df2db55b9dafd23347d1c47a457072a1e87be26896549a8737"
+                "02" + "00" * 32
             ),
             "public_key_uncompressed": bytes.fromhex(
                 "04b4632d08485ff1df2db55b9dafd23347d1c47a457072a1e87be26896549a8737"
@@ -110,7 +110,7 @@ class TestMatchStorageSave:
     def test_save_match_data_integrity(self, storage, match_data):
         filepath = storage.save_match(match_data)
 
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             saved = json.load(f)
 
         assert "match_info" in saved
@@ -126,7 +126,7 @@ class TestMatchStorageSave:
         """字节串应转为十六进制字符串"""
         filepath = storage.save_match(match_data)
 
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             saved = json.load(f)
 
         # 私钥 hex
@@ -202,7 +202,7 @@ class TestMatchStorageEdgeCases:
     @patch.object(MatchDataStorage, "_create_backup", side_effect=Exception("backup fail"))
     def test_save_match_exception_cleans_temp(self, mock_backup, storage, match_data):
         """save_match 异常时清理临时文件并重新抛出"""
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             storage.save_match(match_data)
         # 临时文件应被清理
         temp_files = list(storage.storage_path.glob("*.tmp"))
@@ -213,7 +213,7 @@ class TestMatchStorageEdgeCases:
         # hash160_compressed 传字符串而非 bytes
         match_data["generated"]["hash160_compressed"] = "already_hex_string"
         filepath = storage.save_match(match_data)
-        with open(filepath, "r") as f:
+        with open(filepath) as f:
             saved = json.load(f)
         # 字符串原样返回
         assert saved["address"]["hash160_compressed"] == "already_hex_string"
@@ -227,9 +227,8 @@ class TestMatchStorageEdgeCases:
     def test_temp_cleanup_unlink_error(self, mock_unlink, storage, match_data):
         """临时文件清理失败不传播异常"""
         # 让 os.chmod 在 temp_file 仍存在时失败，触发 cleanup 代码路径
-        with patch("os.chmod", side_effect=OSError("chmod fail")):
-            with pytest.raises(OSError):
-                storage.save_match(match_data)
+        with patch("os.chmod", side_effect=OSError("chmod fail")), pytest.raises(OSError):
+            storage.save_match(match_data)
 
     def test_list_matches_skips_non_file(self, storage):
         """list_matches 跳过非文件条目"""

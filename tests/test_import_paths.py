@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """导入路径专项测试
 
 测试所有TargetResolver导入路径的正确性和一致性。
@@ -68,8 +67,8 @@ class TestImportConsistency:
         """验证所有导入路径返回同一个类"""
         # 导入所有有效路径
         from src.collision import TargetResolver as TR1
-        from src.collision.targets.resolver import TargetResolver as TR2
         from src.collision.targets import TargetResolver as TR3
+        from src.collision.targets.resolver import TargetResolver as TR2
 
         # 验证都是同一个类
         assert TR1 is TR2, "包导入和完整路径导入应该返回同一个类"
@@ -84,8 +83,8 @@ class TestImportConsistency:
         """验证所有导入的类都可以正常实例化"""
         # 导入所有有效路径
         from src.collision import TargetResolver as TR1
-        from src.collision.targets.resolver import TargetResolver as TR2
         from src.collision.targets import TargetResolver as TR3
+        from src.collision.targets.resolver import TargetResolver as TR2
 
         # 验证都可以实例化
         instances = []

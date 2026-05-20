@@ -11,10 +11,10 @@ Intel Arc ULLS优化效果验证工具
   3. 对比优化前后的性能数据
 """
 
-import sys
 import json
-from pathlib import Path
+import sys
 from datetime import datetime
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -33,10 +33,10 @@ def run_ulls_verification_test(duration=60):
     print("=" * 80)
     print()
 
-    print(f"测试配置:")
+    print("测试配置:")
     print(f"  - 测试时长: {duration}秒")
-    print(f"  - 目标: 验证ULLS禁用后的性能提升")
-    print(f"  - 预期提升: 14-31%")
+    print("  - 目标: 验证ULLS禁用后的性能提升")
+    print("  - 预期提升: 14-31%")
     print()
 
     # 尝试导入GPU引擎
@@ -52,18 +52,10 @@ def run_ulls_verification_test(duration=60):
     # 加载配置
     config_file = Path("config.intel_arc.json")
     if config_file.exists():
-        config_manager = ConfigManager(config_file=str(config_file))
-        config = config_manager.config
+        ConfigManager(config_file=str(config_file))
         print(f"✅ 配置文件加载: {config_file}")
     else:
-        print(f"⚠️  使用默认配置")
-        config = {
-            'gpu': {
-                'use_gpu': True,
-                'batch_size': 1000000,
-                'enable_async_execution': True
-            }
-        }
+        print("⚠️  使用默认配置")
 
     print()
     print("=" * 80)
@@ -268,7 +260,7 @@ if __name__ == "__main__":
     before_data = None
     if args.before:
         try:
-            with open(args.before, 'r', encoding='utf-8') as f:
+            with open(args.before, encoding='utf-8') as f:
                 before_data = json.load(f)
             print(f"✅ 加载优化前数据: {args.before}")
         except Exception as e:

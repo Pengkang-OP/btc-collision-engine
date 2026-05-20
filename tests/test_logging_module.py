@@ -10,18 +10,19 @@
 - log_manager.py (LogManager)
 """
 
-import pytest
-import os
 import json
+import os
 import time
 from unittest.mock import Mock
 
+import pytest
+
 from src.log_engine.events import LogEvent, LogEventType
-from src.log_engine.log_processor import LogProcessor, SensitiveDataFilter
-from src.log_engine.log_storage import LogStorage
-from src.log_engine.log_query import LogQuery
 from src.log_engine.log_collector import LogCollector
-from src.log_engine.log_manager import LogManager, LogLevel
+from src.log_engine.log_manager import LogLevel, LogManager
+from src.log_engine.log_processor import LogProcessor, SensitiveDataFilter
+from src.log_engine.log_query import LogQuery
+from src.log_engine.log_storage import LogStorage
 
 # ============================================================================
 # 1. LogEvent & LogEventType 测试
@@ -291,7 +292,7 @@ class TestLogStorage:
         result = storage.export_to_json(export_path)
         assert result is True
         assert os.path.exists(export_path)
-        with open(export_path, "r") as f:
+        with open(export_path) as f:
             data = json.load(f)
         assert len(data) == 1
 

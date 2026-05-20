@@ -4,11 +4,12 @@
 """
 
 import pytest
+
 from src.utils.gpu_memory_utils import (
-    calculate_optimal_batch_size,
-    MIN_GPU_MEMORY,
     DEFAULT_BATCH_SIZE,
+    MIN_GPU_MEMORY,
     BatchSizeConfig,
+    calculate_optimal_batch_size,
 )
 
 pytestmark = pytest.mark.gpu
@@ -542,8 +543,8 @@ class TestBatchSizeConfig:
 
     def test_config_serialization(self):
         """测试配置对象序列化"""
-        from dataclasses import asdict
         import json
+        from dataclasses import asdict
 
         config = BatchSizeConfig(memory_usage_ratio=0.7, min_batch_size=2048)
 

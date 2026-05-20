@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """端到端闭环测试（GPU 引擎）
 
 闭环(Closed-Loop)概念: 使用已知密钥对, 通过 GPU 引擎的内部
@@ -16,16 +15,16 @@ GPU 引擎测试策略:
 
 import os
 import time
-import pytest
 from unittest.mock import Mock, patch
 
-# 使用独立的地址生成器（与引擎内部解耦，验证引擎的真实输出）
-from src.core.address_generator import P2PKHAddressGenerator
-from src.core.wif import WIF
+import pytest
 
 # GPU 引擎
 from src.collision.gpu_collision_engine import GPUCollisionEngine
 
+# 使用独立的地址生成器（与引擎内部解耦，验证引擎的真实输出）
+from src.core.address_generator import P2PKHAddressGenerator
+from src.core.wif import WIF
 
 # ============================================================================
 # 已知密钥对常量（动态推导，避免硬编码风险）

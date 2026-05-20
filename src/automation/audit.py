@@ -216,7 +216,9 @@ class AuditModule:
             # 配置状态（安全访问嵌套属性）
             try:
                 data_summary = getattr(analysis_report, "data_summary", None) or {}
-                config_info = data_summary.get("configuration", {}) if isinstance(data_summary, dict) else {}
+                config_info = (
+                    data_summary.get("configuration", {}) if isinstance(data_summary, dict) else {}
+                )
                 metrics["config_valid"] = config_info.get("config_valid", True)
             except Exception:
                 pass
@@ -224,7 +226,9 @@ class AuditModule:
             # 质量分数
             try:
                 stats = getattr(analysis_report, "statistics", None) or {}
-                metrics["quality_score"] = stats.get("quality_score", 100) if isinstance(stats, dict) else 100
+                metrics["quality_score"] = (
+                    stats.get("quality_score", 100) if isinstance(stats, dict) else 100
+                )
             except Exception:
                 pass
 
@@ -248,10 +252,7 @@ class AuditModule:
             priority_1_tests = [
                 r
                 for r in getattr(test_results, "results", []) or []
-                if any(
-                    tc in getattr(r, "test_name", "")
-                    for tc in ["配置", "CLI", "加密", "端到端"]
-                )
+                if any(tc in getattr(r, "test_name", "") for tc in ["配置", "CLI", "加密", "端到端"])
             ]
             if priority_1_tests:
                 metrics["critical_tests_passed"] = all(
@@ -259,7 +260,8 @@ class AuditModule:
                 )
                 metrics["critical_test_pass_rate"] = (
                     sum(1 for r in priority_1_tests if getattr(r, "is_passed", True))
-                    / len(priority_1_tests) * 100
+                    / len(priority_1_tests)
+                    * 100
                 )
             else:
                 metrics["critical_tests_passed"] = True
@@ -336,31 +338,31 @@ class AuditModule:
 
         # --- 含数值比较的条件：使用正则确保数字精确匹配，防止 >=90 误匹配 >=900 ---
         # 模式: <metric> <op> <number>，数字后跟单词边界或字符串末尾
-        _num = r'(\d+(?:\.\d+)?)\b'
+        _num = r"(\d+(?:\.\d+)?)\b"
 
-        if re.search(rf'test_pass_rate\s*>=\s*{_num}', condition):
-            m = re.search(rf'test_pass_rate\s*>=\s*{_num}', condition)
+        if re.search(rf"test_pass_rate\s*>=\s*{_num}", condition):
+            m = re.search(rf"test_pass_rate\s*>=\s*{_num}", condition)
             threshold = float(m.group(1)) if m else 90
             passed = passed and metrics.get("test_pass_rate", 0) >= threshold
 
-        if re.search(rf'critical_issues\s*==\s*{_num}', condition):
+        if re.search(rf"critical_issues\s*==\s*{_num}", condition):
             passed = passed and metrics.get("critical_issues", 0) == 0
 
-        if re.search(rf'high_priority_issues\s*<=\s*{_num}', condition):
-            m = re.search(rf'high_priority_issues\s*<=\s*{_num}', condition)
+        if re.search(rf"high_priority_issues\s*<=\s*{_num}", condition):
+            m = re.search(rf"high_priority_issues\s*<=\s*{_num}", condition)
             threshold = int(m.group(1)) if m else 3
             passed = passed and metrics.get("high_priority_issues", 0) <= threshold
 
-        if re.search(rf'test_coverage\s*>=\s*{_num}', condition):
-            m = re.search(rf'test_coverage\s*>=\s*{_num}', condition)
+        if re.search(rf"test_coverage\s*>=\s*{_num}", condition):
+            m = re.search(rf"test_coverage\s*>=\s*{_num}", condition)
             threshold = float(m.group(1)) if m else 80
             passed = passed and metrics.get("test_pass_rate", 0) >= threshold
 
-        if re.search(rf'test_errors\s*==\s*{_num}', condition):
+        if re.search(rf"test_errors\s*==\s*{_num}", condition):
             passed = passed and metrics.get("test_errors", 0) == 0
 
-        if re.search(rf'quality_score\s*>=\s*{_num}', condition):
-            m = re.search(rf'quality_score\s*>=\s*{_num}', condition)
+        if re.search(rf"quality_score\s*>=\s*{_num}", condition):
+            m = re.search(rf"quality_score\s*>=\s*{_num}", condition)
             threshold = float(m.group(1)) if m else 70
             passed = passed and metrics.get("quality_score", 100) >= threshold
 
@@ -435,9 +437,7 @@ class AuditModule:
             json.dump(rules_data, f, ensure_ascii=False, indent=2)
 
 
-def audit(
-    test_results: TestSuiteResult, analysis_report: AnalysisReport | None = None
-) -> AuditResult:
+def audit(test_results: TestSuiteResult, analysis_report: AnalysisReport | None = None) -> AuditResult:
     """执行审核"""
     module = AuditModule()
     return module.audit(test_results, analysis_report)

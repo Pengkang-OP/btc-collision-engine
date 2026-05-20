@@ -89,8 +89,10 @@ class SecureKeyGenerator:
                 self.stats["entropy_checks"] = self.stats.get("entropy_checks", 0) + 1
 
                 if entropy < self.min_entropy_bits:
+                    _entropy = entropy
+                    _min_e = self.min_entropy_bits
                     logger.warning(
-                        f"系统熵池较低: {entropy} bits (< {self.min_entropy_bits}), 建议安装haveged或rng-tools"
+                        f"系统熵池较低: {_entropy} bits (<{_min_e}), 建议安装haveged/rng-tools"
                     )
                     self.stats["low_entropy_count"] = self.stats.get("low_entropy_count", 0) + 1
 
@@ -134,15 +136,18 @@ class SecureKeyGenerator:
             logger.debug(f"无法检查熵池状态: {e}")
             return True  # 无法检查时假设健康
 
-    def generate_batch(self, count: int) -> list[bytes]:
+    def generate_batch(self, count: int) -> list[bytearray]:
         """
-        批量生成私钥 - 符合加密货币安全标准
+        批量生成私钥 - 返回可变 bytearray 以支持使用后安全清零
+
+        调用者应使用 src.core.secure_key_manager.secure_clear_bytearray()
+        在使用完毕后清零每个私钥。
 
         参数:
             count: 要生成的私钥数量
 
         返回:
-            私钥列表（字节串）
+            私钥列表（bytearray，可变类型，支持清零）
         """
         if count <= 0:
             raise ValueError("生成数量必须大于0")
@@ -157,8 +162,8 @@ class SecureKeyGenerator:
 
         for i in range(count):
             try:
-                # 1. 使用CSPRNG生成32字节随机数
-                private_key = secrets.token_bytes(32)
+                # 1. 使用CSPRNG生成32字节随机数，存入可变 bytearray（支持清零）
+                private_key = bytearray(secrets.token_bytes(32))
 
                 # 2. 验证私钥有效性 (1 <= k < n)
                 if not self._is_valid_private_key(private_key):
@@ -186,9 +191,7 @@ class SecureKeyGenerator:
         elapsed = time.time() - start_time
         rate = len(private_keys) / elapsed if elapsed > 0 else 0
 
-        logger.debug(
-            "批量生成完成: %d keys in %.2fs (%.0f keys/s)", len(private_keys), elapsed, rate
-        )
+        logger.debug("批量生成完成: %d keys in %.2fs (%.0f keys/s)", len(private_keys), elapsed, rate)
 
         # BL-2修复: 检查是否生成了任何有效私钥
         if len(private_keys) == 0 and count > 0:

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """DataStorage 独立单元测试 (P1-6)
 
 测试 src.monitoring.monitoring_system.DataStorage 类的完整功能，
@@ -20,16 +19,15 @@ import os
 import shutil
 import sys
 import tempfile
-import time
+import threading
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.monitoring.monitoring_system import DataStorage, MonitoringData # noqa: E402
-from src.monitoring.data_logger import DataLogger # noqa: E402
-
+from src.monitoring.data_logger import DataLogger  # noqa: E402
+from src.monitoring.monitoring_system import DataStorage, MonitoringData  # noqa: E402
 
 # ============================================================================
 # Fixtures
@@ -129,13 +127,13 @@ class TestDataStorageInit:
 
     def test_init_creates_error_log_file(self, temp_storage_dir):
         """初始化时创建 error_log.json (无委托模式)"""
-        storage = DataStorage(storage_dir=temp_storage_dir, data_logger=None)
+        DataStorage(storage_dir=temp_storage_dir, data_logger=None)
         error_path = os.path.join(temp_storage_dir, "error_log.json")
         assert os.path.exists(error_path)
 
     def test_init_creates_history_file(self, temp_storage_dir):
         """初始化时创建 history_data.json (无委托模式)"""
-        storage = DataStorage(storage_dir=temp_storage_dir, data_logger=None)
+        DataStorage(storage_dir=temp_storage_dir, data_logger=None)
         history_path = os.path.join(temp_storage_dir, "history_data.json")
         assert os.path.exists(history_path)
 
@@ -555,29 +553,28 @@ class TestThreadSafety:
 
     def test_concurrent_reads(self, storage_no_logger, sample_monitoring_data):
         """并发读操作不冲突"""
-        import threading
 
         # 先写入数据
         storage_no_logger.save_current_data(sample_monitoring_data)
         storage_no_logger.save_history_data(sample_monitoring_data)
 
-        results = []
+        results: list = []
 
-    def read_data():
-        for _ in range(10):
-            c = storage_no_logger.get_current_data()
-            h = storage_no_logger.get_history_data()
-            e = storage_no_logger.get_error_logs()
-            results.append((c is not None, isinstance(h, list), isinstance(e, list)))
+        def read_data():
+            for _ in range(10):
+                c = storage_no_logger.get_current_data()
+                h = storage_no_logger.get_history_data()
+                e = storage_no_logger.get_error_logs()
+                results.append((c is not None, isinstance(h, list), isinstance(e, list)))
 
-            threads = [threading.Thread(target=read_data) for _ in range(5)]
-            for t in threads:
-                t.start()
-                for t in threads:
-                    t.join()
+        threads = [threading.Thread(target=read_data) for _ in range(5)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
 
-                    # 所有结果应为 (True, True, True)
-                    assert all(r == (True, True, True) for r in results)
+        # 所有结果应为 (True, True, True)
+        assert all(r == (True, True, True) for r in results)
 
 
 if __name__ == "__main__":

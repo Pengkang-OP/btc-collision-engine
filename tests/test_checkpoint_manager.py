@@ -9,8 +9,9 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.collision.checkpoint_manager import CheckpointManager  # noqa: E402
 from unittest.mock import patch
+
+from src.collision.checkpoint_manager import CheckpointManager  # noqa: E402
 
 
 class TestCheckpointManagerBasic(unittest.TestCase):
@@ -449,8 +450,8 @@ class TestCheckpointFlushDirCreation(unittest.TestCase):
 
     def test_flush_creates_parent_dir(self):
         """父目录不存在时自动创建"""
-        import uuid
         import shutil
+        import uuid
         subdir = os.path.join(tempfile.gettempdir(), f"ckpt_test_{uuid.uuid4().hex[:8]}")
         ckpt_path = os.path.join(subdir, "checkpoint.json")
         mgr = CheckpointManager(filepath=ckpt_path)

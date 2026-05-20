@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Intel Arc资源监控功能验证脚本
 
@@ -10,9 +9,9 @@ Intel Arc资源监控功能验证脚本
 4. 数据质量监控
 """
 
+import logging
 import sys
 import time
-import logging
 from pathlib import Path
 
 # 添加项目根目录到路径

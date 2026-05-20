@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 GPU压力测试
 
@@ -12,13 +11,14 @@ GPU压力测试
 """
 
 import os
-import pytest
-import time
-import secrets
 import random
+import secrets
+import time
 from unittest.mock import Mock
 
-from src.gpu.gpu_recovery_manager import GPURecoveryManager, GPUFailureType
+import pytest
+
+from src.gpu.gpu_recovery_manager import GPUFailureType, GPURecoveryManager
 from src.gpu.load_balancer import GPULoadBalancer
 from tests.gpu_mock_factory import GPUMockFactory
 

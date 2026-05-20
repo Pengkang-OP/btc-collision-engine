@@ -5,10 +5,12 @@
 Phase 6 兼容版：使用 src.collision.gpu.engine 路径和 GPUDeviceManager mock。
 """
 
-import pytest
 import threading
 import time
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
+
 from src.collision.gpu.engine import GPUCollisionEngine
 
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """增强监控系统单元测试
 
 测试src.monitoring.enhanced_monitoring模块的所有功能。
@@ -15,21 +14,22 @@
 - 错误处理和恢复
 """
 
-import pytest
-import os
-import sys
-import time
-import shutil
-import tempfile
 import logging
+import os
+import shutil
+import sys
+import tempfile
+import time
 from unittest.mock import MagicMock
+
+import pytest
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from src.monitoring.data_logger import DataLogger  # noqa: E402
 from src.monitoring.enhanced_monitoring import EnhancedMonitoringSystem  # noqa: E402
 from src.monitoring.monitor_config import MonitorConfig  # noqa: E402
-from src.monitoring.data_logger import DataLogger  # noqa: E402
 
 
 class TestEnhancedMonitoringSystemInit:
@@ -268,8 +268,9 @@ class TestEnhancedMonitoringSystemDataCollection:
         time.sleep(0.3)
         monitor.stop()
 
-        # 不应该出错
-        assert True
+        # 无引擎时监控应正常工作，采集的系统数据非空
+        current_data = monitor.data_logger.get_current_data()
+        assert current_data is not None, "无引擎时数据采集不应崩溃"
 
     def test_collect_with_engine_no_stats(self):
         """测试引擎返回None统计数据"""
@@ -279,8 +280,9 @@ class TestEnhancedMonitoringSystemDataCollection:
         time.sleep(0.3)
         self.monitor.stop()
 
-        # 不应该出错
-        assert True
+        # 引擎返回None stats时应优雅跳过，不影响系统数据采集
+        current_data = self.monitor.data_logger.get_current_data()
+        assert current_data is not None, "stats为None时监控不应崩溃"
 
 
 class TestEnhancedMonitoringSystemAlerts:
@@ -550,15 +552,15 @@ class TestEnhancedMonitoringSystemIntegration:
 
         monitor = EnhancedMonitoringSystem(engine=None, config=config)
 
-        # 快速启动和停止
-        for _ in range(3):
+        # 快速启动和停止应保持状态一致，不抛异常
+        for i in range(3):
             monitor.start()
             time.sleep(0.1)
             monitor.stop()
             time.sleep(0.1)
 
-        # 应该能正常工作
-        assert True
+        # 最终应处于停止状态
+        assert monitor.is_running() is False, "快速启停后应处于停止状态"
 
 
 if __name__ == "__main__":

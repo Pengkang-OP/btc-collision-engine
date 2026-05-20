@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """PlatformUtils 跨平台工具类测试。
 
 覆盖 PlatformUtils 类的所有方法：
@@ -16,7 +15,7 @@
 import os
 import sys
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 

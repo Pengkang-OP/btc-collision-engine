@@ -7,21 +7,21 @@ _format_progress_bar 四个私有纯函数，以及 format_progress 的 Mock 测
 import unittest
 from unittest.mock import MagicMock
 
-from src.cli.progress import (
-    _format_checked_count,
-    _format_total_count,
-    _compute_eta,
-    _format_progress_bar,
-    format_progress,
-    VALID_ENGINE_TYPES,
-)
 from src.cli.constants import (
-    PROGRESS_BAR_LENGTH,
-    PROGRESS_BAR_FILLED,
     PROGRESS_BAR_EMPTY,
+    PROGRESS_BAR_FILLED,
+    PROGRESS_BAR_LENGTH,
     UNIT_BILLION,
     UNIT_MILLION,
     UNIT_THOUSAND,
+)
+from src.cli.progress import (
+    VALID_ENGINE_TYPES,
+    _compute_eta,
+    _format_checked_count,
+    _format_progress_bar,
+    _format_total_count,
+    format_progress,
 )
 
 

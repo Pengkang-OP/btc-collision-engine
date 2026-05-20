@@ -59,8 +59,6 @@ class HealthChecker:
 
     def check_python_version(self) -> tuple[bool, str]:
         """检查Python版本兼容性"""
-        if sys.version_info < (3, 9):
-            return False, f"Python版本过低: {sys.version} (需要3.9+)"
         return True, f"Python版本: {sys.version}"
 
     def check_dependencies(self) -> tuple[bool, str]:
@@ -461,14 +459,11 @@ def main() -> None:
         # 安静模式：抑制所有输出，静默运行检查
         import contextlib
         import io
+
         with contextlib.redirect_stdout(io.StringIO()):
-            results = checker.run_all_checks(
-                include_gpu=args.gpu, include_network=args.network
-            )
+            results = checker.run_all_checks(include_gpu=args.gpu, include_network=args.network)
     else:
-        results = checker.run_all_checks(
-            include_gpu=args.gpu, include_network=args.network
-        )
+        results = checker.run_all_checks(include_gpu=args.gpu, include_network=args.network)
 
     if args.report:
         report = checker.generate_report()

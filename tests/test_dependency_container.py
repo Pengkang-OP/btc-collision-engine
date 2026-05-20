@@ -13,7 +13,6 @@ from unittest.mock import MagicMock, patch
 
 from src.collision.dependency_container import DependencyContainer
 
-
 # ============================================================================
 # 初始化和属性延迟创建
 # ============================================================================

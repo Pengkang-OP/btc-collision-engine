@@ -35,7 +35,7 @@ class SafeRotatingFileHandler(RotatingFileHandler):
         self._is_windows = platform.system() == "Windows"
         super().__init__(*args, **kwargs)
 
-    def doRollover(self) -> None:
+    def doRollover(self) -> None:  # noqa: N802 — 继承父类 camelCase 方法
         """带重试机制的日志轮转（Windows 专用），加全局锁防止并发冲突
 
         sleep 在锁外执行，避免持有锁期间阻塞其他 handler 的 rollover。
@@ -50,8 +50,9 @@ class SafeRotatingFileHandler(RotatingFileHandler):
             if attempt < self._retry_count - 1:
                 time.sleep(self._retry_delay * (attempt + 1))
         # 所有重试均失败：输出警告并继续写入当前文件，不中断主程序
+        _rc = self._retry_count
         print(
-            f"[日志警告] 日志轮转失败（已重试{self._retry_count}次），文件可能被其他进程占用: {self.baseFilename}",
+            f"[日志警告] 日志轮转失败（已重试{_rc}次），文件可能被其他进程占用: {self.baseFilename}",
             file=sys.stderr,
         )
 
@@ -263,7 +264,7 @@ class LoggingConfig:
                     self._inner = inner
                     self._disk_full_warned = False
 
-                def setFormatter(self, fmt) -> None:
+                def setFormatter(self, fmt) -> None:  # noqa: N802 — 继承父类 camelCase 方法
                     self._inner.setFormatter(fmt)
 
                 def emit(self, record: logging.LogRecord) -> None:

@@ -9,11 +9,16 @@
 如果任何依赖不可用，监听器静默失败，不影响主流程。
 """
 
+import contextlib
 import os
 import sys
 import threading
 import time
 from collections.abc import Callable
+
+from ..utils import get_configured_logger
+
+logger = get_configured_logger("KeyboardListener")
 
 
 class KeyboardListener:
@@ -126,8 +131,8 @@ class KeyboardListener:
                         key = raw.decode("utf-8", errors="ignore").upper()
                         if key:
                             self._callback(key)
-            except Exception:
-                pass
+            except (OSError, UnicodeDecodeError) as e:
+                logger.debug("键盘监听异常（可忽略）: %s", e)
             time.sleep(0.05)
 
     def _listen_unix(self):

@@ -9,14 +9,16 @@
 - 统一异常处理器
 """
 
-import pytest
 import os
-import time
 import tempfile
+import time
 from unittest.mock import Mock, patch
-from src.collision.gpu_collision_engine import GPUCollisionEngine
-from src.collision.collision_stats import CollisionStats
+
+import pytest
+
 from src.collision.checkpoint_manager import CheckpointManager
+from src.collision.collision_stats import CollisionStats
+from src.collision.gpu_collision_engine import GPUCollisionEngine
 from src.utils.exception_handler import ExceptionHandler
 
 pytestmark = pytest.mark.gpu
@@ -267,7 +269,7 @@ class TestExceptionHandler:
     def test_exception_handler_file_error(self):
         """测试文件错误处理"""
         # 测试IOError
-        error = IOError("Disk read error")
+        error = OSError("Disk read error")
 
         # 不应该抛出异常
         ExceptionHandler.handle_file_error(error, "读取", "/path/to/file")

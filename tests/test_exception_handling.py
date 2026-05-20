@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 异常处理优化的单元测试
 
 测试异常分类、统计指标、公共方法等
 """
 
-import pytest
-import sys
 import os
+import sys
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.utils.exception_handler import ExceptionHandler  # noqa: E402
-from src.gpu.device_helper import GPUDeviceHelper  # noqa: E402
 from src.collision.collision_stats import CollisionStats  # noqa: E402
 from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
+from src.gpu.device_helper import GPUDeviceHelper  # noqa: E402
+from src.utils.exception_handler import ExceptionHandler  # noqa: E402
 
 
 class TestGPUExceptionHandling:
@@ -725,7 +725,7 @@ class TestHandleFileError:
     def test_io_error(self):
         """IOError → error"""
         with patch("src.utils.exception_handler.logger") as mock_logger:
-            ExceptionHandler.handle_file_error(IOError("io fail"), "删除", "/path/to/file")
+            ExceptionHandler.handle_file_error(OSError("io fail"), "删除", "/path/to/file")
         mock_logger.error.assert_called_once()
 
     def test_unknown_error(self):

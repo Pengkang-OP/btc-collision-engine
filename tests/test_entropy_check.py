@@ -1,15 +1,13 @@
-# -*- coding: utf-8 -*-
 """
 密钥生成器熵池检查测试
 
 验证P1-3修复：熵池健康检查完整实现
 """
 
-import unittest
 import os
-from unittest.mock import Mock, patch, MagicMock
-
 import sys
+import unittest
+from unittest.mock import MagicMock, Mock, patch
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -94,16 +92,15 @@ class TestEntropyHealthCheck(unittest.TestCase):
         generator = SecureKeyGenerator(config)
 
         # 即使熵池低，也应该返回True
-        with patch("os.path.exists", return_value=True):
-            with patch("builtins.open") as mock_open:
-                mock_file = MagicMock()
-                mock_file.__enter__ = Mock(return_value=mock_file)
-                mock_file.__exit__ = Mock(return_value=False)
-                mock_file.read.return_value = "100"  # 非常低的熵
-                mock_open.return_value = mock_file
+        with patch("os.path.exists", return_value=True), patch("builtins.open") as mock_open:
+            mock_file = MagicMock()
+            mock_file.__enter__ = Mock(return_value=mock_file)
+            mock_file.__exit__ = Mock(return_value=False)
+            mock_file.read.return_value = "100"  # 非常低的熵
+            mock_open.return_value = mock_file
 
-                result = generator._check_entropy_health()
-                self.assertTrue(result)
+            result = generator._check_entropy_health()
+            self.assertTrue(result)
 
 
 class TestKeyGenerationWithEntropyCheck(unittest.TestCase):
@@ -170,17 +167,16 @@ class TestEntropyStatistics(unittest.TestCase):
         generator = SecureKeyGenerator()
 
         # 模拟多次低熵检查
-        with patch("os.path.exists", return_value=True):
-            with patch("builtins.open") as mock_open:
-                mock_file = MagicMock()
-                mock_file.__enter__ = Mock(return_value=mock_file)
-                mock_file.__exit__ = Mock(return_value=False)
-                mock_file.read.return_value = "500"
-                mock_open.return_value = mock_file
+        with patch("os.path.exists", return_value=True), patch("builtins.open") as mock_open:
+            mock_file = MagicMock()
+            mock_file.__enter__ = Mock(return_value=mock_file)
+            mock_file.__exit__ = Mock(return_value=False)
+            mock_file.read.return_value = "500"
+            mock_open.return_value = mock_file
 
-                # 多次检查
-                for _ in range(3):
-                    generator._check_entropy_health()
+            # 多次检查
+            for _ in range(3):
+                generator._check_entropy_health()
 
         stats = generator.get_statistics()
 
@@ -213,7 +209,7 @@ class TestEntropyCheckEdgeCases(unittest.TestCase):
     def test_entropy_file_read_error(self, mock_open, mock_exists):
         """测试熵池文件读取错误"""
         mock_exists.return_value = True
-        mock_open.side_effect = IOError("Cannot read file")
+        mock_open.side_effect = OSError("Cannot read file")
 
         generator = SecureKeyGenerator()
         result = generator._check_entropy_health()
@@ -293,16 +289,15 @@ class TestEntropyCheckConfiguration(unittest.TestCase):
 
         self.assertFalse(generator.entropy_check_enabled)
         # 即使熵池低也应该返回True
-        with patch("os.path.exists", return_value=True):
-            with patch("builtins.open") as mock_open:
-                mock_file = MagicMock()
-                mock_file.__enter__ = Mock(return_value=mock_file)
-                mock_file.__exit__ = Mock(return_value=False)
-                mock_file.read.return_value = "100"
-                mock_open.return_value = mock_file
+        with patch("os.path.exists", return_value=True), patch("builtins.open") as mock_open:
+            mock_file = MagicMock()
+            mock_file.__enter__ = Mock(return_value=mock_file)
+            mock_file.__exit__ = Mock(return_value=False)
+            mock_file.read.return_value = "100"
+            mock_open.return_value = mock_file
 
-                result = generator._check_entropy_health()
-                self.assertTrue(result)
+            result = generator._check_entropy_health()
+            self.assertTrue(result)
 
 
 if __name__ == "__main__":

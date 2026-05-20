@@ -45,13 +45,11 @@ class GPUProfileLoader:
             # 版本检查
             version = data.get("_version", "1.0")
             if version != "1.0":
-                logger.warning(
-                    f"不支持的配置文件版本: {version}, 当前支持1.0。可能导致配置加载错误"
-                )
+                logger.warning(f"不支持的配置文件版本: {version}, 当前支持1.0。可能导致配置加载错误")
 
             self.profiles = data
 
-            vendor_count = len([k for k in self.profiles.keys() if not k.startswith("_")])
+            vendor_count = len([k for k in self.profiles if not k.startswith("_")])
             logger.info(f"GPU型号数据库加载成功: {vendor_count} 个厂商 (版本 {version})")
 
         except json.JSONDecodeError as e:
@@ -102,7 +100,7 @@ class GPUProfileLoader:
                 if not isinstance(series_data, dict):
                     _type_name = type(series_data).__name__
                     logger.warning(
-                        f"跳过无效的系列配置 {vendor}/{arch_name}/{series_name}: 期望dict, 得到{_type_name}"
+                        f"跳过无效系列配置 {vendor}/{arch_name}/{series_name}: 期望dict, 得{_type_name}"
                     )
                     continue
 
@@ -217,9 +215,7 @@ class GPUProfileLoader:
             and isinstance(max_batch, (int, float))
             and max_batch < rec_batch
         ):
-            errors.append(
-                f"max_batch_size ({max_batch}) < recommended_batch_size ({rec_batch})"
-            )
+            errors.append(f"max_batch_size ({max_batch}) < recommended_batch_size ({rec_batch})")
 
         # 验证optimizations字段（如果存在）
         if "optimizations" in profile:
@@ -257,9 +253,7 @@ class GPUProfileLoader:
         if "compute_capability" in profile:
             cc = profile["compute_capability"]
             if not isinstance(cc, (str, int, float)):
-                errors.append(
-                    f"compute_capability类型错误: 期望str/int/float, 得到{type(cc).__name__}"
-                )
+                errors.append(f"compute_capability类型错误: 期望str/int/float, 得到{type(cc).__name__}")
 
         # 验证memory_efficiency范围（如果存在）
         if "memory_efficiency" in profile:
@@ -322,7 +316,7 @@ class GPUProfileLoader:
 
     def get_all_vendors(self) -> list[str]:
         """获取所有支持的厂商列表"""
-        return [k for k in self.profiles.keys() if not k.startswith("_")]
+        return [k for k in self.profiles if not k.startswith("_")]
 
     def get_vendor_architectures(self, vendor: str) -> list[str]:
         """
@@ -340,7 +334,7 @@ class GPUProfileLoader:
             return []
 
         vendor_data = self.profiles[vendor]
-        return [k for k in vendor_data.keys() if not k.startswith("_") and k != "default"]
+        return [k for k in vendor_data if not k.startswith("_") and k != "default"]
 
     def reload(self) -> None:
         """重新加载配置文件"""

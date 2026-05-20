@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 import re
 
-with open('src/cli/arg_parser.py', 'r', encoding='utf-8') as f:
+with open('src/cli/arg_parser.py', encoding='utf-8') as f:
     content = f.read()
 
 # 查找所有help参数

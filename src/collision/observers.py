@@ -47,8 +47,8 @@ class CollisionObserver(ABC):
             stats: 最终碰撞统计信息
         """
 
-    def on_error(self, error: Exception, context: dict[str, Any] | None = None) -> None:
-        """错误事件（可选实现）
+    def on_error(self, error: Exception, context: dict[str, Any] | None = None) -> None:  # noqa: B027
+        """错误事件（可选实现，非抽象方法）
 
         Args:
             error: 异常对象
@@ -129,8 +129,11 @@ class LoggingObserver(BaseCollisionObserver):
         """记录进度日志（采样）"""
         # 每10000次记录一次，避免日志洪水
         if stats.total_checked % 10000 == 0:
+            _total = stats.total_checked
+            _speed = stats.speed
+            _matches = len(stats.matches)
             self.logger.info(
-                f"碰撞进度: 已检测={stats.total_checked:,}, 速度={stats.speed:.2f}/s, 匹配={len(stats.matches)}"
+                f"碰撞进度: 已检测={_total:,}, 速度={_speed:.2f}/s, 匹配={_matches}"
             )
 
     def on_match(self, private_key: bytes, address: str, wif: str) -> None:

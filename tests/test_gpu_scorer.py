@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """GPUDeviceScorer 单元测试
 
 覆盖 GPUDeviceScorer 的全部公共方法:
@@ -12,10 +11,11 @@
 """
 
 import unittest
-from typing import Dict, Any
+from typing import Any
+
+import pytest
 
 from src.gpu.scorer import GPUDeviceScorer, get_gpu_scorer, reset_gpu_scorer
-import pytest
 
 pytestmark = pytest.mark.gpu
 
@@ -32,7 +32,7 @@ def _make_device(
     cache_kb: float = 0.0,
     lmem_kb: float = 0.0,
     model: str = "",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     return {
         "name": name,
         "vendor": vendor,
@@ -96,7 +96,7 @@ class TestGPUDeviceScorerScore(unittest.TestCase):
 
     def test_07_score_missing_fields_defaults(self):
         """score: 缺失字段使用默认值不崩溃"""
-        d: Dict[str, Any] = {"name": "Min GPU", "vendor": "nvidia"}
+        d: dict[str, Any] = {"name": "Min GPU", "vendor": "nvidia"}
         s = self.scorer.score(d)
         # mem=0, cu=0, no gen bonus (name doesn't match any model)
         self.assertGreaterEqual(s, 0.0)

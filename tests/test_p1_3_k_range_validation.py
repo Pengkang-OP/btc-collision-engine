@@ -8,8 +8,8 @@ P1-3 修复验证：GPU内核 batch_check k>=N 验证
 4. .cl 文件和 kernel.py 保持同步
 """
 
-import sys
 import os
+import sys
 import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -163,7 +163,7 @@ class TestP1_3_KeyRangeValidation(unittest.TestCase):
 
         self.assertEqual(len(n_values), 8, f"N应有8个值，实际{len(n_values)}")
 
-        for i, (actual, expected) in enumerate(zip(n_values, expected_n)):
+        for i, (actual, expected) in enumerate(zip(n_values, expected_n, strict=False)):
             self.assertEqual(actual, expected, f"N[{i}] = {hex(actual)} 不等于预期 {hex(expected)}")
 
         print("\n[P1-3-F ✓] SECP256K1_N 常量值正确")

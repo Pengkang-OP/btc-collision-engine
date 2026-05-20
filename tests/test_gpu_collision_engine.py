@@ -5,9 +5,11 @@
 避免真实GPU调用导致的测试失败。
 """
 
-import pytest
 import threading
 from unittest.mock import Mock, patch
+
+import pytest
+
 from src.collision.gpu_collision_engine import GPUCollisionEngine
 from src.gpu.device import GPUDeviceDetector
 

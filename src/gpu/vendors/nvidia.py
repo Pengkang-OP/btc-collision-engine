@@ -101,7 +101,7 @@ class NVIDIAGPUVendor(GPUVendorBase):
         optimal = align_batch_size(optimal)
 
         logger.info(
-            f"NVIDIA batch_size计算: recommended={recommended}, mem_based={mem_based_max}, optimal={optimal}"
+            f"NVIDIA batch_size: recommended={recommended}, mem={mem_based_max}, optimal={optimal}"
         )
 
         return optimal

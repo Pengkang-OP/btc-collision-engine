@@ -9,13 +9,13 @@
 
 import unittest
 
+from src.wizard.events import WizardEventType
 from src.wizard.message_queue import (
     WizardMessageQueue,
     get_message_queue,
-    set_message_queue,
     reset_message_queue,
+    set_message_queue,
 )
-from src.wizard.events import WizardEventType
 
 
 class TestWizardMessageQueue(unittest.TestCase):

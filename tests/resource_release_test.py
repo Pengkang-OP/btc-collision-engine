@@ -5,10 +5,10 @@
 此脚本用于测试修复后的GPU资源释放功能，确保在引擎停止后GPU资源能够被正确释放。
 """
 
-import time
 import logging
-import sys
 import os
+import sys
+import time
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))

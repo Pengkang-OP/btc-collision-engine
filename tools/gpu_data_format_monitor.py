@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 GPU 数据格式实时监控工具
 
@@ -9,28 +8,28 @@ GPU 数据格式实时监控工具
 - 地址格式（P2PKH / P2SH / Bech32）
 """
 
-import sys
 import os
-import time
 import re
+import sys
+import time
 from datetime import datetime
-from typing import List, Tuple
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.core import (
-    Secp256k1, EllipticCurve,
-    P2PKHAddressGenerator,
-)
 from src.collision import KeyCollisionEngine, TargetResolver
+from src.core import (
+    EllipticCurve,
+    P2PKHAddressGenerator,
+    Secp256k1,
+)
 from src.utils.ui_helpers import format_number_with_commas, format_speed
 
 
 class GPUDataFormatMonitor:
     """GPU 数据格式监控器"""
 
-    def __init__(self, target_addresses: List[str] = None):
+    def __init__(self, target_addresses: list[str] = None):
         """
         初始化监控器
 
@@ -62,7 +61,7 @@ class GPUDataFormatMonitor:
         self.p2sh_pattern = re.compile(r'^3[a-km-zA-HJ-NP-Z1-9]{25,34}$')
         self.bech32_pattern = re.compile(r'^bc1[a-z0-9]{25,39}$')
 
-    def validate_private_key(self, private_key: bytes) -> Tuple[bool, str]:
+    def validate_private_key(self, private_key: bytes) -> tuple[bool, str]:
         """
         验证私钥格式
 
@@ -88,7 +87,7 @@ class GPUDataFormatMonitor:
 
         return True, ""
 
-    def validate_public_key(self, public_key: bytes) -> Tuple[bool, str]:
+    def validate_public_key(self, public_key: bytes) -> tuple[bool, str]:
         """
         验证公钥格式
 
@@ -115,7 +114,7 @@ class GPUDataFormatMonitor:
 
         return False, f"公钥长度错误: {len(public_key)} 字节（应为 33 或 65 字节）"
 
-    def validate_address(self, address: str) -> Tuple[bool, str]:
+    def validate_address(self, address: str) -> tuple[bool, str]:
         """
         验证地址格式
 
@@ -262,7 +261,7 @@ class GPUDataFormatMonitor:
                     if len(self.format_errors) < 20:
                         self.format_errors.append(error)
 
-            except Exception as e:
+            except Exception:
                 # 静默处理异常，避免影响监控
                 pass
 
@@ -288,7 +287,7 @@ class GPUDataFormatMonitor:
         print("-" * 80)
 
         # 性能统计
-        print(f"⚡ 性能统计:")
+        print("⚡ 性能统计:")
         print(f"   总检测数: {format_number_with_commas(self.total_checked)}")
         print(f"   新增检测: {format_number_with_commas(new_checked)}")
         print(f"   当前速度: {format_speed(speed)} keys/s")
@@ -296,21 +295,21 @@ class GPUDataFormatMonitor:
         print()
 
         # 私钥验证
-        print(f"🔑 私钥验证:")
+        print("🔑 私钥验证:")
         print(f"   有效私钥: {format_number_with_commas(self.valid_private_keys)}")
         print(f"   无效私钥: {format_number_with_commas(self.invalid_private_keys)}")
         print(f"   合格率: {private_key_rate:.2f}%")
         print()
 
         # 公钥验证
-        print(f"🔓 公钥验证:")
+        print("🔓 公钥验证:")
         print(f"   有效公钥: {format_number_with_commas(self.valid_public_keys)}")
         print(f"   无效公钥: {format_number_with_commas(self.invalid_public_keys)}")
         print(f"   合格率: {public_key_rate:.2f}%")
         print()
 
         # 地址验证
-        print(f"📍 地址验证:")
+        print("📍 地址验证:")
         print(f"   有效地址: {format_number_with_commas(self.valid_addresses)}")
         print(f"   无效地址: {format_number_with_commas(self.invalid_addresses)}")
         print(f"   合格率: {address_rate:.2f}%")
@@ -336,7 +335,7 @@ class GPUDataFormatMonitor:
         print(f"总运行时间: {elapsed:.1f} 秒")
         print()
 
-        print(f"🔑 私钥验证统计:")
+        print("🔑 私钥验证统计:")
         print(f"   有效: {format_number_with_commas(self.valid_private_keys)}")
         print(f"   无效: {format_number_with_commas(self.invalid_private_keys)}")
         total = self.valid_private_keys + self.invalid_private_keys
@@ -344,7 +343,7 @@ class GPUDataFormatMonitor:
             print(f"   合格率: {self.valid_private_keys / total * 100:.2f}%")
         print()
 
-        print(f"🔓 公钥验证统计:")
+        print("🔓 公钥验证统计:")
         print(f"   有效: {format_number_with_commas(self.valid_public_keys)}")
         print(f"   无效: {format_number_with_commas(self.invalid_public_keys)}")
         total = self.valid_public_keys + self.invalid_public_keys
@@ -352,7 +351,7 @@ class GPUDataFormatMonitor:
             print(f"   合格率: {self.valid_public_keys / total * 100:.2f}%")
         print()
 
-        print(f"📍 地址验证统计:")
+        print("📍 地址验证统计:")
         print(f"   有效: {format_number_with_commas(self.valid_addresses)}")
         print(f"   无效: {format_number_with_commas(self.invalid_addresses)}")
         print()
@@ -360,7 +359,7 @@ class GPUDataFormatMonitor:
         if self.format_errors:
             print(f"⚠️  共发现 {len(self.format_errors)} 个格式错误")
         else:
-            print(f"✅ 未发现格式错误")
+            print("✅ 未发现格式错误")
 
         print("=" * 80)
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Intel GPU 专有优化器单元测试
 
@@ -12,12 +11,13 @@ Intel GPU 专有优化器单元测试
 所有 GPU 依赖通过 Mock 隔离，不依赖真实 GPU 或 OpenCL。
 """
 
-import sys
-import os
-import unittest
 import logging
-import pytest
+import os
+import sys
+import unittest
 from unittest.mock import Mock, patch
+
+import pytest
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -383,10 +383,9 @@ class TestInitMonitoringAndTuning(unittest.TestCase):
                 "src.gpu.auto_tuner": None,
                 "src.gpu.performance_reporter": None,
             },
-        ):
-            with patch("src.gpu.intel_optimizer.open", side_effect=ImportError, create=True):
-                context = {"engine": Mock()}
-                result = optimizer.init_monitoring_and_tuning(context)
+        ), patch("src.gpu.intel_optimizer.open", side_effect=ImportError, create=True):
+            context = {"engine": Mock()}
+            result = optimizer.init_monitoring_and_tuning(context)
 
         self.assertIsNone(result["memory_monitor"])
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """验证 secp256k1.py 和 logger.py 的修复
 
 测试内容:
@@ -9,19 +8,19 @@
 4. ThreadSafeLogger 弃用警告
 """
 
-import sys
 import os
-import warnings
+import sys
 import time
+import warnings
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.core.secp256k1 import Secp256k1, ECPoint, EllipticCurve  # noqa: E402
+from src.core.secp256k1 import ECPoint, EllipticCurve, Secp256k1  # noqa: E402
 from src.utils.logger import (  # noqa: E402
-    ThreadSafeLogger,
-    SampledLogger,
     AsyncFileHandler,
+    SampledLogger,
+    ThreadSafeLogger,
     setup_logger,
 )
 

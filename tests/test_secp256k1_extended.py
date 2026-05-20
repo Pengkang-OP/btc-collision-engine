@@ -1,13 +1,13 @@
 """secp256k1椭圆曲线运算扩展测试 - 覆盖核心算法"""
 
-import unittest
 import os
 import sys
+import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from src.core.secp256k1 import Secp256k1, ECPoint, EllipticCurve  # noqa: E402
 from src.core.address_generator import P2PKHAddressGenerator  # noqa: E402
+from src.core.secp256k1 import ECPoint, EllipticCurve, Secp256k1  # noqa: E402
 
 
 class TestModInverse(unittest.TestCase):
