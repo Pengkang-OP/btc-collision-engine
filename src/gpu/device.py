@@ -107,6 +107,57 @@ def identify_vendor(device_name: str, vendor_str: str = "") -> str:
         return "unknown"
 
 
+def _identify_nvidia_model(name_lower: str) -> str:
+    """识别 NVIDIA GPU 型号"""
+    if "rtx 40" in name_lower:
+        return "rtx40"
+    if "rtx 30" in name_lower:
+        return "rtx30"
+    if "rtx 20" in name_lower:
+        return "rtx20"
+    if "gtx 16" in name_lower:
+        return "gtx16"
+    if "gtx 10" in name_lower:
+        return "gtx10"
+    if "titan" in name_lower:
+        return "titan"
+    if "tesla" in name_lower:
+        return "tesla"
+    if "quadro" in name_lower:
+        return "quadro"
+    return "nvidia_other"
+
+
+def _identify_amd_model(name_lower: str) -> str:
+    """识别 AMD GPU 型号"""
+    if "rx 7" in name_lower:
+        return "rx7000"
+    if "rx 6" in name_lower:
+        return "rx6000"
+    if "rx 5700" in name_lower or "rx 5600" in name_lower or "rx 5500" in name_lower:
+        return "rx5000"
+    if "rx 580" in name_lower or "rx 570" in name_lower or "rx 560" in name_lower:
+        return "rx500"
+    if "vega" in name_lower:
+        return "vega"
+    if "instinct" in name_lower:
+        return "instinct"
+    return "amd_other"
+
+
+def _identify_intel_model(name_lower: str) -> str:
+    """识别 Intel GPU 型号"""
+    if "arc" in name_lower:
+        return "arc"
+    if "iris" in name_lower:
+        return "iris"
+    if "hd graphics" in name_lower:
+        return "hd_graphics"
+    if "uhd graphics" in name_lower:
+        return "uhd_graphics"
+    return "intel_other"
+
+
 def identify_gpu_model(device_name: str, vendor: str) -> str:
     """
     识别GPU型号
@@ -121,59 +172,15 @@ def identify_gpu_model(device_name: str, vendor: str) -> str:
     name_lower = device_name.lower()
     vendor_lower = vendor.lower()
 
-    if vendor_lower == "nvidia":
-        # NVIDIA 型号识别
-        if "rtx 40" in name_lower:
-            return "rtx40"
-        elif "rtx 30" in name_lower:
-            return "rtx30"
-        elif "rtx 20" in name_lower:
-            return "rtx20"
-        elif "gtx 16" in name_lower:
-            return "gtx16"
-        elif "gtx 10" in name_lower:
-            return "gtx10"
-        elif "titan" in name_lower:
-            return "titan"
-        elif "tesla" in name_lower:
-            return "tesla"
-        elif "quadro" in name_lower:
-            return "quadro"
-        else:
-            return "nvidia_other"
-
-    elif vendor_lower == "amd":
-        # AMD 型号识别
-        if "rx 7" in name_lower:
-            return "rx7000"
-        elif "rx 6" in name_lower:
-            return "rx6000"
-        elif "rx 5700" in name_lower or "rx 5600" in name_lower or "rx 5500" in name_lower:
-            return "rx5000"
-        elif "rx 580" in name_lower or "rx 570" in name_lower or "rx 560" in name_lower:
-            return "rx500"
-        elif "vega" in name_lower:
-            return "vega"
-        elif "instinct" in name_lower:
-            return "instinct"
-        else:
-            return "amd_other"
-
-    elif vendor_lower == "intel":
-        # Intel 型号识别
-        if "arc" in name_lower:
-            return "arc"
-        elif "iris" in name_lower:
-            return "iris"
-        elif "hd graphics" in name_lower:
-            return "hd_graphics"
-        elif "uhd graphics" in name_lower:
-            return "uhd_graphics"
-        else:
-            return "intel_other"
-
-    else:
-        return "unknown"
+    _identifiers = {
+        "nvidia": _identify_nvidia_model,
+        "amd": _identify_amd_model,
+        "intel": _identify_intel_model,
+    }
+    identifier = _identifiers.get(vendor_lower)
+    if identifier is not None:
+        return identifier(name_lower)
+    return "unknown"
 
 
 class GPUDeviceDetector:

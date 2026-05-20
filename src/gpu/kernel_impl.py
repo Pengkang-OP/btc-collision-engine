@@ -1255,7 +1255,7 @@ class GPUKernel(GPUKernelProtocol):
 
         return matches
 
-    def _check_memory_leaks_on_shutdown(self, released_buffers: set) -> None:
+    def _check_memory_leaks_on_shutdown(self, released_buffers: set[str]) -> None:
         """引擎关闭时强制检查并释放所有缓冲区。"""
         if not hasattr(self, "_buffer_tracker") or not self._buffer_tracker:
             return
@@ -1287,7 +1287,7 @@ class GPUKernel(GPUKernelProtocol):
         except Exception as e:
             logger.error(f"内存泄漏检查失败: {e}")
 
-    def _release_gpu_buffers(self, released_buffers: set) -> None:
+    def _release_gpu_buffers(self, released_buffers: set[str]) -> None:
         """显式释放所有 OpenCL Buffer。"""
         buffers_to_release = [
             ("_seed_buf", self._seed_buf),
@@ -1339,7 +1339,7 @@ class GPUKernel(GPUKernelProtocol):
         # memory_pool = getattr(self, '_gpu_memory_pool', None) # 不再需要
 
         # v2.2.1修复: 跟踪已释放的缓冲区，避免双重释放
-        released_buffers: set = set()
+        released_buffers: set[str] = set()
 
         self._check_memory_leaks_on_shutdown(released_buffers)
         self._release_gpu_buffers(released_buffers)
