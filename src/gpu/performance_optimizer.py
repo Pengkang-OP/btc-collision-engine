@@ -514,12 +514,10 @@ class GPUPerformanceOptimizer:
             recommendations.append(f"检测到{total_errors}个错误，建议检查GPU驱动和显存使用")
 
         # 厂商特定建议
-        if profile.vendor == GPUVendor.INTEL:
-            if not profile.use_uint32_workaround:
-                recommendations.append("Intel GPU建议启用uint32 workaround避免hang bug")
-        elif profile.vendor == GPUVendor.NVIDIA:
-            if profile.memory_usage_ratio < 0.6:
-                recommendations.append("NVIDIA GPU可以尝试提高显存使用率至60-70%")
+        if profile.vendor == GPUVendor.INTEL and not profile.use_uint32_workaround:
+            recommendations.append("Intel GPU建议启用uint32 workaround避免hang bug")
+        elif profile.vendor == GPUVendor.NVIDIA and profile.memory_usage_ratio < 0.6:
+            recommendations.append("NVIDIA GPU可以尝试提高显存使用率至60-70%")
 
         return recommendations
 

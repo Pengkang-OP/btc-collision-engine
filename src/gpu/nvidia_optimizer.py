@@ -147,7 +147,8 @@ class NvidiaDriverDetector:
                 )
             elif major < self.RECOMMENDED_DRIVER:
                 result["recommendation"] = (
-                    f"NVIDIA 驱动版本 {major} 可正常工作，建议升级至推荐版本 {self.RECOMMENDED_DRIVER}+ 以获得最佳性能"
+                    f"NVIDIA 驱动版本 {major} 可正常工作，"
+                    f"建议升级至推荐版本 {self.RECOMMENDED_DRIVER}+ 以获得最佳性能"
                 )
 
         return result
@@ -582,8 +583,8 @@ class NvidiaGPUOptimizer:
             self._logger.info(
                 f"\u2705 NVIDIA GPU 架构: {self._arch_info['arch']}"
                 f"（计算能力 CC {self._arch_info.get('compute_capability', '?')}，"
-                f"异步拷贝: {'\u652f持' if self._arch_info.get('async_copy') else '\u4e0d支持'}，"
-                f"原生 FP64: {'\u652f持' if self._arch_info.get('fp64_native') else '\u4e0d支持'}，"
+                f"异步拷贝: {'支持' if self._arch_info.get('async_copy') else '不支持'}，"
+                f"原生 FP64: {'支持' if self._arch_info.get('fp64_native') else '不支持'}，"
                 f"最低驱动: {self._arch_info.get('min_driver', '?')}）"
             )
 
@@ -608,7 +609,7 @@ class NvidiaGPUOptimizer:
                 f"\u2705 NVIDIA 显存配置: {self._memory_config['global_mem_gb']:.1f}GB"
                 f"（类型: {'HBM' if self._memory_config.get('is_hbm') else 'GDDR'}），"
                 f"memory_ratio={self._memory_config['memory_ratio']:.2f}，"
-                f"异步传输={'\u5efa议启用' if self._memory_config['async_transfer'] else '\u4e0d建议'}"
+                f"异步传输={'建议启用' if self._memory_config['async_transfer'] else '不建议'}"
             )
 
         except Exception as e:

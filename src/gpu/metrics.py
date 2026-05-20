@@ -269,7 +269,7 @@ class GPUMetricsCollector:
             # Pool hit ratio
             lines.append("# HELP gpu_memory_pool_hit_ratio Memory pool cache hit ratio per device.")
             lines.append("# TYPE gpu_memory_pool_hit_ratio gauge")
-            for dev in set(list(self._pool_hits.keys()) + list(self._pool_misses.keys())):
+            for dev in set(self._pool_hits) | set(self._pool_misses):
                 ratio = self.get_pool_hit_ratio(dev)
                 if ratio is not None:
                     lines.append(f'gpu_memory_pool_hit_ratio{{device="{dev}"}} {ratio:.4f}')
@@ -308,7 +308,7 @@ class GPUMetricsCollector:
                         "pool_hit_ratio": self.get_pool_hit_ratio(dev),
                     }
                     for dev in sorted(
-                        set(list(self._keys_checked_total.keys()) + list(self._throughput.keys()))
+                        set(self._keys_checked_total) | set(self._throughput)
                     )
                 },
             }

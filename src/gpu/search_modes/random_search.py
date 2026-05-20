@@ -14,6 +14,7 @@ import queue
 import secrets
 import threading
 import time
+from contextlib import suppress
 from typing import TYPE_CHECKING, Any
 
 # 统一日志获取 + 修复缺失导入
@@ -324,7 +325,8 @@ class RandomSearchMode(BaseSearchMode):
                     cpu_pct = psutil.cpu_percent(interval=None)
                     if cpu_pct > CPU_OVERLOAD_THRESHOLD:
                         logger.debug(
-                            f"CPU使用率 {cpu_pct:.1f}% 超过阈值 {CPU_OVERLOAD_THRESHOLD}%, 节流 {CPU_THROTTLE_SLEEP}s"
+                            f"CPU使用率 {cpu_pct:.1f}% 超过阈值 "
+                            f"{CPU_OVERLOAD_THRESHOLD}%, 节流 {CPU_THROTTLE_SLEEP}s"
                         )
                         time.sleep(CPU_THROTTLE_SLEEP)
                 except OSError:
@@ -439,14 +441,12 @@ class RandomSearchMode(BaseSearchMode):
                 total_memory_mb = device_info["global_mem_size"] / (1024 * 1024)
                 batch_optimizer.record_memory_usage(total_memory_mb * 0.7, total_memory_mb)
         # 系统负载
-        try:
+        with suppress(OSError):
             import psutil
 
             cpu_load = psutil.cpu_percent(interval=None) / 100.0
             gpu_load = min(speed / 1000000, 1.0)
             batch_optimizer.record_system_load(cpu_load, gpu_load)
-        except OSError:
-            pass
         # 性能记录
         batch_optimizer.record_performance(batch_size, execution_time_ms, speed)
 
@@ -510,14 +510,12 @@ class RandomSearchMode(BaseSearchMode):
 
             while not engine._stop_event.is_set():
                 # CPU过载检查
-                try:
+                with suppress(OSError):
                     cpu_pct = psutil.cpu_percent(interval=None)
                     if cpu_pct > CPU_OVERLOAD_THRESHOLD:
                         logger.debug(f"CPU使用率 {cpu_pct:.1f}% 超过阈值，节流")
                         current_batch_size = max(current_batch_size // 2, 10000)
                         time.sleep(CPU_THROTTLE_SLEEP)
-                except OSError:
-                    pass
 
                 # 检查引擎可用性
                 if not self._check_engine_availability(engine):

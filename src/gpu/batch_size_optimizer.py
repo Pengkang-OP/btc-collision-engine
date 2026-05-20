@@ -71,10 +71,11 @@ class SmartBatchSizeOptimizer:
         # 当前批次大小
         self._current_batch_size: int = self._initial_batch_size
 
+        _init_batch = self._initial_batch_size
+        _min_b = self._min_batch_size
+        _max_b = self._max_batch_size
         logger.info(
-            f"智能批次大小优化器初始化: GPU型号={gpu_model}, 初始批次={
-                self._initial_batch_size
-            }, 范围={self._min_batch_size}-{self._max_batch_size}"
+            f"智能批次大小优化器初始化: GPU型号={gpu_model}, 初始批次={_init_batch}, 范围={_min_b}-{_max_b}"
         )
 
     def _get_gpu_config(self, gpu_model: str) -> dict:
@@ -319,14 +320,12 @@ class SmartBatchSizeOptimizer:
             # 计算最近的趋势
             trend = recent_throughputs[-1] / recent_throughputs[0]
 
-            if trend > 1.15:  # 性能提升，增加阈值
-                # 如果最近批次大小在增加且性能提升，继续增加
-                if recent_batch_sizes[-1] > recent_batch_sizes[0]:
-                    return best_batch_size * 2
-            elif trend < 0.85:  # 性能下降，增加阈值
-                # 如果最近批次大小在增加且性能下降，减小批次大小
-                if recent_batch_sizes[-1] > recent_batch_sizes[0]:
-                    return best_batch_size // 2
+            if trend > 1.15 and recent_batch_sizes[-1] > recent_batch_sizes[0]:
+                # 性能提升且批次大小在增加，继续增加
+                return best_batch_size * 2
+            elif trend < 0.85 and recent_batch_sizes[-1] > recent_batch_sizes[0]:
+                # 性能下降且批次大小在增加，减小批次大小
+                return best_batch_size // 2
 
         return best_batch_size
 

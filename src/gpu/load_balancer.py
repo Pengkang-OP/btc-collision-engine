@@ -280,10 +280,7 @@ class GPULoadBalancer:
             return True
 
         # 内存使用检查
-        if self._detect_memory_pressure():
-            return True
-
-        return False
+        return bool(self._detect_memory_pressure())
 
     def _detect_load_imbalance(self) -> bool:
         """检测负载不均衡情况
@@ -361,12 +358,7 @@ class GPULoadBalancer:
 
             # 计算动态学习率
             history_length = len(self._historical_performance.get(idx, []))
-            if history_length < 3:
-                # 历史数据不足，更多依赖当前性能
-                learning_rate = 0.9
-            else:
-                # 历史数据充足，平衡当前和历史性能
-                learning_rate = 0.7
+            learning_rate = 0.9 if history_length < 3 else 0.7
 
             # 结合历史和当前性能
             if historical_perf > 0:
@@ -421,10 +413,10 @@ class GPULoadBalancer:
                 self._weights = {idx: w / smoothed_total for idx, w in smoothed_weights.items()}
             else:
                 # 降级为平均分配
-                self._weights = {idx: 1.0 / len(self.devices) for idx in self._weights.keys()}
+                self._weights = {idx: 1.0 / len(self.devices) for idx in self._weights}
         else:
             # 降级为平均分配
-            self._weights = {idx: 1.0 / len(self.devices) for idx in self._weights.keys()}
+            self._weights = {idx: 1.0 / len(self.devices) for idx in self._weights}
 
         # 记录负载历史
         self._record_load_history()

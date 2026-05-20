@@ -190,11 +190,12 @@ class DriverManager:
             # 依次尝试各种检测方法
             for method in detection_methods:
                 try:
-                    result = subprocess.run(
+                    result = subprocess.run(  # nosec B603
                         method["cmd"],
                         capture_output=True,
                         text=True,
                         timeout=DriverManager.DETECTION_TIMEOUT,
+                        shell=False,
                     )
 
                     if result.returncode == 0 and result.stdout.strip():
@@ -268,11 +269,12 @@ class DriverManager:
             elif system == "Darwin":
                 # macOS: 使用 system_profiler 检测 AMD GPU
                 try:
-                    result = subprocess.run(
+                    result = subprocess.run(  # nosec B603
                         ["system_profiler", "SPDisplaysDataType"],
                         capture_output=True,
                         text=True,
                         timeout=10,
+                        shell=False,
                     )
                     if result.returncode == 0 and "AMD" in result.stdout:
                         # 从输出中提取版本信息
@@ -301,11 +303,12 @@ class DriverManager:
                 "Select-Object -First 1 -ExpandProperty DriverVersion"
             )
 
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603
                 ["powershell", "-Command", ps_command],
                 capture_output=True,
                 text=True,
                 timeout=DriverManager.DETECTION_TIMEOUT,
+                shell=False,
             )
 
             if result.returncode == 0 and result.stdout.strip():
@@ -332,8 +335,9 @@ class DriverManager:
 
             for cmd in methods:
                 try:
-                    result = subprocess.run(
-                        cmd, capture_output=True, text=True, timeout=DriverManager.DETECTION_TIMEOUT
+                    result = subprocess.run(  # nosec B603
+                        cmd, capture_output=True, text=True, timeout=DriverManager.DETECTION_TIMEOUT,
+                        shell=False,
                     )
 
                     if result.returncode == 0 and result.stdout.strip():
@@ -374,11 +378,12 @@ class DriverManager:
             elif system == "Darwin":
                 # macOS: 使用 system_profiler 检测 Intel GPU
                 try:
-                    result = subprocess.run(
+                    result = subprocess.run(  # nosec B603
                         ["system_profiler", "SPDisplaysDataType"],
                         capture_output=True,
                         text=True,
                         timeout=10,
+                        shell=False,
                     )
                     if result.returncode == 0 and "Intel" in result.stdout:
                         # 从输出中提取版本信息
@@ -407,11 +412,12 @@ class DriverManager:
                 "Select-Object -First 1 -ExpandProperty DriverVersion"
             )
 
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603
                 ["powershell", "-Command", ps_command],
                 capture_output=True,
                 text=True,
                 timeout=DriverManager.DETECTION_TIMEOUT,
+                shell=False,
             )
 
             if result.returncode == 0 and result.stdout.strip():
@@ -438,8 +444,9 @@ class DriverManager:
 
             for cmd in methods:
                 try:
-                    result = subprocess.run(
-                        cmd, capture_output=True, text=True, timeout=DriverManager.DETECTION_TIMEOUT
+                    result = subprocess.run(  # nosec B603
+                        cmd, capture_output=True, text=True, timeout=DriverManager.DETECTION_TIMEOUT,
+                        shell=False,
                     )
 
                     if result.returncode == 0 and result.stdout.strip():
@@ -610,25 +617,25 @@ class DriverManager:
             min_driver = profile.get("min_driver_version")
             recommended_driver = profile.get("recommended_driver_version")
 
-            if min_driver:
-                if not DriverVersionParser.is_version_compatible(driver_version, min_driver):
-                    result["status"] = "critical"
-                    result["message"] = f"驱动版本过低: {driver_version}, 最低要求: {min_driver}"
-                    result["recommendations"].append(f"请立即更新驱动到 {min_driver} 或更高版本")
-                    return result
+            if min_driver and not DriverVersionParser.is_version_compatible(
+                driver_version, min_driver
+            ):
+                result["status"] = "critical"
+                result["message"] = f"驱动版本过低: {driver_version}, 最低要求: {min_driver}"
+                result["recommendations"].append(f"请立即更新驱动到 {min_driver} 或更高版本")
+                return result
 
-            if recommended_driver:
-                if not DriverVersionParser.is_version_compatible(
-                    driver_version, recommended_driver
-                ):
-                    if result["status"] == "good":
-                        result["status"] = "warning"
-                    result["message"] = (
-                        f"驱动版本较旧: {driver_version}, 推荐版本: {recommended_driver}"
-                    )
-                    result["recommendations"].append(
-                        f"建议更新驱动到 {recommended_driver} 以获得最佳性能"
-                    )
+            if recommended_driver and not DriverVersionParser.is_version_compatible(
+                driver_version, recommended_driver
+            ):
+                if result["status"] == "good":
+                    result["status"] = "warning"
+                result["message"] = (
+                    f"驱动版本较旧: {driver_version}, 推荐版本: {recommended_driver}"
+                )
+                result["recommendations"].append(
+                    f"建议更新驱动到 {recommended_driver} 以获得最佳性能"
+                )
 
         # 3. 根据厂商给出特定建议
         if vendor_lower == "intel":

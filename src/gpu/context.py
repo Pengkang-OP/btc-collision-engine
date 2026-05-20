@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, cast  # noqa: F401
 
 # 统一日志获取
 from ..utils import get_configured_logger
+from .constants import OPENCL_MIN_REQUIRED_VERSION, OPENCL_RECOMMENDED_VERSION
 from .device import GPUDevice, identify_vendor
 from .kernel_impl import compile_kernel_with_retry  # DEF-2修复: 共享重试函数
 from .vendors.amd import AMDGPUVendor
@@ -72,7 +73,8 @@ class GPUContext:
         self._kernel_cache: dict[str, Any] = {}
 
         logger.info(
-            f"GPU上下文已创建: {device.device_info.get('name', 'Unknown')} ({self.vendor_handler.get_vendor_name()})"
+            f"GPU上下文已创建: {device.device_info.get('name', 'Unknown')} "
+            f"({self.vendor_handler.get_vendor_name()})"
         )
 
     def _create_vendor_handler(self) -> GPUVendorBase:
@@ -184,13 +186,35 @@ class GPUContext:
                 f"options='{vendor_options}', source_hash={source_hash}]"
             )
 
-            # DEF-2修复: 构建渐进编译策略（厂商优选 → 通用回退）
+            # COMP-2: 根据设备 OpenCL 版本构建自适应编译策略
+            # OpenCL >= 2.0: 厂商优选 → CL2.0 → CL1.2 (三级降级)
+            # OpenCL >= 1.2, < 2.0: 厂商优选 → CL1.2 (二级降级，跳过 CL2.0)
+            # OpenCL < 1.2: 警告 + 厂商优选 → CL1.2 (不兼容但仍尝试)
             vendor_options_list = vendor_options.split() if vendor_options else []
-            context_strategies = [
-                (f"厂商编译({vendor_options or '默认'})", vendor_options_list),
-                ("CL2.0标准编译", ["-cl-std=CL2.0"]),
-                ("降级CL1.2编译", ["-cl-std=CL1.2", "-cl-mad-enable", "-cl-no-signed-zeros"]),
-            ]
+
+            device_ocl_version = getattr(self.device, 'opencl_version', OPENCL_MIN_REQUIRED_VERSION)
+            if not isinstance(device_ocl_version, (int, float)):
+                device_ocl_version = OPENCL_MIN_REQUIRED_VERSION
+
+            if device_ocl_version >= OPENCL_RECOMMENDED_VERSION:
+                context_strategies = [
+                    (f"厂商编译({vendor_options or '默认'})", vendor_options_list),
+                    ("CL2.0标准编译", ["-cl-std=CL2.0"]),
+                    ("降级CL1.2编译", ["-cl-std=CL1.2", "-cl-mad-enable", "-cl-no-signed-zeros"]),
+                ]
+                logger.debug(
+                    f"COMP-2: OpenCL {device_ocl_version:.1f} >= {OPENCL_RECOMMENDED_VERSION}, "
+                    "使用三级编译策略 (厂商 → CL2.0 → CL1.2)"
+                )
+            else:
+                context_strategies = [
+                    (f"厂商编译({vendor_options or '默认'})", vendor_options_list),
+                    ("降级CL1.2编译", ["-cl-std=CL1.2", "-cl-mad-enable", "-cl-no-signed-zeros"]),
+                ]
+                logger.debug(
+                    f"COMP-2: OpenCL {device_ocl_version:.1f} < {OPENCL_RECOMMENDED_VERSION}, "
+                    "跳过 CL2.0 策略 (设备不支持), 使用二级编译策略 (厂商 → CL1.2)"
+                )
 
             # DEF-2修复: 使用共享重试函数
             self.program, _strategy_idx = compile_kernel_with_retry(

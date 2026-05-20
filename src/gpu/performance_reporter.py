@@ -295,9 +295,8 @@ class PerformanceReportGenerator:
         }
 
         # 添加基准测试结果
-        if config.include_benchmark_results and self.benchmark_suite:
-            if hasattr(self.benchmark_suite, "results"):
-                report_data["benchmark_results"] = [
+        if config.include_benchmark_results and self.benchmark_suite and hasattr(self.benchmark_suite, "results"):
+            report_data["benchmark_results"] = [
                     {
                         "test_name": r.test_name,
                         "test_type": r.test_type.value,

@@ -4,6 +4,7 @@
 复用现有gpu_engine.py的逻辑并保持API兼容。
 """
 
+import re
 from typing import Any, cast
 
 # 统一日志获取
@@ -17,11 +18,44 @@ try:
 except ImportError:
     PYOPENCL_AVAILABLE = False
 
+from .constants import (
+    OPENCL_MIN_REQUIRED_VERSION,
+    OPENCL_OPTIMAL_VERSION,
+    OPENCL_RECOMMENDED_VERSION,
+    OPENCL_UPGRADE_ADVICE,
+    OPENCL_VERSION_UNKNOWN,
+)
 from .driver_manager import DriverManager
 from .profiles.loader import GPUProfileLoader
 from .scorer import get_gpu_scorer
 
 logger = get_configured_logger("GPUDevice")
+
+
+def _parse_opencl_version(version_str: str) -> float:
+    """解析 OpenCL 版本字符串为浮点数
+
+    支持格式:
+      - "OpenCL 3.0 NEO"
+      - "OpenCL C 2.0 NEO"
+      - "OpenCL 2.1 AMD-APP (3276.6)"
+      - "OpenCL 1.2 CUDA 12.1.128"
+
+    Args:
+        version_str: OpenCL 版本字符串
+
+    Returns:
+        版本号浮点数, 如 3.0, 2.1, 1.2; 解析失败返回 OPENCL_VERSION_UNKNOWN
+    """
+    if not version_str or version_str == "Unknown":
+        return OPENCL_VERSION_UNKNOWN
+    match = re.search(r"OpenCL\s*(?:C\s*)?(\d+\.\d+)", str(version_str))
+    if match:
+        try:
+            return float(match.group(1))
+        except ValueError:
+            pass
+    return OPENCL_VERSION_UNKNOWN
 
 
 def identify_vendor(device_name: str, vendor_str: str = "") -> str:
@@ -341,6 +375,16 @@ class GPUDeviceDetector:
                             logger.debug(f"跳过核显设备: {device_name}")
                             continue
 
+                        # COMP-2: 查询 OpenCL 版本信息
+                        try:
+                            opencl_version_str = device.get_info(cl.device_info.VERSION)
+                        except Exception:
+                            opencl_version_str = "Unknown"
+                        try:
+                            opencl_c_version_str = device.get_info(cl.device_info.OPENCL_C_VERSION)
+                        except Exception:
+                            opencl_c_version_str = "Unknown"
+
                         # 构建设备信息字典
                         device_info = {
                             "name": device_name,
@@ -352,6 +396,8 @@ class GPUDeviceDetector:
                             "max_compute_units": device.max_compute_units,
                             "max_work_group_size": device.max_work_group_size,
                             "type": "GPU",
+                            "opencl_version": opencl_version_str,
+                            "opencl_c_version": opencl_c_version_str,
                         }
 
                         devices.append(device_info)
@@ -443,6 +489,11 @@ class GPUDevice:
         # PERF-2修复: 默认启用异步执行，提高GPU利用率
         self.enable_async_execution = True  # 是否启用异步执行（默认True）
 
+        # COMP-2: OpenCL 版本兼容性
+        self._opencl_version = OPENCL_VERSION_UNKNOWN
+        self._opencl_version_str = "Unknown"
+        self._supports_svm = False
+
     def initialize(self, device_index: int = -1, enable_async: bool = True) -> None:
         """
         初始化GPU设备
@@ -495,38 +546,62 @@ class GPUDevice:
         self.device = device_info["device"]
         self.vendor = device_info.get("vendor", "Unknown")
 
-        # COMP-2修复: 检测OpenCL版本并提供兼容性建议
-        opencl_version = device_info.get("version", "Unknown")
-        logger.info(f"OpenCL版本: {opencl_version}")
+        # COMP-2: 检测OpenCL版本并提供兼容性建议
+        opencl_version_str = device_info.get("opencl_version", "Unknown")
+        opencl_c_version_str = device_info.get("opencl_c_version", "Unknown")
+        self._opencl_version_str = opencl_version_str
 
-        # 解析OpenCL版本号 (例如 "OpenCL 3.0" -> 3.0)
-        try:
-            version_str = opencl_version.replace("OpenCL", "").strip()
-            version_num = float(version_str.split()[0])  # 取第一个数字部分
+        # 优先使用 OPENCL_C_VERSION (设备级), 回退到 VERSION (平台级)
+        version_source = opencl_c_version_str if opencl_c_version_str != "Unknown" else opencl_version_str
+        self._opencl_version = _parse_opencl_version(version_source)
 
-            if version_num < 1.2:
-                logger.warning(
-                    f"COMP-2警告: OpenCL版本过低 ({version_num})，部分功能可能不可用\n"
-                    "  最低要求: OpenCL 1.2\n"
-                    "  建议: 更新GPU驱动或使用更高版本的设备"
-                )
-                # 标记为不兼容模式，某些高级功能需要禁用
-                self._legacy_mode = True
-            else:
-                logger.info(f"✅ OpenCL版本兼容 ({version_num} >= 1.2)")
-                self._legacy_mode = False
+        logger.info(
+            f"COMP-2: OpenCL 版本检测 — 平台: {opencl_version_str}, "
+            f"设备: {opencl_c_version_str}, 解析: {self._opencl_version:.1f}"
+        )
 
-                # 为OpenCL 3.0+提供额外优化建议
-                if version_num >= 3.0:
-                    logger.info(
-                        "检测到OpenCL 3.0+，可以使用最新特性:\n"
-                        "  - Sub-groups (SIMD)\n"
-                        "  - 3D image support\n"
-                        "  - Extended atomic operations"
-                    )
-        except (ValueError, IndexError):
-            logger.warning(f"无法解析OpenCL版本: {opencl_version}")
-            self._legacy_mode = True
+        # 按版本分级处理
+        if self._opencl_version < OPENCL_MIN_REQUIRED_VERSION:
+            # OpenCL < 1.2: 不兼容，给出明确提示但不崩溃
+            vendor_for_advice = identify_vendor(
+                device_info.get("name", ""), cast(str, self.vendor)
+            )
+            upgrade_info = OPENCL_UPGRADE_ADVICE.get(vendor_for_advice, OPENCL_UPGRADE_ADVICE["unknown"])
+            logger.warning(
+                f"COMP-2: OpenCL 版本不兼容 (当前: {self._opencl_version:.1f}, "
+                f"最低要求: {OPENCL_MIN_REQUIRED_VERSION})\n"
+                f"  当前版本: {self._opencl_version_str}\n"
+                f"  最低要求: OpenCL {OPENCL_MIN_REQUIRED_VERSION}\n"
+                f"  推荐版本: OpenCL {OPENCL_RECOMMENDED_VERSION}+\n"
+                f"  升级建议 ({upgrade_info['description']}):\n"
+                f"    {upgrade_info['advice']}"
+            )
+            self._supports_svm = False
+        elif self._opencl_version < OPENCL_RECOMMENDED_VERSION:
+            # OpenCL 1.2: 兼容但功能受限，使用标准 buffer 映射
+            logger.info(
+                f"COMP-2: OpenCL {self._opencl_version:.1f} — 兼容模式 (标准 buffer 映射)\n"
+                f"  不支持 SVM 共享虚拟内存 (需 OpenCL {OPENCL_RECOMMENDED_VERSION}+)\n"
+                f"  将使用标准 clCreateBuffer + clEnqueueMapBuffer 进行数据传输"
+            )
+            self._supports_svm = False
+        elif self._opencl_version >= OPENCL_OPTIMAL_VERSION:
+            # OpenCL 3.0+: 完全支持，可使用 SVM
+            logger.info(
+                f"COMP-2: OpenCL {self._opencl_version:.1f} — 完全兼容\n"
+                f"  SVM 共享虚拟内存: ✅ 可用 (OpenCL 2.0+)\n"
+                f"  Sub-groups (SIMD): ✅ 可用\n"
+                f"  Generic Address Space: ✅ 可用\n"
+                f"  Extended atomics: ✅ 可用"
+            )
+            self._supports_svm = True
+        else:
+            # OpenCL 2.0 - 2.x: 支持 SVM
+            logger.info(
+                f"COMP-2: OpenCL {self._opencl_version:.1f} — 完全兼容\n"
+                f"  SVM 共享虚拟内存: ✅ 可用"
+            )
+            self._supports_svm = True
 
         # 识别GPU型号
         vendor_identifier = identify_vendor(device_info.get("name", ""), cast(str, self.vendor))
@@ -543,6 +618,9 @@ class GPUDevice:
             "global_mem_size": device_info["device"].global_mem_size,
             "max_compute_units": device_info["device"].max_compute_units,
             "work_group_size": 256,  # v2.3.0优化: 默认值，会被auto_config覆盖
+            "opencl_version": self._opencl_version,
+            "opencl_version_str": self._opencl_version_str,
+            "supports_svm": self._supports_svm,
         }
 
         # 查询设备最大工作组大小
@@ -606,6 +684,8 @@ class GPUDevice:
             f"  - 最大工作组大小: {self.device_info.get('max_work_group_size', 'N/A')}\n"
             f"  - 本地内存: {self.device_info.get('local_mem_size', 0) / 1024:.0f} KB\n"
             f"  - 平台: {self.device_info['platform']}\n"
+            f"  - OpenCL: {self._opencl_version:.1f} ({self._opencl_version_str})\n"
+            f"  - SVM: {'可用' if self._supports_svm else '不可用'}\n"
             f"  - 异步执行: {'已启用' if self.enable_async_execution else '未启用'}"
         )
 
@@ -715,6 +795,16 @@ class GPUDevice:
             设备信息字典
         """
         return self.device_info.copy()
+
+    @property
+    def opencl_version(self) -> float:
+        """获取解析后的 OpenCL 版本号 (如 1.2, 2.0, 3.0)"""
+        return self._opencl_version
+
+    @property
+    def supports_svm(self) -> bool:
+        """是否支持 SVM 共享虚拟内存 (OpenCL 2.0+)"""
+        return self._supports_svm
 
     def cleanup(self) -> None:
         """释放GPU资源"""
