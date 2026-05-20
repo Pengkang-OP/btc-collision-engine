@@ -460,6 +460,7 @@ class TestExecute:
     """执行模式分发测试"""
 
     @patch("src.gpu.search_modes.random_search.threading.Thread")
+    @pytest.mark.gpu_kernel
     def test_execute_async_when_executor_available(self, mock_thread):
         from src.gpu.search_modes.random_search import RandomSearchMode
 

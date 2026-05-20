@@ -45,11 +45,11 @@ class TestCollisionStatsBasic(unittest.TestCase):
         self.assertEqual(match["address"], "1TestAddress")
 
     def test_add_match_stores_hash(self):
-        """add_match 存储私钥哈希（前16字符）"""
+        """add_match 存储私钥哈希（完整 SHA256）"""
         pk = bytes(range(32))
         self.stats.add_match(pk, "1TestAddress")
         match = self.stats.matches[0]
-        expected_hash = hashlib.sha256(pk).hexdigest()[:16]
+        expected_hash = hashlib.sha256(pk).hexdigest()
         self.assertEqual(match.get("private_key_hash"), expected_hash)
 
     def test_add_match_multiple(self):
@@ -126,8 +126,8 @@ class TestCollisionStatsIncrement(unittest.TestCase):
         self.assertEqual(self.stats.total_checked, 0)
 
     def test_increment_negative_delta_raises(self):
-        """increment delta<0 触发 AssertionError"""
-        with self.assertRaises(AssertionError):
+        """increment delta<0 触发 ValueError"""
+        with self.assertRaises(ValueError):
             self.stats.increment(-1)
 
     def test_increment_with_total_range(self):

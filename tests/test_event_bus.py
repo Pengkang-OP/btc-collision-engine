@@ -104,8 +104,8 @@ class TestEventCreation:
         )
         d = event.to_dict()
         assert d["event_type"] == "engine.match"
-        assert d["metadata"]["address"] == "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
-        assert d["metadata"]["target_address"] == "1TargetAddress"
+        assert d["metadata"]["address"] == "1A1zP1...vfNa"
+        assert d["metadata"]["target_address"] == "1Targe...ress"
         # 安全：序列化后不包含私钥和 WIF
         assert "private_key" not in d
         assert "private_key" not in d["metadata"]

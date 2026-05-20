@@ -14,8 +14,6 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 import pytest
-import threading
-import time
 from unittest.mock import Mock
 
 from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
@@ -64,7 +62,7 @@ class TestGenerateSequentialKeysBoundary:
         assert len(result) == count * 32
 
         for i in range(count):
-            key = int.from_bytes(result[i * 32 : (i + 1) * 32], "big")
+            key = int.from_bytes(result[i * 32: (i + 1) * 32], "big")
             assert key == start + i, f"key[{i}] expected {start + i}, got {key}"
 
     def test_count_large_value(self):
@@ -215,196 +213,153 @@ class TestRangescanMultiWorkerBoundary:
         )
 
 
+@pytest.mark.gpu_kernel
 class TestRangescanGPUFirstBatchBoundary:
-    """GPU range_scan 第一批发包 off-by-one 修复验证"""
+    """GPU range_scan 第一批发包 off-by-one 修复验证
 
-    def test_first_batch_small_range_smaller_than_batch_size(self, mock_gpu_chain):
+    通过直接实例化 RangeScanSearchMode 并使用 Mock 引擎来避免
+    GPUCollisionEngine 完整初始化（需要真实 pyopencl 环境）。
+    标记为 gpu_kernel 测试，无 GPU 环境时自动 skip。
+    """
+
+    @staticmethod
+    def _make_mock_engine(batch_size):
+        """创建 Mock 引擎用于测试 RangeScanSearchMode"""
+        mock_engine = Mock()
+        mock_engine.batch_size = batch_size
+        mock_engine._current_position = 0
+        mock_engine._stop_event = Mock()
+        mock_engine._stop_event.is_set.return_value = False
+        mock_engine._gpu_kernel = Mock()
+        mock_engine._gpu_kernel.run_batch.return_value = []
+        mock_engine._target_list = []
+        mock_engine.stats = Mock()
+        mock_engine._last_progress_time = 9999999
+        mock_engine._progress_interval_sec = 9999
+        mock_engine._batch_size_lock = Mock()
+        mock_engine._batch_size_lock.__enter__ = Mock(return_value=None)
+        mock_engine._batch_size_lock.__exit__ = Mock(return_value=None)
+        mock_engine._consecutive_gpu_errors = 0
+        mock_engine._max_gpu_error_retries = 3
+        mock_engine._save_checkpoint = Mock()
+        mock_engine.on_progress = None
+        mock_engine.on_match = None
+        mock_engine.on_complete = None
+        mock_engine._running = True
+        return mock_engine
+
+    def test_first_batch_small_range_smaller_than_batch_size(self):
         """范围小于 batch_size 时不应遗漏最后一个key"""
-        mock_device, mock_context, mock_kernel = mock_gpu_chain
+        from src.gpu.search_modes.range_scan_search import RangeScanSearchMode
 
-        from src.core.address_generator import P2PKHAddressGenerator
-
-         gen = P2PKHAddressGenerator()
-         test_key = (12345).to_bytes(32, "big")
-         valid_addr, _, _ = gen.generate_address(test_key)
-
-         mock_context.calculate_batch_size.return_value = 1000
-
-         keys_generated = []
-
-         def capture_run_batch(batch_data, actual_size):
-             keys_generated.append(actual_size)
-             return []
-
-         mock_kernel.run_batch.side_effect = capture_run_batch
-
-         from src.collision.gpu_collision_engine import GPUCollisionEngine
-
-         engine = GPUCollisionEngine(
-             targets={valid_addr},
-             device_index=0,
-             batch_size=1000,
-             data_logging_enabled=False,
-             use_enhanced_monitoring=False,
-         )
-
-         engine._range_scan(5, 10)
-         total_generated = sum(keys_generated)
-         assert total_generated == 6, (
-             f"范围[5,10]应生成6个私钥，实际{total_generated}"
-         )
-
-     def test_first_batch_range_exactly_equals_batch_size(self, mock_gpu_chain):
-         """范围恰好等于 batch_size 时全部在首批完成"""
-         mock_device, mock_context, mock_kernel = mock_gpu_chain
-
-         from src.core.address_generator import P2PKHAddressGenerator
-
-         gen = P2PKHAddressGenerator()
-         test_key = (12345).to_bytes(32, "big")
-         valid_addr, _, _ = gen.generate_address(test_key)
-
-         mock_context.calculate_batch_size.return_value = 10
-
-         keys_generated = []
-
-         def capture_run_batch(batch_data, actual_size):
-             keys_generated.append(actual_size)
-             return []
-
-         mock_kernel.run_batch.side_effect = capture_run_batch
-
-         from src.collision.gpu_collision_engine import GPUCollisionEngine
-
-         engine = GPUCollisionEngine(
-             targets={valid_addr},
-             device_index=0,
-             batch_size=10,
-             data_logging_enabled=False,
-             use_enhanced_monitoring=False,
-         )
-
-         engine._range_scan(1, 10)
-         total_generated = sum(keys_generated)
-         assert total_generated == 10, (
-             f"范围[1,10] batch_size=10 应生成10个，实际{total_generated}"
-         )
-         assert len(keys_generated) == 1, (
-             f"应在一个批次完成，实际{len(keys_generated)}批"
-         )
-
-     def test_first_batch_range_slightly_larger_than_batch_size(self, mock_gpu_chain):
-         """范围略大于 batch_size 时分两批完成"""
-         mock_device, mock_context, mock_kernel = mock_gpu_chain
-
-         from src.core.address_generator import P2PKHAddressGenerator
-
-         gen = P2PKHAddressGenerator()
-         test_key = (12345).to_bytes(32, "big")
-         valid_addr, _, _ = gen.generate_address(test_key)
-
-         mock_context.calculate_batch_size.return_value = 10
-
-         keys_generated = []
-
-         def capture_run_batch(batch_data, actual_size):
-             keys_generated.append(actual_size)
-             return []
-
-         mock_kernel.run_batch.side_effect = capture_run_batch
-
-         from src.collision.gpu_collision_engine import GPUCollisionEngine
-
-         engine = GPUCollisionEngine(
-             targets={valid_addr},
-             device_index=0,
-             batch_size=10,
-             data_logging_enabled=False,
-             use_enhanced_monitoring=False,
-         )
-
-         engine._range_scan(1, 15)
-         total_generated = sum(keys_generated)
-         assert total_generated == 15, (
-             f"范围[1,15] batch_size=10 应生成15个，实际{total_generated}"
-         )
-         assert len(keys_generated) == 2, (
-             f"应分两批完成，实际{len(keys_generated)}批"
-         )
-
-     def test_first_batch_single_element_range(self, mock_gpu_chain):
-         """单元素范围（start==end）首批只生成一个私钥"""
-         mock_device, mock_context, mock_kernel = mock_gpu_chain
-
-         from src.core.address_generator import P2PKHAddressGenerator
-
-         gen = P2PKHAddressGenerator()
-         test_key = (12345).to_bytes(32, "big")
-         valid_addr, _, _ = gen.generate_address(test_key)
-
-         mock_context.calculate_batch_size.return_value = 1000
-
-         keys_generated = []
-
-         def capture_run_batch(batch_data, actual_size):
-             keys_generated.append(actual_size)
-             return []
-
-         mock_kernel.run_batch.side_effect = capture_run_batch
-
-         from src.collision.gpu_collision_engine import GPUCollisionEngine
-
-         engine = GPUCollisionEngine(
-             targets={valid_addr},
-             device_index=0,
-             batch_size=1000,
-             data_logging_enabled=False,
-             use_enhanced_monitoring=False,
-         )
-
-         engine._range_scan(100, 100)
-         total_generated = sum(keys_generated)
-         assert total_generated == 1, (
-             f"单元素范围[100,100]应生成1个，实际{total_generated}"
-         )
-
-     def test_first_batch_range_multi_batch_exact_fit(self, mock_gpu_chain):
-         """范围恰好是 batch_size 整数倍时边界正确"""
-         mock_device, mock_context, mock_kernel = mock_gpu_chain
-
-         from src.core.address_generator import P2PKHAddressGenerator
-
-         gen = P2PKHAddressGenerator()
-         test_key = (12345).to_bytes(32, "big")
-         valid_addr, _, _ = gen.generate_address(test_key)
-
-         mock_context.calculate_batch_size.return_value = 5
-
-        keys_generated = []
+        mock_engine = self._make_mock_engine(batch_size=1000)
+        batch_sizes = []
 
         def capture_run_batch(batch_data, actual_size):
-            keys_generated.append(actual_size)
+            batch_sizes.append(actual_size)
             return []
 
-        mock_kernel.run_batch.side_effect = capture_run_batch
+        mock_engine._gpu_kernel.run_batch.side_effect = capture_run_batch
 
-        from src.collision.gpu_collision_engine import GPUCollisionEngine
+        mode = RangeScanSearchMode(mock_engine)
+        mode.execute(5, 10)
 
-        engine = GPUCollisionEngine(
-            targets={valid_addr},
-            device_index=0,
-            batch_size=5,
-            data_logging_enabled=False,
-            use_enhanced_monitoring=False,
+        total_generated = sum(batch_sizes)
+        assert total_generated == 6, (
+            f"范围[5,10]应生成6个私钥，实际{total_generated}"
         )
 
-        engine._range_scan(1, 10)
-        total_generated = sum(keys_generated)
+    def test_first_batch_range_exactly_equals_batch_size(self):
+        """范围恰好等于 batch_size 时全部在首批完成"""
+        from src.gpu.search_modes.range_scan_search import RangeScanSearchMode
+
+        mock_engine = self._make_mock_engine(batch_size=10)
+        batch_sizes = []
+
+        def capture_run_batch(batch_data, actual_size):
+            batch_sizes.append(actual_size)
+            return []
+
+        mock_engine._gpu_kernel.run_batch.side_effect = capture_run_batch
+
+        mode = RangeScanSearchMode(mock_engine)
+        mode.execute(1, 10)
+
+        total_generated = sum(batch_sizes)
+        assert total_generated == 10, (
+            f"范围[1,10] batch_size=10 应生成10个，实际{total_generated}"
+        )
+        assert len(batch_sizes) == 1, (
+            f"应在一个批次完成，实际{len(batch_sizes)}批"
+        )
+
+    def test_first_batch_range_slightly_larger_than_batch_size(self):
+        """范围略大于 batch_size 时分两批完成"""
+        from src.gpu.search_modes.range_scan_search import RangeScanSearchMode
+
+        mock_engine = self._make_mock_engine(batch_size=10)
+        batch_sizes = []
+
+        def capture_run_batch(batch_data, actual_size):
+            batch_sizes.append(actual_size)
+            return []
+
+        mock_engine._gpu_kernel.run_batch.side_effect = capture_run_batch
+
+        mode = RangeScanSearchMode(mock_engine)
+        mode.execute(1, 15)
+
+        total_generated = sum(batch_sizes)
+        assert total_generated == 15, (
+            f"范围[1,15] batch_size=10 应生成15个，实际{total_generated}"
+        )
+        assert len(batch_sizes) == 2, (
+            f"应分两批完成，实际{len(batch_sizes)}批"
+        )
+
+    def test_first_batch_single_element_range(self):
+        """单元素范围（start==end）首批只生成一个私钥"""
+        from src.gpu.search_modes.range_scan_search import RangeScanSearchMode
+
+        mock_engine = self._make_mock_engine(batch_size=1000)
+        batch_sizes = []
+
+        def capture_run_batch(batch_data, actual_size):
+            batch_sizes.append(actual_size)
+            return []
+
+        mock_engine._gpu_kernel.run_batch.side_effect = capture_run_batch
+
+        mode = RangeScanSearchMode(mock_engine)
+        mode.execute(100, 100)
+
+        total_generated = sum(batch_sizes)
+        assert total_generated == 1, (
+            f"单元素范围[100,100]应生成1个，实际{total_generated}"
+        )
+
+    def test_first_batch_range_multi_batch_exact_fit(self):
+        """范围恰好是 batch_size 整数倍时边界正确"""
+        from src.gpu.search_modes.range_scan_search import RangeScanSearchMode
+
+        mock_engine = self._make_mock_engine(batch_size=5)
+        batch_sizes = []
+
+        def capture_run_batch(batch_data, actual_size):
+            batch_sizes.append(actual_size)
+            return []
+
+        mock_engine._gpu_kernel.run_batch.side_effect = capture_run_batch
+
+        mode = RangeScanSearchMode(mock_engine)
+        mode.execute(1, 10)
+
+        total_generated = sum(batch_sizes)
         assert total_generated == 10, (
             f"范围[1,10] batch_size=5 应生成10个，实际{total_generated}"
         )
-        assert len(keys_generated) == 2, (
-            f"应分2批完成（每批5），实际{len(keys_generated)}批"
+        assert len(batch_sizes) == 2, (
+            f"应分2批完成（每批5），实际{len(batch_sizes)}批"
         )
 
 

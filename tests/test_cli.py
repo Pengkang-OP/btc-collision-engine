@@ -1034,10 +1034,10 @@ class TestSecurity:
 
         captured = capsys.readouterr()
         full_hex = test_key.hex()
-        # masked模式下不应包含完整私钥（中间部分被*替换）
+        # hash_only 模式下不应包含完整私钥（stdout 非 TTY）
         assert full_hex not in captured.out
-        # 但应包含前8位
-        assert full_hex[:8] in captured.out
+        # 应包含 SHA256 哈希前缀标记
+        assert "[SHA256:" in captured.out
 
 
 class TestModuleExports:
@@ -1122,7 +1122,7 @@ class TestV3Improvements:
         a.no_simd = kwargs.get("no_simd", False)
         a.no_memory_pool = kwargs.get("no_memory_pool", False)
         # 安全模式
-        a.sensitive_mode = kwargs.get("sensitive_mode", "full")
+        a.sensitive_mode = kwargs.get("sensitive_mode", "masked")
         return a
 
     # ── 测试 1: window_size 范围验证 ────────────────────────────────────────
@@ -1144,7 +1144,7 @@ class TestV3Improvements:
 
     # ── 测试 2: sensitive_mode 参数解析 ─────────────────────────────────────
     def test_sensitive_mode_parameter(self, monkeypatch):
-        """--sensitive-mode 参数解析正确，默认值为 full"""
+        """--sensitive-mode 参数解析正确，默认值为 masked"""
         # masked 模式
         monkeypatch.setattr(
             "sys.argv",
@@ -1161,10 +1161,10 @@ class TestV3Improvements:
         args = parse_args()
         assert args.sensitive_mode == "hash_only"
 
-        # 未指定时默认 full
+        # 未指定时默认 masked (v4.5.0: 安全优先，默认脱敏)
         monkeypatch.setattr("sys.argv", ["cli.py", "-t", "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"])
         args = parse_args()
-        assert args.sensitive_mode == "full"
+        assert args.sensitive_mode == "masked"
 
     @staticmethod
     def _get_main_mod():

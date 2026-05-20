@@ -9,7 +9,6 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from src.core.address_generator import P2PKHAddressGenerator
 from src.core.bitcoin_key_validator import BitcoinKeyValidator, AddressType
-from src.utils.bech32_codec import Bech32Codec
 import secrets
 
 print("=" * 80)
