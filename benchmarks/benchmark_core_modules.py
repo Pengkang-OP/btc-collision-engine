@@ -1,29 +1,24 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-核心模块性能基准测试
+"""核心模块性能基准测试
 
 测试内容:
 1. secp256k1 椭圆曲线运算性能
 2. 日志系统性能（同步 vs 异步）
 3. ThreadSafeLogger vs 原生logger性能对比
 """
-import sys
 import os
-import time
 import statistics
+import sys
+import time
 
 # 添加项目根目录到路径
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.core.secp256k1 import Secp256k1, ECPoint, EllipticCurve
-from src.utils import init_logging, get_configured_logger
-from src.utils.logger import (
-    ThreadSafeLogger, SampledLogger,
-    AsyncLogger, AsyncFileHandler
-)
-import logging
 import warnings
+
+from src.core.secp256k1 import ECPoint, EllipticCurve, Secp256k1
+from src.utils import get_configured_logger, init_logging
+from src.utils.logger import AsyncFileHandler, SampledLogger, ThreadSafeLogger
 
 
 def benchmark_secp256k1_scalar_multiply(iterations=100):
@@ -130,7 +125,7 @@ def benchmark_logger_performance(iterations=1000):
     # 测试3: 异步日志
     print("\n[测试2c] AsyncFileHandler (异步日志)")
     import tempfile
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.log', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".log", delete=False) as f:
         log_file = f.name
 
     try:
@@ -154,7 +149,7 @@ def benchmark_logger_performance(iterations=1000):
         # 等待队列清空
         async_handler.close()
 
-        async_logger = getattr(async_handler, '_async_logger', None)
+        async_logger = getattr(async_handler, "_async_logger", None)
         if async_logger:
             stats = async_logger.get_stats()
             print(f"  队列状态: {stats}")

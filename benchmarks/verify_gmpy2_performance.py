@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-gmpy2真实性能验证
+"""gmpy2真实性能验证
 对比gmpy2和纯Python在复杂大整数运算中的性能差异
 """
 import sys
@@ -10,7 +8,7 @@ from pathlib import Path
 # 添加项目根目录到路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-sys.stdout.reconfigure(encoding='utf-8')
+sys.stdout.reconfigure(encoding="utf-8")
 
 print("="*80)
 print("gmpy2 真实性能验证测试")
@@ -38,21 +36,21 @@ test_cases = [
 
 for name, k in test_cases:
     iterations = 5000
-    
+
     # gmpy2优化版本
     start = time.perf_counter()
     for _ in range(iterations):
         _ = optimizer.mod_inverse(k, Secp256k1.P)
     elapsed_gmpy2 = time.perf_counter() - start
-    
+
     # 纯Python版本
     start = time.perf_counter()
     for _ in range(iterations):
         _ = optimizer._mod_inverse_python(k, Secp256k1.P)
     elapsed_python = time.perf_counter() - start
-    
+
     speedup = elapsed_python / elapsed_gmpy2
-    
+
     print(f"\n  {name}:")
     print(f"    gmpy2:    {elapsed_gmpy2:.4f}s ({elapsed_gmpy2/iterations*1000:.4f}ms/次)")
     print(f"    Python:   {elapsed_python:.4f}s ({elapsed_python/iterations*1000:.4f}ms/次)")
@@ -93,6 +91,7 @@ print("测试3: 模拟地址生成 (标量乘法 + 哈希)")
 print("="*80)
 
 import hashlib
+
 from src.core.precomputed_table import get_precomputed_table
 from src.core.secp256k1 import ECPoint
 
@@ -101,35 +100,36 @@ table = get_precomputed_table(window_size=8)
 ec = table.ec
 
 import secrets
+
 private_keys = [secrets.token_bytes(32) for _ in range(50)]
 
 # 使用预计算表 + gmpy2
-print(f"\n  使用预计算表 + gmpy2优化:")
+print("\n  使用预计算表 + gmpy2优化:")
 start = time.perf_counter()
 for pk in private_keys:
-    k = int.from_bytes(pk, 'big')
+    k = int.from_bytes(pk, "big")
     point = table.scalar_multiply_with_table(k, ec)
     # 模拟公钥哈希
-    pub_key = b'\x02' + point.x.to_bytes(32, 'big')
+    pub_key = b"\x02" + point.x.to_bytes(32, "big")
     sha256 = hashlib.sha256(pub_key).digest()
-    ripemd160 = hashlib.new('ripemd160', sha256).digest()
+    ripemd160 = hashlib.new("ripemd160", sha256).digest()
 elapsed_opt = time.perf_counter() - start
 
 # 使用标准方法 (无预计算表)
-print(f"  使用标准方法 (无预计算表):")
+print("  使用标准方法 (无预计算表):")
 G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
 start = time.perf_counter()
 for pk in private_keys:
-    k = int.from_bytes(pk, 'big')
+    k = int.from_bytes(pk, "big")
     point = ec.scalar_multiply(k, G)
-    pub_key = b'\x02' + point.x.to_bytes(32, 'big')
+    pub_key = b"\x02" + point.x.to_bytes(32, "big")
     sha256 = hashlib.sha256(pub_key).digest()
-    ripemd160 = hashlib.new('ripemd160', sha256).digest()
+    ripemd160 = hashlib.new("ripemd160", sha256).digest()
 elapsed_std = time.perf_counter() - start
 
 speedup = elapsed_std / elapsed_opt
 
-print(f"\n  结果:")
+print("\n  结果:")
 print(f"    优化版: {elapsed_opt:.4f}s ({elapsed_opt/len(private_keys)*1000:.2f}ms/地址)")
 print(f"    标准版: {elapsed_std:.4f}s ({elapsed_std/len(private_keys)*1000:.2f}ms/地址)")
 print(f"    性能提升: {speedup:.2f}x")
