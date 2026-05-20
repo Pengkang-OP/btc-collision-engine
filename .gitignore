@@ -72,6 +72,8 @@ scripts/monitoring_data/
 review_diff_*.txt
 
 # 根目录临时报告
+_test_*.bat
+screenshot_*.png
 report.txt
 cov_report.txt
 diagnostic.bat
