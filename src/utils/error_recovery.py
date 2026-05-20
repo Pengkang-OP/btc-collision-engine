@@ -129,7 +129,8 @@ def _sanitize_error_message(message: str) -> str:
     message = re.sub(r'\b[5HKL][1-9A-HJ-NP-Za-km-z]{50,51}\b', '[MASKED_WIF]', message)
 
     # 匹配 64 字符十六进制私钥
-    message = re.sub(r'\b[0-9a-fA-F]{64}\b', '[MASKED_HEX_KEY]', message)
+    # 注意: SHA-256 哈希值也是 64 字符 hex，掩码标签需区分以利回溯
+    message = re.sub(r'\b[0-9a-fA-F]{64}\b', '[MASKED_64CHAR_HEX]', message)
 
     return message
 
@@ -153,9 +154,11 @@ def classify_recoverable_error(error: Exception) -> RecoverableErrorCategory | N
         if any(kw in error_msg for kw in keywords):
             return category
 
-    error_type = type(error)
-    if error_type in RECOVERABLE_ERROR_MAP:
-        return RECOVERABLE_ERROR_MAP[error_type]
+    # 使用 isinstance() 而非 type() 精确匹配，以支持子类异常
+    # 例如: ConnectionRefusedError → ConnectionError, FileNotFoundError → OSError
+    for exc_type, category in RECOVERABLE_ERROR_MAP.items():
+        if isinstance(error, exc_type):
+            return category
 
     return None
 
