@@ -142,7 +142,8 @@ target-version = ["py312"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py312"
+fix = true
 exclude = [
     ".git",
     "__pycache__",
@@ -158,12 +159,16 @@ exclude = [
     "*.egg-info",
     ".eggs",
 ]
-fix = true
+
+[tool.ruff.lint]
 select = ["E", "F", "W", "C90", "I", "N", "UP", "SIM", "B"]
 ignore = ["E203"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 15
+
+[tool.ruff.format]
+line-ending = "lf"
 
 [tool.bandit]
 exclude_dirs = ["tests", "docs", "benchmarks"]

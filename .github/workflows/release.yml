@@ -4,7 +4,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   # ─────────────────────────────────────────────
@@ -23,7 +23,7 @@ jobs:
       - name: 设置 Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       # 安装项目依赖
       - name: 安装依赖
@@ -109,7 +109,39 @@ jobs:
                       print(notes)
                       sys.exit(0)
 
-          print(f"版本 {version} 的更新记录未在 CHANGELOG.md 中找到。")
+          # 所有 pattern 均未匹配 → fallback: 从 git log 生成
+          import subprocess
+          try:
+              # 获取上一版 tag (按时间排序取倒数第二个)
+              tags_result = subprocess.run(
+                  ["git", "tag", "--sort=-creatordate", "--merged", "HEAD"],
+                  capture_output=True, text=True
+              )
+              tags = [t.strip() for t in tags_result.stdout.strip().split("\n") if t.strip()]
+              # 过滤出 v* 格式的 tag，跳过当前 tag
+              version_tags = [t for t in tags if t.startswith("v") and t != tag]
+              if version_tags:
+                  prev_tag = version_tags[0]
+                  log_result = subprocess.run(
+                      ["git", "log", "--oneline", "--no-merges", f"{prev_tag}..HEAD"],
+                      capture_output=True, text=True
+                  )
+                  notes = log_result.stdout.strip()
+              else:
+                  notes = ""
+
+              if notes:
+                  print(f"⚠️  CHANGELOG 未找到版本 {version} 的记录，使用 git log ({prev_tag}..HEAD) 生成:\n{notes}")
+              else:
+                  # 最终兜底: 最近 20 条 commit
+                  result2 = subprocess.run(
+                      ["git", "log", "--oneline", "--no-merges", "-20"],
+                      capture_output=True, text=True
+                  )
+                  notes = result2.stdout.strip()
+                  print(notes or f"Release {tag}")
+          except Exception:
+              print(f"版本 {version} 的更新记录未在 CHANGELOG.md 中找到，且 git log 获取失败。")
           PYEOF
           )
 
@@ -135,3 +167,54 @@ jobs:
           prerelease: false
           # 自动生成的 tag 已存在，不重新创建
           tag_name: ${{ steps.version.outputs.tag }}
+
+  # ─────────────────────────────────────────────
+  # Job 3: 构建 Docker 镜像并推送到 ghcr.io
+  # ─────────────────────────────────────────────
+  docker-push:
+    name: 构建并推送 Docker 镜像
+    needs: test
+    runs-on: ubuntu-latest
+
+    # ghcr.io 写权限
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 提取版本号
+        id: version
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG_NAME#v}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: 登录 GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker 元数据
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
+
+      - name: 构建并推送 CPU 镜像
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}:${{ steps.version.outputs.version }},ghcr.io/${{ github.repository }}:latest
+          labels: ${{ steps.meta.outputs.labels }}

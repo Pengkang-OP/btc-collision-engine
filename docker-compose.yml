@@ -2,6 +2,10 @@ version: '3.8'
 
 # BTC碰撞引擎 - Docker Compose配置
 # 支持CPU和GPU两种模式
+#
+# ⚠️ 启动前必须创建 config.production.json:
+#    cp config.example.json config.production.json
+#    然后编辑 config.production.json 调整参数
 
 services:
   # CPU模式
@@ -25,7 +29,7 @@ services:
 
     # 配置文件
     volumes:
-      - ./config.production.json:/opt/btc-collision-engine/config.production.json:ro
+      - ./config.production.json:/opt/btc-collision-engine/config.production.json:ro  # ⚠️ 必须先 cp config.example.json config.production.json
       - ./targets.txt:/opt/btc-collision-engine/targets.txt:ro
       - btc-data:/opt/btc-collision-engine/data_logs
       - btc-logs:/opt/btc-collision-engine/logs
@@ -93,7 +97,7 @@ services:
 
     # 配置文件
     volumes:
-      - ./config.production.json:/opt/btc-collision-engine/config.production.json:ro
+      - ./config.production.json:/opt/btc-collision-engine/config.production.json:ro  # ⚠️ 必须先 cp config.example.json config.production.json
       - ./targets.txt:/opt/btc-collision-engine/targets.txt:ro
       - btc-data:/opt/btc-collision-engine/data_logs
       - btc-logs:/opt/btc-collision-engine/logs
@@ -164,7 +168,7 @@ services:
 
     # 配置文件
     volumes:
-      - ./config.production.json:/opt/btc-collision-engine/config.production.json:ro
+      - ./config.production.json:/opt/btc-collision-engine/config.production.json:ro  # ⚠️ 必须先 cp config.example.json config.production.json
       - ./targets.txt:/opt/btc-collision-engine/targets.txt:ro
       - btc-data:/opt/btc-collision-engine/data_logs
       - btc-logs:/opt/btc-collision-engine/logs
