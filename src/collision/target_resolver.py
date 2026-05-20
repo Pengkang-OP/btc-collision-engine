@@ -65,7 +65,7 @@ warnings.warn(
     迁移辅助: python scripts/check_import_paths.py --fix target_resolver
     ================================================================
     """,
-    DeprecationWarning,
+    FutureWarning,
     stacklevel=2,
 )
 

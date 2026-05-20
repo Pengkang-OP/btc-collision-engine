@@ -8,20 +8,17 @@
 - 处理 GPU 匹配结果（常规模式：完整私钥数组）
 - 处理 GPU 匹配结果（PRNG 模式：种子+索引推导私钥）
 
-版本: v1.0.0 (Phase 6 - 拆分)
+版本: v1.1.0 (CALL-1 - 超时保护工具集成)
 创建日期: 2026-05-20
 """
 
 import logging
-import os
-import signal
-import threading
-import time
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
+
+from ...utils.timeout import invoke_with_timeout
+from ..events import EngineMatchEvent
 
 # 回调类型
-from ..types import CompleteCallback, MatchCallback, ProgressCallback
-from ..events import EngineMatchEvent
 
 if TYPE_CHECKING:
     from .engine import GPUCollisionEngine
@@ -51,7 +48,7 @@ class GPUResultProcessor:
     ) -> bool:
         """安全调用匹配回调函数，提供超时控制与异常隔离
 
-        从 GPUCollisionEngine._safe_invoke_match_callback 提取。
+        使用统一的 invoke_with_timeout 工具实现跨平台超时保护。
 
         Args:
             private_key: 私钥字节串
@@ -66,61 +63,13 @@ class GPUResultProcessor:
         if not on_match:
             return True
         try:
-            if os.name == "nt":
-                result: list[Any | None] = [None]
-                exception: list[BaseException | None] = [None]
-
-                def target() -> None:
-                    try:
-                        result[0] = on_match(private_key, address, wif)
-                    except Exception as e:
-                        exception[0] = e
-
-                callback_thread = threading.Thread(target=target, daemon=True)
-                callback_thread.start()
-                callback_thread.join(timeout=engine._match_callback_timeout)
-                if callback_thread.is_alive():
-                    logger.critical(
-                        f"匹配回调执行超时 ({engine._match_callback_timeout}秒)"
-                    )
-                    return False
-                if exception[0]:
-                    logger.error(f"匹配回调异常: {exception[0]}")
-                    return False
-            else:
-                # Q7修复: 添加信号 API 可用性检查，兼容 WSL 和其他 Unix-like 环境
-                try:
-                    _sigalrm = signal.SIGALRM  # Unix-only API
-                except AttributeError:
-                    # 信号 API 不可用，回退到无超时模式
-                    logger.warning("SIGALRM 不可用，匹配回调将无超时保护")
-                    try:
-                        on_match(private_key, address, wif)
-                    except Exception as e:
-                        logger.error(f"匹配回调异常: {e}", exc_info=True)
-                        return False
-                    return True
-
-                def timeout_handler(signum: int, frame: Any) -> None:
-                    raise TimeoutError(
-                        f"匹配回调执行超时 ({engine._match_callback_timeout}秒)"
-                    )
-
-                old_handler = signal.signal(_sigalrm, timeout_handler)  # noqa: E501
-                _alarm = signal.alarm  # type: ignore[attr-defined] # Unix-only API
-                _alarm(int(engine._match_callback_timeout))
-                try:
-                    on_match(private_key, address, wif)
-                except TimeoutError as e:
-                    logger.critical(str(e))
-                    return False
-                except Exception as e:
-                    logger.error(f"匹配回调异常: {e}", exc_info=True)
-                    return False
-                finally:
-                    _alarm(0)
-                    signal.signal(_sigalrm, old_handler)
-            return True
+            timeout = getattr(engine, "_match_callback_timeout", 5)
+            return invoke_with_timeout(
+                on_match,
+                args=(private_key, address, wif),
+                timeout=timeout,
+                callback_name="on_match",
+            )
         except Exception as e:
             logger.error(f"匹配回调调用失败: {e}", exc_info=True)
             return False
@@ -189,7 +138,7 @@ class GPUResultProcessor:
             # 向后兼容: 调用传统回调
             if not self.safe_invoke_match_callback(private_key, address, wif):
                 logger.warning(
-                    f"GPU匹配回调处理失败，跳过地址: {address[:6]}...{address[-4:]}"
+                    "GPU匹配回调处理失败，跳过地址: [MASKED_ADDRESS]"
                 )
 
     def process_matches_prng(
@@ -254,5 +203,5 @@ class GPUResultProcessor:
             # 向后兼容: 调用传统回调
             if not self.safe_invoke_match_callback(private_key, address, wif):
                 logger.warning(
-                    f"GPU匹配回调处理失败，跳过地址: {address[:6]}...{address[-4:]}"
+                    "GPU匹配回调处理失败，跳过地址: [MASKED_ADDRESS]"
                 )

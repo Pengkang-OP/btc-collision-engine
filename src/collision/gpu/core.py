@@ -20,6 +20,8 @@ import warnings
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Optional
 
+from ...utils.timeout import invoke_with_timeout
+
 # 统一回调类型别名
 from ..types import MatchCallback, ProgressCallback
 from .protocols import ICollisionCore, MatchResult
@@ -121,7 +123,7 @@ class CollisionCore(ICollisionCore):
         """
         warnings.warn(
             "CollisionCore.start() is deprecated, use GPUCollisionEngine API",
-            DeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
         # S3修复: 添加锁保护，防止多线程并发调用导致竞态条件
@@ -169,7 +171,7 @@ class CollisionCore(ICollisionCore):
         """
         warnings.warn(
             "CollisionCore.stop() is deprecated, use GPUCollisionEngine API",
-            DeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
         # S3修复: 添加锁保护，防止多线程并发调用导致竞态条件
@@ -196,7 +198,7 @@ class CollisionCore(ICollisionCore):
         """[DEPRECATED] 暂停碰撞 — scheduled removal"""
         warnings.warn(
             "CollisionCore.pause() is deprecated, use GPUCollisionEngine API",
-            DeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
         if not self._running or self._paused:
@@ -212,7 +214,7 @@ class CollisionCore(ICollisionCore):
         """[DEPRECATED] 恢复碰撞 — scheduled removal"""
         warnings.warn(
             "CollisionCore.resume() is deprecated, use GPUCollisionEngine API",
-            DeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
         if not self._running or not self._paused:
@@ -228,7 +230,7 @@ class CollisionCore(ICollisionCore):
         """[DEPRECATED] 重置统计 — scheduled removal"""
         warnings.warn(
             "CollisionCore.reset() is deprecated, use CollisionStats.reset()",
-            DeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
         if self.stats and hasattr(self.stats, "reset"):
@@ -241,8 +243,9 @@ class CollisionCore(ICollisionCore):
         GPUCollisionEngine 在 _check_and_report_progress() 中直接处理批次回调。
         """
         warnings.warn(
-            "CollisionCore.on_batch_complete() is deprecated, use GPUCollisionEngine._check_and_report_progress()",
-            DeprecationWarning,
+            "CollisionCore.on_batch_complete() is deprecated, "
+            "use GPUCollisionEngine._check_and_report_progress()",
+            FutureWarning,
             stacklevel=2,
         )
         if not self._running or self._paused or not self.stats:
@@ -283,7 +286,12 @@ class CollisionCore(ICollisionCore):
                     else:
                         private_key_bytes = private_key if isinstance(private_key, bytes) else b""
                     wif = match.get("wif", "")
-                    self.on_match(private_key_bytes, address, wif)
+                    invoke_with_timeout(
+                        self.on_match,
+                        args=(private_key_bytes, address, wif),
+                        timeout=5.0,
+                        callback_name="on_match",
+                    )
                 except Exception as e:
                     logger.error(f"处理匹配回调失败: {e}")
 
@@ -528,11 +536,15 @@ class CollisionCore(ICollisionCore):
         if current_time - self._last_progress_time >= self.progress_interval:
             self._last_progress_time = current_time
             try:
-                # 使用 snapshot 获取线程安全的统计快照
                 if hasattr(self.stats, "snapshot"):
                     stats_snapshot = self.stats.snapshot()
                 else:
                     stats_snapshot = self.stats
-                self.on_progress(stats_snapshot)
+                invoke_with_timeout(
+                    self.on_progress,
+                    args=(stats_snapshot,),
+                    timeout=5.0,
+                    callback_name="on_progress",
+                )
             except Exception as e:
                 logger.error(f"进度回调执行失败: {e}")

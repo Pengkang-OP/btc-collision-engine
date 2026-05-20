@@ -17,10 +17,16 @@
 """
 
 import logging
+import secrets
 import time
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING
 
 from ...gpu.memory_calculator import GPUMemoryCalculator
+from ...utils.error_recovery import (
+    classify_recoverable_error,
+    get_default_recovery_manager,
+)
+from ...utils.timeout import invoke_with_timeout
 
 if TYPE_CHECKING:
     from .engine import GPUCollisionEngine
@@ -75,7 +81,7 @@ class GPUBatchScheduler:
         engine = self._engine
         try:
             test_batch_size = 100000
-            seed = __import__("os").urandom(32)
+            seed = secrets.token_bytes(32)
             start_time = time.time()
             engine._gpu_kernel.run_batch(seed, test_batch_size)
             execution_time = time.time() - start_time
@@ -131,70 +137,59 @@ class GPUBatchScheduler:
                 f"GPU batch {batch_num}: 运行 run_batch (size={batch_size})..."
             )
 
-        # P2-3.2修复: 瞬态错误重试循环
+        # P2-3.2修复: 瞬态错误重试循环（DEF-2增强: 集成ErrorRecoveryManager追踪）
+        # W1重构: 合并RuntimeError/MemoryError与通用Exception的重试逻辑
+        recovery_mgr = get_default_recovery_manager()
         last_error: Exception | None = None
+
+        _TRANSIENT_KEYWORDS = (
+            "out of resources",
+            "out of memory",
+            "memoryerror",
+            "timeout",
+            "device removed",
+            "cl_out_of_resources",
+            "cl_mem_object_allocation_failure",
+            "resource exhausted",
+            "insufficient",
+        )
+
         for retry in range(GPU_BATCH_MAX_RETRIES):
             try:
                 return self.execute_batch_once(seed, batch_size, batch_num)
-            except (RuntimeError, MemoryError) as e:
-                last_error = e
-                error_msg = str(e).lower()
-                # 仅对瞬态/可恢复错误重试
-                is_transient = any(
-                    kw in error_msg
-                    for kw in (
-                        "out of resources",
-                        "out of memory",
-                        "timeout",
-                        "device removed",
-                        "cl_out_of_resources",
-                        "cl_mem_object_allocation_failure",
-                        "resource exhausted",
-                        "insufficient",
-                    )
-                )
-                if not is_transient or retry >= GPU_BATCH_MAX_RETRIES - 1:
-                    raise
-                backoff = min(
-                    GPU_BATCH_RETRY_BASE_DELAY * (2**retry),
-                    GPU_BATCH_RETRY_MAX_DELAY,
-                )
-                logger.warning(
-                    f"GPU batch {batch_num}: 瞬态错误重试 {retry + 1}/{GPU_BATCH_MAX_RETRIES}, "
-                    f"退避 {backoff:.3f}s: {type(e).__name__}: {e}"
-                )
-                time.sleep(backoff)
             except Exception as e:
-                # pyopencl.MemoryError 等非内置异常也尝试重试
                 last_error = e
-                error_msg = str(e).lower()
-                is_transient = any(
-                    kw in error_msg
-                    for kw in (
-                        "out of resources",
-                        "out of memory",
-                        "memoryerror",
-                        "timeout",
-                        "device removed",
-                        "resource exhausted",
-                        "insufficient",
-                    )
-                )
-                if not is_transient or retry >= GPU_BATCH_MAX_RETRIES - 1:
+
+                if isinstance(e, (SystemExit, KeyboardInterrupt)):
                     raise
+
+                error_msg = str(e).lower()
+                error_category = classify_recoverable_error(e)
+                is_transient = any(kw in error_msg for kw in _TRANSIENT_KEYWORDS)
+
+                if not is_transient or retry >= GPU_BATCH_MAX_RETRIES - 1:
+                    if error_category is not None:
+                        recovery_mgr.record_retry(error_category, e, retry + 1, False)
+                    raise
+
+                if error_category is not None:
+                    recovery_mgr.record_retry(error_category, e, retry + 1, False)
+
                 backoff = min(
                     GPU_BATCH_RETRY_BASE_DELAY * (2**retry),
                     GPU_BATCH_RETRY_MAX_DELAY,
                 )
                 logger.warning(
-                    f"GPU batch {batch_num}: 瞬态错误重试 {retry + 1}/{GPU_BATCH_MAX_RETRIES}, "
+                    f"GPU batch {batch_num}: 瞬态错误重试 "
+                    f"{retry + 1}/{GPU_BATCH_MAX_RETRIES}, "
                     f"退避 {backoff:.3f}s: {type(e).__name__}: {e}"
                 )
                 time.sleep(backoff)
 
         # 理论上不可达（for 循环总会 raise 或 return）
-        assert last_error is not None
-        raise last_error
+        raise RuntimeError(
+            "BUG: execute_batch retry loop exhausted without result"
+        ) from last_error
 
     def execute_batch_once(
         self, seed: bytes, batch_size: int, batch_num: int
@@ -371,9 +366,14 @@ class GPUBatchScheduler:
         progress_event.source = "gpu_collision_engine"
         engine.event_bus.publish(progress_event)
 
-        # 向后兼容: 调用传统回调（从事件触发）
+        # 向后兼容: 调用传统回调（CALL-1: 超时保护）
         if engine.on_progress:
-            engine.on_progress(stats_snapshot)
+            invoke_with_timeout(
+                engine.on_progress,
+                args=(stats_snapshot,),
+                timeout=5.0,
+                callback_name="on_progress",
+            )
 
         self.save_checkpoint(batch_count)
         engine._last_progress_time = current_time
