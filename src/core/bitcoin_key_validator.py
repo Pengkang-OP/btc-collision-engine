@@ -299,11 +299,11 @@ class BitcoinKeyValidator:
 
         # 2. 计算公钥：P = k * G
         try:
-<<<<<<< Updated upstream
-            # P0修复: 使用恒定时间标量乘法防御侧信道攻击
-            public_key_point = self.curve.scalar_multiply_const_time(
-                k, ECPoint(Secp256k1.Gx, Secp256k1.Gy)
-            )
+            # v4.2.2 R1修复: 使用恒定时间实现，避免 RuntimeError
+            public_key_point = self.curve.scalar_multiply_const_time(k, ECPoint(Secp256k1.Gx, Secp256k1.Gy))
+>>>>>>> Stashed changes
+            # v4.2.2 R1修复: 使用恒定时间实现，避免 RuntimeError
+            public_key_point = self.curve.scalar_multiply_const_time(k, ECPoint(Secp256k1.Gx, Secp256k1.Gy))
 =======
             # v4.2.2 R1修复: 使用恒定时间实现，避免 RuntimeError
             public_key_point = self.curve.scalar_multiply_const_time(k, ECPoint(Secp256k1.Gx, Secp256k1.Gy))
@@ -425,107 +425,89 @@ class BitcoinKeyValidator:
 
         return result
 
+    # ── generate_address 辅助方法（降低 C901） ────────────────────
+
+    @staticmethod
+    def _verify_base58_checksum(address: str, expected_version: int, result: KeyValidationResult) -> None:
+        """验证 Base58Check 校验和与版本字节。"""
+        try:
+            version, payload = Base58.check_decode(address)
+            if version == expected_version:
+                result.add_detail("address_checksum_valid", True)
+            else:
+                result.add_warning(f"地址版本字节异常: 0x{version:02x}")
+        except (ValueError, TypeError) as e:
+            result.add_error(f"地址Base58Check验证失败: {str(e)}")
+
+    @staticmethod
+    def _verify_address_length(result: KeyValidationResult, address: str) -> None:
+        """验证 Base58 地址长度是否在合理范围。"""
+        if (
+            len(address) < KeyValidationConstants.P2PKH_ADDRESS_MIN_LENGTH
+            or len(address) > KeyValidationConstants.P2PKH_ADDRESS_MAX_LENGTH
+        ):
+            result.add_warning(f"地址长度异常: {len(address)}")
+
+    def _generate_p2pkh_address(self, public_key: bytes, result: KeyValidationResult) -> str:
+        """生成 P2PKH 地址 (以 '1' 开头)。"""
+        hash160_digest = HashUtils.hash160(public_key)
+        address = Base58.check_encode(0x00, hash160_digest)
+        result.add_detail("address_type", "P2PKH")
+        result.add_detail("address", address)
+        result.add_detail("hash160", hash160_digest.hex())
+        result.add_detail("public_key_used", public_key.hex())
+        if not address.startswith("1"):
+            result.add_warning(f"P2PKH地址应以'1'开头，当前: {address[0]}")
+        self._verify_address_length(result, address)
+        self._verify_base58_checksum(address, KeyValidationConstants.P2PKH_VERSION_BYTE, result)
+        return address
+
+    def _generate_p2sh_address(self, public_key: bytes, result: KeyValidationResult) -> str:
+        """生成 P2SH 地址 (以 '3' 开头)。"""
+        address = BitcoinKeyValidator.generate_p2sh_address(public_key)
+        result.add_detail("address_type", "P2SH")
+        result.add_detail("address", address)
+        result.add_detail("public_key_used", public_key.hex())
+        if not address.startswith("3"):
+            result.add_warning(f"P2SH地址应以'3'开头，当前: {address[0]}")
+        self._verify_address_length(result, address)
+        self._verify_base58_checksum(address, KeyValidationConstants.P2SH_VERSION_BYTE, result)
+        return address
+
+    def _generate_bech32_address(self, public_key: bytes, result: KeyValidationResult) -> str:
+        """生成 Bech32 地址 (以 'bc1' 开头)。"""
+        address = BitcoinKeyValidator.generate_bech32_address(public_key)
+        result.add_detail("address_type", "Bech32")
+        result.add_detail("address", address)
+        result.add_detail("public_key_used", public_key.hex())
+        if not address.startswith("bc1"):
+            result.add_warning(f"Bech32地址应以'bc1'开头，当前: {address[:3]}")
+        if len(address) < 10:
+            result.add_warning(f"Bech32地址长度过短: {len(address)}")
+        return address
+
     def generate_address(
         self, public_key: bytes, address_type: AddressType = AddressType.P2PKH
     ) -> tuple[KeyValidationResult, str]:
-        """
-        从公钥生成比特币地址
-
-        支持：
-        - P2PKH：以'1'开头
-        - P2SH：以'3'开头
-        - Bech32：以'bc1'开头（需要额外实现）
-        """
+        """从公钥生成比特币地址。支持 P2PKH / P2SH / Bech32 三种类型。"""
         result = KeyValidationResult()
 
-        # 1. 验证公钥
         pk_validation = self.validate_public_key(public_key)
         if not pk_validation.success:
             result.success = False
             result.errors.extend(pk_validation.errors)
             return result, ""
 
-        # 初始化地址变量
-        address = ""
-
         try:
             if address_type == AddressType.P2PKH:
-                # P2PKH地址生成
-                hash160_digest = HashUtils.hash160(public_key)
-
-                # Base58Check编码
-                address = Base58.check_encode(0x00, hash160_digest)
-
-                result.add_detail("address_type", "P2PKH")
-                result.add_detail("address", address)
-                result.add_detail("hash160", hash160_digest.hex())
-                result.add_detail("public_key_used", public_key.hex())
-
-                # 验证地址格式
-                if not address.startswith("1"):
-                    result.add_warning(f"P2PKH地址应以'1'开头，当前: {address[0]}")
-
-                if (
-                    len(address) < KeyValidationConstants.P2PKH_ADDRESS_MIN_LENGTH
-                    or len(address) > KeyValidationConstants.P2PKH_ADDRESS_MAX_LENGTH
-                ):
-                    result.add_warning(f"P2PKH地址长度异常: {len(address)}")
-
-                # 验证Base58Check校验和
-                try:
-                    version, payload = Base58.check_decode(address)
-                    if version == KeyValidationConstants.P2PKH_VERSION_BYTE:
-                        result.add_detail("address_checksum_valid", True)
-                    else:
-                        result.add_warning(f"地址版本字节异常: 0x{version:02x}")
-                except (ValueError, TypeError) as e:
-                    result.add_error(f"地址Base58Check验证失败: {str(e)}")
-
+                address = self._generate_p2pkh_address(public_key, result)
             elif address_type == AddressType.P2SH:
-                # P2SH地址生成
-                address = BitcoinKeyValidator.generate_p2sh_address(public_key)
-
-                result.add_detail("address_type", "P2SH")
-                result.add_detail("address", address)
-                result.add_detail("public_key_used", public_key.hex())
-
-                # 验证地址格式
-                if not address.startswith("3"):
-                    result.add_warning(f"P2SH地址应以'3'开头，当前: {address[0]}")
-
-                if (
-                    len(address) < KeyValidationConstants.P2PKH_ADDRESS_MIN_LENGTH
-                    or len(address) > KeyValidationConstants.P2PKH_ADDRESS_MAX_LENGTH
-                ):
-                    result.add_warning(f"P2SH地址长度异常: {len(address)}")
-
-                # 验证Base58Check校验和
-                try:
-                    version, payload = Base58.check_decode(address)
-                    if version == KeyValidationConstants.P2SH_VERSION_BYTE:
-                        result.add_detail("address_checksum_valid", True)
-                    else:
-                        result.add_warning(f"地址版本字节异常: 0x{version:02x}")
-                except (ValueError, TypeError) as e:
-                    result.add_error(f"地址Base58Check验证失败: {str(e)}")
-
+                address = self._generate_p2sh_address(public_key, result)
             elif address_type == AddressType.BECH32:
-                # Bech32地址（SegWit）
-                address = BitcoinKeyValidator.generate_bech32_address(public_key)
-
-                result.add_detail("address_type", "Bech32")
-                result.add_detail("address", address)
-                result.add_detail("public_key_used", public_key.hex())
-
-                # 验证地址格式
-                if not address.startswith("bc1"):
-                    result.add_warning(f"Bech32地址应以'bc1'开头，当前: {address[:3]}")
-
-                if len(address) < 10:
-                    result.add_warning(f"Bech32地址长度过短: {len(address)}")
-
+                address = self._generate_bech32_address(public_key, result)
+            else:
+                return result, ""
             return result, address
-
         except (ValueError, OverflowError, TypeError) as e:
             result.add_error(f"地址生成失败: {str(e)}")
             import traceback

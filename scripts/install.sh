@@ -27,7 +27,7 @@ if ! command -v python3 >/dev/null 2>&1; then
     exit 1
 fi
 
-PYTHON_VERSION=$(python3 --version | awk '{print $2}')
+PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}')
 echo -e "${GREEN}[成功]${NC} Python版本: $PYTHON_VERSION"
 
 # 检查Python版本是否 >= 3.9

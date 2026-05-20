@@ -200,7 +200,7 @@ class _LegacyTargetResolver:
                 return address
             else:
                 return None
-        except Exception:
+        except (ValueError, TypeError, Exception):
             return None
 
     @staticmethod
