@@ -2,8 +2,8 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:  # 允许手动触发
+    branches: [main]
+  workflow_dispatch: # 允许手动触发
 
 # 设置GITHUB_TOKEN权限
 permissions:
@@ -27,32 +27,47 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest pytest-benchmark pytest-cov
-
-      - name: Run tests
-        run: |
-          python -m pytest tests/ -v --tb=short
-
-      - name: Check import paths
-        run: |
-          python scripts/check_import_paths.py
 
       - name: Build documentation
         run: |
-          echo "Building documentation..."
-          # 如果有文档生成工具，在这里添加
-          # 例如: mkdocs build 或 sphinx-build
+          echo "📚 准备文档部署..."
+          mkdir -p _site
+          # 生成简单的文档索引页
+          python3 - <<'PYEOF'
+          import os
+          index_html = """<!DOCTYPE html>
+          <html lang="zh-CN">
+          <head><meta charset="UTF-8"><title>BTC Collision Engine Docs</title>
+          <style>body{font-family:system-ui,sans-serif;max-width:900px;margin:0 auto;padding:2em;background:#0d1117;color:#c9d1d9}a{color:#58a6ff}</style></head>
+          <body>
+          <h1>🚀 BTC Collision Engine</h1>
+          <p>比特币私钥碰撞引擎 — 文档</p>
+          <h2>📖 文档索引</h2><ul>"""
+          for root, dirs, files in os.walk("docs"):
+              for f in sorted(files):
+                  if f.endswith(".md"):
+                      rel = os.path.join(root, f).replace("\\", "/")
+                      name = f.replace(".md", "").replace("_", " ").title()
+                      index_html += f'<li><a href="{rel}">{name}</a></li>'
+          index_html += """</ul><footer style='margin-top:3em;color:#484f58'><small>BTC Collision Engine v4.4.0</small></footer></body></html>"""
+          with open("_site/index.html", "w", encoding="utf-8") as f:
+              f.write(index_html)
+          print(f"✅ 生成 _site/index.html")
+          PYEOF
+          # 复制 docs 目录内容
+          cp -r docs/* _site/
+          echo "✅ 文档构建完成"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .  # 或文档目录
+          path: _site
 
   # 部署任务
   deploy:

@@ -1,0 +1,119 @@
+# Python缓存
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+.pytest_cache/
+.benchmarks/
+.mypy_cache/
+.ruff_cache/
+
+# 测试覆盖率
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+*.cover
+_cov*.txt
+cov_*.txt
+
+# 虚拟环境
+.venv/
+venv/
+ENV/
+env/
+
+# IDE配置
+.qoder/
+.qodo/
+.history/
+.trae/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.arts/
+.codebuddy/
+.codeartsdoer/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# 日志文件
+*.log
+logs/
+data_logs/
+monitoring_data/
+
+# 测试
+.pytest_cache/
+tests/
+test_data/
+test_results/
+test_matches/
+test_targets/
+
+# 基准测试
+benchmarks/
+
+# 文档 (运行时不需要)
+docs/
+
+# 临时文件
+*.tmp
+*.bak
+*.cache
+*.pid
+
+# 操作系统
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 编译产物
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# 性能分析
+*.prof
+*.pstats
+
+# 环境配置
+.env
+.env.local
+
+# 用户配置
+config.json
+
+# CI/CD (运行时不需要)
+.github/
+
+# Docker 相关 (构建上下文不需要)
+Dockerfile
+Dockerfile.amd
+docker-compose.yml
+deploy/
+
+# 代码审查 diff
+review_diff_*.txt
+
+# 根目录临时报告/脚本
+report.txt
+bandit-report.json
+_batch_cov.py
+_run_cov.py
+diagnostic.bat
+dual_launcher.py
+*.html
+
+# 先前的 eggs
+btc_collision_engine.egg-info/

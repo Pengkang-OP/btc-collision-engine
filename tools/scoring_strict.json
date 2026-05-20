@@ -1,0 +1,14 @@
+{
+  "_comment": "严格模式配置 - 适用于高质量要求的项目",
+  "_description": "更高的错误扣分，更低的上限，更严格的评分标准",
+  
+  "error_weight": 2.5,
+  "code_block_weight": 0.3,
+  "code_block_max": 1.5,
+  "link_weight": 1.2,
+  "link_max": 2.0,
+  "other_warning_weight": 0.5,
+  "info_weight": 0.2,
+  "toc_bonus": 0.2,
+  "version_bonus": 0.2
+}

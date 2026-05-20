@@ -1,168 +1,176 @@
 # 项目文档索引
 
-> 本文档提供BTC碰撞引擎项目的完整文档导航，帮助您快速找到所需信息。
+> BTC碰撞引擎项目文档导航
 
-## 📚 文档分类
+> **版本**: v4.4.0 | **最后更新**: 2026-05-18
 
-### 1. 快速开始与概述
-- [README.md](../README.md) - 项目概述、快速开始、功能特性
-- [getting-started.md](getting-started.md) - 详细入门指南
-- [project-status.md](project-status.md) - 项目状态和路线图
+> 本次更新：安全修复增强(安全清零/侧信道防护/敏感数据脱敏/线程安全)；全项目版本统一到4.4.0；文档拓扑图更新；冗余文档清理。
+
+---
+
+## 文档统计
+
+| 目录 | 文档数量 | 说明 |
+|------|----------|------|
+| docs/*.md | 30+ | 核心活跃文档 |
+| docs/standards/ | 5 | 开发规范文档 |
+| docs/technical-docs/ | 4 | 技术深度文档 |
+| docs/security/ | 1 | 安全专项文档 |
+| docs/user-docs/ | 1 | 用户手册 |
+| docs/audit-reports/ | 6 | 审计报告 |
+| docs/archive/ | 38+ | 历史归档 |
+| 根目录 | 3 | 核心文档 (README/CHANGELOG/CONTRIBUTING) |
+
+---
+
+## 核心文档 (根目录)
+
+| 文档 | 说明 |
+|------|------|
+| README.md | 项目概述、快速开始 |
+| CHANGELOG.md | 完整变更日志 |
+| CONTRIBUTING.md | 贡献指南 |
+
+> 其他文档已统一整理至 docs/ 目录，审核报告归档至 docs/audit-reports/。
+
+---
+
+## 文档分类 (docs/)
+
+### 1. 快速开始
+
+- getting-started.md - 详细入门指南
+- use-cases.md - 使用场景
+- project-status.md - 项目状态
 
 ### 2. 架构与设计
-- [architecture.md](architecture.md) - 系统架构设计（✅ 已更新：17个Mermaid图表，依赖拓扑图，数据流向图，监控系统架构）
-- [workflow_diagrams.md](workflow_diagrams.md) - 工作流程图（✅ 已更新：19个Mermaid图表，完整程序运行流程，GPU碰撞流程，并发模型）
-- [api-reference.md](api-reference.md) - 完整API参考（✅ 已更新：2949行，SecureKeyManager API，碰撞引擎完整方法）
-- [mermaid-rendering-check.md](mermaid-rendering-check.md) - Mermaid图表渲染检查报告（🆕 新增）
 
-### 3. 核心功能文档
+- architecture.md - 系统架构 (17个图表)
+- workflow_diagrams.md - 工作流程图 (19个图表)
+- api-reference.md - API参考 (2949行)
+- requirements.md - 需求规格
+
+### 3. 核心功能
 
 #### 碰撞引擎
-- [performance-optimization.md](performance-optimization.md) - 性能优化指南（924行）
-- [checkpoint-resume-feature.md](checkpoint-resume-feature.md) - 断点续传功能
-- [logging-guide.md](logging-guide.md) - 日志系统指南
-- [gpu-engine-guide.md](gpu-engine-guide.md) - GPU引擎使用指南（TODO）
+
+- performance-optimization.md - 性能优化 (924行)
+- checkpoint-resume-feature.md - 断点续传
+- checkpoint-quick-guide.md - 断点续传快速指南
+- logging-guide.md - 日志指南
+- logging-standards.md - 日志标准
 
 #### 安全特性
-- [security-guidelines.md](security-guidelines.md) - 安全指南
-- [secure-key-management.md](secure-key-management.md) - 安全密钥管理
-- [quick-reference-private-key-security.md](quick-reference-private-key-security.md) - 私钥安全速查
+
+- security-guidelines.md - 安全指南
+- secure-key-management.md - 密钥管理
+- windows-memory-lock.md - 内存锁机制
 
 #### 监控系统
-- [monitoring-system-guide.md](monitoring-system-guide.md) - 监控系统指南
-- [data-logging-guide.md](data-logging-guide.md) - 数据日志系统指南（TODO）
 
-#### 目标地址管理
-- [address-import-feature.md](address-import-feature.md) - 地址导入功能
+- monitoring-system-guide.md - 监控指南
 
-### 4. 界面使用
-- [user-interface.md](user-interface.md) - GUI使用指南
+#### GPU加速
 
-### 5. 开发文档
-- [requirements.md](requirements.md) - 需求规格
-- [comprehensive-audit-report.md](comprehensive-audit-report.md) - 综合审计报告
+- gpu-engine-guide.md - GPU引擎指南
+- GPU_CONFIG_MANAGER_GUIDE.md - GPU配置管理
+- intel-arc-integration-guide.md - Intel Arc集成
+- intel-arc-gpu-compatibility-research.md - Intel Arc兼容性研究
+- GPU_ASYNC_LOGGING_INTEGRATION_GUIDE.md - GPU异步日志
 
----
+### 4. 配置与部署
 
-## 📦 Archive文档归档说明
+- CONFIG.md - 配置指南
+- config-usage-examples.md - 配置示例
+- DOCKER_DEPLOYMENT.md - Docker部署
+- SYSTEMD_DEPLOYMENT.md - Systemd部署
+- PRODUCTION_DEPLOYMENT.md - 生产部署
 
-`archive/` 目录包含项目开发过程中的历史报告和总结，主要用于：
-- 开发决策记录
-- 问题修复历史
-- 性能优化记录
-- 测试验证报告
+### 5. 界面使用
 
-### Archive文档分类索引
+- user-interface.md - 用户界面
+- CLI_GUIDE.md - CLI完整使用指南
+- STARTUP_GUIDE.md - 启动指南
 
-#### 安全相关
-- [SecureKeyManager优化报告](2026-04-20_SecureKeyManager优化报告.md)
-- [SecureKeyManager审查修复](2026-04-20_SecureKeyManager审查修复.md)
-- [SecureKeyManager测试报告](2026-04-20_SecureKeyManager测试报告.md)
-- [SecureKeyManager集成报告](2026-04-20_SecureKeyManager集成报告.md)
-- [安全增强报告](2026-04-20_安全增强报告.md)
-- [内存清零修复报告](2026-04-20_内存清零修复报告.md)
+### 6. 运维与监控
 
-#### 代码质量
-- [代码审计报告](2026-04-20_代码审计报告.md)
-- [代码质量审计报告](2026-04-20_代码质量审计报告.md)
-- [代码审查总结](2026-04-20_代码审查总结.md)
-- [地址导入代码审查](2026-04-20_地址导入代码审查.md)
+- GPU_MONITORING.md - GPU监控指南
+- AUTOMATION_SYSTEM.md - 端到端自动化系统
 
-#### 异常处理
-- [异常处理优化报告](2026-04-20_异常处理优化报告.md)
-- [异常处理修复报告](2026-04-20_异常处理修复报告.md)
-- [异常处理回归审查](2026-04-20_异常处理回归审查.md)
-- [异常处理审计报告](2026-04-20_异常处理审计报告.md)
-- [Git提交总结_异常处理](2026-04-20_Git提交总结_异常处理.md)
+### 7. 故障排除
 
-#### 线程安全
-- [线程安全修复总结](2026-04-20_线程安全修复总结.md)
-- [Git提交总结_线程安全修复](2026-04-20_Git提交总结_线程安全修复.md)
+- troubleshooting.md - 故障排除
+- FAQ.md - 常见问题
 
-#### 测试相关
-- [测试最终总结](2026-04-20_测试最终总结.md) - 25.8KB，最全面的测试报告
-- [测试验证报告](2026-04-20_测试验证报告.md)
-- [真实碰撞测试报告](2026-04-20_真实碰撞测试报告.md)
+### 8. 开发规范 (docs/standards/)
 
-#### 性能优化
-- [CI优化执行报告](2026-04-20_CI优化执行报告.md)
-- [加密依赖监控](2026-04-20_加密依赖监控.md)
+- development_code_standards.md - 代码编写规范
+- development_test_standards.md - 测试编写规范
+- git_commit_standards.md - Git提交规范
+- log_level_guidelines.md - 日志级别指南
+- config_change_process.md - 配置变更流程
 
-#### 重构与开发
-- [重构计划](2026-04-20_重构计划.md)
+### 9. 技术专题 (docs/technical-docs/)
+
+- cross-platform-compatibility.md - 跨平台兼容性
+- gpu_best_practices.md - GPU最佳实践
+- i18n-guide.md - 国际化指南
+- logging-monitoring-system.md - 日志监控系统
+
+### 10. 安全 (docs/security/)
+
+- windows_memory_lock.md - Windows内存锁定
+
+### 11. 用户文档 (docs/user-docs/)
+
+- cli_export_guide.md - CLI导出指南
 
 ---
 
-## 🎯 按使用场景导航
+## 审计报告 (docs/audit-reports/)
 
-### 新用户入门
-1. [README.md](../README.md) - 了解项目
-2. [getting-started.md](getting-started.md) - 安装和运行
-3. [user-interface.md](user-interface.md) - 使用GUI
-
-### 性能调优
-1. [performance-optimization.md](performance-optimization.md) - 优化策略
-2. [monitoring-system-guide.md](monitoring-system-guide.md) - 监控性能
-3. [archive/2026-04-20_CI优化执行报告.md](2026-04-20_CI优化执行报告.md) - 优化历史
-
-### 安全审计
-1. [security-guidelines.md](security-guidelines.md) - 安全指南
-2. [comprehensive-audit-report.md](comprehensive-audit-report.md) - 审计报告
-3. [archive/2026-04-20_代码审计报告.md](2026-04-20_代码审计报告.md) - 详细审计
-
-### 开发贡献
-1. [architecture.md](architecture.md) - 了解架构
-2. [api-reference.md](api-reference.md) - API文档
-3. [requirements.md](requirements.md) - 需求规格
+| 文档 | 说明 |
+|------|------|
+| BAT_CLI_AUDIT_REPORT.md | BAT/CLI审计报告 |
+| CLEANUP_REPORT.md | 清理报告 |
+| COMPATIBILITY_AUDIT_REPORT.md | 兼容性审计报告 |
+| OPENCL_KERNEL_AUDIT_REPORT.md | OpenCL内核审计报告 |
+| comprehensive_audit_10dimensions_20260424.md | 十维度综合审计 |
+| E2E_AUDIT_REPORT_v4.3.0.md | v4.3.0端到端审计报告 |
 
 ---
 
-## 📊 文档统计
+## 历史归档 (docs/archive/history/)
 
-| 类别 | 文档数量 | 总大小 | 说明 |
-|------|---------|--------|------|
-| 主文档 | 16 | ~480KB（已更新） | 含36个Mermaid图表 |
-| Archive文档 | 25 | ~280KB | 历史记录 |
-| **总计** | **41** | **~760KB** | - |
+> 2026-05-16 深度清理新增归档：v3.5.1 发布说明、v3.5.1 深度分析、GPU引擎重构计划、综合审计报告、全面系统验证报告、Intel Arc快速开始/优化/深度分析、GPU异步日志使用示例、监控系统使用指南
 
-**核心文档更新统计**：
-- architecture.md：~786行，17个Mermaid图表
-- workflow_diagrams.md：~827行，19个Mermaid图表
-- api-reference.md：~2949行，完整API文档
-- **新增总计**：约4562行高质量内容
-
----
-
-## 🔄 文档更新记录
-
-| 日期 | 更新内容 | 更新者 |
-|------|---------|--------|
-| 2026-04-20 | 创建文档索引，整理archive文档 | AI Assistant |
-| 2026-04-20 | 更新architecture.md: 补充GPU架构、监控系统架构、数据流向图 | AI Assistant |
-| 2026-04-20 | 更新workflow_diagrams.md: 补充GPU工作流程、监控数据流程、Mermaid图表 | AI Assistant |
-| 2026-04-20 | 更新api-reference.md: 补充GPU引擎、监控系统、数据日志、统计模块API | AI Assistant |
-| **2026-04-20** | **大规模文档现代化更新**（本次） | **AI Assistant** |
-| | • architecture.md：转换ASCII为Mermaid，新增依赖拓扑图、程序运行流程图 | |
-| | • workflow_diagrams.md：转换全部ASCII序列图为Mermaid（19个图表） | |
-| | • api-reference.md：补充SecureKeyManager API、碰撞引擎完整方法 | |
-| | • 新增mermaid-rendering-check.md：图表渲染检查报告 | |
-| | • **总计新增约4562行高质量内容，36个Mermaid图表** | |
+| 归档类型 | 说明 |
+|----------|------|
+| PROJECT_COMPREHENSIVE_*.md | 旧版本分析报告 |
+| topology-diagrams.md | 旧版拓扑图 |
+| *PHASE*.md | Phase完成报告 |
+| *REVIEW*.md | 代码审查报告 |
+| *git_commit*.md | Git提交记录 |
+| *MIGRATION*.md | 迁移报告 |
+| INTEL_ARC_*.md | Intel Arc 历史文档 (3 个已归档) |
+| RELEASE_NOTES_v3.5.1.md | v3.5.1 发布说明 |
+| GPU_ENGINE_REFACTORING_PLAN.md | GPU引擎重构计划 (已完成) |
+| comprehensive-audit-report.md | 综合审计报告 |
+| 全面系统性验证报告.md | 系统验证报告 |
+| GPU_ASYNC_LOGGING_USAGE_EXAMPLES.md | GPU异步日志使用示例 |
+| monitoring-system-usage-guide.md | 监控系统使用指南 |
+| startbat_*.md | 启动脚本相关 (已精简，保留 quick_reference) |
+| CLI_AUDIT_SUMMARY.md | CLI审核总结 (2026-04-24) |
+| CLI_QUICK_REFERENCE.md | CLI快速参考 (2026-04-24) |
 
 ---
 
-## 💡 使用建议
+## 更新记录
 
-1. **首次使用**：从“新用户入门”路径开始
-2. **遇到问题**：查看[troubleshooting.md](troubleshooting.md)
-3. **深入研究**：参考API文档和架构文档
-4. **历史问题**：在archive中查找相关报告
-5. **查看图表**：architecture.md和workflow_diagrams.md包含36个Mermaid图表
-6. **API查询**：api-reference.md（2949行）包含完整API文档
-
----
-
-## 📝 文档维护说明
-
-- 主文档：保持最新，反映当前状态
-- Archive文档：历史记录，不建议修改
-- 新增文档：根据功能模块添加到相应分类
+- v4.4.0 (2026-05-18): 安全修复增强(安全清零/侧信道防护/敏感数据脱敏/线程安全); 全项目版本统一到4.4.0; 文档拓扑图更新; 冗余文档清理
+- v4.3.0 (2026-05-16): 启动时目标格式分析与不兼容格式Rich Panel警告; 全文措辞修正; GPU路径一致性注释; i18n新增targets键; 冗余文件清理; 文档深度清理
+- v4.2.3 (2026-05-15): Bech32 编解码统一重构，WIF 防泄露，竞态条件修复，BIP-173 回归测试，注释规范化
+- v4.2.2 (2026-05-15): mod_inverse Binary GCD 2^256溢出修复，生产验收测试全通过
+- v4.2.1 (2026-05-12): 全项目版本统一，OpenCL内核审核修复，端到端自动化系统上线，CLI/bat文件整理
+- v4.2.1 (2026-05-08): GPU引擎重构完成，测试体系增强
+- v4.2.1: 首次文档大清理 (100->30文件)

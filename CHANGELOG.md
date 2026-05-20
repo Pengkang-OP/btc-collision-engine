@@ -1,171 +1,158 @@
-# 变更日志
+# CHANGELOG
 
-本项目的所有重要更改都将记录在此文件中。
+## v4.4.0 (2026-05-18)
 
-格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
-项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
+### 安全修复
+
+- **C-1: 安全清零实现修复**
+  - 使用 `ctypes.memset` 直接清零内存，防止编译器优化导致清零被跳过
+  - 添加清零验证步骤，确保内存被正确清零
+  - 失败时抛出 `SecureMemoryError` 异常，避免静默失败
+
+- **C-2: OpenSSL 后端安全要求**
+  - 当 OpenSSL 不可用时拒绝回退到非恒定时间实现
+  - `scalar_multiply()` 方法抛出异常而不是静默回退
+  - 确保侧信道安全要求被严格遵守
+
+- **H-4: 错误日志敏感数据脱敏**
+  - 使用 `SensitiveDataFilter` 对错误消息和异常字符串进行敏感数据过滤
+  - 保留异常类型用于诊断，但隐藏敏感信息
+  - 避免敏感私钥数据泄露到日志文件
+
+### 稳定性修复
+
+- **H-2: 析构函数异常处理**
+  - 添加析构函数异常处理记录，避免静默吞掉异常
+  - 使用 `logging` 模块记录析构中的异常，而非静默忽略
+  - 提高问题可追溯性
+
+- **H-5: 批量回调超时和批次数限制**
+  - 添加批量回调超时控制（每批 2 秒）
+  - 每批最多处理 5 个回调，防止长时间阻塞
+  - 分批处理避免主线程被回调卡死
+
+- **C-3: 多线程清零统计线程安全**
+  - 使用 `threading.Lock` 保护类级别统计变量
+  - 确保 `_total_clears`, `_successful_clears`, `_failed_clears` 的原子更新
+  - 解决多线程并发访问时的竞态条件
+
+- **M-3: 配置值边界验证**
+  - 添加 `_validate_config_values()` 方法验证配置边界
+  - 检查 `worker_join_timeout`, `workload_monitor_interval`, `total_pool_mb` 等参数
+  - 超出范围时使用默认值并记录警告，避免无效配置导致的问题
+
+### 代码质量改进
+
+- **线程安全增强**
+  - 使用 RLock 保护状态变更操作
+  - 统一异常处理模式
+  - 添加详细的线程安全文档
+
+- **资源清理改进**
+  - 改进的 `cleanup()` 方法确保资源正确释放
+  - 添加 `_stopping` 标志防止重复进入 `stop()`
+  - 确保上下文管理器正确清理资源
+
+- **日志和监控增强**
+  - 改进的性能历史数据收集
+  - 添加 metrics 收集器用于结构化指标导出
+  - 支持 Prometheus 格式导出
+
+### 测试
+
+- 新增多项安全相关测试用例
+- 所有安全修复已验证
+- 测试通过率保持 100%
+
+### BREAKING CHANGES
+
+- **secure_key_context() 返回类型变更**: `secure_key_context()` 和 `SecureKeyManager.get_key()` 现在返回 `memoryview`（只读视图）而非 `bytearray`（可写引用）。这是一项安全增强，防止密钥数据被意外修改。使用 `with secure_key_context() as key:` 的代码需确认 key 类型为 `memoryview`。如需可写副本，请使用新增的 `get_key_copy()` 方法。
 
 ---
 
-## [未发布]
+## v4.3.0 (2026-05-18)
+
+### 新功能
+
+- **多格式地址智能匹配**
+  - 新增 `MultiFormatAddressGenerator` 模块
+  - 新增 `FormatAwareTargetManager` 格式感知目标管理器
+  - 支持自动检测目标地址格式
+  - 支持按需生成对应格式地址，避免无效计算
+  - P2PKH只匹配P2PKH目标，Bech32只匹配Bech32目标
+  - 新增 `check_match_all()` 完整检查所有格式方法
+
+- **完整支持所有比特币地址格式**
+  - P2PKH (Pay-to-Public-Key-Hash) - 以'1'开头
+  - P2SH (Pay-to-Script-Hash) - 以'3'开头
+  - Bech32 (SegWit v0) - 以'bc1q'开头
+  - Taproot (SegWit v1) - 以'bc1p'开头
 
 ### 修复
 
-#### 数据日志系统
-- 🐛 修复 `_current_data` 浅拷贝导致的数据不一致问题 (Critical)
-  - 使用 `copy.deepcopy()` 替代浅拷贝
-  - 确保嵌套字典在并发场景下的数据一致性
-  - 修复位置: `save_current_data()` 方法
-- 🐛 优化 JSON 损坏恢复机制 (Medium)
-  - 替换不完整的正则表达式为健壮的括号匹配算法
-  - 支持嵌套对象的完整解析
-  - 添加文件大小限制（10MB）防止内存耗尽
-  - 修复位置: `_recover_history_data()` 方法
-- 🐛 修复 `save_history_data` 中的并发竞态条件 (Medium)
-  - 优化失败回退策略，使用 `appendleft()` 保持数据顺序
-  - 避免高并发场景下历史数据时间顺序错乱
-  - 修复位置: `save_history_data()` 异常处理逻辑
-- 🐛 优化 `record_performance_data` 中的I/O操作 (Medium)
-  - 将CSV日志写入移出锁范围
-  - 提升高频率调用场景下的并发性能
-  - 修复位置: `record_performance_data()` 方法
+- **地址格式检测大小写问题** (2026-05-18)
+  - 修复大写地址（如 BC1Q）无法识别的问题
+  - `detect_address_format()` 中添加小写处理逻辑
+  - 所有地址统一小写存储和匹配，完全不区分大小写
 
-#### 代码质量
-- 🐛 修复 `temp_file` 变量未初始化问题 (Low)
-  - 在try块前初始化为None，避免NameError
-  - 改进异常处理的安全性
-  - 修复位置: `save_current_data()`, `save_history_data()`
-- 🐛 添加 `re` 模块的顶部导入 (Low)
-  - 符合PEP 8规范，移除函数内导入
-  - 修复位置: 文件顶部导入区
+### 性能优化
 
-### 改进
+- 按需生成地址，跳过无目标的格式，减少无效计算
+- 保持现有优化特性：SIMD哈希、gmpy2、GPU加速等
 
-#### 数据日志系统
-- 📈 线程安全评分: 4/5 → 5/5
-- 📈 数据恢复完整性: 3/5 → 5/5
-- 📈 并发性能: 4/5 → 5/5
-- 📈 代码质量: 4/5 → 5/5
-- 📈 防御性编程: 增强文件大小验证和异常处理
+### 文档更新
 
-#### 测试覆盖
-- ✅ 所有审查问题已修复（8/8，100%）
-- ✅ 单元测试全部通过（17/17）
-- ✅ 集成测试全部通过（5/5）
+- 更新 README.md，添加多格式地址使用示例
+- 更新 pyproject.toml 版本号和描述
+- 添加详细的多格式地址使用文档
+- 更新项目分析文档
+
+### 测试
+
+- 新增多格式地址匹配测试
+- 新增格式隔离测试
+- 新增按需生成测试
+- 所有测试通过率 100%
 
 ---
 
-## [未发布]
+## v4.2.4 (2026-05-18)
 
-### 新增
-
-#### 开发工具
-- ✨ 添加导入路径检查脚本 (`scripts/check_import_paths.py`)
-  - 自动检测弃用的导入路径
-  - 智能排除允许使用旧路径的文件
-  - 支持CI/CD集成
-- ✨ 添加pre-commit钩子配置 (`.pre-commit-config.yaml`)
-  - 导入路径规范检查
-  - 代码格式化（Black）
-  - 代码质量检查（Flake8）
-  - 基础文件检查
-
-#### 文档
-- ✨ 添加贡献指南 (`CONTRIBUTING.md`)
-  - 完整的开发环境设置指南
-  - 代码规范和命名规范
-  - **导入规范**详细说明
-  - 测试规范和提交规范
-  - **弃用策略**完整流程
-  - pre-commit安装和使用指南
-- ✨ 添加导入路径专项测试 (`tests/test_import_paths.py`)
-  - 7个测试用例覆盖所有导入路径
-  - 验证新路径无警告
-  - 验证旧路径向后兼容
-  - 验证导入一致性
-
-### 修改
-
-#### 核心模块
-- 🔧 重构TargetResolver导入路径
-  - 从 `src.collision.target_resolver` 迁移到 `src.collision.targets.resolver`
-  - 更新所有25处引用使用新路径
-  - 消除DeprecationWarning（新路径）
-- 🔧 优化向后兼容包装器 (`src/collision/target_resolver.py`)
-  - 添加明确的移除时间线（v2.0, 2026-Q3）
-  - 提供完整的4步迁移指南
-  - 添加相关文档链接
-
-#### 测试
-- 🔧 更新测试文件导入路径 (`tests/test_security.py`)
-- 🔧 修复测试文档字符串数量（6→7个测试用例）
-
-#### 文档
-- 🔧 更新README.md
-  - 添加项目徽章（Python版本、License、Contributions）
-  - 突出显示贡献指南链接
-
-### 已弃用
-
-- ⚠️ `src.collision.target_resolver` 模块
-  - 替代方案: `src.collision.targets.resolver`
-  - 移除版本: v2.0
-  - 移除时间: 2026-Q3
-  - 迁移后仍可消除DeprecationWarning
-
-### 改进
-
-- 📈 代码质量评分: 9.9/10 → 10/10
-- 📈 测试覆盖: 116个 → 123个测试 (+7个专项测试)
-- 📈 文档完整性: 6/10 → 10/10
-- 📈 开发体验: 7/10 → 10/10
-- 📈 工具支持: 无 → 完整（检查脚本+pre-commit）
-
-### 性能
-
-- ⚡ 零性能退化
-- ⚡ 缓存命中: 23x加速保持不变
-- ⚡ 解析速度: 2.5 μs/地址保持不变
-
-### 文档
-
-- 📚 新增3个详细优化报告
-  - `docs/import-path-optimization-report.md` (414行)
-  - `docs/import-path-review-fixes-report.md` (409行)
-  - `docs/import-path-final-optimization-report.md` (465行)
+- 维护版本，修复小问题
+- 优化文档结构
 
 ---
 
-## 版本说明
+## v3.5.1 (2026-05)
 
-### 版本号格式
+### GPU 引擎架构重构 (Phase 6 完成)
 
-`[主版本号.次版本号.修订号]`
-
-- **主版本号**: 不兼容的API修改
-- **次版本号**: 向下兼容的功能性新增
-- **修订号**: 向下兼容的问题修正
-
-### 类型说明
-
-- `新增` (Added): 新功能
-- `修改` (Changed): 现有功能的变更
-- `已弃用` (Deprecated): 即将移除的功能
-- `移除` (Removed): 已移除的功能
-- `修复` (Fixed): Bug修复
-- `安全` (Security): 安全相关修复
-- `改进` (Improved): 性能或质量提升
-- `文档` (Documentation): 文档更新
-- `性能` (Performance): 性能优化
+- 协议层+外观层+核心层+监控管道+厂商策略 完整解耦
+- 代码复杂度 -73%（1466→<400行）
+- 导入模块 -70%（49→<15）
+- Shim 层 100% 向后兼容
+- 29 个专项测试全部通过
+- 新增 search_mode_coordinator / data_logger_adapter 等 5 个子模块
 
 ---
 
-## 链接
+## v3.5.0
 
-- [未发布]: https://github.com/[你的GitHub用户名]/btc-collision-engine/compare/v1.0.0...HEAD
-- [贡献指南]: CONTRIBUTING.md
-- [导入路径优化报告]: docs/import-path-final-optimization-report.md
+### 类型系统工程化
+
+- 全模块类型提示补全 (104 文件)
+- 配置热重载
+- 多渠道告警系统
+- 地址生成器架构去重
+- GPU 评分统一
+- 内存池自适应调优
+- 序列化优化
 
 ---
 
-**最后更新**: 2026-04-21
+## 更早版本
+
+- v3.4.0: 交互式向导，全新模块化架构
+- v3.2.0: GPU PRNG + 双缓冲，3.07M keys/s (Intel Arc A770)
+- v3.0: GPU 异步双缓冲
+- v2.x: 基础功能，性能优化

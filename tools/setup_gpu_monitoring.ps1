@@ -1,37 +1,37 @@
-# ============================================
+﻿# ============================================
 # GPU监控依赖检查和安装脚本
 # ============================================
 
-Write-Host "============================================" -ForegroundColor Cyan
-Write-Host "GPU监控依赖检查和安装" -ForegroundColor Cyan
-Write-Host "============================================" -ForegroundColor Cyan
-Write-Host ""
+Write-Output "============================================"
+Write-Output "GPU监控依赖检查和安装"
+Write-Output "============================================"
+Write-Output ""
 
 # 检查Python
-Write-Host "[1/4] 检查Python环境..." -ForegroundColor Yellow
+Write-Output "[1/4] 检查Python环境..."
 try {
     $pythonVersion = & python --version 2>&1
-    Write-Host "✓ Python已找到: $pythonVersion" -ForegroundColor Green
+    Write-Output "✓ Python已找到: $pythonVersion"
 } catch {
-    Write-Host "✗ Python未找到，请先安装Python 3.7+" -ForegroundColor Red
+    Write-Output "✗ Python未找到，请先安装Python 3.7+"
     exit 1
 }
 
 # 检查PyOpenCL
-Write-Host ""
-Write-Host "[2/4] 检查PyOpenCL..." -ForegroundColor Yellow
+Write-Output ""
+Write-Output "[2/4] 检查PyOpenCL..."
 try {
     & python -c "import pyopencl; print('PyOpenCL版本:', pyopencl.VERSION_TEXT)" 2>$null
-    Write-Host "✓ PyOpenCL已安装" -ForegroundColor Green
+    Write-Output "✓ PyOpenCL已安装"
     $pyopencl_installed = $true
 } catch {
-    Write-Host "✗ PyOpenCL未安装" -ForegroundColor Red
+    Write-Output "✗ PyOpenCL未安装"
     $pyopencl_installed = $false
 }
 
 # 检查OpenCL驱动
-Write-Host ""
-Write-Host "[3/4] 检查OpenCL驱动..." -ForegroundColor Yellow
+Write-Output ""
+Write-Output "[3/4] 检查OpenCL驱动..."
 
 # 尝试获取GPU信息
 $gpu_info = & python -c "
@@ -53,65 +53,65 @@ except Exception as e:
 " 2>&1
 
 if ($gpu_info) {
-    Write-Host "✓ OpenCL驱动正常" -ForegroundColor Green
-    Write-Host $gpu_info
+    Write-Output "✓ OpenCL驱动正常"
+    Write-Output $gpu_info
 } else {
-    Write-Host "⚠ 无法检测OpenCL驱动" -ForegroundColor Yellow
+    Write-Output "⚠ 无法检测OpenCL驱动"
 }
 
 # 安装建议
-Write-Host ""
-Write-Host "[4/4] 安装建议" -ForegroundColor Yellow
-Write-Host ""
+Write-Output ""
+Write-Output "[4/4] 安装建议"
+Write-Output ""
 
 if ($pyopencl_installed) {
-    Write-Host "✓ PyOpenCL已安装，GPU监控可以直接使用！" -ForegroundColor Green
-    Write-Host ""
-    Write-Host "测试GPU监控：" -ForegroundColor Cyan
-    Write-Host "  python src\monitoring\gpu_monitor.py" -ForegroundColor Gray
+    Write-Output "✓ PyOpenCL已安装，GPU监控可以直接使用！"
+    Write-Output ""
+    Write-Output "测试GPU监控："
+    Write-Output "  python src\monitoring\gpu_monitor.py"
 } else {
-    Write-Host "PyOpenCL未安装，需要安装才能启用GPU监控" -ForegroundColor Red
-    Write-Host ""
-    Write-Host "安装步骤：" -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "方法1: 使用pip安装（推荐）" -ForegroundColor Yellow
-    Write-Host "  pip install pyopencl" -ForegroundColor Gray
-    Write-Host ""
-    Write-Host "方法2: 如果方法1失败，尝试预编译版本" -ForegroundColor Yellow
-    Write-Host "  pip install pyopencl-wheel" -ForegroundColor Gray
-    Write-Host ""
-    Write-Host "方法3: 从源码编译（需要Visual Studio Build Tools）" -ForegroundColor Yellow
-    Write-Host "  1. 安装Visual Studio Build Tools 2019+" -ForegroundColor Gray
-    Write-Host "  2. pip install pyopencl" -ForegroundColor Gray
-    Write-Host ""
-    Write-Host "注意: PyOpenCL需要OpenCL驱动支持" -ForegroundColor Yellow
-    Write-Host "  - Intel GPU: 通常已预装OpenCL驱动" -ForegroundColor Gray
-    Write-Host "  - NVIDIA GPU: 安装NVIDIA显卡驱动即可" -ForegroundColor Gray
-    Write-Host "  - AMD GPU: 安装AMD显卡驱动即可" -ForegroundColor Gray
-    Write-Host ""
+    Write-Output "PyOpenCL未安装，需要安装才能启用GPU监控"
+    Write-Output ""
+    Write-Output "安装步骤："
+    Write-Output ""
+    Write-Output "方法1: 使用pip安装（推荐）"
+    Write-Output "  pip install pyopencl"
+    Write-Output ""
+    Write-Output "方法2: 如果方法1失败，尝试预编译版本"
+    Write-Output "  pip install pyopencl-wheel"
+    Write-Output ""
+    Write-Output "方法3: 从源码编译（需要Visual Studio Build Tools）"
+    Write-Output "  1. 安装Visual Studio Build Tools 2019+"
+    Write-Output "  2. pip install pyopencl"
+    Write-Output ""
+    Write-Output "注意: PyOpenCL需要OpenCL驱动支持"
+    Write-Output "  - Intel GPU: 通常已预装OpenCL驱动"
+    Write-Output "  - NVIDIA GPU: 安装NVIDIA显卡驱动即可"
+    Write-Output "  - AMD GPU: 安装AMD显卡驱动即可"
+    Write-Output ""
     
     $install = Read-Host "是否现在安装PyOpenCL？(Y/N)"
     if ($install -eq 'Y' -or $install -eq 'y') {
-        Write-Host ""
-        Write-Host "正在安装PyOpenCL..." -ForegroundColor Yellow
+        Write-Output ""
+        Write-Output "正在安装PyOpenCL..."
         & python -m pip install pyopencl
         if ($LASTEXITCODE -eq 0) {
-            Write-Host ""
-            Write-Host "✓ PyOpenCL安装成功！" -ForegroundColor Green
-            Write-Host ""
-            Write-Host "测试GPU监控：" -ForegroundColor Cyan
-            Write-Host "  python src\monitoring\gpu_monitor.py" -ForegroundColor Gray
+            Write-Output ""
+            Write-Output "✓ PyOpenCL安装成功！"
+            Write-Output ""
+            Write-Output "测试GPU监控："
+            Write-Output "  python src\monitoring\gpu_monitor.py"
         } else {
-            Write-Host ""
-            Write-Host "✗ PyOpenCL安装失败" -ForegroundColor Red
-            Write-Host ""
-            Write-Host "请尝试上述其他安装方法" -ForegroundColor Yellow
+            Write-Output ""
+            Write-Output "✗ PyOpenCL安装失败"
+            Write-Output ""
+            Write-Output "请尝试上述其他安装方法"
         }
     }
 }
 
-Write-Host ""
-Write-Host "============================================" -ForegroundColor Cyan
-Write-Host "完成" -ForegroundColor Cyan
-Write-Host "============================================" -ForegroundColor Cyan
-Write-Host ""
+Write-Output ""
+Write-Output "============================================"
+Write-Output "完成"
+Write-Output "============================================"
+Write-Output ""

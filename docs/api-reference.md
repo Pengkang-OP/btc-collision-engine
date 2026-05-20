@@ -1,5 +1,226 @@
 # BTC项目API接口文档
 
+> **版本**: v4.4.0 | **最后更新**: 2026-05-18
+> **面向**: 开发者
+
+## 目录
+
+- [1. 概述](#1-概述)
+- [2. 椭圆曲线模块 (secp256k1.py)](#2-椭圆曲线模块-secp256k1py)
+  - [2.1 Secp256k1类](#21-secp256k1类)
+- [2.2 ECPoint类](#22-ecpoint类)
+  - [构造函数](#构造函数)
+    - [copy()](#copy)
+- [2.3 EllipticCurve类](#23-ellipticcurve类)
+  - [构造函数](#构造函数)
+  - [mod_inverse()](#mod_inverse)
+- [point_add()](#point_add)
+- [scalar_multiply()](#scalar_multiply)
+- [scalar_multiply_const_time()](#scalar_multiply_const_time)
+- [generate_public_key()](#generate_public_key)
+- [3. 哈希工具模块 (hash_utils.py)](#3-哈希工具模块-hash_utilspy)
+  - [3.1 HashUtils类](#31-hashutils类)
+    - [sha256()](#sha256)
+    - [ripemd160()](#ripemd160)
+    - [hash160()](#hash160)
+    - [double_sha256()](#double_sha256)
+- [4. Base58编码模块 (base58.py)](#4-base58编码模块-base58py)
+  - [4.1 Base58类](#41-base58类)
+    - [encode()](#encode)
+    - [decode()](#decode)
+    - [check_encode()](#check_encode)
+- [check_decode()](#check_decode)
+- [5. WIF私钥格式模块 (wif.py)](#5-wif私钥格式模块-wifpy)
+  - [5.1 WIF类](#51-wif类)
+    - [encode()](#encode)
+- [decode()](#decode)
+- [6. 地址生成器模块 (address_generator.py)](#6-地址生成器模块-address_generatorpy)
+  - [6.1 P2PKHAddressGenerator类](#61-p2pkhaddressgenerator类)
+    - [构造函数](#构造函数)
+    - [generate_private_key()](#generate_private_key)
+    - [private_key_to_public_key()](#private_key_to_public_key)
+    - [public_key_to_address()](#public_key_to_address)
+    - [generate_address()](#generate_address)
+- [6.2 CryptoManager类 (新增)](#62-cryptomanager类-新增)
+  - [架构](#架构)
+  - [generate_public_key()](#generate_public_key)
+- [7. 多格式地址生成器 (multi_format_generator.py) - 新增](#7-多格式地址生成器-multi_format_generatorpy---新增)
+  - [7.1 AddressFormat枚举](#71-addressformat枚举)
+  - [7.2 MultiFormatAddressGenerator类](#72-multiformataddressgenerator类)
+    - [构造函数](#构造函数)
+    - [generate_public_key()](#generate_public_key-1)
+    - [generate_p2pkh_address()](#generate_p2pkh_address)
+    - [generate_p2sh_address()](#generate_p2sh_address)
+    - [generate_bech32_address()](#generate_bech32_address)
+    - [generate_taproot_address()](#generate_taproot_address)
+    - [generate_address()](#generate_address-1)
+    - [generate_all_formats()](#generate_all_formats)
+    - [detect_address_format()](#detect_address_format)
+    - [get_targets_by_format()](#get_targets_by_format)
+    - [match_address()](#match_address)
+    - [match_all_formats()](#match_all_formats)
+    - [validate_format_support()](#validate_format_support)
+- [8. 碰撞检测引擎模块 (key_collision_engine.py)](#8-碰撞检测引擎模块-key_collision_enginepy)
+  - [8.1 KeyCollisionEngine类](#81-keycollisionengine类)
+    - [构造函数](#构造函数)
+    - [random_search()](#random_search)
+    - [stop()](#stop)
+    - [is_running()](#is_running)
+    - [get_stats()](#get_stats)
+  - [8.2 DeduplicationFilter类 (补充)](#82-deduplicationfilter类-补充)
+    - [设计特点](#设计特点)
+    - [构造函数](#构造函数-1)
+    - [check_and_add()](#check_and_add-1)
+    - [get_stats()](#get_stats-1)
+  - [8.3 CheckpointManager类 (补充)](#83-checkpointmanager类-补充)
+    - [安全设计](#安全设计)
+    - [构造函数](#构造函数-2)
+    - [save()](#save-1)
+    - [load()](#load-1)
+  - [8.4 DataLogger类 (新增)](#84-datalogger类-新增)
+    - [构造函数](#构造函数-3)
+    - [log_performance_data()](#log_performance_data-1)
+  - [8.5 TargetResolver类 (补充)](#85-targetresolver类-补充)
+    - [构造函数](#构造函数-4)
+    - [resolve()](#resolve-1)
+    - [load_from_file()](#load_from_file-1)
+  - [8.6 AddressBatchValidator类 (新增)](#86-addressbatchvalidator类-新增)
+    - [构造函数](#构造函数-5)
+    - [validate_batch()](#validate_batch-1)
+    - [filter_valid()](#filter_valid-1)
+  - [8.7 AddressMatcher类 (新增)](#87-addressmatcher类-新增)
+    - [构造函数](#构造函数-6)
+    - [is_match()](#is_match-1)
+- [9. 格式感知目标管理器 (format_aware_manager.py) - 新增](#9-格式感知目标管理器-format_aware_managerpy---新增)
+  - [9.1 FormatAwareTargetManager类](#91-formatawaretargetmanager类)
+    - [构造函数](#构造函数-7)
+    - [add_target()](#add_target)
+    - [add_targets()](#add_targets)
+    - [load_from_file()](#load_from_file-2)
+    - [get_targets_by_format()](#get_targets_by_format-1)
+    - [get_all_targets()](#get_all_targets)
+    - [get_format_stats()](#get_format_stats)
+    - [has_targets()](#has_targets)
+    - [get_target_count()](#get_target_count)
+    - [check_match()](#check_match)
+    - [check_match_all()](#check_match_all)
+    - [remove_target()](#remove_target)
+    - [clear()](#clear-1)
+    - [get_supported_formats()](#get_supported_formats)
+    - [get_max_batch_size()](#get_max_batch_size)
+- [10. GPU引擎模块 (gpu_engine.py)](#10-gpu引擎模块-gpu_enginepy)
+  - [10.1 GPUDevice类](#101-gpudevice类)
+    - [detect_devices() 静态方法](#detect_devices-静态方法)
+    - [is_available() 静态方法](#is_available-静态方法)
+    - [initialize() 方法](#initialize-方法)
+    - [get_device_info() 方法](#get_device_info-方法)
+  - [10.2 GPUKernel类](#102-gpukernel类)
+- [11. GPU碰撞引擎 (gpu_collision_engine.py)](#11-gpu碰撞引擎-gpu_collision_enginepy)
+  - [11.1 GPUCollisionEngine类](#111-gpucollisionengine类)
+    - [构造函数](#构造函数-8)
+    - [random_search() 方法](#random_search-方法)
+    - [range_scan() 方法](#range_scan-方法)
+    - [handle_gpu_batch_error() 静态方法](#handle_gpu_batch_error-静态方法)
+  - [11.2 GPU vs CPU性能对比](#112-gpu-vs-cpu性能对比)
+- [12. GPU监控模块 (gpu_monitor.py)](#12-gpu监控模块-gpu_monitorpy)
+  - [12.1 GPUMonitor类](#121-gpumonitor类)
+    - [构造函数](#构造函数-9)
+    - [get_gpu_info() 方法](#get_gpu_info-方法-1)
+    - [get_gpu_metrics() 方法](#get_gpu_metrics-方法)
+    - [track_memory_usage() 方法](#track_memory_usage-方法)
+- [13. 监控系统API (monitoring_system.py)](#13-监控系统api-monitoring_systempy)
+  - [13.1 MonitoringData类](#131-monitoringdata类)
+    - [to_dict() 方法](#to_dict-方法)
+  - [13.2 DataCollector类](#132-datacollector类)
+    - [构造函数](#构造函数-10)
+    - [collect_performance_data() 方法](#collect_performance_data-方法-1)
+    - [collect_system_data() 方法](#collect_system_data-方法-1)
+    - [collect_engine_data() 方法](#collect_engine_data-方法-1)
+    - [collect_all_data() 方法](#collect_all_data-方法-1)
+  - [13.3 DataStorage类](#133-datastorage类)
+    - [构造函数](#构造函数-11)
+    - [主要方法](#主要方法)
+  - [13.4 AnomalyDetector类](#134-anomalydetector类)
+    - [detect_anomalies() 方法](#detect_anomalies-方法-1)
+    - [analyze_trends() 方法](#analyze_trends-方法-1)
+  - [13.5 AlertSystem类](#135-alertsystem类)
+    - [generate_alert() 方法](#generate_alert-方法-1)
+    - [process_anomalies() 方法](#process_anomalies-方法-1)
+  - [13.6 ReportGenerator类](#136-reportgenerator类)
+    - [generate_daily_report() 方法](#generate_daily_report-方法-1)
+  - [13.7 MonitoringSystem类](#137-monitoringsystem类)
+    - [构造函数](#构造函数-12)
+    - [主要方法](#主要方法-1)
+  - [13.8 EnhancedMonitoringSystem类](#138-enhancedmonitoringsystem类)
+    - [构造函数](#构造函数-13)
+- [14. 数据日志API (data_logger.py)](#14-数据日志api-data_loggerpy)
+  - [14.1 DataLogger类](#141-datalogger类)
+    - [构造函数](#构造函数-14)
+    - [record_performance_data() 方法](#record_performance_data-方法-1)
+    - [record_system_data() 方法](#record_system_data-方法-1)
+    - [record_engine_data() 方法](#record_engine_data-方法-1)
+    - [record_error() 方法](#record_error-方法-1)
+    - [save_current_data() 方法](#save_current_data-方法-1)
+    - [save_history_data() 方法](#save_history_data-方法-1)
+    - [get_current_data() 方法](#get_current_data-方法-1)
+    - [get_statistics() 方法](#get_statistics-方法-1)
+    - [generate_report() 方法](#generate_report-方法-1)
+    - [cleanup_old_data() 方法](#cleanup_old_data-方法-1)
+  - [14.2 数据文件格式](#142-数据文件格式)
+    - [current_data.json格式](#current_datajson格式)
+    - [history_data.json格式](#history_datajson格式)
+    - [error_log.json格式](#error_logjson格式)
+    - [performance.log格式](#performancelog格式)
+- [15. 统计模块API (collision_stats.py)](#15-统计模块api-collision_statspy)
+  - [15.1 CollisionStats类](#151-collisionstats类)
+    - [构造函数](#构造函数-15)
+    - [update() 方法](#update-方法)
+    - [add_match() 方法](#add_match-方法)
+    - [snapshot() 方法](#snapshot-方法)
+    - [format_elapsed() 方法](#format_elapsed-方法)
+    - [format_speed() 方法](#format_speed-方法)
+    - [get_speed() 方法](#get_speed-方法-1)
+    - [record_gpu_error() 方法](#record_gpu_error-方法-1)
+    - [record_worker_error() 方法](#record_worker_error-方法-1)
+    - [record_wif_encode_error() 方法](#record_wif_encode_error-方法-1)
+    - [get_error_rates() 方法](#get_error_rates-方法-1)
+    - [is_healthy() 方法](#is_healthy-方法-1)
+    - [error_summary() 方法](#error_summary-方法-1)
+- [16. 使用示例汇总](#16-使用示例汇总)
+  - [16.1 P2PKHSimulator类](#161-p2pkhsimulator类)
+    - [构造函数](#构造函数-16)
+    - [derive_address()](#derive_address-1)
+    - [derive_address_detailed()](#derive_address_detailed-1)
+    - [run_test_vector()](#run_test_vector-1)
+    - [parse_private_key_input()](#parse_private_key_input-1)
+    - [batch_generate()](#batch_generate-1)
+    - [run_interactive()](#run_interactive-1)
+- [17. GUI模块 (p2pkh_gui.py)](#17-gui模块-p2pkh_guipy)
+  - [17.1 P2PKHGUI类](#171-p2pkhgui类)
+    - [构造函数](#构造函数-17)
+- [18. 异常类 (exceptions.py)](#18-异常类-exceptionspy)
+  - [18.1 KeyGenerationError](#181-keygenerationerror)
+- [19. 安全密钥管理器 (secure_key_manager.py) - 新增](#19-安全密钥管理器-secure_key_managerpy---新增)
+  - [19.1 SecureKeyManager类](#191-securekeymanager类)
+    - [安全特性](#安全特性-1)
+    - [构造函数](#构造函数-18)
+    - [generate_key()](#generate_key-1)
+    - [get_key()](#get_key-1)
+    - [clear()](#clear-2)
+    - [get_clear_stats() 静态方法](#get_clear_stats-静态方法-1)
+    - [上下文管理器](#上下文管理器)
+- [20. 碰撞引擎完整方法 - 补充](#20-碰撞引擎完整方法---补充)
+  - [20.1 KeyCollisionEngine完整方法](#201-keycollisionengine完整方法)
+    - [range_scan() 方法](#range_scan-方法-1)
+    - [brute_force() 方法](#brute_force-方法)
+    - [resume_from_checkpoint() 方法](#resume_from_checkpoint-方法)
+- [21. 使用示例汇总](#21-使用示例汇总)
+  - [21.1 生成比特币地址](#211-生成比特币地址)
+  - [21.2 从WIF导入私钥](#212-从wif导入私钥)
+  - [21.3 验证比特币地址](#213-验证比特币地址)
+  - [21.4 运行碰撞检测](#214-运行碰撞检测)
+- [22. 版本历史](#22-版本历史)
+
 ## 1. 概述
 
 本文档详细说明BTC项目中所有公共类和方法的API接口，包括参数说明、返回值、异常处理和使用示例。
@@ -24,17 +245,18 @@
 | `B` | int | 7 | 曲线参数b |
 
 **使用示例**:
+
 ```python
 from src.core.secp256k1 import Secp256k1
 
 # 访问曲线参数
 print(f"素数域模数: {Secp256k1.P:x}")
 print(f"曲线阶: {Secp256k1.N:x}")
-```
+```python
 
 ---
 
-### 2.2 ECPoint类
+## 2.2 ECPoint类
 
 **文件位置**: `src/core/secp256k1.py`
 
@@ -44,7 +266,7 @@ print(f"曲线阶: {Secp256k1.N:x}")
 
 ```python
 ECPoint(x: Optional[int], y: Optional[int], curve=Secp256k1)
-```
+```python
 
 **参数**:
 | 参数 | 类型 | 说明 |
@@ -67,7 +289,7 @@ ECPoint(x: Optional[int], y: Optional[int], curve=Secp256k1)
 
 ```python
 copy() -> 'ECPoint'
-```
+```python
 
 创建点的副本。
 
@@ -82,11 +304,11 @@ G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
 
 # 创建副本
 G_copy = G.copy()
-```
+```python
 
 ---
 
-### 2.3 EllipticCurve类
+## 2.3 EllipticCurve类
 
 **文件位置**: `src/core/secp256k1.py`
 
@@ -96,7 +318,7 @@ G_copy = G.copy()
 
 ```python
 EllipticCurve(curve=Secp256k1)
-```
+```python
 
 **参数**:
 | 参数 | 类型 | 说明 |
@@ -107,7 +329,7 @@ EllipticCurve(curve=Secp256k1)
 
 ```python
 mod_inverse(a: int, m: int) -> int
-```
+```python
 
 计算模逆元（扩展欧几里得算法）。
 
@@ -133,13 +355,13 @@ ec = EllipticCurve()
 # 计算3在模7下的逆元（结果为5，因为3*5=15≡1 mod 7）
 result = ec.mod_inverse(3, 7)
 print(result)  # 输出: 5
-```
+```markdown
 
-#### point_add()
+## point_add()
 
 ```python
 point_add(p1: ECPoint, p2: ECPoint) -> ECPoint
-```
+```python
 
 椭圆曲线点加法。
 
@@ -160,13 +382,13 @@ ec = EllipticCurve()
 # 创建两点
 G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
 result = ec.point_add(G, G)  # G + G = 2G
-```
+```markdown
 
-#### scalar_multiply()
+## scalar_multiply()
 
 ```python
 scalar_multiply(k: int, point: ECPoint) -> ECPoint
-```
+```python
 
 椭圆曲线标量乘法（双倍-加法算法）。
 
@@ -189,13 +411,13 @@ G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
 
 # 计算2G
 result = ec.scalar_multiply(2, G)
-```
+```markdown
 
-#### scalar_multiply_const_time()
+## scalar_multiply_const_time()
 
 ```python
 scalar_multiply_const_time(k: int, point: ECPoint) -> ECPoint
-```
+```python
 
 恒定时间的椭圆曲线标量乘法（Montgomery Ladder算法）。
 
@@ -219,13 +441,13 @@ G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
 # 恒定时间计算公钥
 private_key = 12345
 public_point = ec.scalar_multiply_const_time(private_key, G)
-```
+```markdown
 
-#### generate_public_key()
+## generate_public_key()
 
 ```python
 generate_public_key(private_key, compressed: bool = True) -> bytes
-```
+```python
 
 从私钥生成公钥。
 
@@ -273,7 +495,7 @@ uncompressed_pk = ec.generate_public_key(private_key, compressed=False)
 
 print(f"压缩公钥: {compressed_pk.hex()}")
 print(f"非压缩公钥: {uncompressed_pk.hex()}")
-```
+```python
 
 ---
 
@@ -289,7 +511,7 @@ print(f"非压缩公钥: {uncompressed_pk.hex()}")
 
 ```python
 sha256(data: bytes) -> bytes
-```
+```python
 
 计算SHA-256哈希。
 
@@ -307,13 +529,13 @@ from src.core.hash_utils import HashUtils
 data = b"Hello, Bitcoin!"
 hash_value = HashUtils.sha256(data)
 print(f"SHA-256: {hash_value.hex()}")
-```
+```markdown
 
 #### ripemd160()
 
 ```python
 ripemd160(data: bytes) -> bytes
-```
+```python
 
 计算RIPEMD-160哈希。
 
@@ -331,13 +553,13 @@ from src.core.hash_utils import HashUtils
 data = b"Hello, Bitcoin!"
 hash_value = HashUtils.ripemd160(data)
 print(f"RIPEMD-160: {hash_value.hex()}")
-```
+```markdown
 
 #### hash160()
 
 ```python
 hash160(data: bytes) -> bytes
-```
+```python
 
 计算Hash160 = RIPEMD-160(SHA-256(data))。
 
@@ -355,13 +577,13 @@ from src.core.hash_utils import HashUtils
 public_key = bytes.fromhex('0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798')
 hash160 = HashUtils.hash160(public_key)
 print(f"Hash160: {hash160.hex()}")
-```
+```markdown
 
 #### double_sha256()
 
 ```python
 double_sha256(data: bytes) -> bytes
-```
+```python
 
 计算双SHA-256哈希。
 
@@ -379,7 +601,7 @@ from src.core.hash_utils import HashUtils
 data = b"Hello, Bitcoin!"
 checksum = HashUtils.double_sha256(data)[:4]
 print(f"校验和: {checksum.hex()}")
-```
+```python
 
 ---
 
@@ -402,7 +624,7 @@ print(f"校验和: {checksum.hex()}")
 
 ```python
 encode(data: bytes) -> str
-```
+```python
 
 将字节串编码为Base58字符串。
 
@@ -420,13 +642,13 @@ from src.core.base58 import Base58
 data = bytes.fromhex('00010966776006953d5567439e5e39f86a0d273bee')
 encoded = Base58.encode(data)
 print(f"Base58: {encoded}")
-```
+```markdown
 
 #### decode()
 
 ```python
 decode(s: str) -> bytes
-```
+```python
 
 将Base58字符串解码为字节串。
 
@@ -444,13 +666,13 @@ from src.core.base58 import Base58
 encoded = "16UwLL9Risc3QfPqBUvKofHmBQ7wMtjvM"
 decoded = Base58.decode(encoded)
 print(f"Decoded: {decoded.hex()}")
-```
+```markdown
 
 #### check_encode()
 
 ```python
 check_encode(version: int, payload: bytes) -> str
-```
+```python
 
 Base58Check编码。
 
@@ -471,13 +693,13 @@ from src.core.hash_utils import HashUtils
 hash160 = bytes.fromhex('91b24bf9f5288532960ac687abb035127b1d28a5')
 address = Base58.check_encode(0x00, hash160)
 print(f"比特币地址: {address}")
-```
+```markdown
 
-#### check_decode()
+## check_decode()
 
 ```python
 check_decode(s: str) -> tuple
-```
+```python
 
 Base58Check解码。
 
@@ -504,7 +726,7 @@ try:
     print(f"Payload: {payload.hex()}")
 except ValueError as e:
     print(f"解码失败: {e}")
-```
+```python
 
 ---
 
@@ -520,7 +742,7 @@ except ValueError as e:
 
 ```python
 encode(private_key: bytes, compressed: bool = True) -> str
-```
+```python
 
 将私钥编码为WIF格式。
 
@@ -552,13 +774,13 @@ print(f"WIF压缩: {wif_compressed}")
 # 非压缩格式
 wif_uncompressed = WIF.encode(private_key, compressed=False)
 print(f"WIF非压缩: {wif_uncompressed}")
-```
+```markdown
 
-#### decode()
+## decode()
 
 ```python
 decode(wif: str) -> tuple
-```
+```python
 
 解码WIF格式私钥。
 
@@ -584,7 +806,7 @@ wif = "KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qYjgd9M7rFU73sVHnoWn"
 private_key, is_compressed = WIF.decode(wif)
 print(f"私钥: {private_key.hex()}")
 print(f"是否压缩: {is_compressed}")
-```
+```python
 
 ---
 
@@ -600,7 +822,7 @@ print(f"是否压缩: {is_compressed}")
 
 ```python
 P2PKHAddressGenerator()
-```
+```python
 
 创建椭圆曲线运算器实例。
 
@@ -608,7 +830,7 @@ P2PKHAddressGenerator()
 
 ```python
 generate_private_key(max_retries: int = 100) -> bytes
-```
+```python
 
 生成随机私钥。
 
@@ -631,13 +853,13 @@ from src.core.address_generator import P2PKHAddressGenerator
 generator = P2PKHAddressGenerator()
 private_key = generator.generate_private_key()
 print(f"私钥: {private_key.hex()}")
-```
+```markdown
 
 #### private_key_to_public_key()
 
 ```python
 private_key_to_public_key(private_key: bytes, compressed: bool = True) -> bytes
-```
+```python
 
 从私钥生成公钥。
 
@@ -659,13 +881,13 @@ generator = P2PKHAddressGenerator()
 private_key = generator.generate_private_key()
 public_key = generator.private_key_to_public_key(private_key)
 print(f"公钥: {public_key.hex()}")
-```
+```markdown
 
 #### public_key_to_address()
 
 ```python
 public_key_to_address(public_key: bytes) -> str
-```
+```python
 
 从公钥生成比特币地址。
 
@@ -685,13 +907,13 @@ private_key = generator.generate_private_key()
 public_key = generator.private_key_to_public_key(private_key)
 address = generator.public_key_to_address(public_key)
 print(f"地址: {address}")
-```
+```markdown
 
 #### generate_address()
 
 ```python
 generate_address(private_key: bytes = None) -> Tuple[str, bytes, bytes]
-```
+```python
 
 生成完整的比特币地址。
 
@@ -723,11 +945,11 @@ print(f"非压缩公钥: {uncompressed_pk.hex()}")
 private_key = bytes.fromhex('0000000000000000000000000000000000000000000000000000000000000001')
 address, _, _ = generator.generate_address(private_key)
 print(f"地址: {address}")
-```
+```python
 
 ---
 
-### 6.2 CryptoManager类 (新增)
+## 6.2 CryptoManager类 (新增)
 
 **文件位置**: `src/core/crypto_backend.py`
 
@@ -736,19 +958,21 @@ print(f"地址: {address}")
 #### 架构
 
 ```
+
 CryptoBackend (抽象基类)
 ├── PurePythonBackend: 纯Python实现
 └── CoincurveBackend: coincurve库加速（推荐）
 
 CryptoManager (管理器)
 └── 自动选择最佳后端
-```
+
+```markdown
 
 #### generate_public_key()
 
 ```python
 generate_public_key(private_key: bytes, compressed: bool = True) -> bytes
-```
+```python
 
 统一的公钥生成接口。
 
@@ -771,13 +995,250 @@ from src.core.crypto_backend import crypto_manager
 private_key = bytes.fromhex('0000000000000000000000000000000000000000000000000000000000000001')
 public_key = crypto_manager.generate_public_key(private_key, compressed=True)
 print(f"公钥: {public_key.hex()}")
+```python
+
+---
+
+## 7. 多格式地址生成器 (multi_format_generator.py) - 新增
+
+### 7.1 AddressFormat枚举
+
+**文件位置**: `src/core/multi_format_generator.py`
+
+**描述**: 比特币地址格式枚举，定义支持的所有地址类型。
+
+**枚举值**:
+| 值 | 说明 | 前缀示例 |
+|----|------|---------|
+| `P2PKH` | Pay-to-Public-Key-Hash | `1...` |
+| `P2SH` | Pay-to-Script-Hash | `3...` |
+| `BECH32` | SegWit v0 (P2WPKH) | `bc1q...` |
+| `TAPROOT` | SegWit v1 (P2TR) | `bc1p...` |
+
+---
+
+### 7.2 MultiFormatAddressGenerator类
+
+**文件位置**: `src/core/multi_format_generator.py`
+
+**描述**: 多格式比特币地址生成器，支持从单个私钥生成所有主流比特币地址格式，自动检测地址格式，提供智能匹配功能。
+
+#### 构造函数
+
+```python
+MultiFormatAddressGenerator(auto_detect: bool = True, prefer_compressed: bool = True)
+```
+
+**参数**:
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `auto_detect` | bool | True | 是否自动检测支持的格式 |
+| `prefer_compressed` | bool | True | 是否优先使用压缩公钥 |
+
+**示例**:
+```python
+from src.core.multi_format_generator import MultiFormatAddressGenerator, AddressFormat
+
+# 创建生成器
+generator = MultiFormatAddressGenerator()
+```
+
+#### generate_public_key()
+
+```python
+generate_public_key(private_key: bytes, compressed: bool = True) -> bytes
+```
+
+从私钥生成公钥。
+
+**参数**:
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `private_key` | bytes | 32字节私钥 |
+| `compressed` | bool | 是否使用压缩格式 |
+
+**返回**: bytes - 公钥字节串
+
+#### generate_p2pkh_address()
+
+```python
+generate_p2pkh_address(private_key: bytes) -> str
+```
+
+生成P2PKH地址（Pay-to-Public-Key-Hash）。
+
+**参数**:
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `private_key` | bytes | 32字节私钥 |
+
+**返回**: str - P2PKH地址字符串（以`1`开头）
+
+**示例**:
+```python
+generator = MultiFormatAddressGenerator()
+private_key = bytes.fromhex('0000000000000000000000000000000000000000000000000000000000000001')
+address = generator.generate_p2pkh_address(private_key)
+print(f"P2PKH地址: {address}")  # 1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH
+```
+
+#### generate_p2sh_address()
+
+```python
+generate_p2sh_address(private_key: bytes) -> str
+```
+
+生成P2SH地址（Pay-to-Script-Hash）。
+
+**参数**:
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `private_key` | bytes | 32字节私钥 |
+
+**返回**: str - P2SH地址字符串（以`3`开头）
+
+**示例**:
+```python
+address = generator.generate_p2sh_address(private_key)
+print(f"P2SH地址: {address}")  # 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy
+```
+
+#### generate_bech32_address()
+
+```python
+generate_bech32_address(private_key: bytes, hrp: str = "bc") -> str
+```
+
+生成Bech32地址（SegWit v0 - P2WPKH）。
+
+**参数**:
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `private_key` | bytes | - | 32字节私钥 |
+| `hrp` | str | "bc" | Human-Readable Part（主网"bc"，测试网"tb"） |
+
+**返回**: str - Bech32地址字符串（以`bc1q`开头）
+
+**示例**:
+```python
+address = generator.generate_bech32_address(private_key)
+print(f"Bech32地址: {address}")  # bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4
+```
+
+#### generate_taproot_address()
+
+```python
+generate_taproot_address(private_key: bytes, hrp: str = "bc") -> str
+```
+
+生成Taproot地址（SegWit v1 - P2TR）。
+
+**参数**:
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `private_key` | bytes | - | 32字节私钥 |
+| `hrp` | str | "bc" | Human-Readable Part |
+
+**返回**: str - Taproot地址字符串（以`bc1p`开头）
+
+**注意**: Taproot使用xonly公钥（仅x坐标，32字节）
+
+#### generate_all_formats()
+
+```python
+generate_all_formats(private_key: bytes, hrp: str = "bc") -> Dict[AddressFormat, str]
+```
+
+生成所有格式的地址。
+
+**参数**:
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `private_key` | bytes | - | 32字节私钥 |
+| `hrp` | str | "bc" | Human-Readable Part |
+
+**返回**: Dict[AddressFormat, str] - 格式到地址的映射字典
+
+**示例**:
+```python
+generator = MultiFormatAddressGenerator()
+private_key = bytes.fromhex('0000000000000000000000000000000000000000000000000000000000000001')
+addresses = generator.generate_all_formats(private_key)
+
+print(f"P2PKH: {addresses[AddressFormat.P2PKH]}")
+print(f"P2SH: {addresses[AddressFormat.P2SH]}")
+print(f"Bech32: {addresses[AddressFormat.BECH32]}")
+print(f"Taproot: {addresses[AddressFormat.TAPROOT]}")
+```
+
+#### detect_address_format()
+
+```python
+detect_address_format(address: str) -> AddressFormat
+```
+
+自动检测比特币地址格式。
+
+**参数**:
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `address` | str | 比特币地址字符串（大小写不敏感） |
+
+**返回**: AddressFormat - 检测到的地址格式
+
+**异常**:
+| 异常 | 说明 |
+|------|------|
+| `ValueError` | 地址格式无法识别 |
+
+**示例**:
+```python
+generator = MultiFormatAddressGenerator()
+
+# 检测各种格式
+print(generator.detect_address_format("1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"))  # P2PKH
+print(generator.detect_address_format("3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"))  # P2SH
+print(generator.detect_address_format("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"))  # BECH32
+print(generator.detect_address_format("BC1QW508D6Q EJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4"))  # 支持大写
+```
+
+#### match_all_formats()
+
+```python
+match_all_formats(private_key: bytes, targets: Set[str], hrp: str = "bc") -> List[Tuple[str, str]]
+```
+
+用所有格式的地址匹配目标集合。
+
+**参数**:
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `private_key` | bytes | - | 32字节私钥 |
+| `targets` | Set[str] | - | 目标地址集合（小写存储） |
+| `hrp` | str | "bc" | Human-Readable Part |
+
+**返回**: List[Tuple[str, str]] - 匹配列表，每个元素是(地址, 格式字符串)
+
+**示例**:
+```python
+generator = MultiFormatAddressGenerator()
+targets = {
+    "1bgzg9tcn4rm9kbzdn7kprqz87sz26samh",
+    "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+}
+
+private_key = bytes.fromhex('0000000000000000000000000000000000000000000000000000000000000001')
+matches = generator.match_all_formats(private_key, targets)
+
+for address, fmt in matches:
+    print(f"匹配成功! {address} ({fmt})")
 ```
 
 ---
 
-## 7. 碰撞检测引擎模块 (key_collision_engine.py)
+## 8. 碰撞检测引擎模块 (key_collision_engine.py)
 
-### 7.1 KeyCollisionEngine类
+### 8.1 KeyCollisionEngine类
 
 **文件位置**: `src/collision/key_collision_engine.py`
 
@@ -796,10 +1257,18 @@ KeyCollisionEngine(
     dedup_max_size: int = 1_000_000,
     checkpoint_interval: int = 30,
     max_workers: Optional[int] = None,
+    event_bus: Optional[EventBus] = None,
     data_logging_enabled: bool = True,
-    data_logging_interval: int = 5
+    data_logging_interval: int = 5,
+    verbose_logging: bool = False,
+    use_enhanced_monitoring: bool = True,
+    use_performance_optimization: bool = True,
+    precomputed_window_size: int = 8,
+    use_simd_hash: bool = True,
+    use_memory_pool: bool = True,
+    crypto_backend_type: str = None
 )
-```
+```python
 
 **参数**:
 | 参数 | 类型 | 默认值 | 说明 |
@@ -813,19 +1282,27 @@ KeyCollisionEngine(
 | `dedup_max_size` | int | 1,000,000 | 去重过滤器最大容量 |
 | `checkpoint_interval` | int | 30 | 断点自动保存间隔(秒) |
 | `max_workers` | Optional[int] | None | 线程池最大工作线程数，None表示使用默认值 |
+| `event_bus` | EventBus | None | 事件总线实例（v4.2.2新增，None则自动创建） |
 | `data_logging_enabled` | bool | True | 是否启用数据日志记录 |
 | `data_logging_interval` | int | 5 | 数据日志记录间隔(秒) |
+| `verbose_logging` | bool | False | 是否启用详细日志（生产环境建议False） |
+| `use_enhanced_monitoring` | bool | True | 是否使用增强监控系统（包含异常检测和告警） |
+| `use_performance_optimization` | bool | True | 是否启用性能优化（v4.2.2新增） |
+| `precomputed_window_size` | int | 8 | 预计算表窗口大小(4-8) |
+| `use_simd_hash` | bool | True | 是否使用SIMD哈希优化 |
+| `use_memory_pool` | bool | True | 是否使用内存池 |
+| `crypto_backend_type` | str | None | 加密后端类型: 'coincurve', 'openssl', 'ecdsa', 'pure_python' |
 
 **内部配置**:
 ```python
 self._batch_size = 1000  # 每批处理的私钥数量
 self._progress_interval_sec = 0.5  # 进度回调最小间隔（秒）
-```
+```python
 
 **运行模式**:
 - `random_search()`: 随机搜索模式
 - `range_scan(start, end)`: 范围扫描模式
-- `sequential_brute_force()`: 顺序爆破模式
+- `brute_force(start, max_keys)`: 暴力穷举模式
 
 **示例**:
 ```python
@@ -842,13 +1319,13 @@ engine = KeyCollisionEngine(
     checkpoint_enabled=True,
     dedup_enabled=True
 )
-```
+```markdown
 
-#### random_search()
+## random_search()
 
 ```python
 random_search()
-```
+```python
 
 随机碰撞模式 - 使用线程池并行生成私钥并比对。
 
@@ -871,13 +1348,13 @@ import time
 time.sleep(10)
 engine.stop()
 thread.join()
-```
+```markdown
 
-#### stop()
+## stop()
 
 ```python
 stop()
-```
+```python
 
 停止碰撞检测。
 
@@ -887,7 +1364,7 @@ stop()
 
 ```python
 is_running() -> bool
-```
+```python
 
 检查引擎是否正在运行。
 
@@ -897,7 +1374,7 @@ is_running() -> bool
 
 ```python
 get_stats() -> CollisionStats
-```
+```python
 
 获取当前统计信息。
 
@@ -923,7 +1400,7 @@ get_stats() -> CollisionStats
 
 ```python
 DeduplicationFilter(max_size: int = 1_000_000, enabled: bool = True)
-```
+```python
 
 **参数**:
 | 参数 | 类型 | 默认值 | 说明 |
@@ -935,7 +1412,7 @@ DeduplicationFilter(max_size: int = 1_000_000, enabled: bool = True)
 
 ```python
 check_and_add(private_key: bytes) -> bool
-```
+```python
 
 检查是否重复。不重复返回True，重复返回False。
 
@@ -950,7 +1427,7 @@ check_and_add(private_key: bytes) -> bool
 
 ```python
 get_stats() -> Dict[str, Any]
-```
+```python
 
 返回去重统计。
 
@@ -984,7 +1461,7 @@ get_stats() -> Dict[str, Any]
 
 ```python
 CheckpointManager(filepath: str = None, auto_save_interval: int = 30)
-```
+```python
 
 **参数**:
 | 参数 | 类型 | 默认值 | 说明 |
@@ -995,12 +1472,12 @@ CheckpointManager(filepath: str = None, auto_save_interval: int = 30)
 #### save()
 
 ```python
-save(mode: str, targets: Set[str], current_position: int, 
-     total_checked: int, matches: List[Dict], 
-     range_start: Optional[int] = None, 
-     range_end: Optional[int] = None, 
+save(mode: str, targets: Set[str], current_position: int,
+     total_checked: int, matches: List[Dict],
+     range_start: Optional[int] = None,
+     range_end: Optional[int] = None,
      force: bool = False) -> None
-```
+```python
 
 保存断点到JSON文件（线程安全）。
 
@@ -1010,7 +1487,7 @@ save(mode: str, targets: Set[str], current_position: int,
 
 ```python
 load() -> Optional[Dict]
-```
+```python
 
 从文件加载断点，文件不存在或格式错误返回None。
 
@@ -1026,7 +1503,7 @@ load() -> Optional[Dict]
 
 ```python
 DataLogger(log_dir: str = "monitoring_data", log_interval: int = 5)
-```
+```python
 
 **参数**:
 | 参数 | 类型 | 默认值 | 说明 |
@@ -1038,7 +1515,7 @@ DataLogger(log_dir: str = "monitoring_data", log_interval: int = 5)
 
 ```python
 log_performance_data(stats: CollisionStats) -> None
-```
+```python
 
 记录性能数据。
 
@@ -1068,7 +1545,7 @@ log_performance_data(stats: CollisionStats) -> None
 
 ```python
 TargetResolver(enable_cache: bool = True, cache_max_size: int = 10000)
-```
+```python
 
 **参数**:
 | 参数 | 类型 | 默认值 | 说明 |
@@ -1080,7 +1557,7 @@ TargetResolver(enable_cache: bool = True, cache_max_size: int = 10000)
 
 ```python
 resolve(key: str) -> str
-```
+```python
 
 解析地址（支持WIF、Hex等格式）。
 
@@ -1093,7 +1570,7 @@ resolve(key: str) -> str
 
 ```python
 load_from_file(filepath: str) -> Set[str]
-```
+```python
 
 批量加载文件中的地址。
 
@@ -1114,7 +1591,7 @@ load_from_file(filepath: str) -> Set[str]
 
 ```python
 AddressBatchValidator(max_workers: int = 4)
-```
+```python
 
 **参数**:
 | 参数 | 类型 | 默认值 | 说明 |
@@ -1125,7 +1602,7 @@ AddressBatchValidator(max_workers: int = 4)
 
 ```python
 validate_batch(addresses: List[str]) -> List[Dict[str, Any]]
-```
+```python
 
 批量验证地址列表。
 
@@ -1138,7 +1615,7 @@ validate_batch(addresses: List[str]) -> List[Dict[str, Any]]
 
 ```python
 filter_valid(addresses: List[str]) -> List[str]
-```
+```python
 
 过滤出有效地址。
 
@@ -1153,9 +1630,9 @@ filter_valid(addresses: List[str]) -> List[str]
 #### 构造函数
 
 ```python
-AddressMatcher(strategy: str = 'hash_set', targets: Set[str] = None, 
+AddressMatcher(strategy: str = 'hash_set', targets: Set[str] = None,
                bloom_capacity: int = 100000, bloom_error_rate: float = 0.001)
-```
+```python
 
 **参数**:
 | 参数 | 类型 | 默认值 | 说明 |
@@ -1169,7 +1646,7 @@ AddressMatcher(strategy: str = 'hash_set', targets: Set[str] = None,
 
 ```python
 is_match(address: str) -> bool
-```
+```python
 
 检查地址是否匹配。
 
@@ -1185,9 +1662,281 @@ is_match(address: str) -> bool
 
 ---
 
-## 8. GPU引擎模块 (gpu_engine.py)
+## 9. 格式感知目标管理器 (format_aware_manager.py) - 新增
 
-### 8.1 GPUDevice类
+### 9.1 FormatAwareTargetManager类
+
+**文件位置**: `src/collision/targets/format_aware_manager.py`
+
+**描述**: 格式感知的目标地址管理器，自动检测目标地址格式，按格式分组管理，提供格式相关的智能匹配功能。
+
+**特性**:
+- 自动检测地址格式（P2PKH/P2SH/Bech32/Taproot）
+- 大小写不敏感存储
+- 按格式分组，高效查询
+- 线程安全（使用RLock保护）
+- 支持从文件批量加载
+- 提供格式统计信息
+
+#### 构造函数
+
+```python
+FormatAwareTargetManager()
+```
+
+创建格式感知目标管理器实例。
+
+**示例**:
+```python
+from src.collision.targets.format_aware_manager import FormatAwareTargetManager
+from src.core.multi_format_generator import AddressFormat
+
+manager = FormatAwareTargetManager()
+```
+
+#### add_target()
+
+```python
+add_target(address: str) -> bool
+```
+
+添加单个目标地址，自动检测格式。
+
+**参数**:
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `address` | str | 比特币地址字符串（大小写不敏感） |
+
+**返回**: bool - True表示成功添加新地址，False表示已存在
+
+**示例**:
+```python
+manager = FormatAwareTargetManager()
+
+# 添加各种格式的地址
+manager.add_target("1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH")  # P2PKH
+manager.add_target("3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy")  # P2SH
+manager.add_target("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4")  # Bech32
+manager.add_target("BC1QW508D6Q EJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4")  # 支持大写
+```
+
+#### add_targets()
+
+```python
+add_targets(addresses: List[str]) -> int
+```
+
+批量添加目标地址。
+
+**参数**:
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `addresses` | List[str] | 地址列表 |
+
+**返回**: int - 成功添加的地址数量
+
+**示例**:
+```python
+manager = FormatAwareTargetManager()
+addresses = [
+    "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH",
+    "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
+    "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+]
+count = manager.add_targets(addresses)
+print(f"成功添加 {count} 个地址")
+```
+
+#### load_from_file()
+
+```python
+load_from_file(filepath: str) -> int
+```
+
+从文件加载目标地址。
+
+**参数**:
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `filepath` | str | 文件路径 |
+
+**返回**: int - 成功加载的地址数量
+
+**文件格式**:
+- 每行一个地址
+- 以`#`开头的行被视为注释跳过
+- 空行自动跳过
+- 自动去除首尾空白
+- 支持UTF-8编码
+
+**示例**:
+```python
+manager = FormatAwareTargetManager()
+count = manager.load_from_file("target_addresses.txt")
+print(f"从文件加载了 {count} 个地址")
+```
+
+#### get_targets_by_format()
+
+```python
+get_targets_by_format() -> Dict[AddressFormat, Set[str]]
+```
+
+获取按格式分组的目标地址。
+
+**返回**: Dict[AddressFormat, Set[str]] - 格式到地址集合的映射
+
+**示例**:
+```python
+manager = FormatAwareTargetManager()
+# 添加一些地址...
+
+targets = manager.get_targets_by_format()
+for fmt, addrs in targets.items():
+    print(f"{fmt.value}: {len(addrs)} 个地址")
+```
+
+#### get_all_targets()
+
+```python
+get_all_targets() -> Set[str]
+```
+
+获取所有目标地址。
+
+**返回**: Set[str] - 所有地址的集合（小写格式）
+
+#### get_format_stats()
+
+```python
+get_format_stats() -> Dict[str, int]
+```
+
+获取格式统计信息。
+
+**返回**: Dict[str, int] - 格式名称到数量的映射
+
+**示例**:
+```python
+manager = FormatAwareTargetManager()
+# 添加一些地址...
+
+stats = manager.get_format_stats()
+print("格式统计:")
+for fmt, count in stats.items():
+    print(f"  {fmt}: {count}")
+```
+
+#### check_match()
+
+```python
+check_match(private_key: bytes) -> tuple[bool, Optional[str], Optional[str]]
+```
+
+检查私钥是否匹配任何目标。内部自动生成对应格式的地址进行匹配。
+
+**参数**:
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `private_key` | bytes | 32字节私钥 |
+
+**返回**: (is_match, matched_address, matched_format) 元组
+
+**示例**:
+```python
+manager = FormatAwareTargetManager()
+# 添加地址...
+
+private_key = bytes.fromhex('0000000000000000000000000000000000000000000000000000000000000001')
+is_match, matched_addr, matched_fmt = manager.check_match(private_key)
+
+if is_match:
+    print(f"找到匹配！格式: {matched_fmt}, 地址: {matched_addr}")
+```
+
+#### check_match_all()
+
+```python
+check_match_all(private_key: bytes) -> tuple[bool, list[tuple[str, str]]]
+```
+
+检查私钥是否匹配所有目标格式的地址，返回所有匹配。
+
+**参数**:
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `private_key` | bytes | 32字节私钥 |
+
+**返回**: (is_match, list[tuple[address, format]]) 元组
+
+**示例**:
+```python
+manager = FormatAwareTargetManager()
+# 添加地址...
+
+private_key = bytes.fromhex('0000000000000000000000000000000000000000000000000000000000000001')
+is_match, all_matches = manager.check_match_all(private_key)
+
+if is_match:
+    print(f"找到 {len(all_matches)} 个匹配:")
+    for addr, fmt in all_matches:
+        print(f"  - {fmt}: {addr}")
+```
+
+#### remove_target()
+
+```python
+remove_target(address: str) -> bool
+```
+
+移除目标地址。
+
+**参数**:
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `address` | str | 要移除的地址 |
+
+**返回**: bool - True表示成功移除
+
+#### clear()
+
+```python
+clear() -> None
+```
+
+清空所有目标地址。
+
+**完整示例**:
+```python
+from src.collision.targets.format_aware_manager import FormatAwareTargetManager
+
+# 创建管理器
+manager = FormatAwareTargetManager()
+
+# 从文件加载目标地址
+manager.load_from_file("targets.txt")
+
+# 打印格式统计
+stats = manager.get_format_stats()
+print("目标地址格式统计:")
+for fmt, count in stats.items():
+    print(f"  {fmt}: {count}")
+
+# 检查匹配（只需传入私钥，内部自动生成对应格式的地址）
+private_key = bytes.fromhex('0000000000000000000000000000000000000000000000000000000000000001')
+is_match, all_matches = manager.check_match_all(private_key)
+
+if is_match:
+    print(f"\n找到 {len(all_matches)} 个匹配!")
+    for addr, fmt in all_matches:
+        print(f"  - {fmt}: {addr}")
+```
+
+---
+
+## 10. GPU引擎模块 (gpu_engine.py)
+
+### 10.1 GPUDevice类
 
 **文件位置**: `gpu_engine.py` (第1080行起)
 
@@ -1198,7 +1947,7 @@ is_match(address: str) -> bool
 ```python
 @staticmethod
 detect_devices() -> List[Dict]
-```
+```python
 
 检测所有可用的OpenCL GPU设备。
 
@@ -1222,14 +1971,14 @@ devices = GPUDevice.detect_devices()
 for i, dev in enumerate(devices):
     print(f"GPU {i}: {dev['name']} ({dev['vendor']})")
     print(f"  显存: {dev['global_mem_size'] / (1024**3):.2f} GB")
-```
+```markdown
 
 #### is_available() 静态方法
 
 ```python
 @staticmethod
 is_available() -> bool
-```
+```python
 
 检查pyopencl是否可用。
 
@@ -1239,7 +1988,7 @@ is_available() -> bool
 
 ```python
 initialize(device_index: int = 1) -> None
-```
+```python
 
 初始化GPU设备。
 
@@ -1279,13 +2028,13 @@ print(f"设备: {info['name']}")
 print(f"厂商: {info['vendor']}")
 print(f"显存: {info['global_mem_size'] / (1024**3):.2f} GB")
 print(f"计算单元: {info['max_compute_units']}")
-```
+```markdown
 
-#### get_device_info() 方法
+## get_device_info() 方法
 
 ```python
 get_device_info() -> Dict
-```
+```python
 
 获取当前GPU设备信息。
 
@@ -1316,6 +2065,7 @@ get_device_info() -> Dict
 
 **OpenCL内核架构**:
 ```
+
 uint256_t (256位整数)
 ├── d[8]: 8个uint32,小端序存储
 └── 支持所有基本运算
@@ -1330,7 +2080,8 @@ secp256k1实现
 ├── SHA-256: sha256_hash()
 ├── RIPEMD-160: ripemd160_hash()
 └── Hash160: hash160() = RIPEMD160(SHA256(x))
-```
+
+```python
 
 **性能特点**:
 - 并行处理: 每个工作项处理一个私钥
@@ -1356,13 +2107,13 @@ hash160_results = kernel.compute_hash160_batch(private_keys)
 # 检查目标匹配
 targets = ["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"]
 matches = kernel.check_matches(hash160_results, targets)
-```
+```python
 
 ---
 
-## 9. GPU碰撞引擎 (gpu_collision_engine.py)
+## 11. GPU碰撞引擎 (gpu_collision_engine.py)
 
-### 9.1 GPUCollisionEngine类
+### 11.1 GPUCollisionEngine类
 
 **文件位置**: `src/collision/gpu_collision_engine.py` (第535行起)
 
@@ -1384,7 +2135,7 @@ GPUCollisionEngine(
     batch_size: int = 65536,
     max_workers: Optional[int] = None
 )
-```
+```python
 
 **参数**:
 | 参数 | 类型 | 默认值 | 说明 |
@@ -1410,7 +2161,7 @@ GPUCollisionEngine(
 
 ```python
 random_search() -> None
-```
+```python
 
 GPU随机搜索模式 - 使用GPU并行生成私钥并比对。
 
@@ -1443,13 +2194,13 @@ engine = GPUCollisionEngine(
 )
 
 engine.random_search()
-```
+```markdown
 
 #### range_scan() 方法
 
 ```python
 range_scan(start: int, end: int) -> None
-```
+```python
 
 GPU范围扫描模式 - 在指定私钥范围内进行扫描。
 
@@ -1469,7 +2220,7 @@ GPU范围扫描模式 - 在指定私钥范围内进行扫描。
 ```python
 @staticmethod
 handle_gpu_batch_error(mode: str, e: Exception, stats=None) -> bool
-```
+```python
 
 统一处理GPU计算批次异常。
 
@@ -1523,7 +2274,7 @@ handle_gpu_batch_error(mode: str, e: Exception, stats=None) -> bool
 
 ```python
 GPUMonitor()
-```
+```python
 
 **特性**:
 - 自动检测PyOpenCL可用性
@@ -1534,7 +2285,7 @@ GPUMonitor()
 
 ```python
 get_gpu_info() -> Dict[str, Any]
-```
+```python
 
 获取GPU基本信息。
 
@@ -1565,13 +2316,13 @@ if info['available']:
     print(f"检测到 {info['gpu_count']} 个GPU")
     for gpu in info['gpus']:
         print(f"  {gpu['name']}: {gpu['global_memory_mb']:.0f}MB")
-```
+```markdown
 
 #### get_gpu_metrics() 方法
 
 ```python
 get_gpu_metrics() -> Dict[str, Any]
-```
+```python
 
 获取GPU性能指标(使用5秒缓存)。
 
@@ -1591,7 +2342,7 @@ get_gpu_metrics() -> Dict[str, Any]
 
 ```python
 track_memory_usage(allocated_bytes: int) -> None
-```
+```python
 
 跟踪GPU显存使用。
 
@@ -1612,7 +2363,7 @@ monitor.track_memory_usage(allocated)
 
 metrics = monitor.get_gpu_metrics()
 print(f"显存使用: {metrics['memory_used_mb']:.0f}MB ({metrics['memory_usage_percent']:.1f}%)")
-```
+```python
 
 ---
 
@@ -1646,13 +2397,13 @@ MonitoringData
 │   ├── is_running: bool          # 是否运行
 │   └── current_position: int     # 当前位置
 └── errors: List[Dict]            # 错误记录
-```
+```markdown
 
 #### to_dict() 方法
 
 ```python
 to_dict() -> Dict[str, Any]
-```
+```python
 
 转换为字典格式。
 
@@ -1668,7 +2419,7 @@ to_dict() -> Dict[str, Any]
 
 ```python
 DataCollector(engine=None)
-```
+```python
 
 **参数**:
 | 参数 | 类型 | 说明 |
@@ -1679,7 +2430,7 @@ DataCollector(engine=None)
 
 ```python
 collect_performance_data() -> Dict[str, Any]
-```
+```python
 
 收集性能数据(CPU、内存、线程、速度)。
 
@@ -1687,7 +2438,7 @@ collect_performance_data() -> Dict[str, Any]
 
 ```python
 collect_system_data() -> Dict[str, Any]
-```
+```python
 
 收集系统数据(OS、Python版本、PID、运行时间)。
 
@@ -1695,7 +2446,7 @@ collect_system_data() -> Dict[str, Any]
 
 ```python
 collect_engine_data() -> Dict[str, Any]
-```
+```python
 
 收集引擎数据(模式、目标数、运行状态、位置)。
 
@@ -1703,7 +2454,7 @@ collect_engine_data() -> Dict[str, Any]
 
 ```python
 collect_all_data() -> MonitoringData
-```
+```python
 
 收集所有数据,返回MonitoringData对象。
 
@@ -1719,7 +2470,7 @@ collect_all_data() -> MonitoringData
 
 ```python
 DataStorage(storage_dir: str = "monitoring_data")
-```
+```python
 
 **数据文件**:
 - `current_data.json`: 当前监控数据
@@ -1752,13 +2503,13 @@ thresholds = {
     "cpu_usage": {"max": 90},
     "memory_usage": {"max": 1024}  # MB
 }
-```
+```markdown
 
 #### detect_anomalies() 方法
 
 ```python
 detect_anomalies(current_data: MonitoringData) -> List[Dict[str, Any]]
-```
+```python
 
 检测异常,返回异常列表。
 
@@ -1770,7 +2521,7 @@ detect_anomalies(current_data: MonitoringData) -> List[Dict[str, Any]]
 
 ```python
 analyze_trends(history_data: List[Dict[str, Any]]) -> Dict[str, Any]
-```
+```python
 
 分析趋势,返回速度、CPU、内存的趋势(increasing/decreasing/stable)。
 
@@ -1786,7 +2537,7 @@ analyze_trends(history_data: List[Dict[str, Any]]) -> Dict[str, Any]
 
 ```python
 generate_alert(anomaly: Dict[str, Any]) -> None
-```
+```python
 
 生成告警,级别分为`warning`和`critical`。
 
@@ -1794,7 +2545,7 @@ generate_alert(anomaly: Dict[str, Any]) -> None
 
 ```python
 process_anomalies(anomalies: List[Dict[str, Any]]) -> None
-```
+```python
 
 批量处理异常并生成告警。
 
@@ -1810,7 +2561,7 @@ process_anomalies(anomalies: List[Dict[str, Any]]) -> None
 
 ```python
 generate_daily_report() -> Dict[str, Any]
-```
+```python
 
 生成每日报告,包含:
 - 统计摘要(总检查数、匹配数、平均速度)
@@ -1830,7 +2581,7 @@ generate_daily_report() -> Dict[str, Any]
 
 ```python
 MonitoringSystem(engine=None, collection_interval: int = 5)
-```
+```python
 
 **参数**:
 | 参数 | 类型 | 默认值 | 说明 |
@@ -1874,11 +2625,11 @@ report = monitor.generate_report()
 
 # 停止监控
 monitor.stop()
-```
+```python
 
 ---
 
-### 11.8 EnhancedMonitoringSystem类
+## 11.8 EnhancedMonitoringSystem类
 
 **文件位置**: `src/monitoring/enhanced_monitoring.py`
 
@@ -1888,7 +2639,7 @@ monitor.stop()
 
 ```python
 EnhancedMonitoringSystem(engine=None, collection_interval: int = 5)
-```
+```python
 
 **特性**:
 - 继承MonitoringSystem所有功能
@@ -1910,7 +2661,7 @@ EnhancedMonitoringSystem(engine=None, collection_interval: int = 5)
 
 ```python
 DataLogger(storage_dir: str = "data_logs")
-```
+```python
 
 **参数**:
 | 参数 | 类型 | 默认值 | 说明 |
@@ -1919,13 +2670,15 @@ DataLogger(storage_dir: str = "data_logs")
 
 **数据文件结构**:
 ```
+
 data_logs/
 ├── current_data.json      # 当前数据(最新)
 ├── history_data.json      # 历史数据(最多1000条)
 ├── error_log.json         # 错误日志(最多500条)
 ├── performance.log        # 性能日志(CSV格式)
 └── report_*.json          # 生成的报告
-```
+
+```markdown
 
 #### record_performance_data() 方法
 
@@ -1938,7 +2691,7 @@ record_performance_data(
     memory_usage: float = 0.0,
     thread_count: int = 0
 ) -> None
-```
+```python
 
 记录性能数据。
 
@@ -1967,7 +2720,7 @@ record_system_data(
     pid: int = 0,
     uptime: float = 0.0
 ) -> None
-```
+```python
 
 记录系统数据。
 
@@ -1981,7 +2734,7 @@ record_engine_data(
     current_position: int = 0,
     additional_info: Dict[str, Any] = None
 ) -> None
-```
+```python
 
 记录引擎状态数据。
 
@@ -1994,7 +2747,7 @@ record_error(
     exception: Exception = None,
     context: Dict[str, Any] = None
 ) -> None
-```
+```python
 
 记录错误信息。
 
@@ -2009,7 +2762,7 @@ record_error(
 
 ```python
 save_current_data() -> None
-```
+```python
 
 保存当前数据到current_data.json。
 
@@ -2017,7 +2770,7 @@ save_current_data() -> None
 
 ```python
 save_history_data() -> None
-```
+```python
 
 保存历史数据到history_data.json。
 
@@ -2025,7 +2778,7 @@ save_history_data() -> None
 
 ```python
 get_current_data() -> Dict[str, Any]
-```
+```python
 
 获取当前数据。
 
@@ -2033,7 +2786,7 @@ get_current_data() -> Dict[str, Any]
 
 ```python
 get_statistics() -> Dict[str, Any]
-```
+```python
 
 获取统计信息。
 
@@ -2052,7 +2805,7 @@ get_statistics() -> Dict[str, Any]
 
 ```python
 generate_report(report_type: str = "daily") -> Dict[str, Any]
-```
+```python
 
 生成报告。
 
@@ -2099,13 +2852,13 @@ report = logger.generate_report("daily")
 # 保存数据
 logger.save_current_data()
 logger.save_history_data()
-```
+```markdown
 
-#### cleanup_old_data() 方法
+## cleanup_old_data() 方法
 
 ```python
 cleanup_old_data(max_age_days: int = 30) -> None
-```
+```python
 
 清理旧数据。
 
@@ -2150,7 +2903,7 @@ cleanup_old_data(max_age_days: int = 30) -> None
     "current_position": 0
   }
 }
-```
+```markdown
 
 #### history_data.json格式
 
@@ -2169,7 +2922,7 @@ cleanup_old_data(max_age_days: int = 30) -> None
   },
   ...
 ]
-```
+```markdown
 
 #### error_log.json格式
 
@@ -2188,18 +2941,23 @@ cleanup_old_data(max_age_days: int = 30) -> None
   },
   ...
 ]
-```
+```markdown
 
 #### performance.log格式
 
 ```
+
 # 性能日志 - 比特币密钥碰撞检测
+
 # 创建时间: 2026-04-20T10:00:00
+
 # 格式: timestamp,speed,total_checked,matches,cpu_usage,memory_usage,threads
+
 1713598200.0,50000.0,1000000,0,75.5,512.0,8
 1713598205.0,51000.0,1255000,0,76.0,515.0,8
 ...
-```
+
+```python
 
 ---
 
@@ -2220,7 +2978,7 @@ cleanup_old_data(max_age_days: int = 30) -> None
 
 ```python
 CollisionStats()
-```
+```python
 
 **属性**:
 | 属性 | 类型 | 说明 |
@@ -2245,13 +3003,13 @@ CollisionStats()
     "match_index": int,       # 匹配序号
     "private_key_hash": str   # 私钥SHA256哈希(前16字符)
 }
-```
+```markdown
 
 #### update() 方法
 
 ```python
 update(checked_count: int, total_range: int = 0) -> None
-```
+```python
 
 更新统计数据。
 
@@ -2268,13 +3026,13 @@ if total_range > 0 and speed > 0:
     eta_seconds = remaining / speed
 else:
     eta_seconds = -1.0  # 无法估算
-```
+```markdown
 
 #### add_match() 方法
 
 ```python
 add_match(private_key: bytes, address: str) -> None
-```
+```python
 
 记录匹配结果(不存储私钥)。
 
@@ -2287,7 +3045,7 @@ add_match(private_key: bytes, address: str) -> None
 
 ```python
 snapshot() -> 'CollisionStats'
-```
+```python
 
 返回线程安全的统计快照。
 
@@ -2301,7 +3059,7 @@ snapshot() -> 'CollisionStats'
 
 ```python
 format_elapsed() -> str
-```
+```yaml
 
 格式化运行时间为HH:MM:SS格式。
 
@@ -2309,7 +3067,7 @@ format_elapsed() -> str
 
 ```python
 format_speed() -> str
-```
+```python
 
 格式化速度(带单位): `/s`, `K/s`, `M/s`。
 
@@ -2317,7 +3075,7 @@ format_speed() -> str
 
 ```python
 get_speed() -> float
-```
+```python
 
 获取当前碰撞速度(线程安全)。
 
@@ -2325,7 +3083,7 @@ get_speed() -> float
 
 ```python
 record_gpu_error(is_resource_error: bool = False) -> None
-```
+```python
 
 记录GPU错误。
 
@@ -2333,7 +3091,7 @@ record_gpu_error(is_resource_error: bool = False) -> None
 
 ```python
 record_worker_error() -> None
-```
+```python
 
 记录工作线程错误。
 
@@ -2341,7 +3099,7 @@ record_worker_error() -> None
 
 ```python
 record_wif_encode_error() -> None
-```
+```python
 
 记录WIF编码错误。
 
@@ -2349,7 +3107,7 @@ record_wif_encode_error() -> None
 
 ```python
 get_error_rates() -> Dict[str, float]
-```
+```python
 
 获取各类错误率。
 
@@ -2362,13 +3120,13 @@ get_error_rates() -> Dict[str, float]
     "wif_encode_error_rate": float,  # WIF错误/总检查数
     "resource_error_rate": float     # 资源错误/总检查数
 }
-```
+```markdown
 
 #### is_healthy() 方法
 
 ```python
 is_healthy(error_rate_threshold: float = 0.01) -> bool
-```
+```python
 
 检查系统健康状态。
 
@@ -2383,14 +3141,16 @@ is_healthy(error_rate_threshold: float = 0.01) -> bool
 
 ```python
 error_summary() -> str
-```
+```python
 
 生成错误统计摘要。
 
 **输出示例**:
 ```
+
 错误统计: GPU=5, Worker=2, WIF=1, Resource=3, 总计=7
-```
+
+```python
 
 **计算说明**:
 - 总计 = GPU错误 + Worker错误(独立错误事件数)
@@ -2428,7 +3188,7 @@ else:
 
 # 获取快照(用于回调)
 snapshot = stats.snapshot()
-```
+```python
 
 ---
 
@@ -2444,7 +3204,7 @@ snapshot = stats.snapshot()
 
 ```python
 P2PKHSimulator()
-```
+```python
 
 初始化模拟器，创建地址生成器和彩色输出器实例。
 
@@ -2452,7 +3212,7 @@ P2PKHSimulator()
 
 ```python
 derive_address(private_key: bytes) -> tuple
-```
+```python
 
 执行完整的地址推导流程。
 
@@ -2467,7 +3227,7 @@ derive_address(private_key: bytes) -> tuple
 
 ```python
 derive_address_detailed(private_key: bytes) -> tuple
-```
+```python
 
 详细推导地址（带彩色输出）。
 
@@ -2482,7 +3242,7 @@ derive_address_detailed(private_key: bytes) -> tuple
 
 ```python
 run_test_vector() -> bool
-```
+```python
 
 运行测试向量验证。
 
@@ -2492,7 +3252,7 @@ run_test_vector() -> bool
 
 ```python
 parse_private_key_input(user_input: str) -> bytes
-```
+```python
 
 解析用户输入的私钥。
 
@@ -2517,7 +3277,7 @@ parse_private_key_input(user_input: str) -> bytes
 
 ```python
 batch_generate(count: int, export_csv: bool = False)
-```
+```python
 
 批量生成地址。
 
@@ -2531,7 +3291,7 @@ batch_generate(count: int, export_csv: bool = False)
 
 ```python
 run_interactive()
-```
+```python
 
 运行交互式菜单。
 
@@ -2551,7 +3311,7 @@ run_interactive()
 
 ```python
 P2PKHGUI(root: tk.Tk)
-```
+```python
 
 初始化GUI。
 
@@ -2568,7 +3328,7 @@ from p2pkh_gui import P2PKHGUI
 root = tk.Tk()
 app = P2PKHGUI(root)
 root.mainloop()
-```
+```python
 
 ---
 
@@ -2604,9 +3364,9 @@ address, compressed_pk, uncompressed_pk = generator.generate_address()
 
 print(f"比特币地址: {address}")
 print(f"压缩公钥: {compressed_pk.hex()}")
-```
+```markdown
 
-### 17.2 从WIF导入私钥
+## 17.2 从WIF导入私钥
 
 ```python
 from src.core.wif import WIF
@@ -2621,9 +3381,9 @@ generator = P2PKHAddressGenerator()
 address, _, _ = generator.generate_address(private_key)
 
 print(f"地址: {address}")
-```
+```markdown
 
-### 17.3 验证比特币地址
+## 17.3 验证比特币地址
 
 ```python
 from src.core.base58 import Base58
@@ -2637,7 +3397,7 @@ try:
     print(f"Hash160: {payload.hex()}")
 except ValueError as e:
     print(f"地址无效: {e}")
-```
+```markdown
 
 ### 17.4 运行碰撞检测
 
@@ -2675,7 +3435,7 @@ try:
     engine.random_search()
 except KeyboardInterrupt:
     engine.stop()
-```
+```python
 
 ---
 
@@ -2699,7 +3459,7 @@ except KeyboardInterrupt:
 
 ```python
 SecureKeyManager(lock_memory: bool = True)
-```
+```python
 
 **参数**:
 | 参数 | 类型 | 默认值 | 说明 |
@@ -2714,7 +3474,7 @@ SecureKeyManager(lock_memory: bool = True)
 
 ```python
 generate_key() -> None
-```
+```python
 
 生成加密安全的随机私钥。
 
@@ -2726,7 +3486,7 @@ generate_key() -> None
 
 ```python
 get_key() -> bytearray
-```
+```python
 
 获取当前私钥。
 
@@ -2741,7 +3501,7 @@ get_key() -> bytearray
 
 ```python
 clear() -> None
-```
+```python
 
 安全清零私钥。
 
@@ -2759,7 +3519,7 @@ clear() -> None
 ```python
 @staticmethod
 get_clear_stats() -> Dict[str, int]
-```
+```python
 
 获取清零统计信息。
 
@@ -2771,7 +3531,7 @@ get_clear_stats() -> Dict[str, int]
     "failed_clears": int,      # 失败清零次数
     "success_rate": float      # 成功率（%）
 }
-```
+```markdown
 
 #### 上下文管理器
 
@@ -2782,7 +3542,7 @@ with SecureKeyManager() as key_mgr:
     # 使用私钥...
     address = generate_address(private_key)
 # 退出上下文时自动安全清零
-```
+```python
 
 **使用示例**:
 
@@ -2812,7 +3572,7 @@ finally:
 # 查看清零统计
 stats = SecureKeyManager.get_clear_stats()
 print(f"清零成功率: {stats['success_rate']:.2f}%")
-```
+```python
 
 **后端优先级**:
 
@@ -2834,7 +3594,7 @@ print(f"清零成功率: {stats['success_rate']:.2f}%")
 
 ```python
 range_scan(start: int, end: int) -> None
-```
+```python
 
 范围扫描模式 - 在指定私钥范围内顺序扫描。
 
@@ -2863,20 +3623,21 @@ engine = KeyCollisionEngine(
 
 # 扫描私钥范围 1 到 1000000
 engine.range_scan(start=1, end=1000000)
-```
+```markdown
 
-#### brute_force() 方法
+## brute_force() 方法
 
 ```python
-brute_force(start: int = 1) -> None
-```
+brute_force(start: int = 1, max_keys: Optional[int] = None) -> None
+```python
 
 暴力穷举模式 - 从指定位置开始顺序穷举。
 
 **参数**:
 | 参数 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| `start` | int | 1 | 起始私钥 |
+| `start` | int | 1 | 起始私钥（整数） |
+| `max_keys` | Optional[int] | None | 最大检查数量，None表示无限穷举 |
 
 **特点**:
 - 无限穷举，直到手动停止
@@ -2900,13 +3661,13 @@ import time
 time.sleep(60)
 engine.stop()
 thread.join()
-```
+```markdown
 
-#### resume_from_checkpoint() 方法
+## resume_from_checkpoint() 方法
 
 ```python
 resume_from_checkpoint() -> bool
-```
+```python
 
 从断点恢复碰撞检测。
 
@@ -2939,9 +3700,11 @@ else:
 
 ---
 
-## 20. 版本历史
+## 22. 版本历史
 
 | 版本 | 日期 | 说明 |
 |------|------|------|
-| v2.1 | 2026-04-20 | 补充SecureKeyManager API、碰撞引擎完整方法 |
-| v2.0 | 2026-04 | 初始版本，完整API文档 |
+| v4.4.0 | 2026-05-18 | 新增多格式地址生成器、格式感知目标管理器，完善v4.4.0安全改进 |
+| v4.2.2 | 2026-05-15 | mod_inverse Binary GCD 2^256溢出修复，生产验收测试全通过 |
+| v4.2.1 | 2026-04-20 | 补充SecureKeyManager API、碰撞引擎完整方法 |
+| v4.2.1 | 2026-04 | 初始版本，完整API文档 |

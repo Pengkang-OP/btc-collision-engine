@@ -9,6 +9,7 @@
 - [开发环境设置](#开发环境设置)
 - [代码规范](#代码规范)
 - [导入规范](#导入规范)
+- [文档规范](#文档规范)
 - [测试规范](#测试规范)
 - [提交规范](#提交规范)
 - [代码审查](#代码审查)
@@ -51,6 +52,7 @@ pre-commit run --all-files
 ```
 
 **pre-commit钩子会自动检查**:
+
 - ✅ 导入路径规范
 - ✅ 代码格式化（Black）
 - ✅ 代码质量（Flake8）
@@ -137,14 +139,14 @@ from src.collision.targets import TargetResolver, AddressMatcher, AddressCache
 ### ❌ 避免使用的导入方式
 
 ```python
-# 已弃用！将在 v2.0 (2026-Q3) 中移除
-from src.collision.target_resolver import TargetResolver
+# ❌ 此路径已在 v3.x 中删除，不再可用
+# from src.collision.target_resolver import TargetResolver
 ```
 
-**原因**: 
-- 旧路径已迁移到 `targets.resolver` 子包
-- 使用旧路径会产生 `DeprecationWarning`
-- 新路径模块组织更清晰，与其他targets模块一致
+**说明**:
+
+- `src.collision.target_resolver` 兼容层已于 v3.x 正式删除
+- 请直接使用上方推荐的三种新路径之一
 
 ### 导入顺序
 
@@ -173,6 +175,176 @@ from src.utils.logger import get_configured_logger
 ```bash
 python scripts/check_import_paths.py
 ```
+
+---
+
+## 文档规范
+
+### 文档分类体系
+
+项目文档分为两大类：
+
+#### 核心文档 (docs/根目录)
+
+面向用户和开发者的主要文档，保持最新：
+
+- **快速开始**: README.md, getting-started.md, project-status.md
+- **架构设计**: architecture.md, workflow_diagrams.md, api-reference.md
+- **功能文档**: 各功能模块的使用指南和API文档
+- **配置部署**: config-usage-examples.md, document-archive-strategy.md
+- **界面使用**: user-interface.md
+- **故障排除**: troubleshooting.md
+
+#### 归档文档 (docs/archive/)
+
+开发过程中的历史报告和决策记录：
+
+- 按主题分类（安全、性能、测试、GPU等）
+- 命名格式: `YYYY-MM-DD_主题.md`
+- 保留重要决策记录和历史报告
+
+### 文档编写标准
+
+#### 1. 文档结构
+
+每个文档应包含：
+
+```markdown
+# 文档标题
+
+> **版本**: v1.2.0 | **最后更新**: YYYY-MM-DD
+> **面向**: 用户/开发者/维护者
+
+## 概述
+简要说明文档目的和适用范围
+
+## 目录
+- [章节1](#章节1)
+- [章节2](#章节2)
+
+## 主要内容
+...
+
+## 示例
+提供实际使用示例
+
+## 常见问题
+FAQ部分
+
+## 相关文档
+- [文档1](link)
+- [文档2](link)
+```
+
+#### 2. 文档质量标准
+
+- ✅ **准确性**: 所有信息必须准确无误
+- ✅ **完整性**: 覆盖所有重要功能和场景
+- ✅ **时效性**: 与当前代码版本同步
+- ✅ **可读性**: 使用清晰的语言和结构
+- ✅ **可查找**: 包含关键词和交叉引用
+- ✅ **可维护**: 模块化，易于更新
+
+#### 3. Markdown规范
+
+- 使用标准Markdown语法
+- 代码块指定语言类型
+- 链接使用相对路径
+- 图片使用相对路径或外部链接
+- 表格保持对齐
+
+#### 4. 代码示例规范
+
+```python
+# ✅ 好的示例 - 完整可运行
+from src.collision import TargetResolver
+
+resolver = TargetResolver()
+result = resolver.resolve_address("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
+print(f"解析结果: {result}")
+
+# ❌ 不好的示例 - 不完整
+resolver.resolve_address("...")  # 缺少导入和上下文
+```
+
+### 文档审查流程
+
+#### 新增文档
+
+1. **规划阶段**
+   - 确定文档类型（核心/归档）
+   - 确定目标读者
+   - 创建文档大纲
+
+2. **编写阶段**
+   - 按照文档编写标准编写
+   - 包含完整的示例
+   - 自我审查
+
+3. **审查阶段**
+   - 提交PR
+   - 至少1人审查
+   - 检查清单（见下文）
+
+4. **合并阶段**
+   - 更新DOCUMENT_INDEX.md
+   - 更新CHANGELOG.md
+   - 合并到主分支
+
+#### 更新文档
+
+1. **小更新**（修正错误、补充说明）
+   - 直接提交PR
+   - 简要说明变更内容
+
+2. **大更新**（重构、重写）
+   - 先创建Issue讨论
+   - 制定更新计划
+   - 按审查流程进行
+
+### 文档检查清单
+
+提交文档PR前，请确认：
+
+- [ ] 文档结构符合标准
+- [ ] 所有链接有效
+- [ ] 代码示例可运行
+- [ ] 与当前版本同步
+- [ ] 无拼写和语法错误
+- [ ] 已更新DOCUMENT_INDEX.md（如需要）
+- [ ] 已更新CHANGELOG.md（如需要）
+- [ ] 文件编码为UTF-8
+- [ ] 文件末尾有换行符
+
+### 文档维护责任
+
+- **作者**: 负责初始编写和重大更新
+- **维护者**: 负责日常维护和错误修正
+- **审查者**: 负责审查质量和准确性
+- **用户**: 报告问题和提出改进建议
+
+### 文档工具
+
+#### 文档质量检查脚本
+
+```bash
+# 检查文档质量
+python tools/check_document_quality.py
+
+# 检查断裂链接
+python tools/check_broken_links.py
+
+# 生成文档统计报告
+python tools/generate_doc_stats.py
+```
+
+#### 自动化文档生成
+
+项目提供以下自动生成工具：
+
+- **API文档生成器**: 从代码注释生成API文档
+- **CHANGELOG生成器**: 从git commits生成变更日志
+- **文档索引更新器**: 自动更新DOCUMENT_INDEX.md
 
 ---
 
@@ -334,37 +506,20 @@ mypy src/collision/
 4. **设定移除时间**: 明确标注将在哪个版本移除
 5. **保持兼容**: 在移除前保持向后兼容
 
-### 弃用示例
+### 已删除的兼容层
+
+`src.collision.target_resolver` 兼容模块已在 v3.x 中正式删除。如遇到 `ModuleNotFoundError`，请将导入更新为：
 
 ```python
-"""旧模块 - 向后兼容
-
-⚠️  弃用警告: 此模块已迁移到新位置。
-
-📅 移除计划:
-    - 此模块将在 v2.0 版本中移除（计划时间: 2026-Q3）
-    - 建议所有用户尽快迁移到新路径
-
-✅ 新用法（推荐）:
-    from src.collision.targets.resolver import TargetResolver
-
-❌ 旧用法（已弃用）:
-    from src.collision.target_resolver import TargetResolver
-"""
-import warnings
-
-warnings.warn(
-    "此模块已迁移，请使用新路径",
-    DeprecationWarning,
-    stacklevel=2
-)
+# 推荐：从 collision 包直接导入
+from src.collision import TargetResolver
+# 或：完整路径导入
+from src.collision.targets.resolver import TargetResolver
 ```
 
 ### 当前弃用项
 
-| 弃用项 | 替代方案 | 移除版本 | 移除时间 |
-|--------|----------|----------|----------|
-| `src.collision.target_resolver` | `src.collision.targets.resolver` | v2.0 | 2026-Q3 |
+（当前版本无待删除的弃用项）
 
 ---
 
@@ -414,17 +569,10 @@ A: 为了更好地组织模块结构，TargetResolver已迁移到 `targets` 子�
 
 ### Q: 旧导入路径还能用吗？
 
-A: 可以，但会产生 `DeprecationWarning`。旧路径将在 v2.0 (2026-Q3) 中移除，建议尽快迁移。
-
-### Q: 如何迁移？
-
-A: 只需更改导入语句：
+A: 不可以。`src.collision.target_resolver` 兼容层已在 v3.x 中删除。请使用新路径：
 
 ```python
-# 旧代码
-from src.collision.target_resolver import TargetResolver
-
-# 新代码
+# 推荐方式
 from src.collision import TargetResolver
 # 或
 from src.collision.targets.resolver import TargetResolver
@@ -432,9 +580,10 @@ from src.collision.targets.resolver import TargetResolver
 
 ### Q: 测试失败怎么办？
 
-A: 
+A:
+
 1. 确保安装了所有依赖
-2. 检查Python版本（需要3.7+）
+2. 检查Python版本（需要3.9+）
 3. 查看详细错误信息
 4. 查看项目Issues是否有类似问题
 
@@ -453,7 +602,8 @@ A:
 - [README](../README.md) - 项目概述
 - [架构文档](../docs/architecture.md) - 系统架构
 - [API参考](../docs/api-reference.md) - API文档
-- [导入路径优化报告](../docs/import-path-optimization-report.md) - 导入重构详情
+- [文档索引](../docs/DOCUMENT_INDEX.md) - 文档导航
+- [文档更新总结](../docs/DOCUMENTATION_UPDATE_SUMMARY_v1.2.0.md) - v1.2.0文档重构详情
 - [性能优化指南](../docs/performance-optimization.md) - 性能优化
 
 ---

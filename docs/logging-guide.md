@@ -1,5 +1,8 @@
 # 日志系统使用指南
 
+> **版本**: v4.2.2 | **最后更新**: 2026-05-15
+> **面向**: 开发者
+
 本文档提供BTC碰撞引擎项目日志系统的完整使用指南，包括配置、使用和最佳实践。
 
 ## 目录
@@ -32,9 +35,9 @@ logger.info("程序启动")
 logger.debug(f"配置值: {config_value}")
 logger.warning("潜在问题")
 logger.error("发生错误")
-```
+```markdown
 
-### 1.2 在模块中使用
+## 1.2 在模块中使用
 
 ```python
 # 在模块顶部创建logger
@@ -44,7 +47,7 @@ logger = logging.getLogger(__name__)
 # 在函数中使用
 def my_function():
     logger.info("函数被调用")
-```
+```python
 
 ---
 
@@ -64,7 +67,7 @@ def my_function():
     "enable_file": true
   }
 }
-```
+```markdown
 
 ### 2.2 编程方式配置
 
@@ -81,7 +84,7 @@ config = {
 }
 
 init_logging(config)
-```
+```markdown
 
 ### 2.3 环境特定配置
 
@@ -103,7 +106,7 @@ elif env == 'production':
         "enable_console": False,
         "enable_file": True
     })
-```
+```python
 
 ---
 
@@ -135,9 +138,9 @@ except Exception as e:
 
 # CRITICAL: 严重错误
 logger.critical(f"系统无法继续运行: {reason}")
-```
+```markdown
 
-### 3.2 格式化输出
+## 3.2 格式化输出
 
 ```python
 # ✅ 推荐: 惰性格式化
@@ -145,9 +148,9 @@ logger.info("用户%s登录，IP=%s", username, ip_address)
 
 # ❌ 不推荐: 提前格式化
 logger.info(f"用户{username}登录，IP={ip_address}")
-```
+```markdown
 
-### 3.3 包含上下文
+## 3.3 包含上下文
 
 ```python
 # ✅ 推荐: 包含关键上下文
@@ -158,7 +161,7 @@ logger.error(
 
 # ❌ 不推荐: 缺少上下文
 logger.error(f"处理失败: {error}")
-```
+```python
 
 ---
 
@@ -177,9 +180,9 @@ with EnhancedPerformanceMonitor(logger, "GPU内核编译", level="INFO") as pm:
 
 # 输出:
 # [Performance] GPU内核编译: 215.34ms
-```
+```markdown
 
-### 4.2 性能追踪器
+## 4.2 性能追踪器
 
 ```python
 from src.utils import get_performance_tracker, log_performance_summary
@@ -198,9 +201,9 @@ for op in slow_ops:
 
 # 记录性能摘要
 log_performance_summary(logger, tracker)
-```
+```markdown
 
-### 4.3 性能监控场景
+## 4.3 性能监控场景
 
 ```python
 from src.utils import EnhancedPerformanceMonitor
@@ -217,7 +220,7 @@ with EnhancedPerformanceMonitor(logger, "批次处理", level="DEBUG"):
 # 场景3: 文件I/O性能
 with EnhancedPerformanceMonitor(logger, "断点保存", level="INFO"):
     save_checkpoint(data)
-```
+```python
 
 ---
 
@@ -235,9 +238,9 @@ sampled_logger = get_sampled_logger("MyModule.sampled", sample_rate=1000)
 for i in range(1000000):
     sampled_logger.info(f"进度: {i:,} / 1,000,000")
     # 实际只记录1000条日志
-```
+```markdown
 
-### 5.2 采样率选择
+## 5.2 采样率选择
 
 ```python
 from src.utils import get_sampled_logger
@@ -253,16 +256,16 @@ medium_sampled = get_sampled_logger("medium", sample_rate=100)
 
 # 低频率（~10次/秒）
 low_sampled = get_sampled_logger("low", sample_rate=10)
-```
+```markdown
 
-### 5.3 实际示例
+## 5.3 实际示例
 
 ```python
 from src.utils import get_sampled_logger
 
 # GPU碰撞引擎中的采样日志
 sampled_logger = get_sampled_logger(
-    "KeyCollisionEngine.sampled", 
+    "KeyCollisionEngine.sampled",
     sample_rate=1000
 )
 
@@ -273,7 +276,7 @@ def process_keys():
             f"批次处理完成: {len(results)} 个密钥, "
             f"速度: {speed:.0f} 次/秒"
         )
-```
+```python
 
 ---
 
@@ -292,9 +295,9 @@ import threading
 
 def worker():
     logger.info(f"工作线程 {threading.current_thread().name} 启动")
-```
+```markdown
 
-### 6.2 彩色格式化器
+## 6.2 彩色格式化器
 
 ```python
 from src.utils import ColoredFormatter
@@ -308,13 +311,13 @@ formatter = ColoredFormatter(
 # 应用到处理器
 handler = logging.StreamHandler()
 handler.setFormatter(formatter)
-```
+```markdown
 
-### 6.3 性能监控组合
+## 6.3 性能监控组合
 
 ```python
 from src.utils import (
-    EnhancedPerformanceMonitor, 
+    EnhancedPerformanceMonitor,
     get_performance_tracker,
     log_performance_summary
 )
@@ -331,9 +334,9 @@ with EnhancedPerformanceMonitor(logger, "操作2"):
 
 # 最后输出统计
 log_performance_summary(logger, tracker)
-```
+```markdown
 
-### 6.4 条件日志
+## 6.4 条件日志
 
 ```python
 import logging
@@ -346,7 +349,7 @@ if logger.isEnabledFor(logging.DEBUG):
 
 # 避免不必要的计算
 logger.debug(f"详细数据: %s", compute_expensive_data())  # 总是执行
-```
+```python
 
 ---
 
@@ -365,9 +368,9 @@ def main():
 # ❌ 不推荐: 延迟初始化
 def some_function():
     init_logging()  # 可能导致日志丢失
-```
+```markdown
 
-### 7.2 日志记录器命名
+## 7.2 日志记录器命名
 
 ```python
 # ✅ 推荐: 使用模块路径
@@ -379,9 +382,9 @@ logger = logging.getLogger("GPUMonitor")
 
 # ❌ 不推荐: 使用根日志记录器
 logger = logging.getLogger()
-```
+```markdown
 
-### 7.3 避免敏感信息
+## 7.3 避免敏感信息
 
 ```python
 # ❌ 绝对禁止
@@ -391,9 +394,9 @@ logger.info(f"WIF: {wif}")
 # ✅ 推荐
 logger.debug(f"地址: {address}")
 logger.info(f"地址数量: {len(targets)}")
-```
+```markdown
 
-### 7.4 异常处理
+## 7.4 异常处理
 
 ```python
 # ✅ 推荐: 已知错误
@@ -413,9 +416,9 @@ try:
     do_something()
 except Exception:
     pass  # 没有日志！
-```
+```markdown
 
-### 7.5 性能优化
+## 7.5 性能优化
 
 ```python
 # ✅ 推荐: 使用采样日志
@@ -432,9 +435,9 @@ for i in range(1000000):
 # ❌ 不推荐: 每次都记录
 for i in range(1000000):
     logger.info(f"进度: {i}")  # 太慢！
-```
+```markdown
 
-### 7.6 资源管理日志
+## 7.6 资源管理日志
 
 ```python
 # ✅ 推荐: 完整的生命周期日志
@@ -445,7 +448,7 @@ logger.info(f"GPU资源已清理: {device_name}")
 # ✅ 推荐: 使用性能监控
 with EnhancedPerformanceMonitor(logger, "资源清理"):
     cleanup_resources()
-```
+```python
 
 ---
 
@@ -460,7 +463,7 @@ with EnhancedPerformanceMonitor(logger, "资源清理"):
 import sys
 import logging
 from src.utils import (
-    init_logging, 
+    init_logging,
     get_configured_logger,
     EnhancedPerformanceMonitor,
     get_performance_tracker,
@@ -475,11 +478,11 @@ def main():
     # 1. 初始化日志
     init_logging()
     logger.info("BTC碰撞引擎启动")
-    
+
     # 2. 加载配置
     with EnhancedPerformanceMonitor(logger, "配置加载", level="INFO"):
         config = load_config()
-    
+
     # 3. 创建引擎
     with EnhancedPerformanceMonitor(logger, "引擎创建", level="INFO") as pm:
         engine = create_collision_engine(
@@ -488,19 +491,19 @@ def main():
             config=config
         )
         pm.add_metadata('mode', config['mode'])
-    
+
     # 4. 启动引擎
     logger.info("开始碰撞...")
     engine.start()
-    
+
     # 5. 输出性能统计
     log_performance_summary(logger)
-    
+
     logger.info("程序退出")
 
 if __name__ == '__main__':
     main()
-```
+```markdown
 
 ### A.2 模块示例
 
@@ -522,7 +525,7 @@ class GPUCollisionEngine:
         with EnhancedPerformanceMonitor(logger, "GPU引擎初始化") as pm:
             self._init_gpu()
             pm.add_metadata('targets', len(targets))
-    
+
     def process_batch(self, batch):
         with EnhancedPerformanceMonitor(logger, "批次处理", level="DEBUG"):
             try:
@@ -534,7 +537,7 @@ class GPUCollisionEngine:
             except Exception as e:
                 ExceptionHandler.handle_gpu_error("批次处理", e)
                 return []
-```
+```python
 
 ---
 
@@ -552,19 +555,19 @@ print(f"日志级别: {logger.level}")
 # 确保初始化
 from src.utils import init_logging
 init_logging()
-```
+```markdown
 
-### Q2: 如何禁用文件日志？
+## Q2: 如何禁用文件日志？
 
 **A**: 配置中设置`enable_file=False`：
 
 ```python
 init_logging({"enable_file": False})
-```
+```markdown
 
 ### Q3: 如何动态修改日志级别？
 
-**A**: 
+**A**:
 
 ```python
 import logging
@@ -574,9 +577,9 @@ logging.getLogger().setLevel(logging.DEBUG)
 
 # 修改特定模块级别
 logging.getLogger("src.collision").setLevel(logging.DEBUG)
-```
+```markdown
 
-### Q4: 采样日志不工作？
+## Q4: 采样日志不工作？
 
 **A**: 确保使用同一个采样日志器实例：
 
@@ -598,6 +601,6 @@ def func():
 
 ---
 
-**文档版本**: v1.0  
-**最后更新**: 2026-04-20  
+**文档版本**: v4.2.2
+**最后更新**: 2026-04-20
 **维护者**: BTC碰撞引擎开发团队
