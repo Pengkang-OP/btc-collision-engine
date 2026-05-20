@@ -142,8 +142,9 @@ class ExceptionHandler:
             if wif_err_func and callable(wif_err_func):
                 wif_err_func()
         else:
-            # 未知错误
-            logger.exception(f"GPU {mode}失败(未知错误)")
+            # 未知错误：仅记录错误消息，避免完整堆栈泄露调用上下文
+            logger.error(f"GPU {mode}失败(未知错误)")
+            logger.debug("详细堆栈:", exc_info=True)
             record_func = getattr(stats, "record_gpu_error", None)
             if record_func and callable(record_func):
                 record_func(is_resource_error=False)

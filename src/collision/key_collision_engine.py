@@ -1308,10 +1308,10 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         )
                         uncompressed_addr = None
                 except ValueError as e:
-                    logger.warning(f"Worker {worker_id}: 私钥 k={k} 无效，跳过: {e}")
+                    logger.warning(f"Worker {worker_id}: 私钥无效，跳过: {e}")
                     continue
                 except (RuntimeError, OSError) as e:
-                    logger.warning(f"Worker {worker_id}: 生成地址失败 k={k}: {e}", exc_info=True)
+                    logger.warning(f"Worker {worker_id}: 生成地址失败: {e}", exc_info=True)
                     continue
 
                 local_count += 1
@@ -1678,16 +1678,16 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         # 生成地址
                         address, compressed_pub, _ = self.generator.generate_address(private_key_bytes)
                     except ValueError as e:
-                        logger.warning(f"BruteForce worker {worker_id}: 私钥 k={k} 无效，跳过: {e}")
+                        logger.warning(f"BruteForce worker {worker_id}: 私钥无效，跳过: {e}")
                         continue
                     except (TypeError, OverflowError) as e:
                         # 私钥转换错误（这是关键错误，应该引起关注）
                         # 理论上不应该发生，如果发生说明有潜在的bug
-                        logger.error(f"BF worker {worker_id}: 私钥转换错 k={k}: {type(e).__name__}: {e}")
+                        logger.error(f"BF worker {worker_id}: 私钥转换错: {type(e).__name__}: {e}")
                         continue
                     except (RuntimeError, OSError):
                         # 未知错误：记录完整堆栈
-                        logger.exception(f"BruteForce worker {worker_id}: 生成地址未知错误 k={k}")
+                        logger.exception(f"BruteForce worker {worker_id}: 生成地址未知错误")
                         continue
 
                     local_count += 1

@@ -13,7 +13,6 @@ BTC碰撞引擎 - 生产环境打包脚本
     python build_production.py --output F:\\Qoder\\btc-collision-tools
 """
 
-import os
 import sys
 import shutil
 import argparse
@@ -248,7 +247,7 @@ def copy_production_files(source_dir: Path, target_dir: Path):
     total_size = 0
     ignore_fn = build_production_ignore_patterns()
 
-    print(f"\n📦 开始复制生产环境文件...")
+    print("\n📦 开始复制生产环境文件...")
     print(f"   源目录: {source_dir}")
     print(f"   目标目录: {target_dir}")
     print()
@@ -447,15 +446,15 @@ def main():
     print("\n" + "=" * 80)
     print("✅ 打包完成!")
     print("=" * 80)
-    print(f"\n📊 统计信息:")
+    print("\n📊 统计信息:")
     print(f"   复制文件/目录: {copied}")
     print(f"   跳过文件/目录: {skipped}")
     print(f"   总大小: {size / 1024 / 1024:.2f} MB")
     print(f"\n📁 输出目录: {target_dir}")
-    print(f"\n🎯 下一步:")
-    print(f"   1. 在输出目录中安装依赖: pip install -r requirements.txt")
-    print(f"   2. 编辑配置文件: config.json")
-    print(f"   3. 运行程序: python key_collision_cli.py")  # M-NEW3修复: 更新为CLI入口
+    print("\n🎯 下一步:")
+    print("   1. 在输出目录中安装依赖: pip install -r requirements.txt")
+    print("   2. 编辑配置文件: config.json")
+    print("   3. 运行程序: python key_collision_cli.py")  # M-NEW3修复: 更新为CLI入口
     print("=" * 80)
 
 
