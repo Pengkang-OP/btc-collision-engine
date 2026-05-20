@@ -401,6 +401,49 @@ def _scan_target_file_lines(target_file: str, max_scan: int = 50000) -> tuple[in
     return valid_count, truncated
 
 
+def _handle_missing_target_file(
+    output: CLIOutput, target_file: str,
+) -> tuple[list[str], str | None] | None:
+    """处理目标文件不存在时的菜单交互。
+    返回 (targets, target_file) 或 None（需要继续后续流程）。
+    """
+    output.warning(_t("errors.file_not_found", path=target_file))
+    output.print("   1. " + _t("cli.commands.create_example_file"))
+    output.print("   2. 手动输入地址")
+    output.print("   3. 返回重新选择")
+    while True:
+        choice = input("   请选择 [1/2/3]: ").strip()
+        if choice in ("1", "2", "3"):
+            break
+        output.error("请输入 1、2 或 3")
+    if choice == "1":
+        try:
+            with open(target_file, "w", encoding="utf-8") as f:
+                f.write("# 目标地址文件\n")
+                f.write("# 每行一个地址，支持 # 注释\n")
+                f.write("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n")
+            output.success(_t("cli.commands.example_file_created", path=target_file))
+            output.print("   [TIP] " + _t("cli.commands.example_file_tip"))
+            output.success(_t(
+                "cli.commands.addresses_loaded",
+                count="1", path=Path(target_file).name,
+            ))
+            return [], target_file
+        except Exception as e:
+            output.error(f"创建文件失败: {str(e)}")
+            output.print("   [TIP] 请检查文件路径是否正确，以及是否有写入权限")
+            return [], None
+    elif choice == "2":
+        address = input("   请输入目标地址: ").strip()
+        if not address:
+            output.error(_t("cli.commands.address_empty"))
+            return [], None
+        return [address], None
+    else:
+        # 选3：返回重新选择
+        return _quick_start_select_target()
+
+
 def _quick_start_select_target(compact: bool = False) -> tuple[list[str], str | None]:
     """步骤1: 选择目标地址来源。返回 (targets_list, target_file)
 
@@ -648,15 +691,98 @@ def _detect_gpu_devices_with_timeout(timeout: float = 5.0) -> list[dict]:
             return []
 
 
+def _gpu_no_devices_confirm(
+    output: CLIOutput, mode_label: str, arg: str,
+) -> list[str]:
+    """无GPU设备时的确认交互。"""
+    output.warning("未检测到可用 GPU 设备（可能缺少 OpenCL 驱动）")
+    output.print("   [INFO] GPU 模式需要安装 pyopencl 和相应的驱动")
+    output.print("   [INFO] 请参考文档安装 GPU 驱动和依赖")
+    fallback = input(f"   是否仍然尝试{mode_label}？[y/N]: ").strip().lower()
+    if fallback == "y":
+        output.warning(
+            f"警告：在无 GPU 设备的情况下尝试{mode_label}可能会导致运行时错误"
+        )
+        return [arg]
+    output.success("已回退到 CPU 模式")
+    return []
+
+
+def _single_gpu_select(output: CLIOutput, devices: list[dict]) -> list[str]:
+    """单GPU模式设备选择。"""
+    if not devices:
+        return _gpu_no_devices_confirm(output, "GPU 模式", "--use-gpu")
+    if len(devices) == 1:
+        label = _format_device_label(devices[0], 0)
+        output.success(f"将使用 GPU: {label}")
+        return ["--use-gpu", "--gpu-device", "0"]
+    # 多设备选一
+    output.print("   检测到以下 GPU 设备:")
+    for i, dev in enumerate(devices):
+        output.print(f"     {i + 1}. {_format_device_label(dev, i)}")
+    raw = input(
+        f"   请选择 GPU 设备 [1-{len(devices)}，直接回车=选择第一个]: "
+    ).strip() or "1"
+    try:
+        idx = int(raw) - 1
+        if 0 <= idx < len(devices):
+            output.success(f"已选择: {_format_device_label(devices[idx], idx)}")
+            return ["--use-gpu", "--gpu-device", str(idx)]
+    except ValueError:
+        pass
+    output.warning("将使用第一个 GPU 设备")
+    output.success(f"已选择: {_format_device_label(devices[0], 0)}")
+    return ["--use-gpu", "--gpu-device", "0"]
+
+
+def _multi_gpu_select(output: CLIOutput, devices: list[dict]) -> list[str]:
+    """多GPU模式设备选择。"""
+    if not devices:
+        return _gpu_no_devices_confirm(output, "多GPU模式", "--multi-gpu")
+    if len(devices) == 1:
+        label = _format_device_label(devices[0], 0)
+        output.success(f"检测到 GPU: {label}，将使用此设备")
+        return ["--use-gpu", "--gpu-device", "0"]
+    # 多设备多选
+    output.print("   检测到以下 GPU 设备:")
+    for i, dev in enumerate(devices):
+        output.print(f"     {i + 1}. {_format_device_label(dev, i)}")
+    default_indices = " ".join(str(i + 1) for i in range(len(devices)))
+    raw = input(
+        "   请选择要使用的 GPU 设备编号（空格分隔，如 1 2，直接回车=全部）: "
+    ).strip() or default_indices
+    selected_indices: list[int] = []
+    valid_sel = True
+    for part in raw.split():
+        try:
+            n = int(part) - 1
+            if 0 <= n < len(devices):
+                selected_indices.append(n)
+            else:
+                output.error(f"无效设备编号: {part}（有效范围 1-{len(devices)}）")
+                valid_sel = False
+                break
+        except ValueError:
+            output.error(f"无效输入: {part}")
+            valid_sel = False
+            break
+    if valid_sel and selected_indices:
+        labels = ", ".join(
+            _format_device_label(devices[i], i) for i in selected_indices
+        )
+        output.success(f"已选择: {labels}")
+        return ["--multi-gpu", "--gpu-indices",
+                *[str(i) for i in selected_indices]]
+    output.warning("选择无效，将使用所有 GPU 设备")
+    return ["--multi-gpu"]
+
+
 def _quick_start_select_gpu() -> list[str]:
     """步骤4: 选择GPU加速模式。返回额外的命令行参数列表"""
     output = CLIOutput.get_instance()
-
-    # 预先检测 GPU，决定默认选项
     output.print("\n[bold cyan]【步骤 4/4】[/bold cyan] " + _t("cli.commands.step4_title"))
     output.print("   [INFO] 正在检测可用 GPU 设备（最多等待 5 秒）...")
     detected_devices = _detect_gpu_devices_with_timeout(timeout=5.0)
-
     if detected_devices:
         gpu_count = len(detected_devices)
         labels_preview = ", ".join(
@@ -665,11 +791,10 @@ def _quick_start_select_gpu() -> list[str]:
         if gpu_count > 2:
             labels_preview += f" 等{gpu_count}个"
         output.success(f"检测到 {gpu_count} 个 GPU 设备: {labels_preview}")
-        default_choice = "2"  # 有 GPU 时默认单 GPU
+        default_choice = "2"
     else:
         output.warning("未检测到可用 GPU 设备")
-        default_choice = "1"  # 无 GPU 时默认 CPU
-
+        default_choice = "1"
     output.print("   1. " + _t("cli.commands.mode_cpu"))
     output.print("   2. " + _t("cli.commands.mode_single_gpu"))
     output.print("   3. " + _t("cli.commands.mode_multi_gpu"))
@@ -680,110 +805,11 @@ def _quick_start_select_gpu() -> list[str]:
         if gpu_choice in ("1", "2", "3"):
             break
         output.error("请输入 1、2 或 3")
-
     gpu_args: list[str] = []
-
     if gpu_choice == "2":
-        # 单GPU模式：使用已检测到的设备
-        devices = detected_devices
-
-        if not devices:
-            output.warning("未检测到可用 GPU 设备（可能缺少 OpenCL 驱动）")
-            output.print("   [INFO] GPU 模式需要安装 pyopencl 和相应的驱动")
-            output.print("   [INFO] 请参考文档安装 GPU 驱动和依赖")
-            fallback = input("   是否仍然尝试 GPU 模式？[y/N]: ").strip().lower()
-            if fallback == "y":
-                output.warning("警告：在无 GPU 设备的情况下尝试 GPU 模式可能会导致运行时错误")
-                gpu_args.append("--use-gpu")
-            else:
-                output.success("已回退到 CPU 模式")
-        elif len(devices) == 1:
-            label = _format_device_label(devices[0], 0)
-            output.success(f"将使用 GPU: {label}")
-            gpu_args.extend(["--use-gpu", "--gpu-device", "0"])
-        else:
-            output.print("   检测到以下 GPU 设备:")
-            for i, dev in enumerate(devices):
-                label = _format_device_label(dev, i)
-                output.print(f"     {i + 1}. {label}")
-            default_idx = 1  # 默认选择第一个设备
-            raw = input(f"   请选择 GPU 设备 [1-{len(devices)}，直接回车=选择第一个]: ").strip() or str(
-                default_idx
-            )
-            try:
-                idx = int(raw) - 1
-                if 0 <= idx < len(devices):
-                    label = _format_device_label(devices[idx], idx)
-                    output.success(f"已选择: {label}")
-                    gpu_args.extend(["--use-gpu", "--gpu-device", str(idx)])
-                else:
-                    output.error(f"无效设备编号: {raw}（有效范围 1-{len(devices)}）")
-                    output.warning("将使用第一个 GPU 设备")
-                    label = _format_device_label(devices[0], 0)
-                    output.success(f"已选择: {label}")
-                    gpu_args.extend(["--use-gpu", "--gpu-device", "0"])
-            except ValueError:
-                output.error(f"无效输入: {raw}")
-                output.warning("将使用第一个 GPU 设备")
-                label = _format_device_label(devices[0], 0)
-                output.success(f"已选择: {label}")
-                gpu_args.extend(["--use-gpu", "--gpu-device", "0"])
-
+        gpu_args = _single_gpu_select(output, detected_devices)
     elif gpu_choice == "3":
-        # 多GPU模式：使用已检测到的设备
-        devices = detected_devices
-
-        if not devices:
-            output.warning("未检测到可用 GPU 设备（可能缺少 OpenCL 驱动）")
-            output.print("   [INFO] GPU 模式需要安装 pyopencl 和相应的驱动")
-            output.print("   [INFO] 请参考文档安装 GPU 驱动和依赖")
-            fallback = input("   是否仍然尝试多GPU模式？[y/N]: ").strip().lower()
-            if fallback == "y":
-                output.warning("警告：在无 GPU 设备的情况下尝试多GPU模式可能会导致运行时错误")
-                gpu_args.append("--multi-gpu")
-            else:
-                output.success("已回退到 CPU 模式")
-        elif len(devices) == 1:
-            label = _format_device_label(devices[0], 0)
-            output.success(f"检测到 GPU: {label}，将使用此设备")
-            gpu_args.extend(["--use-gpu", "--gpu-device", "0"])
-        else:
-            output.print("   检测到以下 GPU 设备:")
-            for i, dev in enumerate(devices):
-                label = _format_device_label(dev, i)
-                output.print(f"     {i + 1}. {label}")
-            default_indices = " ".join(str(i + 1) for i in range(len(devices)))
-            raw = (
-                input("   请选择要使用的 GPU 设备编号（空格分隔，如 1 2，直接回车=全部）: ").strip()
-                or default_indices
-            )
-            selected_indices: list[int] = []
-            valid = True
-            for part in raw.split():
-                try:
-                    n = int(part) - 1
-                    if 0 <= n < len(devices):
-                        selected_indices.append(n)
-                    else:
-                        output.error(f"无效设备编号: {part}（有效范围 1-{len(devices)}）")
-                        valid = False
-                        break
-                except ValueError:
-                    output.error(f"无效输入: {part}")
-                    valid = False
-                    break
-
-            if valid and selected_indices:
-                labels = ", ".join(_format_device_label(devices[i], i) for i in selected_indices)
-                output.success(f"已选择: {labels}")
-                gpu_args.append("--multi-gpu")
-                if selected_indices:  # 非空时才追加 --gpu-indices
-                    gpu_args.append("--gpu-indices")
-                    gpu_args.extend(str(i) for i in selected_indices)
-            else:
-                output.warning("选择无效，将使用所有 GPU 设备")
-                gpu_args.append("--multi-gpu")
-
+        gpu_args = _multi_gpu_select(output, detected_devices)
     return gpu_args
 
 
