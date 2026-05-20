@@ -1,21 +1,20 @@
-# -*- coding: utf-8 -*-
-"""
-BTC碰撞引擎性能优化基准测试
+"""BTC碰撞引擎性能优化基准测试
 验证所有优化模块的性能提升效果
 """
-import time
 import sys
+import time
 from pathlib import Path
 
 # 添加项目根目录到路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.core.precomputed_table import get_precomputed_table
-from src.core.bigint_optimizer import get_bigint_optimizer
-from src.core.simd_hash import get_simd_hash_optimizer
-from src.core.memory_pool import get_pool_manager
-from src.core.secp256k1 import Secp256k1, ECPoint
 import hashlib
+
+from src.core.bigint_optimizer import get_bigint_optimizer
+from src.core.memory_pool import get_pool_manager
+from src.core.precomputed_table import get_precomputed_table
+from src.core.secp256k1 import ECPoint, Secp256k1
+from src.core.simd_hash import get_simd_hash_optimizer
 
 
 def benchmark_precomputed_table(iterations=100):
@@ -54,8 +53,7 @@ def benchmark_precomputed_table(iterations=100):
 
 
 def benchmark_bigint_optimizer(iterations=100000):
-    """
-    基准测试: 大整数优化性能
+    """基准测试: 大整数优化性能
 
     测试目的: 验证 gmpy2 多精度整数库在模乘、模逆等密码学运算上的性能优势。
     规模选择: 100000 次迭代确保统计显著性，足以区分 gmpy2（C扩展）与纯 Python
@@ -95,8 +93,7 @@ def benchmark_bigint_optimizer(iterations=100000):
 
 
 def benchmark_simd_hash(iterations=100000):
-    """
-    基准测试: SIMD哈希性能
+    """基准测试: SIMD哈希性能
 
     测试目的: 验证 pycryptodome 在批量 SHA256 计算上相对 hashlib 的性能优势。
     规模选择: 100000 条数据足以触发 pycryptodome 的向量化路径，消除启动开销的
@@ -109,7 +106,7 @@ def benchmark_simd_hash(iterations=100000):
     optimizer = get_simd_hash_optimizer()
 
     # 准备测试数据：每条约 300 字节，模拟压缩公钥 + 附加数据的真实负载
-    data_list = [f'data{i}'.encode() * 100 for i in range(iterations)]
+    data_list = [f"data{i}".encode() * 100 for i in range(iterations)]
 
     # pycryptodome
     start = time.perf_counter()
@@ -177,8 +174,7 @@ def benchmark_memory_pool(iterations=1000):
 
 
 def benchmark_gpu_scale():
-    """
-    基准测试: 大规模批量操作性能（GPU 工作负载模拟）
+    """基准测试: 大规模批量操作性能（GPU 工作负载模拟）
 
     测试目的: 模拟 GPU 批量地址生成的典型工作负载，对比不同规模下（10K / 100K / 500K）
               的批量密钥生成与哈希计算性能，找出吞吐量拐点并验证线性扩展能力。
@@ -229,9 +225,9 @@ def benchmark_gpu_scale():
         pipeline_ops = batch_size / total_elapsed
 
         results_by_scale[label.strip()] = {
-            'keygen_ops': keygen_ops,
-            'hash_ops': hash_ops,
-            'pipeline_ops': pipeline_ops,
+            "keygen_ops": keygen_ops,
+            "hash_ops": hash_ops,
+            "pipeline_ops": pipeline_ops,
         }
 
         print(f"  [{label}] 批次规模: {batch_size:>7,} 条")
@@ -241,16 +237,16 @@ def benchmark_gpu_scale():
         print()
 
     # 线性扩展比分析：500K 相对 10K 的吞吐量比值（理想值 = 1.0）
-    ops_10k   = results_by_scale['10K']['pipeline_ops']
-    ops_100k  = results_by_scale['100K']['pipeline_ops']
-    ops_500k  = results_by_scale['500K']['pipeline_ops']
+    ops_10k   = results_by_scale["10K"]["pipeline_ops"]
+    ops_100k  = results_by_scale["100K"]["pipeline_ops"]
+    ops_500k  = results_by_scale["500K"]["pipeline_ops"]
 
     scale_ratio_100k = ops_100k / ops_10k if ops_10k > 0 else 0
     scale_ratio_500k = ops_500k / ops_10k if ops_10k > 0 else 0
 
     print(f"  线性扩展比 (100K vs 10K): {scale_ratio_100k:.3f}x", flush=True)
     print(f"  线性扩展比 (500K vs 10K): {scale_ratio_500k:.3f}x", flush=True)
-    print(f"  (> 0.8 表示良好的线性扩展能力)", flush=True)
+    print("  (> 0.8 表示良好的线性扩展能力)", flush=True)
 
     # 返回 500K 规模的流水线吞吐量（单位: addr/s / 1000，便于汇总展示）
     return ops_500k / 1000
@@ -277,7 +273,7 @@ def benchmark_batch_hash160(iterations=10000):
     addresses_single = []
     for pubkey in pubkeys:
         sha256 = hashlib.sha256(pubkey).digest()
-        ripemd160 = hashlib.new('ripemd160', sha256).digest()
+        ripemd160 = hashlib.new("ripemd160", sha256).digest()
         addresses_single.append(ripemd160)
     elapsed_single = time.perf_counter() - start
 
@@ -296,12 +292,12 @@ def benchmark_batch_hash160(iterations=10000):
 
 def main():
     """运行所有基准测试"""
-    import sys
     import io
+    import sys
 
     # 修复Windows终端编码
-    if sys.platform == 'win32':
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    if sys.platform == "win32":
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
     print("\n" + "="*80)
     print("BTC碰撞引擎性能优化基准测试套件")
@@ -312,40 +308,40 @@ def main():
     results = {}
 
     try:
-        results['precomputed_table'] = benchmark_precomputed_table(100)
+        results["precomputed_table"] = benchmark_precomputed_table(100)
     except Exception as e:
         print(f"  ❌ 测试失败: {e}")
-        results['precomputed_table'] = 0
+        results["precomputed_table"] = 0
 
     try:
-        results['bigint_optimizer'] = benchmark_bigint_optimizer(100000)
+        results["bigint_optimizer"] = benchmark_bigint_optimizer(100000)
     except Exception as e:
         print(f"  ❌ 测试失败: {e}")
-        results['bigint_optimizer'] = 0
+        results["bigint_optimizer"] = 0
 
     try:
-        results['simd_hash'] = benchmark_simd_hash(100000)
+        results["simd_hash"] = benchmark_simd_hash(100000)
     except Exception as e:
         print(f"  ❌ 测试失败: {e}")
-        results['simd_hash'] = 0
+        results["simd_hash"] = 0
 
     try:
-        results['memory_pool'] = benchmark_memory_pool(1000)
+        results["memory_pool"] = benchmark_memory_pool(1000)
     except Exception as e:
         print(f"  ❌ 测试失败: {e}")
-        results['memory_pool'] = 0
+        results["memory_pool"] = 0
 
     try:
-        results['batch_hash160'] = benchmark_batch_hash160(10000)
+        results["batch_hash160"] = benchmark_batch_hash160(10000)
     except Exception as e:
         print(f"  ❌ 测试失败: {e}")
-        results['batch_hash160'] = 0
+        results["batch_hash160"] = 0
 
     try:
-        results['gpu_scale'] = benchmark_gpu_scale()
+        results["gpu_scale"] = benchmark_gpu_scale()
     except Exception as e:
         print(f"  ❌ 测试失败: {e}")
-        results['gpu_scale'] = 0
+        results["gpu_scale"] = 0
 
     # 汇总结果
     print("\n" + "="*80)
@@ -353,12 +349,12 @@ def main():
     print("="*80)
 
     test_names = {
-        'precomputed_table': '预计算点表',
-        'bigint_optimizer': '大整数优化',
-        'simd_hash': 'SIMD哈希',
-        'memory_pool': '内存池',
-        'batch_hash160': '批量Hash160',
-        'gpu_scale':    'GPU规模测试(K/s)',
+        "precomputed_table": "预计算点表",
+        "bigint_optimizer": "大整数优化",
+        "simd_hash": "SIMD哈希",
+        "memory_pool": "内存池",
+        "batch_hash160": "批量Hash160",
+        "gpu_scale":    "GPU规模测试(K/s)",
     }
 
     total_speedup = 0
@@ -382,5 +378,5 @@ def main():
     print("="*80)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

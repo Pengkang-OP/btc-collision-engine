@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-BTC碰撞引擎统一基准测试运行器
+"""BTC碰撞引擎统一基准测试运行器
 
 功能:
 - 自动发现并运行所有基准测试函数
@@ -16,14 +14,14 @@ BTC碰撞引擎统一基准测试运行器
 """
 import argparse
 import json
-import os
 import platform
 import statistics
 import sys
 import time
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 # 将项目根目录加入路径
 _ROOT = Path(__file__).parent.parent
@@ -55,9 +53,9 @@ class BenchmarkResult:
         self.success = success
         self.error = error
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转为字典，用于 JSON 序列化"""
-        d: Dict[str, Any] = {
+        d: dict[str, Any] = {
             "ops_per_sec": round(self.ops_per_sec, 2),
             "mean_us": round(self.mean_us, 3),
             "std_us": round(self.std_us, 3),
@@ -74,8 +72,7 @@ class BenchmarkResult:
 # ──────────────────────────────────────────────
 
 def _run_timed(func: Callable, warmup: int = 3, iterations: int = 1000) -> BenchmarkResult:
-    """
-    运行函数并精确计时。
+    """运行函数并精确计时。
 
     参数:
         func:       待测函数（无参数）
@@ -89,7 +86,7 @@ def _run_timed(func: Callable, warmup: int = 3, iterations: int = 1000) -> Bench
     for _ in range(warmup):
         func()
 
-    times_us: List[float] = []
+    times_us: list[float] = []
     for _ in range(iterations):
         t0 = time.perf_counter()
         func()
@@ -221,7 +218,7 @@ def bench_base58check_encode() -> BenchmarkResult:
 # 内建基准测试注册表
 # ──────────────────────────────────────────────
 
-BUILTIN_BENCHMARKS: Dict[str, Callable[[], BenchmarkResult]] = {
+BUILTIN_BENCHMARKS: dict[str, Callable[[], BenchmarkResult]] = {
     "secp256k1_key_gen":   bench_secp256k1_key_generation,
     "address_generation":  bench_address_generation,
     "collision_check":     bench_collision_check,
@@ -238,18 +235,17 @@ BUILTIN_BENCHMARKS: Dict[str, Callable[[], BenchmarkResult]] = {
 _REGRESSION_THRESHOLD = 0.10  # 10% 下降触发报警
 
 
-def _find_latest_result(results_dir: Path) -> Optional[Path]:
+def _find_latest_result(results_dir: Path) -> Path | None:
     """在 results_dir 中查找最新的基准结果文件"""
     files = sorted(results_dir.glob("benchmark_*.json"), reverse=True)
     return files[0] if files else None
 
 
 def _compare_results(
-    current: Dict[str, BenchmarkResult],
+    current: dict[str, BenchmarkResult],
     baseline_path: Path,
-) -> Dict[str, Any]:
-    """
-    将当前结果与基线文件对比。
+) -> dict[str, Any]:
+    """将当前结果与基线文件对比。
 
     返回:
         包含 baseline_file / regressions / improvements 的字典
@@ -265,10 +261,10 @@ def _compare_results(
             "improvements": [],
         }
 
-    baseline_benchmarks: Dict[str, Any] = baseline_data.get("benchmarks", {})
+    baseline_benchmarks: dict[str, Any] = baseline_data.get("benchmarks", {})
 
-    regressions: List[Dict[str, Any]] = []
-    improvements: List[Dict[str, Any]] = []
+    regressions: list[dict[str, Any]] = []
+    improvements: list[dict[str, Any]] = []
 
     for name, result in current.items():
         if not result.success:
@@ -309,12 +305,11 @@ def _compare_results(
 class BenchmarkRunner:
     """统一基准测试运行器"""
 
-    def __init__(self, output_dir: Optional[str] = None, compare: bool = False, baseline: Optional[str] = None):
-        """
-        参数:
-            output_dir: 结果保存目录，默认为 benchmarks/results
-            compare:    是否与上次结果对比
-            baseline:   指定基线文件路径（用于 CI 流水线）
+    def __init__(self, output_dir: str | None = None, compare: bool = False, baseline: str | None = None):
+        """参数:
+        output_dir: 结果保存目录，默认为 benchmarks/results
+        compare:    是否与上次结果对比
+        baseline:   指定基线文件路径（用于 CI 流水线）
         """
         if output_dir:
             self.results_dir = Path(output_dir)
@@ -337,7 +332,7 @@ class BenchmarkRunner:
             print(
                 f"  {result.ops_per_sec:>12,.0f} ops/s"
                 f"  均值 {result.mean_us:.3f} µs"
-                f"  ±{result.std_us:.3f} µs"
+                f"  ±{result.std_us:.3f} µs",
             )
             return result
         except Exception as exc:
@@ -357,9 +352,8 @@ class BenchmarkRunner:
 
     # ── 运行所有测试 ──────────────────────────
 
-    def run_all(self, suite: Optional[Dict[str, Callable]] = None) -> Dict[str, BenchmarkResult]:
-        """
-        运行所有基准测试。
+    def run_all(self, suite: dict[str, Callable] | None = None) -> dict[str, BenchmarkResult]:
+        """运行所有基准测试。
 
         参数:
             suite: 测试集合，默认使用 BUILTIN_BENCHMARKS
@@ -379,7 +373,7 @@ class BenchmarkRunner:
         print(f"  测试数 : {len(suite)}")
         print("=" * 70 + "\n")
 
-        results: Dict[str, BenchmarkResult] = {}
+        results: dict[str, BenchmarkResult] = {}
         for name, func in suite.items():
             results[name] = self._run_one(name, func)
 
@@ -387,9 +381,8 @@ class BenchmarkRunner:
 
     # ── 持久化结果 ────────────────────────────
 
-    def save(self, results: Dict[str, BenchmarkResult]) -> Path:
-        """
-        将结果保存为 JSON 文件。
+    def save(self, results: dict[str, BenchmarkResult]) -> Path:
+        """将结果保存为 JSON 文件。
 
         返回:
             保存的文件路径
@@ -399,7 +392,7 @@ class BenchmarkRunner:
         out_path = self.results_dir / filename
 
         # 构造回归对比节
-        comparison: Dict[str, Any] = {
+        comparison: dict[str, Any] = {
             "baseline_file": None,
             "regressions": [],
             "improvements": [],
@@ -433,7 +426,7 @@ class BenchmarkRunner:
     # ── 打印回归报告 ──────────────────────────
 
     @staticmethod
-    def print_comparison(comparison: Dict[str, Any]) -> None:
+    def print_comparison(comparison: dict[str, Any]) -> None:
         """打印回归/改进报告到控制台"""
         baseline = comparison.get("baseline_file")
         if not baseline:
@@ -451,7 +444,7 @@ class BenchmarkRunner:
                 print(
                     f"    - {r['name']:30s}  "
                     f"{r['baseline_ops_per_sec']:>12,.0f} → {r['current_ops_per_sec']:>12,.0f} ops/s"
-                    f"  ({r['change_pct']:+.1f}%)"
+                    f"  ({r['change_pct']:+.1f}%)",
                 )
         else:
             print("\n[OK] 未发现性能回归。")
@@ -462,7 +455,7 @@ class BenchmarkRunner:
                 print(
                     f"    + {r['name']:30s}  "
                     f"{r['baseline_ops_per_sec']:>12,.0f} → {r['current_ops_per_sec']:>12,.0f} ops/s"
-                    f"  ({r['change_pct']:+.1f}%)"
+                    f"  ({r['change_pct']:+.1f}%)",
                 )
 
     # ── 一键运行入口 ──────────────────────────
@@ -534,7 +527,7 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     """CLI 主函数"""
     parser = _build_parser()
     args = parser.parse_args(argv)
@@ -560,7 +553,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     return runner.run() if suite is BUILTIN_BENCHMARKS else _run_subset(runner, suite)
 
 
-def _run_subset(runner: BenchmarkRunner, suite: Dict[str, Callable]) -> int:
+def _run_subset(runner: BenchmarkRunner, suite: dict[str, Callable]) -> int:
     """运行子集并保存"""
     results = runner.run_all(suite)
     out_path = runner.save(results)
