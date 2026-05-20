@@ -380,9 +380,8 @@ class BitcoinKeyValidator:
                 y = pow(y_squared, (Secp256k1.P + 1) // 4, Secp256k1.P)
 
                 # 根据前缀确定y
-                if public_key[0] == 0x03:  # y是奇数
-                    if y % 2 == 0:
-                        y = Secp256k1.P - y
+                if public_key[0] == 0x03 and y % 2 == 0:  # y是奇数
+                    y = Secp256k1.P - y
 
                 point = ECPoint(x, y)
                 if self.curve.is_on_curve(point):
@@ -476,13 +475,47 @@ class BitcoinKeyValidator:
                     result.add_error(f"地址Base58Check验证失败: {str(e)}")
 
             elif address_type == AddressType.P2SH:
-                # P2SH地址生成（简化版）
-                # 实际需要 redeem script，这里仅做格式验证
-                result.add_warning("P2SH地址生成需要redeem script，此处仅验证格式")
+                # P2SH地址生成
+                address = BitcoinKeyValidator.generate_p2sh_address(public_key)
+
+                result.add_detail("address_type", "P2SH")
+                result.add_detail("address", address)
+                result.add_detail("public_key_used", public_key.hex())
+
+                # 验证地址格式
+                if not address.startswith("3"):
+                    result.add_warning(f"P2SH地址应以'3'开头，当前: {address[0]}")
+
+                if (
+                    len(address) < KeyValidationConstants.P2PKH_ADDRESS_MIN_LENGTH
+                    or len(address) > KeyValidationConstants.P2PKH_ADDRESS_MAX_LENGTH
+                ):
+                    result.add_warning(f"P2SH地址长度异常: {len(address)}")
+
+                # 验证Base58Check校验和
+                try:
+                    version, payload = Base58.check_decode(address)
+                    if version == KeyValidationConstants.P2SH_VERSION_BYTE:
+                        result.add_detail("address_checksum_valid", True)
+                    else:
+                        result.add_warning(f"地址版本字节异常: 0x{version:02x}")
+                except (ValueError, TypeError) as e:
+                    result.add_error(f"地址Base58Check验证失败: {str(e)}")
 
             elif address_type == AddressType.BECH32:
                 # Bech32地址（SegWit）
-                result.add_warning("Bech32地址生成需要bech32编码实现")
+                address = BitcoinKeyValidator.generate_bech32_address(public_key)
+
+                result.add_detail("address_type", "Bech32")
+                result.add_detail("address", address)
+                result.add_detail("public_key_used", public_key.hex())
+
+                # 验证地址格式
+                if not address.startswith("bc1"):
+                    result.add_warning(f"Bech32地址应以'bc1'开头，当前: {address[:3]}")
+
+                if len(address) < 10:
+                    result.add_warning(f"Bech32地址长度过短: {len(address)}")
 
             return result, address
 
