@@ -272,8 +272,9 @@ class WorkStealingThreadPool:
             包含统计数据的字典
         """
         with self._stats_lock:
-            sum(self._thread_tasks)
-            sum(self._thread_idle_cycles)
+            # 验证内部计数器一致性（DEBUG 用途，生产环境可移除）
+            _tasks_sum = sum(self._thread_tasks)
+            _idle_sum = sum(self._thread_idle_cycles)
 
             return {
                 "num_threads": self.num_threads,
