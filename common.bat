@@ -1,12 +1,11 @@
 @echo off
 rem ================================================================
 rem  BTC Collision Engine - 共享批处理子程序库
-rem  被 install.bat / start_engine.bat / tools\*.bat 等引用
-rem
-rem  用法: 在调用方脚本中先 call "common.bat" 加载子程序,
-rem        再 call :子程序名 来执行。
+rem  用法: call "common.bat" :子程序名 [参数]
+rem        通过 goto 路由到对应标签，实现跨文件函数调用
 rem ================================================================
-goto :eof
+rem 路由入口：call common.bat :label → goto :label
+goto %1 2>nul || goto :eof
 
 rem ── 编码初始化 (UTF-8) ───────────────────────────────────────────
 :init_encoding
@@ -60,21 +59,37 @@ goto :eof
 
 rem ── 创建运行时目录 ──────────────────────────────────────────────
 :create_required_dirs
+set "_DIRS_OK=1"
 for %%D in (logs data_logs monitoring_data) do (
-    if not exist "%%D" mkdir "%%D" >nul 2>&1
+    if not exist "%%D" (
+        mkdir "%%D" >nul 2>&1
+        if errorlevel 1 (
+            echo [ERROR] Failed to create directory: %%D
+            set "_DIRS_OK=0"
+        )
+    )
+)
+if "%_DIRS_OK%"=="0" (
+    pause
+    exit /b 1
 )
 echo [OK] Runtime directories created
 goto :eof
 
 rem ── 从 config.example.json 创建 config.json ──────────────────────
 :create_config
-if not exist "config.json" (
-    if exist "config.example.json" (
-        copy "config.example.json" "config.json" >nul 2>&1
-        echo [OK] config.json created
-    )
-) else (
+if exist "config.json" (
     echo [INFO] config.json exists
+    goto :eof
+)
+if exist "config.example.json" (
+    copy "config.example.json" "config.json" >nul 2>&1
+    if errorlevel 1 (
+        echo [ERROR] Failed to copy config.example.json to config.json
+        pause
+        exit /b 1
+    )
+    echo [OK] config.json created
 )
 goto :eof
 
@@ -95,8 +110,11 @@ if exist "venv\Scripts\activate.bat" (
     if not errorlevel 1 (
         echo [OK] Virtual env activated
         goto :eof
+    ) else (
+        echo [ERROR] Virtual environment activation failed (check venv\Scripts\activate.bat)
+        exit /b 1
     )
 )
-echo [WARNING] Virtual env not found
+echo [WARNING] Virtual env not found at venv\Scripts\activate.bat
 exit /b 1
 goto :eof

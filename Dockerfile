@@ -55,9 +55,9 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     DEBIAN_FRONTEND=noninteractive \
     APP_HOME=/opt/btc-collision-engine \
-    DATA_DIR=/opt/btc-collision-engine/data \
+    DATA_DIR=/opt/btc-collision-engine/data_logs \
     LOG_DIR=/opt/btc-collision-engine/logs \
-    MONITOR_DIR=/opt/btc-collision-engine/monitoring
+    MONITOR_DIR=/opt/btc-collision-engine/monitoring_data
 
 # 安装运行时依赖
 RUN apt-get update && apt-get install -y --no-install-recommends \

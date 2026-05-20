@@ -291,9 +291,15 @@ class ObjectPool:
                     )
                     adjusted = True
 
-            # 场景2: 空闲对象过多 → 缩容
+            # 场景2: 空闲对象过多 → 缩容（内联逻辑避免 shrink() 重复加锁死锁）
             if current > self._initial_size * POOL_SHRINK_THRESHOLD_RATIO:
-                self.shrink(self._initial_size)
+                target = self._initial_size
+                released = current - target
+                del self._pool[target:]
+                logger.info(
+                    f"对象池缩容: {current} -> {target} (释放{released}个, "
+                    f"约{released * self._obj_size_estimate / 1024:.1f}KB)"
+                )
                 adjusted = True
 
             return adjusted

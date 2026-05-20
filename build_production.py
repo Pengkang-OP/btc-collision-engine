@@ -416,11 +416,15 @@ def main():
             print(f"\n🧹 清理目标目录: {target_dir}")
             try:
                 shutil.rmtree(target_dir)
-            except PermissionError:
-                # Windows .git目录权限问题,使用命令行删除
-                subprocess.run(
-                    ["cmd", "/c", "rmdir", "/s", "/q", str(target_dir)], capture_output=True
-                )
+            except OSError:
+                # Windows 权限/只读问题：先修复属性再重试
+                import stat
+
+                def _remove_readonly(_func, _path, _exc):
+                    os.chmod(_path, stat.S_IWRITE)
+                    _func(_path)
+
+                shutil.rmtree(target_dir, onerror=_remove_readonly)
         else:
             print(f"\n⚠️  目标目录已存在: {target_dir}")
             response = input("   是否继续? (y/n): ")
