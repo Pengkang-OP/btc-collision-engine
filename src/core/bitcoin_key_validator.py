@@ -559,10 +559,10 @@ class BitcoinKeyValidator:
                 len(address) < KeyValidationConstants.P2PKH_ADDRESS_MIN_LENGTH
                 or len(address) > KeyValidationConstants.P2PKH_ADDRESS_MAX_LENGTH
             ):
+                _min_len = KeyValidationConstants.P2PKH_ADDRESS_MIN_LENGTH
+                _max_len = KeyValidationConstants.P2PKH_ADDRESS_MAX_LENGTH
                 result.add_error(
-                    f"地址长度错误: {len(address)}，应为{
-                        KeyValidationConstants.P2PKH_ADDRESS_MIN_LENGTH
-                    }-{KeyValidationConstants.P2PKH_ADDRESS_MAX_LENGTH}字符"
+                    f"地址长度错误: {len(address)}，应为{_min_len}-{_max_len}字符"
                 )
 
             # 验证Base58字符集

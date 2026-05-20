@@ -443,9 +443,11 @@ def main() -> None:
     # 显示磁盘使用情况
     disk_usage = cleaner.get_disk_usage()
     if disk_usage:
+        _used = disk_usage['used_gb']
+        _total = disk_usage['total_gb']
+        _pct = disk_usage['usage_percent']
         print(
-            f"磁盘使用: {disk_usage['used_gb']:.2f}GB / {disk_usage['total_gb']:.2f}GB ({
-                disk_usage['usage_percent']:.1f}%)"
+            f"磁盘使用: {_used:.2f}GB / {_total:.2f}GB ({_pct:.1f}%)"
         )
         print(f"可用空间: {disk_usage['free_gb']:.2f}GB")
         print()
