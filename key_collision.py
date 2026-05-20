@@ -20,7 +20,6 @@ import threading
 import logging
 import json
 import hashlib
-import atexit
 from datetime import datetime
 from typing import Set, List, Dict, Optional, Callable, Tuple
 

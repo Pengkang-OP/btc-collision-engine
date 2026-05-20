@@ -96,12 +96,12 @@ try:
 
     if is_simd_available():
         impl = get_sha256_implementation()
-        print(f"  ✓ SIMD加速已启用")
+        print("  ✓ SIMD加速已启用")
         print(f"  实现: {impl}")
-        print(f"  ✓ pycryptodome SIMD哈希优化已启用 (AES-NI加速)")
+        print("  ✓ pycryptodome SIMD哈希优化已启用 (AES-NI加速)")
     else:
-        print(f"  ⚠ SIMD加速未启用")
-        print(f"  建议: 安装pycryptodome以启用AES-NI加速")
+        print("  ⚠ SIMD加速未启用")
+        print("  建议: 安装pycryptodome以启用AES-NI加速")
 except Exception as e:
     print(f"  ⚠ 无法检查SIMD状态: {e}")
 

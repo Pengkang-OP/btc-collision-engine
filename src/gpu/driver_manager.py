@@ -237,7 +237,7 @@ class DriverManager:
         try:
             if parser_type == "nvidia_smi":
                 # nvidia-smi输出格式: "520.67.03"
-                return output.split("\n")[0].strip()
+                return output.split("\n", maxsplit=1)[0].strip()
 
             elif parser_type == "proc_driver":
                 # /proc/driver/nvidia/version格式:

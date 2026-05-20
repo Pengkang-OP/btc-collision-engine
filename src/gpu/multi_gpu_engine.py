@@ -1051,9 +1051,9 @@ class MultiGPUCollisionEngine:
             stats = worker.get_stats()
             total_keys += stats.get("keys_checked", 0)
 
-        # 使用state_lock保护_total_keys_checked赋值
+        # 使用state_lock保护_total_keys_checked赋值（预留字段，供未来可观测性使用）
         with self._state_lock:
-            self._total_keys_checked = total_keys
+            self._total_keys_checked = total_keys  # noqa: F841 (预留)
 
     def cleanup(self) -> None:
         """清理所有资源
@@ -1167,7 +1167,11 @@ class MultiGPUCollisionEngine:
                 "per_device": stats["per_device"],
             }
 
-            self._performance_history.append(performance_data)
+            # 添加性能数据并裁剪历史（全程持锁，避免 append 与切片竞态）
+            with self._performance_history_lock:
+                self._performance_history.append(performance_data)
+                if len(self._performance_history) > self._max_history_size:
+                    self._performance_history = self._performance_history[-self._max_history_size :]
 
             # 记录到结构化 metrics（可观测性增强）
             for device_idx, worker_stats in stats["per_device"].items():
@@ -1175,11 +1179,6 @@ class MultiGPUCollisionEngine:
                 throughput = worker_stats.get("throughput", 0)
                 if throughput > 0:
                     self._metrics.record_throughput(device_idx, throughput)
-
-            # 保持历史数据大小（添加锁保护）
-            with self._performance_history_lock:
-                if len(self._performance_history) > self._max_history_size:
-                    self._performance_history = self._performance_history[-self._max_history_size :]
 
             # 记录负载均衡器状态
             if self.load_balancer:

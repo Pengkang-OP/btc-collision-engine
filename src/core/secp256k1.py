@@ -122,11 +122,11 @@ class Secp256k1:
             s += 1
             d //= 2
 
-        # 使用随机基数的概率性测试
-        import random
+        # 使用密码学安全随机基数进行概率性测试
+        import secrets
 
         for _ in range(rounds):
-            a = random.randint(2, n - 2)
+            a = secrets.randbelow(n - 3) + 2
             x = pow(a, d, n)
             if x == 1 or x == n - 1:
                 continue
