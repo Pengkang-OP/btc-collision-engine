@@ -85,6 +85,8 @@ class AISortExecutor:
                 cwd=self.project_root,
             )
             unpushed = result.stdout.strip().split("\n") if result.stdout.strip() else []
+            if result.returncode != 0:
+                print(f"  ⚠️ git命令失败: {result.stderr.strip()}")
 
             print("\n📦 Git状态:")
             print(f"  未推送commits: {len(unpushed)}个")

@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 
 _config_dir = os.path.dirname(os.path.abspath(__file__))
 _config_path = os.path.join(_config_dir, '..', 'config.intel_arc.json')
@@ -9,7 +10,7 @@ try:
         config = json.load(f)
 except (FileNotFoundError, json.JSONDecodeError) as e:
     print(f"❌ 无法加载配置: {e}")
-    exit(1)
+    sys.exit(1)
 
 print("当前配置:")
 print(f"  collision.batch_size: {config['collision']['batch_size']:,}")

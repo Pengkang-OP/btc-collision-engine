@@ -48,9 +48,11 @@ def reset_batch_size(target_batch: int = 1572864):
 
     config["gpu"]["per_device_config"]["1"]["batch_size"] = target_batch
 
-    # 写回配置
-    with open(config_path, "w", encoding="utf-8") as f:
+    # 原子写回配置（先写临时文件再 rename，防止中断截断）
+    tmp_path = config_path + ".tmp"
+    with open(tmp_path, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=4, ensure_ascii=False)
+    os.replace(tmp_path, config_path)
 
     print(f"[OK] batch_size reset to: {target_batch}")
     print("请重启程序以应用新配置")

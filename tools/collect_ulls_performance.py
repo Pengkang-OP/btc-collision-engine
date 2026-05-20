@@ -67,7 +67,6 @@ print("-" * 80)
 
 # 优化前数据
 before_peak = 2730000  # 2.73M keys/s
-before_avg = 47000     # ~47K keys/s
 
 if peaks:
     after_peak = max(peaks)

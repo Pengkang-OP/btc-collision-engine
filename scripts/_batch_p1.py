@@ -1,5 +1,8 @@
 """批量应用P1-1/P1-2/P1-3/P2-3到data_logger.py"""
-path = r"f:/Qoder/btc-collision-engine/src/monitoring/data_logger.py"
+import os
+
+path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                    "src", "monitoring", "data_logger.py")
 with open(path, encoding="utf-8") as f:
     content = f.read()
 

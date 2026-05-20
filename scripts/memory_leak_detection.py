@@ -69,6 +69,7 @@ def test_gpu_collision_engine_memory_leak():
             logger.info("GPU碰撞引擎初始化成功")
 
             # 运行碰撞检测任务
+            engine.start(mode="random")
             start_time = time.time()
             time.sleep(5)  # 运行5秒
             elapsed = time.time() - start_time
