@@ -1339,84 +1339,12 @@ class GPUKernel(GPUKernelProtocol):
         # memory_pool = getattr(self, '_gpu_memory_pool', None) # 不再需要
 
         # v2.2.1修复: 跟踪已释放的缓冲区，避免双重释放
-        released_buffers = set()
+        released_buffers: set = set()
 
-        # P5增强: 引擎关闭时强制检查并释放所有缓冲区
-        if hasattr(self, "_buffer_tracker") and self._buffer_tracker:
-            try:
-                leak_report = self._buffer_tracker.force_check_on_shutdown()
-                # 记录force_check_on_shutdown已经释放的缓冲区
-                released_buffers.update(leak_report.get("released", []))
+        self._check_memory_leaks_on_shutdown(released_buffers)
+        self._release_gpu_buffers(released_buffers)
+        self._close_async_logging()
 
-                # v2.2.1修复: 将已释放的缓冲区引用设为None，避免双重释放
-                for buf_name in released_buffers:
-                    if buf_name == "_seed_buf":
-                        self._seed_buf = None
-                    elif buf_name == "_match_buf":
-                        self._match_buf = None
-                    elif buf_name == "_targets_buf":
-                        self._targets_buf = None
-                    elif buf_name == "_precomp_buf":
-                        self._precomp_buf = None
-
-                # 审查修复#3: 使用修正后的语义
-                if leak_report["has_unreleased"] or leak_report["has_leak"]:
-                    logger.warning(
-                        "GPU内存泄漏检测报告: "
-                        f"未释放={leak_report['remaining_buffers']}, "
-                        f"释放成功={len(leak_report['released'])}, "
-                        f"释放失败={len(leak_report['release_failed'])}"
-                    )
-                    if leak_report["has_leak"]:
-                        logger.error(
-                            f"发现{len(leak_report['release_failed'])}个缓冲区释放失败，可能存在内存泄漏"
-                        )
-            except Exception as e:
-                logger.error(f"内存泄漏检查失败: {e}")
-
-        # v3.3.0优化: 纯持久化设计 - 直接释放，不需要计算大小
-
-        # 显式释放OpenCL Buffer（跳过已释放的）
-        buffers_to_release = [
-            ("_seed_buf", self._seed_buf),
-            ("_match_buf", self._match_buf),
-            ("_targets_buf", self._targets_buf),
-            ("_precomp_buf", self._precomp_buf),
-        ]
-
-        for buf_name, buf in buffers_to_release:
-            # v2.2.1修复: 跳过已被force_check_on_shutdown释放的缓冲区
-            if buf_name in released_buffers:
-                logger.debug(f"缓冲区 {buf_name} 已释放，跳过")
-                continue
-
-            if buf is not None:
-                try:
-                    # v3.3.0优化: 纯持久化设计 - 直接释放，不归还到内存池
-                    buf.release()
-                    logger.debug(f"已释放 {buf_name}")
-
-                    # P2-2修复: 注销缓冲区追踪
-                    # 注意: force_check_on_shutdown已clear整个_allocated_buffers dict,
-                    # 所以此处release_buffer是空操作(防御性保留,避免未来重构遗漏)
-                    if hasattr(self, "_buffer_tracker"):
-                        self._buffer_tracker.release_buffer(buf_name)
-                except Exception as e:
-                    logger.warning(f"释放 {buf_name} 失败: {e}")
-
-        # 清空引用
-        self._seed_buf = None
-        self._match_buf = None
-        self._targets_buf = None
-        self._precomp_buf = None
-
-        # v2.2.1: 关闭异步日志处理器
-        if hasattr(self, "_async_log_handler") and self._async_log_handler:
-            try:
-                self._async_log_handler.close()
-                logger.info("GPU异步日志已关闭")
-            except Exception as e:
-                logger.debug(f"关闭异步日志失败: {e}")
         self._match_flags = None
         self._program = None
         self._batch_kernel = None

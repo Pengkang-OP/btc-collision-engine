@@ -143,13 +143,16 @@ class GPUMonitor:
 
 # 全局GPU监控器实例
 _gpu_monitor = None
+_monitor_lock = threading.Lock()
 
 
 def get_gpu_monitor() -> GPUMonitor:
-    """获取全局GPU监控器实例"""
+    """获取全局GPU监控器实例（线程安全）"""
     global _gpu_monitor
     if _gpu_monitor is None:
-        _gpu_monitor = GPUMonitor()
+        with _monitor_lock:
+            if _gpu_monitor is None:  # double-check
+                _gpu_monitor = GPUMonitor()
     return _gpu_monitor
 
 

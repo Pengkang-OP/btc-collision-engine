@@ -42,6 +42,7 @@ class LogMonitoringIntegrator:
         # 数据共享缓冲区
         self._log_buffer: list[dict[str, Any]] = []
         self._lock = threading.Lock()
+        self._stop_event = threading.Event()
 
         # 集成状态
         self._initialized = False
@@ -219,7 +220,7 @@ class LogMonitoringIntegrator:
 
         # 定期同步日志数据到监控系统
         def sync_log_data() -> None:
-            while True:
+            while not self._stop_event.is_set():
                 try:
                     # 获取最近的日志
                     recent_logs = self.get_recent_logs(100)

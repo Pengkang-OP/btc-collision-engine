@@ -250,8 +250,8 @@ class BatchCollisionProcessor:
             # 批量生成地址
             addresses = self._batch_generate_addresses(batch, address_generator)
 
-            # 检测碰撞
-            for pk, addr in zip(batch, addresses, strict=False):
+            # 检测碰撞（strict=True 确保 batch 和 addresses 长度一致）
+            for pk, addr in zip(batch, addresses, strict=True):
                 if addr in self.target_addresses:
                     matches.append((pk, addr))
 
