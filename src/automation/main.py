@@ -13,7 +13,7 @@ _project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(_project_root))
 os.chdir(_project_root)
 
-from src.automation import (
+from src.automation import (  # noqa: E402 — 需 sys.path 前置
     AuditModule,
     AutoTestModule,
     DataAnalysisModule,

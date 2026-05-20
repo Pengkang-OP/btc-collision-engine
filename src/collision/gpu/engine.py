@@ -18,6 +18,7 @@
 创建日期: 2026-04-30
 """
 
+import contextlib
 import logging
 import os
 import threading
@@ -77,7 +78,6 @@ GPU_CONFIG_MANAGER_AVAILABLE = False  # 保留供外部导入兼容
 
 # 基础依赖
 # 加密
-import contextlib
 
 from ...gpu.device import GPUDeviceDetector  # noqa: E402
 from ...gpu.device_manager import GPUDeviceManager  # noqa: E402
@@ -692,11 +692,11 @@ class GPUCollisionEngine(BaseCollisionEngine):
                         self._perf_pipeline.stop()
                     elif hasattr(self._perf_pipeline, "cleanup"):
                         self._perf_pipeline.cleanup()
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"GPU性能管道清理异常（非致命）: {type(e).__name__}: {e}")
                 self._perf_pipeline = None
-        except Exception:
-            pass  # 析构函数中资源清理失败静默处理
+        except Exception as e:
+            logger.debug(f"GPU引擎析构清理异常（非致命）: {type(e).__name__}: {e}")
 
     # ========== 厂商检测 ==========
 

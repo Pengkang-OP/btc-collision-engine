@@ -68,14 +68,14 @@ class Secp256k1:
         _n_expected = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
 
         # 验证P
-        if cls.P != _p_expected:
+        if _p_expected != cls.P:
             return False
         # 二次确认: 快速 Miller-Rabin 筛检
         if not cls._miller_rabin_probabilistic(cls.P, rounds=5):
             return False
 
         # 验证N
-        if cls.N != N_EXPECTED:
+        if cls.N != _n_expected:
             return False
         if not cls._miller_rabin_probabilistic(cls.N, rounds=5):
             return False

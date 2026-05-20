@@ -155,7 +155,7 @@ class GPUBatchScheduler:
 
                 error_msg = str(e).lower()
                 error_category = classify_recoverable_error(e)
-                is_transient = any(kw in error_msg for kw in _TRANSIENT_KEYWORDS)
+                is_transient = any(kw in error_msg for kw in _transient_keywords)
 
                 if not is_transient or retry >= GPU_BATCH_MAX_RETRIES - 1:
                     if error_category is not None:

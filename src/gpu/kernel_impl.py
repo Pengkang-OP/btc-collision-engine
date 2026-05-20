@@ -173,8 +173,8 @@ def get_gpu_optimizer() -> Any | None:
         return None
 
 
-from .seed_utils import (
-    _seed_bytes_to_u32_be_array,  # noqa: E402, F811  # 权威实现（含 itemsize/len 运行时校验）
+from .seed_utils import (  # noqa: E402, F811
+    _seed_bytes_to_u32_be_array,
 )
 
 # ============================================================================

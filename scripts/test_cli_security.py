@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 # 添加项目根目录到路径
-project_root = Path(__file__).parent.parent / "src"
+project_root = Path(__file__).parent.parent  # 项目根目录，非 src/
 sys.path.insert(0, str(project_root))
 
 

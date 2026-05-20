@@ -405,7 +405,7 @@ class MultiGPUCollisionEngine:
 
             # Linux
             try:
-                with open("/proc/meminfo", "r") as f:
+                with open("/proc/meminfo") as f:
                     for line in f:
                         if line.startswith("MemTotal:"):
                             # 格式: "MemTotal:       16384000 kB"

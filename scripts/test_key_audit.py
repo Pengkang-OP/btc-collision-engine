@@ -9,7 +9,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.utils.key_audit import (
+from src.utils.key_audit import (  # noqa: E402 — 需 sys.path 前置
     KeyAuditLevel,
     KeyAuditLogger,
     KeyOperationType,

@@ -72,6 +72,7 @@ def _worker_process(
     # 尝试锁定内存，防止私钥被交换到磁盘（仅Linux）
     try:
         import ctypes
+        import errno
         import sys
 
         if sys.platform.startswith("linux"):
@@ -83,12 +84,11 @@ def _worker_process(
             if ret == 0:
                 logger.debug(f"工作进程 {worker_id} 内存已锁定")
             else:
-                import errno
-
-                if errno.errno == errno.EPERM:
+                saved_errno = ctypes.get_errno()
+                if saved_errno == errno.EPERM:
                     logger.debug(f"工作进程 {worker_id} 内存锁定需要root权限")
                 else:
-                    logger.debug(f"工作进程 {worker_id} 内存锁定失败: errno={errno.errno}")
+                    logger.debug(f"工作进程 {worker_id} 内存锁定失败: errno={saved_errno}")
         # macOS和Windows不支持mlockall，静默跳过
     except (OSError, AttributeError, ImportError) as e:
         # OSError: mlockall系统调用失败
@@ -251,12 +251,10 @@ def _worker_process(
         except (NameError, TypeError, ValueError) as e:
             logger.debug(f"清理私钥内存失败: {e}")
 
-        # 防御性清理: 删除加密密钥引用（bytes不可变，依赖OS进程退出回收内存）
+        # 防御性清理: 清除加密密钥引用（bytes不可变，依赖OS进程退出回收内存）
         # 子进程有独立地址空间，退出后OS回收全部内存，此操作为纵深防御
-        nonlocal_key = locals().get("encryption_key")
-        if nonlocal_key is not None:
-            with suppress(NameError, TypeError):
-                del encryption_key
+        # 使用 None 赋值替代 del，语义更清晰且避免 locals() 内省的不稳定性
+        encryption_key = None
 
         logger.info(f"工作进程 {worker_id} 退出: 检测={total_checked:,}, 匹配={matches_found}")
 

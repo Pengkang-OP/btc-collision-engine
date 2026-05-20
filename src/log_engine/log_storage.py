@@ -56,8 +56,9 @@ class LogStorage:
             是否保存成功
         """
         try:
-            # 保存到内存
-            self._memory_buffer.append(event_data)
+            # 保存到内存（持锁，避免并发变形 deque 迭代器）
+            with self._lock:
+                self._memory_buffer.append(event_data)
 
             # 保存到文件
             self._save_to_file(event_data)
@@ -70,14 +71,16 @@ class LogStorage:
         """保存到文件"""
         log_file = os.path.join(self.storage_dir, "wizard.log")
 
-        # 检查文件大小
-        if os.path.exists(log_file):
-            file_size = os.path.getsize(log_file)
-            if file_size >= self.max_file_size:
-                self._rotate_file(log_file)
+        # 检查文件大小并轮转（持锁，消除 TOCTOU 竞态）
+        with self._lock:
+            if os.path.exists(log_file):
+                file_size = os.path.getsize(log_file)
+                if file_size >= self.max_file_size:
+                    self._rotate_file(log_file)
 
-        # 写入文件
-        with self._lock, open(log_file, "a", encoding="utf-8") as f:
+        # 文件写入在锁外执行，避免阻塞读操作
+        # JSON 行写入是安全的（每行完整写入 + 换行）
+        with open(log_file, "a", encoding="utf-8") as f:
             json.dump(event_data, f, ensure_ascii=False)
             f.write("\n")
 
@@ -137,7 +140,9 @@ class LogStorage:
             符合条件的日志列表
         """
         results = []
-        for event_data in reversed(self._memory_buffer):
+        with self._lock:
+            buffer_snapshot = list(self._memory_buffer)
+        for event_data in reversed(buffer_snapshot):
             if event_data.get("type") == event_type:
                 results.append(event_data)
                 if len(results) >= limit:
@@ -155,7 +160,9 @@ class LogStorage:
             符合条件的日志列表
         """
         results = []
-        for event_data in self._memory_buffer:
+        with self._lock:
+            buffer_snapshot = list(self._memory_buffer)
+        for event_data in buffer_snapshot:
             timestamp = event_data.get("timestamp", 0)
             if start_time <= timestamp <= end_time:
                 results.append(event_data)
@@ -174,7 +181,9 @@ class LogStorage:
         results = []
         keyword_to_find = keyword if case_sensitive else keyword.lower()
 
-        for event_data in self._memory_buffer:
+        with self._lock:
+            buffer_snapshot = list(self._memory_buffer)
+        for event_data in buffer_snapshot:
             message = str(event_data.get("message", ""))
             search_in = message if case_sensitive else message.lower()
 
@@ -195,7 +204,9 @@ class LogStorage:
             统计信息字典
         """
         type_counts: dict[str, int] = {}
-        for event_data in self._memory_buffer:
+        with self._lock:
+            buffer_snapshot = list(self._memory_buffer)
+        for event_data in buffer_snapshot:
             event_type = event_data.get("type", "unknown")
             type_counts[event_type] = type_counts.get(event_type, 0) + 1
 
@@ -205,7 +216,7 @@ class LogStorage:
             file_size = os.path.getsize(log_file)
 
         return {
-            "total_count": len(self._memory_buffer),
+            "total_count": len(buffer_snapshot),
             "type_counts": type_counts,
             "file_size": file_size,
             "storage_dir": self.storage_dir,
@@ -222,7 +233,12 @@ class LogStorage:
             是否导出成功
         """
         try:
-            data = self.get_recent() if recent_only else list(self._memory_buffer)
+            # 通过持锁 snapshot 或 get_recent() 获取线程安全的数据副本
+            if not recent_only:
+                with self._lock:
+                    data = list(self._memory_buffer)
+            else:
+                data = self.get_recent()
 
             with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
