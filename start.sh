@@ -46,7 +46,7 @@ if [ -z "${VIRTUAL_ENV:-}" ]; then
             source venv/bin/activate
             echo -e "${GREEN}[成功]${NC} 虚拟环境已激活: venv/"
         fi
-    elif [ -f ".venv/bin/activate" ]; then
+    elif [ -f ".venv/bin/activate" ] && [ -r ".venv/bin/activate" ]; then
         read -r -p "是否激活虚拟环境? (y/N): " ACTIVATE
         if [ "$ACTIVATE" = "y" ] || [ "$ACTIVATE" = "Y" ]; then
             source .venv/bin/activate
