@@ -179,7 +179,7 @@ show_status() {
     if [[ "${MONITORING:-}" == "true" ]]; then
         echo ""
         log_info "监控服务:"
-        echo "  Grafana: http://localhost:3000 (admin/btc-monitor-2024)"
+        echo "  Grafana: http://localhost:3000 (${GRAFANA_ADMIN_USER:-admin}/<见 .env 或密钥管理>)"
         echo "  Prometheus: http://localhost:9090"
     fi
 

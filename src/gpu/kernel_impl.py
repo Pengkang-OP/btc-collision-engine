@@ -1255,6 +1255,73 @@ class GPUKernel(GPUKernelProtocol):
 
         return matches
 
+    def _check_memory_leaks_on_shutdown(self, released_buffers: set) -> None:
+        """引擎关闭时强制检查并释放所有缓冲区。"""
+        if not hasattr(self, "_buffer_tracker") or not self._buffer_tracker:
+            return
+        try:
+            leak_report = self._buffer_tracker.force_check_on_shutdown()
+            released_buffers.update(leak_report.get("released", []))
+
+            for buf_name in released_buffers:
+                if buf_name == "_seed_buf":
+                    self._seed_buf = None
+                elif buf_name == "_match_buf":
+                    self._match_buf = None
+                elif buf_name == "_targets_buf":
+                    self._targets_buf = None
+                elif buf_name == "_precomp_buf":
+                    self._precomp_buf = None
+
+            if leak_report["has_unreleased"] or leak_report["has_leak"]:
+                logger.warning(
+                    "GPU内存泄漏检测报告: "
+                    f"未释放={leak_report['remaining_buffers']}, "
+                    f"释放成功={len(leak_report['released'])}, "
+                    f"释放失败={len(leak_report['release_failed'])}"
+                )
+                if leak_report["has_leak"]:
+                    logger.error(
+                        f"发现{len(leak_report['release_failed'])}个缓冲区释放失败"
+                    )
+        except Exception as e:
+            logger.error(f"内存泄漏检查失败: {e}")
+
+    def _release_gpu_buffers(self, released_buffers: set) -> None:
+        """显式释放所有 OpenCL Buffer。"""
+        buffers_to_release = [
+            ("_seed_buf", self._seed_buf),
+            ("_match_buf", self._match_buf),
+            ("_targets_buf", self._targets_buf),
+            ("_precomp_buf", self._precomp_buf),
+        ]
+        for buf_name, buf in buffers_to_release:
+            if buf_name in released_buffers:
+                logger.debug(f"缓冲区 {buf_name} 已释放，跳过")
+                continue
+            if buf is not None:
+                try:
+                    buf.release()
+                    logger.debug(f"已释放 {buf_name}")
+                    if hasattr(self, "_buffer_tracker"):
+                        self._buffer_tracker.release_buffer(buf_name)
+                except Exception as e:
+                    logger.warning(f"释放 {buf_name} 失败: {e}")
+
+        self._seed_buf = None
+        self._match_buf = None
+        self._targets_buf = None
+        self._precomp_buf = None
+
+    def _close_async_logging(self) -> None:
+        """关闭异步日志处理器。"""
+        if hasattr(self, "_async_log_handler") and self._async_log_handler:
+            try:
+                self._async_log_handler.close()
+                logger.info("GPU异步日志已关闭")
+            except Exception as e:
+                logger.debug(f"关闭异步日志失败: {e}")
+
     def cleanup(self) -> None:
         """清理GPU资源
 
