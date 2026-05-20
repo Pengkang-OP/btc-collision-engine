@@ -6,7 +6,7 @@ import os
 import sys
 import time
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.collision import KeyCollisionEngine  # noqa: E402
 
@@ -51,7 +51,6 @@ def diagnose_engine():
     print("3. 监控引擎状态 (10秒)...")
     print()
 
-    time.time()
     last_count = 0
 
     for i in range(10):

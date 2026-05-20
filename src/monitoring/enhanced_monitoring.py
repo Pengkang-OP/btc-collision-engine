@@ -173,6 +173,18 @@ class EnhancedMonitoringSystem:
                 self.logger.debug(f"DataCollector停止异常（可忽略）: {e}")
         self.logger.info("增强版监控系统已停止")
 
+    def _run_anomaly_check(self) -> None:
+        """收集监控数据并检测异常。"""
+        if not self.enable_monitoring_data or not self.storage or not self._collector:
+            return
+        data = self._collector.collect_all_data()
+        self.storage.save_current_data(data)
+        self.storage.save_history_data(data)
+
+        anomalies = self.detector.detect_anomalies(data)
+        if anomalies:
+            self.alert_system.process_anomalies(anomalies)
+
     def _monitoring_loop(self):
         """监控循环"""
         while not self._stop_event.is_set():
@@ -226,15 +238,7 @@ class EnhancedMonitoringSystem:
                     self.data_logger.record_system_data()
 
                 # 如果使用monitoring_data，同时保存
-                if self.enable_monitoring_data and self.storage and self._collector:
-                    data = self._collector.collect_all_data()
-                    self.storage.save_current_data(data)
-                    self.storage.save_history_data(data)
-
-                    # 检测异常
-                    anomalies = self.detector.detect_anomalies(data)
-                    if anomalies:
-                        self.alert_system.process_anomalies(anomalies)
+                self._run_anomaly_check()
 
                 # 控制报告生成频率（每小时最多一次）
                 current_time = time.time()

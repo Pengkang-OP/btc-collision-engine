@@ -10,7 +10,7 @@ import json
 import shutil
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from src.i18n import _t
 
@@ -113,6 +113,70 @@ def detect_config_version(config: dict) -> str:
     return "unknown"
 
 
+def _build_migration_path(
+    current_version: str, changelog: list[str]
+) -> list[str]:
+    """根据当前版本构建迁移路径列表。"""
+    if current_version == "2.x":
+        return ["2.x_to_3.0", "3.0_to_3.1"]
+    elif current_version == "3.0.0":
+        return ["3.0_to_3.1"]
+    elif current_version == "3.1.0":
+        changelog.append("配置已是最新版本，无需迁移")
+        return []
+    else:
+        changelog.append(f"无法识别版本 '{current_version}'，尝试应用全部迁移规则")
+        return ["2.x_to_3.0", "3.0_to_3.1"]
+
+
+def _apply_migration_rules(
+    result: dict, migration_path: list[str], changelog: list[str]
+) -> None:
+    """逐步应用迁移规则到配置字典。"""
+    for rule_key in migration_path:
+        if rule_key not in MIGRATION_RULES:
+            continue
+
+        rule = MIGRATION_RULES[rule_key]
+        changelog.append(f"应用迁移规则: {rule_key}")
+
+        # 添加整段
+        for section_name, section_defaults in rule.get("add_sections", {}).items():
+            if section_name not in result:
+                result[section_name] = section_defaults
+                changelog.append(f"  + 新增配置段: {section_name}")
+            else:
+                changelog.append(f"  ~ 配置段已存在，跳过: {section_name}")
+
+        # 添加缺失字段
+        for section_name, fields in rule.get("add_fields", {}).items():
+            if section_name not in result:
+                result[section_name] = fields
+                changelog.append(f"  + 新增配置段（字段扩展）: {section_name}")
+            else:
+                for field_name, field_value in fields.items():
+                    if field_name not in result[section_name]:
+                        result[section_name][field_name] = field_value
+                        changelog.append(
+                            f"  + 添加字段: {section_name}.{field_name}"
+                        )
+                    else:
+                        changelog.append(
+                            f"  ~ 字段已存在，保留用户值: {section_name}.{field_name}"
+                        )
+
+        # 字段重命名
+        for section_name, renames in rule.get("rename_fields", {}).items():
+            if section_name not in result:
+                continue
+            for old_name, new_name in renames.items():
+                if old_name in result[section_name] and new_name not in result[section_name]:
+                    result[section_name][new_name] = result[section_name].pop(old_name)
+                    changelog.append(
+                        f"  > 字段重命名: {section_name}.{old_name} -> {new_name}"
+                    )
+
+
 def migrate_config(
     config: dict,
     target_version: str = CONFIG_VERSION,
@@ -137,60 +201,11 @@ def migrate_config(
     current_version = detect_config_version(result)
     changelog.append(f"检测到当前配置版本: {current_version}")
 
-    # 构建迁移路径
-    migration_path: list[str] = []
-    if current_version == "2.x":
-        migration_path = ["2.x_to_3.0", "3.0_to_3.1"]
-    elif current_version == "3.0.0":
-        migration_path = ["3.0_to_3.1"]
-    elif current_version == "3.1.0":
-        changelog.append("配置已是最新版本，无需迁移")
+    migration_path = _build_migration_path(current_version, changelog)
+    if not migration_path:
         return result, changelog
-    else:
-        changelog.append(f"无法识别版本 '{current_version}'，尝试应用全部迁移规则")
-        migration_path = ["2.x_to_3.0", "3.0_to_3.1"]
 
-    for rule_key in migration_path:
-        if rule_key not in MIGRATION_RULES:
-            continue
-
-        rule = MIGRATION_RULES[rule_key]
-        changelog.append(f"应用迁移规则: {rule_key}")
-
-        # 1. 添加整段（仅当该段不存在时）
-        add_sections: dict[str, Any] = rule.get("add_sections", {})
-        for section_name, section_defaults in add_sections.items():
-            if section_name not in result:
-                result[section_name] = section_defaults
-                changelog.append(f"  + 新增配置段: {section_name}")
-            else:
-                changelog.append(f"  ~ 配置段已存在，跳过: {section_name}")
-
-        # 2. 在已有段内添加缺失字段（仅当字段不存在时）
-        add_fields: dict[str, dict[str, Any]] = rule.get("add_fields", {})
-        for section_name, fields in add_fields.items():
-            if section_name not in result:
-                # 段不存在则整体添加
-                result[section_name] = fields
-                changelog.append(f"  + 新增配置段（字段扩展）: {section_name}")
-            else:
-                for field_name, field_value in fields.items():
-                    if field_name not in result[section_name]:
-                        result[section_name][field_name] = field_value
-                        changelog.append(f"  + 添加字段: {section_name}.{field_name}")
-                    else:
-                        changelog.append(f"  ~ 字段已存在，保留用户值: {section_name}.{field_name}")
-
-        # 3. 字段重命名
-        rename_fields: dict[str, dict[str, str]] = rule.get("rename_fields", {})
-        for section_name, renames in rename_fields.items():
-            if section_name not in result:
-                continue
-            for old_name, new_name in renames.items():
-                if old_name in result[section_name] and new_name not in result[section_name]:
-                    result[section_name][new_name] = result[section_name].pop(old_name)
-                    changelog.append(f"  > 字段重命名: {section_name}.{old_name} -> {new_name}")
-
+    _apply_migration_rules(result, migration_path, changelog)
     changelog.append(f"迁移完成，目标版本: {target_version}")
     return result, changelog
 
@@ -219,12 +234,59 @@ def backup_config(config_path: str) -> str:
     return str(backup_path)
 
 
-def validate_migrated_config(config: dict) -> tuple[bool, list[str]]:
-    """
-    验证迁移后的配置是否满足 v3.1 要求。
+def _check_section_is_dict(section_name: str, value: Any, issues: list[str]) -> dict | None:
+    """验证配置段是否为 dict 类型，返回 dict 或 None。"""
+    if not isinstance(value, dict):
+        issues.append(f"{section_name} 段必须是 JSON 对象")
+        return None
+    return value
 
-    参数:
-        config: 待验证配置字典
+
+def _check_field_type(
+    section: dict, section_name: str, field: str,
+    expected_type: type | tuple[type, ...], type_desc: str, issues: list[str],
+) -> None:
+    """检查配置段中字段的类型。"""
+    if field in section and not isinstance(section[field], expected_type):
+        issues.append(f"{section_name}.{field} 必须是{type_desc}")
+
+
+def _validate_crypto_fields(crypto: dict, issues: list[str]) -> None:
+    """验证 crypto 段字段类型。"""
+    _check_field_type(crypto, "crypto", "backend", str, "字符串", issues)
+    _check_field_type(crypto, "crypto", "use_gpu", bool, "布尔值", issues)
+
+
+def _validate_logging_fields(logging_cfg: dict, issues: list[str]) -> None:
+    """验证 logging 段字段类型。"""
+    _check_field_type(logging_cfg, "logging", "level", str, "字符串", issues)
+    _check_field_type(logging_cfg, "logging", "max_bytes", int, "整数", issues)
+
+
+def _validate_gpu_fields(gpu_cfg: dict, issues: list[str]) -> None:
+    """验证 gpu 段字段类型。"""
+    if "memory_usage_ratio" in gpu_cfg:
+        ratio = gpu_cfg["memory_usage_ratio"]
+        if not isinstance(ratio, (int, float)) or not (0.0 <= ratio <= 1.0):
+            issues.append("gpu.memory_usage_ratio 必须是 0.0~1.0 之间的数值")
+    _check_field_type(gpu_cfg, "gpu", "base_timeout_seconds", (int, float), "数值", issues)
+
+
+def _validate_monitoring_fields(mon_cfg: dict, issues: list[str]) -> None:
+    """验证 monitoring 段字段类型。"""
+    _check_field_type(mon_cfg, "monitoring", "enabled", bool, "布尔值", issues)
+    _check_field_type(mon_cfg, "monitoring", "collection_interval", (int, float), "数值", issues)
+
+
+def _validate_perf_monitoring_fields(pm_cfg: dict, issues: list[str]) -> None:
+    """验证 performance_monitoring 段字段类型。"""
+    _check_field_type(pm_cfg, "performance_monitoring", "enabled", bool, "布尔值", issues)
+    _check_field_type(pm_cfg, "performance_monitoring", "max_records", int, "整数", issues)
+    _check_field_type(pm_cfg, "performance_monitoring", "slow_threshold_ms", (int, float), "数值", issues)
+
+
+def validate_migrated_config(config: dict) -> tuple[bool, list[str]]:
+    """验证迁移后的配置是否满足 v3.1 要求。
 
     返回:
         (是否有效, 问题列表)；问题列表为空表示验证通过
@@ -234,77 +296,22 @@ def validate_migrated_config(config: dict) -> tuple[bool, list[str]]:
     if not isinstance(config, dict):
         return False, ["配置根节点不是有效的 JSON 对象"]
 
-    # 检查必需段
     for section in V3_1_REQUIRED_SECTIONS:
         if section not in config:
             issues.append(f"缺少必需配置段: {section}")
 
-    # ── 关键字段类型检查 ──────────────────────────────────────────────────
-
-    # crypto 段
-    if "crypto" in config:
-        crypto = config["crypto"]
-        if not isinstance(crypto, dict):
-            issues.append("crypto 段必须是 JSON 对象")
-        else:
-            if "backend" in crypto and not isinstance(crypto["backend"], str):
-                issues.append("crypto.backend 必须是字符串")
-            if "use_gpu" in crypto and not isinstance(crypto["use_gpu"], bool):
-                issues.append("crypto.use_gpu 必须是布尔值")
-
-    # logging 段
-    if "logging" in config:
-        logging_cfg = config["logging"]
-        if not isinstance(logging_cfg, dict):
-            issues.append("logging 段必须是 JSON 对象")
-        else:
-            if "level" in logging_cfg and not isinstance(logging_cfg["level"], str):
-                issues.append("logging.level 必须是字符串")
-            if "max_bytes" in logging_cfg and not isinstance(logging_cfg["max_bytes"], int):
-                issues.append("logging.max_bytes 必须是整数")
-
-    # gpu 段
-    if "gpu" in config:
-        gpu_cfg = config["gpu"]
-        if not isinstance(gpu_cfg, dict):
-            issues.append("gpu 段必须是 JSON 对象")
-        else:
-            if "memory_usage_ratio" in gpu_cfg:
-                ratio = gpu_cfg["memory_usage_ratio"]
-                if not isinstance(ratio, (int, float)) or not (0.0 <= ratio <= 1.0):
-                    issues.append("gpu.memory_usage_ratio 必须是 0.0~1.0 之间的数值")
-            if "base_timeout_seconds" in gpu_cfg and not isinstance(
-                gpu_cfg["base_timeout_seconds"], (int, float)
-            ):
-                issues.append("gpu.base_timeout_seconds 必须是数值")
-
-    # monitoring 段
-    if "monitoring" in config:
-        mon_cfg = config["monitoring"]
-        if not isinstance(mon_cfg, dict):
-            issues.append("monitoring 段必须是 JSON 对象")
-        else:
-            if "enabled" in mon_cfg and not isinstance(mon_cfg["enabled"], bool):
-                issues.append("monitoring.enabled 必须是布尔值")
-            if "collection_interval" in mon_cfg and not isinstance(
-                mon_cfg["collection_interval"], (int, float)
-            ):
-                issues.append("monitoring.collection_interval 必须是数值")
-
-    # performance_monitoring 段
-    if "performance_monitoring" in config:
-        pm_cfg = config["performance_monitoring"]
-        if not isinstance(pm_cfg, dict):
-            issues.append("performance_monitoring 段必须是 JSON 对象")
-        else:
-            if "enabled" in pm_cfg and not isinstance(pm_cfg["enabled"], bool):
-                issues.append("performance_monitoring.enabled 必须是布尔值")
-            if "max_records" in pm_cfg and not isinstance(pm_cfg["max_records"], int):
-                issues.append("performance_monitoring.max_records 必须是整数")
-            if "slow_threshold_ms" in pm_cfg and not isinstance(
-                pm_cfg["slow_threshold_ms"], (int, float)
-            ):
-                issues.append("performance_monitoring.slow_threshold_ms 必须是数值")
+    section_rules: list[tuple[str, Callable]] = [
+        ("crypto", _validate_crypto_fields),
+        ("logging", _validate_logging_fields),
+        ("gpu", _validate_gpu_fields),
+        ("monitoring", _validate_monitoring_fields),
+        ("performance_monitoring", _validate_perf_monitoring_fields),
+    ]
+    for section_name, validator in section_rules:
+        if section_name in config:
+            sec = _check_section_is_dict(section_name, config[section_name], issues)
+            if sec is not None:
+                validator(sec, issues)
 
     is_valid = len(issues) == 0
     return is_valid, issues

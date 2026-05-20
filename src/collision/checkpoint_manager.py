@@ -11,6 +11,7 @@ from datetime import datetime
 from typing import Any, cast
 
 # 导入日志配置
+from .. import __version__ as _project_version
 from ..utils import get_configured_logger
 from ..utils.fast_json import fast_dumps, fast_loads
 from ..utils.platform_utils import PlatformUtils

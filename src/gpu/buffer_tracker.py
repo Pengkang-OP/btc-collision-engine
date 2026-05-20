@@ -184,7 +184,8 @@ class GPUBufferTracker:
                 "leak_detection_count": self._leak_detection_count,
                 "timeout_seconds": self._timeout,
                 "memory_threshold_mb": self._memory_threshold / 1024 / 1024,
-                "memory_usage_history": self._memory_usage_history[-self.MEMORY_TREND_WINDOW:],  # 最近趋势窗口记录
+                # 最近趋势窗口记录
+                "memory_usage_history": self._memory_usage_history[-self.MEMORY_TREND_WINDOW:],
                 "last_check_time": self._last_check_time,
             }
 

@@ -33,6 +33,130 @@ from ..utils import get_configured_logger
 logger = get_configured_logger("MultiprocessEngine")
 
 
+def _try_lock_process_memory(worker_id: int) -> None:
+    """尝试锁定工作进程内存，防止私钥被交换到磁盘（仅Linux）。"""
+    try:
+        import ctypes
+        import errno
+        import sys
+
+        if sys.platform.startswith("linux"):
+            libc = ctypes.CDLL("libc.so.6")
+            _mcl_current = 1
+            _mcl_future = 2
+            ret = libc.mlockall(_mcl_current | _mcl_future)
+            if ret == 0:
+                logger.debug(f"工作进程 {worker_id} 内存已锁定")
+            else:
+                saved_errno = ctypes.get_errno()
+                if saved_errno == errno.EPERM:
+                    logger.debug(f"工作进程 {worker_id} 内存锁定需要root权限")
+                else:
+                    logger.debug(f"工作进程 {worker_id} 内存锁定失败: errno={saved_errno}")
+    except (OSError, AttributeError, ImportError) as e:
+        logger.debug(f"工作进程 {worker_id} 内存锁定失败: {type(e).__name__}: {e}")
+
+
+def _init_key_generator(generator_func_name: str):
+    """在子进程中初始化私钥生成器。
+
+    Returns:
+        Callable[[int], list[bytearray]]
+    """
+    if generator_func_name == "random":
+        import secrets
+
+        def generator_func(n: int) -> list[bytearray]:
+            return [bytearray(secrets.token_bytes(32)) for _ in range(n)]
+
+        return generator_func
+    elif generator_func_name == "sequential":
+        start_key = 1
+
+        def sequential_gen(n: int) -> list[bytearray]:
+            nonlocal start_key
+            keys = [bytearray(start_key.to_bytes(32, "big")) for _ in range(n)]
+            start_key += n
+            return keys
+
+        return sequential_gen
+    else:
+        raise ValueError(f"未知的生成器函数: {generator_func_name}")
+
+
+def _check_single_key_collision(
+    pk: bytearray,
+    target_set: set,
+    address_generator,
+) -> dict | None:
+    """检查单个私钥是否命中目标地址。
+
+    Returns:
+        匹配信息 dict，未命中返回 None。
+    """
+    pk_bytes = bytes(pk)
+    address = address_generator.generate_from_private_key(pk_bytes)
+    if address not in target_set:
+        return None
+
+    import hashlib
+
+    pk_hash = hashlib.sha256(pk_bytes).hexdigest()[:32]
+    return {
+        "private_key_hash": pk_hash,
+        "address": address,
+    }
+
+
+def _clear_private_key(pk: bytearray) -> None:
+    """清零私钥内存。"""
+    try:
+        if isinstance(pk, bytearray):
+            pk[:] = b"\x00" * len(pk)
+    except (TypeError, ValueError, MemoryError) as e:
+        logger.debug(f"私钥清零失败: {e}")
+
+
+def _send_results(
+    result_queue: Queue,
+    batch_matches: list,
+    enable_encryption: bool,
+    encryption_key: bytes | None,
+    worker_id: int,
+) -> None:
+    """发送匹配结果到结果队列，可选加密。"""
+    if enable_encryption and encryption_key:
+        try:
+            from cryptography.fernet import Fernet
+
+            fernet = Fernet(encryption_key)
+            encrypted_data = fernet.encrypt(json.dumps(batch_matches).encode())
+            result_queue.put(encrypted_data)
+        except Exception as e:
+            logger.error(f"工作进程 {worker_id} 加密失败，丢弃匹配数据: {e}")
+    else:
+        result_queue.put(batch_matches)
+
+
+def _cleanup_worker_memory(
+    worker_id: int, total_checked: int, matches_found: int
+) -> None:
+    """清理工作进程中的敏感内存。"""
+    try:
+        f_locals = locals()
+        if "private_keys" in f_locals:
+            private_keys = f_locals["private_keys"]
+            for pk in private_keys:
+                if isinstance(pk, bytearray):
+                    pk[:] = b"\x00" * len(pk)
+            del private_keys
+    except (NameError, TypeError, ValueError) as e:
+        logger.debug(f"清理私钥内存失败: {e}")
+
+    logger.info(f"工作进程 {worker_id} 退出: 检测={total_checked:,}, 匹配={matches_found}")
+
+
+# noqa: C901 — 复杂性来自多层级异常处理, 核心逻辑已提取至辅助函数
 def _worker_process(
     worker_id: int,
     target_addresses: list[str],
@@ -64,69 +188,20 @@ def _worker_process(
     # 设置进程名称
     with suppress(ImportError):
         from setproctitle import setproctitle
-
-        setproctitle(f"btc-collision-worker-{worker_id}")  # setproctitle可选
+        setproctitle(f"btc-collision-worker-{worker_id}")
 
     logger.info(f"工作进程 {worker_id} 启动")
 
-    # 尝试锁定内存，防止私钥被交换到磁盘（仅Linux）
-    try:
-        import ctypes
-        import errno
-        import sys
-
-        if sys.platform.startswith("linux"):
-            libc = ctypes.CDLL("libc.so.6")
-            # 使用正确的mlockall标志
-            _mcl_current = 1  # 锁定当前所有内存
-            _mcl_future = 2  # 锁定未来分配的内存
-            ret = libc.mlockall(_mcl_current | _mcl_future)
-            if ret == 0:
-                logger.debug(f"工作进程 {worker_id} 内存已锁定")
-            else:
-                saved_errno = ctypes.get_errno()
-                if saved_errno == errno.EPERM:
-                    logger.debug(f"工作进程 {worker_id} 内存锁定需要root权限")
-                else:
-                    logger.debug(f"工作进程 {worker_id} 内存锁定失败: errno={saved_errno}")
-        # macOS和Windows不支持mlockall，静默跳过
-    except (OSError, AttributeError, ImportError) as e:
-        # OSError: mlockall系统调用失败
-        # AttributeError: ctypes找不到mlockall函数
-        # ImportError: 库导入失败
-        logger.debug(f"工作进程 {worker_id} 内存锁定失败: {type(e).__name__}: {e}")
+    _try_lock_process_memory(worker_id)
 
     # 在子进程中本地初始化生成器（避免pickle问题）
-    # 使用bytearray以支持私钥清零
-    if generator_func_name == "random":
-        # SEVERE-3修复: 使用secrets模块替代os.urandom以获得更好的安全性
-        import secrets
-
-        def generator_func(n: int) -> list[bytearray]:
-            return [bytearray(secrets.token_bytes(32)) for _ in range(n)]
-
-    elif generator_func_name == "sequential":
-        start_key = 1
-
-        def sequential_gen(n: int) -> list[bytearray]:
-            nonlocal start_key
-            keys = [bytearray(start_key.to_bytes(32, "big")) for _ in range(n)]
-            start_key += n
-            return keys
-
-        generator_func = sequential_gen
-    else:
-        raise ValueError(f"未知的生成器函数: {generator_func_name}")
+    generator_func = _init_key_generator(generator_func_name)
 
     # 在子进程中初始化地址生成器
     from ..core.optimized_address_generator import OptimizedP2PKHAddressGenerator
-
     address_generator = OptimizedP2PKHAddressGenerator()
-
-    # 转换为集合加速查找
     target_set = set(target_addresses)
 
-    # 统计信息
     total_checked = 0
     start_time = time.time()
     matches_found = 0
@@ -134,101 +209,55 @@ def _worker_process(
     try:
         while not stop_event.is_set():
             try:
-                # 从任务队列获取任务（超时避免永久阻塞）
                 task = task_queue.get(timeout=1.0)
-
                 if task is None:  # 毒丸信号
                     break
 
-                # 处理任务
                 batch_size = task.get("batch_size", batch_size)
                 private_keys = generator_func(batch_size)
 
-                # 批量生成地址并检测碰撞
                 batch_matches = []
                 for pk in private_keys:
                     try:
-                        # pk是bytearray类型，可以清零
-                        # 创建bytes副本用于计算（不可变）
-                        pk_bytes = bytes(pk)
-
-                        # 使用子进程本地初始化的address_generator
-                        address = address_generator.generate_from_private_key(pk_bytes)
+                        match = _check_single_key_collision(
+                            pk, target_set, address_generator
+                        )
                         total_checked += 1
-
-                        if address in target_set:
+                        if match is not None:
                             matches_found += 1
-
-                            # 安全处理：仅存储地址和私钥哈希，不存储明文私钥
-                            # 使用32字符（128位）哈希，更安全
-                            import hashlib
-
-                            pk_hash = hashlib.sha256(pk_bytes).hexdigest()[:32]
-
-                            batch_matches.append(
-                                {
-                                    "private_key_hash": pk_hash,  # 仅存储128位哈希
-                                    "address": address,
-                                    "worker_id": worker_id,
-                                    "timestamp": time.time(),
-                                }
-                            )
-
-                            # 安全日志：不记录完整私钥
+                            match["worker_id"] = worker_id
+                            match["timestamp"] = time.time()
+                            batch_matches.append(match)
                             logger.warning(
-                                f"🎉 匹配发现 [Worker-{worker_id}]: 地址={address[:10]}...{address[-6:]}"
+                                f"🎉 匹配发现 [Worker-{worker_id}]: 地址={match['address'][:10]}...{match['address'][-6:]}"
                             )
                     except Exception as e:
-                        # 安全的错误日志（不包含私钥）
-                        error_type = type(e).__name__
-                        logger.error(f"工作进程 {worker_id} 处理失败: 类型={error_type}")
+                        logger.error(
+                            f"工作进程 {worker_id} 处理失败: 类型={type(e).__name__}"
+                        )
                         continue
                     finally:
-                        # 清零私钥内存（现在有效，因为pk是bytearray）
-                        try:
-                            if isinstance(pk, bytearray):
-                                pk[:] = b"\x00" * len(pk)
-                        except (TypeError, ValueError, MemoryError) as e:
-                            logger.debug(f"私钥清零失败: {e}")
-
-                        # 删除引用，加速GC
+                        _clear_private_key(pk)
                         with suppress(NameError):
-                            del pk_bytes  # 变量已不存在
+                            del pk_bytes  # pyright: ignore[reportUnboundVariable]
 
-                # 发送匹配结果
                 if batch_matches:
-                    # 如果启用加密，则加密后发送
-                    if enable_encryption and encryption_key:
-                        try:
-                            from cryptography.fernet import Fernet
+                    _send_results(
+                        result_queue, batch_matches,
+                        enable_encryption, encryption_key, worker_id,
+                    )
 
-                            fernet = Fernet(encryption_key)
-                            encrypted_data = fernet.encrypt(json.dumps(batch_matches).encode())
-                            result_queue.put(encrypted_data)
-                        except Exception as e:
-                            # 加密失败时丢弃数据，不发送明文（安全优先）
-                            logger.error(f"工作进程 {worker_id} 加密失败，丢弃匹配数据: {e}")
-                            # 不降级发送明文，保护数据安全
-                    else:
-                        result_queue.put(batch_matches)
-
-                # 定期发送统计信息（每10000次）
+                # 定期发送统计信息
                 if total_checked % 10000 == 0:
                     elapsed = time.time() - start_time
                     speed = total_checked / elapsed if elapsed > 0 else 0
-
-                    stats_queue.put(
-                        {
-                            "worker_id": worker_id,
-                            "total_checked": total_checked,
-                            "matches_found": matches_found,
-                            "speed": speed,
-                            "elapsed": elapsed,
-                        }
-                    )
-
-                    # 定期强制GC，清理敏感对象（增大间隔减少性能影响）
-                    # 每200,000次触发一次，降低GC频率
+                    stats_queue.put({
+                        "worker_id": worker_id,
+                        "total_checked": total_checked,
+                        "matches_found": matches_found,
+                        "speed": speed,
+                        "elapsed": elapsed,
+                    })
                     if total_checked % 200000 == 0:
                         gc.collect()
 
@@ -241,22 +270,8 @@ def _worker_process(
     except Exception as e:
         logger.error(f"工作进程 {worker_id} 致命错误: {type(e).__name__}")
     finally:
-        # 清理所有私钥内存（异常退出时也需要清理）
-        try:
-            if "private_keys" in locals():
-                for pk in private_keys:
-                    if isinstance(pk, bytearray):
-                        pk[:] = b"\x00" * len(pk)
-                del private_keys
-        except (NameError, TypeError, ValueError) as e:
-            logger.debug(f"清理私钥内存失败: {e}")
-
-        # 防御性清理: 清除加密密钥引用（bytes不可变，依赖OS进程退出回收内存）
-        # 子进程有独立地址空间，退出后OS回收全部内存，此操作为纵深防御
-        # 使用 None 赋值替代 del，语义更清晰且避免 locals() 内省的不稳定性
-        encryption_key = None
-
-        logger.info(f"工作进程 {worker_id} 退出: 检测={total_checked:,}, 匹配={matches_found}")
+        _cleanup_worker_memory(worker_id, total_checked, matches_found)
+        encryption_key = None  # 纵深防御：清除密钥引用
 
 
 class MultiprocessCollisionEngine:

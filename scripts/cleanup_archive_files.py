@@ -28,7 +28,8 @@ def clean_archive_files():
     if os.path.exists(archive_dir):
         for file_name in os.listdir(archive_dir):
             file_path = os.path.join(archive_dir, file_name)
-            if os.path.isfile(file_path) and file_name.startswith("report_daily_") and file_name.endswith(".json"):
+            is_target = file_name.startswith("report_daily_") and file_name.endswith(".json")
+            if os.path.isfile(file_path) and is_target:
                     try:
                         os.remove(file_path)
                         logger.info(f"清理归档文件: {file_path}")

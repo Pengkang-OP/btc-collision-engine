@@ -407,8 +407,10 @@ class GPUPerformanceOptimizer:
                     self.AGGRESSIVE_GROWTH_CAP,
                     self.AGGRESSIVE_GROWTH_BASE * deficit_ratio
                 )
+                gpu_pct = gpu_utilization * 100
+                min_pct = min_target * 100
                 logger.info(
-                    f"GPU利用率不足({gpu_utilization:.1%} < {min_target:.1%}), 激进增长: *{growth_ratio:.2f}"
+                    f"GPU利用率不足({gpu_pct:.1f}% < {min_pct:.1f}%), 激进增长: *{growth_ratio:.2f}"
                 )
             else:
                 growth_ratio = strategy.get("growth_ratio", 1.20)

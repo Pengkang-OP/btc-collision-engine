@@ -219,23 +219,24 @@ class EmailNotifier(BaseNotifier):
 
     def _create_text_content(self, alert: AlertRecord) -> str:
         """创建纯文本内容"""
-        content = """GPU告警通知
-
-告警类型: {alert.alert_type.value}
-告警级别: {alert.level.value.upper()}
-触发时间: {alert.timestamp}
-告警消息: {alert.message}
-
-性能指标:
-"""
+        lines = [
+            "GPU告警通知",
+            "",
+            f"告警类型: {alert.alert_type.value}",
+            f"告警级别: {alert.level.value.upper()}",
+            f"触发时间: {alert.timestamp}",
+            f"告警消息: {alert.message}",
+            "",
+            "性能指标:",
+        ]
         for key, value in alert.metrics.items():
-            content += f"  {key}: {value}\n"
+            lines.append(f"  {key}: {value}")
 
-        content += f"\n解决状态: {'已解决' if alert.resolved else '未解决'}\n"
+        lines.append(f"\n解决状态: {'已解决' if alert.resolved else '未解决'}")
         if alert.resolved_at:
-            content += f"解决时间: {alert.resolved_at}\n"
+            lines.append(f"解决时间: {alert.resolved_at}")
 
-        return content
+        return "\n".join(lines)
 
     def _create_html_content(self, alert: AlertRecord) -> str:
         """创建HTML内容"""
@@ -245,12 +246,21 @@ class EmailNotifier(BaseNotifier):
             AlertLevel.CRITICAL: "#EF5350",
             AlertLevel.EMERGENCY: "#FF1744",
         }
-        color = level_colors.get(alert.level, "#9E9E9E")  # noqa: F841
+        color = level_colors.get(alert.level, "#9E9E9E")
 
-        html = """
+        metrics_rows = ""
+        for key, value in alert.metrics.items():
+            metrics_rows += f"""
+            <tr>
+                <td style="padding: 8px; font-weight: bold; width: 200px;">{key}:</td>
+                <td style="padding: 8px;">{value}</td>
+            </tr>
+"""
+
+        html = f"""
 <html>
 <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
-    <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px;">  # noqa: E501
+    <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px;">
         <h2 style="color: {color}; border-bottom: 2px solid {color}; padding-bottom: 10px;">
             GPU告警通知
         </h2>
@@ -262,7 +272,7 @@ class EmailNotifier(BaseNotifier):
             </tr>
             <tr style="background-color: #f9f9f9;">
                 <td style="padding: 8px; font-weight: bold;">告警级别:</td>
-                <td style="padding: 8px; color: {color}; font-weight: bold;">{alert.level.value.upper()}</td>  # noqa: E501
+                <td style="padding: 8px; color: {color}; font-weight: bold;">{alert.level.value.upper()}</td>
             </tr>
             <tr>
                 <td style="padding: 8px; font-weight: bold;">触发时间:</td>
@@ -276,16 +286,7 @@ class EmailNotifier(BaseNotifier):
 
         <h3 style="margin-top: 20px;">性能指标</h3>
         <table style="width: 100%; border-collapse: collapse; background-color: #f9f9f9;">
-"""
-        for _key, _value in alert.metrics.items():
-            html += """
-            <tr>
-                <td style="padding: 8px; font-weight: bold; width: 200px;">{key}:</td>
-                <td style="padding: 8px;">{value}</td>
-            </tr>
-"""
-
-        html += """
+{metrics_rows}
         </table>
 
         <p style="margin-top: 20px; color: #999; font-size: 12px;">

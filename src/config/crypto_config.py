@@ -66,7 +66,7 @@ class CryptoConfig:
                 user_config = json.load(f)
             self.config.update(user_config)
             return True
-        except Exception as e:
+        except (OSError, json.JSONDecodeError, ValueError, KeyError) as e:
             import logging
 
             logging.warning(f"加载加密配置失败: {e}")
@@ -89,7 +89,7 @@ class CryptoConfig:
             with open(self.config_file, "w", encoding="utf-8") as f:
                 json.dump(self.config, f, indent=2, ensure_ascii=False)
             return True
-        except Exception as e:
+        except (OSError, json.JSONDecodeError, ValueError, TypeError) as e:
             import logging
 
             logging.error(f"保存加密配置失败: {e}")
