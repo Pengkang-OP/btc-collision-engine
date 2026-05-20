@@ -6,15 +6,17 @@
 2. 日志系统性能（同步 vs 异步）
 3. ThreadSafeLogger vs 原生logger性能对比
 """
-import os
 import statistics
 import sys
+import tempfile
+import threading
 import time
+import traceback
+import warnings
+from pathlib import Path
 
 # 添加项目根目录到路径
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-import warnings
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.core.secp256k1 import ECPoint, EllipticCurve, Secp256k1
 from src.utils import get_configured_logger, init_logging
@@ -28,7 +30,7 @@ def benchmark_secp256k1_scalar_multiply(iterations=100):
     print("="*60)
 
     ec = EllipticCurve()
-    G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
+    G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)  # noqa: N806 (标准椭圆曲线记法)
 
     # 测试旧版标量乘法（带弃用警告）
     print("\n[测试1a] 旧版 scalar_multiply() (双倍-加法)")
@@ -82,7 +84,7 @@ def benchmark_logger_performance(iterations=1000):
     # 初始化日志
     init_logging()
 
-    # 测试1: 原生logger
+    # ── 测试1: 原生logger ──
     print("\n[测试2a] 原生 logging.Logger")
     logger1 = get_configured_logger("Benchmark_Native", thread_safe=False)
     native_times = []
@@ -98,7 +100,7 @@ def benchmark_logger_performance(iterations=1000):
     print(f"  平均时间: {native_avg:.4f}ms/条")
     print(f"  吞吐量: {iterations/native_total*1000:.0f} 条/秒")
 
-    # 测试2: ThreadSafeLogger (已弃用)
+    # ── 测试2: ThreadSafeLogger (已弃用) ──
     print("\n[测试2b] ThreadSafeLogger (已弃用)")
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -122,9 +124,8 @@ def benchmark_logger_performance(iterations=1000):
     slowdown = (ts_total / native_total - 1) * 100 if native_total > 0 else 0
     print(f"\n  [WARNING] ThreadSafeLogger 比原生logger慢约 {slowdown:.1f}%")
 
-    # 测试3: 异步日志
+    # ── 测试3: 异步日志 ──
     print("\n[测试2c] AsyncFileHandler (异步日志)")
-    import tempfile
     with tempfile.NamedTemporaryFile(mode="w", suffix=".log", delete=False) as f:
         log_file = f.name
 
@@ -158,11 +159,12 @@ def benchmark_logger_performance(iterations=1000):
         # 先确保 handler 已关闭再删除临时文件（Windows 下打开的文件无法删除）
         try:
             async_handler.close()
-        except Exception:
+        except Exception:  # noqa: BLE001 (基准测试容错)
             pass
-        if os.path.exists(log_file):
+        log_path = Path(log_file)
+        if log_path.exists():
             try:
-                os.remove(log_file)
+                log_path.unlink()
             except OSError:
                 pass
 
@@ -204,8 +206,6 @@ def benchmark_concurrent_logging(thread_count=5, messages_per_thread=100):
     print("="*60)
 
     init_logging()
-
-    import threading
 
     # 测试原生logger
     print(f"\n[测试4a] 原生logger ({thread_count}线程, {messages_per_thread}条/线程)")
@@ -254,9 +254,8 @@ def main():
         print("所有基准测试完成！")
         print("="*60)
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 (基准测试容错)
         print(f"\n[ERROR] 基准测试失败: {e}")
-        import traceback
         traceback.print_exc()
         return 1
 

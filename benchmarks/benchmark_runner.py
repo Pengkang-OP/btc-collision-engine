@@ -13,11 +13,13 @@
     python -m benchmarks.benchmark_runner --list
 """
 import argparse
+import hashlib
 import json
 import platform
 import statistics
 import sys
 import time
+import traceback
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
@@ -26,6 +28,10 @@ from typing import Any
 # 将项目根目录加入路径
 _ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(_ROOT))
+
+from src.core.address_generator import P2PKHAddressGenerator  # noqa: E402 (需 sys.path.insert 在前)
+from src.core.base58 import Base58  # noqa: E402 (需 sys.path.insert 在前)
+from src.collision.deduplication_filter import DeduplicationFilter  # noqa: E402 (需 sys.path.insert 在前)
 
 
 # ──────────────────────────────────────────────
@@ -112,8 +118,6 @@ def _run_timed(func: Callable, warmup: int = 3, iterations: int = 1000) -> Bench
 
 def bench_secp256k1_key_generation() -> BenchmarkResult:
     """椭圆曲线密钥生成吞吐量基准测试"""
-    from src.core.address_generator import P2PKHAddressGenerator
-
     generator = P2PKHAddressGenerator()
 
     def _gen():
@@ -126,8 +130,6 @@ def bench_secp256k1_key_generation() -> BenchmarkResult:
 
 def bench_address_generation() -> BenchmarkResult:
     """地址生成吞吐量基准测试（含 Base58Check 编码）"""
-    from src.core.address_generator import P2PKHAddressGenerator
-
     generator = P2PKHAddressGenerator()
     # 使用固定私钥，排除随机数生成的开销
     test_key = (42).to_bytes(32, "big")
@@ -144,7 +146,8 @@ def bench_collision_check() -> BenchmarkResult:
     """碰撞检测吞吐量基准测试（使用 set lookup）"""
     # 构造含 10000 个目标地址的集合
     target_set = {f"1Address{i:040d}" for i in range(10_000)}
-    probe_addrs = [f"1Address{i:040d}" for i in range(0, 2000, 2)]  # 全部命中（偶数地址均在 0..9999 范围内）
+    probe_addrs = [f"1Address{i:040d}" for i in range(0, 2000, 2)]
+    # 全部命中（偶数地址均在 0..9999 范围内）
 
     def _check():
         for addr in probe_addrs:
@@ -163,8 +166,6 @@ def bench_collision_check() -> BenchmarkResult:
 
 def bench_dedup_filter() -> BenchmarkResult:
     """去重过滤器吞吐量基准测试"""
-    from src.collision.deduplication_filter import DeduplicationFilter
-
     # 预先触发类导入与JIT编译，避免构造开销计入测量
     _ = DeduplicationFilter(max_size=50_000, enabled=True)
     keys = [i.to_bytes(32, "big") for i in range(500)]
@@ -187,8 +188,6 @@ def bench_dedup_filter() -> BenchmarkResult:
 
 def bench_hash160() -> BenchmarkResult:
     """Hash160（SHA256 + RIPEMD160）吞吐量基准测试"""
-    import hashlib
-
     pubkey = bytes([0x02]) + bytes([0xAB] * 32)  # 33字节压缩公钥
 
     def _hash():
@@ -202,8 +201,6 @@ def bench_hash160() -> BenchmarkResult:
 
 def bench_base58check_encode() -> BenchmarkResult:
     """Base58Check 编码吞吐量基准测试"""
-    from src.core.base58 import Base58
-
     # 版本 + 20字节 hash160 负载（实际基准中由 _encode 闭包实时构造）
 
     def _encode():
@@ -253,7 +250,7 @@ def _compare_results(
     try:
         with baseline_path.open("r", encoding="utf-8") as f:
             baseline_data = json.load(f)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 (基准测试容错)
         return {
             "baseline_file": str(baseline_path),
             "error": f"无法读取基线文件: {exc}",
@@ -305,11 +302,17 @@ def _compare_results(
 class BenchmarkRunner:
     """统一基准测试运行器"""
 
-    def __init__(self, output_dir: str | None = None, compare: bool = False, baseline: str | None = None):
-        """参数:
-        output_dir: 结果保存目录，默认为 benchmarks/results
-        compare:    是否与上次结果对比
-        baseline:   指定基线文件路径（用于 CI 流水线）
+    def __init__(
+        self,
+        output_dir: str | None = None,
+        compare: bool = False,  # noqa: FBT001
+        baseline: str | None = None,
+    ):
+        """
+        参数:
+            output_dir: 结果保存目录，默认为 benchmarks/results
+            compare:    是否与上次结果对比
+            baseline:   指定基线文件路径（用于 CI 流水线）
         """
         if output_dir:
             self.results_dir = Path(output_dir)
@@ -335,8 +338,7 @@ class BenchmarkRunner:
                 f"  ±{result.std_us:.3f} µs",
             )
             return result
-        except Exception as exc:
-            import traceback
+        except Exception as exc:  # noqa: BLE001 (基准测试容错)
 
             err = traceback.format_exc()
             print(f"  [FAILED] {exc}\n{err}")

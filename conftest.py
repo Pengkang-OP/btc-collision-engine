@@ -13,7 +13,6 @@ sys.stdout.closed = True，使后续所有写操作失败。
 3. 修补 SysCapture 相关方法安全处理已关闭的 IO
 4. 修补 logging.StreamHandler.emit() 安全处理已关闭的流（log_cli 兼容性）
 """
-import sys
 
 
 def pytest_configure(config):
@@ -33,7 +32,6 @@ def _apply_python314_capture_patch():
     try:
         import _pytest.capture as capture_mod
         import tempfile
-        import os
 
         # 补丁1: FDCapture.snap() - 安全处理已关闭的 tmpfile
         _orig_fdcapture_snap = capture_mod.FDCapture.snap
