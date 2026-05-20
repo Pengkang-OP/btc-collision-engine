@@ -1,14 +1,15 @@
 """BTC碰撞引擎性能优化基准测试
 验证所有优化模块的性能提升效果
 """
+import hashlib
+import io
+import secrets
 import sys
 import time
 from pathlib import Path
 
 # 添加项目根目录到路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
-
-import hashlib
 
 from src.core.bigint_optimizer import get_bigint_optimizer
 from src.core.memory_pool import get_pool_manager
@@ -25,7 +26,7 @@ def benchmark_precomputed_table(iterations=100):
 
     table = get_precomputed_table(window_size=8)
     ec = table.ec
-    G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
+    G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)  # noqa: N806 (标准椭圆曲线记法)
 
     k = 12345678901234567890123456789012345678
 
@@ -138,14 +139,12 @@ def benchmark_memory_pool(iterations=1000):
     print("基准测试4: 内存池优化")
     print("="*80)
 
-    from src.core.secp256k1 import Secp256k1
-
     # 使用内存池
     pool_mgr = get_pool_manager()
     pool_mgr.initialize()
     ec_pool = pool_mgr.get_ecpoint_pool()
 
-    # 不使用内存池(直接创建)
+    # ── 不使用内存池(直接创建) ──
     start = time.perf_counter()
     for _ in range(iterations):
         point = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
@@ -168,7 +167,10 @@ def benchmark_memory_pool(iterations=1000):
     print(f"  性能提升: {speedup:.2f}x", flush=True)
 
     stats = ec_pool.get_stats()
-    print(f"  池统计: 创建={stats['created_count']}, 获取={stats['acquire_count']}, 归还={stats['release_count']}")
+    print(
+        f"  池统计: 创建={stats['created_count']}, "
+        f"获取={stats['acquire_count']}, 归还={stats['release_count']}"
+    )
 
     return speedup
 
@@ -188,8 +190,6 @@ def benchmark_gpu_scale():
     print("\n" + "="*80)
     print("基准测试6: 大规模批量操作（GPU 工作负载模拟）")
     print("="*80)
-
-    import secrets
 
     optimizer = get_simd_hash_optimizer()
 
@@ -292,9 +292,6 @@ def benchmark_batch_hash160(iterations=10000):
 
 def main():
     """运行所有基准测试"""
-    import io
-    import sys
-
     # 修复Windows终端编码
     if sys.platform == "win32":
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
@@ -309,37 +306,37 @@ def main():
 
     try:
         results["precomputed_table"] = benchmark_precomputed_table(100)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 (基准测试容错)
         print(f"  ❌ 测试失败: {e}")
         results["precomputed_table"] = 0
 
     try:
         results["bigint_optimizer"] = benchmark_bigint_optimizer(100000)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 (基准测试容错)
         print(f"  ❌ 测试失败: {e}")
         results["bigint_optimizer"] = 0
 
     try:
         results["simd_hash"] = benchmark_simd_hash(100000)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 (基准测试容错)
         print(f"  ❌ 测试失败: {e}")
         results["simd_hash"] = 0
 
     try:
         results["memory_pool"] = benchmark_memory_pool(1000)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 (基准测试容错)
         print(f"  ❌ 测试失败: {e}")
         results["memory_pool"] = 0
 
     try:
         results["batch_hash160"] = benchmark_batch_hash160(10000)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 (基准测试容错)
         print(f"  ❌ 测试失败: {e}")
         results["batch_hash160"] = 0
 
     try:
         results["gpu_scale"] = benchmark_gpu_scale()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 (基准测试容错)
         print(f"  ❌ 测试失败: {e}")
         results["gpu_scale"] = 0
 

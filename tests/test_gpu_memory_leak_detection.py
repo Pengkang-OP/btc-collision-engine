@@ -5,8 +5,11 @@ import pytest
 from src.collision.gpu_collision_engine import GPUCollisionEngine
 from src.collision.targets.resolver import TargetResolver
 
+# 这两个测试需要真实 GPU 硬件，CI 中由 gpu_hardware 标记跳过
+pytestmark = pytest.mark.gpu_hardware
 
-@pytest.mark.gpu
+
+@pytest.mark.gpu_hardware
 def test_memory_leak_detection():
     """
     测试内存泄漏检测功能
@@ -30,18 +33,20 @@ def test_memory_leak_detection():
             print(f"批次 {i + 1} 执行时间: {execution_time_ms:.2f}ms")
             time.sleep(0.1)  # 短暂暂停
 
-        # 调用内存泄漏检查 — 验证不抛异常且返回有意义的结果
+        # 调用内存泄漏检查 — 验证不抛异常且方法设计返回 None
         leak_result = engine._check_memory_leaks()
-        # _check_memory_leaks 应返回 bool 表示是否有泄漏，或 None
-        # 至少验证方法未抛异常并成功返回
-        assert leak_result is not None or True, "内存泄漏检查应成功执行"
+        # _check_memory_leaks 设计返回 None（仅执行检查，不返回结果）
+        # 达到此处即证明方法未抛异常
+        assert leak_result is None, (
+            f"_check_memory_leaks 预期返回 None，实际: {type(leak_result).__name__}"
+        )
 
     finally:
         # 清理资源
         engine.stop()
 
 
-@pytest.mark.gpu
+@pytest.mark.gpu_hardware
 def test_buffer_release():
     """
     测试缓冲区释放功能

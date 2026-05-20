@@ -8,9 +8,8 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
-from src.core.multi_format_generator import MultiFormatAddressGenerator, AddressFormat
+from src.core.multi_format_generator import MultiFormatAddressGenerator
 from src.collision.targets.format_aware_manager import FormatAwareTargetManager
-import secrets
 
 
 def test_format_detection_and_generation():
@@ -26,8 +25,8 @@ def test_format_detection_and_generation():
     print("-" * 60)
     manager = FormatAwareTargetManager()
     generator = MultiFormatAddressGenerator()
-    print(f"✓ FormatAwareTargetManager 创建成功")
-    print(f"✓ MultiFormatAddressGenerator 创建成功")
+    print("✓ FormatAwareTargetManager 创建成功")
+    print("✓ MultiFormatAddressGenerator 创建成功")
     print(f"  - 内部生成器是否存在: {hasattr(manager, '_generator')}")
     print(f"  - 内部生成器类型: {type(manager._generator).__name__}")
     
@@ -42,7 +41,7 @@ def test_format_detection_and_generation():
     
     # 用同一个私钥生成所有格式地址
     test_addresses = generator.generate_all_formats(test_private_key)
-    print(f"✓ 从测试私钥生成的地址:")
+    print("✓ 从测试私钥生成的地址:")
     for fmt, addr in test_addresses.items():
         if addr:
             print(f"  - {fmt:8s}: {addr}")
@@ -61,13 +60,13 @@ def test_format_detection_and_generation():
     
     # 检查格式统计
     stats = manager.get_format_stats()
-    print(f"\n✓ 格式统计:")
+    print("\n✓ 格式统计:")
     for fmt, count in stats.items():
         print(f"  - {fmt:8s}: {count} 个目标")
     
     # 检查按格式分组的目标
     targets_by_format = manager.get_targets_by_format()
-    print(f"\n✓ 按格式分组的目标:")
+    print("\n✓ 按格式分组的目标:")
     for fmt, targets in targets_by_format.items():
         if targets:
             print(f"  - {fmt.value:8s}: {list(targets)}")
@@ -81,7 +80,7 @@ def test_format_detection_and_generation():
     
     is_match, matched_address, matched_format = manager.check_match(test_private_key)
     
-    print(f"✓ 匹配结果:")
+    print("✓ 匹配结果:")
     print(f"  - 是否匹配: {is_match}")
     print(f"  - 匹配地址: {matched_address}")
     print(f"  - 匹配格式: {matched_format}")
@@ -94,7 +93,7 @@ def test_format_detection_and_generation():
     
     all_match_found, all_matches = manager.check_match_all(test_private_key)
     
-    print(f"✓ 所有匹配结果:")
+    print("✓ 所有匹配结果:")
     print(f"  - 是否有匹配: {all_match_found}")
     print(f"  - 匹配数量: {len(all_matches)}")
     for addr, fmt in all_matches:
@@ -137,7 +136,7 @@ def test_format_detection_and_generation():
     # 测试只添加一个格式
     single_format_manager = FormatAwareTargetManager()
     single_format_manager.add_target(test_addresses['p2pkh'])
-    print(f"\n单格式管理器（仅P2PKH）:")
+    print("\n单格式管理器（仅P2PKH）:")
     print(f"  格式统计: {single_format_manager.get_format_stats()}")
     single_match, single_addr, single_fmt = single_format_manager.check_match(test_private_key)
     print(f"  匹配结果: {single_match}, {single_fmt}, {single_addr}")

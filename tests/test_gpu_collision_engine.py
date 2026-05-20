@@ -278,18 +278,19 @@ class TestGPUCollisionEngine:
                 import time
 
                 time.sleep(0.5)
-
-                # 验证后台线程捕获到 ValueError
-                assert len(captured_exceptions) > 0, "应捕获到后台线程异常"
-                assert any(
-                    isinstance(exc, ValueError)
-                    and ("未知" in str(exc) or "无效" in str(exc) or "invalid" in str(exc).lower())
-                    for exc in captured_exceptions
-                ), f"应捕获到包含'未知/无效/invalid'的ValueError，实际: {captured_exceptions}"
             finally:
+                # 必须在断言之前恢复全局 hook，防止断言失败导致 hook 泄漏
                 threading.excepthook = original_hook
                 if engine.is_running():
                     engine.stop()
+
+            # 断言移至 finally 之后：即使断言失败，hook 也已恢复
+            assert len(captured_exceptions) > 0, "应捕获到后台线程异常"
+            assert any(
+                isinstance(exc, ValueError)
+                and ("未知" in str(exc) or "无效" in str(exc) or "invalid" in str(exc).lower())
+                for exc in captured_exceptions
+            ), f"应捕获到包含'未知/无效/invalid'的ValueError，实际: {captured_exceptions}"
 
     @pytest.mark.skip(
         reason="[GPU-HW-003] 需要真实GPU硬件: pyopencl C扩展类型检查无法完美Mock。详见: test_results/PYOPENCL_MOCK_SOLUTION.md"  # noqa: E501

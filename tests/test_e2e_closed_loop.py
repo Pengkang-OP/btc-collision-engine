@@ -126,6 +126,7 @@ class TestRangeScanClosedLoop:
         # range_scan 在后台线程运行，范围小很快完成
         engine.start(mode="range", start=1, end=100)
         engine._thread.join(timeout=15)
+        engine.stop()
 
         assert len(match_results) == 1, f"应检测到 1 个匹配，实际: {len(match_results)}"
         m = match_results[0]
@@ -155,6 +156,7 @@ class TestRangeScanClosedLoop:
 
         engine.start(mode="range", start=1, end=100)
         engine._thread.join(timeout=10)
+        engine.stop()
 
         assert len(match_results) == 3, f"应检测到 3 个匹配，实际: {len(match_results)}"
         assert _K1_ADDR in match_results
@@ -184,6 +186,7 @@ class TestRangeScanClosedLoop:
 
         engine.start(mode="range", start=1, end=100)
         engine._thread.join(timeout=10)
+        engine.stop()
 
         assert len(false_matches) == 0, f"不应有任何匹配，实际: {false_matches}"
         stats = engine.get_stats()
@@ -241,6 +244,7 @@ class TestMatchCallbackClosedLoop:
 
         engine.start(mode="range", start=1, end=100)
         engine._thread.join(timeout=10)
+        engine.stop()
 
         assert "pk" in result, "on_match 未被调用"
 
@@ -278,6 +282,7 @@ class TestMatchCallbackClosedLoop:
 
         engine.start(mode="range", start=1, end=100)
         engine._thread.join(timeout=10)
+        engine.stop()
 
         assert len(results) >= 1
         r = results[0]
@@ -306,6 +311,7 @@ class TestMatchCallbackClosedLoop:
 
         engine.start(mode="range", start=1, end=100)
         engine._thread.join(timeout=10)
+        engine.stop()
 
         assert "match_callback_addr" in derived
         assert derived["match_callback_addr"] == derived["re_derived_addr"], (
@@ -358,6 +364,7 @@ class TestEngineLifecycleClosedLoop:
         assert engine.is_running()
 
         engine._thread.join(timeout=15)
+        engine.stop()
 
         # 验证各阶段
         assert lifecycle["progress_calls"] > 0, "on_progress 应被调用"
@@ -393,6 +400,7 @@ class TestEngineLifecycleClosedLoop:
         # 足够大的范围确保触发多次 progress 回调
         engine.start(mode="range", start=1, end=20000)
         engine._thread.join(timeout=30)
+        engine.stop()
 
         assert len(progress_events) >= 1, (
             f"on_progress 应至少被调用一次，实际: {len(progress_events)}"
@@ -415,6 +423,7 @@ class TestEngineLifecycleClosedLoop:
 
         engine.start(mode="range", start=1, end=50)
         engine._thread.join(timeout=10)
+        engine.stop()
 
         assert len(complete_called) == 1, "on_complete 应被调用一次"
 
@@ -430,6 +439,7 @@ class TestEngineLifecycleClosedLoop:
         # 第一次运行
         engine.start(mode="range", start=1, end=50)
         engine._thread.join(timeout=10)
+        engine.stop()
         stats1 = engine.get_stats()
         assert stats1.total_checked > 0
 
@@ -440,6 +450,7 @@ class TestEngineLifecycleClosedLoop:
         # 第二次运行
         engine.start(mode="range", start=51, end=100)
         engine._thread.join(timeout=10)
+        engine.stop()
         stats2 = engine.get_stats()
 
         # 第二次应当也检查了私钥（stats 会被重置，但 total_checked > 0）
@@ -480,6 +491,7 @@ class TestCheckpointClosedLoop:
 
         engine.start(mode="range", start=1, end=5000)  # 更大范围确保扫描时长 >= 1s
         engine._thread.join(timeout=15)
+        engine.stop()
 
         assert cp_mgr.exists(), "checkpoint 文件应存在"
         assert len(match_addrs) >= 1, "应至少找到 k=1"
@@ -514,6 +526,7 @@ class TestCheckpointClosedLoop:
 
         engine1.start(mode="range", start=1, end=5000)  # 更大范围确保扫描时长 >= 1s
         engine1._thread.join(timeout=15)
+        engine1.stop()
 
         assert cp_mgr.exists(), "第一次扫描后 checkpoint 应存在"
         assert len(match_addrs) >= 1, "应至少找到 k=1"
@@ -552,6 +565,7 @@ class TestMultiTargetClosedLoop:
 
         engine.start(mode="range", start=1, end=100)
         engine._thread.join(timeout=15)
+        engine.stop()
 
         assert len(match_addrs) == 10, (
             f"应检测到 10 个匹配，实际: {len(match_addrs)}"
@@ -628,6 +642,7 @@ class TestMultiFormatClosedLoop:
         )
         engine.start(mode="range", start=1, end=10)
         engine._thread.join(timeout=15)
+        engine.stop()
 
         assert len(match_results) == 1, f"应有 1 个匹配，实际: {len(match_results)}"
         m_pk, m_addr, _ = match_results[0]
@@ -864,6 +879,7 @@ class TestFileLoadingClosedLoop:
         )
         engine.start(mode="range", start=1, end=20)
         engine._thread.join(timeout=15)
+        engine.stop()
 
         # Legacy P2PKH + Bech32 解析的 5 个 P2PKH 应该匹配
         for addr in expected_legacy_p2pkh:
@@ -981,6 +997,7 @@ class TestEventBusClosedLoop:
         )
         engine.start(mode="range", start=1, end=50)
         engine._thread.join(timeout=15)
+        engine.stop()
 
         bus.stop()
 
@@ -1013,6 +1030,7 @@ class TestEventBusClosedLoop:
         )
         engine.start(mode="range", start=1, end=100)
         engine._thread.join(timeout=15)
+        engine.stop()
 
         bus.stop()
 
@@ -1045,6 +1063,7 @@ class TestStatsAccuracyClosedLoop:
 
         engine.start(mode="range", start=1, end=100)
         engine._thread.join(timeout=10)
+        engine.stop()
 
         stats = engine.get_stats()
         # range_scan 遍历 100 个值，全部有效（1-100 都在 [1, N) 内）
@@ -1069,6 +1088,7 @@ class TestStatsAccuracyClosedLoop:
 
         engine.start(mode="range", start=1, end=50)
         engine._thread.join(timeout=15)
+        engine.stop()
 
         # 通过回调验证匹配数（更可靠）
         assert len(match_results) == 2, (
@@ -1094,6 +1114,7 @@ class TestStatsAccuracyClosedLoop:
 
         engine.start(mode="range", start=1, end=500)
         engine._thread.join(timeout=15)
+        engine.stop()
 
         stats = engine.get_stats()
         # speed 基于 total_checked / elapsed_time 计算
@@ -1112,6 +1133,7 @@ class TestStatsAccuracyClosedLoop:
 
         engine.start(mode="range", start=1, end=100)
         engine._thread.join(timeout=15)
+        engine.stop()
 
         stats = engine.get_stats()
         assert len(stats.matches) == 1
@@ -1142,6 +1164,7 @@ class TestMultiWorkerClosedLoop:
 
         engine.start(mode="range", start=1, end=200)
         engine._thread.join(timeout=15)
+        engine.stop()
 
         assert len(match_results) == 1, (
             f"应检测到 1 个匹配（不重复），实际: {len(match_results)}"
@@ -1165,6 +1188,7 @@ class TestMultiWorkerClosedLoop:
 
         engine.start(mode="range", start=1, end=100)
         engine._thread.join(timeout=15)
+        engine.stop()
 
         assert len(match_results) == 3, (
             f"应检测到 3 个匹配，实际: {len(match_results)}"
@@ -1183,6 +1207,7 @@ class TestMultiWorkerClosedLoop:
 
         engine.start(mode="range", start=1, end=1000)
         engine._thread.join(timeout=20)
+        engine.stop()
 
         stats = engine.get_stats()
         # 多线程下 total_checked 可能略少于 1000（窗口边界），但应接近
@@ -1286,6 +1311,7 @@ class TestDataLoggingClosedLoop:
 
         engine.start(mode="range", start=1, end=50)
         engine._thread.join(timeout=15)
+        engine.stop()
 
         stats = engine.get_stats()
         # 有 on_match 回调 → 引擎不会提前停止 → total_checked 应为 50
@@ -1311,6 +1337,7 @@ class TestDataLoggingClosedLoop:
 
         engine.start(mode="range", start=1, end=100)
         engine._thread.join(timeout=15)
+        engine.stop()
 
         assert len(match_results) == 1, (
             f"data_logging 启用时匹配回调应正常，实际: {len(match_results)}"
