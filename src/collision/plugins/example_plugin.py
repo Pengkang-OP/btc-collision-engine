@@ -11,9 +11,9 @@ from src.core.address_generator import P2PKHAddressGenerator
 # 统一回调类型别名
 from ..types import CompleteCallback, MatchCallback, ProgressCallback
 
-# v2.2.1迁移: 使用crypto_backend替代secp256k1.py
-# Secp256k1.N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
-SECP256K1_N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+from ...core.secp256k1 import Secp256k1  # v4.2.2: 统一从 secp256k1 获取曲线参数
+
+SECP256K1_N = Secp256k1.N
 
 
 class ExamplePlugin(CollisionPlugin):
@@ -81,7 +81,7 @@ class ExamplePlugin(CollisionPlugin):
             # 生成随机私钥
             private_key = secrets.token_bytes(32)
             k = int.from_bytes(private_key, "big")
-            # v2.2.1迁移: 使用曲线阶数常量（原Secp256k1.N）
+            # v4.2.1迁移: 使用曲线阶数常量（原Secp256k1.N）
             if k < 1 or k >= SECP256K1_N:
                 continue
 

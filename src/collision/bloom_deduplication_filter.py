@@ -13,7 +13,11 @@ from bitarray import bitarray
 # 导入日志配置
 from ..utils import get_configured_logger
 
+<<<<<<< Updated upstream
 # 日志系统由CLI/main.py入口统一初始化
+=======
+# 获取模块日志记录器
+>>>>>>> Stashed changes
 logger = get_configured_logger("BloomDeduplicationFilter")
 
 
@@ -199,6 +203,14 @@ class BloomFilter:
 
 class BloomDeduplicationFilter:
     """基于Bloom Filter的去重过滤器
+
+    **使用场景（M7）**: 适用于 random_search 海量去重（>100万元素），
+    与 [DeduplicationFilter](file:///f:/Qoder/btc-collision-engine/src/collision/deduplication_filter.py)
+    选择分界：
+    - BloomDeduplicationFilter: 概率去重，适合 >100万 元素、
+      可容忍 0.1% 误判率的 random_search 海量去重
+    - DeduplicationFilter: 滑动窗口精确去重，适合 <100万 元素、
+      需要零误判的场景
 
     相比传统哈希集合：
     - 内存占用减少90%

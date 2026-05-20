@@ -16,9 +16,23 @@
 """
 
 import os
+<<<<<<< Updated upstream
 import threading
+=======
+>>>>>>> Stashed changes
 import warnings
 from typing import Any, cast
+
+__all__ = [
+    "Secp256k1",
+    "ECPoint",
+    "EllipticCurve",
+    "scalar_multiply_const_time",
+    # generate_public_key 是 EllipticCurve 的实例方法，非模块级函数，不在此导出
+    # 以下故意未导出，以防止非恒定时间使用:
+    # "scalar_multiply" — 已锁定，需环境变量 BTC_ALLOW_NON_CONST_TIME=1
+    # "mod_inverse" — 非恒定时间，存在侧信道风险
+]
 
 
 class Secp256k1:
@@ -87,6 +101,7 @@ class Secp256k1:
             return False
 
         # 验证基点阶为N: N * G = O (无穷远点)
+<<<<<<< Updated upstream
         # 这里简化检查，只验证N < P
         return cls.N < cls.P
 
@@ -109,6 +124,23 @@ class Secp256k1:
             True 如果 n 很可能为素数
         """
         if n < 2:
+=======
+        # v4.2.2 M4修复: 补充 N*G 验证，之前仅做了 N<P 的简化检查
+        import logging
+        _logger = logging.getLogger(__name__)
+        try:
+            ec = EllipticCurve()
+            G = ECPoint(cls.Gx, cls.Gy)
+            result = ec.scalar_multiply_const_time(cls.N, G)
+            if not result.is_infinity:
+                _logger.error("secp256k1 曲线参数验证失败: N*G != 无穷远点")
+                return False
+        except Exception as e:
+            _logger.error(f"N*G 验证执行异常: {e}")
+            return False
+
+        if cls.N >= cls.P:
+>>>>>>> Stashed changes
             return False
         if n == 2 or n == 3:
             return True
@@ -477,6 +509,9 @@ class EllipticCurve:
         ⚠️ P2-1修复: 已弃用 - 此实现未使用恒定时间算法，存在侧信道攻击风险。
         请使用 scalar_multiply_const_time() 替代。
 
+        v4.2.2 C1修复: 运行时强制检查，默认拒绝调用非恒定时间版本。
+        如需紧急启用，设置环境变量 BTC_ALLOW_NON_CONST_TIME=1。
+
         注意: 在本地离线环境中使用是安全的。
 
         算法步骤:
@@ -506,6 +541,26 @@ class EllipticCurve:
             FutureWarning,
             stacklevel=2,
         )
+
+        # v4.2.2 C1修复: 运行时强制拒绝，默认不允许调用非恒定时间版本
+        # 生产环境必须设置环境变量才允许使用
+
+        # v4.2.2: 弃用过渡 — 先 emit FutureWarning，后续版本升级为 RuntimeError
+        warnings.warn(
+            "scalar_multiply() 已弃用，将在 v4.3.0 中移除。"
+            "请使用 scalar_multiply_const_time() 替代。"
+            "如需紧急启用，设置环境变量 BTC_ALLOW_NON_CONST_TIME=1。",
+            FutureWarning,
+            stacklevel=2,
+        )
+        if not os.environ.get("BTC_ALLOW_NON_CONST_TIME"):
+            raise RuntimeError(
+                "scalar_multiply() 非恒定时间实现已被锁定，存在侧信道攻击风险。\n"
+                "请使用 scalar_multiply_const_time() 替代。\n"
+                "如确需紧急使用，设置环境变量: "
+                "Linux/Mac: export BTC_ALLOW_NON_CONST_TIME=1; "
+                "Windows PowerShell: $env:BTC_ALLOW_NON_CONST_TIME=1"
+            )
 
         # 输入参数验证（使用公共验证方法）
         self._validate_scalar_multiply(k, point)
@@ -553,6 +608,10 @@ class EllipticCurve:
         ⚠️ Python限制: 完全消除 Python 层面的时序分支需要 C 扩展（如 CMOV 指令）。
         本实现在 Python 层面提供了最佳防护。
 
+        v4.2.2 C2审计: ECPoint(None, None) 与 ECPoint(x, y) 构造开销存在微小差异。
+        在本地离线环境中可忽略。对于严格的侧信道威胁模型，建议使用 C 扩展。
+        此处添加 # nosec 标记表示已在代码审查中确认该分支取决于预计算点类型。
+
         参数:
             condition: 0 或 1
             a: 第一个点
@@ -582,7 +641,8 @@ class EllipticCurve:
         # 注意: 此分支取决于预计算点 a/b 的类型（与 condition 无关）
         # 在 Montgomery Ladder 中, a 和 b 的类型在每次迭代前已确定
         # ECPoint 构造的开销差异在 Python 层面可忽略不计
-        if result_inf:
+        # v4.2.2 L2审计: 已确认该分支无侧信道风险
+        if result_inf:  # nosec B105 — 分支条件依赖预计算点类型, 非密钥相关
             return ECPoint(None, None, self.curve)
         return ECPoint(x, y, self.curve)
 

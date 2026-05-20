@@ -4,7 +4,7 @@
 通过 DeviceManagerAdapter 获取底层 GPUDevice 和 GPUContext，
 利用真实的内核编译流程创建 GPUKernel。
 
-版本: v2.0 (Phase 2)
+版本: v4.2.2 (Phase 2)
 创建日期: 2026-04-29
 更新日期: 2026-04-30
 """

@@ -643,7 +643,7 @@ class TestConfigMigration:
         reset_log_window_instance()
 
     def test_detect_config_version(self):
-        """版本检测 - v2.x / v3.0.0 / v3.1.0"""
+        """版本检测 - v2.x / v4.2.1 / v4.2.1"""
         v2_config = {
             "crypto": {"backend": "auto"},
             "collision": {"mode": "random"},
@@ -671,7 +671,7 @@ class TestConfigMigration:
         assert detect_config_version(v31_config) == "3.1.0"
 
     def test_migrate_v2_to_v3(self):
-        """v2 -> v3.1 迁移后必需段存在"""
+        """v2 -> v4.2.1 迁移后必需段存在"""
         v2_config = {
             "crypto": {"backend": "auto"},
             "collision": {"mode": "random", "max_workers": 4},

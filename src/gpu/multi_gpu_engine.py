@@ -146,8 +146,12 @@ class MultiGPUCollisionEngine:
         # 性能历史数据（添加锁防止竞态条件）
         self._performance_history: list[dict[str, Any]] = []
         self._performance_history_lock = threading.Lock()  # 修复: 防止并发访问导致数据竞争
+<<<<<<< Updated upstream
         # P2修复: 配置化历史长度上限（原硬编码100）
         self._max_history_size = self.config.performance_history_max_size
+=======
+        self._max_history_size = 100  # 最大历史记录数
+>>>>>>> Stashed changes
 
         # 分布式统计聚合器（减少锁竞争，支持大规模GPU集群）- 根据配置启用
         self._stats_aggregator = None
@@ -1180,6 +1184,14 @@ class MultiGPUCollisionEngine:
                 if throughput > 0:
                     self._metrics.record_throughput(device_idx, throughput)
 
+<<<<<<< Updated upstream
+=======
+            # 保持历史数据大小（添加锁保护）
+            with self._performance_history_lock:
+                if len(self._performance_history) > self._max_history_size:
+                    self._performance_history = self._performance_history[-self._max_history_size :]
+
+>>>>>>> Stashed changes
             # 记录负载均衡器状态
             if self.load_balancer:
                 self.load_balancer.get_all_loads()

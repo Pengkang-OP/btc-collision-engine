@@ -90,6 +90,7 @@ def validate_args(args: argparse.Namespace) -> bool:
     output = _get_output()
 
     # 如果没有 -t/-f，且不是实用工具命令，则报错
+    # v4.2.2 P2修复: 补全所有实用命令标志，防御性编程
     is_util_cmd = (
         getattr(args, "health_check", False)
         or getattr(args, "platform_check", False)
@@ -98,6 +99,10 @@ def validate_args(args: argparse.Namespace) -> bool:
         or getattr(args, "examples", False)
         or getattr(args, "config_check", False)
         or getattr(args, "quick_start", False)
+        or getattr(args, "quick_run", False)
+        or getattr(args, "migrate_config", False)
+        or getattr(args, "template", None) is not None
+        or getattr(args, "recommend", False)
     )
     if not is_util_cmd and not args.targets and not args.file:
         output.error(_t("cli.validation.need_target"))

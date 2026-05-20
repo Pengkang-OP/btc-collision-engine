@@ -3,7 +3,11 @@
 比特币私钥碰撞引擎，支持CPU和GPU加速，用于学习和研究比特币地址碰撞。
 
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
+<<<<<<< Updated upstream
 [![Version](https://img.shields.io/badge/Version-4.4.0-blue.svg)](CHANGELOG.md)
+=======
+[![Version](https://img.shields.io/badge/Version-4.2.2-blue.svg)](CHANGELOG.md)
+>>>>>>> Stashed changes
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Contributions](https://img.shields.io/badge/Contributions-Welcome-orange.svg)](CONTRIBUTING.md)
 
@@ -403,7 +407,8 @@ python key_collision_cli.py -t 1A1z... -m random --dedup
 |------|------|------|
 | 初始基准 (CPU) | **44K keys/s** | 无GPU优化 |
 | GPU 异步双缓冲 | **~520K keys/s** | v3.0 |
-| GPU PRNG + 双缓冲 | **3.07M keys/s** | v3.2.0，**70x 提升** |
+| GPU PRNG + 双缓冲 | **3.07M keys/s** | v3.2.0, 不含异步双缓冲, **70x 提升** |
+| GPU PRNG + 异步双缓冲 | **4.89M keys/s** | v3.5.0 最新, 峰值 5.08M |
 
 最优配置：`batch_size=1,048,576`，`async_execution=true`（参考 `config.intel_arc.json`）
 
@@ -697,15 +702,17 @@ python test_checkpoint_resume.py
 
 ### GPU性能
 
-**实测数据** (Intel Arc A770, v2.2.0):
+**最新实测数据** (Intel Arc A770, v3.5.0):
 
 | 指标 | 数值 | 说明 |
 |------|------|------|
-| 平均吞吐量 | **203,434 keys/s** | 批次大小5,000-10,000 |
-| 峰值吞吐量 | **240,031 keys/s** | 最佳性能 |
-| 平均执行时间 | 49.5 ms | 每批次 |
-| 错误率 | 0.00% | 稳定运行 |
+| 峰值吞吐量 (异步) | **4.89M keys/s** | 异步双缓冲 + GPU PRNG |
+| 峰值吞吐量 (同步) | **3.07M keys/s** | GPU PRNG + 双缓冲 |
 | 显存使用 | 0.42 MB/批次 | 高效利用 |
+| 错误率 | 0.00% | 稳定运行 |
+
+> **历史数据** (Intel Arc A770, v2.2.0, 已废弃): 平均吞吐量 ~203K keys/s, 峰值 ~240K keys/s, 批次 5,000-10,000。
+> 从 v2.2.0 到 v3.5.0，性能提升 **24x** (203K→4.89M keys/s)。
 
 **理论性能参考**:
 

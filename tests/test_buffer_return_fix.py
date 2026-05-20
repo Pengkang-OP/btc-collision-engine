@@ -2,14 +2,22 @@
 """
 GPU内存池缓冲区归还验证测试
 
+<<<<<<< Updated upstream
 验证v3.2.1修复 (历史版本):
+=======
+验证v4.2.1修复:
+>>>>>>> Stashed changes
 1. 缓冲区释放时归还到内存池
 2. 复用率达到85%+
 3. 无内存泄漏
 
 作者: AI Assistant
 日期: 2026-04-24
+<<<<<<< Updated upstream
 版本: v3.2.1 (历史版本)
+=======
+版本: v4.2.1
+>>>>>>> Stashed changes
 """
 
 import os

@@ -29,7 +29,7 @@ from src.gpu.intel_optimizer import IntelGPUOptimizer  # noqa: E402
 # ---------------------------------------------------------------------------
 
 # 包含正确 uint32 workaround 特征字符串的内核源码片段
-# 注意: v4.0 PRNG改造后，内核使用 __constant const uint *seed 替代 __global const uint *private_keys
+# 注意: v4.2.1 PRNG改造后，内核使用 __constant const uint *seed 替代 __global const uint *private_keys
 _VALID_KERNEL_SOURCE = """
 __kernel void btc_collision(
     __constant const uint *seed,

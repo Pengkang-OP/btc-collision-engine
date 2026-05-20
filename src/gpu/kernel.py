@@ -38,11 +38,10 @@ For complete technical specs, API docs and usage guide, see:
 
 ## Technical Specs
 
-- **Total lines**: 1,052
-- **Kernel source**: 35,234 chars / 1,042 lines
-- **Kernel functions**: 3 (__kernel)
-- **Helper functions**: 26
-- **Constant definitions**: 24 (including macros)
+- **Total lines**: ~1,635
+- **Kernel functions**: 4 (__kernel: batch_check, batch_check_local_mem, debug_hash, verify_arithmetic)
+- **Helper functions**: 30+ (uint256 ops, SHA-256, RIPEMD-160, EC point ops)
+- **Constant definitions**: 30+ (including macros, curve params, hash constants)
 """
 
 # flake8: noqa: W605, E501
@@ -65,7 +64,11 @@ KERNEL_VERSION_HISTORY: list[dict[str, str]] = [
     {
         "version": "4.2.2",
         "date": "2026-05",
+<<<<<<< Updated upstream
         "changes": "OPT-3: 内核内存访问模式文档化; batch_check 合并访问注释; local_mem 阈值可配置化",
+=======
+        "changes": "P1 fix: mod_inverse Binary GCD 2^256 overflow compensation (lost carry broke Bezout invariant)",
+>>>>>>> Stashed changes
     },
     {
         "version": "4.2.1",
@@ -197,13 +200,24 @@ OPENCL_KERNEL_SOURCE = """
 // ============================================================================
 // Bitcoin secp256k1 GPU computation kernel
 // Kernel Version: 4.2.2 (MAJOR.MINOR.PATCH)
+<<<<<<< Updated upstream
 // Compile-time validation: #if KERNEL_VERSION_MAJOR < 4 ...
+=======
+>>>>>>> Stashed changes
 // ============================================================================
 
 // Kernel version defines for compile-time feature gating
 #define KERNEL_VERSION_MAJOR 4
 #define KERNEL_VERSION_MINOR 2
 #define KERNEL_VERSION_PATCH 2
+<<<<<<< Updated upstream
+=======
+
+// v4.2.2 P1修复: 编译时版本校验，防止 Python 侧与 OpenCL 侧版本号不一致
+#if KERNEL_VERSION_MAJOR < 4
+#error "Kernel version too old: requires KERNEL_VERSION_MAJOR >= 4"
+#endif
+>>>>>>> Stashed changes
 
 // uint256 type: 8 x uint32, little-endian (d[0]=LSB, d[7]=MSB)
 typedef struct {
@@ -235,7 +249,7 @@ constant uint SECP256K1_N[8] = {0xD0364141, 0xBFD25E8C, 0xAF48A03B, 0xBAAEDCE6, 
 constant uint ZERO[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 // ============================================================================
-// Scalar multiplication constants (v4.2.0 audit fix)
+// Scalar multiplication constants (v4.2.1 audit fix)
 // ============================================================================
 
 // Precomputed table parameters: 31 points * 2 coords * 8 uints per coord = 496 uints
@@ -530,7 +544,7 @@ void mod_sqr(const uint256_t *a, uint256_t *result) {
     mod_mul(a, a, result);
 }
 
-// v4.2.0: Binary GCD modular inverse.
+// v4.2.1: Binary GCD modular inverse.
 // Replaces addition chain (255 sqr + 15 mul) with add/sub/shift only.
 // ~30% fewer ALU ops, zero register pressure from multiplication.
 // Algorithm: binary extended Euclidean for a^(-1) mod P.
@@ -568,20 +582,34 @@ void mod_inverse(const uint256_t *a, uint256_t *result) {
     uint256_set_zero(&x2);     // x2 = 1
     x2.d[0] = 1;
 
+<<<<<<< Updated upstream
     // Binary GCD with Bezout coefficient tracking (max 512 iterations to prevent TDR)
     uint _gcd_iters = 0;
     while (!uint256_is_zero(&u) && !uint256_is_zero(&v) && _gcd_iters < 512) {
         _gcd_iters++;
+=======
+    // Binary GCD with Bezout coefficient tracking
+    // v4.2.2: Fix uint256_add overflow when x+P >= 2^256 (lost 2^256 = 977 mod P)
+    while (!uint256_is_zero(&u) && !uint256_is_zero(&v)) {
+>>>>>>> Stashed changes
         // Strip factor 2 from u
         while (uint256_is_even(&u)) {
             uint256_shr1(&u, &u);
             // x1 / 2 mod P: if x1 is odd, (x1 + P) / 2, else x1 / 2
             if (!uint256_is_even(&x1)) {
+<<<<<<< Updated upstream
                 // v4.2.4 fix: handle x1 + P overflow (x1 >= 2^32+977 causes carry)
                 uint carry = uint256_add(&x1, &p, &x1);
                 uint256_shr1(&x1, &x1);
                 if (carry) {
                     x1.d[7] |= 0x80000000;  // propagate overflow bit into MSB
+=======
+                uint carry = uint256_add(&x1, &p, &x1);
+                uint256_shr1(&x1, &x1);
+                if (carry) {
+                    // Compensate 2^256 overflow: add 2^255 to x1
+                    x1.d[7] |= 0x80000000;
+>>>>>>> Stashed changes
                 }
             } else {
                 uint256_shr1(&x1, &x1);
@@ -592,10 +620,17 @@ void mod_inverse(const uint256_t *a, uint256_t *result) {
         while (uint256_is_even(&v)) {
             uint256_shr1(&v, &v);
             if (!uint256_is_even(&x2)) {
+<<<<<<< Updated upstream
                 // v4.2.4 fix: handle x2 + P overflow
                 uint carry = uint256_add(&x2, &p, &x2);
                 uint256_shr1(&x2, &x2);
                 if (carry) {
+=======
+                uint carry = uint256_add(&x2, &p, &x2);
+                uint256_shr1(&x2, &x2);
+                if (carry) {
+                    // Compensate 2^256 overflow: add 2^255 to x2
+>>>>>>> Stashed changes
                     x2.d[7] |= 0x80000000;
                 }
             } else {
@@ -632,7 +667,7 @@ void mod_inverse(const uint256_t *a, uint256_t *result) {
 
 // ============================================================================
 // Jacobian Coordinates point operations
-// v3.0.0 opt: eliminate intermediate mod_inverse, greatly reduce computation
+// v4.2.1 opt: eliminate intermediate mod_inverse, greatly reduce computation
 // Jacobian (X:Y:Z) maps to affine (X/Z^2, Y/Z^3)
 // Point double: 11 mod_mul+5 mod_sqr (vs affine: 4 mod_mul+505 Modular multiplication/mod_inverse)
 // Point add: 16 mod_mul+4 mod_sqr (vs affine: 5 mod_mul+505 Modular multiplication/mod_inverse)
@@ -873,7 +908,7 @@ void ec_point_double(const uint256_t *px, const uint256_t *py, uint256_t *rx, ui
 }
 
 // Inline helper: load a single precomputed point from __constant table
-// v4.2.0: Eliminate 1984 bytes/thread private memory copy (precomp_x[31]+precomp_y[31]).
+// v4.2.1: Eliminate 1984 bytes/thread private memory copy (precomp_x[31]+precomp_y[31]).
 // Access __constant directly on-demand instead of bulk-copying to private memory.
 // Reduces register pressure ~30%, enabling more wavefronts on Intel Arc A770.
 // v4.2.1: Use PRECOMP_UINTS_PER_POINT constant (audit fix)
@@ -888,12 +923,12 @@ void load_precomp_point(int index, __constant const uint *table,
 }
 
 // Scalar multiply: R = k * G (Jacobian MSB-first windowed algorithm)
-// v3.0.0 major optimizations:
+// v4.2.1 major optimizations:
 //   1. Use Jacobian coords to eliminate intermediate mod_inverse (major speedup)
 //   2. Fix algorithm: changed from LSB-first to correct MSB-first
-// v4.0.0 optimizations:
+// v4.2.1 optimizations:
 //   3. Precomputed table passed from host, avoids redundant computation per thread
-// v4.2.0 optimizations:
+// v4.2.1 optimizations:
 //   4. Eliminate private memory copy of precomp table (1984B/thread -> 0B)
 //      Use on-demand __constant access, reducing register spill on Intel Arc
 // Algorithm steps:
@@ -912,7 +947,7 @@ void ec_scalar_multiply(const uint256_t *k,
     uint256_set_zero(&jac_y);
     uint256_set_zero(&jac_z);
 
-    // v4.2.0: On-demand point loading from __constant (no bulk copy)
+    // v4.2.1: On-demand point loading from __constant (no bulk copy)
     uint256_t loaded_x, loaded_y;  // single point temp buffer
 
     // MSB-first window algorithm (w=5)
@@ -1055,7 +1090,7 @@ void sha256_transform(uint *state, const uchar *data) {
     state[7] += h;
 }
 
-// v4.2.0: Single-block SHA-256 for 33-byte input (compressed public key).
+// v4.2.1: Single-block SHA-256 for 33-byte input (compressed public key).
 // Eliminates byte-by-byte buffer loop and padding logic.
 // ~40% fewer instructions than generic sha256() for this input size.
 void sha256_single_block_33(const uchar *data, uchar *hash) {
@@ -1197,7 +1232,7 @@ __constant uint RIPEMD160_KR[5] = {
     a = RIPEMD160_ROTL(a + f(b, c, d) + x[r] + k, s) + e; \
     c = RIPEMD160_ROTL(c, 10)
 
-// v4.2.0: Message index and rotation lookup tables (left path).
+// v4.2.1: Message index and rotation lookup tables (left path).
 // Replaces 160 macro expansions with loop, reducing I-cache pressure on Intel Arc.
 __constant uchar RIPEMD160_IDX_L[80] = {
     0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,   // Round 0
@@ -1213,7 +1248,7 @@ __constant uchar RIPEMD160_ROT_L[80] = {
     11,12,14,15,14,15,9,8,9,14,5,6,8,6,5,12,  // Round 3
     9,15,5,11,6,8,13,12,5,12,13,14,11,8,5,6   // Round 4
 };
-// v4.2.0: Message index and rotation lookup tables (right path).
+// v4.2.1: Message index and rotation lookup tables (right path).
 __constant uchar RIPEMD160_IDX_R[80] = {
     5,14,7,0,9,2,11,4,13,6,15,8,1,10,3,12,   // Round 0
     6,11,3,7,0,13,5,10,14,15,8,12,4,9,1,2,   // Round 1
@@ -1356,7 +1391,7 @@ void ripemd160(const uchar *data, uint len, uchar *hash) {
 // Hash160: RIPEMD160(SHA256(data))
 // ============================================================================
 
-// v4.2.0: Fast path for 33-byte input (compressed pubkey, >99% of calls).
+// v4.2.1: Fast path for 33-byte input (compressed pubkey, >99% of calls).
 // Uses single-block SHA-256, avoiding byte-by-byte loop overhead.
 void hash160(const uchar *data, uint len, uchar *result) {
     uchar sha256_hash[32];
@@ -1416,7 +1451,7 @@ __kernel void batch_check(
     __global const uchar *target_hash160s,  // Input: num_targets * 20 bytes
     const uint num_targets,
     __global int *match_flags,              // Output: num_keys flags (0=no match, target_index+1=match)
-    const uint check_uncompressed,          // v4.0: 0=compressed only, 1=also check uncompressed format
+    const uint check_uncompressed,          // v4.2.1: 0=compressed only, 1=also check uncompressed format
     __constant const uint *precomp_table    // Precomputed table: 31x2x8 = 496 uint32 (G1..G31 affine)
 ) {
     // OPT-3 内核内存访问模式文档化:
@@ -1489,7 +1524,7 @@ __kernel void batch_check(
     int match = 0;
     HASH160_TARGET_SCAN(target_hash160s, h0, h1, h2, h3, h4, num_targets, match);
 
-    // v4.0: If no match and uncompressed checking enabled, try uncompressed format
+    // v4.2.1: If no match and uncompressed checking enabled, try uncompressed format
     if (match == 0 && check_uncompressed) {
         // Serialize uncompressed public key (0x04 + x + y)
         uchar pubkey_uncomp[65];
@@ -1524,7 +1559,7 @@ __kernel void batch_check_local_mem(
     __global const uchar *target_hash160s,  // Input: num_targets * 20 bytes
     const uint num_targets,
     __global int *match_flags,              // Output: num_keys flags
-    const uint check_uncompressed,          // v4.0: 0=compressed only, 1=also check uncompressed format
+    const uint check_uncompressed,          // v4.2.1: 0=compressed only, 1=also check uncompressed format
     __local uchar *cached_targets,          // local memory cache: num_targets * 20 bytes
     __constant const uint *precomp_table    // Precomputed table: 31x2x8 = 496 uint32 (G1..G31 affine)
 ) {
@@ -1606,7 +1641,7 @@ __kernel void batch_check_local_mem(
     int match = 0;
     HASH160_TARGET_SCAN(cached_targets, h0, h1, h2, h3, h4, num_targets, match);
 
-    // v4.0: If no match and uncompressed checking enabled, try uncompressed format
+    // v4.2.1: If no match and uncompressed checking enabled, try uncompressed format
     if (match == 0 && check_uncompressed) {
         // Serialize uncompressed public key (0x04 + x + y)
         uchar pubkey_uncomp[65];

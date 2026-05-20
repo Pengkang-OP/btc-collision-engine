@@ -14,7 +14,7 @@
     # 或
     python start_dashboard.py
 
-版本: v1.0
+版本: v4.2.1
 创建日期: 2026-05-01
 """
 

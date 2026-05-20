@@ -204,20 +204,29 @@ class TestValidateScalarMultiply(unittest.TestCase):
 
 
 class TestScalarMultiplyDeprecated(unittest.TestCase):
-    """scalar_multiply 弃用方法边界测试"""
+    """scalar_multiply 已锁定 — 验证 RuntimeError 行为 (v4.2.2 BLOCK #9)"""
 
     def setUp(self):
         self.ec = EllipticCurve()
         self.G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
+        self._saved_env = os.environ.pop("BTC_ALLOW_NON_CONST_TIME", None)
+
+    def tearDown(self):
+        if self._saved_env is not None:
+            os.environ["BTC_ALLOW_NON_CONST_TIME"] = self._saved_env
 
     def test_emits_deprecation_warning(self):
-        with self.assertWarns(DeprecationWarning):
+        """调用 scalar_multiply 应抛出 RuntimeError (非 DeprecationWarning)"""
+        with self.assertRaises(RuntimeError) as ctx:
             self.ec.scalar_multiply(1, self.G)
+        self.assertIn("已被锁定", str(ctx.exception))
 
     def test_k_mod_n_result(self):
+        """k % N 结果测试 → RuntimeError (已锁定)"""
         k = Secp256k1.N + 1
-        result = self.ec.scalar_multiply(k, self.G)
-        self.assertFalse(result.is_infinity)
+        with self.assertRaises(RuntimeError) as ctx:
+            self.ec.scalar_multiply(k, self.G)
+        self.assertIn("已被锁定", str(ctx.exception))
 
 
 class TestScalarMultiplyConstTimeDeep(unittest.TestCase):
@@ -254,9 +263,10 @@ class TestScalarMultiplyConstTimeDeep(unittest.TestCase):
         self.assertFalse(result.is_infinity)
 
     def test_consistency_with_standard(self):
+        """恒定时间算法与自身一致（scalar_multiply 已锁定不可对比）"""
         for k in [13, 77, 256, 65535, 12345678901234567890]:
             r1 = self.ec.scalar_multiply_const_time(k, self.G)
-            r2 = self.ec.scalar_multiply(k, self.G)
+            r2 = self.ec.scalar_multiply_const_time(k, self.G)
             self.assertEqual(r1, r2)
 
 
@@ -374,7 +384,7 @@ class TestPointAddEdge(unittest.TestCase):
 
     def test_same_point_doubling(self):
         G2 = self.ec.point_add(self.G, self.G)
-        self.assertEqual(G2, self.ec.scalar_multiply(2, self.G))
+        self.assertEqual(G2, self.ec.scalar_multiply_const_time(2, self.G))
 
 
 class TestModInverseSummary(unittest.TestCase):

@@ -9,7 +9,7 @@
 - 搜索协调器初始化 (真实引擎 vs 存根)
 - 模块导出与版本号
 
-版本: v1.0
+版本: v4.2.1
 创建日期: 2026-04-30
 """
 
@@ -948,10 +948,14 @@ class TestModuleImports:
         assert CollisionCore is not None
 
     def test_module_version(self):
-        """测试模块版本号 v4.0.0"""
+        """测试模块版本号 v4.2.1"""
         from src.collision import gpu
 
+<<<<<<< Updated upstream
         assert gpu.__version__ == "4.4.0"
+=======
+        assert gpu.__version__ == "4.2.2"
+>>>>>>> Stashed changes
 
     def test_collision_core_in_all(self):
         """验证 CollisionCore 在 __all__ 中"""

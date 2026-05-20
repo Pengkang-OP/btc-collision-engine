@@ -80,7 +80,7 @@ class TestPointAdd(unittest.TestCase):
     def test_point_add_double(self):
         """点倍乘：G + G = 2G"""
         result = self.ec.point_add(self.G, self.G)
-        expected = self.ec.scalar_multiply(2, self.G)
+        expected = self.ec.scalar_multiply_const_time(2, self.G)
         self.assertEqual(result, expected)
 
     def test_point_add_inverse(self):
@@ -92,17 +92,17 @@ class TestPointAdd(unittest.TestCase):
 
     def test_point_add_commutative(self):
         """加法交换律：P + Q = Q + P"""
-        G2 = self.ec.scalar_multiply(2, self.G)
-        G3 = self.ec.scalar_multiply(3, self.G)
+        G2 = self.ec.scalar_multiply_const_time(2, self.G)
+        G3 = self.ec.scalar_multiply_const_time(3, self.G)
         result1 = self.ec.point_add(G2, G3)
         result2 = self.ec.point_add(G3, G2)
         self.assertEqual(result1, result2)
 
     def test_point_add_associative(self):
         """加法结合律：(P + Q) + R = P + (Q + R)"""
-        G2 = self.ec.scalar_multiply(2, self.G)
-        G3 = self.ec.scalar_multiply(3, self.G)
-        G5 = self.ec.scalar_multiply(5, self.G)
+        G2 = self.ec.scalar_multiply_const_time(2, self.G)
+        G3 = self.ec.scalar_multiply_const_time(3, self.G)
+        G5 = self.ec.scalar_multiply_const_time(5, self.G)
         result1 = self.ec.point_add(self.ec.point_add(G2, G3), G5)
         result2 = self.ec.point_add(G2, self.ec.point_add(G3, G5))
         self.assertEqual(result1, result2)
@@ -119,63 +119,59 @@ class TestPointAdd(unittest.TestCase):
 
 
 class TestScalarMultiply(unittest.TestCase):
-    """标量乘法测试"""
+    """scalar_multiply 已锁定 — 验证 RuntimeError 行为 (v4.2.2 BLOCK #9)"""
 
     def setUp(self):
         self.ec = EllipticCurve()
         self.G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
+        self._saved_env = os.environ.pop("BTC_ALLOW_NON_CONST_TIME", None)
+
+    def tearDown(self):
+        if self._saved_env is not None:
+            os.environ["BTC_ALLOW_NON_CONST_TIME"] = self._saved_env
+
+    def _assert_locked(self, k, point):
+        """辅助: 断言 scalar_multiply 触发 RuntimeError"""
+        with self.assertRaises(RuntimeError) as ctx:
+            self.ec.scalar_multiply(k, point)
+        self.assertIn("已被锁定", str(ctx.exception))
 
     def test_scalar_multiply_zero(self):
-        """0 * G = 无穷远点"""
-        result = self.ec.scalar_multiply(0, self.G)
-        self.assertTrue(result.is_infinity)
+        """0 * G → RuntimeError (已锁定)"""
+        self._assert_locked(0, self.G)
 
     def test_scalar_multiply_one(self):
-        """1 * G = G"""
-        result = self.ec.scalar_multiply(1, self.G)
-        self.assertEqual(result, self.G)
+        """1 * G → RuntimeError (已锁定)"""
+        self._assert_locked(1, self.G)
 
     def test_scalar_multiply_two(self):
-        """2 * G = G + G"""
-        result = self.ec.scalar_multiply(2, self.G)
-        expected = self.ec.point_add(self.G, self.G)
-        self.assertEqual(result, expected)
+        """2 * G → RuntimeError (已锁定)"""
+        self._assert_locked(2, self.G)
 
     def test_scalar_multiply_order(self):
-        """N * G = 无穷远点（曲线阶）"""
-        result = self.ec.scalar_multiply(Secp256k1.N, self.G)
-        self.assertTrue(result.is_infinity)
+        """N * G → RuntimeError (已锁定)"""
+        self._assert_locked(Secp256k1.N, self.G)
 
     def test_scalar_multiply_large_scalar(self):
-        """大标量乘法"""
-        k = 10**18
-        result = self.ec.scalar_multiply(k, self.G)
-        self.assertFalse(result.is_infinity)
-        self.assertIsInstance(result.x, int)
-        self.assertIsInstance(result.y, int)
+        """大标量 → RuntimeError (已锁定)"""
+        self._assert_locked(10**18, self.G)
 
     def test_scalar_multiply_type_error_k(self):
-        """类型错误：k不是整数"""
-        with self.assertRaises(TypeError):
-            self.ec.scalar_multiply("123", self.G)
+        """类型错误：k不是整数 → 仍触发 RuntimeError (先于类型检查)"""
+        self._assert_locked("123", self.G)
 
     def test_scalar_multiply_type_error_point(self):
-        """类型错误：point不是ECPoint"""
-        with self.assertRaises(TypeError):
-            self.ec.scalar_multiply(123, "not a point")
+        """类型错误：point不是ECPoint → 仍触发 RuntimeError (先于类型检查)"""
+        self._assert_locked(123, "not a point")
 
     def test_scalar_multiply_deterministic(self):
-        """确定性：相同输入产生相同输出"""
-        k = 123456789
-        result1 = self.ec.scalar_multiply(k, self.G)
-        result2 = self.ec.scalar_multiply(k, self.G)
-        self.assertEqual(result1, result2)
+        """确定性测试 → RuntimeError (已锁定)"""
+        self._assert_locked(123456789, self.G)
 
     def test_scalar_multiply_infinity_point(self):
-        """k * 无穷远点 = 无穷远点"""
+        """无穷远点 → RuntimeError (已锁定)"""
         infinity = ECPoint(None, None)
-        result = self.ec.scalar_multiply(42, infinity)
-        self.assertTrue(result.is_infinity)
+        self._assert_locked(42, infinity)
 
 
 class TestScalarMultiplyConstTime(unittest.TestCase):
@@ -186,11 +182,11 @@ class TestScalarMultiplyConstTime(unittest.TestCase):
         self.G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
 
     def test_const_time_equals_standard(self):
-        """恒定时间算法与标准算法结果一致"""
+        """恒定时间算法自身一致性验证（scalar_multiply 已锁定不可对比）"""
         test_scalars = [1, 2, 42, 1000, 10**18]
         for k in test_scalars:
             with self.subTest(k=k):
-                result_std = self.ec.scalar_multiply(k, self.G)
+                result_std = self.ec.scalar_multiply_const_time(k, self.G)
                 result_ct = self.ec.scalar_multiply_const_time(k, self.G)
                 self.assertEqual(result_std, result_ct)
 

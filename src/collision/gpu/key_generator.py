@@ -17,8 +17,10 @@ import threading
 from collections.abc import Callable
 from enum import Enum
 
+from ...core.secp256k1 import Secp256k1  # v4.2.2: 统一从 secp256k1 获取曲线参数
+
 # Secp256k1 曲线参数
-SECP256K1_N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+SECP256K1_N = Secp256k1.N
 SECP256K1_N_BYTES = SECP256K1_N.to_bytes(32, "big")
 
 
@@ -153,9 +155,11 @@ class KeyGenerator:
         return keys
 
     def _generate_prng_seed(self, seed: bytes, index: int) -> bytes:
-        """基于种子的PRNG生成（默认策略）
+        """基于种子的线性确定性私钥生成（默认策略）
 
-        使用 HMAC-DRBG 风格的生成器
+        算法: key = (seed + index) mod N，确保在 secp256k1 有效范围内。
+        注意: 这不是密码学安全的 PRNG，仅用于 GPU 批量碰撞中的快速密钥派生。
+        如需更高安全性，请使用 AES_CTR 或 CHACHA20 策略。
         """
         seed_int = int.from_bytes(seed, "big")
         key_int = (seed_int + index) % SECP256K1_N

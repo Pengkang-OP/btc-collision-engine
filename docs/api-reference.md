@@ -1,6 +1,10 @@
 # BTC项目API接口文档
 
+<<<<<<< Updated upstream
 > **版本**: v4.4.0 | **最后更新**: 2026-05-18
+=======
+> **版本**: v4.2.2 | **最后更新**: 2026-05-15
+>>>>>>> Stashed changes
 > **面向**: 开发者
 
 ## 目录
@@ -44,6 +48,7 @@
 - [6.2 CryptoManager类 (新增)](#62-cryptomanager类-新增)
   - [架构](#架构)
   - [generate_public_key()](#generate_public_key)
+<<<<<<< Updated upstream
 - [7. 多格式地址生成器 (multi_format_generator.py) - 新增](#7-多格式地址生成器-multi_format_generatorpy---新增)
   - [7.1 AddressFormat枚举](#71-addressformat枚举)
   - [7.2 MultiFormatAddressGenerator类](#72-multiformataddressgenerator类)
@@ -68,6 +73,16 @@
     - [is_running()](#is_running)
     - [get_stats()](#get_stats)
   - [8.2 DeduplicationFilter类 (补充)](#82-deduplicationfilter类-补充)
+=======
+- [7. 碰撞检测引擎模块 (key_collision_engine.py)](#7-碰撞检测引擎模块-key_collision_enginepy)
+  - [7.1 KeyCollisionEngine类](#71-keycollisionengine类)
+    - [构造函数](#构造函数)
+- [random_search()](#random_search)
+- [stop()](#stop)
+  - [is_running()](#is_running)
+  - [get_stats()](#get_stats)
+  - [7.2 DeduplicationFilter类 (补充)](#72-deduplicationfilter类-补充)
+>>>>>>> Stashed changes
     - [设计特点](#设计特点)
     - [构造函数](#构造函数-1)
     - [check_and_add()](#check_and_add-1)
@@ -140,6 +155,7 @@
   - [13.3 DataStorage类](#133-datastorage类)
     - [构造函数](#构造函数-11)
     - [主要方法](#主要方法)
+<<<<<<< Updated upstream
   - [13.4 AnomalyDetector类](#134-anomalydetector类)
     - [detect_anomalies() 方法](#detect_anomalies-方法-1)
     - [analyze_trends() 方法](#analyze_trends-方法-1)
@@ -167,6 +183,35 @@
     - [generate_report() 方法](#generate_report-方法-1)
     - [cleanup_old_data() 方法](#cleanup_old_data-方法-1)
   - [14.2 数据文件格式](#142-数据文件格式)
+=======
+  - [11.4 AnomalyDetector类](#114-anomalydetector类)
+    - [detect_anomalies() 方法](#detect_anomalies-方法)
+    - [analyze_trends() 方法](#analyze_trends-方法)
+  - [11.5 AlertSystem类](#115-alertsystem类)
+    - [generate_alert() 方法](#generate_alert-方法)
+    - [process_anomalies() 方法](#process_anomalies-方法)
+  - [11.6 ReportGenerator类](#116-reportgenerator类)
+    - [generate_daily_report() 方法](#generate_daily_report-方法)
+  - [11.7 MonitoringSystem类](#117-monitoringsystem类)
+    - [构造函数](#构造函数)
+    - [主要方法](#主要方法)
+- [11.8 EnhancedMonitoringSystem类](#118-enhancedmonitoringsystem类)
+  - [构造函数](#构造函数)
+- [12. 数据日志API (data_logger.py)](#12-数据日志api-data_loggerpy)
+  - [12.1 DataLogger类](#121-datalogger类)
+    - [构造函数](#构造函数)
+    - [record_performance_data() 方法](#record_performance_data-方法)
+    - [record_system_data() 方法](#record_system_data-方法)
+    - [record_engine_data() 方法](#record_engine_data-方法)
+    - [record_error() 方法](#record_error-方法)
+    - [save_current_data() 方法](#save_current_data-方法)
+    - [save_history_data() 方法](#save_history_data-方法)
+    - [get_current_data() 方法](#get_current_data-方法)
+    - [get_statistics() 方法](#get_statistics-方法)
+    - [generate_report() 方法](#generate_report-方法)
+- [cleanup_old_data() 方法](#cleanup_old_data-方法)
+  - [12.2 数据文件格式](#122-数据文件格式)
+>>>>>>> Stashed changes
     - [current_data.json格式](#current_datajson格式)
     - [history_data.json格式](#history_datajson格式)
     - [error_log.json格式](#error_logjson格式)
@@ -209,6 +254,7 @@
     - [clear()](#clear-2)
     - [get_clear_stats() 静态方法](#get_clear_stats-静态方法-1)
     - [上下文管理器](#上下文管理器)
+<<<<<<< Updated upstream
 - [20. 碰撞引擎完整方法 - 补充](#20-碰撞引擎完整方法---补充)
   - [20.1 KeyCollisionEngine完整方法](#201-keycollisionengine完整方法)
     - [range_scan() 方法](#range_scan-方法-1)
@@ -220,6 +266,14 @@
   - [21.3 验证比特币地址](#213-验证比特币地址)
   - [21.4 运行碰撞检测](#214-运行碰撞检测)
 - [22. 版本历史](#22-版本历史)
+=======
+- [19. 碰撞引擎完整方法 - 补充](#19-碰撞引擎完整方法---补充)
+  - [19.1 KeyCollisionEngine完整方法](#191-keycollisionengine完整方法)
+    - [range_scan() 方法](#range_scan-方法)
+- [brute_force() 方法](#brute_force-方法)
+- [resume_from_checkpoint() 方法](#resume_from_checkpoint-方法)
+- [20. 版本历史](#20-版本历史)
+>>>>>>> Stashed changes
 
 ## 1. 概述
 
@@ -3704,7 +3758,10 @@ else:
 
 | 版本 | 日期 | 说明 |
 |------|------|------|
+<<<<<<< Updated upstream
 | v4.4.0 | 2026-05-18 | 新增多格式地址生成器、格式感知目标管理器，完善v4.4.0安全改进 |
+=======
+>>>>>>> Stashed changes
 | v4.2.2 | 2026-05-15 | mod_inverse Binary GCD 2^256溢出修复，生产验收测试全通过 |
 | v4.2.1 | 2026-04-20 | 补充SecureKeyManager API、碰撞引擎完整方法 |
 | v4.2.1 | 2026-04 | 初始版本，完整API文档 |

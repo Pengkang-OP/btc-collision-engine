@@ -3,7 +3,7 @@
 原 GPUCollisionEngine 类已迁移至 src.collision.gpu.engine。
 此文件作为薄 shim 保持向后兼容，所有现有导入和 Monkey-patch 继续工作。
 
-版本: v6.0.0 (Phase 6)
+版本: v4.2.1 (Phase 6)
 """
 
 # ========== 从新位置导入核心类 ==========

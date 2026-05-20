@@ -22,7 +22,10 @@ from typing import Any
 from ...utils import get_configured_logger
 from ...utils.encoding_utils import EncodingUtils
 
+<<<<<<< Updated upstream
 # 日志系统由CLI/main.py入口统一初始化
+=======
+>>>>>>> Stashed changes
 logger = get_configured_logger("AddressStorage")
 
 # 比特币地址验证正则表达式
@@ -631,15 +634,19 @@ class AddressStorage:
                     continue
 
                 if not header_skipped:
-                    # 更健壮的头部检测
-                    first_cell = row[0].strip().lower()
+                    first_cell_lower = row[0].strip().lower()
                     is_header = (
-                        first_cell in ("address", "addresses", "addr", "target", "targets")
-                        or first_cell.startswith("#")
+                        first_cell_lower in ("address", "addresses", "addr", "target", "targets")
+                        or first_cell_lower.startswith("#")
                         or not (
-                            first_cell.startswith("1")
-                            or first_cell.startswith("3")
-                            or first_cell.startswith("bc1")
+                            first_cell_lower.startswith("1")
+                            or first_cell_lower.startswith("3")
+                            or first_cell_lower.startswith("bc1")
+                            or first_cell_lower.startswith("tb1")
+                            or first_cell_lower.startswith("tb1p")
+                            or first_cell_lower.startswith("m")
+                            or first_cell_lower.startswith("n")
+                            or first_cell_lower.startswith("2")
                         )
                     )
                     if is_header:

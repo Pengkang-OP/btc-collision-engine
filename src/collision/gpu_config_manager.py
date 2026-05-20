@@ -1,7 +1,18 @@
-"""GPU碰撞引擎配置管理器
+"""GPU碰撞引擎配置管理器 (已弃用)
 
 CODE-1修复: 从gpu_collision_engine.py提取配置管理逻辑，降低主类复杂度。
-负责GPU配置读取、合并、验证和应用。
+
+DEPRECATED: 此模块与 src/gpu/config_manager.py::GPUConfigManager 重复。
+生产代码已统一使用 src/gpu/config_manager.py 中的版本。
+本模块仅保留用于测试兼容，计划在后续版本中移除。
+
+职责:
+1. 读取配置（构造函数参数 > 配置文件 > 默认值）
+2. 合并配置（AutoConfig + ProfileLoader）
+3. 验证配置有效性
+4. 应用配置到GPU设备
+
+设计模式: 策略模式 + 责任链模式
 """
 
 import json

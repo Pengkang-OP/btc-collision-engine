@@ -5,7 +5,7 @@
 - 线程安全的日志记录
 - 性能监控日志
 - 采样日志（高频操作）
-- 异步日志写入（v2.2.1新增）
+- 异步日志写入（v4.2.1新增）
 
 性能优化说明：
 - Python的logging.Logger本身是线程安全的（内部使用RLock）
@@ -404,7 +404,7 @@ def log_performance(logger: logging.Logger, operation: str, level: str = "DEBUG"
 
 
 class AsyncLogger:
-    """异步日志记录器（v2.2.1新增）
+    """异步日志记录器（v4.2.1新增）
 
     使用后台线程异步写入日志，避免I/O阻塞计算线程。
     适用于高频日志记录场景（如GPU碰撞引擎的批量处理）。

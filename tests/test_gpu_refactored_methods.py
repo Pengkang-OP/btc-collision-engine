@@ -95,7 +95,7 @@ class TestAsyncKeyGeneration:
         """创建mock引擎 (Phase 6 兼容)"""
         engine = create_mock_gpu_engine(self.test_targets)
 
-        # v4.0 PRNG改造后，_start_async_key_generation 和
+        # v4.2.1 PRNG改造后，_start_async_key_generation 和
         # _wait_for_async_key_generation 已从 RandomSearchMode 删除。
         # 为保持测试延续性，在 _random_search_mode 上增加兼容方法。
         def _start_async_key_generation(batch_size):

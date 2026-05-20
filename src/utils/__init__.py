@@ -94,7 +94,7 @@ __all__ = [
     "log_performance",
     "AsyncLogger",
     "AsyncFileHandler",
-    "SafeStreamHandler",  # v2.2.1新增; SafeStreamHandler: Windows GBK兼容
+    "SafeStreamHandler",  # v4.2.1新增; SafeStreamHandler: Windows GBK兼容
     # 日志配置
     "init_logging",
     "get_configured_logger",

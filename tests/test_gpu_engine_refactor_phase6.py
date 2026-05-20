@@ -8,7 +8,7 @@
 5. TestModuleImports: 版本号, 常量导出, shim 等价性
 6. TestLifecycle: start/stop 完整生命周期
 
-版本: v1.0
+版本: v4.2.1
 创建日期: 2026-04-30
 """
 
@@ -481,7 +481,11 @@ class TestModuleImports:
         """测试包版本号为 6.0.0"""
         from src.collision import gpu
 
+<<<<<<< Updated upstream
         assert gpu.__version__ == "4.4.0"
+=======
+        assert gpu.__version__ == "4.2.2"
+>>>>>>> Stashed changes
 
     def test_package_all_exports(self):
         """测试 __all__ 包含新组件"""

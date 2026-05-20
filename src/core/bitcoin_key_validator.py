@@ -26,7 +26,8 @@ from .wif import WIF
 class WIFEncoder:
     """WIF (Wallet Import Format) 编码器 - 符合Bitcoin Core规范
 
-    扩展了基础WIF类，增加测试网支持。
+    独立的 WIF 编解码实现，增加测试网支持。
+    注意: 此实现与 src.core.wif.WIF 功能重叠，优先使用 WIF 类。
     - 主网压缩WIF: 'K'/'L'开头（52字符）
     - 主网非压缩WIF: '5'开头（51字符）
     - 测试网压缩WIF: 'c'开头
@@ -189,19 +190,19 @@ class BitcoinKeyValidator:
             P2SH地址 (以'3'开头)
         """
         # 创建简单的P2PKH redeem script
-        pub_key_hash = hashlib.new("ripemd160", hashlib.sha256(public_key).digest()).digest()
+        pub_key_hash = HashUtils.hash160(public_key)
 
         # OP_DUP OP_HASH160 <20 bytes> OP_EQUALVERIFY OP_CHECKSIG
         redeem_script = bytes([0x76, 0xA9, 0x14]) + pub_key_hash + bytes([0x88, 0xAC])
 
         # HASH160 of redeem script
-        script_hash = hashlib.new("ripemd160", hashlib.sha256(redeem_script).digest()).digest()
+        script_hash = HashUtils.hash160(redeem_script)
 
         # 添加版本号 (P2SH = 0x05)
         versioned = bytes([KeyValidationConstants.P2SH_VERSION_BYTE]) + script_hash
 
         # Base58Check编码
-        checksum = hashlib.sha256(hashlib.sha256(versioned).digest()).digest()[:4]
+        checksum = HashUtils.double_sha256(versioned)[:4]
         return Base58.encode(versioned + checksum)
 
     @staticmethod
@@ -227,7 +228,7 @@ class BitcoinKeyValidator:
             raise ValueError("Bech32地址仅支持压缩公钥")
 
         # HASH160 of public key
-        pub_key_hash = hashlib.new("ripemd160", hashlib.sha256(public_key).digest()).digest()
+        pub_key_hash = HashUtils.hash160(public_key)
 
         # Witness program + Bech32编码
         return bech32_encode(hrp, 0, pub_key_hash, "bech32")
@@ -298,10 +299,15 @@ class BitcoinKeyValidator:
 
         # 2. 计算公钥：P = k * G
         try:
+<<<<<<< Updated upstream
             # P0修复: 使用恒定时间标量乘法防御侧信道攻击
             public_key_point = self.curve.scalar_multiply_const_time(
                 k, ECPoint(Secp256k1.Gx, Secp256k1.Gy)
             )
+=======
+            # v4.2.2 R1修复: 使用恒定时间实现，避免 RuntimeError
+            public_key_point = self.curve.scalar_multiply_const_time(k, ECPoint(Secp256k1.Gx, Secp256k1.Gy))
+>>>>>>> Stashed changes
 
             # 3. 验证公钥不是无穷远点
             if public_key_point.is_infinity:
@@ -445,10 +451,7 @@ class BitcoinKeyValidator:
         try:
             if address_type == AddressType.P2PKH:
                 # P2PKH地址生成
-                # 手动实现P2PKH地址生成
-                hash160 = hashlib.new("ripemd160")
-                hash160.update(hashlib.sha256(public_key).digest())
-                hash160_digest = hash160.digest()
+                hash160_digest = HashUtils.hash160(public_key)
 
                 # Base58Check编码
                 address = Base58.check_encode(0x00, hash160_digest)

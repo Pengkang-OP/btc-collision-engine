@@ -250,9 +250,16 @@ class EngineStopEvent(CollisionEvent):
 
     def __post_init__(self) -> None:
         self.event_type = EventType.ENGINE_STOP
+<<<<<<< Updated upstream
         self.metadata.update(
             {
                 "reason": self.reason,
                 "total_checked": self.total_checked,
             }
         )
+=======
+        self.metadata.update({
+            "reason": self.reason,
+            "total_checked": self.total_checked,
+        })
+>>>>>>> Stashed changes

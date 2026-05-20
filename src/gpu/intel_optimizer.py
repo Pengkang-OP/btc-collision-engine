@@ -215,7 +215,7 @@ class IntelGPUOptimizer:
                             "   显存监控功能将被禁用"
                         )
                     else:
-                        # v2.2.2 修复: 使用设备的 memory_efficiency 而非硬编码常量
+                        # v4.2.1 修复: 使用设备的 memory_efficiency 而非硬编码常量
                         # 确保监控器的 safe_usage_ratio 与厂商优化器设置的 memory_efficiency 一致
                         effective_ratio = getattr(self._device, "memory_efficiency", 0.70)
                         self._memory_monitor = _memory_cls(
@@ -369,7 +369,7 @@ class IntelGPUOptimizer:
         """
         try:
             has_uint32_workaround = (
-                # DEPRECATED: '__global const uint *private_keys' 已于 v4.0 PRNG改造后从内核中移除
+                # DEPRECATED: '__global const uint *private_keys' 已于 v4.2.1 PRNG改造后从内核中移除
                 # 当前内核均使用 PRNG 模式
                 "__constant const uint *seed" in kernel_source  # PRNG mode (seed 也是 uint*)
             )

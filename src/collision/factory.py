@@ -1,9 +1,11 @@
-"""引擎工厂 — 简化引擎创建并支持依赖注入"""
+"""引擎工厂 — 简化引擎创建并支持依赖注入
+
+v4.2.2 M2: 移除 stats/data_logger 废弃参数，向后兼容通过 **kwargs 过滤。
+"""
 
 from __future__ import annotations
 
 import logging
-import warnings
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -38,9 +40,7 @@ class EngineFactory:
     def create_cpu_engine(
         targets: set[str],
         container: DependencyContainer | None = None,
-        stats: Any = None,
         event_bus: Any = None,
-        data_logger: Any = None,
         **kwargs,
     ) -> KeyCollisionEngine:
         """创建 CPU 碰撞引擎
@@ -48,18 +48,16 @@ class EngineFactory:
         Args:
             targets: 目标地址集合
             container: 依赖容器（优先级低于直接参数）
-            stats: [已废弃] CollisionStats 实例 — KeyCollisionEngine 自建 stats，此参数被忽略。
-                保留仅为 API 向后兼容，将在 v4.0 移除。
             event_bus: EventBus 实例
-            data_logger: [已废弃] DataLogger 实例 — KeyCollisionEngine 自建 data_logger，此参数被忽略。
-                保留仅为 API 向后兼容，将在 v4.0 移除。
             **kwargs: 传递给 KeyCollisionEngine 的其他参数
+                (v4.2.2 M2: 已移除 stats/data_logger 废弃参数)
 
         Returns:
             KeyCollisionEngine 实例
         """
         from .key_collision_engine import KeyCollisionEngine
 
+<<<<<<< Updated upstream
         # Deprecation: stats/data_logger 参数在新架构中由引擎自建
         if stats is not None:
             warnings.warn(
@@ -75,8 +73,13 @@ class EngineFactory:
                 FutureWarning,
                 stacklevel=2,
             )
+=======
+        # v4.2.2 M2: 移除 stats/data_logger 废弃参数，向后兼容：通过 **kwargs 过滤
+        kwargs.pop('stats', None)
+        kwargs.pop('data_logger', None)
+>>>>>>> Stashed changes
 
-        # 直接参数优先于容器（仅 event_bus 仍有效传递）
+        # 直接参数优先于容器
         if container:
             event_bus = event_bus or container.event_bus
 
@@ -86,9 +89,7 @@ class EngineFactory:
     def create_gpu_engine(
         targets: set[str],
         container: DependencyContainer | None = None,
-        stats: Any = None,
         event_bus: Any = None,
-        data_logger: Any = None,
         **kwargs,
     ) -> GPUCollisionEngine:
         """创建 GPU 碰撞引擎
@@ -96,19 +97,16 @@ class EngineFactory:
         Args:
             targets: 目标地址集合
             container: 依赖容器
-            stats: [已废弃] CollisionStats 实例 — GPUCollisionEngine 自建 stats，此参数被忽略。
-                保留仅为 API 向后兼容，将在 v4.0 移除。
-            event_bus: [已废弃] EventBus 实例 — GPUCollisionEngine 自建 event_bus，此参数被忽略。
-                保留仅为 API 向后兼容，将在 v4.0 移除。
-            data_logger: [已废弃] DataLogger 实例 — GPUCollisionEngine 自建 data_logger，此参数被忽略。
-                保留仅为 API 向后兼容，将在 v4.0 移除。
+            event_bus: EventBus 实例
             **kwargs: 传递给 GPUCollisionEngine 的其他参数
+                (v4.2.2 M2: 已移除 stats/event_bus/data_logger 废弃参数)
 
         Returns:
             GPUCollisionEngine 实例
         """
         from .gpu_collision_engine import GPUCollisionEngine
 
+<<<<<<< Updated upstream
         # Deprecation: stats/event_bus/data_logger 参数在新架构中由引擎自建
         if stats is not None:
             warnings.warn(
@@ -131,5 +129,16 @@ class EngineFactory:
                 FutureWarning,
                 stacklevel=2,
             )
+=======
+        # v4.2.2 M2: 移除 stats/data_logger 废弃参数，向后兼容：通过 **kwargs 过滤
+        kwargs.pop('stats', None)
+        kwargs.pop('data_logger', None)
+        # GPU 引擎自建 event_bus，外部传入的 event_bus 会被 kwargs 覆盖
+        # 保留向后兼容：不强制使用 container.event_bus
+
+        # v4.2.2 M1: GPU 引擎也使用 container.event_bus 作为 fallback
+        if container:
+            _ = container.event_bus  # 预留扩展点
+>>>>>>> Stashed changes
 
         return GPUCollisionEngine(targets=targets, **kwargs)

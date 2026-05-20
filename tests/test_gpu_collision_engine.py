@@ -147,7 +147,11 @@ class TestGPUCollisionEngine:
         """测试在没有 GPU 的情况下初始化 GPU 引擎"""
         # 模拟 pyopencl 不可用
         with patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", False):
+<<<<<<< Updated upstream
             with pytest.raises(RuntimeError, match=r"[Pp]y[Oo]pen[Cc][Ll]\s*不可用"):
+=======
+            with pytest.raises(RuntimeError, match="PyOpenCL 不可用"):
+>>>>>>> Stashed changes
                 GPUCollisionEngine(self.test_targets)
 
     def test_gpu_engine_mock_initialization(self):

@@ -48,7 +48,7 @@ class TestGPUKernelCompilation:
         """测试内核使用uint32 workaround（Intel Arc兼容）- PRNG模式"""
         from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
-        # v4.0: 已转换为 PRNG 模式，使用种子而非私钥缓冲区
+        # v4.2.1: 已转换为 PRNG 模式，使用种子而非私钥缓冲区
         # Intel Arc 需要 uint32 workaround，现已应用于 PRNG 种子和 uint256_from_bytes_global
         assert (
             "__constant const uint *seed" in OPENCL_KERNEL_SOURCE

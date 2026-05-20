@@ -142,12 +142,19 @@ class DataLoggerAdapter:
         """
         if self.data_logger:
             try:
+<<<<<<< Updated upstream
                 # 地址脱敏: 仅保留前6后4字符, 防止私钥泄露到日志
                 _addr = (event.address[:6] + "..." + event.address[-4:]
                          if len(event.address) > 10 else "***")
                 _tgt = (event.target_address[:6] + "..." + event.target_address[-4:]
                         if len(event.target_address) > 10 else "***")
                 logger.info(f"发现匹配! 地址: {_addr}, 目标: {_tgt}")
+=======
+                # 只记录脱敏地址，不记录私钥 (安全考虑)
+                safe_addr = event.address[:6] + "..." + event.address[-4:] if len(event.address) > 10 else event.address[:3] + "..."
+                safe_target = event.target_address[:6] + "..." + event.target_address[-4:] if len(event.target_address) > 10 else event.target_address[:3] + "..."
+                logger.info(f"发现匹配! 地址: {safe_addr}, 目标: {safe_target}")
+>>>>>>> Stashed changes
 
                 # 可以在这里保存匹配结果到文件
                 # self.data_logger.save_match_result(event.address, event.wif)
@@ -232,7 +239,11 @@ class EnhancedMonitoringAdapter:
 
         # 订阅错误事件
         event_bus.subscribe(EventType.ENGINE_ERROR, self.handle_error)
+<<<<<<< Updated upstream
         # v3.5.2: 订阅匹配事件（引擎匹配发现时立即触发告警）
+=======
+        # v4.2.1: 订阅匹配事件（引擎匹配发现时立即触发告警）
+>>>>>>> Stashed changes
         event_bus.subscribe(EventType.ENGINE_MATCH, self.handle_match)
 
         self._subscribed = True
@@ -260,6 +271,7 @@ class EnhancedMonitoringAdapter:
                 logger.error(f"增强监控错误处理失败: {e}")
 
     def handle_match(self, event: EngineMatchEvent) -> None:
+<<<<<<< Updated upstream
         """v3.5.2: 处理匹配事件"""
         if self.monitoring_system:
             try:
@@ -275,6 +287,24 @@ class EnhancedMonitoringAdapter:
                     cast(Any, self.monitoring_system).record_match(
                         address=event.address,
                         target_address=event.target_address,
+=======
+        """v4.2.1: 处理匹配事件"""
+        if self.monitoring_system:
+            try:
+                safe_addr = event.address[:6] + "..." + event.address[-4:] if len(event.address) > 10 else event.address[:3] + "..."
+                safe_target = event.target_address[:6] + "..." + event.target_address[-4:] if len(event.target_address) > 10 else event.target_address[:3] + "..."
+                logger.info(
+                    f"增强监控 — 匹配发现: address={safe_addr}, "
+                    f"target={safe_target}"
+                )
+                # 触发 DataLogger 记录匹配事件 (脱敏+持久化)
+                dl = getattr(self.monitoring_system, "_data_logger", None)
+                if dl is not None and hasattr(dl, "record_match_event"):
+                    dl.record_match_event(
+                        matched_address=event.address,
+                        collision_mode="",
+                        match_type="address",
+>>>>>>> Stashed changes
                     )
             except Exception as e:
                 logger.error(f"增强监控匹配处理失败: {e}")

@@ -373,7 +373,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
     {% endif %}</div>
 
     <div class="footer">
-        BTC 碰撞引擎 v{{ version }} | Web 监控仪表板 v1.0
+        BTC 碰撞引擎 v{{ version }} | Web 监控仪表板 v4.2.1
     </div>
 </body>
 </html>"""
@@ -832,7 +832,7 @@ def run_dashboard(
     auth_status = "已启用" if _api_key_required else "未启用 (公开访问)"  # noqa: F841
     print(f"""
 ╔══════════════════════════════════════════════════════╗
-║     BTC 碰撞引擎 - Web 监控仪表板 v1.0               ║
+║     BTC 碰撞引擎 - Web 监控仪表板 v4.2.1               ║
 ╠══════════════════════════════════════════════════════╣
 ║  本地访问: http://127.0.0.1:{port:<5}                  ║
 ║  API Key:  {auth_status:<38}║

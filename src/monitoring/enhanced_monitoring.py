@@ -124,7 +124,8 @@ class EnhancedMonitoringSystem:
         self.report_generator: ReportGenerator | None = None
         self._collector: DataCollector | None = None
         if self.config.enable_monitoring_data:
-            self.storage = DataStorage()
+            # P0统一数据源: DataStorage委托DataLogger为唯一持久化层
+            self.storage = DataStorage(data_logger=self.data_logger)
             self.detector = AnomalyDetector(self.storage)
             self.alert_system = MonitoringAlertAdapter(self.storage)
             self.report_generator = ReportGenerator(self.storage, self.detector)

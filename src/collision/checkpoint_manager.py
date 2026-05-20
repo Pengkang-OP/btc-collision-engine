@@ -11,12 +11,20 @@ from datetime import datetime
 from typing import Any, cast
 
 # 导入日志配置
+<<<<<<< Updated upstream
 from .. import __version__ as _project_version
 from ..utils import get_configured_logger
 from ..utils.fast_json import fast_dumps, fast_loads
 from ..utils.platform_utils import PlatformUtils
 
 # 日志系统由CLI/main.py入口统一初始化
+=======
+from .. import __version__ as PROJECT_VERSION
+from ..utils import get_configured_logger
+from ..utils.platform_utils import PlatformUtils
+
+# 获取模块日志记录器
+>>>>>>> Stashed changes
 logger = get_configured_logger("CheckpointManager")
 
 
@@ -290,7 +298,8 @@ class CheckpointManager:
             # 清理可能的旧临时文件
             self._cleanup_temp_file(temp_filepath)
 
-            self._last_save_time = time.time()
+            # v4.2.2 M10: 使用 monotonic 时间，避免系统时间调整影响断点间隔
+            self._last_save_time = time.monotonic()
             self._dirty = False
             _pos = self._buffer.get("current_position")
             _checked = self._buffer.get("total_checked")
@@ -408,4 +417,5 @@ class CheckpointManager:
 
     def should_auto_save(self) -> bool:
         """检查是否该自动保存（基于时间间隔）"""
-        return (time.time() - self._last_save_time) >= self.auto_save_interval
+        # v4.2.2 M10: monotonic 时间不受系统时间调整影响
+        return (time.monotonic() - self._last_save_time) >= self.auto_save_interval

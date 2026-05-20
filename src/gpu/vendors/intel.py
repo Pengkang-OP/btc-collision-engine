@@ -5,7 +5,7 @@
 - 超时保护机制
 - 保守的batch_size策略
 - 日志频率限制（防止重复日志泵洪）
-- v6.0: 基于互联网最新研究添加更多优化
+- v4.2.1: 基于互联网最新研究添加更多优化
 
 参考文献:
 - Intel OpenCL SDK Developer Guide (2019.4)
@@ -171,11 +171,11 @@ class IntelGPUVendor(GPUVendorBase):
                 key="intel_known_hang_bug",
             )
 
-        # 8. 显存效率设置 (v2.2.1优化: 45% -> 70%)
+        # 8. 显存效率设置 (v4.2.1优化: 45% -> 70%)
         memory_efficiency = profile.get("memory_efficiency", 0.70)
         device.memory_efficiency = memory_efficiency
         _rate_logger.info(
-            f"✅ Intel GPU内存效率: {memory_efficiency * 100:.0f}% (v2.2.1优化)",
+            f"✅ Intel GPU内存效率: {memory_efficiency * 100:.0f}% (v4.2.1优化)",
             key="intel_memory_efficiency",
         )
 
@@ -184,13 +184,18 @@ class IntelGPUVendor(GPUVendorBase):
         计算Intel GPU的最优batch_size
 
         策略:
-        1. v4.2: Intel Arc A770 16GB 可安全使用更大 batch_size
+        1. v4.2.1: Intel Arc A770 16GB 可安全使用更大 batch_size
         2. 70% 显存效率，兼顾稳定性与性能
         3. 动态检测显存大小自动调整上限
         """
         recommended = profile.get("recommended_batch_size", 1048576)
+<<<<<<< Updated upstream
         maximum = profile.get("max_batch_size", 2097152)  # v4.2.3: A770 16GB 可安全承载 2M
         memory_efficiency = profile.get("memory_efficiency", 0.70)  # v2.2.1优化: 45% -> 70%
+=======
+        maximum = profile.get("max_batch_size", 2097152)  # v4.2.1: A770 16GB 可安全承载 2M
+        memory_efficiency = profile.get("memory_efficiency", 0.70)  # v4.2.1优化: 45% -> 70%
+>>>>>>> Stashed changes
 
         # 根据显存计算理论最大值(使用更保守的memory_efficiency)
         global_mem = device.device_info.get("global_mem_size", 0)
@@ -278,7 +283,7 @@ class IntelGPUVendor(GPUVendorBase):
 
     def apply_environment_optimizations(self) -> dict[str, str]:
         """
-        应用环境变量优化 (v6.0 新增)
+        应用环境变量优化 (v4.2.1 新增)
 
         基于互联网研究的应用层优化:
         1. SYCL_DEVICE_FILTER: 强制使用OpenCL而非Level-Zero

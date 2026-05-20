@@ -8,7 +8,7 @@
 - GPUKernelAdapter: GPU内核执行
 - AsyncPipelineAdapter: 异步执行管道
 
-版本: v1.0.0 (Phase 2)
+版本: v4.2.1 (Phase 2)
 创建日期: 2026-04-30
 """
 

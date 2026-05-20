@@ -22,7 +22,11 @@ from typing import Any
 # 导入日志配置
 from ..utils import get_configured_logger
 
+<<<<<<< Updated upstream
 # 日志系统由CLI/main.py入口统一初始化
+=======
+# 获取模块日志记录器
+>>>>>>> Stashed changes
 logger = get_configured_logger("PrecomputedTable")
 
 

@@ -1,12 +1,24 @@
 """GPU模块 - GPU设备检测、配置管理和厂商优化
 
 提供完整的GPU管理功能:
+<<<<<<< Updated upstream
 - GPU设备自动检测(过滤CPU和核显,2015年至今的GPU型号)
 - 按厂商分类的GPU处理模块(NVIDIA/AMD/Intel)
 - 厂商特定的优化策略
 - 驱动版本检测和健康检查
 - 基于型号数据库的功能配置
 - 基于性能表现的差异化配置调用
+=======
+- GPU设备自动检测和选择
+- 厂商特定的优化策略 (NVIDIA/AMD/Intel)
+- 驱动版本检测和健康检查
+- 型号数据库驱动的配置
+- 多GPU负载均衡与评分
+- GPU内存计算与锁监控
+- 种子端序转换工具 (seed_utils)
+
+v4.2.2 S1: 统一模块说明，移除重复 docstring。
+>>>>>>> Stashed changes
 """
 
 from .amd_optimizer import AmdGPUOptimizer  # noqa: E402
@@ -72,7 +84,11 @@ from .scorer import GPUDeviceScorer, get_gpu_scorer, reset_gpu_scorer  # noqa: E
 from .selector import GPUDeviceSelector, get_gpu_selector, reset_gpu_selector  # noqa: E402
 from .worker import SingleGPUWorker  # noqa: E402
 
+<<<<<<< Updated upstream
 __version__ = "4.4.0"  # v4.4.0: 安全修复增强(安全清零/侧信道防护/敏感数据脱敏/线程安全), 文档一致性整理
+=======
+__version__ = "4.2.2"  # v4.2.2: 代码审查修复，mod_inverse溢出修复
+>>>>>>> Stashed changes
 
 __all__ = [
     "GPUDeviceDetector",

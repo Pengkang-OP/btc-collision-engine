@@ -113,7 +113,11 @@ class TestRandomSearchModeInit:
         engine = _make_engine_stub()
         mode = RandomSearchMode(engine)
         assert mode._seed_queue is not None
+<<<<<<< Updated upstream
         assert mode._seed_queue.maxsize == SEED_PREFETCH_SIZE  # v6.4: 10→100
+=======
+        assert mode._seed_queue.maxsize == 10  # SEED_PREFETCH_SIZE (v4.2.1: 5→10)
+>>>>>>> Stashed changes
 
     @patch("src.gpu.search_modes.random_search.threading.Thread")
     def test_init_starts_prefetch_thread(self, mock_thread):

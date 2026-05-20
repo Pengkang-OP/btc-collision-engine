@@ -11,11 +11,16 @@ class Base58:
     Base58字符集: 123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz
     不包含: 0, O, I, l
 
-    优化特性:
+    性能优化:
     - 预计算编码表和解码表 (O(1)查找)
     - 解码性能提升40%+ (vs 原始index()方法)
     - 编码性能提升30%+
+    - v4.2.2 S3: __slots__ 防止意外属性创建，减少对象内存开销
+
+    注意: 所有方法均为静态方法，无需实例化即可使用。
     """
+
+    __slots__ = ()  # v4.2.2 S3: 静态工具类，禁止动态属性
 
     ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
     BASE = len(ALPHABET)

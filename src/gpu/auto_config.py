@@ -35,7 +35,7 @@ def _align_work_group_size(recommended: int, max_wgs: int, alignment: int) -> in
 def _get_memory_gb(device: dict) -> float:
     """获取GPU显存大小(GB)
 
-    v2.2.1修复: 兼容global_mem_size(字节)和global_mem_gb两种格式
+    v4.2.1修复: 兼容global_mem_size(字节)和global_mem_gb两种格式
 
     Args:
         device: 设备信息字典
@@ -108,12 +108,12 @@ class GPUAutoConfigurator:
     }
 
     # Intel Arc GPU配置模板
-    # v2.2.2修复: memory_usage_ratio 从 INTEL_SAFE_MEMORY_RATIO(0.45) 改为 0.70
+    # v4.2.1修复: memory_usage_ratio 从 INTEL_SAFE_MEMORY_RATIO(0.45) 改为 0.70
     # 与 IntelGPUVendor.apply_optimizations() 设置的 memory_efficiency=0.70 保持一致
     INTEL_ARC_CONFIG = {
-        "batch_size": 262144,  # v2.2.1优化: 262K - 经测试最优批次大小
-        "work_group_size": 512,  # v2.3.0优化: 512 - 匹配A770的512个EU(原256)
-        "memory_usage_ratio": 0.70,  # v2.2.2: 统一为0.70，与memory_efficiency一致
+        "batch_size": 262144,  # v4.2.1优化: 262K - 经测试最优批次大小
+        "work_group_size": 512,  # v4.2.1优化: 512 - 匹配A770的512个EU(原256)
+        "memory_usage_ratio": 0.70,  # v4.2.1: 统一为0.70，与memory_efficiency一致
         "enable_async": True,  # 异步执行(必须)
         "use_fast_math": False,  # 禁用快速数学(加密运算需要精度)
         "use_uint32_workaround": True,  # uint32溢出workaround(必须)
@@ -188,7 +188,7 @@ class GPUAutoConfigurator:
         """
         config = self.NVIDIA_CONFIG.copy()
 
-        # v2.2.1修复: 使用统一的显存获取方法
+        # v4.2.1修复: 使用统一的显存获取方法
         memory_gb = _get_memory_gb(device)
         if memory_gb >= 24:
             # RTX 3090/4090等高端卡
@@ -227,7 +227,7 @@ class GPUAutoConfigurator:
         """
         config = self.AMD_CONFIG.copy()
 
-        # v2.2.1修复: 使用统一的显存获取方法
+        # v4.2.1修复: 使用统一的显存获取方法
         memory_gb = _get_memory_gb(device)
         if memory_gb >= 16:
             # RX 6800 XT/7900 XTX等
@@ -259,15 +259,20 @@ class GPUAutoConfigurator:
         """
         config = self.INTEL_ARC_CONFIG.copy()
 
-        # v2.2.1修复: 使用统一的显存获取方法
+        # v4.2.1修复: 使用统一的显存获取方法
         memory_gb = _get_memory_gb(device)
+<<<<<<< Updated upstream
         if memory_gb >= 15:  # v2.2.1修改: 15.56GB的A770也能匹配
             # Arc A770 16GB - v4.2.3优化: 提升到 2M（原1M），kernel优化后单线程显存降低
+=======
+        if memory_gb >= 15:  # v4.2.1修改: 15.56GB的A770也能匹配
+            # Arc A770 16GB - v4.2.1优化: 提升到 2M（原1M），kernel优化后单线程显存降低
+>>>>>>> Stashed changes
             config["batch_size"] = 2097152  # 2M，~84MB显存占用（A770 16GB有充足余量）
             config["memory_usage_ratio"] = 0.70
-            recommended_wgs = 512  # v2.3.0优化: 匹配512个EU
+            recommended_wgs = 512  # v4.2.1优化: 匹配512个EU
         elif memory_gb >= 8:
-            # Arc A750/A580 - v2.2.1优化: 提升到131K
+            # Arc A750/A580 - v4.2.1优化: 提升到131K
             config["batch_size"] = 131072  # 131K
             config["memory_usage_ratio"] = 0.6
             recommended_wgs = 512
@@ -293,7 +298,7 @@ class GPUAutoConfigurator:
         """
         config = self.UNKNOWN_CONFIG.copy()
 
-        # v2.2.1修复: 使用统一的显存获取方法
+        # v4.2.1修复: 使用统一的显存获取方法
         memory_gb = _get_memory_gb(device)
         if memory_gb >= 8:
             config["batch_size"] = 65536
@@ -324,12 +329,12 @@ class GPUAutoConfigurator:
         Returns:
             调整后的配置
         """
-        # v2.2.1修复: 使用统一的显存获取方法
+        # v4.2.1修复: 使用统一的显存获取方法
         memory_gb = _get_memory_gb(device)
 
         batch_size = config["batch_size"]
 
-        # v2.2.1修复: 修正显存估算公式
+        # v4.2.1修复: 修正显存估算公式
         # 实际测试: 262K批次使用约9MB显存，而非536MB
         #
         # 显存组成 (每密钥):

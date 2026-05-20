@@ -122,17 +122,28 @@ def migrate_config(config):
 **弃用流程**:
 
 ```python
+<<<<<<< Updated upstream
 # 版本 v4.4.0: 标记弃用
 if 'old_option' in config:
     logger.warning(
         "配置项 'old_option' 已弃用，将在v4.5.0中删除\n"
+=======
+# 版本 v4.2.1: 标记弃用
+if 'old_option' in config:
+    logger.warning(
+        "配置项 'old_option' 已弃用，将在v4.2.1中删除\n"
+>>>>>>> Stashed changes
         "  请使用 'new_option' 替代\n"
         "  自动迁移: old_option=True -> new_option='enabled'"
     )
     # 自动迁移
     config['new_option'] = 'enabled' if config['old_option'] else 'disabled'
 
+<<<<<<< Updated upstream
 # 版本 v4.5.0: 删除
+=======
+# 版本 v4.2.1: 删除
+>>>>>>> Stashed changes
 # 移除所有相关代码
 ```
 

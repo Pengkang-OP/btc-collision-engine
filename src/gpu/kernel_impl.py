@@ -1,5 +1,6 @@
 """GPU内核实现
 
+<<<<<<< Updated upstream
 包含 GPUKernel 类的实现，解决循环导入问题。
 
 注意: GPU路径同样仅生成P2PKH地址进行碰撞检测，与CPU路径保持一致。
@@ -10,6 +11,16 @@
 - 可调参数支持：环境变量 BTC_GPU_WORK_GROUP_SIZE / BTC_GPU_LOCAL_MEM_THRESHOLD
 - 全局内存合并访问增强：对齐匹配结果缓冲区，优化 target_hash160s 访问模式
 - 详细注释说明各优化点的设计原理和trade-off
+=======
+包含:
+- compile_kernel_with_retry: 共享的内核编译重试函数 (DEF-2修复)，支持4种降级编译策略
+- GPUKernel: OpenCL GPU计算内核包装类，实现GPUKernelProtocol接口
+  - 持久化Buffer和异步执行，保持GPU持续高负载
+  - 2*G自检验证、批量密钥碰撞、目标地址管理
+  - 预计算表(Precomputed Table)常量缓冲区管理
+
+v4.2.2 M5: _seed_bytes_to_u32_be_array 统一至 gpu/seed_utils.py 导入。
+>>>>>>> Stashed changes
 """
 
 import logging
@@ -69,11 +80,21 @@ _VENDOR_WORK_GROUP_DEFAULTS: dict[str, int] = {
 _DEFAULT_WORK_GROUP_SIZE = 256
 
 # DEF-2修复: 内核编译重试配置
+<<<<<<< Updated upstream
 GPU_KERNEL_COMPILE_MAX_RETRIES = 4  # v4.2.3: 4 策略（含 Intel Arc 优化）
 GPU_KERNEL_COMPILE_RETRY_DELAY_BASE = 2.0  # 基础延迟(秒), 指数退避: 2s(第1次失败后), 4s(第2次失败后)
 
 # DEF-2修复: 渐进编译策略 — 每次重试尝试不同的编译选项
 # v4.2.3: 新增 Intel Arc 优化策略（无符号零+乘加融合，安全于加密运算）
+=======
+GPU_KERNEL_COMPILE_MAX_RETRIES = 4  # v4.2.1: 4 策略（含 Intel Arc 优化）
+GPU_KERNEL_COMPILE_RETRY_DELAY_BASE = (
+    2.0  # 基础延迟(秒), 指数退避: 2s(第1次失败后), 4s(第2次失败后)
+)
+
+# DEF-2修复: 渐进编译策略 — 每次重试尝试不同的编译选项
+# v4.2.1: 新增 Intel Arc 优化策略（无符号零+乘加融合，安全于加密运算）
+>>>>>>> Stashed changes
 COMPILE_STRATEGIES = [
     ("标准编译", []),
     ("CL2.0标准编译", ["-cl-std=CL2.0"]),
@@ -173,6 +194,7 @@ def get_gpu_optimizer() -> Any | None:
         return None
 
 
+<<<<<<< Updated upstream
 from .seed_utils import (  # noqa: E402, F811
     _seed_bytes_to_u32_be_array,
 )
@@ -302,6 +324,10 @@ def _get_local_mem_threshold_ratio() -> float:
         except (ValueError, TypeError):
             logger.warning(f"OPT-3: 环境变量 {ENV_LOCAL_MEM_THRESHOLD}={env_val} 无效, 使用默认 0.8")
     return 0.8
+=======
+# v4.2.2 M5: 统一端序转换 → 从 gpu/seed_utils.py 导入单一权威实现
+from .seed_utils import _seed_bytes_to_u32_be_array  # noqa: E402
+>>>>>>> Stashed changes
 
 
 class GPUKernel(GPUKernelProtocol):
@@ -311,14 +337,19 @@ class GPUKernel(GPUKernelProtocol):
     使用持久化 Buffer 和异步执行来保持 GPU 持续高负载，
     避免频繁的内存分配和同步等待造成的 GPU 空闲。
 
+<<<<<<< Updated upstream
     地址格式: GPU路径使用 P2PKHAddressGenerator，仅生成P2PKH地址（与CPU路径一致）。
+=======
+    v4.2.2: mod_inverse Binary GCD 2^256溢出修复；
+    _seed_bytes_to_u32_be_array 统一至 gpu/seed_utils.py 导入。
+>>>>>>> Stashed changes
     """
 
     # 2*G 的期望坐标值（用于验证）
     EXPECTED_2G_X = 0xC6047F9441ED7D6D3045406E95C07CD85C778E4B8CEF3CA7ABAC09B95C709EE5
     EXPECTED_2G_Y = 0x1AE168FEA63DC339A3C58419466CEAEEF7F632653266D0E1236431A950CFE52A
 
-    # v3.3.0新增: 缓冲区大小因子常量
+    # v4.2.1新增: 缓冲区大小因子常量
     # KEYS_BUFFER_SIZE_FACTOR: PRNG改造后私钥缓冲区已弃用，保留以兼容日志中的历史大小引用
     KEYS_BUFFER_SIZE_FACTOR = 32  # 历史: PRNG模式下私钥缓冲区已不再需要，仅用于日志大小参考
     MATCH_BUFFER_SIZE_FACTOR = 4  # 每个匹配标志4字节（int32）
@@ -337,6 +368,7 @@ class GPUKernel(GPUKernelProtocol):
         self._device = device
         self.gpu_optimizer = get_gpu_optimizer()
 
+<<<<<<< Updated upstream
         # OPT-3优化: 智能 work_group_size 检测
         # 优先级: 环境变量 > auto_config > 厂商默认 > 安全回退256
         # 详细文档见 _detect_optimal_work_group_size() 函数
@@ -348,6 +380,11 @@ class GPUKernel(GPUKernelProtocol):
 
         # OPT-3: local memory 阈值比例（从环境变量读取，默认0.8）
         self._local_mem_threshold = _get_local_mem_threshold_ratio()
+=======
+        # v4.2.1优化: 从配置中获取work_group_size
+        device_info = device.get_device_info() if hasattr(device, "get_device_info") else {}
+        self._work_group_size = device_info.get("work_group_size", 256)
+>>>>>>> Stashed changes
 
         # 如果没有指定max_batch_size，根据GPU显存自动计算
         if max_batch_size is None:
@@ -375,13 +412,13 @@ class GPUKernel(GPUKernelProtocol):
 
         # 持久化 Buffer - 避免频繁分配/释放（PyOpenCL C扩展类型，无stubs故用Any）
         self._seed_buf = None  # PRNG模式：仅存傤32字节种子
-        # self._keys_buf 已于 v4.0 PRNG 改造时移除，不再使用
+        # self._keys_buf 已于 v4.2.1 PRNG 改造时移除，不再使用
         self._match_buf = None
         self._targets_buf = None
         self._target_hash160s: bytes | None = None  # 添加目标地址缓存
         self._targets_cached: bytes | None = None
         self._num_targets_cached = 0
-        self._check_uncompressed = 0  # v4.0: 0=仅压缩, 1=也检查非压缩
+        self._check_uncompressed = 0  # v4.2.1: 0=仅压缩, 1=也检查非压缩
         self._precomp_buf = None  # 预计算表常量缓冲区（生命周期与 kernel 一致）
 
         # 预分配主机内存
@@ -405,10 +442,15 @@ class GPUKernel(GPUKernelProtocol):
                 logger.warning("batch_check_local_mem 内核未找到，将回退到标准版本")
                 self._batch_kernel_local = None
 
-        self._allocate_buffers()
+        # v4.2.2 P1修复: try/finally 保护，防止 _verify() 异常导致 GPU Buffer 泄漏
+        try:
+            self._allocate_buffers()
 
-        # 验证GPU内核(在分配缓冲区之后)
-        self._verify()
+            # 验证GPU内核(在分配缓冲区之后)
+            self._verify()
+        except Exception:
+            self._release_buffers_on_error()
+            raise
 
     @property
     def device(self) -> Any:  # GPUDevice
@@ -827,7 +869,7 @@ class GPUKernel(GPUKernelProtocol):
         """预分配 GPU 内存缓冲区（PRNG模式）
 
         P2-2修复: 添加缓冲区追踪
-        v3.2.0修复: 使用GPU内存池分配缓冲区（如果已启用）
+        v4.2.1修复: 使用GPU内存池分配缓冲区（如果已启用）
         PRNG改造: 删除大型 keys_buf，改用固定32字节 seed_buf
         OPT-3优化: match_buf 对齐到 64 字节边界，确保合并内存访问
 
@@ -908,11 +950,11 @@ class GPUKernel(GPUKernelProtocol):
         stats = self._buffer_tracker.get_stats()
         logger.debug(f"GPU Buffer统计: {stats['count']}个缓冲区, {stats['total_size_mb']:.2f} MB")
 
-        # v3.3.0优化: 记录内存池使用状态（纯持久化设计）
+        # v4.2.1优化: 记录内存池使用状态（纯持久化设计）
         if memory_pool:
             pool_stats = memory_pool.get_stats()
             logger.info(
-                "GPU内存池状态 (v3.3.0纯持久化设计): "
+                "GPU内存池状态 (v4.2.1纯持久化设计): "
                 f"已分配={pool_stats['total_allocated']}, "
                 f"已复用={pool_stats['total_reused']}, "
                 f"当前内存={pool_stats['current_memory_mb']:.1f}MB, "
@@ -1328,30 +1370,110 @@ class GPUKernel(GPUKernelProtocol):
         P1修复: 显式释放OpenCL Buffer,防止显存泄漏
         改进: 删除未使用的pyopencl导入(Buffer对象自带release方法)
         P5增强: 引擎关闭时强制检查内存泄漏
-        v2.2.1: 关闭异步日志处理器
-        v2.2.1修复: 避免双重释放缓冲区
-        v3.2.1修复: 缓冲区归还到内存池（支持复用）
-        v3.3.0优化: 纯持久化设计 - 直接释放，不归还到内存池
+        v4.2.1: 关闭异步日志处理器
+        v4.2.1修复: 避免双重释放缓冲区
+        v4.2.1修复: 缓冲区归还到内存池（支持复用）
+        v4.2.1优化: 纯持久化设计 - 直接释放，不归还到内存池
         """
         # 注意: 不需要导入pyopencl, OpenCL Buffer对象自带release()方法
 
+<<<<<<< Updated upstream
         # v3.3.0优化: 纯持久化设计 - 不需要内存池引用（缓冲区直接释放）
         # memory_pool = getattr(self, '_gpu_memory_pool', None) # 不再需要
 
         # v2.2.1修复: 跟踪已释放的缓冲区，避免双重释放
         released_buffers: set[str] = set()
+=======
+        # v4.2.1优化: 纯持久化设计 - 不需要内存池引用（缓冲区直接释放）
+        # memory_pool = getattr(self, '_gpu_memory_pool', None)  # 不再需要
+
+        # v4.2.1修复: 跟踪已释放的缓冲区，避免双重释放
+        released_buffers = set()
+>>>>>>> Stashed changes
 
         self._check_memory_leaks_on_shutdown(released_buffers)
         self._release_gpu_buffers(released_buffers)
         self._close_async_logging()
 
+<<<<<<< Updated upstream
+=======
+                # v4.2.1修复: 将已释放的缓冲区引用设为None，避免双重释放
+                for buf_name in released_buffers:
+                    if buf_name == "_seed_buf":
+                        self._seed_buf = None
+                    elif buf_name == "_match_buf":
+                        self._match_buf = None
+                    elif buf_name == "_targets_buf":
+                        self._targets_buf = None
+                    elif buf_name == "_precomp_buf":
+                        self._precomp_buf = None
+
+                # 审查修复#3: 使用修正后的语义
+                if leak_report["has_unreleased"] or leak_report["has_leak"]:
+                    logger.warning(
+                        "GPU内存泄漏检测报告: "
+                        f"未释放={leak_report['remaining_buffers']}, "
+                        f"释放成功={len(leak_report['released'])}, "
+                        f"释放失败={len(leak_report['release_failed'])}"
+                    )
+                    if leak_report["has_leak"]:
+                        logger.error(
+                            f"发现{len(leak_report['release_failed'])}个缓冲区释放失败，可能存在内存泄漏"
+                        )
+            except Exception as e:
+                logger.error(f"内存泄漏检查失败: {e}")
+
+        # v4.2.1优化: 纯持久化设计 - 直接释放，不需要计算大小
+
+        # P1修复: 显式释放OpenCL Buffer（跳过已释放的）
+        buffers_to_release = [
+            ("_seed_buf", self._seed_buf),
+            ("_match_buf", self._match_buf),
+            ("_targets_buf", self._targets_buf),
+            ("_precomp_buf", self._precomp_buf),
+        ]
+
+        for buf_name, buf in buffers_to_release:
+            # v4.2.1修复: 跳过已被force_check_on_shutdown释放的缓冲区
+            if buf_name in released_buffers:
+                logger.debug(f"缓冲区 {buf_name} 已释放，跳过")
+                continue
+
+            if buf is not None:
+                try:
+                    # v4.2.1优化: 纯持久化设计 - 直接释放，不归还到内存池
+                    buf.release()
+                    logger.debug(f"已释放 {buf_name}")
+
+                    # P2-2修复: 注销缓冲区追踪
+                    # 注意: force_check_on_shutdown已clear整个_allocated_buffers dict,
+                    # 所以此处release_buffer是空操作(防御性保留,避免未来重构遗漏)
+                    if hasattr(self, "_buffer_tracker"):
+                        self._buffer_tracker.release_buffer(buf_name)
+                except Exception as e:
+                    logger.warning(f"释放 {buf_name} 失败: {e}")
+
+        # 清空引用
+        self._seed_buf = None
+        self._match_buf = None
+        self._targets_buf = None
+        self._precomp_buf = None
+
+        # v4.2.1: 关闭异步日志处理器
+        if hasattr(self, "_async_log_handler") and self._async_log_handler:
+            try:
+                self._async_log_handler.close()
+                logger.info("GPU异步日志已关闭")
+            except Exception as e:
+                logger.debug(f"关闭异步日志失败: {e}")
+>>>>>>> Stashed changes
         self._match_flags = None
         self._program = None
         self._batch_kernel = None
         self._batch_kernel_local = None
 
     def _setup_async_logging(self, log_file: str, max_bytes: int, backup_count: int):
-        """设置异步日志处理器（v2.2.1新增）
+        """设置异步日志处理器（v4.2.1新增）
 
         Args:
             log_file: 日志文件路径

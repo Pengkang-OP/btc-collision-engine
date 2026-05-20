@@ -3,8 +3,9 @@
 定义所有组件的接口协议，遵循依赖倒置原则(DIP)。
 所有实现类都应该实现这些接口。
 
-版本: v1.0
+版本: v4.2.2
 创建日期: 2026-04-29
+更新日期: 2026-04-30
 """
 
 from dataclasses import dataclass, field
@@ -267,7 +268,7 @@ class GPUExecutionContext:
 
     包含GPU执行所需的所有资源和配置。
 
-    v2.2.2 新增: engine 字段，用于传递 GPU 引擎实例给厂商优化器，
+    v4.2.1 新增: engine 字段，用于传递 GPU 引擎实例给厂商优化器，
     使 benchmark_suite / auto_tuner / performance_reporter 等 P2 组件能够初始化。
     """
 
@@ -278,7 +279,7 @@ class GPUExecutionContext:
     vendor: str = "unknown"
     config: dict[str, Any] | None = None
     initialized_at: float = 0.0  # 初始化时间戳
-    engine: Any | None = None  # v2.2.2: GPU 引擎实例引用（用于 P2 组件初始化）
+    engine: Any | None = None  # v4.2.1: GPU 引擎实例引用（用于 P2 组件初始化）
 
 
 @dataclass
