@@ -18,14 +18,14 @@ import tempfile
 logger = logging.getLogger(__name__)
 
 
-def setup_arc_environment() -> dict:
+def setup_arc_environment() -> dict[str, str]:
     """
     设置 Intel Arc A770 GPU 优化的环境变量
 
     Returns:
-        dict: 设置的环境变量字典
+        dict[str, str]: 设置的环境变量字典
     """
-    env_vars = {}
+    env_vars: dict[str, str] = {}
 
     # 1. 强制使用 OpenCL (非 Level-Zero)
     # 效果: 减少 12% 内核启动延迟
@@ -111,5 +111,5 @@ def get_arc_optimization_report() -> str:
 if __name__ == "__main__":
     # 直接运行时显示报告
     logging.basicConfig(level=logging.INFO)
-    setup_arc_environment()
+    _ = setup_arc_environment()
     print(get_arc_optimization_report())
