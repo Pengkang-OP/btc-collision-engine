@@ -334,8 +334,8 @@ class BenchmarkRunner:
             result.name = name
             print(
                 f"  {result.ops_per_sec:>12,.0f} ops/s"
-                f"  均值 {result.mean_us:.3f} µs"
-                f"  ±{result.std_us:.3f} µs",
+                f"  mean {result.mean_us:.3f} us"
+                f"  +/-{result.std_us:.3f} us",
             )
             return result
         except Exception as exc:  # noqa: BLE001 (基准测试容错)
