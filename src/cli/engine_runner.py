@@ -379,7 +379,7 @@ def _compute_range(
         start_val = int(args.start, 16)
     if args.mode == "range" and args.end:
         end_val = int(args.end, 16)
-        if start_val is not None:
+        if start_val is not None and end_val >= start_val:
             total_range = end_val - start_val + 1
     return start_val, end_val, total_range
 

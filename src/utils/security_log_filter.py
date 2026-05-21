@@ -121,8 +121,9 @@ class SecurityLogFilter(logging.Filter):
             message = self.WIF_UNCOMPRESSED_PATTERN.sub("[WIF_UNCOMPRESSED_KEY]", message)
             message = self.WIF_COMPRESSED_PATTERN.sub("[WIF_COMPRESSED_KEY]", message)
 
-        # 屏蔽原始字节模式
-        message = self.RAW_KEY_PATTERN.sub("[RAW_PRIVATE_KEY]", message)
+        # 屏蔽原始字节模式（私钥相关，与 mask_private_keys 联动）
+        if self.mask_private_keys:
+            message = self.RAW_KEY_PATTERN.sub("[RAW_PRIVATE_KEY]", message)
 
         # 屏蔽比特币地址
         if self.mask_addresses:

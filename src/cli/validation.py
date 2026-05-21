@@ -57,8 +57,8 @@ def _validate_range_mode(args, output) -> bool:
         output.print("  提示: --start 最小值为 1 (0x1)")
         return False
 
-    if end_val > (2**64) + start_val:
-        total_range = end_val - start_val + 1
+    total_range = end_val - start_val + 1
+    if total_range > 2**64:
         hours = total_range / 1e9 / 3600
         output.warning(_t("cli.validation.range_too_large", total=f"{total_range:,}"))
         output.warning(f"  预计耗时约 {hours:,.0f} 小时，建议缩小扫描范围")
