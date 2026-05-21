@@ -64,7 +64,7 @@ class LogStorage:
             self._save_to_file(event_data)
 
             return True
-        except Exception:
+        except (OSError, RuntimeError):
             return False
 
     def _save_to_file(self, event_data: dict[str, Any]):
@@ -244,5 +244,5 @@ class LogStorage:
                 json.dump(data, f, ensure_ascii=False, indent=2)
 
             return True
-        except Exception:
+        except (OSError, RuntimeError):
             return False

@@ -12,13 +12,13 @@ import time
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
+# v4.2.2 S4: 将循环内 WIF 导入提升到模块级别
+from ...core.wif import WIF
+
 # 统一日志获取 + 修复缺失导入
 from ...utils import get_configured_logger
 from ...utils.exception_handler import ExceptionHandler
 from ...utils.timeout import invoke_with_timeout
-
-# v4.2.2 S4: 将循环内 WIF 导入提升到模块级别
-from ...core.wif import WIF
 
 if TYPE_CHECKING:
     from ...collision.gpu_collision_engine import GPUCollisionEngine

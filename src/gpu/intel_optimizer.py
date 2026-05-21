@@ -10,9 +10,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
 import importlib
+from typing import TYPE_CHECKING, Any
 
 from ..utils import get_configured_logger
 

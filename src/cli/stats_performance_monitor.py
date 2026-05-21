@@ -118,7 +118,7 @@ class StatsPerformanceMonitor:
         try:
             memory_usage_mb = self._process.memory_info().rss / (1024 * 1024)
             cpu_usage = self._process.cpu_percent(interval=0.1)
-        except Exception:
+        except (OSError, RuntimeError):
             memory_usage_mb = 0.0
             cpu_usage = 0.0
 

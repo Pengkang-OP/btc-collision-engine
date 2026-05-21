@@ -193,7 +193,7 @@ class AuditModule:
             metrics["test_failed"] = test_results.failed
             metrics["test_errors"] = test_results.errors
             metrics["test_skipped"] = test_results.skipped
-        except Exception:
+        except (AttributeError, TypeError):
             pass  # 使用默认值
 
         # 从分析报告获取问题统计（安全访问）
@@ -210,7 +210,7 @@ class AuditModule:
                         metrics["medium_priority_issues"] += 1
                     elif sev == Severity.LOW:
                         metrics["low_priority_issues"] += 1
-            except Exception:
+            except (AttributeError, TypeError):
                 pass
 
             # 配置状态（安全访问嵌套属性）
@@ -220,7 +220,7 @@ class AuditModule:
                     data_summary.get("configuration", {}) if isinstance(data_summary, dict) else {}
                 )
                 metrics["config_valid"] = config_info.get("config_valid", True)
-            except Exception:
+            except (AttributeError, TypeError):
                 pass
 
             # 质量分数
@@ -229,7 +229,7 @@ class AuditModule:
                 metrics["quality_score"] = (
                     stats.get("quality_score", 100) if isinstance(stats, dict) else 100
                 )
-            except Exception:
+            except (AttributeError, TypeError):
                 pass
 
         # 检查性能测试
@@ -244,7 +244,7 @@ class AuditModule:
                 metrics["performance_tests_passed"] = all(
                     getattr(r, "is_passed", True) for r in perf_tests
                 )
-        except Exception:
+        except (AttributeError, TypeError):
             pass
 
         # 检查关键测试通过率
@@ -266,7 +266,7 @@ class AuditModule:
             else:
                 metrics["critical_tests_passed"] = True
                 metrics["critical_test_pass_rate"] = 100
-        except Exception:
+        except (AttributeError, TypeError):
             metrics["critical_tests_passed"] = True
             metrics["critical_test_pass_rate"] = 100
 

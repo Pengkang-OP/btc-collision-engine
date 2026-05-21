@@ -241,7 +241,7 @@ class LogWindowHandler(logging.Handler):
         try:
             message = self.format(record)
             self.log_window.log(message, record.levelname)
-        except Exception:
+        except (RuntimeError, OSError):
             pass
 
 
