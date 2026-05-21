@@ -246,7 +246,7 @@ def _worker_process(
                     finally:
                         _clear_private_key(pk)
                         with suppress(NameError):
-                            del pk_bytes  # pyright: ignore[reportUnboundVariable]
+                            del pk  # pyright: ignore[reportUnboundVariable]
 
                 if batch_matches:
                     _send_results(

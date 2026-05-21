@@ -238,27 +238,27 @@ class TestScalarMultiplyEdge(unittest.TestCase):
         """k==0 → RuntimeError (已锁定)"""
         with self.assertRaises(RuntimeError) as ctx:
             self.ec.scalar_multiply(0, self.G)
-        self.assertIn("已被锁定", str(ctx.exception))
+        self.assertIn("已被永久禁用", str(ctx.exception))
 
     def test_point_infinity(self):
         """point 无穷远点 → RuntimeError (已锁定)"""
         inf = ECPoint(None, None)
         with self.assertRaises(RuntimeError) as ctx:
             self.ec.scalar_multiply(5, inf)
-        self.assertIn("已被锁定", str(ctx.exception))
+        self.assertIn("已被永久禁用", str(ctx.exception))
 
     def test_k_mod_N_zero(self):
         """k % N == 0 → RuntimeError (已锁定)"""
         k = Secp256k1.N * 2
         with self.assertRaises(RuntimeError) as ctx:
             self.ec.scalar_multiply(k, self.G)
-        self.assertIn("已被锁定", str(ctx.exception))
+        self.assertIn("已被永久禁用", str(ctx.exception))
 
     def test_normal_scalar_multiply(self):
         """正常标量乘法 → RuntimeError (已锁定)"""
         with self.assertRaises(RuntimeError) as ctx:
             self.ec.scalar_multiply(5, self.G)
-        self.assertIn("已被锁定", str(ctx.exception))
+        self.assertIn("已被永久禁用", str(ctx.exception))
 
 
 class TestConstTimeSelectEdge(unittest.TestCase):

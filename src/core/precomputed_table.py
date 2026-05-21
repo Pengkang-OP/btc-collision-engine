@@ -128,7 +128,6 @@ class PrecomputedPointTable:
 
         return table
 
-    # type: ignore[name-defined]
     def scalar_multiply_with_table(self, k: int, ec: Any = None) -> Any:
         """
         使用预计算表加速标量乘法

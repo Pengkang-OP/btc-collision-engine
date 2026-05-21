@@ -196,7 +196,7 @@ class BaseCollisionEngine(ABC):
     ) -> bool:
         """Unix: 使用SIGALRM超时调用匹配回调 (Q7修复: 兼容WSL等无SIGALRM环境)"""
         try:
-            _sigalrm = signal.SIGALRM  # Unix-only API
+            _sigalrm = signal.SIGALRM  # type: ignore[attr-defined]  # Unix-only API
         except AttributeError:
             # Q7修复: 信号 API 不可用，回退到无超时模式
             logger.warning("SIGALRM 不可用，匹配回调将无超时保护")

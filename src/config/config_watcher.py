@@ -84,7 +84,7 @@ class ConfigWatcher:
         self._stop_event = threading.Event()
         self._stop_event.set()
         self._lock = threading.Lock()
-        self._observer: Observer | None = None
+        self._observer: Any = None  # watchdog.observers.Observer, 延迟导入以避免类型解析失败
         self._poll_thread: threading.Thread | None = None
         self._last_mtime: float | None = None  # None表示文件不存在
         self._last_reload_time: float = 0.0

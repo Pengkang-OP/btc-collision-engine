@@ -4,7 +4,7 @@
 内存管理和碰撞执行等复杂操作，降低碰撞引擎与GPU模块的耦合度。
 """
 
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict
 import logging
 
 # 导入日志配置
@@ -275,7 +275,7 @@ class GPUFacade:
         """析构函数"""
         try:
             self.cleanup()
-        except Exception as cleanup_error:
+        except Exception:
             # A类修复: 析构函数中资源清理失败静默处理
             # 因为此时对象正在销毁，无法做更多处理
             pass

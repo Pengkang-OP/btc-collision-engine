@@ -215,7 +215,7 @@ def setup_security_logging() -> None:
     ]
 
     # 追踪已添加过滤器的 logger，避免重复
-    _processed_loggers = set()
+    _processed_loggers: set[int | None] = set()
     _processed_loggers.add(None)  # root logger 已处理
 
     # 为显式列表中的模块添加过滤器

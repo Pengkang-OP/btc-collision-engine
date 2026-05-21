@@ -84,7 +84,8 @@ class TestGenerateBatch(unittest.TestCase):
         keys = self.gen.generate_batch(3)
         self.assertEqual(len(keys), 3)
         for key in keys:
-            self.assertIsInstance(key, bytes)
+            # generate_batch() 返回 bytearray 以支持安全清零，bytes 和 bytearray 均可
+            self.assertIsInstance(key, (bytes, bytearray))
             self.assertEqual(len(key), 32)
             key_int = int.from_bytes(key, "big")
             self.assertGreaterEqual(key_int, 1)
