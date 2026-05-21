@@ -194,32 +194,32 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
         # 确保清理
         if GlobalGPUMemoryManager._instance is not None:
             mgr = GlobalGPUMemoryManager._instance
-            if mgr._cleanup_thread and mgr._cleanup_thread.is_alive():
+            if mgr._cleanup_state._cleanup_thread and mgr._cleanup_state._cleanup_thread.is_alive():
                 mgr.stop_auto_cleanup(timeout=2.0)
         GlobalGPUMemoryManager._instance = None
 
     def test_start_auto_cleanup(self):
         mgr = GlobalGPUMemoryManager()
-        assert mgr._cleanup_thread is None
+        assert mgr._cleanup_state._cleanup_thread is None
         mgr.start_auto_cleanup(interval_seconds=3600)
-        assert mgr._cleanup_thread is not None
-        assert mgr._cleanup_thread.is_alive()
-        assert mgr._cleanup_thread.daemon is True
+        assert mgr._cleanup_state._cleanup_thread is not None
+        assert mgr._cleanup_state._cleanup_thread.is_alive()
+        assert mgr._cleanup_state._cleanup_thread.daemon is True
         mgr.stop_auto_cleanup(timeout=2.0)
 
     def test_start_auto_cleanup_idempotent(self):
         mgr = GlobalGPUMemoryManager()
         mgr.start_auto_cleanup(interval_seconds=3600)
-        first = mgr._cleanup_thread
+        first = mgr._cleanup_state._cleanup_thread
         mgr.start_auto_cleanup(interval_seconds=3600)
-        assert mgr._cleanup_thread is first
+        assert mgr._cleanup_state._cleanup_thread is first
         mgr.stop_auto_cleanup(timeout=2.0)
 
     def test_stop_auto_cleanup(self):
         mgr = GlobalGPUMemoryManager()
         mgr.start_auto_cleanup(interval_seconds=3600)
         mgr.stop_auto_cleanup(timeout=2.0)
-        assert mgr._cleanup_thread is None
+        assert mgr._cleanup_state._cleanup_thread is None
 
     def test_stop_auto_cleanup_not_running(self):
         mgr = GlobalGPUMemoryManager()
@@ -229,12 +229,12 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
         mgr = GlobalGPUMemoryManager()
         mgr.start_auto_cleanup(interval_seconds=3600)
         # 强制 stop event，但线程在长时间 wait 中
-        mgr._cleanup_stop_event.set()
+        mgr._cleanup_state._cleanup_stop_event.set()
         mgr.stop_auto_cleanup(timeout=0.001)
         # cleanup after
-        mgr._cleanup_stop_event.set()
-        if mgr._cleanup_thread and mgr._cleanup_thread.is_alive():
-            mgr._cleanup_thread.join(timeout=2.0)
+        mgr._cleanup_state._cleanup_stop_event.set()
+        if mgr._cleanup_state._cleanup_thread and mgr._cleanup_state._cleanup_thread.is_alive():
+            mgr._cleanup_state._cleanup_thread.join(timeout=2.0)
 
     def test_auto_cleanup_loop_normal(self):
         """自动清理循环正常运行"""
@@ -258,7 +258,7 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
                 return True  # 停止
             return False
 
-        with patch.object(mgr._cleanup_stop_event, "wait", side_effect=wait_side_effect):
+        with patch.object(mgr._cleanup_state._cleanup_stop_event, "wait", side_effect=wait_side_effect):
             mgr._auto_cleanup_loop(interval=0.01, lru_timeout=0.1)
         # 不应崩溃
 
@@ -281,7 +281,7 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
 
         # mock _evict_lru_locked to raise on first call
         with patch.object(GPUMemoryPool, "_evict_lru_locked", side_effect=TestException("err")):
-            with patch.object(mgr._cleanup_stop_event, "wait", side_effect=wait_side_effect):
+            with patch.object(mgr._cleanup_state._cleanup_stop_event, "wait", side_effect=wait_side_effect):
                 mgr._auto_cleanup_loop(interval=0.01, lru_timeout=0.1)
         # 不应崩溃
 
@@ -294,7 +294,7 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
             return False  # run once
 
         with patch.object(GPUMemoryPool, "_evict_lru_locked", side_effect=MemoryError("OOM")):
-            with patch.object(mgr._cleanup_stop_event, "wait", side_effect=wait_side_effect):
+            with patch.object(mgr._cleanup_state._cleanup_stop_event, "wait", side_effect=wait_side_effect):
                 mgr._auto_cleanup_loop(interval=0.01, lru_timeout=0.1)
         # 不应崩溃
 
@@ -327,7 +327,7 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
 
         # 注入 pyopencl mock
         with patch.dict(sys.modules, {"pyopencl": FakeCL}):
-            with patch.object(mgr._cleanup_stop_event, "wait", side_effect=wait_side_effect):
+            with patch.object(mgr._cleanup_state._cleanup_stop_event, "wait", side_effect=wait_side_effect):
                 mgr._auto_cleanup_loop(interval=0.01, lru_timeout=0.1)
         # 不应崩溃
 
@@ -335,7 +335,7 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
         """使用默认间隔启动"""
         mgr = GlobalGPUMemoryManager()
         mgr.start_auto_cleanup()  # 使用默认值
-        assert mgr._cleanup_thread is not None
+        assert mgr._cleanup_state._cleanup_thread is not None
         mgr.stop_auto_cleanup(timeout=2.0)
 
     def test_start_stop_full_cycle(self):
@@ -343,19 +343,19 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
         mgr = GlobalGPUMemoryManager()
         mgr.start_auto_cleanup(interval_seconds=3600)
         mgr.stop_auto_cleanup(timeout=2.0)
-        assert mgr._cleanup_thread is None
+        assert mgr._cleanup_state._cleanup_thread is None
 
     def test_stop_timeout_logs_warning(self):
         """stop_auto_cleanup 超时触发 warning (line 924)"""
         mgr = GlobalGPUMemoryManager()
         mgr.start_auto_cleanup(interval_seconds=3600)
         # mock is_alive 始终返回 True，模拟线程未能及时停止
-        with patch.object(mgr._cleanup_thread, "is_alive", return_value=True):
+        with patch.object(mgr._cleanup_state._cleanup_thread, "is_alive", return_value=True):
             mgr.stop_auto_cleanup(timeout=0.001)
         # 确认清理
-        mgr._cleanup_stop_event.set()
-        if mgr._cleanup_thread and mgr._cleanup_thread.is_alive():
-            mgr._cleanup_thread.join(timeout=5.0)
+        mgr._cleanup_state._cleanup_stop_event.set()
+        if mgr._cleanup_state._cleanup_thread and mgr._cleanup_state._cleanup_thread.is_alive():
+            mgr._cleanup_state._cleanup_thread.join(timeout=5.0)
 
 
 # ===========================================================================
