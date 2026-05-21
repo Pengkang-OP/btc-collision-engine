@@ -18,7 +18,7 @@ from pathlib import Path
 
 # 修复Windows编码
 if sys.platform == 'win32':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', closefd=False)
 
 # 添加项目根目录
 sys.path.insert(0, str(Path(__file__).parent.parent))

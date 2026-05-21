@@ -21,7 +21,7 @@ if sys.platform == "win32":
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     else:
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", closefd=False)
 
 # 添加项目根目录
 sys.path.insert(0, str(Path(__file__).parent.parent))

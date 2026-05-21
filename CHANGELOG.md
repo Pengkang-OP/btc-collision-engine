@@ -117,6 +117,10 @@
   - 更新 2 个测试文件，删除 `verify_threadsafe_replacement.py` 验证脚本
   - 修复 `test_core_fixes_verification.py` GBK 编码兼容性（Windows 终端）
 
+- **TextIOWrapper closefd=False 根因修复** (P1-7)
+  - 3 个测试文件中的 `TextIOWrapper()` 调用添加 `closefd=False`，防止 stdout 底层 fd 被意外关闭
+  - `conftest.py`: 补丁注释更新为"防御性保护"，标记根因已修复
+
 ## v4.5.0 (2026-05-21)
 
 ### 遗留问题修复与代码清理
