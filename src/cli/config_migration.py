@@ -287,7 +287,9 @@ def _validate_perf_monitoring_fields(pm_cfg: dict, issues: list[str]) -> None:
     """验证 performance_monitoring 段字段类型。"""
     _check_field_type(pm_cfg, "performance_monitoring", "enabled", bool, "布尔值", issues)
     _check_field_type(pm_cfg, "performance_monitoring", "max_records", int, "整数", issues)
-    _check_field_type(pm_cfg, "performance_monitoring", "slow_threshold_ms", (int, float), "数值", issues)
+    _check_field_type(
+        pm_cfg, "performance_monitoring", "slow_threshold_ms", (int, float), "数值", issues
+    )
 
 
 def validate_migrated_config(config: dict) -> tuple[bool, list[str]]:

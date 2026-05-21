@@ -904,10 +904,8 @@ class DataLogger:
             # 清理临时文件
             temp_file = self.history_data_file + ".compact.tmp"
             if os.path.exists(temp_file):
-                try:
+                with suppress(OSError):
                     os.remove(temp_file)
-                except OSError:
-                    pass
 
     def _load_history_with_recovery(self) -> list:
         """加载历史数据，带损坏恢复机制
@@ -940,6 +938,54 @@ class DataLogger:
             self.logger.warning(f"读取历史数据失败: {e}")
             return []
 
+    @staticmethod
+    def _scan_bracket_pairs(content: str) -> list[dict[str, Any]]:
+        """从损坏的 JSON 文本中扫描匹配括号的完整对象。
+
+        使用字符级状态机提取所有顶层 JSON 对象，跳过无法解析的片段。
+        """
+        recovered: list[dict[str, Any]] = []
+        i = 0
+        while i < len(content):
+            if content[i] == "{":
+                brace_count = 0
+                in_string = False
+                escape_next = False
+                start = i
+
+                for j in range(i, len(content)):
+                    char = content[j]
+                    if escape_next:
+                        escape_next = False
+                        continue
+                    if char == "\\":
+                        escape_next = True
+                        continue
+                    if char == '"' and not escape_next:
+                        in_string = not in_string
+                        continue
+                    if in_string:
+                        continue
+                    if char == "{":
+                        brace_count += 1
+                    elif char == "}":
+                        brace_count -= 1
+                        if brace_count == 0:
+                            try:
+                                obj_str = content[start : j + 1]
+                                obj = fast_loads(obj_str)
+                                if isinstance(obj, dict) and "timestamp" in obj:
+                                    recovered.append(obj)
+                            except json.JSONDecodeError:
+                                pass
+                            i = j + 1
+                            break
+                else:
+                    i += 1
+            else:
+                i += 1
+        return recovered
+
     def _recover_history_data(self) -> list:
         """尝试从损坏的JSON文件中恢复数据（健壮的逐行解析）"""
         recovered = []
@@ -967,59 +1013,7 @@ class DataLogger:
                 pass  # 继续原有字符级恢复
 
             # 使用括号匹配算法找到完整的JSON对象
-            i = 0
-            while i < len(content):
-                # 查找对象开始
-                if content[i] == "{":
-                    brace_count = 0
-                    in_string = False
-                    escape_next = False
-                    start = i
-
-                    # 向后扫描找到匹配的结束括号
-                    for j in range(i, len(content)):
-                        char = content[j]
-
-                        # 处理转义字符
-                        if escape_next:
-                            escape_next = False
-                            continue
-
-                        if char == "\\":
-                            escape_next = True
-                            continue
-
-                        # 处理字符串
-                        if char == '"' and not escape_next:
-                            in_string = not in_string
-                            continue
-
-                        # 如果在字符串中，跳过
-                        if in_string:
-                            continue
-
-                        # 计算括号
-                        if char == "{":
-                            brace_count += 1
-                        elif char == "}":
-                            brace_count -= 1
-                            if brace_count == 0:
-                                # 找到完整对象
-                                try:
-                                    obj_str = content[start : j + 1]
-                                    obj = fast_loads(obj_str)
-                                    if isinstance(obj, dict) and "timestamp" in obj:
-                                        recovered.append(obj)
-                                except json.JSONDecodeError:
-                                    # 解析失败，跳过
-                                    pass
-                                i = j + 1
-                                break
-                    else:
-                        # 未找到匹配的括号
-                        i += 1
-                else:
-                    i += 1
+            recovered = self._scan_bracket_pairs(content)
 
             self.logger.info(f"从损坏文件中恢复了 {len(recovered)} 条记录")
             return recovered
