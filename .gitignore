@@ -116,6 +116,7 @@ build/
 # 安全扫描报告
 bandit-result*.json
 bandit-report*.json
+_ruff_*.txt
 
 # 环境配置
 .env
@@ -207,3 +208,6 @@ _e501_*.py
 _verify_*.py
 _vfy_*.py
 _fmt_*.py
+
+# 根目录意外生成的文件（测试重定向残留）
+[0-9]
