@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "btc-collision-engine"
-version = "4.4.0"
+version = "4.5.1"
 description = "比特币私钥碰撞引擎，支持CPU和GPU加速，多格式地址支持，用于学习和研究比特币地址碰撞"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -27,7 +27,7 @@ classifiers = [
 # 核心必须依赖
 dependencies = [
     "coincurve>=18.0.0",
-    "gmpy2>=2.1.0,<4.0.0",          # C-07: 放宽上限，支持 3.x 版本
+    "gmpy2>=2.1.0,<5.0.0",          # v4.5.1: 放宽上限至 4.x，支持最新版本
     "pycryptodome>=3.19.0,<5.0.0",  # C-08: 放宽上限，预留 4.x 兼容性
     "cachetools>=5.3.0",
     "pybloom-live>=2.2.0",
@@ -50,9 +50,9 @@ dependencies = [
 gpu = [
     "pyopencl>=2022.1",
     "numpy>=1.24.0",
-    "gmpy2>=2.1.0,<4.0.0",         # C-07: 与主依赖一致
+    "gmpy2>=2.1.0,<5.0.0",         # v4.5.1: 与主依赖一致
     "pycryptodome>=3.19.0,<5.0.0", # C-08: 与主依赖一致
-    "nvidia-ml-py>=12.0.0",        # C-13: NVIDIA GPU 监控（替代已弃用的 pynvml）
+    "nvidia-ml-py>=12.0.0",        # v4.5.1: 已确认 gpu_performance_monitor.py 有 pynvml 导入保护
 ]
 # 开发与测试工具
 dev = [
@@ -71,6 +71,13 @@ dev = [
 ]
 # 一次性安装所有可选依赖
 all = ["btc-collision-engine[gpu,dev]"]
+
+# Windows 平台可选依赖（断点文件 ACL 设置）
+# checkpoint_manager.py 使用 pywin32 设置 Windows DACL
+# 若 pywin32 不可用，自动降级为 icacls 命令（系统内置）
+windows = [
+    "pywin32>=306",
+]
 
 [project.scripts]
 btc-collision = "src.cli.main:main"
@@ -137,12 +144,12 @@ strict_equality = true                                    # 防止不安全的�
 exclude = ["tests/", "benchmarks/", "tools/", "scripts/"]
 
 [tool.black]
-line-length = 100
-target-version = ["py312"]
+line-length = 105
+target-version = ["py39"]
 
 [tool.ruff]
 line-length = 105 # 略高于标准100以容纳中文日志/长变量名
-target-version = "py312"
+target-version = "py39"
 fix = true
 exclude = [
     ".git",

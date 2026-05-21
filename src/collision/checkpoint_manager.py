@@ -1,5 +1,6 @@
 """断点管理器"""
 
+import binascii
 import json
 import os
 import threading
@@ -115,7 +116,7 @@ class CheckpointManager:
                     safe_match["private_key_hash"] = match["private_key_hash"]
                 sanitized_matches.append(safe_match)
 
-            # 构建断点数据
+            # 构建断点数据（不含校验和，校验和在序列化后计算）
             self._buffer = {
                 "version": 1,  # 格式版本
                 "project_version": _project_version,  # 项目版本 (C-02: 版本兼容性修复)
@@ -129,6 +130,8 @@ class CheckpointManager:
                 "range_end": range_end,
                 "security_note": "私钥信息未保存，仅用于运行时内存处理",
             }
+            # v4.5.1: 添加 CRC32 校验和以检测文件损坏
+            self._buffer["checksum"] = self._compute_checksum(self._buffer)
 
             # 标记为脏
             self._dirty = True
@@ -329,6 +332,19 @@ class CheckpointManager:
                 else:
                     data = fast_loads(raw.decode("utf-8"))
 
+                # v4.5.1: 校验 CRC32 校验和以检测文件损坏
+                stored_checksum = data.pop("checksum", None)
+                if stored_checksum is not None:
+                    computed = self._compute_checksum(data)
+                    if stored_checksum != computed:
+                        logger.error(
+                            f"断点文件校验和失败（可能已损坏）: "
+                            f"存储={stored_checksum}, 计算={computed}"
+                        )
+                        return None
+                else:
+                    logger.warning("断点文件无校验和字段（旧版本格式）")
+
                 if data.get("version") != 1:
                     logger.warning(f"断点文件格式版本不兼容: {data.get('version')}")
                     return None
@@ -381,4 +397,20 @@ class CheckpointManager:
     def should_auto_save(self) -> bool:
         """检查是否达到自动保存间隔"""
         return time.monotonic() - self._last_save_time >= self.auto_save_interval
+
+    @staticmethod
+    def _compute_checksum(data: dict) -> str:
+        """计算断点数据的 CRC32 校验和（排除 checksum 自引用）
+
+        Args:
+            data: 断点数据字典（不含 checksum 键）
+
+        Returns:
+            十六进制 CRC32 校验和字符串（8 字符）
+        """
+        serialized = fast_dumps(data, sort_keys=True, ensure_ascii=False)
+        if isinstance(serialized, bytes):
+            serialized = serialized.decode("utf-8")
+        crc = binascii.crc32(serialized.encode("utf-8")) & 0xFFFFFFFF
+        return f"{crc:08x}"
 

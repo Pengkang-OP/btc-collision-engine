@@ -154,10 +154,10 @@ class MultiFormatAddressGenerator:
             return bech32_encode(hrp, 1, xonly_pubkey, "bech32m")
         except ImportError:
             logger.warning("coincurve不可用，无法生成Taproot地址")
-            return ""
+            raise ValueError("coincurve 不可用，无法生成 Taproot 地址。请安装 coincurve: pip install coincurve")
         except Exception as e:
             logger.error(f"Taproot地址生成失败: {e}")
-            return ""
+            raise ValueError(f"Taproot地址生成失败: {e}") from e
 
     def generate_address(
         self, private_key: bytes, format_type: AddressFormat = AddressFormat.P2PKH

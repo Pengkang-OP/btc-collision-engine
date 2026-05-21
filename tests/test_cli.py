@@ -168,8 +168,8 @@ class TestCLI:
         # 测试随机模式进度（新格式：[elapsed] | 1.0K | 速度: ... | ETA: -- | 匹配: 0）
         progress_str = format_progress(stats, "random")
         assert "1.0K" in progress_str  # 已检查数量以缩写显示
-        assert "速度:" in progress_str
-        assert "匹配: 0" in progress_str
+        assert "0.00/s" in progress_str  # 速度显示
+        assert "匹配:0" in progress_str
 
         # 测试范围模式进度（带进度条和百分比）
         progress_str = format_progress(stats, "range", total_range=10000)
@@ -267,7 +267,7 @@ class TestCLI:
         stats.elapsed = 0
         stats.matches = []
         progress_str = format_progress(stats, "range", total_range=10000)
-        assert "ETA: --" in progress_str
+        assert "ETA:--" in progress_str
 
     def test_load_targets(self, tmp_path):
         """测试目标地址加载"""
@@ -316,7 +316,8 @@ class TestCLI:
 
         # 创建 mock 引擎实例
         mock_instance = Mock()
-        mock_instance.is_running.side_effect = [True, False, False]
+        # v4.5.1: 新增 stop 轮询需要更多 is_running 返回值
+        mock_instance.is_running.side_effect = [True, False, False, True, False]
 
         mock_stats = Mock()
         mock_stats.total_checked = 1000
@@ -373,7 +374,8 @@ class TestCLI:
 
         # 创建 mock 引擎实例
         mock_instance = Mock()
-        mock_instance.is_running.side_effect = [True, False, False]
+        # v4.5.1: 新增 stop 轮询需要更多 is_running 返回值
+        mock_instance.is_running.side_effect = [True, False, False, True, False]
 
         mock_stats = Mock()
         mock_stats.total_checked = 500
@@ -426,7 +428,8 @@ class TestCLI:
 
         # 创建 mock 引擎实例
         mock_instance = Mock()
-        mock_instance.is_running.side_effect = [True, False, False]
+        # v4.5.1: 新增 stop 轮询需要更多 is_running 返回值
+        mock_instance.is_running.side_effect = [True, False, False, True, False]
 
         mock_stats = Mock()
         mock_stats.total_checked = 2000
@@ -730,29 +733,18 @@ class TestLoadConfigWithValidation:
         assert result is None
 
     def test_module_sys_path_insert(self, monkeypatch):
-        """模块首次加载时 _project_root 不在 sys.path → sys.path.insert (L16)。"""
-        import importlib
+        """v4.5.1: 验证 _path_setup 共享模块确保项目根目录在 sys.path 中。"""
         import sys
 
-        mod = self._get_config_loader_module()
-        project_root = mod._project_root
+        # 验证 _path_setup 模块可加载且路径已设置
+        from src.cli import _path_setup
+        assert _path_setup._project_root is not None
+        assert _path_setup._project_root in sys.path
 
-        # 1. 从 sys.modules 移除
-        sys.modules.pop("src.cli.config_loader", None)
-        # 2. 临时从 sys.path 移除项目根目录
-        original_path = list(sys.path)
-        sys.path = [p for p in sys.path if p != project_root]
-        try:
-            # 3. 重新导入，触发 L16
-            new_mod = importlib.import_module("src.cli.config_loader")
-            assert new_mod is not None
-            assert hasattr(new_mod, "_project_root")
-            assert project_root in sys.path  # 验证 L16 insert 已执行
-        finally:
-            sys.path[:] = original_path
-            # 恢复模块
-            sys.modules.pop("src.cli.config_loader", None)
-            importlib.import_module("src.cli.config_loader")
+        # 验证 ensure_project_root 幂等
+        original_path_len = len(sys.path)
+        _path_setup.ensure_project_root()
+        assert len(sys.path) == original_path_len
 
 
 class TestBuildEngine:

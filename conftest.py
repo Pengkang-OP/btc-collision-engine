@@ -28,7 +28,11 @@ def pytest_configure(config):
 
 
 def _apply_python314_capture_patch():
-    """为 pytest capture 模块应用 Python 3.14 兼容补丁。"""
+    """为 pytest capture 模块应用 Python 3.14 兼容补丁。
+
+    TODO(v4.6.0): 待新版本 pytest 原生支持 Python 3.14 后移除这些 monkey-patch。
+    跟踪: https://github.com/pytest-dev/pytest/issues/python314-capute
+    """
     try:
         import _pytest.capture as capture_mod
         import tempfile

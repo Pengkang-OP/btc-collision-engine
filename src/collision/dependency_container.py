@@ -1,6 +1,7 @@
 """依赖注入容器 — 集中管理引擎核心依赖的生命周期"""
 
 import logging
+import threading
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -17,6 +18,8 @@ class DependencyContainer:
         container = DependencyContainer()
         container.set_stats(mock_stats)  # 测试时注入 Mock
         engine = EngineFactory.create_cpu_engine(targets, container=container)
+
+    v4.5.1: 添加线程安全锁保护延迟初始化
     """
 
     def __init__(self) -> None:
@@ -24,32 +27,39 @@ class DependencyContainer:
         self._event_bus: Any | None = None
         self._data_logger: Any | None = None
         self._initialized = False
+        self._lock = threading.Lock()
 
     @property
     def stats(self) -> Any:
-        """获取 CollisionStats（延迟创建）"""
+        """获取 CollisionStats（延迟创建，线程安全）"""
         if self._stats is None:
-            from .collision_stats import CollisionStats
+            with self._lock:
+                if self._stats is None:
+                    from .collision_stats import CollisionStats
 
-            self._stats = CollisionStats()
+                    self._stats = CollisionStats()
         return self._stats
 
     @property
     def event_bus(self) -> Any:
-        """获取 EventBus（延迟创建）"""
+        """获取 EventBus（延迟创建，线程安全）"""
         if self._event_bus is None:
-            from .event_bus import EventBus
+            with self._lock:
+                if self._event_bus is None:
+                    from .event_bus import EventBus
 
-            self._event_bus = EventBus()
+                    self._event_bus = EventBus()
         return self._event_bus
 
     @property
     def data_logger(self) -> Any:
-        """获取 DataLogger（延迟创建）"""
+        """获取 DataLogger（延迟创建，线程安全）"""
         if self._data_logger is None:
-            from ..monitoring.data_logger import DataLogger
+            with self._lock:
+                if self._data_logger is None:
+                    from ..monitoring.data_logger import DataLogger
 
-            self._data_logger = DataLogger()
+                    self._data_logger = DataLogger()
         return self._data_logger
 
     def set_stats(self, stats: Any) -> "DependencyContainer":
@@ -69,9 +79,10 @@ class DependencyContainer:
 
     def reset(self) -> None:
         """重置所有依赖（测试用）"""
-        self._stats = None
-        self._event_bus = None
-        self._data_logger = None
+        with self._lock:
+            self._stats = None
+            self._event_bus = None
+            self._data_logger = None
 
     def __repr__(self) -> str:
         return (
