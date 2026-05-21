@@ -183,6 +183,7 @@ class TestTranslator(unittest.TestCase):
         """JSON 文件损坏时回退到硬编码默认值。"""
         import shutil
         import tempfile
+
         tmpdir = tempfile.mkdtemp()
         try:
             # 创建损坏的 en_US.json
@@ -359,6 +360,7 @@ class TestLanguageDetector(unittest.TestCase):
     def test_detect_env_language_finds_zh_cn(self):
         """_detect_env_language 通过 LANG 变量检测到 zh_CN。"""
         from src.i18n.language_detector import _detect_env_language
+
         os.environ["LANG"] = "zh_CN.UTF-8"
         result = _detect_env_language()
         self.assertEqual(result, "zh_CN")

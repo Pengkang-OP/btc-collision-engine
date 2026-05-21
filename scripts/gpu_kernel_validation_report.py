@@ -50,9 +50,7 @@ def _test_environment():
         import sys  # noqa: F811 (re-import for standalone script)
 
         py_version = (
-            f"{sys.version_info.major}."
-            f"{sys.version_info.minor}."
-            f"{sys.version_info.micro}"
+            f"{sys.version_info.major}." f"{sys.version_info.minor}." f"{sys.version_info.micro}"
         )
         print_result("Python版本", True, f"Python {py_version}")
         results.append(True)
@@ -103,13 +101,11 @@ def _test_kernel_source():
         from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
         lines = OPENCL_KERNEL_SOURCE.split("\n")
-        print_result("源码加载", True,
-                     f"{len(OPENCL_KERNEL_SOURCE)} 字符, {len(lines)} 行")
+        print_result("源码加载", True, f"{len(OPENCL_KERNEL_SOURCE)} 字符, {len(lines)} 行")
         results.append(True)
         kernel_count = OPENCL_KERNEL_SOURCE.count("__kernel")
         matches_expected = kernel_count == 3
-        print_result("内核函数", matches_expected,
-                     f"发现 {kernel_count} 个内核函数")
+        print_result("内核函数", matches_expected, f"发现 {kernel_count} 个内核函数")
         results.append(matches_expected)
         components = {
             "uint256_t类型": "typedef struct",
@@ -251,12 +247,9 @@ def _test_verify_arithmetic():
         queue = cl.CommandQueue(context)
         result_x = np.zeros(8, dtype=np.uint32)
         result_y = np.zeros(8, dtype=np.uint32)
-        result_x_buf = cl.Buffer(
-            context, cl.mem_flags.WRITE_ONLY, result_x.nbytes)
-        result_y_buf = cl.Buffer(
-            context, cl.mem_flags.WRITE_ONLY, result_y.nbytes)
-        program.verify_arithmetic(
-            queue, (1,), None, result_x_buf, result_y_buf)
+        result_x_buf = cl.Buffer(context, cl.mem_flags.WRITE_ONLY, result_x.nbytes)
+        result_y_buf = cl.Buffer(context, cl.mem_flags.WRITE_ONLY, result_y.nbytes)
+        program.verify_arithmetic(queue, (1,), None, result_x_buf, result_y_buf)
         queue.finish()
         cl.enqueue_copy(queue, result_x, result_x_buf)
         cl.enqueue_copy(queue, result_y, result_y_buf)
@@ -300,29 +293,27 @@ def _test_hash_verification():
         hash160_out = np.zeros(20, dtype=np.uint8)
         qx_out = np.zeros(8, dtype=np.uint32)
         qy_out = np.zeros(8, dtype=np.uint32)
-        pubkey_buf = cl.Buffer(
-            context, cl.mem_flags.WRITE_ONLY, pubkey_out.nbytes)
-        hash160_buf = cl.Buffer(
-            context, cl.mem_flags.WRITE_ONLY, hash160_out.nbytes)
-        qx_buf = cl.Buffer(
-            context, cl.mem_flags.WRITE_ONLY, qx_out.nbytes)
-        qy_buf = cl.Buffer(
-            context, cl.mem_flags.WRITE_ONLY, qy_out.nbytes)
+        pubkey_buf = cl.Buffer(context, cl.mem_flags.WRITE_ONLY, pubkey_out.nbytes)
+        hash160_buf = cl.Buffer(context, cl.mem_flags.WRITE_ONLY, hash160_out.nbytes)
+        qx_buf = cl.Buffer(context, cl.mem_flags.WRITE_ONLY, qx_out.nbytes)
+        qy_buf = cl.Buffer(context, cl.mem_flags.WRITE_ONLY, qy_out.nbytes)
         program.debug_hash(
-            queue, (1,), None,
+            queue,
+            (1,),
+            None,
             pubkey_buf,
             cl.Buffer(context, cl.mem_flags.WRITE_ONLY, 32),
             hash160_buf,
             np.uint32(1),
-            qx_buf, qy_buf,
+            qx_buf,
+            qy_buf,
         )
         queue.finish()
         cl.enqueue_copy(queue, pubkey_out, pubkey_buf)
         cl.enqueue_copy(queue, hash160_out, hash160_buf)
         pubkey_valid = pubkey_out[0] in [0x02, 0x03]
         hash160_hex = hash160_out.tobytes().hex()
-        print_result("压缩公钥格式", pubkey_valid,
-                     f"首字节: 0x{pubkey_out[0]:02x}")
+        print_result("压缩公钥格式", pubkey_valid, f"首字节: 0x{pubkey_out[0]:02x}")
         results.append(pubkey_valid)
         print_result("Hash160计算", True, hash160_hex)
         results.append(True)
@@ -340,8 +331,7 @@ def _test_intel_arc_optimization():
         from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
         optimizations = [
-            ("uint32私钥输入", "__global const uint *private_keys",
-             "避免global char* hang bug"),
+            ("uint32私钥输入", "__global const uint *private_keys", "避免global char* hang bug"),
             ("ulong算术", "ulong carry", "避免signed long bug"),
         ]
         for name, pattern, desc in optimizations:

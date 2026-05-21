@@ -25,14 +25,10 @@ WIF_COMPRESSED = re.compile(r"\b[KL][1-9A-HJ-NP-Za-km-z]{50,51}\b")
 
 # 原始字节模式（32字节）
 # P2-07修复: 添加路径分隔符负向前瞻，避免误匹配 Windows 路径中的反斜杠序列
-RAW_KEY = re.compile(
-    r"(?<![\\/:a-zA-Z0-9])b'\\x[0-9a-fA-F]{2}(?:\\x[0-9a-fA-F]{2}){31}'(?![\\/])"
-)
+RAW_KEY = re.compile(r"(?<![\\/:a-zA-Z0-9])b'\\x[0-9a-fA-F]{2}(?:\\x[0-9a-fA-F]{2}){31}'(?![\\/])")
 
 # PrivateKey 上下文模式（仅在 SensitiveDataFilter 中使用）
-PRIVATE_KEY_CONTEXT = re.compile(
-    r'PrivateKey["\']?\s*[:=]\s*["\']?[0-9a-fA-F]{64}'
-)
+PRIVATE_KEY_CONTEXT = re.compile(r'PrivateKey["\']?\s*[:=]\s*["\']?[0-9a-fA-F]{64}')
 
 # ====================================================================
 # 比特币地址模式

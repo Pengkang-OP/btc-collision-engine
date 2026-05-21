@@ -450,6 +450,7 @@ if __name__ == "__main__":
 # ExceptionHandler 单元测试 (从 src/utils/exception_handler.py)
 # ============================================================
 
+
 class TestHandleEngineError:
     """测试 handle_engine_error — 7条分支"""
 
@@ -538,8 +539,9 @@ class TestHandleGpuError:
         stats = MagicMock()
         stats.record_gpu_error = MagicMock()
         with patch("src.utils.exception_handler.logger") as mock_logger:
-            result = ExceptionHandler.handle_gpu_error("随机碰撞",
-                                                       RuntimeError("out of resources"), stats)
+            result = ExceptionHandler.handle_gpu_error(
+                "随机碰撞", RuntimeError("out of resources"), stats
+            )
         assert result is True
         mock_logger.error.assert_called_once()
         stats.record_gpu_error.assert_called_once_with(is_resource_error=True)
@@ -594,8 +596,7 @@ class TestHandleGpuAsyncError:
     def test_runtime_error_returns_true(self):
         """RuntimeError → 返回 True (可回退)"""
         with patch("src.utils.exception_handler.logger") as mock_logger:
-            result = ExceptionHandler.handle_gpu_async_error(
-                RuntimeError("cl error"), "内核执行")
+            result = ExceptionHandler.handle_gpu_async_error(RuntimeError("cl error"), "内核执行")
         assert result is True
         mock_logger.warning.assert_called_once()
 
@@ -630,7 +631,8 @@ class TestHandleClResourceError:
         """资源耗尽 → 返回 True, 记录 warning"""
         with patch("src.utils.exception_handler.logger") as mock_logger:
             result = ExceptionHandler.handle_cl_resource_error(
-                RuntimeError("out of resources"), "buffer")
+                RuntimeError("out of resources"), "buffer"
+            )
         assert result is True
         mock_logger.warning.assert_called_once()
 
@@ -638,20 +640,23 @@ class TestHandleClResourceError:
         """非资源错误 → 返回 False, 记录 error"""
         with patch("src.utils.exception_handler.logger") as mock_logger:
             result = ExceptionHandler.handle_cl_resource_error(
-                RuntimeError("unknown kernel error"), "kernel")
+                RuntimeError("unknown kernel error"), "kernel"
+            )
         assert result is False
         mock_logger.error.assert_called_once()
 
     def test_cl_out_of_host_memory(self):
         """CL_OUT_OF_HOST_MEMORY → 识别为资源耗尽"""
         result = ExceptionHandler.handle_cl_resource_error(
-            RuntimeError("cl_out_of_host_memory"), "buffer")
+            RuntimeError("cl_out_of_host_memory"), "buffer"
+        )
         assert result is True
 
     def test_invalid_buffer_size(self):
         """invalid buffer size → 识别为资源耗尽"""
         result = ExceptionHandler.handle_cl_resource_error(
-            RuntimeError("invalid buffer size"), "buffer")
+            RuntimeError("invalid buffer size"), "buffer"
+        )
         assert result is True
 
 
@@ -713,7 +718,9 @@ class TestHandleFileError:
     def test_file_not_found(self):
         """FileNotFoundError → error"""
         with patch("src.utils.exception_handler.logger") as mock_logger:
-            ExceptionHandler.handle_file_error(FileNotFoundError("no file"), "读取", "/path/to/file")
+            ExceptionHandler.handle_file_error(
+                FileNotFoundError("no file"), "读取", "/path/to/file"
+            )
         mock_logger.error.assert_called_once()
 
     def test_permission_error(self):

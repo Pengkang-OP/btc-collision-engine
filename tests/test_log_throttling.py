@@ -238,6 +238,7 @@ class TestRateLimitedLogDecorator:
 
     def test_decorator_preserves_function_metadata(self):
         """装饰器应保留函数元数据"""
+
         @rate_limited_log(cooldown=60, level="warning")
         def my_func():
             """Docstring here."""
@@ -248,6 +249,7 @@ class TestRateLimitedLogDecorator:
 
     def test_decorator_with_warning_level(self):
         """测试 warning 级别的装饰器"""
+
         @rate_limited_log(cooldown=60, level="warning")
         def my_func():
             return "warning_done"
@@ -257,6 +259,7 @@ class TestRateLimitedLogDecorator:
 
     def test_decorator_with_info_level(self):
         """测试 info 级别的装饰器"""
+
         @rate_limited_log(cooldown=60, level="info")
         def my_func():
             return "info_done"

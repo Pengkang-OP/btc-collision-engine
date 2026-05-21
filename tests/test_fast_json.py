@@ -148,8 +148,10 @@ class TestFastDumpsOrjsonPath:
         mock_orjson = MagicMock()
         mock_orjson.dumps.return_value = b'{"a":1}'
 
-        with patch("src.utils.fast_json._ORJSON_AVAILABLE", True), \
-             patch("src.utils.fast_json._orjson_module", mock_orjson):
+        with (
+            patch("src.utils.fast_json._ORJSON_AVAILABLE", True),
+            patch("src.utils.fast_json._orjson_module", mock_orjson),
+        ):
             result = fast_dumps({"a": 1})
             assert result == '{"a":1}'
             mock_orjson.dumps.assert_called_once()
@@ -162,8 +164,10 @@ class TestFastDumpsOrjsonPath:
         def custom_default(obj):
             return str(obj)
 
-        with patch("src.utils.fast_json._ORJSON_AVAILABLE", True), \
-             patch("src.utils.fast_json._orjson_module", mock_orjson):
+        with (
+            patch("src.utils.fast_json._ORJSON_AVAILABLE", True),
+            patch("src.utils.fast_json._orjson_module", mock_orjson),
+        ):
             result = fast_dumps({"a": object()}, default=custom_default)
             assert result == '{"a":"2024-01-01"}'
             call_args = mock_orjson.dumps.call_args
@@ -174,8 +178,10 @@ class TestFastDumpsOrjsonPath:
         mock_orjson = MagicMock()
         mock_orjson.dumps.return_value = b'{"a": 1}'
 
-        with patch("src.utils.fast_json._ORJSON_AVAILABLE", True), \
-             patch("src.utils.fast_json._orjson_module", mock_orjson):
+        with (
+            patch("src.utils.fast_json._ORJSON_AVAILABLE", True),
+            patch("src.utils.fast_json._orjson_module", mock_orjson),
+        ):
             fast_dumps({"a": 1}, indent=2)
             call_kwargs = mock_orjson.dumps.call_args[1]
             option = call_kwargs["option"]
@@ -186,8 +192,10 @@ class TestFastDumpsOrjsonPath:
         mock_orjson = MagicMock()
         mock_orjson.dumps.return_value = b'{"a":1,"b":2}'
 
-        with patch("src.utils.fast_json._ORJSON_AVAILABLE", True), \
-             patch("src.utils.fast_json._orjson_module", mock_orjson):
+        with (
+            patch("src.utils.fast_json._ORJSON_AVAILABLE", True),
+            patch("src.utils.fast_json._orjson_module", mock_orjson),
+        ):
             fast_dumps({"b": 2, "a": 1}, sort_keys=True)
             call_kwargs = mock_orjson.dumps.call_args[1]
             option = call_kwargs["option"]
@@ -198,8 +206,10 @@ class TestFastDumpsOrjsonPath:
         mock_orjson = MagicMock()
         mock_orjson.dumps.return_value = b'{"key":"value"}'
 
-        with patch("src.utils.fast_json._ORJSON_AVAILABLE", True), \
-             patch("src.utils.fast_json._orjson_module", mock_orjson):
+        with (
+            patch("src.utils.fast_json._ORJSON_AVAILABLE", True),
+            patch("src.utils.fast_json._orjson_module", mock_orjson),
+        ):
             fast_dumps({"key": "value"}, ensure_ascii=False)
             call_kwargs = mock_orjson.dumps.call_args[1]
             option = call_kwargs["option"]
@@ -210,8 +220,10 @@ class TestFastDumpsOrjsonPath:
         mock_orjson = MagicMock()
         mock_orjson.dumps.side_effect = TypeError("not serializable")
 
-        with patch("src.utils.fast_json._ORJSON_AVAILABLE", True), \
-             patch("src.utils.fast_json._orjson_module", mock_orjson):
+        with (
+            patch("src.utils.fast_json._ORJSON_AVAILABLE", True),
+            patch("src.utils.fast_json._orjson_module", mock_orjson),
+        ):
             result = fast_dumps({"a": 1})
             loaded = json.loads(result)
             assert loaded == {"a": 1}
@@ -221,8 +233,10 @@ class TestFastDumpsOrjsonPath:
         mock_orjson = MagicMock()
         mock_orjson.dumps.side_effect = ValueError("bad value")
 
-        with patch("src.utils.fast_json._ORJSON_AVAILABLE", True), \
-             patch("src.utils.fast_json._orjson_module", mock_orjson):
+        with (
+            patch("src.utils.fast_json._ORJSON_AVAILABLE", True),
+            patch("src.utils.fast_json._orjson_module", mock_orjson),
+        ):
             result = fast_dumps({"a": 1})
             loaded = json.loads(result)
             assert loaded == {"a": 1}
@@ -232,19 +246,23 @@ class TestFastDumpsOrjsonPath:
         mock_orjson = MagicMock()
         mock_orjson.dumps.side_effect = OverflowError("float too large")
 
-        with patch("src.utils.fast_json._ORJSON_AVAILABLE", True), \
-             patch("src.utils.fast_json._orjson_module", mock_orjson):
-            result = fast_dumps({"a": float('inf')})
+        with (
+            patch("src.utils.fast_json._ORJSON_AVAILABLE", True),
+            patch("src.utils.fast_json._orjson_module", mock_orjson),
+        ):
+            result = fast_dumps({"a": float("inf")})
             loaded = json.loads(result)
-            assert loaded == {"a": float('inf')}
+            assert loaded == {"a": float("inf")}
 
     def test_orjson_dumps_returns_str_directly(self):
         """orjson.dumps 返回 str 时直接返回不 decode"""
         mock_orjson = MagicMock()
         mock_orjson.dumps.return_value = '{"a":1}'
 
-        with patch("src.utils.fast_json._ORJSON_AVAILABLE", True), \
-             patch("src.utils.fast_json._orjson_module", mock_orjson):
+        with (
+            patch("src.utils.fast_json._ORJSON_AVAILABLE", True),
+            patch("src.utils.fast_json._orjson_module", mock_orjson),
+        ):
             result = fast_dumps({"a": 1})
             assert result == '{"a":1}'
 
@@ -257,8 +275,10 @@ class TestFastLoadsOrjsonPath:
         mock_orjson = MagicMock()
         mock_orjson.loads.return_value = {"a": 1}
 
-        with patch("src.utils.fast_json._ORJSON_AVAILABLE", True), \
-             patch("src.utils.fast_json._orjson_module", mock_orjson):
+        with (
+            patch("src.utils.fast_json._ORJSON_AVAILABLE", True),
+            patch("src.utils.fast_json._orjson_module", mock_orjson),
+        ):
             result = fast_loads('{"a":1}')
             assert result == {"a": 1}
             mock_orjson.loads.assert_called_once_with('{"a":1}')
@@ -268,8 +288,10 @@ class TestFastLoadsOrjsonPath:
         mock_orjson = MagicMock()
         mock_orjson.loads.side_effect = ValueError("bad json")
 
-        with patch("src.utils.fast_json._ORJSON_AVAILABLE", True), \
-             patch("src.utils.fast_json._orjson_module", mock_orjson):
+        with (
+            patch("src.utils.fast_json._ORJSON_AVAILABLE", True),
+            patch("src.utils.fast_json._orjson_module", mock_orjson),
+        ):
             result = fast_loads('{"a":1}')
             assert result == {"a": 1}
 
@@ -278,8 +300,10 @@ class TestFastLoadsOrjsonPath:
         mock_orjson = MagicMock()
         mock_orjson.loads.return_value = {"a": 1}
 
-        with patch("src.utils.fast_json._ORJSON_AVAILABLE", True), \
-             patch("src.utils.fast_json._orjson_module", mock_orjson):
+        with (
+            patch("src.utils.fast_json._ORJSON_AVAILABLE", True),
+            patch("src.utils.fast_json._orjson_module", mock_orjson),
+        ):
             result = fast_loads(b'{"a":1}')
             assert result == {"a": 1}
 

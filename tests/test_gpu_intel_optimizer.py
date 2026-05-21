@@ -376,14 +376,17 @@ class TestInitMonitoringAndTuning(unittest.TestCase):
         mock_timeout_cls = Mock()
         mock_timeout_cls.return_value = Mock()
 
-        with patch.dict(
-            "sys.modules",
-            {
-                "src.gpu.benchmark_suite": None,
-                "src.gpu.auto_tuner": None,
-                "src.gpu.performance_reporter": None,
-            },
-        ), patch("src.gpu.intel_optimizer.open", side_effect=ImportError, create=True):
+        with (
+            patch.dict(
+                "sys.modules",
+                {
+                    "src.gpu.benchmark_suite": None,
+                    "src.gpu.auto_tuner": None,
+                    "src.gpu.performance_reporter": None,
+                },
+            ),
+            patch("src.gpu.intel_optimizer.open", side_effect=ImportError, create=True),
+        ):
             context = {"engine": Mock()}
             result = optimizer.init_monitoring_and_tuning(context)
 

@@ -350,17 +350,17 @@ class TestSetupAndStartEngine:
         real_import = builtins.__import__
 
         def mock_import(name, *a, **kw):
-            if 'alert_system' in name:
+            if "alert_system" in name:
                 raise ImportError(f"No module named '{name}'")
             return real_import(name, *a, **kw)
 
         with patch("builtins.__import__", side_effect=mock_import):
-            with patch("src.cli.engine_runner.build_engine",
-                       return_value=(MagicMock(), "cpu")):
+            with patch("src.cli.engine_runner.build_engine", return_value=(MagicMock(), "cpu")):
                 with patch("signal.signal"):
                     with patch("builtins.print"):
                         engine, etype, alert, stop = _setup_and_start_engine(
-                            args, {"addr1"}, {}, None, None)
+                            args, {"addr1"}, {}, None, None
+                        )
                         assert alert is None
 
     def test_alert_system_init_exception(self):
@@ -384,12 +384,15 @@ class TestSetupAndStartEngine:
 
         mock_as_cls = MagicMock(side_effect=RuntimeError("setup failed"))
 
-        with patch("src.cli.engine_runner.build_engine",
-                   return_value=(MagicMock(), "cpu")), patch("signal.signal"), patch("builtins.print"):
-            with patch("src.monitoring.alert_system.AlertSystem",
-                       mock_as_cls):
+        with (
+            patch("src.cli.engine_runner.build_engine", return_value=(MagicMock(), "cpu")),
+            patch("signal.signal"),
+            patch("builtins.print"),
+        ):
+            with patch("src.monitoring.alert_system.AlertSystem", mock_as_cls):
                 engine, etype, alert, stop = _setup_and_start_engine(
-                    args, {"addr1"}, {}, None, None)
+                    args, {"addr1"}, {}, None, None
+                )
                 assert alert is None
 
     def test_sigterm_handler_registered(self):
@@ -418,8 +421,10 @@ class TestSetupAndStartEngine:
         def fake_signal(sig, handler):
             sig_calls.append(sig)
 
-        with patch("src.cli.engine_runner.build_engine",
-                   return_value=(MagicMock(), "cpu")), patch("signal.signal", fake_signal):
+        with (
+            patch("src.cli.engine_runner.build_engine", return_value=(MagicMock(), "cpu")),
+            patch("signal.signal", fake_signal),
+        ):
             with patch("builtins.print"):
                 _setup_and_start_engine(args, {"addr1"}, {}, None, None)
                 assert _signal.SIGINT in sig_calls
@@ -448,12 +453,13 @@ class TestSetupAndStartEngine:
         mock_engine = MagicMock()
         mock_engine.start.return_value = False
 
-        with patch("src.cli.engine_runner.build_engine",
-                   return_value=(mock_engine, "multi_gpu")), patch("signal.signal"):
+        with (
+            patch("src.cli.engine_runner.build_engine", return_value=(mock_engine, "multi_gpu")),
+            patch("signal.signal"),
+        ):
             with patch("builtins.print"):
                 with pytest.raises(SystemExit) as ctx:
-                    _setup_and_start_engine(
-                        args, {"addr1"}, {}, 1, 255)
+                    _setup_and_start_engine(args, {"addr1"}, {}, 1, 255)
                 assert ctx.value.code == 1
 
     def test_single_gpu_engine_start_with_range(self):
@@ -478,12 +484,13 @@ class TestSetupAndStartEngine:
         mock_engine = MagicMock()
         mock_engine.start = MagicMock()
 
-        with patch("src.cli.engine_runner.build_engine",
-                   return_value=(mock_engine, "gpu")), patch("signal.signal"), patch("builtins.print"):
-            engine, etype, alert, stop = _setup_and_start_engine(
-                args, {"addr1"}, {}, 10, 100)
-            mock_engine.start.assert_called_once_with(
-                mode="range", start=10, end=100)
+        with (
+            patch("src.cli.engine_runner.build_engine", return_value=(mock_engine, "gpu")),
+            patch("signal.signal"),
+            patch("builtins.print"),
+        ):
+            engine, etype, alert, stop = _setup_and_start_engine(args, {"addr1"}, {}, 10, 100)
+            mock_engine.start.assert_called_once_with(mode="range", start=10, end=100)
 
 
 # ============================================================================
@@ -518,8 +525,7 @@ class TestOnKeyCallbacks:
                 mock_out = MagicMock()
                 mock_co.get_instance.return_value = mock_out
 
-                _run_collision_loop(
-                    engine, engine_type, args, None, None, stop_event)
+                _run_collision_loop(engine, engine_type, args, None, None, stop_event)
 
                 # _available=False → warning 被调用
                 mock_out.warning.assert_called_once()
@@ -566,8 +572,7 @@ class TestOnKeyCallbacks:
                 mock_co.get_instance.return_value = mock_out
 
                 with patch("src.cli.engine_runner._print_detailed_stats") as mock_pds:
-                    _run_collision_loop(
-                        engine, "cpu", args, None, None, stop_event)
+                    _run_collision_loop(engine, "cpu", args, None, None, stop_event)
 
                     reg_cb = mock_kl.call_args[0][0]
                     reg_cb("S")
@@ -580,10 +585,14 @@ class TestOnKeyCallbacks:
         from src.cli.engine_runner import _run_collision_loop
 
         engine = _make_mock_engine()
-        engine.get_combined_stats = MagicMock(return_value={
-            "total_keys_checked": 5000, "device_count": 2,
-            "total_matches": 1, "elapsed_time": 60
-        })
+        engine.get_combined_stats = MagicMock(
+            return_value={
+                "total_keys_checked": 5000,
+                "device_count": 2,
+                "total_matches": 1,
+                "elapsed_time": 60,
+            }
+        )
         stop_event = threading.Event()
 
         args = Mock()
@@ -600,8 +609,7 @@ class TestOnKeyCallbacks:
                 mock_out = MagicMock()
                 mock_co.get_instance.return_value = mock_out
 
-                _run_collision_loop(
-                    engine, "multi_gpu", args, None, None, stop_event)
+                _run_collision_loop(engine, "multi_gpu", args, None, None, stop_event)
 
                 reg_cb = mock_kl.call_args[0][0]
                 reg_cb("S")
@@ -770,12 +778,15 @@ class TestAlertSystemSuccess:
         mock_as = MagicMock()
         mock_as.rules = [1, 2, 3]
 
-        with patch("src.cli.engine_runner.build_engine",
-                   return_value=(MagicMock(), "cpu")), patch("signal.signal"), patch("builtins.print"):
-            with patch("src.monitoring.alert_system.AlertSystem",
-                       return_value=mock_as):
+        with (
+            patch("src.cli.engine_runner.build_engine", return_value=(MagicMock(), "cpu")),
+            patch("signal.signal"),
+            patch("builtins.print"),
+        ):
+            with patch("src.monitoring.alert_system.AlertSystem", return_value=mock_as):
                 engine, etype, alert, stop = _setup_and_start_engine(
-                    args, {"addr1"}, {}, None, None)
+                    args, {"addr1"}, {}, None, None
+                )
                 assert alert is mock_as
                 mock_as.setup_default_rules.assert_called_once()
                 mock_as.add_alert_callback.assert_called_once()
@@ -802,13 +813,13 @@ class TestAlertSystemSuccess:
         mock_as = MagicMock()
         mock_as.rules = [1]
 
-        with patch("src.cli.engine_runner.build_engine",
-                   return_value=(MagicMock(), "cpu")), patch("signal.signal"):
+        with (
+            patch("src.cli.engine_runner.build_engine", return_value=(MagicMock(), "cpu")),
+            patch("signal.signal"),
+        ):
             with patch("builtins.print") as mock_print:
-                with patch("src.monitoring.alert_system.AlertSystem",
-                           return_value=mock_as):
-                    _setup_and_start_engine(
-                        args, {"addr1"}, {}, None, None)
+                with patch("src.monitoring.alert_system.AlertSystem", return_value=mock_as):
+                    _setup_and_start_engine(args, {"addr1"}, {}, None, None)
                     # 提取注册的 _on_alert 回调
                     callback = mock_as.add_alert_callback.call_args[0][0]
                     mock_record = MagicMock()
@@ -841,13 +852,13 @@ class TestAlertSystemSuccess:
         mock_as = MagicMock()
         mock_as.rules = [1]
 
-        with patch("src.cli.engine_runner.build_engine",
-                   return_value=(MagicMock(), "cpu")), patch("signal.signal"):
+        with (
+            patch("src.cli.engine_runner.build_engine", return_value=(MagicMock(), "cpu")),
+            patch("signal.signal"),
+        ):
             with patch("builtins.print") as mock_print:
-                with patch("src.monitoring.alert_system.AlertSystem",
-                           return_value=mock_as):
-                    _setup_and_start_engine(
-                        args, {"addr1"}, {}, None, None)
+                with patch("src.monitoring.alert_system.AlertSystem", return_value=mock_as):
+                    _setup_and_start_engine(args, {"addr1"}, {}, None, None)
                     callback = mock_as.add_alert_callback.call_args[0][0]
                     mock_record = MagicMock()
                     del mock_record.level.value
@@ -892,11 +903,14 @@ class TestHandleSignalExecution:
         def fake_signal(sig, handler):
             sig_handlers[sig] = handler
 
-        with patch("src.cli.engine_runner.build_engine",
-                   return_value=(mock_engine, "cpu")), patch("signal.signal", fake_signal):
+        with (
+            patch("src.cli.engine_runner.build_engine", return_value=(mock_engine, "cpu")),
+            patch("signal.signal", fake_signal),
+        ):
             with patch("builtins.print") as mock_print:
                 engine, etype, alert, stop = _setup_and_start_engine(
-                    args, {"addr1"}, {}, None, None)
+                    args, {"addr1"}, {}, None, None
+                )
                 handler = sig_handlers[_signal.SIGINT]
                 handler(_signal.SIGINT, None)
                 assert stop.is_set()
@@ -916,11 +930,14 @@ class TestHandleSignalExecution:
         def fake_signal(sig, handler):
             sig_handlers[sig] = handler
 
-        with patch("src.cli.engine_runner.build_engine",
-                   return_value=(mock_engine, "cpu")), patch("signal.signal", fake_signal):
+        with (
+            patch("src.cli.engine_runner.build_engine", return_value=(mock_engine, "cpu")),
+            patch("signal.signal", fake_signal),
+        ):
             with patch("builtins.print"):
                 engine, etype, alert, stop = _setup_and_start_engine(
-                    args, {"addr1"}, {}, None, None)
+                    args, {"addr1"}, {}, None, None
+                )
                 if hasattr(_signal, "SIGTERM"):
                     assert _signal.SIGTERM in sig_handlers
                     sig_handlers[_signal.SIGTERM](_signal.SIGTERM, None)
@@ -960,8 +977,7 @@ class TestOnKeySException:
                 mock_out = MagicMock()
                 mock_co.get_instance.return_value = mock_out
 
-                _run_collision_loop(
-                    engine, "cpu", args, None, None, stop_event)
+                _run_collision_loop(engine, "cpu", args, None, None, stop_event)
 
                 reg_cb = mock_kl.call_args[0][0]
                 # 不应抛异常
@@ -974,8 +990,7 @@ class TestOnKeySException:
         from src.cli.engine_runner import _run_collision_loop
 
         engine = _make_mock_engine()
-        engine.get_combined_stats = MagicMock(
-            side_effect=RuntimeError("combined stats error"))
+        engine.get_combined_stats = MagicMock(side_effect=RuntimeError("combined stats error"))
         stop_event = threading.Event()
 
         args = Mock()
@@ -992,8 +1007,7 @@ class TestOnKeySException:
                 mock_out = MagicMock()
                 mock_co.get_instance.return_value = mock_out
 
-                _run_collision_loop(
-                    engine, "multi_gpu", args, None, None, stop_event)
+                _run_collision_loop(engine, "multi_gpu", args, None, None, stop_event)
 
                 reg_cb = mock_kl.call_args[0][0]
                 # 不应抛异常
@@ -1027,8 +1041,7 @@ class TestHotkeyVisible:
                 mock_out = MagicMock()
                 mock_co.get_instance.return_value = mock_out
 
-                _run_collision_loop(
-                    engine, "cpu", args, None, None, stop_event)
+                _run_collision_loop(engine, "cpu", args, None, None, stop_event)
 
                 # _available=True → warning 不应被调用
                 mock_out.warning.assert_not_called()
@@ -1043,9 +1056,9 @@ class TestHotkeyVisible:
 class TestMainLoopBody:
     """_run_collision_loop 主循环体 while 内部逻辑测试。"""
 
-    def _run_loop_and_get_callback(self, engine, engine_type, args,
-                                   alert_system=None, stop_event=None,
-                                   _available=False):
+    def _run_loop_and_get_callback(
+        self, engine, engine_type, args, alert_system=None, stop_event=None, _available=False
+    ):
         """运行 _run_collision_loop 并返回 on_key 回调。"""
         import threading
 
@@ -1067,8 +1080,8 @@ class TestMainLoopBody:
                     with patch("src.cli.engine_runner._restore_console_logging"):
                         with patch("builtins.print"):
                             _run_collision_loop(
-                                engine, engine_type, args,
-                                None, alert_system, stop_event)
+                                engine, engine_type, args, None, alert_system, stop_event
+                            )
 
                 reg_cb = mock_kl.call_args[0][0] if mock_kl.called else None
                 return reg_cb, mock_out
@@ -1087,10 +1100,12 @@ class TestMainLoopBody:
         args.duration = 0
         args.progress_interval = 5.0
 
-        with patch("src.cli.engine_runner.format_progress",
-                   return_value="[CPU] progress line") as mock_fp:
+        with patch(
+            "src.cli.engine_runner.format_progress", return_value="[CPU] progress line"
+        ) as mock_fp:
             cb, mock_out = self._run_loop_and_get_callback(
-                engine, "cpu", args, None, stop_event, _available=False)
+                engine, "cpu", args, None, stop_event, _available=False
+            )
 
             # format_progress 应被调用
             mock_fp.assert_called()
@@ -1108,10 +1123,10 @@ class TestMainLoopBody:
         args.progress_interval = 5.0
 
         # _available=True → hotkey bar 路径覆盖，不抛异常即通过
-        with patch("src.cli.engine_runner.format_progress",
-                   return_value="[CPU] line"):
+        with patch("src.cli.engine_runner.format_progress", return_value="[CPU] line"):
             cb, mock_out = self._run_loop_and_get_callback(
-                engine, "cpu", args, None, stop_event, _available=True)
+                engine, "cpu", args, None, stop_event, _available=True
+            )
 
     # ── 多GPU 模式主循环迭代 ────────────────────────────
 
@@ -1120,11 +1135,15 @@ class TestMainLoopBody:
         import threading
 
         engine = _make_mock_engine()
-        engine.get_combined_stats = MagicMock(return_value={
-            "elapsed_time": 120, "total_keys_checked": 2000000,
-            "combined_throughput": 1500000, "total_matches": 2,
-            "device_count": 2,
-        })
+        engine.get_combined_stats = MagicMock(
+            return_value={
+                "elapsed_time": 120,
+                "total_keys_checked": 2000000,
+                "combined_throughput": 1500000,
+                "total_matches": 2,
+                "device_count": 2,
+            }
+        )
         stop_event = threading.Event()
 
         args = Mock()
@@ -1133,7 +1152,8 @@ class TestMainLoopBody:
         args.progress_interval = 5.0
 
         cb, mock_out = self._run_loop_and_get_callback(
-            engine, "multi_gpu", args, None, stop_event, _available=False)
+            engine, "multi_gpu", args, None, stop_event, _available=False
+        )
 
         engine.get_combined_stats.assert_called()
 
@@ -1142,11 +1162,15 @@ class TestMainLoopBody:
         import threading
 
         engine = _make_mock_engine()
-        engine.get_combined_stats = MagicMock(return_value={
-            "elapsed_time": 120, "total_keys_checked": 500,
-            "combined_throughput": 500, "total_matches": 0,
-            "device_count": 1,
-        })
+        engine.get_combined_stats = MagicMock(
+            return_value={
+                "elapsed_time": 120,
+                "total_keys_checked": 500,
+                "combined_throughput": 500,
+                "total_matches": 0,
+                "device_count": 1,
+            }
+        )
         stop_event = threading.Event()
 
         args = Mock()
@@ -1155,7 +1179,8 @@ class TestMainLoopBody:
         args.progress_interval = 5.0
 
         cb, mock_out = self._run_loop_and_get_callback(
-            engine, "multi_gpu", args, None, stop_event, _available=False)
+            engine, "multi_gpu", args, None, stop_event, _available=False
+        )
         engine.get_combined_stats.assert_called()
 
     def test_multi_gpu_iteration_kilo_throughput(self):
@@ -1163,11 +1188,15 @@ class TestMainLoopBody:
         import threading
 
         engine = _make_mock_engine()
-        engine.get_combined_stats = MagicMock(return_value={
-            "elapsed_time": 120, "total_keys_checked": 50000,
-            "combined_throughput": 50000, "total_matches": 0,
-            "device_count": 1,
-        })
+        engine.get_combined_stats = MagicMock(
+            return_value={
+                "elapsed_time": 120,
+                "total_keys_checked": 50000,
+                "combined_throughput": 50000,
+                "total_matches": 0,
+                "device_count": 1,
+            }
+        )
         stop_event = threading.Event()
 
         args = Mock()
@@ -1176,7 +1205,8 @@ class TestMainLoopBody:
         args.progress_interval = 5.0
 
         cb, mock_out = self._run_loop_and_get_callback(
-            engine, "multi_gpu", args, None, stop_event, _available=False)
+            engine, "multi_gpu", args, None, stop_event, _available=False
+        )
         engine.get_combined_stats.assert_called()
 
     # ── 暂停状态 ──────────────────────────────────────────
@@ -1224,13 +1254,11 @@ class TestMainLoopBody:
                 with patch("src.cli.engine_runner._suppress_console_logging"):
                     with patch("src.cli.engine_runner._restore_console_logging"):
                         with patch("builtins.print"):
-                            with patch("src.cli.engine_runner.format_progress",
-                                       return_value="line"):
-                                with patch("time.sleep",
-                                           TriggerPauseOnSleep(cb_holder)):
-                                    _run_collision_loop(
-                                        engine, "cpu", args,
-                                        None, None, stop_event)
+                            with patch(
+                                "src.cli.engine_runner.format_progress", return_value="line"
+                            ):
+                                with patch("time.sleep", TriggerPauseOnSleep(cb_holder)):
+                                    _run_collision_loop(engine, "cpu", args, None, None, stop_event)
 
     # ── 告警系统 metric check ────────────────────────────
 
@@ -1247,10 +1275,10 @@ class TestMainLoopBody:
         args.duration = 0
         args.progress_interval = 5.0
 
-        with patch("src.cli.engine_runner.format_progress",
-                   return_value="line"):
+        with patch("src.cli.engine_runner.format_progress", return_value="line"):
             cb, mock_out = self._run_loop_and_get_callback(
-                engine, "cpu", args, mock_alert, stop_event, _available=False)
+                engine, "cpu", args, mock_alert, stop_event, _available=False
+            )
             mock_alert.check_metrics.assert_called()
 
     def test_alert_system_metrics_check_exception(self):
@@ -1268,10 +1296,10 @@ class TestMainLoopBody:
         args.progress_interval = 5.0
 
         # 不应抛异常
-        with patch("src.cli.engine_runner.format_progress",
-                   return_value="line"):
+        with patch("src.cli.engine_runner.format_progress", return_value="line"):
             cb, mock_out = self._run_loop_and_get_callback(
-                engine, "cpu", args, mock_alert, stop_event, _available=False)
+                engine, "cpu", args, mock_alert, stop_event, _available=False
+            )
 
     # ── 运行时长限制 ─────────────────────────────────────
 
@@ -1287,10 +1315,13 @@ class TestMainLoopBody:
         args.duration = 1  # 1 秒限制
         args.progress_interval = 5.0
 
-        with patch("src.cli.engine_runner.format_progress",
-                   return_value="line"), patch("time.time", side_effect=[0, 99999]):
+        with (
+            patch("src.cli.engine_runner.format_progress", return_value="line"),
+            patch("time.time", side_effect=[0, 99999]),
+        ):
             cb, mock_out = self._run_loop_and_get_callback(
-                engine, "cpu", args, None, stop_event, _available=False)
+                engine, "cpu", args, None, stop_event, _available=False
+            )
 
         # duration limit reached → engine stopped
         engine.stop.assert_called()
@@ -1326,9 +1357,7 @@ class TestMainLoopBody:
                     with patch("src.cli.engine_runner._restore_console_logging"):
                         with patch("builtins.print"):
                             with pytest.raises(KeyboardInterrupt):
-                                _run_collision_loop(
-                                    engine, "cpu", args,
-                                    None, None, stop_event)
+                                _run_collision_loop(engine, "cpu", args, None, None, stop_event)
 
         engine.stop.assert_called()
 
@@ -1347,9 +1376,12 @@ class TestMainLoopBody:
         def set_stop_during_sleep(*a, **kw):
             stop_event.set()
 
-        with patch("src.cli.engine_runner.format_progress",
-                   return_value="line"), patch("time.sleep", side_effect=set_stop_during_sleep):
+        with (
+            patch("src.cli.engine_runner.format_progress", return_value="line"),
+            patch("time.sleep", side_effect=set_stop_during_sleep),
+        ):
             cb, mock_out = self._run_loop_and_get_callback(
-                engine, "cpu", args, None, stop_event, _available=False)
+                engine, "cpu", args, None, stop_event, _available=False
+            )
 
         assert stop_event.is_set()

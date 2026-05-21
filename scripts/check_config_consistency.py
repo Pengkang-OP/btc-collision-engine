@@ -35,18 +35,23 @@ class ConfigFixer:
 
             if "properties" in schema_obj:
                 for field, field_schema in schema_obj["properties"].items():
-                    if field.startswith("_") or field in ("additionalProperties", "patternProperties"):
+                    if field.startswith("_") or field in (
+                        "additionalProperties",
+                        "patternProperties",
+                    ):
                         continue
 
                     full_path = f"{path}.{field}" if path != "root" else field
 
                     # 检查是否在默认配置中
                     if field not in defaults_obj:
-                        missing_fields.append({
-                            "path": full_path,
-                            "field": field,
-                            "suggested_value": self._get_suggested_value(field_schema),
-                        })
+                        missing_fields.append(
+                            {
+                                "path": full_path,
+                                "field": field,
+                                "suggested_value": self._get_suggested_value(field_schema),
+                            }
+                        )
                     else:
                         # 递归检查嵌套对象
                         if "properties" in field_schema:

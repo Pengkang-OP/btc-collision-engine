@@ -118,9 +118,7 @@ def detect_config_version(config: dict) -> str:
     return "unknown"
 
 
-def _build_migration_path(
-    current_version: str, changelog: list[str]
-) -> list[str]:
+def _build_migration_path(current_version: str, changelog: list[str]) -> list[str]:
     """根据当前版本构建迁移路径列表。"""
     if current_version == "2.x":
         return ["2.x_to_3.0", "3.0_to_3.1"]
@@ -134,9 +132,7 @@ def _build_migration_path(
         return ["2.x_to_3.0", "3.0_to_3.1"]
 
 
-def _apply_migration_rules(
-    result: dict, migration_path: list[str], changelog: list[str]
-) -> None:
+def _apply_migration_rules(result: dict, migration_path: list[str], changelog: list[str]) -> None:
     """逐步应用迁移规则到配置字典。"""
     for rule_key in migration_path:
         if rule_key not in MIGRATION_RULES:
@@ -162,13 +158,9 @@ def _apply_migration_rules(
                 for field_name, field_value in fields.items():
                     if field_name not in result[section_name]:
                         result[section_name][field_name] = field_value
-                        changelog.append(
-                            f"  + 添加字段: {section_name}.{field_name}"
-                        )
+                        changelog.append(f"  + 添加字段: {section_name}.{field_name}")
                     else:
-                        changelog.append(
-                            f"  ~ 字段已存在，保留用户值: {section_name}.{field_name}"
-                        )
+                        changelog.append(f"  ~ 字段已存在，保留用户值: {section_name}.{field_name}")
 
         # 字段重命名
         for section_name, renames in rule.get("rename_fields", {}).items():
@@ -177,9 +169,7 @@ def _apply_migration_rules(
             for old_name, new_name in renames.items():
                 if old_name in result[section_name] and new_name not in result[section_name]:
                     result[section_name][new_name] = result[section_name].pop(old_name)
-                    changelog.append(
-                        f"  > 字段重命名: {section_name}.{old_name} -> {new_name}"
-                    )
+                    changelog.append(f"  > 字段重命名: {section_name}.{old_name} -> {new_name}")
 
 
 def migrate_config(
@@ -248,8 +238,12 @@ def _check_section_is_dict(section_name: str, section: Any, issues: list[str]) -
 
 
 def _check_field_type(
-    section: dict, section_name: str, field: str,
-    expected_type: type | tuple[type, ...], type_desc: str, issues: list[str],
+    section: dict,
+    section_name: str,
+    field: str,
+    expected_type: type | tuple[type, ...],
+    type_desc: str,
+    issues: list[str],
 ) -> None:
     """检查配置段中字段的类型。"""
     if field in section and not isinstance(section[field], expected_type):

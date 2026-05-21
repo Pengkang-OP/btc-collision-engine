@@ -33,39 +33,39 @@ def print_test(name, passed, details=""):
 def verify_implementation():
     """验证内存锁定功能实现"""
     print_header("P1-1修复验证：SecureKeyManager内存锁定功能")
-    
+
     tests_passed = 0
     tests_total = 0
-    
+
     # 测试1: 检查内存锁定相关方法是否存在
     print_header("测试1: 内存锁定方法存在性检查")
-    
+
     manager = SecureKeyManager(lock_memory=True)
-    
+
     methods_to_check = [
-        '_try_lock_memory',
-        '_lock_memory_posix',
-        '_lock_memory_windows',
-        '_lock_key_memory',
-        '_unlock_key_memory',
+        "_try_lock_memory",
+        "_lock_memory_posix",
+        "_lock_memory_windows",
+        "_lock_key_memory",
+        "_unlock_key_memory",
     ]
-    
+
     for method_name in methods_to_check:
         tests_total += 1
         has_method = hasattr(manager, method_name)
         print_test(f"方法 {method_name}", has_method)
         if has_method:
             tests_passed += 1
-    
+
     # 测试2: 检查内存锁定状态属性
     print_header("测试2: 内存锁定状态属性检查")
-    
+
     properties_to_check = [
-        ('_locked', False),
-        ('_memory_locked', False),
-        ('_lock_memory_enabled', True),
+        ("_locked", False),
+        ("_memory_locked", False),
+        ("_lock_memory_enabled", True),
     ]
-    
+
     for prop_name, expected_value in properties_to_check:
         tests_total += 1
         has_prop = hasattr(manager, prop_name)
@@ -76,34 +76,30 @@ def verify_implementation():
             tests_passed += 1
         else:
             print_test(f"属性 {prop_name}", False)
-    
+
     # 测试3: 检查is_memory_locked属性
     print_header("测试3: is_memory_locked属性检查")
-    
+
     tests_total += 1
-    has_property = hasattr(SecureKeyManager, 'is_memory_locked')
+    has_property = hasattr(SecureKeyManager, "is_memory_locked")
     print_test("is_memory_locked property", has_property)
     if has_property:
         tests_passed += 1
-    
+
     # 测试4: 验证密钥生成和清零流程
     print_header("测试4: 密钥生命周期验证")
-    
+
     tests_total += 1
     try:
         manager.generate_key()
         key = manager.get_key()
-        
-        key_valid = (
-            key is not None and
-            len(key) == 32 and
-            not manager.is_cleared
-        )
-        
+
+        key_valid = key is not None and len(key) == 32 and not manager.is_cleared
+
         print_test("密钥生成", key_valid, f"长度: {len(key)} 字节")
         if key_valid:
             tests_passed += 1
-        
+
         # 清零测试
         tests_total += 1
         manager.clear()
@@ -111,82 +107,82 @@ def verify_implementation():
         print_test("密钥清零", clear_valid)
         if clear_valid:
             tests_passed += 1
-            
+
     except Exception as e:
         print_test("密钥生命周期", False, f"错误: {e}")
-    
+
     # 测试5: 验证上下文管理器
     print_header("测试5: 上下文管理器验证")
-    
+
     tests_total += 1
     try:
         from src.core.secure_key_manager import secure_key_context
-        
+
         with secure_key_context() as key:
-            key_valid = (key is not None and len(key) == 32)
+            key_valid = key is not None and len(key) == 32
             print_test("上下文管理器", key_valid, "自动清零已验证")
             if key_valid:
                 tests_passed += 1
     except Exception as e:
         print_test("上下文管理器", False, f"错误: {e}")
-    
+
     # 测试6: 检查跨平台支持
     print_header("测试6: 跨平台支持检查")
-    
+
     platforms = [
-        ('_lock_memory_posix', 'Linux/macOS'),
-        ('_lock_memory_windows', 'Windows'),
+        ("_lock_memory_posix", "Linux/macOS"),
+        ("_lock_memory_windows", "Windows"),
     ]
-    
+
     for method_name, platform_name in platforms:
         tests_total += 1
         has_method = hasattr(manager, method_name)
         print_test(f"{platform_name} 支持", has_method)
         if has_method:
             tests_passed += 1
-    
+
     # 测试7: 运行单元测试
     print_header("测试7: 运行单元测试套件")
-    
+
     import subprocess
+
     result = subprocess.run(
-        [sys.executable, '-m', 'pytest', 
-         'tests/test_memory_locking.py', '-v', '--tb=short'],
+        [sys.executable, "-m", "pytest", "tests/test_memory_locking.py", "-v", "--tb=short"],
         cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
         capture_output=True,
-        text=True
+        text=True,
     )
-    
+
     tests_total += 1
     unit_tests_passed = result.returncode == 0
-    
+
     # 提取测试结果
-    if 'passed' in result.stdout:
+    if "passed" in result.stdout:
         # 解析 "17 passed in 0.48s"
         import re
-        match = re.search(r'(\d+) passed', result.stdout)
+
+        match = re.search(r"(\d+) passed", result.stdout)
         if match:
             passed_count = match.group(1)
-            print_test("单元测试套件", unit_tests_passed, 
-                      f"{passed_count} 个测试全部通过")
+            print_test("单元测试套件", unit_tests_passed, f"{passed_count} 个测试全部通过")
         else:
             print_test("单元测试套件", unit_tests_passed)
     else:
         print_test("单元测试套件", unit_tests_passed)
-    
+
     if unit_tests_passed:
         tests_passed += 1
-    
+
     # 总结
     print_header("验证总结")
-    
+
     pass_rate = (tests_passed / tests_total * 100) if tests_total > 0 else 0
-    
+
     print(f"\n总测试数: {tests_total}")
     print(f"通过测试: {tests_passed}")
     print(f"失败测试: {tests_total - tests_passed}")
     print(f"通过率: {pass_rate:.1f}%")
-    
+
     if tests_passed == tests_total:
         print("\n" + "🎉" * 35)
         print("✅ P1-1修复验证通过！")
@@ -202,7 +198,7 @@ def verify_implementation():
 def show_implementation_details():
     """显示实现细节"""
     print_header("实现细节")
-    
+
     print("""
 内存锁定功能实现要点：
 
@@ -238,9 +234,9 @@ def show_implementation_details():
 if __name__ == "__main__":
     # 显示实现细节
     show_implementation_details()
-    
+
     # 运行验证
     success = verify_implementation()
-    
+
     # 退出码
     sys.exit(0 if success else 1)

@@ -181,8 +181,9 @@ class TestObjectPoolAutoTune(unittest.TestCase):
         """扩展时受内存限制"""
         pool = ObjectPool(
             lambda: _DummyObj(),
-            initial_size=1, max_size=10,
-            object_size_estimate=10 * 1024 * 1024  # 10MB per obj
+            initial_size=1,
+            max_size=10,
+            object_size_estimate=10 * 1024 * 1024,  # 10MB per obj
         )
         pool._acquire_count = 1000
         pool._miss_count = 100
@@ -232,8 +233,9 @@ class TestObjectPoolAutoTune(unittest.TestCase):
         """扩展被内存限制阻止（new_max <= self._max_size 分支）"""
         pool = ObjectPool(
             lambda: _DummyObj(),
-            initial_size=1, max_size=10,
-            object_size_estimate=1024 * 1024 * 1024  # 1GB per obj
+            initial_size=1,
+            max_size=10,
+            object_size_estimate=1024 * 1024 * 1024,  # 1GB per obj
         )
         pool._acquire_count = 1000
         pool._miss_count = 100  # miss_rate = 10% > 5%
@@ -259,9 +261,7 @@ class TestObjectPoolStats(unittest.TestCase):
     def test_estimate_memory(self):
         """内存估算"""
         pool = ObjectPool(
-            lambda: _DummyObj(),
-            initial_size=10, max_size=50,
-            object_size_estimate=256
+            lambda: _DummyObj(), initial_size=10, max_size=50, object_size_estimate=256
         )
         mem = pool.estimate_memory()
         self.assertEqual(mem, 10 * 256)

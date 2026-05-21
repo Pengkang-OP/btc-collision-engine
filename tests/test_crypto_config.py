@@ -37,6 +37,7 @@ class TestCryptoConfig(unittest.TestCase):
             self.assertEqual(saved["backend"], "coincurve")
         finally:
             import shutil
+
             shutil.rmtree(tmpdir, ignore_errors=True)
 
     def test_save_no_config_file(self):
@@ -58,6 +59,7 @@ class TestCryptoConfig(unittest.TestCase):
             self.assertFalse(result)
         finally:
             import shutil
+
             shutil.rmtree(tmpdir, ignore_errors=True)
 
     def test_load_no_config_file(self):

@@ -166,10 +166,6 @@
       "enabled": true,
       "_comment_enabled_cleanup": "是否启用自动清理",
       "max_age_days": 30,
-<<<<<<< Updated upstream
-      "_comment_max_age_days": "数据最大保留天数"
-    }
-=======
       "_comment_max_age_days": "数据最大保存天数"
     }
   },
@@ -240,7 +236,6 @@
     "_comment_check_uncompressed": "是否检查非压缩P2PKH地址(null=自动, true=强制检查, false=不检查)",
     "key_generation_strategy": "PRNG_SEED",
     "_comment_key_generation_strategy": "私钥生成策略: PRNG_SEED(推荐), SEQUENTIAL_UINT32, PRNG_STREAM"
->>>>>>> Stashed changes
   },
 
   "optimization": {

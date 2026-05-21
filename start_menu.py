@@ -53,7 +53,9 @@ except Exception:
         "menu.cleanup_clearing_checkpoints": "[INFO] Clearing checkpoint files...",
         "menu.cleanup_done": "[OK] Done",
         "menu.cleanup_deleted": "[OK] Deleted {count} file(s)",
-        "menu.cleanup_warning": "[WARNING] This will delete all logs, checkpoints, and cache files!",
+        "menu.cleanup_warning": (
+            "[WARNING] This will delete all logs, checkpoints, and cache files!"
+        ),
         "menu.cleanup_confirm": "Confirm deletion? Enter Y to confirm: ",
         "menu.cleanup_cancelled": "[INFO] Operation cancelled",
         "menu.cleanup_all_done": "[OK] All temporary files cleaned",
@@ -62,6 +64,7 @@ except Exception:
         "menu.gpu_starting": "[INFO] Starting GPU mode...",
         "menu.multi_gpu_starting": "[INFO] Starting Multi-GPU mode...",
     }
+
     def _t(key: str, **kwargs) -> str:  # type: ignore[misc]
         text = _FALLBACK_EN.get(key, key)
         return text.format(**kwargs) if kwargs else text
@@ -70,7 +73,7 @@ except Exception:
 # ── 辅助函数 ──────────────────────────────────────────────────────
 
 def _clear_screen() -> None:
-    os.system("cls" if os.name == "nt" else "clear")
+    print("\033[H\033[J", end="")
 
 
 def _wait_key() -> None:

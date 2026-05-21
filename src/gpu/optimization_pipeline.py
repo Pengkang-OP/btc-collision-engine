@@ -61,10 +61,8 @@ class PerformanceOptimizationPipeline:
         Args:
             device_info: GPU 设备信息字典
         """
-        _name = device_info.get('name', 'unknown')
-        self._logger.debug(
-            f"PerformanceOptimizationPipeline.initialize called: device={_name}"
-        )
+        _name = device_info.get("name", "unknown")
+        self._logger.debug(f"PerformanceOptimizationPipeline.initialize called: device={_name}")
 
     # ------------------------------------------------------------------
     # 批处理大小优化

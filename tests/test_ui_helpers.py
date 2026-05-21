@@ -99,12 +99,12 @@ class TestSpeedTimeFunctions(unittest.TestCase):
 
     def test_format_speed_nan(self):
         """NaN 返回 0/s。"""
-        self.assertEqual(format_speed(float('nan')), "0/s")
+        self.assertEqual(format_speed(float("nan")), "0/s")
 
     def test_format_speed_inf(self):
         """±inf 返回 0/s。"""
-        self.assertEqual(format_speed(float('inf')), "0/s")
-        self.assertEqual(format_speed(-float('inf')), "0/s")
+        self.assertEqual(format_speed(float("inf")), "0/s")
+        self.assertEqual(format_speed(-float("inf")), "0/s")
 
     # ── format_elapsed_time ───────────────────────────────────
 
@@ -152,7 +152,7 @@ class TestSpeedTimeFunctions(unittest.TestCase):
 
     def test_format_eta_inf(self):
         """inf 返回 '-'。"""
-        self.assertEqual(format_eta(float('inf')), "-")
+        self.assertEqual(format_eta(float("inf")), "-")
 
 
 class TestValidationDisplayFunctions(unittest.TestCase):
@@ -178,34 +178,28 @@ class TestValidationDisplayFunctions(unittest.TestCase):
 
     def test_validate_p2pkh(self):
         """P2PKH 地址 (1 开头)。"""
-        self.assertTrue(validate_address_format(
-            "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"))
+        self.assertTrue(validate_address_format("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"))
 
     def test_validate_p2sh(self):
         """P2SH 地址 (3 开头)。"""
-        self.assertTrue(validate_address_format(
-            "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"))
+        self.assertTrue(validate_address_format("3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"))
 
     def test_validate_bech32(self):
         """Bech32 地址 (bc1 开头)。"""
-        self.assertTrue(validate_address_format(
-            "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq"))
+        self.assertTrue(validate_address_format("bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq"))
 
     def test_validate_wif(self):
         """WIF 私钥格式 (5 开头, 51 字符)。"""
         # 合成符合格式的有效 WIF（非真实密钥）
-        self.assertTrue(validate_address_format(
-            "5" + "A" * 50))
+        self.assertTrue(validate_address_format("5" + "A" * 50))
 
     def test_validate_compressed_pubkey(self):
         """压缩公钥 (02/03 开头, 66 字符 hex)。"""
-        self.assertTrue(validate_address_format(
-            "02" + "a" * 64))
+        self.assertTrue(validate_address_format("02" + "a" * 64))
 
     def test_validate_uncompressed_pubkey(self):
         """非压缩公钥 (04 开头, 130 字符 hex)。"""
-        self.assertTrue(validate_address_format(
-            "04" + "a" * 128))
+        self.assertTrue(validate_address_format("04" + "a" * 128))
 
     def test_validate_address_empty(self):
         """空字符串返回 False。"""

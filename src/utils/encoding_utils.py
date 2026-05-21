@@ -207,7 +207,9 @@ class EncodingUtils:
 
         # 所有编码都失败
         elapsed_ms = (time.perf_counter() - start_time) * 1000
-        error_msg = f"无法读取文件 {filepath}，尝试了编码: {encodings_to_try}, 耗时={elapsed_ms:.2f}ms"
+        error_msg = (
+            f"无法读取文件 {filepath}，尝试了编码: {encodings_to_try}, 耗时={elapsed_ms:.2f}ms"
+        )
         logger.error(error_msg)
         raise UnicodeDecodeError("unknown", b"", 0, 1, error_msg)
 
@@ -295,7 +297,9 @@ class EncodingUtils:
         try:
             content = EncodingUtils.read_file(src_path, src_encoding)
             EncodingUtils.write_file(dst_path, content, dst_encoding)
-            logger.info(f"文件编码转换成功: {src_path} ({src_encoding}) -> {dst_path} ({dst_encoding})")
+            logger.info(
+                f"文件编码转换成功: {src_path} ({src_encoding}) -> {dst_path} ({dst_encoding})"
+            )
             return True
         except Exception as e:
             logger.error(f"文件编码转换失败: {src_path} -> {dst_path}, 错误={e}")

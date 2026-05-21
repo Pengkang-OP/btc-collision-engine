@@ -154,6 +154,7 @@ class LoggingConfig:
         log_file = self._config.get("file")
         if not log_file:
             from .log_platform_adapter import ensure_log_directory
+
             ensure_log_directory()
             return
 
@@ -312,7 +313,10 @@ class LoggingConfig:
                         # v4.5.1: 检测 NFS stale file handle 并尝试恢复
                         import errno
 
-                        if hasattr(errno, "ESTALE") and getattr(os_err, "errno", None) == errno.ESTALE:
+                        if (
+                            hasattr(errno, "ESTALE")
+                            and getattr(os_err, "errno", None) == errno.ESTALE
+                        ):
                             self._recover_stale_handle()
                             # 恢复后重试本次 emit
                             try:
@@ -323,7 +327,10 @@ class LoggingConfig:
 
                         if not self._disk_full_warned:
                             self._disk_full_warned = True
-                            if hasattr(errno, "ESTALE") and getattr(os_err, "errno", None) == errno.ESTALE:
+                            if (
+                                hasattr(errno, "ESTALE")
+                                and getattr(os_err, "errno", None) == errno.ESTALE
+                            ):
                                 print(
                                     f"[日志警告] NFS 文件句柄失效且无法恢复: {os_err}",
                                     file=sys.stderr,
@@ -346,24 +353,39 @@ class LoggingConfig:
                         self._inner.close()
                         try:
                             from logging.handlers import TimedRotatingFileHandler
+
                             handler: logging.Handler
                             if self._rotation_type == "time":
                                 handler = TimedRotatingFileHandler(
                                     self._log_file,
-                                    when=(self._config_snapshot or {}).get("rotation_when", "midnight"),
-                                    interval=(self._config_snapshot or {}).get("rotation_interval", 1),
-                                    backupCount=(self._config_snapshot or {}).get("backup_count", 5),
+                                    when=(self._config_snapshot or {}).get(
+                                        "rotation_when", "midnight"
+                                    ),
+                                    interval=(self._config_snapshot or {}).get(
+                                        "rotation_interval", 1
+                                    ),
+                                    backupCount=(self._config_snapshot or {}).get(
+                                        "backup_count", 5
+                                    ),
                                     encoding="utf-8-sig",
                                 )
                             else:
                                 handler = SafeRotatingFileHandler(
                                     self._log_file,
-                                    maxBytes=(self._config_snapshot or {}).get("max_bytes", 10 * 1024 * 1024),
-                                    backupCount=(self._config_snapshot or {}).get("backup_count", 5),
+                                    maxBytes=(self._config_snapshot or {}).get(
+                                        "max_bytes", 10 * 1024 * 1024
+                                    ),
+                                    backupCount=(self._config_snapshot or {}).get(
+                                        "backup_count", 5
+                                    ),
                                     encoding="utf-8-sig",
                                 )
                             handler.setLevel(self.level)
-                            handler.setFormatter(self._format_str if isinstance(self._format_str, str) else self._inner.formatter)
+                            handler.setFormatter(
+                                self._format_str
+                                if isinstance(self._format_str, str)
+                                else self._inner.formatter
+                            )
                             self._inner = handler
                             print(f"[日志] NFS 文件句柄已恢复: {self._log_file}", file=sys.stderr)
                         except Exception as rebuild_err:

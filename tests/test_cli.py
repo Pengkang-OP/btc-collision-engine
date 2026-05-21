@@ -96,9 +96,7 @@ class TestCLI:
     def test_parse_args_no_color_env(self, monkeypatch):
         """NO_COLOR 环境变量设置后 args.no_color 为 True"""
         monkeypatch.setenv("NO_COLOR", "1")
-        with patch(
-            "sys.argv", ["cli.py", "-t", "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"]
-        ):
+        with patch("sys.argv", ["cli.py", "-t", "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"]):
             args = parse_args()
             assert args.no_color is True
 
@@ -702,7 +700,8 @@ class TestLoadConfigWithValidation:
         config_file.write_text(_json_mod.dumps({"crypto": {}}), encoding="utf-8")
         monkeypatch.setattr(mod, "_project_root", str(tmp_path))
         monkeypatch.setattr(
-            _json_mod, "load",
+            _json_mod,
+            "load",
             lambda f: (_ for _ in ()).throw(Exception("unexpected")),
         )
         result = mod.load_config_with_validation()
@@ -714,9 +713,7 @@ class TestLoadConfigWithValidation:
 
         mod = self._get_config_loader_module()
         config_file = tmp_path / "my_config.json"
-        config_file.write_text(
-            _json_mod.dumps({"crypto": {}, "collision": {}}), encoding="utf-8"
-        )
+        config_file.write_text(_json_mod.dumps({"crypto": {}, "collision": {}}), encoding="utf-8")
         monkeypatch.setattr(mod, "_project_root", str(tmp_path))
         result = mod.load_config_with_validation(str(config_file))
         assert isinstance(result, dict)
@@ -738,6 +735,7 @@ class TestLoadConfigWithValidation:
 
         # 验证 _path_setup 模块可加载且路径已设置
         from src.cli import _path_setup
+
         assert _path_setup._project_root is not None
         assert _path_setup._project_root in sys.path
 
@@ -1366,12 +1364,14 @@ class TestCLIOutput:
         from src.cli.output import CLIOutput
 
         out = CLIOutput()
-        out.performance_status({
-            "speed": 10000,
-            "keys_total": 50000,
-            "gpu_usage": 85,
-            "memory_used": 2048,
-        })
+        out.performance_status(
+            {
+                "speed": 10000,
+                "keys_total": 50000,
+                "gpu_usage": 85,
+                "memory_used": 2048,
+            }
+        )
         captured = capsys.readouterr()
         assert "speed" in captured.out or "速度" in captured.out
 
@@ -1456,10 +1456,13 @@ class TestCLIOutput:
 
         CLIOutput.reset_instance()
         out = CLIOutput()
-        out.stats_panel("性能统计", [
-            ("速度", "10,000/s"),
-            ("GPU 温度", "65°C", "yellow"),
-        ])
+        out.stats_panel(
+            "性能统计",
+            [
+                ("速度", "10,000/s"),
+                ("GPU 温度", "65°C", "yellow"),
+            ],
+        )
         captured = capsys.readouterr()
         assert "性能统计" in captured.out
         assert "10,000/s" in captured.out
@@ -1758,8 +1761,10 @@ class TestPrintFinalSummaryException:
 
     def setup_method(self):
         from src.cli.output import CLIOutput
+
         CLIOutput.reset_instance()
         from src.cli.log_window import reset_log_window_instance
+
         reset_log_window_instance()
 
     def test_stats_get_exception_graceful(self, monkeypatch):

@@ -11,6 +11,7 @@ import sys
 
 # v4.5.1: 确保项目根目录在 sys.path 中（使用共享模块）
 from ._path_setup import ensure_project_root
+
 ensure_project_root()
 
 from src.i18n import _t  # noqa: E402

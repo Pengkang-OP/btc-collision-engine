@@ -94,7 +94,9 @@ class ConsoleNotification(NotificationChannel):
         except (ValueError, AttributeError):
             timestamp = alert.timestamp or "--:--:--"
 
-        line = f"{prefix}{color}[{alert.level.value.upper():>8}] {timestamp}  {alert.message}{_RESET}"
+        line = (
+            f"{prefix}{color}[{alert.level.value.upper():>8}] {timestamp}  {alert.message}{_RESET}"
+        )
         print(line, file=sys.stderr, flush=True)
 
 

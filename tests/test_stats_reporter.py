@@ -11,6 +11,7 @@ from src.cli.stats_reporter import _print_detailed_stats, _print_final_summary
 
 # ── 辅助工具 ────────────────────────────────────────────────────
 
+
 def _mock_cli_output():
     """创建 mock CLIOutput 并 patch get_instance。"""
     CLIOutput.reset_instance()
@@ -61,6 +62,7 @@ def _make_engine(engine_type="cpu", **kwargs):
 
 
 # ── _print_detailed_stats ───────────────────────────────────────
+
 
 class TestPrintDetailedStats(unittest.TestCase):
     """_print_detailed_stats() 单元测试。"""
@@ -183,6 +185,7 @@ class TestPrintDetailedStats(unittest.TestCase):
 
 
 # ── _print_final_summary ───────────────────────────────────────
+
 
 class TestPrintFinalSummary(unittest.TestCase):
     """_print_final_summary() 单元测试。"""
@@ -310,8 +313,12 @@ class TestPrintFinalSummary(unittest.TestCase):
         engine = _make_engine("cpu")
         args = self._make_args(export_progress="out.json")
 
-        with patch("src.cli.stats_reporter.export_progress_data",
-                   side_effect=RuntimeError("disk full")), patch("builtins.print") as mock_print:
+        with (
+            patch(
+                "src.cli.stats_reporter.export_progress_data", side_effect=RuntimeError("disk full")
+            ),
+            patch("builtins.print") as mock_print,
+        ):
             self._call(engine, "cpu", args)
             mock_print.assert_called_once()
             self.out.final_summary.assert_called_once()
@@ -321,8 +328,12 @@ class TestPrintFinalSummary(unittest.TestCase):
         engine = _make_engine("cpu")
         args = self._make_args(export_matches="matches.json")
 
-        with patch("src.cli.stats_reporter.export_matches",
-                   side_effect=OSError("permission denied")), patch("builtins.print") as mock_print:
+        with (
+            patch(
+                "src.cli.stats_reporter.export_matches", side_effect=OSError("permission denied")
+            ),
+            patch("builtins.print") as mock_print,
+        ):
             self._call(engine, "cpu", args)
             mock_print.assert_called_once()
             self.out.final_summary.assert_called_once()

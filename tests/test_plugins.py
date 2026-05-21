@@ -20,6 +20,7 @@ from src.collision.plugins.example_plugin import ExamplePlugin
 # 1. CollisionPlugin ABC 测试
 # ═══════════════════════════════════════════════════════════════
 
+
 class ConcretePlugin(CollisionPlugin):
     """用于测试的具体插件实现."""
 
@@ -122,6 +123,7 @@ class TestCollisionPlugin(unittest.TestCase):
 # ═══════════════════════════════════════════════════════════════
 # 2. PluginManager 测试
 # ═══════════════════════════════════════════════════════════════
+
 
 class TestPluginManager(unittest.TestCase):
     """PluginManager 测试."""
@@ -323,6 +325,7 @@ class TestPlugin(CollisionPlugin):
 # 3. ExamplePlugin 测试
 # ═══════════════════════════════════════════════════════════════
 
+
 class TestExamplePlugin(unittest.TestCase):
     """ExamplePlugin 测试."""
 
@@ -452,8 +455,7 @@ class TestExamplePlugin(unittest.TestCase):
                 # k >= N (SECP256K1_N) → 无效，触发 continue
                 mock_bytes.return_value = b"\xff" * 32
                 with patch.object(
-                    self.plugin.generator, "generate_address",
-                    return_value=("fake", "key", None)
+                    self.plugin.generator, "generate_address", return_value=("fake", "key", None)
                 ):
                     self.plugin._run()
         # k 无效 → count 保持 0 → stats.update(0) 被调用
@@ -472,8 +474,7 @@ class TestExamplePlugin(unittest.TestCase):
         with patch.object(self.plugin._stop_event, "is_set", side_effect=[False, True]):
             with patch("secrets.token_bytes", return_value=b"\x01" * 32):
                 with patch.object(
-                    self.plugin.generator, "generate_address",
-                    return_value=(target, "key", None)
+                    self.plugin.generator, "generate_address", return_value=(target, "key", None)
                 ):
                     with patch("src.core.wif.WIF.encode", return_value="fake_wif"):
                         self.plugin._run()
@@ -513,8 +514,9 @@ class TestExamplePlugin(unittest.TestCase):
         with patch.object(self.plugin._stop_event, "is_set", side_effect=controlled_is_set):
             with patch("secrets.token_bytes", return_value=b"\x01" * 32):
                 with patch.object(
-                    self.plugin.generator, "generate_address",
-                    return_value=("non_matching_addr", "key", None)
+                    self.plugin.generator,
+                    "generate_address",
+                    return_value=("non_matching_addr", "key", None),
                 ):
                     self.plugin._run()
 
@@ -526,23 +528,27 @@ class TestExamplePlugin(unittest.TestCase):
 # 4. __init__ 重导出测试
 # ═══════════════════════════════════════════════════════════════
 
+
 class TestPluginsInit(unittest.TestCase):
     """__init__.py 重导出验证."""
 
     def test_all_exports(self):
         """__all__ 包含 PluginManager 和 CollisionPlugin."""
         from src.collision.plugins import __all__
+
         self.assertIn("PluginManager", __all__)
         self.assertIn("CollisionPlugin", __all__)
 
     def test_plugin_manager_importable(self):
         """PluginManager 可从包级别导入."""
         from src.collision.plugins import PluginManager as PM
+
         self.assertTrue(callable(PM))
 
     def test_collision_plugin_importable(self):
         """CollisionPlugin 可从包级别导入."""
         from src.collision.plugins import CollisionPlugin as CP
+
         self.assertTrue(issubclass(CP, _BasePlugin))
 
 

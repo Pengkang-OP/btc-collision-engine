@@ -146,9 +146,7 @@ class TestEventCreation:
 
     def test_collision_event_base_to_dict_with_type(self):
         """CollisionEvent 带 event_type 时正确序列化"""
-        event = CollisionEvent(
-            event_type=EventType.ENGINE_START, source="test"
-        )
+        event = CollisionEvent(event_type=EventType.ENGINE_START, source="test")
         d = event.to_dict()
         assert d["event_type"] == "engine.start"
 

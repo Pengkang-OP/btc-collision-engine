@@ -14,7 +14,7 @@
 
 import sys
 
-sys.path.insert(0, 'src')
+sys.path.insert(0, "src")
 
 import secrets
 
@@ -49,10 +49,10 @@ def test_format_manager():
     print(f"\n格式统计: {stats}")
 
     # 验证统计正确
-    assert stats['p2pkh'] == 1, "P2PKH统计错误"
-    assert stats['p2sh'] == 1, "P2SH统计错误"
-    assert stats['bech32'] == 1, "Bech32统计错误"
-    assert stats['taproot'] == 1, "Taproot统计错误"
+    assert stats["p2pkh"] == 1, "P2PKH统计错误"
+    assert stats["p2sh"] == 1, "P2SH统计错误"
+    assert stats["bech32"] == 1, "Bech32统计错误"
+    assert stats["taproot"] == 1, "Taproot统计错误"
 
     print("\n✅ 测试1通过: 多格式目标管理器")
     return manager
@@ -72,10 +72,10 @@ def test_engine_creation():
     print(f"  地址生成器: {type(engine._address_generator).__name__}")
 
     # 验证内部组件
-    assert hasattr(engine, '_format_manager'), "缺少格式管理器"
-    assert hasattr(engine, '_address_generator'), "缺少地址生成器"
-    assert hasattr(engine, 'add_target'), "缺少add_target方法"
-    assert hasattr(engine, 'check_match_all'), "缺少check_match_all方法"
+    assert hasattr(engine, "_format_manager"), "缺少格式管理器"
+    assert hasattr(engine, "_address_generator"), "缺少地址生成器"
+    assert hasattr(engine, "add_target"), "缺少add_target方法"
+    assert hasattr(engine, "check_match_all"), "缺少check_match_all方法"
 
     print("\n✅ 测试2通过: 引擎创建")
     return engine
@@ -161,18 +161,11 @@ def test_post_processing(engine):
     private_key = b"\x00" * 31 + b"\x01"
 
     # 模拟匹配事件
-    match = {
-        'private_key': private_key,
-        'address': p2pkh_addr,
-        'format': 'p2pkh',
-        'device_idx': 0
-    }
+    match = {"private_key": private_key, "address": p2pkh_addr, "format": "p2pkh", "device_idx": 0}
 
     # 调用后处理
     extra_matches = engine._check_other_formats(
-        match['private_key'],
-        match['address'],
-        match['format']
+        match["private_key"], match["address"], match["format"]
     )
 
     print(f"\nGPU匹配到P2PKH: {p2pkh_addr}")
@@ -195,9 +188,7 @@ def test_post_processing(engine):
 
     # 再次后处理
     extra_matches = engine._check_other_formats(
-        match['private_key'],
-        match['address'],
-        match['format']
+        match["private_key"], match["address"], match["format"]
     )
 
     print("\n后处理结果:")
@@ -207,7 +198,7 @@ def test_post_processing(engine):
             print(f"    {fmt}: {addr}")
 
         # 验证Bech32匹配
-        bech32_found = any(fmt == 'bech32' for _, fmt in extra_matches)
+        bech32_found = any(fmt == "bech32" for _, fmt in extra_matches)
         assert bech32_found, "应该找到Bech32匹配"
     else:
         print("  ❌ 没有找到Bech32匹配")
@@ -243,10 +234,10 @@ def test_format_stats(engine):
         print(f"  {fmt}: {count} 个地址")
 
     # 验证
-    assert stats['p2pkh'] == 2, "应该有2个P2PKH地址"
-    assert stats['p2sh'] == 1, "应该有1个P2SH地址"
-    assert stats['bech32'] == 1, "应该有1个Bech32地址"
-    assert stats['taproot'] == 1, "应该有1个Taproot地址"
+    assert stats["p2pkh"] == 2, "应该有2个P2PKH地址"
+    assert stats["p2sh"] == 1, "应该有1个P2SH地址"
+    assert stats["bech32"] == 1, "应该有1个Bech32地址"
+    assert stats["taproot"] == 1, "应该有1个Taproot地址"
 
     # 获取引擎统计
     engine_stats = engine.get_combined_stats()
@@ -272,10 +263,8 @@ def test_integration_scenario():
         # P2PKH格式
         "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH",
         "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",  # Satoshi的地址
-
         # Bech32格式
         "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
-
         # Taproot格式
         "bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0",
     ]
@@ -347,6 +336,7 @@ def main():
     except Exception as e:
         print(f"\n❌ 测试失败: {type(e).__name__}: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

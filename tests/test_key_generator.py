@@ -33,29 +33,35 @@ class TestSecureKeyGeneratorInit(unittest.TestCase):
 
     def test_init_custom_config(self):
         """P0-3: 自定义 batch_size/rate_limit/key_format"""
-        gen = SecureKeyGenerator(config={
-            "batch_size": 500,
-            "rate_limit": 100,
-            "key_format": "compressed",
-        })
+        gen = SecureKeyGenerator(
+            config={
+                "batch_size": 500,
+                "rate_limit": 100,
+                "key_format": "compressed",
+            }
+        )
         self.assertEqual(gen.batch_size, 500)
         self.assertEqual(gen.rate_limit, 100)
         self.assertEqual(gen.key_format, "compressed")
 
     def test_init_entropy_config_enabled(self):
         """P0-4: 自定义熵池配置"""
-        gen = SecureKeyGenerator(config={
-            "entropy_check_enabled": True,
-            "min_entropy_bits": 2000,
-        })
+        gen = SecureKeyGenerator(
+            config={
+                "entropy_check_enabled": True,
+                "min_entropy_bits": 2000,
+            }
+        )
         self.assertTrue(gen.entropy_check_enabled)
         self.assertEqual(gen.min_entropy_bits, 2000)
 
     def test_init_entropy_config_disabled(self):
         """P0-5: 禁用熵池检查"""
-        gen = SecureKeyGenerator(config={
-            "entropy_check_enabled": False,
-        })
+        gen = SecureKeyGenerator(
+            config={
+                "entropy_check_enabled": False,
+            }
+        )
         self.assertFalse(gen.entropy_check_enabled)
 
     def test_init_stats_initialized(self):
@@ -121,13 +127,13 @@ class TestGenerateBatch(unittest.TestCase):
     def test_generate_batch_with_rate_limit(self):
         """P1-2: 速率限制生效 - 10 keys at 100/s 至少耗时约 0.1s"""
         import time
+
         gen = SecureKeyGenerator(config={"rate_limit": 100, "batch_size": 10})
         start = time.perf_counter()
         keys = gen.generate_batch(10)
         elapsed = time.perf_counter() - start
         # 10 keys at 100/s = minimum 0.1s; allow small epsilon for timer precision
-        self.assertGreaterEqual(elapsed, 0.05,
-                                f"速率限制未生效, 耗时仅 {elapsed:.4f}s")
+        self.assertGreaterEqual(elapsed, 0.05, f"速率限制未生效, 耗时仅 {elapsed:.4f}s")
         self.assertEqual(len(keys), 10)
         for key in keys:
             self.assertEqual(len(key), 32)
@@ -228,15 +234,17 @@ class TestIsValidPrivateKey(unittest.TestCase):
         """P0-19: 密钥长度 < 32 被拒绝"""
         for length in [0, 1, 16, 31]:
             key = b"\x01" * length
-            self.assertFalse(self.gen._is_valid_private_key(key),
-                             f"Length {length} should be rejected")
+            self.assertFalse(
+                self.gen._is_valid_private_key(key), f"Length {length} should be rejected"
+            )
 
     def test_wrong_length_too_long(self):
         """P0-20: 密钥长度 > 32 被拒绝"""
         for length in [33, 48, 64]:
             key = b"\x01" * length
-            self.assertFalse(self.gen._is_valid_private_key(key),
-                             f"Length {length} should be rejected")
+            self.assertFalse(
+                self.gen._is_valid_private_key(key), f"Length {length} should be rejected"
+            )
 
 
 class TestStatistics(unittest.TestCase):

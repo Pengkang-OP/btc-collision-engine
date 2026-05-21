@@ -79,6 +79,7 @@ class TestNoCircularDependency:
         try:
             # 清空模块缓存后按不同顺序重新导入，验证无循环依赖
             import importlib
+
             importlib.import_module("src.collision.gpu.facade")
             importlib.import_module("src.collision.gpu.monitoring")
             importlib.import_module("src.collision.gpu.precompute")

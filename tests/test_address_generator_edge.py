@@ -76,10 +76,14 @@ class TestGeneratePrivateKeyEdge(unittest.TestCase):
     def test_generate_private_key_keygenerror_handler(self):
         """secrets.token_bytes 抛 KeyGenerationError → lines 166-172"""
         from src.utils.exceptions import KeyGenerationError
-        with patch(
-            "secrets.token_bytes",
-            side_effect=KeyGenerationError("模拟", error_code=999),
-        ), self.assertRaises(Exception):  # noqa: B017
+
+        with (
+            patch(
+                "secrets.token_bytes",
+                side_effect=KeyGenerationError("模拟", error_code=999),
+            ),
+            self.assertRaises(Exception),
+        ):  # noqa: B017
             self.gen.generate_private_key(max_retries=2)
 
     def test_generate_private_key_other_exception_handler(self):
@@ -102,9 +106,7 @@ class TestCryptoBackendPerformance(unittest.TestCase):
         mock_manager = MagicMock()
         mock_backend = MagicMock()
         mock_backend.name = "PURE_PYTHON"
-        type(mock_manager).current_backend = PropertyMock(
-            return_value=mock_backend
-        )
+        type(mock_manager).current_backend = PropertyMock(return_value=mock_backend)
         with patch.dict(
             "sys.modules",
             {"src.core.crypto_backend": MagicMock(crypto_manager=mock_manager)},
@@ -115,6 +117,7 @@ class TestCryptoBackendPerformance(unittest.TestCase):
 
     def test_import_error_silent(self):
         """导入 crypto_backend 失败时静默处理 → line 250"""
+
         # 在 crypto_backend 导入前, 让 _check_crypto_backend_performance
         # 中的 import 失败
         def mock_import(name, *args, **kwargs):

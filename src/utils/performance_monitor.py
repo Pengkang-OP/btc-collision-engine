@@ -258,7 +258,9 @@ class EnhancedPerformanceMonitor:
         self.start_time = time.perf_counter()
         return self
 
-    def __exit__(self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None) -> None:
+    def __exit__(
+        self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None
+    ) -> None:
         """
         退出上下文时的处理
 
@@ -331,7 +333,9 @@ class EnhancedPerformanceMonitor:
         return (self.end_time - self.start_time) * 1000
 
 
-def log_performance_summary(logger: logging.Logger, tracker: PerformanceTracker | None = None) -> None:
+def log_performance_summary(
+    logger: logging.Logger, tracker: PerformanceTracker | None = None
+) -> None:
     """
     记录性能统计摘要
 

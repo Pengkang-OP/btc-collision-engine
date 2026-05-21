@@ -195,7 +195,9 @@ class AuditResult:
     def is_approved(self) -> bool:
         return (
             self.status == SystemStatus.PASSED
-            and len([v for v in self.violations if v.severity in (Severity.CRITICAL, Severity.HIGH)])
+            and len(
+                [v for v in self.violations if v.severity in (Severity.CRITICAL, Severity.HIGH)]
+            )
             == 0
         )
 

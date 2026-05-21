@@ -63,7 +63,7 @@ class TestGenerateSequentialKeysBoundary:
         assert len(result) == count * 32
 
         for i in range(count):
-            key = int.from_bytes(result[i * 32: (i + 1) * 32], "big")
+            key = int.from_bytes(result[i * 32 : (i + 1) * 32], "big")
             assert key == start + i, f"key[{i}] expected {start + i}, got {key}"
 
     def test_count_large_value(self):
@@ -157,9 +157,7 @@ class TestRangescanMultiWorkerBoundary:
         )
         engine.range_scan(1, 3)
         stats = engine.get_stats()
-        assert stats.total_checked == 3, (
-            f"小范围应完整扫描3个私钥，实际{stats.total_checked}"
-        )
+        assert stats.total_checked == 3, f"小范围应完整扫描3个私钥，实际{stats.total_checked}"
 
     def test_range_exactly_equals_workers(self):
         """总范围恰好等于 worker 数"""
@@ -170,9 +168,7 @@ class TestRangescanMultiWorkerBoundary:
         )
         engine.range_scan(1, 4)
         stats = engine.get_stats()
-        assert stats.total_checked == 4, (
-            f"应完整扫描4个私钥，实际{stats.total_checked}"
-        )
+        assert stats.total_checked == 4, f"应完整扫描4个私钥，实际{stats.total_checked}"
 
     def test_range_chunk_size_one(self):
         """chunk_size=1 场景（范围仅比worker数多1）"""
@@ -183,9 +179,7 @@ class TestRangescanMultiWorkerBoundary:
         )
         engine.range_scan(1, 5)
         stats = engine.get_stats()
-        assert stats.total_checked == 5, (
-            f"应完整扫描5个私钥，实际{stats.total_checked}"
-        )
+        assert stats.total_checked == 5, f"应完整扫描5个私钥，实际{stats.total_checked}"
 
     def test_range_no_overlap_verification(self):
         """多worker分配不重叠（范围[1,1000] max_workers=4）"""
@@ -196,9 +190,7 @@ class TestRangescanMultiWorkerBoundary:
         )
         engine.range_scan(1, 1000)
         stats = engine.get_stats()
-        assert stats.total_checked == 1000, (
-            f"无重叠应扫描1000个私钥，实际{stats.total_checked}"
-        )
+        assert stats.total_checked == 1000, f"无重叠应扫描1000个私钥，实际{stats.total_checked}"
 
     def test_range_uneven_split(self):
         """范围不能被worker数整除时的剩余分配"""
@@ -209,9 +201,7 @@ class TestRangescanMultiWorkerBoundary:
         )
         engine.range_scan(1, 10)
         stats = engine.get_stats()
-        assert stats.total_checked == 10, (
-            f"不均匀分割应扫描全部10个私钥，实际{stats.total_checked}"
-        )
+        assert stats.total_checked == 10, f"不均匀分割应扫描全部10个私钥，实际{stats.total_checked}"
 
 
 @pytest.mark.gpu_kernel
@@ -266,9 +256,7 @@ class TestRangescanGPUFirstBatchBoundary:
         mode.execute(5, 10)
 
         total_generated = sum(batch_sizes)
-        assert total_generated == 6, (
-            f"范围[5,10]应生成6个私钥，实际{total_generated}"
-        )
+        assert total_generated == 6, f"范围[5,10]应生成6个私钥，实际{total_generated}"
 
     def test_first_batch_range_exactly_equals_batch_size(self):
         """范围恰好等于 batch_size 时全部在首批完成"""
@@ -287,12 +275,8 @@ class TestRangescanGPUFirstBatchBoundary:
         mode.execute(1, 10)
 
         total_generated = sum(batch_sizes)
-        assert total_generated == 10, (
-            f"范围[1,10] batch_size=10 应生成10个，实际{total_generated}"
-        )
-        assert len(batch_sizes) == 1, (
-            f"应在一个批次完成，实际{len(batch_sizes)}批"
-        )
+        assert total_generated == 10, f"范围[1,10] batch_size=10 应生成10个，实际{total_generated}"
+        assert len(batch_sizes) == 1, f"应在一个批次完成，实际{len(batch_sizes)}批"
 
     def test_first_batch_range_slightly_larger_than_batch_size(self):
         """范围略大于 batch_size 时分两批完成"""
@@ -311,12 +295,8 @@ class TestRangescanGPUFirstBatchBoundary:
         mode.execute(1, 15)
 
         total_generated = sum(batch_sizes)
-        assert total_generated == 15, (
-            f"范围[1,15] batch_size=10 应生成15个，实际{total_generated}"
-        )
-        assert len(batch_sizes) == 2, (
-            f"应分两批完成，实际{len(batch_sizes)}批"
-        )
+        assert total_generated == 15, f"范围[1,15] batch_size=10 应生成15个，实际{total_generated}"
+        assert len(batch_sizes) == 2, f"应分两批完成，实际{len(batch_sizes)}批"
 
     def test_first_batch_single_element_range(self):
         """单元素范围（start==end）首批只生成一个私钥"""
@@ -335,9 +315,7 @@ class TestRangescanGPUFirstBatchBoundary:
         mode.execute(100, 100)
 
         total_generated = sum(batch_sizes)
-        assert total_generated == 1, (
-            f"单元素范围[100,100]应生成1个，实际{total_generated}"
-        )
+        assert total_generated == 1, f"单元素范围[100,100]应生成1个，实际{total_generated}"
 
     def test_first_batch_range_multi_batch_exact_fit(self):
         """范围恰好是 batch_size 整数倍时边界正确"""
@@ -356,12 +334,8 @@ class TestRangescanGPUFirstBatchBoundary:
         mode.execute(1, 10)
 
         total_generated = sum(batch_sizes)
-        assert total_generated == 10, (
-            f"范围[1,10] batch_size=5 应生成10个，实际{total_generated}"
-        )
-        assert len(batch_sizes) == 2, (
-            f"应分2批完成（每批5），实际{len(batch_sizes)}批"
-        )
+        assert total_generated == 10, f"范围[1,10] batch_size=5 应生成10个，实际{total_generated}"
+        assert len(batch_sizes) == 2, f"应分2批完成（每批5），实际{len(batch_sizes)}批"
 
 
 class TestCLIValidationBoundary:

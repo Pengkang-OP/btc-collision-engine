@@ -34,7 +34,7 @@ class TestObjectPoolAutoTuneIdleShrink(unittest.TestCase):
         self.assertGreater(len(pool._pool), 5 * 3)
 
         # Mock shrink 避免死锁 (Lock 不可重入) — 用 class-level patch 因 __slots__
-        with patch.object(ObjectPool, 'shrink', return_value=30) as mock_shrink:
+        with patch.object(ObjectPool, "shrink", return_value=30) as mock_shrink:
             adjusted = pool.auto_tune(max_memory_mb=1024)
             mock_shrink.assert_called_once_with(5)
             self.assertTrue(adjusted)
@@ -54,9 +54,9 @@ class TestGlobalPoolManagerAutoCleanupEdge(unittest.TestCase):
         mgr = GlobalPoolManager()
         mgr.initialize()
 
-        with patch.object(mgr, 'auto_tune_all', return_value=True):
-            with patch.object(mgr, 'shrink_all', return_value=5):
-                with patch.object(mgr._cleanup_state, '_cleanup_stop_event') as mock_event:
+        with patch.object(mgr, "auto_tune_all", return_value=True):
+            with patch.object(mgr, "shrink_all", return_value=5):
+                with patch.object(mgr._cleanup_state, "_cleanup_stop_event") as mock_event:
                     mock_event.wait.side_effect = [False, True]  # 只运行一次
                     mgr._auto_cleanup_loop(0.01)
         # 不应崩溃
@@ -66,9 +66,9 @@ class TestGlobalPoolManagerAutoCleanupEdge(unittest.TestCase):
         mgr = GlobalPoolManager()
         mgr.initialize()
 
-        with patch.object(mgr, 'auto_tune_all', return_value=True):
-            with patch.object(mgr, 'shrink_all', return_value=0):
-                with patch.object(mgr._cleanup_state, '_cleanup_stop_event') as mock_event:
+        with patch.object(mgr, "auto_tune_all", return_value=True):
+            with patch.object(mgr, "shrink_all", return_value=0):
+                with patch.object(mgr._cleanup_state, "_cleanup_stop_event") as mock_event:
                     mock_event.wait.side_effect = [False, True]
                     mgr._auto_cleanup_loop(0.01)
 
@@ -92,8 +92,8 @@ class TestGlobalPoolManagerStopCleanupTimeout(unittest.TestCase):
         mgr._cleanup_state._cleanup_stop_event.set()
 
         # Mock join 不做实际等待, 然后 is_alive 返回 True
-        with patch.object(mgr._cleanup_state._cleanup_thread, 'join') as mock_join:
-            with patch.object(mgr._cleanup_state._cleanup_thread, 'is_alive', return_value=True):
+        with patch.object(mgr._cleanup_state._cleanup_thread, "join") as mock_join:
+            with patch.object(mgr._cleanup_state._cleanup_thread, "is_alive", return_value=True):
                 mgr.stop_auto_cleanup(timeout=0.1)
                 mock_join.assert_called_once()
 
@@ -149,7 +149,7 @@ class TestECPointPool(unittest.TestCase):
         mgr.initialize()
         pool = mgr.get_ecpoint_pool()
         stats = pool.get_stats()
-        self.assertIn('current_size', stats)
+        self.assertIn("current_size", stats)
 
 
 if __name__ == "__main__":

@@ -28,9 +28,7 @@ class ConfigBuilder:
     def _validate_input(result: WizardResult) -> None:
         """验证向导输入参数合法性"""
         if not result.targets and not result.target_file:
-            raise ValueError(
-                "No targets specified: both targets and target_file are empty"
-            )
+            raise ValueError("No targets specified: both targets and target_file are empty")
         if result.mode not in ConfigBuilder.VALID_MODES:
             raise ValueError(
                 f"Invalid mode '{result.mode}'. Valid modes: {', '.join(sorted(ConfigBuilder.VALID_MODES))}"

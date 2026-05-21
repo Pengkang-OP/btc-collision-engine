@@ -244,6 +244,7 @@ class TestGPUContext(unittest.TestCase):
         # 清理 test_gpu_memory_pool_part2.py 造成的 sys.modules mock 泄漏
         import sys
         from unittest.mock import Mock
+
         for mod_name in ("src.gpu.context", "src.gpu.kernel_impl"):
             if mod_name in sys.modules and isinstance(sys.modules[mod_name], Mock):
                 del sys.modules[mod_name]

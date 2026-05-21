@@ -281,7 +281,9 @@ class ValidationMonitor:
                 f"成功率={metrics.success_rate:.1f}%"
             )
 
-    def _format_alert_message(self, level: str, metrics: ValidationMetrics, batch_id: str | None) -> str:
+    def _format_alert_message(
+        self, level: str, metrics: ValidationMetrics, batch_id: str | None
+    ) -> str:
         """格式化告警消息"""
         severity = "严重" if level == "critical" else "警告"
 
@@ -352,4 +354,6 @@ def create_monitor(
         coverage_warning=coverage_warning, unvalidated_warning=unvalidated_warning
     )
 
-    return ValidationMonitor(validator=validator, thresholds=thresholds, alert_callback=alert_callback)
+    return ValidationMonitor(
+        validator=validator, thresholds=thresholds, alert_callback=alert_callback
+    )

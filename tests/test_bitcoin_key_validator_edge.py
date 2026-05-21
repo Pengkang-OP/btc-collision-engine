@@ -79,9 +79,7 @@ class TestWIFEncoderDecodeEdge(unittest.TestCase):
     def test_decode_checksum_mismatch(self):
         """WIF 校验和不匹配 → line 94"""
         # 破坏合法 WIF 的最后一个字符来触发校验和失败
-        corrupted = self.valid_wif[:-1] + (
-            "A" if self.valid_wif[-1] != "A" else "B"
-        )
+        corrupted = self.valid_wif[:-1] + ("A" if self.valid_wif[-1] != "A" else "B")
         with self.assertRaises(ValueError) as ctx:
             WIFEncoder.decode(corrupted)
         self.assertIn("校验", str(ctx.exception))
@@ -125,8 +123,9 @@ class TestGenerateKeyExceptionHandlers(unittest.TestCase):
     def test_generate_pubkey_exception_handler(self):
         """generate_public_key 抛出异常时捕获 (lines 439-441)"""
         with patch.object(
-            self.validator.curve, "scalar_multiply_const_time",
-            side_effect=RuntimeError("模拟标量乘法错误")
+            self.validator.curve,
+            "scalar_multiply_const_time",
+            side_effect=RuntimeError("模拟标量乘法错误"),
         ):
             result, pub_key = self.validator.generate_public_key(self.pk)
             self.assertFalse(result.success)
@@ -154,6 +153,7 @@ class TestGenerateKeyExceptionHandlers(unittest.TestCase):
     def test_generate_pubkey_infinity_point(self):
         """公钥为无穷远点 → lines 399-400"""
         from src.core.secp256k1 import ECPoint
+
         inf_point = ECPoint(None, None)  # is_infinity = True
         with patch.object(
             self.validator.curve, "scalar_multiply_const_time", return_value=inf_point
@@ -166,6 +166,7 @@ class TestGenerateKeyExceptionHandlers(unittest.TestCase):
     def test_generate_pubkey_not_on_curve(self):
         """公钥不在曲线上 → lines 404-405"""
         from src.core.secp256k1 import ECPoint
+
         off_curve = ECPoint(1, 1)  # (1,1) 不在 secp256k1 上
         with patch.object(
             self.validator.curve, "scalar_multiply_const_time", return_value=off_curve
@@ -200,14 +201,14 @@ class TestValidatePubKeyEdge(unittest.TestCase):
     def test_compressed_not_on_curve(self):
         """压缩公钥不在曲线上 → line 486"""
         # 构造一个 x 坐标不在曲线上的点
-        bad_pk = b"\x02" + b"\xFF" * 31 + b"\xFE"
+        bad_pk = b"\x02" + b"\xff" * 31 + b"\xfe"
         result = self.validator.validate_public_key(bad_pk)
         # 可能触发 ValueError（y_squared 不对应任何 y）或明确报错
         self.assertFalse(result.success)
 
     def test_uncompressed_not_on_curve(self):
         """非压缩公钥不在曲线上 → line 508"""
-        bad_pk = b"\x04" + b"\xFF" * 32 + b"\xFF" * 32
+        bad_pk = b"\x04" + b"\xff" * 32 + b"\xff" * 32
         result = self.validator.validate_public_key(bad_pk)
         self.assertFalse(result.success)
 
@@ -240,9 +241,7 @@ class TestAddressWarnings(unittest.TestCase):
         """生成地址不以 '1' 开头 (line 555)"""
         mock_vpk.return_value = _make_success_result()
         mock_enc.return_value = "3NotP2PKHxxxxxxxxxxxxxxxxxxxx"
-        result, addr = self.validator.generate_address(
-            self.pub_key, AddressType.P2PKH
-        )
+        result, addr = self.validator.generate_address(self.pub_key, AddressType.P2PKH)
         self.assertTrue(any("'1'" in w for w in result.warnings))
 
     @patch("src.core.bitcoin_key_validator.Base58.check_encode")
@@ -251,9 +250,7 @@ class TestAddressWarnings(unittest.TestCase):
         """P2PKH 地址长度异常 (line 561)"""
         mock_vpk.return_value = _make_success_result()
         mock_enc.return_value = "1Short"
-        result, addr = self.validator.generate_address(
-            self.pub_key, AddressType.P2PKH
-        )
+        result, addr = self.validator.generate_address(self.pub_key, AddressType.P2PKH)
         self.assertTrue(any("长度" in w for w in result.warnings))
 
     @patch("src.core.bitcoin_key_validator.Base58.check_decode")
@@ -264,9 +261,7 @@ class TestAddressWarnings(unittest.TestCase):
         mock_vpk.return_value = _make_success_result()
         mock_enc.return_value = "1" + "A" * 33
         mock_dec.side_effect = ValueError("checksum error")
-        result, addr = self.validator.generate_address(
-            self.pub_key, AddressType.P2PKH
-        )
+        result, addr = self.validator.generate_address(self.pub_key, AddressType.P2PKH)
         self.assertTrue(any("Base58Check" in e for e in result.errors))
 
     @patch("src.core.bitcoin_key_validator.Base58.check_decode")
@@ -277,9 +272,7 @@ class TestAddressWarnings(unittest.TestCase):
         mock_vpk.return_value = _make_success_result()
         mock_enc.return_value = "1" + "A" * 33
         mock_dec.return_value = (0x01, b"\x00" * 20)  # 非 0x00
-        result, addr = self.validator.generate_address(
-            self.pub_key, AddressType.P2PKH
-        )
+        result, addr = self.validator.generate_address(self.pub_key, AddressType.P2PKH)
         warnings = result.warnings
         self.assertTrue(any("版本" in w for w in warnings))
 
@@ -306,9 +299,7 @@ class TestAddressWarnings(unittest.TestCase):
     def test_validate_address_bech32_decode_fail(self, mock_b32):
         """Bech32 解码失败 → lines 678-679"""
         mock_b32.return_value = (None, None, None)
-        result = self.validator.validate_address(
-            "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
-        )
+        result = self.validator.validate_address("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4")
         self.assertFalse(result.success)
         self.assertTrue(any("解码失败" in e for e in result.errors))
 
@@ -318,18 +309,14 @@ class TestAddressWarnings(unittest.TestCase):
         # 地址必须以 "bc1" 开头才能进入 Bech32 验证分支
         # mock 返回 HRP="xx" (不是 bc/tb), data 长度 33 以通过长度检查
         mock_b32.return_value = ("xx", [0] * 33, 1)
-        result = self.validator.validate_address(
-            "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
-        )
+        result = self.validator.validate_address("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4")
         self.assertTrue(any("HRP" in e for e in result.errors))
 
     @patch("src.core.bitcoin_key_validator.bech32_decode")
     def test_validate_address_bech32_bad_data_length(self, mock_b32):
         """Bech32 数据长度错误 → line 693"""
         mock_b32.return_value = ("bc", [0] * 10, 1)  # 10 elements, not 33/53
-        result = self.validator.validate_address(
-            "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
-        )
+        result = self.validator.validate_address("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4")
         self.assertTrue(any("数据长度" in e for e in result.errors))
 
     @patch("src.core.bitcoin_key_validator.bech32_decode")
@@ -337,9 +324,7 @@ class TestAddressWarnings(unittest.TestCase):
         """Bech32 不支持的 witness 版本 → line 700"""
         data = [1] + [0] * 32  # version=1, not 0
         mock_b32.return_value = ("bc", data, 1)
-        result = self.validator.validate_address(
-            "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
-        )
+        result = self.validator.validate_address("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4")
         self.assertTrue(any("witness" in e.lower() for e in result.errors))
 
     @patch("src.core.bitcoin_key_validator.bech32_decode")
@@ -347,18 +332,14 @@ class TestAddressWarnings(unittest.TestCase):
         """Bech32 P2WSH 子类型 → line 705-706"""
         data = [0] + [0] * 52  # 53 elements → P2WSH
         mock_b32.return_value = ("bc", data, 1)
-        result = self.validator.validate_address(
-            "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
-        )
+        result = self.validator.validate_address("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4")
         self.assertEqual(result.details.get("bech32_address_subtype"), "P2WSH")
 
     @patch("src.core.bitcoin_key_validator.bech32_decode")
     def test_validate_address_bech32_exception(self, mock_b32):
         """Bech32 验证异常 → lines 712-713"""
         mock_b32.side_effect = RuntimeError("bech32 internal error")
-        result = self.validator.validate_address(
-            "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
-        )
+        result = self.validator.validate_address("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4")
         self.assertTrue(any("Bech32地址验证失败" in e for e in result.errors))
 
 
@@ -377,8 +358,7 @@ class TestWIFEdgeWarnings(unittest.TestCase):
     def test_wif_encoding_exception_handler(self):
         """private_key_to_wif 异常捕获 → lines 776-778"""
         # 只能捕获 ValueError/TypeError (line 776)
-        with patch("src.core.bitcoin_key_validator.WIF.encode",
-                   side_effect=ValueError("编码错误")):
+        with patch("src.core.bitcoin_key_validator.WIF.encode", side_effect=ValueError("编码错误")):
             result, wif = self.validator.private_key_to_wif(self.pk)
             self.assertFalse(result.success)
             self.assertEqual(wif, "")
@@ -559,9 +539,7 @@ class TestFullChainErrorBranches(unittest.TestCase):
     @patch("src.core.bitcoin_key_validator.BitcoinKeyValidator.private_key_to_wif")
     @patch("src.core.bitcoin_key_validator.BitcoinKeyValidator.generate_address")
     @patch("src.core.bitcoin_key_validator.BitcoinKeyValidator.generate_public_key")
-    def test_chain_match_failure_adds_errors(
-        self, mock_pubkey, mock_addr, mock_wif, mock_match
-    ):
+    def test_chain_match_failure_adds_errors(self, mock_pubkey, mock_addr, mock_wif, mock_match):
         """地址匹配失败时收集错误 → line 949"""
         pubkey_tuple = _make_pubkey_result()
         mock_pubkey.return_value = pubkey_tuple
@@ -585,6 +563,7 @@ class TestFullChainErrorBranches(unittest.TestCase):
 def _make_success_result():
     """创建成功 KeyValidationResult"""
     from src.core.bitcoin_key_validator import KeyValidationResult
+
     r = KeyValidationResult()
     r.add_detail("test", True)
     return r
@@ -593,6 +572,7 @@ def _make_success_result():
 def _make_fail_result(msg):
     """创建失败 KeyValidationResult"""
     from src.core.bitcoin_key_validator import KeyValidationResult
+
     r = KeyValidationResult()
     r.add_error(msg)
     return r
@@ -623,13 +603,9 @@ class TestBIP173Regression(unittest.TestCase):
 
         address = BitcoinKeyValidator.generate_bech32_address(_BIP173_G_PUBKEY, hrp="bc")
         self.assertEqual(
-            len(address), 42,
-            f"Bech32 P2WPKH地址应为42字符, 实际{len(address)} (旧bug会生成45)"
+            len(address), 42, f"Bech32 P2WPKH地址应为42字符, 实际{len(address)} (旧bug会生成45)"
         )
-        self.assertTrue(
-            address.startswith("bc1q"),
-            f"P2WPKH地址应以bc1q开头: {address}"
-        )
+        self.assertTrue(address.startswith("bc1q"), f"P2WPKH地址应以bc1q开头: {address}")
 
     def test_bech32_address_matches_bip173_vector(self):
         """Bech32地址与 BIP-173 已知向量匹配"""
@@ -637,8 +613,9 @@ class TestBIP173Regression(unittest.TestCase):
 
         address = BitcoinKeyValidator.generate_bech32_address(_BIP173_G_PUBKEY, hrp="bc")
         self.assertEqual(
-            address, _BIP173_EXPECTED_ADDRESS,
-            f"Bech32地址应与BIP-173测试向量一致\n  实际: {address}\n  期望: {_BIP173_EXPECTED_ADDRESS}"
+            address,
+            _BIP173_EXPECTED_ADDRESS,
+            f"Bech32地址应与BIP-173测试向量一致\n  实际: {address}\n  期望: {_BIP173_EXPECTED_ADDRESS}",
         )
 
     def test_bech32_address_validates_roundtrip(self):

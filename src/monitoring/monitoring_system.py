@@ -774,9 +774,7 @@ class AnomalyDetector:
                 "trend": (
                     "increasing"
                     if speeds and speeds[-1] > speeds[0]
-                    else "decreasing"
-                    if speeds and speeds[-1] < speeds[0]
-                    else "stable"
+                    else "decreasing" if speeds and speeds[-1] < speeds[0] else "stable"
                 ),
             },
             "cpu_usage": {
@@ -785,9 +783,7 @@ class AnomalyDetector:
                 "trend": (
                     "increasing"
                     if cpu_usages and cpu_usages[-1] > cpu_usages[0]
-                    else "decreasing"
-                    if cpu_usages and cpu_usages[-1] < cpu_usages[0]
-                    else "stable"
+                    else "decreasing" if cpu_usages and cpu_usages[-1] < cpu_usages[0] else "stable"
                 ),
             },
             "memory_usage": {
@@ -975,16 +971,19 @@ class ReportGenerator:
         # 计算统计数据（兼容扁平字典和嵌套 performance 两种历史数据格式）
         speeds = [d.get("performance", {}).get("speed", d.get("speed", 0)) for d in today_data]
         total_checked = sum(
-            d.get("performance", {}).get("total_checked", d.get("total_checked", 0)) for d in today_data
+            d.get("performance", {}).get("total_checked", d.get("total_checked", 0))
+            for d in today_data
         )
         matches_found = sum(
-            d.get("performance", {}).get("matches_found", d.get("matches_found", 0)) for d in today_data
+            d.get("performance", {}).get("matches_found", d.get("matches_found", 0))
+            for d in today_data
         )
         cpu_usages = [
             d.get("performance", {}).get("cpu_usage", d.get("cpu_usage", 0)) for d in today_data
         ]
         memory_usages = [
-            d.get("performance", {}).get("memory_usage", d.get("memory_usage", 0)) for d in today_data
+            d.get("performance", {}).get("memory_usage", d.get("memory_usage", 0))
+            for d in today_data
         ]
 
         # 计算平均值
@@ -1030,7 +1029,9 @@ class ReportGenerator:
 
         return report
 
-    def _generate_recommendations(self, trends: dict[str, Any], data: list[dict[str, Any]]) -> list[str]:
+    def _generate_recommendations(
+        self, trends: dict[str, Any], data: list[dict[str, Any]]
+    ) -> list[str]:
         """生成优化建议"""
         recommendations = []
 

@@ -63,6 +63,7 @@ class TestWizardMessageQueue(unittest.TestCase):
 
         def cb(e):
             received.append(1)
+
         self.mq.subscribe(cb)
         self.mq.unsubscribe(cb)
         self.mq.send(WizardEventType.WIZARD_START, {})
@@ -77,6 +78,7 @@ class TestWizardMessageQueue(unittest.TestCase):
 
         def good_cb(e):
             received.append(1)
+
         self.mq.subscribe(bad_cb)
         self.mq.subscribe(good_cb)
         self.mq.send(WizardEventType.WIZARD_START, {})

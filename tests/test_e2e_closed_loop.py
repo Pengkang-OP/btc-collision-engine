@@ -40,6 +40,7 @@ from src.utils.bech32_codec import bech32_encode
 # 已知密钥对常量（使用独立生成器推导，避免硬编码风险）
 # ============================================================================
 
+
 def _derive_known_keypair(k: int):
     """从整数 k 推导完整密钥对 (private_key, address, wif)"""
     private_key = k.to_bytes(32, "big")
@@ -72,6 +73,7 @@ KNOWN_KEYPAIRS = [_derive_known_keypair(i) for i in range(1, 11)]
 # Fixtures
 # ============================================================================
 
+
 @pytest.fixture(autouse=True)
 def reset_global_state():
     """每个测试前后重置全局事件总线"""
@@ -103,6 +105,7 @@ def temp_checkpoint_dir():
 # Task 2: TestRangeScanClosedLoop - 核心闭环测试
 # ============================================================================
 
+
 @pytest.mark.integration
 class TestRangeScanClosedLoop:
     """核心闭环测试: range_scan 已知密钥匹配"""
@@ -130,9 +133,9 @@ class TestRangeScanClosedLoop:
         engine._thread.join(timeout=30)
         engine.stop()
 
-        assert len(progress_events) >= 1, (
-            f"on_progress 应至少被调用一次，实际: {len(progress_events)}"
-        )
+        assert (
+            len(progress_events) >= 1
+        ), f"on_progress 应至少被调用一次，实际: {len(progress_events)}"
 
     def test_lifecycle_complete_callback(self):
         """验证 on_complete 在 stop 后被调用"""
@@ -188,6 +191,7 @@ class TestRangeScanClosedLoop:
 # ============================================================================
 # Task 5: TestCheckpointClosedLoop - 断点闭环
 # ============================================================================
+
 
 @pytest.mark.integration
 class TestCheckpointClosedLoop:
@@ -263,14 +267,15 @@ class TestCheckpointClosedLoop:
         cp_mgr2 = CheckpointManager(filepath=cp_file)
         data = cp_mgr2.load()
         assert data is not None
-        assert _K1_ADDR.lower() in [t.lower() for t in data.get("targets", [])], (
-            "断点应包含目标地址"
-        )
+        assert _K1_ADDR.lower() in [
+            t.lower() for t in data.get("targets", [])
+        ], "断点应包含目标地址"
 
 
 # ============================================================================
 # Task 6: TestMultiTargetClosedLoop - 多目标闭环
 # ============================================================================
+
 
 @pytest.mark.integration
 class TestMultiTargetClosedLoop:
@@ -295,9 +300,7 @@ class TestMultiTargetClosedLoop:
         engine._thread.join(timeout=15)
         engine.stop()
 
-        assert len(match_addrs) == 10, (
-            f"应检测到 10 个匹配，实际: {len(match_addrs)}"
-        )
+        assert len(match_addrs) == 10, f"应检测到 10 个匹配，实际: {len(match_addrs)}"
 
         # 验证所有已知地址都被匹配
         for _, addr, _ in KNOWN_KEYPAIRS:
@@ -307,6 +310,7 @@ class TestMultiTargetClosedLoop:
 # ============================================================================
 # Task 7: TestMultiFormatClosedLoop - 多格式地址闭环
 # ============================================================================
+
 
 @pytest.mark.integration
 class TestMultiFormatClosedLoop:
@@ -377,6 +381,7 @@ class TestMultiFormatClosedLoop:
 # Task 7a: TestResolverPipelineClosedLoop - Resolver 集成管线
 # ============================================================================
 
+
 @pytest.mark.integration
 class TestResolverPipelineClosedLoop:
     """TargetResolver 集成管线: P2PKH/P2SH/Bech32/Bech32m → P2PKH 转换验证"""
@@ -395,9 +400,7 @@ class TestResolverPipelineClosedLoop:
         assert result == p2sh_addr, "P2SH 应保持原格式（载荷为 script_hash，无法转换为 P2PKH）"
         # P2SH 的 payload 是 hash160(redeem_script)，不是 hash160(pubkey)
         # 所以解析器保持原格式不变
-        assert result != p2pkh_addr, (
-            "P2SH 保持原格式，应不同于 Legacy P2PKH（载荷不同）"
-        )
+        assert result != p2pkh_addr, "P2SH 保持原格式，应不同于 Legacy P2PKH（载荷不同）"
 
     def test_resolver_converts_bech32_to_p2pkh(self):
         """Bech32 → Resolver → 正确的 P2PKH（载荷为 pubkey_hash）"""
@@ -429,11 +432,13 @@ class TestResolverPipelineClosedLoop:
         result = resolver.resolve(taproot_addr)
 
         assert result is not None, "Resolver 应返回 Taproot 原地址"
-        assert result == taproot_addr, "Taproot 应保持原格式（payload 为 x-only pubkey，无法转换为 P2PKH）"
+        assert (
+            result == taproot_addr
+        ), "Taproot 应保持原格式（payload 为 x-only pubkey，无法转换为 P2PKH）"
         # Taproot 的 witness program 是 x-only pubkey → P2PKH 载荷不同
-        assert result != p2pkh_addr, (
-            "Taproot 保持原格式，应不同于 Legacy P2PKH（载荷为 x-only pubkey）"
-        )
+        assert (
+            result != p2pkh_addr
+        ), "Taproot 保持原格式，应不同于 Legacy P2PKH（载荷为 x-only pubkey）"
 
     def test_resolver_mixed_formats_same_pubkey(self):
         """同一公钥 → 四种格式 → Resolver 全部可解析 → Bech32 与 Legacy 一致"""
@@ -465,6 +470,7 @@ class TestResolverPipelineClosedLoop:
 # ============================================================================
 # Task 7b: TestTaprootClosedLoop - Bech32m (Taproot) 格式
 # ============================================================================
+
 
 @pytest.mark.integration
 class TestTaprootClosedLoop:
@@ -523,6 +529,7 @@ class TestTaprootClosedLoop:
 # Task 7c: TestFileLoadingClosedLoop - 混格式文件加载
 # ============================================================================
 
+
 @pytest.mark.integration
 class TestFileLoadingClosedLoop:
     """混格式文件加载闭环: targets.txt 含 P2PKH/P2SH/Bech32/Bech32m"""
@@ -557,9 +564,9 @@ class TestFileLoadingClosedLoop:
         # - P2SH → 5 个不同的 P2PKH (script_hash)
         # - Taproot → 5 个不同的 P2PKH (x-only pubkey)
         # 总计 15 个唯一 P2PKH
-        assert len(loaded_p2pkh) >= 10, (
-            f"应至少解析出 10 个唯一 P2PKH（5 Legacy + 5 P2SH + 5 Taproot），实际: {len(loaded_p2pkh)}"
-        )
+        assert (
+            len(loaded_p2pkh) >= 10
+        ), f"应至少解析出 10 个唯一 P2PKH（5 Legacy + 5 P2SH + 5 Taproot），实际: {len(loaded_p2pkh)}"
 
         # 引擎闭环验证：Legacy P2PKH 应该全部匹配
         match_results = []
@@ -616,9 +623,7 @@ class TestFileLoadingClosedLoop:
         engine._thread.join(timeout=15)
         engine.stop()
 
-        assert len(match_results) == 1, (
-            f"应检测到 1 个匹配（不重复），实际: {len(match_results)}"
-        )
+        assert len(match_results) == 1, f"应检测到 1 个匹配（不重复），实际: {len(match_results)}"
         assert match_results[0] == _K1_ADDR
 
     def test_multi_worker_range_scan_all_matches(self):
@@ -642,15 +647,14 @@ class TestFileLoadingClosedLoop:
 
         stats = engine.get_stats()
         # 多线程下 total_checked 可能略少于 1000（窗口边界），但应接近
-        assert stats.total_checked >= 900, (
-            f"多线程至少检查 900 个私钥，实际: {stats.total_checked}"
-        )
+        assert stats.total_checked >= 900, f"多线程至少检查 900 个私钥，实际: {stats.total_checked}"
         assert stats.speed >= 0, "speed 应 >= 0"
 
 
 # ============================================================================
 # Task B: TestRandomModeClosedLoop - Random 模式引擎闭环
 # ============================================================================
+
 
 @pytest.mark.integration
 class TestRandomModeClosedLoop:
@@ -688,9 +692,9 @@ class TestRandomModeClosedLoop:
         engine.stop()
 
         stats = engine.get_stats()
-        assert stats.total_checked > 0, (
-            f"random 模式应检查至少 1 个私钥，实际: {stats.total_checked}"
-        )
+        assert (
+            stats.total_checked > 0
+        ), f"random 模式应检查至少 1 个私钥，实际: {stats.total_checked}"
         assert stats.speed >= 0, "speed 应 >= 0"
 
     def test_random_mode_on_progress_called(self):
@@ -712,14 +716,15 @@ class TestRandomModeClosedLoop:
         time.sleep(3)
         engine.stop()
 
-        assert len(progress_calls) >= 1, (
-            f"on_progress 应至少被调用一次，实际: {len(progress_calls)}"
-        )
+        assert (
+            len(progress_calls) >= 1
+        ), f"on_progress 应至少被调用一次，实际: {len(progress_calls)}"
 
 
 # ============================================================================
 # Task C: TestDataLoggingClosedLoop - Data Logging 集成闭环
 # ============================================================================
+
 
 @pytest.mark.integration
 class TestDataLoggingClosedLoop:
@@ -744,9 +749,9 @@ class TestDataLoggingClosedLoop:
         engine._thread.join(timeout=15)
         engine.stop()
 
-        assert len(match_results) == 1, (
-            f"data_logging 启用时匹配回调应正常，实际: {len(match_results)}"
-        )
+        assert (
+            len(match_results) == 1
+        ), f"data_logging 启用时匹配回调应正常，实际: {len(match_results)}"
         assert match_results[0] == _K1_ADDR
 
     def test_data_logging_random_mode(self):
@@ -763,9 +768,9 @@ class TestDataLoggingClosedLoop:
         engine.stop()
 
         stats = engine.get_stats()
-        assert stats.total_checked > 0, (
-            f"data_logging + random 应检查至少 1 个私钥，实际: {stats.total_checked}"
-        )
+        assert (
+            stats.total_checked > 0
+        ), f"data_logging + random 应检查至少 1 个私钥，实际: {stats.total_checked}"
 
 
 if __name__ == "__main__":

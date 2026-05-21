@@ -97,10 +97,14 @@ class GPUResultProcessor:
             key_idx = match["key_index"]
             # S-2修复: 添加边界检查，防止越界访问
             if key_idx * 32 + 32 > len(private_keys):
-                logger.warning(f"私钥索引越界: key_idx={key_idx}, private_keys长度={len(private_keys)}")
+                logger.warning(
+                    f"私钥索引越界: key_idx={key_idx}, private_keys长度={len(private_keys)}"
+                )
                 continue
             private_key = private_keys[key_idx * 32 : (key_idx + 1) * 32]
-            if engine.dedup_filter is not None and not engine.dedup_filter.check_and_add(private_key):
+            if engine.dedup_filter is not None and not engine.dedup_filter.check_and_add(
+                private_key
+            ):
                 continue
             target_idx = match["target_index"]
             # G1修复: 检查目标索引是否越界
@@ -155,7 +159,9 @@ class GPUResultProcessor:
                 logger.warning(f"PRNG模式key_idx计算失败: key_idx={key_idx}, 跳过匹配")
                 continue
             private_key = key_int.to_bytes(32, "big")
-            if engine.dedup_filter is not None and not engine.dedup_filter.check_and_add(private_key):
+            if engine.dedup_filter is not None and not engine.dedup_filter.check_and_add(
+                private_key
+            ):
                 continue
             target_idx = match["target_index"]
             # G1修复: 检查目标索引是否越界

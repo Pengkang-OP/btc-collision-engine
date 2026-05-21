@@ -58,8 +58,11 @@ def _make_mock_benchmark(results=None):
 
 
 def _make_mock_autotuner(
-    best_config=None, best_throughput=0, total_tuning_cycles=0,
-    performance_history=None, tuning_report="Tuning Report Content",
+    best_config=None,
+    best_throughput=0,
+    total_tuning_cycles=0,
+    performance_history=None,
+    tuning_report="Tuning Report Content",
 ):
     """创建模拟自动调优器"""
     tuner = MagicMock()
@@ -290,14 +293,16 @@ class TestDeviceInfoSection:
 
     def test_with_device_info(self):
         """有设备信息时生成表格"""
-        engine = _make_mock_engine({
-            "name": "NVIDIA RTX 3080",
-            "vendor": "NVIDIA Corporation",
-            "platform": "OpenCL",
-            "global_mem_size": 10 * 1024**3,
-            "max_compute_units": 68,
-            "driver_version": "535.129.03",
-        })
+        engine = _make_mock_engine(
+            {
+                "name": "NVIDIA RTX 3080",
+                "vendor": "NVIDIA Corporation",
+                "platform": "OpenCL",
+                "global_mem_size": 10 * 1024**3,
+                "max_compute_units": 68,
+                "driver_version": "535.129.03",
+            }
+        )
         gen = PerformanceReportGenerator(engine)
         section = gen._generate_device_info_section()
         assert "GPU 设备信息" in section
@@ -318,13 +323,15 @@ class TestDeviceInfoSection:
 
     def test_intel_device_opencl_version(self):
         """Intel 设备 OpenCL 版本为 3.0"""
-        engine = _make_mock_engine({
-            "name": "Intel Arc A770",
-            "vendor": "Intel Corporation",
-            "platform": "OpenCL",
-            "global_mem_size": 16 * 1024**3,
-            "max_compute_units": 512,
-        })
+        engine = _make_mock_engine(
+            {
+                "name": "Intel Arc A770",
+                "vendor": "Intel Corporation",
+                "platform": "OpenCL",
+                "global_mem_size": 16 * 1024**3,
+                "max_compute_units": 512,
+            }
+        )
         gen = PerformanceReportGenerator(engine)
         section = gen._generate_device_info_section()
         assert "3.0" in section  # Intel 硬编码 OpenCL 3.0
@@ -420,9 +427,7 @@ class TestHistorySection:
         """多条记录时仅显示最近 20 条"""
         engine = _make_mock_engine()
         records = [
-            _make_mock_history_record(
-                timestamp=float(i), batch_size=100000 + i * 10000
-            )
+            _make_mock_history_record(timestamp=float(i), batch_size=100000 + i * 10000)
             for i in range(30)
         ]
         tuner = _make_mock_autotuner(performance_history=records)
@@ -487,12 +492,14 @@ class TestComparisonSection:
 
     def test_comparison_with_current_device(self):
         """包含当前设备与参考 GPU 对比"""
-        engine = _make_mock_engine({
-            "name": "NVIDIA RTX 3080",
-            "vendor": "NVIDIA",
-            "platform": "OpenCL",
-            "global_mem_size": 10 * 1024**3,
-        })
+        engine = _make_mock_engine(
+            {
+                "name": "NVIDIA RTX 3080",
+                "vendor": "NVIDIA",
+                "platform": "OpenCL",
+                "global_mem_size": 10 * 1024**3,
+            }
+        )
         tuner = _make_mock_autotuner(
             best_config={"throughput": 600000, "batch_size": 2097152},
             best_throughput=600000,
@@ -509,12 +516,14 @@ class TestComparisonSection:
 
     def test_comparison_without_tuner(self):
         """无 tuner 时 throughput 为 0"""
-        engine = _make_mock_engine({
-            "name": "Test GPU",
-            "vendor": "Unknown",
-            "platform": "OpenCL",
-            "global_mem_size": 4 * 1024**3,
-        })
+        engine = _make_mock_engine(
+            {
+                "name": "Test GPU",
+                "vendor": "Unknown",
+                "platform": "OpenCL",
+                "global_mem_size": 4 * 1024**3,
+            }
+        )
         gen = PerformanceReportGenerator(engine)
         section = gen._generate_comparison_section()
         assert "性能对比" in section
@@ -685,14 +694,16 @@ class TestGetDeviceInfo:
 
     def test_with_device(self):
         """有 GPU 设备时返回完整信息"""
-        engine = _make_mock_engine({
-            "name": "RTX 3080",
-            "vendor": "NVIDIA",
-            "platform": "CUDA",
-            "global_mem_size": 10 * 1024**3,
-            "max_compute_units": 68,
-            "driver_version": "535.129.03",
-        })
+        engine = _make_mock_engine(
+            {
+                "name": "RTX 3080",
+                "vendor": "NVIDIA",
+                "platform": "CUDA",
+                "global_mem_size": 10 * 1024**3,
+                "max_compute_units": 68,
+                "driver_version": "535.129.03",
+            }
+        )
         gen = PerformanceReportGenerator(engine)
         info = gen._get_device_info()
         assert info["设备名称"] == "RTX 3080"
@@ -726,9 +737,7 @@ class TestGetCurrentPerformance:
     def test_with_tuner_best_config(self):
         """有调优器且有 best_config"""
         engine = _make_mock_engine()
-        tuner = _make_mock_autotuner(
-            best_config={"throughput": 500000, "batch_size": 131072}
-        )
+        tuner = _make_mock_autotuner(best_config={"throughput": 500000, "batch_size": 131072})
         gen = PerformanceReportGenerator(engine, auto_tuner=tuner)
         perf = gen._get_current_performance()
         assert perf["throughput"] == 500000
@@ -763,14 +772,14 @@ class TestGenerateRecommendations:
 
     def test_intel_vendor_recommendations(self):
         """Intel 厂商包含特定建议"""
-        engine = _make_mock_engine({
-            "name": "Intel Arc A770",
-            "vendor": "Intel Corporation",
-            "global_mem_size": 16 * 1024**3,
-        })
-        tuner = _make_mock_autotuner(
-            best_config={"throughput": 500000, "batch_size": 524288}
+        engine = _make_mock_engine(
+            {
+                "name": "Intel Arc A770",
+                "vendor": "Intel Corporation",
+                "global_mem_size": 16 * 1024**3,
+            }
         )
+        tuner = _make_mock_autotuner(best_config={"throughput": 500000, "batch_size": 524288})
         gen = PerformanceReportGenerator(engine, auto_tuner=tuner)
         recs = gen._generate_recommendations()
         assert any("uint32 workaround" in r for r in recs)
@@ -779,45 +788,53 @@ class TestGenerateRecommendations:
 
     def test_low_throughput_recommendation(self):
         """低吞吐量建议运行自动调优"""
-        engine = _make_mock_engine({
-            "name": "GPU", "vendor": "Unknown",
-            "global_mem_size": 8 * 1024**3,  # int, not str
-        })
-        tuner = _make_mock_autotuner(
-            best_config={"throughput": 50000, "batch_size": 32768}
+        engine = _make_mock_engine(
+            {
+                "name": "GPU",
+                "vendor": "Unknown",
+                "global_mem_size": 8 * 1024**3,  # int, not str
+            }
         )
+        tuner = _make_mock_autotuner(best_config={"throughput": 50000, "batch_size": 32768})
         gen = PerformanceReportGenerator(engine, auto_tuner=tuner)
         recs = gen._generate_recommendations()
         assert any("吞吐量较低" in r for r in recs)
 
     def test_high_memory_recommendation(self):
         """大显存 (≥16GB) 建议"""
-        engine = _make_mock_engine({
-            "name": "High Mem GPU",
-            "vendor": "NVIDIA",
-            "global_mem_size": 24 * 1024**3,
-        })
+        engine = _make_mock_engine(
+            {
+                "name": "High Mem GPU",
+                "vendor": "NVIDIA",
+                "global_mem_size": 24 * 1024**3,
+            }
+        )
         gen = PerformanceReportGenerator(engine)
         recs = gen._generate_recommendations()
         assert any("显存充足" in r for r in recs)
 
     def test_low_memory_recommendation(self):
         """小显存 (<4GB) 建议"""
-        engine = _make_mock_engine({
-            "name": "Low Mem GPU",
-            "vendor": "AMD",
-            "global_mem_size": 2 * 1024**3,
-        })
+        engine = _make_mock_engine(
+            {
+                "name": "Low Mem GPU",
+                "vendor": "AMD",
+                "global_mem_size": 2 * 1024**3,
+            }
+        )
         gen = PerformanceReportGenerator(engine)
         recs = gen._generate_recommendations()
         assert any("显存较小" in r for r in recs)
 
     def test_always_includes_generic_recommendations(self):
         """始终包含通用建议"""
-        engine = _make_mock_engine({
-            "name": "GPU", "vendor": "NVIDIA",
-            "global_mem_size": 8 * 1024**3,  # int, not str
-        })
+        engine = _make_mock_engine(
+            {
+                "name": "GPU",
+                "vendor": "NVIDIA",
+                "global_mem_size": 8 * 1024**3,  # int, not str
+            }
+        )
         gen = PerformanceReportGenerator(engine)
         recs = gen._generate_recommendations()
         assert any("定期运行基准测试" in r for r in recs)
@@ -825,11 +842,13 @@ class TestGenerateRecommendations:
 
     def test_zero_memory_handled_gracefully(self):
         """显存为 0 时正确进入小显存建议分支，不崩溃"""
-        engine = _make_mock_engine({
-            "name": "GPU",
-            "vendor": "Unknown",
-            "global_mem_size": 0,  # 格式化为 "0.0 GB"，触发 mem_gb < 4 → 小显存建议
-        })
+        engine = _make_mock_engine(
+            {
+                "name": "GPU",
+                "vendor": "Unknown",
+                "global_mem_size": 0,  # 格式化为 "0.0 GB"，触发 mem_gb < 4 → 小显存建议
+            }
+        )
         gen = PerformanceReportGenerator(engine)
         recs = gen._generate_recommendations()
         assert isinstance(recs, list)

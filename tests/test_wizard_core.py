@@ -70,8 +70,10 @@ class TestEventDispatcher(unittest.TestCase):
 
     def test_register_and_dispatch(self):
         received = []
+
         def handler(event):
             received.append(event.event_type)
+
         self.dispatcher.register(WizardEventType.WIZARD_START, handler)
         event = WizardEvent(event_type=WizardEventType.WIZARD_START)
         self.dispatcher.dispatch(event)
@@ -80,8 +82,10 @@ class TestEventDispatcher(unittest.TestCase):
 
     def test_unregister(self):
         received = []
+
         def handler(event):
             received.append(1)
+
         self.dispatcher.register(WizardEventType.WIZARD_COMPLETE, handler)
         self.dispatcher.unregister(WizardEventType.WIZARD_COMPLETE, handler)
         event = WizardEvent(event_type=WizardEventType.WIZARD_COMPLETE)
@@ -94,10 +98,13 @@ class TestEventDispatcher(unittest.TestCase):
 
     def test_multiple_handlers(self):
         results = []
+
         def h1(event):
             results.append(1)
+
         def h2(event):
             results.append(2)
+
         self.dispatcher.register(WizardEventType.TARGET_SELECTED, h1)
         self.dispatcher.register(WizardEventType.TARGET_SELECTED, h2)
         event = WizardEvent(event_type=WizardEventType.TARGET_SELECTED)
@@ -106,10 +113,13 @@ class TestEventDispatcher(unittest.TestCase):
 
     def test_handler_exception_does_not_block(self):
         results = []
+
         def bad_handler(event):
             raise RuntimeError("test")
+
         def good_handler(event):
             results.append(1)
+
         self.dispatcher.register(WizardEventType.WIZARD_ERROR, bad_handler)
         self.dispatcher.register(WizardEventType.WIZARD_ERROR, good_handler)
         event = WizardEvent(event_type=WizardEventType.WIZARD_ERROR)
@@ -118,8 +128,10 @@ class TestEventDispatcher(unittest.TestCase):
 
     def test_clear(self):
         received = []
+
         def handler(event):
             received.append(1)
+
         self.dispatcher.register(WizardEventType.WIZARD_START, handler)
         self.dispatcher.clear()
         event = WizardEvent(event_type=WizardEventType.WIZARD_START)

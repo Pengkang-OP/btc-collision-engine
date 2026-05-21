@@ -73,7 +73,9 @@ class FormatAwareTargetManager:
                     # 检查是否已在正确的格式组中
                     if normalized not in self._targets_by_format[format_type]:
                         self._targets_by_format[format_type].add(normalized)
-                        logger.debug(f"补充分类目标地址: {address[:6]}... (格式: {format_type.value})")
+                        logger.debug(
+                            f"补充分类目标地址: {address[:6]}... (格式: {format_type.value})"
+                        )
                     return False
 
                 self._all_targets.add(normalized)
@@ -117,7 +119,9 @@ class FormatAwareTargetManager:
         with self._lock:
             try:
                 with open(filepath, encoding="utf-8") as f:
-                    addresses = [line.strip() for line in f if line.strip() and not line.startswith("#")]
+                    addresses = [
+                        line.strip() for line in f if line.strip() and not line.startswith("#")
+                    ]
 
                 count = self.add_targets(addresses)
                 logger.info(f"从文件加载目标: {filepath}, {count}/{len(addresses)} 成功")
@@ -231,7 +235,9 @@ class FormatAwareTargetManager:
             包含目标的格式列表
         """
         with self._lock:
-            return [fmt.value for fmt, targets in self._targets_by_format.items() if len(targets) > 0]
+            return [
+                fmt.value for fmt, targets in self._targets_by_format.items() if len(targets) > 0
+            ]
 
     def get_max_batch_size(self) -> int:
         """

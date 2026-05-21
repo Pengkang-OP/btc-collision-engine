@@ -72,24 +72,24 @@ def sample_monitoring_data():
     """创建样本 MonitoringData"""
     data = MonitoringData()
     data.performance = {
-    "speed": 1000.0,
-    "total_checked": 5000,
-    "matches_found": 0,
-    "cpu_usage": 50.0,
-    "memory_usage": 200.0,
-    "thread_count": 4,
+        "speed": 1000.0,
+        "total_checked": 5000,
+        "matches_found": 0,
+        "cpu_usage": 50.0,
+        "memory_usage": 200.0,
+        "thread_count": 4,
     }
     data.system = {
-    "os": "nt",
-    "python_version": "3.12.0",
-    "pid": 12345,
-    "uptime": 3600.0,
+        "os": "nt",
+        "python_version": "3.12.0",
+        "pid": 12345,
+        "uptime": 3600.0,
     }
     data.engine = {
-    "mode": "random",
-    "target_count": 10,
-    "is_running": True,
-    "current_position": 500,
+        "mode": "random",
+        "target_count": 10,
+        "is_running": True,
+        "current_position": 500,
     }
     return data
 
@@ -147,14 +147,18 @@ class TestDataStorageInit:
 class TestSaveCurrentData:
     """测试 save_current_data"""
 
-    def test_save_with_delegation(self, storage_with_logger, mock_data_logger, sample_monitoring_data):
+    def test_save_with_delegation(
+        self, storage_with_logger, mock_data_logger, sample_monitoring_data
+    ):
         """委托模式下调用 DataLogger.save_current_data"""
         storage_with_logger.save_current_data(sample_monitoring_data)
 
         # 验证委托的 DataLogger 被调用
         mock_data_logger.save_current_data.assert_called_once()
 
-    def test_save_with_delegation_syncs_data(self, storage_with_logger, mock_data_logger, sample_monitoring_data):
+    def test_save_with_delegation_syncs_data(
+        self, storage_with_logger, mock_data_logger, sample_monitoring_data
+    ):
         """委托模式下同步 performance/system/engine 数据到 DataLogger"""
         storage_with_logger.save_current_data(sample_monitoring_data)
 
@@ -183,7 +187,9 @@ class TestSaveCurrentData:
             assert saved["performance"]["speed"] == 1000.0
             assert saved["performance"]["total_checked"] == 5000
 
-    def test_delegation_error_handled(self, storage_with_logger, mock_data_logger, sample_monitoring_data):
+    def test_delegation_error_handled(
+        self, storage_with_logger, mock_data_logger, sample_monitoring_data
+    ):
         """委托模式下 DataLogger 抛出异常应被捕获"""
         mock_data_logger.save_current_data.side_effect = RuntimeError("delegation error")
 
@@ -200,7 +206,9 @@ class TestSaveCurrentData:
 class TestSaveHistoryData:
     """测试 save_history_data"""
 
-    def test_save_with_delegation(self, storage_with_logger, mock_data_logger, sample_monitoring_data):
+    def test_save_with_delegation(
+        self, storage_with_logger, mock_data_logger, sample_monitoring_data
+    ):
         """委托模式下调用 DataLogger 保存历史数据"""
         storage_with_logger.save_history_data(sample_monitoring_data)
 
@@ -223,13 +231,15 @@ class TestSaveHistoryData:
         assert history[0]["performance"]["speed"] == 1000.0
         assert history[0]["performance"]["total_checked"] == 5000
 
-    def test_delegation_error_handled(self, storage_with_logger, mock_data_logger, sample_monitoring_data):
+    def test_delegation_error_handled(
+        self, storage_with_logger, mock_data_logger, sample_monitoring_data
+    ):
         """委托模式下缓冲区操作异常应被捕获"""
-        mock_data_logger._history_buffer = None # 模拟异常状态
+        mock_data_logger._history_buffer = None  # 模拟异常状态
         try:
             storage_with_logger.save_history_data(sample_monitoring_data)
         except AttributeError:
-            pass # 预期可能抛出，但不应崩溃
+            pass  # 预期可能抛出，但不应崩溃
 
 
 # ============================================================================
@@ -306,7 +316,7 @@ class TestLoadHistoryWithRecovery:
     def test_delegation_passthrough(self, storage_with_logger, mock_data_logger):
         """委托模式下直接调用 DataLogger 的恢复方法"""
         mock_data_logger._load_history_with_recovery.return_value = [
-        {"timestamp": 1000, "performance": {"speed": 500}}
+            {"timestamp": 1000, "performance": {"speed": 500}}
         ]
 
         result = storage_with_logger._load_history_with_recovery()
@@ -354,8 +364,7 @@ class TestLoadHistoryWithRecovery:
         """
         # JSONL 格式：有效行 + 损坏行
         corrupt_content = (
-            '{"timestamp": 1000, "speed": 100, "total": 5000}\n'
-            'CORRUPTED_GARBAGExyz'
+            '{"timestamp": 1000, "speed": 100, "total": 5000}\n' "CORRUPTED_GARBAGExyz"
         )
         with open(storage_no_logger.history_data_file, "w", encoding="utf-8") as f:
             f.write(corrupt_content)
@@ -463,15 +472,15 @@ class TestCompressOldData:
         """有历史数据时的压缩"""
         # 写入多条历史数据
         for i in range(10):
-            storage_no_logger.save_history_data(
-            self._make_monitoring_data(i)
-            )
+            storage_no_logger.save_history_data(self._make_monitoring_data(i))
 
             # 压缩 (days_threshold=0 压缩全部数据)
             storage_no_logger.compress_old_data(days_threshold=0, sample_rate=0.5)
 
             # 压缩后的文件应存在
-            compressed_file = storage_no_logger.history_data_file.replace(".json", "_compressed.json")
+            compressed_file = storage_no_logger.history_data_file.replace(
+                ".json", "_compressed.json"
+            )
             assert os.path.exists(compressed_file)
 
     def test_compress_no_history(self, storage_no_logger):
@@ -521,10 +530,12 @@ class TestBackwardCompatibility:
         assert storage._data_logger is None
 
         data = MonitoringData()
-        storage.save_current_data(data) # 不应崩溃
-        storage.save_history_data(data) # 不应崩溃
+        storage.save_current_data(data)  # 不应崩溃
+        storage.save_history_data(data)  # 不应崩溃
 
-    def test_storage_dir_unchanged_after_multiple_saves(self, storage_no_logger, sample_monitoring_data):
+    def test_storage_dir_unchanged_after_multiple_saves(
+        self, storage_no_logger, sample_monitoring_data
+    ):
         """多次保存后存储目录不变"""
         original_dir = storage_no_logger.storage_dir
 

@@ -1,6 +1,6 @@
 import sys
 
-sys.argv = ['key_collision_cli.py', '--help']
+sys.argv = ["key_collision_cli.py", "--help"]
 
 import os  # noqa: E402 — sys.argv 必须在导入前设置
 
@@ -14,4 +14,5 @@ try:
 except Exception as e:
     print(f"Error: {e}")
     import traceback
+
     traceback.print_exc()

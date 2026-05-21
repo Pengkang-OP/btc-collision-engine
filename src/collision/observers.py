@@ -47,7 +47,9 @@ class CollisionObserver(ABC):
             stats: 最终碰撞统计信息
         """
 
-    def on_error(self, error: Exception, context: dict[str, Any] | None = None) -> None:  # noqa: B027
+    def on_error(
+        self, error: Exception, context: dict[str, Any] | None = None
+    ) -> None:  # noqa: B027
         """错误事件（可选实现，非抽象方法）
 
         Args:
@@ -132,9 +134,7 @@ class LoggingObserver(BaseCollisionObserver):
             _total = stats.total_checked
             _speed = stats.speed
             _matches = len(stats.matches)
-            self.logger.info(
-                f"碰撞进度: 已检测={_total:,}, 速度={_speed:.2f}/s, 匹配={_matches}"
-            )
+            self.logger.info(f"碰撞进度: 已检测={_total:,}, 速度={_speed:.2f}/s, 匹配={_matches}")
 
     def on_match(self, private_key: bytes, address: str, wif: str) -> None:
         """记录匹配日志（安全：仅输出地址和密钥哈希，不泄露私钥）"""

@@ -30,11 +30,11 @@ def clean_src_archive_files():
             file_path = os.path.join(src_archive_dir, file_name)
             is_target = file_name.startswith("report_") and file_name.endswith(".json")
             if os.path.isfile(file_path) and is_target:
-                    try:
-                        os.remove(file_path)
-                        logger.info(f"清理src归档文件: {file_path}")
-                    except Exception as e:
-                        logger.warning(f"清理src归档文件失败: {e}")
+                try:
+                    os.remove(file_path)
+                    logger.info(f"清理src归档文件: {file_path}")
+                except Exception as e:
+                    logger.warning(f"清理src归档文件失败: {e}")
 
 
 def main():

@@ -167,12 +167,16 @@ class TestPerformanceOptimizer:
         """测试基于编译时间的调整"""
         optimizer = GPUPerformanceOptimizer()
         profile_fast = optimizer.create_optimized_profile(
-            device_name="Test GPU", vendor_str="Test",
-            global_mem_size=8 * 1024**3, compile_time_ms=5000,
+            device_name="Test GPU",
+            vendor_str="Test",
+            global_mem_size=8 * 1024**3,
+            compile_time_ms=5000,
         )
         profile_slow = optimizer.create_optimized_profile(
-            device_name="Test GPU", vendor_str="Test",
-            global_mem_size=8 * 1024**3, compile_time_ms=25000,
+            device_name="Test GPU",
+            vendor_str="Test",
+            global_mem_size=8 * 1024**3,
+            compile_time_ms=25000,
         )
         assert profile_fast.max_batch_size > profile_slow.max_batch_size
 

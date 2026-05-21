@@ -234,6 +234,7 @@ class TestPaginationManagerInfo(unittest.TestCase):
 
 # ── display_page 方法 ───────────────────────────────────────────
 
+
 class TestPaginationManagerDisplayPage(unittest.TestCase):
     """测试 PaginationManager.display_page() 方法。"""
 
@@ -356,6 +357,7 @@ class TestPaginationManagerDisplayPage(unittest.TestCase):
 
 
 # ── display_paginated_results ────────────────────────────────────
+
 
 class TestDisplayPaginatedResults(unittest.TestCase):
     """测试 display_paginated_results() 函数。"""
@@ -481,6 +483,7 @@ class TestDisplayPaginatedResults(unittest.TestCase):
 
 # ── display_paginated_performance ────────────────────────────────
 
+
 class TestDisplayPaginatedPerformance(unittest.TestCase):
     """测试 display_paginated_performance() 函数。"""
 
@@ -505,8 +508,9 @@ class TestDisplayPaginatedPerformance(unittest.TestCase):
         self._out_patch.stop()
         CLIOutput.reset_instance()
 
-    def _make_perf(self, timestamp=1714800000, speed=1000, total_checked=50000,
-                   gpu_usage=85, memory_used=2048):
+    def _make_perf(
+        self, timestamp=1714800000, speed=1000, total_checked=50000, gpu_usage=85, memory_used=2048
+    ):
         """创建单条性能数据 dict。"""
         return {
             "timestamp": timestamp,
@@ -575,6 +579,7 @@ class TestDisplayPaginatedPerformance(unittest.TestCase):
 
 # ── display_paginated_errors ─────────────────────────────────────
 
+
 class TestDisplayPaginatedErrors(unittest.TestCase):
     """测试 display_paginated_errors() 函数。"""
 
@@ -599,8 +604,9 @@ class TestDisplayPaginatedErrors(unittest.TestCase):
         self._out_patch.stop()
         CLIOutput.reset_instance()
 
-    def _make_error(self, timestamp=1714800000, error_type="RuntimeError",
-                    message="测试错误", details=""):
+    def _make_error(
+        self, timestamp=1714800000, error_type="RuntimeError", message="测试错误", details=""
+    ):
         """创建单条错误日志 dict。"""
         d = {
             "timestamp": timestamp,

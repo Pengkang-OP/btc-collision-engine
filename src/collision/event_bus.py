@@ -381,7 +381,9 @@ class EventBus:
         """上下文管理器入口"""
         return self
 
-    def __exit__(self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None) -> None:
+    def __exit__(
+        self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None
+    ) -> None:
         """上下文管理器出口"""
         self.shutdown()
 

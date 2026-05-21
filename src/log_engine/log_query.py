@@ -213,7 +213,10 @@ class LogQuery:
         return self.get_recent(count)
 
     def filter(
-        self, predicate: Callable[[dict[str, Any]], bool], limit: int = 100, search_limit: int = 10000
+        self,
+        predicate: Callable[[dict[str, Any]], bool],
+        limit: int = 100,
+        search_limit: int = 10000,
     ) -> list[dict[str, Any]]:
         """使用自定义函数过滤
 

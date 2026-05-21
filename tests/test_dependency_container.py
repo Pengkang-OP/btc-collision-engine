@@ -36,9 +36,7 @@ class TestDependencyContainerInit:
         惰性导入。若未来重构为模块级导入，需改为
         src.collision.dependency_container.CollisionStats。
         """
-        with patch(
-            "src.collision.collision_stats.CollisionStats"
-        ) as mock_cs:
+        with patch("src.collision.collision_stats.CollisionStats") as mock_cs:
             mock_instance = MagicMock()
             mock_cs.return_value = mock_instance
             container = DependencyContainer()
@@ -66,9 +64,7 @@ class TestDependencyContainerInit:
         注意: patch 路径依赖于属性 getter 内部的惰性导入
         (from ..monitoring.data_logger import DataLogger)。
         """
-        with patch(
-            "src.monitoring.data_logger.DataLogger"
-        ) as mock_dl:
+        with patch("src.monitoring.data_logger.DataLogger") as mock_dl:
             mock_instance = MagicMock()
             mock_dl.return_value = mock_instance
             container = DependencyContainer()
@@ -78,9 +74,7 @@ class TestDependencyContainerInit:
 
     def test_stats_reuses_instance(self):
         """多次访问 stats 返回同一实例"""
-        with patch(
-            "src.collision.collision_stats.CollisionStats"
-        ) as mock_cs:
+        with patch("src.collision.collision_stats.CollisionStats") as mock_cs:
             mock_instance = MagicMock()
             mock_cs.return_value = mock_instance
             container = DependencyContainer()
@@ -102,9 +96,7 @@ class TestDependencyContainerInit:
 
     def test_data_logger_reuses_instance(self):
         """多次访问 data_logger 返回同一实例"""
-        with patch(
-            "src.monitoring.data_logger.DataLogger"
-        ) as mock_dl:
+        with patch("src.monitoring.data_logger.DataLogger") as mock_dl:
             mock_instance = MagicMock()
             mock_dl.return_value = mock_instance
             container = DependencyContainer()
@@ -128,9 +120,7 @@ class TestDependencyContainerInjection:
         mock_stats = MagicMock()
         container.set_stats(mock_stats)
         # 注入后访问 stats 不应触发 CollisionStats 惰性创建
-        with patch(
-            "src.collision.collision_stats.CollisionStats"
-        ) as mock_cs:
+        with patch("src.collision.collision_stats.CollisionStats") as mock_cs:
             assert container.stats is mock_stats
             assert container._stats is mock_stats
             mock_cs.assert_not_called()
@@ -152,9 +142,7 @@ class TestDependencyContainerInjection:
         mock_dl = MagicMock()
         container.set_data_logger(mock_dl)
         # 注入后访问 data_logger 不应触发 DataLogger 惰性创建
-        with patch(
-            "src.monitoring.data_logger.DataLogger"
-        ) as mock_dl_cls:
+        with patch("src.monitoring.data_logger.DataLogger") as mock_dl_cls:
             assert container.data_logger is mock_dl
             assert container._data_logger is mock_dl
             mock_dl_cls.assert_not_called()
@@ -165,9 +153,7 @@ class TestDependencyContainerInjection:
         mock_stats = MagicMock()
         mock_eb = MagicMock()
         mock_dl = MagicMock()
-        result = container.set_stats(mock_stats).set_event_bus(
-            mock_eb
-        ).set_data_logger(mock_dl)
+        result = container.set_stats(mock_stats).set_event_bus(mock_eb).set_data_logger(mock_dl)
         assert result is container
         assert container.stats is mock_stats
         assert container.event_bus is mock_eb
@@ -190,9 +176,7 @@ class TestDependencyContainerInjection:
         assert container._data_logger is None
 
         # reset 后访问属性应重新触发延迟创建
-        with patch(
-            "src.collision.collision_stats.CollisionStats"
-        ) as mock_cs:
+        with patch("src.collision.collision_stats.CollisionStats") as mock_cs:
             new_stats = MagicMock()
             mock_cs.return_value = new_stats
             result = container.stats
@@ -206,9 +190,7 @@ class TestDependencyContainerInjection:
             assert result is new_eb
             assert result is not mock_eb
 
-        with patch(
-            "src.monitoring.data_logger.DataLogger"
-        ) as mock_dl_cls:
+        with patch("src.monitoring.data_logger.DataLogger") as mock_dl_cls:
             new_dl = MagicMock()
             mock_dl_cls.return_value = new_dl
             result = container.data_logger

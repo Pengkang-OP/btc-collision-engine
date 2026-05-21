@@ -237,9 +237,13 @@ class OptimizedP2PKHAddressGenerator(BaseAddressGenerator):
         info = {
             "precomputed_table": {
                 "enabled": self.use_precomputed_table,
-                "window_size": (self.precomputed_table.window_size if self.precomputed_table else None),
+                "window_size": (
+                    self.precomputed_table.window_size if self.precomputed_table else None
+                ),
                 "memory_usage_kb": (
-                    self.precomputed_table.get_memory_usage() / 1024 if self.precomputed_table else 0
+                    self.precomputed_table.get_memory_usage() / 1024
+                    if self.precomputed_table
+                    else 0
                 ),
             },
             "simd_hash": {

@@ -22,6 +22,7 @@ from src.gpu.gpu_config import (
 # MultiGPUConfig 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestMultiGPUConfig:
     """MultiGPUConfig 数据类测试"""
@@ -56,10 +57,12 @@ class TestMultiGPUConfig:
 
     def test_from_dict_partial(self):
         """测试 from_dict 部分覆盖"""
-        cfg = MultiGPUConfig.from_dict({
-            "total_pool_mb": 1024,
-            "worker_join_timeout": 60,
-        })
+        cfg = MultiGPUConfig.from_dict(
+            {
+                "total_pool_mb": 1024,
+                "worker_join_timeout": 60,
+            }
+        )
         assert cfg.total_pool_mb == 1024
         assert cfg.worker_join_timeout == 60
         # 未指定的保持默认
@@ -68,17 +71,19 @@ class TestMultiGPUConfig:
 
     def test_from_dict_full(self):
         """测试 from_dict 完整覆盖"""
-        cfg = MultiGPUConfig.from_dict({
-            "total_pool_mb": 2048,
-            "enable_data_monitor": False,
-            "data_monitor": {"check_interval": 2.0},
-            "gpu_recovery": {"max_retry_count": 5},
-            "worker_join_timeout": 120,
-            "workload_monitor_interval": 10,
-            "auto_rebalance": False,
-            "auto_pause_on_critical": True,
-            "per_device_config": {"gpu0": {"batch_size": 1024}},
-        })
+        cfg = MultiGPUConfig.from_dict(
+            {
+                "total_pool_mb": 2048,
+                "enable_data_monitor": False,
+                "data_monitor": {"check_interval": 2.0},
+                "gpu_recovery": {"max_retry_count": 5},
+                "worker_join_timeout": 120,
+                "workload_monitor_interval": 10,
+                "auto_rebalance": False,
+                "auto_pause_on_critical": True,
+                "per_device_config": {"gpu0": {"batch_size": 1024}},
+            }
+        )
         assert cfg.total_pool_mb == 2048
         assert cfg.enable_data_monitor is False
         assert cfg.data_monitor.check_interval == 2.0
@@ -112,11 +117,13 @@ class TestMultiGPUConfig:
 
     def test_boundary_large_values(self):
         """测试大值"""
-        cfg = MultiGPUConfig.from_dict({
-            "total_pool_mb": 10**6,
-            "worker_join_timeout": 3600,
-            "workload_monitor_interval": 86400,
-        })
+        cfg = MultiGPUConfig.from_dict(
+            {
+                "total_pool_mb": 10**6,
+                "worker_join_timeout": 3600,
+                "workload_monitor_interval": 86400,
+            }
+        )
         assert cfg.total_pool_mb == 10**6
         assert cfg.worker_join_timeout == 3600
 
@@ -131,6 +138,7 @@ class TestMultiGPUConfig:
 # ============================================================================
 # WorkerConfig 测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestWorkerConfig:
@@ -160,11 +168,13 @@ class TestWorkerConfig:
 
     def test_from_dict_full(self):
         """测试 from_dict 完整填充"""
-        cfg = WorkerConfig.from_dict({
-            "batch_size": 65536,
-            "work_group_size": 512,
-            "max_memory_mb": 4096,
-        })
+        cfg = WorkerConfig.from_dict(
+            {
+                "batch_size": 65536,
+                "work_group_size": 512,
+                "max_memory_mb": 4096,
+            }
+        )
         assert cfg.batch_size == 65536
         assert cfg.work_group_size == 512
         assert cfg.max_memory_mb == 4096
@@ -226,6 +236,7 @@ class TestWorkerConfig:
 # GPURecoveryConfig 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestGPURecoveryConfig:
     """GPURecoveryConfig 数据类测试"""
@@ -250,10 +261,12 @@ class TestGPURecoveryConfig:
 
     def test_from_dict_partial(self):
         """测试 from_dict 部分覆盖"""
-        cfg = GPURecoveryConfig.from_dict({
-            "max_retry_count": 10,
-            "batch_size_reduction_factor": 0.25,
-        })
+        cfg = GPURecoveryConfig.from_dict(
+            {
+                "max_retry_count": 10,
+                "batch_size_reduction_factor": 0.25,
+            }
+        )
         assert cfg.max_retry_count == 10
         assert cfg.batch_size_reduction_factor == 0.25
         assert cfg.retry_delay_seconds == 5.0  # 保持默认
@@ -261,12 +274,14 @@ class TestGPURecoveryConfig:
 
     def test_from_dict_full(self):
         """测试 from_dict 完整覆盖"""
-        cfg = GPURecoveryConfig.from_dict({
-            "max_retry_count": 1,
-            "retry_delay_seconds": 1.0,
-            "batch_size_reduction_factor": 0.1,
-            "auto_redistribute": False,
-        })
+        cfg = GPURecoveryConfig.from_dict(
+            {
+                "max_retry_count": 1,
+                "retry_delay_seconds": 1.0,
+                "batch_size_reduction_factor": 0.1,
+                "auto_redistribute": False,
+            }
+        )
         assert cfg.max_retry_count == 1
         assert cfg.retry_delay_seconds == 1.0
         assert cfg.batch_size_reduction_factor == 0.1
@@ -298,6 +313,7 @@ class TestGPURecoveryConfig:
 # ============================================================================
 # DataMonitorConfig 测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestDataMonitorConfig:
@@ -333,27 +349,31 @@ class TestDataMonitorConfig:
 
     def test_from_dict_partial(self):
         """测试 from_dict 部分覆盖"""
-        cfg = DataMonitorConfig.from_dict({
-            "check_interval": 5.0,
-            "max_seen_keys": 50000,
-        })
+        cfg = DataMonitorConfig.from_dict(
+            {
+                "check_interval": 5.0,
+                "max_seen_keys": 50000,
+            }
+        )
         assert cfg.check_interval == 5.0
         assert cfg.max_seen_keys == 50000
         assert cfg.throughput_threshold == 0.5  # 保持默认
 
     def test_from_dict_full(self):
         """测试 from_dict 完整覆盖"""
-        cfg = DataMonitorConfig.from_dict({
-            "check_interval": 2.0,
-            "throughput_threshold": 0.8,
-            "error_rate_threshold": 0.05,
-            "stale_data_timeout": 30.0,
-            "max_issues_per_minute": 200,
-            "max_seen_keys": 500000,
-            "max_seen_addresses": 50000,
-            "max_retry_count": 10,
-            "anomaly_threshold": 0.2,
-        })
+        cfg = DataMonitorConfig.from_dict(
+            {
+                "check_interval": 2.0,
+                "throughput_threshold": 0.8,
+                "error_rate_threshold": 0.05,
+                "stale_data_timeout": 30.0,
+                "max_issues_per_minute": 200,
+                "max_seen_keys": 500000,
+                "max_seen_addresses": 50000,
+                "max_retry_count": 10,
+                "anomaly_threshold": 0.2,
+            }
+        )
         assert cfg.check_interval == 2.0
         assert cfg.throughput_threshold == 0.8
         assert cfg.error_rate_threshold == 0.05
@@ -401,10 +421,12 @@ class TestDataMonitorConfig:
 
     def test_boundary_large_seen(self):
         """测试大的 seen 值"""
-        cfg = DataMonitorConfig.from_dict({
-            "max_seen_keys": 10**9,
-            "max_seen_addresses": 10**8,
-        })
+        cfg = DataMonitorConfig.from_dict(
+            {
+                "max_seen_keys": 10**9,
+                "max_seen_addresses": 10**8,
+            }
+        )
         assert cfg.max_seen_keys == 10**9
         assert cfg.max_seen_addresses == 10**8
 
@@ -412,6 +434,7 @@ class TestDataMonitorConfig:
 # ============================================================================
 # 集成测试: 数据类之间的组合
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestConfigComposition:
@@ -425,10 +448,12 @@ class TestConfigComposition:
 
     def test_from_dict_nested_inheritance(self):
         """测试嵌套配置从 dict 继承"""
-        cfg = MultiGPUConfig.from_dict({
-            "data_monitor": {"check_interval": 7.0},
-            "gpu_recovery": {"max_retry_count": 7},
-        })
+        cfg = MultiGPUConfig.from_dict(
+            {
+                "data_monitor": {"check_interval": 7.0},
+                "gpu_recovery": {"max_retry_count": 7},
+            }
+        )
         assert cfg.data_monitor.check_interval == 7.0
         # 未指定的嵌套字段保持默认
         assert cfg.data_monitor.throughput_threshold == 0.5

@@ -46,7 +46,9 @@ class BitcoinTargetTable:
 
         logger.info("BitcoinTargetTable初始化完成，最大容量: %d", max_size)
 
-    def add_target(self, wif: str, address: str, hash160: bytes, address_type: str = "p2pkh") -> None:
+    def add_target(
+        self, wif: str, address: str, hash160: bytes, address_type: str = "p2pkh"
+    ) -> None:
         """
         添加目标地址
 

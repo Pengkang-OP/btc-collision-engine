@@ -424,7 +424,9 @@ def get_current_stats(data_dir: Path) -> dict[str, Any]:
         "memory_usage": perf.get("memory_usage", 0) if isinstance(perf, dict) else 0,
         "thread_count": perf.get("thread_count", 0) if isinstance(perf, dict) else 0,
         "uptime": data.get("uptime", 0),
-        "is_running": (engine_info.get("is_running", False) if isinstance(engine_info, dict) else False),
+        "is_running": (
+            engine_info.get("is_running", False) if isinstance(engine_info, dict) else False
+        ),
         "mode": engine_info.get("mode", "") if isinstance(engine_info, dict) else "",
         "target_count": engine_info.get("target_count", 0) if isinstance(engine_info, dict) else 0,
         "current_position": (

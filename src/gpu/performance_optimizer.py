@@ -95,7 +95,9 @@ class GPUProfile:
         if self.work_group_size < 1:
             raise ValueError(f"work_group_size 必须 >= 1, 实际: {self.work_group_size}")
         if not 0.0 <= self.memory_usage_ratio <= 1.0:
-            raise ValueError(f"memory_usage_ratio 必须在 [0.0, 1.0], 实际: {self.memory_usage_ratio}")
+            raise ValueError(
+                f"memory_usage_ratio 必须在 [0.0, 1.0], 实际: {self.memory_usage_ratio}"
+            )
         if self.min_batch_size < 1:
             raise ValueError(f"min_batch_size 必须 >= 1, 实际: {self.min_batch_size}")
         if self.min_batch_size > self.max_batch_size:
@@ -120,9 +122,7 @@ class GPUProfile:
         if self.min_batch_size > self.max_batch_size_limit:
             _mbs = self.min_batch_size
             _mbl = self.max_batch_size_limit
-            raise ValueError(
-                f"min_batch_size ({_mbs}) 不能大于 max_batch_size_limit ({_mbl})"
-            )
+            raise ValueError(f"min_batch_size ({_mbs}) 不能大于 max_batch_size_limit ({_mbl})")
         if self.min_gpu_utilization_target > self.max_gpu_utilization_target:
             raise ValueError(
                 f"min_gpu_utilization_target ({self.min_gpu_utilization_target}) 不能大于"
@@ -311,7 +311,7 @@ class GPUPerformanceOptimizer:
 
             # 保留最近记录
             if len(self._metrics_history) > self.MAX_METRICS_HISTORY:
-                self._metrics_history = self._metrics_history[-self.MAX_METRICS_HISTORY:]
+                self._metrics_history = self._metrics_history[-self.MAX_METRICS_HISTORY :]
 
     def _analyze_check_readiness(
         self,
@@ -324,9 +324,7 @@ class GPUPerformanceOptimizer:
             None 表示可以继续调整；否则返回 (batch_size, info) 用于提前返回
         """
         if not self._current_profile:
-            return current_batch_size, {
-                "action": "no_profile", "reason": "未创建配置文件"
-            }
+            return current_batch_size, {"action": "no_profile", "reason": "未创建配置文件"}
 
         now = time.time()
         with self._lock:
@@ -343,9 +341,7 @@ class GPUPerformanceOptimizer:
             if monitor is not None:
                 recent_count = monitor.get_recent_adjustments(seconds=60)
                 if recent_count >= self.MAX_ADJUSTMENTS_PER_MINUTE:
-                    logger.warning(
-                        f"batch_size调整过于频繁 ({recent_count}次/60秒)，暂停自动调整"
-                    )
+                    logger.warning(f"batch_size调整过于频繁 ({recent_count}次/60秒)，暂停自动调整")
                     return current_batch_size, {
                         "action": "rate_limited",
                         "reason": f"调整频率超限({recent_count}次/60秒)",
@@ -353,9 +349,7 @@ class GPUPerformanceOptimizer:
 
         return None
 
-    def _analyze_get_vendor_strategy(
-        self, engine: Any = None
-    ) -> tuple[str, dict[str, Any]]:
+    def _analyze_get_vendor_strategy(self, engine: Any = None) -> tuple[str, dict[str, Any]]:
         """获取厂商标识和调整策略"""
         vendor_key = "unknown"
         if engine is not None:
@@ -364,9 +358,7 @@ class GPUPerformanceOptimizer:
                 vendor_key = "unknown"
             vendor_key = vendor_key.lower()
             if vendor_key == "unknown" and hasattr(engine, "gpu_device"):
-                vendor_key = str(
-                    getattr(engine.gpu_device, "vendor", "unknown")
-                ).lower()
+                vendor_key = str(getattr(engine.gpu_device, "vendor", "unknown")).lower()
         if vendor_key == "unknown" and self._current_profile:
             vendor_key = self._current_profile.vendor.value.lower()
         strategy = VENDOR_ADJUST_STRATEGY.get(vendor_key, DEFAULT_ADJUST_STRATEGY)
@@ -382,11 +374,9 @@ class GPUPerformanceOptimizer:
     ) -> tuple[int, dict[str, Any]]:
         """在持有锁的情况下执行性能分析和batch调整（锁由调用方持有）"""
         if len(self._metrics_history) < self.MIN_DATA_POINTS:
-            return current_batch_size, {
-                "action": "insufficient_data", "reason": "数据不足"
-            }
+            return current_batch_size, {"action": "insufficient_data", "reason": "数据不足"}
 
-        recent_metrics = self._metrics_history[-self.RECENT_METRICS_WINDOW:]
+        recent_metrics = self._metrics_history[-self.RECENT_METRICS_WINDOW :]
         n = len(recent_metrics)
         avg_execution_time = sum(m.batch_execution_time_ms for m in recent_metrics) / n
         avg_speed = sum(m.keys_per_second for m in recent_metrics) / n
@@ -406,9 +396,7 @@ class GPUPerformanceOptimizer:
                 pass
 
         min_target = profile.min_gpu_utilization_target
-        growth_ratio = self._analyze_compute_growth_ratio(
-            gpu_utilization, min_target, strategy
-        )
+        growth_ratio = self._analyze_compute_growth_ratio(gpu_utilization, min_target, strategy)
         reduction_ratio = strategy.get("reduction_ratio", 0.80)
 
         # 减少batch：错误率高 AND 执行时间长
@@ -459,9 +447,7 @@ class GPUPerformanceOptimizer:
         if new_batch_size != current_batch_size:
             new_batch_size = clamp_batch_size(new_batch_size)
 
-        new_batch_size = self._analyze_try_recover(
-            new_batch_size, recent_metrics, adjustments
-        )
+        new_batch_size = self._analyze_try_recover(new_batch_size, recent_metrics, adjustments)
 
         if new_batch_size != current_batch_size:
             self._adjustment_count += 1
@@ -679,12 +665,14 @@ class GPUPerformanceOptimizer:
                     },
                 }
 
-            recent = self._metrics_history[-self.RECENT_METRICS_WINDOW:]
+            recent = self._metrics_history[-self.RECENT_METRICS_WINDOW :]
             avg_speed = sum(m.keys_per_second for m in recent) / len(recent)
             avg_error = sum(m.error_count for m in recent) / len(recent)
 
             # 计算时间范围
-            time_range_sec = self._metrics_history[-1].timestamp - self._metrics_history[0].timestamp
+            time_range_sec = (
+                self._metrics_history[-1].timestamp - self._metrics_history[0].timestamp
+            )
 
             return {
                 "status": "active",

@@ -90,9 +90,7 @@ def format_progress(
     """
     # 验证引擎类型，无效时降级为默认值
     if engine_type not in VALID_ENGINE_TYPES:
-        logging.getLogger("CLI").warning(
-            "无效的 engine_type '%s'，已降级为 'cpu'", engine_type
-        )
+        logging.getLogger("CLI").warning("无效的 engine_type '%s'，已降级为 'cpu'", engine_type)
         engine_type = "cpu"
 
     elapsed = stats.format_elapsed()
@@ -108,9 +106,7 @@ def format_progress(
     )
     if checked == 0 and elapsed_sec < INIT_CHECK_THRESHOLD:
         engine_tag = f"[{engine_type.upper()}]"
-        return (
-            f"[{elapsed}] {engine_tag} [Initializing] 初始化中... | 速度: -- | 匹配: {matches} | ETA: --"
-        )
+        return f"[{elapsed}] {engine_tag} [Initializing] 初始化中... | 速度: -- | 匹配: {matches} | ETA: --"
 
     # 计算进度百分比
     pct = min(100.0, checked / total_range * 100) if total_range and total_range > 0 else 0.0

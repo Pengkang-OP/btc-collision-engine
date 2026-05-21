@@ -170,15 +170,15 @@ class GPUContext:
         vendor_options = self._get_build_options()
 
         # 计算缓存键: 源码哈希 + 编译选项
-        source_hash = hashlib.md5(kernel_source.encode("utf-8"), usedforsecurity=False).hexdigest()[:16]
+        source_hash = hashlib.md5(kernel_source.encode("utf-8"), usedforsecurity=False).hexdigest()[
+            :16
+        ]
         cache_key = f"{source_hash}_{vendor_options.replace(' ', '_')}"
 
         # 检查缓存
         if cache_key in self._kernel_cache:
             _vendor = self.vendor_handler.get_vendor_name()
-            logger.info(
-                f"复用已编译内核 [厂商={_vendor}, source_hash={source_hash}]"
-            )
+            logger.info(f"复用已编译内核 [厂商={_vendor}, source_hash={source_hash}]")
             self.program = self._kernel_cache[cache_key]
             return self.program
 

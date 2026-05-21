@@ -195,6 +195,7 @@ class TestPrecomputedPointTable:
         table = PrecomputedPointTable(window_size=6)
         # 使用独立的 EllipticCurve 实例
         from src.core.secp256k1 import EllipticCurve
+
         custom_ec = EllipticCurve()
         G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
 

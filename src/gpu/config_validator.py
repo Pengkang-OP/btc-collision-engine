@@ -224,7 +224,9 @@ class GPUConfigValidator:
         # 检查厂商混合
         vendors = set(d.get("vendor", "unknown") for d in devices)
         if len(vendors) > 1:
-            warnings.append(f"检测到混合厂商GPU: {vendors}\n可能导致性能不均衡,建议手动配置负载分配")
+            warnings.append(
+                f"检测到混合厂商GPU: {vendors}\n可能导致性能不均衡,建议手动配置负载分配"
+            )
 
         # 检查显存差异
         memories = [d.get("global_mem_gb", 0) for d in devices]

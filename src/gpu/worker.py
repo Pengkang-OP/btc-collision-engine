@@ -256,15 +256,15 @@ class SingleGPUWorker(threading.Thread):
         """
         MAX_MEMORY_RETRIES = 3
         if _depth >= MAX_MEMORY_RETRIES:
-            logger.error(
-                f"GPU {self.device_idx} 降批重试已达上限 ({MAX_MEMORY_RETRIES})，放弃")
+            logger.error(f"GPU {self.device_idx} 降批重试已达上限 ({MAX_MEMORY_RETRIES})，放弃")
             return
 
         current_batch = self.config.batch_size or 65536
         new_batch = max(current_batch // 2, 1024)
         logger.warning(
             f"GPU {self.device_idx} 内存不足（MemoryError），"
-            f"自动减小 batch_size: {current_batch:,} → {new_batch:,}")
+            f"自动减小 batch_size: {current_batch:,} → {new_batch:,}"
+        )
         self.config.batch_size = new_batch
         with self._lock:
             self._stats["error_count"] += 1
@@ -274,8 +274,7 @@ class SingleGPUWorker(threading.Thread):
                 try:
                     self._gpu_engine.stop()
                 except (RuntimeError, OSError) as stop_err:
-                    logger.warning(
-                        f"GPU {self.device_idx} 引擎停止错误（将强制释放）: {stop_err}")
+                    logger.warning(f"GPU {self.device_idx} 引擎停止错误（将强制释放）: {stop_err}")
                 self._gpu_engine = None
             self._initialize_gpu_engine()
             self._execute_search(_retry_depth=_depth + 1)
@@ -308,12 +307,14 @@ class SingleGPUWorker(threading.Thread):
                 engine_kwargs["end"] = self.range_end
 
             monitor_thread = threading.Thread(
-                target=lambda: self._run_monitor_loop(total_keys), daemon=True)
+                target=lambda: self._run_monitor_loop(total_keys), daemon=True
+            )
             monitor_thread.start()
 
             self._gpu_engine.start(mode=self.mode, **engine_kwargs)
             logger.info(
-                f"GPU {self.device_idx} 引擎已启动: mode={self.mode}, kwargs={engine_kwargs or '无'}")
+                f"GPU {self.device_idx} 引擎已启动: mode={self.mode}, kwargs={engine_kwargs or '无'}"
+            )
 
             monitor_thread.join(timeout=5.0)
 
@@ -335,9 +336,7 @@ class SingleGPUWorker(threading.Thread):
     def _compute_throughput(self) -> None:
         """计算并更新吞吐量统计（需在锁内调用）。"""
         if self._stats["elapsed_time"] > 0:
-            self._stats["throughput"] = (
-                self._stats["keys_checked"] / self._stats["elapsed_time"]
-            )
+            self._stats["throughput"] = self._stats["keys_checked"] / self._stats["elapsed_time"]
 
     def _report_new_matches(self, matches: list, current_count: int) -> None:
         """上报新增匹配结果（需在锁内调用）。"""

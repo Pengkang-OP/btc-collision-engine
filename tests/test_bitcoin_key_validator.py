@@ -572,6 +572,7 @@ class TestBitcoinKeyValidatorP2SH(unittest.TestCase):
 
     def test_generate_p2sh_valid_base58(self):
         from src.core.base58 import Base58
+
         pk = (999).to_bytes(32, "big")
         v = BitcoinKeyValidator(secure_mode=False)
         _, pub_key = v.generate_public_key(pk, compressed=True)

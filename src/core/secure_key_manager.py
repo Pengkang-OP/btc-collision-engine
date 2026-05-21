@@ -467,7 +467,9 @@ class SecureKeyManager:
 
             # 使用 ctypes.memset 进行安全清零
             try:
-                ctypes.memset(ctypes.addressof(ctypes.c_char.from_buffer(self._key)), 0, len(self._key))
+                ctypes.memset(
+                    ctypes.addressof(ctypes.c_char.from_buffer(self._key)), 0, len(self._key)
+                )
             except (TypeError, ValueError, OSError):
                 # 回退到安全的多次覆盖
                 for _ in range(3):
@@ -480,7 +482,9 @@ class SecureKeyManager:
         """使用ctypes memset清零（回退方案）"""
         if self._key:
             try:
-                ctypes.memset(ctypes.addressof(ctypes.c_char.from_buffer(self._key)), 0, len(self._key))
+                ctypes.memset(
+                    ctypes.addressof(ctypes.c_char.from_buffer(self._key)), 0, len(self._key)
+                )
             except (TypeError, ValueError, OSError):
                 # 如果无法清零，至少覆盖为0
                 for i in range(len(self._key)):
@@ -490,7 +494,9 @@ class SecureKeyManager:
         """上下文管理器入口"""
         return self
 
-    def __exit__(self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None) -> None:
+    def __exit__(
+        self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None
+    ) -> None:
         """上下文管理器出口 - 自动清零"""
         self.clear()
         return None

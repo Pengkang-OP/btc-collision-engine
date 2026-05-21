@@ -23,6 +23,7 @@ from src.gpu.search_modes.base_search import BaseSearchMode
 # 辅助函数
 # ============================================================================
 
+
 def _make_engine_stub(**kwargs):
     """创建 GPUCollisionEngine stub"""
     engine = MagicMock()
@@ -59,6 +60,7 @@ def _make_engine_stub(**kwargs):
 # 初始化测试
 # ============================================================================
 
+
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
 class TestBaseSearchModeInit:
@@ -82,6 +84,7 @@ class TestBaseSearchModeInit:
 # ============================================================================
 # _generate_sequential_keys 测试
 # ============================================================================
+
 
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
@@ -180,6 +183,7 @@ class TestGenerateSequentialKeys:
 # _execute_batch_loop 正常流程
 # ============================================================================
 
+
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
 class TestExecuteBatchLoopNormal:
@@ -212,9 +216,7 @@ class TestExecuteBatchLoopNormal:
 
         mode = BaseSearchMode(engine)
         # 返回一个匹配：key_index=0, target_index=1
-        engine._gpu_kernel.run_batch.return_value = [
-            {"key_index": 0, "target_index": 1}
-        ]
+        engine._gpu_kernel.run_batch.return_value = [{"key_index": 0, "target_index": 1}]
 
         def key_gen():
             # 生成两个私钥（每个 32 字节）
@@ -309,6 +311,7 @@ class TestExecuteBatchLoopNormal:
 # _execute_batch_loop 停止条件
 # ============================================================================
 
+
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
 class TestExecuteBatchLoopStopConditions:
@@ -383,6 +386,7 @@ class TestExecuteBatchLoopStopConditions:
 # ============================================================================
 # _execute_batch_loop 异常处理
 # ============================================================================
+
 
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
@@ -500,9 +504,7 @@ class TestExecuteBatchLoopErrors:
 
     def test_max_consecutive_errors_stops_engine(self):
         """测试最大连续错误数达到上限时停止引擎"""
-        engine = _make_engine_stub(
-            _consecutive_gpu_errors=4, _max_gpu_error_retries=5
-        )
+        engine = _make_engine_stub(_consecutive_gpu_errors=4, _max_gpu_error_retries=5)
         engine._stop_event.is_set.return_value = False
         engine._gpu_kernel.run_batch.side_effect = RuntimeError("random GPU error")
 
@@ -524,6 +526,7 @@ class TestExecuteBatchLoopErrors:
 # _execute_batch_loop PRNG 模式 (key_extractor_fn)
 # ============================================================================
 
+
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
 class TestExecuteBatchLoopPRNG:
@@ -533,9 +536,7 @@ class TestExecuteBatchLoopPRNG:
         """测试 PRNG 模式正确提取私钥"""
         engine = _make_engine_stub(_target_list=["addr0"])
         engine._stop_event.is_set.side_effect = [False, True]
-        engine._gpu_kernel.run_batch.return_value = [
-            {"key_index": 5, "target_index": 0}
-        ]
+        engine._gpu_kernel.run_batch.return_value = [{"key_index": 5, "target_index": 0}]
 
         mode = BaseSearchMode(engine)
 
@@ -560,9 +561,7 @@ class TestExecuteBatchLoopPRNG:
         engine = _make_engine_stub(_target_list=["addr0"])
         engine._stop_event.is_set.side_effect = [False, True]
         # key_index=10，但 batch_data 只有 32 字节 → 越界
-        engine._gpu_kernel.run_batch.return_value = [
-            {"key_index": 10, "target_index": 0}
-        ]
+        engine._gpu_kernel.run_batch.return_value = [{"key_index": 10, "target_index": 0}]
 
         mode = BaseSearchMode(engine)
 
@@ -582,6 +581,7 @@ class TestExecuteBatchLoopPRNG:
 # ============================================================================
 # 进度回调测试
 # ============================================================================
+
 
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
@@ -613,6 +613,7 @@ class TestProgressCallback:
     def test_progress_not_triggered_before_interval(self):
         """测试进度间隔未到时不被触发"""
         import time
+
         engine = _make_engine_stub(
             on_progress=MagicMock(),
             _last_progress_time=time.time() + 100,  # 未来时间
@@ -637,6 +638,7 @@ class TestProgressCallback:
 # ============================================================================
 # 边界值测试
 # ============================================================================
+
 
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
@@ -667,9 +669,7 @@ class TestBaseSearchBoundary:
             on_match=None,
         )
         engine._stop_event.is_set.side_effect = [False, True]
-        engine._gpu_kernel.run_batch.return_value = [
-            {"key_index": 0, "target_index": 0}
-        ]
+        engine._gpu_kernel.run_batch.return_value = [{"key_index": 0, "target_index": 0}]
 
         mode = BaseSearchMode(engine)
 

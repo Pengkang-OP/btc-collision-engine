@@ -154,24 +154,18 @@ def _apply_gpu_patches(mock_device, mock_context, mock_kernel, vendor="nvidia"):
 
         with ExitStack() as stack:
             # 应用7层Mock
-            stack.enter_context(
-                patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True)
-            )
+            stack.enter_context(patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True))
             stack.enter_context(
                 patch(
                     "src.gpu.device.GPUDeviceDetector.is_gpu_available",
                     return_value=True,
                 )
             )
-            stack.enter_context(
-                patch("src.gpu.device_manager.GPUDevice", return_value=mock_device)
-            )
+            stack.enter_context(patch("src.gpu.device_manager.GPUDevice", return_value=mock_device))
             stack.enter_context(
                 patch("src.gpu.device_manager.GPUContext", return_value=mock_context)
             )
-            stack.enter_context(
-                patch("src.gpu.device_manager.GPUKernel", return_value=mock_kernel)
-            )
+            stack.enter_context(patch("src.gpu.device_manager.GPUKernel", return_value=mock_kernel))
             mock_profile_loader = stack.enter_context(
                 patch("src.gpu.profiles.loader.GPUProfileLoader")
             )
@@ -689,6 +683,7 @@ def pytest_sessionfinish(session, exitstatus):
     graceful_timeout = 5.0
     deadline = time.time() + graceful_timeout
     import threading
+
     for thread in threading.enumerate():
         if thread is threading.main_thread():
             continue

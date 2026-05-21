@@ -13,6 +13,7 @@ Intel Arc A770 GPU 环境优化器
 import os
 import platform
 import logging
+import tempfile
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +50,7 @@ def setup_arc_environment() -> dict:
         temp_base = os.environ.get("TEMP") or os.environ.get("TMP") or os.path.expanduser("~")
         cache_dir = os.path.join(temp_base, "intel_ocl_cache")
     else:
-        cache_dir = os.path.join("/tmp", "intel_ocl_cache")
+        cache_dir = os.path.join(tempfile.gettempdir(), "intel_ocl_cache")
 
     os.makedirs(cache_dir, exist_ok=True)
     os.environ["OCL_CACHE_DIR"] = cache_dir

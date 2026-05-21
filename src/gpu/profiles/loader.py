@@ -45,7 +45,9 @@ class GPUProfileLoader:
             # 版本检查
             version = data.get("_version", "1.0")
             if version != "1.0":
-                logger.warning(f"不支持的配置文件版本: {version}, 当前支持1.0。可能导致配置加载错误")
+                logger.warning(
+                    f"不支持的配置文件版本: {version}, 当前支持1.0。可能导致配置加载错误"
+                )
 
             self.profiles = data
 
@@ -173,9 +175,7 @@ class GPUProfileLoader:
     }
 
     @staticmethod
-    def _validate_profile_models(
-        profile: dict[str, Any], errors: list[str]
-    ) -> None:
+    def _validate_profile_models(profile: dict[str, Any], errors: list[str]) -> None:
         """验证 models 字段"""
         if not isinstance(profile["models"], list):
             errors.append("models必须为列表")
@@ -185,16 +185,12 @@ class GPUProfileLoader:
             errors.append("models列表中的元素必须为字符串")
 
     @staticmethod
-    def _validate_profile_batch_sizes(
-        profile: dict[str, Any], errors: list[str]
-    ) -> None:
+    def _validate_profile_batch_sizes(profile: dict[str, Any], errors: list[str]) -> None:
         """验证 batch_size 字段"""
         for key in ["recommended_batch_size", "max_batch_size"]:
             value = profile[key]
             if not isinstance(value, (int, float)):
-                errors.append(
-                    f"{key}类型错误: 期望int/float, 得到{type(value).__name__}"
-                )
+                errors.append(f"{key}类型错误: 期望int/float, 得到{type(value).__name__}")
             elif value <= 0:
                 errors.append(f"{key}必须为正数")
 
@@ -205,9 +201,7 @@ class GPUProfileLoader:
             and isinstance(max_batch, (int, float))
             and max_batch < rec_batch
         ):
-            errors.append(
-                f"max_batch_size ({max_batch}) < recommended_batch_size ({rec_batch})"
-            )
+            errors.append(f"max_batch_size ({max_batch}) < recommended_batch_size ({rec_batch})")
 
     def _validate_profile_optimizations(
         self, profile: dict[str, Any], errors: list[str], warnings: list[str]
@@ -241,13 +235,9 @@ class GPUProfileLoader:
         if "memory_efficiency" in profile:
             eff = profile["memory_efficiency"]
             if not isinstance(eff, (int, float)):
-                errors.append(
-                    f"memory_efficiency类型错误: 期望int/float, 得到{type(eff).__name__}"
-                )
+                errors.append(f"memory_efficiency类型错误: 期望int/float, 得到{type(eff).__name__}")
             elif not (0.0 < eff <= 1.0):
-                warnings.append(
-                    f"memory_efficiency ({eff}) 不在合理范围 (0.0, 1.0]"
-                )
+                warnings.append(f"memory_efficiency ({eff}) 不在合理范围 (0.0, 1.0]")
 
     def _validate_profile(self, profile: dict[str, Any], profile_path: str) -> bool:
         """

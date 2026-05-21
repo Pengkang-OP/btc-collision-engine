@@ -20,8 +20,7 @@ class TestBigIntOptimizerNoGmpy2(unittest.TestCase):
         """在 gmpy2 不可用环境中创建 BigIntOptimizer"""
         saved = sys.modules.pop("gmpy2", None)
         try:
-            with patch("builtins.__import__",
-                       side_effect=self._selective_import_fail_for_gmpy2):
+            with patch("builtins.__import__", side_effect=self._selective_import_fail_for_gmpy2):
                 with patch("src.core.bigint_optimizer.logger"):
                     optimizer = BigIntOptimizer()
         finally:
@@ -112,6 +111,7 @@ class TestBigIntOptimizerWithGmpy2(unittest.TestCase):
     def test_mod_inverse_with_gmpy2_no_inverse(self):
         """gmpy2.invert 抛 ZeroDivisionError → ValueError → line 94"""
         import gmpy2
+
         with patch.object(gmpy2, "invert", side_effect=ZeroDivisionError("inverse does not exist")):
             with self.assertRaises(ValueError) as ctx:
                 self.opt.mod_inverse(2, 4)

@@ -186,9 +186,9 @@ def calculate_optimal_batch_size(
 
         # 验证对齐正确性（仅在调试模式）
         if __debug__:
-            assert optimal_batch % config.memory_alignment == 0, (
-                f"batch_size未对齐: {optimal_batch} % {config.memory_alignment} != 0"
-            )
+            assert (
+                optimal_batch % config.memory_alignment == 0
+            ), f"batch_size未对齐: {optimal_batch} % {config.memory_alignment} != 0"
 
         # 计算实际内存占用和比例
         total_buffer = optimal_batch * config.per_key_memory + target_buffer_size

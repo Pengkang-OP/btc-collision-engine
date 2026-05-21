@@ -167,8 +167,7 @@ class TestWindowsMemoryLocking(unittest.TestCase):
                 # 或 ERROR_PRIVILEGE_NOT_HELD (1314) 是预期的
                 # 这些错误表示功能存在但当前用户没有权限
                 self.assertTrue(
-                    error_code in [14, 1453, 1314],
-                    f"预期的权限或内存不足错误，实际: {error_code}"
+                    error_code in [14, 1453, 1314], f"预期的权限或内存不足错误，实际: {error_code}"
                 )
 
         except Exception as e:

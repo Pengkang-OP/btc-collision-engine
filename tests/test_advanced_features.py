@@ -22,6 +22,7 @@ from src.cli.advanced_features import (
 
 # ── deep_merge ───────────────────────────────────────────────────
 
+
 class TestDeepMerge(unittest.TestCase):
     """deep_merge() 纯函数测试。"""
 
@@ -70,6 +71,7 @@ class TestDeepMerge(unittest.TestCase):
 
 # ── apply_template ──────────────────────────────────────────────
 
+
 class TestApplyTemplate(unittest.TestCase):
     """apply_template() 文件 I/O 测试。"""
 
@@ -102,8 +104,7 @@ class TestApplyTemplate(unittest.TestCase):
     def test_existing_config_merges(self):
         """已有配置文件 → 加载、合并、保存。"""
         config_path = self.tmp_path / "existing.json"
-        config_path.write_text('{"my_key": "keep_me", "collision": {"x": 1}}',
-                               encoding="utf-8")
+        config_path.write_text('{"my_key": "keep_me", "collision": {"x": 1}}', encoding="utf-8")
         with patch("builtins.print"):
             result = apply_template("quick-test", str(config_path))
         self.assertTrue(result)
@@ -135,6 +136,7 @@ class TestApplyTemplate(unittest.TestCase):
         config_path = self.tmp_path / "wo.json"
         config_path.write_text("{}", encoding="utf-8")
         import builtins as _bi
+
         _real_open = _bi.open
 
         def _conditional_open(file, mode="r", *a, **kw):
@@ -148,6 +150,7 @@ class TestApplyTemplate(unittest.TestCase):
 
 
 # ── recommend_parameters ────────────────────────────────────────
+
 
 class TestRecommendParameters(unittest.TestCase):
     """recommend_parameters() 推荐逻辑测试。"""
@@ -208,10 +211,12 @@ class TestRecommendParameters(unittest.TestCase):
     def test_gpu_available_recommends_use_gpu(self):
         """pyopencl 可用 → 推荐 --use-gpu。"""
         import src.cli.advanced_features as af
+
         original = sys.modules["src.cli.advanced_features"]
         try:
             with patch.dict("sys.modules", {"pyopencl": MagicMock()}):
                 import importlib
+
                 importlib.reload(af)
                 # 使用 af.recommend_parameters (重载后的引用),
                 # 而非模块级 recommend_parameters, 以确保
@@ -226,6 +231,7 @@ class TestRecommendParameters(unittest.TestCase):
     def test_gpu_unavailable_adds_cpu_note(self):
         """pyopencl 不可用 → reasons 包含 CPU 模式说明。"""
         import builtins
+
         _orig_import = builtins.__import__
 
         def _mock_import(name, *a, **kw):
@@ -242,11 +248,10 @@ class TestRecommendParameters(unittest.TestCase):
     def test_file_based_targets_counts_lines(self):
         """通过 --file 指定目标文件 → 正确计数行数。"""
         import tempfile as _tmp_mod
+
         with _tmp_mod.TemporaryDirectory() as td:
             targets_file = Path(td) / "targets.txt"
-            targets_file.write_text(
-                "addr1\naddr2\n# comment\n\naddr3\n", encoding="utf-8"
-            )
+            targets_file.write_text("addr1\naddr2\n# comment\n\naddr3\n", encoding="utf-8")
             args = self._make_args(targets=None, file=str(targets_file))
             result = recommend_parameters(args)
             self.assertEqual(result["target_count"], 3)
@@ -260,6 +265,7 @@ class TestRecommendParameters(unittest.TestCase):
 
 
 # ── export_progress_data ────────────────────────────────────────
+
 
 class TestExportProgressData(unittest.TestCase):
     """export_progress_data() 文件导出测试。"""
@@ -302,9 +308,7 @@ class TestExportProgressData(unittest.TestCase):
         stats = self._make_stats()
         stats.total_checked = 25000
         with patch("builtins.print"):
-            result = export_progress_data(
-                stats, "random", "cpu", str(output), total_range=100000
-            )
+            result = export_progress_data(stats, "random", "cpu", str(output), total_range=100000)
         self.assertTrue(result)
         data = json.loads(output.read_text(encoding="utf-8"))
         self.assertEqual(data["total_range"], 100000)
@@ -315,9 +319,7 @@ class TestExportProgressData(unittest.TestCase):
         output = self.tmp_path / "pz.json"
         stats = self._make_stats()
         with patch("builtins.print"):
-            result = export_progress_data(
-                stats, "r", "cpu", str(output), total_range=0
-            )
+            result = export_progress_data(stats, "r", "cpu", str(output), total_range=0)
         self.assertTrue(result)
         data = json.loads(output.read_text(encoding="utf-8"))
         self.assertNotIn("progress_percent", data)
@@ -328,9 +330,7 @@ class TestExportProgressData(unittest.TestCase):
         stats = self._make_stats()
         stats.total_checked = 200000
         with patch("builtins.print"):
-            result = export_progress_data(
-                stats, "r", "cpu", str(output), total_range=100000
-            )
+            result = export_progress_data(stats, "r", "cpu", str(output), total_range=100000)
         self.assertTrue(result)
         data = json.loads(output.read_text(encoding="utf-8"))
         self.assertEqual(data["progress_percent"], 100.0)
@@ -344,6 +344,7 @@ class TestExportProgressData(unittest.TestCase):
 
 
 # ── export_matches ──────────────────────────────────────────────
+
 
 class TestExportMatches(unittest.TestCase):
     """export_matches() 文件导出测试。"""
@@ -385,23 +386,20 @@ class TestExportMatches(unittest.TestCase):
 
 # ── GPUErrorHandler ─────────────────────────────────────────────
 
+
 class TestGPUErrorHandlerInitError(unittest.TestCase):
     """GPUErrorHandler.handle_initialization_error() 纯逻辑测试。"""
 
     def test_no_platform_error(self):
         """'no platform' → type=no_gpu, recoverable=False。"""
-        result = GPUErrorHandler.handle_initialization_error(
-            Exception("No platform found")
-        )
+        result = GPUErrorHandler.handle_initialization_error(Exception("No platform found"))
         self.assertEqual(result["type"], "no_gpu")
         self.assertFalse(result["recoverable"])
         self.assertIn("GPU", result["solution"])
 
     def test_no_gpu_error(self):
         """'no gpu' → type=no_gpu。"""
-        result = GPUErrorHandler.handle_initialization_error(
-            Exception("no GPU detected")
-        )
+        result = GPUErrorHandler.handle_initialization_error(Exception("no GPU detected"))
         self.assertEqual(result["type"], "no_gpu")
 
     def test_out_of_memory_error(self):
@@ -415,32 +413,24 @@ class TestGPUErrorHandlerInitError(unittest.TestCase):
 
     def test_generic_memory_error(self):
         """generic 'memory' → type=out_of_memory。"""
-        result = GPUErrorHandler.handle_initialization_error(
-            Exception("memory allocation failed")
-        )
+        result = GPUErrorHandler.handle_initialization_error(Exception("memory allocation failed"))
         self.assertEqual(result["type"], "out_of_memory")
         self.assertTrue(result["recoverable"])
 
     def test_driver_error(self):
         """'driver' → type=driver_issue, recoverable=False。"""
-        result = GPUErrorHandler.handle_initialization_error(
-            Exception("driver not compatible")
-        )
+        result = GPUErrorHandler.handle_initialization_error(Exception("driver not compatible"))
         self.assertEqual(result["type"], "driver_issue")
         self.assertFalse(result["recoverable"])
 
     def test_version_error(self):
         """'version' → type=driver_issue。"""
-        result = GPUErrorHandler.handle_initialization_error(
-            Exception("unsupported version")
-        )
+        result = GPUErrorHandler.handle_initialization_error(Exception("unsupported version"))
         self.assertEqual(result["type"], "driver_issue")
 
     def test_unknown_error(self):
         """未知错误 → type=unknown, 含通用建议。"""
-        result = GPUErrorHandler.handle_initialization_error(
-            Exception("some random failure")
-        )
+        result = GPUErrorHandler.handle_initialization_error(Exception("some random failure"))
         self.assertEqual(result["type"], "unknown")
         self.assertFalse(result["recoverable"])
         self.assertIn("GPU初始化失败", result["solution"])
@@ -451,23 +441,17 @@ class TestGPUErrorHandlerBatchSize(unittest.TestCase):
 
     def test_oom_halves_batch_size(self):
         """OOM → 减半 (最小 1024)。"""
-        result = GPUErrorHandler.suggest_batch_size_adjustment(
-            65536, Exception("out of memory")
-        )
+        result = GPUErrorHandler.suggest_batch_size_adjustment(65536, Exception("out of memory"))
         self.assertEqual(result, 32768)
 
     def test_oom_floor_at_1024(self):
         """OOM 减半不低过 1024。"""
-        result = GPUErrorHandler.suggest_batch_size_adjustment(
-            1500, Exception("out of memory")
-        )
+        result = GPUErrorHandler.suggest_batch_size_adjustment(1500, Exception("out of memory"))
         self.assertEqual(result, 1024)
 
     def test_non_oom_keeps_current_size(self):
         """非 OOM → 返回原值。"""
-        result = GPUErrorHandler.suggest_batch_size_adjustment(
-            65536, Exception("driver error")
-        )
+        result = GPUErrorHandler.suggest_batch_size_adjustment(65536, Exception("driver error"))
         self.assertEqual(result, 65536)
 
 

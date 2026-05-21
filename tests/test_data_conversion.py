@@ -281,11 +281,12 @@ class TestAddressConverter(unittest.TestCase):
         with patch("src.core.address_converter.WIF.decode") as mock_decode:
             mock_decode.return_value = (_TEST_PRIVATE_KEY, True)
             with patch.object(
-                self.converter, "private_key_to_all",
+                self.converter,
+                "private_key_to_all",
                 return_value={
                     "address_compressed": "3xxx",  # 不以'1'开头
                     "wif_compressed": "5valid",
-                }
+                },
             ):
                 valid, message = self.converter.validate_conversion(_TEST_PRIVATE_KEY)
                 self.assertFalse(valid)
@@ -294,8 +295,7 @@ class TestAddressConverter(unittest.TestCase):
     def test_validate_conversion_address_mismatch(self):
         """validate_conversion 期望地址不匹配 (cover line 175)"""
         valid, message = self.converter.validate_conversion(
-            _TEST_PRIVATE_KEY,
-            expected_address="1DifferentAddress1234567890"
+            _TEST_PRIVATE_KEY, expected_address="1DifferentAddress1234567890"
         )
         self.assertFalse(valid)
         self.assertIn("地址不匹配", message)
@@ -305,8 +305,7 @@ class TestAddressConverter(unittest.TestCase):
         from unittest.mock import patch
 
         with patch.object(
-            self.converter, "private_key_to_all",
-            side_effect=RuntimeError("模拟错误")
+            self.converter, "private_key_to_all", side_effect=RuntimeError("模拟错误")
         ):
             valid, message = self.converter.validate_conversion(_TEST_PRIVATE_KEY)
             self.assertFalse(valid)

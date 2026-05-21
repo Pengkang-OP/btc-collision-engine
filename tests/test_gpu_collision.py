@@ -27,26 +27,23 @@ def main():
     targets = {"12ib7dApVFvg82TXKycWBNpN8kFyiAN1dr"}
 
     # 统计数据
-    stats_data = {
-        'total_checked': 0,
-        'speed': 0.0,
-        'elapsed': 0.0,
-        'matches': 0
-    }
+    stats_data = {"total_checked": 0, "speed": 0.0, "elapsed": 0.0, "matches": 0}
 
     def on_progress(stats: CollisionStats):
         """进度回调"""
-        stats_data['total_checked'] = stats.total_checked
-        stats_data['speed'] = stats.speed
-        stats_data['elapsed'] = stats.elapsed
-        stats_data['matches'] = len(stats.matches)
+        stats_data["total_checked"] = stats.total_checked
+        stats_data["speed"] = stats.speed
+        stats_data["elapsed"] = stats.elapsed
+        stats_data["matches"] = len(stats.matches)
 
         elapsed = stats.elapsed
         mins = int(elapsed // 60)
         secs = int(elapsed % 60)
-        print(f"[{mins:02d}:{secs:02d}] 已检查: {stats.total_checked:>10,} | "
-              f"速度: {stats.speed:>12,.2f} keys/s | "
-              f"匹配: {len(stats.matches)}")
+        print(
+            f"[{mins:02d}:{secs:02d}] 已检查: {stats.total_checked:>10,} | "
+            f"速度: {stats.speed:>12,.2f} keys/s | "
+            f"匹配: {len(stats.matches)}"
+        )
 
     def on_match(private_key: bytes, address: str, wif: str):
         """匹配回调"""
@@ -66,7 +63,7 @@ def main():
             checkpoint_enabled=False,
             dedup_enabled=False,
             data_logging_enabled=False,
-            use_enhanced_monitoring=True
+            use_enhanced_monitoring=True,
         )
 
         dev_info = engine.get_device_info()
@@ -110,13 +107,14 @@ def main():
 
         # 性能对比
         print(f"\n[PERF] 性能对比（vs CPU模式 ~88 keys/s）:")
-        speedup = (stats_data['total_checked']/elapsed) / 88
+        speedup = (stats_data["total_checked"] / elapsed) / 88
         print(f"  加速倍数 : {speedup:,.1f}x")
         print("=" * 70)
 
     except Exception as e:
         print(f"\n[FAIL] GPU测试失败: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

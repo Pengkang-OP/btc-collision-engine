@@ -135,10 +135,13 @@ class IntelGPUVendor(GPUVendorBase):
             device_name_clean = re.sub(r"\s+", " ", device_name_clean)  # 合并多余空格
             # Arc A770/A750/A580 及 Pro 系列支持异步执行，不禁用
             is_high_end = any(
-                x in device_name_clean for x in ["arc a770", "arc a750", "arc a580", "arc pro", "arc a3"]
+                x in device_name_clean
+                for x in ["arc a770", "arc a750", "arc a580", "arc pro", "arc a3"]
             )
             if not is_high_end:
-                _rate_logger.warning("⚠️ Intel GPU: 禁用异步传输以确保稳定性", key="intel_async_disabled")
+                _rate_logger.warning(
+                    "⚠️ Intel GPU: 禁用异步传输以确保稳定性", key="intel_async_disabled"
+                )
                 device.enable_async_execution = False
             else:
                 _rate_logger.info(
@@ -215,7 +218,9 @@ class IntelGPUVendor(GPUVendorBase):
         """检查驱动版本并给出建议"""
         driver_version = device.driver_version
         if not driver_version:
-            _rate_logger.warning("⚠️ 无法检测Intel驱动版本，使用保守模式", key="intel_no_driver_version")
+            _rate_logger.warning(
+                "⚠️ 无法检测Intel驱动版本，使用保守模式", key="intel_no_driver_version"
+            )
             return
 
         try:
@@ -345,7 +350,9 @@ class IntelGPUVendor(GPUVendorBase):
             os.makedirs(cache_dir, exist_ok=True)
             os.environ["OCL_CACHE_DIR"] = cache_dir
             applied["OCL_CACHE_DIR"] = cache_dir
-            _rate_logger.info(f"✅ 设置 OCL_CACHE_DIR={cache_dir} (编译缓存)", key="intel_ocl_cache")
+            _rate_logger.info(
+                f"✅ 设置 OCL_CACHE_DIR={cache_dir} (编译缓存)", key="intel_ocl_cache"
+            )
 
         return applied
 

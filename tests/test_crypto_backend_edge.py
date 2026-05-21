@@ -58,6 +58,7 @@ class TestPurePythonConstantTime(unittest.TestCase):
     def test_scalar_multiply_const_time(self):
         """const_time scalar_multiply → lines 129-132"""
         from src.core.secp256k1 import Secp256k1
+
         result = self.backend.scalar_multiply(5, Secp256k1.Gx, Secp256k1.Gy)
         self.assertEqual(len(result), 2)
         self.assertIsInstance(result[0], int)
@@ -66,6 +67,7 @@ class TestPurePythonConstantTime(unittest.TestCase):
     def test_scalar_multiply_non_const_time(self):
         """非 const_time scalar_multiply → line 132"""
         from src.core.secp256k1 import Secp256k1
+
         backend = PurePythonBackend(use_const_time=False)
         result = backend.scalar_multiply(5, Secp256k1.Gx, Secp256k1.Gy)
         self.assertEqual(len(result), 2)
@@ -96,7 +98,7 @@ class TestOpenSSLBackend(unittest.TestCase):
 
     @unittest.skipIf(
         not crypto_manager._backends[BackendType.OPENSSL].is_available,
-        "OpenSSL backend not available in test environment"
+        "OpenSSL backend not available in test environment",
     )
     def test_name(self):
         """名称 → line 163"""
@@ -104,14 +106,14 @@ class TestOpenSSLBackend(unittest.TestCase):
 
     @unittest.skipIf(
         not crypto_manager._backends[BackendType.OPENSSL].is_available,
-        "OpenSSL backend not available"
+        "OpenSSL backend not available",
     )
     def test_is_available(self):
         self.assertTrue(self.backend.is_available)
 
     @unittest.skipIf(
         not crypto_manager._backends[BackendType.OPENSSL].is_available,
-        "OpenSSL backend not available"
+        "OpenSSL backend not available",
     )
     def test_generate_public_key_compressed(self):
         """压缩公钥 → lines 170-192"""
@@ -121,7 +123,7 @@ class TestOpenSSLBackend(unittest.TestCase):
 
     @unittest.skipIf(
         not crypto_manager._backends[BackendType.OPENSSL].is_available,
-        "OpenSSL backend not available"
+        "OpenSSL backend not available",
     )
     def test_generate_public_key_uncompressed(self):
         """非压缩公钥 → lines 193-196"""
@@ -147,17 +149,18 @@ class TestOpenSSLBackend(unittest.TestCase):
 
     @unittest.skipIf(
         not crypto_manager._backends[BackendType.OPENSSL].is_available,
-        "OpenSSL backend not available"
+        "OpenSSL backend not available",
     )
     def test_scalar_multiply_fallback(self):
         """回退到纯 Python → lines 217-222"""
         from src.core.secp256k1 import Secp256k1
+
         result = self.backend.scalar_multiply(5, Secp256k1.Gx, Secp256k1.Gy)
         self.assertEqual(len(result), 2)
 
     @unittest.skipIf(
         not crypto_manager._backends[BackendType.OPENSSL].is_available,
-        "OpenSSL backend not available"
+        "OpenSSL backend not available",
     )
     def test_is_constant_time(self):
         """返回 False → line 233"""
@@ -204,6 +207,7 @@ class TestCoincurveBackend(unittest.TestCase):
     def test_scalar_multiply(self):
         """标量乘法 → lines 274-294"""
         from src.core.secp256k1 import Secp256k1
+
         result = self.backend.scalar_multiply(5, Secp256k1.Gx, Secp256k1.Gy)
         self.assertEqual(len(result), 2)
 
@@ -221,7 +225,7 @@ class TestCoincurveBackend(unittest.TestCase):
 
     def test_check_availability_import_error(self):
         """coincurve 不可用 → 返回 False → lines 247-248"""
-        with patch.dict('sys.modules', {'coincurve': None}):
+        with patch.dict("sys.modules", {"coincurve": None}):
             backend = CoincurveBackend()
             self.assertFalse(backend._available)
             self.assertFalse(backend.is_available)
@@ -231,8 +235,9 @@ class TestCoincurveBackend(unittest.TestCase):
         from unittest.mock import MagicMock
 
         from src.core.secp256k1 import Secp256k1
+
         # 创建一个 coincurve.PublicKey mock 使 multiply 抛异常
-        with patch('coincurve.PublicKey') as mock_pk:
+        with patch("coincurve.PublicKey") as mock_pk:
             mock_instance = MagicMock()
             mock_instance.multiply.side_effect = AttributeError("no multiply")
             mock_pk.return_value = mock_instance
@@ -280,6 +285,7 @@ class TestECDSABackend(unittest.TestCase):
     def test_scalar_multiply(self):
         """回退标量乘法 → lines 358-362"""
         from src.core.secp256k1 import Secp256k1
+
         result = self.backend.scalar_multiply(5, Secp256k1.Gx, Secp256k1.Gy)
         self.assertEqual(len(result), 2)
 
@@ -289,7 +295,7 @@ class TestECDSABackend(unittest.TestCase):
 
     def test_check_availability_import_error(self):
         """ecdsa 不可用 → 返回 False → lines 328-329"""
-        with patch.dict('sys.modules', {'ecdsa': None}):
+        with patch.dict("sys.modules", {"ecdsa": None}):
             backend = ECDSABackend()
             self.assertFalse(backend._available)
             self.assertFalse(backend.is_available)
@@ -323,9 +329,7 @@ class TestCryptoBackendManagerEdge(unittest.TestCase):
 
     def test_set_backend_pure_python_const_time(self):
         """set_backend PURE_PYTHON with kwargs → lines 469-494"""
-        result = crypto_manager.set_backend(
-            BackendType.PURE_PYTHON, use_const_time=True
-        )
+        result = crypto_manager.set_backend(BackendType.PURE_PYTHON, use_const_time=True)
         self.assertTrue(result)
         self.assertTrue(crypto_manager.is_constant_time())
         # restore
@@ -368,8 +372,7 @@ class TestCryptoBackendManagerEdge(unittest.TestCase):
     def test_generate_public_key_perf_log(self):
         """带性能日志的 generate_public_key → lines 519-523"""
         # 需要 DEBUG 级别
-        with patch.object(logging.getLogger("CryptoBackend"), "isEnabledFor",
-                          return_value=True):
+        with patch.object(logging.getLogger("CryptoBackend"), "isEnabledFor", return_value=True):
             result = crypto_manager.generate_public_key(PK, compressed=True)
             self.assertEqual(len(result), 33)
 
@@ -401,9 +404,7 @@ class TestCryptoBackendManagerEdge(unittest.TestCase):
         """PURE_PYTHON 不存在时创建新实例 → line 478"""
         saved = crypto_manager._backends.pop(BackendType.PURE_PYTHON, None)
         try:
-            result = crypto_manager.set_backend(
-                BackendType.PURE_PYTHON, use_const_time=False
-            )
+            result = crypto_manager.set_backend(BackendType.PURE_PYTHON, use_const_time=False)
             self.assertTrue(result)
         finally:
             if saved is not None:

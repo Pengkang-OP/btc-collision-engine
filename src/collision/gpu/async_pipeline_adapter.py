@@ -67,12 +67,12 @@ class AsyncPipelineAdapter(IAsyncExecutionPipeline):
             )
 
             # 初始化缓冲区池
-            self._pipeline.initialize_buffers(context=kernel.context.context_obj, num_keys=batch_size)
+            self._pipeline.initialize_buffers(
+                context=kernel.context.context_obj, num_keys=batch_size
+            )
 
             _qd = self._pipeline.queue_depth
-            logger.info(
-                f"异步管道初始化完成: batch_size={batch_size:,}, queue_depth={_qd}"
-            )
+            logger.info(f"异步管道初始化完成: batch_size={batch_size:,}, queue_depth={_qd}")
 
         except Exception as e:
             logger.error(f"异步管道初始化失败: {e}")
