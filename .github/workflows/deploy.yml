@@ -74,7 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     environment:
-      name: btc-collision-engine
+      name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
