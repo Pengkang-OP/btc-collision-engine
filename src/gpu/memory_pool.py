@@ -358,72 +358,55 @@ class GPUMemoryPool:
         if allocated > 0:
             logger.info(f"GPU内存池预分配完成: {allocated}个{buffer_type}类型缓冲区")
 
-    def _evict_lru_locked(self, count: int = 1, min_idle_seconds: float = 0) -> int:
-        """淘汰最久未使用的空闲缓冲区（必须在持有 _lock 时调用）
+    def _find_lru_candidate(self, min_idle_seconds: float, now: float) -> tuple | None:
+        """在通用池和类型池中查找符合条件的 LRU 候选缓冲区。
+        返回 (timestamp, buf_id, size, buf, type_str) 或 None。"""
+        candidate = None
+        # 检查通用池
+        for size, pool_list in self._pool.items():
+            for buf in pool_list:
+                buf_id = id(buf)
+                ts = self._access_times.get(buf_id, 0)
+                if min_idle_seconds > 0 and ts > 0 and (now - ts) < min_idle_seconds:
+                    continue
+                if candidate is None or ts < candidate[0]:
+                    candidate = (ts, buf_id, size, buf, "generic")
 
-        P1-6增强: 支持 min_idle_seconds 过滤，仅淘汰空闲超过指定秒数的缓冲区。
-
-        Args:
-            count: 要淘汰的缓冲区数量（默认1）
-            min_idle_seconds: 最短空闲时间(秒)，仅淘汰空闲超过此时间的缓冲区。
-                              0 = 无限制（与旧行为一致）
-
-        Returns:
-            实际淘汰的缓冲区数量
-
-        安全保证：只从池中的空闲缓冲区里选择淘汰目标，
-        不会影响已借出、正在使用中的缓冲区。
-
-        实现原理：
-        - _access_times 只记录当前在池中的空闲缓冲区（由 allocate/release 保证）
-        - 直接遍历池中的缓冲区寻找 LRU 候选，而非扫描全部 _access_times
-        - 这双重保证了不会选到使用中的缓冲区
-        """
-        now = time.monotonic() if min_idle_seconds > 0 else 0
-        evicted = 0
-        for _ in range(count):
-            candidate = None  # (timestamp, buf_id, size, buf, type)
-
-            # 检查通用池
-            for size, pool_list in self._pool.items():
+        # 检查类型专用池
+        for buffer_type, type_pool in self._type_pools.items():
+            for size, pool_list in type_pool.items():
                 for buf in pool_list:
                     buf_id = id(buf)
-                    ts = self._access_times.get(buf_id, 0)  # 无记录视为最旧
-                    # min_idle_seconds 过滤 — 跳过空闲时间未达标的缓冲区
+                    ts = self._access_times.get(buf_id, 0)
                     if min_idle_seconds > 0 and ts > 0 and (now - ts) < min_idle_seconds:
                         continue
                     if candidate is None or ts < candidate[0]:
-                        candidate = (ts, buf_id, size, buf, "generic")
+                        candidate = (ts, buf_id, size, buf, buffer_type)
+        return candidate
 
-            # 检查类型专用池
-            for buffer_type, type_pool in self._type_pools.items():
-                for size, pool_list in type_pool.items():
-                    for buf in pool_list:
-                        buf_id = id(buf)
-                        ts = self._access_times.get(buf_id, 0)  # 无记录视为最旧
-                        if min_idle_seconds > 0 and ts > 0 and (now - ts) < min_idle_seconds:
-                            continue
-                        if candidate is None or ts < candidate[0]:
-                            candidate = (ts, buf_id, size, buf, buffer_type)
+    def _remove_lru_from_pool(self, lru_type: str, lru_size: int, lru_id: int) -> None:
+        """从对应池分组中移除指定 ID 的 LRU 缓冲区。"""
+        if lru_type != "generic" and lru_type in self._type_pools:
+            pool_list = self._type_pools[lru_type].get(cast(int, lru_size), [])
+        else:
+            pool_list = self._pool.get(lru_size, [])
+        for i, b in enumerate(pool_list):
+            if id(b) == lru_id:
+                pool_list.pop(i)
+                break
 
+    def _evict_lru_locked(self, count: int = 1, min_idle_seconds: float = 0) -> int:
+        """淘汰最久未使用的空闲缓冲区（必须在持有 _lock 时调用）。"""
+        now = time.monotonic() if min_idle_seconds > 0 else 0
+        evicted = 0
+        for _ in range(count):
+            candidate = self._find_lru_candidate(min_idle_seconds, now)
             if candidate is None:
-                break  # 池中无更多符合条件的空闲缓冲区
+                break
 
             _, lru_id, lru_size, lru_buf, lru_type = candidate
 
-            # 从对应池分组中移除
-            if lru_type != "generic" and lru_type in self._type_pools:
-                pool_list = self._type_pools[lru_type].get(cast(int, lru_size), [])
-                for i, b in enumerate(pool_list):
-                    if id(b) == lru_id:
-                        pool_list.pop(i)
-                        break
-            else:
-                pool_list = self._pool.get(lru_size, [])
-                for i, b in enumerate(pool_list):
-                    if id(b) == lru_id:
-                        pool_list.pop(i)
-                        break
+            self._remove_lru_from_pool(lru_type, lru_size, lru_id)
 
             # 清理映射并释放显存
             self._access_times.pop(lru_id, None)

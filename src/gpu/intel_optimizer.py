@@ -12,6 +12,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+import importlib
+
 from ..utils import get_configured_logger
 
 logger = get_configured_logger("IntelOptimizer")
@@ -115,189 +117,150 @@ class IntelGPUOptimizer:
 
         return result
 
-    def init_monitoring_and_tuning(self, engine_context: dict[str, Any]) -> dict[str, Any]:
-        """初始化 Intel GPU 监控和调优组件（P1/P2）
+    @staticmethod
+    def _lazy_import_components() -> tuple:
+        """延迟导入所有 5 个监控/调优组件类，返回 (Timeout, Memory, Benchmark, Tuner, Reporter)。
+        导入失败的组件对应位置为 None。"""
+        classes = []
+        for mod_rel, cls_name in [
+            (".intel_timeout_manager", "AdaptiveTimeoutManager"),
+            (".intel_memory_monitor", "IntelMemoryMonitor"),
+            (".benchmark_suite", "GPUBenchmarkSuite"),
+            (".auto_tuner", "GPUAutoTuner"),
+            (".performance_reporter", "PerformanceReportGenerator"),
+        ]:
+            try:
+                mod = importlib.import_module(mod_rel, package=__package__)
+                classes.append(getattr(mod, cls_name))
+            except (ImportError, AttributeError):
+                classes.append(None)
+        return tuple(classes)
 
-        采用防御性初始化策略：
-        - 每个组件独立初始化
-        - 失败不影响其他组件
-        - 失败的组件设为 None
-        - 记录详细的警告日志
-
-        Args:
-            engine_context: 引擎上下文字典，包含引擎自身（key='engine'）和
-                            benchmark_suite、auto_tuner 所需的引擎引用
-
-        Returns:
-            包含已初始化组件的字典:
-            {
-                'timeout_manager': ...,
-                'memory_monitor': ...,
-                'benchmark_suite': ...,
-                'auto_tuner': ...,
-                'performance_reporter': ...,
-            }
-        """
-        self._logger.info("\n📊 初始化 Intel GPU 监控和调优组件...")
-
-        engine = engine_context.get("engine")
-
-        # 延迟导入，避免循环依赖
-        try:
-            from .intel_timeout_manager import AdaptiveTimeoutManager
-
-            _timeout_cls = AdaptiveTimeoutManager
-        except ImportError:
-            _timeout_cls = None
-
-        try:
-            from .intel_memory_monitor import IntelMemoryMonitor
-
-            _memory_cls = IntelMemoryMonitor
-        except ImportError:
-            _memory_cls = None
-
-        try:
-            from .benchmark_suite import GPUBenchmarkSuite
-
-            _benchmark_cls = GPUBenchmarkSuite
-        except ImportError:
-            _benchmark_cls = None
-
-        try:
-            from .auto_tuner import GPUAutoTuner
-
-            _tuner_cls = GPUAutoTuner
-        except ImportError:
-            _tuner_cls = None
-
-        try:
-            from .performance_reporter import PerformanceReportGenerator
-
-            _reporter_cls = PerformanceReportGenerator
-        except ImportError:
-            _reporter_cls = None
-
-        # 1. 自适应超时管理器（P1）
+    def _init_timeout_manager(self, timeout_cls) -> None:
+        """初始化自适应超时管理器（P1）。"""
         self._timeout_manager = None
-        if _timeout_cls:
-            try:
-                self._timeout_manager = _timeout_cls(
-                    base_timeout=getattr(self._device, "timeout_seconds", 30.0),
-                    history_size=50,
-                    safety_factor=3.0,
-                    min_timeout=10.0,
-                    max_timeout=120.0,
-                )
-                self._logger.info("✅ 自适应超时管理器已初始化")
-            except (RuntimeError, ValueError, TypeError, AttributeError) as e:
-                self._logger.warning(
-                    f"⚠️ 自适应超时管理器初始化失败（非致命）: {type(e).__name__}: {e}\n"
-                    "   超时管理功能将被禁用，使用固定超时保护",
-                    exc_info=True,
-                )
+        if not timeout_cls:
+            return
+        try:
+            self._timeout_manager = timeout_cls(
+                base_timeout=getattr(self._device, "timeout_seconds", 30.0),
+                history_size=50, safety_factor=3.0,
+                min_timeout=10.0, max_timeout=120.0,
+            )
+            self._logger.info("✅ 自适应超时管理器已初始化")
+        except (RuntimeError, ValueError, TypeError, AttributeError) as e:
+            self._logger.warning(
+                f"⚠️ 自适应超时管理器初始化失败（非致命）: {type(e).__name__}: {e}\n"
+                "   超时管理功能将被禁用，使用固定超时保护", exc_info=True)
 
-        # 2. 显存监控器（P1）
+    def _init_memory_monitor(self, memory_cls) -> None:
+        """初始化显存监控器（P1）。"""
         self._memory_monitor = None
-        if _memory_cls:
-            try:
-                device_info = self._device.device_info
-                if not isinstance(device_info, dict):
-                    self._logger.warning(
-                        f"⚠️ device_info 类型异常: {type(device_info).__name__}, 跳过显存监控器初始化\n"
-                        "   显存监控功能将被禁用"
-                    )
-                else:
-                    total_memory = device_info.get("global_mem_size", 0)
-                    if total_memory <= 0:
-                        self._logger.warning(
-                            "⚠️ 无法获取显存大小（global_mem_size=0），跳过显存监控器初始化\n"
-                            "   显存监控功能将被禁用"
-                        )
-                    else:
-                        # v4.2.1 修复: 使用设备的 memory_efficiency 而非硬编码常量
-                        # 确保监控器的 safe_usage_ratio 与厂商优化器设置的 memory_efficiency 一致
-                        effective_ratio = getattr(self._device, "memory_efficiency", 0.70)
-                        self._memory_monitor = _memory_cls(
-                            total_memory_bytes=total_memory,
-                            safe_usage_ratio=effective_ratio,
-                        )
-                        self._logger.info(
-                            "✅ 显存监控器已初始化 "
-                            f"(总显存: {total_memory / 1024**3:.1f}GB, "
-                            f"安全比例: {effective_ratio * 100:.0f}%)"
-                        )
-            except (RuntimeError, ValueError, TypeError, AttributeError) as e:
+        if not memory_cls:
+            return
+        try:
+            device_info = self._device.device_info
+            if not isinstance(device_info, dict):
                 self._logger.warning(
-                    f"⚠️ 显存监控器初始化失败（非致命）: {type(e).__name__}\n   显存监控功能将被禁用",
-                    exc_info=True,
-                )
+                    f"⚠️ device_info 类型异常: {type(device_info).__name__}, 跳过显存监控器初始化\n"
+                    "   显存监控功能将被禁用")
+                return
+            total_memory = device_info.get("global_mem_size", 0)
+            if total_memory <= 0:
+                self._logger.warning(
+                    "⚠️ 无法获取显存大小（global_mem_size=0），跳过显存监控器初始化\n"
+                    "   显存监控功能将被禁用")
+                return
+            effective_ratio = getattr(self._device, "memory_efficiency", 0.70)
+            self._memory_monitor = memory_cls(
+                total_memory_bytes=total_memory, safe_usage_ratio=effective_ratio)
+            self._logger.info(
+                "✅ 显存监控器已初始化 "
+                f"(总显存: {total_memory / 1024**3:.1f}GB, "
+                f"安全比例: {effective_ratio * 100:.0f}%)")
+        except (RuntimeError, ValueError, TypeError, AttributeError) as e:
+            self._logger.warning(
+                f"⚠️ 显存监控器初始化失败（非致命）: {type(e).__name__}\n   显存监控功能将被禁用",
+                exc_info=True)
 
-        # 3. 基准测试套件（P2）
+    def _init_benchmark_suite(self, benchmark_cls, engine) -> None:
+        """初始化基准测试套件（P2）。"""
         self._benchmark_suite = None
-        if _benchmark_cls and engine is not None:
-            try:
-                self._benchmark_suite = _benchmark_cls(engine)
-                self._logger.info("✅ 基准测试套件已初始化")
-            except (RuntimeError, ValueError, TypeError, AttributeError) as e:
-                self._logger.warning(
-                    f"⚠️ 基准测试套件初始化失败（非致命）: {type(e).__name__}\n   基准测试功能将被禁用",
-                    exc_info=True,
-                )
+        if not benchmark_cls or engine is None:
+            return
+        try:
+            self._benchmark_suite = benchmark_cls(engine)
+            self._logger.info("✅ 基准测试套件已初始化")
+        except (RuntimeError, ValueError, TypeError, AttributeError) as e:
+            self._logger.warning(
+                f"⚠️ 基准测试套件初始化失败（非致命）: {type(e).__name__}\n   基准测试功能将被禁用",
+                exc_info=True)
 
-        # 4. 自动调优器（P2）
+    def _init_auto_tuner(self, tuner_cls, engine) -> None:
+        """初始化自动调优器（P2）。"""
         self._auto_tuner = None
-        if _tuner_cls and engine is not None:
-            try:
-                self._auto_tuner = _tuner_cls(engine)
-                self._logger.info("✅ 自动调优器已初始化")
-            except (RuntimeError, ValueError, TypeError, AttributeError) as e:
-                self._logger.warning(
-                    f"⚠️ 自动调优器初始化失败（非致命）: {type(e).__name__}\n   自动调优功能将被禁用",
-                    exc_info=True,
-                )
+        if not tuner_cls or engine is None:
+            return
+        try:
+            self._auto_tuner = tuner_cls(engine)
+            self._logger.info("✅ 自动调优器已初始化")
+        except (RuntimeError, ValueError, TypeError, AttributeError) as e:
+            self._logger.warning(
+                f"⚠️ 自动调优器初始化失败（非致命）: {type(e).__name__}\n   自动调优功能将被禁用",
+                exc_info=True)
 
-        # 5. 性能报告生成器（P2）
+    def _init_performance_reporter(self, reporter_cls, engine) -> None:
+        """初始化性能报告生成器（P2）。"""
         self._performance_reporter = None
-        if _reporter_cls and engine is not None:
-            try:
-                self._performance_reporter = _reporter_cls(
-                    gpu_engine=engine,
-                    benchmark_suite=self._benchmark_suite,
-                    auto_tuner=self._auto_tuner,
-                )
-                self._logger.info("✅ 性能报告生成器已初始化")
-            except (RuntimeError, ValueError, TypeError, AttributeError) as e:
-                self._logger.warning(
-                    f"⚠️ 性能报告生成器初始化失败（非致命）: {type(e).__name__}\n   性能报告功能将被禁用",
-                    exc_info=True,
-                )
+        if not reporter_cls or engine is None:
+            return
+        try:
+            self._performance_reporter = reporter_cls(
+                gpu_engine=engine,
+                benchmark_suite=self._benchmark_suite,
+                auto_tuner=self._auto_tuner)
+            self._logger.info("✅ 性能报告生成器已初始化")
+        except (RuntimeError, ValueError, TypeError, AttributeError) as e:
+            self._logger.warning(
+                f"⚠️ 性能报告生成器初始化失败（非致命）: {type(e).__name__}\n   性能报告功能将被禁用",
+                exc_info=True)
 
-        # 总结初始化结果
-        initialized_count = sum(
-            [
-                self._timeout_manager is not None,
-                self._memory_monitor is not None,
-                self._benchmark_suite is not None,
-                self._auto_tuner is not None,
-                self._performance_reporter is not None,
-            ]
-        )
-
+    def _log_init_summary(self) -> None:
+        """记录 5 个组件的初始化结果摘要。"""
+        initialized_count = sum([
+            self._timeout_manager is not None,
+            self._memory_monitor is not None,
+            self._benchmark_suite is not None,
+            self._auto_tuner is not None,
+            self._performance_reporter is not None,
+        ])
         if initialized_count == 5:
             self._logger.info("✅ 所有 5 个监控和调优组件初始化成功\n")
         elif initialized_count > 0:
             self._logger.warning(
                 f"⚠️ {initialized_count}/5 个组件初始化成功，"
                 f"{5 - initialized_count} 个组件被禁用\n"
-                "   引擎仍可正常运行，但部分监控功能不可用\n"
-            )
+                "   引擎仍可正常运行，但部分监控功能不可用\n")
         else:
             self._logger.error(
-                "❌ 所有监控和调优组件初始化失败\n   引擎将使用默认配置运行，无监控和调优功能\n"
-            )
-
+                "❌ 所有监控和调优组件初始化失败\n   引擎将使用默认配置运行，无监控和调优功能\n")
         self._logger.info("✅ Intel GPU 监控和调优组件初始化完成\n")
+
+    def init_monitoring_and_tuning(self, engine_context: dict[str, Any]) -> dict[str, Any]:
+        """初始化 Intel GPU 监控和调优组件（P1/P2）。"""
+        self._logger.info("\n📊 初始化 Intel GPU 监控和调优组件...")
+        engine = engine_context.get("engine")
+
+        timeout_cls, memory_cls, benchmark_cls, tuner_cls, reporter_cls = (
+            self._lazy_import_components())
+
+        self._init_timeout_manager(timeout_cls)
+        self._init_memory_monitor(memory_cls)
+        self._init_benchmark_suite(benchmark_cls, engine)
+        self._init_auto_tuner(tuner_cls, engine)
+        self._init_performance_reporter(reporter_cls, engine)
+
+        self._log_init_summary()
 
         return {
             "timeout_manager": self._timeout_manager,

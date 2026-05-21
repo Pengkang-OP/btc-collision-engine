@@ -220,6 +220,66 @@ class SingleGPUWorker(threading.Thread):
             logger.exception(f"GPU {self.device_idx} 引擎初始化未知异常: {type(e).__name__}: {e}")
             raise
 
+    def _run_monitor_loop(self, total_keys: int) -> None:
+        """监控循环：持续更新统计、检测完成条件。"""
+        _base_interval = 0.5
+        _min_interval = 0.2
+        _max_interval = 1.0
+        _adaptive_interval = _base_interval
+
+        while not self._stop_event.is_set():
+            if not self._pause_event.is_set():
+                time.sleep(0.1)
+                continue
+
+            self._update_stats()
+
+            current_throughput = self._stats.get("throughput", 0)
+            if current_throughput > 1_000_000:
+                _adaptive_interval = _min_interval
+            elif current_throughput < 10_000:
+                _adaptive_interval = _max_interval
+            else:
+                _adaptive_interval = _base_interval
+
+            if self.mode != "random" and self._stats["keys_checked"] >= total_keys:
+                logger.info(f"GPU {self.device_idx} 完成搜索范围")
+                self._stop_event.set()
+                break
+
+            time.sleep(_adaptive_interval)
+
+    def _handle_memory_error_retry(self) -> None:
+        """处理 MemoryError：batch_size 减半后重试。"""
+        current_batch = self.config.batch_size or 65536
+        new_batch = max(current_batch // 2, 1024)
+        logger.warning(
+            f"GPU {self.device_idx} 内存不足（MemoryError），"
+            f"自动减小 batch_size: {current_batch:,} → {new_batch:,}")
+        self.config.batch_size = new_batch
+        with self._lock:
+            self._stats["error_count"] += 1
+            self._stats["last_error"] = f"MemoryError 自动降批至 {new_batch:,}"
+        try:
+            if self._gpu_engine:
+                try:
+                    self._gpu_engine.stop()
+                except (RuntimeError, OSError) as stop_err:
+                    logger.warning(
+                        f"GPU {self.device_idx} 引擎停止错误（将强制释放）: {stop_err}")
+                self._gpu_engine = None
+            self._initialize_gpu_engine()
+            self._execute_search()
+        except Exception as retry_err:
+            logger.error(f"GPU {self.device_idx} 降批重试失败: {retry_err}")
+
+    def _record_search_error(self, error: Exception, error_type: str) -> None:
+        """记录搜索错误到统计。"""
+        logger.error(f"GPU {self.device_idx} 搜索{error_type}错误: {error}")
+        with self._lock:
+            self._stats["error_count"] += 1
+            self._stats["last_error"] = f"{type(error).__name__}: {error}"
+
     def _execute_search(self):
         """执行私钥搜索（支持 random / range / brute_force 三种模式）"""
         if not self._gpu_engine:
@@ -229,102 +289,31 @@ class SingleGPUWorker(threading.Thread):
         total_keys = end_key - start_key
 
         try:
-            # 根据模式组装 start() 关键字参数
             engine_kwargs: dict = {}
             if self.mode in ("range", "brute_force") and self.range_start is not None:
                 engine_kwargs["start"] = self.range_start
             if self.mode == "range" and self.range_end is not None:
                 engine_kwargs["end"] = self.range_end
 
-            # 启动监控线程（并行更新统计）
-            def monitor_loop() -> None:
-                # 自适应更新间隔: 高吞吐时更频繁(0.2s), 低吞吐时降低开销(1.0s)
-                _base_interval = 0.5
-                _min_interval = 0.2
-                _max_interval = 1.0
-                _adaptive_interval = _base_interval
-
-                while not self._stop_event.is_set():
-                    # 检查暂停状态
-                    if not self._pause_event.is_set():
-                        time.sleep(0.1)
-                        continue
-
-                    # 更新统计
-                    self._update_stats()
-
-                    # 根据吞吐量自适应调整更新间隔
-                    current_throughput = self._stats.get("throughput", 0)
-                    if current_throughput > 1_000_000:
-                        _adaptive_interval = _min_interval  # 高频更新
-                    elif current_throughput < 10_000:
-                        _adaptive_interval = _max_interval  # 降低开销
-                    else:
-                        _adaptive_interval = _base_interval
-
-                    # random 模式不按范围判断结束；range/brute_force 按已检查量
-                    if self.mode != "random" and self._stats["keys_checked"] >= total_keys:
-                        logger.info(f"GPU {self.device_idx} 完成搜索范围")
-                        self._stop_event.set()
-                        break
-
-                    # 自适应休眠让出CPU
-                    time.sleep(_adaptive_interval)
-
-            monitor_thread = threading.Thread(target=monitor_loop, daemon=True)
+            monitor_thread = threading.Thread(
+                target=lambda: self._run_monitor_loop(total_keys), daemon=True)
             monitor_thread.start()
 
-            # 启动GPU引擎（阻塞调用，直到完成或停止）
             self._gpu_engine.start(mode=self.mode, **engine_kwargs)
             logger.info(
-                f"GPU {self.device_idx} 引擎已启动: mode={self.mode}, kwargs={engine_kwargs or '无'}"
-            )
+                f"GPU {self.device_idx} 引擎已启动: mode={self.mode}, kwargs={engine_kwargs or '无'}")
 
-            # 等待监控线程结束
             monitor_thread.join(timeout=5.0)
 
-            # 停止引擎
             if self._gpu_engine:
                 self._gpu_engine.stop()
 
         except MemoryError:
-            # MemoryError 自动降批——将 batch_size 减半重试（仅一次）
-            current_batch = self.config.batch_size or 65536
-            new_batch = max(current_batch // 2, 1024)
-            logger.warning(
-                f"GPU {self.device_idx} 内存不足（MemoryError），"
-                f"自动减小 batch_size: {current_batch:,} → {new_batch:,}"
-            )
-            self.config.batch_size = new_batch
-            with self._lock:
-                self._stats["error_count"] += 1
-                self._stats["last_error"] = f"MemoryError 自动降批至 {new_batch:,}"
-            # 重新初始化引擎并重试
-            try:
-                if self._gpu_engine:
-                    try:
-                        self._gpu_engine.stop()
-                    except RuntimeError as stop_err:
-                        logger.warning(
-                            f"GPU {self.device_idx} 引擎停止错误（将强制释放）: {stop_err}"
-                        )
-                    except OSError as stop_err:
-                        logger.warning(f"GPU {self.device_idx} 引擎停止时发生OSError: {stop_err}")
-                    self._gpu_engine = None
-                self._initialize_gpu_engine()  # 已修正：使用正确的方法名
-                self._execute_search()
-            except Exception as retry_err:
-                logger.error(f"GPU {self.device_idx} 降批重试失败: {retry_err}")
+            self._handle_memory_error_retry()
         except RuntimeError as e:
-            logger.error(f"GPU {self.device_idx} 搜索运行时错误: {e}")
-            with self._lock:
-                self._stats["error_count"] += 1
-                self._stats["last_error"] = f"RuntimeError: {e}"
+            self._record_search_error(e, "运行时")
         except ValueError as e:
-            logger.error(f"GPU {self.device_idx} 搜索数据错误: {e}")
-            with self._lock:
-                self._stats["error_count"] += 1
-                self._stats["last_error"] = f"ValueError: {e}"
+            self._record_search_error(e, "数据")
         except Exception as e:
             logger.exception(f"GPU {self.device_idx} 搜索未知异常: {type(e).__name__}: {e}")
             with self._lock:
