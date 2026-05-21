@@ -74,7 +74,6 @@ ASYNC_LOG_AVAILABLE = True
 GPU_CONFIG_MANAGER_AVAILABLE = False  # 保留供外部导入兼容
 
 # 基础依赖
-# 加密
 
 from ...gpu.device import GPUDeviceDetector  # noqa: E402
 from ...gpu.device_manager import GPUDeviceManager  # noqa: E402
@@ -357,7 +356,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             logger.warning("异步日志不可用（AsyncFileHandler导入失败），使用同步日志")
 
         # === Phase 2: GPUEngineFacade ===
-        config = {
+        gpu_facade_config = {
             "gpu": {
                 "use_memory_pool": use_gpu_memory_pool,
                 "pool_max_buffers": gpu_pool_max_buffers,
@@ -365,7 +364,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             },
             "batch_size": batch_size,
         }
-        self._device_manager = GPUDeviceManager(device_index=device_index, config=config, logger=logger)
+        self._device_manager = GPUDeviceManager(device_index=device_index, config=gpu_facade_config, logger=logger)
         self._device_manager.initialize(
             targets,
             batch_size,
@@ -417,7 +416,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
                     self._data_logger_adapter.subscribe_to(self.event_bus)
                     logger.info("GPU引擎：数据日志系统已启用（事件适配器模式）")
             except Exception as e:
-                logger.warning(f"GPU引擎：监控系统初始化失败: {e}")
+                logger.warning(f"GPU引擎：监控系统初始化失败: {e}", exc_info=True)
                 self.data_logging_enabled = False
 
         # === 位置跟踪 ===
@@ -727,6 +726,11 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 self._gpu_memory_pool = None
 
             # GPU 内存池由 device_manager.cleanup() 统一清理，无需重复操作
+
+            # 停止 enhanced_monitoring（修复: 防止异常路径绕过上下文管理器）
+            if hasattr(self, "enhanced_monitoring") and self.enhanced_monitoring is not None:
+                with contextlib.suppress(Exception):
+                    self.enhanced_monitoring.stop()
 
             # 清理性能监控管道（修复: 资源泄漏）
             if hasattr(self, "_perf_pipeline") and self._perf_pipeline is not None:
@@ -1051,14 +1055,17 @@ class GPUCollisionEngine(BaseCollisionEngine):
             )
 
     def _on_match_callback(self, event: EngineMatchEvent) -> None:
-        """处理匹配事件 - 向后兼容包装器"""
-        if self.on_match:
-            invoke_with_timeout(
-                self.on_match,
-                args=(event.private_key, event.address, event.wif),
-                timeout=getattr(self, "_match_callback_timeout", 5),
-                callback_name="on_match",
-            )
+        """处理匹配事件 - 仅记录日志，不重复调用用户回调
+
+        BLOCK-2修复: safe_invoke_match_callback 已通过 _result_processor
+        直接调用 self.on_match（传递原始私钥/WIF），此 EventBus 路径
+        仅用于日志/监控，不应重复触发用户回调。
+        """
+        logger.info(
+            "GPU引擎匹配事件: address=%s...%s",
+            event.address[:6] if event.address else "?",
+            event.address[-4:] if event.address else "?",
+        )
 
     def _on_complete_callback(self, event: EngineCompleteEvent) -> None:
         """处理完成事件 - 向后兼容包装器"""
