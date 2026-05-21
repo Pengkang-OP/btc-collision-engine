@@ -485,7 +485,7 @@ class TestModuleImports:
         """测试模块版本号 v4.2.1"""
         from src.collision import gpu
 
-        assert gpu.__version__ == "4.4.0"
+        assert gpu.__version__ == "4.5.0"
 
     def test_vendor_factory_in_all(self):
         """验证 VendorOptimizationFactory 在 __all__ 中"""

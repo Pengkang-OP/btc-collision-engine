@@ -307,7 +307,7 @@ class TestArgParserModuleCoverage:
             importlib.import_module("src.cli.arg_parser")
 
     def test_version_import_fallback(self):
-        """from src import __version__ 失败时回退到 '4.4.0' (L22-23)。"""
+        """from src import __version__ 失败时回退到 '4.5.1' (L22-23)。"""
         import builtins
         import importlib
         import sys
@@ -327,7 +327,7 @@ class TestArgParserModuleCoverage:
         try:
             with patch("builtins.__import__", side_effect=mock_import):
                 mod = importlib.import_module("src.cli.arg_parser")
-                assert mod._VERSION == "4.4.0"
+                assert mod._version == "4.5.1"
         finally:
             sys.modules.pop("src.cli.arg_parser", None)
             importlib.import_module("src.cli.arg_parser")
