@@ -475,7 +475,7 @@ python scripts/test_gpu_collision_actual.py
 使用 Python 导入验证替代 pytest：
 
 ```bash
-python -c "from src.collision.gpu_collision_engine import GPUCollisionEngine; print('OK')"
+python -c "from src.collision.gpu.engine import GPUCollisionEngine; print('OK')"
 ```
 
 ---

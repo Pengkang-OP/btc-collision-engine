@@ -1619,7 +1619,7 @@ GPU随机搜索模式 - 使用GPU并行生成私钥并比对。
 
 **示例**:
 ```python
-from src.collision.gpu_collision_engine import GPUCollisionEngine
+from src.collision.gpu.engine import GPUCollisionEngine
 
 targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
 

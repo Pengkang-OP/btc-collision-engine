@@ -1,6 +1,6 @@
 # GPU引擎使用指南
 
-> **版本**: v4.2.2 | **最后更新**: 2026-05-15
+> **版本**: v4.5.1 | **最后更新**: 2026-05-21
 > **面向**: 开发者
 
 > 本文档详细介绍如何使用BTC碰撞引擎的GPU加速功能，包括安装、配置、性能调优和故障排除。
@@ -127,7 +127,7 @@ pip install coincurve  # CPU后端优化
 ## 3. 验证GPU可用性
 
 ```python
-from src.collision.gpu_collision_engine import GPUCollisionEngine
+from src.collision.gpu.engine import GPUCollisionEngine
 
 # 检查GPU是否可用
 if GPUCollisionEngine.is_gpu_available():
@@ -195,7 +195,7 @@ engine = create_collision_engine(targets, mode='cpu')
 from src.gpu.device_manager import GPUDeviceManager
 from src.gpu.config_manager import GPUConfigManager
 from src.gpu.search_mode_coordinator import SearchModeCoordinator
-from src.collision.gpu_collision_engine import GPUCollisionEngine
+from src.collision.gpu.engine import GPUCollisionEngine
 
 targets = {'1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'}
 
@@ -223,7 +223,7 @@ coordinator.start(mode='random')
 ### GPU设备选择
 
 ```python
-from src.collision.gpu_collision_engine import GPUCollisionEngine, GPUDevice
+from src.collision.gpu.engine import GPUCollisionEngine, GPUDevice
 
 # 检测所有可用设备
 devices = GPUDevice.detect_devices()

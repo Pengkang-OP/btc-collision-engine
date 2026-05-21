@@ -574,7 +574,7 @@ python tests/test_optimization_integration.py
 ### 检测GPU设备
 
 ```python
-from src.collision.gpu_collision_engine import GPUCollisionEngine
+from src.collision.gpu.engine import GPUCollisionEngine
 
 # 列出所有可用GPU设备
 GPUCollisionEngine.list_devices()

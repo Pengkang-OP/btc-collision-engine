@@ -140,12 +140,12 @@ from src.collision.targets import TargetResolver, AddressMatcher, AddressCache
 
 ```python
 # ❌ 此路径已在 v3.x 中删除，不再可用
-# from src.collision.target_resolver import TargetResolver
+# from src.collision.targets.resolver import TargetResolver
 ```
 
 **说明**:
 
-- `src.collision.target_resolver` 兼容层已于 v3.x 正式删除
+- `src.collision.targets.resolver` 兼容层已于 v3.x 正式删除
 - 请直接使用上方推荐的三种新路径之一
 
 ### 导入顺序
@@ -212,7 +212,7 @@ python scripts/check_import_paths.py
 ```markdown
 # 文档标题
 
-> **版本**: v1.2.0 | **最后更新**: YYYY-MM-DD
+> **版本**: v4.5.1 | **最后更新**: YYYY-MM-DD
 > **面向**: 用户/开发者/维护者
 
 ## 概述
@@ -508,7 +508,7 @@ mypy src/collision/
 
 ### 已删除的兼容层
 
-`src.collision.target_resolver` 兼容模块已在 v3.x 中正式删除。如遇到 `ModuleNotFoundError`，请将导入更新为：
+`src.collision.targets.resolver` 兼容模块已在 v3.x 中正式删除。如遇到 `ModuleNotFoundError`，请将导入更新为：
 
 ```python
 # 推荐：从 collision 包直接导入
@@ -569,7 +569,7 @@ A: 为了更好地组织模块结构，TargetResolver已迁移到 `targets` 子�
 
 ### Q: 旧导入路径还能用吗？
 
-A: 不可以。`src.collision.target_resolver` 兼容层已在 v3.x 中删除。请使用新路径：
+A: 不可以。`src.collision.targets.resolver` 兼容层已在 v3.x 中删除。请使用新路径：
 
 ```python
 # 推荐方式
@@ -603,7 +603,7 @@ A:
 - [架构文档](../docs/architecture.md) - 系统架构
 - [API参考](../docs/api-reference.md) - API文档
 - [文档索引](../docs/DOCUMENT_INDEX.md) - 文档导航
-- [文档更新总结](../docs/DOCUMENTATION_UPDATE_SUMMARY_v1.2.0.md) - v1.2.0文档重构详情
+- [文档更新总结](../docs/DOCUMENTATION_UPDATE_SUMMARY_v4.5.1.md) - v4.5.1文档重构详情
 - [性能优化指南](../docs/performance-optimization.md) - 性能优化
 
 ---
