@@ -49,6 +49,14 @@ class DataLogger:
     _PERF_BATCH_MAX_AGE_SEC: float = 5.0  # 累积时间阈值(秒)
     _PERF_BATCH_ENABLED: bool = True  # 是否启用批量化
 
+    # 报告推荐阈值常量
+    _REC_SPEED_THRESHOLD_LOW: int = 100
+    _REC_SPEED_THRESHOLD_HIGH: int = 100000
+    _REC_CPU_THRESHOLD_HIGH: int = 80
+    _REC_CPU_THRESHOLD_LOW: int = 20
+    _REC_MEM_THRESHOLD_HIGH_MB: int = 1024
+    _REC_MEM_THRESHOLD_MEDIUM_MB: int = 512
+
     def __init__(self, storage_dir: str | None = None) -> None:
         """
         初始化数据日志记录器
@@ -289,11 +297,11 @@ class DataLogger:
 
         # 在锁外写入CSV日志 — v4.3.1: 批量化写入减少 I/O 频率
         try:
-            # P1-2: 包含GPU指标
             csv_line = f"{timestamp},{speed},{total_checked},{matches_found},{cpu_usage},{memory_usage},{thread_count},{gpu_temperature},{gpu_memory_usage},{gpu_utilization}\n"  # noqa: E501
-            self._rotate_perf_log_if_needed()
-            with open(self.performance_log_file, "a", encoding="utf-8") as f:
-                f.write(csv_line)
+            if self._PERF_BATCH_ENABLED:
+                self._buffered_perf_write(csv_line)
+            else:
+                self._direct_perf_write(csv_line)
         except Exception as e:
             self.logger.error(f"写入性能日志失败: {e}")
 
@@ -508,43 +516,38 @@ class DataLogger:
             exception: 异常对象
             context: 错误上下文信息
         """
+        timestamp = time.time()
+
+        error_record = {
+            "timestamp": timestamp,
+            "datetime": datetime.fromtimestamp(timestamp).isoformat(),
+            "type": error_type,
+            "message": message,
+            "exception_type": type(exception).__name__ if exception else None,
+            "exception_message": str(exception) if exception else None,
+            "context": context or {},
+        }
+
+        # 仅锁内更新内存缓冲区，文件 I/O 移到锁外
         with self._lock:
-            timestamp = time.time()
-
-            error_record = {
-                "timestamp": timestamp,
-                "datetime": datetime.fromtimestamp(timestamp).isoformat(),
-                "type": error_type,
-                "message": message,
-                "exception_type": type(exception).__name__ if exception else None,
-                "exception_message": str(exception) if exception else None,
-                "context": context or {},
-            }
-
-            # 添加到错误缓冲区
             self._error_buffer.append(error_record)
 
-            # 在锁内执行文件I/O，防止并发覆盖写入
-            try:
-                # 读取现有错误日志
-                errors = []
-                if os.path.exists(self.error_log_file):
-                    with open(self.error_log_file, encoding="utf-8") as f:
-                        errors = fast_load(f)
+        # 在锁外执行文件I/O，避免阻塞高频路径（record_performance_data/save_history_data）
+        try:
+            errors = []
+            if os.path.exists(self.error_log_file):
+                with open(self.error_log_file, encoding="utf-8") as f:
+                    errors = fast_load(f)
 
-                # 添加新错误
-                errors.append(error_record)
+            errors.append(error_record)
+            errors = self._error_rotator.rotate(errors)
 
-                # 应用轮转：保留最近7天、最多1000条记录
-                errors = self._error_rotator.rotate(errors)
-
-                # 写回文件
-                with open(self.error_log_file, "w", encoding="utf-8") as f:
-                    fast_dump(errors, f, ensure_ascii=False, indent=2)
-                self._record_pipeline_metric("record_error", success=True)
-            except Exception as e:
-                self.logger.error(f"保存错误日志失败: {e}")
-                self._record_pipeline_metric("record_error", success=False, error=str(e)[:200])
+            with open(self.error_log_file, "w", encoding="utf-8") as f:
+                fast_dump(errors, f, ensure_ascii=False, indent=2)
+            self._record_pipeline_metric("record_error", success=True)
+        except Exception as e:
+            self.logger.error(f"保存错误日志失败: {e}")
+            self._record_pipeline_metric("record_error", success=False, error=str(e)[:200])
 
         # 记录到标准日志
         if exception:
@@ -638,7 +641,7 @@ class DataLogger:
                     continue
                 if not entry.name.endswith((".tmp", ".last.tmp", ".direct.tmp")):
                     continue
-                try:
+                with suppress(OSError):
                     age = now - entry.stat().st_mtime
                     if age < max_age_seconds:
                         continue
@@ -646,8 +649,6 @@ class DataLogger:
                     os.remove(entry.path)
                     removed += 1
                     freed += size
-                except OSError:
-                    pass  # 文件可能已被其他进程删除或锁定
             if removed > 0:
                 self.logger.info(f"清理了 {removed} 个过期临时文件，释放 {freed / 1024 / 1024:.2f} MB")
         except Exception as e:
@@ -679,15 +680,14 @@ class DataLogger:
                     return
 
                 # 执行级联轮转：.2 -> .3, .1 -> .2, current -> .1
+                # 使用 os.replace 原子操作，避免 remove+rename 中的中间态丢失
                 for i in range(self._PERF_LOG_MAX_ROTATIONS, 0, -1):
                     old_name = (
                         f"{self.performance_log_file}.{i - 1}" if i > 1 else self.performance_log_file
                     )
                     new_name = f"{self.performance_log_file}.{i}"
                     if os.path.exists(old_name):
-                        if os.path.exists(new_name):
-                            os.remove(new_name)
-                        os.rename(old_name, new_name)
+                        os.replace(old_name, new_name)
 
                 # 写入新文件头
                 with open(self.performance_log_file, "w", encoding="utf-8") as f:
@@ -833,7 +833,7 @@ class DataLogger:
     def save_history_data(self) -> None:
         """保存历史数据到文件
 
-        P0: 使用 {schema_version, data} 格式存储，支持向前兼容。
+        P0: 使用 {schema_version, data} 版本化 JSON 格式存储（与 flush() 一致）。
         P1: 写入失败累计计数，超过阈值触发告警。
 
         _safe_file_replace 内部包含完整的重试+回退机制，
@@ -848,14 +848,18 @@ class DataLogger:
             return
 
         try:
-            # JSONL 追加写入: 每行一个 JSON 记录
-            with open(self.history_data_file, "a", encoding="utf-8") as f:
-                for record in new_data:
-                    f.write(fast_dumps(record) + "\n")
-                f.flush()
-                os.fsync(f.fileno())
+            # 加载现有历史数据，追加新记录，写入版本化格式
+            existing = self._load_history_with_recovery()
+            existing.extend(new_data)
+            if len(existing) > 1000:
+                existing = existing[-1000:]
+            versioned = {
+                "schema_version": self.HISTORY_SCHEMA_VERSION,
+                "data": existing,
+            }
+            self._atomic_write_json(self.history_data_file, versioned)
 
-            self.logger.debug(f"JSONL追加写入: {len(new_data)}条历史数据")
+            self.logger.debug(f"版本化写入: {len(new_data)}条历史数据 (总计{len(existing)}条)")
             self._record_pipeline_metric("save_history_data", success=True, record_count=len(new_data))
         except Exception as e:
             self.logger.error(f"保存历史数据失败: {e}")
@@ -865,38 +869,36 @@ class DataLogger:
                 self._history_buffer.extendleft(reversed(new_data))
 
     def _compact_history_if_needed(self) -> None:
-        """压缩历史数据：超过 1200 行时保留最近 1000 行
+        """压缩历史数据：超过 1200 条时保留最近 1000 条
 
         阈值设为 1200（超过目标 20%）以减少频繁压缩。
+        支持版本化 JSON 格式（{schema_version, data}），
         使用原子替换确保数据完整性。
         """
         try:
-            if not os.path.exists(self.history_data_file):
+            history = self._load_history_with_recovery()
+            if len(history) <= 1200:
                 return
 
-            # 快速检查行数（避免读取整个文件）
-            with open(self.history_data_file, encoding="utf-8") as f:
-                line_count = sum(1 for _ in f)
+            # 保留最近 1000 条
+            compacted = history[-1000:]
 
-            if line_count <= 1200:
-                return
-
-            # 读取最后 1000 行 (deque + maxlen 实现 O(1) 滚动)
-            lines: deque[str] = deque(maxlen=1000)
-            with open(self.history_data_file, encoding="utf-8") as f:
-                for line in f:
-                    lines.append(line)
-
-            # 原子写入
+            # 原子写入版本化格式
+            versioned = {
+                "schema_version": self.HISTORY_SCHEMA_VERSION,
+                "data": compacted,
+            }
             temp_file = self.history_data_file + ".compact.tmp"
             with open(temp_file, "w", encoding="utf-8") as f:
-                f.writelines(lines)
+                fast_dump(versioned, f, ensure_ascii=False, indent=2)
                 f.flush()
                 os.fsync(f.fileno())
 
             if not self._safe_file_replace(temp_file, self.history_data_file):
                 self.logger.error("历史数据压缩失败: 文件替换所有方案均失败")
                 self._count_write_failure()
+            else:
+                self.logger.info(f"历史数据压缩: {len(history)} → {len(compacted)} 条")
         except Exception as e:
             self.logger.error(f"历史数据压缩失败: {e}")
             self._count_write_failure()
@@ -1087,18 +1089,8 @@ class DataLogger:
 
         # 在锁外执行I/O操作和报告生成
         try:
-            # 读取历史数据
-            history = []
-            if os.path.exists(self.history_data_file):
-                with open(self.history_data_file, encoding="utf-8") as f:
-                    raw = fast_load(f)
-                    # P0: 支持新旧格式
-                    if isinstance(raw, dict) and "data" in raw:
-                        history = raw["data"]
-                    elif isinstance(raw, list):
-                        history = raw
-                    else:
-                        history = []
+            # 读取历史数据（通过统一加载器，支持版本化 JSON 和 JSONL）
+            history = self._load_history_with_recovery()
 
             if not history:
                 return {"message": "无历史数据可供生成报告"}
@@ -1252,25 +1244,25 @@ class DataLogger:
         # 基于速度的建议
         if speeds:
             avg_speed = statistics.mean(speeds)
-            if avg_speed < 100:
+            if avg_speed < self._REC_SPEED_THRESHOLD_LOW:
                 recommendations.append("检测速率较低，建议检查系统配置或考虑使用GPU加速")
-            elif avg_speed > 100000:
+            elif avg_speed > self._REC_SPEED_THRESHOLD_HIGH:
                 recommendations.append("检测速率很高，系统性能良好")
 
         # 基于CPU使用率的建议
         if cpu_usages:
             avg_cpu = statistics.mean(cpu_usages)
-            if avg_cpu > 80:
+            if avg_cpu > self._REC_CPU_THRESHOLD_HIGH:
                 recommendations.append("CPU使用率较高，建议优化算法或减少并发线程数")
-            elif avg_cpu < 20:
+            elif avg_cpu < self._REC_CPU_THRESHOLD_LOW:
                 recommendations.append("CPU使用率较低，可以增加并发线程数提高性能")
 
         # 基于内存使用的建议
         if memory_usages:
             avg_memory = statistics.mean(memory_usages)
-            if avg_memory > 1024:  # 1GB
+            if avg_memory > self._REC_MEM_THRESHOLD_HIGH_MB:  # 1GB
                 recommendations.append("内存使用较高，建议检查内存泄漏或优化数据结构")
-            elif avg_memory > 512:
+            elif avg_memory > self._REC_MEM_THRESHOLD_MEDIUM_MB:
                 recommendations.append("内存使用适中，注意监控内存增长趋势")
 
         return recommendations
@@ -1378,18 +1370,9 @@ class DataLogger:
 
         # 在锁外执行I/O操作
         try:
-            # 清理历史数据 (v4.3.1: JSONL 格式读写，与 save_history_data() 一致)
-            if os.path.exists(self.history_data_file):
-                with open(self.history_data_file, encoding="utf-8") as f:
-                    raw = fast_load(f)
-                    # P0: 支持新旧格式
-                    if isinstance(raw, dict) and "data" in raw:
-                        history = raw["data"]
-                    elif isinstance(raw, list):
-                        history = raw
-                    else:
-                        history = []
-
+            # 清理历史数据（通过统一加载器，与 flush()/save_history_data() 一致）
+            history = self._load_history_with_recovery()
+            if history:
                 cleaned_history = [d for d in history if d.get("timestamp", 0) >= cutoff_time]
 
                 if len(cleaned_history) != len(history):
@@ -1473,6 +1456,14 @@ class DataLogger:
             - throughput: 最近 60s 内各操作吞吐量 (ops/min)
         """
         now = time.time()
+        # 统一锁顺序: _lock → _pipeline_lock（与其他方法一致）
+        with self._lock:
+            buffer_sizes = {
+                "history_buffer": len(self._history_buffer),
+                "error_buffer": len(self._error_buffer),
+                "current_data_keys": len(self._current_data),
+            }
+
         with self._pipeline_lock:
             save_counts = dict(self._save_counts)
             last_save_times = {
@@ -1481,14 +1472,6 @@ class DataLogger:
             }
             error_count = self._pipeline_error_count
             recent_metrics = list(self._pipeline_metrics)[-50:]
-
-        # 缓冲区大小 (在 _lock 下获取)
-        with self._lock:
-            buffer_sizes = {
-                "history_buffer": len(self._history_buffer),
-                "error_buffer": len(self._error_buffer),
-                "current_data_keys": len(self._current_data),
-            }
 
         # 计算最近 60s 内各操作吞吐量
         cutoff = now - 60
@@ -1511,7 +1494,7 @@ class DataLogger:
     def flush(self) -> None:
         """刷写所有缓冲数据到磁盘
 
-        自 v4.3.1: 历史数据使用 JSONL 追加格式，与 save_history_data() 保持一致。
+        自 v4.3.1: 使用版本化 JSON 格式（{schema_version, data}），与 save_history_data() 一致。
         """
         pending_history = None
         pending_errors = None
@@ -1524,7 +1507,9 @@ class DataLogger:
                 pending_errors = list(self._error_buffer)
                 self._error_buffer.clear()
 
-        # 在锁外执行 I/O 操作
+        # 在锁外执行 I/O 操作: 先刷写性能日志缓冲
+        self._flush_perf_buffer()
+
         if pending_history:
             try:
                 history = self._load_history_with_recovery()
@@ -1586,6 +1571,7 @@ class DataLogger:
     def stop(self) -> None:
         """停止数据记录器，确保所有数据已写入"""
         try:
+            self._flush_perf_buffer()
             self.flush()
             self._record_pipeline_metric("stop", success=True)
             self.logger.info("数据记录器已停止，所有缓冲数据已写入")

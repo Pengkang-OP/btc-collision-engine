@@ -553,46 +553,30 @@ class GPUCollisionEngine(BaseCollisionEngine):
         )
         self._thread.start()
 
-    def stop(self, timeout: float | None = None) -> None:
-        """停止对撞（幂等，重复调用安全）
-
-        GPU-1修复: 使用 _stop_event 防止重复调用导致异常。
-        当 _stop_event 已被设置时，说明 stop() 已执行过，直接返回。
-        """
-        # GPU-1: 防止重复调用 stop()
-        if self._stop_event.is_set():
-            logger.debug("stop() 已执行过，跳过重复调用")
+    def _save_checkpoint_on_stop(self) -> None:
+        """保存最终断点（stop 时调用）。"""
+        if not self.checkpoint_mgr:
             return
+        try:
+            matches_list = [
+                {"private_key_hash": m["private_key_hash"], "address": m["address"]}
+                for m in self.stats.matches
+                if isinstance(m, dict) and "private_key_hash" in m and "address" in m
+            ]
+            self.checkpoint_mgr.save(
+                mode=self._current_mode,
+                targets=self.targets,
+                current_position=self._current_position,
+                total_checked=self.stats.total_checked,
+                matches=matches_list,
+                range_start=self._range_start,
+                range_end=self._range_end,
+            )
+        except Exception as e:
+            logger.error(f"保存最终断点失败: {e}", exc_info=True)
 
-        self._search_coordinator.stop()
-        self._stop_event.set()
-        self._running = False
-        if self._thread:
-            self._thread.join(timeout=timeout or 5)
-
-        # 保存最终断点
-        if self.checkpoint_mgr:
-            try:
-                # MEDIUM-3修复: 添加类型检查确保 matches 数据格式正确
-                matches_list = []
-                for m in self.stats.matches:
-                    if isinstance(m, dict) and "private_key_hash" in m and "address" in m:
-                        matches_list.append(
-                            {"private_key_hash": m["private_key_hash"], "address": m["address"]}
-                        )
-                self.checkpoint_mgr.save(
-                    mode=self._current_mode,
-                    targets=self.targets,
-                    current_position=self._current_position,
-                    total_checked=self.stats.total_checked,
-                    matches=matches_list,
-                    range_start=self._range_start,
-                    range_end=self._range_end,
-                )
-            except Exception as e:
-                logger.error(f"保存最终断点失败: {e}", exc_info=True)
-
-        # v4.2.1: 发布引擎停止事件
+    def _publish_stop_events(self) -> None:
+        """发布引擎停止和完成事件。"""
         stop_event = EngineStopEvent(
             reason="user_request",
             total_checked=self.stats.total_checked,
@@ -600,7 +584,6 @@ class GPUCollisionEngine(BaseCollisionEngine):
         stop_event.source = "gpu_collision_engine"
         self.event_bus.publish(stop_event)
 
-        # v4.2.1: 发布引擎完成事件
         if self.stats is None:
             raise RuntimeError("GPUCollisionEngine.stop(): self.stats is None, 引擎状态异常")
         complete_event = EngineCompleteEvent(
@@ -613,7 +596,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
         complete_event.source = "gpu_collision_engine"
         self.event_bus.publish(complete_event)
 
-        # 停止监控
+    def _cleanup_stop_components(self) -> None:
+        """停止后清理所有组件（监控、去重、日志、种子预生成、异步执行器等）。"""
         if self.enhanced_monitoring:
             try:
                 self.enhanced_monitoring.stop()
@@ -626,38 +610,49 @@ class GPUCollisionEngine(BaseCollisionEngine):
             except Exception as e:
                 logger.error(f"停止GPU性能监控器失败: {e}", exc_info=True)
 
-        # 清理去重过滤器
         if self.dedup_filter and self.dedup_filter.enabled:
             self.dedup_filter.reset()
 
-        # 刷写日志
         if self.data_logger:
             try:
                 self.data_logger.flush()
             except Exception as e:
                 logger.error(f"刷写数据日志失败: {e}", exc_info=True)
 
-        # 停止种子预生成
         if hasattr(self, "_random_search_mode") and self._random_search_mode:
             try:
                 self._random_search_mode.stop()
             except Exception as e:
                 logger.warning(f"停止种子预生成线程失败: {e}")
 
-        # 清理异步执行器
         if self._async_executor:
             try:
                 self._async_executor.cleanup()
             except Exception as e:
                 logger.error(f"清理异步执行器失败: {e}", exc_info=True)
-            self._async_executor = None  # cleanup重置
+            self._async_executor = None
 
-        # 清理设备管理器
         if self._device_manager:
             try:
                 self._device_manager.cleanup()
             except Exception as e:
                 logger.error(f"清理设备管理器失败: {e}", exc_info=True)
+
+    def stop(self, timeout: float | None = None) -> None:
+        """停止对撞（幂等，重复调用安全）。"""
+        if self._stop_event.is_set():
+            logger.debug("stop() 已执行过，跳过重复调用")
+            return
+
+        self._search_coordinator.stop()
+        self._stop_event.set()
+        self._running = False
+        if self._thread:
+            self._thread.join(timeout=timeout or 5)
+
+        self._save_checkpoint_on_stop()
+        self._publish_stop_events()
+        self._cleanup_stop_components()
 
         self._thread = None
         logger.info("GPU引擎：资源清理完成")

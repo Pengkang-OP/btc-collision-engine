@@ -63,16 +63,10 @@ class TestWindowsPermissionRetry(unittest.TestCase):
         history_file = os.path.join(self.test_dir, "history_data.json")
         self.assertTrue(os.path.exists(history_file))
 
-<<<<<<< Updated upstream
-        # 验证数据已保存
-        with open(history_file, encoding="utf-8") as f:
-            history = json.load(f)
-=======
         # 验证数据已保存（P0 版本化格式）
         with open(history_file, "r", encoding="utf-8") as f:
             raw = json.load(f)
         history = raw["data"] if isinstance(raw, dict) and "data" in raw else raw
->>>>>>> Stashed changes
         self.assertEqual(len(history), 1)
         self.assertEqual(history[0]["speed"], 100.0)
 
@@ -141,14 +135,10 @@ class TestWindowsPermissionRetry(unittest.TestCase):
         history_file = os.path.join(self.test_dir, "history_data.json")
         self.assertTrue(os.path.exists(history_file))
 
-<<<<<<< Updated upstream
-        with open(history_file, encoding="utf-8") as f:
-            history = json.load(f)
-=======
+        # 验证数据已保存（P0 版本化格式）
         with open(history_file, "r", encoding="utf-8") as f:
             raw = json.load(f)
         history = raw["data"] if isinstance(raw, dict) and "data" in raw else raw
->>>>>>> Stashed changes
         self.assertEqual(len(history), 1)
         self.assertEqual(history[0]["speed"], 300.0)
 
