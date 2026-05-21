@@ -68,7 +68,7 @@ def test_gpu_initialization():
     
     try:
         from unittest.mock import Mock, patch
-        from src.collision.gpu_collision_engine import GPUCollisionEngine
+        from src.collision.gpu.engine import GPUCollisionEngine
         
         print("\n[1/3] 创建Mock GPU环境...")
         with patch('src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE', True), \
@@ -145,7 +145,7 @@ def test_memory_leak_fix():
     
     try:
         from unittest.mock import Mock, patch
-        from src.collision.gpu_collision_engine import GPUCollisionEngine
+        from src.collision.gpu.engine import GPUCollisionEngine
         
         print("\n[1/2] 创建GPU引擎...")
         with patch('src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE', True), \

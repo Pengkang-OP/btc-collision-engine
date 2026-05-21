@@ -23,7 +23,7 @@ from typing import Any
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_PROJECT_ROOT))
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
 from src.monitoring.gpu_performance_monitor import GPUPerformanceMonitor  # noqa: E402
 
 

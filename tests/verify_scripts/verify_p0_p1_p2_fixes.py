@@ -8,7 +8,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent  # 修复: 应该是parent.parent,因为tests在根目录下
 sys.path.insert(0, str(project_root))
 
-from src.collision.gpu_collision_engine import GPUKernel, GPUCollisionEngine
+from src.collision.gpu.engine import GPUKernel, GPUCollisionEngine
 from src.monitoring.monitoring_system import MonitoringSystem, ReportGenerator
 
 # 配置日志
@@ -75,7 +75,7 @@ def test_p1_wif_import():
     logger.info("="*60)
     
     import inspect
-    from src.collision import gpu_collision_engine
+    from src.collision.gpu import engine as gpu_collision_engine
     
     # 检查文件顶部是否有WIF导入
     source_file = inspect.getfile(gpu_collision_engine)

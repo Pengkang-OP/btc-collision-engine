@@ -23,7 +23,7 @@ import pytest  # noqa: E402
 
 pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
 
 
 def test_buffer_return_to_pool():
