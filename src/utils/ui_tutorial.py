@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter import messagebox
 from typing import Any
 
-from ..config.gui_config import FONT_CONFIG
+from ..config.gui_config import FONT_CONFIG  # type: ignore[import-not-found]
 from .platform_utils import PlatformUtils
 
 

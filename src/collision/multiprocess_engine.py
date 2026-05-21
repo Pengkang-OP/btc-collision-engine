@@ -238,7 +238,8 @@ def _worker_process(
                             match["timestamp"] = time.time()
                             batch_matches.append(match)
                             logger.warning(
-                                f"🎉 匹配发现 [Worker-{worker_id}]: 地址={match['address'][:10]}...{match['address'][-6:]}"
+                                f"🎉 匹配发现 [Worker-{worker_id}]: "
+                                f"地址={match['address'][:10]}...{match['address'][-6:]}"
                             )
                     except Exception as e:
                         logger.error(f"工作进程 {worker_id} 处理失败: 类型={type(e).__name__}")
@@ -581,10 +582,10 @@ class MultiprocessCollisionEngine:
 
         # #12修复: 僵尸进程清理报告
         if zombie_processes:
-            logger.critical(
-                f"发现{len(zombie_processes)}个僵尸进程: "
-                f"{', '.join([f'Worker-{z["id"]}(PID={z["pid"]})' for z in zombie_processes])}"
+            zombie_details = ", ".join(
+                [f"Worker-{z['id']}(PID={z['pid']})" for z in zombie_processes]
             )
+            logger.critical(f"发现{len(zombie_processes)}个僵尸进程: {zombie_details}")
             # 尝试发送SIGKILL（Unix）
             if os.name != "nt":
                 for z in zombie_processes:

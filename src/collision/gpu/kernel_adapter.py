@@ -155,7 +155,7 @@ class GPUKernelAdapter(IKernelExecutor):
         matches = []
 
         for match in raw_matches:
-            match_result: MatchResult = {
+            match_result: MatchResult = {  # type: ignore[typeddict-unknown-key]
                 "address": match.get("address", ""),
                 "private_key": match.get("private_key", ""),
                 "private_key_hash": hashlib.sha256(

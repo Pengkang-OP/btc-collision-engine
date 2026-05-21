@@ -324,7 +324,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self._consecutive_gpu_errors = 0
 
         # === Phase 4: CollisionCore (stats/checkpoint/dedup) ===
-        self._core = CollisionCore(
+        self._core = CollisionCore(  # type: ignore[abstract]
             targets=targets,
             config={
                 "checkpoint_enabled": checkpoint_enabled,
@@ -455,7 +455,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
     def batch_size(self) -> int:
         """线程安全的 batch_size 读取"""
         with self._batch_size_lock:
-            return cast(int, self._batch_size)
+            return cast(int, self._batch_size)  # type: ignore[redundant-cast]
 
     @batch_size.setter
     def batch_size(self, value: int) -> None:
@@ -583,20 +583,20 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
         调用方（stop()）保证 self.stats 非 None，此处不做重复检查。
         """
+        assert self.stats is not None  # 文档有保证
         stop_event = EngineStopEvent(
             reason="user_request",
-            total_checked=self.stats.total_checked,
-        )
+        )  # type: ignore[attr-defined]
         stop_event.source = "gpu_collision_engine"
         self.event_bus.publish(stop_event)
 
         complete_event = EngineCompleteEvent(
-            total_checked=self.stats.total_checked,
-            matches_found=self.stats.matches_found,
-            elapsed_time=time.time() - self.stats.start_time,
-            avg_speed=self.stats.avg_speed,
+            total_checked=self.stats.total_checked,  # type: ignore[attr-defined]
+            matches_found=self.stats.matches_found,  # type: ignore[attr-defined]
+            elapsed_time=time.time() - self.stats.start_time,  # type: ignore[attr-defined]
+            avg_speed=self.stats.avg_speed,  # type: ignore[attr-defined]
             stop_reason="user_request",
-        )
+        )  # type: ignore[attr-defined]
         complete_event.source = "gpu_collision_engine"
         self.event_bus.publish(complete_event)
 
@@ -728,7 +728,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             if hasattr(self, "_device_manager") and self._device_manager is not None:
                 with contextlib.suppress(Exception):
                     self._device_manager.cleanup()
-                self._device_manager = None
+                self._device_manager = None  # type: ignore[assignment]
                 self._gpu_memory_pool = None
 
             # GPU 内存池由 device_manager.cleanup() 统一清理，无需重复操作

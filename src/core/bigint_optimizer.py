@@ -59,7 +59,7 @@ class BigIntOptimizer:
         self.mpz: Any | None = None
 
         try:
-            import gmpy2
+            import gmpy2  # type: ignore[import-untyped]
 
             self.gmpy2 = gmpy2
             self.mpz = gmpy2.mpz

@@ -81,6 +81,7 @@ class MatchResult(TypedDict, total=False):
     hash160: str
     index: int
     seed: str
+    private_key_hash: str
 
 
 class IGPUDeviceManager(Protocol):

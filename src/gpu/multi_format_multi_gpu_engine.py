@@ -41,7 +41,7 @@ class MultiFormatMultiGPUEngine:
     - 格式统计和监控
     """
 
-    def __init__(self, multi_gpu_config: dict = None):
+    def __init__(self, multi_gpu_config: dict | None = None):
         self._multi_gpu_engine = MultiGPUCollisionEngine(multi_gpu_config)
         self._format_manager = FormatAwareTargetManager()
         self._address_generator = MultiFormatAddressGenerator()
@@ -152,7 +152,7 @@ class MultiFormatMultiGPUEngine:
         self, private_key: bytes, matched_address: str, matched_format: str
     ) -> list[tuple[str, str]]:
         """检查其他格式是否也匹配"""
-        extra_matches = []
+        extra_matches: list[tuple[str, str]] = []
         targets_by_format = self._format_manager.get_targets_by_format()
 
         has_other_format_targets = any(

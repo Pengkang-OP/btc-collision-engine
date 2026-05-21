@@ -134,7 +134,7 @@ class GPURecoveryManager:
         self.health_check_timeout = 5.0  # 默认5秒超时
 
         # 健康检查线程池复用：避免每次 _verify_gpu_health 都创建/销毁线程
-        self._health_check_executor = concurrent.futures.ThreadPoolExecutor(
+        self._health_check_executor: concurrent.futures.ThreadPoolExecutor = concurrent.futures.ThreadPoolExecutor(
             max_workers=1, thread_name_prefix="gpu_health_check"
         )
 
@@ -658,4 +658,4 @@ class GPURecoveryManager:
                 logger.debug("健康检查线程池已关闭")
             except Exception as e:
                 logger.warning(f"关闭健康检查线程池时异常: {e}")
-            self._health_check_executor = None
+            self._health_check_executor = None  # type: ignore[assignment]

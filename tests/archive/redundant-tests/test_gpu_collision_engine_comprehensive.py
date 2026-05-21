@@ -18,7 +18,8 @@ import json
 import secrets
 import threading
 from unittest.mock import Mock, patch, MagicMock
-from src.collision.gpu_collision_engine import GPUCollisionEngine, GPUDeviceHelper
+from src.collision.gpu.engine import GPUCollisionEngine
+from src.gpu.device_helper import GPUDeviceHelper
 from src.collision.collision_stats import CollisionStats
 from src.collision.checkpoint_manager import CheckpointManager
 from src.collision.deduplication_filter import DeduplicationFilter
@@ -87,7 +88,7 @@ class TestGPUEngineInitialization:
 
     def test_gpu_engine_init_without_pyopencl(self):
         """测试无pyopencl时初始化失败"""
-        with patch("src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE", False):
+        with patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", False):
             with pytest.raises(RuntimeError, match="pyopencl 不可用"):
                 GPUCollisionEngine({"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"})
 
@@ -95,17 +96,17 @@ class TestGPUEngineInitialization:
         """测试GPU引擎成功初始化"""
         mock_device, mock_context, mock_kernel = self._create_mock_gpu_chain()
 
-        with patch("src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE", True):
+        with patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True):
             # Mock GPUDeviceDetector返回可用
             with (
                 patch(
-                    "src.collision.gpu_collision_engine.GPUDeviceDetector.is_gpu_available",
+                    "src.gpu.device.GPUDeviceDetector.is_gpu_available",
                     return_value=True,
                 ),
-                patch("src.collision.gpu_collision_engine.GPUDevice", return_value=mock_device),
-                patch("src.collision.gpu_collision_engine.GPUContext", return_value=mock_context),
-                patch("src.collision.gpu_collision_engine.GPUKernel", return_value=mock_kernel),
-                patch("src.collision.gpu_collision_engine.GPUProfileLoader") as mock_profile_loader,
+                patch("src.gpu.device_manager.GPUDevice", return_value=mock_device),
+                patch("src.gpu.device_manager.GPUContext", return_value=mock_context),
+                patch("src.gpu.device_manager.GPUKernel", return_value=mock_kernel),
+                patch("src.gpu.profiles.loader.GPUProfileLoader") as mock_profile_loader,
                 patch("src.gpu.device.identify_vendor", return_value="nvidia"),
             ):
 
@@ -164,19 +165,19 @@ class TestCollisionModes:
         """统一GPU引擎Mock补丁"""
         mock_profile_loader.return_value.get_profile.return_value = None
         return [
-            patch("src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE", True),
+            patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
             patch(
-                "src.collision.gpu_collision_engine.GPUDeviceDetector.is_gpu_available",
+                "src.gpu.device.GPUDeviceDetector.is_gpu_available",
                 return_value=True,
             ),
-            patch("src.collision.gpu_collision_engine.GPUDevice", return_value=mock_device),
-            patch("src.collision.gpu_collision_engine.GPUContext", return_value=mock_context),
-            patch("src.collision.gpu_collision_engine.GPUKernel", return_value=mock_kernel),
+            patch("src.gpu.device_manager.GPUDevice", return_value=mock_device),
+            patch("src.gpu.device_manager.GPUContext", return_value=mock_context),
+            patch("src.gpu.device_manager.GPUKernel", return_value=mock_kernel),
             patch(
-                "src.collision.gpu_collision_engine.GPUProfileLoader",
+                "src.gpu.profiles.loader.GPUProfileLoader",
                 return_value=mock_profile_loader,
             ),
-            patch("src.collision.gpu_collision_engine.identify_vendor", return_value="nvidia"),
+            patch("src.gpu.device.identify_vendor", return_value="nvidia"),
         ]
 
     def test_random_search_mode(self):
@@ -184,15 +185,15 @@ class TestCollisionModes:
         mock_device, mock_context, mock_kernel = self._setup_engine_for_mode_test()
 
         with (
-            patch("src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE", True),
+            patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
             patch(
-                "src.collision.gpu_collision_engine.GPUDeviceDetector.is_gpu_available",
+                "src.gpu.device.GPUDeviceDetector.is_gpu_available",
                 return_value=True,
             ),
-            patch("src.collision.gpu_collision_engine.GPUDevice", return_value=mock_device),
-            patch("src.collision.gpu_collision_engine.GPUContext", return_value=mock_context),
-            patch("src.collision.gpu_collision_engine.GPUKernel", return_value=mock_kernel),
-            patch("src.collision.gpu_collision_engine.GPUProfileLoader") as mock_profile_loader,
+            patch("src.gpu.device_manager.GPUDevice", return_value=mock_device),
+            patch("src.gpu.device_manager.GPUContext", return_value=mock_context),
+            patch("src.gpu.device_manager.GPUKernel", return_value=mock_kernel),
+            patch("src.gpu.profiles.loader.GPUProfileLoader") as mock_profile_loader,
             patch("src.gpu.device.identify_vendor", return_value="nvidia"),
         ):
 
@@ -221,15 +222,15 @@ class TestCollisionModes:
         mock_device, mock_context, mock_kernel = self._setup_engine_for_mode_test()
 
         with (
-            patch("src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE", True),
+            patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
             patch(
-                "src.collision.gpu_collision_engine.GPUDeviceDetector.is_gpu_available",
+                "src.gpu.device.GPUDeviceDetector.is_gpu_available",
                 return_value=True,
             ),
-            patch("src.collision.gpu_collision_engine.GPUDevice", return_value=mock_device),
-            patch("src.collision.gpu_collision_engine.GPUContext", return_value=mock_context),
-            patch("src.collision.gpu_collision_engine.GPUKernel", return_value=mock_kernel),
-            patch("src.collision.gpu_collision_engine.GPUProfileLoader") as mock_profile_loader,
+            patch("src.gpu.device_manager.GPUDevice", return_value=mock_device),
+            patch("src.gpu.device_manager.GPUContext", return_value=mock_context),
+            patch("src.gpu.device_manager.GPUKernel", return_value=mock_kernel),
+            patch("src.gpu.profiles.loader.GPUProfileLoader") as mock_profile_loader,
             patch("src.gpu.device.identify_vendor", return_value="nvidia"),
         ):
 
@@ -258,15 +259,15 @@ class TestCollisionModes:
         mock_device, mock_context, mock_kernel = self._setup_engine_for_mode_test()
 
         with (
-            patch("src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE", True),
+            patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
             patch(
-                "src.collision.gpu_collision_engine.GPUDeviceDetector.is_gpu_available",
+                "src.gpu.device.GPUDeviceDetector.is_gpu_available",
                 return_value=True,
             ),
-            patch("src.collision.gpu_collision_engine.GPUDevice", return_value=mock_device),
-            patch("src.collision.gpu_collision_engine.GPUContext", return_value=mock_context),
-            patch("src.collision.gpu_collision_engine.GPUKernel", return_value=mock_kernel),
-            patch("src.collision.gpu_collision_engine.GPUProfileLoader") as mock_profile_loader,
+            patch("src.gpu.device_manager.GPUDevice", return_value=mock_device),
+            patch("src.gpu.device_manager.GPUContext", return_value=mock_context),
+            patch("src.gpu.device_manager.GPUKernel", return_value=mock_kernel),
+            patch("src.gpu.profiles.loader.GPUProfileLoader") as mock_profile_loader,
             patch("src.gpu.device.identify_vendor", return_value="nvidia"),
         ):
 
@@ -292,15 +293,15 @@ class TestCollisionModes:
         mock_device, mock_context, mock_kernel = self._setup_engine_for_mode_test()
 
         with (
-            patch("src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE", True),
+            patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
             patch(
-                "src.collision.gpu_collision_engine.GPUDeviceDetector.is_gpu_available",
+                "src.gpu.device.GPUDeviceDetector.is_gpu_available",
                 return_value=True,
             ),
-            patch("src.collision.gpu_collision_engine.GPUDevice", return_value=mock_device),
-            patch("src.collision.gpu_collision_engine.GPUContext", return_value=mock_context),
-            patch("src.collision.gpu_collision_engine.GPUKernel", return_value=mock_kernel),
-            patch("src.collision.gpu_collision_engine.GPUProfileLoader") as mock_profile_loader,
+            patch("src.gpu.device_manager.GPUDevice", return_value=mock_device),
+            patch("src.gpu.device_manager.GPUContext", return_value=mock_context),
+            patch("src.gpu.device_manager.GPUKernel", return_value=mock_kernel),
+            patch("src.gpu.profiles.loader.GPUProfileLoader") as mock_profile_loader,
             patch("src.gpu.device.identify_vendor", return_value="nvidia"),
         ):
 
@@ -468,15 +469,15 @@ class TestTargetAddressProcessing:
         mock_kernel.max_batch_size = 65536
 
         with (
-            patch("src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE", True),
+            patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
             patch(
-                "src.collision.gpu_collision_engine.GPUDeviceDetector.is_gpu_available",
+                "src.gpu.device.GPUDeviceDetector.is_gpu_available",
                 return_value=True,
             ),
-            patch("src.collision.gpu_collision_engine.GPUDevice", return_value=mock_device),
-            patch("src.collision.gpu_collision_engine.GPUContext", return_value=mock_context),
-            patch("src.collision.gpu_collision_engine.GPUKernel", return_value=mock_kernel),
-            patch("src.collision.gpu_collision_engine.GPUProfileLoader") as mock_profile_loader,
+            patch("src.gpu.device_manager.GPUDevice", return_value=mock_device),
+            patch("src.gpu.device_manager.GPUContext", return_value=mock_context),
+            patch("src.gpu.device_manager.GPUKernel", return_value=mock_kernel),
+            patch("src.gpu.profiles.loader.GPUProfileLoader") as mock_profile_loader,
             patch("src.gpu.device.identify_vendor", return_value="nvidia"),
         ):
 
@@ -523,15 +524,15 @@ class TestTargetAddressProcessing:
         mock_kernel.max_batch_size = 65536
 
         with (
-            patch("src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE", True),
+            patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
             patch(
-                "src.collision.gpu_collision_engine.GPUDeviceDetector.is_gpu_available",
+                "src.gpu.device.GPUDeviceDetector.is_gpu_available",
                 return_value=True,
             ),
-            patch("src.collision.gpu_collision_engine.GPUDevice", return_value=mock_device),
-            patch("src.collision.gpu_collision_engine.GPUContext", return_value=mock_context),
-            patch("src.collision.gpu_collision_engine.GPUKernel", return_value=mock_kernel),
-            patch("src.collision.gpu_collision_engine.GPUProfileLoader") as mock_profile_loader,
+            patch("src.gpu.device_manager.GPUDevice", return_value=mock_device),
+            patch("src.gpu.device_manager.GPUContext", return_value=mock_context),
+            patch("src.gpu.device_manager.GPUKernel", return_value=mock_kernel),
+            patch("src.gpu.profiles.loader.GPUProfileLoader") as mock_profile_loader,
             patch("src.gpu.device.identify_vendor", return_value="nvidia"),
         ):
 

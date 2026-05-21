@@ -376,7 +376,7 @@ class BatchKeyGenerator:
         """并行生成私钥"""
         import concurrent.futures
 
-        keys = [None] * batch_size
+        keys: list[bytes] = [None] * batch_size  # type: ignore[list-item]
         completed = 0
 
         def generate_chunk(chunk_start: int, chunk_end: int, chunk_index: int) -> None:
@@ -387,7 +387,7 @@ class BatchKeyGenerator:
 
             # S-1修复: 直接使用 j 作为数组索引，因为 chunk_keys 的长度与当前块大小一致
             for j, key in enumerate(chunk_keys):
-                keys[chunk_start + j] = key
+                keys[chunk_start + j] = key  # type: ignore[call-overload]
 
             # 更新进度
             if progress_callback:
@@ -414,7 +414,7 @@ class BatchKeyGenerator:
             # 等待所有任务完成
             concurrent.futures.wait(futures)
 
-        return keys
+        return keys  # type: ignore[return-value]
 
     @property
     def strategy(self) -> KeyGenerationStrategy:

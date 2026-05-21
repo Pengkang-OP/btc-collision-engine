@@ -835,6 +835,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             return False
         if not should_continue:
             return False
+        return True
 
     def _flush_match_batch(self, local_matches: list, force: bool = False) -> tuple[bool, bool]:
         """批量提交匹配结果（v4.2.2 H6重构: 从 _process_key_match 和 worker 末尾提取公共逻辑）
@@ -1004,18 +1005,18 @@ class KeyCollisionEngine(BaseCollisionEngine):
         _half_size: int,
         local_count: int,
         batch_count: int,
-    ) -> tuple[int, int, list, list, bool]:
+    ) -> tuple[int, int, list, set, bool]:
         """处理单个私钥：验证、去重、生成地址、匹配检查。"""
         k = int.from_bytes(private_key, "big")
         if k < 1 or k >= Secp256k1.N:
-            return (local_count, batch_count, recent_keys_list, recent_keys_set, True)
+            return (local_count, batch_count, recent_keys_list, recent_keys_set, True)  # type: ignore[return-value]
 
         # 短期缓存 + 去重检查（M1优化: 使用list+set组合）
         key_fp = hashlib.sha256(private_key).digest()[:8]
         if key_fp in recent_keys_set:
-            return (local_count, batch_count, recent_keys_list, recent_keys_set, True)
+            return (local_count, batch_count, recent_keys_list, recent_keys_set, True)  # type: ignore[return-value]
         if not self.dedup_filter.check_and_add(bytes(private_key)):
-            return (local_count, batch_count, recent_keys_list, recent_keys_set, True)
+            return (local_count, batch_count, recent_keys_list, recent_keys_set, True)  # type: ignore[return-value]
 
         # M1优化: 高效缓存管理
         recent_keys_list.append(key_fp)
@@ -1043,11 +1044,11 @@ class KeyCollisionEngine(BaseCollisionEngine):
         except ValueError as e:
             logger.warning(f"Random worker {worker_id}: 私钥无效，跳过: {e}")
             self._log_throttled_error("invalid_key", "随机私钥无效", e, worker_id)
-            return (local_count, batch_count, recent_keys_list, recent_keys_set, True)
+            return (local_count, batch_count, recent_keys_list, recent_keys_set, True)  # type: ignore[return-value]
         except Exception as e:
             logger.error(f"Random worker {worker_id}: 生成地址失败: {e}", exc_info=True)
             self._log_throttled_error("address_generation_failed", "生成地址失败", e, worker_id)
-            return (local_count, batch_count, recent_keys_list, recent_keys_set, True)
+            return (local_count, batch_count, recent_keys_list, recent_keys_set, True)  # type: ignore[return-value]
 
         local_count += 1
         batch_count += 1
@@ -1083,7 +1084,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 matched_hash160,
             )
 
-        return (local_count, batch_count, recent_keys_list, recent_keys_set, should_continue)
+        return (local_count, batch_count, recent_keys_list, recent_keys_set, should_continue)  # type: ignore[return-value]
 
     @staticmethod
     def _log_worker_batch_speed(
@@ -1143,7 +1144,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         recent_keys_list,
                         recent_keys_set,
                         should_continue,
-                    ) = self._worker_process_key(
+                    ) = self._worker_process_key(  # type: ignore[assignment]
                         private_key,
                         worker_id,
                         local_matches,
