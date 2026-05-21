@@ -16,9 +16,7 @@
 """
 
 import os
-<<<<<<< Updated upstream
 import threading
-=======
 import warnings
 from typing import Any, cast
 
@@ -100,7 +98,6 @@ class Secp256k1:
             return False
 
         # 验证基点阶为N: N * G = O (无穷远点)
-<<<<<<< Updated upstream
         # 这里简化检查，只验证N < P
         return cls.N < cls.P
 
@@ -123,8 +120,7 @@ class Secp256k1:
             True 如果 n 很可能为素数
         """
         if n < 2:
-=======
-        # v4.2.2 M4修复: 补充 N*G 验证，之前仅做了 N<P 的简化检查
+            return False
         import logging
         _logger = logging.getLogger(__name__)
         try:

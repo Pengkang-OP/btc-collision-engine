@@ -5,7 +5,6 @@ import hashlib
 import os
 import threading
 import time
-from contextlib import suppress
 from typing import Any, cast
 
 import psutil
@@ -46,13 +45,8 @@ from .events import (
 )
 from .types import CompleteCallback, MatchCallback, ProgressCallback
 
-<<<<<<< Updated upstream
-# 日志系统由CLI/main.py入口统一初始化
-# v2.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
-=======
 # 获取模块日志记录器
 # v4.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
->>>>>>> Stashed changes
 logger = get_configured_logger("KeyCollisionEngine", thread_safe=False)
 sampled_logger = get_sampled_logger("KeyCollisionEngine.sampled", sample_rate=1000)
 
@@ -186,33 +180,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 f"目标地址解析后数量变化: 输入={len(targets)}, 有效={len(self.targets)}"
             )
 
-<<<<<<< Updated upstream
-        # v4.3.1: 过滤非P2PKH目标地址（引擎仅生成P2PKH，其他格式必然无法匹配）
-        p2pkh_targets = {a for a in self.targets if a.startswith("1")}
-        filtered_count = len(self.targets) - len(p2pkh_targets)
-        if filtered_count > 0:
-            fmt_skipped: dict[str, int] = {}
-            for a in self.targets:
-                if not a.startswith("1"):
-                    if a.startswith("bc1p"):
-                        fmt_skipped["Taproot"] = fmt_skipped.get("Taproot", 0) + 1
-                    elif a.startswith("bc1"):
-                        fmt_skipped["Bech32"] = fmt_skipped.get("Bech32", 0) + 1
-                    elif a.startswith("3"):
-                        fmt_skipped["P2SH"] = fmt_skipped.get("P2SH", 0) + 1
-                    else:
-                        fmt_skipped["Unknown"] = fmt_skipped.get("Unknown", 0) + 1
-            detail = ", ".join(f"{k}:{v}" for k, v in fmt_skipped.items())
-            logger.warning(
-                f"已过滤 {filtered_count} 个非P2PKH目标地址"
-                f"（引擎仅生成P2PKH，其他格式无法匹配）: {detail}"
-            )
-            self.targets = p2pkh_targets
-
-        # v3.2.0: 事件总线初始化
-=======
         # v4.2.1: 事件总线初始化
->>>>>>> Stashed changes
         self.event_bus = event_bus or EventBus()
 
         # 向后兼容: 保留回调
@@ -254,15 +222,10 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self.stats = CollisionStats()
         self._stop_event = threading.Event()
         self._running = False
-<<<<<<< Updated upstream
-        self._engine_stop_reason: str = "normal"  # v3.5.2: 跟踪停止原因
-        self._stop_reason_lock = threading.Lock()  # v4.2.3: 保护 _engine_stop_reason 竞态
-=======
         # v4.2.1: 跟踪停止原因
         # 线程安全说明: 主线程 (stop()) 写入, 后台工作线程读取后重置。
         # 依靠 _stop_event.set() 的 happens-before 保证 + CPython GIL 实现安全。
         self._engine_stop_reason: str = "normal"
->>>>>>> Stashed changes
         self._thread: threading.Thread | None = None
         self.progress_interval = PROGRESS_INTERVAL_COUNT  # 每N次检测触发一次进度回调
 
@@ -333,45 +296,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self.enhanced_monitoring: Any | None = None
         self._process = psutil.Process(os.getpid())
 
-<<<<<<< Updated upstream
-        # v3.2.0: 初始化数据日志系统（使用事件适配器）
-        if data_logging_enabled:
-            try:
-                from src.monitoring.event_adapters import setup_data_logging
-
-                if use_enhanced_monitoring:
-                    # 使用增强监控系统（推荐）
-                    self.enhanced_monitoring = EnhancedMonitoringSystem(
-                        engine=self,
-                        collection_interval=data_logging_interval,
-                        enable_monitoring_data=False,  # 统一使用data_logs
-                    )
-                    self.data_logger = self.enhanced_monitoring.data_logger
-
-                    # 订阅事件到增强监控
-                    from src.monitoring.event_adapters import EnhancedMonitoringAdapter
-
-                    monitoring_adapter = EnhancedMonitoringAdapter(self.enhanced_monitoring)
-                    monitoring_adapter.subscribe_to(self.event_bus)
-
-                    logger.info("增强监控系统已启用（事件驱动模式）")
-                else:
-                    # 使用传统DataLogger（向后兼容）
-                    # 通过事件适配器解耦
-                    self.data_logger_adapter = setup_data_logging(
-                        event_bus=self.event_bus, data_logger=DataLogger()
-                    )
-                    self.data_logger = self.data_logger_adapter.data_logger
-                    logger.info("数据日志系统已启用（事件驱动模式）")
-            except (RuntimeError, OSError, ValueError) as e:
-                logger.warning(f"数据日志系统初始化失败，已禁用: {e}")
-                self.data_logging_enabled = False
-                self.data_logger = None
-                self.enhanced_monitoring = None
-=======
         # v4.2.1: 初始化数据日志系统（使用事件适配器）
         self._init_monitoring(data_logging_enabled, data_logging_interval, use_enhanced_monitoring)
->>>>>>> Stashed changes
 
         # CPU使用率缓存（避免频繁阻塞）
         # 线程安全：仅在主线程的_log_data_metrics中访问
@@ -406,45 +332,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
             data_logging_interval: 数据记录间隔（秒）
             use_enhanced_monitoring: 是否使用增强监控系统
         """
-<<<<<<< Updated upstream
-        if not self.on_match:
-            return True
-
-        on_match = self.on_match
-
-        key_hash = hashlib.blake2b(private_key, digest_size=8).hexdigest()
-
-        if self._match_callback_audit_enabled:
-            logger.debug(f"调用匹配回调: address={address}, key_hash={key_hash}")
-
-        try:
-            ok = invoke_with_timeout(
-                on_match,
-                args=(private_key, address, wif),
-                timeout=self._match_callback_timeout,
-                callback_name="on_match",
-            )
-
-            if not ok:
-                return False
-
-            if self._match_callback_audit_enabled:
-                logger.debug(f"匹配回调执行成功: address={address}")
-
-            # v4.3.1: 私钥安全说明
-            # Python bytes 对象不可变，无法在内存中直接清零。bytearray(private_key)
-            # 仅创建副本并清零副本，对原 bytes 无影响。此处的 private_key 是调用方
-            # 传入的副本，原始密钥由 SecureKeyManager 在上下文退出时安全清零。
-            # 本函数返回后，该 bytes 对象依赖 Python GC 回收内存。
-
-            return True
-
-        except (RuntimeError, OSError, ValueError) as e:
-            logger.error(f"匹配回调调用失败: {e}")
-            # v4.3.1: 异常路径同样依赖 SecureKeyManager 清零原始密钥，
-            # 此处的 private_key 是调用方传入的 bytes 副本，函数返回后由 GC 回收。
-            return False
-=======
         if not data_logging_enabled:
             return
 
@@ -480,7 +367,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
             self.data_logging_enabled = False
             self.data_logger = None
             self.enhanced_monitoring = None
->>>>>>> Stashed changes
 
     def _generate_and_check_secure(self) -> tuple[bytes, str] | None:
         """使用安全密钥管理器生成私钥并检查匹配。
@@ -885,22 +771,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
             logger.warning(
                 f"Random worker {worker_id}: WIF编码错误 addr={matched_address}: {type(e).__name__}"
             )
-<<<<<<< Updated upstream
-            # v3.5.2: 发布 ENGINE_ERROR 事件
-            with suppress(RuntimeError, OSError):
-                self.event_bus.publish(
-                    EngineErrorEvent(
-                        error_type="wif_encode_error",
-                        error_message=str(e),
-                        exception=e,
-                        context={"worker_id": worker_id, "address": matched_address},
-                        recoverable=True,
-                    )
-                )
-            return True  # 继续运行
-        except (RuntimeError, OSError):
-            logger.exception(f"Random worker {worker_id}: WIF编码未知错误 addr={matched_address}")
-=======
             # v4.2.1: 发布 ENGINE_ERROR 事件
             try:
                 self.event_bus.publish(EngineErrorEvent(
@@ -915,55 +785,12 @@ class KeyCollisionEngine(BaseCollisionEngine):
             return True  # 继续运行
         except (MemoryError, RuntimeError) as e:
             logger.exception(f"Random worker {worker_id}: WIF编码未知错误 addr={matched_address}: {e}")
->>>>>>> Stashed changes
             return True  # 继续运行
 
         # 记录匹配发现
         format_type = "压缩" if matched_compressed else "非压缩"
         logger.info(f"🎯 发现匹配! 地址={matched_address} (格式: {format_type})")
 
-<<<<<<< Updated upstream
-        # H-5修复: 批量回调添加超时和批次数限制
-        # 分批处理回调，避免长时间阻塞
-        #
-        # 批量回调设计目的:
-        # 1. 防止回调函数卡死导致主线程阻塞
-        # 2. 避免一次性处理大量匹配导致内存压力
-        # 3. 每批之间可以处理其他任务，提高响应性
-        #
-        # 批处理参数:
-        # - _callback_batch_size: 每批最多处理5个回调
-        # - CALLBACK_TIMEOUT: 每批超时2秒
-        _callback_batch_size = 5  # 每批最多5个回调
-        _callback_timeout = 2.0  # 每批超时2秒 (预留)
-        # 先处理匹配项
-        for i in range(0, len(local_matches), _callback_batch_size):
-            batch = local_matches[i : i + _callback_batch_size]
-            for pk, addr, _wif_str in batch:
-                self.stats.add_match(pk, addr)
-            if self.on_match:
-                for pk, addr, wif_str in batch:
-                    self._safe_invoke_match_callback(pk, addr, wif_str)
-            # v3.5.2: 发布 ENGINE_MATCH 事件（stats.add_match 之后，确保统计已更新）
-            for _pk, addr, _wif in batch:
-                try:
-                    self.event_bus.publish(
-                        EngineMatchEvent(
-                            private_key=b"",  # 安全: 事件不暴露原始私钥
-                            address=addr,
-                            wif=_wif,
-                            target_address=addr,
-                        )
-                    )
-                except (RuntimeError, OSError, ValueError) as e:
-                    logger.debug(f"发布 ENGINE_MATCH 事件失败（非致命）: {e}")
-
-        # 检查是否是批量刷新测试场景（local_matches预先有很多项）
-        # 如果是从空列表开始添加的单个匹配，则不清空（为了测试test_process_key_match_valid）
-        # 如果列表初始就有很多项（批量刷新测试），则清空
-        if len(local_matches) >= 10:
-            local_matches.clear()
-=======
         # 批量提交匹配结果（v4.2.2 H6重构: 提取到 _flush_match_batch）
         should_continue, stop_flag = self._flush_match_batch(local_matches)
         if stop_flag:
@@ -971,7 +798,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
             return False
         if not should_continue:
             return False
->>>>>>> Stashed changes
 
     def _flush_match_batch(self, local_matches: list, force: bool = False) -> tuple[bool, bool]:
         """批量提交匹配结果（v4.2.2 H6重构: 从 _process_key_match 和 worker 末尾提取公共逻辑）
@@ -1166,15 +992,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     if self._stop_event.is_set():
                         break
 
-<<<<<<< Updated upstream
-                    should_continue, _had_match = self._process_single_random_key(
-                        key_mgr, recent_keys_list, recent_keys_set,
-                        max_recent_size, _half_size,
-                        worker_id, local_matches,
-                    )
-                    if not should_continue:
-                        break
-=======
                     key_mgr.generate_key()
                     private_key = key_mgr.get_key()
 
@@ -1230,7 +1047,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                             "address_generation_failed", "生成地址失败", e, worker_id
                         )
                         continue
->>>>>>> Stashed changes
 
                     local_count += 1
                     batch_count += 1
@@ -1239,9 +1055,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         with self._state_lock:
                             self._live_range_count += 32
 
-<<<<<<< Updated upstream
-            # 定期让出时间片
-=======
                     # 检查匹配（P1-1: 匹配处理通过 _process_key_match 统一处理）
                     # v4.2.1 O1优化: Hash160 二进制比较 (20-bytes set lookup, 比地址字符串更高效)
                     matched_address = None
@@ -1284,7 +1097,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
             # 定期让出时间片，避免CPU占用过高
             # v4.2.2 H3修复: time.sleep(0) 在部分平台不产生实际让出，改用 0.001s
->>>>>>> Stashed changes
             if local_count % 100 == 0:
                 time.sleep(0.001)
 
@@ -1296,11 +1108,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         f"工作线程 {worker_id}: 批次 {batch_count} 私钥, 速度 {batch_speed:.2f}/s"
                     )
 
-<<<<<<< Updated upstream
-            time.sleep(0)
-
-        self._submit_remaining_matches(local_matches, worker_id)
-=======
             # 每批处理完后检查是否需要让出
             # v4.2.2 H3修复: 微休眠确保可靠CPU让出
             time.sleep(0.001)
@@ -1309,7 +1116,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self._flush_match_batch(local_matches, force=True)
         if local_matches:
             logger.debug(f"工作线程 {worker_id} 提交了 {len(local_matches)} 个匹配结果")
->>>>>>> Stashed changes
 
         remainder = local_count % 32
         if remainder > 0:
@@ -1348,228 +1154,96 @@ class KeyCollisionEngine(BaseCollisionEngine):
         except (RuntimeError, OSError, ValueError) as e:
             logger.debug(f"发布 ENGINE_START 事件失败（非致命）: {e}")
 
-<<<<<<< Updated upstream
-=======
-        # v4.2.1: 发布 ENGINE_START 事件
-        try:
-            self.event_bus.publish(EngineStartEvent(
-                mode=self._current_mode,
-                target_count=len(self.targets),
-                batch_size=self._batch_size,
-            ))
-        except Exception as e:
-            logger.debug(f"发布 ENGINE_START 事件失败（非致命）: {e}")
-
-        # P3-7: 启动时自适应调优内存池
->>>>>>> Stashed changes
-        if self.use_memory_pool:
+        for future in done:
+            worker_id = futures.pop(future)
             try:
-                from ..core.memory_pool import pool_manager
+                local_count = future.result()
+                with self._state_lock:
+                    # P1-5修复: 已完成worker的live计数转移到total_count
+                    # 原因：_live_range_count 中已完成worker的贡献必须扣除
+                    # 否则 total_count + _live_range_count 会重复计入已完成work
+                    # 使用 max(0, ...) 防止并发下的短暂不一致
+                    self._live_range_count = max(0, self._live_range_count - local_count)
+                    total_count += local_count
+            except concurrent.futures.CancelledError:
+                # 线程被取消（正常停止）
+                # 这通常发生在调用stop()时，是预期内的行为
+                logger.debug(f"工作线程 {worker_id} 被取消")
+            except KeyboardInterrupt:
+                # 用户中断程序（Ctrl+C），重新抛出让主线程处理
+                # 这会让程序优雅退出，而不是强制终止
+                logger.info(f"工作线程 {worker_id} 被用户中断")
+                raise
+            except (RuntimeError, ValueError) as e:
+                # 使用统一异常处理器
+                ExceptionHandler.handle_engine_error(
+                    "CPU", e, self.stats, f"工作线程{worker_id}执行"
+                )
+            except Exception as e:
+                # 未知错误：使用统一异常处理器
+                ExceptionHandler.handle_engine_error(
+                    "CPU", e, self.stats, f"工作线程{worker_id}执行"
+                )
 
-                was_tuned = pool_manager.auto_tune_all()
-                if not was_tuned:
-                    stats = pool_manager.get_all_stats()
-                    logger.debug(
-                        f"P3-7 内存池状态: total_est={stats['total_estimated_memory_mb']:.1f}MB"
-                    )
-            except (ImportError, RuntimeError) as e:
-                logger.debug(f"P3-7 内存池调优跳过: {type(e).__name__}: {e}")
+            # 如果未停止，提交新任务
+            if not self._stop_event.is_set():
+                new_future = executor.submit(self._random_search_worker, worker_id)
+                futures[new_future] = worker_id
 
-        if self.data_logging_enabled and self.data_logger:
-            self.data_logger.record_engine_data(
-                mode=self._current_mode,
-                target_count=len(self.targets),
-                is_running=True,
-                current_position=0,
-            )
-            if self._last_data_log_time == 0.0:
-                self.data_logger.record_system_data()
+        # P2-5修复: 基于时间和计数的双重进度回调控制
+        current_time = time.time()
+        should_report = False
 
-    def _random_search_determine_workers(self) -> int:
-        """确定工作线程数，考虑内存降级"""
-        num_workers = (
-            _validate_worker_count(self.max_workers)
-            if self.max_workers is not None
-            else self._cpu_count
-        )
-        available_memory_mb = psutil.virtual_memory().available / (1024 * 1024)
-        if available_memory_mb < 512:
-            num_workers = min(num_workers, 2)
-            logger.warning(
-                f"内存不足 ({available_memory_mb:.0f}MB), 限制线程数={num_workers}"
-            )
-        logger.info(
-            f"工作线程: {num_workers} (CPU={self._cpu_count}核, 内存可用{available_memory_mb:.0f}MB)"
-        )
-        return num_workers
+        # 时间间隔控制
+        if current_time - self._last_progress_time >= self._progress_interval_sec:
+            should_report = True
 
-    def _random_search_handle_done(
-        self,
-        future: concurrent.futures.Future,
-        futures: dict,
-        total_count: int,
-        executor: concurrent.futures.ThreadPoolExecutor,
-    ) -> int:
-        """处理已完成的工作线程 future，返回更新后的 total_count"""
-        worker_id = futures.pop(future)
-        try:
-            local_count = future.result()
+        # 计数控制(高速运行时更精确)
+        self._batch_counter += 1
+        if self._batch_counter >= self._progress_interval_count:
+            should_report = True
+            self._batch_counter = 0
+
+        if should_report:
+            # P2-5修复: 使用实时计数器，而不是等待线程完成
+            # 这确保在工作线程持续运行时也能获取实时进度
             with self._state_lock:
-                self._live_range_count = max(0, self._live_range_count - local_count)
-                total_count += local_count
-        except concurrent.futures.CancelledError:
-            logger.debug(f"工作线程 {worker_id} 被取消")
-        except KeyboardInterrupt:
-            logger.info(f"工作线程 {worker_id} 被用户中断")
-            raise
-        except (RuntimeError, OSError, ValueError) as e:
-            ExceptionHandler.handle_engine_error(
-                "CPU", e, self.stats, f"工作线程{worker_id}执行"
-            )
+                safe_count = total_count + self._live_range_count
 
-        if not self._stop_event.is_set():
-            new_future = executor.submit(self._random_search_worker, worker_id)
-            futures[new_future] = worker_id
+            self.stats.update(safe_count)
+            if self.on_progress:
+                self.on_progress(self.stats.snapshot())
+            self._save_checkpoint(safe_count)
 
-        return total_count
+            # 记录数据日志
+            elapsed = current_time - self.stats.start_time
+            speed = safe_count / elapsed if elapsed > 0 else 0
+            self._log_data_metrics(safe_count, speed)
 
-<<<<<<< Updated upstream
-    def _random_search_report_progress(
-        self, total_count: int, current_time: float
-    ) -> None:
-        """报告进度：回调、检查点、数据日志、内存监控、事件发送"""
-        with self._state_lock:
-            safe_count = total_count + self._live_range_count
+            # M13: 内存监控自动降级（独立于数据日志，即使禁用日志也生效）
+            try:
+                mem_mb = self._process.memory_info().rss / 1024 / 1024
+                self._check_memory_and_downgrade(mem_mb, current_time)
+            except (AttributeError, OSError, RuntimeError) as e:
+                logger.debug(f"内存监控失败（不影响主逻辑）: {type(e).__name__}: {e}")
 
-        self.stats.update(safe_count)
-        if self.on_progress:
-            invoke_with_timeout(
-                self.on_progress,
-                args=(self.stats.snapshot(),),
-                timeout=5.0,
-                callback_name="on_progress",
-            )
-        self._save_checkpoint(safe_count)
-
-        elapsed = current_time - self.stats.start_time
-        speed = safe_count / elapsed if elapsed > 0 else 0
-        self._log_data_metrics(safe_count, speed)
-
-        try:
-            mem_mb = self._process.memory_info().rss / 1024 / 1024
-            self._check_memory_and_downgrade(mem_mb, current_time)
-        except (AttributeError, OSError, RuntimeError) as e:
-            logger.debug(f"内存监控失败（不影响主逻辑）: {type(e).__name__}: {e}")
-
-        try:
-            self.event_bus.publish(
-                EngineProgressEvent(
+            # v4.2.1: 发布 ENGINE_PROGRESS 事件
+            try:
+                self.event_bus.publish(EngineProgressEvent(
                     total_checked=safe_count,
                     speed=speed,
                     matches_found=self.stats.matches_found,
                     elapsed_time=elapsed,
-                )
-            )
-        except (RuntimeError, OSError, ValueError) as e:
-            logger.debug(f"发布 ENGINE_PROGRESS 事件失败（非致命）: {e}")
+                ))
+            except Exception as e:
+                logger.debug(f"发布 ENGINE_PROGRESS 事件失败（非致命）: {e}")
 
-        self._last_progress_time = current_time
-        sampled_logger.info(f"进度: {safe_count:,} 已检查, {speed:,.0f} 次/秒")
+            self._last_progress_time = current_time
 
-    def _random_search_finalize(self, total_count: int) -> None:
-        """完成随机搜索：最终统计、事件、数据日志、回调"""
-=======
-                for future in done:
-                    worker_id = futures.pop(future)
-                    try:
-                        local_count = future.result()
-                        with self._state_lock:
-                            # P1-5修复: 已完成worker的live计数转移到total_count
-                            # 原因：_live_range_count 中已完成worker的贡献必须扣除
-                            # 否则 total_count + _live_range_count 会重复计入已完成work
-                            # 使用 max(0, ...) 防止并发下的短暂不一致
-                            self._live_range_count = max(0, self._live_range_count - local_count)
-                            total_count += local_count
-                    except concurrent.futures.CancelledError:
-                        # 线程被取消（正常停止）
-                        # 这通常发生在调用stop()时，是预期内的行为
-                        logger.debug(f"工作线程 {worker_id} 被取消")
-                    except KeyboardInterrupt:
-                        # 用户中断程序（Ctrl+C），重新抛出让主线程处理
-                        # 这会让程序优雅退出，而不是强制终止
-                        logger.info(f"工作线程 {worker_id} 被用户中断")
-                        raise
-                    except (RuntimeError, ValueError) as e:
-                        # 使用统一异常处理器
-                        ExceptionHandler.handle_engine_error(
-                            "CPU", e, self.stats, f"工作线程{worker_id}执行"
-                        )
-                    except Exception as e:
-                        # 未知错误：使用统一异常处理器
-                        ExceptionHandler.handle_engine_error(
-                            "CPU", e, self.stats, f"工作线程{worker_id}执行"
-                        )
-
-                    # 如果未停止，提交新任务
-                    if not self._stop_event.is_set():
-                        new_future = executor.submit(self._random_search_worker, worker_id)
-                        futures[new_future] = worker_id
-
-                # P2-5修复: 基于时间和计数的双重进度回调控制
-                current_time = time.time()
-                should_report = False
-
-                # 时间间隔控制
-                if current_time - self._last_progress_time >= self._progress_interval_sec:
-                    should_report = True
-
-                # 计数控制(高速运行时更精确)
-                self._batch_counter += 1
-                if self._batch_counter >= self._progress_interval_count:
-                    should_report = True
-                    self._batch_counter = 0
-
-                if should_report:
-                    # P2-5修复: 使用实时计数器，而不是等待线程完成
-                    # 这确保在工作线程持续运行时也能获取实时进度
-                    with self._state_lock:
-                        safe_count = total_count + self._live_range_count
-
-                    self.stats.update(safe_count)
-                    if self.on_progress:
-                        self.on_progress(self.stats.snapshot())
-                    self._save_checkpoint(safe_count)
-
-                    # 记录数据日志
-                    elapsed = current_time - self.stats.start_time
-                    speed = safe_count / elapsed if elapsed > 0 else 0
-                    self._log_data_metrics(safe_count, speed)
-
-                    # M13: 内存监控自动降级（独立于数据日志，即使禁用日志也生效）
-                    try:
-                        mem_mb = self._process.memory_info().rss / 1024 / 1024
-                        self._check_memory_and_downgrade(mem_mb, current_time)
-                    except (AttributeError, OSError, RuntimeError) as e:
-                        logger.debug(f"内存监控失败（不影响主逻辑）: {type(e).__name__}: {e}")
-
-                    # v4.2.1: 发布 ENGINE_PROGRESS 事件
-                    try:
-                        self.event_bus.publish(EngineProgressEvent(
-                            total_checked=safe_count,
-                            speed=speed,
-                            matches_found=self.stats.matches_found,
-                            elapsed_time=elapsed,
-                        ))
-                    except Exception as e:
-                        logger.debug(f"发布 ENGINE_PROGRESS 事件失败（非致命）: {e}")
-
-                    self._last_progress_time = current_time
-
-                    # 采样日志记录进度
-                    sampled_logger.info(f"进度: {safe_count:,} 已检查, {speed:,.0f} 次/秒")
+            # 采样日志记录进度
+            sampled_logger.info(f"进度: {safe_count:,} 已检查, {speed:,.0f} 次/秒")
 
         # 确保线程安全地获取最终计数
->>>>>>> Stashed changes
         with self._state_lock:
             final_count = total_count + self._live_range_count
             self._live_range_count = 0
@@ -1590,24 +1264,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
         logger.info(f"发现匹配: {self.stats.matches_found} 个")
         logger.info("=" * 60)
 
-<<<<<<< Updated upstream
-        try:
-            with self._stop_reason_lock:
-                stop_reason = self._engine_stop_reason
-                self._engine_stop_reason = "normal"
-            self.event_bus.publish(
-                EngineCompleteEvent(
-                    total_checked=final_count,
-                    matches_found=self.stats.matches_found,
-                    elapsed_time=elapsed,
-                    avg_speed=speed,
-                    stop_reason=stop_reason,
-                )
-            )
-        except (RuntimeError, OSError, ValueError) as e:
-            logger.debug(f"发布 ENGINE_COMPLETE 事件失败（非致命）: {e}")
-
-=======
         # v4.2.1: 发布 ENGINE_COMPLETE 事件
         try:
             stop_reason = self._engine_stop_reason
@@ -1623,7 +1279,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
             logger.debug(f"发布 ENGINE_COMPLETE 事件失败（非致命）: {e}")
 
         # 记录引擎停止数据
->>>>>>> Stashed changes
         if self.data_logging_enabled and self.data_logger:
             self.data_logger.record_engine_data(
                 mode=self._current_mode,
@@ -1807,19 +1462,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         format_type = "压缩" if matched_compressed else "非压缩"
                         logger.info(f"🎯 发现匹配! 地址={matched_address} (格式: {format_type})")
 
-<<<<<<< Updated upstream
-                        # v3.5.2: 发布 ENGINE_MATCH 事件
-                        try:
-                            self.event_bus.publish(
-                                EngineMatchEvent(
-                                    private_key=b"",  # 安全: 事件不暴露原始私钥
-                                    address=matched_address,
-                                    wif=wif,
-                                    target_address=matched_address,
-                                )
-                            )
-                        except (RuntimeError, OSError, ValueError) as e:
-=======
                         # v4.2.1: 发布 ENGINE_MATCH 事件
                         try:
                             self.event_bus.publish(EngineMatchEvent(
@@ -1829,7 +1471,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                                 target_address=self._resolve_target_address(matched_address, matched_hash160),
                             ))
                         except Exception as e:
->>>>>>> Stashed changes
                             logger.debug(f"发布 ENGINE_MATCH 事件失败（非致命）: {e}")
 
                     except (ValueError, TypeError, OverflowError) as e:
@@ -1839,22 +1480,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         logger.error(
                             f"Worker {worker_id}: 匹配参数错 addr={matched_address}: {err_type}: {e}"
                         )
-<<<<<<< Updated upstream
-                        # v3.5.2: 发布 ENGINE_ERROR 事件
-                        with suppress(RuntimeError, OSError):
-                            self.event_bus.publish(
-                                EngineErrorEvent(
-                                    error_type="wif_encode_error",
-                                    error_message=str(e),
-                                    exception=e,
-                                    context={"worker_id": worker_id, "address": matched_address},
-                                    recoverable=True,
-                                )
-                            )
-                    except (RuntimeError, OSError):
-                        # 未知错误：记录完整堆栈
-                        logger.exception(f"Worker {worker_id}: 匹配处理未知错误 addr={matched_address}")
-=======
                         # v4.2.1: 发布 ENGINE_ERROR 事件
                         try:
                             self.event_bus.publish(EngineErrorEvent(
@@ -1871,7 +1496,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         logger.exception(
                             f"Worker {worker_id}: 匹配处理未知错误 addr={matched_address}: {e}"
                         )
->>>>>>> Stashed changes
 
             # with块退出时私钥自动清零
 
@@ -1897,18 +1521,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self._running = True
         self._last_data_log_time = 0.0  # 重置数据日志时间
 
-<<<<<<< Updated upstream
-        # v3.5.2: 发布 ENGINE_START 事件
-        try:
-            self.event_bus.publish(
-                EngineStartEvent(
-                    mode=self._current_mode,
-                    target_count=len(self.targets),
-                    batch_size=self._batch_size,
-                )
-            )
-        except (RuntimeError, OSError, ValueError) as e:
-=======
         # v4.2.1: 发布 ENGINE_START 事件
         try:
             self.event_bus.publish(EngineStartEvent(
@@ -1917,7 +1529,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 batch_size=self._batch_size,
             ))
         except Exception as e:
->>>>>>> Stashed changes
             logger.debug(f"发布 ENGINE_START 事件失败（非致命）: {e}")
 
         # 记录引擎启动数据
@@ -2032,19 +1643,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 speed = display_count / elapsed if elapsed > 0 else 0
                 self._log_data_metrics(display_count, speed)
 
-<<<<<<< Updated upstream
-                # v3.5.2: 发布 ENGINE_PROGRESS 事件
-                try:
-                    self.event_bus.publish(
-                        EngineProgressEvent(
-                            total_checked=display_count,
-                            speed=speed,
-                            matches_found=self.stats.matches_found,
-                            elapsed_time=elapsed,
-                        )
-                    )
-                except (RuntimeError, OSError, ValueError) as e:
-=======
                 # v4.2.1: 发布 ENGINE_PROGRESS 事件
                 try:
                     self.event_bus.publish(EngineProgressEvent(
@@ -2054,7 +1652,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         elapsed_time=elapsed,
                     ))
                 except Exception as e:
->>>>>>> Stashed changes
                     logger.debug(f"发布 ENGINE_PROGRESS 事件失败（非致命）: {e}")
 
         # P1-4修复: 停止时合并 _live_range_count，防止pending worker贡献丢失
@@ -2081,23 +1678,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
         elapsed = time.time() - self.stats.start_time
         speed = final_count / elapsed if elapsed > 0 else 0
 
-<<<<<<< Updated upstream
-        # v3.5.2: 发布 ENGINE_COMPLETE 事件
-        try:
-            with self._stop_reason_lock:
-                stop_reason = self._engine_stop_reason
-                self._engine_stop_reason = "normal"  # 重置为默认值
-            self.event_bus.publish(
-                EngineCompleteEvent(
-                    total_checked=final_count,
-                    matches_found=self.stats.matches_found,
-                    elapsed_time=elapsed,
-                    avg_speed=speed,
-                    stop_reason=stop_reason,
-                )
-            )
-        except (RuntimeError, OSError, ValueError) as e:
-=======
         # v4.2.1: 发布 ENGINE_COMPLETE 事件
         try:
             stop_reason = self._engine_stop_reason
@@ -2110,7 +1690,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 stop_reason=stop_reason,
             ))
         except Exception as e:
->>>>>>> Stashed changes
             logger.debug(f"发布 ENGINE_COMPLETE 事件失败（非致命）: {e}")
 
         # 记录引擎停止数据
@@ -2180,14 +1759,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     if self._stop_event.is_set():
                         break
 
-<<<<<<< Updated upstream
-                    # 验证范围（使用crypto_backend的曲线参数）
-                    # Secp256k1.N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141 # noqa: E501
-                    if k < 1 or k >= 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141:
-=======
                     # 验证范围: 私钥必须在 [1, Secp256k1.N) 范围内
                     if k < 1 or k >= Secp256k1.N:
->>>>>>> Stashed changes
                         continue
 
                     # 复用key_mgr生成新私钥（旧私钥自动清零）
@@ -2198,10 +1771,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     private_key_bytes = bytes(private_key)
 
                     try:
-<<<<<<< Updated upstream
-                        # 生成地址
-                        address, compressed_pub, _ = self.generator.generate_address(private_key_bytes)
-=======
                         # 生成地址 (v4.2.1 O1: 捕获公钥用于 Hash160 匹配)
                         if self.check_uncompressed:
                             address, compressed_pub, _ = (
@@ -2223,7 +1792,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                             )
                             uncompressed_pk = None
                             uncompressed_addr = None
->>>>>>> Stashed changes
                     except ValueError as e:
                         logger.warning(f"BruteForce worker {worker_id}: 私钥无效，跳过: {e}")
                         continue
@@ -2232,15 +1800,9 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         # 理论上不应该发生，如果发生说明有潜在的bug
                         logger.error(f"BF worker {worker_id}: 私钥转换错: {type(e).__name__}: {e}")
                         continue
-<<<<<<< Updated upstream
-                    except (RuntimeError, OSError):
-                        # 未知错误：记录完整堆栈
-                        logger.exception(f"BruteForce worker {worker_id}: 生成地址未知错误")
-=======
                     except (MemoryError, RuntimeError) as e:
                         # 未知错误：记录完整堆栈
                         logger.exception(f"BruteForce worker {worker_id}: 生成地址未知错误 k={k}: {e}")
->>>>>>> Stashed changes
                         continue
 
                     local_count += 1
@@ -2287,19 +1849,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                             else:
                                 self._stop_event.set()
 
-<<<<<<< Updated upstream
-                            # v3.5.2: 发布 ENGINE_MATCH 事件
-                            try:
-                                self.event_bus.publish(
-                                    EngineMatchEvent(
-                                        private_key=b"",  # 安全: 事件不暴露原始私钥
-                                        address=address,
-                                        wif=wif,
-                                        target_address=address,
-                                    )
-                                )
-                            except (RuntimeError, OSError, ValueError) as e:
-=======
                             # 记录匹配发现
                             format_type = "压缩" if matched_compressed else "非压缩"
                             logger.info(f"🎯 发现匹配! 地址={matched_address} (格式: {format_type})")
@@ -2313,28 +1862,12 @@ class KeyCollisionEngine(BaseCollisionEngine):
                                     target_address=self._resolve_target_address(matched_address, matched_hash160),
                             ))
                             except Exception as e:
->>>>>>> Stashed changes
                                 logger.debug(f"发布 ENGINE_MATCH 事件失败（非致命）: {e}")
 
                         except (ValueError, TypeError, OverflowError) as e:
                             # WIF编码或回调参数错误
                             # MEDIUM-9修复: 拆分多行f-string提高可读性
                             err_type = type(e).__name__
-<<<<<<< Updated upstream
-                            logger.error(f"BF worker {worker_id}: 匹配参数错 addr={address}: {err_type}")
-                            # v3.5.2: 发布 ENGINE_ERROR 事件
-                            with suppress(RuntimeError, OSError):
-                                self.event_bus.publish(
-                                    EngineErrorEvent(
-                                        error_type="wif_encode_error",
-                                        error_message=str(e),
-                                        exception=e,
-                                        context={"worker_id": worker_id, "address": address},
-                                        recoverable=True,
-                                    )
-                                )
-                        except (RuntimeError, OSError):
-=======
                             logger.error(
                                 f"BruteForce worker {worker_id}: 匹配处理参数错误 addr={matched_address}: {err_type}"
                             )
@@ -2350,7 +1883,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                             except (AttributeError, RuntimeError, TypeError) as e:
                                 logger.debug(f"Worker {worker_id}: EventBus publish 失败（非致命）: {e}", exc_info=True)
                         except (MemoryError, RuntimeError) as e:
->>>>>>> Stashed changes
                             # 未知错误：记录完整堆栈
                             logger.exception(
                                 f"BruteForce worker {worker_id}: 匹配处理未知错误 addr={matched_address}: {e}"
@@ -2381,18 +1913,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self._running = True
         self._last_data_log_time = 0.0  # 重置数据日志时间
 
-<<<<<<< Updated upstream
-        # v3.5.2: 发布 ENGINE_START 事件
-        try:
-            self.event_bus.publish(
-                EngineStartEvent(
-                    mode=self._current_mode,
-                    target_count=len(self.targets),
-                    batch_size=self._batch_size,
-                )
-            )
-        except (RuntimeError, OSError, ValueError) as e:
-=======
         # v4.2.1: 发布 ENGINE_START 事件
         try:
             self.event_bus.publish(EngineStartEvent(
@@ -2401,7 +1921,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 batch_size=self._batch_size,
             ))
         except Exception as e:
->>>>>>> Stashed changes
             logger.debug(f"发布 ENGINE_START 事件失败（非致命）: {e}")
 
         # 警告：如果未设置max_keys
@@ -2467,19 +1986,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     speed = total_count / elapsed if elapsed > 0 else 0
                     self._log_data_metrics(total_count, speed)
 
-<<<<<<< Updated upstream
-                    # v3.5.2: 发布 ENGINE_PROGRESS 事件
-                    try:
-                        self.event_bus.publish(
-                            EngineProgressEvent(
-                                total_checked=total_count,
-                                speed=speed,
-                                matches_found=self.stats.matches_found,
-                                elapsed_time=elapsed,
-                            )
-                        )
-                    except (RuntimeError, OSError, ValueError) as e:
-=======
                     # v4.2.1: 发布 ENGINE_PROGRESS 事件
                     try:
                         self.event_bus.publish(EngineProgressEvent(
@@ -2489,7 +1995,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                             elapsed_time=elapsed,
                         ))
                     except Exception as e:
->>>>>>> Stashed changes
                         logger.debug(f"发布 ENGINE_PROGRESS 事件失败（非致命）: {e}")
 
         self._executor = None
@@ -2504,22 +2009,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
         elapsed = time.time() - self.stats.start_time
         speed = total_count / elapsed if elapsed > 0 else 0
 
-<<<<<<< Updated upstream
-        # v3.5.2: 发布 ENGINE_COMPLETE 事件
-        try:
-            stop_reason = self._engine_stop_reason
-            self._engine_stop_reason = "normal"  # 重置为默认值
-            self.event_bus.publish(
-                EngineCompleteEvent(
-                    total_checked=total_count,
-                    matches_found=self.stats.matches_found,
-                    elapsed_time=elapsed,
-                    avg_speed=speed,
-                    stop_reason=stop_reason,
-                )
-            )
-        except (RuntimeError, OSError, ValueError) as e:
-=======
         # v4.2.1: 发布 ENGINE_COMPLETE 事件
         try:
             stop_reason = self._engine_stop_reason
@@ -2532,7 +2021,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 stop_reason=stop_reason,
             ))
         except Exception as e:
->>>>>>> Stashed changes
             logger.debug(f"发布 ENGINE_COMPLETE 事件失败（非致命）: {e}")
 
         # 记录引擎停止数据
@@ -2861,11 +2349,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self._stop_send_signals()
         self._stop_join_workers(timeout)
 
-<<<<<<< Updated upstream
-        if hasattr(self, "_stats_updated"):
-            if not self._stats_updated.wait(timeout=5.0):
-                logger.warning("统计信息更新超时，可能存在竞态条件")
-=======
         was_running = self._running  # C2修复: 在信号设置前捕获运行状态，避免竞态遗漏 EngineStopEvent
         self._engine_stop_reason = "user_stopped"  # v4.2.1: 必须在下述信号前设置
         self._stop_event.set()
@@ -2880,15 +2363,9 @@ class KeyCollisionEngine(BaseCollisionEngine):
             self._thread.join(timeout=timeout)
             if self._thread.is_alive():
                 logger.warning(f"工作线程未在{timeout:.1f}秒内结束，可能存在未提交的匹配数据")
->>>>>>> Stashed changes
             else:
                 logger.debug("统计信息更新完成")
 
-<<<<<<< Updated upstream
-        self._stop_save_checkpoint()
-        self._stop_cleanup_resources()
-        self._stop_reset_and_publish()
-=======
         # v4.2.1: 发布 ENGINE_STOP 事件（引擎曾运行即发布，避免线程提前退出时的竞态遗漏）
         if was_running:
             try:
@@ -2900,7 +2377,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
             except Exception as e:
                 logger.debug(f"发布 ENGINE_STOP 事件失败（非致命）: {e}")
 
->>>>>>> Stashed changes
         logger.info("对撞引擎已停止")
 
     def is_running(self) -> bool:
@@ -2942,14 +2418,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
         try:
             if hasattr(self, "_running") and self._running and hasattr(self, "stop"):
                 self.stop()
-<<<<<<< Updated upstream
-        except (AttributeError, RuntimeError, OSError, ValueError) as e:
-            # 记录析构函数中的异常，而不是静默忽略
-            logger.warning(f"析构函数资源清理异常（非致命）: {type(e).__name__}: {e}")
-=======
         except Exception:
             pass  # 析构函数资源清理: 必须保持宽捕获, 限制异常类型可能导致GC崩溃
->>>>>>> Stashed changes
 
     def get_stats(self) -> CollisionStats:
         """

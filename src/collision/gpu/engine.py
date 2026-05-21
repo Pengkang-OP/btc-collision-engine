@@ -24,11 +24,7 @@ import os
 import threading
 import time
 from collections.abc import Callable
-<<<<<<< Updated upstream
 from dataclasses import dataclass, field
-=======
-from dataclasses import dataclass
->>>>>>> Stashed changes
 from typing import Any, cast
 
 from ...utils.timeout import invoke_with_timeout
@@ -41,50 +37,7 @@ from ._result_processor import GPUResultProcessor
 from ._scheduler import GPUBatchScheduler
 from .core import CollisionCore
 from .monitoring import PerformanceMonitoringPipeline
-<<<<<<< Updated upstream
 from .vendor_strategy import VendorOptimizationFactory  # noqa: F401 # 保留供测试 patch 目标
-=======
-from .vendor_strategy import VendorOptimizationFactory  # 保留供测试 patch 目标
-
-# v4.2.2 H2修复: 所有导入移至模块顶部, 消除 noqa E402
-# --- 基础依赖 - 加密 ---
-from ...core.base58 import Base58
-from ...core.wif import WIF
-from ...gpu.device import GPUDeviceDetector
-from ...gpu.device_manager import GPUDeviceManager
-from ...gpu.engine_monitor import GPUEngineMonitor
-from ...gpu.memory_calculator import GPUMemoryCalculator
-from ...gpu.search_mode_coordinator import SearchModeCoordinator
-
-# --- 监控 ---
-from ...monitoring.data_logger import DataLogger
-from ...monitoring.enhanced_monitoring import EnhancedMonitoringSystem
-from ...monitoring.event_adapters import (
-    DataLoggerAdapter,
-    EnhancedMonitoringAdapter,
-)
-from ...monitoring.gpu_performance_monitor import (
-    GPUPerformanceMonitor,
-    get_gpu_performance_monitor,
-)
-
-# --- 碰撞基础 ---
-from ..base_engine import BaseCollisionEngine
-from ..collision_stats import CollisionStats
-from ..event_bus import EventBus
-from ..events import (
-    EngineCompleteEvent,
-    EngineMatchEvent,
-    EngineProgressEvent,
-    EngineStartEvent,
-    EngineStopEvent,
-    EventType,
-)
-from .key_generator import (
-    KeyGenerationStrategy,
-    KeyGenerator,
-)
->>>>>>> Stashed changes
 
 # GPU 常量
 UINT32_MAX = 0xFFFFFFFF
@@ -106,12 +59,7 @@ ASYNC_KEY_GEN_SAFETY_FACTOR = 2.0
 
 # pyopencl 检测
 try:
-<<<<<<< Updated upstream
     import pyopencl as cl  # noqa: F401
-=======
-    import numpy as np
-    import pyopencl as cl
->>>>>>> Stashed changes
 
     PYOPENCL_AVAILABLE = True
 except ImportError:
@@ -125,7 +73,6 @@ ASYNC_LOG_AVAILABLE = True
 # GPU 配置管理器 (已弃用: _merge_gpu_configs 已移除, 常量仅保留供外部导入兼容)
 GPU_CONFIG_MANAGER_AVAILABLE = False  # 保留供外部导入兼容
 
-<<<<<<< Updated upstream
 # 基础依赖
 # 加密
 
@@ -168,8 +115,6 @@ from .key_generator import (  # noqa: E402
     KeyGenerator,
 )
 
-=======
->>>>>>> Stashed changes
 logger = logging.getLogger(__name__)
 
 # 预导入 GPU 监控器
@@ -184,7 +129,6 @@ def _get_gpu_monitor() -> "GPUPerformanceMonitor":
     return _gpu_performance_monitor
 
 
-<<<<<<< Updated upstream
 @dataclass
 class GPUEngineConfig:
     """GPU 碰撞引擎配置 (v4.3.1)
@@ -195,39 +139,10 @@ class GPUEngineConfig:
 
     device_index: int = 1
     batch_size: int | None = None
-=======
-# v4.2.2 M5: 统一端序转换 → 从 gpu/seed_utils.py 导入单一权威实现
-from ...gpu.seed_utils import _seed_bytes_to_u32_be_array  # noqa: E402
-
-
-# v4.2.2 M8: GPUEngineConfig dataclass — 推荐的 GPU 引擎配置方式
-@dataclass
-class GPUEngineConfig:
-    """GPU 碰撞引擎配置（dataclass，推荐替代构造函数 22 参数）
-
-    v4.2.2 M8 新增: 提供类型安全的配置对象，替代 GPUCollisionEngine.__init__
-    的直接参数传递。从旧参数式构造迁移时使用 GPUCollisionEngine.from_config()。
-
-    示例:
-        config = GPUEngineConfig(targets={"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"})
-        engine = GPUCollisionEngine.from_config(config)
-    """
-
-    targets: set[str]
-    device_index: int = 1
-    batch_size: int | None = None
-    on_progress: ProgressCallback | None = None
-    on_match: MatchCallback | None = None
-    on_complete: CompleteCallback | None = None
->>>>>>> Stashed changes
     checkpoint_enabled: bool = False
     dedup_enabled: bool = False
     dedup_max_size: int = 1_000_000
     checkpoint_interval: int = 30
-<<<<<<< Updated upstream
-=======
-    event_bus: EventBus | None = None
->>>>>>> Stashed changes
     data_logging_enabled: bool = True
     data_logging_interval: int = 5
     use_enhanced_monitoring: bool = True
@@ -239,7 +154,6 @@ class GPUEngineConfig:
     async_log_max_bytes: int = 10 * 1024 * 1024
     async_log_backup_count: int = 5
     check_uncompressed: bool | None = None
-<<<<<<< Updated upstream
     key_generation_strategy: KeyGenerationStrategy = field(default=KeyGenerationStrategy.PRNG_SEED)
 
     def to_dict(self) -> dict[str, Any]:
@@ -264,9 +178,6 @@ class GPUEngineConfig:
             "check_uncompressed": self.check_uncompressed,
             "key_generation_strategy": self.key_generation_strategy.value,
         }
-=======
-    key_generation_strategy: KeyGenerationStrategy = KeyGenerationStrategy.PRNG_SEED
->>>>>>> Stashed changes
 
 
 class GPUCollisionEngine(BaseCollisionEngine):
@@ -278,13 +189,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
     继承 BaseCollisionEngine，保持完整向后兼容。
 
-<<<<<<< Updated upstream
     自 v4.3.1: 支持通过 GPUEngineConfig 配置对象简化参数传递。
-=======
-    v4.2.2 改进:
-        M8: 新增 GPUEngineConfig dataclass (from_config() 类方法)
-        H2: 消除所有 noqa E402 导入, 所有导入移至模块顶部
->>>>>>> Stashed changes
     """
 
     MONITOR_INTERVAL = 100
@@ -313,13 +218,9 @@ class GPUCollisionEngine(BaseCollisionEngine):
         async_log_max_bytes: int = 10 * 1024 * 1024,
         async_log_backup_count: int = 5,
         check_uncompressed: bool | None = None,
-<<<<<<< Updated upstream
         key_generation_strategy: KeyGenerationStrategy = KeyGenerationStrategy.PRNG_SEED,
         # v3.2.1: 私钥生成策略
         config: "GPUEngineConfig | None" = None,  # v4.3.1: 配置对象优先
-=======
-        key_generation_strategy: KeyGenerationStrategy = KeyGenerationStrategy.PRNG_SEED,  # v4.2.1: 私钥生成策略
->>>>>>> Stashed changes
     ) -> None:
         """初始化 GPU 碰撞引擎 (Phase 6 重构版)
 
@@ -818,21 +719,9 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 with contextlib.suppress(Exception):
                     self._device_manager.cleanup()
                 self._device_manager = None
-<<<<<<< Updated upstream
                 self._gpu_memory_pool = None
 
             # GPU 内存池由 device_manager.cleanup() 统一清理，无需重复操作
-=======
-
-            # 清理GPU内存池（修复: 资源泄漏）
-            if hasattr(self, "_gpu_memory_pool") and self._gpu_memory_pool is not None:
-                try:
-                    if hasattr(self._gpu_memory_pool, "cleanup"):
-                        self._gpu_memory_pool.cleanup()
-                except Exception:
-                    pass
-                self._gpu_memory_pool = None
->>>>>>> Stashed changes
 
             # 清理性能监控管道（修复: 资源泄漏）
             if hasattr(self, "_perf_pipeline") and self._perf_pipeline is not None:
@@ -841,19 +730,11 @@ class GPUCollisionEngine(BaseCollisionEngine):
                         self._perf_pipeline.stop()
                     elif hasattr(self._perf_pipeline, "cleanup"):
                         self._perf_pipeline.cleanup()
-<<<<<<< Updated upstream
                 except Exception as e:
                     logger.debug(f"GPU性能管道清理异常（非致命）: {type(e).__name__}: {e}")
                 self._perf_pipeline = None
         except Exception as e:
             logger.debug(f"GPU引擎析构清理异常（非致命）: {type(e).__name__}: {e}")
-=======
-                except Exception:
-                    pass
-                self._perf_pipeline = None
-        except Exception:
-            pass  # 析构函数中资源清理失败静默处理
->>>>>>> Stashed changes
 
     # ========== 厂商检测 ==========
 
@@ -919,7 +800,6 @@ class GPUCollisionEngine(BaseCollisionEngine):
         """单次 GPU batch 执行 [委托给 _scheduler]"""
         return self._scheduler.execute_batch_once(seed, batch_size, batch_num)
 
-<<<<<<< Updated upstream
     # ========== 匹配回调 ==========
 
     def _safe_invoke_match_callback(self, private_key: bytes, address: str, wif: str) -> bool:
@@ -935,78 +815,6 @@ class GPUCollisionEngine(BaseCollisionEngine):
     def _process_gpu_matches_prng(self, seed: bytes, matches: list[dict[str, int]]) -> None:
         """处理 GPU 匹配结果 (PRNG 模式) [委托给 _result_processor]"""
         self._result_processor.process_matches_prng(seed, matches)
-=======
-    # ========== 匹配处理 ==========
-
-    def _process_gpu_matches(self, private_keys: bytes, matches: list[dict[str, int]]) -> None:
-        """处理 GPU 匹配结果"""
-        for match in matches:
-            key_idx = match["key_index"]
-            # S-2修复: 添加边界检查，防止越界访问
-            if key_idx * 32 + 32 > len(private_keys):
-                logger.warning(
-                    f"私钥索引越界: key_idx={key_idx}, private_keys长度={len(private_keys)}"
-                )
-                continue
-            private_key = private_keys[key_idx * 32 : (key_idx + 1) * 32]
-            if self.dedup_filter is not None and not self.dedup_filter.check_and_add(private_key):
-                continue
-            target_idx = match["target_index"]
-            address = self._target_list[target_idx]
-            wif = WIF.encode(private_key, compressed=True)
-            if self.stats is not None:
-                self.stats.add_match(private_key, address)
-
-            # v4.2.2: 安全修复 - 不通过EventBus暴露私钥/WIF (同步CPU引擎修复)
-            match_event = EngineMatchEvent(
-                private_key=b'',  # 安全: 不暴露私钥
-                address=address,
-                wif='',  # 安全: WIF即私钥，不通过EventBus传递
-                target_address=address,
-            )
-            match_event.source = "gpu_collision_engine"
-            self.event_bus.publish(match_event)
-
-            # 向后兼容: 调用传统回调 (私钥仅通过此路径传递)
-            if not self._safe_invoke_match_callback(private_key, address, wif):
-                logger.warning(f"GPU匹配回调处理失败，跳过地址: {address[:6]}...{address[-4:]}")
-
-    def _process_gpu_matches_prng(self, seed: bytes, matches: list[dict[str, int]]) -> None:
-        """处理 GPU 匹配结果 (PRNG 模式)
-
-        G1修复: 添加索引越界检查，防止IndexError崩溃
-        """
-        seed_int = int.from_bytes(seed, "big")
-        for match in matches:
-            key_idx = match["key_index"]
-            key_int = (seed_int + key_idx) % (2**256)
-            private_key = key_int.to_bytes(32, "big")
-            if self.dedup_filter is not None and not self.dedup_filter.check_and_add(private_key):
-                continue
-            target_idx = match["target_index"]
-            # G1修复: 检查目标索引是否越界
-            if target_idx >= len(self._target_list):
-                logger.warning(f"目标索引越界: {target_idx} >= {len(self._target_list)}，跳过匹配")
-                continue
-            address = self._target_list[target_idx]
-            wif = WIF.encode(private_key, compressed=True)
-            if self.stats is not None:
-                self.stats.add_match(private_key, address)
-
-            # v4.2.2: 安全修复 - 不通过EventBus暴露私钥/WIF (同步CPU引擎修复)
-            match_event = EngineMatchEvent(
-                private_key=b'',  # 安全: 不暴露私钥
-                address=address,
-                wif='',  # 安全: WIF即私钥，不通过EventBus传递
-                target_address=address,
-            )
-            match_event.source = "gpu_collision_engine"
-            self.event_bus.publish(match_event)
-
-            # 向后兼容: 调用传统回调 (私钥仅通过此路径传递)
-            if not self._safe_invoke_match_callback(private_key, address, wif):
-                logger.warning(f"GPU匹配回调处理失败，跳过地址: {address[:6]}...{address[-4:]}")
->>>>>>> Stashed changes
 
     # ========== 性能指标 ==========
 
@@ -1027,65 +835,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
     # ========== 进度与断点 ==========
 
     def _check_and_report_progress(self, batch_count: int, current_batch_size: int) -> None:
-<<<<<<< Updated upstream
         """检查并报告进度 [委托给 _scheduler]"""
         self._scheduler.check_and_report_progress(batch_count, current_batch_size)
-=======
-        """检查并报告进度"""
-        current_time = time.time()
-        if current_time - self._last_progress_time < self._progress_interval_sec:
-            return
-        logger.debug(f"GPU 进度回调: batch_count={batch_count}")
-
-        assert self.stats is not None
-        stats_snapshot = self.stats.snapshot()
-
-        # v4.2.1: 发布进度事件
-        progress_event = EngineProgressEvent(
-            total_checked=stats_snapshot.total_checked,
-            speed=stats_snapshot.speed,
-            avg_speed=stats_snapshot.avg_speed,
-            matches_found=stats_snapshot.matches_found,
-            cpu_usage=0.0,  # GPU引擎暂不报告CPU使用
-            memory_usage=0.0,
-            thread_count=0,
-            elapsed_time=time.time() - self.stats.start_time,
-        )
-        progress_event.source = "gpu_collision_engine"
-        self.event_bus.publish(progress_event)
-
-        # 向后兼容: 调用传统回调（从事件触发）
-        if self.on_progress:
-            self.on_progress(stats_snapshot)
-
-        self._save_checkpoint(batch_count)
-        self._last_progress_time = current_time
-
-        with self._batch_size_lock:
-            self._consecutive_gpu_errors = 0
-
-        if not self._gpu_kernel:
-            return
-
-        try:
-            error_rate = getattr(self.stats, "gpu_errors", 0) / max(batch_count, 1)
-            if self._gpu_kernel and self._gpu_kernel.gpu_optimizer:
-                new_batch_size, adjustments = self._gpu_kernel.gpu_optimizer.analyze_and_adjust(
-                    current_batch_size=current_batch_size,
-                    error_rate=error_rate,
-                    engine=self,
-                )
-                if new_batch_size != current_batch_size and adjustments:
-                    reason = list(adjustments.keys())[0]
-                    logger.info(
-                        f"自适应优化: batch_size {current_batch_size} -> {new_batch_size} ({reason})"
-                    )
-                    self.batch_size = new_batch_size
-        except Exception as adjust_error:
-            logger.debug(f"自适应调整失败: {adjust_error}")
-
-        self._maybe_adjust_batch_size()
->>>>>>> Stashed changes
 
     def _save_checkpoint(self, count: int):
         """保存断点 [委托给 _scheduler]"""

@@ -19,11 +19,7 @@ from src.i18n import _t  # noqa: E402
 try:
     from src import __version__ as _version
 except ImportError:
-<<<<<<< Updated upstream
-    _version = "4.4.0"
-=======
     _VERSION = "4.2.2"
->>>>>>> Stashed changes
 
 
 def parse_args() -> argparse.Namespace:  # noqa: D401
@@ -212,13 +208,9 @@ def parse_args() -> argparse.Namespace:  # noqa: D401
     )
 
     # ── 4. 性能调优 ──────────────────────────────────────────────────────────
-<<<<<<< Updated upstream
-    perf_group = parser.add_argument_group("性能调优", "工作线程、进度刷新频率及 v2.2.0+ 引擎优化开关")
-=======
     perf_group = parser.add_argument_group(
         "性能调优", "工作线程、进度刷新频率及 v4.2.2+ 引擎优化开关"
     )
->>>>>>> Stashed changes
     perf_group.add_argument(
         "--workers",
         metavar="N",

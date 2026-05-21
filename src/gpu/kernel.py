@@ -64,11 +64,7 @@ KERNEL_VERSION_HISTORY: list[dict[str, str]] = [
     {
         "version": "4.2.2",
         "date": "2026-05",
-<<<<<<< Updated upstream
-        "changes": "OPT-3: 内核内存访问模式文档化; batch_check 合并访问注释; local_mem 阈值可配置化",
-=======
         "changes": "P1 fix: mod_inverse Binary GCD 2^256 overflow compensation (lost carry broke Bezout invariant)",
->>>>>>> Stashed changes
     },
     {
         "version": "4.2.1",
@@ -200,24 +196,17 @@ OPENCL_KERNEL_SOURCE = """
 // ============================================================================
 // Bitcoin secp256k1 GPU computation kernel
 // Kernel Version: 4.2.2 (MAJOR.MINOR.PATCH)
-<<<<<<< Updated upstream
-// Compile-time validation: #if KERNEL_VERSION_MAJOR < 4 ...
-=======
->>>>>>> Stashed changes
 // ============================================================================
 
 // Kernel version defines for compile-time feature gating
 #define KERNEL_VERSION_MAJOR 4
 #define KERNEL_VERSION_MINOR 2
 #define KERNEL_VERSION_PATCH 2
-<<<<<<< Updated upstream
-=======
 
 // v4.2.2 P1修复: 编译时版本校验，防止 Python 侧与 OpenCL 侧版本号不一致
 #if KERNEL_VERSION_MAJOR < 4
 #error "Kernel version too old: requires KERNEL_VERSION_MAJOR >= 4"
 #endif
->>>>>>> Stashed changes
 
 // uint256 type: 8 x uint32, little-endian (d[0]=LSB, d[7]=MSB)
 typedef struct {
@@ -582,34 +571,19 @@ void mod_inverse(const uint256_t *a, uint256_t *result) {
     uint256_set_zero(&x2);     // x2 = 1
     x2.d[0] = 1;
 
-<<<<<<< Updated upstream
-    // Binary GCD with Bezout coefficient tracking (max 512 iterations to prevent TDR)
-    uint _gcd_iters = 0;
-    while (!uint256_is_zero(&u) && !uint256_is_zero(&v) && _gcd_iters < 512) {
-        _gcd_iters++;
-=======
     // Binary GCD with Bezout coefficient tracking
     // v4.2.2: Fix uint256_add overflow when x+P >= 2^256 (lost 2^256 = 977 mod P)
     while (!uint256_is_zero(&u) && !uint256_is_zero(&v)) {
->>>>>>> Stashed changes
         // Strip factor 2 from u
         while (uint256_is_even(&u)) {
             uint256_shr1(&u, &u);
             // x1 / 2 mod P: if x1 is odd, (x1 + P) / 2, else x1 / 2
             if (!uint256_is_even(&x1)) {
-<<<<<<< Updated upstream
-                // v4.2.4 fix: handle x1 + P overflow (x1 >= 2^32+977 causes carry)
-                uint carry = uint256_add(&x1, &p, &x1);
-                uint256_shr1(&x1, &x1);
-                if (carry) {
-                    x1.d[7] |= 0x80000000;  // propagate overflow bit into MSB
-=======
                 uint carry = uint256_add(&x1, &p, &x1);
                 uint256_shr1(&x1, &x1);
                 if (carry) {
                     // Compensate 2^256 overflow: add 2^255 to x1
                     x1.d[7] |= 0x80000000;
->>>>>>> Stashed changes
                 }
             } else {
                 uint256_shr1(&x1, &x1);
@@ -620,17 +594,10 @@ void mod_inverse(const uint256_t *a, uint256_t *result) {
         while (uint256_is_even(&v)) {
             uint256_shr1(&v, &v);
             if (!uint256_is_even(&x2)) {
-<<<<<<< Updated upstream
-                // v4.2.4 fix: handle x2 + P overflow
-                uint carry = uint256_add(&x2, &p, &x2);
-                uint256_shr1(&x2, &x2);
-                if (carry) {
-=======
                 uint carry = uint256_add(&x2, &p, &x2);
                 uint256_shr1(&x2, &x2);
                 if (carry) {
                     // Compensate 2^256 overflow: add 2^255 to x2
->>>>>>> Stashed changes
                     x2.d[7] |= 0x80000000;
                 }
             } else {

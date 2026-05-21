@@ -189,10 +189,8 @@ class IntelGPUVendor(GPUVendorBase):
         3. 动态检测显存大小自动调整上限
         """
         recommended = profile.get("recommended_batch_size", 1048576)
-<<<<<<< Updated upstream
         maximum = profile.get("max_batch_size", 2097152)  # v4.2.3: A770 16GB 可安全承载 2M
         memory_efficiency = profile.get("memory_efficiency", 0.70)  # v2.2.1优化: 45% -> 70%
-=======
         maximum = profile.get("max_batch_size", 2097152)  # v4.2.1: A770 16GB 可安全承载 2M
         memory_efficiency = profile.get("memory_efficiency", 0.70)  # v4.2.1优化: 45% -> 70%
 

@@ -1,19 +1,15 @@
 """地址转换工具 - 私钥到地址和WIF的完整转换"""
 
-<<<<<<< Updated upstream
 import hashlib
 from typing import Any
 
-=======
 from ..utils import get_configured_logger
 from .base58 import Base58
 from .hash_utils import HashUtils
 from .secp256k1 import EllipticCurve
 from .wif import WIF
-<<<<<<< Updated upstream
 
 # 日志系统由CLI/main.py入口统一初始化
-=======
 logger = get_configured_logger("AddressConverter")
 
 

@@ -279,10 +279,7 @@ def build_engine(
                 use_gpu_memory_pool=True,
                 use_async_logging=True,
             )
-<<<<<<< Updated upstream
-=======
             # v4.2.1: 将完整 config.json 注入引擎，供 search_mode_coordinator 等使用
->>>>>>> Stashed changes
             if config:
                 engine.config = config
             return engine, "gpu"

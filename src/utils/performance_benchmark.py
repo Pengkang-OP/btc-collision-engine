@@ -24,10 +24,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 
 from src.utils import get_configured_logger  # noqa: E402
 
-<<<<<<< Updated upstream
 # 日志系统由CLI/main.py入口统一初始化
-=======
->>>>>>> Stashed changes
 logger = get_configured_logger("PerformanceBenchmark")
 
 

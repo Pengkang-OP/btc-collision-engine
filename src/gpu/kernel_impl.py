@@ -1,17 +1,5 @@
 """GPU内核实现
 
-<<<<<<< Updated upstream
-包含 GPUKernel 类的实现，解决循环导入问题。
-
-注意: GPU路径同样仅生成P2PKH地址进行碰撞检测，与CPU路径保持一致。
-非P2PKH格式(P2SH/Bech32/Taproot)的目标地址在当前版本中必然无法匹配。
-
-## OPT-3: GPU内核执行优化 (2026-05)
-- 智能 work_group_size 自动检测：根据GPU厂商/EU数/显存自适应选择最优工作组大小
-- 可调参数支持：环境变量 BTC_GPU_WORK_GROUP_SIZE / BTC_GPU_LOCAL_MEM_THRESHOLD
-- 全局内存合并访问增强：对齐匹配结果缓冲区，优化 target_hash160s 访问模式
-- 详细注释说明各优化点的设计原理和trade-off
-=======
 包含:
 - compile_kernel_with_retry: 共享的内核编译重试函数 (DEF-2修复)，支持4种降级编译策略
 - GPUKernel: OpenCL GPU计算内核包装类，实现GPUKernelProtocol接口
@@ -20,7 +8,6 @@
   - 预计算表(Precomputed Table)常量缓冲区管理
 
 v4.2.2 M5: _seed_bytes_to_u32_be_array 统一至 gpu/seed_utils.py 导入。
->>>>>>> Stashed changes
 """
 
 import logging
@@ -80,13 +67,6 @@ _VENDOR_WORK_GROUP_DEFAULTS: dict[str, int] = {
 _DEFAULT_WORK_GROUP_SIZE = 256
 
 # DEF-2修复: 内核编译重试配置
-<<<<<<< Updated upstream
-GPU_KERNEL_COMPILE_MAX_RETRIES = 4  # v4.2.3: 4 策略（含 Intel Arc 优化）
-GPU_KERNEL_COMPILE_RETRY_DELAY_BASE = 2.0  # 基础延迟(秒), 指数退避: 2s(第1次失败后), 4s(第2次失败后)
-
-# DEF-2修复: 渐进编译策略 — 每次重试尝试不同的编译选项
-# v4.2.3: 新增 Intel Arc 优化策略（无符号零+乘加融合，安全于加密运算）
-=======
 GPU_KERNEL_COMPILE_MAX_RETRIES = 4  # v4.2.1: 4 策略（含 Intel Arc 优化）
 GPU_KERNEL_COMPILE_RETRY_DELAY_BASE = (
     2.0  # 基础延迟(秒), 指数退避: 2s(第1次失败后), 4s(第2次失败后)
@@ -94,7 +74,6 @@ GPU_KERNEL_COMPILE_RETRY_DELAY_BASE = (
 
 # DEF-2修复: 渐进编译策略 — 每次重试尝试不同的编译选项
 # v4.2.1: 新增 Intel Arc 优化策略（无符号零+乘加融合，安全于加密运算）
->>>>>>> Stashed changes
 COMPILE_STRATEGIES = [
     ("标准编译", []),
     ("CL2.0标准编译", ["-cl-std=CL2.0"]),
@@ -194,140 +173,8 @@ def get_gpu_optimizer() -> Any | None:
         return None
 
 
-<<<<<<< Updated upstream
-from .seed_utils import (  # noqa: E402, F811
-    _seed_bytes_to_u32_be_array,
-)
-
-# ============================================================================
-# OPT-3: 智能 work_group_size 检测辅助函数
-# ============================================================================
-
-
-def _detect_optimal_work_group_size(device: GPUDevice) -> int:
-    r"""检测最优 work_group_size（OPT-3 优化）
-
-    优先级顺序:
-    1. 环境变量 BTC_GPU_WORK_GROUP_SIZE（高级用户手动调优）
-    2. auto_config 自动配置（vendor-aware，从 profiles/device 检测)
-    3. 厂商默认值（NVIDIA=256, AMD=256, Intel=512）
-    4. 安全回退值（256）
-
-    设计原理:
-    - NVIDIA Warp 大小=32, 256 = 8 warps/SM, 可充分隐藏内存延迟
-    - AMD GCN Wavefront=64, 256 = 4 wavefronts/CU, 平衡 occupancy 和资源
-    - AMD RDNA Wavefront=32, 256 = 8 wavefronts/WGP
-    - Intel Arc EU SIMD=32, 512 = 16-wide SIMD x 32 lanes, 匹配 512 EU 布局
-
-    Trade-off 说明:
-    - 过大的 work_group_size (>=1024): 增加寄存器压力, 降低 occupancy,
-      且 Intel Arc 可能因 TDR (Timeout Detection & Recovery) 超时而 crash
-    - 过小的 work_group_size (<=64): 无法充分隐藏内存延迟, 合并访问效率下降,
-      OpenCL 调度开销占比增加
-    - 甜点值: 128-512 范围，具体取决于 GPU 架构和 workload 特征
-
-    Args:
-        device: GPUDevice 实例
-
-    Returns:
-        推荐的工作组大小 (64-1024 之间)
-    """
-    # 优先级1: 环境变量覆盖
-    env_val = os.environ.get(ENV_WORK_GROUP_SIZE)
-    if env_val is not None:
-        try:
-            wgs = int(env_val)
-            if 64 <= wgs <= 1024:
-                logger.info(f"OPT-3: 使用环境变量 work_group_size={wgs} (来源: {ENV_WORK_GROUP_SIZE})")
-                return wgs
-            else:
-                logger.warning(
-                    f"OPT-3: 环境变量 {ENV_WORK_GROUP_SIZE}={wgs} 超出范围 [64, 1024], 回退到自动检测"
-                )
-        except (ValueError, TypeError):
-            logger.warning(f"OPT-3: 环境变量 {ENV_WORK_GROUP_SIZE}={env_val} 无效, 回退到自动检测")
-
-    # 优先级2: 从 device_info 获取（auto_config 填充）
-    device_info = device.get_device_info() if hasattr(device, "get_device_info") else {}
-    wgs_from_config = device_info.get("work_group_size")
-    if (
-        wgs_from_config is not None
-        and isinstance(wgs_from_config, int)
-        and 64 <= wgs_from_config <= 1024
-    ):
-        logger.debug(f"OPT-3: 使用 auto_config 提供的 work_group_size={wgs_from_config}")
-        return wgs_from_config
-
-    # 优先级3: 厂商默认值
-    vendor = ""
-    with suppress(AttributeError, RuntimeError, TypeError):
-        vendor_str = device.device.vendor.lower()
-        for v in ("nvidia", "amd", "intel"):
-            if v in vendor_str:
-                vendor = v
-                break
-
-    if vendor in _VENDOR_WORK_GROUP_DEFAULTS:
-        wgs = _VENDOR_WORK_GROUP_DEFAULTS[vendor]
-        logger.info(f"OPT-3: 使用厂商默认 work_group_size={wgs} (vendor={vendor})")
-        # 进一步验证不超过设备最大限制
-        try:
-            max_wgs = device.device.max_work_group_size
-        except (AttributeError, RuntimeError, TypeError):
-            max_wgs = wgs
-        wgs = min(wgs, max_wgs)
-        # 对齐到 32（大多数 GPU 的 SIMD 宽度）
-        wgs = (wgs // 32) * 32
-        if wgs < 64:
-            wgs = 64
-        return wgs
-
-    # 优先级4: 安全回退
-    logger.info(f"OPT-3: 无法识别厂商，使用通用默认 work_group_size={_DEFAULT_WORK_GROUP_SIZE}")
-    return _DEFAULT_WORK_GROUP_SIZE
-
-
-def _get_local_mem_threshold_ratio() -> float:
-    """获取 local memory 使用阈值比例（OPT-3 可调参数）
-
-    从环境变量 BTC_GPU_LOCAL_MEM_THRESHOLD 读取，默认 0.8。
-    用于控制何时优先使用 local memory 版内核 (batch_check_local_mem)。
-
-    降低此值（如 0.6）:
-    - 更少地使用 local memory，更多使用 global memory 直接访问
-    - local memory 是稀缺资源，节省出的空间允许更多 work-group 并发
-    - 适用于：目标地址数量较多、local memory 成为 occupancy 瓶颈的场景
-
-    提高此值（如 0.95）:
-    - 更积极地使用 local memory 内核
-    - local memory 带宽远高于 global memory（~数 TB/s vs ~数百 GB/s）
-    - 适用于：目标地址数量少、local memory 充足的高端 GPU
-
-    Returns:
-        阈值比例 (0.0-1.0)
-    """
-    env_val = os.environ.get(ENV_LOCAL_MEM_THRESHOLD)
-    if env_val is not None:
-        try:
-            ratio = float(env_val)
-            if 0.1 <= ratio <= 1.0:
-                logger.info(
-                    f"OPT-3: 使用环境变量 local_mem_threshold={ratio:.2f} "
-                    f"(来源: {ENV_LOCAL_MEM_THRESHOLD})"
-                )
-                return ratio
-            else:
-                logger.warning(
-                    f"OPT-3: 环境变量 {ENV_LOCAL_MEM_THRESHOLD}={ratio:.2f} "
-                    f"超出范围 [0.1, 1.0], 使用默认 0.8"
-                )
-        except (ValueError, TypeError):
-            logger.warning(f"OPT-3: 环境变量 {ENV_LOCAL_MEM_THRESHOLD}={env_val} 无效, 使用默认 0.8")
-    return 0.8
-=======
 # v4.2.2 M5: 统一端序转换 → 从 gpu/seed_utils.py 导入单一权威实现
 from .seed_utils import _seed_bytes_to_u32_be_array  # noqa: E402
->>>>>>> Stashed changes
 
 
 class GPUKernel(GPUKernelProtocol):
@@ -337,12 +184,8 @@ class GPUKernel(GPUKernelProtocol):
     使用持久化 Buffer 和异步执行来保持 GPU 持续高负载，
     避免频繁的内存分配和同步等待造成的 GPU 空闲。
 
-<<<<<<< Updated upstream
-    地址格式: GPU路径使用 P2PKHAddressGenerator，仅生成P2PKH地址（与CPU路径一致）。
-=======
     v4.2.2: mod_inverse Binary GCD 2^256溢出修复；
     _seed_bytes_to_u32_be_array 统一至 gpu/seed_utils.py 导入。
->>>>>>> Stashed changes
     """
 
     # 2*G 的期望坐标值（用于验证）
@@ -368,23 +211,9 @@ class GPUKernel(GPUKernelProtocol):
         self._device = device
         self.gpu_optimizer = get_gpu_optimizer()
 
-<<<<<<< Updated upstream
-        # OPT-3优化: 智能 work_group_size 检测
-        # 优先级: 环境变量 > auto_config > 厂商默认 > 安全回退256
-        # 详细文档见 _detect_optimal_work_group_size() 函数
-        self._work_group_size = _detect_optimal_work_group_size(device)
-        logger.info(
-            f"OPT-3: work_group_size={self._work_group_size} "
-            f"(device={getattr(device.device, 'name', 'unknown')})"
-        )
-
-        # OPT-3: local memory 阈值比例（从环境变量读取，默认0.8）
-        self._local_mem_threshold = _get_local_mem_threshold_ratio()
-=======
         # v4.2.1优化: 从配置中获取work_group_size
         device_info = device.get_device_info() if hasattr(device, "get_device_info") else {}
         self._work_group_size = device_info.get("work_group_size", 256)
->>>>>>> Stashed changes
 
         # 如果没有指定max_batch_size，根据GPU显存自动计算
         if max_batch_size is None:
@@ -1377,51 +1206,16 @@ class GPUKernel(GPUKernelProtocol):
         """
         # 注意: 不需要导入pyopencl, OpenCL Buffer对象自带release()方法
 
-<<<<<<< Updated upstream
-        # v3.3.0优化: 纯持久化设计 - 不需要内存池引用（缓冲区直接释放）
-        # memory_pool = getattr(self, '_gpu_memory_pool', None) # 不再需要
-
-        # v2.2.1修复: 跟踪已释放的缓冲区，避免双重释放
-        released_buffers: set[str] = set()
-=======
         # v4.2.1优化: 纯持久化设计 - 不需要内存池引用（缓冲区直接释放）
         # memory_pool = getattr(self, '_gpu_memory_pool', None)  # 不再需要
 
         # v4.2.1修复: 跟踪已释放的缓冲区，避免双重释放
         released_buffers = set()
->>>>>>> Stashed changes
 
         self._check_memory_leaks_on_shutdown(released_buffers)
         self._release_gpu_buffers(released_buffers)
         self._close_async_logging()
 
-<<<<<<< Updated upstream
-=======
-                # v4.2.1修复: 将已释放的缓冲区引用设为None，避免双重释放
-                for buf_name in released_buffers:
-                    if buf_name == "_seed_buf":
-                        self._seed_buf = None
-                    elif buf_name == "_match_buf":
-                        self._match_buf = None
-                    elif buf_name == "_targets_buf":
-                        self._targets_buf = None
-                    elif buf_name == "_precomp_buf":
-                        self._precomp_buf = None
-
-                # 审查修复#3: 使用修正后的语义
-                if leak_report["has_unreleased"] or leak_report["has_leak"]:
-                    logger.warning(
-                        "GPU内存泄漏检测报告: "
-                        f"未释放={leak_report['remaining_buffers']}, "
-                        f"释放成功={len(leak_report['released'])}, "
-                        f"释放失败={len(leak_report['release_failed'])}"
-                    )
-                    if leak_report["has_leak"]:
-                        logger.error(
-                            f"发现{len(leak_report['release_failed'])}个缓冲区释放失败，可能存在内存泄漏"
-                        )
-            except Exception as e:
-                logger.error(f"内存泄漏检查失败: {e}")
 
         # v4.2.1优化: 纯持久化设计 - 直接释放，不需要计算大小
 
@@ -1466,7 +1260,6 @@ class GPUKernel(GPUKernelProtocol):
                 logger.info("GPU异步日志已关闭")
             except Exception as e:
                 logger.debug(f"关闭异步日志失败: {e}")
->>>>>>> Stashed changes
         self._match_flags = None
         self._program = None
         self._batch_kernel = None

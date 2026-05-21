@@ -23,9 +23,7 @@ if TYPE_CHECKING:
 from ..utils import get_configured_logger
 from .address_generator import BaseAddressGenerator
 
-<<<<<<< Updated upstream
 # 日志系统由CLI/main.py入口统一初始化
-=======
 # 获取模块日志记录器
 logger = get_configured_logger("OptimizedAddressGenerator")
 
@@ -116,8 +114,6 @@ class OptimizedP2PKHAddressGenerator(BaseAddressGenerator):
         if self.use_precomputed_table and self.precomputed_table:
             point = self.precomputed_table.scalar_multiply_with_table(k, self.ec)
         else:
-<<<<<<< Updated upstream
-=======
             # v4.2.2 C1-regression修复: 使用恒定时间实现
             point = self.ec.scalar_multiply_const_time(k, self.G)
 
@@ -207,8 +203,6 @@ class OptimizedP2PKHAddressGenerator(BaseAddressGenerator):
             if self.use_precomputed_table and self.precomputed_table:
                 point = self.precomputed_table.scalar_multiply_with_table(pk_int, self.ec)
             else:
-<<<<<<< Updated upstream
-=======
                 # v4.2.2 C1-regression修复: 使用恒定时间实现
                 point = self.ec.scalar_multiply_const_time(pk_int, self.G)
 

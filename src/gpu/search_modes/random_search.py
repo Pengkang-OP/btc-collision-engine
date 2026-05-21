@@ -458,51 +458,116 @@ class RandomSearchMode(BaseSearchMode):
         time.sleep(backoff)
         return consecutive_errors
 
-    def _execute_async(self) -> None:
-        """异步执行版本（双缓冲 + PRNG + CPU过载保护）"""
-        engine = self.engine
-        if engine.stats is None:
-            raise RuntimeError("RandomSearchMode._execute_async(): engine.stats is None, 引擎未正确初始化")
+    # ── _execute_async 辅助方法（降低 C901） ──────────────────────
 
-        # 检查异步执行器是否可用
-        if not self._check_engine_availability(engine):
-            logger.warning("异步执行器不可用，回退到同步模式")
-            self._execute_sync()
-            return
-
-        logger.info("启动GPU异步执行模式（双缓冲优化）")
-
-        # 检测GPU型号并初始化优化器
+    def _setup_async_buffers(
+        self, engine: Any, current_batch_size: int
+    ) -> tuple[dict, int, str]:
+        """初始化双缓冲区和 GPU 型号检测。"""
         gpu_model = self._detect_gpu_model(engine)
         from ..batch_size_optimizer import get_batch_size_optimizer
 
-        batch_optimizer = get_batch_size_optimizer(engine.batch_size or 1048576, gpu_model=gpu_model)
+        batch_optimizer = get_batch_size_optimizer(
+            engine.batch_size or 1048576, gpu_model=gpu_model
+        )
 
-        # 初始化状态
-        consecutive_errors = 0
-        batch_count = 0
-        batch_num = 0  # 本地批次计数器，更新到 engine.stats.total_batches
-        current_batch_size = engine.batch_size or 1000000
-
-        # 获取异步执行器的实际缓冲区大小
         if hasattr(engine, "_async_executor") and engine._async_executor:
             actual_batch_size = engine._async_executor.get_actual_batch_size()
             if current_batch_size > actual_batch_size:
                 logger.warning(f"batch_size超过GPU缓冲区大小，使用缓冲区大小: {actual_batch_size}")
                 current_batch_size = actual_batch_size
 
-        # 双缓冲机制
         buffer_data = {
             "A": {"seed": self._generate_seed(), "batch_size": current_batch_size},
             "B": {"seed": None, "batch_size": current_batch_size},
         }
-        current_buffer = "A"
+        return buffer_data, current_batch_size, "A", batch_optimizer
+
+    def _run_async_batch_cycle(
+        self, engine: Any, batch_optimizer: Any,
+        buffer_data: dict, current_buffer: str,
+        current_batch_size: int, batch_num: int,
+        consecutive_errors: int,
+    ) -> tuple[int, str, int, int, bool, int]:
+        """执行一次异步批处理周期。
+
+        Returns:
+            (current_batch_size, current_buffer, batch_num,
+             consecutive_errors, should_break, batch_size_used)
+        """
+        try:
+            next_buffer = "B" if current_buffer == "A" else "A"
+            buffer_data[next_buffer]["seed"] = self._generate_seed()
+            buffer_data[next_buffer]["batch_size"] = current_batch_size
+            batch_num += 1
+            engine.stats.set_total_batches(batch_num)
+
+            if batch_num % 10 == 0:
+                current_batch_size = batch_optimizer.get_optimal_batch_size()
+
+            seed = buffer_data[current_buffer]["seed"]
+            batch_size = buffer_data[current_buffer]["batch_size"]
+            matches, execution_time_ms = self._handle_batch_execution(
+                engine, seed, batch_size, batch_optimizer, batch_num
+            )
+
+            if engine._stop_event.is_set():
+                return current_batch_size, current_buffer, batch_num, consecutive_errors, True, 0
+
+            if matches:
+                engine._process_gpu_matches_prng(seed, matches)
+
+            if engine._stop_event.is_set():
+                return current_batch_size, current_buffer, batch_num, consecutive_errors, True, 0
+
+            effective_time_ms = max(execution_time_ms, 0.001)
+            speed = batch_size / (effective_time_ms / 1000)
+            if batch_num <= 5 or batch_num % 10 == 0:
+                logger.debug(
+                    f"GPU batch {batch_num}: {batch_size:,} keys, "
+                    f"{execution_time_ms:.2f}ms, {speed:.0f} keys/s"
+                )
+            self._record_performance_data(
+                engine, batch_optimizer, batch_size, execution_time_ms, speed
+            )
+            consecutive_errors = 0
+            current_buffer = next_buffer
+
+        except Exception as e:
+            result = self._handle_batch_error(e, engine, batch_num, consecutive_errors)
+            if result == -1:
+                return current_batch_size, current_buffer, batch_num, consecutive_errors, True, 0
+            consecutive_errors = result
+            if engine._stop_event.is_set():
+                return current_batch_size, current_buffer, batch_num, consecutive_errors, True, 0
+
+        return current_batch_size, current_buffer, batch_num, consecutive_errors, False, batch_size
+
+    def _execute_async(self) -> None:
+        """异步执行版本（双缓冲 + PRNG + CPU过载保护）。"""
+        engine = self.engine
+        if engine.stats is None:
+            raise RuntimeError("RandomSearchMode._execute_async(): engine.stats is None, 引擎未正确初始化")
+
+        if not self._check_engine_availability(engine):
+            logger.warning("异步执行器不可用，回退到同步模式")
+            self._execute_sync()
+            return
+
+        logger.info("启动GPU异步执行模式（双缓冲优化）")
+        current_batch_size = engine.batch_size or 1000000
+        buffer_data, current_batch_size, current_buffer, batch_optimizer = (
+            self._setup_async_buffers(engine, current_batch_size)
+        )
+
+        batch_count = 0
+        batch_num = 0
+        consecutive_errors = 0
 
         try:
             import psutil
 
             while not engine._stop_event.is_set():
-                # CPU过载检查
                 with suppress(OSError):
                     cpu_pct = psutil.cpu_percent(interval=None)
                     if cpu_pct > CPU_OVERLOAD_THRESHOLD:
@@ -510,73 +575,22 @@ class RandomSearchMode(BaseSearchMode):
                         current_batch_size = max(current_batch_size // 2, 10000)
                         time.sleep(CPU_THROTTLE_SLEEP)
 
-                # 检查引擎可用性
                 if not self._check_engine_availability(engine):
                     self.stop()
                     self._execute_sync()
                     return
 
-                try:
-                    # 准备下一个缓冲区
-                    next_buffer = "B" if current_buffer == "A" else "A"
-                    buffer_data[next_buffer]["seed"] = self._generate_seed()
-                    buffer_data[next_buffer]["batch_size"] = current_batch_size
-
-                    batch_num += 1
-                    engine.stats.set_total_batches(batch_num)
-
-                    # 智能批次大小调整
-                    if batch_num % 10 == 0:
-                        current_batch_size = batch_optimizer.get_optimal_batch_size()
-
-                    # 执行批处理
-                    seed = buffer_data[current_buffer]["seed"]
-                    batch_size = buffer_data[current_buffer]["batch_size"]
-                    matches, execution_time_ms = self._handle_batch_execution(
-                        engine, seed, batch_size, batch_optimizer, batch_num
-                    )
-
-                    if engine._stop_event.is_set():
-                        break
-
-                    batch_count += batch_size
-                    engine.stats.update(batch_count)
-
-                    # 处理匹配
-                    if matches:
-                        engine._process_gpu_matches_prng(seed, matches)
-
-                    if engine._stop_event.is_set():
-                        break
-
-                    # 性能记录
-                    effective_time_ms = max(execution_time_ms, 0.001)
-                    speed = batch_size / (effective_time_ms / 1000)
-                    if batch_num <= 5 or batch_num % 10 == 0:
-                        logger.debug(
-                            f"GPU batch {batch_num}: {batch_size:,} keys, "
-                            f"{execution_time_ms:.2f}ms, {speed:.0f} keys/s"
-                        )
-
-                    self._record_performance_data(
-                        engine, batch_optimizer, batch_size, execution_time_ms, speed
-                    )
-                    consecutive_errors = 0
-                    current_buffer = next_buffer
-
-                except Exception as e:
-<<<<<<< Updated upstream
-                    result = self._handle_batch_error(e, engine, batch_num, consecutive_errors)
-=======
-                    result = self._handle_batch_error(
-                        e, engine, batch_num, consecutive_errors
-                    )
->>>>>>> Stashed changes
-                    if result == -1:  # 用户中断
-                        break
-                    consecutive_errors = result
-                    if engine._stop_event.is_set():
-                        break
+                (
+                    current_batch_size, current_buffer, batch_num,
+                    consecutive_errors, should_break, batch_size_used,
+                ) = self._run_async_batch_cycle(
+                    engine, batch_optimizer, buffer_data, current_buffer,
+                    current_batch_size, batch_num, consecutive_errors,
+                )
+                if should_break:
+                    break
+                batch_count += batch_size_used
+                engine.stats.update(batch_count)
 
         except KeyboardInterrupt:
             logger.info("用户中断，停止异步执行")

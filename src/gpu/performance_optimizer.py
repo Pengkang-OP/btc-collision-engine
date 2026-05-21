@@ -156,13 +156,8 @@ class GPUPerformanceOptimizer:
         self._performance_degraded = False
         self._adjustment_count = 0
         self._last_adjustment_time = 0.0
-<<<<<<< Updated upstream
-        self._adjustment_cooldown_sec = self.ADJUSTMENT_COOLDOWN_SEC
-        self._initial_batch_size: int = 0  # v6.1 修复: 保存真正的初始值
-=======
         self._adjustment_cooldown_sec = 10  # 调整冷却期10秒
         self._initial_batch_size: int = 0  # v4.2.1 修复: 保存真正的初始值
->>>>>>> Stashed changes
 
         logger.info("GPU性能优化器初始化完成")
 
@@ -193,13 +188,8 @@ class GPUPerformanceOptimizer:
                 vendor=GPUVendor.INTEL,
                 device_name="Intel GPU",
                 max_batch_size=262144,  # 256K
-<<<<<<< Updated upstream
-                work_group_size=512,  # 同步v2.3.0优化，匹配Arc A770的512个EU（原128）
-                memory_usage_ratio=0.7,  # 同步v2.2.1优化的显存率（原0.5）
-=======
                 work_group_size=512,  # P3修复: 同步v4.2.1优化，匹配Arc A770的512个EU（原128）
                 memory_usage_ratio=0.7,  # P3修复: 同步v4.2.1优化的显存率（原0.5）
->>>>>>> Stashed changes
                 preferred_mode="range_scan",
                 use_uint32_workaround=True,  # Intel Arc需要workaround
                 enable_async_execution=True,  # 启用异步（Intel Arc必须）（原False）
@@ -557,8 +547,6 @@ class GPUPerformanceOptimizer:
             return self._analyze_perform_adjustments(
                 current_batch_size, error_rate, engine, strategy, now
             )
-<<<<<<< Updated upstream
-=======
             avg_speed = sum(m.keys_per_second for m in recent_metrics) / len(recent_metrics)
 
             adjustments = {}
@@ -674,7 +662,6 @@ class GPUPerformanceOptimizer:
                 cast(dict[str, Any], adjustments)["adjustment_count"] = self._adjustment_count
 
             return new_batch_size, adjustments
->>>>>>> Stashed changes
 
     def get_optimization_report(self) -> dict[str, Any]:
         """获取优化报告"""

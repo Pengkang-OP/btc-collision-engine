@@ -7,15 +7,12 @@ from typing import Any
 
 # 导入日志配置
 # 获取模块日志记录器
->>>>>>> Stashed changes
 logger = get_configured_logger("DeduplicationFilter")
 from ..utils import get_configured_logger
 
 # 获取模块日志记录器
 logger = get_configured_logger("DeduplicationFilter")
-=======
 # 获取模块日志记录器
->>>>>>> Stashed changes
 logger = get_configured_logger("DeduplicationFilter")
 
 # v4.3.1: 快速哈希模式开关
@@ -48,17 +45,10 @@ class DeduplicationFilter:
 
     设计说明：
     比特币私钥空间为 2^256，内存无法存储所有已检测的键。
-<<<<<<< Updated upstream
-    本实现采用滑动窗口 + 快速哈希策略：
-    - v4.3.1: 使用 Python 内置 hash() 替代 SHA256，速度提升 10-100x
-    - 双缓冲队列实现滑动窗口，避免频繁清空
-    - 64-bit 整数指纹，set 操作 O(1) 且哈希极快
-=======
     本实现采用滑动窗口 + 双缓冲集合策略：
     - 使用双缓冲集合实现滑动窗口，避免频繁清空
     - 8字节SHA256截断作为指纹，误判率极低
     - 需要零误判的场景请使用本类；海量去重请使用 BloomDeduplicationFilter
->>>>>>> Stashed changes
     - 仅对 random_search 模式有意义（range/brute_force 天然无重复）
     """
 

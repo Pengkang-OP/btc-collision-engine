@@ -22,10 +22,7 @@ from typing import Any
 from ...utils import get_configured_logger
 from ...utils.encoding_utils import EncodingUtils
 
-<<<<<<< Updated upstream
 # 日志系统由CLI/main.py入口统一初始化
-=======
->>>>>>> Stashed changes
 logger = get_configured_logger("AddressStorage")
 
 # 比特币地址验证正则表达式
@@ -403,6 +400,87 @@ class AddressStorage:
 
         return info
 
+    # ── import_addresses 辅助方法（降低 C901） ────────────────────
+
+    @staticmethod
+    def _ensure_storage_dir(storage_dir: str | None) -> str:
+        """验证并创建存储目录，返回规范化后的绝对路径。
+
+        Raises:
+            ValueError: 目录不在允许范围内。
+        """
+        if storage_dir is None:
+            storage_dir = os.path.join(os.getcwd(), "targets_data")
+        storage_dir = os.path.abspath(storage_dir)
+        allowed_dirs = [
+            os.path.abspath(os.getcwd()),
+            os.path.abspath(os.environ.get("TEMP", "/tmp")),
+            os.path.abspath(os.environ.get("TMP", "/tmp")),
+        ]
+        if not any(storage_dir.startswith(d) for d in allowed_dirs):
+            raise ValueError(f"存储目录必须在允许的路径范围内: {storage_dir}")
+        os.makedirs(storage_dir, exist_ok=True)
+        return storage_dir
+
+    @staticmethod
+    def _generate_storage_path(storage_dir: str, storage_type: str) -> str:
+        """生成带时间戳+唯一ID的存储文件路径。
+
+        Raises:
+            ValueError: 不支持的存储类型。
+        """
+        import uuid
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        unique_id = str(uuid.uuid4())[:8]
+        ext_map = {"json": ".json", "sqlite": ".db", "csv": ".csv"}
+        if storage_type not in ext_map:
+            raise ValueError(f"不支持的存储类型: {storage_type}")
+        return os.path.join(
+            storage_dir, f"imported_addresses_{timestamp}_{unique_id}{ext_map[storage_type]}"
+        )
+
+    def _read_source_addresses(self, real_source_path: str) -> list[str]:
+        """根据文件扩展名读取源文件中的地址，并限制最大数量。"""
+        file_ext = os.path.splitext(real_source_path)[1].lower()
+        if file_ext == ".json":
+            source_addresses = self._read_json_source(real_source_path)
+        elif file_ext == ".csv":
+            source_addresses = self._read_csv_source(real_source_path)
+        else:
+            source_addresses = self._read_text_source(real_source_path)
+
+        max_addresses = 1_000_000
+        if len(source_addresses) > max_addresses:
+            logger.warning(f"地址数量超过限制({max_addresses}), 仅处理前{max_addresses}个")
+            source_addresses = source_addresses[:max_addresses]
+        return source_addresses
+
+    @staticmethod
+    def _batch_validate_addresses(
+        source_addresses: list[str], progress_callback: Callable | None
+    ) -> tuple[set, list]:
+        """分批验证源地址，返回 (valid_addresses, invalid_addresses)。"""
+        from .validator import AddressBatchValidator
+
+        valid_addresses: set = set()
+        invalid_addresses: list = []
+        validator = AddressBatchValidator(max_workers=4)
+        batch_size = 100
+        for i in range(0, len(source_addresses), batch_size):
+            batch = source_addresses[i : i + batch_size]
+            for addr, vr in validator.validate_batch(batch).items():
+                if vr.valid:
+                    valid_addresses.add(addr)
+                else:
+                    invalid_addresses.append({"address": addr, "error": vr.error})
+                if progress_callback:
+                    progress_callback(
+                        len(valid_addresses) + len(invalid_addresses),
+                        len(source_addresses), addr,
+                    )
+        return valid_addresses, invalid_addresses
+
     def import_addresses(
         self,
         source_path: str,
@@ -411,147 +489,40 @@ class AddressStorage:
         storage_type: str = "json",
         progress_callback: Callable | None = None,
     ) -> dict[str, Any]:
-        """
-        从外部源导入地址并自动保存到持久化存储
-
-        参数:
-            source_path: 源文件路径(支持txt, csv, json格式)
-            storage_dir: 存储目录(如果不指定则使用当前目录下的targets_data)
-            validate: 是否验证地址格式,默认True
-            storage_type: 存储类型,默认'json'
-            progress_callback: 进度回调函数,接收(processed, total, address)参数
-
-        返回:
-            导入结果字典,包含:
-            - success: 是否成功
-            - imported_count: 成功导入的地址数
-            - invalid_count: 无效地址数
-            - total_count: 总处理地址数
-            - invalid_addresses: 无效地址列表
-            - storage_path: 存储路径
-            - error: 错误信息(如果有)
-        """
-        result = {
-            "success": False,
-            "imported_count": 0,
-            "invalid_count": 0,
-            "total_count": 0,
-            "invalid_addresses": [],
-            "storage_path": "",
-            "error": None,
+        """从外部源导入地址并自动保存到持久化存储。"""
+        result: dict[str, Any] = {
+            "success": False, "imported_count": 0, "invalid_count": 0,
+            "total_count": 0, "invalid_addresses": [], "storage_path": "", "error": None,
         }
 
         try:
-            # 设置存储目录
-            if storage_dir is None:
-                storage_dir = os.path.join(os.getcwd(), "targets_data")
+            storage_dir = self._ensure_storage_dir(storage_dir)
+            storage_path = self._generate_storage_path(storage_dir, storage_type)
 
-            # 规范化并验证存储目录路径
-            storage_dir = os.path.abspath(storage_dir)
-            allowed_dirs = [
-                os.path.abspath(os.getcwd()),
-                os.path.abspath(os.environ.get("TEMP", "/tmp")),  # nosec B108: 仅用于路径验证，非实际temp文件
-                os.path.abspath(os.environ.get("TMP", "/tmp")),  # nosec B108: 仅用于路径验证，非实际temp文件
-            ]
-            if not any(storage_dir.startswith(allowed_dir) for allowed_dir in allowed_dirs):
-                result["error"] = "存储目录必须在允许的路径范围内"
-                logger.error(f"安全警告: 存储目录超出允许范围: {storage_dir}")
-                return result
-
-            os.makedirs(storage_dir, exist_ok=True)
-
-            # 生成存储文件路径(使用时间戳+唯一ID避免冲突)
-            import uuid
-
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-            unique_id = str(uuid.uuid4())[:8]
-            if storage_type == "json":
-                storage_path = os.path.join(
-                    storage_dir, f"imported_addresses_{timestamp}_{unique_id}.json"
-                )
-            elif storage_type == "sqlite":
-                storage_path = os.path.join(
-                    storage_dir, f"imported_addresses_{timestamp}_{unique_id}.db"
-                )
-            elif storage_type == "csv":
-                storage_path = os.path.join(
-                    storage_dir, f"imported_addresses_{timestamp}_{unique_id}.csv"
-                )
-            else:
-                result["error"] = f"不支持的存储类型: {storage_type}"
-                return result
-
-            # 初始化存储
-            storage = AddressStorage(storage_type=storage_type, path=storage_path)
-
-            # 获取源文件真实路径
             real_source_path = os.path.realpath(source_path)
-
-            # 读取源文件
             logger.info(f"开始导入地址: 源文件={real_source_path}, 存储类型={storage_type}")
 
             if not os.path.exists(real_source_path):
                 result["error"] = f"源文件不存在: {source_path}"
                 return result
 
-            # 检查文件大小
             file_size = os.path.getsize(real_source_path)
-            if file_size > 100 * 1024 * 1024:  # 100MB
+            if file_size > 100 * 1024 * 1024:
                 result["error"] = "文件过大(>100MB)"
                 logger.error(f"文件过大: {real_source_path}, 大小={file_size / 1024 / 1024:.1f}MB")
                 return result
 
-            # 根据文件扩展名选择读取方式
-            file_ext = os.path.splitext(real_source_path)[1].lower()
-            source_addresses = []
-
-            if file_ext == ".json":
-                source_addresses = self._read_json_source(real_source_path)
-            elif file_ext == ".csv":
-                source_addresses = self._read_csv_source(real_source_path)
-            else:  # 默认按文本文件处理
-                source_addresses = self._read_text_source(real_source_path)
-
-            # 限制导入数量
-            max_addresses = 1_000_000  # 最多100万个地址
-            if len(source_addresses) > max_addresses:
-                logger.warning(f"地址数量超过限制({max_addresses}), 仅处理前{max_addresses}个")
-                source_addresses = source_addresses[:max_addresses]
-
+            source_addresses = self._read_source_addresses(real_source_path)
             result["total_count"] = len(source_addresses)
             logger.info(f"从源文件读取到 {len(source_addresses)} 个地址")
 
-            # 地址验证
-            valid_addresses = set()
-            invalid_addresses = []
-
             if validate:
-                from .validator import AddressBatchValidator
-
-                validator = AddressBatchValidator(max_workers=4)
-
-                # 分批验证
-                batch_size = 100
-                for i in range(0, len(source_addresses), batch_size):
-                    batch = source_addresses[i : i + batch_size]
-                    validation_results = validator.validate_batch(batch)
-
-                    for addr, validation_result in validation_results.items():
-                        if validation_result.valid:
-                            valid_addresses.add(addr)
-                        else:
-                            invalid_addresses.append({"address": addr, "error": validation_result.error})
-
-                        # 调用进度回调
-                        if progress_callback:
-                            progress_callback(
-                                len(valid_addresses) + len(invalid_addresses),
-                                len(source_addresses),
-                                addr,
-                            )
+                valid_addresses, invalid_addresses = self._batch_validate_addresses(
+                    source_addresses, progress_callback
+                )
             else:
-                # 不验证,直接导入
                 valid_addresses = set(source_addresses)
+                invalid_addresses = []
                 if progress_callback:
                     for i, addr in enumerate(source_addresses):
                         progress_callback(i + 1, len(source_addresses), addr)
@@ -560,8 +531,8 @@ class AddressStorage:
             result["invalid_count"] = len(invalid_addresses)
             result["invalid_addresses"] = invalid_addresses
 
-            # 保存有效地址
             if valid_addresses:
+                storage = AddressStorage(storage_type=storage_type, path=storage_path)
                 metadata = {
                     "import_time": datetime.now().isoformat(),
                     "source_file": source_path,
@@ -571,14 +542,10 @@ class AddressStorage:
                     "validation_enabled": validate,
                     "storage_type": storage_type,
                 }
-
-                success = storage.save_targets(valid_addresses, metadata)
-                if success:
+                if storage.save_targets(valid_addresses, metadata):
                     result["success"] = True
                     result["storage_path"] = storage_path
-                    logger.info(
-                        f"地址导入成功: {len(valid_addresses)} 个有效地址已保存到 {storage_path}"
-                    )
+                    logger.info(f"地址导入成功: {len(valid_addresses)} 个有效地址已保存到 {storage_path}")
                 else:
                     result["error"] = "保存地址到存储失败"
                     logger.error("地址导入失败: 保存操作失败")
@@ -587,7 +554,10 @@ class AddressStorage:
                 logger.warning("地址导入完成: 没有有效地址")
 
             return result
-
+        except ValueError as e:
+            result["error"] = str(e)
+            logger.error(f"地址导入失败: {e}")
+            return result
         except Exception as e:
             result["error"] = f"导入过程中发生错误: {str(e)}"
             logger.error(f"地址导入失败: {e}", exc_info=True)

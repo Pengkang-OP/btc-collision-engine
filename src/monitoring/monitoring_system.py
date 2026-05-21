@@ -197,28 +197,13 @@ class DataStorage:
     本类仅作为兼容性适配层存在。
     """
 
-<<<<<<< Updated upstream
-    def __init__(self, storage_dir: str | None = None, data_logger: Any = None) -> None:
-=======
     def __init__(self, storage_dir: str | None = None, data_logger: Any | None = None) -> None:
->>>>>>> Stashed changes
         # 使用统一配置，默认使用data_logs
         self.storage_dir = DataStorageConfig.ensure_storage_dir(storage_dir)
         self.current_data_file = os.path.join(self.storage_dir, "current_data.json")
         self.history_data_file = os.path.join(self.storage_dir, "history_data.json")
         self.error_log_file = os.path.join(self.storage_dir, "error_log.json")
 
-<<<<<<< Updated upstream
-        # v4.3.1: 可选的 DataLogger 委托，消除双写竞争
-        self._data_logger = data_logger
-
-        # 仅当未委托 DataLogger 时才自行初始化文件
-        if self._data_logger is None:
-            # 初始化历史数据文件 (JSONL 格式，空文件即为有效)
-            if not os.path.exists(self.history_data_file):
-                with open(self.history_data_file, "w", encoding="utf-8") as f:
-                    f.write("")
-=======
         # P0统一数据源: DataLogger委托引用（可选，向后兼容）
         self._data_logger: Any | None = data_logger
 
@@ -228,57 +213,11 @@ class DataStorage:
             if not os.path.exists(self.history_data_file):
                 with open(self.history_data_file, "w", encoding="utf-8") as f:
                     fast_dump([], f)
->>>>>>> Stashed changes
 
             # 初始化错误日志文件
             if not os.path.exists(self.error_log_file):
                 with open(self.error_log_file, "w", encoding="utf-8") as f:
                     fast_dump([], f)
-<<<<<<< Updated upstream
-
-    @property
-    def _use_logger(self) -> bool:
-        """检查是否委托给 DataLogger"""
-        return self._data_logger is not None
-
-    def save_current_data(self, data: MonitoringData) -> None:
-        """保存当前数据（优化：原子写入 + 安全权限）
-
-        自 v4.3.1: 若委托给 DataLogger，则通过其 record 系列方法更新内部状态后
-        调用其 save_current_data() 输出。
-        """
-        # v4.3.1: 委托给 DataLogger 以消除双写竞争
-        if self._data_logger is not None:
-            try:
-                perf = data.performance
-                sys_info = data.system
-                eng = data.engine
-                self._data_logger.record_performance_data(
-                    speed=perf.get("speed", 0),
-                    total_checked=perf.get("total_checked", 0),
-                    matches_found=perf.get("matches_found", 0),
-                    cpu_usage=perf.get("cpu_usage", 0),
-                    memory_usage=perf.get("memory_usage", 0),
-                    thread_count=perf.get("thread_count", 0),
-                )
-                self._data_logger.record_system_data(
-                    os_name=sys_info.get("os", ""),
-                    python_version=sys_info.get("python_version", ""),
-                    pid=sys_info.get("pid", 0),
-                    uptime=sys_info.get("uptime", 0),
-                )
-                self._data_logger.record_engine_data(
-                    mode=eng.get("mode", ""),
-                    target_count=eng.get("target_count", 0),
-                    is_running=eng.get("is_running", False),
-                    current_position=eng.get("current_position", 0),
-                )
-                self._data_logger.save_current_data()
-                return
-            except Exception as e:
-                logger.error(f"DataLogger委托写入当前数据失败: {e}")
-                # 降级到直接写入
-=======
 
     def save_current_data(self, data: MonitoringData) -> None:
         """保存当前数据（P0委托DataLogger或原子写入 + 安全权限）"""
@@ -296,7 +235,6 @@ class DataStorage:
                 logger.error(f"委托DataLogger保存当前数据失败: {e}")
             return
 
->>>>>>> Stashed changes
         try:
             # 使用原子写入：先写临时文件，再重命名
             temp_file = self.current_data_file + ".tmp"
@@ -325,25 +263,6 @@ class DataStorage:
                 logger.debug(f"清理临时文件失败（可忽略）: {cleanup_error}")
 
     def save_history_data(self, data: MonitoringData) -> None:
-<<<<<<< Updated upstream
-        """保存历史数据（优化：原子写入 + 数据恢复）
-
-        自 v4.3.1: 统一持久化层，DataLogger 为唯一写入路径。
-        当 DataLogger 可用时，数据直接推入其缓冲区后由其统一写入。
-        降级路径仅在 DataLogger 完全不可用时使用。
-        """
-        record = data.to_dict()
-        # v4.3.1: 统一持久化层 — DataLogger 为唯一写入路径
-        if self._data_logger is not None:
-            try:
-                with self._data_logger._lock:
-                    self._data_logger._history_buffer.append(record)
-                self._data_logger.save_history_data()
-                return
-            except Exception as e:
-                logger.error(f"DataLogger委托写入历史数据失败: {e}")
-                # 降级到直接写入
-=======
         """保存历史数据（P0委托DataLogger或原子写入 + 数据恢复）"""
         # P0统一数据源: 委托给DataLogger的缓冲区
         if self._data_logger is not None:
@@ -354,7 +273,6 @@ class DataStorage:
                 logger.error(f"委托DataLogger保存历史数据失败: {e}")
             return
 
->>>>>>> Stashed changes
         try:
             # 读取现有历史数据（带恢复机制）
             history = self._load_history_with_recovery()
@@ -516,26 +434,6 @@ class DataStorage:
         return sampled
 
     def save_error(self, error: dict[str, Any]) -> None:
-<<<<<<< Updated upstream
-        """保存错误记录（优化：原子写入）
-
-        自 v4.3.1: 若委托给 DataLogger，通过其 record_error() 方法保存。
-        """
-        # v4.3.1: 委托给 DataLogger 以消除双写竞争
-        if self._data_logger is not None:
-            try:
-                error_type = error.get("type", error.get("level", "unknown"))
-                message = error.get("message", "")
-                self._data_logger.record_error(
-                    error_type=str(error_type),
-                    message=str(message),
-                    context=error,
-                )
-                return
-            except Exception as e:
-                logger.error(f"DataLogger委托写入错误记录失败: {e}")
-                # 降级到直接写入
-=======
         """保存错误记录（P0委托DataLogger或原子写入）"""
         # P0统一数据源: 委托给DataLogger
         if self._data_logger is not None:
@@ -551,7 +449,6 @@ class DataStorage:
                 logger.error(f"委托DataLogger保存错误记录失败: {e}")
             return
 
->>>>>>> Stashed changes
         try:
             # 读取现有错误日志
             errors = []
@@ -617,23 +514,11 @@ class DataStorage:
     def _load_history_with_recovery(self) -> list:
         """加载历史数据，带损坏恢复机制
 
-<<<<<<< Updated upstream
-        自 v4.3.1: 若委托给 DataLogger，从其获取数据。
-        默认使用 JSONL 逐行解析，兼容传统 JSON array 格式。
-        """
-        # v4.3.1: 委托给 DataLogger
-        if self._data_logger is not None:
-            try:
-                return self._data_logger._load_history_with_recovery()
-            except Exception as e:
-                logger.error(f"DataLogger读取历史数据失败: {e}")
-=======
         P0统一数据源: DataLogger可用时委托其更强的括号匹配恢复算法。
         """
         # P0委托DataLoader（其恢复算法更强）
         if self._data_logger is not None:
             return self._data_logger._load_history_with_recovery()
->>>>>>> Stashed changes
 
         if not os.path.exists(self.history_data_file):
             return []
@@ -1246,17 +1131,10 @@ class MonitoringSystem:
         self.engine = engine
         self.collection_interval = collection_interval
 
-<<<<<<< Updated upstream
-        # v4.3.1: 创建统一的 DataLogger 实例，消除与 DataStorage 的双写竞争
-        from src.monitoring.data_logger import DataLogger
-
-        self._data_logger = DataLogger()
-=======
         # P0统一数据源: 创建DataLogger并委托给DataStorage
         from .data_logger import DataLogger
 
         self._data_logger = DataLogger(storage_dir="data_logs")
->>>>>>> Stashed changes
         self.storage = DataStorage(data_logger=self._data_logger)
         self.collector = DataCollector(engine)
         self.detector = AnomalyDetector(self.storage)

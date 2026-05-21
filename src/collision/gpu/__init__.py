@@ -15,20 +15,12 @@
 - 提高可测试性 (Mock层从7+降到1-2)
 - 保持向后兼容 (API不变)
 
-<<<<<<< Updated upstream
-版本: v4.4.0
-=======
 版本: v4.2.2 (Phase 6)
->>>>>>> Stashed changes
 创建日期: 2026-04-29
 更新日期: 2026-05-18
 """
 
-<<<<<<< Updated upstream
-__version__ = "4.4.0"
-=======
 __version__ = "4.2.2"
->>>>>>> Stashed changes
 __author__ = "BTC Project"
 
 # v4.2.2 S1: __init__.py 提供清晰的导入映射

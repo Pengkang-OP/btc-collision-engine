@@ -9,8 +9,9 @@
 import json
 import shutil
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from src.i18n import _t
 
@@ -238,18 +239,10 @@ def backup_config(config_path: str) -> str:
     return str(backup_path)
 
 
-<<<<<<< Updated upstream
-def _check_section_is_dict(section_name: str, value: Any, issues: list[str]) -> dict | None:
-    """验证配置段是否为 dict 类型，返回 dict 或 None。"""
-    if not isinstance(value, dict):
-        issues.append(f"{section_name} 段必须是 JSON 对象")
-        return None
-    return value
-=======
 def validate_migrated_config(config: dict) -> tuple[bool, list[str]]:
     """
     验证迁移后的配置是否满足 v4.2.2 要求。
->>>>>>> Stashed changes
+    """
 
 
 def _check_field_type(
