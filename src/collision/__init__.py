@@ -39,7 +39,7 @@ from .types import (
 # 条件导出 GPUCollisionEngine / MultiGPUCollisionEngine（pyopencl 可能不可用）
 try:
     from ..gpu.multi_gpu_engine import MultiGPUCollisionEngine
-    from .gpu_collision_engine import GPUCollisionEngine
+    from .gpu.engine import GPUCollisionEngine
 
     _GPU_AVAILABLE = True
 except ImportError as _gpu_import_err:  # noqa: F841

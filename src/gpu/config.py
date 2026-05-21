@@ -185,7 +185,7 @@ class GPUConfig:
             GPUCollisionEngine实例
         """
         try:
-            from ..collision.gpu_collision_engine import GPUCollisionEngine
+            from ..collision.gpu.engine import GPUCollisionEngine
 
             gpu_config = self.get_gpu_config()
 

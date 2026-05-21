@@ -262,7 +262,7 @@ def build_engine(
                 message="GPU mode requires OpenCL",
                 user_message=_t("cli.engine.gpu_requires_opencl"),
             )
-        from src.collision.gpu_collision_engine import GPUCollisionEngine as _GEngine
+        from src.collision.gpu.engine import GPUCollisionEngine as _GEngine
 
         match_cb = on_match if on_match else on_match_callback(sensitive_mode=sensitive_mode)
         try:

@@ -68,10 +68,9 @@ except ImportError:
 # 异步日志支持
 # AsyncFileHandler 的实际导入检测在 _setup_async_logging() 中进行。
 # 此常量作为编译期守卫，恒为 True；运行时导入失败由 _setup_async_logging() 内部 try/except 回退。
-# 计划 v5.0.0 移除: ASYNC_LOG_AVAILABLE 由 _setup_async_logging() 负责运行时检测。
+# ASYNC_LOG_AVAILABLE: 编译期守卫，运行时检测在 _setup_async_logging() 中处理
 ASYNC_LOG_AVAILABLE = True
-
-# 计划 v5.0.0 移除: GPU_CONFIG_MANAGER_AVAILABLE 保留供外部导入兼容
+# GPU_CONFIG_MANAGER_AVAILABLE: 保留供外部导入兼容（不再使用）
 GPU_CONFIG_MANAGER_AVAILABLE = False
 
 # 基础依赖

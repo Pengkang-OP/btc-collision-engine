@@ -230,7 +230,7 @@ class CryptoConfig:
         异常:
             RuntimeError: 当GPU不可用时
         """
-        from ..collision.gpu_collision_engine import GPUCollisionEngine
+        from ..collision.gpu.engine import GPUCollisionEngine
 
         gpu_config = self.get_gpu_config()
         return GPUCollisionEngine(

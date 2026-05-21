@@ -33,7 +33,7 @@ class GPUMemoryCalculator:
     # ------------------------------------------------------------------
     SEED_BUF_SIZE: int = 32  # PRNG 种子缓冲区（固定，不随 batch_size 变化）
     PRECOMP_TABLE_SIZE: int = 1984  # 预计算点表（31×2×8 uint32 = 496×4 字节，固定）
-    PRIVATE_KEY_SIZE: int = 32  # 计划 v5.0.0 移除：PRNG 模式不再传输私钥，保留仅供向后兼容
+    PRIVATE_KEY_SIZE: int = 32  # 私钥长度（字节），公共常量位于 src/collision/constants.py
     HASH160_SIZE: int = 20  # Hash160（RIPEMD160(SHA256(pubkey))）字节数
     MATCH_FLAG_SIZE: int = 4  # 匹配标志（uint32）字节数
     KERNEL_OVERHEAD_RATIO: float = 0.20  # 内核执行临时显存开销比例（20%）
