@@ -371,7 +371,6 @@ class TestMultiFormatClosedLoop:
         engine.start(mode="range", start=1, end=10)
         engine._thread.join(timeout=15)
         engine.stop()
-        )
 
 
 # ============================================================================
