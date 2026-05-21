@@ -46,12 +46,16 @@ class SearchModeCoordinator:
     def _init_modes(self):
         """初始化所有搜索模式"""
         # 从配置读取seed_prefetch_size
-        cfg_gpu = (
-            self.engine.config.get("gpu", {})
-            if hasattr(self.engine, "config") and self.engine.config
-            else {}
-        )
-        seed_prefetch_size = cfg_gpu.get("seed_prefetch_size", 5)
+        seed_prefetch_size = 5
+        try:
+            if hasattr(self.engine, "config") and self.engine.config:
+                cfg_gpu = self.engine.config.get("gpu", {})
+                if isinstance(cfg_gpu, dict):
+                    val = cfg_gpu.get("seed_prefetch_size")
+                    if isinstance(val, int):
+                        seed_prefetch_size = val
+        except Exception:
+            seed_prefetch_size = 5
 
         self._modes[self.MODE_RANDOM] = RandomSearchMode(
             self.engine, seed_prefetch_size=seed_prefetch_size

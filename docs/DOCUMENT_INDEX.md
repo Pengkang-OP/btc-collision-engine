@@ -2,13 +2,6 @@
 
 > BTC碰撞引擎项目文档导航
 
-<<<<<<< Updated upstream
-> **版本**: v4.4.0 | **最后更新**: 2026-05-18
-
-> 本次更新：安全修复增强(安全清零/侧信道防护/敏感数据脱敏/线程安全)；全项目版本统一到4.4.0；文档拓扑图更新；冗余文档清理。
-=======
-> **版本**: v4.2.2 | **最后更新**: 2026-05-15
->>>>>>> Stashed changes
 
 ---
 
@@ -16,18 +9,6 @@
 
 | 目录 | 文档数量 | 说明 |
 |------|----------|------|
-<<<<<<< Updated upstream
-| docs/*.md | 30+ | 核心活跃文档 |
-| docs/standards/ | 5 | 开发规范文档 |
-| docs/technical-docs/ | 4 | 技术深度文档 |
-| docs/security/ | 1 | 安全专项文档 |
-| docs/user-docs/ | 1 | 用户手册 |
-| docs/audit-reports/ | 6 | 审计报告 |
-| docs/archive/ | 38+ | 历史归档 |
-=======
-| docs/*.md | 70+ | 活跃文档 |
-| docs/archive/ | 30+ | 历史归档 |
->>>>>>> Stashed changes
 | 根目录 | 3 | 核心文档 (README/CHANGELOG/CONTRIBUTING) |
 
 ---
@@ -56,10 +37,6 @@
 
 - architecture.md - 系统架构 (17个图表)
 - workflow_diagrams.md - 工作流程图 (19个图表)
-<<<<<<< Updated upstream
-=======
-- PROJECT_COMPREHENSIVE_DEEP_ANALYSIS_V3.5.1.md - 深度分析报告
->>>>>>> Stashed changes
 - api-reference.md - API参考 (2949行)
 - requirements.md - 需求规格
 
@@ -165,18 +142,6 @@
 | *REVIEW*.md | 代码审查报告 |
 | *git_commit*.md | Git提交记录 |
 | *MIGRATION*.md | 迁移报告 |
-<<<<<<< Updated upstream
-| INTEL_ARC_*.md | Intel Arc 历史文档 (3 个已归档) |
-| RELEASE_NOTES_v3.5.1.md | v3.5.1 发布说明 |
-| GPU_ENGINE_REFACTORING_PLAN.md | GPU引擎重构计划 (已完成) |
-| comprehensive-audit-report.md | 综合审计报告 |
-| 全面系统性验证报告.md | 系统验证报告 |
-| GPU_ASYNC_LOGGING_USAGE_EXAMPLES.md | GPU异步日志使用示例 |
-| monitoring-system-usage-guide.md | 监控系统使用指南 |
-| startbat_*.md | 启动脚本相关 (已精简，保留 quick_reference) |
-=======
-| startbat_*.md | 启动脚本相关 (已归档至 docs/archive/startbat/) |
->>>>>>> Stashed changes
 | CLI_AUDIT_SUMMARY.md | CLI审核总结 (2026-04-24) |
 | CLI_QUICK_REFERENCE.md | CLI快速参考 (2026-04-24) |
 
@@ -184,12 +149,6 @@
 
 ## 更新记录
 
-<<<<<<< Updated upstream
-- v4.4.0 (2026-05-18): 安全修复增强(安全清零/侧信道防护/敏感数据脱敏/线程安全); 全项目版本统一到4.4.0; 文档拓扑图更新; 冗余文档清理
-- v4.3.0 (2026-05-16): 启动时目标格式分析与不兼容格式Rich Panel警告; 全文措辞修正; GPU路径一致性注释; i18n新增targets键; 冗余文件清理; 文档深度清理
-- v4.2.3 (2026-05-15): Bech32 编解码统一重构，WIF 防泄露，竞态条件修复，BIP-173 回归测试，注释规范化
-=======
->>>>>>> Stashed changes
 - v4.2.2 (2026-05-15): mod_inverse Binary GCD 2^256溢出修复，生产验收测试全通过
 - v4.2.1 (2026-05-12): 全项目版本统一，OpenCL内核审核修复，端到端自动化系统上线，CLI/bat文件整理
 - v4.2.1 (2026-05-08): GPU引擎重构完成，测试体系增强

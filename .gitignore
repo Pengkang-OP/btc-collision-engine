@@ -113,6 +113,10 @@ build/
 *.prof
 *.pstats
 
+# 安全扫描报告
+bandit-result*.json
+bandit-report*.json
+
 # 环境配置
 .env
 .env.local
