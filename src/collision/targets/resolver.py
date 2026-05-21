@@ -260,8 +260,15 @@ class TargetResolver:
                 return None
             prog_len = len(witness_program)
             if prog_len == 20:
-                # P2WPKH: witness_program = hash160(pubkey) → 可转换为P2PKH地址匹配
-                addr_type = "P2WPKH"
+                # P2WPKH (v0, 20字节): witness program = pubkey_hash (Hash160)
+                # 转换为 Legacy P2PKH 地址以便引擎进行碰撞匹配
+                from ...core.hash_utils import HashUtils
+
+                p2pkh_addr = HashUtils.hash160_to_address(witness_program)
+                if self.cache:
+                    self.cache.put(input_str, p2pkh_addr)
+                logger.debug(f"P2WPKH地址转换: {input_str} -> {p2pkh_addr}")
+                return p2pkh_addr
             elif prog_len == 32:
                 # P2WSH: witness_program = sha256(redeemScript) → 不可匹配
                 logger.warning(
@@ -274,15 +281,6 @@ class TargetResolver:
             else:
                 logger.warning(f"Bech32 witness长度无效: {prog_len}字节")
                 return None
-            # P2WPKH (v0, 20字节): witness program = pubkey_hash (Hash160)
-            # 转换为 Legacy P2PKH 地址以便引擎进行碰撞匹配
-            from ...core.hash_utils import HashUtils
-
-            p2pkh_addr = HashUtils.hash160_to_address(witness_program)
-            if self.cache:
-                self.cache.put(input_str, address)
-            logger.debug(f"{addr_type}地址转换: {input_str} -> {address}")
-            return address
         except ValueError as e:
             logger.error(f"Bech32地址转换异常: {input_str} - {type(e).__name__}: {e}")
             return None

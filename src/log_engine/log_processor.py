@@ -158,25 +158,39 @@ class SensitiveDataFilter:
     """敏感数据过滤器
 
     过滤可能包含私钥等敏感信息的数据。
+
+    v4.5.1: 正则模式从 src.utils.sensitive_patterns 导入共享常量。
     """
 
-    SENSITIVE_PATTERNS = [
-        (r"[0-9a-fA-F]{64}", "***REDACTED***"),  # 私钥 (hex)
-        (r'PrivateKey["\']?\s*[:=]\s*["\']?[0-9a-fA-F]{64}', "***REDACTED***"),
-        # 比特币地址模式
-        (r"\b1[1-9A-HJ-NP-Za-km-z]{24,33}\b", "[P2PKH_ADDRESS]"),  # P2PKH
-        (r"\b3[1-9A-HJ-NP-Za-km-z]{24,33}\b", "[P2SH_ADDRESS]"),  # P2SH
-        (r"\bbc1[ac-hj-np-z02-9]{38,58}\b", "[BECH32_ADDRESS]"),  # Bech32
-        (r"\bbc1p[ac-hj-np-z02-9]{58}\b", "[BECH32M_ADDRESS]"),  # Bech32m
-        # WIF 格式私钥
-        (r"\b5[HJK][1-9A-HJ-NP-Za-km-z]{48,49}\b", "[WIF_UNCOMPRESSED_KEY]"),
-        (r"\b[KL][1-9A-HJ-NP-Za-km-z]{50,51}\b", "[WIF_COMPRESSED_KEY]"),
-        # BIP32 扩展密钥
-        (r"\b[xXtT]prv[1-9A-HJ-NP-Za-km-z]{107,108}\b", "[BIP32_EXTENDED_KEY]"),
-        (r"\b[xXtT]pub[1-9A-HJ-NP-Za-km-z]{107,108}\b", "[BIP32_EXTENDED_PUBKEY]"),
-        # BIP39 种子短语 (12/24个助记词)
-        (r"\b(?:[a-z]{3,8}\s+){11}[a-z]{3,8}\b", "[BIP39_PHRASE_12_WORDS]"),
-        (r"\b(?:[a-z]{3,8}\s+){23}[a-z]{3,8}\b", "[BIP39_PHRASE_24_WORDS]"),
+    # 从共享模块导入正则模式，避免与 SecurityLogFilter 重复维护
+    from ..utils.sensitive_patterns import (  # type: ignore[import]
+        PRIVATE_KEY_HEX,
+        PRIVATE_KEY_CONTEXT,
+        P2PKH_ADDRESS,
+        P2SH_ADDRESS,
+        BECH32_ADDRESS,
+        BECH32M_ADDRESS,
+        WIF_UNCOMPRESSED,
+        WIF_COMPRESSED,
+        BIP32_EXTENDED_KEY,
+        BIP32_EXTENDED_PUBKEY,
+        BIP39_PHRASE_12,
+        BIP39_PHRASE_24,
+    )
+
+    SENSITIVE_PATTERNS = [  # type: ignore[assignment]
+        (PRIVATE_KEY_HEX.pattern, "***REDACTED***"),
+        (PRIVATE_KEY_CONTEXT.pattern, "***REDACTED***"),
+        (P2PKH_ADDRESS.pattern, "[P2PKH_ADDRESS]"),
+        (P2SH_ADDRESS.pattern, "[P2SH_ADDRESS]"),
+        (BECH32_ADDRESS.pattern, "[BECH32_ADDRESS]"),
+        (BECH32M_ADDRESS.pattern, "[BECH32M_ADDRESS]"),
+        (WIF_UNCOMPRESSED.pattern, "[WIF_UNCOMPRESSED_KEY]"),
+        (WIF_COMPRESSED.pattern, "[WIF_COMPRESSED_KEY]"),
+        (BIP32_EXTENDED_KEY.pattern, "[BIP32_EXTENDED_KEY]"),
+        (BIP32_EXTENDED_PUBKEY.pattern, "[BIP32_EXTENDED_PUBKEY]"),
+        (BIP39_PHRASE_12.pattern, "[BIP39_PHRASE_12_WORDS]"),
+        (BIP39_PHRASE_24.pattern, "[BIP39_PHRASE_24_WORDS]"),
     ]
 
     def __init__(self, enabled: bool = True):

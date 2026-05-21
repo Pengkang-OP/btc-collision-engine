@@ -243,10 +243,6 @@ class OpenSSLBackend(CryptoBackend):
         # 1. 对于安全敏感场景，使用 CoincurveBackend（libsecp256k1，完全恒定时间）
         # 2. 对于性能优先场景，可使用 OpenSSLBackend（generate_public_key 是恒定的）
         return False
-        # - generate_public_key() 使用 OpenSSL ec.derive_private_key (恒定时间)
-        # - scalar_multiply() 已迁移至 scalar_multiply_const_time() (v4.2.2 C1, R2)
-        #   Montgomery Ladder 实现，完全恒定时间
-        return True
 
 
 class CoincurveBackend(CryptoBackend):

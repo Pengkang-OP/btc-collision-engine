@@ -13,10 +13,9 @@ import threading
 import time
 from typing import Any
 
-# 将项目根目录加入路径
-_project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if _project_root not in sys.path:
-    sys.path.insert(0, _project_root)
+# v4.5.1: 确保项目根目录在 sys.path 中（使用共享模块）
+from ._path_setup import ensure_project_root
+ensure_project_root()
 
 from src.cli.engine_builder import (  # noqa: E402 — 需 sys.path 前置
     EngineBuildError,

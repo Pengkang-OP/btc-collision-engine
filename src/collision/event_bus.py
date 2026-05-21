@@ -78,7 +78,7 @@ class EventBus:
         Args:
             async_mode: 是否异步处理事件 (默认False)
             max_queue_size: 事件队列最大大小 (异步模式)
-            handler_timeout: 事件处理器超时时间(秒)，0表示无超时（默认10秒）
+            handler_timeout: 事件处理器超时时间(秒)，0表示无超时（默认0，禁用超时保护）
         """
         self._subscribers: dict[EventType, list[Callable]] = defaultdict(list)
         self._lock = threading.RLock()

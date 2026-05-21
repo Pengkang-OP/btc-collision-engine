@@ -506,6 +506,27 @@
             "checkpoint_interval": "检查点间隔",
             "address_file": "地址文件",
             "output_dir": "输出目录"
+        },
+        "validation": {
+            "invalid_mode": "无效模式: {value}，有效值: {valid_values}",
+            "batch_size_min": "{name} 必须 >= {min_val}, 当前值: {value}",
+            "batch_size_max_gpu": "batch_size {value} 大于 GPU 上限 {max}",
+            "batch_size_max_schema": "batch_size {value} 超过 Schema 上限 {max}",
+            "int_min_max": "{name} 必须 >= {min_val} 且 <= {max_val}, 当前值: {value}",
+            "float_min": "{name} 必须 >= {min_val}, 当前值: {value}",
+            "bool_expected": "需要布尔值，当前: {value} (类型: {type_name})",
+            "checkpoint_interval_invalid": "checkpoint_interval 必须为 -1 或 >= 1, 当前值: {value}",
+            "invalid_log_level": "无效日志级别: {value}，有效值: {valid_values}",
+            "type_mismatch": "{key} 必须是 {expected_type}, 当前: {actual_type}",
+            "invalid_rotation_type": "无效 rotation_type: {value}，有效值: size, time",
+            "rotation_needs_max_bytes": "rotation_type=size 需要设置 max_bytes",
+            "rotation_needs_when": "rotation_type=time 需要设置 rotation_when",
+            "field_must_be_dict": "{key} 必须是字典, 当前: {actual_type}",
+            "memory_ratio_range": "memory_usage_ratio 必须在(0, 1]范围内, 当前: {value}",
+            "gpu_mode_invalid": "无效 gpu.mode: {value}，有效值: auto, single, multi",
+            "load_balancing_invalid": "无效 load_balancing: {value}，有效值: performance, equal",
+            "device_index_type": "device_index 必须是整数, 当前: {actual_type}",
+            "backend_invalid": "无效 crypto.backend: {value}，有效值: {valid_values}"
         }
     },
     "monitoring": {

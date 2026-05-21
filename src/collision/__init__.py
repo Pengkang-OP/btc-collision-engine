@@ -100,7 +100,11 @@ __all__ = [
 
 
 def create_collision_engine(
-    targets: set[str], mode: str = "auto", config: dict[str, Any] | None = None, **kwargs
+    targets: set[str],
+    mode: str = "auto",
+    config: dict[str, Any] | None = None,
+    container: Any = None,
+    **kwargs,
 ) -> Any:
     """
     创建碰撞引擎实例
@@ -115,38 +119,14 @@ def create_collision_engine(
         config: 配置字典（可选）
             如果提供，将从中读取引擎配置
             优先级: kwargs > config > 默认值
+        container: DependencyContainer 实例（可选，v4.5.1 新增）
+            提供依赖注入支持，自动填充 event_bus/stats 等组件
         **kwargs: 传递给引擎构造函数的参数
-            - 对于GPU引擎: batch_size, device_index, dedup_filter, checkpoint_mgr
-            - 对于CPU引擎: on_progress, on_match, on_complete, checkpoint_enabled,
-                         dedup_enabled, dedup_max_size, checkpoint_interval, max_workers
-            - 对于多GPU引擎: device_indices, device_count, strategy
 
     返回:
         碰撞引擎实例 (GPUCollisionEngine / MultiGPUCollisionEngine / KeyCollisionEngine)
 
-    异常:
-        RuntimeError: 当mode='gpu'/'multi_gpu'但GPU不可用时
-        ValueError: 当mode参数无效时
-
-    示例:
-        >>> # 基本用法
-        >>> engine = create_collision_engine(targets={'1A...'}, mode='auto')
-
-        >>> # 使用配置字典
-        >>> config = {
-        ...     'gpu': {'batch_size': 131072, 'device_index': 0},
-        ...     'collision': {'max_workers': 4}
-        ... }
-        >>> engine = create_collision_engine(targets, mode='auto', config=config)
-
-        >>> # 强制GPU
-        >>> engine = create_collision_engine(targets, mode='gpu', batch_size=65536)
-
-        >>> # 强制CPU
-        >>> engine = create_collision_engine(targets, mode='cpu', max_workers=4)
-
-        >>> # 强制多GPU
-        >>> engine = create_collision_engine(targets, mode='multi_gpu', device_count=2)
+    v4.5.1: 新增 container 参数，合并 EngineFactory 的依赖注入能力。
     """
     # 参数验证
     if mode not in ("auto", "gpu", "cpu", "multi_gpu"):
@@ -158,6 +138,11 @@ def create_collision_engine(
 
         logger = logging.getLogger(__name__)
         logger.warning("目标地址集合为空，碰撞将无意义")
+
+    # v4.5.1: 从 DependencyContainer 注入 event_bus
+    if container is not None:
+        if "event_bus" not in kwargs:
+            kwargs.setdefault("event_bus", container.event_bus)
 
     # 合并配置: kwargs优先级最高，config次之
     merged_kwargs = _merge_config_with_kwargs(config, kwargs) if config else kwargs.copy()

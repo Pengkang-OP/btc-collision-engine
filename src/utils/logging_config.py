@@ -17,6 +17,9 @@ from typing import Any
 
 from .logger import ColoredFormatter, SafeStreamHandler  # ThreadSafeLogger已弃用
 
+# v4.5.1: 项目根目录缓存，用于解析相对日志路径
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 # 模块级可重入锁，序列化所有 SafeRotatingFileHandler 实例的 rollover 操作，
 # 防止并发测试场景下多个处理器同时竞争同一日志文件的 rename/delete。
 # 使用 RLock 对齐 Python logging.Handler 内置锁类型，提供防御性可重入安全。
@@ -146,18 +149,35 @@ class LoggingConfig:
             return None
 
     def _ensure_log_directory(self) -> None:
-        """确保日志目录存在"""
+        """确保日志目录存在（相对路径基于项目根目录）"""
         assert self._config is not None
         log_file = self._config.get("file")
-        if log_file:
-            log_dir = os.path.dirname(log_file)
-            if log_dir and not os.path.exists(log_dir):
-                os.makedirs(log_dir, mode=0o750, exist_ok=True)
-        else:
-            # 使用平台特定的日志目录
+        if not log_file:
             from .log_platform_adapter import ensure_log_directory
-
             ensure_log_directory()
+            return
+
+        # v4.5.1: 将相对日志路径解析为基于项目根目录的绝对路径
+        log_path = self._resolve_log_path(log_file)
+        self._config["file"] = log_path  # 更新配置中的路径为绝对路径
+
+        log_dir = os.path.dirname(log_path)
+        if log_dir and not os.path.exists(log_dir):
+            os.makedirs(log_dir, mode=0o750, exist_ok=True)
+
+    def _resolve_log_path(self, log_file: str) -> str:
+        """将日志路径解析为绝对路径（相对路径基于项目根目录）
+
+        Args:
+            log_file: 配置中的日志文件路径（可能为相对路径）
+
+        Returns:
+            绝对路径的日志文件位置
+        """
+        if os.path.isabs(log_file):
+            return log_file
+        # 相对路径基于项目根目录，而非 CWD
+        return os.path.join(_PROJECT_ROOT, log_file)
 
     def check_disk_space(self, min_free_mb: int = 200) -> bool:
         """主动检查日志目录所在磁盘的可用空间
@@ -255,30 +275,101 @@ class LoggingConfig:
             handler.setLevel(getattr(logging, level))
             handler.setFormatter(logging.Formatter(format_str))
 
-            # M10: 包装文件处理器，捕获磁盘满 OSError
+            # M10: 包装文件处理器，捕获磁盘满 OSError 和 NFS stale handle
             class _DiskSafeHandler(logging.Handler):
-                """OSError（磁盘满）安全包装层"""
+                """OSError（磁盘满/NFS stale handle）安全包装层
+
+                v4.5.1: 添加 ESTALE（NFS 陈旧文件句柄）检测与自动恢复。
+                """
 
                 def __init__(self, inner: logging.Handler) -> None:
                     super().__init__(inner.level)
                     self._inner = inner
                     self._disk_full_warned = False
+                    # v4.5.1: 缓存创建参数，用于 NFS stale handle 恢复
+                    self._log_file: str | None = None
+                    self._format_str: str | None = None
+                    self._rotation_type: str | None = None
+                    self._config_snapshot: dict[str, Any] | None = None
 
                 def setFormatter(self, fmt) -> None:  # noqa: N802 — 继承父类 camelCase 方法
                     self._inner.setFormatter(fmt)
+                    self._format_str = fmt
+
+                def bind_params(
+                    self, log_file: str, rotation_type: str, config: dict[str, Any]
+                ) -> None:
+                    """绑定创建参数，用于 NFS stale handle 后重建处理器"""
+                    self._log_file = log_file
+                    self._rotation_type = rotation_type
+                    self._config_snapshot = config.copy()
 
                 def emit(self, record: logging.LogRecord) -> None:
                     try:
                         self._inner.emit(record)
                         self._disk_full_warned = False  # 恢复后重置警告状态
                     except OSError as os_err:
+                        # v4.5.1: 检测 NFS stale file handle 并尝试恢复
+                        import errno
+
+                        if hasattr(errno, "ESTALE") and getattr(os_err, "errno", None) == errno.ESTALE:
+                            self._recover_stale_handle()
+                            # 恢复后重试本次 emit
+                            try:
+                                self._inner.emit(record)
+                                return
+                            except OSError:
+                                pass  # 重试失败，降级到通用错误处理
+
                         if not self._disk_full_warned:
                             self._disk_full_warned = True
-                            print(
-                                f"[日志警告] 日志文件写入失败（磁盘可能已满）: {os_err}"
-                                " 请清理磁盘或调整 logging.file 路径",
-                                file=sys.stderr,
-                            )
+                            if hasattr(errno, "ESTALE") and getattr(os_err, "errno", None) == errno.ESTALE:
+                                print(
+                                    f"[日志警告] NFS 文件句柄失效且无法恢复: {os_err}",
+                                    file=sys.stderr,
+                                )
+                            else:
+                                print(
+                                    f"[日志警告] 日志文件写入失败（磁盘可能已满）: {os_err}"
+                                    " 请清理磁盘或调整 logging.file 路径",
+                                    file=sys.stderr,
+                                )
+
+                def _recover_stale_handle(self) -> None:
+                    """尝试从 NFS stale file handle 中恢复
+
+                    关闭旧的文件句柄，重新创建文件处理器。
+                    """
+                    if not self._log_file or not self._format_str:
+                        return
+                    try:
+                        self._inner.close()
+                        try:
+                            from logging.handlers import TimedRotatingFileHandler
+                            handler: logging.Handler
+                            if self._rotation_type == "time":
+                                handler = TimedRotatingFileHandler(
+                                    self._log_file,
+                                    when=(self._config_snapshot or {}).get("rotation_when", "midnight"),
+                                    interval=(self._config_snapshot or {}).get("rotation_interval", 1),
+                                    backupCount=(self._config_snapshot or {}).get("backup_count", 5),
+                                    encoding="utf-8-sig",
+                                )
+                            else:
+                                handler = SafeRotatingFileHandler(
+                                    self._log_file,
+                                    maxBytes=(self._config_snapshot or {}).get("max_bytes", 10 * 1024 * 1024),
+                                    backupCount=(self._config_snapshot or {}).get("backup_count", 5),
+                                    encoding="utf-8-sig",
+                                )
+                            handler.setLevel(self.level)
+                            handler.setFormatter(self._format_str if isinstance(self._format_str, str) else self._inner.formatter)
+                            self._inner = handler
+                            print(f"[日志] NFS 文件句柄已恢复: {self._log_file}", file=sys.stderr)
+                        except Exception as rebuild_err:
+                            print(f"[日志警告] NFS 句柄恢复失败: {rebuild_err}", file=sys.stderr)
+                    except Exception as close_err:
+                        print(f"[日志警告] 关闭旧日志句柄失败: {close_err}", file=sys.stderr)
 
                 def close(self) -> None:
                     self._inner.close()
@@ -288,7 +379,10 @@ class LoggingConfig:
             with suppress(OSError):
                 os.chmod(log_file, 0o600)  # Windows 系统可能不支持 chmod
 
-            return _DiskSafeHandler(handler)
+            # v4.5.1: 绑定创建参数供 NFS stale handle 恢复
+            safe_handler = _DiskSafeHandler(handler)
+            safe_handler.bind_params(log_file, rotation_type, self._config or {})
+            return safe_handler
         except Exception as e:
             print(f"创建日志文件处理器失败: {e}", file=sys.stderr)
             return None

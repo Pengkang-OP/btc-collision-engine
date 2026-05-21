@@ -8,6 +8,7 @@ from collections.abc import Callable
 from typing import Any, Optional
 
 # 导入日志配置
+from ..i18n import _t
 from ..utils import get_configured_logger
 from .config_watcher import ConfigWatcher  # noqa: F401 — type annotation reference
 
@@ -787,7 +788,7 @@ class ConfigManager:
         }
         key = prefix + "mode"
         if value not in valid_modes:
-            errors[key] = f"无效模式: {value}，有效值: {valid_modes}"
+            errors[key] = _t("config.validation.invalid_mode", value=value, valid_values=valid_modes)
             return None
         return value
 
@@ -800,13 +801,13 @@ class ConfigManager:
         _schema_max_batch_size = 16777216  # Schema maximum (16M, 与 CONFIG_SCHEMA 保持一致)
         key = prefix + "batch_size"
         if value < 1:
-            errors[key] = f"batch_size 必须 >= 1, 当前值: {value}"
+            errors[key] = _t("config.validation.batch_size_min", name=key, min_val=1, value=value)
             return None
         if value >= _gpu_max_batch_size:
-            errors[key] = f"batch_size {value} >= _gpu_max_batch_size({_gpu_max_batch_size})"
+            errors[key] = _t("config.validation.batch_size_max_gpu", value=value, max=_gpu_max_batch_size)
             return None
         if value > _schema_max_batch_size:
-            errors[key] = f"batch_size {value} 超过 Schema 上限 {_schema_max_batch_size}"
+            errors[key] = _t("config.validation.batch_size_max_schema", value=value, max=_schema_max_batch_size)
             return None
         return value
 
@@ -832,10 +833,10 @@ class ConfigManager:
         if nullable and value is None:
             return None
         if not isinstance(value, int) or value < min_val:
-            errors[name] = f"{name} 必须 >= {min_val}, 当前值: {value} (类型: {type(value).__name__})"
+            errors[name] = _t("config.validation.batch_size_min", name=name, min_val=min_val, value=value)
             return None
         if max_val is not None and value > max_val:
-            errors[name] = f"{name} 必须 <= {max_val}, 当前值: {value}"
+            errors[name] = _t("config.validation.int_min_max", name=name, min_val=min_val, max_val=max_val, value=value)
             return None
         return value
 
@@ -844,7 +845,7 @@ class ConfigManager:
     ) -> float | None:
         """验证正浮点数配置"""
         if not isinstance(value, (int, float)) or value < min_val:
-            errors[name] = f"{name} 必须 >= {min_val}, 当前值: {value} (类型: {type(value).__name__})"
+            errors[name] = _t("config.validation.float_min", name=name, min_val=min_val, value=value)
             return None
         return float(value)
 
@@ -857,7 +858,7 @@ class ConfigManager:
                     return True
                 elif value.lower() in ("false", "0", "no", "off"):
                     return False
-            errors[name] = f"需要布尔值，当前: {value} (类型: {type(value).__name__})"
+            errors[name] = _t("config.validation.bool_expected", value=value, type_name=type(value).__name__)
             return False
         return value
 
@@ -870,7 +871,7 @@ class ConfigManager:
         """
         key = prefix + "checkpoint_interval"
         if value != -1 and (not isinstance(value, int) or value < 1):
-            errors[key] = f"checkpoint_interval 必须为 -1 或 >= 1, 当前值: {value}"
+            errors[key] = _t("config.validation.checkpoint_interval_invalid", value=value)
             return None
         return value
 
@@ -885,7 +886,7 @@ class ConfigManager:
         valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
         key = prefix + "level"
         if value.upper() not in valid_levels:
-            errors[key] = f"无效日志级别: {value}，有效值: {valid_levels}"
+            errors[key] = _t("config.validation.invalid_log_level", value=value, valid_values=valid_levels)
             return None
         return value.upper()
 
@@ -973,9 +974,7 @@ class ConfigManager:
             self._validate_log_level(logging_cfg["level"], errors, prefix="logging.")
         for key in ("format", "file", "rotation_when"):
             if key in logging_cfg and not isinstance(logging_cfg[key], str):
-                errors[f"logging.{key}"] = (
-                    f"logging.{key} 必须是字符串, 当前: {type(logging_cfg[key]).__name__}"
-                )
+                errors[f"logging.{key}"] = _t("config.validation.type_mismatch", key=f"logging.{key}", expected_type="字符串/string", actual_type=type(logging_cfg[key]).__name__)
         for key in ("max_bytes", "backup_count", "rotation_interval"):
             if key in logging_cfg:
                 self._validate_positive_int(
@@ -988,13 +987,11 @@ class ConfigManager:
         if "rotation_type" in logging_cfg:
             rt = logging_cfg["rotation_type"]
             if rt not in ("size", "time"):
-                errors["logging.rotation_type"] = (
-                    f"无效 rotation_type: {rt}，有效值: size, time"
-                )
+                errors["logging.rotation_type"] = _t("config.validation.invalid_rotation_type", value=rt)
             elif rt == "size" and "max_bytes" not in logging_cfg:
-                errors["logging.max_bytes"] = "rotation_type=size 需要设置 max_bytes"
+                errors["logging.max_bytes"] = _t("config.validation.rotation_needs_max_bytes")
             elif rt == "time" and "rotation_when" not in logging_cfg:
-                errors["logging.rotation_when"] = "rotation_type=time 需要设置 rotation_when"
+                errors["logging.rotation_when"] = _t("config.validation.rotation_needs_when")
 
     def _validate_engine_section(self, engine_cfg: dict, errors: dict[str, str]) -> None:
         """验证 engine 配置节"""
@@ -1014,33 +1011,25 @@ class ConfigManager:
     ) -> None:
         """验证 gpu 配置节"""
         if gpu_top is not None and not isinstance(gpu_top, dict):
-            errors["gpu"] = f"gpu 必须是字典, 当前: {type(gpu_top).__name__}"
+            errors["gpu"] = _t("config.validation.field_must_be_dict", key="gpu", actual_type=type(gpu_top).__name__)
             return
         if "batch_size" in gpu_cfg:
             self._validate_batch_size(gpu_cfg["batch_size"], errors, prefix="gpu.")
         if "memory_usage_ratio" in gpu_cfg:
             ratio = gpu_cfg["memory_usage_ratio"]
             if not isinstance(ratio, (int, float)) or not (0 < ratio <= 1):
-                errors["gpu.memory_usage_ratio"] = (
-                    f"memory_usage_ratio 必须在(0, 1]范围内, 当前: {ratio}"
-                )
+                errors["gpu.memory_usage_ratio"] = _t("config.validation.memory_ratio_range", value=ratio)
         if "mode" in gpu_cfg and gpu_cfg["mode"] not in ("auto", "single", "multi"):
-            errors["gpu.mode"] = (
-                f"无效 gpu.mode: {gpu_cfg['mode']}，有效值: auto, single, multi"
-            )
+            errors["gpu.mode"] = _t("config.validation.gpu_mode_invalid", value=gpu_cfg["mode"])
         if "load_balancing" in gpu_cfg and gpu_cfg["load_balancing"] not in (
             "performance", "equal"
         ):
-            errors["gpu.load_balancing"] = (
-                f"无效 load_balancing: {gpu_cfg['load_balancing']}，有效值: performance, equal"
-            )
+            errors["gpu.load_balancing"] = _t("config.validation.load_balancing_invalid", value=gpu_cfg["load_balancing"])
         for key in ("use_gpu", "auto_detect", "enable_vendor_optimizations"):
             if key in gpu_cfg:
                 self._validate_bool(f"gpu.{key}", gpu_cfg[key], errors)
         if "device_index" in gpu_cfg and not isinstance(gpu_cfg["device_index"], int):
-            errors["gpu.device_index"] = (
-                f"gpu.device_index 必须是整数, 当前: {type(gpu_cfg['device_index']).__name__}"
-            )
+            errors["gpu.device_index"] = _t("config.validation.device_index_type", actual_type=type(gpu_cfg["device_index"]).__name__)
 
     def _validate_crypto_section(self, crypto: dict, errors: dict[str, str]) -> None:
         """验证 crypto 配置节"""
@@ -1051,15 +1040,13 @@ class ConfigManager:
             )
             if crypto["backend"] not in valid_backends:
                 errors["crypto.backend"] = (
-                    f"无效 crypto.backend: {crypto['backend']}，有效值: {valid_backends}"
+                    _t("config.validation.backend_invalid", value=crypto["backend"], valid_values=valid_backends)
                 )
         for key in ("constant_time", "verify_checksums", "strict_wif_validation", "use_gpu"):
             if key in crypto:
                 self._validate_bool(f"crypto.{key}", crypto[key], errors)
         if "gpu_device_index" in crypto and not isinstance(crypto["gpu_device_index"], int):
-            errors["crypto.gpu_device_index"] = (
-                f"gpu_device_index 必须是整数, 当前: {type(crypto['gpu_device_index']).__name__}"
-            )
+            errors["crypto.gpu_device_index"] = _t("config.validation.device_index_type", actual_type=type(crypto["gpu_device_index"]).__name__)
 
     def _validate_perf_section(self, perf_cfg: dict, errors: dict[str, str]) -> None:
         """验证 performance_monitoring 配置节"""

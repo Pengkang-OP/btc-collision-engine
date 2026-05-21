@@ -506,6 +506,27 @@
             "checkpoint_interval": "Checkpoint interval",
             "address_file": "Address file",
             "output_dir": "Output directory"
+        },
+        "validation": {
+            "invalid_mode": "Invalid mode: {value}, valid values: {valid_values}",
+            "batch_size_min": "{name} must be >= {min_val}, current: {value}",
+            "batch_size_max_gpu": "batch_size {value} exceeds GPU limit {max}",
+            "batch_size_max_schema": "batch_size {value} exceeds Schema limit {max}",
+            "int_min_max": "{name} must be >= {min_val} and <= {max_val}, current: {value}",
+            "float_min": "{name} must be >= {min_val}, current: {value}",
+            "bool_expected": "Boolean expected, got: {value} (type: {type_name})",
+            "checkpoint_interval_invalid": "checkpoint_interval must be -1 or >= 1, current: {value}",
+            "invalid_log_level": "Invalid log level: {value}, valid values: {valid_values}",
+            "type_mismatch": "{key} must be {expected_type}, got: {actual_type}",
+            "invalid_rotation_type": "Invalid rotation_type: {value}, valid values: size, time",
+            "rotation_needs_max_bytes": "rotation_type=size requires max_bytes",
+            "rotation_needs_when": "rotation_type=time requires rotation_when",
+            "field_must_be_dict": "{key} must be a dict, got: {actual_type}",
+            "memory_ratio_range": "memory_usage_ratio must be in (0, 1], current: {value}",
+            "gpu_mode_invalid": "Invalid gpu.mode: {value}, valid values: auto, single, multi",
+            "load_balancing_invalid": "Invalid load_balancing: {value}, valid values: performance, equal",
+            "device_index_type": "device_index must be integer, got: {actual_type}",
+            "backend_invalid": "Invalid crypto.backend: {value}, valid values: {valid_values}"
         }
     },
     "monitoring": {

@@ -7,14 +7,11 @@
 
 import json
 import os
-import sys
 from pathlib import Path
 
-# 将项目根目录加入路径
-_project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if _project_root not in sys.path:
-    sys.path.insert(0, _project_root)
-
+# v4.5.1: 确保项目根目录在 sys.path 中（使用共享模块）
+from ._path_setup import _project_root, ensure_project_root
+ensure_project_root()
 
 from src.i18n import _t  # noqa: E402
 from src.utils import get_configured_logger  # noqa: E402
@@ -68,6 +65,9 @@ def load_config_with_validation(config_file: str | None = None) -> dict | None:
             logger.error(_t("config.invalid", error="根节点必须是JSON对象"))
             return None
 
+        # v4.5.1: 过滤 `_comment` 字段，避免运行时数据污染
+        config = _strip_comment_keys(config)
+
         return config
 
     except json.JSONDecodeError as e:
@@ -86,3 +86,19 @@ def load_config_with_validation(config_file: str | None = None) -> dict | None:
     except Exception as e:
         logger.error(_t("errors.unexpected", error=str(e)))
         return None
+
+
+def _strip_comment_keys(data: object) -> object:
+    """递归移除字典中以 `_comment` 或 `_comment_` 开头的键。
+
+    用于清理 config.json 中嵌入的文档注释字段。
+    """
+    if isinstance(data, dict):
+        return {
+            k: _strip_comment_keys(v)
+            for k, v in data.items()
+            if not k.startswith("_comment")
+        }
+    if isinstance(data, list):
+        return [_strip_comment_keys(item) for item in data]
+    return data

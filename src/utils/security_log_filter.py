@@ -4,11 +4,28 @@
 
 防止敏感信息（如私钥）泄露到日志文件中。
 自动检测和屏蔽比特币私钥模式。
+
+v4.5.1: 正则模式已提取至 src.utils.sensitive_patterns 共享模块。
 """
 
 import hashlib
 import logging
-import re
+
+from .sensitive_patterns import (
+    BECH32_ADDRESS,
+    BECH32M_ADDRESS,
+    BIP32_EXTENDED_KEY,
+    BIP32_EXTENDED_PUBKEY,
+    BIP39_CONTEXT_KEYWORDS,
+    BIP39_PHRASE_12,
+    BIP39_PHRASE_24,
+    P2PKH_ADDRESS,
+    P2SH_ADDRESS,
+    PRIVATE_KEY_HEX,
+    RAW_KEY,
+    WIF_COMPRESSED,
+    WIF_UNCOMPRESSED,
+)
 
 
 class SecurityLogFilter(logging.Filter):
@@ -19,50 +36,23 @@ class SecurityLogFilter(logging.Filter):
     - WIF格式私钥
     - 原始私钥字节
     - 比特币地址（P2PKH/P2SH/Bech32/Bech32m）
+
+    v4.5.1: 正则模式从 src.utils.sensitive_patterns 导入。
     """
 
-    # 私钥模式匹配
-    # 64位十六进制（32字节私钥），支持0x前缀
-    # 增强：使用负向前瞻确保不在其他十六进制字符串中间匹配
-    PRIVATE_KEY_HEX_PATTERN = re.compile(r"(?<![0-9a-fA-F])(?:0x)?[0-9a-fA-F]{64}(?![0-9a-fA-F])")
-
-    # WIF格式 - 与 SensitiveDataFilter 保持精确一致
-    # 非压缩WIF: 以5开头，总长51字符 (5 + 50后续字符)
-    WIF_UNCOMPRESSED_PATTERN = re.compile(r"\b5[HJK][1-9A-HJ-NP-Za-km-z]{48,49}\b")
-    # 压缩WIF: 以K或L开头，总长52字符 (K/L + 51后续字符)
-    WIF_COMPRESSED_PATTERN = re.compile(r"\b[KL][1-9A-HJ-NP-Za-km-z]{50,51}\b")
-
-    # 原始字节模式（32字节）
-    # P2-07修复: 添加路径分隔符负向前瞻，避免误匹配 Windows 路径中的反斜杠序列
-    # 例如: C:\x00\x11... 不应该被误判为原始私钥字节
-    RAW_KEY_PATTERN = re.compile(
-        r"(?<![\\/:a-zA-Z0-9])b'\\x[0-9a-fA-F]{2}(?:\\x[0-9a-fA-F]{2}){31}'(?![\\/])"
-    )
-
-    # 比特币地址模式匹配
-    # P2PKH: 以 1 开头，25-34 字符 Base58
-    P2PKH_ADDRESS_PATTERN = re.compile(r"\b1[1-9A-HJ-NP-Za-km-z]{24,33}\b")
-    # P2SH: 以 3 开头，25-34 字符 Base58
-    P2SH_ADDRESS_PATTERN = re.compile(r"\b3[1-9A-HJ-NP-Za-km-z]{24,33}\b")
-    # Bech32: 以 bc1 开头，42 或 62 字符（P2WPKH/P2WSH）
-    BECH32_ADDRESS_PATTERN = re.compile(r"\bbc1[ac-hj-np-z02-9]{38,58}\b")
-    # Bech32m (Taproot): 以 bc1p 开头，62 字符
-    BECH32M_ADDRESS_PATTERN = re.compile(r"\bbc1p[ac-hj-np-z02-9]{58}\b")
-
-    # BIP32 扩展密钥 (xprv/xpub/等)
-    BIP32_EXTENDED_KEY_PATTERN = re.compile(r"\b[xXtT]prv[1-9A-HJ-NP-Za-km-z]{107,108}\b")
-    BIP32_EXTENDED_PUBKEY_PATTERN = re.compile(r"\b[xXtT]pub[1-9A-HJ-NP-Za-km-z]{107,108}\b")
-
-    # BIP39 种子短语上下文关键词 — 仅当消息包含这些上下文时才应用BIP39检测
-    # 避免纯技术日志被误匹配（如 "the system encountered an unexpected error"）
-    BIP39_CONTEXT_KEYWORDS = re.compile(
-        r"\b(seed|mnemonic|recovery|phrase|bip39|助记词|种子短语|恢复短语)\b", re.IGNORECASE
-    )
-    # BIP39 种子短语 (12或24个英语助记词)
-    # 词列表包含常见的 BIP39 英语助记词
-    # 检测包含12或24个助记词的文本，每个词3-8个字母
-    BIP39_PHRASE_12_PATTERN = re.compile(r"\b(?:[a-z]{3,8}\s+){11}[a-z]{3,8}\b", re.IGNORECASE)
-    BIP39_PHRASE_24_PATTERN = re.compile(r"\b(?:[a-z]{3,8}\s+){23}[a-z]{3,8}\b", re.IGNORECASE)
+    PRIVATE_KEY_HEX_PATTERN = PRIVATE_KEY_HEX
+    WIF_UNCOMPRESSED_PATTERN = WIF_UNCOMPRESSED
+    WIF_COMPRESSED_PATTERN = WIF_COMPRESSED
+    RAW_KEY_PATTERN = RAW_KEY
+    P2PKH_ADDRESS_PATTERN = P2PKH_ADDRESS
+    P2SH_ADDRESS_PATTERN = P2SH_ADDRESS
+    BECH32_ADDRESS_PATTERN = BECH32_ADDRESS
+    BECH32M_ADDRESS_PATTERN = BECH32M_ADDRESS
+    BIP32_EXTENDED_KEY_PATTERN = BIP32_EXTENDED_KEY
+    BIP32_EXTENDED_PUBKEY_PATTERN = BIP32_EXTENDED_PUBKEY
+    BIP39_CONTEXT_KEYWORDS = BIP39_CONTEXT_KEYWORDS
+    BIP39_PHRASE_12_PATTERN = BIP39_PHRASE_12
+    BIP39_PHRASE_24_PATTERN = BIP39_PHRASE_24
 
     def __init__(
         self,

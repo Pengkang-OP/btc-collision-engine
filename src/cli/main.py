@@ -22,10 +22,9 @@ import sys
 import time
 from typing import Any, cast
 
-# 将项目根目录加入路径
-_project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if _project_root not in sys.path:
-    sys.path.insert(0, _project_root)
+# v4.5.1: 确保项目根目录在 sys.path 中（使用共享模块）
+from ._path_setup import ensure_project_root
+ensure_project_root()
 
 # ── 仅导入轻量级模块（--help/--version 等命令不触发重量级导入） ─────────────
 from src.cli.arg_parser import parse_args  # noqa: E402
@@ -254,6 +253,9 @@ def _run_main() -> None:
         logger.warning(_t("config.using_default"))
         config = {}
     targets = load_targets(args)
+    if not targets:
+        print(_t("address.load_failed", error="解析后无有效目标地址"), file=sys.stderr)
+        sys.exit(1)
 
     # ── 以下阶段才延迟导入重量级模块 ────────────────────────────────────────
     from src.cli.engine_runner import (
@@ -286,10 +288,13 @@ def _run_main() -> None:
     # 阶段7: 主循环
     _run_collision_loop(engine, engine_type, args, total_range, alert_system, stop_event)
 
-    # 阶段8: 等待引擎完全停止
+    # 阶段8: 等待引擎完全停止（带超时轮询）
     if engine.is_running():
         engine.stop()
-    time.sleep(0.5)
+    for _ in range(50):  # 最多等待5秒
+        if not engine.is_running():
+            break
+        time.sleep(0.1)
 
     # 阶段9: 最终统计
     _print_final_summary(engine, engine_type, args)

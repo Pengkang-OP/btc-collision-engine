@@ -1,5 +1,105 @@
 # CHANGELOG
 
+## v4.5.1 (2026-05-21)
+
+### 全面审核修复
+
+基于全面审核报告（涵盖数据、功能、算法、逻辑、架构、代码质量等7个维度），进行了以下修复：
+
+- **P2WPKH 地址转换修复** (`resolver.py`)
+  - 删除使用未定义变量 `address` 的不可达死代码
+  - 将 P2WPKH 转换逻辑正确迁移到 `if prog_len == 20` 分支内，使用正确变量 `p2pkh_addr`
+
+- **死代码清理**
+  - `crypto_backend.py`: 删除 `OpenSSLBackend.is_constant_time()` 中的不可达 `return True`
+  - 消除 A-03 审核批注项
+
+- **配置对齐**
+  - `pyproject.toml`: 版本同步为 `4.5.1`；`target-version` 从 `py312` 改为 `py39`；`line-length` 统一为 `105`
+  - `gmpy2` 上限从 `<4.0.0` 放宽至 `<5.0.0`
+  - `nvidia-ml-py` 注释更新，确认有 `pynvml` 导入保护
+
+- **线程安全增强** (`dependency_container.py`)
+  - 添加 `threading.Lock` 保护延迟初始化（双重检查锁定模式）
+  - `reset()` 方法添加锁保护
+
+- **CLI 健壮性提升** (`main.py`)
+  - 引擎停止等待改为 5 秒轮询机制
+  - 添加解析后空目标地址集合的早期检测与退出
+
+- **配置污染清理** (`config_loader.py`)
+  - 新增 `_strip_comment_keys()` 递归移除配置中的 `_comment` 字段
+  - 防止运行时数据污染（D-08 修复）
+
+- **Taproot 地址错误处理增强** (`multi_format_generator.py`)
+  - 失败时改为 `raise ValueError` 替代返回空字符串 `""`
+  - 提供清晰的安装提示信息（A-05 修复）
+
+- **弃用警告** (`gpu_collision_engine.py`)
+  - 添加 Shim 层弃用日志警告
+
+- **文档修复**
+  - `event_bus.py`: 修正 `handler_timeout` 默认值文档（`0` 非 `10` 秒）
+  - `conftest.py`: 添加 Python 3.14 补丁的 TODO 跟踪注释
+
+- **安全性增强**
+  - `checkpoint_manager.py`: icacls 使用 `SystemRoot` 绝对路径
+
+- **资产清理**
+  - 删除 `tests/archive/` 中的 `.pyc` 文件
+  - 更新 `.gitignore` 覆盖
+
+- **README 冲突修复**
+  - 清除 Git stash 冲突标记（`<<<<<<< Updated upstream` / `>>>>>>> Stashed changes`）
+  - 版本徽章统一为 `4.5.1`
+
+- **断点文件完整性** (`checkpoint_manager.py`)
+  - 新增 CRC32 校验和字段，保存时写入、加载时验证
+  - 旧版无校验和的断点文件兼容处理（日志警告，不拒绝加载）
+
+- **日志路径修复** (`logging_config.py`)
+  - `_ensure_log_directory()` 将相对日志路径解析为基于项目根目录的绝对路径
+  - 新增 `_resolve_log_path()` 辅助方法，解决 CWD 变化导致日志写入位置异常
+
+- **依赖声明完善** (`pyproject.toml`)
+  - 新增 `[windows]` 可选依赖组，声明 `pywin32>=306`
+
+- **敏感模式共享** (`sensitive_patterns.py`, `security_log_filter.py`, `log_processor.py`)
+  - 新增 `src/utils/sensitive_patterns.py` 共享模块，集中维护所有敏感数据正则模式
+  - `SecurityLogFilter` 和 `SensitiveDataFilter` 均从共享模块导入，消除正则重复维护
+  - 涉及：私钥/WIF/地址/BIP32/BIP39 共 20+ 个正则模式（L-04 修复）
+
+- **配置验证国际化** (`config_manager.py`, `zh_CN.json`, `en_US.json`)
+  - 将 18 处硬编码的验证错误消息替换为 `_t()` 调用
+  - 新增 `config.validation.*` 翻译键（含中英文）
+  - 涉及：mode/batch_size/checkpoint_interval/log_level/rotation_type/GPU 配置/加密后端 等验证
+
+- **CLI sys.path.insert 去重** (`_path_setup.py`, 5 个 CLI 文件)
+  - 新增 `src/cli/_path_setup.py` 共享模块，集中管理项目路径初始化
+  - `ensure_project_root()` 幂等设计，全局只执行一次
+  - 消除 main.py/config_loader.py/arg_parser.py/engine_runner.py/stats_reporter.py 中的重复代码
+  - 测试 `test_module_sys_path_insert` 同步更新验证新模块（F-05 修复）
+
+- **工厂函数去重** (`__init__.py`, `factory.py`)
+  - `create_collision_engine()` 新增 `container` 参数支持依赖注入
+  - `EngineFactory.create_cpu_engine()` / `create_gpu_engine()` 委托给 `create_collision_engine()`
+  - 消除两套工厂逻辑的重复维护（F-07 修复）
+
+- **NFS 陈旧文件句柄恢复** (`logging_config.py`)
+  - `_DiskSafeHandler` 新增 `bind_params()` 方法缓存日志处理器创建参数
+  - `emit()` 中检测 `errno.ESTALE`（NFS stale file handle）时自动关闭并重建日志文件句柄
+  - 重建失败时降级到通用错误处理，不影响主程序运行（C-11 修复）
+
+- **测试对齐** (`tests/test_cli.py`)
+  - 修复 `test_format_progress` 断言与 `progress.py` 输出格式对齐
+  - 修复 `test_main_random/range/brute_force_mode` mock 中 `is_running` 侧效应不足（v4.5.1 新增的停止轮询需更多返回值）
+  - 修复 `TestLoadConfigWithValidation` 中 `_project_root` mock 路径（对应 `_path_setup` 重构）
+
+- **项目文档同步**
+  - `README.md`: 清除 Git stash 冲突标记，版本徽章统一至 `4.5.1`
+  - `PROJECT_ANALYSIS.md`: 版本号 v4.3.0→v4.5.1，测试数 261+→760+，补充 v4.5.1 关键成果
+  - `docs/project-status.md`: 当前阶段从 v4.5.0 推进至 v4.5.1
+
 ## v4.5.0 (2026-05-21)
 
 ### 遗留问题修复与代码清理
