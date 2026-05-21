@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 # BTC碰撞引擎 - systemd服务安装脚本
 
 set -euo pipefail
