@@ -394,10 +394,9 @@ class GPUBufferTracker:
         final_size = recent[-1]["total_size_bytes"]
 
         if final_size > initial_size * self.MEMORY_GROWTH_WARNING_RATIO:  # 内存使用增长超过阈值
-            logger.warning(f"GPU内存使用持续增长: {initial_size / 1024 / 1024:.1f}MB -> {
-                    final_size  # noqa: W504
-                    / 1024
-                    / 1024:.1f}MB")
+            final_mb = final_size / 1024 / 1024
+            initial_mb = initial_size / 1024 / 1024
+            logger.warning(f"GPU内存使用持续增长: {initial_mb:.1f}MB -> {final_mb:.1f}MB")
             # 尝试清理所有超时缓冲区
             self.cleanup_timed_out_buffers()
 
