@@ -47,7 +47,7 @@ from .types import CompleteCallback, MatchCallback, ProgressCallback
 
 # 获取模块日志记录器
 # v4.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
-logger = get_configured_logger("KeyCollisionEngine", thread_safe=False)
+logger = get_configured_logger("KeyCollisionEngine")
 sampled_logger = get_sampled_logger("KeyCollisionEngine.sampled", sample_rate=1000)
 
 # 模块级常量配置

@@ -69,7 +69,7 @@ class DataLogger:
 
         # 初始化日志记录器
         # v4.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
-        self.logger = get_configured_logger("DataLogger", thread_safe=False)
+        self.logger = get_configured_logger("DataLogger")
 
         # 数据文件路径
         self.current_data_file = os.path.join(self.storage_dir, "current_data.json")

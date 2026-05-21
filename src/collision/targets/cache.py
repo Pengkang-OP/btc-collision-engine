@@ -16,7 +16,7 @@ from cachetools import LRUCache, TTLCache  # type: ignore[import-untyped]
 from ...utils import get_configured_logger
 
 # v4.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
-logger = get_configured_logger("AddressCache", thread_safe=False)
+logger = get_configured_logger("AddressCache")
 
 
 class AddressCache:

@@ -13,7 +13,7 @@ from typing import Any
 from ...utils import get_configured_logger
 
 # v4.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
-logger = get_configured_logger("ValidationMonitor", thread_safe=False)
+logger = get_configured_logger("ValidationMonitor")
 
 
 @dataclass

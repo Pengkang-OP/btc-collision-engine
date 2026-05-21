@@ -2,14 +2,12 @@
 
 提供增强的日志功能，包括：
 - 彩色控制台输出
-- 线程安全的日志记录
 - 性能监控日志
 - 采样日志（高频操作）
 - 异步日志写入（v4.2.1新增）
 
 性能优化说明：
 - Python的logging.Logger本身是线程安全的（内部使用RLock）
-- ThreadSafeLogger已弃用，避免双重锁导致的性能损失
 - 高频场景请使用SampledLogger或AsyncLogger
 """
 
@@ -95,60 +93,6 @@ class ColoredFormatter(logging.Formatter):
         result = super().format(record)
         record.levelname = orig_levelname  # 恢复原始值
         return result
-
-
-class ThreadSafeLogger:
-    """线程安全的日志包装器（已弃用）
-
-    ⚠️ 弃用警告:
-    Python的logging.Logger本身是线程安全的（内部使用RLock）。
-    此包装器会造成双重锁，导致性能下降约15-20%。
-
-    保留此类仅为向后兼容，新代码应直接使用原生logger。
-
-    示例:
-        # ❌ 不推荐
-        logger = ThreadSafeLogger(logging.getLogger('name'))
-
-        # ✅ 推荐
-        logger = logging.getLogger('name')
-    """
-
-    def __init__(self, logger: logging.Logger) -> None:
-        import warnings
-
-        warnings.warn(
-            "ThreadSafeLogger已弃用。Python的logging.Logger本身是线程安全的，"
-            "使用此包装器会造成双重锁导致性能损失。请直接使用原生logger。",
-            FutureWarning,
-            stacklevel=2,
-        )
-        self._logger = logger
-        self._lock = threading.Lock()
-
-    def debug(self, msg: str, *args, **kwargs) -> None:
-        with self._lock:
-            self._logger.debug(msg, *args, **kwargs)
-
-    def info(self, msg: str, *args, **kwargs) -> None:
-        with self._lock:
-            self._logger.info(msg, *args, **kwargs)
-
-    def warning(self, msg: str, *args, **kwargs) -> None:
-        with self._lock:
-            self._logger.warning(msg, *args, **kwargs)
-
-    def error(self, msg: str, *args, **kwargs) -> None:
-        with self._lock:
-            self._logger.error(msg, *args, **kwargs)
-
-    def critical(self, msg: str, *args, **kwargs) -> None:
-        with self._lock:
-            self._logger.critical(msg, *args, **kwargs)
-
-    def exception(self, msg: str, *args, **kwargs) -> None:
-        with self._lock:
-            self._logger.exception(msg, *args, **kwargs)
 
 
 class PerformanceMonitor:

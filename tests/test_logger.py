@@ -4,7 +4,6 @@
 覆盖：
 - ColoredFormatter 彩色格式化
 - SafeStreamHandler 编码安全
-- ThreadSafeLogger（已弃用）兼容性
 - PerformanceMonitor 性能监控
 - SampledLogger 采样日志
 - AsyncLogger / AsyncFileHandler 异步日志
@@ -164,81 +163,6 @@ class TestSafeStreamHandler:
         record = logging.LogRecord("test", logging.INFO, "", 0, "中文测试日志", (), None)
         # 不应抛出异常
         handler.emit(record)
-
-
-# ============================================================================
-# ThreadSafeLogger（已弃用）测试
-# ============================================================================
-
-
-@pytest.mark.unit
-class TestThreadSafeLogger:
-    """线程安全日志器测试（兼容性）"""
-
-    def test_init_emits_deprecation_warning(self):
-        from src.utils.logger import ThreadSafeLogger
-
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            logger = logging.getLogger("test_ts")
-            ThreadSafeLogger(logger)
-            assert len(w) >= 1
-            deprecation_warnings = [x for x in w if issubclass(x.category, DeprecationWarning)]
-            assert len(deprecation_warnings) >= 1
-
-    def test_info_delegates_to_logger(self):
-        from src.utils.logger import ThreadSafeLogger
-
-        base = MagicMock(spec=logging.Logger)
-        ts = ThreadSafeLogger.__new__(ThreadSafeLogger)
-        ts._logger = base
-        ts._lock = MagicMock()
-        ts.info("test %s", "arg")
-        base.info.assert_called_once()
-
-    def test_error_delegates_to_logger(self):
-        from src.utils.logger import ThreadSafeLogger
-
-        base = MagicMock(spec=logging.Logger)
-        ts = ThreadSafeLogger.__new__(ThreadSafeLogger)
-        ts._logger = base
-        ts._lock = MagicMock()
-        ts.error("error msg")
-        base.error.assert_called_once()
-
-    def test_exception_delegates_to_logger(self):
-        from src.utils.logger import ThreadSafeLogger
-
-        base = MagicMock(spec=logging.Logger)
-        ts = ThreadSafeLogger.__new__(ThreadSafeLogger)
-        ts._logger = base
-        ts._lock = MagicMock()
-        ts.exception("exception msg")
-        base.exception.assert_called_once()
-
-    def test_critical_delegates_to_logger(self):
-        from src.utils.logger import ThreadSafeLogger
-
-        base = MagicMock(spec=logging.Logger)
-        ts = ThreadSafeLogger.__new__(ThreadSafeLogger)
-        ts._logger = base
-        ts._lock = MagicMock()
-        ts.critical("critical")
-        base.critical.assert_called_once()
-
-    def test_all_methods_hold_lock(self):
-        import threading
-
-        from src.utils.logger import ThreadSafeLogger
-
-        base = MagicMock(spec=logging.Logger)
-        ts = ThreadSafeLogger.__new__(ThreadSafeLogger)
-        ts._logger = base
-        ts._lock = threading.Lock()
-        # 验证 lock 被正确使用（无异常即为通过）
-        ts.debug("d")
-        ts.info("i")
-        ts.error("e")
 
 
 # ============================================================================
@@ -541,15 +465,6 @@ class TestGetLogger:
 
         logger = get_logger("test_existing")
         assert isinstance(logger, logging.Logger)
-
-    def test_thread_safe_returns_wrapper(self):
-        from src.utils.logger import ThreadSafeLogger, get_logger
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            result = get_logger("test_ts_get", thread_safe=True)
-            assert isinstance(result, ThreadSafeLogger)
-
 
 @pytest.mark.unit
 class TestGetSampledLogger:
