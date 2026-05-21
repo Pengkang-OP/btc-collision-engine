@@ -595,12 +595,7 @@ class TestMigrateConfigFile:
                     assert result is False
 
     def test_already_latest_version(self, v31_config):
-<<<<<<< Updated upstream
         """v3.1 配置 -> 返回 True，无需迁移"""
-=======
-        """v4.2.1 配置 -> 返回 True，无需迁移"""
-        from src.cli.config_migration import migrate_config_file
->>>>>>> Stashed changes
         from pathlib import Path
 
         from src.cli.config_migration import migrate_config_file
