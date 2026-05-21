@@ -27,8 +27,6 @@ from src.monitoring.storage_config import DataStorageConfig
 from src.utils import get_configured_logger
 from src.utils.fast_json import fast_dump, fast_dumps, fast_load, fast_loads
 
-from ..utils.trend_utils import calculate_trend, extract_metrics
-
 
 class DataLogger:
     """数据日志记录器
@@ -99,6 +97,18 @@ class DataLogger:
         self._write_failure_count: int = 0
         self._write_failure_last_reset: float = 0.0
         self._write_failure_lock = threading.Lock()  # P1-4: 保护计数器线程安全
+
+        # v4.3.1: 性能日志批量化写入属性
+        self._perf_buffer_lock = threading.Lock()
+        self._perf_line_buffer: list[str] = []
+        self._perf_buffer_start_time: float = 0.0
+
+        # v4.3.1: 管道运营指标
+        self._pipeline_lock = threading.Lock()
+        self._save_counts: dict[str, int] = {}
+        self._last_save_times: dict[str, float] = {}
+        self._pipeline_error_count: int = 0
+        self._pipeline_metrics: list[dict[str, Any]] = []
 
         self.logger.info("数据日志系统初始化完成")
 
@@ -845,19 +855,6 @@ class DataLogger:
                 f.flush()
                 os.fsync(f.fileno())
 
-            # P0: 包装为带版本号的字典
-            versioned_data = {
-                "schema_version": self.HISTORY_SCHEMA_VERSION,
-                "data": history,
-            }
-
-            temp_fd, temp_file = tempfile.mkstemp(
-                dir=os.path.dirname(self.history_data_file),
-                suffix=".tmp",
-                prefix=".history_data_",
-            )
-            os.close(temp_fd)
-
             self.logger.debug(f"JSONL追加写入: {len(new_data)}条历史数据")
             self._record_pipeline_metric("save_history_data", success=True, record_count=len(new_data))
         except Exception as e:
@@ -893,26 +890,20 @@ class DataLogger:
             # 原子写入
             temp_file = self.history_data_file + ".compact.tmp"
             with open(temp_file, "w", encoding="utf-8") as f:
-                fast_dump(versioned_data, f, ensure_ascii=False, indent=2)
+                f.writelines(lines)
                 f.flush()
                 os.fsync(f.fileno())
 
             if not self._safe_file_replace(temp_file, self.history_data_file):
-                self.logger.error("保存历史数据失败: 文件替换所有方案均失败")
-                # P1: 写入失败计数
+                self.logger.error("历史数据压缩失败: 文件替换所有方案均失败")
                 self._count_write_failure()
-                # 写入失败将数据放回缓冲区（使用 extendleft 保持顺序）
-                with self._lock:
-                    self._history_buffer.extendleft(reversed(new_data))
         except Exception as e:
-            self.logger.error(f"保存历史数据失败: {e}")
-            # P1: 写入失败计数
+            self.logger.error(f"历史数据压缩失败: {e}")
             self._count_write_failure()
-            # 异常时也将数据放回缓冲区
-            with self._lock:
-                self._history_buffer.extendleft(reversed(new_data))
         finally:
-            if temp_file and os.path.exists(temp_file):
+            # 清理临时文件
+            temp_file = self.history_data_file + ".compact.tmp"
+            if os.path.exists(temp_file):
                 try:
                     os.remove(temp_file)
                 except OSError:
