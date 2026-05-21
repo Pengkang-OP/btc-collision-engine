@@ -8,7 +8,7 @@ import logging
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any, cast
@@ -389,7 +389,7 @@ class AlertSystem:
                 if rule.condition(metrics):
                     # 创建告警记录
                     alert = AlertRecord(
-                        timestamp=datetime.now(timezone.utc).isoformat(),
+                        timestamp=datetime.now(UTC).isoformat(),
                         alert_type=rule.alert_type,
                         level=rule.level,
                         message=rule.message,

@@ -159,5 +159,5 @@ class _CollectorLogHandler(logging.Handler):
         """发送日志记录"""
         try:
             self.collector.collect_log(record.name, record.levelno, self.format(record))
-        except Exception:
+        except (RuntimeError, OSError):
             self.handleError(record)

@@ -8,10 +8,10 @@ from src.collision.collision_stats import CollisionStats
 from src.collision.plugins.base_plugin import CollisionPlugin
 from src.core.address_generator import P2PKHAddressGenerator
 
+from ...core.secp256k1 import Secp256k1  # v4.2.2: 统一从 secp256k1 获取曲线参数
+
 # 统一回调类型别名
 from ..types import CompleteCallback, MatchCallback, ProgressCallback
-
-from ...core.secp256k1 import Secp256k1  # v4.2.2: 统一从 secp256k1 获取曲线参数
 
 SECP256K1_N = Secp256k1.N
 

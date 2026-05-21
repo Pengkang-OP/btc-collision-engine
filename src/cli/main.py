@@ -166,7 +166,7 @@ def _print_format_summary(fmt_counts: dict[str, int]) -> None:
             warning_text.append("\n")
             warning_text.append(_t("targets.incompatible_suggestion"))
             console.print(Panel(warning_text, title=_t("common.warning"), border_style="yellow"))
-        except Exception:
+        except (RuntimeError, OSError, ValueError):
             logger.debug("Rich Panel 渲染失败，降级纯文本警告", exc_info=True)
             print(_t("targets.incompatible_warning", count=incompatible))
             print(_t("targets.incompatible_detail"))
@@ -209,7 +209,7 @@ def _run_security_check(args) -> None:
             console.print(
                 Panel(warning_text, title="[bold yellow]安全检查[/bold yellow]", border_style="yellow")
             )
-        except Exception:
+        except (RuntimeError, OSError, ValueError):
             # Rich Panel 渲染失败时降级为纯文本警告
             output.warning(
                 "生产环境安全检查未通过 — 当前加密后端安全级别不足",
@@ -333,7 +333,7 @@ def main() -> None:
         if hasattr(sys.stdout, "reconfigure"):
             cast(Any, sys.stdout).reconfigure(errors="replace")
             cast(Any, sys.stderr).reconfigure(errors="replace")
-    except Exception:
+    except (OSError, AttributeError):
         pass
     try:
         _run_main()

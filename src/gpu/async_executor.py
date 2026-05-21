@@ -22,7 +22,6 @@ logger = get_configured_logger("AsyncGPUExecutor")
 # v4.2.2 M5: 统一端序转换 → 从 gpu/seed_utils.py 导入单一权威实现
 from .seed_utils import _seed_bytes_to_u32_be_array  # noqa: E402
 
-
 # 队列深度管理常量
 DEFAULT_QUEUE_DEPTH = 4  # GPU 队列中保持的预提交批次数量
 

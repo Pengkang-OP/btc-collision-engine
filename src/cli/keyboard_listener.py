@@ -148,7 +148,7 @@ class KeyboardListener:
         fd = sys.stdin.fileno()
         try:
             old_settings = termios.tcgetattr(fd)
-        except Exception:
+        except (OSError, RuntimeError):
             self._available = False
             return
 
@@ -161,9 +161,9 @@ class KeyboardListener:
                         key = sys.stdin.read(1).upper()
                         if key:
                             self._callback(key)
-                except Exception:
+                except (OSError, ValueError):
                     pass
-        except Exception:
+        except (OSError, RuntimeError):
             pass
         finally:
             with contextlib.suppress(Exception):
