@@ -125,8 +125,8 @@ class Secp256k1:
         _logger = logging.getLogger(__name__)
         try:
             ec = EllipticCurve()
-            G = ECPoint(cls.Gx, cls.Gy)
-            result = ec.scalar_multiply_const_time(cls.N, G)
+            g = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
+            result = ec.scalar_multiply_const_time(Secp256k1.N, g)
             if not result.is_infinity:
                 _logger.error("secp256k1 曲线参数验证失败: N*G != 无穷远点")
                 return False
@@ -134,7 +134,7 @@ class Secp256k1:
             _logger.error(f"N*G 验证执行异常: {e}")
             return False
 
-        if cls.N >= cls.P:
+        if Secp256k1.N >= Secp256k1.P:
             return False
         if n == 2 or n == 3:
             return True

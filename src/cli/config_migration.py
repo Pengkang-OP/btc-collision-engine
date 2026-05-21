@@ -247,12 +247,6 @@ def _check_section_is_dict(section_name: str, section: Any, issues: list[str]) -
     return section
 
 
-def validate_migrated_config(config: dict) -> tuple[bool, list[str]]:
-    """
-    验证迁移后的配置是否满足 v4.2.2 要求。
-    """
-
-
 def _check_field_type(
     section: dict, section_name: str, field: str,
     expected_type: type | tuple[type, ...], type_desc: str, issues: list[str],
