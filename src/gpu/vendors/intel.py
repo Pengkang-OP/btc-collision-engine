@@ -30,6 +30,8 @@ class _RateLimitedLogger:
     """日志频率限制器 - 防止相同日志在短时间内重复输出导致泵洪"""
 
     # P3-04修复: 默认最小间隔可通过环境变量 INTEL_LOG_RATE_LIMIT_SEC 配置
+    # v4.2.4: 移除类体求值 _DEFAULT_MIN_INTERVAL，改为 __init__ 懒求值，
+    # 避免 import 时的时序依赖和环境变量状态不确定性。
     @staticmethod
     def _get_default_min_interval() -> float:
         """从环境变量读取默认限流间隔，异常时安全回退"""
@@ -38,8 +40,6 @@ class _RateLimitedLogger:
         except (ValueError, TypeError):
             return 60.0
 
-    _DEFAULT_MIN_INTERVAL = _get_default_min_interval.__func__()  # type: ignore[attr-defined]
-
     def __init__(self, base_logger: Any, min_interval: float | None = None) -> None:
         """
         Args:
@@ -47,7 +47,9 @@ class _RateLimitedLogger:
             min_interval: 相同消息的最小输出间隔（秒），默认从环境变量读取，回退60s
         """
         self._logger = base_logger
-        self._min_interval = min_interval if min_interval is not None else self._DEFAULT_MIN_INTERVAL
+        self._min_interval = (
+            min_interval if min_interval is not None else self._get_default_min_interval()
+        )
         self._last_logged: dict[str, float] = {}
 
     def _should_log(self, key: str) -> bool:
@@ -191,9 +193,6 @@ class IntelGPUVendor(GPUVendorBase):
         recommended = profile.get("recommended_batch_size", 1048576)
         maximum = profile.get("max_batch_size", 2097152)  # v4.2.3: A770 16GB 可安全承载 2M
         memory_efficiency = profile.get("memory_efficiency", 0.70)  # v2.2.1优化: 45% -> 70%
-        maximum = profile.get("max_batch_size", 2097152)  # v4.2.1: A770 16GB 可安全承载 2M
-        memory_efficiency = profile.get("memory_efficiency", 0.70)  # v4.2.1优化: 45% -> 70%
-
         # 根据显存计算理论最大值(使用更保守的memory_efficiency)
         global_mem = device.device_info.get("global_mem_size", 0)
         per_key_memory = PER_KEY_MEMORY_BYTES
@@ -287,10 +286,23 @@ class IntelGPUVendor(GPUVendorBase):
         2. INTEL_XESS_MEMORY_COMPRESSION: 启用内存压缩
         3. OCL_CACHE_DIR: 设置编译缓存目录
 
+        v4.2.4: 保存原始环境变量值，支持 restore_environment_optimizations() 恢复，
+        防止全局状态污染。
+
         Returns:
             Dict[str, str]: 应用的环境变量字典
         """
         applied = {}
+
+        # v4.2.4: 保存原始值以防止全局状态污染
+        _env_keys = [
+            "SYCL_DEVICE_FILTER",
+            "INTEL_XESS_MEMORY_COMPRESSION",
+            "OCL_QUEUE_THREAD_TRACE",
+            "IGDRCL_DEBUG_LEVEL",
+            "OCL_CACHE_DIR",
+        ]
+        self._env_originals = {key: os.environ.get(key) for key in _env_keys}
 
         # 1. 强制使用 OpenCL (非 Level-Zero)
         # 效果: 减少 12% 内核启动延迟
@@ -336,6 +348,25 @@ class IntelGPUVendor(GPUVendorBase):
             _rate_logger.info(f"✅ 设置 OCL_CACHE_DIR={cache_dir} (编译缓存)", key="intel_ocl_cache")
 
         return applied
+
+    def restore_environment_optimizations(self) -> None:
+        """
+        恢复环境变量原始值 (v4.2.4 新增)
+
+        将 apply_environment_optimizations() 修改的环境变量恢复为原始值，
+        防止全局状态污染和跨组件交叉污染。
+
+        应在 GPU 计算上下文退出/清理时调用。
+        """
+        originals = getattr(self, "_env_originals", None)
+        if originals is None:
+            return
+        for key, original in originals.items():
+            if original is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = original
+        self._env_originals = {}
 
     def get_optimization_report(self) -> str:
         """

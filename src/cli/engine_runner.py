@@ -200,7 +200,7 @@ def _handle_stats_key(engine: Any, engine_type: str) -> None:
             print("=" * 52 + "\n")
         else:
             _print_detailed_stats(engine.get_stats())
-    except Exception:
+    except (AttributeError, RuntimeError, TypeError):
         pass
 
 
@@ -271,7 +271,7 @@ def _check_alerts_in_loop(alert_system: Any, stats: Any) -> None:
             "error_rate": 0.0,
         }
         alert_system.check_metrics(metrics)
-    except Exception:
+    except (AttributeError, RuntimeError, TypeError):
         pass
 
 

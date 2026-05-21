@@ -216,7 +216,7 @@ class CheckpointManager:
                 logger.debug("已使用icacls设置Windows文件权限（仅当前用户可访问）")
             else:
                 logger.warning(f"icacls权限设置失败: {result.stderr}")
-        except Exception:
+        except (OSError, FileNotFoundError, RuntimeError):
             logger.debug("icacls命令执行失败，跳过Windows权限设置")
 
     def _set_file_permissions(self) -> None:
@@ -225,7 +225,7 @@ class CheckpointManager:
             self._set_posix_file_permissions(self.filepath)
             if PlatformUtils.is_windows():
                 self._set_windows_file_permissions()
-        except Exception as e:
+        except (OSError, RuntimeError) as e:
             logger.warning(f"文件权限设置失败: {e}")
 
     # ── _flush_buffer 主方法（C901 已清零） ────────────────────────

@@ -54,7 +54,7 @@ def _terminate_thread(thread_handle: int, exit_code: int = 0) -> bool:
         kernel32 = ctypes.windll.kernel32
         result = kernel32.TerminateThread(ctypes.c_void_p(thread_handle), ctypes.c_ulong(exit_code))
         return bool(result)
-    except Exception:
+    except (OSError, ValueError, AttributeError):
         return False
 
 

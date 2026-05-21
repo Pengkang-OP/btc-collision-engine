@@ -10,7 +10,6 @@
 5. 完整流程验证
 """
 
-import hashlib
 import hmac
 import time
 from enum import Enum
@@ -245,7 +244,7 @@ class BitcoinKeyValidator:
 
         # 安全模式：不输出私钥明文
         if self.secure_mode:
-            pk_hash = hashlib.sha256(private_key).hexdigest()[:16]
+            pk_hash = HashUtils.key_fingerprint(private_key)
             result.add_detail("private_key_hash", f"{pk_hash}...")
         else:
             result.add_detail("private_key_hex", private_key.hex())
@@ -695,7 +694,7 @@ class BitcoinKeyValidator:
 
             # 安全模式：不输出私钥明文
             if self.secure_mode:
-                pk_hash = hashlib.sha256(private_key).hexdigest()[:16]
+                pk_hash = HashUtils.key_fingerprint(private_key)
                 result.add_detail("private_key_hash", pk_hash)
             else:
                 result.add_detail("private_key_hex", private_key.hex())
@@ -859,7 +858,7 @@ class BitcoinKeyValidator:
 
         # 添加摘要 - 安全模式下不暴露私钥明文
         if self.secure_mode:
-            pk_hash = hashlib.sha256(private_key).hexdigest()[:16]
+            pk_hash = HashUtils.key_fingerprint(private_key)
             wif_comp_safe = (
                 wif_compressed[:8] + "..." + wif_compressed[-4:] if len(wif_compressed) > 12 else "***"
             )

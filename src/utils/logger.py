@@ -66,7 +66,7 @@ class SafeStreamHandler(logging.StreamHandler):
         except (ValueError, OSError):
             # I/O operation on closed file 等流关闭异常，静默跳过
             return
-        except Exception:
+        except (TypeError, RuntimeError, AttributeError):
             self.handleError(record)
 
 

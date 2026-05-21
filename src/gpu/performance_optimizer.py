@@ -402,7 +402,7 @@ class GPUPerformanceOptimizer:
                 if monitor is not None:
                     stats = monitor.get_stats()
                     gpu_utilization = stats.get("avg_gpu_utilization", 0.0)
-            except Exception:
+            except (AttributeError, RuntimeError, TypeError):
                 pass
 
         min_target = profile.min_gpu_utilization_target
@@ -561,7 +561,7 @@ class GPUPerformanceOptimizer:
                     if monitor is not None:
                         stats = monitor.get_stats()
                         gpu_utilization = stats.get("avg_gpu_utilization", 0.0)
-                except Exception:
+                except (AttributeError, RuntimeError, TypeError):
                     pass
 
             # v4.2.1 修复: 使用对称的乘法公式，但更激进的增长策略

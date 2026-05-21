@@ -782,7 +782,8 @@ class AsyncGPUExecutor:
                         sync_matches, sync_time = self._run_batch_sync(
                             seed, num_keys, program, targets_buf, num_targets
                         )
-                    except Exception:
+                    except Exception as sync_e:
+                        logger.debug(f"同步回退也失败: {type(sync_e).__name__}: {sync_e}")
                         sync_matches, sync_time = [], 0.0
                     raise _SyncFallbackError(sync_matches, sync_time) from e
                 except Exception as e:
@@ -791,7 +792,8 @@ class AsyncGPUExecutor:
                         sync_matches, sync_time = self._run_batch_sync(
                             seed, num_keys, program, targets_buf, num_targets
                         )
-                    except Exception:
+                    except Exception as sync_e:
+                        logger.debug(f"同步回退也失败: {type(sync_e).__name__}: {sync_e}")
                         sync_matches, sync_time = [], 0.0
                     raise _SyncFallbackError(sync_matches, sync_time) from e
 
@@ -811,7 +813,8 @@ class AsyncGPUExecutor:
                 sync_matches, sync_time = self._run_batch_sync(
                     seed, num_keys, program, targets_buf, num_targets
                 )
-            except Exception:
+            except Exception as sync_e:
+                logger.debug(f"同步回退也失败: {type(sync_e).__name__}: {sync_e}")
                 sync_matches, sync_time = [], 0.0
             raise _SyncFallbackError(sync_matches, sync_time) from e
         except Exception as e:
@@ -820,7 +823,8 @@ class AsyncGPUExecutor:
                 sync_matches, sync_time = self._run_batch_sync(
                     seed, num_keys, program, targets_buf, num_targets
                 )
-            except Exception:
+            except Exception as sync_e:
+                logger.debug(f"同步回退也失败: {type(sync_e).__name__}: {sync_e}")
                 sync_matches, sync_time = [], 0.0
             raise _SyncFallbackError(sync_matches, sync_time) from e
 

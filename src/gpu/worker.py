@@ -249,8 +249,17 @@ class SingleGPUWorker(threading.Thread):
 
             time.sleep(_adaptive_interval)
 
-    def _handle_memory_error_retry(self) -> None:
-        """处理 MemoryError：batch_size 减半后重试。"""
+    def _handle_memory_error_retry(self, _depth: int = 0) -> None:
+        """处理 MemoryError：batch_size 减半后重试。
+
+        最多递归重试 3 次，防止 batch_size 已降至下限后仍 MemoryError 导致无限递归。
+        """
+        MAX_MEMORY_RETRIES = 3
+        if _depth >= MAX_MEMORY_RETRIES:
+            logger.error(
+                f"GPU {self.device_idx} 降批重试已达上限 ({MAX_MEMORY_RETRIES})，放弃")
+            return
+
         current_batch = self.config.batch_size or 65536
         new_batch = max(current_batch // 2, 1024)
         logger.warning(
@@ -269,7 +278,7 @@ class SingleGPUWorker(threading.Thread):
                         f"GPU {self.device_idx} 引擎停止错误（将强制释放）: {stop_err}")
                 self._gpu_engine = None
             self._initialize_gpu_engine()
-            self._execute_search()
+            self._execute_search(_retry_depth=_depth + 1)
         except Exception as retry_err:
             logger.error(f"GPU {self.device_idx} 降批重试失败: {retry_err}")
 
@@ -280,8 +289,11 @@ class SingleGPUWorker(threading.Thread):
             self._stats["error_count"] += 1
             self._stats["last_error"] = f"{type(error).__name__}: {error}"
 
-    def _execute_search(self):
-        """执行私钥搜索（支持 random / range / brute_force 三种模式）"""
+    def _execute_search(self, _retry_depth: int = 0):
+        """执行私钥搜索（支持 random / range / brute_force 三种模式）。
+
+        _retry_depth: 内部参数，由 _handle_memory_error_retry 传递，外部调用方不应使用。
+        """
         if not self._gpu_engine:
             return
 
@@ -309,7 +321,7 @@ class SingleGPUWorker(threading.Thread):
                 self._gpu_engine.stop()
 
         except MemoryError:
-            self._handle_memory_error_retry()
+            self._handle_memory_error_retry(_depth=_retry_depth)
         except RuntimeError as e:
             self._record_search_error(e, "运行时")
         except ValueError as e:

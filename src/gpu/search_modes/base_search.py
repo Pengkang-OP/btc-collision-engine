@@ -131,7 +131,7 @@ class BaseSearchMode:
                         context={"gpu_id": getattr(engine, "device_index", 0)},
                         recoverable=False,
                     ))
-            except Exception:
+            except (RuntimeError, AttributeError):
                 logger.debug("发布 ENGINE_ERROR 事件失败（非致命）", exc_info=True)
             engine._running = False
             return engine.stats.total_checked if engine.stats else 0

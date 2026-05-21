@@ -416,7 +416,7 @@ class MultiGPUCollisionEngine:
             except (OSError, ValueError, IndexError):
                 pass
 
-        except Exception:
+        except (OSError, RuntimeError):
             pass
 
         return -1

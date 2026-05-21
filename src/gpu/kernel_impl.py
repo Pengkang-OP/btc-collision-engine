@@ -675,7 +675,7 @@ class GPUKernel(GPUKernelProtocol):
                                 logger.debug(f"清理旧版本缓存: {entry}")
                             except OSError:
                                 pass
-        except Exception:
+        except (OSError, RuntimeError):
             pass  # 清理失败不影响主流程
 
     def _calculate_optimal_batch_size(self) -> int:

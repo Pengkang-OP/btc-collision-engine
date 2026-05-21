@@ -1,6 +1,5 @@
 """地址转换工具 - 私钥到地址和WIF的完整转换"""
 
-import hashlib
 from typing import Any
 
 from ..utils import get_configured_logger
