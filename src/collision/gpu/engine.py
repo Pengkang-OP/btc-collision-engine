@@ -137,8 +137,13 @@ class GPUEngineConfig:
     可通过 GPUCollisionEngine(targets, config=cfg) 传入。
     """
 
+    targets: set[str] = field(default_factory=set)
     device_index: int = 1
     batch_size: int | None = None
+    on_progress: ProgressCallback | None = None
+    on_match: MatchCallback | None = None
+    on_complete: CompleteCallback | None = None
+    event_bus: EventBus | None = None
     checkpoint_enabled: bool = False
     dedup_enabled: bool = False
     dedup_max_size: int = 1_000_000
