@@ -539,9 +539,9 @@ class EllipticCurve:
         # v4.2.2 C1修复: 运行时强制拒绝，默认不允许调用非恒定时间版本
         # 生产环境必须设置环境变量才允许使用
 
-        # v4.2.2: 弃用过渡 — 先 emit FutureWarning，后续版本升级为 RuntimeError
+        # v4.2.2: 弃用过渡 — 先 emit FutureWarning，计划 v5.0.0 升级为 RuntimeError
         warnings.warn(
-            "scalar_multiply() 已弃用，将在 v4.3.0 中移除。"
+            "scalar_multiply() 已弃用，将在 v5.0.0 中移除。"
             "请使用 scalar_multiply_const_time() 替代。"
             "如需紧急启用，设置环境变量 BTC_ALLOW_NON_CONST_TIME=1。",
             FutureWarning,

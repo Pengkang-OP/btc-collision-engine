@@ -22,7 +22,7 @@ from typing import Any
 
 # GPU硬件利用率监控支持
 # C-13: nvidia-ml-py 安装后导入名称仍为 pynvml，API 完全兼容
-# 建议: pip install nvidia-ml-py # 替代已弃用的 pynvml
+# pynvml 已迁移至 nvidia-ml-py 包
 try:
     import pynvml
 
