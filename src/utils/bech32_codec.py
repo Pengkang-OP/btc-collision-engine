@@ -6,13 +6,26 @@
 - bech32m: SegWit v1+ 地址 (BIP-0350, Taproot 等)
 """
 
-__all__ = ["bech32_encode", "bech32_decode", "decode_segwit_address"]
+__all__ = [
+    "bech32_encode",
+    "bech32_decode",
+    "decode_segwit_address",
+    "convertbits",
+    "BECH32_CONST",
+    "BECH32M_CONST",
+]
 
 # Bech32 字符集 (5-bit 编码)
 _CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
 
+# Bech32 校验常量 (BIP-0173)
+BECH32_CONST = 1
+
 # Bech32m 校验常量 (BIP-0350)
-_BECH32M_CONST = 0x2BC830A3
+BECH32M_CONST = 0x2BC830A3
+
+# 内部别名
+_BECH32M_CONST = BECH32M_CONST
 
 
 def _polymod(values: list[int]) -> int:
@@ -61,6 +74,10 @@ def _convert_bits(data: bytes, from_bits: int, to_bits: int, pad: bool = True) -
     elif bits >= from_bits or ((acc << (to_bits - bits)) & maxv):
         return None
     return result
+
+
+# 公开别名（保持与旧 bech32 库 API 兼容）
+convertbits = _convert_bits
 
 
 def _verify_checksum(hrp: str, data: list[int]) -> str | None:
