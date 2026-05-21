@@ -496,30 +496,12 @@ class TestDataLoggerCleanup:
             )
             self.logger.save_history_data()
 
-<<<<<<< Updated upstream
         # 通过 DataLogger 的方法读取（支持 JSONL 格式）
         history = self.logger.get_history_data()
 
         # 验证历史数据有长度限制
         assert isinstance(history, list)
-=======
-        # 清理应该在保存时自动进行
-        history_data_path = os.path.join(self.test_dir, "history_data.json")
-        if os.path.exists(history_data_path):
-            with open(history_data_path, "r") as f:
-                raw = json.load(f)
-
-            # P0: 支持版本化格式 {"schema_version": ..., "data": [...]}
-            if isinstance(raw, dict) and "data" in raw:
-                history = raw["data"]
-            else:
-                history = raw
-
-            # 验证历史数据有长度限制
-            assert isinstance(history, list)
-            # 验证数据写入成功（至少有一条记录）
-            assert len(history) > 0, "历史数据不应为空"
->>>>>>> Stashed changes
+        assert len(history) > 0, "历史数据不应为空"
 
 
 class TestDataLoggerThreadSafety:
