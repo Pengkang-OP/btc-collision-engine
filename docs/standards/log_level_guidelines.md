@@ -296,7 +296,7 @@ logger.error(
 **示例**:
 
 ```
-2026-04-24 14:00:00 [ERROR] src.collision.gpu_collision_engine: GPU初始化失败 [GPU_INIT_FAILED]
+2026-04-24 14:00:00 [ERROR] src.collision.gpu.engine: GPU初始化失败 [GPU_INIT_FAILED]
   错误: pyopencl not available
   建议: 安装pyopencl并验证OpenCL环境
 ```

@@ -260,7 +260,7 @@ def _check_async_log_fallback(self):
 ```python
 # tests/test_gpu_async_logging.py
 import unittest
-from src.collision.gpu_collision_engine import GPUCollisionEngine
+from src.collision.gpu.engine import GPUCollisionEngine
 from src.utils.logger import AsyncFileHandler
 
 class TestGPUAsyncLogging(unittest.TestCase):

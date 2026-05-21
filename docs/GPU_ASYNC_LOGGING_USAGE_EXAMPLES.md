@@ -10,7 +10,7 @@
 ### 1. 基本使用
 
 ```python
-from src.collision.gpu_collision_engine import GPUCollisionEngine
+from src.collision.gpu.engine import GPUCollisionEngine
 
 # 启用异步日志（推荐用于生产环境）
 engine = GPUCollisionEngine(
@@ -54,7 +54,7 @@ finally:
 
 ```python
 import json
-from src.collision.gpu_collision_engine import GPUCollisionEngine
+from src.collision.gpu.engine import GPUCollisionEngine
 
 with open('config.json', 'r') as f:
     config = json.load(f)
@@ -80,7 +80,7 @@ engine = GPUCollisionEngine(
 ### 检查异步日志状态
 
 ```python
-from src.collision.gpu_collision_engine import GPUCollisionEngine
+from src.collision.gpu.engine import GPUCollisionEngine
 
 engine = GPUCollisionEngine(
     targets={"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"},
@@ -141,7 +141,7 @@ engine = GPUCollisionEngine(
 ```python
 # 启用详细调试日志
 import logging
-from src.collision.gpu_collision_engine import GPUCollisionEngine, logger
+from src.collision.gpu.engine import GPUCollisionEngine, logger
 
 engine = GPUCollisionEngine(
     targets=targets,
@@ -173,7 +173,7 @@ if engine._async_log_handler is None:
     print("异步日志未初始化")
     
     # 2. 检查AsyncFileHandler是否可用
-    from src.collision.gpu_collision_engine import ASYNC_LOG_AVAILABLE
+    from src.collision.gpu.engine import ASYNC_LOG_AVAILABLE
     if not ASYNC_LOG_AVAILABLE:
         print("错误: AsyncFileHandler导入失败")
         print("请确保 src/utils/logger.py 包含 AsyncFileHandler 类")

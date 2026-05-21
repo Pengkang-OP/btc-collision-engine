@@ -271,7 +271,7 @@ device.initialize(config)
 ### 动态配置调整
 
 ```python
-from src.collision.gpu_collision_engine import GPUCollisionEngine
+from src.collision.gpu.engine import GPUCollisionEngine
 
 # 创建引擎
 engine = GPUCollisionEngine(
@@ -290,7 +290,7 @@ print(f"当前batch_size: {engine.batch_size:,}")
 ### 配置验证
 
 ```python
-from src.gpu.gpu_config_manager import GPUConfigManager
+from src.gpu.gpu.config_manager (旧: gpu_config_manager 已归档) import GPUConfigManager
 
 config_manager = GPUConfigManager()
 
@@ -316,7 +316,7 @@ for error in errors:
 ### 配置回滚
 
 ```python
-from src.gpu.gpu_config_manager import GPUConfigManager
+from src.gpu.gpu.config_manager (旧: gpu_config_manager 已归档) import GPUConfigManager
 
 config_manager = GPUConfigManager()
 
@@ -480,7 +480,7 @@ python scripts/v330_simple_benchmark.py
 使用GPU自动调优器：
 
 ```python
-from src.collision.gpu_collision_engine import GPUCollisionEngine
+from src.collision.gpu.engine import GPUCollisionEngine
 
 engine = GPUCollisionEngine(
     targets={"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"},

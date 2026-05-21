@@ -427,7 +427,7 @@ print(f"报告已保存: {report_path}")
 ### 步骤 1: 初始化引擎
 
 ```python
-from src.collision.gpu_collision_engine import GPUCollisionEngine
+from src.collision.gpu.engine import GPUCollisionEngine
 
 # 创建引擎（Intel GPU 会自动初始化所有组件）
 engine = GPUCollisionEngine(

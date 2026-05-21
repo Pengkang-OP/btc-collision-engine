@@ -213,7 +213,7 @@ with PerformanceMonitor(logger, "GPU内核编译", level="INFO"):
 
 **输出示例**:
 ```
-2026-04-20 23:10:15,234 - src.collision.gpu_collision_engine - INFO - [Performance] GPU内核编译: 215.34ms
+2026-04-20 23:10:15,234 - src.collision.gpu.engine - INFO - [Performance] GPU内核编译: 215.34ms
 ```markdown
 
 ### 3.2 性能监控场景
@@ -328,7 +328,7 @@ class SampledLogger:
 ```python
 # 碰撞引擎
 logger = logging.getLogger("src.collision.key_collision_engine")
-logger = logging.getLogger("src.collision.gpu_collision_engine")
+logger = logging.getLogger("src.collision.gpu.engine")
 
 # GPU模块
 logger = logging.getLogger("src.gpu.device")

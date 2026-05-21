@@ -127,7 +127,7 @@ pip install coincurve  # CPU后端优化
 ## 3. 验证GPU可用性
 
 ```python
-from src.collision.gpu_collision_engine import GPUCollisionEngine
+from src.collision.gpu.engine import GPUCollisionEngine
 
 # 检查GPU是否可用
 if GPUCollisionEngine.is_gpu_available():
@@ -193,7 +193,7 @@ engine = create_collision_engine(targets, mode='cpu')
 ### GPU设备选择
 
 ```python
-from src.collision.gpu_collision_engine import GPUCollisionEngine, GPUDevice
+from src.collision.gpu.engine import GPUCollisionEngine, GPUDevice
 
 # 检测所有可用设备
 devices = GPUDevice.detect_devices()

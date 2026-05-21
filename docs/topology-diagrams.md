@@ -1,6 +1,6 @@
 # BTC碰撞引擎拓扑图文档
 
-> **版本**: v1.0.0 | **最后更新**: 2026-04-26  
+> **版本**: v4.5.1 | **最后更新**: 2026-05-21  
 > **面向**: 开发者/架构师
 
 ## 目录
@@ -290,8 +290,8 @@ graph LR
         key_collision_engine --> checkpoint_manager["checkpoint_manager.py"]
         key_collision_engine --> deduplication_filter["deduplication_filter.py"]
         key_collision_engine --> collision_stats["collision_stats.py"]
-        gpu_collision_engine["gpu_collision_engine.py"] --> key_collision_engine
-        gpu_collision_engine --> pyopencl["PyOpenCL"]
+        gpu_engine["collision/gpu/engine.py"] --> key_collision_engine
+        gpu_engine --> pyopencl["PyOpenCL"]
     end
     
     subgraph 监控系统依赖
@@ -332,7 +332,7 @@ graph LR
 | SecureKeyManager | 安全密钥管理 | src/core/secure_key_manager.py | - |
 | **碰撞引擎** | | | |
 | KeyCollisionEngine | CPU碰撞检测 | src/collision/key_collision_engine.py | AddressGenerator, SecureKeyManager |
-| GPUCollisionEngine | GPU碰撞检测 | src/collision/gpu_collision_engine.py | KeyCollisionEngine, PyOpenCL |
+| GPUCollisionEngine | GPU碰撞检测 | src/collision/gpu/engine.py | PyOpenCL, GPUDeviceManager |
 | CheckpointManager | 断点管理 | src/collision/checkpoint_manager.py | - |
 | DeduplicationFilter | 去重过滤 | src/collision/deduplication_filter.py | - |
 | CollisionStats | 碰撞统计 | src/collision/collision_stats.py | - |
