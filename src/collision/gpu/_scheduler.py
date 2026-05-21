@@ -401,7 +401,14 @@ class GPUBatchScheduler:
     # ========== GPU 缓冲区调整 ==========
 
     def resize_gpu_buffers(self, new_batch_size: int) -> None:
-        """动态调整 GPU 缓冲区大小"""
+        """动态调整 GPU 缓冲区大小
+
+        注意: 缓冲区生命周期管理分布于两处:
+        - 本方法: 运行时 resize (mid-operation)
+        - device_manager.cleanup(): 关闭时释放 (shutdown)
+        两处通过 kernel.release_buffers() / kernel.cleanup() 协作，
+        本方法在释放后将缓冲区属性置 None，避免 cleanup 时 double-free。
+        """
         engine = self._engine
         try:
             old_batch_size = engine.batch_size

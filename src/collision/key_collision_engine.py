@@ -1341,20 +1341,18 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
         return local_count
 
-    def range_scan(self, start: int, end: int) -> None:
-        """范围扫描模式 - 使用线程池并行扫描指定私鑰范围"""
+    def _range_scan_setup(self, start: int, end: int) -> int:
+        """range_scan 初始化状态、发布 ENGINE_START、返回 total_range。"""
         self._current_mode = "range"
         self._range_start = start
         self._range_end = end
         self.stats = CollisionStats()
         self.stats.start_time = time.time()
-        total_count = 0
         total_range = end - start + 1
-        self._live_range_count = 0  # 重置实时计数器
+        self._live_range_count = 0
         self._running = True
-        self._last_data_log_time = 0.0  # 重置数据日志时间
+        self._last_data_log_time = 0.0
 
-        # v4.2.1: 发布 ENGINE_START 事件
         try:
             self.event_bus.publish(EngineStartEvent(
                 mode=self._current_mode,
@@ -1364,7 +1362,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
         except Exception as e:
             logger.debug(f"发布 ENGINE_START 事件失败（非致命）: {e}")
 
-        # 记录引擎启动数据
         if self.data_logging_enabled and self.data_logger:
             self.data_logger.record_engine_data(
                 mode=self._current_mode,
@@ -1373,148 +1370,96 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 current_position=start,
                 additional_info={"range_start": start, "range_end": end},
             )
-            # 系统数据只在第一次记录（避免重复）
             if self._last_data_log_time == 0.0:
                 self.data_logger.record_system_data()
 
-        # 计算线程数和每个线程的任务范围
-        num_workers = self.max_workers or 4
+        return total_range
+
+    @staticmethod
+    def _range_scan_compute_ranges(
+        start: int, end: int, total_range: int, num_workers: int
+    ) -> list[tuple[int, int, int]]:
+        """
+        计算各 worker 的范围，含边界重叠修正。
+        返回 [(worker_id, worker_start, worker_end), ...] 列表。
+        """
         chunk_size = total_range // num_workers
-        if chunk_size == 0:
-            # 范围太小，使用单线程
-            self._range_scan_worker(start, end, 0)
-            return
+        ranges = []
+        for i in range(num_workers):
+            worker_start = start + i * chunk_size
+            worker_end = start + (i + 1) * chunk_size - 1
+            if i == num_workers - 1:
+                worker_end = end
 
-        # 创建线程池
-        with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
-            self._executor = executor
-
-            # 提交任务
-            futures = []
-            for i in range(num_workers):
-                worker_start = start + i * chunk_size
-                worker_end = start + (i + 1) * chunk_size - 1
-                if i == num_workers - 1:
-                    worker_end = end  # 最后一个线程处理剩余部分
-
-                # M3修复: 添加边界检查，确保无重叠
-                # 计算前一个worker的结束位置
-                if i > 0:
-                    prev_worker_end = start + i * chunk_size - 1
-                    if worker_start <= prev_worker_end:
-                        # 发现重叠，调整当前worker的开始位置为前一个worker结束+1
-                        logger.warning(
-                            f"RangeScan worker {i}: 边界重叠修正 "
-                            f"[{worker_start},{worker_end}]->[{prev_worker_end + 1},{worker_end}]"
-                        )
-                        worker_start = prev_worker_end + 1
-                        if worker_start > worker_end:
-                            # 如果修正后范围无效，跳过此worker
-                            logger.warning(f"RangeScan worker {i}: 范围无效，跳过")
-                            continue
-
-                logger.debug(
-                    f"RangeScan worker {i}: 分配范围 [{worker_start}, {worker_end}] "
-                    f"(共{worker_end - worker_start + 1}个私钥)"
-                )
-
-                future = executor.submit(self._range_scan_worker, worker_start, worker_end, i)
-                futures.append(future)
-
-            # 基于时间的进度回调（不依赖 future 完成）
-            pending = set(futures)
-            while pending and not self._stop_event.is_set():
-                done, pending = concurrent.futures.wait(
-                    pending,
-                    timeout=self._progress_interval_sec,
-                    return_when=concurrent.futures.FIRST_COMPLETED,
-                )
-
-                # 收集已完成的 future
-                for future in done:
-                    try:
-                        local_count = future.result()
-                        with self._state_lock:
-                            # P1-5修复: 已完成worker的live计数转移到total_count
-                            # 防止 total_count + _live_range_count 重复计入
-                            self._live_range_count = max(0, self._live_range_count - local_count)
-                            total_count += local_count
-                    except concurrent.futures.CancelledError:
-                        # 线程被取消（正常停止）
-                        logger.debug("工作线程被取消")
-                    except KeyboardInterrupt:
-                        # 用户中断程序，重新抛出让主线程处理
-                        logger.info("工作线程被用户中断")
-                        raise
-                    except (RuntimeError, OSError, ValueError) as e:
-                        # 使用统一异常处理器
-                        ExceptionHandler.handle_engine_error(
-                            "CPU", e, self.stats, "range_scan工作线程执行"
-                        )
-
-                # 定期进度回调（无论是否有 future 完成）
-                with self._state_lock:
-                    safe_count = total_count
-                # 从工作线程读取当前进度（通过共享计数器）
-                with self._state_lock:
-                    live_count = self._live_range_count
-                display_count = max(safe_count, live_count)
-
-                self.stats.update(display_count, total_range=total_range)
-                if self.on_progress:
-                    self.stats._progress_percent = display_count / total_range * 100
-                    invoke_with_timeout(
-                        self.on_progress,
-                        args=(self.stats.snapshot(),),
-                        timeout=5.0,
-                        callback_name="on_progress",
+            if i > 0:
+                prev_worker_end = start + i * chunk_size - 1
+                if worker_start <= prev_worker_end:
+                    logger.warning(
+                        f"RangeScan worker {i}: 边界重叠修正 "
+                        f"[{worker_start},{worker_end}]->[{prev_worker_end + 1},{worker_end}]"
                     )
-                self._save_checkpoint(display_count)
+                    worker_start = prev_worker_end + 1
+                    if worker_start > worker_end:
+                        logger.warning(f"RangeScan worker {i}: 范围无效，跳过")
+                        continue
 
-                # 记录数据日志
-                elapsed = time.time() - self.stats.start_time
-                speed = display_count / elapsed if elapsed > 0 else 0
-                self._log_data_metrics(display_count, speed)
+            logger.debug(
+                f"RangeScan worker {i}: 分配范围 [{worker_start}, {worker_end}] "
+                f"(共{worker_end - worker_start + 1}个私钥)"
+            )
+            ranges.append((i, worker_start, worker_end))
+        return ranges
 
-                # v4.2.1: 发布 ENGINE_PROGRESS 事件
-                try:
-                    self.event_bus.publish(EngineProgressEvent(
-                        total_checked=display_count,
-                        speed=speed,
-                        matches_found=self.stats.matches_found,
-                        elapsed_time=elapsed,
-                    ))
-                except Exception as e:
-                    logger.debug(f"发布 ENGINE_PROGRESS 事件失败（非致命）: {e}")
+    def _range_scan_report_progress(self, total_count: int, total_range: int) -> None:
+        """range_scan 进度回调：读取 live 计数、更新统计、记日志。"""
+        safe_count = total_count
+        with self._state_lock:
+            live_count = self._live_range_count
+        display_count = max(safe_count, live_count)
 
-        # P1-4修复: 停止时合并 _live_range_count，防止pending worker贡献丢失
-        # 当stop()被调用时，while循环退出但pending workers可能已完成
-        # 它们的贡献仍在 _live_range_count 中，需要合并到最终计数
-        # pattern与 random_search (L976-981) 一致
+        self.stats.update(display_count, total_range=total_range)
+        if self.on_progress:
+            self.stats._progress_percent = display_count / total_range * 100
+            invoke_with_timeout(
+                self.on_progress,
+                args=(self.stats.snapshot(),),
+                timeout=5.0,
+                callback_name="on_progress",
+            )
+        self._save_checkpoint(display_count)
+
+        elapsed = time.time() - self.stats.start_time
+        speed = display_count / elapsed if elapsed > 0 else 0
+        self._log_data_metrics(display_count, speed)
+
+        try:
+            self.event_bus.publish(EngineProgressEvent(
+                total_checked=display_count,
+                speed=speed,
+                matches_found=self.stats.matches_found,
+                elapsed_time=elapsed,
+            ))
+        except Exception as e:
+            logger.debug(f"发布 ENGINE_PROGRESS 事件失败（非致命）: {e}")
+
+    def _range_scan_finalize(self, total_count: int, total_range: int) -> None:
+        """range_scan 结束：合并 live 计数、更新统计、发布 COMPLETE。"""
         with self._state_lock:
             final_count = total_count + self._live_range_count
-            _live = self._live_range_count
-            logger.debug(
-                f"P1-4: range_scan end: total={total_count}, live={_live}, final={final_count}"
-            )
             self._live_range_count = 0
 
         self._executor = None
-
-        # 更新最终统计并设置事件
         self._stats_updated.clear()
         self.stats.update(final_count, total_range=total_range)
         self._stats_updated.set()
-
         self._running = False
 
         elapsed = time.time() - self.stats.start_time
         speed = final_count / elapsed if elapsed > 0 else 0
 
-        # v4.2.1: 发布 ENGINE_COMPLETE 事件
         try:
             stop_reason = self._engine_stop_reason
-            self._engine_stop_reason = "normal"  # 重置为默认值
+            self._engine_stop_reason = "normal"
             self.event_bus.publish(EngineCompleteEvent(
                 total_checked=final_count,
                 matches_found=self.stats.matches_found,
@@ -1525,7 +1470,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
         except Exception as e:
             logger.debug(f"发布 ENGINE_COMPLETE 事件失败（非致命）: {e}")
 
-        # 记录引擎停止数据
         if self.data_logging_enabled and self.data_logger:
             self.data_logger.record_engine_data(
                 mode=self._current_mode,
@@ -1533,7 +1477,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 is_running=False,
                 current_position=final_count,
             )
-            # 生成报告
             try:
                 self.data_logger.generate_report("daily")
                 logger.info("数据日志报告已生成")
@@ -1547,6 +1490,57 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 timeout=5.0,
                 callback_name="on_complete",
             )
+
+    def range_scan(self, start: int, end: int) -> None:
+        """范围扫描模式 - 使用线程池并行扫描指定私鑰范围"""
+        total_range = self._range_scan_setup(start, end)
+        total_count = 0
+
+        num_workers = self.max_workers or 4
+        chunk_size = total_range // num_workers
+        if chunk_size == 0:
+            self._range_scan_worker(start, end, 0)
+            return
+
+        worker_ranges = self._range_scan_compute_ranges(
+            start, end, total_range, num_workers
+        )
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
+            self._executor = executor
+
+            futures = {
+                executor.submit(self._range_scan_worker, ws, we, wid): wid
+                for wid, ws, we in worker_ranges
+            }
+
+            pending = set(futures.keys())
+            while pending and not self._stop_event.is_set():
+                done, pending = concurrent.futures.wait(
+                    pending,
+                    timeout=self._progress_interval_sec,
+                    return_when=concurrent.futures.FIRST_COMPLETED,
+                )
+
+                for future in done:
+                    try:
+                        local_count = future.result()
+                        with self._state_lock:
+                            self._live_range_count = max(0, self._live_range_count - local_count)
+                            total_count += local_count
+                    except concurrent.futures.CancelledError:
+                        logger.debug("工作线程被取消")
+                    except KeyboardInterrupt:
+                        logger.info("工作线程被用户中断")
+                        raise
+                    except (RuntimeError, OSError, ValueError) as e:
+                        ExceptionHandler.handle_engine_error(
+                            "CPU", e, self.stats, "range_scan工作线程执行"
+                        )
+
+                self._range_scan_report_progress(total_count, total_range)
+
+        self._range_scan_finalize(total_count, total_range)
 
     def _brute_force_worker(
         self, worker_id: int, batch_size: int = 5000, max_keys: int | None = None

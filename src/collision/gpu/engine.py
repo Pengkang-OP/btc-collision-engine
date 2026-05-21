@@ -66,8 +66,9 @@ except ImportError:
     PYOPENCL_AVAILABLE = False
 
 # 异步日志支持
-# AsyncFileHandler 的实际导入检测在 _setup_async_logging() 中进行
-# 此处设为 True，由 _setup_async_logging() 处理运行时导入失败的回退
+# AsyncFileHandler 的实际导入检测在 _setup_async_logging() 中进行。
+# 此常量作为编译期守卫，恒为 True；运行时导入失败由 _setup_async_logging() 内部 try/except 回退。
+# deprecated: 计划在下一大版本中移除，统一由 _setup_async_logging() 负责运行时检测。
 ASYNC_LOG_AVAILABLE = True
 
 # GPU 配置管理器 (已弃用: _merge_gpu_configs 已移除, 常量仅保留供外部导入兼容)
@@ -180,7 +181,7 @@ class GPUEngineConfig:
             "async_log_max_bytes": self.async_log_max_bytes,
             "async_log_backup_count": self.async_log_backup_count,
             "check_uncompressed": self.check_uncompressed,
-            "key_generation_strategy": self.key_generation_strategy.value,
+            "key_generation_strategy": self.key_generation_strategy.name,  # 枚举名，可通过 KeyGenerationStrategy[name] 反序列化
         }
 
 
