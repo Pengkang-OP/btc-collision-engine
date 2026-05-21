@@ -137,7 +137,7 @@ class GPUAutoConfigurator:
 
         logger.info("GPUAutoConfigurator已初始化")
 
-    def configure_for_device(self, device: dict) -> dict:
+    def configure_for_device(self, device: dict[str, Any]) -> dict[str, Any]:
         """为指定设备生成优化配置
 
         Args:
@@ -177,7 +177,7 @@ class GPUAutoConfigurator:
 
         return config
 
-    def get_nvidia_config(self, device: dict) -> dict:
+    def get_nvidia_config(self, device: dict[str, Any]) -> dict[str, Any]:
         """生成NVIDIA GPU配置
 
         NVIDIA特点:
@@ -212,14 +212,12 @@ class GPUAutoConfigurator:
         recommended_wgs = 256
         adjusted_wgs = _align_work_group_size(recommended_wgs, max_wgs, 32)
         if adjusted_wgs != recommended_wgs:
-            logger.info(
-                f"[NVIDIA] wgs: {recommended_wgs}->{adjusted_wgs} (max={max_wgs}, align=32)"
-            )
+            logger.info(f"[NVIDIA] wgs: {recommended_wgs}->{adjusted_wgs} (max={max_wgs}, align=32)")
         config["work_group_size"] = adjusted_wgs
 
         return config
 
-    def get_amd_config(self, device: dict) -> dict:
+    def get_amd_config(self, device: dict[str, Any]) -> dict[str, Any]:
         """生成AMD GPU配置
 
         AMD特点:
@@ -250,7 +248,7 @@ class GPUAutoConfigurator:
 
         return config
 
-    def get_intel_config(self, device: dict) -> dict:
+    def get_intel_config(self, device: dict[str, Any]) -> dict[str, Any]:
         """生成Intel Arc GPU配置
 
         Intel Arc特点:
@@ -283,14 +281,12 @@ class GPUAutoConfigurator:
         max_wgs = device.get("max_work_group_size", 1024)
         adjusted_wgs = _align_work_group_size(recommended_wgs, max_wgs, 32)
         if adjusted_wgs != recommended_wgs:
-            logger.info(
-                f"[Intel Arc] wgs: {recommended_wgs}->{adjusted_wgs} (max={max_wgs}, align=32)"
-            )
+            logger.info(f"[Intel Arc] wgs: {recommended_wgs}->{adjusted_wgs} (max={max_wgs}, align=32)")
         config["work_group_size"] = adjusted_wgs
 
         return config
 
-    def get_unknown_config(self, device: dict) -> dict:
+    def get_unknown_config(self, device: dict[str, Any]) -> dict[str, Any]:
         """生成未知GPU的保守配置
 
         对于未知厂商,使用最保守的配置以确保稳定性。
@@ -318,7 +314,7 @@ class GPUAutoConfigurator:
 
         return config
 
-    def _adjust_for_memory(self, device: dict, config: dict) -> dict:
+    def _adjust_for_memory(self, device: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
         """根据实际显存调整配置
 
         Args:
@@ -354,9 +350,7 @@ class GPUAutoConfigurator:
             # 确保最小batch_size为1024
             if new_batch_size < 1024:
                 new_batch_size = 1024
-                logger.warning(
-                    f"显存不足,批次大小从 {batch_size:,} 调整为最小值 {new_batch_size:,}"
-                )
+                logger.warning(f"显存不足,批次大小从 {batch_size:,} 调整为最小值 {new_batch_size:,}")
             else:
                 # 对齐到2的幂
                 new_batch_size = 1 << (new_batch_size.bit_length() - 1)
@@ -366,7 +360,7 @@ class GPUAutoConfigurator:
 
         return config
 
-    def validate_config(self, config: dict, device: dict) -> tuple:
+    def validate_config(self, config: dict[str, Any], device: dict[str, Any]) -> tuple[bool, list[str]]:
         """验证配置是否合理
 
         Args:
@@ -402,7 +396,7 @@ class GPUAutoConfigurator:
 
         return is_valid, warnings
 
-    def get_config_summary(self, config: dict) -> str:
+    def get_config_summary(self, config: dict[str, Any]) -> str:
         """获取配置摘要
 
         Args:

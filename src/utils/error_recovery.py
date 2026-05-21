@@ -357,9 +357,7 @@ class ErrorRecoveryManager:
         self._retry_history: dict[RecoverableErrorCategory, list[RetryRecord]] = {}
         self._disabled_categories: set[RecoverableErrorCategory] = set()
 
-    def register_fallback(
-        self, category: RecoverableErrorCategory, strategy: FallbackStrategy
-    ) -> None:
+    def register_fallback(self, category: RecoverableErrorCategory, strategy: FallbackStrategy) -> None:
         with self._lock:
             self._fallbacks[category] = strategy
             logger.debug(f"[{self.name}] 注册 {category.value} 降级策略: {strategy.name}")
@@ -525,7 +523,9 @@ class ErrorRecoveryManager:
                     try:
                         result = func(*args, **kwargs)
                         if resolved_category is not None and attempt > 0:
-                            manager.record_retry(resolved_category, last_exception, attempt, True)  # type: ignore[arg-type]
+                            manager.record_retry(
+                                resolved_category, last_exception, attempt, True
+                            )  # type: ignore[arg-type]
                         return result
                     except Exception as e:
                         last_exception = e
@@ -561,7 +561,9 @@ class ErrorRecoveryManager:
 
                         time.sleep(sleep_time)
 
-                manager.record_retry(resolved_category, last_exception, max_retries, False)  # type: ignore[arg-type]
+                manager.record_retry(
+                    resolved_category, last_exception, max_retries, False
+                )  # type: ignore[arg-type]
 
                 if resolved_category is not None:
                     fallback_ok, fallback_label = manager.execute_fallback(resolved_category)
@@ -574,9 +576,7 @@ class ErrorRecoveryManager:
                             )
                             return result
                         except Exception as fb_err:
-                            logger.error(
-                                f"[{manager.name}] {func.__name__} 降级后重试也失败: {fb_err}"
-                            )
+                            logger.error(f"[{manager.name}] {func.__name__} 降级后重试也失败: {fb_err}")
                             raise fb_err
 
                 raise last_exception  # type: ignore[misc]

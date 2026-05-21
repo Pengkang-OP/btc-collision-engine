@@ -42,12 +42,16 @@ def test_kernel_compilation():
     return compile_time
 
 
-def test_batch_throughput(batch_sizes, duration=3):
+def test_batch_throughput(
+    batch_sizes: list[int],
+    duration: int = 3,
+) -> list[tuple[int, int, float, float]]:
     """测试不同批次大小的吞吐量"""
     print("\n" + "=" * 60)
     print("2. 批次大小 vs 吞吐量")
     print("=" * 60)
-    print(f"{'Batch Size':>12} | {'Keys':>12} | {'Time':>8} | {'Throughput':>14}")
+    header = f"{'Batch Size':>12} | {'Keys':>12} | {'Time':>8} | {'Throughput':>14}"
+    print(header)
     print("-" * 52)
 
     results = []
@@ -77,7 +81,8 @@ def test_batch_throughput(batch_sizes, duration=3):
 
         throughput = checked / elapsed if elapsed > 0 else 0
         results.append((bs, checked, elapsed, throughput))
-        print(f"{bs:>12,} | {checked:>12,} | {elapsed:>7.2f}s | {throughput:>12,.0f} keys/s")
+        result_line = f"{bs:>12,} | {checked:>12,} | {elapsed:>7.2f}s | {throughput:>12,.0f} keys/s"
+        print(result_line)
 
     print("-" * 52)
     best = max(results, key=lambda r: r[3])
@@ -86,12 +91,13 @@ def test_batch_throughput(batch_sizes, duration=3):
 
 
 def test_single_vendor_nvidia():
-    """3. 指定 NVIDIA 单卡性能"""
+    """测试指定 NVIDIA 单卡性能"""
     print("\n" + "=" * 60)
-    print("3. NVIDIA GTX 1660 Ti 单卡测试")
+    print("3. NVIDIA 单卡测试")
     print("=" * 60)
 
     import pyopencl as cl
+
     nvidia_devices = []
     for p in cl.get_platforms():
         if "nvidia" in p.name.lower():
@@ -119,8 +125,7 @@ def test_single_vendor_nvidia():
     print(f"  初始化时间: {init_time:.3f}s")
 
     engine.start(mode="random")
-    import time as t_mod
-    t_mod.sleep(5)
+    time.sleep(5)
     engine.stop()
     print("  引擎运行: 5秒 (正常)")
 
@@ -131,11 +136,11 @@ def main():
     print("=" * 60)
 
     # 1. 内核编译时间
-    compile_t = test_kernel_compilation()
+    _ = test_kernel_compilation()
 
     # 2. 批次吞吐量
     batch_sizes = [65536, 262144, 1048576, 4194304]
-    test_batch_throughput(batch_sizes, duration=3)
+    _ = test_batch_throughput(batch_sizes, duration=3)
 
     # 3. NVIDIA 单卡
     test_single_vendor_nvidia()

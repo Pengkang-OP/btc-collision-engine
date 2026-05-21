@@ -681,7 +681,7 @@ class ConfigManager:
             config[keys[-1]] = value
         return True
 
-    def _merge_config(self, base: dict, update: dict) -> None:
+    def _merge_config(self, base: dict[str, Any], update: dict[str, Any]) -> None:
         """
         递归合并配置（必须在锁内调用）
 
@@ -695,7 +695,7 @@ class ConfigManager:
             else:
                 base[key] = value
 
-    def _deep_copy_config(self, config: dict) -> dict:
+    def _deep_copy_config(self, config: dict[str, Any]) -> dict[str, Any]:
         """
         深拷贝配置字典（避免在写文件时持有锁）
 
@@ -806,15 +806,11 @@ class ConfigManager:
         }
         key = prefix + "mode"
         if value not in valid_modes:
-            errors[key] = _t(
-                "config.validation.invalid_mode", value=value, valid_values=valid_modes
-            )
+            errors[key] = _t("config.validation.invalid_mode", value=value, valid_values=valid_modes)
             return None
         return value
 
-    def _validate_batch_size(
-        self, value: int, errors: dict[str, str], prefix: str = ""
-    ) -> int | None:
+    def _validate_batch_size(self, value: int, errors: dict[str, str], prefix: str = "") -> int | None:
         """验证批次大小
 
         自 v4.3.1: 添加 prefix 参数支持嵌套路径错误键。
@@ -879,9 +875,7 @@ class ConfigManager:
     ) -> float | None:
         """验证正浮点数配置"""
         if not isinstance(value, (int, float)) or value < min_val:
-            errors[name] = _t(
-                "config.validation.float_min", name=name, min_val=min_val, value=value
-            )
+            errors[name] = _t("config.validation.float_min", name=name, min_val=min_val, value=value)
             return None
         return float(value)
 
@@ -913,9 +907,7 @@ class ConfigManager:
             return None
         return value
 
-    def _validate_log_level(
-        self, value: str, errors: dict[str, str], prefix: str = ""
-    ) -> str | None:
+    def _validate_log_level(self, value: str, errors: dict[str, str], prefix: str = "") -> str | None:
         """验证日志级别
 
         参数:
@@ -975,7 +967,7 @@ class ConfigManager:
 
         return errors
 
-    def _validate_collision_section(self, collision: dict, errors: dict[str, str]) -> None:
+    def _validate_collision_section(self, collision: dict[str, Any], errors: dict[str, str]) -> None:
         """验证 collision 配置节"""
         if "max_workers" in collision:
             self._validate_positive_int(
@@ -995,9 +987,7 @@ class ConfigManager:
                 collision["checkpoint_interval"], errors, prefix="collision."
             )
         if "dedup_max_size" in collision:
-            self._validate_positive_int(
-                "collision.dedup_max_size", collision["dedup_max_size"], errors
-            )
+            self._validate_positive_int("collision.dedup_max_size", collision["dedup_max_size"], errors)
         if "precomputed_window_size" in collision:
             self._validate_positive_int(
                 "collision.precomputed_window_size",
@@ -1017,7 +1007,7 @@ class ConfigManager:
             if key in source:
                 self._validate_bool(field_name, source[key], errors)
 
-    def _validate_logging_section(self, logging_cfg: dict, errors: dict[str, str]) -> None:
+    def _validate_logging_section(self, logging_cfg: dict[str, Any], errors: dict[str, str]) -> None:
         """验证 logging 配置节"""
         if "level" in logging_cfg:
             self._validate_log_level(logging_cfg["level"], errors, prefix="logging.")
@@ -1043,15 +1033,13 @@ class ConfigManager:
         if "rotation_type" in logging_cfg:
             rt = logging_cfg["rotation_type"]
             if rt not in ("size", "time"):
-                errors["logging.rotation_type"] = _t(
-                    "config.validation.invalid_rotation_type", value=rt
-                )
+                errors["logging.rotation_type"] = _t("config.validation.invalid_rotation_type", value=rt)
             elif rt == "size" and "max_bytes" not in logging_cfg:
                 errors["logging.max_bytes"] = _t("config.validation.rotation_needs_max_bytes")
             elif rt == "time" and "rotation_when" not in logging_cfg:
                 errors["logging.rotation_when"] = _t("config.validation.rotation_needs_when")
 
-    def _validate_engine_section(self, engine_cfg: dict, errors: dict[str, str]) -> None:
+    def _validate_engine_section(self, engine_cfg: dict[str, Any], errors: dict[str, str]) -> None:
         """验证 engine 配置节"""
         if "mode" in engine_cfg:
             self._validate_mode(engine_cfg["mode"], errors, prefix="engine.")
@@ -1064,7 +1052,9 @@ class ConfigManager:
                 engine_cfg["checkpoint_interval"], errors, prefix="engine."
             )
 
-    def _validate_gpu_section(self, gpu_top: Any, gpu_cfg: dict, errors: dict[str, str]) -> None:
+    def _validate_gpu_section(
+        self, gpu_top: Any, gpu_cfg: dict[str, Any], errors: dict[str, str]
+    ) -> None:
         """验证 gpu 配置节"""
         if gpu_top is not None and not isinstance(gpu_top, dict):
             errors["gpu"] = _t(
@@ -1099,7 +1089,7 @@ class ConfigManager:
                 actual_type=type(gpu_cfg["device_index"]).__name__,
             )
 
-    def _validate_crypto_section(self, crypto: dict, errors: dict[str, str]) -> None:
+    def _validate_crypto_section(self, crypto: dict[str, Any], errors: dict[str, str]) -> None:
         """验证 crypto 配置节"""
         if "backend" in crypto:
             valid_backends = (
@@ -1125,7 +1115,7 @@ class ConfigManager:
                 actual_type=type(crypto["gpu_device_index"]).__name__,
             )
 
-    def _validate_perf_section(self, perf_cfg: dict, errors: dict[str, str]) -> None:
+    def _validate_perf_section(self, perf_cfg: dict[str, Any], errors: dict[str, str]) -> None:
         """验证 performance_monitoring 配置节"""
         for key in ("enabled", "track_slow_operations"):
             if key in perf_cfg:
@@ -1142,6 +1132,4 @@ class ConfigManager:
                 "performance_monitoring.max_records", perf_cfg["max_records"], errors
             )
         if "log_level" in perf_cfg:
-            self._validate_log_level(
-                perf_cfg["log_level"], errors, prefix="performance_monitoring.log_"
-            )
+            self._validate_log_level(perf_cfg["log_level"], errors, prefix="performance_monitoring.log_")

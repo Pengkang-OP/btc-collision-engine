@@ -26,9 +26,7 @@ class GPUConfigManager:
     PRIORITY_AUTO = 3  # 自动生成配置
     PRIORITY_DEFAULT = 4  # 默认值
 
-    def __init__(
-        self, user_config: dict[str, Any] | None = None, logger: Any | None = None
-    ) -> None:  # noqa: E501
+    def __init__(self, user_config: dict[str, Any] | None = None, logger: Any | None = None) -> None:  # noqa: E501
         """
         Args:
             user_config: 用户提供的配置
@@ -70,7 +68,7 @@ class GPUConfigManager:
 
         return merged_config
 
-    def _generate_auto_config(self, device_info: dict) -> dict:
+    def _generate_auto_config(self, device_info: dict[str, Any]) -> dict[str, Any]:
         """生成自动配置"""
         config = self._auto_configurator.configure_for_device(device_info)
         _bs = config["batch_size"]
@@ -78,7 +76,7 @@ class GPUConfigManager:
         self.logger.info(f"自动配置: batch={_bs:,}, vendor_workaround={_wa}")
         return config
 
-    def _load_profile_config(self, device_info: dict) -> dict | None:
+    def _load_profile_config(self, device_info: dict[str, Any]) -> dict[str, Any] | None:
         """加载型号配置"""
         device_name = device_info.get("name", "")
         vendor = device_info.get("vendor", "")
@@ -97,7 +95,7 @@ class GPUConfigManager:
 
         return None
 
-    def _merge_configs(self, *configs: dict) -> dict:
+    def _merge_configs(self, *configs: dict[str, Any]) -> dict[str, Any]:
         """合并多个配置源
 
         优先级: 后面的配置覆盖前面的配置
@@ -112,7 +110,7 @@ class GPUConfigManager:
 
         return merged
 
-    def _validate_config(self, config: dict):
+    def _validate_config(self, config: dict[str, Any]):
         """验证配置"""
         # 验证batch_size
         batch_size = config.get("batch_size")
@@ -176,7 +174,7 @@ class GPUConfigManager:
         """
         return self.user_config.get(key, default)
 
-    def get_gpu_config(self) -> dict:
+    def get_gpu_config(self) -> dict[str, Any]:
         """获取GPU相关配置
 
         Returns:
@@ -184,7 +182,7 @@ class GPUConfigManager:
         """
         return self.user_config.get("gpu", {})
 
-    def update_config(self, updates: dict) -> None:
+    def update_config(self, updates: dict[str, Any]) -> None:
         """更新配置
 
         Args:
@@ -197,7 +195,7 @@ class GPUConfigManager:
             else:
                 self.user_config[key] = value
 
-    def validate_and_apply(self, config: dict, device: Any) -> dict:
+    def validate_and_apply(self, config: dict[str, Any], device: Any) -> dict[str, Any]:
         """验证并应用配置
 
         Args:
@@ -218,9 +216,7 @@ class GPUConfigManager:
         if "use_uint32_workaround" in config:
             # uint32_workaround 在 kernel 层由 intel_optimizer 自动应用，
             # 此处仅记录配置状态（设备层无直接属性设置）
-            self.logger.info(
-                f"✅ 应用配置: use_uint32_workaround={config['use_uint32_workaround']}"
-            )
+            self.logger.info(f"✅ 应用配置: use_uint32_workaround={config['use_uint32_workaround']}")
 
         return config
 

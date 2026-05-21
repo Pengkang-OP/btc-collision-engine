@@ -247,7 +247,9 @@ class LoggingConfig:
                 if file_handler:
                     root_logger.addHandler(file_handler)
 
-    def _create_file_handler(self, log_file: str, format_str: str) -> logging.Handler | None:
+    def _create_file_handler(
+        self, log_file: str, format_str: str
+    ) -> logging.Handler | None:  # noqa: C901
         """创建文件处理器"""
         assert self._config is not None
         rotation_type = self._config.get("rotation_type", "size")
@@ -297,9 +299,7 @@ class LoggingConfig:
                     self._inner.setFormatter(fmt)
                     self._format_str = fmt
 
-                def bind_params(
-                    self, log_file: str, rotation_type: str, config: dict[str, Any]
-                ) -> None:
+                def bind_params(self, log_file: str, rotation_type: str, config: dict[str, Any]) -> None:
                     """绑定创建参数，用于 NFS stale handle 后重建处理器"""
                     self._log_file = log_file
                     self._rotation_type = rotation_type
@@ -313,10 +313,7 @@ class LoggingConfig:
                         # v4.5.1: 检测 NFS stale file handle 并尝试恢复
                         import errno
 
-                        if (
-                            hasattr(errno, "ESTALE")
-                            and getattr(os_err, "errno", None) == errno.ESTALE
-                        ):
+                        if hasattr(errno, "ESTALE") and getattr(os_err, "errno", None) == errno.ESTALE:
                             self._recover_stale_handle()
                             # 恢复后重试本次 emit
                             try:
@@ -358,15 +355,9 @@ class LoggingConfig:
                             if self._rotation_type == "time":
                                 handler = TimedRotatingFileHandler(
                                     self._log_file,
-                                    when=(self._config_snapshot or {}).get(
-                                        "rotation_when", "midnight"
-                                    ),
-                                    interval=(self._config_snapshot or {}).get(
-                                        "rotation_interval", 1
-                                    ),
-                                    backupCount=(self._config_snapshot or {}).get(
-                                        "backup_count", 5
-                                    ),
+                                    when=(self._config_snapshot or {}).get("rotation_when", "midnight"),
+                                    interval=(self._config_snapshot or {}).get("rotation_interval", 1),
+                                    backupCount=(self._config_snapshot or {}).get("backup_count", 5),
                                     encoding="utf-8-sig",
                                 )
                             else:
@@ -375,9 +366,7 @@ class LoggingConfig:
                                     maxBytes=(self._config_snapshot or {}).get(
                                         "max_bytes", 10 * 1024 * 1024
                                     ),
-                                    backupCount=(self._config_snapshot or {}).get(
-                                        "backup_count", 5
-                                    ),
+                                    backupCount=(self._config_snapshot or {}).get("backup_count", 5),
                                     encoding="utf-8-sig",
                                 )
                             handler.setLevel(self.level)

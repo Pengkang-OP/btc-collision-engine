@@ -1,0 +1,15 @@
+[flake8]
+max-line-length = 105
+ignore = E203,W503
+exclude = .git,__pycache__,.mypy_cache,.pytest_cache,venv,build,dist
+per-file-ignores =
+    src/web/dashboard.py: E501
+    src/monitoring/alert_notifications.py: E501
+    src/utils/ui_tutorial.py: E501
+    src/collision/targets/validator.py: E501
+    scripts/__init__.py: E501,E402
+    scripts/**/*.py: E501,E402
+    scripts/_batch_p1.py: E501
+    scripts/extract_opencl_kernels.py: E501
+    benchmarks/*.py: E501,E402
+    src/automation/*.py: E402

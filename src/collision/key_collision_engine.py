@@ -194,12 +194,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     self.target_hash160s.add(payload)
                     self._hash160_to_target[payload] = resolved  # Hash160→目标地址映射
                 except (ValueError, TypeError):
-                    logger.warning(
-                        f"目标地址 Base58 解码失败，将从对撞目标中移除: {resolved[:20]}..."
-                    )
-                    resolved_targets.discard(
-                        resolved.lower()
-                    )  # C1修复: 移除无法提取Hash160的目标地址
+                    logger.warning(f"目标地址 Base58 解码失败，将从对撞目标中移除: {resolved[:20]}...")
+                    resolved_targets.discard(resolved.lower())  # C1修复: 移除无法提取Hash160的目标地址
         self.targets = resolved_targets
         if len(self.targets) != len(targets):
             logger.warning(f"目标地址解析后数量变化: 输入={len(targets)}, 有效={len(self.targets)}")
@@ -261,9 +257,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         )
         # 断点管理器
         self.checkpoint_mgr = (
-            CheckpointManager(auto_save_interval=checkpoint_interval)
-            if checkpoint_enabled
-            else None
+            CheckpointManager(auto_save_interval=checkpoint_interval) if checkpoint_enabled else None
         )
         # 去重过滤器
         self.dedup_filter = DeduplicationFilter(max_size=dedup_max_size, enabled=dedup_enabled)
@@ -646,9 +640,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         # 降低阈值策略：P2PKH地址无法区分压缩/非压缩来源，优先保证不漏匹配
         # v4.2.1.1: 从50000降至10000，减少大规模场景下的漏匹配风险
         if target_count < COMPRESSION_AUTO_THRESHOLD:
-            logger.debug(
-                f"目标地址数={target_count} < {COMPRESSION_AUTO_THRESHOLD}，启用双格式检查"
-            )
+            logger.debug(f"目标地址数={target_count} < {COMPRESSION_AUTO_THRESHOLD}，启用双格式检查")
             return True
         else:
             logger.warning(
@@ -688,9 +680,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
             # 获取当前后端信息
             backend = crypto_manager.current_backend
-            logger.info(
-                f"加密后端初始化完成: {backend.name}, 恒定时间={backend.is_constant_time()}"
-            )
+            logger.info(f"加密后端初始化完成: {backend.name}, 恒定时间={backend.is_constant_time()}")
 
         except (RuntimeError, OSError, ValueError) as e:
             logger.warning(f"加密后端初始化失败: {e}，使用默认后端", exc_info=True)
@@ -819,9 +809,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 )
             return True  # 继续运行
         except (MemoryError, RuntimeError) as e:
-            logger.exception(
-                f"Random worker {worker_id}: WIF编码未知错误 addr={matched_address}: {e}"
-            )
+            logger.exception(f"Random worker {worker_id}: WIF编码未知错误 addr={matched_address}: {e}")
             return True  # 继续运行
 
         # 记录匹配发现
@@ -833,9 +821,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         if stop_flag:
             self._stop_event.set()
             return False
-        if not should_continue:
-            return False
-        return True
+        return should_continue
 
     def _flush_match_batch(self, local_matches: list, force: bool = False) -> tuple[bool, bool]:
         """批量提交匹配结果（v4.2.2 H6重构: 从 _process_key_match 和 worker 末尾提取公共逻辑）
@@ -859,7 +845,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             return True, False
 
         # 提交到统计
-        for pk, addr, wif_str, _h160 in local_matches:
+        for pk, addr, _wif_str, _h160 in local_matches:
             self.stats.add_match(pk, addr)
 
         # 触发匹配回调
@@ -930,9 +916,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         try:
             compressed_addr, _, _ = self.generator.generate_address(private_key, compressed=True)
             if self.check_uncompressed:
-                uncompressed_addr, _, _ = self.generator.generate_address(
-                    private_key, compressed=False
-                )
+                uncompressed_addr, _, _ = self.generator.generate_address(private_key, compressed=False)
             else:
                 uncompressed_addr = None
         except ValueError as e:
@@ -950,11 +934,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         if compressed_addr.lower() in self.targets:
             matched_address = compressed_addr
             matched_compressed = True
-        elif (
-            self.check_uncompressed
-            and uncompressed_addr
-            and uncompressed_addr.lower() in self.targets
-        ):
+        elif self.check_uncompressed and uncompressed_addr and uncompressed_addr.lower() in self.targets:
             matched_address = uncompressed_addr
             matched_compressed = False
 
@@ -1009,14 +989,20 @@ class KeyCollisionEngine(BaseCollisionEngine):
         """处理单个私钥：验证、去重、生成地址、匹配检查。"""
         k = int.from_bytes(private_key, "big")
         if k < 1 or k >= Secp256k1.N:
-            return (local_count, batch_count, recent_keys_list, recent_keys_set, True)  # type: ignore[return-value]
+            return (
+                local_count, batch_count, recent_keys_list, recent_keys_set, True
+            )  # type: ignore[return-value]
 
         # 短期缓存 + 去重检查（M1优化: 使用list+set组合）
         key_fp = hashlib.sha256(private_key).digest()[:8]
         if key_fp in recent_keys_set:
-            return (local_count, batch_count, recent_keys_list, recent_keys_set, True)  # type: ignore[return-value]
+            return (
+                local_count, batch_count, recent_keys_list, recent_keys_set, True
+            )  # type: ignore[return-value]
         if not self.dedup_filter.check_and_add(bytes(private_key)):
-            return (local_count, batch_count, recent_keys_list, recent_keys_set, True)  # type: ignore[return-value]
+            return (
+                local_count, batch_count, recent_keys_list, recent_keys_set, True
+            )  # type: ignore[return-value]
 
         # M1优化: 高效缓存管理
         recent_keys_list.append(key_fp)
@@ -1031,9 +1017,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 compressed_addr, compressed_pk, _ = self.generator.generate_address(
                     private_key, compressed=True
                 )
-                uncompressed_pk = self.generator.private_key_to_public_key(
-                    private_key, compressed=False
-                )
+                uncompressed_pk = self.generator.private_key_to_public_key(private_key, compressed=False)
                 uncompressed_addr = self.generator.public_key_to_address(uncompressed_pk)
             else:
                 compressed_addr, compressed_pk, _ = self.generator.generate_address(
@@ -1044,11 +1028,15 @@ class KeyCollisionEngine(BaseCollisionEngine):
         except ValueError as e:
             logger.warning(f"Random worker {worker_id}: 私钥无效，跳过: {e}")
             self._log_throttled_error("invalid_key", "随机私钥无效", e, worker_id)
-            return (local_count, batch_count, recent_keys_list, recent_keys_set, True)  # type: ignore[return-value]
+            return (
+                local_count, batch_count, recent_keys_list, recent_keys_set, True
+            )  # type: ignore[return-value]
         except Exception as e:
             logger.error(f"Random worker {worker_id}: 生成地址失败: {e}", exc_info=True)
             self._log_throttled_error("address_generation_failed", "生成地址失败", e, worker_id)
-            return (local_count, batch_count, recent_keys_list, recent_keys_set, True)  # type: ignore[return-value]
+            return (
+                local_count, batch_count, recent_keys_list, recent_keys_set, True
+            )  # type: ignore[return-value]
 
         local_count += 1
         batch_count += 1
@@ -1084,7 +1072,9 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 matched_hash160,
             )
 
-        return (local_count, batch_count, recent_keys_list, recent_keys_set, should_continue)  # type: ignore[return-value]
+        return (
+            local_count, batch_count, recent_keys_list, recent_keys_set, should_continue
+        )  # type: ignore[return-value]
 
     @staticmethod
     def _log_worker_batch_speed(
@@ -1213,9 +1203,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
             self._executor = executor
-            futures = {
-                executor.submit(self._random_search_worker, i): i for i in range(num_workers)
-            }
+            futures = {executor.submit(self._random_search_worker, i): i for i in range(num_workers)}
 
             while not self._stop_event.is_set() and futures:
                 done, _ = concurrent.futures.wait(
@@ -1223,9 +1211,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 )
 
                 for future in done:
-                    total_count = self._random_search_handle_done(
-                        future, futures, total_count, executor
-                    )
+                    total_count = self._random_search_handle_done(future, futures, total_count, executor)
 
                 # 基于时间和计数的双重进度回调控制
                 current_time = time.time()
@@ -1342,7 +1328,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
             )
 
     def _worker_generate_addresses(self, private_key_bytes, worker_id: int) -> tuple | None:
-        """为工作线程生成压缩和（可选）未压缩地址。返回 (c_addr, c_pub, uc_addr, uc_pk) 或 None 表示跳过。"""
+        """为工作线程生成压缩和（可选）未压缩地址。
+        返回 (c_addr, c_pub, uc_addr, uc_pk) 或 None 表示跳过。"""
         try:
             if self.check_uncompressed:
                 compressed_addr, compressed_pub, _ = self.generator.generate_address(
@@ -1394,9 +1381,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         private_key=b"",
                         address=matched_address,
                         wif="",
-                        target_address=self._resolve_target_address(
-                            matched_address, matched_hash160
-                        ),
+                        target_address=self._resolve_target_address(matched_address, matched_hash160),
                     )
                 )
             except Exception as e:
@@ -1416,9 +1401,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     )
                 )
             except (AttributeError, RuntimeError, TypeError) as e:
-                logger.debug(
-                    f"Worker {worker_id}: EventBus publish 失败（非致命）: {e}", exc_info=True
-                )
+                logger.debug(f"Worker {worker_id}: EventBus publish 失败（非致命）: {e}", exc_info=True)
         except (MemoryError, RuntimeError) as e:
             logger.exception(f"Worker {worker_id}: 匹配处理未知错误 addr={matched_address}: {e}")
 
@@ -1905,9 +1888,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     logger.info("BruteForce 工作线程被用户中断")
                     raise
                 except (RuntimeError, OSError, ValueError) as e:
-                    ExceptionHandler.handle_engine_error(
-                        "CPU", e, self.stats, "brute_force工作线程执行"
-                    )
+                    ExceptionHandler.handle_engine_error("CPU", e, self.stats, "brute_force工作线程执行")
 
                 self._brute_force_report_progress(total_count)
 
@@ -2106,9 +2087,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             self.checkpoint_mgr.save(
                 mode=self._current_mode if hasattr(self, "_current_mode") else "",
                 targets=self.targets if hasattr(self, "targets") else set(),
-                current_position=(
-                    self._current_position if hasattr(self, "_current_position") else 0
-                ),
+                current_position=(self._current_position if hasattr(self, "_current_position") else 0),
                 total_checked=self.stats.total_checked,
                 matches=matches_list,
                 range_start=self._range_start if hasattr(self, "_range_start") else None,
@@ -2188,9 +2167,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self._stop_send_signals()
         self._stop_join_workers(timeout)
 
-        was_running = (
-            self._running
-        )  # C2修复: 在信号设置前捕获运行状态，避免竞态遗漏 EngineStopEvent
+        was_running = self._running  # C2修复: 在信号设置前捕获运行状态，避免竞态遗漏 EngineStopEvent
         self._engine_stop_reason = "user_stopped"  # v4.2.1: 必须在下述信号前设置
         self._stop_event.set()
         self._running = False
@@ -2242,9 +2219,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
     def __enter__(self) -> "KeyCollisionEngine":
         return self
 
-    def __exit__(
-        self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None
-    ) -> None:
+    def __exit__(self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None) -> None:
         self.stop()
         return
 

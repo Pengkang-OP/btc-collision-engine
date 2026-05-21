@@ -25,6 +25,7 @@ import threading
 import time
 from collections.abc import Callable
 from functools import wraps
+from types import TracebackType
 from typing import Any
 
 from .logging_config import get_configured_logger
@@ -46,13 +47,16 @@ class _TimeoutError(Exception):
 def _terminate_thread(thread_handle: int, exit_code: int = 0) -> bool:
     """Windows: 通过 kernel32.TerminateThread 终止线程（仅作最后手段）
 
-    注意: TerminateThread 可能导致资源泄漏，仅在守护线程超时且无法自行退出时使用。
+    注意: TerminateThread 可能导致资源泄漏，
+    仅在守护线程超时且无法自行退出时使用。
     """
     if os.name != "nt":
         return False
     try:
         kernel32 = ctypes.windll.kernel32
-        result = kernel32.TerminateThread(ctypes.c_void_p(thread_handle), ctypes.c_ulong(exit_code))
+        result = kernel32.TerminateThread(
+            ctypes.c_void_p(thread_handle), ctypes.c_ulong(exit_code)
+        )
         return bool(result)
     except (OSError, ValueError, AttributeError):
         return False
@@ -64,9 +68,9 @@ def _terminate_thread(thread_handle: int, exit_code: int = 0) -> bool:
 
 
 def _execute_with_thread_timeout(
-    func: Callable,
-    args: tuple = (),
-    kwargs: dict | None = None,
+    func: Callable[..., Any],
+    args: tuple[Any, ...] = (),
+    kwargs: dict[str, Any] | None = None,
     timeout: float = 5.0,
     callback_name: str = "",
 ) -> bool:
@@ -104,13 +108,19 @@ def _execute_with_thread_timeout(
     thread.join(timeout=timeout)
 
     if thread.is_alive():
-        thread_info = f"name={thread.name}, ident={thread.ident}, native_id={thread.native_id}"
-        logger.warning(f"回调执行超时 ({timeout}秒) - 回调: {callback_name} - 线程: {thread_info}")
+        thread_info = (
+            f"name={thread.name}, ident={thread.ident}, "
+            f"native_id={thread.native_id}"
+        )
+        logger.warning(
+            f"回调执行超时 ({timeout}秒) - 回调: {callback_name} - 线程: {thread_info}"
+        )
         return False
 
     if exception[0]:
         logger.warning(
-            f"回调执行异常 - 回调: {callback_name} - 异常: {type(exception[0]).__name__}: {exception[0]}"
+            f"回调执行异常 - 回调: {callback_name} - " +
+            f"异常: {type(exception[0]).__name__}: {exception[0]}"
         )
         return False
 
@@ -123,9 +133,9 @@ def _execute_with_thread_timeout(
 
 
 def _execute_with_sigalrm_timeout(
-    func: Callable,
-    args: tuple = (),
-    kwargs: dict | None = None,
+    func: Callable[..., Any],
+    args: tuple[Any, ...] = (),
+    kwargs: dict[str, Any] | None = None,
     timeout: float = 5.0,
     callback_name: str = "",
 ) -> bool:
@@ -146,7 +156,7 @@ def _execute_with_sigalrm_timeout(
     if kwargs is None:
         kwargs = {}
 
-    def _timeout_handler(signum: int, frame: Any) -> None:
+    def _timeout_handler(_signum: int, _frame: object) -> None:
         raise _TimeoutError(f"回调执行超时 ({timeout}秒) - 回调: {callback_name}")
 
     retry_count = 0
@@ -154,30 +164,34 @@ def _execute_with_sigalrm_timeout(
 
     while retry_count < max_retries:
         try:
-            old_handler = signal.signal(signal.SIGALRM, _timeout_handler)  # type: ignore[attr-defined]
-            signal.setitimer(signal.ITIMER_REAL, timeout)  # type: ignore[attr-defined]
+            old_handler = signal.signal(
+                signal.SIGALRM, _timeout_handler
+            )  # type: ignore[attr-defined]
+            _ = signal.setitimer(signal.ITIMER_REAL, timeout)  # type: ignore[attr-defined]
             try:
                 func(*args, **kwargs)
                 return True
             except _TimeoutError:
                 logger.warning(
-                    f"回调执行超时 ({timeout}秒) - 回调: {callback_name} - "
+                    f"回调执行超时 ({timeout}秒) - 回调: {callback_name} - " +
                     f"线程: {threading.current_thread().name}"
                 )
                 return False
             except Exception as e:
                 logger.warning(
-                    f"回调执行异常 - 回调: {callback_name} - 异常: {type(e).__name__}: {e}"
+                    f"回调执行异常 - 回调: {callback_name} - " +
+                    f"异常: {type(e).__name__}: {e}"
                 )
                 return False
             finally:
-                signal.setitimer(signal.ITIMER_REAL, 0)  # type: ignore[attr-defined]
-                signal.signal(signal.SIGALRM, old_handler)  # type: ignore[attr-defined]
+                _ = signal.setitimer(signal.ITIMER_REAL, 0)  # type: ignore[attr-defined]
+                _ = signal.signal(signal.SIGALRM, old_handler)  # type: ignore[attr-defined]
         except (ValueError, OSError, AttributeError) as e:
             retry_count += 1
             if retry_count >= max_retries:
                 logger.warning(
-                    f"SIGALRM 超时执行重试耗尽 ({max_retries}次) - 回调: {callback_name} - 错误: {e}"
+                    f"SIGALRM 超时执行重试耗尽 ({max_retries}次) - " +
+                    f"回调: {callback_name} - 错误: {e}"
                 )
                 return False
             time.sleep(0.1)
@@ -191,9 +205,9 @@ def _execute_with_sigalrm_timeout(
 
 
 def invoke_with_timeout(
-    func: Callable,
-    args: tuple = (),
-    kwargs: dict | None = None,
+    func: Callable[..., Any],
+    args: tuple[Any, ...] = (),
+    kwargs: dict[str, Any] | None = None,
     timeout: float = 5.0,
     callback_name: str = "",
 ) -> bool:
@@ -255,11 +269,11 @@ def with_timeout(seconds: float):
         >>> my_handler(some_stats)  # 超时后记录 WARNING，不阻塞
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> None:
             callback_name = getattr(func, "__qualname__", func.__name__)
-            invoke_with_timeout(func, args, kwargs, timeout=seconds, callback_name=callback_name)
+            _ = invoke_with_timeout(func, args, kwargs, timeout=seconds, callback_name=callback_name)
 
         return wrapper
 
@@ -288,9 +302,9 @@ class TimeoutContext:
             seconds: 超时时间（秒）
             name: 上下文名称（用于日志）
         """
-        self._seconds = seconds
-        self._name = name or "unnamed"
-        self._start_time = 0.0
+        self._seconds: float = seconds
+        self._name: str = name or "unnamed"
+        self._start_time: float = 0.0
 
     def __enter__(self) -> "TimeoutContext":
         self._start_time = time.perf_counter()
@@ -300,19 +314,20 @@ class TimeoutContext:
         self,
         exc_type: type | None,
         exc_val: BaseException | None,
-        exc_tb: Any | None,
+        exc_tb: TracebackType | None,
     ) -> bool:
         elapsed_ms = (time.perf_counter() - self._start_time) * 1000
 
         if exc_type is not None:
             logger.warning(
-                f"上下文执行异常 [{self._name}] {exc_type.__name__}: {exc_val} (耗时 {elapsed_ms:.1f}ms)"
+                f"上下文执行异常 [{self._name}] {exc_type.__name__}: " +
+                f"{exc_val} (耗时 {elapsed_ms:.1f}ms)"
             )
             return True
 
         if elapsed_ms > self._seconds * 1000:
             logger.warning(
-                f"上下文执行可能超时 [{self._name}] "
+                f"上下文执行可能超时 [{self._name}] " +
                 f"(耗时 {elapsed_ms:.1f}ms, 阈值 {self._seconds * 1000:.0f}ms)"
             )
 

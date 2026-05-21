@@ -4,10 +4,14 @@
   "python.terminal.activateEnvironment": true,
   "python.analysis.typeCheckingMode": "basic",
   "python.analysis.ignore": ["tests", "benchmarks", "tools", "scripts"],
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportExplicitAny": "none",
+    "reportUnusedFunction": "none"
+  },
   "python.linting.enabled": true,
   "python.linting.mypyEnabled": true,
   "python.linting.flake8Enabled": true,
-  "python.linting.flake8Args": ["--max-line-length=100", "--ignore=E203,W503"],
+  "python.linting.flake8Args": ["--max-line-length=105", "--ignore=E203,W503"],
   "python.formatting.provider": "black",
   "python.formatting.blackArgs": ["--line-length=100"],
 
