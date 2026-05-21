@@ -21,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 # 标记为 GPU 测试，CI 中跳过
 pytestmark = pytest.mark.gpu
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
 
 
 def test_memory_pool_fix():

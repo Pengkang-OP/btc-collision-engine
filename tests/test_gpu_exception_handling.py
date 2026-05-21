@@ -18,7 +18,7 @@ import pytest
 
 from src.collision.checkpoint_manager import CheckpointManager
 from src.collision.collision_stats import CollisionStats
-from src.collision.gpu_collision_engine import GPUCollisionEngine
+from src.collision.gpu.engine import GPUCollisionEngine
 from src.utils.exception_handler import ExceptionHandler
 
 pytestmark = pytest.mark.gpu

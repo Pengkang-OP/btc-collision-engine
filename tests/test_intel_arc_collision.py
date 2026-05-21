@@ -24,7 +24,7 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_PROJECT_ROOT))
 
 from src.collision.collision_stats import CollisionStats  # noqa: E402
-from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
 from src.gpu.intel_memory_monitor import IntelMemoryMonitor  # noqa: E402
 from src.gpu.intel_timeout_manager import AdaptiveTimeoutManager  # noqa: E402
 

@@ -20,7 +20,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 # GPU 引擎
-from src.collision.gpu_collision_engine import GPUCollisionEngine
+from src.collision.gpu.engine import GPUCollisionEngine
 
 # 使用独立的地址生成器（与引擎内部解耦，验证引擎的真实输出）
 from src.core.address_generator import P2PKHAddressGenerator

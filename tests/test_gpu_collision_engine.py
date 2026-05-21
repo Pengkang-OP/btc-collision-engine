@@ -84,19 +84,19 @@ def mock_gpu_setup():
 
     # 完全Mock所有GPU相关模块
     with (
-        patch("src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE", True),
+        patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
         patch(
-            "src.collision.gpu_collision_engine.GPUDeviceDetector.is_gpu_available",
+            "src.gpu.device.GPUDeviceDetector.is_gpu_available",
             return_value=True,
         ),
         patch(
-            "src.collision.gpu_collision_engine.GPUDeviceDetector.detect_devices",
+            "src.gpu.device.GPUDeviceDetector.detect_devices",
             return_value=[mock_device_info],
         ),
-        patch("src.collision.gpu_collision_engine.GPUDevice", return_value=mock_device),
-        patch("src.collision.gpu_collision_engine.GPUContext", return_value=mock_context),
-        patch("src.collision.gpu_collision_engine.GPUKernel", return_value=mock_kernel),
-        patch("src.collision.gpu_collision_engine.GPUProfileLoader") as mock_profile_loader,
+        patch("src.gpu.device_manager.GPUDevice", return_value=mock_device),
+        patch("src.gpu.device_manager.GPUContext", return_value=mock_context),
+        patch("src.gpu.device_manager.GPUKernel", return_value=mock_kernel),
+        patch("src.gpu.profiles.loader.GPUProfileLoader") as mock_profile_loader,
         patch("pyopencl.Buffer", return_value=mock_buffer),
         patch("pyopencl.mem_flags.READ_ONLY", 0x0001),
         patch("pyopencl.mem_flags.READ_WRITE", 0x0002),
@@ -153,15 +153,15 @@ class TestGPUCollisionEngine:
     def test_gpu_engine_mock_initialization(self):
         """使用 Mock 测试 GPU 引擎初始化 - 无设备情况"""
         # 模拟 pyopencl 可用
-        with patch("src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE", True):
+        with patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True):
             # Mock GPUDeviceDetector返回空设备列表
             with (
                 patch(
-                    "src.collision.gpu_collision_engine.GPUDeviceDetector.detect_devices",
+                    "src.gpu.device.GPUDeviceDetector.detect_devices",
                     return_value=[],
                 ),
                 patch(
-                    "src.collision.gpu_collision_engine.GPUDeviceDetector.is_gpu_available",
+                    "src.gpu.device.GPUDeviceDetector.is_gpu_available",
                     return_value=False,
                 ),
             ):

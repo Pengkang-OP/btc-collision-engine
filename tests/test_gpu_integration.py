@@ -35,7 +35,7 @@ class TestGPUIntegration(unittest.TestCase):
     
     def test_02_gpu_engine_has_p1_p2_attributes(self):
         """测试 GPU 引擎类有 P1/P2 属性"""
-        from src.collision.gpu_collision_engine import GPUCollisionEngine
+        from src.collision.gpu.engine import GPUCollisionEngine
         
         # 检查类有这些属性（虽然实例可能是 None）
         self.assertTrue(hasattr(GPUCollisionEngine, '__init__'))
@@ -52,7 +52,7 @@ class TestGPUIntegration(unittest.TestCase):
     
     def test_03_gpu_engine_has_p2_methods(self):
         """测试 GPU 引擎有 P2 便捷方法"""
-        from src.collision.gpu_collision_engine import GPUCollisionEngine
+        from src.collision.gpu.engine import GPUCollisionEngine
         
         # 验证方法存在
         self.assertTrue(hasattr(GPUCollisionEngine, 'run_benchmark'))
@@ -92,7 +92,7 @@ class TestGPUIntegration(unittest.TestCase):
     def test_06_import_integration_in_engine(self):
         """测试 GPU 引擎中导入了 P1/P2 模块"""
         import inspect
-        from src.collision import gpu_collision_engine
+        from src.collision.gpu import engine as gpu_collision_engine
         
         source = inspect.getsource(gpu_collision_engine)
         

@@ -19,7 +19,7 @@ import time
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
 
 
 def _benchmark_batch_size(batch_size: int, test_duration: int = 30):

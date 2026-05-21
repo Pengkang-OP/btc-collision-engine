@@ -16,7 +16,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine
+from src.collision.gpu.engine import GPUCollisionEngine
 
 # 模块级别 marker：本文件所有测试都属于 GPU 测试
 pytestmark = pytest.mark.gpu

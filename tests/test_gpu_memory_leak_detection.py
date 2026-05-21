@@ -2,7 +2,7 @@ import time
 
 import pytest
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine
+from src.collision.gpu.engine import GPUCollisionEngine
 from src.collision.targets.resolver import TargetResolver
 
 # 这两个测试需要真实 GPU 硬件，CI 中由 gpu_hardware 标记跳过

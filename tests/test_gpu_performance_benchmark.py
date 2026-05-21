@@ -24,7 +24,7 @@ pytestmark = pytest.mark.gpu
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.collision.collision_stats import CollisionStats  # noqa: E402
-from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
 from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
 
 # 配置日志

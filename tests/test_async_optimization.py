@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
 from src.gpu.device import GPUDeviceDetector  # noqa: E402
 
 

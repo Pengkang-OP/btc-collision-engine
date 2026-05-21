@@ -44,7 +44,7 @@ def test_crypto_backend_in_gpu():
     # 2. 测试GPU引擎导入
     print("\n[2/4] 测试GPU引擎导入...")
     try:
-        from src.collision.gpu_collision_engine import GPUCollisionEngine
+        from src.collision.gpu.engine import GPUCollisionEngine
 
         print("  ✅ GPUCollisionEngine导入成功")
     except Exception as e:
