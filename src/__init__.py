@@ -1,6 +1,6 @@
 """比特币私钥对撞工具包"""
 
-__version__ = "4.2.2"  # v4.2.2: Phase 6 GPU碰撞引擎重构，安全性增强，mod_inverse溢出修复
+__version__ = "4.5.0"  # v4.5.0: 遗留问题清理，文档更新，代码注释优化
 __author__ = "BTC Collision Team"
 
 # 多格式地址支持模块（v4.3.0 新增）

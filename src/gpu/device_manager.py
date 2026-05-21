@@ -3,10 +3,14 @@
 负责GPU设备的初始化、配置和管理。
 """
 
-# 统一日志获取
+import json
+import logging
+import time
+import traceback
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Optional
 
+from ..core.base58 import Base58
 from ..utils import get_configured_logger
 from ..utils.exception_handler import ExceptionHandler
 from ..utils.performance_monitor import EnhancedPerformanceMonitor
@@ -27,8 +31,6 @@ _logger = get_configured_logger("GPUDeviceManager")
 class NoValidTargetsError(ValueError):
     """没有有效的目标地址 (仅 P2PKH 格式可用, 其他格式已被跳过)"""
 
-    pass
-
 
 class GPUDeviceManager:
     """GPU设备管理器
@@ -40,7 +42,7 @@ class GPUDeviceManager:
         self,
         device_index: int = -1,
         config: dict[str, Any] | None = None,
-        logger: Any | None = None,
+        logger: logging.Logger | None = None,
     ) -> None:
         """
         Args:
@@ -62,6 +64,9 @@ class GPUDeviceManager:
         self._intel_optimizer: Any | None = None
         self._nvidia_optimizer: Any | None = None
         self._amd_optimizer: Any | None = None
+
+        self.target_hash160s: bytes = b""
+        self.target_list: list[str] = []
 
     def _require_device(self) -> GPUDevice:
         """返回已初始化的 GPU 设备，未初始化则抛出 RuntimeError。
@@ -85,9 +90,25 @@ class GPUDeviceManager:
         return self._async_executor
 
     def initialize(
-        self, targets: set[str], batch_size: int | None = None, check_uncompressed: int = 0
+        self,
+        targets: set[str],
+        batch_size: Optional[int] = None,
+        check_uncompressed: int = 0,
     ) -> "GPUDeviceManager":
-        """初始化GPU设备
+        """初始化GPU设备及所有依赖组件
+
+        执行完整的GPU初始化流程，按依赖顺序依次初始化各组件:
+
+        初始化顺序:
+        1. 检测 GPU 可用性
+        2. 初始化 GPU 设备 (init_device)
+        3. 准备目标地址 (prepare_targets)
+        4. 计算最优 batch_size
+        5. 创建 GPU 上下文并编译内核
+        6. 初始化 GPU 内存池（含预分配）
+        7. 初始化异步执行器（双缓冲）
+        8. 设置目标地址和 nonce 映射
+        9. 应用厂商特定优化 (NVIDIA/AMD/Intel)
 
         Args:
             targets: 目标地址集合
@@ -96,6 +117,10 @@ class GPUDeviceManager:
 
         Returns:
             self，支持链式调用
+
+        Raises:
+            RuntimeError: GPU 不可用或初始化失败时抛出
+            NoValidTargetsError: 无有效 P2PKH 目标地址时抛出
         """
         with EnhancedPerformanceMonitor(self.logger, "GPU设备初始化", level="INFO") as pm:
             try:
@@ -146,12 +171,15 @@ class GPUDeviceManager:
 
                 # 10. 记录初始化完成
                 device_info = self._gpu_device.get_device_info()
-                _name = device_info.get('name', 'Unknown')
-                _vendor = device_info.get('vendor', 'Unknown')
-                _wgs = self._gpu_kernel._work_group_size if self._gpu_kernel else 'N/A'
+                _name = device_info.get("name", "Unknown")
+                _vendor = device_info.get("vendor", "Unknown")
+                _wgs = getattr(self._gpu_kernel, "_work_group_size", "N/A")
                 self.logger.info(
-                    f"GPU 设备初始化成功: {_name} "
-                    f"(厂商: {_vendor}, batch_size: {batch_size}, work_group_size: {_wgs})"
+                    "GPU 设备初始化成功: %s (厂商: %s, batch_size: %d, " "work_group_size: %s)",
+                    _name,
+                    _vendor,
+                    batch_size,
+                    _wgs,
                 )
 
                 pm.add_metadata("device_name", device_info.get("name", "Unknown"))
@@ -163,42 +191,45 @@ class GPUDeviceManager:
                 ExceptionHandler.handle_engine_error("GPU", e, context="设备初始化")
                 # 目标地址格式不兼容 (仅支持 P2PKH)
                 self.logger.error(
-                    f"GPU初始化失败: {e}\n"
-                    "原因: 目标地址格式不兼容\n"
+                    "GPU初始化失败: %s\n原因: 目标地址格式不兼容\n"
                     "  GPU 引擎当前仅支持 P2PKH 地址 (1... 开头, Base58 编码)。\n"
                     "  如果你的目标包含 P2SH (3...) 或 Bech32/Taproot (bc1...) 地址,\n"
-                    "  请使用 CPU 模式或仅使用 P2PKH 地址。"
+                    "  请使用 CPU 模式或仅使用 P2PKH 地址。",
+                    e,
                 )
                 raise RuntimeError(
-                    f"GPU初始化失败: {e} (GPU 引擎仅支持 P2PKH 地址格式, 其他格式请使用 CPU 模式)"
+                    "GPU初始化失败: %s (GPU 引擎仅支持 P2PKH 地址格式, "
+                    "其他格式请使用 CPU 模式)" % e
                 ) from e
             except ValueError as e:
                 # 使用ExceptionHandler记录详细错误
                 ExceptionHandler.handle_engine_error("GPU", e, context="设备初始化")
                 self.logger.error(
-                    f"GPU初始化失败: {e}\n"
-                    "建议操作:\n"
+                    "GPU初始化失败: %s\n建议操作:\n"
                     "  1. 检查GPU驱动是否正常\n"
                     "  2. 验证OpenCL环境配置\n"
                     "  3. 使用CPU引擎作为备选方案\n"
-                    "  4. 查看日志获取详细错误信息"
+                    "  4. 查看日志获取详细错误信息",
+                    e,
                 )
                 raise RuntimeError(
-                    f"GPU初始化失败: {e}。请检查GPU驱动和OpenCL环境,或使用CPU引擎作为备选方案。"
+                    "GPU初始化失败: %s。请检查GPU驱动和OpenCL环境, "
+                    "或使用CPU引擎作为备选方案。" % e
                 ) from e
-            except Exception as e:
+            except RuntimeError as e:
                 # 使用ExceptionHandler记录详细错误
                 ExceptionHandler.handle_engine_error("GPU", e, context="设备初始化")
                 self.logger.error(
-                    f"GPU初始化失败: {e}\n"
-                    "建议操作:\n"
+                    "GPU初始化失败: %s\n建议操作:\n"
                     "  1. 检查GPU驱动是否正常\n"
                     "  2. 验证OpenCL环境配置\n"
                     "  3. 使用CPU引擎作为备选方案\n"
-                    "  4. 查看日志获取详细错误信息"
+                    "  4. 查看日志获取详细错误信息",
+                    e,
                 )
                 raise RuntimeError(
-                    f"GPU初始化失败: {e}。请检查GPU驱动和OpenCL环境,或使用CPU引擎作为备选方案。"
+                    "GPU初始化失败: %s。请检查GPU驱动和OpenCL环境, "
+                    "或使用CPU引擎作为备选方案。" % e
                 ) from e
 
         return self
@@ -215,15 +246,15 @@ class GPUDeviceManager:
             self._gpu_device.initialize(self.device_index, enable_async=enable_async)
 
             device_info = self._gpu_device.get_device_info()
-            _name = device_info.get('name', 'Unknown')
-            _vendor = device_info.get('vendor', 'Unknown')
+            _name = device_info.get("name", "Unknown")
+            _vendor = device_info.get("vendor", "Unknown")
+            self.logger.info("检测到GPU设备: %s (%s)", _name, _vendor)
+            mem_size = device_info.get("global_mem_size", 0) / (1024**3)
             self.logger.info(
-                f"检测到GPU设备: {_name} ({_vendor})"
-            )
-            self.logger.info(
-                f"  - 显存: {device_info.get('global_mem_size', 0) / (1024**3):.1f} GB\n"
-                f"  - 计算单元: {device_info.get('max_compute_units', 'N/A')}\n"
-                f"  - 平台: {device_info.get('platform', 'Unknown')}"
+                "  - 显存: %.1f GB\n  - 计算单元: %s\n  - 平台: %s",
+                mem_size,
+                device_info.get("max_compute_units", "N/A"),
+                device_info.get("platform", "Unknown"),
             )
 
     def _read_async_config(self) -> bool:
@@ -237,7 +268,7 @@ class GPUDeviceManager:
             if "async_execution" in gpu_config:
                 enable_async = gpu_config["async_execution"]
                 config_source = "构造参数"
-                self.logger.info(f"✅ 从构造参数读取异步设置: {enable_async} (优先级1)")
+                self.logger.info("✅ 从构造参数读取异步设置: %s (优先级1)", enable_async)
 
         # 优先级2: 自动读取配置文件
         if config_source == "默认":
@@ -250,39 +281,43 @@ class GPUDeviceManager:
             for cfg_file in config_files:
                 if cfg_file.exists():
                     try:
-                        import json
-
                         with open(cfg_file, encoding="utf-8") as f:
                             cfg = json.load(f)
                             gpu_cfg = cfg.get("gpu", {})
                             if "async_execution" in gpu_cfg:
                                 enable_async = bool(gpu_cfg["async_execution"])
-                                config_source = f"配置文件 {cfg_file.name}"
+                                config_source = "配置文件 %s" % cfg_file.name
                                 self.logger.info(
-                                    f"✅ 从{config_source}读取异步设置: {enable_async} (优先级2)"
+                                    "✅ 从%s读取异步设置: %s (优先级2)",
+                                    config_source,
+                                    enable_async,
                                 )
                                 break
                     except json.JSONDecodeError as e:
-                        self.logger.warning(f"配置文件 {cfg_file} JSON格式错误: {e}")
+                        self.logger.warning("配置文件 %s JSON格式错误: %s", cfg_file, e)
                     except PermissionError:
-                        self.logger.warning(f"无法读取 {cfg_file}: 权限不足")
-                    except Exception as e:
-                        self.logger.debug(f"读取配置文件 {cfg_file} 失败(非关键): {e}")
+                        self.logger.warning("无法读取 %s: 权限不足", cfg_file)
+                    except RuntimeError as e:
+                        self.logger.debug("读取配置文件 %s 失败(非关键): %s", cfg_file, e)
 
         # 应用配置
         if enable_async:
             self._require_device().enable_async_execution = True
-            self.logger.info(f"✅ GPU异步执行已启用 (来源: {config_source}) - 双缓冲优化")
+            self.logger.info(
+                "✅ GPU异步执行已启用 (来源: %s) - 双缓冲优化",
+                config_source,
+            )
         else:
-            self.logger.info(f"GPU异步执行未启用 (来源: {config_source}) - 使用同步模式")
-            self.logger.info("提示: 在配置文件中设置 'gpu.async_execution': true 以启用异步优化")
+            self.logger.info(
+                "GPU异步执行未启用 (来源: %s) - 使用同步模式",
+                config_source,
+            )
+            self.logger.info("提示: 在配置文件中设置 'gpu.async_execution': true " "以启用异步优化")
 
         return enable_async
 
     def _prepare_targets(self, targets: set[str]):
         """准备目标地址 (仅 P2PKH 格式通过 Base58 校验)"""
-        from ..core.base58 import Base58
-
         target_list = []
         hash160_list = []
         skipped_non_p2pkh = 0
@@ -296,20 +331,21 @@ class GPUDeviceManager:
                 else:
                     skipped_non_p2pkh += 1
             except (ValueError, TypeError) as e:
-                # 非 Base58 编码地址 (如 Bech32 bc1...), 跳过
                 skipped_non_p2pkh += 1
-                masked = f"{address[:6]}...{address[-4:]}" if len(address) >= 10 else "***"
-                self.logger.debug(f"目标地址格式无效 [{masked}]: {type(e).__name__}")
+                addr_len = len(address)
+                masked = address[:6] + "..." + address[-4:] if addr_len >= 10 else "***"
+                self.logger.debug("目标地址格式无效 [%s]: %s", masked, type(e).__name__)
                 continue
-            except Exception as e:
-                # 未知错误：记录日志
-                masked = f"{address[:6]}...{address[-4:]}" if len(address) >= 10 else "***"
-                self.logger.warning(f"目标地址解析失败 [{masked}]: {type(e).__name__}")
+            except RuntimeError as e:
+                addr_len = len(address)
+                masked = address[:6] + "..." + address[-4:] if addr_len >= 10 else "***"
+                self.logger.warning("目标地址解析失败 [%s]: %s", masked, type(e).__name__)
                 continue
 
         if skipped_non_p2pkh:
             self.logger.warning(
-                f"已跳过 {skipped_non_p2pkh} 个非 P2PKH 格式目标地址 (GPU 引擎仅支持 P2PKH)"
+                "已跳过 %d 个非 P2PKH 格式目标地址 (GPU 引擎仅支持 P2PKH)",
+                skipped_non_p2pkh,
             )
 
         if not hash160_list:
@@ -330,7 +366,7 @@ class GPUDeviceManager:
         profile = self._profile_loader.get_profile(vendor, device_name)
         if profile and "recommended_batch_size" in profile:
             recommended_batch_size = profile["recommended_batch_size"]
-            self.logger.info(f"从GPU配置文件获取推荐 batch_size: {recommended_batch_size}")
+            self.logger.info("从GPU配置文件获取推荐 batch_size: %s", recommended_batch_size)
             return int(recommended_batch_size)
 
         # 基于显存大小计算
@@ -339,10 +375,10 @@ class GPUDeviceManager:
         # 保守估计：每100万私钥需要约100MB显存
         estimated_batch_size = int((global_mem_size / (100 * 1024 * 1024)) * 1_000_000)
 
-        # 限制范围
-        estimated_batch_size = max(100_000, min(estimated_batch_size, 16_777_216))  # 100K到16M
+        # 限制范围 100K到16M
+        estimated_batch_size = max(100_000, min(estimated_batch_size, 16_777_216))
 
-        self.logger.info(f"自动计算 batch_size: {estimated_batch_size} (基于GPU显存)")
+        self.logger.info("自动计算 batch_size: %d (基于GPU显存)", estimated_batch_size)
         return estimated_batch_size
 
     def _init_context(self):
@@ -392,10 +428,16 @@ class GPUDeviceManager:
             if preallocate_sizes:
                 try:
                     self._gpu_memory_pool.preallocate_buffers(preallocate_sizes, count_per_size=2)
-                    self.logger.debug(f"GPU内存池预分配: {len(preallocate_sizes)} 种大小 × 2")
+                    self.logger.debug(
+                        "GPU内存池预分配: %d 种大小 × 2",
+                        len(preallocate_sizes),
+                    )
                 except (RuntimeError, MemoryError, ValueError):
                     self.logger.debug("GPU内存池预分配跳过（非致命）", exc_info=True)
-            self.logger.info(f"GPU内存池初始化完成: {self._gpu_memory_pool.get_stats()}")
+            self.logger.info(
+                "GPU内存池初始化完成: %s",
+                self._gpu_memory_pool.get_stats(),
+            )
         else:
             self.logger.info("GPU内存池未启用,使用直接分配模式")
 
@@ -436,7 +478,7 @@ class GPUDeviceManager:
             profile = self._profile_loader.get_profile(vendor, device_name)
             if profile and "queue_depth" in profile:
                 queue_depth = profile["queue_depth"]
-                self.logger.info(f"从GPU配置文件获取推荐队列深度: {queue_depth}")
+                self.logger.info("从GPU配置文件获取推荐队列深度: %s", queue_depth)
 
             self._async_executor = AsyncGPUExecutor(
                 dev, max_batch_size=batch_size, queue_depth=queue_depth
@@ -446,7 +488,10 @@ class GPUDeviceManager:
             executor = self._require_async_executor()
             executor.initialize_buffers(dev.context, num_keys=batch_size)
 
-            self.logger.info(f"✅ GPU异步执行器已初始化(双缓冲, 队列深度: {queue_depth})")
+            self.logger.info(
+                "✅ GPU异步执行器已初始化(双缓冲, 队列深度: %d)",
+                queue_depth,
+            )
         else:
             self._async_executor = None
             self.logger.info("GPU异步执行器未初始化(使用同步模式)")
@@ -474,7 +519,7 @@ class GPUDeviceManager:
             self._intel_optimizer.apply_optimizations(
                 {
                     "kernel_source": OPENCL_KERNEL_SOURCE,
-                    "engine": self,  # v4.2.1: 传递 engine 引用，启用 P2 组件
+                    "engine": self,
                 }
             )
         elif "nvidia" in vendor_lower:
@@ -486,12 +531,15 @@ class GPUDeviceManager:
                     engine_logger=self.logger,
                 )
                 optimization_result = self._nvidia_optimizer.apply_optimizations()
+                arch_name = optimization_result.get("arch_name", "Unknown")
+                mem_ratio = optimization_result.get("recommended_memory_ratio", 0.60)
                 self.logger.info(
-                    f"✅ NVIDIA 优化器已初始化: 架构={optimization_result.get('arch_name', 'Unknown')}, "
-                    f"memory_ratio={optimization_result.get('recommended_memory_ratio', 0.60):.2f}"
+                    "✅ NVIDIA 优化器已初始化: 架构=%s, memory_ratio=%.2f",
+                    arch_name,
+                    mem_ratio,
                 )
-            except Exception as e:
-                self.logger.warning(f"⚠️ NVIDIA 优化器初始化失败（非致命）: {e}")
+            except RuntimeError as e:
+                self.logger.warning("⚠️ NVIDIA 优化器初始化失败（非致命）: %s", e)
                 self._nvidia_optimizer = None
         elif "amd" in vendor_lower or "advanced micro" in vendor_lower:
             self.logger.info("🔧 检测到 AMD GPU，应用特殊优化")
@@ -502,32 +550,49 @@ class GPUDeviceManager:
                     engine_logger=self.logger,
                 )
                 optimization_result = self._amd_optimizer.apply_optimizations()
+                arch_name = optimization_result.get("arch_name", "Unknown")
+                mem_ratio = optimization_result.get("recommended_memory_ratio", 0.60)
                 self.logger.info(
-                    f"✅ AMD 优化器已初始化: 架构={optimization_result.get('arch_name', 'Unknown')}, "
-                    f"memory_ratio={optimization_result.get('recommended_memory_ratio', 0.60):.2f}"
+                    "✅ AMD 优化器已初始化: 架构=%s, memory_ratio=%.2f",
+                    arch_name,
+                    mem_ratio,
                 )
-            except Exception as e:
-                self.logger.warning(f"⚠️ AMD 优化器初始化失败（非致命）: {e}")
+            except RuntimeError as e:
+                self.logger.warning("⚠️ AMD 优化器初始化失败（非致命）: %s", e)
                 self._amd_optimizer = None
 
     def cleanup(self) -> None:
-        """清理GPU资源"""
-        import time
+        """清理GPU资源（按依赖逆序释放）
 
+        清理顺序（与初始化顺序相反）:
+        1. 清理异步执行器（资源取消 + 等待完成）
+        2. 清理 GPU 内核
+        3. 清理内存池（释放所有缓冲）
+        4. 清理 GPU 上下文
+        5. 清理 GPU 设备
+
+        所有清理步骤均包含异常保护，单个步骤失败不影响后续清理。
+        """
         try:
             # 清理异步执行器
             if self._async_executor:
                 start_time = time.time()
                 self._async_executor.cleanup()
                 elapsed = time.time() - start_time
-                self.logger.info(f"设备管理器：异步执行器已清理 (耗时: {elapsed:.2f}秒)")
+                self.logger.info(
+                    "设备管理器：异步执行器已清理 (耗时: %.2f秒)",
+                    elapsed,
+                )
 
             # 清理内核
             if self._gpu_kernel:
                 start_time = time.time()
                 self._gpu_kernel.cleanup()
                 elapsed = time.time() - start_time
-                self.logger.info(f"设备管理器：内核已清理 (耗时: {elapsed:.2f}秒)")
+                self.logger.info(
+                    "设备管理器：内核已清理 (耗时: %.2f秒)",
+                    elapsed,
+                )
 
             # 清理内存池
             if self._gpu_memory_pool:
@@ -535,27 +600,34 @@ class GPUDeviceManager:
                 self._gpu_memory_pool.clear()
                 self._gpu_memory_pool = None
                 elapsed = time.time() - start_time
-                self.logger.info(f"设备管理器：内存池已清理 (耗时: {elapsed:.2f}秒)")
+                self.logger.info(
+                    "设备管理器：内存池已清理 (耗时: %.2f秒)",
+                    elapsed,
+                )
 
             # 清理上下文
             if self._gpu_context:
                 start_time = time.time()
                 self._gpu_context.cleanup()
                 elapsed = time.time() - start_time
-                self.logger.info(f"设备管理器：上下文已清理 (耗时: {elapsed:.2f}秒)")
+                self.logger.info(
+                    "设备管理器：上下文已清理 (耗时: %.2f秒)",
+                    elapsed,
+                )
 
             # 清理设备
             if self._gpu_device:
                 start_time = time.time()
                 self._gpu_device.cleanup()
                 elapsed = time.time() - start_time
-                self.logger.info(f"设备管理器：设备已清理 (耗时: {elapsed:.2f}秒)")
+                self.logger.info(
+                    "设备管理器：设备已清理 (耗时: %.2f秒)",
+                    elapsed,
+                )
 
             self.logger.info("设备管理器：GPU资源清理完成")
-        except Exception as e:
-            self.logger.warning(f"设备管理器：GPU资源清理失败: {e}")
-            import traceback
-
+        except RuntimeError as e:
+            self.logger.warning("设备管理器：GPU资源清理失败: %s", e)
             traceback.print_exc()
 
     @property
@@ -563,28 +635,28 @@ class GPUDeviceManager:
         """获取GPU设备实例"""
         if self._gpu_device is None:
             raise RuntimeError("GPUDevice 尚未初始化，请先调用 initialize()")
-        return cast(GPUDevice, self._gpu_device)
+        return self._gpu_device
 
     @property
     def context(self) -> GPUContext:
         """获取GPU上下文实例"""
         if self._gpu_context is None:
             raise RuntimeError("GPUContext 尚未初始化，请先调用 initialize()")
-        return cast(GPUContext, self._gpu_context)
+        return self._gpu_context
 
     @property
     def kernel(self) -> GPUKernel:
         """获取GPU内核实例"""
         if self._gpu_kernel is None:
             raise RuntimeError("GPUKernel 尚未初始化，请先调用 initialize()")
-        return cast(GPUKernel, self._gpu_kernel)
+        return self._gpu_kernel
 
     @property
     def async_executor(self) -> AsyncGPUExecutor:
         """获取异步执行器实例"""
         if self._async_executor is None:
             raise RuntimeError("AsyncGPUExecutor 尚未初始化，请先调用 initialize()")
-        return cast(AsyncGPUExecutor, self._async_executor)
+        return self._async_executor
 
     @property
     def memory_pool(self) -> Any:

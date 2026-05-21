@@ -1,12 +1,18 @@
 """随机搜索模式 - RandomSearchMode
 
 将 GPUCollisionEngine 中的随机搜索相关方法迁移至此独立模块，
-包括同步模式（_random_search_sync）和异步双缓冲模式（_random_search_async）。
+包括同步模式（_execute_sync）和异步双缓冲模式（_execute_async）。
 
-PRNG改造 (v4.2.1): CPU仅生成 32 字节种子，GPU内核自行计算 key = seed + gid。
-消除大型私钥数组的内存分配和 CPU-GPU 传输开销。
+架构演变:
+- v4.2.1: PRNG改造 — CPU仅生成32字节种子，GPU内核自行计算 key = seed + gid
+  消除大型私钥数组的内存分配和 CPU-GPU 传输开销。
+- v4.2.2: CPU过载保护 — 主循环内添加节流机制，防止 CPU 飞升。
+- v4.5.0: 代码注释优化，文档标准化。
 
-CPU过载保护: 主循环内添加节流机制，防止 CPU 飞升。
+设计原则:
+- 通过 self.engine 访问所有引擎状态，不复制状态
+- 自动选择同步或异步执行模式
+- 后台种子预生成线程消除 CPU-GPU 同步瓶颈
 """
 
 import hashlib
@@ -473,9 +479,10 @@ class RandomSearchMode(BaseSearchMode):
 
         if hasattr(engine, "_async_executor") and engine._async_executor:
             actual_batch_size = engine._async_executor.get_actual_batch_size()
-            if current_batch_size > actual_batch_size:
-                logger.warning(f"batch_size超过GPU缓冲区大小，使用缓冲区大小: {actual_batch_size}")
-                current_batch_size = actual_batch_size
+            if isinstance(current_batch_size, int) and isinstance(actual_batch_size, int):
+                if current_batch_size > actual_batch_size:
+                    logger.warning(f"batch_size超过GPU缓冲区大小，使用缓冲区大小: {actual_batch_size}")
+                    current_batch_size = actual_batch_size
 
         buffer_data = {
             "A": {"seed": self._generate_seed(), "batch_size": current_batch_size},

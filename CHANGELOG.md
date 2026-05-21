@@ -1,5 +1,43 @@
 # CHANGELOG
 
+## v4.5.0 (2026-05-21)
+
+### 遗留问题修复与代码清理
+
+- **P0-1: GPU引擎代码复杂度已解决**
+  - `GPUCollisionEngine` 已完成 Phase 6 重构，`random_search` 方法已迁移至独立模块
+  - `src/collision/gpu_collision_engine.py` 现为 Shim 层，仅做向后兼容重导出
+  - `RandomSearchMode` 已迁至 `src/gpu/search_modes/random_search.py`，代码结构化良好
+
+- **P1-1: CPU引擎代码复杂度已解决**
+  - `key_collision_engine.py` 中的 `random_search` 方法已重构为 ~30 行编排方法
+  - 工作线程逻辑已提取到 `_random_search_worker`、`_worker_process_key` 等子函数
+  - 匹配处理逻辑已提取到 `_process_key_match`、`_flush_match_batch` 等独立方法
+
+- **待清理文件处理**
+  - 将 `bandit-result*.json` 和 `bandit-report*.json` 添加到 `.gitignore`
+  - 清理 untracked 的安全扫描报告文件
+
+### 代码注释与文档优化
+
+- **代码注释统一优化**
+  - `src/gpu/async_executor.py`: 优化 docstring，统一 Google 风格
+  - `src/gpu/device_manager.py`: 完善初始化流程注释，统一参数/返回文档
+  - `src/core/secure_key_manager.py`: 完善安全后端选择策略注释
+  - `src/collision/targets/storage.py`: 统一中英文混合注释为清晰中文
+  - `src/gpu/search_modes/random_search.py`: 标准化模块级 docstring
+
+- **项目文档同步更新**
+  - `docs/project-status.md`: 更新项目状态至 v4.5.0
+  - `CHANGELOG.md`: 本文件 — 记录 v4.5.0 变更
+
+### 版本统一
+
+- 项目包版本: `4.4.0` → `4.5.0`
+- `src/__init__.py`, `src/gpu/__init__.py`, `src/collision/gpu/__init__.py` 统一更新
+
+---
+
 ## v4.4.0 (2026-05-18)
 
 ### 安全修复
@@ -84,7 +122,6 @@
 
 ---
 
-<<<<<<< Updated upstream
 ## v4.3.0 (2026-05-18)
 
 ### 新功能
@@ -109,7 +146,9 @@
   - 修复大写地址（如 BC1Q）无法识别的问题
   - `detect_address_format()` 中添加小写处理逻辑
   - 所有地址统一小写存储和匹配，完全不区分大小写
-=======
+
+---
+
 ## [4.2.2] - 2026-05-15
 
 ### P1 关键修复 (mod_inverse Binary GCD 2^256 溢出)
@@ -461,7 +500,6 @@
 ---
 
 ## [3.2.0] - 2026-04-26
->>>>>>> Stashed changes
 
 ### 性能优化
 
@@ -483,8 +521,6 @@
 - 所有测试通过率 100%
 
 ---
-
-## v4.2.4 (2026-05-18)
 
 - 维护版本，修复小问题
 - 优化文档结构

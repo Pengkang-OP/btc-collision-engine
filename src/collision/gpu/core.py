@@ -90,10 +90,8 @@ class CollisionCore(ICollisionCore):
         self._checkpoint_factory = checkpoint_factory
         self._dedup_factory = dedup_factory
 
-        # 核心组件（初始化为默认值，start() 时重新创建）
-        from ..collision_stats import CollisionStats
-
-        self.stats = CollisionStats()
+        # 核心组件（初始化为 None，start() 时初始化）
+        self.stats = None
         self.checkpoint = None
         self.dedup_filter = None
         self.search_coordinator = None
@@ -313,10 +311,14 @@ class CollisionCore(ICollisionCore):
         stats_dict = self.stats.to_dict() if hasattr(self.stats, "to_dict") else {}
 
         # 添加额外信息
+        elapsed_time = 0
+        if hasattr(self, "_start_time") and self._start_time:
+            elapsed_time = time.time() - self._start_time
+
         stats_dict.update(
             {
                 "running": self._running,
-                "elapsed_time": time.time() - self._start_time if self._start_time else 0,
+                "elapsed_time": elapsed_time,
             }
         )
 
@@ -396,10 +398,18 @@ class CollisionCore(ICollisionCore):
         """
         try:
             if self._engine is not None:
-                from ...gpu.search_mode_coordinator import SearchModeCoordinator
+                # 检查是否是真正的 GPUCollisionEngine 实例
+                from ...collision.gpu_collision_engine import GPUCollisionEngine
 
-                self.search_coordinator = SearchModeCoordinator(self._engine)
-                logger.debug("搜索协调器已初始化 (通过engine注入)")
+                if isinstance(self._engine, GPUCollisionEngine):
+                    from ...gpu.search_mode_coordinator import SearchModeCoordinator
+
+                    self.search_coordinator = SearchModeCoordinator(self._engine)
+                    logger.debug("搜索协调器已初始化 (通过engine注入)")
+                else:
+                    # Mock引擎或其他类型，回退到存根
+                    logger.info("引擎类型不兼容，搜索协调器使用存根模式")
+                    self.search_coordinator = self._create_search_stub()
             else:
                 # 无engine时创建简单的存根，支持start/stop/pause/resume空操作
                 logger.info("无引擎引用，搜索协调器使用存根模式")

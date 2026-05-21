@@ -94,7 +94,14 @@ GPU_SPECIFIC_CONFIG = {
 
 
 class _PendingBatch:
-    """队列深度管理中，单个已提交到 GPU 但尚未取回结果的批次描述符。"""
+    """队列深度管理中，单个已提交到 GPU 但尚未取回结果的批次描述符。
+
+    Attributes:
+        read_event: OpenCL 事件，结果回读完成后触发
+        buf: 对应的缓冲区字典，包含 'matches' 和 'match_flags'
+        num_keys: 当前批次的密钥数量
+        seed: 当前批次对应的 32 字节种子，用于 seed+gid 还原私钥
+    """
 
     __slots__ = ("read_event", "buf", "num_keys", "seed")
 
@@ -128,16 +135,25 @@ MAX_CONSECUTIVE_SYNC_FALLBACKS = 50  # 超过此阈值停止尝试恢复异步
 class AsyncGPUExecutor:
     """异步GPU执行器
 
-    使用双缓冲和双队列实现异步执行,提升GPU利用率到90%+
+    使用双缓冲和双队列实现异步执行，提升GPU利用率到90%+。
 
-    优化v4.2.1:
-    - 预取队列机制，消除CPU-GPU等待
-    - 智能缓冲切换，减少空闲时间
-    - 增强错误恢复，提升稳定性
-    - queue_depth=4 预提交批次队列（_prefetch_events FIFO），消除批次间空闲间隙
-    - 非阻塞 enqueue，按 FIFO 顺序处理最老批次结果
+    核心机制:
+    - 双OpenCL队列（计算队列 + 传输队列），独立工作，重叠执行
+    - 双缓冲机制（buffer_a / buffer_b），消除CPU-GPU等待
+    - PRNG模式：CPU仅生成32字节种子，GPU内核自行计算 key = seed + gid
+    - 队列深度优化：预提交批次 FIFO 队列，保持 GPU 始终满载
+    - 自动回退：异步失败时自动切换到同步模式
 
-    v4.2.2 M5: _seed_bytes_to_u32_be_array 统一至 gpu/seed_utils.py 导入。
+    优化历史:
+    - v4.2.1: 预取队列、智能缓冲切换、queue_depth 预提交
+    - v4.2.2: M5 种子端序转换统一、P0 批次注册修复
+    - v4.5.0: 文档和注释优化
+
+    Attributes:
+        device: GPUDevice实例
+        max_batch_size: 最大批次大小
+        queue_depth: GPU命令队列深度
+        initial_batch_size: 初始批次大小
     """
 
     def __init__(
@@ -223,11 +239,19 @@ class AsyncGPUExecutor:
         )
 
     def _detect_gpu_model(self) -> str:
-        """
-        检测GPU型号
+        """检测GPU型号并返回配置标识
+
+        通过设备信息中的 name 字段检测具体 GPU 型号，
+        返回与 GPU_SPECIFIC_CONFIG 中对应的配置键名。
+
+        检测优先级:
+        1. 具体型号匹配 (如 "1660", "rtx40")
+        2. 系列匹配 (如 "rtx30", "amd6000")
+        3. 厂商匹配 (如 "intel", "amd")
+        4. 回退到 "default"
 
         Returns:
-            GPU型号标识
+            GPU型号标识，如 "1660", "rtx40", "intel", "default" 等
         """
         if hasattr(self.device, "device_info") and self.device.device_info:
             device_name = self.device.device_info.get("name", "").lower()
@@ -315,16 +339,20 @@ class AsyncGPUExecutor:
         return model_ws_map.get(gpu_model, 256)
 
     def initialize_buffers(self, context: Any, num_keys: int) -> None:
-        """
-        初始化缓冲区池（PRNG模式：seed缓冲区替代keys缓冲区）
+        """初始化缓冲区池（PRNG模式：seed缓冲区替代keys缓冲区）
 
         队列深度优化 v4.2.1：
         - 分配 queue_depth 个匹配结果缓冲区，支持多批次同时在 GPU 中执行
         - buffer_a / buffer_b 作为历史兼容引用，指向缓冲区池的头两个
 
+        PRNG 模式优势:
+        - 种子缓冲区仅 32 字节（替代原 num_keys*32 字节的 keys 缓冲区）
+        - 大幅减少 CPU-GPU 传输量
+        - 支持更大批次大小
+
         Args:
             context: OpenCL上下文
-            num_keys: 每个缓冲的密鑰数量
+            num_keys: 每个缓冲的密钥数量
         """
         import numpy as np
         import pyopencl as cl
@@ -762,39 +790,7 @@ class AsyncGPUExecutor:
             buffer_size = current_buf["match_flags"].size
             if buffer_size < num_keys:
                 logger.warning(f"缓冲区大小不足: 需要{num_keys}个元素, 实际{buffer_size}个元素")
-                import pyopencl as cl
-
-                if current_buf["matches"] is not None:
-                    try:
-                        current_buf["matches"].release()
-                    except (RuntimeError, Exception) as e:
-                        logger.warning(f"释放旧缓冲区异常: {type(e).__name__}: {e}")
-                try:
-                    current_buf["matches"] = cl.Buffer(
-                        self.device.context, cl.mem_flags.READ_WRITE, size=num_keys * 4
-                    )
-                    current_buf["match_flags"] = np.zeros(num_keys, dtype=np.int32)
-                    logger.info(f"已动态调整缓冲区大小为: {num_keys}个元素")
-                except (RuntimeError, MemoryError) as e:
-                    logger.warning(f"创建新缓冲区OpenCL错误: {type(e).__name__}: {e}，回退到同步模式")
-                    try:
-                        sync_matches, sync_time = self._run_batch_sync(
-                            seed, num_keys, program, targets_buf, num_targets
-                        )
-                    except Exception as sync_e:
-                        logger.debug(f"同步回退也失败: {type(sync_e).__name__}: {sync_e}")
-                        sync_matches, sync_time = [], 0.0
-                    raise _SyncFallbackError(sync_matches, sync_time) from e
-                except Exception as e:
-                    logger.warning(f"创建新缓冲区失败: {type(e).__name__}: {e}，回退到同步模式")
-                    try:
-                        sync_matches, sync_time = self._run_batch_sync(
-                            seed, num_keys, program, targets_buf, num_targets
-                        )
-                    except Exception as sync_e:
-                        logger.debug(f"同步回退也失败: {type(sync_e).__name__}: {sync_e}")
-                        sync_matches, sync_time = [], 0.0
-                    raise _SyncFallbackError(sync_matches, sync_time) from e
+                self._resize_buffer_and_clear(current_buf, num_keys, seed, program, targets_buf, num_targets)
 
             import pyopencl as cl
 
@@ -806,26 +802,41 @@ class AsyncGPUExecutor:
                 num_keys * 4,
             )
             return True
-        except (RuntimeError, MemoryError) as e:
-            logger.warning(f"清空缓冲区OpenCL错误: {type(e).__name__}: {e}，回退到同步模式")
+        except (RuntimeError, MemoryError, Exception) as e:
+            self._handle_sync_fallback(e, seed, num_keys, program, targets_buf, num_targets)
+
+    def _resize_buffer_and_clear(self, current_buf, num_keys, seed, program, targets_buf, num_targets):
+        """调整缓冲区大小并清空（提取公共逻辑，消除代码重复）"""
+        import pyopencl as cl
+
+        if current_buf["matches"] is not None:
             try:
-                sync_matches, sync_time = self._run_batch_sync(
-                    seed, num_keys, program, targets_buf, num_targets
-                )
-            except Exception as sync_e:
-                logger.debug(f"同步回退也失败: {type(sync_e).__name__}: {sync_e}")
-                sync_matches, sync_time = [], 0.0
-            raise _SyncFallbackError(sync_matches, sync_time) from e
-        except Exception as e:
-            logger.warning(f"清空缓冲区失败: {type(e).__name__}: {e}，回退到同步模式")
-            try:
-                sync_matches, sync_time = self._run_batch_sync(
-                    seed, num_keys, program, targets_buf, num_targets
-                )
-            except Exception as sync_e:
-                logger.debug(f"同步回退也失败: {type(sync_e).__name__}: {sync_e}")
-                sync_matches, sync_time = [], 0.0
-            raise _SyncFallbackError(sync_matches, sync_time) from e
+                current_buf["matches"].release()
+            except (RuntimeError, Exception) as e:
+                logger.warning(f"释放旧缓冲区异常: {type(e).__name__}: {e}")
+
+        try:
+            current_buf["matches"] = cl.Buffer(
+                self.device.context, cl.mem_flags.READ_WRITE, size=num_keys * 4
+            )
+            current_buf["match_flags"] = np.zeros(num_keys, dtype=np.int32)
+            logger.info(f"已动态调整缓冲区大小为: {num_keys}个元素")
+        except (RuntimeError, MemoryError, Exception) as e:
+            logger.warning(f"创建新缓冲区失败: {type(e).__name__}: {e}，回退到同步模式")
+            self._handle_sync_fallback(e, seed, num_keys, program, targets_buf, num_targets)
+
+    def _handle_sync_fallback(self, error, seed, num_keys, program, targets_buf, num_targets):
+        """统一处理同步回退逻辑（提取公共异常处理，消除代码重复）"""
+        try:
+            sync_matches, sync_time = self._run_batch_sync(
+                seed, num_keys, program, targets_buf, num_targets
+            )
+        except Exception as sync_e:
+            logger.debug(f"同步回退也失败: {type(sync_e).__name__}: {sync_e}")
+            sync_matches, sync_time = [], 0.0
+        self.sync_fallbacks += 1
+        self._track_sync_fallback()
+        raise _SyncFallbackError(sync_matches, sync_time) from error
 
     def _execute_and_register(
         self, current_buf, num_keys, seed, program, targets_buf, num_targets, transfer_event
@@ -1046,15 +1057,18 @@ class AsyncGPUExecutor:
     def cleanup(self) -> None:
         """释放所有GPU缓冲区资源
 
-        释放顺序：
-        1. 确保所有命令队列中的命令都已完成
-        2. 清理所有待处理事件
-        3. 释放 seed_buffer（32字节PRNG种子缓冲区）
-        4. 释放 precomp_buffer（预计算表常量缓冲区）
-        5. 释放缓冲区池中的所有匹配结果缓冲区
+        按安全依赖顺序执行清理，确保无资源泄漏:
 
-        注意：不再引用 buffer_a['keys'] / buffer_b['keys']，
-        v4.2.1 PRNG改造后已移除大型私鑰缓冲区。
+        1. 完成所有命令队列中的命令 (compute_queue, transfer_queue)
+        2. 清理所有待处理事件 (_prefetch_events, pending_event)
+        3. 释放种子缓冲区 (seed_buffer，32字节PRNG)
+        4. 释放预计算表常量缓冲区 (precomp_buffer)
+        5. 释放缓冲区池中的所有匹配结果缓冲区
+        6. 清空待处理状态字段
+
+        v4.2.1 变化:
+        - 不再引用 buffer_a['keys'] / buffer_b['keys']
+        - PRNG 改造后已移除大型私钥缓冲区
         """
         self._finish_all_queues()
         with self._prefetch_lock:

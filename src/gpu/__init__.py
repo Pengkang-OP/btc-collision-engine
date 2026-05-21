@@ -75,7 +75,7 @@ from .scorer import GPUDeviceScorer, get_gpu_scorer, reset_gpu_scorer  # noqa: E
 from .selector import GPUDeviceSelector, get_gpu_selector, reset_gpu_selector  # noqa: E402
 from .worker import SingleGPUWorker  # noqa: E402
 
-__version__ = "4.2.2"  # v4.2.2: 代码审查修复，mod_inverse溢出修复
+__version__ = "4.5.0"  # v4.5.0: 遗留问题清理，文档更新，代码注释优化
 
 __all__ = [
     "GPUDeviceDetector",

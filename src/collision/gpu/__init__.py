@@ -20,7 +20,7 @@
 更新日期: 2026-05-18
 """
 
-__version__ = "4.2.2"
+__version__ = "4.5.0"
 __author__ = "BTC Project"
 
 # v4.2.2 S1: __init__.py 提供清晰的导入映射

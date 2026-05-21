@@ -14,6 +14,7 @@ import json
 import os
 import re
 import sqlite3
+import tempfile
 from collections.abc import Callable
 from datetime import datetime
 from typing import Any
@@ -86,15 +87,16 @@ class AddressStorage:
         logger.info(f"AddressStorage 初始化: 类型={storage_type}, 路径={path}")
 
     def save_targets(self, targets: set[str], metadata: dict | None = None) -> bool:
-        """
-        保存目标地址集合
+        """保存目标地址集合到持久化存储
 
-        参数:
+        根据 storage_type 选择对应的存储后端执行保存操作。
+
+        Args:
             targets: 目标地址集合
-            metadata: 可选的元数据字典
+            metadata: 可选的元数据字典（存储内容因后端而异）
 
-        返回:
-            True表示保存成功,False表示失败
+        Returns:
+            True 表示保存成功，False 表示失败
         """
         try:
             if self.storage_type == "json":
@@ -111,11 +113,12 @@ class AddressStorage:
             return False
 
     def load_targets(self) -> tuple[set[str], dict | None]:
-        """
-        加载目标地址集合和元数据
+        """从持久化存储加载目标地址集合和元数据
 
-        返回:
-            (目标地址集合, 元数据字典) 元组
+        根据 storage_type 选择对应的存储后端执行加载操作。
+
+        Returns:
+            (目标地址集合, 元数据字典) 元组，加载失败返回 (set(), None)
         """
         try:
             if self.storage_type == "json":
@@ -352,15 +355,14 @@ class AddressStorage:
             return set(), None
 
     def export_csv(self, targets: set[str], output_path: str) -> bool:
-        """
-        导出为CSV文件(临时导出,不改变存储类型)
+        """导出目标地址为CSV文件（临时导出，不改变存储类型）
 
-        参数:
+        Args:
             targets: 目标地址集合
             output_path: 输出文件路径
 
-        返回:
-            True表示导出成功
+        Returns:
+            True 表示导出成功
         """
         try:
             import io
@@ -414,8 +416,8 @@ class AddressStorage:
         storage_dir = os.path.abspath(storage_dir)
         allowed_dirs = [
             os.path.abspath(os.getcwd()),
-            os.path.abspath(os.environ.get("TEMP", "/tmp")),
-            os.path.abspath(os.environ.get("TMP", "/tmp")),
+            os.path.abspath(os.environ.get("TEMP", tempfile.gettempdir())),
+            os.path.abspath(os.environ.get("TMP", tempfile.gettempdir())),
         ]
         if not any(storage_dir.startswith(d) for d in allowed_dirs):
             raise ValueError(f"存储目录必须在允许的路径范围内: {storage_dir}")
