@@ -10,7 +10,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine
+from src.collision.gpu.engine import GPUCollisionEngine
 from src.gpu.device import GPUDeviceDetector
 
 pytestmark = pytest.mark.gpu

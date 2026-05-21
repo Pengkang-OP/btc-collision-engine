@@ -63,7 +63,7 @@ class TestGPUKernelCompilation:
 class TestGPUKernelExecution:
     """GPU内核执行测试（使用Mock）"""
 
-    @patch("src.collision.gpu_collision_engine.GPUKernel._verify")
+    @patch("src.gpu.kernel_impl.GPUKernel._verify")
     @patch("pyopencl.create_some_context")
     def test_kernel_initialization(self, mock_context, mock_verify):
         """测试内核初始化"""
@@ -71,7 +71,7 @@ class TestGPUKernelExecution:
         # 这个测试需要真实的GPU设备，跳过
         pytest.skip("需要真实GPU环境")
 
-    @patch("src.collision.gpu_collision_engine.GPUKernel._verify")
+    @patch("src.gpu.kernel_impl.GPUKernel._verify")
     def test_kernel_batch_size_validation(self, mock_verify):
         """测试内核批次大小验证"""
 
