@@ -379,9 +379,6 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self._async_executor: Any | None = self._device_manager.async_executor
         self._gpu_memory_pool = self._device_manager.memory_pool
 
-        # Phase 5: VendorOptimizationFactory 策略创建保留供外部测试使用
-        # 引擎内部不再持有 _vendor_strategy 引用 (scheduled removal)
-
         # === 搜索模式协调器 ===
         self._search_coordinator = SearchModeCoordinator(self, logger)
 
@@ -953,8 +950,6 @@ class GPUCollisionEngine(BaseCollisionEngine):
     def _resize_gpu_buffers(self, new_batch_size: int) -> None:
         """动态调整 GPU 缓冲区大小 [委托给 _scheduler]"""
         self._scheduler.resize_gpu_buffers(new_batch_size)
-
-    # ========== 配置合并 (scheduled removal: _merge_gpu_configs 无调用者) ==========
 
     # ========== P2 便捷方法 (向后兼容) ==========
 

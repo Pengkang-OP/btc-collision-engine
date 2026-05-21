@@ -1,0 +1,110 @@
+{
+  "_comment": "生产环境配置 - Docker部署",
+  "crypto": {
+    "backend": "auto",
+    "use_gpu": true,
+    "gpu_device_index": -1,
+    "constant_time": false,
+    "verify_checksums": true,
+    "strict_wif_validation": true
+  },
+  "engine": {
+    "_comment": "碰撞引擎配置",
+    "mode": "random",
+    "batch_size": 1048576,
+    "_comment_batch_size": "批次大小, 1M为Intel Arc A770最优配置(CPU和GPU统一使用)",
+    "max_threads": 8,
+    "checkpoint_interval": 300
+  },
+  "collision": {
+    "max_workers": null,
+    "progress_interval": 1000,
+    "checkpoint_interval": 60,
+    "dedup_max_size": 5000000,
+    "use_performance_optimization": true,
+    "precomputed_window_size": 8,
+    "use_simd_hash": true,
+    "use_memory_pool": true
+  },
+  "logging": {
+    "_comment": "日志配置 - 生产环境使用较大单文件上限和备份数",
+    "level": "INFO",
+    "_comment_level": "日志级别: 生产环境建议INFO, 调试时可改为DEBUG",
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    "file": "logs/collision.log",
+    "max_bytes": 52428800,
+    "_comment_max_bytes": "单个日志文件最大字节数(50MB, 生产环境增大)",
+    "backup_count": 10,
+    "_comment_backup_count": "保留的备份文件数量(生产环境增大)",
+    "enable_console": true,
+    "enable_file": true,
+    "rotation_type": "size",
+    "_comment_rotation_type": "日志轮转类型: size(按大小)",
+    "rotation_when": "midnight",
+    "rotation_interval": 1,
+    "compress_backups": true,
+    "_comment_compress_backups": "生产环境开启日志压缩以节约磁盘空间"
+  },
+  "gpu": {
+    "use_new_module": true,
+    "auto_detect": true,
+    "async_execution": true,
+    "memory_usage_ratio": 0.70,
+    "_comment_memory_usage_ratio": "显存使用比例(0.0-1.0), Intel Arc建议0.70",
+    "enable_vendor_optimizations": true,
+    "gpu_memory_pool": true,
+    "max_buffers": 100,
+    "max_memory_mb": 512,
+    "driver_check": {
+      "enabled": true,
+      "require_minimum_version": true,
+      "warn_on_unstable": true,
+      "auto_fallback_conservative": true
+    },
+    "mode": "auto",
+    "device_indices": [-1],
+    "load_balancing": "performance",
+    "auto_tuning": true,
+    "queue_depth": 4,
+    "seed_prefetch_size": 5,
+    "_comment_queue_depth": "命令队列深度=4：GPU队列中同时保持 4 个待执行批次，消除批次间空闲间隙",
+    "_comment_seed_prefetch": "种子预生成缓存=5：后台线程预生成 5 个 32B 种子，减少主循环 os.urandom() 阻塞"
+  },
+  "optimization": {
+    "uint32_workaround": true,
+    "_comment_uint32_workaround": "Intel Arc必须启用(避免global char* hang bug)",
+    "disable_async_transfer": false,
+    "conservative_memory_policy": false,
+    "adaptive_timeout": true
+  },
+  "monitoring": {
+    "enabled": true,
+    "collection_interval": 10,
+    "storage_dir": "monitoring_data",
+    "history_max_size": 5000,
+    "error_max_size": 1000,
+    "anomaly_thresholds": {
+      "speed": {
+        "min": 100,
+        "max": 1000000
+      },
+      "cpu_usage": {
+        "max": 85
+      },
+      "memory_usage": {
+        "max": 14336
+      }
+    },
+    "auto_cleanup": {
+      "enabled": true,
+      "max_age_days": 30
+    }
+  },
+  "performance_monitoring": {
+    "enabled": true,
+    "max_records": 50000,
+    "slow_threshold_ms": 5000,
+    "track_slow_operations": true,
+    "log_level": "INFO"
+  }
+}
