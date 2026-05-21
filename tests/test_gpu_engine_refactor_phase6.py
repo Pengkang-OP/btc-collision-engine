@@ -2,14 +2,13 @@
 
 测试范围:
 1. TestEngineIntegration: 构造函数参数完整性, 组件创建
-2. TestBackwardCompatibility: shim 重导出, 公共 API 存在性
+2. (v5.0.0: Shim 层已删除, 向后兼容测试移除)
 3. TestComponentDelegation: 委托到 Facade/Core/Monitoring
 4. TestSearchModeAccess: 搜索模式属性代理
-5. TestModuleImports: 版本号, 常量导出, shim 等价性
+5. TestModuleImports: 版本号, 常量导出
 6. TestLifecycle: start/stop 完整生命周期
 
-版本: v4.2.1
-创建日期: 2026-04-30
+版本: v5.0.0
 """
 
 from unittest.mock import MagicMock, patch
@@ -72,7 +71,6 @@ def mock_engine_patches(mock_targets):
             "src.collision.gpu.engine.VendorOptimizationFactory.create", return_value=MagicMock()
         ),
         patch("src.collision.gpu.engine.GPUDeviceDetector"),
-        patch("src.collision.gpu.engine.GPUMemoryCalculator"),
     ]
     return patches, mock_device_manager, mock_collision_core
 
@@ -199,155 +197,7 @@ class TestEngineIntegration:
                 p.stop()
 
 
-# ========== TestBackwardCompatibility ==========
-
-
-class TestBackwardCompatibility:
-    """测试向后兼容性: shim 重导出, API 存在性"""
-
-    def test_shim_imports_gpucollisionengine(self):
-        """测试从 shim 导入 GPUCollisionEngine"""
-        from src.collision.gpu_collision_engine import GPUCollisionEngine
-
-        assert GPUCollisionEngine is not None
-
-    def test_new_engine_imports_gpucollisionengine(self):
-        """测试从新位置导入 GPUCollisionEngine"""
-        from src.collision.gpu.engine import GPUCollisionEngine
-
-        assert GPUCollisionEngine is not None
-
-    def test_shim_and_new_are_same_class(self):
-        """测试 shim 和新引擎导出的是同一个类"""
-        from src.collision.gpu.engine import GPUCollisionEngine as NewEngine
-        from src.collision.gpu_collision_engine import GPUCollisionEngine as ShimEngine
-
-        assert ShimEngine is NewEngine
-
-    def test_shim_re_exports_constants(self):
-        """测试 shim 重导出所有常量"""
-        from src.collision.gpu_collision_engine import (
-            ASYNC_KEY_GEN_TIMEOUT,
-            BATCH_LOG_FREQUENCY,
-            EXCEPTION_RECOVERY_DELAY,
-            GPU_MAX_BATCH_SIZE,
-            INITIAL_BATCH_SIZE,
-            INITIAL_BATCHES_LOG,
-            MONITOR_THREAD_JOIN_TIMEOUT,
-            THREAD_JOIN_TIMEOUT,
-            UINT32_MAX,
-        )
-
-        assert GPU_MAX_BATCH_SIZE == 0xFFFFFFFF
-        assert UINT32_MAX == 0xFFFFFFFF
-        assert INITIAL_BATCH_SIZE == 1_000_000
-        assert ASYNC_KEY_GEN_TIMEOUT == 30.0
-        assert BATCH_LOG_FREQUENCY == 100
-        assert INITIAL_BATCHES_LOG == 3
-        assert THREAD_JOIN_TIMEOUT == 5.0
-        assert MONITOR_THREAD_JOIN_TIMEOUT == 1.0
-        assert EXCEPTION_RECOVERY_DELAY == 0.1
-
-    def test_shim_re_exports_functions(self):
-        """测试 shim 重导出工具函数"""
-        from src.collision.gpu_collision_engine import (
-            _get_gpu_monitor,
-            _seed_bytes_to_u32_be_array,
-        )
-
-        assert callable(_seed_bytes_to_u32_be_array)
-        assert callable(_get_gpu_monitor)
-
-    def test_shim_re_exports_module_attrs(self):
-        """测试 shim 保留模块级属性（向后兼容 Monkey-patch）"""
-        from src.collision import gpu_collision_engine
-
-        assert hasattr(gpu_collision_engine, "GPUDevice")
-        assert hasattr(gpu_collision_engine, "GPUContext")
-        assert hasattr(gpu_collision_engine, "GPUKernel")
-        assert hasattr(gpu_collision_engine, "GPUDeviceDetector")
-        assert hasattr(gpu_collision_engine, "AsyncGPUExecutor")
-        assert hasattr(gpu_collision_engine, "GPUProfileLoader")
-
-    def test_shim_monkey_patch_works(self):
-        """测试 Monkey-patch shim 模块属性仍然有效"""
-        from src.collision import gpu_collision_engine
-
-        original = gpu_collision_engine.PYOPENCL_AVAILABLE
-        try:
-            gpu_collision_engine.PYOPENCL_AVAILABLE = not original
-            assert (not original) == gpu_collision_engine.PYOPENCL_AVAILABLE
-        finally:
-            gpu_collision_engine.PYOPENCL_AVAILABLE = original
-
-    def test_public_api_methods_exist(self, mock_targets, mock_engine_patches):
-        """测试所有公共 API 方法存在"""
-        patches, _, _ = mock_engine_patches
-
-        active_patches = []
-        for p in patches:
-            p.start()
-            active_patches.append(p)
-
-        try:
-            from src.collision.gpu.engine import GPUCollisionEngine
-
-            engine = GPUCollisionEngine(targets=mock_targets, data_logging_enabled=False)
-
-            # 核心方法
-            assert callable(engine.start)
-            assert callable(engine.stop)
-            assert callable(engine.is_running)
-            assert callable(engine.get_stats)
-            assert callable(engine.get_device_info)
-
-            # 便捷方法 (P2)
-            assert callable(engine.run_benchmark)
-            assert callable(engine.start_auto_tuning)
-            assert callable(engine.generate_performance_report)
-
-            # 上下文管理器方法
-            assert hasattr(engine, "__enter__")
-            assert hasattr(engine, "__exit__")
-        finally:
-            for p in active_patches:
-                p.stop()
-
-    def test_batch_size_property(self, mock_targets, mock_engine_patches):
-        """测试 batch_size 属性线程安全"""
-        patches, _, _ = mock_engine_patches
-
-        active_patches = []
-        for p in patches:
-            p.start()
-            active_patches.append(p)
-
-        try:
-            from src.collision.gpu.engine import GPUCollisionEngine
-
-            engine = GPUCollisionEngine(
-                targets=mock_targets, batch_size=1_000_000, data_logging_enabled=False
-            )
-            assert engine.batch_size == 1_000_000
-
-            # 设置新值
-            engine.batch_size = 2_000_000
-            assert engine.batch_size == 2_000_000
-
-            # 超出 UINT32_MAX 应抛出异常
-            with pytest.raises(ValueError, match="UINT32_MAX"):
-                engine.batch_size = 0xFFFFFFFF
-        finally:
-            for p in active_patches:
-                p.stop()
-
-    def test_static_method_is_gpu_available(self):
-        """测试静态方法 is_gpu_available"""
-        from src.collision.gpu.engine import GPUCollisionEngine
-
-        # 应该返回 bool（不抛异常）
-        result = GPUCollisionEngine.is_gpu_available()
-        assert isinstance(result, bool)
+# v5.0.0: TestBackwardCompatibility 已移除（Shim 层已删除）
 
 
 # ========== TestComponentDelegation ==========
@@ -481,7 +331,7 @@ class TestModuleImports:
         """测试包版本号与 __init__.py 一致"""
         from src.collision import gpu
 
-        assert gpu.__version__ == "4.2.2"
+        assert gpu.__version__ == "4.5.0"
 
     def test_package_all_exports(self):
         """测试 __all__ 包含新组件"""
@@ -506,20 +356,6 @@ class TestModuleImports:
         from src.collision.gpu import GPUEngineFacade, get_gpu_engine_facade
 
         assert get_gpu_engine_facade() is GPUEngineFacade
-
-    def test_constants_consistency(self):
-        """测试 engine.py 和 shim 中的常量一致性"""
-        from src.collision.gpu.engine import GPU_MAX_BATCH_SIZE as new_const
-        from src.collision.gpu_collision_engine import GPU_MAX_BATCH_SIZE as shim_const
-
-        assert shim_const == new_const
-
-    def test_utility_functions_consistency(self):
-        """测试 engine.py 和 shim 中的工具函数一致性"""
-        from src.collision.gpu.engine import _seed_bytes_to_u32_be_array as new_fn
-        from src.collision.gpu_collision_engine import _seed_bytes_to_u32_be_array as shim_fn
-
-        assert shim_fn is new_fn
 
     def test_gpuenginefacade_importable(self):
         """测试 GPUEngineFacade 可以从包中导入"""
