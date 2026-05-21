@@ -56,7 +56,7 @@ class TestGlobalPoolManagerAutoCleanupEdge(unittest.TestCase):
 
         with patch.object(mgr, 'auto_tune_all', return_value=True):
             with patch.object(mgr, 'shrink_all', return_value=5):
-                with patch.object(mgr, '_cleanup_stop_event') as mock_event:
+                with patch.object(mgr._cleanup_state, '_cleanup_stop_event') as mock_event:
                     mock_event.wait.side_effect = [False, True]  # 只运行一次
                     mgr._auto_cleanup_loop(0.01)
         # 不应崩溃
@@ -68,7 +68,7 @@ class TestGlobalPoolManagerAutoCleanupEdge(unittest.TestCase):
 
         with patch.object(mgr, 'auto_tune_all', return_value=True):
             with patch.object(mgr, 'shrink_all', return_value=0):
-                with patch.object(mgr, '_cleanup_stop_event') as mock_event:
+                with patch.object(mgr._cleanup_state, '_cleanup_stop_event') as mock_event:
                     mock_event.wait.side_effect = [False, True]
                     mgr._auto_cleanup_loop(0.01)
 
@@ -89,18 +89,18 @@ class TestGlobalPoolManagerStopCleanupTimeout(unittest.TestCase):
         mgr.start_auto_cleanup(interval_seconds=3600)
 
         # 设置 stop_event 让线程尝试退出
-        mgr._cleanup_stop_event.set()
+        mgr._cleanup_state._cleanup_stop_event.set()
 
         # Mock join 不做实际等待, 然后 is_alive 返回 True
-        with patch.object(mgr._cleanup_thread, 'join') as mock_join:
-            with patch.object(mgr._cleanup_thread, 'is_alive', return_value=True):
+        with patch.object(mgr._cleanup_state._cleanup_thread, 'join') as mock_join:
+            with patch.object(mgr._cleanup_state._cleanup_thread, 'is_alive', return_value=True):
                 mgr.stop_auto_cleanup(timeout=0.1)
                 mock_join.assert_called_once()
 
         # 清理残留线程
-        mgr._cleanup_stop_event.set()
-        if mgr._cleanup_thread and mgr._cleanup_thread.is_alive():
-            mgr._cleanup_thread.join(timeout=2.0)
+        mgr._cleanup_state._cleanup_stop_event.set()
+        if mgr._cleanup_state._cleanup_thread and mgr._cleanup_state._cleanup_thread.is_alive():
+            mgr._cleanup_state._cleanup_thread.join(timeout=2.0)
 
 
 class TestECPointPool(unittest.TestCase):

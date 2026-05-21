@@ -458,28 +458,28 @@ class TestGlobalPoolManagerAutoCleanup(unittest.TestCase):
         """启动自动清理线程"""
         mgr = GlobalPoolManager()
         mgr.initialize()
-        self.assertIsNone(mgr._cleanup_thread)
+        self.assertIsNone(mgr._cleanup_state._cleanup_thread)
         mgr.start_auto_cleanup(interval_seconds=0.5)
-        self.assertIsNotNone(mgr._cleanup_thread)
-        self.assertTrue(mgr._cleanup_thread.is_alive())
+        self.assertIsNotNone(mgr._cleanup_state._cleanup_thread)
+        self.assertTrue(mgr._cleanup_state._cleanup_thread.is_alive())
 
     def test_start_auto_cleanup_idempotent(self):
         """重复启动不创建新线程"""
         mgr = GlobalPoolManager()
         mgr.start_auto_cleanup(interval_seconds=0.5)
-        first_thread = mgr._cleanup_thread
+        first_thread = mgr._cleanup_state._cleanup_thread
         mgr.start_auto_cleanup(interval_seconds=0.5)
-        self.assertIs(mgr._cleanup_thread, first_thread)
+        self.assertIs(mgr._cleanup_state._cleanup_thread, first_thread)
 
     def test_stop_auto_cleanup(self):
         """停止自动清理线程"""
         mgr = GlobalPoolManager()
         mgr.start_auto_cleanup(interval_seconds=0.5)
-        self.assertIsNotNone(mgr._cleanup_thread)
-        self.assertTrue(mgr._cleanup_thread.is_alive())
+        self.assertIsNotNone(mgr._cleanup_state._cleanup_thread)
+        self.assertTrue(mgr._cleanup_state._cleanup_thread.is_alive())
         mgr.stop_auto_cleanup(timeout=2.0)
-        # stop 成功后将 _cleanup_thread 设为 None
-        self.assertIsNone(mgr._cleanup_thread)
+        # stop 成功后将 _cleanup_state._cleanup_thread 设为 None
+        self.assertIsNone(mgr._cleanup_state._cleanup_thread)
 
     def test_stop_auto_cleanup_not_running(self):
         """未运行时停止不报错"""
@@ -491,16 +491,16 @@ class TestGlobalPoolManagerAutoCleanup(unittest.TestCase):
         mgr = GlobalPoolManager()
         mgr.start_auto_cleanup(interval_seconds=3600)
         # Patch is_alive 强制返回 True，模拟线程在超时后仍存活
-        original_is_alive = mgr._cleanup_thread.is_alive
-        mgr._cleanup_thread.is_alive = lambda: True
+        original_is_alive = mgr._cleanup_state._cleanup_thread.is_alive
+        mgr._cleanup_state._cleanup_thread.is_alive = lambda: True
         try:
             mgr.stop_auto_cleanup(timeout=0.001)
         finally:
-            mgr._cleanup_thread.is_alive = original_is_alive
+            mgr._cleanup_state._cleanup_thread.is_alive = original_is_alive
             # 清理：发送停止信号并等待线程结束
-            mgr._cleanup_stop_event.set()
-            if mgr._cleanup_thread and mgr._cleanup_thread.is_alive():
-                mgr._cleanup_thread.join(timeout=2.0)
+            mgr._cleanup_state._cleanup_stop_event.set()
+            if mgr._cleanup_state._cleanup_thread and mgr._cleanup_state._cleanup_thread.is_alive():
+                mgr._cleanup_state._cleanup_thread.join(timeout=2.0)
 
     def test_auto_cleanup_loop_exception_handling(self):
         """自动清理循环异常处理"""
@@ -516,7 +516,7 @@ class TestGlobalPoolManagerAutoCleanup(unittest.TestCase):
             return False  # stop
 
         with patch.object(mgr, "auto_tune_all", side_effect=RuntimeError("tune error")):
-            with patch.object(mgr, "_cleanup_stop_event") as mock_event:
+            with patch.object(mgr._cleanup_state, "_cleanup_stop_event") as mock_event:
                 mock_event.wait.side_effect = [False, True]  # run once then stop
                 mgr._auto_cleanup_loop(0.01)
         # Should not crash
@@ -527,7 +527,7 @@ class TestGlobalPoolManagerAutoCleanup(unittest.TestCase):
         mgr.initialize()
         with patch.object(mgr, "auto_tune_all", return_value=True):
             with patch.object(mgr, "shrink_all", return_value=3):
-                with patch.object(mgr, "_cleanup_stop_event") as mock_event:
+                with patch.object(mgr._cleanup_state, "_cleanup_stop_event") as mock_event:
                     mock_event.wait.side_effect = [False, True]  # run once then stop
                     mgr._auto_cleanup_loop(0.01)
         # Should not crash
