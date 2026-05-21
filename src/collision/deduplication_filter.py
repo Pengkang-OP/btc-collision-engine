@@ -6,12 +6,8 @@ from collections import deque
 from typing import Any
 
 # 导入日志配置
-# 获取模块日志记录器
-logger = get_configured_logger("DeduplicationFilter")
 from ..utils import get_configured_logger
 
-# 获取模块日志记录器
-logger = get_configured_logger("DeduplicationFilter")
 # 获取模块日志记录器
 logger = get_configured_logger("DeduplicationFilter")
 
