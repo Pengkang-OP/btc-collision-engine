@@ -35,7 +35,7 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from flask import Flask, abort, jsonify, render_template_string, request
+    from flask import Flask, abort, jsonify, render_template_string, request  # type: ignore[import-not-found]
 
     FLASK_AVAILABLE = True
 except ImportError:

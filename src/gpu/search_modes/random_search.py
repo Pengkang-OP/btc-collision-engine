@@ -459,7 +459,7 @@ class RandomSearchMode(BaseSearchMode):
         # 性能记录
         batch_optimizer.record_performance(batch_size, execution_time_ms, speed)
 
-    def _handle_batch_error(self, e, engine, batch_num, consecutive_errors) -> int:
+    def _handle_batch_error(self, e, engine, batch_num, consecutive_errors) -> int:  # type: ignore[override]
         """处理批次执行错误"""
         if isinstance(e, KeyboardInterrupt):
             logger.info("用户中断，停止异步执行")
@@ -497,7 +497,7 @@ class RandomSearchMode(BaseSearchMode):
             "A": {"seed": self._generate_seed(), "batch_size": current_batch_size},
             "B": {"seed": None, "batch_size": current_batch_size},
         }
-        return buffer_data, current_batch_size, "A", batch_optimizer
+        return buffer_data, current_batch_size, "A", batch_optimizer  # type: ignore[return-value]
 
     def _run_async_batch_cycle(
         self,

@@ -109,6 +109,15 @@ class ConfigManager:
                     "driver_check": {"type": "object"},
                     # 每设备独立配置
                     "per_device_config": {"type": "object"},
+                    # 异步日志配置
+                    "use_async_logging": {"type": "boolean"},
+                    "async_log_file": {"type": "string"},
+                    "async_log_max_bytes": {"type": "integer", "minimum": 1},
+                    "async_log_backup_count": {"type": "integer", "minimum": 1},
+                    # 非压缩地址检查
+                    "check_uncompressed": {"type": ["boolean", "null"]},
+                    # 私钥生成策略
+                    "key_generation_strategy": {"type": "string"},
                 },
                 "additionalProperties": False,
             },
@@ -304,6 +313,15 @@ class ConfigManager:
             "compiler_flags": "",  # 自定义编译选项
             "driver_check": {},  # 驱动检查配置
             "per_device_config": {},  # 每设备独立配置
+            # 异步日志配置 (来自 config.example.json)
+            "use_async_logging": False,
+            "async_log_file": "logs/gpu_async.log",
+            "async_log_max_bytes": 10485760,
+            "async_log_backup_count": 5,
+            # 非压缩地址检查
+            "check_uncompressed": None,
+            # 私钥生成策略
+            "key_generation_strategy": "PRNG_SEED",
         },
         "monitoring": {
             "enabled": True,

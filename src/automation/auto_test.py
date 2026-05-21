@@ -296,9 +296,9 @@ class AutoTestModule:
         try:
             from src.core.crypto_backend import CryptoBackend
 
-            backend = CryptoBackend()
-            available = backend.get_available_backends()
-            current = backend.get_current_backend()
+            backend = CryptoBackend()  # type: ignore[abstract]
+            available = backend.get_available_backends()  # type: ignore[attr-defined]
+            current = backend.get_current_backend()  # type: ignore[attr-defined]
 
             if current:
                 return {
@@ -490,7 +490,7 @@ class AutoTestModule:
                 "message": f"断点续传测试异常: {str(e)}",
             }
 
-    def test_i18n_support(self, languages: list[str] = None) -> dict:
+    def test_i18n_support(self, languages: list[str] | None = None) -> dict:
         """测试多语言支持"""
         languages = languages or ["zh_CN", "en_US"]
 

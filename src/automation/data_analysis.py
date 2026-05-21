@@ -30,7 +30,7 @@ class DataAnalysisModule:
 
     def __init__(self, project_root: Path | None = None):
         self.project_root = project_root or Path(__file__).parent.parent.parent.parent
-        self.analysis_cache = {}
+        self.analysis_cache: dict = {}
 
     def analyze(self, target_path: str | None = None) -> AnalysisReport:
         """
@@ -106,7 +106,7 @@ class DataAnalysisModule:
             "total_functions": 0,
             "module_depth": 0,
         }
-        metrics_data = {
+        metrics_data: dict[str, Any] = {
             "avg_file_length": 0,
             "max_file_length": 0,
             "total_lines": 0,
@@ -169,7 +169,7 @@ class DataAnalysisModule:
 
     def _analyze_dependencies(self) -> dict[str, Any]:
         """分析依赖关系"""
-        deps = {
+        deps: dict[str, Any] = {
             "required": [],
             "optional": [],
             "circular_imports": [],

@@ -335,7 +335,7 @@ class ECDSABackend(CryptoBackend):
     def __init__(self) -> None:
         self._available = self._check_availability()
         if self._available:
-            from ecdsa import SECP256k1, SigningKey, VerifyingKey
+            from ecdsa import SECP256k1, SigningKey, VerifyingKey  # type: ignore[import-untyped]
 
             self._SigningKey = SigningKey
             self._SECP256k1 = SECP256k1

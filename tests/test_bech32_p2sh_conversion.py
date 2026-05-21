@@ -23,14 +23,12 @@ class TestP2SHAddressConversion:
         self.resolver = TargetResolver(enable_cache=True)
 
     def test_valid_p2sh_address_conversion(self):
-        """测试有效P2SH地址转换为P2PKH"""
-        # 已知的P2SH地址
+        """测试P2SH地址无法转换为P2PKH（数学上不可行）"""
+        # P2SH地址(3开头)使用hash160(redeemScript)，而非公钥hash160，无法直接匹配到公钥
         p2sh_address = "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"
         result = self.resolver.resolve(p2sh_address)
 
-        assert result is not None, "P2SH地址应该成功转换"
-        assert result.startswith("1"), "转换结果应该是P2PKH地址（1开头）"
-        assert len(result) >= 25 and len(result) <= 34, "P2PKH地址长度应在25-34字符之间"
+        assert result is None, "P2SH地址数学上无法转换为P2PKH（不同hash类型）"
 
     def test_p2sh_address_consistency(self):
         """测试P2SH地址转换的一致性（多次转换结果相同）"""
@@ -42,21 +40,23 @@ class TestP2SHAddressConversion:
         assert result1 == result2, "同一地址多次转换结果应该一致"
 
     def test_p2sh_cache_hit(self):
-        """测试P2SH地址缓存命中"""
+        """测试P2SH地址不会被缓存（因为返回None）"""
+        # P2SH地址(3开头)使用hash160(redeemScript)，数学上无法匹配公钥，resolve返回None
+        # 返回None的地址不会被缓存，因此不会有缓存命中
         p2sh_address = "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"
 
-        # 第一次解析（缓存未命中）
+        # 第一次解析
         result1 = self.resolver.resolve(p2sh_address)
 
-        # 第二次解析（应该缓存命中）
+        # 第二次解析（P2SH返回None，不会被缓存）
         result2 = self.resolver.resolve(p2sh_address)
 
-        assert result1 == result2, "缓存命中应该返回相同结果"
+        assert result1 == result2, "两次解析应该返回相同结果"
 
-        # 检查缓存统计
+        # 检查缓存统计 — P2SH不会被缓存
         if self.resolver.cache:
             stats = self.resolver.cache.get_stats()
-            assert stats["hits"] >= 1, "应该有至少一次缓存命中"
+            assert stats["hits"] == 0, "P2SH地址不被缓存，应该有0次缓存命中"
 
     def test_p2sh_invalid_checksum(self):
         """测试P2SH地址校验和失败"""
@@ -276,8 +276,9 @@ class TestExceptionHandling:
         assert len(results) == len(inputs), "结果数量应该与输入数量一致"
 
         # 验证有效地址被正确解析
+        # P2SH地址(3开头)使用hash160(redeemScript)，数学上无法匹配公钥，返回None
         assert results["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"] is not None
-        assert results["3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"] is not None
+        assert results["3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"] is None, "P2SH数学上无法匹配公钥，返回None"
         assert results["bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"] is not None
 
         # 验证无效地址返回None
@@ -302,8 +303,9 @@ class TestExceptionHandling:
         assert len(results) == 5, "应该返回5个结果"
 
         # 验证有效地址
+        # P2SH地址(3开头)使用hash160(redeemScript)，数学上无法匹配公钥，返回None
         assert results["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"] is not None
-        assert results["3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"] is not None
+        assert results["3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"] is None, "P2SH数学上无法匹配公钥，返回None"
         assert results["bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"] is not None
 
         # 验证无效地址
@@ -361,9 +363,9 @@ class TestEdgeCases:
         resolver.resolve(addr2)
         resolver.resolve(addr3)
 
-        # 验证缓存大小为3
+        # 验证缓存大小为2（P2SH地址返回None，不会被缓存）
         stats = resolver.cache.get_stats()
-        assert stats["lru_size"] == 3, f"缓存应该包含3个地址，实际为{stats['lru_size']}"
+        assert stats["lru_size"] == 2, f"缓存应该包含2个地址（P2SH不被缓存），实际为{stats['lru_size']}"
 
         # 添加第4个地址（应该淘汰最旧的addr1）
         addr4 = "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2"

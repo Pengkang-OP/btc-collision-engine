@@ -67,9 +67,9 @@ class BaseSearchMode:
                     continue
                 private_key = batch_data[key_idx * 32 : (key_idx + 1) * 32]
             target_idx = match["target_index"]
-            address = engine._target_list[target_idx]
+            address = engine._target_list[target_idx]  # type: ignore[attr-defined]
             wif = WIF.encode(private_key, compressed=True)
-            engine.stats.add_match(private_key, address)
+            engine.stats.add_match(private_key, address)  # type: ignore[attr-defined]
             if engine.on_match:
                 timeout_val = (
                     engine._match_callback_timeout

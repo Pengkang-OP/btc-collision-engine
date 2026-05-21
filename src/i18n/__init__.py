@@ -30,18 +30,18 @@ _translator = Translator(language=detect_system_language())
 # ------------------------------------------------------------------
 
 
-def _t(key: str, **kwargs) -> str:
+def _t(msg_key: str, **kwargs) -> str:
     """
     翻译快捷函数。
 
     Args:
-        key: 点分隔的翻译键，如 "cli.help.description"。
+        msg_key: 点分隔的翻译键，如 "cli.help.description"。
         **kwargs: 字符串格式化参数。
 
     Returns:
         翻译后的字符串。
     """
-    return _translator.translate(key, **kwargs)
+    return _translator.translate(msg_key, **kwargs)
 
 
 def set_language(lang: str) -> None:

@@ -73,7 +73,7 @@ _ORJSON_OPT_SORT_KEYS: int = 1 << 1  # orjson.OPT_SORT_KEYS
 _ORJSON_OPT_NON_STR_KEYS: int = 1 << 2  # orjson.OPT_NON_STR_KEYS
 
 try:
-    import orjson as _orjson_imported
+    import orjson as _orjson_imported  # type: ignore[import-not-found]
 
     _orjson_module = _orjson_imported
     _ORJSON_AVAILABLE = True

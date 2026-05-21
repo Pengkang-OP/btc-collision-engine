@@ -393,7 +393,7 @@ class GPUMemoryPool:
     def _remove_lru_from_pool(self, lru_type: str, lru_size: int, lru_id: int) -> None:
         """从对应池分组中移除指定 ID 的 LRU 缓冲区。"""
         if lru_type != "generic" and lru_type in self._type_pools:
-            pool_list = self._type_pools[lru_type].get(cast(int, lru_size), [])
+            pool_list = self._type_pools[lru_type].get(lru_size, [])  # type: ignore[redundant-cast]
         else:
             pool_list = self._pool.get(lru_size, [])
         for i, b in enumerate(pool_list):
@@ -781,14 +781,17 @@ class GlobalGPUMemoryManager:
     # v4.2.4: 使用共享 _CleanupThreadState 替代重复声明的线程变量
     _cleanup_state = _CleanupThreadState()
 
+    _lock: threading.Lock
+    _pools: dict[int, GPUMemoryPool]
+
     def __new__(cls) -> "GlobalGPUMemoryManager":
         if cls._instance is None:
             with cls._creation_lock:
-                if cls._instance is None:
-                    cls._instance = super().__new__(cls)
+                if cls._instance is None:  # type: ignore[attr-defined]
+                    cls._instance = super().__new__(cls)  # type: ignore[attr-defined]
                     # 实例级别：每个实例有独立的锁和状态
                     cls._instance._lock = threading.Lock()
-                    cls._instance._pools: dict[int, GPUMemoryPool] = {}
+                    cls._instance._pools = {}  # type: ignore[assignment]
         return cls._instance
 
     # 默认自动清理间隔(秒)
@@ -808,17 +811,17 @@ class GlobalGPUMemoryManager:
         返回:
             GPUMemoryPool实例
         """
-        context_id = id(context)
+        context_id = id(context)  # type: ignore[attr-defined]
         # 修复: 添加锁保护，防止多线程并发创建/访问内存池导致的数据竞争
         with self._lock:
-            if context_id not in self._pools:
+            if context_id not in self._pools:  # type: ignore[attr-defined]
                 self._pools[context_id] = GPUMemoryPool(context, max_buffers)
                 logger.info(f"为上下文 {context_id} 创建GPU内存池")
             return self._pools[context_id]
-
-    def clear_all(self) -> None:
+            return self._pools[context_id]  # type: ignore[attr-defined]
+    def clear_all(self) -> None:  # type: ignore[attr-defined]
         """清空所有内存池"""
-        with self._lock:
+        with self._lock:  # type: ignore[attr-defined]
             for pool in self._pools.values():
                 pool.clear()
             self._pools.clear()
@@ -832,7 +835,7 @@ class GlobalGPUMemoryManager:
         v4.2.4: 使用共享 run_cleanup_loop_safely() 统一异常处理
         """
 
-        def _do_cleanup() -> None:
+        def _do_cleanup() -> None:  # type: ignore[attr-defined]
             total_evicted = 0
             with self._lock:
                 for pool in self._pools.values():

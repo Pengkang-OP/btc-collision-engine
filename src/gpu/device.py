@@ -686,7 +686,7 @@ class GPUDevice:
         else:
             # 传统模式: 单一队列
             self.queue = cl.CommandQueue(
-                self.context,
+                self.context,  # type: ignore[arg-type]
                 self.device,  # type: ignore[arg-type]
             )  # type: ignore[assignment] # noqa: E501
             logger.info("使用传统单队列模式(同步执行)")

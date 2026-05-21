@@ -79,7 +79,7 @@ class GPUFacade:
 
         return self._driver_manager.get_gpu_count() if self._driver_manager else 0
 
-    def list_devices(self) -> List[Dict[str, Any]]:
+    def list_devices(self) -> list[dict[str, Any]]:
         """列出所有可用GPU设备
 
         Returns:
@@ -107,10 +107,10 @@ class GPUFacade:
             # 创建GPU设备
             from .device import GPUDevice
 
-            self._gpu_device = GPUDevice(device_index=device_index)
+            self._gpu_device = GPUDevice(device_index=device_index)  # type: ignore[call-arg]
 
             # 创建碰撞引擎
-            from .collision_engine import GPUCollisionEngine
+            from .collision_engine import GPUCollisionEngine  # type: ignore[import-not-found]
 
             self._collision_engine = GPUCollisionEngine(
                 gpu_device=self._gpu_device, device_index=device_index, batch_size=batch_size
@@ -126,7 +126,7 @@ class GPUFacade:
             return False
 
     def start_collision(
-        self, targets: List[str], mode: str = "random", batch_size: int = 10000
+        self, targets: list[str], mode: str = "random", batch_size: int = 10000
     ) -> bool:
         """启动GPU碰撞
 

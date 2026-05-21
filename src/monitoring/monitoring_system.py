@@ -1143,7 +1143,7 @@ class MonitoringSystem:
         self.report_generator = ReportGenerator(self.storage, self.detector)
 
         # 集成日志监控系统
-        self.log_integrator: "LogMonitoringIntegrator | None" = None
+        self.log_integrator: "LogMonitoringIntegrator | None" = None  # type: ignore[name-defined]
         try:
             from .log_monitoring_integrator import get_log_monitoring_integrator
 

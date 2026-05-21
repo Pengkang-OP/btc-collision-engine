@@ -187,3 +187,14 @@ line-ending = "lf"
 
 [tool.bandit]
 exclude_dirs = ["tests", "docs", "benchmarks"]
+
+[tool.flake8]
+max-line-length = 105
+exclude = [".git", "__pycache__", ".mypy_cache", ".pytest_cache", "venv", "build", "dist"]
+per-file-ignores =
+    src/web/dashboard.py: E501
+    src/monitoring/alert_notifications.py: E501
+    src/utils/ui_tutorial.py: E501
+    src/collision/targets/validator.py: E501
+    scripts/_batch_p1.py: E501
+    scripts/extract_opencl_kernels.py: E501

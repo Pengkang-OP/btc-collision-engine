@@ -55,8 +55,8 @@ class LoopController:
         self._lock = threading.Lock()
 
         self.total_iterations = 0
-        self.start_time = None
-        self.end_time = None
+        self.start_time: datetime | None = None
+        self.end_time: datetime | None = None
 
         # v4.3.1: 阶段失败计数
         self._phase_failures: dict[str, int] = {"analysis": 0, "test": 0, "audit": 0}

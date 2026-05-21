@@ -220,7 +220,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
             GPUPerformanceMonitor 实例，失败时返回 None
         """
         try:
-            from ....monitoring.gpu_performance_monitor import get_gpu_performance_monitor
+            from ....monitoring.gpu_performance_monitor import get_gpu_performance_monitor  # type: ignore[import-not-found]
 
             return get_gpu_performance_monitor(engine=self.engine)
         except ImportError as e:

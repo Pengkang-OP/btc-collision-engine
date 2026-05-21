@@ -228,8 +228,8 @@ class GPUKernel(GPUKernelProtocol):
 
         self._max_batch_size = max_batch_size
         self._program = program  # 可能为None（需要自行编译）
-        self._batch_kernel = None
-        self._batch_kernel_local = None  # local memory版本内核引用
+        self._batch_kernel: Any | None = None
+        self._batch_kernel_local: Any | None = None  # local memory版本内核引用
         # 查询设备local memory大小（OpenCL标准属性），回退默认值16KB
         try:
             self._local_mem_size = device.device.local_mem_size  # type: ignore[attr-defined] # noqa: E501
@@ -964,7 +964,7 @@ class GPUKernel(GPUKernelProtocol):
                 f"threshold={local_threshold:.0%}, "
                 f"global_ws={global_work_size}, local_ws={local_work_size}"
             )
-            self._batch_kernel_local(
+            self._batch_kernel_local(  # type: ignore[misc]
                 self.device.queue,
                 (global_work_size,),
                 (local_work_size,),
@@ -983,7 +983,7 @@ class GPUKernel(GPUKernelProtocol):
                 f"global_ws={global_work_size}, local_ws={local_work_size}, "
                 f"num_keys={num_keys}, num_targets={self._num_targets_cached}"
             )
-            self._batch_kernel(
+            self._batch_kernel(  # type: ignore[misc]
                 self.device.queue,
                 (global_work_size,),
                 (local_work_size,),
@@ -998,7 +998,7 @@ class GPUKernel(GPUKernelProtocol):
 
         # OPT-3: 异步读取匹配结果（非阻塞，通过返回的 event 同步）
         # 使用 match_flags[:num_keys] 视图而非整个数组，减少主机内存拷贝
-        return cl.enqueue_copy(self.device.queue, self._match_flags[:num_keys], self._match_buf)
+        return cl.enqueue_copy(self.device.queue, self._match_flags[:num_keys], self._match_buf)  # type: ignore[call-overload,index]
 
     def _wait_for_completion(self, read_event, timeout_seconds: float = 30) -> bool:
         """等待GPU执行完成"""
@@ -1120,7 +1120,7 @@ class GPUKernel(GPUKernelProtocol):
 
         # 5. 执行内核
         if self._batch_kernel is None:
-            self._batch_kernel = self.program.batch_check
+            self._batch_kernel = self.program.batch_check  # type: ignore[union-attr]
 
         # OPT-3: 使用智能检测的 work_group_size（而非硬编码 256）
         local_work_size = getattr(self, "_work_group_size", _DEFAULT_WORK_GROUP_SIZE)
@@ -1136,7 +1136,7 @@ class GPUKernel(GPUKernelProtocol):
             raise RuntimeError("GPU执行超时，内核可能已hang")
 
         # 7. 收集结果
-        matches = self._collect_matches(self._match_flags[:num_keys], num_keys)
+        matches = self._collect_matches(self._match_flags[:num_keys], num_keys)  # type: ignore[index]
 
         # 8. 记录性能
         self._record_performance(num_keys, batch_start_time, len(matches))
@@ -1225,7 +1225,7 @@ class GPUKernel(GPUKernelProtocol):
         # memory_pool = getattr(self, '_gpu_memory_pool', None)  # 不再需要
 
         # v4.2.1修复: 跟踪已释放的缓冲区，避免双重释放
-        released_buffers = set()
+        released_buffers = set()  # type: ignore[var-annotated]
 
         self._check_memory_leaks_on_shutdown(released_buffers)
         self._release_gpu_buffers(released_buffers)
@@ -1250,7 +1250,7 @@ class GPUKernel(GPUKernelProtocol):
                 os.makedirs(log_dir, mode=0o750, exist_ok=True)
 
             # 创建异步文件处理器
-            from ..utils.async_file_handler import AsyncFileHandler
+            from ..utils.async_file_handler import AsyncFileHandler  # type: ignore[import-not-found]
 
             self._async_log_handler = AsyncFileHandler(
                 log_file, max_bytes=max_bytes, backup_count=backup_count

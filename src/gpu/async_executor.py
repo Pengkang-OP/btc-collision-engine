@@ -9,7 +9,7 @@
 import threading
 import time
 from contextlib import suppress
-from typing import Any
+from typing import Any, Callable, Callable
 
 import numpy as np
 
@@ -1131,7 +1131,7 @@ class AsyncGPUExecutor:
                 logger.warning(f"等待待处理事件完成失败: {type(e).__name__}: {e}")
             self.pending_event = None
 
-    def _release_buffer_safe(self, name: str, getter: callable, setter: callable) -> None:
+    def _release_buffer_safe(self, name: str, getter: Callable, setter: Callable) -> None:
         """安全地释放缓冲区资源"""
         buf = getter()
         if buf is not None:
@@ -1169,7 +1169,7 @@ class AsyncGPUExecutor:
             cl.enqueue_fill_buffer(
                 self.device.queue,
                 buf_dict["matches"],
-                np.int32(0),
+                np.int32(0),  # type: ignore[arg-type]
                 0,
                 num_keys * 4,
             )
