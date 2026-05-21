@@ -154,8 +154,8 @@ def _execute_with_sigalrm_timeout(
 
     while retry_count < max_retries:
         try:
-            old_handler = signal.signal(signal.SIGALRM, _timeout_handler)
-            _old_itimer = signal.setitimer(signal.ITIMER_REAL, timeout)  # type: ignore[attr-defined]
+            old_handler = signal.signal(signal.SIGALRM, _timeout_handler)  # type: ignore[attr-defined]
+            signal.setitimer(signal.ITIMER_REAL, timeout)  # type: ignore[attr-defined]
             try:
                 func(*args, **kwargs)
                 return True
@@ -171,9 +171,9 @@ def _execute_with_sigalrm_timeout(
                 )
                 return False
             finally:
-                signal.setitimer(signal.ITIMER_REAL, 0)
-                signal.signal(signal.SIGALRM, old_handler)
-        except (ValueError, OSError) as e:
+                signal.setitimer(signal.ITIMER_REAL, 0)  # type: ignore[attr-defined]
+                signal.signal(signal.SIGALRM, old_handler)  # type: ignore[attr-defined]
+        except (ValueError, OSError, AttributeError) as e:
             retry_count += 1
             if retry_count >= max_retries:
                 logger.warning(
@@ -220,7 +220,7 @@ def invoke_with_timeout(
         return _execute_with_thread_timeout(func, args, kwargs, timeout, callback_name)
     else:
         try:
-            _ = signal.SIGALRM
+            _ = signal.SIGALRM  # type: ignore[attr-defined]
             _ = signal.setitimer  # type: ignore[attr-defined]
             return _execute_with_sigalrm_timeout(func, args, kwargs, timeout, callback_name)
         except AttributeError:

@@ -8,6 +8,7 @@
 import json
 import os
 from pathlib import Path
+from typing import cast
 
 # v4.5.1: 确保项目根目录在 sys.path 中（使用共享模块）
 from ._path_setup import _project_root, ensure_project_root
@@ -69,7 +70,7 @@ def load_config_with_validation(config_file: str | None = None) -> dict | None:
         # v4.5.1: 过滤 `_comment` 字段，避免运行时数据污染
         config = _strip_comment_keys(config)
 
-        return config
+        return cast(dict, config)
 
     except json.JSONDecodeError as e:
         logger.error(_t("config.invalid", error=str(e)))

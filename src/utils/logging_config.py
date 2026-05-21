@@ -382,7 +382,7 @@ class LoggingConfig:
                                 )
                             handler.setLevel(self.level)
                             handler.setFormatter(
-                                self._format_str
+                                logging.Formatter(self._format_str)
                                 if isinstance(self._format_str, str)
                                 else self._inner.formatter
                             )
@@ -498,7 +498,7 @@ def _setup_security_filter() -> None:
         ]
 
         # 追踪已添加过滤器的 logger，避免重复
-        _processed_loggers = set()
+        _processed_loggers: set[int | None] = set()
         _processed_loggers.add(None)  # root logger 已处理
 
         # 为显式列表中的模块添加过滤器

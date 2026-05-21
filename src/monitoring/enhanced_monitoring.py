@@ -182,9 +182,10 @@ class EnhancedMonitoringSystem:
         self.storage.save_current_data(data)
         self.storage.save_history_data(data)
 
-        anomalies = self.detector.detect_anomalies(data)
-        if anomalies:
-            self.alert_system.process_anomalies(anomalies)
+        if self.detector is not None and self.alert_system is not None:
+            anomalies = self.detector.detect_anomalies(data)
+            if anomalies:
+                self.alert_system.process_anomalies(anomalies)
 
     def _monitoring_loop(self):
         """监控循环"""

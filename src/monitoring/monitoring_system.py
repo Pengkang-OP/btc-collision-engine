@@ -413,7 +413,7 @@ class DataStorage:
         import random
 
         # 使用实例化Random对象而非全局随机，避免影响其他模块（统计采样，非加密用途）
-        _rng = random.Random()  # nosec B311  # 预留: 实例化Random而非全局
+        random.Random()  # nosec B311  # 预留: 实例化Random而非全局
 
         # 计算采样数量
         sample_count = max(1, int(len(data) * sample_rate))
@@ -1143,7 +1143,7 @@ class MonitoringSystem:
         self.report_generator = ReportGenerator(self.storage, self.detector)
 
         # 集成日志监控系统
-        self.log_integrator: LogMonitoringIntegrator | None = None  # type: ignore[name-defined] # noqa: F821, E501
+        self.log_integrator: "LogMonitoringIntegrator | None" = None
         try:
             from .log_monitoring_integrator import get_log_monitoring_integrator
 

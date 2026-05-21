@@ -25,7 +25,8 @@ from src.collision import CollisionStats
 
 def _format_checked_count(checked: int) -> str:
     """将已检查数格式化为缩写形式"""
-    assert checked >= 0, f"checked 不能为负数: {checked}"
+    if checked < 0:
+        raise ValueError(f"checked 不能为负数: {checked}")
     if checked >= UNIT_BILLION:
         return f"{checked / UNIT_BILLION:.2f}B"
     elif checked >= UNIT_MILLION:

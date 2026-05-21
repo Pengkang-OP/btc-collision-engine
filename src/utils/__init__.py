@@ -1,6 +1,7 @@
 """工具模块"""
 
 from .sensitive_patterns import (
+    # 敏感数据检测模式（非MASK变体，通过 __all__ 导出）
     BECH32_ADDRESS,
     BECH32M_ADDRESS,
     BIP32_EXTENDED_KEY,
@@ -15,17 +16,7 @@ from .sensitive_patterns import (
     RAW_KEY,
     WIF_COMPRESSED,
     WIF_UNCOMPRESSED,
-    BECH32_ADDRESS_MASK,
-    BECH32M_ADDRESS_MASK,
-    BIP32_EXTENDED_KEY_MASK,
-    BIP32_EXTENDED_PUBKEY_MASK,
-    BIP39_PHRASE_12_MASK,
-    BIP39_PHRASE_24_MASK,
-    P2PKH_ADDRESS_MASK,
-    P2SH_ADDRESS_MASK,
-    RAW_KEY_MASK,
-    WIF_COMPRESSED_MASK,
-    WIF_UNCOMPRESSED_MASK,
+    # _MASK 变体由 sensitive_patterns 内部使用，此处不重新导出
 )
 from .bech32_codec import (
     bech32_decode,

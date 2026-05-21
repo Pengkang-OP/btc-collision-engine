@@ -63,7 +63,7 @@ class KeyboardListener:
                 import tty  # noqa: PLC0415, F401
 
                 fd = sys.stdin.fileno()
-                termios.tcgetattr(fd)  # 若非 TTY 会抛出 termios.error
+                termios.tcgetattr(fd)  # type: ignore[attr-defined]  # 若非 TTY 会抛出 termios.error
                 cls._platform_available = True
             except Exception as exc:
                 cls._platform_available = False

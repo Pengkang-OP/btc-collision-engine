@@ -497,6 +497,12 @@ class GPUPerformanceMonitor:
                             {"timestamp": timestamp, "power": hardware_metrics["power_usage"]}
                         )
 
+                # 收集引擎指标、检查显存泄漏和错误率
+                if self.engine:
+                    self._collect_engine_metrics()
+                self._check_memory_leak()
+                self._check_error_rate()
+
             except Exception as e:
                 logger.debug(f"监控循环异常: {e}")
 
@@ -906,25 +912,6 @@ class GPUPerformanceMonitor:
                 return "\n".join(csv_lines)
             else:
                 raise ValueError(f"不支持的格式: {format}")
-
-    def _monitor_loop(self):
-        """监控循环"""
-        while self._running:
-            try:
-                # 定期收集GPU引擎指标
-                if self.engine:
-                    self._collect_engine_metrics()
-
-                # 检查显存泄漏
-                self._check_memory_leak()
-
-                # 检查错误率
-                self._check_error_rate()
-
-                time.sleep(self.check_interval)
-            except Exception as e:
-                logger.error(f"GPU监控循环异常: {e}")
-                time.sleep(self.check_interval)
 
     def _collect_engine_metrics(self):
         """从GPU引擎收集指标"""

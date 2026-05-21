@@ -1241,6 +1241,105 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
         self._random_search_finalize(total_count)
 
+    def _random_search_determine_workers(self) -> int:
+        """确定随机搜索的工作线程数。"""
+        return self.max_workers or 4
+
+    def _random_search_handle_done(
+        self,
+        future: concurrent.futures.Future,
+        futures: dict,
+        total_count: int,
+        executor: concurrent.futures.ThreadPoolExecutor,
+    ) -> int:
+        """处理完成的随机搜索线程，更新计数并提交新线程。"""
+        try:
+            local_count = future.result()
+            total_count += local_count
+        except concurrent.futures.CancelledError:
+            logger.debug("随机搜索线程被取消")
+        except KeyboardInterrupt:
+            raise
+        except (RuntimeError, OSError, ValueError) as e:
+            logger.error(f"随机搜索线程异常: {e}")
+
+        # 移除已完成的任务
+        futures.pop(future, None)
+
+        return total_count
+
+    def _random_search_report_progress(self, total_count: int, current_time: float) -> None:
+        """随机搜索进度回调：更新统计、日志。"""
+        elapsed = current_time - self.stats.start_time
+        speed = total_count / elapsed if elapsed > 0 else 0
+
+        self.stats.update(total_count)
+        if self.on_progress:
+            invoke_with_timeout(
+                self.on_progress,
+                args=(self.stats.snapshot(),),
+                timeout=5.0,
+                callback_name="on_progress",
+            )
+        self._save_checkpoint(total_count)
+        self._log_data_metrics(total_count, speed)
+
+        try:
+            self.event_bus.publish(
+                EngineProgressEvent(
+                    total_checked=total_count,
+                    speed=speed,
+                    matches_found=self.stats.matches_found,
+                    elapsed_time=elapsed,
+                )
+            )
+        except Exception as e:
+            logger.debug(f"发布 ENGINE_PROGRESS 事件失败（非致命）: {e}")
+
+        self._last_progress_time = current_time
+
+    def _random_search_finalize(self, total_count: int) -> None:
+        """随机搜索结束：更新统计、发布 COMPLETE。"""
+        self._executor = None
+        self._stats_updated.clear()
+        self.stats.update(total_count)
+        self._stats_updated.set()
+        self._running = False
+
+        elapsed = time.time() - self.stats.start_time
+        speed = total_count / elapsed if elapsed > 0 else 0
+
+        try:
+            stop_reason = self._engine_stop_reason
+            self._engine_stop_reason = "normal"
+            self.event_bus.publish(
+                EngineCompleteEvent(
+                    total_checked=total_count,
+                    matches_found=self.stats.matches_found,
+                    elapsed_time=elapsed,
+                    avg_speed=speed,
+                    stop_reason=stop_reason,
+                )
+            )
+        except Exception as e:
+            logger.debug(f"发布 ENGINE_COMPLETE 事件失败（非致命）: {e}")
+
+        if self.data_logging_enabled and self.data_logger:
+            self.data_logger.record_engine_data(
+                mode=self._current_mode,
+                target_count=len(self.targets),
+                is_running=False,
+                current_position=total_count,
+            )
+
+        if self.on_complete:
+            invoke_with_timeout(
+                self.on_complete,
+                args=(self.stats,),
+                timeout=5.0,
+                callback_name="on_complete",
+            )
+
     def _worker_generate_addresses(self, private_key_bytes, worker_id: int) -> tuple | None:
         """为工作线程生成压缩和（可选）未压缩地址。返回 (c_addr, c_pub, uc_addr, uc_pk) 或 None 表示跳过。"""
         try:

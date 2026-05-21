@@ -306,7 +306,7 @@ class FallbackStrategy:
         for label, action in self._fallbacks:
             logger.info(f"执行降级策略 [{self.name}]: {label}")
             try:
-                _result = action()
+                action()
                 logger.info(f"降级策略 [{self.name}] {label} 成功")
                 return True, label
             except Exception as e:

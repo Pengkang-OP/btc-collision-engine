@@ -468,7 +468,7 @@ class EllipticCurve:
         if point.is_infinity:
             return True  # 无穷远点被认为在曲线上
 
-        assert point.x is not None and point.y is not None
+        assert point.x is not None and point.y is not None, "is_infinity 检查后坐标不应为 None"
 
         # 验证 y² ≡ x³ + ax + b (mod p)
         left_side = pow(point.y, 2, self.curve.P)
@@ -702,7 +702,7 @@ class EllipticCurve:
             raise ValueError("生成的公钥为无穷远点，私钥无效")
 
         # 转换为字节串
-        assert public_point.x is not None and public_point.y is not None
+        assert public_point.x is not None and public_point.y is not None, "is_infinity 检查后坐标不应为 None"
         x_bytes = public_point.x.to_bytes(32, "big")
 
         if compressed:

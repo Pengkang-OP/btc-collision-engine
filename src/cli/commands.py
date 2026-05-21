@@ -900,6 +900,7 @@ def _cmd_quick_run(executor: Callable[[], None] | None = None) -> None:
         # 倒计时
         countdown = QUICK_RUN_DEFAULTS["countdown_seconds"]
         output.print(f"\n[bold green]{countdown}秒后自动开始... (按Ctrl+C取消)[/bold green]")
+        import time
         try:
             for i in range(countdown, 0, -1):
                 output.print(f"  {i}...")
