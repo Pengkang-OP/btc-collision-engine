@@ -9,6 +9,7 @@
     python examples/demo_btc_key_verification.py
 """
 
+import json
 import os
 import sys
 
@@ -137,10 +138,6 @@ def example_json_output():
     print("示例5: JSON格式输出")
     print("=" * 70)
 
-<<<<<<< Updated upstream
-=======
-    import json
->>>>>>> Stashed changes
 
     verifier = BTCKeyAddressVerifier(verbose=False)
     report = verifier.generate_random_verification()

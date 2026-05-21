@@ -951,11 +951,7 @@ class TestModuleImports:
         """测试模块版本号 v4.2.1"""
         from src.collision import gpu
 
-<<<<<<< Updated upstream
         assert gpu.__version__ == "4.4.0"
-=======
-        assert gpu.__version__ == "4.2.2"
->>>>>>> Stashed changes
 
     def test_collision_core_in_all(self):
         """验证 CollisionCore 在 __all__ 中"""
