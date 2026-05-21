@@ -1,45 +1,48 @@
 @echo off
-setlocal enabledelayedexpansion
+setlocal
 
-call "%~dp0common.bat" :init_encoding
-call "%~dp0common.bat" :set_script_dir
+rem ============================================================
+rem  BTC Collision Engine - 启动入口
+rem  注意：若无特殊需要，安装后首次运行应使用 install.bat
+rem ============================================================
 
-call "%~dp0common.bat" :check_python
+rem 切换到 bat 所在目录（使用绝对路径）
+cd /d "%~dp0"
+
+rem ============================================================
+rem 检查 Python
+rem ============================================================
+where python >nul 2>&1
 if errorlevel 1 (
     echo [ERROR] Python 未安装或不在 PATH 中
+    echo         请安装 Python 3.9+ 并确保 "python" 命令可用
+    echo         下载: https://www.python.org/downloads/
     pause
     exit /b 1
 )
 
-echo [INFO] 正在启动 BTC Collision Engine...
-
-if exist "venv\Scripts\python.exe" (
-    set "PYTHON_EXE=venv\Scripts\python.exe"
+rem ============================================================
+rem 优先使用虚拟环境中的 Python（依赖完整）
+rem ============================================================
+if exist "%~dp0venv\Scripts\python.exe" (
+    set "PYAPP=%~dp0venv\Scripts\python.exe"
 ) else (
-    set "PYTHON_EXE=python"
+    set "PYAPP=python"
 )
 
-echo [INFO] 使用: %PYTHON_EXE%
-echo.
+echo [INFO] Starting...
 
-echo [INFO] 验证 Python 版本...
-"%PYTHON_EXE%" --version > _start_test.log 2>&1
-type _start_test.log
+rem ============================================================
+rem 启动交互菜单（直接执行，不显式超时等待 - 菜单自身接管输入）
+rem ============================================================
+"%PYAPP%" "%~dp0start_menu.py"
 
-echo [INFO] 检查 start_menu.py 是否存在...
-if not exist "start_menu.py" (
-    echo [ERROR] start_menu.py 未找到
-    pause
-    exit /b 1
-)
-
-echo [INFO] 启动菜单...
-"%PYTHON_EXE%" start_menu.py
-set "MENU_EXIT=%errorlevel%"
-
-if "%MENU_EXIT%" NEQ "0" (
+rem ============================================================
+rem 菜单退出后的收尾
+rem ============================================================
+if errorlevel 1 (
     echo.
-    echo [ERROR] 启动失败，退出码: !MENU_EXIT!
+    echo [ERROR] 启动出错，退出码: %errorlevel%
 )
+
 pause
-exit /b %MENU_EXIT%
