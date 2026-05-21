@@ -49,6 +49,7 @@ class CollisionCore(ICollisionCore):
     - 以下方法标记为 [DEPRECATED] 仅保留用于测试向后兼容:
       start(), stop(), pause(), resume(), reset(), on_batch_complete()
     - 非测试代码请使用 GPUCollisionEngine API
+    - [计划] v5.0.0 将移除所有 [DEPRECATED] 方法
 
     测试示例:
         >>> core = CollisionCore(targets, config)  # 仅用于测试
