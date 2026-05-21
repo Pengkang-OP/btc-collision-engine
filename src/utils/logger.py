@@ -22,6 +22,7 @@ from collections.abc import Callable
 from contextlib import suppress
 from functools import wraps
 from logging.handlers import RotatingFileHandler
+from types import TracebackType
 from typing import Any
 
 
@@ -35,9 +36,7 @@ def _make_rotating_handler(filename: str, max_bytes: int, backup_count: int) -> 
             return SafeRotatingFileHandler(
                 filename, maxBytes=max_bytes, backupCount=backup_count, encoding="utf-8"
             )
-    return RotatingFileHandler(
-        filename, maxBytes=max_bytes, backupCount=backup_count, encoding="utf-8"
-    )
+    return RotatingFileHandler(filename, maxBytes=max_bytes, backupCount=backup_count, encoding="utf-8")
 
 
 class SafeStreamHandler(logging.StreamHandler):
@@ -112,10 +111,14 @@ class PerformanceMonitor:
         return self
 
     def __exit__(
-        self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None
+        self,
+        exc_type: type | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         self.end_time = time.perf_counter()
-        assert self.start_time is not None
+        if self.start_time is None:
+            raise RuntimeError("EnhancedPerformanceMonitor 未正确进入上下文: start_time 为 None")
         elapsed_ms = (self.end_time - self.start_time) * 1000
 
         if exc_type is None:
@@ -128,10 +131,10 @@ class PerformanceMonitor:
     @property
     def elapsed_ms(self) -> float:
         """获取已耗时的毫秒数"""
+        if self.start_time is None:
+            raise RuntimeError("EnhancedPerformanceMonitor 未正确进入上下文: start_time 为 None")
         if self.end_time is None:
-            assert self.start_time is not None
             return (time.perf_counter() - self.start_time) * 1000
-        assert self.start_time is not None
         return (self.end_time - self.start_time) * 1000
 
 
@@ -284,9 +287,7 @@ def setup_logger(
             os.makedirs(log_dir, mode=0o750, exist_ok=True)
 
         # 使用 SafeRotatingFileHandler 自动轮转（Windows 安全）
-        file_handler: logging.FileHandler = _make_rotating_handler(
-            log_file, max_bytes, backup_count
-        )
+        file_handler: logging.FileHandler = _make_rotating_handler(log_file, max_bytes, backup_count)
         file_handler.setLevel(getattr(logging, level))
         file_handler.setFormatter(logging.Formatter(format))
         logger.addHandler(file_handler)
@@ -311,9 +312,7 @@ def get_logger(name: str) -> logging.Logger:
     return logger
 
 
-def get_sampled_logger(
-    name: str, sample_rate: int = 100, max_per_second: float = 0.0
-) -> SampledLogger:
+def get_sampled_logger(name: str, sample_rate: int = 100, max_per_second: float = 0.0) -> SampledLogger:
     """
     获取采样日志记录器（用于高频操作）
 
@@ -515,9 +514,7 @@ class AsyncFileHandler(logging.Handler):
 
         # 创建底层文件处理器
         if max_bytes > 0:
-            self._handler: logging.Handler = _make_rotating_handler(
-                filename, max_bytes, backup_count
-            )
+            self._handler: logging.Handler = _make_rotating_handler(filename, max_bytes, backup_count)
         else:
             self._handler = logging.FileHandler(filename, encoding="utf-8")
 

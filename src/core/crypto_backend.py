@@ -300,7 +300,9 @@ class CoincurveBackend(CryptoBackend):
 
             # 将结果格式化为非压缩公钥字节串 (0x04 + x + y)
             result_bytes = (
-                result.format(compressed=False) if hasattr(result, "format") else bytes(result)  # type: ignore[call-overload]
+                result.format(compressed=False)
+                if hasattr(result, "format")
+                else bytes(result)  # type: ignore[call-overload]
             )
             if result_bytes[0] == 0x04 and len(result_bytes) >= 65:
                 rx = int.from_bytes(result_bytes[1:33], "big")

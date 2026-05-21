@@ -82,7 +82,7 @@ class EventBus:
         """
         self._subscribers: dict[EventType, list[Callable]] = defaultdict(list)
         self._lock = threading.RLock()
-        self._error_handler: Callable | None = None
+        self._error_handler: Callable[..., Any] | None = None
         self._async_mode = async_mode
         self._max_queue_size = max_queue_size
         self._handler_timeout = handler_timeout
@@ -109,7 +109,7 @@ class EventBus:
         else:
             logger.debug("事件总线已初始化 (同步模式)")
 
-    def subscribe(self, event_type: EventType, handler: Callable) -> None:
+    def subscribe(self, event_type: EventType, handler: Callable[..., Any]) -> None:
         """订阅事件
 
         Args:
@@ -128,7 +128,7 @@ class EventBus:
                 handler_name = getattr(handler, "__name__", str(handler))
                 logger.debug("订阅事件: %s, 处理器: %s", event_type.value, handler_name)
 
-    def unsubscribe(self, event_type: EventType, handler: Callable) -> None:
+    def unsubscribe(self, event_type: EventType, handler: Callable[..., Any]) -> None:
         """取消订阅
 
         Args:
@@ -141,7 +141,7 @@ class EventBus:
                 handler_name = getattr(handler, "__name__", str(handler))
                 logger.debug("取消订阅: %s, 处理器: %s", event_type.value, handler_name)
 
-    def subscribe_to_all(self, handler: Callable) -> None:
+    def subscribe_to_all(self, handler: Callable[..., Any]) -> None:
         """
         订阅所有事件类型
 
@@ -185,7 +185,8 @@ class EventBus:
 
         if self._async_mode:
             # 异步模式: 加入队列
-            assert self._event_queue is not None
+            if self._event_queue is None:
+                raise RuntimeError("EventBus 未启动: _event_queue 为 None")
             try:
                 self._event_queue.put_nowait(event)
             except queue.Full:
@@ -216,7 +217,7 @@ class EventBus:
         for handler in handlers:
             self._invoke_handler(handler, event)
 
-    def _invoke_handler(self, handler: Callable, event: CollisionEvent) -> None:
+    def _invoke_handler(self, handler: Callable[..., Any], event: CollisionEvent) -> None:
         """安全调用事件处理器，带超时保护 (v4.3.1)
 
         使用线程超时机制防止挂起的处理器阻塞事件总线。
@@ -285,7 +286,8 @@ class EventBus:
         logger.info("事件处理线程已启动")
 
         while self._running:
-            assert self._event_queue is not None
+            if self._event_queue is None:
+                raise RuntimeError("EventBus 未初始化: _event_queue 为 None")
             try:
                 event = self._event_queue.get(timeout=0.1)
                 self._dispatch_event(event)
@@ -297,7 +299,7 @@ class EventBus:
 
         logger.info("事件处理线程已停止")
 
-    def set_error_handler(self, handler: Callable) -> None:
+    def set_error_handler(self, handler: Callable[..., Any]) -> None:
         """
         设置全局错误处理器
 
@@ -317,7 +319,8 @@ class EventBus:
             self._running = False
 
             # 清空队列
-            assert self._event_queue is not None
+            if self._event_queue is None:
+                raise RuntimeError("EventBus 未初始化: _event_queue 为 None")
             try:
                 while not self._event_queue.empty():
                     self._event_queue.get_nowait()
@@ -381,9 +384,7 @@ class EventBus:
         """上下文管理器入口"""
         return self
 
-    def __exit__(
-        self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None
-    ) -> None:
+    def __exit__(self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None) -> None:
         """上下文管理器出口"""
         self.shutdown()
 

@@ -114,15 +114,15 @@ class GPURecoveryManager:
         # 降级状态（审查修复#1: 添加线程锁保护）
         self._fallback_lock = threading.Lock()
         self._fallback_to_cpu = False
-        self._fallback_callback: Callable | None = None
-        self._recovery_callback: Callable | None = None  # 恢复回调
+        self._fallback_callback: Callable[..., Any] | None = None
+        self._recovery_callback: Callable[..., Any] | None = None  # 恢复回调
 
         # 失败历史记录
         self._failure_history: dict[int, list] = {}
         self._history_lock = threading.Lock()
 
         # 恢复回调
-        self._recovery_callbacks: dict[int, Callable] = {}
+        self._recovery_callbacks: dict[int, Callable[..., Any]] = {}
 
         # H2修复: 统计信息（添加线程保护）
         self._total_failures = 0
@@ -134,8 +134,8 @@ class GPURecoveryManager:
         self.health_check_timeout = 5.0  # 默认5秒超时
 
         # 健康检查线程池复用：避免每次 _verify_gpu_health 都创建/销毁线程
-        self._health_check_executor: concurrent.futures.ThreadPoolExecutor = concurrent.futures.ThreadPoolExecutor(
-            max_workers=1, thread_name_prefix="gpu_health_check"
+        self._health_check_executor: concurrent.futures.ThreadPoolExecutor = (
+            concurrent.futures.ThreadPoolExecutor(max_workers=1, thread_name_prefix="gpu_health_check")
         )
 
         logger.info("GPURecoveryManager已初始化")
@@ -144,8 +144,8 @@ class GPURecoveryManager:
         self,
         gpu_id: int,
         error: Exception,
-        redistribute_callback: Callable | None = None,
-        alert_callback: Callable | None = None,
+        redistribute_callback: Callable[..., Any] | None = None,
+        alert_callback: Callable[..., Any] | None = None,
     ) -> bool:
         """处理GPU失败
 
@@ -261,15 +261,14 @@ class GPURecoveryManager:
 
         # 设备丢失
         if any(
-            kw in error_msg
-            for kw in ["device lost", "device removed", "cl_invalid_device", "gpu hang"]
+            kw in error_msg for kw in ["device lost", "device removed", "cl_invalid_device", "gpu hang"]
         ):
             return GPUFailureType.DEVICE_LOST
 
         # 未知错误
         return GPUFailureType.UNKNOWN
 
-    def set_fallback_callback(self, callback: Callable) -> None:
+    def set_fallback_callback(self, callback: Callable[..., Any]) -> None:
         """设置降级到CPU模式的回调函数
 
         Args:
@@ -278,7 +277,7 @@ class GPURecoveryManager:
         with self._fallback_lock:
             self._fallback_callback = callback
 
-    def set_recovery_callback(self, callback: Callable) -> None:
+    def set_recovery_callback(self, callback: Callable[..., Any]) -> None:
         """设置从CPU模式恢复到GPU模式的回调函数
 
         Args:
@@ -371,9 +370,7 @@ class GPURecoveryManager:
         with self._fallback_lock:
             return self._fallback_to_cpu
 
-    def _select_recovery_strategy(
-        self, gpu_id: int, failure_type: GPUFailureType
-    ) -> RecoveryStrategy:
+    def _select_recovery_strategy(self, gpu_id: int, failure_type: GPUFailureType) -> RecoveryStrategy:
         """选择恢复策略
 
         Args:
@@ -518,9 +515,7 @@ class GPURecoveryManager:
                     # H4修复: 超时时尝试取消future
                     cancelled = future.cancel()
                     if cancelled:
-                        logger.warning(
-                            f"GPU {gpu_id} 健康检查超时（{timeout}秒），已取消未执行的任务"
-                        )
+                        logger.warning(f"GPU {gpu_id} 健康检查超时（{timeout}秒），已取消未执行的任务")
                     else:
                         logger.warning(
                             f"GPU {gpu_id} 健康检查超时（{timeout}秒），任务已在运行，无法取消"

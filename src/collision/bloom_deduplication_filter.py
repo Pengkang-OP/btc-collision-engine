@@ -104,9 +104,8 @@ class BloomFilter:
             哈希值列表（位数组索引）
         """
         # 计算两个基础哈希(仅用于Bloom过滤器,不用于加密安全)
-        h1 = int(
-            hashlib.md5(item, usedforsecurity=False).hexdigest(), 16
-        )  # nosec B324 - 仅用于Bloom过滤器性能优化
+        h1 = int(hashlib.md5(item, usedforsecurity=False).hexdigest(), 16)
+        # nosec B324 - 仅用于Bloom过滤器性能优化
         h2 = int(hashlib.sha1(item).hexdigest(), 16)  # nosec B324 - 仅用于Bloom过滤器性能优化
 
         # 生成k个哈希值

@@ -32,7 +32,8 @@ class DeduplicationFilter:
     """私钥去重过滤器 - 防止重复检测相同私钥（滑动窗口 + 哈希指纹）
 
     **使用场景（M7）**: 适用于 random_search 模式的高频去重，
-    与 [BloomDeduplicationFilter](file:///f:/Qoder/btc-collision-engine/src/collision/bloom_deduplication_filter.py)
+    与 BloomDeduplicationFilter
+    (file:///f:/Qoder/btc-collision-engine/src/collision/bloom_deduplication_filter.py)
     选择分界：
     - DeduplicationFilter: 滑动窗口精确去重，适合 <100万 元素、
       需要零误判的场景（range/sequential/brute_force 模式可用此）
