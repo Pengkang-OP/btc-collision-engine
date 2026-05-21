@@ -6,6 +6,7 @@ CLI进度格式化模块
 - format_progress: 格式化进度信息（带可视化进度条）
 """
 
+import logging
 import time
 
 from src.cli.constants import (
@@ -88,6 +89,9 @@ def format_progress(
     """
     # 验证引擎类型，无效时降级为默认值
     if engine_type not in VALID_ENGINE_TYPES:
+        logging.getLogger("CLI").warning(
+            "无效的 engine_type '%s'，已降级为 'cpu'", engine_type
+        )
         engine_type = "cpu"
 
     elapsed = stats.format_elapsed()

@@ -1509,11 +1509,11 @@ class TestPagination:
         assert len(pm.items) == 25
 
     def test_pagination_init_empty(self):
-        """空列表初始化 total_pages=0"""
+        """空列表初始化 total_pages=0, current_page=0"""
         from src.cli.pagination import PaginationManager
 
         pm = PaginationManager([], page_size=10)
-        assert pm.current_page == 1
+        assert pm.current_page == 0
         assert pm.total_pages == 0
 
     def test_pagination_get_current_page(self):
