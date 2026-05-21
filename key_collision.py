@@ -9,11 +9,7 @@
 可选依赖coincurve库以提升性能。
 
 作者: BTC Project
-<<<<<<< Updated upstream
 版本: v4.2.3
-=======
-版本: v4.2.1
->>>>>>> Stashed changes
 """
 
 import os

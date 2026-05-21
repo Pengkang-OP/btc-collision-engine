@@ -99,13 +99,8 @@ def main():
     )
     parser.add_argument(
         '--version',
-<<<<<<< Updated upstream
         default='v4.2.3',
         help='版本号 (默认: v4.2.3)'
-=======
-        default='v4.2.2',
-        help='版本号 (默认: v4.2.2)'
->>>>>>> Stashed changes
     )
     parser.add_argument(
         '--docs-dir',
