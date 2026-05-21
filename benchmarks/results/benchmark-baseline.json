@@ -1,0 +1,54 @@
+{
+  "timestamp": "2026-05-22T04:50:57",
+  "python_version": "3.12.10",
+  "platform": "Windows-11",
+  "benchmarks": {
+    "secp256k1_key_gen": {
+      "ops_per_sec": 512032.88,
+      "mean_us": 1.953,
+      "std_us": 0.406,
+      "iterations": 200,
+      "success": true
+    },
+    "address_generation": {
+      "ops_per_sec": 6109.67,
+      "mean_us": 163.675,
+      "std_us": 62.571,
+      "iterations": 500,
+      "success": true
+    },
+    "collision_check": {
+      "ops_per_sec": 33803769.05,
+      "mean_us": 0.03,
+      "std_us": 7.215,
+      "iterations": 200,
+      "success": true
+    },
+    "dedup_filter": {
+      "ops_per_sec": 1712199.77,
+      "mean_us": 0.584,
+      "std_us": 65.381,
+      "iterations": 100,
+      "success": true
+    },
+    "hash160": {
+      "ops_per_sec": 401437.15,
+      "mean_us": 2.491,
+      "std_us": 1.031,
+      "iterations": 2000,
+      "success": true
+    },
+    "base58check_encode": {
+      "ops_per_sec": 125561.89,
+      "mean_us": 7.964,
+      "std_us": 2.168,
+      "iterations": 1000,
+      "success": true
+    }
+  },
+  "comparison": {
+    "baseline_file": null,
+    "regressions": [],
+    "improvements": []
+  }
+}

@@ -187,6 +187,8 @@ line-ending = "lf"
 
 [tool.bandit]
 exclude_dirs = ["tests", "docs", "benchmarks"]
+# B101: assert 语句在本项目中广泛用于防御性编程(非安全校验), 不构成安全风险
+skips = ["B101"]
 
 [tool.flake8]
 max-line-length = 105
