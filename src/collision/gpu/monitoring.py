@@ -329,7 +329,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
                 from ...gpu.device import identify_vendor
 
                 return identify_vendor(self.engine._gpu_device)
-        except Exception:
+        except (AttributeError, ImportError, RuntimeError):
             pass  # GPU设备检测失败，回退到 device_info 方案
 
         # 备选：从 engine 的 device_info 获取
@@ -338,7 +338,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
                 info = self.engine.get_device_info()
                 if isinstance(info, dict) and "vendor" in info:
                     return info["vendor"]
-        except Exception:
+        except (AttributeError, RuntimeError, TypeError):
             pass  # device_info 方案也失败，返回 unknown
 
         return "unknown"

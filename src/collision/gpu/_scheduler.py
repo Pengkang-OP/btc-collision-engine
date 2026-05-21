@@ -302,7 +302,7 @@ class GPUBatchScheduler:
                 try:
                     perf_stats = engine.gpu_performance_monitor.get_stats()
                     gpu_utilization = perf_stats.get("avg_gpu_utilization")
-                except Exception:
+                except (AttributeError, RuntimeError, TypeError):
                     pass  # 无法获取GPU性能统计，跳过利用率自适应调整
             if gpu_utilization is not None and 0 < gpu_utilization < 0.5:
                 new_size = min(engine._max_batch_size, int(old_batch_size * 1.5))

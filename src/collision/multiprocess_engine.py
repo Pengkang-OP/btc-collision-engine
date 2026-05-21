@@ -193,7 +193,7 @@ def _worker_process(
         from ..utils import init_logging
 
         init_logging()
-    except Exception:
+    except (OSError, RuntimeError, ImportError):
         pass  # 日志初始化失败不应阻止工作进程启动
 
     # 设置进程名称

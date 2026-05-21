@@ -576,7 +576,10 @@ class GPUCollisionEngine(BaseCollisionEngine):
             logger.error(f"保存最终断点失败: {e}", exc_info=True)
 
     def _publish_stop_events(self) -> None:
-        """发布引擎停止和完成事件。"""
+        """发布引擎停止和完成事件。
+
+        调用方（stop()）保证 self.stats 非 None，此处不做重复检查。
+        """
         stop_event = EngineStopEvent(
             reason="user_request",
             total_checked=self.stats.total_checked,
@@ -584,8 +587,6 @@ class GPUCollisionEngine(BaseCollisionEngine):
         stop_event.source = "gpu_collision_engine"
         self.event_bus.publish(stop_event)
 
-        if self.stats is None:
-            raise RuntimeError("GPUCollisionEngine.stop(): self.stats is None, 引擎状态异常")
         complete_event = EngineCompleteEvent(
             total_checked=self.stats.total_checked,
             matches_found=self.stats.matches_found,

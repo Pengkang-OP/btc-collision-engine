@@ -262,7 +262,7 @@ class GPUBufferTracker:
                 buffer = info.get("buffer")
                 if buffer is not None and hasattr(buffer, "release"):
                     buffer.release()
-            except Exception:
+            except (RuntimeError, OSError):
                 logger.debug(f"_cleanup_sync: 释放缓冲区失败 {name}，已移除追踪记录")
             finally:
                 del self._allocated_buffers[name]

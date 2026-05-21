@@ -378,7 +378,7 @@ def _save_address_to_targets_file(address: str, output) -> None:
 
                     fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
                 lock_file.close()
-            except Exception:
+            except (OSError, RuntimeError):
                 pass
 
 

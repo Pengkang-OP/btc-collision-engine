@@ -187,7 +187,7 @@ def get_performance_tracker() -> PerformanceTracker:
         # 先在锁外获取配置，避免在持有锁时执行可能失败的操作
         try:
             config = _get_tracker_config()
-        except Exception:
+        except (OSError, ValueError, RuntimeError, ImportError):
             # 配置获取失败时使用默认值
             config = {"max_records": 10000}
 

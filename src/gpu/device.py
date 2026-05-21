@@ -389,11 +389,11 @@ class GPUDeviceDetector:
                         # COMP-2: 查询 OpenCL 版本信息
                         try:
                             opencl_version_str = device.get_info(cl.device_info.VERSION)
-                        except Exception:
+                        except (RuntimeError, OSError):
                             opencl_version_str = "Unknown"
                         try:
                             opencl_c_version_str = device.get_info(cl.device_info.OPENCL_C_VERSION)
-                        except Exception:
+                        except (RuntimeError, OSError):
                             opencl_c_version_str = "Unknown"
 
                         # 构建设备信息字典

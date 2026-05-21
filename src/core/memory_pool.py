@@ -43,6 +43,12 @@ from collections.abc import Callable
 from typing import Any, Optional
 
 from ..utils import get_configured_logger
+from ..utils.pool_helpers import (
+    _CleanupThreadState,
+    run_cleanup_loop_safely,
+    start_cleanup_thread,
+    stop_cleanup_thread,
+)
 
 logger = get_configured_logger("MemoryPool")
 
@@ -421,9 +427,8 @@ class GlobalPoolManager:
     _initialized: bool = False
     _pools_registry: list[Any] = []
 
-    # 自动清理线程 — 类级别类型声明供 mypy 检查
-    _cleanup_thread: threading.Thread | None = None
-    _cleanup_stop_event: threading.Event = threading.Event()
+    # v4.2.4: 使用共享 _CleanupThreadState 替代重复声明的线程变量
+    _cleanup_state = _CleanupThreadState()
 
     # 默认内存限制(MB)
     DEFAULT_ECPOINT_MEMORY_MB = 64
@@ -439,9 +444,6 @@ class GlobalPoolManager:
                     cls._instance = super().__new__(cls)
                     cls._instance._initialized = False
                     cls._instance._pools_registry = []
-                    # 自动清理线程 — 类级别已声明类型，此处仅初始化
-                    cls._instance._cleanup_thread = None
-                    cls._instance._cleanup_stop_event = threading.Event()
         return cls._instance
 
     def initialize(self) -> None:
@@ -580,74 +582,60 @@ class GlobalPoolManager:
     def _auto_cleanup_loop(self, interval: float) -> None:
         """自动清理后台循环（daemon 线程入口）
 
-        定期执行 auto_tune_all() → shrink_all() 以保持内存池健康。
-
-        参数:
-            interval: 清理间隔(秒)
+        v4.2.4: 使用共享 run_cleanup_loop_safely() 统一异常处理
         """
-        logger.info(f"CPU内存池自动清理已启动 (间隔={interval:.0f}s)")
-        while not self._cleanup_stop_event.wait(interval):
-            try:
-                # 自适应调优: 根据命中率和系统内存调整池大小
-                tuned = self.auto_tune_all()
-                # 缩容: 释放多余空闲对象
-                released = self.shrink_all()
-                if tuned or released > 0:
-                    stats = self.get_all_stats()
-                    logger.debug(
-                        f"CPU内存池自动清理完成: tuned={tuned}, released={released}, "
-                        f"total_memory={stats['total_estimated_memory_mb']:.1f}MB"
-                    )
-            except Exception:
-                logger.error("CPU内存池自动清理异常", exc_info=True)
-        logger.info("CPU内存池自动清理已停止")
+
+        def _do_cleanup() -> None:
+            tuned = self.auto_tune_all()
+            released = self.shrink_all()
+            if tuned or released > 0:
+                stats = self.get_all_stats()
+                logger.debug(
+                    f"CPU内存池自动清理完成: tuned={tuned}, released={released}, "
+                    f"total_memory={stats['total_estimated_memory_mb']:.1f}MB"
+                )
+
+        run_cleanup_loop_safely(
+            self._cleanup_state,
+            interval,
+            "cpu-pool-cleanup",
+            _do_cleanup,
+            on_memory_error="continue",
+        )
 
     def start_auto_cleanup(self, interval_seconds: float | None = None) -> None:
         """
         P1-6新增: 启动后台自动清理线程
 
-        启动一个 daemon 线程，定期调用 auto_tune_all() 和 shrink_all()
-        以自动管理内存池大小，防止长时间运行后废弃缓冲区积累。
+        v4.2.4: 使用共享 start_cleanup_thread() 统一管理
 
         参数:
             interval_seconds: 清理间隔(秒)，默认 300s (5分钟)
-
-        注意:
-            - 重复调用安全（已启动则跳过）
-            - 线程为 daemon 模式，主进程退出时自动终止
         """
-        if self._cleanup_thread is not None and self._cleanup_thread.is_alive():
-            logger.debug("CPU内存池自动清理已在运行，跳过重复启动")
-            return
-
         interval = (
             interval_seconds if interval_seconds is not None else self.DEFAULT_AUTO_CLEANUP_INTERVAL
         )
-        self._cleanup_stop_event.clear()
-        self._cleanup_thread: threading.Thread | None = threading.Thread(
-            target=self._auto_cleanup_loop,
-            args=(interval,),
-            daemon=True,
-            name="cpu-pool-cleanup",
+        start_cleanup_thread(
+            self._cleanup_state,
+            self._auto_cleanup_loop,
+            interval,
+            "cpu-pool-cleanup",
         )
-        self._cleanup_thread.start()
 
     def stop_auto_cleanup(self, timeout: float | None = 5.0) -> None:
         """
         P1-6新增: 停止自动清理线程
 
+        v4.2.4: 使用共享 stop_cleanup_thread() 统一管理
+
         参数:
             timeout: 等待线程结束的超时时间(秒)，默认5秒
         """
-        if self._cleanup_thread is None or not self._cleanup_thread.is_alive():
-            return
-
-        self._cleanup_stop_event.set()
-        self._cleanup_thread.join(timeout=timeout)
-        if self._cleanup_thread.is_alive():
-            logger.warning("CPU内存池自动清理线程未能在超时内停止")
-        else:
-            self._cleanup_thread = None
+        stop_cleanup_thread(
+            self._cleanup_state,
+            "cpu-pool-cleanup",
+            timeout=timeout if timeout is not None else 5.0,
+        )
 
 
 # 全局单例

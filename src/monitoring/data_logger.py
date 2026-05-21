@@ -25,7 +25,7 @@ from src.monitoring.storage_config import DataStorageConfig
 
 # 导入现有日志系统
 from src.utils import get_configured_logger
-from src.utils.fast_json import fast_dump, fast_dumps, fast_load, fast_loads
+from src.utils.fast_json import fast_dump, fast_load, fast_loads
 
 
 class DataLogger:
