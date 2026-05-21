@@ -16,11 +16,7 @@ from typing import Any
 # 导入日志配置
 from ...utils import get_configured_logger
 
-<<<<<<< Updated upstream
-# 日志系统由CLI/main.py入口统一初始化
-=======
 # v4.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
->>>>>>> Stashed changes
 logger = get_configured_logger("AddressValidator", thread_safe=False)
 
 
@@ -96,43 +92,19 @@ class AddressBatchValidator:
 
         logger.info(f"AddressBatchValidator 初始化: max_workers={max_workers}")
 
-    def validate_batch(
-        self,
-        addresses: list[str | Any],
-        strict_mode: bool = False,
-        on_type_error: str = "abort",
-    ) -> dict[str, ValidationResult]:
+    # ── validate_batch 辅助方法（降低 C901） ──────────────────────
+
+    @staticmethod
+    def _normalize_addresses(
+        addresses: list[str | Any], strict_mode: bool, on_type_error: str
+    ) -> tuple[list[str], int, dict[str, ValidationResult] | None]:
+        """将输入地址列表规范化为纯字符串列表。
+
+        Returns:
+            (str_addresses, skipped_count, abort_results):
+            - abort_results 非 None 表示严格模式 abort 策略触发中止。
         """
-        批量验证地址
-
-        参数:
-            addresses: 待验证的地址列表（支持字符串和其他类型）
-            strict_mode: 严格模式，如果为True则只接受字符串类型，默认False
-            on_type_error: 严格模式下遇到非字符串类型的处理策略
-                - 'abort': 立即中止验证(默认),返回部分结果
-                - 'skip': 跳过非字符串类型,继续验证其他地址
-                - 'convert': 尝试将非字符串类型转换为字符串
-
-        返回:
-            字典 {地址: 验证结果}
-
-        示例:
-            >>> # 默认行为: 遇到非字符串立即中止
-            >>> results = validator.validate_batch(addresses, strict_mode=True)
-
-            >>> # 跳过非字符串类型
-            >>> results = validator.validate_batch(addresses, strict_mode=True, on_type_error='skip')  # noqa: E501
-
-            >>> # 尝试转换类型
-            >>> results = validator.validate_batch(addresses, strict_mode=True, on_type_error='convert')  # noqa: E501
-        """
-        # 验证策略参数
-        valid_strategies = {"abort", "skip", "convert"}
-        if on_type_error not in valid_strategies:
-            raise ValueError(f"无效的策略 '{on_type_error}',必须是 {valid_strategies} 之一")
-
-        # 数据类型兼容性处理
-        str_addresses = []
+        str_addresses: list[str] = []
         skipped_count = 0
 
         for addr in addresses:
@@ -144,47 +116,28 @@ class AddressBatchValidator:
                     logger.debug("地址为空字符串，跳过 [原始字符串]")
                     skipped_count += 1
             elif strict_mode:
-                # 严格模式：根据策略处理非字符串类型
                 addr_str = str(addr) if addr is not None else "None"
-
                 if on_type_error == "abort":
-                    # 策略1: 立即中止(默认行为)
                     error_msg = f"期望字符串类型，实际: {type(addr).__name__}"
                     logger.error(error_msg)
-
-                    # 已收集的地址标记为"未验证"
-                    # 使用validated=False明确区分"验证失败"和"未验证"
                     results = {}
                     for valid_addr in str_addresses:
                         results[valid_addr] = ValidationResult(
-                            address=valid_addr,
-                            valid=False,
-                            validated=False,  # 明确标记未验证
+                            address=valid_addr, valid=False, validated=False,
                             error="批量验证因严格模式中止",
                         )
-
-                    # 添加导致失败的地址
                     results[addr_str] = ValidationResult(
-                        address=addr_str,
-                        valid=False,
-                        validated=True,  # 这个地址确实验证了（类型检查失败）
-                        error=error_msg,
+                        address=addr_str, valid=False, validated=True, error=error_msg,
                     )
-
                     logger.info(
                         f"严格模式验证中止: 已收集{len(str_addresses)}个有效地址（未验证），"
                         f"遇到非字符串类型: {type(addr).__name__}"
                     )
-                    return results
-
+                    return str_addresses, skipped_count, results
                 elif on_type_error == "skip":
-                    # 策略2: 跳过非字符串类型,继续验证
                     logger.info(f"跳过非字符串类型: {type(addr).__name__}")
                     skipped_count += 1
-
                 elif on_type_error == "convert":
-                    # 策略3: 尝试转换为字符串（仅允许安全类型）
-                    # 类型白名单：int, float, Decimal（移除bytes/bytearray，因为str()会产生"b'...'"格式）
                     safe_types = (int, float, Decimal)
                     if isinstance(addr, safe_types):
                         try:
@@ -193,7 +146,6 @@ class AddressBatchValidator:
                                 str_addresses.append(str_addr)
                                 logger.debug(f"类型转换成功: {type(addr).__name__} -> str")
                             else:
-                                logger.debug("地址转换为空字符串，跳过 [convert策略]")
                                 skipped_count += 1
                         except Exception as e:
                             logger.error(f"地址类型转换失败: {type(addr).__name__} -> str, 错误={e}")
@@ -201,19 +153,46 @@ class AddressBatchValidator:
                     else:
                         logger.debug(f"不支持的类型转换: {type(addr).__name__}, 跳过")
                         skipped_count += 1
-
             else:
-                # 宽松模式：尝试转换为字符串
                 try:
                     str_addr = str(addr).strip()
                     if str_addr:
                         str_addresses.append(str_addr)
                     else:
-                        logger.debug("地址转换为空字符串，跳过 [宽松模式]")
                         skipped_count += 1
                 except Exception as e:
                     logger.error(f"地址类型转换失败: {type(addr).__name__}, 错误={e}")
                     skipped_count += 1
+
+        return str_addresses, skipped_count, None
+
+    @staticmethod
+    def _log_validation_summary(results: dict) -> None:
+        """记录批量验证结果摘要。"""
+        valid_count = sum(1 for r in results.values() if r.valid)
+        invalid_count = len(results) - valid_count
+        pct = (valid_count / len(results) * 100) if len(results) > 0 else 0
+        logger.info(
+            f"批量验证完成: 总数={len(results)}, 有效={valid_count}, "
+            f"无效={invalid_count}, 有效率={pct:.1f}%"
+        )
+
+    def validate_batch(
+        self,
+        addresses: list[str | Any],
+        strict_mode: bool = False,
+        on_type_error: str = "abort",
+    ) -> dict[str, ValidationResult]:
+        """批量验证地址。"""
+        valid_strategies = {"abort", "skip", "convert"}
+        if on_type_error not in valid_strategies:
+            raise ValueError(f"无效的策略 '{on_type_error}',必须是 {valid_strategies} 之一")
+
+        str_addresses, skipped_count, abort_results = self._normalize_addresses(
+            addresses, strict_mode, on_type_error
+        )
+        if abort_results is not None:
+            return abort_results
 
         if skipped_count > 0:
             logger.info(
@@ -222,40 +201,25 @@ class AddressBatchValidator:
 
         logger.info(f"开始批量验证: 总数={len(str_addresses)}, 工作线程={self.max_workers}")
 
-        results = {}
-
+        results: dict[str, ValidationResult] = {}
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            # 提交所有验证任务
             futures = {executor.submit(self._validate_single, addr): addr for addr in str_addresses}
-
-            # 收集结果
             for future in as_completed(futures):
                 addr = futures[future]
                 try:
                     result = future.result()
                     results[addr] = result
-
-                    # 更新统计
                     with self._lock:
                         self.total_validated += 1
                         if result.valid:
                             self.total_valid += 1
                         else:
                             self.total_invalid += 1
-
                 except Exception as e:
                     logger.error(f"地址验证异常: {addr}, 错误={e}")
                     results[addr] = ValidationResult(address=addr, valid=False, error=str(e))
 
-        # 统计结果
-        valid_count = sum(1 for r in results.values() if r.valid)
-        invalid_count = len(results) - valid_count
-
-        logger.info(
-            f"批量验证完成: 总数={len(results)}, 有效={valid_count}, "
-            f"无效={invalid_count}, 有效率={(valid_count / len(results) * 100) if len(results) > 0 else 0:.1f}%"  # noqa: E501
-        )
-
+        self._log_validation_summary(results)
         return results
 
     def _validate_single(self, address: str) -> ValidationResult:

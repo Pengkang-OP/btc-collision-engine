@@ -95,30 +95,10 @@ class DataLogger:
         self._match_event_count = 0  # P1-1: 独立匹配事件计数器
         self._speed_samples: list[float] = []
 
-<<<<<<< Updated upstream
-        # v4.3.1: 性能日志批量化写入缓冲
-        self._perf_line_buffer: list[str] = []
-        self._perf_buffer_start_time: float = 0.0
-        self._perf_buffer_lock = threading.Lock()
-
-        # v4.3.1: 数据管道可观测性 — 追踪管道运营指标
-        self._save_counts: dict[str, int] = {
-            "current_data": 0,
-            "history_data": 0,
-            "error_log": 0,
-            "performance_log": 0,
-            "flush": 0,
-        }
-        self._last_save_times: dict[str, float] = {}
-        self._pipeline_error_count: int = 0
-        self._pipeline_metrics: deque[dict[str, Any]] = deque(maxlen=200)
-        self._pipeline_lock = threading.Lock()  # 管道指标专用锁，避免与数据锁竞争
-=======
         # P1-4: 写入失败计数器（在__init__初始化避免竞态）
         self._write_failure_count: int = 0
         self._write_failure_last_reset: float = 0.0
         self._write_failure_lock = threading.Lock()  # P1-4: 保护计数器线程安全
->>>>>>> Stashed changes
 
         self.logger.info("数据日志系统初始化完成")
 
@@ -169,24 +149,14 @@ class DataLogger:
                 if os.name != "nt":
                     os.chmod(self.current_data_file, 0o600)
 
-<<<<<<< Updated upstream
-            # 初始化历史数据文件（v4.3.1: JSONL 格式，空文件即可）
-=======
             # 初始化历史数据文件 (P0: 带schema_version)
->>>>>>> Stashed changes
             if not os.path.exists(self.history_data_file):
                 init_data = {
                     "schema_version": self.HISTORY_SCHEMA_VERSION,
                     "data": [],
                 }
                 with open(self.history_data_file, "w", encoding="utf-8") as f:
-<<<<<<< Updated upstream
-                    pass  # JSONL 格式无需初始内容
-                if os.name != "nt":
-                    os.chmod(self.history_data_file, 0o600)
-=======
                     fast_dump(init_data, f)
->>>>>>> Stashed changes
 
             # 初始化错误日志文件
             if not os.path.exists(self.error_log_file):
@@ -309,19 +279,11 @@ class DataLogger:
 
         # 在锁外写入CSV日志 — v4.3.1: 批量化写入减少 I/O 频率
         try:
-<<<<<<< Updated upstream
-            csv_line = f"{timestamp},{speed},{total_checked},{matches_found},{cpu_usage},{memory_usage},{thread_count}\n"  # noqa: E501
-            if self._PERF_BATCH_ENABLED:
-                self._buffered_perf_write(csv_line)
-            else:
-                self._direct_perf_write(csv_line)
-=======
             # P1-2: 包含GPU指标
             csv_line = f"{timestamp},{speed},{total_checked},{matches_found},{cpu_usage},{memory_usage},{thread_count},{gpu_temperature},{gpu_memory_usage},{gpu_utilization}\n"  # noqa: E501
             self._rotate_perf_log_if_needed()
             with open(self.performance_log_file, "a", encoding="utf-8") as f:
                 f.write(csv_line)
->>>>>>> Stashed changes
         except Exception as e:
             self.logger.error(f"写入性能日志失败: {e}")
 
@@ -861,16 +823,11 @@ class DataLogger:
     def save_history_data(self) -> None:
         """保存历史数据到文件
 
-<<<<<<< Updated upstream
-        自 v4.3.1: 使用 JSONL 格式追加写入，避免每次全量读写。
-        每行一个 JSON 记录，追加模式写入，定期压缩保留最近 1000 行。
-=======
         P0: 使用 {schema_version, data} 格式存储，支持向前兼容。
         P1: 写入失败累计计数，超过阈值触发告警。
 
         _safe_file_replace 内部包含完整的重试+回退机制，
         无需外层重复重试。
->>>>>>> Stashed changes
         """
         # 在锁内获取数据
         with self._lock:
@@ -888,10 +845,6 @@ class DataLogger:
                 f.flush()
                 os.fsync(f.fileno())
 
-<<<<<<< Updated upstream
-            # 定期压缩: 保留最近 1000 行，避免文件无限增长
-            self._compact_history_if_needed()
-=======
             # P0: 包装为带版本号的字典
             versioned_data = {
                 "schema_version": self.HISTORY_SCHEMA_VERSION,
@@ -904,7 +857,6 @@ class DataLogger:
                 prefix=".history_data_",
             )
             os.close(temp_fd)
->>>>>>> Stashed changes
 
             self.logger.debug(f"JSONL追加写入: {len(new_data)}条历史数据")
             self._record_pipeline_metric("save_history_data", success=True, record_count=len(new_data))
@@ -941,26 +893,11 @@ class DataLogger:
             # 原子写入
             temp_file = self.history_data_file + ".compact.tmp"
             with open(temp_file, "w", encoding="utf-8") as f:
-<<<<<<< Updated upstream
-                for line in lines:
-                    f.write(line)
-=======
                 fast_dump(versioned_data, f, ensure_ascii=False, indent=2)
->>>>>>> Stashed changes
                 f.flush()
                 os.fsync(f.fileno())
 
             if not self._safe_file_replace(temp_file, self.history_data_file):
-<<<<<<< Updated upstream
-                self.logger.error("压缩历史数据失败: 文件替换所有方案均失败")
-            else:
-                self.logger.debug(f"历史数据已压缩: {line_count} -> {len(lines)} 行")
-        except Exception as e:
-            self.logger.warning(f"压缩历史数据失败（非致命）: {e}")
-
-    def _load_history_with_recovery(self) -> list:
-        """加载历史数据，支持 JSONL 和传统 JSON 数组两种格式 (v4.3.1)"""
-=======
                 self.logger.error("保存历史数据失败: 文件替换所有方案均失败")
                 # P1: 写入失败计数
                 self._count_write_failure()
@@ -988,49 +925,11 @@ class DataLogger:
         - 旧格式（无版本号）: 直接返回JSON数组
         - 新格式（v1.0+）: 返回 {"schema_version": ..., "data": [...]} 中的data
         """
->>>>>>> Stashed changes
         if not os.path.exists(self.history_data_file):
             return []
 
         try:
             with open(self.history_data_file, encoding="utf-8") as f:
-<<<<<<< Updated upstream
-                content = f.read().strip()
-
-            if not content:
-                return []
-
-            # 尝试 JSONL 格式（每行一个 JSON 对象，可能包含缩进）
-            first_non_space = content.lstrip()
-            if first_non_space.startswith("{"):
-                records: list[dict[str, Any]] = []
-                for line in content.splitlines():
-                    line = line.strip()
-                    if not line:
-                        continue
-                    if not line.startswith("{"):
-                        continue
-                    try:
-                        record = fast_loads(line)
-                        if isinstance(record, dict):
-                            records.append(record)
-                    except json.JSONDecodeError:
-                        self.logger.debug(f"JSONL解析跳过损坏行: {line[:80]}...")
-                        continue
-                if records:
-                    return records
-
-            # 传统 JSON 数组格式（向后兼容）
-            try:
-                data = fast_loads(content)
-                if isinstance(data, list):
-                    return data
-            except json.JSONDecodeError:
-                pass
-
-            self.logger.warning("历史数据格式错误，重置为空列表")
-            return []
-=======
                 data = fast_load(f)
             if isinstance(data, list):
                 # 旧格式（无版本号），直接返回
@@ -1043,7 +942,6 @@ class DataLogger:
             else:
                 self.logger.warning("历史数据格式错误，重置为空列表")
                 return []
->>>>>>> Stashed changes
         except json.JSONDecodeError as e:
             self.logger.warning(f"历史数据JSON损坏，尝试恢复: {e}")
             return self._recover_history_data()
@@ -1204,10 +1102,6 @@ class DataLogger:
 
         # 在锁外执行I/O操作和报告生成
         try:
-<<<<<<< Updated upstream
-            # 读取历史数据（v4.3.1: 使用支持 JSONL 的加载方法）
-            history = self._load_history_with_recovery()
-=======
             # 读取历史数据
             history = []
             if os.path.exists(self.history_data_file):
@@ -1220,7 +1114,6 @@ class DataLogger:
                         history = raw
                     else:
                         history = []
->>>>>>> Stashed changes
 
             if not history:
                 return {"message": "无历史数据可供生成报告"}
@@ -1304,10 +1197,6 @@ class DataLogger:
         if len(data) < 2:
             return {"message": "数据点不足，无法分析趋势"}
 
-<<<<<<< Updated upstream
-        # 单次遍历提取所有字段（使用共享工具）
-        speeds, cpu_usages, memory_usages = extract_metrics(data)
-=======
         # 分析速度趋势
         speeds = [d.get("speed", 0) for d in data]
         cpu_usages = [d.get("cpu_usage", 0) for d in data]
@@ -1350,7 +1239,6 @@ class DataLogger:
                     return "decreasing"
                 else:
                     return "stable"
->>>>>>> Stashed changes
 
         return {
             "speed": {
@@ -1507,9 +1395,6 @@ class DataLogger:
         try:
             # 清理历史数据 (v4.3.1: JSONL 格式读写，与 save_history_data() 一致)
             if os.path.exists(self.history_data_file):
-<<<<<<< Updated upstream
-                history = self._load_history_with_recovery()
-=======
                 with open(self.history_data_file, encoding="utf-8") as f:
                     raw = fast_load(f)
                     # P0: 支持新旧格式
@@ -1520,7 +1405,6 @@ class DataLogger:
                     else:
                         history = []
 
->>>>>>> Stashed changes
                 cleaned_history = [d for d in history if d.get("timestamp", 0) >= cutoff_time]
 
                 if len(cleaned_history) != len(history):
@@ -1530,14 +1414,7 @@ class DataLogger:
                         "data": cleaned_history,
                     }
                     with open(self.history_data_file, "w", encoding="utf-8") as f:
-<<<<<<< Updated upstream
-                        for record in cleaned_history:
-                            f.write(fast_dumps(record) + "\n")
-                        f.flush()
-                        os.fsync(f.fileno())
-=======
                         fast_dump(versioned, f, ensure_ascii=False, indent=2)
->>>>>>> Stashed changes
                     self.logger.info(f"清理了 {len(history) - len(cleaned_history)} 条过期历史数据")
 
             # 清理错误日志
@@ -1665,16 +1542,6 @@ class DataLogger:
         # 在锁外执行 I/O 操作
         if pending_history:
             try:
-<<<<<<< Updated upstream
-                # JSONL 追加写入，与 save_history_data() 保持一致
-                with open(self.history_data_file, "a", encoding="utf-8") as f:
-                    for record in pending_history:
-                        f.write(fast_dumps(record) + "\n")
-                    f.flush()
-                    os.fsync(f.fileno())
-                self._compact_history_if_needed()
-                self.logger.debug(f"flush: JSONL 追加 {len(pending_history)} 条历史数据")
-=======
                 history = self._load_history_with_recovery()
                 history.extend(pending_history)
                 if len(history) > 1000:
@@ -1686,7 +1553,6 @@ class DataLogger:
                 }
                 self._atomic_write_json(self.history_data_file, versioned)
                 self.logger.debug(f"flush: 写入 {len(pending_history)} 条历史数据")
->>>>>>> Stashed changes
             except Exception as e:
                 self.logger.error(f"flush 写入历史数据失败: {e}")
                 # P1: 写入失败计数
@@ -1715,10 +1581,6 @@ class DataLogger:
                 with self._lock:
                     self._error_buffer.extendleft(reversed(pending_errors))
 
-<<<<<<< Updated upstream
-        # v4.3.1: 刷写性能日志缓冲
-        self._flush_perf_buffer()
-=======
     def _count_write_failure(self) -> None:
         """P1-4: 累计写入失败次数，超过阈值告警（线程安全）"""
         with self._write_failure_lock:
@@ -1735,7 +1597,6 @@ class DataLogger:
                     f"数据写入失败次数累积: {self._write_failure_count}次 "
                     f"（可能磁盘空间不足或权限问题）"
                 )
->>>>>>> Stashed changes
 
     def stop(self) -> None:
         """停止数据记录器，确保所有数据已写入"""

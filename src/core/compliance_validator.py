@@ -1,11 +1,9 @@
 """Bitcoin Core规范合规性验证"""
 
 from ..utils import get_configured_logger
-<<<<<<< Updated upstream
 from .secp256k1 import Secp256k1
 
 # 日志系统由CLI/main.py入口统一初始化
-=======
 logger = get_configured_logger("BitcoinComplianceValidator")
 
 
@@ -87,16 +85,11 @@ class BitcoinComplianceValidator:
 
         # 验证私钥范围 (1 <= k < n)
         key_int = int.from_bytes(private_key, "big")
-<<<<<<< Updated upstream
-        if key_int >= Secp256k1.N:
-=======
-        from .secp256k1 import Secp256k1
-        SECP256K1_ORDER = Secp256k1.N
 
         if key_int < 1:
             issues.append("私钥必须大于0")
 
-        if key_int >= SECP256K1_ORDER:
+        if key_int >= Secp256k1.N:
             issues.append("私钥必须小于secp256k1曲线阶")
 
         return issues

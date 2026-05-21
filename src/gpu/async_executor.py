@@ -19,15 +19,9 @@ from ..utils import get_configured_logger
 logger = get_configured_logger("AsyncGPUExecutor")
 
 
-<<<<<<< Updated upstream
-from .seed_utils import (  # noqa: E402, F811
-    _seed_bytes_to_u32_be_array,
-)
-=======
 # v4.2.2 M5: 统一端序转换 → 从 gpu/seed_utils.py 导入单一权威实现
 from .seed_utils import _seed_bytes_to_u32_be_array  # noqa: E402
 
->>>>>>> Stashed changes
 
 # 队列深度管理常量
 DEFAULT_QUEUE_DEPTH = 4  # GPU 队列中保持的预提交批次数量
@@ -190,11 +184,7 @@ class AsyncGPUExecutor:
         self._pending_num_keys = 0  # 待处理的批次大小
         self.check_uncompressed = 0  # v4.2.1: 由 GPUDeviceManager.initialize() 覆写
 
-<<<<<<< Updated upstream
-        # v4.2.3: 显式 work_group_size（内核启动必须指定，避免 OpenCL 自动选择次优值）
-=======
         # v4.2.1: 显式 work_group_size（内核启动必须指定，避免 OpenCL 自动选择次优值）
->>>>>>> Stashed changes
         # 从设备信息获取最优 work_group_size，Intel Arc 建议 256，NVIDIA/AMD 建议 256-512
         self._work_group_size = self._detect_optimal_work_group_size(gpu_config)
         self._align_global_size = True  # 是否对齐 global_work_size 到 local_work_size 的整数倍
@@ -492,11 +482,6 @@ class AsyncGPUExecutor:
             if kernel_event is None or read_event is None:
                 return [], 0.0
 
-<<<<<<< Updated upstream
-            # 将成功提交的批次注册到预取队列，以便后续回收结果
-            with self._prefetch_lock:
-                self._prefetch_events.append(_PendingBatch(read_event, current_buf, num_keys, seed))
-=======
             # v4.2.2 P0修复: 将批次注册到预提交队列，确保异步结果可被收集
             self._prefetch_events.append(
                 _PendingBatch(
@@ -506,7 +491,6 @@ class AsyncGPUExecutor:
                     seed=seed,
                 )
             )
->>>>>>> Stashed changes
 
             execution_time_ms = (time.time() - start_time) * 1000
 
@@ -1028,11 +1012,7 @@ class AsyncGPUExecutor:
         if batch_kernel is None:
             batch_kernel = cl.Kernel(program, "batch_check")
             self._cached_sync_kernel = batch_kernel
-<<<<<<< Updated upstream
-        # v4.2.3: 显式设置 local_work_size，对齐异步路径
-=======
         # v4.2.1: 显式设置 local_work_size，对齐异步路径
->>>>>>> Stashed changes
         sync_local_ws = getattr(self, "_work_group_size", 256)
         sync_global_ws = ((num_keys + sync_local_ws - 1) // sync_local_ws) * sync_local_ws
         batch_kernel(

@@ -123,7 +123,6 @@ def main():
 
         # 定义匹配回调
         def on_match(private_key, address, wif):
-<<<<<<< Updated upstream
             key_hash = hashlib.sha256(private_key).hexdigest()[:16]
 
             # 始终记录脱敏审计日志
@@ -150,19 +149,6 @@ def main():
 
             # 保存到文件（设置严格权限防止私钥泄漏）
             key_file = "found_keys.txt"
-=======
-            print()
-            print("=" * 70)
-            print("  🎊 找到匹配！")
-            print("=" * 70)
-            print(f"  地址: {address}")
-            print(f"  WIF: {wif}")
-            print(f"  私钥(hex): {private_key.hex()}")
-            print("=" * 70)
-            print()
-
-            # 保存到文件
->>>>>>> Stashed changes
             try:
                 with open(key_file, "a") as f:
                     f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')}\n")

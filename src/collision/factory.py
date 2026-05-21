@@ -57,27 +57,9 @@ class EngineFactory:
         """
         from .key_collision_engine import KeyCollisionEngine
 
-<<<<<<< Updated upstream
-        # Deprecation: stats/data_logger 参数在新架构中由引擎自建
-        if stats is not None:
-            warnings.warn(
-                "'stats' parameter is deprecated and ignored. "
-                "KeyCollisionEngine now creates its own CollisionStats internally.",
-                FutureWarning,
-                stacklevel=2,
-            )
-        if data_logger is not None:
-            warnings.warn(
-                "'data_logger' parameter is deprecated and ignored. "
-                "KeyCollisionEngine now creates its own DataLogger internally.",
-                FutureWarning,
-                stacklevel=2,
-            )
-=======
         # v4.2.2 M2: 移除 stats/data_logger 废弃参数，向后兼容：通过 **kwargs 过滤
         kwargs.pop('stats', None)
         kwargs.pop('data_logger', None)
->>>>>>> Stashed changes
 
         # 直接参数优先于容器
         if container:
@@ -106,30 +88,6 @@ class EngineFactory:
         """
         from .gpu_collision_engine import GPUCollisionEngine
 
-<<<<<<< Updated upstream
-        # Deprecation: stats/event_bus/data_logger 参数在新架构中由引擎自建
-        if stats is not None:
-            warnings.warn(
-                "'stats' parameter is deprecated and ignored. "
-                "GPUCollisionEngine now creates its own CollisionStats internally.",
-                FutureWarning,
-                stacklevel=2,
-            )
-        if event_bus is not None:
-            warnings.warn(
-                "'event_bus' parameter is deprecated and ignored. "
-                "GPUCollisionEngine now creates its own EventBus internally.",
-                FutureWarning,
-                stacklevel=2,
-            )
-        if data_logger is not None:
-            warnings.warn(
-                "'data_logger' parameter is deprecated and ignored. "
-                "GPUCollisionEngine now creates its own DataLogger internally.",
-                FutureWarning,
-                stacklevel=2,
-            )
-=======
         # v4.2.2 M2: 移除 stats/data_logger 废弃参数，向后兼容：通过 **kwargs 过滤
         kwargs.pop('stats', None)
         kwargs.pop('data_logger', None)
@@ -139,6 +97,5 @@ class EngineFactory:
         # v4.2.2 M1: GPU 引擎也使用 container.event_bus 作为 fallback
         if container:
             _ = container.event_bus  # 预留扩展点
->>>>>>> Stashed changes
 
         return GPUCollisionEngine(targets=targets, **kwargs)

@@ -627,14 +627,7 @@ class GPUDevice:
             "platform": device_info.get("platform", "Unknown"),
             "global_mem_size": device_info["device"].global_mem_size,
             "max_compute_units": device_info["device"].max_compute_units,
-<<<<<<< Updated upstream
-            "work_group_size": 256,  # v2.3.0优化: 默认值，会被auto_config覆盖
-            "opencl_version": self._opencl_version,
-            "opencl_version_str": self._opencl_version_str,
-            "supports_svm": self._supports_svm,
-=======
             "work_group_size": 256,  # v4.2.1优化: 默认值，会被auto_config覆盖
->>>>>>> Stashed changes
         }
 
         # 查询设备最大工作组大小

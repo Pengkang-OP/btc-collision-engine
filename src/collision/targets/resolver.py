@@ -34,19 +34,11 @@ from ...utils import get_configured_logger
 from ...utils.encoding_utils import EncodingUtils
 from .cache import AddressCache
 
-<<<<<<< Updated upstream
-# 日志系统由CLI/main.py入口统一初始化
-logger = get_configured_logger("TargetResolver", thread_safe=False)
-
-
-from ...utils.bech32_codec import decode_segwit_address  # noqa: E402 — 故意在 logger 后导入
-=======
 # v4.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
 logger = get_configured_logger("TargetResolver", thread_safe=False)
 
 
 from ...utils.bech32_codec import decode_segwit_address
->>>>>>> Stashed changes
 
 
 class TargetResolver:
@@ -147,18 +139,11 @@ class TargetResolver:
         ):
             return "p2sh_address"
 
-<<<<<<< Updated upstream
-        # Bech32地址: 以'bc1'开头
-        if input_str.lower().startswith("bc1p"):
-            return "taproot_address"  # Taproot (P2TR, BIP-0341)
-        if input_str.lower().startswith("bc1"):
-=======
         # Bech32地址: 以'bc1'开头 (主网) 或 'tb1'开头 (测试网)
         if input_str.lower().startswith("bc1") or input_str.lower().startswith("tb1"):
             # 区分SegWit v0和Taproot
             if input_str.lower().startswith("bc1p") or input_str.lower().startswith("tb1p"):
                 return "taproot_address"  # Taproot (P2TR, BIP-0341)
->>>>>>> Stashed changes
             return "bech32_address"  # SegWit v0 (P2WPKH/P2WSH)
 
         # WIF: 以'5'开头(非压缩,51字符) 或 'K'/'L'开头(压缩,52字符)
@@ -228,14 +213,6 @@ class TargetResolver:
             logger.debug(f"P2PKH地址版本不匹配: version=0x{version:02x}")
             return None
         except ValueError:
-<<<<<<< Updated upstream
-            masked = f"{input_str[:6]}...{input_str[-4:]}" if len(input_str) >= 10 else "***"
-            logger.debug(f"P2PKH地址校验失败 [{masked}]")
-            return None
-
-    def _resolve_p2sh_address(self, input_str: str) -> str | None:
-        """解析P2SH地址 — 仅格式验证,保留原始大小写"""
-=======
             return None
 
     def _resolve_p2sh_address(self, input_str: str) -> str | None:
@@ -246,27 +223,9 @@ class TargetResolver:
         P2SH 的脚本哈希与此路径在密码学上不相关，无法匹配。
         因此 P2SH 目标地址不可用于碰撞检测，返回 None 并记录警告。
         """
->>>>>>> Stashed changes
         try:
             version, _payload = Base58.check_decode(input_str)
             if version == 0x05:
-<<<<<<< Updated upstream
-                # Base58 编码大小写敏感,不可小写化,否则校验和失效
-                if self.cache:
-                    self.cache.put(input_str, input_str)
-                logger.debug(f"P2SH地址验证成功(保持原格式): {input_str[:15]}...")
-                logger.warning("P2SH目标地址将保持原格式,当前引擎仅生成P2PKH地址,P2SH目标必然无法匹配。")
-                return input_str
-            logger.warning(f"P2SH地址版本不匹配: version=0x{version:02x}")
-            return None
-        except ValueError:
-            masked = f"{input_str[:6]}...{input_str[-4:]}" if len(input_str) >= 10 else "***"
-            logger.warning(f"P2SH地址校验失败 [{masked}]")
-            return None
-
-    def _resolve_bech32_address(self, input_str: str) -> str | None:
-        """解析Bech32地址 — P2WPKH(v0/20字节)转换为P2PKH, P2WSH(v0/32字节)保持原格式"""
-=======
                 logger.warning(
                     f"P2SH地址 '{input_str[:20]}...' 无法用于碰撞匹配: "
                     f"P2SH的payload=hash160(redeemScript)与引擎生成的hash160(pubkey)不相关，"
@@ -290,7 +249,6 @@ class TargetResolver:
         P2WSH (32字节 witness): witness_program = sha256(redeemScript)，
         与引擎生成的 hash160(pubkey) 路径不同 → 不可匹配 ❌
         """
->>>>>>> Stashed changes
         try:
             hrp = "bc" if input_str.lower().startswith("bc1") else "tb"
             witness_version, witness_program = decode_segwit_address(hrp, input_str)
@@ -301,17 +259,6 @@ class TargetResolver:
                 logger.warning(f"仅支持witness version 0, 当前={witness_version}")
                 return None
             prog_len = len(witness_program)
-<<<<<<< Updated upstream
-            if prog_len == 32:
-                logger.warning(
-                    "检测到P2WSH地址(32字节witness program),当前引擎仅生成P2PKH地址,此目标必然无法匹配。"
-                )
-                normalized = input_str.lower()
-                if self.cache:
-                    self.cache.put(normalized, normalized)
-                return normalized
-            elif prog_len != 20:
-=======
             if prog_len == 20:
                 # P2WPKH: witness_program = hash160(pubkey) → 可转换为P2PKH地址匹配
                 addr_type = "P2WPKH"
@@ -325,7 +272,6 @@ class TargetResolver:
                 self._unsupported_types.add("p2wsh_address")
                 return None
             else:
->>>>>>> Stashed changes
                 logger.warning(f"Bech32 witness长度无效: {prog_len}字节")
                 return None
             # P2WPKH (v0, 20字节): witness program = pubkey_hash (Hash160)
@@ -334,32 +280,20 @@ class TargetResolver:
 
             p2pkh_addr = HashUtils.hash160_to_address(witness_program)
             if self.cache:
-<<<<<<< Updated upstream
-                # 同时缓存原始 Bech32 和转换后的 P2PKH
-                normalized = input_str.lower()
-                self.cache.put(normalized, p2pkh_addr)
-            logger.debug(f"Bech32 P2WPKH 转换成功: {input_str[:15]}... → {p2pkh_addr[:15]}...")
-            return p2pkh_addr
-=======
                 self.cache.put(input_str, address)
             logger.debug(f"{addr_type}地址转换: {input_str} -> {address}")
             return address
->>>>>>> Stashed changes
         except ValueError as e:
             logger.error(f"Bech32地址转换异常: {input_str} - {type(e).__name__}: {e}")
             return None
 
     def _resolve_taproot_address(self, input_str: str) -> str | None:
-<<<<<<< Updated upstream
-        """解析Taproot地址 — 仅格式验证和小写标准化,不转换为P2PKH"""
-=======
         """解析Taproot地址 (P2TR, BIP-0341)
 
         Taproot 的 witness program 是 32字节 x-only 公钥（Schnorr签名用），
         而非 hash160(pubkey)。碰撞引擎通过 hash160(pubkey) → P2PKH地址 匹配，
         与 Taproot 的 x-only 公钥路径在密码学上不相关，无法匹配。
         """
->>>>>>> Stashed changes
         try:
             hrp = "bc" if input_str.lower().startswith("bc1") else "tb"
             witness_version, witness_program = decode_segwit_address(hrp, input_str)
@@ -372,17 +306,6 @@ class TargetResolver:
             if len(witness_program) != 32:
                 logger.warning("Taproot witness program应为32字节")
                 return None
-<<<<<<< Updated upstream
-            normalized = input_str.lower()
-            if self.cache:
-                # Bech32m 编码大小写不敏感,统一用小写作为缓存 key
-                self.cache.put(normalized, normalized)
-            logger.debug(f"Taproot地址验证成功(保持原格式): {normalized[:15]}...")
-            logger.warning(
-                "Taproot目标地址将保持原格式,当前引擎仅生成P2PKH地址,Taproot目标必然无法匹配。"
-            )
-            return normalized
-=======
             logger.warning(
                 f"Taproot地址 '{input_str[:25]}...' 无法用于碰撞匹配: "
                 f"Taproot的witness program=x-only公钥(32字节)与引擎生成的hash160(pubkey)不相关，"
@@ -390,7 +313,6 @@ class TargetResolver:
             )
             self._unsupported_types.add("taproot_address")
             return None
->>>>>>> Stashed changes
         except ValueError as e:
             logger.error(f"Taproot地址转换异常: {input_str} - {type(e).__name__}: {e}")
             return None
