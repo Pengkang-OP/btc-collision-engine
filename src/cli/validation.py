@@ -181,7 +181,7 @@ def _get_output():
     return CLIOutput.get_instance()
 
 
-def validate_file_path(file_path: str) -> bool:
+def validate_file_path(file_path: str | None) -> bool:
     """
     验证文件路径有效性：存在性、类型、读权限、文件大小。
 
@@ -195,6 +195,8 @@ def validate_file_path(file_path: str) -> bool:
     """
     from pathlib import Path
 
+    if file_path is None:
+        return False
     output = _get_output()
     resolved = Path(file_path).resolve()
 

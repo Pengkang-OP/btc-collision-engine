@@ -24,12 +24,17 @@ class PaginationManager:
 
         Args:
             items: 要分页的数据列表
-            page_size: 每页显示的项目数量
+            page_size: 每页显示的项目数量（必须 >= 1）
+
+        Raises:
+            ValueError: page_size < 1 时抛出
         """
+        if page_size < 1:
+            raise ValueError(f"page_size 必须 >= 1，当前值: {page_size}")
         self.items = items
         self.page_size = page_size
-        self.current_page = 1
-        self.total_pages = (len(items) + page_size - 1) // page_size
+        self.current_page = 1 if items else 0
+        self.total_pages = max(1, (len(items) + page_size - 1) // page_size) if items else 0
 
     def get_current_page_items(self) -> list[Any]:
         """获取当前页的数据
@@ -67,11 +72,15 @@ class PaginationManager:
         """跳转到指定页
 
         Args:
-            page: 页码
+            page: 页码（必须为整数）
 
         Returns:
             是否成功跳转到指定页
         """
+        if not isinstance(page, int):
+            return False
+        if self.total_pages == 0:
+            return False
         if 1 <= page <= self.total_pages:
             self.current_page = page
             return True
@@ -132,41 +141,24 @@ class PaginationManager:
             output.print(" ".join(nav_options))
 
 
-def display_paginated_results(results: list[dict], title: str = "匹配结果") -> None:
-    """分页显示匹配结果
+def _display_paginated_loop(
+    paginator: PaginationManager,
+    formatter: Callable[[Any], str],
+    title: str,
+) -> None:
+    """分页循环：显示当前页 → 等待输入 → 导航
 
     Args:
-        results: 匹配结果列表
+        paginator: 分页管理器实例
+        formatter: 项目格式化函数
         title: 显示的标题
     """
-    from src.cli.output import CLIOutput
-
-    output = CLIOutput.get_instance()
-
-    if not results:
-        output.info("没有匹配结果")
-        return
-
-    def format_match(item: dict) -> str:
-        address = item.get("address", "N/A")
-        timestamp = item.get("timestamp", 0)
-        match_index = item.get("match_index", 0)
-        private_key_hash = item.get("private_key_hash", "N/A")
-
-        import time
-
-        time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
-
-        return f"地址: {address} | 时间: {time_str} | 索引: {match_index} | 私钥哈希: {private_key_hash}"
-
-    paginator = PaginationManager(results, page_size=5)
-
     while True:
-        paginator.display_page(format_match, title)
+        paginator.display_page(formatter, title)
 
-        # 等待用户输入
         user_input = input("请输入选项: ").strip().upper()
-
+        if not user_input:
+            continue  # 空输入重新等待
         if user_input == "P":
             paginator.previous_page()
         elif user_input == "N":
@@ -178,17 +170,32 @@ def display_paginated_results(results: list[dict], title: str = "匹配结果") 
             paginator.go_to_page(page)
 
 
-def display_paginated_performance(data: list[dict], title: str = "性能数据") -> None:
-    """分页显示性能数据
-
-    Args:
-        data: 性能数据列表
-        title: 显示的标题
-    """
+def display_paginated_results(results: list[dict], title: str = "匹配结果") -> None:
+    """分页显示匹配结果"""
     from src.cli.output import CLIOutput
 
     output = CLIOutput.get_instance()
+    if not results:
+        output.info("没有匹配结果")
+        return
 
+    def format_match(item: dict) -> str:
+        address = item.get("address", "N/A")
+        timestamp = item.get("timestamp", 0)
+        match_index = item.get("match_index", 0)
+        private_key_hash = item.get("private_key_hash", "N/A")
+        import time
+        time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
+        return f"地址: {address} | 时间: {time_str} | 索引: {match_index} | 私钥哈希: {private_key_hash}"
+
+    _display_paginated_loop(PaginationManager(results, page_size=5), format_match, title)
+
+
+def display_paginated_performance(data: list[dict], title: str = "性能数据") -> None:
+    """分页显示性能数据"""
+    from src.cli.output import CLIOutput
+
+    output = CLIOutput.get_instance()
     if not data:
         output.info("没有性能数据")
         return
@@ -199,43 +206,18 @@ def display_paginated_performance(data: list[dict], title: str = "性能数据")
         total_checked = item.get("total_checked", 0)
         gpu_usage = item.get("gpu_usage", 0)
         memory_used = item.get("memory_used", 0)
-
         import time
-
         time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
-
         return f"时间: {time_str} | 速度: {speed:,}/s | 总尝试: {total_checked:,} | GPU: {gpu_usage}% | 内存: {memory_used}MB"  # noqa: E501
 
-    paginator = PaginationManager(data, page_size=8)
-
-    while True:
-        paginator.display_page(format_performance, title)
-
-        # 等待用户输入
-        user_input = input("请输入选项: ").strip().upper()
-
-        if user_input == "P":
-            paginator.previous_page()
-        elif user_input == "N":
-            paginator.next_page()
-        elif user_input == "Q":
-            break
-        elif user_input.isdigit():
-            page = int(user_input)
-            paginator.go_to_page(page)
+    _display_paginated_loop(PaginationManager(data, page_size=8), format_performance, title)
 
 
 def display_paginated_errors(errors: list[dict], title: str = "错误日志") -> None:
-    """分页显示错误日志
-
-    Args:
-        errors: 错误日志列表
-        title: 显示的标题
-    """
+    """分页显示错误日志"""
     from src.cli.output import CLIOutput
 
     output = CLIOutput.get_instance()
-
     if not errors:
         output.info("没有错误日志")
         return
@@ -245,30 +227,10 @@ def display_paginated_errors(errors: list[dict], title: str = "错误日志") ->
         error_type = item.get("error_type", "Unknown")
         message = item.get("message", "No message")
         details = item.get("details", "")
-
         import time
-
         time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
-
         if details:
             return f"时间: {time_str} | 类型: {error_type} | 消息: {message} | 详情: {details}"
-        else:
-            return f"时间: {time_str} | 类型: {error_type} | 消息: {message}"
+        return f"时间: {time_str} | 类型: {error_type} | 消息: {message}"
 
-    paginator = PaginationManager(errors, page_size=6)
-
-    while True:
-        paginator.display_page(format_error, title)
-
-        # 等待用户输入
-        user_input = input("请输入选项: ").strip().upper()
-
-        if user_input == "P":
-            paginator.previous_page()
-        elif user_input == "N":
-            paginator.next_page()
-        elif user_input == "Q":
-            break
-        elif user_input.isdigit():
-            page = int(user_input)
-            paginator.go_to_page(page)
+    _display_paginated_loop(PaginationManager(errors, page_size=6), format_error, title)

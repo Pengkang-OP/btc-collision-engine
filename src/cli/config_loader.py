@@ -88,17 +88,26 @@ def load_config_with_validation(config_file: str | None = None) -> dict | None:
         return None
 
 
-def _strip_comment_keys(data: object) -> object:
+def _strip_comment_keys(data: object, _depth: int = 0) -> object:
     """递归移除字典中以 `_comment` 或 `_comment_` 开头的键。
 
     用于清理 config.json 中嵌入的文档注释字段。
+
+    Args:
+        data: 要处理的数据
+        _depth: 内部递归深度（防止栈溢出）
+
+    Raises:
+        RecursionError: 递归深度超过 100 层时抛出
     """
+    if _depth > 100:
+        raise RecursionError("_strip_comment_keys: 递归深度超过 100 层，配置结构可能异常")
     if isinstance(data, dict):
         return {
-            k: _strip_comment_keys(v)
+            k: _strip_comment_keys(v, _depth + 1)
             for k, v in data.items()
             if not k.startswith("_comment")
         }
     if isinstance(data, list):
-        return [_strip_comment_keys(item) for item in data]
+        return [_strip_comment_keys(item, _depth + 1) for item in data]
     return data
