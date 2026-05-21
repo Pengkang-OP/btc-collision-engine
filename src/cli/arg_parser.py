@@ -19,7 +19,7 @@ from src.i18n import _t  # noqa: E402
 try:
     from src import __version__ as _version
 except ImportError:
-    _VERSION = "4.2.2"
+    _version = "4.2.2"
 
 
 def parse_args() -> argparse.Namespace:  # noqa: D401

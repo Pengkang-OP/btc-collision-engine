@@ -302,10 +302,6 @@ class BitcoinKeyValidator:
             public_key_point = self.curve.scalar_multiply_const_time(k, ECPoint(Secp256k1.Gx, Secp256k1.Gy))
 
             # 3. 验证公钥不是无穷远点
-            # v4.2.2 R1修复: 使用恒定时间实现，避免 RuntimeError
-            public_key_point = self.curve.scalar_multiply_const_time(k, ECPoint(Secp256k1.Gx, Secp256k1.Gy))
-
-            # 3. 验证公钥不是无穷远点
             if public_key_point.is_infinity:
                 result.add_error("生成的公钥为无穷远点，私钥无效")
                 return result, b""
@@ -322,7 +318,6 @@ class BitcoinKeyValidator:
             # 5. 序列化公钥 — 经过 is_infinity 检查后, x/y 必然非 None
             assert public_key_point.x is not None and public_key_point.y is not None
 
-            # 5. 序列化公钥
             if compressed:
                 # 压缩格式：33字节，02或03开头
                 prefix = b"\x02" if int(public_key_point.y) % 2 == 0 else b"\x03"

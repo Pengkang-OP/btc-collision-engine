@@ -239,6 +239,14 @@ def backup_config(config_path: str) -> str:
     return str(backup_path)
 
 
+def _check_section_is_dict(section_name: str, section: Any, issues: list[str]) -> dict | None:
+    """检查配置段是否为字典类型。"""
+    if not isinstance(section, dict):
+        issues.append(f"配置段 {section_name} 必须是 JSON 对象，当前类型: {type(section).__name__}")
+        return None
+    return section
+
+
 def validate_migrated_config(config: dict) -> tuple[bool, list[str]]:
     """
     验证迁移后的配置是否满足 v4.2.2 要求。

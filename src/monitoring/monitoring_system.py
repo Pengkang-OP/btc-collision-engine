@@ -278,7 +278,7 @@ class DataStorage:
             history = self._load_history_with_recovery()
 
             # 添加新数据
-            history.append(record)
+            history.append(data.to_dict())
 
             # 限制历史数据长度（保留最近1000条）
             if len(history) > 1000:

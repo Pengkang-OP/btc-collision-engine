@@ -24,8 +24,8 @@ __all__ = [
     "Secp256k1",
     "ECPoint",
     "EllipticCurve",
-    "scalar_multiply_const_time",
     # generate_public_key 是 EllipticCurve 的实例方法，非模块级函数，不在此导出
+    # scalar_multiply_const_time 是 EllipticCurve 的实例方法，非模块级函数，不在此导出
     # 以下故意未导出，以防止非恒定时间使用:
     # "scalar_multiply" — 已锁定，需环境变量 BTC_ALLOW_NON_CONST_TIME=1
     # "mod_inverse" — 非恒定时间，存在侧信道风险

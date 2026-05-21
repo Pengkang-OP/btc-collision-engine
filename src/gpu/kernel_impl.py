@@ -1215,51 +1215,6 @@ class GPUKernel(GPUKernelProtocol):
         self._check_memory_leaks_on_shutdown(released_buffers)
         self._release_gpu_buffers(released_buffers)
         self._close_async_logging()
-
-
-        # v4.2.1优化: 纯持久化设计 - 直接释放，不需要计算大小
-
-        # P1修复: 显式释放OpenCL Buffer（跳过已释放的）
-        buffers_to_release = [
-            ("_seed_buf", self._seed_buf),
-            ("_match_buf", self._match_buf),
-            ("_targets_buf", self._targets_buf),
-            ("_precomp_buf", self._precomp_buf),
-        ]
-
-        for buf_name, buf in buffers_to_release:
-            # v4.2.1修复: 跳过已被force_check_on_shutdown释放的缓冲区
-            if buf_name in released_buffers:
-                logger.debug(f"缓冲区 {buf_name} 已释放，跳过")
-                continue
-
-            if buf is not None:
-                try:
-                    # v4.2.1优化: 纯持久化设计 - 直接释放，不归还到内存池
-                    buf.release()
-                    logger.debug(f"已释放 {buf_name}")
-
-                    # P2-2修复: 注销缓冲区追踪
-                    # 注意: force_check_on_shutdown已clear整个_allocated_buffers dict,
-                    # 所以此处release_buffer是空操作(防御性保留,避免未来重构遗漏)
-                    if hasattr(self, "_buffer_tracker"):
-                        self._buffer_tracker.release_buffer(buf_name)
-                except Exception as e:
-                    logger.warning(f"释放 {buf_name} 失败: {e}")
-
-        # 清空引用
-        self._seed_buf = None
-        self._match_buf = None
-        self._targets_buf = None
-        self._precomp_buf = None
-
-        # v4.2.1: 关闭异步日志处理器
-        if hasattr(self, "_async_log_handler") and self._async_log_handler:
-            try:
-                self._async_log_handler.close()
-                logger.info("GPU异步日志已关闭")
-            except Exception as e:
-                logger.debug(f"关闭异步日志失败: {e}")
         self._match_flags = None
         self._program = None
         self._batch_kernel = None
