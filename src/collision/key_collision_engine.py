@@ -57,6 +57,27 @@ PROGRESS_INTERVAL_COUNT = 1000  # 每N次检测触发一次进度回调
 DATA_LOG_SAVE_FREQUENCY = 3  # 每N次记录保存一次数据日志
 ERROR_LOG_INTERVAL_SEC = 5.0  # 错误日志记录间隔（秒）
 CPU_CACHE_INTERVAL_SEC = 1.0  # CPU使用率缓存更新间隔（秒）
+
+# P3-9: Batch自动调优参数
+BATCH_TUNE_1_2_CORE = 500
+BATCH_TUNE_4_CORE = 1000
+BATCH_TUNE_8_CORE = 2000
+BATCH_TUNE_16_CORE = 4000
+BATCH_TUNE_32_CORE = 6000
+BATCH_TUNE_64_PLUS_CORE = 8000
+
+# 内存监控降级参数 (P1-6)
+MEMORY_HIGH_THRESHOLD_MB = 2048  # 内存警报阈值 2GB
+MEMORY_CRITICAL_THRESHOLD_MB = 3072  # 内存临界阈值 3GB
+MEMORY_DOWNGRADE_COOLDOWN_SEC = 30.0  # 降级冷却时间（秒）
+
+# 去重缓存参数
+DEDUP_MAX_RECENT_SIZE = 10000  # 短期去重缓存大小
+COMPRESSION_AUTO_THRESHOLD = 10000  # 双格式检查自动切换阈值
+COMPRESSION_FORCE_SINGLE_THRESHOLD = 50000  # 强制仅压缩格式的阈值
+
+# 进度回调控制参数
+PROGRESS_INTERVAL_COUNT_DEFAULT = 1000  # 每N次检测触发一次进度回调
 MATCH_BATCH_FLUSH_THRESHOLD = 10  # P2-2修复: 匹配结果批量提交阈值
 
 
@@ -275,15 +296,15 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self._auto_tune_batch_size = True  # P3-9修复: 是否自动调整batch_size
         self._tune_batch_size()  # P3-9修复: 根据CPU核心数调整batch_size
         self._progress_interval_sec = PROGRESS_INTERVAL_SEC  # 进度回调最小间隔（秒）
-        self._progress_interval_count = 1000  # P2-5修复: 进度回调计数控制(每N个batch)
+        self._progress_interval_count = PROGRESS_INTERVAL_COUNT_DEFAULT
         self._last_progress_time = 0.0
         self._batch_counter = 0  # P2-5修复: batch计数器
 
         # M13: 内存监控自动降级
-        self._memory_high_threshold_mb = 2048  # 内存警报阈値 2GB
-        self._memory_critical_threshold_mb = 3072  # 内存临界阈値 3GB
+        self._memory_high_threshold_mb = MEMORY_HIGH_THRESHOLD_MB
+        self._memory_critical_threshold_mb = MEMORY_CRITICAL_THRESHOLD_MB
         self._last_memory_downgrade_time = 0.0  # 上次降级时间
-        self._memory_downgrade_cooldown = 30.0  # 降级冷却时间（秒）
+        self._memory_downgrade_cooldown = MEMORY_DOWNGRADE_COOLDOWN_SEC
 
         # 数据日志系统
         # 设计说明：以下数据日志变量仅在主线程访问（通过_log_data_metrics方法），
@@ -363,7 +384,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 self.data_logger = self.data_logger_adapter.data_logger
                 logger.info("数据日志系统已启用（事件驱动模式）")
         except Exception as e:
-            logger.warning(f"数据日志系统初始化失败，已禁用: {e}")
+            logger.warning(f"数据日志系统初始化失败，已禁用: {e}", exc_info=True)
             self.data_logging_enabled = False
             self.data_logger = None
             self.enhanced_monitoring = None
@@ -506,7 +527,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             self._last_data_log_time = current_time
 
         except (RuntimeError, OSError, ValueError) as e:
-            logger.warning(f"记录数据指标失败: {e}")
+            logger.warning(f"记录数据指标失败: {e}", exc_info=True)
 
     def _check_memory_and_downgrade(self, memory_mb: float, current_time: float) -> None:
         """M13: 内存监控自动降级
@@ -580,17 +601,17 @@ class KeyCollisionEngine(BaseCollisionEngine):
         cpu_count = self._cpu_count
 
         if cpu_count <= 2:
-            optimal_batch_size = 500
+            optimal_batch_size = BATCH_TUNE_1_2_CORE
         elif cpu_count <= 4:
-            optimal_batch_size = 1000
+            optimal_batch_size = BATCH_TUNE_4_CORE
         elif cpu_count <= 8:
-            optimal_batch_size = 2000
+            optimal_batch_size = BATCH_TUNE_8_CORE
         elif cpu_count <= 16:
-            optimal_batch_size = 4000
+            optimal_batch_size = BATCH_TUNE_16_CORE
         elif cpu_count <= 32:
-            optimal_batch_size = 6000
+            optimal_batch_size = BATCH_TUNE_32_CORE
         else:
-            optimal_batch_size = 8000
+            optimal_batch_size = BATCH_TUNE_64_PLUS_CORE
 
         old_batch_size = self._batch_size
         self._batch_size = optimal_batch_size
@@ -616,7 +637,6 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
         # 降低阈值策略：P2PKH地址无法区分压缩/非压缩来源，优先保证不漏匹配
         # v4.2.1.1: 从50000降至10000，减少大规模场景下的漏匹配风险
-        COMPRESSION_AUTO_THRESHOLD = 10000
         if target_count < COMPRESSION_AUTO_THRESHOLD:
             logger.debug(
                 f"目标地址数={target_count} < {COMPRESSION_AUTO_THRESHOLD}，启用双格式检查"
@@ -663,7 +683,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             logger.info(f"加密后端初始化完成: {backend.name}, 恒定时间={backend.is_constant_time()}")
 
         except (RuntimeError, OSError, ValueError) as e:
-            logger.warning(f"加密后端初始化失败: {e}，使用默认后端")
+            logger.warning(f"加密后端初始化失败: {e}，使用默认后端", exc_info=True)
 
     def _log_throttled_error(
         self, error_type: str, message: str, exception: Exception, worker_id: int
