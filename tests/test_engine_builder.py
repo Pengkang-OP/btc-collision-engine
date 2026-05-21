@@ -203,7 +203,7 @@ class TestBuildEngineGPU(unittest.TestCase):
 
         with patch.object(eb, "GPU_AVAILABLE", True), patch.dict(
             "sys.modules",
-            {"src.collision.gpu_collision_engine": MagicMock(GPUCollisionEngine=mock_gpu_engine)},
+            {"src.collision.gpu.engine": MagicMock(GPUCollisionEngine=mock_gpu_engine)},
         ), patch.object(eb, "KeyCollisionEngine") as mock_cpu_cls:
             mock_cpu_cls.return_value = MagicMock()
             with patch("builtins.print"):
@@ -218,7 +218,7 @@ class TestBuildEngineGPU(unittest.TestCase):
 
         with patch.object(eb, "GPU_AVAILABLE", True), patch.dict(
             "sys.modules",
-            {"src.collision.gpu_collision_engine": MagicMock(GPUCollisionEngine=mock_gpu_engine)},
+            {"src.collision.gpu.engine": MagicMock(GPUCollisionEngine=mock_gpu_engine)},
         ):
             with self.assertRaises(eb.GPUInitializationError) as ctx:
                 eb.build_engine(_make_args(use_gpu=True), self.targets)
@@ -231,7 +231,7 @@ class TestBuildEngineGPU(unittest.TestCase):
 
         with patch.object(eb, "GPU_AVAILABLE", True), patch.dict(
             "sys.modules",
-            {"src.collision.gpu_collision_engine": MagicMock(GPUCollisionEngine=mock_gpu_engine)},
+            {"src.collision.gpu.engine": MagicMock(GPUCollisionEngine=mock_gpu_engine)},
         ):
             args = _make_args(use_gpu=True, gpu_device=0, gpu_batch_size=1000)
             engine, etype = eb.build_engine(args, self.targets)

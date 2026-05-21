@@ -14,7 +14,7 @@ import psutil
 # 添加项目根目录到Python路径
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
 from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine  # noqa: E402
 from src.utils import get_configured_logger, init_logging  # noqa: E402
 

@@ -155,25 +155,25 @@ def _apply_gpu_patches(mock_device, mock_context, mock_kernel, vendor="nvidia"):
         with ExitStack() as stack:
             # 应用7层Mock
             stack.enter_context(
-                patch("src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE", True)
+                patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True)
             )
             stack.enter_context(
                 patch(
-                    "src.collision.gpu_collision_engine.GPUDeviceDetector.is_gpu_available",
+                    "src.gpu.device.GPUDeviceDetector.is_gpu_available",
                     return_value=True,
                 )
             )
             stack.enter_context(
-                patch("src.collision.gpu_collision_engine.GPUDevice", return_value=mock_device)
+                patch("src.gpu.device_manager.GPUDevice", return_value=mock_device)
             )
             stack.enter_context(
-                patch("src.collision.gpu_collision_engine.GPUContext", return_value=mock_context)
+                patch("src.gpu.device_manager.GPUContext", return_value=mock_context)
             )
             stack.enter_context(
-                patch("src.collision.gpu_collision_engine.GPUKernel", return_value=mock_kernel)
+                patch("src.gpu.device_manager.GPUKernel", return_value=mock_kernel)
             )
             mock_profile_loader = stack.enter_context(
-                patch("src.collision.gpu_collision_engine.GPUProfileLoader")
+                patch("src.gpu.profiles.loader.GPUProfileLoader")
             )
             stack.enter_context(patch("src.gpu.device.identify_vendor", return_value=vendor))
             # async_executor采用函数级导入，通过patch sys.modules使内部 import pyopencl as cl 使用Mock

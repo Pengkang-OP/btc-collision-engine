@@ -209,7 +209,7 @@ def test_gpu_stability():
     print_section("GPU稳定性测试")
 
     try:
-        from src.collision.gpu_collision_engine import GPUCollisionEngine
+        from src.collision.gpu.engine import GPUCollisionEngine
 
         print("  初始化GPU引擎...")
         test_targets = ["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"]

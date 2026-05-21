@@ -109,14 +109,14 @@ def mock_gpu_collision_engine_full():
     }
 
     patches = [
-        patch("src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE", True),
+        patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
         patch(
-            "src.collision.gpu_collision_engine.GPUDeviceDetector.is_gpu_available",
+            "src.gpu.device.GPUDeviceDetector.is_gpu_available",
             return_value=True,
         ),
-        patch("src.collision.gpu_collision_engine.GPUDevice", return_value=mock_device),
-        patch("src.collision.gpu_collision_engine.GPUContext", return_value=mock_context),
-        patch("src.collision.gpu_collision_engine.GPUKernel", return_value=mock_kernel),
+        patch("src.gpu.device_manager.GPUDevice", return_value=mock_device),
+        patch("src.gpu.device_manager.GPUContext", return_value=mock_context),
+        patch("src.gpu.device_manager.GPUKernel", return_value=mock_kernel),
         patch("pyopencl.Buffer", return_value=mock_buffer),
         patch("src.gpu.async_executor.AsyncGPUExecutor.initialize_buffers"),
         patch("src.gpu.async_executor.AsyncGPUExecutor.run_batch_async", return_value=([], 1.0)),
