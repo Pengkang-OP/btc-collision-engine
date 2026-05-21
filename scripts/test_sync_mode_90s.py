@@ -22,7 +22,7 @@ from typing import Dict, List, Any
 project_root = str(Path(__file__).parent.parent)
 sys.path.insert(0, project_root)
 
-from src.collision.gpu_collision_engine import GPUCollisionEngine
+from src.collision.gpu.engine import GPUCollisionEngine
 from src.collision.collision_stats import CollisionStats
 
 

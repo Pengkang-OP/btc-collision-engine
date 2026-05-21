@@ -142,7 +142,7 @@ def bench_cpu_engine(duration: float = 15.0) -> dict[str, Any]:
 def bench_gpu_engine(duration: float = 15.0) -> dict[str, Any] | None:
     """基准测试: GPU 碰撞引擎吞吐量（需要 PyOpenCL）"""
     try:
-        from src.collision.gpu_collision_engine import GPUCollisionEngine
+        from src.collision.gpu.engine import GPUCollisionEngine
     except ImportError:
         return None
 

@@ -94,7 +94,7 @@ def run_benchmark(duration_sec: int = 30) -> dict:
     # ── 3. 初始化引擎 ──────────────────────────────────────
     print("\n[3/5] 初始化 GPU 碰撞引擎...")
     try:
-        from src.collision.gpu_collision_engine import GPUCollisionEngine
+        from src.collision.gpu.engine import GPUCollisionEngine
     except ImportError as e:
         print(f"    [ERROR] 无法导入 GPUCollisionEngine: {e}")
         return {"error": str(e), "success": False}
