@@ -624,7 +624,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             try:
                 self._random_search_mode.stop()
             except Exception as e:
-                logger.warning(f"停止种子预生成线程失败: {e}")
+                logger.warning(f"停止种子预生成线程失败: {e}", exc_info=True)
 
         if self._async_executor:
             try:

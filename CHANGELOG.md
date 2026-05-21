@@ -14,6 +14,17 @@
   - 工作线程逻辑已提取到 `_random_search_worker`、`_worker_process_key` 等子函数
   - 匹配处理逻辑已提取到 `_process_key_match`、`_flush_match_batch` 等独立方法
 
+- **P1-7: 异常捕获堆栈上下文增强**
+  - 为 `key_collision_engine.py` 中多个关键异常 handler 添加 `exc_info=True`
+  - 涉及：数据日志系统初始化、数据指标记录、加密后端初始化等
+  - 为 `gpu/engine.py` 中种子预生成线程停止失败 handler 添加 `exc_info=True`
+
+- **P2-2: 魔法数字提取为模块级常量**
+  - 提取 Batch 调优常量: `BATCH_TUNE_1_2_CORE` 等 6 个常量
+  - 提取内存监控常量: `MEMORY_HIGH_THRESHOLD_MB`, `MEMORY_CRITICAL_THRESHOLD_MB` 等
+  - 提取去重和压缩检测阈值: `COMPRESSION_AUTO_THRESHOLD` 等
+  - 所有内部方法改为引用常量名，提高代码可读性
+
 - **待清理文件处理**
   - 将 `bandit-result*.json` 和 `bandit-report*.json` 添加到 `.gitignore`
   - 清理 untracked 的安全扫描报告文件
