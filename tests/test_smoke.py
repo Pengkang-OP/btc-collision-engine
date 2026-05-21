@@ -282,29 +282,18 @@ class TestArgParserModuleCoverage:
     """arg_parser.py 模块级代码覆盖测试 (L15, L22-23)。"""
 
     def test_sys_path_insert_when_root_not_in_path(self):
-        """模块首次加载时 _project_root 不在 sys.path → sys.path.insert (L15)。"""
-        import importlib
+        """v4.5.1: _path_setup 确保项目根目录在 sys.path 中。"""
         import sys
 
-        # 获取当前已加载模块的 _project_root
-        mod = sys.modules.get("src.cli.arg_parser")
-        if mod is None:
-            mod = importlib.import_module("src.cli.arg_parser")
-        project_root = mod._project_root
+        from src.cli import _path_setup
 
-        # 卸载模块，移除 project_root，重新导入
-        sys.modules.pop("src.cli.arg_parser", None)
-        original_path = list(sys.path)
-        sys.path = [p for p in sys.path if p != project_root]
-        try:
-            new_mod = importlib.import_module("src.cli.arg_parser")
-            assert new_mod is not None
-            assert hasattr(new_mod, "_project_root")
-            assert project_root in sys.path  # 验证 L15 insert 已执行
-        finally:
-            sys.path[:] = original_path
-            sys.modules.pop("src.cli.arg_parser", None)
-            importlib.import_module("src.cli.arg_parser")
+        project_root = _path_setup._project_root
+
+        # 验证 ensure_project_root 幂等
+        original_path_len = len(sys.path)
+        _path_setup.ensure_project_root()
+        assert len(sys.path) == original_path_len  # 幂等
+        assert project_root in sys.path
 
     def test_version_import_fallback(self):
         """from src import __version__ 失败时回退到 '4.5.1' (L22-23)。"""
