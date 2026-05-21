@@ -12,7 +12,7 @@ from ..utils import get_configured_logger
 
 if TYPE_CHECKING:
     # 避免循环导入：仅在类型检查时引用引擎
-    from ..collision.gpu_collision_engine import GPUCollisionEngine
+    from ..collision.gpu.engine import GPUCollisionEngine
 
 _logger = get_configured_logger("SearchModeCoordinator")
 

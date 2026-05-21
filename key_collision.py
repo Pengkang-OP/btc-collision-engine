@@ -57,9 +57,9 @@ except ImportError:
     MONITORING_AVAILABLE = False
     MonitoringSystem = None
 
-# 条件导入新GPU引擎（优先使用src.collision.gpu_collision_engine）
+# 条件导入新GPU引擎
 try:
-    from src.collision.gpu_collision_engine import GPUCollisionEngine as _GPUCollisionEngine
+    from src.collision.gpu.engine import GPUCollisionEngine as _GPUCollisionEngine
     GPU_ENGINE_AVAILABLE = True
 except ImportError:
     GPU_ENGINE_AVAILABLE = False

@@ -497,70 +497,20 @@ class EllipticCurve:
     def scalar_multiply(self, k: int, point: ECPoint) -> ECPoint:
         """椭圆曲线标量乘法（双倍-加法算法）
 
-        计算 k * point，即点point的k倍。
-        使用双倍-加法算法，时间复杂度为O(log k)。
-
-        ⚠️ P2-1修复: 已弃用 - 此实现未使用恒定时间算法，存在侧信道攻击风险。
+        ⚠️ v5.0.0: 已永久禁用 — 此实现未使用恒定时间算法，存在侧信道攻击风险。
         请使用 scalar_multiply_const_time() 替代。
-
-        v4.2.2 C1修复: 运行时强制检查，默认拒绝调用非恒定时间版本。
-        如需紧急启用，设置环境变量 BTC_ALLOW_NON_CONST_TIME=1。
-
-        注意: 在本地离线环境中使用是安全的。
-
-        算法步骤:
-        1. 将标量k表示为二进制
-        2. 从最高位开始遍历每一位
-        3. 如果当前位为1，将结果加上当前addend
-        4. 每次迭代将addend翻倍
 
         参数:
             k: 标量（正整数）
             point: 椭圆曲线点
 
-        返回:
-            k倍的点
-
         异常:
-            TypeError: 当输入参数类型不正确时
-
-        弃用警告:
-            DeprecationWarning: 请使用 scalar_multiply_const_time() 替代
+            RuntimeError: 始终抛出 — 非恒定时间实现已被锁定
         """
-        # P2-1修复: 添加弃用警告
-        warnings.warn(
-            "scalar_multiply() 不是恒定时间实现，存在侧信道攻击风险。"
-            "请使用 scalar_multiply_const_time() 替代。"
-            "注意: 本模块是教学参考实现，生产环境请使用crypto_backend.py",
-            FutureWarning,
-            stacklevel=2,
+        raise RuntimeError(
+            "scalar_multiply() 非恒定时间实现已被永久禁用。\n"
+            "请使用 scalar_multiply_const_time() 替代。\n"
         )
-
-        # v4.2.2 C1修复: 运行时强制拒绝，默认不允许调用非恒定时间版本
-        # 生产环境必须设置环境变量才允许使用
-
-        # v4.2.2: 弃用过渡 — 先 emit FutureWarning，计划 v5.0.0 升级为 RuntimeError
-        warnings.warn(
-            "scalar_multiply() 已弃用，将在 v5.0.0 中移除。"
-            "请使用 scalar_multiply_const_time() 替代。"
-            "如需紧急启用，设置环境变量 BTC_ALLOW_NON_CONST_TIME=1。",
-            FutureWarning,
-            stacklevel=2,
-        )
-        if not os.environ.get("BTC_ALLOW_NON_CONST_TIME"):
-            raise RuntimeError(
-                "scalar_multiply() 非恒定时间实现已被锁定，存在侧信道攻击风险。\n"
-                "请使用 scalar_multiply_const_time() 替代。\n"
-                "如确需紧急使用，设置环境变量: "
-                "Linux/Mac: export BTC_ALLOW_NON_CONST_TIME=1; "
-                "Windows PowerShell: $env:BTC_ALLOW_NON_CONST_TIME=1"
-            )
-
-        # 输入参数验证（使用公共验证方法）
-        self._validate_scalar_multiply(k, point)
-
-        if k == 0 or point.is_infinity:
-            return ECPoint(None, None, self.curve)
 
         # 确保k为正数且在曲线阶范围内
         k = k % self.curve.N

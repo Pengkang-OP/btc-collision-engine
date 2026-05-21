@@ -24,7 +24,7 @@ from ..types import MatchCallback, ProgressCallback
 from .protocols import ICollisionCore
 
 if TYPE_CHECKING:
-    from ..gpu_collision_engine import GPUCollisionEngine
+    from .engine import GPUCollisionEngine
 
 logger = logging.getLogger(__name__)
 

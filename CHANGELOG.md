@@ -117,6 +117,24 @@
   - 更新 2 个测试文件，删除 `verify_threadsafe_replacement.py` 验证脚本
   - 修复 `test_core_fixes_verification.py` GBK 编码兼容性（Windows 终端）
 
+- **Shim 层移除** (v5.0.0 #3)
+  - 删除 `src/collision/gpu_collision_engine.py`（Shim 层）
+  - 9 个 src 生产文件导入路径更新：`gpu_collision_engine` → `gpu.engine`
+  - 3 个启动脚本同步更新：`start_monitoring.py`、`start_collision_full.py`、`key_collision.py`
+  - `collision/__init__.py` 直接导入 `gpu.engine`
+  - `gpu/core.py` 导入路径调整为同目录 `engine` 模块
+
+- **`target_resolver.py` 删除** (v5.0.0 #1)
+  - 模块已无任何生产代码引用
+
+- **`gpu_config_manager.py` 删除** (v5.0.0 #2)
+  - 删除模块 + 对应测试文件 `test_gpu_config_manager.py`、`test_boundary_values.py`
+
+- **`scalar_multiply()` 永久禁用** (v5.0.0 #6)
+  - 移除 `FutureWarning` 和环境变量绕过，始终抛出 `RuntimeError`
+
+- **`PRIVATE_KEY_SIZE` / `ASYNC_LOG_AVAILABLE` / `GPU_CONFIG_MANAGER_AVAILABLE` 注释清理** (v5.0.0 #4/#5/#7)
+
 - **TextIOWrapper closefd=False 根因修复** (P1-7)
   - 3 个测试文件中的 `TextIOWrapper()` 调用添加 `closefd=False`，防止 stdout 底层 fd 被意外关闭
   - `conftest.py`: 补丁注释更新为"防御性保护"，标记根因已修复

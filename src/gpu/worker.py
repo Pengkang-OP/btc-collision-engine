@@ -16,7 +16,7 @@ from queue import Empty, Queue
 from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
-    from ..collision.gpu_collision_engine import GPUCollisionEngine
+    from ..collision.gpu.engine import GPUCollisionEngine
 
 # 统一日志获取
 from ..config.optimization_config import is_feature_enabled
@@ -192,7 +192,7 @@ class SingleGPUWorker(threading.Thread):
         """初始化GPU碰撞引擎"""
         try:
             # 导入GPU碰撞引擎
-            from ..collision.gpu_collision_engine import GPUCollisionEngine
+            from ..collision.gpu.engine import GPUCollisionEngine
 
             # 配置引擎
             batch_size: int | None = self.config.batch_size  # None=自动计算

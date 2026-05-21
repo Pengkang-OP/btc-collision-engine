@@ -21,7 +21,7 @@ from ...utils.exception_handler import ExceptionHandler
 from ...utils.timeout import invoke_with_timeout
 
 if TYPE_CHECKING:
-    from ...collision.gpu_collision_engine import GPUCollisionEngine
+    from ...collision.gpu.engine import GPUCollisionEngine
 
 logger = get_configured_logger("BaseSearchMode")
 
