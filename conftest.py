@@ -1,17 +1,14 @@
 """
-根目录 conftest.py - Python 3.14 兼容性补丁
+根目录 conftest.py - 防御性兼容性补丁
 
-修复 pytest 9.0.x 在 Python 3.14 上的 capture 崩溃问题。
-
-问题根因: Python 3.14 中 io.TextIOWrapper.close() 行为变化：
-当 sys.stdout 被设置为一个 TextIOWrapper 对象后，close() 该对象会导致
-sys.stdout.closed = True，使后续所有写操作失败。
+修复 pytest 在 io.TextIOWrapper 未设置 closefd=False 时的 capture 崩溃问题。
 
 解决方案:
-1. 修补 FDCapture.snap() 在 tmpfile 已关闭时返回空字符串
-2. 修补 FDCaptureBase.resume() 在 tmpfile 已关闭时重新创建一个新的 tmpfile
-3. 修补 SysCapture 相关方法安全处理已关闭的 IO
-4. 修补 logging.StreamHandler.emit() 安全处理已关闭的流（log_cli 兼容性）
+1. 修补 FDCapture/FDCaptureBase/SysCapture 安全处理已关闭的 tmpfile
+2. 修补 logging.StreamHandler.emit() 安全处理已关闭的流（log_cli 兼容性）
+
+v4.5.1: 已修复所有已知的 TextIOWrapper 根因（添加 closefd=False）。
+此补丁保留为防御性保护，防止未来新引入的代码出现同类问题。
 """
 
 
@@ -28,10 +25,10 @@ def pytest_configure(config):
 
 
 def _apply_python314_capture_patch():
-    """为 pytest capture 模块应用 Python 3.14 兼容补丁。
+    """为 pytest capture 模块应用兼容补丁。
 
-    TODO(v4.6.0): 待新版本 pytest 原生支持 Python 3.14 后移除这些 monkey-patch。
-    跟踪: https://github.com/pytest-dev/pytest/issues/python314-capute
+    v4.5.1: 已修复所有已知的 TextIOWrapper 根因（添加 closefd=False）。
+    保留为防御性保护，待确认长期无触发后可移除。
     """
     try:
         import _pytest.capture as capture_mod
