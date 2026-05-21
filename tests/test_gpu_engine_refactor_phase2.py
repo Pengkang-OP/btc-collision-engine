@@ -379,7 +379,7 @@ class TestModuleImports:
         """测试模块版本号"""
         from src.collision import gpu
 
-        assert gpu.__version__ == "4.4.0"
+        assert gpu.__version__ == "4.5.0"
 
     def test_all_exports(self):
         """测试 __all__ 导出列表"""
