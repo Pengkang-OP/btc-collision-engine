@@ -70,9 +70,7 @@ class TestValidateArgs(unittest.TestCase):
 
     def setUp(self):
         self.mock_output = _make_mock_output()
-        patcher = patch(
-            "src.cli.validation._get_output", return_value=self.mock_output
-        )
+        patcher = patch("src.cli.validation._get_output", return_value=self.mock_output)
         self.addCleanup(patcher.stop)
         patcher.start()
 
@@ -103,9 +101,7 @@ class TestValidateArgs(unittest.TestCase):
 
     def test_util_cmd_validate_addresses_bypass(self):
         """--validate-addresses 绕过 targets 检查。"""
-        args = _make_args(
-            targets=None, file=None, validate_addresses="some_file.txt"
-        )
+        args = _make_args(targets=None, file=None, validate_addresses="some_file.txt")
         self.assertTrue(validate_args(args))
 
     def test_util_cmd_examples_bypass(self):
@@ -292,9 +288,7 @@ class TestValidateArgs(unittest.TestCase):
 
     def test_checkpoint_interval_default_no_auto_enable(self):
         """checkpoint-interval 为默认值时不自动启用 checkpoint。"""
-        args = _make_args(
-            checkpoint_interval=DEFAULT_CHECKPOINT_INTERVAL, checkpoint=False
-        )
+        args = _make_args(checkpoint_interval=DEFAULT_CHECKPOINT_INTERVAL, checkpoint=False)
         validate_args(args)
         self.assertFalse(args.checkpoint)
 
@@ -308,9 +302,7 @@ class TestValidateArgs(unittest.TestCase):
 
     def test_dedup_max_size_default_no_auto_enable(self):
         """dedup-max-size 为默认值时不自动启用 dedup。"""
-        args = _make_args(
-            dedup_max_size=DEFAULT_DEDUP_MAX_SIZE, dedup=False
-        )
+        args = _make_args(dedup_max_size=DEFAULT_DEDUP_MAX_SIZE, dedup=False)
         validate_args(args)
         self.assertFalse(args.dedup)
 
@@ -407,9 +399,7 @@ class TestValidateFilePath(unittest.TestCase):
 
     def setUp(self):
         self.mock_output = _make_mock_output()
-        patcher = patch(
-            "src.cli.validation._get_output", return_value=self.mock_output
-        )
+        patcher = patch("src.cli.validation._get_output", return_value=self.mock_output)
         self.addCleanup(patcher.stop)
         patcher.start()
 
@@ -439,21 +429,20 @@ class TestValidateFilePath(unittest.TestCase):
 
     def test_file_no_read_permission(self):
         """文件无读权限 → False (Unix-only, mock os.access)。"""
-        with patch("os.access", return_value=False), patch(
-            "pathlib.Path.exists", return_value=True
-        ), patch("pathlib.Path.is_file", return_value=True):
+        with (
+            patch("os.access", return_value=False),
+            patch("pathlib.Path.exists", return_value=True),
+            patch("pathlib.Path.is_file", return_value=True),
+        ):
             self.assertFalse(validate_file_path("unreadable_file.txt"))
 
     def test_large_file_warning(self):
         """大文件 (>100MB) → True + 警告。"""
-        with patch(
-            "pathlib.Path.stat"
-        ) as mock_stat, patch(
-            "pathlib.Path.exists", return_value=True
-        ), patch(
-            "pathlib.Path.is_file", return_value=True
-        ), patch(
-            "os.access", return_value=True
+        with (
+            patch("pathlib.Path.stat") as mock_stat,
+            patch("pathlib.Path.exists", return_value=True),
+            patch("pathlib.Path.is_file", return_value=True),
+            patch("os.access", return_value=True),
         ):
             mock_stat.return_value.st_size = 200 * 1024 * 1024  # 200 MB
             self.assertTrue(validate_file_path("large_file.txt"))
@@ -469,12 +458,11 @@ class TestValidateFilePath(unittest.TestCase):
 
     def test_stat_oserror_ignored(self):
         """stat() 抛出 OSError → 忽略, 仍返回 True。"""
-        with patch(
-            "pathlib.Path.stat", side_effect=OSError("permission denied")
-        ), patch("pathlib.Path.exists", return_value=True), patch(
-            "pathlib.Path.is_file", return_value=True
-        ), patch(
-            "os.access", return_value=True
+        with (
+            patch("pathlib.Path.stat", side_effect=OSError("permission denied")),
+            patch("pathlib.Path.exists", return_value=True),
+            patch("pathlib.Path.is_file", return_value=True),
+            patch("os.access", return_value=True),
         ):
             self.assertTrue(validate_file_path("broken_stat.txt"))
 
@@ -487,9 +475,7 @@ class TestValidateArgsWithRealFilePath(unittest.TestCase):
 
     def setUp(self):
         self.mock_output = _make_mock_output()
-        patcher = patch(
-            "src.cli.validation._get_output", return_value=self.mock_output
-        )
+        patcher = patch("src.cli.validation._get_output", return_value=self.mock_output)
         self.addCleanup(patcher.stop)
         patcher.start()
 

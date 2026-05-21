@@ -43,9 +43,7 @@ def match_data():
             "private_key": b"\x00" * 32,
             "wif_compressed": "5" + "H" + "0" * 49,
             "wif_uncompressed": "5" + "J" + "0" * 49,
-            "public_key_compressed": bytes.fromhex(
-                "02" + "00" * 32
-            ),
+            "public_key_compressed": bytes.fromhex("02" + "00" * 32),
             "public_key_uncompressed": bytes.fromhex(
                 "04b4632d08485ff1df2db55b9dafd23347d1c47a457072a1e87be26896549a8737"
                 "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"

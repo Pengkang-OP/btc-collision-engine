@@ -157,7 +157,9 @@ def get_version_changelog(version: str | None = None) -> list[dict[str, str]]:
     return [e for e in KERNEL_VERSION_HISTORY if e["version"] == version]
 
 
-def get_latest_compatible_version(current_version: str, available_versions: list[str]) -> str | None:
+def get_latest_compatible_version(
+    current_version: str, available_versions: list[str]
+) -> str | None:
     """查找最新兼容版本（用于回滚场景）
 
     给定当前版本和可用版本列表，返回可回退到的最高版本。
@@ -1716,6 +1718,7 @@ __kernel void verify_arithmetic(
 
 
 # P2修复: 内核代码外部化 — 运行时从独立 .cl 文件加载，回退到嵌入源码
+
 
 def _load_kernel_source() -> str:
     """加载 OpenCL 内核源码

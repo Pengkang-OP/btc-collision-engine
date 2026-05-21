@@ -90,7 +90,9 @@ def _verify_checksum(hrp: str, data: list[int]) -> str | None:
     return None
 
 
-def bech32_encode(hrp: str, witness_version: int, witness_program: bytes, encoding: str = "bech32") -> str:
+def bech32_encode(
+    hrp: str, witness_version: int, witness_program: bytes, encoding: str = "bech32"
+) -> str:
     """将 witness program 编码为 Bech32/Bech32m 地址。
 
     参数:
@@ -151,7 +153,7 @@ def bech32_decode(addr: str) -> tuple[str | None, list[int], str | None]:
         return None, [], None
 
     hrp = addr[:pos]
-    data_part = addr[pos + 1:]
+    data_part = addr[pos + 1 :]
     if len(data_part) < 6:
         return None, [], None
 
@@ -198,7 +200,7 @@ def decode_segwit_address(hrp: str, addr: str) -> tuple[int | None, bytes | None
     if addr[:pos] != hrp:
         return None, None
 
-    data_part = addr[pos + 1:]
+    data_part = addr[pos + 1 :]
     if len(data_part) < 6:
         return None, None
 

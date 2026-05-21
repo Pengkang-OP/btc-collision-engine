@@ -365,7 +365,9 @@ class GPUCollisionEngine(BaseCollisionEngine):
             },
             "batch_size": batch_size,
         }
-        self._device_manager = GPUDeviceManager(device_index=device_index, config=gpu_facade_config, logger=logger)
+        self._device_manager = GPUDeviceManager(
+            device_index=device_index, config=gpu_facade_config, logger=logger
+        )
         self._device_manager.initialize(
             targets,
             batch_size,
@@ -530,7 +532,9 @@ class GPUCollisionEngine(BaseCollisionEngine):
             self.dedup_filter = self._core.dedup_filter
 
         if self.stats is None:
-            raise RuntimeError("GPUCollisionEngine.start(): self.stats is None, _core._init_stats() 可能未正确初始化")
+            raise RuntimeError(
+                "GPUCollisionEngine.start(): self.stats is None, _core._init_stats() 可能未正确初始化"
+            )
         self.stats.start_time = time.time()
 
         # v4.2.1: 发布引擎启动事件
@@ -680,7 +684,9 @@ class GPUCollisionEngine(BaseCollisionEngine):
     def get_stats(self) -> CollisionStats:
         """获取统计信息"""
         if self.stats is None:
-            raise RuntimeError("GPUCollisionEngine.get_stats(): self.stats is None, 引擎未正确初始化")
+            raise RuntimeError(
+                "GPUCollisionEngine.get_stats(): self.stats is None, 引擎未正确初始化"
+            )
         return self.stats
 
     def get_adjustment_history(self, limit: int = 10) -> list[dict[str, Any]]:
@@ -831,7 +837,9 @@ class GPUCollisionEngine(BaseCollisionEngine):
         """记录 GPU 性能指标 [委托给 _scheduler]"""
         self._scheduler.update_performance_metrics(batch_size, execution_time_ms)
 
-    def _record_adjustment(self, old_size: int, new_size: int, reason: str, details: str = "") -> None:
+    def _record_adjustment(
+        self, old_size: int, new_size: int, reason: str, details: str = ""
+    ) -> None:
         """记录调整历史 [委托给 _scheduler]"""
         self._scheduler.record_adjustment(old_size, new_size, reason, details)
 
@@ -899,7 +907,9 @@ class GPUCollisionEngine(BaseCollisionEngine):
         assert self._random_search_mode is not None
         return cast(
             bytes,
-            self._random_search_mode._wait_for_async_key_generation(gen_thread, gen_result, batch_num),
+            self._random_search_mode._wait_for_async_key_generation(
+                gen_thread, gen_result, batch_num
+            ),
         )
 
     def _range_scan(self, start: int, end: int):

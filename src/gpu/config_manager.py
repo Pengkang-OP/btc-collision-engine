@@ -26,7 +26,9 @@ class GPUConfigManager:
     PRIORITY_AUTO = 3  # 自动生成配置
     PRIORITY_DEFAULT = 4  # 默认值
 
-    def __init__(self, user_config: dict[str, Any] | None = None, logger: Any | None = None) -> None:  # noqa: E501
+    def __init__(
+        self, user_config: dict[str, Any] | None = None, logger: Any | None = None
+    ) -> None:  # noqa: E501
         """
         Args:
             user_config: 用户提供的配置
@@ -71,11 +73,9 @@ class GPUConfigManager:
     def _generate_auto_config(self, device_info: dict) -> dict:
         """生成自动配置"""
         config = self._auto_configurator.configure_for_device(device_info)
-        _bs = config['batch_size']
-        _wa = config.get('use_uint32_workaround', False)
-        self.logger.info(
-            f"自动配置: batch={_bs:,}, vendor_workaround={_wa}"
-        )
+        _bs = config["batch_size"]
+        _wa = config.get("use_uint32_workaround", False)
+        self.logger.info(f"自动配置: batch={_bs:,}, vendor_workaround={_wa}")
         return config
 
     def _load_profile_config(self, device_info: dict) -> dict | None:
@@ -218,7 +218,9 @@ class GPUConfigManager:
         if "use_uint32_workaround" in config:
             # uint32_workaround 在 kernel 层由 intel_optimizer 自动应用，
             # 此处仅记录配置状态（设备层无直接属性设置）
-            self.logger.info(f"✅ 应用配置: use_uint32_workaround={config['use_uint32_workaround']}")
+            self.logger.info(
+                f"✅ 应用配置: use_uint32_workaround={config['use_uint32_workaround']}"
+            )
 
         return config
 

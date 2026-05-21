@@ -137,7 +137,9 @@ class WizardEngine:
     def _select_options(self):
         """选择功能选项"""
         selector = OptionSelector()
-        checkpoint, dedup, duration = selector.select(compact=(self.config.mode == WizardMode.COMPACT))
+        checkpoint, dedup, duration = selector.select(
+            compact=(self.config.mode == WizardMode.COMPACT)
+        )
         self.result.checkpoint = checkpoint
         self.result.dedup = dedup
         self.result.duration = duration
@@ -146,7 +148,9 @@ class WizardEngine:
     def _select_gpu(self):
         """选择GPU设备"""
         selector = GPUSelector()
-        gpu_indices, use_multi_gpu = selector.select(compact=(self.config.mode == WizardMode.COMPACT))
+        gpu_indices, use_multi_gpu = selector.select(
+            compact=(self.config.mode == WizardMode.COMPACT)
+        )
         self.result.gpu_indices = gpu_indices
         self.result.use_multi_gpu = use_multi_gpu
         self.message_queue.send_gpu_selected(gpu_indices, use_multi_gpu)

@@ -459,17 +459,21 @@ class GPUMemoryPool:
 
             # 如果平均内存使用超过最大内存的70%，尝试扩展内存池
             if avg_memory > self._max_memory_bytes / (1024 * 1024) * 0.7:
-                new_max_memory = min(self._max_memory_bytes * 1.5, 2 * 1024 * 1024 * 1024)  # 最多2GB
+                new_max_memory = min(
+                    self._max_memory_bytes * 1.5, 2 * 1024 * 1024 * 1024
+                )  # 最多2GB
                 if new_max_memory > self._max_memory_bytes:
                     self._max_memory_bytes = int(new_max_memory)
-                    logger.info(f"内存使用较高，扩展内存池大小: {new_max_memory / (1024 * 1024):.1f}MB")
+                    logger.info(
+                        f"内存使用较高，扩展内存池大小: {new_max_memory / (1024 * 1024):.1f}MB"
+                    )
 
             # 分析分配模式
             if self._allocation_count > 100:
                 # 找出最常用的缓冲区大小
-                top_sizes = sorted(self._allocation_patterns.items(), key=lambda x: x[1], reverse=True)[
-                    :5
-                ]
+                top_sizes = sorted(
+                    self._allocation_patterns.items(), key=lambda x: x[1], reverse=True
+                )[:5]
                 if top_sizes:
                     logger.debug(f"最常用的缓冲区大小: {top_sizes}")
 
@@ -865,7 +869,9 @@ class GlobalGPUMemoryManager:
         interval = (
             interval_seconds if interval_seconds is not None else self.DEFAULT_AUTO_CLEANUP_INTERVAL
         )
-        lru_timeout = lru_idle_timeout if lru_idle_timeout is not None else self.DEFAULT_LRU_IDLE_TIMEOUT
+        lru_timeout = (
+            lru_idle_timeout if lru_idle_timeout is not None else self.DEFAULT_LRU_IDLE_TIMEOUT
+        )
         start_cleanup_thread(
             self._cleanup_state,
             self._auto_cleanup_loop,

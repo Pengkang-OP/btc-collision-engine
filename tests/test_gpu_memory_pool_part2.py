@@ -258,7 +258,9 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
                 return True  # 停止
             return False
 
-        with patch.object(mgr._cleanup_state._cleanup_stop_event, "wait", side_effect=wait_side_effect):
+        with patch.object(
+            mgr._cleanup_state._cleanup_stop_event, "wait", side_effect=wait_side_effect
+        ):
             mgr._auto_cleanup_loop(interval=0.01, lru_timeout=0.1)
         # 不应崩溃
 
@@ -281,7 +283,9 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
 
         # mock _evict_lru_locked to raise on first call
         with patch.object(GPUMemoryPool, "_evict_lru_locked", side_effect=TestException("err")):
-            with patch.object(mgr._cleanup_state._cleanup_stop_event, "wait", side_effect=wait_side_effect):
+            with patch.object(
+                mgr._cleanup_state._cleanup_stop_event, "wait", side_effect=wait_side_effect
+            ):
                 mgr._auto_cleanup_loop(interval=0.01, lru_timeout=0.1)
         # 不应崩溃
 
@@ -294,7 +298,9 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
             return False  # run once
 
         with patch.object(GPUMemoryPool, "_evict_lru_locked", side_effect=MemoryError("OOM")):
-            with patch.object(mgr._cleanup_state._cleanup_stop_event, "wait", side_effect=wait_side_effect):
+            with patch.object(
+                mgr._cleanup_state._cleanup_stop_event, "wait", side_effect=wait_side_effect
+            ):
                 mgr._auto_cleanup_loop(interval=0.01, lru_timeout=0.1)
         # 不应崩溃
 
@@ -327,7 +333,9 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
 
         # 注入 pyopencl mock
         with patch.dict(sys.modules, {"pyopencl": FakeCL}):
-            with patch.object(mgr._cleanup_state._cleanup_stop_event, "wait", side_effect=wait_side_effect):
+            with patch.object(
+                mgr._cleanup_state._cleanup_stop_event, "wait", side_effect=wait_side_effect
+            ):
                 mgr._auto_cleanup_loop(interval=0.01, lru_timeout=0.1)
         # 不应崩溃
 
@@ -413,12 +421,8 @@ class TestConcurrentSafety:
         # 无异常
         assert len(errors) == 0, f"并发异常: {errors}"
         # 所有缓冲区都正常归还（access_times 数量 = 池中缓冲区总数）
-        total_pooled = (
-            sum(len(v) for v in pool._pool.values())
-            + sum(
-                sum(len(vv) for vv in v.values())
-                for v in pool._type_pools.values()
-            )
+        total_pooled = sum(len(v) for v in pool._pool.values()) + sum(
+            sum(len(vv) for vv in v.values()) for v in pool._type_pools.values()
         )
         assert len(pool._access_times) == total_pooled
         assert len(pool._buf_by_id) == total_pooled

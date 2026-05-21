@@ -59,9 +59,7 @@ class EngineFactory:
         if event_bus is not None:
             kwargs.setdefault("event_bus", event_bus)
 
-        return create_collision_engine(
-            targets=targets, mode="cpu", container=container, **kwargs
-        )
+        return create_collision_engine(targets=targets, mode="cpu", container=container, **kwargs)
 
     @staticmethod
     def create_gpu_engine(
@@ -83,6 +81,4 @@ class EngineFactory:
         kwargs.pop("stats", None)
         kwargs.pop("data_logger", None)
 
-        return create_collision_engine(
-            targets=targets, mode="gpu", container=container, **kwargs
-        )
+        return create_collision_engine(targets=targets, mode="gpu", container=container, **kwargs)

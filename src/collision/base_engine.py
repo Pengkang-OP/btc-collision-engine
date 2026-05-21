@@ -125,11 +125,11 @@ class BaseCollisionEngine(ABC):
             bool: 回调是否成功执行
         """
         # v4.2.2 H1修复: 使用 getattr 防护，避免子类未设置 on_match 时 AttributeError
-        on_match = getattr(self, 'on_match', None)
+        on_match = getattr(self, "on_match", None)
         if not on_match:
             return True
 
-        audit_enabled = getattr(self, '_match_callback_audit_enabled', True)
+        audit_enabled = getattr(self, "_match_callback_audit_enabled", True)
 
         if audit_enabled:
             key_hash = hashlib.sha256(private_key).hexdigest()[:16]
@@ -138,14 +138,10 @@ class BaseCollisionEngine(ABC):
         try:
             if os.name == "nt":
                 # Windows不支持SIGALRM，使用线程超时
-                return self._invoke_match_callback_windows(
-                    on_match, private_key, address, wif
-                )
+                return self._invoke_match_callback_windows(on_match, private_key, address, wif)
             else:
                 # Unix系统使用SIGALRM超时 (含Q7修复)
-                return self._invoke_match_callback_unix(
-                    on_match, private_key, address, wif
-                )
+                return self._invoke_match_callback_unix(on_match, private_key, address, wif)
         except Exception as e:
             logger.error(f"匹配回调调用失败: {e}")
             return False
@@ -182,9 +178,7 @@ class BaseCollisionEngine(ABC):
         if callback_thread.is_alive():
             # v4.2.2 H7: 通知子线程取消，避免资源泄漏
             cancel_event.set()
-            logger.critical(
-                f"匹配回调执行超时 ({self._match_callback_timeout}秒)，已通知取消"
-            )
+            logger.critical(f"匹配回调执行超时 ({self._match_callback_timeout}秒)，已通知取消")
             return False
 
         if exception[0]:

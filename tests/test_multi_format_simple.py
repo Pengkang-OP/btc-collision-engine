@@ -27,18 +27,14 @@ class TestMultiFormatAddressGeneration:
 
     def test_p2pkh_generation_starts_with_1(self):
         """P2PKH 地址应以 '1' 开头"""
-        result, address = self.validator.generate_address(
-            self.compressed_pk, AddressType.P2PKH
-        )
+        result, address = self.validator.generate_address(self.compressed_pk, AddressType.P2PKH)
         assert result.success, f"P2PKH 生成失败: {result.errors}"
         assert address.startswith("1"), f"P2PKH 地址不以 '1' 开头: {address}"
         assert 25 <= len(address) <= 35, f"P2PKH 地址长度异常: {len(address)}"
 
     def test_p2pkh_self_validation(self):
         """生成的 P2PKH 地址能通过验证"""
-        result, address = self.validator.generate_address(
-            self.compressed_pk, AddressType.P2PKH
-        )
+        result, address = self.validator.generate_address(self.compressed_pk, AddressType.P2PKH)
         validation = self.validator.validate_address(address)
         assert validation.success, f"P2PKH 自验证失败: {validation.errors}"
         assert validation.details.get("address_type") == "P2PKH"
@@ -47,18 +43,14 @@ class TestMultiFormatAddressGeneration:
 
     def test_p2sh_generation_starts_with_3(self):
         """P2SH 地址应以 '3' 开头"""
-        result, address = self.validator.generate_address(
-            self.compressed_pk, AddressType.P2SH
-        )
+        result, address = self.validator.generate_address(self.compressed_pk, AddressType.P2SH)
         assert result.success, f"P2SH 生成失败: {result.errors}"
         assert address.startswith("3"), f"P2SH 地址不以 '3' 开头: '{address}'"
         assert 25 <= len(address) <= 35, f"P2SH 地址长度异常: {len(address)}"
 
     def test_p2sh_self_validation(self):
         """生成的 P2SH 地址能通过验证"""
-        result, address = self.validator.generate_address(
-            self.compressed_pk, AddressType.P2SH
-        )
+        result, address = self.validator.generate_address(self.compressed_pk, AddressType.P2SH)
         validation = self.validator.validate_address(address)
         assert validation.success, f"P2SH 自验证失败: {validation.errors}"
         assert validation.details.get("address_type") == "P2SH"
@@ -67,18 +59,14 @@ class TestMultiFormatAddressGeneration:
 
     def test_bech32_generation_starts_with_bc1(self):
         """Bech32 地址应以 'bc1' 开头"""
-        result, address = self.validator.generate_address(
-            self.compressed_pk, AddressType.BECH32
-        )
+        result, address = self.validator.generate_address(self.compressed_pk, AddressType.BECH32)
         assert result.success, f"Bech32 生成失败: {result.errors}"
         assert address.startswith("bc1"), f"Bech32 地址不以 'bc1' 开头: '{address}'"
         assert len(address) >= 10, f"Bech32 地址过短: {len(address)}"
 
     def test_bech32_self_validation(self):
         """生成的 Bech32 地址能通过验证"""
-        result, address = self.validator.generate_address(
-            self.compressed_pk, AddressType.BECH32
-        )
+        result, address = self.validator.generate_address(self.compressed_pk, AddressType.BECH32)
         validation = self.validator.validate_address(address)
         assert validation.success, f"Bech32 自验证失败: {validation.errors}"
         assert validation.details.get("address_type") == "Bech32"
@@ -92,9 +80,9 @@ class TestMultiFormatAddressGeneration:
         )
         hash160 = HashUtils.hash160(self.compressed_pk)
         manual_bech32 = bech32_encode("bc", 0, hash160, "bech32")
-        assert manual_bech32 == bech32_address, (
-            f"手动编码 {manual_bech32} 与验证器 {bech32_address} 不一致"
-        )
+        assert (
+            manual_bech32 == bech32_address
+        ), f"手动编码 {manual_bech32} 与验证器 {bech32_address} 不一致"
 
     def test_bech32_decode_roundtrip(self):
         """Bech32 编解码往返一致"""
@@ -118,9 +106,7 @@ class TestMultiFormatAddressGeneration:
         result = self.validator.validate_address(address)
         assert result.success, f"已知 {expected_type} 地址验证失败: {result.errors}"
         detected = result.details.get("address_type", "")
-        assert detected == expected_type, (
-            f"地址类型不匹配: 期望 {expected_type}, 实际 {detected}"
-        )
+        assert detected == expected_type, f"地址类型不匹配: 期望 {expected_type}, 实际 {detected}"
 
     # ---- 第6组：格式支持综合验证 ----
 
@@ -147,6 +133,4 @@ class TestMultiFormatAddressGeneration:
         # 已知地址
         assert validator.validate_address("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa").success
         assert validator.validate_address("3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy").success
-        assert validator.validate_address(
-            "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
-        ).success
+        assert validator.validate_address("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4").success

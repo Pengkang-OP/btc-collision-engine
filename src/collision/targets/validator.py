@@ -58,7 +58,9 @@ class ValidationResult:
 
     def __repr__(self) -> str:
         if self.valid:
-            return f"ValidationResult({self.address[:10]}..., valid=True, format={self.format_type})"
+            return (
+                f"ValidationResult({self.address[:10]}..., valid=True, format={self.format_type})"
+            )
         elif not self.validated:
             return f"ValidationResult({self.address[:10]}..., valid=False, validated=False, error={self.error})"  # noqa: E501
         else:
@@ -123,11 +125,16 @@ class AddressBatchValidator:
                     results = {}
                     for valid_addr in str_addresses:
                         results[valid_addr] = ValidationResult(
-                            address=valid_addr, valid=False, validated=False,
+                            address=valid_addr,
+                            valid=False,
+                            validated=False,
                             error="批量验证因严格模式中止",
                         )
                     results[addr_str] = ValidationResult(
-                        address=addr_str, valid=False, validated=True, error=error_msg,
+                        address=addr_str,
+                        valid=False,
+                        validated=True,
+                        error=error_msg,
                     )
                     logger.info(
                         f"严格模式验证中止: 已收集{len(str_addresses)}个有效地址（未验证），"
@@ -148,7 +155,9 @@ class AddressBatchValidator:
                             else:
                                 skipped_count += 1
                         except Exception as e:
-                            logger.error(f"地址类型转换失败: {type(addr).__name__} -> str, 错误={e}")
+                            logger.error(
+                                f"地址类型转换失败: {type(addr).__name__} -> str, 错误={e}"
+                            )
                             skipped_count += 1
                     else:
                         logger.debug(f"不支持的类型转换: {type(addr).__name__}, 跳过")
@@ -243,7 +252,9 @@ class AddressBatchValidator:
                     logger.debug(f"地址验证成功: {address[:15]}... (P2PKH)")
                     return ValidationResult(address=address, valid=True, format_type=format_type)
                 else:
-                    logger.debug(f"地址验证失败: {address[:15]}... (P2PKH, version=0x{version:02x})")
+                    logger.debug(
+                        f"地址验证失败: {address[:15]}... (P2PKH, version=0x{version:02x})"
+                    )
                     return ValidationResult(
                         address=address,
                         valid=False,

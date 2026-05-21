@@ -330,18 +330,21 @@ class TestValidateWorkerCount:
     def test_none_returns_cpu_count(self):
         """None 返回 CPU 核心数"""
         import os
+
         result = _validate_worker_count(None)
         assert result == (os.cpu_count() or 4)
 
     def test_zero_returns_cpu_count(self):
         """0 返回 CPU 核心数"""
         import os
+
         result = _validate_worker_count(0)
         assert result == (os.cpu_count() or 4)
 
     def test_negative_returns_cpu_count(self):
         """负数返回 CPU 核心数"""
         import os
+
         result = _validate_worker_count(-5)
         assert result == (os.cpu_count() or 4)
 
@@ -478,6 +481,7 @@ class TestHealthCheck:
         pool = WorkStealingThreadPool(num_threads=2)
         pool.start()
         try:
+
             def fail():
                 raise RuntimeError("fail")
 

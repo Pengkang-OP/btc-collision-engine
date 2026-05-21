@@ -65,6 +65,7 @@ def _has_opencl_gpu() -> bool:
     except Exception as e:
         # 驱动/平台错误 — 记录原因
         import logging
+
         logging.getLogger(__name__).debug(f"GPU检测失败: {type(e).__name__}: {e}")
     return False
 

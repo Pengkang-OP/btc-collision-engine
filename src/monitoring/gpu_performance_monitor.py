@@ -258,9 +258,7 @@ class GPUPerformanceMonitor:
                 self._total_memory_mb = device_info.get("global_mem_size", 0) / (1024 * 1024)
 
                 _mem = self._total_memory_mb
-                logger.info(
-                    f"GPU设备信息: {self._device_name} ({self._vendor}), 显存={_mem:.0f}MB"
-                )
+                logger.info(f"GPU设备信息: {self._device_name} ({self._vendor}), 显存={_mem:.0f}MB")
         except Exception as e:
             logger.warning(f"获取GPU设备信息失败: {e}")
 
@@ -333,9 +331,7 @@ class GPUPerformanceMonitor:
 
                 # AMD GPU 典型规格 (RX 7900 XTX / RX 6900 XT 等)
                 # 生产环境应使用 ROCm-SMI (rocm-smi) 获取实时数据
-                logger.info(
-                    "AMD GPU 监控提示: 安装 ROCm-SMI 后可获取实时利用率/温度/功耗"
-                )
+                logger.info("AMD GPU 监控提示: 安装 ROCm-SMI 后可获取实时利用率/温度/功耗")
 
             except Exception as e:
                 logger.warning(f"AMD监控初始化失败: {e}")

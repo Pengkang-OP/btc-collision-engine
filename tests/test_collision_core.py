@@ -272,22 +272,16 @@ class TestEngineFactory:
 
     def test_create_cpu_engine_default(self):
         """默认参数创建 CPU 引擎，targets 正确传递"""
-        with patch(
-            "src.collision.key_collision_engine.KeyCollisionEngine"
-        ) as mock_engine_cls:
+        with patch("src.collision.key_collision_engine.KeyCollisionEngine") as mock_engine_cls:
             mock_engine = MagicMock()
             mock_engine_cls.return_value = mock_engine
             engine = EngineFactory.create_cpu_engine(self.TARGETS)
-            mock_engine_cls.assert_called_once_with(
-                targets=self.TARGETS, event_bus=None
-            )
+            mock_engine_cls.assert_called_once_with(targets=self.TARGETS, event_bus=None)
             assert engine is mock_engine
 
     def test_create_cpu_engine_passes_targets(self):
         """targets 参数正确传递给引擎构造器"""
-        with patch(
-            "src.collision.key_collision_engine.KeyCollisionEngine"
-        ) as mock_engine_cls:
+        with patch("src.collision.key_collision_engine.KeyCollisionEngine") as mock_engine_cls:
             mock_engine = MagicMock()
             mock_engine_cls.return_value = mock_engine
             EngineFactory.create_cpu_engine(self.TARGETS_1)
@@ -296,9 +290,7 @@ class TestEngineFactory:
 
     def test_create_cpu_engine_no_event_bus(self):
         """无 container、无 event_bus 时传递 event_bus=None"""
-        with patch(
-            "src.collision.key_collision_engine.KeyCollisionEngine"
-        ) as mock_engine_cls:
+        with patch("src.collision.key_collision_engine.KeyCollisionEngine") as mock_engine_cls:
             mock_engine_cls.return_value = MagicMock()
             EngineFactory.create_cpu_engine(self.TARGETS_1)
             call_kwargs = mock_engine_cls.call_args.kwargs
@@ -306,25 +298,17 @@ class TestEngineFactory:
 
     def test_create_cpu_engine_container_event_bus_fallback(self):
         """传入 container 时 event_bus 回退到 container.event_bus"""
-        with patch(
-            "src.collision.key_collision_engine.KeyCollisionEngine"
-        ) as mock_engine_cls:
+        with patch("src.collision.key_collision_engine.KeyCollisionEngine") as mock_engine_cls:
             mock_engine_cls.return_value = MagicMock()
             mock_eb = MagicMock()
             mock_container = MagicMock()
             mock_container.event_bus = mock_eb
-            EngineFactory.create_cpu_engine(
-                self.TARGETS_1, container=mock_container
-            )
-            mock_engine_cls.assert_called_once_with(
-                targets=self.TARGETS_1, event_bus=mock_eb
-            )
+            EngineFactory.create_cpu_engine(self.TARGETS_1, container=mock_container)
+            mock_engine_cls.assert_called_once_with(targets=self.TARGETS_1, event_bus=mock_eb)
 
     def test_create_cpu_engine_event_bus_priority(self):
         """直接 event_bus 参数优先于 container.event_bus"""
-        with patch(
-            "src.collision.key_collision_engine.KeyCollisionEngine"
-        ) as mock_engine_cls:
+        with patch("src.collision.key_collision_engine.KeyCollisionEngine") as mock_engine_cls:
             mock_engine_cls.return_value = MagicMock()
             direct_eb = MagicMock()
             container_eb = MagicMock()
@@ -335,44 +319,30 @@ class TestEngineFactory:
                 container=mock_container,
                 event_bus=direct_eb,
             )
-            mock_engine_cls.assert_called_once_with(
-                targets=self.TARGETS_1, event_bus=direct_eb
-            )
+            mock_engine_cls.assert_called_once_with(targets=self.TARGETS_1, event_bus=direct_eb)
 
     def test_create_cpu_engine_kwargs_passthrough(self):
         """**kwargs 透传给引擎构造器"""
-        with patch(
-            "src.collision.key_collision_engine.KeyCollisionEngine"
-        ) as mock_engine_cls:
+        with patch("src.collision.key_collision_engine.KeyCollisionEngine") as mock_engine_cls:
             mock_engine_cls.return_value = MagicMock()
-            EngineFactory.create_cpu_engine(
-                self.TARGETS_1, max_keys=10000, batch_size=512
-            )
+            EngineFactory.create_cpu_engine(self.TARGETS_1, max_keys=10000, batch_size=512)
             call_kwargs = mock_engine_cls.call_args.kwargs
             assert call_kwargs["max_keys"] == 10000
             assert call_kwargs["batch_size"] == 512
 
     def test_create_cpu_engine_stats_deprecation(self):
         """传入 stats 参数触发 DeprecationWarning"""
-        with patch(
-            "src.collision.key_collision_engine.KeyCollisionEngine"
-        ) as mock_ec:
+        with patch("src.collision.key_collision_engine.KeyCollisionEngine") as mock_ec:
             mock_ec.return_value = MagicMock()
             with pytest.warns(DeprecationWarning, match="stats"):
-                EngineFactory.create_cpu_engine(
-                    self.TARGETS_1, stats=MagicMock()
-                )
+                EngineFactory.create_cpu_engine(self.TARGETS_1, stats=MagicMock())
 
     def test_create_cpu_engine_data_logger_deprecation(self):
         """传入 data_logger 参数触发 DeprecationWarning"""
-        with patch(
-            "src.collision.key_collision_engine.KeyCollisionEngine"
-        ) as mock_ec:
+        with patch("src.collision.key_collision_engine.KeyCollisionEngine") as mock_ec:
             mock_ec.return_value = MagicMock()
             with pytest.warns(DeprecationWarning, match="data_logger"):
-                EngineFactory.create_cpu_engine(
-                    self.TARGETS_1, data_logger=MagicMock()
-                )
+                EngineFactory.create_cpu_engine(self.TARGETS_1, data_logger=MagicMock())
 
     # ========================================================================
     # GPU 引擎创建
@@ -384,64 +354,42 @@ class TestEngineFactory:
         注意: GPU factory 不传递 event_bus 给 GPUCollisionEngine
         (与 CPU factory 不同)，因此仅验证 targets 参数。
         """
-        with patch(
-            "src.collision.gpu_collision_engine.GPUCollisionEngine"
-        ) as mock_engine_cls:
+        with patch("src.collision.gpu_collision_engine.GPUCollisionEngine") as mock_engine_cls:
             mock_engine = MagicMock()
             mock_engine_cls.return_value = mock_engine
             engine = EngineFactory.create_gpu_engine(self.TARGETS_1)
-            mock_engine_cls.assert_called_once_with(
-                targets=self.TARGETS_1
-            )
+            mock_engine_cls.assert_called_once_with(targets=self.TARGETS_1)
             assert engine is mock_engine
 
     def test_create_gpu_engine_with_container(self):
         """GPU 引擎传入 container 不崩溃（container 在当前实现中被忽略）"""
-        with patch(
-            "src.collision.gpu_collision_engine.GPUCollisionEngine"
-        ) as mock_engine_cls:
+        with patch("src.collision.gpu_collision_engine.GPUCollisionEngine") as mock_engine_cls:
             mock_engine_cls.return_value = MagicMock()
             mock_container = MagicMock()
-            engine = EngineFactory.create_gpu_engine(
-                self.TARGETS_1, container=mock_container
-            )
-            mock_engine_cls.assert_called_once_with(
-                targets=self.TARGETS_1
-            )
+            engine = EngineFactory.create_gpu_engine(self.TARGETS_1, container=mock_container)
+            mock_engine_cls.assert_called_once_with(targets=self.TARGETS_1)
             assert engine is not None
 
     def test_create_gpu_engine_stats_deprecation(self):
         """GPU 引擎传入 stats 参数触发 DeprecationWarning"""
-        with patch(
-            "src.collision.gpu_collision_engine.GPUCollisionEngine"
-        ) as mock_ec:
+        with patch("src.collision.gpu_collision_engine.GPUCollisionEngine") as mock_ec:
             mock_ec.return_value = MagicMock()
             with pytest.warns(DeprecationWarning, match="stats"):
-                EngineFactory.create_gpu_engine(
-                    self.TARGETS_1, stats=MagicMock()
-                )
+                EngineFactory.create_gpu_engine(self.TARGETS_1, stats=MagicMock())
 
     def test_create_gpu_engine_event_bus_deprecation(self):
         """GPU 引擎传入 event_bus 参数触发 DeprecationWarning"""
-        with patch(
-            "src.collision.gpu_collision_engine.GPUCollisionEngine"
-        ) as mock_ec:
+        with patch("src.collision.gpu_collision_engine.GPUCollisionEngine") as mock_ec:
             mock_ec.return_value = MagicMock()
             with pytest.warns(DeprecationWarning, match="event_bus"):
-                EngineFactory.create_gpu_engine(
-                    self.TARGETS_1, event_bus=MagicMock()
-                )
+                EngineFactory.create_gpu_engine(self.TARGETS_1, event_bus=MagicMock())
 
     def test_create_gpu_engine_data_logger_deprecation(self):
         """GPU 引擎传入 data_logger 参数触发 DeprecationWarning"""
-        with patch(
-            "src.collision.gpu_collision_engine.GPUCollisionEngine"
-        ) as mock_ec:
+        with patch("src.collision.gpu_collision_engine.GPUCollisionEngine") as mock_ec:
             mock_ec.return_value = MagicMock()
             with pytest.warns(DeprecationWarning, match="data_logger"):
-                EngineFactory.create_gpu_engine(
-                    self.TARGETS_1, data_logger=MagicMock()
-                )
+                EngineFactory.create_gpu_engine(self.TARGETS_1, data_logger=MagicMock())
 
 
 # ============================================================================

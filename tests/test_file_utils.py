@@ -125,9 +125,7 @@ class TestAtomicJsonRead:
         data = {"key": "value"}
         with open(self.test_file, "w", encoding="utf-8") as f:
             json.dump(data, f)
-        result = atomic_json_read(
-            self.test_file, validate_func=lambda d: "key" in d
-        )
+        result = atomic_json_read(self.test_file, validate_func=lambda d: "key" in d)
         assert result == data
 
     def test_read_with_validation_fail(self):
@@ -136,8 +134,7 @@ class TestAtomicJsonRead:
         with open(self.test_file, "w", encoding="utf-8") as f:
             json.dump(data, f)
         result = atomic_json_read(
-            self.test_file, default={"backup": True},
-            validate_func=lambda d: "key" in d
+            self.test_file, default={"backup": True}, validate_func=lambda d: "key" in d
         )
         assert result == {"backup": True}
 
@@ -328,7 +325,9 @@ class TestEnsureDirectory:
 
     def test_creation_failure_returns_false(self):
         """权限错误返回 False（模拟）"""
-        with patch("os.path.exists", return_value=False), \
-             patch("os.makedirs", side_effect=OSError("permission denied")):
+        with (
+            patch("os.path.exists", return_value=False),
+            patch("os.makedirs", side_effect=OSError("permission denied")),
+        ):
             result = ensure_directory("/invalid/path")
         assert result is False

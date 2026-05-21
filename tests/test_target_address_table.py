@@ -333,9 +333,7 @@ class TestBitcoinTargetTableLogging(unittest.TestCase):
         mock_generator_cls.return_value = mock_gen
 
         with patch("src.core.target_address_table.HashUtils") as mock_hash:
-            mock_hash.hash160.side_effect = [
-                i.to_bytes(20, "big") for i in range(10001)
-            ]
+            mock_hash.hash160.side_effect = [i.to_bytes(20, "big") for i in range(10001)]
             wif_list = [f"wif_{i}" for i in range(10001)]
             count = self.table.load_from_wif_list(wif_list)
 

@@ -23,8 +23,7 @@ def reset_batch_size(target_batch: int = 1572864):
     import os
 
     config_path = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-        "config.json"
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config.json"
     )
 
     # 读取配置
@@ -59,14 +58,9 @@ def reset_batch_size(target_batch: int = 1572864):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Intel Arc A770 Batch Size 重置工具"
-    )
+    parser = argparse.ArgumentParser(description="Intel Arc A770 Batch Size 重置工具")
     parser.add_argument(
-        "--batch", "-b",
-        type=int,
-        default=1572864,
-        help="目标 batch_size 值 (默认: 1572864)"
+        "--batch", "-b", type=int, default=1572864, help="目标 batch_size 值 (默认: 1572864)"
     )
 
     args = parser.parse_args()

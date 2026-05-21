@@ -94,33 +94,36 @@ class TestTargetTypeIdentification:
 
     def test_detect_wif(self):
         """识别 WIF 私钥 (5/K/L开头)"""
-        assert TargetResolver.detect_format(
-            "5KJvsngHeMpm884wtkJNzQGaCErckhHJBGFsvd3VyK5qMZXj3hS"
-        ) == "wif"
-        assert TargetResolver.detect_format(
-            "KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP98617"
-        ) == "wif"
-        assert TargetResolver.detect_format(
-            "L1aW4aubDFB7yfras2S1mN3bqg9nwySY8nkoLmJebSLD5BWv3ENZ"
-        ) == "wif"
+        assert (
+            TargetResolver.detect_format("5KJvsngHeMpm884wtkJNzQGaCErckhHJBGFsvd3VyK5qMZXj3hS")
+            == "wif"
+        )
+        assert (
+            TargetResolver.detect_format("KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP98617")
+            == "wif"
+        )
+        assert (
+            TargetResolver.detect_format("L1aW4aubDFB7yfras2S1mN3bqg9nwySY8nkoLmJebSLD5BWv3ENZ")
+            == "wif"
+        )
 
     def test_detect_case_insensitive_lowercase(self):
         """detect_format 对有效 Base58 地址的检测"""
         # Base58 字符集排除 I/O/l/0 — 大写	o 小写可能引入非法字符
         # 对原始混合大小写地址进行检测
-        assert TargetResolver.detect_format(
-            "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
-        ) == "address"
-        assert TargetResolver.detect_format(
-            "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"
-        ) == "p2sh_address"
+        assert TargetResolver.detect_format("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa") == "address"
+        assert TargetResolver.detect_format("3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy") == "p2sh_address"
         # Bech32 大小写均可（字符集不同）
-        assert TargetResolver.detect_format(
-            "BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4"
-        ) == "bech32_address"
-        assert TargetResolver.detect_format(
-            "BC1P5D7RJQ7G6RDK2YHZKS9SMLAQTEDR4DEKQ08GE8ZTWAC72SFR9RUSXG3297"
-        ) == "taproot_address"
+        assert (
+            TargetResolver.detect_format("BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4")
+            == "bech32_address"
+        )
+        assert (
+            TargetResolver.detect_format(
+                "BC1P5D7RJQ7G6RDK2YHZKS9SMLAQTEDR4DEKQ08GE8ZTWAC72SFR9RUSXG3297"
+            )
+            == "taproot_address"
+        )
 
     def test_detect_from_generated_formats(self):
         """从生成的地址出发验证类型识别"""
@@ -280,6 +283,7 @@ class TestBitcoinTargetTableWithTypes:
 
         # P2SH 地址的 script hash 不是公钥的 Hash160
         import hashlib as hl
+
         pub = self.formats["public_key_compressed"]
         pub_key_hash = hl.new("ripemd160", hl.sha256(pub).digest()).digest()
         redeem_script = bytes([0x76, 0xA9, 0x14]) + pub_key_hash + bytes([0x88, 0xAC])
@@ -354,7 +358,9 @@ class TestAddressMatcherMultiTypeStrategies:
         assert matcher.is_match(self.formats["p2pkh"]), f"{strategy}: P2PKH应匹配"
         assert matcher.is_match(self.formats["p2sh"]), f"{strategy}: P2SH应匹配"
         assert matcher.is_match(self.formats["bech32"]), f"{strategy}: Bech32应匹配"
-        assert not matcher.is_match("1NonExistentXXXXXXXXXXXXXXX"), f"{strategy}: 不存在的地址不应匹配"
+        assert not matcher.is_match(
+            "1NonExistentXXXXXXXXXXXXXXX"
+        ), f"{strategy}: 不存在的地址不应匹配"
 
     def test_hash_set_strategy_all_types(self):
         """hash_set 策略：三种地址格式均可匹配"""
@@ -379,15 +385,9 @@ class TestAddressMatcherMultiTypeStrategies:
             matcher = AddressMatcher(strategy=strategy, targets=self.all_targets)
 
             # 大写输入
-            assert matcher.is_match(self.formats["p2pkh"].upper()), (
-                f"{strategy}: 大写P2PKH应匹配"
-            )
-            assert matcher.is_match(self.formats["p2sh"].upper()), (
-                f"{strategy}: 大写P2SH应匹配"
-            )
-            assert matcher.is_match(self.formats["bech32"].upper()), (
-                f"{strategy}: 大写Bech32应匹配"
-            )
+            assert matcher.is_match(self.formats["p2pkh"].upper()), f"{strategy}: 大写P2PKH应匹配"
+            assert matcher.is_match(self.formats["p2sh"].upper()), f"{strategy}: 大写P2SH应匹配"
+            assert matcher.is_match(self.formats["bech32"].upper()), f"{strategy}: 大写Bech32应匹配"
 
             # 混合大小写
             mixed = self.formats["p2pkh"][:10].upper() + self.formats["p2pkh"][10:]

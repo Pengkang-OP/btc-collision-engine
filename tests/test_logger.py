@@ -466,6 +466,7 @@ class TestGetLogger:
         logger = get_logger("test_existing")
         assert isinstance(logger, logging.Logger)
 
+
 @pytest.mark.unit
 class TestGetSampledLogger:
     """get_sampled_logger 函数测试"""

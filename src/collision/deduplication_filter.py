@@ -171,8 +171,6 @@ class DeduplicationFilter:
             self._current_size = 0
             self.duplicates_found = 0
             self.checks_total = 0
-            _old_checks = old_stats['checks_total']
-            _old_dups = old_stats['duplicates_found']
-            logger.info(
-                f"去重过滤器已重置 (之前: 检查={_old_checks}, 重复={_old_dups})"
-            )
+            _old_checks = old_stats["checks_total"]
+            _old_dups = old_stats["duplicates_found"]
+            logger.info(f"去重过滤器已重置 (之前: 检查={_old_checks}, 重复={_old_dups})")

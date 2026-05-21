@@ -44,9 +44,7 @@ class TestHashUtilsHash160(unittest.TestCase):
     def test_hash160_known(self):
         """hash160 = ripemd160(sha256(data))"""
         result = HashUtils.hash160(b"data")
-        expected = hashlib.new(
-            "ripemd160", hashlib.sha256(b"data").digest()
-        ).digest()
+        expected = hashlib.new("ripemd160", hashlib.sha256(b"data").digest()).digest()
         self.assertEqual(result, expected)
         self.assertEqual(len(result), 20)
 

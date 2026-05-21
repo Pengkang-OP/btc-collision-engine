@@ -429,8 +429,16 @@ class GPUDeviceScorer:
         if "rx 5700" in name_lower or "rx 5600" in name_lower or "rx 5500" in name_lower:
             return "rx5000"
         _rx500_patterns = [
-            "rx 590", "rx 580", "rx 570", "rx 560", "rx 550",
-            "rx 480", "rx 470", "rx 460", "rx 540", "rx 530",
+            "rx 590",
+            "rx 580",
+            "rx 570",
+            "rx 560",
+            "rx 550",
+            "rx 480",
+            "rx 470",
+            "rx 460",
+            "rx 540",
+            "rx 530",
         ]
         if any(x in name_lower for x in _rx500_patterns):
             return "rx500"

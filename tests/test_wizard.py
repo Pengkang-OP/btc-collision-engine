@@ -16,15 +16,18 @@ import pytest
 # __init__ tests
 # ============================================================================
 
+
 class TestWizardInit:
     """Test wizard/__init__.py exports."""
 
     def test_version(self):
         from src.wizard import __version__
+
         assert __version__ == "1.0.0"
 
     def test_all_exports(self):
         from src.wizard import __all__
+
         assert "WizardEngine" in __all__
         assert "WizardResult" in __all__
         assert "WizardConfig" in __all__
@@ -34,10 +37,12 @@ class TestWizardInit:
 
     def test_wizard_engine_importable(self):
         from src.wizard import WizardEngine
+
         assert WizardEngine is not None
 
     def test_wizard_result_importable(self):
         from src.wizard import WizardResult
+
         assert WizardResult is not None
 
 
@@ -45,11 +50,13 @@ class TestWizardInit:
 # selector_protocol.py tests
 # ============================================================================
 
+
 class TestSelectorProtocol:
     """Test SelectorProtocol ABC."""
 
     def test_cannot_instantiate_abstract(self):
         from src.wizard.selector_protocol import SelectorProtocol
+
         with pytest.raises(TypeError):
             SelectorProtocol()
 
@@ -92,11 +99,13 @@ class TestSelectorProtocol:
 # events.py tests
 # ============================================================================
 
+
 class TestWizardEventType:
     """Test WizardEventType enum."""
 
     def test_all_event_types(self):
         from src.wizard.events import WizardEventType
+
         types = list(WizardEventType)
         assert len(types) >= 10
         assert WizardEventType.WIZARD_START.value == "wizard_start"
@@ -110,6 +119,7 @@ class TestWizardEvent:
 
     def test_default_values(self):
         from src.wizard.events import WizardEvent, WizardEventType
+
         event = WizardEvent(event_type=WizardEventType.WIZARD_START)
         assert event.event_type == WizardEventType.WIZARD_START
         assert event.data == {}
@@ -118,6 +128,7 @@ class TestWizardEvent:
 
     def test_custom_values(self):
         from src.wizard.events import WizardEvent, WizardEventType
+
         event = WizardEvent(
             event_type=WizardEventType.TARGET_SELECTED,
             data={"targets": ["addr1"]},
@@ -130,6 +141,7 @@ class TestWizardEvent:
 
     def test_to_dict(self):
         from src.wizard.events import WizardEvent, WizardEventType
+
         event = WizardEvent(event_type=WizardEventType.MODE_SELECTED, data={"mode": "random"})
         d = event.to_dict()
         assert d["event_type"] == "mode_selected"
@@ -143,6 +155,7 @@ class TestEventDispatcher:
 
     def test_register_and_dispatch(self):
         from src.wizard.events import EventDispatcher, WizardEvent, WizardEventType
+
         dispatcher = EventDispatcher()
         callback = MagicMock()
         dispatcher.register(WizardEventType.WIZARD_START, callback)
@@ -152,6 +165,7 @@ class TestEventDispatcher:
 
     def test_unregister(self):
         from src.wizard.events import EventDispatcher, WizardEvent, WizardEventType
+
         dispatcher = EventDispatcher()
         callback = MagicMock()
         dispatcher.register(WizardEventType.WIZARD_START, callback)
@@ -162,12 +176,14 @@ class TestEventDispatcher:
 
     def test_dispatch_no_listeners(self):
         from src.wizard.events import EventDispatcher, WizardEvent, WizardEventType
+
         dispatcher = EventDispatcher()
         event = WizardEvent(event_type=WizardEventType.WIZARD_START)
         dispatcher.dispatch(event)  # should not raise
 
     def test_dispatch_callback_exception(self, caplog):
         from src.wizard.events import EventDispatcher, WizardEvent, WizardEventType
+
         dispatcher = EventDispatcher()
 
         def failing_callback(event):
@@ -181,6 +197,7 @@ class TestEventDispatcher:
 
     def test_dispatch_multiple_callbacks(self):
         from src.wizard.events import EventDispatcher, WizardEvent, WizardEventType
+
         dispatcher = EventDispatcher()
         cb1 = MagicMock()
         cb2 = MagicMock()
@@ -193,6 +210,7 @@ class TestEventDispatcher:
 
     def test_clear(self):
         from src.wizard.events import EventDispatcher, WizardEvent, WizardEventType
+
         dispatcher = EventDispatcher()
         callback = MagicMock()
         dispatcher.register(WizardEventType.WIZARD_START, callback)
@@ -206,11 +224,13 @@ class TestEventDispatcher:
 # interfaces.py tests
 # ============================================================================
 
+
 class TestWizardMode:
     """Test WizardMode enum."""
 
     def test_modes(self):
         from src.wizard.interfaces import WizardMode
+
         assert WizardMode.INTERACTIVE.value == "interactive"
         assert WizardMode.COMPACT.value == "compact"
         assert WizardMode.AUTO.value == "auto"
@@ -221,6 +241,7 @@ class TestWizardConfig:
 
     def test_defaults(self):
         from src.wizard.interfaces import WizardConfig, WizardMode
+
         config = WizardConfig()
         assert config.mode == WizardMode.INTERACTIVE
         assert config.show_intro is True
@@ -231,6 +252,7 @@ class TestWizardConfig:
 
     def test_custom_values(self):
         from src.wizard.interfaces import WizardConfig, WizardMode
+
         config = WizardConfig(
             mode=WizardMode.COMPACT,
             show_intro=False,
@@ -246,6 +268,7 @@ class TestWizardResult:
 
     def test_defaults(self):
         from src.wizard.interfaces import WizardResult
+
         result = WizardResult()
         assert result.success is False
         assert result.targets == []
@@ -259,6 +282,7 @@ class TestWizardResult:
 
     def test_to_dict(self):
         from src.wizard.interfaces import WizardResult
+
         result = WizardResult(success=True, targets=["addr1"], mode="range", duration=3600)
         d = result.to_dict()
         assert d["success"] is True
@@ -269,6 +293,7 @@ class TestWizardResult:
 
     def test_build_command(self):
         from src.wizard.interfaces import WizardResult
+
         result = WizardResult(success=True, targets=["addr1"], mode="random")
         cmd = result.build_command()
         assert isinstance(cmd, list)
@@ -277,6 +302,7 @@ class TestWizardResult:
 
     def test_save_to_file(self, tmp_path):
         from src.wizard.interfaces import WizardResult
+
         result = WizardResult(success=True, targets=["addr1"])
         filepath = tmp_path / "result.json"
         assert result.save_to_file(str(filepath)) is True
@@ -286,12 +312,14 @@ class TestWizardResult:
 
     def test_save_to_file_io_error(self, tmp_path):
         from src.wizard.interfaces import WizardResult
+
         result = WizardResult(success=True)
         # Use a directory as path to cause IOError
         assert result.save_to_file(str(tmp_path)) is False
 
     def test_load_from_file(self, tmp_path):
         from src.wizard.interfaces import WizardResult
+
         filepath = tmp_path / "result.json"
         filepath.write_text(
             json.dumps({"success": True, "targets": ["addr1"], "mode": "random"}),
@@ -304,11 +332,13 @@ class TestWizardResult:
 
     def test_load_from_file_nonexistent(self, tmp_path):
         from src.wizard.interfaces import WizardResult
+
         result = WizardResult.load_from_file(str(tmp_path / "nonexistent.json"))
         assert result is None
 
     def test_load_from_file_invalid_json(self, tmp_path):
         from src.wizard.interfaces import WizardResult
+
         filepath = tmp_path / "bad.json"
         filepath.write_text("not json", encoding="utf-8")
         result = WizardResult.load_from_file(str(filepath))
@@ -319,11 +349,13 @@ class TestWizardResult:
 # config_builder.py tests
 # ============================================================================
 
+
 class TestConfigBuilder:
     """Test ConfigBuilder - pure logic, no I/O dependencies."""
 
     def _make_result(self, **overrides):
         from src.wizard.interfaces import WizardResult
+
         defaults = {
             "success": True,
             "targets": ["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"],
@@ -337,6 +369,7 @@ class TestConfigBuilder:
 
     def test_build_random_mode(self):
         from src.wizard.config_builder import ConfigBuilder
+
         result = self._make_result(mode="random", targets=["addr1"])
         cmd = ConfigBuilder().build(result)
         assert cmd[0] == "python"
@@ -348,10 +381,14 @@ class TestConfigBuilder:
 
     def test_build_range_mode(self):
         from src.wizard.config_builder import ConfigBuilder
+
         result = self._make_result(
-            mode="range", targets=["addr1"],
-            start_key="abc123", end_key="def456",
-            checkpoint=False, dedup=False,
+            mode="range",
+            targets=["addr1"],
+            start_key="abc123",
+            end_key="def456",
+            checkpoint=False,
+            dedup=False,
         )
         cmd = ConfigBuilder().build(result)
         assert "range" in cmd
@@ -362,8 +399,11 @@ class TestConfigBuilder:
 
     def test_build_brute_force_mode(self):
         from src.wizard.config_builder import ConfigBuilder
+
         result = self._make_result(
-            mode="brute_force", targets=["addr1"], start_key="abc123",
+            mode="brute_force",
+            targets=["addr1"],
+            start_key="abc123",
         )
         cmd = ConfigBuilder().build(result)
         assert "brute_force" in cmd
@@ -371,6 +411,7 @@ class TestConfigBuilder:
 
     def test_build_with_target_file(self):
         from src.wizard.config_builder import ConfigBuilder
+
         result = self._make_result(targets=[], target_file="my_targets.txt", mode="random")
         cmd = ConfigBuilder().build(result)
         assert "-f" in cmd
@@ -378,6 +419,7 @@ class TestConfigBuilder:
 
     def test_build_with_duration(self):
         from src.wizard.config_builder import ConfigBuilder
+
         result = self._make_result(mode="random", duration=7200)
         cmd = ConfigBuilder().build(result)
         assert "--duration" in cmd
@@ -385,6 +427,7 @@ class TestConfigBuilder:
 
     def test_build_with_gpu_indices(self):
         from src.wizard.config_builder import ConfigBuilder
+
         result = self._make_result(mode="random", gpu_indices=[0, 1], use_multi_gpu=True)
         cmd = ConfigBuilder().build(result)
         assert "--multi-gpu" in cmd
@@ -395,36 +438,42 @@ class TestConfigBuilder:
     def test_build_no_targets_raises(self):
         from src.wizard.config_builder import ConfigBuilder
         from src.wizard.interfaces import WizardResult
+
         result = WizardResult(targets=[], target_file=None, mode="random")
         with pytest.raises(ValueError, match="No targets specified"):
             ConfigBuilder().build(result)
 
     def test_build_invalid_mode_raises(self):
         from src.wizard.config_builder import ConfigBuilder
+
         result = self._make_result(mode="invalid_mode")
         with pytest.raises(ValueError, match="Invalid mode"):
             ConfigBuilder().build(result)
 
     def test_build_range_without_start_key_raises(self):
         from src.wizard.config_builder import ConfigBuilder
+
         result = self._make_result(mode="range", start_key=None, end_key="some")
         with pytest.raises(ValueError, match="requires a start_key"):
             ConfigBuilder().build(result)
 
     def test_build_range_without_end_key_raises(self):
         from src.wizard.config_builder import ConfigBuilder
+
         result = self._make_result(mode="range", start_key="abc", end_key=None)
         with pytest.raises(ValueError, match="requires an end_key"):
             ConfigBuilder().build(result)
 
     def test_build_brute_force_without_start_key_raises(self):
         from src.wizard.config_builder import ConfigBuilder
+
         result = self._make_result(mode="brute_force", start_key=None)
         with pytest.raises(ValueError, match="requires a start_key"):
             ConfigBuilder().build(result)
 
     def test_build_summary(self):
         from src.wizard.config_builder import ConfigBuilder
+
         result = self._make_result(mode="random")
         summary = ConfigBuilder().build_summary(result)
         assert "生成的命令" in summary
@@ -432,6 +481,7 @@ class TestConfigBuilder:
 
     def test_save_command(self, tmp_path):
         from src.wizard.config_builder import ConfigBuilder
+
         result = self._make_result(mode="random")
         filepath = tmp_path / "start.sh"
         assert ConfigBuilder().save_command(result, str(filepath)) is True
@@ -442,6 +492,7 @@ class TestConfigBuilder:
 
     def test_save_command_io_error(self, tmp_path):
         from src.wizard.config_builder import ConfigBuilder
+
         result = self._make_result(mode="random")
         assert ConfigBuilder().save_command(result, str(tmp_path)) is False
 
@@ -450,22 +501,26 @@ class TestConfigBuilder:
 # option_selector.py tests
 # ============================================================================
 
+
 class TestOptionSelector:
     """Test OptionSelector with mocked input."""
 
     def test_is_compact_supported(self):
         from src.wizard.option_selector import OptionSelector
+
         selector = OptionSelector()
         assert selector.is_compact_supported() is True
 
     def test_select_compact(self):
         from src.wizard.option_selector import OptionSelector
+
         selector = OptionSelector()
         result = selector.select(compact=True)
         assert result == (True, True, 0)
 
     def test_select_interactive_defaults(self, monkeypatch):
         from src.wizard.option_selector import OptionSelector
+
         selector = OptionSelector()
         # User presses Enter for all (defaults)
         inputs = iter(["", "", ""])
@@ -475,18 +530,21 @@ class TestOptionSelector:
 
     def test_ask_checkpoint_yes(self, monkeypatch):
         from src.wizard.option_selector import OptionSelector
+
         selector = OptionSelector()
         monkeypatch.setattr("builtins.input", lambda p: "y")
         assert selector._ask_checkpoint() is True
 
     def test_ask_checkpoint_no(self, monkeypatch):
         from src.wizard.option_selector import OptionSelector
+
         selector = OptionSelector()
         monkeypatch.setattr("builtins.input", lambda p: "n")
         assert selector._ask_checkpoint() is False
 
     def test_ask_checkpoint_invalid_then_valid(self, monkeypatch):
         from src.wizard.option_selector import OptionSelector
+
         selector = OptionSelector()
         inputs = iter(["invalid", "y"])
         monkeypatch.setattr("builtins.input", lambda p: next(inputs))
@@ -494,30 +552,35 @@ class TestOptionSelector:
 
     def test_ask_dedup_yes(self, monkeypatch):
         from src.wizard.option_selector import OptionSelector
+
         selector = OptionSelector()
         monkeypatch.setattr("builtins.input", lambda p: "yes")
         assert selector._ask_dedup() is True
 
     def test_ask_dedup_no(self, monkeypatch):
         from src.wizard.option_selector import OptionSelector
+
         selector = OptionSelector()
         monkeypatch.setattr("builtins.input", lambda p: "no")
         assert selector._ask_dedup() is False
 
     def test_ask_duration_default(self, monkeypatch):
         from src.wizard.option_selector import OptionSelector
+
         selector = OptionSelector()
         monkeypatch.setattr("builtins.input", lambda p: "")
         assert selector._ask_duration() == 0
 
     def test_ask_duration_option1(self, monkeypatch):
         from src.wizard.option_selector import OptionSelector
+
         selector = OptionSelector()
         monkeypatch.setattr("builtins.input", lambda p: "1")
         assert selector._ask_duration() == 0
 
     def test_ask_duration_option2_hours(self, monkeypatch):
         from src.wizard.option_selector import OptionSelector
+
         selector = OptionSelector()
         inputs = iter(["2", "5"])
         monkeypatch.setattr("builtins.input", lambda p: next(inputs))
@@ -525,6 +588,7 @@ class TestOptionSelector:
 
     def test_ask_duration_option3_days(self, monkeypatch):
         from src.wizard.option_selector import OptionSelector
+
         selector = OptionSelector()
         inputs = iter(["3", "2"])
         monkeypatch.setattr("builtins.input", lambda p: next(inputs))
@@ -532,6 +596,7 @@ class TestOptionSelector:
 
     def test_ask_duration_invalid_choice(self, monkeypatch):
         from src.wizard.option_selector import OptionSelector
+
         selector = OptionSelector()
         inputs = iter(["invalid", "1"])
         monkeypatch.setattr("builtins.input", lambda p: next(inputs))
@@ -539,12 +604,14 @@ class TestOptionSelector:
 
     def test_ask_hours_empty(self, monkeypatch):
         from src.wizard.option_selector import OptionSelector
+
         selector = OptionSelector()
         monkeypatch.setattr("builtins.input", lambda p: "")
         assert selector._ask_hours() == 0
 
     def test_ask_hours_zero(self, monkeypatch):
         from src.wizard.option_selector import OptionSelector
+
         selector = OptionSelector()
         inputs = iter(["0", "1"])
         monkeypatch.setattr("builtins.input", lambda p: next(inputs))
@@ -552,6 +619,7 @@ class TestOptionSelector:
 
     def test_ask_hours_invalid(self, monkeypatch):
         from src.wizard.option_selector import OptionSelector
+
         selector = OptionSelector()
         inputs = iter(["abc", "3"])
         monkeypatch.setattr("builtins.input", lambda p: next(inputs))
@@ -559,6 +627,7 @@ class TestOptionSelector:
 
     def test_ask_dedup_invalid_then_valid(self, monkeypatch):
         from src.wizard.option_selector import OptionSelector
+
         selector = OptionSelector()
         inputs = iter(["invalid", "yes"])
         monkeypatch.setattr("builtins.input", lambda p: next(inputs))
@@ -566,12 +635,14 @@ class TestOptionSelector:
 
     def test_ask_days_empty(self, monkeypatch):
         from src.wizard.option_selector import OptionSelector
+
         selector = OptionSelector()
         monkeypatch.setattr("builtins.input", lambda p: "")
         assert selector._ask_days() == 0
 
     def test_ask_days_zero(self, monkeypatch):
         from src.wizard.option_selector import OptionSelector
+
         selector = OptionSelector()
         inputs = iter(["0", "2"])
         monkeypatch.setattr("builtins.input", lambda p: next(inputs))
@@ -579,6 +650,7 @@ class TestOptionSelector:
 
     def test_ask_days_invalid(self, monkeypatch):
         from src.wizard.option_selector import OptionSelector
+
         selector = OptionSelector()
         inputs = iter(["xyz", "1"])
         monkeypatch.setattr("builtins.input", lambda p: next(inputs))
@@ -589,17 +661,20 @@ class TestOptionSelector:
 # mode_selector.py tests
 # ============================================================================
 
+
 class TestModeSelector:
     """Test ModeSelector with mocked input."""
 
     def test_select_compact(self):
         from src.wizard.mode_selector import ModeSelector
+
         selector = ModeSelector()
         result = selector.select(compact=True)
         assert result == ("random", None, None)
 
     def test_select_random_default(self, monkeypatch):
         from src.wizard.mode_selector import ModeSelector
+
         selector = ModeSelector()
         monkeypatch.setattr("builtins.input", lambda p: "")
         result = selector.select(compact=False)
@@ -607,6 +682,7 @@ class TestModeSelector:
 
     def test_select_random_explicit(self, monkeypatch):
         from src.wizard.mode_selector import ModeSelector
+
         selector = ModeSelector()
         monkeypatch.setattr("builtins.input", lambda p: "1")
         result = selector.select(compact=False)
@@ -614,6 +690,7 @@ class TestModeSelector:
 
     def test_select_range(self, monkeypatch):
         from src.wizard.mode_selector import ModeSelector
+
         selector = ModeSelector()
         inputs = iter(["2", "abc123", "def456"])
         monkeypatch.setattr("builtins.input", lambda p: next(inputs))
@@ -622,6 +699,7 @@ class TestModeSelector:
 
     def test_select_brute_force(self, monkeypatch):
         from src.wizard.mode_selector import ModeSelector
+
         selector = ModeSelector()
         inputs = iter(["3", "abc123"])
         monkeypatch.setattr("builtins.input", lambda p: next(inputs))
@@ -630,6 +708,7 @@ class TestModeSelector:
 
     def test_select_invalid_mode(self, monkeypatch):
         from src.wizard.mode_selector import ModeSelector
+
         selector = ModeSelector()
         inputs = iter(["invalid", "1"])
         monkeypatch.setattr("builtins.input", lambda p: next(inputs))
@@ -638,6 +717,7 @@ class TestModeSelector:
 
     def test_select_range_empty_keys(self, monkeypatch):
         from src.wizard.mode_selector import ModeSelector
+
         selector = ModeSelector()
         # First pass: empty keys, then valid ones
         inputs = iter(["2", "", "", "abc", "def"])
@@ -647,6 +727,7 @@ class TestModeSelector:
 
     def test_select_range_invalid_hex(self, monkeypatch):
         from src.wizard.mode_selector import ModeSelector
+
         selector = ModeSelector()
         inputs = iter(["2", "zzz", "yyy", "abc", "def"])
         monkeypatch.setattr("builtins.input", lambda p: next(inputs))
@@ -655,6 +736,7 @@ class TestModeSelector:
 
     def test_select_brute_force_empty_key(self, monkeypatch):
         from src.wizard.mode_selector import ModeSelector
+
         selector = ModeSelector()
         inputs = iter(["3", "", "abc"])
         monkeypatch.setattr("builtins.input", lambda p: next(inputs))
@@ -663,6 +745,7 @@ class TestModeSelector:
 
     def test_select_brute_force_invalid_hex(self, monkeypatch):
         from src.wizard.mode_selector import ModeSelector
+
         selector = ModeSelector()
         inputs = iter(["3", "zzz", "abc"])
         monkeypatch.setattr("builtins.input", lambda p: next(inputs))
@@ -671,6 +754,7 @@ class TestModeSelector:
 
     def test_select_range_empty_end_key(self, monkeypatch):
         from src.wizard.mode_selector import ModeSelector
+
         selector = ModeSelector()
         # First: empty end_key, then valid range (use valid hex)
         inputs = iter(["2", "abc", "", "def", "456"])
@@ -681,6 +765,7 @@ class TestModeSelector:
     def test_select_fallback_line(self, monkeypatch):
         """Cover the fallback return on line 76 (unreachable in normal flow)."""
         from src.wizard.mode_selector import ModeSelector
+
         selector = ModeSelector()
         # Patch MODES to simulate a mode that bypasses all branches
         original_modes = selector.MODES
@@ -692,6 +777,7 @@ class TestModeSelector:
 
     def test_modes_dict(self):
         from src.wizard.mode_selector import ModeSelector
+
         selector = ModeSelector()
         assert "1" in selector.MODES
         assert selector.MODES["1"]["name"] == "random"
@@ -705,11 +791,13 @@ class TestModeSelector:
 # message_queue.py tests
 # ============================================================================
 
+
 class TestWizardMessageQueue:
     """Test WizardMessageQueue."""
 
     def test_init_defaults(self):
         from src.wizard.message_queue import WizardMessageQueue
+
         mq = WizardMessageQueue()
         assert mq.is_empty()
         assert not mq.is_full()
@@ -718,6 +806,7 @@ class TestWizardMessageQueue:
     def test_send_and_receive(self):
         from src.wizard.events import WizardEventType
         from src.wizard.message_queue import WizardMessageQueue
+
         mq = WizardMessageQueue()
         assert mq.send(WizardEventType.WIZARD_START, {"key": "val"})
         event = mq.receive()
@@ -728,6 +817,7 @@ class TestWizardMessageQueue:
     def test_send_disabled_queue(self):
         from src.wizard.events import WizardEventType
         from src.wizard.message_queue import WizardMessageQueue
+
         mq = WizardMessageQueue()
         mq.disable()
         assert mq.send(WizardEventType.WIZARD_START, {}) is False
@@ -735,12 +825,14 @@ class TestWizardMessageQueue:
     def test_send_queue_full(self):
         from src.wizard.events import WizardEventType
         from src.wizard.message_queue import WizardMessageQueue
+
         mq = WizardMessageQueue(maxsize=1)
         assert mq.send(WizardEventType.WIZARD_START, {})
         assert mq.send(WizardEventType.WIZARD_START, {}) is False
 
     def test_receive_timeout(self):
         from src.wizard.message_queue import WizardMessageQueue
+
         mq = WizardMessageQueue()
         event = mq.receive(timeout=0.01)
         assert event is None
@@ -748,6 +840,7 @@ class TestWizardMessageQueue:
     def test_receive_all(self):
         from src.wizard.events import WizardEventType
         from src.wizard.message_queue import WizardMessageQueue
+
         mq = WizardMessageQueue()
         mq.send(WizardEventType.WIZARD_START, {})
         mq.send(WizardEventType.TARGET_SELECTED, {"targets": ["a"]})
@@ -757,6 +850,7 @@ class TestWizardMessageQueue:
     def test_subscribe_and_notify(self):
         from src.wizard.events import WizardEventType
         from src.wizard.message_queue import WizardMessageQueue
+
         mq = WizardMessageQueue()
         callback = MagicMock()
         mq.subscribe(callback)
@@ -766,6 +860,7 @@ class TestWizardMessageQueue:
     def test_unsubscribe(self):
         from src.wizard.events import WizardEventType
         from src.wizard.message_queue import WizardMessageQueue
+
         mq = WizardMessageQueue()
         callback = MagicMock()
         mq.subscribe(callback)
@@ -776,6 +871,7 @@ class TestWizardMessageQueue:
     def test_subscriber_exception_handled(self, caplog):
         from src.wizard.events import WizardEventType
         from src.wizard.message_queue import WizardMessageQueue
+
         mq = WizardMessageQueue()
 
         def failing_cb(event):
@@ -788,6 +884,7 @@ class TestWizardMessageQueue:
     def test_enable_disable(self):
         from src.wizard.events import WizardEventType
         from src.wizard.message_queue import WizardMessageQueue
+
         mq = WizardMessageQueue()
         mq.disable()
         assert mq.send(WizardEventType.WIZARD_START, {}) is False
@@ -797,6 +894,7 @@ class TestWizardMessageQueue:
     def test_clear(self):
         from src.wizard.events import WizardEventType
         from src.wizard.message_queue import WizardMessageQueue
+
         mq = WizardMessageQueue()
         mq.send(WizardEventType.WIZARD_START, {})
         mq.send(WizardEventType.WIZARD_START, {})
@@ -805,48 +903,56 @@ class TestWizardMessageQueue:
 
     def test_send_wizard_start(self):
         from src.wizard.message_queue import WizardMessageQueue
+
         mq = WizardMessageQueue()
         assert mq.send_wizard_start({"mode": "interactive"})
         assert mq.size() == 1
 
     def test_send_target_selected(self):
         from src.wizard.message_queue import WizardMessageQueue
+
         mq = WizardMessageQueue()
         assert mq.send_target_selected(["addr1"], "file.txt")
         assert mq.size() == 1
 
     def test_send_mode_selected(self):
         from src.wizard.message_queue import WizardMessageQueue
+
         mq = WizardMessageQueue()
         assert mq.send_mode_selected("random", "start", "end")
         assert mq.size() == 1
 
     def test_send_options_selected(self):
         from src.wizard.message_queue import WizardMessageQueue
+
         mq = WizardMessageQueue()
         assert mq.send_options_selected(True, False, 3600)
         assert mq.size() == 1
 
     def test_send_gpu_selected(self):
         from src.wizard.message_queue import WizardMessageQueue
+
         mq = WizardMessageQueue()
         assert mq.send_gpu_selected([0, 1], True)
         assert mq.size() == 1
 
     def test_send_wizard_complete(self):
         from src.wizard.message_queue import WizardMessageQueue
+
         mq = WizardMessageQueue()
         assert mq.send_wizard_complete({"success": True})
         assert mq.size() == 1
 
     def test_send_wizard_cancelled(self):
         from src.wizard.message_queue import WizardMessageQueue
+
         mq = WizardMessageQueue()
         assert mq.send_wizard_cancelled()
         assert mq.size() == 1
 
     def test_send_wizard_error(self):
         from src.wizard.message_queue import WizardMessageQueue
+
         mq = WizardMessageQueue()
         assert mq.send_wizard_error("test error")
         assert mq.size() == 1
@@ -855,6 +961,7 @@ class TestWizardMessageQueue:
         """Test clear() handles queue.Empty during drain."""
         from src.wizard.events import WizardEventType
         from src.wizard.message_queue import WizardMessageQueue
+
         mq = WizardMessageQueue()
         mq.send(WizardEventType.WIZARD_START, {})
         # Simulate race: empty() returns False, but get_nowait raises Empty
@@ -883,6 +990,7 @@ class TestMessageQueueGlobal:
 
     def test_get_message_queue_creates_singleton(self, monkeypatch):
         from src.wizard.message_queue import get_message_queue, reset_message_queue
+
         # Reset first
         reset_message_queue(None)
         q1 = get_message_queue()
@@ -896,6 +1004,7 @@ class TestMessageQueueGlobal:
             reset_message_queue,
             set_message_queue,
         )
+
         reset_message_queue(None)
         custom_q = WizardMessageQueue(maxsize=100)
         set_message_queue(custom_q)
@@ -908,6 +1017,7 @@ class TestMessageQueueGlobal:
             reset_message_queue,
             set_message_queue,
         )
+
         old_q = WizardMessageQueue()
         old_q.send_wizard_start({})
         reset_message_queue(None)
@@ -923,6 +1033,7 @@ class TestMessageQueueGlobal:
             get_message_queue,
             reset_message_queue,
         )
+
         reset_message_queue(None)
         q = WizardMessageQueue()
         q.send_wizard_start({})
@@ -940,6 +1051,7 @@ class TestMessageQueueGlobal:
             get_message_queue,
             reset_message_queue,
         )
+
         reset_message_queue(None)
         new_q = WizardMessageQueue()
         reset_message_queue(new_q)
@@ -950,6 +1062,7 @@ class TestMessageQueueGlobal:
 # ============================================================================
 # target_selector.py tests
 # ============================================================================
+
 
 class TestTargetSelector:
     """Test TargetSelector with mocked TargetResolver."""
@@ -963,11 +1076,13 @@ class TestTargetSelector:
 
         # Mock the import in target_selector
         import src.wizard.target_selector as ts
+
         monkeypatch.setattr(ts, "TargetResolver", MagicMock(return_value=mock))
         return mock
 
     def test_select_compact_with_targets_file(self, mock_resolver, tmp_path, monkeypatch):
         from src.wizard.target_selector import TargetSelector
+
         monkeypatch.chdir(tmp_path)
         # Create targets.txt
         (tmp_path / "targets.txt").write_text("addr1\naddr2")
@@ -978,6 +1093,7 @@ class TestTargetSelector:
 
     def test_select_compact_no_file(self, mock_resolver, tmp_path, monkeypatch):
         from src.wizard.target_selector import TargetSelector
+
         monkeypatch.chdir(tmp_path)
         monkeypatch.setattr("builtins.input", lambda *a, **kw: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
         selector = TargetSelector()
@@ -987,6 +1103,7 @@ class TestTargetSelector:
 
     def test_select_compact_empty_input(self, mock_resolver, tmp_path, monkeypatch):
         from src.wizard.target_selector import TargetSelector
+
         monkeypatch.chdir(tmp_path)
         inputs = iter(["", "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"])
         monkeypatch.setattr("builtins.input", lambda *a, **kw: next(inputs))
@@ -996,6 +1113,7 @@ class TestTargetSelector:
 
     def test_select_compact_invalid_address(self, mock_resolver, tmp_path, monkeypatch):
         from src.wizard.target_selector import TargetSelector
+
         monkeypatch.chdir(tmp_path)
         call_count = [0]
 
@@ -1015,6 +1133,7 @@ class TestTargetSelector:
     def test_select_interactive_default_single(self, mock_resolver, monkeypatch):
         """Interactive mode: empty input defaults to single address."""
         from src.wizard.target_selector import TargetSelector
+
         monkeypatch.setattr("builtins.input", lambda *a, **kw: "")
         # Will default to "1", enter _select_single, read address
         # _select_single uses input() without prompt
@@ -1035,6 +1154,7 @@ class TestTargetSelector:
     def test_select_interactive_single_valid(self, mock_resolver, monkeypatch):
         """Interactive mode: choose single address (option 1)."""
         from src.wizard.target_selector import TargetSelector
+
         call_count = [0]
 
         def input_side(*args):
@@ -1051,6 +1171,7 @@ class TestTargetSelector:
     def test_select_interactive_single_empty_address(self, mock_resolver, monkeypatch):
         """Interactive mode: empty address in _select_single triggers retry."""
         from src.wizard.target_selector import TargetSelector
+
         call_count = [0]
 
         def input_side(*args):
@@ -1069,6 +1190,7 @@ class TestTargetSelector:
     def test_select_interactive_single_invalid(self, mock_resolver, monkeypatch):
         """Interactive mode: invalid address triggers retry."""
         from src.wizard.target_selector import TargetSelector
+
         call_count = [0]
 
         def input_side(*args):
@@ -1096,6 +1218,7 @@ class TestTargetSelector:
     def test_select_interactive_from_file(self, mock_resolver, tmp_path, monkeypatch):
         """Interactive mode: choose from file (option 2)."""
         from src.wizard.target_selector import TargetSelector
+
         monkeypatch.chdir(tmp_path)
         (tmp_path / "my_targets.txt").write_text("addr1\naddr2")
         call_count = [0]
@@ -1115,6 +1238,7 @@ class TestTargetSelector:
     def test_select_interactive_from_file_default(self, mock_resolver, tmp_path, monkeypatch):
         """Interactive mode: from file with default path."""
         from src.wizard.target_selector import TargetSelector
+
         monkeypatch.chdir(tmp_path)
         (tmp_path / "targets.txt").write_text("addr1")
         mock_resolver.load_from_file.return_value = ["addr1"]
@@ -1134,6 +1258,7 @@ class TestTargetSelector:
     def test_select_interactive_from_file_not_exists(self, mock_resolver, tmp_path, monkeypatch):
         """Interactive mode: file not exists triggers retry."""
         from src.wizard.target_selector import TargetSelector
+
         monkeypatch.chdir(tmp_path)
         (tmp_path / "targets.txt").write_text("addr1")
         mock_resolver.load_from_file.return_value = ["addr1"]
@@ -1155,6 +1280,7 @@ class TestTargetSelector:
     def test_select_interactive_from_file_no_addresses(self, mock_resolver, tmp_path, monkeypatch):
         """Interactive mode: file with no valid addresses triggers retry."""
         from src.wizard.target_selector import TargetSelector
+
         monkeypatch.chdir(tmp_path)
         (tmp_path / "empty_file.txt").write_text("")
         (tmp_path / "targets.txt").write_text("addr1")
@@ -1186,6 +1312,7 @@ class TestTargetSelector:
     def test_select_interactive_invalid_option(self, mock_resolver, monkeypatch):
         """Interactive mode: invalid choice triggers retry."""
         from src.wizard.target_selector import TargetSelector
+
         call_count = [0]
 
         def input_side(*args):
@@ -1205,6 +1332,7 @@ class TestTargetSelector:
 # ============================================================================
 # gpu_selector.py tests
 # ============================================================================
+
 
 class TestGPUSelector:
     """Test GPUSelector with mocked GPU detection."""
@@ -1234,6 +1362,7 @@ class TestGPUSelector:
 
     def test_select_compact_no_gpus(self, monkeypatch):
         from src.wizard.gpu_selector import GPUSelector
+
         selector = GPUSelector()
         # Mock _detect_gpus to return empty
         monkeypatch.setattr(selector, "_detect_gpus", lambda: [])
@@ -1242,6 +1371,7 @@ class TestGPUSelector:
 
     def test_select_compact_single_gpu(self, monkeypatch):
         from src.wizard.gpu_selector import GPUSelector
+
         selector = GPUSelector()
         monkeypatch.setattr(selector, "_detect_gpus", lambda: [{"name": "GPU1"}])
         result = selector.select(compact=True)
@@ -1249,14 +1379,15 @@ class TestGPUSelector:
 
     def test_select_compact_multi_gpu(self, monkeypatch):
         from src.wizard.gpu_selector import GPUSelector
+
         selector = GPUSelector()
-        monkeypatch.setattr(selector, "_detect_gpus",
-                            lambda: [{"name": "GPU1"}, {"name": "GPU2"}])
+        monkeypatch.setattr(selector, "_detect_gpus", lambda: [{"name": "GPU1"}, {"name": "GPU2"}])
         result = selector.select(compact=True)
         assert result == ([0, 1], True)
 
     def test_detect_gpus_exception(self, monkeypatch):
         from src.wizard.gpu_selector import GPUSelector
+
         selector = GPUSelector()
         # Mock the GPU device module to raise on detect_devices
         mock_gpu_device = MagicMock()
@@ -1268,15 +1399,16 @@ class TestGPUSelector:
 
     def test_select_cpu_mode(self, monkeypatch):
         from src.wizard.gpu_selector import GPUSelector
+
         selector = GPUSelector()
-        monkeypatch.setattr(selector, "_detect_gpus",
-                            lambda: [{"name": "GPU1"}])
+        monkeypatch.setattr(selector, "_detect_gpus", lambda: [{"name": "GPU1"}])
         monkeypatch.setattr("builtins.input", lambda p: "1")
         result = selector.select(compact=False)
         assert result == ([], False)
 
     def test_select_single_gpu_valid(self, monkeypatch):
         from src.wizard.gpu_selector import GPUSelector
+
         selector = GPUSelector()
         gpu_info = [{"name": "GPU1"}, {"name": "GPU2"}]
         monkeypatch.setattr(selector, "_detect_gpus", lambda: gpu_info)
@@ -1287,6 +1419,7 @@ class TestGPUSelector:
 
     def test_select_single_gpu_invalid_then_valid(self, monkeypatch):
         from src.wizard.gpu_selector import GPUSelector
+
         selector = GPUSelector()
         gpu_info = [{"name": "GPU1"}, {"name": "GPU2"}]
         monkeypatch.setattr(selector, "_detect_gpus", lambda: gpu_info)
@@ -1298,6 +1431,7 @@ class TestGPUSelector:
 
     def test_select_multi_gpu_all(self, monkeypatch):
         from src.wizard.gpu_selector import GPUSelector
+
         selector = GPUSelector()
         gpu_info = [{"name": "GPU1"}, {"name": "GPU2"}]
         monkeypatch.setattr(selector, "_detect_gpus", lambda: gpu_info)
@@ -1308,6 +1442,7 @@ class TestGPUSelector:
 
     def test_select_multi_gpu_specific(self, monkeypatch):
         from src.wizard.gpu_selector import GPUSelector
+
         selector = GPUSelector()
         gpu_info = [{"name": "GPU1"}, {"name": "GPU2"}, {"name": "GPU3"}]
         monkeypatch.setattr(selector, "_detect_gpus", lambda: gpu_info)
@@ -1318,6 +1453,7 @@ class TestGPUSelector:
 
     def test_select_multi_gpu_invalid_then_valid(self, monkeypatch):
         from src.wizard.gpu_selector import GPUSelector
+
         selector = GPUSelector()
         gpu_info = [{"name": "GPU1"}, {"name": "GPU2"}]
         monkeypatch.setattr(selector, "_detect_gpus", lambda: gpu_info)
@@ -1340,6 +1476,7 @@ class TestGPUSelector:
 
     def test_detect_gpus_success(self, mock_detector):
         from src.wizard.gpu_selector import GPUSelector
+
         selector = GPUSelector()
         gpus = selector._detect_gpus()
         assert len(gpus) == 2
@@ -1348,6 +1485,7 @@ class TestGPUSelector:
 
     def test_select_interactive_no_gpus(self, monkeypatch):
         from src.wizard.gpu_selector import GPUSelector
+
         selector = GPUSelector()
         monkeypatch.setattr(selector, "_detect_gpus", lambda: [])
         result = selector.select(compact=False)
@@ -1355,9 +1493,9 @@ class TestGPUSelector:
 
     def test_select_interactive_empty_defaults_to_single(self, monkeypatch):
         from src.wizard.gpu_selector import GPUSelector
+
         selector = GPUSelector()
-        monkeypatch.setattr(selector, "_detect_gpus",
-                            lambda: [{"name": "GPU1"}])
+        monkeypatch.setattr(selector, "_detect_gpus", lambda: [{"name": "GPU1"}])
         # Empty input defaults to "2" (single GPU), then pick GPU 1
         inputs = iter(["", "1"])
         monkeypatch.setattr("builtins.input", lambda p: next(inputs))
@@ -1366,9 +1504,9 @@ class TestGPUSelector:
 
     def test_select_interactive_invalid_option(self, monkeypatch):
         from src.wizard.gpu_selector import GPUSelector
+
         selector = GPUSelector()
-        monkeypatch.setattr(selector, "_detect_gpus",
-                            lambda: [{"name": "GPU1"}])
+        monkeypatch.setattr(selector, "_detect_gpus", lambda: [{"name": "GPU1"}])
         # Invalid "4", then valid "1"
         inputs = iter(["4", "1"])
         monkeypatch.setattr("builtins.input", lambda p: next(inputs))
@@ -1377,6 +1515,7 @@ class TestGPUSelector:
 
     def test_select_multi_gpu_invalid_format(self, monkeypatch):
         from src.wizard.gpu_selector import GPUSelector
+
         selector = GPUSelector()
         gpu_info = [{"name": "GPU1"}, {"name": "GPU2"}]
         monkeypatch.setattr(selector, "_detect_gpus", lambda: gpu_info)
@@ -1392,12 +1531,14 @@ class TestGPUSelector:
 # wizard_engine.py tests
 # ============================================================================
 
+
 class TestWizardEngine:
     """Test WizardEngine orchestration."""
 
     def test_init_defaults(self):
         from src.wizard.interfaces import WizardMode
         from src.wizard.wizard_engine import WizardEngine
+
         engine = WizardEngine()
         assert engine.config.mode == WizardMode.INTERACTIVE
         assert engine.result.success is False
@@ -1411,6 +1552,7 @@ class TestWizardEngine:
     def test_init_custom_config(self):
         from src.wizard.interfaces import WizardConfig, WizardMode
         from src.wizard.wizard_engine import WizardEngine
+
         config = WizardConfig(mode=WizardMode.COMPACT, show_intro=False)
         engine = WizardEngine(config=config)
         assert engine.config.mode == WizardMode.COMPACT
@@ -1418,6 +1560,7 @@ class TestWizardEngine:
 
     def test_stop(self):
         from src.wizard.wizard_engine import WizardEngine
+
         engine = WizardEngine()
         assert engine.is_running() is False
         engine._running = True
@@ -1427,6 +1570,7 @@ class TestWizardEngine:
 
     def test_register_step_handler(self):
         from src.wizard.wizard_engine import WizardEngine
+
         engine = WizardEngine()
         handler = MagicMock()
         engine.register_step_handler("custom_step", handler)
@@ -1434,12 +1578,14 @@ class TestWizardEngine:
 
     def test_unregister_step_handler(self):
         from src.wizard.wizard_engine import WizardEngine
+
         engine = WizardEngine()
         engine.unregister_step_handler("target")
         assert "target" not in engine._step_handlers
 
     def test_show_intro(self, capsys):
         from src.wizard.wizard_engine import WizardEngine
+
         engine = WizardEngine()
         engine._show_intro()
         captured = capsys.readouterr()
@@ -1476,10 +1622,12 @@ class TestWizardEngine:
 
         # Mock message queue
         from src.wizard.message_queue import WizardMessageQueue
+
         mock_mq = MagicMock(spec=WizardMessageQueue)
 
-        config = WizardConfig(mode=WizardMode.COMPACT, show_intro=False,
-                              show_summary=False, auto_continue=True)
+        config = WizardConfig(
+            mode=WizardMode.COMPACT, show_intro=False, show_summary=False, auto_continue=True
+        )
         engine = we.WizardEngine(config=config, message_queue=mock_mq)
         result = engine.run()
 
@@ -1502,6 +1650,7 @@ class TestWizardEngine:
             if call_count[0] > 1:
                 return ([], False)
             import time
+
             time.sleep(0.05)  # Give stop thread time to cancel
             return (["addr1"], None)
 
@@ -1521,10 +1670,12 @@ class TestWizardEngine:
         monkeypatch.setattr(we, "GPUSelector", mock_gpu_selector)
 
         from src.wizard.message_queue import WizardMessageQueue
+
         mock_mq = MagicMock(spec=WizardMessageQueue)
 
-        config = WizardConfig(mode=WizardMode.COMPACT, show_intro=False,
-                              show_summary=False, auto_continue=True)
+        config = WizardConfig(
+            mode=WizardMode.COMPACT, show_intro=False, show_summary=False, auto_continue=True
+        )
 
         engine = we.WizardEngine(config=config, message_queue=mock_mq)
 
@@ -1536,6 +1687,7 @@ class TestWizardEngine:
 
         def stop_soon():
             import time
+
             time.sleep(0.01)
             engine.stop()
 
@@ -1558,6 +1710,7 @@ class TestWizardEngine:
         monkeypatch.setattr(we, "TargetSelector", mock_target_selector)
 
         from src.wizard.message_queue import WizardMessageQueue
+
         mock_mq = MagicMock(spec=WizardMessageQueue)
 
         config = WizardConfig(mode=WizardMode.COMPACT, show_intro=False)
@@ -1577,6 +1730,7 @@ class TestWizardEngine:
         monkeypatch.setattr(we, "TargetSelector", mock_target_selector)
 
         from src.wizard.message_queue import WizardMessageQueue
+
         mock_mq = MagicMock(spec=WizardMessageQueue)
 
         config = WizardConfig(mode=WizardMode.COMPACT, show_intro=False)
@@ -1608,16 +1762,18 @@ class TestWizardEngine:
         monkeypatch.setattr(we, "GPUSelector", mock_gs)
 
         from src.wizard.config_builder import ConfigBuilder
+
         mock_builder = MagicMock(spec=ConfigBuilder)
         mock_builder.return_value.build.side_effect = ValueError("bad config")
-        monkeypatch.setattr(we, "ConfigBuilder",
-                            MagicMock(return_value=mock_builder.return_value))
+        monkeypatch.setattr(we, "ConfigBuilder", MagicMock(return_value=mock_builder.return_value))
 
         from src.wizard.message_queue import WizardMessageQueue
+
         mock_mq = MagicMock(spec=WizardMessageQueue)
 
-        config = WizardConfig(mode=WizardMode.COMPACT, show_intro=False,
-                              show_summary=False, auto_continue=True)
+        config = WizardConfig(
+            mode=WizardMode.COMPACT, show_intro=False, show_summary=False, auto_continue=True
+        )
         engine = we.WizardEngine(config=config, message_queue=mock_mq)
         result = engine.run()
 
@@ -1626,6 +1782,7 @@ class TestWizardEngine:
 
     def test_execute_no_command(self, capsys):
         from src.wizard.wizard_engine import WizardEngine
+
         engine = WizardEngine()
         engine._execute()
         captured = capsys.readouterr()
@@ -1637,8 +1794,7 @@ class TestWizardEngine:
         from src.wizard.wizard_engine import WizardEngine
 
         mock_mq = MagicMock(spec=WizardMessageQueue)
-        config = WizardConfig(mode=WizardMode.INTERACTIVE, show_summary=False,
-                              auto_continue=False)
+        config = WizardConfig(mode=WizardMode.INTERACTIVE, show_summary=False, auto_continue=False)
         engine = WizardEngine(config=config, message_queue=mock_mq)
         engine.result.success = False  # Pre-state
         engine.result.command = ["python", "test.py"]
@@ -1655,8 +1811,7 @@ class TestWizardEngine:
         from src.wizard.wizard_engine import WizardEngine
 
         mock_mq = MagicMock(spec=WizardMessageQueue)
-        config = WizardConfig(mode=WizardMode.INTERACTIVE, show_summary=False,
-                              auto_continue=False)
+        config = WizardConfig(mode=WizardMode.INTERACTIVE, show_summary=False, auto_continue=False)
         engine = WizardEngine(config=config, message_queue=mock_mq)
         engine.result.command = ["python", "test.py"]
 
@@ -1670,6 +1825,7 @@ class TestWizardEngine:
 
     def test_show_summary(self, capsys):
         from src.wizard.wizard_engine import WizardEngine
+
         engine = WizardEngine()
         engine.result.targets = ["addr1", "addr2", "addr3"]
         engine.result.mode = "random"
@@ -1682,6 +1838,7 @@ class TestWizardEngine:
 
     def test_show_summary_no_gpu(self, capsys):
         from src.wizard.wizard_engine import WizardEngine
+
         engine = WizardEngine()
         engine.result.targets = ["addr1"]
         engine.result.mode = "random"
@@ -1694,6 +1851,7 @@ class TestWizardEngine:
     def test_execute_subprocess_error(self, monkeypatch, capsys):
         """Test _execute handles subprocess errors."""
         from src.wizard.wizard_engine import WizardEngine
+
         engine = WizardEngine()
         engine.result.command = ["nonexistent_command"]
         mock_run = MagicMock(side_effect=FileNotFoundError("no such command"))
@@ -1707,9 +1865,11 @@ class TestWizardEngine:
         from src.wizard.interfaces import WizardConfig, WizardMode
         from src.wizard.message_queue import WizardMessageQueue
         from src.wizard.wizard_engine import WizardEngine
+
         mock_mq = MagicMock(spec=WizardMessageQueue)
-        config = WizardConfig(mode=WizardMode.COMPACT, show_intro=False,
-                              show_summary=True, auto_continue=True)
+        config = WizardConfig(
+            mode=WizardMode.COMPACT, show_intro=False, show_summary=True, auto_continue=True
+        )
         monkeypatch.setattr("subprocess.run", MagicMock())
         engine = WizardEngine(config=config, message_queue=mock_mq)
         engine.result.command = ["python", "test.py"]
@@ -1722,12 +1882,14 @@ class TestWizardEngine:
 # main() function tests
 # ============================================================================
 
+
 class TestWizardMain:
     """Test wizard_engine.main() function."""
 
     def test_main_compact(self, monkeypatch, capsys):
         """Test main with --compact flag."""
         import src.wizard.wizard_engine as we
+
         monkeypatch.setattr("sys.argv", ["wizard", "--compact"])
         mock_engine = MagicMock()
         mock_result = MagicMock()
@@ -1743,6 +1905,7 @@ class TestWizardMain:
     def test_main_auto(self, monkeypatch):
         """Test main with --auto flag."""
         import src.wizard.wizard_engine as we
+
         monkeypatch.setattr("sys.argv", ["wizard", "--auto"])
         mock_engine = MagicMock()
         mock_result = MagicMock()
@@ -1757,6 +1920,7 @@ class TestWizardMain:
     def test_main_interactive_default(self, monkeypatch):
         """Test main with no flags (interactive mode)."""
         import src.wizard.wizard_engine as we
+
         monkeypatch.setattr("sys.argv", ["wizard"])
         mock_engine = MagicMock()
         mock_result = MagicMock()
@@ -1771,6 +1935,7 @@ class TestWizardMain:
     def test_main_failure_return_code(self, monkeypatch):
         """Test main returns 1 on failure."""
         import src.wizard.wizard_engine as we
+
         monkeypatch.setattr("sys.argv", ["wizard"])
         mock_engine = MagicMock()
         mock_result = MagicMock()
@@ -1783,6 +1948,7 @@ class TestWizardMain:
     def test_main_with_output(self, monkeypatch, tmp_path):
         """Test main with --output flag."""
         import src.wizard.wizard_engine as we
+
         output_file = str(tmp_path / "config.json")
         monkeypatch.setattr("sys.argv", ["wizard", "--output", output_file])
         mock_engine = MagicMock()
@@ -1797,6 +1963,7 @@ class TestWizardMain:
     def test_main_module_guard(self, monkeypatch):
         """Test if __name__ == "__main__" guard."""
         import src.wizard.wizard_engine as we
+
         # Use exec to simulate the __name__ guard without re-executing the module
         monkeypatch.setattr("sys.argv", ["wizard"])
         monkeypatch.setattr("sys.exit", MagicMock())
@@ -1804,6 +1971,9 @@ class TestWizardMain:
         mock_engine.return_value.run.return_value = MagicMock(success=True)
         monkeypatch.setattr(we, "WizardEngine", mock_engine)
         import sys
-        exec("if __name__ == '__main__': sys.exit(main())",
-             {"__name__": "__main__", "main": we.main, "sys": sys})
+
+        exec(
+            "if __name__ == '__main__': sys.exit(main())",
+            {"__name__": "__main__", "main": we.main, "sys": sys},
+        )
         sys.exit.assert_called_once()

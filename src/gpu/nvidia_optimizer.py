@@ -115,9 +115,13 @@ class NvidiaDriverDetector:
         }
 
         # 尝试从 device_info 中提取
-        version_str = self._device_info.get("driver_version") or self._device_info.get("version", "")
+        version_str = self._device_info.get("driver_version") or self._device_info.get(
+            "version", ""
+        )
         if not version_str:
-            result["recommendation"] = "无法检测 NVIDIA 驱动版本，建议升级至 450+ 以获得最佳 OpenCL 支持"
+            result["recommendation"] = (
+                "无法检测 NVIDIA 驱动版本，建议升级至 450+ 以获得最佳 OpenCL 支持"
+            )
             return result
 
         result["version_str"] = str(version_str)
@@ -433,7 +437,9 @@ class NvidiaMemoryOptimizer:
         "Quadro GV",
     ]
 
-    def __init__(self, device_info: dict, arch_features: dict, engine_logger: Any | None = None) -> None:
+    def __init__(
+        self, device_info: dict, arch_features: dict, engine_logger: Any | None = None
+    ) -> None:
         self._device_info = device_info
         self._arch_features = arch_features
         self._logger = engine_logger or logger
@@ -607,7 +613,7 @@ class NvidiaGPUOptimizer:
             self._logger.warning(
                 f"⚠️ NVIDIA 显存优化配置失败（非致命）: {type(e).__name__}\n"
                 "   显存配置将使用保守默认值",
-                exc_info=True
+                exc_info=True,
             )
             self._memory_config = {
                 "memory_ratio": 0.60,
@@ -628,7 +634,9 @@ class NvidiaGPUOptimizer:
         result["recommended_async_transfer"] = (
             self._memory_config.get("async_transfer", False) if self._memory_config else False
         )
-        result["arch_name"] = self._arch_info.get("arch", "Unknown") if self._arch_info else "Unknown"
+        result["arch_name"] = (
+            self._arch_info.get("arch", "Unknown") if self._arch_info else "Unknown"
+        )
 
         self._logger.info("=" * 60)
         self._logger.info("✅ NVIDIA GPU 特殊优化应用完成")

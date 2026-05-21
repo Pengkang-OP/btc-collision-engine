@@ -48,10 +48,14 @@ print(f"  格式: {matched_fmt}")
 print("\n处理流程:")
 print(f"  1. 遍历到P2PKH格式，有{manager.get_targets_by_format()[AddressFormat.P2PKH]}个目标")
 print(f"     - 生成P2PKH地址: {addrs['p2pkh']}")
-print(f"     - 检查是否在目标中: {'是' if addrs['p2pkh'].lower() in manager.get_targets_by_format()[AddressFormat.P2PKH] else '否'}")
+print(
+    f"     - 检查是否在目标中: {'是' if addrs['p2pkh'].lower() in manager.get_targets_by_format()[AddressFormat.P2PKH] else '否'}"
+)
 print(f"  2. 继续遍历到Bech32格式，有{manager.get_targets_by_format()[AddressFormat.BECH32]}个目标")
 print(f"     - 生成Bech32地址: {addrs['bech32']}")
-print(f"     - 检查是否在目标中: {'是' if addrs['bech32'].lower() in manager.get_targets_by_format()[AddressFormat.BECH32] else '否'}")
+print(
+    f"     - 检查是否在目标中: {'是' if addrs['bech32'].lower() in manager.get_targets_by_format()[AddressFormat.BECH32] else '否'}"
+)
 print("  3. 两个格式都匹配，返回第一个匹配的（P2PKH先遍历）")
 
 print("\n" + "=" * 80)
@@ -104,11 +108,11 @@ print(f"  格式: {matched_fmt3}")
 print("\n处理流程:")
 print(f"  1. P2PKH: 有目标，生成地址，{'匹配成功' if matched_fmt3 == 'p2pkh' else '不匹配'}")
 print(f"     - 匹配: {matched_fmt3 == 'p2pkh'}")
-if matched_fmt3 != 'p2pkh':
+if matched_fmt3 != "p2pkh":
     print(f"  2. P2SH: 有目标，生成地址，{'匹配成功' if matched_fmt3 == 'p2sh' else '不匹配'}")
-if matched_fmt3 not in ['p2pkh', 'p2sh']:
+if matched_fmt3 not in ["p2pkh", "p2sh"]:
     print(f"  3. Bech32: 有目标，生成地址，{'匹配成功' if matched_fmt3 == 'bech32' else '不匹配'}")
-if matched_fmt3 == 'bech32':
+if matched_fmt3 == "bech32":
     print("     - 返回Bech32匹配！")
 print("\n  由于P2PKH在字典中第一个被遍历，会返回P2PKH格式的匹配")
 

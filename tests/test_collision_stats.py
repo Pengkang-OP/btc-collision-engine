@@ -340,8 +340,6 @@ class TestCollisionStatsThreadSafety(unittest.TestCase):
         self.assertEqual(errors, [])
 
 
-
-
 class TestCollisionStatsErrorTracking(unittest.TestCase):
     """record_*_error 和 get_error_rates 测试"""
 
@@ -431,7 +429,7 @@ class TestCollisionStatsHealthCheck(unittest.TestCase):
 
     def test_is_healthy_total_error_includes_both(self):
         """总错误率 = gpu + worker"""
-        self.stats.gpu_errors = 100   # 1%%
+        self.stats.gpu_errors = 100  # 1%%
         self.stats.worker_errors = 50  # 0.5%%
         # total_error_rate = 150/10000 = 1.5%% > 1%%
         self.assertFalse(self.stats.is_healthy())

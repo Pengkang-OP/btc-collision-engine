@@ -99,10 +99,15 @@ class GPUBatchScheduler:
         current_time = time.time()
         if current_time - engine._last_memory_check_time >= engine._memory_check_interval:
             engine._last_memory_check_time = current_time
-            if hasattr(engine._gpu_kernel, "_buffer_tracker") and engine._gpu_kernel._buffer_tracker:
+            if (
+                hasattr(engine._gpu_kernel, "_buffer_tracker")
+                and engine._gpu_kernel._buffer_tracker
+            ):
                 try:
                     stats = engine._gpu_kernel._buffer_tracker.get_stats()
-                    logger.debug(f"内存检查: {stats['count']}个缓冲区, {stats['total_size_mb']:.2f} MB")
+                    logger.debug(
+                        f"内存检查: {stats['count']}个缓冲区, {stats['total_size_mb']:.2f} MB"
+                    )
                 except Exception as e:
                     logger.error(f"内存泄漏检查失败: {e}", exc_info=True)
 
@@ -262,7 +267,9 @@ class GPUBatchScheduler:
         except Exception as e:
             logger.debug(f"记录GPU性能指标失败: {e}")
 
-    def record_adjustment(self, old_size: int, new_size: int, reason: str, details: str = "") -> None:
+    def record_adjustment(
+        self, old_size: int, new_size: int, reason: str, details: str = ""
+    ) -> None:
         """记录调整历史"""
         engine = self._engine
         engine._engine_monitor.record_adjustment(
@@ -424,7 +431,9 @@ class GPUBatchScheduler:
                                 buf.release()
                                 setattr(engine._gpu_kernel, attr, None)
                             except Exception as e:
-                                logger.warning(f"释放GPU缓冲区失败 [{attr}]: {type(e).__name__}: {e}")
+                                logger.warning(
+                                    f"释放GPU缓冲区失败 [{attr}]: {type(e).__name__}: {e}"
+                                )
                 engine._gpu_kernel._max_batch_size = new_batch_size
                 if hasattr(engine._gpu_kernel, "_allocate_buffers"):
                     engine._gpu_kernel._allocate_buffers()

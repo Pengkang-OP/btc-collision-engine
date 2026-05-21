@@ -178,11 +178,9 @@ class GPUAutoTuner:
             }
             self.best_throughput = best["throughput"]
 
-            _bs = best['batch_size']
-            _tp = best['throughput']
-            logger.info(
-                f"\n🏆 最优配置: batch_size={_bs:,}, 吞吐量={_tp:,.0f} keys/sec"
-            )
+            _bs = best["batch_size"]
+            _tp = best["throughput"]
+            logger.info(f"\n🏆 最优配置: batch_size={_bs:,}, 吞吐量={_tp:,.0f} keys/sec")
 
             return self.best_config
         else:

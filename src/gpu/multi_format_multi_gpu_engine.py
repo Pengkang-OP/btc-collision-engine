@@ -74,8 +74,15 @@ class MultiFormatMultiGPUEngine:
         """获取格式统计"""
         return self._format_manager.get_format_stats()
 
-    def start(self, targets=None, mode="random", total_keys=10000000,
-              match_callback=None, range_start=None, range_end=None):
+    def start(
+        self,
+        targets=None,
+        mode="random",
+        total_keys=10000000,
+        match_callback=None,
+        range_start=None,
+        range_end=None,
+    ):
         """启动多GPU碰撞 (P0: API兼容)
 
         Args:

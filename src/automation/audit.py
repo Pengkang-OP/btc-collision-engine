@@ -252,7 +252,9 @@ class AuditModule:
             priority_1_tests = [
                 r
                 for r in getattr(test_results, "results", []) or []
-                if any(tc in getattr(r, "test_name", "") for tc in ["配置", "CLI", "加密", "端到端"])
+                if any(
+                    tc in getattr(r, "test_name", "") for tc in ["配置", "CLI", "加密", "端到端"]
+                )
             ]
             if priority_1_tests:
                 metrics["critical_tests_passed"] = all(
@@ -437,7 +439,9 @@ class AuditModule:
             json.dump(rules_data, f, ensure_ascii=False, indent=2)
 
 
-def audit(test_results: TestSuiteResult, analysis_report: AnalysisReport | None = None) -> AuditResult:
+def audit(
+    test_results: TestSuiteResult, analysis_report: AnalysisReport | None = None
+) -> AuditResult:
     """执行审核"""
     module = AuditModule()
     return module.audit(test_results, analysis_report)

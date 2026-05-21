@@ -45,7 +45,9 @@ for fmt, addr in addresses.items():
         detected_fmt = gen.detect_address_format(addr)
         expected_fmt = AddressFormat(fmt)
         match = detected_fmt == expected_fmt
-        print(f"  {fmt:10s}: {'✓' if match else '✗'} (expected={expected_fmt.value}, detected={detected_fmt.value})")
+        print(
+            f"  {fmt:10s}: {'✓' if match else '✗'} (expected={expected_fmt.value}, detected={detected_fmt.value})"
+        )
 
 # 2. 测试格式检测
 print("\n[Test 2] Address Format Detection")
@@ -121,7 +123,9 @@ for fmt in ["p2pkh", "p2sh", "bech32", "taproot"]:
     if addr:
         manager_test.add_target(addr)
         is_match, matched_addr, matched_fmt = manager_test.check_match(private_key_1)
-        print(f"  {fmt:10s}: {'✓ MATCHED' if is_match else '✗ NO MATCH'} - {matched_addr if is_match else ''}")
+        print(
+            f"  {fmt:10s}: {'✓ MATCHED' if is_match else '✗ NO MATCH'} - {matched_addr if is_match else ''}"
+        )
 
 # 5. 测试混合格式匹配
 print("\n[Test 5] Mixed Format Matching")

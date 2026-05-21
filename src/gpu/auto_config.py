@@ -212,7 +212,9 @@ class GPUAutoConfigurator:
         recommended_wgs = 256
         adjusted_wgs = _align_work_group_size(recommended_wgs, max_wgs, 32)
         if adjusted_wgs != recommended_wgs:
-            logger.info(f"[NVIDIA] wgs: {recommended_wgs}->{adjusted_wgs} (max={max_wgs}, align=32)")
+            logger.info(
+                f"[NVIDIA] wgs: {recommended_wgs}->{adjusted_wgs} (max={max_wgs}, align=32)"
+            )
         config["work_group_size"] = adjusted_wgs
 
         return config
@@ -281,7 +283,9 @@ class GPUAutoConfigurator:
         max_wgs = device.get("max_work_group_size", 1024)
         adjusted_wgs = _align_work_group_size(recommended_wgs, max_wgs, 32)
         if adjusted_wgs != recommended_wgs:
-            logger.info(f"[Intel Arc] wgs: {recommended_wgs}->{adjusted_wgs} (max={max_wgs}, align=32)")
+            logger.info(
+                f"[Intel Arc] wgs: {recommended_wgs}->{adjusted_wgs} (max={max_wgs}, align=32)"
+            )
         config["work_group_size"] = adjusted_wgs
 
         return config
@@ -350,7 +354,9 @@ class GPUAutoConfigurator:
             # 确保最小batch_size为1024
             if new_batch_size < 1024:
                 new_batch_size = 1024
-                logger.warning(f"显存不足,批次大小从 {batch_size:,} 调整为最小值 {new_batch_size:,}")
+                logger.warning(
+                    f"显存不足,批次大小从 {batch_size:,} 调整为最小值 {new_batch_size:,}"
+                )
             else:
                 # 对齐到2的幂
                 new_batch_size = 1 << (new_batch_size.bit_length() - 1)

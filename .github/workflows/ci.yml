@@ -422,16 +422,26 @@ jobs:
           import ast, sys, os, glob
           errors = []
           gpu_dir = "src/gpu"
-          for py_file in glob.glob(f"{gpu_dir}/**/*.py", recursive=True):
+          for py_file in sorted(glob.glob(f"{gpu_dir}/**/*.py", recursive=True)):
               if "__pycache__" in py_file:
                   continue
               try:
-                  with open(py_file, encoding="utf-8") as f:
-                      ast.parse(f.read(), filename=py_file)
-              except SyntaxError as e:
-                  errors.append(f"  ❌ {py_file}:{e.lineno}: {e.msg}")
+                  with open(py_file, "rb") as f:
+                      raw = f.read()
+                  # Try UTF-8 first
+                  try:
+                      text = raw.decode("utf-8")
+                  except UnicodeDecodeError:
+                      errors.append(f"  ❌ {py_file}: 文件不是 UTF-8 编码 (大小={len(raw)}字节)")
+                      continue
+                  try:
+                      ast.parse(text, filename=py_file)
+                  except SyntaxError as e:
+                      errors.append(f"  ❌ {py_file}:{e.lineno}: {e.msg}")
+              except Exception as e:
+                  errors.append(f"  ❌ {py_file}: 未知错误: {e}")
           if errors:
-              print(f"❌ 发现 {len(errors)} 个语法错误:")
+              print(f"❌ 发现 {len(errors)} 个错误:")
               for e in errors:
                   print(e)
               sys.exit(1)

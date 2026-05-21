@@ -18,21 +18,25 @@ class TestSecp256k1Parameters(unittest.TestCase):
     def test_verify_parameters_p_invalid(self):
         class BadP(Secp256k1):
             P = 1
+
         self.assertFalse(BadP.verify_parameters())
 
     def test_verify_parameters_n_invalid(self):
         class BadN(Secp256k1):
             N = 1
+
         self.assertFalse(BadN.verify_parameters())
 
     def test_verify_parameters_bad_curve_eq(self):
         class BadPoint(Secp256k1):
             Gy = Secp256k1.Gy + 1
+
         self.assertFalse(BadPoint.verify_parameters())
 
     def test_verify_parameters_n_ge_p(self):
         class BadOrder(Secp256k1):
             N = Secp256k1.P + 1
+
         self.assertFalse(BadOrder.verify_parameters())
 
     def test_get_security_info_has_keys(self):
@@ -67,6 +71,7 @@ class TestECPointEdge(unittest.TestCase):
     def test_eq_infinity_different_curve(self):
         class FakeCurve:
             pass
+
         p1 = ECPoint(None, None, Secp256k1)
         p2 = ECPoint(None, None, FakeCurve)
         self.assertEqual(p1, p2)
@@ -81,6 +86,7 @@ class TestECPointEdge(unittest.TestCase):
     def test_copy_individual_curve(self):
         class FakeCurve:
             pass
+
         p = ECPoint(1, 2, FakeCurve)
         c = p.copy()
         self.assertIs(c.curve, FakeCurve)
@@ -298,6 +304,7 @@ class TestGeneratePublicKeyDeep(unittest.TestCase):
 
     def test_compressed_prefix_02_or_03(self):
         import random
+
         random.seed(42)
         for _ in range(20):
             k = random.randint(1, 10**12)
@@ -307,6 +314,7 @@ class TestGeneratePublicKeyDeep(unittest.TestCase):
 
     def test_uncompressed_prefix_04(self):
         import random
+
         random.seed(42)
         for _ in range(20):
             k = random.randint(1, 10**12)
@@ -395,6 +403,7 @@ class TestModInverseSummary(unittest.TestCase):
 
     def test_mod_inverse_batch_secp256k1(self):
         import random
+
         random.seed(77)
         p = Secp256k1.P
         for _ in range(10):

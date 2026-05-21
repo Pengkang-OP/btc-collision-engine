@@ -142,9 +142,7 @@ class DistributedStatsAggregator:
                 "combined_throughput": total_throughput,
                 "average_throughput": avg_throughput,
                 "total_errors": total_errors,
-                "per_device": {
-                    idx: stats for idx, stats in workers_snapshot
-                },
+                "per_device": {idx: stats for idx, stats in workers_snapshot},
             }
             self._cache_valid = True
 
@@ -180,7 +178,9 @@ class DistributedStatsAggregator:
             return {"balanced": True, "devices": []}
 
         avg_keys = (
-            combined["total_keys_checked"] / len(per_device) if combined["total_keys_checked"] > 0 else 0
+            combined["total_keys_checked"] / len(per_device)
+            if combined["total_keys_checked"] > 0
+            else 0
         )
         max_deviation = 0
 

@@ -86,7 +86,9 @@ class TargetResolver:
         self.generator = P2PKHAddressGenerator()
 
         # 解析缓存
-        self.cache = AddressCache(lru_size=cache_max_size, enable_stats=True) if enable_cache else None
+        self.cache = (
+            AddressCache(lru_size=cache_max_size, enable_stats=True) if enable_cache else None
+        )
 
         # 文件加载配置
         self._max_file_size_bytes = max_file_size_bytes
@@ -321,7 +323,9 @@ class TargetResolver:
             from ...core.wif import WIF
 
             private_key, compressed = WIF.decode(input_str)
-            public_key = self.generator.private_key_to_public_key(private_key, compressed=compressed)
+            public_key = self.generator.private_key_to_public_key(
+                private_key, compressed=compressed
+            )
             address = self.generator.public_key_to_address(public_key)
             if self.cache:
                 self.cache.put(input_str, address)
@@ -555,9 +559,7 @@ class TargetResolver:
             # 报告密码学上不支持的类型
             unsupported = self.get_unsupported_types()
             if unsupported:
-                unsupported_summary = ", ".join(
-                    f"{k}={v}" for k, v in sorted(unsupported.items())
-                )
+                unsupported_summary = ", ".join(f"{k}={v}" for k, v in sorted(unsupported.items()))
                 logger.warning(
                     f"密码学上不支持匹配的输入类型: {unsupported_summary}. "
                     f"这些地址/格式因密码学路径不同无法通过私钥碰撞匹配，已自动跳过。"

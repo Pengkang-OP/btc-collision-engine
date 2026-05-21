@@ -25,8 +25,10 @@ class TestSIMDHashNoPycryptodome(unittest.TestCase):
                 saved_modules[key] = sys.modules.pop(key)
 
         try:
-            with patch("builtins.__import__",
-                       side_effect=self._selective_import_fail), patch("src.core.simd_hash.logger"):
+            with (
+                patch("builtins.__import__", side_effect=self._selective_import_fail),
+                patch("src.core.simd_hash.logger"),
+            ):
                 optimizer = SIMDHashOptimizer()
         finally:
             sys.modules.update(saved_modules)

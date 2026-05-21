@@ -238,7 +238,10 @@ def _cmd_config_check() -> None:
 
             if missing_sections:
                 print(
-                    "[WARN] " + _t("cli.commands.missing_sections") + ": " + ", ".join(missing_sections)
+                    "[WARN] "
+                    + _t("cli.commands.missing_sections")
+                    + ": "
+                    + ", ".join(missing_sections)
                 )
             else:
                 print("[OK] " + _t("cli.commands.sections_complete"))
@@ -251,9 +254,15 @@ def _cmd_config_check() -> None:
             print("   - workers        : " + str(workers))
             print(
                 "   - perf_optimize  : "
-                + ("enabled" if collision_cfg.get("use_performance_optimization", True) else "disabled")
+                + (
+                    "enabled"
+                    if collision_cfg.get("use_performance_optimization", True)
+                    else "disabled"
+                )
             )
-            chk = collision_cfg.get("checkpoint_interval", engine_cfg.get("checkpoint_interval", 30))
+            chk = collision_cfg.get(
+                "checkpoint_interval", engine_cfg.get("checkpoint_interval", 30)
+            )
             print("   - checkpoint_int : " + str(chk) + "s")
 
             gpu_cfg = config.get("gpu", {})
@@ -361,7 +370,9 @@ def _save_address_to_targets_file(address: str, output) -> None:
         os.replace(temp_path, targets_path)
 
         output.print(
-            "   [green][OK] 地址已保存到 targets.txt（共 " + str(len(existing) + 1) + " 条）[/green]"
+            "   [green][OK] 地址已保存到 targets.txt（共 "
+            + str(len(existing) + 1)
+            + " 条）[/green]"
         )
     except OSError as e:
         output.warning("无法写入 targets.txt: " + str(e))
@@ -403,7 +414,8 @@ def _scan_target_file_lines(target_file: str, max_scan: int = 50000) -> tuple[in
 
 
 def _handle_missing_target_file(
-    output: CLIOutput, target_file: str,
+    output: CLIOutput,
+    target_file: str,
 ) -> tuple[list[str], str | None] | None:
     """处理目标文件不存在时的菜单交互。
     返回 (targets, target_file) 或 None（需要继续后续流程）。
@@ -425,10 +437,13 @@ def _handle_missing_target_file(
                 f.write("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n")
             output.success(_t("cli.commands.example_file_created", path=target_file))
             output.print("   [TIP] " + _t("cli.commands.example_file_tip"))
-            output.success(_t(
-                "cli.commands.addresses_loaded",
-                count="1", path=Path(target_file).name,
-            ))
+            output.success(
+                _t(
+                    "cli.commands.addresses_loaded",
+                    count="1",
+                    path=Path(target_file).name,
+                )
+            )
             return [], target_file
         except Exception as e:
             output.error(f"创建文件失败: {str(e)}")
@@ -552,14 +567,17 @@ def _quick_start_select_mode(compact: bool = False) -> tuple[str, str | None, st
 
     if mode in ["range", "brute_force"]:
         while True:
-            start_key = input("   " + _t("cli.commands.input_start_key") + " (hex): ").strip() or "1"
+            start_key = (
+                input("   " + _t("cli.commands.input_start_key") + " (hex): ").strip() or "1"
+            )
             if all(c in "0123456789abcdefABCDEF" for c in start_key):
                 break
             output.error("请输入有效的十六进制字符串")
         if mode == "range":
             while True:
                 end_key = (
-                    input("   " + _t("cli.commands.input_end_key") + " (hex): ").strip() or "FFFFFFFF"
+                    input("   " + _t("cli.commands.input_end_key") + " (hex): ").strip()
+                    or "FFFFFFFF"
                 )
                 if all(c in "0123456789abcdefABCDEF" for c in end_key):
                     break
@@ -668,7 +686,9 @@ def _detect_gpu_devices_with_timeout(timeout: float = 5.0) -> list[dict]:
 
 
 def _gpu_no_devices_confirm(
-    output: CLIOutput, mode_label: str, arg: str,
+    output: CLIOutput,
+    mode_label: str,
+    arg: str,
 ) -> list[str]:
     """无GPU设备时的确认交互。"""
     output.warning("未检测到可用 GPU 设备（可能缺少 OpenCL 驱动）")
@@ -676,9 +696,7 @@ def _gpu_no_devices_confirm(
     output.print("   [INFO] 请参考文档安装 GPU 驱动和依赖")
     fallback = input(f"   是否仍然尝试{mode_label}？[y/N]: ").strip().lower()
     if fallback == "y":
-        output.warning(
-            f"警告：在无 GPU 设备的情况下尝试{mode_label}可能会导致运行时错误"
-        )
+        output.warning(f"警告：在无 GPU 设备的情况下尝试{mode_label}可能会导致运行时错误")
         return [arg]
     output.success("已回退到 CPU 模式")
     return []
@@ -696,9 +714,7 @@ def _single_gpu_select(output: CLIOutput, devices: list[dict]) -> list[str]:
     output.print("   检测到以下 GPU 设备:")
     for i, dev in enumerate(devices):
         output.print(f"     {i + 1}. {_format_device_label(dev, i)}")
-    raw = input(
-        f"   请选择 GPU 设备 [1-{len(devices)}，直接回车=选择第一个]: "
-    ).strip() or "1"
+    raw = input(f"   请选择 GPU 设备 [1-{len(devices)}，直接回车=选择第一个]: ").strip() or "1"
     try:
         idx = int(raw) - 1
         if 0 <= idx < len(devices):
@@ -724,9 +740,10 @@ def _multi_gpu_select(output: CLIOutput, devices: list[dict]) -> list[str]:
     for i, dev in enumerate(devices):
         output.print(f"     {i + 1}. {_format_device_label(dev, i)}")
     default_indices = " ".join(str(i + 1) for i in range(len(devices)))
-    raw = input(
-        "   请选择要使用的 GPU 设备编号（空格分隔，如 1 2，直接回车=全部）: "
-    ).strip() or default_indices
+    raw = (
+        input("   请选择要使用的 GPU 设备编号（空格分隔，如 1 2，直接回车=全部）: ").strip()
+        or default_indices
+    )
     selected_indices: list[int] = []
     valid_sel = True
     for part in raw.split():
@@ -743,12 +760,9 @@ def _multi_gpu_select(output: CLIOutput, devices: list[dict]) -> list[str]:
             valid_sel = False
             break
     if valid_sel and selected_indices:
-        labels = ", ".join(
-            _format_device_label(devices[i], i) for i in selected_indices
-        )
+        labels = ", ".join(_format_device_label(devices[i], i) for i in selected_indices)
         output.success(f"已选择: {labels}")
-        return ["--multi-gpu", "--gpu-indices",
-                *[str(i) for i in selected_indices]]
+        return ["--multi-gpu", "--gpu-indices", *[str(i) for i in selected_indices]]
     output.warning("选择无效，将使用所有 GPU 设备")
     return ["--multi-gpu"]
 
@@ -790,7 +804,8 @@ def _quick_start_select_gpu() -> list[str]:
 
 
 def _quick_run_scan_target(
-    target_file: str, output: CLIOutput,
+    target_file: str,
+    output: CLIOutput,
 ) -> tuple[int, list[str]] | None:
     """扫描目标文件获取地址预览。返回 (count, preview_list) 或 None (失败/无数据)"""
     address_count = 0
@@ -811,8 +826,7 @@ def _quick_run_scan_target(
         output.warning(f"{target_file} 中没有有效的目标地址")
         output.print("\n[TIP] 请先在文件中添加目标地址，或使用以下命令:")
         output.print(
-            "  python key_collision_cli.py "
-            "-t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random\n"
+            "  python key_collision_cli.py " "-t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random\n"
         )
         return None
     return address_count, preview_addresses
@@ -823,9 +837,7 @@ def _quick_run_config_summary(target_file: str) -> dict:
     return {
         "目标文件": target_file,
         "碰撞模式": (
-            "随机模式"
-            if QUICK_RUN_DEFAULTS["mode"] == "random"
-            else QUICK_RUN_DEFAULTS["mode"]
+            "随机模式" if QUICK_RUN_DEFAULTS["mode"] == "random" else QUICK_RUN_DEFAULTS["mode"]
         ),
         "断点续传": "启用" if QUICK_RUN_DEFAULTS["checkpoint"] else "禁用",
         "去重过滤": "启用" if QUICK_RUN_DEFAULTS["dedup"] else "禁用",
@@ -858,9 +870,7 @@ def _cmd_quick_run(executor: Callable[[], None] | None = None) -> None:
                 max_display_len = PREVIEW_CONFIG["max_address_display_length"]
                 for i, addr in enumerate(preview_addresses, 1):
                     display_addr = (
-                        addr[:max_display_len] + "..."
-                        if len(addr) > max_display_len
-                        else addr
+                        addr[:max_display_len] + "..." if len(addr) > max_display_len else addr
                     )
                     output.print(f"  {i}. {display_addr}")
                 if address_count > PREVIEW_CONFIG["max_preview_addresses"]:
@@ -874,8 +884,7 @@ def _cmd_quick_run(executor: Callable[[], None] | None = None) -> None:
             output.warning(f"未找到 {target_file}，请使用 -t 或 -f 指定目标")
             output.print("\n[TIP] 快速模式示例:")
             output.print(
-                "  python key_collision_cli.py "
-                "-t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random"
+                "  python key_collision_cli.py " "-t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random"
             )
             output.print("  python key_collision_cli.py -f targets.txt --use-gpu\n")
             return

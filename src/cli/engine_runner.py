@@ -15,6 +15,7 @@ from typing import Any
 
 # v4.5.1: 确保项目根目录在 sys.path 中（使用共享模块）
 from ._path_setup import ensure_project_root
+
 ensure_project_root()
 
 from src.cli.engine_builder import (  # noqa: E402 — 需 sys.path 前置
@@ -70,7 +71,9 @@ def _setup_and_start_engine(
     sensitive_mode = getattr(args, "sensitive_mode", "masked")
 
     try:
-        engine, engine_type = build_engine(args, targets, sensitive_mode=sensitive_mode, config=config)
+        engine, engine_type = build_engine(
+            args, targets, sensitive_mode=sensitive_mode, config=config
+        )
     except GPUNotAvailableError as e:
         logger.error(f"GPU不可用: {e.message}")
         print(f"{e.user_message}", file=sys.stderr)
@@ -316,7 +319,9 @@ def _run_collision_loop(
     total_pause_time: list[float] = [0.0]
 
     listener = KeyboardListener(
-        _make_key_handler(engine, engine_type, output, stop_event, paused, pause_start, total_pause_time)
+        _make_key_handler(
+            engine, engine_type, output, stop_event, paused, pause_start, total_pause_time
+        )
     )
     listener.start()
     _suppress_console_logging()
@@ -440,7 +445,9 @@ def _print_config_info(
         config_items["性能优化"] = f"{optimize_status} (v4.2.2)"
         if not args.no_optimize:
             config_items["预计算表"] = f"window_size={args.window_size}"
-            config_items["SIMD哈希"] = _t("common.disabled") if args.no_simd else _t("common.enabled")
+            config_items["SIMD哈希"] = (
+                _t("common.disabled") if args.no_simd else _t("common.enabled")
+            )
             config_items["内存池"] = (
                 _t("common.disabled") if args.no_memory_pool else _t("common.enabled")
             )

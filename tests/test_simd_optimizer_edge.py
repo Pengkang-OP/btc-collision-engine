@@ -17,6 +17,7 @@ from src.core.simd_optimizer import (
 
 # ──────────────────────────── BatchOptimizer 初始化 ────────────────────────────
 
+
 class TestBatchOptimizerInit(unittest.TestCase):
     """BatchOptimizer 初始化测试"""
 
@@ -46,6 +47,7 @@ class TestBatchOptimizerInit(unittest.TestCase):
 
 # ──────────────────────── BatchOptimizer 转换方法 ──────────────────────────────
 
+
 class TestBatchOptimizerConvert(unittest.TestCase):
     """batch_private_key_to_int 测试"""
 
@@ -72,6 +74,7 @@ class TestBatchOptimizerConvert(unittest.TestCase):
 
 
 # ──────────────────────── BatchOptimizer 哈希方法 ──────────────────────────────
+
 
 class TestBatchOptimizerHash(unittest.TestCase):
     """batch_ripemd160, batch_sha256, batch_hash160 测试"""
@@ -131,6 +134,7 @@ class TestBatchOptimizerHash(unittest.TestCase):
 
 # ────────────────────── BatchOptimizer Base58 编码 ────────────────────────────
 
+
 class TestBatchOptimizerBase58(unittest.TestCase):
     """batch_base58_encode 测试"""
 
@@ -166,6 +170,7 @@ class TestBatchOptimizerBase58(unittest.TestCase):
 
 # ────────────────────── BatchOptimizer 地址生成 ───────────────────────────────
 
+
 class TestBatchOptimizerAddress(unittest.TestCase):
     """batch_address_from_hash160 测试"""
 
@@ -200,6 +205,7 @@ class TestBatchOptimizerAddress(unittest.TestCase):
 
 
 # ─────────────────────── BatchCollisionProcessor ──────────────────────────────
+
 
 class TestBatchCollisionProcessorInit(unittest.TestCase):
     """BatchCollisionProcessor 初始化测试"""
@@ -240,18 +246,14 @@ class TestBatchCollisionProcessorProcessBatch(unittest.TestCase):
         """无匹配时返回空列表"""
         self.processor.set_targets(["1Target1"])
         mock_gen = self._make_fallback_mock(["1Other"] * 2)
-        result = self.processor.process_batch(
-            [b"\x01" * 32, b"\x02" * 32], mock_gen
-        )
+        result = self.processor.process_batch([b"\x01" * 32, b"\x02" * 32], mock_gen)
         self.assertEqual(result, [])
 
     def test_process_batch_with_match(self):
         """有匹配时返回匹配项"""
         self.processor.set_targets(["1Match"])
         mock_gen = self._make_fallback_mock(["1Match", "1Other"])
-        result = self.processor.process_batch(
-            [b"\x01" * 32, b"\x02" * 32], mock_gen
-        )
+        result = self.processor.process_batch([b"\x01" * 32, b"\x02" * 32], mock_gen)
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0][0], b"\x01" * 32)
         self.assertEqual(result[0][1], "1Match")
@@ -266,30 +268,22 @@ class TestBatchCollisionProcessorProcessBatch(unittest.TestCase):
     def test_process_batch_multiple_batches(self):
         """跨越多个批次的处理"""
         self.processor.set_targets(["1Target"])
-        mock_gen = self._make_fallback_mock(
-            ["1Other", "1Target", "1Other", "1Other"]
-        )
-        result = self.processor.process_batch(
-            [b"\x01" * 32] * 4, mock_gen
-        )
+        mock_gen = self._make_fallback_mock(["1Other", "1Target", "1Other", "1Other"])
+        result = self.processor.process_batch([b"\x01" * 32] * 4, mock_gen)
         self.assertEqual(len(result), 1)
 
     def test_batch_generate_addresses_with_batch_generate(self):
         """address_generator 有 batch_generate 方法时使用它"""
         mock_gen = MagicMock()
         mock_gen.batch_generate.return_value = ["addr1", "addr2"]
-        result = self.processor._batch_generate_addresses(
-            [b"\x01" * 32, b"\x02" * 32], mock_gen
-        )
+        result = self.processor._batch_generate_addresses([b"\x01" * 32, b"\x02" * 32], mock_gen)
         self.assertEqual(result, ["addr1", "addr2"])
         mock_gen.batch_generate.assert_called_once()
 
     def test_batch_generate_addresses_fallback(self):
         """address_generator 没有 batch_generate 方法时逐個生成"""
         mock_gen = self._make_fallback_mock(["a1", "a2"])
-        result = self.processor._batch_generate_addresses(
-            [b"\x01" * 32, b"\x02" * 32], mock_gen
-        )
+        result = self.processor._batch_generate_addresses([b"\x01" * 32, b"\x02" * 32], mock_gen)
         self.assertEqual(result, ["a1", "a2"])
         self.assertEqual(mock_gen.generate_from_private_key.call_count, 2)
 
@@ -297,9 +291,7 @@ class TestBatchCollisionProcessorProcessBatch(unittest.TestCase):
         """address_generator 没有 batch_generate 属性(通过 mock spec)"""
         mock_gen = MagicMock(spec=["generate_from_private_key"])
         mock_gen.generate_from_private_key.return_value = "addr"
-        result = self.processor._batch_generate_addresses(
-            [b"\x01" * 32], mock_gen
-        )
+        result = self.processor._batch_generate_addresses([b"\x01" * 32], mock_gen)
         self.assertEqual(result, ["addr"])
 
     def test_process_batch_matches_across_batches(self):
@@ -307,13 +299,12 @@ class TestBatchCollisionProcessorProcessBatch(unittest.TestCase):
         self.processor = BatchCollisionProcessor(batch_size=2)
         self.processor.set_targets(["1T1", "1T2"])
         mock_gen = self._make_fallback_mock(["1T1", "x", "y", "1T2"])
-        result = self.processor.process_batch(
-            [b"\x01" * 32] * 4, mock_gen
-        )
+        result = self.processor.process_batch([b"\x01" * 32] * 4, mock_gen)
         self.assertEqual(len(result), 2)
 
 
 # ──────────────────── NumpyOptimizedAddressGenerator ──────────────────────────
+
 
 class TestNumpyOptimizedAddressGenerator(unittest.TestCase):
     """NumpyOptimizedAddressGenerator 测试"""
@@ -367,6 +358,7 @@ class TestNumpyOptimizedAddressGenerator(unittest.TestCase):
 
 
 # ─────────────────────────── 工厂函数 ─────────────────────────────────────────
+
 
 class TestFactoryFunctions(unittest.TestCase):
     """工厂函数测试"""

@@ -178,7 +178,9 @@ class RandomSearchMode(BaseSearchMode):
                         self._seed_generated_count += 1
                 else:
                     # 队列充足，批量补充
-                    batch_size = min(SEED_BATCH_GENERATE_SIZE, self._seed_prefetch_size - current_size)
+                    batch_size = min(
+                        SEED_BATCH_GENERATE_SIZE, self._seed_prefetch_size - current_size
+                    )
                     if batch_size > 0:
                         seeds = self._generate_seed_batch(batch_size)
                         for seed in seeds:
@@ -264,7 +266,9 @@ class RandomSearchMode(BaseSearchMode):
 
         engine = self.engine
         if engine.stats is None:
-            raise RuntimeError("RandomSearchMode._random_search(): engine.stats is None, 引擎未正确初始化")
+            raise RuntimeError(
+                "RandomSearchMode._random_search(): engine.stats is None, 引擎未正确初始化"
+            )
         logger.info("GPU _random_search 启动 (PRNG + CPU过载保护模式)")
 
         batch_count = 0
@@ -341,7 +345,9 @@ class RandomSearchMode(BaseSearchMode):
                 ExceptionHandler.handle_gpu_error("随机碰撞", e, engine.stats)
 
                 consecutive_errors += 1
-                backoff = min(EXP_BACKOFF_BASE * (2 ** min(consecutive_errors - 1, 8)), EXP_BACKOFF_MAX)
+                backoff = min(
+                    EXP_BACKOFF_BASE * (2 ** min(consecutive_errors - 1, 8)), EXP_BACKOFF_MAX
+                )
                 logger.warning(
                     f"GPU batch {batch_num}: 异常 (连续第{consecutive_errors}次), 退避 {backoff:.2f}s"
                 )
@@ -412,7 +418,10 @@ class RandomSearchMode(BaseSearchMode):
         if not hasattr(engine, "_gpu_kernel") or engine._gpu_kernel is None:
             logger.warning("GPU内核不可用")
             return False
-        if not hasattr(engine._gpu_kernel, "_targets_buf") or engine._gpu_kernel._targets_buf is None:
+        if (
+            not hasattr(engine._gpu_kernel, "_targets_buf")
+            or engine._gpu_kernel._targets_buf is None
+        ):
             logger.warning("目标缓冲区不可用")
             return False
         return True
@@ -466,9 +475,7 @@ class RandomSearchMode(BaseSearchMode):
 
     # ── _execute_async 辅助方法（降低 C901） ──────────────────────
 
-    def _setup_async_buffers(
-        self, engine: Any, current_batch_size: int
-    ) -> tuple[dict, int, str]:
+    def _setup_async_buffers(self, engine: Any, current_batch_size: int) -> tuple[dict, int, str]:
         """初始化双缓冲区和 GPU 型号检测。"""
         gpu_model = self._detect_gpu_model(engine)
         from ..batch_size_optimizer import get_batch_size_optimizer
@@ -481,7 +488,9 @@ class RandomSearchMode(BaseSearchMode):
             actual_batch_size = engine._async_executor.get_actual_batch_size()
             if isinstance(current_batch_size, int) and isinstance(actual_batch_size, int):
                 if current_batch_size > actual_batch_size:
-                    logger.warning(f"batch_size超过GPU缓冲区大小，使用缓冲区大小: {actual_batch_size}")
+                    logger.warning(
+                        f"batch_size超过GPU缓冲区大小，使用缓冲区大小: {actual_batch_size}"
+                    )
                     current_batch_size = actual_batch_size
 
         buffer_data = {
@@ -491,9 +500,13 @@ class RandomSearchMode(BaseSearchMode):
         return buffer_data, current_batch_size, "A", batch_optimizer
 
     def _run_async_batch_cycle(
-        self, engine: Any, batch_optimizer: Any,
-        buffer_data: dict, current_buffer: str,
-        current_batch_size: int, batch_num: int,
+        self,
+        engine: Any,
+        batch_optimizer: Any,
+        buffer_data: dict,
+        current_buffer: str,
+        current_batch_size: int,
+        batch_num: int,
         consecutive_errors: int,
     ) -> tuple[int, str, int, int, bool, int]:
         """执行一次异步批处理周期。
@@ -554,7 +567,9 @@ class RandomSearchMode(BaseSearchMode):
         """异步执行版本（双缓冲 + PRNG + CPU过载保护）。"""
         engine = self.engine
         if engine.stats is None:
-            raise RuntimeError("RandomSearchMode._execute_async(): engine.stats is None, 引擎未正确初始化")
+            raise RuntimeError(
+                "RandomSearchMode._execute_async(): engine.stats is None, 引擎未正确初始化"
+            )
 
         if not self._check_engine_availability(engine):
             logger.warning("异步执行器不可用，回退到同步模式")
@@ -588,11 +603,20 @@ class RandomSearchMode(BaseSearchMode):
                     return
 
                 (
-                    current_batch_size, current_buffer, batch_num,
-                    consecutive_errors, should_break, batch_size_used,
+                    current_batch_size,
+                    current_buffer,
+                    batch_num,
+                    consecutive_errors,
+                    should_break,
+                    batch_size_used,
                 ) = self._run_async_batch_cycle(
-                    engine, batch_optimizer, buffer_data, current_buffer,
-                    current_batch_size, batch_num, consecutive_errors,
+                    engine,
+                    batch_optimizer,
+                    buffer_data,
+                    current_buffer,
+                    current_batch_size,
+                    batch_num,
+                    consecutive_errors,
                 )
                 if should_break:
                     break
@@ -621,7 +645,9 @@ class RandomSearchMode(BaseSearchMode):
         """
         engine = self.engine
         if engine.stats is None:
-            raise RuntimeError("RandomSearchMode._process_matches(): engine.stats is None, 引擎未正确初始化")
+            raise RuntimeError(
+                "RandomSearchMode._process_matches(): engine.stats is None, 引擎未正确初始化"
+            )
         for match in matches:
             private_key = match.get("private_key")
             address = match.get("address")

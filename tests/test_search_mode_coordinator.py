@@ -22,6 +22,7 @@ from src.gpu.search_mode_coordinator import SearchModeCoordinator
 # 辅助函数
 # ============================================================================
 
+
 def _make_engine_stub(**kwargs):
     """创建 GPUCollisionEngine stub"""
     engine = MagicMock()
@@ -37,6 +38,7 @@ def _make_engine_stub(**kwargs):
 # ============================================================================
 # 初始化测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestSearchModeCoordinatorInit:
@@ -105,6 +107,7 @@ class TestSearchModeCoordinatorInit:
 # get_available_modes / get_current_mode 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestQueryModes:
     """模式查询测试"""
@@ -140,6 +143,7 @@ class TestQueryModes:
 # ============================================================================
 # start 测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestStart:
@@ -207,6 +211,7 @@ class TestStart:
 # resume 检查点恢复测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestResume:
     """检查点恢复测试"""
@@ -264,6 +269,7 @@ class TestResume:
 # ============================================================================
 # switch_mode 测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestSwitchMode:
@@ -326,6 +332,7 @@ class TestSwitchMode:
 # stop 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestStop:
     """停止模式测试"""
@@ -375,6 +382,7 @@ class TestStop:
 # get_mode_instance / get_mode_status 测试
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestGetMode:
     """获取模式实例和状态测试"""
@@ -404,10 +412,12 @@ class TestGetMode:
         engine = _make_engine_stub(config={"gpu": {"seed_prefetch_size": 5}})
         coordinator = SearchModeCoordinator(engine)
         r_mode = coordinator._modes["random"]
-        r_mode.get_status = MagicMock(return_value={
-            "mode": "random",
-            "seed_generated": 100,
-        })
+        r_mode.get_status = MagicMock(
+            return_value={
+                "mode": "random",
+                "seed_generated": 100,
+            }
+        )
         status = coordinator.get_mode_status("random")
         assert status["mode"] == "random"
         assert status["seed_generated"] == 100
@@ -449,6 +459,7 @@ class TestGetMode:
 # ============================================================================
 # 边界值测试
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestBoundaryConditions:

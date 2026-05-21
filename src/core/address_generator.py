@@ -127,7 +127,9 @@ class BaseAddressGenerator(ABC):
         address = Base58.check_encode(0x00, hash160)
         return address
 
-    def generate_address(self, private_key: bytes, compressed: bool = True) -> tuple[str, bytes, bytes]:
+    def generate_address(
+        self, private_key: bytes, compressed: bool = True
+    ) -> tuple[str, bytes, bytes]:
         """从私钥生成完整地址
 
         Args:
@@ -231,7 +233,9 @@ class P2PKHAddressGenerator(BaseAddressGenerator):
                     PerformanceWarning,
                     stacklevel=2,
                 )
-                logger.info("提示: 安装 coincurve 库可提升3-5倍性能 (pip install coincurve>=18.0.0)")
+                logger.info(
+                    "提示: 安装 coincurve 库可提升3-5倍性能 (pip install coincurve>=18.0.0)"
+                )
         except ImportError as e:
             # 静默失败，不影响功能
             logger.debug(f"coincurve库不可用（将使用纯 Python 实现）: {e}")

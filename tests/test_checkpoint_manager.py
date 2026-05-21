@@ -215,6 +215,7 @@ class TestCheckpointSaveVariants(unittest.TestCase):
 
     def setUp(self):
         import uuid
+
         self.tmp_path = os.path.join(
             tempfile.gettempdir(), f"test_ckpt_var_{uuid.uuid4().hex[:8]}.json"
         )
@@ -226,15 +227,20 @@ class TestCheckpointSaveVariants(unittest.TestCase):
 
     def test_save_force_writes_immediately(self):
         """force=True 强制写入"""
-        self.mgr.save(mode="random", targets=set(), current_position=0,
-                       total_checked=0, matches=[], force=True)
+        self.mgr.save(
+            mode="random",
+            targets=set(),
+            current_position=0,
+            total_checked=0,
+            matches=[],
+            force=True,
+        )
         self.assertTrue(self.mgr.exists())
 
     def test_save_with_auto_save_disabled(self):
         """间隔未到时 save 仅缓冲不写入"""
         self.mgr._last_save_time = time.time()  # 刚保存过
-        self.mgr.save(mode="random", targets=set(), current_position=0,
-                       total_checked=0, matches=[])
+        self.mgr.save(mode="random", targets=set(), current_position=0, total_checked=0, matches=[])
         # 间隔9999秒未到，不应写入文件
         self.assertFalse(os.path.exists(self.tmp_path))
         # 但 buffer 应该有数据
@@ -256,8 +262,14 @@ class TestCheckpointSaveVariants(unittest.TestCase):
     def test_save_match_with_private_key_hash(self):
         """match 含 private_key_hash 时被保存"""
         matches = [{"address": "1Addr", "timestamp": 1.0, "private_key_hash": "abc123"}]
-        self.mgr.save(mode="random", targets=set(), current_position=0,
-                       total_checked=0, matches=matches, force=True)
+        self.mgr.save(
+            mode="random",
+            targets=set(),
+            current_position=0,
+            total_checked=0,
+            matches=matches,
+            force=True,
+        )
         data = self.mgr.load()
         self.assertEqual(data["matches"][0].get("private_key_hash"), "abc123")
 
@@ -267,6 +279,7 @@ class TestCheckpointFlushErrors(unittest.TestCase):
 
     def setUp(self):
         import uuid
+
         self.tmp_path = os.path.join(
             tempfile.gettempdir(), f"test_ckpt_err_{uuid.uuid4().hex[:8]}.json"
         )
@@ -319,6 +332,7 @@ class TestCheckpointLoadEdgeCases(unittest.TestCase):
 
     def setUp(self):
         import uuid
+
         self.tmp_path = os.path.join(
             tempfile.gettempdir(), f"test_ckpt_load_{uuid.uuid4().hex[:8]}.json"
         )
@@ -372,6 +386,7 @@ class TestCheckpointDelete(unittest.TestCase):
 
     def setUp(self):
         import uuid
+
         self.tmp_path = os.path.join(
             tempfile.gettempdir(), f"test_ckpt_del_{uuid.uuid4().hex[:8]}.json"
         )
@@ -384,8 +399,14 @@ class TestCheckpointDelete(unittest.TestCase):
 
     def test_delete_with_temp_file(self):
         """delete 同时清理 .tmp 文件"""
-        self.mgr.save(mode="random", targets=set(), current_position=0,
-                       total_checked=0, matches=[], force=True)
+        self.mgr.save(
+            mode="random",
+            targets=set(),
+            current_position=0,
+            total_checked=0,
+            matches=[],
+            force=True,
+        )
         temp_file = self.tmp_path + ".tmp"
         with open(temp_file, "w") as f:
             f.write("temp")
@@ -397,8 +418,14 @@ class TestCheckpointDelete(unittest.TestCase):
 
     def test_delete_clears_buffer(self):
         """delete 清空 buffer 和 dirty"""
-        self.mgr.save(mode="random", targets=set(), current_position=0,
-                       total_checked=0, matches=[], force=True)
+        self.mgr.save(
+            mode="random",
+            targets=set(),
+            current_position=0,
+            total_checked=0,
+            matches=[],
+            force=True,
+        )
         self.mgr.delete()
         self.assertIsNone(self.mgr._buffer)
         self.assertFalse(self.mgr._dirty)
@@ -452,6 +479,7 @@ class TestCheckpointFlushDirCreation(unittest.TestCase):
         """父目录不存在时自动创建"""
         import shutil
         import uuid
+
         subdir = os.path.join(tempfile.gettempdir(), f"ckpt_test_{uuid.uuid4().hex[:8]}")
         ckpt_path = os.path.join(subdir, "checkpoint.json")
         mgr = CheckpointManager(filepath=ckpt_path)
@@ -482,6 +510,7 @@ class TestCheckpointLoadTempRecoveryErrors(unittest.TestCase):
 
     def setUp(self):
         import uuid
+
         self.tmp_path = os.path.join(
             tempfile.gettempdir(), f"test_ckpt_rec_{uuid.uuid4().hex[:8]}.json"
         )

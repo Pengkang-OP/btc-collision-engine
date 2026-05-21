@@ -9,6 +9,7 @@ from src.cli.output import CLIOutput, _get_utf8_console
 
 # ── _get_utf8_console ──────────────────────────────────────────
 
+
 class TestGetUtf8Console(unittest.TestCase):
     """_get_utf8_console() 端到端测试。"""
 
@@ -77,6 +78,7 @@ class TestGetUtf8Console(unittest.TestCase):
 
 # ── CLIOutput 单例管理 ─────────────────────────────────────────
 
+
 class TestCLIOutputSingleton(unittest.TestCase):
     """get_instance / init / reset_instance 测试。"""
 
@@ -111,6 +113,7 @@ class TestCLIOutputSingleton(unittest.TestCase):
 
 
 # ── CLIOutput 初始化 ───────────────────────────────────────────
+
 
 class TestCLIOutputInit(unittest.TestCase):
     """__init__ 参数测试。"""
@@ -162,6 +165,7 @@ class TestCLIOutputInit(unittest.TestCase):
 
 
 # ── CLIOutput 消息输出 ─────────────────────────────────────────
+
 
 class TestCLIOutputMessages(unittest.TestCase):
     """info / success / hint / warning / error / print 测试。"""
@@ -294,6 +298,7 @@ class TestCLIOutputMessages(unittest.TestCase):
 
 # ── CLIOutput 结构化输出 ───────────────────────────────────────
 
+
 class TestCLIOutputStructured(unittest.TestCase):
     """rule / header / startup_panel / final_summary / stats_panel 测试。"""
 
@@ -403,6 +408,7 @@ class TestCLIOutputStructured(unittest.TestCase):
 
 # ── CLIOutput 运行时状态 ───────────────────────────────────────
 
+
 class TestCLIOutputRuntime(unittest.TestCase):
     """status_line / performance_status 测试。"""
 
@@ -449,12 +455,14 @@ class TestCLIOutputRuntime(unittest.TestCase):
         """performance_status 全部字段 → 组合输出。"""
         self.out.quiet = False
         with patch.object(self.out, "status_line") as mock_sl:
-            self.out.performance_status({
-                "speed": 5000,
-                "keys_total": 100000,
-                "gpu_usage": 85,
-                "memory_used": 2048,
-            })
+            self.out.performance_status(
+                {
+                    "speed": 5000,
+                    "keys_total": 100000,
+                    "gpu_usage": 85,
+                    "memory_used": 2048,
+                }
+            )
             mock_sl.assert_called_once()
             status_text = mock_sl.call_args[0][0]
             self.assertIn("速度:", status_text)

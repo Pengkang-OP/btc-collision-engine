@@ -156,7 +156,9 @@ class Base58:
 
         # 最小长度检查
         if len(data) < 5:
-            raise ValueError("Base58Check数据过短（至少需要5字节: 1字节版本 + 0+载荷 + 4字节校验和）")
+            raise ValueError(
+                "Base58Check数据过短（至少需要5字节: 1字节版本 + 0+载荷 + 4字节校验和）"
+            )
 
         # 分离版本、载荷和校验和
         version = data[0]

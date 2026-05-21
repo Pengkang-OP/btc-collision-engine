@@ -633,9 +633,7 @@ class TestKernelCompilationCache:
         }
         kernel_src = "__kernel void test(){}"
 
-        cfg_nvidia = engine._get_or_cache_compile_config(
-            nvidia_dev, kernel_src, "-cl-std=CL2.0"
-        )
+        cfg_nvidia = engine._get_or_cache_compile_config(nvidia_dev, kernel_src, "-cl-std=CL2.0")
         cfg_amd = engine._get_or_cache_compile_config(amd_dev, kernel_src, "-cl-std=CL2.0")
 
         assert cfg_nvidia is not cfg_amd, "不同厂商应为独立配置"

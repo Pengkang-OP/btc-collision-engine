@@ -61,7 +61,7 @@ def create_kernel_files():
 
     print(f"✓ 已创建: {main_kernel_path}")
     print(f"  大小: {os.path.getsize(main_kernel_path)} 字节")
-    with open(main_kernel_path, encoding='utf-8') as f:
+    with open(main_kernel_path, encoding="utf-8") as f:
         line_count = sum(1 for _ in f)
     print(f"  行数: {line_count} 行")
 

@@ -340,6 +340,7 @@ class TestConfigManagerLifecycle(unittest.TestCase):
 
         def callback():
             called.append(1)
+
         self.cm.on_config_changed(callback)
         self.cm._notify_change_callbacks()
         self.assertEqual(len(called), 1)
@@ -352,6 +353,7 @@ class TestConfigManagerLifecycle(unittest.TestCase):
 
         def cb2():
             results.append(2)
+
         self.cm.on_config_changed(cb1)
         self.cm.on_config_changed(cb2)
         self.cm._notify_change_callbacks()
@@ -365,6 +367,7 @@ class TestConfigManagerLifecycle(unittest.TestCase):
 
         def good_cb():
             results.append(1)
+
         self.cm.on_config_changed(bad_cb)
         self.cm.on_config_changed(good_cb)
         self.cm._notify_change_callbacks()
@@ -428,6 +431,7 @@ class TestConfigManagerWithTempFile(unittest.TestCase):
 
     def tearDown(self):
         import shutil
+
         shutil.rmtree(self.tmpdir, ignore_errors=True)
 
     def test_save_and_load_roundtrip(self):

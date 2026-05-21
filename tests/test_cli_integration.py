@@ -336,7 +336,11 @@ class TestGPUIntegration:
         monkeypatch.setattr(eb, "GPU_AVAILABLE", True)
         with patch.dict(
             "sys.modules",
-            {"src.collision.gpu_collision_engine": Mock(GPUCollisionEngine=lambda **kw: mock_gpu_engine)},
+            {
+                "src.collision.gpu_collision_engine": Mock(
+                    GPUCollisionEngine=lambda **kw: mock_gpu_engine
+                )
+            },
         ):
             args = _make_full_args(
                 use_gpu=True,

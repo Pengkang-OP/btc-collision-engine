@@ -138,9 +138,7 @@ def _send_results(
         result_queue.put(batch_matches)
 
 
-def _cleanup_worker_memory(
-    worker_id: int, total_checked: int, matches_found: int
-) -> None:
+def _cleanup_worker_memory(worker_id: int, total_checked: int, matches_found: int) -> None:
     """清理工作进程中的敏感内存。"""
     try:
         f_locals = locals()
@@ -199,6 +197,7 @@ def _worker_process(
     # 设置进程名称
     with suppress(ImportError):
         from setproctitle import setproctitle
+
         setproctitle(f"btc-collision-worker-{worker_id}")
 
     logger.info(f"工作进程 {worker_id} 启动")
@@ -210,6 +209,7 @@ def _worker_process(
 
     # 在子进程中初始化地址生成器
     from ..core.optimized_address_generator import OptimizedP2PKHAddressGenerator
+
     address_generator = OptimizedP2PKHAddressGenerator()
     target_set = set(target_addresses)
 
@@ -230,9 +230,7 @@ def _worker_process(
                 batch_matches = []
                 for pk in private_keys:
                     try:
-                        match = _check_single_key_collision(
-                            pk, target_set, address_generator
-                        )
+                        match = _check_single_key_collision(pk, target_set, address_generator)
                         total_checked += 1
                         if match is not None:
                             matches_found += 1
@@ -243,9 +241,7 @@ def _worker_process(
                                 f"🎉 匹配发现 [Worker-{worker_id}]: 地址={match['address'][:10]}...{match['address'][-6:]}"
                             )
                     except Exception as e:
-                        logger.error(
-                            f"工作进程 {worker_id} 处理失败: 类型={type(e).__name__}"
-                        )
+                        logger.error(f"工作进程 {worker_id} 处理失败: 类型={type(e).__name__}")
                         continue
                     finally:
                         _clear_private_key(pk)
@@ -254,21 +250,26 @@ def _worker_process(
 
                 if batch_matches:
                     _send_results(
-                        result_queue, batch_matches,
-                        enable_encryption, encryption_key, worker_id,
+                        result_queue,
+                        batch_matches,
+                        enable_encryption,
+                        encryption_key,
+                        worker_id,
                     )
 
                 # 定期发送统计信息
                 if total_checked % 10000 == 0:
                     elapsed = time.time() - start_time
                     speed = total_checked / elapsed if elapsed > 0 else 0
-                    stats_queue.put({
-                        "worker_id": worker_id,
-                        "total_checked": total_checked,
-                        "matches_found": matches_found,
-                        "speed": speed,
-                        "elapsed": elapsed,
-                    })
+                    stats_queue.put(
+                        {
+                            "worker_id": worker_id,
+                            "total_checked": total_checked,
+                            "matches_found": matches_found,
+                            "speed": speed,
+                            "elapsed": elapsed,
+                        }
+                    )
                     if total_checked % 200000 == 0:
                         gc.collect()
 
@@ -442,7 +443,8 @@ class MultiprocessCollisionEngine:
             return
 
         task = {
-            "batch_size": batch_size or self.batch_size
+            "batch_size": batch_size
+            or self.batch_size
             # 不再需要address_generator，子进程本地初始化
         }
 
@@ -652,7 +654,9 @@ class MultiprocessCollisionEngine:
         """上下文管理器入口"""
         return self
 
-    def __exit__(self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None) -> None:
+    def __exit__(
+        self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None
+    ) -> None:
         """上下文管理器出口
 
         始终返回 None，表示不抑制异常（让异常传播给调用者）。

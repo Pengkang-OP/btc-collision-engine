@@ -23,18 +23,18 @@ _IS_CI = os.environ.get("CI", "").lower() in ("true", "1")
 
 # 本地严格阈值 (有 coincurve 或其他加速库时的期望值)
 _LOCAL_THRESHOLDS = {
-    "public_key_derivation": 20,   # 次/秒
-    "address_generation": 5,        # 次/秒
-    "engine_throughput": 5,         # 次/秒
-    "full_pipeline": 20,            # 次/秒
+    "public_key_derivation": 20,  # 次/秒
+    "address_generation": 5,  # 次/秒
+    "engine_throughput": 5,  # 次/秒
+    "full_pipeline": 20,  # 次/秒
 }
 
 # CI 宽松阈值 (纯 Python 后端，无 coincurve)
 _CI_THRESHOLDS = {
-    "public_key_derivation": 5,    # 次/秒
-    "address_generation": 3,        # 次/秒
-    "engine_throughput": 1,         # 次/秒
-    "full_pipeline": 5,             # 次/秒
+    "public_key_derivation": 5,  # 次/秒
+    "address_generation": 3,  # 次/秒
+    "engine_throughput": 1,  # 次/秒
+    "full_pipeline": 5,  # 次/秒
 }
 
 

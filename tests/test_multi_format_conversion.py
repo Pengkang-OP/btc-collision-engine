@@ -140,7 +140,9 @@ try:
     print("  ↓ Convert")
     print(f"Bech32: {wrapped_to_native}")
 
-    print(f"\nRound-trip conversion: {'✓ PASS' if bech32_address == wrapped_to_native else '✗ FAIL'}")
+    print(
+        f"\nRound-trip conversion: {'✓ PASS' if bech32_address == wrapped_to_native else '✗ FAIL'}"
+    )
 except Exception as e:
     print(f"❌ Bech32 <-> P2SH-P2WPKH conversion failed: {e}")
 
@@ -157,8 +159,8 @@ known_addresses = [
 
 for addr, addr_type, description in known_addresses:
     result = validator.validate_address(addr)
-    status = '✓' if result.success else '✗'
-    detected_type = result.details.get('address_type', 'N/A') if result.success else 'N/A'
+    status = "✓" if result.success else "✗"
+    detected_type = result.details.get("address_type", "N/A") if result.success else "N/A"
     print(f"{status} {addr}")
     print(f"  Type: {addr_type} (Expected), {detected_type} (Detected)")
     print(f"  Description: {description}")
@@ -175,9 +177,9 @@ print(f"  Uncompressed PK: {uncompressed_pk.hex()[:64]}... (65 bytes)")
 
 addresses = {
     "P2PKH": p2pkh_address,
-    "P2SH": p2sh_address if 'p2sh_address' in locals() else "N/A",
-    "Bech32": bech32_address if 'bech32_address' in locals() else "N/A",
-    "Taproot": taproot_address if 'taproot_address' in locals() else "N/A",
+    "P2SH": p2sh_address if "p2sh_address" in locals() else "N/A",
+    "Bech32": bech32_address if "bech32_address" in locals() else "N/A",
+    "Taproot": taproot_address if "taproot_address" in locals() else "N/A",
 }
 
 for addr_type, addr in addresses.items():
@@ -190,6 +192,7 @@ for addr_type, addr in addresses.items():
         if addr_type in ["P2PKH", "P2SH"]:
             # 从地址解码
             from src.core.base58 import Base58
+
             try:
                 version, payload = Base58.check_decode(addr)
                 addr_hash160 = payload.hex()
@@ -204,10 +207,14 @@ print("Summary")
 print("=" * 80)
 
 test_results = {
-    "P2PKH Generation": p2pkh_address[0] == '1',
-    "P2SH Generation": p2sh_address[0] == '3' if 'p2sh_address' in locals() else False,
-    "Bech32 Generation": bech32_address.startswith('bc1q') if 'bech32_address' in locals() else False,
-    "Taproot Generation": taproot_address.startswith('bc1p') if 'taproot_address' in locals() else False,
+    "P2PKH Generation": p2pkh_address[0] == "1",
+    "P2SH Generation": p2sh_address[0] == "3" if "p2sh_address" in locals() else False,
+    "Bech32 Generation": (
+        bech32_address.startswith("bc1q") if "bech32_address" in locals() else False
+    ),
+    "Taproot Generation": (
+        taproot_address.startswith("bc1p") if "taproot_address" in locals() else False
+    ),
     "P2PKH Validation": validator.validate_address(p2pkh_address).success,
     "Known Address Validation": True,
 }

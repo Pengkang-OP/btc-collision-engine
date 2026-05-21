@@ -97,7 +97,9 @@ class CollisionCore(ICollisionCore):
         self.checkpoint_interval = self.config.get("checkpoint_interval", 30)
         self.dedup_enabled = self.config.get("dedup_enabled", False)
         self.checkpoint_enabled = self.config.get("checkpoint_enabled", False)
-        self.progress_interval = self.config.get("progress_interval", 1.0)  # Phase 4: 进度回调间隔(秒)
+        self.progress_interval = self.config.get(
+            "progress_interval", 1.0
+        )  # Phase 4: 进度回调间隔(秒)
 
         logger.debug("CollisionCore 初始化完成")
 

@@ -19,6 +19,7 @@ main_mod = sys.modules["src.cli.main"]
 
 # ── _apply_output_flags ────────────────────────────────────────
 
+
 class TestApplyOutputFlags(unittest.TestCase):
     """_apply_output_flags() 测试。"""
 
@@ -86,6 +87,7 @@ class TestApplyOutputFlags(unittest.TestCase):
 
 # ── load_targets ───────────────────────────────────────────────
 
+
 class TestLoadTargets(unittest.TestCase):
     """load_targets() 测试 (缺失分支)。"""
 
@@ -151,6 +153,7 @@ class TestLoadTargets(unittest.TestCase):
 
 # ── _run_main ──────────────────────────────────────────────────
 
+
 class TestRunMain(unittest.TestCase):
     """_run_main() 函数测试 — 覆盖主流程各分支。"""
 
@@ -158,17 +161,22 @@ class TestRunMain(unittest.TestCase):
 
     def setUp(self):
         from src.cli.output import CLIOutput
+
         CLIOutput.reset_instance()
 
     def tearDown(self):
         from src.cli.output import CLIOutput
+
         CLIOutput.reset_instance()
 
     @staticmethod
     def _make_args(**kwargs):
         defaults = {
-            "verbose": 0, "quiet": False, "no_color": False,
-            "language": None, "config": None,
+            "verbose": 0,
+            "quiet": False,
+            "no_color": False,
+            "language": None,
+            "config": None,
             "file": None,
             "targets": ["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"],
         }
@@ -181,63 +189,56 @@ class TestRunMain(unittest.TestCase):
         engine.is_running.return_value = True
         return engine, "cpu", MagicMock(), MagicMock()
 
-    def _enter_base(self, stack, args, config, targets, eng,
-                    dispatch_ret=False):
+    def _enter_base(self, stack, args, config, targets, eng, dispatch_ret=False):
         """进入 _run_main 通用 mock (不含 engine_runner 后续阶段)."""
-        stack.enter_context(
-            patch.object(main_mod, "parse_args", return_value=args))
+        stack.enter_context(patch.object(main_mod, "parse_args", return_value=args))
         mock_cli = stack.enter_context(patch.object(main_mod, "CLIOutput"))
         mock_cli.init = MagicMock()
         stack.enter_context(patch.object(main_mod, "_apply_output_flags"))
-        stack.enter_context(patch.object(
-            main_mod, "_dispatch_utility_commands",
-            return_value=dispatch_ret))
+        stack.enter_context(
+            patch.object(main_mod, "_dispatch_utility_commands", return_value=dispatch_ret)
+        )
 
     def _enter_engine_phase(self, stack, config, targets, eng):
         """进入 _run_main 引擎阶段 mock (validate_args 之后)."""
+        stack.enter_context(patch.object(main_mod, "validate_args", return_value=True))
         stack.enter_context(
-            patch.object(main_mod, "validate_args", return_value=True))
-        stack.enter_context(patch.object(
-            main_mod, "load_config_with_validation", return_value=config))
-        stack.enter_context(
-            patch.object(main_mod, "load_targets", return_value=targets))
-        stack.enter_context(patch(
-            self._ER + "._setup_and_start_engine", return_value=eng))
-        stack.enter_context(patch(
-            self._ER + "._compute_range", return_value=(0, 100, 100)))
+            patch.object(main_mod, "load_config_with_validation", return_value=config)
+        )
+        stack.enter_context(patch.object(main_mod, "load_targets", return_value=targets))
+        stack.enter_context(patch(self._ER + "._setup_and_start_engine", return_value=eng))
+        stack.enter_context(patch(self._ER + "._compute_range", return_value=(0, 100, 100)))
 
     def test_language_set_from_args(self):
         """args.language 非空 → 调用 set_language (L122-123)。"""
         from contextlib import ExitStack
+
         args = self._make_args(language="en")
         with ExitStack() as stack:
-            self._enter_base(stack, args, None, None, None,
-                             dispatch_ret=True)
-            mock_set_lang = stack.enter_context(
-                patch.object(main_mod, "set_language"))
+            self._enter_base(stack, args, None, None, None, dispatch_ret=True)
+            mock_set_lang = stack.enter_context(patch.object(main_mod, "set_language"))
             main_mod._run_main()
             mock_set_lang.assert_called_once_with("en")
 
     def test_utility_dispatch_early_return(self):
         """_dispatch_utility_commands 返回 True → 提前返回 (L135-136)。"""
         from contextlib import ExitStack
+
         args = self._make_args()
         with ExitStack() as stack:
-            self._enter_base(stack, args, None, None, None,
-                             dispatch_ret=True)
-            mock_validate = stack.enter_context(
-                patch.object(main_mod, "validate_args"))
+            self._enter_base(stack, args, None, None, None, dispatch_ret=True)
+            mock_validate = stack.enter_context(patch.object(main_mod, "validate_args"))
             main_mod._run_main()
             mock_validate.assert_not_called()
 
     def test_validation_failure_exits(self):
         """validate_args 返回 False → SystemExit(1) (L139-140)。"""
         from contextlib import ExitStack
+
         args = self._make_args()
         with ExitStack() as stack:
             self._enter_base(stack, args, None, None, None)
-            stack.enter_context(
-                patch.object(main_mod, "validate_args", return_value=False))
+            stack.enter_context(patch.object(main_mod, "validate_args", return_value=False))
             with self.assertRaises(SystemExit) as ctx:
                 main_mod._run_main()
             self.assertEqual(ctx.exception.code, 1)
@@ -245,78 +246,69 @@ class TestRunMain(unittest.TestCase):
     def test_config_none_defaults_to_empty_dict(self):
         """load_config_with_validation 返回 None → config = {} (L145-146)。"""
         from contextlib import ExitStack
+
         args = self._make_args(quiet=True)
         eng = self._make_engine_tuple()
         with ExitStack() as stack:
             self._enter_base(stack, args, None, {"a"}, eng)
             self._enter_engine_phase(stack, None, {"a"}, eng)
-            stack.enter_context(patch(
-                self._ER + "._run_collision_loop"))
-            stack.enter_context(
-                patch.object(main_mod, "_print_final_summary"))
-            mock_logger = stack.enter_context(
-                patch.object(main_mod, "logger"))
+            stack.enter_context(patch(self._ER + "._run_collision_loop"))
+            stack.enter_context(patch.object(main_mod, "_print_final_summary"))
+            mock_logger = stack.enter_context(patch.object(main_mod, "logger"))
             main_mod._run_main()
             mock_logger.warning.assert_called_once()
 
     def test_full_flow_quiet(self):
         """完整流程 quiet=True → 跳过 _print_config_info (L163)。"""
         from contextlib import ExitStack
+
         args = self._make_args(quiet=True)
         eng = self._make_engine_tuple()
         with ExitStack() as stack:
             self._enter_base(stack, args, {"k": "v"}, {"a"}, eng)
             self._enter_engine_phase(stack, {"k": "v"}, {"a"}, eng)
-            mock_pci = stack.enter_context(patch(
-                self._ER + "._print_config_info"))
-            stack.enter_context(patch(
-                self._ER + "._run_collision_loop"))
-            stack.enter_context(
-                patch.object(main_mod, "_print_final_summary"))
+            mock_pci = stack.enter_context(patch(self._ER + "._print_config_info"))
+            stack.enter_context(patch(self._ER + "._run_collision_loop"))
+            stack.enter_context(patch.object(main_mod, "_print_final_summary"))
             main_mod._run_main()
             mock_pci.assert_not_called()
 
     def test_full_flow_not_quiet(self):
         """完整流程 quiet=False → 调用 _print_config_info (L163-165)。"""
         from contextlib import ExitStack
+
         args = self._make_args(quiet=False, verbose=0)
         eng = self._make_engine_tuple()
         with ExitStack() as stack:
             self._enter_base(stack, args, {"k": "v"}, {"a"}, eng)
             self._enter_engine_phase(stack, {"k": "v"}, {"a"}, eng)
-            mock_pci = stack.enter_context(patch(
-                self._ER + "._print_config_info"))
-            stack.enter_context(patch(
-                self._ER + "._run_collision_loop"))
-            stack.enter_context(
-                patch.object(main_mod, "_print_final_summary"))
+            mock_pci = stack.enter_context(patch(self._ER + "._print_config_info"))
+            stack.enter_context(patch(self._ER + "._run_collision_loop"))
+            stack.enter_context(patch.object(main_mod, "_print_final_summary"))
             main_mod._run_main()
             mock_pci.assert_called_once()
 
     def test_full_flow_verbose_vv_with_config(self):
         """-vv + config 非空 → 打印 JSON 配置详情 (L166-170)。"""
         from contextlib import ExitStack
+
         args = self._make_args(verbose=2, quiet=False, config="cfg.json")
         eng = self._make_engine_tuple()
         with ExitStack() as stack:
             self._enter_base(stack, args, {"mode": "r"}, {"a"}, eng)
             self._enter_engine_phase(stack, {"mode": "r"}, {"a"}, eng)
-            stack.enter_context(patch(
-                self._ER + "._print_config_info"))
-            stack.enter_context(patch(
-                self._ER + "._run_collision_loop"))
-            stack.enter_context(
-                patch.object(main_mod, "_print_final_summary"))
+            stack.enter_context(patch(self._ER + "._print_config_info"))
+            stack.enter_context(patch(self._ER + "._run_collision_loop"))
+            stack.enter_context(patch.object(main_mod, "_print_final_summary"))
             mock_print = stack.enter_context(patch("builtins.print"))
             main_mod._run_main()
-            json_printed = any(
-                '"mode"' in str(c)
-                for c in mock_print.call_args_list)
+            json_printed = any('"mode"' in str(c) for c in mock_print.call_args_list)
             self.assertTrue(json_printed)
 
     def test_engine_stop_and_final_summary_called(self):
         """引擎运行时 → stop() + _print_final_summary 被调用 (L181-186)。"""
         from contextlib import ExitStack
+
         args = self._make_args(quiet=True)
         engine = MagicMock()
         engine.is_running.return_value = True
@@ -324,10 +316,8 @@ class TestRunMain(unittest.TestCase):
         with ExitStack() as stack:
             self._enter_base(stack, args, {"k": "v"}, {"a"}, eng)
             self._enter_engine_phase(stack, {"k": "v"}, {"a"}, eng)
-            stack.enter_context(patch(
-                self._ER + "._run_collision_loop"))
-            mock_fs = stack.enter_context(
-                patch.object(main_mod, "_print_final_summary"))
+            stack.enter_context(patch(self._ER + "._run_collision_loop"))
+            mock_fs = stack.enter_context(patch.object(main_mod, "_print_final_summary"))
             stack.enter_context(patch("time.sleep"))
             main_mod._run_main()
             engine.stop.assert_called_once()
@@ -336,6 +326,7 @@ class TestRunMain(unittest.TestCase):
     def test_engine_already_stopped_skip_stop(self):
         """引擎已停止 → 不重复调用 stop() (L181-182)。"""
         from contextlib import ExitStack
+
         args = self._make_args(quiet=True)
         engine = MagicMock()
         engine.is_running.return_value = False
@@ -343,10 +334,8 @@ class TestRunMain(unittest.TestCase):
         with ExitStack() as stack:
             self._enter_base(stack, args, {"k": "v"}, {"a"}, eng)
             self._enter_engine_phase(stack, {"k": "v"}, {"a"}, eng)
-            stack.enter_context(patch(
-                self._ER + "._run_collision_loop"))
-            stack.enter_context(
-                patch.object(main_mod, "_print_final_summary"))
+            stack.enter_context(patch(self._ER + "._run_collision_loop"))
+            stack.enter_context(patch.object(main_mod, "_print_final_summary"))
             stack.enter_context(patch("time.sleep"))
             main_mod._run_main()
             engine.stop.assert_not_called()
@@ -357,10 +346,12 @@ class TestHandleError(unittest.TestCase):
 
     def setUp(self):
         from src.cli.output import CLIOutput
+
         CLIOutput.reset_instance()
 
     def tearDown(self):
         from src.cli.output import CLIOutput
+
         CLIOutput.reset_instance()
 
     def test_file_not_found_error(self):
@@ -447,15 +438,18 @@ class TestHandleError(unittest.TestCase):
 
 # ── main() 异常路径 ────────────────────────────────────────────
 
+
 class TestMainErrorHandling(unittest.TestCase):
     """main() 入口异常处理分支测试。"""
 
     def setUp(self):
         from src.cli.output import CLIOutput
+
         CLIOutput.reset_instance()
 
     def tearDown(self):
         from src.cli.output import CLIOutput
+
         CLIOutput.reset_instance()
 
     def test_keyboard_interrupt_exits_130(self):
@@ -485,6 +479,7 @@ class TestMainErrorHandling(unittest.TestCase):
 
 # ── 模块级启动行为 ────────────────────────────────────────────
 
+
 class TestModuleStartup(unittest.TestCase):
     """模块导入时的 sys.path 操作 + main() 启动异常路径。"""
 
@@ -492,8 +487,7 @@ class TestModuleStartup(unittest.TestCase):
         """项目根不在 sys.path 时自动插入 (L29)。"""
         # 计算 main.py 所在的项目根
         main_file = main_mod.__file__
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(
-            os.path.abspath(main_file))))
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(main_file))))
         # 确保项目根已在 path 中 (正常情况下已存在)
         self.assertIn(project_root, sys.path)
         # 移除后重新加载，验证自动补回
@@ -502,8 +496,11 @@ class TestModuleStartup(unittest.TestCase):
             while project_root in sys.path:
                 sys.path.remove(project_root)
             # 清理模块缓存
-            mod_keys = [k for k in list(sys.modules.keys())
-                        if k == "src.cli.main" or k.startswith("src.cli.main.")]
+            mod_keys = [
+                k
+                for k in list(sys.modules.keys())
+                if k == "src.cli.main" or k.startswith("src.cli.main.")
+            ]
             saved_mods = {k: sys.modules.pop(k, None) for k in mod_keys}
             try:
                 # 放回 main_mod 以便 reload 能找到
@@ -519,16 +516,15 @@ class TestModuleStartup(unittest.TestCase):
 
     def test_stdout_reconfigure_exception_handled(self):
         """sys.stdout.reconfigure 抛异常 → 静默忽略 (L227-228)。"""
-        with patch.object(main_mod, "_run_main"), patch.object(
-            sys.stdout, "reconfigure", side_effect=OSError("bad fd")
-        ) as mock_rec:
+        with (
+            patch.object(main_mod, "_run_main"),
+            patch.object(sys.stdout, "reconfigure", side_effect=OSError("bad fd")) as mock_rec,
+        ):
             # 不应抛出异常
             try:
                 main_mod.main()
             except Exception as e:
-                self.fail(
-                    f"main() should not raise on reconfigure error: {e}"
-                )
+                self.fail(f"main() should not raise on reconfigure error: {e}")
             mock_rec.assert_called()  # 确认 except 路径被执行
 
 

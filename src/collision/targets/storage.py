@@ -479,7 +479,8 @@ class AddressStorage:
                 if progress_callback:
                     progress_callback(
                         len(valid_addresses) + len(invalid_addresses),
-                        len(source_addresses), addr,
+                        len(source_addresses),
+                        addr,
                     )
         return valid_addresses, invalid_addresses
 
@@ -493,8 +494,13 @@ class AddressStorage:
     ) -> dict[str, Any]:
         """从外部源导入地址并自动保存到持久化存储。"""
         result: dict[str, Any] = {
-            "success": False, "imported_count": 0, "invalid_count": 0,
-            "total_count": 0, "invalid_addresses": [], "storage_path": "", "error": None,
+            "success": False,
+            "imported_count": 0,
+            "invalid_count": 0,
+            "total_count": 0,
+            "invalid_addresses": [],
+            "storage_path": "",
+            "error": None,
         }
 
         try:
@@ -547,7 +553,9 @@ class AddressStorage:
                 if storage.save_targets(valid_addresses, metadata):
                     result["success"] = True
                     result["storage_path"] = storage_path
-                    logger.info(f"地址导入成功: {len(valid_addresses)} 个有效地址已保存到 {storage_path}")
+                    logger.info(
+                        f"地址导入成功: {len(valid_addresses)} 个有效地址已保存到 {storage_path}"
+                    )
                 else:
                     result["error"] = "保存地址到存储失败"
                     logger.error("地址导入失败: 保存操作失败")
@@ -577,7 +585,9 @@ class AddressStorage:
                 addresses = [str(addr).strip() for addr in data if str(addr).strip()]
             elif isinstance(data, dict):
                 if "addresses" in data:
-                    addresses = [str(addr).strip() for addr in data["addresses"] if str(addr).strip()]
+                    addresses = [
+                        str(addr).strip() for addr in data["addresses"] if str(addr).strip()
+                    ]
                 elif "targets" in data:
                     addresses = [str(addr).strip() for addr in data["targets"] if str(addr).strip()]
                 else:

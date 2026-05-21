@@ -255,7 +255,9 @@ class GPUKernel(GPUKernelProtocol):
 
         # 校验 GPUDevice 已正确初始化
         if not getattr(self.device, "context", None) or not getattr(self.device, "queue", None):
-            raise RuntimeError("GPUDevice 尚未初始化，请先调用 GPUDevice.initialize() 再创建 GPUKernel")
+            raise RuntimeError(
+                "GPUDevice 尚未初始化，请先调用 GPUDevice.initialize() 再创建 GPUKernel"
+            )
 
         # 如果未提供program，则自行编译
         if self.program is None:
@@ -459,7 +461,9 @@ class GPUKernel(GPUKernelProtocol):
 
         # 验证: 由于目标是全0,不应该匹配
         if match_flags[0] != 0:
-            raise RuntimeError(f"GPU内核验证失败: 不应匹配虚拟目标,但match_flags[0]={match_flags[0]}")
+            raise RuntimeError(
+                f"GPU内核验证失败: 不应匹配虚拟目标,但match_flags[0]={match_flags[0]}"
+            )
 
         logger.info("✅ GPU内核基础验证通过（虚拟目标不匹配）")
 
@@ -475,7 +479,9 @@ class GPUKernel(GPUKernelProtocol):
             test_address, compressed_pk, _ = generator.generate_address(test_key_bytes)
             test_hash160 = HashUtils.hash160(compressed_pk)
 
-            logger.info(f"ALG-3增强验证: 测试私钥1 -> 地址 {test_address[:6]}...{test_address[-4:]}")
+            logger.info(
+                f"ALG-3增强验证: 测试私钥1 -> 地址 {test_address[:6]}...{test_address[-4:]}"
+            )
             logger.info(f"  Hash160: {test_hash160.hex()[:8]}...")
 
             # 将真实Hash160设置为目标
@@ -541,7 +547,9 @@ class GPUKernel(GPUKernelProtocol):
             f"v{self.KERNEL_CACHE_VERSION}_"
             f"{OPENCL_KERNEL_SOURCE[:100]}"  # 取前100字符加速哈希
         )
-        source_hash = hashlib.md5(source_fingerprint.encode(), usedforsecurity=False).hexdigest()[:8]
+        source_hash = hashlib.md5(source_fingerprint.encode(), usedforsecurity=False).hexdigest()[
+            :8
+        ]
 
         cache_key = f"{device_info}_{source_hash}"
         # 替换非法字符
@@ -692,7 +700,9 @@ class GPUKernel(GPUKernelProtocol):
             target_buffer_size = len(self._target_hash160s)
 
         # 调用共享函数
-        return calculate_optimal_batch_size(device=self.device, target_buffer_size=target_buffer_size)
+        return calculate_optimal_batch_size(
+            device=self.device, target_buffer_size=target_buffer_size
+        )
 
     def _allocate_buffers(self):
         """预分配 GPU 内存缓冲区（PRNG模式）
@@ -791,7 +801,9 @@ class GPUKernel(GPUKernelProtocol):
                 "设计: 持久化缓冲区在引擎生命周期内重复使用，零运行时分配开销"
             )
 
-    def set_targets(self, target_hash160s: bytes, num_targets: int, check_uncompressed: int = 0) -> None:
+    def set_targets(
+        self, target_hash160s: bytes, num_targets: int, check_uncompressed: int = 0
+    ) -> None:
         """设置目标地址 Hash160 - 只需设置一次
 
         Args:
@@ -833,7 +845,9 @@ class GPUKernel(GPUKernelProtocol):
 
         # 注册到缓冲区追踪器
         if hasattr(self, "_buffer_tracker") and self._buffer_tracker:
-            self._buffer_tracker.track_buffer("_targets_buf", self._targets_buf, len(target_hash160s))
+            self._buffer_tracker.track_buffer(
+                "_targets_buf", self._targets_buf, len(target_hash160s)
+            )
 
         self._targets_cached = target_hash160s
         self._num_targets_cached = num_targets
@@ -856,7 +870,9 @@ class GPUKernel(GPUKernelProtocol):
         target_buffer_size = len(self._target_hash160s) if self._target_hash160s else 0
         required_memory = 32 + (num_keys * 4) + target_buffer_size
         required_memory_with_overhead = int(required_memory * 1.2)
-        device_info = self.device.get_device_info() if hasattr(self.device, "get_device_info") else {}
+        device_info = (
+            self.device.get_device_info() if hasattr(self.device, "get_device_info") else {}
+        )
         max_memory = device_info.get("global_mem_size", 0)
         safe_memory_limit = int(max_memory * 0.8) if max_memory > 0 else float("inf")
         if required_memory_with_overhead > safe_memory_limit:
@@ -934,7 +950,8 @@ class GPUKernel(GPUKernelProtocol):
             and target_bytes > 0
             and target_bytes <= local_mem_size
             and (
-                target_bytes <= int(local_mem_size * local_threshold) or self._num_targets_cached <= 250
+                target_bytes <= int(local_mem_size * local_threshold)
+                or self._num_targets_cached <= 250
             )
         )
 
@@ -1152,9 +1169,7 @@ class GPUKernel(GPUKernelProtocol):
                     f"释放失败={len(leak_report['release_failed'])}"
                 )
                 if leak_report["has_leak"]:
-                    logger.error(
-                        f"发现{len(leak_report['release_failed'])}个缓冲区释放失败"
-                    )
+                    logger.error(f"发现{len(leak_report['release_failed'])}个缓冲区释放失败")
         except Exception as e:
             logger.error(f"内存泄漏检查失败: {e}")
 

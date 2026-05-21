@@ -9,16 +9,18 @@
 """
 
 import sys
-sys.path.insert(0, 'src')
+
+sys.path.insert(0, "src")
+
 
 def analyze_modular_inverse_bottleneck():
     """分析模逆运算瓶颈"""
-    
+
     print("=" * 80)
     print("  批量模逆算法性能分析")
     print("=" * 80)
     print()
-    
+
     # 当前算法分析
     print("📊 当前模逆算法分析")
     print("-" * 80)
@@ -37,14 +39,14 @@ def analyze_modular_inverse_bottleneck():
     print()
     print("总模逆调用: 256 + 48 = 304次/私钥")
     print()
-    
+
     # 费马小定理性能
     print("费马小定理性能:")
     print("  模幂运算: a^(P-2) mod P")
     print("  需要模乘次数: ~256次 (二进制展开)")
     print("  总模乘: 304 × 256 = 77,824次模乘/私钥")
     print()
-    
+
     # 批量模逆优化
     print("=" * 80)
     print("🚀 批量模逆优化分析 (Montgomery Trick)")
@@ -61,24 +63,24 @@ def analyze_modular_inverse_bottleneck():
     print("       = 1次模逆 + 6次模乘 = 256 + 6 = 262次模乘")
     print("       节省: (768-262)/768 = 66%")
     print()
-    
+
     # 预期收益计算
     print("预期收益计算:")
     print("-" * 80)
     print()
-    
+
     current_modmul = 77824  # 当前模乘次数
     batch_size = 304  # 批量大小
-    
+
     # 批量模逆: 1次模逆 + 2*(n-1)次模乘用于前向累积 + 2*(n-1)次模乘用于后向计算
     # = 256 + 2*303 + 2*303 = 256 + 606 + 606 = 1468次模乘
     batch_modinv = 256  # 1次模逆
     forward_pass = 2 * (batch_size - 1)  # 前向累积: a, ab, abc, ...
     backward_pass = 2 * (batch_size - 1)  # 后向计算: 提取每个逆
     optimized_modmul = batch_modinv + forward_pass + backward_pass
-    
+
     savings = (current_modmul - optimized_modmul) / current_modmul * 100
-    
+
     print(f"  当前模乘: {current_modmul:,}次/私钥")
     print(f"  批量模乘: {optimized_modmul:,}次/私钥")
     print(f"    - 1次模逆: {batch_modinv}次模乘")
@@ -86,52 +88,54 @@ def analyze_modular_inverse_bottleneck():
     print(f"    - 后向计算: {backward_pass}次模乘")
     print(f"  节省: {savings:.1f}%")
     print()
-    
+
     # 性能预期
     print("性能预期:")
     print("-" * 80)
     print()
     print(f"  当前速度: 81,887 keys/s")
-    
+
     # 模逆占总时间的比例（估算）
     # 椭圆曲线运算中，模逆是最昂贵的操作，约占总时间的60-70%
     modinv_ratio = 0.65  # 65%
-    
+
     # 优化后的时间比例
     new_modinv_time = modinv_ratio * (optimized_modmul / current_modmul)
     new_total_time = (1 - modinv_ratio) + new_modinv_time
     speedup = 1 / new_total_time
     expected_speed = 81887 * speedup
-    
+
     print(f"  模逆占比: {modinv_ratio*100:.0f}%")
     print(f"  优化后模逆时间: {new_modinv_time*100:.1f}%")
     print(f"  预期加速: {speedup:.2f}x")
     print(f"  预期速度: {expected_speed:,.0f} keys/s")
     print(f"  性能提升: +{(speedup-1)*100:.1f}%")
     print()
-    
+
     # 保守/乐观估计
     print("性能范围估计:")
     print("-" * 80)
     print()
-    
+
     # 保守: 模逆占50%
     modinv_ratio_low = 0.50
     new_time_low = (1 - modinv_ratio_low) + modinv_ratio_low * (optimized_modmul / current_modmul)
     speedup_low = 1 / new_time_low
     speed_low = 81887 * speedup_low
-    
+
     # 乐观: 模逆占70%
     modinv_ratio_high = 0.70
-    new_time_high = (1 - modinv_ratio_high) + modinv_ratio_high * (optimized_modmul / current_modmul)
+    new_time_high = (1 - modinv_ratio_high) + modinv_ratio_high * (
+        optimized_modmul / current_modmul
+    )
     speedup_high = 1 / new_time_high
     speed_high = 81887 * speedup_high
-    
+
     print(f"  保守估计 (模逆50%): {speed_low:,.0f} keys/s (+{(speedup_low-1)*100:.1f}%)")
     print(f"  预期估计 (模逆65%): {expected_speed:,.0f} keys/s (+{(speedup-1)*100:.1f}%)")
     print(f"  乐观估计 (模逆70%): {speed_high:,.0f} keys/s (+{(speedup_high-1)*100:.1f}%)")
     print()
-    
+
     # 实施建议
     print("=" * 80)
     print("📝 实施建议")
@@ -151,7 +155,7 @@ def analyze_modular_inverse_bottleneck():
     print()
     print("推荐: 方案A (快速实施)")
     print()
-    
+
     # 难度评估
     print("实施难度:")
     print("-" * 80)
@@ -161,7 +165,7 @@ def analyze_modular_inverse_bottleneck():
     print("  测试难度: ⭐⭐⭐⭐ (高)")
     print("  预估工时: 4-6小时")
     print()
-    
+
     print("=" * 80)
     print("🎯 结论")
     print("-" * 80)
@@ -172,6 +176,7 @@ def analyze_modular_inverse_bottleneck():
     print(f"  建议实施: 是")
     print()
     print("=" * 80)
+
 
 if __name__ == "__main__":
     analyze_modular_inverse_bottleneck()

@@ -17,6 +17,7 @@ description: "Assists with creating and debugging Windows batch scripts (.bat/.c
 ## 常用命令
 
 ### 创建批处理文件
+
 ```batch
 @echo off
 chcp 65001 >nul 2>&1
@@ -24,12 +25,14 @@ cd /d "%~dp0"
 ```
 
 ### 环境变量
+
 ```batch
 set "VAR=value"
 echo %VAR%
 ```
 
 ### 条件判断
+
 ```batch
 if "%CHOICE%"=="1" (
     echo Option 1
@@ -39,6 +42,7 @@ if "%CHOICE%"=="1" (
 ```
 
 ### 循环
+
 ```batch
 for %%f in (*.txt) do (
     echo Found: %%f
@@ -46,6 +50,7 @@ for %%f in (*.txt) do (
 ```
 
 ### 函数定义
+
 ```batch
 :my_function
 echo Running function

@@ -582,12 +582,14 @@ class TestAdjustPoolSize:
         pool = self._pool()
         # 填充历史：平均内存 > 70%
         for _ in range(10):
-            pool._memory_usage_history.append({
-                "timestamp": time.monotonic(),
-                "current_memory_mb": pool._max_memory_bytes / (1024 * 1024) * 0.8,
-                "allocation_count": 1,
-                "reuse_rate": 0.5,
-            })
+            pool._memory_usage_history.append(
+                {
+                    "timestamp": time.monotonic(),
+                    "current_memory_mb": pool._max_memory_bytes / (1024 * 1024) * 0.8,
+                    "allocation_count": 1,
+                    "reuse_rate": 0.5,
+                }
+            )
         pool._last_adjustment_time = 0  # 允许调整
         pool._adjust_pool_size()
         assert pool._max_memory_bytes > 256 * 1024 * 1024
@@ -595,12 +597,14 @@ class TestAdjustPoolSize:
     def test_no_expand_if_exceeds_2gb(self):
         pool = GPUMemoryPool(self.ctx, max_memory_mb=1500)
         for _ in range(10):
-            pool._memory_usage_history.append({
-                "timestamp": time.monotonic(),
-                "current_memory_mb": pool._max_memory_bytes / (1024 * 1024) * 0.8,
-                "allocation_count": 1,
-                "reuse_rate": 0.5,
-            })
+            pool._memory_usage_history.append(
+                {
+                    "timestamp": time.monotonic(),
+                    "current_memory_mb": pool._max_memory_bytes / (1024 * 1024) * 0.8,
+                    "allocation_count": 1,
+                    "reuse_rate": 0.5,
+                }
+            )
         pool._last_adjustment_time = 0
         pool._adjust_pool_size()
         # 不应超过 2GB
@@ -609,12 +613,14 @@ class TestAdjustPoolSize:
     def test_low_usage_no_expand(self):
         pool = self._pool()
         for _ in range(10):
-            pool._memory_usage_history.append({
-                "timestamp": time.monotonic(),
-                "current_memory_mb": pool._max_memory_bytes / (1024 * 1024) * 0.3,
-                "allocation_count": 1,
-                "reuse_rate": 0.5,
-            })
+            pool._memory_usage_history.append(
+                {
+                    "timestamp": time.monotonic(),
+                    "current_memory_mb": pool._max_memory_bytes / (1024 * 1024) * 0.3,
+                    "allocation_count": 1,
+                    "reuse_rate": 0.5,
+                }
+            )
         pool._last_adjustment_time = 0
         old_max = pool._max_memory_bytes
         pool._adjust_pool_size()
@@ -625,12 +631,14 @@ class TestAdjustPoolSize:
         pool._allocation_count = 200
         pool._allocation_patterns = {512: 50, 1024: 30}
         for _ in range(10):
-            pool._memory_usage_history.append({
-                "timestamp": time.monotonic(),
-                "current_memory_mb": 10,
-                "allocation_count": 1,
-                "reuse_rate": 0.5,
-            })
+            pool._memory_usage_history.append(
+                {
+                    "timestamp": time.monotonic(),
+                    "current_memory_mb": 10,
+                    "allocation_count": 1,
+                    "reuse_rate": 0.5,
+                }
+            )
         pool._last_adjustment_time = 0
         pool._adjust_pool_size()  # 不抛异常
 

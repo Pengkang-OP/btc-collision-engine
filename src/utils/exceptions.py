@@ -130,7 +130,9 @@ class AddressGenerationError(CollisionError):
         context: dict[str, Any] | None = None,
         original_error: Exception | None = None,
     ) -> None:
-        super().__init__(message, error_code or self.ADDRESS_GENERATION_ERROR, context, original_error)
+        super().__init__(
+            message, error_code or self.ADDRESS_GENERATION_ERROR, context, original_error
+        )
 
 
 class CheckpointError(CollisionError):
@@ -169,7 +171,9 @@ class TargetResolutionError(CollisionError):
         context: dict[str, Any] | None = None,
         original_error: Exception | None = None,
     ) -> None:
-        super().__init__(message, error_code or self.TARGET_RESOLUTION_ERROR, context, original_error)
+        super().__init__(
+            message, error_code or self.TARGET_RESOLUTION_ERROR, context, original_error
+        )
 
 
 class CryptoBackendError(CollisionError):

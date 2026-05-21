@@ -21,13 +21,12 @@ from src.gpu.search_modes.range_scan_search import RangeScanSearchMode
 # 辅助函数
 # ============================================================================
 
+
 def _make_engine_stub(**kwargs):
     """创建 GPUCollisionEngine stub"""
     engine = MagicMock()
     engine._stop_event = MagicMock()
-    engine._stop_event.is_set.side_effect = kwargs.get(
-        "stop_side_effect", [False, True]
-    )
+    engine._stop_event.is_set.side_effect = kwargs.get("stop_side_effect", [False, True])
     engine._gpu_kernel = MagicMock()
     engine._gpu_kernel.run_batch.return_value = kwargs.get("run_batch_return", [])
     engine.stats = MagicMock()
@@ -54,6 +53,7 @@ def _make_engine_stub(**kwargs):
 # ============================================================================
 # execute 测试
 # ============================================================================
+
 
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
@@ -146,6 +146,7 @@ class TestRangeScanExecute:
 # 流水线预生成
 # ============================================================================
 
+
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
 class TestRangeScanPipeline:
@@ -220,6 +221,7 @@ class TestRangeScanPipeline:
 # 多批次跨范围
 # ============================================================================
 
+
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
 class TestRangeScanMultiBatch:
@@ -258,6 +260,7 @@ class TestRangeScanMultiBatch:
 # ============================================================================
 # 边界值测试
 # ============================================================================
+
 
 @pytest.mark.unit
 @pytest.mark.gpu_kernel

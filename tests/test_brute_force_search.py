@@ -21,13 +21,12 @@ from src.gpu.search_modes.brute_force_search import BruteForceSearchMode
 # 辅助函数
 # ============================================================================
 
+
 def _make_engine_stub(**kwargs):
     """创建 GPUCollisionEngine stub"""
     engine = MagicMock()
     engine._stop_event = MagicMock()
-    engine._stop_event.is_set.side_effect = kwargs.get(
-        "stop_side_effect", [False, True]
-    )
+    engine._stop_event.is_set.side_effect = kwargs.get("stop_side_effect", [False, True])
     engine._gpu_kernel = MagicMock()
     engine._gpu_kernel.run_batch.return_value = kwargs.get("run_batch_return", [])
     engine.stats = MagicMock()
@@ -56,6 +55,7 @@ def _make_engine_stub(**kwargs):
 # ============================================================================
 # execute 测试
 # ============================================================================
+
 
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
@@ -161,6 +161,7 @@ class TestBruteForceExecute:
 # 多批次执行
 # ============================================================================
 
+
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
 class TestBruteForceMultiBatch:
@@ -199,6 +200,7 @@ class TestBruteForceMultiBatch:
 # 边界值测试
 # ============================================================================
 
+
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
 class TestBruteForceBoundary:
@@ -231,6 +233,7 @@ class TestBruteForceBoundary:
     def test_start_negative_raises(self):
         """测试负起始值抛出 struct.error（Q 格式不支持负数）"""
         import struct
+
         engine = _make_engine_stub(
             batch_size=10,
             stop_side_effect=[False, True],

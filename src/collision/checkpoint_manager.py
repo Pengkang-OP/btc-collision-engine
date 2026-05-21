@@ -56,7 +56,9 @@ class CheckpointManager:
         # 修复: 默认断点路径使用data_logs目录（有写入权限）
         if filepath is None:
             # 获取项目根目录（src的父目录）
-            project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            project_root = os.path.dirname(
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            )
             data_logs_dir = os.path.join(project_root, "data_logs")
             # 确保data_logs目录存在
             os.makedirs(data_logs_dir, exist_ok=True)
@@ -211,8 +213,12 @@ class CheckpointManager:
 
             username = getpass.getuser()
             cmd = [
-                "icacls", self.filepath,
-                "/inheritance:r", "/grant:r", f"{username}:F", "/Q",
+                "icacls",
+                self.filepath,
+                "/inheritance:r",
+                "/grant:r",
+                f"{username}:F",
+                "/Q",
             ]
             result = subprocess.run(cmd, capture_output=True, text=True)  # nosec B603
             if result.returncode == 0:
@@ -413,4 +419,3 @@ class CheckpointManager:
             serialized = serialized.decode("utf-8")
         crc = binascii.crc32(serialized.encode("utf-8")) & 0xFFFFFFFF
         return f"{crc:08x}"
-

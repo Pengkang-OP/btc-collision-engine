@@ -303,7 +303,10 @@ class TestAnalyzeTargetFormats:
     def test_unknown_prefix(self):
         from src.collision.targets.resolver import TargetResolver
 
-        targets = {"2NFf16kDmUQ5RqhsVHtZoF1rsYqkYJvRgPg", "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx"}
+        targets = {
+            "2NFf16kDmUQ5RqhsVHtZoF1rsYqkYJvRgPg",
+            "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx",
+        }
         result = TargetResolver.analyze_target_formats(targets)
         assert result["p2pkh"] == 0
         assert result["unknown"] == 2

@@ -30,9 +30,7 @@ class TestConfigBuilder(unittest.TestCase):
 
     def test_build_invalid_mode_raises(self):
         """mode 不在 VALID_MODES 中时抛出 ValueError"""
-        result = WizardResult(
-            targets=[self.TARGET], mode="invalid_mode"
-        )
+        result = WizardResult(targets=[self.TARGET], mode="invalid_mode")
         with self.assertRaises(ValueError) as ctx:
             self.builder.build(result)
         self.assertIn("Invalid mode", str(ctx.exception))
@@ -40,8 +38,10 @@ class TestConfigBuilder(unittest.TestCase):
     def test_build_range_requires_start_key(self):
         """mode='range' 且 start_key=None 时抛出 ValueError"""
         result = WizardResult(
-            targets=[self.TARGET], mode="range",
-            start_key=None, end_key=None,
+            targets=[self.TARGET],
+            mode="range",
+            start_key=None,
+            end_key=None,
         )
         with self.assertRaises(ValueError) as ctx:
             self.builder.build(result)
@@ -50,8 +50,10 @@ class TestConfigBuilder(unittest.TestCase):
     def test_build_range_requires_end_key(self):
         """mode='range' 有 start_key 但 end_key=None 时抛出 ValueError"""
         result = WizardResult(
-            targets=[self.TARGET], mode="range",
-            start_key="0x1", end_key=None,
+            targets=[self.TARGET],
+            mode="range",
+            start_key="0x1",
+            end_key=None,
         )
         with self.assertRaises(ValueError) as ctx:
             self.builder.build(result)
@@ -60,7 +62,8 @@ class TestConfigBuilder(unittest.TestCase):
     def test_build_brute_force_requires_start_key(self):
         """mode='brute_force' 且 start_key=None 时抛出 ValueError"""
         result = WizardResult(
-            targets=[self.TARGET], mode="brute_force",
+            targets=[self.TARGET],
+            mode="brute_force",
             start_key=None,
         )
         with self.assertRaises(ValueError) as ctx:
@@ -70,8 +73,10 @@ class TestConfigBuilder(unittest.TestCase):
     def test_build_brute_force_with_start_key(self):
         """mode='brute_force' 有 start_key 时正常构建命令"""
         result = WizardResult(
-            targets=[self.TARGET], mode="brute_force",
-            start_key="0xABC", end_key="0xFFFF",
+            targets=[self.TARGET],
+            mode="brute_force",
+            start_key="0xABC",
+            end_key="0xFFFF",
         )
         cmd = self.builder.build(result)
         self.assertIn("--start", cmd)
@@ -84,7 +89,9 @@ class TestConfigBuilder(unittest.TestCase):
     def test_build_with_target_file(self):
         """使用 target_file 构建命令时使用 -f 参数"""
         result = WizardResult(
-            targets=[], target_file="targets.txt", mode="random",
+            targets=[],
+            target_file="targets.txt",
+            mode="random",
         )
         cmd = self.builder.build(result)
         self.assertIn("-f", cmd)
@@ -127,8 +134,10 @@ class TestConfigBuilder(unittest.TestCase):
     def test_build_multi_gpu_flag(self):
         """use_multi_gpu=True 且 gpu_indices 不为空时命令包含 --multi-gpu"""
         result = WizardResult(
-            targets=[self.TARGET], mode="random",
-            gpu_indices=[0, 1], use_multi_gpu=True,
+            targets=[self.TARGET],
+            mode="random",
+            gpu_indices=[0, 1],
+            use_multi_gpu=True,
         )
         cmd = self.builder.build(result)
         self.assertIn("--multi-gpu", cmd)
@@ -138,7 +147,9 @@ class TestConfigBuilder(unittest.TestCase):
     def test_build_summary(self):
         """build_summary() 返回格式化的多行字符串"""
         result = WizardResult(
-            targets=[self.TARGET], mode="random", gpu_indices=[0],
+            targets=[self.TARGET],
+            mode="random",
+            gpu_indices=[0],
         )
         summary = self.builder.build_summary(result)
         self.assertIn("生成的命令", summary)
@@ -152,8 +163,10 @@ class TestConfigBuilder(unittest.TestCase):
         import os
         import shutil
         import tempfile
+
         result = WizardResult(
-            targets=[self.TARGET], mode="random",
+            targets=[self.TARGET],
+            mode="random",
         )
         tmpdir = tempfile.mkdtemp()
         try:

@@ -30,6 +30,7 @@ from src.core.wif import WIF
 # 已知密钥对常量（动态推导，避免硬编码风险）
 # ============================================================================
 
+
 def _derive_known_keypair(k: int):
     """从整数 k 推导完整密钥对 (private_key, address, wif)"""
     private_key = k.to_bytes(32, "big")
@@ -46,6 +47,7 @@ _K2_PK, _K2_ADDR, _K2_WIF = _derive_known_keypair(2)
 # ============================================================================
 # Fixture: Mock GPU 引擎（绕过真实 OpenCL 初始化）
 # ============================================================================
+
 
 @pytest.fixture
 def mock_gpu_engine():
@@ -69,13 +71,15 @@ def mock_gpu_engine():
         mock_mgr.kernel = Mock()
         mock_mgr.async_executor = None  # 不使用异步执行器
         mock_mgr.memory_pool = Mock()
-        mock_mgr.get_device_info = Mock(return_value={
-            "name": "Mock GPU",
-            "vendor": "NVIDIA Corporation",
-            "type": "GPU",
-            "device_index": 0,
-            "batch_size": 65536,
-        })
+        mock_mgr.get_device_info = Mock(
+            return_value={
+                "name": "Mock GPU",
+                "vendor": "NVIDIA Corporation",
+                "type": "GPU",
+                "device_index": 0,
+                "batch_size": 65536,
+            }
+        )
         mock_mgr.cleanup = Mock()
         MockDeviceManager.return_value = mock_mgr
 
@@ -114,6 +118,7 @@ def gpu_engine_with_targets(mock_gpu_engine):
 # Task 11: TestGPUEngineInitClosedLoop - GPU 引擎初始化闭环
 # ============================================================================
 
+
 @pytest.mark.gpu
 class TestGPUEngineInitClosedLoop:
     """GPU 引擎初始化闭环测试"""
@@ -122,9 +127,7 @@ class TestGPUEngineInitClosedLoop:
         """使用已知地址初始化 → 验证 targets 正确加载"""
         engine = gpu_engine_with_targets
         assert engine is not None
-        assert _K1_ADDR in engine.targets, (
-            f"已知地址应在 targets 中，实际: {engine.targets}"
-        )
+        assert _K1_ADDR in engine.targets, f"已知地址应在 targets 中，实际: {engine.targets}"
 
     def test_gpu_engine_init_with_empty_targets(self, gpu_engine_no_targets):
         """无目标地址初始化 → 验证 targets 为空"""
@@ -181,6 +184,7 @@ class TestGPUEngineInitClosedLoop:
 # ============================================================================
 # Task 12: TestGPUEngineMatchCallbackClosedLoop - GPU 匹配回调闭环
 # ============================================================================
+
 
 @pytest.mark.gpu
 class TestGPUEngineMatchCallbackClosedLoop:
@@ -277,11 +281,13 @@ class TestGPUEngineMatchCallbackClosedLoop:
         results = []
 
         def on_match(pk, addr, wif):
-            results.append({
-                "pk_len": len(pk),
-                "addr_start": addr[0],
-                "wif_start": wif[0],
-            })
+            results.append(
+                {
+                    "pk_len": len(pk),
+                    "addr_start": addr[0],
+                    "wif_start": wif[0],
+                }
+            )
 
         engine = GPUCollisionEngine(
             targets={_K1_ADDR},
@@ -301,6 +307,7 @@ class TestGPUEngineMatchCallbackClosedLoop:
 
     def test_gpu_match_callback_exception_handling(self, mock_gpu_engine):
         """回调抛出异常时不应崩溃，返回 False"""
+
         def failing_callback(pk, addr, wif):
             raise RuntimeError("模拟回调异常")
 
@@ -319,6 +326,7 @@ class TestGPUEngineMatchCallbackClosedLoop:
 # ============================================================================
 # Task 13: TestGPUEngineLifecycleClosedLoop - GPU 生命周期闭环
 # ============================================================================
+
 
 @pytest.mark.gpu
 class TestGPUEngineLifecycleClosedLoop:

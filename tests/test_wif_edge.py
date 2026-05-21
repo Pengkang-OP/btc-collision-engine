@@ -32,8 +32,7 @@ class TestWIFEncodeEdge(unittest.TestCase):
 
     def test_encode_non_valueerror_exception_handler(self):
         """encode 非 ValueError 异常捕获 → lines 59-63"""
-        with patch("src.core.wif.Base58.check_encode",
-                   side_effect=TypeError("模拟Base58内部错误")):
+        with patch("src.core.wif.Base58.check_encode", side_effect=TypeError("模拟Base58内部错误")):
             with self.assertRaises(ValueError) as ctx:
                 WIF.encode(b"\x01" * 32, compressed=True)
             self.assertIn("WIF编码失败", str(ctx.exception))

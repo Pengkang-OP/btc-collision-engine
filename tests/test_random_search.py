@@ -270,7 +270,7 @@ class TestSeedPrefetchWorker:
         # does a single bulk os.urandom(count*32) call. The batch method
         # catches OSError internally and falls back to per-seed generation.
         # Mock the batch method directly instead of os.urandom.
-        with patch.object(mode, '_generate_seed_batch', side_effect=OSError("no entropy")):
+        with patch.object(mode, "_generate_seed_batch", side_effect=OSError("no entropy")):
             # First iteration: _generate_seed_batch raises OSError → error count incremented
             mode._seed_stop_event = MagicMock()
             mode._seed_stop_event.is_set.side_effect = [False, True]

@@ -261,7 +261,8 @@ class GPURecoveryManager:
 
         # 设备丢失
         if any(
-            kw in error_msg for kw in ["device lost", "device removed", "cl_invalid_device", "gpu hang"]
+            kw in error_msg
+            for kw in ["device lost", "device removed", "cl_invalid_device", "gpu hang"]
         ):
             return GPUFailureType.DEVICE_LOST
 
@@ -370,7 +371,9 @@ class GPURecoveryManager:
         with self._fallback_lock:
             return self._fallback_to_cpu
 
-    def _select_recovery_strategy(self, gpu_id: int, failure_type: GPUFailureType) -> RecoveryStrategy:
+    def _select_recovery_strategy(
+        self, gpu_id: int, failure_type: GPUFailureType
+    ) -> RecoveryStrategy:
         """选择恢复策略
 
         Args:
@@ -515,7 +518,9 @@ class GPURecoveryManager:
                     # H4修复: 超时时尝试取消future
                     cancelled = future.cancel()
                     if cancelled:
-                        logger.warning(f"GPU {gpu_id} 健康检查超时（{timeout}秒），已取消未执行的任务")
+                        logger.warning(
+                            f"GPU {gpu_id} 健康检查超时（{timeout}秒），已取消未执行的任务"
+                        )
                     else:
                         logger.warning(
                             f"GPU {gpu_id} 健康检查超时（{timeout}秒），任务已在运行，无法取消"

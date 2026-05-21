@@ -22,6 +22,7 @@ def test_security_check_integration():
     try:
         from src.cli.main import _run_main  # noqa: F401 — 导入可用性检测
         from src.core.crypto_backend import verify_production_ready
+
         print("  ✅ 导入成功")
     except ImportError as e:
         print(f"  ❌ 导入失败: {e}")
@@ -103,5 +104,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ 测试失败: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

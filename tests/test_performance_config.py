@@ -127,11 +127,13 @@ class TestPerformanceOptimizationConfig(unittest.TestCase):
 
     def test_from_dict(self):
         """from_dict() 从字典创建配置"""
-        cfg = PerformanceOptimizationConfig.from_dict({
-            "use_gpu": True,
-            "num_workers": 4,
-            "enable_simd": False,
-        })
+        cfg = PerformanceOptimizationConfig.from_dict(
+            {
+                "use_gpu": True,
+                "num_workers": 4,
+                "enable_simd": False,
+            }
+        )
         self.assertTrue(cfg.use_gpu)
         self.assertEqual(cfg.num_workers, 4)
         self.assertFalse(cfg.enable_simd)

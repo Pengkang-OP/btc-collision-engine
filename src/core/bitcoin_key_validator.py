@@ -255,9 +255,7 @@ class BitcoinKeyValidator:
         if len(private_key) != KeyValidationConstants.PRIVATE_KEY_LENGTH:
             _len = len(private_key)
             _expected = KeyValidationConstants.PRIVATE_KEY_LENGTH
-            result.add_error(
-                f"私钥长度错误: {_len}字节, 应为{_expected}字节"
-            )
+            result.add_error(f"私钥长度错误: {_len}字节, 应为{_expected}字节")
             return result
 
         # 2. 转换为整数
@@ -549,9 +547,7 @@ class BitcoinKeyValidator:
                 else KeyValidationConstants.P2SH_VERSION_BYTE
             )
             if version != expected:
-                result.add_warning(
-                    f"地址版本应为0x{expected:02x}, 当前: 0x{version:02x}"
-                )
+                result.add_warning(f"地址版本应为0x{expected:02x}, 当前: 0x{version:02x}")
             result.add_detail("checksum_valid", True)
         except (ValueError, TypeError) as e:
             result.add_error(f"Base58Check校验和验证失败: {str(e)}")
@@ -794,7 +790,9 @@ class BitcoinKeyValidator:
             return report
 
         # 步骤2: 生成压缩公钥
-        pub_comp_result, public_key_compressed = self.generate_public_key(private_key, compressed=True)
+        pub_comp_result, public_key_compressed = self.generate_public_key(
+            private_key, compressed=True
+        )
         report["steps"]["public_key_compressed"] = pub_comp_result.to_dict()
         if not pub_comp_result.success:
             report["overall_success"] = False
@@ -860,7 +858,9 @@ class BitcoinKeyValidator:
         if self.secure_mode:
             pk_hash = HashUtils.key_fingerprint(private_key)
             wif_comp_safe = (
-                wif_compressed[:8] + "..." + wif_compressed[-4:] if len(wif_compressed) > 12 else "***"
+                wif_compressed[:8] + "..." + wif_compressed[-4:]
+                if len(wif_compressed) > 12
+                else "***"
             )
             wif_uncomp_safe = (
                 wif_uncompressed[:8] + "..." + wif_uncompressed[-4:]

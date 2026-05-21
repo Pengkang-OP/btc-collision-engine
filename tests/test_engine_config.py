@@ -17,6 +17,7 @@ from src.collision.gpu.key_generator import KeyGenerationStrategy
 # 辅助函数
 # ============================================================================
 
+
 def _reconstruct_from_dict(d: dict) -> GPUEngineConfig:
     """从 to_dict() 输出重建 GPUEngineConfig 实例（模拟 from_dict 往返）
 
@@ -34,6 +35,7 @@ def _reconstruct_from_dict(d: dict) -> GPUEngineConfig:
 # ============================================================================
 # 默认值验证
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestGPUEngineConfigDefaults:
@@ -143,6 +145,7 @@ class TestGPUEngineConfigDefaults:
 # ============================================================================
 # 边界值
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestGPUEngineConfigBoundary:
@@ -286,6 +289,7 @@ class TestGPUEngineConfigBoundary:
 # to_dict / from_dict 往返
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestGPUEngineConfigRoundtrip:
     """GPUEngineConfig to_dict / from_dict 往返测试"""
@@ -297,14 +301,24 @@ class TestGPUEngineConfigRoundtrip:
         cfg = GPUEngineConfig()
         d = cfg.to_dict()
         expected_keys = {
-            "device_index", "batch_size", "checkpoint_enabled",
-            "dedup_enabled", "dedup_max_size", "checkpoint_interval",
-            "data_logging_enabled", "data_logging_interval",
-            "use_enhanced_monitoring", "use_gpu_memory_pool",
-            "gpu_pool_max_buffers", "gpu_pool_max_memory_mb",
-            "use_async_logging", "async_log_file",
-            "async_log_max_bytes", "async_log_backup_count",
-            "check_uncompressed", "key_generation_strategy",
+            "device_index",
+            "batch_size",
+            "checkpoint_enabled",
+            "dedup_enabled",
+            "dedup_max_size",
+            "checkpoint_interval",
+            "data_logging_enabled",
+            "data_logging_interval",
+            "use_enhanced_monitoring",
+            "use_gpu_memory_pool",
+            "gpu_pool_max_buffers",
+            "gpu_pool_max_memory_mb",
+            "use_async_logging",
+            "async_log_file",
+            "async_log_max_bytes",
+            "async_log_backup_count",
+            "check_uncompressed",
+            "key_generation_strategy",
         }
         assert set(d.keys()) == expected_keys
 
@@ -383,9 +397,7 @@ class TestGPUEngineConfigRoundtrip:
             cfg = GPUEngineConfig(key_generation_strategy=strategy)
             d = cfg.to_dict()
             cfg2 = _reconstruct_from_dict(d)
-            assert cfg2.key_generation_strategy == strategy, (
-                f"策略 {strategy} 往返失败"
-            )
+            assert cfg2.key_generation_strategy == strategy, f"策略 {strategy} 往返失败"
 
     def test_roundtrip_batch_size_none(self):
         """batch_size=None 往返应保持 None"""
@@ -424,6 +436,7 @@ class TestGPUEngineConfigRoundtrip:
 # ============================================================================
 # 非法值处理
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestGPUEngineConfigInvalid:
@@ -526,6 +539,7 @@ class TestGPUEngineConfigInvalid:
 # 配置组合场景
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestGPUEngineConfigScenarios:
     """GPUEngineConfig 典型使用场景测试"""
@@ -588,6 +602,7 @@ class TestGPUEngineConfigScenarios:
 # 不可变性 / 冻结测试（如适用）
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestGPUEngineConfigImmutability:
     """GPUEngineConfig 字段可变性测试"""
@@ -604,7 +619,7 @@ class TestGPUEngineConfigImmutability:
         d1 = cfg.to_dict()
         d2 = cfg.to_dict()
         assert d1 is not d2  # 不同对象
-        assert d1 == d2      # 但内容相同
+        assert d1 == d2  # 但内容相同
 
 
 if __name__ == "__main__":

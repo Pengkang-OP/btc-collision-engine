@@ -16,24 +16,29 @@ import pytest
 # __init__.py tests (no Flask needed)
 # ============================================================================
 
+
 class TestWebInit:
     """Test web/__init__.py package exports."""
 
     def test_version(self):
         from src.web import __version__
+
         assert __version__ == "1.0.0"
 
     def test_all_exports(self):
         from src.web import __all__
+
         assert "create_app" in __all__
         assert "run_dashboard" in __all__
 
     def test_create_app_importable(self):
         from src.web import create_app
+
         assert callable(create_app)
 
     def test_run_dashboard_importable(self):
         from src.web import run_dashboard
+
         assert callable(run_dashboard)
 
 
@@ -41,34 +46,40 @@ class TestWebInit:
 # Auth functions tests (no Flask needed)
 # ============================================================================
 
+
 class TestAuthFunctions:
     """Test API Key authentication functions."""
 
     def test_set_api_key_enables_auth(self):
         import src.web.dashboard as dash
+
         dash.set_api_key("test-key-123")
         assert dash._api_key == "test-key-123"
         assert dash._api_key_required is True
 
     def test_set_api_key_none_disables_auth(self):
         import src.web.dashboard as dash
+
         dash.set_api_key(None)
         assert dash._api_key is None
         assert dash._api_key_required is False
 
     def test_set_api_key_empty_disables_auth(self):
         import src.web.dashboard as dash
+
         dash.set_api_key("")
         assert dash._api_key == ""
         assert dash._api_key_required is False
 
     def test_validate_api_key_no_auth_required(self, monkeypatch):
         from src.web.dashboard import _validate_api_key
+
         monkeypatch.setattr("src.web.dashboard._api_key_required", False)
         assert _validate_api_key() is True
 
     def test_validate_api_key_valid_bearer_token(self, monkeypatch):
         from src.web.dashboard import _validate_api_key
+
         monkeypatch.setattr("src.web.dashboard._api_key_required", True)
         monkeypatch.setattr("src.web.dashboard._api_key", "my-secret")
         mock_request = MagicMock()
@@ -79,6 +90,7 @@ class TestAuthFunctions:
 
     def test_validate_api_key_valid_query_param(self, monkeypatch):
         from src.web.dashboard import _validate_api_key
+
         monkeypatch.setattr("src.web.dashboard._api_key_required", True)
         monkeypatch.setattr("src.web.dashboard._api_key", "my-secret")
         mock_request = MagicMock()
@@ -89,6 +101,7 @@ class TestAuthFunctions:
 
     def test_validate_api_key_invalid(self, monkeypatch):
         from src.web.dashboard import _validate_api_key
+
         monkeypatch.setattr("src.web.dashboard._api_key_required", True)
         monkeypatch.setattr("src.web.dashboard._api_key", "my-secret")
         mock_request = MagicMock()
@@ -99,6 +112,7 @@ class TestAuthFunctions:
 
     def test_validate_api_key_bearer_empty_key(self, monkeypatch):
         from src.web.dashboard import _validate_api_key
+
         monkeypatch.setattr("src.web.dashboard._api_key_required", True)
         monkeypatch.setattr("src.web.dashboard._api_key", "my-secret")
         mock_request = MagicMock()
@@ -110,6 +124,7 @@ class TestAuthFunctions:
     def test_validate_api_key_no_bearer_prefix_in_header(self, monkeypatch):
         """Auth header without Bearer prefix: removeprefix no-op, raw value compared."""
         from src.web.dashboard import _validate_api_key
+
         monkeypatch.setattr("src.web.dashboard._api_key_required", True)
         monkeypatch.setattr("src.web.dashboard._api_key", "my-secret")
         mock_request = MagicMock()
@@ -121,6 +136,7 @@ class TestAuthFunctions:
     def test_validate_api_key_no_bearer_wrong_key_rejected(self, monkeypatch):
         """Header without Bearer prefix but wrong key: rejected (no query fallback)."""
         from src.web.dashboard import _validate_api_key
+
         monkeypatch.setattr("src.web.dashboard._api_key_required", True)
         monkeypatch.setattr("src.web.dashboard._api_key", "my-secret")
         mock_request = MagicMock()
@@ -141,6 +157,7 @@ class TestAuthFunctions:
 
     def test_require_auth_valid_key(self, monkeypatch):
         from src.web.dashboard import require_auth
+
         monkeypatch.setattr("src.web.dashboard._api_key_required", True)
         monkeypatch.setattr("src.web.dashboard._api_key", "secret")
         mock_request = MagicMock()
@@ -156,6 +173,7 @@ class TestAuthFunctions:
 
     def test_require_auth_invalid_key_aborts(self, monkeypatch):
         from src.web.dashboard import require_auth
+
         monkeypatch.setattr("src.web.dashboard._api_key_required", True)
         monkeypatch.setattr("src.web.dashboard._api_key", "secret")
         mock_abort = MagicMock(side_effect=Exception("401"))
@@ -188,11 +206,13 @@ class TestAuthFunctions:
 # Data utility tests (no Flask needed)
 # ============================================================================
 
+
 class TestFindDataLogsDir:
     """Test _find_data_logs_dir function."""
 
     def test_finds_data_logs_in_cwd(self, tmp_path, monkeypatch):
         from src.web.dashboard import _find_data_logs_dir
+
         data_logs = tmp_path / "data_logs"
         data_logs.mkdir()
         # Change CWD so Path("data_logs") resolves
@@ -205,6 +225,7 @@ class TestFindDataLogsDir:
 
     def test_finds_data_logs_via_project_root(self, monkeypatch):
         from src.web.dashboard import _find_data_logs_dir
+
         # Path("data_logs") doesn't exist, second candidate should match
         # We can't easily test this without actual data_logs dir
         result = _find_data_logs_dir()
@@ -212,6 +233,7 @@ class TestFindDataLogsDir:
 
     def test_returns_default_when_nonexistent(self, tmp_path, monkeypatch):
         from src.web.dashboard import _find_data_logs_dir
+
         # Must ensure both candidates are unavailable
         # In the project workspace, the project-root data_logs EXISTS,
         # so the function correctly returns it. That's expected behavior.
@@ -222,6 +244,7 @@ class TestFindDataLogsDir:
     def test_both_candidates_nonexistent_fallback(self, monkeypatch):
         """Cover line 251: return Path('data_logs') when both candidates unavailable."""
         from src.web.dashboard import _find_data_logs_dir
+
         monkeypatch.setattr(Path, "exists", lambda self: False)
         result = _find_data_logs_dir()
         assert result == Path("data_logs")
@@ -232,6 +255,7 @@ class TestSafeReadJson:
 
     def test_reads_valid_json(self, tmp_path):
         from src.web.dashboard import _safe_read_json
+
         p = tmp_path / "test.json"
         p.write_text(json.dumps({"key": "value"}), encoding="utf-8")
         result = _safe_read_json(p)
@@ -239,11 +263,13 @@ class TestSafeReadJson:
 
     def test_returns_none_for_missing_file(self, tmp_path):
         from src.web.dashboard import _safe_read_json
+
         result = _safe_read_json(tmp_path / "nonexistent.json")
         assert result is None
 
     def test_returns_none_for_invalid_json(self, tmp_path):
         from src.web.dashboard import _safe_read_json
+
         p = tmp_path / "bad.json"
         p.write_text("not json", encoding="utf-8")
         result = _safe_read_json(p)
@@ -251,6 +277,7 @@ class TestSafeReadJson:
 
     def test_returns_none_on_oserror(self, tmp_path):
         from src.web.dashboard import _safe_read_json
+
         p = tmp_path / "unreadable.json"
         p.write_text('{"key": "value"}', encoding="utf-8")
         with patch("builtins.open", side_effect=OSError("Permission denied")):
@@ -263,18 +290,27 @@ class TestGetCurrentStats:
 
     def test_full_data(self, tmp_path):
         from src.web.dashboard import get_current_stats
+
         data = {
             "performance": {
-                "speed": 1000, "avg_speed": 900, "total_checked": 50000,
-                "matches_found": 3, "cpu_usage": 45.5, "memory_usage": 256.0,
+                "speed": 1000,
+                "avg_speed": 900,
+                "total_checked": 50000,
+                "matches_found": 3,
+                "cpu_usage": 45.5,
+                "memory_usage": 256.0,
                 "thread_count": 4,
             },
             "engine": {
-                "is_running": True, "mode": "GPU", "target_count": 5,
+                "is_running": True,
+                "mode": "GPU",
+                "target_count": 5,
                 "current_position": 12345,
             },
             "system": {
-                "os": "Windows", "python_version": "3.11", "pid": 9999,
+                "os": "Windows",
+                "python_version": "3.11",
+                "pid": 9999,
             },
             "uptime": 3600,
         }
@@ -299,6 +335,7 @@ class TestGetCurrentStats:
 
     def test_empty_file(self, tmp_path):
         from src.web.dashboard import get_current_stats
+
         (tmp_path / "current_data.json").write_text("{}", encoding="utf-8")
         result = get_current_stats(tmp_path)
         assert result["speed"] == 0
@@ -308,6 +345,7 @@ class TestGetCurrentStats:
 
     def test_perf_not_dict(self, tmp_path):
         from src.web.dashboard import get_current_stats
+
         data = {"performance": "not a dict", "engine": {}, "system": {}}
         (tmp_path / "current_data.json").write_text(json.dumps(data), encoding="utf-8")
         result = get_current_stats(tmp_path)
@@ -316,6 +354,7 @@ class TestGetCurrentStats:
 
     def test_engine_not_dict(self, tmp_path):
         from src.web.dashboard import get_current_stats
+
         data = {"performance": {}, "engine": "not dict", "system": {}}
         (tmp_path / "current_data.json").write_text(json.dumps(data), encoding="utf-8")
         result = get_current_stats(tmp_path)
@@ -324,6 +363,7 @@ class TestGetCurrentStats:
 
     def test_system_not_dict(self, tmp_path):
         from src.web.dashboard import get_current_stats
+
         data = {"performance": {}, "engine": {}, "system": 123}
         (tmp_path / "current_data.json").write_text(json.dumps(data), encoding="utf-8")
         result = get_current_stats(tmp_path)
@@ -337,6 +377,7 @@ class TestGetHistory:
 
     def test_returns_last_n_items(self, tmp_path):
         from src.web.dashboard import get_history
+
         data = [{"id": i, "speed": i * 100} for i in range(100)]
         (tmp_path / "history_data.json").write_text(json.dumps(data), encoding="utf-8")
         result = get_history(tmp_path, limit=5)
@@ -346,6 +387,7 @@ class TestGetHistory:
 
     def test_returns_data_when_less_than_limit(self, tmp_path):
         from src.web.dashboard import get_history
+
         data = [{"id": 1}, {"id": 2}]
         (tmp_path / "history_data.json").write_text(json.dumps(data), encoding="utf-8")
         result = get_history(tmp_path, limit=10)
@@ -353,12 +395,14 @@ class TestGetHistory:
 
     def test_not_a_list_returns_empty(self, tmp_path):
         from src.web.dashboard import get_history
+
         (tmp_path / "history_data.json").write_text('{"not": "list"}', encoding="utf-8")
         result = get_history(tmp_path)
         assert result == []
 
     def test_missing_file_returns_empty(self, tmp_path):
         from src.web.dashboard import get_history
+
         result = get_history(tmp_path)
         assert result == []
 
@@ -368,6 +412,7 @@ class TestGetErrors:
 
     def test_returns_last_n_errors(self, tmp_path):
         from src.web.dashboard import get_errors
+
         data = [{"type": "error", "message": f"err{i}"} for i in range(50)]
         (tmp_path / "error_log.json").write_text(json.dumps(data), encoding="utf-8")
         result = get_errors(tmp_path, limit=3)
@@ -376,6 +421,7 @@ class TestGetErrors:
 
     def test_not_a_list_returns_empty(self, tmp_path):
         from src.web.dashboard import get_errors
+
         (tmp_path / "error_log.json").write_text('"just a string"', encoding="utf-8")
         result = get_errors(tmp_path)
         assert result == []
@@ -386,38 +432,47 @@ class TestFormatUptime:
 
     def test_seconds_less_than_60(self):
         from src.web.dashboard import format_uptime
+
         assert format_uptime(30) == "30秒"
 
     def test_minutes_less_than_3600(self):
         from src.web.dashboard import format_uptime
+
         assert format_uptime(125) == "2分5秒"
 
     def test_hours(self):
         from src.web.dashboard import format_uptime
+
         assert format_uptime(7325) == "2小时2分"
 
     def test_zero_seconds(self):
         from src.web.dashboard import format_uptime
+
         assert format_uptime(0) == "0秒"
 
     def test_exactly_60_seconds(self):
         from src.web.dashboard import format_uptime
+
         assert format_uptime(60) == "1分0秒"
 
     def test_59_seconds(self):
         from src.web.dashboard import format_uptime
+
         assert format_uptime(59) == "59秒"
 
     def test_3599_seconds(self):
         from src.web.dashboard import format_uptime
+
         assert format_uptime(3599) == "59分59秒"
 
     def test_exactly_3600_seconds(self):
         from src.web.dashboard import format_uptime
+
         assert format_uptime(3600) == "1小时0分"
 
     def test_float_input_truncates(self):
         from src.web.dashboard import format_uptime
+
         assert format_uptime(60.9) == "1分0秒"
 
 
@@ -497,6 +552,7 @@ class TestCreateAppFlaskAvailable:
         import importlib
 
         import src.web.dashboard as dash
+
         importlib.reload(dash)
         return dash
 
@@ -517,6 +573,7 @@ class TestCreateAppFlaskAvailable:
         import importlib
 
         import src.web.dashboard as dash
+
         importlib.reload(dash)
         dash.set_api_key(None)
         app = dash.create_app()
@@ -526,6 +583,7 @@ class TestCreateAppFlaskAvailable:
         import importlib
 
         import src.web.dashboard as dash
+
         importlib.reload(dash)
         dash.set_api_key("secret")
         app = dash.create_app()
@@ -536,6 +594,7 @@ class TestCreateAppFlaskAvailable:
         import importlib
 
         import src.web.dashboard as dash
+
         importlib.reload(dash)
         monkeypatch.setattr(dash, "FLASK_AVAILABLE", False)
         with pytest.raises(ImportError, match="Flask 未安装"):
@@ -561,22 +620,30 @@ class TestCreateAppFlaskAvailable:
         dash.set_api_key(None)
         # Create mock data files
         (tmp_path / "current_data.json").write_text(
-            json.dumps({
-                "performance": {
-                    "speed": 1000, "total_checked": 5000,
-                    "cpu_usage": 30, "memory_usage": 200
-                },
-                "engine": {"is_running": True, "mode": "GPU"},
-                "system": {"os": "Windows"},
-                "uptime": 3600,
-            }), encoding="utf-8")
+            json.dumps(
+                {
+                    "performance": {
+                        "speed": 1000,
+                        "total_checked": 5000,
+                        "cpu_usage": 30,
+                        "memory_usage": 200,
+                    },
+                    "engine": {"is_running": True, "mode": "GPU"},
+                    "system": {"os": "Windows"},
+                    "uptime": 3600,
+                }
+            ),
+            encoding="utf-8",
+        )
         (tmp_path / "history_data.json").write_text(
-            json.dumps([{
-                "speed": 900, "total_checked": 4000,
-                "cpu_usage": 25, "memory_usage": 150
-            }]), encoding="utf-8")
+            json.dumps(
+                [{"speed": 900, "total_checked": 4000, "cpu_usage": 25, "memory_usage": 150}]
+            ),
+            encoding="utf-8",
+        )
         (tmp_path / "error_log.json").write_text(
-            json.dumps([{"message": "test error", "type": "error"}]), encoding="utf-8")
+            json.dumps([{"message": "test error", "type": "error"}]), encoding="utf-8"
+        )
 
         dash.create_app(data_dir=tmp_path)
         handler = flask_mock["route_handlers"]["/"]
@@ -590,7 +657,8 @@ class TestCreateAppFlaskAvailable:
         dash.set_api_key(None)
         (tmp_path / "current_data.json").write_text(
             json.dumps({"performance": {"speed": 500}, "engine": {}, "system": {}}),
-            encoding="utf-8")
+            encoding="utf-8",
+        )
         dash.create_app(data_dir=tmp_path)
         handler = flask_mock["route_handlers"]["/api/status"]
         result = handler()
@@ -669,7 +737,8 @@ class TestCreateAppFlaskAvailable:
         dash.set_api_key(None)
         (tmp_path / "current_data.json").write_text(
             json.dumps({"performance": {}, "engine": {}, "system": {}, "uptime": 0}),
-            encoding="utf-8")
+            encoding="utf-8",
+        )
         (tmp_path / "history_data.json").write_text("[]", encoding="utf-8")
 
         dash.create_app(data_dir=tmp_path)
@@ -687,7 +756,8 @@ class TestCreateAppFlaskAvailable:
         dash.set_api_key(None)
         (tmp_path / "current_data.json").write_text(
             json.dumps({"performance": {}, "engine": {}, "system": {}, "uptime": 0}),
-            encoding="utf-8")
+            encoding="utf-8",
+        )
         (tmp_path / "history_data.json").write_text('{"not": "list"}', encoding="utf-8")
 
         dash.create_app(data_dir=tmp_path)
@@ -717,15 +787,21 @@ class TestCreateAppFlaskAvailable:
         dash = self._setup_app()
         dash.set_api_key(None)
         (tmp_path / "current_data.json").write_text(
-            json.dumps({
-                "performance": {
-                    "total_checked": 10000, "matches_found": 2,
-                    "cpu_usage": 40, "memory_usage": 300
-                },
-                "engine": {"is_running": True, "mode": "GPU"},
-                "system": {},
-                "uptime": 7200,
-            }), encoding="utf-8")
+            json.dumps(
+                {
+                    "performance": {
+                        "total_checked": 10000,
+                        "matches_found": 2,
+                        "cpu_usage": 40,
+                        "memory_usage": 300,
+                    },
+                    "engine": {"is_running": True, "mode": "GPU"},
+                    "system": {},
+                    "uptime": 7200,
+                }
+            ),
+            encoding="utf-8",
+        )
         history_data = [{"speed": s} for s in [100, 200, 300, 0, None]]
         # Include an entry with no speed key to test filter
         history_data.append({"other": "data"})
@@ -752,10 +828,12 @@ class TestCreateAppFlaskAvailable:
         import importlib
 
         import src.web.dashboard as dash
+
         importlib.reload(dash)
 
         # Remove __version__ from src.web so the relative import fails
         import src.web
+
         saved_version = getattr(src.web, "__version__", None)
         try:
             del src.web.__version__
@@ -780,6 +858,7 @@ class TestRunDashboard:
 
     def test_flask_not_available_exits(self, monkeypatch):
         import src.web.dashboard as dash
+
         monkeypatch.setattr(dash, "FLASK_AVAILABLE", False)
         with pytest.raises(SystemExit) as exc_info:
             dash.run_dashboard()
@@ -789,6 +868,7 @@ class TestRunDashboard:
         import importlib
 
         import src.web.dashboard as dash
+
         importlib.reload(dash)
         mock_app_run = MagicMock()
         flask_mock["app"].run = mock_app_run
@@ -802,6 +882,7 @@ class TestRunDashboard:
         import importlib
 
         import src.web.dashboard as dash
+
         importlib.reload(dash)
         mock_app_run = MagicMock()
         flask_mock["app"].run = mock_app_run
@@ -814,6 +895,7 @@ class TestRunDashboard:
         import importlib
 
         import src.web.dashboard as dash
+
         importlib.reload(dash)
         mock_app_run = MagicMock()
         flask_mock["app"].run = mock_app_run
@@ -827,6 +909,7 @@ class TestRunDashboard:
         import importlib
 
         import src.web.dashboard as dash
+
         importlib.reload(dash)
         mock_app_run = MagicMock()
         flask_mock["app"].run = mock_app_run
@@ -840,6 +923,7 @@ class TestRunDashboard:
         import importlib
 
         import src.web.dashboard as dash
+
         importlib.reload(dash)
         mock_app_run = MagicMock()
         flask_mock["app"].run = mock_app_run
@@ -856,6 +940,7 @@ class TestMainCLI:
         import importlib
 
         import src.web.dashboard as dash
+
         importlib.reload(dash)
         mock_app_run = MagicMock()
         flask_mock["app"].run = mock_app_run
@@ -917,6 +1002,7 @@ class TestMainCLI:
         import importlib
 
         import src.web.dashboard as dash
+
         importlib.reload(dash)
         mock_app_run = MagicMock()
         flask_mock["app"].run = mock_app_run
@@ -924,8 +1010,7 @@ class TestMainCLI:
         monkeypatch.setattr("sys.argv", ["dashboard.py"])
 
         # Execute the module-level __name__ check directly
-        exec("if __name__ == '__main__': main()",
-             {"__name__": "__main__", "main": dash.main})
+        exec("if __name__ == '__main__': main()", {"__name__": "__main__", "main": dash.main})
 
     def test_main_entry_point_via_runpy(self, flask_mock, monkeypatch):
         """Cover line 557: actual if __name__ == '__main__' via runpy."""
@@ -933,4 +1018,5 @@ class TestMainCLI:
 
         # run_module with run_name='__main__' triggers the __name__ guard
         import runpy
+
         runpy.run_module("src.web.dashboard", run_name="__main__")

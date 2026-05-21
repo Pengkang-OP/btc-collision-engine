@@ -611,9 +611,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
             max_workers=1,
         )
         self.assertIsNotNone(engine.data_logger)
-        engine._log_throttled_error(
-            "test_error", "测试错误消息", ValueError("test"), worker_id=0
-        )
+        engine._log_throttled_error("test_error", "测试错误消息", ValueError("test"), worker_id=0)
         engine.stop()
 
     def test_log_throttled_error_disabled(self):
@@ -621,9 +619,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
         engine = KeyCollisionEngine(
             targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False
         )
-        engine._log_throttled_error(
-            "test_error", "测试错误消息", ValueError("test"), worker_id=0
-        )
+        engine._log_throttled_error("test_error", "测试错误消息", ValueError("test"), worker_id=0)
         # 不应崩溃
         engine.stop()
 
@@ -632,11 +628,12 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
     def _generate_test_addresses(self, count: int) -> set[str]:
         """生成有效的测试地址用于测试"""
         from src.core.base58 import Base58
+
         addresses = set()
         i = 0
         while len(addresses) < count:
             # 使用递增的32位整数作为基础，确保唯一性
-            hash160 = (i).to_bytes(4, 'big') + bytes([0] * 16)
+            hash160 = (i).to_bytes(4, "big") + bytes([0] * 16)
             addresses.add(Base58.check_encode(0x00, hash160))
             i += 1
         return addresses
@@ -644,9 +641,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
     def test_auto_detect_compression_many_targets(self):
         """目标地址>=10000时仅检查压缩格式（阈值从50000降至10000以减少漏匹配风险）"""
         many_targets = self._generate_test_addresses(15000)
-        engine = KeyCollisionEngine(
-            targets=many_targets, max_workers=1, data_logging_enabled=False
-        )
+        engine = KeyCollisionEngine(targets=many_targets, max_workers=1, data_logging_enabled=False)
         self.assertFalse(engine.check_uncompressed)
         engine.stop()
 
@@ -655,6 +650,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
     def test_init_crypto_backend_unknown_type(self):
         """未知 crypto_backend_type 时使用默认后端"""
         from src.core.base58 import Base58
+
         test_addr = Base58.check_encode(0x00, bytes([i % 256 for i in range(20)]))
         engine = KeyCollisionEngine(
             targets={test_addr},
@@ -672,9 +668,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
         engine = KeyCollisionEngine(
             targets={"1TestAddr"}, on_match=None, max_workers=1, data_logging_enabled=False
         )
-        result = engine._safe_invoke_match_callback(
-            (1).to_bytes(32, "big"), "1TestAddr", "WIF123"
-        )
+        result = engine._safe_invoke_match_callback((1).to_bytes(32, "big"), "1TestAddr", "WIF123")
         self.assertTrue(result)
         engine.stop()
 
@@ -1204,10 +1198,12 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
 
     def tearDown(self):
         import shutil
+
         shutil.rmtree(self._ckpt_dir, ignore_errors=True)
 
-    def _create_checkpoint(self, mode="range", current_position=100,
-                           total_checked=500, range_end=1000):
+    def _create_checkpoint(
+        self, mode="range", current_position=100, total_checked=500, range_end=1000
+    ):
         data = {
             "version": 1,
             "timestamp": "2026-05-03T00:00:00",
@@ -1226,6 +1222,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
     def test_resume_from_checkpoint_no_file(self):
         """无断点文件时返回 None"""
         from src.collision.checkpoint_manager import CheckpointManager
+
         mgr = CheckpointManager(filepath=self._ckpt_path)
         engine = KeyCollisionEngine(
             targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False
@@ -1238,6 +1235,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
     def test_resume_from_checkpoint_range(self):
         """从 range 模式断点恢复"""
         from src.collision.checkpoint_manager import CheckpointManager
+
         self._create_checkpoint(
             mode="range", current_position=100, total_checked=500, range_end=1000
         )
@@ -1255,9 +1253,9 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
     def test_resume_from_checkpoint_brute_force(self):
         """从 brute_force 模式断点恢复"""
         from src.collision.checkpoint_manager import CheckpointManager
+
         self._create_checkpoint(
-            mode="brute_force", current_position=200, total_checked=300,
-            range_end=None
+            mode="brute_force", current_position=200, total_checked=300, range_end=None
         )
         mgr = CheckpointManager(filepath=self._ckpt_path)
         engine = KeyCollisionEngine(
@@ -1305,6 +1303,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
     def test_start_resume_from_range_checkpoint(self):
         """start(resume=True) 从 range 断点恢复"""
         from src.collision.checkpoint_manager import CheckpointManager
+
         self._create_checkpoint(mode="range", current_position=1, total_checked=0, range_end=500000)
         mgr = CheckpointManager(filepath=self._ckpt_path)
         engine = KeyCollisionEngine(
@@ -1322,9 +1321,9 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
     def test_start_resume_from_brute_force_checkpoint(self):
         """start(resume=True) 从 brute_force 断点恢复"""
         from src.collision.checkpoint_manager import CheckpointManager
+
         self._create_checkpoint(
-            mode="brute_force", current_position=1, total_checked=0,
-            range_end=None
+            mode="brute_force", current_position=1, total_checked=0, range_end=None
         )
         mgr = CheckpointManager(filepath=self._ckpt_path)
         engine = KeyCollisionEngine(
@@ -1342,6 +1341,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
     def test_start_resume_from_random_checkpoint(self):
         """start(resume=True) 从 random 断点恢复"""
         from src.collision.checkpoint_manager import CheckpointManager
+
         self._create_checkpoint(
             mode="random", current_position=0, total_checked=100, range_end=None
         )

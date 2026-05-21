@@ -166,7 +166,9 @@ def _execute_with_sigalrm_timeout(
                 )
                 return False
             except Exception as e:
-                logger.warning(f"回调执行异常 - 回调: {callback_name} - 异常: {type(e).__name__}: {e}")
+                logger.warning(
+                    f"回调执行异常 - 回调: {callback_name} - 异常: {type(e).__name__}: {e}"
+                )
                 return False
             finally:
                 signal.setitimer(signal.ITIMER_REAL, 0)

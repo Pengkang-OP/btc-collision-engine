@@ -60,7 +60,9 @@ class BaseSearchMode:
                     logger.warning(
                         "key_index %d 超出 batch_data 范围 (data_len=%d, mode=%s) — "
                         "可能是PRNG种子模式，请传入 key_extractor_fn 参数",
-                        key_idx, len(batch_data), mode_name,
+                        key_idx,
+                        len(batch_data),
+                        mode_name,
                     )
                     continue
                 private_key = batch_data[key_idx * 32 : (key_idx + 1) * 32]
@@ -81,9 +83,7 @@ class BaseSearchMode:
                     callback_name="on_match",
                 )
 
-    def _handle_batch_error(
-        self, error: Exception, mode_name: str
-    ) -> int | None:
+    def _handle_batch_error(self, error: Exception, mode_name: str) -> int | None:
         """处理批量执行中的 GPU 异常，返回 batch_count 或 None（继续）。
 
         Returns:
@@ -107,9 +107,8 @@ class BaseSearchMode:
             # fall through to error counting
 
         elif "device" in error_str and ("lost" in error_str or "not found" in error_str):
-            recovery_mgr = (
-                getattr(engine, "_recovery_manager", None)
-                or getattr(engine, "gpu_recovery_manager", None)
+            recovery_mgr = getattr(engine, "_recovery_manager", None) or getattr(
+                engine, "gpu_recovery_manager", None
             )
             if recovery_mgr is not None:
                 try:
@@ -124,13 +123,15 @@ class BaseSearchMode:
                 if hasattr(engine, "event_bus") and engine.event_bus:
                     from ...collision.events import EngineErrorEvent
 
-                    engine.event_bus.publish(EngineErrorEvent(
-                        error_type="gpu_device_lost_unrecoverable",
-                        error_message=f"GPU设备丢失且恢复失败: {error}",
-                        exception=error,
-                        context={"gpu_id": getattr(engine, "device_index", 0)},
-                        recoverable=False,
-                    ))
+                    engine.event_bus.publish(
+                        EngineErrorEvent(
+                            error_type="gpu_device_lost_unrecoverable",
+                            error_message=f"GPU设备丢失且恢复失败: {error}",
+                            exception=error,
+                            context={"gpu_id": getattr(engine, "device_index", 0)},
+                            recoverable=False,
+                        )
+                    )
             except (RuntimeError, AttributeError):
                 logger.debug("发布 ENGINE_ERROR 事件失败（非致命）", exc_info=True)
             engine._running = False
@@ -141,9 +142,7 @@ class BaseSearchMode:
             engine._consecutive_gpu_errors += 1
             if engine._consecutive_gpu_errors >= engine._max_gpu_error_retries:
                 _max_retry = engine._max_gpu_error_retries
-                logger.critical(
-                    f"GPU连续错误达上限({_max_retry}), 强制停止引擎防止无限循环"
-                )
+                logger.critical(f"GPU连续错误达上限({_max_retry}), 强制停止引擎防止无限循环")
                 engine._running = False
                 return engine.stats.total_checked if engine.stats else 0
         return None  # continue

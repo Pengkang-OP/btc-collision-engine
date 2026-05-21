@@ -122,6 +122,7 @@ class Secp256k1:
         if n < 2:
             return False
         import logging
+
         _logger = logging.getLogger(__name__)
         try:
             ec = EllipticCurve()
@@ -684,7 +685,11 @@ class EllipticCurve:
             ValueError: 当生成的公钥为无穷远点时
         """
         # 将私钥转换为整数
-        k = int.from_bytes(private_key, "big") if isinstance(private_key, bytes) else int(private_key)
+        k = (
+            int.from_bytes(private_key, "big")
+            if isinstance(private_key, bytes)
+            else int(private_key)
+        )
 
         # 创建基点G
         _g_point = ECPoint(self.curve.Gx, self.curve.Gy, self.curve)
@@ -714,7 +719,9 @@ class EllipticCurve:
             y_bytes = public_point.y.to_bytes(32, "big")
             return b"\x04" + x_bytes + y_bytes
 
-    def generate_public_key_const_time(self, private_key: bytes | int, compressed: bool = True) -> bytes:
+    def generate_public_key_const_time(
+        self, private_key: bytes | int, compressed: bool = True
+    ) -> bytes:
         """恒定时间公钥生成 (generate_public_key 的显式别名)
 
         generate_public_key 内部已使用 scalar_multiply_const_time (Montgomery Ladder),

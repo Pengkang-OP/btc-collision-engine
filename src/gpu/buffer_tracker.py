@@ -66,9 +66,7 @@ class GPUBufferTracker:
         with self._lock:
             # P2-02修复: 使用 MAX_TRACKED_BUFFERS 防止无限制增长
             if len(self._allocated_buffers) >= self.MAX_TRACKED_BUFFERS:
-                logger.warning(
-                    f"缓冲区追踪数量已达上限 ({self.MAX_TRACKED_BUFFERS})，触发自动清理"
-                )
+                logger.warning(f"缓冲区追踪数量已达上限 ({self.MAX_TRACKED_BUFFERS})，触发自动清理")
                 _ = self._cleanup_sync()
                 if len(self._allocated_buffers) >= self.MAX_TRACKED_BUFFERS:
                     _cnt = len(self._allocated_buffers)
@@ -185,7 +183,7 @@ class GPUBufferTracker:
                 "timeout_seconds": self._timeout,
                 "memory_threshold_mb": self._memory_threshold / 1024 / 1024,
                 # 最近趋势窗口记录
-                "memory_usage_history": self._memory_usage_history[-self.MEMORY_TREND_WINDOW:],
+                "memory_usage_history": self._memory_usage_history[-self.MEMORY_TREND_WINDOW :],
                 "last_check_time": self._last_check_time,
             }
 
@@ -214,7 +212,9 @@ class GPUBufferTracker:
                     buffer = info.get("buffer")
                     if buffer is not None and hasattr(buffer, "release"):
                         buffer.release()
-                        logger.debug(f"自动清理超时缓冲区: {name} (类型: {info.get('type', 'generic')})")
+                        logger.debug(
+                            f"自动清理超时缓冲区: {name} (类型: {info.get('type', 'generic')})"
+                        )
                     else:
                         failed_to_release.append(name)
                         logger.warning(f"超时缓冲区无release方法: {name}")
@@ -353,7 +353,9 @@ class GPUBufferTracker:
                 if leaked:
                     stats = self.get_stats()
                     _count = stats["count"]
-                    logger.warning(f"GPU缓冲区泄漏: 泄漏={len(leaked)}, 追踪={_count}, 已泄漏={leaked}")
+                    logger.warning(
+                        f"GPU缓冲区泄漏: 泄漏={len(leaked)}, 追踪={_count}, 已泄漏={leaked}"
+                    )
                     # 自动清理泄漏的缓冲区
                     self.cleanup_timed_out_buffers()
 
@@ -379,7 +381,7 @@ class GPUBufferTracker:
 
         # 只保留最近记录
         if len(self._memory_usage_history) > self.MAX_MEMORY_HISTORY:
-            self._memory_usage_history = self._memory_usage_history[-self.MAX_MEMORY_HISTORY:]
+            self._memory_usage_history = self._memory_usage_history[-self.MAX_MEMORY_HISTORY :]
 
     def _check_memory_trend(self):
         """检查内存使用趋势"""
@@ -387,17 +389,15 @@ class GPUBufferTracker:
             return
 
         # 计算内存使用趋势
-        recent = self._memory_usage_history[-self.MEMORY_TREND_WINDOW:]
+        recent = self._memory_usage_history[-self.MEMORY_TREND_WINDOW :]
         initial_size = recent[0]["total_size_bytes"]
         final_size = recent[-1]["total_size_bytes"]
 
         if final_size > initial_size * self.MEMORY_GROWTH_WARNING_RATIO:  # 内存使用增长超过阈值
-            logger.warning(
-                f"GPU内存使用持续增长: {initial_size / 1024 / 1024:.1f}MB -> {
+            logger.warning(f"GPU内存使用持续增长: {initial_size / 1024 / 1024:.1f}MB -> {
                     final_size  # noqa: W504
                     / 1024
-                    / 1024:.1f}MB"
-            )
+                    / 1024:.1f}MB")
             # 尝试清理所有超时缓冲区
             self.cleanup_timed_out_buffers()
 
@@ -432,9 +432,13 @@ class GPUBufferTracker:
                     if buffer is not None and hasattr(buffer, "release"):
                         buffer.release()
                         released.append(name)
-                        logger.debug(f"关闭时释放缓冲区: {name} (类型: {info.get('type', 'generic')})")
+                        logger.debug(
+                            f"关闭时释放缓冲区: {name} (类型: {info.get('type', 'generic')})"
+                        )
                 except Exception as e:
-                    failed.append({"name": name, "error": str(e), "type": info.get("type", "generic")})
+                    failed.append(
+                        {"name": name, "error": str(e), "type": info.get("type", "generic")}
+                    )
                     logger.error(f"关闭时释放缓冲区失败 {name}: {e}")
 
             # 清空追踪记录

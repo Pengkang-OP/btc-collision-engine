@@ -242,7 +242,12 @@ class TestCheckpointRestore:
         """恢复时更新 config mode"""
         from src.collision.gpu.core import CollisionCore
 
-        checkpoint_data = {"mode": "brute_force", "total_checked": 10, "current_position": 5, "matches": []}
+        checkpoint_data = {
+            "mode": "brute_force",
+            "total_checked": 10,
+            "current_position": 5,
+            "matches": [],
+        }
         cp = MagicMock()
         cp.load.return_value = checkpoint_data
 

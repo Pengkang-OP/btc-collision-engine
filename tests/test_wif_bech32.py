@@ -271,8 +271,7 @@ class TestResolverBech32Integration(unittest.TestCase):
         result = self.resolver.resolve(addr)
         self.assertIsNotNone(result, f"Failed to resolve: {addr}")
         # 应返回小写原地址,不转换为P2PKH
-        self.assertEqual(result, addr.lower(),
-                         f"Expected lowercase original, got: {result}")
+        self.assertEqual(result, addr.lower(), f"Expected lowercase original, got: {result}")
 
     def test_resolve_taproot(self):
         """TargetResolver 应能解析 bc1p Taproot 地址(保持原格式)"""
@@ -280,8 +279,7 @@ class TestResolverBech32Integration(unittest.TestCase):
         result = self.resolver.resolve(addr)
         self.assertIsNotNone(result, f"Failed to resolve Taproot: {addr}")
         # 应返回小写原地址,不转换为P2PKH
-        self.assertEqual(result, addr.lower(),
-                         f"Expected lowercase original, got: {result}")
+        self.assertEqual(result, addr.lower(), f"Expected lowercase original, got: {result}")
 
     def test_resolve_mixed_case_invalid(self):
         """大小写混合 Bech32 地址应解析失败"""

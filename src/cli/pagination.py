@@ -126,7 +126,9 @@ class PaginationManager:
             output.print(f"{i}. {item_formatter(item)}")
 
         # 显示分页信息
-        pagination_str = f"页 {info['current_page']}/{info['total_pages']} (共 {info['total_items']} 项)"
+        pagination_str = (
+            f"页 {info['current_page']}/{info['total_pages']} (共 {info['total_items']} 项)"
+        )
         output.print(f"\n{pagination_str}")
 
         # 显示导航选项
@@ -185,6 +187,7 @@ def display_paginated_results(results: list[dict], title: str = "匹配结果") 
         match_index = item.get("match_index", 0)
         private_key_hash = item.get("private_key_hash", "N/A")
         import time
+
         time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
         return f"地址: {address} | 时间: {time_str} | 索引: {match_index} | 私钥哈希: {private_key_hash}"
 
@@ -207,6 +210,7 @@ def display_paginated_performance(data: list[dict], title: str = "性能数据")
         gpu_usage = item.get("gpu_usage", 0)
         memory_used = item.get("memory_used", 0)
         import time
+
         time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
         return f"时间: {time_str} | 速度: {speed:,}/s | 总尝试: {total_checked:,} | GPU: {gpu_usage}% | 内存: {memory_used}MB"  # noqa: E501
 
@@ -228,6 +232,7 @@ def display_paginated_errors(errors: list[dict], title: str = "错误日志") ->
         message = item.get("message", "No message")
         details = item.get("details", "")
         import time
+
         time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
         if details:
             return f"时间: {time_str} | 类型: {error_type} | 消息: {message} | 详情: {details}"

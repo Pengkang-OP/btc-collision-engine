@@ -21,6 +21,7 @@ from src.cli.stats_performance_monitor import (
 
 # ── PerformanceSample ──────────────────────────────────────────
 
+
 class TestPerformanceSample(unittest.TestCase):
     """PerformanceSample dataclass 测试。"""
 
@@ -56,6 +57,7 @@ class TestPerformanceSample(unittest.TestCase):
 
 # ── StatsPerformanceMonitor ────────────────────────────────────
 
+
 class TestStatsPerformanceMonitor(unittest.TestCase):
     """StatsPerformanceMonitor 测试。
 
@@ -81,18 +83,14 @@ class TestStatsPerformanceMonitor(unittest.TestCase):
 
     def _make_monitor(self, thresholds=None):
         """创建监控器，mock 掉 _monitor_loop 避免后台线程干扰。"""
-        with patch.object(
-            StatsPerformanceMonitor, "_monitor_loop"
-        ):
+        with patch.object(StatsPerformanceMonitor, "_monitor_loop"):
             return StatsPerformanceMonitor(alert_thresholds=thresholds)
 
     # ── __init__ ───────────────────────────────────────────────
 
     def test_init_default_thresholds(self):
         """默认告警阈值。"""
-        with patch.object(
-            StatsPerformanceMonitor, "_monitor_loop"
-        ):
+        with patch.object(StatsPerformanceMonitor, "_monitor_loop"):
             monitor = StatsPerformanceMonitor()
             self.assertEqual(monitor._thresholds["latency_ms"], 100.0)
             self.assertEqual(monitor._thresholds["lock_contention"], 0.5)
@@ -102,9 +100,7 @@ class TestStatsPerformanceMonitor(unittest.TestCase):
     def test_init_custom_thresholds(self):
         """自定义告警阈值完全替换默认值（非合并）。"""
         custom = {"latency_ms": 50.0, "memory_mb": 256.0}
-        with patch.object(
-            StatsPerformanceMonitor, "_monitor_loop"
-        ):
+        with patch.object(StatsPerformanceMonitor, "_monitor_loop"):
             monitor = StatsPerformanceMonitor(alert_thresholds=custom)
             self.assertEqual(monitor._thresholds["latency_ms"], 50.0)
             self.assertEqual(monitor._thresholds["memory_mb"], 256.0)
@@ -348,12 +344,8 @@ class TestStatsPerformanceMonitor(unittest.TestCase):
         """有采样 → 返回平均值。"""
         monitor = self._make_monitor()
         now = time.time()
-        monitor._samples.append(
-            PerformanceSample(now - 1, 10.0, 5.0, 100.0, 200.0, 30.0)
-        )
-        monitor._samples.append(
-            PerformanceSample(now - 2, 20.0, 15.0, 200.0, 300.0, 50.0)
-        )
+        monitor._samples.append(PerformanceSample(now - 1, 10.0, 5.0, 100.0, 200.0, 30.0))
+        monitor._samples.append(PerformanceSample(now - 2, 20.0, 15.0, 200.0, 300.0, 50.0))
         result = monitor.get_recent_performance(window_seconds=5.0)
         self.assertEqual(result["sample_count"], 2)
         self.assertAlmostEqual(result["average_latency_ms"], 15.0)
@@ -367,13 +359,9 @@ class TestStatsPerformanceMonitor(unittest.TestCase):
         monitor = self._make_monitor()
         now = time.time()
         # 新采样（窗口内）
-        monitor._samples.append(
-            PerformanceSample(now - 1, 10.0, 5.0, 100.0, 200.0, 30.0)
-        )
+        monitor._samples.append(PerformanceSample(now - 1, 10.0, 5.0, 100.0, 200.0, 30.0))
         # 旧采样（窗口外）
-        monitor._samples.append(
-            PerformanceSample(now - 100, 20.0, 15.0, 200.0, 300.0, 50.0)
-        )
+        monitor._samples.append(PerformanceSample(now - 100, 20.0, 15.0, 200.0, 300.0, 50.0))
         result = monitor.get_recent_performance(window_seconds=5.0)
         self.assertEqual(result["sample_count"], 1)
 
@@ -468,6 +456,7 @@ class TestStatsPerformanceMonitor(unittest.TestCase):
 
 # ── StatsUpdateProfiler ────────────────────────────────────────
 
+
 class TestStatsUpdateProfiler(unittest.TestCase):
     """StatsUpdateProfiler 测试。"""
 
@@ -482,6 +471,7 @@ class TestStatsUpdateProfiler(unittest.TestCase):
 
     def test_profile_update_calls_record_update(self):
         """profile_update 调用 monitor.record_update。"""
+
         def dummy_func(x):
             return x * 2
 
@@ -498,6 +488,7 @@ class TestStatsUpdateProfiler(unittest.TestCase):
 
     def test_profile_update_passes_args_and_kwargs(self):
         """profile_update 透传 args/kwargs 给被包装函数。"""
+
         def dummy_func(a, b=0):
             return a + b
 
@@ -508,12 +499,14 @@ class TestStatsUpdateProfiler(unittest.TestCase):
 
 # ── 全局函数 ───────────────────────────────────────────────────
 
+
 class TestGlobalFunctions(unittest.TestCase):
     """get_global_monitor / profile_stats_update 测试。"""
 
     def setUp(self):
         # 保存并清除全局状态
         import src.cli.stats_performance_monitor as spm
+
         self._orig_global = spm._global_monitor
         spm._global_monitor = None
         self._thread_patcher = patch("threading.Thread")
@@ -523,32 +516,28 @@ class TestGlobalFunctions(unittest.TestCase):
 
     def tearDown(self):
         import src.cli.stats_performance_monitor as spm
+
         spm._global_monitor = self._orig_global
         self._thread_patcher.stop()
         self._psutil_patcher.stop()
 
     def test_get_global_monitor_creates_instance(self):
         """首次调用创建实例。"""
-        with patch.object(
-            StatsPerformanceMonitor, "_monitor_loop"
-        ):
+        with patch.object(StatsPerformanceMonitor, "_monitor_loop"):
             monitor = get_global_monitor()
             self.assertIsInstance(monitor, StatsPerformanceMonitor)
 
     def test_get_global_monitor_returns_singleton(self):
         """重复调用返回同一实例。"""
-        with patch.object(
-            StatsPerformanceMonitor, "_monitor_loop"
-        ):
+        with patch.object(StatsPerformanceMonitor, "_monitor_loop"):
             m1 = get_global_monitor()
             m2 = get_global_monitor()
             self.assertIs(m1, m2)
 
     def test_profile_stats_update_decorator(self):
         """profile_stats_update 装饰器包装函数。"""
-        with patch.object(
-            StatsPerformanceMonitor, "_monitor_loop"
-        ):
+        with patch.object(StatsPerformanceMonitor, "_monitor_loop"):
+
             @profile_stats_update
             def add_one(x):
                 return x + 1

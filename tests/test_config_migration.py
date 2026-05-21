@@ -615,8 +615,9 @@ class TestMigrateConfigFile:
 
         with patch.object(Path, "exists", return_value=True), patch("builtins.open"):
             with patch("json.load", return_value=v2_config):
-                with patch("src.cli.config_migration.backup_config",
-                           side_effect=OSError("disk full")):
+                with patch(
+                    "src.cli.config_migration.backup_config", side_effect=OSError("disk full")
+                ):
                     with patch("builtins.print"):
                         result = migrate_config_file("config.json")
                         assert result is False
@@ -629,10 +630,13 @@ class TestMigrateConfigFile:
 
         with patch.object(Path, "exists", return_value=True), patch("builtins.open"):
             with patch("json.load", return_value=v2_config):
-                with patch("src.cli.config_migration.backup_config",
-                           return_value="/tmp/backup.json"):
-                    with patch("src.cli.config_migration.migrate_config",
-                               side_effect=RuntimeError("migrate crash")):
+                with patch(
+                    "src.cli.config_migration.backup_config", return_value="/tmp/backup.json"
+                ):
+                    with patch(
+                        "src.cli.config_migration.migrate_config",
+                        side_effect=RuntimeError("migrate crash"),
+                    ):
                         with patch("builtins.print"):
                             result = migrate_config_file("config.json")
                             assert result is False
@@ -645,12 +649,16 @@ class TestMigrateConfigFile:
 
         with patch.object(Path, "exists", return_value=True), patch("builtins.open"):
             with patch("json.load", return_value=v2_config):
-                with patch("src.cli.config_migration.backup_config",
-                           return_value="/tmp/backup.json"):
-                    with patch("src.cli.config_migration.migrate_config",
-                               return_value=({}, ["changelog"])):
-                        with patch("src.cli.config_migration.validate_migrated_config",
-                                   return_value=(False, ["缺少字段"])):
+                with patch(
+                    "src.cli.config_migration.backup_config", return_value="/tmp/backup.json"
+                ):
+                    with patch(
+                        "src.cli.config_migration.migrate_config", return_value=({}, ["changelog"])
+                    ):
+                        with patch(
+                            "src.cli.config_migration.validate_migrated_config",
+                            return_value=(False, ["缺少字段"]),
+                        ):
                             with patch("builtins.print"):
                                 result = migrate_config_file("config.json")
                                 assert result is False
@@ -664,14 +672,20 @@ class TestMigrateConfigFile:
         mock_read = MagicMock()
         with patch.object(Path, "exists", return_value=True):
             with patch("json.load", return_value=v2_config):
-                with patch("src.cli.config_migration.backup_config",
-                           return_value="/tmp/backup.json"):
-                    with patch("src.cli.config_migration.migrate_config",
-                               return_value=(v2_config, ["changelog"])):
-                        with patch("src.cli.config_migration.validate_migrated_config",
-                                   return_value=(True, [])):
-                            with patch("builtins.open",
-                                       side_effect=[mock_read, OSError("write error")]):
+                with patch(
+                    "src.cli.config_migration.backup_config", return_value="/tmp/backup.json"
+                ):
+                    with patch(
+                        "src.cli.config_migration.migrate_config",
+                        return_value=(v2_config, ["changelog"]),
+                    ):
+                        with patch(
+                            "src.cli.config_migration.validate_migrated_config",
+                            return_value=(True, []),
+                        ):
+                            with patch(
+                                "builtins.open", side_effect=[mock_read, OSError("write error")]
+                            ):
                                 with patch("builtins.print"):
                                     result = migrate_config_file("config.json")
                                     assert result is False
@@ -689,12 +703,17 @@ class TestMigrateConfigFile:
 
         with patch.object(Path, "exists", return_value=True):
             with patch("json.load", return_value=v2_config):
-                with patch("src.cli.config_migration.backup_config",
-                           return_value="/tmp/backup.json"):
-                    with patch("src.cli.config_migration.migrate_config",
-                               return_value=(migrated, ["迁移完成"])):
-                        with patch("src.cli.config_migration.validate_migrated_config",
-                                   return_value=(True, [])):
+                with patch(
+                    "src.cli.config_migration.backup_config", return_value="/tmp/backup.json"
+                ):
+                    with patch(
+                        "src.cli.config_migration.migrate_config",
+                        return_value=(migrated, ["迁移完成"]),
+                    ):
+                        with patch(
+                            "src.cli.config_migration.validate_migrated_config",
+                            return_value=(True, []),
+                        ):
                             mock_file = MagicMock()
                             with patch("builtins.open", return_value=mock_file):
                                 with patch("json.dump"):
@@ -716,12 +735,17 @@ class TestMigrateConfigFile:
 
         with patch.object(Path, "exists", return_value=True):
             with patch("json.load", return_value=config):
-                with patch("src.cli.config_migration.backup_config",
-                           return_value="/tmp/backup.json"):
-                    with patch("src.cli.config_migration.migrate_config",
-                               return_value=(migrated, ["迁移完成"])):
-                        with patch("src.cli.config_migration.validate_migrated_config",
-                                   return_value=(True, [])):
+                with patch(
+                    "src.cli.config_migration.backup_config", return_value="/tmp/backup.json"
+                ):
+                    with patch(
+                        "src.cli.config_migration.migrate_config",
+                        return_value=(migrated, ["迁移完成"]),
+                    ):
+                        with patch(
+                            "src.cli.config_migration.validate_migrated_config",
+                            return_value=(True, []),
+                        ):
                             mock_file = MagicMock()
                             with patch("builtins.open", return_value=mock_file):
                                 with patch("json.dump"):
@@ -744,8 +768,12 @@ class TestValidateMigratedConfigEdges:
         from src.cli.config_migration import validate_migrated_config
 
         config = {
-            "crypto": {}, "collision": {}, "logging": "not_a_dict",
-            "gpu": {}, "monitoring": {}, "performance_monitoring": {},
+            "crypto": {},
+            "collision": {},
+            "logging": "not_a_dict",
+            "gpu": {},
+            "monitoring": {},
+            "performance_monitoring": {},
         }
         is_valid, issues = validate_migrated_config(config)
         assert is_valid is False
@@ -756,8 +784,12 @@ class TestValidateMigratedConfigEdges:
         from src.cli.config_migration import validate_migrated_config
 
         config = {
-            "crypto": {}, "collision": {}, "logging": {},
-            "gpu": 123, "monitoring": {}, "performance_monitoring": {},
+            "crypto": {},
+            "collision": {},
+            "logging": {},
+            "gpu": 123,
+            "monitoring": {},
+            "performance_monitoring": {},
         }
         is_valid, issues = validate_migrated_config(config)
         assert is_valid is False
@@ -768,8 +800,12 @@ class TestValidateMigratedConfigEdges:
         from src.cli.config_migration import validate_migrated_config
 
         config = {
-            "crypto": {}, "collision": {}, "logging": {},
-            "gpu": {}, "monitoring": [], "performance_monitoring": {},
+            "crypto": {},
+            "collision": {},
+            "logging": {},
+            "gpu": {},
+            "monitoring": [],
+            "performance_monitoring": {},
         }
         is_valid, issues = validate_migrated_config(config)
         assert is_valid is False
@@ -780,8 +816,12 @@ class TestValidateMigratedConfigEdges:
         from src.cli.config_migration import validate_migrated_config
 
         config = {
-            "crypto": {}, "collision": {}, "logging": {},
-            "gpu": {}, "monitoring": {}, "performance_monitoring": "bad_type",
+            "crypto": {},
+            "collision": {},
+            "logging": {},
+            "gpu": {},
+            "monitoring": {},
+            "performance_monitoring": "bad_type",
         }
         is_valid, issues = validate_migrated_config(config)
         assert is_valid is False
@@ -792,9 +832,12 @@ class TestValidateMigratedConfigEdges:
         from src.cli.config_migration import validate_migrated_config
 
         config = {
-            "crypto": {}, "collision": {}, "logging": {},
+            "crypto": {},
+            "collision": {},
+            "logging": {},
             "gpu": {"base_timeout_seconds": "not_numeric"},
-            "monitoring": {}, "performance_monitoring": {},
+            "monitoring": {},
+            "performance_monitoring": {},
         }
         is_valid, issues = validate_migrated_config(config)
         assert is_valid is False
@@ -805,9 +848,12 @@ class TestValidateMigratedConfigEdges:
         from src.cli.config_migration import validate_migrated_config
 
         config = {
-            "crypto": {}, "collision": {}, "logging": {},
+            "crypto": {},
+            "collision": {},
+            "logging": {},
             "gpu": {"memory_usage_ratio": "high"},
-            "monitoring": {}, "performance_monitoring": {},
+            "monitoring": {},
+            "performance_monitoring": {},
         }
         is_valid, issues = validate_migrated_config(config)
         assert is_valid is False
@@ -818,9 +864,12 @@ class TestValidateMigratedConfigEdges:
         from src.cli.config_migration import validate_migrated_config
 
         config = {
-            "crypto": {}, "collision": {}, "logging": {},
+            "crypto": {},
+            "collision": {},
+            "logging": {},
             "gpu": {"memory_usage_ratio": -0.1},
-            "monitoring": {}, "performance_monitoring": {},
+            "monitoring": {},
+            "performance_monitoring": {},
         }
         is_valid, issues = validate_migrated_config(config)
         assert is_valid is False
@@ -830,9 +879,12 @@ class TestValidateMigratedConfigEdges:
         from src.cli.config_migration import validate_migrated_config
 
         config = {
-            "crypto": {}, "collision": {}, "logging": {},
+            "crypto": {},
+            "collision": {},
+            "logging": {},
             "gpu": {"memory_usage_ratio": 0.0},
-            "monitoring": {}, "performance_monitoring": {},
+            "monitoring": {},
+            "performance_monitoring": {},
         }
         is_valid, issues = validate_migrated_config(config)
         assert is_valid is True

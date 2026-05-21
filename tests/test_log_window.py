@@ -353,9 +353,15 @@ class TestLogWindowRunWindow:
     @patch("src.cli.log_window.tk.StringVar")
     @patch("src.cli.log_window.tk.BooleanVar")
     def test_run_window_creates_widgets(
-        self, mock_boolvar, mock_strvar,
-        mock_frame, mock_label, mock_combo,
-        mock_check, mock_button, mock_text,
+        self,
+        mock_boolvar,
+        mock_strvar,
+        mock_frame,
+        mock_label,
+        mock_combo,
+        mock_check,
+        mock_button,
+        mock_text,
     ):
         """_run_window 应创建所有 Tkinter 组件"""
         import tkinter as tk
@@ -393,9 +399,15 @@ class TestLogWindowRunWindow:
     @patch("src.cli.log_window.tk.StringVar")
     @patch("src.cli.log_window.tk.BooleanVar")
     def test_run_window_sets_filter_and_autoscroll(
-        self, mock_boolvar, mock_strvar,
-        mock_frame, mock_label, mock_combo,
-        mock_check, mock_button, mock_text,
+        self,
+        mock_boolvar,
+        mock_strvar,
+        mock_frame,
+        mock_label,
+        mock_combo,
+        mock_check,
+        mock_button,
+        mock_text,
     ):
         """_run_window 应正确设置 filter_var 和 auto_scroll_var"""
         import tkinter as tk
@@ -423,9 +435,15 @@ class TestLogWindowRunWindow:
     @patch("src.cli.log_window.tk.StringVar")
     @patch("src.cli.log_window.tk.BooleanVar")
     def test_run_window_tags_configured(
-        self, mock_boolvar, mock_strvar,
-        mock_frame, mock_label, mock_combo,
-        mock_check, mock_button, mock_text,
+        self,
+        mock_boolvar,
+        mock_strvar,
+        mock_frame,
+        mock_label,
+        mock_combo,
+        mock_check,
+        mock_button,
+        mock_text,
     ):
         """_run_window 应配置所有日志级别标签颜色"""
         import tkinter as tk
@@ -453,9 +471,15 @@ class TestLogWindowRunWindow:
     @patch("src.cli.log_window.tk.StringVar")
     @patch("src.cli.log_window.tk.BooleanVar")
     def test_run_window_handles_mainloop_exception(
-        self, mock_boolvar, mock_strvar,
-        mock_frame, mock_label, mock_combo,
-        mock_check, mock_button, mock_text,
+        self,
+        mock_boolvar,
+        mock_strvar,
+        mock_frame,
+        mock_label,
+        mock_combo,
+        mock_check,
+        mock_button,
+        mock_text,
     ):
         """mainloop 抛异常 → 被 except 吞掉不崩溃"""
         import tkinter as tk
@@ -772,8 +796,10 @@ class TestLogWindowSaveLog:
         window.text_area.get.return_value = "log content here\n"
 
         mock_file = MagicMock()
-        with patch("tkinter.filedialog.asksaveasfilename",
-                   return_value="/tmp/test.log"), patch("builtins.open", return_value=mock_file):
+        with (
+            patch("tkinter.filedialog.asksaveasfilename", return_value="/tmp/test.log"),
+            patch("builtins.open", return_value=mock_file),
+        ):
             window._save_log()
             mock_file.__enter__().write.assert_called_once_with("log content here\n")
 
@@ -785,8 +811,7 @@ class TestLogWindowSaveLog:
         window.text_area = MagicMock()
         window.text_area.get.return_value = "content"
 
-        with patch("tkinter.filedialog.asksaveasfilename",
-                   return_value="/tmp/test.log"):
+        with patch("tkinter.filedialog.asksaveasfilename", return_value="/tmp/test.log"):
             with patch("builtins.open", side_effect=OSError("disk full")):
                 with patch.object(window, "log") as mock_log:
                     window._save_log()

@@ -62,6 +62,7 @@ class TestPurePythonBackendDirect(unittest.TestCase):
         """P0-5: 非恒定时间标量乘法"""
         backend = PurePythonBackend()
         from src.core.secp256k1 import Secp256k1
+
         k = 123456789
         rx, ry = backend.scalar_multiply(k, Secp256k1.Gx, Secp256k1.Gy)
         self.assertIsInstance(rx, int)
@@ -73,6 +74,7 @@ class TestPurePythonBackendDirect(unittest.TestCase):
         """P0-6: 恒定时间标量乘法"""
         backend = PurePythonBackend(use_const_time=True)
         from src.core.secp256k1 import Secp256k1
+
         k = 123456789
         rx, ry = backend.scalar_multiply(k, Secp256k1.Gx, Secp256k1.Gy)
         self.assertIsInstance(rx, int)
@@ -118,6 +120,7 @@ class TestPurePythonBackendDirect(unittest.TestCase):
         self.assertEqual(pub_reg, pub_ct)
 
         from src.core.secp256k1 import Secp256k1
+
         k = 999888777
         rx_r, ry_r = regular.scalar_multiply(k, Secp256k1.Gx, Secp256k1.Gy)
         rx_c, ry_c = const.scalar_multiply(k, Secp256k1.Gx, Secp256k1.Gy)
@@ -161,14 +164,14 @@ class TestBackendSetAndSwitch(unittest.TestCase):
         # 用 MagicMock 替换 _backends，使 get() 返回 None 模拟未知后端
         mock_backends = MagicMock()
         mock_backends.get.return_value = None
-        with patch.object(crypto_manager, '_backends', mock_backends):
+        with patch.object(crypto_manager, "_backends", mock_backends):
             with self.assertRaises(ValueError) as ctx:
                 crypto_manager.set_backend(BackendType.PURE_PYTHON)
             self.assertIn("Unknown backend type", str(ctx.exception))
 
     def test_set_backend_unavailable_backend_error(self):
         """P0-17: set_backend 不可用后端抛出 RuntimeError"""
-        with patch.object(OpenSSLBackend, 'is_available', PropertyMock(return_value=False)):
+        with patch.object(OpenSSLBackend, "is_available", PropertyMock(return_value=False)):
             with self.assertRaises(RuntimeError) as ctx:
                 crypto_manager.set_backend(BackendType.OPENSSL)
             self.assertIn("not available", str(ctx.exception))
@@ -183,6 +186,7 @@ class TestBackendSetAndSwitch(unittest.TestCase):
     def test_generate_public_key_perf_debug_path(self):
         """P0-19: DEBUG 级别性能日志路径"""
         import logging as log_mod
+
         crypto_logger = log_mod.getLogger("CryptoBackend")
         old_level = crypto_logger.level
         try:
@@ -235,7 +239,7 @@ class TestCryptoBackendManagerEdgeCases(unittest.TestCase):
 
     def test_current_backend_none_error(self):
         """P0-24: current_backend 为 None 时抛出 RuntimeError"""
-        with patch.object(crypto_manager, '_current_backend', None):
+        with patch.object(crypto_manager, "_current_backend", None):
             with self.assertRaises(RuntimeError) as ctx:
                 _ = crypto_manager.current_backend
             self.assertIn("No crypto backend available", str(ctx.exception))
@@ -243,6 +247,7 @@ class TestCryptoBackendManagerEdgeCases(unittest.TestCase):
     def test_scalar_multiply_via_manager(self):
         """P0-25: 通过 manager 的 current_backend 执行标量乘法"""
         from src.core.secp256k1 import Secp256k1
+
         crypto_manager.set_backend(BackendType.PURE_PYTHON)
         backend = crypto_manager.current_backend
         rx, ry = backend.scalar_multiply(999, Secp256k1.Gx, Secp256k1.Gy)
@@ -293,6 +298,7 @@ class TestOpenSSLBackendDirect(unittest.TestCase):
     def test_scalar_multiply(self):
         """P1-6: OpenSSL 标量乘法"""
         from src.core.secp256k1 import Secp256k1
+
         rx, ry = self.backend.scalar_multiply(42, Secp256k1.Gx, Secp256k1.Gy)
         self.assertIsInstance(rx, int)
         self.assertIsInstance(ry, int)
@@ -333,6 +339,7 @@ class TestCoincurveBackendDirect(unittest.TestCase):
     def test_scalar_multiply(self):
         """P1-12: Coincurve 标量乘法"""
         from src.core.secp256k1 import Secp256k1
+
         rx, ry = self.backend.scalar_multiply(42, Secp256k1.Gx, Secp256k1.Gy)
         self.assertIsInstance(rx, int)
         self.assertIsInstance(ry, int)
@@ -379,6 +386,7 @@ class TestECDSABackendDirect(unittest.TestCase):
     def test_scalar_multiply(self):
         """P1-19: ECDSA 标量乘法"""
         from src.core.secp256k1 import Secp256k1
+
         rx, ry = self.backend.scalar_multiply(42, Secp256k1.Gx, Secp256k1.Gy)
         self.assertIsInstance(rx, int)
         self.assertIsInstance(ry, int)
@@ -391,6 +399,7 @@ class TestBackendImportErrors(unittest.TestCase):
     def _mock_import_for(self, blocked_modules):
         """创建一个仅对特定模块抛出 ImportError 的 mock import"""
         import builtins
+
         original_import = builtins.__import__
 
         def selective_import(name, *args, **kwargs):
@@ -399,32 +408,32 @@ class TestBackendImportErrors(unittest.TestCase):
                     raise ImportError(f"Mocked import error for: {name}")
             return original_import(name, *args, **kwargs)
 
-        return patch('builtins.__import__', side_effect=selective_import)
+        return patch("builtins.__import__", side_effect=selective_import)
 
     def test_openssl_import_error(self):
         """P1-20: OpenSSL 导入失败时 _available=False"""
-        with self._mock_import_for(['cryptography']):
+        with self._mock_import_for(["cryptography"]):
             backend = OpenSSLBackend()
             self.assertFalse(backend._available)
             self.assertFalse(backend.is_available)
 
     def test_coincurve_import_error(self):
         """P1-21: coincurve 导入失败时 _available=False"""
-        with self._mock_import_for(['coincurve']):
+        with self._mock_import_for(["coincurve"]):
             backend = CoincurveBackend()
             self.assertFalse(backend._available)
             self.assertFalse(backend.is_available)
 
     def test_ecdsa_import_error(self):
         """P1-22: ecdsa 导入失败时 _available=False"""
-        with self._mock_import_for(['ecdsa']):
+        with self._mock_import_for(["ecdsa"]):
             backend = ECDSABackend()
             self.assertFalse(backend._available)
             self.assertFalse(backend.is_available)
 
     def test_unavailable_backend_raises_on_generate(self):
         """P1-23: 不可用后端调用 generate_public_key 抛出 RuntimeError"""
-        with self._mock_import_for(['cryptography']):
+        with self._mock_import_for(["cryptography"]):
             backend = OpenSSLBackend()
             with self.assertRaises(RuntimeError) as ctx:
                 backend.generate_public_key((1).to_bytes(32, "big"))
@@ -432,16 +441,17 @@ class TestBackendImportErrors(unittest.TestCase):
 
     def test_unavailable_backend_raises_on_scalar_multiply(self):
         """P1-24: 不可用后端调用 scalar_multiply 抛出 RuntimeError"""
-        with self._mock_import_for(['cryptography']):
+        with self._mock_import_for(["cryptography"]):
             backend = OpenSSLBackend()
             from src.core.secp256k1 import Secp256k1
+
             with self.assertRaises(RuntimeError) as ctx:
                 backend.scalar_multiply(1, Secp256k1.Gx, Secp256k1.Gy)
             self.assertIn("不可用", str(ctx.exception))
 
     def test_coincurve_unavailable_generate_public_key(self):
         """P2-1: coincurve 不可用时 generate_public_key 抛出 RuntimeError"""
-        with self._mock_import_for(['coincurve']):
+        with self._mock_import_for(["coincurve"]):
             backend = CoincurveBackend()
             self.assertFalse(backend._available)
             with self.assertRaises(RuntimeError) as ctx:
@@ -450,17 +460,18 @@ class TestBackendImportErrors(unittest.TestCase):
 
     def test_coincurve_unavailable_scalar_multiply(self):
         """P2-2: coincurve 不可用时 scalar_multiply 抛出 RuntimeError"""
-        with self._mock_import_for(['coincurve']):
+        with self._mock_import_for(["coincurve"]):
             backend = CoincurveBackend()
             self.assertFalse(backend._available)
             from src.core.secp256k1 import Secp256k1
+
             with self.assertRaises(RuntimeError) as ctx:
                 backend.scalar_multiply(1, Secp256k1.Gx, Secp256k1.Gy)
             self.assertIn("not available", str(ctx.exception))
 
     def test_ecdsa_unavailable_generate_public_key(self):
         """P2-3: ecdsa 不可用时 generate_public_key 抛出 RuntimeError"""
-        with self._mock_import_for(['ecdsa']):
+        with self._mock_import_for(["ecdsa"]):
             backend = ECDSABackend()
             self.assertFalse(backend._available)
             with self.assertRaises(RuntimeError) as ctx:
@@ -476,9 +487,10 @@ class TestCoincurveFallbackToPurePython(unittest.TestCase):
         import coincurve
 
         from src.core.secp256k1 import Secp256k1
+
         backend = CoincurveBackend()
         self.assertTrue(backend._available)
-        with patch.object(coincurve, 'PublicKey', side_effect=TypeError("mock construction error")):
+        with patch.object(coincurve, "PublicKey", side_effect=TypeError("mock construction error")):
             rx, ry = backend.scalar_multiply(42, Secp256k1.Gx, Secp256k1.Gy)
             # 回退到 PurePython，应能正常工作
             self.assertIsInstance(rx, int)
@@ -490,13 +502,14 @@ class TestCoincurveFallbackToPurePython(unittest.TestCase):
         import coincurve
 
         from src.core.secp256k1 import Secp256k1
+
         k = 999888777
         # PurePython 直接计算
         pp = PurePythonBackend()
         pp_rx, pp_ry = pp.scalar_multiply(k, Secp256k1.Gx, Secp256k1.Gy)
         # Coincurve 回退
         backend = CoincurveBackend()
-        with patch.object(coincurve, 'PublicKey', side_effect=TypeError("mock")):
+        with patch.object(coincurve, "PublicKey", side_effect=TypeError("mock")):
             cc_rx, cc_ry = backend.scalar_multiply(k, Secp256k1.Gx, Secp256k1.Gy)
         self.assertEqual(pp_rx, cc_rx)
         self.assertEqual(pp_ry, cc_ry)
@@ -533,6 +546,7 @@ class TestBackendConsistency(unittest.TestCase):
     def test_all_backends_scalar_multiply_consistency(self):
         """P1-27: 所有后端标量乘法结果一致"""
         from src.core.secp256k1 import Secp256k1
+
         k = 12345
         pp = PurePythonBackend().scalar_multiply(k, Secp256k1.Gx, Secp256k1.Gy)
         ossl = OpenSSLBackend().scalar_multiply(k, Secp256k1.Gx, Secp256k1.Gy)
@@ -545,8 +559,12 @@ class TestBackendConsistency(unittest.TestCase):
 
     def test_set_backend_then_generate(self):
         """P1-28: set_backend 切换后各后端正确工作"""
-        for bt in [BackendType.PURE_PYTHON, BackendType.OPENSSL,
-                    BackendType.COINCURVE, BackendType.ECDSA]:
+        for bt in [
+            BackendType.PURE_PYTHON,
+            BackendType.OPENSSL,
+            BackendType.COINCURVE,
+            BackendType.ECDSA,
+        ]:
             crypto_manager.set_backend(bt)
             pub = crypto_manager.generate_public_key(self.pk, compressed=True)
             self.assertEqual(len(pub), 33, f"Backend {bt.name} failed")

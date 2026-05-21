@@ -86,7 +86,9 @@ class DataLoggerAdapter:
             # 将通用 dict 映射到 record_performance_data 签名
             speed = data.get("speed", data.get("keys_per_second", 0.0))
             total_checked = data.get("total_checked", data.get("batch_size", 0))
-            matches_found = data.get("match_count", data.get("matches_found", data.get("matches", 0)))
+            matches_found = data.get(
+                "match_count", data.get("matches_found", data.get("matches", 0))
+            )
             cpu_usage = data.get("cpu_usage", 0.0)
             memory_usage = data.get("memory_usage", 0.0)
             thread_count = data.get("thread_count", 0)
