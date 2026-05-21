@@ -83,6 +83,7 @@ from ...gpu.search_mode_coordinator import SearchModeCoordinator  # noqa: E402
 # 监控
 from ...monitoring.data_logger import DataLogger  # noqa: E402
 from ...monitoring.enhanced_monitoring import EnhancedMonitoringSystem  # noqa: E402
+from ...monitoring.monitor_config import MonitorConfig  # noqa: E402
 from ...monitoring.event_adapters import (  # noqa: E402
     DataLoggerAdapter,
     EnhancedMonitoringAdapter,
@@ -397,8 +398,10 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 if use_enhanced_monitoring:
                     # v4.2.1: 使用事件适配器模式
                     self.enhanced_monitoring = EnhancedMonitoringSystem(
-                        collection_interval=data_logging_interval,
-                        enable_monitoring_data=False,
+                        config=MonitorConfig(
+                            collection_interval=data_logging_interval,
+                            enable_monitoring_data=False,
+                        ),
                     )
                     self.data_logger = self.enhanced_monitoring.data_logger
                     self._enhanced_monitoring_adapter = EnhancedMonitoringAdapter(

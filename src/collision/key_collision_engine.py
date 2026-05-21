@@ -358,13 +358,16 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
         try:
             from src.monitoring.event_adapters import setup_data_logging
+            from src.monitoring.monitor_config import MonitorConfig
 
             if use_enhanced_monitoring:
                 # 使用增强监控系统（推荐）
                 self.enhanced_monitoring = EnhancedMonitoringSystem(
                     engine=self,
-                    collection_interval=data_logging_interval,
-                    enable_monitoring_data=False,  # 统一使用data_logs
+                    config=MonitorConfig(
+                        collection_interval=data_logging_interval,
+                        enable_monitoring_data=False,
+                    ),
                 )
                 self.data_logger = self.enhanced_monitoring.data_logger
 

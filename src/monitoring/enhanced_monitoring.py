@@ -67,20 +67,12 @@ class EnhancedMonitoringSystem:
             enable_monitoring_data: 是否同时保存到monitoring_data - 已弃用
 
         Example:
-            >>> # 推荐方式：使用配置对象
             >>> from src.monitoring.monitor_config import MonitorConfig
             >>> config = MonitorConfig(
             ...     data_logging_enabled=True,
             ...     collection_interval=5.0
             ... )
             >>> monitoring = EnhancedMonitoringSystem(engine, config=config)
-            >>>
-            >>> # 兼容方式：使用旧参数
-            >>> monitoring = EnhancedMonitoringSystem(
-            ...     engine,
-            ...     collection_interval=5,
-            ...     enable_monitoring_data=False
-            ... )
         """
         self.logger = get_configured_logger("EnhancedMonitoringSystem")
         self.engine = engine
@@ -90,7 +82,15 @@ class EnhancedMonitoringSystem:
             # 使用配置对象
             self.config = config
         else:
-            # 兼容旧API：从参数构建配置
+            # v5.0.0: 旧API参数路径已弃用，使用 MonitorConfig 替代
+            import warnings
+
+            warnings.warn(
+                "EnhancedMonitoringSystem(collection_interval=..., enable_monitoring_data=...) "
+                "已弃用，请使用 config=MonitorConfig(...) 替代。",
+                FutureWarning,
+                stacklevel=2,
+            )
             self.config = MonitorConfig()
 
             if collection_interval is not None:
