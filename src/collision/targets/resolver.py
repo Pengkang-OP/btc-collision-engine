@@ -35,7 +35,7 @@ from ...utils.encoding_utils import EncodingUtils
 from .cache import AddressCache
 
 # v4.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
-logger = get_configured_logger("TargetResolver", thread_safe=False)
+logger = get_configured_logger("TargetResolver")
 
 
 from ...utils.bech32_codec import decode_segwit_address

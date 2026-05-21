@@ -15,7 +15,7 @@ from contextlib import suppress
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 from typing import Any
 
-from .logger import ColoredFormatter, SafeStreamHandler  # ThreadSafeLogger已弃用
+from .logger import ColoredFormatter, SafeStreamHandler
 
 # v4.5.1: 项目根目录缓存，用于解析相对日志路径
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -394,13 +394,12 @@ class LoggingConfig:
         assert self._config is not None
         return self._config.copy()
 
-    def get_logger(self, name: str, thread_safe: bool = False) -> logging.Logger:
+    def get_logger(self, name: str) -> logging.Logger:
         """
         获取配置好的日志记录器
 
         参数:
             name: 日志记录器名称
-            thread_safe: 已弃用，Python的logging.Logger本身是线程安全的
 
         返回:
             配置好的日志记录器
@@ -408,21 +407,7 @@ class LoggingConfig:
         if not self._initialized:
             self.init()
 
-        logger = logging.getLogger(name)
-
-        # v4.2.1修复: Python的logging.Logger本身是线程安全的（内部使用RLock）
-        # thread_safe参数已弃用，直接返回原生logger
-        if thread_safe:
-            import warnings
-
-            warnings.warn(
-                "get_logger(thread_safe=True)已弃用。Python的logging.Logger本身是线程安全的，"
-                f"请直接使用 get_logger('{name}', thread_safe=False) 或省略该参数。",
-                FutureWarning,
-                stacklevel=2,
-            )
-
-        return logger
+        return logging.getLogger(name)
 
 
 # 全局日志配置实例
@@ -524,15 +509,14 @@ def _setup_security_filter() -> None:
         print("[WARNING] 日志系统将继续工作，但可能不会屏蔽敏感信息")
 
 
-def get_configured_logger(name: str, thread_safe: bool = False) -> logging.Logger:
+def get_configured_logger(name: str) -> logging.Logger:
     """
     获取统一配置的日志记录器
 
     参数:
         name: 日志记录器名称
-        thread_safe: 是否返回线程安全包装器
 
     返回:
         配置好的日志记录器
     """
-    return logging_config.get_logger(name, thread_safe)
+    return logging_config.get_logger(name)

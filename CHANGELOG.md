@@ -110,6 +110,13 @@
   - `memory_calculator.py`: PRIVATE_KEY_SIZE 弃用注释添加 v5.0.0 计划
   - `gpu_performance_monitor.py`: 清理过时 pynvml 备注
 
+- **ThreadSafeLogger 全面移除** (P1-6)
+  - `src/utils/logger.py`: 删除已弃用的 `ThreadSafeLogger` 类（52行代码）
+  - `src/utils/logging_config.py`: 删除 `thread_safe` 参数及弃用处理逻辑
+  - 6个调用文件移除 `thread_safe=False` 参数
+  - 更新 2 个测试文件，删除 `verify_threadsafe_replacement.py` 验证脚本
+  - 修复 `test_core_fixes_verification.py` GBK 编码兼容性（Windows 终端）
+
 ## v4.5.0 (2026-05-21)
 
 ### 遗留问题修复与代码清理
