@@ -9,7 +9,7 @@ v4.2.4: 从 GlobalPoolManager / GlobalGPUMemoryManager 提取共享模式
 import threading
 from typing import Any, Protocol, runtime_checkable
 
-from .logger import get_configured_logger
+from .logging_config import get_configured_logger
 
 _logger = get_configured_logger("PoolHelpers")
 

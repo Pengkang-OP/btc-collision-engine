@@ -6,7 +6,7 @@
 - bech32m: SegWit v1+ 地址 (BIP-0350, Taproot 等)
 """
 
-__all__ = ["bech32_encode", "decode_segwit_address"]
+__all__ = ["bech32_encode", "bech32_decode", "decode_segwit_address"]
 
 # Bech32 字符集 (5-bit 编码)
 _CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
@@ -109,6 +109,48 @@ def bech32_encode(hrp: str, witness_version: int, witness_program: bytes, encodi
     # 编码为字符串
     combined = data + checksum
     return hrp + "1" + "".join(_CHARSET[d] for d in combined)
+
+
+def bech32_decode(addr: str) -> tuple[str | None, list[int], str | None]:
+    """解码 Bech32/Bech32m 地址，返回 (hrp, data, encoding)。
+
+    与 bech32 库兼容的接口，用于链式调用验证代码。
+
+    参数:
+        addr: Bech32/Bech32m 地址字符串
+
+    返回:
+        (hrp, data, encoding) 元组。
+        - hrp: Human-Readable Part，失败为 None
+        - data: 5-bit 数据列表（含 witness_version，不含校验和）
+        - encoding: 'bech32' / 'bech32m'，失败为 None
+    """
+    if not addr:
+        return None, [], None
+
+    addr = addr.lower()
+    pos = addr.rfind("1")
+    if pos == -1:
+        return None, [], None
+
+    hrp = addr[:pos]
+    data_part = addr[pos + 1:]
+    if len(data_part) < 6:
+        return None, [], None
+
+    data: list[int] = []
+    for ch in data_part:
+        idx = _CHARSET.find(ch)
+        if idx == -1:
+            return None, [], None
+        data.append(idx)
+
+    encoding = _verify_checksum(hrp, data)
+    if encoding is None:
+        return None, [], None
+
+    # 去除校验和 (最后 6 个字节)
+    return hrp, data[:-6], encoding
 
 
 def decode_segwit_address(hrp: str, addr: str) -> tuple[int | None, bytes | None]:
