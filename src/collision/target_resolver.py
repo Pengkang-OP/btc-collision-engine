@@ -5,8 +5,8 @@
 ================================================================================
 迁移时间表 (Migration Timeline):
 --------------------------------------------------------------------------------
-  ⚠️  v4.2.1: 发出 DeprecationWarning（当前状态）
-  📅  2026-Q3: 计划移除此模块
+  ⚠️  v4.2.1–v4.5.x: 发出 DeprecationWarning（当前状态）
+  📅  v5.0.0: 计划移除此模块
   ⚠️  移除后: 旧导入路径将导致 ImportError
   📋  跟踪: 在 GitHub Issues 中搜索标签 'deprecation/target-resolver'
 ================================================================================
@@ -58,8 +58,8 @@ warnings.warn(
     - 替换为: from src.collision.targets.resolver import TargetResolver
 
     移除时间线:
-    - 当前版本: 发出警告（v4.2.1）
-    - 计划移除: 2026-Q3
+    - 当前版本 v4.x: 发出警告
+    - 计划移除: v5.0.0
     - 跟踪标签: 'deprecation/target-resolver'
 
     迁移辅助: python scripts/check_import_paths.py --fix target_resolver

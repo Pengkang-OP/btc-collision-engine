@@ -48,9 +48,10 @@ from .gpu.engine import (
 logger = get_configured_logger(__name__)
 
 # v4.5.1: Shim 层弃用警告
+# 计划 v5.0.0 移除: 使用 'from src.collision.gpu.engine import GPUCollisionEngine' 替代
 logger.warning(
     "gpu_collision_engine.py (Shim) 已弃用，建议直接导入 src.collision.gpu.engine。"
-    "此 shim 将在未来版本移除。"
+    "此 shim 将在 v5.0.0 移除。"
 )
 
 NEW_GPU_MODULE_AVAILABLE = True

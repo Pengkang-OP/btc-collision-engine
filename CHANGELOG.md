@@ -100,6 +100,16 @@
   - `PROJECT_ANALYSIS.md`: 版本号 v4.3.0→v4.5.1，测试数 261+→760+，补充 v4.5.1 关键成果
   - `docs/project-status.md`: 当前阶段从 v4.5.0 推进至 v4.5.1
 
+- **遗留问题清理与弃用对齐** (本次修复)
+  - `target_resolver.py`: 弃用移除时间线统一为 v5.0.0
+  - `gpu_config_manager.py`: 添加测试迁移指引，移除计划统一为 v5.0.0
+  - `gpu_collision_engine.py`: Shim 层弃用警告明确 v5.0.0 移除
+  - `gpu/engine.py`: ASYNC_LOG_AVAILABLE/GPU_CONFIG_MANAGER_AVAILABLE 注释清理
+  - `secp256k1.py`: `scalar_multiply()` 弃用消息 v4.3.0→v5.0.0
+  - `utils/__init__.py`: 敏感模式常量 14 项加入 `__all__`
+  - `memory_calculator.py`: PRIVATE_KEY_SIZE 弃用注释添加 v5.0.0 计划
+  - `gpu_performance_monitor.py`: 清理过时 pynvml 备注
+
 ## v4.5.0 (2026-05-21)
 
 ### 遗留问题修复与代码清理

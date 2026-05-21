@@ -4,7 +4,8 @@ CODE-1修复: 从gpu_collision_engine.py提取配置管理逻辑，降低主类�
 
 DEPRECATED: 此模块与 src/gpu/config_manager.py::GPUConfigManager 重复。
 生产代码已统一使用 src/gpu/config_manager.py 中的版本。
-本模块仅保留用于测试兼容，计划在后续版本中移除。
+本模块仅保留用于测试兼容，计划在 v5.0.0 中移除。
+测试导入迁移: 'from src.collision.gpu_config_manager' → 'from src.gpu.config_manager'
 
 职责:
 1. 读取配置（构造函数参数 > 配置文件 > 默认值）
