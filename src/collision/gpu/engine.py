@@ -644,6 +644,10 @@ class GPUCollisionEngine(BaseCollisionEngine):
             logger.debug("stop() 已执行过，跳过重复调用")
             return
 
+        # 状态一致性守卫：stats 必须在后续步骤前可用
+        if self.stats is None:
+            raise RuntimeError("GPUCollisionEngine.stop(): self.stats is None, 引擎状态异常")
+
         self._search_coordinator.stop()
         self._stop_event.set()
         self._running = False

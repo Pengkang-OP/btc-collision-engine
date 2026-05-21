@@ -130,7 +130,7 @@ class IntelGPUOptimizer:
             (".performance_reporter", "PerformanceReportGenerator"),
         ]:
             try:
-                mod = importlib.import_module(mod_rel, package=__package__)
+                mod = importlib.import_module(mod_rel, package=__package__ or "src.gpu")
                 classes.append(getattr(mod, cls_name))
             except (ImportError, AttributeError):
                 classes.append(None)
