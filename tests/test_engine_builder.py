@@ -240,49 +240,61 @@ class TestBuildEngineGPU(unittest.TestCase):
 
 
 class TestBuildEngineMultiGPU(unittest.TestCase):
-    """build_engine() 多GPU 分支测试 (GPU_AVAILABLE=True)。"""
+    """build_engine() 多GPU 分支测试 (GPU_AVAILABLE=True)。
+
+    注意: engine_builder 导入的是 MultiFormatMultiGPUEngine，
+    测试 mock 路径必须对齐: src.gpu.multi_format_multi_gpu_engine。
+    """
 
     def setUp(self):
         self.targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
+        # 清理缓存确保 mock 生效
+        for key in list(sys.modules.keys()):
+            if "multi_format_multi_gpu_engine" in key:
+                sys.modules.pop(key, None)
+
+    def _patch_multi_engine(self, mock_engine_instance):
+        """创建多GPU引擎 mock 上下文管理器。
+
+        engine_builder 通过 'from src.gpu.multi_format_multi_gpu_engine
+        import MultiFormatMultiGPUEngine as _MEngine' 导入。
+        """
+        mock_multi_engine = MagicMock(return_value=mock_engine_instance)
+        return patch.dict(
+            "sys.modules",
+            {
+                "src.gpu.multi_format_multi_gpu_engine": MagicMock(
+                    MultiFormatMultiGPUEngine=mock_multi_engine
+                )
+            },
+        )
 
     def test_multi_gpu_init_returns_false_raises_exception(self):
-        """MultiGPUCollisionEngine.initialize() 返回 False → GPUInitializationError。"""
+        """MultiFormatMultiGPUEngine.initialize() 返回 False → GPUInitializationError。"""
         mock_engine_instance = MagicMock()
         mock_engine_instance.initialize.return_value = False
-        mock_multi_engine = MagicMock(return_value=mock_engine_instance)
 
-        with patch.object(eb, "GPU_AVAILABLE", True), patch.dict(
-            "sys.modules",
-            {"src.gpu.multi_gpu_engine": MagicMock(MultiGPUCollisionEngine=mock_multi_engine)},
-        ):
+        with patch.object(eb, "GPU_AVAILABLE", True), self._patch_multi_engine(mock_engine_instance):
             with self.assertRaises(eb.GPUInitializationError) as ctx:
                 eb.build_engine(_make_args(multi_gpu=True), self.targets)
             self.assertEqual(ctx.exception.engine_type, "multi_gpu")
 
     def test_multi_gpu_init_raises_exception(self):
-        """MultiGPUCollisionEngine() 初始化抛异常 → GPUInitializationError。"""
+        """MultiFormatMultiGPUEngine() 初始化抛异常 → GPUInitializationError。"""
         mock_engine_instance = MagicMock()
         mock_engine_instance.initialize.side_effect = OSError("device busy")
-        mock_multi_engine = MagicMock(return_value=mock_engine_instance)
 
-        with patch.object(eb, "GPU_AVAILABLE", True), patch.dict(
-            "sys.modules",
-            {"src.gpu.multi_gpu_engine": MagicMock(MultiGPUCollisionEngine=mock_multi_engine)},
-        ):
+        with patch.object(eb, "GPU_AVAILABLE", True), self._patch_multi_engine(mock_engine_instance):
             with self.assertRaises(eb.GPUInitializationError) as ctx:
                 eb.build_engine(_make_args(multi_gpu=True), self.targets)
             self.assertIn("Multi-GPU initialization failed", ctx.exception.message)
 
     def test_multi_gpu_success(self):
-        """MultiGPUCollisionEngine 初始化成功 → 返回 multi_gpu。"""
+        """MultiFormatMultiGPUEngine 初始化成功 → 返回 multi_gpu。"""
         mock_engine_instance = MagicMock()
         mock_engine_instance.initialize.return_value = True
-        mock_multi_engine = MagicMock(return_value=mock_engine_instance)
 
-        with patch.object(eb, "GPU_AVAILABLE", True), patch.dict(
-            "sys.modules",
-            {"src.gpu.multi_gpu_engine": MagicMock(MultiGPUCollisionEngine=mock_multi_engine)},
-        ):
+        with patch.object(eb, "GPU_AVAILABLE", True), self._patch_multi_engine(mock_engine_instance):
             engine, etype = eb.build_engine(
                 _make_args(multi_gpu=True, gpu_indices=[0, 1], gpu_count=2),
                 self.targets,
