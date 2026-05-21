@@ -481,11 +481,7 @@ class TestModuleImports:
         """测试包版本号为 6.0.0"""
         from src.collision import gpu
 
-<<<<<<< Updated upstream
         assert gpu.__version__ == "4.4.0"
-=======
-        assert gpu.__version__ == "4.2.2"
->>>>>>> Stashed changes
 
     def test_package_all_exports(self):
         """测试 __all__ 包含新组件"""
@@ -609,3 +605,75 @@ class TestLifecycle:
         finally:
             for p in active_patches:
                 p.stop()
+
+    def test_from_config_creates_engine(self, mock_targets, mock_engine_patches):
+        """测试 from_config() 从 GPUEngineConfig 创建引擎实例
+
+        BLOCK-1修复验证: 确保 GPUEngineConfig 包含 from_config() 所需的全部字段。
+        """
+        patches, _, _ = mock_engine_patches
+
+        active_patches = []
+        for p in patches:
+            p.start()
+            active_patches.append(p)
+
+        try:
+            from src.collision.gpu.engine import GPUCollisionEngine, GPUEngineConfig
+            from src.collision.gpu.key_generator import KeyGenerationStrategy
+
+            config = GPUEngineConfig(
+                targets=mock_targets,
+                device_index=0,
+                batch_size=2_000_000,
+                checkpoint_enabled=True,
+                dedup_enabled=True,
+                dedup_max_size=500_000,
+                checkpoint_interval=60,
+                event_bus=None,
+                data_logging_enabled=False,
+                data_logging_interval=10,
+                use_enhanced_monitoring=False,
+                use_gpu_memory_pool=False,
+                gpu_pool_max_buffers=50,
+                gpu_pool_max_memory_mb=256,
+                use_async_logging=False,
+                check_uncompressed=False,
+                key_generation_strategy=KeyGenerationStrategy.AES_CTR,
+            )
+
+            engine = GPUCollisionEngine.from_config(config)
+
+            assert engine is not None
+            assert engine.targets == mock_targets
+            assert engine.device_index == 0
+        finally:
+            for p in active_patches:
+                p.stop()
+
+    def test_from_config_fields_completeness(self):
+        """测试 GPUEngineConfig 包含 from_config() 引用的所有字段
+
+        BLOCK-1修复验证: 确保所有字段在 dataclass 中存在，避免 AttributeError。
+        """
+        from dataclasses import fields
+
+        from src.collision.gpu.engine import GPUEngineConfig
+
+        field_names = {f.name for f in fields(GPUEngineConfig)}
+
+        required = {
+            "targets", "device_index", "batch_size",
+            "on_progress", "on_match", "on_complete",
+            "event_bus", "checkpoint_enabled", "dedup_enabled",
+            "dedup_max_size", "checkpoint_interval",
+            "data_logging_enabled", "data_logging_interval",
+            "use_enhanced_monitoring", "use_gpu_memory_pool",
+            "gpu_pool_max_buffers", "gpu_pool_max_memory_mb",
+            "use_async_logging", "async_log_file",
+            "async_log_max_bytes", "async_log_backup_count",
+            "check_uncompressed", "key_generation_strategy",
+        }
+
+        missing = required - field_names
+        assert not missing, f"GPUEngineConfig 缺少字段: {missing}"

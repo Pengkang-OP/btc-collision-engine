@@ -299,7 +299,9 @@ class BitcoinKeyValidator:
 
         try:
             # v4.2.2 R1修复: 使用恒定时间实现，避免 RuntimeError
-            public_key_point = self.curve.scalar_multiply_const_time(k, ECPoint(Secp256k1.Gx, Secp256k1.Gy))
+            public_key_point = self.curve.scalar_multiply_const_time(
+                k, ECPoint(Secp256k1.Gx, Secp256k1.Gy)
+            )
 
             # 3. 验证公钥不是无穷远点
             if public_key_point.is_infinity:
@@ -419,7 +421,9 @@ class BitcoinKeyValidator:
     # ── generate_address 辅助方法（降低 C901） ────────────────────
 
     @staticmethod
-    def _verify_base58_checksum(address: str, expected_version: int, result: KeyValidationResult) -> None:
+    def _verify_base58_checksum(
+        address: str, expected_version: int, result: KeyValidationResult
+    ) -> None:
         """验证 Base58Check 校验和与版本字节。"""
         try:
             version, payload = Base58.check_decode(address)
@@ -520,7 +524,9 @@ class BitcoinKeyValidator:
         return AddressType.UNKNOWN, "unknown"
 
     @staticmethod
-    def _validate_legacy_address(address: str, addr_type: AddressType, result: KeyValidationResult) -> None:
+    def _validate_legacy_address(
+        address: str, addr_type: AddressType, result: KeyValidationResult
+    ) -> None:
         """验证 P2PKH / P2SH 传统地址格式。"""
         if (
             len(address) < KeyValidationConstants.P2PKH_ADDRESS_MIN_LENGTH

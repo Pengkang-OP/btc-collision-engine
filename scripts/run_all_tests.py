@@ -132,6 +132,57 @@ def print_summary(results):
     return total_failed == 0
 
 
+def _select_test_files(args) -> list:
+    """根据命令行参数选择要运行的测试文件列表。"""
+    if args.smoke:
+        return TEST_SUITES["smoke"]
+    if args.unit:
+        return (
+            TEST_SUITES["smoke"]
+            + TEST_SUITES["unit_core"]
+            + TEST_SUITES["unit_logging"]
+            + TEST_SUITES["unit_collision"]
+            + TEST_SUITES["unit_config"]
+            + TEST_SUITES["unit_health"]
+            + TEST_SUITES["unit_utils"]
+            + TEST_SUITES["regression"]
+        )
+    if args.integration:
+        return TEST_SUITES["integration"]
+    if args.quick:
+        return (
+            TEST_SUITES["smoke"]
+            + TEST_SUITES["unit_core"]
+            + TEST_SUITES["unit_logging"]
+            + TEST_SUITES["unit_collision"]
+            + TEST_SUITES["unit_config"]
+            + TEST_SUITES["unit_health"]
+            + TEST_SUITES["regression"]
+            + TEST_SUITES["integration"]
+        )
+    # 全部测试
+    test_files = []
+    for suite_files in TEST_SUITES.values():
+        test_files.extend(suite_files)
+    if not args.gpu:
+        test_files = [f for f in test_files if f not in TEST_SUITES["gpu"]]
+    return test_files
+
+
+def _build_pytest_args(args) -> list:
+    """构建 pytest 额外参数列表。"""
+    extra_args = []
+    if args.ci:
+        extra_args.extend(["--cov=src", "--cov-report=term-missing", "--cov-report=xml"])
+    if args.keyword:
+        extra_args.extend(["-k", args.keyword])
+    if args.exitfirst:
+        extra_args.append("-x")
+    if args.quiet:
+        extra_args.append("-q")
+    return extra_args
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="BTC 碰撞引擎 - 统一测试运行器",
@@ -169,49 +220,11 @@ def main():
                 print(f"  {status} {f}")
         return 0
 
-    # 确定要运行的测试
-    if args.smoke:
-        test_files = TEST_SUITES["smoke"]
-    elif args.unit:
-        test_files = (
-            TEST_SUITES["smoke"]
-            + TEST_SUITES["unit_core"]
-            + TEST_SUITES["unit_logging"]
-            + TEST_SUITES["unit_collision"]
-            + TEST_SUITES["unit_config"]
-            + TEST_SUITES["unit_health"]
-            + TEST_SUITES["unit_utils"]
-            + TEST_SUITES["regression"]
-        )
-    elif args.integration:
-        test_files = TEST_SUITES["integration"]
-    elif args.quick:
-        test_files = (
-            TEST_SUITES["smoke"]
-            + TEST_SUITES["unit_core"]
-            + TEST_SUITES["unit_logging"]
-            + TEST_SUITES["unit_collision"]
-            + TEST_SUITES["unit_config"]
-            + TEST_SUITES["unit_health"]
-            + TEST_SUITES["regression"]
-            + TEST_SUITES["integration"]
-        )
-    else:
-        # 全部测试
-        test_files = []
-        for suite_files in TEST_SUITES.values():
-            test_files.extend(suite_files)
-        if not args.gpu:
-            test_files = [f for f in test_files if f not in TEST_SUITES["gpu"]]
+    test_files = _select_test_files(args)
 
     # 仅保留存在的文件
-    existing_files = []
-    missing_files = []
-    for f in test_files:
-        if (PROJECT_ROOT / f).exists():
-            existing_files.append(f)
-        else:
-            missing_files.append(f)
+    existing_files = [f for f in test_files if (PROJECT_ROOT / f).exists()]
+    missing_files = [f for f in test_files if f not in existing_files]
 
     if missing_files and not args.quiet:
         print(f"[WARNING] 以下测试文件不存在 (将跳过): {missing_files}")
@@ -220,16 +233,7 @@ def main():
         print("[ERROR] 没有可运行的测试文件")
         return 1
 
-    # 构建 pytest 参数
-    extra_args = []
-    if args.ci:
-        extra_args.extend(["--cov=src", "--cov-report=term-missing", "--cov-report=xml"])
-    if args.keyword:
-        extra_args.extend(["-k", args.keyword])
-    if args.exitfirst:
-        extra_args.append("-x")
-    if args.quiet:
-        extra_args.append("-q")
+    extra_args = _build_pytest_args(args)
 
     # 运行测试
     print_header("BTC 碰撞引擎 - 测试运行")
