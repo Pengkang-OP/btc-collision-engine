@@ -1,160 +1,199 @@
-"""P2PKH比特币地址生成器
+"""P2PKH Bitcoin address generator.
 
-提供地址生成的共享基类和标准实现。
-- BaseAddressGenerator: 共享基类（私钥生成、公钥推导、地址编码）
-- P2PKHAddressGenerator: 标准实现（crypto_backend路径、性能检查）
-- OptimizedP2PKHAddressGenerator: 优化实现（预计算表+SIMD+内存池，在 optimized_address_generator.py）
+Provides shared base class and standard implementation for address
+generation.
+- BaseAddressGenerator: Shared base class (private key generation,
+  public key derivation, address encoding)
+- P2PKHAddressGenerator: Standard implementation (crypto_backend path,
+  performance check)
+- OptimizedP2PKHAddressGenerator: Optimized implementation
+  (precomputed tables + SIMD + memory pool, in
+  optimized_address_generator.py)
 """
 
 import ctypes
 import secrets
 from abc import ABC, abstractmethod
 
-# 导入日志配置
+# Import logging configuration
 from ..utils import get_configured_logger
 from .base58 import Base58
 from .hash_utils import HashUtils
 from .secp256k1 import EllipticCurve, Secp256k1
 
-# v4.2.2 M3: 日志初始化统一由 CLI 入口 (main.py) 和 utils/__init__.py 处理
+# v4.2.2 M3: Log initialization unified by CLI entry (main.py) and
+# utils/__init__.py
 
-# 获取模块日志记录器
+# Get module logger
 logger = get_configured_logger("AddressGenerator")
 
 
 class PerformanceWarning(UserWarning):
-    """性能警告：当前配置可能不是最优"""
+    """Performance warning: current configuration may not be optimal"""
 
 
 def secure_clear_bytearray(buffer: bytearray) -> None:
     """
-    安全清零bytearray内存
+    Securely clear bytearray memory.
 
-    使用ctypes直接清零bytearray的内存，防止敏感数据在内存中残留。
+    Uses ctypes to directly zero out bytearray memory, preventing
+    sensitive data from lingering in memory.
 
-    参数:
-        buffer: 要清零的bytearray对象（必须是可变的bytearray）
+    Args:
+        buffer: bytearray object to clear (must be mutable bytearray)
 
-    注意:
-        - bytes对象不可变，无法清零，必须先转换为bytearray
-        - Python的垃圾回收机制可能会复制对象，此方法仅能清零当前引用
-        - 对于最高安全要求，建议使用专门的密码学库（如cryptography.io）
-        - 此方法适用于临时存储私钥的bytearray对象
+    Note:
+        - bytes objects are immutable and cannot be cleared; convert
+          to bytearray first
+        - Python's GC may copy objects; this method only clears the
+          current reference
+        - For highest security requirements, use dedicated crypto
+          libraries (e.g. cryptography.io)
+        - This method is suitable for bytearray objects used for
+          temporary private key storage
 
-    示例:
-        >>> # 正确用法：使用bytearray
+    Usage:
+        >>> # Correct: use bytearray
         >>> private_key = bytearray(secrets.token_bytes(32))
-        >>> # 使用私钥...
-        >>> secure_clear_bytearray(private_key)  # 清零
+        >>> # Use private key...
+        >>> secure_clear_bytearray(private_key)  # Clear
 
-        >>> # 错误用法：bytes不可变
-        >>> private_key = secrets.token_bytes(32)  # bytes类型
-        >>> # secure_clear_bytearray(private_key) # 会失败！
+        >>> # Wrong: bytes is immutable
+        >>> private_key = secrets.token_bytes(32)  # bytes type
+        >>> # secure_clear_bytearray(private_key)  # Will fail!
 
     Raises:
-        TypeError: 如果传入的不是bytearray类型
+        TypeError: If input is not a bytearray type
     """
     if not isinstance(buffer, bytearray):
         raise TypeError(
-            f"必须传入bytearray类型，当前为{type(buffer).__name__}。bytes对象不可变，无法清零。请先转换为bytearray。"
+            f"Input must be bytearray, got {type(buffer).__name__}. "
+            "bytes is immutable and cannot be cleared. "
+            "Convert to bytearray first."
         )
 
     try:
-        # 使用ctypes.memset直接清零bytearray的内存
-        ctypes.memset(ctypes.addressof(ctypes.c_char.from_buffer(buffer)), 0, len(buffer))
+        # Use ctypes.memset to directly zero out bytearray memory
+        ctypes.memset(
+            ctypes.addressof(ctypes.c_char.from_buffer(buffer)),
+            0,
+            len(buffer),
+        )
     except (TypeError, ValueError, OSError) as e:
-        # 如果buffer已被释放或无法访问，静默失败
-        # 记录调试信息（不泄露敏感数据）
-        logger.debug(f"清零buffer失败: {type(e).__name__}")
+        # Silently fail if buffer is already freed or inaccessible
+        # Log debug info (without leaking sensitive data)
+        logger.debug(
+            f"Failed to clear buffer: {type(e).__name__}"
+        )
 
 
 class BaseAddressGenerator(ABC):
-    """地址生成器共享基类
+    """Shared base class for address generators.
 
-    定义地址生成的通用流程，子类只需实现 private_key_to_public_key()。
-    所有地址生成器（标准版和优化版）都继承此类，消除代码重复。
+    Defines the common address generation workflow; subclasses only
+    need to implement private_key_to_public_key().
+    All address generators (standard and optimized) inherit from this
+    class to eliminate code duplication.
 
-    属性:
-        ec: 椭圆曲线运算器实例
+    Attributes:
+        ec: Elliptic curve calculator instance
 
-    子类必须实现:
+    Subclasses must implement:
         private_key_to_public_key(private_key, compressed) -> bytes
     """
 
     def __init__(self) -> None:
-        """初始化基类 — 创建椭圆曲线运算器"""
+        """Initialize base class — create elliptic curve calculator"""
         self.ec = EllipticCurve()
 
     @abstractmethod
-    def private_key_to_public_key(self, private_key: bytes, compressed: bool = True) -> bytes:
-        """从私钥推导公钥（子类必须实现）
+    def private_key_to_public_key(
+        self, private_key: bytes, compressed: bool = True
+    ) -> bytes:
+        """Derive public key from private key (subclass must implement).
 
         Args:
-            private_key: 32字节私钥
-            compressed: 是否使用压缩格式
+            private_key: 32-byte private key
+            compressed: Whether to use compressed format
 
         Returns:
-            公钥字节串
+            Public key bytes
         """
         ...
 
-    def public_key_to_hash160(self, public_key: bytes) -> bytes:
-        """从公钥计算 Hash160（不生成完整地址）
+    def public_key_to_hash160(
+        self, public_key: bytes
+    ) -> bytes:
+        """Compute Hash160 from public key (without full address).
 
-        仅执行 Hash160 计算，跳过 Base58Check 编码。
-        用于碰撞引擎热路径上的快速匹配检测。
+        Only performs Hash160 computation, skipping Base58Check
+        encoding.
+        Used for fast match detection in collision engine hot path.
 
         Args:
-            public_key: 公钥字节串（压缩或非压缩）
+            public_key: Public key bytes (compressed or uncompressed)
 
         Returns:
-            20字节 Hash160 值
+            20-byte Hash160 value
         """
         return HashUtils.hash160(public_key)
 
-    def public_key_to_address(self, public_key: bytes) -> str:
-        """从公钥生成比特币地址
+    def public_key_to_address(
+        self, public_key: bytes
+    ) -> str:
+        """Generate Bitcoin address from public key.
 
-        执行Hash160和Base58Check编码。子类可覆盖以使用优化路径（如SIMD）。
+        Performs Hash160 and Base58Check encoding. Subclasses can
+        override to use optimized paths (e.g. SIMD).
 
         Args:
-            public_key: 公钥字节串（压缩或非压缩）
+            public_key: Public key bytes (compressed or uncompressed)
 
         Returns:
-            以'1'开头的比特币地址
+            Bitcoin address starting with '1'
         """
         hash160 = self.public_key_to_hash160(public_key)
         address = Base58.check_encode(0x00, hash160)
         return address
 
-    def generate_address(self, private_key: bytes, compressed: bool = True) -> tuple[str, bytes, bytes]:
-        """从私钥生成完整地址
+    def generate_address(
+        self,
+        private_key: bytes,
+        compressed: bool = True,
+    ) -> tuple[str, bytes, bytes]:
+        """Generate complete address from private key.
 
         Args:
-            private_key: 32字节私钥（必须提供）
-            compressed: 是否使用压缩公钥格式
+            private_key: 32-byte private key (required)
+            compressed: Whether to use compressed public key format
 
         Returns:
-            (address, public_key, private_key) 元组
+            (address, public_key, private_key) tuple
         """
-        public_key = self.private_key_to_public_key(private_key, compressed)
+        public_key = self.private_key_to_public_key(
+            private_key, compressed
+        )
         address = self.public_key_to_address(public_key)
         return address, public_key, private_key
 
-    def generate_private_key(self, max_retries: int = 100) -> bytes:
-        """生成随机私钥
+    def generate_private_key(
+        self, max_retries: int = 100
+    ) -> bytes:
+        """Generate random private key.
 
-        使用加密安全的随机数生成器生成32字节私钥。
-        确保私钥在有效范围内（1 <= key < N）。
+        Uses cryptographically secure random number generator to
+        generate a 32-byte private key.
+        Ensures the key is in valid range (1 <= key < N).
 
         Args:
-            max_retries: 最大重试次数，默认100次
+            max_retries: Maximum retry attempts, default 100
 
         Returns:
-            32字节私钥
+            32-byte private key
 
         Raises:
-            KeyGenerationError: 当无法在max_retries次内生成有效私钥时
+            KeyGenerationError: When unable to generate valid key
+                within max_retries
         """
         from ..utils.exceptions import KeyGenerationError
 
@@ -164,21 +203,30 @@ class BaseAddressGenerator(ABC):
                 key_int = int.from_bytes(private_key, "big")
 
                 if 1 <= key_int < Secp256k1.N:
-                    logger.debug(f"私钥生成成功 (尝试 {attempt + 1}/{max_retries})")
+                    logger.debug(
+                        f"Private key generated successfully "
+                        f"(attempt {attempt + 1}/{max_retries})"
+                    )
                     return private_key
             except Exception as e:
-                # secrets.token_bytes 可能因系统熵不足抛 ValueError/TypeError/OverflowError
-                # 其他异常（如 OSError）也应记录并重试
+                # secrets.token_bytes may raise ValueError/
+                # TypeError/OverflowError due to low system entropy
+                # Other exceptions (e.g. OSError) also logged
                 logger.error(
-                    "生成私钥时出错 (尝试 %d/%d): %s",
+                    "Error generating private key "
+                    "(attempt %d/%d): %s",
                     attempt + 1,
                     max_retries,
                     type(e).__name__,
                 )
 
-        logger.error(f"私钥生成失败: 超过最大重试次数 {max_retries}")
+        logger.error(
+            f"Private key generation failed: "
+            f"exceeded max retries {max_retries}"
+        )
         raise KeyGenerationError(
-            f"无法在 {max_retries} 次尝试内生成有效私钥",
+            f"Cannot generate valid private key within "
+            f"{max_retries} attempts",
             error_code=1001,
             context={"max_retries": max_retries},
         )
@@ -186,35 +234,40 @@ class BaseAddressGenerator(ABC):
 
 class P2PKHAddressGenerator(BaseAddressGenerator):
     """
-    P2PKH比特币地址生成器（标准实现）
+    P2PKH Bitcoin address generator (standard implementation).
 
-    继承自 BaseAddressGenerator，使用 crypto_backend 进行公钥推导。
-    支持自动生成私钥（generate_address() 不传参时）。
+    Inherits from BaseAddressGenerator, uses crypto_backend for
+    public key derivation.
+    Supports automatic private key generation (generate_address()
+    without arguments).
 
-    属性:
-        ec: 椭圆曲线运算器实例（继承自基类）
+    Attributes:
+        ec: Elliptic curve calculator instance (inherited from base)
 
-    示例:
+    Usage:
         >>> generator = P2PKHAddressGenerator()
-        >>> address, compressed_pk, uncompressed_pk = generator.generate_address()
+        >>> address, compressed_pk, uncompressed_pk = \
+            generator.generate_address()
     """
 
     def __init__(self) -> None:
         """
-        初始化地址生成器
+        Initialize address generator.
 
-        创建椭圆曲线运算器实例，并检查加密后端性能。
+        Creates elliptic curve calculator instance and checks crypto
+        backend performance.
         """
         super().__init__()
 
-        # 检查加密后端并发出性能警告
+        # Check crypto backend and issue performance warning
         self._check_crypto_backend_performance()
 
     def _check_crypto_backend_performance(self):
         """
-        检查加密后端并发出性能警告
+        Check crypto backend and issue performance warning.
 
-        如果当前使用纯Python后端，发出警告建议安装coincurve。
+        If using pure Python backend, warns and suggests installing
+        coincurve.
         """
         try:
             from .crypto_backend import crypto_manager
@@ -225,44 +278,66 @@ class P2PKHAddressGenerator(BaseAddressGenerator):
                 import warnings
 
                 warnings.warn(
-                    "当前使用纯Python加密后端，性能较低。"
-                    "建议安装 coincurve 库以获得3-5倍性能提升：\n"
+                    "Currently using pure Python crypto backend, "
+                    "lower performance. "
+                    "Install coincurve for 3-5x speedup:\n"
                     "  pip install coincurve>=18.0.0",
                     PerformanceWarning,
                     stacklevel=2,
                 )
-                logger.info("提示: 安装 coincurve 库可提升3-5倍性能 (pip install coincurve>=18.0.0)")
+                logger.info(
+                    "Tip: Install coincurve for 3-5x performance "
+                    "boost (pip install coincurve>=18.0.0)"
+                )
         except ImportError as e:
-            # 静默失败，不影响功能
-            logger.debug(f"coincurve库不可用（将使用纯 Python 实现）: {e}")
+            # Silently fail, does not affect functionality
+            logger.debug(
+                f"coincurve not available "
+                f"(will use pure Python): {e}"
+            )
 
-    def generate_private_key(self, max_retries: int = 100) -> bytes:
-        """生成随机私钥（委托给基类实现）"""
+    def generate_private_key(
+        self, max_retries: int = 100
+    ) -> bytes:
+        """Generate random private key (delegates to base)"""
         return super().generate_private_key(max_retries)
 
-    def private_key_to_public_key(self, private_key: bytes, compressed: bool = True) -> bytes:
+    def private_key_to_public_key(
+        self,
+        private_key: bytes,
+        compressed: bool = True,
+    ) -> bytes:
         """
-        从私钥生成公钥
+        Generate public key from private key.
 
-        参数:
-            private_key: 32字节私钥
-            compressed: 是否使用压缩格式，默认True
+        Args:
+            private_key: 32-byte private key
+            compressed: Whether to use compressed format, default True
 
-        返回:
-            公钥字节串
+        Returns:
+            Public key bytes
         """
-        # 优先使用加密后端管理器（支持多种后端）
+        # Prefer crypto backend manager (supports multiple backends)
         try:
             from .crypto_backend import crypto_manager
 
-            return crypto_manager.generate_public_key(private_key, compressed)
+            return crypto_manager.generate_public_key(
+                private_key, compressed
+            )
         except (ImportError, AttributeError) as e:
-            # 回退到纯 Python 实现
-            logger.debug(f"加密后端不可用，使用纯 Python 实现: {type(e).__name__}")
-            return self.ec.generate_public_key(private_key, compressed)
+            # Fall back to pure Python implementation
+            logger.debug(
+                f"Crypto backend unavailable, using pure Python: "
+                f"{type(e).__name__}"
+            )
+            return self.ec.generate_public_key(
+                private_key, compressed
+            )
 
-    def public_key_to_address(self, public_key: bytes) -> str:
-        """从公钥生成比特币地址（委托给基类实现）"""
+    def public_key_to_address(
+        self, public_key: bytes
+    ) -> str:
+        """Generate Bitcoin address from public key (delegates to base)"""
         return super().public_key_to_address(public_key)
 
     def generate_address(
@@ -271,46 +346,64 @@ class P2PKHAddressGenerator(BaseAddressGenerator):
         compressed: bool = True,
     ) -> tuple[str, bytes, bytes]:
         """
-        生成完整的比特币地址
+        Generate complete Bitcoin address from private key.
 
-        从私钥生成地址。P2PKHAddressGenerator 始终返回两种格式的公钥
-        (compressed_public_key, uncompressed_public_key)，因此 compressed
-        参数被接受但仅用于与基类接口兼容，不影响实际行为。
+        P2PKHAddressGenerator always returns both compressed and
+        uncompressed public keys, so the compressed parameter is
+        accepted only for base class interface compatibility.
 
-        参数:
-            private_key: 可选的32字节私钥，None则随机生成
-            compressed: 基类兼容参数，不影响 P2PKHAddressGenerator 行为
+        Args:
+            private_key: Optional 32-byte private key,
+                None for random generation
+            compressed: Base class compatibility parameter,
+                does not affect P2PKHAddressGenerator behavior
 
-        返回:
-            (address, compressed_public_key, uncompressed_public_key)元组
+        Returns:
+            (address, compressed_public_key,
+             uncompressed_public_key) tuple
 
-        异常:
-            ValueError: 当私钥长度无效或超出有效范围时
+        Raises:
+            ValueError: When private key length is invalid or out of
+                valid range
         """
-        # 生成或验证私钥
+        # Generate or validate private key
         if private_key is None:
             private_key = self.generate_private_key()
         elif len(private_key) != 32:
-            raise ValueError(f"私钥长度必须为32字节，当前为{len(private_key)}字节")
+            raise ValueError(
+                f"Private key length must be 32 bytes, "
+                f"got {len(private_key)} bytes"
+            )
         else:
-            # 验证私钥在有效范围内 [1, N)
+            # Validate private key in valid range [1, N)
             key_int = int.from_bytes(private_key, "big")
             if key_int == 0:
-                raise ValueError("私钥不能为零，必须在范围 [1, N) 内")
+                raise ValueError(
+                    "Private key cannot be zero, "
+                    "must be in range [1, N)"
+                )
             elif key_int >= Secp256k1.N:
-                raise ValueError(f"私钥超出曲线阶 N = {Secp256k1.N}。私钥必须在范围 [1, N) 内")
+                raise ValueError(
+                    f"Private key exceeds curve order N = "
+                    f"{Secp256k1.N}. "
+                    f"Key must be in range [1, N)"
+                )
 
-        # 生成压缩公钥
-        compressed_pk = self.private_key_to_public_key(private_key, compressed=True)
+        # Generate compressed public key
+        compressed_pk = self.private_key_to_public_key(
+            private_key, compressed=True
+        )
 
-        # 生成非压缩公钥
-        uncompressed_pk = self.private_key_to_public_key(private_key, compressed=False)
+        # Generate uncompressed public key
+        uncompressed_pk = self.private_key_to_public_key(
+            private_key, compressed=False
+        )
 
-        # 生成地址
+        # Generate address
         address = self.public_key_to_address(compressed_pk)
 
         return address, compressed_pk, uncompressed_pk
 
 
-# 向后兼容别名 (simd_optimizer.py 等旧代码引用)
+# Backward compatibility alias (referenced by simd_optimizer.py, etc.)
 AddressGenerator = P2PKHAddressGenerator
