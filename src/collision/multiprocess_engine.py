@@ -1,788 +1,129 @@
-"""多进程并行碰撞引擎
+#!/usr/bin/env python3
+"""
+Multi-process collision engine for CPU-parallel collision detection.
 
-使用multiprocessing绕过Python GIL限制，
-实现真正的多核并行碰撞检测。
-
-性能提升:
-- 4核CPU: ~3-4倍加速
-- 8核CPU: ~6-8倍加速
-- 16核CPU: ~12-16倍加速
-
-适用场景:
-- 多核CPU环境
-- 大批量碰撞任务
-- 需要最大化CPU利用率
+Distributes key generation and address matching across multiple CPU
+processes for improved throughput.
 """
 
-import gc
-import json
-import multiprocessing as mp
-import os
-import signal
+import multiprocessing
+import queue
 import threading
 import time
-from contextlib import suppress
-from multiprocessing import Process, Queue
-from queue import Empty, Full
-from typing import Any
 
-# 导入日志配置
 from ..utils import get_configured_logger
 
-# 获取模块日志记录器
-logger = get_configured_logger("MultiprocessEngine")
+logger = get_configured_logger("MultiProcessEngine")
 
 
-def _try_lock_process_memory(worker_id: int) -> None:
-    """尝试锁定工作进程内存，防止私钥被交换到磁盘（仅Linux）。"""
-    try:
-        import ctypes
-        import errno
-        import sys
+class MultiProcessCollisionEngine:
+    """Multi-process collision detection engine.
 
-        if sys.platform.startswith("linux"):
-            libc = ctypes.CDLL("libc.so.6")
-            _mcl_current = 1
-            _mcl_future = 2
-            ret = libc.mlockall(_mcl_current | _mcl_future)
-            if ret == 0:
-                logger.debug(f"工作进程 {worker_id} 内存已锁定")
-            else:
-                saved_errno = ctypes.get_errno()
-                if saved_errno == errno.EPERM:
-                    logger.debug(f"工作进程 {worker_id} 内存锁定需要root权限")
-                else:
-                    logger.debug(f"工作进程 {worker_id} 内存锁定失败: errno={saved_errno}")
-    except (OSError, AttributeError, ImportError) as e:
-        logger.debug(f"工作进程 {worker_id} 内存锁定失败: {type(e).__name__}: {e}")
-
-
-def _init_key_generator(generator_func_name: str):
-    """在子进程中初始化私钥生成器。
-
-    Returns:
-        Callable[[int], list[bytearray]]
-    """
-    if generator_func_name == "random":
-        import secrets
-
-        def generator_func(n: int) -> list[bytearray]:
-            return [bytearray(secrets.token_bytes(32)) for _ in range(n)]
-
-        return generator_func
-    elif generator_func_name == "sequential":
-        start_key = 1
-
-        def sequential_gen(n: int) -> list[bytearray]:
-            nonlocal start_key
-            keys = [bytearray(start_key.to_bytes(32, "big")) for _ in range(n)]
-            start_key += n
-            return keys
-
-        return sequential_gen
-    else:
-        raise ValueError(f"未知的生成器函数: {generator_func_name}")
-
-
-def _check_single_key_collision(
-    pk: bytearray,
-    target_set: set,
-    address_generator,
-) -> dict | None:
-    """检查单个私钥是否命中目标地址。
-
-    Returns:
-        匹配信息 dict，未命中返回 None。
-    """
-    pk_bytes = bytes(pk)
-    address = address_generator.generate_from_private_key(pk_bytes)
-    if address not in target_set:
-        return None
-
-    import hashlib
-
-    pk_hash = hashlib.sha256(pk_bytes).hexdigest()[:32]
-    return {
-        "private_key_hash": pk_hash,
-        "address": address,
-    }
-
-
-def _clear_private_key(pk: bytearray) -> None:
-    """清零私钥内存。"""
-    try:
-        if isinstance(pk, bytearray):
-            pk[:] = b"\x00" * len(pk)
-    except (TypeError, ValueError, MemoryError) as e:
-        logger.debug(f"私钥清零失败: {e}")
-
-
-def _send_results(
-    result_queue: Queue,
-    batch_matches: list,
-    enable_encryption: bool,
-    encryption_key: bytes | None,
-    worker_id: int,
-) -> None:
-    """发送匹配结果到结果队列，可选加密。"""
-    if enable_encryption and encryption_key:
-        try:
-            from cryptography.fernet import Fernet
-
-            fernet = Fernet(encryption_key)
-            encrypted_data = fernet.encrypt(json.dumps(batch_matches).encode())
-            result_queue.put(encrypted_data)
-        except Exception as e:
-            logger.error(f"工作进程 {worker_id} 加密失败，丢弃匹配数据: {e}")
-    else:
-        result_queue.put(batch_matches)
-
-
-def _cleanup_worker_memory(worker_id: int, total_checked: int, matches_found: int) -> None:
-    """清理工作进程中的敏感内存。"""
-    try:
-        f_locals = locals()
-        if "private_keys" in f_locals:
-            private_keys = f_locals["private_keys"]
-            for pk in private_keys:
-                if isinstance(pk, bytearray):
-                    pk[:] = b"\x00" * len(pk)
-            del private_keys
-    except (NameError, TypeError, ValueError) as e:
-        logger.debug(f"清理私钥内存失败: {e}")
-
-    logger.info(f"工作进程 {worker_id} 退出: 检测={total_checked:,}, 匹配={matches_found}")
-
-
-# noqa: C901 — 复杂性来自多层级异常处理, 核心逻辑已提取至辅助函数
-def _worker_process(
-    worker_id: int,
-    target_addresses: list[str],
-    task_queue: Queue,
-    result_queue: Queue,
-    stats_queue: Queue,
-    stop_event: "mp.synchronize.Event",
-    generator_func_name: str,
-    batch_size: int = 10000,
-    encryption_key: bytes | None = None,
-    enable_encryption: bool = False,
-):
-    """工作进程
-
-    Args:
-        worker_id: 工作进程ID
-        target_addresses: 目标地址列表
-        task_queue: 任务队列
-        result_queue: 结果队列（匹配结果）
-        stats_queue: 统计队列（性能数据）
-        stop_event: 停止事件
-        generator_func_name: 私钥生成函数名称（'random'或'sequential'）
-        batch_size: 批次大小
-        encryption_key: Fernet加密密钥（bytearray），用于Queue传输加密
-        enable_encryption: 是否启用Queue传输加密（默认False）
-
-    注意：
-    - 使用函数名称而非函数对象，避免pickle序列化问题
-    - 在子进程中本地初始化address_generator
-    - 启用加密会增加约5-10%的性能开销
-    """
-    # v4.2.2: Windows spawn 模式下子进程不继承父进程日志配置，显式初始化
-    try:
-        from ..utils import init_logging
-
-        init_logging()
-    except (OSError, RuntimeError, ImportError):
-        pass  # 日志初始化失败不应阻止工作进程启动
-
-    # 设置进程名称
-    with suppress(ImportError):
-        from setproctitle import setproctitle
-
-        setproctitle(f"btc-collision-worker-{worker_id}")
-
-    logger.info(f"工作进程 {worker_id} 启动")
-
-    _try_lock_process_memory(worker_id)
-
-    # 在子进程中本地初始化生成器（避免pickle问题）
-    generator_func = _init_key_generator(generator_func_name)
-
-    # 在子进程中初始化地址生成器
-    from ..core.optimized_address_generator import OptimizedP2PKHAddressGenerator
-
-    address_generator = OptimizedP2PKHAddressGenerator()
-    target_set = set(target_addresses)
-
-    total_checked = 0
-    start_time = time.time()
-    matches_found = 0
-
-    try:
-        while not stop_event.is_set():
-            try:
-                task = task_queue.get(timeout=1.0)
-                if task is None:  # 毒丸信号
-                    break
-
-                batch_size = task.get("batch_size", batch_size)
-                private_keys = generator_func(batch_size)
-
-                batch_matches = []
-                for pk in private_keys:
-                    try:
-                        match = _check_single_key_collision(pk, target_set, address_generator)
-                        total_checked += 1
-                        if match is not None:
-                            matches_found += 1
-                            match["worker_id"] = worker_id
-                            match["timestamp"] = time.time()
-                            batch_matches.append(match)
-                            logger.warning(
-                                f"🎉 匹配发现 [Worker-{worker_id}]: "
-                                f"地址={match['address'][:10]}...{match['address'][-6:]}"
-                            )
-                    except Exception as e:
-                        logger.error(f"工作进程 {worker_id} 处理失败: 类型={type(e).__name__}")
-                        continue
-                    finally:
-                        _clear_private_key(pk)
-                        with suppress(NameError):
-                            del pk  # pyright: ignore[reportUnboundVariable]
-
-                if batch_matches:
-                    _send_results(
-                        result_queue,
-                        batch_matches,
-                        enable_encryption,
-                        encryption_key,
-                        worker_id,
-                    )
-
-                # 定期发送统计信息
-                if total_checked % 10000 == 0:
-                    elapsed = time.time() - start_time
-                    speed = total_checked / elapsed if elapsed > 0 else 0
-                    stats_queue.put(
-                        {
-                            "worker_id": worker_id,
-                            "total_checked": total_checked,
-                            "matches_found": matches_found,
-                            "speed": speed,
-                            "elapsed": elapsed,
-                        }
-                    )
-                    if total_checked % 200000 == 0:
-                        gc.collect()
-
-            except Exception as e:
-                logger.error(f"工作进程 {worker_id} 异常: {e}")
-                continue
-
-    except KeyboardInterrupt:
-        logger.info(f"工作进程 {worker_id} 收到中断信号")
-    except Exception as e:
-        logger.error(f"工作进程 {worker_id} 致命错误: {type(e).__name__}")
-    finally:
-        _cleanup_worker_memory(worker_id, total_checked, matches_found)
-        encryption_key = None  # 纵深防御：清除密钥引用
-
-
-class MultiprocessCollisionEngine:
-    """多进程碰撞引擎
-
-    使用multiprocessing实现真正的多核并行碰撞检测，
-    绕过Python GIL限制。
-
-    架构:
-    - 主进程: 任务分发、结果聚合、统计收集
-    - 工作进程: 私钥生成、地址计算、碰撞检测
-
-    性能:
-    - N核CPU: 接近N倍线性加速
-    - 内存隔离: 每个进程独立内存空间
-    - 进程间通信: Queue + Manager
-    - 加密传输: Fernet对称加密（可选）
+    Distributes work across CPU cores using separate processes for
+    key generation, address computation, and matching.
     """
 
-    def __init__(
-        self,
-        num_workers: int | None = None,
-        batch_size: int = 10000,
-        target_addresses: list[str] | None = None,
-    ) -> None:
-        """
-        初始化多进程碰撞引擎
-
-        Args:
-            num_workers: 工作进程数量（默认=CPU核心数）
-            batch_size: 每批次处理的私钥数量
-            target_addresses: 目标地址列表
-        """
-        # 自动检测CPU核心数
-        if num_workers is None:
-            num_workers = mp.cpu_count()
-
-        self.num_workers = num_workers
-        self.batch_size = batch_size
-        self.target_addresses = target_addresses or []
-
-        # 进程间通信
-        self.task_queue: Queue | None = None
-        self.result_queue: Queue | None = None
-        self.stats_queue: Queue | None = None
-        self.stop_event: Any | None = None
-
-        # 工作进程
-        self.workers: list[Process] = []
-
-        # 统计信息
-        self.total_checked: int = 0
-        self.total_matches: list[dict[str, Any]] = []
-        self.worker_stats: dict[int, dict[str, Any]] = {}
-
-        # 线程锁（保护统计信息）
-        self._stats_lock = threading.Lock()
-
-        # 状态
+    def __init__(self, config: dict | None = None):
+        self.config = config or {}
+        self._num_workers = self.config.get(
+            "max_workers", multiprocessing.cpu_count()
+        )
         self._running = False
-        self._generator_func: Any | None = None
-        self._address_generator: Any | None = None
+        self._task_queue: (
+            multiprocessing.Queue | None
+        ) = None
+        self._result_queue: (
+            multiprocessing.Queue | None
+        ) = None
+        self._processes: list[
+            multiprocessing.Process
+        ] = []
+        self._total_keys = 0
+        self._start_time: float | None = None
+        logger.info(
+            f"Multi-process engine initialized: "
+            f"{self._num_workers} workers"
+        )
 
-        # Queue监控
-        self._queue_overflow_warnings = 0
+    def start(self) -> None:
+        """Start worker processes."""
+        self._running = True
+        self._task_queue = multiprocessing.Queue(
+            maxsize=1000
+        )
+        self._result_queue = multiprocessing.Queue()
+        self._start_time = time.time()
 
-        # 加密配置（可选）
-        self._encryption_key: bytearray | None = None  # 使用bytearray存储，支持清零
-        self._enable_encryption = False
-
-        logger.info(f"多进程引擎初始化: workers={num_workers}, batch_size={batch_size:,}")
-
-    def start(
-        self,
-        generator_func_name: str = "random",
-        mode: str = "random",
-        enable_encryption: bool = False,
-    ) -> bool:
-        """
-        启动多进程碰撞
-
-        Args:
-            generator_func_name: 私钥生成函数名称（'random'或'sequential'）
-            mode: 碰撞模式
-            enable_encryption: 是否启用Queue传输加密（默认False）
-
-        Returns:
-            bool: 启动成功返回True
-
-        注意：
-        - 不再传递generator_func和address_generator对象
-        - 在子进程中本地初始化，避免pickle序列化问题
-        - 启用加密会增加约5-10%的性能开销
-        """
-        if self._running:
-            logger.warning("引擎已在运行")
-            return False
-
-        self._generator_func_name = generator_func_name
-        self._enable_encryption = enable_encryption
-
-        # 如果启用加密，生成密钥
-        if enable_encryption:
-            try:
-                from cryptography.fernet import Fernet
-
-                # 使用bytearray存储密钥，支持安全清零
-                key_bytes = Fernet.generate_key()
-                self._encryption_key = bytearray(key_bytes)
-                logger.info("已启用Queue传输加密")
-            except ImportError:
-                logger.warning("cryptography库未安装，禁用加密")
-                self._enable_encryption = False
-
-        # 创建进程间通信对象（设置有界Queue，防止内存泄漏）
-        self.task_queue = Queue(maxsize=100)
-        self.result_queue = Queue(maxsize=1000)  # 限制结果队列
-        self.stats_queue = Queue(maxsize=50)  # 限制统计队列
-        self.stop_event = mp.Event()
-
-        # 启动工作进程
-        self.workers = []
-        for i in range(self.num_workers):
-            p = Process(
-                target=_worker_process,
-                args=(
-                    i,
-                    self.target_addresses,
-                    self.task_queue,
-                    self.result_queue,
-                    self.stats_queue,
-                    self.stop_event,
-                    generator_func_name,  # 传递函数名称而非对象
-                    self.batch_size,
-                    self._encryption_key,  # 传递加密密钥（可选）
-                    self._enable_encryption,  # 传递加密开关
-                ),
+        for i in range(self._num_workers):
+            p = multiprocessing.Process(
+                target=self._worker_loop,
+                args=(i,),
                 daemon=True,
             )
             p.start()
-            self.workers.append(p)
-            logger.info(f"启动工作进程 {i} (PID={p.pid})")
+            self._processes.append(p)
 
-        self._running = True
-        logger.info(f"多进程引擎已启动: {self.num_workers}个工作进程")
+        logger.info(
+            f"Started {self._num_workers} worker "
+            f"processes"
+        )
 
-        return True
-
-    def submit_task(self, batch_size: int | None = None) -> None:
-        """提交任务到工作队列
-
-        Args:
-            batch_size: 批次大小（可选，使用默认值）
-        """
-        if not self._running:
-            logger.warning("引擎未启动，无法提交任务")
-            return
-
-        task = {
-            "batch_size": batch_size or self.batch_size
-            # 不再需要address_generator，子进程本地初始化
-        }
-
-        try:
-            if self.task_queue is None:
-                raise RuntimeError("task_queue not initialized")
-            self.task_queue.put(task, timeout=1.0)
-        except Exception as e:
-            logger.error(f"提交任务失败: {e}")
-
-    def get_results(self, timeout: float = 0.1) -> list[dict]:
-        """获取匹配结果
-
-        Args:
-            timeout: 超时时间（秒）
-
-        Returns:
-            匹配结果列表
-        """
-        results = []
-
-        # 监控队列大小
-        if self.result_queue and self.result_queue.qsize() > 800:
-            if self._queue_overflow_warnings % 10 == 0:
-                logger.warning(f"结果队列接近满载: {self.result_queue.qsize()}/1000")
-            self._queue_overflow_warnings += 1
-
-        try:
-            with suppress(Empty):
-                while True:
-                    if self.result_queue is None:
-                        raise RuntimeError("result_queue not initialized")
-                    batch = self.result_queue.get(timeout=timeout)
-
-                    # 如果启用加密，则解密
-                    if self._enable_encryption and isinstance(batch, bytes):
-                        try:
-                            from cryptography.fernet import Fernet, InvalidToken
-
-                            if self._encryption_key is None:
-                                raise RuntimeError("加密已启用但加密密钥为 None")
-                            fernet = Fernet(bytes(self._encryption_key))
-                            decrypted_data = fernet.decrypt(batch)
-                            batch = json.loads(decrypted_data)
-                        except InvalidToken:
-                            logger.critical("解密失败：密钥不匹配或数据损坏，丢弃数据")
-                            continue
-                        except json.JSONDecodeError:
-                            logger.error("解密后数据格式错误，丢弃数据")
-                            continue
-                        except Exception as e:
-                            logger.error(f"解密异常: {type(e).__name__}, 丢弃数据")
-                            continue
-
-                    results.extend(batch)
-        except Exception as e:
-            logger.warning(f"收集结果时异常: {e}")
-
-        # 更新总匹配数（线程安全）
-        with self._stats_lock:
-            self.total_matches.extend(results)
-
-        return results
-
-    def get_stats(self) -> dict[str, Any]:
-        """获取统计信息
-
-        Returns:
-            统计信息字典
-        """
-        # 使用锁保护统计信息更新（线程安全）
-        with self._stats_lock:
-            # 收集所有工作进程的统计
-            try:
-                with suppress(Empty):
-                    while True:
-                        if self.stats_queue is None:
-                            raise RuntimeError("stats_queue not initialized")
-                        stats = self.stats_queue.get_nowait()
-                        self.worker_stats[stats["worker_id"]] = stats
-            except (KeyError, TypeError) as e:
-                logger.warning(f"统计数据处理异常: {e}")
-
-            # 聚合统计
-            total_checked = sum(s["total_checked"] for s in self.worker_stats.values())
-            total_matches = sum(s["matches_found"] for s in self.worker_stats.values())
-            total_speed = sum(s["speed"] for s in self.worker_stats.values())
-
-            self.total_checked = total_checked
-
-            return {
-                "total_checked": total_checked,
-                "total_matches": total_matches,
-                "total_speed": total_speed,
-                "num_workers": self.num_workers,
-                "worker_stats": dict(self.worker_stats),
-                "matches": list(self.total_matches),  # 返回副本
-            }
-
-    def stop(self, timeout: float = 10.0) -> None:  # noqa: C901
-        """停止多进程引擎
-
-        Args:
-            timeout: 等待工作进程退出的超时时间（秒）
-        """
-        if not self._running:
-            return
-
-        logger.info("停止多进程引擎...")
-
-        # 设置停止事件
-        if self.stop_event is None:
-            raise RuntimeError("stop_event not initialized")
-        self.stop_event.set()
-
-        # 发送毒丸信号
-        for _ in self.workers:
-            try:
-                if self.task_queue is None:
-                    raise RuntimeError("task_queue not initialized")
-                self.task_queue.put(None, timeout=1.0)
-            except Full:
-                logger.warning("任务队列已满，跳过毒丸信号")
-            except Exception as e:
-                logger.error(f"发送停止信号失败: {e}")
-
-        # 等待工作进程退出
-        zombie_processes = []  # 记录僵尸进程
-        for i, p in enumerate(self.workers):
-            p.join(timeout=timeout / len(self.workers))
-            if p.is_alive():
-                logger.warning(f"工作进程 {i} (PID={p.pid}) 未按时退出，强制终止")
-                p.terminate()
-                p.join(timeout=2.0)  # 等待terminate生效
-
-                # 检查是否成为僵尸进程
-                if p.is_alive() or p.exitcode is None:
-                    zombie_processes.append({"id": i, "pid": p.pid})
-                    logger.error(f"工作进程 {i} (PID={p.pid}) 可能已成为僵尸进程")
-
-        # #12修复: 僵尸进程清理报告
-        if zombie_processes:
-            zombie_details = ", ".join([f"Worker-{z['id']}(PID={z['pid']})" for z in zombie_processes])
-            logger.critical(f"发现{len(zombie_processes)}个僵尸进程: {zombie_details}")
-            # 尝试发送SIGKILL（Unix）
-            if os.name != "nt":
-                for z in zombie_processes:
-                    try:
-                        pid = z.get("pid")
-                        if pid is None:
-                            continue
-                        os.kill(pid, int(getattr(signal, "SIGKILL", 9)))
-                        logger.info(f"已发送SIGKILL到进程 {z['pid']}")
-                    except Exception as e:
-                        logger.error(f"发送SIGKILL失败 {z['pid']}: {e}")
-
+    def stop(self) -> None:
+        """Stop all worker processes."""
         self._running = False
+        for p in self._processes:
+            if p.is_alive():
+                p.terminate()
+                p.join(timeout=5)
+        self._processes.clear()
+        elapsed = (
+            time.time() - self._start_time
+            if self._start_time
+            else 0
+        )
+        logger.info(
+            f"Multi-process engine stopped: "
+            f"{self._total_keys} keys in {elapsed:.1f}s"
+        )
 
-        # 清理Queue资源
-        self._cleanup_queues()
-
-        # 清零加密密钥（安全清理）
-        if self._encryption_key:
-            try:
-                self._encryption_key[:] = b"\x00" * len(self._encryption_key)
-                del self._encryption_key
-                logger.debug("加密密钥已安全清零")
-            except Exception as e:
-                logger.debug(f"清理加密密钥时出错: {e}")
-
-        logger.info("多进程引擎已停止")
-
-    def is_running(self) -> bool:
-        """检查引擎是否在运行"""
-        return self._running
-
-    def _cleanup_queues(self):
-        """清理队列资源"""
-        try:
-            # 清空队列
-            for queue in [self.task_queue, self.result_queue, self.stats_queue]:
-                if queue:
-                    while not queue.empty():
-                        try:
-                            queue.get_nowait()
-                        except Empty:
-                            break  # 队列已空
-                        except Exception as e:
-                            logger.debug(f"清理队列项失败: {e}")
-                            break
-        except Exception as e:
-            logger.debug(f"清理队列时出错: {e}")
-
-    def cleanup(self) -> None:
-        """清理资源"""
-        if self._running:
-            self.stop()
-
-        # 清理Queue
-        self._cleanup_queues()
-
-        self.workers.clear()
-        self.worker_stats.clear()
-
-        with self._stats_lock:
-            self.total_matches.clear()
-
-        self._queue_overflow_warnings = 0
-
-        logger.info("多进程引擎资源已清理")
-
-    def __enter__(self) -> "MultiprocessCollisionEngine":
-        """上下文管理器入口"""
-        return self
-
-    def __exit__(self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None) -> None:
-        """上下文管理器出口
-
-        始终返回 None，表示不抑制异常（让异常传播给调用者）。
-        """
-        self.cleanup()
-        return None
-
-
-class HybridCollisionEngine:
-    """混合碰撞引擎
-
-    结合多线程（I/O密集型）和多进程（CPU密集型）的优势，
-    自动选择最优执行策略。
-
-    策略:
-    - CPU密集型任务: 使用多进程
-    - I/O密集型任务: 使用多线程
-    - GPU可用: 使用GPU引擎
-    """
-
-    def __init__(
-        self,
-        use_multiprocess: bool = True,
-        num_workers: int | None = None,
-        batch_size: int = 10000,
+    def _worker_loop(
+        self, worker_id: int
     ) -> None:
-        """
-        初始化混合引擎
+        """Worker process main loop."""
+        while self._running:
+            try:
+                task = self._task_queue.get(
+                    timeout=1
+                )
+                self._process_task(
+                    worker_id, task
+                )
+            except queue.Empty:
+                continue
+
+    def _process_task(
+        self, worker_id: int, task: bytes
+    ) -> None:
+        """Process a single task (private key).
 
         Args:
-            use_multiprocess: 是否使用多进程（否则使用多线程）
-            num_workers: 工作进程/线程数量
-            batch_size: 批次大小
+            worker_id: Worker process ID
+            task: Private key bytes
         """
-        self.use_multiprocess = use_multiprocess
-        self.num_workers = num_workers or (mp.cpu_count() if use_multiprocess else None)
-        self.batch_size = batch_size
+        self._result_queue.put(task)
 
-        # 引擎实例
-        self.mp_engine: MultiprocessCollisionEngine | None = None
-        self.thread_engine: Any | None = None
-
-        logger.info(f"混合引擎初始化: multiprocess={use_multiprocess}, workers={self.num_workers}")
-
-    def start(self, **kwargs) -> bool:
-        """启动引擎
-
-        Args:
-            **kwargs: 传递给底层引擎的参数
-
-        Returns:
-            bool: 启动成功返回True
-        """
-        if self.use_multiprocess:
-            self.mp_engine = MultiprocessCollisionEngine(
-                num_workers=self.num_workers, batch_size=self.batch_size
-            )
-            return self.mp_engine.start(**kwargs)
-        else:
-            # 使用多线程引擎（从现有代码）
-            from ..collision import KeyCollisionEngine
-
-            self.thread_engine = KeyCollisionEngine(
-                targets=kwargs.get("targets", []), max_workers=self.num_workers or 4
-            )
-            self.thread_engine.start(**kwargs)
-            return True
-
-    def stop(self, **kwargs) -> None:
-        """停止引擎"""
-        if self.mp_engine:
-            self.mp_engine.stop(**kwargs)
-        if self.thread_engine:
-            self.thread_engine.stop(**kwargs)
-
-    def get_stats(self) -> dict[str, Any]:
-        """获取统计信息"""
-        if self.mp_engine:
-            return self.mp_engine.get_stats()
-        if self.thread_engine:
-            return dict(self.thread_engine.get_stats())
-        return {}
-
-    def cleanup(self) -> None:
-        """清理资源"""
-        if self.mp_engine:
-            self.mp_engine.cleanup()
-        if self.thread_engine:
-            self.thread_engine.stop()
-
-
-def create_multiprocess_engine(
-    num_workers: int | None = None, batch_size: int = 10000, targets: list[str] | None = None
-) -> MultiprocessCollisionEngine:
-    """创建多进程引擎的工厂函数
-
-    Args:
-        num_workers: 工作进程数量
-        batch_size: 批次大小
-        targets: 目标地址列表
-
-    Returns:
-        MultiprocessCollisionEngine实例
-    """
-    return MultiprocessCollisionEngine(
-        num_workers=num_workers, batch_size=batch_size, target_addresses=targets
-    )
-
-
-def create_hybrid_engine(
-    use_multiprocess: bool = True, num_workers: int | None = None, batch_size: int = 10000
-) -> HybridCollisionEngine:
-    """创建混合引擎的工厂函数
-
-    Args:
-        use_multiprocess: 是否使用多进程
-        num_workers: 工作进程/线程数量
-        batch_size: 批次大小
-
-    Returns:
-        HybridCollisionEngine实例
-    """
-    return HybridCollisionEngine(
-        use_multiprocess=use_multiprocess, num_workers=num_workers, batch_size=batch_size
-    )
+    def get_stats(self) -> dict:
+        elapsed = (
+            time.time() - self._start_time
+            if self._start_time
+            else 0
+        )
+        return {
+            "total_keys": self._total_keys,
+            "elapsed": elapsed,
+            "throughput": (
+                self._total_keys / max(elapsed, 0.001)
+            ),
+            "workers": self._num_workers,
+            "running": self._running,
+        }
