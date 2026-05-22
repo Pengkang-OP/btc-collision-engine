@@ -1,13 +1,14 @@
-"""Web 监控仪表板 - Flask 应用
+"""Web monitoring dashboard - Flask application.
 
-BTC 碰撞引擎的 Web 监控仪表板，提供:
-- RESTful API 接口查询运行状态
-- HTML 仪表板页面实时展示引擎指标
-- 历史性能数据查询
-- 错误日志浏览
+BTC collision engine web monitoring dashboard providing:
+- RESTful API for querying runtime status
+- HTML dashboard page for real-time engine metrics
+- Historical performance data queries
+- Error log browsing
 
-安全:
-- 支持 API Key 认证（--api-key 参数或 DASHBOARD_API_KEY 环境变量）
+Security:
+- API Key authentication supported (--api-key or DASHBOARD_API_KEY env)
+- Authentication required in production (non-debug mode)
 - /health 端点无需认证（供负载均衡器健康检查）
 
 启动:
