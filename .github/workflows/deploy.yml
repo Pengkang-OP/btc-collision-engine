@@ -3,21 +3,22 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
-  workflow_dispatch: # 允许手动触发
+    paths:
+      - "docs/**"
+      - "CHANGELOG.md"
+      - "README.md"
+  workflow_dispatch:
 
-# 设置GITHUB_TOKEN权限
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# 允许一个并发部署
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
-  # 构建任务
   build:
     runs-on: ubuntu-latest
     steps:
@@ -28,6 +29,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: "pip"
 
       - name: Install dependencies
         run: |
@@ -38,29 +40,40 @@ jobs:
         run: |
           echo "📚 准备文档部署..."
           mkdir -p _site
-          # 生成简单的文档索引页
           python3 - <<'PYEOF'
           import os
-          index_html = """<!DOCTYPE html>
+
+          # 读取项目版本
+          version = "5.0.0"
+          try:
+              with open("pyproject.toml", "r", encoding="utf-8") as f:
+                  for line in f:
+                      if line.startswith("version ="):
+                          version = line.split('"')[1]
+                          break
+          except Exception:
+              pass
+
+          index_html = f"""<!DOCTYPE html>
           <html lang="zh-CN">
           <head><meta charset="UTF-8"><title>BTC Collision Engine Docs</title>
-          <style>body{font-family:system-ui,sans-serif;max-width:900px;margin:0 auto;padding:2em;background:#0d1117;color:#c9d1d9}a{color:#58a6ff}</style></head>
+          <style>body{{font-family:system-ui,sans-serif;max-width:900px;margin:0 auto;padding:2em;background:#0d1117;color:#c9d1d9}}a{{color:#58a6ff}}code{{background:#161b22;padding:2px 6px;border-radius:3px}}</style></head>
           <body>
-          <h1>🚀 BTC Collision Engine</h1>
-          <p>比特币私钥碰撞引擎 — 文档</p>
-          <h2>📖 文档索引</h2><ul>"""
+          <h1>BTC Collision Engine</h1>
+          <p>比特币私钥碰撞引擎 v{version} - 文档</p>
+          <h2>文档索引</h2><ul>"""
           for root, dirs, files in os.walk("docs"):
+              dirs.sort()
               for f in sorted(files):
                   if f.endswith(".md"):
                       rel = os.path.join(root, f).replace("\\", "/")
                       name = f.replace(".md", "").replace("_", " ").title()
                       index_html += f'<li><a href="{rel}">{name}</a></li>'
-          index_html += """</ul><footer style='margin-top:3em;color:#484f58'><small>BTC Collision Engine v4.4.0</small></footer></body></html>"""
+          index_html += f"""</ul><footer style='margin-top:3em;color:#484f58'><small>BTC Collision Engine v{version}</small></footer></body></html>"""
           with open("_site/index.html", "w", encoding="utf-8") as f:
               f.write(index_html)
-          print(f"✅ 生成 _site/index.html")
+          print("✅ 生成 _site/index.html")
           PYEOF
-          # 复制 docs 目录内容
           cp -r docs/* _site/
           echo "✅ 文档构建完成"
 
@@ -69,7 +82,6 @@ jobs:
         with:
           path: _site
 
-  # 部署任务
   deploy:
     runs-on: ubuntu-latest
     needs: build

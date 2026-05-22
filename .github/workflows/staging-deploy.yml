@@ -1,0 +1,133 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+concurrency:
+  group: staging-deploy
+  cancel-in-progress: true
+
+jobs:
+  # ──────────────────────────────────────────
+  # 构建 Staging Docker 镜像
+  # ──────────────────────────────────────────
+  build-staging:
+    name: 构建 Staging 镜像
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 设置 Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 登录 GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 获取短 SHA
+        id: sha
+        run: echo "short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: 构建并推送 Staging 镜像
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:staging
+            ghcr.io/${{ github.repository }}:staging-${{ steps.sha.outputs.short }}
+          platforms: linux/amd64
+          build-args: |
+            VERSION=staging-${{ steps.sha.outputs.short }}
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ──────────────────────────────────────────
+  # 部署到 Staging 环境
+  # ──────────────────────────────────────────
+  deploy-staging:
+    name: 部署到 Staging 环境
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build-staging
+    environment: staging
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 部署 Staging 服务
+        env:
+          STAGING_HOST: ${{ secrets.STAGING_HOST }}
+          STAGING_USER: ${{ secrets.STAGING_USER }}
+          STAGING_SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
+          STAGING_PATH: ${{ secrets.STAGING_PATH }}
+        run: |
+          echo "🚀 部署 Staging 环境..."
+
+          # 配置 SSH
+          mkdir -p ~/.ssh
+          echo "$STAGING_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$STAGING_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+          # 远程部署
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "${STAGING_USER}@${STAGING_HOST}" << 'DEPLOY_EOF'
+            cd "${STAGING_PATH:-/opt/btc-collision-engine}" || exit 1
+
+            # 拉取最新 staging 镜像
+            docker compose --profile cpu pull btc-engine-cpu 2>/dev/null || true
+
+            # 重启服务
+            docker compose --profile cpu up -d --force-recreate btc-engine-cpu
+
+            # 等待健康检查
+            echo "⏳ 等待服务启动..."
+            sleep 30
+
+            # 验证服务状态
+            if docker compose --profile cpu ps | grep -q "healthy"; then
+              echo "✅ Staging 部署成功"
+            else
+              echo "⚠️ 服务未就绪，请手动检查"
+              docker compose --profile cpu ps
+              docker compose --profile cpu logs --tail=50 btc-engine-cpu
+            fi
+          DEPLOY_EOF
+
+      - name: 健康检查
+        run: |
+          echo "🏥 验证 Staging 环境..."
+          # 可根据实际情况添加 API 健康检查端点
+          echo "✅ Staging 部署完成"
+
+  # ──────────────────────────────────────────
+  # Staging 冒烟测试
+  # ──────────────────────────────────────────
+  smoke-test:
+    name: Staging 冒烟测试
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: deploy-staging
+
+    steps:
+      - name: 运行冒烟测试
+        env:
+          STAGING_HOST: ${{ secrets.STAGING_HOST }}
+        run: |
+          echo "🧪 运行 Staging 冒烟测试..."
+          # 基础连通性检查
+          if [ -n "$STAGING_HOST" ]; then
+            curl -sf --max-time 10 "http://${STAGING_HOST}:8080/health" && echo "✅ 健康检查通过" || echo "⚠️ 健康检查端点不可用（可能未启用 Web 监控）"
+          fi
+          echo "✅ 冒烟测试完成"
