@@ -666,11 +666,12 @@ def _parse_audit_log_entries(log_path: Path, limit: int = 20) -> list[dict[str, 
 # ──────────────────────────────────────────────────────────────────
 
 
-def create_app(data_dir: Path | None = None) -> "Flask":
+def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
     """创建 Flask 应用
 
     Args:
         data_dir: data_logs 目录路径，为 None 时自动查找
+        debug: 是否开启调试模式
 
     Returns:
         Flask 应用实例
@@ -679,14 +680,22 @@ def create_app(data_dir: Path | None = None) -> "Flask":
         raise ImportError("Flask 未安装。请运行: pip install flask")
 
     app = Flask(__name__)
+    app.config['DEBUG'] = debug  # 存储debug标志到app.config
     data_logs_dir = data_dir or _find_data_logs_dir()
 
     if _api_key_required:
         logger.info("Web 仪表板 API Key 认证已启用")
     else:
-        logger.warning(
-            "Web 仪表板未设置 API Key，所有端点可公开访问。请通过 --api-key 参数或 DASHBOARD_API_KEY 环境变量设置密钥。"
-        )
+        # 在生产环境（非debug模式）中使用 CRITICAL 级别
+        if not debug:
+            logger.critical(
+                "⚠️ 生产环境安全警告: Web 仪表板未设置 API Key，所有端点可公开访问！"
+                "请通过 --api-key 参数或 DASHBOARD_API_KEY 环境变量设置密钥。"
+            )
+        else:
+            logger.warning(
+                "Web 仪表板未设置 API Key，所有端点可公开访问。请通过 --api-key 参数或 DASHBOARD_API_KEY 环境变量设置密钥。"
+            )
 
     # 从 web 包元数据获取版本号（避免硬编码和触发 OpenCL 初始化）
     try:
