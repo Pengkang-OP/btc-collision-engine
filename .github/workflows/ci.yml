@@ -317,7 +317,7 @@ jobs:
 
       - name: 上传覆盖率报告
         if: matrix.python-version == '3.12'
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6
         with:
           file: ./coverage.xml
           flags: unittests
