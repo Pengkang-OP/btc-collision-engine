@@ -101,20 +101,31 @@ class TargetResolver:
             f"最大行数={max_lines}"
         )
 
+    # 输入长度限制（防止 ReDoS 攻击）
+    MAX_INPUT_LENGTH = 1000  # 最大 1000 字符
+    
     @staticmethod
     def detect_format(input_str: str) -> str:
         """
         自动检测输入格式
-
+        
         参数:
             input_str: 输入字符串
-
+            
         返回:
             格式类型: 'address', 'p2sh_address', 'bech32_address', 'taproot_address', 'wif',
                      'pubkey_compressed', 'pubkey_uncompressed', 'hash160', 'unknown'
         """
+        if not isinstance(input_str, str):
+            return "unknown"
+        
+        # M7修复：添加输入长度限制防止 ReDoS 攻击
+        if len(input_str) > TargetResolver.MAX_INPUT_LENGTH:
+            logger.waring(f"输入长度超出限制: {len(input_str)} > {TargetResolver.MAX_INPUT_LENGTH}")
+            return "unknown"
+        
         input_str = input_str.strip()
-
+        
         if not input_str:
             return "unknown"
 
