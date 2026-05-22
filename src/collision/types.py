@@ -39,6 +39,9 @@ from typing import Callable, Optional
 MatchCallback = Callable[..., None]
 ProgressCallback = Callable[..., None]
 CompleteCallback = Callable[..., None]
+ErrorCallback = Callable[..., None]
+ErrorHandler = Callable[..., None]
+EventHandler = Callable[..., None]
 
 
 @dataclass

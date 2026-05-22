@@ -134,6 +134,11 @@ class CollisionStats:
         with self._lock:
             return self._total_matches
 
+    @property
+    def avg_speed(self) -> float:
+        """Get average speed (keys per second)."""
+        return self.get_throughput()
+
     def reset(self) -> None:
         with self._lock:
             self._total_keys = 0

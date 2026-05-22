@@ -748,3 +748,24 @@ def generate_secure_key() -> bytearray:
         - Recommend using secure_key_context() instead
     """
     return bytearray(secrets.token_bytes(32))
+
+
+def validate_private_key(private_key: bytes) -> None:
+    """
+    Validate private key format and length.
+
+    Args:
+        private_key: Private key bytes to validate
+
+    Raises:
+        TypeError: If private_key is not bytes type
+        ValueError: If private_key is not exactly 32 bytes
+    """
+    if not isinstance(private_key, bytes):
+        raise TypeError(
+            f"Private key must be bytes type, got {type(private_key).__name__}"
+        )
+    if len(private_key) != 32:
+        raise ValueError(
+            f"Private key must be exactly 32 bytes, got {len(private_key)} bytes"
+        )
