@@ -1,5 +1,6 @@
 """
-GPU性能监控模块 - 实时监控GPU碰撞引擎
+GPU performance monitoring module - real-time monitoring of GPU
+collision engine.
 
 监控GPU碰撞引擎的关键性能指标:
 - GPU利用率和计算效率
