@@ -22,6 +22,7 @@ import threading
 import logging
 import json
 import hashlib
+import warnings  # 新增：用于弃用警告
 from datetime import datetime
 from typing import Set, List, Dict, Optional, Callable, Tuple
 
@@ -342,6 +343,14 @@ class KeyCollisionEngine:
             checkpoint_interval: 断点自动保存间隔(秒)
             monitoring_enabled: 是否启用监控系统
         """
+        # v5.0.0 弃用警告：引导用户使用新的 API
+        warnings.warn(
+            "KeyCollisionEngine in key_collision.py is deprecated since v5.0.0. "
+            "Use src.collision.key_collision_engine.KeyCollisionEngine instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        
         self.targets = targets
         self.on_progress = on_progress
         self.on_match = on_match
