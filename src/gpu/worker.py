@@ -254,9 +254,9 @@ class SingleGPUWorker(threading.Thread):
 
         最多递归重试 3 次，防止 batch_size 已降至下限后仍 MemoryError 导致无限递归。
         """
-        MAX_MEMORY_RETRIES = 3
-        if _depth >= MAX_MEMORY_RETRIES:
-            logger.error(f"GPU {self.device_idx} 降批重试已达上限 ({MAX_MEMORY_RETRIES})，放弃")
+        max_memory_retries = 3
+        if _depth >= max_memory_retries:
+            logger.error(f"GPU {self.device_idx} 降批重试已达上限 ({max_memory_retries})，放弃")
             return
 
         current_batch = self.config.batch_size or 65536

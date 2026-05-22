@@ -21,9 +21,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 def print_header(title: str):
     """打印标题"""
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"  {title}")
-    print(f"{'='*80}\n")
+    print(f"{'=' * 80}\n")
 
 
 def print_section(title: str):
@@ -67,7 +67,7 @@ def check_gpu_hardware():
             print()
 
             # 检查是否为Intel Arc A770
-            if 'Arc A770' in device.get('name', ''):
+            if "Arc A770" in device.get("name", ""):
                 print("  [INFO] 检测到Intel Arc A770")
                 print("  [INFO] 推荐配置:")
                 print("    - 批次大小: 262,144")
@@ -88,23 +88,20 @@ def check_gpu_driver():
 
     try:
         # Windows检查
-        if platform.system() == 'Windows':
+        if platform.system() == "Windows":
             import subprocess
 
             # 尝试检查Intel驱动
             try:
                 result = subprocess.run(
-                    ['driverquery', '/v', '/fo', 'csv'],
-                    capture_output=True,
-                    text=True,
-                    timeout=10
+                    ["driverquery", "/v", "/fo", "csv"], capture_output=True, text=True, timeout=10
                 )
 
-                if 'intel' in result.stdout.lower():
+                if "intel" in result.stdout.lower():
                     print("  [PASS] Intel驱动已安装")
                     # 提取驱动版本信息
-                    for line in result.stdout.split('\n'):
-                        if 'intel' in line.lower() and 'display' in line.lower():
+                    for line in result.stdout.split("\n"):
+                        if "intel" in line.lower() and "display" in line.lower():
                             print(f"  [INFO] 驱动信息: {line[:100]}")
                 else:
                     print("  [WARN] 未找到Intel显示驱动信息")
@@ -113,27 +110,19 @@ def check_gpu_driver():
 
             # 检查DirectX
             try:
-                result = subprocess.run(
-                    ['dxdiag', '/t'],
-                    capture_output=True,
-                    text=True,
-                    timeout=10
-                )
+                result = subprocess.run(["dxdiag", "/t"], capture_output=True, text=True, timeout=10)
                 print("  [INFO] DirectX诊断信息已生成")
             except (subprocess.TimeoutExpired, FileNotFoundError):
                 pass
 
         # Linux检查
-        elif platform.system() == 'Linux':
+        elif platform.system() == "Linux":
             import subprocess
 
             # 检查Intel GPU工具
             try:
                 result = subprocess.run(
-                    ['intel_gpu_top', '-L'],
-                    capture_output=True,
-                    text=True,
-                    timeout=5
+                    ["intel_gpu_top", "-L"], capture_output=True, text=True, timeout=5
                 )
                 print("  [PASS] intel_gpu_top可用")
             except FileNotFoundError:
@@ -142,14 +131,9 @@ def check_gpu_driver():
 
             # 检查OpenCL
             try:
-                result = subprocess.run(
-                    ['clinfo'],
-                    capture_output=True,
-                    text=True,
-                    timeout=5
-                )
+                result = subprocess.run(["clinfo"], capture_output=True, text=True, timeout=5)
 
-                if 'Intel' in result.stdout:
+                if "Intel" in result.stdout:
                     print("  [PASS] Intel OpenCL可用")
                 else:
                     print("  [WARN] 未检测到Intel OpenCL")
@@ -158,7 +142,9 @@ def check_gpu_driver():
                 print("  [INFO] 安装方法: sudo apt install clinfo")
 
         print("\n  [建议] Intel Arc驱动下载:")
-        print("  https://www.intel.com/content/www/us/en/download/785597/intel-arc-iris-xe-graphics-windows.html")
+        print(
+            "  https://www.intel.com/content/www/us/en/download/785597/intel-arc-iris-xe-graphics-windows.html"
+        )
 
         return True
 
@@ -217,7 +203,7 @@ def test_gpu_stability():
         engine = GPUCollisionEngine(
             targets=test_targets,
             batch_size=65536,  # 使用较小批次进行稳定性测试
-            use_gpu_memory_pool=True
+            use_gpu_memory_pool=True,
         )
 
         print("  [PASS] GPU引擎初始化成功\n")
@@ -238,9 +224,11 @@ def test_gpu_stability():
             monitor = engine.gpu_performance_monitor
             report = monitor.get_performance_report()
 
-            print(f"  [{(i+1)*6}s] 吞吐量: {report.avg_throughput_keys_per_sec:>10,.0f} keys/s | "
-                  f"错误率: {report.error_rate_percent:>6.2f}% | "
-                  f"显存: {report.memory_usage_avg_mb:>8.2f} MB")
+            print(
+                f"  [{(i + 1) * 6}s] 吞吐量: {report.avg_throughput_keys_per_sec:>10,.0f} keys/s | "
+                f"错误率: {report.error_rate_percent:>6.2f}% | "
+                f"显存: {report.memory_usage_avg_mb:>8.2f} MB"
+            )
 
         # 停止引擎
         print("\n  停止引擎...")
@@ -260,6 +248,7 @@ def test_gpu_stability():
     except Exception as e:
         print(f"  [FAIL] GPU稳定性测试失败: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -272,7 +261,7 @@ def check_intel_arc_workarounds():
         from src.gpu.device import GPUDeviceHelper
 
         devices = GPUDeviceHelper.detect_devices()
-        intel_arc_detected = any('Arc' in d.get('name', '') for d in devices)
+        intel_arc_detected = any("Arc" in d.get("name", "") for d in devices)
 
         if not intel_arc_detected:
             print("  [INFO] 未检测到Intel Arc GPU,跳过workaround检查")
@@ -353,14 +342,14 @@ def main():
     results = {}
 
     # 执行检查
-    results['系统信息'] = check_system_info()
-    results['GPU硬件'] = check_gpu_hardware()
-    results['GPU驱动'] = check_gpu_driver()
-    results['OpenCL'] = check_opencl_availability()
-    results['Intel Workaround'] = check_intel_arc_workarounds()
+    results["系统信息"] = check_system_info()
+    results["GPU硬件"] = check_gpu_hardware()
+    results["GPU驱动"] = check_gpu_driver()
+    results["OpenCL"] = check_opencl_availability()
+    results["Intel Workaround"] = check_intel_arc_workarounds()
 
     print_header("GPU稳定性测试")
-    results['稳定性测试'] = test_gpu_stability()
+    results["稳定性测试"] = test_gpu_stability()
 
     # 总结
     print_header("诊断总结")
@@ -383,13 +372,13 @@ def main():
     if passed < total:
         provide_recommendations()
 
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     if passed == total:
         print("  [PASS] 所有检查通过,GPU状态正常")
         print("  间歇性问题可能是驱动或散热导致,建议更新驱动")
     else:
         print("  [WARN] 部分检查未通过,请参考修复建议")
-    print(f"{'='*80}\n")
+    print(f"{'=' * 80}\n")
 
 
 if __name__ == "__main__":

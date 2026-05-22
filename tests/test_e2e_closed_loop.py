@@ -26,7 +26,7 @@ import pytest
 
 from src.collision.checkpoint_manager import CheckpointManager
 from src.collision.event_bus import EventBus, reset_event_bus
-from src.collision.events import EngineMatchEvent, EventType
+from src.collision.events import EventType
 from src.collision.key_collision_engine import KeyCollisionEngine
 from src.collision.targets.resolver import TargetResolver
 
@@ -133,9 +133,7 @@ class TestRangeScanClosedLoop:
         engine._thread.join(timeout=30)
         engine.stop()
 
-        assert (
-            len(progress_events) >= 1
-        ), f"on_progress 应至少被调用一次，实际: {len(progress_events)}"
+        assert len(progress_events) >= 1, f"on_progress 应至少被调用一次，实际: {len(progress_events)}"
 
     def test_lifecycle_complete_callback(self):
         """验证 on_complete 在 stop 后被调用"""
@@ -267,9 +265,7 @@ class TestCheckpointClosedLoop:
         cp_mgr2 = CheckpointManager(filepath=cp_file)
         data = cp_mgr2.load()
         assert data is not None
-        assert _K1_ADDR.lower() in [
-            t.lower() for t in data.get("targets", [])
-        ], "断点应包含目标地址"
+        assert _K1_ADDR.lower() in [t.lower() for t in data.get("targets", [])], "断点应包含目标地址"
 
 
 # ============================================================================
@@ -432,13 +428,11 @@ class TestResolverPipelineClosedLoop:
         result = resolver.resolve(taproot_addr)
 
         assert result is not None, "Resolver 应返回 Taproot 原地址"
-        assert (
-            result == taproot_addr
-        ), "Taproot 应保持原格式（payload 为 x-only pubkey，无法转换为 P2PKH）"
+        assert result == taproot_addr, (
+            "Taproot 应保持原格式（payload 为 x-only pubkey，无法转换为 P2PKH）"
+        )
         # Taproot 的 witness program 是 x-only pubkey → P2PKH 载荷不同
-        assert (
-            result != p2pkh_addr
-        ), "Taproot 保持原格式，应不同于 Legacy P2PKH（载荷为 x-only pubkey）"
+        assert result != p2pkh_addr, "Taproot 保持原格式，应不同于 Legacy P2PKH（载荷为 x-only pubkey）"
 
     def test_resolver_mixed_formats_same_pubkey(self):
         """同一公钥 → 四种格式 → Resolver 全部可解析 → Bech32 与 Legacy 一致"""
@@ -564,9 +558,9 @@ class TestFileLoadingClosedLoop:
         # - P2SH → 5 个不同的 P2PKH (script_hash)
         # - Taproot → 5 个不同的 P2PKH (x-only pubkey)
         # 总计 15 个唯一 P2PKH
-        assert (
-            len(loaded_p2pkh) >= 10
-        ), f"应至少解析出 10 个唯一 P2PKH（5 Legacy + 5 P2SH + 5 Taproot），实际: {len(loaded_p2pkh)}"
+        assert len(loaded_p2pkh) >= 10, (
+            f"应至少解析出 10 个唯一 P2PKH（5 Legacy + 5 P2SH + 5 Taproot），实际: {len(loaded_p2pkh)}"
+        )
 
         # 引擎闭环验证：Legacy P2PKH 应该全部匹配
         match_results = []
@@ -692,9 +686,7 @@ class TestRandomModeClosedLoop:
         engine.stop()
 
         stats = engine.get_stats()
-        assert (
-            stats.total_checked > 0
-        ), f"random 模式应检查至少 1 个私钥，实际: {stats.total_checked}"
+        assert stats.total_checked > 0, f"random 模式应检查至少 1 个私钥，实际: {stats.total_checked}"
         assert stats.speed >= 0, "speed 应 >= 0"
 
     def test_random_mode_on_progress_called(self):
@@ -716,9 +708,7 @@ class TestRandomModeClosedLoop:
         time.sleep(3)
         engine.stop()
 
-        assert (
-            len(progress_calls) >= 1
-        ), f"on_progress 应至少被调用一次，实际: {len(progress_calls)}"
+        assert len(progress_calls) >= 1, f"on_progress 应至少被调用一次，实际: {len(progress_calls)}"
 
 
 # ============================================================================
@@ -749,9 +739,7 @@ class TestDataLoggingClosedLoop:
         engine._thread.join(timeout=15)
         engine.stop()
 
-        assert (
-            len(match_results) == 1
-        ), f"data_logging 启用时匹配回调应正常，实际: {len(match_results)}"
+        assert len(match_results) == 1, f"data_logging 启用时匹配回调应正常，实际: {len(match_results)}"
         assert match_results[0] == _K1_ADDR
 
     def test_data_logging_random_mode(self):
@@ -768,9 +756,9 @@ class TestDataLoggingClosedLoop:
         engine.stop()
 
         stats = engine.get_stats()
-        assert (
-            stats.total_checked > 0
-        ), f"data_logging + random 应检查至少 1 个私钥，实际: {stats.total_checked}"
+        assert stats.total_checked > 0, (
+            f"data_logging + random 应检查至少 1 个私钥，实际: {stats.total_checked}"
+        )
 
 
 if __name__ == "__main__":

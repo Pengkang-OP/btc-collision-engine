@@ -461,13 +461,10 @@ class GPUMockFactory:
                 "src.gpu.async_executor.AsyncGPUExecutor.run_batch_async",
                 side_effect=mock_kernel.run_batch_async.side_effect,
                 return_value=(
-                    mock_kernel.run_batch_async.return_value
-                    if run_batch_side_effect is None
-                    else None
+                    mock_kernel.run_batch_async.return_value if run_batch_side_effect is None else None
                 ),
             ),
         ):
-
             mock_loader.return_value.get_profile.return_value = None
 
             yield {

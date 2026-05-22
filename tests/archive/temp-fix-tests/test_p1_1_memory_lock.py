@@ -1,15 +1,14 @@
-# -*- coding: utf-8 -*-
 """
 P1-1修复验证: SecureKeyManager内存锁定单元测试
 
 验证SecureKeyManager在不同平台上的内存锁定实现是否正确。
 """
 
-import unittest
-import sys
 import os
-from unittest.mock import patch, MagicMock, Mock
-import ctypes
+import sys
+import unittest
+from unittest.mock import patch
+
 import pytest
 
 # 添加项目根目录到路径

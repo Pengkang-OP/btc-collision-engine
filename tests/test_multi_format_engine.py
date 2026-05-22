@@ -164,7 +164,7 @@ elapsed = time.time() - start
 
 print(f"Generated {iterations} multi-format address sets")
 print(f"Time: {elapsed:.3f}s")
-print(f"Rate: {iterations/elapsed:.1f} sets/s")
+print(f"Rate: {iterations / elapsed:.1f} sets/s")
 
 # 7. 格式支持状态
 print("\n[Test 7] Format Support Status")

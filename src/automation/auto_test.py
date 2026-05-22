@@ -4,17 +4,18 @@
 基于分析结果执行全面的测试用例，确保功能与性能达标
 """
 
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+
 import importlib
 import subprocess
-import sys
 import threading
 import time
 import traceback
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from .models import AnalysisReport, TestCase, TestResult, TestSuiteResult
 

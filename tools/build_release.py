@@ -946,6 +946,7 @@ See `CHANGELOG.md` for detailed version history.
 
 # ──────────────────────────── Helpers ───────────────────────────
 
+
 def _bold(text: str) -> str:
     return f"\033[1m{text}\033[0m"
 
@@ -980,6 +981,7 @@ def log_skip(detail: str) -> None:
 
 
 # ──────────────────────── Build functions ───────────────────────
+
 
 def _clean_output_dir(output_dir: Path) -> None:
     """Clean output directory, skipping locked files."""
@@ -1016,10 +1018,9 @@ def copy_source(root: Path, out: Path) -> None:
     dst = out / "src"
     log_step("SRC", f"{src} -> {dst}")
     shutil.copytree(
-        src, dst,
-        ignore=shutil.ignore_patterns(
-            "__pycache__", "*.pyc", "*.pyo", ".git", "venv", ".pytest_cache"
-        )
+        src,
+        dst,
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo", ".git", "venv", ".pytest_cache"),
     )
     log_ok("src/ copied")
 
@@ -1090,7 +1091,7 @@ def copy_requirements(root: Path, out: Path) -> None:
         "\n"
         "# GPU 加速依赖（可选）\n"
         "-r requirements-gpu.txt\n",
-        encoding='utf-8'
+        encoding="utf-8",
     )
     log_ok("Req: requirements.txt (release version, no dev deps)")
 
@@ -1219,6 +1220,7 @@ def generate_release_notes(out: Path) -> None:
 
 # ─────────────────────────── Summary ────────────────────────────
 
+
 def print_summary(out: Path) -> None:
     categories = {
         "源码 (src/)": out / "src",
@@ -1260,6 +1262,7 @@ def print_summary(out: Path) -> None:
 
 
 # ──────────────────────────── Main ──────────────────────────────
+
 
 def parse_args():
     parser = argparse.ArgumentParser(

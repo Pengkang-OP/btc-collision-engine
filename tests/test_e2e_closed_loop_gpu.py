@@ -148,13 +148,17 @@ class TestGPUEngineInitClosedLoop:
         assert "batch_size" in info
 
     def test_gpu_engine_stats_initial(self, gpu_engine_with_targets):
-        """初始 stats 状态正确"""
+        """初始 stats 状态正确（引擎启动后）"""
         engine = gpu_engine_with_targets
-        stats = engine.get_stats()
-
-        assert stats is not None
-        assert stats.total_checked == 0
-        assert len(stats.matches) == 0
+        engine.start()
+        try:
+            stats = engine.get_stats()
+            assert stats is not None
+            assert stats.total_checked == 0
+            assert len(stats.matches) == 0
+        finally:
+            if engine.is_running():
+                engine.stop()
 
     def test_gpu_engine_context_manager(self, mock_gpu_engine):
         """with 语句自动 stop"""

@@ -56,9 +56,7 @@ class TestGPUAsyncError:
 
     def test_type_error_should_fallback(self):
         """TypeError 应回退"""
-        result = ExceptionHandler.handle_gpu_async_error(
-            TypeError("expected int, got str"), "结果回读"
-        )
+        result = ExceptionHandler.handle_gpu_async_error(TypeError("expected int, got str"), "结果回读")
         assert result is True
 
     def test_index_error_should_fallback(self):
@@ -91,9 +89,7 @@ class TestGPUAsyncError:
 
     def test_unknown_error_with_fatal_keyword_should_not_fallback(self):
         """未知错误含 'fatal' 关键字 → 不应回退"""
-        result = ExceptionHandler.handle_gpu_async_error(
-            Exception("A fatal error occurred"), "缓冲清理"
-        )
+        result = ExceptionHandler.handle_gpu_async_error(Exception("A fatal error occurred"), "缓冲清理")
         assert result is False
 
     def test_unknown_error_with_corruption_keyword_should_not_fallback(self):
@@ -105,9 +101,7 @@ class TestGPUAsyncError:
 
     def test_unknown_error_with_segmentation_keyword_should_not_fallback(self):
         """未知错误含 'segmentation' 关键字 → 不应回退"""
-        result = ExceptionHandler.handle_gpu_async_error(
-            Exception("segmentation fault"), "内核执行"
-        )
+        result = ExceptionHandler.handle_gpu_async_error(Exception("segmentation fault"), "内核执行")
         assert result is False
 
     def test_unknown_error_with_access_violation_keyword_should_not_fallback(self):
@@ -151,9 +145,7 @@ class TestCLResourceError:
     # ── 资源耗尽关键字 (应返回 True) ──
 
     def test_out_of_resources(self):
-        result = ExceptionHandler.handle_cl_resource_error(
-            RuntimeError("CL_OUT_OF_RESOURCES"), "buffer"
-        )
+        result = ExceptionHandler.handle_cl_resource_error(RuntimeError("CL_OUT_OF_RESOURCES"), "buffer")
         assert result is True
 
     def test_out_of_memory(self):
@@ -189,9 +181,7 @@ class TestCLResourceError:
     # ── 非资源错误 (应返回 False) ──
 
     def test_invalid_kernel_name(self):
-        result = ExceptionHandler.handle_cl_resource_error(
-            RuntimeError("invalid kernel name"), "kernel"
-        )
+        result = ExceptionHandler.handle_cl_resource_error(RuntimeError("invalid kernel name"), "kernel")
         assert result is False
 
     def test_compile_error(self):
@@ -231,9 +221,7 @@ class TestGPUCleanupError:
     def test_runtime_error(self):
         """RuntimeError — 清理 OpenCL 错误"""
         # 不应抛出异常
-        ExceptionHandler.handle_gpu_cleanup_error(
-            RuntimeError("buffer release failed"), "seed_buffer"
-        )
+        ExceptionHandler.handle_gpu_cleanup_error(RuntimeError("buffer release failed"), "seed_buffer")
 
     def test_os_error(self):
         """OSError — 清理系统 I/O 错误"""
@@ -241,9 +229,7 @@ class TestGPUCleanupError:
 
     def test_other_error(self):
         """其他未知错误"""
-        ExceptionHandler.handle_gpu_cleanup_error(
-            Exception("something unexpected"), "compute_queue"
-        )
+        ExceptionHandler.handle_gpu_cleanup_error(Exception("something unexpected"), "compute_queue")
 
     # ── 边界 ──
 
@@ -313,9 +299,7 @@ class TestConfigError:
 
     def test_file_not_found(self):
         """配置文件不存在"""
-        ExceptionHandler.handle_config_error(
-            FileNotFoundError("config.json missing"), "ConfigManager"
-        )
+        ExceptionHandler.handle_config_error(FileNotFoundError("config.json missing"), "ConfigManager")
 
     def test_io_error(self):
         """配置文件 IO 错误"""

@@ -477,8 +477,7 @@ class TestTranslationCompleteness(unittest.TestCase):
         self.assertEqual(
             extra_zh,
             set(),
-            f"zh_CN 中存在 en_US 缺失的 key（{len(extra_zh)} 个）:\n"
-            + "\n".join(sorted(extra_zh)[:20]),
+            f"zh_CN 中存在 en_US 缺失的 key（{len(extra_zh)} 个）:\n" + "\n".join(sorted(extra_zh)[:20]),
         )
 
     def test_en_has_no_extra_keys(self):
@@ -487,8 +486,7 @@ class TestTranslationCompleteness(unittest.TestCase):
         self.assertEqual(
             extra_en,
             set(),
-            f"en_US 中存在 zh_CN 缺失的 key（{len(extra_en)} 个）:\n"
-            + "\n".join(sorted(extra_en)[:20]),
+            f"en_US 中存在 zh_CN 缺失的 key（{len(extra_en)} 个）:\n" + "\n".join(sorted(extra_en)[:20]),
         )
 
     def test_key_sets_identical(self):

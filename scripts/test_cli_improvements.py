@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 CLI人性化改进测试脚本
 
@@ -12,12 +11,11 @@ CLI人性化改进测试脚本
 
 import subprocess
 import sys
-from pathlib import Path
 
 
 def run_test(test_name, command, expected_output=None, should_fail=False):
     """运行单个测试"""
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"测试: {test_name}")
     print(f"命令: {command}")
     print("=" * 70)
@@ -55,7 +53,7 @@ def run_test(test_name, command, expected_output=None, should_fail=False):
 
             found = any(variant in output for variant in expected_variants)
             if found:
-                print(f"✅ 通过 - 找到预期输出")
+                print("✅ 通过 - 找到预期输出")
                 return True
             else:
                 print(f"❌ 失败 - 未找到预期输出: {expected_output}")
@@ -68,11 +66,11 @@ def run_test(test_name, command, expected_output=None, should_fail=False):
                 print(f"✅ 通过 - 命令按预期失败 (退出码: {result.returncode})")
                 return True
             else:
-                print(f"❌ 失败 - 命令应该失败但成功了")
+                print("❌ 失败 - 命令应该失败但成功了")
                 return False
         else:
             if result.returncode == 0:
-                print(f"✅ 通过 - 命令成功执行")
+                print("✅ 通过 - 命令成功执行")
                 return True
             else:
                 print(f"❌ 失败 - 命令执行失败 (退出码: {result.returncode})")
@@ -80,7 +78,7 @@ def run_test(test_name, command, expected_output=None, should_fail=False):
                 return False
 
     except subprocess.TimeoutExpired:
-        print(f"❌ 失败 - 命令执行超时")
+        print("❌ 失败 - 命令执行超时")
         return False
     except Exception as e:
         print(f"❌ 失败 - 异常: {e}")
@@ -148,7 +146,7 @@ def main():
         print(f"{status} - {name}")
 
     print("-" * 70)
-    print(f"总计: {passed}/{total} 通过 ({passed/total*100:.1f}%)")
+    print(f"总计: {passed}/{total} 通过 ({passed / total * 100:.1f}%)")
     print("=" * 70)
 
     if passed == total:

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Task #57: GPU 性能基准测试
 验证队列深度优化（queue_depth=4）+ 种子预生成线程的实际效果
@@ -11,11 +10,11 @@ Task #57: GPU 性能基准测试
 """
 
 import argparse
+import contextlib
 import json
-import os
+import statistics
 import sys
 import time
-import statistics
 from datetime import datetime
 from pathlib import Path
 
@@ -29,7 +28,7 @@ TARGET_KEYS_PER_SEC = 3_400_000  # 3.40M keys/s 目标（+10%）
 
 def load_config(config_path: str) -> dict:
     """加载配置文件"""
-    with open(config_path, "r", encoding="utf-8") as f:
+    with open(config_path, encoding="utf-8") as f:
         raw = f.read()
     # 剥离 JSON5 风格注释（//...行）
     import re
@@ -44,7 +43,7 @@ def load_targets(path: str = "valid_addresses.txt") -> set:
     if not p.exists():
         raise FileNotFoundError(f"目标地址文件不存在: {path}")
     addresses = set()
-    with open(p, "r", encoding="utf-8") as f:
+    with open(p, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if line and not line.startswith("#"):
@@ -52,7 +51,7 @@ def load_targets(path: str = "valid_addresses.txt") -> set:
     return addresses
 
 
-def run_benchmark(duration_sec: int = 30) -> dict:
+def run_benchmark(duration_sec: int = 30) -> dict:  # noqa: C901
     """
     运行 GPU 性能基准测试
 
@@ -65,8 +64,8 @@ def run_benchmark(duration_sec: int = 30) -> dict:
     print("=" * 70)
     print(f"  时间   : {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"  测试时长: {duration_sec} 秒")
-    print(f"  基线   : {BASELINE_KEYS_PER_SEC/1e6:.2f}M keys/s")
-    print(f"  目标   : {TARGET_KEYS_PER_SEC/1e6:.2f}M keys/s (+10%)")
+    print(f"  基线   : {BASELINE_KEYS_PER_SEC / 1e6:.2f}M keys/s")
+    print(f"  目标   : {TARGET_KEYS_PER_SEC / 1e6:.2f}M keys/s (+10%)")
     print("=" * 70 + "\n")
 
     # ── 1. 加载配置 ──────────────────────────────────────────
@@ -149,16 +148,12 @@ def run_benchmark(duration_sec: int = 30) -> dict:
     random_mode = getattr(engine, "_random_search_mode", None)
     seed_thread = getattr(random_mode, "_seed_thread", None)
     seed_thread_alive = seed_thread.is_alive() if seed_thread else False
-    seed_prefetch_actual = (
-        getattr(random_mode, "_seed_prefetch_size", "N/A") if random_mode else "N/A"
-    )
+    seed_prefetch_actual = getattr(random_mode, "_seed_prefetch_size", "N/A") if random_mode else "N/A"
     print(f"    SeedPrefetch 线程运行中 = {seed_thread_alive}")
     print(f"    SeedPrefetch 缓存深度   = {seed_prefetch_actual}")
 
     # 检查异步执行器
-    async_exec_enabled = getattr(
-        getattr(engine, "_gpu_device", None), "enable_async_execution", False
-    )
+    async_exec_enabled = getattr(getattr(engine, "_gpu_device", None), "enable_async_execution", False)
     print(f"    异步执行已启用 = {async_exec_enabled}")
 
     # ── 5. 运行测试 ─────────────────────────────────────────
@@ -177,7 +172,7 @@ def run_benchmark(duration_sec: int = 30) -> dict:
         traceback.print_exc()
         return {"error": str(e), "success": False}
 
-    last_print_time = time.time()
+    time.time()
     test_start = time.time()
     interval_speeds = []
 
@@ -190,7 +185,7 @@ def run_benchmark(duration_sec: int = 30) -> dict:
             recent_speed = speed_samples[-1]
             interval_speeds.append(recent_speed)
             print(
-                f"  {elapsed:5.0f}s  {recent_speed/1e6:12.3f}M/s  {total_checked:>14,}  {len(speed_samples):>6}"
+                f"  {elapsed:5.0f}s  {recent_speed / 1e6:12.3f}M/s  {total_checked:>14,}  {len(speed_samples):>6}"
             )
 
     # 停止引擎
@@ -223,10 +218,8 @@ def run_benchmark(duration_sec: int = 30) -> dict:
     # 收集异步执行器统计
     executor_stats = {}
     if async_executor:
-        try:
+        with contextlib.suppress(Exception):
             executor_stats = async_executor.get_stats()
-        except Exception:
-            pass
 
     # ── 打印结果摘要 ──────────────────────────────────────
     print("\n" + "=" * 70)
@@ -234,11 +227,11 @@ def run_benchmark(duration_sec: int = 30) -> dict:
     print("=" * 70)
     print(f"  测试时长       : {duration_sec}s")
     print(f"  采样次数       : {len(speed_samples)}")
-    print(f"  最高速度       : {max_speed/1e6:.3f}M keys/s")
-    print(f"  平均速度       : {avg_speed/1e6:.3f}M keys/s")
-    print(f"  稳定平均速度   : {stable_avg/1e6:.3f}M keys/s（跳过前{warmup_skip}个预热采样）")
-    print(f"  最低速度       : {min_speed/1e6:.3f}M keys/s")
-    print(f"  速度标准差     : {std_speed/1e6:.3f}M keys/s")
+    print(f"  最高速度       : {max_speed / 1e6:.3f}M keys/s")
+    print(f"  平均速度       : {avg_speed / 1e6:.3f}M keys/s")
+    print(f"  稳定平均速度   : {stable_avg / 1e6:.3f}M keys/s（跳过前{warmup_skip}个预热采样）")
+    print(f"  最低速度       : {min_speed / 1e6:.3f}M keys/s")
+    print(f"  速度标准差     : {std_speed / 1e6:.3f}M keys/s")
     print(f"  总检查密钥数   : {total_checked:,}")
 
     print("\n  --- 优化特性验证 ---")
@@ -259,18 +252,18 @@ def run_benchmark(duration_sec: int = 30) -> dict:
     delta_vs_baseline = (stable_avg - baseline) / baseline * 100 if baseline > 0 else 0
     delta_vs_target = (stable_avg - target) / target * 100 if target > 0 else 0
 
-    print(f"  基线 (3.07M)   : {baseline/1e6:.2f}M keys/s")
-    print(f"  目标 (+10%)    : {target/1e6:.2f}M keys/s")
-    print(f"  实测稳定速度   : {stable_avg/1e6:.3f}M keys/s")
+    print(f"  基线 (3.07M)   : {baseline / 1e6:.2f}M keys/s")
+    print(f"  目标 (+10%)    : {target / 1e6:.2f}M keys/s")
+    print(f"  实测稳定速度   : {stable_avg / 1e6:.3f}M keys/s")
     print(f"  vs 基线        : {delta_vs_baseline:+.1f}%")
     print(f"  vs 目标        : {delta_vs_target:+.1f}%")
 
     if stable_avg >= target:
-        print(f"\n  ✅ 性能目标达成！实测 {stable_avg/1e6:.3f}M >= 目标 {target/1e6:.2f}M keys/s")
+        print(f"\n  ✅ 性能目标达成！实测 {stable_avg / 1e6:.3f}M >= 目标 {target / 1e6:.2f}M keys/s")
     elif stable_avg >= baseline:
-        print(f"\n  ⚠️  性能有所提升但未达目标（{stable_avg/1e6:.3f}M vs 目标 {target/1e6:.2f}M）")
+        print(f"\n  ⚠️  性能有所提升但未达目标（{stable_avg / 1e6:.3f}M vs 目标 {target / 1e6:.2f}M）")
     else:
-        print(f"\n  ❌ 性能未提升（{stable_avg/1e6:.3f}M vs 基线 {baseline/1e6:.2f}M）")
+        print(f"\n  ❌ 性能未提升（{stable_avg / 1e6:.3f}M vs 基线 {baseline / 1e6:.2f}M）")
 
     print("=" * 70 + "\n")
 

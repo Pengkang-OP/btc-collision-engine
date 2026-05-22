@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """简化的测试运行器 - 绕过Python 3.14 pytest兼容性问题"""
 
-import sys
 import os
+import sys
 import time
 import traceback
 
@@ -14,9 +13,9 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 def run_test_file(test_file):
     """运行单个测试文件"""
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"运行测试: {test_file}")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
 
     # 导入测试模块
     module_name = os.path.splitext(os.path.basename(test_file))[0]
@@ -48,7 +47,7 @@ def run_test_file(test_file):
                 print(f"✅ 通过 ({elapsed:.2f}s)")
                 passed += 1
             except Exception as e:
-                print(f"❌ 失败")
+                print("❌ 失败")
                 errors.append((test_func_name, str(e), traceback.format_exc()))
                 failed += 1
 
@@ -92,9 +91,9 @@ def main():
         all_errors.extend(errors)
 
     # 打印总结
-    print(f"\n{'='*80}")
-    print(f"测试总结")
-    print(f"{'='*80}")
+    print(f"\n{'=' * 80}")
+    print("测试总结")
+    print(f"{'=' * 80}")
     print(f"总测试数: {total_passed + total_failed}")
     print(f"✅ 通过: {total_passed}")
     print(f"❌ 失败: {total_failed}")
@@ -104,20 +103,20 @@ def main():
         print(f"通过率: {pass_rate:.1f}%")
 
     if all_errors:
-        print(f"\n{'='*80}")
-        print(f"失败详情:")
-        print(f"{'='*80}")
+        print(f"\n{'=' * 80}")
+        print("失败详情:")
+        print(f"{'=' * 80}")
         for test_name, error_msg, tb in all_errors[:5]:  # 只显示前5个
             print(f"\n测试: {test_name}")
             print(f"错误: {error_msg}")
             print(tb)
 
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     if total_failed == 0:
         print("🎉 所有测试通过! 无回归!")
     else:
         print(f"⚠️  有 {total_failed} 个测试失败")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
 
     return 0 if total_failed == 0 else 1
 

@@ -279,7 +279,7 @@ class EnhancedMonitoringAdapter:
                     if len(event.target_address) > 10
                     else event.target_address[:3] + "..."
                 )
-                logger.info(f"增强监控 — 匹配发现: address={safe_addr}, " f"target={safe_target}")
+                logger.info(f"增强监控 — 匹配发现: address={safe_addr}, target={safe_target}")
                 # 触发 DataLogger 记录匹配事件 (脱敏+持久化)
                 dl = getattr(self.monitoring_system, "_data_logger", None)
                 if dl is not None and hasattr(dl, "record_match_event"):
@@ -297,9 +297,7 @@ class EnhancedMonitoringAdapter:
 # ============================================================================
 
 
-def setup_data_logging(
-    event_bus: EventBus, data_logger: DataLogger | None = None
-) -> DataLoggerAdapter:
+def setup_data_logging(event_bus: EventBus, data_logger: DataLogger | None = None) -> DataLoggerAdapter:
     """
     便捷函数: 设置数据日志事件监听
 

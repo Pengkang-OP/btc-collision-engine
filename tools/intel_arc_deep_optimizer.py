@@ -35,9 +35,9 @@ class IntelArcOptimizer:
 
     def print_header(self, title: str):
         """打印标题"""
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(f"  {title}")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
 
     def print_section(self, title: str):
         """打印小节"""
@@ -57,9 +57,9 @@ class IntelArcOptimizer:
 
             # 获取PCIe信息(如果可用)
             pci_info = {
-                "max_work_group_size": device.get('max_work_group_size', 0),
-                "global_mem_size_gb": device.get('global_mem_size', 0) / (1024**3),
-                "max_compute_units": device.get('max_compute_units', 'Unknown'),
+                "max_work_group_size": device.get("max_work_group_size", 0),
+                "global_mem_size_gb": device.get("global_mem_size", 0) / (1024**3),
+                "max_compute_units": device.get("max_compute_units", "Unknown"),
             }
 
             print(f"  GPU: {device.get('name', 'Unknown')}")
@@ -69,8 +69,8 @@ class IntelArcOptimizer:
 
             # 推荐批次大小
             recommended_batch = min(
-                pci_info['max_work_group_size'] * 4,
-                int(pci_info['global_mem_size_gb'] * 16384)  # 每GB显存16k批次
+                pci_info["max_work_group_size"] * 4,
+                int(pci_info["global_mem_size_gb"] * 16384),  # 每GB显存16k批次
             )
 
             print(f"\n  推荐批次大小: {recommended_batch:,}")
@@ -80,11 +80,7 @@ class IntelArcOptimizer:
                 print(f"  [WARN] 建议降低批次大小到 {recommended_batch:,}")
                 self.recommendations.append(f"降低批次大小到 {recommended_batch:,}")
 
-            return {
-                "status": "pass",
-                "recommended_batch": recommended_batch,
-                "pci_info": pci_info
-            }
+            return {"status": "pass", "recommended_batch": recommended_batch, "pci_info": pci_info}
 
         except Exception as e:
             print(f"  [ERROR] PCIe带宽检测失败: {e}")
@@ -103,9 +99,7 @@ class IntelArcOptimizer:
 
             try:
                 engine = GPUCollisionEngine(
-                    targets=test_targets,
-                    batch_size=batch_size,
-                    use_gpu_memory_pool=True
+                    targets=test_targets, batch_size=batch_size, use_gpu_memory_pool=True
                 )
 
                 import threading
@@ -130,7 +124,7 @@ class IntelArcOptimizer:
                     "throughput": throughput,
                     "error_rate": error_rate,
                     "memory_mb": memory_mb,
-                    "status": "pass" if error_rate == 0 else "fail"
+                    "status": "pass" if error_rate == 0 else "fail",
                 }
 
                 print(f"    吞吐量: {throughput:>10,.0f} keys/s")
@@ -152,25 +146,20 @@ class IntelArcOptimizer:
                     "error_rate": 0,
                     "memory_mb": 0,
                     "status": "fail",
-                    "error": str(e)
+                    "error": str(e),
                 }
 
         # 找出最佳批次大小
         best_batch = max(
-            results.items(),
-            key=lambda x: x[1]['throughput'] if x[1]['status'] == 'pass' else 0
+            results.items(), key=lambda x: x[1]["throughput"] if x[1]["status"] == "pass" else 0
         )
 
         print(f"\n  [INFO] 最佳批次大小: {best_batch[0]:,}")
         print(f"         吞吐量: {best_batch[1]['throughput']:,.0f} keys/s")
 
-        self.test_results['batch_size_test'] = results
+        self.test_results["batch_size_test"] = results
 
-        return {
-            "status": "pass",
-            "results": results,
-            "best_batch_size": best_batch[0]
-        }
+        return {"status": "pass", "results": results, "best_batch_size": best_batch[0]}
 
     def optimize_memory_pool(self) -> dict[str, Any]:
         """优化内存池配置"""
@@ -195,7 +184,7 @@ class IntelArcOptimizer:
                 "max_memory_mb": 1024,
                 "适合场景": "短期高性能测试",
                 "预期性能": "150k+ keys/s",
-            }
+            },
         }
 
         print("  推荐内存池配置:\n")
@@ -208,10 +197,7 @@ class IntelArcOptimizer:
             print(f"    预期性能: {config['预期性能']}")
             print()
 
-        return {
-            "status": "pass",
-            "recommendations": recommendations
-        }
+        return {"status": "pass", "recommendations": recommendations}
 
     def optimize_timeout_settings(self) -> dict[str, Any]:
         """优化超时设置"""
@@ -235,7 +221,7 @@ class IntelArcOptimizer:
                 "max_timeout": 60,
                 "safety_factor": 2.0,
                 "适合场景": "性能优先(可能不稳定)",
-            }
+            },
         }
 
         print("  超时配置推荐:\n")
@@ -251,10 +237,7 @@ class IntelArcOptimizer:
         print("  [INFO] 当前使用: 保守模式(已自动应用)")
         print("  [INFO] 自适应超时范围: 10-120秒")
 
-        return {
-            "status": "pass",
-            "recommendations": timeout_configs
-        }
+        return {"status": "pass", "recommendations": timeout_configs}
 
     def generate_optimized_config(self, batch_size: int = 131072) -> dict[str, Any]:
         """生成优化后的配置文件"""
@@ -265,7 +248,7 @@ class IntelArcOptimizer:
                 "mode": "random",
                 "batch_size": batch_size,
                 "max_threads": 8,
-                "checkpoint_interval": 300
+                "checkpoint_interval": 300,
             },
             "gpu": {
                 "use_gpu": True,
@@ -276,21 +259,21 @@ class IntelArcOptimizer:
                 "async_execution": False,  # Intel Arc禁用异步
                 "timeout_protection": True,
                 "base_timeout_seconds": 30,
-                "memory_limit_percent": 45  # 保守显存限制
+                "memory_limit_percent": 45,  # 保守显存限制
             },
             "monitoring": {
                 "enable_performance_monitor": True,
                 "report_interval": 60,
                 "log_level": "INFO",
                 "enable_memory_monitoring": True,
-                "enable_timeout_monitoring": True
+                "enable_timeout_monitoring": True,
             },
             "optimization": {
                 "uint32_workaround": True,  # Intel Arc必需
                 "disable_async_transfer": True,  # 稳定性优先
                 "conservative_memory_policy": True,
-                "adaptive_timeout": True
-            }
+                "adaptive_timeout": True,
+            },
         }
 
         print("  生成优化配置文件:")
@@ -303,16 +286,12 @@ class IntelArcOptimizer:
 
         # 保存到文件
         config_path = Path(__file__).parent.parent / "config.optimized.json"
-        with open(config_path, 'w', encoding='utf-8') as f:
+        with open(config_path, "w", encoding="utf-8") as f:
             json.dump(config, f, indent=4, ensure_ascii=False)
 
         print("\n  [PASS] 配置已保存到: config.optimized.json")
 
-        return {
-            "status": "pass",
-            "config": config,
-            "config_path": str(config_path)
-        }
+        return {"status": "pass", "config": config, "config_path": str(config_path)}
 
     def run_full_optimization(self):
         """运行完整优化流程"""
@@ -342,7 +321,7 @@ class IntelArcOptimizer:
 
         # 5. 生成优化配置
         self.print_header("步骤5: 生成优化配置")
-        best_batch = batch_result.get('best_batch_size', 131072)
+        best_batch = batch_result.get("best_batch_size", 131072)
         config_result = self.generate_optimized_config(best_batch)
 
         # 总结

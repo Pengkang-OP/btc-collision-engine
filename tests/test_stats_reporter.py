@@ -314,9 +314,7 @@ class TestPrintFinalSummary(unittest.TestCase):
         args = self._make_args(export_progress="out.json")
 
         with (
-            patch(
-                "src.cli.stats_reporter.export_progress_data", side_effect=RuntimeError("disk full")
-            ),
+            patch("src.cli.stats_reporter.export_progress_data", side_effect=RuntimeError("disk full")),
             patch("builtins.print") as mock_print,
         ):
             self._call(engine, "cpu", args)
@@ -329,9 +327,7 @@ class TestPrintFinalSummary(unittest.TestCase):
         args = self._make_args(export_matches="matches.json")
 
         with (
-            patch(
-                "src.cli.stats_reporter.export_matches", side_effect=OSError("permission denied")
-            ),
+            patch("src.cli.stats_reporter.export_matches", side_effect=OSError("permission denied")),
             patch("builtins.print") as mock_print,
         ):
             self._call(engine, "cpu", args)

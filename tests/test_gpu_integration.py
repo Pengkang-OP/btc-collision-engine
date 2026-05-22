@@ -3,9 +3,9 @@
 GPU 引擎集成测试 - 验证 P0/P1/P2 所有功能集成
 """
 
-import unittest
-import sys
 import os
+import sys
+import unittest
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -17,12 +17,12 @@ class TestGPUIntegration(unittest.TestCase):
     def test_01_import_modules(self):
         """测试所有 P1/P2 模块可以导入"""
         # P1 模块
-        from src.gpu.intel_timeout_manager import AdaptiveTimeoutManager
-        from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+        from src.gpu.auto_tuner import GPUAutoTuner
 
         # P2 模块
         from src.gpu.benchmark_suite import GPUBenchmarkSuite
-        from src.gpu.auto_tuner import GPUAutoTuner
+        from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+        from src.gpu.intel_timeout_manager import AdaptiveTimeoutManager
         from src.gpu.performance_reporter import PerformanceReportGenerator, ReportConfig
 
         # 验证导入成功
@@ -86,6 +86,7 @@ class TestGPUIntegration(unittest.TestCase):
     def test_06_import_integration_in_engine(self):
         """测试 GPU 引擎中导入了 P1/P2 模块"""
         import inspect
+
         from src.collision.gpu import engine as gpu_collision_engine
 
         source = inspect.getsource(gpu_collision_engine)

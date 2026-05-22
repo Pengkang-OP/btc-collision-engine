@@ -67,9 +67,7 @@ def mock_engine_patches(mock_targets):
         patch("src.collision.gpu.engine.CollisionCore", return_value=mock_collision_core),
         patch("src.collision.gpu.engine.SearchModeCoordinator"),
         patch("src.collision.gpu.engine.GPUEngineMonitor"),
-        patch(
-            "src.collision.gpu.engine.VendorOptimizationFactory.create", return_value=MagicMock()
-        ),
+        patch("src.collision.gpu.engine.VendorOptimizationFactory.create", return_value=MagicMock()),
         patch("src.collision.gpu.engine.GPUDeviceDetector"),
     ]
     return patches, mock_device_manager, mock_collision_core

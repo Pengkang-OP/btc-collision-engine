@@ -198,21 +198,22 @@ class TestTaprootAddressDetection:
 
     def test_taproot_format_detection(self):
         """测试Taproot地址格式检测"""
-        taproot_addr = "bc1p5d7rjq7g6rdk2yhzqv9fjyq8z5qgkz9x3m2l8c7v6b5n4m3k2h"
+        taproot_addr = "bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0"
         fmt = self.resolver.detect_format(taproot_addr)
 
         assert fmt == "taproot_address", f"应该识别为taproot_address，实际为{fmt}"
 
     def test_taproot_address_not_supported(self):
-        """测试Taproot地址暂不支持"""
-        taproot_addr = "bc1p5d7rjq7g6rdk2yhzqv9fjyq8z5qgkz9x3m2l8c7v6b5n4m3k2h"
+        """测试Taproot地址暂不支持（使用有效BIP-350测试向量验证完整解码路径）"""
+        # 使用 BIP-350 官方测试向量，确保覆盖完整解码→警告→None 路径
+        taproot_addr = "bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0"
         result = self.resolver.resolve(taproot_addr)
 
         assert result is None, "Taproot地址当前应该返回None（暂不支持）"
 
     def test_taproot_uppercase_detection(self):
         """测试大写Taproot地址检测"""
-        taproot_addr = "BC1P5D7RJQ7G6RDK2YHZQV9FJYQ8Z5QGKZ9X3M2L8C7V6B5N4M3K2H"
+        taproot_addr = "BC1P0XLXVLHEMJA6C4DQV22UAPCTQUPFHLXM9H8Z3K2E72Q4K9HCZ7VQZK5JJ0"
         fmt = self.resolver.detect_format(taproot_addr)
 
         assert fmt == "taproot_address", f"大写Taproot地址应该被识别，实际为{fmt}"
@@ -249,9 +250,7 @@ class TestExceptionHandling:
         result = self.resolver.resolve(invalid_base58)
 
         # 应该被格式检测拒绝或校验和验证失败
-        assert (
-            result is None or result is not None
-        ), "无效Base58字符应该被处理（返回None或验证失败）"
+        assert result is None or result is not None, "无效Base58字符应该被处理（返回None或验证失败）"
 
     def test_very_long_input(self):
         """测试超长输入"""

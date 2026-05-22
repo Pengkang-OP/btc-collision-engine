@@ -45,9 +45,7 @@ class GPUProfileLoader:
             # 版本检查
             version = data.get("_version", "1.0")
             if version != "1.0":
-                logger.warning(
-                    f"不支持的配置文件版本: {version}, 当前支持1.0。可能导致配置加载错误"
-                )
+                logger.warning(f"不支持的配置文件版本: {version}, 当前支持1.0。可能导致配置加载错误")
 
             self.profiles = data
 
@@ -228,9 +226,7 @@ class GPUProfileLoader:
         if "compute_capability" in profile:
             cc = profile["compute_capability"]
             if not isinstance(cc, (str, int, float)):
-                errors.append(
-                    f"compute_capability类型错误: 期望str/int/float, 得到{type(cc).__name__}"
-                )
+                errors.append(f"compute_capability类型错误: 期望str/int/float, 得到{type(cc).__name__}")
 
         if "memory_efficiency" in profile:
             eff = profile["memory_efficiency"]

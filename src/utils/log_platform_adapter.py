@@ -170,7 +170,7 @@ class PlatformAdapter:
             try:
                 import psutil
 
-                return cast(int, psutil.Process(os.getpid()).nice())  # 可选依赖psutil
+                return int(psutil.Process(os.getpid()).nice())  # 可选依赖psutil
             except (OSError, AttributeError):
                 return 0
 
@@ -264,9 +264,7 @@ class PlatformAdapter:
 
         return cast(
             logging.Handler,
-            RotatingFileHandler(
-                filename, maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8"
-            ),
+            RotatingFileHandler(filename, maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8"),
         )
 
     def _get_windows_console_handler(self, level: int) -> logging.Handler:

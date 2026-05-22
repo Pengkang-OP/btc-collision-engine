@@ -293,7 +293,6 @@ class TestPerformanceMonitoringPipeline:
             patch.object(pipeline, "_create_data_logger", return_value=None),
             patch.object(pipeline, "_create_vendor_monitors", return_value=[]),
         ):
-
             pipeline.start()
             assert pipeline.is_running() is True
 
@@ -312,7 +311,6 @@ class TestPerformanceMonitoringPipeline:
             patch.object(pipeline, "_create_data_logger", return_value=None),
             patch.object(pipeline, "_create_vendor_monitors", return_value=[]),
         ):
-
             pipeline.start()
             pipeline.start()  # 不应抛出异常
             assert pipeline.is_running() is True

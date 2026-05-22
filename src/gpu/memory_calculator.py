@@ -72,9 +72,7 @@ class GPUMemoryCalculator:
         # 5. 内核执行临时开销（20%，仅对可变大小缓冲区计算）
         overhead_bytes = int(match_flags_bytes * GPUMemoryCalculator.KERNEL_OVERHEAD_RATIO)
 
-        total_bytes = (
-            seed_buf_bytes + precomp_bytes + match_flags_bytes + targets_bytes + overhead_bytes
-        )
+        total_bytes = seed_buf_bytes + precomp_bytes + match_flags_bytes + targets_bytes + overhead_bytes
         return total_bytes
 
     @staticmethod
@@ -170,9 +168,7 @@ class GPUMemoryCalculator:
         match_flags_bytes = batch_size * GPUMemoryCalculator.MATCH_FLAG_SIZE
         targets_bytes = num_targets * GPUMemoryCalculator.HASH160_SIZE
         overhead_bytes = int(match_flags_bytes * GPUMemoryCalculator.KERNEL_OVERHEAD_RATIO)
-        total_bytes = (
-            seed_buf_bytes + precomp_bytes + match_flags_bytes + targets_bytes + overhead_bytes
-        )
+        total_bytes = seed_buf_bytes + precomp_bytes + match_flags_bytes + targets_bytes + overhead_bytes
 
         breakdown = {
             "seed_buf_mb": seed_buf_bytes / bp_mb,

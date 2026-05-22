@@ -318,9 +318,7 @@ class TestGPUDeviceScorerIdentifyModel(unittest.TestCase):
         self.assertEqual(self.scorer.identify_model("NVIDIA GeForce RTX 3080", "nvidia"), "rtx30")
 
     def test_04_nvidia_rtx20(self):
-        self.assertEqual(
-            self.scorer.identify_model("NVIDIA GeForce RTX 2080 Ti", "nvidia"), "rtx20"
-        )
+        self.assertEqual(self.scorer.identify_model("NVIDIA GeForce RTX 2080 Ti", "nvidia"), "rtx20")
 
     def test_05_nvidia_gtx16(self):
         self.assertEqual(self.scorer.identify_model("NVIDIA GeForce GTX 1660", "nvidia"), "gtx16")
@@ -338,9 +336,7 @@ class TestGPUDeviceScorerIdentifyModel(unittest.TestCase):
         self.assertEqual(self.scorer.identify_model("Quadro P4000", "nvidia"), "quadro")
 
     def test_10_nvidia_unknown(self):
-        self.assertEqual(
-            self.scorer.identify_model("NVIDIA SomeWeirdGPU", "nvidia"), "nvidia_other"
-        )
+        self.assertEqual(self.scorer.identify_model("NVIDIA SomeWeirdGPU", "nvidia"), "nvidia_other")
 
     # ── AMD RX 500/400 扩展 ──
     def test_11_amd_rx590(self):

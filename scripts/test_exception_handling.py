@@ -9,10 +9,9 @@ GPU停止阻塞修复 - 异常处理专项测试
 4. 验证超时监控优化
 """
 
-import sys
 import os
+import sys
 import time
-import threading
 
 # 添加项目根目录到路径
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -25,8 +24,9 @@ def test_1_exception_handling_code_review():
     print("测试1: 异常处理代码审查")
     print("=" * 70)
 
-    from src.gpu import kernel_impl
     import inspect
+
+    from src.gpu import kernel_impl
 
     # 获取run_batch方法源码
     source = inspect.getsource(kernel_impl.GPUKernel.run_batch)
@@ -58,8 +58,9 @@ def test_2_timeout_monitor_optimization():
     print("测试2: 超时监控线程优化")
     print("=" * 70)
 
-    from src.gpu import kernel_impl
     import inspect
+
+    from src.gpu import kernel_impl
 
     source = inspect.getsource(kernel_impl.GPUKernel.run_batch)
 
@@ -88,8 +89,9 @@ def test_3_race_condition_fix():
     print("测试3: 停止信号竞态条件优化")
     print("=" * 70)
 
-    from src.gpu import kernel_impl
     import inspect
+
+    from src.gpu import kernel_impl
 
     source = inspect.getsource(kernel_impl.GPUKernel.run_batch)
 
@@ -134,8 +136,8 @@ def test_4_max_iterations_calculation():
     # 验证计算逻辑
     assert expected_max_iterations == 310, f"预期310,实际{expected_max_iterations}"
 
-    print(f"  ✅ 最大迭代次数计算正确")
-    print(f"  ✅ 包含10次容错缓冲")
+    print("  ✅ 最大迭代次数计算正确")
+    print("  ✅ 包含10次容错缓冲")
 
     return True
 
@@ -153,15 +155,15 @@ def test_5_polling_interval_performance():
     overhead_ms = polling_count * 0.001  # 每次查询约1ms
     overhead_percent = (overhead_ms / (batch_time_estimate * 1000)) * 100
 
-    print(f"  轮询间隔: {poll_interval}秒 ({poll_interval*1000}ms)")
+    print(f"  轮询间隔: {poll_interval}秒 ({poll_interval * 1000}ms)")
     print(f"  预计每批次时间: {batch_time_estimate}秒")
     print(f"  预计轮询次数: {polling_count}次")
-    print(f"  轮询总开销: {overhead_ms*1000:.3f}ms")
+    print(f"  轮询总开销: {overhead_ms * 1000:.3f}ms")
     print(f"  性能影响: {overhead_percent:.4f}%")
 
     assert overhead_percent < 0.01, f"性能影响过大: {overhead_percent}%"
 
-    print(f"  ✅ 性能影响极小(<0.001%)")
+    print("  ✅ 性能影响极小(<0.001%)")
 
     return True
 
@@ -176,14 +178,14 @@ def test_6_exception_types_coverage():
         import pyopencl as cl
 
         print(f"  PyOpenCL版本: {cl.VERSION_TEXT}")
-        print(f"  ✅ command_execution_status枚举可用")
-        print(f"  ✅ cl.Error异常类型可用")
+        print("  ✅ command_execution_status枚举可用")
+        print("  ✅ cl.Error异常类型可用")
 
         # 验证异常类型
         assert hasattr(cl, "Error"), "cl.Error不存在"
         assert hasattr(cl, "command_execution_status"), "command_execution_status不存在"
 
-        print(f"  ✅ 异常处理所需的API完整")
+        print("  ✅ 异常处理所需的API完整")
 
         return True
 

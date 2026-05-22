@@ -30,9 +30,7 @@ pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
 from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine  # noqa: E402
 
 # 配置日志
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -76,9 +74,7 @@ def test_single_gpu_performance():
     targets = generate_test_targets(1000)
 
     # 创建多GPU引擎，只使用一个GPU
-    engine = MultiGPUCollisionEngine(
-        {"enable_async_execution": True, "workload_monitor_interval": 2}
-    )
+    engine = MultiGPUCollisionEngine({"enable_async_execution": True, "workload_monitor_interval": 2})
 
     # 初始化引擎，只使用一个GPU
     if not engine.initialize(device_count=1):
@@ -257,9 +253,7 @@ def test_memory_usage():
     targets = generate_test_targets(1000)
 
     # 创建多GPU引擎
-    engine = MultiGPUCollisionEngine(
-        {"enable_async_execution": True, "workload_monitor_interval": 2}
-    )
+    engine = MultiGPUCollisionEngine({"enable_async_execution": True, "workload_monitor_interval": 2})
 
     # 初始化引擎，只使用一个GPU
     if not engine.initialize(device_count=1):

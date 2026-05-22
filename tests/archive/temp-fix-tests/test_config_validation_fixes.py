@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 配置验证代码审查修复验证测试
 
 验证代码审查发现的6个问题是否已正确修复
 """
 
+
 import pytest
-import json
-import tempfile
-import os
+
 from src.config.config_manager import ConfigManager
 
 
@@ -132,9 +130,9 @@ class TestCodeReviewFixes:
 
         # 验证错误消息中提到额外属性
         error_messages = " ".join(errors.values())
-        assert (
-            "Additional" in error_messages or "additional" in error_messages.lower()
-        ), f"错误消息应提到额外属性: {error_messages}"
+        assert "Additional" in error_messages or "additional" in error_messages.lower(), (
+            f"错误消息应提到额外属性: {error_messages}"
+        )
 
         print(f"\n[OK] 成功拒绝额外属性: {list(errors.keys())}")
 

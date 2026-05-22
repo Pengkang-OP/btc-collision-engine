@@ -151,9 +151,7 @@ class EngineMatchEvent(CollisionEvent):
         self.event_type = EventType.ENGINE_MATCH
         # 安全脱敏: metadata中的地址仅保留前6和后4字符
         masked_addr = (
-            self.address
-            if len(self.address) <= 10
-            else (f"{self.address[:6]}...{self.address[-4:]}")
+            self.address if len(self.address) <= 10 else (f"{self.address[:6]}...{self.address[-4:]}")
         )
         masked_target = (
             self.target_address

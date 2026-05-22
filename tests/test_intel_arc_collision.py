@@ -117,9 +117,7 @@ class IntelArcTestMonitor:
         """获取统计信息"""
         elapsed = time.time() - self.start_time if self.start_time else 0
         avg_throughput = (
-            sum(self.throughput_history) / len(self.throughput_history)
-            if self.throughput_history
-            else 0
+            sum(self.throughput_history) / len(self.throughput_history) if self.throughput_history else 0
         )
         peak_throughput = max(self.throughput_history) if self.throughput_history else 0
 
@@ -182,9 +180,7 @@ class IntelArcTestMonitor:
         logger.info("Intel Arc测试监控器资源已清理")
 
 
-def run_gpu_collision_test(
-    targets: set[str], duration: int = 60, batch_size: int = 1048576
-) -> dict:
+def run_gpu_collision_test(targets: set[str], duration: int = 60, batch_size: int = 1048576) -> dict:
     """运行GPU碰撞测试"""
 
     print("\n" + "=" * 80)
@@ -224,9 +220,7 @@ def run_gpu_collision_test(
         print(f"\n🎯 发现匹配: {address}")
         print(f"   私钥: {private_key.hex()}")
         print(f"   WIF: {wif}\n")
-        stats_data["matches"].append(
-            {"address": address, "private_key": private_key.hex(), "wif": wif}
-        )
+        stats_data["matches"].append({"address": address, "private_key": private_key.hex(), "wif": wif})
 
     try:
         # 初始化GPU引擎
@@ -279,9 +273,7 @@ def run_gpu_collision_test(
                         # 估算执行时间：batch_size / speed * 1000
                         est_batch_time = batch_size / current_stats.speed * 1000
                         batch_times.append(est_batch_time)
-                        monitor.record_batch(
-                            batch_size=batch_size, execution_time_ms=est_batch_time
-                        )
+                        monitor.record_batch(batch_size=batch_size, execution_time_ms=est_batch_time)
 
         except KeyboardInterrupt:
             print("\n\n⚠️  收到中断信号，正在停止...")
@@ -441,7 +433,9 @@ def main():
 
     # 运行GPU测试
     gpu_result = run_gpu_collision_test(
-        targets=targets, duration=60, batch_size=1048576  # 60秒测试 # 1M batch size
+        targets=targets,
+        duration=60,
+        batch_size=1048576,  # 60秒测试 # 1M batch size
     )
 
     # 可选：运行CPU基线测试（取消注释以启用）

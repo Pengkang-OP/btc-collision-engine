@@ -99,8 +99,8 @@
     "_comment_gpu_memory_pool": "是否启用 GPU 内存池",
     "max_buffers": 100,
     "_comment_max_buffers": "最大缓冲区数",
-    "max_memory_mb": 512,
-    "_comment_max_memory_mb": "最大 GPU 内存(MB)",
+    "max_memory_mb": 8192,
+    "_comment_max_memory_mb": "最大 GPU 内存(MB, 与 config.json 保持一致)",
     "mode": "auto",
     "_comment_mode_gpu": "GPU 模式: auto(自动), single(单卡), multi(多卡)",
     "device_indices": [-1],
@@ -113,8 +113,8 @@
     "_comment_work_group_size": "OpenCL work group 大小 (64-2048)",
     "use_fast_math": true,
     "_comment_use_fast_math": "是否启用 fast math 优化",
-    "use_uint32_workaround": false,
-    "_comment_use_uint32_workaround": "Intel GPU uint32 兼容处理",
+    "use_uint32_workaround": true,
+    "_comment_use_uint32_workaround": "Intel GPU uint32 兼容处理 (Intel Arc 必须启用)",
     "compiler_flags": "",
     "_comment_compiler_flags": "自定义 OpenCL 编译选项",
     "driver_check": {
@@ -128,9 +128,30 @@
       "0": {
         "batch_size": 2097152,
         "work_group_size": 512
+      },
+      "1": {
+        "_comment": "Intel Arc A770 16GB - v4.2.1 极致性能配置 (建议 0.70-0.80)",
+        "batch_size": 16777216,
+        "work_group_size": 256,
+        "queue_depth": 32,
+        "memory_usage_ratio": 0.75,
+        "enable_async": true
       }
     },
-    "_comment_per_device_config": "每设备独立配置(可选, 覆盖全局值)"
+    "_comment_per_device_config": "每设备独立配置(可选, 覆盖全局值)",
+    "_comment_v422": "===== v4.2.2 新增: 异步日志与压缩检查配置 =====",
+    "use_async_logging": false,
+    "_comment_use_async_logging": "启用异步日志写入，减少主线程阻塞",
+    "async_log_file": "logs/gpu_async.log",
+    "_comment_async_log_file": "异步日志文件路径",
+    "async_log_max_bytes": 10485760,
+    "_comment_async_log_max_bytes": "异步日志文件最大字节数(10MB)",
+    "async_log_backup_count": 5,
+    "_comment_async_log_backup_count": "异步日志备份文件数量",
+    "check_uncompressed": null,
+    "_comment_check_uncompressed": "是否检查非压缩P2PKH地址(null=自动, true=强制检查, false=不检查)",
+    "key_generation_strategy": "PRNG_SEED",
+    "_comment_key_generation_strategy": "私钥生成策略: PRNG_SEED(推荐), SEQUENTIAL_UINT32, PRNG_STREAM"
   },
 
   "monitoring": {
@@ -168,74 +189,6 @@
       "max_age_days": 30,
       "_comment_max_age_days": "数据最大保存天数"
     }
-  },
-  "gpu": {
-    "_comment": "GPU高级配置",
-    "use_new_module": true,
-    "_comment_use_new_module": "是否使用新的GPU模块(false=使用旧gpu_engine.py)",
-    "auto_detect": true,
-    "_comment_auto_detect": "自动检测GPU设备",
-    "memory_usage_ratio": 0.70,
-    "_comment_memory_usage_ratio": "显存使用比例(0.0-1.0), Intel Arc建议0.70",
-    "enable_vendor_optimizations": true,
-    "_comment_enable_vendor_optimizations": "启用厂商特定优化",
-    "gpu_memory_pool": true,
-    "_comment_gpu_memory_pool": "启用GPU内存池以减少频繁分配/释放",
-    "max_buffers": 100,
-    "_comment_max_buffers": "GPU内存池最大缓冲区数量(与代码默认值一致)",
-    "max_memory_mb": 512,
-    "_comment_max_memory_mb": "GPU内存池最大内存(MB,与代码默认值一致)",
-    "async_execution": true,
-    "_comment_async_execution": "启用GPU异步执行(双缓冲优化), 性能提升~61%, v3.2.0默认开启",
-    "queue_depth": 4,
-    "_comment_queue_depth": "GPU命令队列深度: GPU队列中同时保持的预提交批次数(v2.3.2队列深度优化), 默认4, 范围1-16",
-    "seed_prefetch_size": 5,
-    "_comment_seed_prefetch_size": "种子预生成缓存大小: 后台线程预生成的种子数量，减少主循环os.urandom()阻塞",
-    "timeout_protection": true,
-    "_comment_timeout_protection": "启用GPU超时保护机制, 防止永久卡死",
-    "base_timeout_seconds": 30,
-    "_comment_base_timeout_seconds": "GPU内核执行基础超时(秒)",
-    "max_error_retries": 100,
-    "_comment_max_error_retries": "GPU连续错误最大重试次数(超过后强制停止引擎)",
-    "driver_check": {
-      "_comment": "驱动检查配置",
-      "enabled": true,
-      "_comment_enabled": "启用驱动版本检测和健康检查",
-      "require_minimum_version": true,
-      "_comment_require_minimum_version": "要求驱动版本满足最低要求(否则报错)",
-      "warn_on_unstable": true,
-      "_comment_warn_on_unstable": "对已知不稳定驱动版本发出警告",
-      "auto_fallback_conservative": true,
-      "_comment_auto_fallback_conservative": "驱动版本过旧时自动切换到保守模式"
-    },
-    "mode": "auto",
-    "_comment_mode": "GPU模式: auto=自动选择, single=单GPU, multi=多GPU",
-    "device_indices": [-1],
-    "_comment_device_indices": "GPU设备索引列表, -1=自动选择最佳, [0,1]=使用GPU 0和1",
-    "load_balancing": "performance",
-    "_comment_load_balancing": "负载均衡策略: performance=按性能, equal=平均分配",
-    "auto_tuning": true,
-    "_comment_auto_tuning": "自动根据设备型号调优参数",
-    "per_device_config": {
-      "_comment": "每个GPU的独立配置(可选,覆盖auto_tuning)",
-      "0": {
-        "batch_size": 1048576,
-        "work_group_size": 512
-      }
-    },
-    "_comment_v422": "===== v4.2.2 新增: 异步日志与压缩检查配置 =====",
-    "use_async_logging": false,
-    "_comment_use_async_logging": "启用异步日志写入，减少主线程阻塞",
-    "async_log_file": "logs/gpu_async.log",
-    "_comment_async_log_file": "异步日志文件路径",
-    "async_log_max_bytes": 10485760,
-    "_comment_async_log_max_bytes": "异步日志文件最大字节数(10MB)",
-    "async_log_backup_count": 5,
-    "_comment_async_log_backup_count": "异步日志备份文件数量",
-    "check_uncompressed": null,
-    "_comment_check_uncompressed": "是否检查非压缩P2PKH地址(null=自动, true=强制检查, false=不检查)",
-    "key_generation_strategy": "PRNG_SEED",
-    "_comment_key_generation_strategy": "私钥生成策略: PRNG_SEED(推荐), SEQUENTIAL_UINT32, PRNG_STREAM"
   },
 
   "optimization": {

@@ -1,23 +1,19 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 GPU自适应性能优化器测试
 """
 
-import sys
 import os
-import time
+import sys
 import unittest
-from unittest.mock import Mock, MagicMock
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.gpu.performance_optimizer import (
     GPUPerformanceOptimizer,
-    PerformanceMetrics,
-    GPUProfile,
     GPUVendor,
+    PerformanceMetrics,
     get_gpu_optimizer,
 )
 
@@ -115,9 +111,7 @@ class TestGPUPerformanceOptimizer(unittest.TestCase):
         # 先记录一些性能数据
         for i in range(10):
             self.optimizer.record_performance(
-                PerformanceMetrics(
-                    batch_execution_time_ms=50, keys_per_second=100000, error_count=1
-                )
+                PerformanceMetrics(batch_execution_time_ms=50, keys_per_second=100000, error_count=1)
             )
 
         # 创建配置文件
@@ -127,7 +121,8 @@ class TestGPUPerformanceOptimizer(unittest.TestCase):
 
         # 测试高错误率调整
         new_batch_size, adjustments = self.optimizer.analyze_and_adjust(
-            current_batch_size=100000, error_rate=0.05  # 5%错误率
+            current_batch_size=100000,
+            error_rate=0.05,  # 5%错误率
         )
 
         # 应该减小batch_size
@@ -166,7 +161,9 @@ class TestGPUPerformanceOptimizer(unittest.TestCase):
         for i in range(10):
             self.optimizer.record_performance(
                 PerformanceMetrics(
-                    batch_execution_time_ms=10, keys_per_second=500000, error_count=0  # 10ms，很快
+                    batch_execution_time_ms=10,
+                    keys_per_second=500000,
+                    error_count=0,  # 10ms，很快
                 )
             )
 
@@ -193,9 +190,7 @@ class TestGPUPerformanceOptimizer(unittest.TestCase):
 
         for i in range(5):
             self.optimizer.record_performance(
-                PerformanceMetrics(
-                    batch_execution_time_ms=50, keys_per_second=100000, error_count=0
-                )
+                PerformanceMetrics(batch_execution_time_ms=50, keys_per_second=100000, error_count=0)
             )
 
         report = self.optimizer.get_optimization_report()

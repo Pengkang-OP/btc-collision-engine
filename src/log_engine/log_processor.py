@@ -164,18 +164,18 @@ class SensitiveDataFilter:
 
     # 从共享模块导入正则模式，避免与 SecurityLogFilter 重复维护
     from ..utils.sensitive_patterns import (  # type: ignore[import]
-        PRIVATE_KEY_HEX,
-        PRIVATE_KEY_CONTEXT,
-        P2PKH_ADDRESS,
-        P2SH_ADDRESS,
         BECH32_ADDRESS,
         BECH32M_ADDRESS,
-        WIF_UNCOMPRESSED,
-        WIF_COMPRESSED,
         BIP32_EXTENDED_KEY,
         BIP32_EXTENDED_PUBKEY,
         BIP39_PHRASE_12,
         BIP39_PHRASE_24,
+        P2PKH_ADDRESS,
+        P2SH_ADDRESS,
+        PRIVATE_KEY_CONTEXT,
+        PRIVATE_KEY_HEX,
+        WIF_COMPRESSED,
+        WIF_UNCOMPRESSED,
     )
 
     SENSITIVE_PATTERNS = [  # type: ignore[assignment]

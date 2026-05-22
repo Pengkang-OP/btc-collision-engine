@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 GPU碰撞引擎综合性能测试
 
@@ -12,13 +11,13 @@ GPU碰撞引擎综合性能测试
 6. 生成详细报告
 """
 
-import sys
-import os
-import time
 import json
+import os
 import statistics
-from pathlib import Path
+import sys
+import time
 from datetime import datetime
+from pathlib import Path
 
 # 添加项目根目录到路径
 project_root = Path(__file__).parent
@@ -121,7 +120,7 @@ class GPUPerformanceTester:
         print(f"✓ GPU设备: {device_info.get('name', 'Unknown')}")
         print(f"✓ 显存: {device_info.get('global_mem_gb', 0):.2f} GB")
         print(f"✓ 计算单元: {device_info.get('compute_units', 0)}")
-        print(f"✓ 显存效率: {memory_efficiency*100:.0f}%")
+        print(f"✓ 显存效率: {memory_efficiency * 100:.0f}%")
         print(f"✓ 批次大小: {engine.batch_size:,}")
         print(f"✓ 初始化时间: {init_time:.2f}秒")
 
@@ -147,8 +146,7 @@ class GPUPerformanceTester:
                 speeds.append(speed)
 
                 print(
-                    f"  [{elapsed:5.1f}s] {latest['total_checked']:>12,} keys | "
-                    f"{speed:>10,.2f} keys/s"
+                    f"  [{elapsed:5.1f}s] {latest['total_checked']:>12,} keys | {speed:>10,.2f} keys/s"
                 )
 
         engine.stop()
@@ -176,7 +174,7 @@ class GPUPerformanceTester:
                 "speed_samples": len(speeds),
             }
 
-            print(f"\n  基准测试结果:")
+            print("\n  基准测试结果:")
             print(f"    总检查数: {total_keys:,} keys")
             print(f"    平均速度: {avg_speed:,.2f} keys/s")
             print(f"    峰值速度: {max_speed:,.2f} keys/s")
@@ -246,7 +244,7 @@ class GPUPerformanceTester:
                 "max_memory_mb": max_memory,
             }
 
-            print(f"\n  压力测试结果:")
+            print("\n  压力测试结果:")
             print(f"    总检查数: {total_keys:,} keys")
             print(f"    平均速度: {avg_speed:,.2f} keys/s")
             print(f"    峰值速度: {max_speed:,.2f} keys/s")
@@ -280,10 +278,10 @@ class GPUPerformanceTester:
             if speeds:
                 avg = statistics.mean([s for s in speeds if s > 0])
                 all_speeds.append(avg)
-                print(f"  测试 {i+1}/{test_count}: {avg:,.2f} keys/s")
+                print(f"  测试 {i + 1}/{test_count}: {avg:,.2f} keys/s")
             else:
                 all_speeds.append(0)
-                print(f"  测试 {i+1}/{test_count}: 0.00 keys/s")
+                print(f"  测试 {i + 1}/{test_count}: 0.00 keys/s")
 
             time.sleep(1)  # 等待资源释放
 
@@ -307,7 +305,7 @@ class GPUPerformanceTester:
                 "individual_results": all_speeds,
             }
 
-            print(f"\n  稳定性结果:")
+            print("\n  稳定性结果:")
             print(f"    平均速度: {overall_avg:,.2f} keys/s")
             print(f"    标准差: {std_dev:,.2f}")
             print(f"    变异系数: {cv:.2f}% (越低越稳定)")
@@ -319,7 +317,7 @@ class GPUPerformanceTester:
         print("=" * 80)
 
         # 设备信息
-        print(f"\n📊 GPU设备信息:")
+        print("\n📊 GPU设备信息:")
         print(f"  设备名称: {self.results['device_info'].get('name', 'N/A')}")
         print(f"  厂商: {self.results['device_info'].get('vendor', 'N/A')}")
         print(f"  显存: {self.results['device_info'].get('global_mem_gb', 0):.2f} GB")
@@ -345,12 +343,12 @@ class GPUPerformanceTester:
 
         # 稳定性测试
         if "overall_avg_speed" in self.results.get("stability", {}):
-            print(f"\n📈 稳定性测试:")
+            print("\n📈 稳定性测试:")
             print(f"  平均速度: {self.results['stability']['overall_avg_speed']:>12,.2f} keys/s")
             print(f"  变异系数: {self.results['stability']['coefficient_of_variation']:>12.2f}%")
 
         # 综合评估
-        print(f"\n⭐ 综合评估:")
+        print("\n⭐ 综合评估:")
 
         benchmark_speed = self.results.get("benchmark", {}).get("avg_speed", 0)
         stress_speed = self.results.get("stress_test", {}).get("avg_speed", 0)
@@ -445,7 +443,8 @@ class GPUPerformanceTester:
 def main():
     """主函数"""
     tester = GPUPerformanceTester(
-        test_duration_benchmark=30, test_duration_stress=60  # 基准测试30秒  # 压力测试60秒
+        test_duration_benchmark=30,
+        test_duration_stress=60,  # 基准测试30秒  # 压力测试60秒
     )
 
     tester.run_all_tests()

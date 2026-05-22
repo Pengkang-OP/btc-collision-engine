@@ -44,37 +44,43 @@ class QualityAlertSystem:
 
         # 1. 绝对值告警
         if current_score < threshold:
-            alerts.append({
-                'type': 'LOW_SCORE',
-                'severity': 'ERROR',
-                'message': f'文档质量评分低于阈值: {current_score:.1f} < {threshold}',
-                'score': current_score,
-                'threshold': threshold
-            })
+            alerts.append(
+                {
+                    "type": "LOW_SCORE",
+                    "severity": "ERROR",
+                    "message": f"文档质量评分低于阈值: {current_score:.1f} < {threshold}",
+                    "score": current_score,
+                    "threshold": threshold,
+                }
+            )
 
         # 2. 趋势告警
         trend = self.analyzer.get_trend()
-        if trend['status'] == 'success' and trend['trend_status'] == 'declining':
-            if trend['trend'] < -0.5:
-                alerts.append({
-                    'type': 'DECLINING_TREND',
-                    'severity': 'WARNING',
-                    'message': f'文档质量持续下降: {trend["trend"]:+.2f}',
-                    'trend': trend['trend']
-                })
+        if trend["status"] == "success" and trend["trend_status"] == "declining":
+            if trend["trend"] < -0.5:
+                alerts.append(
+                    {
+                        "type": "DECLINING_TREND",
+                        "severity": "WARNING",
+                        "message": f"文档质量持续下降: {trend['trend']:+.2f}",
+                        "trend": trend["trend"],
+                    }
+                )
 
         # 3. 新文档告警(低分文档)
         if self.analyzer.history:
             last_record = self.analyzer.history[-1]
-            if 'details' in last_record:
-                new_low = last_record['details'].get('needs_improvement', 0)
+            if "details" in last_record:
+                new_low = last_record["details"].get("needs_improvement", 0)
                 if new_low > 0:
-                    alerts.append({
-                        'type': 'NEW_LOW_QUALITY_DOCS',
-                        'severity': 'WARNING',
-                        'message': f'发现 {new_low} 个需要改进的文档',
-                        'count': new_low
-                    })
+                    alerts.append(
+                        {
+                            "type": "NEW_LOW_QUALITY_DOCS",
+                            "severity": "WARNING",
+                            "message": f"发现 {new_low} 个需要改进的文档",
+                            "count": new_low,
+                        }
+                    )
 
         return alerts
 
@@ -89,11 +95,11 @@ class QualityAlertSystem:
         print(f"{'=' * 60}")
 
         for i, alert in enumerate(alerts, 1):
-            severity = alert['severity']
-            if severity == 'ERROR':
-                icon = '❌'
+            severity = alert["severity"]
+            if severity == "ERROR":
+                icon = "❌"
             else:
-                icon = '⚠️'
+                icon = "⚠️"
 
             print(f"\n{i}. {icon} [{severity}] {alert['type']}")
             print(f"   {alert['message']}")
@@ -103,11 +109,11 @@ class QualityAlertSystem:
 
         # 根据告警类型给出建议
         for alert in alerts:
-            if alert['type'] == 'LOW_SCORE':
+            if alert["type"] == "LOW_SCORE":
                 print("  - 检查需要改进的文档并修复问题")
-            elif alert['type'] == 'DECLINING_TREND':
+            elif alert["type"] == "DECLINING_TREND":
                 print("  - 分析质量下降原因，制定改进计划")
-            elif alert['type'] == 'NEW_LOW_QUALITY_DOCS':
+            elif alert["type"] == "NEW_LOW_QUALITY_DOCS":
                 print("  - 优先修复低分文档")
 
         print(f"{'=' * 60}")
@@ -122,35 +128,22 @@ class QualityAlertSystem:
             True表示CI应该失败
         """
         # 任何ERROR级别告警都导致CI失败
-        return any(a['severity'] == 'ERROR' for a in alerts)
+        return any(a["severity"] == "ERROR" for a in alerts)
 
 
 def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='文档质量智能告警系统')
+    parser = argparse.ArgumentParser(description="文档质量智能告警系统")
+    parser.add_argument("--docs-dir", default="docs", help="文档目录路径 (默认: docs)")
+    parser.add_argument("--threshold", type=float, default=8.0, help="告警阈值 (默认: 8.0)")
     parser.add_argument(
-        '--docs-dir',
-        default='docs',
-        help='文档目录路径 (默认: docs)'
+        "--history-file",
+        default="quality_history.json",
+        help="历史记录文件 (默认: quality_history.json)",
     )
-    parser.add_argument(
-        '--threshold',
-        type=float,
-        default=8.0,
-        help='告警阈值 (默认: 8.0)'
-    )
-    parser.add_argument(
-        '--history-file',
-        default='quality_history.json',
-        help='历史记录文件 (默认: quality_history.json)'
-    )
-    parser.add_argument(
-        '--ci-mode',
-        action='store_true',
-        help='CI模式(返回合适的退出码)'
-    )
+    parser.add_argument("--ci-mode", action="store_true", help="CI模式(返回合适的退出码)")
 
     args = parser.parse_args()
 
@@ -183,11 +176,11 @@ def main():
     good = sum(1 for s in scores if 7.0 <= s.score < 8.5)
     needs_improvement = sum(1 for s in scores if s.score < 7.0)
 
-    analyzer.add_record(avg_score, len(scores), {
-        'excellent': excellent,
-        'good': good,
-        'needs_improvement': needs_improvement
-    })
+    analyzer.add_record(
+        avg_score,
+        len(scores),
+        {"excellent": excellent, "good": good, "needs_improvement": needs_improvement},
+    )
 
     # 检查告警
     alert_system = QualityAlertSystem(args.history_file)

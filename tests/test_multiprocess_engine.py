@@ -65,9 +65,7 @@ class TestMultiprocessEngineInit:
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
 
         targets = ["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", "1HLoD9E4SDFFPDiYfNYnkBLQ85Y51J3Zb1"]
-        engine = MultiprocessCollisionEngine(
-            num_workers=2, batch_size=20000, target_addresses=targets
-        )
+        engine = MultiprocessCollisionEngine(num_workers=2, batch_size=20000, target_addresses=targets)
         assert engine.num_workers == 2
         assert engine.batch_size == 20000
         assert len(engine.target_addresses) == 2
@@ -139,9 +137,7 @@ class TestMultiprocessEngineStart:
     @patch("src.collision.multiprocess_engine.Process")
     @patch("src.collision.multiprocess_engine.mp.Event")
     @patch("src.collision.multiprocess_engine.Queue")
-    def test_start_encryption_no_cryptography(
-        self, mock_queue_cls, mock_event_cls, mock_process_cls
-    ):
+    def test_start_encryption_no_cryptography(self, mock_queue_cls, mock_event_cls, mock_process_cls):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
 
         mock_queue = MagicMock()
@@ -164,9 +160,7 @@ class TestMultiprocessEngineStart:
     @patch("src.collision.multiprocess_engine.Process")
     @patch("src.collision.multiprocess_engine.mp.Event")
     @patch("src.collision.multiprocess_engine.Queue")
-    def test_start_with_sequential_generator(
-        self, mock_queue_cls, mock_event_cls, mock_process_cls
-    ):
+    def test_start_with_sequential_generator(self, mock_queue_cls, mock_event_cls, mock_process_cls):
         from src.collision.multiprocess_engine import MultiprocessCollisionEngine
 
         mock_queue = MagicMock()

@@ -25,22 +25,18 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 def apply_intel_arc_continuity_optimizations(engine):
     """应用Intel Arc GPU运算连续性优化
-    
+
     Args:
         engine: GPUCollisionEngine实例
-    
+
     Returns:
         dict: 应用的优化项
     """
 
-    optimizations = {
-        'applied': [],
-        'warnings': [],
-        'recommendations': []
-    }
+    optimizations = {"applied": [], "warnings": [], "recommendations": []}
 
-    if not hasattr(engine, '_gpu_device'):
-        optimizations['warnings'].append("GPU设备未初始化")
+    if not hasattr(engine, "_gpu_device"):
+        optimizations["warnings"].append("GPU设备未初始化")
         return optimizations
 
     gpu_device = engine._gpu_device
@@ -58,17 +54,17 @@ def apply_intel_arc_continuity_optimizations(engine):
     解决: 使用双队列+预提交策略
     """
 
-    if hasattr(gpu_device, 'compute_queue') and hasattr(gpu_device, 'transfer_queue'):
-        optimizations['applied'].append({
-            'name': '双命令队列',
-            'detail': '已启用Compute队列+Transfer队列并发执行',
-            'expected_improvement': '减少队列等待时间30-50%'
-        })
-    else:
-        optimizations['warnings'].append("未启用双命令队列")
-        optimizations['recommendations'].append(
-            "启用enable_async_execution以使用双队列"
+    if hasattr(gpu_device, "compute_queue") and hasattr(gpu_device, "transfer_queue"):
+        optimizations["applied"].append(
+            {
+                "name": "双命令队列",
+                "detail": "已启用Compute队列+Transfer队列并发执行",
+                "expected_improvement": "减少队列等待时间30-50%",
+            }
         )
+    else:
+        optimizations["warnings"].append("未启用双命令队列")
+        optimizations["recommendations"].append("启用enable_async_execution以使用双队列")
 
     # ========================================
     # 优化2: Batch提交频率优化
@@ -83,26 +79,22 @@ def apply_intel_arc_continuity_optimizations(engine):
     建议值: 1,000,000 - 2,000,000
     """
 
-    current_batch_size = getattr(engine, 'batch_size', None)
+    current_batch_size = getattr(engine, "batch_size", None)
 
     if current_batch_size is None:
-        optimizations['warnings'].append("无法获取batch_size配置")
-        optimizations['recommendations'].append(
-            "检查GPU引擎初始化配置,确保batch_size正确设置"
-        )
+        optimizations["warnings"].append("无法获取batch_size配置")
+        optimizations["recommendations"].append("检查GPU引擎初始化配置,确保batch_size正确设置")
     elif current_batch_size < 500000:
-        optimizations['warnings'].append(
-            f"batch_size={current_batch_size:,} 偏小,建议>=500,000"
-        )
-        optimizations['recommendations'].append(
-            "增大batch_size到1,000,000以减少驱动提交开销"
-        )
+        optimizations["warnings"].append(f"batch_size={current_batch_size:,} 偏小,建议>=500,000")
+        optimizations["recommendations"].append("增大batch_size到1,000,000以减少驱动提交开销")
     elif current_batch_size >= 1000000:
-        optimizations['applied'].append({
-            'name': '大批次优化',
-            'detail': f'batch_size={current_batch_size:,}, 符合Intel Arc最佳实践',
-            'expected_improvement': '减少驱动层开销,提升GPU利用率20-40%'
-        })
+        optimizations["applied"].append(
+            {
+                "name": "大批次优化",
+                "detail": f"batch_size={current_batch_size:,}, 符合Intel Arc最佳实践",
+                "expected_improvement": "减少驱动层开销,提升GPU利用率20-40%",
+            }
+        )
 
     # ========================================
     # 优化3: 工作提交策略
@@ -118,17 +110,17 @@ def apply_intel_arc_continuity_optimizations(engine):
     - 消除CPU-GPU同步等待
     """
 
-    if hasattr(engine, '_async_executor') and engine._async_executor:
-        optimizations['applied'].append({
-            'name': '异步双缓冲',
-            'detail': '已实现Compute/Transfer重叠执行',
-            'expected_improvement': '消除CPU等待,提升GPU连续性50-70%'
-        })
-    else:
-        optimizations['warnings'].append("未启用异步执行器")
-        optimizations['recommendations'].append(
-            "启用async_execution以使用异步双缓冲"
+    if hasattr(engine, "_async_executor") and engine._async_executor:
+        optimizations["applied"].append(
+            {
+                "name": "异步双缓冲",
+                "detail": "已实现Compute/Transfer重叠执行",
+                "expected_improvement": "消除CPU等待,提升GPU连续性50-70%",
+            }
         )
+    else:
+        optimizations["warnings"].append("未启用异步执行器")
+        optimizations["recommendations"].append("启用async_execution以使用异步双缓冲")
 
     # ========================================
     # 优化4: 显存访问模式优化
@@ -144,47 +136,51 @@ def apply_intel_arc_continuity_optimizations(engine):
     - 内存池复用(减少分配开销)
     """
 
-    if hasattr(gpu_device, 'enable_async_execution') and gpu_device.enable_async_execution:
-        optimizations['applied'].append({
-            'name': '显存访问优化',
-            'detail': 'uint32 workaround + 内存池复用',
-            'expected_improvement': '避免hang bug,减少显存分配开销'
-        })
+    if hasattr(gpu_device, "enable_async_execution") and gpu_device.enable_async_execution:
+        optimizations["applied"].append(
+            {
+                "name": "显存访问优化",
+                "detail": "uint32 workaround + 内存池复用",
+                "expected_improvement": "避免hang bug,减少显存分配开销",
+            }
+        )
 
     # ========================================
     # 优化5: 驱动层建议(需要用户手动设置)
     # ========================================
 
-    optimizations['recommendations'].extend([
-        {
-            'category': '驱动设置',
-            'item': '禁用ULLS(Ultra Low Latency Submission)',
-            'detail': 'Intel Arc驱动101.6975+: ULLS会导致Compute性能损失14-31%',
-            'how_to': '在Intel Arc Control中关闭"超低延迟"选项',
-            'expected_improvement': 'Compute性能提升14-31%'
-        },
-        {
-            'category': '驱动设置',
-            'item': '启用硬件调度(Hardware Scheduling)',
-            'detail': 'Windows 10/11硬件加速GPU调度',
-            'how_to': '设置 > 系统 > 显示 > 图形设置 > 硬件加速GPU调度 = 开',
-            'expected_improvement': '减少CPU调度开销,提升GPU利用率'
-        },
-        {
-            'category': '驱动设置',
-            'item': '更新到最新驱动',
-            'detail': 'Intel持续优化Arc GPU的OpenCL性能',
-            'how_to': '下载Intel Arc & Iris Xe Graphics驱动最新版本',
-            'expected_improvement': '修复已知问题,提升稳定性'
-        },
-        {
-            'category': '电源管理',
-            'item': '高性能电源模式',
-            'detail': '避免GPU降频导致性能波动',
-            'how_to': 'Windows电源选项 = 高性能; Intel Arc Control = 最大性能',
-            'expected_improvement': '稳定的GPU频率,减少性能波动'
-        }
-    ])
+    optimizations["recommendations"].extend(
+        [
+            {
+                "category": "驱动设置",
+                "item": "禁用ULLS(Ultra Low Latency Submission)",
+                "detail": "Intel Arc驱动101.6975+: ULLS会导致Compute性能损失14-31%",
+                "how_to": '在Intel Arc Control中关闭"超低延迟"选项',
+                "expected_improvement": "Compute性能提升14-31%",
+            },
+            {
+                "category": "驱动设置",
+                "item": "启用硬件调度(Hardware Scheduling)",
+                "detail": "Windows 10/11硬件加速GPU调度",
+                "how_to": "设置 > 系统 > 显示 > 图形设置 > 硬件加速GPU调度 = 开",
+                "expected_improvement": "减少CPU调度开销,提升GPU利用率",
+            },
+            {
+                "category": "驱动设置",
+                "item": "更新到最新驱动",
+                "detail": "Intel持续优化Arc GPU的OpenCL性能",
+                "how_to": "下载Intel Arc & Iris Xe Graphics驱动最新版本",
+                "expected_improvement": "修复已知问题,提升稳定性",
+            },
+            {
+                "category": "电源管理",
+                "item": "高性能电源模式",
+                "detail": "避免GPU降频导致性能波动",
+                "how_to": "Windows电源选项 = 高性能; Intel Arc Control = 最大性能",
+                "expected_improvement": "稳定的GPU频率,减少性能波动",
+            },
+        ]
+    )
 
     return optimizations
 
@@ -200,12 +196,12 @@ def print_optimization_report(optimizations):
     # 已应用的优化
     print("【已应用的优化】")
     print("-" * 80)
-    if optimizations['applied']:
-        for i, opt in enumerate(optimizations['applied'], 1):
+    if optimizations["applied"]:
+        for i, opt in enumerate(optimizations["applied"], 1):
             print(f"  {i}. ✅ {opt['name']}")
-            if 'detail' in opt:
+            if "detail" in opt:
                 print(f"     详情: {opt['detail']}")
-            if 'expected_improvement' in opt:
+            if "expected_improvement" in opt:
                 print(f"     预期改进: {opt['expected_improvement']}")
             print()
     else:
@@ -215,8 +211,8 @@ def print_optimization_report(optimizations):
     # 警告
     print("【警告】")
     print("-" * 80)
-    if optimizations['warnings']:
-        for i, warn in enumerate(optimizations['warnings'], 1):
+    if optimizations["warnings"]:
+        for i, warn in enumerate(optimizations["warnings"], 1):
             print(f"  {i}. ⚠️  {warn}")
         print()
     else:
@@ -226,15 +222,15 @@ def print_optimization_report(optimizations):
     # 建议
     print("【建议的优化】")
     print("-" * 80)
-    if optimizations['recommendations']:
-        for i, rec in enumerate(optimizations['recommendations'], 1):
+    if optimizations["recommendations"]:
+        for i, rec in enumerate(optimizations["recommendations"], 1):
             if isinstance(rec, dict):
                 print(f"  {i}. 💡 [{rec.get('category', '通用')}] {rec['item']}")
-                if 'detail' in rec:
+                if "detail" in rec:
                     print(f"     说明: {rec['detail']}")
-                if 'how_to' in rec:
+                if "how_to" in rec:
                     print(f"     操作方法: {rec['how_to']}")
-                if 'expected_improvement' in rec:
+                if "expected_improvement" in rec:
                     print(f"     预期改进: {rec['expected_improvement']}")
             else:
                 print(f"  {i}. 💡 {rec}")
@@ -249,9 +245,9 @@ def print_optimization_report(optimizations):
     print("=" * 80)
     print()
 
-    applied_count = len(optimizations['applied'])
-    warning_count = len(optimizations['warnings'])
-    recommendation_count = len(optimizations['recommendations'])
+    applied_count = len(optimizations["applied"])
+    warning_count = len(optimizations["warnings"])
+    recommendation_count = len(optimizations["recommendations"])
 
     print(f"  已应用优化: {applied_count} 项")
     print(f"  警告: {warning_count} 项")

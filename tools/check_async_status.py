@@ -4,42 +4,40 @@
 读取最新的日志文件,检查异步执行情况
 """
 
-import os
-import sys
 from pathlib import Path
 
 
 def check_async_status():
     """检查异步执行状态"""
-    
+
     # 找到最新的日志文件
     log_dir = Path("logs")
     if not log_dir.exists():
         print("❌ logs目录不存在")
         return
-    
+
     log_file = log_dir / "collision.log"
     if not log_file.exists():
         print("❌ 日志文件不存在: collision.log")
         return
-    
+
     # 读取日志
     try:
-        with open(log_file, 'r', encoding='utf-8') as f:
+        with open(log_file, encoding="utf-8") as f:
             lines = f.readlines()
     except Exception as e:
         print(f"❌ 读取日志失败: {e}")
         return
-    
+
     # 获取最后100行
     last_lines = lines[-100:] if len(lines) > 100 else lines
-    log_text = ''.join(last_lines)
-    
+    log_text = "".join(last_lines)
+
     print("=" * 80)
     print("  GPU异步功能状态检查")
     print("=" * 80)
     print()
-    
+
     # 检查关键指标
     checks = {
         "GPU设备初始化": False,
@@ -54,7 +52,7 @@ def check_async_status():
         "batch_size=1000000": False,
         "batch_size=262144": False,
     }
-    
+
     for line in last_lines:
         if "创建双队列(计算+传输)" in line:
             checks["双队列创建"] = True
@@ -80,7 +78,7 @@ def check_async_status():
             checks["batch_size=262144"] = True
         if "GPU设备初始化成功" in line or "GPU 引擎初始化成功" in line:
             checks["GPU设备初始化"] = True
-    
+
     # 显示结果
     print("【基础检查】")
     for key in ["GPU设备初始化", "batch_size=1000000", "batch_size=262144"]:
@@ -90,27 +88,27 @@ def check_async_status():
             continue
         else:
             print(f"  ❌ {key}")
-    
+
     print()
     print("【异步执行检查】")
-    
+
     if checks["双队列创建"]:
         print("  ✅ 双队列创建")
         print(f"    - 计算队列: {'✅' if checks['计算队列'] else '❌'}")
         print(f"    - 传输队列: {'✅' if checks['传输队列'] else '❌'}")
     else:
         print("  ❌ 双队列创建 - 未检测到")
-    
+
     if checks["异步执行启用(配置)"]:
         print("  ✅ 异步执行已启用")
     elif checks["异步执行禁用(传统)"]:
         print("  ❌ 异步执行未启用 - 使用传统模式")
-    
+
     if checks["异步执行器初始化"]:
         print("  ✅ 异步执行器已初始化")
     else:
         print("  ❌ 异步执行器未初始化")
-    
+
     print()
     print("【运行模式】")
     if checks["异步执行模式启动"]:
@@ -119,10 +117,10 @@ def check_async_status():
         print("  ❌ 同步执行模式(单队列)")
     else:
         print("  ⚠️ 未检测到运行模式")
-    
+
     print()
     print("=" * 80)
-    
+
     # 总结
     if checks["双队列创建"] and checks["异步执行模式启动"]:
         print("✅ 异步功能已完全启用!")
@@ -135,9 +133,9 @@ def check_async_status():
     else:
         print("❌ 异步功能未启用 - 使用传统同步模式")
         print("   建议: 检查配置文件或启动参数")
-    
+
     print("=" * 80)
-    
+
     # 显示吞吐量信息
     print()
     print("【性能信息】")

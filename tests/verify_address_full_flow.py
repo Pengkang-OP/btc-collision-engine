@@ -2,20 +2,16 @@
 验证比特币地址全链路：导入 → 格式检测 → 密钥生成 → 地址生成 → 碰撞匹配
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.collision.targets.resolver import TargetResolver
-from src.core.multi_format_generator import MultiFormatAddressGenerator
 from src.collision.targets.format_aware_manager import FormatAwareTargetManager
 from src.collision.targets.matcher import AddressMatcher
-from src.core.crypto_backend import crypto_manager
-from src.core.hash_utils import HashUtils
-from src.core.base58 import Base58
-from src.utils.bech32_codec import bech32_decode
+from src.collision.targets.resolver import TargetResolver
+from src.core.multi_format_generator import MultiFormatAddressGenerator
 
 PASS = 0
 FAIL = 0
@@ -78,17 +74,13 @@ test_key_raw = bytes.fromhex("00000000000000000000000000000000000000000000000000
 
 formats = generator.generate_all_formats(test_key_raw)
 for fmt, addr in formats.items():
-    check(
-        f"私钥0x1 → {fmt}: {addr[:15]}...", addr is not None and len(addr) > 10, f"地址为空或过短"
-    )
+    check(f"私钥0x1 → {fmt}: {addr[:15]}...", addr is not None and len(addr) > 10, "地址为空或过短")
 
 # 验证各格式前缀
 check("P2PKH 以 1 开头", formats["p2pkh"].startswith("1"), f"实际: {formats['p2pkh'][0]}")
 check("P2SH 以 3 开头", formats["p2sh"].startswith("3"), f"实际: {formats['p2sh'][0]}")
 check("Bech32 以 bc1q 开头", formats["bech32"].startswith("bc1q"), f"实际: {formats['bech32'][:6]}")
-check(
-    "Taproot 以 bc1p 开头", formats["taproot"].startswith("bc1p"), f"实际: {formats['taproot'][:6]}"
-)
+check("Taproot 以 bc1p 开头", formats["taproot"].startswith("bc1p"), f"实际: {formats['taproot'][:6]}")
 
 
 print("\n" + "=" * 70)
@@ -99,19 +91,19 @@ from src.core.wif import WIF
 
 # 编码: 私钥 → WIF
 wif_from_pk = WIF.encode(test_key_raw, compressed=True)
-check(f"WIF编码 私钥0x1 → {wif_from_pk}", wif_from_pk is not None, f"WIF编码失败")
+check(f"WIF编码 私钥0x1 → {wif_from_pk}", wif_from_pk is not None, "WIF编码失败")
 
 # 解析: WIF → 地址
 resolved_from_wif = resolver.resolve(wif_from_pk)
 check(
-    f"WIF 解析为地址",
+    "WIF 解析为地址",
     resolved_from_wif is not None and resolved_from_wif.startswith("1"),
     f"解析失败: {resolved_from_wif}",
 )
 
 # 闭环验证: WIF→地址 == 私钥→地址
 check(
-    f"WIF解析地址 = 私钥生成地址",
+    "WIF解析地址 = 私钥生成地址",
     resolved_from_wif == formats["p2pkh"],
     f"WIF解析: {resolved_from_wif}, 私钥生成: {formats['p2pkh']}",
 )
@@ -142,7 +134,7 @@ print("=" * 70)
 
 # 构建测试目标: 将已知私钥 0x1 的地址加入目标集
 target_addrs = {formats["p2pkh"]}
-check(f"目标地址: {list(target_addrs)[0][:15]}...", len(target_addrs) == 1, f"应有1个目标")
+check(f"目标地址: {list(target_addrs)[0][:15]}...", len(target_addrs) == 1, "应有1个目标")
 
 # 使用 AddressMatcher 进行匹配
 matcher = AddressMatcher(strategy="hash_set", targets=target_addrs)
@@ -195,12 +187,12 @@ with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, encoding
 
 try:
     file_targets = resolver.load_from_file(temp_path)
-    check(f"文件加载地址数", file_targets is not None, f"加载失败: {file_targets}")
+    check("文件加载地址数", file_targets is not None, f"加载失败: {file_targets}")
 
     if file_targets:
         # 应跳过无效地址和空行, 有效地址数
         valid_count = len(file_targets)
-        check(f"有效地址数 >= 3", valid_count >= 3, f"期望 >= 3, 实际: {valid_count}")
+        check("有效地址数 >= 3", valid_count >= 3, f"期望 >= 3, 实际: {valid_count}")
         for addr in file_targets:
             check(
                 f"  有效 P2PKH: {addr[:10]}...",
@@ -215,7 +207,7 @@ print("\n" + "=" * 70)
 print("总结")
 print("=" * 70)
 total = PASS + FAIL
-print(f"  通过: {PASS}/{total} ({PASS/total*100:.0f}%)")
+print(f"  通过: {PASS}/{total} ({PASS / total * 100:.0f}%)")
 print(f"  失败: {FAIL}/{total}")
 print("=" * 70)
 

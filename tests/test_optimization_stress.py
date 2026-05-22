@@ -250,15 +250,7 @@ def stress_test_4_memory_stability():
 
         # 检查内存
         current, peak = tracemalloc.get_traced_memory()
-        print(f"  批次 {
-            batch
-            + 1}: 当前={
-            current
-            / 1024
-            / 1024:.2f}MB, " f"峰值={
-                peak
-                / 1024
-            / 1024:.2f}MB")
+        print(f"  批次 {batch + 1}: 当前={current / 1024 / 1024:.2f}MB, 峰值={peak / 1024 / 1024:.2f}MB")
 
     # 最终内存
     final_snapshot = tracemalloc.take_snapshot()

@@ -66,7 +66,7 @@ pip install -r requirements-dev.txt
 | 文件 | 内容 | 必需 |
 |------|------|------|
 | `requirements-base.txt` | 核心加密和工具库 | 是 |
-| `requirements-gpu.txt` | pyopencl + numpy | 否（GPU 支持）|
+| `requirements-gpu.txt` | pyopencl + nvidia-ml-py（继承 base） | 否（GPU 支持）|
 | `requirements-dev.txt` | pytest + 代码质量工具 | 否（开发用）|
 | `requirements.txt` | 全量依赖 | 完整安装 |
 

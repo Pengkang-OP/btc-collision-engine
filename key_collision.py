@@ -86,7 +86,13 @@ try:
     _TARGET_RESOLVER_SRC = _SrcTargetResolver
 except ImportError:
     # src/ 模块不可用时回退到本地实现
-    pass
+    # 常见场景: key_collision.py 作为独立脚本运行（如 python key_collision.py）
+    logging.warning(
+        "src/ 模块不可用，将使用 _LegacyTargetResolver 回退实现。"
+        "此回退功能受限（不支持 P2SH/Bech32/Taproot），"
+        "建议将 key_collision.py 作为包的一部分运行。"
+        "计划在 v5.0 中移除回退路径。"
+    )
 
 
 class TargetResolver:
@@ -102,6 +108,11 @@ class TargetResolver:
         else:
             self._impl = None
             self.generator = P2PKHAddressGenerator()
+            logging.warning(
+                "_LegacyTargetResolver 回退已启用: src/ 模块不可用。"
+                "此回退不支持 P2SH/Bech32/Taproot 地址，"
+                "功能受限。计划在 v5.0 中移除。"
+            )
 
     @staticmethod
     def detect_format(input_str: str) -> str:
@@ -138,7 +149,17 @@ class TargetResolver:
 
 
 class _LegacyTargetResolver:
-    """v4.2.3: 旧版 TargetResolver 逻辑保留作为 src/ 模块不可用时的回退"""
+    """v4.2.3: 旧版 TargetResolver 逻辑保留作为 src/ 模块不可用时的回退。
+
+    限制:
+    - 不支持 P2SH(3开头)、Bech32(bc1q)、Taproot(bc1p) 地址
+    - 不支持缓存
+    - 不支持批量解析优化
+    - 不支持文件分块处理（大文件占用大量内存）
+
+    计划在 v5.0 中移除本回退实现。
+    届时 key_collision.py 将要求 src/ 模块必须可用。
+    """
 
     @staticmethod
     def _detect_format(input_str: str) -> str:

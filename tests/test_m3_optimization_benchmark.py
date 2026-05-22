@@ -231,8 +231,7 @@ class TestM3OptimizationComparison:
             results[batch_size] = per_key_time
 
             print(
-                f"批量大小 {batch_size:5d}: {elapsed * 1000:.2f}ms, "
-                f"每私钥 {per_key_time * 1000:.4f}ms"
+                f"批量大小 {batch_size:5d}: {elapsed * 1000:.2f}ms, 每私钥 {per_key_time * 1000:.4f}ms"
             )
 
         # 分级检查：CI 环境放宽到 10x，本地保持严格 1.5x
@@ -241,16 +240,16 @@ class TestM3OptimizationComparison:
                 raise AssertionError("CI环境: 大批量性能退化超过10倍")
             if results[5000] > results[10] * 1.5:
                 warnings.warn(
-                    f"CI批量性能波动: 5000/10={results[5000]/results[10]:.1f}x > 1.5x, "
+                    f"CI批量性能波动: 5000/10={results[5000] / results[10]:.1f}x > 1.5x, "
                     f"可能因CI虚拟化/资源争抢",
                     stacklevel=2,
                 )
         else:
             assert results[5000] <= results[10] * 1.5, (
                 f"大批量不应该显著更慢: "
-                f"per_key_5000={results[5000]*1000:.4f}ms, "
-                f"per_key_10={results[10]*1000:.4f}ms, "
-                f"ratio={results[5000]/results[10]:.1f}x"
+                f"per_key_5000={results[5000] * 1000:.4f}ms, "
+                f"per_key_10={results[10] * 1000:.4f}ms, "
+                f"ratio={results[5000] / results[10]:.1f}x"
             )
 
         print("\n批量大小性能对比:")

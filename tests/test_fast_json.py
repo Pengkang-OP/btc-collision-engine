@@ -67,9 +67,7 @@ class TestFastDumpLoad:
 
     def test_round_trip(self):
         data = {"test": "value", "list": [1, 2, 3], "nested": {"a": 1}}
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False, encoding="utf-8"
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as f:
             temp_path = f.name
             fast_dump(data, f, indent=2)
 

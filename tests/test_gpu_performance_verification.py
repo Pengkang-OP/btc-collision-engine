@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 GPU性能验证测试 - v2.2.1优化效果确认
 
@@ -24,7 +23,7 @@ def test_crypto_backend_performance():
     print("  测试1: crypto_backend性能验证")
     print("=" * 80)
 
-    from src.core.crypto_backend import crypto_manager, BackendType
+    from src.core.crypto_backend import BackendType, crypto_manager
 
     # 测试数据
     test_key = bytes([1] * 32)
@@ -50,15 +49,15 @@ def test_crypto_backend_performance():
     speedup = pp_time / cc_time if cc_time > 0 else 0
 
     print(f"\n结果 ({iterations}次公钥生成):")
-    print(f"  Pure Python:  {pp_time:.2f}ms ({pp_time/iterations:.3f}ms/次)")
-    print(f"  Coincurve:    {cc_time:.2f}ms ({cc_time/iterations:.3f}ms/次)")
+    print(f"  Pure Python:  {pp_time:.2f}ms ({pp_time / iterations:.3f}ms/次)")
+    print(f"  Coincurve:    {cc_time:.2f}ms ({cc_time / iterations:.3f}ms/次)")
     print(f"  性能提升:     {speedup:.0f}倍")
 
     if speedup >= 100:
-        print(f"  [PASS] 性能提升 >= 100倍，达到预期")
+        print("  [PASS] 性能提升 >= 100倍，达到预期")
         return True
     else:
-        print(f"  [WARN] 性能提升 < 100倍，低于预期")
+        print("  [WARN] 性能提升 < 100倍，低于预期")
         return False
 
 
@@ -70,6 +69,7 @@ def test_gpu_initialization():
 
     try:
         from unittest.mock import Mock, patch
+
         from src.collision.gpu.engine import GPUCollisionEngine
 
         print("\n[1/3] 创建Mock GPU环境...")
@@ -81,7 +81,6 @@ def test_gpu_initialization():
             patch("src.collision.gpu_collision_engine.GPUKernel") as mock_kernel,
             patch("src.collision.gpu_collision_engine.GPUProfileLoader"),
         ):
-
             # 配置Mock
             mock_device_instance = Mock()
             mock_device_instance.context = Mock()
@@ -92,9 +91,7 @@ def test_gpu_initialization():
                 "global_mem_size": 16 * 1024**3,  # 16GB
             }
             mock_device_instance.initialize = Mock()
-            mock_device_instance.get_device_info = Mock(
-                return_value=mock_device_instance.device_info
-            )
+            mock_device_instance.get_device_info = Mock(return_value=mock_device_instance.device_info)
             # v2.2.1优化: 显存效率从45%提升到70%
             mock_device_instance.memory_efficiency = 0.70
             mock_device_instance.timeout_seconds = 30
@@ -122,10 +119,10 @@ def test_gpu_initialization():
             )
 
             print("[3/3] 验证配置...")
-            print(f"  GPU设备: Intel Arc A770")
-            print(f"  批次大小: 65536")
-            print(f"  显存效率: 70% (v2.2.1优化)")
-            print(f"  [PASS] GPU引擎初始化成功")
+            print("  GPU设备: Intel Arc A770")
+            print("  批次大小: 65536")
+            print("  显存效率: 70% (v2.2.1优化)")
+            print("  [PASS] GPU引擎初始化成功")
 
             # 清理（安全检查）
             if hasattr(engine, "cleanup"):
@@ -151,6 +148,7 @@ def test_memory_leak_fix():
 
     try:
         from unittest.mock import Mock, patch
+
         from src.collision.gpu.engine import GPUCollisionEngine
 
         print("\n[1/2] 创建GPU引擎...")
@@ -162,7 +160,6 @@ def test_memory_leak_fix():
             patch("src.collision.gpu_collision_engine.GPUKernel"),
             patch("src.collision.gpu_collision_engine.GPUProfileLoader"),
         ):
-
             # 配置Mock
             mock_device_instance = Mock()
             mock_device_instance.context = Mock()
@@ -173,9 +170,7 @@ def test_memory_leak_fix():
                 "global_mem_size": 16 * 1024**3,
             }
             mock_device_instance.initialize = Mock()
-            mock_device_instance.get_device_info = Mock(
-                return_value=mock_device_instance.device_info
-            )
+            mock_device_instance.get_device_info = Mock(return_value=mock_device_instance.device_info)
             mock_device_instance.memory_efficiency = 0.70
             mock_device_instance.timeout_seconds = 30
             mock_device_instance.enable_async_execution = False
@@ -186,9 +181,7 @@ def test_memory_leak_fix():
             mock_buf.release = Mock()
             mock_buffer.return_value = mock_buf
 
-            engine = GPUCollisionEngine(
-                targets={"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}, device_index=1
-            )
+            engine = GPUCollisionEngine(targets={"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}, device_index=1)
 
             # 模拟缓冲区
             engine._keys_buf = mock_buf
@@ -208,7 +201,7 @@ def test_memory_leak_fix():
                     print(f"  [FAIL] 缓冲区释放次数: {release_count} (存在双重释放)")
                     return False
             else:
-                print(f"  [WARN] cleanup方法不存在，跳过测试")
+                print("  [WARN] cleanup方法不存在，跳过测试")
                 return True
 
     except Exception as e:

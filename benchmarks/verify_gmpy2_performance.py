@@ -62,14 +62,8 @@ def main() -> None:
         speedup = elapsed_python / elapsed_gmpy2
 
         print(f"\n  {name}:")
-        print(
-            f"    gmpy2:    {elapsed_gmpy2:.4f}s"
-            f" ({elapsed_gmpy2 / iterations * 1000:.4f}ms/次)"
-        )
-        print(
-            f"    Python:   {elapsed_python:.4f}s"
-            f" ({elapsed_python / iterations * 1000:.4f}ms/次)"
-        )
+        print(f"    gmpy2:    {elapsed_gmpy2:.4f}s ({elapsed_gmpy2 / iterations * 1000:.4f}ms/次)")
+        print(f"    Python:   {elapsed_python:.4f}s ({elapsed_python / iterations * 1000:.4f}ms/次)")
         print(f"    性能提升: {speedup:.2f}x")
 
     # ── 测试2: 模乘法 (点加法核心运算) ──
@@ -138,14 +132,8 @@ def main() -> None:
     speedup = elapsed_std / elapsed_opt
 
     print("\n  结果:")
-    print(
-        f"    优化版: {elapsed_opt:.4f}s"
-        f" ({elapsed_opt / len(private_keys) * 1000:.2f}ms/地址)"
-    )
-    print(
-        f"    标准版: {elapsed_std:.4f}s"
-        f" ({elapsed_std / len(private_keys) * 1000:.2f}ms/地址)"
-    )
+    print(f"    优化版: {elapsed_opt:.4f}s ({elapsed_opt / len(private_keys) * 1000:.2f}ms/地址)")
+    print(f"    标准版: {elapsed_std:.4f}s ({elapsed_std / len(private_keys) * 1000:.2f}ms/地址)")
     print(f"    性能提升: {speedup:.2f}x")
     print(f"    速度: {len(private_keys) / elapsed_opt:.0f} 地址/秒")
 

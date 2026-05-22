@@ -1,18 +1,16 @@
-# -*- coding: utf-8 -*-
 """
 P2中优先级问题修复测试
 
 验证P2-1到P2-6的修复功能
 """
 
-import unittest
-import os
-import time
-from unittest.mock import Mock, patch, MagicMock
-import tempfile
 import json
-
+import os
 import sys
+import tempfile
+import time
+import unittest
+from unittest.mock import Mock
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -24,7 +22,8 @@ class TestP2_1_DeprecationWarning(unittest.TestCase):
     def test_scalar_multiply_deprecation_warning(self):
         """测试scalar_multiply方法发出弃用警告"""
         import warnings
-        from src.core.secp256k1 import Secp256k1, ECPoint
+
+        from src.core.secp256k1 import ECPoint, Secp256k1
 
         secp = Secp256k1()
         point = ECPoint(
@@ -46,7 +45,8 @@ class TestP2_1_DeprecationWarning(unittest.TestCase):
     def test_const_time_no_warning(self):
         """测试恒定时间方法不发出警告"""
         import warnings
-        from src.core.secp256k1 import Secp256k1, ECPoint
+
+        from src.core.secp256k1 import ECPoint, Secp256k1
 
         secp = Secp256k1()
         point = ECPoint(
@@ -86,7 +86,6 @@ class TestP2_3_DataCompression(unittest.TestCase):
 
     def test_compress_old_data(self):
         """测试压缩旧数据"""
-        from src.monitoring.monitoring_system import MonitoringData
         from datetime import datetime, timedelta
 
         # 创建历史数据（包含旧数据和新数据）
@@ -114,7 +113,7 @@ class TestP2_3_DataCompression(unittest.TestCase):
         self.monitor.compress_old_data(days_threshold=7, sample_rate=0.1)
 
         # 验证压缩结果
-        with open(self.history_file, "r") as f:
+        with open(self.history_file) as f:
             new_history = json.load(f)
 
         # 应该只保留新数据（50条）
@@ -125,7 +124,7 @@ class TestP2_3_DataCompression(unittest.TestCase):
         self.assertTrue(os.path.exists(compressed_file))
 
         # 验证压缩数据（应该是旧数据的10%）
-        with open(compressed_file, "r") as f:
+        with open(compressed_file) as f:
             compressed_data = json.load(f)
 
         self.assertLessEqual(len(compressed_data), 15)  # 100 * 0.1 = 10
@@ -165,7 +164,7 @@ class TestP2_3_DataCompression(unittest.TestCase):
         self.monitor.compress_old_data(days_threshold=7, sample_rate=0.1)
 
         # 数据应该不变
-        with open(self.history_file, "r") as f:
+        with open(self.history_file) as f:
             result = json.load(f)
 
         self.assertEqual(len(result), 50)
@@ -217,7 +216,6 @@ class TestP2_6_KernelCache(unittest.TestCase):
     def test_cache_key_generation(self):
         """测试缓存键生成"""
         # 这个测试需要Mock GPU设备
-        from src.collision.gpu_collision_engine import GPUKernel
 
         # 创建Mock设备
         mock_device = Mock()
@@ -234,6 +232,7 @@ class TestP2_6_KernelCache(unittest.TestCase):
     def test_cache_file_path(self):
         """测试缓存文件路径生成"""
         import hashlib
+
         from src.collision.gpu_collision_engine import OPENCL_KERNEL_SOURCE
 
         # 模拟缓存键生成

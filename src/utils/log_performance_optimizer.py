@@ -15,7 +15,7 @@ import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, cast
+from typing import Any
 
 
 @dataclass
@@ -253,7 +253,7 @@ class LogPerformanceOptimizer:
 
             process = psutil.Process(os.getpid())
             memory_info = process.memory_info()
-            return cast(float, memory_info.rss / (1024 * 1024))  # 可选依赖psutil，mypy无类型信息
+            return float(memory_info.rss / (1024 * 1024))  # 可选依赖psutil，mypy无类型信息
         except ImportError:
             return 0.0
 
@@ -332,9 +332,7 @@ class LogThrottler:
                 return False
 
 
-def log_performance_decorator(
-    logger: logging.Logger, operation: str, level: str = "DEBUG"
-) -> Callable:
+def log_performance_decorator(logger: logging.Logger, operation: str, level: str = "DEBUG") -> Callable:
     """
     性能监控装饰器
 

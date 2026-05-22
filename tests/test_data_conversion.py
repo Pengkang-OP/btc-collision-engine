@@ -46,9 +46,7 @@ class TestEncodingUtils(unittest.TestCase):
     def test_detect_utf8_encoding(self):
         """检测UTF-8编码文件"""
         content = "Hello World! 你好世界!"
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".txt", delete=False, encoding="utf-8"
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, encoding="utf-8") as f:
             f.write(content)
             temp_path = f.name
 
@@ -61,9 +59,7 @@ class TestEncodingUtils(unittest.TestCase):
     def test_read_write_file(self):
         """文件读写往返测试"""
         content = "Test content with 中文"
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".txt", delete=False, encoding="utf-8"
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, encoding="utf-8") as f:
             temp_path = f.name
 
         try:
@@ -304,9 +300,7 @@ class TestAddressConverter(unittest.TestCase):
         """validate_conversion 异常处理 (cover lines 179-180)"""
         from unittest.mock import patch
 
-        with patch.object(
-            self.converter, "private_key_to_all", side_effect=RuntimeError("模拟错误")
-        ):
+        with patch.object(self.converter, "private_key_to_all", side_effect=RuntimeError("模拟错误")):
             valid, message = self.converter.validate_conversion(_TEST_PRIVATE_KEY)
             self.assertFalse(valid)
             self.assertEqual(message, "模拟错误")
@@ -338,9 +332,7 @@ class TestDataConversionIntegration(unittest.TestCase):
         wif = _EXPECTED_WIF_COMPRESSED
 
         # 将WIF写入文件再读取
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".txt", delete=False, encoding="utf-8"
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, encoding="utf-8") as f:
             f.write(wif)
             temp_path = f.name
 

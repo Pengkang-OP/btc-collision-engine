@@ -76,21 +76,21 @@ def benchmark_check(docs_dir: str, iterations: int = 10) -> dict:
         throughput = doc_counts[0] / avg_time if doc_counts else 0
 
     stats = {
-        'iterations': iterations,
-        'doc_count': statistics.mean(doc_counts) if doc_counts else 0,
-        'time': {
-            'avg': avg_time,
-            'min': min(times),
-            'max': max(times),
-            'median': statistics.median(times),
-            'stdev': statistics.stdev(times) if len(times) > 1 else 0,
+        "iterations": iterations,
+        "doc_count": statistics.mean(doc_counts) if doc_counts else 0,
+        "time": {
+            "avg": avg_time,
+            "min": min(times),
+            "max": max(times),
+            "median": statistics.median(times),
+            "stdev": statistics.stdev(times) if len(times) > 1 else 0,
         },
-        'score': {
-            'avg': statistics.mean(scores) if scores else 0,
-            'min': min(scores) if scores else 0,
-            'max': max(scores) if scores else 0,
+        "score": {
+            "avg": statistics.mean(scores) if scores else 0,
+            "min": min(scores) if scores else 0,
+            "max": max(scores) if scores else 0,
         },
-        'throughput': throughput,
+        "throughput": throughput,
     }
 
     return stats
@@ -129,18 +129,9 @@ def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='文档质量检查性能基准测试')
-    parser.add_argument(
-        '--docs-dir',
-        default='docs',
-        help='文档目录路径 (默认: docs)'
-    )
-    parser.add_argument(
-        '--iterations',
-        type=int,
-        default=10,
-        help='迭代次数 (默认: 10)'
-    )
+    parser = argparse.ArgumentParser(description="文档质量检查性能基准测试")
+    parser.add_argument("--docs-dir", default="docs", help="文档目录路径 (默认: docs)")
+    parser.add_argument("--iterations", type=int, default=10, help="迭代次数 (默认: 10)")
 
     args = parser.parse_args()
 
@@ -157,7 +148,7 @@ def main():
 
     # 性能建议
     print("\n💡 性能建议:")
-    avg_time = stats['time']['avg']
+    avg_time = stats["time"]["avg"]
     if avg_time < 1.0:
         print(f"  ✅ 性能优秀！平均{avg_time:.2f}秒")
     elif avg_time < 5.0:

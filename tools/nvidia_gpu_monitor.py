@@ -28,25 +28,28 @@ def get_nvidia_gpu_stats():
     """获取NVIDIA GPU状态(使用nvidia-smi)"""
     try:
         result = subprocess.run(
-            ['nvidia-smi', '--query-gpu=utilization.gpu,memory.used,memory.total,temperature.gpu,power.draw,name',
-             '--format=csv,noheader,nounits'],
+            [
+                "nvidia-smi",
+                "--query-gpu=utilization.gpu,memory.used,memory.total,temperature.gpu,power.draw,name",
+                "--format=csv,noheader,nounits",
+            ],
             capture_output=True,
             text=True,
-            timeout=5
+            timeout=5,
         )
 
         if result.returncode == 0:
-            parts = result.stdout.strip().split(',')
+            parts = result.stdout.strip().split(",")
             return {
-                'gpu_utilization': float(parts[0].strip()),
-                'memory_used_mb': float(parts[1].strip()),
-                'memory_total_mb': float(parts[2].strip()),
-                'temperature': float(parts[3].strip()),
-                'power_w': float(parts[4].strip()),
-                'gpu_name': parts[5].strip()
+                "gpu_utilization": float(parts[0].strip()),
+                "memory_used_mb": float(parts[1].strip()),
+                "memory_total_mb": float(parts[2].strip()),
+                "temperature": float(parts[3].strip()),
+                "power_w": float(parts[4].strip()),
+                "gpu_name": parts[5].strip(),
             }
     except Exception as e:
-        return {'error': str(e)}
+        return {"error": str(e)}
 
     return None
 
@@ -56,13 +59,16 @@ def get_process_info():
     try:
         # 查找主窗口标题包含"collision"的进程
         result = subprocess.run(
-            ['powershell', '-Command',
-             'Get-Process | Where-Object {$_.MainWindowTitle -like "*collision*"} | '
-             'Select-Object Id, ProcessName, WorkingSet64, CPU | ConvertTo-Json'],
+            [
+                "powershell",
+                "-Command",
+                'Get-Process | Where-Object {$_.MainWindowTitle -like "*collision*"} | '
+                "Select-Object Id, ProcessName, WorkingSet64, CPU | ConvertTo-Json",
+            ],
             capture_output=True,
             text=True,
             timeout=5,
-            encoding='utf-8'
+            encoding="utf-8",
         )
 
         if result.stdout.strip():
@@ -71,9 +77,9 @@ def get_process_info():
                 proc = proc[0]
 
             return {
-                'pid': proc.get('Id', 'N/A'),
-                'memory_mb': proc.get('WorkingSet64', 0) / (1024*1024),
-                'cpu_seconds': proc.get('CPU', 0)
+                "pid": proc.get("Id", "N/A"),
+                "memory_mb": proc.get("WorkingSet64", 0) / (1024 * 1024),
+                "cpu_seconds": proc.get("CPU", 0),
             }
     except (subprocess.TimeoutExpired, json.JSONDecodeError, ValueError, KeyError, OSError):
         pass  # WMI查询/解析失败时跳过该进程
@@ -88,12 +94,12 @@ def read_log_recent_errors():
         return []
 
     try:
-        with open(log_file, encoding='utf-8', errors='ignore') as f:
+        with open(log_file, encoding="utf-8", errors="ignore") as f:
             lines = f.readlines()
 
         # 获取最后50行中的错误
         recent_lines = lines[-50:]
-        errors = [line.strip() for line in recent_lines if 'ERROR' in line or 'CRITICAL' in line]
+        errors = [line.strip() for line in recent_lines if "ERROR" in line or "CRITICAL" in line]
         return errors[-5:]  # 最多返回5个错误
     except (OSError, UnicodeDecodeError):
         return []
@@ -102,7 +108,7 @@ def read_log_recent_errors():
 def format_size(size_mb):
     """格式化大小显示"""
     if size_mb >= 1024:
-        return f"{size_mb/1024:.2f} GB"
+        return f"{size_mb / 1024:.2f} GB"
     return f"{size_mb:.1f} MB"
 
 
@@ -123,7 +129,7 @@ def print_gpu_stats(stats, iteration):
     print(f"📈 监控周期 #{iteration} - {datetime.now().strftime('%H:%M:%S')}")
     print(f"{'─' * 80}")
 
-    if 'error' in stats:
+    if "error" in stats:
         print(f"❌ GPU状态获取失败: {stats['error']}")
         return
 
@@ -135,23 +141,23 @@ def print_gpu_stats(stats, iteration):
     print(f"   功耗: {stats['power_w']:.1f}W")
 
     # 显存信息
-    memory_percent = (stats['memory_used_mb'] / stats['memory_total_mb']) * 100
+    memory_percent = (stats["memory_used_mb"] / stats["memory_total_mb"]) * 100
     print("\n💾 显存使用:")
     print(f"   已用: {format_size(stats['memory_used_mb'])}")
     print(f"   总计: {format_size(stats['memory_total_mb'])}")
     print(f"   使用率: {memory_percent:.1f}%")
 
     # 状态指示
-    if stats['gpu_utilization'] > 80:
+    if stats["gpu_utilization"] > 80:
         gpu_status = "🔴 高负载"
-    elif stats['gpu_utilization'] > 50:
+    elif stats["gpu_utilization"] > 50:
         gpu_status = "🟡 中负载"
     else:
         gpu_status = "🟢 正常"
 
-    if stats['temperature'] > 85:
+    if stats["temperature"] > 85:
         temp_status = "🔴 过热"
-    elif stats['temperature'] > 70:
+    elif stats["temperature"] > 70:
         temp_status = "🟡 警告"
     else:
         temp_status = "🟢 正常"

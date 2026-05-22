@@ -202,9 +202,7 @@ class TestRunMain(unittest.TestCase):
     def _enter_engine_phase(self, stack, config, targets, eng):
         """进入 _run_main 引擎阶段 mock (validate_args 之后)."""
         stack.enter_context(patch.object(main_mod, "validate_args", return_value=True))
-        stack.enter_context(
-            patch.object(main_mod, "load_config_with_validation", return_value=config)
-        )
+        stack.enter_context(patch.object(main_mod, "load_config_with_validation", return_value=config))
         stack.enter_context(patch.object(main_mod, "load_targets", return_value=targets))
         stack.enter_context(patch(self._ER + "._setup_and_start_engine", return_value=eng))
         stack.enter_context(patch(self._ER + "._compute_range", return_value=(0, 100, 100)))

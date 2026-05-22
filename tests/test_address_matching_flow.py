@@ -487,9 +487,7 @@ class TestBitcoinKeyValidatorSecurity:
             "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
         }
 
-        result = validator.verify_address_match(
-            "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", target_addresses
-        )
+        result = validator.verify_address_match("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", target_addresses)
 
         assert result.success is True
         assert result.details["match"] is True
@@ -747,9 +745,9 @@ class TestEdgeCases:
         targets = set()
         for i in range(1000):
             # 使用hash生成唯一的33字符后缀
-            hash_suffix = hashlib.md5(
-                f"test_address_{i}".encode(), usedforsecurity=False
-            ).hexdigest()[:33]
+            hash_suffix = hashlib.md5(f"test_address_{i}".encode(), usedforsecurity=False).hexdigest()[
+                :33
+            ]
             fake_addr = "1" + hash_suffix
             targets.add(fake_addr)
 

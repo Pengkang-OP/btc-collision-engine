@@ -167,7 +167,7 @@ class TestKnownBitcoinVectors:
         pubkey = _privkey_to_compressed_pubkey(self.PRIVKEY_01)
         hash160 = _compute_hash160(pubkey)
         assert hash160 == self.EXPECTED_HASH160, (
-            "Hash160 不正确\n" f"期望: {self.EXPECTED_HASH160.hex()}\n" f"实际: {hash160.hex()}"
+            f"Hash160 不正确\n期望: {self.EXPECTED_HASH160.hex()}\n实际: {hash160.hex()}"
         )
 
     def test_privkey_1_p2pkh_address(self):
@@ -176,7 +176,7 @@ class TestKnownBitcoinVectors:
         hash160 = _compute_hash160(pubkey)
         address = Base58.check_encode(0x00, hash160)
         assert address == self.EXPECTED_P2PKH_ADDRESS, (
-            "P2PKH 地址不正确\n" f"期望: {self.EXPECTED_P2PKH_ADDRESS}\n" f"实际: {address}"
+            f"P2PKH 地址不正确\n期望: {self.EXPECTED_P2PKH_ADDRESS}\n实际: {address}"
         )
 
     def test_full_chain_privkey_to_address(self):
@@ -249,9 +249,9 @@ class TestGPUCPUConsistency:
         """k=1 时 GPU 与 CPU Hash160 完全一致"""
         cpu_result = self._cpu_compute_hash160(1)
         gpu_result = self._simulate_gpu_hash160(1)
-        assert (
-            cpu_result == gpu_result
-        ), f"k=1 Hash160 不一致\nCPU: {cpu_result.hex()}\nGPU: {gpu_result.hex()}"
+        assert cpu_result == gpu_result, (
+            f"k=1 Hash160 不一致\nCPU: {cpu_result.hex()}\nGPU: {gpu_result.hex()}"
+        )
 
     def test_hash160_cpu_gpu_equal_for_known_keys(self):
         """多个已知私钥 GPU 与 CPU Hash160 完全一致"""
@@ -260,7 +260,7 @@ class TestGPUCPUConsistency:
             cpu_result = self._cpu_compute_hash160(k)
             gpu_result = self._simulate_gpu_hash160(k)
             assert cpu_result == gpu_result, (
-                f"k={k:#x} Hash160 不一致\n" f"CPU: {cpu_result.hex()}\nGPU: {gpu_result.hex()}"
+                f"k={k:#x} Hash160 不一致\nCPU: {cpu_result.hex()}\nGPU: {gpu_result.hex()}"
             )
 
     def test_mock_gpu_engine_patch(self):
@@ -317,12 +317,12 @@ class TestBatchConsistency:
         seed = os.urandom(32)
         gpu_results = mock_kernel.run_batch(seed, self.BATCH_SIZE)
 
-        assert (
-            len(gpu_results) == self.BATCH_SIZE
-        ), f"批量结果数量应为 {self.BATCH_SIZE}，实际 {len(gpu_results)}"
+        assert len(gpu_results) == self.BATCH_SIZE, (
+            f"批量结果数量应为 {self.BATCH_SIZE}，实际 {len(gpu_results)}"
+        )
         for i, (cpu_h, gpu_h) in enumerate(zip(cpu_results, gpu_results, strict=False)):
             assert cpu_h == gpu_h, (
-                f"第 {i} 个私钥 Hash160 不一致\n" f"CPU: {cpu_h.hex()}\nGPU: {gpu_h.hex()}"
+                f"第 {i} 个私钥 Hash160 不一致\nCPU: {cpu_h.hex()}\nGPU: {gpu_h.hex()}"
             )
 
     def test_all_keys_in_valid_range(self):
@@ -416,9 +416,9 @@ class TestCompressedUncompressedPubkey:
             uncomp = _privkey_to_uncompressed_pubkey(k)
             y = int.from_bytes(uncomp[33:], "big")
             expected_prefix = 0x02 if y % 2 == 0 else 0x03
-            assert (
-                comp[0] == expected_prefix
-            ), f"k={k:#x} 前缀 0x{comp[0]:02x} 与 Y 奇偶性不符（Y={y:#x}）"
+            assert comp[0] == expected_prefix, (
+                f"k={k:#x} 前缀 0x{comp[0]:02x} 与 Y 奇偶性不符（Y={y:#x}）"
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -470,8 +470,7 @@ class TestWIFEncoding:
             decoded_privkey, compressed = WIF.decode(wif)
             assert compressed is True
             assert decoded_privkey == privkey, (
-                "WIF 解码后私钥与原始不一致\n"
-                f"原始: {privkey.hex()}\n解码: {decoded_privkey.hex()}"
+                f"WIF 解码后私钥与原始不一致\n原始: {privkey.hex()}\n解码: {decoded_privkey.hex()}"
             )
 
     def test_wif_base58check_roundtrip_uncompressed(self):

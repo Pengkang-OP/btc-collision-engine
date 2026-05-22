@@ -126,9 +126,7 @@ class PaginationManager:
             output.print(f"{i}. {item_formatter(item)}")
 
         # 显示分页信息
-        pagination_str = (
-            f"页 {info['current_page']}/{info['total_pages']} (共 {info['total_items']} 项)"
-        )
+        pagination_str = f"页 {info['current_page']}/{info['total_pages']} (共 {info['total_items']} 项)"
         output.print(f"\n{pagination_str}")
 
         # 显示导航选项

@@ -387,13 +387,10 @@ class TestSetupAndStartEngine:
         with (
             patch("src.cli.engine_runner.build_engine", return_value=(MagicMock(), "cpu")),
             patch("signal.signal"),
-            patch("builtins.print"),
+            patch("builtins.print"),patch("src.monitoring.alert_system.AlertSystem", mock_as_cls)
         ):
-            with patch("src.monitoring.alert_system.AlertSystem", mock_as_cls):
-                engine, etype, alert, stop = _setup_and_start_engine(
-                    args, {"addr1"}, {}, None, None
-                )
-                assert alert is None
+            engine, etype, alert, stop = _setup_and_start_engine(args, {"addr1"}, {}, None, None)
+            assert alert is None
 
     def test_sigterm_handler_registered(self):
         """SIGTERM 信号处理器注册 (L106-107)。"""
@@ -423,13 +420,12 @@ class TestSetupAndStartEngine:
 
         with (
             patch("src.cli.engine_runner.build_engine", return_value=(MagicMock(), "cpu")),
-            patch("signal.signal", fake_signal),
+            patch("signal.signal", fake_signal),patch("builtins.print")
         ):
-            with patch("builtins.print"):
-                _setup_and_start_engine(args, {"addr1"}, {}, None, None)
-                assert _signal.SIGINT in sig_calls
-                if hasattr(_signal, "SIGTERM"):
-                    assert _signal.SIGTERM in sig_calls
+            _setup_and_start_engine(args, {"addr1"}, {}, None, None)
+            assert _signal.SIGINT in sig_calls
+            if hasattr(_signal, "SIGTERM"):
+                assert _signal.SIGTERM in sig_calls
 
     def test_multi_gpu_start_failure_exits(self):
         """多GPU 引擎 start() 返回 False → SystemExit(1) (L122-124)。"""
@@ -455,12 +451,11 @@ class TestSetupAndStartEngine:
 
         with (
             patch("src.cli.engine_runner.build_engine", return_value=(mock_engine, "multi_gpu")),
-            patch("signal.signal"),
+            patch("signal.signal"),patch("builtins.print")
         ):
-            with patch("builtins.print"):
-                with pytest.raises(SystemExit) as ctx:
-                    _setup_and_start_engine(args, {"addr1"}, {}, 1, 255)
-                assert ctx.value.code == 1
+            with pytest.raises(SystemExit) as ctx:
+                _setup_and_start_engine(args, {"addr1"}, {}, 1, 255)
+            assert ctx.value.code == 1
 
     def test_single_gpu_engine_start_with_range(self):
         """单GPU引擎 range 模式启动 (L127-132)。"""
@@ -784,9 +779,7 @@ class TestAlertSystemSuccess:
             patch("builtins.print"),
         ):
             with patch("src.monitoring.alert_system.AlertSystem", return_value=mock_as):
-                engine, etype, alert, stop = _setup_and_start_engine(
-                    args, {"addr1"}, {}, None, None
-                )
+                engine, etype, alert, stop = _setup_and_start_engine(args, {"addr1"}, {}, None, None)
                 assert alert is mock_as
                 mock_as.setup_default_rules.assert_called_once()
                 mock_as.add_alert_callback.assert_called_once()
@@ -815,20 +808,19 @@ class TestAlertSystemSuccess:
 
         with (
             patch("src.cli.engine_runner.build_engine", return_value=(MagicMock(), "cpu")),
-            patch("signal.signal"),
+            patch("signal.signal"),patch("builtins.print") as mock_print
         ):
-            with patch("builtins.print") as mock_print:
-                with patch("src.monitoring.alert_system.AlertSystem", return_value=mock_as):
-                    _setup_and_start_engine(args, {"addr1"}, {}, None, None)
-                    # 提取注册的 _on_alert 回调
-                    callback = mock_as.add_alert_callback.call_args[0][0]
-                    mock_record = MagicMock()
-                    mock_record.level.value = "WARNING"
-                    mock_record.message = "alert message"
-                    callback(mock_record)
-                    mock_print.assert_called()
-                    printed = mock_print.call_args[0][0]
-                    assert "alert message" in str(printed)
+            with patch("src.monitoring.alert_system.AlertSystem", return_value=mock_as):
+                _setup_and_start_engine(args, {"addr1"}, {}, None, None)
+                # 提取注册的 _on_alert 回调
+                callback = mock_as.add_alert_callback.call_args[0][0]
+                mock_record = MagicMock()
+                mock_record.level.value = "WARNING"
+                mock_record.message = "alert message"
+                callback(mock_record)
+                mock_print.assert_called()
+                printed = mock_print.call_args[0][0]
+                assert "alert message" in str(printed)
 
     def test_on_alert_no_level_value_fallback(self):
         """_on_alert 回调 — level 无 .value 属性时使用 str() 回退 (L87)。"""
@@ -854,19 +846,18 @@ class TestAlertSystemSuccess:
 
         with (
             patch("src.cli.engine_runner.build_engine", return_value=(MagicMock(), "cpu")),
-            patch("signal.signal"),
+            patch("signal.signal"),patch("builtins.print") as mock_print
         ):
-            with patch("builtins.print") as mock_print:
-                with patch("src.monitoring.alert_system.AlertSystem", return_value=mock_as):
-                    _setup_and_start_engine(args, {"addr1"}, {}, None, None)
-                    callback = mock_as.add_alert_callback.call_args[0][0]
-                    mock_record = MagicMock()
-                    del mock_record.level.value
-                    mock_record.message = "fallback alert"
-                    callback(mock_record)
-                    mock_print.assert_called()
-                    printed = mock_print.call_args[0][0]
-                    assert "[WARN]" in str(printed)
+            with patch("src.monitoring.alert_system.AlertSystem", return_value=mock_as):
+                _setup_and_start_engine(args, {"addr1"}, {}, None, None)
+                callback = mock_as.add_alert_callback.call_args[0][0]
+                mock_record = MagicMock()
+                del mock_record.level.value
+                mock_record.message = "fallback alert"
+                callback(mock_record)
+                mock_print.assert_called()
+                printed = mock_print.call_args[0][0]
+                assert "[WARN]" in str(printed)
 
 
 @pytest.mark.unit
@@ -905,17 +896,14 @@ class TestHandleSignalExecution:
 
         with (
             patch("src.cli.engine_runner.build_engine", return_value=(mock_engine, "cpu")),
-            patch("signal.signal", fake_signal),
+            patch("signal.signal", fake_signal),patch("builtins.print") as mock_print
         ):
-            with patch("builtins.print") as mock_print:
-                engine, etype, alert, stop = _setup_and_start_engine(
-                    args, {"addr1"}, {}, None, None
-                )
-                handler = sig_handlers[_signal.SIGINT]
-                handler(_signal.SIGINT, None)
-                assert stop.is_set()
-                mock_engine.stop.assert_called()
-                mock_print.assert_called()
+            engine, etype, alert, stop = _setup_and_start_engine(args, {"addr1"}, {}, None, None)
+            handler = sig_handlers[_signal.SIGINT]
+            handler(_signal.SIGINT, None)
+            assert stop.is_set()
+            mock_engine.stop.assert_called()
+            mock_print.assert_called()
 
     def test_sigterm_handler_also_registered_and_works(self):
         """SIGTERM handler 也注册并可调用 (L106-107)。"""
@@ -932,16 +920,13 @@ class TestHandleSignalExecution:
 
         with (
             patch("src.cli.engine_runner.build_engine", return_value=(mock_engine, "cpu")),
-            patch("signal.signal", fake_signal),
+            patch("signal.signal", fake_signal),patch("builtins.print")
         ):
-            with patch("builtins.print"):
-                engine, etype, alert, stop = _setup_and_start_engine(
-                    args, {"addr1"}, {}, None, None
-                )
-                if hasattr(_signal, "SIGTERM"):
-                    assert _signal.SIGTERM in sig_handlers
-                    sig_handlers[_signal.SIGTERM](_signal.SIGTERM, None)
-                    assert stop.is_set()
+            engine, etype, alert, stop = _setup_and_start_engine(args, {"addr1"}, {}, None, None)
+            if hasattr(_signal, "SIGTERM"):
+                assert _signal.SIGTERM in sig_handlers
+                sig_handlers[_signal.SIGTERM](_signal.SIGTERM, None)
+                assert stop.is_set()
 
 
 # ============================================================================
@@ -1254,9 +1239,7 @@ class TestMainLoopBody:
                 with patch("src.cli.engine_runner._suppress_console_logging"):
                     with patch("src.cli.engine_runner._restore_console_logging"):
                         with patch("builtins.print"):
-                            with patch(
-                                "src.cli.engine_runner.format_progress", return_value="line"
-                            ):
+                            with patch("src.cli.engine_runner.format_progress", return_value="line"):
                                 with patch("time.sleep", TriggerPauseOnSleep(cb_holder)):
                                     _run_collision_loop(engine, "cpu", args, None, None, stop_event)
 

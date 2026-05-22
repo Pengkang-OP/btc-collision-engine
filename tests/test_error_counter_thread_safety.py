@@ -47,9 +47,7 @@ def _create_phase6_mock_fixture():
         patch("src.collision.gpu.engine.CollisionCore", return_value=mock_collision_core),
         patch("src.collision.gpu.engine.SearchModeCoordinator"),
         patch("src.collision.gpu.engine.GPUEngineMonitor"),
-        patch(
-            "src.collision.gpu.engine.VendorOptimizationFactory.create", return_value=MagicMock()
-        ),
+        patch("src.collision.gpu.engine.VendorOptimizationFactory.create", return_value=MagicMock()),
         patch("src.collision.gpu.engine.GPUDeviceDetector"),
         patch("src.collision.gpu.engine.GPUMemoryCalculator"),
     ]

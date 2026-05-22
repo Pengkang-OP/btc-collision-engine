@@ -113,9 +113,7 @@ class TestEventCreation:
         assert "wif" not in d["metadata"]
 
     def test_engine_error_event(self):
-        event = EngineErrorEvent(
-            error_type="GPU_OOM", error_message="Out of memory", recoverable=True
-        )
+        event = EngineErrorEvent(error_type="GPU_OOM", error_message="Out of memory", recoverable=True)
         assert event.event_type == EventType.ENGINE_ERROR
         assert event.error_type == "GPU_OOM"
 
@@ -308,9 +306,7 @@ class TestEventBusSyncErrorHandling:
         assert isinstance(args[1], RuntimeError)
 
     def test_error_handler_exception_not_propagate(self, sync_bus):
-        error_handler = Mock(
-            __name__="err_handler", side_effect=RuntimeError("error in error handler")
-        )
+        error_handler = Mock(__name__="err_handler", side_effect=RuntimeError("error in error handler"))
         handler = Mock(__name__="bad_handler", side_effect=RuntimeError("original error"))
         sync_bus.subscribe(EventType.ENGINE_START, handler)
         sync_bus.set_error_handler(error_handler)

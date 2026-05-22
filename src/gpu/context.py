@@ -30,8 +30,7 @@ VENDOR_BUILD_OPTIONS: dict[str, dict[str, Any]] = {
         "options": ["-cl-std=CL2.0"],  # 禁用fast-math (精度安全约束)
         "cl_version": "CL2.0",
         "description": (
-            "NVIDIA优化：CL2.0标准，精度优先"
-            "（fast-math已禁用——secp256k1/SHA256/RIPEMD160精度要求）"
+            "NVIDIA优化：CL2.0标准，精度优先（fast-math已禁用——secp256k1/SHA256/RIPEMD160精度要求）"
         ),
     },
     "amd": {
@@ -170,9 +169,7 @@ class GPUContext:
         vendor_options = self._get_build_options()
 
         # 计算缓存键: 源码哈希 + 编译选项
-        source_hash = hashlib.md5(kernel_source.encode("utf-8"), usedforsecurity=False).hexdigest()[
-            :16
-        ]
+        source_hash = hashlib.md5(kernel_source.encode("utf-8"), usedforsecurity=False).hexdigest()[:16]
         cache_key = f"{source_hash}_{vendor_options.replace(' ', '_')}"
 
         # 检查缓存

@@ -236,9 +236,7 @@ class TestContinuousMatcherThreadSafety:
             t.join()
 
         expected = iterations * num_threads
-        assert (
-            matcher.total_checked == expected
-        ), f"Expected {expected}, got {matcher.total_checked}"
+        assert matcher.total_checked == expected, f"Expected {expected}, got {matcher.total_checked}"
 
 
 # ============================================================================
@@ -275,9 +273,7 @@ class TestI18NFix:
 
     def test_stop_failed_not_garbled(self):
         """stop_failed 翻译不应包含乱码字符"""
-        i18n_dir = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)), "src", "i18n", "locales"
-        )
+        i18n_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "src", "i18n", "locales")
         zh_file = os.path.join(i18n_dir, "zh_CN.json")
 
         if os.path.exists(zh_file):
@@ -317,9 +313,7 @@ class TestDockerComposeSecurity:
 
     def test_grafana_no_hardcoded_weak_password(self):
         """Grafana 密码不应包含硬编码弱密码"""
-        compose_file = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)), "docker-compose.yml"
-        )
+        compose_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), "docker-compose.yml")
 
         if os.path.exists(compose_file):
             with open(compose_file, encoding="utf-8") as f:

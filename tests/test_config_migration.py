@@ -404,7 +404,7 @@ class TestValidateMigratedConfig:
         }
         is_valid, issues = validate_migrated_config(config)
         assert is_valid is False
-        assert any("crypto 段" in i for i in issues)
+        assert any("配置段 crypto" in i for i in issues)
 
 
 # ============================================================================
@@ -595,13 +595,17 @@ class TestMigrateConfigFile:
                     assert result is False
 
     def test_already_latest_version(self, v31_config):
-        """v3.1 配置 -> 返回 True，无需迁移"""
+        """v4.2.2 配置（含 i18n 段）-> 返回 True，无需迁移"""
         from pathlib import Path
 
         from src.cli.config_migration import migrate_config_file
 
+        # 添加 i18n 段使其被检测为最新版本
+        latest_config = v31_config.copy()
+        latest_config["i18n"] = {"locale": "zh_CN"}
+
         with patch.object(Path, "exists", return_value=True):
-            with patch("json.load", return_value=v31_config):
+            with patch("json.load", return_value=latest_config):
                 with patch("builtins.open"):
                     with patch("builtins.print"):
                         result = migrate_config_file("latest.json")
@@ -615,9 +619,7 @@ class TestMigrateConfigFile:
 
         with patch.object(Path, "exists", return_value=True), patch("builtins.open"):
             with patch("json.load", return_value=v2_config):
-                with patch(
-                    "src.cli.config_migration.backup_config", side_effect=OSError("disk full")
-                ):
+                with patch("src.cli.config_migration.backup_config", side_effect=OSError("disk full")):
                     with patch("builtins.print"):
                         result = migrate_config_file("config.json")
                         assert result is False
@@ -630,9 +632,7 @@ class TestMigrateConfigFile:
 
         with patch.object(Path, "exists", return_value=True), patch("builtins.open"):
             with patch("json.load", return_value=v2_config):
-                with patch(
-                    "src.cli.config_migration.backup_config", return_value="/tmp/backup.json"
-                ):
+                with patch("src.cli.config_migration.backup_config", return_value="/tmp/backup.json"):
                     with patch(
                         "src.cli.config_migration.migrate_config",
                         side_effect=RuntimeError("migrate crash"),
@@ -649,9 +649,7 @@ class TestMigrateConfigFile:
 
         with patch.object(Path, "exists", return_value=True), patch("builtins.open"):
             with patch("json.load", return_value=v2_config):
-                with patch(
-                    "src.cli.config_migration.backup_config", return_value="/tmp/backup.json"
-                ):
+                with patch("src.cli.config_migration.backup_config", return_value="/tmp/backup.json"):
                     with patch(
                         "src.cli.config_migration.migrate_config", return_value=({}, ["changelog"])
                     ):
@@ -672,9 +670,7 @@ class TestMigrateConfigFile:
         mock_read = MagicMock()
         with patch.object(Path, "exists", return_value=True):
             with patch("json.load", return_value=v2_config):
-                with patch(
-                    "src.cli.config_migration.backup_config", return_value="/tmp/backup.json"
-                ):
+                with patch("src.cli.config_migration.backup_config", return_value="/tmp/backup.json"):
                     with patch(
                         "src.cli.config_migration.migrate_config",
                         return_value=(v2_config, ["changelog"]),
@@ -683,9 +679,7 @@ class TestMigrateConfigFile:
                             "src.cli.config_migration.validate_migrated_config",
                             return_value=(True, []),
                         ):
-                            with patch(
-                                "builtins.open", side_effect=[mock_read, OSError("write error")]
-                            ):
+                            with patch("builtins.open", side_effect=[mock_read, OSError("write error")]):
                                 with patch("builtins.print"):
                                     result = migrate_config_file("config.json")
                                     assert result is False
@@ -703,9 +697,7 @@ class TestMigrateConfigFile:
 
         with patch.object(Path, "exists", return_value=True):
             with patch("json.load", return_value=v2_config):
-                with patch(
-                    "src.cli.config_migration.backup_config", return_value="/tmp/backup.json"
-                ):
+                with patch("src.cli.config_migration.backup_config", return_value="/tmp/backup.json"):
                     with patch(
                         "src.cli.config_migration.migrate_config",
                         return_value=(migrated, ["迁移完成"]),
@@ -735,9 +727,7 @@ class TestMigrateConfigFile:
 
         with patch.object(Path, "exists", return_value=True):
             with patch("json.load", return_value=config):
-                with patch(
-                    "src.cli.config_migration.backup_config", return_value="/tmp/backup.json"
-                ):
+                with patch("src.cli.config_migration.backup_config", return_value="/tmp/backup.json"):
                     with patch(
                         "src.cli.config_migration.migrate_config",
                         return_value=(migrated, ["迁移完成"]),
@@ -777,7 +767,7 @@ class TestValidateMigratedConfigEdges:
         }
         is_valid, issues = validate_migrated_config(config)
         assert is_valid is False
-        assert any("logging 段" in i for i in issues)
+        assert any("配置段 logging" in i for i in issues)
 
     def test_gpu_not_dict(self):
         """gpu 段不是 dict"""
@@ -793,7 +783,7 @@ class TestValidateMigratedConfigEdges:
         }
         is_valid, issues = validate_migrated_config(config)
         assert is_valid is False
-        assert any("gpu 段" in i for i in issues)
+        assert any("配置段 gpu" in i for i in issues)
 
     def test_monitoring_not_dict(self):
         """monitoring 段不是 dict"""
@@ -809,7 +799,7 @@ class TestValidateMigratedConfigEdges:
         }
         is_valid, issues = validate_migrated_config(config)
         assert is_valid is False
-        assert any("monitoring 段" in i for i in issues)
+        assert any("配置段 monitoring" in i for i in issues)
 
     def test_performance_monitoring_not_dict(self):
         """performance_monitoring 段不是 dict"""
@@ -825,7 +815,7 @@ class TestValidateMigratedConfigEdges:
         }
         is_valid, issues = validate_migrated_config(config)
         assert is_valid is False
-        assert any("performance_monitoring 段" in i for i in issues)
+        assert any("配置段 performance_monitoring" in i for i in issues)
 
     def test_gpu_base_timeout_type_error(self):
         """gpu.base_timeout_seconds 类型错误"""

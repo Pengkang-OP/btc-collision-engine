@@ -585,9 +585,7 @@ class AddressStorage:
                 addresses = [str(addr).strip() for addr in data if str(addr).strip()]
             elif isinstance(data, dict):
                 if "addresses" in data:
-                    addresses = [
-                        str(addr).strip() for addr in data["addresses"] if str(addr).strip()
-                    ]
+                    addresses = [str(addr).strip() for addr in data["addresses"] if str(addr).strip()]
                 elif "targets" in data:
                     addresses = [str(addr).strip() for addr in data["targets"] if str(addr).strip()]
                 else:

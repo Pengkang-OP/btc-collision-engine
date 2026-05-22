@@ -12,9 +12,7 @@ import sys
 import time
 
 # 配置日志
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("GPU_Benchmark")
 
 
@@ -63,9 +61,7 @@ class PerformanceBenchmark:
 
         except Exception as e:
             print(f"❌ 预取机制测试失败: {e}")
-            self.results.append(
-                {"test": "async_executor_prefetch", "status": "FAIL", "details": str(e)}
-            )
+            self.results.append({"test": "async_executor_prefetch", "status": "FAIL", "details": str(e)})
 
     def test_memory_pool_alignment(self):
         """测试内存池大小对齐优化"""
@@ -104,9 +100,7 @@ class PerformanceBenchmark:
 
         except Exception as e:
             print(f"❌ 内存池对齐测试失败: {e}")
-            self.results.append(
-                {"test": "memory_pool_alignment", "status": "FAIL", "details": str(e)}
-            )
+            self.results.append({"test": "memory_pool_alignment", "status": "FAIL", "details": str(e)})
 
     def test_performance_optimizer_aggressive(self):
         """测试性能优化器激进调整策略"""
@@ -121,7 +115,9 @@ class PerformanceBenchmark:
 
             # 创建配置文件
             optimizer.create_optimized_profile(
-                device_name="Test GPU", vendor_str="NVIDIA", global_mem_size=8 * 1024**3  # 8GB
+                device_name="Test GPU",
+                vendor_str="NVIDIA",
+                global_mem_size=8 * 1024**3,  # 8GB
             )
 
             # 记录优秀的性能数据（执行时间很短）
@@ -203,9 +199,7 @@ class PerformanceBenchmark:
 
         except Exception as e:
             print(f"❌ 内存池预分配测试失败: {e}")
-            self.results.append(
-                {"test": "memory_pool_preallocate", "status": "FAIL", "details": str(e)}
-            )
+            self.results.append({"test": "memory_pool_preallocate", "status": "FAIL", "details": str(e)})
 
     def run_all_tests(self):
         """运行所有基准测试"""

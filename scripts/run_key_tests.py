@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """运行关键测试验证无回归 - 使用pytest API"""
 
-import sys
 import os
+import sys
 
 # 禁用pytest的capture插件以避免Python 3.14问题
 os.environ["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = ""
@@ -33,7 +32,7 @@ def main():
     for f in existing_tests:
         print(f"  - {f}")
 
-    print(f"\n{'='*80}\n")
+    print(f"\n{'=' * 80}\n")
 
     # 使用pytest API运行
     args = [

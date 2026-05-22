@@ -17,6 +17,9 @@ import time
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Optional  # noqa: F401
 
+if TYPE_CHECKING:
+    from .log_monitoring_integrator import LogMonitoringIntegrator
+
 import psutil
 
 from src.monitoring.storage_config import DataStorageConfig
@@ -1142,9 +1145,8 @@ class MonitoringSystem:
         self.report_generator = ReportGenerator(self.storage, self.detector)
 
         # 集成日志监控系统
-        self.log_integrator: LogMonitoringIntegrator | None = (
-            None  # noqa: F821  # type: ignore[name-defined]
-        )
+        # LogMonitoringIntegrator 在 TYPE_CHECKING 块中导入
+        self.log_integrator: Optional[LogMonitoringIntegrator] = None
         try:
             from .log_monitoring_integrator import get_log_monitoring_integrator
 

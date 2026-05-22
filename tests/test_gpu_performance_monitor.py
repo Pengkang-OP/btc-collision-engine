@@ -230,7 +230,9 @@ class TestGPUPerformanceMonitor:
         # 先注入足够的高性能批次建立温定基准
         for _ in range(12):
             monitor.record_kernel_metrics(
-                batch_size=10000, execution_time_ms=50.0, memory_allocated_mb=128.0  # 200k keys/s
+                batch_size=10000,
+                execution_time_ms=50.0,
+                memory_allocated_mb=128.0,  # 200k keys/s
             )
 
         # 再记录严重退化性能（低于基准的 25%，远超退化阈值75%）

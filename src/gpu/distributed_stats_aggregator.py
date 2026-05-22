@@ -178,9 +178,7 @@ class DistributedStatsAggregator:
             return {"balanced": True, "devices": []}
 
         avg_keys = (
-            combined["total_keys_checked"] / len(per_device)
-            if combined["total_keys_checked"] > 0
-            else 0
+            combined["total_keys_checked"] / len(per_device) if combined["total_keys_checked"] > 0 else 0
         )
         max_deviation = 0
 

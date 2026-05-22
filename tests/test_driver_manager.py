@@ -188,7 +188,9 @@ class TestDriverManager(unittest.TestCase):
 
         # 旧驱动
         flags = DriverManager.get_driver_optimization_flags(
-            "Intel", "31.0.100.9000", {}  # 旧于31.0.101.0
+            "Intel",
+            "31.0.100.9000",
+            {},  # 旧于31.0.101.0
         )
         self.assertTrue(flags["conservative_mode"])
         self.assertFalse(flags["enable_async_compute"])
@@ -259,7 +261,9 @@ class TestDriverVersionEdgeCases(unittest.TestCase):
     def test_optimization_flags_intel_modern(self):
         """测试Intel现代驱动优化标志"""
         flags = DriverManager.get_driver_optimization_flags(
-            "Intel", "31.0.101.4500", {}  # 现代驱动
+            "Intel",
+            "31.0.101.4500",
+            {},  # 现代驱动
         )
 
         self.assertTrue(flags["enable_async_compute"])

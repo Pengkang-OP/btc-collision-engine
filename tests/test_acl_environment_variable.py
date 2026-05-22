@@ -35,9 +35,7 @@ class TestACLEnvironmentVariable(unittest.TestCase):
                 if os.name == "nt":
                     import subprocess
 
-                    subprocess.run(
-                        ["icacls", self.test_file, "/reset"], capture_output=True, timeout=2
-                    )
+                    subprocess.run(["icacls", self.test_file, "/reset"], capture_output=True, timeout=2)
                 os.remove(self.test_file)
             except (OSError, PermissionError):
                 pass  # Windows文件清理权限问题，不影响测试

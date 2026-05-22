@@ -1,14 +1,32 @@
 #!/usr/bin/env python3
-# DEPRECATED(v4.0): Montgomery Trick 批量模逆优化方案已放弃。
-# GPU PRNG 改造后，内核内部采用费马小定理进行模逆，Montgomery Trick 已无必要。
-# 本脚本仅作历史参考保留，不建议运行。
 """
-批量模逆算法性能分析
+[DEPRECATED v4.0] 批量模逆算法性能分析
 
-分析当前模逆运算的性能瓶颈，并计算批量模逆优化的潜在收益。
+背景: Montgomery Trick 批量模逆优化方案已放弃。
+GPU PRNG 改造后，内核内部采用费马小定理进行模逆，Montgomery Trick 已无必要。
+
+状态: 仅作历史参考保留，不可运行。
 """
 
 import sys
+import warnings
+
+warnings.warn(
+    "analyze_batch_modinv.py 已弃用 (v4.0): "
+    "Montgomery Trick 批量模逆方案已被 GPU PRNG 模式下的费马小定理替代。"
+    "本脚本仅作历史参考。",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
+# 运行防护: 阻止误执行
+if __name__ == "__main__":
+    print("=" * 70)
+    print("  [!] analyze_batch_modinv.py 已弃用 (v4.0)")
+    print("  Montgomery Trick 批量模逆方案已被 GPU PRNG 模式下的")
+    print("  费马小定理模逆替代，本脚本仅作历史参考，不应运行。")
+    print("=" * 70)
+    sys.exit(0)
 
 sys.path.insert(0, "src")
 
@@ -93,7 +111,7 @@ def analyze_modular_inverse_bottleneck():
     print("性能预期:")
     print("-" * 80)
     print()
-    print(f"  当前速度: 81,887 keys/s")
+    print("  当前速度: 81,887 keys/s")
 
     # 模逆占总时间的比例（估算）
     # 椭圆曲线运算中，模逆是最昂贵的操作，约占总时间的60-70%
@@ -105,11 +123,11 @@ def analyze_modular_inverse_bottleneck():
     speedup = 1 / new_total_time
     expected_speed = 81887 * speedup
 
-    print(f"  模逆占比: {modinv_ratio*100:.0f}%")
-    print(f"  优化后模逆时间: {new_modinv_time*100:.1f}%")
+    print(f"  模逆占比: {modinv_ratio * 100:.0f}%")
+    print(f"  优化后模逆时间: {new_modinv_time * 100:.1f}%")
     print(f"  预期加速: {speedup:.2f}x")
     print(f"  预期速度: {expected_speed:,.0f} keys/s")
-    print(f"  性能提升: +{(speedup-1)*100:.1f}%")
+    print(f"  性能提升: +{(speedup - 1) * 100:.1f}%")
     print()
 
     # 保守/乐观估计
@@ -125,15 +143,13 @@ def analyze_modular_inverse_bottleneck():
 
     # 乐观: 模逆占70%
     modinv_ratio_high = 0.70
-    new_time_high = (1 - modinv_ratio_high) + modinv_ratio_high * (
-        optimized_modmul / current_modmul
-    )
+    new_time_high = (1 - modinv_ratio_high) + modinv_ratio_high * (optimized_modmul / current_modmul)
     speedup_high = 1 / new_time_high
     speed_high = 81887 * speedup_high
 
-    print(f"  保守估计 (模逆50%): {speed_low:,.0f} keys/s (+{(speedup_low-1)*100:.1f}%)")
-    print(f"  预期估计 (模逆65%): {expected_speed:,.0f} keys/s (+{(speedup-1)*100:.1f}%)")
-    print(f"  乐观估计 (模逆70%): {speed_high:,.0f} keys/s (+{(speedup_high-1)*100:.1f}%)")
+    print(f"  保守估计 (模逆50%): {speed_low:,.0f} keys/s (+{(speedup_low - 1) * 100:.1f}%)")
+    print(f"  预期估计 (模逆65%): {expected_speed:,.0f} keys/s (+{(speedup - 1) * 100:.1f}%)")
+    print(f"  乐观估计 (模逆70%): {speed_high:,.0f} keys/s (+{(speedup_high - 1) * 100:.1f}%)")
     print()
 
     # 实施建议
@@ -170,10 +186,10 @@ def analyze_modular_inverse_bottleneck():
     print("🎯 结论")
     print("-" * 80)
     print()
-    print(f"  预期性能: {expected_speed:,.0f} keys/s (+{(speedup-1)*100:.1f}%)")
+    print(f"  预期性能: {expected_speed:,.0f} keys/s (+{(speedup - 1) * 100:.1f}%)")
     print(f"  目标范围: {speed_low:,.0f} - {speed_high:,.0f} keys/s")
-    print(f"  建议优先级: P0 (高价值)")
-    print(f"  建议实施: 是")
+    print("  建议优先级: P0 (高价值)")
+    print("  建议实施: 是")
     print()
     print("=" * 80)
 

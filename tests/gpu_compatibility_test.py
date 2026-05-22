@@ -21,9 +21,7 @@ from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
 from src.gpu.device import GPUDeviceDetector, identify_gpu_model, identify_vendor  # noqa: E402
 
 # 配置日志
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -197,9 +195,7 @@ def test_all_gpus():
         init_success, init_error = test_gpu_initialization(i)
 
         # 测试不同批次大小
-        batch_success, batch_error = (
-            test_gpu_batch_sizes(i) if init_success else (False, "初始化失败")
-        )
+        batch_success, batch_error = test_gpu_batch_sizes(i) if init_success else (False, "初始化失败")
 
         # 记录测试结果
         test_results.append(
@@ -236,10 +232,14 @@ def generate_compatibility_report(test_results: list[dict]):
     batch_success_count = sum(1 for result in test_results if result["batch_success"])
 
     logger.info(f"测试设备数量: {total_devices}")
-    logger.info(f"初始化成功: {init_success_count}/{total_devices} ({
-        init_success_count / total_devices * 100:.1f}%)")
-    logger.info(f"批次大小测试成功: {batch_success_count}/{total_devices} ({
-        batch_success_count / total_devices * 100:.1f}%)")
+    logger.info(
+        f"初始化成功: {init_success_count}/{total_devices} ({
+            init_success_count / total_devices * 100:.1f}%)"
+    )
+    logger.info(
+        f"批次大小测试成功: {batch_success_count}/{total_devices} ({
+            batch_success_count / total_devices * 100:.1f}%)"
+    )
 
     for result in test_results:
         device_index = result["device_index"]

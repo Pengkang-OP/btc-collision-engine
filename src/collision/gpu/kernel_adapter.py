@@ -123,9 +123,7 @@ class GPUKernelAdapter(IKernelExecutor):
             kernel_impl = kernel.kernel_obj
 
             # 执行批次
-            raw_matches = kernel_impl.run_batch(
-                seed=seed, batch_size=batch_size, stop_event=stop_event
-            )
+            raw_matches = kernel_impl.run_batch(seed=seed, batch_size=batch_size, stop_event=stop_event)
 
             execution_time_ms = (time.time() - start_time) * 1000
 

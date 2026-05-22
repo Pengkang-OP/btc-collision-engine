@@ -6,6 +6,7 @@
 2. 日志系统性能（同步 vs 异步）
 3. ThreadSafeLogger vs 原生logger性能对比
 """
+
 import statistics
 import sys
 import tempfile
@@ -25,9 +26,9 @@ from src.utils.logger import AsyncFileHandler, SampledLogger, ThreadSafeLogger
 
 def benchmark_secp256k1_scalar_multiply(iterations=100):
     """基准测试: 标量乘法性能"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("基准测试 1: secp256k1 标量乘法性能")
-    print("="*60)
+    print("=" * 60)
 
     ec = EllipticCurve()
     G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)  # noqa: N806 (标准椭圆曲线记法)
@@ -77,9 +78,9 @@ def benchmark_secp256k1_scalar_multiply(iterations=100):
 
 def benchmark_logger_performance(iterations=1000):
     """基准测试: 日志系统性能"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("基准测试 2: 日志系统性能对比")
-    print("="*60)
+    print("=" * 60)
 
     # 初始化日志
     init_logging()
@@ -98,7 +99,7 @@ def benchmark_logger_performance(iterations=1000):
     native_total = sum(native_times)
     print(f"  总时间: {native_total:.2f}ms")
     print(f"  平均时间: {native_avg:.4f}ms/条")
-    print(f"  吞吐量: {iterations/native_total*1000:.0f} 条/秒")
+    print(f"  吞吐量: {iterations / native_total * 1000:.0f} 条/秒")
 
     # ── 测试2: ThreadSafeLogger (已弃用) ──
     print("\n[测试2b] ThreadSafeLogger (已弃用)")
@@ -118,7 +119,7 @@ def benchmark_logger_performance(iterations=1000):
     ts_total = sum(ts_times)
     print(f"  总时间: {ts_total:.2f}ms")
     print(f"  平均时间: {ts_avg:.4f}ms/条")
-    print(f"  吞吐量: {iterations/ts_total*1000:.0f} 条/秒")
+    print(f"  吞吐量: {iterations / ts_total * 1000:.0f} 条/秒")
 
     # 性能对比（使用独立变量名避免覆盖）
     slowdown = (ts_total / native_total - 1) * 100 if native_total > 0 else 0
@@ -130,7 +131,7 @@ def benchmark_logger_performance(iterations=1000):
         log_file = f.name
 
     try:
-        async_handler = AsyncFileHandler(log_file, max_bytes=10*1024*1024)
+        async_handler = AsyncFileHandler(log_file, max_bytes=10 * 1024 * 1024)
         logger3 = get_configured_logger("Benchmark_Async", thread_safe=False)
         logger3.addHandler(async_handler)
 
@@ -145,7 +146,7 @@ def benchmark_logger_performance(iterations=1000):
         total_time = sum(times)
         print(f"  总时间: {total_time:.2f}ms (非阻塞)")
         print(f"  平均时间: {avg_time:.4f}ms/条")
-        print(f"  吞吐量: {iterations/total_time*1000:.0f} 条/秒 (理论值)")
+        print(f"  吞吐量: {iterations / total_time * 1000:.0f} 条/秒 (理论值)")
 
         # 等待队列清空
         async_handler.close()
@@ -156,24 +157,22 @@ def benchmark_logger_performance(iterations=1000):
             print(f"  队列状态: {stats}")
 
     finally:
+        import contextlib
+
         # 先确保 handler 已关闭再删除临时文件（Windows 下打开的文件无法删除）
-        try:
+        with contextlib.suppress(Exception):
             async_handler.close()
-        except Exception:  # noqa: BLE001 (基准测试容错)
-            pass
         log_path = Path(log_file)
         if log_path.exists():
-            try:
+            with contextlib.suppress(OSError):
                 log_path.unlink()
-            except OSError:
-                pass
 
 
 def benchmark_sampled_logger(iterations=10000):
     """基准测试: 采样日志性能"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("基准测试 3: SampledLogger 性能")
-    print("="*60)
+    print("=" * 60)
 
     init_logging()
 
@@ -201,9 +200,9 @@ def benchmark_sampled_logger(iterations=10000):
 
 def benchmark_concurrent_logging(thread_count=5, messages_per_thread=100):
     """基准测试: 并发日志性能"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("基准测试 4: 并发日志性能")
-    print("="*60)
+    print("=" * 60)
 
     init_logging()
 
@@ -232,15 +231,15 @@ def benchmark_concurrent_logging(thread_count=5, messages_per_thread=100):
     total_messages = thread_count * messages_per_thread
     print(f"  总消息数: {len(messages)}/{total_messages}")
     print(f"  总时间: {elapsed:.2f}ms")
-    print(f"  吞吐量: {total_messages/elapsed*1000:.0f} 条/秒")
+    print(f"  吞吐量: {total_messages / elapsed * 1000:.0f} 条/秒")
     print(f"  无竞态条件: {'[PASS]' if len(messages) == total_messages else '[FAIL]'}")
 
 
 def main():
     """运行所有基准测试"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("BTC碰撞引擎核心模块性能基准测试")
-    print("="*60)
+    print("=" * 60)
     print(f"测试时间: {time.strftime('%Y-%m-%d %H:%M:%S')}")
 
     # 运行测试
@@ -250,9 +249,9 @@ def main():
         benchmark_sampled_logger(iterations=10000)
         benchmark_concurrent_logging(thread_count=5, messages_per_thread=100)
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("所有基准测试完成！")
-        print("="*60)
+        print("=" * 60)
 
     except Exception as e:  # noqa: BLE001 (基准测试容错)
         print(f"\n[ERROR] 基准测试失败: {e}")

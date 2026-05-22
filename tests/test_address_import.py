@@ -15,9 +15,7 @@ class TestAddressImport:
     def test_import_from_text_file(self):
         """测试从文本文件导入地址"""
         # 创建临时文本文件
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".txt", delete=False, encoding="utf-8"
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, encoding="utf-8") as f:
             f.write("# 测试地址文件\n")
             f.write("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n")
             f.write("1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2\n")
@@ -67,9 +65,7 @@ class TestAddressImport:
             ]
         }
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False, encoding="utf-8"
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as f:
             json.dump(test_data, f)
             temp_json_path = f.name
 
@@ -94,9 +90,7 @@ class TestAddressImport:
     def test_import_from_csv_file(self):
         """测试从CSV文件导入地址"""
         # 创建临时CSV文件
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".csv", delete=False, encoding="utf-8"
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False, encoding="utf-8") as f:
             f.write("address,name\n")
             f.write("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa,test1\n")
             f.write("1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2,test2\n")
@@ -123,9 +117,7 @@ class TestAddressImport:
 
     def test_import_without_validation(self):
         """测试不验证直接导入"""
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".txt", delete=False, encoding="utf-8"
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, encoding="utf-8") as f:
             f.write("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n")
             f.write("invalid_address\n")
             temp_txt_path = f.name
@@ -168,9 +160,7 @@ class TestAddressImport:
         def progress_callback(imported, total, address):
             progress_calls.append((imported, total, address))
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".txt", delete=False, encoding="utf-8"
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, encoding="utf-8") as f:
             f.write("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n")
             f.write("1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2\n")
             temp_txt_path = f.name
@@ -195,9 +185,7 @@ class TestAddressImport:
 
     def test_import_sqlite_format(self):
         """测试SQLite格式导入"""
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".txt", delete=False, encoding="utf-8"
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, encoding="utf-8") as f:
             f.write("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n")
             f.write("1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2\n")
             temp_txt_path = f.name

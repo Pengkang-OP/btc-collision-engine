@@ -34,9 +34,9 @@ class MockAssertions:
             mock_kernel: GPU内核Mock
             min_calls: 最小调用次数
         """
-        assert (
-            mock_kernel.run_batch.call_count >= min_calls
-        ), f"GPU内核执行次数{mock_kernel.run_batch.call_count} < {min_calls}"
+        assert mock_kernel.run_batch.call_count >= min_calls, (
+            f"GPU内核执行次数{mock_kernel.run_batch.call_count} < {min_calls}"
+        )
 
     @staticmethod
     def assert_targets_set(mock_kernel, expected_count):
@@ -48,9 +48,7 @@ class MockAssertions:
         """
         mock_kernel.set_targets.assert_called_once()
         call_args = mock_kernel.set_targets.call_args
-        assert (
-            call_args[0][1] == expected_count
-        ), f"目标地址数量{call_args[0][1]} != {expected_count}"
+        assert call_args[0][1] == expected_count, f"目标地址数量{call_args[0][1]} != {expected_count}"
 
     @staticmethod
     def assert_engine_running(engine):
@@ -72,9 +70,9 @@ class MockAssertions:
         """
         mock_context.calculate_batch_size.assert_called()
         actual_batch_size = mock_context.calculate_batch_size.return_value
-        assert (
-            actual_batch_size == expected_batch_size
-        ), f"Batch size {actual_batch_size} != {expected_batch_size}"
+        assert actual_batch_size == expected_batch_size, (
+            f"Batch size {actual_batch_size} != {expected_batch_size}"
+        )
 
     @staticmethod
     def assert_gpu_initialized(mock_device):

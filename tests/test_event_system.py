@@ -79,9 +79,7 @@ class TestCollisionEvent(unittest.TestCase):
     def test_engine_error_event(self):
         """测试引擎错误事件"""
         error = ValueError("Test error")
-        event = EngineErrorEvent(
-            error_type="ValueError", error_message="Test error", exception=error
-        )
+        event = EngineErrorEvent(error_type="ValueError", error_message="Test error", exception=error)
 
         self.assertEqual(event.error_type, "ValueError")
         self.assertEqual(event.event_type, EventType.ENGINE_ERROR)

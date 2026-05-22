@@ -12,6 +12,7 @@
     python -m benchmarks.benchmark_runner --output benchmarks/results
     python -m benchmarks.benchmark_runner --list
 """
+
 import argparse
 import hashlib
 import json
@@ -29,14 +30,16 @@ from typing import Any
 _ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(_ROOT))
 
+from src.collision.deduplication_filter import (
+    DeduplicationFilter,  # noqa: E402 (需 sys.path.insert 在前)
+)
 from src.core.address_generator import P2PKHAddressGenerator  # noqa: E402 (需 sys.path.insert 在前)
 from src.core.base58 import Base58  # noqa: E402 (需 sys.path.insert 在前)
-from src.collision.deduplication_filter import DeduplicationFilter  # noqa: E402 (需 sys.path.insert 在前)
-
 
 # ──────────────────────────────────────────────
 # 基准测试结果数据结构
 # ──────────────────────────────────────────────
+
 
 class BenchmarkResult:
     """单个基准测试的结果"""
@@ -77,6 +80,7 @@ class BenchmarkResult:
 # 精确计时工具
 # ──────────────────────────────────────────────
 
+
 def _run_timed(func: Callable, warmup: int = 3, iterations: int = 1000) -> BenchmarkResult:
     """运行函数并精确计时。
 
@@ -115,6 +119,7 @@ def _run_timed(func: Callable, warmup: int = 3, iterations: int = 1000) -> Bench
 # ──────────────────────────────────────────────
 # 内建核心基准测试
 # ──────────────────────────────────────────────
+
 
 def bench_secp256k1_key_generation() -> BenchmarkResult:
     """椭圆曲线密钥生成吞吐量基准测试"""
@@ -216,12 +221,12 @@ def bench_base58check_encode() -> BenchmarkResult:
 # ──────────────────────────────────────────────
 
 BUILTIN_BENCHMARKS: dict[str, Callable[[], BenchmarkResult]] = {
-    "secp256k1_key_gen":   bench_secp256k1_key_generation,
-    "address_generation":  bench_address_generation,
-    "collision_check":     bench_collision_check,
-    "dedup_filter":        bench_dedup_filter,
-    "hash160":             bench_hash160,
-    "base58check_encode":  bench_base58check_encode,
+    "secp256k1_key_gen": bench_secp256k1_key_generation,
+    "address_generation": bench_address_generation,
+    "collision_check": bench_collision_check,
+    "dedup_filter": bench_dedup_filter,
+    "hash160": bench_hash160,
+    "base58check_encode": bench_base58check_encode,
 }
 
 
@@ -299,6 +304,7 @@ def _compare_results(
 # 主运行器
 # ──────────────────────────────────────────────
 
+
 class BenchmarkRunner:
     """统一基准测试运行器"""
 
@@ -339,7 +345,6 @@ class BenchmarkRunner:
             )
             return result
         except Exception as exc:  # noqa: BLE001 (基准测试容错)
-
             err = traceback.format_exc()
             print(f"  [FAILED] {exc}\n{err}")
             return BenchmarkResult(
@@ -441,7 +446,9 @@ class BenchmarkRunner:
         improvements = comparison.get("improvements", [])
 
         if regressions:
-            print(f"\n[!] 发现 {len(regressions)} 处性能回归 (下降 > {_REGRESSION_THRESHOLD*100:.0f}%):")
+            print(
+                f"\n[!] 发现 {len(regressions)} 处性能回归 (下降 > {_REGRESSION_THRESHOLD * 100:.0f}%):"
+            )
             for r in regressions:
                 print(
                     f"    - {r['name']:30s}  "
@@ -491,6 +498,7 @@ class BenchmarkRunner:
 # ──────────────────────────────────────────────
 # CLI 入口
 # ──────────────────────────────────────────────
+
 
 def _build_parser() -> argparse.ArgumentParser:
     """构造命令行参数解析器"""

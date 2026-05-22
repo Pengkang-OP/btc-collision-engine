@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 异步双缓冲60秒性能对比测试 v3
 
@@ -30,22 +29,20 @@
 - 超时保护: 每个模式最多运行100秒(90秒测试+10秒缓冲)
 """
 
-import sys
-import os
-import time
 import json
-import signal
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Any
+import os
 import subprocess
+import sys
+import time
+from datetime import datetime
+from typing import Any
 
 # 添加项目根目录到路径
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)
 
-from src.collision.gpu.engine import GPUCollisionEngine
 from src.collision.collision_stats import CollisionStats
+from src.collision.gpu.engine import GPUCollisionEngine
 
 
 class AsyncDoubleBufferTest:
@@ -109,7 +106,7 @@ class AsyncDoubleBufferTest:
         except Exception as e:
             print(f"  ⚠️  进程检查失败(继续测试): {e}")
 
-    def test_sync_mode(self) -> Dict[str, Any]:
+    def test_sync_mode(self) -> dict[str, Any]:  # noqa: C901
         """
         测试同步模式(单缓冲)
 
@@ -121,11 +118,10 @@ class AsyncDoubleBufferTest:
         print("=" * 80)
         print(f"  测试时长: {self.test_duration}秒")
         print(f"  数据分析: 前{self.analysis_duration}秒")
-        print(f"  批次大小: 1,048,576")
+        print("  批次大小: 1,048,576")
         print()
 
         stats_history = []
-        batch_times = []
         total_keys = 0
         start_time = time.time()
         engine = None  # 初始化engine变量
@@ -318,7 +314,7 @@ class AsyncDoubleBufferTest:
             traceback.print_exc()
             return {"mode": "sync", "error": str(e), "duration": time.time() - start_time}
 
-    def test_async_mode(self) -> Dict[str, Any]:
+    def test_async_mode(self) -> dict[str, Any]:  # noqa: C901
         """
         测试异步模式(双缓冲)
 
@@ -330,11 +326,10 @@ class AsyncDoubleBufferTest:
         print("=" * 80)
         print(f"  测试时长: {self.test_duration}秒")
         print(f"  数据分析: 前{self.analysis_duration}秒")
-        print(f"  批次大小: 1,048,576")
+        print("  批次大小: 1,048,576")
         print()
 
         stats_history = []
-        batch_times = []
         total_keys = 0
         start_time = time.time()
 
@@ -530,7 +525,7 @@ class AsyncDoubleBufferTest:
             traceback.print_exc()
             return {"mode": "async", "error": str(e), "duration": time.time() - start_time}
 
-    def run_comparison(self) -> Dict[str, Any]:
+    def run_comparison(self) -> dict[str, Any]:
         """
         运行完整对比测试
 
@@ -583,7 +578,7 @@ class AsyncDoubleBufferTest:
 
         return comparison
 
-    def generate_comparison(self, sync: Dict, async_mode: Dict) -> Dict[str, Any]:
+    def generate_comparison(self, sync: dict, async_mode: dict) -> dict[str, Any]:
         """
         生成对比报告
 
@@ -611,9 +606,7 @@ class AsyncDoubleBufferTest:
                 f"  {'平均速度 (keys/s)':<20} {sync_speed:>15,.0f} {async_speed:>15,.0f} {improvement:>+9.1f}%"
             )
             print(f"  {'总密钥数':<20} {sync['total_keys']:>15,} {async_mode['total_keys']:>15,}")
-            print(
-                f"  {'测试时长 (秒)':<20} {sync['duration']:>15.2f} {async_mode['duration']:>15.2f}"
-            )
+            print(f"  {'测试时长 (秒)':<20} {sync['duration']:>15.2f} {async_mode['duration']:>15.2f}")
             print(
                 f"  {'初始化时间 (秒)':<20} {sync['init_time']:>15.2f} {async_mode['init_time']:>15.2f}"
             )
@@ -660,7 +653,7 @@ class AsyncDoubleBufferTest:
                 "timestamp": datetime.now().isoformat(),
             }
 
-    def save_results(self, comparison: Dict[str, Any]):
+    def save_results(self, comparison: dict[str, Any]):
         """
         保存测试结果
 
@@ -687,21 +680,21 @@ class AsyncDoubleBufferTest:
         print(f"  📄 报告已生成: {md_filepath}")
 
 
-def generate_markdown_report(comparison: Dict, filepath: str):
+def generate_markdown_report(comparison: dict, filepath: str):
     """生成Markdown格式的报告"""
 
     with open(filepath, "w", encoding="utf-8") as f:
         f.write("# 异步双缓冲60秒性能对比测试报告\n\n")
         f.write(f"> **测试时间**: {comparison.get('timestamp', 'N/A')}\n")
-        f.write(f"> **测试版本**: v3.3.0\n")
+        f.write("> **测试版本**: v3.3.0\n")
         f.write(f"> **GPU设备**: {comparison.get('device', 'Unknown')}\n\n")
 
         f.write("## 测试配置\n\n")
         f.write(f"- **测试时长**: {comparison['test_duration']}秒/模式\n")
-        f.write(f"- **批次大小**: 1,048,576 (1M)\n")
-        f.write(f"- **目标地址**: 2个真实比特币地址\n")
-        f.write(f"- **同步模式**: 单缓冲，队列深度=1\n")
-        f.write(f"- **异步模式**: 双缓冲，队列深度=2\n\n")
+        f.write("- **批次大小**: 1,048,576 (1M)\n")
+        f.write("- **目标地址**: 2个真实比特币地址\n")
+        f.write("- **同步模式**: 单缓冲，队列深度=1\n")
+        f.write("- **异步模式**: 双缓冲，队列深度=2\n\n")
 
         if "error" not in comparison:
             sync = comparison["sync"]
@@ -715,9 +708,7 @@ def generate_markdown_report(comparison: Dict, filepath: str):
                 f"| 平均速度 (keys/s) | {sync['avg_speed']:,.0f} | {async_mode['avg_speed']:,.0f} | {improvement:+.1f}% |\n"
             )
             f.write(f"| 总密钥数 | {sync['total_keys']:,} | {async_mode['total_keys']:,} | - |\n")
-            f.write(
-                f"| 测试时长 (秒) | {sync['duration']:.2f} | {async_mode['duration']:.2f} | - |\n"
-            )
+            f.write(f"| 测试时长 (秒) | {sync['duration']:.2f} | {async_mode['duration']:.2f} | - |\n")
             f.write(
                 f"| 初始化时间 (秒) | {sync['init_time']:.2f} | {async_mode['init_time']:.2f} | - |\n"
             )

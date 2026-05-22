@@ -171,9 +171,7 @@ class TestSafeInvokeMatchCallbackIsolation:
 
         # 不应抛出任何异常
         try:
-            result = self._engine._safe_invoke_match_callback(
-                b"\x01" * 32, "1TestAddress", "Kwif123"
-            )
+            result = self._engine._safe_invoke_match_callback(b"\x01" * 32, "1TestAddress", "Kwif123")
             # 异常回调应返回 False（隔离失败结果）
             assert result is False, "异常回调应返回 False"
         except Exception as exc:
@@ -215,9 +213,7 @@ class TestSafeInvokeMatchCallbackIsolation:
 
         # mock Thread.is_alive 返回 True 模拟超时
         with patch.object(threading.Thread, "is_alive", return_value=True):
-            result = self._engine._safe_invoke_match_callback(
-                b"\x03" * 32, "1TestAddress", "Kwif789"
-            )
+            result = self._engine._safe_invoke_match_callback(b"\x03" * 32, "1TestAddress", "Kwif789")
         assert result is False, "超时回调应返回 False"
 
 
@@ -265,9 +261,7 @@ class TestCoinCurveVersionConsistency:
         version_req = match_req.group(1)
 
         assert version_toml == version_req, (
-            "coincurve 版本不一致: "
-            f"pyproject.toml={version_toml}, "
-            f"requirements-base.txt={version_req}"
+            f"coincurve 版本不一致: pyproject.toml={version_toml}, requirements-base.txt={version_req}"
         )
 
     def test_coincurve_minimum_version_is_18(self):
@@ -336,7 +330,7 @@ class TestRangeScanBoundaryConsistency:
         for i, (b_start, b_end) in enumerate(batches):
             expected_end = min(b_start + batch_size, end + 1)
             assert b_end == expected_end, (
-                f"批次 {i} 的 batch_end 计算不一致: " f"得到 {b_end}，期望 {expected_end}"
+                f"批次 {i} 的 batch_end 计算不一致: 得到 {b_end}，期望 {expected_end}"
             )
 
     def test_each_batch_size_within_limit(self):
@@ -372,6 +366,6 @@ class TestRangeScanBoundaryConsistency:
         last_batch = batches[-1]
         remainder = (end - start + 1) % batch_size
         if remainder != 0:
-            assert (
-                len(last_batch) == remainder
-            ), f"最后批次大小应为 {remainder}，实际为 {len(last_batch)}"
+            assert len(last_batch) == remainder, (
+                f"最后批次大小应为 {remainder}，实际为 {len(last_batch)}"
+            )

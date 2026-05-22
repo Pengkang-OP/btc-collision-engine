@@ -27,7 +27,6 @@ PRODUCTION_INCLUDE = [
     "key_collision_cli.py",
     # M-NEW3修复: key_collision_gui.py 已移除，项目转为纯 CLI 架构
     "start.bat",
-
     # 配置文件
     "config.json",
     "config.example.json",
@@ -36,20 +35,16 @@ PRODUCTION_INCLUDE = [
     "requirements.txt",
     "requirements.lock",
     "valid_addresses.txt",
-
     # 源代码
     "src/",
-
     # 文档
     "README.md",
     "CHANGELOG.md",
     "CONTRIBUTING.md",
     "docs/",
-
     # 工具
     "tools/utf8_helper.py",
     "tools/retry_helper.py",
-
     # 脚本
     "scripts/",
 ]
@@ -59,14 +54,12 @@ PRODUCTION_EXCLUDE = [
     # 版本控制
     ".git/",
     ".github/",
-
     # Python缓存
     "__pycache__/",
     "*.pyc",
     "*.pyo",
     ".pytest_cache/",
     ".benchmarks/",
-
     # 测试相关
     "tests/",
     "test_*.py",
@@ -74,7 +67,6 @@ PRODUCTION_EXCLUDE = [
     "test_*.log",
     "test_data/",
     "test_results/",
-
     # 开发工具文档
     "docs/archive/",
     "tools/test_*.py",
@@ -99,13 +91,11 @@ PRODUCTION_EXCLUDE = [
     "tools/CODE_REVIEW_*.md",
     "tools/UTF8_*.md",
     "tools/README.md",
-
     # 日志和数据
     "logs/",
     "data_logs/",
     "monitoring_data/",
     "*.log",
-
     # IDE配置
     ".vscode/",
     ".qoder/",
@@ -113,7 +103,6 @@ PRODUCTION_EXCLUDE = [
     ".trae/",
     "*.swp",
     "*.swo",
-
     # 其他
     "build/",
     "dist/",
@@ -127,37 +116,46 @@ def get_git_info():
     """获取Git版本信息"""
     try:
         # 获取当前commit hash
-        commit_hash = subprocess.check_output(
-            ["git", "rev-parse", "HEAD"],
-            stderr=subprocess.DEVNULL
-        ).decode().strip()
+        commit_hash = (
+            subprocess.check_output(["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL)
+            .decode()
+            .strip()
+        )
 
         # 获取简短hash
-        short_hash = subprocess.check_output(
-            ["git", "rev-parse", "--short", "HEAD"],
-            stderr=subprocess.DEVNULL
-        ).decode().strip()
+        short_hash = (
+            subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], stderr=subprocess.DEVNULL)
+            .decode()
+            .strip()
+        )
 
         # 获取最近标签
         try:
-            tag = subprocess.check_output(
-                ["git", "describe", "--tags", "--abbrev=0"],
-                stderr=subprocess.DEVNULL
-            ).decode().strip()
+            tag = (
+                subprocess.check_output(
+                    ["git", "describe", "--tags", "--abbrev=0"], stderr=subprocess.DEVNULL
+                )
+                .decode()
+                .strip()
+            )
         except (subprocess.CalledProcessError, FileNotFoundError):
             tag = "v2.2.0"
 
         # 获取提交数量
-        commit_count = subprocess.check_output(
-            ["git", "rev-list", "--count", "HEAD"],
-            stderr=subprocess.DEVNULL
-        ).decode().strip()
+        commit_count = (
+            subprocess.check_output(["git", "rev-list", "--count", "HEAD"], stderr=subprocess.DEVNULL)
+            .decode()
+            .strip()
+        )
 
         # 获取分支名
-        branch = subprocess.check_output(
-            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-            stderr=subprocess.DEVNULL
-        ).decode().strip()
+        branch = (
+            subprocess.check_output(
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"], stderr=subprocess.DEVNULL
+            )
+            .decode()
+            .strip()
+        )
 
         return {
             "commit_hash": commit_hash,
@@ -180,17 +178,18 @@ def get_git_info():
 def should_exclude(filepath: Path, base_dir: Path) -> bool:
     """判断文件是否应该排除"""
     rel_path = filepath.relative_to(base_dir)
-    rel_str = str(rel_path).replace('\\', '/')
+    rel_str = str(rel_path).replace("\\", "/")
 
     for pattern in PRODUCTION_EXCLUDE:
         # 目录匹配
-        if pattern.endswith('/'):
-            dir_name = pattern.rstrip('/')
-            if rel_str == dir_name or rel_str.startswith(dir_name + '/'):
+        if pattern.endswith("/"):
+            dir_name = pattern.rstrip("/")
+            if rel_str == dir_name or rel_str.startswith(dir_name + "/"):
                 return True
         # 通配符匹配
-        elif '*' in pattern:
+        elif "*" in pattern:
             import fnmatch
+
             if fnmatch.fnmatch(rel_str, pattern) or fnmatch.fnmatch(filepath.name, pattern):
                 return True
         # 精确匹配
@@ -260,11 +259,11 @@ def generate_release_notes(target_dir: Path, version_info: dict):
 
 ## 版本信息
 
-- **版本号**: {version_info['version']}
-- **构建时间**: {version_info['build_time']}
-- **Git Commit**: {version_info['git']['short_hash']}
-- **Python版本**: {version_info['python_version']}
-- **平台**: {version_info['platform']}
+- **版本号**: {version_info["version"]}
+- **构建时间**: {version_info["build_time"]}
+- **Git Commit**: {version_info["git"]["short_hash"]}
+- **Python版本**: {version_info["python_version"]}
+- **平台**: {version_info["platform"]}
 
 ## 快速开始
 
@@ -332,8 +331,8 @@ btc-collision-engine/
 
 ---
 
-**构建时间**: {version_info['build_time']}
-**版本**: {version_info['version']}
+**构建时间**: {version_info["build_time"]}
+**版本**: {version_info["version"]}
 """
 
     notes_file = target_dir / "RELEASE_NOTES.md"
@@ -346,21 +345,9 @@ btc-collision-engine/
 def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="BTC碰撞引擎生产环境打包工具")
-    parser.add_argument(
-        "--output",
-        required=True,
-        help="输出目录路径"
-    )
-    parser.add_argument(
-        "--clean",
-        action="store_true",
-        help="清理已存在的输出目录"
-    )
-    parser.add_argument(
-        "--yes",
-        action="store_true",
-        help="自动确认所有提示"
-    )
+    parser.add_argument("--output", required=True, help="输出目录路径")
+    parser.add_argument("--clean", action="store_true", help="清理已存在的输出目录")
+    parser.add_argument("--yes", action="store_true", help="自动确认所有提示")
 
     args = parser.parse_args()
 

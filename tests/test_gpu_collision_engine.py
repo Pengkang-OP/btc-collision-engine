@@ -104,7 +104,6 @@ def mock_gpu_setup():
         patch("src.gpu.async_executor.AsyncGPUExecutor.initialize_buffers"),
         patch("src.gpu.async_executor.AsyncGPUExecutor.run_batch_async", return_value=([], 1.0)),
     ):
-
         mock_profile_loader.return_value.get_profile.return_value = None
 
         yield {
@@ -165,11 +164,8 @@ class TestGPUCollisionEngine:
                     return_value=False,
                 ),
             ):
-
                 # 测试没有 GPU 设备的情况应该抛出异常
-                with pytest.raises(
-                    RuntimeError, match="pyopencl 不可用|未检测到 GPU 设备|GPU.*不可用"
-                ):
+                with pytest.raises(RuntimeError, match="pyopencl 不可用|未检测到 GPU 设备|GPU.*不可用"):
                     GPUCollisionEngine(self.test_targets)
 
     @pytest.mark.skip(

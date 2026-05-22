@@ -260,9 +260,7 @@ class TestObjectPoolStats(unittest.TestCase):
 
     def test_estimate_memory(self):
         """内存估算"""
-        pool = ObjectPool(
-            lambda: _DummyObj(), initial_size=10, max_size=50, object_size_estimate=256
-        )
+        pool = ObjectPool(lambda: _DummyObj(), initial_size=10, max_size=50, object_size_estimate=256)
         mem = pool.estimate_memory()
         self.assertEqual(mem, 10 * 256)
 

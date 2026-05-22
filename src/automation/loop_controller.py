@@ -5,13 +5,14 @@
 """
 
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+
 import threading
 from collections.abc import Callable
 from datetime import datetime
-from pathlib import Path
 from typing import Any
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from .audit import AuditModule
 from .auto_test import AutoTestModule

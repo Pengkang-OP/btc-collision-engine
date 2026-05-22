@@ -310,9 +310,7 @@ class DataAnalysisModule:
 
         return stats
 
-    def _identify_issues(
-        self, data_summary: dict[str, Any], statistics: dict[str, Any]
-    ) -> list[Issue]:
+    def _identify_issues(self, data_summary: dict[str, Any], statistics: dict[str, Any]) -> list[Issue]:
         """识别问题"""
         issues = []
 
@@ -412,9 +410,7 @@ class DataAnalysisModule:
 
         return issues
 
-    def _generate_recommendations(
-        self, issues: list[Issue], statistics: dict[str, Any]
-    ) -> list[str]:
+    def _generate_recommendations(self, issues: list[Issue], statistics: dict[str, Any]) -> list[str]:
         """生成建议"""
         recommendations = []
 

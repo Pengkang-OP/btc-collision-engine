@@ -129,9 +129,7 @@ class TestGpuSpecificConfig:
 
         for model, config in GPU_SPECIFIC_CONFIG.items():
             assert config["initial_batch_size"] > 0, f"{model} initial_batch_size <= 0"
-            assert (
-                config["max_batch_size"] >= config["initial_batch_size"]
-            ), f"{model} max < initial"
+            assert config["max_batch_size"] >= config["initial_batch_size"], f"{model} max < initial"
 
     def test_memory_factors_valid(self):
         from src.gpu.async_executor import GPU_SPECIFIC_CONFIG

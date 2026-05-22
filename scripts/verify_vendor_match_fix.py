@@ -1,6 +1,7 @@
 """验证 vendor 匹配修复：configure_for_device 路由正确性"""
 
-import sys, logging
+import logging
+import sys
 
 sys.path.insert(0, ".")
 logging.disable(logging.CRITICAL)
@@ -141,8 +142,8 @@ print(f"  enable_async    = {arc_cfg['enable_async']}      (期望 True)")
 print(f"  workaround      = {arc_cfg['use_uint32_workaround']}      (期望 True)")
 assert arc_cfg["batch_size"] == 262144, f"batch_size 错误: {arc_cfg['batch_size']}"
 assert arc_cfg["work_group_size"] == 512, f"work_group_size 错误: {arc_cfg['work_group_size']}"
-assert arc_cfg["enable_async"] == True, f"enable_async 错误"
-assert arc_cfg["use_uint32_workaround"] == True, "workaround 错误"
+assert arc_cfg["enable_async"], "enable_async 错误"
+assert arc_cfg["use_uint32_workaround"], "workaround 错误"
 print("  Arc A770 所有关键字段: PASS")
 
 sys.exit(failed)

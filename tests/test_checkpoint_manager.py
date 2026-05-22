@@ -21,9 +21,7 @@ class TestCheckpointManagerBasic(unittest.TestCase):
         # 使用临时文件，但不预先创建
         import uuid
 
-        self.tmp_path = os.path.join(
-            tempfile.gettempdir(), f"test_ckpt_{uuid.uuid4().hex[:8]}.json"
-        )
+        self.tmp_path = os.path.join(tempfile.gettempdir(), f"test_ckpt_{uuid.uuid4().hex[:8]}.json")
         self.mgr = CheckpointManager(filepath=self.tmp_path)
 
     def tearDown(self):
@@ -109,9 +107,7 @@ class TestCheckpointSensitiveInfoCleaning(unittest.TestCase):
     def test_address_preserved_in_match(self):
         """断点保存保留地址信息"""
         matches = [{"address": "1TestPreserved", "timestamp": time.time()}]
-        self.mgr.save(
-            mode="random", targets=set(), current_position=0, total_checked=0, matches=matches
-        )
+        self.mgr.save(mode="random", targets=set(), current_position=0, total_checked=0, matches=matches)
         data = self.mgr.load()
         self.assertEqual(data["matches"][0]["address"], "1TestPreserved")
 
@@ -216,9 +212,7 @@ class TestCheckpointSaveVariants(unittest.TestCase):
     def setUp(self):
         import uuid
 
-        self.tmp_path = os.path.join(
-            tempfile.gettempdir(), f"test_ckpt_var_{uuid.uuid4().hex[:8]}.json"
-        )
+        self.tmp_path = os.path.join(tempfile.gettempdir(), f"test_ckpt_var_{uuid.uuid4().hex[:8]}.json")
         self.mgr = CheckpointManager(filepath=self.tmp_path, auto_save_interval=9999)
 
     def tearDown(self):
@@ -280,9 +274,7 @@ class TestCheckpointFlushErrors(unittest.TestCase):
     def setUp(self):
         import uuid
 
-        self.tmp_path = os.path.join(
-            tempfile.gettempdir(), f"test_ckpt_err_{uuid.uuid4().hex[:8]}.json"
-        )
+        self.tmp_path = os.path.join(tempfile.gettempdir(), f"test_ckpt_err_{uuid.uuid4().hex[:8]}.json")
         self.mgr = CheckpointManager(filepath=self.tmp_path)
 
     def tearDown(self):
@@ -387,9 +379,7 @@ class TestCheckpointDelete(unittest.TestCase):
     def setUp(self):
         import uuid
 
-        self.tmp_path = os.path.join(
-            tempfile.gettempdir(), f"test_ckpt_del_{uuid.uuid4().hex[:8]}.json"
-        )
+        self.tmp_path = os.path.join(tempfile.gettempdir(), f"test_ckpt_del_{uuid.uuid4().hex[:8]}.json")
         self.mgr = CheckpointManager(filepath=self.tmp_path)
 
     def tearDown(self):
@@ -511,9 +501,7 @@ class TestCheckpointLoadTempRecoveryErrors(unittest.TestCase):
     def setUp(self):
         import uuid
 
-        self.tmp_path = os.path.join(
-            tempfile.gettempdir(), f"test_ckpt_rec_{uuid.uuid4().hex[:8]}.json"
-        )
+        self.tmp_path = os.path.join(tempfile.gettempdir(), f"test_ckpt_rec_{uuid.uuid4().hex[:8]}.json")
         self.mgr = CheckpointManager(filepath=self.tmp_path)
 
     def tearDown(self):

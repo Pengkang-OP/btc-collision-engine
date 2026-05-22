@@ -306,9 +306,7 @@ class DataLogger:
             self.logger.error(f"写入性能日志失败: {e}")
 
         # 记录到标准日志
-        self.logger.debug(
-            f"性能数据: 速度={speed:.2f}/s, 总计={total_checked}, 匹配={matches_found}"
-        )
+        self.logger.debug(f"性能数据: 速度={speed:.2f}/s, 总计={total_checked}, 匹配={matches_found}")
 
     # ==== v4.3.1: 性能日志批量化写入 ====
 
@@ -498,9 +496,7 @@ class DataLogger:
             # P1-1: 使用独立计数器，避免与record_performance_data赋值冲突
             self._match_event_count += 1
 
-        self.logger.info(
-            f"碰撞匹配事件: 地址={safe_addr}, 模式={collision_mode}, 类型={match_type}"
-        )
+        self.logger.info(f"碰撞匹配事件: 地址={safe_addr}, 模式={collision_mode}, 类型={match_type}")
 
     def record_error(
         self,
@@ -612,9 +608,7 @@ class DataLogger:
 
             if not self._safe_file_replace(temp_file, self.current_data_file):
                 self.logger.error("保存当前数据失败: 文件替换所有方案均失败")
-                self._record_pipeline_metric(
-                    "save_current_data", success=False, error="replace_failed"
-                )
+                self._record_pipeline_metric("save_current_data", success=False, error="replace_failed")
             else:
                 self._record_pipeline_metric("save_current_data", success=True)
         except Exception as e:
@@ -654,9 +648,7 @@ class DataLogger:
                     removed += 1
                     freed += size
             if removed > 0:
-                self.logger.info(
-                    f"清理了 {removed} 个过期临时文件，释放 {freed / 1024 / 1024:.2f} MB"
-                )
+                self.logger.info(f"清理了 {removed} 个过期临时文件，释放 {freed / 1024 / 1024:.2f} MB")
         except Exception as e:
             self.logger.debug(f"清理过期临时文件时出错（非致命）: {e}")
 
@@ -689,9 +681,7 @@ class DataLogger:
                 # 使用 os.replace 原子操作，避免 remove+rename 中的中间态丢失
                 for i in range(self._PERF_LOG_MAX_ROTATIONS, 0, -1):
                     old_name = (
-                        f"{self.performance_log_file}.{i - 1}"
-                        if i > 1
-                        else self.performance_log_file
+                        f"{self.performance_log_file}.{i - 1}" if i > 1 else self.performance_log_file
                     )
                     new_name = f"{self.performance_log_file}.{i}"
                     if os.path.exists(old_name):
@@ -868,9 +858,7 @@ class DataLogger:
             self._atomic_write_json(self.history_data_file, versioned)
 
             self.logger.debug(f"版本化写入: {len(new_data)}条历史数据 (总计{len(existing)}条)")
-            self._record_pipeline_metric(
-                "save_history_data", success=True, record_count=len(new_data)
-            )
+            self._record_pipeline_metric("save_history_data", success=True, record_count=len(new_data))
         except Exception as e:
             self.logger.error(f"保存历史数据失败: {e}")
             self._record_pipeline_metric("save_history_data", success=False, error=str(e)[:200])
@@ -1157,9 +1145,7 @@ class DataLogger:
                     "error_count": error_count,  # 使用之前获取的值
                 },
                 "trends": self._analyze_trends(filtered_data),
-                "recommendations": self._generate_recommendations(
-                    speeds, cpu_usages, memory_usages
-                ),
+                "recommendations": self._generate_recommendations(speeds, cpu_usages, memory_usages),
             }
 
             # 保存报告
@@ -1364,9 +1350,7 @@ class DataLogger:
                         moved_count += 1
 
             if moved_count > 0:
-                self.logger.info(
-                    f"自动归档了 {moved_count} 个过期报告文件（保留期: {max_age_days} 天）"
-                )
+                self.logger.info(f"自动归档了 {moved_count} 个过期报告文件（保留期: {max_age_days} 天）")
 
             self._last_cleanup_time = current_time
         except Exception as e:
@@ -1578,8 +1562,7 @@ class DataLogger:
             # 超过3次写入失败触发告警
             if self._write_failure_count >= 3:
                 self.logger.warning(
-                    f"数据写入失败次数累积: {self._write_failure_count}次 "
-                    f"（可能磁盘空间不足或权限问题）"
+                    f"数据写入失败次数累积: {self._write_failure_count}次 （可能磁盘空间不足或权限问题）"
                 )
 
     def stop(self) -> None:

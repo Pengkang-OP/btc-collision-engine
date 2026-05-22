@@ -50,9 +50,7 @@ class TestGPUBenchmarkSuite:
     def test_run_all_benchmarks(self):
         """测试运行所有基准测试"""
         # 模拟 run_batch 返回（加延迟确保 benchmark 记录有效结果）
-        self.mock_kernel.run_batch = Mock(
-            side_effect=lambda *args, **kwargs: (time.sleep(0.001), [])[1]
-        )
+        self.mock_kernel.run_batch = Mock(side_effect=lambda *args, **kwargs: (time.sleep(0.001), [])[1])
 
         # 运行测试（减少迭代次数以加快速度）
         results = self.suite.run_all_benchmarks(iterations=2)
@@ -82,9 +80,7 @@ class TestGPUBenchmarkSuite:
     def test_benchmark_batch_execution(self):
         """测试批次执行基准"""
         # 添加微小延迟确保 execution time > 0，避免被 valid_times 过滤
-        self.mock_kernel.run_batch = Mock(
-            side_effect=lambda *args, **kwargs: (time.sleep(0.001), [])[1]
-        )
+        self.mock_kernel.run_batch = Mock(side_effect=lambda *args, **kwargs: (time.sleep(0.001), [])[1])
 
         results = self.suite.benchmark_batch_execution(iterations=2)
 
@@ -131,9 +127,7 @@ class TestGPUAutoTuner:
         self.mock_engine._gpu_kernel = self.mock_kernel
         self.mock_kernel.run_batch = Mock(return_value=[])
 
-        config = TuningConfig(
-            exploration_iterations=2, exploration_batch_sizes=[10000, 50000, 100000]
-        )
+        config = TuningConfig(exploration_iterations=2, exploration_batch_sizes=[10000, 50000, 100000])
 
         self.tuner = GPUAutoTuner(self.mock_engine, config)
 

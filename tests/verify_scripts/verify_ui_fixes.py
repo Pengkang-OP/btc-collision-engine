@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """验证UI模块修复"""
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -25,8 +24,6 @@ print(f"  format_speed(1500) = {format_speed(1500)}")  # 应该返回 "1.50K/s"
 print("\n测试 truncate_address:")
 print(f"  truncate_address('test', 0) = {truncate_address('test', 0)}")  # 应该返回 "..."
 print(f"  truncate_address('test', -1) = {truncate_address('test', -1)}")  # 应该返回 "..."
-print(
-    f"  truncate_address('1ABC...XYZ', 20) = {truncate_address('1ABC...XYZ', 20)}"
-)  # 应该返回原字符串
+print(f"  truncate_address('1ABC...XYZ', 20) = {truncate_address('1ABC...XYZ', 20)}")  # 应该返回原字符串
 
 print("\n✅ 所有测试通过！")

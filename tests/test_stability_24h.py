@@ -187,9 +187,7 @@ class StabilityTestRunner:
                 "max_memory_mb": max(memory_usages),
                 "min_memory_mb": min(memory_usages),
                 "memory_growth_mb": memory_usages[-1] - memory_usages[0],
-                "memory_growth_percent": (memory_usages[-1] - memory_usages[0])
-                / memory_usages[0]
-                * 100,
+                "memory_growth_percent": (memory_usages[-1] - memory_usages[0]) / memory_usages[0] * 100,
             },
             "stability_checks": {
                 "memory_leak_detected": not self.check_memory_leak(),
@@ -332,20 +330,14 @@ class StabilityTestRunner:
             print("\n显存使用:")
             print(f"  平均显存: {mem['avg_memory_mb']:.2f} MB")
             print(f"  峰值显存: {mem['max_memory_mb']:.2f} MB")
-            print(
-                f"  显存增长: {mem['memory_growth_mb']:.2f} MB ({mem['memory_growth_percent']:.2f}%)"
-            )
+            print(f"  显存增长: {mem['memory_growth_mb']:.2f} MB ({mem['memory_growth_percent']:.2f}%)")
 
             print("\n稳定性检查:")
             print(
                 f"  内存泄漏: {'[FAIL] 检测到' if checks['memory_leak_detected'] else '[PASS] 未检测到'}"
             )
-            print(
-                f"  性能稳定: {'[FAIL] 不稳定' if checks['performance_unstable'] else '[PASS] 稳定'}"
-            )
-            print(
-                f"  错误检测: {'[FAIL] 有错误' if checks['errors_detected'] else '[PASS] 无错误'}"
-            )
+            print(f"  性能稳定: {'[FAIL] 不稳定' if checks['performance_unstable'] else '[PASS] 稳定'}")
+            print(f"  错误检测: {'[FAIL] 有错误' if checks['errors_detected'] else '[PASS] 无错误'}")
 
             # 总体评估
             all_passed = not any(checks.values())

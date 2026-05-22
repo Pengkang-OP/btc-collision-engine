@@ -83,7 +83,7 @@ class OptimizedP2PKHAddressGenerator(BaseAddressGenerator):
             self.simd_optimizer = get_simd_hash_optimizer()
             logger.info(f"SIMD哈希优化已启用: {self.simd_optimizer.get_backend_name()}")
         else:
-            pass
+            logger.info("SIMD哈希优化未启用")
 
         # 初始化内存池
         self.ecpoint_pool: ECPointPool | None = None
@@ -237,13 +237,9 @@ class OptimizedP2PKHAddressGenerator(BaseAddressGenerator):
         info = {
             "precomputed_table": {
                 "enabled": self.use_precomputed_table,
-                "window_size": (
-                    self.precomputed_table.window_size if self.precomputed_table else None
-                ),
+                "window_size": (self.precomputed_table.window_size if self.precomputed_table else None),
                 "memory_usage_kb": (
-                    self.precomputed_table.get_memory_usage() / 1024
-                    if self.precomputed_table
-                    else 0
+                    self.precomputed_table.get_memory_usage() / 1024 if self.precomputed_table else 0
                 ),
             },
             "simd_hash": {

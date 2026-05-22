@@ -467,9 +467,7 @@ class TestBatchSizeConfig:
         config1 = BatchSizeConfig()
         config1.validate()  # 不应抛出异常
 
-        config2 = BatchSizeConfig(
-            memory_usage_ratio=0.7, min_batch_size=2048, max_batch_size=4194304
-        )
+        config2 = BatchSizeConfig(memory_usage_ratio=0.7, min_batch_size=2048, max_batch_size=4194304)
         config2.validate()  # 不应抛出异常
 
         # 无效配置 - memory_usage_ratio为0

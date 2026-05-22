@@ -162,9 +162,7 @@ class TestEstimateMaxBatchSize(unittest.TestCase):
         # 使用默认 ratio=0.7
         result_default = GPUMemoryCalculator.estimate_max_batch_size(available, 0)
         # 显式传入 ratio=0.7
-        result_explicit = GPUMemoryCalculator.estimate_max_batch_size(
-            available, 0, memory_ratio=0.7
-        )
+        result_explicit = GPUMemoryCalculator.estimate_max_batch_size(available, 0, memory_ratio=0.7)
         self.assertEqual(result_default, result_explicit)
 
     def test_higher_memory_ratio_gives_larger_batch(self):

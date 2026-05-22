@@ -91,9 +91,7 @@ try:
 
     # 添加一个匹配的地址
     if "test_result" in locals():
-        test_addresses.append(
-            {"hash160": test_result["hash160_compressed"], "private_key": test_key}
-        )
+        test_addresses.append({"hash160": test_result["hash160_compressed"], "private_key": test_key})
 
     matches = matcher.check_address_batch(test_addresses)
     print(f"   检查了 {len(test_addresses)} 个地址")

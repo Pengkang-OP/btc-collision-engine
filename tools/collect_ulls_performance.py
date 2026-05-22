@@ -17,14 +17,14 @@ if not log_file.exists():
     print("❌ 日志文件不存在")
     sys.exit(1)
 
-with open(log_file, encoding='utf-8') as f:
+with open(log_file, encoding="utf-8") as f:
     lines = f.readlines()
 
 # 查找性能数据
 import re
 
-throughput_pattern = r'吞吐量:\s+([0-9,]+)\s*keys/s'
-peak_pattern = r'峰值=([0-9,]+)\s*keys/s'
+throughput_pattern = r"吞吐量:\s+([0-9,]+)\s*keys/s"
+peak_pattern = r"峰值=([0-9,]+)\s*keys/s"
 
 throughputs = []
 peaks = []
@@ -33,13 +33,13 @@ for line in lines[-200:]:  # 检查最后200行
     # 查找吞吐量
     tp_match = re.search(throughput_pattern, line)
     if tp_match:
-        tp_value = int(tp_match.group(1).replace(',', ''))
+        tp_value = int(tp_match.group(1).replace(",", ""))
         throughputs.append(tp_value)
 
     # 查找峰值
     pk_match = re.search(peak_pattern, line)
     if pk_match:
-        pk_value = int(pk_match.group(1).replace(',', ''))
+        pk_value = int(pk_match.group(1).replace(",", ""))
         peaks.append(pk_value)
 
 print("【性能数据收集结果】")

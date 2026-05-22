@@ -45,11 +45,7 @@ def _strip_comments(config: Any) -> Any:
     复用自 ConfigManager._strip_comments 的逻辑，确保与加载流程一致。
     """
     if isinstance(config, dict):
-        return {
-            k: _strip_comments(v)
-            for k, v in config.items()
-            if not k.startswith("_comment")
-        }
+        return {k: _strip_comments(v) for k, v in config.items() if not k.startswith("_comment")}
     return config
 
 
@@ -141,11 +137,7 @@ def _validate_with_schema(config: dict, schema: dict) -> dict[str, str]:
     errors: dict[str, str] = {}
     validator = Draft7Validator(schema)
     for error in sorted(validator.iter_errors(config), key=lambda e: list(e.absolute_path)):
-        path = (
-            ".".join(str(p) for p in error.absolute_path)
-            if error.absolute_path
-            else "root"
-        )
+        path = ".".join(str(p) for p in error.absolute_path) if error.absolute_path else "root"
         if path not in errors:
             errors[path] = error.message
         else:

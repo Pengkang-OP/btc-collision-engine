@@ -188,9 +188,7 @@ class TestPerformanceOptimizer:
         )
         for _ in range(5):
             optimizer.record_performance(
-                PerformanceMetrics(
-                    batch_execution_time_ms=50, keys_per_second=100000, error_count=0
-                )
+                PerformanceMetrics(batch_execution_time_ms=50, keys_per_second=100000, error_count=0)
             )
         report = optimizer.get_optimization_report()
         assert report["status"] == "active"

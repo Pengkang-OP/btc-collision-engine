@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 GPU集成测试和性能验证 - 步骤7
 验证所有优化组件集成正常,性能达标
 """
 
-import sys
-import os
-import time
 import json
+import sys
+import time
 from pathlib import Path
 
 # 修复Windows编码
@@ -21,7 +19,6 @@ if sys.platform == "win32":
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.collision.gpu.engine import GPUCollisionEngine
-from src.monitoring.gpu_performance_monitor import get_gpu_performance_monitor
 
 
 class GPUIntegrationValidator:
@@ -93,7 +90,7 @@ class GPUIntegrationValidator:
 
             if device_count > 0:
                 device = devices[0]
-                print(f"\n📊 主GPU设备信息:")
+                print("\n📊 主GPU设备信息:")
                 print(f"   名称: {device.get('name', 'Unknown')}")
                 print(f"   厂商: {device.get('vendor', 'Unknown')}")
                 print(f"   显存: {device.get('global_mem_size', 0) / (1024**3):.1f} GB")
@@ -318,7 +315,7 @@ class GPUIntegrationValidator:
             if report.avg_throughput_keys_per_sec > 0:
                 print(f"\n✅ 吞吐量验证通过: {report.avg_throughput_keys_per_sec:,.0f} keys/s")
             else:
-                print(f"\n❌ 吞吐量验证失败: 为0 (execution_time_ms可能未正确记录)")
+                print("\n❌ 吞吐量验证失败: 为0 (execution_time_ms可能未正确记录)")
                 all_valid = False
 
             return all_valid
@@ -377,15 +374,13 @@ class GPUIntegrationValidator:
             self.print_result(
                 "内存池统计",
                 True,
-                f"分配={total_allocated}, " f"复用={total_reused}, " f"池化缓冲区={pooled_buffers}",
+                f"分配={total_allocated}, 复用={total_reused}, 池化缓冲区={pooled_buffers}",
             )
 
             # 验证内存池已使用 (修改验证逻辑: 配置正确即视为通过)
             pool_used = total_allocated > 0 or pooled_buffers > 0
             if pool_used:
-                self.print_result(
-                    "内存池已使用", True, f"分配={total_allocated}, 池化={pooled_buffers}"
-                )
+                self.print_result("内存池已使用", True, f"分配={total_allocated}, 池化={pooled_buffers}")
             else:
                 # 内存池配置正确但未触发,也算通过
                 self.print_result(
@@ -400,7 +395,7 @@ class GPUIntegrationValidator:
             if total_reused > 0 or reuse_rate > 0:
                 print(f"\n✅ 内存池复用验证通过: 命中率 {reuse_rate:.1f}%")
             else:
-                print(f"\n⚠️  内存池尚未产生缓存命中(可能批次太少)")
+                print("\n⚠️  内存池尚未产生缓存命中(可能批次太少)")
 
             return True
 
@@ -450,7 +445,7 @@ class GPUIntegrationValidator:
                 if (i + 1) % 10 == 0:
                     report = engine.gpu_performance_monitor.get_performance_report()
                     print(
-                        f"    [{i+1}s] 吞吐量: {report.avg_throughput_keys_per_sec:,.0f} keys/s, "
+                        f"    [{i + 1}s] 吞吐量: {report.avg_throughput_keys_per_sec:,.0f} keys/s, "
                         f"批次: {report.total_batches}"
                     )
 
@@ -495,9 +490,7 @@ class GPUIntegrationValidator:
             # 策略2: 基于峰值吞吐量的动态阈值(峰值的5%)
             # 边界检查: 防止峰值为0导致阈值异常
             if report.peak_throughput_keys_per_sec <= 0:
-                print(
-                    f"⚠️ 警告: 峰值吞吐量异常 ({report.peak_throughput_keys_per_sec}), 使用默认阈值"
-                )
+                print(f"⚠️ 警告: 峰值吞吐量异常 ({report.peak_throughput_keys_per_sec}), 使用默认阈值")
                 peak_dynamic_threshold = self.PERFORMANCE_THRESHOLD_TARGET
             else:
                 peak_dynamic_threshold = (
@@ -519,7 +512,7 @@ class GPUIntegrationValidator:
 
             # 边界检查: 验证平均吞吐量有效性
             if actual_throughput <= 0:
-                print(f"❌ 错误: 平均吞吐量为0,测试可能失败")
+                print("❌ 错误: 平均吞吐量为0,测试可能失败")
                 self.print_result("性能达标", False, "平均吞吐量为0")
                 return False
 
@@ -535,7 +528,7 @@ class GPUIntegrationValidator:
                 )
                 print(
                     f"     [阈值分解] 最低={min_threshold:,}, 目标={target_threshold:,}, "
-                    f"峰值5%={peak_dynamic_threshold:,.0f}, 容忍={self.PERFORMANCE_TOLERANCE*100:.0f}%"
+                    f"峰值5%={peak_dynamic_threshold:,.0f}, 容忍={self.PERFORMANCE_TOLERANCE * 100:.0f}%"
                 )
                 print(
                     f"     [裕度] +{margin:.1f}% ({actual_throughput - adjusted_threshold:,.0f} keys/s)"
@@ -552,7 +545,7 @@ class GPUIntegrationValidator:
                 print(
                     f"     [警告] 峰值达 {report.peak_throughput_keys_per_sec:,.0f} keys/s, 但平均值偏低"
                 )
-                print(f"     [建议] 可能是系统波动,建议多次测试取平均值")
+                print("     [建议] 可能是系统波动,建议多次测试取平均值")
 
             # 返回结果: 稳定性 + 性能
             return report.error_rate_percent < 1.0 and passed
@@ -652,7 +645,7 @@ class GPUIntegrationValidator:
         print(f"  总测试数: {total}")
         print(f"  ✅ 通过: {passed}")
         print(f"  ❌ 失败: {failed}")
-        print(f"  通过率: {passed/total*100:.1f}%")
+        print(f"  通过率: {passed / total * 100:.1f}%")
 
         # 性能基准对比
         self.print_header("性能基准对比 (Intel Arc A770)")
@@ -685,7 +678,7 @@ class GPUIntegrationValidator:
             "total_tests": total,
             "passed": passed,
             "failed": failed,
-            "pass_rate": f"{passed/total*100:.1f}%",
+            "pass_rate": f"{passed / total * 100:.1f}%",
             "results": self.results,
             "performance_benchmarks": benchmarks,
         }

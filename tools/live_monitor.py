@@ -17,24 +17,27 @@ def get_current_program_info():
     try:
         # 获取最新启动的Python进程
         result = subprocess.run(
-            ['powershell', '-Command',
-             'Get-Process python -ErrorAction SilentlyContinue | '
-             'Sort-Object StartTime -Descending | '
-             'Select-Object -First 1 | '
-             'ConvertTo-Json'],
+            [
+                "powershell",
+                "-Command",
+                "Get-Process python -ErrorAction SilentlyContinue | "
+                "Sort-Object StartTime -Descending | "
+                "Select-Object -First 1 | "
+                "ConvertTo-Json",
+            ],
             capture_output=True,
             text=True,
-            encoding='utf-8',
-            timeout=5
+            encoding="utf-8",
+            timeout=5,
         )
 
         if result.stdout.strip():
             proc = json.loads(result.stdout)
             return {
-                'pid': proc.get('Id', 'N/A'),
-                'memory_mb': proc.get('WorkingSet', 0) / (1024*1024),
-                'cpu_seconds': proc.get('CPU', 0),
-                'start_time': proc.get('StartTime', 'Unknown')
+                "pid": proc.get("Id", "N/A"),
+                "memory_mb": proc.get("WorkingSet", 0) / (1024 * 1024),
+                "cpu_seconds": proc.get("CPU", 0),
+                "start_time": proc.get("StartTime", "Unknown"),
             }
     except (subprocess.TimeoutExpired, json.JSONDecodeError, ValueError):
         pass
@@ -45,12 +48,12 @@ def get_current_program_info():
 def check_recent_errors(log_file, since_time):
     """检查指定时间之后的错误"""
     try:
-        with open(log_file, encoding='utf-8', errors='ignore') as f:
+        with open(log_file, encoding="utf-8", errors="ignore") as f:
             lines = f.readlines()
 
         errors_after = []
         for line in lines:
-            if 'ERROR' in line:
+            if "ERROR" in line:
                 # 提取时间戳
                 try:
                     timestamp_str = line[:23]  # "2026-04-21 20:44:19,927"
@@ -73,15 +76,18 @@ def check_gpu_status():
     try:
         # 尝试使用pyopencl检查GPU
         result = subprocess.run(
-            ['python', '-c',
-             'import pyopencl as cl; '
-             'platforms = cl.get_platforms(); '
-             'devices = []; '
-             '[devices.extend(p.get_devices(device_type=cl.device_type.GPU)) for p in platforms]; '
-             'print(len(devices))'],
+            [
+                "python",
+                "-c",
+                "import pyopencl as cl; "
+                "platforms = cl.get_platforms(); "
+                "devices = []; "
+                "[devices.extend(p.get_devices(device_type=cl.device_type.GPU)) for p in platforms]; "
+                "print(len(devices))",
+            ],
             capture_output=True,
             text=True,
-            timeout=10
+            timeout=10,
         )
 
         if result.returncode == 0:
@@ -93,9 +99,9 @@ def check_gpu_status():
 
 
 def main():
-    print("="*80)
+    print("=" * 80)
     print("  GPU碰撞引擎 - 实时监控")
-    print("="*80)
+    print("=" * 80)
     print()
 
     log_file = Path("logs/collision.log")
@@ -118,13 +124,13 @@ def main():
 
         # 解析启动时间
         try:
-            start_time = datetime.strptime(proc_info['start_time'].split('.')[0], "%Y-%m-%d %H:%M:%S")
+            start_time = datetime.strptime(proc_info["start_time"].split(".")[0], "%Y-%m-%d %H:%M:%S")
             print(f"  启动时间: {proc_info['start_time']}")
 
             # 计算运行时间
             now = datetime.now()
             runtime = (now - start_time).total_seconds()
-            print(f"  运行时长: {runtime:.0f} 秒 ({runtime/60:.1f} 分钟)")
+            print(f"  运行时长: {runtime:.0f} 秒 ({runtime / 60:.1f} 分钟)")
         except (ValueError, AttributeError):
             start_time = None
             print(f"  启动时间: {proc_info['start_time']}")
@@ -136,9 +142,9 @@ def main():
     print()
 
     # 检查最新错误
-    print("="*80)
+    print("=" * 80)
     print("  错误检查")
-    print("="*80)
+    print("=" * 80)
     print()
 
     if start_time:
@@ -157,9 +163,9 @@ def main():
     print()
 
     # 检查GPU
-    print("="*80)
+    print("=" * 80)
     print("  GPU状态")
-    print("="*80)
+    print("=" * 80)
     print()
 
     gpu_count = check_gpu_status()
@@ -171,9 +177,9 @@ def main():
     print()
 
     # 持续监控
-    print("="*80)
+    print("=" * 80)
     print("  持续监控 (Ctrl+C停止)")
-    print("="*80)
+    print("=" * 80)
     print()
 
     print("每5秒刷新一次...")
@@ -187,7 +193,7 @@ def main():
 
             # 获取最新的10行日志
             try:
-                with open(log_file, encoding='utf-8', errors='ignore') as f:
+                with open(log_file, encoding="utf-8", errors="ignore") as f:
                     lines = f.readlines()
                     recent = lines[-10:]
 
@@ -195,11 +201,13 @@ def main():
 
                 for line in recent:
                     line = line.strip()
-                    if 'ERROR' in line:
+                    if "ERROR" in line:
                         print(f"  [ERROR] {line[24:100]}")
-                    elif 'WARNING' in line or 'WARN' in line:
+                    elif "WARNING" in line or "WARN" in line:
                         print(f"  [WARN]  {line[24:100]}")
-                    elif 'INFO' in line and ('吞吐量' in line or 'throughput' in line.lower() or 'keys/s' in line.lower()):
+                    elif "INFO" in line and (
+                        "吞吐量" in line or "throughput" in line.lower() or "keys/s" in line.lower()
+                    ):
                         print(f"  [PERF]  {line[24:100]}")
 
                 print()
@@ -209,9 +217,9 @@ def main():
 
     except KeyboardInterrupt:
         print()
-        print("="*80)
+        print("=" * 80)
         print("  监控已停止")
-        print("="*80)
+        print("=" * 80)
 
 
 if __name__ == "__main__":

@@ -46,12 +46,8 @@ class TestP2SHAddressGeneration:
 
     def test_p2sh_different_public_keys(self):
         """测试不同公钥生成不同的P2SH地址"""
-        public_key1 = bytes.fromhex(
-            "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
-        )
-        public_key2 = bytes.fromhex(
-            "02c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5"
-        )
+        public_key1 = bytes.fromhex("0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798")
+        public_key2 = bytes.fromhex("02c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5")
 
         address1 = BitcoinKeyValidator.generate_p2sh_address(public_key1)
         address2 = BitcoinKeyValidator.generate_p2sh_address(public_key2)
@@ -99,9 +95,9 @@ class TestP2SHAddressGeneration:
         assert len(decoded) == 25, f"P2SH地址解码后应为25字节，实际: {len(decoded)}"
 
         # 验证版本号（P2SH = 0x05）
-        assert (
-            decoded[0] == KeyValidationConstants.P2SH_VERSION_BYTE
-        ), f"P2SH版本号应为0x05，实际: {decoded[0]:#x}"
+        assert decoded[0] == KeyValidationConstants.P2SH_VERSION_BYTE, (
+            f"P2SH版本号应为0x05，实际: {decoded[0]:#x}"
+        )
 
         # 验证校验和
         payload = decoded[:21]  # 版本 + 哈希
@@ -146,12 +142,8 @@ class TestBech32AddressGeneration:
 
     def test_bech32_different_public_keys(self):
         """测试不同公钥生成不同的Bech32地址"""
-        public_key1 = bytes.fromhex(
-            "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
-        )
-        public_key2 = bytes.fromhex(
-            "02c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5"
-        )
+        public_key1 = bytes.fromhex("0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798")
+        public_key2 = bytes.fromhex("02c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5")
 
         address1 = BitcoinKeyValidator.generate_bech32_address(public_key1)
         address2 = BitcoinKeyValidator.generate_bech32_address(public_key2)
@@ -186,9 +178,7 @@ class TestBech32AddressGeneration:
 
         # Testnet Bech32地址必须以'tb1'开头
         assert address.startswith("tb1"), f"Testnet Bech32地址应以'tb1'开头，实际: {address}"
-        assert (
-            42 <= len(address) <= 45
-        ), f"Testnet Bech32地址长度应在42-45之间，实际: {len(address)}"
+        assert 42 <= len(address) <= 45, f"Testnet Bech32地址长度应在42-45之间，实际: {len(address)}"
 
         print(f"\n[OK] Testnet Bech32地址生成成功: {address}")
 

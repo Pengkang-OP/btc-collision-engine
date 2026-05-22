@@ -17,19 +17,19 @@ def check_async_enabled():
         return False, "日志文件不存在"
 
     try:
-        with open(log_file, encoding='utf-8', errors='ignore') as f:
+        with open(log_file, encoding="utf-8", errors="ignore") as f:
             lines = f.readlines()
 
         # 查找最近的启动记录(最后200行)
         recent_lines = lines[-200:]
-        recent_content = ''.join(recent_lines)
+        recent_content = "".join(recent_lines)
 
         # 检查异步相关日志
         checks = {
-            '异步配置': 'GPU异步执行已启用' in recent_content,
-            '双队列': '创建双队列' in recent_content,
-            '异步执行器': '异步执行器已初始化' in recent_content,
-            '异步模式': '使用GPU异步执行模式' in recent_content
+            "异步配置": "GPU异步执行已启用" in recent_content,
+            "双队列": "创建双队列" in recent_content,
+            "异步执行器": "异步执行器已初始化" in recent_content,
+            "异步模式": "使用GPU异步执行模式" in recent_content,
         }
 
         all_enabled = all(checks.values())
@@ -50,11 +50,13 @@ def get_recent_performance():
     try:
         import re
 
-        with open(log_file, encoding='utf-8', errors='ignore') as f:
+        with open(log_file, encoding="utf-8", errors="ignore") as f:
             content = f.read()
 
         # 查找最近的启动时间
-        start_matches = list(re.finditer(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}).*?GPU引擎初始化成功', content))
+        start_matches = list(
+            re.finditer(r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}).*?GPU引擎初始化成功", content)
+        )
 
         if not start_matches:
             return None
@@ -69,15 +71,15 @@ def get_recent_performance():
         runtime = (now - start_time).total_seconds()
 
         # 查找错误
-        after_start = content[last_start.start():]
-        error_count = after_start.count('ERROR')
-        warning_count = after_start.count('WARNING')
+        after_start = content[last_start.start() :]
+        error_count = after_start.count("ERROR")
+        warning_count = after_start.count("WARNING")
 
         return {
-            'start_time': start_time,
-            'runtime_seconds': runtime,
-            'error_count': error_count,
-            'warning_count': warning_count
+            "start_time": start_time,
+            "runtime_seconds": runtime,
+            "error_count": error_count,
+            "warning_count": warning_count,
         }
 
     except Exception:
@@ -86,10 +88,10 @@ def get_recent_performance():
 
 def monitor_async_stats():
     """持续监控异步执行统计"""
-    print("="*80)
+    print("=" * 80)
     print("  GPU异步优化效果监控")
     print(f"  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("="*80)
+    print("=" * 80)
     print()
 
     # 1. 检查异步启用状态
@@ -121,13 +123,13 @@ def monitor_async_stats():
     perf_data = get_recent_performance()
 
     if perf_data:
-        runtime = perf_data['runtime_seconds']
+        runtime = perf_data["runtime_seconds"]
         print(f"  启动时间: {perf_data['start_time'].strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"  运行时长: {runtime:.0f} 秒 ({runtime/60:.1f} 分钟)")
+        print(f"  运行时长: {runtime:.0f} 秒 ({runtime / 60:.1f} 分钟)")
         print(f"  错误数量: {perf_data['error_count']}")
         print(f"  警告数量: {perf_data['warning_count']}")
 
-        if perf_data['error_count'] == 0:
+        if perf_data["error_count"] == 0:
             print("  错误状态: [PASS] 无错误")
         else:
             print(f"  错误状态: [WARN] 发现{perf_data['error_count']}个错误")
@@ -144,18 +146,18 @@ def monitor_async_stats():
     log_file = Path("logs/collision.log")
     if log_file.exists():
         try:
-            with open(log_file, encoding='utf-8', errors='ignore') as f:
+            with open(log_file, encoding="utf-8", errors="ignore") as f:
                 lines = f.readlines()
 
             recent = lines[-50:]
 
             # 查找关键信息
             keywords = {
-                'Intel Arc': False,
-                'batch_size': False,
-                '双缓冲': False,
-                '异步': False,
-                '吞吐量': False
+                "Intel Arc": False,
+                "batch_size": False,
+                "双缓冲": False,
+                "异步": False,
+                "吞吐量": False,
             }
 
             for line in recent:
@@ -188,13 +190,13 @@ def monitor_async_stats():
         health_score -= 30
         print("  [-30] 异步未启用")
 
-    if perf_data and perf_data['error_count'] == 0:
+    if perf_data and perf_data["error_count"] == 0:
         print("  [+0] 无错误")
     else:
         health_score -= 20
         print("  [-20] 存在错误")
 
-    if perf_data and perf_data['runtime_seconds'] > 60:
+    if perf_data and perf_data["runtime_seconds"] > 60:
         print("  [+0] 运行稳定(>1分钟)")
     elif perf_data:
         health_score -= 10
@@ -214,7 +216,7 @@ def monitor_async_stats():
         print("  状态: [ERROR] 存在问题")
 
     print()
-    print("="*80)
+    print("=" * 80)
 
     return health_score
 
@@ -242,16 +244,16 @@ def continuous_monitor(interval=10):
 
     except KeyboardInterrupt:
         print()
-        print("="*80)
+        print("=" * 80)
         print("  监控已停止")
-        print("="*80)
+        print("=" * 80)
 
 
 def main():
     """主函数"""
     import sys
 
-    if '--continuous' in sys.argv or '-c' in sys.argv:
+    if "--continuous" in sys.argv or "-c" in sys.argv:
         # 持续监控模式
         continuous_monitor()
     else:

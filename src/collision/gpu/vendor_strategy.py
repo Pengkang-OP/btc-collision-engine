@@ -205,9 +205,7 @@ class AMDOptimizationStrategy:
             arch = optimization_result.get("arch_name", "Unknown")
             mem_ratio = optimization_result.get("recommended_memory_ratio", 0.60)
             wavefront = optimization_result.get("recommended_wavefront_size", 64)
-            logger.info(
-                f"AMD GPU优化策略已应用: arch={arch}, mem_ratio={mem_ratio:.2f}, wf={wavefront}"
-            )
+            logger.info(f"AMD GPU优化策略已应用: arch={arch}, mem_ratio={mem_ratio:.2f}, wf={wavefront}")
 
         except Exception as e:
             logger.error(f"应用AMD优化失败: {e}")

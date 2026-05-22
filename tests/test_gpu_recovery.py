@@ -107,9 +107,7 @@ class TestRecoveryStrategy(unittest.TestCase):
         # 先记录一次失败
         self.manager._record_failure(
             0,
-            GPUFailureRecord(
-                gpu_id=0, failure_type=GPUFailureType.OUT_OF_MEMORY, error_message="test"
-            ),
+            GPUFailureRecord(gpu_id=0, failure_type=GPUFailureType.OUT_OF_MEMORY, error_message="test"),
         )
 
         strategy = self.manager._select_recovery_strategy(
@@ -177,9 +175,7 @@ class TestRecoveryStrategy(unittest.TestCase):
                 ),
             )
 
-        strategy = manager._select_recovery_strategy(
-            gpu_id=0, failure_type=GPUFailureType.OUT_OF_MEMORY
-        )
+        strategy = manager._select_recovery_strategy(gpu_id=0, failure_type=GPUFailureType.OUT_OF_MEMORY)
         self.assertEqual(strategy, RecoveryStrategy.REINITIALIZE)
 
 
@@ -188,7 +184,8 @@ class TestRecoveryExecution(unittest.TestCase):
 
     def setUp(self):
         self.manager = GPURecoveryManager(
-            retry_delay_seconds=0.1, batch_size_reduction_factor=0.5  # 快速测试
+            retry_delay_seconds=0.1,
+            batch_size_reduction_factor=0.5,  # 快速测试
         )
 
     def test_retry_immediate_execution(self):

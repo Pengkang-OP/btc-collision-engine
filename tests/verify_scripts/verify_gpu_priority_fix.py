@@ -42,7 +42,7 @@ def main():
     best_device = GPUDeviceDetector._select_best_device(devices.copy())
 
     print(f"自动选择的设备: {best_device['name']}")
-    print(f"  显存: {best_device.get('global_mem_size', 0)/(1024**3):.1f} GB")
+    print(f"  显存: {best_device.get('global_mem_size', 0) / (1024**3):.1f} GB")
     print(f"  计算单元: {best_device.get('max_compute_units', 'N/A')}")
     print()
 
@@ -104,9 +104,7 @@ def main():
         nvidia_dev = next(
             d
             for d in devices
-            if "NVIDIA" in d.get("name", "")
-            or "GTX" in d.get("name", "")
-            or "RTX" in d.get("name", "")
+            if "NVIDIA" in d.get("name", "") or "GTX" in d.get("name", "") or "RTX" in d.get("name", "")
         )
 
         intel_score = calc_score(intel_arc_dev)
@@ -114,10 +112,10 @@ def main():
 
         print("多GPU环境检测:")
         print(
-            f"  Intel Arc: {intel_arc_dev['name']} ({intel_arc_dev.get('global_mem_size', 0)/(1024**3):.1f}GB)"
+            f"  Intel Arc: {intel_arc_dev['name']} ({intel_arc_dev.get('global_mem_size', 0) / (1024**3):.1f}GB)"
         )
         print(
-            f"  NVIDIA: {nvidia_dev['name']} ({nvidia_dev.get('global_mem_size', 0)/(1024**3):.1f}GB)"
+            f"  NVIDIA: {nvidia_dev['name']} ({nvidia_dev.get('global_mem_size', 0) / (1024**3):.1f}GB)"
         )
         print()
 

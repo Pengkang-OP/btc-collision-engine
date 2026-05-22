@@ -387,8 +387,7 @@ class TestFullValidationChain:
         assert report["summary"]["address"] == "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"
         assert report["summary"]["private_key_hash"] == private_key.hex()
         assert (
-            report["summary"]["wif_compressed"]
-            == "KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qYjgd9M7rFU73sVHnoWn"
+            report["summary"]["wif_compressed"] == "KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qYjgd9M7rFU73sVHnoWn"
         )
         assert report["summary"]["address_match"] is True
 

@@ -253,8 +253,7 @@ class FirstRunWizard:
 
         # 检查 PyOpenCL 是否可用
         try:
-            pass
-
+            import pyopencl  # noqa: F401
             has_opencl = True
         except ImportError:
             has_opencl = False

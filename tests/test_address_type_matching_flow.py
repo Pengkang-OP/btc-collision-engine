@@ -95,16 +95,13 @@ class TestTargetTypeIdentification:
     def test_detect_wif(self):
         """识别 WIF 私钥 (5/K/L开头)"""
         assert (
-            TargetResolver.detect_format("5KJvsngHeMpm884wtkJNzQGaCErckhHJBGFsvd3VyK5qMZXj3hS")
-            == "wif"
+            TargetResolver.detect_format("5KJvsngHeMpm884wtkJNzQGaCErckhHJBGFsvd3VyK5qMZXj3hS") == "wif"
         )
         assert (
-            TargetResolver.detect_format("KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP98617")
-            == "wif"
+            TargetResolver.detect_format("KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP98617") == "wif"
         )
         assert (
-            TargetResolver.detect_format("L1aW4aubDFB7yfras2S1mN3bqg9nwySY8nkoLmJebSLD5BWv3ENZ")
-            == "wif"
+            TargetResolver.detect_format("L1aW4aubDFB7yfras2S1mN3bqg9nwySY8nkoLmJebSLD5BWv3ENZ") == "wif"
         )
 
     def test_detect_case_insensitive_lowercase(self):
@@ -144,12 +141,8 @@ class TestMultiFormatAddressGeneration:
 
     def setup_method(self):
         self.validator = BitcoinKeyValidator(secure_mode=False)
-        _, self.pub_compressed = self.validator.generate_public_key(
-            TEST_PRIVATE_KEY, compressed=True
-        )
-        _, self.pub_uncompressed = self.validator.generate_public_key(
-            TEST_PRIVATE_KEY, compressed=False
-        )
+        _, self.pub_compressed = self.validator.generate_public_key(TEST_PRIVATE_KEY, compressed=True)
+        _, self.pub_uncompressed = self.validator.generate_public_key(TEST_PRIVATE_KEY, compressed=False)
 
     def test_generate_p2pkh_address(self):
         """生成 P2PKH 地址 — 以'1'开头, 25-34字符（标准 Bitcoin Base58Check 编码，包含大小写混合）"""
@@ -358,9 +351,7 @@ class TestAddressMatcherMultiTypeStrategies:
         assert matcher.is_match(self.formats["p2pkh"]), f"{strategy}: P2PKH应匹配"
         assert matcher.is_match(self.formats["p2sh"]), f"{strategy}: P2SH应匹配"
         assert matcher.is_match(self.formats["bech32"]), f"{strategy}: Bech32应匹配"
-        assert not matcher.is_match(
-            "1NonExistentXXXXXXXXXXXXXXX"
-        ), f"{strategy}: 不存在的地址不应匹配"
+        assert not matcher.is_match("1NonExistentXXXXXXXXXXXXXXX"), f"{strategy}: 不存在的地址不应匹配"
 
     def test_hash_set_strategy_all_types(self):
         """hash_set 策略：三种地址格式均可匹配"""

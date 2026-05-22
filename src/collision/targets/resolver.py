@@ -31,14 +31,12 @@ from ...core.base58 import Base58
 
 # 导入日志配置
 from ...utils import get_configured_logger
+from ...utils.bech32_codec import decode_segwit_address
 from ...utils.encoding_utils import EncodingUtils
 from .cache import AddressCache
 
 # v4.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
 logger = get_configured_logger("TargetResolver")
-
-
-from ...utils.bech32_codec import decode_segwit_address
 
 
 class TargetResolver:
@@ -86,9 +84,7 @@ class TargetResolver:
         self.generator = P2PKHAddressGenerator()
 
         # 解析缓存
-        self.cache = (
-            AddressCache(lru_size=cache_max_size, enable_stats=True) if enable_cache else None
-        )
+        self.cache = AddressCache(lru_size=cache_max_size, enable_stats=True) if enable_cache else None
 
         # 文件加载配置
         self._max_file_size_bytes = max_file_size_bytes
@@ -293,6 +289,11 @@ class TargetResolver:
         Taproot 的 witness program 是 32字节 x-only 公钥（Schnorr签名用），
         而非 hash160(pubkey)。碰撞引擎通过 hash160(pubkey) → P2PKH地址 匹配，
         与 Taproot 的 x-only 公钥路径在密码学上不相关，无法匹配。
+
+        注意:
+            即使计算 hash160(x-only-pubkey)，其结果也与 ECDSA 公钥的 hash160 不同，
+            因为 x-only 公钥省略了 y 坐标，ECDSA 公钥包含完整 (x, y) 坐标。
+            两种签名体系间的地址校验不可能通过私钥碰撞实现。
         """
         try:
             hrp = "bc" if input_str.lower().startswith("bc1") else "tb"
@@ -308,8 +309,9 @@ class TargetResolver:
                 return None
             logger.warning(
                 f"Taproot地址 '{input_str[:25]}...' 无法用于碰撞匹配: "
-                f"Taproot的witness program=x-only公钥(32字节)与引擎生成的hash160(pubkey)不相关，"
-                f"密码学上不可能匹配。请使用P2PKH地址(1开头)或私钥/公钥。"
+                f"Taproot的witness program=x-only公钥(32字节,Schnorr)与引擎生成的"
+                f"hash160(pubkey)(ECDSA)在密码学上不相关，无法匹配。"
+                f" 建议: 将Taproot地址中的BTC转入支持P2PKH格式的钱包后操作。"
             )
             self._unsupported_types.add("taproot_address")
             return None
@@ -323,9 +325,7 @@ class TargetResolver:
             from ...core.wif import WIF
 
             private_key, compressed = WIF.decode(input_str)
-            public_key = self.generator.private_key_to_public_key(
-                private_key, compressed=compressed
-            )
+            public_key = self.generator.private_key_to_public_key(private_key, compressed=compressed)
             address = self.generator.public_key_to_address(public_key)
             if self.cache:
                 self.cache.put(input_str, address)
@@ -563,7 +563,8 @@ class TargetResolver:
                 logger.warning(
                     f"密码学上不支持匹配的输入类型: {unsupported_summary}. "
                     f"这些地址/格式因密码学路径不同无法通过私钥碰撞匹配，已自动跳过。"
-                    f"支持的类型: P2PKH地址(1开头)、WIF私钥、压缩/非压缩公钥、Hash160(hash160(pubkey))、P2WPKH Bech32(20字节witness)。"
+                    f"支持的类型: P2PKH地址(1开头)、WIF私钥、压缩/非压缩公钥、"
+                    f"Hash160(hash160(pubkey))、P2WPKH Bech32(20字节witness)。"
                 )
 
         except PermissionError:
@@ -587,11 +588,15 @@ class TargetResolver:
             unknown 类别包含 testnet 地址(2/tb1 前缀)等非主网
             标准格式,这些地址不会被引擎匹配。
 
+            ⚠️ taproot 类别的地址(bc1p...)虽能识别但不会被引擎匹配:
+            Taproot 使用 Schnorr x-only 公钥,引擎使用 ECDSA hash160(pubkey),
+            密码学路径不同导致无法通过私钥碰撞实现匹配。
+
         参数:
             targets: 已解析的目标地址集合(Base58 地址保留原始大小写,Bech32 小写)
 
         返回:
-            格式→数量映射,如 {'p2pkh': 100, 'p2sh': 5, 'bech32': 3}
+            格式→数量映射,如 {'p2pkh': 100, 'p2sh': 5, 'bech32': 3, 'taproot': 1}
         """
         counts: dict[str, int] = {
             "p2pkh": 0,

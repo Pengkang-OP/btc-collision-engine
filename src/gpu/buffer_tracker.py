@@ -212,9 +212,7 @@ class GPUBufferTracker:
                     buffer = info.get("buffer")
                     if buffer is not None and hasattr(buffer, "release"):
                         buffer.release()
-                        logger.debug(
-                            f"自动清理超时缓冲区: {name} (类型: {info.get('type', 'generic')})"
-                        )
+                        logger.debug(f"自动清理超时缓冲区: {name} (类型: {info.get('type', 'generic')})")
                     else:
                         failed_to_release.append(name)
                         logger.warning(f"超时缓冲区无release方法: {name}")
@@ -353,9 +351,7 @@ class GPUBufferTracker:
                 if leaked:
                     stats = self.get_stats()
                     _count = stats["count"]
-                    logger.warning(
-                        f"GPU缓冲区泄漏: 泄漏={len(leaked)}, 追踪={_count}, 已泄漏={leaked}"
-                    )
+                    logger.warning(f"GPU缓冲区泄漏: 泄漏={len(leaked)}, 追踪={_count}, 已泄漏={leaked}")
                     # 自动清理泄漏的缓冲区
                     self.cleanup_timed_out_buffers()
 
@@ -431,13 +427,9 @@ class GPUBufferTracker:
                     if buffer is not None and hasattr(buffer, "release"):
                         buffer.release()
                         released.append(name)
-                        logger.debug(
-                            f"关闭时释放缓冲区: {name} (类型: {info.get('type', 'generic')})"
-                        )
+                        logger.debug(f"关闭时释放缓冲区: {name} (类型: {info.get('type', 'generic')})")
                 except Exception as e:
-                    failed.append(
-                        {"name": name, "error": str(e), "type": info.get("type", "generic")}
-                    )
+                    failed.append({"name": name, "error": str(e), "type": info.get("type", "generic")})
                     logger.error(f"关闭时释放缓冲区失败 {name}: {e}")
 
             # 清空追踪记录

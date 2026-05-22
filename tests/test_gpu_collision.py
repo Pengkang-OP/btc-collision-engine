@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 GPU加速模式快速测试脚本
 
@@ -13,8 +12,8 @@ from pathlib import Path
 # 添加项目根目录
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.collision.gpu.engine import GPUCollisionEngine
 from src.collision.collision_stats import CollisionStats
+from src.collision.gpu.engine import GPUCollisionEngine
 
 
 def main():
@@ -74,8 +73,8 @@ def main():
         print(f"   Batch Size: {engine.batch_size:,}")
 
         print(f"\n[TARGET] 目标地址: {list(targets)[0]}")
-        print(f"[TIME] 测试时长: 10秒")
-        print(f"\n开始GPU碰撞测试...\n")
+        print("[TIME] 测试时长: 10秒")
+        print("\n开始GPU碰撞测试...\n")
         print("-" * 70)
 
         # 启动引擎
@@ -96,17 +95,17 @@ def main():
 
         # 打印结果
         print("-" * 70)
-        print(f"\n[RESULT] GPU测试完成！")
+        print("\n[RESULT] GPU测试完成！")
         print("=" * 70)
         print(f"  总检查数 : {stats_data['total_checked']:,}")
         print(f"  运行时间 : {elapsed:.2f}秒")
-        print(f"  平均速度 : {stats_data['total_checked']/elapsed:,.2f} keys/s")
+        print(f"  平均速度 : {stats_data['total_checked'] / elapsed:,.2f} keys/s")
         print(f"  峰值速度 : {stats_data['speed']:,.2f} keys/s")
         print(f"  发现匹配 : {stats_data['matches']} 个")
         print("=" * 70)
 
         # 性能对比
-        print(f"\n[PERF] 性能对比（vs CPU模式 ~88 keys/s）:")
+        print("\n[PERF] 性能对比（vs CPU模式 ~88 keys/s）:")
         speedup = (stats_data["total_checked"] / elapsed) / 88
         print(f"  加速倍数 : {speedup:,.1f}x")
         print("=" * 70)

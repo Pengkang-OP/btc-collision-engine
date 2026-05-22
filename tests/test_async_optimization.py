@@ -103,7 +103,7 @@ def main():
 
     avg_throughput = sum(throughputs) / len(throughputs) if throughputs else 0
     print(f"平均吞吐量: {avg_throughput:,.0f} keys/s")
-    print(f'各次测量: {[f"{t:,.0f}" for t in throughputs]}')
+    print(f"各次测量: {[f'{t:,.0f}' for t in throughputs]}")
     print()
 
     # 对比
@@ -126,9 +126,9 @@ def main():
         stats = engine._async_executor.get_stats()
         print()
         print("异步执行统计:")
-        print(f'  异步执行次数: {stats["async_executions"]}')
-        print(f'  同步回退次数: {stats["sync_fallbacks"]}')
-        print(f'  异步执行率: {stats["async_rate_percent"]:.1f}%')
+        print(f"  异步执行次数: {stats['async_executions']}")
+        print(f"  同步回退次数: {stats['sync_fallbacks']}")
+        print(f"  异步执行率: {stats['async_rate_percent']:.1f}%")
 
     print()
 

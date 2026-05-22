@@ -201,9 +201,9 @@ class TestThreadSafetyFixes:
         # 验证计数准确（20线程 x 1000次 = 20000次）
         expected_count = thread_count * iterations
         actual_count = stats.worker_errors
-        assert (
-            actual_count == expected_count
-        ), f"错误计数不准确: 期望{expected_count}, 实际{actual_count}"
+        assert actual_count == expected_count, (
+            f"错误计数不准确: 期望{expected_count}, 实际{actual_count}"
+        )
 
         # 输出性能信息
         print("\nrecord_worker_error并发测试完成:")
@@ -260,9 +260,7 @@ class TestThreadSafetyFixes:
         elapsed = time.time() - start_time
 
         # 验证限频效果（在1秒内应该只记录1次）
-        assert (
-            call_count[0] == 1
-        ), f"限频失效: 在{elapsed:.3f}秒内记录了{call_count[0]}次（期望1次）"
+        assert call_count[0] == 1, f"限频失效: 在{elapsed:.3f}秒内记录了{call_count[0]}次（期望1次）"
 
         print("\n错误日志限频测试完成:")
         print("  触发次数: 10")

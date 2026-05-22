@@ -20,9 +20,7 @@ class TestUtils:
     @contextmanager
     def temp_file(content: str = "", suffix: str = ""):
         """创建临时文件上下文管理器"""
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=suffix, delete=False, encoding="utf-8"
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=suffix, delete=False, encoding="utf-8") as f:
             f.write(content)
             temp_path = f.name
 
@@ -36,9 +34,7 @@ class TestUtils:
     @contextmanager
     def temp_json_file(data: dict):
         """创建临时JSON文件上下文管理器"""
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False, encoding="utf-8"
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
             temp_path = f.name
 
@@ -118,18 +114,18 @@ class TestUtils:
         d1_filtered = {k: v for k, v in d1.items() if k not in ignore_keys}
         d2_filtered = {k: v for k, v in d2.items() if k not in ignore_keys}
 
-        assert (
-            d1_filtered == d2_filtered
-        ), f"字典不相等（忽略键: {ignore_keys}）\n{d1_filtered}\n{d2_filtered}"
+        assert d1_filtered == d2_filtered, (
+            f"字典不相等（忽略键: {ignore_keys}）\n{d1_filtered}\n{d2_filtered}"
+        )
 
     @staticmethod
     def assert_call_count(mock_obj, method_name: str, expected_count: int):
         """断言mock方法被调用的次数"""
         method = getattr(mock_obj, method_name, None)
         assert method is not None, f"对象没有方法: {method_name}"
-        assert (
-            method.call_count == expected_count
-        ), f"方法 {method_name} 调用次数不符: 预期 {expected_count}, 实际 {method.call_count}"
+        assert method.call_count == expected_count, (
+            f"方法 {method_name} 调用次数不符: 预期 {expected_count}, 实际 {method.call_count}"
+        )
 
     # -------------------------------------------------------------------------
     # 时间相关Mock

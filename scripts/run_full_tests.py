@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """运行完整测试套件验证无回归"""
 
 import subprocess

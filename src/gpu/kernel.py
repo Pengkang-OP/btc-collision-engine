@@ -157,9 +157,7 @@ def get_version_changelog(version: str | None = None) -> list[dict[str, str]]:
     return [e for e in KERNEL_VERSION_HISTORY if e["version"] == version]
 
 
-def get_latest_compatible_version(
-    current_version: str, available_versions: list[str]
-) -> str | None:
+def get_latest_compatible_version(current_version: str, available_versions: list[str]) -> str | None:
     """查找最新兼容版本（用于回滚场景）
 
     给定当前版本和可用版本列表，返回可回退到的最高版本。

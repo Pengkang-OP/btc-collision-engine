@@ -18,7 +18,7 @@ def read_monitoring_data():
         return None
 
     try:
-        with open(monitoring_file, encoding='utf-8') as f:
+        with open(monitoring_file, encoding="utf-8") as f:
             return json.load(f)
     except Exception as e:
         print(f"[ERROR] 读取监控数据失败: {e}")
@@ -33,7 +33,7 @@ def read_error_log():
         return []
 
     try:
-        with open(error_file, encoding='utf-8') as f:
+        with open(error_file, encoding="utf-8") as f:
             return json.load(f)
     except (OSError, json.JSONDecodeError):
         return []
@@ -47,23 +47,23 @@ def analyze_logs():
         return {"status": "日志文件不存在"}
 
     try:
-        with open(log_file, encoding='utf-8', errors='ignore') as f:
+        with open(log_file, encoding="utf-8", errors="ignore") as f:
             lines = f.readlines()
 
         # 获取最后50行
         recent_lines = lines[-50:]
 
         # 统计关键信息
-        info_count = sum(1 for line in lines if 'INFO' in line)
-        warning_count = sum(1 for line in lines if 'WARNING' in line)
-        error_count = sum(1 for line in lines if 'ERROR' in line)
+        info_count = sum(1 for line in lines if "INFO" in line)
+        warning_count = sum(1 for line in lines if "WARNING" in line)
+        error_count = sum(1 for line in lines if "ERROR" in line)
 
         return {
             "total_lines": len(lines),
             "recent_lines": [line.strip() for line in recent_lines],
             "info_count": info_count,
             "warning_count": warning_count,
-            "error_count": error_count
+            "error_count": error_count,
         }
     except Exception as e:
         return {"status": f"分析失败: {e}"}
@@ -75,9 +75,14 @@ def _check_processes():  # noqa: D401 (描述性函数名)
     print("-" * 80)
     try:
         result = subprocess.run(
-            ['powershell', '-Command',
-             'Get-Process python -ErrorAction SilentlyContinue | ConvertTo-Json'],
-            capture_output=True, text=True, encoding='utf-8',
+            [
+                "powershell",
+                "-Command",
+                "Get-Process python -ErrorAction SilentlyContinue | ConvertTo-Json",
+            ],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
         )
         if result.stdout.strip():
             processes = json.loads(result.stdout)
@@ -85,9 +90,9 @@ def _check_processes():  # noqa: D401 (描述性函数名)
                 processes = [processes]
             print(f"检测到 {len(processes)} 个Python进程:")
             for proc in processes:
-                pid = proc.get('Id', 'N/A')
-                ws_mb = proc.get('WorkingSet', 0) / (1024 * 1024)
-                cpu = proc.get('CPU', 0)
+                pid = proc.get("Id", "N/A")
+                ws_mb = proc.get("WorkingSet", 0) / (1024 * 1024)
+                cpu = proc.get("CPU", 0)
                 print(f"  PID: {pid} | 内存: {ws_mb:.1f} MB | CPU时间: {cpu:.1f}s")
         else:
             print("[WARN] 未检测到Python进程")
@@ -106,9 +111,7 @@ def _read_monitoring_section():
         print(f"  运行状态: {monitoring_data.get('running_status', 'Unknown')}")
         print(f"  已检查密钥: {monitoring_data.get('total_checked', 0):,}")
         print(f"  匹配数: {monitoring_data.get('match_count', 0):,}")
-        print(
-            f"  速度: {monitoring_data.get('keys_per_second', 0):,.0f} keys/s"
-        )
+        print(f"  速度: {monitoring_data.get('keys_per_second', 0):,.0f} keys/s")
         print(f"  运行时间: {monitoring_data.get('elapsed_time', 0):.1f} 秒")
         print(f"  最后更新: {monitoring_data.get('last_update', 'Unknown')}")
     else:
@@ -140,7 +143,7 @@ def _analyze_logs_section():
     print("[4/5] 分析运行日志")
     print("-" * 80)
     log_analysis = analyze_logs()
-    if 'total_lines' in log_analysis:
+    if "total_lines" in log_analysis:
         print(f"日志总行数: {log_analysis['total_lines']}")
         print(
             f"INFO: {log_analysis['info_count']} | "
@@ -149,16 +152,16 @@ def _analyze_logs_section():
         )
         print()
         print("最新日志(最后10行):")
-        for line in log_analysis['recent_lines'][-10:]:
-            if 'INFO' in line:
-                level = 'INFO'
-            elif 'WARNING' in line:
-                level = 'WARN'
-            elif 'ERROR' in line:
-                level = 'ERROR'
+        for line in log_analysis["recent_lines"][-10:]:
+            if "INFO" in line:
+                level = "INFO"
+            elif "WARNING" in line:
+                level = "WARN"
+            elif "ERROR" in line:
+                level = "ERROR"
             else:
-                level = '????'
-            parts = line.split(' - ', 2)
+                level = "????"
+            parts = line.split(" - ", 2)
             if len(parts) >= 3:
                 message = parts[2][:100]
                 print(f"  [{level}] {message}")
@@ -177,7 +180,7 @@ def _health_check_section(monitoring_data, log_analysis):
     if monitoring_data or True:
         health_checks.append(("进程状态", True, "程序运行中"))
     # 检查2: 错误率
-    err_cnt = log_analysis.get('error_count', 0)
+    err_cnt = log_analysis.get("error_count", 0)
     if err_cnt == 0:
         health_checks.append(("错误率", True, "0错误"))
     elif err_cnt < 5:
@@ -185,20 +188,17 @@ def _health_check_section(monitoring_data, log_analysis):
     else:
         health_checks.append(("错误率", False, f"{err_cnt}个错误(需关注)"))
     # 检查3: 警告数量
-    warn_cnt = log_analysis.get('warning_count', 0)
+    warn_cnt = log_analysis.get("warning_count", 0)
     if warn_cnt < 10:
         health_checks.append(("警告数量", True, f"{warn_cnt}个警告"))
     else:
         health_checks.append(("警告数量", False, f"{warn_cnt}个警告(较多)"))
     # 检查4: 性能
-    if monitoring_data and monitoring_data.get('keys_per_second', 0) > 10000:
-        health_checks.append(
-            ("吞吐量", True, f"{monitoring_data['keys_per_second']:,.0f} keys/s")
-        )
+    if monitoring_data and monitoring_data.get("keys_per_second", 0) > 10000:
+        health_checks.append(("吞吐量", True, f"{monitoring_data['keys_per_second']:,.0f} keys/s"))
     elif monitoring_data:
         health_checks.append(
-            ("吞吐量", False,
-             f"{monitoring_data.get('keys_per_second', 0):,.0f} keys/s(偏低)")
+            ("吞吐量", False, f"{monitoring_data.get('keys_per_second', 0):,.0f} keys/s(偏低)")
         )
     else:
         health_checks.append(("吞吐量", None, "暂无数据"))
@@ -223,24 +223,12 @@ def _print_summary(health_checks, monitoring_data):
     pass_count = sum(1 for _, status, _ in health_checks if status is True)
     fail_count = sum(1 for _, status, _ in health_checks if status is False)
     if fail_count == 0:
-        print(
-            f"[HEALTHY] 程序运行正常! "
-            f"(通过 {pass_count}/{pass_count + fail_count} 项检查)"
-        )
+        print(f"[HEALTHY] 程序运行正常! (通过 {pass_count}/{pass_count + fail_count} 项检查)")
         print()
         if monitoring_data:
-            print(
-                f"  已检查: "
-                f"{monitoring_data.get('total_checked', 0):,} 个密钥"
-            )
-            print(
-                f"  速度: "
-                f"{monitoring_data.get('keys_per_second', 0):,.0f} keys/s"
-            )
-            print(
-                f"  运行时间: "
-                f"{monitoring_data.get('elapsed_time', 0):.1f} 秒"
-            )
+            print(f"  已检查: {monitoring_data.get('total_checked', 0):,} 个密钥")
+            print(f"  速度: {monitoring_data.get('keys_per_second', 0):,.0f} keys/s")
+            print(f"  运行时间: {monitoring_data.get('elapsed_time', 0):.1f} 秒")
     else:
         print(f"[WARNING] 发现 {fail_count} 个问题需要关注")
         print()

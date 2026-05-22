@@ -65,9 +65,7 @@ class TestAlertSystemIntegration:
         alerts = alert_system.get_active_alerts()
 
         # 应该至少有一个性能退化告警
-        performance_alerts = [
-            a for a in alerts if a.alert_type == AlertType.PERFORMANCE_DEGRADATION
-        ]
+        performance_alerts = [a for a in alerts if a.alert_type == AlertType.PERFORMANCE_DEGRADATION]
         assert len(performance_alerts) > 0, "应该触发性能退化告警"
 
         # 检查告警级别

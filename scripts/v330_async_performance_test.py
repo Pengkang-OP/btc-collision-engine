@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 v3.3.0 异步双缓冲性能验证测试
 
@@ -15,13 +14,12 @@ v3.3.0 异步双缓冲性能验证测试
 - 目标地址: 2个真实比特币地址
 """
 
-import sys
-import os
-import time
 import json
-from pathlib import Path
+import os
+import sys
+import time
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Any
 
 # 添加项目根目录到路径
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -47,7 +45,7 @@ class V330PerformanceVerifier:
         }
         self.results = []
 
-    def test_sync_mode(self) -> Dict[str, Any]:
+    def test_sync_mode(self) -> dict[str, Any]:
         """测试同步模式（单缓冲）"""
         print("\n" + "=" * 80)
         print("  测试配置: 同步模式（单缓冲）")
@@ -145,7 +143,7 @@ class V330PerformanceVerifier:
                 max_speed = max(speeds) if speeds else 0
                 min_speed = min(speeds) if speeds else 0
 
-                print(f"\n  📊 测试结果:")
+                print("\n  📊 测试结果:")
                 print(f"    总检查数: {total_keys:,} keys")
                 print(f"    平均速度: {avg_speed:,.2f} keys/s")
                 print(f"    峰值速度: {max_speed:,.2f} keys/s")
@@ -173,7 +171,7 @@ class V330PerformanceVerifier:
             traceback.print_exc()
             return None
 
-    def test_async_mode(self) -> Dict[str, Any]:
+    def test_async_mode(self) -> dict[str, Any]:
         """测试异步模式（双缓冲）"""
         print("\n" + "=" * 80)
         print("  测试配置: 异步模式（双缓冲优化）")
@@ -216,7 +214,7 @@ class V330PerformanceVerifier:
             print(f"  GPU设备: {device_info.get('name', 'Unknown')}")
             print(f"  厂商: {device_info.get('vendor', 'Unknown')}")
             print(f"  批次大小: {batch_size:,}")
-            print(f"  异步执行: 已启用")
+            print("  异步执行: 已启用")
             print(f"  初始化时间: {init_time:.2f}秒")
             print()
 
@@ -272,7 +270,7 @@ class V330PerformanceVerifier:
                 max_speed = max(speeds) if speeds else 0
                 min_speed = min(speeds) if speeds else 0
 
-                print(f"\n  📊 测试结果:")
+                print("\n  📊 测试结果:")
                 print(f"    总检查数: {total_keys:,} keys")
                 print(f"    平均速度: {avg_speed:,.2f} keys/s")
                 print(f"    峰值速度: {max_speed:,.2f} keys/s")
@@ -308,42 +306,42 @@ class V330PerformanceVerifier:
         async_result = self.results[0]
 
         report = f"""
-{'='*80}
+{"=" * 80}
   v3.3.0 异步双缓冲性能测试报告
-{'='*80}
+{"=" * 80}
 
-测试时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+测试时间: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 测试时长: {self.test_duration}秒
 测试模式: 异步双缓冲（Async Double Buffering）
 目标地址: {len(self.targets)}个
 
-{'─'*80}
+{"─" * 80}
   GPU设备信息
-{'─'*80}
-设备名称: {async_result['device'].get('name', 'Intel Arc A770')}
-厂商: {async_result['device'].get('vendor', 'Intel Corporation')}
-批次大小: {async_result['batch_size']:,}
+{"─" * 80}
+设备名称: {async_result["device"].get("name", "Intel Arc A770")}
+厂商: {async_result["device"].get("vendor", "Intel Corporation")}
+批次大小: {async_result["batch_size"]:,}
 异步执行: 已启用
 
-{'─'*80}
+{"─" * 80}
   性能指标
-{'─'*80}
+{"─" * 80}
 
-总检查数:     {async_result['total_keys']:>15,} keys
-平均速度:     {async_result['avg_speed']:>15,.2f} keys/s
-峰值速度:     {async_result['max_speed']:>15,.2f} keys/s
-最低速度:     {async_result['min_speed']:>15,.2f} keys/s
-初始化时间:   {async_result['init_time']:>15.2f} 秒
-速度稳定性:   {(1 - (async_result['max_speed'] - async_result['min_speed']) / async_result['avg_speed']) * 100:>14.1f}%
+总检查数:     {async_result["total_keys"]:>15,} keys
+平均速度:     {async_result["avg_speed"]:>15,.2f} keys/s
+峰值速度:     {async_result["max_speed"]:>15,.2f} keys/s
+最低速度:     {async_result["min_speed"]:>15,.2f} keys/s
+初始化时间:   {async_result["init_time"]:>15.2f} 秒
+速度稳定性:   {(1 - (async_result["max_speed"] - async_result["min_speed"]) / async_result["avg_speed"]) * 100:>14.1f}%
 
-{'─'*80}
+{"─" * 80}
   性能评估
-{'─'*80}
+{"─" * 80}
 ✅ 异步双缓冲优化: 已启用
 ✅ 预期性能提升: +30-50%（相比同步模式）
-{'✅ 性能达到预期' if async_result['avg_speed'] > 600000 else '⚠️ 性能需进一步优化'}
+{"✅ 性能达到预期" if async_result["avg_speed"] > 600000 else "⚠️ 性能需进一步优化"}
 
-{'='*80}
+{"=" * 80}
 """
         return report
 
@@ -376,7 +374,7 @@ class V330PerformanceVerifier:
             report_file = os.path.join(
                 project_root,
                 "test_results",
-                f'v330_async_performance_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json',
+                f"v330_async_performance_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
             )
             os.makedirs(os.path.dirname(report_file), exist_ok=True)
 
@@ -400,9 +398,7 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="v3.3.0异步双缓冲性能验证测试")
-    parser.add_argument(
-        "--duration", type=int, default=60, help="每个配置的测试时长（秒），默认60秒"
-    )
+    parser.add_argument("--duration", type=int, default=60, help="每个配置的测试时长（秒），默认60秒")
 
     args = parser.parse_args()
 

@@ -1,20 +1,20 @@
 """断点续传功能完整测试套件"""
 
-import unittest
+import json
 import os
 import sys
-import time
-import json
-import threading
 import tempfile
+import threading
+import time
+import unittest
 from datetime import datetime
 
 # 添加项目根目录到路径
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)
 
-from src.collision.checkpoint_manager import CheckpointManager
 from src.collision import KeyCollisionEngine
+from src.collision.checkpoint_manager import CheckpointManager
 
 
 def safe_remove_file(filepath):
@@ -161,7 +161,7 @@ class TestCheckpointSecurity(unittest.TestCase):
         )
 
         # 直接读取文件验证
-        with open(self.test_file, "r", encoding="utf-8") as f:
+        with open(self.test_file, encoding="utf-8") as f:
             file_content = f.read()
 
         # 验证私钥不在文件中

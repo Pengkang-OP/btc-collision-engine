@@ -204,9 +204,7 @@ class TestAsyncGPUExecutorQueueDepth(unittest.TestCase):
 
         with (
             patch.dict("sys.modules", {"pyopencl": mock_cl}),
-            patch(
-                "src.gpu.precompute.get_precomp_table", return_value=np.zeros(496, dtype=np.uint32)
-            ),
+            patch("src.gpu.precompute.get_precomp_table", return_value=np.zeros(496, dtype=np.uint32)),
         ):
             for qd in [1, 4, 8]:
                 ex = AsyncGPUExecutor(dev, max_batch_size=256, queue_depth=qd)

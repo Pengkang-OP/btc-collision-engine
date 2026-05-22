@@ -8,6 +8,7 @@ Windows 控制台 UTF-8 编码修复工具
 
 非 Windows 平台下，所有函数为空操作，保证跨平台兼容性。
 """
+
 import ctypes
 import io
 import logging

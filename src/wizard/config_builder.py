@@ -31,7 +31,8 @@ class ConfigBuilder:
             raise ValueError("No targets specified: both targets and target_file are empty")
         if result.mode not in ConfigBuilder.VALID_MODES:
             raise ValueError(
-                f"Invalid mode '{result.mode}'. Valid modes: {', '.join(sorted(ConfigBuilder.VALID_MODES))}"
+                f"Invalid mode '{result.mode}'. "
+                f"Valid modes: {', '.join(sorted(ConfigBuilder.VALID_MODES))}"
             )
         if result.mode in ("range", "brute_force") and not result.start_key:
             raise ValueError(f"Mode '{result.mode}' requires a start_key")

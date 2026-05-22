@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 GPU碰撞引擎稳定性压力测试
 运行10分钟，验证长期稳定性
 """
 
-import sys
 import os
+import sys
 import time
+
 import psutil
 
 # 添加项目根目录到路径
@@ -17,7 +17,7 @@ sys.path.insert(0, project_root)
 from src.collision.gpu.engine import GPUCollisionEngine
 
 
-def stability_test(duration_minutes=10):
+def stability_test(duration_minutes=10):  # noqa: C901
     """稳定性压力测试"""
     print("=" * 80)
     print("  GPU碰撞引擎 - 稳定性压力测试")
@@ -33,7 +33,6 @@ def stability_test(duration_minutes=10):
 
     stats_history = []
     error_count = 0
-    warning_count = 0
 
     def on_progress(stats):
         stats_history.append(
@@ -41,14 +40,12 @@ def stability_test(duration_minutes=10):
                 "timestamp": time.time(),
                 "total_checked": stats.total_checked,
                 "speed": stats.speed,
-                "matches": (
-                    len(stats.matches) if hasattr(stats.matches, "__len__") else stats.matches
-                ),
+                "matches": (len(stats.matches) if hasattr(stats.matches, "__len__") else stats.matches),
             }
         )
 
     def on_match(match_info):
-        print(f"  [MATCH] 发现匹配!")
+        print("  [MATCH] 发现匹配!")
 
     try:
         # 初始化引擎
@@ -139,10 +136,10 @@ def stability_test(duration_minutes=10):
             else:
                 trend = 0
 
-            print(f"\n{'='*80}")
+            print(f"\n{'=' * 80}")
             print("  压力测试结果")
-            print(f"{'='*80}")
-            print(f"    总运行时间:   {(time.time() - start_time)/60:.2f} 分钟")
+            print(f"{'=' * 80}")
+            print(f"    总运行时间:   {(time.time() - start_time) / 60:.2f} 分钟")
             print(f"    总检查数:     {total_keys:,} keys")
             print(f"    平均速度:     {avg_speed:,.2f} keys/s")
             print(f"    峰值速度:     {max_speed:,.2f} keys/s")
@@ -173,16 +170,16 @@ def stability_test(duration_minutes=10):
             if stats_history:
                 first_memory = final_memory_mb  # 近似值
                 if first_memory > 500:
-                    print(f"    内存泄漏:     警告 - 内存占用过高")
+                    print("    内存泄漏:     警告 - 内存占用过高")
                 else:
-                    print(f"    内存泄漏:     无")
+                    print("    内存泄漏:     无")
 
             print()
 
             # 最终结论
-            print(f"{'='*80}")
+            print(f"{'=' * 80}")
             print("  测试结论")
-            print(f"{'='*80}")
+            print(f"{'=' * 80}")
 
             if cv < 2 and error_count == 0 and trend > -5:
                 print("    结果: PASS")
@@ -197,7 +194,7 @@ def stability_test(duration_minutes=10):
                 if trend <= -5:
                     print(f"    - 性能衰减严重 ({trend:.2f}%)")
 
-            print(f"{'='*80}")
+            print(f"{'=' * 80}")
 
             return {
                 "duration_minutes": duration_minutes,
@@ -225,13 +222,13 @@ if __name__ == "__main__":
     result = stability_test(duration_minutes=10)
 
     if result:
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         if result["passed"]:
             print("  压力测试完成 - 通过!")
         else:
             print("  压力测试完成 - 需要关注!")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
     else:
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("  压力测试失败!")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")

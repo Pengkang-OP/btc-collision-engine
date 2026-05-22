@@ -2,8 +2,8 @@
 """GPU碰撞引擎修复验证脚本"""
 
 import sys
-import time
 import threading
+import time
 from pathlib import Path
 
 # 添加项目根目录
@@ -76,7 +76,7 @@ def main():
         report = monitor.get_performance_report()
 
         print(
-            f"  [{(i+1)*3}s] 吞吐量: {report.avg_throughput_keys_per_sec:>10,.0f} keys/s | "
+            f"  [{(i + 1) * 3}s] 吞吐量: {report.avg_throughput_keys_per_sec:>10,.0f} keys/s | "
             f"错误率: {report.error_rate_percent:>6.2f}% | "
             f"显存: {report.memory_usage_avg_mb:>8.2f} MB | "
             f"批次: {report.total_batches}"
@@ -106,10 +106,10 @@ def main():
         print("[PASS] 引擎运行稳定")
         print()
         print("修复效果:")
-        print(f"  - 设备选择: Intel Arc A770 (16GB) ✓")
-        print(f"  - 吞吐量: 稳定")
-        print(f"  - 错误率: 0.00%")
-        print(f"  - 稳定性: 高")
+        print("  - 设备选择: Intel Arc A770 (16GB) ✓")
+        print("  - 吞吐量: 稳定")
+        print("  - 错误率: 0.00%")
+        print("  - 稳定性: 高")
     else:
         print("[FAIL] 未使用Intel Arc A770")
         print(f"       实际使用: {gpu_name}")

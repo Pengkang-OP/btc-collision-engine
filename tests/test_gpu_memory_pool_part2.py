@@ -258,9 +258,7 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
                 return True  # 停止
             return False
 
-        with patch.object(
-            mgr._cleanup_state._cleanup_stop_event, "wait", side_effect=wait_side_effect
-        ):
+        with patch.object(mgr._cleanup_state._cleanup_stop_event, "wait", side_effect=wait_side_effect):
             mgr._auto_cleanup_loop(interval=0.01, lru_timeout=0.1)
         # 不应崩溃
 
@@ -332,11 +330,10 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
                 return mm
 
         # 注入 pyopencl mock
-        with patch.dict(sys.modules, {"pyopencl": FakeCL}):
-            with patch.object(
-                mgr._cleanup_state._cleanup_stop_event, "wait", side_effect=wait_side_effect
-            ):
-                mgr._auto_cleanup_loop(interval=0.01, lru_timeout=0.1)
+        with patch.dict(sys.modules, {"pyopencl": FakeCL}), patch.object(
+            mgr._cleanup_state._cleanup_stop_event, "wait", side_effect=wait_side_effect
+        ):
+            mgr._auto_cleanup_loop(interval=0.01, lru_timeout=0.1)
         # 不应崩溃
 
     def test_auto_cleanup_uses_default_intervals(self):

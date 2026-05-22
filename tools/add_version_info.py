@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python
+#!/usr/bin/env python
 """
 批量添加版本信息到文档
 
@@ -22,11 +22,13 @@ setup_windows_utf8()
 def check_has_version(content: str) -> bool:
     """检查文档是否已有版本信息"""
     # 检查前20行是否有版本信息
-    first_20_lines = '\n'.join(content.split('\n')[:20])
-    return bool(re.search(r'[*]*[*]版本[*]*[*]:\s*v?\d+\.\d+', first_20_lines))
+    first_20_lines = "\n".join(content.split("\n")[:20])
+    return bool(re.search(r"[*]*[*]版本[*]*[*]:\s*v?\d+\.\d+", first_20_lines))
 
 
-def add_version_info(content: str, version: str, target_audience: str = "用户/开发者") -> tuple[str, bool]:
+def add_version_info(
+    content: str, version: str, target_audience: str = "用户/开发者"
+) -> tuple[str, bool]:
     """添加版本信息到文档
 
     Returns:
@@ -35,12 +37,12 @@ def add_version_info(content: str, version: str, target_audience: str = "用户/
     if check_has_version(content):
         return content, False
 
-    lines = content.split('\n')
+    lines = content.split("\n")
 
     # 找到第一个标题行
     title_line_idx = 0
     for i, line in enumerate(lines):
-        if line.startswith('# ') and not line.startswith('##'):
+        if line.startswith("# ") and not line.startswith("##"):
             title_line_idx = i
             break
 
@@ -51,62 +53,50 @@ def add_version_info(content: str, version: str, target_audience: str = "用户/
     insert_idx = title_line_idx + 1
     lines.insert(insert_idx, version_block)
 
-    return '\n'.join(lines), True
+    return "\n".join(lines), True
 
 
 def determine_target_audience(file_name: str) -> str:
     """根据文件名确定目标读者"""
     audience_map = {
-        'README': '所有用户',
-        'getting-started': '新用户',
-        'user-interface': '用户',
-        'troubleshooting': '用户',
-        'api-reference': '开发者',
-        'architecture': '开发者/架构师',
-        'performance-optimization': '开发者',
-        'security': '开发者/安全工程师',
-        'CONTRIBUTING': '贡献者',
-        'config': '开发者/运维',
-        'monitoring': '运维/开发者',
-        'logging': '开发者',
-        'gpu': '开发者',
-        'intel': '开发者',
-        'checkpoint': '用户',
-        'address-import': '用户',
-        'bech32': '开发者',
-        'workflow': '开发者',
-        'review': '审查者',
-        'quality': '维护者',
-        'improvement': '维护者',
+        "README": "所有用户",
+        "getting-started": "新用户",
+        "user-interface": "用户",
+        "troubleshooting": "用户",
+        "api-reference": "开发者",
+        "architecture": "开发者/架构师",
+        "performance-optimization": "开发者",
+        "security": "开发者/安全工程师",
+        "CONTRIBUTING": "贡献者",
+        "config": "开发者/运维",
+        "monitoring": "运维/开发者",
+        "logging": "开发者",
+        "gpu": "开发者",
+        "intel": "开发者",
+        "checkpoint": "用户",
+        "address-import": "用户",
+        "bech32": "开发者",
+        "workflow": "开发者",
+        "review": "审查者",
+        "quality": "维护者",
+        "improvement": "维护者",
     }
 
     for key, audience in audience_map.items():
         if key.lower() in file_name.lower():
             return audience
 
-    return '用户/开发者'
+    return "用户/开发者"
 
 
 def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='批量添加版本信息到文档')
-    parser.add_argument(
-        '--dry-run',
-        action='store_true',
-        help='仅显示添加计划，不实际修改文件'
-    )
-    parser.add_argument(
-        '--version',
-        default='v4.2.3',
-        help='版本号 (默认: v4.2.3)'
-    )
-    parser.add_argument(
-        '--docs-dir',
-        default='docs',
-        help='文档目录路径 (默认: docs)'
-    )
+    parser = argparse.ArgumentParser(description="批量添加版本信息到文档")
+    parser.add_argument("--dry-run", action="store_true", help="仅显示添加计划，不实际修改文件")
+    parser.add_argument("--version", default="v4.2.3", help="版本号 (默认: v4.2.3)")
+    parser.add_argument("--docs-dir", default="docs", help="文档目录路径 (默认: docs)")
 
     args = parser.parse_args()
 
@@ -122,14 +112,14 @@ def main():
 
     md_files = list(docs_dir.glob("*.md"))
     # 排除archive目录
-    md_files = [f for f in md_files if 'archive' not in str(f)]
+    md_files = [f for f in md_files if "archive" not in str(f)]
 
     total_added = 0
     total_skipped = 0
     file_stats = []
 
     for md_file in sorted(md_files):
-        content = md_file.read_text(encoding='utf-8')
+        content = md_file.read_text(encoding="utf-8")
 
         if check_has_version(content):
             total_skipped += 1
@@ -143,7 +133,7 @@ def main():
             file_stats.append((md_file.name, audience))
 
             if not args.dry_run:
-                md_file.write_text(new_content, encoding='utf-8')
+                md_file.write_text(new_content, encoding="utf-8")
 
     # 打印统计信息
     print("=" * 60)

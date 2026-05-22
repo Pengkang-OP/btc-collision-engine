@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 异步双缓冲60秒性能对比测试 v4 - 修复停止阻塞问题
 
@@ -9,21 +8,21 @@
 - 使用后台线程监控测试时长,超时自动退出
 """
 
-import sys
-import os
-import time
 import json
+import os
+import sys
 import threading
-from pathlib import Path
+import time
 from datetime import datetime
-from typing import Dict, List, Any
+from pathlib import Path
+from typing import Any
 
 # 添加项目根目录到路径
 project_root = str(Path(__file__).parent.parent)
 sys.path.insert(0, project_root)
 
-from src.collision.gpu.engine import GPUCollisionEngine
 from src.collision.collision_stats import CollisionStats
+from src.collision.gpu.engine import GPUCollisionEngine
 
 
 class AsyncDoubleBufferTest:
@@ -44,14 +43,14 @@ class AsyncDoubleBufferTest:
             "12cbQLTFMXRnSzktFkuoG3eHoMeFtpTu3S",  # 早期地址
         ]
 
-    def test_sync_mode(self) -> Dict[str, Any]:
+    def test_sync_mode(self) -> dict[str, Any]:  # noqa: C901
         """测试同步模式(单缓冲)"""
         print("\n" + "=" * 80)
         print("  测试模式: 同步(单缓冲)")
         print("=" * 80)
         print(f"  测试时长: {self.test_duration}秒")
         print(f"  数据分析: 前{self.analysis_duration}秒")
-        print(f"  批次大小: 1,048,576")
+        print("  批次大小: 1,048,576")
         print()
 
         stats_history = []
@@ -121,7 +120,7 @@ class AsyncDoubleBufferTest:
             # 后台线程: 90秒后强制退出整个进程
             def force_exit():
                 time.sleep(self.test_duration)
-                print(f"\n  ⏰ [90秒倒计时结束] 强制退出进程...")
+                print("\n  ⏰ [90秒倒计时结束] 强制退出进程...")
                 os._exit(0)  # 强制退出,不等待线程
 
             exit_thread = threading.Thread(target=force_exit, daemon=True)
@@ -190,14 +189,14 @@ class AsyncDoubleBufferTest:
             traceback.print_exc()
             return {"mode": "sync", "error": str(e), "duration": time.time() - start_time}
 
-    def test_async_mode(self) -> Dict[str, Any]:
+    def test_async_mode(self) -> dict[str, Any]:  # noqa: C901
         """测试异步模式(双缓冲)"""
         print("\n" + "=" * 80)
         print("  测试模式: 异步(双缓冲)")
         print("=" * 80)
         print(f"  测试时长: {self.test_duration}秒")
         print(f"  数据分析: 前{self.analysis_duration}秒")
-        print(f"  批次大小: 1,048,576")
+        print("  批次大小: 1,048,576")
         print()
 
         stats_history = []
@@ -273,7 +272,7 @@ class AsyncDoubleBufferTest:
             # 后台线程: 90秒后强制退出整个进程
             def force_exit():
                 time.sleep(self.test_duration)
-                print(f"\n  ⏰ [90秒倒计时结束] 强制退出进程...")
+                print("\n  ⏰ [90秒倒计时结束] 强制退出进程...")
                 os._exit(0)  # 强制退出,不等待线程
 
             exit_thread = threading.Thread(target=force_exit, daemon=True)
@@ -341,7 +340,7 @@ class AsyncDoubleBufferTest:
             traceback.print_exc()
             return {"mode": "async", "error": str(e), "duration": time.time() - start_time}
 
-    def run_comparison(self) -> Dict[str, Any]:
+    def run_comparison(self) -> dict[str, Any]:
         """运行完整对比测试"""
         print("=" * 80)
         print("  异步双缓冲性能对比测试 v4 (修复停止阻塞)")
@@ -378,7 +377,7 @@ class AsyncDoubleBufferTest:
 
         return comparison
 
-    def generate_comparison(self, sync: Dict, async_mode: Dict) -> Dict[str, Any]:
+    def generate_comparison(self, sync: dict, async_mode: dict) -> dict[str, Any]:
         """生成对比报告"""
         print("\n" + "=" * 80)
         print("  性能对比报告")
@@ -388,21 +387,21 @@ class AsyncDoubleBufferTest:
             sync_speed = sync.get("avg_speed", 0)
             async_speed = async_mode.get("avg_speed", 0)
 
-            print(f"\n  同步模式(单缓冲):")
+            print("\n  同步模式(单缓冲):")
             print(f"    平均速度: {sync_speed:,.0f} keys/s")
             print(f"    峰值速度: {sync.get('max_speed', 0):,.0f} keys/s")
             print(f"    最低速度: {sync.get('min_speed', 0):,.0f} keys/s")
             print(
-                f"    稳定性: ±{sync.get('speed_std', 0)/sync_speed*100 if sync_speed > 0 else 0:.1f}%"
+                f"    稳定性: ±{sync.get('speed_std', 0) / sync_speed * 100 if sync_speed > 0 else 0:.1f}%"
             )
             print(f"    60秒总计: {sync.get('total_keys', 0):,} keys")
 
-            print(f"\n  异步模式(双缓冲):")
+            print("\n  异步模式(双缓冲):")
             print(f"    平均速度: {async_speed:,.0f} keys/s")
             print(f"    峰值速度: {async_mode.get('max_speed', 0):,.0f} keys/s")
             print(f"    最低速度: {async_mode.get('min_speed', 0):,.0f} keys/s")
             print(
-                f"    稳定性: ±{async_mode.get('speed_std', 0)/async_speed*100 if async_speed > 0 else 0:.1f}%"
+                f"    稳定性: ±{async_mode.get('speed_std', 0) / async_speed * 100 if async_speed > 0 else 0:.1f}%"
             )
             print(f"    60秒总计: {async_mode.get('total_keys', 0):,} keys")
 
@@ -433,7 +432,7 @@ class AsyncDoubleBufferTest:
                 "timestamp": datetime.now().isoformat(),
             }
 
-    def save_results(self, comparison: Dict[str, Any]):
+    def save_results(self, comparison: dict[str, Any]):
         """保存测试结果"""
         output_dir = os.path.join(project_root, "test_results")
         os.makedirs(output_dir, exist_ok=True)

@@ -21,11 +21,7 @@ def load_daily_summary():
     log_dir = os.path.join(ROOT, "data_logs")
     # 取最新的日报文件
     reports = sorted(
-        [
-            f
-            for f in os.listdir(log_dir)
-            if f.startswith("report_daily_20260423") and f.endswith(".json")
-        ]
+        [f for f in os.listdir(log_dir) if f.startswith("report_daily_20260423") and f.endswith(".json")]
     )
     if not reports:
         return {}

@@ -19,9 +19,7 @@ from src.core.secp256k1 import Secp256k1
 from src.utils.bech32_codec import convertbits
 
 # BIP-173 已知测试向量 (G点公钥 → P2WPKH bech32地址)
-_BIP173_G_PUBKEY = bytes.fromhex(
-    "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
-)
+_BIP173_G_PUBKEY = bytes.fromhex("0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798")
 _BIP173_EXPECTED_ADDRESS = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
 
 
@@ -155,9 +153,7 @@ class TestGenerateKeyExceptionHandlers(unittest.TestCase):
         from src.core.secp256k1 import ECPoint
 
         inf_point = ECPoint(None, None)  # is_infinity = True
-        with patch.object(
-            self.validator.curve, "scalar_multiply_const_time", return_value=inf_point
-        ):
+        with patch.object(self.validator.curve, "scalar_multiply_const_time", return_value=inf_point):
             result, pub_key = self.validator.generate_public_key(self.pk)
             self.assertFalse(result.success)
             self.assertEqual(pub_key, b"")
@@ -168,9 +164,7 @@ class TestGenerateKeyExceptionHandlers(unittest.TestCase):
         from src.core.secp256k1 import ECPoint
 
         off_curve = ECPoint(1, 1)  # (1,1) 不在 secp256k1 上
-        with patch.object(
-            self.validator.curve, "scalar_multiply_const_time", return_value=off_curve
-        ):
+        with patch.object(self.validator.curve, "scalar_multiply_const_time", return_value=off_curve):
             result, pub_key = self.validator.generate_public_key(self.pk)
             self.assertFalse(result.success)
             self.assertEqual(pub_key, b"")

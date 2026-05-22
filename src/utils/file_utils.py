@@ -114,9 +114,7 @@ def atomic_json_write(
                 logger.debug(f"清理临时文件失败（可忽略）: {cleanup_error}")
 
 
-def atomic_json_read(
-    filepath: str, default: Any = None, validate_func: Callable | None = None
-) -> Any:
+def atomic_json_read(filepath: str, default: Any = None, validate_func: Callable | None = None) -> Any:
     """安全读取JSON文件（带恢复机制）
 
     尝试读取JSON文件，如果文件损坏则尝试从备份恢复。

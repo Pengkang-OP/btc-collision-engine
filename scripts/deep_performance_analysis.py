@@ -35,9 +35,11 @@ try:
                 # Intel Arc: 每个EU可以处理7个线程
                 peak_ops = device.max_compute_units * 7 * device.max_clock_frequency * 1e6
                 print(f"\n  理论峰值操作数: {peak_ops / 1e9:.1f} GOPS")
-                print(f"  (基于: {
-                    device.max_compute_units} EUs × 7线程 × {
-                    device.max_clock_frequency} MHz)")
+                print(
+                    f"  (基于: {device.max_compute_units} EUs × 7线程 × {
+                        device.max_clock_frequency
+                    } MHz)"
+                )
 
 except Exception as e:
     print(f"❌ GPU检测失败: {e}")

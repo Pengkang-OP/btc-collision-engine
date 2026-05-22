@@ -129,7 +129,7 @@ class GPUDeviceManager:
 
                 # 1. 初始化GPU设备
                 self._init_device()
-                assert self._gpu_device is not None  # _init_device 保证设置
+                self._require_device()  # 替代 assert，确保 -O 模式下有效
 
                 # 2. 准备目标地址
                 target_hash160s, target_list = self._prepare_targets(targets)
@@ -142,11 +142,13 @@ class GPUDeviceManager:
 
                 # 4. 创建GPU上下文
                 self._init_context()
-                assert self._gpu_context is not None  # _init_context 保证设置
+                self._require_context()  # 替代 assert，确保 -O 模式下有效
 
                 # 5. 编译和创建内核
                 self._init_kernel(batch_size)
-                assert self._gpu_kernel is not None  # _init_kernel 保证初始化
+                # _init_kernel 保证初始化，显式检查确保安全
+                if self._gpu_kernel is None:
+                    raise RuntimeError("GPU kernel not initialized after _init_kernel")
 
                 # 6. 初始化内存池（含预分配）
                 self._init_memory_pool(batch_size)
@@ -170,12 +172,13 @@ class GPUDeviceManager:
                 self._apply_vendor_optimizations()
 
                 # 10. 记录初始化完成
-                device_info = self._gpu_device.get_device_info()
+                device = self._require_device()
+                device_info = device.get_device_info()
                 _name = device_info.get("name", "Unknown")
                 _vendor = device_info.get("vendor", "Unknown")
                 _wgs = getattr(self._gpu_kernel, "_work_group_size", "N/A")
                 self.logger.info(
-                    "GPU 设备初始化成功: %s (厂商: %s, batch_size: %d, " "work_group_size: %s)",
+                    "GPU 设备初始化成功: %s (厂商: %s, batch_size: %d, work_group_size: %s)",
                     _name,
                     _vendor,
                     batch_size,
@@ -198,8 +201,7 @@ class GPUDeviceManager:
                     e,
                 )
                 raise RuntimeError(
-                    "GPU初始化失败: %s (GPU 引擎仅支持 P2PKH 地址格式, "
-                    "其他格式请使用 CPU 模式)" % e
+                    f"GPU初始化失败: {e} (GPU 引擎仅支持 P2PKH 地址格式, 其他格式请使用 CPU 模式)"
                 ) from e
             except ValueError as e:
                 # 使用ExceptionHandler记录详细错误
@@ -213,8 +215,7 @@ class GPUDeviceManager:
                     e,
                 )
                 raise RuntimeError(
-                    "GPU初始化失败: %s。请检查GPU驱动和OpenCL环境, "
-                    "或使用CPU引擎作为备选方案。" % e
+                    f"GPU初始化失败: {e}。请检查GPU驱动和OpenCL环境, 或使用CPU引擎作为备选方案。"
                 ) from e
             except RuntimeError as e:
                 # 使用ExceptionHandler记录详细错误
@@ -228,8 +229,7 @@ class GPUDeviceManager:
                     e,
                 )
                 raise RuntimeError(
-                    "GPU初始化失败: %s。请检查GPU驱动和OpenCL环境, "
-                    "或使用CPU引擎作为备选方案。" % e
+                    f"GPU初始化失败: {e}。请检查GPU驱动和OpenCL环境, 或使用CPU引擎作为备选方案。"
                 ) from e
 
         return self
@@ -286,7 +286,7 @@ class GPUDeviceManager:
                             gpu_cfg = cfg.get("gpu", {})
                             if "async_execution" in gpu_cfg:
                                 enable_async = bool(gpu_cfg["async_execution"])
-                                config_source = "配置文件 %s" % cfg_file.name
+                                config_source = f"配置文件 {cfg_file.name}"
                                 self.logger.info(
                                     "✅ 从%s读取异步设置: %s (优先级2)",
                                     config_source,
@@ -312,7 +312,7 @@ class GPUDeviceManager:
                 "GPU异步执行未启用 (来源: %s) - 使用同步模式",
                 config_source,
             )
-            self.logger.info("提示: 在配置文件中设置 'gpu.async_execution': true " "以启用异步优化")
+            self.logger.info("提示: 在配置文件中设置 'gpu.async_execution': true 以启用异步优化")
 
         return enable_async
 
@@ -356,9 +356,8 @@ class GPUDeviceManager:
 
     def _calculate_optimal_batch_size(self) -> int:
         """计算最优batch_size"""
-        self._require_device()
-        assert self._gpu_device is not None  # _require_device ensures non-None
-        device_info: dict[str, Any] = self._gpu_device.get_device_info()
+        device = self._require_device()
+        device_info: dict[str, Any] = device.get_device_info()
         device_name = device_info.get("name", "")
         vendor = device_info.get("vendor_identifier", "unknown")
 
