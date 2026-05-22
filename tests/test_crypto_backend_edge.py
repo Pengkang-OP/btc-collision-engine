@@ -77,9 +77,9 @@ class TestPurePythonConstantTime(unittest.TestCase):
         self.assertTrue(self.backend.is_constant_time())
 
     def test_is_constant_time_false(self):
-        """use_const_time=False → line 137"""
+        """v4.2.2后始终为 True（所有路径使用恒定时间实现）"""
         backend = PurePythonBackend(use_const_time=False)
-        self.assertFalse(backend.is_constant_time())
+        self.assertTrue(backend.is_constant_time())
 
 
 # ===========================================================================
