@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 """
-加密后端抽象层
+Cryptographic backend abstraction layer.
 
-提供统一的椭圆曲线运算接口，支持多种后端实现：
-- 纯Python实现（默认）
-- OpenSSL（通过cryptography库）
-- coincurve（libsecp256k1绑定）
-- ecdsa库
+Provides unified elliptic curve operation interface with support for
+multiple backend implementations:
+- Pure Python implementation (default)
+- OpenSSL (via cryptography library)
+- coincurve (libsecp256k1 binding)
+- ecdsa library
 
-使用策略模式允许运行时切换后端。
+Uses strategy pattern to allow runtime backend switching.
 
-线程安全说明:
-- CryptoBackendManager 使用 RLock 保护全局状态
-- 后端切换操作是线程安全的
-- 加密操作本身在锁外执行，避免性能瓶颈
+Thread Safety:
+- CryptoBackendManager uses RLock to protect global state
+- Backend switching operations are thread-safe
+- Cryptographic operations are executed outside the lock to avoid
+  performance bottlenecks
 """
 
 import logging
@@ -23,81 +25,86 @@ from abc import ABC, abstractmethod
 from enum import Enum, auto
 from typing import Any, cast
 
-# 导入日志配置
+# Import logging configuration
 from ..utils import get_configured_logger
 
-# 注意：不在模块级别调用init_logging()，由CLI入口统一初始化
-# init_logging() # ← 已移除，避免重复初始化
+# Note: do not call init_logging() at module level, initialized
+# uniformly by CLI entry point
+# init_logging()  # removed to avoid duplicate initialization
 
-# 获取模块日志记录器
+# Get module logger
 logger = get_configured_logger("CryptoBackend")
 
 
 class BackendType(Enum):
-    """加密后端类型"""
+    """Cryptographic backend types"""
 
-    PURE_PYTHON = auto()  # 纯Python实现
+    PURE_PYTHON = auto()  # Pure Python implementation
     OPENSSL = auto()  # OpenSSL (cryptography)
     COINCURVE = auto()  # coincurve (libsecp256k1)
-    ECDSA = auto()  # ecdsa库
+    ECDSA = auto()  # ecdsa library
 
 
 class CryptoBackend(ABC):
     """
-    加密后端抽象基类
+    Abstract base class for cryptographic backends.
 
-    定义椭圆曲线运算的统一接口。
+    Defines unified interface for elliptic curve operations.
     """
 
     @property
     @abstractmethod
     def name(self) -> str:
-        """后端名称"""
+        """Backend name"""
 
     @property
     @abstractmethod
     def is_available(self) -> bool:
-        """检查后端是否可用"""
+        """Check if backend is available"""
 
     @abstractmethod
-    def generate_public_key(self, private_key: bytes, compressed: bool = True) -> bytes:
+    def generate_public_key(
+        self, private_key: bytes, compressed: bool = True
+    ) -> bytes:
         """
-        从私钥生成公钥
+        Generate public key from private key.
 
-        参数:
-            private_key: 32字节私钥
-            compressed: 是否使用压缩格式
+        Args:
+            private_key: 32-byte private key
+            compressed: Whether to use compressed format
 
-        返回:
-            公钥字节串
+        Returns:
+            Public key bytes
         """
 
     @abstractmethod
-    def scalar_multiply(self, k: int, point_x: int, point_y: int) -> tuple[int, int]:
+    def scalar_multiply(
+        self, k: int, point_x: int, point_y: int
+    ) -> tuple[int, int]:
         """
-        椭圆曲线标量乘法
+        Elliptic curve scalar multiplication.
 
-        参数:
-            k: 标量
-            point_x: 点的x坐标
-            point_y: 点的y坐标
+        Args:
+            k: Scalar multiplier
+            point_x: X coordinate of point
+            point_y: Y coordinate of point
 
-        返回:
-            (rx, ry) 结果点坐标
+        Returns:
+            (rx, ry) Result point coordinates
         """
 
     @abstractmethod
     def is_constant_time(self) -> bool:
         """
-        检查此后端是否使用恒定时间算法
+        Check if this backend uses constant-time algorithms.
 
-        返回:
-            True表示使用恒定时间算法
+        Returns:
+            True if constant-time algorithms are used
         """
 
 
 class PurePythonBackend(CryptoBackend):
-    """纯Python后端 - 使用现有的secp256k1.py实现"""
+    """Pure Python backend - uses existing secp256k1.py implementation"""
 
     def __init__(self, use_const_time: bool = False) -> None:
         from .secp256k1 import ECPoint, EllipticCurve, Secp256k1
@@ -114,28 +121,35 @@ class PurePythonBackend(CryptoBackend):
     def is_available(self) -> bool:
         return True
 
-    def generate_public_key(self, private_key: bytes, compressed: bool = True) -> bytes:
-        # v4.2.2 R4: generate_public_key 内部已使用 scalar_multiply_const_time,
-        # 两分支等效，简化为单路径
+    def generate_public_key(
+        self, private_key: bytes, compressed: bool = True
+    ) -> bytes:
+        # v4.2.2 R4: generate_public_key already uses
+        # scalar_multiply_const_time internally,
+        # both branches are equivalent, simplified to single path
         return self.ec.generate_public_key(private_key, compressed)
 
-    def scalar_multiply(self, k: int, point_x: int, point_y: int) -> tuple[int, int]:
+    def scalar_multiply(
+        self, k: int, point_x: int, point_y: int
+    ) -> tuple[int, int]:
         from .secp256k1 import ECPoint
 
         point = ECPoint(point_x, point_y)
 
-        # v4.2.2 C1-regression修复: 始终使用恒定时间实现
+        # v4.2.2 C1-regression fix: always use constant-time
+        # implementation
         result = self.ec.scalar_multiply_const_time(k, point)
 
         return cast(tuple[int, int], (result.x, result.y))
 
     def is_constant_time(self) -> bool:
-        # v4.2.2 R5: 所有标量乘法已统一使用恒定时间实现
+        # v4.2.2 R5: all scalar multiplications now use
+        # constant-time implementation
         return True
 
 
 class OpenSSLBackend(CryptoBackend):
-    """OpenSSL后端 - 使用cryptography库"""
+    """OpenSSL backend - uses cryptography library"""
 
     def __init__(self) -> None:
         self._available = self._check_availability()
@@ -143,14 +157,12 @@ class OpenSSLBackend(CryptoBackend):
             from cryptography.hazmat.backends import default_backend
             from cryptography.hazmat.primitives.asymmetric import ec
 
-            self._ec = ec
             self._backend = default_backend()
             self._SECP256K1 = ec.SECP256K1()
 
     def _check_availability(self) -> bool:
         try:
             from cryptography.hazmat.primitives.asymmetric import ec  # noqa: F401
-
             return True
         except ImportError:
             return False
@@ -163,90 +175,125 @@ class OpenSSLBackend(CryptoBackend):
     def is_available(self) -> bool:
         return self._available
 
-    def generate_public_key(self, private_key: bytes, compressed: bool = True) -> bytes:
+    def generate_public_key(
+        self, private_key: bytes, compressed: bool = True
+    ) -> bytes:
         if not self._available:
             raise RuntimeError("OpenSSL backend not available")
 
         from cryptography.hazmat.primitives.asymmetric import ec
 
-        # 使用私钥创建椭圆曲线私钥对象
+        # Create elliptic curve private key object from private key
+        # bytes
         private_value = int.from_bytes(private_key, "big")
-        private_key_obj = ec.derive_private_key(private_value, self._SECP256K1, self._backend)
+        private_key_obj = ec.derive_private_key(
+            private_value, self._SECP256K1, self._backend
+        )
 
-        # 获取公钥
+        # Get public key
         public_key = private_key_obj.public_key()
         public_numbers = public_key.public_numbers()
 
-        # 转换为字节格式
+        # Convert to byte format
         x = public_numbers.x
         y = public_numbers.y
 
         x_bytes = x.to_bytes(32, "big")
 
         if compressed:
-            # 压缩格式: 0x02 (y为偶数) 或 0x03 (y为奇数) + x坐标
+            # Compressed format: 0x02 (y even) or 0x03 (y odd)
+            # + x coordinate
             prefix = b"\x02" if (y % 2 == 0) else b"\x03"
             return prefix + x_bytes
         else:
-            # 非压缩格式: 0x04 + x坐标 + y坐标
+            # Uncompressed format: 0x04 + x coordinate + y coordinate
             y_bytes = y.to_bytes(32, "big")
             return b"\x04" + x_bytes + y_bytes
 
-    def scalar_multiply(self, k: int, point_x: int, point_y: int) -> tuple[int, int]:
+    def scalar_multiply(
+        self, k: int, point_x: int, point_y: int
+    ) -> tuple[int, int]:
         """
-        注意: cryptography库不直接暴露点乘运算，
-        我们通过创建临时私钥来实现。
+        Note: cryptography library does not directly expose point
+        multiplication, we implement it by creating temporary
+        private keys.
 
-        C-2修复: 当OpenSSL不可用时拒绝回退到非恒定时间实现。
-        抛出异常而不是回退到不安全的实现。
+        C-2 fix: refuse to fall back to non-constant-time
+        implementation when OpenSSL is unavailable.
+        Raise exception instead of falling back to insecure
+        implementation.
 
-        侧信道安全说明:
-        1. 非恒定时间算法可能泄露私钥信息
-        2. 攻击者可通过分析执行时间推断私钥位
-        3. 恒定时间实现确保执行时间与输入无关
-        4. 对于安全敏感场景，强制要求恒定时间实现
+        Side-channel security notes:
+        1. Non-constant-time algorithms may leak private key
+           information
+        2. Attackers can infer private key bits by analyzing
+           execution time
+        3. Constant-time implementation ensures execution time
+           is independent of input
+        4. For security-sensitive scenarios, constant-time
+           implementation is mandatory
 
-        推荐的后端选择:
-        - CoincurveBackend: libsecp256k1，完全恒定时间（推荐）
-        - OpenSSLBackend: generate_public_key 是恒定的，但 scalar_multiply 不是
-        - PurePythonBackend: 可选恒定时间模式，但性能较低
+        Recommended backend selection:
+        - CoincurveBackend: libsecp256k1, fully constant-time
+          (recommended)
+        - OpenSSLBackend: generate_public_key is constant-time,
+          but scalar_multiply is not
+        - PurePythonBackend: optional constant-time mode, but
+          lower performance
         """
         if not self._available:
-            logger.critical("OpenSSL后端不可用，无法执行标量乘法")
-            raise RuntimeError("OpenSSL后端不可用，无法执行标量乘法")
+            msg = "OpenSSL backend not available"
+            logger.critical(f"{msg}, cannot perform scalar multiplication")
+            raise RuntimeError(f"{msg}, cannot perform scalar multiplication")
 
-        # OpenSSL后端不支持标量乘法，回退到纯Python恒定时间实现
+        # OpenSSL backend does not support scalar multiplication,
+        # fall back to pure Python constant-time implementation
+        logger.warning(
+            "OpenSSL backend does not support scalar multiplication"
+            ", falling back to pure Python constant-time implementation"
+        )
         from .secp256k1 import ECPoint, EllipticCurve
 
         ec_impl = EllipticCurve()
-        # v4.2.2 C1-regression修复: 使用恒定时间实现
-        result = ec_impl.scalar_multiply_const_time(k, ECPoint(point_x, point_y))
+        # v4.2.2 C1-regression fix: use constant-time
+        # implementation
+        point = ECPoint(point_x, point_y)
+        result = ec_impl.scalar_multiply_const_time(k, point)
 
         return cast(tuple[int, int], (result.x, result.y))
 
     def is_constant_time(self) -> bool:
-        # v4.2.2 R9: 所有代码路径均为恒定时间实现
+        # v4.2.2 R9: all code paths use constant-time
+        # implementation
         #
-        # ⚠️ 重要说明:
-        # - generate_public_key() IS constant-time (使用 OpenSSL ec.derive_private_key)
-        # - scalar_multiply() 现在调用 scalar_multiply_const_time (Montgomery Ladder),
-        #   算法层面是恒定时间的，但 Python 解释器层面的分支预测和缓存效应
-        #   可能导致实际执行时间的微小变化
+        # Important notes:
+        # - generate_public_key() IS constant-time (uses OpenSSL
+        #   ec.derive_private_key)
+        # - scalar_multiply() now calls
+        #   scalar_multiply_const_time (Montgomery Ladder),
+        #   which is algorithmically constant-time, but Python
+        #   interpreter level branch prediction and cache effects
+        #   may cause minor variations in actual execution time
         #
-        # 由于 is_constant_time() 应反映整个后端的能力，保守地返回 False。
+        # Since is_constant_time() should reflect the capability
+        # of the entire backend, conservatively return False.
         #
-        # 对于本项目的主要用例（通过 generate_public_key 进行碰撞检测），
-        # 实际执行路径是恒定时间的。本标志保守地返回 False，
-        # 因为 Python 解释器层面难以保证绝对恒定时间。
+        # For the main use case of this project (collision
+        # detection via generate_public_key), the actual execution
+        # path is constant-time. This flag conservatively returns
+        # False because it is difficult to guarantee absolute
+        # constant-time at the Python interpreter level.
         #
-        # 建议:
-        # 1. 对于安全敏感场景，使用 CoincurveBackend（libsecp256k1，完全恒定时间）
-        # 2. 对于性能优先场景，可使用 OpenSSLBackend（generate_public_key 是恒定的）
+        # Recommendations:
+        # 1. For security-sensitive scenarios, use
+        #    CoincurveBackend (libsecp256k1, fully constant-time)
+        # 2. For performance-prioritized scenarios, OpenSSLBackend
+        #    can be used (generate_public_key is constant-time)
         return False
 
 
 class CoincurveBackend(CryptoBackend):
-    """coincurve后端 - 使用libsecp256k1"""
+    """coincurve backend - uses libsecp256k1"""
 
     def __init__(self) -> None:
         self._available = self._check_availability()
@@ -254,7 +301,6 @@ class CoincurveBackend(CryptoBackend):
     def _check_availability(self) -> bool:
         try:
             import coincurve  # noqa: F401
-
             return True
         except ImportError:
             return False
@@ -267,72 +313,93 @@ class CoincurveBackend(CryptoBackend):
     def is_available(self) -> bool:
         return self._available
 
-    def generate_public_key(self, private_key: bytes, compressed: bool = True) -> bytes:
+    def generate_public_key(
+        self, private_key: bytes, compressed: bool = True
+    ) -> bytes:
         if not self._available:
             raise RuntimeError("coincurve backend not available")
 
         import coincurve
 
-        # 使用coincurve生成公钥
+        # Generate public key using coincurve
         private_key_obj = coincurve.PrivateKey(private_key)
         return private_key_obj.public_key.format(compressed=compressed)
 
-    def scalar_multiply(self, k: int, point_x: int, point_y: int) -> tuple[int, int]:
+    def scalar_multiply(
+        self, k: int, point_x: int, point_y: int
+    ) -> tuple[int, int]:
         """
-        coincurve标量乘法
+        coincurve scalar multiplication.
 
-        coincurve提供了高效的标量乘法实现。
+        coincurve provides efficient scalar multiplication
+        implementation.
         """
         if not self._available:
             raise RuntimeError("coincurve backend not available")
 
         import coincurve
 
-        # 创建公钥对象
-        # 注意: coincurve的API可能需要调整
-        # 这里使用公钥乘法的概念
-        pubkey_bytes = b"\x04" + point_x.to_bytes(32, "big") + point_y.to_bytes(32, "big")
+        # Create public key object
+        # Note: coincurve's API may need adjustment
+        # Using public key multiplication concept here
+        pubkey_bytes = (
+            b"\x04"
+            + point_x.to_bytes(32, "big")
+            + point_y.to_bytes(32, "big")
+        )
 
         try:
             pubkey = coincurve.PublicKey(pubkey_bytes)
-            # coincurve.PublicKey.multiply 返回 PublicKey 对象
+            # coincurve.PublicKey.multiply returns PublicKey object
             result = pubkey.multiply(k.to_bytes(32, "big"))
 
-            # 将结果格式化为非压缩公钥字节串 (0x04 + x + y)
+            # Format result as uncompressed public key bytes
+            # (0x04 + x + y)
             result_bytes = (
                 result.format(compressed=False)
                 if hasattr(result, "format")
-                else bytes(result)  # type: ignore[call-overload]
+                else bytes(result)
             )
             if result_bytes[0] == 0x04 and len(result_bytes) >= 65:
                 rx = int.from_bytes(result_bytes[1:33], "big")
                 ry = int.from_bytes(result_bytes[33:65], "big")
                 return rx, ry
             else:
-                # coincurve 返回了意外格式，回退到纯Python实现
+                # coincurve returned unexpected format, fall back to
+                # pure Python implementation
                 logger.warning(
-                    f"coincurve返回意外格式: prefix=0x{result_bytes[0]:02x}, len={len(result_bytes)}，"
-                    f"回退到纯Python恒定时间实现"
+                    f"coincurve returned unexpected format: "
+                    f"prefix=0x{result_bytes[0]:02x}, "
+                    f"len={len(result_bytes)},"
+                    f" falling back to pure Python constant-time "
+                    f"implementation"
                 )
         except (AttributeError, TypeError, AssertionError) as e:
-            # 如果multiply不可用或返回类型不匹配，使用纯Python回退
-            logger.warning(f"coincurve标量乘法失败({type(e).__name__})，回退到纯Python恒定时间实现")
+            # If multiply is not available or return type doesn't
+            # match, use pure Python fallback
+            logger.warning(
+                f"coincurve scalar multiplication failed "
+                f"({type(e).__name__}), falling back to pure "
+                f"Python constant-time implementation"
+            )
 
-        # 回退到纯Python恒定时间实现
+        # Fall back to pure Python constant-time implementation
         from .secp256k1 import ECPoint, EllipticCurve
 
         ec_impl = EllipticCurve()
-        # v4.2.2 C1-regression修复: 使用恒定时间实现
-        ec_result = ec_impl.scalar_multiply_const_time(k, ECPoint(point_x, point_y))
+        # v4.2.2 C1-regression fix: use constant-time
+        # implementation
+        point = ECPoint(point_x, point_y)
+        ec_result = ec_impl.scalar_multiply_const_time(k, point)
         return cast(tuple[int, int], (ec_result.x, ec_result.y))
 
     def is_constant_time(self) -> bool:
-        # libsecp256k1使用恒定时间算法
+        # libsecp256k1 uses constant-time algorithm
         return True
 
 
 class ECDSABackend(CryptoBackend):
-    """ecdsa库后端"""
+    """ecdsa library backend"""
 
     def __init__(self) -> None:
         self._available = self._check_availability()
@@ -346,7 +413,6 @@ class ECDSABackend(CryptoBackend):
     def _check_availability(self) -> bool:
         try:
             import ecdsa  # noqa: F401
-
             return True
         except ImportError:
             return False
@@ -359,12 +425,16 @@ class ECDSABackend(CryptoBackend):
     def is_available(self) -> bool:
         return self._available
 
-    def generate_public_key(self, private_key: bytes, compressed: bool = True) -> bytes:
+    def generate_public_key(
+        self, private_key: bytes, compressed: bool = True
+    ) -> bytes:
         if not self._available:
             raise RuntimeError("ecdsa backend not available")
 
-        # 使用ecdsa生成公钥
-        signing_key = self._SigningKey.from_string(private_key, curve=self._SECP256k1)
+        # Generate public key using ecdsa
+        signing_key = self._SigningKey.from_string(
+            private_key, curve=self._SECP256k1
+        )
         verifying_key = signing_key.get_verifying_key()
 
         if compressed:
@@ -372,39 +442,48 @@ class ECDSABackend(CryptoBackend):
         else:
             return cast(bytes, b"\x04" + verifying_key.to_string())
 
-    def scalar_multiply(self, k: int, point_x: int, point_y: int) -> tuple[int, int]:
+    def scalar_multiply(
+        self, k: int, point_x: int, point_y: int
+    ) -> tuple[int, int]:
         """
-        ecdsa标量乘法
+        ecdsa scalar multiplication.
 
-        ecdsa库不直接暴露点乘运算，使用纯Python回退。
+        ecdsa library does not directly expose point
+        multiplication, uses pure Python fallback.
         """
         from .secp256k1 import ECPoint, EllipticCurve
 
         ec_impl = EllipticCurve()
-        # v4.2.2 C1-regression修复: 使用恒定时间实现
-        result = ec_impl.scalar_multiply_const_time(k, ECPoint(point_x, point_y))
+        # v4.2.2 C1-regression fix: use constant-time
+        # implementation
+        point = ECPoint(point_x, point_y)
+        result = ec_impl.scalar_multiply_const_time(k, point)
         return cast(tuple[int, int], (result.x, result.y))
 
     def is_constant_time(self) -> bool:
-        # ecdsa库可能不使用恒定时间算法
+        # ecdsa library may not use constant-time algorithm
         return False
 
 
 class CryptoBackendManager:
     """
-    加密后端管理器
+    Cryptographic backend manager.
 
-    管理所有可用的加密后端，提供统一的访问接口。
-    支持运行时切换后端。
+    Manages all available cryptographic backends and provides
+    unified access interface.
+    Supports runtime backend switching.
 
-    线程安全:
-    - 使用 RLock 保护所有状态变更
-    - 单例模式在模块导入时初始化，天然线程安全
-    - 加密操作在锁外执行，避免性能瓶颈
+    Thread Safety:
+    - Uses RLock to protect all state changes
+    - Singleton pattern initialized at module import, naturally
+      thread-safe
+    - Cryptographic operations are executed outside the lock
+      to avoid performance bottlenecks
     """
 
     _instance = None
-    _lock = threading.RLock()  # 类级锁，保护单例创建
+    _lock = threading.RLock()  # Class-level lock, protects
+    # singleton creation
     _backends: dict[Any, Any] = {}
     _current_backend = None
     _default_backend_type = BackendType.PURE_PYTHON
@@ -412,35 +491,43 @@ class CryptoBackendManager:
     def __new__(cls) -> "CryptoBackendManager":
         if cls._instance is None:
             with cls._lock:
-                # 双重检查锁定模式
+                # Double-checked locking pattern
                 if cls._instance is None:
                     cls._instance = super().__new__(cls)
                     cls._instance._init_backends()
         return cls._instance
 
     def _init_backends(self) -> None:
-        """初始化所有后端"""
-        # 实例级锁，保护运行时状态
+        """Initialize all backends"""
+        # Instance-level lock, protects runtime state
         self._instance_lock = threading.RLock()
 
-        logger.debug("初始化加密后端...")
+        logger.debug("Initializing cryptographic backends...")
 
-        # 按优先级顺序初始化
+        # Initialize in priority order
         self._backends[BackendType.PURE_PYTHON] = PurePythonBackend()
         self._backends[BackendType.OPENSSL] = OpenSSLBackend()
         self._backends[BackendType.COINCURVE] = CoincurveBackend()
         self._backends[BackendType.ECDSA] = ECDSABackend()
 
-        # 设置默认后端
+        # Set default backend
         self._select_best_backend()
 
-        available = [bt.name for bt, backend in self._backends.items() if backend.is_available]
+        available = [
+            bt.name for bt, backend in self._backends.items()
+            if backend.is_available
+        ]
         assert self._current_backend is not None
-        logger.info(f"加密后端初始化完成: 可用={available}, 当前={self._current_backend.name}")
+        logger.info(
+            f"Crypto backend initialization complete: "
+            f"available={available}, "
+            f"current={self._current_backend.name}"
+        )
 
     def _select_best_backend(self) -> None:
-        """选择最佳可用后端（内部方法，调用者需持有锁）"""
-        # 优先级: coincurve > OpenSSL > ecdsa > Pure Python
+        """Select best available backend (internal method, caller must
+        hold lock)"""
+        # Priority: coincurve > OpenSSL > ecdsa > Pure Python
         priority_order = [
             BackendType.COINCURVE,
             BackendType.OPENSSL,
@@ -458,18 +545,20 @@ class CryptoBackendManager:
 
     def reset_to_best_backend(self) -> None:
         """
-        重置为最佳可用后端（线程安全）
+        Reset to best available backend (thread-safe).
 
-        公开的线程安全方法，替代直接调用 _select_best_backend
+        Public thread-safe method, replaces direct call to
+        _select_best_backend.
         """
         self._select_best_backend()
 
     @property
     def current_backend(self) -> CryptoBackend:
         """
-        获取当前后端（线程安全）
+        Get current backend (thread-safe).
 
-        在锁内获取后端引用，确保获取的是一致的实例
+        Gets backend reference inside lock to ensure consistent
+        instance.
         """
         with self._instance_lock:
             backend = self._current_backend
@@ -477,145 +566,181 @@ class CryptoBackendManager:
             raise RuntimeError("No crypto backend available")
         return cast(CryptoBackend, backend)
 
-    def set_backend(self, backend_type: BackendType, **kwargs) -> bool:
+    def set_backend(
+        self, backend_type: BackendType, **kwargs
+    ) -> bool:
         """
-        设置当前后端（线程安全）
+        Set current backend (thread-safe).
 
-        所有状态更新在锁内原子完成，避免竞态条件。
+        All state updates are atomically completed inside the
+        lock to avoid race conditions.
 
-        参数:
-            backend_type: 后端类型
-            **kwargs: 后端特定的参数
+        Args:
+            backend_type: Backend type
+            **kwargs: Backend-specific parameters
 
-        返回:
-            设置成功返回True
+        Returns:
+            True if setting succeeded
         """
-        logger.debug(f"切换加密后端: {backend_type.name}, 参数={kwargs}")
+        logger.debug(
+            f"Switching crypto backend: {backend_type.name}, "
+            f"params={kwargs}"
+        )
 
         with self._instance_lock:
             if backend_type == BackendType.PURE_PYTHON:
                 use_const_time = kwargs.get("use_const_time", False)
                 existing = self._backends.get(backend_type)
-                if existing is not None and isinstance(existing, PurePythonBackend):
+                if existing is not None and isinstance(
+                    existing, PurePythonBackend
+                ):
                     existing._use_const_time = use_const_time
                 else:
-                    self._backends[backend_type] = PurePythonBackend(use_const_time)
+                    self._backends[backend_type] = (
+                        PurePythonBackend(use_const_time)
+                    )
 
             backend = self._backends.get(backend_type)
             if backend is None:
-                logger.error(f"未知的后端类型: {backend_type}")
+                logger.error(f"Unknown backend type: {backend_type}")
                 raise ValueError(f"Unknown backend type: {backend_type}")
 
             if not backend.is_available:
-                logger.error(f"后端不可用: {backend.name}")
-                raise RuntimeError(f"Backend {backend.name} is not available")
+                logger.error(f"Backend not available: {backend.name}")
+                raise RuntimeError(
+                    f"Backend {backend.name} is not available"
+                )
 
-            old_backend = self._current_backend.name if self._current_backend else "None"
+            old_backend = (
+                self._current_backend.name
+                if self._current_backend
+                else "None"
+            )
             self._current_backend = backend
             self._default_backend_type = backend_type
 
-        logger.info(f"加密后端已切换: {old_backend} -> {backend.name}")
+        logger.info(
+            f"Crypto backend switched: {old_backend} -> "
+            f"{backend.name}"
+        )
         return True
 
     def get_available_backends(self) -> list[tuple[BackendType, str]]:
-        """获取所有可用后端列表（线程安全）"""
+        """Get list of all available backends (thread-safe)"""
         with self._instance_lock:
             backends_copy = dict(self._backends)
-        return [(bt, b.name) for bt, b in backends_copy.items() if b.is_available]
+        return [
+            (bt, b.name)
+            for bt, b in backends_copy.items()
+            if b.is_available
+        ]
 
-    def generate_public_key(self, private_key: bytes, compressed: bool = True) -> bytes:
+    def generate_public_key(
+        self, private_key: bytes, compressed: bool = True
+    ) -> bytes:
         """
-        使用当前后端生成公钥
+        Generate public key using current backend.
 
-        注意: 加密操作在锁外执行，避免性能瓶颈
+        Note: cryptographic operations are executed outside the
+        lock to avoid performance bottlenecks.
 
-        参数:
-            private_key: 32字节私钥
-            compressed: 是否使用压缩格式
+        Args:
+            private_key: 32-byte private key
+            compressed: Whether to use compressed format
 
-        返回:
-            公钥字节串
+        Returns:
+            Public key bytes
         """
-        backend = self.current_backend  # 在锁内获取引用
+        backend = self.current_backend  # Get reference inside lock
 
-        # 性能监控（仅在DEBUG级别）
+        # Performance monitoring (only at DEBUG level)
         if logger.isEnabledFor(logging.DEBUG):
             start_time = time.perf_counter()
             result = backend.generate_public_key(private_key, compressed)
             elapsed_ms = (time.perf_counter() - start_time) * 1000
-            logger.debug(f"公钥生成: {backend.name}, 耗时={elapsed_ms:.3f}ms")
+            logger.debug(
+                f"Public key generation: {backend.name}, "
+                f"elapsed={elapsed_ms:.3f}ms"
+            )
             return result
 
         return backend.generate_public_key(private_key, compressed)
 
     def is_constant_time(self) -> bool:
-        """检查当前后端是否使用恒定时间算法"""
-        backend = self.current_backend  # 在锁内获取引用
+        """Check if current backend uses constant-time algorithm"""
+        backend = self.current_backend  # Get reference inside lock
         return backend.is_constant_time()
 
 
-# 全局后端管理器实例
+# Global backend manager instance
 crypto_manager = CryptoBackendManager()
 
 
 def get_crypto_backend() -> CryptoBackendManager:
     """
-    获取加密后端管理器实例
+    Get crypto backend manager instance.
 
-    返回:
-        CryptoBackendManager实例
+    Returns:
+        CryptoBackendManager instance
     """
     return crypto_manager
 
 
-# 便捷函数
-def generate_public_key(private_key: bytes, compressed: bool = True) -> bytes:
+# Convenience functions
+def generate_public_key(
+    private_key: bytes, compressed: bool = True
+) -> bytes:
     """
-    使用当前后端生成公钥
+    Generate public key using current backend.
 
-    参数:
-        private_key: 32字节私钥
-        compressed: 是否使用压缩格式
+    Args:
+        private_key: 32-byte private key
+        compressed: Whether to use compressed format
 
-    返回:
-        公钥字节串
+    Returns:
+        Public key bytes
     """
     return crypto_manager.generate_public_key(private_key, compressed)
 
 
-def set_crypto_backend(backend_type: BackendType, **kwargs) -> bool:
+def set_crypto_backend(
+    backend_type: BackendType, **kwargs
+) -> bool:
     """
-    设置加密后端
+    Set crypto backend.
 
-    参数:
-        backend_type: 后端类型
-        **kwargs: 后端特定参数
+    Args:
+        backend_type: Backend type
+        **kwargs: Backend-specific parameters
 
-    返回:
-        设置成功返回True
+    Returns:
+        True if setting succeeded
     """
     return crypto_manager.set_backend(backend_type, **kwargs)
 
 
 def get_available_backends() -> list[tuple[BackendType, str]]:
-    """获取所有可用后端"""
+    """Get all available backends"""
     return crypto_manager.get_available_backends()
 
 
 def is_secure_backend_available() -> bool:
     """
-    检查是否有安全的加密后端可用（生产环境必需）
+    Check if secure crypto backend is available (required for
+    production).
 
-    安全后端定义:
-    - CoincurveBackend (推荐): libsecp256k1，完全恒定时间
-    - OpenSSLBackend: generate_public_key 恒定时间
+    Secure backend definition:
+    - CoincurveBackend (recommended): libsecp256k1, fully
+      constant-time
+    - OpenSSLBackend: generate_public_key is constant-time
 
-    不安全后端:
-    - PurePythonBackend: 可选恒定时间模式，但性能较低
-    - ECDSABackend: 可能不使用恒定时间算法
+    Insecure backends:
+    - PurePythonBackend: optional constant-time mode, but lower
+      performance
+    - ECDSABackend: may not use constant-time algorithm
 
     Returns:
-        True 表示有安全后端可用
+        True if secure backend is available
     """
     backend = crypto_manager.current_backend
     if backend is None:
@@ -623,28 +748,28 @@ def is_secure_backend_available() -> bool:
 
     backend_name = backend.name.lower()
 
-    # Coincurve 最安全
+    # Coincurve is most secure
     if "coincurve" in backend_name or "libsecp256k1" in backend_name:
         return True
 
-    # OpenSSL 的 generate_public_key 是恒定时间的
+    # OpenSSL's generate_public_key is constant-time
     if "openssl" in backend_name:
         return True
 
-    # PurePython 需要检查是否启用恒定时间模式
+    # PurePython needs to check if constant-time mode is enabled
     if "pure python" in backend_name or "purepython" in backend_name:
         return backend.is_constant_time()
 
-    # 其他后端保守返回 False
+    # Other backends conservatively return False
     return False
 
 
 def get_backend_security_info() -> dict:
     """
-    获取当前后端的安全信息
+    Get current backend security information.
 
     Returns:
-        包含后端安全信息的字典
+        Dictionary containing backend security information
     """
     backend = crypto_manager.current_backend
     if backend is None:
@@ -657,54 +782,67 @@ def get_backend_security_info() -> dict:
     backend_name = backend.name.lower()
     is_constant_time = backend.is_constant_time()
 
-    # 判断安全级别
+    # Determine security level
     if "coincurve" in backend_name or "libsecp256k1" in backend_name:
-        security_level = "secure"  # 完全安全
+        security_level = "secure"  # Fully secure
     elif "openssl" in backend_name:
         security_level = "secure" if is_constant_time else "partial"
     elif is_constant_time:
-        security_level = "partial"  # 部分安全
+        security_level = "partial"  # Partially secure
     else:
-        security_level = "insecure"  # 不安全
+        security_level = "insecure"  # Insecure
 
     return {
         "available": True,
         "backend": backend.name,
         "security_level": security_level,
         "is_constant_time": is_constant_time,
-        "recommendation": _get_security_recommendation(security_level),
+        "recommendation": _get_security_recommendation(
+            security_level
+        ),
     }
 
 
 def _get_security_recommendation(security_level: str) -> str:
-    """获取安全建议"""
+    """Get security recommendation"""
     recommendations = {
-        "secure": "当前后端安全，适合生产环境使用",
-        "partial": "当前后端部分安全，建议安装 coincurve 库以获得更好的安全性",
-        "insecure": "当前后端不安全，不建议在生产环境中使用",
+        "secure": (
+            "Current backend is secure, suitable for "
+            "production use"
+        ),
+        "partial": (
+            "Current backend is partially secure, "
+            "recommend installing coincurve library for "
+            "better security"
+        ),
+        "insecure": (
+            "Current backend is insecure, not "
+            "recommended for production use"
+        ),
     }
-    return recommendations.get(security_level, "未知安全级别")
+    return recommendations.get(security_level, "Unknown security level")
 
 
 def verify_production_ready() -> tuple[bool, str]:
     """
-    验证系统是否满足生产环境安全要求
+    Verify system meets production environment security
+    requirements.
 
     Returns:
-        (is_ready, message) 元组
-        is_ready: True 表示满足生产环境要求
-        message: 状态消息
+        (is_ready, message) tuple
+        is_ready: True if production requirements are met
+        message: Status message
     """
     if is_secure_backend_available():
-        return True, "✅ 生产环境安全检查通过"
+        return True, "Production environment security check passed"
 
     backend_info = get_backend_security_info()
     return False, (
-        f"⚠️  生产环境安全检查未通过\n"
-        f"   当前后端: {backend_info.get('backend', 'unknown')}\n"
-        f"   安全级别: {backend_info.get('security_level', 'unknown')}\n"
-        f"   {backend_info.get('recommendation', '')}\n\n"
-        f"💡 建议:\n"
-        f"   pip install coincurve  # 推荐，最安全\n"
-        f"   pip install cryptography  # 备选，generate_public_key 恒定时间\n"
+        f"Production environment security check failed\n"
+        f"  Current backend: {backend_info.get('backend', 'unknown')}\n"
+        f"  Security level: {backend_info.get('security_level', 'unknown')}\n"
+        f"  {backend_info.get('recommendation', '')}\n\n"
+        f"Suggestions:\n"
+        f"  pip install coincurve  # Recommended, most secure\n"
+        f"  pip install cryptography  # Alternative, generate_public_key is constant-time\n"
     )
