@@ -198,7 +198,9 @@ class CheckpointManager:
             win32security.SetFileSecurity(self.filepath, win32security.DACL_SECURITY_INFORMATION, handle)
             logger.debug("已设置Windows文件权限（仅当前用户可访问）")
         except Exception as e:
-            logger.debug(f"pywin32权限设置失败: {e}，尝试使用icacls")
+            logger.warning(f"pywin32权限设置失败: {e}")
+            logger.warning("建议: 请安装 pywin32 以获得更可靠的权限管理: pip install pywin32")
+            logger.debug("尝试使用 icacls 命令作为回退方案")
             self._set_windows_acl_via_icacls()
 
     def _set_windows_acl_via_icacls(self) -> None:
