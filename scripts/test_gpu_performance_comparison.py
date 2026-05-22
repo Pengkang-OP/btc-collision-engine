@@ -18,7 +18,7 @@ import time
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)
 
-from src.collision.gpu.engine import GPUCollisionEngine
+from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
 
 
 def test_config(config_name, batch_size, test_duration=30):

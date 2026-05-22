@@ -8,7 +8,7 @@ import sys
 
 sys.path.insert(0, ".")
 
-from src.gpu.auto_config import GPUAutoConfigurator
+from src.gpu.auto_config import GPUAutoConfigurator  # noqa: E402
 
 
 def test_memory_estimate(gpu_name, memory_gb, batch_size, expected_adjusted=None):

@@ -133,7 +133,7 @@ class TestRangeScanClosedLoop:
         engine._thread.join(timeout=30)
         engine.stop()
 
-        assert len(progress_events) >= 1, f"on_progress 应至少被调用一次，实际: {len(progress_events)}"
+        assert len(match_results) >= 1, f"on_match 应至少被调用一次，实际: {len(match_results)}"
 
     def test_lifecycle_complete_callback(self):
         """验证 on_complete 在 stop 后被调用"""

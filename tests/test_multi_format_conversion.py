@@ -8,10 +8,10 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-import secrets
+import secrets  # noqa: E402
 
-from src.core.address_generator import P2PKHAddressGenerator
-from src.core.bitcoin_key_validator import BitcoinKeyValidator
+from src.core.address_generator import P2PKHAddressGenerator  # noqa: E402
+from src.core.bitcoin_key_validator import BitcoinKeyValidator  # noqa: E402
 
 print("=" * 80)
 print("Bitcoin Multi-Format Address Conversion Test")
@@ -50,7 +50,7 @@ print("\n" + "=" * 80)
 print("[2] P2SH Address (Pay-to-Script-Hash)")
 print("-" * 80)
 
-from src.core.address_converter import AddressConverter
+from src.core.address_converter import AddressConverter  # noqa: E402
 
 try:
     converter = AddressConverter()

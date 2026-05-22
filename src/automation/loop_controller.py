@@ -9,15 +9,17 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-import threading
-from collections.abc import Callable
-from datetime import datetime
-from typing import Any
+import threading  # noqa: E402
+from collections.abc import Callable  # noqa: E402
+from datetime import datetime  # noqa: E402
+from typing import Any  # noqa: E402
 
-from .audit import AuditModule
-from .auto_test import AutoTestModule
-from .data_analysis import DataAnalysisModule
-from .models import AnalysisReport, AuditResult, LoopState, Severity, SystemStatus, TestSuiteResult
+from .audit import AuditModule  # noqa: E402
+from .auto_test import AutoTestModule  # noqa: E402
+from .data_analysis import DataAnalysisModule  # noqa: E402
+from .models import (  # noqa: E402
+    AnalysisReport, AuditResult, LoopState, Severity, SystemStatus, TestSuiteResult,
+)
 
 
 class LoopController:

@@ -8,7 +8,7 @@ import sys
 
 sys.path.insert(0, ".")
 
-from src.gpu.auto_config import GPUAutoConfigurator
+from src.gpu.auto_config import GPUAutoConfigurator  # noqa: E402
 
 print("=" * 80)
 print("  Intel Arc配置修复验证")

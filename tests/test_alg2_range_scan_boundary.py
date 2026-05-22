@@ -13,9 +13,9 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from unittest.mock import Mock
+from unittest.mock import Mock  # noqa: E402
 
-import pytest
+import pytest  # noqa: E402
 
 from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
 

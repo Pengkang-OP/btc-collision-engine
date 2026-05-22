@@ -20,7 +20,7 @@ from src.monitoring.monitoring_system import (  # noqa: E402
     MonitoringSystem,
     ReportGenerator,
 )
-from src.monitoring.monitoring_system import (
+from src.monitoring.monitoring_system import (  # noqa: E402
     MonitoringAlertAdapter as AlertSystem,
 )
 

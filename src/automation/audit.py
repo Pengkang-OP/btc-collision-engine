@@ -14,7 +14,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-from .models import (
+from .models import (  # noqa: E402
     AnalysisReport,
     AuditResult,
     AuditRule,

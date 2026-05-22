@@ -8,8 +8,8 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent  # 修复: 应该是parent.parent,因为tests在根目录下
 sys.path.insert(0, str(project_root))
 
-from src.collision.gpu.engine import GPUCollisionEngine
-from src.monitoring.monitoring_system import ReportGenerator
+from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
+from src.monitoring.monitoring_system import ReportGenerator  # noqa: E402
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -24,7 +24,7 @@ def test_p0_gpu_initialization_error_handling():
 
     try:
         # 尝试创建GPU引擎(如果没有GPU会失败)
-        engine = GPUCollisionEngine(
+        GPUCollisionEngine(  # noqa: F841
             targets={"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"},
             device_index=999,  # 不存在的设备
         )

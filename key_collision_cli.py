@@ -15,8 +15,8 @@ import sys
 # 确保项目根目录在路径中
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from src.i18n import _t
-from src.cli.main import main
+from src.i18n import _t  # noqa: E402
+from src.cli.main import main  # noqa: E402
 
 if __name__ == "__main__":
     try:
@@ -28,5 +28,6 @@ if __name__ == "__main__":
         logging.basicConfig(level=logging.CRITICAL)
         logger = logging.getLogger(__name__)
         logger.critical(_t("cli.entry.fatal_error", error=e), exc_info=True)
-        print("\n" + _t("cli.entry.error_prefix", error=e) + "\n" + _t("cli.entry.check_log"), file=sys.stderr)
+        error_msg = _t("cli.entry.error_prefix", error=e)
+        print("\n" + error_msg + "\n" + _t("cli.entry.check_log"), file=sys.stderr)
         sys.exit(1)

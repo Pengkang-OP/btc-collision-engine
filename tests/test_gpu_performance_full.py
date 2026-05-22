@@ -23,8 +23,8 @@ from pathlib import Path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from src.collision.gpu.engine import GPUCollisionEngine
-from src.collision.targets.resolver import TargetResolver
+from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
+from src.collision.targets.resolver import TargetResolver  # noqa: E402
 
 
 class GPUPerformanceTester:
@@ -351,7 +351,6 @@ class GPUPerformanceTester:
         print("\n⭐ 综合评估:")
 
         benchmark_speed = self.results.get("benchmark", {}).get("avg_speed", 0)
-        stress_speed = self.results.get("stress_test", {}).get("avg_speed", 0)
         stability_cv = self.results.get("stability", {}).get("coefficient_of_variation", 100)
 
         # 性能评级
