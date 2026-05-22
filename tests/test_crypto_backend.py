@@ -82,10 +82,10 @@ class TestPurePythonBackendDirect(unittest.TestCase):
         self.assertGreater(rx, 0)
         self.assertGreater(ry, 0)
 
-    def test_is_constant_time_default_false(self):
-        """P0-7: 默认非恒定时间"""
+    def test_is_constant_time_default_true(self):
+        """P0-7: v4.2.2后所有标量乘法使用恒定时间实现"""
         backend = PurePythonBackend()
-        self.assertFalse(backend.is_constant_time())
+        self.assertTrue(backend.is_constant_time())
 
     def test_is_constant_time_enabled_true(self):
         """P0-8: 启用恒定时间"""
@@ -147,11 +147,11 @@ class TestBackendSetAndSwitch(unittest.TestCase):
         self.assertTrue(backend.is_constant_time())
 
     def test_is_constant_time_via_manager(self):
-        """P0-14: 通过 manager 检查恒定时间"""
+        """P0-14: 通过 manager 检查恒定时间（v4.2.2后始终为True）"""
         crypto_manager.set_backend(BackendType.PURE_PYTHON, use_const_time=True)
         self.assertTrue(crypto_manager.is_constant_time())
         crypto_manager.set_backend(BackendType.PURE_PYTHON, use_const_time=False)
-        self.assertFalse(crypto_manager.is_constant_time())
+        self.assertTrue(crypto_manager.is_constant_time())
 
     def test_generate_public_key_const_time_via_manager(self):
         """P0-15: 通过 manager 使用恒定时间后端生成公钥"""
@@ -447,7 +447,7 @@ class TestBackendImportErrors(unittest.TestCase):
 
             with self.assertRaises(RuntimeError) as ctx:
                 backend.scalar_multiply(1, Secp256k1.Gx, Secp256k1.Gy)
-            self.assertIn("不可用", str(ctx.exception))
+            self.assertIn("not available", str(ctx.exception))
 
     def test_coincurve_unavailable_generate_public_key(self):
         """P2-1: coincurve 不可用时 generate_public_key 抛出 RuntimeError"""
