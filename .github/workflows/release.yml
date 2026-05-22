@@ -1,10 +1,13 @@
 name: Release
 
-# 仅在推送 v* 格式的 Git tag 时触发（如 v3.1.2）
 on:
   push:
     tags:
       - "v*"
+
+permissions:
+  contents: write
+  packages: write
 
 jobs:
   # ─────────────────────────────────────────────
@@ -13,51 +16,116 @@ jobs:
   test:
     name: 发布前测试验证
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.11", "3.12"]
 
     steps:
-      # 检出代码
       - name: 检出代码
         uses: actions/checkout@v4
 
-      # 设置 Python 3.12 运行环境
-      - name: 设置 Python 3.12
+      - name: 设置 Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
 
-      # 安装项目依赖
-      - name: 安装依赖
+      - name: 安装系统依赖
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest pytest-benchmark pytest-cov
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libgmp-dev
 
-      # 运行完整测试套件
+      - name: 安装 Python 依赖
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-timeout
+
       - name: 运行测试套件
         run: |
-          python -m pytest tests/ -v --tb=short --cov=src --cov-report=term-missing
+          pytest tests/ \
+            -v \
+            --tb=short \
+            --cov=src \
+            --cov-report=term-missing \
+            -m "not (gpu or gpu_kernel or multi_gpu)" \
+            --timeout=600
 
   # ─────────────────────────────────────────────
-  # Job 2: 创建 GitHub Release，附带 CHANGELOG 内容
+  # Job 2: 构建发布包
   # ─────────────────────────────────────────────
-  release:
-    name: 创建 GitHub Release
-    needs: test
+  build:
+    name: 构建发布包
     runs-on: ubuntu-latest
-    environment: release
-
-    # 需要写权限以创建 Release
-    permissions:
-      contents: write
+    needs: test
 
     steps:
-      # 检出代码（含完整历史以便读取 CHANGELOG）
       - name: 检出代码
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # 从 tag 名称提取纯版本号（v3.1.2 → 3.1.2）
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: 安装构建工具
+        run: pip install --upgrade pip build twine
+
+      - name: 构建 sdist 和 wheel
+        run: python -m build
+
+      - name: 检查包
+        run: twine check dist/*
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-dist
+          path: dist/
+
+  # ─────────────────────────────────────────────
+  # Job 3: 发布到 PyPI（可选）
+  # ─────────────────────────────────────────────
+  publish-pypi:
+    name: 发布到 PyPI
+    runs-on: ubuntu-latest
+    needs: build
+    environment: release
+
+    steps:
+      - name: 下载构建产物
+        uses: actions/download-artifact@v4
+        with:
+          name: release-dist
+          path: dist/
+
+      - name: 发布到 PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          skip-existing: true  # 避免重复发布
+
+  # ─────────────────────────────────────────────
+  # Job 4: 创建 GitHub Release
+  # ─────────────────────────────────────────────
+  github-release:
+    name: 创建 GitHub Release
+    runs-on: ubuntu-latest
+    needs: build
+    environment: release
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: 提取版本号
         id: version
         run: |
@@ -65,20 +133,15 @@ jobs:
           VERSION="${TAG_NAME#v}"
           echo "tag=${TAG_NAME}" >> "$GITHUB_OUTPUT"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "提取版本号: tag=${TAG_NAME}, version=${VERSION}"
 
-      # 从 CHANGELOG.md 中提取该版本对应的更新记录
-      # 提取规则：匹配 "## [版本号]" 或 "## 版本号" 标题，
-      # 截取到下一个 "## " 标题（不含）之间的内容
       - name: 从 CHANGELOG 提取发布说明
         id: changelog
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           TAG="${{ steps.version.outputs.tag }}"
 
-          # 尝试多种常见的 CHANGELOG 版本标题格式
           NOTES=$(python3 - <<PYEOF
-          import re, sys, os
+          import re, sys, os, subprocess
 
           version = os.environ.get("VERSION", "")
           tag = os.environ.get("TAG", "")
@@ -87,14 +150,9 @@ jobs:
               with open("CHANGELOG.md", "r", encoding="utf-8") as f:
                   content = f.read()
           except FileNotFoundError:
-              print("CHANGELOG.md 文件未找到，使用默认发布说明。")
+              print("CHANGELOG.md 未找到，使用 git log 生成。")
               sys.exit(0)
 
-          # 匹配版本标题的多种格式：
-          #   ## [3.1.2] - 2026-04-25
-          #   ## [v3.1.2]
-          #   ## 3.1.2
-          #   ## v3.1.2
           patterns = [
               rf"##\s+\[{re.escape(version)}\][^\n]*\n(.*?)(?=\n##\s|\Z)",
               rf"##\s+\[{re.escape(tag)}\][^\n]*\n(.*?)(?=\n##\s|\Z)",
@@ -110,16 +168,13 @@ jobs:
                       print(notes)
                       sys.exit(0)
 
-          # 所有 pattern 均未匹配 → fallback: 从 git log 生成
-          import subprocess
+          # Fallback: git log
           try:
-              # 获取上一版 tag (按时间排序取倒数第二个)
               tags_result = subprocess.run(
                   ["git", "tag", "--sort=-creatordate", "--merged", "HEAD"],
                   capture_output=True, text=True
               )
               tags = [t.strip() for t in tags_result.stdout.strip().split("\n") if t.strip()]
-              # 过滤出 v* 格式的 tag，跳过当前 tag
               version_tags = [t for t in tags if t.startswith("v") and t != tag]
               if version_tags:
                   prev_tag = version_tags[0]
@@ -127,60 +182,48 @@ jobs:
                       ["git", "log", "--oneline", "--no-merges", f"{prev_tag}..HEAD"],
                       capture_output=True, text=True
                   )
-                  notes = log_result.stdout.strip()
+                  print(log_result.stdout.strip() or f"Release {tag}")
               else:
-                  notes = ""
-
-              if notes:
-                  print(f"⚠️  CHANGELOG 未找到版本 {version} 的记录，使用 git log ({prev_tag}..HEAD) 生成:\n{notes}")
-              else:
-                  # 最终兜底: 最近 20 条 commit
                   result2 = subprocess.run(
                       ["git", "log", "--oneline", "--no-merges", "-20"],
                       capture_output=True, text=True
                   )
-                  notes = result2.stdout.strip()
-                  print(notes or f"Release {tag}")
+                  print(result2.stdout.strip() or f"Release {tag}")
           except Exception:
-              print(f"版本 {version} 的更新记录未在 CHANGELOG.md 中找到，且 git log 获取失败。")
+              print(f"Release {tag}")
           PYEOF
           )
 
-          # 将多行内容写入 GitHub Actions 输出（使用 heredoc 方式）
           {
             echo "notes<<RELEASE_NOTES_EOF"
             echo "$NOTES"
             echo "RELEASE_NOTES_EOF"
           } >> "$GITHUB_OUTPUT"
 
-          echo "── 提取到的发布说明 ──"
-          echo "$NOTES"
+      - name: 下载构建产物
+        uses: actions/download-artifact@v4
+        with:
+          name: release-dist
+          path: dist/
 
-      # 使用 softprops/action-gh-release@v2 创建正式 GitHub Release
       - name: 创建 GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          # Release 标题：版本 tag 名称
           name: "Release ${{ steps.version.outputs.tag }}"
-          # Release body：从 CHANGELOG 提取的更新记录
           body: ${{ steps.changelog.outputs.notes }}
-          # 标记为正式发布（非预发布）
           prerelease: false
-          # 自动生成的 tag 已存在，不重新创建
           tag_name: ${{ steps.version.outputs.tag }}
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
 
   # ─────────────────────────────────────────────
-  # Job 3: 构建 Docker 镜像并推送到 ghcr.io
+  # Job 5: 构建并推送多架构 Docker 镜像
   # ─────────────────────────────────────────────
   docker-push:
     name: 构建并推送 Docker 镜像
-    needs: test
     runs-on: ubuntu-latest
-
-    # ghcr.io 写权限
-    permissions:
-      contents: read
-      packages: write
+    needs: test
 
     steps:
       - name: 检出代码
@@ -194,10 +237,10 @@ jobs:
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "tag=${TAG_NAME}" >> "$GITHUB_OUTPUT"
 
-      - name: 设置 QEMU（多架构支持）
+      - name: 设置 QEMU
         uses: docker/setup-qemu-action@v3
 
-      - name: 设置 Docker Buildx（多架构）
+      - name: 设置 Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: 登录 GitHub Container Registry
@@ -218,7 +261,7 @@ jobs:
             type=raw,value=latest
 
       - name: 构建并推送多架构镜像
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
@@ -226,3 +269,26 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
+          build-args: |
+            VERSION=${{ steps.version.outputs.version }}
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 构建 AMD GPU 镜像
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.amd
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:${{ steps.version.outputs.version }}-amd
+            ghcr.io/${{ github.repository }}:latest-amd
+          platforms: linux/amd64
+          build-args: |
+            VERSION=${{ steps.version.outputs.version }}
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

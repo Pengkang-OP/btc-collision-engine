@@ -1,0 +1,189 @@
+name: Build Verification
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ──────────────────────────────────────────
+  # 构建 Python 包 (sdist + wheel)
+  # ──────────────────────────────────────────
+  build-package:
+    name: 构建包 (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # setuptools_scm 需要完整历史
+
+      - name: 设置 Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: 安装构建工具
+        run: pip install --upgrade pip build twine
+
+      - name: 安装系统依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libgmp-dev
+
+      - name: 构建 sdist 和 wheel
+        run: python -m build
+
+      - name: 检查包元数据
+        run: twine check dist/*
+
+      - name: 验证 wheel 内容
+        run: |
+          echo "📦 Wheel 内容:"
+          python -m zipfile -l dist/*.whl | head -30
+          echo ""
+          echo "📋 包元数据:"
+          twine check dist/* 2>&1 || true
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-py${{ matrix.python-version }}
+          path: dist/
+          retention-days: 7
+
+  # ──────────────────────────────────────────
+  # 安装验证：从构建产物安装并验证 CLI 可用
+  # ──────────────────────────────────────────
+  install-test:
+    name: 安装验证 (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build-package
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 设置 Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: 安装系统依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libgmp-dev
+
+      - name: 下载构建产物
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-py${{ matrix.python-version }}
+          path: dist/
+
+      - name: 从 wheel 安装
+        run: |
+          pip install dist/*.whl
+
+      - name: 验证 CLI 入口点
+        run: |
+          btc-collision --help || echo "⚠️ CLI 入口点不可用（可能缺少配置文件）"
+
+      - name: 验证核心模块可导入
+        run: |
+          python -c "from src.collision.key_collision_engine import KeyCollisionEngine; print('✅ 核心模块导入成功')"
+          python -c "from src.core.crypto_backend import CryptoBackend; print('✅ 加密后端导入成功')"
+          python -c "from src.monitoring.enhanced_monitoring import EnhancedMonitor; print('✅ 监控模块导入成功')"
+
+  # ──────────────────────────────────────────
+  # Docker 镜像构建验证
+  # ──────────────────────────────────────────
+  docker-build:
+    name: Docker 镜像构建验证
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 设置 Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 构建 Docker 镜像 (amd64)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          load: true
+          tags: btc-collision-engine:build-test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 验证 Docker 镜像
+        run: |
+          echo "📋 镜像信息:"
+          docker images btc-collision-engine:build-test
+          echo ""
+          echo "🔍 验证镜像可运行:"
+          docker run --rm btc-collision-engine:build-test python -c "
+          from src.collision.key_collision_engine import KeyCollisionEngine
+          print('✅ Docker 镜像内核心模块导入成功')
+          "
+
+      - name: 构建 AMD GPU Docker 镜像
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.amd
+          push: false
+          load: true
+          tags: btc-collision-engine:amd-build-test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ──────────────────────────────────────────
+  # 构建门禁
+  # ──────────────────────────────────────────
+  build-gate:
+    name: 构建门禁
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    needs: [build-package, install-test, docker-build]
+    if: always()
+
+    steps:
+      - name: 验证构建通过
+        run: |
+          FAILED=0
+          for job in build-package install-test docker-build; do
+            RESULT="${{ needs.${job}.result }}"
+            if [ "$RESULT" != "success" ]; then
+              echo "❌ $job 未通过: $RESULT"
+              FAILED=1
+            else
+              echo "✅ $job 通过"
+            fi
+          done
+          if [ $FAILED -eq 1 ]; then
+            echo "⛔ 构建验证未通过！"
+            exit 1
+          fi
+          echo "✅ 所有构建验证通过！"

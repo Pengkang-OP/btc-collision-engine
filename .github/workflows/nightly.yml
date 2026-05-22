@@ -1,0 +1,209 @@
+name: Nightly Test
+
+on:
+  schedule:
+    # 每天 UTC 02:00 运行（北京时间 10:00）
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: nightly-test
+  cancel-in-progress: true
+
+jobs:
+  # ──────────────────────────────────────────
+  # 全版本矩阵测试
+  # ──────────────────────────────────────────
+  full-test:
+    name: 完整测试 (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 设置 Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: 安装系统依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libgmp-dev
+
+      - name: 安装 Python 依赖
+        run: |
+          pip install --upgrade pip setuptools wheel
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-timeout pytest-benchmark pytest-rerunfailures
+
+      - name: 运行完整测试套件
+        run: |
+          pytest tests/ \
+            -v \
+            --tb=long \
+            --cov=src \
+            --cov-report=xml \
+            --cov-report=html \
+            -m "not (gpu or gpu_kernel or multi_gpu)" \
+            --timeout=600 \
+            --reruns=2 \
+            --reruns-delay=5
+
+      - name: 上传覆盖率报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-py${{ matrix.python-version }}
+          path: |
+            coverage.xml
+            htmlcov/
+          retention-days: 30
+
+  # ──────────────────────────────────────────
+  # 内存泄漏检测
+  # ──────────────────────────────────────────
+  memory-leak-check:
+    name: 内存泄漏检测
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: 安装系统依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libgmp-dev
+
+      - name: 安装 Python 依赖
+        run: |
+          pip install -r requirements.txt
+          pip install pytest memory-profiler
+
+      - name: 运行内存泄漏检测脚本
+        continue-on-error: true
+        run: |
+          if [ -f scripts/memory_leak_detection.py ]; then
+            python scripts/memory_leak_detection.py
+          else
+            echo "⚠️ 内存泄漏检测脚本不存在，跳过"
+          fi
+
+  # ──────────────────────────────────────────
+  # 性能基准测试（更新基线）
+  # ──────────────────────────────────────────
+  nightly-benchmark:
+    name: 夜间性能基准
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: 安装系统依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libgmp-dev
+
+      - name: 安装 Python 依赖
+        run: pip install -r requirements.txt
+
+      - name: 运行性能基准测试
+        run: |
+          rm -f benchmarks/results/benchmark_[0-9]*.json
+          python -m benchmarks.benchmark_runner --output benchmarks/results
+
+      - name: 上传基准结果
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-benchmark-results
+          path: benchmarks/results/
+          retention-days: 90
+
+  # ──────────────────────────────────────────
+  # 依赖安全扫描
+  # ──────────────────────────────────────────
+  nightly-security:
+    name: 夜间安全扫描
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: 安装扫描工具
+        run: pip install bandit pip-audit safety
+
+      - name: 运行 Bandit 安全扫描
+        continue-on-error: true
+        run: |
+          bandit -r src/ -ll -f json -o bandit-nightly.json || true
+          bandit -r src/ -ll -f txt || true
+
+      - name: 运行 pip-audit
+        continue-on-error: true
+        run: |
+          pip install -r requirements-base.txt
+          pip-audit --requirement requirements-base.txt --desc on || true
+
+      - name: 运行 safety 检查
+        continue-on-error: true
+        run: |
+          safety check -r requirements-base.txt || true
+
+      - name: 上传安全报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-security-report
+          path: bandit-nightly.json
+          retention-days: 30
+
+  # ──────────────────────────────────────────
+  # 夜间测试汇总通知
+  # ──────────────────────────────────────────
+  nightly-summary:
+    name: 夜间测试汇总
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [full-test, memory-leak-check, nightly-benchmark, nightly-security]
+    if: always()
+
+    steps:
+      - name: 生成汇总报告
+        run: |
+          echo "## 🌙 夜间测试报告" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 检查项 | 状态 |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 全版本测试 | ${{ needs.full-test.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 内存泄漏 | ${{ needs.memory-leak-check.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 性能基准 | ${{ needs.nightly-benchmark.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 安全扫描 | ${{ needs.nightly-security.result }} |" >> $GITHUB_STEP_SUMMARY
