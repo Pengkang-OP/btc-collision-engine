@@ -1,6 +1,6 @@
-"""GPU设备检测和管理
+"""GPU device detection and management.
 
-提供GPU设备自动检测、过滤、选择功能。
+Provides GPU device auto-detection, filtering, and selection.
 复用现有gpu_engine.py的逻辑并保持API兼容。
 """
 

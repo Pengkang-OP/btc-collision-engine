@@ -1,6 +1,7 @@
-"""GPU内存池优化模块
+"""GPU memory pool optimization module.
 
-实现GPU缓冲区复用机制,减少OpenCL内存分配开销。
+Implements GPU buffer reuse mechanism to reduce OpenCL memory
+allocation overhead.
 
 优化原理:
 - GPU内存分配开销大(毫秒级)

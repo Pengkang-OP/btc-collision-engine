@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CLI工具命令模块
+CLI tool commands module.
 
 包含:
 - _cmd_validate_addresses: 批量验证文件中所有比特币地址

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-比特币私钥对撞引擎监控系统
+Bitcoin private key collision engine monitoring system.
 
 该模块负责监控对撞引擎的运行状态、性能指标和异常情况，
 提供实时数据采集、分析和告警功能。
