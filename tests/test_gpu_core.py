@@ -98,7 +98,9 @@ class TestGPUConstants:
     def test_batch_size_constants_are_positive(self):
         """测试：批次大小常量为正数"""
         from src.collision.gpu.engine import (
-            GPU_MAX_BATCH_SIZE, INITIAL_BATCH_SIZE, UINT32_MAX,
+            GPU_MAX_BATCH_SIZE,
+            INITIAL_BATCH_SIZE,
+            UINT32_MAX,
         )
         assert GPU_MAX_BATCH_SIZE > 0
         assert INITIAL_BATCH_SIZE > 0

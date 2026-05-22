@@ -47,7 +47,10 @@ def setup_arc_environment() -> dict[str, str]:
 
     # 4. 设置 OpenCL 缓存目录
     if platform.system() == "Windows":
-        temp_base = os.environ.get("TEMP") or os.environ.get("TMP") or os.path.expanduser("~")
+        temp_base = (
+            os.environ.get("TEMP") or os.environ.get("TMP")
+            or os.path.expanduser("~")
+        )
         cache_dir = os.path.join(temp_base, "intel_ocl_cache")
     else:
         cache_dir = os.path.join(tempfile.gettempdir(), "intel_ocl_cache")

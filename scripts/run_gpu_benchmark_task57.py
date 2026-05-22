@@ -94,7 +94,7 @@ def run_benchmark(duration_sec: int = 30) -> dict:  # noqa: C901
     # ── 3. 初始化引擎 ──────────────────────────────────────
     print("\n[3/5] 初始化 GPU 碰撞引擎...")
     try:
-        from src.collision.gpu.engine import GPUCollisionEngine
+        from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
     except ImportError as e:
         print(f"    [ERROR] 无法导入 GPUCollisionEngine: {e}")
         return {"error": str(e), "success": False}
@@ -127,7 +127,7 @@ def run_benchmark(duration_sec: int = 30) -> dict:  # noqa: C901
             on_match=on_match,
         )
         init_elapsed = time.time() - init_start
-        print(f"    引擎初始化耗时: {init_elapsed:.2f}s")
+        print(f"    引擎初始化耗时: {init_elapsed:.2f}s")  # noqa: E501
     except Exception as e:
         print(f"    [ERROR] 引擎初始化失败: {e}")
         import traceback
@@ -185,7 +185,8 @@ def run_benchmark(duration_sec: int = 30) -> dict:  # noqa: C901
             recent_speed = speed_samples[-1]
             interval_speeds.append(recent_speed)
             print(
-                f"  {elapsed:5.0f}s  {recent_speed / 1e6:12.3f}M/s  {total_checked:>14,}  {len(speed_samples):>6}"
+                f"  {elapsed:5.0f}s  {recent_speed / 1e6:12.3f}M/s"
+                f"  {total_checked:>14,}  {len(speed_samples):>6}"
             )
 
     # 停止引擎

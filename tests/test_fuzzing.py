@@ -21,7 +21,8 @@ sys.path.insert(0, ".")
 
 HYPOTHESIS_AVAILABLE = False
 try:
-    from hypothesis import given, strategies as st, settings
+    from hypothesis import given, settings
+    from hypothesis import strategies as st
 
     HYPOTHESIS_AVAILABLE = True
 except ImportError:

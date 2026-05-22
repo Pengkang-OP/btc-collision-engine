@@ -320,7 +320,9 @@ class CheckpointManager:
     DEFAULT_FILE = "collision_checkpoint.json"
 
     def __init__(self, filepath: str = None, auto_save_interval: int = 30):
-        self.filepath = filepath or os.path.join(os.path.dirname(os.path.abspath(__file__)), self.DEFAULT_FILE)
+        self.filepath = filepath or os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), self.DEFAULT_FILE
+        )
         self.auto_save_interval = auto_save_interval
         self._last_save_time = 0.0
 
@@ -500,7 +502,10 @@ class KeyCollisionEngine:
         self.progress_interval = 1000  # 每N次检测触发一次进度回调
         self.logger = logging.getLogger("KeyCollisionEngine")
         # 断点管理器
-        self.checkpoint_mgr = CheckpointManager(auto_save_interval=checkpoint_interval) if checkpoint_enabled else None
+        self.checkpoint_mgr = (
+            CheckpointManager(auto_save_interval=checkpoint_interval)
+            if checkpoint_enabled else None
+        )
         # 去重过滤器
         self.dedup_filter = DeduplicationFilter(max_size=dedup_max_size, enabled=dedup_enabled)
         # 当前位置（用于断点保存）
@@ -752,12 +757,16 @@ class KeyCollisionEngine:
         """根据断点数据启动对撞"""
         mode = data.get('mode', 'random')
         if mode == 'range':
-            self.start(mode='range',
-                      start=data.get('current_position', 1),
-                      end=data.get('range_end', 2**32))
+            self.start(
+                mode='range',
+                start=data.get('current_position', 1),
+                end=data.get('range_end', 2 ** 32),
+            )
         elif mode == 'brute_force':
-            self.start(mode='brute_force',
-                      start=data.get('current_position', 1))
+            self.start(
+                mode='brute_force',
+                start=data.get('current_position', 1),
+            )
         elif mode == 'random':
             self.start(mode='random')
 
@@ -806,9 +815,15 @@ class KeyCollisionEngine:
         if mode == "random":
             target_fn = self.random_search
         elif mode == "range":
-            target_fn = lambda: self.range_scan(kwargs.get('start', 1), kwargs.get('end', 2**32))
+            def _range_scan_target():
+                return self.range_scan(
+                    kwargs.get('start', 1), kwargs.get('end', 2 ** 32)
+                )
+            target_fn = _range_scan_target
         elif mode == "brute_force":
-            target_fn = lambda: self.brute_force(kwargs.get('start', 1))
+            def _brute_force_target():
+                return self.brute_force(kwargs.get('start', 1))
+            target_fn = _brute_force_target
         else:
             raise ValueError(f"未知模式: {mode}")
 
@@ -925,7 +940,7 @@ class CollisionCLI:
         """打印欢迎横幅"""
         p = self.printer
         print(f"""
-{p.BRIGHT_YELLOW}{'='*70}{p.RESET}
+{p.BRIGHT_YELLOW}{'=' * 70}{p.RESET}
 {p.BOLD}{p.BRIGHT_RED}
    ██╗  ██╗███████╗██╗   ██╗     ██████╗ ██████╗██╗     ██╗██╗███████╗██╗ ██████╗ ███╗   ██╗
    ██║ ██╔╝██╔════╝██║   ██║    ██╔════╝██╔════╝██║     ██║██║██╔════╝██║██╔═══██╗████╗  ██║
@@ -936,7 +951,7 @@ class CollisionCLI:
 {p.RESET}
 {p.BRIGHT_GREEN}   btc-collision-engine{p.RESET}
 {p.DIM}   纯Python实现 | 标准库 only | 教育演示用途{p.RESET}
-{p.BRIGHT_YELLOW}{'='*70}{p.RESET}
+{p.BRIGHT_YELLOW}{'=' * 70}{p.RESET}
         """)
 
     def print_menu(self):
@@ -1007,7 +1022,12 @@ class CollisionCLI:
         elapsed_str = stats.format_elapsed()
         match_str = f"{len(stats.matches)}"
 
-        progress_line = f"\r{p.BRIGHT_CYAN}[{p.RESET}已检测: {p.BRIGHT_WHITE}{checked_str}{p.RESET} | 速度: {p.BRIGHT_GREEN}{speed_str}{p.RESET} | 运行: {p.BRIGHT_YELLOW}{elapsed_str}{p.RESET} | 匹配: {p.BRIGHT_RED}{match_str}{p.RESET}{p.BRIGHT_CYAN}]{p.RESET}"
+        progress_line = (
+            f"\r{p.BRIGHT_CYAN}[{p.RESET}已检测: {p.BRIGHT_WHITE}{checked_str}{p.RESET}"
+            f" | 速度: {p.BRIGHT_GREEN}{speed_str}{p.RESET}"
+            f" | 运行: {p.BRIGHT_YELLOW}{elapsed_str}{p.RESET}"
+            f" | 匹配: {p.BRIGHT_RED}{match_str}{p.RESET}{p.BRIGHT_CYAN}]{p.RESET}"
+        )
         print(progress_line, end='', flush=True)
 
     def on_match(self, private_key: bytes, address: str, wif: str):
@@ -1030,9 +1050,9 @@ class CollisionCLI:
 
         # 交互式终端：显示完整私钥（带安全警告）
         if sys.stdout.isatty():
-            print(f"\n\n{p.BG_GREEN}{p.BLACK}{'='*70}{p.RESET}")
-            p.print_success("🎉 找到匹配！")
-            print(f"{p.BG_GREEN}{p.BLACK}{'='*70}{p.RESET}\n")
+            print(f"\n\n{p.BG_GREEN}{p.BLACK}{'=' * 70}{p.RESET}")
+            p.print_success("找到匹配！")
+            print(f"{p.BG_GREEN}{p.BLACK}{'=' * 70}{p.RESET}\n")
 
             p.print_label("匹配地址")
             p.print_address(f"  {address}")
@@ -1043,8 +1063,8 @@ class CollisionCLI:
             p.print_label("私钥 (WIF)")
             p.print_private_key(f"  {wif}")
 
-            print(f"\n{p.BRIGHT_RED}⚠ 安全警告: 请勿分享、截图或在网络上传输以上私钥信息！{p.RESET}")
-            print(f"{p.BG_GREEN}{p.BLACK}{'='*70}{p.RESET}\n")
+            print(f"\n{p.BRIGHT_RED}安全警告: 请勿分享、截图或在网络上传输以上私钥信息！{p.RESET}")
+            print(f"{p.BG_GREEN}{p.BLACK}{'=' * 70}{p.RESET}\n")
         else:
             # 非交互环境：仅输出脱敏信息
             print(f"\n[MATCH] address={address} private_key_hash=KEY_HASH:{key_hash}\n")

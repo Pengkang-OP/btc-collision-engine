@@ -22,7 +22,7 @@ import pytest
 sys.path.insert(0, ".")
 
 from src.collision.collision_stats import CollisionStats
-from src.collision.event_bus import EventBus, get_event_bus, reset_event_bus
+from src.collision.event_bus import EventBus
 from src.collision.events import (
     CollisionEvent,
     EngineCompleteEvent,
@@ -33,7 +33,6 @@ from src.collision.events import (
     EngineStopEvent,
     EventType,
 )
-
 
 # ============================================================================
 # 维度一：多模式测试 (Multi-Mode Tests)

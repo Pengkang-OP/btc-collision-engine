@@ -49,7 +49,8 @@ def _test_environment():
     try:
         import sys  # noqa: F811 (re-import for standalone script)
 
-        py_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+        ver = sys.version_info
+        py_version = f"{ver.major}.{ver.minor}.{ver.micro}"
         print_result("Python版本", True, f"Python {py_version}")
         results.append(True)
         # PyOpenCL
@@ -99,7 +100,10 @@ def _test_kernel_source():
         from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
         lines = OPENCL_KERNEL_SOURCE.split("\n")
-        print_result("源码加载", True, f"{len(OPENCL_KERNEL_SOURCE)} 字符, {len(lines)} 行")
+        print_result(
+            "源码加载", True,
+            f"{len(OPENCL_KERNEL_SOURCE)} 字符, {len(lines)} 行"
+        )
         results.append(True)
         kernel_count = OPENCL_KERNEL_SOURCE.count("__kernel")
         matches_expected = kernel_count == 3
@@ -247,7 +251,7 @@ def _test_verify_arithmetic():
         result_y = np.zeros(8, dtype=np.uint32)
         result_x_buf = cl.Buffer(context, cl.mem_flags.WRITE_ONLY, result_x.nbytes)
         result_y_buf = cl.Buffer(context, cl.mem_flags.WRITE_ONLY, result_y.nbytes)
-        program.verify_arithmetic(queue, (1,), None, result_x_buf, result_y_buf)
+        program.verify_arithmetic(queue, (1,), None, result_x_buf, result_y_buf)  # noqa: E501
         queue.finish()
         cl.enqueue_copy(queue, result_x, result_x_buf)
         cl.enqueue_copy(queue, result_y, result_y_buf)
@@ -313,7 +317,7 @@ def _test_hash_verification():
         hash160_hex = hash160_out.tobytes().hex()
         print_result("压缩公钥格式", pubkey_valid, f"首字节: 0x{pubkey_out[0]:02x}")
         results.append(pubkey_valid)
-        print_result("Hash160计算", True, hash160_hex)
+        print_result("Hash160计算", True, hash160_hex)  # noqa: E501
         results.append(True)
     except Exception as e:  # noqa: BLE001
         print_result("哈希验证", False, str(e))

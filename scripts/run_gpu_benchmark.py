@@ -17,10 +17,13 @@ try:
 except ImportError:
     try:
         from src.collision import GPUCollisionEngine
-        list_gpu_devices = lambda: []
+
+        def list_gpu_devices():
+            return []
     except ImportError:
         print("[ERROR] 无法导入 GPUCollisionEngine")
         sys.exit(1)
+
 
 def main():
     print("=" * 60)
@@ -109,7 +112,7 @@ def main():
             os.makedirs("test_results", exist_ok=True)
             with open("test_results/gpu_benchmark_result.json", "w", encoding="utf-8") as f:
                 json.dump(result, f, indent=2, ensure_ascii=False)
-            print(f"\n结果保存至: test_results/gpu_benchmark_result.json")
+            print("结果保存至: test_results/gpu_benchmark_result.json")
         else:
             print("无法获取统计数据")
 
@@ -117,6 +120,7 @@ def main():
         print(f"GPU 基准测试失败: {e}")
         import traceback
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     main()
