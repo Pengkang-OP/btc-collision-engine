@@ -162,13 +162,9 @@ def _apply_gpu_patches(mock_device, mock_context, mock_kernel, vendor="nvidia"):
                 )
             )
             stack.enter_context(patch("src.gpu.device_manager.GPUDevice", return_value=mock_device))
-            stack.enter_context(
-                patch("src.gpu.device_manager.GPUContext", return_value=mock_context)
-            )
+            stack.enter_context(patch("src.gpu.device_manager.GPUContext", return_value=mock_context))
             stack.enter_context(patch("src.gpu.device_manager.GPUKernel", return_value=mock_kernel))
-            mock_profile_loader = stack.enter_context(
-                patch("src.gpu.profiles.loader.GPUProfileLoader")
-            )
+            mock_profile_loader = stack.enter_context(patch("src.gpu.profiles.loader.GPUProfileLoader"))
             stack.enter_context(patch("src.gpu.device.identify_vendor", return_value=vendor))
             # async_executor采用函数级导入，通过patch sys.modules使内部 import pyopencl as cl 使用Mock
             # 同时注入 pyopencl.array 子模块，避免 'import pyopencl.array as cl_array' 失败
@@ -697,5 +693,12 @@ def pytest_sessionfinish(session, exitstatus):
         except RuntimeError:
             pass  # 无法 join 当前线程
 
-    print("\n[conftest] 测试会话清理完成，强制退出进程", flush=True)
+    # 根据退出码判断是否有失败：不掩盖测试失败
+    # 注意：os._exit(0) 会覆盖 pytest 的退出码，导致失败的测试在 CI 中被忽略
+    exit_code = getattr(session, "exitcode", 0)
+    if exit_code != 0:
+        print(f"\n[conftest] 检测到测试失败 (exitcode={exit_code})，保留退出码", flush=True)
+        os._exit(exit_code)
+
+    print("\n[conftest] 测试全部通过，强制退出进程", flush=True)
     os._exit(0)

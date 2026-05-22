@@ -23,3 +23,6 @@ memory-profiler>=0.61       # 内存占用分析
 # 文档工具
 sphinx>=7.0.0
 sphinx-rtd-theme>=1.3.0
+
+# 模糊测试
+hypothesis>=6.0.0

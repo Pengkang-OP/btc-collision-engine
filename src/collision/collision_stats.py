@@ -60,9 +60,17 @@ class CollisionStats:
         线程安全：与 update() 共享同一把锁。
 
         参数:
-            delta: 本次新增的检查数量（必须 >= 0）
+            delta: 本次新增的检查数量（必须 >= 0 且为 int）
             total_range: 总范围（仅 range 模式传入，用于计算 ETA）
+
+        异常:
+            TypeError: delta 不是 int
+            ValueError: delta 为负数
         """
+        if not isinstance(delta, int):
+            raise TypeError(
+                f"delta must be an integer, got {type(delta).__name__}: {delta}"
+            )
         if delta < 0:
             raise ValueError(f"delta must be non-negative, got {delta}")
         with self._lock:
