@@ -805,7 +805,7 @@ class KeyCollisionEngine:
    python p2pkh_gui.py
    
    # 碰撞检测
-   python key_collision.py
+   python key_collision_cli.py
 ```markdown
 
 ### 8.3 运行环境

@@ -683,7 +683,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             logger.info(f"加密后端初始化完成: {backend.name}, 恒定时间={backend.is_constant_time()}")
 
         except (RuntimeError, OSError, ValueError) as e:
-            logger.warning(f"加密后端初始化失败: {e}，使用默认后端", exc_info=True)
+            logger.error(f"加密后端初始化失败: {e}，使用默认后端", exc_info=True)
 
     def _log_throttled_error(
         self, error_type: str, message: str, exception: Exception, worker_id: int
@@ -865,7 +865,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     )
                 )
             except (AttributeError, RuntimeError, TypeError) as e:
-                logger.debug(f"发布 ENGINE_MATCH 事件失败（非致命）: {e}")
+                logger.warning(f"发布 ENGINE_MATCH 事件失败（非致命）: {e}")
 
         local_matches.clear()
 
@@ -924,7 +924,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             self._log_throttled_error("invalid_key", "随机私钥无效", e, worker_id)
             return True, False
         except (RuntimeError, OSError) as e:
-            logger.warning(f"Random worker {worker_id}: 生成地址失败: {e}", exc_info=True)
+            logger.error(f"Random worker {worker_id}: 生成地址失败: {e}", exc_info=True)
             self._log_throttled_error("address_generation_failed", "生成地址失败", e, worker_id)
             return True, False
 
@@ -971,21 +971,21 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     )
                 )
             except (RuntimeError, OSError, ValueError) as e:
-                logger.debug(f"发布 ENGINE_MATCH 事件失败（非致命）: {e}")
+                logger.warning(f"发布 ENGINE_MATCH 事件失败（非致命）: {e}")
         logger.debug(f"工作线程 {worker_id} 提交了 {len(local_matches)} 个匹配结果")
 
     def _worker_process_key(
         self,
-        private_key,
+        private_key: bytes,
         worker_id: int,
-        local_matches: list,
-        recent_keys_list: list,
-        recent_keys_set: set,
+        local_matches: list[tuple[bytes, str, str, bytes | None]],
+        recent_keys_list: list[bytes],
+        recent_keys_set: set[bytes],
         max_recent_size: int,
         _half_size: int,
         local_count: int,
         batch_count: int,
-    ) -> tuple[int, int, list, set, bool]:
+    ) -> tuple[int, int, list[bytes], set[bytes], bool]:
         """处理单个私钥：验证、去重、生成地址、匹配检查。"""
         k = int.from_bytes(private_key, "big")
         if k < 1 or k >= Secp256k1.N:
@@ -1327,7 +1327,9 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 callback_name="on_complete",
             )
 
-    def _worker_generate_addresses(self, private_key_bytes, worker_id: int) -> tuple | None:
+    def _worker_generate_addresses(
+        self, private_key_bytes: bytes, worker_id: int
+    ) -> tuple[str, bytes, str | None, bytes | None] | None:
         """为工作线程生成压缩和（可选）未压缩地址。
         返回 (c_addr, c_pub, uc_addr, uc_pk) 或 None 表示跳过。"""
         try:
@@ -1350,7 +1352,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             logger.warning(f"Worker {worker_id}: 私钥无效，跳过: {e}")
             return None
         except (RuntimeError, OSError) as e:
-            logger.warning(f"Worker {worker_id}: 生成地址失败: {e}", exc_info=True)
+            logger.error(f"Worker {worker_id}: 生成地址失败: {e}", exc_info=True)
             return None
 
     def _worker_check_and_handle_match(
@@ -1484,7 +1486,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 )
             )
         except Exception as e:
-            logger.debug(f"发布 ENGINE_START 事件失败（非致命）: {e}")
+            logger.warning(f"发布 ENGINE_START 事件失败（非致命）: {e}")
 
         if self.data_logging_enabled and self.data_logger:
             self.data_logger.record_engine_data(

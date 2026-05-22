@@ -289,7 +289,7 @@ class ConfigManager:
             "device_index": -1,  # -1表示自动选择
             "batch_size": 1048576,  # C-06: 与 config.example.json 同步 (1M)
             "auto_detect": True,
-            "memory_usage_ratio": 0.75,  # C-06: 与 config.json 保持一致
+            "memory_usage_ratio": 0.7,  # v5.0.0 PARAM-2: 与 auto_config.py NVIDIA 基线保持一致
             "enable_vendor_optimizations": True,
             "queue_depth": 16,  # GPU 命令队列预提交批次数，与 config.json 保持一致
             # v4.3.1: 补充 config.example.json 中的 GPU 高级配置字段

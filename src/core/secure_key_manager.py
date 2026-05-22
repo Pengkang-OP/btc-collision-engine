@@ -89,7 +89,9 @@ class SecureKeyManager:
 
         注意:
             - Linux/macOS: 使用mlock()锁定内存
-            - Windows: 使用VirtualLock()锁定内存
+            - Windows: 使用VirtualLock()锁定内存（需管理员权限或SeLockMemoryPrivilege）
+            - Windows 在非管理员运行环境下, VirtualLock() 可能失败，
+              此时不会抛出异常但日志会记录 WARNING。
             - 锁定内存需要足够的权限
         """
         self._key: bytearray | None = None

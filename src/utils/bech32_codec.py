@@ -147,6 +147,10 @@ def bech32_decode(addr: str) -> tuple[str | None, list[int], str | None]:
     if not addr:
         return None, [], None
 
+    # Bech32 规范: 必须全大写或全小写，拒绝混合大小写
+    if addr != addr.lower() and addr != addr.upper():
+        return None, [], None
+
     addr = addr.lower()
     pos = addr.rfind("1")
     if pos == -1:

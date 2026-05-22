@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-比特币私钥对撞引擎和 CLI 界面
+比特币私钥碰撞引擎 - 向后兼容模块
 
-这是一个基于纯Python标准库实现的比特币私钥对撞工具。
-支持多种对撞模式：随机碰撞、范围扫描、暴力穷举。
+v5.0.0: 已移除 _LegacyTargetResolver 回退路径和 CollisionCLI 旧版 CLI。
+请使用 key_collision_cli.py 或 start_menu.py 启动程序。
 
-可选依赖coincurve库以提升性能。
+此文件仍保留以下类和常量的向后兼容导出：
+- TargetResolver, CollisionStats, CheckpointManager
+- DeduplicationFilter, KeyCollisionEngine
+- GPUCollisionEngine, MultiGPUCollisionEngine
 
 作者: BTC Project
-版本: v4.2.3
+版本: v5.0.0
 """
 
 import os
-import sys
 import time
 import secrets
 import threading
@@ -36,16 +38,16 @@ except ImportError:
 try:
     from p2pkh_simulator import (
         Secp256k1, ECPoint, EllipticCurve, HashUtils, Base58, WIF,
-        P2PKHAddressGenerator, ColorPrinter
+        P2PKHAddressGenerator,
     )
     P2PKH_SIMULATOR_AVAILABLE = True
 except ImportError:
     P2PKH_SIMULATOR_AVAILABLE = False
     # 定义占位符，避免后续代码指向这些类型时出错
     Secp256k1 = ECPoint = EllipticCurve = HashUtils = Base58 = WIF = None
-    P2PKHAddressGenerator = ColorPrinter = None
+    P2PKHAddressGenerator = None
     logging.warning(
-        "p2pkh_simulator 模块未找到，key_collision.py 的旧版 GUI 功能不可用。"
+        "p2pkh_simulator 模块未找到，key_collision.py 的 KeyCollisionEngine 不可用。"
         "请使用 key_collision_cli.py 运行命令行模式。"
     )
 
@@ -77,190 +79,41 @@ except ImportError:
 # =============================================================================
 # TargetResolver 类 - 目标地址解析器
 # =============================================================================
-# v4.2.3: 优先使用 src/ 统一实现，回退到本地兼容实现
-# 解决两套代码独立演进导致的功能不一致问题
-_TARGET_RESOLVER_SRC = None
-
-try:
-    from src.collision import TargetResolver as _SrcTargetResolver
-    _TARGET_RESOLVER_SRC = _SrcTargetResolver
-except ImportError:
-    # src/ 模块不可用时回退到本地实现
-    # 常见场景: key_collision.py 作为独立脚本运行（如 python key_collision.py）
-    logging.warning(
-        "src/ 模块不可用，将使用 _LegacyTargetResolver 回退实现。"
-        "此回退功能受限（不支持 P2SH/Bech32/Taproot），"
-        "建议将 key_collision.py 作为包的一部分运行。"
-        "计划在 v5.0 中移除回退路径。"
-    )
+# v5.0.0: 已移除 _LegacyTargetResolver 回退路径，
+# key_collision.py 现在要求 src/ 模块必须可用。
+from src.collision import TargetResolver as _SrcTargetResolver
 
 
 class TargetResolver:
     """解析多种格式的目标，统一转换为 P2PKH 地址集合
 
-    v4.2.3: 内部委托给 src.collision.TargetResolver 统一实现。
-    当 src/ 模块不可用时，使用本地兼容实现。
+    v5.0.0: 只使用 src.collision.TargetResolver 统一实现。
     """
 
     def __init__(self):
-        if _TARGET_RESOLVER_SRC is not None:
-            self._impl = _TARGET_RESOLVER_SRC()
-        else:
-            self._impl = None
-            self.generator = P2PKHAddressGenerator()
-            logging.warning(
-                "_LegacyTargetResolver 回退已启用: src/ 模块不可用。"
-                "此回退不支持 P2SH/Bech32/Taproot 地址，"
-                "功能受限。计划在 v5.0 中移除。"
-            )
+        self._impl = _SrcTargetResolver()
 
     @staticmethod
     def detect_format(input_str: str) -> str:
         """自动检测输入格式，返回: 'address', 'wif', 'pubkey_compressed', 'pubkey_uncompressed', 'unknown'"""
-        # 优先使用统一实现
-        if _TARGET_RESOLVER_SRC is not None:
-            return _TARGET_RESOLVER_SRC.detect_format(input_str)
-        return _LegacyTargetResolver._detect_format(input_str)
+        return _SrcTargetResolver.detect_format(input_str)
 
     @staticmethod
     def analyze_target_formats(targets: set[str]) -> dict[str, int]:
-        """v4.2.3: 分析目标地址格式分布"""
-        if _TARGET_RESOLVER_SRC is not None:
-            return _TARGET_RESOLVER_SRC.analyze_target_formats(targets)
-        return _LegacyTargetResolver._analyze_formats(targets)
+        """分析目标地址格式分布"""
+        return _SrcTargetResolver.analyze_target_formats(targets)
 
     def resolve(self, input_str: str) -> Optional[str]:
         """将任意格式输入解析为 P2PKH 地址，解析失败返回 None"""
-        if self._impl is not None:
-            return self._impl.resolve(input_str)
-        return _LegacyTargetResolver._resolve(input_str, self.generator)
+        return self._impl.resolve(input_str)
 
     def resolve_multiple(self, inputs: List[str]) -> Set[str]:
         """解析多个输入，返回地址集合"""
-        if self._impl is not None:
-            return self._impl.resolve_multiple(inputs)
-        return _LegacyTargetResolver._resolve_multiple(inputs, self.generator)
+        return self._impl.resolve_multiple(inputs)
 
     def load_from_file(self, filepath: str) -> Set[str]:
         """从文件逐行加载并解析，跳过空行和#注释"""
-        if self._impl is not None:
-            return self._impl.load_from_file(filepath)
-        return _LegacyTargetResolver._load_from_file(filepath, self.generator)
-
-
-class _LegacyTargetResolver:
-    """v4.2.3: 旧版 TargetResolver 逻辑保留作为 src/ 模块不可用时的回退。
-
-    限制:
-    - 不支持 P2SH(3开头)、Bech32(bc1q)、Taproot(bc1p) 地址
-    - 不支持缓存
-    - 不支持批量解析优化
-    - 不支持文件分块处理（大文件占用大量内存）
-
-    计划在 v5.0 中移除本回退实现。
-    届时 key_collision.py 将要求 src/ 模块必须可用。
-    """
-
-    @staticmethod
-    def _detect_format(input_str: str) -> str:
-        input_str = input_str.strip()
-        if not input_str:
-            return 'unknown'
-        # P2PKH地址: 以'1'开头, 25-34字符, Base58字符集
-        if input_str.startswith('1') and 25 <= len(input_str) <= 34:
-            valid_chars = set(Base58.ALPHABET)
-            if all(c in valid_chars for c in input_str):
-                return 'address'
-        # WIF
-        if input_str.startswith('5') and len(input_str) == 51:
-            valid_chars = set(Base58.ALPHABET)
-            if all(c in valid_chars for c in input_str):
-                return 'wif'
-        if input_str.startswith(('K', 'L')) and len(input_str) == 52:
-            valid_chars = set(Base58.ALPHABET)
-            if all(c in valid_chars for c in input_str):
-                return 'wif'
-        # 压缩公钥
-        if len(input_str) == 66 and input_str.startswith(('02', '03')):
-            try:
-                bytes.fromhex(input_str)
-                return 'pubkey_compressed'
-            except ValueError:
-                pass
-        # 非压缩公钥
-        if len(input_str) == 130 and input_str.startswith('04'):
-            try:
-                bytes.fromhex(input_str)
-                return 'pubkey_uncompressed'
-            except ValueError:
-                pass
-        return 'unknown'
-
-    @staticmethod
-    def _resolve(input_str: str, generator) -> Optional[str]:
-        input_str = input_str.strip()
-        fmt = _LegacyTargetResolver._detect_format(input_str)
-        try:
-            if fmt == 'address':
-                version, payload = Base58.check_decode(input_str)
-                if version == 0x00:
-                    return input_str
-                return None
-            elif fmt == 'wif':
-                private_key, compressed = WIF.decode(input_str)
-                public_key = generator.private_key_to_public_key(private_key, compressed=compressed)
-                address = generator.public_key_to_address(public_key)
-                return address
-            elif fmt in ('pubkey_compressed', 'pubkey_uncompressed'):
-                public_key = bytes.fromhex(input_str)
-                address = generator.public_key_to_address(public_key)
-                return address
-            else:
-                return None
-        except (ValueError, TypeError, Exception):
-            return None
-
-    @staticmethod
-    def _resolve_multiple(inputs: List[str], generator) -> Set[str]:
-        addresses = set()
-        for inp in inputs:
-            addr = _LegacyTargetResolver._resolve(inp, generator)
-            if addr:
-                addresses.add(addr)
-        return addresses
-
-    @staticmethod
-    def _analyze_formats(targets: set[str]) -> dict[str, int]:
-        """简单格式统计"""
-        counts: dict[str, int] = {}
-        for addr in targets:
-            if addr.startswith('1'):
-                counts['p2pkh'] = counts.get('p2pkh', 0) + 1
-            elif addr.startswith('3'):
-                counts['p2sh'] = counts.get('p2sh', 0) + 1
-            elif addr.startswith('bc1'):
-                counts['bech32'] = counts.get('bech32', 0) + 1
-            else:
-                counts['unknown'] = counts.get('unknown', 0) + 1
-        return counts
-
-    @staticmethod
-    def _load_from_file(filepath: str, generator) -> Set[str]:
-        addresses = set()
-        try:
-            with open(filepath, 'r', encoding='utf-8') as f:
-                for line in f:
-                    line = line.strip()
-                    if not line or line.startswith('#'):
-                        continue
-                    addr = _LegacyTargetResolver._resolve(line, generator)
-                    if addr:
-                        addresses.add(addr)
-        except FileNotFoundError:
-            logging.error(f"文件未找到: {filepath}")
-        except Exception as e:
-            logging.error(f"读取文件时出错: {e}")
-        return addresses
+        return self._impl.load_from_file(filepath)
 
 
 # =============================================================================
@@ -912,441 +765,7 @@ else:
 
 
 # =============================================================================
-# CollisionCLI 类 - CLI 交互界面
-# =============================================================================
-class CollisionCLI:
-    """对撞工具命令行界面
-
-    .. deprecated:: v4.2.3
-        此 CLI 已被 src/cli/main.py (key_collision_cli.py) + start_menu.py 完全替代。
-        请使用 `python key_collision_cli.py --help` 或 `python start_menu.py` 启动。
-        直接运行 `python key_collision.py` 仍可使用,但不会获得新功能和修复。
-    """
-
-    def __init__(self):
-        import warnings
-
-        warnings.warn(
-            "CollisionCLI 已弃用，请使用 key_collision_cli.py 或 start_menu.py",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        self.printer = ColorPrinter()
-        self.resolver = TargetResolver()
-        self.engine: Optional[KeyCollisionEngine] = None
-        self.targets: Set[str] = set()
-
-    def print_banner(self):
-        """打印欢迎横幅"""
-        p = self.printer
-        print(f"""
-{p.BRIGHT_YELLOW}{'=' * 70}{p.RESET}
-{p.BOLD}{p.BRIGHT_RED}
-   ██╗  ██╗███████╗██╗   ██╗     ██████╗ ██████╗██╗     ██╗██╗███████╗██╗ ██████╗ ███╗   ██╗
-   ██║ ██╔╝██╔════╝██║   ██║    ██╔════╝██╔════╝██║     ██║██║██╔════╝██║██╔═══██╗████╗  ██║
-   █████╔╝ █████╗  ██║   ██║    ██║     ██║     ██║     ██║██║███████╗██║██║   ██║██╔██╗ ██║
-   ██╔═██╗ ██╔══╝  ██║   ██║    ██║     ██║     ██║     ██║██║╚════██║██║██║   ██║██║╚██╗██║
-   ██║  ██╗███████╗╚██████╔╝    ╚██████╗╚██████╗███████╗██║██║███████║██║╚██████╔╝██║ ╚████║
-   ╚═╝  ╚═╝╚══════╝ ╚═════╝      ╚═════╝ ╚═════╝╚══════╝╚═╝╚═╝╚══════╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝
-{p.RESET}
-{p.BRIGHT_GREEN}   btc-collision-engine{p.RESET}
-{p.DIM}   纯Python实现 | 标准库 only | 教育演示用途{p.RESET}
-{p.BRIGHT_YELLOW}{'=' * 70}{p.RESET}
-        """)
-
-    def print_menu(self):
-        """打印主菜单"""
-        p = self.printer
-        print(f"""
-{p.BOLD}{p.BRIGHT_CYAN}╔══════════════════════════════════════════════════════════════════════╗{p.RESET}
-{p.BOLD}{p.BRIGHT_CYAN}║                        主菜单                                        ║{p.RESET}
-{p.BOLD}{p.BRIGHT_CYAN}╠══════════════════════════════════════════════════════════════════════╣{p.RESET}
-{p.BRIGHT_WHITE}  [{p.BRIGHT_GREEN}1{p.BRIGHT_WHITE}] 设置目标地址{p.RESET}
-{p.BRIGHT_WHITE}  [{p.BRIGHT_GREEN}2{p.BRIGHT_WHITE}] 随机碰撞模式{p.RESET}
-{p.BRIGHT_WHITE}  [{p.BRIGHT_GREEN}3{p.BRIGHT_WHITE}] 范围扫描模式{p.RESET}
-{p.BRIGHT_WHITE}  [{p.BRIGHT_GREEN}4{p.BRIGHT_WHITE}] 暴力穷举模式{p.RESET}
-{p.BRIGHT_WHITE}  [{p.BRIGHT_GREEN}5{p.BRIGHT_WHITE}] 查看当前目标{p.RESET}
-{p.BRIGHT_WHITE}  [{p.BRIGHT_GREEN}6{p.BRIGHT_WHITE}] 演示模式（已知小范围私钥）{p.RESET}
-{p.BRIGHT_WHITE}  [{p.BRIGHT_RED}0{p.BRIGHT_WHITE}] 退出{p.RESET}
-{p.BOLD}{p.BRIGHT_CYAN}╚══════════════════════════════════════════════════════════════════════╝{p.RESET}
-        """)
-
-    def setup_targets(self):
-        """设置目标地址（手动输入或文件导入）"""
-        p = self.printer
-        p.clear_screen()
-        p.print_title("设置目标地址")
-
-        print(f"{p.BRIGHT_WHITE}选择输入方式:{p.RESET}")
-        print(f"  [{p.BRIGHT_GREEN}1{p.BRIGHT_WHITE}] 手动输入（支持地址/WIF/公钥）{p.RESET}")
-        print(f"  [{p.BRIGHT_GREEN}2{p.BRIGHT_WHITE}] 从文件导入{p.RESET}")
-        print(f"  [{p.BRIGHT_GREEN}3{p.BRIGHT_WHITE}] 返回主菜单{p.RESET}")
-
-        choice = input(f"\n{p.BRIGHT_WHITE}请选择: {p.RESET}").strip()
-
-        if choice == '1':
-            print(f"\n{p.DIM}支持格式: P2PKH地址(1开头), WIF(5/K/L开头), 公钥(hex){p.RESET}")
-            print(f"{p.DIM}输入 'done' 结束输入{p.RESET}\n")
-
-            new_targets = set()
-            while True:
-                user_input = input(f"{p.BRIGHT_WHITE}输入目标 (或 'done' 结束): {p.RESET}").strip()
-                if user_input.lower() == 'done':
-                    break
-
-                addr = self.resolver.resolve(user_input)
-                if addr:
-                    new_targets.add(addr)
-                    p.print_success(f"已添加: {addr}")
-                else:
-                    p.print_error("无法解析输入")
-
-            self.targets.update(new_targets)
-            p.print_success(f"总共设置了 {len(self.targets)} 个目标地址")
-            p.wait_for_enter()
-
-        elif choice == '2':
-            filepath = input(f"{p.BRIGHT_WHITE}请输入文件路径: {p.RESET}").strip()
-            new_targets = self.resolver.load_from_file(filepath)
-            self.targets.update(new_targets)
-            p.print_success(f"从文件加载了 {len(new_targets)} 个目标地址")
-            p.print_info("当前总目标数", str(len(self.targets)), p.BRIGHT_CYAN)
-            p.wait_for_enter()
-
-    def on_progress(self, stats: CollisionStats):
-        """进度回调 - 打印实时统计"""
-        p = self.printer
-        # 格式: [已检测: 1,234,567 | 速度: 1,200/s | 运行: 00:17:13 | 匹配: 0]
-        checked_str = f"{stats.total_checked:,}"
-        speed_str = stats.format_speed()
-        elapsed_str = stats.format_elapsed()
-        match_str = f"{len(stats.matches)}"
-
-        progress_line = (
-            f"\r{p.BRIGHT_CYAN}[{p.RESET}已检测: {p.BRIGHT_WHITE}{checked_str}{p.RESET}"
-            f" | 速度: {p.BRIGHT_GREEN}{speed_str}{p.RESET}"
-            f" | 运行: {p.BRIGHT_YELLOW}{elapsed_str}{p.RESET}"
-            f" | 匹配: {p.BRIGHT_RED}{match_str}{p.RESET}{p.BRIGHT_CYAN}]{p.RESET}"
-        )
-        print(progress_line, end='', flush=True)
-
-    def on_match(self, private_key: bytes, address: str, wif: str):
-        """匹配回调 - 高亮显示匹配结果
-
-        安全说明:
-        - 仅交互式终端 (TTY) 显示完整私钥
-        - 非交互环境通过 logging 输出脱敏版本
-        - 始终记录脱敏审计日志
-        """
-        p = self.printer
-        logger = logging.getLogger(__name__)
-        key_hash = hashlib.sha256(private_key).hexdigest()[:16]
-
-        # 始终记录脱敏审计日志
-        logger.info(
-            "匹配发现: address=%s private_key_hash=%s",
-            address, f"KEY_HASH:{key_hash}"
-        )
-
-        # 交互式终端：显示完整私钥（带安全警告）
-        if sys.stdout.isatty():
-            print(f"\n\n{p.BG_GREEN}{p.BLACK}{'=' * 70}{p.RESET}")
-            p.print_success("找到匹配！")
-            print(f"{p.BG_GREEN}{p.BLACK}{'=' * 70}{p.RESET}\n")
-
-            p.print_label("匹配地址")
-            p.print_address(f"  {address}")
-
-            p.print_label("私钥 (Hex)")
-            p.print_private_key(f"  {private_key.hex()}")
-
-            p.print_label("私钥 (WIF)")
-            p.print_private_key(f"  {wif}")
-
-            print(f"\n{p.BRIGHT_RED}安全警告: 请勿分享、截图或在网络上传输以上私钥信息！{p.RESET}")
-            print(f"{p.BG_GREEN}{p.BLACK}{'=' * 70}{p.RESET}\n")
-        else:
-            # 非交互环境：仅输出脱敏信息
-            print(f"\n[MATCH] address={address} private_key_hash=KEY_HASH:{key_hash}\n")
-
-    def run_random_mode(self):
-        """运行随机碰撞模式"""
-        p = self.printer
-
-        if not self.targets:
-            p.print_error("请先设置目标地址")
-            p.wait_for_enter()
-            return
-
-        p.clear_screen()
-        p.print_title("随机碰撞模式")
-        p.print_info("目标数量", str(len(self.targets)), p.BRIGHT_CYAN)
-        print(f"\n{p.BRIGHT_YELLOW}按 Enter 开始，按 Ctrl+C 停止{p.RESET}\n")
-        input()
-
-        self.engine = KeyCollisionEngine(
-            targets=self.targets,
-            on_progress=self.on_progress,
-            on_match=self.on_match,
-            monitoring_enabled=True
-        )
-
-        self.engine.start(mode="random")
-
-        try:
-            while self.engine.is_running():
-                time.sleep(0.1)
-        except KeyboardInterrupt:
-            print(f"\n{p.BRIGHT_YELLOW}正在停止...{p.RESET}")
-        finally:
-            self.engine.stop()
-            stats = self.engine.get_stats()
-            print(f"\n\n{p.BRIGHT_CYAN}最终统计:{p.RESET}")
-            print(f"  已检测: {stats.total_checked:,}")
-            print(f"  速度: {stats.format_speed()}")
-            print(f"  运行时间: {stats.format_elapsed()}")
-            print(f"  匹配数: {len(stats.matches)}")
-            p.wait_for_enter()
-
-    def run_range_mode(self):
-        """运行范围扫描模式"""
-        p = self.printer
-
-        if not self.targets:
-            p.print_error("请先设置目标地址")
-            p.wait_for_enter()
-            return
-
-        p.clear_screen()
-        p.print_title("范围扫描模式")
-        p.print_info("目标数量", str(len(self.targets)), p.BRIGHT_CYAN)
-
-        try:
-            start_str = input(f"\n{p.BRIGHT_WHITE}输入起始私钥 (十进制整数): {p.RESET}").strip()
-            start = int(start_str)
-
-            end_str = input(f"{p.BRIGHT_WHITE}输入结束私钥 (十进制整数): {p.RESET}").strip()
-            end = int(end_str)
-
-            if start < 1 or end >= Secp256k1.N or start > end:
-                p.print_error("无效的范围")
-                p.wait_for_enter()
-                return
-
-            print(f"\n{p.BRIGHT_YELLOW}按 Enter 开始，按 Ctrl+C 停止{p.RESET}\n")
-            input()
-
-            self.engine = KeyCollisionEngine(
-                targets=self.targets,
-                on_progress=self.on_progress,
-                on_match=self.on_match
-            )
-
-            self.engine.start(mode="range", start=start, end=end)
-
-            try:
-                while self.engine.is_running():
-                    time.sleep(0.1)
-            except KeyboardInterrupt:
-                print(f"\n{p.BRIGHT_YELLOW}正在停止...{p.RESET}")
-            finally:
-                self.engine.stop()
-                stats = self.engine.get_stats()
-                print(f"\n\n{p.BRIGHT_CYAN}最终统计:{p.RESET}")
-                print(f"  已检测: {stats.total_checked:,}")
-                print(f"  速度: {stats.format_speed()}")
-                print(f"  运行时间: {stats.format_elapsed()}")
-                print(f"  匹配数: {len(stats.matches)}")
-                p.wait_for_enter()
-
-        except ValueError:
-            p.print_error("请输入有效的整数")
-            p.wait_for_enter()
-
-    def run_brute_force_mode(self):
-        """运行暴力穷举模式"""
-        p = self.printer
-
-        if not self.targets:
-            p.print_error("请先设置目标地址")
-            p.wait_for_enter()
-            return
-
-        p.clear_screen()
-        p.print_title("暴力穷举模式")
-        p.print_info("目标数量", str(len(self.targets)), p.BRIGHT_CYAN)
-
-        try:
-            start_str = input(f"\n{p.BRIGHT_WHITE}输入起始私钥 (十进制整数, 默认1): {p.RESET}").strip()
-            start = int(start_str) if start_str else 1
-
-            print(f"\n{p.BRIGHT_YELLOW}按 Enter 开始，按 Ctrl+C 停止{p.RESET}\n")
-            input()
-
-            self.engine = KeyCollisionEngine(
-                targets=self.targets,
-                on_progress=self.on_progress,
-                on_match=self.on_match
-            )
-
-            self.engine.start(mode="brute_force", start=start)
-
-            try:
-                while self.engine.is_running():
-                    time.sleep(0.1)
-            except KeyboardInterrupt:
-                print(f"\n{p.BRIGHT_YELLOW}正在停止...{p.RESET}")
-            finally:
-                self.engine.stop()
-                stats = self.engine.get_stats()
-                print(f"\n\n{p.BRIGHT_CYAN}最终统计:{p.RESET}")
-                print(f"  已检测: {stats.total_checked:,}")
-                print(f"  速度: {stats.format_speed()}")
-                print(f"  运行时间: {stats.format_elapsed()}")
-                print(f"  匹配数: {len(stats.matches)}")
-                p.wait_for_enter()
-
-        except ValueError:
-            p.print_error("请输入有效的整数")
-            p.wait_for_enter()
-
-    def run_demo_mode(self):
-        """演示模式 - 使用已知小范围私钥进行演示"""
-        p = self.printer
-
-        p.clear_screen()
-        p.print_title("演示模式")
-
-        # 使用已知私钥 1-100 范围
-        # 私钥=1 的地址: 1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH
-        demo_private_key = b'\x00' * 31 + b'\x01'
-
-        # 生成地址
-        if COINCURVE_AVAILABLE:
-            # 使用coincurve库生成地址，提升性能
-            try:
-                public_key = coincurve.PrivateKey(demo_private_key).public_key.format(compressed=True)
-                # 计算hash160
-                hash160 = hashlib.new('ripemd160', hashlib.sha256(public_key).digest()).digest()
-                # 生成P2PKH地址
-                demo_address = Base58.check_encode(0x00, hash160)
-            except Exception:
-                # 如果coincurve失败，回退到纯Python实现
-                demo_address, _, _ = self.generator.generate_address(demo_private_key)
-        else:
-            # 使用纯Python实现
-            demo_address, _, _ = self.generator.generate_address(demo_private_key)
-
-        p.print_info("演示说明", "使用私钥=1的已知地址作为目标", p.BRIGHT_CYAN)
-        p.print_info("目标地址", demo_address, p.BRIGHT_YELLOW)
-        p.print_info("搜索范围", "私钥 1-100", p.BRIGHT_GREEN)
-
-        # 设置目标
-        self.targets = {demo_address}
-
-        print(f"\n{p.BRIGHT_YELLOW}按 Enter 开始演示...{p.RESET}\n")
-        input()
-
-        self.engine = KeyCollisionEngine(
-            targets=self.targets,
-            on_progress=self.on_progress,
-            on_match=self.on_match,
-            monitoring_enabled=True
-        )
-
-        # 使用 brute_force 模式从 1 开始
-        self.engine.start(mode="brute_force", start=1)
-
-        try:
-            while self.engine.is_running():
-                time.sleep(0.1)
-        except KeyboardInterrupt:
-            print(f"\n{p.BRIGHT_YELLOW}正在停止...{p.RESET}")
-        finally:
-            self.engine.stop()
-            stats = self.engine.get_stats()
-            print(f"\n\n{p.BRIGHT_CYAN}演示结束统计:{p.RESET}")
-            print(f"  已检测: {stats.total_checked:,}")
-            print(f"  速度: {stats.format_speed()}")
-            print(f"  运行时间: {stats.format_elapsed()}")
-            print(f"  匹配数: {len(stats.matches)}")
-
-            if stats.matches:
-                p.print_success("演示成功！找到了匹配的私钥！")
-            else:
-                p.print_warning("演示结束，未找到匹配")
-
-            p.wait_for_enter()
-
-    def run(self):
-        """主循环"""
-        self.print_banner()
-
-        while True:
-            self.print_menu()
-            choice = input(f"{self.printer.BRIGHT_WHITE}请选择: {self.printer.RESET}").strip()
-
-            if choice == '0':
-                print(f"\n{self.printer.BRIGHT_GREEN}感谢使用，再见！{self.printer.RESET}\n")
-                break
-
-            elif choice == '1':
-                self.setup_targets()
-
-            elif choice == '2':
-                self.run_random_mode()
-
-            elif choice == '3':
-                self.run_range_mode()
-
-            elif choice == '4':
-                self.run_brute_force_mode()
-
-            elif choice == '5':
-                p = self.printer
-                p.clear_screen()
-                p.print_title("当前目标地址")
-                if self.targets:
-                    for i, addr in enumerate(sorted(self.targets), 1):
-                        p.print_info(f"{i}", addr, p.BRIGHT_YELLOW)
-                    p.print_info("总计", str(len(self.targets)), p.BRIGHT_CYAN)
-                else:
-                    p.print_warning("尚未设置目标地址")
-                p.wait_for_enter()
-
-            elif choice == '6':
-                self.run_demo_mode()
-
-            else:
-                p = self.printer
-                p.print_error("无效的选择，请重新输入")
-                p.wait_for_enter()
-
-
-# =============================================================================
 # 入口
 # =============================================================================
-# 配置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(message)s',
-    datefmt='%H:%M:%S'
-)
-
-# 安装日志安全过滤器（防止私钥泄露到日志文件）
-try:
-    from src.utils.logging_config import _setup_security_filter
-    _setup_security_filter()
-except Exception:
-    pass  # 安全过滤器初始化失败不阻止运行
-
-if __name__ == "__main__":
-    import warnings
-
-    warnings.warn(
-        "直接运行 key_collision.py 已弃用，请使用 key_collision_cli.py 或 start_menu.py",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    cli = CollisionCLI()
-    cli.run()
+# v5.0.0: 已移除 CollisionCLI 和 __main__ 入口
+# 请使用 key_collision_cli.py 或 start_menu.py 启动

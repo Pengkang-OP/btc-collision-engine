@@ -42,8 +42,12 @@ class EnhancedMonitoringSystem:
         config: 监控配置对象
         engine: 对撞引擎实例
         data_logger: 数据日志记录器(可能为None)
-        collection_interval: 数据采集间隔(秒)
-        enable_monitoring_data: 是否启用监控数据采集
+        collection_interval: 数据采集间隔(秒)，取自config
+        enable_monitoring_data: 是否启用监控数据采集，取自config
+
+    Note:
+        v5.0.0: 已移除弃用的 collection_interval/enable_monitoring_data 参数，
+        所有配置统一通过 MonitorConfig 管理。
     """
 
     # 类属性类型提示
@@ -54,8 +58,6 @@ class EnhancedMonitoringSystem:
         self,
         engine: Any | None = None,
         config: MonitorConfig | None = None,
-        collection_interval: float | None = None,  # 已弃用，使用config
-        enable_monitoring_data: bool | None = None,  # 已弃用，使用config
     ) -> None:
         """
         初始化增强版监控系统
@@ -63,8 +65,6 @@ class EnhancedMonitoringSystem:
         Args:
             engine: 对撞引擎实例
             config: 监控配置对象（推荐）
-            collection_interval: 数据采集间隔（秒）- 已弃用
-            enable_monitoring_data: 是否同时保存到monitoring_data - 已弃用
 
         Example:
             >>> from src.monitoring.monitor_config import MonitorConfig
@@ -73,38 +73,23 @@ class EnhancedMonitoringSystem:
             ...     collection_interval=5.0
             ... )
             >>> monitoring = EnhancedMonitoringSystem(engine, config=config)
+
+        Note:
+            v5.0.0: 已移除弃用的 collection_interval/enable_monitoring_data 参数，
+            请使用 config=MonitorConfig(...) 替代。
         """
         self.logger = get_configured_logger("EnhancedMonitoringSystem")
         self.engine = engine
 
-        # 处理配置：优先使用配置对象，兼容旧API参数
-        if config is not None:
-            # 使用配置对象
-            self.config = config
-        else:
-            # v5.0.0: 旧API参数路径已弃用，使用 MonitorConfig 替代
-            import warnings
+        # 使用配置对象
+        self.config = config if config is not None else MonitorConfig()
 
-            warnings.warn(
-                "EnhancedMonitoringSystem(collection_interval=..., enable_monitoring_data=...) "
-                "已弃用，请使用 config=MonitorConfig(...) 替代。",
-                FutureWarning,
-                stacklevel=2,
-            )
-            self.config = MonitorConfig()
-
-            if collection_interval is not None:
-                self.config.collection_interval = float(collection_interval)
-
-            if enable_monitoring_data is not None:
-                self.config.enable_monitoring_data = enable_monitoring_data
-
-        # 验证配置（添加异常处理）
+        # 验证配置
         try:
             self.config.validate()
         except ValueError as e:
             self.logger.warning(f"配置验证失败: {e}, 使用默认配置")
-            self.config = MonitorConfig()  # 回退到默认配置
+            self.config = MonitorConfig()
 
         # 使用配置初始化
         self.collection_interval = self.config.collection_interval

@@ -14,8 +14,8 @@ import sys
 from pathlib import Path
 
 # ─────────────────────────── Config ────────────────────────────
-VERSION = "4.2.3"
-RELEASE_DATE = "2026-05-16"
+VERSION = "5.0.0"
+RELEASE_DATE = "2026-05-22"
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_OUTPUT = Path(r"F:\Qoder\btc-collision-tools")
 
