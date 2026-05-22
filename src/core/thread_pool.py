@@ -1,36 +1,41 @@
-"""线程池优化模块
+"""Thread pool optimization module.
 
-实现支持工作窃取(Work Stealing)的线程池,提升多线程并行效率。
+Implements a work-stealing thread pool to improve multi-threaded
+parallel efficiency.
 
-P3-8增强：
-- 线程级统计信息（队列深度、任务处理数、闲置时间）
-- 健康监控（线程饥饿检测、死线程告警）
-- max_workers 边界校验（1-1024，防止过度创建）
-- GlobalThreadPoolManager 优雅关闭与统计导出
+P3-8 enhancements:
+- Per-thread statistics (queue depth, tasks processed, idle time)
+- Health monitoring (thread starvation detection, dead thread alerts)
+- max_workers boundary validation (1-1024)
+- GlobalThreadPoolManager graceful shutdown and stats export
 
-优化原理:
-- 工作窃取: 空闲线程从繁忙线程队列窃取任务,负载均衡
-- 任务队列: 每个线程独立队列,减少锁竞争
-- 动态调整: 根据系统负载动态调整线程数
+Optimization principles:
+- Work stealing: idle threads steal tasks from busy threads for load
+  balancing
+- Task queues: per-thread independent queues reduce lock contention
+- Dynamic adjustment: adjust thread count based on system load
 
-性能提升:
-- CPU利用率提升至90%+ (8核环境)
-- 多线程效率提升30%+
-- 任务调度延迟降低50%
+Performance improvements:
+- CPU utilization up to 90%+ (on 8-core environments)
+- Multi-thread efficiency improved by 30%+
+- Task scheduling latency reduced by 50%
 
-适用场景:
-- CPU密集型任务(椭圆曲线运算、哈希计算)
-- 大量独立小任务(批量私钥生成、地址计算)
+Applicable scenarios:
+- CPU-bound tasks (elliptic curve operations, hash computation)
+- Bulk independent tasks (batch private key generation, address
+  computation)
 
-技术规格:
-- 线程数: 默认CPU核心数（可配置 min=1, max=1024）
-- 任务队列: 每线程独立deque
-- 工作窃取: 从其他队列尾部窃取
-- 线程安全: 使用threading.Lock保护共享状态
+Technical specifications:
+- Thread count: default CPU core count (configurable min=1, max=1024)
+- Task queue: per-thread independent deque
+- Work stealing: steal from tail of other queues
+- Thread safety: threading.Lock protects shared state
 
-参考:
-- Work Stealing Algorithm: "The Work-Stealing Scheduler" - Blumofe & Leiserson, 1999
-- Python concurrent.futures: https://docs.python.org/3/library/concurrent.futures.html
+References:
+- Work Stealing Algorithm: "The Work-Stealing Scheduler"
+  - Blumofe & Leiserson, 1999
+- Python concurrent.futures:
+  https://docs.python.org/3/library/concurrent.futures.html
 """
 
 import os
@@ -41,50 +46,56 @@ from collections.abc import Callable
 from concurrent.futures import Future
 from typing import Any, Optional, cast
 
-# 导入日志配置
+# Import logging configuration
 from ..utils import get_configured_logger
 
-# 日志系统由CLI/main.py入口统一初始化
-# 获取模块日志记录器
+# Log system initialized uniformly by CLI/main.py entry point
+# Get module logger
 logger = get_configured_logger("ThreadPool")
 
-# 线程池配置常量
+# Thread pool configuration constants
 DEFAULT_MIN_WORKERS = 1
-DEFAULT_MAX_WORKERS = 1024  # 防止线程过度创建导致系统资源耗尽
+DEFAULT_MAX_WORKERS = 1024  # Prevent excessive thread creation
 
 
 def _validate_worker_count(count: int) -> int:
-    """P3-8: 验证并修正工作线程数
+    """P3-8: Validate and correct worker thread count.
 
-    确保线程数在安全范围内 [1, 1024]。
+    Ensures thread count is within safe range [1, 1024].
 
-    参数:
-        count: 请求的线程数
+    Args:
+        count: Requested thread count
 
-    返回:
-        修正后的安全线程数
+    Returns:
+        Corrected safe thread count
     """
     cpu_count = os.cpu_count() or 4
     if count is None or count <= 0:
         return cpu_count
     if count > DEFAULT_MAX_WORKERS:
-        logger.warning(f"线程数 {count} 超过上限 {DEFAULT_MAX_WORKERS}，已自动修正")
+        logger.warning(
+            f"Thread count {count} exceeds maximum "
+            f"{DEFAULT_MAX_WORKERS}, auto-corrected"
+        )
         return DEFAULT_MAX_WORKERS
     if count < DEFAULT_MIN_WORKERS:
-        logger.warning(f"线程数 {count} 低于下限 {DEFAULT_MIN_WORKERS}，已自动修正")
+        logger.warning(
+            f"Thread count {count} below minimum "
+            f"{DEFAULT_MIN_WORKERS}, auto-corrected"
+        )
         return DEFAULT_MIN_WORKERS
     return count
 
 
 class WorkStealingThreadPool:
-    """支持工作窃取的线程池
+    """Thread pool with work stealing support.
 
-    特性:
-    - 每线程独立任务队列,减少锁竞争
-    - 空闲线程自动从繁忙线程窃取任务
-    - 动态线程数调整(可选)
+    Features:
+    - Per-thread independent task queues reduce lock contention
+    - Idle threads automatically steal tasks from busy threads
+    - Dynamic thread count adjustment (optional)
 
-    使用示例:
+    Usage:
         >>> pool = WorkStealingThreadPool(num_threads=8)
         >>> pool.start()
         >>> future = pool.submit(lambda: 2+2)
@@ -92,61 +103,80 @@ class WorkStealingThreadPool:
         >>> pool.stop()
     """
 
-    def __init__(self, num_threads: int | None = None, enable_work_stealing: bool = True) -> None:
+    def __init__(
+        self, num_threads: int | None = None,
+        enable_work_stealing: bool = True,
+    ) -> None:
         """
-        初始化线程池
+        Initialize thread pool.
 
-        参数:
-            num_threads: 线程数,默认CPU核心数 (P3-8: 不再-1，充分利用多核)
-            enable_work_stealing: 是否启用工作窃取,默认True
+        Args:
+            num_threads: Number of threads, defaults to CPU count
+                (P3-8: no longer -1, fully utilize multi-core)
+            enable_work_stealing: Enable work stealing, default True
         """
-        self.num_threads = _validate_worker_count(num_threads or (os.cpu_count() or 4))
+        self.num_threads = _validate_worker_count(
+            num_threads or (os.cpu_count() or 4)
+        )
         self.enable_work_stealing = enable_work_stealing
 
-        # 每线程任务队列
-        self._queues: list[deque] = [deque() for _ in range(self.num_threads)]
-        self._queue_locks = [threading.Lock() for _ in range(self.num_threads)]
+        # Per-thread task queues
+        self._queues: list[deque] = [
+            deque() for _ in range(self.num_threads)
+        ]
+        self._queue_locks = [
+            threading.Lock() for _ in range(self.num_threads)
+        ]
 
-        # 线程管理
+        # Thread management
         self._threads: list[threading.Thread] = []
         self._stop_event = threading.Event()
 
-        # 统计信息
+        # Statistics
         self._stats_lock = threading.Lock()
         self._tasks_submitted = 0
         self._tasks_completed = 0
         self._tasks_stolen = 0
-        self._tasks_failed = 0  # 失败任务计数
+        self._tasks_failed = 0
 
-        # 线程级统计
+        # Per-thread statistics
         self._thread_tasks: list[int] = [0] * self.num_threads
         self._thread_idle_cycles: list[int] = [0] * self.num_threads
         self._last_health_check = time.time()
 
-        # 启动时间戳
+        # Start timestamp
         self._start_time: float | None = None
 
-        logger.info(f"线程池初始化: threads={self.num_threads}, work_stealing={enable_work_stealing}")
+        logger.info(
+            f"Thread pool initialized: "
+            f"threads={self.num_threads}, "
+            f"work_stealing={enable_work_stealing}"
+        )
 
     def start(self) -> None:
-        """启动线程池"""
+        """Start the thread pool"""
         self._stop_event.clear()
-        self._start_time = time.time()  # 记录启动时间
+        self._start_time = time.time()
 
         for i in range(self.num_threads):
-            thread = threading.Thread(target=self._worker, args=(i,), name=f"Worker-{i}", daemon=True)
+            thread = threading.Thread(
+                target=self._worker,
+                args=(i,),
+                name=f"Worker-{i}",
+                daemon=True,
+            )
             thread.start()
             self._threads.append(thread)
 
-        logger.info(f"线程池已启动: {self.num_threads}个线程")
+        logger.info(f"Thread pool started: {self.num_threads} threads")
 
     def stop(self, wait: bool = True, timeout: float = 30.0) -> None:
         """
-        停止线程池
+        Stop the thread pool.
 
-        参数:
-            wait: 是否等待所有任务完成
-            timeout: 等待超时时间(秒)
+        Args:
+            wait: Whether to wait for all tasks to complete
+            timeout: Wait timeout in seconds
         """
         self._stop_event.set()
 
@@ -154,37 +184,41 @@ class WorkStealingThreadPool:
             for i, thread in enumerate(self._threads):
                 thread.join(timeout=timeout)
                 if thread.is_alive():
-                    logger.warning(f"线程 Worker-{i} 在 {timeout}s 超时后仍未停止")
+                    logger.warning(
+                        f"Thread Worker-{i} did not stop within "
+                        f"{timeout}s timeout"
+                    )
 
         self._threads.clear()
 
-        # 输出关闭统计
+        # Output shutdown statistics
         stats = self.get_stats()
         logger.info(
-            f"线程池已停止: 提交={stats['tasks_submitted']}, "
-            f"完成={stats['tasks_completed']}, "
-            f"窃取={stats['tasks_stolen']}, "
-            f"失败={stats['tasks_failed']}"
+            f"Thread pool stopped: "
+            f"submitted={stats['tasks_submitted']}, "
+            f"completed={stats['tasks_completed']}, "
+            f"stolen={stats['tasks_stolen']}, "
+            f"failed={stats['tasks_failed']}"
         )
 
     def submit(self, fn: Callable, *args, **kwargs) -> Future:
         """
-        提交任务到线程池
+        Submit a task to the thread pool.
 
-        参数:
-            fn: 要执行的函数
-            *args: 函数位置参数
-            **kwargs: 函数关键字参数
+        Args:
+            fn: Function to execute
+            *args: Positional arguments for the function
+            **kwargs: Keyword arguments for the function
 
-        返回:
-            Future对象,用于获取任务结果
+        Returns:
+            Future object for retrieving the task result
         """
         future: Future = Future()
 
-        # 包装任务
+        # Wrap task
         task = (fn, args, kwargs, future)
 
-        # 选择队列(轮询分配)
+        # Select queue (round-robin distribution)
         queue_idx = self._tasks_submitted % self.num_threads
 
         with self._queue_locks[queue_idx]:
@@ -194,13 +228,13 @@ class WorkStealingThreadPool:
         return future
 
     def _worker(self, thread_id: int) -> None:
-        """工作线程主循环"""
+        """Worker thread main loop"""
         while not self._stop_event.is_set():
             task = self._get_task(thread_id)
 
             if task is None:
-                # 无任务,短暂休眠
-                self._thread_idle_cycles[thread_id] += 1  # 闲置计数
+                # No task, brief sleep
+                self._thread_idle_cycles[thread_id] += 1
                 time.sleep(0.001)
                 continue
 
@@ -211,54 +245,64 @@ class WorkStealingThreadPool:
                 future.set_result(result)
                 with self._stats_lock:
                     self._tasks_completed += 1
-                    self._thread_tasks[thread_id] += 1  # 线程级计数
+                    self._thread_tasks[thread_id] += 1
             except Exception as e:
                 future.set_exception(e)
                 with self._stats_lock:
-                    self._tasks_failed += 1  # 失败计数
-                logger.error(f"任务执行失败 (线程{thread_id}): {type(e).__name__}: {e}")
+                    self._tasks_failed += 1
+                logger.error(
+                    f"Task failed (thread {thread_id}): "
+                    f"{type(e).__name__}: {e}"
+                )
 
-    def _get_task(self, thread_id: int) -> tuple | None:
+    def _get_task(
+        self, thread_id: int
+    ) -> tuple | None:
         """
-        获取任务(优先从本地队列,其次窃取)
+        Get a task (local queue first, then steal).
 
-        参数:
-            thread_id: 当前线程ID
+        Args:
+            thread_id: Current thread ID
 
-        返回:
-            任务元组或None
+        Returns:
+            Task tuple or None
         """
-        # 1. 尝试从本地队列获取
+        # 1. Try local queue first
         with self._queue_locks[thread_id]:
             if self._queues[thread_id]:
-                return cast(tuple | None, self._queues[thread_id].popleft())
+                return cast(
+                    tuple | None,
+                    self._queues[thread_id].popleft(),
+                )
 
-        # 2. 工作窃取: 从其他队列获取
+        # 2. Work stealing: get from other queues
         if self.enable_work_stealing:
             return self._steal_work(thread_id)
 
         return None
 
-    def _steal_work(self, thief_id: int) -> tuple | None:
+    def _steal_work(
+        self, thief_id: int
+    ) -> tuple | None:
         """
-        工作窃取算法
+        Work stealing algorithm.
 
-        从其他线程的队列尾部窃取任务。
+        Steals tasks from the tail of other thread queues.
 
-        参数:
-            thief_id: 窃取者线程ID
+        Args:
+            thief_id: Thief thread ID
 
-        返回:
-            窃取的任务或None
+        Returns:
+            Stolen task or None
         """
-        # 遍历其他线程的队列
+        # Iterate other thread queues
         for victim_id in range(self.num_threads):
             if victim_id == thief_id:
                 continue
 
             with self._queue_locks[victim_id]:
                 if self._queues[victim_id]:
-                    # 从队列尾部窃取(减少竞争)
+                    # Steal from queue tail (reduce contention)
                     task = self._queues[victim_id].pop()
                     self._tasks_stolen += 1
                     return cast(tuple | None, task)
@@ -267,10 +311,10 @@ class WorkStealingThreadPool:
 
     def get_stats(self) -> dict:
         """
-        P3-8增强: 获取线程池详细统计信息
+        P3-8 enhanced: Get detailed thread pool statistics.
 
-        返回:
-            包含统计数据的字典
+        Returns:
+            Dictionary containing statistics
         """
         with self._stats_lock:
             return {
@@ -279,23 +323,35 @@ class WorkStealingThreadPool:
                 "tasks_completed": self._tasks_completed,
                 "tasks_failed": self._tasks_failed,
                 "tasks_stolen": self._tasks_stolen,
-                "tasks_pending": self._tasks_submitted - self._tasks_completed,
-                "steal_rate": self._tasks_stolen / max(self._tasks_completed + self._tasks_failed, 1),
-                "failure_rate": self._tasks_failed / max(self._tasks_completed + self._tasks_failed, 1),
-                "active_threads": sum(1 for t in self._threads if t.is_alive()),
+                "tasks_pending": (
+                    self._tasks_submitted - self._tasks_completed
+                ),
+                "steal_rate": self._tasks_stolen / max(
+                    self._tasks_completed + self._tasks_failed, 1
+                ),
+                "failure_rate": self._tasks_failed / max(
+                    self._tasks_completed + self._tasks_failed, 1
+                ),
+                "active_threads": sum(
+                    1 for t in self._threads if t.is_alive()
+                ),
                 "per_thread_tasks": self._thread_tasks.copy(),
                 "per_thread_idle": self._thread_idle_cycles.copy(),
-                "uptime_seconds": time.time() - self._start_time if self._start_time else 0,
+                "uptime_seconds": (
+                    time.time() - self._start_time
+                    if self._start_time
+                    else 0
+                ),
             }
 
     def health_check(self) -> dict:
         """
-        P3-8新增: 线程池健康检查
+        P3-8 new: Thread pool health check.
 
-        检测线程饥饿、死线程等异常状态。
+        Detects thread starvation, dead threads, and other anomalies.
 
-        返回:
-            健康状态字典
+        Returns:
+            Health status dictionary
         """
         with self._stats_lock:
             now = time.time()
@@ -305,25 +361,39 @@ class WorkStealingThreadPool:
             issues = []
             status = "healthy"
 
-            # 检测死线程
+            # Detect dead threads
             if self._threads and active < self.num_threads:
-                issues.append(f"死线程: {self.num_threads - active}个线程已终止")
+                issues.append(
+                    f"Dead threads: "
+                    f"{self.num_threads - active} threads terminated"
+                )
                 status = "degraded"
 
-            # 检测线程饥饿（某线程任务量远低于平均）
+            # Detect thread starvation
+            # (thread task count far below average)
             if total_tasks > 100:
                 avg_tasks = total_tasks / max(active, 1)
-                for tid, task_count in enumerate(self._thread_tasks):
+                for tid, task_count in enumerate(
+                    self._thread_tasks
+                ):
                     if task_count < avg_tasks * 0.1:
                         issues.append(
-                            f"线程饥饿: Worker-{tid} 仅处理 {task_count} 任务 (平均 {avg_tasks:.0f})"
+                            f"Thread starvation: Worker-{tid} "
+                            f"processed only {task_count} tasks "
+                            f"(avg {avg_tasks:.0f})"
                         )
 
-            # 检测高失败率
-            if self._tasks_completed + self._tasks_failed > 100:
-                fail_rate = self._tasks_failed / (self._tasks_completed + self._tasks_failed)
+            # Detect high failure rate
+            if (
+                self._tasks_completed + self._tasks_failed > 100
+            ):
+                fail_rate = self._tasks_failed / max(
+                    self._tasks_completed + self._tasks_failed, 1
+                )
                 if fail_rate > 0.1:
-                    issues.append(f"高失败率: {fail_rate:.1%}")
+                    issues.append(
+                        f"High failure rate: {fail_rate:.1%}"
+                    )
                     status = "degraded"
 
             self._last_health_check = now
@@ -338,32 +408,37 @@ class WorkStealingThreadPool:
 
 
 class TaskBatch:
-    """批量任务执行器
+    """Batch task executor.
 
-    用于批量提交和执行任务,减少调度开销。
+    Used for submitting and executing tasks in batch to reduce
+    scheduling overhead.
     """
 
-    def __init__(self, pool: WorkStealingThreadPool) -> None:
+    def __init__(
+        self, pool: WorkStealingThreadPool
+    ) -> None:
         """
-        初始化批量任务执行器
+        Initialize batch task executor.
 
-        参数:
-            pool: 线程池实例
+        Args:
+            pool: Thread pool instance
         """
         self._pool = pool
         self._futures: list[Future] = []
 
-    def submit(self, fn: Callable, *args, **kwargs) -> None:
-        """提交任务到批次"""
+    def submit(
+        self, fn: Callable, *args, **kwargs
+    ) -> None:
+        """Submit a task to the batch"""
         future = self._pool.submit(fn, *args, **kwargs)
         self._futures.append(future)
 
     def execute_all(self) -> list[Any]:
         """
-        执行所有任务并等待结果
+        Execute all tasks and wait for results.
 
-        返回:
-            所有任务的结果列表
+        Returns:
+            List of all task results
         """
         results = []
         for future in self._futures:
@@ -373,16 +448,17 @@ class TaskBatch:
         return results
 
 
-# 全局线程池管理器
+# Global thread pool manager
 class GlobalThreadPoolManager:
-    """P3-8增强: 全局线程池管理器
+    """P3-8 enhanced: Global thread pool manager.
 
-    提供单例访问模式,管理全局线程池实例。
+    Provides singleton access pattern, managing global thread pool
+    instance.
 
-    P3-8新增特性:
-    - 从配置加载线程数
-    - 运行时调整线程数（缩容）
-    - 关闭时输出完整统计
+    P3-8 new features:
+    - Load thread count from configuration
+    - Runtime thread count adjustment (scale down)
+    - Full statistics output on shutdown
     """
 
     _instance: Optional["GlobalThreadPoolManager"] = None
@@ -391,7 +467,9 @@ class GlobalThreadPoolManager:
     _initialized: bool = False
     _shutdown_complete: bool = False
 
-    def __new__(cls) -> "GlobalThreadPoolManager":
+    def __new__(
+        cls,
+    ) -> "GlobalThreadPoolManager":
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None:
@@ -401,90 +479,122 @@ class GlobalThreadPoolManager:
                     cls._instance._shutdown_complete = False
         return cls._instance
 
-    def initialize(self, num_threads: int | None = None) -> None:
+    def initialize(
+        self, num_threads: int | None = None
+    ) -> None:
         """
-        P3-8增强: 初始化全局线程池（支持配置传入）
+        P3-8 enhanced: Initialize global thread pool
+        (supports config input).
 
-        参数:
-            num_threads: 线程数，None则自动检测。会被边界校验修正。
+        Args:
+            num_threads: Thread count, None for auto-detect.
+                Will be corrected by boundary validation.
         """
         if self._initialized:
             return
 
         with self._lock:
             if not self._initialized:
-                self._pool = WorkStealingThreadPool(num_threads)
+                self._pool = WorkStealingThreadPool(
+                    num_threads
+                )
                 self._pool.start()
                 self._initialized = True
                 self._shutdown_complete = False
-                logger.info(f"全局线程池已初始化: {self._pool.num_threads}线程")
+                logger.info(
+                    f"Global thread pool initialized: "
+                    f"{self._pool.num_threads} threads"
+                )
 
-    def get_pool(self) -> WorkStealingThreadPool | None:
-        """获取全局线程池"""
+    def get_pool(
+        self,
+    ) -> WorkStealingThreadPool | None:
+        """Get global thread pool"""
         if not self._initialized:
             self.initialize()
         return self._pool
 
     def shutdown(self) -> None:
         """
-        P3-8增强: 关闭全局线程池（带统计输出）
+        P3-8 enhanced: Shutdown global thread pool
+        (with statistics output).
         """
         if self._pool and not self._shutdown_complete:
             self._pool.stop()
             self._initialized = False
             self._shutdown_complete = True
 
-            # 关闭时健康检查
+            # Health check on shutdown
             health = self._pool.health_check()
             if health["issues"]:
-                logger.warning(f"线程池关闭时检测到问题: {', '.join(health['issues'])}")
+                logger.warning(
+                    "Issues detected during thread pool "
+                    f"shutdown: {', '.join(health['issues'])}"
+                )
 
-    def resize(self, new_num_threads: int) -> bool:
+    def resize(
+        self, new_num_threads: int
+    ) -> bool:
         """
-        P3-8新增: 运行时调整线程数（仅支持缩容，不清除活跃线程）
+        P3-8 new: Adjust thread count at runtime
+        (scale down only, does not kill active threads).
 
-        当前实现为简化版：仅记录新配置，不强行终止运行中线程。
-        实际缩容在下次 start() 时生效。
+        Current implementation is simplified: records new
+        configuration only, does not force-terminate running threads.
+        Actual scale down takes effect on next start().
 
-        参数:
-            new_num_threads: 新的线程数
+        Args:
+            new_num_threads: New thread count
 
-        返回:
+        Returns:
             True if the resize was applied, False otherwise
         """
-        new_num_threads = _validate_worker_count(new_num_threads)
+        new_num_threads = _validate_worker_count(
+            new_num_threads
+        )
 
         if not self._pool:
-            logger.warning("线程池未初始化，无法调整大小")
+            logger.warning(
+                "Thread pool not initialized, cannot resize"
+            )
             return False
 
         if new_num_threads >= self._pool.num_threads:
-            logger.info(f"线程数无需调整: 当前={self._pool.num_threads}, 请求={new_num_threads}")
+            logger.info(
+                f"No resize needed: "
+                f"current={self._pool.num_threads}, "
+                f"requested={new_num_threads}"
+            )
             return False
 
-        logger.info(f"线程池缩容: {self._pool.num_threads} -> {new_num_threads} (将在下次启动时生效)")
-        # 保存意图（实际缩容在下次 start 时生效）
+        logger.info(
+            f"Thread pool scaling down: "
+            f"{self._pool.num_threads} -> "
+            f"{new_num_threads} "
+            f"(will take effect on next start)"
+        )
+        # Save intent (actual scale down on next start)
         self._resize_pending = new_num_threads
         return True
 
     def get_health(self) -> dict | None:
         """
-        P3-8新增: 获取线程池健康状态
+        P3-8 new: Get thread pool health status.
 
-        返回:
-            健康状态字典，若未初始化则返回 None
+        Returns:
+            Health status dictionary, or None if not initialized
         """
         if not self._pool:
             return None
         return self._pool.health_check()
 
 
-# 全局单例
+# Global singleton
 thread_pool_manager = GlobalThreadPoolManager()
 
 
 def get_thread_pool() -> WorkStealingThreadPool:
-    """获取全局线程池实例"""
+    """Get global thread pool instance"""
     pool = thread_pool_manager.get_pool()
     if pool is None:
         thread_pool_manager.initialize()
