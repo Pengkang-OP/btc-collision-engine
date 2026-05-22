@@ -143,7 +143,11 @@ class SecureKeyManager:
                 logger.warning(f"不支持的操作系统: {os.name}，无法锁定内存")
                 return False
         except Exception as e:
-            logger.warning(f"内存锁定失败: {e}，将继续运行但不保护内存")
+            logger.error(f"⚠️ 内存锁定失败: {e}")
+            logger.error("⚠️ 私钥可能被交换到磁盘！建议以管理员权限运行。")
+            # 在Linux上建议用户调整 memlock 限制
+            if os.name == "posix":
+                logger.error("在Linux上，请运行: ulimit -l unlimited")
             return False
 
     def _lock_memory_posix(self) -> bool:
