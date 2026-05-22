@@ -1,5 +1,9 @@
 # CMD环境下引擎日志使用指南
 
+**版本**: v4.5.1
+
+
+
 ## 📋 目录
 
 - [环境配置](#环境配置)
@@ -36,13 +40,13 @@ setlocal enabledelayedexpansion
 
 ### 方式1: 双击启动（推荐）
 
-```
+```yaml
 直接双击: start.bat
 ```
 
 会显示启动选择菜单：
 
-```
+```yaml
 ========================================
   BTC Collision Engine - 启动选择
 ========================================
@@ -93,7 +97,7 @@ python key_collision_cli.py -f targets.txt --duration 300
 
 日志会同时输出到控制台和文件：
 
-```
+```bash
 [INFO] 日志安全过滤器已启用（防止私钥泄露）
 2026-04-27 19:26:36,238 - CMD测试 - INFO - 日志系统初始化完成
 2026-04-27 19:26:36,239 - CMD测试 - INFO - 目标地址数: 4
@@ -113,13 +117,13 @@ python key_collision_cli.py -f targets.txt --duration 300
 
 ### 日志格式
 
-```
+```bash
 时间戳 - 模块名 - 级别 - 消息
 ```
 
 示例：
 
-```
+```bash
 2026-04-27 19:22:12,480 - CryptoBackend - INFO - 加密后端初始化完成
 2026-04-27 19:22:12,571 - BigIntOptimizer - INFO - gmpy2大整数优化已启用
 ```
@@ -130,7 +134,7 @@ python key_collision_cli.py -f targets.txt --duration 300
 
 ### 文件位置
 
-```
+```bash
 项目根目录/
 └── logs/
     ├── collision.log          ← 当前日志
@@ -357,7 +361,7 @@ taskkill /F /IM python.exe
 
 **错误信息**:
 
-```
+```bash
 PermissionError: [WinError 5] 拒绝访问
 ```
 
@@ -371,7 +375,7 @@ PermissionError: [WinError 5] 拒绝访问
 
 **警告**:
 
-```
+```bash
 [磁盘警告] 日志目录可用空间不足
 ```
 

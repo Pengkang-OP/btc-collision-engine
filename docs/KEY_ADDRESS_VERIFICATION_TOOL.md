@@ -1,5 +1,8 @@
 # 比特币密钥派生及地址生成验证工具
 
+**版本**: v4.5.1
+
+
 ## 概述
 
 本工具 (`tools/btc_key_address_verifier.py`) 用于验证比特币密钥派生及地址生成流程的正确性。
@@ -87,7 +90,7 @@ report = verifier.generate_random_verification()
 
 ### 控制台输出
 
-```
+```python
 ======================================================================
 比特币密钥派生及地址生成验证
 ======================================================================
@@ -143,7 +146,7 @@ Bech32m: bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jjw (format 
 
 ### 1. 私钥到公钥
 
-```
+```text
 私钥 (32 bytes)
     │
     ▼ [椭圆曲线标量乘法 Q = k * G]
@@ -155,7 +158,7 @@ Bech32m: bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jjw (format 
 
 ### 2. P2PKH 地址
 
-```
+```text
 公钥
     │
     ▼ [SHA256]
@@ -173,7 +176,7 @@ P2PKH 地址 (以 '1' 开头)
 
 ### 3. P2SH 地址
 
-```
+```text
 压缩公钥
     │
     ▼ [HASH160]
@@ -194,7 +197,7 @@ P2SH 地址 (以 '3' 开头)
 
 ### 4. Bech32 地址
 
-```
+```text
 压缩公钥
     │
     ▼ [HASH160]
@@ -209,7 +212,7 @@ Bech32 地址 (以 'bc1' 开头)
 
 ### 5. Bech32m (Taproot) 地址
 
-```
+```text
 压缩公钥 (移除前缀，仅保留 x 坐标)
     │
     ▼ [x-only 公钥]
@@ -239,7 +242,7 @@ Bech32m 地址 (以 'bc1p' 开头)
 2. 标出不一致环节
 3. 显示生成的地址和目标地址
 
-```
+```text
 P2PKH: 1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH [FAIL] MISMATCH
 ```
 

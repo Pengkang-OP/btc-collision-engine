@@ -1,5 +1,8 @@
 # 文档归档策略
 
+**版本**: v4.5.1
+
+
 ## 背景
 
 在导入路径重构过程中，生成了3个详细的优化报告文档。为避免文档冗余和维护成本，制定本归档策略。
@@ -22,7 +25,7 @@
 
 ### 方案1: 创建archive目录（推荐）
 
-```
+```text
 docs/
 ├── import-path-final-optimization-report.md  # 保留在主目录
 └── archive/
@@ -50,7 +53,7 @@ docs/
 
 创建一个包含所有阶段信息的综合报告：
 
-```
+```text
 docs/
 └── import-path-refactoring-complete.md  # 综合报告
 ```
@@ -173,7 +176,7 @@ docs/
 
 ### 文档分类
 
-```
+```bash
 docs/
 ├── *.md                    # 当前有效文档
 ├── archive/                # 历史归档

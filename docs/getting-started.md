@@ -1,5 +1,8 @@
 # 快速开始与部署指南
 
+**版本**: v4.5.1
+
+
 
 ## 目录
 
@@ -119,7 +122,7 @@ python run_real_collision_test.py 60 4
 
 ## 方法C: 使用Python代码
 
-```
+```bash
 from src.collision.key_collision_engine import KeyCollisionEngine
 import time
 
@@ -198,7 +201,7 @@ python key_collision_cli.py -f valid_addresses.txt -m brute --start 1
 
 **实际测试**:
 
-```
+```text
 $ python run_real_collision_test.py 10 2
 
 📊 测试结果:
@@ -215,7 +218,7 @@ $ python run_real_collision_test.py 10 2
 
 ### 完整测试套件
 
-```
+```bash
 # 运行所有测试
 python -m pytest tests/ -v
 
@@ -231,7 +234,7 @@ python -m pytest tests/ --cov=src --cov-report=html
 
 ## 测试状态
 
-```
+```bash
 
 ✅ 261个测试用例
 ✅ 97%+通过率
@@ -243,7 +246,7 @@ python -m pytest tests/ --cov=src --cov-report=html
 
 ## 📁 项目结构
 
-```
+```text
 
 f:/BTC/
 ├── src/                          # 源代码

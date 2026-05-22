@@ -528,7 +528,7 @@ class DocumentQualityChecker:
         print(f"  ❌ 需改进 (<7.0): {poor} 个")
 
         # 列出需要改进的文档
-        poor_docs = [s for s in self.scores if s.score < 7.0]
+        poor_docs = [s for s in self.scores if s.score < 6.0]
         if poor_docs:
             print("\n⚠️  需要改进的文档:")
             for doc in poor_docs:

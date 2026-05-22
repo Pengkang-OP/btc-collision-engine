@@ -84,7 +84,7 @@ python -m src.utils.health_check --gpu
 
 ## 3. 项目结构
 
-```
+```bash
 btc-collision-engine/
 ├── src/                        # 核心源码
 │   ├── cli/                    # 命令行界面
@@ -447,7 +447,7 @@ stats = monitor.get_stats()
 
 ### 9.2 Git 提交规范
 
-```
+```bash
 <类型>(<模块>): <简短描述>
 
 详细说明（可选）
@@ -457,7 +457,7 @@ stats = monitor.get_stats()
 
 示例：
 
-```
+```bash
 feat(gpu): 添加 Intel Arc A770 支持
 
 - 新增 uint32 workaround 标志

@@ -45,7 +45,7 @@ python key_collision_cli.py -t targets.txt -m random
 
 ### 基本参数
 
-```
+```bash
 -t, --target FILE        目标地址文件
 -m, --mode MODE          碰撞模式 (random/range/brute)
 -e, --engine TYPE        引擎类型 (cpu/gpu/multi-gpu)
@@ -54,7 +54,7 @@ python key_collision_cli.py -t targets.txt -m random
 
 ### 功能开关
 
-```
+```bash
 --checkpoint             启用断点续传 (默认启用)
 --no-checkpoint          禁用断点续传
 --dedup                  启用去重过滤 (默认启用)
@@ -64,7 +64,7 @@ python key_collision_cli.py -t targets.txt -m random
 
 ### 帮助命令
 
-```
+```bash
 -h, --help               显示帮助信息
 --examples               显示使用示例
 --recommend              参数推荐
@@ -88,7 +88,7 @@ python key_collision_cli.py -t targets.txt -m random
 
 ## 📝 创建targets.txt
 
-```
+```bash
 # 我的目标地址
 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy
@@ -160,7 +160,7 @@ nohup python key_collision_cli.py --quick-run > log.txt 2>&1 &
 
 运行时显示：
 
-```
+```bash
 [00:05] [CPU] ████░░░░░░░░░░░░ 25.0% | 1,234/4,936 | 速度: 246/s | ETA: 15s | 匹配: 0
 ```
 
@@ -212,7 +212,7 @@ pip install -r requirements-gpu.txt
 
 **解决**: 按Ctrl+C
 
-```
+```bash
 按 Ctrl+C 安全停止（进度会自动保存）
 ```
 

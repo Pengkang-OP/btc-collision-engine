@@ -1,5 +1,9 @@
 # systemd服务部署指南
 
+**版本**: v4.5.1
+
+
+
 本文档提供BTC碰撞引擎的systemd服务部署详细说明。
 
 ## 📋 目录
@@ -221,7 +225,7 @@ systemd-cgls
 
 创建 `/etc/logrotate.d/btc-collision-engine`:
 
-```
+```bash
 /var/log/journal/*/system.journal {
     monthly
     rotate 12

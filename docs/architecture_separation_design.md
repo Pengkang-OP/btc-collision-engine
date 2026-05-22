@@ -1,5 +1,8 @@
 # BTC Collision Engine - 架构分离设计方案
 
+**版本**: v4.5.1
+
+
 ## 1. 概述
 
 ### 1.1 目标
@@ -23,7 +26,7 @@
 
 ### 2.1 现有模块结构
 
-```
+```text
 f:\Qoder\btc-collision-engine\
 ├── start.bat                      # 启动脚本
 ├── key_collision_cli.py           # CLI入口
@@ -54,7 +57,7 @@ f:\Qoder\btc-collision-engine\
 
 ### 3.1 分离后的目录结构
 
-```
+```text
 f:\Qoder\btc-collision-engine\
 ├── start.bat                      # 启动脚本(简化版)
 ├── key_collision_cli.py           # CLI入口
