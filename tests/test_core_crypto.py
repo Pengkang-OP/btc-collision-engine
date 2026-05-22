@@ -19,9 +19,7 @@ class TestSecp256k1(unittest.TestCase):
     def test_curve_order_valid(self):
         """曲线阶 N 是正整数"""
         self.assertGreater(Secp256k1.N, 0)
-        self.assertEqual(
-            Secp256k1.N, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
-        )
+        self.assertEqual(Secp256k1.N, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141)
 
     def test_generator_point_on_curve(self):
         """生成元 G 在曲线上"""
@@ -217,9 +215,7 @@ class TestWIF(unittest.TestCase):
 
     def test_encode_decode_compressed(self):
         """WIF 压缩格式编解码往返"""
-        private_key = bytes.fromhex(
-            "0c28fca386c7a227600b2fe50b7cae11ec86d3bf1fbe471be89827e19d72aa1d"
-        )
+        private_key = bytes.fromhex("0c28fca386c7a227600b2fe50b7cae11ec86d3bf1fbe471be89827e19d72aa1d")
         wif = WIF.encode(private_key, compressed=True)
         # 压缩 WIF 以 K 或 L 开头
         self.assertIn(wif[0], ("K", "L"))
@@ -233,9 +229,7 @@ class TestWIF(unittest.TestCase):
 
     def test_encode_decode_uncompressed(self):
         """WIF 非压缩格式编解码往返"""
-        private_key = bytes.fromhex(
-            "0c28fca386c7a227600b2fe50b7cae11ec86d3bf1fbe471be89827e19d72aa1d"
-        )
+        private_key = bytes.fromhex("0c28fca386c7a227600b2fe50b7cae11ec86d3bf1fbe471be89827e19d72aa1d")
         wif = WIF.encode(private_key, compressed=False)
         # 非压缩 WIF 以 5 开头
         self.assertEqual(wif[0], "5")

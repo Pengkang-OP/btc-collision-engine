@@ -193,68 +193,68 @@ def load_config(filepath: str) -> Dict:
         with open(filepath, 'r', encoding='utf-8') as f:
             return json.load(f)
     except Exception as e:
-        print(f"❌ 加载配置文件失败 {filepath}: {e}")
+        print(f"[ERR] 加载配置文件失败 {filepath}: {e}")
         return {}
 
 
 def print_validation_result(result: Dict):
     """打印验证结果"""
     print(f"\n{'='*60}")
-    print(f"📋 配置文件: {result['config_name']}")
+    print(f"[Config] 配置文件: {result['config_name']}")
     print(f"{'='*60}")
     
     # 评分
     score = result['score']
     if score >= 90:
-        emoji = "✅"
+        emoji = "[OK]"
         level = "优秀"
     elif score >= 70:
-        emoji = "⚠️"
+        emoji = "[WARN]"
         level = "良好"
     elif score >= 50:
-        emoji = "❌"
+        emoji = "[ERR]"
         level = "中等"
     else:
-        emoji = "❌"
+        emoji = "[ERR]"
         level = "差"
     
     print(f"\n{emoji} 完整性评分: {score}/100 ({level})")
     
     # 缺失参数
     if result['missing']:
-        print(f"\n❌ 缺失参数 ({len(result['missing'])}个):")
+        print(f"\n[ERR] 缺失参数 ({len(result['missing'])}个):")
         for param in result['missing']:
             print(f"  - {param}")
     
     # 警告
     if result['warnings']:
-        print(f"\n⚠️ 警告 ({len(result['warnings'])}个):")
+        print(f"\n[WARN] 警告 ({len(result['warnings'])}个):")
         for warning in result['warnings']:
             print(f"  - {warning}")
     
     # 错误
     if result['errors']:
-        print(f"\n🚨 错误 ({len(result['errors'])}个):")
+        print(f"\n[ERR] 错误 ({len(result['errors'])}个):")
         for error in result['errors']:
             print(f"  - {error}")
     
     # 状态
     if result['valid']:
-        print(f"\n✅ 配置验证通过")
+        print(f"\n[OK] 配置验证通过")
     else:
-        print(f"\n❌ 配置验证失败")
+        print(f"\n[ERR] 配置验证失败")
 
 
 def print_comparison_result(comparison: Dict, config_names: List[str]):
     """打印比较结果"""
     print(f"\n{'='*60}")
-    print(f"📊 配置文件一致性比较")
+    print(f"[Stats] 配置文件一致性比较")
     print(f"{'='*60}")
     
     print(f"\n一致性评分: {comparison['consistency_score']}/100")
     
     if comparison['differences']:
-        print(f"\n⚠️ 发现 {len(comparison['differences'])} 个参数差异:")
+        print(f"\n[WARN] 发现 {len(comparison['differences'])} 个参数差异:")
         for diff in comparison['differences']:
             param = diff['param']
             values = diff['values']
@@ -263,12 +263,12 @@ def print_comparison_result(comparison: Dict, config_names: List[str]):
                 if name in config_names:
                     print(f"    - {name}: {value}")
     else:
-        print(f"\n✅ 所有配置文件参数一致")
+        print(f"\n[OK] 所有配置文件参数一致")
 
 
 def main():
     """主函数"""
-    print("🔍 GPU配置完整性验证工具")
+    print("[*] GPU配置完整性验证工具")
     print("="*60)
     
     # 配置文件路径
@@ -284,12 +284,12 @@ def main():
     for name, filepath in config_files.items():
         if filepath.exists():
             configs[name] = load_config(str(filepath))
-            print(f"✅ 已加载: {filepath.name}")
+            print(f"[OK] 已加载: {filepath.name}")
         else:
-            print(f"⚠️  未找到: {filepath.name}")
+            print(f"[WARN]  未找到: {filepath.name}")
     
     if not configs:
-        print("\n❌ 未找到任何配置文件")
+        print("\n[ERR] 未找到任何配置文件")
         sys.exit(1)
     
     # 验证每个配置
@@ -306,7 +306,7 @@ def main():
     
     # 总结
     print(f"\n{'='*60}")
-    print(f"📊 验证总结")
+    print(f"[Stats] 验证总结")
     print(f"{'='*60}")
     
     total_score = sum(r['score'] for r in results)
@@ -317,19 +317,19 @@ def main():
     for result in results:
         score = result['score']
         if score >= 90:
-            status = "✅ 优秀"
+            status = "[OK] 优秀"
         elif score >= 70:
-            status = "⚠️  良好"
+            status = "[WARN]  良好"
         else:
-            status = "❌ 需改进"
+            status = "[ERR] 需改进"
         print(f"  - {result['config_name']}: {score}/100 ({status})")
     
     # 退出码
     if all(r['valid'] for r in results):
-        print(f"\n✅ 所有配置验证通过")
+        print(f"\n[OK] 所有配置验证通过")
         sys.exit(0)
     else:
-        print(f"\n❌ 部分配置验证失败，请检查缺失参数")
+        print(f"\n[ERR] 部分配置验证失败，请检查缺失参数")
         sys.exit(1)
 
 

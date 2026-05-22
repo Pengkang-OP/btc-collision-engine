@@ -146,9 +146,7 @@ class TestBitcoinTargetTableLoadFromFile(unittest.TestCase):
     def test_load_from_json_list_format(self, mock_load):
         """JSON 列表格式加载"""
         mock_load.return_value = 3
-        with tempfile.NamedTemporaryFile(
-            suffix=".json", mode="w", delete=False, encoding="utf-8"
-        ) as f:
+        with tempfile.NamedTemporaryFile(suffix=".json", mode="w", delete=False, encoding="utf-8") as f:
             json.dump(["wif1", "wif2", "wif3"], f)
             tmp_path = f.name
         try:
@@ -163,9 +161,7 @@ class TestBitcoinTargetTableLoadFromFile(unittest.TestCase):
         """JSON 字典格式（含 targets 键）加载"""
         mock_load.return_value = 2
         data = {"targets": [{"wif": "wA"}, {"wif": "wB"}, {"other": "x"}]}
-        with tempfile.NamedTemporaryFile(
-            suffix=".json", mode="w", delete=False, encoding="utf-8"
-        ) as f:
+        with tempfile.NamedTemporaryFile(suffix=".json", mode="w", delete=False, encoding="utf-8") as f:
             json.dump(data, f)
             tmp_path = f.name
         try:
@@ -178,9 +174,7 @@ class TestBitcoinTargetTableLoadFromFile(unittest.TestCase):
     @patch.object(BitcoinTargetTable, "load_from_wif_list")
     def test_load_from_json_invalid_format(self, mock_load):
         """JSON 格式无效时抛出 ValueError"""
-        with tempfile.NamedTemporaryFile(
-            suffix=".json", mode="w", delete=False, encoding="utf-8"
-        ) as f:
+        with tempfile.NamedTemporaryFile(suffix=".json", mode="w", delete=False, encoding="utf-8") as f:
             json.dump({"not_targets": 123}, f)
             tmp_path = f.name
         try:
@@ -194,9 +188,7 @@ class TestBitcoinTargetTableLoadFromFile(unittest.TestCase):
     def test_load_from_csv(self, mock_load):
         """CSV 文件加载（含不含 wif 列的行）"""
         mock_load.return_value = 2
-        with tempfile.NamedTemporaryFile(
-            suffix=".csv", mode="w", delete=False, encoding="utf-8"
-        ) as f:
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode="w", delete=False, encoding="utf-8") as f:
             f.write("wif,extra\nw1,x\nw2,y\n")
             tmp_path = f.name
         try:
@@ -210,9 +202,7 @@ class TestBitcoinTargetTableLoadFromFile(unittest.TestCase):
     def test_load_from_csv_no_wif_column(self, mock_load):
         """CSV 文件无 wif 列时跳过所有行"""
         mock_load.return_value = 0
-        with tempfile.NamedTemporaryFile(
-            suffix=".csv", mode="w", delete=False, encoding="utf-8"
-        ) as f:
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode="w", delete=False, encoding="utf-8") as f:
             f.write("name,value\nnone,1\n")
             tmp_path = f.name
         try:
@@ -226,9 +216,7 @@ class TestBitcoinTargetTableLoadFromFile(unittest.TestCase):
     def test_load_from_txt(self, mock_load):
         """TXT 文件加载（每行一个 WIF）"""
         mock_load.return_value = 3
-        with tempfile.NamedTemporaryFile(
-            suffix=".txt", mode="w", delete=False, encoding="utf-8"
-        ) as f:
+        with tempfile.NamedTemporaryFile(suffix=".txt", mode="w", delete=False, encoding="utf-8") as f:
             f.write("  w1  \nw2\n\nw3\n")
             tmp_path = f.name
         try:

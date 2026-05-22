@@ -57,9 +57,7 @@ class BaseNotifier(ABC):
     """
 
     # BTC 地址正则（P2PKH/P2SH/Bech32/Bech32m），用于通知消息脱敏
-    _BTC_ADDRESS_RE = re.compile(
-        r"\b([13][a-km-zA-HJ-NP-Z1-9]{25,34}|bc1[ac-hj-np-z02-9]{11,71})\b"
-    )
+    _BTC_ADDRESS_RE = re.compile(r"\b([13][a-km-zA-HJ-NP-Z1-9]{25,34}|bc1[ac-hj-np-z02-9]{11,71})\b")
 
     def __init__(self, enabled: bool = True) -> None:
         """
@@ -411,9 +409,7 @@ class DingTalkWebhookNotifier(BaseNotifier):
 
         logger.info("钉钉Webhook通知器初始化")
         # 脱敏记录webhook URL
-        _safe_url = re.sub(
-            r"(access_token=|token=|secret=)[^&]+", r"\1***REDACTED***", self.webhook_url
-        )
+        _safe_url = re.sub(r"(access_token=|token=|secret=)[^&]+", r"\1***REDACTED***", self.webhook_url)
         logger.debug(f"钉钉Webhook URL: {_safe_url}")
 
     def _send_notification(self, alert: AlertRecord):

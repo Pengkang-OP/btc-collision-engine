@@ -158,7 +158,9 @@ class TestGPUBufferTracker(unittest.TestCase):
             try:
                 for i in range(100):
                     self.tracker.track_buffer(
-                        f"thread_{thread_id}_buf_{i}", self.mock_buffer, 1024  # 添加线程ID
+                        f"thread_{thread_id}_buf_{i}",
+                        self.mock_buffer,
+                        1024,  # 添加线程ID
                     )
             except Exception as e:
                 errors.append(e)
@@ -213,10 +215,14 @@ class TestGPUBufferTracker(unittest.TestCase):
         """测试大容量缓冲区追踪"""
         # 模拟真实GPU缓冲区大小
         self.tracker.track_buffer(
-            "keys_buf", self.mock_buffer, 1_000_000 * 32  # 100万个私钥 * 32字节
+            "keys_buf",
+            self.mock_buffer,
+            1_000_000 * 32,  # 100万个私钥 * 32字节
         )
         self.tracker.track_buffer(
-            "match_buf", self.mock_buffer, 1_000_000 * 4  # 100万个匹配标志 * 4字节
+            "match_buf",
+            self.mock_buffer,
+            1_000_000 * 4,  # 100万个匹配标志 * 4字节
         )
 
         stats = self.tracker.get_stats()

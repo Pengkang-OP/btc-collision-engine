@@ -3,7 +3,7 @@ import re
 
 
 def remove_git_conflicts(file_path):
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         content = f.read()
 
     patterns = [
@@ -28,11 +28,11 @@ def main():
     docs_dir = os.path.abspath(docs_dir)
 
     conflict_files = []
-    for root, dirs, files in os.walk(docs_dir):
+    for root, _dirs, files in os.walk(docs_dir):
         for file in files:
             if file.endswith(".md"):
                 file_path = os.path.join(root, file)
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     content = f.read()
                     if "<<<<<<<" in content or "=======" in content or ">>>>>>>" in content:
                         conflict_files.append(file_path)

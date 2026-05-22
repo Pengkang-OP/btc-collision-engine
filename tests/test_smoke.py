@@ -192,9 +192,7 @@ class TestConfigSmoke:
     def test_config_manager_load(self):
         from src.config.config_manager import ConfigManager
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False, encoding="utf-8"
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as f:
             json.dump({"collision": {"max_workers": 2}}, f)
             config_path = f.name
 

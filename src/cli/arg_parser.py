@@ -208,9 +208,7 @@ def parse_args() -> argparse.Namespace:  # noqa: D401
     )
 
     # ── 4. 性能调优 ──────────────────────────────────────────────────────────
-    perf_group = parser.add_argument_group(
-        "性能调优", "工作线程、进度刷新频率及 v4.2.2+ 引擎优化开关"
-    )
+    perf_group = parser.add_argument_group("性能调优", "工作线程、进度刷新频率及 v4.2.2+ 引擎优化开关")
     perf_group.add_argument(
         "--workers",
         metavar="N",

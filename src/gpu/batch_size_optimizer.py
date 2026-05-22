@@ -147,9 +147,7 @@ class SmartBatchSizeOptimizer:
         }
         return gpu_configs.get(gpu_model, gpu_configs.get("default", {}))
 
-    def record_performance(
-        self, batch_size: int, execution_time_ms: float, throughput: float
-    ) -> None:
+    def record_performance(self, batch_size: int, execution_time_ms: float, throughput: float) -> None:
         """
         记录性能数据
 
@@ -259,9 +257,7 @@ class SmartBatchSizeOptimizer:
                         new_size = self._current_batch_size // 2
                     # 确保在合理范围内
                     new_size = max(self._min_batch_size, min(new_size, self._max_batch_size))
-                    logger.info(
-                        f"批次大小调整: {self._current_batch_size} -> {new_size} (平滑过渡)"
-                    )
+                    logger.info(f"批次大小调整: {self._current_batch_size} -> {new_size} (平滑过渡)")
                     self._current_batch_size = new_size
                 else:
                     logger.info(f"批次大小调整: {self._current_batch_size} -> {optimal_size}")
@@ -290,9 +286,7 @@ class SmartBatchSizeOptimizer:
         for batch_size, throughputs in batch_performance.items():
             avg_throughput[batch_size] = sum(throughputs) / len(throughputs)
             # 计算标准差，衡量性能稳定性
-            variance = sum((t - avg_throughput[batch_size]) ** 2 for t in throughputs) / len(
-                throughputs
-            )
+            variance = sum((t - avg_throughput[batch_size]) ** 2 for t in throughputs) / len(throughputs)
             std_throughput[batch_size] = variance**0.5
 
         # 找出吞吐量最高且性能稳定的批次大小
@@ -473,9 +467,7 @@ def get_batch_size_optimizer(
 
     with global_optimizer_lock:
         if global_batch_optimizer is None:
-            global_batch_optimizer = SmartBatchSizeOptimizer(
-                initial_batch_size, gpu_model=gpu_model
-            )
+            global_batch_optimizer = SmartBatchSizeOptimizer(initial_batch_size, gpu_model=gpu_model)
 
     return global_batch_optimizer
 

@@ -166,9 +166,7 @@ def test_error_logging_rate_limit():
         new_error_count = len(errors) - baseline_error_count
         print(f"  本次测试新增错误数: {new_error_count}")
         # 验证限频：2秒内新增错误不应该大于10条
-        assert (
-            new_error_count < 10
-        ), f"本次测试新增错误日志条数过多: {new_error_count}，限频可能未生效"
+        assert new_error_count < 10, f"本次测试新增错误日志条数过多: {new_error_count}，限频可能未生效"
 
     print("\n✅ 错误记录限频测试通过")
     return True

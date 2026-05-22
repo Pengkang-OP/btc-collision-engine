@@ -152,17 +152,16 @@ class TestCmdValidateAddresses:
                 assert call_args[0][0] == 0
 
     def test_path_validation_fails(self):
-        """路径验证失败应提前返回，不调用 sys.exit 也不读文件"""
+        """路径验证失败应调用 sys.exit(1) 提前退出，不读文件"""
         from src.cli.commands import _cmd_validate_addresses
 
         with (
             patch("src.cli.commands.validate_file_path", return_value=False),
-            patch.object(sys, "exit") as mock_exit,
             patch("builtins.open") as mock_open,
         ):
-            _cmd_validate_addresses("/invalid/../path")
-            # 验证提前返回：不应调用 sys.exit，也不应打开文件
-            mock_exit.assert_not_called()
+            with pytest.raises(SystemExit):
+                _cmd_validate_addresses("/invalid/../path")
+            # 验证提前退出：不应打开文件
             mock_open.assert_not_called()
 
 
@@ -272,7 +271,9 @@ class TestSaveAddressToTargetsFile:
         with open(targets_path) as f:
             lines = f.readlines()
         addr_lines = [
-            l.strip() for l in lines if l.strip() and not l.strip().startswith("#")  # noqa: E741
+            l.strip()
+            for l in lines
+            if l.strip() and not l.strip().startswith("#")  # noqa: E741
         ]  # noqa: E741, E501
         assert addr_lines.count(addr) == 1
 
@@ -349,9 +350,7 @@ class TestHandleSystemCommands:
         args.validate_addresses = None
         args.migrate_config = True
         with (
-            patch(
-                "src.cli.config_migration.migrate_config_file", return_value=True
-            ) as mock_migrate,
+            patch("src.cli.config_migration.migrate_config_file", return_value=True) as mock_migrate,
             patch.object(sys, "exit") as mock_exit,
         ):
             _handle_system_commands(args)

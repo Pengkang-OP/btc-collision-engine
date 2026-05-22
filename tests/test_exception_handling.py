@@ -654,9 +654,7 @@ class TestHandleClResourceError:
 
     def test_invalid_buffer_size(self):
         """invalid buffer size → 识别为资源耗尽"""
-        result = ExceptionHandler.handle_cl_resource_error(
-            RuntimeError("invalid buffer size"), "buffer"
-        )
+        result = ExceptionHandler.handle_cl_resource_error(RuntimeError("invalid buffer size"), "buffer")
         assert result is True
 
 
@@ -718,9 +716,7 @@ class TestHandleFileError:
     def test_file_not_found(self):
         """FileNotFoundError → error"""
         with patch("src.utils.exception_handler.logger") as mock_logger:
-            ExceptionHandler.handle_file_error(
-                FileNotFoundError("no file"), "读取", "/path/to/file"
-            )
+            ExceptionHandler.handle_file_error(FileNotFoundError("no file"), "读取", "/path/to/file")
         mock_logger.error.assert_called_once()
 
     def test_permission_error(self):

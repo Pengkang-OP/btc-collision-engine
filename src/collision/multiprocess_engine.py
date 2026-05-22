@@ -444,13 +444,13 @@ class MultiprocessCollisionEngine:
             return
 
         task = {
-            "batch_size": batch_size
-            or self.batch_size
+            "batch_size": batch_size or self.batch_size
             # 不再需要address_generator，子进程本地初始化
         }
 
         try:
-            assert self.task_queue is not None
+            if self.task_queue is None:
+                raise RuntimeError("task_queue not initialized")
             self.task_queue.put(task, timeout=1.0)
         except Exception as e:
             logger.error(f"提交任务失败: {e}")
@@ -475,7 +475,8 @@ class MultiprocessCollisionEngine:
         try:
             with suppress(Empty):
                 while True:
-                    assert self.result_queue is not None
+                    if self.result_queue is None:
+                        raise RuntimeError("result_queue not initialized")
                     batch = self.result_queue.get(timeout=timeout)
 
                     # 如果启用加密，则解密
@@ -483,7 +484,8 @@ class MultiprocessCollisionEngine:
                         try:
                             from cryptography.fernet import Fernet, InvalidToken
 
-                            assert self._encryption_key is not None
+                            if self._encryption_key is None:
+                                raise RuntimeError("加密已启用但加密密钥为 None")
                             fernet = Fernet(bytes(self._encryption_key))
                             decrypted_data = fernet.decrypt(batch)
                             batch = json.loads(decrypted_data)
@@ -519,7 +521,8 @@ class MultiprocessCollisionEngine:
             try:
                 with suppress(Empty):
                     while True:
-                        assert self.stats_queue is not None
+                        if self.stats_queue is None:
+                            raise RuntimeError("stats_queue not initialized")
                         stats = self.stats_queue.get_nowait()
                         self.worker_stats[stats["worker_id"]] = stats
             except (KeyError, TypeError) as e:
@@ -541,7 +544,7 @@ class MultiprocessCollisionEngine:
                 "matches": list(self.total_matches),  # 返回副本
             }
 
-    def stop(self, timeout: float = 10.0) -> None:
+    def stop(self, timeout: float = 10.0) -> None:  # noqa: C901
         """停止多进程引擎
 
         Args:
@@ -553,13 +556,15 @@ class MultiprocessCollisionEngine:
         logger.info("停止多进程引擎...")
 
         # 设置停止事件
-        assert self.stop_event is not None
+        if self.stop_event is None:
+            raise RuntimeError("stop_event not initialized")
         self.stop_event.set()
 
         # 发送毒丸信号
         for _ in self.workers:
             try:
-                assert self.task_queue is not None
+                if self.task_queue is None:
+                    raise RuntimeError("task_queue not initialized")
                 self.task_queue.put(None, timeout=1.0)
             except Full:
                 logger.warning("任务队列已满，跳过毒丸信号")
@@ -582,16 +587,16 @@ class MultiprocessCollisionEngine:
 
         # #12修复: 僵尸进程清理报告
         if zombie_processes:
-            zombie_details = ", ".join(
-                [f"Worker-{z['id']}(PID={z['pid']})" for z in zombie_processes]
-            )
+            zombie_details = ", ".join([f"Worker-{z['id']}(PID={z['pid']})" for z in zombie_processes])
             logger.critical(f"发现{len(zombie_processes)}个僵尸进程: {zombie_details}")
             # 尝试发送SIGKILL（Unix）
             if os.name != "nt":
                 for z in zombie_processes:
                     try:
-                        assert z["pid"] is not None
-                        os.kill(z["pid"], int(getattr(signal, "SIGKILL", 9)))
+                        pid = z.get("pid")
+                        if pid is None:
+                            continue
+                        os.kill(pid, int(getattr(signal, "SIGKILL", 9)))
                         logger.info(f"已发送SIGKILL到进程 {z['pid']}")
                     except Exception as e:
                         logger.error(f"发送SIGKILL失败 {z['pid']}: {e}")
@@ -655,9 +660,7 @@ class MultiprocessCollisionEngine:
         """上下文管理器入口"""
         return self
 
-    def __exit__(
-        self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None
-    ) -> None:
+    def __exit__(self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None) -> None:
         """上下文管理器出口
 
         始终返回 None，表示不抑制异常（让异常传播给调用者）。

@@ -636,9 +636,7 @@ class TestCreateAppFlaskAvailable:
             encoding="utf-8",
         )
         (tmp_path / "history_data.json").write_text(
-            json.dumps(
-                [{"speed": 900, "total_checked": 4000, "cpu_usage": 25, "memory_usage": 150}]
-            ),
+            json.dumps([{"speed": 900, "total_checked": 4000, "cpu_usage": 25, "memory_usage": 150}]),
             encoding="utf-8",
         )
         (tmp_path / "error_log.json").write_text(
@@ -901,9 +899,7 @@ class TestRunDashboard:
         flask_mock["app"].run = mock_app_run
 
         dash.run_dashboard(host="0.0.0.0", port=8080, debug=True)
-        mock_app_run.assert_called_once_with(
-            host="127.0.0.1", port=8080, debug=True, use_reloader=False
-        )
+        mock_app_run.assert_called_once_with(host="127.0.0.1", port=8080, debug=True, use_reloader=False)
 
     def test_debug_mode_localhost_not_redirected(self, flask_mock):
         import importlib
@@ -915,9 +911,7 @@ class TestRunDashboard:
         flask_mock["app"].run = mock_app_run
 
         dash.run_dashboard(host="127.0.0.1", port=8080, debug=True)
-        mock_app_run.assert_called_once_with(
-            host="127.0.0.1", port=8080, debug=True, use_reloader=False
-        )
+        mock_app_run.assert_called_once_with(host="127.0.0.1", port=8080, debug=True, use_reloader=False)
 
     def test_run_dashboard_with_data_dir(self, flask_mock, tmp_path):
         import importlib
@@ -950,25 +944,19 @@ class TestMainCLI:
         dash, mock_app_run = self._setup(flask_mock)
         monkeypatch.setattr("sys.argv", ["dashboard.py"])
         dash.main()
-        mock_app_run.assert_called_once_with(
-            host="0.0.0.0", port=8080, debug=False, use_reloader=False
-        )
+        mock_app_run.assert_called_once_with(host="0.0.0.0", port=8080, debug=False, use_reloader=False)
 
     def test_main_custom_port(self, flask_mock, monkeypatch):
         dash, mock_app_run = self._setup(flask_mock)
         monkeypatch.setattr("sys.argv", ["dashboard.py", "--port", "3000"])
         dash.main()
-        mock_app_run.assert_called_once_with(
-            host="0.0.0.0", port=3000, debug=False, use_reloader=False
-        )
+        mock_app_run.assert_called_once_with(host="0.0.0.0", port=3000, debug=False, use_reloader=False)
 
     def test_main_with_debug(self, flask_mock, monkeypatch):
         dash, mock_app_run = self._setup(flask_mock)
         monkeypatch.setattr("sys.argv", ["dashboard.py", "--debug"])
         dash.main()
-        mock_app_run.assert_called_once_with(
-            host="127.0.0.1", port=8080, debug=True, use_reloader=False
-        )
+        mock_app_run.assert_called_once_with(host="127.0.0.1", port=8080, debug=True, use_reloader=False)
 
     def test_main_with_api_key(self, flask_mock, monkeypatch):
         dash, mock_app_run = self._setup(flask_mock)
@@ -980,9 +968,7 @@ class TestMainCLI:
         dash, mock_app_run = self._setup(flask_mock)
         monkeypatch.setattr("sys.argv", ["dashboard.py", "--reload"])
         dash.main()
-        mock_app_run.assert_called_once_with(
-            host="0.0.0.0", port=8080, debug=False, use_reloader=True
-        )
+        mock_app_run.assert_called_once_with(host="0.0.0.0", port=8080, debug=False, use_reloader=True)
 
     def test_main_with_data_dir(self, flask_mock, monkeypatch, tmp_path):
         dash, mock_app_run = self._setup(flask_mock)

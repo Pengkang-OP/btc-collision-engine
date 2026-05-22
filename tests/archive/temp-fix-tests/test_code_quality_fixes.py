@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 代码质量修复专项测试
 
 测试所有已完成的代码质量修复（FD-1, DF-1, BL-4, RL-1, DF-3, BL-1, BL-5等）
 """
 
-import pytest
-import time
-import threading
 import json
-import tempfile
 import os
-from unittest.mock import patch, MagicMock
+import tempfile
+import threading
+import time
+
+import pytest
 
 from src.collision.key_collision_engine import KeyCollisionEngine
 from src.config.config_manager import ConfigManager
@@ -37,10 +36,10 @@ class TestBruteForceLimit:
             # 应该处理了一些私钥
             assert stats.total_checked >= 0
             print(f"\n[OK] brute_force with max_keys: 处理了 {stats.total_checked} 个私钥")
-        except Exception as e:
+        except Exception:
             # 如果启动失败，至少验证参数被接受
             assert "max_keys" in str(engine.brute_force.__doc__)
-            print(f"\n[OK] brute_force方法接受max_keys参数")
+            print("\n[OK] brute_force方法接受max_keys参数")
 
     def test_brute_force_without_max_keys_warning(self, caplog):
         """测试未设置max_keys时发出警告"""
@@ -52,7 +51,7 @@ class TestBruteForceLimit:
             engine.start(mode="brute_force", start=1)
             time.sleep(0.3)
             engine.stop()
-            print(f"\n[OK] brute_force without max_keys: 正常启动")
+            print("\n[OK] brute_force without max_keys: 正常启动")
         except:
             pass
 
@@ -136,7 +135,7 @@ class TestDeduplicationCache:
         for rate in [0.001, 0.01, 0.05]:
             dedup = DeduplicationFilter(max_size=1000, enabled=True, false_positive_rate=rate)
             assert dedup.false_positive_rate == rate
-            print(f"\n[OK] DeduplicationFilter 误报率配置: {rate*100:.1f}%")
+            print(f"\n[OK] DeduplicationFilter 误报率配置: {rate * 100:.1f}%")
 
     def test_dedup_filter_basic(self):
         """测试去重过滤器基本功能"""
@@ -155,7 +154,7 @@ class TestDeduplicationCache:
         key2 = b"test_key_2"
         assert dedup.check_and_add(key2) == True
 
-        print(f"\n[OK] DeduplicationFilter 基本功能: 去重正常工作")
+        print("\n[OK] DeduplicationFilter 基本功能: 去重正常工作")
 
 
 class TestStartupCleanup:
@@ -174,7 +173,7 @@ class TestStartupCleanup:
 
             # 验证引擎状态已清理
             assert engine._running == False or engine._stop_event.is_set()
-            print(f"\n[OK] 引擎启动/停止: 资源清理正常")
+            print("\n[OK] 引擎启动/停止: 资源清理正常")
         except Exception as e:
             # 如果启动失败，验证状态已清理
             assert engine._running == False
@@ -268,7 +267,7 @@ class TestConfigValidation:
 
             # 验证失败应该返回False
             assert load_result == False, "无效配置应该被拒绝"
-            print(f"\n[OK] 配置验证: 无效配置被正确拒绝 (load_config返回False)")
+            print("\n[OK] 配置验证: 无效配置被正确拒绝 (load_config返回False)")
         finally:
             os.unlink(config_file)
 
@@ -296,7 +295,7 @@ class TestEntropyLog:
             # 注意：日志可能在DEBUG级别，不一定捕获到
             print(f"\n[OK] {system}熵池检查: 使用系统级CSPRNG")
         else:
-            print(f"\n[OK] Linux熵池检查: 返回健康状态")
+            print("\n[OK] Linux熵池检查: 返回健康状态")
 
 
 class TestBoundaryConditions:
@@ -329,7 +328,7 @@ class TestBoundaryConditions:
             engine.start(mode="range", start=1, end=100)
             time.sleep(0.2)
             engine.stop()
-            print(f"\n[OK] 小范围扫描: 正常处理")
+            print("\n[OK] 小范围扫描: 正常处理")
         except:
             pass
 
@@ -390,7 +389,7 @@ class TestComprehensiveFixes:
             errors = config.validate_config()
             assert len(errors) == 0
 
-            print(f"\n[OK] 配置管理器集成: 所有功能正常")
+            print("\n[OK] 配置管理器集成: 所有功能正常")
         finally:
             os.unlink(config_file)
 

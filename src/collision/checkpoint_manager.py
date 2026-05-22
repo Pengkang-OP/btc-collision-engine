@@ -56,9 +56,7 @@ class CheckpointManager:
         # 修复: 默认断点路径使用data_logs目录（有写入权限）
         if filepath is None:
             # 获取项目根目录（src的父目录）
-            project_root = os.path.dirname(
-                os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            )
+            project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             data_logs_dir = os.path.join(project_root, "data_logs")
             # 确保data_logs目录存在
             os.makedirs(data_logs_dir, exist_ok=True)
@@ -197,9 +195,7 @@ class CheckpointManager:
             sid, _, _ = win32security.LookupAccountName(None, username)
             dacl.AddAccessAllowedAce(win32security.ACL_REVISION, con.FILE_ALL_ACCESS, sid)
             handle.SetSecurityDescriptorDacl(1, dacl, 0)
-            win32security.SetFileSecurity(
-                self.filepath, win32security.DACL_SECURITY_INFORMATION, handle
-            )
+            win32security.SetFileSecurity(self.filepath, win32security.DACL_SECURITY_INFORMATION, handle)
             logger.debug("已设置Windows文件权限（仅当前用户可访问）")
         except Exception as e:
             logger.debug(f"pywin32权限设置失败: {e}，尝试使用icacls")
@@ -344,8 +340,7 @@ class CheckpointManager:
                     computed = self._compute_checksum(data)
                     if stored_checksum != computed:
                         logger.error(
-                            f"断点文件校验和失败（可能已损坏）: "
-                            f"存储={stored_checksum}, 计算={computed}"
+                            f"断点文件校验和失败（可能已损坏）: 存储={stored_checksum}, 计算={computed}"
                         )
                         return None
                 else:

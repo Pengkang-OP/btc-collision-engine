@@ -235,17 +235,13 @@ class TestIsValidPrivateKey(unittest.TestCase):
         """P0-19: 密钥长度 < 32 被拒绝"""
         for length in [0, 1, 16, 31]:
             key = b"\x01" * length
-            self.assertFalse(
-                self.gen._is_valid_private_key(key), f"Length {length} should be rejected"
-            )
+            self.assertFalse(self.gen._is_valid_private_key(key), f"Length {length} should be rejected")
 
     def test_wrong_length_too_long(self):
         """P0-20: 密钥长度 > 32 被拒绝"""
         for length in [33, 48, 64]:
             key = b"\x01" * length
-            self.assertFalse(
-                self.gen._is_valid_private_key(key), f"Length {length} should be rejected"
-            )
+            self.assertFalse(self.gen._is_valid_private_key(key), f"Length {length} should be rejected")
 
 
 class TestStatistics(unittest.TestCase):

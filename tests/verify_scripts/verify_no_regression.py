@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 无回归验证脚本
 
 验证所有代码审查修复没有引入回归问题
 """
 
-import sys
 import json
-import tempfile
 import os
+import sys
+import tempfile
+
 from src.config.config_manager import ConfigManager
 
 
@@ -176,9 +176,7 @@ def test_dependency_validation():
             print("⚠️  配置依赖验证未触发（可能是可选的）")
 
         # 测试: 完整配置通过
-        config_complete = {
-            "logging": {"rotation_type": "size", "level": "INFO", "max_bytes": 10485760}
-        }
+        config_complete = {"logging": {"rotation_type": "size", "level": "INFO", "max_bytes": 10485760}}
         errors = cm.validate(config_complete)
         assert len(errors) == 0, f"完整配置应该通过: {errors}"
         print("✅ 配置依赖关系验证已实现（修复#6验证通过）")
@@ -218,7 +216,7 @@ def test_file_operations():
         print("✅ 配置文件保存成功")
 
         # 验证保存的内容
-        with open(config_file, "r") as f:
+        with open(config_file) as f:
             saved_data = json.load(f)
         assert saved_data["collision"]["max_workers"] == 8
         assert saved_data["collision"]["checkpoint_interval"] == 60

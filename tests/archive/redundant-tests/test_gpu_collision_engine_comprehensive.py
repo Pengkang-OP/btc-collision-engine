@@ -10,22 +10,19 @@
 - 匹配结果处理
 """
 
-import pytest
 import os
-import sys
-import time
-import json
 import secrets
-import threading
-from unittest.mock import Mock, patch, MagicMock
-from src.collision.gpu.engine import GPUCollisionEngine
-from src.gpu.device_helper import GPUDeviceHelper
-from src.collision.collision_stats import CollisionStats
+import time
+from unittest.mock import Mock, patch
+
+import pytest
+
 from src.collision.checkpoint_manager import CheckpointManager
 from src.collision.deduplication_filter import DeduplicationFilter
-from src.gpu.device import GPUDeviceDetector
+from src.collision.gpu.engine import GPUCollisionEngine
 from src.core.base58 import Base58
 from src.core.wif import WIF
+from src.gpu.device import GPUDeviceDetector
 
 
 class TestGPUDeviceDetection:
@@ -109,7 +106,6 @@ class TestGPUEngineInitialization:
                 patch("src.gpu.profiles.loader.GPUProfileLoader") as mock_profile_loader,
                 patch("src.gpu.device.identify_vendor", return_value="nvidia"),
             ):
-
                 mock_profile_loader.return_value.get_profile.return_value = None
 
                 targets = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}
@@ -196,7 +192,6 @@ class TestCollisionModes:
             patch("src.gpu.profiles.loader.GPUProfileLoader") as mock_profile_loader,
             patch("src.gpu.device.identify_vendor", return_value="nvidia"),
         ):
-
             mock_profile_loader.return_value.get_profile.return_value = None
 
             targets = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}
@@ -233,7 +228,6 @@ class TestCollisionModes:
             patch("src.gpu.profiles.loader.GPUProfileLoader") as mock_profile_loader,
             patch("src.gpu.device.identify_vendor", return_value="nvidia"),
         ):
-
             mock_profile_loader.return_value.get_profile.return_value = None
 
             targets = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}
@@ -270,7 +264,6 @@ class TestCollisionModes:
             patch("src.gpu.profiles.loader.GPUProfileLoader") as mock_profile_loader,
             patch("src.gpu.device.identify_vendor", return_value="nvidia"),
         ):
-
             mock_profile_loader.return_value.get_profile.return_value = None
 
             targets = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}
@@ -304,7 +297,6 @@ class TestCollisionModes:
             patch("src.gpu.profiles.loader.GPUProfileLoader") as mock_profile_loader,
             patch("src.gpu.device.identify_vendor", return_value="nvidia"),
         ):
-
             mock_profile_loader.return_value.get_profile.return_value = None
 
             targets = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}
@@ -480,7 +472,6 @@ class TestTargetAddressProcessing:
             patch("src.gpu.profiles.loader.GPUProfileLoader") as mock_profile_loader,
             patch("src.gpu.device.identify_vendor", return_value="nvidia"),
         ):
-
             mock_profile_loader.return_value.get_profile.return_value = None
 
             # 3个有效地址
@@ -535,7 +526,6 @@ class TestTargetAddressProcessing:
             patch("src.gpu.profiles.loader.GPUProfileLoader") as mock_profile_loader,
             patch("src.gpu.device.identify_vendor", return_value="nvidia"),
         ):
-
             mock_profile_loader.return_value.get_profile.return_value = None
 
             # 2个有效地址 + 1个无效地址

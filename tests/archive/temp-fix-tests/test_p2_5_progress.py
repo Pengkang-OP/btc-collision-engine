@@ -1,21 +1,20 @@
-# -*- coding: utf-8 -*-
 """
 P2-5修复: 进度回调频率控制单元测试
 
 测试CPU碰撞引擎的双重进度回调控制机制(时间间隔+计数控制)。
 """
 
-import unittest
-import time
-import sys
 import os
-from unittest.mock import MagicMock, patch, call
+import sys
+import time
+import unittest
+
 import pytest
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from src.collision.key_collision_engine import KeyCollisionEngine, CollisionStats
+from src.collision.key_collision_engine import CollisionStats, KeyCollisionEngine
 
 
 @pytest.mark.unit

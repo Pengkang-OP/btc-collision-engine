@@ -10,4 +10,4 @@ print(f"Found {len(helps)} help strings")
 for i, h in enumerate(helps[:20]):
     # 检查是否有格式化问题
     if "%(" in h or "{" in h:
-        print(f"{i+1}: {repr(h[:80])}")
+        print(f"{i + 1}: {repr(h[:80])}")

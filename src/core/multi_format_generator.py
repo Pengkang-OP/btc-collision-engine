@@ -156,7 +156,7 @@ class MultiFormatAddressGenerator:
             logger.warning("coincurve不可用，无法生成Taproot地址")
             raise ValueError(
                 "coincurve 不可用，无法生成 Taproot 地址。请安装 coincurve: pip install coincurve"
-            )
+            ) from None
         except Exception as e:
             logger.error(f"Taproot地址生成失败: {e}")
             raise ValueError(f"Taproot地址生成失败: {e}") from e

@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python
+#!/usr/bin/env python
 """
 为长文档自动添加目录
 
@@ -25,10 +25,10 @@ def extract_headings(content: str) -> list[tuple[int, int, str]]:
         List of (level, line_number, title_text)
     """
     headings = []
-    lines = content.split('\n')
+    lines = content.split("\n")
 
     for i, line in enumerate(lines, 1):
-        match = re.match(r'^(#{1,6})\s+(.+)', line)
+        match = re.match(r"^(#{1,6})\s+(.+)", line)
         if match:
             level = len(match.group(1))
             text = match.group(2).strip()
@@ -51,21 +51,21 @@ def generate_toc(headings: list[tuple[int, int, str]]) -> str:
 
         # 生成锚点链接
         anchor = title.lower()
-        anchor = re.sub(r'[^\w\u4e00-\u9fff\s-]', '', anchor)  # 移除特殊字符
-        anchor = anchor.replace(' ', '-')
+        anchor = re.sub(r"[^\w\u4e00-\u9fff\s-]", "", anchor)  # 移除特殊字符
+        anchor = anchor.replace(" ", "-")
 
         # 缩进
-        indent = '  ' * (level - 2)  # level 2 开始无缩进
+        indent = "  " * (level - 2)  # level 2 开始无缩进
 
         toc_lines.append(f"{indent}- [{title}](#{anchor})")
 
-    return '\n'.join(toc_lines)
+    return "\n".join(toc_lines)
 
 
 def has_toc(content: str) -> bool:
     """检查文档是否已有目录"""
     # 查找"目录"标题
-    return bool(re.search(r'^##\s+目录\s*$', content, re.MULTILINE))
+    return bool(re.search(r"^##\s+目录\s*$", content, re.MULTILINE))
 
 
 def add_toc_to_file(content: str, min_headings: int = 3) -> tuple[str, bool]:
@@ -92,64 +92,46 @@ def add_toc_to_file(content: str, min_headings: int = 3) -> tuple[str, bool]:
         return content, False
 
     # 找到插入位置（在第一个##标题之前，或版本信息块之后）
-    lines = content.split('\n')
+    lines = content.split("\n")
     insert_idx = 0
 
     # 查找第一个##标题或版本信息块结束位置
     for i, line in enumerate(lines):
         # 跳过主标题
-        if i == 0 and line.startswith('# '):
+        if i == 0 and line.startswith("# "):
             insert_idx = i + 1
             continue
 
         # 跳过版本信息块
-        if line.startswith('> **版本**:'):
+        if line.startswith("> **版本**:"):
             # 找到版本信息块结束
             j = i
-            while j < len(lines) and (lines[j].startswith('> ') or lines[j].strip() == ''):
+            while j < len(lines) and (lines[j].startswith("> ") or lines[j].strip() == ""):
                 j += 1
             insert_idx = j
             break
 
         # 找到第一个##标题
-        if line.startswith('## '):
+        if line.startswith("## "):
             insert_idx = i
             break
 
     # 插入目录
     lines.insert(insert_idx, toc)
-    lines.insert(insert_idx, '')  # 空行
+    lines.insert(insert_idx, "")  # 空行
 
-    return '\n'.join(lines), True
+    return "\n".join(lines), True
 
 
 def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='为长文档自动添加目录')
-    parser.add_argument(
-        '--dry-run',
-        action='store_true',
-        help='仅显示添加计划，不实际修改文件'
-    )
-    parser.add_argument(
-        '--min-lines',
-        type=int,
-        default=50,
-        help='最小行数 (默认: 50)'
-    )
-    parser.add_argument(
-        '--min-headings',
-        type=int,
-        default=3,
-        help='最小标题数 (默认: 3)'
-    )
-    parser.add_argument(
-        '--docs-dir',
-        default='docs',
-        help='文档目录路径 (默认: docs)'
-    )
+    parser = argparse.ArgumentParser(description="为长文档自动添加目录")
+    parser.add_argument("--dry-run", action="store_true", help="仅显示添加计划，不实际修改文件")
+    parser.add_argument("--min-lines", type=int, default=50, help="最小行数 (默认: 50)")
+    parser.add_argument("--min-headings", type=int, default=3, help="最小标题数 (默认: 3)")
+    parser.add_argument("--docs-dir", default="docs", help="文档目录路径 (默认: docs)")
 
     args = parser.parse_args()
 
@@ -164,15 +146,15 @@ def main():
         print("⚠️  模拟运行模式 - 不会修改文件\n")
 
     md_files = list(docs_dir.glob("*.md"))
-    md_files = [f for f in md_files if 'archive' not in str(f)]
+    md_files = [f for f in md_files if "archive" not in str(f)]
 
     total_added = 0
     total_skipped = 0
     file_stats = []
 
     for md_file in sorted(md_files):
-        content = md_file.read_text(encoding='utf-8')
-        line_count = len(content.split('\n'))
+        content = md_file.read_text(encoding="utf-8")
+        line_count = len(content.split("\n"))
 
         # 跳过长文档
         if line_count < args.min_lines:
@@ -187,7 +169,7 @@ def main():
             file_stats.append((md_file.name, line_count, headings_count))
 
             if not args.dry_run:
-                md_file.write_text(new_content, encoding='utf-8')
+                md_file.write_text(new_content, encoding="utf-8")
                 print(f"✅ {md_file.name}: 添加目录 ({line_count}行, {headings_count}个标题)")
             else:
                 print(f"📄 {md_file.name}: 将添加目录 ({line_count}行, {headings_count}个标题)")

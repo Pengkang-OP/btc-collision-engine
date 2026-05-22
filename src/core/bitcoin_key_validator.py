@@ -575,9 +575,7 @@ class BitcoinKeyValidator:
 
             data_length = len(data)
             if data_length not in (33, 53):
-                result.add_error(
-                    f"Bech32地址数据长度错误: {data_length}，应为33 (P2WPKH) 或 53 (P2WSH)"
-                )
+                result.add_error(f"Bech32地址数据长度错误: {data_length}，应为33 (P2WPKH) 或 53 (P2WSH)")
 
             witness_version = data[0]
             if witness_version != 0:
@@ -790,9 +788,7 @@ class BitcoinKeyValidator:
             return report
 
         # 步骤2: 生成压缩公钥
-        pub_comp_result, public_key_compressed = self.generate_public_key(
-            private_key, compressed=True
-        )
+        pub_comp_result, public_key_compressed = self.generate_public_key(private_key, compressed=True)
         report["steps"]["public_key_compressed"] = pub_comp_result.to_dict()
         if not pub_comp_result.success:
             report["overall_success"] = False
@@ -858,9 +854,7 @@ class BitcoinKeyValidator:
         if self.secure_mode:
             pk_hash = HashUtils.key_fingerprint(private_key)
             wif_comp_safe = (
-                wif_compressed[:8] + "..." + wif_compressed[-4:]
-                if len(wif_compressed) > 12
-                else "***"
+                wif_compressed[:8] + "..." + wif_compressed[-4:] if len(wif_compressed) > 12 else "***"
             )
             wif_uncomp_safe = (
                 wif_uncompressed[:8] + "..." + wif_uncompressed[-4:]

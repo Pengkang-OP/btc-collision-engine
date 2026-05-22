@@ -1,24 +1,23 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 GPU碰撞引擎实际性能测试
 测试真实GPU碰撞性能和稳定性
 """
 
+import os
 import sys
 import time
-import os
 from pathlib import Path
 
 # 添加项目根目录
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.collision.gpu.engine import GPUCollisionEngine
 from src.collision.collision_stats import CollisionStats
+from src.collision.gpu.engine import GPUCollisionEngine
 
 
-def main():
+def main():  # noqa: C901
     """主函数"""
     print("=" * 80)
     print("  GPU碰撞引擎实际性能测试")  # 移除emoji避免Windows GBK编码问题
@@ -82,7 +81,7 @@ def main():
 
     def on_match(private_key: bytes, address: str, wif: str):
         """匹配回调"""
-        print(f"\n\n  🎯 发现匹配!")
+        print("\n\n  🎯 发现匹配!")
         print(f"     地址: {address}")
         print(f"     私钥: {private_key.hex()}")
         print(f"     WIF: {wif}")
@@ -114,7 +113,7 @@ def main():
 
         # 获取设备信息
         device_info = engine._gpu_device.get_device_info()
-        print(f"  📱 GPU设备信息:")
+        print("  📱 GPU设备信息:")
         print(f"     名称: {device_info.get('name', 'Unknown')}")
         print(f"     厂商: {device_info.get('vendor', 'Unknown')}")
         # 修复: 使用global_mem_size（字节）而非global_mem_gb
@@ -127,7 +126,7 @@ def main():
         # 2. 开始测试
         print(f"  🎯 目标地址: {len(targets)} 个")
         print(f"  ⏱️  测试时长: {test_duration}秒")
-        print(f"  🚀 开始GPU碰撞测试...")
+        print("  🚀 开始GPU碰撞测试...")
         print()
         print("  " + "─" * 78)
 
@@ -142,10 +141,10 @@ def main():
 
                 # 检查是否意外停止
                 if not engine.is_running():
-                    print(f"\n\n  ⚠️  引擎意外停止!")
+                    print("\n\n  ⚠️  引擎意外停止!")
                     break
         except KeyboardInterrupt:
-            print(f"\n\n  ⚠️  收到中断信号，正在停止...")
+            print("\n\n  ⚠️  收到中断信号，正在停止...")
         finally:
             engine.stop()
 
@@ -155,24 +154,24 @@ def main():
         print()
         print("  " + "─" * 78)
         print()
-        print(f"  📊 测试完成!")
+        print("  📊 测试完成!")
         print()
-        print(f"  {'='*76}")
-        print(f"  📈 性能统计")
-        print(f"  {'='*76}")
+        print(f"  {'=' * 76}")
+        print("  📈 性能统计")
+        print(f"  {'=' * 76}")
         print(f"     总运行时间: {elapsed:.2f}秒")
         print(f"     总检查数:   {total_checked:>15,} keys")
-        print(f"     平均速度:   {total_checked/elapsed:>15,.2f} keys/s")
+        print(f"     平均速度:   {total_checked / elapsed:>15,.2f} keys/s")
         print(f"     峰值速度:   {max_speed:>15,.2f} keys/s")
         if min_speed != float("inf"):
             print(f"     最低速度:   {min_speed:>15,.2f} keys/s")
         print(f"     发现匹配:   {stats_history[-1]['matches'] if stats_history else 0}")
-        print(f"  {'='*76}")
+        print(f"  {'=' * 76}")
 
         # 4. 性能对比
         print()
-        print(f"  📊 性能对比")
-        print(f"  {'='*76}")
+        print("  📊 性能对比")
+        print(f"  {'=' * 76}")
 
         cpu_speed = 88  # CPU模式参考速度
         gpu_speed = total_checked / elapsed
@@ -194,13 +193,13 @@ def main():
             rating = "❌ 较差"
 
         print(f"     性能评级:     {rating}")
-        print(f"  {'='*76}")
+        print(f"  {'=' * 76}")
 
         # 5. 稳定性分析
         if len(stats_history) > 10:
             print()
-            print(f"  📊 稳定性分析")
-            print(f"  {'='*76}")
+            print("  📊 稳定性分析")
+            print(f"  {'=' * 76}")
 
             speeds = [s["speed"] for s in stats_history if s["speed"] > 0]
             if speeds:
@@ -226,12 +225,12 @@ def main():
 
                 print(f"     稳定性评级:   {stability}")
 
-            print(f"  {'='*76}")
+            print(f"  {'=' * 76}")
 
         # 6. 资源使用
         print()
-        print(f"  📊 资源使用")
-        print(f"  {'='*76}")
+        print("  📊 资源使用")
+        print(f"  {'=' * 76}")
 
         try:
             import psutil
@@ -243,23 +242,21 @@ def main():
             print(f"     进程内存:     {memory_mb:,.1f} MB")
             print(f"     CPU使用率:    {cpu_percent:.1f}%")
         except Exception:
-            print(f"     资源监控:     不可用")
+            print("     资源监控:     不可用")
 
-        print(f"  {'='*76}")
+        print(f"  {'=' * 76}")
 
         # 7. 总结
         print()
-        print(f"  📝 测试总结")
-        print(f"  {'='*76}")
+        print("  📝 测试总结")
+        print(f"  {'=' * 76}")
         print(f"     GPU模式:      {'✅ 正常工作' if total_checked > 0 else '❌ 未运行'}")
         print(f"     性能达标:     {'✅ 是' if speedup >= 100 else '⚠️  低于预期'}")
         print(
             f"     稳定性:       {'✅ 良好' if min_speed != float('inf') and speed_cv < 30 else '⚠️  需优化'}"
         )
-        print(
-            f"     生产就绪:     {'✅ 是' if speedup >= 1000 and total_checked > 100000 else '❌ 否'}"
-        )
-        print(f"  {'='*76}")
+        print(f"     生产就绪:     {'✅ 是' if speedup >= 1000 and total_checked > 100000 else '❌ 否'}")
+        print(f"  {'=' * 76}")
         print()
 
         return 0 if total_checked > 0 else 1

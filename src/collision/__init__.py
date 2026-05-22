@@ -99,7 +99,7 @@ __all__ = [
 ]
 
 
-def create_collision_engine(
+def create_collision_engine(  # noqa: C901
     targets: set[str],
     mode: str = "auto",
     config: dict[str, Any] | None = None,
@@ -140,9 +140,8 @@ def create_collision_engine(
         logger.warning("目标地址集合为空，碰撞将无意义")
 
     # v4.5.1: 从 DependencyContainer 注入 event_bus
-    if container is not None:
-        if "event_bus" not in kwargs:
-            kwargs.setdefault("event_bus", container.event_bus)
+    if container is not None and "event_bus" not in kwargs:
+        kwargs.setdefault("event_bus", container.event_bus)
 
     # 合并配置: kwargs优先级最高，config次之
     merged_kwargs = _merge_config_with_kwargs(config, kwargs) if config else kwargs.copy()

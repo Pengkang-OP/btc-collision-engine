@@ -389,16 +389,13 @@ class GPUPerformanceMonitor:
                 # 获取真实GPU指标；当前版本使用OpenCL执行统计作为估算
                 import platform
 
-                if platform.system() == "Windows":
-                    # 基于已知的GPU配置参数返回估算值
-                    # 生产环境应使用 pywin32/WMI 从性能计数器获取真实数据
-                    if self._intel_gpu_index is not None:
-                        # Intel Arc 系列典型参数
-                        metrics["gpu_utilization"] = 0.18
-                        metrics["temperature"] = 59.0
-                        metrics["memory_used"] = 300.0
-                        metrics["memory_total"] = 16384.0  # Arc A770 16GB
-                        metrics["power_usage"] = 120.0  # Arc A770 TDP典型值
+                if platform.system() == "Windows" and self._intel_gpu_index is not None:
+                    # Intel Arc 系列典型参数
+                    metrics["gpu_utilization"] = 0.18
+                    metrics["temperature"] = 59.0
+                    metrics["memory_used"] = 300.0
+                    metrics["memory_total"] = 16384.0  # Arc A770 16GB
+                    metrics["power_usage"] = 120.0  # Arc A770 TDP典型值
 
             except Exception as e:
                 logger.debug(f"获取Intel GPU硬件指标失败: {e}")

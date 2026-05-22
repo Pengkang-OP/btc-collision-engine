@@ -65,12 +65,12 @@ def run_ulls_verification_test(duration=60):
 
     # 收集性能数据
     performance_data = {
-        'throughputs': [],
-        'peak_throughput': 0,
-        'avg_throughput': 0,
-        'start_time': None,
-        'end_time': None,
-        'duration': 0
+        "throughputs": [],
+        "peak_throughput": 0,
+        "avg_throughput": 0,
+        "start_time": None,
+        "end_time": None,
+        "duration": 0,
     }
 
     print("正在收集性能数据,请稍候...")
@@ -92,9 +92,9 @@ def run_ulls_verification_test(duration=60):
     print()
 
     # 返回测试框架
-    performance_data['start_time'] = datetime.now().isoformat()
-    performance_data['end_time'] = datetime.now().isoformat()
-    performance_data['duration'] = 0
+    performance_data["start_time"] = datetime.now().isoformat()
+    performance_data["end_time"] = datetime.now().isoformat()
+    performance_data["duration"] = 0
 
     return performance_data
 
@@ -109,32 +109,28 @@ def compare_performance(before_data, after_data):
     Returns:
         dict: 对比结果
     """
-    comparison = {
-        'peak_improvement': 0,
-        'avg_improvement': 0,
-        'meets_expectation': False,
-        'details': {}
-    }
+    comparison = {"peak_improvement": 0, "avg_improvement": 0, "meets_expectation": False, "details": {}}
 
     if before_data and after_data:
         # 峰值性能提升
-        if before_data.get('peak_throughput', 0) > 0:
-            comparison['peak_improvement'] = (
-                (after_data['peak_throughput'] - before_data['peak_throughput']) /
-                before_data['peak_throughput'] * 100
+        if before_data.get("peak_throughput", 0) > 0:
+            comparison["peak_improvement"] = (
+                (after_data["peak_throughput"] - before_data["peak_throughput"])
+                / before_data["peak_throughput"]
+                * 100
             )
 
         # 平均性能提升
-        if before_data.get('avg_throughput', 0) > 0:
-            comparison['avg_improvement'] = (
-                (after_data['avg_throughput'] - before_data['avg_throughput']) /
-                before_data['avg_throughput'] * 100
+        if before_data.get("avg_throughput", 0) > 0:
+            comparison["avg_improvement"] = (
+                (after_data["avg_throughput"] - before_data["avg_throughput"])
+                / before_data["avg_throughput"]
+                * 100
             )
 
         # 是否达到预期(14-31%)
-        comparison['meets_expectation'] = (
-            14 <= comparison['peak_improvement'] <= 31 or
-            14 <= comparison['avg_improvement'] <= 31
+        comparison["meets_expectation"] = (
+            14 <= comparison["peak_improvement"] <= 31 or 14 <= comparison["avg_improvement"] <= 31
         )
 
     return comparison
@@ -172,10 +168,10 @@ def generate_verification_report(performance_data, comparison):
         print(f"  平均性能提升: {comparison.get('avg_improvement', 0):+.2f}%")
         print()
 
-        if comparison.get('meets_expectation', False):
+        if comparison.get("meets_expectation", False):
             print("  ✅ 达到预期效果 (14-31%提升)")
         else:
-            improvement = comparison.get('peak_improvement', 0)
+            improvement = comparison.get("peak_improvement", 0)
             if improvement > 31:
                 print(f"  ⚠️  超出预期 ({improvement:.2f}% > 31%)")
                 print("     可能原因:")
@@ -199,7 +195,7 @@ def generate_verification_report(performance_data, comparison):
     # 建议
     print("【建议】")
     print("-" * 80)
-    if comparison and comparison.get('meets_expectation', False):
+    if comparison and comparison.get("meets_expectation", False):
         print("  ✅ ULLS优化成功!")
         print("     - 保持当前配置")
         print("     - 定期监控性能")
@@ -224,12 +220,12 @@ def save_report(performance_data, comparison):
         comparison: 对比结果
     """
     report = {
-        'test_time': datetime.now().isoformat(),
-        'test_type': 'Intel Arc ULLS Optimization Verification',
-        'performance_data': performance_data,
-        'comparison': comparison,
-        'ull_status': 'disabled',  # 假设已禁用
-        'expected_improvement': '14-31%'
+        "test_time": datetime.now().isoformat(),
+        "test_type": "Intel Arc ULLS Optimization Verification",
+        "performance_data": performance_data,
+        "comparison": comparison,
+        "ull_status": "disabled",  # 假设已禁用
+        "expected_improvement": "14-31%",
     }
 
     # 保存到文件
@@ -239,7 +235,7 @@ def save_report(performance_data, comparison):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     report_file = report_dir / f"ull_verification_{timestamp}.json"
 
-    with open(report_file, 'w', encoding='utf-8') as f:
+    with open(report_file, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
 
     print(f"报告已保存: {report_file}")
@@ -251,16 +247,17 @@ if __name__ == "__main__":
 
     # 运行测试
     import argparse
-    parser = argparse.ArgumentParser(description='Intel Arc ULLS优化效果验证')
-    parser.add_argument('--duration', type=int, default=60, help='测试持续时间(秒)')
-    parser.add_argument('--before', type=str, help='优化前性能数据文件')
+
+    parser = argparse.ArgumentParser(description="Intel Arc ULLS优化效果验证")
+    parser.add_argument("--duration", type=int, default=60, help="测试持续时间(秒)")
+    parser.add_argument("--before", type=str, help="优化前性能数据文件")
     args = parser.parse_args()
 
     # 加载优化前数据(如果有)
     before_data = None
     if args.before:
         try:
-            with open(args.before, encoding='utf-8') as f:
+            with open(args.before, encoding="utf-8") as f:
                 before_data = json.load(f)
             print(f"✅ 加载优化前数据: {args.before}")
         except Exception as e:

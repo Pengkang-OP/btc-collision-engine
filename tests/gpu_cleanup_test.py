@@ -20,9 +20,7 @@ pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
 from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
 
 # 配置日志
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 

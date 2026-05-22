@@ -87,9 +87,7 @@ def check_core_deps() -> list[dict[str, Any]]:
             __import__(module)
             results.append({"module": module, "pkg": pkg, "desc": desc, "ok": True, "error": None})
         except ImportError as e:
-            results.append(
-                {"module": module, "pkg": pkg, "desc": desc, "ok": False, "error": str(e)}
-            )
+            results.append({"module": module, "pkg": pkg, "desc": desc, "ok": False, "error": str(e)})
     return results
 
 
@@ -275,10 +273,11 @@ def print_report(results: dict[str, Any], as_json: bool = False):
     disk = results["disk"]
     if "error" not in disk:
         tag = PASS if disk["ok"] else WARN
-        print(f"{tag} 磁盘空间: {
-            disk['free_mb']} MB 可用 / {
-            disk['total_mb']} MB 总计（已用 {
-            disk['used_pct']}%）")
+        print(
+            f"{tag} 磁盘空间: {disk['free_mb']} MB 可用 / {disk['total_mb']} MB 总计（已用 {
+                disk['used_pct']
+            }%）"
+        )
     else:
         print(f"{WARN} 磁盘空间: 检查失败 - {disk['error']}")
 

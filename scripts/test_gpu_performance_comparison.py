@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 GPU碰撞引擎性能对比测试
 测试不同配置下的性能差异
@@ -10,11 +9,10 @@ GPU碰撞引擎性能对比测试
 - C: 显存效率70% + batch_size=131072 (进一步优化)
 """
 
-import sys
-import os
-import time
 import json
-from pathlib import Path
+import os
+import sys
+import time
 
 # 添加项目根目录到路径
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -25,9 +23,9 @@ from src.collision.gpu.engine import GPUCollisionEngine
 
 def test_config(config_name, batch_size, test_duration=30):
     """测试特定配置"""
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"  配置测试: {config_name}")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
 
     targets = {
         "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH",
@@ -61,11 +59,11 @@ def test_config(config_name, batch_size, test_duration=30):
         )
         init_time = time.time() - start_init
 
-        device_info = engine._gpu_device.get_device_info()
+        engine._gpu_device.get_device_info()
         memory_efficiency = getattr(engine._gpu_device, "memory_efficiency", 0.45)
 
         print(f"  批次大小: {batch_size:,}")
-        print(f"  显存效率: {memory_efficiency*100:.0f}%")
+        print(f"  显存效率: {memory_efficiency * 100:.0f}%")
         print(f"  初始化时间: {init_time:.2f}秒")
         print()
 
@@ -95,7 +93,7 @@ def test_config(config_name, batch_size, test_duration=30):
             avg_speed = sum(speeds) / len(speeds) if speeds else 0
             max_speed = max(speeds) if speeds else 0
 
-            print(f"\n  结果:")
+            print("\n  结果:")
             print(f"    总检查数: {total_keys:,} keys")
             print(f"    平均速度: {avg_speed:,.2f} keys/s")
             print(f"    峰值速度: {max_speed:,.2f} keys/s")
@@ -150,9 +148,9 @@ def main():
 
     # 生成对比报告
     if results:
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("  性能对比报告")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
         print()
 
         print(f"{'配置':<30} {'批次大小':>10} {'平均速度':>12} {'峰值速度':>12} {'提升':>8}")
@@ -189,9 +187,9 @@ def main():
 
         print(f"\n  报告已保存: {report_file}")
 
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("  测试完成!")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
 
 
 if __name__ == "__main__":

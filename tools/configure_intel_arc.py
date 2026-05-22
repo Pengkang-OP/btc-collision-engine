@@ -21,9 +21,9 @@ from src.gpu.device import GPUDeviceDetector
 
 def print_header(title: str):
     """打印标题"""
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"  {title}")
-    print(f"{'='*80}\n")
+    print(f"{'=' * 80}\n")
 
 
 def detect_gpus():
@@ -41,9 +41,9 @@ def detect_gpus():
     intel_arc_index = None
 
     for i, device in enumerate(devices):
-        name = device.get('name', 'Unknown')
-        vendor = device.get('vendor', 'Unknown')
-        mem_gb = device.get('global_mem_size', 0) / (1024**3)
+        name = device.get("name", "Unknown")
+        vendor = device.get("vendor", "Unknown")
+        mem_gb = device.get("global_mem_size", 0) / (1024**3)
 
         print(f"  GPU {i}:")
         print(f"    名称: {name}")
@@ -52,7 +52,7 @@ def detect_gpus():
         print()
 
         # 查找Intel Arc
-        if 'Arc' in name and 'Intel' in vendor:
+        if "Arc" in name and "Intel" in vendor:
             intel_arc_index = i
             print(f"  [FOUND] 找到Intel Arc A770! 索引: {i}")
             print()
@@ -75,7 +75,7 @@ def generate_config(device_index: int) -> dict:
             "mode": "random",
             "batch_size": 131072,  # 平衡性能和稳定性
             "max_threads": 8,
-            "checkpoint_interval": 300
+            "checkpoint_interval": 300,
         },
         "gpu": {
             "use_gpu": True,
@@ -90,15 +90,15 @@ def generate_config(device_index: int) -> dict:
             "uint32_workaround": True,
             "disable_async_transfer": True,
             "conservative_memory_policy": True,
-            "adaptive_timeout": True
+            "adaptive_timeout": True,
         },
         "monitoring": {
             "enable_performance_monitor": True,
             "report_interval": 60,
             "log_level": "INFO",
             "enable_memory_monitoring": True,
-            "enable_timeout_monitoring": True
-        }
+            "enable_timeout_monitoring": True,
+        },
     }
 
     return config
@@ -108,7 +108,7 @@ def save_config(config: dict, filename: str = "config.intel_arc.json"):
     """保存配置文件"""
     config_path = Path(__file__).parent.parent / filename
 
-    with open(config_path, 'w', encoding='utf-8') as f:
+    with open(config_path, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=4, ensure_ascii=False)
 
     print(f"\n[PASS] 配置已保存到: {config_path}")
@@ -120,12 +120,12 @@ def verify_config(config: dict):
     print_header("配置验证")
 
     checks = {
-        "GPU启用": config['gpu']['use_gpu'] == True,
-        "设备索引设置": 'device_index' in config['gpu'],
-        "内存池启用": config['gpu']['gpu_memory_pool'] == True,
-        "异步执行禁用": config['gpu']['async_execution'] == False,
-        "超时保护启用": config['gpu']['timeout_protection'] == True,
-        "uint32 workaround": config['gpu']['uint32_workaround'] == True,
+        "GPU启用": config["gpu"]["use_gpu"] == True,
+        "设备索引设置": "device_index" in config["gpu"],
+        "内存池启用": config["gpu"]["gpu_memory_pool"] == True,
+        "异步执行禁用": config["gpu"]["async_execution"] == False,
+        "超时保护启用": config["gpu"]["timeout_protection"] == True,
+        "uint32 workaround": config["gpu"]["uint32_workaround"] == True,
     }
 
     all_passed = True

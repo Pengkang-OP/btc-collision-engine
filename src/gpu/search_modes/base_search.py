@@ -72,9 +72,7 @@ class BaseSearchMode:
             engine.stats.add_match(private_key, address)  # type: ignore[attr-defined]
             if engine.on_match:
                 timeout_val = (
-                    engine._match_callback_timeout
-                    if hasattr(engine, "_match_callback_timeout")
-                    else 5.0
+                    engine._match_callback_timeout if hasattr(engine, "_match_callback_timeout") else 5.0
                 )
                 invoke_with_timeout(
                     engine.on_match,

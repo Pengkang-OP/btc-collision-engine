@@ -64,7 +64,7 @@ class TestWindowsPermissionRetry(unittest.TestCase):
         self.assertTrue(os.path.exists(history_file))
 
         # 验证数据已保存（P0 版本化格式）
-        with open(history_file, "r", encoding="utf-8") as f:
+        with open(history_file, encoding="utf-8") as f:
             raw = json.load(f)
         history = raw["data"] if isinstance(raw, dict) and "data" in raw else raw
         self.assertEqual(len(history), 1)
@@ -136,7 +136,7 @@ class TestWindowsPermissionRetry(unittest.TestCase):
         self.assertTrue(os.path.exists(history_file))
 
         # 验证数据已保存（P0 版本化格式）
-        with open(history_file, "r", encoding="utf-8") as f:
+        with open(history_file, encoding="utf-8") as f:
             raw = json.load(f)
         history = raw["data"] if isinstance(raw, dict) and "data" in raw else raw
         self.assertEqual(len(history), 1)

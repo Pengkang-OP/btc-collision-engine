@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 异步模式90秒性能测试 - 自动退出
 
@@ -9,32 +8,31 @@
 - 结果保存到JSON文件
 """
 
-import sys
-import os
-import time
 import json
+import os
+import sys
 import threading
-from pathlib import Path
+import time
 from datetime import datetime
-from typing import Dict, List, Any
+from pathlib import Path
 
 # 添加项目根目录到路径
 project_root = str(Path(__file__).parent.parent)
 sys.path.insert(0, project_root)
 
-from src.collision.gpu.engine import GPUCollisionEngine
 from src.collision.collision_stats import CollisionStats
+from src.collision.gpu.engine import GPUCollisionEngine
 
 
-def test_async_mode(test_duration: int = 90, analysis_duration: int = 60):
+def test_async_mode(test_duration: int = 90, analysis_duration: int = 60):  # noqa: C901
     """测试异步模式"""
     print("=" * 80)
     print("  异步模式(双缓冲)性能测试")
     print("=" * 80)
     print(f"  测试时长: {test_duration}秒")
     print(f"  数据分析: 前{analysis_duration}秒")
-    print(f"  批次大小: 1,048,576")
-    print(f"  目标地址: 2个")
+    print("  批次大小: 1,048,576")
+    print("  目标地址: 2个")
     print()
 
     targets = ["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", "12cbQLTFMXRnSzktFkuoG3eHoMeFtpTu3S"]
@@ -93,9 +91,7 @@ def test_async_mode(test_duration: int = 90, analysis_duration: int = 60):
 
         init_time = time.time() - init_start
         device_name = (
-            engine._gpu_device.device_info.get("name", "Unknown")
-            if engine._gpu_device
-            else "Unknown"
+            engine._gpu_device.device_info.get("name", "Unknown") if engine._gpu_device else "Unknown"
         )
         print(f"  [完成] 初始化耗时: {init_time:.2f}秒")
         print(f"  [设备] {device_name}")

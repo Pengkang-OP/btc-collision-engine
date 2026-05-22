@@ -89,9 +89,7 @@ def run_2m_batch_size(duration=60):
         print(f"\n🎯 发现匹配: {address}")
         print(f"   私钥: {private_key.hex()}")
         print(f"   WIF: {wif}\n")
-        stats_data["matches"].append(
-            {"address": address, "private_key": private_key.hex(), "wif": wif}
-        )
+        stats_data["matches"].append({"address": address, "private_key": private_key.hex(), "wif": wif})
 
     try:
         # 初始化GPU引擎（2M批次）

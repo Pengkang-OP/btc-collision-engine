@@ -47,9 +47,7 @@ def clean_device_info():
     # 清理设备信息缓存
     device_info_files = [
         os.path.join(os.path.dirname(__file__), "..", "src", "gpu", "profiles", "device_info.json"),
-        os.path.join(
-            os.path.dirname(__file__), "..", "src", "gpu", "profiles", "device_cache.json"
-        ),
+        os.path.join(os.path.dirname(__file__), "..", "src", "gpu", "profiles", "device_cache.json"),
     ]
 
     for file_path in device_info_files:
@@ -100,7 +98,7 @@ def clean_temporary_files():
                 file_age = now - os.path.getmtime(file_path)
                 if file_age > age_threshold:
                     os.remove(file_path)
-                    logger.info(f"清理过期文件 ({file_age/86400:.0f}d): {file_path}")
+                    logger.info(f"清理过期文件 ({file_age / 86400:.0f}d): {file_path}")
             except Exception as e:
                 logger.warning(f"清理日志文件失败: {e}")
 

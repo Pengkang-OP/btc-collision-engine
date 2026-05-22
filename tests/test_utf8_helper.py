@@ -85,9 +85,7 @@ class TestUTF8HelperMock(unittest.TestCase):
 
         with (
             mock.patch.object(utf8_helper.sys, "platform", "linux"),
-            mock.patch.object(
-                utf8_helper.ctypes.windll.kernel32, "SetConsoleOutputCP"
-            ) as mock_output,
+            mock.patch.object(utf8_helper.ctypes.windll.kernel32, "SetConsoleOutputCP") as mock_output,
             mock.patch.object(utf8_helper.ctypes.windll.kernel32, "SetConsoleCP") as mock_input,
             mock.patch.object(utf8_helper.io, "TextIOWrapper") as mock_wrapper,
         ):

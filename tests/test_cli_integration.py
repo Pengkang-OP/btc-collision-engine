@@ -136,7 +136,7 @@ class TestCLIEndToEnd:
         # 创建临时地址文件（放在项目内部 tests/data_logs 避免路径拦截）
         addr_file = tmp_path / "targets.txt"
         addr_file.write_text(
-            "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n" "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH\n",
+            "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH\n",
             encoding="utf-8",
         )
 

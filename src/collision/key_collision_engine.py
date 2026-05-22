@@ -2238,8 +2238,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
         try:
             if hasattr(self, "_running") and self._running and hasattr(self, "stop"):
                 self.stop()
-        except Exception:
-            pass  # 析构函数资源清理: 必须保持宽捕获, 限制异常类型可能导致GC崩溃
+        except Exception as e:
+            logger.debug("析构 KeyCollisionEngine 时发生异常: %s", e)
 
     def get_stats(self) -> CollisionStats:
         """

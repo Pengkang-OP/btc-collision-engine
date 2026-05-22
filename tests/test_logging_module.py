@@ -213,9 +213,7 @@ class TestSensitiveDataFilter:
 
     def test_blocks_p2pkh_address_in_event(self):
         f = SensitiveDataFilter(enabled=True)
-        event = LogEvent(
-            LogEventType.MATCH_FOUND, {"address": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
-        )
+        event = LogEvent(LogEventType.MATCH_FOUND, {"address": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"})
         assert f.filter(event) is False
 
 
@@ -458,9 +456,9 @@ class TestLogCollector:
 
         logger = logging.getLogger("test_attach")
         # 验证 _CollectorLogHandler 已被附加到 logger
-        assert any(
-            hasattr(h, "emit") and h is collector._log_handler for h in logger.handlers
-        ), "_CollectorLogHandler 未被附加到 logger"
+        assert any(hasattr(h, "emit") and h is collector._log_handler for h in logger.handlers), (
+            "_CollectorLogHandler 未被附加到 logger"
+        )
         collector.detach_from_logger("test_attach")
         # 验证 handler 已被移除
         assert collector._log_handler not in logger.handlers, "_CollectorLogHandler 未被成功移除"

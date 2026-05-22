@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 UI 模块更新验证脚本（已废弃）
 
 警告：GUI 模块已删除，本测试文件不再可用。
 """
 
-import sys
 import os
+import sys
 
 import pytest
 
@@ -25,14 +24,12 @@ def test_gui_config():
 
     try:
         from src.config.gui_config import (
-            WINDOW_CONFIG,
-            COMPONENT_CONFIG,
-            FONT_CONFIG,
             COLOR_CONFIG,
-            PADDING_CONFIG,
-            LAYOUT_CONFIG,
+            COMPONENT_CONFIG,
             INTERACTION_CONFIG,
+            LAYOUT_CONFIG,
             THEME_CONFIG,
+            WINDOW_CONFIG,
         )
 
         # 验证窗口配置
@@ -83,17 +80,14 @@ def test_ui_helpers():
 
     try:
         from src.utils.ui_helpers import (
-            format_timestamp,
-            format_mode_name,
-            format_number_with_commas,
-            format_speed,
+            format_bytes,
             format_elapsed_time,
             format_eta,
+            format_speed,
+            sanitize_display_text,
             truncate_address,
             validate_address_format,
             validate_hex_string,
-            format_bytes,
-            sanitize_display_text,
         )
 
         # 测试 format_speed
@@ -129,27 +123,21 @@ def test_ui_helpers():
         print("✓ truncate_address 正确")
 
         # 测试 validate_address_format
-        assert (
-            validate_address_format("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa") == True
-        ), "P2PKH 验证错误"
-        assert (
-            validate_address_format("3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy") == True
-        ), "P2SH 验证错误"
-        assert (
-            validate_address_format("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4") == True
-        ), "Bech32 验证错误"
+        assert validate_address_format("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa") == True, "P2PKH 验证错误"
+        assert validate_address_format("3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy") == True, "P2SH 验证错误"
+        assert validate_address_format("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4") == True, (
+            "Bech32 验证错误"
+        )
         # WIF 私钥测试
-        assert (
-            validate_address_format("5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ") == True
-        ), "WIF 验证错误"
-        assert (
-            validate_address_format("KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP98617") == True
-        ), "WIF 压缩验证错误"
+        assert validate_address_format("5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ") == True, (
+            "WIF 验证错误"
+        )
+        assert validate_address_format("KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP98617") == True, (
+            "WIF 压缩验证错误"
+        )
         # 公钥测试
         assert (
-            validate_address_format(
-                "0279BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798"
-            )
+            validate_address_format("0279BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798")
             == True
         ), "压缩公钥验证错误"
         assert (
@@ -246,7 +234,7 @@ def test_config_validation():
     print("=" * 60)
 
     try:
-        from src.config.gui_config import validate_color_config, validate_all_configs
+        from src.config.gui_config import validate_all_configs, validate_color_config
 
         # 验证颜色配置
         assert validate_color_config() == True, "颜色配置验证应通过"

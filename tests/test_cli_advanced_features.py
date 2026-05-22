@@ -369,9 +369,7 @@ class TestProgressExport:
 
     def test_export_progress_json_structure(self, mock_stats, temp_output_file):
         """测试导出JSON结构完整性"""
-        export_progress_data(
-            mock_stats, mode="random", engine_type="cpu", output_file=temp_output_file
-        )
+        export_progress_data(mock_stats, mode="random", engine_type="cpu", output_file=temp_output_file)
 
         with open(temp_output_file, encoding="utf-8") as f:
             data = json.load(f)
@@ -593,9 +591,7 @@ class TestEndToEndIntegration:
         assert config["collision"]["max_workers"] == 2
 
         # 步骤3: 模拟运行并导出
-        export_progress_data(
-            mock_stats, mode="random", engine_type="cpu", output_file=temp_output_file
-        )
+        export_progress_data(mock_stats, mode="random", engine_type="cpu", output_file=temp_output_file)
 
         # 步骤4: 验证导出
         with open(temp_output_file, encoding="utf-8") as f:

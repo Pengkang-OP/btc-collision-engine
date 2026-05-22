@@ -231,9 +231,7 @@ class PerformanceBenchmark:
             bloom = BloomDeduplicationFilter(max_size=size, false_positive_rate=0.001)
 
             # 测试添加性能
-            result = BenchmarkResult(
-                f"BloomFilter_Add_{size}", {"max_size": size, "operation": "add"}
-            )
+            result = BenchmarkResult(f"BloomFilter_Add_{size}", {"max_size": size, "operation": "add"})
             result.start()
 
             for _i in range(size):
@@ -370,9 +368,7 @@ def main() -> None:
         default="all",
         help="选择要运行的测试",
     )
-    parser.add_argument(
-        "--output", type=str, default="benchmark_results.json", help="结果输出文件路径"
-    )
+    parser.add_argument("--output", type=str, default="benchmark_results.json", help="结果输出文件路径")
 
     args = parser.parse_args()
 

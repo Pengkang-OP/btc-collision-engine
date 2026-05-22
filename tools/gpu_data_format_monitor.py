@@ -56,10 +56,10 @@ class GPUDataFormatMonitor:
         self.last_checked = 0
 
         # 验证规则
-        self.compiled_pubkey_pattern = re.compile(r'^(02|03|04)[0-9a-fA-F]+$')
-        self.p2pkh_pattern = re.compile(r'^1[a-km-zA-HJ-NP-Z1-9]{25,34}$')
-        self.p2sh_pattern = re.compile(r'^3[a-km-zA-HJ-NP-Z1-9]{25,34}$')
-        self.bech32_pattern = re.compile(r'^bc1[a-z0-9]{25,39}$')
+        self.compiled_pubkey_pattern = re.compile(r"^(02|03|04)[0-9a-fA-F]+$")
+        self.p2pkh_pattern = re.compile(r"^1[a-km-zA-HJ-NP-Z1-9]{25,34}$")
+        self.p2sh_pattern = re.compile(r"^3[a-km-zA-HJ-NP-Z1-9]{25,34}$")
+        self.bech32_pattern = re.compile(r"^bc1[a-z0-9]{25,39}$")
 
     def validate_private_key(self, private_key: bytes) -> tuple[bool, str]:
         """
@@ -76,7 +76,7 @@ class GPUDataFormatMonitor:
             return False, f"私钥长度错误: {len(private_key)} 字节（应为 32 字节）"
 
         # 转换为整数
-        private_key_int = int.from_bytes(private_key, 'big')
+        private_key_int = int.from_bytes(private_key, "big")
 
         # 检查范围（1 到 N-1）
         if private_key_int < 1:
@@ -164,7 +164,7 @@ class GPUDataFormatMonitor:
 
         try:
             # 启动引擎
-            engine.start(mode='random')
+            engine.start(mode="random")
 
             print("✅ 引擎已启动，开始监控...\n")
 
@@ -192,6 +192,7 @@ class GPUDataFormatMonitor:
         except Exception as e:
             print(f"\n\n❌ 监控过程出错: {e}")
             import traceback
+
             traceback.print_exc()
         finally:
             # 停止引擎
@@ -214,7 +215,7 @@ class GPUDataFormatMonitor:
             try:
                 # 生成有效的随机私钥（1 到 N-1）
                 private_key_int = random.randint(1, Secp256k1.N - 1)
-                private_key_bytes = private_key_int.to_bytes(32, 'big')
+                private_key_bytes = private_key_int.to_bytes(32, "big")
 
                 # 验证私钥
                 is_valid, error = self.validate_private_key(private_key_bytes)
@@ -269,16 +270,24 @@ class GPUDataFormatMonitor:
     def _display_monitoring_report(self, new_checked: int):
         """显示监控报告"""
         elapsed = time.time() - self.start_time
-        speed = new_checked / (time.time() - self.last_stats_time) if time.time() > self.last_stats_time else 0
+        speed = (
+            new_checked / (time.time() - self.last_stats_time)
+            if time.time() > self.last_stats_time
+            else 0
+        )
 
         self.last_stats_time = time.time()
 
         # 计算验证统计
         total_validations = self.valid_private_keys + self.invalid_private_keys
-        private_key_rate = (self.valid_private_keys / total_validations * 100) if total_validations > 0 else 0
+        private_key_rate = (
+            (self.valid_private_keys / total_validations * 100) if total_validations > 0 else 0
+        )
 
         total_pk_validations = self.valid_public_keys + self.invalid_public_keys
-        public_key_rate = (self.valid_public_keys / total_pk_validations * 100) if total_pk_validations > 0 else 0
+        public_key_rate = (
+            (self.valid_public_keys / total_pk_validations * 100) if total_pk_validations > 0 else 0
+        )
 
         total_addr_validations = self.valid_addresses
         address_rate = 100.0 if total_addr_validations > 0 else 0
@@ -403,8 +412,10 @@ def main():
     engine = KeyCollisionEngine(
         targets=resolved_targets,
         on_progress=lambda stats: None,
-        on_match=lambda pk, addr, wif: print(f"\n🎯 发现匹配!\n   地址: {addr}\n   私钥: {pk.hex()}\n   WIF: {wif}\n"),
-        on_complete=lambda stats: print("\n✅ 对撞完成")
+        on_match=lambda pk, addr, wif: print(
+            f"\n🎯 发现匹配!\n   地址: {addr}\n   私钥: {pk.hex()}\n   WIF: {wif}\n"
+        ),
+        on_complete=lambda stats: print("\n✅ 对撞完成"),
     )
 
     # 创建监控器

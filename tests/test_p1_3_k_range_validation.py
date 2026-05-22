@@ -72,7 +72,7 @@ class TestP1_3_KeyRangeValidation(unittest.TestCase):
         self.assertEqual(
             len(old_pattern),
             0,
-            "旧代码 'if (uint256_is_zero(&k)) {{' 应已被替换，" f"但仍找到 {len(old_pattern)} 处",
+            f"旧代码 'if (uint256_is_zero(&k)) {{{{' 应已被替换，但仍找到 {len(old_pattern)} 处",
         )
 
         print("\n[P1-3-B ✓] 旧独占条件已全部替换")
@@ -94,9 +94,7 @@ class TestP1_3_KeyRangeValidation(unittest.TestCase):
             source,
         )
         # 应该有4处（kernel.py和.cl各两个内核）
-        self.assertGreaterEqual(
-            len(load_loops), 2, f"不应少于2处N值加载循环，找到{len(load_loops)}处"
-        )
+        self.assertGreaterEqual(len(load_loops), 2, f"不应少于2处N值加载循环，找到{len(load_loops)}处")
 
         print(f"\n[P1-3-C ✓] n_val加载正确 (找到{len(load_loops)}处)")
 

@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 GPU设备选择和切换功能全面测试 (简化版)
 专注于核心功能: 厂商识别、设备评分、选择算法
 """
 
 import sys
-import os
 import time
 import unittest
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 # 修复Windows编码
 if sys.platform == "win32":
@@ -21,8 +19,8 @@ if sys.platform == "win32":
 # 添加项目根目录
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.gpu.selector import GPUDeviceSelector, get_gpu_selector, reset_gpu_selector
 from src.gpu.device import identify_vendor
+from src.gpu.selector import GPUDeviceSelector, get_gpu_selector, reset_gpu_selector
 
 
 class TestGPUVendorIdentification(unittest.TestCase):
@@ -162,7 +160,7 @@ class TestGPUDeviceScoring(unittest.TestCase):
         self.assertIn("Arc A770", best["name"])
 
         print(f"  ✅ 最佳GPU: {best['name']} ({best['score']:.1f}分)")
-        print(f"  所有设备排名:")
+        print("  所有设备排名:")
         for dev in sorted(devices, key=lambda d: d["score"], reverse=True):
             print(f"    {dev['name']}: {dev['score']:.1f}分")
 
@@ -229,12 +227,12 @@ class TestGPUSelectorAPI(unittest.TestCase):
         brief = selector.format_device_info(device, detailed=False)
         self.assertIn("RTX 3080", brief)
         self.assertIn("10.00 GB", brief)
-        print(f"  ✅ 简洁格式生成成功")
+        print("  ✅ 简洁格式生成成功")
 
         # 详细格式
         detailed = selector.format_device_info(device, detailed=True)
         self.assertIn("131,072", detailed)
-        print(f"  ✅ 详细格式生成成功")
+        print("  ✅ 详细格式生成成功")
 
     def test_03_select_by_index(self):
         """测试3.3: 根据索引选择设备"""
@@ -269,7 +267,7 @@ class TestGPUSelectorAPI(unittest.TestCase):
             device_invalid = selector.get_device_info(99)
             self.assertIsNone(device_invalid)
 
-            print(f"  ✅ 索引选择功能正常")
+            print("  ✅ 索引选择功能正常")
 
 
 def run_tests():

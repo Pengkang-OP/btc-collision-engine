@@ -55,6 +55,7 @@ class SearchModeCoordinator:
                     if isinstance(val, int):
                         seed_prefetch_size = val
         except Exception:
+            _logger.warning("读取 GPU seed_prefetch_size 配置失败，使用默认值 5", exc_info=True)
             seed_prefetch_size = 5
 
         self._modes[self.MODE_RANDOM] = RandomSearchMode(

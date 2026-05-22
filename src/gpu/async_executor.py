@@ -9,7 +9,7 @@
 import threading
 import time
 from contextlib import suppress
-from typing import Any, Callable, Callable
+from typing import Any, Callable
 
 import numpy as np
 
@@ -122,9 +122,7 @@ class _SyncFallbackError(Exception):
     __slots__ = ("matches", "execution_time_ms")
 
     def __init__(self, matches: list[dict], execution_time_ms: float) -> None:
-        super().__init__(
-            f"Async fallback complete: {len(matches)} matches, {execution_time_ms:.1f}ms"
-        )
+        super().__init__(f"Async fallback complete: {len(matches)} matches, {execution_time_ms:.1f}ms")
         self.matches = [dict(m) for m in matches]
         self.execution_time_ms = execution_time_ms
 
@@ -370,9 +368,7 @@ class AsyncGPUExecutor:
         # 更新内部max_batch_size以匹配实际分配的缓冲区大小
         self._actual_batch_size = num_keys
 
-        logger.info(
-            f"创建缓冲区池（PRNG模式）: num_keys={num_keys}, queue_depth={self.queue_depth}"
-        )
+        logger.info(f"创建缓冲区池（PRNG模式）: num_keys={num_keys}, queue_depth={self.queue_depth}")
 
         # 预计算表 GPU 常量缓冲区（如果尚未初始化）
         if self.precomp_buffer is None:
@@ -391,9 +387,7 @@ class AsyncGPUExecutor:
                 cl.mem_flags.READ_ONLY,
                 size=32,  # 固兵2字节 = 8 uint32
             )
-            logger.info(
-                f"种子缓冲区已创建: 32字节（PRNG模式，节省约{num_keys * 32 / 1024 / 1024}MB)"
-            )
+            logger.info(f"种子缓冲区已创建: 32字节（PRNG模式，节省约{num_keys * 32 / 1024 / 1024}MB)")
 
         # 创建 queue_depth 个缓冲区构成缓冲区池
         self._buffer_pool: list[dict] = []
@@ -685,14 +679,10 @@ class AsyncGPUExecutor:
                 return current_buf
             except (AttributeError, KeyError) as e:
                 logger.warning(f"获取双缓冲区属性异常: {type(e).__name__}: {e}，回退到同步模式")
-                return self._run_batch_sync_fallback(
-                    seed, num_keys, program, targets_buf, num_targets
-                )
+                return self._run_batch_sync_fallback(seed, num_keys, program, targets_buf, num_targets)
             except Exception as e:
                 logger.warning(f"获取双缓冲区失败: {type(e).__name__}: {e}，回退到同步模式")
-                return self._run_batch_sync_fallback(
-                    seed, num_keys, program, targets_buf, num_targets
-                )
+                return self._run_batch_sync_fallback(seed, num_keys, program, targets_buf, num_targets)
 
     def _run_batch_sync_fallback(self, seed, num_keys, program, targets_buf, num_targets):
         """回退到同步执行并抛出结果异常（供 _allocate_buffer 使用）"""
@@ -787,9 +777,7 @@ class AsyncGPUExecutor:
                 seed, num_keys, program, targets_buf, num_targets
             )
 
-    def _run_batch_sync_fallback_and_return(
-        self, seed, num_keys, program, targets_buf, num_targets
-    ):
+    def _run_batch_sync_fallback_and_return(self, seed, num_keys, program, targets_buf, num_targets):
         """回退到同步执行并抛出结果异常（供 _transfer_seed / _clear_matches_buffer 使用）"""
         matches, exec_time = self._run_batch_sync(seed, num_keys, program, targets_buf, num_targets)
         self.sync_fallbacks += 1
@@ -819,9 +807,7 @@ class AsyncGPUExecutor:
         except (RuntimeError, MemoryError, Exception) as e:
             self._handle_sync_fallback(e, seed, num_keys, program, targets_buf, num_targets)
 
-    def _resize_buffer_and_clear(
-        self, current_buf, num_keys, seed, program, targets_buf, num_targets
-    ):
+    def _resize_buffer_and_clear(self, current_buf, num_keys, seed, program, targets_buf, num_targets):
         """调整缓冲区大小并清空（提取公共逻辑，消除代码重复）"""
         import pyopencl as cl
 

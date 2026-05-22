@@ -1,26 +1,23 @@
-# -*- coding: utf-8 -*-
 """
 P1-2 High优先级问题修复测试
 
 验证H1（GPU健康验证）和H2（统计信息线程保护）修复
 """
 
-import unittest
+import os
+import sys
 import threading
 import time
-from unittest.mock import Mock, patch, MagicMock
-
-import sys
-import os
+import unittest
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.gpu.gpu_recovery_manager import (
-    GPURecoveryManager,
-    GPUFailureType,
-    RecoveryStrategy,
     GPUFailureRecord,
+    GPUFailureType,
+    GPURecoveryManager,
+    RecoveryStrategy,
 )
 
 

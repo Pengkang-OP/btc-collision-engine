@@ -212,9 +212,7 @@ class PlatformChecker:
                 _t("platform.check.permission_denied", path=f"{len(failures)} dirs"),
                 "\n".join(failures),
             )
-        return self._add(
-            _t("platform.check.name_permission"), True, _t("platform.check.permission_ok")
-        )
+        return self._add(_t("platform.check.name_permission"), True, _t("platform.check.permission_ok"))
 
     def check_disk_space(self, min_mb: int = 200) -> CheckResult:
         """检查项目目录磁盘可用空间"""
@@ -293,9 +291,7 @@ class PlatformChecker:
             test_link.symlink_to(test_target)
             test_link.unlink()
             test_target.unlink()
-            return self._add(
-                _t("platform.check.name_symlink"), True, _t("platform.check.symlink_ok")
-            )
+            return self._add(_t("platform.check.name_symlink"), True, _t("platform.check.symlink_ok"))
         except (OSError, NotImplementedError):
             # 清理残留
             for p in (test_link, test_target):
@@ -423,9 +419,7 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(description="BTC碰撞引擎 - 跨平台兼容性检查工具")
     parser.add_argument("--json", action="store_true", help="以 JSON 格式输出检查结果")
-    parser.add_argument(
-        "--root", metavar="PATH", default=None, help="项目根目录路径（默认：自动检测）"
-    )
+    parser.add_argument("--root", metavar="PATH", default=None, help="项目根目录路径（默认：自动检测）")
     args = parser.parse_args()
 
     checker = PlatformChecker(project_root=args.root)

@@ -141,9 +141,7 @@ class TestKeyGenerationWithEntropyCheck(unittest.TestCase):
             key_int = int.from_bytes(key, "big")
             # 验证范围: 1 <= k < n
             self.assertGreaterEqual(key_int, 1)
-            self.assertLess(
-                key_int, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
-            )
+            self.assertLess(key_int, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141)
 
 
 class TestEntropyStatistics(unittest.TestCase):

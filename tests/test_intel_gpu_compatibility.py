@@ -139,9 +139,7 @@ class TestIntelMemoryMonitor:
         """设置测试环境"""
         # 模拟 8GB 显存
         self.total_memory = 8 * 1024**3  # 8GB
-        self.monitor = IntelMemoryMonitor(
-            total_memory_bytes=self.total_memory, safe_usage_ratio=0.45
-        )
+        self.monitor = IntelMemoryMonitor(total_memory_bytes=self.total_memory, safe_usage_ratio=0.45)
 
     def test_initial_state(self):
         """测试初始状态"""

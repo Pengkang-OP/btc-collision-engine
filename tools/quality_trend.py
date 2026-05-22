@@ -35,7 +35,7 @@ class QualityTrendAnalyzer:
 
     def _cleanup_temp(self):
         """清理残留的临时文件"""
-        temp_file = self.history_file.with_suffix('.tmp')
+        temp_file = self.history_file.with_suffix(".tmp")
         if temp_file.exists():
             try:
                 temp_file.unlink()
@@ -46,7 +46,7 @@ class QualityTrendAnalyzer:
         """加载历史记录"""
         if self.history_file.exists():
             try:
-                with open(self.history_file, encoding='utf-8') as f:
+                with open(self.history_file, encoding="utf-8") as f:
                     data = json.load(f)
                     if isinstance(data, list):
                         return data
@@ -66,8 +66,8 @@ class QualityTrendAnalyzer:
         """保存历史记录"""
         try:
             # 使用临时文件避免写入中断导致数据损坏
-            temp_file = self.history_file.with_suffix('.tmp')
-            with open(temp_file, 'w', encoding='utf-8') as f:
+            temp_file = self.history_file.with_suffix(".tmp")
+            with open(temp_file, "w", encoding="utf-8") as f:
                 json.dump(self.history, f, indent=2, ensure_ascii=False)
             # 原子替换
             temp_file.replace(self.history_file)
@@ -83,10 +83,10 @@ class QualityTrendAnalyzer:
             details: 详细信息
         """
         record = {
-            'timestamp': datetime.now().isoformat(),
-            'avg_score': round(avg_score, 2),
-            'doc_count': doc_count,
-            'details': details
+            "timestamp": datetime.now().isoformat(),
+            "avg_score": round(avg_score, 2),
+            "doc_count": doc_count,
+            "details": details,
         }
 
         self.history.append(record)
@@ -102,11 +102,11 @@ class QualityTrendAnalyzer:
             趋势分析结果
         """
         if len(self.history) < 2:
-            return {'status': 'insufficient_data', 'message': '数据不足，至少需要2次记录'}
+            return {"status": "insufficient_data", "message": "数据不足，至少需要2次记录"}
 
         recent = self.history[-last_n:]
 
-        scores = [r['avg_score'] for r in recent]
+        scores = [r["avg_score"] for r in recent]
         avg_score = sum(scores) / len(scores)
         min_score = min(scores)
         max_score = max(scores)
@@ -115,29 +115,29 @@ class QualityTrendAnalyzer:
         if len(scores) >= 2:
             trend = scores[-1] - scores[-2]
             if trend > 0.2:
-                trend_status = 'improving'
-                trend_icon = '📈'
+                trend_status = "improving"
+                trend_icon = "📈"
             elif trend < -0.2:
-                trend_status = 'declining'
-                trend_icon = '📉'
+                trend_status = "declining"
+                trend_icon = "📉"
             else:
-                trend_status = 'stable'
-                trend_icon = '➡️'
+                trend_status = "stable"
+                trend_icon = "➡️"
         else:
             trend = 0
-            trend_status = 'stable'
-            trend_icon = '➡️'
+            trend_status = "stable"
+            trend_icon = "➡️"
 
         return {
-            'status': 'success',
-            'avg_score': round(avg_score, 2),
-            'min_score': round(min_score, 2),
-            'max_score': round(max_score, 2),
-            'trend': round(trend, 2),
-            'trend_status': trend_status,
-            'trend_icon': trend_icon,
-            'record_count': len(recent),
-            'scores': scores
+            "status": "success",
+            "avg_score": round(avg_score, 2),
+            "min_score": round(min_score, 2),
+            "max_score": round(max_score, 2),
+            "trend": round(trend, 2),
+            "trend_status": trend_status,
+            "trend_icon": trend_icon,
+            "record_count": len(recent),
+            "scores": scores,
         }
 
     def print_trend_report(self):
@@ -148,7 +148,7 @@ class QualityTrendAnalyzer:
         print("📊 文档质量趋势分析报告")
         print(f"{'=' * 60}")
 
-        if trend['status'] == 'insufficient_data':
+        if trend["status"] == "insufficient_data":
             print(f"\n⚠️  {trend['message']}")
             print(f"当前记录数: {len(self.history)}")
             print("\n💡 建议: 运行多次质量检查以积累数据")
@@ -164,16 +164,16 @@ class QualityTrendAnalyzer:
         print(f"\n📊 质量趋势: {trend['trend_icon']} {trend['trend_status'].upper()}")
         print(f"  最近变化: {trend['trend']:+.2f}")
 
-        if trend['trend_status'] == 'improving':
+        if trend["trend_status"] == "improving":
             print("  ✅ 文档质量正在提升!")
-        elif trend['trend_status'] == 'declining':
+        elif trend["trend_status"] == "declining":
             print("  ⚠️  文档质量下降，需要关注!")
         else:
             print("  ➡️  文档质量稳定")
 
         # 评分历史
         print("\n📝 最近评分历史:")
-        for i, score in enumerate(trend['scores'][-10:], 1):
+        for i, score in enumerate(trend["scores"][-10:], 1):
             print(f"  {i:2d}. {score}/10")
 
         print(f"\n{'=' * 60}")
@@ -185,7 +185,7 @@ class QualityTrendAnalyzer:
             return
 
         try:
-            with open(output_file, 'w', encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 f.write("timestamp,avg_score,doc_count\n")
                 for record in self.history:
                     f.write(f"{record['timestamp']},{record['avg_score']},{record['doc_count']}\n")
@@ -199,27 +199,15 @@ def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='文档质量趋势分析工具')
+    parser = argparse.ArgumentParser(description="文档质量趋势分析工具")
+    parser.add_argument("--docs-dir", default="docs", help="文档目录路径 (默认: docs)")
     parser.add_argument(
-        '--docs-dir',
-        default='docs',
-        help='文档目录路径 (默认: docs)'
+        "--history-file",
+        default="quality_history.json",
+        help="历史记录文件 (默认: quality_history.json)",
     )
-    parser.add_argument(
-        '--history-file',
-        default='quality_history.json',
-        help='历史记录文件 (默认: quality_history.json)'
-    )
-    parser.add_argument(
-        '--check',
-        action='store_true',
-        help='执行质量检查并记录'
-    )
-    parser.add_argument(
-        '--export-csv',
-        default=None,
-        help='导出为CSV文件'
-    )
+    parser.add_argument("--check", action="store_true", help="执行质量检查并记录")
+    parser.add_argument("--export-csv", default=None, help="导出为CSV文件")
 
     args = parser.parse_args()
 
@@ -239,11 +227,7 @@ def main():
             good = sum(1 for s in scores if 7.0 <= s.score < 8.5)
             needs_improvement = sum(1 for s in scores if s.score < 7.0)
 
-            details = {
-                'excellent': excellent,
-                'good': good,
-                'needs_improvement': needs_improvement
-            }
+            details = {"excellent": excellent, "good": good, "needs_improvement": needs_improvement}
 
             # 记录
             analyzer.add_record(avg_score, len(scores), details)

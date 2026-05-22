@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """验证A类异常修复"""
 
 import sys
-import re
 
 
 def verify_a_class_fixes():
@@ -27,7 +25,7 @@ def verify_a_class_fixes():
 
     for f in files:
         try:
-            with open(f, "r", encoding="utf-8") as file:
+            with open(f, encoding="utf-8") as file:
                 content = file.read()
 
             # 检查是否有A类修复标记

@@ -289,9 +289,9 @@ class ConfigManager:
             "device_index": -1,  # -1表示自动选择
             "batch_size": 1048576,  # C-06: 与 config.example.json 同步 (1M)
             "auto_detect": True,
-            "memory_usage_ratio": 0.7,  # C-06: Intel Arc 推荐值 (70%)
+            "memory_usage_ratio": 0.75,  # C-06: 与 config.json 保持一致
             "enable_vendor_optimizations": True,
-            "queue_depth": 4,  # GPU 命令队列预提交批次数，默认 4
+            "queue_depth": 16,  # GPU 命令队列预提交批次数，与 config.json 保持一致
             # v4.3.1: 补充 config.example.json 中的 GPU 高级配置字段
             "use_new_module": True,
             "async_execution": True,
@@ -301,7 +301,7 @@ class ConfigManager:
             "max_error_retries": 100,
             "gpu_memory_pool": True,
             "max_buffers": 100,
-            "max_memory_mb": 512,
+            "max_memory_mb": 8192,  # 与 config.json 保持一致
             "mode": "auto",
             "device_indices": [-1],
             "load_balancing": "performance",
@@ -309,7 +309,7 @@ class ConfigManager:
             # 审计修复: 补充 Schema 中声明但 DEFAULT_CONFIG 缺失的字段
             "work_group_size": 256,  # OpenCL work group size
             "use_fast_math": True,  # 启用 fast math 优化
-            "use_uint32_workaround": False,  # Intel GPU uint32 兼容处理
+            "use_uint32_workaround": True,  # Intel GPU uint32 兼容处理 (Intel Arc 必须启用)
             "compiler_flags": "",  # 自定义编译选项
             "driver_check": {},  # 驱动检查配置
             "per_device_config": {},  # 每设备独立配置

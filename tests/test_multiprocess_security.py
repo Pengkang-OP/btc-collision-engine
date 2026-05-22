@@ -207,9 +207,7 @@ class TestQueueLimits(unittest.TestCase):
         """测试Queue有大小限制"""
 
         # 创建引擎
-        engine = MultiprocessCollisionEngine(
-            num_workers=2, batch_size=1000, target_addresses=["test"]
-        )
+        engine = MultiprocessCollisionEngine(num_workers=2, batch_size=1000, target_addresses=["test"])
 
         # 验证Queue在初始化后为None
         self.assertIsNone(engine.task_queue)

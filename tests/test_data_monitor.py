@@ -226,9 +226,7 @@ class TestDataMonitor(unittest.TestCase):
         self.monitor.start()
 
         # 创建不同严重级别的问题
-        issue_low = DataQualityIssue(
-            issue_type="test", severity="low", message="低级别", device_idx=0
-        )
+        issue_low = DataQualityIssue(issue_type="test", severity="low", message="低级别", device_idx=0)
 
         issue_critical = DataQualityIssue(
             issue_type="test", severity="critical", message="严重级别", device_idx=0

@@ -207,9 +207,9 @@ class TestMonitoringWithDifferentModes:
 
         # 验证引擎确实运行了（总检查数>0）
         # 注意：需要在stop()后检查，因为stop()会触发最终统计更新
-        assert (
-            engine.stats.total_checked > 0
-        ), f"引擎应该处理了至少一个私钥，但total_checked={engine.stats.total_checked}"
+        assert engine.stats.total_checked > 0, (
+            f"引擎应该处理了至少一个私钥，但total_checked={engine.stats.total_checked}"
+        )
 
     def test_monitoring_in_brute_force_mode(self):
         """测试暴力穷举模式下的监控"""
@@ -275,9 +275,7 @@ class TestMonitoringErrorScenarios:
         )
 
         # 模拟监控系统错误
-        engine.enhanced_monitoring._monitoring_loop = Mock(
-            side_effect=RuntimeError("Monitoring failed")
-        )
+        engine.enhanced_monitoring._monitoring_loop = Mock(side_effect=RuntimeError("Monitoring failed"))
 
         engine.start(mode="random")
         poll_until(lambda: engine.is_running(), timeout=2.0)
@@ -361,9 +359,9 @@ class TestMonitoringDataIntegrity:
 
         # 验证引擎确实运行了
         # 注意：需要在stop()后检查，因为stop()会触发最终统计更新
-        assert (
-            engine.stats.total_checked > 0
-        ), f"引擎应该处理了数据，但total_checked={engine.stats.total_checked}"
+        assert engine.stats.total_checked > 0, (
+            f"引擎应该处理了数据，但total_checked={engine.stats.total_checked}"
+        )
 
     def test_no_data_loss_on_stop(self):
         """测试停止时无数据丢失"""
@@ -389,9 +387,9 @@ class TestMonitoringDataIntegrity:
         # 停止前后总检查数应该相同（没有数据丢失）
         total_checks_before = stats_before.get("total_checks", 0)
         total_checks_after = stats_after.get("total_checks", 0)
-        assert (
-            total_checks_before == total_checks_after
-        ), f"停止前后数据不一致: before={total_checks_before}, after={total_checks_after}"
+        assert total_checks_before == total_checks_after, (
+            f"停止前后数据不一致: before={total_checks_before}, after={total_checks_after}"
+        )
 
         # 验证引擎的总检查数一致
         # P2-5修复后，可以严格验证

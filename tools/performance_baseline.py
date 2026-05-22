@@ -13,16 +13,16 @@
 使用方法:
     # 运行完整性能测试
     python tools/performance_baseline.py
-    
+
     # 仅测试CPU性能
     python tools/performance_baseline.py --cpu-only
-    
+
     # 仅测试GPU性能
     python tools/performance_baseline.py --gpu-only
-    
+
     # 保存到基线文件
     python tools/performance_baseline.py --save-baseline
-    
+
     # 与基线对比
     python tools/performance_baseline.py --compare-baseline
 """
@@ -51,7 +51,7 @@ class PerformanceBaseline:
         """加载性能基线"""
         if self.BASELINE_FILE.exists():
             try:
-                with open(self.BASELINE_FILE, encoding='utf-8') as f:
+                with open(self.BASELINE_FILE, encoding="utf-8") as f:
                     return json.load(f)
             except (OSError, json.JSONDecodeError):
                 pass
@@ -59,7 +59,7 @@ class PerformanceBaseline:
 
     def save_baseline(self):
         """保存性能基线"""
-        with open(self.BASELINE_FILE, 'w', encoding='utf-8') as f:
+        with open(self.BASELINE_FILE, "w", encoding="utf-8") as f:
             json.dump(self.results, f, indent=2, ensure_ascii=False)
         print(f"✅ 基线已保存: {self.BASELINE_FILE}")
 
@@ -72,16 +72,16 @@ class PerformanceBaseline:
         comparison = {}
         for test_name, result in self.results.items():
             if test_name in self.baseline:
-                baseline_value = self.baseline[test_name].get('throughput', 0)
-                current_value = result.get('throughput', 0)
+                baseline_value = self.baseline[test_name].get("throughput", 0)
+                current_value = result.get("throughput", 0)
 
                 if baseline_value > 0:
                     change = ((current_value - baseline_value) / baseline_value) * 100
                     comparison[test_name] = {
-                        'baseline': baseline_value,
-                        'current': current_value,
-                        'change_percent': change,
-                        'status': '✅ 提升' if change >= 0 else '❌ 下降'
+                        "baseline": baseline_value,
+                        "current": current_value,
+                        "change_percent": change,
+                        "status": "✅ 提升" if change >= 0 else "❌ 下降",
                     }
 
         return comparison
@@ -108,11 +108,11 @@ class PerformanceBaseline:
         throughput = iterations / elapsed
 
         result = {
-            'test_name': 'CPU地址生成',
-            'iterations': iterations,
-            'elapsed_seconds': round(elapsed, 2),
-            'throughput': round(throughput, 2),
-            'unit': 'keys/s'
+            "test_name": "CPU地址生成",
+            "iterations": iterations,
+            "elapsed_seconds": round(elapsed, 2),
+            "throughput": round(throughput, 2),
+            "unit": "keys/s",
         }
 
         print(f"  ✅ 完成: {throughput:,.0f} keys/s")
@@ -136,6 +136,7 @@ class PerformanceBaseline:
 
         # 测试不带池性能(直接创建对象)
         from src.core.secp256k1 import ECPoint, Secp256k1
+
         start_time = time.time()
         for _ in range(iterations):
             ECPoint(Secp256k1.Gx, Secp256k1.Gy)
@@ -144,12 +145,12 @@ class PerformanceBaseline:
         speedup = elapsed_without_pool / elapsed_with_pool if elapsed_with_pool > 0 else 1.0
 
         result = {
-            'test_name': '内存池性能',
-            'iterations': iterations,
-            'with_pool_seconds': round(elapsed_with_pool, 3),
-            'without_pool_seconds': round(elapsed_without_pool, 3),
-            'speedup': round(speedup, 2),
-            'unit': 'x加速'
+            "test_name": "内存池性能",
+            "iterations": iterations,
+            "with_pool_seconds": round(elapsed_with_pool, 3),
+            "without_pool_seconds": round(elapsed_without_pool, 3),
+            "speedup": round(speedup, 2),
+            "unit": "x加速",
         }
 
         print(f"  ✅ 完成: {speedup:.2f}x加速")
@@ -167,7 +168,7 @@ class PerformanceBaseline:
         # 测试不带预计算表
         start_time = time.time()
         for _ in range(iterations):
-            k = int.from_bytes(secrets.token_bytes(32), 'big') % Secp256k1.N
+            k = int.from_bytes(secrets.token_bytes(32), "big") % Secp256k1.N
             ec.scalar_multiply(k, G)
         elapsed_standard = time.time() - start_time
 
@@ -175,19 +176,19 @@ class PerformanceBaseline:
         table = get_precomputed_table(window_size=8)
         start_time = time.time()
         for _ in range(iterations):
-            k = int.from_bytes(secrets.token_bytes(32), 'big') % Secp256k1.N
+            k = int.from_bytes(secrets.token_bytes(32), "big") % Secp256k1.N
             table.scalar_multiply_with_table(k, ec)
         elapsed_optimized = time.time() - start_time
 
         speedup = elapsed_standard / elapsed_optimized if elapsed_optimized > 0 else 1.0
 
         result = {
-            'test_name': '预计算表性能',
-            'iterations': iterations,
-            'standard_seconds': round(elapsed_standard, 3),
-            'optimized_seconds': round(elapsed_optimized, 3),
-            'speedup': round(speedup, 2),
-            'unit': 'x加速'
+            "test_name": "预计算表性能",
+            "iterations": iterations,
+            "standard_seconds": round(elapsed_standard, 3),
+            "optimized_seconds": round(elapsed_optimized, 3),
+            "speedup": round(speedup, 2),
+            "unit": "x加速",
         }
 
         print(f"  ✅ 完成: {speedup:.2f}x加速")
@@ -229,15 +230,15 @@ class PerformanceBaseline:
             engine.stop()
             engine.cleanup()
 
-            throughput = report.get('avg_throughput_keys_per_sec', 0)
+            throughput = report.get("avg_throughput_keys_per_sec", 0)
 
             result = {
-                'test_name': 'GPU碰撞引擎',
-                'gpu_name': devices[0]['name'],
-                'batch_size': batch_size,
-                'duration_seconds': duration,
-                'throughput': round(throughput, 2),
-                'unit': 'keys/s'
+                "test_name": "GPU碰撞引擎",
+                "gpu_name": devices[0]["name"],
+                "batch_size": batch_size,
+                "duration_seconds": duration,
+                "throughput": round(throughput, 2),
+                "unit": "keys/s",
             }
 
             print(f"  ✅ 完成: {throughput:,.0f} keys/s")
@@ -255,15 +256,15 @@ class PerformanceBaseline:
 
         if not gpu_only:
             # CPU测试
-            self.results['cpu_address_generation'] = self.test_cpu_address_generation()
-            self.results['memory_pool'] = self.test_memory_pool_performance()
-            self.results['precomputed_table'] = self.test_precomputed_table_performance()
+            self.results["cpu_address_generation"] = self.test_cpu_address_generation()
+            self.results["memory_pool"] = self.test_memory_pool_performance()
+            self.results["precomputed_table"] = self.test_precomputed_table_performance()
 
         if not cpu_only:
             # GPU测试
             gpu_result = self.test_gpu_performance()
             if gpu_result:
-                self.results['gpu_collision'] = gpu_result
+                self.results["gpu_collision"] = gpu_result
 
         # 打印总结
         self.print_summary()
@@ -310,14 +311,14 @@ def main():
     baseline.run_all_tests(cpu_only=args.cpu_only, gpu_only=args.gpu_only)
 
     if args.save_baseline:
-        baseline.results['timestamp'] = datetime.now().isoformat()
+        baseline.results["timestamp"] = datetime.now().isoformat()
         baseline.save_baseline()
 
     if args.compare_baseline:
         comparison = baseline.compare_with_baseline()
         if comparison:
             # 检查是否有性能下降
-            regressions = [k for k, v in comparison.items() if v['change_percent'] < -5]
+            regressions = [k for k, v in comparison.items() if v["change_percent"] < -5]
             if regressions:
                 print(f"\n⚠️  发现性能下降的测试: {', '.join(regressions)}")
                 sys.exit(1)

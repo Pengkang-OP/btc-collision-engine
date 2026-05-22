@@ -119,9 +119,7 @@ class GPULoadBalancer:
         """
         return self._weights.copy()
 
-    def assign_key_range(
-        self, total_keys: int, device_idx: int, key_offset: int = 0
-    ) -> tuple[int, int]:
+    def assign_key_range(self, total_keys: int, device_idx: int, key_offset: int = 0) -> tuple[int, int]:
         """为指定GPU分配私钥搜索范围
 
         Args:
@@ -173,9 +171,7 @@ class GPULoadBalancer:
 
         return cumulative
 
-    def assign_all_key_ranges(
-        self, total_keys: int, key_offset: int = 0
-    ) -> dict[int, tuple[int, int]]:
+    def assign_all_key_ranges(self, total_keys: int, key_offset: int = 0) -> dict[int, tuple[int, int]]:
         """为所有GPU分配私钥范围
 
         Args:
@@ -210,9 +206,7 @@ class GPULoadBalancer:
 
         return ranges
 
-    def record_performance(
-        self, device_idx: int, throughput: float, error_rate: float = 0.0
-    ) -> None:
+    def record_performance(self, device_idx: int, throughput: float, error_rate: float = 0.0) -> None:
         """记录GPU实际性能
 
         Args:
@@ -239,9 +233,7 @@ class GPULoadBalancer:
 
         # 保持历史数据大小
         if len(self._historical_performance[device_idx]) > 50:
-            self._historical_performance[device_idx] = self._historical_performance[device_idx][
-                -50:
-            ]
+            self._historical_performance[device_idx] = self._historical_performance[device_idx][-50:]
 
     def record_memory_usage(
         self, device_idx: int, used_memory_mb: float, total_memory_mb: float

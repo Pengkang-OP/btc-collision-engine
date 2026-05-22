@@ -7,13 +7,13 @@
 使用方法:
     # 列出所有GPU设备
     python tools/gpu_cli.py list
-    
+
     # 自动选择最佳GPU
     python tools/gpu_cli.py auto
-    
+
     # 测试多GPU模式
     python tools/gpu_cli.py test-multi
-    
+
     # 生成配置文件
     python tools/gpu_cli.py generate-config --mode multi --output config.multi.json
 """
@@ -48,6 +48,7 @@ def cmd_list_devices(args):
 
     # 打印兼容性警告
     from src.gpu.config_validator import GPUConfigValidator
+
     validator = GPUConfigValidator()
     is_compatible, warnings = validator.validate_device_compatibility(devices)
 
@@ -75,6 +76,7 @@ def cmd_auto_select(args):
 
     # 生成配置建议
     from src.gpu.auto_config import get_gpu_configurator
+
     configurator = get_gpu_configurator()
     config = configurator.configure_for_device(best_device)
 
@@ -109,7 +111,7 @@ def cmd_test_multi(args):
     engine = MultiGPUCollisionEngine()
 
     # 初始化
-    if not engine.initialize(device_count=device_count, strategy='performance'):
+    if not engine.initialize(device_count=device_count, strategy="performance"):
         print("❌ 多GPU引擎初始化失败")
         return 1
 
@@ -153,23 +155,23 @@ def cmd_generate_config(args):
     config = validator.suggest_config(devices, mode=args.mode)
 
     # 添加元数据
-    config['_metadata'] = {
-        'generated_at': datetime.now().isoformat(),
-        'device_count': len(devices),
-        'devices': [
+    config["_metadata"] = {
+        "generated_at": datetime.now().isoformat(),
+        "device_count": len(devices),
+        "devices": [
             {
-                'index': d['global_index'],
-                'name': d['name'],
-                'vendor': d['vendor'],
-                'memory_gb': d['global_mem_gb']
+                "index": d["global_index"],
+                "name": d["name"],
+                "vendor": d["vendor"],
+                "memory_gb": d["global_mem_gb"],
             }
             for d in devices
-        ]
+        ],
     }
 
     # 输出配置
     output_path = Path(args.output)
-    with open(output_path, 'w', encoding='utf-8') as f:
+    with open(output_path, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=2, ensure_ascii=False)
 
     print(f"✅ 配置文件已生成: {output_path}")
@@ -200,41 +202,31 @@ def main():
   
   # 生成多GPU配置
   python gpu_cli.py generate-config --mode multi --output config.multi.json
-        """
+        """,
     )
 
-    subparsers = parser.add_subparsers(dest='command', help='可用命令')
+    subparsers = parser.add_subparsers(dest="command", help="可用命令")
 
     # list命令
-    list_parser = subparsers.add_parser('list', help='列出所有GPU设备')
+    list_parser = subparsers.add_parser("list", help="列出所有GPU设备")
     list_parser.set_defaults(func=cmd_list_devices)
 
     # auto命令
-    auto_parser = subparsers.add_parser('auto', help='自动选择最佳GPU')
+    auto_parser = subparsers.add_parser("auto", help="自动选择最佳GPU")
     auto_parser.set_defaults(func=cmd_auto_select)
 
     # test-multi命令
-    test_parser = subparsers.add_parser('test-multi', help='测试多GPU模式')
-    test_parser.add_argument(
-        '--gpu-count',
-        type=int,
-        default=2,
-        help='测试的GPU数量(默认2)'
-    )
+    test_parser = subparsers.add_parser("test-multi", help="测试多GPU模式")
+    test_parser.add_argument("--gpu-count", type=int, default=2, help="测试的GPU数量(默认2)")
     test_parser.set_defaults(func=cmd_test_multi)
 
     # generate-config命令
-    gen_parser = subparsers.add_parser('generate-config', help='生成配置文件')
+    gen_parser = subparsers.add_parser("generate-config", help="生成配置文件")
     gen_parser.add_argument(
-        '--mode',
-        choices=['auto', 'single', 'multi'],
-        default='auto',
-        help='GPU模式(默认auto)'
+        "--mode", choices=["auto", "single", "multi"], default="auto", help="GPU模式(默认auto)"
     )
     gen_parser.add_argument(
-        '--output',
-        default='config.gpu.json',
-        help='输出文件路径(默认config.gpu.json)'
+        "--output", default="config.gpu.json", help="输出文件路径(默认config.gpu.json)"
     )
     gen_parser.set_defaults(func=cmd_generate_config)
 
@@ -250,6 +242,7 @@ def main():
     except Exception as e:
         print(f"❌ 命令执行失败: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

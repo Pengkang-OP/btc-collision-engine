@@ -107,7 +107,6 @@ def test_crypto_backend_in_gpu():
             patch("src.collision.gpu_collision_engine.GPUKernel"),
             patch("src.collision.gpu_collision_engine.GPUProfileLoader"),
         ):
-
             # 配置Mock
             mock_device_instance = Mock()
             mock_device_instance.context = Mock()

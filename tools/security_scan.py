@@ -31,9 +31,13 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 def run_bandit_scan(severity="medium", format_type="json"):
     """运行bandit安全扫描"""
     cmd = [
-        sys.executable, "-m", "bandit",
-        "-r", "src/",
-        "-f", format_type,
+        sys.executable,
+        "-m",
+        "bandit",
+        "-r",
+        "src/",
+        "-f",
+        format_type,
         "-ll",  # 仅显示medium和high
     ]
 
@@ -41,12 +45,7 @@ def run_bandit_scan(severity="medium", format_type="json"):
         cmd.append("-lll")  # 仅显示high
 
     try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=60
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
         return result
     except subprocess.TimeoutExpired:
         print("❌ 扫描超时(60秒)")
@@ -63,7 +62,7 @@ def parse_json_report(json_file="bandit_report.json"):
         return None
 
     try:
-        with open(report_path, encoding='utf-8') as f:
+        with open(report_path, encoding="utf-8") as f:
             data = json.load(f)
 
         return data
@@ -115,9 +114,9 @@ def print_summary(report):
             print(f"     置信度: {issue.get('issue_confidence')}")
 
     # 安全评分
-    if severity_counts['HIGH'] == 0 and severity_counts['MEDIUM'] == 0:
+    if severity_counts["HIGH"] == 0 and severity_counts["MEDIUM"] == 0:
         score = "✅ 优秀 (10/10)"
-    elif severity_counts['HIGH'] == 0:
+    elif severity_counts["HIGH"] == 0:
         score = "🟡 良好 (7-9/10)"
     else:
         score = "🔴 需要改进 (<7/10)"
@@ -138,7 +137,7 @@ def generate_html_report(report, output_file="security_report.html"):
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>安全扫描报告 - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</title>
+    <title>安全扫描报告 - {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</title>
     <style>
         body {{ font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }}
         .container {{ max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
@@ -162,15 +161,15 @@ def generate_html_report(report, output_file="security_report.html"):
 <body>
     <div class="container">
         <h1>🔒 安全扫描报告</h1>
-        <p><strong>生成时间:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+        <p><strong>生成时间:</strong> {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
 
         <div class="summary">
             <h2>📊 扫描统计</h2>
             <table>
-                <tr><td>总代码行数</td><td>{metrics.get('_total_lines_of_code', 0):,}</td></tr>
-                <tr><td>高危问题</td><td>{metrics.get('_issue_severity', {}).get('HIGH', 0)}</td></tr>
-                <tr><td>中危问题</td><td>{metrics.get('_issue_severity', {}).get('MEDIUM', 0)}</td></tr>
-                <tr><td>低危问题</td><td>{metrics.get('_issue_severity', {}).get('LOW', 0)}</td></tr>
+                <tr><td>总代码行数</td><td>{metrics.get("_total_lines_of_code", 0):,}</td></tr>
+                <tr><td>高危问题</td><td>{metrics.get("_issue_severity", {}).get("HIGH", 0)}</td></tr>
+                <tr><td>中危问题</td><td>{metrics.get("_issue_severity", {}).get("MEDIUM", 0)}</td></tr>
+                <tr><td>低危问题</td><td>{metrics.get("_issue_severity", {}).get("LOW", 0)}</td></tr>
             </table>
         </div>
 
@@ -182,12 +181,12 @@ def generate_html_report(report, output_file="security_report.html"):
         html_content += f"""
         <div class="issue {severity}">
             <h3>
-                <span class="badge {severity}">{issue.get('issue_severity')}</span>
-                [{issue.get('test_id')}] {issue.get('issue_text')}
+                <span class="badge {severity}">{issue.get("issue_severity")}</span>
+                [{issue.get("test_id")}] {issue.get("issue_text")}
             </h3>
-            <p><strong>文件:</strong> {issue.get('filename')}:{issue.get('line_number')}</p>
-            <p><strong>置信度:</strong> {issue.get('issue_confidence')}</p>
-            <div class="code">{issue.get('code', '')}</div>
+            <p><strong>文件:</strong> {issue.get("filename")}:{issue.get("line_number")}</p>
+            <p><strong>置信度:</strong> {issue.get("issue_confidence")}</p>
+            <div class="code">{issue.get("code", "")}</div>
         </div>
 """
 
@@ -197,7 +196,7 @@ def generate_html_report(report, output_file="security_report.html"):
 </html>"""
 
     output_path = Path(output_file)
-    with open(output_path, 'w', encoding='utf-8') as f:
+    with open(output_path, "w", encoding="utf-8") as f:
         f.write(html_content)
 
     print(f"✅ HTML报告已生成: {output_path}")
@@ -208,27 +207,12 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="自动化安全扫描工具")
+    parser.add_argument("--format", choices=["json", "html", "text"], default="json", help="报告格式")
+    parser.add_argument("--output", help="报告输出路径")
     parser.add_argument(
-        "--format",
-        choices=["json", "html", "text"],
-        default="json",
-        help="报告格式"
+        "--severity", choices=["low", "medium", "high"], default="medium", help="最低严重性级别"
     )
-    parser.add_argument(
-        "--output",
-        help="报告输出路径"
-    )
-    parser.add_argument(
-        "--severity",
-        choices=["low", "medium", "high"],
-        default="medium",
-        help="最低严重性级别"
-    )
-    parser.add_argument(
-        "--ci-mode",
-        action="store_true",
-        help="CI/CD模式(有高危问题时退出码非0)"
-    )
+    parser.add_argument("--ci-mode", action="store_true", help="CI/CD模式(有高危问题时退出码非0)")
 
     args = parser.parse_args()
 

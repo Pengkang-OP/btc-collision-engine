@@ -49,9 +49,7 @@ def _test_environment():
     try:
         import sys  # noqa: F811 (re-import for standalone script)
 
-        py_version = (
-            f"{sys.version_info.major}." f"{sys.version_info.minor}." f"{sys.version_info.micro}"
-        )
+        py_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
         print_result("Python版本", True, f"Python {py_version}")
         results.append(True)
         # PyOpenCL

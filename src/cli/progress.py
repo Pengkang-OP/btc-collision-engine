@@ -107,7 +107,9 @@ def format_progress(
     )
     if checked == 0 and elapsed_sec < INIT_CHECK_THRESHOLD:
         engine_tag = f"[{engine_type.upper()}]"
-        return f"[{elapsed}] {engine_tag} [Initializing] 初始化中... | 速度: -- | 匹配: {matches} | ETA: --"
+        return (
+            f"[{elapsed}] {engine_tag} [Initializing] 初始化中... | 速度: -- | 匹配: {matches} | ETA: --"
+        )
 
     # 计算进度百分比
     pct = min(100.0, checked / total_range * 100) if total_range and total_range > 0 else 0.0

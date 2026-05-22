@@ -342,9 +342,7 @@ class TestAddressStorage:
 
     def test_json_save_load(self):
         """测试JSON保存和加载"""
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False, encoding="utf-8"
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as f:
             temp_path = f.name
 
         try:
@@ -367,9 +365,7 @@ class TestAddressStorage:
 
     def test_csv_save_load(self):
         """测试CSV保存和加载"""
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".csv", delete=False, encoding="utf-8"
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False, encoding="utf-8") as f:
             temp_path = f.name
 
         try:
@@ -390,9 +386,7 @@ class TestAddressStorage:
 
     def test_get_storage_info(self):
         """测试获取存储信息"""
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False, encoding="utf-8"
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as f:
             f.write("{}")
             temp_path = f.name
 
@@ -414,9 +408,7 @@ class TestEncodingCompatibility:
 
     def test_read_utf8_file(self):
         """测试读取UTF-8编码文件"""
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".txt", delete=False, encoding="utf-8"
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, encoding="utf-8") as f:
             f.write("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n")
             f.write("# 中文注释\n")
             temp_path = f.name
@@ -534,9 +526,7 @@ class TestEncodingCompatibility:
 
         try:
             # 动态采样（应该读取10% = 10KB）
-            encoding_dynamic = EncodingUtils.detect_file_encoding(
-                temp_path, use_dynamic_sampling=True
-            )
+            encoding_dynamic = EncodingUtils.detect_file_encoding(temp_path, use_dynamic_sampling=True)
 
             # 固定采样（限制1KB）
             encoding_fixed = EncodingUtils.detect_file_encoding(
@@ -725,9 +715,7 @@ class TestCrossPlatformCompatibility:
         resolver = TargetResolver(enable_cache=False)
 
         # 创建临时文件测试
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".txt", delete=False, encoding="utf-8"
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, encoding="utf-8") as f:
             f.write("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n")
             temp_path = f.name
 

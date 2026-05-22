@@ -135,9 +135,7 @@ class TestExceptionHandler(unittest.TestCase):
 
     def test_handle_engine_error_value_error(self):
         stats = Mock()
-        ExceptionHandler.handle_engine_error(
-            "GPU", ValueError("bad value"), stats, context="批处理"
-        )
+        ExceptionHandler.handle_engine_error("GPU", ValueError("bad value"), stats, context="批处理")
         stats.record_worker_error.assert_called_once()
 
     def test_handle_engine_error_memory_error(self):

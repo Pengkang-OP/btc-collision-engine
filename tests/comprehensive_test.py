@@ -21,9 +21,7 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine  # noqa: E402
 
 # 配置日志
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -207,9 +205,7 @@ class ComprehensiveTest:
 
             # 获取统计信息
             stats = engine.get_combined_stats()
-            results.append(
-                {"batch_size": batch_size, "throughput": stats.get("combined_throughput", 0)}
-            )
+            results.append({"batch_size": batch_size, "throughput": stats.get("combined_throughput", 0)})
 
             # 清理资源
             engine.cleanup()
@@ -420,7 +416,7 @@ class ComprehensiveTest:
         report = f"""# 深度全面测试报告
 
 ## 测试摘要
-- 测试时间: {time.strftime('%Y-%m-%d %H:%M:%S')}
+- 测试时间: {time.strftime("%Y-%m-%d %H:%M:%S")}
 - 总测试时间: {total_time:.2f}秒
 - 总测试数: {total_tests}
 - 通过测试数: {passed_tests}

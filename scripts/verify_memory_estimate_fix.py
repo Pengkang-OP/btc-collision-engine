@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 验证显存估算公式修改（36→42字节/密钥）
 测试不同GPU和不同batch_size的场景
@@ -25,7 +24,7 @@ def test_memory_estimate(gpu_name, memory_gb, batch_size, expected_adjusted=None
 
     ac = GPUAutoConfigurator()
     original_batch = config["batch_size"]
-    result = ac._adjust_for_memory(device, config)
+    ac._adjust_for_memory(device, config)
 
     adjusted = config["batch_size"]
     was_adjusted = adjusted != original_batch
@@ -38,7 +37,7 @@ def test_memory_estimate(gpu_name, memory_gb, batch_size, expected_adjusted=None
         ratio = adjusted / original_batch * 100
         print(f"  ⚠️  被降级: {ratio:.1f}%")
     else:
-        print(f"  ✅ 未被降级")
+        print("  ✅ 未被降级")
 
     # 计算显存使用
     estimated_mb = (batch_size * 42) / (1024**2)
@@ -47,7 +46,7 @@ def test_memory_estimate(gpu_name, memory_gb, batch_size, expected_adjusted=None
 
     if expected_adjusted is not None:
         if adjusted == expected_adjusted:
-            print(f"  ✅ 符合预期")
+            print("  ✅ 符合预期")
         else:
             print(f"  ❌ 不符合预期 (期望: {expected_adjusted:,})")
 
@@ -75,7 +74,7 @@ print("\n测试不同GPU和batch_size配置:")
 print("-" * 80)
 
 all_passed = True
-for gpu_name, memory_gb, batch_size, expected in test_cases:
+for gpu_name, memory_gb, batch_size, _expected in test_cases:
     passed = test_memory_estimate(gpu_name, memory_gb, batch_size)
     all_passed = all_passed and passed
 
@@ -90,9 +89,7 @@ print("=" * 80)
 print("\n" + "=" * 80)
 print("显存使用对比 (旧公式 vs 新公式)")
 print("=" * 80)
-print(
-    f"{'batch_size':>12} | {'旧公式(2KB)':>12} | {'新公式(36B)':>12} | {'新公式(42B)':>12} | 实际测试"
-)
+print(f"{'batch_size':>12} | {'旧公式(2KB)':>12} | {'新公式(36B)':>12} | {'新公式(42B)':>12} | 实际测试")
 print("-" * 80)
 
 for batch in [1024, 65536, 131072, 262144, 524288, 1000000]:
@@ -100,13 +97,8 @@ for batch in [1024, 65536, 131072, 262144, 524288, 1000000]:
     new36_mb = (batch * 36) / (1024**2)
     new42_mb = (batch * 42) / (1024**2)
 
-    if batch == 262144:
-        actual = "~9 MB ✅"
-    else:
-        actual = "~线性推算"
+    actual = "~9 MB ✅" if batch == 262144 else "~线性推算"
 
-    print(
-        f"{batch:>12,} | {old_mb:>10.1f}MB | {new36_mb:>10.1f}MB | {new42_mb:>10.1f}MB | {actual}"
-    )
+    print(f"{batch:>12,} | {old_mb:>10.1f}MB | {new36_mb:>10.1f}MB | {new42_mb:>10.1f}MB | {actual}")
 
 print("=" * 80)

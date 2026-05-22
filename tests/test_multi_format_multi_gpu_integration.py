@@ -164,9 +164,7 @@ def test_post_processing(engine):
     match = {"private_key": private_key, "address": p2pkh_addr, "format": "p2pkh", "device_idx": 0}
 
     # 调用后处理
-    extra_matches = engine._check_other_formats(
-        match["private_key"], match["address"], match["format"]
-    )
+    extra_matches = engine._check_other_formats(match["private_key"], match["address"], match["format"])
 
     print(f"\nGPU匹配到P2PKH: {p2pkh_addr}")
     print("后处理检查其他格式:")
@@ -187,9 +185,7 @@ def test_post_processing(engine):
     print(f"  Bech32: {bech32_addr}")
 
     # 再次后处理
-    extra_matches = engine._check_other_formats(
-        match["private_key"], match["address"], match["format"]
-    )
+    extra_matches = engine._check_other_formats(match["private_key"], match["address"], match["format"])
 
     print("\n后处理结果:")
     if extra_matches:
@@ -290,11 +286,11 @@ def test_integration_scenario():
         is_match, matches = engine.check_match_all(test_key)
 
         if is_match:
-            print(f"\n  找到匹配! 私钥 {i+1}:")
+            print(f"\n  找到匹配! 私钥 {i + 1}:")
             for addr, fmt in matches:
                 print(f"    ✓ {fmt}: {addr}")
         else:
-            print(f"  私钥 {i+1}: 无匹配")
+            print(f"  私钥 {i + 1}: 无匹配")
 
     # 清理
     engine.cleanup()

@@ -19,9 +19,7 @@ class TestMultiFormatAddressGeneration:
         cls.addr_gen = P2PKHAddressGenerator()
         cls.validator = BitcoinKeyValidator()
         cls.test_private_key = secrets.token_bytes(32)
-        cls.compressed_pk = cls.addr_gen.private_key_to_public_key(
-            cls.test_private_key, compressed=True
-        )
+        cls.compressed_pk = cls.addr_gen.private_key_to_public_key(cls.test_private_key, compressed=True)
 
     # ---- 第1组：P2PKH 地址生成 ----
 
@@ -75,14 +73,12 @@ class TestMultiFormatAddressGeneration:
 
     def test_manual_bech32_matches_validator(self):
         """手动 Bech32 编码与验证器生成的地址一致"""
-        result, bech32_address = self.validator.generate_address(
-            self.compressed_pk, AddressType.BECH32
-        )
+        result, bech32_address = self.validator.generate_address(self.compressed_pk, AddressType.BECH32)
         hash160 = HashUtils.hash160(self.compressed_pk)
         manual_bech32 = bech32_encode("bc", 0, hash160, "bech32")
-        assert (
-            manual_bech32 == bech32_address
-        ), f"手动编码 {manual_bech32} 与验证器 {bech32_address} 不一致"
+        assert manual_bech32 == bech32_address, (
+            f"手动编码 {manual_bech32} 与验证器 {bech32_address} 不一致"
+        )
 
     def test_bech32_decode_roundtrip(self):
         """Bech32 编解码往返一致"""

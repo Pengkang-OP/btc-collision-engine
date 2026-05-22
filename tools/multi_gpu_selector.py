@@ -51,25 +51,25 @@ def detect_all_gpus():
                     local_mem_size = device.get_info(cl.device_info.LOCAL_MEM_SIZE)
 
                     device_info = {
-                        'platform_index': platform_idx,
-                        'device_index': device_idx,
-                        'global_index': len(all_devices),
-                        'name': device_name,
-                        'vendor': device_vendor,
-                        'global_mem_gb': global_mem / (1024**3),
-                        'global_mem_bytes': global_mem,
-                        'max_compute_units': max_compute_units,
-                        'max_work_group_size': max_work_group_size,
-                        'global_mem_cache_kb': global_mem_cache_size / 1024,
-                        'local_mem_kb': local_mem_size / 1024,
-                        'device': device,
-                        'platform': platform
+                        "platform_index": platform_idx,
+                        "device_index": device_idx,
+                        "global_index": len(all_devices),
+                        "name": device_name,
+                        "vendor": device_vendor,
+                        "global_mem_gb": global_mem / (1024**3),
+                        "global_mem_bytes": global_mem,
+                        "max_compute_units": max_compute_units,
+                        "max_work_group_size": max_work_group_size,
+                        "global_mem_cache_kb": global_mem_cache_size / 1024,
+                        "local_mem_kb": local_mem_size / 1024,
+                        "device": device,
+                        "platform": platform,
                     }
 
                     all_devices.append(device_info)
 
                     # 打印设备信息
-                    print(f"\n  🎮 GPU {len(all_devices)-1}: {device_name}")
+                    print(f"\n  🎮 GPU {len(all_devices) - 1}: {device_name}")
                     print(f"     厂商: {device_vendor}")
                     print(f"     显存: {global_mem / (1024**3):.2f} GB")
                     print(f"     计算单元: {max_compute_units}")
@@ -100,14 +100,14 @@ def calculate_priority_score(device_info):
     - 计算单元: 0.05分/CU
     - 厂商偏好: NVIDIA=20, AMD=15, Intel Arc=10, 其他=0
     """
-    name_lower = device_info['name'].lower()
-    vendor_lower = device_info['vendor'].lower()
+    name_lower = device_info["name"].lower()
+    vendor_lower = device_info["vendor"].lower()
 
     # 显存分数 (每GB 10分)
-    memory_score = device_info['global_mem_gb'] * 10
+    memory_score = device_info["global_mem_gb"] * 10
 
     # 计算单元分数
-    cu_score = device_info['max_compute_units'] * 0.05
+    cu_score = device_info["max_compute_units"] * 0.05
 
     # 厂商基础分
     if "nvidia" in name_lower or "nvidia" in vendor_lower:
@@ -124,10 +124,10 @@ def calculate_priority_score(device_info):
     total_score = memory_score + cu_score + vendor_score
 
     return {
-        'memory_score': memory_score,
-        'cu_score': cu_score,
-        'vendor_score': vendor_score,
-        'total_score': total_score
+        "memory_score": memory_score,
+        "cu_score": cu_score,
+        "vendor_score": vendor_score,
+        "total_score": total_score,
     }
 
 
@@ -140,8 +140,8 @@ def recommend_gpu(devices):
     scored_devices = []
     for device in devices:
         scores = calculate_priority_score(device)
-        device['scores'] = scores
-        scored_devices.append((device, scores['total_score']))
+        device["scores"] = scores
+        scored_devices.append((device, scores["total_score"]))
 
     # 按分数排序
     scored_devices.sort(key=lambda x: x[1], reverse=True)
@@ -155,28 +155,28 @@ def generate_config(device, devices, output_file="config.multi_gpu.json"):
     config = {
         "gpu": {
             "enabled": True,
-            "device_index": device['global_index'],
+            "device_index": device["global_index"],
             "batch_size": 10000,
             "use_memory_pool": True,
             "enable_async": True,
-            "description": f"使用 {device['name']} ({device['global_mem_gb']:.1f}GB)"
+            "description": f"使用 {device['name']} ({device['global_mem_gb']:.1f}GB)",
         },
         "multi_gpu": {
             "all_devices": [
                 {
-                    "index": d['global_index'],
-                    "name": d['name'],
-                    "vendor": d['vendor'],
-                    "memory_gb": d['global_mem_gb']
+                    "index": d["global_index"],
+                    "name": d["name"],
+                    "vendor": d["vendor"],
+                    "memory_gb": d["global_mem_gb"],
                 }
                 for d in devices
             ],
-            "recommended_index": device['global_index']
-        }
+            "recommended_index": device["global_index"],
+        },
     }
 
     output_path = Path(output_file)
-    with open(output_path, 'w', encoding='utf-8') as f:
+    with open(output_path, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=2, ensure_ascii=False)
 
     return output_path
@@ -193,7 +193,7 @@ def print_summary(devices, recommended, recommendation_text):
     if devices:
         print("\n📋 所有GPU设备:")
         for i, device in enumerate(devices):
-            scores = device['scores']
+            scores = device["scores"]
             recommended_marker = "⭐" if device == recommended else "  "
             print(f"  {recommended_marker} GPU {i}: {device['name']}")
             print(f"      显存: {device['global_mem_gb']:.2f} GB | 分数: {scores['total_score']:.1f}")
@@ -210,7 +210,7 @@ def print_summary(devices, recommended, recommendation_text):
 
         print("\n💡 使用方式:")
         print("  方式1: 修改config.json")
-        print(f"    \"gpu_device_index\": {recommended['global_index']}")
+        print(f'    "gpu_device_index": {recommended["global_index"]}')
         print("")
         print("  方式2: 生成新配置文件")
         print("    python tools/multi_gpu_selector.py --generate-config")
@@ -224,16 +224,8 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="多GPU环境选择工具")
-    parser.add_argument(
-        "--generate-config",
-        action="store_true",
-        help="生成多GPU配置文件"
-    )
-    parser.add_argument(
-        "--output",
-        default="config.multi_gpu.json",
-        help="配置文件输出路径"
-    )
+    parser.add_argument("--generate-config", action="store_true", help="生成多GPU配置文件")
+    parser.add_argument("--output", default="config.multi_gpu.json", help="配置文件输出路径")
 
     args = parser.parse_args()
 

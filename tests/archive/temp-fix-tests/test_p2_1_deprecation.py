@@ -1,20 +1,20 @@
-# -*- coding: utf-8 -*-
 """
 P2-1修复: 椭圆曲线弃用警告单元测试
 
 测试scalar_multiply()方法的DeprecationWarning是否正确触发。
 """
 
+import os
+import sys
 import unittest
 import warnings
-import sys
-import os
+
 import pytest
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from src.core.secp256k1 import Secp256k1, ECPoint, EllipticCurve
+from src.core.secp256k1 import ECPoint, EllipticCurve, Secp256k1
 
 
 @pytest.mark.unit

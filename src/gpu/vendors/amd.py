@@ -102,9 +102,7 @@ class AMDGPUVendor(GPUVendorBase):
         # 向下对齐到1024的倍数，并确保不低于最小值
         optimal = align_batch_size(optimal)
 
-        logger.info(
-            f"AMD batch_size: recommended={recommended}, mem={mem_based_max}, optimal={optimal}"
-        )
+        logger.info(f"AMD batch_size: recommended={recommended}, mem={mem_based_max}, optimal={optimal}")
 
         return optimal
 

@@ -10,9 +10,9 @@ GPU对撞UI卡死检测工具
 
 import os
 import sys
-import time
-import psutil
 from datetime import datetime
+
+import psutil
 
 
 def check_gui_process():
@@ -21,79 +21,85 @@ def check_gui_process():
     print("GPU对撞UI卡死检测工具")
     print("=" * 60)
     print()
-    
+
     # 1. 检查Python进程
     print("📊 检查进程状态...")
     gui_processes = []
-    
-    for proc in psutil.process_iter(['pid', 'name', 'cmdline', 'create_time']):
+
+    for proc in psutil.process_iter(["pid", "name", "cmdline", "create_time"]):
         try:
-            cmdline = ' '.join(proc.info['cmdline'] or [])
-            if 'python' in proc.info['name'].lower() and 'key_collision_gui.py' in cmdline:
-                gui_processes.append({
-                    'pid': proc.info['pid'],
-                    'create_time': datetime.fromtimestamp(proc.info['create_time']),
-                    'cmdline': cmdline
-                })
+            cmdline = " ".join(proc.info["cmdline"] or [])
+            if "python" in proc.info["name"].lower() and "key_collision_gui.py" in cmdline:
+                gui_processes.append(
+                    {
+                        "pid": proc.info["pid"],
+                        "create_time": datetime.fromtimestamp(proc.info["create_time"]),
+                        "cmdline": cmdline,
+                    }
+                )
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             pass
-    
+
     if not gui_processes:
         print("❌ 未找到GUI进程")
         return False
-    
+
     print(f"✅ 找到 {len(gui_processes)} 个GUI进程:")
     for i, proc in enumerate(gui_processes, 1):
         print(f"  [{i}] PID: {proc['pid']}")
         print(f"      启动时间: {proc['create_time']}")
         print(f"      运行时长: {datetime.now() - proc['create_time']}")
     print()
-    
+
     # 2. 检查日志文件
     print("📝 检查日志文件...")
     log_files = [
-        'logs/gui.log',
-        'logs/collision.log',
-        'data_logs/current_data.json',
-        'data_logs/history_data.json'
+        "logs/gui.log",
+        "logs/collision.log",
+        "data_logs/current_data.json",
+        "data_logs/history_data.json",
     ]
-    
+
     for log_file in log_files:
         if os.path.exists(log_file):
             stat = os.stat(log_file)
             last_modified = datetime.fromtimestamp(stat.st_mtime)
             time_ago = datetime.now() - last_modified
-            
-            status = "✅" if time_ago.total_seconds() < 60 else "⚠️" if time_ago.total_seconds() < 300 else "❌"
-            
+
+            status = (
+                "✅"
+                if time_ago.total_seconds() < 60
+                else "⚠️"
+                if time_ago.total_seconds() < 300
+                else "❌"
+            )
+
             print(f"  {status} {log_file}")
             print(f"      最后更新: {last_modified}")
             print(f"      距今: {time_ago}")
         else:
             print(f"  ❓ {log_file} (不存在)")
     print()
-    
+
     # 3. 检查checkpoint文件
     print("💾 检查checkpoint文件...")
-    checkpoint_files = [
-        'src/collision/collision_checkpoint.json',
-        'data_logs/checkpoint.json'
-    ]
-    
+    checkpoint_files = ["src/collision/collision_checkpoint.json", "data_logs/checkpoint.json"]
+
     for ckpt_file in checkpoint_files:
         if os.path.exists(ckpt_file):
             stat = os.stat(ckpt_file)
             last_modified = datetime.fromtimestamp(stat.st_mtime)
             time_ago = datetime.now() - last_modified
-            
+
             # 读取checkpoint内容
             try:
                 import json
-                with open(ckpt_file, 'r', encoding='utf-8') as f:
+
+                with open(ckpt_file, encoding="utf-8") as f:
                     data = json.load(f)
-                    checked = data.get('checked', 0)
-                    matches = data.get('matches', 0)
-                
+                    checked = data.get("checked", 0)
+                    matches = data.get("matches", 0)
+
                 status = "✅" if time_ago.total_seconds() < 10 else "⚠️"
                 print(f"  {status} {ckpt_file}")
                 print(f"      最后更新: {last_modified}")
@@ -105,24 +111,24 @@ def check_gui_process():
         else:
             print(f"  ❓ {ckpt_file} (不存在)")
     print()
-    
+
     # 4. 综合判断
     print("🔍 综合判断...")
-    
+
     # 检查最近的日志
     most_recent_log = None
     most_recent_time = None
-    
+
     for log_file in log_files + checkpoint_files:
         if os.path.exists(log_file):
             stat = os.stat(log_file)
             if most_recent_time is None or stat.st_mtime > most_recent_time:
                 most_recent_time = stat.st_mtime
                 most_recent_log = log_file
-    
+
     if most_recent_log:
         time_ago = datetime.now() - datetime.fromtimestamp(most_recent_time)
-        
+
         if time_ago.total_seconds() < 30:
             print("✅ 程序正常运行中")
             print(f"   最新文件: {most_recent_log}")
@@ -153,11 +159,11 @@ def check_gui_process():
             print("   2. 检查日志文件中的错误信息")
             print("   3. 重新启动程序")
             return False
-    
+
     return False
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         result = check_gui_process()
         sys.exit(0 if result else 1)
@@ -167,5 +173,6 @@ if __name__ == '__main__':
     except Exception as e:
         print(f"\n\n❌ 检测失败: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(2)

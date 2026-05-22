@@ -95,9 +95,7 @@ class GPUProfile:
         if self.work_group_size < 1:
             raise ValueError(f"work_group_size 必须 >= 1, 实际: {self.work_group_size}")
         if not 0.0 <= self.memory_usage_ratio <= 1.0:
-            raise ValueError(
-                f"memory_usage_ratio 必须在 [0.0, 1.0], 实际: {self.memory_usage_ratio}"
-            )
+            raise ValueError(f"memory_usage_ratio 必须在 [0.0, 1.0], 实际: {self.memory_usage_ratio}")
         if self.min_batch_size < 1:
             raise ValueError(f"min_batch_size 必须 >= 1, 实际: {self.min_batch_size}")
         if self.min_batch_size > self.max_batch_size:
@@ -471,7 +469,7 @@ class GPUPerformanceOptimizer:
                 self.AGGRESSIVE_GROWTH_BASE * deficit_ratio,
             )
             logger.info(
-                f"GPU利用率不足({gpu_utilization*100:.1f}% < {min_target*100:.1f}%), "
+                f"GPU利用率不足({gpu_utilization * 100:.1f}% < {min_target * 100:.1f}%), "
                 f"激进增长: *{growth_ratio:.2f}"
             )
             return growth_ratio
@@ -556,9 +554,7 @@ class GPUPerformanceOptimizer:
             avg_error = sum(m.error_count for m in recent) / len(recent)
 
             # 计算时间范围
-            time_range_sec = (
-                self._metrics_history[-1].timestamp - self._metrics_history[0].timestamp
-            )
+            time_range_sec = self._metrics_history[-1].timestamp - self._metrics_history[0].timestamp
 
             return {
                 "status": "active",

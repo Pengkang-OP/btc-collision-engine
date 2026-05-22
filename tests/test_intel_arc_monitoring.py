@@ -35,7 +35,8 @@ def test_memory_monitor():
     # 模拟Intel Arc A770 16GB显存
     total_memory = 16 * 1024**3  # 16GB
     monitor = IntelMemoryMonitor(
-        total_memory_bytes=total_memory, safe_usage_ratio=0.45  # Intel保守策略：45%
+        total_memory_bytes=total_memory,
+        safe_usage_ratio=0.45,  # Intel保守策略：45%
     )
 
     print("\n✓ 显存监控器初始化成功")
@@ -65,9 +66,7 @@ def test_memory_monitor():
     print("\n测试显存释放...")
     monitor.track_deallocation(1024 * 1024**2, batch_count=4)
     status = monitor.get_status()
-    print(
-        f"  释放 1024MB -> 使用 {status['current_mb']:.0f}MB " f"({status['usage_percent']:.1f}%)"
-    )
+    print(f"  释放 1024MB -> 使用 {status['current_mb']:.0f}MB ({status['usage_percent']:.1f}%)")
 
     # 测试状态检查
     print("\n测试状态检查...")
@@ -163,7 +162,7 @@ def test_performance_monitor():
         monitor.record_kernel_metrics(
             batch_size=100000, execution_time_ms=50.0 + i * 10, memory_allocated_mb=256.0
         )
-        print(f"  批次 {i + 1}: " f"执行时间 {50.0 + i * 10:.0f}ms, " "显存 256MB")
+        print(f"  批次 {i + 1}: 执行时间 {50.0 + i * 10:.0f}ms, 显存 256MB")
 
     # 获取性能报告
     print("\n生成性能报告...")
@@ -273,11 +272,7 @@ def test_integration():
         if batch % 5 == 0:
             mem_status = memory_monitor.get_status()
             timeout = timeout_manager.get_timeout()
-            print(
-                f"  批次 {batch}: "
-                f"显存 {mem_status['current_mb']:.0f}MB, "
-                f"超时 {timeout:.1f}秒"
-            )
+            print(f"  批次 {batch}: 显存 {mem_status['current_mb']:.0f}MB, 超时 {timeout:.1f}秒")
 
     # 3. 生成综合报告
     print("\n步骤3: 生成综合资源报告")

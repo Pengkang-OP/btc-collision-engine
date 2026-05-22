@@ -260,9 +260,7 @@ class TestLogQueryCustomFilter:
 
     def test_filter_with_complex_predicate(self, log_query):
         # 过滤 GPU 源且包含 "失败" 的日志
-        results = log_query.filter(
-            lambda e: e.get("source") == "gpu" and "失败" in e.get("message", "")
-        )
+        results = log_query.filter(lambda e: e.get("source") == "gpu" and "失败" in e.get("message", ""))
         assert len(results) == 1
 
 

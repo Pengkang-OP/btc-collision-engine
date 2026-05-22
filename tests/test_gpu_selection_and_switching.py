@@ -163,15 +163,24 @@ class TestGPUDeviceDetection(unittest.TestCase):
         print("\n📋 测试1.2: 检测多个GPU设备")
 
         nvidia_gpu = make_mock_gpu_device(
-            "NVIDIA GeForce RTX 3080", "NVIDIA Corporation", 10737418240, 68  # 10GB
+            "NVIDIA GeForce RTX 3080",
+            "NVIDIA Corporation",
+            10737418240,
+            68,  # 10GB
         )
 
         amd_gpu = make_mock_gpu_device(
-            "AMD Radeon RX 6800 XT", "Advanced Micro Devices, Inc.", 17179869184, 72  # 16GB
+            "AMD Radeon RX 6800 XT",
+            "Advanced Micro Devices, Inc.",
+            17179869184,
+            72,  # 16GB
         )
 
         intel_gpu = make_mock_gpu_device(
-            "Intel(R) Arc(TM) A770 Graphics", "Intel Corporation", 17179869184, 512  # 16GB
+            "Intel(R) Arc(TM) A770 Graphics",
+            "Intel Corporation",
+            17179869184,
+            512,  # 16GB
         )
 
         # 模拟两个平台

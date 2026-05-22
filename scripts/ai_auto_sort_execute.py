@@ -1,28 +1,37 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# DEPRECATED(v4.2.1): 本脚本中包含旧版 _keys_buf 缓冲区分配逻辑，
-# 该部分已在 v4.2.1 PRNG 改造中完整移除。
-# 本脚本不应再运行，仅作历史参考保留。
 """
-AI自动排序执行脚本
+[DEPRECATED v4.2.1] AI自动排序执行脚本
 
-功能:
-1. 自动分析项目状态
-2. 识别待优化任务
-3. 按优先级排序
-4. 自动执行高优先级任务
-5. 生成执行报告
+背景: 本脚本中包含旧版 _keys_buf 缓冲区分配逻辑，
+该部分已在 v4.2.1 PRNG 改造中完整移除。
 
-优先级计算公式:
-    优先级得分 = (影响程度 × 紧急程度) / 工时 × 100
+状态: 仅作历史参考保留，不可运行。
 """
 
 import json
 import subprocess
 import sys
+import warnings
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
+
+warnings.warn(
+    "ai_auto_sort_execute.py 已弃用 (v4.2.1): "
+    "旧版 _keys_buf 缓冲区分配逻辑已在 PRNG 改造中移除。"
+    "本脚本仅作历史参考。",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
+# 运行防护: 阻止误执行
+if __name__ == "__main__":
+    print("=" * 70)
+    print("  [!] ai_auto_sort_execute.py 已弃用 (v4.2.1)")
+    print("  旧版 _keys_buf 缓冲区分配逻辑已在 PRNG 改造中移除。")
+    print("  本脚本仅作历史参考，不应运行。")
+    print("=" * 70)
+    sys.exit(0)
 
 # 添加项目根目录
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -205,12 +214,10 @@ class AISortExecutor:
 
         for i, task in enumerate(self.tasks, 1):
             priority_level = "P0" if i <= 1 else "P1" if i <= 3 else "P2" if i <= 5 else "P3"
-            print(f"{
-                priority_level:<6} {
-                task.id:<8} {
-                task.name:<35} {
-                task.priority_score:<8.1f} {
-                task.category:<12}")
+            print(
+                f"{priority_level:<6} {task.id:<8} {task.name:<35} {task.priority_score:<8.1f} {
+                    task.category:<12}"
+            )
 
         print("-" * 80)
         print("\n排序公式: 优先级得分 = (影响程度 × 紧急程度) / 工时 × 100")

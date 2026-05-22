@@ -50,6 +50,11 @@
 - logging-guide.md - 日志指南
 - logging-standards.md - 日志标准
 
+#### API 参考
+
+- api-reference.md - API参考 (2949行)
+- API_CHANGELOG.md - API变更日志
+
 #### 安全特性
 
 - security-guidelines.md - 安全指南
@@ -67,6 +72,7 @@
 - intel-arc-integration-guide.md - Intel Arc集成
 - intel-arc-gpu-compatibility-research.md - Intel Arc兼容性研究
 - GPU_ASYNC_LOGGING_INTEGRATION_GUIDE.md - GPU异步日志
+- gpu-driver-matrix.md - GPU驱动兼容矩阵
 
 ### 4. 配置与部署
 
@@ -110,6 +116,17 @@
 ### 10. 安全 (docs/security/)
 
 - windows_memory_lock.md - Windows内存锁定
+- threat-model.md - STRIDE威胁模型
+
+### 11. 法律合规 (docs/legal/)
+
+- export-control.md - 加密出口管制声明
+- license-compatibility.md - 许可证兼容性报告
+- third-party-attribution.md - 第三方代码归属
+
+### 12. 环境配置 (docs/environment/)
+
+- environment-variables.md - 环境变量配置
 
 ### 11. 用户文档 (docs/user-docs/)
 

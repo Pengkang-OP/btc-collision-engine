@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 GPU模块调用验证脚本
 
@@ -10,10 +9,10 @@ GPU模块调用验证脚本
 5. 引擎停止时监控器正确停止
 """
 
-import sys
 import io
-import time
 import logging
+import sys
+import time
 from pathlib import Path
 
 # 修复Windows编码
@@ -25,7 +24,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.collision.gpu.engine import GPUCollisionEngine
 from src.monitoring.gpu_performance_monitor import (
-    get_gpu_performance_monitor,
     reset_gpu_performance_monitor,
 )
 
@@ -56,7 +54,9 @@ def verify_gpu_module_integration():
     targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
     try:
         engine = GPUCollisionEngine(
-            targets=targets, batch_size=10000, use_gpu_memory_pool=True  # 小批次用于快速验证
+            targets=targets,
+            batch_size=10000,
+            use_gpu_memory_pool=True,  # 小批次用于快速验证
         )
         print("✅ GPU引擎创建成功")
     except Exception as e:
@@ -74,7 +74,7 @@ def verify_gpu_module_integration():
         print("❌ GPU性能监控器未启动")
         return False
 
-    print(f"✅ GPU性能监控器已启动")
+    print("✅ GPU性能监控器已启动")
     print(f"   设备: {monitor._device_name}")
     print(f"   厂商: {monitor._vendor}")
     print(f"   显存: {monitor._total_memory_mb:.0f}MB")
@@ -100,7 +100,7 @@ def verify_gpu_module_integration():
     if report.total_batches == 0:
         print("⚠️ 未记录任何批次(可能GPU执行较慢)")
     else:
-        print(f"✅ 已记录性能指标:")
+        print("✅ 已记录性能指标:")
         print(f"   总批次数: {report.total_batches}")
         print(f"   总处理密钥: {report.total_keys_processed:,}")
         print(f"   平均吞吐量: {report.avg_throughput_keys_per_sec:,.0f} keys/s")
@@ -212,7 +212,7 @@ def verify_metrics_recording():
     # 验证指标
     report = monitor.get_performance_report()
 
-    print(f"\n✅ 指标记录验证:")
+    print("\n✅ 指标记录验证:")
     print(f"   总批次数: {report.total_batches} (期望: 10)")
     print(f"   总密钥数: {report.total_keys_processed:,} (期望: 100,000)")
     print(f"   平均吞吐量: {report.avg_throughput_keys_per_sec:,.0f} keys/s")

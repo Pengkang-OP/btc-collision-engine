@@ -191,9 +191,7 @@ class SecureKeyGenerator:
         elapsed = time.time() - start_time
         rate = len(private_keys) / elapsed if elapsed > 0 else 0
 
-        logger.debug(
-            "批量生成完成: %d keys in %.2fs (%.0f keys/s)", len(private_keys), elapsed, rate
-        )
+        logger.debug("批量生成完成: %d keys in %.2fs (%.0f keys/s)", len(private_keys), elapsed, rate)
 
         # BL-2修复: 检查是否生成了任何有效私钥
         if len(private_keys) == 0 and count > 0:

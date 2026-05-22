@@ -147,9 +147,7 @@ class TestDataStorageInit:
 class TestSaveCurrentData:
     """测试 save_current_data"""
 
-    def test_save_with_delegation(
-        self, storage_with_logger, mock_data_logger, sample_monitoring_data
-    ):
+    def test_save_with_delegation(self, storage_with_logger, mock_data_logger, sample_monitoring_data):
         """委托模式下调用 DataLogger.save_current_data"""
         storage_with_logger.save_current_data(sample_monitoring_data)
 
@@ -206,9 +204,7 @@ class TestSaveCurrentData:
 class TestSaveHistoryData:
     """测试 save_history_data"""
 
-    def test_save_with_delegation(
-        self, storage_with_logger, mock_data_logger, sample_monitoring_data
-    ):
+    def test_save_with_delegation(self, storage_with_logger, mock_data_logger, sample_monitoring_data):
         """委托模式下调用 DataLogger 保存历史数据"""
         storage_with_logger.save_history_data(sample_monitoring_data)
 
@@ -363,9 +359,7 @@ class TestLoadHistoryWithRecovery:
         (不含嵌套花括号)，此处提供不含嵌套的损坏数据。
         """
         # JSONL 格式：有效行 + 损坏行
-        corrupt_content = (
-            '{"timestamp": 1000, "speed": 100, "total": 5000}\n' "CORRUPTED_GARBAGExyz"
-        )
+        corrupt_content = '{"timestamp": 1000, "speed": 100, "total": 5000}\nCORRUPTED_GARBAGExyz'
         with open(storage_no_logger.history_data_file, "w", encoding="utf-8") as f:
             f.write(corrupt_content)
 
@@ -478,9 +472,7 @@ class TestCompressOldData:
             storage_no_logger.compress_old_data(days_threshold=0, sample_rate=0.5)
 
             # 压缩后的文件应存在
-            compressed_file = storage_no_logger.history_data_file.replace(
-                ".json", "_compressed.json"
-            )
+            compressed_file = storage_no_logger.history_data_file.replace(".json", "_compressed.json")
             assert os.path.exists(compressed_file)
 
     def test_compress_no_history(self, storage_no_logger):
@@ -533,9 +525,7 @@ class TestBackwardCompatibility:
         storage.save_current_data(data)  # 不应崩溃
         storage.save_history_data(data)  # 不应崩溃
 
-    def test_storage_dir_unchanged_after_multiple_saves(
-        self, storage_no_logger, sample_monitoring_data
-    ):
+    def test_storage_dir_unchanged_after_multiple_saves(self, storage_no_logger, sample_monitoring_data):
         """多次保存后存储目录不变"""
         original_dir = storage_no_logger.storage_dir
 

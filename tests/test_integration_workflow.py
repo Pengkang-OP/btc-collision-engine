@@ -77,9 +77,7 @@ class TestLoggingPipeline:
             collector.start()
 
             # 发送事件
-            collector.collect_from_queue(
-                LogEventType.ENGINE_START, {"mode": "random", "targets": 5}
-            )
+            collector.collect_from_queue(LogEventType.ENGINE_START, {"mode": "random", "targets": 5})
             collector.collect_from_queue(
                 LogEventType.STATUS_UPDATE, {"message": "引擎运行中", "progress": 50}
             )

@@ -489,9 +489,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
 
     def test_memory_critical_downgrade(self):
         """M13: 临界内存(>=3GB)触发 batch_size 和 max_workers 降级"""
-        engine = KeyCollisionEngine(
-            targets={"1TestAddr"}, max_workers=4, data_logging_enabled=False
-        )
+        engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=4, data_logging_enabled=False)
         old_batch = engine._batch_size
         old_workers = engine.max_workers
         engine._check_memory_and_downgrade(3500.0, time.time())
@@ -501,9 +499,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
 
     def test_memory_high_downgrade_single_worker(self):
         """M13: 高警内存(>=2GB)仅降低batch_size（单worker时）"""
-        engine = KeyCollisionEngine(
-            targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False
-        )
+        engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         old_batch = engine._batch_size
         engine._check_memory_and_downgrade(2500.0, time.time())
         if engine._batch_size < old_batch:
@@ -513,9 +509,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
 
     def test_memory_high_downgrade_multi_worker(self):
         """M13: 高警内存(>=2GB)仅降低batch_size（多worker场景）"""
-        engine = KeyCollisionEngine(
-            targets={"1TestAddr"}, max_workers=4, data_logging_enabled=False
-        )
+        engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=4, data_logging_enabled=False)
         engine._batch_size = 2000
         engine._check_memory_and_downgrade(2500.0, time.time())
         # 降至 75% = 1500
@@ -524,9 +518,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
 
     def test_memory_downgrade_cooldown(self):
         """M13: 冷却期内不重复降级"""
-        engine = KeyCollisionEngine(
-            targets={"1TestAddr"}, max_workers=4, data_logging_enabled=False
-        )
+        engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=4, data_logging_enabled=False)
         now = time.time()
         engine._check_memory_and_downgrade(3500.0, now)
         batch_after_first = engine._batch_size
@@ -539,9 +531,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
 
     def test_tune_batch_size_dual_core(self):
         """P3-9: 2核CPU调优 batch_size=500"""
-        engine = KeyCollisionEngine(
-            targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False
-        )
+        engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine._cpu_count = 2
         engine._auto_tune_batch_size = True
         engine._tune_batch_size()
@@ -550,9 +540,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
 
     def test_tune_batch_size_quad_core(self):
         """P3-9: 4核CPU调优 batch_size=1000"""
-        engine = KeyCollisionEngine(
-            targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False
-        )
+        engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine._cpu_count = 4
         engine._auto_tune_batch_size = True
         engine._tune_batch_size()
@@ -561,9 +549,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
 
     def test_tune_batch_size_disabled(self):
         """P3-9: _auto_tune_batch_size=False 时跳过"""
-        engine = KeyCollisionEngine(
-            targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False
-        )
+        engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine._auto_tune_batch_size = False
         old_batch = engine._batch_size
         engine._tune_batch_size()
@@ -616,9 +602,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
 
     def test_log_throttled_error_disabled(self):
         """data_logging_enabled=False 时 _log_throttled_error 跳过"""
-        engine = KeyCollisionEngine(
-            targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False
-        )
+        engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine._log_throttled_error("test_error", "测试错误消息", ValueError("test"), worker_id=0)
         # 不应崩溃
         engine.stop()
@@ -678,54 +662,42 @@ class TestKeyCollisionEngineStartValidation(unittest.TestCase):
 
     def test_start_invalid_mode_raises(self):
         """未知模式抛出 ValueError"""
-        engine = KeyCollisionEngine(
-            targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False
-        )
+        engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         with self.assertRaises(ValueError):
             engine.start(mode="invalid_mode")
         engine.stop()
 
     def test_start_range_missing_params(self):
         """range模式缺少参数抛出 ValueError"""
-        engine = KeyCollisionEngine(
-            targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False
-        )
+        engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         with self.assertRaises(ValueError):
             engine.start(mode="range")
         engine.stop()
 
     def test_start_range_non_int_params(self):
         """range模式非整数参数抛出 ValueError"""
-        engine = KeyCollisionEngine(
-            targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False
-        )
+        engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         with self.assertRaises(ValueError):
             engine.start(mode="range", start="abc", end=100)
         engine.stop()
 
     def test_start_range_invalid_range(self):
         """start < 1 或 end < start 抛出 ValueError"""
-        engine = KeyCollisionEngine(
-            targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False
-        )
+        engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         with self.assertRaises(ValueError):
             engine.start(mode="range", start=100, end=50)
         engine.stop()
 
     def test_start_brute_force_non_int_start(self):
         """brute_force模式非整数start抛出 ValueError"""
-        engine = KeyCollisionEngine(
-            targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False
-        )
+        engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         with self.assertRaises(ValueError):
             engine.start(mode="brute_force", start="abc")
         engine.stop()
 
     def test_start_brute_force_negative_start(self):
         """brute_force模式start<1抛出 ValueError"""
-        engine = KeyCollisionEngine(
-            targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False
-        )
+        engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         with self.assertRaises(ValueError):
             engine.start(mode="brute_force", start=-5)
         engine.stop()
@@ -777,9 +749,7 @@ class TestKeyCollisionEngineContextManager(unittest.TestCase):
 
     def test_del_with_running_engine(self):
         """__del__ 在引擎运行时安全停止"""
-        engine = KeyCollisionEngine(
-            targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False
-        )
+        engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine.start(mode="random")
         time.sleep(0.2)
         # 模拟析构
@@ -788,9 +758,7 @@ class TestKeyCollisionEngineContextManager(unittest.TestCase):
 
     def test_del_with_stopped_engine(self):
         """__del__ 在引擎已停止时不报错"""
-        engine = KeyCollisionEngine(
-            targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False
-        )
+        engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine.__del__()
 
 
@@ -1135,9 +1103,7 @@ class TestKeyCollisionEngineP3MockExceptions(unittest.TestCase):
         )
         # 模拟 threading.Thread 构造函数抛出异常
         with patch("threading.Thread", side_effect=RuntimeError("线程创建失败")):
-            result = engine._safe_invoke_match_callback(
-                (1).to_bytes(32, "big"), known_addr, "WIF123"
-            )
+            result = engine._safe_invoke_match_callback((1).to_bytes(32, "big"), known_addr, "WIF123")
             self.assertFalse(result, "线程创建失败应返回 False")
         engine.stop()
 
@@ -1167,9 +1133,7 @@ class TestKeyCollisionEngineP3TuneBatch(unittest.TestCase):
 
     def test_tune_batch_size_octa_core(self):
         """8核CPU调优 batch_size=2000"""
-        engine = KeyCollisionEngine(
-            targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False
-        )
+        engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine._cpu_count = 8
         engine._auto_tune_batch_size = True
         engine._tune_batch_size()
@@ -1178,9 +1142,7 @@ class TestKeyCollisionEngineP3TuneBatch(unittest.TestCase):
 
     def test_tune_batch_size_hexadeca_core(self):
         """16核+CPU调优 batch_size=4000"""
-        engine = KeyCollisionEngine(
-            targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False
-        )
+        engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine._cpu_count = 16
         engine._auto_tune_batch_size = True
         engine._batch_size = 500
@@ -1201,9 +1163,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
 
         shutil.rmtree(self._ckpt_dir, ignore_errors=True)
 
-    def _create_checkpoint(
-        self, mode="range", current_position=100, total_checked=500, range_end=1000
-    ):
+    def _create_checkpoint(self, mode="range", current_position=100, total_checked=500, range_end=1000):
         data = {
             "version": 1,
             "timestamp": "2026-05-03T00:00:00",
@@ -1224,9 +1184,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
         from src.collision.checkpoint_manager import CheckpointManager
 
         mgr = CheckpointManager(filepath=self._ckpt_path)
-        engine = KeyCollisionEngine(
-            targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False
-        )
+        engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine.checkpoint_mgr = mgr
         result = engine.resume_from_checkpoint()
         self.assertIsNone(result)
@@ -1236,13 +1194,9 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
         """从 range 模式断点恢复"""
         from src.collision.checkpoint_manager import CheckpointManager
 
-        self._create_checkpoint(
-            mode="range", current_position=100, total_checked=500, range_end=1000
-        )
+        self._create_checkpoint(mode="range", current_position=100, total_checked=500, range_end=1000)
         mgr = CheckpointManager(filepath=self._ckpt_path)
-        engine = KeyCollisionEngine(
-            targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False
-        )
+        engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine.checkpoint_mgr = mgr
         result = engine.resume_from_checkpoint()
         self.assertIsNotNone(result)
@@ -1258,9 +1212,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
             mode="brute_force", current_position=200, total_checked=300, range_end=None
         )
         mgr = CheckpointManager(filepath=self._ckpt_path)
-        engine = KeyCollisionEngine(
-            targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False
-        )
+        engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine.checkpoint_mgr = mgr
         result = engine.resume_from_checkpoint()
         self.assertIsNotNone(result)
@@ -1270,9 +1222,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
     def test_start_from_checkpoint_range(self):
         """start_from_checkpoint range 模式"""
         data = {"mode": "range", "current_position": 50, "range_end": 500000}
-        engine = KeyCollisionEngine(
-            targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False
-        )
+        engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine.start_from_checkpoint(data)
         time.sleep(0.3)
         self.assertTrue(engine.is_running())
@@ -1281,9 +1231,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
     def test_start_from_checkpoint_brute_force(self):
         """start_from_checkpoint brute_force 模式"""
         data = {"mode": "brute_force", "current_position": 50}
-        engine = KeyCollisionEngine(
-            targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False
-        )
+        engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine.start_from_checkpoint(data)
         time.sleep(0.3)
         self.assertTrue(engine.is_running())
@@ -1292,9 +1240,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
     def test_start_from_checkpoint_random(self):
         """start_from_checkpoint random 模式"""
         data = {"mode": "random"}
-        engine = KeyCollisionEngine(
-            targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False
-        )
+        engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine.start_from_checkpoint(data)
         time.sleep(0.2)
         self.assertTrue(engine.is_running())
@@ -1322,9 +1268,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
         """start(resume=True) 从 brute_force 断点恢复"""
         from src.collision.checkpoint_manager import CheckpointManager
 
-        self._create_checkpoint(
-            mode="brute_force", current_position=1, total_checked=0, range_end=None
-        )
+        self._create_checkpoint(mode="brute_force", current_position=1, total_checked=0, range_end=None)
         mgr = CheckpointManager(filepath=self._ckpt_path)
         engine = KeyCollisionEngine(
             targets={"1NoMatchAddrXYZ"},
@@ -1342,9 +1286,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
         """start(resume=True) 从 random 断点恢复"""
         from src.collision.checkpoint_manager import CheckpointManager
 
-        self._create_checkpoint(
-            mode="random", current_position=0, total_checked=100, range_end=None
-        )
+        self._create_checkpoint(mode="random", current_position=0, total_checked=100, range_end=None)
         mgr = CheckpointManager(filepath=self._ckpt_path)
         engine = KeyCollisionEngine(
             targets={"1TestAddr"},

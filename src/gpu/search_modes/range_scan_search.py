@@ -5,13 +5,12 @@
 """
 
 # 统一日志获取
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from ...utils import get_configured_logger
 from .base_search import BaseSearchMode
 
-if TYPE_CHECKING:
-    pass
+# TYPE_CHECKING 保留为扩展预留
 
 logger = get_configured_logger("RangeScanSearch")
 

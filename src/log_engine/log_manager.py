@@ -204,29 +204,21 @@ class LogManager:
 
     def critical(self, message: str, **kwargs):
         """记录严重错误日志"""
-        self.collector.collect_from_queue(
-            LogEventType.ENGINE_ERROR, {"critical": message, **kwargs}
-        )
+        self.collector.collect_from_queue(LogEventType.ENGINE_ERROR, {"critical": message, **kwargs})
 
     # 专用日志方法
 
     def log_wizard_start(self, config: dict[str, Any]):
         """记录向导开始"""
-        self.collector.collect_from_queue(
-            LogEventType.ENGINE_START, {"config": config}, source="wizard"
-        )
+        self.collector.collect_from_queue(LogEventType.ENGINE_START, {"config": config}, source="wizard")
 
     def log_wizard_complete(self, result: dict[str, Any]):
         """记录向导完成"""
-        self.collector.collect_from_queue(
-            LogEventType.ENGINE_STOP, {"result": result}, source="wizard"
-        )
+        self.collector.collect_from_queue(LogEventType.ENGINE_STOP, {"result": result}, source="wizard")
 
     def log_wizard_error(self, error: str):
         """记录向导错误"""
-        self.collector.collect_from_queue(
-            LogEventType.ENGINE_ERROR, {"error": error}, source="wizard"
-        )
+        self.collector.collect_from_queue(LogEventType.ENGINE_ERROR, {"error": error}, source="wizard")
 
     def log_target_selected(self, targets: list, target_file: str | None = None):
         """记录目标选择"""
@@ -238,9 +230,7 @@ class LogManager:
 
     def log_mode_selected(self, mode: str):
         """记录模式选择"""
-        self.collector.collect_from_queue(
-            LogEventType.CONFIG_LOADED, {"mode": mode}, source="wizard"
-        )
+        self.collector.collect_from_queue(LogEventType.CONFIG_LOADED, {"mode": mode}, source="wizard")
 
     def log_gpu_selected(self, gpu_indices: list, use_multi_gpu: bool):
         """记录GPU选择"""

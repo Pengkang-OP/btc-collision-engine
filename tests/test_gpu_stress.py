@@ -198,9 +198,7 @@ class TestLongRunning:
             free_buffer(buf)
 
         # 验证：所有分配的缓冲区均已释放（无泄漏）
-        assert (
-            len(allocated_buffers) == 0
-        ), f"{ROUNDS} 轮后仍有 {len(allocated_buffers)} 个未释放缓冲区"
+        assert len(allocated_buffers) == 0, f"{ROUNDS} 轮后仍有 {len(allocated_buffers)} 个未释放缓冲区"
         assert len(freed_buffers) == ROUNDS, f"已释放缓冲区数 {len(freed_buffers)} 应等于 {ROUNDS}"
 
     def test_buffer_tracker_cleanup_after_long_run(self):
@@ -231,9 +229,9 @@ class TestLongRunning:
             t0 = time.perf_counter()
             mock_kernel.run_batch(seed, BATCH_SIZE)
             elapsed_ms = (time.perf_counter() - t0) * 1000
-            assert (
-                elapsed_ms < MAX_ROUND_TIME_MS
-            ), f"单轮处理耗时 {elapsed_ms:.1f}ms 超过 {MAX_ROUND_TIME_MS}ms"
+            assert elapsed_ms < MAX_ROUND_TIME_MS, (
+                f"单轮处理耗时 {elapsed_ms:.1f}ms 超过 {MAX_ROUND_TIME_MS}ms"
+            )
 
     def test_recovery_manager_stats_stable_over_time(self):
         """长时间运行中，恢复管理器统计不会意外重置"""
@@ -390,9 +388,9 @@ class TestErrorRecoveryStress:
         # 验证成功次数约为 3/4
         assert success_count == ROUNDS - failure_count
         expected_failures = ROUNDS // 4
-        assert (
-            abs(failure_count - expected_failures) <= 1
-        ), f"间歇性失败次数 {failure_count} 与期望 {expected_failures} 偏差过大"
+        assert abs(failure_count - expected_failures) <= 1, (
+            f"间歇性失败次数 {failure_count} 与期望 {expected_failures} 偏差过大"
+        )
 
         # 统计追踪正确
         stats = recovery_manager.get_recovery_stats()
@@ -447,7 +445,7 @@ class TestErrorRecoveryStress:
         for error, expected_type in error_type_pairs:
             classified = recovery_manager._classify_failure(error)
             assert classified == expected_type, (
-                f"错误 '{error}' 应被分类为 {expected_type.value}，" f"实际: {classified.value}"
+                f"错误 '{error}' 应被分类为 {expected_type.value}，实际: {classified.value}"
             )
 
     def test_fallback_triggered_when_enough_gpus_fail(self):
@@ -495,9 +493,9 @@ class TestErrorRecoveryStress:
 
         stats = recovery_manager.get_recovery_stats()
         assert stats["total_failures"] == 4
-        assert (
-            0.0 <= stats["success_rate"] <= 100.0
-        ), f"成功率 {stats['success_rate']} 不在 [0, 100] 范围内"
+        assert 0.0 <= stats["success_rate"] <= 100.0, (
+            f"成功率 {stats['success_rate']} 不在 [0, 100] 范围内"
+        )
 
     def test_multiple_gpu_ids_independent_failure_tracking(self):
         """不同 GPU ID 的失败独立追踪，不互相干扰"""

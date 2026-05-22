@@ -509,9 +509,7 @@ class TestModuleImports:
         with open(file_path, encoding="utf-8") as f:
             content = f.read()
         assert "# TODO: Phase 5" not in content, "vendor_strategy.py 中还有未处理的 Phase 5 TODO"
-        assert (
-            "# TODO: Phase 5实现" not in content
-        ), "vendor_strategy.py 中还有未处理的 Phase 5实现 TODO"
+        assert "# TODO: Phase 5实现" not in content, "vendor_strategy.py 中还有未处理的 Phase 5实现 TODO"
 
 
 # ========== Test: 集成测试 ==========

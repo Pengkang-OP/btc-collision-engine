@@ -240,9 +240,7 @@ class TestConfigManagerAdvanced(unittest.TestCase):
         self.assertIn("performance_monitoring.enabled", errors)
 
     def test_validate_perf_track_slow_bool(self):
-        errors = self.cm._validate_manual(
-            {"performance_monitoring": {"track_slow_operations": False}}
-        )
+        errors = self.cm._validate_manual({"performance_monitoring": {"track_slow_operations": False}})
         self.assertNotIn("performance_monitoring.track_slow_operations", errors)
 
     def test_validate_perf_threshold_valid(self):

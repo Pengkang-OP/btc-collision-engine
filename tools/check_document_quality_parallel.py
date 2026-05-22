@@ -67,7 +67,7 @@ def parallel_check(docs_dir: str, workers: int = None, config_dict: dict = None)
 
     # 获取所有.md文件
     md_files = list(docs_path.glob("*.md"))
-    md_files = [f for f in md_files if 'archive' not in str(f)]
+    md_files = [f for f in md_files if "archive" not in str(f)]
 
     if not md_files:
         print("❌ 没有找到文档文件")
@@ -82,6 +82,7 @@ def parallel_check(docs_dir: str, workers: int = None, config_dict: dict = None)
     # 默认配置
     if config_dict is None:
         from tools.check_document_quality import ScoringConfig
+
         config_dict = ScoringConfig().__dict__
 
     # 准备参数
@@ -111,7 +112,7 @@ def parallel_check(docs_dir: str, workers: int = None, config_dict: dict = None)
     # 打印结果
     if elapsed > 0:
         print(f"\n✅ 检查完成! 耗时: {elapsed:.2f}秒")
-        print(f"⚡ 平均速度: {len(md_files)/elapsed:.1f} 文档/秒")
+        print(f"⚡ 平均速度: {len(md_files) / elapsed:.1f} 文档/秒")
     else:
         print("\n✅ 检查完成! 耗时: <0.01秒")
 
@@ -138,9 +139,9 @@ def print_summary(scores: list[DocumentScore]):
     needs_improvement = sum(1 for s in scores if s.score < 7.0)
 
     print("\n质量分布:")
-    print(f"  ✅ 优秀 (≥8.5): {excellent} 个 ({excellent/len(scores)*100:.1f}%)")
-    print(f"  ⚠️  良好 (7.0-8.4): {good} 个 ({good/len(scores)*100:.1f}%)")
-    print(f"  ❌ 需改进 (<7.0): {needs_improvement} 个 ({needs_improvement/len(scores)*100:.1f}%)")
+    print(f"  ✅ 优秀 (≥8.5): {excellent} 个 ({excellent / len(scores) * 100:.1f}%)")
+    print(f"  ⚠️  良好 (7.0-8.4): {good} 个 ({good / len(scores) * 100:.1f}%)")
+    print(f"  ❌ 需改进 (<7.0): {needs_improvement} 个 ({needs_improvement / len(scores) * 100:.1f}%)")
 
     # 需改进的文档
     if needs_improvement > 0:
@@ -164,23 +165,10 @@ def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='文档质量并行检查工具')
-    parser.add_argument(
-        '--docs-dir',
-        default='docs',
-        help='文档目录路径 (默认: docs)'
-    )
-    parser.add_argument(
-        '--workers',
-        type=int,
-        default=None,
-        help='工作进程数 (默认: CPU核心数)'
-    )
-    parser.add_argument(
-        '--config',
-        default=None,
-        help='评分配置文件路径 (JSON格式)'
-    )
+    parser = argparse.ArgumentParser(description="文档质量并行检查工具")
+    parser.add_argument("--docs-dir", default="docs", help="文档目录路径 (默认: docs)")
+    parser.add_argument("--workers", type=int, default=None, help="工作进程数 (默认: CPU核心数)")
+    parser.add_argument("--config", default=None, help="评分配置文件路径 (JSON格式)")
 
     args = parser.parse_args()
 
@@ -188,9 +176,10 @@ def main():
     config_dict = None
     if args.config:
         import json
+
         config_path = Path(args.config)
         if config_path.exists():
-            with open(config_path, encoding='utf-8') as f:
+            with open(config_path, encoding="utf-8") as f:
                 config_dict = json.load(f)
             print(f"📝 使用配置文件: {config_path}")
         else:

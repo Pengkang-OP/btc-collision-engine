@@ -123,9 +123,7 @@ class TestRealAddressIntegration:
 
         stats = engine.get_stats()
         assert stats.total_checked > 0, "多工作线程应该检查了一些私钥"
-        print(
-            f"\n[OK] 4个工作线程检查了 {stats.total_checked} 个私钥，速度: {stats.speed:.0f} 次/秒"
-        )
+        print(f"\n[OK] 4个工作线程检查了 {stats.total_checked} 个私钥，速度: {stats.speed:.0f} 次/秒")
 
     @pytest.mark.flaky(reruns=2, reruns_delay=1)
     def test_engine_stats_with_real_targets(self):
@@ -202,9 +200,9 @@ class TestRealAddressIntegration:
         # 主要验证引擎能够正常重启并继续工作
         tolerance = 0.50  # 50%容差
         min_expected = stats1.total_checked * (1 - tolerance)
-        assert (
-            stats2.total_checked >= min_expected
-        ), f"第二次运行检查数量过低: {stats2.total_checked} < {min_expected:.0f} (第一次: {stats1.total_checked})"
+        assert stats2.total_checked >= min_expected, (
+            f"第二次运行检查数量过低: {stats2.total_checked} < {min_expected:.0f} (第一次: {stats1.total_checked})"
+        )
         print(f"\n[OK] 重启测试通过: 第一次={stats1.total_checked}, 第二次={stats2.total_checked}")
 
 

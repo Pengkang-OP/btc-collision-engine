@@ -58,9 +58,7 @@ class TestLogProcessorFormat:
 
     def test_format_output_structure(self):
         processor = LogProcessor()
-        event = LogEvent(
-            event_type=LogEventType.ENGINE_ERROR, data={"error": "GPU OOM"}, source="gpu"
-        )
+        event = LogEvent(event_type=LogEventType.ENGINE_ERROR, data={"error": "GPU OOM"}, source="gpu")
         result = processor.format(event)
         assert "timestamp" in result
         assert "formatted_time" in result
@@ -250,9 +248,7 @@ class TestSensitiveDataFilterPrivacy:
     def test_safe_data_passes(self):
         """安全数据(不含敏感信息)应通过"""
         sf = SensitiveDataFilter()
-        event = LogEvent(
-            LogEventType.STATUS_UPDATE, data={"message": "引擎运行正常", "speed": 500000}
-        )
+        event = LogEvent(LogEventType.STATUS_UPDATE, data={"message": "引擎运行正常", "speed": 500000})
         assert sf.filter(event) is True
 
     def test_disabled_filter_allows_all(self):

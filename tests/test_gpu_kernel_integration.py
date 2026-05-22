@@ -50,14 +50,14 @@ class TestGPUKernelCompilation:
 
         # v4.2.1: 已转换为 PRNG 模式，使用种子而非私钥缓冲区
         # Intel Arc 需要 uint32 workaround，现已应用于 PRNG 种子和 uint256_from_bytes_global
-        assert (
-            "__constant const uint *seed" in OPENCL_KERNEL_SOURCE
-        ), "内核应该使用PRNG种子模式（uint32 workaround已应用）"
+        assert "__constant const uint *seed" in OPENCL_KERNEL_SOURCE, (
+            "内核应该使用PRNG种子模式（uint32 workaround已应用）"
+        )
 
         # 验证辅助函数存在（uint32 workaround的具体实现）
-        assert (
-            "uint256_from_bytes_global" in OPENCL_KERNEL_SOURCE
-        ), "内核应该包含 uint256_from_bytes_global 函数（使用 uint* 而非 uchar*）"
+        assert "uint256_from_bytes_global" in OPENCL_KERNEL_SOURCE, (
+            "内核应该包含 uint256_from_bytes_global 函数（使用 uint* 而非 uchar*）"
+        )
 
 
 class TestGPUKernelExecution:

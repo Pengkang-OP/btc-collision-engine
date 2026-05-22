@@ -121,9 +121,7 @@ class TestMonitorConfigValidation:
 
     def test_validate_custom_valid_config(self):
         """测试验证自定义有效配置"""
-        config = MonitorConfig(
-            alert_threshold=0.5, data_logging_interval=10.0, collection_interval=5.0
-        )
+        config = MonitorConfig(alert_threshold=0.5, data_logging_interval=10.0, collection_interval=5.0)
         assert config.validate() is True
 
     def test_validate_invalid_alert_threshold_high(self):
@@ -232,9 +230,7 @@ class TestMonitorConfigMerge:
     def test_merge_override_multiple_fields(self):
         """测试合并多个字段覆盖"""
         config1 = MonitorConfig(alert_threshold=0.8, data_logging_interval=1.0)
-        config2 = MonitorConfig(
-            alert_threshold=0.95, data_logging_interval=5.0, enable_debug_mode=True
-        )
+        config2 = MonitorConfig(alert_threshold=0.95, data_logging_interval=5.0, enable_debug_mode=True)
 
         merged = config1.merge(config2)
 

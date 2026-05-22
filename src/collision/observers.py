@@ -47,9 +47,7 @@ class CollisionObserver(ABC):
             stats: 最终碰撞统计信息
         """
 
-    def on_error(
-        self, error: Exception, context: dict[str, Any] | None = None
-    ) -> None:  # noqa: B027
+    def on_error(self, error: Exception, context: dict[str, Any] | None = None) -> None:  # noqa: B027
         """错误事件（可选实现，非抽象方法）
 
         Args:

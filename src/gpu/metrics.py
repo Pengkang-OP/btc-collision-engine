@@ -277,9 +277,7 @@ class GPUMetricsCollector:
             # Collector uptime
             lines.append("# HELP gpu_metrics_collector_uptime_seconds Collector uptime.")
             lines.append("# TYPE gpu_metrics_collector_uptime_seconds gauge")
-            lines.append(
-                f"gpu_metrics_collector_uptime_seconds {time.time() - self._created_at:.1f}"
-            )
+            lines.append(f"gpu_metrics_collector_uptime_seconds {time.time() - self._created_at:.1f}")
 
             lines.append("")  # 末尾换行
             return "\n".join(lines)

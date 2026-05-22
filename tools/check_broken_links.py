@@ -27,6 +27,7 @@ setup_windows_utf8()
 @dataclass
 class LinkInfo:
     """链接信息"""
+
     file: str
     line: int
     text: str
@@ -37,6 +38,7 @@ class LinkInfo:
 @dataclass
 class BrokenLink:
     """断裂链接"""
+
     link: LinkInfo
     reason: str
 
@@ -73,7 +75,7 @@ class BrokenLinkChecker:
     def check_file(self, file_path: Path):
         """检查单个文件"""
         try:
-            content = file_path.read_text(encoding='utf-8')
+            content = file_path.read_text(encoding="utf-8")
             self.checked_files += 1
 
             # 查找所有Markdown链接
@@ -90,14 +92,14 @@ class BrokenLinkChecker:
     def extract_links(self, content: str, file_path: str) -> list[LinkInfo]:
         """提取文档中的所有链接"""
         links = []
-        lines = content.split('\n')
+        lines = content.split("\n")
 
         # Markdown链接: [text](url)
-        link_pattern = r'\[([^\]]+)\]\(([^)]+)\)'
+        link_pattern = r"\[([^\]]+)\]\(([^)]+)\)"
 
         for line_num, line in enumerate(lines, 1):
             # 跳过代码块中的链接
-            if line.strip().startswith('```'):
+            if line.strip().startswith("```"):
                 continue
 
             for match in re.finditer(link_pattern, line):
@@ -105,42 +107,38 @@ class BrokenLinkChecker:
                 url = match.group(2)
 
                 # 跳过图片链接（单独处理）
-                if line[max(0, match.start()-1)] == '!':
+                if line[max(0, match.start() - 1)] == "!":
                     continue
 
                 # 确定链接类型
-                if url.startswith(('http://', 'https://')):
-                    link_type = 'external'
-                elif url.startswith('#'):
-                    link_type = 'anchor'
-                elif url.startswith('mailto:') or url.startswith('tel:'):
-                    link_type = 'special'
+                if url.startswith(("http://", "https://")):
+                    link_type = "external"
+                elif url.startswith("#"):
+                    link_type = "anchor"
+                elif url.startswith("mailto:") or url.startswith("tel:"):
+                    link_type = "special"
                 else:
-                    link_type = 'internal'
+                    link_type = "internal"
 
-                links.append(LinkInfo(
-                    file=file_path,
-                    line=line_num,
-                    text=text,
-                    url=url,
-                    link_type=link_type
-                ))
+                links.append(
+                    LinkInfo(file=file_path, line=line_num, text=text, url=url, link_type=link_type)
+                )
 
         return links
 
     def check_link(self, link: LinkInfo, base_dir: Path):
         """检查单个链接"""
-        if link.link_type == 'external':
+        if link.link_type == "external":
             self.check_external_link(link)
-        elif link.link_type == 'anchor':
+        elif link.link_type == "anchor":
             self.check_anchor_link(link)
-        elif link.link_type == 'internal':
+        elif link.link_type == "internal":
             self.check_internal_link(link, base_dir)
 
     def check_internal_link(self, link: LinkInfo, base_dir: Path):
         """检查内部链接"""
         # 分离文件路径和锚点
-        parts = link.url.split('#')
+        parts = link.url.split("#")
         file_path = parts[0]
         anchor = parts[1] if len(parts) > 1 else None
 
@@ -149,7 +147,7 @@ class BrokenLinkChecker:
             return
 
         # 计算目标文件路径
-        if file_path.startswith('/'):
+        if file_path.startswith("/"):
             # 绝对路径（相对于项目根目录）
             target_path = (self.docs_dir.parent / file_path[1:]).resolve()
         else:
@@ -158,10 +156,7 @@ class BrokenLinkChecker:
 
         # 检查文件是否存在
         if not target_path.exists():
-            self.broken_links.append(BrokenLink(
-                link=link,
-                reason=f"文件不存在: {target_path}"
-            ))
+            self.broken_links.append(BrokenLink(link=link, reason=f"文件不存在: {target_path}"))
             return
 
         # 如果有锚点，检查锚点是否存在
@@ -178,37 +173,31 @@ class BrokenLinkChecker:
     def check_anchor_in_file(self, link: LinkInfo, file_path: Path, anchor: str):
         """检查文件中的锚点是否存在"""
         try:
-            content = file_path.read_text(encoding='utf-8')
+            content = file_path.read_text(encoding="utf-8")
 
             # 将锚点转换为小写（Markdown锚点通常是小写）
             anchor_lower = anchor.lower()
 
             # 查找匹配的标题
             # Markdown标题: # Title 或 ## Title
-            heading_pattern = r'#{1,6}\s+(.+)'
+            heading_pattern = r"#{1,6}\s+(.+)"
 
             found = False
             for match in re.finditer(heading_pattern, content):
                 heading = match.group(1).strip()
                 # 转换为锚点格式（小写，空格替换为连字符）
-                heading_anchor = re.sub(r'[^\w\s-]', '', heading).lower()
-                heading_anchor = re.sub(r'\s+', '-', heading_anchor)
+                heading_anchor = re.sub(r"[^\w\s-]", "", heading).lower()
+                heading_anchor = re.sub(r"\s+", "-", heading_anchor)
 
                 if heading_anchor == anchor_lower:
                     found = True
                     break
 
             if not found:
-                self.broken_links.append(BrokenLink(
-                    link=link,
-                    reason=f"锚点不存在: #{anchor}"
-                ))
+                self.broken_links.append(BrokenLink(link=link, reason=f"锚点不存在: #{anchor}"))
 
         except Exception as e:
-            self.broken_links.append(BrokenLink(
-                link=link,
-                reason=f"读取文件失败: {e}"
-            ))
+            self.broken_links.append(BrokenLink(link=link, reason=f"读取文件失败: {e}"))
 
     def check_external_link(self, link: LinkInfo):
         """检查外部链接"""
@@ -219,15 +208,9 @@ class BrokenLinkChecker:
             response = requests.head(link.url, timeout=5, allow_redirects=True)
 
             if response.status_code >= 400:
-                self.broken_links.append(BrokenLink(
-                    link=link,
-                    reason=f"HTTP {response.status_code}"
-                ))
+                self.broken_links.append(BrokenLink(link=link, reason=f"HTTP {response.status_code}"))
         except requests.RequestException as e:
-            self.broken_links.append(BrokenLink(
-                link=link,
-                reason=f"请求失败: {str(e)}"
-            ))
+            self.broken_links.append(BrokenLink(link=link, reason=f"请求失败: {str(e)}"))
 
     def print_summary(self):
         """打印总结报告"""
@@ -266,17 +249,9 @@ def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='检查Markdown文档中的断裂链接')
-    parser.add_argument(
-        '--check-external',
-        action='store_true',
-        help='检查外部HTTP链接（耗时）'
-    )
-    parser.add_argument(
-        '--docs-dir',
-        default='docs',
-        help='文档目录路径 (默认: docs)'
-    )
+    parser = argparse.ArgumentParser(description="检查Markdown文档中的断裂链接")
+    parser.add_argument("--check-external", action="store_true", help="检查外部HTTP链接（耗时）")
+    parser.add_argument("--docs-dir", default="docs", help="文档目录路径 (默认: docs)")
 
     args = parser.parse_args()
 

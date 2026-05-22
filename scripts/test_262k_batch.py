@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 测试262K批次大小性能（Intel Arc推荐值）
 """
 
-import sys
 import os
+import sys
 import time
 
 # 添加项目根目录到路径
@@ -35,14 +34,12 @@ def test_262k_batch():
             {
                 "total_checked": stats.total_checked,
                 "speed": stats.speed,
-                "matches": (
-                    len(stats.matches) if hasattr(stats.matches, "__len__") else stats.matches
-                ),
+                "matches": (len(stats.matches) if hasattr(stats.matches, "__len__") else stats.matches),
             }
         )
 
     def on_match(match_info):
-        print(f"  [MATCH] 发现匹配!")
+        print("  [MATCH] 发现匹配!")
 
     try:
         # 初始化引擎 - 使用262K批次
@@ -65,10 +62,10 @@ def test_262k_batch():
         device_info = engine._gpu_device.get_device_info()
         memory_efficiency = getattr(engine._gpu_device, "memory_efficiency", 0.70)
 
-        print(f"\n  GPU设备信息:")
+        print("\n  GPU设备信息:")
         print(f"    名称: {device_info.get('name', 'Unknown')}")
         print(f"    显存: {device_info.get('global_mem_size', 0) / (1024**3):.2f} GB")
-        print(f"    显存效率: {memory_efficiency*100:.0f}%")
+        print(f"    显存效率: {memory_efficiency * 100:.0f}%")
         print(f"    批次大小: {engine.batch_size:,}")
         print(f"    初始化时间: {init_time:.2f}秒")
         print()
@@ -109,9 +106,9 @@ def test_262k_batch():
             else:
                 cv = 0
 
-            print(f"\n{'='*80}")
+            print(f"\n{'=' * 80}")
             print("  测试结果")
-            print(f"{'='*80}")
+            print(f"{'=' * 80}")
             print(f"    总运行时间: {time.time() - start_time:.2f}秒")
             print(f"    总检查数:   {total_keys:,} keys")
             print(f"    平均速度:   {avg_speed:,.2f} keys/s")
@@ -121,11 +118,11 @@ def test_262k_batch():
             print()
 
             # 与之前配置对比
-            print(f"{'='*80}")
+            print(f"{'=' * 80}")
             print("  性能对比")
-            print(f"{'='*80}")
-            print(f"    65K批次:    44,096 keys/s (基线)")
-            print(f"    131K批次:   46,333 keys/s (+5.1%)")
+            print(f"{'=' * 80}")
+            print("    65K批次:    44,096 keys/s (基线)")
+            print("    131K批次:   46,333 keys/s (+5.1%)")
             print(
                 f"    262K批次:   {avg_speed:,.2f} keys/s ({((avg_speed - 44096) / 44096 * 100):+.1f}%)"
             )
@@ -152,10 +149,10 @@ if __name__ == "__main__":
     result = test_262k_batch()
 
     if result:
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("  测试完成!")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
     else:
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("  测试失败!")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")

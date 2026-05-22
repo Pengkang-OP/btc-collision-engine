@@ -254,11 +254,11 @@ class ConfigWatcher:
                     self._observer.stop()
                     # 使用小超时，避免析构期间永久阻塞
                     self._observer.join(timeout=1.0)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("析构 observer 时发生异常: %s", e)
                 self._observer = None
 
             # 注意：不处理 _poll_thread，因为 daemon 线程会在进程退出时自动终止
-        except Exception:
+        except Exception as e:
             # 析构期间忽略所有异常，避免GC崩溃
-            pass
+            logger.debug("析构配置监听器时发生异常: %s", e)

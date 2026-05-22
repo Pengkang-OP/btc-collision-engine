@@ -83,7 +83,6 @@ from ...gpu.search_mode_coordinator import SearchModeCoordinator  # noqa: E402
 # 监控
 from ...monitoring.data_logger import DataLogger  # noqa: E402
 from ...monitoring.enhanced_monitoring import EnhancedMonitoringSystem  # noqa: E402
-from ...monitoring.monitor_config import MonitorConfig  # noqa: E402
 from ...monitoring.event_adapters import (  # noqa: E402
     DataLoggerAdapter,
     EnhancedMonitoringAdapter,
@@ -92,6 +91,7 @@ from ...monitoring.gpu_performance_monitor import (  # noqa: E402
     GPUPerformanceMonitor,
     get_gpu_performance_monitor,
 )  # noqa: E402
+from ...monitoring.monitor_config import MonitorConfig  # noqa: E402
 from ..base_engine import BaseCollisionEngine  # noqa: E402
 
 # 碰撞基础
@@ -181,7 +181,8 @@ class GPUEngineConfig:
             "async_log_max_bytes": self.async_log_max_bytes,
             "async_log_backup_count": self.async_log_backup_count,
             "check_uncompressed": self.check_uncompressed,
-            "key_generation_strategy": self.key_generation_strategy.name,  # 枚举名，可通过 KeyGenerationStrategy[name] 反序列化
+            "key_generation_strategy": self.key_generation_strategy.name,
+            # 枚举名，可通过 KeyGenerationStrategy[name] 反序列化
         }
 
 
@@ -684,9 +685,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
     def get_stats(self) -> CollisionStats:
         """获取统计信息"""
         if self.stats is None:
-            raise RuntimeError(
-                "GPUCollisionEngine.get_stats(): self.stats is None, 引擎未正确初始化"
-            )
+            raise RuntimeError("GPUCollisionEngine.get_stats(): self.stats is None, 引擎未正确初始化")
         return self.stats
 
     def get_adjustment_history(self, limit: int = 10) -> list[dict[str, Any]]:
@@ -774,11 +773,11 @@ class GPUCollisionEngine(BaseCollisionEngine):
         仅在目标数 >= 50000 时自动切为仅压缩格式。
         """
         target_count = len(self.targets)
-        COMPRESSION_AUTO_THRESHOLD = 50000
-        if target_count < COMPRESSION_AUTO_THRESHOLD:
+        compression_auto_threshold = 50000
+        if target_count < compression_auto_threshold:
             return 1
         logger.warning(
-            f"GPU引擎: 目标地址数={target_count} >= {COMPRESSION_AUTO_THRESHOLD}，"
+            f"GPU引擎: 目标地址数={target_count} >= {compression_auto_threshold}，"
             f"自动切换为仅检查压缩格式（性能优先）。"
             f"注意：非压缩P2PKH地址将不会被匹配！"
             f"如需确保匹配所有地址，请设置 check_uncompressed=True。"
@@ -837,9 +836,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         """记录 GPU 性能指标 [委托给 _scheduler]"""
         self._scheduler.update_performance_metrics(batch_size, execution_time_ms)
 
-    def _record_adjustment(
-        self, old_size: int, new_size: int, reason: str, details: str = ""
-    ) -> None:
+    def _record_adjustment(self, old_size: int, new_size: int, reason: str, details: str = "") -> None:
         """记录调整历史 [委托给 _scheduler]"""
         self._scheduler.record_adjustment(old_size, new_size, reason, details)
 
@@ -907,9 +904,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         assert self._random_search_mode is not None
         return cast(
             bytes,
-            self._random_search_mode._wait_for_async_key_generation(
-                gen_thread, gen_result, batch_num
-            ),
+            self._random_search_mode._wait_for_async_key_generation(gen_thread, gen_result, batch_num),
         )
 
     def _range_scan(self, start: int, end: int):

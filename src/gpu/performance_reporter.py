@@ -258,9 +258,7 @@ class PerformanceReportGenerator:
         current_device = self._get_device_info().get("设备名称", "Current")
 
         for gpu_name, perf in reference_gpus.items():
-            relative = (
-                (current_throughput / perf["throughput"] * 100) if perf["throughput"] > 0 else 0
-            )
+            relative = (current_throughput / perf["throughput"] * 100) if perf["throughput"] > 0 else 0
 
             marker = " ← 当前" if gpu_name == current_device else ""
             _tp = perf["throughput"]
@@ -388,9 +386,7 @@ class PerformanceReportGenerator:
             recommendations.append(
                 "Intel Arc GPU: 确保已启用 uint32 workaround 避免 global char* hang bug"
             )
-            recommendations.append(
-                "Intel Arc GPU: 建议使用保守的 batch_size (≤524,288) 以确保稳定性"
-            )
+            recommendations.append("Intel Arc GPU: 建议使用保守的 batch_size (≤524,288) 以确保稳定性")
             recommendations.append("Intel Arc GPU: 保持驱动版本 ≥ 31.0.101.4500")
 
         # 性能建议
@@ -405,9 +401,7 @@ class PerformanceReportGenerator:
                 if mem_gb >= 16:
                     recommendations.append("显存充足 (≥16GB)，可以尝试更大的 batch_size 提升吞吐量")
                 elif mem_gb < 4:
-                    recommendations.append(
-                        "显存较小 (<4GB)，建议使用较小的 batch_size 避免显存不足"
-                    )
+                    recommendations.append("显存较小 (<4GB)，建议使用较小的 batch_size 避免显存不足")
             except (KeyError, TypeError, ValueError) as e:
                 logger.debug(f"获取GPU显存信息失败: {e}")
 

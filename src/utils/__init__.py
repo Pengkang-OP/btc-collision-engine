@@ -1,23 +1,5 @@
 """工具模块"""
 
-from .sensitive_patterns import (
-    # 敏感数据检测模式（非MASK变体，通过 __all__ 导出）
-    BECH32_ADDRESS,
-    BECH32M_ADDRESS,
-    BIP32_EXTENDED_KEY,
-    BIP32_EXTENDED_PUBKEY,
-    BIP39_CONTEXT_KEYWORDS,
-    BIP39_PHRASE_12,
-    BIP39_PHRASE_24,
-    P2PKH_ADDRESS,
-    P2SH_ADDRESS,
-    PRIVATE_KEY_HEX,
-    PRIVATE_KEY_CONTEXT,
-    RAW_KEY,
-    WIF_COMPRESSED,
-    WIF_UNCOMPRESSED,
-    # _MASK 变体由 sensitive_patterns 内部使用，此处不重新导出
-)
 from .bech32_codec import (
     bech32_decode,
     bech32_encode,
@@ -74,6 +56,24 @@ from .performance_monitor import (
     get_performance_tracker,
     is_performance_monitoring_enabled,
     log_performance_summary,
+)
+from .sensitive_patterns import (
+    # 敏感数据检测模式（非MASK变体，通过 __all__ 导出）
+    BECH32_ADDRESS,
+    BECH32M_ADDRESS,
+    BIP32_EXTENDED_KEY,
+    BIP32_EXTENDED_PUBKEY,
+    BIP39_CONTEXT_KEYWORDS,
+    BIP39_PHRASE_12,
+    BIP39_PHRASE_24,
+    P2PKH_ADDRESS,
+    P2SH_ADDRESS,
+    PRIVATE_KEY_CONTEXT,
+    PRIVATE_KEY_HEX,
+    RAW_KEY,
+    WIF_COMPRESSED,
+    WIF_UNCOMPRESSED,
+    # _MASK 变体由 sensitive_patterns 内部使用，此处不重新导出
 )
 from .timeout import (
     TimeoutContext,

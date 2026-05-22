@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 验证Intel Arc配置修复
 确保batch_size不会被降级
@@ -54,7 +53,7 @@ test_config = {"batch_size": 262144, "memory_usage_ratio": 0.70}
 ac2 = GPUAutoConfigurator()
 result = ac2._adjust_for_memory(device, test_config)
 
-print(f"  请求batch_size: 262,144")
+print("  请求batch_size: 262,144")
 print(f"  调整后batch_size: {test_config['batch_size']:,}")
 
 if test_config["batch_size"] == 262144:

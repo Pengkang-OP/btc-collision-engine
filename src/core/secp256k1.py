@@ -685,11 +685,7 @@ class EllipticCurve:
             ValueError: 当生成的公钥为无穷远点时
         """
         # 将私钥转换为整数
-        k = (
-            int.from_bytes(private_key, "big")
-            if isinstance(private_key, bytes)
-            else int(private_key)
-        )
+        k = int.from_bytes(private_key, "big") if isinstance(private_key, bytes) else int(private_key)
 
         # 创建基点G
         _g_point = ECPoint(self.curve.Gx, self.curve.Gy, self.curve)
@@ -702,9 +698,9 @@ class EllipticCurve:
             raise ValueError("生成的公钥为无穷远点，私钥无效")
 
         # 转换为字节串
-        assert (
-            public_point.x is not None and public_point.y is not None
-        ), "is_infinity 检查后坐标不应为 None"
+        assert public_point.x is not None and public_point.y is not None, (
+            "is_infinity 检查后坐标不应为 None"
+        )
         x_bytes = public_point.x.to_bytes(32, "big")
 
         if compressed:
@@ -721,9 +717,7 @@ class EllipticCurve:
             y_bytes = public_point.y.to_bytes(32, "big")
             return b"\x04" + x_bytes + y_bytes
 
-    def generate_public_key_const_time(
-        self, private_key: bytes | int, compressed: bool = True
-    ) -> bytes:
+    def generate_public_key_const_time(self, private_key: bytes | int, compressed: bool = True) -> bytes:
         """恒定时间公钥生成 (generate_public_key 的显式别名)
 
         generate_public_key 内部已使用 scalar_multiply_const_time (Montgomery Ladder),

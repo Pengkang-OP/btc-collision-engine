@@ -10,10 +10,7 @@ from pathlib import Path
 
 
 def read_with_retry(
-    file_path: Path,
-    max_retries: int = 3,
-    delay: float = 0.1,
-    encoding: str = 'utf-8'
+    file_path: Path, max_retries: int = 3, delay: float = 0.1, encoding: str = "utf-8"
 ) -> str | None:
     """带重试的文件读取
 
@@ -28,21 +25,17 @@ def read_with_retry(
     """
     for attempt in range(max_retries):
         try:
-            return file_path.read_text(encoding=encoding, errors='ignore')
+            return file_path.read_text(encoding=encoding, errors="ignore")
         except (OSError, PermissionError):
             if attempt < max_retries - 1:
-                time.sleep(delay * (2 ** attempt))  # 指数退避
+                time.sleep(delay * (2**attempt))  # 指数退避
                 continue
             # 最后一次重试失败
             return None
 
 
 def write_with_retry(
-    file_path: Path,
-    content: str,
-    max_retries: int = 3,
-    delay: float = 0.1,
-    encoding: str = 'utf-8'
+    file_path: Path, content: str, max_retries: int = 3, delay: float = 0.1, encoding: str = "utf-8"
 ) -> bool:
     """带重试的文件写入
 
@@ -62,7 +55,7 @@ def write_with_retry(
             return True
         except (OSError, PermissionError):
             if attempt < max_retries - 1:
-                time.sleep(delay * (2 ** attempt))
+                time.sleep(delay * (2**attempt))
                 continue
             return False
     return False

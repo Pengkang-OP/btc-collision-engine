@@ -34,7 +34,7 @@ def verify_kernel_files():
     # 2. 验证内核文件内容
     print("\n2. 内核文件内容验证:")
     cl_file = os.path.join(kernel_dir, "btc_collision.cl")
-    with open(cl_file, "r", encoding="utf-8") as f:
+    with open(cl_file, encoding="utf-8") as f:
         content = f.read()
 
     # 检查关键元素
@@ -110,15 +110,15 @@ def verify_kernel_files():
         if gpu_devices:
             print(f"   ✓ GPU设备数: {len(gpu_devices)}")
             for i, device in enumerate(gpu_devices[:3]):  # 只显示前3个
-                print(f"     - {i+1}. {device.name}")
+                print(f"     - {i + 1}. {device.name}")
                 print(f"       厂商: {device.vendor}")
                 print(f"       全局内存: {device.global_mem_size // (1024**2)} MB")
         else:
-            print(f"   ⚠ 未检测到GPU设备")
+            print("   ⚠ 未检测到GPU设备")
 
     except ImportError:
-        print(f"   ⚠ PyOpenCL未安装")
-        print(f"     安装命令: pip install pyopencl")
+        print("   ⚠ PyOpenCL未安装")
+        print("     安装命令: pip install pyopencl")
     except Exception as e:
         print(f"   ⚠ OpenCL检查失败: {e}")
 

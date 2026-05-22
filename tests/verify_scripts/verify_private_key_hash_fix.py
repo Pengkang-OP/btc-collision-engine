@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """验证私钥内存哈希修复"""
 
-import sys
 import re
+import sys
 
 
 def verify_private_key_hash_fix():
@@ -16,7 +15,7 @@ def verify_private_key_hash_fix():
     file_path = "src/gpu/data_monitor.py"
 
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         issues = []
@@ -90,7 +89,7 @@ def check_other_files():
 
     for file_path in files_to_check:
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             # 检查是否使用哈希

@@ -68,6 +68,19 @@ class BigIntOptimizer:
         except ImportError:
             logger.info("gmpy2未安装,使用纯Python大整数运算 (pip install gmpy2)")
 
+    def _require_gmpy2(self) -> tuple[Any, Any]:
+        """确保 gmpy2 已正确初始化并返回 (gmpy2, mpz)，替代 assert 防止 -O 模式静默跳过。
+
+        Returns:
+            (gmpy2 模块, mpz 函数) 元组
+
+        Raises:
+            RuntimeError: 当 use_gmpy2=True 但 gmpy2/mpz 为 None 时
+        """
+        if self.gmpy2 is None or self.mpz is None:
+            raise RuntimeError("gmpy2 优化器状态异常: use_gmpy2=True 但 gmpy2/mpz 为 None")
+        return self.gmpy2, self.mpz
+
     def mod_inverse(self, a: int, m: int) -> int:
         """
         计算模逆元: 找到x使得 (a * x) % m = 1
@@ -83,10 +96,10 @@ class BigIntOptimizer:
             ValueError: 当逆元不存在时
         """
         if self.use_gmpy2:
-            assert self.gmpy2 is not None and self.mpz is not None
+            gmpy2, mpz = self._require_gmpy2()
             # 使用gmpy2.invert() - 基于扩展欧几里得的优化实现
             try:
-                return int(self.gmpy2.invert(self.mpz(a), self.mpz(m)))
+                return int(gmpy2.invert(mpz(a), mpz(m)))
             except ZeroDivisionError as e:
                 # 模逆元不存在（a和m不互素）
                 raise ValueError(f"模逆元不存在: {a} 和 {m} 不互素（GCD ≠ 1）") from e
@@ -130,9 +143,9 @@ class BigIntOptimizer:
             (a * b) % m
         """
         if self.use_gmpy2:
-            assert self.gmpy2 is not None and self.mpz is not None
+            gmpy2, mpz = self._require_gmpy2()
             # gmpy2内部使用Comba乘法,比Python int快30-40%
-            return int((self.mpz(a) * self.mpz(b)) % self.mpz(m))
+            return int((mpz(a) * mpz(b)) % mpz(m))
         else:
             return (a * b) % m
 
@@ -149,8 +162,8 @@ class BigIntOptimizer:
             (a + b) % m
         """
         if self.use_gmpy2:
-            assert self.gmpy2 is not None and self.mpz is not None
-            return int((self.mpz(a) + self.mpz(b)) % self.mpz(m))
+            gmpy2, mpz = self._require_gmpy2()
+            return int((mpz(a) + mpz(b)) % mpz(m))
         else:
             return (a + b) % m
 
@@ -167,8 +180,8 @@ class BigIntOptimizer:
             (a - b) % m
         """
         if self.use_gmpy2:
-            assert self.gmpy2 is not None and self.mpz is not None
-            return int((self.mpz(a) - self.mpz(b)) % self.mpz(m))
+            gmpy2, mpz = self._require_gmpy2()
+            return int((mpz(a) - mpz(b)) % mpz(m))
         else:
             return (a - b) % m
 
@@ -185,8 +198,8 @@ class BigIntOptimizer:
             (base ^ exp) % m
         """
         if self.use_gmpy2:
-            assert self.gmpy2 is not None and self.mpz is not None
-            return int(pow(self.mpz(base), self.mpz(exp), self.mpz(m)))
+            gmpy2, mpz = self._require_gmpy2()
+            return int(pow(mpz(base), mpz(exp), mpz(m)))
         else:
             return pow(base, exp, m)
 

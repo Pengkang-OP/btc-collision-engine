@@ -147,9 +147,7 @@ def _print_format_summary(fmt_counts: dict[str, int]) -> None:
     print(_t("targets.format_breakdown", breakdown=", ".join(parts)))
 
     # 不兼容格式警告
-    incompatible = (
-        fmt_counts.get("p2sh", 0) + fmt_counts.get("bech32", 0) + fmt_counts.get("taproot", 0)
-    )
+    incompatible = fmt_counts.get("p2sh", 0) + fmt_counts.get("bech32", 0) + fmt_counts.get("taproot", 0)
     if incompatible > 0:
         # 使用 Rich Panel 输出醒目警告
         try:
@@ -209,9 +207,7 @@ def _run_security_check(args) -> None:
             warning_text.append("  pip install cryptography  # 备选\n\n", style="white")
             warning_text.append("使用 --skip-security-check 跳过此检查", style="dim")
             console.print(
-                Panel(
-                    warning_text, title="[bold yellow]安全检查[/bold yellow]", border_style="yellow"
-                )
+                Panel(warning_text, title="[bold yellow]安全检查[/bold yellow]", border_style="yellow")
             )
         except (RuntimeError, OSError, ValueError):
             # Rich Panel 渲染失败时降级为纯文本警告

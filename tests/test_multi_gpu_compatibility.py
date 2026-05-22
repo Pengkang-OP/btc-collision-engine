@@ -71,9 +71,9 @@ class TestSameVendorSameModel:
 
         assert _weights_sum_to_one(weights)
         # 两块相同规格，权重应非常接近（误差 < 5%）
-        assert (
-            abs(weights[0] - weights[1]) < 0.05
-        ), f"相同规格 GPU 权重差异过大: {weights[0]:.3f} vs {weights[1]:.3f}"
+        assert abs(weights[0] - weights[1]) < 0.05, (
+            f"相同规格 GPU 权重差异过大: {weights[0]:.3f} vs {weights[1]:.3f}"
+        )
 
     def test_dual_amd_equal_load(self):
         """两块 RX 6800 XT（16GB/72CU），equal 策略：权重各 0.5"""
@@ -133,9 +133,9 @@ class TestSameVendorDifferentModel:
         weights = balancer.calculate_weights()
 
         assert _weights_sum_to_one(weights)
-        assert (
-            weights[1] > weights[0]
-        ), f"RTX 4090 权重 {weights[1]:.3f} 应大于 RTX 3080 {weights[0]:.3f}"
+        assert weights[1] > weights[0], (
+            f"RTX 4090 权重 {weights[1]:.3f} 应大于 RTX 3080 {weights[0]:.3f}"
+        )
         # 4090 显存是 3080 的 3 倍，权重差距应明显
         assert weights[1] > 0.6, f"RTX 4090 权重 {weights[1]:.3f} 应超过 0.6"
 
@@ -157,9 +157,9 @@ class TestSameVendorDifferentModel:
         assert total_assigned <= total_keys
 
         # 4090 分配量超过 60%
-        assert (
-            assigned_1 > total_assigned * 0.6
-        ), f"RTX 4090 分配 {assigned_1:,}，期望超过 60%（{int(total_assigned * 0.6):,}）"
+        assert assigned_1 > total_assigned * 0.6, (
+            f"RTX 4090 分配 {assigned_1:,}，期望超过 60%（{int(total_assigned * 0.6):,}）"
+        )
 
     def test_amd_mixed_models_performance_weight(self):
         """RX 6800 XT（16GB/72CU） + RX 7900 XTX（24GB/96CU），7900 XTX 权重更大"""
@@ -171,9 +171,9 @@ class TestSameVendorDifferentModel:
         weights = balancer.calculate_weights()
 
         assert _weights_sum_to_one(weights)
-        assert (
-            weights[1] > weights[0]
-        ), f"RX 7900 XTX 权重 {weights[1]:.3f} 应大于 RX 6800 XT {weights[0]:.3f}"
+        assert weights[1] > weights[0], (
+            f"RX 7900 XTX 权重 {weights[1]:.3f} 应大于 RX 6800 XT {weights[0]:.3f}"
+        )
 
     def test_performance_weight_reflects_memory_diff(self):
         """性能权重主要由显存大小决定：显存翻倍，权重应明显更大"""
@@ -223,9 +223,9 @@ class TestCrossVendor:
 
         assert _weights_sum_to_one(weights)
         # AMD 16GB 显存 > NVIDIA 8GB，权重应更大
-        assert (
-            weights[1] > weights[0]
-        ), f"AMD(16GB) 权重 {weights[1]:.3f} 应大于 NVIDIA(8GB) {weights[0]:.3f}"
+        assert weights[1] > weights[0], (
+            f"AMD(16GB) 权重 {weights[1]:.3f} 应大于 NVIDIA(8GB) {weights[0]:.3f}"
+        )
 
     def test_all_vendors_three_way(self):
         """NVIDIA + AMD + Intel 三厂商共存，权重之和为 1.0"""
@@ -289,13 +289,11 @@ class TestCrossVendor:
         ranges = balancer.assign_all_key_ranges(total_keys)
 
         total_assigned = sum(end - start for start, end in ranges.values())
-        assert (
-            total_assigned <= total_keys
-        ), f"分配总量 {total_assigned:,} 超过请求量 {total_keys:,}"
+        assert total_assigned <= total_keys, f"分配总量 {total_assigned:,} 超过请求量 {total_keys:,}"
         # 至少分配了 95% 的总量（允许少量舍入损失）
-        assert (
-            total_assigned >= total_keys * 0.95
-        ), f"分配总量 {total_assigned:,} 低于 95%（{int(total_keys * 0.95):,}）"
+        assert total_assigned >= total_keys * 0.95, (
+            f"分配总量 {total_assigned:,} 低于 95%（{int(total_keys * 0.95):,}）"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -378,9 +376,7 @@ class TestGPUFailureRecovery:
         alert_mock = Mock()
 
         # 注册恢复回调（返回 False 使恢复失败，触发重分配）
-        self.recovery_manager.register_recovery_callback(
-            gpu_id=2, callback=lambda action, *args: False
-        )
+        self.recovery_manager.register_recovery_callback(gpu_id=2, callback=lambda action, *args: False)
 
         for _ in range(4):
             self.recovery_manager.handle_gpu_failure(
@@ -395,9 +391,7 @@ class TestGPUFailureRecovery:
     def test_gpu_marked_failed_after_max_retries(self):
         """超过最大重试次数后，GPU 被标记为失败"""
         # 注册总返回失败的恢复回调
-        self.recovery_manager.register_recovery_callback(
-            gpu_id=1, callback=lambda action, *args: False
-        )
+        self.recovery_manager.register_recovery_callback(gpu_id=1, callback=lambda action, *args: False)
 
         max_retries = self.recovery_manager.max_retry_count + 2
         for _ in range(max_retries):
@@ -421,9 +415,7 @@ class TestGPUFailureRecovery:
 
     def test_reset_failure_history_clears_failed_state(self):
         """重置失败历史后，GPU 不再被标记为失败"""
-        self.recovery_manager.register_recovery_callback(
-            gpu_id=0, callback=lambda action, *args: False
-        )
+        self.recovery_manager.register_recovery_callback(gpu_id=0, callback=lambda action, *args: False)
         for _ in range(5):
             self.recovery_manager.handle_gpu_failure(gpu_id=0, error=RuntimeError("error"))
 
@@ -472,9 +464,9 @@ class TestDynamicRebalancing:
         new_weights = balancer.redistribute_load()
 
         # GPU 0 吞吐量是 GPU 1 的 50%，权重也应约为 1/3
-        assert (
-            new_weights[0] < new_weights[1]
-        ), f"性能下降后 GPU 0 权重 {new_weights[0]:.3f} 应小于 GPU 1 {new_weights[1]:.3f}"
+        assert new_weights[0] < new_weights[1], (
+            f"性能下降后 GPU 0 权重 {new_weights[0]:.3f} 应小于 GPU 1 {new_weights[1]:.3f}"
+        )
 
     def test_record_performance_updates_stats(self):
         """record_performance 后 get_device_load 返回更新后的吞吐量"""
@@ -502,9 +494,9 @@ class TestDynamicRebalancing:
         balancer.record_performance(device_idx=0, throughput=900_000, error_rate=0.0)
         recovered_weights = balancer.redistribute_load()
 
-        assert _weights_sum_to_one(
-            recovered_weights
-        ), f"恢复后权重之和 {sum(recovered_weights.values()):.6f} 不为 1.0"
+        assert _weights_sum_to_one(recovered_weights), (
+            f"恢复后权重之和 {sum(recovered_weights.values()):.6f} 不为 1.0"
+        )
 
     def test_all_loads_returns_all_devices(self):
         """get_all_loads() 返回所有设备的负载信息"""
@@ -826,45 +818,45 @@ class TestVendorBuildOptions:
         from src.gpu.context import VENDOR_BUILD_OPTIONS
 
         nvidia_opts = VENDOR_BUILD_OPTIONS["nvidia"]["options"]
-        assert (
-            "-cl-fast-relaxed-math" not in nvidia_opts
-        ), f"NVIDIA 不应包含 -cl-fast-relaxed-math（精度安全约束），实际: {nvidia_opts}"
+        assert "-cl-fast-relaxed-math" not in nvidia_opts, (
+            f"NVIDIA 不应包含 -cl-fast-relaxed-math（精度安全约束），实际: {nvidia_opts}"
+        )
 
     def test_amd_no_fast_relaxed_math(self):
         """AMD 编译选项不包含 -cl-fast-relaxed-math（精度风险）"""
         from src.gpu.context import VENDOR_BUILD_OPTIONS
 
         amd_opts = VENDOR_BUILD_OPTIONS["amd"]["options"]
-        assert (
-            "-cl-fast-relaxed-math" not in amd_opts
-        ), f"AMD 不应包含 -cl-fast-relaxed-math，实际: {amd_opts}"
+        assert "-cl-fast-relaxed-math" not in amd_opts, (
+            f"AMD 不应包含 -cl-fast-relaxed-math，实际: {amd_opts}"
+        )
 
     def test_intel_no_fast_relaxed_math(self):
         """Intel 编译选项不包含 -cl-fast-relaxed-math（已知精度问题）"""
         from src.gpu.context import VENDOR_BUILD_OPTIONS
 
         intel_opts = VENDOR_BUILD_OPTIONS["intel"]["options"]
-        assert (
-            "-cl-fast-relaxed-math" not in intel_opts
-        ), f"Intel 不应包含 -cl-fast-relaxed-math，实际: {intel_opts}"
+        assert "-cl-fast-relaxed-math" not in intel_opts, (
+            f"Intel 不应包含 -cl-fast-relaxed-math，实际: {intel_opts}"
+        )
 
     def test_amd_uses_cl2(self):
         """AMD 使用 CL2.0 标准"""
         from src.gpu.context import VENDOR_BUILD_OPTIONS
 
         amd_opts = VENDOR_BUILD_OPTIONS["amd"]["options"]
-        assert any(
-            "CL2.0" in o or "cl2" in o.lower() for o in amd_opts
-        ), f"AMD 应使用 CL2.0，实际: {amd_opts}"
+        assert any("CL2.0" in o or "cl2" in o.lower() for o in amd_opts), (
+            f"AMD 应使用 CL2.0，实际: {amd_opts}"
+        )
 
     def test_intel_uses_cl2(self):
         """Intel 使用 CL2.0 标准"""
         from src.gpu.context import VENDOR_BUILD_OPTIONS
 
         intel_opts = VENDOR_BUILD_OPTIONS["intel"]["options"]
-        assert any(
-            "CL2.0" in o or "cl2" in o.lower() for o in intel_opts
-        ), f"Intel 应使用 CL2.0，实际: {intel_opts}"
+        assert any("CL2.0" in o or "cl2" in o.lower() for o in intel_opts), (
+            f"Intel 应使用 CL2.0，实际: {intel_opts}"
+        )
 
     def test_intel_has_workarounds_flag(self):
         """Intel 配置标记 intel_workarounds=True"""

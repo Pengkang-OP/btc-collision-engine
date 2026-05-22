@@ -48,8 +48,7 @@ def _check_perf(speed: float, key: str, label: str) -> None:
             raise AssertionError(f"{label}: {speed:.0f}/s < {ci_min}/s (CI阈值)")
         if speed < local_min:
             warnings.warn(
-                f"CI性能偏低: {label} {speed:.0f}/s < {local_min}/s (本地阈值), "
-                f"可能因CI虚拟化/资源争抢",
+                f"CI性能偏低: {label} {speed:.0f}/s < {local_min}/s (本地阈值), 可能因CI虚拟化/资源争抢",
                 stacklevel=2,
             )
     else:
@@ -96,9 +95,9 @@ class TestPerformanceBenchmarks:
         print(f"   基线: {self.BASELINE_PRIVATE_KEY_GEN} 次/秒")
 
         # 应该达到合理性能
-        assert (
-            speed > self.BASELINE_PRIVATE_KEY_GEN * 0.1
-        ), f"私钥生成速度过低: {speed:.0f} < {self.BASELINE_PRIVATE_KEY_GEN * 0.1}"
+        assert speed > self.BASELINE_PRIVATE_KEY_GEN * 0.1, (
+            f"私钥生成速度过低: {speed:.0f} < {self.BASELINE_PRIVATE_KEY_GEN * 0.1}"
+        )
 
     def test_public_key_derivation_speed(self):
         """测试公钥推导速度"""
@@ -426,9 +425,7 @@ class TestPerformanceComparison:
 
         print("\n[Performance] 去重性能对比:")
         print(f"   禁用去重: {stats_no_dedup.total_checked} 个 ({stats_no_dedup.speed:.0f} 次/秒)")
-        print(
-            f"   启用去重: {stats_with_dedup.total_checked} 个 ({stats_with_dedup.speed:.0f} 次/秒)"
-        )
+        print(f"   启用去重: {stats_with_dedup.total_checked} 个 ({stats_with_dedup.speed:.0f} 次/秒)")
 
         # 去重应该有性能开销，但不应过大
         if stats_no_dedup.speed > 0:

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """完整测试套件验证脚本"""
 
 import subprocess
@@ -9,7 +8,7 @@ import time
 
 def run_test_module(module_name):
     """运行单个测试模块"""
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"运行测试: {module_name}")
     print("=" * 80)
 

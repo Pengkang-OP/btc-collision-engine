@@ -258,9 +258,7 @@ class EnhancedPerformanceMonitor:
         self.start_time = time.perf_counter()
         return self
 
-    def __exit__(
-        self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None
-    ) -> None:
+    def __exit__(self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None) -> None:
         """
         退出上下文时的处理
 
@@ -272,7 +270,8 @@ class EnhancedPerformanceMonitor:
                 return
 
             self.end_time = time.perf_counter()
-            assert self.start_time is not None
+            if self.start_time is None:
+                raise RuntimeError("PerformanceMonitor 未正确进入上下文: start_time 为 None")
             elapsed_ms = (self.end_time - self.start_time) * 1000
 
             success = exc_type is None
@@ -289,9 +288,9 @@ class EnhancedPerformanceMonitor:
                         self.logger.error(
                             f"[Performance] {self.operation}: FAILED after {_ms:.2f}ms - {exc_val}"
                         )
-                except Exception as log_error:  # noqa: F841
+                except Exception as log_error:
                     # 日志失败不应影响业务，静默失败
-                    pass
+                    logger.debug("性能监控日志记录失败: %s", log_error)
 
             # 记录到追踪器（异常安全）
             if self.track:
@@ -312,12 +311,12 @@ class EnhancedPerformanceMonitor:
                             f"[Performance] 慢操作检测: {self.operation} "
                             f"耗时 {elapsed_ms:.2f}ms > {config['slow_threshold_ms']}ms"
                         )
-                except Exception as track_error:  # noqa: F841
+                except Exception as track_error:
                     # 追踪失败不应影响业务，静默失败
-                    pass
-        except (OSError, ValueError):
+                    logger.debug("性能追踪记录失败: %s", track_error)
+        except (OSError, ValueError) as monitor_error:
             # 监控本身失败不应影响业务逻辑
-            pass
+            logger.debug("性能监控执行失败: %s", monitor_error)
 
     def add_metadata(self, key: str, value: Any) -> None:
         """添加元数据"""
@@ -326,16 +325,14 @@ class EnhancedPerformanceMonitor:
     @property
     def elapsed_ms(self) -> float:
         """获取已耗时的毫秒数"""
+        if self.start_time is None:
+            raise RuntimeError("PerformanceMonitor 未正确进入上下文: start_time 为 None")
         if self.end_time is None:
-            assert self.start_time is not None
             return (time.perf_counter() - self.start_time) * 1000
-        assert self.start_time is not None
         return (self.end_time - self.start_time) * 1000
 
 
-def log_performance_summary(
-    logger: logging.Logger, tracker: PerformanceTracker | None = None
-) -> None:
+def log_performance_summary(logger: logging.Logger, tracker: PerformanceTracker | None = None) -> None:
     """
     记录性能统计摘要
 

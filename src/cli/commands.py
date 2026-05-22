@@ -238,10 +238,7 @@ def _cmd_config_check() -> None:
 
             if missing_sections:
                 print(
-                    "[WARN] "
-                    + _t("cli.commands.missing_sections")
-                    + ": "
-                    + ", ".join(missing_sections)
+                    "[WARN] " + _t("cli.commands.missing_sections") + ": " + ", ".join(missing_sections)
                 )
             else:
                 print("[OK] " + _t("cli.commands.sections_complete"))
@@ -254,15 +251,9 @@ def _cmd_config_check() -> None:
             print("   - workers        : " + str(workers))
             print(
                 "   - perf_optimize  : "
-                + (
-                    "enabled"
-                    if collision_cfg.get("use_performance_optimization", True)
-                    else "disabled"
-                )
+                + ("enabled" if collision_cfg.get("use_performance_optimization", True) else "disabled")
             )
-            chk = collision_cfg.get(
-                "checkpoint_interval", engine_cfg.get("checkpoint_interval", 30)
-            )
+            chk = collision_cfg.get("checkpoint_interval", engine_cfg.get("checkpoint_interval", 30))
             print("   - checkpoint_int : " + str(chk) + "s")
 
             gpu_cfg = config.get("gpu", {})
@@ -370,9 +361,7 @@ def _save_address_to_targets_file(address: str, output) -> None:
         os.replace(temp_path, targets_path)
 
         output.print(
-            "   [green][OK] 地址已保存到 targets.txt（共 "
-            + str(len(existing) + 1)
-            + " 条）[/green]"
+            "   [green][OK] 地址已保存到 targets.txt（共 " + str(len(existing) + 1) + " 条）[/green]"
         )
     except OSError as e:
         output.warning("无法写入 targets.txt: " + str(e))
@@ -567,17 +556,14 @@ def _quick_start_select_mode(compact: bool = False) -> tuple[str, str | None, st
 
     if mode in ["range", "brute_force"]:
         while True:
-            start_key = (
-                input("   " + _t("cli.commands.input_start_key") + " (hex): ").strip() or "1"
-            )
+            start_key = input("   " + _t("cli.commands.input_start_key") + " (hex): ").strip() or "1"
             if all(c in "0123456789abcdefABCDEF" for c in start_key):
                 break
             output.error("请输入有效的十六进制字符串")
         if mode == "range":
             while True:
                 end_key = (
-                    input("   " + _t("cli.commands.input_end_key") + " (hex): ").strip()
-                    or "FFFFFFFF"
+                    input("   " + _t("cli.commands.input_end_key") + " (hex): ").strip() or "FFFFFFFF"
                 )
                 if all(c in "0123456789abcdefABCDEF" for c in end_key):
                     break
@@ -825,9 +811,7 @@ def _quick_run_scan_target(
     if address_count == 0:
         output.warning(f"{target_file} 中没有有效的目标地址")
         output.print("\n[TIP] 请先在文件中添加目标地址，或使用以下命令:")
-        output.print(
-            "  python key_collision_cli.py " "-t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random\n"
-        )
+        output.print("  python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random\n")
         return None
     return address_count, preview_addresses
 
@@ -842,9 +826,7 @@ def _quick_run_config_summary(target_file: str) -> dict:
         "断点续传": "启用" if QUICK_RUN_DEFAULTS["checkpoint"] else "禁用",
         "去重过滤": "启用" if QUICK_RUN_DEFAULTS["dedup"] else "禁用",
         "运行时长": (
-            "不限制"
-            if QUICK_RUN_DEFAULTS["duration"] == 0
-            else f"{QUICK_RUN_DEFAULTS['duration']}分钟"
+            "不限制" if QUICK_RUN_DEFAULTS["duration"] == 0 else f"{QUICK_RUN_DEFAULTS['duration']}分钟"
         ),
         "加速模式": "CPU 模式",
     }
@@ -875,17 +857,14 @@ def _cmd_quick_run(executor: Callable[[], None] | None = None) -> None:
                     output.print(f"  {i}. {display_addr}")
                 if address_count > PREVIEW_CONFIG["max_preview_addresses"]:
                     output.print(
-                        f"  ... 及其他 "
-                        f"{address_count - PREVIEW_CONFIG['max_preview_addresses']} 个地址"
+                        f"  ... 及其他 {address_count - PREVIEW_CONFIG['max_preview_addresses']} 个地址"
                     )
                 output.print("")
             cmd_parts: list[str] = ["python", "key_collision_cli.py", "-f", target_file]
         else:
             output.warning(f"未找到 {target_file}，请使用 -t 或 -f 指定目标")
             output.print("\n[TIP] 快速模式示例:")
-            output.print(
-                "  python key_collision_cli.py " "-t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random"
-            )
+            output.print("  python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random")
             output.print("  python key_collision_cli.py -f targets.txt --use-gpu\n")
             return
         cmd_parts.extend(["-m", str(QUICK_RUN_DEFAULTS["mode"])])

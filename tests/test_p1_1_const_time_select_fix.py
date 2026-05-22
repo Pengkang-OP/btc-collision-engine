@@ -119,9 +119,7 @@ class TestP1_1ConstTimeSelectFix:
         for k in keys:
             r_const = self.ec.scalar_multiply_const_time(k, self.G)
             r_reg = self.ec.scalar_multiply(k, self.G)
-            assert r_const == r_reg, (
-                f"k={k} 时结果不一致！\n" f"  const_time={r_const}\n" f"  regular={r_reg}"
-            )
+            assert r_const == r_reg, f"k={k} 时结果不一致！\n  const_time={r_const}\n  regular={r_reg}"
 
     # ================================================================
     # 验证 E: 已知测试向量

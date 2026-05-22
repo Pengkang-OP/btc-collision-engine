@@ -37,9 +37,9 @@ def test_memory_leak_detection():
         leak_result = engine._check_memory_leaks()
         # _check_memory_leaks 设计返回 None（仅执行检查，不返回结果）
         # 达到此处即证明方法未抛异常
-        assert (
-            leak_result is None
-        ), f"_check_memory_leaks 预期返回 None，实际: {type(leak_result).__name__}"
+        assert leak_result is None, (
+            f"_check_memory_leaks 预期返回 None，实际: {type(leak_result).__name__}"
+        )
 
     finally:
         # 清理资源

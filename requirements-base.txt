@@ -18,7 +18,7 @@ cffi>=1.15.0                 # 移除上限约束，兼容 Python 3.14 下 cffi 
 coincurve>=18.0.0           # libsecp256k1 绑定（强烈推荐，性能最佳）
 cryptography>=43.0.0,<46.0.0  # C-03: 放宽版本约束，兼容 44.x/45.x
 PyNaCl>=1.5.0,<2.0.0        # libsodium 绑定，防侧信道攻击
-gmpy2>=2.1.0,<4.0.0         # C-07: GMP 大整数运算，支持 3.x 版本
+gmpy2>=2.1.0,<5.0.0         # C-07: GMP 大整数运算，放宽上限与 pyproject.toml 统一
 pycryptodome>=3.19.0,<5.0.0 # C-08: SIMD 哈希优化（AES-NI），预留 4.x 兼容性
 
 # 系统工具

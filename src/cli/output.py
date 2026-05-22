@@ -84,9 +84,7 @@ class CLIOutput:
         return cls._instance
 
     @classmethod
-    def init(
-        cls, no_color: bool = False, quiet: bool = False, compact: bool = False
-    ) -> "CLIOutput":
+    def init(cls, no_color: bool = False, quiet: bool = False, compact: bool = False) -> "CLIOutput":
         """初始化单例（应在程序入口处调用一次）。
 
         线程安全：持锁替换实例，调用方应确保在单线程初始化阶段调用。

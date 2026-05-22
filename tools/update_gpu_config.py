@@ -3,10 +3,10 @@ import os
 import sys
 
 _config_dir = os.path.dirname(os.path.abspath(__file__))
-_config_path = os.path.join(_config_dir, '..', 'config.intel_arc.json')
+_config_path = os.path.join(_config_dir, "..", "config.intel_arc.json")
 
 try:
-    with open(_config_path, encoding='utf-8') as f:
+    with open(_config_path, encoding="utf-8") as f:
         config = json.load(f)
 except (FileNotFoundError, json.JSONDecodeError) as e:
     print(f"❌ 无法加载配置: {e}")
@@ -18,11 +18,11 @@ print(f"  gpu.max_memory_mb: {config['gpu']['max_memory_mb']} MB")
 print()
 
 # 更新配置
-config['collision']['batch_size'] = 1000000
-config['gpu']['max_memory_mb'] = 1024
-config['gpu']['memory_limit_percent'] = 70
+config["collision"]["batch_size"] = 1000000
+config["gpu"]["max_memory_mb"] = 1024
+config["gpu"]["memory_limit_percent"] = 70
 
-with open(_config_path, 'w', encoding='utf-8') as f:
+with open(_config_path, "w", encoding="utf-8") as f:
     json.dump(config, f, indent=4, ensure_ascii=False)
 
 print("更新后配置:")

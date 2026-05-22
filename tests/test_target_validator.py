@@ -236,9 +236,7 @@ class TestSummary:
         results = {
             "addr1": ValidationResult(address="addr1", valid=True, validated=True),
             "addr2": ValidationResult(address="addr2", valid=False, validated=True, error="bad"),
-            "addr3": ValidationResult(
-                address="addr3", valid=False, validated=False, error="aborted"
-            ),
+            "addr3": ValidationResult(address="addr3", valid=False, validated=False, error="aborted"),
         }
         coverage = validator.get_validation_coverage(results)
         assert coverage["total"] == 3

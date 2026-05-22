@@ -1,21 +1,18 @@
 """验证P0/P1/P2修复的测试脚本"""
 
-import sys
-import time
 import logging
+import sys
 from pathlib import Path
 
 # 添加项目根目录到路径
 project_root = Path(__file__).parent.parent  # 修复: 应该是parent.parent,因为tests在根目录下
 sys.path.insert(0, str(project_root))
 
-from src.collision.gpu.engine import GPUKernel, GPUCollisionEngine
-from src.monitoring.monitoring_system import MonitoringSystem, ReportGenerator
+from src.collision.gpu.engine import GPUCollisionEngine
+from src.monitoring.monitoring_system import ReportGenerator
 
 # 配置日志
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("VerificationTest")
 
 
@@ -28,7 +25,8 @@ def test_p0_gpu_initialization_error_handling():
     try:
         # 尝试创建GPU引擎(如果没有GPU会失败)
         engine = GPUCollisionEngine(
-            targets={"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}, device_index=999  # 不存在的设备
+            targets={"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"},
+            device_index=999,  # 不存在的设备
         )
         logger.warning("⚠️ GPU初始化成功(存在GPU设备)")
     except RuntimeError as e:
@@ -36,7 +34,7 @@ def test_p0_gpu_initialization_error_handling():
         if "建议操作" in error_msg or "备选方案" in error_msg:
             logger.info("✅ P0-1修复验证通过: 错误信息包含回退建议")
         else:
-            logger.error(f"❌ P0-1修复验证失败: 错误信息不包含回退建议")
+            logger.error("❌ P0-1修复验证失败: 错误信息不包含回退建议")
             logger.error(f"   错误信息: {error_msg}")
     except Exception as e:
         logger.error(f"❌ P0-1测试异常: {type(e).__name__}: {e}")
@@ -80,11 +78,12 @@ def test_p1_wif_import():
     logger.info("=" * 60)
 
     import inspect
+
     from src.collision.gpu import engine as gpu_collision_engine
 
     # 检查文件顶部是否有WIF导入
     source_file = inspect.getfile(gpu_collision_engine)
-    with open(source_file, "r", encoding="utf-8") as f:
+    with open(source_file, encoding="utf-8") as f:
         content = f.read()
 
     # 统计WIF导入次数
@@ -113,10 +112,11 @@ def test_p2_monitoring_io_optimization():
     logger.info("=" * 60)
 
     import inspect
+
     from src.monitoring import monitoring_system
 
     source_file = inspect.getfile(monitoring_system)
-    with open(source_file, "r", encoding="utf-8") as f:
+    with open(source_file, encoding="utf-8") as f:
         content = f.read()
 
     # 检查是否有history_save_counter

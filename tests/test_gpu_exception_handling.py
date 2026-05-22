@@ -83,12 +83,9 @@ class TestGPURuntimeErrors:
                 patch("src.collision.gpu_collision_engine.GPUContext", return_value=mock_context),
                 patch("src.collision.gpu_collision_engine.GPUKernel", return_value=mock_kernel),
                 patch("src.gpu.device_manager.AsyncGPUExecutor") as mock_async_executor,
-                patch(
-                    "src.collision.gpu_collision_engine.AsyncGPUExecutor"
-                ) as mock_async_executor_shim,
+                patch("src.collision.gpu_collision_engine.AsyncGPUExecutor") as mock_async_executor_shim,
                 patch("src.collision.gpu_collision_engine.GPUProfileLoader") as mock_profile_loader,
             ):
-
                 mock_profile_loader.return_value.get_profile.return_value = None
 
                 # 异步执行器第5次调用时抛出异常（匹配原 mock_kernel.run_batch 的逻辑）
@@ -149,7 +146,6 @@ class TestGPURuntimeErrors:
             patch("src.gpu.device_manager.GPUProfileLoader") as mock_profile_loader,
             patch("pyopencl.Program") as mock_program,
         ):
-
             mock_profile_loader.return_value.get_profile.return_value = None
 
             # 模拟编译失败
@@ -336,7 +332,6 @@ class TestEdgeCases:
             patch("src.collision.gpu_collision_engine.GPUProfileLoader") as mock_profile_loader,
             patch("src.gpu.device.identify_vendor", return_value="nvidia"),
         ):
-
             mock_profile_loader.return_value.get_profile.return_value = None
 
             mock_async_instance = Mock()
@@ -387,7 +382,6 @@ class TestEdgeCases:
                 patch("src.collision.gpu_collision_engine.AsyncGPUExecutor") as mock_async_executor,
                 patch("src.collision.gpu_collision_engine.GPUProfileLoader") as mock_profile_loader,
             ):
-
                 mock_profile_loader.return_value.get_profile.return_value = None
 
                 mock_async_instance = Mock()

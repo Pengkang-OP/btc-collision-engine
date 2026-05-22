@@ -22,7 +22,9 @@ def monitor_performance(duration_seconds=60):
     print("采样间隔: 5秒")
     print()
     print("-" * 80)
-    print(f"{'时间':<8} | {'当前吞吐量':<15} | {'平均吞吐量':<15} | {'峰值':<15} | {'批次':<8} | {'错误率':<8}")
+    print(
+        f"{'时间':<8} | {'当前吞吐量':<15} | {'平均吞吐量':<15} | {'峰值':<15} | {'批次':<8} | {'错误率':<8}"
+    )
     print("-" * 80)
 
     # 读取日志文件
@@ -37,11 +39,11 @@ def monitor_performance(duration_seconds=60):
 
         try:
             if not log_file.exists():
-                print(f"{sample_count*5}s | 等待日志...")
+                print(f"{sample_count * 5}s | 等待日志...")
                 continue
 
             # 读取最新日志
-            with open(log_file, encoding='utf-8') as f:
+            with open(log_file, encoding="utf-8") as f:
                 lines = f.readlines()
 
             # 获取最后20行（预留用于后续日志摘要输出）
@@ -58,8 +60,9 @@ def monitor_performance(duration_seconds=60):
                 if "GPU性能退化" in line:
                     # 解析: 当前=47,563 keys/s, 峰值=2,273,762 keys/s
                     import re
-                    current_match = re.search(r'当前=([0-9,]+) keys/s', line)
-                    peak_match = re.search(r'峰值=([0-9,]+) keys/s', line)
+
+                    current_match = re.search(r"当前=([0-9,]+) keys/s", line)
+                    peak_match = re.search(r"峰值=([0-9,]+) keys/s", line)
 
                     if current_match:
                         current_throughput = current_match.group(1)
@@ -68,10 +71,12 @@ def monitor_performance(duration_seconds=60):
                     break
 
             # 显示数据
-            print(f"{sample_count*5}s | {current_throughput:>12} | {avg_throughput:>12} | {peak_throughput:>12} | {total_batches:>6} | {error_rate:>6}")
+            print(
+                f"{sample_count * 5}s | {current_throughput:>12} | {avg_throughput:>12} | {peak_throughput:>12} | {total_batches:>6} | {error_rate:>6}"
+            )
 
         except Exception as e:
-            print(f"{sample_count*5}s | 读取错误: {e}")
+            print(f"{sample_count * 5}s | 读取错误: {e}")
 
     print("-" * 80)
     print()
@@ -83,11 +88,11 @@ def monitor_performance(duration_seconds=60):
     print()
 
     try:
-        with open(log_file, encoding='utf-8') as f:
+        with open(log_file, encoding="utf-8") as f:
             lines = f.readlines()
 
         last_lines = lines[-50:] if len(lines) > 50 else lines
-        log_text = ''.join(last_lines)
+        log_text = "".join(last_lines)
 
         # 检查关键指标
         checks = {
