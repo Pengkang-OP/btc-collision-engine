@@ -85,7 +85,7 @@ sudo chown -R btc-engine:btc-engine /opt/btc-collision-engine
 sudo chmod 750 /opt/btc-collision-engine/{logs,data_logs,monitoring_data}
 ```
 
-### 2. 部署应用
+## 2. 部署应用
 
 ```bash
 # 复制文件
@@ -96,7 +96,7 @@ sudo rsync -avz --exclude='venv' --exclude='.git' \
 sudo chown -R btc-engine:btc-engine /opt/btc-collision-engine
 ```
 
-### 3. 创建虚拟环境
+## 3. 创建虚拟环境
 
 ```bash
 # 切换到btc-engine用户
@@ -115,7 +115,7 @@ python3 -m venv venv
 exit
 ```
 
-### 4. 安装systemd服务
+## 4. 安装systemd服务
 
 ```bash
 # 复制服务文件
@@ -128,7 +128,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable btc-collision-engine
 ```
 
-### 5. 配置生产环境
+## 5. 配置生产环境
 
 ```bash
 # 创建生产配置
@@ -143,7 +143,7 @@ sudo chmod 600 /opt/btc-collision-engine/config.production.json
 sudo nano /opt/btc-collision-engine/config.production.json
 ```
 
-### 6. 启动服务
+## 6. 启动服务
 
 ```bash
 # 启动服务
@@ -185,7 +185,7 @@ sudo systemctl enable btc-collision-engine
 sudo systemctl disable btc-collision-engine
 ```
 
-### 查看日志
+## 查看日志
 
 ```bash
 # 实时日志
@@ -204,7 +204,7 @@ sudo journalctl -u btc-collision-engine --since "2024-01-01 00:00:00" --until "2
 sudo journalctl -u btc-collision-engine -p err
 ```
 
-### 性能监控
+## 性能监控
 
 ```bash
 # 查看CPU使用率
@@ -250,7 +250,7 @@ sudo journalctl -u btc-collision-engine -o json > btc-engine.json
 sudo journalctl -u btc-collision-engine -p err > btc-engine-errors.log
 ```
 
-### 清理日志
+## 清理日志
 
 ```bash
 # 清理7天前的日志
@@ -292,7 +292,7 @@ sudo systemctl daemon-reload
 sudo systemctl restart btc-collision-engine
 ```
 
-### GPU支持
+## GPU支持
 
 如果使用GPU，需要添加NVIDIA支持：
 
@@ -307,7 +307,7 @@ After=network.target nvidia-persistenced.service
 Wants=nvidia-persistenced.service
 ```
 
-### I/O优化
+## I/O优化
 
 ```ini
 [Service]
@@ -342,7 +342,7 @@ sudo -u btc-engine /opt/btc-collision-engine/venv/bin/python \
     /opt/btc-collision-engine/key_collision_cli.py --help
 ```
 
-### 性能低下
+## 性能低下
 
 ```bash
 # 检查资源限制
@@ -358,7 +358,7 @@ nvidia-smi
 cat /opt/btc-collision-engine/data_logs/current_data.json | jq '.performance'
 ```
 
-### 内存泄漏
+## 内存泄漏
 
 ```bash
 # 监控内存使用
@@ -372,7 +372,7 @@ sudo systemctl restart btc-collision-engine
 # MemoryMax=16G
 ```
 
-### 断点恢复
+## 断点恢复
 
 ```bash
 # 检查断点文件
@@ -409,7 +409,7 @@ sudo chmod 644 /opt/btc-collision-engine/*.py
 sudo chmod 755 /opt/btc-collision-engine/src/
 ```
 
-### systemd安全选项
+## systemd安全选项
 
 服务文件已包含以下安全加固：
 
@@ -433,7 +433,7 @@ ReadWritePaths=/opt/btc-collision-engine/logs \
 PrivateTmp=true
 ```
 
-### 网络隔离
+## 网络隔离
 
 如果不需要网络访问，可以添加：
 
@@ -465,7 +465,7 @@ sudo tar czf /backup/btc-engine-$(date +%Y%m%d).tar.gz \
 sudo chmod 600 /backup/btc-engine-*.tar.gz
 ```
 
-### 恢复数据
+## 恢复数据
 
 ```bash
 # 停止服务
@@ -559,7 +559,7 @@ sudo systemctl edit btc-collision-engine
 # 添加: --file /opt/btc-collision-engine/targets.txt
 ```
 
-### Q: 如何升级应用？
+## Q: 如何升级应用？
 
 A:
 
@@ -584,7 +584,7 @@ sudo systemctl start btc-collision-engine
 sudo systemctl status btc-collision-engine
 ```
 
-### Q: 服务频繁重启怎么办？
+## Q: 服务频繁重启怎么办？
 
 A: 检查服务文件中的重启限制：
 

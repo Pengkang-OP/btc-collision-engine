@@ -86,7 +86,7 @@ python key_collision_cli.py --quick-start
 
 ---
 
-### 方式2: 快速模式（推荐熟练用户）
+## 方式2: 快速模式（推荐熟练用户）
 
 快速模式使用默认配置直接启动，跳过向导。
 
@@ -172,7 +172,7 @@ start.bat qr
 python key_collision_cli.py --quick-run
 ```
 
-### 工作流程
+## 工作流程
 
 1. **检测目标文件**
    - 自动查找`targets.txt`
@@ -236,9 +236,9 @@ start.bat qs
 python key_collision_cli.py --quick-start
 ```
 
-### 步骤详解
+## 步骤详解
 
-#### 步骤1: 选择目标地址来源
+### 步骤1: 选择目标地址来源
 
 ```bash
 【步骤 1/4】选择目标地址来源
@@ -340,7 +340,7 @@ python key_collision_cli.py --quick-start --compact
 python key_collision_cli.py --quick-start --compact
 ```
 
-### 对比
+## 对比
 
 **正常模式**:
 
@@ -389,14 +389,14 @@ echo "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy" >> targets.txt
 echo "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" >> targets.txt
 ```
 
-### 2. 指定运行时长
+## 2. 指定运行时长
 
 ```bash
 # 运行1小时（3600秒）
 python key_collision_cli.py --quick-run --duration 3600
 ```
 
-### 3. 禁用断点续传
+## 3. 禁用断点续传
 
 ```bash
 python key_collision_cli.py --quick-run --no-checkpoint
@@ -421,7 +421,7 @@ python key_collision_cli.py -t targets.txt -m range --start 1 --end 1000000
 python key_collision_cli.py -t targets.txt -m brute --start 1
 ```
 
-### 6. GPU加速
+## 6. GPU加速
 
 ```bash
 # 使用GPU
@@ -431,7 +431,7 @@ python key_collision_cli.py --quick-run --engine gpu
 python key_collision_cli.py --quick-run --engine multi-gpu
 ```
 
-### 7. 进度显示
+## 7. 进度显示
 
 运行时会显示实时进度：
 
@@ -505,7 +505,7 @@ cat config.example.json
 bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh
 ```
 
-### Q2: 支持哪些地址格式？
+## Q2: 支持哪些地址格式？
 
 **A**: 支持3种比特币地址格式：
 
@@ -585,7 +585,7 @@ pip install -r requirements.txt
 python key_collision_cli.py --help
 ```
 
-### 问题2: targets.txt文件不存在
+## 问题2: targets.txt文件不存在
 
 **症状**: 快速模式提示找不到文件
 
@@ -599,7 +599,7 @@ echo "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa" > targets.txt
 start.bat qs
 ```
 
-### 问题3: GPU不可用
+## 问题3: GPU不可用
 
 **症状**: GPU引擎启动失败
 
@@ -616,7 +616,7 @@ start.bat qr
 pip install -r requirements-gpu.txt
 ```
 
-### 问题4: 进度显示异常
+## 问题4: 进度显示异常
 
 **症状**: 进度条不更新或显示错误
 
@@ -633,7 +633,7 @@ python key_collision_cli.py --quick-run --no-color
 pip install --upgrade rich
 ```
 
-### 问题5: 国际化不工作
+## 问题5: 国际化不工作
 
 **症状**: 显示英文而非中文
 
@@ -694,7 +694,7 @@ start.bat hc
 start.bat cc
 ```
 
-### 文件位置
+## 文件位置
 
 ```bash
 项目根目录/
