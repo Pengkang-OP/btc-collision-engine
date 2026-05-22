@@ -15,16 +15,16 @@ import sys
 from typing import Any, cast
 
 # 统一回调类型别名
-from src.collision.types import MatchCallback, ProgressCallback
+from ..collision.types import MatchCallback, ProgressCallback
 
 logger = logging.getLogger(__name__)
 
-from src.cli.constants import SEPARATOR_EQUAL  # noqa: E402
-from src.collision import KeyCollisionEngine  # noqa: E402
-from src.i18n import _t  # noqa: E402
+from .constants import SEPARATOR_EQUAL  # noqa: E402
+from ..collision import KeyCollisionEngine  # noqa: E402
+from ..i18n import _t  # noqa: E402
 
 # 密钥审计模块
-from src.utils.key_audit import log_key_display  # noqa: E402
+from ..utils.key_audit import log_key_display  # noqa: E402
 
 
 class EngineBuildError(Exception):

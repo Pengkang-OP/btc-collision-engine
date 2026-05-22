@@ -312,7 +312,14 @@ class DeduplicationFilter:
 # KeyCollisionEngine 类 - 对撞核心引擎
 # =============================================================================
 class KeyCollisionEngine:
-    """比特币私钥对撞引擎"""
+    """比特币私钥对撞引擎
+
+    .. deprecated:: v5.0.0
+        此旧版引擎已被 src.collision.key_collision_engine.KeyCollisionEngine 替代。
+        旧版引擎不使用 SecureKeyManager 管理私钥生命周期，
+        建议迁移到 src.collision.KeyCollisionEngine。
+        key_collision.py 中的旧版保留仅为向后兼容，v6.0 将移除。
+    """
 
     def __init__(self, targets: Set[str],
                  on_progress: Optional[Callable] = None,

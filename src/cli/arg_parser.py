@@ -13,7 +13,7 @@ from ._path_setup import ensure_project_root
 
 ensure_project_root()
 
-from src.i18n import _t  # noqa: E402
+from ..i18n import _t  # noqa: E402
 
 # 从包版本读取版本号
 try:
