@@ -3,12 +3,11 @@
 定义CPU和GPU碰撞引擎的统一接口。
 
 v4.2.2: 新增 _safe_invoke_match_callback 共享方法，消除 CPU/GPU 引擎中的重复代码。
+v5.0.0: 移除 SIGALRM 信号超时方案（线程不安全），统一使用线程超时。
 """
 
 import hashlib
 import logging
-import os
-import signal
 import threading
 from abc import ABC, abstractmethod
 from typing import Any
@@ -108,13 +107,13 @@ class BaseCollisionEngine(ABC):
     # ========== v4.2.2: 共享匹配回调方法 ==========
 
     def _safe_invoke_match_callback(self, private_key: bytes, address: str, wif: str) -> bool:
-        """安全调用匹配回调函数（CPU/GPU 引擎共享）
+        """安全调用匹配回调函数（CPU/GPU 引擎共享，跨平台）
 
         功能:
         - 超时控制（防止回调函数卡死）
         - 异常隔离（回调异常不影响引擎运行）
         - 审计日志（记录回调执行情况）
-        - Q7修复: Unix-like 环境下检测 SIGALRM 可用性
+        - v5.0.0: 统一使用线程超时（移除线程不安全的 SIGALRM 方案）
 
         参数:
             private_key: 私钥字节（32字节）
@@ -136,34 +135,29 @@ class BaseCollisionEngine(ABC):
             logger.debug(f"调用匹配回调: address={address}, key_hash={key_hash}")
 
         try:
-            if os.name == "nt":
-                # Windows不支持SIGALRM，使用线程超时
-                return self._invoke_match_callback_windows(on_match, private_key, address, wif)
-            else:
-                # Unix系统使用SIGALRM超时 (含Q7修复)
-                return self._invoke_match_callback_unix(on_match, private_key, address, wif)
+            return self._invoke_match_callback_with_timeout(on_match, private_key, address, wif)
         except Exception as e:
             logger.error(f"匹配回调调用失败: {e}")
             return False
 
-    def _invoke_match_callback_windows(
+    def _invoke_match_callback_with_timeout(
         self,
         on_match,
         private_key: bytes,
         address: str,
         wif: str,
     ) -> bool:
-        """Windows: 使用线程超时+取消事件调用匹配回调
+        """使用线程超时+取消事件调用匹配回调（跨平台，替代 SIGALRM）
 
         v4.2.2 H7修复: 增加 threading.Event 取消机制，
         join 超时后通知子线程退出，避免资源泄漏。
+        v5.0.0: 替代 SIGALRM 方案（线程不安全），统一跨平台行为。
         """
         result: list[Any | None] = [None]
         exception: list[BaseException | None] = [None]
         cancel_event = threading.Event()
 
         def target() -> None:
-            # v4.2.2 H7: 检查取消事件，允许主线程提前终止
             if cancel_event.is_set():
                 return
             try:
@@ -176,7 +170,6 @@ class BaseCollisionEngine(ABC):
         callback_thread.join(timeout=self._match_callback_timeout)
 
         if callback_thread.is_alive():
-            # v4.2.2 H7: 通知子线程取消，避免资源泄漏
             cancel_event.set()
             logger.critical(f"匹配回调执行超时 ({self._match_callback_timeout}秒)，已通知取消")
             return False
@@ -184,45 +177,5 @@ class BaseCollisionEngine(ABC):
         if exception[0]:
             logger.error(f"匹配回调异常: {exception[0]}")
             return False
-
-        return True
-
-    def _invoke_match_callback_unix(
-        self,
-        on_match,
-        private_key: bytes,
-        address: str,
-        wif: str,
-    ) -> bool:
-        """Unix: 使用SIGALRM超时调用匹配回调 (Q7修复: 兼容WSL等无SIGALRM环境)"""
-        try:
-            _sigalrm = signal.SIGALRM  # type: ignore[attr-defined]  # Unix-only API
-        except AttributeError:
-            # Q7修复: 信号 API 不可用，回退到无超时模式
-            logger.warning("SIGALRM 不可用，匹配回调将无超时保护")
-            try:
-                on_match(private_key, address, wif)
-            except Exception as e:
-                logger.error(f"匹配回调异常: {e}", exc_info=True)
-                return False
-            return True
-
-        def timeout_handler(signum: int, frame: Any) -> None:
-            raise TimeoutError(f"匹配回调执行超时 ({self._match_callback_timeout}秒)")
-
-        old_handler = signal.signal(_sigalrm, timeout_handler)  # noqa: E501
-        _alarm = signal.alarm  # type: ignore[attr-defined]  # Unix-only API
-        _alarm(int(self._match_callback_timeout))
-        try:
-            on_match(private_key, address, wif)
-        except TimeoutError as e:
-            logger.critical(str(e))
-            return False
-        except Exception as e:
-            logger.error(f"匹配回调异常: {e}", exc_info=True)
-            return False
-        finally:
-            _alarm(0)  # noqa: E501
-            signal.signal(_sigalrm, old_handler)
 
         return True
