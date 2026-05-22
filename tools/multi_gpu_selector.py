@@ -216,7 +216,7 @@ def print_summary(devices, recommended, recommendation_text):
         print("    python tools/multi_gpu_selector.py --generate-config")
         print("")
         print("  方式3: 命令行参数")
-        print(f"    python key_collision.py --gpu-device {recommended['global_index']}")
+        print(f"    python key_collision_cli.py --gpu-device {recommended['global_index']}")
 
 
 def main():
@@ -256,7 +256,7 @@ def main():
         print("\n📝 生成配置文件...")
         config_path = generate_config(recommended, devices, args.output)
         print(f"✅ 配置文件已生成: {config_path}")
-        print(f"   使用方式: python key_collision.py --config {config_path}")
+        print(f"   使用方式: python key_collision_cli.py --config {config_path}")
 
 
 if __name__ == "__main__":

@@ -120,6 +120,18 @@ class GPUAutoConfigurator:
         "compiler_flags": "",  # 不使用优化标志(加密运算不适用)
     }
 
+    # Apple Silicon GPU配置
+    # Apple M1/M2/M3 统一内存架构，支持 OpenCL
+    APPLE_CONFIG = {
+        "batch_size": 65536,  # 64K - 统一内存需适度控制
+        "work_group_size": 256,  # Apple GPU 工作组限制较小
+        "memory_usage_ratio": 0.5,  # 保守值（统一内存与系统共享）
+        "enable_async": True,  # Apple OpenCL 支持异步
+        "use_fast_math": True,  # Apple GPU 快速数学稳定
+        "use_uint32_workaround": False,
+        "compiler_flags": "",
+    }
+
     # 未知GPU保守配置
     UNKNOWN_CONFIG = {
         "batch_size": 32768,
@@ -162,6 +174,8 @@ class GPUAutoConfigurator:
             config = self.get_amd_config(device)
         elif "intel" in vendor_lower:
             config = self.get_intel_config(device)
+        elif "apple" in vendor_lower:
+            config = self.get_apple_config(device)
         else:
             config = self.get_unknown_config(device)
 
@@ -286,6 +300,35 @@ class GPUAutoConfigurator:
 
         return config
 
+    def get_apple_config(self, device: dict[str, Any]) -> dict[str, Any]:
+        """生成Apple Silicon GPU配置
+
+        Apple M1/M2/M3 特点:
+        - 统一内存架构（UMA），GPU与系统共享内存
+        - OpenCL 支持完整，但工作组大小受限
+        - 适合中等批次处理
+        - 不需要 uint32 workaround
+        """
+        config = self.APPLE_CONFIG.copy()
+
+        memory_gb = _get_memory_gb(device)
+        if memory_gb >= 16:
+            # M1 Max/Ultra, M2 Max/Ultra, M3 Max
+            config["batch_size"] = 131072  # 128K
+            config["memory_usage_ratio"] = 0.6
+        elif memory_gb >= 8:
+            # M1 Pro, M2 Pro, M3 Pro 等
+            config["batch_size"] = 65536  # 64K
+            config["memory_usage_ratio"] = 0.5
+        else:
+            # M1, M2, M3 基础版（8GB）
+            config["batch_size"] = 32768  # 32K
+            config["memory_usage_ratio"] = 0.4
+
+        logger.info(f"[Apple Silicon] 配置生成: batch_size={config['batch_size']:,}, "
+                    f"memory_ratio={config['memory_usage_ratio']}, mem={memory_gb}GB")
+        return config
+
     def get_unknown_config(self, device: dict[str, Any]) -> dict[str, Any]:
         """生成未知GPU的保守配置
 
@@ -376,7 +419,7 @@ class GPUAutoConfigurator:
         batch_size = config.get("batch_size", 0)
         if batch_size < 1024:
             warnings.append(f"批次大小过小({batch_size}),性能可能较差")
-        elif batch_size > 1048576:
+        elif batch_size > 16777216:
             warnings.append(f"批次大小过大({batch_size}),可能导致显存不足")
 
         # 检查工作組大小

@@ -1,5 +1,61 @@
 # CHANGELOG
 
+## v5.0.0 (2026-05-22)
+
+### 重大变更
+
+- **移除 `_LegacyTargetResolver` 回退路径** (`key_collision.py`)
+  - `key_collision.py` 现在要求 `src/` 模块必须可用
+  - 删除约 113 行回退代码，解决两套代码独立演进导致的功能不一致问题
+
+- **移除 `CollisionCLI` 旧版 CLI** (`key_collision.py`)
+  - 删除约 580 行的旧版交互式 CLI 界面
+  - 删除 `ColorPrinter` 依赖导入
+  - 删除 `if __name__ == "__main__":` 入口
+  - `key_collision.py` 保留为纯向后兼容模块，导出引擎核心类
+  - 请使用 `key_collision_cli.py` 或 `start_menu.py` 启动
+
+- **移除 `EnhancedMonitoringSystem` 弃用 API** (`src/monitoring/enhanced_monitoring.py`)
+  - 删除 `collection_interval` 和 `enable_monitoring_data` 旧参数
+  - 所有配置统一通过 `config=MonitorConfig(...)` 管理
+
+- **移除已弃用 GPU 常量**
+  - `random_search.py`: 删除 `ASYNC_KEY_GEN_BASE_TIMEOUT` / `PER_KEY_TIME` / `SAFETY_FACTOR`
+  - `kernel_impl.py`: 删除 `KEYS_BUFFER_SIZE_FACTOR`
+
+### 审计修复
+
+- **CODE-2**: 统一异常日志级别 — 修复 6 处日志级别不一致
+- **CODE-3**: 补充类型注解 — 7 处关键函数/方法添加完整注解
+- **COMP-4**: 新增 Apple Silicon GPU 支持 (`auto_config.py`)
+- **PARAM-1**: 修复 batch_size 边界值不一致（`1048576`→`16777216`）
+- **PARAM-2**: 统一 `memory_usage_ratio` 默认值（`config_manager`/`advanced_features`）
+
+### 测试改进
+
+- 更新 `test_enhanced_monitoring.py` 中弃用 API 测试为验证旧 API 被拒绝
+- 所有 72 项相关测试全部通过
+
+### CI/CD
+
+- 新增 Dependabot 自动依赖更新配置
+- 新增 PR 模板
+- Docker 构建升级为多架构（`linux/amd64` + `linux/arm64`）
+- Dockerfile 和 Dockerfile.amd 添加 `BUILDPLATFORM`/`TARGETPLATFORM` 参数
+- `release.yml` 添加 QEMU + Buildx 多架构构建步骤
+
+### 清理
+
+- 删除 `tests/archive/` 目录（已归档的旧测试文件）
+- 更新 `tools/build_release.py` 版本号到 5.0.0
+- 更新 `tools/multi_gpu_selector.py` 命令行示例到 `key_collision_cli.py`
+- 更新 `docs/requirements.md` 和 `docs/developer-docs/requirements.md` 版本和入口引用
+- 更新 `README.md` 版本徽章到 5.0.0
+
+### 测试
+
+- 更新 `test_cli.py:test_key_collision_has_main_function` — 验证 `key_collision.py` **不**包含 `__main__`
+
 ## v4.5.1 (2026-05-21)
 
 ### 全面审核修复

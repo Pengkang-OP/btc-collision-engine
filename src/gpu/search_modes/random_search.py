@@ -52,10 +52,7 @@ SEED_MIN_QUEUE_SIZE = 5  # 降低阈值，更早触发批量生成
 
 # CPU过载保护参数
 
-# 已弃用常量（历史兼容保留，PRNG模式下不再需要）
-ASYNC_KEY_GEN_BASE_TIMEOUT = 5.0
-ASYNC_KEY_GEN_PER_KEY_TIME = 0.00001
-ASYNC_KEY_GEN_SAFETY_FACTOR = 2.0
+# v5.0.0: 移除已弃用的 ASYNC_KEY_GEN_* 常量（PRNG模式下不再需要）
 
 
 class RandomSearchMode(BaseSearchMode):

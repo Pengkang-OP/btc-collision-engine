@@ -35,7 +35,7 @@ CONFIG_TEMPLATES = {
                 "mode": "single",
                 "use_new_module": True,
                 "auto_detect": True,
-                "memory_usage_ratio": 0.8,
+                "memory_usage_ratio": 0.7,  # v5.0.0 PARAM-2: 统一默认值
                 "enable_vendor_optimizations": True,
                 "auto_tuning": True,
             },

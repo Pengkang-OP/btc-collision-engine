@@ -36,9 +36,23 @@ class TestCLIEntryPoint:
         assert os.path.exists("key_collision_cli.py")
 
     def test_key_collision_has_main_function(self):
-        """测试：CLI 脚本包含入口函数"""
+        """v5.0.0: 验证 key_collision_cli.py 包含入口函数（key_collision.py 已移除 __main__）"""
         import ast
 
+        # key_collision_cli.py 应有 __main__ 入口
+        with open("key_collision_cli.py", encoding="utf-8") as f:
+            tree = ast.parse(f.read())
+
+        has_main_block = any(
+            isinstance(node, ast.If)
+            and hasattr(node.test, "left")
+            and isinstance(node.test.left, ast.Name)
+            and node.test.left.id == "__name__"
+            for node in ast.walk(tree)
+        )
+        assert has_main_block, "key_collision_cli.py 缺少 __main__ 入口"
+
+        # key_collision.py v5.0.0 已移除 __main__，不再可独立运行
         with open("key_collision.py", encoding="utf-8") as f:
             tree = ast.parse(f.read())
 
@@ -49,7 +63,7 @@ class TestCLIEntryPoint:
             and node.test.left.id == "__name__"
             for node in ast.walk(tree)
         )
-        assert has_main_block, "key_collision.py 缺少 __main__ 入口"
+        assert not has_main_block, "key_collision.py v5.0.0 不应包含 __main__ 入口"
 
     def test_ast_syntax_validity(self):
         """测试：CLI 脚本 AST 语法有效"""

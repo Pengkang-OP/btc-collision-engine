@@ -84,12 +84,16 @@ class TestEnhancedMonitoringSystemInit:
         assert monitor.alert_system is not None
         assert monitor.report_generator is not None
 
-    def test_init_with_deprecated_params(self):
-        """测试使用已弃用的参数初始化（向后兼容）"""
-        monitor = EnhancedMonitoringSystem(
-            engine=None, collection_interval=3.0, enable_monitoring_data=False
-        )
+    def test_init_with_deprecated_params_rejected(self):
+        """v5.0.0: 验证已弃用的参数被正确拒绝"""
+        with pytest.raises(TypeError, match="unexpected keyword argument"):
+            EnhancedMonitoringSystem(
+                engine=None, collection_interval=3.0, enable_monitoring_data=False
+            )
 
+        # 旧 API 被拒绝，应使用 config=MonitorConfig(...) 替代
+        config = MonitorConfig(collection_interval=3.0, enable_monitoring_data=False)
+        monitor = EnhancedMonitoringSystem(engine=None, config=config)
         assert monitor.collection_interval == 3.0
         assert monitor.enable_monitoring_data is False
 
