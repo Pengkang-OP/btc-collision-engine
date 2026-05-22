@@ -679,7 +679,7 @@ pytest tests/test_gpu_integration.py -v
 ✅ 无错误和警告
 ✅ 性能指标符合预期
 
-```
+```python
 
 ---
 

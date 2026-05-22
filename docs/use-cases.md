@@ -39,7 +39,7 @@ python key_collision_cli.py -t 12ib7dApVFvg82TXKycWBNpN8kFyiAN1dr -m random --du
 
 **预期输出**:
 
-```
+```bash
 ----------------------------------------------------------------------
 碰撞模式     : random
 目标地址数   : 1
@@ -121,7 +121,7 @@ python -c "import pyopencl as cl; [print(f'{i}: {d.name}') for i, p in enumerate
 
 **预期输出**:
 
-```
+```bash
 0: Intel(R) Arc(TM) A770 Graphics
 1: NVIDIA GeForce GTX 1660 Ti
 ```
@@ -144,7 +144,7 @@ python key_collision_cli.py -f valid_addresses.txt --use-gpu -m random --duratio
 
 **预期输出**:
 
-```
+```bash
 加速模式     : 单GPU
 GPU 设备     : Intel(R) Arc(TM) A770 Graphics
 批次大小     : 65536
@@ -266,7 +266,7 @@ python collision_stats.py
 
 创建 `addresses_to_validate.txt`:
 
-```
+```bash
 # 有效的P2PKH地址
 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
 12ib7dApVFvg82TXKycWBNpN8kFyiAN1dr
@@ -325,7 +325,7 @@ python validate_addresses.py
 
 ### 输出示例
 
-```
+```bash
 待验证地址数: 5
 
 ✅ 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
@@ -362,7 +362,7 @@ python key_collision_cli.py -f valid_addresses.txt -m random --checkpoint --chec
 
 按 `Ctrl+C` 中断：
 
-```
+```bash
 用户中断，正在停止...
 断点已保存: data_logs/checkpoint.json
 
@@ -381,7 +381,7 @@ python key_collision_cli.py -f valid_addresses.txt -m random --checkpoint --dura
 
 **输出**:
 
-```
+```bash
 检测到断点文件
   上次运行: 2026-04-23 10:30:00
   已检查数: 1,234,567
@@ -425,7 +425,7 @@ python -c "import pyopencl as cl; [print(f'GPU {i}: {d.name} ({d.global_mem_size
 
 **输出**:
 
-```
+```bash
 GPU 0: NVIDIA GeForce GTX 1660 Ti (6GB)
 GPU 1: Intel(R) Arc(TM) A770 Graphics (16GB)
 ```
@@ -442,7 +442,7 @@ python key_collision_cli.py -f valid_addresses.txt --multi-gpu --gpu-indices 0,1
 
 **输出**:
 
-```
+```bash
 加速模式     : 多GPU (2 个设备)
 ----------------------------------------------------------------------
 [00:00:30] GPU x2 | 已检查: 8,234,567 | 速度: 274.49K/s | 匹配: 0

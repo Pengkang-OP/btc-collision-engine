@@ -1,5 +1,9 @@
 # BTC碰撞引擎 - 用户使用指南
 
+**版本**: v4.5.1
+
+
+
 **适用对象**: 所有用户（新手到高级）
 
 ---
@@ -105,7 +109,7 @@ python key_collision_cli.py --quick-run
 **文件预览**:
 快速模式会自动检测并显示`targets.txt`文件内容：
 
-```
+```bash
 发现目标文件: targets.txt (3 个地址)
 
 地址预览:
@@ -181,7 +185,7 @@ python key_collision_cli.py --quick-run
 
 3. **显示配置摘要**
 
-   ```
+```bash
    ════════════════════════════════════════════
    快速模式配置
    ════════════════════════════════════════════
@@ -236,7 +240,7 @@ python key_collision_cli.py --quick-start
 
 #### 步骤1: 选择目标地址来源
 
-```
+```bash
 【步骤 1/4】选择目标地址来源
    1. 输入单个地址
    2. 从文件读取
@@ -263,7 +267,7 @@ python key_collision_cli.py --quick-start
 
 #### 步骤2: 选择碰撞模式
 
-```
+```bash
 【步骤 2/4】选择碰撞模式
    1. 随机碰撞 (推荐新手)
    2. 范围扫描
@@ -285,7 +289,7 @@ python key_collision_cli.py --quick-start
 
 #### 步骤3: 选择功能选项
 
-```
+```bash
 【步骤 3/4】选择功能选项
    [?] 功能说明:
       - 断点续传: 保存进度，中断后可继续 (强烈推荐)
@@ -305,7 +309,7 @@ python key_collision_cli.py --quick-start
 
 #### 步骤4: 确认并启动
 
-```
+```bash
 【步骤 4/4】确认配置
 ╔═══════════════════════════════════════════════════════════╗
 ║                    配置摘要                              ║
@@ -340,7 +344,7 @@ python key_collision_cli.py --quick-start --compact
 
 **正常模式**:
 
-```
+```bash
 【步骤 1/4】选择目标地址来源
    1. 输入单个地址
    2. 从文件读取
@@ -355,7 +359,7 @@ python key_collision_cli.py --quick-start --compact
 
 **紧凑模式**:
 
-```
+```bash
 【步骤 1/4】选择目标地址来源
    1. 输入单个地址
    2. 从文件读取
@@ -431,7 +435,7 @@ python key_collision_cli.py --quick-run --engine multi-gpu
 
 运行时会显示实时进度：
 
-```
+```bash
 [00:05] [CPU] ████░░░░░░░░░░░░ 25.0% | 1,234/4,936 | 速度: 246/s | ETA: 15s | 匹配: 0
 ```
 
@@ -494,7 +498,7 @@ cat config.example.json
 
 **A**: 创建文本文件，每行一个地址：
 
-```
+```bash
 # 我的目标地址
 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy
@@ -692,7 +696,7 @@ start.bat cc
 
 ### 文件位置
 
-```
+```bash
 项目根目录/
 ├── start.bat              # Windows启动脚本
 ├── key_collision_cli.py   # CLI主程序

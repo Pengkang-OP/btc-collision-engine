@@ -1,5 +1,8 @@
 # 多 GPU 使用指南
 
+**版本**: v4.5.1
+
+
 本文档说明如何在多块 GPU 的系统上配置和运行 BTC 碰撞引擎。
 
 ---
@@ -42,7 +45,7 @@ for i, platform in enumerate(cl.get_platforms()):
 
 示例输出：
 
-```
+```python
 Platform 0: Intel(R) OpenCL Graphics
   Device 0: Intel(R) Arc(TM) A770 Graphics  (16384 MB VRAM)
 Platform 1: NVIDIA CUDA

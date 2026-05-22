@@ -483,7 +483,7 @@ GPUCollisionEngine (Shim 层, 100% 向后兼容)
        ├── DataLoggerAdapter — 数据日志适配
        └── GPUConfigManager — 配置加载 / 验证 / 厂商适配
 
-```
+```python
 
 **分层架构说明**:
 | 层级 | 组件 | 职责 | 文件位置 |
