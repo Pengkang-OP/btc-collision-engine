@@ -18,6 +18,21 @@ class DataStorageConfig:
         self.retention_days = retention_days
         self.output_dir = output_dir
 
+    @staticmethod
+    def ensure_storage_dir(storage_dir: str | None = None) -> str:
+        """Ensure the storage directory exists.
+
+        Args:
+            storage_dir: Optional custom storage directory
+
+        Returns:
+            Path to the storage directory
+        """
+        import os
+        dir_path = storage_dir or "data_logs"
+        os.makedirs(dir_path, exist_ok=True)
+        return dir_path
+
 
 @dataclass
 class StorageConfig:

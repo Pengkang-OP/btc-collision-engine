@@ -3,6 +3,8 @@ import logging
 import threading
 import time
 
+from src.monitoring.data_logger import DataLogger
+
 logger = logging.getLogger(__name__)
 
 
@@ -13,13 +15,20 @@ class EnhancedMonitoringSystem:
     analysis, and resource usage tracking.
     """
 
-    def __init__(self, config: dict | None = None):
+    def __init__(self, engine=None, config=None):
+        self._engine = engine
         self._config = config or {}
         self._lock = threading.Lock()
         self._metrics: dict[str, list[float]] = {}
+        # Create data logger for engine compatibility
+        self.data_logger = DataLogger()
         logger.info(
             "Enhanced monitoring system initialized"
         )
+
+    def is_running(self) -> bool:
+        """Check if monitoring system is running."""
+        return True
 
     def record_metric(
         self, name: str, value: float

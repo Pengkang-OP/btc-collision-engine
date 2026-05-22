@@ -534,6 +534,77 @@ class GPUMemoryPool:
             # 主动淘汰LRU缓冲区释放压力
             self._evict_lru()
 
+    # ──────────── 内存泄漏检测 (PERF-1修复) ────────────
+
+    def detect_leak(self, threshold_factor: float = 3.0) -> bool:
+        """检测 GPU 内存泄漏
+
+        通过分析分配模式和历史使用量，判断是否存在可疑的内存增长趋势。
+        当总分配数远高于复用数，且内存使用持续增长时判定为泄漏。
+
+        Args:
+            threshold_factor: 告警阈值因子。当 当前内存 > 平均内存 × 阈值 时触发。
+
+        Returns:
+            检测到泄漏风险返回 True
+        """
+        with self._lock:
+            if len(self._memory_usage_history) < 5:
+                return False
+
+            recent = self._memory_usage_history[-5:]
+            avg_memory = sum(m["current_memory_mb"] for m in recent) / len(recent)
+            current_memory_mb = self._current_memory / (1024 * 1024)
+
+            # 判断 1: 当前内存远高于平均值
+            memory_surge = current_memory_mb > avg_memory * threshold_factor
+
+            # 判断 2: 分配多但复用少（复用率低于 20%）
+            reuse_rate = self._total_reused / max(self._total_allocated, 1)
+            low_reuse = reuse_rate < 0.2 and self._allocation_count > 50
+
+            if memory_surge and low_reuse:
+                logger.warning(
+                    f"[PERF-1 内存泄漏检测] 可疑泄漏: "
+                    f"当前内存={current_memory_mb:.1f}MB, "
+                    f"平均={avg_memory:.1f}MB, "
+                    f"复用率={reuse_rate:.1%}, "
+                    f"总分配={self._total_allocated}, "
+                    f"总复用={self._total_reused}"
+                )
+                return True
+
+            return False
+
+    def get_leak_report(self) -> dict[str, Any]:
+        """生成内存泄漏分析报告
+
+        Returns:
+            包含泄漏分析数据的字典
+        """
+        with self._lock:
+            leak_detected = self.detect_leak()
+            if len(self._memory_usage_history) >= 5:
+                recent = self._memory_usage_history[-5:]
+                memory_trend = [m["current_memory_mb"] for m in recent]
+                trend_increasing = (
+                    memory_trend[-1] > memory_trend[0] if len(memory_trend) > 1 else False
+                )
+            else:
+                memory_trend = []
+                trend_increasing = False
+
+            return {
+                "leak_detected": leak_detected,
+                "memory_trend_mb": memory_trend,
+                "trend_increasing": trend_increasing,
+                "current_memory_mb": self._current_memory / (1024 * 1024),
+                "total_allocated": self._total_allocated,
+                "total_reused": self._total_reused,
+                "reuse_rate": self._total_reused / max(self._total_allocated, 1),
+                "pooled_buffers": sum(len(buffers) for buffers in self._pool.values()),
+            }
+
     def get_pool_stats(self) -> dict:
         """获取内存池统计信息（含LRU跟踪状态）
 
@@ -561,6 +632,7 @@ class GPUMemoryPool:
                 "allocation_patterns": dict(
                     sorted(self._allocation_patterns.items(), key=lambda x: x[1], reverse=True)[:10]
                 ),
+                "leak_detected": self.detect_leak(),
             }
 
     def get_stats(self) -> dict:

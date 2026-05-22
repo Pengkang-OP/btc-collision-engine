@@ -6,6 +6,9 @@
 
 from typing import Any
 
+# ARCH-1: 使用接口抽象
+from .interfaces import GPUDeviceProtocol, GPUCollisionEngineInterface, GPUDriverInterface
+
 # 导入日志配置
 from ..utils import get_configured_logger, init_logging
 
