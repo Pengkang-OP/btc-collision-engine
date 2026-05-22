@@ -1,8 +1,10 @@
-"""GPU内核实现
+"""GPU kernel implementation.
 
-包含:
-- compile_kernel_with_retry: 共享的内核编译重试函数 (DEF-2修复)，支持4种降级编译策略
-- GPUKernel: OpenCL GPU计算内核包装类，实现GPUKernelProtocol接口
+Contains:
+- compile_kernel_with_retry: Shared kernel compile retry function
+  (DEF-2 fix), supports 4 degradation strategies
+- GPUKernel: OpenCL GPU computation kernel wrapper implementing
+  GPUKernelProtocol interface
   - 持久化Buffer和异步执行，保持GPU持续高负载
   - 2*G自检验证、批量密钥碰撞、目标地址管理
   - 预计算表(Precomputed Table)常量缓冲区管理
