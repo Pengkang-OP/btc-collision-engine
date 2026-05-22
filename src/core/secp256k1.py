@@ -186,6 +186,12 @@ class Secp256k1:
 
 class ECPoint:
     """
+    ⚠️ 教学参考实现 — 不应在生产环境中使用
+    =========================================
+    本类为 secp256k1 椭圆曲线的**教学参考实现**。
+    Python 层面无法保证完全的恒定时间执行和侧信道防护。
+    生产环境请使用 crypto_backend.py 中的优化后端（coincurve/OpenSSL）。
+
     椭圆曲线点类
 
     表示椭圆曲线上的一个点，支持普通点和无穷远点（单位元）。
@@ -256,6 +262,12 @@ class ECPoint:
 
 class EllipticCurve:
     """
+    ⚠️ 教学参考实现 — 不应在生产环境中使用
+    =========================================
+    本类为 secp256k1 椭圆曲线的**教学参考实现**。
+    Python 层面无法保证完全的恒定时间执行和侧信道防护。
+    生产环境请使用 crypto_backend.py 中的优化后端（coincurve/OpenSSL）。
+
     椭圆曲线运算类
 
     实现椭圆曲线上的核心运算，包括模逆元、点加法、标量乘法和公钥生成。
@@ -593,6 +605,11 @@ class EllipticCurve:
 
     def scalar_multiply_const_time(self, k: int, point: ECPoint) -> ECPoint:
         """
+        ⚠️ 教学参考实现 — 不应在生产环境中使用
+        =========================================
+        Python 层面无法保证完全的恒定时间执行。
+        生产环境请使用 crypto_backend.py 中的优化后端（coincurve/OpenSSL）。
+
         恒定时间的椭圆曲线标量乘法（Montgomery Ladder算法）
 
         使用Montgomery Ladder算法实现恒定时间计算，
@@ -664,6 +681,11 @@ class EllipticCurve:
 
     def generate_public_key(self, private_key: bytes | int, compressed: bool = True) -> bytes:
         """
+        ⚠️ 教学参考实现 — 不应在生产环境中使用
+        =========================================
+        Python 层面无法保证完全的恒定时间执行和侧信道防护。
+        生产环境请使用 crypto_backend.py 中的优化后端（coincurve/OpenSSL）。
+
         从私钥生成公钥
 
         通过椭圆曲线标量乘法计算公钥点 Q = private_key * G
