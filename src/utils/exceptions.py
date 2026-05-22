@@ -2,30 +2,46 @@
 
 
 class CollisionEngineError(Exception):
-    """Base exception for collision engine errors."""
+    """Base exception."""
+
+
+CollisionError = CollisionEngineError
 
 
 class KeyGenerationError(CollisionEngineError):
-    """Raised when private key generation fails."""
-
-    def __init__(
-        self,
-        message: str = "",
-        error_code: int = 0,
-        context: dict | None = None,
-    ):
+    def __init__(self, message="", error_code=0, context=None):
         super().__init__(message)
         self.error_code = error_code
         self.context = context or {}
 
 
+class AddressGenerationError(CollisionEngineError):
+    pass
+
+
 class ConfigError(CollisionEngineError):
-    """Raised when configuration is invalid."""
+    pass
 
 
 class GPUError(CollisionEngineError):
-    """Raised when GPU operations fail."""
+    pass
 
 
 class CheckpointError(CollisionEngineError):
-    """Raised when checkpoint operations fail."""
+    pass
+
+
+class CryptoBackendError(CollisionEngineError):
+    pass
+
+
+class DeduplicationError(CollisionEngineError):
+    pass
+
+
+class TargetResolutionError(CollisionEngineError):
+    pass
+
+
+class ValidationError(CollisionEngineError):
+    pass
