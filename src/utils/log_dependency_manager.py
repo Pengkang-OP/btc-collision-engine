@@ -1,9 +1,10 @@
-"""日志依赖管理机制
+"""Log dependency management mechanism.
 
-管理日志组件与其他系统模块的依赖关系，确保：
-- 日志系统的正确初始化顺序
-- 模块间的依赖关系清晰
-- 避免循环依赖
+Manages dependencies between log components and other system
+modules, ensuring:
+- Correct log system initialization order
+- Clear inter-module dependency relationships
+- Avoid circular dependencies
 - 支持依赖注入
 """
 

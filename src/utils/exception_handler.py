@@ -1,9 +1,10 @@
-"""统一异常处理器
+"""Unified exception handler.
 
-提供统一的异常处理机制,适用于CPU引擎、GPU引擎和配置系统。
+Provides unified exception handling for CPU engine, GPU engine,
+and configuration systems.
 
-P3-6增强：
-- 新增 handle_gpu_async_error(): GPU异步执行错误处理
+P3-6 enhancements:
+- New handle_gpu_async_error(): GPU async execution error handling
 - 新增 handle_cl_resource_error(): OpenCL资源错误分类
 - 新增 handle_gpu_cleanup_error(): GPU清理操作错误处理
 - 细化 handle_gpu_error(): 增加 MemoryError/ImportError 分类

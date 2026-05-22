@@ -1,9 +1,10 @@
-"""系统健康检查模块
+"""System health check module.
 
-提供系统环境和依赖的健康状态检查，帮助快速诊断问题。
+Provides system environment and dependency health status checks
+to help diagnose issues quickly.
 
-扩展检查项:
-- Python版本兼容性
+Extended checks:
+- Python version compatibility
 - 关键依赖是否安装且版本正确
 - 配置文件有效性（包括生产配置）
 - 磁盘空间是否充足

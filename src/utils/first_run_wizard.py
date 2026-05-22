@@ -1,9 +1,10 @@
-"""首次运行向导模块
+"""First-run wizard module.
 
-在检测到新用户（无 config.json 或无运行记录）时，以交互式方式引导用户：
-1. 显示欢迎信息
-2. 选择碰撞模式（random / range / brute_force）
-3. 加载测试地址文件或手动输入地址
+When a new user is detected (no config.json or run history),
+interactively guides the user through:
+1. Welcome message display
+2. Collision mode selection (random / range / brute_force)
+3. Load test address file or manual address entry
 4. 询问是否启用 GPU
 5. 生成个性化 config.json
 
