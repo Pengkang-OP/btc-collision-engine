@@ -1,7 +1,8 @@
-"""多GPU碰撞引擎
+"""Multi-GPU collision engine.
 
-协调多个GPU工作器进行并行私钥碰撞搜索。
-采用任务分割策略,每个GPU独立搜索不同的私钥范围。
+Coordinates multiple GPU workers for parallel private key collision
+search. Uses task partitioning strategy where each GPU independently
+searches a different private key range.
 
 增强功能：
 - 实时工作负载监控
