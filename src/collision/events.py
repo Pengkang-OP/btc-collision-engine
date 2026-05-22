@@ -12,6 +12,26 @@ class EngineEvent:
 
 
 @dataclass
+class EngineStartEvent(EngineEvent):
+    """Event emitted when engine starts."""
+    config: dict | None = None
+
+
+@dataclass
+class EngineStopEvent(EngineEvent):
+    """Event emitted when engine stops."""
+    stats: dict | None = None
+    reason: str = ""
+
+
+@dataclass
+class EngineCompleteEvent(EngineEvent):
+    """Event emitted when engine completes."""
+    stats: dict | None = None
+    duration: float = 0.0
+
+
+@dataclass
 class EngineMatchEvent(EngineEvent):
     """Event emitted when a match is found."""
     private_key: bytes = b""
@@ -20,9 +40,7 @@ class EngineMatchEvent(EngineEvent):
     target_address: str = ""
     device_idx: int = 0
     worker_id: int = 0
-    extra: dict[str, Any] = field(
-        default_factory=dict
-    )
+    extra: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -31,9 +49,7 @@ class EngineErrorEvent(EngineEvent):
     error_type: str = ""
     error_message: str = ""
     exception: Exception | None = None
-    context: dict[str, Any] = field(
-        default_factory=dict
-    )
+    context: dict[str, Any] = field(default_factory=dict)
     recoverable: bool = False
 
 
@@ -51,10 +67,3 @@ class EngineStateEvent(EngineEvent):
     """Event emitted on engine state changes."""
     state: str = ""
     message: str = ""
-
-
-@dataclass
-class EngineCompleteEvent(EngineEvent):
-    """Event emitted when engine completes."""
-    stats: dict | None = None
-    duration: float = 0.0
