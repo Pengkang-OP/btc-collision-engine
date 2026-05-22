@@ -1,6 +1,7 @@
-"""GPU驱动版本检测和管理
+"""GPU driver version detection and management.
 
-提供驱动版本检测、兼容性检查和健康评估功能。
+Provides driver version detection, compatibility checking, and
+health assessment.
 支持Windows和Linux平台。
 """
 

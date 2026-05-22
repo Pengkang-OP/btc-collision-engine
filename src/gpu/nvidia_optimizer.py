@@ -1,6 +1,7 @@
-"""NVIDIA GPU 专有优化模块
+"""NVIDIA GPU specific optimization module.
 
-封装所有 NVIDIA GPU 特定的优化逻辑，包括：
+Encapsulates all NVIDIA GPU specific optimization logic,
+including:
 - 驱动版本检测与建议
 - GPU 架构代识别（Kepler/Maxwell/Pascal/Volta/Turing/Ampere/Ada/Hopper/Blackwell）
 - 显存大小动态配置（含HBM数据中心卡识别）

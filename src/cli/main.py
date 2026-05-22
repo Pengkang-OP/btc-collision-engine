@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-比特币私钥对撞工具 - 命令行界面入口
+Bitcoin private key collision tool - CLI entry point.
 
-用法:
+Usage:
     python -m src.cli.main [选项]
     python key_collision_cli.py [选项]
 

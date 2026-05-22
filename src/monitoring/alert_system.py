@@ -1,6 +1,7 @@
-"""性能监控告警系统
+"""Performance monitoring alert system.
 
-实现GPU性能实时监控和异常自动告警功能。
+Implements real-time GPU performance monitoring and automatic
+anomaly alerting.
 支持多种告警规则和通知方式。
 """
 
