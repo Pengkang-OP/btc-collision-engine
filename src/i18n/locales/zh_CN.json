@@ -312,7 +312,12 @@
             "match_wif": "WIF     ",
             "multi_gpu_requires_opencl": "错误: 多GPU模式需要安装 pyopencl，当前不可用",
             "multi_gpu_init_failed": "错误: 多GPU引擎初始化失败，请检查 GPU 驱动和 pyopencl 安装",
-            "gpu_requires_opencl": "错误: GPU模式需要安装 pyopencl，当前不可用"
+            "gpu_requires_opencl": "错误: GPU模式需要安装 pyopencl，当前不可用",
+            "init_complete": "引擎初始化完成: 模式={mode}, 目标数={target_count}",
+            "start": "启动对撞引擎: 模式={mode}, 恢复={resume}, 目标数={target_count}",
+            "start_complete": "对撞引擎启动完成",
+            "stop": "正在停止对撞引擎...",
+            "stopped": "对撞引擎已停止"
         },
         "entry": {
             "keyboard_interrupt": "[用户中断] 程序已安全退出。",

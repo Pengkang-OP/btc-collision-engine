@@ -312,7 +312,12 @@
             "match_wif": "WIF      ",
             "multi_gpu_requires_opencl": "Error: Multi-GPU mode requires pyopencl, currently unavailable",
             "multi_gpu_init_failed": "Error: Multi-GPU engine initialization failed, please check GPU driver and pyopencl installation",
-            "gpu_requires_opencl": "Error: GPU mode requires pyopencl, currently unavailable"
+            "gpu_requires_opencl": "Error: GPU mode requires pyopencl, currently unavailable",
+            "init_complete": "Engine initialization complete: mode={mode}, targets={target_count}",
+            "start": "Starting collision engine: mode={mode}, resume={resume}, targets={target_count}",
+            "start_complete": "Collision engine started",
+            "stop": "Stopping collision engine...",
+            "stopped": "Collision engine stopped"
         },
         "entry": {
             "keyboard_interrupt": "[User Interrupt] Program has exited safely.",

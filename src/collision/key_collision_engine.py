@@ -27,6 +27,7 @@ from ..monitoring.enhanced_monitoring import EnhancedMonitoringSystem
 from ..utils import get_configured_logger
 from ..utils.exception_handler import ExceptionHandler
 from ..utils.logger import get_sampled_logger
+from ..i18n import _t
 from ..utils.timeout import invoke_with_timeout
 from .base_engine import BaseCollisionEngine
 from .checkpoint_manager import CheckpointManager
@@ -2028,7 +2029,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             if not self.targets:
                 logger.warning("目标地址集合为空，对撞将无意义")
 
-            logger.info(f"启动对撞引擎: 模式={mode}, 恢复={resume}, 目标数={len(self.targets)}")
+            logger.info(_t("engine.start", mode=mode, resume=str(resume), target_count=len(self.targets)))
 
             if resume:
                 mode = self._handle_checkpoint_resume(mode, kwargs)
@@ -2039,7 +2040,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             self._stats_updated.set()
 
             self._create_and_start_thread(mode, kwargs)
-            logger.info("对撞引擎启动完成")
+            logger.info(_t("engine.start_complete"))
         except (RuntimeError, OSError, ValueError) as e:
             logger.error(f"启动对撞引擎失败: {e}")
             self._running = False
@@ -2165,7 +2166,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             timeout: 等待工作线程结束的超时时间（秒）
                     None时使用默认值（根据目标数动态计算，最少10秒）
         """
-        logger.info("正在停止对撞引擎...")
+        logger.info(_t("engine.stop"))
         self._stop_send_signals()
         self._stop_join_workers(timeout)
 
@@ -2199,7 +2200,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             except Exception as e:
                 logger.debug(f"发布 ENGINE_STOP 事件失败（非致命）: {e}")
 
-        logger.info("对撞引擎已停止")
+        logger.info(_t("engine.stopped"))
 
     def is_running(self) -> bool:
         """
