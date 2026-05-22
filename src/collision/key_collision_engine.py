@@ -1,4 +1,8 @@
-"""比特币私钥对撞引擎"""
+"""Bitcoin private key collision engine.
+
+Detects Bitcoin address collisions by generating private keys and
+matching against target addresses using CPU and GPU acceleration.
+"""
 
 import concurrent.futures
 import hashlib
@@ -83,9 +87,10 @@ MATCH_BATCH_FLUSH_THRESHOLD = 10  # P2-2修复: 匹配结果批量提交阈值
 
 
 class KeyCollisionEngine(BaseCollisionEngine):
-    """比特币私钥对撞引擎 (CPU实现)
+    """Bitcoin private key collision engine (CPU implementation).
 
-    继承BaseCollisionEngine，实现完整的CPU碰撞引擎，支持：
+    Inherits BaseCollisionEngine, implements a complete CPU collision
+    engine supporting:
     - 三种搜索模式: 随机碰撞、范围扫描、暴力穷举
     - 多线程并行处理 (ThreadPoolExecutor)
     - 断点续传 (CheckpointManager)
