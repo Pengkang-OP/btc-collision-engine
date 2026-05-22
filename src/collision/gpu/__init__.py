@@ -28,6 +28,7 @@ __author__ = "BTC Project"
 # 直接导入（非延迟），避免循环依赖
 from .async_pipeline_adapter import AsyncPipelineAdapter
 from .core import CollisionCore
+from .engine import GPUCollisionEngine, GPUEngineConfig
 
 # Phase 3 新增适配器
 from .data_logger_adapter import DataLoggerAdapter
@@ -82,6 +83,8 @@ def get_data_logger_adapter():
 
 
 __all__ = [
+    "GPUCollisionEngine",
+    "GPUEngineConfig",
     "GPUEngineFacade",
     "PerformanceMonitoringPipeline",
     "CollisionCore",
