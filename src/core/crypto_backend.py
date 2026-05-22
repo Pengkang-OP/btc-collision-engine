@@ -717,7 +717,19 @@ def generate_public_key(
 
     Returns:
         Public key bytes
+
+    Raises:
+        TypeError: If private_key is not bytes type
+        ValueError: If private_key is not exactly 32 bytes
     """
+    if not isinstance(private_key, bytes):
+        raise TypeError(
+            f"Private key must be bytes type, got {type(private_key).__name__}"
+        )
+    if len(private_key) != 32:
+        raise ValueError(
+            f"Private key must be exactly 32 bytes, got {len(private_key)} bytes"
+        )
     return crypto_manager.generate_public_key(private_key, compressed)
 
 

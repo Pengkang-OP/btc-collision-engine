@@ -3,9 +3,18 @@
 定义所有组件的接口协议，遵循依赖倒置原则(DIP)。
 所有实现类都应该实现这些接口。
 
-版本: v4.2.2
+版本: v4.2.2 Phase 6.1
 创建日期: 2026-04-29
-更新日期: 2026-04-30
+更新日期: 2026-05-23
+
+使用说明:
+- Phase 6: 定义了核心协议接口
+- Phase 6.1: GPUCollisionEngine开始支持通过参数注入实现这些协议的具体类
+- 推荐实现这些接口以获得更好的可测试性和灵活性
+
+当前支持注入的组件:
+- IGPUDeviceManager: 通过 device_manager_class 参数注入
+- ISearchModeCoordinator: 通过 search_coordinator_class 参数注入（未来支持）
 """
 
 from dataclasses import dataclass, field

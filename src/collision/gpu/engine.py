@@ -9,13 +9,19 @@
 - 搜索模式执行桥接
 
 组件:
-- GPUEngineFacade (Phase 2): GPU设备/上下文/内核/异步管道
+- GPUDeviceManager (Phase 2): GPU设备/上下文/内核/异步管道
 - PerformanceMonitoringPipeline (Phase 3): 性能监控/异常检测
 - CollisionCore (Phase 4): 统计/断点/去重/搜索协调
 - VendorOptimizationFactory (Phase 5): NVIDIA/AMD/Intel 策略
 
-版本: v4.2.2
+依赖注入:
+- Phase 6.1: 添加可选依赖注入参数，支持自定义组件实现
+- 通过 device_manager, search_coordinator 等参数传入自定义实现
+- 如未传入，则使用默认实现
+
+版本: v4.2.2 Phase 6.1
 创建日期: 2026-04-30
+更新日期: 2026-05-23
 """
 
 import contextlib
@@ -131,10 +137,14 @@ def _get_gpu_monitor() -> "GPUPerformanceMonitor":
 
 @dataclass
 class GPUEngineConfig:
-    """GPU 碰撞引擎配置 (v4.3.1)
+    """GPU 碰撞引擎配置 (v4.3.1 Phase 6.1)
 
     将所有配置参数封装为 dataclass，便于外部构造、序列化和验证。
     可通过 GPUCollisionEngine(targets, config=cfg) 传入。
+
+    Phase 6.1 新增:
+    - device_manager_class: 自定义GPUDeviceManager类
+    - search_coordinator_class: 自定义SearchModeCoordinator类
     """
 
     targets: set[str] = field(default_factory=set)
@@ -160,6 +170,9 @@ class GPUEngineConfig:
     async_log_backup_count: int = 5
     check_uncompressed: bool | None = None
     key_generation_strategy: KeyGenerationStrategy = field(default=KeyGenerationStrategy.PRNG_SEED)
+    # Phase 6.1: 依赖注入配置
+    device_manager_class: Any | None = None  # 自定义GPUDeviceManager类
+    search_coordinator_class: Any | None = None  # 自定义SearchModeCoordinator类
 
     def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
@@ -188,7 +201,7 @@ class GPUEngineConfig:
 class GPUCollisionEngine(BaseCollisionEngine):
     """GPU 加速的比特币私钥对撞引擎 - Phase 6 重构版
 
-    组合 GPUEngineFacade (Phase 2) + PerformanceMonitoringPipeline (Phase 3)
+    组合 GPUDeviceManager (Phase 2) + PerformanceMonitoringPipeline (Phase 3)
     + CollisionCore (Phase 4) + VendorOptimizationFactory (Phase 5),
     实现统一的引擎协调器。
 
@@ -226,8 +239,11 @@ class GPUCollisionEngine(BaseCollisionEngine):
         key_generation_strategy: KeyGenerationStrategy = KeyGenerationStrategy.PRNG_SEED,
         # v3.2.1: 私钥生成策略
         config: "GPUEngineConfig | None" = None,  # v4.3.1: 配置对象优先
+        # Phase 6.1: 依赖注入参数（可选）
+        device_manager: Any | None = None,  # 自定义GPUDeviceManager实现
+        search_coordinator: Any | None = None,  # 自定义SearchModeCoordinator实现
     ) -> None:
-        """初始化 GPU 碰撞引擎 (Phase 6 重构版)
+        """初始化 GPU 碰撞引擎 (Phase 6.1 重构版)
 
         支持两种初始化方式:
         1. (推荐) 通过 GPUEngineConfig 对象: GPUCollisionEngine(targets, config=cfg)
@@ -235,6 +251,11 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
         当 config 参数提供时，config 中的值覆盖对应的显式参数默认值。
         显式非默认参数值优先于 config 中的值。
+
+        Phase 6.1 新增依赖注入:
+        - device_manager: 可传入自定义的GPUDeviceManager实现（用于测试或特殊需求）
+        - search_coordinator: 可传入自定义的SearchModeCoordinator实现
+        如未传入，则使用默认实现。
         """
         # v4.3.1: 合并配置 - config 提供默认值，显式参数可覆盖
         if config is not None:
@@ -262,8 +283,13 @@ class GPUCollisionEngine(BaseCollisionEngine):
             async_log_max_bytes = cfg.async_log_max_bytes
             async_log_backup_count = cfg.async_log_backup_count
             key_generation_strategy = cfg.key_generation_strategy
+            # Phase 6.1: 提取依赖注入配置
+            device_manager_class = cfg.device_manager_class
+            search_coordinator_class = cfg.search_coordinator_class
         else:
             cfg = GPUEngineConfig()
+            device_manager_class = None
+            search_coordinator_class = None
         if not PYOPENCL_AVAILABLE:
             # L2修复: 提供详细诊断信息
             diagnostic_msg = (
@@ -356,7 +382,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         elif use_async_logging and not ASYNC_LOG_AVAILABLE:
             logger.warning("异步日志不可用（AsyncFileHandler导入失败），使用同步日志")
 
-        # === Phase 2: GPUEngineFacade ===
+        # === Phase 2: GPUDeviceManager ===
         gpu_facade_config = {
             "gpu": {
                 "use_memory_pool": use_gpu_memory_pool,
@@ -365,14 +391,30 @@ class GPUCollisionEngine(BaseCollisionEngine):
             },
             "batch_size": batch_size,
         }
-        self._device_manager = GPUDeviceManager(
-            device_index=device_index, config=gpu_facade_config, logger=logger
-        )
-        self._device_manager.initialize(
-            targets,
-            batch_size,
-            check_uncompressed=self._check_uncompressed,
-        )
+        # Phase 6.1: 依赖注入 - 使用传入的device_manager或创建默认实例
+        if device_manager is not None:
+            # 使用注入的device_manager实例
+            self._device_manager = device_manager
+        elif device_manager_class is not None:
+            # 使用自定义的device_manager类
+            self._device_manager = device_manager_class(
+                device_index=device_index, config=gpu_facade_config, logger=logger
+            )
+            self._device_manager.initialize(
+                targets,
+                batch_size,
+                check_uncompressed=self._check_uncompressed,
+            )
+        else:
+            # 使用默认的GPUDeviceManager
+            self._device_manager = GPUDeviceManager(
+                device_index=device_index, config=gpu_facade_config, logger=logger
+            )
+            self._device_manager.initialize(
+                targets,
+                batch_size,
+                check_uncompressed=self._check_uncompressed,
+            )
 
         # 暴露 GPU 对象（向后兼容）
         self._gpu_device = self._device_manager.device
@@ -382,7 +424,16 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self._gpu_memory_pool = self._device_manager.memory_pool
 
         # === 搜索模式协调器 ===
-        self._search_coordinator = SearchModeCoordinator(self, logger)
+        # Phase 6.1: 依赖注入 - 使用传入的search_coordinator或创建默认实例
+        if search_coordinator is not None:
+            # 使用注入的search_coordinator实例
+            self._search_coordinator = search_coordinator
+        elif search_coordinator_class is not None:
+            # 使用自定义的search_coordinator类
+            self._search_coordinator = search_coordinator_class(self, logger)
+        else:
+            # 使用默认的SearchModeCoordinator
+            self._search_coordinator = SearchModeCoordinator(self, logger)
 
         # 将协调器内部模式同步到 engine 属性（向后兼容搜索模式委托方法）
         self._random_search_mode = self._search_coordinator.get_mode_instance("random")
@@ -591,12 +642,9 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self.event_bus.publish(stop_event)
 
         complete_event = EngineCompleteEvent(
-            total_checked=self.stats.total_checked,  # type: ignore[attr-defined]
-            matches_found=self.stats.matches_found,  # type: ignore[attr-defined]
-            elapsed_time=time.time() - self.stats.start_time,  # type: ignore[attr-defined]
-            avg_speed=self.stats.avg_speed,  # type: ignore[attr-defined]
-            stop_reason="user_request",
-        )  # type: ignore[attr-defined]
+            stats=self.stats.to_dict(),
+            duration=time.time() - self.stats.start_time,
+        )
         complete_event.source = "gpu_collision_engine"
         self.event_bus.publish(complete_event)
 

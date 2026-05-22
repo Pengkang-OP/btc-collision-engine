@@ -9,12 +9,18 @@
 - 去重过滤
 - 搜索模式执行协调
 
-版本: v4.2.2 (Phase 4)
+版本: v4.2.2 Phase 6.1
 创建日期: 2026-04-29
-更新日期: 2026-04-30
+更新日期: 2026-05-23
+
+线程安全说明:
+- Phase 6.1: 添加状态锁保护运行状态标志(_running, _paused等)
+- stats/checkpoint/dedup_filter等组件在初始化后只读，不需要锁
+- start/stop/pause等状态修改操作使用线程锁保护
 """
 
 import logging
+import threading
 import time
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Optional
@@ -92,6 +98,8 @@ class CollisionCore(ICollisionCore):
         self._start_time = 0.0
         self._last_checkpoint_time = 0.0
         self._last_progress_time = 0.0  # Phase 4: 进度节流时间戳
+        # Phase 6.1: 状态锁保护运行状态标志
+        self._state_lock = threading.RLock()
 
         # 配置参数
         self.checkpoint_interval = self.config.get("checkpoint_interval", 30)
@@ -129,8 +137,9 @@ class CollisionCore(ICollisionCore):
         return stats_dict
 
     def is_running(self) -> bool:
-        """检查是否正在运行"""
-        return self._running
+        """检查是否正在运行（线程安全）"""
+        with self._state_lock:
+            return self._running
 
     # ========== 私有方法 ==========
 

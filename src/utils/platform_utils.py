@@ -4,6 +4,25 @@ import os
 import sys
 
 
+class PlatformUtils:
+    """Platform utility functions."""
+    
+    @staticmethod
+    def is_windows() -> bool:
+        """Check if running on Windows."""
+        return os.name == "nt"
+    
+    @staticmethod
+    def is_linux() -> bool:
+        """Check if running on Linux."""
+        return sys.platform == "linux"
+    
+    @staticmethod
+    def is_darwin() -> bool:
+        """Check if running on macOS."""
+        return sys.platform == "darwin"
+
+
 def get_os_name() -> str:
     """Get normalized OS name.
 

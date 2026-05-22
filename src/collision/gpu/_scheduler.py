@@ -12,8 +12,9 @@
 - GPU 缓冲区动态调整
 - 性能指标记录
 
-版本: v1.0.0 (Phase 6 - 拆分)
+版本: v1.1.0 Phase 6.1
 创建日期: 2026-05-20
+更新日期: 2026-05-23
 """
 
 import logging
@@ -333,14 +334,10 @@ class GPUBatchScheduler:
 
         # v3.2.0: 发布进度事件
         progress_event = EngineProgressEvent(
-            total_checked=stats_snapshot.total_checked,
-            speed=stats_snapshot.speed,
-            avg_speed=stats_snapshot.avg_speed,
-            matches_found=stats_snapshot.matches_found,
-            cpu_usage=0.0,  # GPU引擎暂不报告CPU使用
-            memory_usage=0.0,
-            thread_count=0,
-            elapsed_time=time.time() - engine.stats.start_time,
+            keys_checked=stats_snapshot["total_keys_checked"],
+            elapsed_seconds=stats_snapshot["elapsed_seconds"],
+            throughput=stats_snapshot["throughput"],
+            matches_found=stats_snapshot["total_matches"],
         )
         progress_event.source = "gpu_collision_engine"
         engine.event_bus.publish(progress_event)

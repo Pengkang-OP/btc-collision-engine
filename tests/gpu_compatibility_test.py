@@ -68,8 +68,14 @@ class TestGPUCompatibility:
 
     def test_gpu_device_detection(self, mock_pyopencl):
         """测试GPU设备检测功能"""
+        # 先patch，再import
         with patch.dict("sys.modules", {"pyopencl": mock_pyopencl}):
             with patch("src.gpu.device.PYOPENCL_AVAILABLE", True):
+                # 清除已经可能已导入的模块，强制重新导入
+                import sys
+                for mod in list(sys.modules.keys()):
+                    if mod.startswith("src.gpu"):
+                        del sys.modules[mod]
                 from src.gpu.device import GPUDeviceDetector, identify_vendor, identify_gpu_model
 
                 devices = GPUDeviceDetector.detect_devices()

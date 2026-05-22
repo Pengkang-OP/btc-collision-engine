@@ -10,6 +10,10 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+# Global event bus instance
+_event_bus: "EventBus | None" = None
+_event_bus_lock = threading.Lock()
+
 
 class EventBus:
     """
@@ -96,3 +100,24 @@ class EventBus:
         """Remove all subscribers."""
         with self._lock:
             self._subscribers.clear()
+
+
+def get_event_bus() -> EventBus:
+    """Get the global event bus instance.
+
+    Returns:
+        The global EventBus instance
+    """
+    global _event_bus
+    if _event_bus is None:
+        with _event_bus_lock:
+            if _event_bus is None:
+                _event_bus = EventBus()
+    return _event_bus
+
+
+def reset_event_bus() -> None:
+    """Reset the global event bus instance (for testing)."""
+    global _event_bus
+    with _event_bus_lock:
+        _event_bus = None

@@ -71,7 +71,17 @@ class HashUtils:
 
         Returns:
             20-byte Hash160 result
+
+        Raises:
+            TypeError: If data is not bytes type
+            ValueError: If data is empty
         """
+        if not isinstance(data, bytes):
+            raise TypeError(
+                f"Input data must be bytes type, got {type(data).__name__}"
+            )
+        if len(data) == 0:
+            raise ValueError("Input data cannot be empty")
         return HashUtils.ripemd160(
             HashUtils.sha256(data)
         )

@@ -58,7 +58,7 @@ class TestPrivateKeyValidation:
         result = self.validator.validate_private_key(private_key)
 
         assert result.success is False
-        assert any("私钥数值为0" in error for error in result.errors)
+        assert any("Private key value is 0" in error for error in result.errors)
 
     def test_invalid_private_key_out_of_range(self):
         """测试无效私钥：>= N"""
@@ -66,7 +66,7 @@ class TestPrivateKeyValidation:
         result = self.validator.validate_private_key(private_key)
 
         assert result.success is False
-        assert any("超出范围" in error for error in result.errors)
+        assert any("out of range" in error for error in result.errors)
 
     def test_invalid_private_key_length(self):
         """测试无效私钥：长度错误"""
@@ -74,7 +74,7 @@ class TestPrivateKeyValidation:
         result = self.validator.validate_private_key(private_key)
 
         assert result.success is False
-        assert any("长度错误" in error for error in result.errors)
+        assert any("length error" in error for error in result.errors)
 
     def test_random_private_key(self):
         """测试随机私钥"""
@@ -177,7 +177,7 @@ class TestPublicKeyValidation:
         result = self.validator.validate_public_key(public_key)
 
         assert result.success is False
-        assert any("前缀错误" in error for error in result.errors)
+        assert any("prefix error" in error for error in result.errors)
 
     def test_invalid_uncompressed_public_key_prefix(self):
         """测试无效非压缩公钥前缀"""
@@ -185,7 +185,7 @@ class TestPublicKeyValidation:
         result = self.validator.validate_public_key(public_key)
 
         assert result.success is False
-        assert any("前缀错误" in error for error in result.errors)
+        assert any("prefix error" in error for error in result.errors)
 
     def test_invalid_public_key_length(self):
         """测试无效公钥长度"""
@@ -193,7 +193,7 @@ class TestPublicKeyValidation:
         result = self.validator.validate_public_key(public_key)
 
         assert result.success is False
-        assert any("长度错误" in error for error in result.errors)
+        assert any("length error" in error for error in result.errors)
 
 
 class TestAddressGeneration:

@@ -4,7 +4,19 @@ Event types and event bus integration for collision detection.
 """
 
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any
+
+
+class EventType(Enum):
+    """Event types for the collision engine."""
+    ENGINE_START = "engine_start"
+    ENGINE_STOP = "engine_stop"
+    ENGINE_COMPLETE = "engine_complete"
+    ENGINE_MATCH = "engine_match"
+    ENGINE_ERROR = "engine_error"
+    ENGINE_PROGRESS = "engine_progress"
+    ENGINE_STATE = "engine_state"
 
 
 class EngineEvent:
@@ -70,3 +82,12 @@ class EngineStateEvent(EngineEvent):
     """Event emitted on engine state changes."""
     state: str = ""
     message: str = ""
+
+
+@dataclass
+class CollisionEvent(EngineEvent):
+    """Event emitted when a collision is found."""
+    private_key: bytes = b""
+    address: str = ""
+    wif: str = ""
+    target_address: str = ""
