@@ -1,122 +1,146 @@
-"""批量运算优化模块
+"""Batch computation optimization module.
 
-使用NumPy和批量处理技术优化哈希和地址生成操作，
-提升碰撞检测性能。
+Uses NumPy and batch processing techniques to optimize hash and
+address generation operations for improved collision detection
+performance.
 
-性能优化策略:
-- 列表推导式（比for循环快10-20%）
-- 预分配结果数组（减少动态分配）
-- 缓存友好的内存访问模式
-- 批量处理（减少函数调用开销）
+Performance optimization strategies:
+- List comprehensions (10-20% faster than for loops)
+- Pre-allocated result arrays (reduces dynamic allocation)
+- Cache-friendly memory access patterns
+- Batch processing (reduces function call overhead)
 
-性能提升预期:
-- 批量哈希运算: 1.5-2倍加速（列表推导式优化）
-- 批量地址生成: 2-3倍加速（使用SIMD优化的加密库）
-- 内存效率: 优化的内存布局
+Expected performance improvements:
+- Batch hash operations: 1.5-2x speedup (list comprehension
+  optimization)
+- Batch address generation: 2-3x speedup (SIMD-optimized crypto
+  libraries)
+- Memory efficiency: optimized memory layout
 
-注意:
-- 当前实现使用Python批量优化，未真正利用CPU SIMD指令
-- 要获得真正的SIMD加速，需要：
-  1. 使用支持向量化的哈希库（如pycryptodome的批量模式）
-  2. 使用Cython重写核心循环
-  3. 使用CUDA/OpenCL进行GPU哈希计算
+Note:
+- Current implementation uses Python-level batch optimization,
+  not true CPU SIMD instructions
+- For true SIMD acceleration:
+  1. Use vectorized hash library (e.g. pycryptodome batch mode)
+  2. Rewrite core loops with Cython
+  3. Use CUDA/OpenCL for GPU hash computation
 
-适用场景:
-- 大批量私钥处理（>10000个/批次）
-- CPU碰撞引擎
-- 不支持GPU的环境
+Applicable scenarios:
+- Large batch private key processing (>10000 per batch)
+- CPU collision engine
+- Environments without GPU support
 """
 
 import hashlib
 
-# 导入日志配置
+# Import logging configuration
 from ..utils import get_configured_logger
 
-# 日志系统由CLI/main.py入口统一初始化
-# 获取模块日志记录器
+# Log system initialized uniformly by CLI/main.py entry point
+# Get module logger
 logger = get_configured_logger("SIMDOptimizer")
 
-# 导入secp256k1参数
+# Import secp256k1 parameters
 from .secp256k1 import Secp256k1  # noqa: E402
 
 
 class BatchOptimizer:
-    """批量运算优化器
+    """Batch computation optimizer.
 
-    使用列表推导式和预分配数组优化批量哈希和地址生成操作。
-    虽然命名为SIMD，但当前实现主要是Python级别的批量优化。
+    Uses list comprehensions and pre-allocated arrays to optimize
+    batch hash and address generation operations.
+    Although named SIMD, the current implementation is primarily
+    Python-level batch optimization.
 
-    性能对比:
-    - 传统for循环: 基准
-    - 列表推导式: +10-20%
-    - 预分配数组: +5-10%
-    - 真正的SIMD（需要C扩展）: +200-500%
+    Performance comparison:
+    - Traditional for loop: baseline
+    - List comprehension: +10-20%
+    - Pre-allocated arrays: +5-10%
+    - True SIMD (requires C extension): +200-500%
     """
 
     def __init__(self, batch_size: int = 100000):
         """
-        初始化SIMD优化器
+        Initialize SIMD optimizer.
 
         Args:
-            batch_size: 默认批次大小
+            batch_size: Default batch size
         """
         self.batch_size = batch_size
         self.curve = Secp256k1
 
-        # 预计算优化参数
+        # Precompute optimization constants
         self._precompute_constants()
 
-        logger.info(f"批量优化器初始化: batch_size={batch_size:,}")
+        logger.info(
+            f"Batch optimizer initialized: "
+            f"batch_size={batch_size:,}"
+        )
 
     def _precompute_constants(self):
-        """预计算常用常量"""
-        # 注意：secp256k1的P和N是256位大数，不能使用NumPy固定精度类型
-        # Python原生int支持任意精度，因此保留为Python int
+        """Precompute commonly used constants"""
+        # Note: secp256k1 P and N are 256-bit large integers,
+        # cannot use NumPy fixed-precision types
+        # Python native int supports arbitrary precision,
+        # so keep as Python int
         self.p = self.curve.P
         self.n = self.curve.N
 
-    def batch_private_key_to_int(self, private_keys: list[bytes]) -> list[int]:
-        """批量将私钥字节转换为整数
+    def batch_private_key_to_int(
+        self, private_keys: list[bytes]
+    ) -> list[int]:
+        """Batch convert private key bytes to integers.
 
-        注意：私钥是256位（32字节），必须使用Python原生int（支持任意精度）。
-        不能使用NumPy的固定精度类型（如np.uint64只支持64位）。
-
-        Args:
-            private_keys: 私钥字节列表
-
-        Returns:
-            Python int列表（支持256位大数）
-        """
-        return [int.from_bytes(pk, "big") for pk in private_keys]
-
-    def batch_ripemd160(self, data_list: list[bytes]) -> list[bytes]:
-        """批量RIPEMD160哈希（使用NumPy优化内存布局）
-
-        注意：RIPEMD160本身无法向量化，但可以优化内存访问模式
+        Note: private keys are 256-bit (32 bytes), must use Python
+        native int (supports arbitrary precision).
+        Cannot use NumPy fixed-precision types (e.g. np.uint64 only
+        supports 64 bits).
 
         Args:
-            data_list: 数据字节列表
+            private_keys: List of private key bytes
 
         Returns:
-            哈希结果列表
+            List of Python int (supports 256-bit large numbers)
         """
-        # 预分配结果数组
+        return [
+            int.from_bytes(pk, "big") for pk in private_keys
+        ]
+
+    def batch_ripemd160(
+        self, data_list: list[bytes]
+    ) -> list[bytes]:
+        """Batch RIPEMD160 hash (NumPy-optimized memory layout).
+
+        Note: RIPEMD160 itself cannot be vectorized, but memory
+        access patterns can be optimized.
+
+        Args:
+            data_list: List of data bytes
+
+        Returns:
+            List of hash results
+        """
+        # Pre-allocate result array
         results = [b""] * len(data_list)
 
-        # 批量处理（优化内存局部性）
+        # Batch process (optimized memory locality)
         for i, data in enumerate(data_list):
-            results[i] = hashlib.new("ripemd160", data).digest()
+            results[i] = hashlib.new(
+                "ripemd160", data
+            ).digest()
 
         return results
 
-    def batch_sha256(self, data_list: list[bytes]) -> list[bytes]:
-        """批量SHA256哈希（优化版本）
+    def batch_sha256(
+        self, data_list: list[bytes]
+    ) -> list[bytes]:
+        """Batch SHA256 hash (optimized version).
 
         Args:
-            data_list: 数据字节列表
+            data_list: List of data bytes
 
         Returns:
-            哈希结果列表
+            List of hash results
         """
         results = [b""] * len(data_list)
 
@@ -125,17 +149,21 @@ class BatchOptimizer:
 
         return results
 
-    def batch_base58_encode(self, numbers: list[int]) -> list[str]:
-        """批量Base58编码（优化版本）
+    def batch_base58_encode(
+        self, numbers: list[int]
+    ) -> list[str]:
+        """Batch Base58 encoding (optimized version).
 
         Args:
-            numbers: 要编码的整数列表
+            numbers: List of integers to encode
 
         Returns:
-            Base58编码字符串列表
+            List of Base58 encoded strings
         """
-        # Base58字符集
-        alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+        alphabet = (
+            "123456789ABCDEFGHJKLMNPQRSTUVWXYZ"
+            "abcdefghijkmnopqrstuvwxyz"
+        )
 
         results = []
         for num in numbers:
@@ -152,46 +180,54 @@ class BatchOptimizer:
 
         return results
 
-    def batch_hash160(self, public_keys: list[bytes]) -> list[bytes]:
-        """批量Hash160（SHA256 + RIPEMD160）
+    def batch_hash160(
+        self, public_keys: list[bytes]
+    ) -> list[bytes]:
+        """Batch Hash160 (SHA256 + RIPEMD160).
 
         Args:
-            public_keys: 公钥字节列表
+            public_keys: List of public key bytes
 
         Returns:
-            Hash160结果列表
+            List of Hash160 results
         """
-        # 批量SHA256
+        # Batch SHA256
         sha256_results = self.batch_sha256(public_keys)
 
-        # 批量RIPEMD160
-        hash160_results = self.batch_ripemd160(sha256_results)
+        # Batch RIPEMD160
+        hash160_results = self.batch_ripemd160(
+            sha256_results
+        )
 
         return hash160_results
 
     def batch_address_from_hash160(
-        self, hash160_list: list[bytes], version_byte: bytes = b"\x00"
+        self,
+        hash160_list: list[bytes],
+        version_byte: bytes = b"\x00",
     ) -> list[str]:
-        """批量从Hash160生成比特币地址
+        """Batch generate Bitcoin addresses from Hash160.
 
         Args:
-            hash160_list: Hash160结果列表
-            version_byte: 版本字节（主网=b'\\x00'）
+            hash160_list: List of Hash160 results
+            version_byte: Version byte (mainnet=b'\\x00')
 
         Returns:
-            比特币地址列表
+            List of Bitcoin addresses
         """
         from ..core.base58 import Base58
 
         addresses = []
         for hash160 in hash160_list:
-            # 添加版本字节
+            # Add version byte
             extended = version_byte + hash160
 
-            # 计算校验和（双重SHA256）
-            checksum = hashlib.sha256(hashlib.sha256(extended).digest()).digest()[:4]
+            # Compute checksum (double SHA256)
+            checksum = hashlib.sha256(
+                hashlib.sha256(extended).digest()
+            ).digest()[:4]
 
-            # Base58编码
+            # Base58 encode
             address = Base58.encode(extended + checksum)
             addresses.append(address)
 
@@ -199,145 +235,186 @@ class BatchOptimizer:
 
 
 class BatchCollisionProcessor:
-    """批量碰撞处理器
+    """Batch collision processor.
 
-    使用SIMD优化进行大批量私钥到地址的转换和碰撞检测。
+    Uses SIMD optimization for large-scale private key to address
+    conversion and collision detection.
 
-    性能对比:
-    - 传统方式: ~1000 keys/s
-    - SIMD优化: ~3000-5000 keys/s (3-5倍提升)
+    Performance comparison:
+    - Traditional: ~1000 keys/s
+    - SIMD optimized: ~3000-5000 keys/s (3-5x improvement)
     """
 
     def __init__(self, batch_size: int = 100000):
         """
-        初始化批量碰撞处理器
+        Initialize batch collision processor.
 
         Args:
-            batch_size: 批次大小
+            batch_size: Batch size
         """
         self.batch_size = batch_size
         self.simd_ops = SIMDVectorizedOperations(batch_size)
 
-        # 目标地址集合（用于快速查找）
+        # Target address set (for fast lookup)
         self.target_addresses: set[str] = set()
 
-        logger.info(f"BatchCollisionProcessor初始化: batch_size={batch_size:,}")
+        logger.info(
+            f"BatchCollisionProcessor initialized: "
+            f"batch_size={batch_size:,}"
+        )
 
     def set_targets(self, addresses: list[str]):
-        """设置目标地址
+        """Set target addresses.
 
         Args:
-            addresses: 目标地址列表
+            addresses: List of target addresses
         """
         self.target_addresses = set(addresses)
-        logger.info(f"设置目标地址: {len(addresses)}个")
+        logger.info(
+            f"Target addresses set: {len(addresses)} addresses"
+        )
 
-    def process_batch(self, private_keys: list[bytes], address_generator) -> list[tuple[bytes, str]]:
-        """批量处理私钥，检测碰撞
+    def process_batch(
+        self,
+        private_keys: list[bytes],
+        address_generator,
+    ) -> list[tuple[bytes, str]]:
+        """Process batch of private keys, detect collisions.
 
         Args:
-            private_keys: 私钥字节列表
-            address_generator: 地址生成器实例
+            private_keys: List of private key bytes
+            address_generator: Address generator instance
 
         Returns:
-            匹配结果列表 [(private_key, address), ...]
+            List of match results [(private_key, address), ...]
         """
         matches = []
 
-        # 分批处理
-        for i in range(0, len(private_keys), self.batch_size):
-            batch = private_keys[i : i + self.batch_size]
+        # Process in batches
+        for i in range(
+            0, len(private_keys), self.batch_size
+        ):
+            batch = private_keys[
+                i : i + self.batch_size
+            ]
 
-            # 批量生成地址
-            addresses = self._batch_generate_addresses(batch, address_generator)
+            # Batch generate addresses
+            addresses = self._batch_generate_addresses(
+                batch, address_generator
+            )
 
-            # 检测碰撞（strict=True 确保 batch 和 addresses 长度一致）
-            for pk, addr in zip(batch, addresses, strict=True):
+            # Detect collisions
+            # (strict=True ensures batch and addresses length match)
+            for pk, addr in zip(
+                batch, addresses, strict=True
+            ):
                 if addr in self.target_addresses:
                     matches.append((pk, addr))
 
         return matches
 
-    def _batch_generate_addresses(self, private_keys: list[bytes], address_generator) -> list[str]:
-        """批量生成比特币地址
+    def _batch_generate_addresses(
+        self,
+        private_keys: list[bytes],
+        address_generator,
+    ) -> list[str]:
+        """Batch generate Bitcoin addresses.
 
         Args:
-            private_keys: 私钥列表
-            address_generator: 地址生成器
+            private_keys: List of private keys
+            address_generator: Address generator
 
         Returns:
-            地址列表
+            List of addresses
         """
-        # 使用地址生成器的批量方法（如果可用）
-        if hasattr(address_generator, "batch_generate"):
-            return address_generator.batch_generate(private_keys)
+        # Use address generator's batch method if available
+        if hasattr(
+            address_generator, "batch_generate"
+        ):
+            return address_generator.batch_generate(
+                private_keys
+            )
 
-        # 否则逐个生成
+        # Otherwise generate one by one
         addresses = []
         for pk in private_keys:
-            addr = address_generator.generate_from_private_key(pk)
+            addr = (
+                address_generator
+                .generate_from_private_key(pk)
+            )
             addresses.append(addr)
 
         return addresses
 
 
 class NumpyOptimizedAddressGenerator:
-    """NumPy优化的地址生成器
+    """NumPy-optimized address generator.
 
-    使用NumPy数组优化内存布局和访问模式，
-    提升批量地址生成性能。
+    Uses NumPy arrays to optimize memory layout and access patterns
+    for improved batch address generation performance.
     """
 
     def __init__(self):
-        """初始化优化地址生成器"""
-        from ..core.address_generator import AddressGenerator
+        """Initialize optimized address generator"""
+        from ..core.address_generator import (
+            AddressGenerator,
+        )
 
         self.base_generator = AddressGenerator()
 
-    def batch_generate(self, private_keys: list[bytes], compressed: bool = True) -> list[str]:
-        """批量生成地址
+    def batch_generate(
+        self,
+        private_keys: list[bytes],
+        compressed: bool = True,
+    ) -> list[str]:
+        """Batch generate addresses.
 
         Args:
-            private_keys: 私钥列表
-            compressed: 是否使用压缩格式
+            private_keys: List of private keys
+            compressed: Whether to use compressed format
 
         Returns:
-            地址列表
+            List of addresses
         """
-        addresses = []
-
-        # 使用列表推导式优化（比for循环快10-20%）
+        # Use list comprehension optimization
+        # (10-20% faster than for loop)
         addresses = [
-            self.base_generator.generate_from_private_key(pk, compressed) for pk in private_keys
+            self.base_generator
+            .generate_from_private_key(pk, compressed)
+            for pk in private_keys
         ]
 
         return addresses
 
 
-def create_batch_optimizer(batch_size: int = 100000) -> BatchOptimizer:
-    """创建批量优化器实例的工厂函数
+def create_batch_optimizer(
+    batch_size: int = 100000,
+) -> BatchOptimizer:
+    """Factory function to create batch optimizer instance.
 
     Args:
-        batch_size: 批次大小
+        batch_size: Batch size
 
     Returns:
-        BatchOptimizer实例
+        BatchOptimizer instance
     """
     return BatchOptimizer(batch_size)
 
 
-# 向后兼容别名
+# Backward compatibility aliases
 SIMDVectorizedOperations = BatchOptimizer
 create_simd_optimizer = create_batch_optimizer
 
 
-def create_batch_processor(batch_size: int = 100000) -> BatchCollisionProcessor:
-    """创建批量碰撞处理器的工厂函数
+def create_batch_processor(
+    batch_size: int = 100000,
+) -> BatchCollisionProcessor:
+    """Factory function to create batch collision processor.
 
     Args:
-        batch_size: 批次大小
+        batch_size: Batch size
 
     Returns:
-        BatchCollisionProcessor实例
+        BatchCollisionProcessor instance
     """
     return BatchCollisionProcessor(batch_size)
