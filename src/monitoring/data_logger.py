@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-比特币密钥碰撞检测数据日志系统
+Bitcoin key collision detection data logging system.
 
-该模块提供全面的数据日志记录功能，包括性能数据、系统状态、引擎信息和错误记录。
-支持数据存储、轮转机制和报告生成。
+Provides comprehensive data logging including performance data,
+system status, engine information, and error records.
+Supports data storage, rotation, and report generation.
 """
 
 import copy
