@@ -1,5 +1,12 @@
 """GPU module constants and defaults."""
 
+# OpenCL requirements
+OPENCL_MIN_REQUIRED_VERSION = (1, 2)
+OPENCL_RECOMMENDED_VERSION = (2, 0)
+OPENCL_OPTIMAL_VERSION = (2, 0)
+OPENCL_UPGRADE_ADVICE = "Consider upgrading your GPU driver"
+OPENCL_VERSION_UNKNOWN = "Unknown"
+
 # Default batch sizes
 DEFAULT_GPU_BATCH_SIZE = 1000000
 DEFAULT_CPU_BATCH_SIZE = 100000
@@ -9,8 +16,8 @@ GPU_KERNEL_TIMEOUT = 300
 GPU_DEVICE_TIMEOUT = 60
 
 # Memory limits
-GPU_MAX_MEMORY_USAGE = 0.8  # 80% of available GPU memory
-GPU_MIN_MEMORY_FREE = 256 * 1024 * 1024  # 256MB
+GPU_MAX_MEMORY_USAGE = 0.8
+GPU_MIN_MEMORY_FREE = 256 * 1024 * 1024
 
 # Device management
 MAX_GPU_DEVICES = 8
