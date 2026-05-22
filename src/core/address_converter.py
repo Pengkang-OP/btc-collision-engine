@@ -1,173 +1,239 @@
-"""地址转换工具 - 私钥到地址和WIF的完整转换"""
+"""Bitcoin address format converter.
 
-from typing import Any
+Provides conversion between different Bitcoin address formats:
+- P2PKH, P2SH, Bech32
+- Supports address type detection and format validation
+"""
+
+import hashlib
 
 from ..utils import get_configured_logger
+from ..utils.bech32_codec import bech32_decode, bech32_encode
 from .base58 import Base58
 from .hash_utils import HashUtils
-from .secp256k1 import EllipticCurve
-from .wif import WIF
 
-# 日志系统由CLI/main.py入口统一初始化
 logger = get_configured_logger("AddressConverter")
+
+# Mainnet version bytes
+P2PKH_VERSION = 0x00
+P2SH_VERSION = 0x05
 
 
 class AddressConverter:
+    """Bitcoin address format converter.
+
+    Provides conversion and validation between different Bitcoin
+    address formats.
+
+    Feature overview:
+    - Detect address type (P2PKH / P2SH / Bech32)
+    - Convert between formats
+    - Validate address format
+    - Calculate address hash
     """
-    地址转换工具
 
-    实现私钥到公钥地址的转换，以及公钥地址到WIF格式的转换，
-    严格遵循Bitcoin Core规范。
+    @staticmethod
+    def detect_type(address: str) -> str:
+        """Detect Bitcoin address type.
 
-    示例:
-        >>> converter = AddressConverter()
-        >>> result = converter.private_key_to_all(private_key)
-    """
+        Args:
+            address: Bitcoin address string
 
-    def __init__(self) -> None:
-        """初始化地址转换器"""
-        self.ec = EllipticCurve()
-        logger.info("AddressConverter初始化完成")
-
-    def private_key_to_address(self, private_key: bytes, compressed: bool = True) -> dict[str, Any]:
+        Returns:
+            Address type string: 'P2PKH', 'P2SH', 'BECH32', or
+                'UNKNOWN'
         """
-        私钥 → 比特币地址 (严格遵循Bitcoin Core规范)
+        address = address.strip()
+        if not address:
+            return "UNKNOWN"
+        if address.startswith("1") and 25 <= len(address) <= 34:
+            return "P2PKH"
+        elif address.startswith("3") and 25 <= len(address) <= 34:
+            return "P2SH"
+        elif address.lower().startswith("bc1"):
+            return "BECH32"
+        return "UNKNOWN"
 
-        6步推导流程:
-        1. 椭圆曲线标量乘法 (私钥 → 公钥)
-        2. SHA-256哈希
-        3. RIPEMD-160哈希 (得到Hash160)
-        4. 添加版本字节 (0x00 = Mainnet P2PKH)
-        5. 计算校验和 (双重SHA-256)
-        6. Base58Check编码
+    @staticmethod
+    def is_valid_address(address: str) -> bool:
+        """Check if address format is valid.
 
-        参数:
-            private_key: 32字节私钥
-            compressed: 是否使用压缩公钥
+        Args:
+            address: Bitcoin address string
 
-        返回:
-            包含所有转换结果的字典
+        Returns:
+            True if address format is valid
         """
-        if len(private_key) != 32:
-            raise ValueError("私钥必须为32字节")
+        addr_type = AddressConverter.detect_type(address)
+        if addr_type == "UNKNOWN":
+            return False
 
-        # Step 1: 椭圆曲线标量乘法 (私钥 → 公钥)
-        public_key = self.ec.generate_public_key(private_key, compressed)
-
-        # Step 2-3: Hash160 = RIPEMD160(SHA256(public_key))
-        hash160 = HashUtils.hash160(public_key)
-
-        # Step 4-6: Base58Check编码生成地址
-        address = Base58.check_encode(0x00, hash160)
-
-        return {
-            "private_key": private_key,
-            "public_key": public_key,
-            "hash160": hash160,
-            "address": address,
-            "compressed": compressed,
-        }
-
-    def private_key_to_wif(
-        self, private_key: bytes, compressed: bool = True, mainnet: bool = True
-    ) -> str:
-        """
-        私钥 → WIF格式 (Wallet Import Format)
-
-        参数:
-            private_key: 32字节私钥
-            compressed: 是否使用压缩格式
-            mainnet: 是否为主网（False为测试网）
-
-        返回:
-            WIF格式字符串
-        """
-        return WIF.encode(private_key, compressed)
-
-    def private_key_to_all(self, private_key: bytes) -> dict[str, Any]:
-        """
-        私钥 → 所有格式的完整转换
-
-        参数:
-            private_key: 32字节私钥
-
-        返回:
-            包含所有格式转换结果的字典
-        """
-        if len(private_key) != 32:
-            raise ValueError("私钥必须为32字节")
-
-        # 生成压缩格式
-        compressed_result = self.private_key_to_address(private_key, compressed=True)
-
-        # 生成非压缩格式
-        uncompressed_result = self.private_key_to_address(private_key, compressed=False)
-
-        # 生成WIF格式
-        wif_compressed = self.private_key_to_wif(private_key, compressed=True)
-        wif_uncompressed = self.private_key_to_wif(private_key, compressed=False)
-
-        return {
-            "private_key": private_key,
-            # 压缩格式
-            "public_key_compressed": compressed_result["public_key"],
-            "hash160_compressed": compressed_result["hash160"],
-            "address_compressed": compressed_result["address"],
-            "wif_compressed": wif_compressed,
-            # 非压缩格式
-            "public_key_uncompressed": uncompressed_result["public_key"],
-            "hash160_uncompressed": uncompressed_result["hash160"],
-            "address_uncompressed": uncompressed_result["address"],
-            "wif_uncompressed": wif_uncompressed,
-        }
-
-    def wif_to_address(self, wif: str) -> dict[str, Any]:
-        """
-        WIF → 私钥 → 地址
-
-        参数:
-            wif: WIF格式私钥
-
-        返回:
-            转换结果字典
-        """
-        # 解码WIF
-        private_key, compressed = WIF.decode(wif)
-
-        # 生成地址
-        return self.private_key_to_address(private_key, compressed)
-
-    def validate_conversion(
-        self, private_key: bytes, expected_address: str | None = None
-    ) -> tuple[bool, str]:
-        """
-        验证转换正确性
-
-        参数:
-            private_key: 私钥
-            expected_address: 期望的地址（可选）
-
-        返回:
-            (是否有效, 错误信息)
-        """
         try:
-            # 生成地址
-            result = self.private_key_to_all(private_key)
+            if addr_type == "BECH32":
+                hrp, data, spec = bech32_decode(address)
+                return hrp is not None
+            else:
+                version, hash160 = Base58.check_decode(
+                    address
+                )
+                return len(hash160) == 20
+        except (ValueError, TypeError):
+            return False
 
-            # 验证WIF可解码
-            decoded_key, _ = WIF.decode(result["wif_compressed"])
-            if decoded_key != private_key:
-                return False, "WIF解码后私钥不匹配"
+    @staticmethod
+    def get_address_hash(address: str) -> bytes | None:
+        """Get the hash from an address.
 
-            # 验证地址格式
-            if not result["address_compressed"].startswith("1"):
-                return False, "地址格式无效"
+        Extracts the hash embedded in the address.
+        For Base58 addresses: returns decoded hash part.
+        For Bech32 addresses: returns witness program data.
 
-            # 验证期望地址
-            if expected_address and result["address_compressed"] != expected_address:
-                return False, "地址不匹配"
+        Args:
+            address: Bitcoin address string
 
-            return True, "验证通过"
+        Returns:
+            Address hash bytes, or None if address is invalid
+        """
+        if not AddressConverter.is_valid_address(address):
+            return None
+        try:
+            addr_type = AddressConverter.detect_type(address)
+            if addr_type == "BECH32":
+                hrp, data, spec = bech32_decode(address)
+                if hrp is None:
+                    return None
+                return bytes(data[1:])
+            else:
+                version, hash160 = Base58.check_decode(
+                    address
+                )
+                return hash160
+        except (ValueError, TypeError):
+            return None
 
-        except (ValueError, KeyError, TypeError) as e:
-            return False, str(e)
+    @staticmethod
+    def p2pkh_to_p2sh(address: str) -> str | None:
+        """Convert P2PKH address to P2SH address.
+
+        Converts a P2PKH address to corresponding P2SH address.
+
+        Args:
+            address: P2PKH address starting with '1'
+
+        Returns:
+            P2SH address starting with '3', or None if conversion
+            fails
+        """
+        if AddressConverter.detect_type(address) != "P2PKH":
+            return None
+        try:
+            hash160 = AddressConverter.get_address_hash(
+                address
+            )
+            if hash160 is None:
+                return None
+
+            # Build P2PKH redeem script
+            redeem_script = (
+                bytes([0x76, 0xA9, 0x14])
+                + hash160
+                + bytes([0x88, 0xAC])
+            )
+
+            # Hash160 of redeem script
+            script_hash = HashUtils.hash160(redeem_script)
+
+            # Add P2SH version byte
+            versioned = (
+                bytes([P2SH_VERSION]) + script_hash
+            )
+
+            # Base58Check encoding
+            checksum = HashUtils.double_sha256(versioned)[
+                :4
+            ]
+            return Base58.encode(versioned + checksum)
+        except (ValueError, TypeError) as e:
+            logger.debug(
+                f"P2PKH to P2SH conversion failed: {e}"
+            )
+            return None
+
+    @staticmethod
+    def p2pkh_to_bech32(address: str) -> str | None:
+        """Convert P2PKH address to Bech32 address.
+
+        Converts a P2PKH address to corresponding Bech32 (P2WPKH)
+        address.
+
+        Args:
+            address: P2PKH address starting with '1'
+
+        Returns:
+            Bech32 address starting with 'bc1q', or None if
+            conversion fails
+        """
+        if AddressConverter.detect_type(address) != "P2PKH":
+            return None
+        try:
+            hash160 = AddressConverter.get_address_hash(
+                address
+            )
+            if hash160 is None:
+                return None
+
+            return bech32_encode("bc", 0, hash160, "bech32")
+        except Exception as e:
+            logger.debug(
+                f"P2PKH to Bech32 conversion failed: {e}"
+            )
+            return None
+
+
+class AddressHashCalculator:
+    """Address hash calculator.
+
+    Provides hash calculation for Bitcoin addresses, supporting
+    various hash algorithms and formats.
+    """
+
+    @staticmethod
+    def hash160_to_address(
+        hash160: bytes, version_byte: int = 0x00
+    ) -> str:
+        """Convert Hash160 to Bitcoin address.
+
+        Args:
+            hash160: 20-byte Hash160 value
+            version_byte: Address version byte (mainnet P2PKH=0x00)
+
+        Returns:
+            Bitcoin address string
+        """
+        return Base58.check_encode(version_byte, hash160)
+
+    @staticmethod
+    def double_sha256(data: bytes) -> bytes:
+        """Compute double SHA256 hash.
+
+        Args:
+            data: Input data
+
+        Returns:
+            32-byte hash result
+        """
+        return hashlib.sha256(
+            hashlib.sha256(data).digest()
+        ).digest()
+
+    @staticmethod
+    def hash160(data: bytes) -> bytes:
+        """Compute Hash160 (SHA256 + RIPEMD160).
+
+        Args:
+            data: Input data
+
+        Returns:
+            20-byte Hash160 result
+        """
+        return HashUtils.hash160(data)
