@@ -2052,7 +2052,7 @@ print(f"Crypto backend: {unified_config['crypto']['backend']}")
 
 ## 23.3 引擎架构整合
 
-#### 23.3.1 引擎类图
+### 23.3.1 引擎类图
 
 ```
 
@@ -2112,7 +2112,7 @@ engine = create_collision_engine(targets, mode='cpu',
 
 ## 23.4 异常处理整合
 
-#### 23.4.1 ExceptionHandler架构
+### 23.4.1 ExceptionHandler架构
 
 ```python
 ExceptionHandler
@@ -2175,7 +2175,7 @@ except Exception as e:
 
 ## 23.5 整合质量评估
 
-#### 23.5.1 代码质量评分
+### 23.5.1 代码质量评分
 
 | 模块 | 架构 | 实现 | 文档 | 测试 | 综合 |
 |------|------|------|------|------|------|
@@ -2223,7 +2223,7 @@ unified_config = coordinator.get_unified_config()
 
 ## 23.7 工厂函数增强
 
-#### create_collision_engine() 优化
+### create_collision_engine() 优化
 
 **位置**: `src/collision/__init__.py`
 

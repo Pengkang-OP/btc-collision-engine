@@ -29,7 +29,7 @@ finally:
     engine.cleanup()  # 自动关闭异步日志
 ```
 
-### 2. 通过配置文件使用
+## 2. 通过配置文件使用
 
 **config.json**:
 
@@ -123,7 +123,7 @@ if engine._async_log_handler:
     engine._async_log_handler._async_logger._queue.maxsize = 50000
 ```
 
-### 2. 日志轮转策略
+## 2. 日志轮转策略
 
 ```python
 # 大日志文件（适合长时间运行）
@@ -136,7 +136,7 @@ engine = GPUCollisionEngine(
 )
 ```
 
-### 3. 调试模式
+## 3. 调试模式
 
 ```python
 # 启用详细调试日志
@@ -189,7 +189,7 @@ grep -n "class AsyncFileHandler" src/utils/logger.py
 python tests/verify_threadsafe_replacement.py
 ```
 
-### Q2: 日志丢弃过多？
+## Q2: 日志丢弃过多？
 
 **症状**: `dropped_count > 100`
 
@@ -215,7 +215,7 @@ from src.utils.logger import SampledLogger
 sampled_logger = SampledLogger(logger, sample_rate=100)
 ```
 
-### Q3: 程序退出时日志丢失？
+## Q3: 程序退出时日志丢失？
 
 **原因**: 未调用 `cleanup()`
 
@@ -280,7 +280,7 @@ engine = GPUCollisionEngine(
 )
 ```
 
-### 3. 长时间运行任务
+## 3. 长时间运行任务
 
 ```python
 # 使用大日志文件 + 多备份

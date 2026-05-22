@@ -58,7 +58,7 @@ cp config.example.json config.production.json
 nano config.production.json
 ```
 
-### 2. 启动服务
+## 2. 启动服务
 
 ```bash
 # 构建镜像
@@ -71,7 +71,7 @@ docker-compose --profile cpu up -d
 docker-compose logs -f btc-engine-cpu
 ```
 
-### 3. 验证运行
+## 3. 验证运行
 
 ```bash
 # 检查容器状态
@@ -97,7 +97,7 @@ docker exec btc-collision-cpu cat data_logs/current_data.json
 docker-compose --profile gpu --profile nvidia build
 ```
 
-#### 2. 启动服务
+## 2. 启动服务
 
 ```bash
 # 启动GPU服务
@@ -110,7 +110,7 @@ docker exec btc-collision-gpu nvidia-smi
 docker-compose logs -f btc-engine-gpu-nvidia
 ```
 
-#### 3. 验证GPU加速
+## 3. 验证GPU加速
 
 ```bash
 # 检查GPU是否被识别
@@ -123,16 +123,16 @@ for platform in cl.get_platforms():
 "
 ```
 
-### AMD GPU
+## AMD GPU
 
-#### 1. 构建AMD GPU镜像
+### 1. 构建AMD GPU镜像
 
 ```bash
 # 构建AMD GPU镜像
 docker-compose --profile gpu --profile amd build
 ```
 
-#### 2. 启动服务
+## 2. 启动服务
 
 ```bash
 # 启动AMD GPU服务
@@ -196,7 +196,7 @@ docker-compose --profile monitoring up -d
 # URL: http://localhost:9090
 ```
 
-### 自定义监控
+## 自定义监控
 
 ```bash
 # 编辑Grafana仪表板配置
@@ -231,7 +231,7 @@ tar xzf btc-data-backup-20240101.tar.gz
 docker-compose up -d
 ```
 
-### 清理旧数据
+## 清理旧数据
 
 ```bash
 # 清理30天前的数据
@@ -258,7 +258,7 @@ docker-compose logs --tail=100 btc-engine-cpu
 docker-compose logs -t btc-engine-cpu
 ```
 
-### 日志轮转
+## 日志轮转
 
 Docker Compose已配置日志轮转：
 
@@ -296,7 +296,7 @@ deploy:
       memory: 16G      # 限制使用16GB内存
 ```
 
-### GPU优化
+## GPU优化
 
 ```json
 {
@@ -340,7 +340,7 @@ with open('config.production.json') as f:
 docker exec btc-collision-cpu python -m src.utils.health_check
 ```
 
-### GPU不可用
+## GPU不可用
 
 ```bash
 # 检查NVIDIA驱动
@@ -354,7 +354,7 @@ sudo nvidia-ctk runtime configure --runtime=docker
 sudo systemctl restart docker
 ```
 
-### 性能低下
+## 性能低下
 
 ```bash
 # 检查当前配置
@@ -367,7 +367,7 @@ docker exec btc-collision-gpu cat data_logs/current_data.json | jq '.performance
 docker exec btc-collision-gpu python benchmarks/benchmark_optimizations.py
 ```
 
-### 断点恢复
+## 断点恢复
 
 ```bash
 # 检查断点文件
@@ -404,7 +404,7 @@ docker-compose down
 docker-compose up -d
 ```
 
-### 清理系统
+## 清理系统
 
 ```bash
 # 清理未使用的镜像
@@ -417,7 +417,7 @@ docker volume prune
 docker system prune -a --volumes
 ```
 
-### 导出配置
+## 导出配置
 
 ```bash
 # 导出当前配置
@@ -446,7 +446,7 @@ chmod 600 config.production.json
 chmod 750 data/ logs/ monitoring_data/
 ```
 
-### 网络安全
+## 网络安全
 
 ```bash
 # 仅监听localhost
@@ -456,7 +456,7 @@ ports:
   - "127.0.0.1:9090:9090"  # Prometheus
 ```
 
-### 用户隔离
+## 用户隔离
 
 Docker容器默认以非root用户（btc-engine）运行，已配置安全加固：
 
@@ -500,7 +500,7 @@ A:
 docker cp btc-collision-cpu:/opt/btc-collision-engine/data_logs/checkpoint.json ./backup-checkpoint.json
 ```
 
-### Q: 容器日志过大怎么办？
+## Q: 容器日志过大怎么办？
 
 A:
 

@@ -203,7 +203,7 @@ print(f"曲线阶: {Secp256k1.N:x}")
 
 **描述**: 表示椭圆曲线上的一个点，支持普通点和无穷远点（单位元）。
 
-#### 构造函数
+### 构造函数
 
 ```python
 ECPoint(x: Optional[int], y: Optional[int], curve=Secp256k1)
@@ -226,7 +226,7 @@ ECPoint(x: Optional[int], y: Optional[int], curve=Secp256k1)
 
 **方法**:
 
-##### copy()
+#### copy()
 
 ```python
 copy() -> 'ECPoint'
@@ -255,7 +255,7 @@ G_copy = G.copy()
 
 **描述**: 实现椭圆曲线上的核心运算，包括模逆元、点加法、标量乘法和公钥生成。
 
-#### 构造函数
+### 构造函数
 
 ```python
 EllipticCurve(curve=Secp256k1)
@@ -896,7 +896,7 @@ print(f"地址: {address}")
 
 **描述**: 加密后端管理器，自动选择最佳后端（coincurve或纯Python）。
 
-#### 架构
+### 架构
 
 ```
 
@@ -984,7 +984,7 @@ from src.core.multi_format_generator import MultiFormatAddressGenerator, Address
 generator = MultiFormatAddressGenerator()
 ```
 
-#### generate_public_key()
+## generate_public_key()
 
 ```python
 generate_public_key(private_key: bytes, compressed: bool = True) -> bytes
@@ -1000,7 +1000,7 @@ generate_public_key(private_key: bytes, compressed: bool = True) -> bytes
 
 **返回**: bytes - 公钥字节串
 
-#### generate_p2pkh_address()
+### generate_p2pkh_address()
 
 ```python
 generate_p2pkh_address(private_key: bytes) -> str
@@ -1143,7 +1143,7 @@ print(generator.detect_address_format("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t
 print(generator.detect_address_format("BC1QW508D6Q EJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4"))  # 支持大写
 ```
 
-#### match_all_formats()
+## match_all_formats()
 
 ```python
 match_all_formats(private_key: bytes, targets: Set[str], hrp: str = "bc") -> List[Tuple[str, str]]
@@ -1301,7 +1301,7 @@ stop()
 
 **说明**: 设置停止标志，等待当前批次完成后停止。
 
-#### is_running()
+### is_running()
 
 ```python
 is_running() -> bool
@@ -1661,7 +1661,7 @@ manager.add_target("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4")  # Bech32
 manager.add_target("BC1QW508D6Q EJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4")  # 支持大写
 ```
 
-#### add_targets()
+## add_targets()
 
 ```python
 add_targets(addresses: List[str]) -> int
@@ -1688,7 +1688,7 @@ count = manager.add_targets(addresses)
 print(f"成功添加 {count} 个地址")
 ```
 
-#### load_from_file()
+### load_from_file()
 
 ```python
 load_from_file(filepath: str) -> int
@@ -1737,7 +1737,7 @@ for fmt, addrs in targets.items():
     print(f"{fmt.value}: {len(addrs)} 个地址")
 ```
 
-#### get_all_targets()
+## get_all_targets()
 
 ```python
 get_all_targets() -> Set[str]
@@ -1747,7 +1747,7 @@ get_all_targets() -> Set[str]
 
 **返回**: Set[str] - 所有地址的集合（小写格式）
 
-#### get_format_stats()
+### get_format_stats()
 
 ```python
 get_format_stats() -> Dict[str, int]
@@ -1768,7 +1768,7 @@ for fmt, count in stats.items():
     print(f"  {fmt}: {count}")
 ```
 
-#### check_match()
+## check_match()
 
 ```python
 check_match(private_key: bytes) -> tuple[bool, Optional[str], Optional[str]]
@@ -1795,7 +1795,7 @@ if is_match:
     print(f"找到匹配！格式: {matched_fmt}, 地址: {matched_addr}")
 ```
 
-#### check_match_all()
+## check_match_all()
 
 ```python
 check_match_all(private_key: bytes) -> tuple[bool, list[tuple[str, str]]]
@@ -1824,7 +1824,7 @@ if is_match:
         print(f"  - {fmt}: {addr}")
 ```
 
-#### remove_target()
+## remove_target()
 
 ```python
 remove_target(address: str) -> bool
@@ -1839,7 +1839,7 @@ remove_target(address: str) -> bool
 
 **返回**: bool - True表示成功移除
 
-#### clear()
+### clear()
 
 ```python
 clear() -> None
@@ -2576,7 +2576,7 @@ monitor.stop()
 
 **描述**: 增强版监控系统,集成DataLogger提供更全面的数据记录。
 
-#### 构造函数
+### 构造函数
 
 ```python
 EnhancedMonitoringSystem(engine=None, collection_interval: int = 5)
