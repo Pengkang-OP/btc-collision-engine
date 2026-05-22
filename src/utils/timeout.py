@@ -1,11 +1,12 @@
-"""回调超时保护工具
+"""Callback timeout protection utility.
 
-提供装饰器和上下文管理器，用于防止用户回调函数超时执行阻塞主流程。
+Provides decorators and context managers to prevent user callback
+functions from blocking the main flow due to timeout.
 
-特性:
-- 双平台支持：Windows 使用线程超时，Unix 使用 SIGALRM 信号超时
-- 异常隔离：超时和异常不会中断主流程
-- 统一日志：超时触发时记录 WARNING 级别日志
+Features:
+- Dual platform: Windows uses thread timeout, Unix uses SIGALRM
+- Exception isolation: timeouts and exceptions don't interrupt main
+- Unified logging: WARNING level log on timeout
 
 使用示例:
     >>> from src.utils.timeout import with_timeout, TimeoutContext
