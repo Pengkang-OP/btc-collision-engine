@@ -7,6 +7,7 @@ from pathlib import Path
 
 BASE = Path(__file__).parent
 
+
 def main():
     # === 1. BANDIT Security Scan ===
     print("=" * 70)
@@ -22,19 +23,35 @@ def main():
         sev_count = {"HIGH": 0, "MEDIUM": 0, "LOW": 0}
         conf_count = {"HIGH": 0, "MEDIUM": 0, "LOW": 0}
         for r in results:
-            sev_count[r["issue_severity"]] = sev_count.get(r["issue_severity"], 0) + 1
-            conf_count[r["issue_confidence"]] = conf_count.get(r["issue_confidence"], 0) + 1
-        
+            sev_count[r["issue_severity"]] = (
+                sev_count.get(r["issue_severity"], 0) + 1
+            )
+            conf_count[r["issue_confidence"]] = (
+                conf_count.get(r["issue_confidence"], 0) + 1
+            )
+
         print(f"\nTotal issues found: {len(results)}")
-        print(f"  By Severity: HIGH={sev_count.get('HIGH',0)}, MEDIUM={sev_count.get('MEDIUM',0)}, LOW={sev_count.get('LOW',0)}")
-        print(f"  By Confidence: HIGH={conf_count.get('HIGH',0)}, MEDIUM={conf_count.get('MEDIUM',0)}, LOW={conf_count.get('LOW',0)}")
-        
+        print(
+            "  By Severity: HIGH={}, MEDIUM={}, LOW={}".format(
+                sev_count.get('HIGH', 0),
+                sev_count.get('MEDIUM', 0),
+                sev_count.get('LOW', 0),
+            )
+        )
+        print(
+            "  By Confidence: HIGH={}, MEDIUM={}, LOW={}".format(
+                conf_count.get('HIGH', 0),
+                conf_count.get('MEDIUM', 0),
+                conf_count.get('LOW', 0),
+            )
+        )
+
         # Print LOC metrics
         loc = metrics.get("loc", {})
         if loc:
             print(f"\n  Files scanned: {loc.get('total', 0)}")
             print(f"  Lines of code: {loc.get('total', 0)}")
-        
+
         if results:
             print("\n  Issue Details:")
             for i, r in enumerate(results, 1):
@@ -55,12 +72,11 @@ def main():
     print("FLAKE8 代码风格检查结果 (src/)")
     print("=" * 70)
     r = subprocess.run(
-        [sys.executable, "-m", "flake8", "src/", "--max-line-length=120", "--statistics", "--count"],
+        [sys.executable, "-m", "flake8", "src/", "--max-line-length=120",
+         "--statistics", "--count"],
         capture_output=True, text=True, timeout=120
     )
-    stdout_lines = [l for l in r.stdout.split("\n") if l.strip()]
-    stderr_lines = [l for l in r.stderr.split("\n") if l.strip()]
-    
+    stdout_lines = [line for line in r.stdout.split("\n") if line.strip()]
     if stdout_lines:
         print(f"\n  Flake8 output ({len(stdout_lines)} lines):")
         for line in stdout_lines:
@@ -69,7 +85,7 @@ def main():
         print(f"\n  Exit code: {r.returncode} (issues found)")
     else:
         print("\n  Zero issues found.")
-    
+
     # Count specific error types
     error_types = {}
     for line in stdout_lines:
@@ -78,7 +94,7 @@ def main():
             if len(parts) > 1:
                 error_types.setdefault(parts[-1], 0)
                 error_types[parts[-1]] += 1
-    
+
     if error_types:
         print("\n  Error type breakdown:")
         for etype, count in sorted(error_types.items(), key=lambda x: -x[1]):
@@ -93,30 +109,37 @@ def main():
         [sys.executable, "-m", "mypy", "src/core/"],
         capture_output=True, text=True, timeout=120
     )
-    mypy_lines = [l for l in r2.stdout.split("\n") if l.strip() and not l.startswith("#")]
-    
+    mypy_lines = [
+        line for line in r2.stdout.split("\n")
+        if line.strip() and not line.startswith("#")
+    ]
+
     if mypy_lines:
         print(f"\n  Mypy output ({len(mypy_lines)} lines):")
         for line in mypy_lines:
             print(f"    {line}")
     else:
         print("\n  No mypy output (may need configuration)")
-    
+
     # Count errors vs notes
-    errors = sum(1 for l in mypy_lines if "error:" in l)
-    notes = sum(1 for l in mypy_lines if "note:" in l)
+    errors = sum(1 for line in mypy_lines if "error:" in line)
+    notes = sum(1 for line in mypy_lines if "note:" in line)
     print(f"\n  Errors: {errors}, Notes: {notes}")
     print(f"  Exit code: {r2.returncode}")
-    
+
     # === 4. Summary ===
     print()
     print("=" * 70)
     print("审核结果汇总")
     print("=" * 70)
     print(f"\n  Bandit 安全问题: {len(results)}")
-    print(f"  Flake8 代码问题: {'Yes (exit=' + str(r.returncode) + ')' if r.returncode else 'None'}")
+    print(
+        "  Flake8 代码问题: "
+        + ('Yes (exit=' + str(r.returncode) + ')' if r.returncode else 'None')
+    )
     print(f"  Mypy 类型错误: {errors}")
     print()
+
 
 if __name__ == "__main__":
     main()

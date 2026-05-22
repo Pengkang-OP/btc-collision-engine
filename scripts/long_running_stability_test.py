@@ -8,7 +8,7 @@
     python scripts/long_running_stability_test.py --duration 3600
 
     # 运行 8 小时长时间测试
-    python scripts/long_running_stability_test.py --duration 28800 --output long_running_test_results.json
+    python scripts/long_running_stability_test.py --duration 28800
 """
 
 import time
@@ -86,7 +86,7 @@ def main():
     start_time = time.time()
     engine.start()
 
-    print(f"开始采样...")
+    print("开始采样...")
     print(f"{'时间(s)':<10} {'速度(keys/s)':<15} {'已检测':<15} {'内存(MB)':<12}")
     print("-" * 55)
 
@@ -115,7 +115,7 @@ def main():
     # 分析结果
     final_mem = get_memory_mb()
     speeds = [s["speed_keys_per_sec"] for s in samples if s["speed_keys_per_sec"] > 0]
-    memories = [s["memory_mb"] for s in samples]
+    # memories = [s["memory_mb"] for s in samples]
 
     result = {
         "test_type": "long_running_stability_test",
@@ -133,7 +133,7 @@ def main():
     }
 
     print("-" * 55)
-    print(f"\n测试完成!")
+    print("\n测试完成!")
     print(f"  采样数: {sample_count}")
     print(f"  平均速度: {result['avg_speed_keys_per_sec']:,} keys/s")
     print(f"  最低速度: {result['min_speed_keys_per_sec']:,} keys/s")
@@ -141,9 +141,9 @@ def main():
     print(f"  内存增长: {result['memory_growth_mb']:+.1f} MB")
 
     if result['memory_growth_mb'] > 50:
-        print(f"  ⚠️ 警告: 内存增长超过 50MB，可能存在内存泄漏!")
+        print("  警告: 内存增长超过 50MB，可能存在内存泄漏!")
     else:
-        print(f"  ✅ 内存稳定，无泄漏迹象")
+        print("  内存稳定，无泄漏迹象")
 
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(result, f, indent=2, ensure_ascii=False)

@@ -12,7 +12,7 @@ import sys
 import time
 
 # 添加项目根目录到Python路径
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))  # noqa: E501
 
 from src.utils import get_configured_logger, init_logging  # noqa: E402
 
@@ -33,8 +33,8 @@ def clean_log_files():
     log_patterns = [
         os.path.join(os.path.dirname(__file__), "..", "*.log"),
         os.path.join(os.path.dirname(__file__), "..", "data_logs", "*.log"),
-        os.path.join(os.path.dirname(__file__), "..", "src", "data_logs", "*.log"),
-        os.path.join(os.path.dirname(__file__), "..", "tests", "data_logs", "*.log"),
+        os.path.join(os.path.dirname(__file__), "..", "src", "data_logs", "*.log"),  # noqa: E501
+        os.path.join(os.path.dirname(__file__), "..", "tests", "data_logs", "*.log"),  # noqa: E501
         os.path.join(os.path.dirname(__file__), "..", "logs", "*.log"),
     ]
 
@@ -54,12 +54,12 @@ def clean_test_files():
 
     # 清理测试文件
     test_patterns = [
-        os.path.join(os.path.dirname(__file__), "..", "test_results", "*.txt"),
-        os.path.join(os.path.dirname(__file__), "..", "test_results", "*.xml"),
+        os.path.join(os.path.dirname(__file__), "..", "test_results", "*.txt"),  # noqa: E501
+        os.path.join(os.path.dirname(__file__), "..", "test_results", "*.xml"),  # noqa: E501
         os.path.join(os.path.dirname(__file__), "..", "test_results", "*.json"),
         os.path.join(os.path.dirname(__file__), "..", "test_matches", "*.json"),
         os.path.join(os.path.dirname(__file__), "..", "tests", "*.pyc"),
-        os.path.join(os.path.dirname(__file__), "..", "tests", "__pycache__"),
+        os.path.join(os.path.dirname(__file__), "..", "tests", "__pycache__"),  # noqa: E501
     ]
 
     for pattern in test_patterns:
@@ -81,7 +81,7 @@ def clean_temporary_configs():
 
     # 清理临时配置文件
     config_patterns = [
-        os.path.join(os.path.dirname(__file__), "..", "config.*.json"),
+        os.path.join(os.path.dirname(__file__), "..", "config.*.json"),  # noqa: E501
         os.path.join(os.path.dirname(__file__), "..", "*.tmp.json"),
         os.path.join(os.path.dirname(__file__), "..", "*.temp.json"),
     ]

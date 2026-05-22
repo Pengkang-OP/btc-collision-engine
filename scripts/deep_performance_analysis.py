@@ -4,7 +4,7 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # noqa: E501
 
 print("=" * 80)
 print("GPU性能深度诊断工具")
@@ -19,7 +19,7 @@ try:
 
     platforms = cl.get_platforms()
     for platform in platforms:
-        devices = platform.get_devices(device_type=cl.device_type.GPU)
+        devices = platform.get_devices(device_type=cl.device_type.GPU)  # noqa: E501
         for device in devices:
             if "Arc" in device.name:
                 print(f"GPU设备: {device.name}")
@@ -211,8 +211,8 @@ conservative = 46487 * 1.2 * 1.3 * 1.2 * 1.1
 optimistic = 46487 * 1.3 * 1.5 * 1.4 * 1.2
 
 print("预期性能范围:")
-print(f"  保守估计: {conservative:,.0f} keys/s (+{((conservative / 46487 - 1) * 100):.0f}%)")
-print(f"  乐观估计: {optimistic:,.0f} keys/s (+{((optimistic / 46487 - 1) * 100):.0f}%)")
+print(f"  保守估计: {conservative:,.0f} keys/s (+{((conservative / 46487 - 1) * 100):.0f}%)")  # noqa: E501
+print(f"  乐观估计: {optimistic:,.0f} keys/s (+{((optimistic / 46487 - 1) * 100):.0f}%)")  # noqa: E501
 print()
 
 print("结论:")

@@ -7,13 +7,10 @@
 这将在 1 小时内每分钟记录一次性能数据，生成性能衰减曲线 CSV 文件。
 """
 
-import time
-import csv
-import os
-import sys
 import argparse
+import csv
+import time
 from datetime import datetime, timezone
-from pathlib import Path
 
 
 def get_gpu_devices():
@@ -76,7 +73,7 @@ def main():
     args = parser.parse_args()
 
     output_path = args.output or f"performance_decay_{int(time.time())}.csv"
-    print(f"📊 性能衰减曲线监控")
+    print("性能衰减曲线监控")
     print(f"   持续时间: {args.duration} 秒")
     print(f"   采样间隔: {args.interval} 秒")
     print(f"   预估采样数: {args.duration // args.interval}")
@@ -86,10 +83,10 @@ def main():
     if devices:
         print(f"   GPU 设备: {', '.join(d['name'] for d in devices)}")
     else:
-        print(f"   GPU 设备: 未检测到")
+        print("   GPU 设备: 未检测到")
 
     print()
-    print(f"开始监控...")
+    print("开始监控...")
     print(f"{'时间戳':<25} {'速度(keys/s)':<15} {'已检测':<15} {'RSS(MB)':<12} {'CPU%':<8}")
     print("-" * 80)
 
@@ -122,10 +119,10 @@ def main():
             time.sleep(args.interval)
 
     print("-" * 80)
-    print(f"✅ 监控完成！共采集 {sample_count} 个样本")
+    print(f"监控完成！共采集 {sample_count} 个样本")
     print(f"   数据已保存至: {output_path}")
     print()
-    print("💡 使用以下命令生成图表:")
+    print("使用以下命令生成图表:")
     print(f"   python -c \"import pandas as pd; import matplotlib.pyplot as plt; "
           f"df = pd.read_csv('{output_path}'); "
           f"df['elapsed'] = df['elapsed_seconds']; "

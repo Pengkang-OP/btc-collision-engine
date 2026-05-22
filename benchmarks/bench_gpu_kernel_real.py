@@ -9,7 +9,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.collision.gpu.engine import GPUCollisionEngine
+from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
 
 
 def test_kernel_compilation():

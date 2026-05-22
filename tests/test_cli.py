@@ -39,7 +39,7 @@ class TestCLIEntryPoint:
         """测试：CLI 脚本包含入口函数"""
         import ast
 
-        with open("key_collision.py", "r", encoding="utf-8") as f:
+        with open("key_collision.py", encoding="utf-8") as f:
             tree = ast.parse(f.read())
 
         has_main_block = any(
@@ -57,7 +57,7 @@ class TestCLIEntryPoint:
 
         files_to_check = ["key_collision.py", "key_collision_cli.py"]
         for fname in files_to_check:
-            with open(fname, "r", encoding="utf-8") as f:
+            with open(fname, encoding="utf-8") as f:
                 try:
                     ast.parse(f.read())
                 except SyntaxError as e:

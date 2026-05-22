@@ -61,7 +61,7 @@ class TestConfigLoading:
         """测试：加载有效的 JSON 配置文件"""
         path = create_temp_config(SAMPLE_VALID_CONFIG)
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 config = json.load(f)
             assert config["mode"] == "random"
             assert isinstance(config["targets"], list)
@@ -74,7 +74,7 @@ class TestConfigLoading:
         """测试：加载最小配置"""
         path = create_temp_config(SAMPLE_MINIMAL_CONFIG)
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 config = json.load(f)
             assert config["mode"] == "random"
             assert config["targets"] == ["1Address"]
@@ -84,7 +84,7 @@ class TestConfigLoading:
     def test_load_config_missing_file(self):
         """测试：加载不存在的配置文件"""
         with pytest.raises(FileNotFoundError):
-            with open("nonexistent_config.json", "r", encoding="utf-8") as f:
+            with open("nonexistent_config.json", encoding="utf-8") as f:
                 json.load(f)
 
     def test_load_invalid_json(self):
@@ -93,9 +93,8 @@ class TestConfigLoading:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             f.write("{invalid json content}")
         try:
-            with pytest.raises(json.JSONDecodeError):
-                with open(path, "r", encoding="utf-8") as f:
-                    json.load(f)
+            with pytest.raises(json.JSONDecodeError), open(path, encoding="utf-8") as f:
+                json.load(f)
         finally:
             os.unlink(path)
 
@@ -103,7 +102,7 @@ class TestConfigLoading:
         """测试：加载空配置"""
         path = create_temp_config({})
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 config = json.load(f)
             assert config == {}
         finally:
@@ -196,13 +195,13 @@ class TestRealConfigFiles:
         """测试：config.example.json 存在且格式正确"""
         config_path = "config.example.json"
         assert os.path.exists(config_path)
-        with open(config_path, "r", encoding="utf-8") as f:
+        with open(config_path, encoding="utf-8") as f:
             config = json.load(f)
         assert isinstance(config, dict)
 
     def test_config_example_has_required_structure(self):
         """测试：config.example.json 包含关键字段"""
-        with open("config.example.json", "r", encoding="utf-8") as f:
+        with open("config.example.json", encoding="utf-8") as f:
             config = json.load(f)
         top_level_keys = set(config.keys())
         assert len(top_level_keys) > 0, "配置文件不应为空"

@@ -63,7 +63,7 @@ def check_python_version() -> tuple[bool, str]:
     ver_str = f"{v.major}.{v.minor}.{v.micro}"
     if v >= (3, 7):
         return True, f"Python {ver_str}"
-    return False, f"Python {ver_str}（要求 >= 3.7）"
+    return False, f"Python {ver_str}（要求 >= 3.7）"  # noqa: E501
 
 
 def check_core_deps() -> list[dict[str, Any]]:
@@ -95,7 +95,7 @@ def check_perf_deps() -> list[dict[str, Any]]:
     """检查可选性能依赖"""
     deps = [
         ("coincurve", "coincurve", "libsecp256k1 绑定（3-5x 加速，强烈推荐）"),
-        ("gmpy2", "gmpy2", "GMP 大整数加速（椭圆曲线计算）"),
+        ("gmpy2", "gmpy2", "GMP 大整数加速（椭圆曲线计算）"),  # noqa: E501
         ("numpy", "numpy", "数值计算加速"),
         ("ecdsa", "ecdsa", "纯 Python ECDSA 后备"),
         ("pyopencl", "pyopencl", "OpenCL GPU 支持"),
@@ -205,7 +205,7 @@ def check_cli_import() -> tuple[bool, str]:
     try:
         from src.cli.main import main  # noqa: F401
 
-        return True, "src.cli.main 导入成功"
+        return True, "src.cli.main 导入成功"  # noqa: E501
     except ImportError as e:
         return False, f"src.cli.main 导入失败: {e}"
     except Exception as e:
@@ -273,11 +273,11 @@ def print_report(results: dict[str, Any], as_json: bool = False):
     disk = results["disk"]
     if "error" not in disk:
         tag = PASS if disk["ok"] else WARN
-        print(
-            f"{tag} 磁盘空间: {disk['free_mb']} MB 可用 / {disk['total_mb']} MB 总计（已用 {
-                disk['used_pct']
-            }%）"
+        disk_str = (
+            f"{tag} 磁盘空间: {disk['free_mb']} MB 可用"
+            f" / {disk['total_mb']} MB 总计（已用 {disk['used_pct']}%）"
         )
+        print(disk_str)
     else:
         print(f"{WARN} 磁盘空间: 检查失败 - {disk['error']}")
 
@@ -323,9 +323,11 @@ def print_report(results: dict[str, Any], as_json: bool = False):
     if not ok_py or not ok_cli or fail_cnt > 0:
         print(f"{RED}{BOLD}  诊断结果: 存在 {fail_cnt} 个严重问题，需要修复{RESET}")
     elif warn_cnt > 0:
-        print(
-            f"{YELLOW}{BOLD}  诊断结果: 基本可用，{warn_cnt} 个可选依赖未安装（不影响基础功能）{RESET}"
+        msg = (
+            f"  诊断结果: 基本可用，{warn_cnt} 个可选依赖未安装"
+            f"（不影响基础功能）"
         )
+        print(f"{YELLOW}{BOLD}{msg}{RESET}")
     else:
         print(f"{GREEN}{BOLD}  诊断结果: 一切正常，可以正常运行{RESET}")
     print(f"{BOLD}{SEP}{RESET}\n")

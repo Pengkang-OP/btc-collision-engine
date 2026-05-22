@@ -34,7 +34,7 @@ def main():
                 file_path = os.path.join(root, file)
                 with open(file_path, encoding="utf-8") as f:
                     content = f.read()
-                    if "<<<<<<<" in content or "=======" in content or ">>>>>>>" in content:
+                    if "<<<<<<<" in content or "=======" in content or ">>>>>>>" in content:  # noqa: E501
                         conflict_files.append(file_path)
 
     print(f"发现 {len(conflict_files)} 个包含冲突标记的文件:")

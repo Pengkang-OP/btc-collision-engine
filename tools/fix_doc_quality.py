@@ -147,7 +147,7 @@ def _infer_language(content: str, filepath: Path) -> str:
         return "dockerfile"
     if "bash" in name_lower or "shell" in name_lower or "sh" in name_lower or "script" in name_lower:
         return "bash"
-    if "python" in name_lower or "py" == filename:
+    if "python" in name_lower or filename == "py":
         return "python"
 
     return "text"
@@ -156,7 +156,6 @@ def _infer_language(content: str, filepath: Path) -> str:
 def run_quality_check() -> list[tuple[float, str]]:
     """运行质量检查并返回低分文档列表"""
     import subprocess
-    import sys
     result = subprocess.run(
         [sys.executable, "tools/check_document_quality.py"],
         capture_output=True, text=True, encoding="utf-8",
@@ -213,9 +212,9 @@ def main():
     print(f"\n{'=' * 60}")
     print(f"修复完成: {fixed_count}/{len(poor_docs)} 个文档已修改")
     print(f"  版本信息添加: {total_changes['version']}")
-    print(f"  代码块语言修复: 已覆盖全部文档")
-    print(f"\n运行以下命令验证效果:")
-    print(f"  python tools/check_document_quality.py")
+    print("  代码块语言修复: 已覆盖全部文档")
+    print("\n运行以下命令验证效果:")
+    print("  python tools/check_document_quality.py")
     print(f"{'=' * 60}")
 
 

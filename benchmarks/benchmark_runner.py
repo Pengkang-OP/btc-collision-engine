@@ -30,11 +30,11 @@ from typing import Any
 _ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(_ROOT))
 
-from src.collision.deduplication_filter import (
-    DeduplicationFilter,  # noqa: E402 (需 sys.path.insert 在前)
+from src.collision.deduplication_filter import (  # noqa: E402
+    DeduplicationFilter,
 )
-from src.core.address_generator import P2PKHAddressGenerator  # noqa: E402 (需 sys.path.insert 在前)
-from src.core.base58 import Base58  # noqa: E402 (需 sys.path.insert 在前)
+from src.core.address_generator import P2PKHAddressGenerator  # noqa: E402
+from src.core.base58 import Base58  # noqa: E402
 
 # ──────────────────────────────────────────────
 # 基准测试结果数据结构
@@ -81,7 +81,9 @@ class BenchmarkResult:
 # ──────────────────────────────────────────────
 
 
-def _run_timed(func: Callable, warmup: int = 3, iterations: int = 1000) -> BenchmarkResult:
+def _run_timed(
+    func: Callable, warmup: int = 3, iterations: int = 1000
+) -> BenchmarkResult:
     """运行函数并精确计时。
 
     参数:
@@ -359,7 +361,8 @@ class BenchmarkRunner:
 
     # ── 运行所有测试 ──────────────────────────
 
-    def run_all(self, suite: dict[str, Callable] | None = None) -> dict[str, BenchmarkResult]:
+    def run_all(self, suite: dict[str, Callable] | None = None
+                ) -> dict[str, BenchmarkResult]:
         """运行所有基准测试。
 
         参数:
@@ -410,7 +413,6 @@ class BenchmarkRunner:
                 baseline_path = self.baseline
             elif self.compare:
                 latest = _find_latest_result(self.results_dir)
-                # 排除刚才保存的当前文件
                 if latest and latest.name != filename:
                     baseline_path = latest
             if baseline_path:
@@ -447,12 +449,14 @@ class BenchmarkRunner:
 
         if regressions:
             print(
-                f"\n[!] 发现 {len(regressions)} 处性能回归 (下降 > {_REGRESSION_THRESHOLD * 100:.0f}%):"
+                f"\n[!] 发现 {len(regressions)} 处性能回归"
+                f" (下降 > {_REGRESSION_THRESHOLD * 100:.0f}%):"
             )
             for r in regressions:
                 print(
                     f"    - {r['name']:30s}  "
-                    f"{r['baseline_ops_per_sec']:>12,.0f} → {r['current_ops_per_sec']:>12,.0f} ops/s"
+                    f"{r['baseline_ops_per_sec']:>12,.0f}"
+                    f" → {r['current_ops_per_sec']:>12,.0f} ops/s"
                     f"  ({r['change_pct']:+.1f}%)",
                 )
         else:
@@ -463,7 +467,8 @@ class BenchmarkRunner:
             for r in improvements:
                 print(
                     f"    + {r['name']:30s}  "
-                    f"{r['baseline_ops_per_sec']:>12,.0f} → {r['current_ops_per_sec']:>12,.0f} ops/s"
+                    f"{r['baseline_ops_per_sec']:>12,.0f}"
+                    f" → {r['current_ops_per_sec']:>12,.0f} ops/s"
                     f"  ({r['change_pct']:+.1f}%)",
                 )
 
@@ -559,8 +564,13 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         suite = {n: BUILTIN_BENCHMARKS[n] for n in args.only}
 
-    runner = BenchmarkRunner(output_dir=args.output, compare=args.compare, baseline=args.baseline)
-    return runner.run() if suite is BUILTIN_BENCHMARKS else _run_subset(runner, suite)
+    runner = BenchmarkRunner(
+        output_dir=args.output, compare=args.compare, baseline=args.baseline
+    )
+    return (
+        runner.run() if suite is BUILTIN_BENCHMARKS
+        else _run_subset(runner, suite)
+    )
 
 
 def _run_subset(runner: BenchmarkRunner, suite: dict[str, Callable]) -> int:
