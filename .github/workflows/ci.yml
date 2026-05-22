@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: 设置 Python
         uses: actions/setup-python@v5
@@ -46,7 +46,7 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: 设置 Python
         uses: actions/setup-python@v5
@@ -70,7 +70,7 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: 设置 Python
         uses: actions/setup-python@v5
@@ -95,7 +95,7 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: 设置 Python
         uses: actions/setup-python@v5
@@ -152,7 +152,7 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: 设置 Python
         uses: actions/setup-python@v5
@@ -179,7 +179,7 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: 设置 Python
         uses: actions/setup-python@v5
@@ -202,7 +202,7 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: 设置 Python
         uses: actions/setup-python@v5
@@ -281,7 +281,7 @@ jobs:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: 设置 Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -333,7 +333,7 @@ jobs:
     needs: [lint]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: 设置 Python
         uses: actions/setup-python@v5
@@ -373,7 +373,7 @@ jobs:
     needs: [lint]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: 设置 Python
         uses: actions/setup-python@v5
@@ -407,7 +407,7 @@ jobs:
     needs: [lint]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: 设置 Python
         uses: actions/setup-python@v5
@@ -451,7 +451,7 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: 检查Markdown文档
         uses: DavidAnson/markdownlint-cli2-action@v15
