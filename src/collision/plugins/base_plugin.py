@@ -1,63 +1,32 @@
-"""碰撞插件基础类"""
+#!/usr/bin/env python3
+"""
+Base class for collision strategy plugins.
+
+Defines the plugin interface for extending collision detection
+strategies.
+"""
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable
-
-# 使用相对导入而非绝对导入，避免包外部导入失败
-from ..collision_stats import CollisionStats
 
 
-class CollisionPlugin(ABC):
-    """碰撞插件基础类，定义插件接口"""
+class BaseCollisionPlugin(ABC):
+    """Abstract base class for collision strategy plugins.
+
+    All plugins must implement :meth:`name` and :meth:`initialize`.
+    """
 
     @property
     @abstractmethod
     def name(self) -> str:
-        """插件名称"""
-
-    @property
-    @abstractmethod
-    def description(self) -> str:
-        """插件描述"""
+        """Plugin name (unique identifier)."""
 
     @abstractmethod
-    def initialize(self, targets: set[str], **kwargs) -> None:
-        """
-        初始化插件
+    def initialize(self, engine) -> None:
+        """Initialize plugin with engine reference.
 
-        参数:
-            targets: 目标地址集合（只读，插件不得修改）
-            kwargs: 其他参数
+        Args:
+            engine: Collision engine instance
         """
 
-    @abstractmethod
-    def start(
-        self,
-        on_progress: Callable[["CollisionStats"], None] | None = None,
-        on_match: Callable[[bytes, str, str], None] | None = None,
-        on_complete: Callable[["CollisionStats"], None] | None = None,
-    ) -> None:
-        """
-        开始碰撞
-
-        参数:
-            on_progress: 进度回调 - 签名: (stats: CollisionStats) -> None
-            on_match: 匹配回调 - 签名: (private_key: bytes, address: str, wif: str) -> None
-                     【安全约束】插件实现必须遵守：
-                     1. 不得在日志或文件中记录私钥原文
-                     2. 不得将私钥数据发送到远程服务器
-                     3. 使用后应立即释放私钥引用
-            on_complete: 完成回调 - 签名: (stats: CollisionStats) -> None
-        """
-
-    @abstractmethod
-    def stop(self) -> None:
-        """停止碰撞"""
-
-    @abstractmethod
-    def is_running(self) -> bool:
-        """是否正在运行"""
-
-    @abstractmethod
-    def get_stats(self) -> CollisionStats:
-        """获取统计数据"""
+    def cleanup(self) -> None:
+        """Cleanup resources before plugin removal."""
