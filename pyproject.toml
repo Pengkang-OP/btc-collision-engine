@@ -43,6 +43,7 @@ dependencies = [
     "PyNaCl>=1.5.0,<2.0.0",
     "rich>=13.0",                   # CLI 富文本输出
     "cffi>=1.15.0",                 # coincurve/cryptography 的 C FFI 依赖
+    "numpy>=1.24.0",                # SIMD 优化和数组操作（基础依赖）
 ]
 
 [project.optional-dependencies]
@@ -90,43 +91,7 @@ Homepage = "https://github.com/btc-project/btc-collision-engine"
 where = ["."]
 include = ["src*"]
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py", "*_test.py"]
-python_classes = ["Test*", "*Test"]
-python_functions = ["test_*"]
-addopts = "-v --tb=short --strict-markers --strict-config"
-log_cli = true
-log_cli_level = "WARNING"
-log_cli_format = "%(asctime)s [%(levelname)8s] %(name)s: %(message)s"
-log_cli_date_format = "%Y-%m-%d %H:%M:%S"
-filterwarnings = [
-    "ignore::DeprecationWarning",
-    "ignore::PendingDeprecationWarning",
-]
-markers = [
-    # 测试类型标记
-    "unit: Unit tests (单元测试)",
-    "integration: Integration tests (集成测试)",
-    "smoke: Smoke tests - quick core verification (冒烟测试)",
-    "regression: Regression tests for known bugs (回归测试)",
-    # 功能域标记
-    "entropy: Entropy pool health check tests (熵池健康检查测试)",
-    "deprecation: Deprecation warning tests (弃用警告测试)",
-    "gpu: GPU-related tests (GPU相关测试)",
-    "gpu_kernel: GPU kernel correctness regression tests (GPU内核正确性回归测试)",
-    "thread_safety: Thread safety tests (线程安全测试)",
-    "progress: Progress callback tests (进度回调测试)",
-    "security: Security tests (安全测试)",
-    "cross_platform: Cross-platform tests (跨平台测试)",
-    "edge_cases: Edge case tests (边界条件测试)",
-    # 优先级标记
-    "p1_high: P1 high priority fixes (P1高优先级修复)",
-    "p2_medium: P2 medium priority fixes (P2中优先级修复)",
-    "p3_low: P3 low priority fixes (P3低优先级修复)",
-    # 其他标记
-    "flaky: Flaky tests that may need reruns (不稳定的测试，允许重试)",
-]
+# pytest 配置已迁移至 pytest.ini，此处不再重复定义以避免冲突
 
 [tool.mypy]
 python_version = "3.11"                                   # 与 CI type-check job 使用的 Python 版本一致
@@ -147,6 +112,33 @@ exclude = ["tests/", "benchmarks/", "tools/", "scripts/"]
 line-length = 105
 target-version = ["py39"]
 
+[tool.flake8]
+max-line-length = 105
+extend-ignore = ["E203"]  # 与 ruff 保持一致，忽略切片语法冒号前空格
+exclude = [
+    ".git",
+    "__pycache__",
+    ".mypy_cache",
+    ".pytest_cache",
+    "venv",
+    "scripts/venv",
+    ".history",
+    "data_logs",
+    "logs",
+    "build",
+    "dist",
+    "*.egg-info",
+    ".eggs",
+]
+per-file-ignores = [
+    "src/web/dashboard.py:E501",
+    "src/monitoring/alert_notifications.py:E501",
+    "src/utils/ui_tutorial.py:E501",
+    "src/collision/targets/validator.py:E501",
+    "scripts/_batch_p1.py:E501",
+    "scripts/extract_opencl_kernels.py:E501",
+]
+
 [tool.ruff]
 line-length = 105 # 略高于标准100以容纳中文日志/长变量名
 target-version = "py39"
@@ -165,6 +157,13 @@ exclude = [
     "dist",
     "*.egg-info",
     ".eggs",
+    # 以下文件使用 Python 3.12+ f-string 跨行语法，跳过 ruff parser 版本检查
+    "benchmarks/benchmark_runner.py",
+    "scripts/ai_auto_sort_execute.py",
+    "scripts/deep_performance_analysis.py",
+    "scripts/diagnose.py",
+    "scripts/gpu_kernel_validation_report.py",
+    "scripts/memory_leak_detection.py",
 ]
 
 [tool.ruff.lint]
@@ -176,8 +175,10 @@ ignore = ["E203"]
 "src/monitoring/alert_notifications.py" = ["E501"] # HTML 邮件模板字符串
 "src/utils/ui_tutorial.py" = ["E501"]              # 长行 UI 字符串/格式化提示文本
 "src/collision/targets/validator.py" = ["E501"]    # doctest 示例 + 中文注释
+"scripts/**/*.py" = ["E501", "E402"]               # 脚本：sys.path.insert + 可读性长行
 "scripts/_batch_p1.py" = ["E501"]                  # 嵌入式源码字符串补丁脚本
 "scripts/extract_opencl_kernels.py" = ["E501"]     # 文档字符串含 markdown 代码示例
+"benchmarks/**/*.py" = ["E501", "E402"]            # 基准测试：格式化非关键
 
 [tool.ruff.lint.mccabe]
 max-complexity = 15
@@ -188,15 +189,7 @@ line-ending = "lf"
 [tool.bandit]
 exclude_dirs = ["tests", "docs", "benchmarks"]
 # B101: assert 语句在本项目中广泛用于防御性编程(非安全校验), 不构成安全风险
-skips = ["B101"]
+# B105: Bandit 基于变量名模式匹配，误报率极高（配置版本号/延迟值被误标记为密码）
+skips = ["B101", "B105"]
 
-[tool.flake8]
-max-line-length = 105
-exclude = [".git", "__pycache__", ".mypy_cache", ".pytest_cache", "venv", "build", "dist"]
-per-file-ignores =
-    src/web/dashboard.py: E501
-    src/monitoring/alert_notifications.py: E501
-    src/utils/ui_tutorial.py: E501
-    src/collision/targets/validator.py: E501
-    scripts/_batch_p1.py: E501
-    scripts/extract_opencl_kernels.py: E501
+

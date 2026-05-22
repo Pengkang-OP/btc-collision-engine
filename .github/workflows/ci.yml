@@ -71,6 +71,50 @@ jobs:
           python scripts/check_import_paths.py
           echo "✅ 导入路径检查通过"
 
+  # 五大维度综合测试
+  comprehensive-tests:
+    name: 五大维度综合测试
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-timeout hypothesis
+
+      - name: 运行五大维度测试
+        run: |
+          echo "🏗 运行五大维度综合测试..."
+          python -m pytest tests/test_comprehensive_5d.py -v --tb=short --timeout=120
+          echo "✅ 五大维度测试通过"
+
+      - name: 运行核心引擎测试
+        run: |
+          echo "🏗 运行核心引擎测试..."
+          python -m pytest tests/test_base_engine.py -v --tb=short --timeout=120
+          echo "✅ 核心引擎测试通过"
+
+      - name: 运行配置与CLI测试
+        run: |
+          echo "🏗 运行配置与CLI测试..."
+          python -m pytest tests/test_config.py tests/test_cli.py -v --tb=short --timeout=60
+          echo "✅ 配置与CLI测试通过"
+
+      - name: 运行GPU核心测试（无GPU依赖）
+        run: |
+          echo "🏗 运行GPU核心测试..."
+          python -m pytest tests/test_gpu_core.py -v --tb=short --timeout=60
+          echo "✅ GPU核心测试通过"
+
   # 关键测试
   critical-tests:
     name: 关键测试
@@ -134,7 +178,7 @@ jobs:
 
   # 代码格式化检查
   lint:
-    name: 代码格式化检查
+    name: 代码格式化检查 (ruff)
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -149,15 +193,15 @@ jobs:
       - name: 安装lint工具
         run: |
           python -m pip install --upgrade pip
-          pip install black flake8
+          pip install ruff>=0.9.0
 
-      - name: 运行Black格式化检查
+      - name: 运行 ruff format 检查
         run: |
-          black --check --line-length=100 --target-version py312 src/ tests/ scripts/
+          ruff format --check src/ tests/ scripts/ benchmarks/ tools/
 
-      - name: 运行Flake8检查
+      - name: 运行 ruff check 检查
         run: |
-          flake8 src/ tests/ scripts/ --max-line-length=100 --ignore=E203,W503
+          ruff check src/ tests/ scripts/ benchmarks/ tools/
 
   # 文档检查
   docs-check:
@@ -188,7 +232,7 @@ jobs:
     name: CI 门禁检查
     runs-on: ubuntu-latest
     timeout-minutes: 2
-    needs: [code-quality, lint, critical-tests, config-validation]
+    needs: [code-quality, lint, critical-tests, config-validation, dependency-scan]
     if: always()
 
     steps:
@@ -225,6 +269,13 @@ jobs:
             FAILED=1
           else
             echo "✅ config-validation 通过"
+          fi
+
+          if [ "${{ needs.dependency-scan.result }}" != "success" ]; then
+            echo "❌ dependency-scan 未通过: ${{ needs.dependency-scan.result }}"
+            FAILED=1
+          else
+            echo "✅ dependency-scan 通过"
           fi
 
           if [ $FAILED -eq 1 ]; then
@@ -492,3 +543,35 @@ jobs:
           print(f"✅ 找到 {kernel_blocks} 个 OpenCL 内核代码块，结构完整")
           print(f"✅ GPU 源码静态检查通过")
           PYEOF
+
+  # ──────────────────────────────────────────
+  # P0 新增: 依赖漏洞扫描 (pip-audit)
+  # ──────────────────────────────────────────
+  dependency-scan:
+    name: 依赖漏洞扫描 (pip-audit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 安装 pip-audit
+        run: |
+          python -m pip install --upgrade pip
+          pip install pip-audit>=2.7.0
+
+      - name: 安装项目依赖
+        run: |
+          pip install -r requirements-base.txt
+
+      - name: 运行 pip-audit 依赖漏洞扫描
+        continue-on-error: true
+        run: |
+          echo "🔒 运行 pip-audit 依赖漏洞扫描..."
+          python -m pip_audit --requirement requirements-base.txt --desc on
+          echo "✅ pip-audit 扫描完成（结果仅供参考，非硬阻断）"
