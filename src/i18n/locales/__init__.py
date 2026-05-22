@@ -1,1 +1,1 @@
-# locales 包初始化文件
+"""Translation locale package."""
