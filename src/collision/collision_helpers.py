@@ -1,72 +1,46 @@
-"""碰撞引擎辅助工具函数
-
-提供碰撞引擎中常用的辅助函数，避免代码重复。
+#!/usr/bin/env python3
+"""
+Collision detection helper functions.
 """
 
-from ..core import WIF
+from typing import Any
 
 
-def encode_private_key_to_wif(private_key: bytes, compressed: bool = True) -> str:
-    """将私钥编码为WIF格式（统一封装函数）
+def create_match_record(
+    private_key: bytes,
+    address: str,
+    wif: str,
+    worker_id: int = 0,
+    device_idx: int = 0,
+) -> dict[str, Any]:
+    """Create a standardized match record.
 
-    这是一个统一封装函数，用于在碰撞引擎中编码私钥为WIF格式。
-    所有需要WIF编码的地方都应该使用此函数，而不是直接调用WIF.encode。
+    Args:
+        private_key: Matched private key bytes
+        address: Matched Bitcoin address
+        wif: WIF-encoded private key
+        worker_id: Worker thread ID
+        device_idx: GPU device index
 
-    参数:
-        private_key: 32字节私钥
-        compressed: 是否使用压缩格式，默认True（比特币标准）
-
-    返回:
-        WIF编码的字符串
-
-    异常:
-        ValueError: 当私钥无效时
-
-    示例:
-        >>> private_key = secrets.token_bytes(32)
-        >>> wif = encode_private_key_to_wif(private_key)
-        >>> print(wif[:10])  # 显示前10个字符
+    Returns:
+        Match record dictionary
     """
-    return WIF.encode(private_key, compressed)
+    return {
+        "private_key": private_key,
+        "address": address,
+        "wif": wif,
+        "worker_id": worker_id,
+        "device_idx": device_idx,
+    }
 
 
-def format_match_result(
-    private_key: bytes, address: str, compressed: bool = True
-) -> tuple[bytes, str, str]:
-    """格式化匹配结果，返回私钥、地址和WIF
+def is_match_found(stats: dict) -> bool:
+    """Check if any matches were found from stats.
 
-    统一处理碰撞匹配结果的格式化，避免在各处重复编码WIF。
+    Args:
+        stats: Collision statistics dictionary
 
-    参数:
-        private_key: 32字节私钥
-        address: 比特币地址
-        compressed: 是否使用压缩格式，默认True
-
-    返回:
-        (private_key, address, wif) 元组
-
-    示例:
-        >>> pk, addr, wif = format_match_result(private_key, "1ABC...")
-        >>> print(f"地址: {addr}")
-        >>> print(f"WIF: {wif}")
+    Returns:
+        True if matches found
     """
-    wif = encode_private_key_to_wif(private_key, compressed)
-    return (private_key, address, wif)
-
-
-def safe_wif_encode(private_key: bytes, compressed: bool = True) -> str | None:
-    """安全地编码私钥为WIF，失败时返回None而不是抛出异常
-
-    用于回调函数等场景，避免异常中断流程。
-
-    参数:
-        private_key: 32字节私钥
-        compressed: 是否使用压缩格式，默认True
-
-    返回:
-        WIF字符串，失败时返回None
-    """
-    try:
-        return encode_private_key_to_wif(private_key, compressed)
-    except (ValueError, Exception):
-        return None
+    return stats.get("total_matches", 0) > 0
