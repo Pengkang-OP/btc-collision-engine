@@ -818,7 +818,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         logger.info(f"🎯 发现匹配! 地址={matched_address} (格式: {format_type})")
 
         # 批量提交匹配结果（v4.2.2 H6重构: 提取到 _flush_match_batch）
-        should_continue, stop_flag = self._flush_match_batch(local_matches)
+        should_continue, stop_flag = self._flush_match_batch(local_matches, force=not self.on_match)
         if stop_flag:
             self._stop_event.set()
             return False
