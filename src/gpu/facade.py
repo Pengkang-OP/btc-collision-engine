@@ -4,13 +4,11 @@
 内存管理和碰撞执行等复杂操作，降低碰撞引擎与GPU模块的耦合度。
 """
 
-from typing import Any
-
-# ARCH-1: 使用接口抽象
-from .interfaces import GPUDeviceProtocol, GPUCollisionEngineInterface, GPUDriverInterface
+from typing import Any, Dict
+import logging
 
 # 导入日志配置
-from ..utils import get_configured_logger, init_logging
+from ..utils import init_logging, get_configured_logger
 
 # 初始化日志系统（如果尚未初始化）
 init_logging()
@@ -127,7 +125,9 @@ class GPUFacade:
             self._is_initialized = False
             return False
 
-    def start_collision(self, targets: list[str], mode: str = "random", batch_size: int = 10000) -> bool:
+    def start_collision(
+        self, targets: list[str], mode: str = "random", batch_size: int = 10000
+    ) -> bool:
         """启动GPU碰撞
 
         Args:
@@ -174,7 +174,7 @@ class GPUFacade:
             logger.error(f"停止GPU碰撞失败: {e}")
             return False
 
-    def get_stats(self) -> dict[str, Any]:
+    def get_stats(self) -> Dict[str, Any]:
         """获取碰撞统计信息
 
         Returns:
@@ -189,7 +189,7 @@ class GPUFacade:
             logger.error(f"获取统计信息失败: {e}")
             return {"status": "error", "message": str(e)}
 
-    def get_device_info(self) -> dict[str, Any]:
+    def get_device_info(self) -> Dict[str, Any]:
         """获取GPU设备信息
 
         Returns:
@@ -204,7 +204,7 @@ class GPUFacade:
             logger.error(f"获取设备信息失败: {e}")
             return {"status": "error", "message": str(e)}
 
-    def get_memory_info(self) -> dict[str, Any]:
+    def get_memory_info(self) -> Dict[str, Any]:
         """获取GPU内存信息
 
         Returns:
@@ -247,7 +247,7 @@ class GPUFacade:
 
         return getattr(self._collision_engine, "_running", False)
 
-    def get_performance(self) -> dict[str, Any]:
+    def get_performance(self) -> Dict[str, Any]:
         """获取性能信息
 
         Returns:
@@ -273,10 +273,12 @@ class GPUFacade:
 
     def __del__(self):
         """析构函数"""
-        import contextlib
-
-        with contextlib.suppress(Exception):
+        try:
             self.cleanup()
+        except Exception:
+            # A类修复: 析构函数中资源清理失败静默处理
+            # 因为此时对象正在销毁，无法做更多处理
+            pass
 
 
 def create_gpu_facade() -> GPUFacade:

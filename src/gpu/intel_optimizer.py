@@ -267,7 +267,9 @@ class IntelGPUOptimizer:
         self._logger.info("\n📊 初始化 Intel GPU 监控和调优组件...")
         engine = engine_context.get("engine")
 
-        timeout_cls, memory_cls, benchmark_cls, tuner_cls, reporter_cls = self._lazy_import_components()
+        timeout_cls, memory_cls, benchmark_cls, tuner_cls, reporter_cls = (
+            self._lazy_import_components()
+        )
 
         self._init_timeout_manager(timeout_cls)
         self._init_memory_monitor(memory_cls)
@@ -339,14 +341,6 @@ class IntelGPUOptimizer:
     def _verify_uint32_workaround(self, kernel_source: str) -> bool:
         """验证 uint32 workaround 是否正确应用
 
-        v4.2.1 PRNG 改造后: 私钥不再通过全局缓冲区传入，
-        而是由内核在设备端从 __constant uint *seed 直接生成。
-        这天然避免了 Intel Arc 驱动的 global char* hang bug，
-        因为不再有 __global uchar *private_keys 传参。
-
-        验证方式: 检查内核是否使用 __constant uint *seed
-        (PRNG 模式，seed 以 uint32 数组传入，规避了 char 类型传参)
-
         Args:
             kernel_source: OpenCL 内核源码字符串
 
@@ -355,11 +349,10 @@ class IntelGPUOptimizer:
         """
         try:
             has_uint32_workaround = (
-                # __global const uint *private_keys 已于 v4.2.1 PRNG 改造后移除，
-                # 当前内核均使用 __constant const uint *seed 实现设备端密钥生成，
-                # 此方式天然使用 uint32 类型传参，彻底规避了 Intel Arc 驱动
-                # global char* hang bug。
-                "__constant const uint *seed" in kernel_source  # PRNG mode (seed 是 uint*)
+                # DEPRECATED: '__global const uint *private_keys' 已于 v4.2.1 PRNG改造后从内核中移除
+                # 当前内核均使用 PRNG 模式
+                "__constant const uint *seed"
+                in kernel_source  # PRNG mode (seed 也是 uint*)
             )
             if not has_uint32_workaround:
                 self._logger.error("❌ 内核未使用 uint32 workaround")

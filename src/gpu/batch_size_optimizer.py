@@ -1,10 +1,9 @@
-"""Smart batch size optimizer.
+"""智能批次大小优化器
 
-Dynamically adjusts batch size based on GPU performance, memory
-usage, and system load for improved performance and stability.
+根据GPU性能、内存使用和系统负载动态调整批次大小，提高性能和稳定性。
 
-Features:
-- Auto-adjust batch size based on historical performance data
+功能特点：
+- 基于历史性能数据自动调整批次大小
 - 考虑GPU显存使用情况
 - 响应系统负载变化
 - 支持不同GPU厂商的特性
@@ -148,7 +147,9 @@ class SmartBatchSizeOptimizer:
         }
         return gpu_configs.get(gpu_model, gpu_configs.get("default", {}))
 
-    def record_performance(self, batch_size: int, execution_time_ms: float, throughput: float) -> None:
+    def record_performance(
+        self, batch_size: int, execution_time_ms: float, throughput: float
+    ) -> None:
         """
         记录性能数据
 
@@ -258,7 +259,9 @@ class SmartBatchSizeOptimizer:
                         new_size = self._current_batch_size // 2
                     # 确保在合理范围内
                     new_size = max(self._min_batch_size, min(new_size, self._max_batch_size))
-                    logger.info(f"批次大小调整: {self._current_batch_size} -> {new_size} (平滑过渡)")
+                    logger.info(
+                        f"批次大小调整: {self._current_batch_size} -> {new_size} (平滑过渡)"
+                    )
                     self._current_batch_size = new_size
                 else:
                     logger.info(f"批次大小调整: {self._current_batch_size} -> {optimal_size}")
@@ -287,7 +290,9 @@ class SmartBatchSizeOptimizer:
         for batch_size, throughputs in batch_performance.items():
             avg_throughput[batch_size] = sum(throughputs) / len(throughputs)
             # 计算标准差，衡量性能稳定性
-            variance = sum((t - avg_throughput[batch_size]) ** 2 for t in throughputs) / len(throughputs)
+            variance = sum((t - avg_throughput[batch_size]) ** 2 for t in throughputs) / len(
+                throughputs
+            )
             std_throughput[batch_size] = variance**0.5
 
         # 找出吞吐量最高且性能稳定的批次大小
@@ -468,7 +473,9 @@ def get_batch_size_optimizer(
 
     with global_optimizer_lock:
         if global_batch_optimizer is None:
-            global_batch_optimizer = SmartBatchSizeOptimizer(initial_batch_size, gpu_model=gpu_model)
+            global_batch_optimizer = SmartBatchSizeOptimizer(
+                initial_batch_size, gpu_model=gpu_model
+            )
 
     return global_batch_optimizer
 

@@ -1,8 +1,7 @@
-"""Multi-GPU collision engine.
+"""多GPU碰撞引擎
 
-Coordinates multiple GPU workers for parallel private key collision
-search. Uses task partitioning strategy where each GPU independently
-searches a different private key range.
+协调多个GPU工作器进行并行私钥碰撞搜索。
+采用任务分割策略,每个GPU独立搜索不同的私钥范围。
 
 增强功能：
 - 实时工作负载监控
@@ -200,7 +199,9 @@ class MultiGPUCollisionEngine:
                 logger.error("无可用GPU设备")
                 return False
 
-            logger.info(f"初始化 {len(self._devices)} 个GPU设备: {[d['name'] for d in self._devices]}")
+            logger.info(
+                f"初始化 {len(self._devices)} 个GPU设备: {[d['name'] for d in self._devices]}"
+            )
 
             # 按显存比例计算 Per-GPU 内存池分配配置
             total_pool_mb = self.config.total_pool_mb
@@ -903,7 +904,9 @@ class MultiGPUCollisionEngine:
         platform = "".join(c if c.isalnum() else "_" for c in platform)
         return f"{vendor}_{platform}"
 
-    def _get_or_cache_compile_config(self, device: dict, kernel_source: str, build_options: str) -> dict:
+    def _get_or_cache_compile_config(
+        self, device: dict, kernel_source: str, build_options: str
+    ) -> dict:
         """获取或缓存内核编译配置（同厂商GPU共享编译配置）
 
         OpenCL Program 不能跨 context 共享，但同厂商 GPU 可共享相同的
@@ -1096,7 +1099,9 @@ class MultiGPUCollisionEngine:
         """上下文管理器入口"""
         return self
 
-    def __exit__(self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None) -> None:
+    def __exit__(
+        self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None
+    ) -> None:
         """上下文管理器出口"""
         self.cleanup()
 
@@ -1199,7 +1204,9 @@ class MultiGPUCollisionEngine:
                                 break
                         if total_memory > 0:
                             used_memory = total_memory * memory_usage
-                            self.load_balancer.record_memory_usage(device_idx, used_memory, total_memory)
+                            self.load_balancer.record_memory_usage(
+                                device_idx, used_memory, total_memory
+                            )
 
         except Exception as e:
             logger.error(f"收集性能数据失败: {e}")
