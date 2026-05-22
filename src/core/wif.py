@@ -1,100 +1,122 @@
-"""WIF (Wallet Import Format) 编解码工具"""
+"""WIF (Wallet Import Format) encode/decode utility"""
 
-from ..utils import get_configured_logger
 from .base58 import Base58
-
-# 日志系统由CLI/main.py入口统一初始化
-# v4.2.2 M3: 日志初始化统一由 CLI 入口 (main.py) 和 utils/__init__.py 处理
-# 移除模块级别的 init_logging() 调用，避免重复初始化
-
-# 获取模块日志记录器
-logger = get_configured_logger("WIF")
+from .hash_utils import HashUtils
 
 
 class WIF:
     """
-    WIF (Wallet Import Format) 编解码工具
+    WIF (Wallet Import Format) encode/decode.
 
-    用于比特币私钥的编码和解码，支持压缩和非压缩格式。
-    压缩格式以'K'或'L'开头，非压缩格式以'5'开头。
+    Implements Bitcoin private key WIF format encoding and decoding.
+    Supports mainnet and testnet, compressed and uncompressed formats.
+
+    Format:
+    - Mainnet compressed: 'K'/'L' prefix, 52 chars
+    - Mainnet uncompressed: '5' prefix, 51 chars
+    - Testnet compressed: 'c' prefix, 52 chars
+    - Testnet uncompressed: '9' prefix, 51 chars
+
+    Structure:
+    [version(1)] [private_key(32)] [compressed_flag(1)] [checksum(4)]
+
+    Reference: https://en.bitcoin.it/wiki/Wallet_import_format
     """
 
+    MAINNET_VERSION = 0x80
+    TESTNET_VERSION = 0xEF
+    COMPRESSED_FLAG = 0x01
+
     @staticmethod
-    def encode(private_key: bytes, compressed: bool = True) -> str:
+    def encode(
+        private_key: bytes,
+        compressed: bool = True,
+        testnet: bool = False,
+    ) -> str:
         """
-        将私钥编码为WIF格式
+        Encode private key to WIF format.
 
-        参数:
-            private_key: 32字节私钥
-            compressed: 是否使用压缩格式，默认True
+        Args:
+            private_key: 32-byte private key
+            compressed: Whether to use compressed format,
+                default True
+            testnet: Whether to use testnet version byte,
+                default False
 
-        返回:
-            WIF编码的字符串
-            - 压缩格式: 以 'K' 或 'L' 开头 (52字符)
-            - 非压缩格式: 以 '5' 开头 (51字符)
+        Returns:
+            WIF encoded string
 
-        异常:
-            ValueError: 当私钥长度无效时
+        Raises:
+            ValueError: When private key length is invalid
         """
-        try:
-            if not isinstance(private_key, bytes):
-                raise ValueError("私钥必须是字节串")
-            if len(private_key) != 32:
-                raise ValueError("私钥长度必须为32字节")
+        if len(private_key) != 32:
+            raise ValueError(
+                f"Private key must be 32 bytes, "
+                f"got {len(private_key)}"
+            )
 
-            # 构建payload: 私钥 + [压缩标志]
-            # 注意: check_encode 会自动添加版本字节和校验和
-            payload = private_key + b"\x01" if compressed else private_key
+        # Build payload
+        version_byte = (
+            WIF.TESTNET_VERSION
+            if testnet
+            else WIF.MAINNET_VERSION
+        )
+        payload = bytes([version_byte]) + private_key
 
-            # Base58Check编码: 版本字节(0x80) + payload + 4字节校验和
-            return Base58.check_encode(0x80, payload)
-        except ValueError:
-            # 预期内的验证错误，直接重新抛出，不记录日志
-            # ValueError通常包含输入验证信息（如私钥长度），不应记录
-            raise
-        except Exception as e:
-            # 意外错误：仅记录异常类型，不记录任何用户输入
-            # 私钥信息绝对不能记录到日志
-            logger.error("编码WIF时发生未预期错误: %s", type(e).__name__)
-            raise ValueError("WIF编码失败") from e
+        if compressed:
+            payload += bytes([WIF.COMPRESSED_FLAG])
+
+        # Compute checksum
+        checksum = HashUtils.double_sha256(payload)[:4]
+
+        return Base58.encode(payload + checksum)
 
     @staticmethod
     def decode(wif: str) -> tuple[bytes, bool]:
         """
-        解码WIF格式私钥
+        Decode WIF string to private key.
 
-        参数:
-            wif: WIF编码的字符串
+        Args:
+            wif: WIF encoded string
 
-        返回:
-            (private_key, is_compressed) 元组
+        Returns:
+            (private_key, is_compressed) tuple
 
-        异常:
-            ValueError: 当WIF格式无效时
+        Raises:
+            ValueError: When WIF format is invalid or checksum
+                verification fails
         """
-        try:
-            if not isinstance(wif, str):
-                raise ValueError("WIF必须是字符串")
+        data = Base58.decode(wif)
 
-            # 解码Base58Check
-            version, data = Base58.check_decode(wif)
+        # Minimum length: 1 (version) + 32 (key) + 4 (checksum)
+        # = 37, or 38 with compressed flag
+        if len(data) < 37:
+            raise ValueError(
+                f"WIF data too short: "
+                f"{len(data)} bytes"
+            )
 
-            # 验证版本字节
-            if version != 0x80:
-                raise ValueError("WIF版本字节无效")
+        # Extract and verify checksum
+        payload = data[:-4]
+        checksum = data[-4:]
+        expected = HashUtils.double_sha256(payload)[:4]
 
-            # 检查是否为压缩格式（最后一个字节为0x01）
-            if len(data) == 33 and data[-1] == 0x01:
-                return data[:32], True
-            elif len(data) == 32:
-                return data, False
-            else:
-                raise ValueError("WIF数据长度无效")
-        except ValueError:
-            # 预期内的验证错误，直接重新抛出，不记录日志
-            raise
-        except Exception as e:
-            # 意外错误：仅记录异常类型，不记录任何用户输入
-            # WIF字符串本身包含私钥信息，绝对不能记录
-            logger.error("解码WIF时发生未预期错误: %s", type(e).__name__)
-            raise ValueError("WIF格式无效") from e
+        if checksum != expected:
+            raise ValueError(
+                "WIF checksum verification failed"
+            )
+
+        # Extract version and key data
+        version = payload[0]
+        key_data = payload[1:]
+
+        # Determine compression based on payload length
+        if len(key_data) == 33 and key_data[-1] == 0x01:
+            return key_data[:-1], True  # Compressed
+        elif len(key_data) == 32:
+            return key_data, False  # Uncompressed
+        else:
+            raise ValueError(
+                f"Invalid WIF payload length: "
+                f"{len(key_data)}"
+            )
