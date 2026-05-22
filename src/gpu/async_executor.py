@@ -1,6 +1,6 @@
-"""GPU异步执行优化模块
+"""GPU async execution optimization module.
 
-实现双缓冲异步执行机制,提升GPU利用率:
+Implements double-buffered async execution to improve GPU utilization:
 1. 双OpenCL队列(计算+传输)
 2. 双缓冲机制(消除CPU-GPU等待)
 3. 安全保护(超时+回退)

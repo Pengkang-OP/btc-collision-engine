@@ -1,6 +1,7 @@
-"""GPU设备管理器
+"""GPU device manager.
 
-负责GPU设备的初始化、配置和管理。
+Responsible for GPU device initialization, configuration, and
+management.
 """
 
 import json
