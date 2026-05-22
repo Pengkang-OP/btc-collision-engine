@@ -33,6 +33,14 @@ class MatchResult:
     device_idx: int = 0
 
 
+from typing import Callable, Optional
+
+# Callback type aliases
+MatchCallback = Callable[..., None]
+ProgressCallback = Callable[..., None]
+CompleteCallback = Callable[..., None]
+
+
 @dataclass
 class EngineStats:
     """Collision engine statistics."""
