@@ -14,7 +14,7 @@ pytest-cov>=4.0.0           # 测试覆盖率
 black>=24.0.0               # 代码格式化
 flake8>=6.0.0               # Lint 检查
 mypy>=1.0.0                 # 类型检查
-types-cachetools>=5.0        # cachetools 类型存根
+types-cachetools>=6.2.0.20251022        # cachetools 类型存根
 bandit>=1.7.0               # 安全扫描
 
 # 性能分析
