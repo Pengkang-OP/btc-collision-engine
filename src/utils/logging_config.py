@@ -1,6 +1,7 @@
-"""日志配置管理模块
+"""Logging configuration management module.
 
-统一管理日志配置，支持从配置文件读取设置，
+Unified log configuration, supports reading settings from config
+files,
 提供统一的日志记录器初始化接口。
 """
 

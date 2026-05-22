@@ -1,6 +1,7 @@
-"""随机搜索模式 - RandomSearchMode
+"""Random search mode - RandomSearchMode.
 
-将 GPUCollisionEngine 中的随机搜索相关方法迁移至此独立模块，
+Migrates random search related methods from GPUCollisionEngine
+to this independent module.
 包括同步模式（_execute_sync）和异步双缓冲模式（_execute_async）。
 
 架构演变:

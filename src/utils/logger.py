@@ -1,6 +1,6 @@
-"""日志管理工具
+"""Log management utility.
 
-提供增强的日志功能，包括：
+Provides enhanced logging features including:
 - 彩色控制台输出
 - 性能监控日志
 - 采样日志（高频操作）

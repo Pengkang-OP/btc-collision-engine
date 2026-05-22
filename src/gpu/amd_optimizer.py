@@ -1,6 +1,6 @@
-"""AMD GPU 专有优化模块
+"""AMD GPU specific optimization module.
 
-封装所有 AMD GPU 特定的优化逻辑，包括：
+Encapsulates all AMD GPU specific optimization logic, including:
 - 驱动版本检测（Adrenalin/ROCm）
 - GPU 架构代识别（GCN1.0/GCN3.0/Vega/RDNA/RDNA2/RDNA3/RDNA4/CDNA1-4）
 - Wavefront 大小验证（GCN/CDNA=64, RDNA原生=32兄容樟64）
