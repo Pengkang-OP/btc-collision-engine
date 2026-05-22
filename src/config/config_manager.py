@@ -1,4 +1,4 @@
-"""配置管理器"""
+"""Configuration manager."""
 
 import copy
 import json

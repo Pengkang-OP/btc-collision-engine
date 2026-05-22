@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""性能基准测试工具
+"""Performance benchmark utility.
 
-测试各种优化策略的性能提升，包括：
-- SIMD向量化优化
-- 多进程并行
-- Bloom Filter去重
-- GPU加速（如果可用）
+Tests performance improvements of various optimization strategies:
+- SIMD vectorization
+- Multi-process parallel
+- Bloom Filter deduplication
+- GPU acceleration (if available)
 
 使用方法:
     python -m src.utils.performance_benchmark

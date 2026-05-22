@@ -1,7 +1,7 @@
-"""增强型性能监控日志模块
+"""Enhanced performance monitoring module.
 
-提供系统化的性能监控功能，包括:
-- 操作耗时追踪
+Provides systematic performance monitoring including:
+- Operation duration tracking
 - 性能瓶颈识别
 - 性能趋势分析
 - 性能告警
