@@ -15,6 +15,7 @@ class EngineEvent:
 class EngineStartEvent(EngineEvent):
     """Event emitted when engine starts."""
     config: dict | None = None
+    mode: str = ""
 
 
 @dataclass

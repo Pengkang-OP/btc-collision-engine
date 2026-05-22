@@ -6,6 +6,7 @@ from .address_generator import (
 )
 from .precomputed_table import get_precomputed_table
 from .simd_optimizer import BatchOptimizer
+from .hash_utils import HashUtils
 
 
 class OptimizedP2PKHAddressGenerator(P2PKHAddressGenerator):
@@ -20,20 +21,40 @@ class OptimizedP2PKHAddressGenerator(P2PKHAddressGenerator):
     """
 
     def __init__(
-        self, window_size: int = 8, batch_size: int = 1000
+        self,
+        use_precomputed_table: bool = True,
+        use_simd_hash: bool = True,
+        use_memory_pool: bool = True,
+        window_size: int = 8,
+        batch_size: int = 1000,
     ) -> None:
         """
         Initialize optimized address generator.
 
         Args:
+            use_precomputed_table: Whether to use precomputed table
+            use_simd_hash: Whether to use SIMD-accelerated hash
+            use_memory_pool: Whether to use memory pool
             window_size: Precomputed table window size (4-8)
             batch_size: Batch processing size
         """
         super().__init__()
+        self.use_precomputed_table = use_precomputed_table
+        self.use_simd_hash = use_simd_hash
+        self.use_memory_pool = use_memory_pool
         self.window_size = window_size
         self.batch_size = batch_size
-        self._table = get_precomputed_table(window_size)
-        self._batch_optimizer = BatchOptimizer(batch_size)
+
+        # Initialize precomputed table if enabled
+        self._table = None
+        if use_precomputed_table:
+            self._table = get_precomputed_table(window_size)
+
+        # Initialize batch optimizer if any optimization is enabled
+        if use_simd_hash or use_memory_pool:
+            self._batch_optimizer = BatchOptimizer(batch_size)
+        else:
+            self._batch_optimizer = None
 
     def private_key_to_public_key(
         self,
@@ -41,10 +62,7 @@ class OptimizedP2PKHAddressGenerator(P2PKHAddressGenerator):
         compressed: bool = True,
     ) -> bytes:
         """
-        Generate public key using precomputed table.
-
-        Uses window method with precomputed point table for
-        2-3x faster scalar multiplication.
+        Generate public key using precomputed table or fallback.
 
         Args:
             private_key: 32-byte private key
@@ -53,10 +71,12 @@ class OptimizedP2PKHAddressGenerator(P2PKHAddressGenerator):
         Returns:
             Public key bytes
         """
+        # Fall back to parent (crypto_backend) if precomputed table disabled
+        if not self.use_precomputed_table or self._table is None:
+            return super().private_key_to_public_key(private_key, compressed)
+
         k = int.from_bytes(private_key, "big")
-        public_point = self._table.scalar_multiply_with_table(
-            k
-        )
+        public_point = self._table.scalar_multiply_with_table(k)
 
         if public_point.is_infinity:
             raise ValueError(
@@ -79,3 +99,106 @@ class OptimizedP2PKHAddressGenerator(P2PKHAddressGenerator):
                 + public_point.x.to_bytes(32, "big")
                 + public_point.y.to_bytes(32, "big")
             )
+
+    def public_key_to_address(
+        self, public_key: bytes
+    ) -> str:
+        """
+        Generate Bitcoin address from public key.
+
+        Uses SIMD-accelerated hash if enabled, otherwise falls back
+        to parent implementation.
+
+        Args:
+            public_key: Public key bytes (compressed or uncompressed)
+
+        Returns:
+            Bitcoin address starting with '1'
+        """
+        if not self.use_simd_hash:
+            return super().public_key_to_address(public_key)
+
+        # Use optimized hash path (SIMD or batch optimizer)
+        hash160 = self.public_key_to_hash160(public_key)
+        from .base58 import Base58
+        address = Base58.check_encode(0x00, hash160)
+        return address
+
+    def public_key_to_hash160(
+        self, public_key: bytes
+    ) -> bytes:
+        """
+        Compute Hash160 from public key.
+
+        Uses SIMD-accelerated batch optimizer if available.
+
+        Args:
+            public_key: Public key bytes
+
+        Returns:
+            20-byte Hash160 value
+        """
+        if self.use_simd_hash and self._batch_optimizer is not None:
+            # Use batch optimizer for potential SIMD acceleration
+            try:
+                return self._batch_optimizer.simd_hash160(public_key)
+            except (AttributeError, NotImplementedError):
+                pass
+
+        # Fall back to standard HashUtils
+        return HashUtils.hash160(public_key)
+
+    def batch_generate(
+        self, private_keys: list[bytes]
+    ) -> list[str]:
+        """
+        Batch generate addresses from private keys.
+
+        Args:
+            private_keys: List of 32-byte private keys
+
+        Returns:
+            List of Bitcoin addresses
+        """
+        if not private_keys:
+            return []
+
+        return [
+            self.generate_address(pk)[0]
+            for pk in private_keys
+        ]
+
+    def get_optimization_info(self) -> dict:
+        """
+        Get optimization configuration information.
+
+        Returns:
+            Dictionary with optimization status and details
+        """
+        info = {
+            "precomputed_table": {
+                "enabled": self.use_precomputed_table,
+                "window_size": self.window_size if self.use_precomputed_table else None,
+            },
+            "simd_hash": {
+                "enabled": self.use_simd_hash,
+            },
+            "memory_pool": {
+                "enabled": self.use_memory_pool,
+                "batch_size": self.batch_size if self.use_memory_pool else None,
+            },
+        }
+        return info
+
+    def generate_from_private_key(self, private_key: bytes) -> str:
+        """
+        Generate address from private key (convenience method).
+
+        Args:
+            private_key: 32-byte private key
+
+        Returns:
+            Bitcoin address string
+        """
+        address, _, _ = self.generate_address(private_key)
+        return address

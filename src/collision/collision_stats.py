@@ -33,6 +33,10 @@ class CollisionStats:
         with self._lock:
             self._total_matches += 1
 
+    def add_match(self, *args, **kwargs) -> None:
+        """Alias for record_match()."""
+        self.record_match()
+
     def record_error(self) -> None:
         with self._lock:
             self._total_errors += 1
@@ -55,6 +59,38 @@ class CollisionStats:
                     self._total_keys / elapsed
                 ),
             }
+
+    @property
+    def start_time(self) -> float:
+        """Get start time."""
+        return self._start_time
+
+    @start_time.setter
+    def start_time(self, value: float) -> None:
+        """Set start time."""
+        with self._lock:
+            self._start_time = value
+
+    def update(self, total_checked: int) -> None:
+        """Update total keys checked.
+
+        Args:
+            total_checked: Total number of keys checked
+        """
+        with self._lock:
+            self._total_keys = total_checked
+
+    @property
+    def total_checked(self) -> int:
+        """Get total keys checked."""
+        with self._lock:
+            return self._total_keys
+
+    @total_checked.setter
+    def total_checked(self, value: int) -> None:
+        """Set total keys checked."""
+        with self._lock:
+            self._total_keys = value
 
     def reset(self) -> None:
         with self._lock:
