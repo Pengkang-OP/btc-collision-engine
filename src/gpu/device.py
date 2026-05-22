@@ -1,6 +1,6 @@
-"""GPU device detection and management.
+"""GPU设备检测和管理
 
-Provides GPU device auto-detection, filtering, and selection.
+提供GPU设备自动检测、过滤、选择功能。
 复用现有gpu_engine.py的逻辑并保持API兼容。
 """
 
@@ -99,7 +99,12 @@ def identify_vendor(device_name: str, vendor_str: str = "") -> str:
         return "amd"
 
     # Intel
-    elif "intel" in vendor_lower or "intel" in name_lower or "iris" in name_lower or "arc" in name_lower:
+    elif (
+        "intel" in vendor_lower
+        or "intel" in name_lower
+        or "iris" in name_lower
+        or "arc" in name_lower
+    ):
         return "intel"
 
     # 未知
@@ -287,7 +292,8 @@ class GPUDeviceDetector:
                 now = time.time()
                 if (
                     GPUDeviceDetector._devices_cache is not None
-                    and now - GPUDeviceDetector._devices_cache_timestamp < GPUDeviceDetector._cache_ttl
+                    and now - GPUDeviceDetector._devices_cache_timestamp
+                    < GPUDeviceDetector._cache_ttl
                 ):
                     # 使用缓存的设备信息
                     devices = GPUDeviceDetector._devices_cache
@@ -397,7 +403,6 @@ class GPUDeviceDetector:
                             opencl_c_version_str = "Unknown"
 
                         # 构建设备信息字典
-                        is_opencl_available = opencl_version_str not in (None, "", "Unknown")
                         device_info = {
                             "name": device_name,
                             "vendor": device.get_info(cl.device_info.VENDOR),
@@ -410,8 +415,6 @@ class GPUDeviceDetector:
                             "type": "GPU",
                             "opencl_version": opencl_version_str,
                             "opencl_c_version": opencl_c_version_str,
-                            "opencl_available": is_opencl_available,
-                            "level_zero_available": False,
                         }
 
                         devices.append(device_info)
@@ -580,7 +583,9 @@ class GPUDevice:
         if self._opencl_version < OPENCL_MIN_REQUIRED_VERSION:
             # OpenCL < 1.2: 不兼容，给出明确提示但不崩溃
             vendor_for_advice = identify_vendor(device_info.get("name", ""), cast(str, self.vendor))
-            upgrade_info = OPENCL_UPGRADE_ADVICE.get(vendor_for_advice, OPENCL_UPGRADE_ADVICE["unknown"])
+            upgrade_info = OPENCL_UPGRADE_ADVICE.get(
+                vendor_for_advice, OPENCL_UPGRADE_ADVICE["unknown"]
+            )
             logger.warning(
                 f"COMP-2: OpenCL 版本不兼容 (当前: {self._opencl_version:.1f}, "
                 f"最低要求: {OPENCL_MIN_REQUIRED_VERSION})\n"

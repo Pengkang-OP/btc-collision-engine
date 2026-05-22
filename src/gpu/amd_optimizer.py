@@ -1,6 +1,6 @@
-"""AMD GPU specific optimization module.
+"""AMD GPU 专有优化模块
 
-Encapsulates all AMD GPU specific optimization logic, including:
+封装所有 AMD GPU 特定的优化逻辑，包括：
 - 驱动版本检测（Adrenalin/ROCm）
 - GPU 架构代识别（GCN1.0/GCN3.0/Vega/RDNA/RDNA2/RDNA3/RDNA4/CDNA1-4）
 - Wavefront 大小验证（GCN/CDNA=64, RDNA原生=32兄容樟64）
@@ -19,11 +19,16 @@ SHA256/RIPEMD160/secp256k1 等加密/哈希运算的精度。
 """
 
 import re
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from ..utils import get_configured_logger
 
 logger = get_configured_logger("AMDOptimizer")
+
+# 延迟导入避免循环依赖
+if TYPE_CHECKING:
+    pass
+
 
 # ---------------------------------------------------------------------------
 # 内部辅助组件
@@ -97,7 +102,9 @@ class AmdDriverDetector:
             "recommendation": None,
         }
 
-        version_str = self._device_info.get("driver_version") or self._device_info.get("version", "")
+        version_str = self._device_info.get("driver_version") or self._device_info.get(
+            "version", ""
+        )
         if not version_str:
             result["recommendation"] = (
                 "无法检测 AMD 驱动版本，建议使用 Adrenalin 22.10+ 或 ROCm 4.0+ 以获得最佳 OpenCL 支持"
@@ -611,7 +618,9 @@ class AmdMemoryOptimizer:
     # GDDR5 架构列表
     _GDDR5_ARCHS = {"GCN1.0", "GCN3.0"}
 
-    def __init__(self, device_info: dict, arch_info: dict, engine_logger: Any | None = None) -> None:
+    def __init__(
+        self, device_info: dict, arch_info: dict, engine_logger: Any | None = None
+    ) -> None:
         self._device_info = device_info
         self._arch_info = arch_info
         self._logger = engine_logger or logger
@@ -917,7 +926,9 @@ class AmdGPUOptimizer:
         result["recommended_wavefront_size"] = (
             self._arch_info.get("wavefront_size", 64) if self._arch_info else 64
         )
-        result["arch_name"] = self._arch_info.get("arch", "Unknown") if self._arch_info else "Unknown"
+        result["arch_name"] = (
+            self._arch_info.get("arch", "Unknown") if self._arch_info else "Unknown"
+        )
 
         self._logger.info("=" * 60)
         self._logger.info("✅ AMD GPU 特殊优化应用完成")

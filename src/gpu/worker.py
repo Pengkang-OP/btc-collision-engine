@@ -1,10 +1,9 @@
-"""Single GPU worker.
+"""单GPU工作器
 
-Encapsulates a single GPU collision engine running private key
-search tasks in a thread. Provides thread-safe state management
-and result collection.
+封装单个GPU的碰撞引擎,在线程中独立运行私钥搜索任务。
+提供线程安全的状态管理和结果收集。
 
-Integration optimizations:
+集成优化：
 - 使用 ThreadLocalDeltaStats 减少锁竞争（可配置）
 - 使用性能监控装饰器（可配置）
 """
@@ -255,9 +254,9 @@ class SingleGPUWorker(threading.Thread):
 
         最多递归重试 3 次，防止 batch_size 已降至下限后仍 MemoryError 导致无限递归。
         """
-        max_memory_retries = 3
-        if _depth >= max_memory_retries:
-            logger.error(f"GPU {self.device_idx} 降批重试已达上限 ({max_memory_retries})，放弃")
+        MAX_MEMORY_RETRIES = 3
+        if _depth >= MAX_MEMORY_RETRIES:
+            logger.error(f"GPU {self.device_idx} 降批重试已达上限 ({MAX_MEMORY_RETRIES})，放弃")
             return
 
         current_batch = self.config.batch_size or 65536

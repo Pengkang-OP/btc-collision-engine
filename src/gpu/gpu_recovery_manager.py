@@ -1,5 +1,5 @@
 """
-GPU error recovery manager.
+GPU异常恢复管理器
 
 提供GPU失败时的优雅降级、自动恢复和负载重分配功能。
 解决P1-2问题：GPU碰撞引擎异常恢复机制不完善。

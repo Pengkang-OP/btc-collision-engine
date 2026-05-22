@@ -1,10 +1,8 @@
-"""GPU kernel implementation.
+"""GPU内核实现
 
-Contains:
-- compile_kernel_with_retry: Shared kernel compile retry function
-  (DEF-2 fix), supports 4 degradation strategies
-- GPUKernel: OpenCL GPU computation kernel wrapper implementing
-  GPUKernelProtocol interface
+包含:
+- compile_kernel_with_retry: 共享的内核编译重试函数 (DEF-2修复)，支持4种降级编译策略
+- GPUKernel: OpenCL GPU计算内核包装类，实现GPUKernelProtocol接口
   - 持久化Buffer和异步执行，保持GPU持续高负载
   - 2*G自检验证、批量密钥碰撞、目标地址管理
   - 预计算表(Precomputed Table)常量缓冲区管理
@@ -192,7 +190,9 @@ class GPUKernel(GPUKernelProtocol):
     EXPECTED_2G_X = 0xC6047F9441ED7D6D3045406E95C07CD85C778E4B8CEF3CA7ABAC09B95C709EE5
     EXPECTED_2G_Y = 0x1AE168FEA63DC339A3C58419466CEAEEF7F632653266D0E1236431A950CFE52A
 
-    # v5.0.0: 移除已弃用的 KEYS_BUFFER_SIZE_FACTOR 常量
+    # v4.2.1新增: 缓冲区大小因子常量
+    # KEYS_BUFFER_SIZE_FACTOR: PRNG改造后私钥缓冲区已弃用，保留以兼容日志中的历史大小引用
+    KEYS_BUFFER_SIZE_FACTOR = 32  # 历史: PRNG模式下私钥缓冲区已不再需要，仅用于日志大小参考
     MATCH_BUFFER_SIZE_FACTOR = 4  # 每个匹配标志4字节（int32）
 
     def __init__(
@@ -306,7 +306,7 @@ class GPUKernel(GPUKernelProtocol):
         """
         return self._program
 
-    def _compile(self) -> Any:
+    def _compile(self):
         """编译 OpenCL 内核（带性能监控、缓存和重试机制）
 
         P2-6修复: 添加内核编译缓存机制，避免每次启动都重新编译
@@ -396,7 +396,7 @@ class GPUKernel(GPUKernelProtocol):
             # compile_kernel_with_retry 已经记录了详细日志，直接向上传播
             raise
 
-    def _verify(self) -> bool:
+    def _verify(self):
         """ALG-3修复: 验证 GPU 计算正确性（增强版）
 
         验证内容:
@@ -600,7 +600,7 @@ class GPUKernel(GPUKernelProtocol):
                     os.remove(cache_file)
             return False
 
-    def _save_kernel_cache(self) -> bool:
+    def _save_kernel_cache(self):
         """P2-6修复 + DEF-2审查: 原子写入内核二进制到缓存
 
         使用 tmp + os.replace 原子写入，防止并发写入导致缓存损坏。
@@ -690,7 +690,7 @@ class GPUKernel(GPUKernelProtocol):
         # 调用共享函数
         return calculate_optimal_batch_size(device=self.device, target_buffer_size=target_buffer_size)
 
-    def _allocate_buffers(self) -> None:
+    def _allocate_buffers(self):
         """预分配 GPU 内存缓冲区（PRNG模式）
 
         P2-2修复: 添加缓冲区追踪
@@ -729,7 +729,7 @@ class GPUKernel(GPUKernelProtocol):
             )
         logger.info(
             "PRNG模式: 创建 seed_buf 32字节（替代原 keys_buf "
-            f"{self.max_batch_size * 32 // 1024 // 1024}MB）"
+            f"{self.max_batch_size * self.KEYS_BUFFER_SIZE_FACTOR // 1024 // 1024}MB）"
         )
         self._buffer_tracker.track_buffer("_seed_buf", self._seed_buf, 32)
 
@@ -1216,7 +1216,7 @@ class GPUKernel(GPUKernelProtocol):
         self._batch_kernel = None
         self._batch_kernel_local = None
 
-    def _setup_async_logging(self, log_file: str, max_bytes: int, backup_count: int) -> None:
+    def _setup_async_logging(self, log_file: str, max_bytes: int, backup_count: int):
         """设置异步日志处理器（v4.2.1新增）
 
         Args:

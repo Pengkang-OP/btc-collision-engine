@@ -1,10 +1,9 @@
-"""Unified GPU device scorer.
+"""统一GPU设备评分器
 
-Provides unified GPU device scoring algorithm, eliminating
-inconsistencies between selector.py, load_balancer.py, and
-device.py scoring formulas.
+提供统一的GPU设备评分算法，消除 selector.py、load_balancer.py、device.py
+三处评分公式的不一致性。
 
-Scoring formula:
+评分公式:
     raw_score = memory_score + compute_score + cache_bonus + local_mem_bonus + generation_bonus
     final_score = raw_score * vendor_factor
 
