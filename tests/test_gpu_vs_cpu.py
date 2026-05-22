@@ -13,9 +13,9 @@ import time
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from src.collision import TargetResolver
-from src.collision.gpu.engine import GPUCollisionEngine
-from src.collision.key_collision_engine import KeyCollisionEngine
+from src.collision import TargetResolver  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
+from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
 
 
 def run_cpu_test(targets, duration=15):

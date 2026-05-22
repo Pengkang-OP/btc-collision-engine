@@ -8,8 +8,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from src.collision.targets.format_aware_manager import FormatAwareTargetManager
-from src.core.multi_format_generator import AddressFormat, MultiFormatAddressGenerator
+from src.collision.targets.format_aware_manager import FormatAwareTargetManager  # noqa: E402
+from src.core.multi_format_generator import AddressFormat, MultiFormatAddressGenerator  # noqa: E402
 
 print("=" * 80)
 print("测试: 多格式目标地址场景")
@@ -30,8 +30,8 @@ print("场景1: 目标包含P2PKH和Bech32")
 print("-" * 80)
 
 manager = FormatAwareTargetManager()
-manager.add_target(addrs["p2pkh"])  # 添加P2PKH目标
-manager.add_target(addrs["bech32"])  # 添加Bech32目标
+_ = manager.add_target(addrs["p2pkh"])  # 添加P2PKH目标
+_ = manager.add_target(addrs["bech32"])  # 添加Bech32目标
 
 print(f"目标格式: {manager.get_format_stats()}")
 print(f"P2PKH目标: {addrs['p2pkh']}")
@@ -49,12 +49,15 @@ print("\n处理流程:")
 print(f"  1. 遍历到P2PKH格式，有{manager.get_targets_by_format()[AddressFormat.P2PKH]}个目标")
 print(f"     - 生成P2PKH地址: {addrs['p2pkh']}")
 print(
-    f"     - 检查是否在目标中: {'是' if addrs['p2pkh'].lower() in manager.get_targets_by_format()[AddressFormat.P2PKH] else '否'}"
+    "     - 检查是否在目标中: "
+    + f"{'是' if addrs['p2pkh'].lower() in manager.get_targets_by_format()[AddressFormat.P2PKH] else '否'}"
 )
 print(f"  2. 继续遍历到Bech32格式，有{manager.get_targets_by_format()[AddressFormat.BECH32]}个目标")
 print(f"     - 生成Bech32地址: {addrs['bech32']}")
+bech32_match = addrs['bech32'].lower() in manager.get_targets_by_format()[AddressFormat.BECH32]
 print(
-    f"     - 检查是否在目标中: {'是' if addrs['bech32'].lower() in manager.get_targets_by_format()[AddressFormat.BECH32] else '否'}"
+    "     - 检查是否在目标中: "
+    + f"{'是' if bech32_match else '否'}"
 )
 print("  3. 两个格式都匹配，返回第一个匹配的（P2PKH先遍历）")
 
@@ -63,7 +66,7 @@ print("场景2: 目标只包含Bech32")
 print("-" * 80)
 
 manager2 = FormatAwareTargetManager()
-manager2.add_target(addrs["bech32"])  # 只添加Bech32目标
+_ = manager2.add_target(addrs["bech32"])  # 只添加Bech32目标
 
 print(f"目标格式: {manager2.get_format_stats()}")
 print(f"Bech32目标: {addrs['bech32']}")
@@ -90,10 +93,10 @@ print("场景3: 目标包含所有4种格式")
 print("-" * 80)
 
 manager3 = FormatAwareTargetManager()
-manager3.add_target(addrs["p2pkh"])
-manager3.add_target(addrs["p2sh"])
-manager3.add_target(addrs["bech32"])
-manager3.add_target(addrs["taproot"])
+_ = manager3.add_target(addrs["p2pkh"])
+_ = manager3.add_target(addrs["p2sh"])
+_ = manager3.add_target(addrs["bech32"])
+_ = manager3.add_target(addrs["taproot"])
 
 print(f"目标格式: {manager3.get_format_stats()}")
 print("所有格式都有目标")
@@ -125,8 +128,8 @@ print("其中一个Bech32地址匹配")
 
 # 创建模拟场景
 manager4 = FormatAwareTargetManager()
-manager4.add_target("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")  # 假P2PKH地址
-manager4.add_target("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4")  # 真实的Bech32地址（私钥=1）
+_ = manager4.add_target("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")  # 假P2PKH地址
+_ = manager4.add_target("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4")  # 真实的Bech32地址（私钥=1）
 
 print(f"目标格式: {manager4.get_format_stats()}")
 

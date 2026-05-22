@@ -12,9 +12,9 @@ from pathlib import Path
 # 添加项目根目录到路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.core.bigint_optimizer import BigIntOptimizer
-from src.core.precomputed_table import get_precomputed_table
-from src.core.secp256k1 import ECPoint, Secp256k1
+from src.core.bigint_optimizer import BigIntOptimizer  # noqa: E402
+from src.core.precomputed_table import get_precomputed_table  # noqa: E402
+from src.core.secp256k1 import ECPoint, Secp256k1  # noqa: E402
 
 
 def main() -> None:

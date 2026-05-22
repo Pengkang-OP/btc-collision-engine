@@ -9,7 +9,7 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from unittest.mock import patch
+from unittest.mock import patch  # noqa: E402
 
 from src.collision.checkpoint_manager import CheckpointManager  # noqa: E402
 

@@ -20,8 +20,8 @@ import pytest
 
 sys.path.insert(0, ".")
 
-from src.collision.base_engine import BaseCollisionEngine
-from src.collision.collision_stats import CollisionStats
+from src.collision.base_engine import BaseCollisionEngine  # noqa: E402
+from src.collision.collision_stats import CollisionStats  # noqa: E402
 
 # ============================================================================
 # Mock 引擎实现（用于测试抽象基类）
@@ -331,7 +331,7 @@ class TestBaseEngineSafeCallback:
 
     def test_callback_audit_disabled(self):
         """测试：禁用了审计日志的回调"""
-        engine = MockEngine()
+        MockEngine()  # noqa: F841
 
         class NoAuditEngine(MockEngine):
             _match_callback_audit_enabled = False

@@ -11,7 +11,7 @@ import sys
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.core.secure_key_manager import SecureKeyManager
+from src.core.secure_key_manager import SecureKeyManager  # noqa: E402
 
 
 def print_header(title):

@@ -271,10 +271,10 @@ class TestSaveAddressToTargetsFile:
         with open(targets_path) as f:
             lines = f.readlines()
         addr_lines = [
-            l.strip()
-            for l in lines
-            if l.strip() and not l.strip().startswith("#")  # noqa: E741
-        ]  # noqa: E741, E501
+            line.strip()
+            for line in lines
+            if line.strip() and not line.strip().startswith("#")
+        ]
         assert addr_lines.count(addr) == 1
 
 

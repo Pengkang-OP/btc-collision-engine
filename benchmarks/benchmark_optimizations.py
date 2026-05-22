@@ -12,11 +12,11 @@ from pathlib import Path
 # 添加项目根目录到路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.core.bigint_optimizer import get_bigint_optimizer
-from src.core.memory_pool import get_pool_manager
-from src.core.precomputed_table import get_precomputed_table
-from src.core.secp256k1 import ECPoint, Secp256k1
-from src.core.simd_hash import get_simd_hash_optimizer
+from src.core.bigint_optimizer import get_bigint_optimizer  # noqa: E402
+from src.core.memory_pool import get_pool_manager  # noqa: E402
+from src.core.precomputed_table import get_precomputed_table  # noqa: E402
+from src.core.secp256k1 import ECPoint, Secp256k1  # noqa: E402
+from src.core.simd_hash import get_simd_hash_optimizer  # noqa: E402
 
 
 def benchmark_precomputed_table(iterations=100):

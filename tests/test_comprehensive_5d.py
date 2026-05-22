@@ -21,9 +21,9 @@ import pytest
 # 添加项目路径
 sys.path.insert(0, ".")
 
-from src.collision.collision_stats import CollisionStats
-from src.collision.event_bus import EventBus
-from src.collision.events import (
+from src.collision.collision_stats import CollisionStats  # noqa: E402
+from src.collision.event_bus import EventBus  # noqa: E402
+from src.collision.events import (  # noqa: E402
     CollisionEvent,
     EngineCompleteEvent,
     EngineErrorEvent,
@@ -38,7 +38,7 @@ from src.collision.events import (
 # 维度一：多模式测试 (Multi-Mode Tests)
 # ============================================================================
 
-@pytest.mark.unit
+
 class TestMultiModeSemantics:
     """多模式测试 - 语义验证（update 赋值语义）"""
 
@@ -561,7 +561,7 @@ class TestMultiFunctionPerformance:
 
         start_time = time.time()
         for _ in range(100):
-            snap = stats.snapshot()
+            stats.snapshot()
         elapsed = time.time() - start_time
 
         assert elapsed < 1.0
@@ -712,7 +712,7 @@ class TestCrossDimensionScenarios:
 
         assert len(errors) == 1
         assert errors[0].error_type == "gpu_error"
-        assert errors[0].recoverable == True
+        assert errors[0].recoverable is True
 
 
 if __name__ == "__main__":

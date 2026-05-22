@@ -6,7 +6,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.utils.ui_helpers import format_speed, truncate_address
+from src.utils.ui_helpers import format_speed, truncate_address  # noqa: E402
 
 print("=" * 60)
 print("验证UI模块修复")

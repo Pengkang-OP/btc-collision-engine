@@ -10,10 +10,10 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-import secrets
+import secrets  # noqa: E402
 
-from src.collision.targets.format_aware_manager import FormatAwareTargetManager
-from src.core.multi_format_generator import AddressFormat, MultiFormatAddressGenerator
+from src.collision.targets.format_aware_manager import FormatAwareTargetManager  # noqa: E402
+from src.core.multi_format_generator import AddressFormat, MultiFormatAddressGenerator  # noqa: E402
 
 print("=" * 80)
 print("Multi-Format Bitcoin Address Generation and Matching Test")
@@ -152,7 +152,7 @@ if is_match:
 print("\n[Test 6] Performance Test")
 print("-" * 80)
 
-import time
+import time  # noqa: E402
 
 # 生成1000个地址
 iterations = 1000

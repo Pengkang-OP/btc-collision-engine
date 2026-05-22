@@ -5,7 +5,7 @@ import sys
 
 sys.path.insert(0, ".")
 logging.disable(logging.CRITICAL)
-from src.gpu.auto_config import GPUAutoConfigurator
+from src.gpu.auto_config import GPUAutoConfigurator  # noqa: E402
 
 c = GPUAutoConfigurator()
 

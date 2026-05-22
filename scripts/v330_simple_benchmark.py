@@ -97,14 +97,16 @@ def generate_v330_report():
             print(f"\n⚠️  发现 {len(regressions)} 处性能回归:")
             for r in regressions:
                 print(
-                    f"  - {r['name']}: {r['baseline_ops_per_sec']:,.2f} → {r['current_ops_per_sec']:,.2f} ({r['change_pct']:+.1f}%)"
+                    f"  - {r['name']}: {r['baseline_ops_per_sec']:,.2f} -> "
+                    f"{r['current_ops_per_sec']:,.2f} ({r['change_pct']:+.1f}%)"
                 )
 
         if improvements:
             print(f"\n✅ 发现 {len(improvements)} 处性能提升:")
             for r in improvements:
                 print(
-                    f"  + {r['name']}: {r['baseline_ops_per_sec']:,.2f} → {r['current_ops_per_sec']:,.2f} ({r['change_pct']:+.1f}%)"
+                    f"  + {r['name']}: {r['baseline_ops_per_sec']:,.2f} -> "
+                    f"{r['current_ops_per_sec']:,.2f} ({r['change_pct']:+.1f}%)"
                 )
 
         if not regressions and not improvements:

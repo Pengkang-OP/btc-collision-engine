@@ -9,15 +9,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-import importlib
-import subprocess
-import threading
-import time
-import traceback
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime
+import importlib  # noqa: E402
+import subprocess  # noqa: E402
+import threading  # noqa: E402
+import time  # noqa: E402
+import traceback  # noqa: E402
+from concurrent.futures import ThreadPoolExecutor, as_completed  # noqa: E402
+from datetime import datetime  # noqa: E402
 
-from .models import AnalysisReport, TestCase, TestResult, TestSuiteResult
+from .models import AnalysisReport, TestCase, TestResult, TestSuiteResult  # noqa: E402
 
 
 class AutoTestModule:

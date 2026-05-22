@@ -161,7 +161,7 @@ def _apply_pyopencl_editable_install_fix():
 # 共享测试工具
 # ============================================================================
 
-import time as _poll_time
+import time as _poll_time  # noqa: E402
 
 
 def poll_until(condition, timeout=2.0, interval=0.01):

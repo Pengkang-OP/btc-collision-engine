@@ -22,8 +22,8 @@ if sys.platform == "win32":
 # 添加项目根目录
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.collision.gpu.engine import GPUCollisionEngine
-from src.monitoring.gpu_performance_monitor import (
+from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
+from src.monitoring.gpu_performance_monitor import (  # noqa: E402
     reset_gpu_performance_monitor,
 )
 

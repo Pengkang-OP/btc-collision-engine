@@ -123,39 +123,40 @@ def test_ui_helpers():
         print("✓ truncate_address 正确")
 
         # 测试 validate_address_format
-        assert validate_address_format("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa") == True, "P2PKH 验证错误"
-        assert validate_address_format("3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy") == True, "P2SH 验证错误"
-        assert validate_address_format("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4") == True, (
+        assert validate_address_format("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"), "P2PKH 验证错误"
+        assert validate_address_format("3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"), "P2SH 验证错误"
+        assert validate_address_format("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"), (
             "Bech32 验证错误"
         )
         # WIF 私钥测试
-        assert validate_address_format("5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ") == True, (
+        assert validate_address_format("5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ"), (
             "WIF 验证错误"
         )
-        assert validate_address_format("KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP98617") == True, (
+        assert validate_address_format("KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP98617"), (
             "WIF 压缩验证错误"
         )
         # 公钥测试
         assert (
             validate_address_format("0279BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798")
-            == True
+            is True
         ), "压缩公钥验证错误"
         assert (
             validate_address_format(
-                "0479BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8"
+                "0479BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798"
+                "483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8"
             )
-            == True
+            is True
         ), "非压缩公钥验证错误"
-        assert validate_address_format("invalid") == False, "无效地址应返回 False"
+        assert not validate_address_format("invalid"), "无效地址应返回 False"
         # 空值测试
-        assert validate_address_format("") == False, "空字符串应返回 False"
-        assert validate_address_format(None) == False, "None 应返回 False"
+        assert not validate_address_format(""), "空字符串应返回 False"
+        assert not validate_address_format(None), "None 应返回 False"
         print("✓ validate_address_format 正确")
 
         # 测试 validate_hex_string
-        assert validate_hex_string("0x1a2b3c") == True, "十六进制验证错误"
-        assert validate_hex_string("1a2b3c") == True, "无前缀十六进制验证错误"
-        assert validate_hex_string("invalid") == False, "无效十六进制应返回 False"
+        assert validate_hex_string("0x1a2b3c"), "十六进制验证错误"
+        assert validate_hex_string("1a2b3c"), "无前缀十六进制验证错误"
+        assert not validate_hex_string("invalid"), "无效十六进制应返回 False"
         print("✓ validate_hex_string 正确")
 
         # 测试 format_bytes
@@ -237,11 +238,11 @@ def test_config_validation():
         from src.config.gui_config import validate_all_configs, validate_color_config
 
         # 验证颜色配置
-        assert validate_color_config() == True, "颜色配置验证应通过"
+        assert validate_color_config(), "颜色配置验证应通过"
         print("✓ 颜色配置验证正确")
 
         # 验证所有配置
-        assert validate_all_configs() == True, "所有配置验证应通过"
+        assert validate_all_configs(), "所有配置验证应通过"
         print("✓ 所有配置验证正确")
 
         print("\n✅ 配置验证测试通过\n")

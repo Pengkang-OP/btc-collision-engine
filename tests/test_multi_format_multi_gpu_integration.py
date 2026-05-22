@@ -16,10 +16,10 @@ import sys
 
 sys.path.insert(0, "src")
 
-import secrets
+import secrets  # noqa: E402
 
-from src.core.multi_format_generator import MultiFormatAddressGenerator
-from src.gpu.multi_format_multi_gpu_engine import create_multi_format_multi_gpu_engine
+from src.core.multi_format_generator import MultiFormatAddressGenerator  # noqa: E402
+from src.gpu.multi_format_multi_gpu_engine import create_multi_format_multi_gpu_engine  # noqa: E402
 
 
 def test_format_manager():

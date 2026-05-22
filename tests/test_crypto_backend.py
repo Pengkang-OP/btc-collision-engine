@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from unittest.mock import MagicMock, PropertyMock, patch  # noqa: E402
 
-from src.core.crypto_backend import (
+from src.core.crypto_backend import (  # noqa: E402
     BackendType,
     CoincurveBackend,
     CryptoBackendManager,

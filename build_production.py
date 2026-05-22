@@ -15,6 +15,7 @@ BTC碰撞引擎 - 生产环境打包脚本
 
 import sys
 import shutil
+import os
 import argparse
 import json
 import fnmatch

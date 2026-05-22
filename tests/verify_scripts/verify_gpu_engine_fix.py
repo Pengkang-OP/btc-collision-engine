@@ -9,8 +9,8 @@ from pathlib import Path
 # 添加项目根目录
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.collision.gpu.engine import GPUCollisionEngine
-from src.gpu.device import GPUDeviceDetector
+from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
+from src.gpu.device import GPUDeviceDetector  # noqa: E402
 
 
 def main():
