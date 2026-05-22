@@ -36,17 +36,24 @@ class CheckpointManager:
 
     def __init__(
         self,
-        filepath: str | Path,
+        filepath: str | Path | None = None,
         interval: int = 60,
         max_size: int = MAX_CHECKPOINT_SIZE,
+        auto_save_interval: int | None = None,
     ):
-        self.filepath = Path(filepath)
-        self._interval = interval
+        self.filepath = Path(filepath) if filepath else Path("checkpoint.json")
+        # Support auto_save_interval as alias for interval
+        self._interval = auto_save_interval if auto_save_interval is not None else interval
         self._max_size = max_size
         self._lock = threading.Lock()
         self._buffer: dict | None = None
         self._dirty = False
         self._last_save = 0.0
+
+    @property
+    def exists(self) -> bool:
+        """Check if checkpoint file exists."""
+        return self.filepath.exists()
 
     def should_save(self) -> bool:
         return (
