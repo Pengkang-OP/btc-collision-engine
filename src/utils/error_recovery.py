@@ -1,9 +1,10 @@
-"""错误恢复策略框架
+"""Error recovery strategy framework.
 
-提供统一的重试、降级和跳过策略，适用于:
-- 临时 I/O 错误（磁盘满、文件锁定、网络超时）
-- GPU 设备暂时不可用（资源不足、超时、设备丢失）
-- 内存临时不足（可降级处理）
+Provides unified retry, degrade, and skip strategies for:
+- Temporary I/O errors (disk full, file lock, network timeout)
+- GPU device temporary unavailability (resource, timeout, device
+  loss)
+- Temporary memory insufficiency (can degrade gracefully)
 - 配置加载失败（回退到默认值）
 
 核心组件:

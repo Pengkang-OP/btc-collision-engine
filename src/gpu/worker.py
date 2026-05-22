@@ -1,9 +1,10 @@
-"""单GPU工作器
+"""Single GPU worker.
 
-封装单个GPU的碰撞引擎,在线程中独立运行私钥搜索任务。
-提供线程安全的状态管理和结果收集。
+Encapsulates a single GPU collision engine running private key
+search tasks in a thread. Provides thread-safe state management
+and result collection.
 
-集成优化：
+Integration optimizations:
 - 使用 ThreadLocalDeltaStats 减少锁竞争（可配置）
 - 使用性能监控装饰器（可配置）
 """

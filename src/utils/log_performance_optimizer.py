@@ -1,9 +1,10 @@
-"""日志性能优化模块
+"""Log performance optimization module.
 
-优化日志处理性能，充分利用平台支持的编程语言特性，包括：
-- 异步日志处理
-- 日志缓存机制
-- 批量写入
+Optimizes log processing performance by leveraging platform
+features, including:
+- Async log processing
+- Log caching mechanism
+- Batch writing
 - 平台特定优化
 """
 

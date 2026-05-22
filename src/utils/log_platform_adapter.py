@@ -1,9 +1,10 @@
-"""日志平台适配模块
+"""Log platform adaptation module.
 
-处理不同操作系统的特定问题，确保日志系统在所有平台上稳定运行，包括：
-- Windows 平台适配
-- Linux 平台适配
-- macOS 平台适配
+Handles OS-specific issues to ensure stable log operation across
+all platforms, including:
+- Windows platform adaptation
+- Linux platform adaptation
+- macOS platform adaptation
 - 跨平台兼容性处理
 """
 

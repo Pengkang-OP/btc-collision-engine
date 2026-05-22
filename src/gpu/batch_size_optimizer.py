@@ -1,9 +1,10 @@
-"""智能批次大小优化器
+"""Smart batch size optimizer.
 
-根据GPU性能、内存使用和系统负载动态调整批次大小，提高性能和稳定性。
+Dynamically adjusts batch size based on GPU performance, memory
+usage, and system load for improved performance and stability.
 
-功能特点：
-- 基于历史性能数据自动调整批次大小
+Features:
+- Auto-adjust batch size based on historical performance data
 - 考虑GPU显存使用情况
 - 响应系统负载变化
 - 支持不同GPU厂商的特性

@@ -1,10 +1,10 @@
-"""日志收集规则配置系统
+"""Log collection rule configuration system.
 
-提供详细的日志收集规则配置，支持：
-- 基于模块的日志级别控制
-- 基于关键字的日志过滤
-- 基于上下文的日志增强
-- 动态规则加载和更新
+Provides detailed log collection rule configuration supporting:
+- Module-based log level control
+- Keyword-based log filtering
+- Context-based log enhancement
+- Dynamic rule loading and updating
 """
 
 import json
