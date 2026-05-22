@@ -51,3 +51,10 @@ class EngineStateEvent(EngineEvent):
     """Event emitted on engine state changes."""
     state: str = ""
     message: str = ""
+
+
+@dataclass
+class EngineCompleteEvent(EngineEvent):
+    """Event emitted when engine completes."""
+    stats: dict | None = None
+    duration: float = 0.0
