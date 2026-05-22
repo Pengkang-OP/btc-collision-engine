@@ -51,10 +51,7 @@ class OptimizedP2PKHAddressGenerator(P2PKHAddressGenerator):
             self._table = get_precomputed_table(window_size)
 
         # Initialize batch optimizer if any optimization is enabled
-        if use_simd_hash or use_memory_pool:
-            self._batch_optimizer = BatchOptimizer(batch_size)
-        else:
-            self._batch_optimizer = None
+        self._batch_optimizer = BatchOptimizer(batch_size) if (use_simd_hash or use_memory_pool) else None
 
     def private_key_to_public_key(
         self,

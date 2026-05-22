@@ -34,11 +34,7 @@
     "use_memory_pool": true,
     "_comment_use_memory_pool": "是否启用 CPU 端内存池",
     "use_gpu_memory_pool": true,
-    "_comment_use_gpu_memory_pool": "是否启用 GPU 端内存池",
-    "gpu_pool_max_buffers": 100,
-    "_comment_gpu_pool_max_buffers": "GPU 内存池最大缓冲区数",
-    "gpu_pool_max_memory_mb": 512,
-    "_comment_gpu_pool_max_memory_mb": "GPU 内存池最大内存(MB)"
+    "_comment_use_gpu_memory_pool": "是否启用 GPU 端内存池(实际配置见 gpu 段)"
   },
 
   "logging": {
@@ -81,8 +77,8 @@
     "_comment_memory_usage_ratio": "GPU 内存使用率 (0-1]，Intel Arc 推荐 0.70-0.80",
     "enable_vendor_optimizations": true,
     "_comment_enable_vendor_optimizations": "是否启用厂商特定优化",
-    "queue_depth": 16,
-    "_comment_queue_depth": "GPU 命令队列预提交批次数 (1-16)，Intel Arc A770 建议 12-16",
+    "queue_depth": 8,
+    "_comment_queue_depth": "GPU 命令队列预提交批次数 (1-32)，NVIDIA 建议 4-8，Intel Arc 建议 12-16",
     "use_new_module": true,
     "_comment_use_new_module": "是否使用新版 GPU 模块",
     "async_execution": true,
@@ -113,8 +109,8 @@
     "_comment_work_group_size": "OpenCL work group 大小 (64-2048)",
     "use_fast_math": true,
     "_comment_use_fast_math": "是否启用 fast math 优化",
-    "use_uint32_workaround": true,
-    "_comment_use_uint32_workaround": "Intel GPU uint32 兼容处理 (Intel Arc 必须启用)",
+    "use_uint32_workaround": false,
+    "_comment_use_uint32_workaround": "Intel GPU uint32 兼容处理 (Intel Arc 必须启用，其他 GPU 保持 false)",
     "compiler_flags": "",
     "_comment_compiler_flags": "自定义 OpenCL 编译选项",
     "driver_check": {

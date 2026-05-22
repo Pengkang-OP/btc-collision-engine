@@ -291,7 +291,7 @@ class ConfigManager:
             "auto_detect": True,
             "memory_usage_ratio": 0.7,  # v5.0.0 PARAM-2: 与 auto_config.py NVIDIA 基线保持一致
             "enable_vendor_optimizations": True,
-            "queue_depth": 16,  # GPU 命令队列预提交批次数，与 config.json 保持一致
+            "queue_depth": 8,  # GPU 命令队列预提交批次数 (NVIDIA 建议 4-8，Intel Arc 建议 12-16)
             # v4.3.1: 补充 config.example.json 中的 GPU 高级配置字段
             "use_new_module": True,
             "async_execution": True,
@@ -309,7 +309,7 @@ class ConfigManager:
             # 审计修复: 补充 Schema 中声明但 DEFAULT_CONFIG 缺失的字段
             "work_group_size": 256,  # OpenCL work group size
             "use_fast_math": True,  # 启用 fast math 优化
-            "use_uint32_workaround": True,  # Intel GPU uint32 兼容处理 (Intel Arc 必须启用)
+            "use_uint32_workaround": False,  # Intel Arc 必须启用，其他 GPU 保持 False
             "compiler_flags": "",  # 自定义编译选项
             "driver_check": {},  # 驱动检查配置
             "per_device_config": {},  # 每设备独立配置
