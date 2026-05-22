@@ -9,7 +9,7 @@ CLI进度格式化模块
 import logging
 import time
 
-from src.cli.constants import (
+from .constants import (
     ETA_HOUR_THRESHOLD,
     ETA_MINUTE_THRESHOLD,
     INIT_CHECK_THRESHOLD,
@@ -20,7 +20,7 @@ from src.cli.constants import (
     UNIT_MILLION,
     UNIT_THOUSAND,
 )
-from src.collision import CollisionStats
+from ..collision import CollisionStats
 
 
 def _format_checked_count(checked: int) -> str:

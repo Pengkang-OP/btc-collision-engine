@@ -11,11 +11,11 @@ import argparse
 import logging
 import os
 
-from src.cli.constants import (
+from .constants import (
     DEFAULT_CHECKPOINT_INTERVAL,
     DEFAULT_DEDUP_MAX_SIZE,
 )
-from src.i18n import _t
+from ..i18n import _t
 
 # 运行时长上限阈值（7天，超过给出警告）
 _DURATION_WARN_THRESHOLD = 604800

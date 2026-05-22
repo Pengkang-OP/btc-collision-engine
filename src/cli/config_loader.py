@@ -15,8 +15,8 @@ from ._path_setup import _project_root, ensure_project_root
 
 ensure_project_root()
 
-from src.i18n import _t  # noqa: E402
-from src.utils import get_configured_logger  # noqa: E402
+from ..i18n import _t  # noqa: E402
+from ..utils import get_configured_logger  # noqa: E402
 
 logger = get_configured_logger("CLI")
 

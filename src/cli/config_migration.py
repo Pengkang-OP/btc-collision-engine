@@ -13,7 +13,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from src.i18n import _t
+from ..i18n import _t
 
 CONFIG_VERSION = "4.2.2"
 

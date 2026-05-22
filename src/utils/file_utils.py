@@ -11,8 +11,8 @@ import tempfile
 from collections.abc import Callable
 from typing import Any
 
-from src.utils.fast_json import fast_dump, fast_load
-from src.utils.platform_utils import PlatformUtils
+from .fast_json import fast_dump, fast_load
+from .platform_utils import PlatformUtils
 
 from .error_recovery import (
     classify_recoverable_error,
