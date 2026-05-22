@@ -1,6 +1,7 @@
-"""GPU参数自动调优器
+"""GPU parameter auto-tuner.
 
-根据不同厂商和型号的GPU自动配置最优参数。
+Automatically configures optimal parameters for different GPU
+vendors and models.
 支持NVIDIA、AMD、Intel Arc的特定优化。
 """
 

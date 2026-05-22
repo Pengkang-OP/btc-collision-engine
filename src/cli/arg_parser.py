@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-命令行参数解析模块
+Command line argument parsing module.
 
-提供 parse_args() 函数，定义所有 CLI 参数。
+Provides parse_args() function defining all CLI parameters.
 """
 
 import argparse
