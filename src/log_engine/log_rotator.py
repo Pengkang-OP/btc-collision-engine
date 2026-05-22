@@ -11,9 +11,13 @@ class LogRotator:
         self,
         max_size_mb: int = 100,
         backup_count: int = 5,
+        max_age_days: int | None = None,
+        max_count: int | None = None,
     ):
         self._max_size = max_size_mb * 1024 * 1024
         self._backup_count = backup_count
+        self._max_age_days = max_age_days
+        self._max_count = max_count
 
     def rotate(self, filepath: str | Path) -> bool:
         """Rotate a log file if it exceeds max size.

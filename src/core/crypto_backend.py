@@ -104,7 +104,19 @@ class CryptoBackend(ABC):
 
 
 class PurePythonBackend(CryptoBackend):
-    """Pure Python backend - uses existing secp256k1.py implementation"""
+    """Pure Python backend - uses existing secp256k1.py implementation
+
+    ⚠️ 安全警告 (SEC-1):
+    - 本后端仅用于教育和研究目的
+    - 纯 Python 实现的椭圆曲线运算性能较低（比 coincurve 慢约 1000 倍）
+    - 虽然使用 Montgomery Ladder（算法上恒定时间），但 Python
+      解释器级别的分支预测和缓存效应仍可能引入微小的时间变化
+    - **生产环境建议**: 安装 coincurve 库以获得完全恒定时间的安全保障
+
+    推荐安装:
+        pip install coincurve  # libsecp256k1, 完全恒定时间, 最高性能
+        pip install cryptography  # OpenSSL, generate_public_key 恒定时间
+    """
 
     def __init__(self, use_const_time: bool = False) -> None:
         from .secp256k1 import ECPoint, EllipticCurve, Secp256k1
@@ -112,6 +124,12 @@ class PurePythonBackend(CryptoBackend):
         self.ec = EllipticCurve()
         self.G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
         self._use_const_time = use_const_time
+
+        if not use_const_time:
+            logger.warning(
+                "PurePythonBackend: 非恒定时间模式 - "
+                "不推荐用于生产环境，建议安装 coincurve 或 cryptography"
+            )
 
     @property
     def name(self) -> str:

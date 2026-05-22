@@ -1,4 +1,14 @@
-"""KeyCollisionEngine 单元测试 - 启动/停止、进度回调、匹配回调"""
+"""KeyCollisionEngine 整合测试入口 (MAINT-1拆分)
+
+测试已按主题拆分到以下文件：
+- test_engine_lifecycle.py    - 生命周期、上下文管理器、stop边界
+- test_engine_callbacks.py     - 回调函数、安全回调
+- test_engine_range_scan.py    - 范围扫描模式（含worker+编排）
+- test_engine_brute_force.py   - 暴力穷举模式（含worker）
+- test_engine_constructor.py   - 构造函数分支和参数验证
+- test_engine_internals.py     - 内部方法、安全生成、去重
+- test_engine_checkpoint.py    - 断点持久化
+"""
 
 import json
 import os
@@ -16,15 +26,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.collision.collision_stats import CollisionStats  # noqa: E402
 from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
 from src.core.address_generator import P2PKHAddressGenerator  # noqa: E402
-
-
-def _get_known_target() -> tuple:
-    """获取一个已知私钥对应的地址（用于匹配测试）"""
-    # 私钥 = 1
-    pk = (1).to_bytes(32, "big")
-    gen = P2PKHAddressGenerator()
-    addr, _, _ = gen.generate_address(pk)
-    return pk, addr
+from tests.conftest_engine import get_known_target  # noqa: E402
 
 
 class TestKeyCollisionEngineLifecycle(unittest.TestCase):

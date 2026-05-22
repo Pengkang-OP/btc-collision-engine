@@ -343,6 +343,32 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self._match_callback_timeout = 5  # 回调超时时间（秒）
         self._match_callback_audit_enabled = True  # 启用审计日志
 
+    def _safe_invoke_match_callback(
+        self, private_key: bytes, address: str, wif: str
+    ) -> bool:
+        """安全调用匹配回调，带超时和异常隔离。
+
+        Args:
+            private_key: 私钥
+            address: 匹配到的地址
+            wif: WIF格式私钥
+
+        Returns:
+            True if callback was invoked, False otherwise
+        """
+        if not self.on_match:
+            return True
+        try:
+            invoke_with_timeout(
+                self.on_match,
+                args=(private_key, address, wif),
+                timeout=self._match_callback_timeout,
+            )
+            return True
+        except Exception:
+            logger.exception("匹配回调执行异常（已隔离）")
+            return False
+
     def _init_monitoring(
         self,
         data_logging_enabled: bool,
@@ -449,7 +475,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             - 保存的信息包括：模式、目标、位置、已检查数、匹配结果
             - random模式不保存当前位置（因为是随机生成）
         """
-        if self.checkpoint_mgr and self.checkpoint_mgr.should_auto_save():
+        if self.checkpoint_mgr and self.checkpoint_mgr.should_auto_save:
             # 通过 snapshot() 获取线程安全的匹配列表快照，避免无锁迭代 self.stats.matches
             snap = self.stats.snapshot()
             matches_list = (
@@ -465,13 +491,15 @@ class KeyCollisionEngine(BaseCollisionEngine):
             position = self._current_position if self._current_mode != "random" else 0
 
             self.checkpoint_mgr.save(
-                mode=self._current_mode,
-                targets=self.targets,
-                current_position=position,
-                total_checked=count,
-                matches=matches_list,
-                range_start=self._range_start,
-                range_end=self._range_end,
+                {
+                    "mode": self._current_mode,
+                    "targets": list(self.targets),
+                    "current_position": position,
+                    "total_checked": count,
+                    "matches": matches_list,
+                    "range_start": self._range_start,
+                    "range_end": self._range_end,
+                }
             )
 
     def _log_data_metrics(self, count: int, speed: float) -> None:
@@ -1270,7 +1298,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         if self.on_progress:
             invoke_with_timeout(
                 self.on_progress,
-                args=(self.stats.snapshot(),),
+                args=(self.stats,),
                 timeout=5.0,
                 callback_name="on_progress",
             )
@@ -1291,14 +1319,11 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
         self._last_progress_time = current_time
 
-    def _random_search_finalize(self, total_count: int) -> None:
-        """随机搜索结束：更新统计、发布 COMPLETE。"""
-        self._executor = None
-        self._stats_updated.clear()
-        self.stats.update(total_count)
-        self._stats_updated.set()
-        self._running = False
+    def _publish_engine_complete(self, total_count: int) -> None:
+        """发布 ENGINE_COMPLETE 事件、记录引擎数据、触发 on_complete 回调。
 
+        CODE-2重构: 从三个 finalize 方法提取公共逻辑，消除重复。
+        """
         elapsed = time.time() - self.stats.start_time
         speed = total_count / elapsed if elapsed > 0 else 0
 
@@ -1332,6 +1357,16 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 timeout=5.0,
                 callback_name="on_complete",
             )
+
+    def _random_search_finalize(self, total_count: int) -> None:
+        """随机搜索结束：更新统计、发布 COMPLETE。"""
+        self._executor = None
+        self._stats_updated.clear()
+        self.stats.update(total_count)
+        self._stats_updated.set()
+        self._running = False
+
+        self._publish_engine_complete(total_count)
 
     def _worker_generate_addresses(
         self, private_key_bytes: bytes, worker_id: int
@@ -1554,7 +1589,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             self.stats._progress_percent = display_count / total_range * 100
             invoke_with_timeout(
                 self.on_progress,
-                args=(self.stats.snapshot(),),
+                args=(self.stats,),
                 timeout=5.0,
                 callback_name="on_progress",
             )
@@ -1588,44 +1623,14 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self._stats_updated.set()
         self._running = False
 
-        elapsed = time.time() - self.stats.start_time
-        speed = final_count / elapsed if elapsed > 0 else 0
-
-        try:
-            stop_reason = self._engine_stop_reason
-            self._engine_stop_reason = "normal"
-            self.event_bus.publish(
-                EngineCompleteEvent(
-                    total_checked=final_count,
-                    matches_found=self.stats.matches_found,
-                    elapsed_time=elapsed,
-                    avg_speed=speed,
-                    stop_reason=stop_reason,
-                )
-            )
-        except Exception as e:
-            logger.debug(f"发布 ENGINE_COMPLETE 事件失败（非致命）: {e}")
+        self._publish_engine_complete(final_count)
 
         if self.data_logging_enabled and self.data_logger:
-            self.data_logger.record_engine_data(
-                mode=self._current_mode,
-                target_count=len(self.targets),
-                is_running=False,
-                current_position=final_count,
-            )
             try:
                 self.data_logger.generate_report("daily")
                 logger.info("数据日志报告已生成")
             except (RuntimeError, OSError, ValueError) as e:
                 logger.error(f"生成数据日志报告失败: {e}")
-
-        if self.on_complete:
-            invoke_with_timeout(
-                self.on_complete,
-                args=(self.stats,),
-                timeout=5.0,
-                callback_name="on_complete",
-            )
 
     def range_scan(self, start: int, end: int) -> None:
         """范围扫描模式 - 使用线程池并行扫描指定私鑰范围"""
@@ -1784,7 +1789,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         if self.on_progress:
             invoke_with_timeout(
                 self.on_progress,
-                args=(self.stats.snapshot(),),
+                args=(self.stats,),
                 timeout=5.0,
                 callback_name="on_progress",
             )
@@ -1814,31 +1819,9 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self._stats_updated.set()
         self._running = False
 
-        elapsed = time.time() - self.stats.start_time
-        speed = total_count / elapsed if elapsed > 0 else 0
-
-        try:
-            stop_reason = self._engine_stop_reason
-            self._engine_stop_reason = "normal"
-            self.event_bus.publish(
-                EngineCompleteEvent(
-                    total_checked=total_count,
-                    matches_found=self.stats.matches_found,
-                    elapsed_time=elapsed,
-                    avg_speed=speed,
-                    stop_reason=stop_reason,
-                )
-            )
-        except Exception as e:
-            logger.debug(f"发布 ENGINE_COMPLETE 事件失败（非致命）: {e}")
+        self._publish_engine_complete(total_count)
 
         if self.data_logging_enabled and self.data_logger:
-            self.data_logger.record_engine_data(
-                mode=self._current_mode,
-                target_count=len(self.targets),
-                is_running=False,
-                current_position=total_count,
-            )
             try:
                 self.data_logger.generate_report("daily")
                 logger.info("数据日志报告已生成")
@@ -1855,13 +1838,15 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 else []
             )
             self.checkpoint_mgr.save(
-                mode=self._current_mode,
-                targets=self.targets,
-                current_position=self._current_position,
-                total_checked=self.stats.total_checked,
-                matches=matches_list,
-                range_start=self._range_start,
-                range_end=self._range_end,
+                {
+                    "mode": self._current_mode,
+                    "targets": list(self.targets),
+                    "current_position": self._current_position,
+                    "total_checked": self.stats.total_checked,
+                    "matches": matches_list,
+                    "range_start": self._range_start,
+                    "range_end": self._range_end,
+                }
             )
         if self.on_complete:
             invoke_with_timeout(
@@ -1904,7 +1889,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
     def resume_from_checkpoint(self) -> dict | None:
         """从断点恢复，返回断点数据（包含mode等信息），无断点返回 None"""
-        if not self.checkpoint_mgr or not self.checkpoint_mgr.exists():
+        if not self.checkpoint_mgr or not self.checkpoint_mgr.exists:
             return None
         data = self.checkpoint_mgr.load()
         if not data:
@@ -2059,9 +2044,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
     def _stop_send_signals(self) -> None:
         """发送停止信号"""
-        if hasattr(self, "_stop_reason_lock") and hasattr(self, "_engine_stop_reason"):
-            with self._stop_reason_lock:
-                self._engine_stop_reason = "user_stopped"
+        self._engine_stop_reason = "user_stopped"
         if hasattr(self, "_stop_event"):
             self._stop_event.set()
         if hasattr(self, "_running"):
@@ -2093,13 +2076,15 @@ class KeyCollisionEngine(BaseCollisionEngine):
             ]
         try:
             self.checkpoint_mgr.save(
-                mode=self._current_mode if hasattr(self, "_current_mode") else "",
-                targets=self.targets if hasattr(self, "targets") else set(),
-                current_position=(self._current_position if hasattr(self, "_current_position") else 0),
-                total_checked=self.stats.total_checked,
-                matches=matches_list,
-                range_start=self._range_start if hasattr(self, "_range_start") else None,
-                range_end=self._range_end if hasattr(self, "_range_end") else None,
+                {
+                    "mode": self._current_mode if hasattr(self, "_current_mode") else "",
+                    "targets": list(self.targets) if hasattr(self, "targets") else [],
+                    "current_position": (self._current_position if hasattr(self, "_current_position") else 0),
+                    "total_checked": self.stats.total_checked,
+                    "matches": matches_list,
+                    "range_start": self._range_start if hasattr(self, "_range_start") else None,
+                    "range_end": self._range_end if hasattr(self, "_range_end") else None,
+                }
             )
             logger.info("断点保存成功")
         except (RuntimeError, OSError, ValueError) as e:
@@ -2138,12 +2123,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
     def _stop_reset_and_publish(self) -> None:
         """重置引擎状态并发布 ENGINE_STOP 事件"""
-        was_thread_alive = (
-            hasattr(self, "_thread") and self._thread is not None and self._thread.is_alive()
-        )
-        if hasattr(self, "_stop_reason_lock") and hasattr(self, "_engine_stop_reason"):
-            with self._stop_reason_lock:
-                self._engine_stop_reason = "user_stopped"
+        self._engine_stop_reason = "user_stopped"
         if hasattr(self, "_stop_event"):
             self._stop_event.clear()
         if hasattr(self, "_running"):
@@ -2151,18 +2131,18 @@ class KeyCollisionEngine(BaseCollisionEngine):
         if hasattr(self, "_thread"):
             self._thread = None
 
-        if was_thread_alive:
-            try:
-                if hasattr(self, "stats") and hasattr(self, "event_bus"):
-                    snap = self.stats.snapshot()
-                    self.event_bus.publish(
-                        EngineStopEvent(
-                            reason="user_stopped",
-                            total_checked=snap.total_checked,
-                        )
+        # 不再检查 was_thread_alive，统一发布 ENGINE_STOP
+        try:
+            if hasattr(self, "stats") and hasattr(self, "event_bus"):
+                snap = self.stats.snapshot()
+                self.event_bus.publish(
+                    EngineStopEvent(
+                        reason="user_stopped",
+                        total_checked=snap.total_checked,
                     )
-            except (RuntimeError, OSError, ValueError) as e:
-                logger.debug(f"发布 ENGINE_STOP 事件失败（非致命）: {e}")
+                )
+        except (RuntimeError, OSError, ValueError) as e:
+            logger.debug(f"发布 ENGINE_STOP 事件失败（非致命）: {e}")
 
     def stop(self, timeout: float | None = None) -> None:
         """停止对撞

@@ -16,6 +16,8 @@ class EngineStartEvent(EngineEvent):
     """Event emitted when engine starts."""
     config: dict | None = None
     mode: str = ""
+    target_count: int = 0
+    batch_size: int = 0
 
 
 @dataclass

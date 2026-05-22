@@ -55,6 +55,11 @@ class CheckpointManager:
         """Check if checkpoint file exists."""
         return self.filepath.exists()
 
+    @property
+    def should_auto_save(self) -> bool:
+        """Alias for should_save()."""
+        return self.should_save()
+
     def should_save(self) -> bool:
         return (
             self._dirty
