@@ -1,6 +1,6 @@
 # 多阶段构建 - 生产环境优化
 # 支持 linux/amd64 和 linux/arm64
-FROM --platform=$BUILDPLATFORM python:3.11-slim AS builder
+FROM --platform=$BUILDPLATFORM python:3.14-slim AS builder
 
 # 构建参数
 ARG BUILD_DATE
@@ -35,7 +35,7 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 生产阶段
-FROM --platform=$TARGETPLATFORM python:3.11-slim AS production
+FROM --platform=$TARGETPLATFORM python:3.14-slim AS production
 
 # 标签信息
 LABEL maintainer="BTC Project" \
