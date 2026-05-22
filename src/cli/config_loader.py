@@ -1,115 +1,49 @@
-#!/usr/bin/env python3
-"""
-配置加载与验证模块
-
-提供配置文件的加载、解析和基本验证功能。
-"""
-
+"""Configuration loader for CLI."""
 import json
-import os
 from pathlib import Path
-from typing import cast
 
-# v4.5.1: 确保项目根目录在 sys.path 中（使用共享模块）
-from ._path_setup import _project_root, ensure_project_root
+from ..utils import get_configured_logger
 
-ensure_project_root()
-
-from ..i18n import _t  # noqa: E402
-from ..utils import get_configured_logger  # noqa: E402
-
-logger = get_configured_logger("CLI")
+logger = get_configured_logger("ConfigLoader")
 
 
-def load_config_with_validation(config_file: str | None = None) -> dict | None:
-    """
-    加载并验证配置文件
+class ConfigLoader:
+    """Loads and validates configuration files."""
 
-    参数:
-        config_file: 可选的配置文件路径，若为 None 则使用项目根目录的 config.json
-    返回:
-        配置字典，如果加载失败则返回None
-    """
-    if config_file:
-        config_path = os.path.abspath(config_file)
-        # 安全: 检测路径遍历，防止读取项目目录外的敏感文件
-        # 使用pathlib进行严格的路径验证
-        try:
-            # W12修复: 使用 os.path.realpath 解析符号链接（兼容 Python 3.12/3.13）
-            # Python 3.13+ 的 Path.resolve(follow_symlinks=True) 等效于 os.path.realpath
-            config_path_obj = Path(os.path.realpath(config_path))
-            project_root_obj = Path(os.path.realpath(_project_root))
-            # 使用relative_to检查路径是否在项目目录内
-            config_path_obj.relative_to(project_root_obj)
-        except ValueError:
-            # ValueError表示路径不在项目目录内
-            logger.error(f"配置文件路径超出项目目录范围，拒绝加载: {config_file}")
-            return None
-    else:
-        config_path = os.path.join(_project_root, "config.json")
+    def load(
+        self, filepath: str | Path
+    ) -> dict:
+        """Load configuration from JSON file.
 
-    # 检查配置文件是否存在
-    if not os.path.exists(config_path):
-        logger.warning(f"配置文件不存在: {config_path}")
-        logger.info(
-            "请运行: copy config.example.json config.json (Windows) 或 cp config.example.json config.json (Linux/macOS)"  # noqa: E501
-        )
-        return None
+        Args:
+            filepath: Path to config file
 
-    # 尝试加载JSON
-    try:
-        with open(config_path, encoding="utf-8") as f:
-            config = json.load(f)
-        logger.info(_t("config.loaded", path=config_path))
+        Returns:
+            Configuration dictionary
+        """
+        path = Path(filepath)
+        if not path.exists():
+            logger.error(
+                f"Config file not found: {path}"
+            )
+            return {}
+        with open(path) as f:
+            return json.load(f)
 
-        # 基本验证
-        if not isinstance(config, dict):
-            logger.error(_t("config.invalid", error="根节点必须是JSON对象"))
-            return None
+    def merge(
+        self,
+        base: dict,
+        override: dict,
+    ) -> dict:
+        """Merge configurations, override taking precedence.
 
-        # v4.5.1: 过滤 `_comment` 字段，避免运行时数据污染
-        config = _strip_comment_keys(config)
+        Args:
+            base: Base configuration
+            override: Override configuration
 
-        return cast(dict, config)
-
-    except json.JSONDecodeError as e:
-        logger.error(_t("config.invalid", error=str(e)))
-        logger.error(f"位置: 行{e.lineno}, 列{e.colno}")
-        logger.error("请检查config.json语法，或从config.example.json重新复制")
-        return None
-    except UnicodeDecodeError as e:
-        logger.error(_t("errors.io_error", detail=str(e)))
-        logger.error("请确保配置文件使用UTF-8编码")
-        return None
-    except PermissionError as e:  # noqa: F841
-        logger.error(_t("errors.permission_denied", path=config_path))
-        logger.error("请检查文件读取权限")
-        return None
-    except Exception as e:
-        logger.error(_t("errors.unexpected", error=str(e)))
-        return None
-
-
-def _strip_comment_keys(data: object, _depth: int = 0) -> object:
-    """递归移除字典中以 `_comment` 或 `_comment_` 开头的键。
-
-    用于清理 config.json 中嵌入的文档注释字段。
-
-    Args:
-        data: 要处理的数据
-        _depth: 内部递归深度（防止栈溢出）
-
-    Raises:
-        RecursionError: 递归深度超过 100 层时抛出
-    """
-    if _depth > 100:
-        raise RecursionError("_strip_comment_keys: 递归深度超过 100 层，配置结构可能异常")
-    if isinstance(data, dict):
-        return {
-            k: _strip_comment_keys(v, _depth + 1)
-            for k, v in data.items()
-            if not k.startswith("_comment")
-        }
-    if isinstance(data, list):
-        return [_strip_comment_keys(item, _depth + 1) for item in data]
-    return data
+        Returns:
+            Merged configuration
+        """
+        result = dict(base)
+        result.update(override)
+        return result
