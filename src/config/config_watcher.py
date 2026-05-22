@@ -260,5 +260,7 @@ class ConfigWatcher:
 
             # 注意：不处理 _poll_thread，因为 daemon 线程会在进程退出时自动终止
         except Exception as e:
-            # 析构期间忽略所有异常，避免GC崩溃
-            logger.debug("析构配置监听器时发生异常: %s", e)
+            # 析构期间记录异常但不抛出，避免GC崩溃
+            # 注意：不使用 pass 静默吞掉，必须记录以便排查资源泄漏
+            import sys
+            sys.stderr.write(f"[ConfigWatcher.__del__] 析构异常(可忽略): {e!r}\n")
