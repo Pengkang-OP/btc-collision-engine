@@ -311,7 +311,7 @@ def mock_gpu_chain() -> Generator[Tuple[Mock, Mock, Mock], None, None]:
     # 应用 Mock 补丁
     with patch("src.gpu.device.GPUDevice", return_value=mock_device), patch(
         "src.gpu.context.GPUContext", return_value=mock_context
-    ), patch("src.gpu.kernel.GPUKernel", return_value=mock_kernel), patch(
+    ), patch("src.gpu.kernel_impl.GPUKernel", return_value=mock_kernel), patch(
         "src.collision.gpu.engine.PYOPENCL_AVAILABLE", True
     ), patch(
         "src.gpu.device.GPUDeviceDetector.is_gpu_available", return_value=True
