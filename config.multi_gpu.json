@@ -1,6 +1,6 @@
 {
   "gpu": {
-    "enabled": true,
+    "use_gpu": true,
     "device_index": 1,
     "batch_size": 1048576,
     "use_memory_pool": true,

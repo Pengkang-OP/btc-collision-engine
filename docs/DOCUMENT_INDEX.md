@@ -1,6 +1,6 @@
 # 项目文档索引
 
-**版本**: v4.5.1
+**版本**: v5.0.0
 
 
 > BTC碰撞引擎项目文档导航
@@ -39,16 +39,16 @@
 ### 2. 架构与设计
 
 - architecture.md - 系统架构 (17个图表)
-- workflow_diagrams.md - 工作流程图 (19个图表)
+- technical-docs/workflow_diagrams.md - 工作流程图 (19个图表)
 - api-reference.md - API参考 (2949行)
-- requirements.md - 需求规格
+- developer-docs/requirements.md - 需求规格
 
 ### 3. 核心功能
 
 #### 碰撞引擎
 
-- performance-optimization.md - 性能优化 (924行)
-- checkpoint-resume-feature.md - 断点续传
+- technical-docs/performance-optimization.md - 性能优化 (924行)
+- feature-docs/checkpoint-resume-feature.md - 断点续传
 - checkpoint-quick-guide.md - 断点续传快速指南
 - logging-guide.md - 日志指南
 - logging-standards.md - 日志标准
@@ -71,7 +71,7 @@
 #### GPU加速
 
 - gpu-engine-guide.md - GPU引擎指南
-- GPU_CONFIG_MANAGER_GUIDE.md - GPU配置管理
+- archive/GPU_CONFIG_MANAGER_GUIDE.md - GPU配置管理 (旧版，已归档)
 - intel-arc-integration-guide.md - Intel Arc集成
 - intel-arc-gpu-compatibility-research.md - Intel Arc兼容性研究
 - GPU_ASYNC_LOGGING_INTEGRATION_GUIDE.md - GPU异步日志

@@ -14,7 +14,7 @@
 """
 
 import json
-import os
+import pathlib
 import tempfile
 import time
 
@@ -200,7 +200,7 @@ class TestConfigSmoke:
             cm = ConfigManager(config_path)
             assert cm is not None
         finally:
-            os.unlink(config_path)
+            pathlib.Path(config_path).unlink()
 
 
 # ============================================================================
@@ -294,7 +294,7 @@ class TestArgParserModuleCoverage:
         assert project_root in sys.path
 
     def test_version_import_fallback(self):
-        """from src import __version__ 失败时回退到 '4.5.1' (L22-23)。"""
+        """From src import __version__ 失败时回退到 '4.5.1' (L22-23)。"""
         import builtins
         import importlib
         import sys
@@ -314,7 +314,7 @@ class TestArgParserModuleCoverage:
         try:
             with patch("builtins.__import__", side_effect=mock_import):
                 mod = importlib.import_module("src.cli.arg_parser")
-                assert mod._version == "4.5.1"
+                assert mod._version == "5.0.0"
         finally:
             sys.modules.pop("src.cli.arg_parser", None)
             importlib.import_module("src.cli.arg_parser")

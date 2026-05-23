@@ -40,7 +40,6 @@ graph TD
         CS["CollisionStats<br/>统计管理"]
         CM["CheckpointMgr<br/>断点管理"]
         DF["DedupFilter<br/>去重过滤"]
-        PM["PluginManager<br/>插件管理"]
     end
     
     subgraph Core["🧮 核心算法层 Core Algorithm Layer"]

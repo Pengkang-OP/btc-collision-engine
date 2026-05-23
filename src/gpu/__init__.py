@@ -12,16 +12,16 @@
 v4.2.2 S1: 统一模块说明，移除重复 docstring。
 """
 
-from .amd_optimizer import AmdGPUOptimizer  # noqa: E402
-from .auto_config import (  # noqa: E402
+from .amd_optimizer import AmdGPUOptimizer
+from .auto_config import (
     GPUAutoConfigurator,
     get_gpu_configurator,
     reset_gpu_configurator,
-)  # noqa: E402
-from .config import GPUConfig  # noqa: E402
+)
+from .config import GPUConfig
 
 # GPU全局常量模块
-from .constants import (  # noqa: E402
+from .constants import (
     BATCH_SIZE_ALIGNMENT,
     BYTES_PER_MB,
     DEFAULT_BATCH_SIZE,
@@ -34,48 +34,48 @@ from .constants import (  # noqa: E402
     align_batch_size,
     clamp_batch_size,
 )
-from .context import GPUContext  # noqa: E402
-from .data_monitor import DataMonitor, DataQualityIssue  # noqa: E402
-from .device import GPUDevice, GPUDeviceDetector, identify_vendor  # noqa: E402
-from .double_buffer import ENV_DOUBLE_BUFFER, DoubleBuffer  # noqa: E402
-from .driver_manager import DriverManager, DriverVersionParser  # noqa: E402
-from .engine_monitor import GPUEngineMonitor  # noqa: E402
-from .gpu_config import (  # noqa: E402
+from .context import GPUContext
+from .data_monitor import DataMonitor, DataQualityIssue
+from .device import GPUDevice, GPUDeviceDetector, identify_vendor
+from .double_buffer import ENV_DOUBLE_BUFFER, DoubleBuffer
+from .driver_manager import DriverManager, DriverVersionParser
+from .engine_monitor import GPUEngineMonitor
+from .gpu_config import (
     DataMonitorConfig,
     GPURecoveryConfig,
     MultiGPUConfig,
     WorkerConfig,
-)  # noqa: E402
+)
 
 # 提取的独立模块
-from .intel_optimizer import IntelGPUOptimizer  # noqa: E402
-from .kernel import (  # noqa: E402
+from .intel_optimizer import IntelGPUOptimizer
+from .kernel import (
     OPENCL_KERNEL_SOURCE,
 )
-from .load_balancer import GPULoadBalancer  # noqa: E402
-from .lock_monitor import (  # noqa: E402
+from .load_balancer import GPULoadBalancer
+from .lock_monitor import (
     LockMonitor,
     MonitoredLock,
     create_monitored_lock,
     get_lock_monitor,
-)  # noqa: E402
-from .memory_calculator import GPUMemoryCalculator  # noqa: E402
-from .metrics import GPUMetricsCollector, get_metrics_collector  # noqa: E402
-from .multi_format_multi_gpu_engine import (  # noqa: E402
+)
+from .memory_calculator import GPUMemoryCalculator
+from .metrics import GPUMetricsCollector, get_metrics_collector
+from .multi_format_multi_gpu_engine import (
     MultiFormatMultiGPUEngine,
     create_engine,
     create_multi_format_multi_gpu_engine,
 )
-from .multi_gpu_engine import MultiGPUCollisionEngine  # noqa: E402
-from .nvidia_optimizer import NvidiaGPUOptimizer  # noqa: E402
-from .optimization_pipeline import PerformanceOptimizationPipeline  # noqa: E402
-from .scorer import GPUDeviceScorer, get_gpu_scorer, reset_gpu_scorer  # noqa: E402
+from .multi_gpu_engine import MultiGPUCollisionEngine
+from .nvidia_optimizer import NvidiaGPUOptimizer
+from .optimization_pipeline import PerformanceOptimizationPipeline
+from .scorer import GPUDeviceScorer, get_gpu_scorer, reset_gpu_scorer
 
 # 多GPU支持模块
-from .selector import GPUDeviceSelector, get_gpu_selector, reset_gpu_selector  # noqa: E402
-from .worker import SingleGPUWorker  # noqa: E402
+from .selector import GPUDeviceSelector, get_gpu_selector, reset_gpu_selector
+from .worker import SingleGPUWorker
 
-__version__ = "4.5.0"  # v4.5.0: 遗留问题清理，文档更新，代码注释优化
+__version__ = "5.0.0"  # v5.0.0: 遗留问题清理，文档更新，代码注释优化
 
 __all__ = [
     "GPUDeviceDetector",

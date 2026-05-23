@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
-"""
-Base collision engine providing core collision detection framework.
+"""Base collision engine providing core collision detection framework.
 
 Supports random and sequential search modes with configurable
 targets, workers, and event hooks.
 """
 
 import threading
-import time
 from abc import ABC, abstractmethod
 from typing import Any, Callable
 
@@ -21,13 +19,14 @@ class BaseCollisionEngine(ABC):
 
     Provides common state management, worker coordination, and
     match recording functionality.
+
+    Subclasses must implement: start(), stop(), get_stats()
     """
 
     def __init__(self, config: dict | None = None):
         self.config = config or {}
         self._lock = threading.Lock()
         self._running = False
-        self._initialized = False
         self._start_time: float | None = None
         self._total_keys_checked = 0
         self._match_callback: (
@@ -35,16 +34,24 @@ class BaseCollisionEngine(ABC):
         ) = None
 
     @abstractmethod
-    def start(self) -> None:
-        """Start the collision engine."""
+    def start(self, **kwargs: Any) -> None:
+        """Start the collision engine.
+
+        Subclasses may accept additional keyword arguments
+        (e.g. mode, resume, max_keys).
+        """
 
     @abstractmethod
     def stop(self) -> None:
         """Stop the collision engine."""
 
     @abstractmethod
-    def get_stats(self) -> dict:
-        """Get collision detection statistics."""
+    def get_stats(self) -> Any:
+        """Get collision detection statistics.
+
+        Returns:
+            Engine-specific statistics object (e.g. CollisionStats).
+        """
 
     def is_running(self) -> bool:
         """Check if engine is running."""

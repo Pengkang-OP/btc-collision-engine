@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Bitcoin private key collision tool - CLI entry point.
+"""Bitcoin private key collision tool - CLI entry point.
 
 Usage:
     python -m src.cli.main [选项]
@@ -87,7 +86,7 @@ def _apply_output_flags(args) -> None:
 def load_targets(args: Any) -> set[str]:
     """加载目标地址集合"""
     # 延迟导入 TargetResolver（属于重量级依赖链）
-    from src.collision import TargetResolver
+    from src.collision.targets.resolver import TargetResolver
 
     resolver = TargetResolver()
     quiet = getattr(args, "quiet", False)
@@ -105,7 +104,9 @@ def load_targets(args: Any) -> set[str]:
         if not quiet:
             print(_t("address.loaded", count=len(targets)))
     else:
-        targets = cast(set[str], resolver.resolve_multiple(args.targets))
+        # resolve_multiple returns dict[str,str] (input→resolved), extract values as set
+        resolved = resolver.resolve_multiple(args.targets)
+        targets = set(resolved.values())
         if not targets:
             print(_t("address.load_failed", error="未能解析任何有效的目标地址"), file=sys.stderr)
             sys.exit(1)
@@ -207,7 +208,7 @@ def _run_security_check(args) -> None:
             warning_text.append("  pip install cryptography  # 备选\n\n", style="white")
             warning_text.append("使用 --skip-security-check 跳过此检查", style="dim")
             console.print(
-                Panel(warning_text, title="[bold yellow]安全检查[/bold yellow]", border_style="yellow")
+                Panel(warning_text, title="[bold yellow]安全检查[/bold yellow]", border_style="yellow"),
             )
         except (RuntimeError, OSError, ValueError):
             # Rich Panel 渲染失败时降级为纯文本警告
@@ -283,7 +284,7 @@ def _run_main() -> None:
 
     # 阶段6: 构建引擎、初始化告警、注册信号、启动
     engine, engine_type, alert_system, stop_event = _setup_and_start_engine(
-        args, targets, config, start_val, end_val
+        args, targets, config, start_val, end_val,
     )
 
     # 阶段7: 主循环
@@ -329,7 +330,7 @@ def _handle_error(e: Exception) -> None:
         output.print("  详细日志: logs/collision.log")
 
     # 记录完整堆栈到日志（不显示给用户）
-    logger.exception(f"CLI 运行错误: {error_type}")
+    logger.exception("CLI 运行错误: %s", error_type)
 
 
 def main() -> None:
@@ -337,8 +338,8 @@ def main() -> None:
     # 确保 stdout/stderr 在非 UTF-8 环境下不会因无法编码字符而崩溃
     try:
         if hasattr(sys.stdout, "reconfigure"):
-            cast(Any, sys.stdout).reconfigure(errors="replace")
-            cast(Any, sys.stderr).reconfigure(errors="replace")
+            cast("Any", sys.stdout).reconfigure(errors="replace")
+            cast("Any", sys.stderr).reconfigure(errors="replace")
     except (OSError, AttributeError):
         pass
     try:

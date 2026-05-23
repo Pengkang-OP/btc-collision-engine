@@ -102,10 +102,9 @@ TasksMax=4096
 
 # 看门狗（健康检查）
 # 注意: 启用此功能需要进程主动发送 sd_notify("WATCHDOG=1")，
-# 否则 300 秒后 systemd 会强制杀进程。如引擎未实现 sd_notify，
-# 请注释此行或改为 WatchdogSec=0 禁用。
-WatchdogSec=300
-WatchdogSignal=SIGUSR1
+# 否则 300 秒后 systemd 会强制杀进程。引擎暂未实现 sd_notify，已禁用。
+#WatchdogSec=300
+#WatchdogSignal=SIGUSR1
 
 [Install]
 WantedBy=multi-user.target

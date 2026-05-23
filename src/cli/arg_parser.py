@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Command line argument parsing module.
+"""Command line argument parsing module.
 
 Provides parse_args() function defining all CLI parameters.
 """
@@ -8,21 +7,21 @@ Provides parse_args() function defining all CLI parameters.
 import argparse
 import os
 
+from ..i18n import _t
+
 # v4.5.1: 确保项目根目录在 sys.path 中（使用共享模块）
 from ._path_setup import ensure_project_root
 
 ensure_project_root()
 
-from ..i18n import _t  # noqa: E402
-
 # 从包版本读取版本号
 try:
     from src import __version__ as _version
 except ImportError:
-    _version = "4.5.1"
+    _version = "5.0.0"
 
 
-def parse_args() -> argparse.Namespace:  # noqa: D401
+def parse_args() -> argparse.Namespace:
     """解析命令行参数"""
     parser = argparse.ArgumentParser(
         prog="key_collision_cli",
@@ -80,17 +79,17 @@ def parse_args() -> argparse.Namespace:  # noqa: D401
     # 语言选项（需要最先处理）
     lang_group = parser.add_argument_group("语言设置")
     lang_group.add_argument(
-        "--language", choices=["zh_CN", "en_US"], default=None, help=_t("cli.options.language")
+        "--language", choices=["zh_CN", "en_US"], default=None, help=_t("cli.options.language"),
     )
 
     # ── 1. 核心参数 ──────────────────────────────────────────────────────────
     core_group = parser.add_argument_group("核心参数", "目标地址、碰撞模式、搜索范围和运行时长")
     target_ex = core_group.add_mutually_exclusive_group(required=False)
     target_ex.add_argument(
-        "-t", "--targets", metavar="ADDRESS", nargs="+", help="目标比特币地址，多个地址以空格分隔"
+        "-t", "--targets", metavar="ADDRESS", nargs="+", help="目标比特币地址，多个地址以空格分隔",
     )
     target_ex.add_argument(
-        "-f", "--file", metavar="FILE", help="从文件批量加载目标地址，每行一个，支持 # 注释"
+        "-f", "--file", metavar="FILE", help="从文件批量加载目标地址，每行一个，支持 # 注释",
     )
     core_group.add_argument(
         "-m",
@@ -100,7 +99,7 @@ def parse_args() -> argparse.Namespace:  # noqa: D401
         help="碰撞模式: random 随机, range 范围扫描, brute_force 暴力穷举 (默认: random)",
     )
     core_group.add_argument(
-        "--start", metavar="HEX", help="扫描起始私钥（十六进制），range/brute_force 模式必填"
+        "--start", metavar="HEX", help="扫描起始私钥（十六进制），range/brute_force 模式必填",
     )
     core_group.add_argument("--end", metavar="HEX", help="扫描结束私钥（十六进制），range 模式必填")
     core_group.add_argument(
@@ -143,18 +142,6 @@ def parse_args() -> argparse.Namespace:  # noqa: D401
     # ── 2.5. 安全选项 ──────────────────────────────────────────────────────────
     security_group = parser.add_argument_group("安全选项", "自动安全检查和敏感信息保护")
     security_group.add_argument(
-        "--production",
-        action="store_true",
-        default=False,
-        help="已废弃：安全检查现已自动执行。使用 --skip-security-check 可跳过",
-    )
-    security_group.add_argument(
-        "--secure",
-        action="store_true",
-        default=False,
-        help="已废弃：安全检查现已自动执行。使用 --skip-security-check 可跳过",
-    )
-    security_group.add_argument(
         "--skip-security-check",
         action="store_true",
         default=False,
@@ -169,7 +156,7 @@ def parse_args() -> argparse.Namespace:  # noqa: D401
     # --use-gpu 与 --multi-gpu 互斥
     gpu_exclusive = gpu_group.add_mutually_exclusive_group()
     gpu_exclusive.add_argument(
-        "--use-gpu", action="store_true", default=False, help="启用单 GPU 加速（需安装 pyopencl）"
+        "--use-gpu", action="store_true", default=False, help="启用单 GPU 加速（需安装 pyopencl）",
     )
     gpu_exclusive.add_argument(
         "--multi-gpu",
@@ -237,15 +224,15 @@ def parse_args() -> argparse.Namespace:  # noqa: D401
         help="EC 预计算表窗口大小，范围 4-8 (默认: 8)",
     )
     perf_group.add_argument(
-        "--no-simd", action="store_true", default=False, help="禁用 SIMD 哈希优化（调试用）"
+        "--no-simd", action="store_true", default=False, help="禁用 SIMD 哈希优化（调试用）",
     )
     perf_group.add_argument(
-        "--no-memory-pool", action="store_true", default=False, help="禁用内存池优化（调试用）"
+        "--no-memory-pool", action="store_true", default=False, help="禁用内存池优化（调试用）",
     )
 
     # ── 5. 工具命令 ──────────────────────────────────────────────────────────
     util_group = parser.add_argument_group(
-        "工具命令", "独立功能命令，指定后直接执行并退出，不启动碰撞引擎"
+        "工具命令", "独立功能命令，指定后直接执行并退出，不启动碰撞引擎",
     )
     util_group.add_argument(
         "--validate-addresses",
@@ -290,10 +277,10 @@ def parse_args() -> argparse.Namespace:  # noqa: D401
         help="快速模式：使用默认配置直接启动（需要targets.txt文件）",
     )
     util_group.add_argument(
-        "--compact", action="store_true", default=False, help="紧凑模式：在向导中跳过详细帮助信息"
+        "--compact", action="store_true", default=False, help="紧凑模式：在向导中跳过详细帮助信息",
     )
     util_group.add_argument(
-        "--examples", action="store_true", default=False, help="显示常用命令示例后退出"
+        "--examples", action="store_true", default=False, help="显示常用命令示例后退出",
     )
     util_group.add_argument(
         "--config-check",

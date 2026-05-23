@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""
-Collision detection statistics tracking.
+"""Collision detection statistics tracking.
 """
 
 import hashlib
 import threading
 import time
+from typing import Any
 
 from ..utils import get_configured_logger
 
@@ -49,7 +49,9 @@ class CollisionStats:
             if address is not None:
                 entry["address"] = address
             if pk is not None:
-                entry["private_key_hash"] = hashlib.sha256(bytes(pk) if not isinstance(pk, bytes) else pk).hexdigest()[:16]
+                entry["private_key_hash"] = hashlib.sha256(
+                    bytes(pk) if not isinstance(pk, bytes) else pk,
+                ).hexdigest()[:16]
             self.matches.append(entry)
 
     def snapshot(self) -> dict:
@@ -57,6 +59,7 @@ class CollisionStats:
 
         Returns:
             Dictionary with current stats
+
         """
         with self._lock:
             return {
@@ -80,7 +83,7 @@ class CollisionStats:
     def to_dict(self) -> dict:
         with self._lock:
             elapsed = max(
-                time.time() - self._start_time, 0.001
+                time.time() - self._start_time, 0.001,
             )
             return {
                 "total_keys_checked": self._total_keys,
@@ -109,12 +112,13 @@ class CollisionStats:
         Args:
             total_checked: Total number of keys checked
             **kwargs: Additional arguments (total_range, etc.)
+
         """
         with self._lock:
             if total_checked:
                 self._total_keys = total_checked
-            elif 'total_range' in kwargs:
-                self._total_keys = kwargs['total_range']
+            elif "total_range" in kwargs:
+                self._total_keys = kwargs["total_range"]
 
     @property
     def total_checked(self) -> int:
@@ -138,6 +142,23 @@ class CollisionStats:
     def avg_speed(self) -> float:
         """Get average speed (keys per second)."""
         return self.get_throughput()
+
+    def get(self, key: str, default: Any = None) -> Any:
+        """Dict-like access for backward compatibility with stats consumers.
+
+        Supported keys:
+            - total_checked: total keys checked
+            - speed: average throughput (keys/sec)
+            - matches_found: total matches detected
+            - elapsed: elapsed time in seconds
+        """
+        mapping = {
+            "total_checked": self.total_checked,
+            "speed": self.avg_speed,
+            "matches_found": self.matches_found,
+            "elapsed": max(time.time() - self._start_time, 0.001),
+        }
+        return mapping.get(key, default)
 
     def reset(self) -> None:
         with self._lock:

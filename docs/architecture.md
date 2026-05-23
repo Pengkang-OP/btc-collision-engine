@@ -169,10 +169,6 @@ f:/Qoder/btc-collision-engine/
 │   │   │   ├── storage.py           # 地址集存储
 │   │   │   ├── resolver.py          # 地址解析
 │   │   │   └── monitor.py           # 地址监控
-│   │   └── plugins/                 # 插件系统
-│   │       ├── base_plugin.py       # 插件基类
-│   │       ├── plugin_manager.py    # 插件管理器
-│   │       └── example_plugin.py    # 示例插件
 │   ├── config/                  # 配置管理
 │   │   ├── config_manager.py    # 配置管理器
 │   │   ├── crypto_config.py     # 加密配置
@@ -1103,16 +1099,16 @@ errors = config.validate()  # 返回错误字典
 
 ## 10. 扩展机制
 
-### 10.1 插件系统
+### 10.1 事件系统
 
-**位置**: `src/collision/plugins/`
-
-**插件基类**: `BasePlugin`
+**位置**: `src/core/event_bus.py`
 
 **功能**:
-- 自定义匹配逻辑
-- 扩展输出格式
-- 集成外部服务
+- EventBus 事件发布/订阅
+- EngineMatchEvent、EngineProgressEvent 等事件类型
+- 监控系统和告警系统通过事件总线解耦
+
+> 注: v5.0.0 移除了旧的插件系统 (`src/collision/plugins/`)，扩展功能统一通过 EventBus 事件驱动架构实现。
 
 ### 10.2 加密后端
 

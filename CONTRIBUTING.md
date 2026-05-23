@@ -212,7 +212,7 @@ python scripts/check_import_paths.py
 ```markdown
 # 文档标题
 
-> **版本**: v4.5.1 | **最后更新**: YYYY-MM-DD
+> **版本**: v5.0.0 | **最后更新**: 2026-05-23
 > **面向**: 用户/开发者/维护者
 
 ## 概述
@@ -333,9 +333,6 @@ python tools/check_document_quality.py
 
 # 检查断裂链接
 python tools/check_broken_links.py
-
-# 生成文档统计报告
-python tools/generate_doc_stats.py
 ```
 
 #### 自动化文档生成
@@ -599,12 +596,11 @@ A:
 
 ## 相关文档
 
-- [README](../README.md) - 项目概述
-- [架构文档](../docs/architecture.md) - 系统架构
-- [API参考](../docs/api-reference.md) - API文档
-- [文档索引](../docs/DOCUMENT_INDEX.md) - 文档导航
-- [文档更新总结](../docs/DOCUMENTATION_UPDATE_SUMMARY_v4.5.1.md) - v4.5.1文档重构详情
-- [性能优化指南](../docs/performance-optimization.md) - 性能优化
+- [README](README.md) - 项目概述
+- [架构文档](docs/architecture.md) - 系统架构
+- [API参考](docs/api-reference.md) - API文档
+- [文档索引](docs/DOCUMENT_INDEX.md) - 文档导航
+- [性能优化指南](docs/technical-docs/performance-optimization.md) - 性能优化
 
 ---
 
