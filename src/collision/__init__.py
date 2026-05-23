@@ -5,11 +5,11 @@ address sets using CPU and GPU acceleration.
 """
 
 from .base_engine import BaseCollisionEngine
-from .collision_stats import CollisionStats
 from .checkpoint_manager import CheckpointManager
+from .collision_stats import CollisionStats
 
 __all__ = [
     "BaseCollisionEngine",
-    "CollisionStats",
     "CheckpointManager",
+    "CollisionStats",
 ]

@@ -62,12 +62,11 @@
     "adaptive_timeout": true
   },
   "monitoring": {
-    "enable_performance_monitor": true,
+    "enabled": true,
     "report_interval": 60,
     "log_level": "INFO",
     "enable_memory_monitoring": true,
     "enable_timeout_monitoring": true,
-    "enabled": true,
     "collection_interval": 5,
     "storage_dir": "monitoring_data",
     "history_max_size": 1000,

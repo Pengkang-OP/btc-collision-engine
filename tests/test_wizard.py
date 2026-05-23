@@ -23,7 +23,7 @@ class TestWizardInit:
     def test_version(self):
         from src.wizard import __version__
 
-        assert __version__ == "1.0.0"
+        assert __version__ == "5.0.0"
 
     def test_all_exports(self):
         from src.wizard import __all__
@@ -1178,7 +1178,7 @@ class TestTargetSelector:
             call_count[0] += 1
             if call_count[0] == 1:
                 return "1"
-            elif call_count[0] == 2:
+            if call_count[0] == 2:
                 return ""  # empty -> retry
             return "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
 
@@ -1197,7 +1197,7 @@ class TestTargetSelector:
             call_count[0] += 1
             if call_count[0] == 1:
                 return "1"
-            elif call_count[0] == 2:
+            if call_count[0] == 2:
                 return "bad"
             return "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
 
@@ -1268,7 +1268,7 @@ class TestTargetSelector:
             call_count[0] += 1
             if call_count[0] == 1:
                 return "2"
-            elif call_count[0] == 2:
+            if call_count[0] == 2:
                 return "no_such_file.txt"
             return ""  # use default targets.txt
 
@@ -1300,7 +1300,7 @@ class TestTargetSelector:
             call_count[0] += 1
             if call_count[0] == 1:
                 return "2"
-            elif call_count[0] == 2:
+            if call_count[0] == 2:
                 return "empty_file.txt"
             return ""
 
@@ -1319,7 +1319,7 @@ class TestTargetSelector:
             call_count[0] += 1
             if call_count[0] == 1:
                 return "3"  # invalid
-            elif call_count[0] == 2:
+            if call_count[0] == 2:
                 return "1"
             return "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
 
@@ -1365,7 +1365,7 @@ class TestGPUSelector:
 
         selector = GPUSelector()
         # Mock _detect_gpus to return empty
-        monkeypatch.setattr(selector, "_detect_gpus", lambda: [])
+        monkeypatch.setattr(selector, "_detect_gpus", list)
         result = selector.select(compact=True)
         assert result == ([], False)
 
@@ -1464,9 +1464,9 @@ class TestGPUSelector:
             call_count[0] += 1
             if call_count[0] == 1:
                 return "3"  # multi-gpu
-            elif call_count[0] == 2:
+            if call_count[0] == 2:
                 return "5"  # invalid index
-            elif call_count[0] == 3:
+            if call_count[0] == 3:
                 return "1"  # valid
             return ""
 
@@ -1487,7 +1487,7 @@ class TestGPUSelector:
         from src.wizard.gpu_selector import GPUSelector
 
         selector = GPUSelector()
-        monkeypatch.setattr(selector, "_detect_gpus", lambda: [])
+        monkeypatch.setattr(selector, "_detect_gpus", list)
         result = selector.select(compact=False)
         assert result == ([], False)
 
@@ -1626,7 +1626,7 @@ class TestWizardEngine:
         mock_mq = MagicMock(spec=WizardMessageQueue)
 
         config = WizardConfig(
-            mode=WizardMode.COMPACT, show_intro=False, show_summary=False, auto_continue=True
+            mode=WizardMode.COMPACT, show_intro=False, show_summary=False, auto_continue=True,
         )
         engine = we.WizardEngine(config=config, message_queue=mock_mq)
         result = engine.run()
@@ -1674,7 +1674,7 @@ class TestWizardEngine:
         mock_mq = MagicMock(spec=WizardMessageQueue)
 
         config = WizardConfig(
-            mode=WizardMode.COMPACT, show_intro=False, show_summary=False, auto_continue=True
+            mode=WizardMode.COMPACT, show_intro=False, show_summary=False, auto_continue=True,
         )
 
         engine = we.WizardEngine(config=config, message_queue=mock_mq)
@@ -1772,7 +1772,7 @@ class TestWizardEngine:
         mock_mq = MagicMock(spec=WizardMessageQueue)
 
         config = WizardConfig(
-            mode=WizardMode.COMPACT, show_intro=False, show_summary=False, auto_continue=True
+            mode=WizardMode.COMPACT, show_intro=False, show_summary=False, auto_continue=True,
         )
         engine = we.WizardEngine(config=config, message_queue=mock_mq)
         result = engine.run()
@@ -1868,7 +1868,7 @@ class TestWizardEngine:
 
         mock_mq = MagicMock(spec=WizardMessageQueue)
         config = WizardConfig(
-            mode=WizardMode.COMPACT, show_intro=False, show_summary=True, auto_continue=True
+            mode=WizardMode.COMPACT, show_intro=False, show_summary=True, auto_continue=True,
         )
         monkeypatch.setattr("subprocess.run", MagicMock())
         engine = WizardEngine(config=config, message_queue=mock_mq)

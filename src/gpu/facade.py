@@ -4,11 +4,11 @@
 内存管理和碰撞执行等复杂操作，降低碰撞引擎与GPU模块的耦合度。
 """
 
-from typing import Any, Dict
-import logging
+import contextlib
+from typing import Any
 
 # 导入日志配置
-from ..utils import init_logging, get_configured_logger
+from ..utils import get_configured_logger, init_logging
 
 # 初始化日志系统（如果尚未初始化）
 init_logging()
@@ -50,6 +50,7 @@ class GPUFacade:
 
         Returns:
             bool: GPU可用返回True
+
         """
         try:
             from .driver_manager import DriverManager
@@ -65,7 +66,7 @@ class GPUFacade:
             return available
 
         except Exception as e:
-            logger.warning(f"GPU可用性检查失败: {e}")
+            logger.warning("GPU可用性检查失败: %s", e)
             return False
 
     def get_device_count(self) -> int:
@@ -73,6 +74,7 @@ class GPUFacade:
 
         Returns:
             int: GPU数量
+
         """
         if not self._driver_manager:
             self.is_available()
@@ -84,6 +86,7 @@ class GPUFacade:
 
         Returns:
             设备信息列表
+
         """
         if not self._driver_manager:
             self.is_available()
@@ -99,6 +102,7 @@ class GPUFacade:
 
         Returns:
             bool: 初始化成功返回True
+
         """
         try:
             if not self._driver_manager:
@@ -107,13 +111,14 @@ class GPUFacade:
             # 创建GPU设备
             from .device import GPUDevice
 
-            self._gpu_device = GPUDevice(device_index=device_index)  # type: ignore[call-arg]
+            self._gpu_device = GPUDevice()  # GPUDevice.__init__() takes no args
+            self._gpu_device.initialize(device_index=device_index)
 
             # 创建碰撞引擎
-            from .collision_engine import GPUCollisionEngine  # type: ignore[import-not-found]
+            from ..collision.gpu.engine import GPUCollisionEngine
 
             self._collision_engine = GPUCollisionEngine(
-                gpu_device=self._gpu_device, device_index=device_index, batch_size=batch_size
+                gpu_device=self._gpu_device, device_index=device_index, batch_size=batch_size,
             )
 
             self._is_initialized = True
@@ -121,12 +126,12 @@ class GPUFacade:
             return True
 
         except Exception as e:
-            logger.error(f"GPU初始化失败: {e}")
+            logger.error("GPU初始化失败: %s", e)
             self._is_initialized = False
             return False
 
     def start_collision(
-        self, targets: list[str], mode: str = "random", batch_size: int = 10000
+        self, targets: list[str], mode: str = "random", batch_size: int = 10000,
     ) -> bool:
         """启动GPU碰撞
 
@@ -137,6 +142,7 @@ class GPUFacade:
 
         Returns:
             bool: 启动成功返回True
+
         """
         if not self._is_initialized:
             logger.error("GPU未初始化，请先调用initialize()")
@@ -153,7 +159,7 @@ class GPUFacade:
             return True
 
         except Exception as e:
-            logger.error(f"启动GPU碰撞失败: {e}")
+            logger.error("启动GPU碰撞失败: %s", e)
             return False
 
     def stop(self) -> bool:
@@ -161,6 +167,7 @@ class GPUFacade:
 
         Returns:
             bool: 停止成功返回True
+
         """
         if not self._collision_engine:
             return True
@@ -171,14 +178,15 @@ class GPUFacade:
             return True
 
         except Exception as e:
-            logger.error(f"停止GPU碰撞失败: {e}")
+            logger.error("停止GPU碰撞失败: %s", e)
             return False
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取碰撞统计信息
 
         Returns:
             统计信息字典
+
         """
         if not self._collision_engine:
             return {"status": "not_initialized"}
@@ -186,14 +194,15 @@ class GPUFacade:
         try:
             return self._collision_engine.get_stats()
         except Exception as e:
-            logger.error(f"获取统计信息失败: {e}")
+            logger.error("获取统计信息失败: %s", e)
             return {"status": "error", "message": str(e)}
 
-    def get_device_info(self) -> Dict[str, Any]:
+    def get_device_info(self) -> dict[str, Any]:
         """获取GPU设备信息
 
         Returns:
             设备信息字典
+
         """
         if not self._collision_engine:
             return {"status": "not_initialized"}
@@ -201,14 +210,15 @@ class GPUFacade:
         try:
             return self._collision_engine.get_device_info()
         except Exception as e:
-            logger.error(f"获取设备信息失败: {e}")
+            logger.error("获取设备信息失败: %s", e)
             return {"status": "error", "message": str(e)}
 
-    def get_memory_info(self) -> Dict[str, Any]:
+    def get_memory_info(self) -> dict[str, Any]:
         """获取GPU内存信息
 
         Returns:
             内存信息字典
+
         """
         if not self._gpu_device:
             return {"status": "not_initialized"}
@@ -216,7 +226,7 @@ class GPUFacade:
         try:
             return self._gpu_device.get_memory_info()
         except Exception as e:
-            logger.error(f"获取内存信息失败: {e}")
+            logger.error("获取内存信息失败: %s", e)
             return {"status": "error", "message": str(e)}
 
     def cleanup(self) -> None:
@@ -234,24 +244,26 @@ class GPUFacade:
             logger.info("GPU资源已清理")
 
         except Exception as e:
-            logger.error(f"清理GPU资源失败: {e}")
+            logger.error("清理GPU资源失败: %s", e)
 
     def is_running(self) -> bool:
         """检查GPU碰撞是否正在运行
 
         Returns:
             bool: 正在运行返回True
+
         """
         if not self._collision_engine:
             return False
 
         return getattr(self._collision_engine, "_running", False)
 
-    def get_performance(self) -> Dict[str, Any]:
+    def get_performance(self) -> dict[str, Any]:
         """获取性能信息
 
         Returns:
             性能信息字典
+
         """
         stats = self.get_stats()
 
@@ -273,12 +285,10 @@ class GPUFacade:
 
     def __del__(self):
         """析构函数"""
-        try:
+        with contextlib.suppress(Exception):
             self.cleanup()
-        except Exception:
             # A类修复: 析构函数中资源清理失败静默处理
             # 因为此时对象正在销毁，无法做更多处理
-            pass
 
 
 def create_gpu_facade() -> GPUFacade:
@@ -286,5 +296,6 @@ def create_gpu_facade() -> GPUFacade:
 
     Returns:
         GPUFacade实例
+
     """
     return GPUFacade()

@@ -48,6 +48,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
         Args:
             engine: 引擎实例（用于监控回调）
             config: 配置字典
+
         """
         self.engine = engine
         self.config = config or {}
@@ -91,7 +92,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
             logger.info("性能监控管道已启动")
 
         except Exception as e:
-            logger.error(f"性能监控管道启动失败: {e}")
+            logger.error("性能监控管道启动失败: %s", e)
             self.stop()
             raise
 
@@ -124,7 +125,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
             logger.info("性能监控管道已停止")
 
         except Exception as e:
-            logger.error(f"性能监控管道停止失败: {e}")
+            logger.error("性能监控管道停止失败: %s", e)
 
     def record_metrics(self, batch_size: int, execution_time_ms: float, **metrics: Any) -> None:
         """记录性能指标
@@ -133,6 +134,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
             batch_size: 批次大小
             execution_time_ms: 执行时间（毫秒）
             **metrics: 其他指标（gpu_usage, memory_usage, errors等）
+
         """
         if not self._running:
             logger.debug("监控管道未运行，跳过指标记录")
@@ -142,7 +144,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
             # 1. 记录到性能监控器
             if self._perf_monitor:
                 self._perf_monitor.record_kernel_metrics(
-                    batch_size=batch_size, execution_time_ms=execution_time_ms
+                    batch_size=batch_size, execution_time_ms=execution_time_ms,
                 )
 
             # 2. 记录到数据日志
@@ -153,14 +155,14 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
                         "execution_time_ms": execution_time_ms,
                         "timestamp": time.time(),
                         **metrics,
-                    }
+                    },
                 )
 
             # 3. 异常检测
             self._detect_anomalies(batch_size, execution_time_ms, metrics)
 
         except Exception as e:
-            logger.error(f"记录性能指标失败: {e}")
+            logger.error("记录性能指标失败: %s", e)
 
     def flush(self) -> None:
         """刷写所有缓冲数据"""
@@ -169,7 +171,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
                 self._data_logger.flush()
                 logger.debug("数据日志缓冲已刷写")
             except Exception as e:
-                logger.error(f"刷写数据日志失败: {e}")
+                logger.error("刷写数据日志失败: %s", e)
 
     def get_stats(self) -> dict[str, Any]:
         """获取监控统计
@@ -178,6 +180,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
 
         Returns:
             监控统计字典，包含 performance、engine、data_logger 三个子字典
+
         """
         stats: dict[str, Any] = {
             "running": self._running,
@@ -201,6 +204,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
 
         Returns:
             DataLoggerAdapter 实例，未初始化时返回 None
+
         """
         return self._data_logger
 
@@ -218,18 +222,21 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
 
         Returns:
             GPUPerformanceMonitor 实例，失败时返回 None
+
         """
         try:
-            from ....monitoring.gpu_performance_monitor import get_gpu_performance_monitor  # type: ignore[import-not-found]
+            from ...monitoring.gpu_performance_monitor import (
+                get_gpu_performance_monitor,
+            )
 
             return get_gpu_performance_monitor(engine=self.engine)
         except ImportError as e:
             # Q11修复: 区分导入错误和其他异常，导入错误记录为警告
-            logger.warning(f"GPU性能监控模块不可用: {e}")
+            logger.warning("GPU性能监控模块不可用: %s", e)
             return None
         except Exception as e:
             # 其他未知异常也记录为警告而非静默忽略
-            logger.warning(f"创建GPU性能监控器失败: {e}")
+            logger.warning("创建GPU性能监控器失败: %s", e)
             return None
 
     def _create_engine_monitor(self):
@@ -240,6 +247,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
 
         Returns:
             GPUEngineMonitor 实例，无引擎时返回 None
+
         """
         try:
             from ...gpu.engine_monitor import GPUEngineMonitor
@@ -248,7 +256,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
                 return GPUEngineMonitor(self.engine)
             return None
         except Exception as e:
-            logger.warning(f"创建引擎监控器失败: {e}")
+            logger.warning("创建引擎监控器失败: %s", e)
             return None
 
     def _create_data_logger(self):
@@ -259,11 +267,12 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
 
         Returns:
             DataLoggerAdapter 实例
+
         """
         try:
             return DataLoggerAdapter(engine=self.engine, config=self.config)
         except Exception as e:
-            logger.warning(f"创建数据日志适配器失败: {e}")
+            logger.warning("创建数据日志适配器失败: %s", e)
             return None
 
     def _create_vendor_monitors(self) -> list[Any]:
@@ -271,6 +280,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
 
         Returns:
             厂商监控器列表
+
         """
         monitors: list[Any] = []
 
@@ -287,12 +297,12 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
                     monitors.append(IntelMemoryMonitor(self.engine._gpu_device))
                     monitors.append(AdaptiveTimeoutManager())
             except Exception as e:
-                logger.warning(f"创建Intel监控器失败: {e}")
+                logger.warning("创建Intel监控器失败: %s", e)
 
         return monitors
 
     def _detect_anomalies(
-        self, batch_size: int, execution_time_ms: float, metrics: dict[str, Any]
+        self, batch_size: int, execution_time_ms: float, metrics: dict[str, Any],
     ) -> None:
         """异常检测
 
@@ -300,12 +310,13 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
             batch_size: 批次大小
             execution_time_ms: 执行时间
             metrics: 其他指标
+
         """
         # 1. 执行时间异常检测
         threshold_ms = self.config.get("slow_threshold_ms", 5000)
         if execution_time_ms > threshold_ms:
             logger.warning(
-                f"慢操作检测: execution_time={execution_time_ms:.0f}ms > threshold={threshold_ms}ms"
+                f"慢操作检测: execution_time={execution_time_ms:.0f}ms > threshold={threshold_ms}ms",
             )
 
         # 2. 错误率检测
@@ -315,7 +326,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
             error_rate = gpu_errors / max(batch_size, 1)
             if error_rate > error_rate_threshold:
                 logger.error(
-                    f"高错误率检测: error_rate={error_rate:.2%} > threshold={error_rate_threshold:.2%}"
+                    f"高错误率检测: error_rate={error_rate:.2%} > threshold={error_rate_threshold:.2%}",
                 )
 
     def _detect_vendor(self) -> str:

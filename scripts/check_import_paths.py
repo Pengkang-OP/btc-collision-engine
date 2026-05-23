@@ -25,13 +25,11 @@ DEPRECATED_PATTERNS = [
 
 # 允许使用旧路径的文件（用于测试向后兼容性）
 ALLOWED_DEPRECATED_FILES = [
-    "src/collision/target_resolver.py",  # 向后兼容包装器
     "tests/test_import_paths.py",  # 导入路径测试（需要测试旧路径）
 ]
 
 # 推荐的导入路径
 RECOMMENDED_IMPORTS = [
-    "from src.collision import TargetResolver",
     "from src.collision.targets.resolver import TargetResolver",
     "from src.collision.targets import TargetResolver",
 ]

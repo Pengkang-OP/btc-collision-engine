@@ -20,7 +20,7 @@
 更新日期: 2026-05-23
 """
 
-__version__ = "4.5.0"
+__version__ = "5.0.0"
 __author__ = "BTC Project"
 
 # v4.2.2 S1: __init__.py 提供清晰的导入映射
@@ -28,13 +28,13 @@ __author__ = "BTC Project"
 # 直接导入（非延迟），避免循环依赖
 from .async_pipeline_adapter import AsyncPipelineAdapter
 from .core import CollisionCore
-from .engine import GPUCollisionEngine, GPUEngineConfig
 
 # Phase 3 新增适配器
 from .data_logger_adapter import DataLoggerAdapter
 
 # Phase 2 新增适配器
 from .device_manager_adapter import DeviceManagerAdapter
+from .engine import GPUCollisionEngine, GPUEngineConfig
 from .facade import GPUEngineFacade
 from .kernel_adapter import GPUKernelAdapter
 from .monitoring import PerformanceMonitoringPipeline
@@ -83,22 +83,22 @@ def get_data_logger_adapter():
 
 
 __all__ = [
+    "AsyncPipelineAdapter",
+    "CollisionCore",
+    "DataLoggerAdapter",
+    "DeviceManagerAdapter",
     "GPUCollisionEngine",
     "GPUEngineConfig",
     "GPUEngineFacade",
-    "PerformanceMonitoringPipeline",
-    "CollisionCore",
-    "VendorOptimizationFactory",
-    "DeviceManagerAdapter",
     "GPUKernelAdapter",
-    "AsyncPipelineAdapter",
-    "DataLoggerAdapter",
-    "get_gpu_engine_facade",
-    "get_monitoring_pipeline",
-    "get_collision_core",
-    "get_vendor_factory",
-    "get_device_manager_adapter",
-    "get_kernel_adapter",
+    "PerformanceMonitoringPipeline",
+    "VendorOptimizationFactory",
     "get_async_pipeline_adapter",
+    "get_collision_core",
     "get_data_logger_adapter",
+    "get_device_manager_adapter",
+    "get_gpu_engine_facade",
+    "get_kernel_adapter",
+    "get_monitoring_pipeline",
+    "get_vendor_factory",
 ]
