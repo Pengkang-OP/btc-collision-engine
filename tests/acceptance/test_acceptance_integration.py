@@ -252,7 +252,7 @@ class TestDataFlowIntegration:
         mock_event_bus,
     ):
         """数据流集成测试：私钥生成 → 地址生成 → 碰撞检测"""
-        from src.core.address_generator import OptimizedP2PKHAddressGenerator
+        from src.core.optimized_address_generator import OptimizedP2PKHAddressGenerator
         from src.core.key_generator import SecureKeyGenerator
 
         generator = SecureKeyGenerator(config={"batch_size": 1})
