@@ -206,7 +206,7 @@ jobs:
             --cov-fail-under=40 \
             -m "not (gpu or gpu_kernel or multi_gpu or integration)" \
             --timeout=600 \
-            --timeout-method=signal \
+            --timeout-method=thread \
             -p no:cacheprovider
 
       - name: 上传覆盖率报告
@@ -245,16 +245,16 @@ jobs:
           pip install pytest pytest-cov pytest-timeout hypothesis
 
       - name: 五大维度综合测试
-        run: pytest tests/test_comprehensive_5d.py -v --tb=short --timeout=120
+        run: pytest tests/test_comprehensive_5d.py -v --tb=short --timeout=120 --timeout-method=thread
 
       - name: 核心引擎测试
-        run: pytest tests/unit/engine/test_base_engine.py -v --tb=short --timeout=120
+        run: pytest tests/unit/engine/test_base_engine.py -v --tb=short --timeout=120 --timeout-method=thread
 
       - name: 配置与CLI测试
-        run: pytest tests/unit/config/test_config.py tests/unit/cli/test_cli.py -v --tb=short --timeout=60
+        run: pytest tests/unit/config/test_config.py tests/unit/cli/test_cli.py -v --tb=short --timeout=60 --timeout-method=thread
 
       - name: GPU核心测试（无GPU）
-        run: pytest tests/gpu/test_gpu_core.py -v --tb=short --timeout=60
+        run: pytest tests/gpu/test_gpu_core.py -v --tb=short --timeout=60 --timeout-method=thread
 
       - name: 导入路径测试
         run: pytest tests/test_import_paths.py -v
@@ -337,15 +337,7 @@ jobs:
     name: 门禁
     runs-on: ubuntu-latest
     timeout-minutes: 2
-    needs:
-      [
-        static-analysis,
-        security,
-        test,
-        extended-tests,
-        benchmark,
-        docs,
-      ]
+    needs: [static-analysis, security, test, extended-tests, benchmark, docs]
     if: always()
 
     steps:
