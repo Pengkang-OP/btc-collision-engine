@@ -1,33 +1,29 @@
 #!/usr/bin/env python3
-"""事件总线 (EventBus) 单元测试
+"""EventBus 单元测试
 
-覆盖：
-- 同步/异步模式
+覆盖当前简化版 EventBus API：
 - 订阅/取消订阅
 - 发布事件分发
 - 错误处理
-- 统计/属性
 - 全局单例
-- 上下文管理器
+- 线程安全
 """
 
 import threading
-import time
 from unittest.mock import Mock
 
 import pytest
 
 from src.collision.event_bus import EventBus, get_event_bus, reset_event_bus
 from src.collision.events import (
-    CollisionEvent,
     EngineCompleteEvent,
     EngineErrorEvent,
     EngineMatchEvent,
     EngineProgressEvent,
     EngineStartEvent,
     EngineStopEvent,
-    EventType,
 )
+
 
 # ============================================================================
 # Fixtures
@@ -43,17 +39,9 @@ def reset_global_bus():
 
 
 @pytest.fixture
-def sync_bus():
-    """同步模式事件总线"""
-    return EventBus(async_mode=False)
-
-
-@pytest.fixture
-def async_bus():
-    """异步模式事件总线"""
-    bus = EventBus(async_mode=True)
-    yield bus
-    bus.stop()
+def bus():
+    """新的事件总线实例"""
+    return EventBus()
 
 
 # ============================================================================
@@ -67,18 +55,12 @@ class TestEventCreation:
 
     def test_engine_start_event(self):
         event = EngineStartEvent(mode="random", target_count=5, batch_size=65536)
-        assert event.event_type == EventType.ENGINE_START
         assert event.mode == "random"
         assert event.target_count == 5
         assert event.batch_size == 65536
-        # 验证 __post_init__ 正确写入 metadata
-        assert event.metadata["mode"] == "random"
-        assert event.metadata["target_count"] == 5
-        assert event.metadata["batch_size"] == 65536
 
     def test_engine_progress_event(self):
         event = EngineProgressEvent(total_checked=100000, speed=500000.0, matches_found=2)
-        assert event.event_type == EventType.ENGINE_PROGRESS
         assert event.total_checked == 100000
         assert event.speed == 500000.0
 
@@ -89,314 +71,207 @@ class TestEventCreation:
             wif="KxFAKE000000000000000000000000000000000000000000000",
             target_address="1TargetAddress",
         )
-        assert event.event_type == EventType.ENGINE_MATCH
         assert event.address == "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
-        # 私钥和 WIF 不应出现在 metadata 中（安全检查）
-        assert "private_key" not in event.metadata
-        assert "wif" not in event.metadata
+        # WIF 应被自动掩码 (安全检查)
+        assert "..." in event.wif
+        assert len(event.wif) < len("KxFAKE000000000000000000000000000000000000000000000")
 
-    def test_engine_match_event_to_dict(self):
-        """EngineMatchEvent.to_dict 不泄露私钥和 WIF"""
+    def test_engine_match_event_wif_masking(self):
+        """EngineMatchEvent.__post_init__ 自动掩码 WIF"""
         event = EngineMatchEvent(
             private_key=b"\x01" * 32,
             address="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
             wif="KxFAKE000000000000000000000000000000000000000000000",
             target_address="1TargetAddress",
         )
-        d = event.to_dict()
-        assert d["event_type"] == "engine.match"
-        assert d["metadata"]["address"] == "1A1zP1...vfNa"
-        assert d["metadata"]["target_address"] == "1Targe...ress"
-        # 安全：序列化后不包含私钥和 WIF
-        assert "private_key" not in d
-        assert "private_key" not in d["metadata"]
-        assert "wif" not in d["metadata"]
+        # 公开 wif 已被掩码
+        assert event.wif.startswith("KxFAKE")
+        assert event.wif.endswith("0000")
+        # 原始 WIF 保存在 _raw_wif
+        assert event._raw_wif == "KxFAKE000000000000000000000000000000000000000000000"
+
+    def test_engine_match_event_metadata(self):
+        """EngineMatchEvent.metadata 不泄露私钥和 WIF"""
+        event = EngineMatchEvent(
+            private_key=b"\x01" * 32,
+            address="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+            wif="KxFAKE000000000000000000000000000000000000000000000",
+            target_address="1TargetAddress",
+        )
+        meta = event.metadata
+        assert "private_key" not in meta
+        assert "wif" not in meta
+        assert meta["address"] == "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
+        assert meta["target_address"] == "1TargetAddress"
 
     def test_engine_error_event(self):
         event = EngineErrorEvent(error_type="GPU_OOM", error_message="Out of memory", recoverable=True)
-        assert event.event_type == EventType.ENGINE_ERROR
         assert event.error_type == "GPU_OOM"
+        assert event.recoverable is True
 
     def test_engine_complete_event(self):
         event = EngineCompleteEvent(
             total_checked=1000000, matches_found=5, elapsed_time=3600.0, stop_reason="normal",
         )
-        assert event.event_type == EventType.ENGINE_COMPLETE
+        assert event.total_checked == 1000000
+        assert event.matches_found == 5
 
     def test_engine_stop_event(self):
         event = EngineStopEvent(reason="user_request", total_checked=500000)
-        assert event.event_type == EventType.ENGINE_STOP
-
-    def test_event_to_dict(self):
-        event = EngineStartEvent(mode="range", target_count=3, batch_size=32768)
-        d = event.to_dict()
-        assert d["event_type"] == "engine.start"
-        assert d["source"] == "collision_engine"
-
-    def test_collision_event_base_to_dict_none_type(self):
-        """CollisionEvent(event_type=None) 的 to_dict 返回 event_type=None"""
-        event = CollisionEvent(event_type=None, source="test_source")
-        d = event.to_dict()
-        assert d["event_type"] is None
-        assert d["source"] == "test_source"
-        assert "timestamp" in d
-        assert "metadata" in d
-
-    def test_collision_event_base_to_dict_with_type(self):
-        """CollisionEvent 带 event_type 时正确序列化"""
-        event = CollisionEvent(event_type=EventType.ENGINE_START, source="test")
-        d = event.to_dict()
-        assert d["event_type"] == "engine.start"
-
-    def test_engine_error_event_with_exception(self):
-        """EngineErrorEvent 正确存储 exception 参数"""
-        exc = ValueError("test error")
-        event = EngineErrorEvent(
-            error_type="ValueError",
-            error_message="test error",
-            exception=exc,
-        )
-        assert event.exception is exc
-        assert event.error_type == "ValueError"
-        assert event.event_type == EventType.ENGINE_ERROR
-
-    def test_engine_error_event_to_dict(self):
-        """EngineErrorEvent.to_dict 生成正确字典"""
-        event = EngineErrorEvent(
-            error_type="GPU_OOM",
-            error_message="Out of memory",
-            recoverable=False,
-        )
-        d = event.to_dict()
-        assert d["event_type"] == "engine.error"
-        assert d["metadata"]["error_type"] == "GPU_OOM"
-        assert d["metadata"]["error_message"] == "Out of memory"
-        assert d["metadata"]["recoverable"] is False
-
-    def test_engine_stop_event_to_dict(self):
-        """EngineStopEvent.to_dict 生成正确字典"""
-        event = EngineStopEvent(reason="completed", total_checked=1000000)
-        d = event.to_dict()
-        assert d["event_type"] == "engine.stop"
-        assert d["source"] == "collision_engine"
-
-    def test_engine_complete_event_to_dict(self):
-        """EngineCompleteEvent.to_dict 生成正确字典"""
-        event = EngineCompleteEvent(
-            total_checked=2000000,
-            matches_found=3,
-            elapsed_time=7200.0,
-            avg_speed=278.0,
-            stop_reason="completed",
-        )
-        d = event.to_dict()
-        assert d["event_type"] == "engine.complete"
-        assert d["metadata"]["total_checked"] == 2000000
-        assert d["metadata"]["matches_found"] == 3
-        assert d["metadata"]["stop_reason"] == "completed"
+        assert event.reason == "user_request"
+        assert event.total_checked == 500000
 
 
 # ============================================================================
-# 同步模式测试
+# 订阅/取消订阅/发布测试
 # ============================================================================
 
 
 @pytest.mark.unit
-class TestEventBusSync:
-    """同步模式事件总线测试"""
+class TestEventBusSubscribe:
+    """订阅与取消订阅测试"""
 
-    def test_initial_state(self, sync_bus):
-        assert sync_bus.subscriber_count == 0
-        assert sync_bus.published_count == 0
-        assert sync_bus.error_count == 0
-
-    def test_subscribe(self, sync_bus):
+    def test_subscribe(self, bus):
         handler = Mock(__name__="test_handler")
-        sync_bus.subscribe(EventType.ENGINE_PROGRESS, handler)
-        assert sync_bus.subscriber_count == 1
+        bus.subscribe(EngineStartEvent, handler)
+        assert len(bus._subscribers) == 1
+        assert EngineStartEvent in bus._subscribers
 
-    def test_subscribe_duplicate_handler(self, sync_bus):
-        handler = Mock(__name__="test_handler")
-        sync_bus.subscribe(EventType.ENGINE_PROGRESS, handler)
-        sync_bus.subscribe(EventType.ENGINE_PROGRESS, handler)
-        assert sync_bus.subscriber_count == 1  # 同 handler 不重复订阅
+    def test_subscribe_multiple_handlers_same_event(self, bus):
+        h1 = Mock(__name__="h1")
+        h2 = Mock(__name__="h2")
+        bus.subscribe(EngineStartEvent, h1)
+        bus.subscribe(EngineStartEvent, h2)
+        assert len(bus._subscribers[EngineStartEvent]) == 2
 
-    def test_unsubscribe(self, sync_bus):
+    def test_unsubscribe(self, bus):
         handler = Mock(__name__="test_handler")
-        sync_bus.subscribe(EventType.ENGINE_PROGRESS, handler)
-        sync_bus.unsubscribe(EventType.ENGINE_PROGRESS, handler)
-        assert sync_bus.subscriber_count == 0
+        bus.subscribe(EngineStartEvent, handler)
+        bus.unsubscribe(EngineStartEvent, handler)
+        assert len(bus._subscribers[EngineStartEvent]) == 0
 
-    def test_publish_dispatches_to_handler(self, sync_bus):
+    def test_unsubscribe_nonexistent_handler(self, bus):
+        """取消未订阅的 handler 不抛异常"""
+        handler = Mock(__name__="ghost")
+        bus.unsubscribe(EngineStartEvent, handler)  # 不应抛异常
+
+    def test_unsubscribe_nonexistent_event_type(self, bus):
+        """取消未订阅的事件类型不抛异常"""
+        handler = Mock(__name__="handler")
+        bus.unsubscribe(EngineStartEvent, handler)  # 不应抛异常
+
+
+@pytest.mark.unit
+class TestEventBusPublish:
+    """发布事件测试"""
+
+    def test_publish_dispatches_to_handler(self, bus):
         handler = Mock(__name__="test_handler")
-        sync_bus.subscribe(EventType.ENGINE_START, handler)
+        bus.subscribe(EngineStartEvent, handler)
 
         event = EngineStartEvent(mode="random", target_count=1, batch_size=1024)
-        sync_bus.publish(event)
+        bus.publish(event)
 
         handler.assert_called_once_with(event)
-        assert sync_bus.published_count == 1
 
-    def test_publish_multiple_subscribers(self, sync_bus):
+    def test_publish_multiple_subscribers(self, bus):
         h1, h2, h3 = Mock(__name__="h1"), Mock(__name__="h2"), Mock(__name__="h3")
-        sync_bus.subscribe(EventType.ENGINE_PROGRESS, h1)
-        sync_bus.subscribe(EventType.ENGINE_PROGRESS, h2)
-        sync_bus.subscribe(EventType.ENGINE_PROGRESS, h3)
+        bus.subscribe(EngineProgressEvent, h1)
+        bus.subscribe(EngineProgressEvent, h2)
+        bus.subscribe(EngineProgressEvent, h3)
 
         event = EngineProgressEvent(total_checked=1000, speed=50000.0)
-        sync_bus.publish(event)
+        bus.publish(event)
 
         h1.assert_called_once_with(event)
         h2.assert_called_once_with(event)
         h3.assert_called_once_with(event)
 
-    def test_publish_no_subscribers(self, sync_bus):
+    def test_publish_no_subscribers(self, bus):
+        """无订阅者时发布不抛异常"""
         event = EngineProgressEvent(total_checked=1000)
-        sync_bus.publish(event)  # 不应抛异常
-        assert sync_bus.published_count == 1
+        bus.publish(event)  # 不应抛异常
 
-    def test_publish_none_event(self, sync_bus):
-        sync_bus.publish(None)  # 不应抛异常
-        assert sync_bus.published_count == 0
-
-    def test_publish_none_event_type(self, sync_bus):
-        event = CollisionEvent(event_type=None)
-        sync_bus.publish(event)  # 不应抛异常
-        assert sync_bus.published_count == 0
-
-    def test_subscribe_to_all(self, sync_bus):
-        handler = Mock()
-        sync_bus.subscribe_to_all(handler)
+    def test_publish_different_event_types(self, bus):
+        """只有匹配的事件类型才触发 handler"""
+        h_start = Mock(__name__="h_start")
+        h_progress = Mock(__name__="h_progress")
+        bus.subscribe(EngineStartEvent, h_start)
+        bus.subscribe(EngineProgressEvent, h_progress)
 
         event = EngineStartEvent(mode="random", target_count=1, batch_size=1024)
-        sync_bus.publish(event)
+        bus.publish(event)
 
-        handler.assert_called_once()
-        # handler 接收 (event_type, event) 两个参数
-        args = handler.call_args[0]
-        assert args[0] == EventType.ENGINE_START
-        assert args[1] is event
+        h_start.assert_called_once()
+        h_progress.assert_not_called()
+
+    def test_publish_handler_receives_correct_event(self, bus):
+        """handler 接收到正确的事件实例"""
+        received = []
+
+        def handler(e):
+            received.append(e)
+
+        bus.subscribe(EngineCompleteEvent, handler)
+
+        event = EngineCompleteEvent(total_checked=5000, matches_found=3)
+        bus.publish(event)
+
+        assert len(received) == 1
+        assert received[0] is event
+        assert received[0].total_checked == 5000
 
 
 @pytest.mark.unit
-class TestEventBusSyncErrorHandling:
-    """同步模式错误处理测试"""
+class TestEventBusErrorHandling:
+    """错误处理测试"""
 
-    def test_handler_error_sets_error_count(self, sync_bus):
-        handler = Mock(__name__="bad_handler", side_effect=RuntimeError("handler error"))
-        sync_bus.subscribe(EventType.ENGINE_START, handler)
+    def test_handler_error_is_logged_not_propagated(self, bus):
+        """handler 抛异常时不向外传播"""
+        bad_handler = Mock(__name__="bad_handler", side_effect=RuntimeError("handler error"))
+        good_handler = Mock(__name__="good_handler")
 
-        event = EngineStartEvent(mode="random", target_count=1, batch_size=1024)
-        sync_bus.publish(event)
-
-        assert sync_bus.error_count == 1
-
-    def test_global_error_handler(self, sync_bus):
-        error_handler = Mock(__name__="error_handler")
-        handler = Mock(__name__="bad_handler", side_effect=RuntimeError("test error"))
-        sync_bus.subscribe(EventType.ENGINE_START, handler)
-        sync_bus.set_error_handler(error_handler)
+        bus.subscribe(EngineStartEvent, bad_handler)
+        bus.subscribe(EngineStartEvent, good_handler)
 
         event = EngineStartEvent(mode="random", target_count=1, batch_size=1024)
-        sync_bus.publish(event)
+        bus.publish(event)  # 不应向外传播异常
 
-        error_handler.assert_called_once()
-        args = error_handler.call_args[0]
-        assert args[0] is event
-        assert isinstance(args[1], RuntimeError)
+        # good_handler 仍然被调用
+        good_handler.assert_called_once_with(event)
 
-    def test_error_handler_exception_not_propagate(self, sync_bus):
-        error_handler = Mock(__name__="err_handler", side_effect=RuntimeError("error in error handler"))
-        handler = Mock(__name__="bad_handler", side_effect=RuntimeError("original error"))
-        sync_bus.subscribe(EventType.ENGINE_START, handler)
-        sync_bus.set_error_handler(error_handler)
 
-        event = EngineStartEvent(mode="random", target_count=1, batch_size=1024)
-        sync_bus.publish(event)  # 不应向外传播异常
+# ============================================================================
+# 生命周期测试
+# ============================================================================
 
 
 @pytest.mark.unit
-class TestEventBusSyncLifecycle:
-    """同步模式生命周期测试"""
+class TestEventBusLifecycle:
+    """生命周期测试"""
 
-    def test_clear(self, sync_bus):
+    def test_clear(self, bus):
         h1, h2 = Mock(__name__="h1"), Mock(__name__="h2")
-        sync_bus.subscribe(EventType.ENGINE_PROGRESS, h1)
-        sync_bus.subscribe(EventType.ENGINE_MATCH, h2)
-        assert sync_bus.subscriber_count == 2
+        bus.subscribe(EngineProgressEvent, h1)
+        bus.subscribe(EngineMatchEvent, h2)
+        assert len(bus._subscribers) == 2
 
-        sync_bus.clear()
-        assert sync_bus.subscriber_count == 0
+        bus.clear()
+        assert len(bus._subscribers) == 0
 
-    def test_get_stats(self, sync_bus):
+    def test_clear_then_resubscribe(self, bus):
+        """clear 后可以重新订阅"""
         handler = Mock(__name__="handler")
-        sync_bus.subscribe(EventType.ENGINE_START, handler)
+        bus.subscribe(EngineStartEvent, handler)
+        bus.clear()
+
+        new_handler = Mock(__name__="new_handler")
+        bus.subscribe(EngineStartEvent, new_handler)
+        assert len(bus._subscribers) == 1
+
         event = EngineStartEvent(mode="random", target_count=1, batch_size=1024)
-        sync_bus.publish(event)
-
-        stats = sync_bus.get_stats()
-        assert stats["subscriber_count"] == 1
-        assert stats["published_count"] == 1
-        assert stats["error_count"] == 0
-        assert stats["async_mode"] is False
-
-    def test_context_manager(self):
-        with EventBus(async_mode=False) as bus:
-            assert bus.subscriber_count == 0
-            handler = Mock(__name__="handler")
-            bus.subscribe(EventType.ENGINE_START, handler)
-            event = EngineStartEvent(mode="random", target_count=1, batch_size=1024)
-            bus.publish(event)
-            handler.assert_called_once()
-        # 退出上下文后应正常关闭
-
-
-# ============================================================================
-# 异步模式测试
-# ============================================================================
-
-
-@pytest.mark.unit
-class TestEventBusAsync:
-    """异步模式事件总线测试"""
-
-    def test_async_mode_initialization(self, async_bus):
-        assert async_bus._async_mode is True
-        assert async_bus._event_queue is not None
-        assert async_bus._worker_thread is not None
-        assert async_bus._worker_thread.is_alive()
-
-    def test_async_publish(self, async_bus):
-        handler = Mock(__name__="handler")
-        async_bus.subscribe(EventType.ENGINE_PROGRESS, handler)
-
-        event = EngineProgressEvent(total_checked=500, speed=10000.0)
-        async_bus.publish(event)
-
-        # 异步模式需要等待处理
-        time.sleep(0.3)
-
-        assert async_bus.published_count == 1
-        handler.assert_called_once_with(event)
-
-    def test_async_stop(self, async_bus):
-        assert async_bus._running is True
-        async_bus.stop()
-        assert async_bus._running is False
-
-    def test_async_shutdown(self, async_bus):
-        async_bus.shutdown()
-        assert async_bus._running is False
-
-    def test_async_context_manager(self):
-        with EventBus(async_mode=True) as bus:
-            handler = Mock(__name__="handler")
-            bus.subscribe(EventType.ENGINE_START, handler)
-            event = EngineStartEvent(mode="random", target_count=1, batch_size=1024)
-            bus.publish(event)
-            time.sleep(0.3)
-            handler.assert_called_once()
-        # 退出上下文后应正常关闭
+        bus.publish(event)
+        new_handler.assert_called_once_with(event)
 
 
 # ============================================================================
@@ -419,13 +294,9 @@ class TestEventBusGlobal:
         bus2 = get_event_bus()
         assert bus1 is not bus2
 
-    def test_async_mode_only_first_call(self):
-        bus1 = get_event_bus(async_mode=True)
-        bus2 = get_event_bus(async_mode=False)
-        # 第二次调用 async_mode 参数被忽略
-        assert bus1._async_mode is True
-        assert bus2._async_mode is True
-        bus1.stop()
+    def test_get_event_bus_is_event_bus_instance(self):
+        bus = get_event_bus()
+        assert isinstance(bus, EventBus)
 
 
 # ============================================================================
@@ -438,19 +309,19 @@ class TestEventBusGlobal:
 class TestEventBusThreadSafety:
     """线程安全测试"""
 
-    def test_concurrent_publish(self, sync_bus):
+    def test_concurrent_publish(self, bus):
         """多线程同时发布不应损坏数据"""
         results = []
 
         def handler(e):
-            return results.append(e.total_checked)
+            results.append(e.total_checked)
 
-        sync_bus.subscribe(EventType.ENGINE_PROGRESS, handler)
+        bus.subscribe(EngineProgressEvent, handler)
 
         def publish_events(start, count):
             for i in range(start, start + count):
                 event = EngineProgressEvent(total_checked=i, speed=10000.0)
-                sync_bus.publish(event)
+                bus.publish(event)
 
         threads = []
         for j in range(4):
@@ -462,22 +333,19 @@ class TestEventBusThreadSafety:
         for t in threads:
             t.join()
 
-        assert sync_bus.published_count == 200
         assert len(results) == 200
 
-    def test_concurrent_subscribe_unsubscribe(self, sync_bus):
+    def test_concurrent_subscribe_unsubscribe(self, bus):
         """并发订阅取消不应导致数据竞争"""
         errors = []
 
         def subscribe_loop():
             try:
                 for i in range(100):
-
                     def handler(e):
                         return None
-
-                    sync_bus.subscribe(EventType.ENGINE_PROGRESS, handler)
-                    sync_bus.unsubscribe(EventType.ENGINE_PROGRESS, handler)
+                    bus.subscribe(EngineProgressEvent, handler)
+                    bus.unsubscribe(EngineProgressEvent, handler)
             except Exception as e:
                 errors.append(e)
 

@@ -57,11 +57,19 @@ For complete technical specs, API docs and usage guide, see:
 # - MAJOR: incompatible API/algorithm changes (e.g., coordinate system switch)
 # - MINOR: new features backward-compatible (e.g., new kernel function)
 # - PATCH: bug fixes, optimizations (e.g., macro refactoring)
-KERNEL_VERSION = "4.2.2"
-KERNEL_VERSION_TUPLE = (4, 2, 2)
+KERNEL_VERSION = "4.2.3"
+KERNEL_VERSION_TUPLE = (4, 2, 3)
 
 # Maps versions to changelog entries for auditing
 KERNEL_VERSION_HISTORY: list[dict[str, str]] = [
+    {
+        "version": "4.2.3",
+        "date": "2026-05",
+        "changes": (
+            "PATCH: HASH160_TARGET_SCAN uint32 aligned loads (5x vs 20x uchar); "
+            "PACK_HASH160_UINT32 macro dedup (4 call sites)"
+        ),
+    },
     {
         "version": "4.2.2",
         "date": "2026-05",
