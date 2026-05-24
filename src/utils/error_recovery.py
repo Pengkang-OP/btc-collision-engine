@@ -241,7 +241,8 @@ def retry_on_error(
 
                     time.sleep(sleep_time)
 
-            assert last_exception is not None
+            if last_exception is None:
+                raise RuntimeError("error_recovery: last_exception is None after retry loop")
             raise last_exception
 
         return wrapper
@@ -525,7 +526,8 @@ class ErrorRecoveryManager:
                     try:
                         result = func(*args, **kwargs)
                         if resolved_category is not None and attempt > 0:
-                            assert last_exception is not None
+                            if last_exception is None:
+                                raise RuntimeError("error_recovery: last_exception is None when recording retry")
                             manager.record_retry(
                                 resolved_category, last_exception, attempt, True,
                             )
@@ -564,7 +566,8 @@ class ErrorRecoveryManager:
 
                         time.sleep(sleep_time)
 
-                assert last_exception is not None
+                if last_exception is None:
+                    raise RuntimeError("error_recovery: last_exception is None after retry loop")
                 manager.record_retry(
                     resolved_category, last_exception, max_retries, False,
                 )

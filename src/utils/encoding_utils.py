@@ -40,7 +40,7 @@ class EncodingUtils:
 
         for enc in encodings:
             try:
-                with open(file_path, "r", encoding=enc) as f:
+                with open(file_path, encoding=enc) as f:
                     return f.readlines()
             except UnicodeDecodeError as e:
                 errors.append(f"{enc}: {e}")
@@ -77,7 +77,7 @@ class EncodingUtils:
 
         for enc in encodings:
             try:
-                with open(file_path, "r", encoding=enc) as f:
+                with open(file_path, encoding=enc) as f:
                     return f.read()
             except UnicodeDecodeError as e:
                 errors.append(f"{enc}: {e}")

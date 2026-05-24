@@ -181,8 +181,8 @@ class GPUKernelFactory:
         """
         if cls._kernel_class is None:
             raise ValueError("未注册GPU内核类，请先调用 GPUKernelFactory.register()")
-
-        assert cls._kernel_class is not None  # 已通过上方 None 检查保证
+        if cls._kernel_class is None:  # mypy: narrow from None check above
+            raise RuntimeError("GPUKernelFactory.create(): cls._kernel_class is None after check")
         return cls._kernel_class(
             device, max_batch_size=max_batch_size, program=program,
         )

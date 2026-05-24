@@ -75,7 +75,7 @@ class OptimizedP2PKHAddressGenerator(P2PKHAddressGenerator):
         # Always prefer native crypto backend (coincurve/OpenSSL) over
         # precomputed table — native libraries are orders of magnitude faster
         try:
-            from .crypto_backend import crypto_manager, BackendType
+            from .crypto_backend import BackendType, crypto_manager
 
             backend = crypto_manager.current_backend
             backend_type = crypto_manager._default_backend_type
@@ -155,8 +155,8 @@ class OptimizedP2PKHAddressGenerator(P2PKHAddressGenerator):
         """
         if self.use_simd_hash and self._batch_optimizer is not None:
             # Use batch optimizer for potential SIMD acceleration
-            if hasattr(self._batch_optimizer, "simd_hash160"):
-                return self._batch_optimizer.simd_hash160(public_key)
+            if hasattr(self._batch_optimizer, "batch_hash160"):
+                return self._batch_optimizer.batch_hash160([public_key])[0]
 
         # Fall back to standard HashUtils
         return HashUtils.hash160(public_key)

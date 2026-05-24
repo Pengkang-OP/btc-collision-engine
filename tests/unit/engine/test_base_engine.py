@@ -112,13 +112,13 @@ class TestBaseEngineInterface:
         assert hasattr(engine, "on_progress")
         assert hasattr(engine, "on_complete")
 
-    @pytest.mark.skip(reason="_match_callback_timeout is an instance attr on KeyCollisionEngine, not a class attr on BaseCollisionEngine")
     def test_engine_class_constants(self):
-        """测试：引擎类常量存在且类型正确"""
-        assert hasattr(BaseCollisionEngine, "_match_callback_timeout")
-        assert isinstance(BaseCollisionEngine._match_callback_timeout, float)
-        assert hasattr(BaseCollisionEngine, "_match_callback_audit_enabled")
-        assert isinstance(BaseCollisionEngine._match_callback_audit_enabled, bool)
+        """测试：引擎实例属性存在且类型正确"""
+        engine = MockEngine({"1Address"})
+        assert hasattr(engine, "_match_callback_timeout")
+        assert isinstance(engine._match_callback_timeout, float)
+        assert hasattr(engine, "_match_callback_audit_enabled")
+        assert isinstance(engine._match_callback_audit_enabled, bool)
 
     def test_supported_modes(self):
         """测试：支持的模式列表"""

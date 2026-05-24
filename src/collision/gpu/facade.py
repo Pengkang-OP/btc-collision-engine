@@ -103,7 +103,8 @@ class GPUEngineFacade:
 
         # 初始化异步管道
         try:
-            assert self.kernel is not None
+            if self.kernel is None:
+                raise RuntimeError("GPUDeviceManager.kernel is None when initializing async pipeline")
             self._async_pipeline.initialize(
                 kernel=self.kernel,
                 batch_size=batch_size or 1_000_000,

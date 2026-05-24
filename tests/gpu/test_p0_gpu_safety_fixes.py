@@ -11,6 +11,7 @@
 import os
 import re
 import threading
+import time
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -32,53 +33,57 @@ PROJECT_ROOT = Path(__file__).parent.parent
 # ===========================================================================
 
 
-@pytest.mark.skip(reason="snapshot() returns dict, not CollisionStats object (Phase 6 design change)")
 class TestSnapshotIsolation:
     """P0-1: 验证 on_progress 传递 snapshot 而非原始 stats 对象"""
 
     def test_snapshot_returns_different_object(self):
         """snapshot() 返回的对象与原始 stats 不是同一个实例"""
-        from src.collision.collision_stats import CollisionStats
+        from src.collision.collision_stats import CollisionStats, StatsSnapshot
 
         stats = CollisionStats()
-        stats.total_checked = 1000
-        stats.speed = 500.0
+        stats.record_keys(1000)
+        stats.record_match()
 
         snapshot = stats.snapshot()
 
         assert snapshot is not stats, "snapshot() 必须返回新对象，而非原始引用"
+        assert isinstance(snapshot, StatsSnapshot), "snapshot() 必须返回 StatsSnapshot 实例"
 
     def test_snapshot_copies_basic_fields(self):
         """Snapshot 正确复制基础统计字段"""
-        from src.collision.collision_stats import CollisionStats
+        from src.collision.collision_stats import CollisionStats, StatsSnapshot
 
         stats = CollisionStats()
-        stats.total_checked = 2048
-        stats.speed = 1024.5
-        stats.elapsed = 2.0
+        stats.record_keys(2048)
+        stats.record_match()
+        # 设置起始时间使 elapsed_seconds 可测
+        stats._start_time = time.time() - 2.0
 
         snap = stats.snapshot()
 
-        assert snap.total_checked == 2048
-        assert snap.speed == 1024.5
-        assert snap.elapsed == 2.0
+        assert isinstance(snap, StatsSnapshot)
+        assert snap.total_keys_checked == 2048
+        assert snap.total_matches == 1
+        assert snap.elapsed_seconds == pytest.approx(2.0, abs=0.5)
+        assert snap.throughput > 0
 
     def test_snapshot_mutation_does_not_affect_original(self):
         """修改 snapshot 字段不影响原始 stats 对象"""
-        from src.collision.collision_stats import CollisionStats
+        from src.collision.collision_stats import CollisionStats, StatsSnapshot
 
         stats = CollisionStats()
-        stats.total_checked = 1000
-        stats.speed = 500.0
+        stats.record_keys(1000)
 
         snap = stats.snapshot()
         # 修改 snapshot
-        snap.total_checked = 9999
-        snap.speed = 0.0
+        snap.total_keys_checked = 9999
+        snap.throughput = 0.0
 
         # 原始对象保持不变
-        assert stats.total_checked == 1000, "修改 snapshot 不应影响原始 stats.total_checked"
-        assert stats.speed == 500.0, "修改 snapshot 不应影响原始 stats.speed"
+        assert stats._total_keys == 1000, "修改 snapshot 不应影响原始 stats"
+        # 重新 snapshot 应得到正确值
+        snap2 = stats.snapshot()
+        assert snap2.total_keys_checked == 1000
 
     def test_snapshot_matches_list_deep_copy(self):
         """Snapshot 的 matches 列表是深拷贝，修改不影响原始对象"""
@@ -95,43 +100,43 @@ class TestSnapshotIsolation:
         assert len(stats.matches) == 1, "清空 snapshot.matches 不应影响原始 stats.matches"
 
     def test_snapshot_copies_error_counters(self):
-        """Snapshot 正确复制异常统计指标"""
+        """Snapshot 正确复制错误计数"""
         from src.collision.collision_stats import CollisionStats
 
         stats = CollisionStats()
-        stats.gpu_errors = 3
-        stats.worker_errors = 1
-        stats.wif_encode_errors = 2
-        stats.resource_errors = 1
+        # record_error 递增 _total_errors
+        stats.record_error()
+        stats.record_error()
+        stats.record_error()
+        stats.record_error()
 
         snap = stats.snapshot()
 
-        assert snap.gpu_errors == 3
-        assert snap.worker_errors == 1
-        assert snap.wif_encode_errors == 2
-        assert snap.resource_errors == 1
+        assert snap.total_errors == 4
+        assert snap.total_keys_checked == 0
 
     def test_snapshot_copies_eta_fields(self):
         """Snapshot 正确复制 ETA 相关字段"""
         from src.collision.collision_stats import CollisionStats
 
         stats = CollisionStats()
-        stats.total_range = 1_000_000
-        stats.eta_seconds = 120.5
+        stats.record_keys(500000)
+        stats._start_time = time.time() - 10.0  # 模拟已运行 10 秒
 
         snap = stats.snapshot()
 
-        assert snap.total_range == 1_000_000
-        assert snap.eta_seconds == 120.5
+        assert snap.total_keys_checked == 500000
+        assert snap.elapsed_seconds > 9.0
+        assert snap.throughput > 0
 
-    def test_snapshot_is_collision_stats_instance(self):
-        """snapshot() 返回的对象是 CollisionStats 实例"""
-        from src.collision.collision_stats import CollisionStats
+    def test_snapshot_is_stats_snapshot_instance(self):
+        """snapshot() 返回的对象是 StatsSnapshot 实例"""
+        from src.collision.collision_stats import CollisionStats, StatsSnapshot
 
         stats = CollisionStats()
         snap = stats.snapshot()
 
-        assert isinstance(snap, CollisionStats)
+        assert isinstance(snap, StatsSnapshot)
 
 
 # ===========================================================================
@@ -139,7 +144,7 @@ class TestSnapshotIsolation:
 # ===========================================================================
 
 
-@pytest.mark.skip(reason="_safe_invoke_match_callback delegated to _result_processor in Phase 6; test infra needs refactor")
+@ pytest.mark.skip(reason="_safe_invoke_match_callback delegates to _result_processor.safe_invoke_match_callback; test needs refactor to test _result_processor directly")
 class TestSafeInvokeMatchCallbackIsolation:
     """P0-2: 验证 GPU _safe_invoke_match_callback 能隔离回调异常
 
@@ -160,6 +165,9 @@ class TestSafeInvokeMatchCallbackIsolation:
             engine.stats = Mock()
             engine._running = False
             engine._match_callback_timeout = 5.0
+            # 添加 _result_processor mock 以支持 _safe_invoke_match_callback
+            engine._result_processor = Mock()
+            engine._result_processor.safe_invoke_match_callback.return_value = True
             self._engine = engine
             yield
 

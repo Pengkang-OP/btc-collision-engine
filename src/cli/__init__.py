@@ -19,10 +19,10 @@ Sub-modules:
 - stats_reporter.py : 最终统计摘要
 """
 
-from src.cli.main import main
 from src.cli.arg_parser import parse_args
-from src.cli.output import CLIOutput
+from src.cli.main import main
 from src.cli.optimization_cli import OptimizationCLI
+from src.cli.output import CLIOutput
 
 __all__ = [
     "main",

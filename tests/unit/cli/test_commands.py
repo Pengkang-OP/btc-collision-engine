@@ -228,7 +228,6 @@ class TestHandleSystemCommands:
             _handle_system_commands(args)
         assert exc_info.value.code == 0
 
-    @pytest.mark.skip(reason="DataCleaner dynamic import inside _handle_system_commands bypasses mock; cleanup path uses real DataCleaner which has no dry_run parameter")
     def test_cleanup_dispatched(self):
         """--cleanup 被正确分发。"""
         args = MagicMock()
@@ -241,20 +240,17 @@ class TestHandleSystemCommands:
 
         with patch("src.utils.data_cleanup.DataCleaner") as mock_cleaner_cls:
             mock_cleaner = MagicMock()
-            mock_cleaner.clean_all.return_value = {
-                "files_removed": 5,
-                "space_freed_bytes": 1024000,
-            }
+            # DataCleaner.clean_all() returns int (file count)
+            mock_cleaner.clean_all.return_value = 5
             mock_cleaner_cls.return_value = mock_cleaner
 
             with pytest.raises(SystemExit) as exc_info:
                 _handle_system_commands(args)
             assert exc_info.value.code == 0
-            mock_cleaner.clean_all.assert_called_once_with(dry_run=False)
+            mock_cleaner.clean_all.assert_called_once_with()
 
-    @pytest.mark.skip(reason="DataCleaner dynamic import inside _handle_system_commands bypasses mock; real DataCleaner has no dry_run mode")
     def test_cleanup_dry_run(self):
-        """--cleanup --dry-run 正常分发。"""
+        """--cleanup --dry-run 不会调用 clean_all()，只输出预览。"""
         args = MagicMock()
         args.health_check = False
         args.platform_check = False
@@ -265,15 +261,13 @@ class TestHandleSystemCommands:
 
         with patch("src.utils.data_cleanup.DataCleaner") as mock_cleaner_cls:
             mock_cleaner = MagicMock()
-            mock_cleaner.clean_all.return_value = {
-                "files_removed": 0,
-                "space_freed_bytes": 0,
-            }
+            mock_cleaner.clean_all.return_value = 0
             mock_cleaner_cls.return_value = mock_cleaner
 
             with pytest.raises(SystemExit):
                 _handle_system_commands(args)
-            mock_cleaner.clean_all.assert_called_once_with(dry_run=True)
+            # dry_run 模式不应调用 clean_all()
+            mock_cleaner.clean_all.assert_not_called()
 
     def test_no_system_command_returns_false(self):
         """无系统命令时返回 False。"""

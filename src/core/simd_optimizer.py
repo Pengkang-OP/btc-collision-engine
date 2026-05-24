@@ -158,6 +158,10 @@ class BatchOptimizer:
     ) -> list[str]:
         """Batch Base58 encoding (optimized version).
 
+        Note: This method performs raw Base58 encoding without version byte
+        or checksum. For proper Bitcoin address encoding use
+        Base58.check_encode() or batch_address_from_hash160().
+
         Args:
             numbers: List of integers to encode
 

@@ -291,8 +291,8 @@ class TestCheckpointSave:
         saved_data = {}
 
         class CheckpointRecorder:
-            def save(self, **kwargs):
-                saved_data.update(kwargs)
+            def save(self, data, **kwargs):
+                saved_data.update(data if isinstance(data, dict) else kwargs)
 
         core = CollisionCore(
             targets=sample_targets,

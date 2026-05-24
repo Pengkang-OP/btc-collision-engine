@@ -11,7 +11,7 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional, cast
+from typing import Any
 
 from ..utils import get_configured_logger
 

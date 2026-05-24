@@ -147,7 +147,8 @@ class GPUDeviceManager:
 
                 # 1. 初始化GPU设备
                 self._init_device()
-                assert self._gpu_device is not None  # _init_device 保证设置
+                if self._gpu_device is None:
+                    raise RuntimeError("GPUDeviceManager._init_device() did not set _gpu_device")
 
                 # 2. 准备目标地址
                 target_hash160s, target_list = self._prepare_targets(targets)
@@ -160,11 +161,13 @@ class GPUDeviceManager:
 
                 # 4. 创建GPU上下文
                 self._init_context()
-                assert self._gpu_context is not None  # _init_context 保证设置
+                if self._gpu_context is None:
+                    raise RuntimeError("GPUDeviceManager._init_context() did not set _gpu_context")
 
                 # 5. 编译和创建内核
                 self._init_kernel(batch_size)
-                assert self._gpu_kernel is not None  # _init_kernel 保证初始化
+                if self._gpu_kernel is None:
+                    raise RuntimeError("GPUDeviceManager._init_kernel() did not set _gpu_kernel")
 
                 # 6. 初始化内存池（含预分配）
                 self._init_memory_pool(batch_size)
@@ -420,7 +423,8 @@ class GPUDeviceManager:
     def _calculate_optimal_batch_size(self) -> int:
         """计算最优batch_size"""
         self._require_device()
-        assert self._gpu_device is not None  # _require_device ensures non-None
+        if self._gpu_device is None:
+            raise RuntimeError("GPUDeviceManager._require_device() did not set _gpu_device")
         device_info: dict[str, Any] = self._gpu_device.get_device_info()
         device_name = device_info.get("name", "")
         vendor = device_info.get("vendor_identifier", "unknown")

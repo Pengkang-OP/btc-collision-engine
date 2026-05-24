@@ -472,8 +472,9 @@ class DataLogger:
 
     def log_error(self, event) -> None:
         """Called from event bus on error events."""
+        error_type = getattr(event, "error_type", "unknown_error")
         msg = getattr(event, "error_message", "") or str(getattr(event, "exception", ""))
-        self.record_error(msg)
+        self.record_error(error_type, msg)
 
     def record_match_event(
         self,
@@ -765,6 +766,7 @@ class DataLogger:
                 )
                 return self._fallback_direct_write(src, dst)
             except OSError as e:
+                last_os_error = e  # 保存引用，避免 except 块退出后被释放
                 if attempt < max_retries - 1:
                     delay = delays[min(attempt, len(delays) - 1)]
                     _attempt = attempt + 1
@@ -777,7 +779,7 @@ class DataLogger:
             # （某些杀毒软件返回非标准 OSError 而非 PermissionError）
             self.logger.warning(
                 "原子替换全部失败 (%s/%s)，回退到直接写入: %s - %s",
-                max_retries, max_retries, e, dst,
+                max_retries, max_retries, last_os_error, dst,
             )
             return self._fallback_direct_write(src, dst)
 

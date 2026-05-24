@@ -524,7 +524,8 @@ class CryptoBackendManager:
             bt.name for bt, backend in self._backends.items()
             if backend.is_available
         ]
-        assert self._current_backend is not None
+        if self._current_backend is None:
+            raise RuntimeError("Crypto backend not initialized")
         logger.info(
             f"Crypto backend initialization complete: "
             f"available={available}, "

@@ -73,7 +73,7 @@ def bech32_encode(hrp: str, witver: int, witprog: bytes, spec: str = "bech32") -
 
 def decode_segwit_address(
     address: str, expected_hrp: str | None = None
-) -> tuple[str | None, int, bytes]:
+) -> tuple[str | None, int | None, bytes | None]:
     """Decode a segwit address to HRP, witness version, and program.
 
     Args:

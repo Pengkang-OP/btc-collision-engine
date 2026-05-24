@@ -376,7 +376,8 @@ class GPUEngineMonitor:
         if not self.should_adjust_batch_size():
             return False
 
-        assert self._engine is not None
+        if self._engine is None:
+            raise RuntimeError("GPUEngineMonitor._adjust_batch_size: self._engine is None")
         old_size = self._engine.batch_size
         new_size, reason, details = self.calculate_optimal_batch_size()
 

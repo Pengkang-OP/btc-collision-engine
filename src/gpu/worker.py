@@ -342,7 +342,11 @@ class SingleGPUWorker(threading.Thread):
                 f"GPU {self.device_idx} 引擎已启动: mode={self.mode}, kwargs={engine_kwargs or '无'}",
             )
 
-            monitor_thread.join(timeout=5.0)
+            # v5.2.1: random 模式持续运行直到 stop_event；range 模式等完成
+            if self.mode == "random":
+                self._stop_event.wait()
+            else:
+                monitor_thread.join(timeout=5.0)
 
             if self._gpu_engine:
                 self._gpu_engine.stop()

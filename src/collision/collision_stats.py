@@ -2,14 +2,30 @@
 """Collision detection statistics tracking.
 """
 
+from __future__ import annotations
+
 import hashlib
 import threading
 import time
+from dataclasses import dataclass, field
 from typing import Any
 
 from ..utils import get_configured_logger
 
 logger = get_configured_logger("CollisionStats")
+
+
+@dataclass
+class StatsSnapshot:
+    """Immutable snapshot of collision statistics at a point in time."""
+
+    total_keys_checked: int = 0
+    total_matches: int = 0
+    total_errors: int = 0
+    elapsed_seconds: float = 0.0
+    throughput: float = 0.0
+    matches: list[dict] = field(default_factory=list)
+
 
 # 常量定义 - 消除魔法数字 (CODE-3修复)
 DEFAULT_PROGRESS_INTERVAL_COUNT = 1000  # 每N次检测触发一次进度回调
@@ -74,23 +90,24 @@ class CollisionStats:
                 ).hexdigest()[:16]
             self.matches.append(entry)
 
-    def snapshot(self) -> dict:
+    def snapshot(self) -> StatsSnapshot:
         """Take a snapshot of current stats.
 
         Returns:
-            Dictionary with current stats
+            StatsSnapshot object with current stats
 
         """
         with self._lock:
-            return {
-                "total_keys_checked": self._total_keys,
-                "total_matches": self._total_matches,
-                "total_errors": self._total_errors,
-                "elapsed_seconds": max(time.time() - self._start_time, 0.001),
-                "throughput": (
+            return StatsSnapshot(
+                total_keys_checked=self._total_keys,
+                total_matches=self._total_matches,
+                total_errors=self._total_errors,
+                elapsed_seconds=max(time.time() - self._start_time, 0.001),
+                throughput=(
                     self._total_keys / max(time.time() - self._start_time, 0.001)
                 ),
-            }
+                matches=list(self.matches),
+            )
 
     def record_error(self, error_type: str = "", error_msg: str = "") -> None:
         """Record a general error with optional type/message."""

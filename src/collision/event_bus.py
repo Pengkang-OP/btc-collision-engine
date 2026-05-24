@@ -69,9 +69,12 @@ class EventBus:
         """
         with self._lock:
             if event_type in self._subscribers:
-                self._subscribers[
-                    event_type
-                ].remove(handler)
+                try:
+                    self._subscribers[
+                        event_type
+                    ].remove(handler)
+                except ValueError:
+                    pass  # handler was not subscribed, no-op
 
     def publish(self, event: Any) -> None:
         """Publish an event to all subscribers.

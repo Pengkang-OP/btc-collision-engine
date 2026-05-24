@@ -641,7 +641,8 @@ class GPUKernel(GPUKernelProtocol):
 
         try:
             # 获取编译后的二进制
-            assert self._program is not None, "_save_kernel_cache 应在编译成功后调用"
+            if self._program is None:
+                raise RuntimeError("_save_kernel_cache should be called after successful compilation")
             binaries = self._program.get_info(cl.program_info.BINARIES)
             if binaries and len(binaries) > 0:
                 binary = binaries[0]

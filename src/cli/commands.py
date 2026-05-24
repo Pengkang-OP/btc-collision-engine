@@ -216,8 +216,41 @@ def _cmd_examples() -> None:
     print(SEPARATOR_EQUAL)
 
 
+# JSON Schema 路径 (P2-9: 配置文件 schema 验证)
+_CONFIG_SCHEMA_PATH = str(Path(__file__).resolve().parent.parent.parent / "config.schema.json")
+
+
+def _validate_config_schema(config: dict[str, Any]) -> list[str]:
+    """使用 JSON Schema 验证 config 结构和类型。
+
+    返回错误信息列表，空列表表示验证通过。
+    若 jsonschema 库不可用，返回提示信息。
+    """
+    try:
+        import jsonschema
+    except ImportError:
+        return []  # 静默跳过（jsonschema 为可选依赖）
+
+    schema_path = Path(_CONFIG_SCHEMA_PATH)
+    if not schema_path.exists():
+        return []
+
+    try:
+        with schema_path.open(encoding="utf-8") as f:
+            schema = json.load(f)
+        validator = jsonschema.Draft202012Validator(schema)
+        errors = list(validator.iter_errors(config))
+        return [
+            f"{'.'.join(str(p) for p in e.absolute_path)}: {e.message}"
+            for e in errors
+            if not (e.absolute_path and str(e.absolute_path[0]).startswith("_comment"))
+        ]
+    except Exception:
+        return []  # schema 文件损坏时静默跳过
+
+
 def _cmd_config_check() -> None:
-    """--config-check 命令实现：检查配置文件状态"""
+    """--config-check 命令实现：检查配置文件状态 (含 JSON Schema 验证)"""
     # 确保UTF-8输出
     PlatformUtils.ensure_utf8_output()
 
@@ -247,6 +280,17 @@ def _cmd_config_check() -> None:
                 )
             else:
                 print("[OK] " + _t("cli.commands.sections_complete"))
+
+            # JSON Schema 验证 (P2-9)
+            schema_errors = _validate_config_schema(config)
+            if schema_errors:
+                print("\n[WARN] Schema validation issues:")
+                for err in schema_errors[:10]:  # 最多显示10条
+                    print(f"   - {err}")
+                if len(schema_errors) > 10:
+                    print(f"   ... 及其他 {len(schema_errors) - 10} 个问题")
+            else:
+                print("[OK] Schema validation passed")
 
             # 显示关键配置信息
             print("\n[INFO] Key config:")

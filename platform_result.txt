@@ -1,6 +1,0 @@
-2026-05-24 00:30:39,661 - CryptoBackend - WARNING - PurePythonBackend: ·Çºã¶¨Ê±¼äÄ£Ê½ - ²»ÍÆ¼öÓÃÓÚÉú²ú»·¾³£¬½¨Òé°²×° coincurve »ò cryptography
-2026-05-24 00:30:39,934 - CryptoBackend - INFO - Crypto backend initialization complete: available=['PURE_PYTHON', 'OPENSSL', 'COINCURVE', 'ECDSA'], current=coincurve (libsecp256k1)
-2026-05-24 00:30:39,935 - src.utils.logging_config - WARNING - ÈÕÖ¾ÏµÍ³ÒÑ±»³õÊ¼»¯£¬ÖØ¸´µ÷ÓÃ±»ºöÂÔ
-[INFO] ÈÕÖ¾°²È«¹ıÂËÆ÷ÒÑÆôÓÃ (ÏÔÊ½: 16, ×Ô¶¯·¢ÏÖ: 11, ×Ü¼Æ: 27)
-2026-05-24 00:30:39,948 - src.cli.commands - ERROR - PlatformChecker not available in platform_check module
-[ERROR] PlatformChecker ç±»æœªåœ¨ platform_check ä¸­å®ç°

@@ -1,7 +1,6 @@
 """Progress display utilities for CLI."""
 import sys
 import time
-from typing import Any
 
 
 def format_progress(

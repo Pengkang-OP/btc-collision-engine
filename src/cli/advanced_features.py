@@ -1,5 +1,4 @@
 """Advanced CLI features for power users."""
-import json
 import logging
 from pathlib import Path
 from typing import Any
@@ -75,7 +74,7 @@ def recommend_parameters(args: Any) -> dict[str, Any]:
     # Recommend based on resources
     if has_gpu:
         recommendations.append("--use-gpu")
-        reasons.append(f"检测到 GPU 设备，推荐启用 GPU 加速")
+        reasons.append("检测到 GPU 设备，推荐启用 GPU 加速")
 
     worker_count = max(2, cpu_count // 2)
     recommendations.append(f"--workers {worker_count}")

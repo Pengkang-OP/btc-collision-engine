@@ -332,7 +332,8 @@ class GPUBatchScheduler:
             return
         logger.debug("GPU 进度回调: batch_count=%s", batch_count)
 
-        assert engine.stats is not None
+        if engine.stats is None:
+            raise RuntimeError("GPUScheduler._check_and_report_progress: engine.stats is None")
         stats_snapshot = engine.stats.snapshot()
 
         # v3.2.0: 发布进度事件

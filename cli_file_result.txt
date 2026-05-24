@@ -1,68 +1,0 @@
-2026-05-24 00:25:00,027 - CryptoBackend - WARNING - PurePythonBackend: �Ǻ㶨ʱ��ģʽ - ���Ƽ������������������鰲װ coincurve �� cryptography
-2026-05-24 00:25:00,272 - CryptoBackend - INFO - Crypto backend initialization complete: available=['PURE_PYTHON', 'OPENSSL', 'COINCURVE', 'ECDSA'], current=coincurve (libsecp256k1)
-2026-05-24 00:25:00,272 - src.utils.logging_config - WARNING - ��־ϵͳ�ѱ���ʼ�����ظ����ñ�����
-[INFO] ��־��ȫ������������ (��ʽ: 16, �Զ�����: 11, �ܼ�: 27)
-[OK] 生产环境安全检查通过 — 加密后端安全可用
-2026-05-24 00:25:00,283 - CLI - INFO - 安全检查通过
-2026-05-24 00:25:00,326 - AddressCache - INFO - AddressCache 初始化: LRU大小=10000, TTL=3600秒
-2026-05-24 00:25:00,326 - TargetResolver - INFO - TargetResolver 初始化: 缓存=启用, 缓存容量=10000, 最大文件大小=100MB, 最大行数=1000000
-2026-05-24 00:25:00,328 - TargetResolver - INFO - 开始从文件加载目标地址: F:\Qoder\btc-collision-engine\test_targets.txt, 大小=0.2KB
-2026-05-24 00:25:00,328 - TargetResolver - INFO - 开始批量解析: 总数=5
-2026-05-24 00:25:00,329 - TargetResolver - WARNING - P2SH地址 '3J98t1WpEZ73CNmQviec...' 无法用于碰撞匹配: P2SH的payload=hash160(redeemScript)与引擎生成的hash160(pubkey)不相关，密码学上不可能匹配。请使用P2PKH地址(1开头)或私钥/公钥。
-2026-05-24 00:25:00,329 - TargetResolver - WARNING - Taproot witness program应为32字节
-2026-05-24 00:25:00,330 - TargetResolver - INFO - 批量解析完成: 总数=5, 成功=3, 失败=2, 缓存命中=0
-2026-05-24 00:25:00,330 - TargetResolver - INFO - 文件加载完成: 文件=F:\Qoder\btc-collision-engine\test_targets.txt, 总行数=5, 有效地址=3, 无效=2, 注释=0, 空行=0
-2026-05-24 00:25:00,330 - TargetResolver - WARNING - 密码学上不支持匹配的输入类型: p2sh_address=1. 这些地址/格式因密码学路径不同无法通过私钥碰撞匹配，已自动跳过。支持的类型: P2PKH地址(1开头)、WIF私钥、压缩/非压缩公钥、Hash160(hash160(pubkey))、P2WPKH Bech32(20字节witness)。
-成功加载 3 个目标地址
-目标地址格式分布: P2PKH: 3
-配置摘要
-  模式: random
-  目标地址数: 3
-  工作线程: None
-  GPU: 否
-  断点续传: 否
-  去重: 否
-  运行时限: 20秒
-
-2026-05-24 00:25:00,417 - AddressCache - INFO - AddressCache 初始化: LRU大小=10000, TTL=3600秒
-2026-05-24 00:25:00,417 - TargetResolver - INFO - TargetResolver 初始化: 缓存=启用, 缓存容量=10000, 最大文件大小=100MB, 最大行数=1000000
-2026-05-24 00:25:00,418 - KeyCollisionEngine - INFO - 自动检测地址格式: 启用双格式检查
-2026-05-24 00:25:00,418 - PrecomputedTable - INFO - Building precomputed point table: window_size=8, points=256
-2026-05-24 00:25:00,489 - PrecomputedTable - INFO - Precomputed table built, estimated memory: 32.0KB
-2026-05-24 00:25:00,489 - SIMDOptimizer - INFO - Batch optimizer initialized: batch_size=1,000
-2026-05-24 00:25:00,489 - KeyCollisionEngine - INFO - KeyCollisionEngine 使用优化版地址生成器: window_size=8, simd=True, pool=True
-2026-05-24 00:25:00,489 - KeyCollisionEngine - INFO - KeyCollisionEngine 初始化完成: P2PKH目标数=3, 断点=False, 去重=False, 工作线程=默认
-2026-05-24 00:25:00,489 - KeyCollisionEngine - INFO - 加密后端初始化完成: coincurve (libsecp256k1), 恒定时间=True
-2026-05-24 00:25:00,490 - KeyCollisionEngine - INFO - P3-9 Batch自动调整: 1000->4000 (CPU=16核)
-2026-05-24 00:25:00,494 - DataLogger - INFO - 数据日志系统初始化完成
-2026-05-24 00:25:00,494 - src.monitoring.enhanced_monitoring - INFO - Enhanced monitoring system initialized
-2026-05-24 00:25:00,494 - KeyCollisionEngine - INFO - 增强监控系统已启用（事件驱动模式）
-2026-05-24 00:25:00,495 - src.monitoring.alert_system - INFO - 加载告警历史: 3 条记录
-2026-05-24 00:25:00,495 - src.monitoring.alert_system - INFO - 告警系统初始化完成: 0 条规则
-2026-05-24 00:25:00,495 - src.monitoring.alert_system - INFO - 添加告警规则: 性能退化警告 (warning)
-2026-05-24 00:25:00,496 - src.monitoring.alert_system - INFO - 添加告警规则: 内存使用过高 (warning)
-2026-05-24 00:25:00,496 - src.monitoring.alert_system - INFO - 添加告警规则: GPU温度过高 (critical)
-2026-05-24 00:25:00,496 - src.monitoring.alert_system - INFO - 添加告警规则: 错误率过高 (critical)
-2026-05-24 00:25:00,496 - src.monitoring.alert_system - INFO - 添加告警规则: 吞吐量严重下降 (critical)
-2026-05-24 00:25:00,496 - src.monitoring.alert_system - INFO - 默认告警规则设置完成: 5 条规则
-2026-05-24 00:25:00,496 - KeyCollisionEngine - INFO - 引擎正在启动...
-2026-05-24 00:25:00,496 - KeyCollisionEngine - INFO - 启动工作线程: random_search
-2026-05-24 00:25:00,496 - KeyCollisionEngine - INFO - ============================================================
-2026-05-24 00:25:00,497 - KeyCollisionEngine - INFO - 引擎启动完成
-2026-05-24 00:25:00,497 - KeyCollisionEngine - INFO - 启动随机碰撞模式
-2026-05-24 00:25:00,497 - EngineRunner - INFO - CPU 引擎已启动
-2026-05-24 00:25:00,497 - KeyCollisionEngine - INFO - 目标地址数: 3
-进度: 0 keys | 速度: 0.0 keys/s | 命中: 0 | 耗时: 1s进度: 0 keys | 速度: 0.0 keys/s | 命中: 0 | 耗时: 2s进度: 0 keys | 速度: 0.0 keys/s | 命中: 0 | 耗时: 3s进度: 0 keys | 速度: 0.0 keys/s | 命中: 0 | 耗时: 4s进度: 0 keys | 速度: 0.0 keys/s | 命中: 0 | 耗时: 5s进度: 0 keys | 速度: 0.0 keys/s | 命中: 0 | 耗时: 6s进度: 0 keys | 速度: 0.0 keys/s | 命中: 0 | 耗时: 7s进度: 0 keys | 速度: 0.0 keys/s | 命中: 0 | 耗时: 8s进度: 0 keys | 速度: 0.0 keys/s | 命中: 0 | 耗时: 9s进度: 0 keys | 速度: 0.0 keys/s | 命中: 0 | 耗时: 10s进度: 0 keys | 速度: 0.0 keys/s | 命中: 0 | 耗时: 11s进度: 0 keys | 速度: 0.0 keys/s | 命中: 0 | 耗时: 12s进度: 0 keys | 速度: 0.0 keys/s | 命中: 0 | 耗时: 13s进度: 0 keys | 速度: 0.0 keys/s | 命中: 0 | 耗时: 14s进度: 0 keys | 速度: 0.0 keys/s | 命中: 0 | 耗时: 16s进度: 0 keys | 速度: 0.0 keys/s | 命中: 0 | 耗时: 17s进度: 0 keys | 速度: 0.0 keys/s | 命中: 0 | 耗时: 18s进度: 0 keys | 速度: 0.0 keys/s | 命中: 0 | 耗时: 19s进度: 0 keys | 速度: 0.0 keys/s | 命中: 0 | 耗时: 20s2026-05-24 00:25:21,235 - EngineRunner - INFO - 运行时限 20 秒已达，停止引擎
-2026-05-24 00:25:21,277 - KeyCollisionEngine - INFO - 引擎正在停止...
-2026-05-24 00:25:21,954 - KeyCollisionEngine - INFO - 引擎已停止
-
-
-================================================================
-  BTC Collision Engine - 运行结束 (CPU)
-================================================================
-  总检查私钥:    103
-  平均速度:      5 keys/s
-  命中次数:      0
-  运行时长:      21.5s
-================================================================
-
