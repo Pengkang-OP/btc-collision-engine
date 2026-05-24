@@ -8,15 +8,15 @@ The runtime logic remains in kernel.py which imports from this module.
 OPENCL_KERNEL_SOURCE = """
 // ============================================================================
 // Bitcoin secp256k1 GPU computation kernel
-// Kernel Version: 4.2.2 (MAJOR.MINOR.PATCH)
+// Kernel Version: 4.2.3 (MAJOR.MINOR.PATCH) — uint32 aligned HASH160_TARGET_SCAN + PACK_HASH160_UINT32 dedup
 // ============================================================================
 
 // Kernel version defines for compile-time feature gating
 #define KERNEL_VERSION_MAJOR 4
 #define KERNEL_VERSION_MINOR 2
-#define KERNEL_VERSION_PATCH 2
+#define KERNEL_VERSION_PATCH 3
 
-// v4.2.2 P1修复: 编译时版本校验，防止 Python 侧与 OpenCL 侧版本号不一致
+// v4.2.3: 编译时版本校验，防止 Python 侧与 OpenCL 侧版本号不一致
 #if KERNEL_VERSION_MAJOR < 4
 #error "Kernel version too old: requires KERNEL_VERSION_MAJOR >= 4"
 #endif
@@ -1198,7 +1198,7 @@ void hash160(const uchar *data, uint len, uchar *result) {
 //   -> 即使在 local memory 版本中，加载阶段也已合并
 // - 渐进式 early-exit: 先比较 h0（最高区分度），失败立即 continue
 //   -> 平均只需 1 次 uint32 比较即可排除非匹配目标（假定 Hash160 均匀分布）
-//   -> h0..h4 共 5 次比较等价于 5 次 32-bit 全局内存读取（非常高效）
+// - v4.2.3: uint32 对齐加载 — 20*n 始终 4 字节对齐，5 次 uint 加载替代 20 次 uchar
 //
 // Parameters:
 //   src_base  - pointer to array of 20-byte Hash160 entries (local or global memory)
@@ -1210,19 +1210,30 @@ do { \
     /* v4.5: 溢出守卫 — num_targets 超过 ~214M 时地址计算溢出，拒绝扫描 */ \
     if ((n_targets) > 214748364u) { (match) = 0; break; } \
     for (uint _t = 0; _t < (n_targets) && (match) == 0; _t++) { \
-        const uchar *_src = (src_base) + (ulong)_t * 20u; \
-        uint _t0 = (uint)_src[0]  | ((uint)_src[1]  << 8) | ((uint)_src[2]  << 16) | ((uint)_src[3]  << 24); \
-        if (_t0 != (h0)) continue; \
-        uint _t1 = (uint)_src[4]  | ((uint)_src[5]  << 8) | ((uint)_src[6]  << 16) | ((uint)_src[7]  << 24); \
-        if (_t1 != (h1)) continue; \
-        uint _t2 = (uint)_src[8]  | ((uint)_src[9]  << 8) | ((uint)_src[10] << 16) | ((uint)_src[11] << 24); \
-        if (_t2 != (h2)) continue; \
-        uint _t3 = (uint)_src[12] | ((uint)_src[13] << 8) | ((uint)_src[14] << 16) | ((uint)_src[15] << 24); \
-        if (_t3 != (h3)) continue; \
-        uint _t4 = (uint)_src[16] | ((uint)_src[17] << 8) | ((uint)_src[18] << 16) | ((uint)_src[19] << 24); \
-        if (_t4 != (h4)) continue; \
+        /* v4.2.3: uint32 aligned loads (20*_t ≡ 0 mod 4), 5x load vs 20x */ \
+        /* NOTE: (const uint*) cast crosses address spaces (global/local→private).  \
+         *       This is technically UB per OpenCL 1.2 §6.5 but universally safe:  \
+         *       all target GPUs (Intel Arc, NVIDIA, AMD) use unified virtual      \
+         *       addressing. Same pattern as uint256_from_bytes_global (L153). */ \
+        const uint *_src = (const uint*)((src_base) + (ulong)_t * 20u); \
+        if (_src[0] != (h0)) continue; \
+        if (_src[1] != (h1)) continue; \
+        if (_src[2] != (h2)) continue; \
+        if (_src[3] != (h3)) continue; \
+        if (_src[4] != (h4)) continue; \
         match = (int)(_t + 1); \
     } \
+} while(0)
+
+// v4.2.3: Pack 20-byte uchar hash160_result into 5 uint32 (little-endian).
+// Deduplicates 4 identical code blocks across batch_check and batch_check_local_mem.
+#define PACK_HASH160_UINT32(src, h0, h1, h2, h3, h4) \
+do { \
+    (h0) = (uint)(src)[0]  | ((uint)(src)[1]  << 8) | ((uint)(src)[2]  << 16) | ((uint)(src)[3]  << 24); \
+    (h1) = (uint)(src)[4]  | ((uint)(src)[5]  << 8) | ((uint)(src)[6]  << 16) | ((uint)(src)[7]  << 24); \
+    (h2) = (uint)(src)[8]  | ((uint)(src)[9]  << 8) | ((uint)(src)[10] << 16) | ((uint)(src)[11] << 24); \
+    (h3) = (uint)(src)[12] | ((uint)(src)[13] << 8) | ((uint)(src)[14] << 16) | ((uint)(src)[15] << 24); \
+    (h4) = (uint)(src)[16] | ((uint)(src)[17] << 8) | ((uint)(src)[18] << 16) | ((uint)(src)[19] << 24); \
 } while(0)
 
 __kernel void batch_check(
@@ -1295,11 +1306,8 @@ __kernel void batch_check(
 
     // Compare against all target Hash160 (uint32 vectorized: 5 uint compares vs 20 uchar, with progressive early-exit)
     // Pre-assemble hash160_result as 5 uint32 (little-endian)
-    uint h0 = (uint)hash160_result[0]  | ((uint)hash160_result[1]  << 8) | ((uint)hash160_result[2]  << 16) | ((uint)hash160_result[3]  << 24);
-    uint h1 = (uint)hash160_result[4]  | ((uint)hash160_result[5]  << 8) | ((uint)hash160_result[6]  << 16) | ((uint)hash160_result[7]  << 24);
-    uint h2 = (uint)hash160_result[8]  | ((uint)hash160_result[9]  << 8) | ((uint)hash160_result[10] << 16) | ((uint)hash160_result[11] << 24);
-    uint h3 = (uint)hash160_result[12] | ((uint)hash160_result[13] << 8) | ((uint)hash160_result[14] << 16) | ((uint)hash160_result[15] << 24);
-    uint h4 = (uint)hash160_result[16] | ((uint)hash160_result[17] << 8) | ((uint)hash160_result[18] << 16) | ((uint)hash160_result[19] << 24);
+    uint h0, h1, h2, h3, h4;
+    PACK_HASH160_UINT32(hash160_result, h0, h1, h2, h3, h4);
 
     int match = 0;
     HASH160_TARGET_SCAN(target_hash160s, h0, h1, h2, h3, h4, num_targets, match);
@@ -1316,11 +1324,7 @@ __kernel void batch_check(
         hash160(pubkey_uncomp, 65, hash160_result);
 
         // Re-pack hash160_result as 5 uint32 (little-endian)
-        h0 = (uint)hash160_result[0]  | ((uint)hash160_result[1]  << 8) | ((uint)hash160_result[2]  << 16) | ((uint)hash160_result[3]  << 24);
-        h1 = (uint)hash160_result[4]  | ((uint)hash160_result[5]  << 8) | ((uint)hash160_result[6]  << 16) | ((uint)hash160_result[7]  << 24);
-        h2 = (uint)hash160_result[8]  | ((uint)hash160_result[9]  << 8) | ((uint)hash160_result[10] << 16) | ((uint)hash160_result[11] << 24);
-        h3 = (uint)hash160_result[12] | ((uint)hash160_result[13] << 8) | ((uint)hash160_result[14] << 16) | ((uint)hash160_result[15] << 24);
-        h4 = (uint)hash160_result[16] | ((uint)hash160_result[17] << 8) | ((uint)hash160_result[18] << 16) | ((uint)hash160_result[19] << 24);
+        PACK_HASH160_UINT32(hash160_result, h0, h1, h2, h3, h4);
 
         // Compare uncompressed Hash160 against all targets
         HASH160_TARGET_SCAN(target_hash160s, h0, h1, h2, h3, h4, num_targets, match);
@@ -1412,11 +1416,8 @@ __kernel void batch_check_local_mem(
 
     // Compare against all target Hash160 (local memory version, uint32 vectorized, 5 uint compares, progressive early-exit)
     // Pre-assemble hash160_result as 5 uint32 (little-endian)
-    uint h0 = (uint)hash160_result[0]  | ((uint)hash160_result[1]  << 8) | ((uint)hash160_result[2]  << 16) | ((uint)hash160_result[3]  << 24);
-    uint h1 = (uint)hash160_result[4]  | ((uint)hash160_result[5]  << 8) | ((uint)hash160_result[6]  << 16) | ((uint)hash160_result[7]  << 24);
-    uint h2 = (uint)hash160_result[8]  | ((uint)hash160_result[9]  << 8) | ((uint)hash160_result[10] << 16) | ((uint)hash160_result[11] << 24);
-    uint h3 = (uint)hash160_result[12] | ((uint)hash160_result[13] << 8) | ((uint)hash160_result[14] << 16) | ((uint)hash160_result[15] << 24);
-    uint h4 = (uint)hash160_result[16] | ((uint)hash160_result[17] << 8) | ((uint)hash160_result[18] << 16) | ((uint)hash160_result[19] << 24);
+    uint h0, h1, h2, h3, h4;
+    PACK_HASH160_UINT32(hash160_result, h0, h1, h2, h3, h4);
 
     int match = 0;
     HASH160_TARGET_SCAN(cached_targets, h0, h1, h2, h3, h4, num_targets, match);
@@ -1433,11 +1434,7 @@ __kernel void batch_check_local_mem(
         hash160(pubkey_uncomp, 65, hash160_result);
 
         // Re-pack hash160_result as 5 uint32 (little-endian)
-        h0 = (uint)hash160_result[0]  | ((uint)hash160_result[1]  << 8) | ((uint)hash160_result[2]  << 16) | ((uint)hash160_result[3]  << 24);
-        h1 = (uint)hash160_result[4]  | ((uint)hash160_result[5]  << 8) | ((uint)hash160_result[6]  << 16) | ((uint)hash160_result[7]  << 24);
-        h2 = (uint)hash160_result[8]  | ((uint)hash160_result[9]  << 8) | ((uint)hash160_result[10] << 16) | ((uint)hash160_result[11] << 24);
-        h3 = (uint)hash160_result[12] | ((uint)hash160_result[13] << 8) | ((uint)hash160_result[14] << 16) | ((uint)hash160_result[15] << 24);
-        h4 = (uint)hash160_result[16] | ((uint)hash160_result[17] << 8) | ((uint)hash160_result[18] << 16) | ((uint)hash160_result[19] << 24);
+        PACK_HASH160_UINT32(hash160_result, h0, h1, h2, h3, h4);
 
         // Compare uncompressed Hash160 against local cached targets
         HASH160_TARGET_SCAN(cached_targets, h0, h1, h2, h3, h4, num_targets, match);

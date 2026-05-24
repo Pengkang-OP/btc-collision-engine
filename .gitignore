@@ -263,3 +263,28 @@ desktop.ini
 
 # --- 根目录 .bat 临时脚本 ---
 /_test_*.bat
+
+# --- 历史文档归档（一次性审查/修复/测试报告，保留项目文档） ---
+docs/archive/
+docs/audit-reports/
+docs/*_audit_report.md
+docs/*_fixes_report.md
+docs/*_improvement_report.md
+docs/*_review.md
+docs/manual_code_review_*.md
+docs/code_review_*.md
+docs/real_environment_test_report.md
+docs/test_address_matching_flow_report.md
+docs/CRYPTO_BACKEND_*.md
+docs/MULTI_GPU_ISSUES_ANALYSIS.md
+docs/PROJECT_ANALYSIS.md
+docs/PROJECT_CLEANUP_REPORT_*.md
+docs/PROJECT_COMPREHENSIVE_ANALYSIS_*.md
+docs/RELEASE_NOTES_v3.*.md
+docs/TEST_ID_INDEX.md
+docs/TEST_PLAN.md
+docs/TEST_REPORT.md
+
+# --- 根目录临时工具报告 ---
+tools/CODE_REVIEW_UTF8*.md
+tools/UTF8_*.md
