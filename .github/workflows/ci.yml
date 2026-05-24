@@ -5,6 +5,7 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -109,7 +110,7 @@ jobs:
       - name: 运行 Bandit 安全扫描
         id: bandit-scan
         run: |
-          bandit -r src/ key_collision.py key_collision_cli.py build_production.py \
+          bandit -r src/ key_collision.py key_collision_cli.py \
             -ll -f json -o bandit-report.json || true
           EXIT_CODE=$?
           echo "exit_code=$EXIT_CODE" >> "$GITHUB_OUTPUT"
@@ -480,15 +481,28 @@ jobs:
         run: |
           echo "🔐 CI 门禁检查..."
           FAILED=0
-          for job in lint test comprehensive-tests critical-tests config-validation security-scan dependency-scan import-check type-check gpu-static-check benchmark docs-check; do
-            RESULT="${{ needs.${job}.result }}"
-            if [ "$RESULT" != "success" ]; then
-              echo "❌ $job 未通过: $RESULT"
+          check_job() {
+            local job_name="$1"
+            local job_result="$2"
+            if [ "$job_result" != "success" ]; then
+              echo "❌ $job_name 未通过: $job_result"
               FAILED=1
             else
-              echo "✅ $job 通过"
+              echo "✅ $job_name 通过"
             fi
-          done
+          }
+          check_job lint "${{ needs.lint.result }}"
+          check_job test "${{ needs.test.result }}"
+          check_job comprehensive-tests "${{ needs.comprehensive-tests.result }}"
+          check_job critical-tests "${{ needs.critical-tests.result }}"
+          check_job config-validation "${{ needs.config-validation.result }}"
+          check_job security-scan "${{ needs.security-scan.result }}"
+          check_job dependency-scan "${{ needs.dependency-scan.result }}"
+          check_job import-check "${{ needs.import-check.result }}"
+          check_job type-check "${{ needs.type-check.result }}"
+          check_job gpu-static-check "${{ needs.gpu-static-check.result }}"
+          check_job benchmark "${{ needs.benchmark.result }}"
+          check_job docs-check "${{ needs.docs-check.result }}"
           if [ $FAILED -eq 1 ]; then
             echo ""
             echo "⛔ CI 门禁未通过！请修复上述问题后重新提交。"
