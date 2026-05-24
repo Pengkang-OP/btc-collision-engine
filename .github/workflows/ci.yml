@@ -13,12 +13,12 @@ concurrency:
 
 jobs:
   # ──────────────────────────────────────────
-  # 快速门禁：代码格式 + lint（秒级完成）
+  # 1. 静态分析 (ruff + mypy + import-check + GPU kernel)
   # ──────────────────────────────────────────
-  lint:
-    name: 代码格式化检查 (ruff)
+  static-analysis:
+    name: 静态分析
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
@@ -29,190 +29,22 @@ jobs:
           python-version: "3.12"
           cache: "pip"
 
-      - name: 安装lint工具
-        run: pip install ruff>=0.9.0
+      - name: 安装工具
+        run: |
+          pip install ruff>=0.9.0 mypy>=1.0.0
+          pip install -r requirements-base.txt
 
-      - name: 运行 ruff format 检查
+      - name: ruff format 检查
         run: ruff format --check src/ tests/ scripts/ benchmarks/ tools/
 
-      - name: 运行 ruff check 检查
+      - name: ruff check 检查
         run: ruff check src/ tests/ scripts/ benchmarks/ tools/
 
-  # ──────────────────────────────────────────
-  # 导入路径检查
-  # ──────────────────────────────────────────
-  import-check:
-    name: 导入路径检查
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: 设置 Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: "pip"
-
-      - name: 安装依赖
-        run: |
-          pip install -r requirements.txt
-
-      - name: 运行导入路径检查
-        run: python scripts/check_import_paths.py
-
-  # ──────────────────────────────────────────
-  # 类型检查 (mypy)
-  # ──────────────────────────────────────────
-  type-check:
-    name: 类型检查 (mypy)
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: 设置 Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: "pip"
-
-      - name: 安装依赖
-        run: |
-          pip install -r requirements-base.txt
-          pip install mypy>=1.0.0
-
-      - name: 运行 mypy 类型检查
+      - name: mypy 类型检查
         run: mypy src/ --config-file pyproject.toml
 
-  # ──────────────────────────────────────────
-  # 安全扫描 (Bandit)
-  # ──────────────────────────────────────────
-  security-scan:
-    name: 安全扫描 (Bandit)
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: 设置 Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: "pip"
-
-      - name: 安装 bandit
-        run: pip install bandit>=1.7.0
-
-      - name: 运行 Bandit 安全扫描
-        id: bandit-scan
-        run: |
-          bandit -r src/ key_collision.py key_collision_cli.py \
-            -ll -f json -o bandit-report.json || true
-          EXIT_CODE=$?
-          echo "exit_code=$EXIT_CODE" >> "$GITHUB_OUTPUT"
-          if [ -s bandit-report.json ]; then
-            ISSUE_COUNT=$(jq '.results | length' bandit-report.json)
-            if [ "$ISSUE_COUNT" -gt 0 ]; then
-              echo "⚠️  发现 ${ISSUE_COUNT} 个安全问题:"
-              jq -r '.results[]? | "  [\(.test_id)] \(.filename):\(.line_number) - \(.issue_text[:120])"' bandit-report.json
-            else
-              echo "✅ 未发现安全问题"
-            fi
-          fi
-          # exit_code > 1 表示 bandit 异常崩溃
-          if [ $EXIT_CODE -gt 1 ]; then
-            echo "❌ Bandit 执行异常 (exit=$EXIT_CODE)"
-            exit $EXIT_CODE
-          fi
-
-      - name: 验证无安全问题
-        if: always()
-        run: |
-          if [ "${{ steps.bandit-scan.outputs.exit_code }}" = "1" ]; then
-            echo "❌ Bandit 发现安全问题，CI 硬阻断"
-            exit 1
-          fi
-
-      - name: 上传 Bandit 报告
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: bandit-report
-          path: bandit-report.json
-
-  # ──────────────────────────────────────────
-  # 依赖漏洞扫描 (pip-audit)
-  # ──────────────────────────────────────────
-  dependency-scan:
-    name: 依赖漏洞扫描 (pip-audit)
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: 设置 Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: "pip"
-
-      - name: 安装 pip-audit
-        run: pip install pip-audit>=2.7.0
-
-      - name: 安装项目依赖
-        run: pip install -r requirements-base.txt
-
-      - name: 运行 pip-audit
-        continue-on-error: true
-        run: pip-audit --requirement requirements-base.txt --desc on
-
-  # ──────────────────────────────────────────
-  # 配置验证
-  # ──────────────────────────────────────────
-  config-validation:
-    name: 配置验证
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: 设置 Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: "pip"
-
-      - name: 安装依赖
-        run: pip install -r requirements-base.txt
-
-      - name: 验证配置一致性
-        run: python tools/validate_config.py
-
-  # ──────────────────────────────────────────
-  # GPU 源码静态检查
-  # ──────────────────────────────────────────
-  gpu-static-check:
-    name: GPU 源码静态检查
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: 设置 Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: "pip"
-
-      - name: 安装依赖
-        run: pip install -r requirements-base.txt
+      - name: 导入路径检查
+        run: python scripts/check_import_paths.py
 
       - name: GPU Python 模块语法检查
         run: |
@@ -268,26 +100,83 @@ jobs:
           PYEOF
 
   # ──────────────────────────────────────────
-  # 核心测试 (多版本 Python 矩阵)
+  # 2. 安全扫描 (Bandit + pip-audit)
   # ──────────────────────────────────────────
-  test:
-    name: 测试 (Python ${{ matrix.python-version }})
+  security:
+    name: 安全扫描
     runs-on: ubuntu-latest
-    timeout-minutes: 50
-    needs: [lint] # lint 通过后才运行完整测试
-
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.12"]
+    timeout-minutes: 12
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: 设置 Python ${{ matrix.python-version }}
+      - name: 设置 Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: 安装工具
+        run: |
+          pip install bandit>=1.7.0 pip-audit>=2.7.0
+          pip install -r requirements-base.txt
+
+      - name: Bandit 安全扫描
+        id: bandit-scan
+        run: |
+          bandit -r src/ key_collision.py key_collision_cli.py \
+            -ll -f json -o bandit-report.json || true
+          EXIT_CODE=$?
+          echo "exit_code=$EXIT_CODE" >> "$GITHUB_OUTPUT"
+          if [ -s bandit-report.json ]; then
+            ISSUE_COUNT=$(jq '.results | length' bandit-report.json)
+            if [ "$ISSUE_COUNT" -gt 0 ]; then
+              echo "⚠️  发现 ${ISSUE_COUNT} 个安全问题:"
+              jq -r '.results[]? | "  [\(.test_id)] \(.filename):\(.line_number) - \(.issue_text[:120])"' bandit-report.json
+            else
+              echo "✅ 未发现安全问题"
+            fi
+          fi
+          if [ $EXIT_CODE -gt 1 ]; then
+            echo "❌ Bandit 执行异常 (exit=$EXIT_CODE)"
+            exit $EXIT_CODE
+          fi
+
+      - name: 验证无安全问题
+        if: always()
+        run: |
+          if [ "${{ steps.bandit-scan.outputs.exit_code }}" = "1" ]; then
+            echo "❌ Bandit 发现安全问题，CI 硬阻断"
+            exit 1
+          fi
+
+      - name: pip-audit 依赖漏洞扫描
+        continue-on-error: true
+        run: pip-audit --requirement requirements-base.txt --desc on
+
+      - name: 上传 Bandit 报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: bandit-report.json
+
+  # ──────────────────────────────────────────
+  # 3. 核心测试 (pytest + coverage + config validation)
+  # ──────────────────────────────────────────
+  test:
+    name: 测试
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    needs: [static-analysis]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
           cache: "pip"
 
       - name: 安装系统依赖
@@ -301,6 +190,9 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-cov pytest-timeout pytest-benchmark
 
+      - name: 配置验证
+        run: python tools/validate_config.py
+
       - name: 运行测试
         timeout-minutes: 45
         run: |
@@ -311,27 +203,26 @@ jobs:
             --cov-report=xml \
             --cov-report=term-missing \
             --cov-fail-under=40 \
-            -m "not (gpu or gpu_kernel or multi_gpu or integration)"
+            -m "not (gpu or gpu_kernel or multi_gpu or integration)" \
             --timeout=600 \
             --timeout-method=signal \
             -p no:cacheprovider
 
       - name: 上传覆盖率报告
-        if: matrix.python-version == '3.12'
         uses: codecov/codecov-action@v4
         with:
           file: ./coverage.xml
           flags: unittests
-          name: codecov-py${{ matrix.python-version }}
+          name: codecov-py3.12
 
   # ──────────────────────────────────────────
-  # 五大维度综合测试
+  # 4. 扩展测试 (综合 + 关键路径)
   # ──────────────────────────────────────────
-  comprehensive-tests:
-    name: 五大维度综合测试
+  extended-tests:
+    name: 扩展测试
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [lint]
+    needs: [static-analysis]
 
     steps:
       - uses: actions/checkout@v4
@@ -352,26 +243,32 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-cov pytest-timeout hypothesis
 
-      - name: 运行五大维度测试
+      - name: 五大维度综合测试
         run: pytest tests/test_comprehensive_5d.py -v --tb=short --timeout=120
 
-      - name: 运行核心引擎测试
+      - name: 核心引擎测试
         run: pytest tests/unit/engine/test_base_engine.py -v --tb=short --timeout=120
 
-      - name: 运行配置与CLI测试
+      - name: 配置与CLI测试
         run: pytest tests/unit/config/test_config.py tests/unit/cli/test_cli.py -v --tb=short --timeout=60
 
-      - name: 运行GPU核心测试（无GPU依赖）
+      - name: GPU核心测试（无GPU）
         run: pytest tests/gpu/test_gpu_core.py -v --tb=short --timeout=60
 
+      - name: 导入路径测试
+        run: pytest tests/test_import_paths.py -v
+
+      - name: Bech32/P2SH测试
+        run: pytest tests/unit/crypto/test_bech32_p2sh_conversion.py tests/unit/crypto/test_bech32_p2sh_performance.py -v
+
   # ──────────────────────────────────────────
-  # 关键路径测试
+  # 5. 性能回归检测
   # ──────────────────────────────────────────
-  critical-tests:
-    name: 关键路径测试
+  benchmark:
+    name: 性能回归
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [lint]
+    needs: [static-analysis]
 
     steps:
       - uses: actions/checkout@v4
@@ -380,40 +277,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"
-
-      - name: 安装系统依赖
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libgmp-dev
-
-      - name: 安装 Python 依赖
-        run: |
-          pip install -r requirements.txt
-          pip install pytest pytest-benchmark
-
-      - name: 运行导入路径测试
-        run: pytest tests/test_import_paths.py -v
-
-      - name: 运行Bech32/P2SH测试
-        run: pytest tests/unit/crypto/test_bech32_p2sh_conversion.py tests/unit/crypto/test_bech32_p2sh_performance.py -v
-
-  # ──────────────────────────────────────────
-  # 性能回归检测
-  # ──────────────────────────────────────────
-  benchmark:
-    name: 性能回归检测
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: [lint]
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: 设置 Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
           cache: "pip"
 
       - name: 安装系统依赖
@@ -444,9 +307,9 @@ jobs:
           path: benchmarks/results/benchmark_*.json
 
   # ──────────────────────────────────────────
-  # 文档检查
+  # 6. 文档检查
   # ──────────────────────────────────────────
-  docs-check:
+  docs:
     name: 文档检查
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -454,7 +317,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 检查Markdown文档
+      - name: Markdown 规范检查
         uses: DavidAnson/markdownlint-cli2-action@v15
         with:
           globs: "**/*.md"
@@ -467,26 +330,20 @@ jobs:
           test -d docs && echo "✅ docs/ 目录存在" || echo "⚠️ docs/ 目录不存在"
 
   # ──────────────────────────────────────────
-  # CI 门禁检查（必须全部通过）
+  # 7. CI 门禁检查（必须全部通过）
   # ──────────────────────────────────────────
   gate:
-    name: CI 门禁检查
+    name: 门禁
     runs-on: ubuntu-latest
     timeout-minutes: 2
     needs:
       [
-        lint,
+        static-analysis,
+        security,
         test,
-        comprehensive-tests,
-        critical-tests,
-        config-validation,
-        security-scan,
-        dependency-scan,
-        import-check,
-        type-check,
-        gpu-static-check,
+        extended-tests,
         benchmark,
-        docs-check,
+        docs,
       ]
     if: always()
 
@@ -505,18 +362,12 @@ jobs:
               echo "✅ $job_name 通过"
             fi
           }
-          check_job lint "${{ needs.lint.result }}"
+          check_job static-analysis "${{ needs.static-analysis.result }}"
+          check_job security "${{ needs.security.result }}"
           check_job test "${{ needs.test.result }}"
-          check_job comprehensive-tests "${{ needs.comprehensive-tests.result }}"
-          check_job critical-tests "${{ needs.critical-tests.result }}"
-          check_job config-validation "${{ needs.config-validation.result }}"
-          check_job security-scan "${{ needs.security-scan.result }}"
-          check_job dependency-scan "${{ needs.dependency-scan.result }}"
-          check_job import-check "${{ needs.import-check.result }}"
-          check_job type-check "${{ needs.type-check.result }}"
-          check_job gpu-static-check "${{ needs.gpu-static-check.result }}"
+          check_job extended-tests "${{ needs.extended-tests.result }}"
           check_job benchmark "${{ needs.benchmark.result }}"
-          check_job docs-check "${{ needs.docs-check.result }}"
+          check_job docs "${{ needs.docs.result }}"
           if [ $FAILED -eq 1 ]; then
             echo ""
             echo "⛔ CI 门禁未通过！请修复上述问题后重新提交。"
