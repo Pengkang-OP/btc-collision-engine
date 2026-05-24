@@ -26,34 +26,34 @@ classifiers = [
 
 # 核心必须依赖
 dependencies = [
-    "coincurve>=18.0.0,<22.0.0",        # L1: 添加上限防止破坏性升级
-    "gmpy2>=2.1.0,<5.0.0",              # v4.5.1: 放宽上限至 4.x
-    "pycryptodome>=3.19.0,<5.0.0",      # C-08: 放宽上限
-    "cachetools>=5.3.0,<7.0.0",         # L1: 添加上限
-    "pybloom-live>=2.2.0,<3.0.0",       # L1: 添加上限
-    "bech32>=1.2.0,<2.0.0",             # L1: 添加上限
-    "bitarray>=2.6.0,<3.0.0",           # L1: 添加上限
+    "coincurve>=18.0.0,<22.0.0",    # L1: 添加上限防止破坏性升级
+    "gmpy2>=2.1.0,<5.0.0",          # v4.5.1: 放宽上限至 4.x
+    "pycryptodome>=3.19.0,<5.0.0",  # C-08: 放宽上限
+    "cachetools>=5.3.0,<7.0.0",     # L1: 添加上限
+    "pybloom-live>=2.2.0,<3.0.0",   # L1: 添加上限
+    "bech32>=1.2.0,<2.0.0",         # L1: 添加上限
+    "bitarray>=2.6.0,<3.0.0",       # L1: 添加上限
     "chardet>=5.0.0,<6.0.0",
-    "requests>=2.28.0,<3.0.0",          # C-12: 接近 3.0，注意破坏性变更
-    "ecdsa>=0.18.0,<1.0.0",             # L1: 添加上限
-    "setproctitle>=1.3.0,<2.0.0",       # L1: 添加上限
-    "psutil>=5.9.0,<8.0.0",             # L1: psutil API 稳定，放宽至 6.x
-    "jsonschema>=4.0.0,<5.0.0",         # H-NEW1: 配置验证必需依赖
-    "cryptography>=43.0.0,<46.0.0",     # C-03: 放宽上限至 45.x
+    "requests>=2.28.0,<3.0.0",      # C-12: 接近 3.0，注意破坏性变更
+    "ecdsa>=0.18.0,<1.0.0",         # L1: 添加上限
+    "setproctitle>=1.3.0,<2.0.0",   # L1: 添加上限
+    "psutil>=5.9.0,<8.0.0",         # L1: psutil API 稳定，放宽至 6.x
+    "jsonschema>=4.0.0,<5.0.0",     # H-NEW1: 配置验证必需依赖
+    "cryptography>=43.0.0,<46.0.0", # C-03: 放宽上限至 45.x
     "PyNaCl>=1.5.0,<2.0.0",
-    "rich>=13.0,<16.0.0",               # L1: 添加上限
-    "cffi>=1.15.0,<2.0.0",              # L1: 添加上限
-    "numpy>=1.24.0,<2.0.0",             # L1: numpy 2.x 含破坏性变更，锁定 1.x
+    "rich>=13.0,<16.0.0",           # L1: 添加上限
+    "cffi>=1.15.0,<2.0.0",          # L1: 添加上限
+    "numpy>=1.24.0,<2.0.0",         # L1: numpy 2.x 含破坏性变更，锁定 1.x
 ]
 
 [project.optional-dependencies]
 # GPU 加速支持
 gpu = [
-    "pyopencl>=2022.1,<2025.0",         # L1: 添加上限
-    "numpy>=1.24.0,<2.0.0",             # L1: 与主依赖一致
-    "gmpy2>=2.1.0,<5.0.0",              # v4.5.1: 与主依赖一致
-    "pycryptodome>=3.19.0,<5.0.0",      # C-08: 与主依赖一致
-    "nvidia-ml-py>=12.0.0,<13.0.0",     # L1: 添加上限
+    "pyopencl>=2022.1,<2025.0",     # L1: 添加上限
+    "numpy>=1.24.0,<2.0.0",         # L1: 与主依赖一致
+    "gmpy2>=2.1.0,<5.0.0",          # v4.5.1: 与主依赖一致
+    "pycryptodome>=3.19.0,<5.0.0",  # C-08: 与主依赖一致
+    "nvidia-ml-py>=12.0.0,<13.0.0", # L1: 添加上限
 ]
 # 开发与测试工具
 dev = [
@@ -77,9 +77,7 @@ all = ["btc-collision-engine[gpu,dev]"]
 # Windows 平台可选依赖（断点文件 ACL 设置）
 # checkpoint_manager.py 使用 pywin32 设置 Windows DACL
 # 若 pywin32 不可用，自动降级为 icacls 命令（系统内置）
-windows = [
-    "pywin32>=306",
-]
+windows = ["pywin32>=306"]
 
 [project.scripts]
 btc-collision = "src.cli.main:main"
@@ -95,20 +93,26 @@ include = ["src*"]
 # pytest 配置已迁移至 pytest.ini，此处不再重复定义以避免冲突
 
 [tool.mypy]
-python_version = "3.11"                                   # 与 CI type-check job 使用的 Python 版本一致
+python_version = "3.11" # 与 CI type-check job 使用的 Python 版本一致
 ignore_missing_imports = true
-warn_return_any = false                                   # 大量底层C库返回Any，暂不强制
+warn_return_any = false # 大量底层C库返回Any，暂不强制
 warn_unused_configs = true
 warn_redundant_casts = true
 warn_unused_ignores = false
 check_untyped_defs = false
-disallow_untyped_defs = false                             # 渐进式类型化，暂不强制函数签名
-disallow_incomplete_defs = false                          # 允许部分类型注解
-disallow_untyped_calls = false                            # 允许调用未类型化函数
-no_implicit_optional = true                               # 防止隐式Optional
-strict_equality = true                                    # 防止不安全的类型比较
-exclude = ["tests/", "benchmarks/", "tools/", "scripts/", "src/gpu/pyopencl_stubs/"]
-mypy_path = ["src/gpu/pyopencl_stubs"]            # pyopencl stub 文件路径
+disallow_untyped_defs = false # 渐进式类型化，暂不强制函数签名
+disallow_incomplete_defs = false # 允许部分类型注解
+disallow_untyped_calls = false # 允许调用未类型化函数
+no_implicit_optional = true # 防止隐式Optional
+strict_equality = true # 防止不安全的类型比较
+exclude = [
+    "tests/",
+    "benchmarks/",
+    "tools/",
+    "scripts/",
+    "src/gpu/pyopencl_stubs/",
+]
+mypy_path = ["src/gpu/pyopencl_stubs"] # pyopencl stub 文件路径
 
 [tool.black]
 line-length = 105
@@ -116,7 +120,7 @@ target-version = ["py39"]
 
 [tool.flake8]
 max-line-length = 105
-extend-ignore = ["E203"]  # 与 ruff 保持一致，忽略切片语法冒号前空格
+extend-ignore = ["E203"] # 与 ruff 保持一致，忽略切片语法冒号前空格
 exclude = [
     ".git",
     "__pycache__",
@@ -173,24 +177,66 @@ select = ["E", "F", "W", "C90", "I", "N", "UP", "SIM", "B", "T20"]
 ignore = ["E203"]
 
 [tool.ruff.lint.per-file-ignores]
-"src/web/dashboard.py" = ["E501"]                  # HTML/Jinja2 模板字符串无法有意义地拆分
+"src/web/dashboard.py" = ["E501"] # HTML/Jinja2 模板字符串无法有意义地拆分
 "src/monitoring/alert_notifications.py" = ["E501"] # HTML 邮件模板字符串
-"src/utils/ui_tutorial.py" = ["E501"]              # 长行 UI 字符串/格式化提示文本
-"src/collision/targets/validator.py" = ["E501"]    # doctest 示例 + 中文注释
-"scripts/**/*.py" = ["E501", "E402", "T201"]               # 脚本：sys.path.insert + 可读性长行 + print合法
-"scripts/_batch_p1.py" = ["E501"]                  # 嵌入式源码字符串补丁脚本
-"scripts/extract_opencl_kernels.py" = ["E501"]     # 文档字符串含 markdown 代码示例
-"benchmarks/**/*.py" = ["E501", "E402", "T201"]        # 基准测试：格式化非关键，允许 print
-"tests/**/*.py" = ["T201"]                             # 测试代码：print 调试输出合法
+"src/utils/ui_tutorial.py" = ["E501"] # 长行 UI 字符串/格式化提示文本
+"src/collision/targets/validator.py" = ["E501"] # doctest 示例 + 中文注释
+"scripts/**/*.py" = [
+    "E501",
+    "E402",
+    "T201",
+] # 脚本：sys.path.insert + 可读性长行 + print合法
+"scripts/_batch_p1.py" = ["E501"] # 嵌入式源码字符串补丁脚本
+"scripts/extract_opencl_kernels.py" = ["E501"] # 文档字符串含 markdown 代码示例
+"benchmarks/**/*.py" = ["E501", "E402", "T201"] # 基准测试：格式化非关键，允许 print
+"tests/**/*.py" = [
+    "T201",   # 测试代码：print 调试输出合法
+    "N806",   # Mock/数学变量名大写合法（MockDeviceManager, G, bpMB 等）
+    "N802",   # 测试函数名含数学符号大写（G, K, O, I, P, N 等）
+    "N801",   # 测试类名格式豁免
+    "SIM117", # 嵌套 with 语句在 mock 场景中合法
+    "SIM105", # suppressible-exception 在测试中合法
+    "B017",   # assert-raises-exception 盲捕获在测试中合法
+    "B007",   # 未使用循环变量在 fixture 中合法
+    "B023",   # 函数内引用循环变量在 fixture 中合法
+    "SIM115", # 测试中直接 open() 合法（fixture/benchmark 场景）
+    "E402",   # sys.path.insert 需在 import 之前
+    "E501",   # 测试数据/长字符串可读性优先
+    "B904",   # raise-without-from 在测试中可接受
+    "N818",   # 测试异常命名豁免
+    "E741",   # 数学变量名 l 在测试中可接受
+    "N814",   # 测试中导入缩写合法（TR1, TR2 等）
+    "N817",   # 测试中导入缩写合合法（CM 等）
+] # 测试代码：广泛豁免常见测试模式
 # ── 合法 CLI 工具允许 print() 输出 ──────────────────────────
-"src/cli/*.py" = ["T201"]                                # CLI 命令行接口输出
-"src/utils/first_run_wizard.py" = ["T201"]               # 首次运行向导
-"src/wizard/*.py" = ["T201"]                             # 向导引擎
-"src/automation/*.py" = ["T201"]                         # 自动化闭环 CLI
-"src/utils/performance_benchmark.py" = ["T201"]          # 性能基准测试 CLI
-"src/utils/health_check.py" = ["T201"]                   # 健康检查 CLI
-"src/gpu/multi_format_multi_gpu_engine.py" = ["T201"]   # GPU 引擎示例/测试
-"tools/**/*.py" = ["T201"]                             # 运维工具：print 合法输出
+"src/cli/*.py" = ["T201"] # CLI 命令行接口输出
+"src/utils/first_run_wizard.py" = ["T201"] # 首次运行向导
+"src/wizard/*.py" = ["T201"] # 向导引擎
+"src/automation/*.py" = ["T201"] # 自动化闭环 CLI
+"src/utils/performance_benchmark.py" = ["T201"] # 性能基准测试 CLI
+"src/utils/health_check.py" = ["T201"] # 健康检查 CLI
+"src/gpu/multi_format_multi_gpu_engine.py" = ["T201"] # GPU 引擎示例/测试
+"tools/**/*.py" = [
+    "T201", # 运维工具：print 合法输出
+    "E402", # sys.path.insert 需在 import 之前
+    "E501", # 工具脚本：长行可读性优先
+    "B007", # 未使用循环变量可接受
+    "E741", # 工具脚本中 l 变量可接受
+] # 运维工具：豁免常见模式
+
+# ── 个别文件豁免 ──────────────────────────────────────────
+"tests/test_multi_format_conversion.py" = [
+    "F821",
+] # AddressConverter 模块已移除，变量通过 try/except+locals() 守卫
+"tests/conftest.py" = ["C901"] # pytest_sessionfinish 固有复杂度
+"tests/test_stability_24h.py" = ["C901"] # 稳定性测试 run() 固有复杂度
+"tools/validate_config.py" = ["N806"] # ConfigManager/CM 是类引用，不是变量
+"tools/performance_baseline.py" = ["N806"] # G 是数学群元素，非变量
+"tools/check_async_status.py" = ["C901"] # 巡检脚本 check_async_status() 固有复杂度
+"tools/check_ui_freeze.py" = ["C901"] # GUI 进程检查 check_gui_process() 固有复杂度
+"tools/monitor_async_effect.py" = ["C901"] # 异步监控 monitor_async_stats() 固有复杂度
+"tools/monitor_dashboard.py" = ["C901"] # 仪表盘 analyze_current_run() 固有复杂度
+"tools/status_report.py" = ["C901"] # 报告生成 generate_report() 固有复杂度
 
 [tool.ruff.lint.mccabe]
 max-complexity = 15
@@ -203,5 +249,3 @@ exclude_dirs = ["tests", "docs", "benchmarks"]
 # B101: assert 语句在本项目中广泛用于防御性编程(非安全校验), 不构成安全风险
 # B105: Bandit 基于变量名模式匹配，误报率极高（配置版本号/延迟值被误标记为密码）
 skips = ["B101", "B105"]
-
-

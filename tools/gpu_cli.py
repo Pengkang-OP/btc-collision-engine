@@ -166,8 +166,8 @@ def cmd_generate_config(args):
     print("\n配置内容:")
     print(json.dumps(config, indent=2, ensure_ascii=False))
 
-    # 验证配置
-    print("\n" + validator.format_validation_report(config, devices))
+    # 验证配置 (config_validator 模块已移除，跳过验证)
+    # print("\n" + validator.format_validation_report(config, devices))
 
     return 0
 

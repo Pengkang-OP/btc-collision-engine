@@ -216,13 +216,12 @@ class TestDataProtection:
 
         for config_file in config_files:
             filepath = os.path.join(os.path.dirname(os.path.dirname(__file__)), config_file)
-            if pathlib.Path(filepath).exists():
-                # 在Unix系统上检查权限
-                if os.name != "nt":  # 非Windows
-                    stat = os.stat(filepath)
-                    _ = stat.st_mode  # 预取权限用于后续检查
-                    # 不应该 world-readable（可选检查）
-                    # assert not (mode & 0o004), f"文件权限过宽: {config_file}"
+            if pathlib.Path(filepath).exists() and os.name != "nt":
+                # 在非Windows系统上检查权限
+                stat = os.stat(filepath)
+                _ = stat.st_mode  # 预取权限用于后续检查
+                # 不应该 world-readable（可选检查）
+                # assert not (mode & 0o004), f"文件权限过宽: {config_file}"
 
 
 class TestDeduplicationSecurity:

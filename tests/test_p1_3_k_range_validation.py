@@ -56,11 +56,14 @@ class TestP1_3_KeyRangeValidation(unittest.TestCase):
                 stripped = line.strip()
                 # 如果包含了 || 则新的正确格式
                 # 如果只有 uint256_is_zero 没有 ||，则是旧代码
-                if "uint256_is_zero(&k)" in stripped and "||" not in stripped:
-                    # 检查下一行是否包含 ||
-                    if i + 1 < len(lines) and "||" not in lines[i + 1]:
-                        # 可能是旧代码，但可能是注释
-                        pass  # 在下面的检查中处理
+                if (
+                    "uint256_is_zero(&k)" in stripped
+                    and "||" not in stripped
+                    and i + 1 < len(lines)
+                    and "||" not in lines[i + 1]
+                ):
+                    # 可能是旧代码，但可能是注释
+                    pass  # 在下面的检查中处理
 
         # 直接检查：确保旧的条件语句模式已被移除
         # 旧模式: "if (uint256_is_zero(&k)) {" (独占条件)

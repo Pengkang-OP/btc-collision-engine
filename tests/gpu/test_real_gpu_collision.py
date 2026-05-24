@@ -266,6 +266,9 @@ def test_config_loading():
 
     try:
         import json
+        from pathlib import Path
+
+        project_root = Path(__file__).resolve().parent.parent.parent
 
         config_files = ["config.json", "config.intel_arc.json", "config.multi_gpu.json"]
 

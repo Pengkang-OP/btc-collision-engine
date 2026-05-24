@@ -262,9 +262,7 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
 
         def wait_side_effect(timeout):
             call_count[0] += 1
-            if call_count[0] >= 2:
-                return True  # 停止
-            return False
+            return call_count[0] >= 2
 
         with patch.object(mgr._cleanup_state._cleanup_stop_event, "wait", side_effect=wait_side_effect):
             mgr._auto_cleanup_loop(interval=0.01, lru_timeout=0.1)

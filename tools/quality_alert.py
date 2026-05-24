@@ -51,16 +51,19 @@ class QualityAlertSystem:
 
         # 2. 趋势告警
         trend = self.analyzer.get_trend()
-        if trend["status"] == "success" and trend["trend_status"] == "declining":
-            if trend["trend"] < -0.5:
-                alerts.append(
-                    {
-                        "type": "DECLINING_TREND",
-                        "severity": "WARNING",
-                        "message": f"文档质量持续下降: {trend['trend']:+.2f}",
-                        "trend": trend["trend"],
-                    }
-                )
+        if (
+            trend["status"] == "success"
+            and trend["trend_status"] == "declining"
+            and trend["trend"] < -0.5
+        ):
+            alerts.append(
+                {
+                    "type": "DECLINING_TREND",
+                    "severity": "WARNING",
+                    "message": f"文档质量持续下降: {trend['trend']:+.2f}",
+                    "trend": trend["trend"],
+                }
+            )
 
         # 3. 新文档告警(低分文档)
         if self.analyzer.history:

@@ -373,6 +373,7 @@ def main():
                 shutil.rmtree(target_dir)
             except PermissionError:
                 # Windows 权限问题：先修复只读属性再重试
+                import os
                 import stat
 
                 def _remove_readonly(_func, _path, _exc):

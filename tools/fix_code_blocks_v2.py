@@ -92,7 +92,7 @@ def detect_language_v2(code_content: str, context_before: str, context_after: st
 
             json.loads(code_content)
             return "json"
-        except:
+        except Exception:
             pass
 
     # 6. Markdown（如果包含Markdown语法）
