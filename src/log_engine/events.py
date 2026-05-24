@@ -1,12 +1,30 @@
 """Log event type definitions."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from enum import Enum, auto
+
+
+class LogEventType(Enum):
+    """Log event type enumeration."""
+
+    STATUS_UPDATE = auto()
+    ERROR = auto()
+    WARNING = auto()
+    INFO = auto()
+    DEBUG = auto()
+    SECURITY = auto()
 
 
 @dataclass
 class LogEvent:
-    """Base log event."""
+    """Base log event.
 
+    Accepts event_type as first positional arg and data as second
+    (for backward compatibility with tests).
+    """
+
+    event_type: "LogEventType | None" = None
+    data: dict = field(default_factory=dict)
     level: str = "INFO"
     message: str = ""
     timestamp: float = 0.0

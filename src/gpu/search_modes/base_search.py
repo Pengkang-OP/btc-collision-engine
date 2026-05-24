@@ -33,8 +33,6 @@ class BaseSearchMode:
     避免在模块间复制状态。
     """
 
-    __slots__ = ("engine",)
-
     def __init__(self, engine: "GPUCollisionEngine") -> None:
         """Args:
         engine: GPUCollisionEngine 实例引用

@@ -4,10 +4,14 @@
 import sys
 import time
 
+import pytest
+
 from src.collision.key_collision_engine import KeyCollisionEngine
 from src.core.address_generator import P2PKHAddressGenerator
 
 
+@pytest.mark.integration
+@pytest.mark.timeout(30)
 def test_secure_integration():
     """测试SecureKeyManager集成"""
     print("=" * 70)
@@ -81,6 +85,8 @@ def test_secure_integration():
     return True
 
 
+@pytest.mark.integration
+@pytest.mark.timeout(30)
 def test_performance_impact():
     """测试性能影响"""
     print("\n" + "=" * 70)
