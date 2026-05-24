@@ -31,11 +31,11 @@ class TestEventType(unittest.TestCase):
 
     def test_event_type_values(self):
         """测试事件类型值格式"""
-        self.assertEqual(EventType.ENGINE_START.value, "engine.start")
-        self.assertEqual(EventType.ENGINE_PROGRESS.value, "engine.progress")
-        self.assertEqual(EventType.ENGINE_MATCH.value, "engine.match")
-        self.assertEqual(EventType.ENGINE_ERROR.value, "engine.error")
-        self.assertEqual(EventType.ENGINE_COMPLETE.value, "engine.complete")
+        self.assertEqual(EventType.ENGINE_START.value, "engine_start")
+        self.assertEqual(EventType.ENGINE_PROGRESS.value, "engine_progress")
+        self.assertEqual(EventType.ENGINE_MATCH.value, "engine_match")
+        self.assertEqual(EventType.ENGINE_ERROR.value, "engine_error")
+        self.assertEqual(EventType.ENGINE_COMPLETE.value, "engine_complete")
 
     def test_event_type_count(self):
         """测试事件类型数量"""

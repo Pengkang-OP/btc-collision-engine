@@ -217,9 +217,9 @@ class TestTypeDefinitionsSmoke:
             EventType,
         )
 
-        assert EventType.ENGINE_START.value == "engine.start"
-        assert EventType.ENGINE_STOP.value == "engine.stop"
-        assert EventType.ENGINE_PROGRESS.value == "engine.progress"
+        assert EventType.ENGINE_START.value == "engine_start"
+        assert EventType.ENGINE_STOP.value == "engine_stop"
+        assert EventType.ENGINE_PROGRESS.value == "engine_progress"
 
     def test_collision_types_import(self):
         from src.collision.types import (
