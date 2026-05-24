@@ -1,0 +1,128 @@
+# Prometheus 告警规则 - BTC碰撞引擎
+#
+# 用法: 在 prometheus.yml 中启用:
+#   rule_files:
+#     - "rules/*.yml"
+groups:
+  - name: btc_collision_engine
+    interval: 30s
+    rules:
+      # ── 引擎吞吐量告警 ──
+      - alert: LowThroughput
+        expr: |
+          gpu_throughput_keys_per_sec < 100
+        for: 5m
+        labels:
+          severity: warning
+          component: collision-engine
+        annotations:
+          summary: "BTC碰撞引擎吞吐量过低"
+          description: "设备 {{ $labels.device }} 吞吐量 {{ $value }} keys/s < 100 keys/s，持续 5 分钟"
+
+      - alert: ThroughputZero
+        expr: |
+          gpu_throughput_keys_per_sec == 0
+        for: 10m
+        labels:
+          severity: critical
+          component: collision-engine
+        annotations:
+          summary: "BTC碰撞引擎停止产出"
+          description: "设备 {{ $labels.device }} 吞吐量为 0，引擎可能已停止或卡死"
+
+      # ── 错误率告警 ──
+      - alert: HighErrorRate
+        expr: |
+          rate(gpu_errors_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: collision-engine
+        annotations:
+          summary: "GPU 错误率升高"
+          description: "设备 {{ $labels.device }} 错误率 {{ $value }}/s，超过阈值 0.1/s"
+
+      - alert: CriticalErrorRate
+        expr: |
+          rate(gpu_errors_total[5m]) > 1.0
+        for: 2m
+        labels:
+          severity: critical
+          component: collision-engine
+        annotations:
+          summary: "GPU 错误率严重超标"
+          description: "设备 {{ $labels.device }} 错误率 {{ $value }}/s，需立即排查"
+
+      # ── 显存压力告警 ──
+      - alert: GPUMemoryPressure
+        expr: |
+          (gpu_memory_used_bytes / gpu_memory_total_bytes) > 0.90
+        for: 5m
+        labels:
+          severity: warning
+          component: collision-engine
+        annotations:
+          summary: "GPU 显存使用率超过 90%"
+          description: "设备 {{ $labels.device }} 显存使用率 {{ $value | humanizePercentage }}"
+
+      # ── 内存池效率告警 ──
+      - alert: LowPoolHitRatio
+        expr: |
+          gpu_memory_pool_hit_ratio < 0.5
+        for: 15m
+        labels:
+          severity: info
+          component: collision-engine
+        annotations:
+          summary: "GPU 内存池命中率低于 50%"
+          description: "设备 {{ $labels.device }} 内存池命中率 {{ $value | humanizePercentage }}，可能需要调整池大小"
+
+      # ── 恢复事件频繁告警 ──
+      - alert: FrequentGPURecovery
+        expr: |
+          rate(gpu_recovery_events_total[30m]) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+          component: collision-engine
+        annotations:
+          summary: "GPU 恢复事件频繁"
+          description: "设备 {{ $labels.device }} 30分钟内恢复 {{ $value }}/s，GPU 可能不稳定"
+
+      # ── 设备丢失告警 ──
+      - alert: GPUDeviceLost
+        expr: |
+          gpu_device_count < 1
+        for: 2m
+        labels:
+          severity: critical
+          component: collision-engine
+        annotations:
+          summary: "所有 GPU 设备丢失"
+          description: "活跃 GPU 设备数降为 {{ $value }}，请检查硬件状态"
+
+      # ── 内核延迟异常 ──
+      - alert: HighKernelLatency
+        expr: |
+          histogram_quantile(0.95, rate(gpu_kernel_latency_seconds_bucket[5m])) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          component: collision-engine
+        annotations:
+          summary: "GPU 内核延迟 P95 过高"
+          description: "设备 {{ $labels.device }} 内核延迟 P95 = {{ $value }}s，超过 100ms"
+
+      # ── 进度停滞告警 ──
+      - alert: ProgressStalled
+        expr: |
+          rate(gpu_keys_checked_total[15m]) == 0
+          and
+          gpu_device_count > 0
+        for: 15m
+        labels:
+          severity: critical
+          component: collision-engine
+        annotations:
+          summary: "引擎进度停滞"
+          description: "15 分钟内无新增 key 检查记录，但 GPU 设备仍在，引擎可能挂起"
